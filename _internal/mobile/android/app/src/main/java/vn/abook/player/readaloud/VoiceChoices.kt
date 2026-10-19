@@ -4,8 +4,8 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Giọng "Nghe ngay" người nghe đã chọn, nhớ TRONG LÕI theo từng cuốn, cộng một lựa chọn chung cho cuốn chưa chọn - cùng luật với
- * `chosenVoice` / `chooseVoice` của giao diện (listen/readAloudVoice.ts). Giao diện gửi giọng mỗi lần nạp / đổi, nhưng phát tiếp từ widget, xe hơi,
+ * Giọng "Nghe ngay" người nghe đã chọn, nhớ TRONG LÕI theo từng cuốn, cộng giọng mặc định (Cài đặt) cho cuốn chưa chọn - cùng luật với
+ * `chosenVoice` / `chooseVoice` / `chooseDefaultVoice` của giao diện (listen/readAloudVoice.ts). Giao diện gửi giọng mỗi lần nạp / đổi, nhưng phát tiếp từ widget, xe hơi,
  * tai nghe hay máy tính điều khiển sau khi app khởi động lại thì không qua giao diện - trước đây những đường ấy đọc bằng giọng mặc định.
  *
  * Một file JSON nhỏ `{"global": "...", "books": {"<mã cuốn>": "..."}, "onlineOk": ["edge", ...]}`; ghi qua file tạm rồi đổi tên. File hỏng / thiếu: như chưa chọn gì.
@@ -23,14 +23,24 @@ class VoiceChoices(private val file: File) {
     fun voiceFor(bookId: String): String =
         data.optJSONObject("books")?.optString(bookId, "")?.takeIf { it.isNotBlank() } ?: data.optString("global", "")
 
-    /** Chọn giọng cho cuốn (và làm giọng chung cho cuốn khác chưa chọn). "" (người nghe chưa chọn gì) không ghi đè lựa chọn đã có. */
+    /** Chọn giọng cho RIÊNG cuốn này - giọng chung giữ nguyên (soát a67); không có cuốn ("") thì là giọng chung. "" (người nghe chưa chọn gì) không
+     *  ghi đè lựa chọn đã có. */
     fun remember(bookId: String, voice: String) {
         if (voice.isBlank()) return
-        if (bookId.isNotBlank()) {
+        if (bookId.isBlank()) {
+            data.put("global", voice)
+        } else {
             val books = data.optJSONObject("books") ?: JSONObject().also { data.put("books", it) }
             books.put(bookId, voice)
+            // The very first choice also becomes the default, like chooseVoice in the UI.
+            if (data.optString("global", "").isBlank()) data.put("global", voice)
         }
-        data.put("global", voice)
+        save()
+    }
+
+    /** Giọng mặc định đặt ở Cài đặt (giao diện gửi lúc mở app và mỗi lần đổi): "" = chưa đặt, cuốn chưa chọn đọc bằng giọng của người chưa chọn. */
+    fun rememberDefault(voice: String) {
+        if (voice.isBlank()) data.remove("global") else data.put("global", voice)
         save()
     }
 

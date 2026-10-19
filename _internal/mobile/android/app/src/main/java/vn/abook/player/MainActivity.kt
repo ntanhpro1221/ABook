@@ -1,12 +1,17 @@
 package vn.abook.player
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import com.getcapacitor.BridgeActivity
 import vn.abook.player.readaloud.ReadAloudPlugin
+import kotlin.math.roundToInt
+
+/** WebView text zoom (percent) for a system font scale: 1.3 -> 130. */
+internal fun textZoomFor(fontScale: Float): Int = (fontScale * 100).roundToInt().coerceIn(50, 300)
 
 class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,6 +65,13 @@ class MainActivity : BridgeActivity() {
         }
         val plugin = bridge?.getPlugin("EbookLibrary")?.instance as? LibraryPlugin ?: return
         plugin.openFrom(uri, intent?.type)
+    }
+
+    // fontScale is in configChanges (AndroidManifest): changing the system text size no longer recreates the activity - which reloaded the WebView,
+    // dropped the listener back to the Library and lost the book's speed (a67). The WebView takes the font scale only when it is created, so follow it here.
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        bridge?.webView?.settings?.textZoom = textZoomFor(newConfig.fontScale)
     }
 
     // Mở app là máy tính thấy điện thoại (để "Phát trên điện thoại" được cả khi chưa nghe gì) - Remote.

@@ -215,7 +215,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
             </p>
           </details>
         )}
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 dialog-actions">
           {/* Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09). */}
           <Button size="sm" variant="ghost" onClick={onCancel}>
             Huỷ mã này
@@ -227,7 +227,7 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
   if (sync.pairingBlocked) {
     return (
       <div className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4">
-        <ShieldAlert className="mt-0.5 size-[18px] shrink-0 text-warning" />
+        <ShieldAlert className="mt-0.5 glyph shrink-0 text-warning" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">Mã đã bị huỷ vì nhập sai 5 lần</p>
           <p className="mt-0.5 text-[0.8125rem] text-fg-2">
@@ -330,7 +330,7 @@ export function PhoneSync() {
             title="Cho thiết bị đã ghép điều khiển sản xuất?"
             description="Điện thoại, máy tính bảng hay máy tính đã ghép sẽ mở được Studio của máy này trong trình duyệt: xem tiến độ, bắt đầu hay dừng tạo sách, duyệt “Việc cần duyệt”. Mỗi thiết bị vẫn cần được cho phép riêng ở danh sách bên dưới."
           >
-            <div className="flex justify-end gap-2">
+            <div className="dialog-actions">
               <Button variant="ghost" onClick={() => setConfirmStudio(false)}>
                 Để sau
               </Button>
@@ -361,7 +361,7 @@ export function PhoneSync() {
                 {sync.devices.map((device) => (
                   // Điện thoại hẹp + công tắc "Điều khiển sản xuất": hàng tự xuống dòng thay vì bóp tên máy còn "NGDtuanh-…".
                   <li key={device.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-                    <Smartphone className="size-[18px] shrink-0 text-fg-3" />
+                    <Smartphone className="glyph shrink-0 text-fg-3" />
                     <div className="min-w-0 flex-1 basis-44">
                       <div className="truncate text-sm font-medium">{device.name}</div>
                       <div className="text-xs text-fg-2">
@@ -418,7 +418,7 @@ export function PhoneSync() {
         title={`Thôi ghép ${removing?.name ?? "thiết bị"}?`}
         description="Thiết bị này sẽ không tải sách hay đồng bộ chỗ đang nghe được nữa, cho tới khi ghép lại. Sách đã tải về thiết bị vẫn nghe được."
       >
-        <div className="flex justify-end gap-2">
+        <div className="dialog-actions">
           <Button variant="ghost" onClick={() => setRemoving(null)}>
             Để nguyên
           </Button>

@@ -1058,7 +1058,7 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
             : "Mọi câu trong các thẻ này giữ đúng người máy đang gán. Không câu nào phải thu lại; máy thôi hỏi. Hoàn tác được ngay sau đó."
         }
       >
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 dialog-actions">
           <Button variant="ghost" onClick={() => setConfirm(false)}>
             Thôi
           </Button>

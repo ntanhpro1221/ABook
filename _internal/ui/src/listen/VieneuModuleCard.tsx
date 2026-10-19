@@ -1,8 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { spokenProgress } from "@/shared/progressSpeech";
-import { Button, LiveText, Progress } from "@/shared/ui";
+import { Button, LiveText, Progress, useFocusFollows } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { api } from "@/studio/api";
@@ -25,6 +24,7 @@ import {
   VIENEU_COPY,
   vieneuLabel,
   vieneuPercent,
+  vieneuSpoken,
   SUPERTONIC_COPY,
   type ModuleCopy,
   type VieneuChoiceId,
@@ -142,6 +142,8 @@ export function VieneuModuleCard({
   const sizes = useRef<Record<string, number>>({});
   // Ô chọn giọng: tên = tên giọng + cỡ tải; đoạn giới thiệu dài đọc riêng là mô tả (soát a31: tên ô 300+ chữ).
   const ids = useId();
+  // Tải <-> Huỷ thay chỗ nhau: tiêu điểm theo sang nút vừa hiện (soát a67).
+  const follow = useFocusFollows(status?.state);
   if (!status) return null;
   const downloading = status.state === "downloading";
   peak.current = downloading ? Math.max(peak.current, status.done) : 0;
@@ -185,21 +187,24 @@ export function VieneuModuleCard({
   const canPick = !working && status.state !== "unsupported";
   const suggestion = status.suggestion && !working ? suggestionText(status.suggestion) : null;
   const metered = canPick && missing.length > 0 ? meteredNotice(status, bytes) : null;
+  const spoken = vieneuSpoken(shown, copy);
   return (
-    <div className="max-w-xl space-y-3">
-      <h3 className="text-sm font-semibold">{copy.title}</h3>
+    <div {...follow} className="max-w-xl space-y-3">
+      <h3 tabIndex={-1} data-focus-fallback className="text-sm font-semibold">{copy.title}</h3>
       {/* Lỗi tải: không ở đầu thẻ mà ngay trên nút Thử lại, nơi người dùng đang nhìn (soát a66) - xem dưới cùng. */}
       {!failed && (
-        <p role="status" className="text-sm text-fg-2 text-pretty">
-          {/* Đang tải: % đổi liên tục - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
-          {status.state === "downloading" ? <LiveText shown={vieneuLabel(shown, copy)} spoken={spokenProgress(`Đang tải ${lowerName}`, vieneuPercent(shown) / 100)} /> : vieneuLabel(shown, copy)}
+        <p className="text-sm text-fg-2 text-pretty">
+          {/* Đang tải: % đổi liên tục - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6), kể cả lúc mạng chập chờn đang thử lại; vừa huỷ thì chỉ đọc
+              "Đã huỷ…", không đọc lại cả đoạn giới thiệu (soát a67). */}
+          <span role="status">{downloading ? <LiveText shown={vieneuLabel(shown, copy)} spoken={spoken.live} /> : spoken.live}</span>
+          {spoken.rest && ` ${spoken.rest}`}
         </p>
       )}
       {status.state === "downloading" && (
         <div className="flex items-center gap-3">
           <Progress value={vieneuPercent(shown) / 100} size="sm" running label={`Đang tải ${lowerName}`} className="flex-1" />
           {backend.cancel && (
-            <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.cancel!(), `Chưa huỷ được việc tải ${lowerName}`)}>
+            <Button size="sm" variant="ghost" data-focus-next loading={busy} onClick={() => void run(() => backend.cancel!(), `Chưa huỷ được việc tải ${lowerName}`)}>
               Huỷ
             </Button>
           )}
@@ -288,7 +293,7 @@ export function VieneuModuleCard({
             </Button>
           )}
           {missing.length > 0 && (
-            <Button size="sm" variant={status.state === "missing" ? "primary" : "secondary"} loading={busy} onClick={() => void run(() => backend.start(missing))}>
+            <Button size="sm" variant={status.state === "missing" ? "primary" : "secondary"} data-focus-next loading={busy} onClick={() => void run(() => backend.start(missing))}>
               {failed ? "Thử lại" : bytes > 0 ? `Tải (${formatSize(bytes)})` : "Dùng"}
             </Button>
           )}

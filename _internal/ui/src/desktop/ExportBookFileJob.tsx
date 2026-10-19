@@ -144,7 +144,7 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
 
 /** Thông báo đang làm có thanh tiến độ dưới dòng mô tả. Thông báo nằm trong vùng aria-live: trình đọc màn hình chỉ đọc `spoken` (pha / mốc
  *  25 %), không đọc dòng chữ và thanh đổi mỗi giây (soát a31 A6). */
-export function ProgressNote({ text, spoken, fraction }: { text: string; spoken: string; fraction?: number }) {
+export function ProgressNote({ text, spoken, fraction, label }: { text: string; spoken: string; fraction?: number; label: string }) {
   return (
     <div className="flex flex-col gap-1.5">
       <span>
@@ -152,7 +152,8 @@ export function ProgressNote({ text, spoken, fraction }: { text: string; spoken:
       </span>
       {fraction !== undefined && (
         <div aria-hidden>
-          <Progress value={fraction} size="sm" running label={spoken} />
+          {/* Tên thanh là tên việc, không phải lời đọc có mốc % (đứng yên ở 0 % trong khi thanh chạy tới 14 - soát a67). */}
+          <Progress value={fraction} size="sm" running label={label} />
         </div>
       )}
     </div>
@@ -192,7 +193,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
         }
         toast.loading(view.title, {
           id: toastId(kind, id),
-          description: <ProgressNote text={view.description} spoken={view.spoken ?? ""} fraction={view.progress} />,
+          description: <ProgressNote text={view.description} spoken={view.spoken ?? ""} fraction={view.progress} label={view.title} />,
           duration: Infinity,
           action: cancel
             ? {

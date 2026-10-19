@@ -13,7 +13,7 @@ const library = vi.hoisted(() => ({
 const toasts = vi.hoisted(() => Object.assign(vi.fn(), { loading: vi.fn(), success: vi.fn(), error: vi.fn() }));
 vi.mock("./plugins", () => ({ EbookLibrary: library, EbookPlayer: {}, ReadAloud: {} }));
 vi.mock("sonner", () => ({ toast: toasts }));
-vi.mock("@capacitor/core", () => ({ Capacitor: { convertFileSrc: (path: string) => path } }));
+vi.mock("@capacitor/core", () => ({ Capacitor: { convertFileSrc: (path: string) => path, isNativePlatform: () => true } }));
 
 import { chooseM4b, exportM4b, finishedView, M4bMusicForm, OPEN_M4B_EVENT, progressText, type M4bDialogDetail } from "./ExportM4b";
 

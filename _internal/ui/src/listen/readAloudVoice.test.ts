@@ -220,6 +220,30 @@ describe("giọng dự phòng của Nghe ngay", () => {
     expect(module.onlineNotice(VOICES[0])).toBe(module.ONLINE_NOTICE);
     expect(module.onlineNotice(VOICES[4])).toBe("");
   });
+
+  it("lần chọn giọng đầu tiên (chưa có giọng mặc định) cũng làm giọng mặc định cho cuốn sau", async () => {
+    const { module, target } = await fresh();
+    const changed: string[] = [];
+    target.addEventListener(module.DEFAULT_VOICE_EVENT, () => changed.push(module.defaultVoice()));
+    module.chooseVoice("b1", "fpt:banmai");
+    module.chooseVoice("b2", "edge:vi-VN-NamMinhNeural");
+    expect(module.defaultVoice()).toBe("fpt:banmai");
+    expect(module.chosenVoice("b3")).toBe("fpt:banmai");
+    expect(changed).toEqual(["fpt:banmai"]);
+  });
+
+  it("đổi giọng ở trình phát chỉ cho cuốn ấy: giọng mặc định và cuốn khác giữ nguyên (soát a67)", async () => {
+    const { module, target } = await fresh();
+    const changed: string[] = [];
+    target.addEventListener(module.DEFAULT_VOICE_EVENT, () => changed.push(module.defaultVoice()));
+    module.chooseDefaultVoice("edge:vi-VN-HoaiMyNeural");
+    module.chooseVoice("b1", "fpt:banmai");
+    expect(module.chosenVoice("b1")).toBe("fpt:banmai");
+    expect(module.defaultVoice()).toBe("edge:vi-VN-HoaiMyNeural");
+    expect(module.chosenVoice("b2")).toBe("edge:vi-VN-HoaiMyNeural");
+    // Chỉ Cài đặt đổi giọng mặc định - và báo lõi điện thoại (android/readAloud.ts) đúng một lần mỗi lần đặt.
+    expect(changed).toEqual(["edge:vi-VN-HoaiMyNeural"]);
+  });
 });
 
 describe("giọng chạy trên máy để đỡ khi mất mạng", () => {

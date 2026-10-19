@@ -1,5 +1,5 @@
 import { Pencil } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "./cn";
 import { formatNumber } from "./format";
 
@@ -40,8 +40,16 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
 }) {
   const [editing, setEditing] = useState<number | null>(null);
   const cancelled = useRef(false); // Esc huỷ: ô mất con trỏ ngay sau đó không được lưu
+  // Enter / Esc xong: tiêu điểm về đúng dòng vừa sửa (nút tên chương), không rơi về khung hộp rồi Tab nhảy lên "Đóng" (soát a67).
+  const box = useRef<HTMLDivElement | null>(null);
+  const returnTo = useRef<number | null>(null);
+  useEffect(() => {
+    if (editing !== null || returnTo.current === null) return;
+    box.current?.querySelector<HTMLElement>(`[data-rename="${returnTo.current}"]`)?.focus();
+    returnTo.current = null;
+  }, [editing]);
   return (
-    <div className={cn("max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel", className)}>
+    <div ref={box} className={cn("max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel", className)}>
       {chapters.map((chapter, position) => {
         const index = chapter.index ?? position + 1;
         const on = choice ? choice.picked.has(index) : true;
@@ -87,9 +95,14 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   onFocus={(event) => event.target.select()}
                   onBlur={(event) => finish(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter") event.currentTarget.blur();
-                    else if (event.key === "Escape") {
+                    if (event.key === "Enter") {
+                      // Không để Enter đi tiếp: tiêu điểm đã về nút tên chương trước khi phím xong - nó sẽ "bấm" nút ấy, mở ô sửa lại.
+                      event.preventDefault();
+                      returnTo.current = index;
+                      event.currentTarget.blur();
+                    } else if (event.key === "Escape") {
                       cancelled.current = true;
+                      returnTo.current = index;
                       event.currentTarget.blur();
                     }
                   }}
@@ -98,6 +111,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
               ) : choice ? (
                 <button
                   type="button"
+                  data-rename={index}
                   disabled={choice.disabled}
                   onClick={() => setEditing(index)}
                   title="Bấm để đổi tên chương"

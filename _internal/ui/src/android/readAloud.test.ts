@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Script } from "@/listen/model";
 import { VOICE_CHANGED_EVENT, mergeTimings, type ReadAloudTimings } from "@/listen/readAloud";
-import { chooseVoice } from "@/listen/readAloudVoice";
+import { chooseDefaultVoice, chooseVoice } from "@/listen/readAloudVoice";
 import { ONLINE_CONSENT_EVENT, giveOnlineConsent } from "@/listen/onlineConsent";
 import { textScript } from "@/listen/textScript";
 import type { ReadAloudPlugin } from "./plugins";
@@ -105,6 +105,8 @@ describe("watchReadAloud", () => {
     const stop = watchReadAloud(client, api, configure, notify);
     // Mở app: lõi biết ngay người nghe đã đồng ý gửi chữ cho nhà cung cấp nào (chưa ai) - nó chỉ tự sang chương chữ với những giọng ấy.
     expect(configure).toHaveBeenCalledWith({ readAloudOnlineOk: [] });
+    // ... và giọng mặc định của Cài đặt (chưa đặt) cho cuốn chưa chọn giọng riêng.
+    expect(configure).toHaveBeenCalledWith({ readAloudDefault: "" });
     (handlers.get("readAloudScript") as (event: { bookId: string; chapterId: number }) => void)({ bookId: BOOK, chapterId: 1 });
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect((client.getQueryData(textScriptKey(BOOK, 1)) as Script | undefined)?.timed).toBe(true);
@@ -118,6 +120,10 @@ describe("watchReadAloud", () => {
 
     chooseVoice(BOOK, "device:vi-vn-an");
     expect(configure).toHaveBeenCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: BOOK });
+    // Đổi giọng một cuốn không đổi giọng mặc định; đặt ở Cài đặt thì lõi nhớ theo.
+    expect(configure).not.toHaveBeenCalledWith({ readAloudDefault: "device:vi-vn-an" });
+    chooseDefaultVoice("edge:vi-VN-NamMinhNeural");
+    expect(configure).toHaveBeenCalledWith({ readAloudDefault: "edge:vi-VN-NamMinhNeural" });
     giveOnlineConsent("edge");
     expect(configure).toHaveBeenCalledWith({ readAloudOnlineOk: ["edge"] });
     stop();
@@ -125,7 +131,8 @@ describe("watchReadAloud", () => {
     expect(remove).toHaveBeenCalledTimes(3);
     target.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: BOOK }));
     target.dispatchEvent(new CustomEvent(ONLINE_CONSENT_EVENT));
-    expect(configure).toHaveBeenCalledTimes(3);
+    chooseDefaultVoice("");
+    expect(configure).toHaveBeenCalledTimes(5);
   });
 });
 

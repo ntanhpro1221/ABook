@@ -22,7 +22,7 @@ import { watchReadAloud } from "./readAloud";
 import { watchImports } from "./imports";
 import { cn } from "@/shared/cn";
 import { UNDO_SECONDS, toastRemoved } from "@/shared/trashUndo";
-import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
+import { Button, Dialog, EmptyState, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
 import { androidSource } from "./androidSource";
 import { DevicesScreen } from "./DevicesScreen";
 import { AudiobookPhoneDialogHost, ExportAudiobookMenuItem, watchAudiobookExports } from "./ExportAudiobook";
@@ -91,7 +91,7 @@ function Tab({ to, icon: Icon, label }: { to: string; icon: typeof Library; labe
         cn("flex flex-1 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium", isActive ? "text-accent-text" : "text-fg-3")
       }
     >
-      <Icon className="size-[22px]" strokeWidth={1.9} />
+      <Icon className="glyph-22" strokeWidth={1.9} />
       {label}
     </NavLink>
   );
@@ -236,7 +236,7 @@ function RemoveFromPhoneHost() {
       title={`Xoá “${book?.title ?? ""}” khỏi điện thoại?`}
       description={`${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Bản trên điện thoại bị xoá hẳn để lấy lại chỗ trống; lỡ tay thì bấm Hoàn tác trong ${UNDO_SECONDS} giây. Sách của máy tính hay thiết bị đã ghép thì tải lại được, chỗ nghe đồng bộ lại từ máy ấy; sách mở từ file .abook thì mở lại file ấy.`}
     >
-      <div className="flex justify-end gap-2">
+      <div className="dialog-actions">
         <Button variant="ghost" onClick={() => setBook(null)}>
           Để sau
         </Button>
@@ -255,6 +255,7 @@ function ClipBridge({ children }: { children: ReactNode }) {
 
 export function AndroidApp() {
   const engine = useMemo(() => new NativeAudioEngine(), []);
+  useFocusClearOfToasts();
   useEffect(() => {
     const settings = loadSettings();
     applyTheme(settings.theme);

@@ -7,6 +7,22 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Máy tính
+
+- Dùng bằng bàn phím và trình đọc màn hình dễ hơn: bảng Tốc độ đọc, Giọng đọc, Hẹn giờ đi được bằng phím mũi tên; nút Tốc độ / Giọng đọc đọc lên giá trị đang chọn ("Tốc độ đọc: 1,2×") và báo lại khi bạn chọn xong; tải hay huỷ tải giọng, đổi tên chương trong hộp "Thêm sách", nút đang chạy... không còn làm mất chỗ con trỏ.
+- Lời báo lỗi của trình phát hiện cả ở trang Cài đặt; bấm Phát khi đang có lỗi thì lời báo được đọc lại. Chọn giọng khác ngay từ lời báo thì sách tự phát tiếp.
+- Cỡ chữ trình duyệt 150 % / 200 %: thanh phát xuống hai hàng thay vì chồng nút lên nhau; chân hộp thoại xuống dòng khi chật. Thông báo không còn che chỗ bạn đang bấm phím tới ở cửa sổ nhỏ.
+- Giao diện sáng: chữ phụ, chữ cảnh báo và mục Studio trong Cài đặt đậm hơn cho dễ đọc. Nút ✕ của hộp thoại to hơn cho dễ bấm.
+
+### Điện thoại
+
+- Đổi cỡ chữ của điện thoại khi app đang mở: app theo cỡ chữ mới ngay, không quay về Thư viện và không quên tốc độ đọc của cuốn đang nghe. Tốc độ đọc của từng cuốn được nhớ như ở máy tính.
+- Nút và mục trong menu cao ít nhất 48 dp cho dễ chạm; biểu tượng to theo cỡ chữ. Tên nút không còn kèm phím tắt của máy tính. Thông báo đang phát của "Nghe ngay" không còn đọc "by null".
+
+### Nghe ngay
+
+- Máy tính và điện thoại: đổi giọng ở trình phát chỉ đổi giọng của cuốn đang nghe; giọng mặc định cho các cuốn khác chỉ đổi trong Cài đặt → Giọng đọc.
+
 ## [0.4.107] - 2026-10-19
 
 ### Điện thoại

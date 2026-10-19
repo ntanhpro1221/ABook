@@ -14,6 +14,7 @@ import {
   toggleChoice,
   tierVoicePrefix,
   vieneuLabel,
+  vieneuSpoken,
   type VieneuStatus,
 } from "./vieneuModule";
 
@@ -216,5 +217,19 @@ describe("Cài đặt: hai mô-đun giọng trên máy, khuyên tải một (so�
     expect(moduleAdvice(status({ state: "unsupported" }), supertonic)).toEqual({ advice: "", preselectSupertonic: true });
     // Trạng thái VieNeu chưa về: chưa đánh dấu Supertonic (tránh tích sẵn rồi bỏ tích trước mắt người dùng).
     expect(moduleAdvice(undefined, supertonic).preselectSupertonic).toBe(false);
+  });
+});
+
+describe("câu trình đọc màn hình nghe ở thẻ mô-đun (soát a67)", () => {
+  it("đang thử lại nói đúng là đang thử lại, kèm mốc 25 %; vừa huỷ thì chỉ nói đã huỷ", () => {
+    const retrying = vieneuSpoken(status({ state: "downloading", done: 62, total: 100, retrying: true }));
+    expect(retrying.live).toContain("đang thử lại");
+    expect(retrying.live).toContain("50%");
+    expect(vieneuSpoken(status({ state: "downloading", done: 62, total: 100 })).live).toMatch(/^Đang tải .* · 50%$/);
+    const cancelled = vieneuSpoken(status({ cancelled: true }));
+    const label = vieneuLabel(status({ cancelled: true }));
+    expect(`${cancelled.live} ${cancelled.rest}`).toBe(label);
+    expect(cancelled.live.length).toBeLessThan(label.length);
+    expect(vieneuSpoken(status({ state: "error", error: "Không tải được." }))).toEqual({ live: "Không tải được.", rest: "" });
   });
 });
