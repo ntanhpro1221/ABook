@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import threading
 import time
+from contextlib import contextmanager
 from dataclasses import replace
 from pathlib import Path
-from typing import Any, Callable, Mapping, Protocol
+from typing import Any, Callable, Iterator, Mapping, Protocol
 
 from . import azure, edge, fpt, google, loudness, names, readings as book_readings, spoken, supertonic, vieneu, viettel, windows
 from .byok import KeyedProvider
@@ -21,6 +22,9 @@ from .prepare import SHARE as PREPARE_SHARE
 from .prepare import Prepare
 
 MAX_TEXT = 20_000  # ký tự một clip; đoạn của chương dài hơn nữa là hiếm, và Edge cũng phải cắt thành nhiều lượt
+# Giọng trên máy (VieNeu, Supertonic: có `forget`) không đọc gì chừng này giây thì nhả model (vài trăm MB, soát a69: máy chủ giữ ~550 MB suốt 80 phút nghe Edge);
+# lần dùng sau nạp lại như lần đầu. Điện thoại cùng số (LocalEngines.IDLE_MS).
+IDLE_SECONDS = 180
 
 
 class Provider(Protocol):
@@ -192,7 +196,7 @@ class ReadAloud:
                  rtf: Callable[[str], float | None] = lambda _voice: None,
                  speed: Callable[[str], str] = lambda _voice: "",
                  supertonic_fast_locate: Callable[[], supertonic.Installed | None] | None = None,
-                 model_mark: Callable[[str, str], str] = lambda _voice, _tier: "") -> None:
+                 model_mark: Callable[[str, str], str] = lambda _voice, _tier: "", clock: Callable[[], float] = time.monotonic) -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
         self.cache = ClipCache(self.folder, **kwargs)
@@ -221,6 +225,12 @@ class ReadAloud:
         self.books = ClipBooks(self.folder.with_name(self.folder.name + "-clip-books.jsonl"))
         self.prepare = Prepare(lambda voice, text, origin, readings, book: self.clip(voice, text, background=True, origin=origin, readings=readings, book=book),
                                lambda: self._live, int(self.cache.limit * PREPARE_SHARE), rtf)
+        # Nhả model của giọng trên máy khi thôi dùng ([release_idle]): lúc dùng gần nhất / số việc đang dùng, theo nhà cung cấp; giọng đã nhả không còn trong `_used`.
+        self._clock = clock
+        self._idle_guard = threading.Lock()
+        self._used: dict[str, float] = {}
+        self._using: dict[str, int] = {}
+        self._idle_timer: threading.Timer | None = None
 
     @property
     def live(self) -> int:
@@ -243,10 +253,66 @@ class ReadAloud:
         threading.Thread(target=run, name="readaloud-warm", daemon=True).start()
 
     def forget(self, provider_id: str) -> None:
-        """Mô-đun giọng `provider_id` vừa cập nhật / gỡ: nạp lại engine của cả hai bậc ở lần dùng sau."""
+        """Mô-đun giọng `provider_id` vừa cập nhật / gỡ (hay lâu không dùng, [release_idle]): nạp lại engine của cả hai bậc ở lần dùng sau."""
         for provider in (self.providers.get(provider_id), self.fast.get(provider_id)):
             if provider is not None and hasattr(provider, "forget"):
                 provider.forget()
+
+    # ---- nhả model của giọng trên máy khi thôi dùng -------------------------------------------------------------------------------
+
+    def _engine_use(self, provider_id: str, step: int) -> None:
+        """Giọng có engine (`forget`) vừa được dùng: `step` +1 lúc bắt đầu một việc dùng nó, -1 lúc xong. Hẹn lần soát nhả model nếu chưa hẹn."""
+        if not hasattr(self.providers.get(provider_id), "forget"):
+            return
+        with self._idle_guard:
+            self._used[provider_id] = self._clock()
+            self._using[provider_id] = self._using.get(provider_id, 0) + step
+            if self._idle_timer is None:
+                self._schedule_idle(IDLE_SECONDS)
+
+    def _schedule_idle(self, delay: float) -> None:
+        self._idle_timer = threading.Timer(delay, self._idle_check)
+        self._idle_timer.daemon = True
+        self._idle_timer.start()
+
+    def _idle_check(self) -> None:
+        self.release_idle()
+        with self._idle_guard:
+            self._idle_timer = None
+            if self._used:  # còn giọng chưa nhả: soát lại lúc giọng dùng lâu nhất đủ IDLE_SECONDS (đang bận thì 1/6 chừng ấy nữa)
+                self._schedule_idle(max(IDLE_SECONDS / 6, IDLE_SECONDS - (self._clock() - min(self._used.values()))))
+
+    @contextmanager
+    def holding(self, voice_id: str) -> Iterator[None]:
+        """Việc nền dài dùng `voice_id` (xuất sách nói): trong lúc này model của giọng ấy không bị nhả, kể cả khi việc đứng chờ người nghe giữa các đoạn."""
+        provider_id = voice_id.partition(":")[0]
+        self._engine_use(provider_id, 1)
+        try:
+            yield
+        finally:
+            self._engine_use(provider_id, -1)
+
+    def release_idle(self) -> list[str]:
+        """Nhả model của mọi giọng trên máy không ai dùng đã IDLE_SECONDS (cả hai bậc tốc độ, `forget`); không nhả giọng đang đọc, đang được việc nền giữ
+        ([holding]) hay đang được "Làm trước". Trả các nhà cung cấp vừa nhả."""
+        job = self.prepare.status()
+        preparing = str(job.get("voice") or "").partition(":")[0] if job.get("state") == "running" else ""
+        with self._idle_guard:
+            now = self._clock()
+            idle = [name for name, at in self._used.items()
+                    if name != preparing and not self._using.get(name) and now - at >= IDLE_SECONDS]
+            for name in idle:
+                del self._used[name]
+                self.forget(name)
+        return idle
+
+    def benchmark(self, provider_id: str, tier: str) -> dict[str, Any]:
+        """Tự đo sau khi tải mô-đun (`benchmark` của nhà cung cấp): việc này cũng nạp model, nên tính như một lần dùng."""
+        self._engine_use(provider_id, 1)
+        try:
+            return self.providers[provider_id].benchmark(tier)  # type: ignore[attr-defined]
+        finally:
+            self._engine_use(provider_id, -1)
 
     def voices(self) -> list[dict[str, Any]]:
         listed = []
@@ -356,6 +422,7 @@ class ReadAloud:
             with self._locks_guard:
                 lock = self._locks.setdefault(key, threading.Lock())
                 self._live += 0 if background else 1
+            self._engine_use(provider.id, 1)  # giọng trên máy: đang dùng, không nhả model ([release_idle])
             try:
                 _take(lock, cancelled)
                 try:  # hai yêu cầu cùng đoạn (đọc trước + bấm nghe) chỉ đọc một lần
@@ -386,6 +453,7 @@ class ReadAloud:
                 finally:
                     lock.release()
             finally:
+                self._engine_use(provider.id, -1)
                 with self._locks_guard:
                     self._locks.pop(key, None)
                     self._live -= 0 if background else 1

@@ -8,6 +8,7 @@ import vn.abook.player.OrtRuntime
 import vn.abook.player.SharedRuntime
 import vn.abook.player.readaloud.Clip
 import vn.abook.player.readaloud.ClipLift
+import vn.abook.player.readaloud.IdleEngine
 import vn.abook.player.readaloud.Voice
 import vn.abook.player.readaloud.VoiceException
 import vn.abook.player.readaloud.VoiceInfo
@@ -16,7 +17,8 @@ import java.util.zip.ZipFile
 
 /**
  * The VieNeu voices of this phone for "Nghe ngay" (provider "vieneu", offline): the module ([VieneuModule], `files/vieneu`), the voice lists,
- * and the engines, loaded on first use and kept for the process - one tier at a time (an engine holds hundreds of MB while it runs).
+ * and the engines, loaded on first use and let go after a few idle minutes ([IdleEngine]) - one tier at a time (an engine holds hundreds of MB
+ * while it runs).
  * Synthesis is serialised: one paragraph at a time, on the caller's (background) thread.
  */
 object VieneuVoices {
@@ -28,6 +30,7 @@ object VieneuVoices {
     private var module: VieneuModule? = null
     private var presetsOf: Pair<String, Map<String, List<VieneuPreset>>>? = null
     private var engine: Pair<String, VieneuTier>? = null
+    private val idle = IdleEngine(this, ::dropEngine)
 
     @Synchronized
     fun module(appContext: Context): VieneuModule = module ?: run {
@@ -46,9 +49,16 @@ object VieneuVoices {
     /** Drop the loaded engine and voice lists (the module is about to replace or remove files). The text reader stays mapped. */
     @Synchronized
     fun forget() {
+        dropEngine()
+        idle.dropped()
+        presetsOf = null
+    }
+
+    /** Close the loaded engine (Turbo or Nano: one at a time); the next read loads it again. */
+    @Synchronized
+    private fun dropEngine() {
         engine?.second?.let { runCatching { it.close() } }
         engine = null
-        presetsOf = null
     }
 
     @Synchronized
@@ -105,6 +115,7 @@ object VieneuVoices {
                 engine = tier to made
                 made
             }
+            idle.used()
             return Ready(tier, loaded, reader, preset)
         } catch (failure: Throwable) {
             if (failure is VoiceException) throw failure
@@ -122,6 +133,8 @@ object VieneuVoices {
         } catch (failure: OutOfMemoryError) {
             forget()
             throw VoiceException("Điện thoại không đủ bộ nhớ cho giọng VieNeu lúc này.", cause = failure, reason = "voice")
+        } finally {
+            if (engine != null) idle.used() // idle minutes count from the end of the last read
         }
         if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
         VieneuAudio.writeWav(ClipLift.lifted(id, spoken.samples, spoken.rate, ClipLift.params(context)), spoken.rate, out) // câu ngắn nhỏ nâng lên mức giọng (như service.clip)

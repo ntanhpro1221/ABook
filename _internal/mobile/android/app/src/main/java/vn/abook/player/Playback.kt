@@ -3,6 +3,8 @@ package vn.abook.player
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
+import android.util.Log
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -44,7 +46,7 @@ object Playback {
     lateinit var appContext: Context
         private set
     /** Nút Trước/Sau từ ngoài app (tai nghe, đồng hồ, xe hơi) = lùi/tới 15 giây thay vì nhảy chương (Cài đặt). */
-    var headsetSkips = false
+    var headsetSkips = true
 
     var bookId: String = ""
         private set
@@ -67,8 +69,8 @@ object Playback {
 
     private class Pending(val id: String, val title: String, val narrator: String, val items: List<Chapter>,
                           val place: Pair<Int, Long>, val rate: Double)
-    private var autoRewindAfterMs = 5 * 60_000L
-    private var autoRewindSeconds = 5.0
+    /** "Tự lùi khi nghe lại" (Cài đặt); how far: [AutoRewind]. */
+    private var autoRewind = true
     private val listeners = mutableSetOf<(JSONObject) -> Unit>()
     private var ticking = false
     /** Lần cuối người nghe chạm vào trình phát (nút, thông báo, widget) - cho lưới an toàn ngủ quên. */
@@ -362,9 +364,8 @@ object Playback {
             Bedtime.interaction("play")
             return
         }
-        if (pausedAtMs > 0 && System.currentTimeMillis() - pausedAtMs > autoRewindAfterMs) {
-            seekToMs((positionMs - (autoRewindSeconds * 1000).toLong()).coerceAtLeast(0))
-        }
+        val back = if (autoRewind && pausedAtMs > 0) AutoRewind.seconds(System.currentTimeMillis() - pausedAtMs) else 0.0
+        if (back > 0) seekToMs((positionMs - (back * 1000).toLong()).coerceAtLeast(0))
         // Sau một lỗi (mất mạng khi nghe thẳng) ExoPlayer nằm ở IDLE: phải chuẩn bị lại thì mới phát tiếp đúng chỗ.
         if (exo.playbackState == Player.STATE_IDLE) {
             lastError = ""
@@ -463,9 +464,8 @@ object Playback {
         return mark
     }
 
-    fun configure(rewindAfterMinutes: Double, rewindSeconds: Double) {
-        autoRewindAfterMs = (rewindAfterMinutes * 60_000).toLong()
-        autoRewindSeconds = rewindSeconds
+    fun configure(rewind: Boolean) {
+        autoRewind = rewind
     }
 
     // ---- sự kiện từ ExoPlayer ------------------------------------------------------------------------------
@@ -496,6 +496,22 @@ object Playback {
      *  vào lại ở từng khe im (trước đây `isPlaying` rơi về false ngay khi ExoPlayer ENDED nên nhạc dừng cùng giọng). Người nghe bấm dừng thì `starved` tắt ngay. */
     private fun syncMusic(playing: Boolean) {
         MusicBed.sync(bookId, currentChapter?.id, positionSeconds, playing || ReadAloud.starved())
+    }
+
+    private const val STALL_LOG_MS = 3_000L
+    private var stalledSince = 0L
+
+    /** Đọc to: giọng đứng chờ đoạn kế từ [STALL_LOG_MS] trở lên thì ghi logcat lúc có tiếng lại (soát a69: một lần đứng 19,2 s không để lại dấu vết nào). */
+    private fun noteStall(playing: Boolean) {
+        val now = SystemClock.elapsedRealtime()
+        if (!playing) {
+            if (stalledSince == 0L) stalledSince = now
+            return
+        }
+        if (stalledSince != 0L && now - stalledSince >= STALL_LOG_MS) {
+            Log.i("ABookStall", "giọng chờ đoạn kế ${now - stalledSince} ms (chương ${currentChapter?.id}, ${"%.1f".format(positionSeconds)} s)")
+        }
+        stalledSince = 0L
     }
 
     /** Người nghe đổi ý phát / dừng mà `isPlaying` không đổi (đang chờ đoạn kế của đọc to): nhạc cũng theo. */
@@ -550,6 +566,7 @@ object Playback {
                 // Đọc to chờ đoạn kế (hàng đợi cạn vì Edge chậm) vẫn là "đang nghe": nhịp nhạc nền không đứt (starved).
                 if (exo == null || !(exo.isPlaying || ReadAloud.starved())) {
                     ticking = false
+                    stalledSince = 0L // người nghe dừng: lần dừng không phải lần đứng chờ
                     return
                 }
                 beats += 1
@@ -559,6 +576,7 @@ object Playback {
                 }
                 if (beats % 60 == 0) SleepTimer.maybeSafetyStop(lastInteractionMs)
                 Bedtime.checkpoint()
+                noteStall(exo.isPlaying)
                 syncMusic(true)
                 emit("tick")
                 main.postDelayed(this, 500)

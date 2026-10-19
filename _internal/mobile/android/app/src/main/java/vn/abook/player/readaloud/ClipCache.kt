@@ -11,7 +11,9 @@ import vn.abook.player.vieneu.VieneuUnits
  * sha256(phiên bản luật đọc | nhà cung cấp | giọng | chữ) - cùng chữ cùng giọng thì nghe lại không đọc lại, đổi giọng thì đoạn mới. Giọng VieNeu đọc tên Nhật / Hàn theo luật phiên âm
  * ([Names]): đoạn nào gốc của cuốn làm nghe khác thì khoá thêm "|gốc", đoạn khác không đổi khoá (tham số `origin` của các hàm dưới đây). Cách đọc riêng người nghe
  * đặt cho cuốn ([Readings], mọi giọng) cũng thế: chỉ đoạn có từ ấy thêm dấu của các cách đọc có mặt (tham số `readings`). Quá `capBytes` (300 MB) thì xoá đoạn lâu không
- * dùng nhất trước (LRU theo giờ sửa file, mỗi lần dùng được cập nhật). Android tự dọn thư mục cache khi máy đầy, nên mất đoạn nào cũng chỉ là đọc lại.
+ * dùng nhất trước (LRU theo giờ sửa file, mỗi lần dùng được cập nhật) xuống còn [TRIM_TO] hạn mức; dưới hạn mức thì chỉ cộng tổng đang chạy, không quét thư mục
+(soát a69: mỗi lần ghi quét cả thư mục). Hạn mức theo chỗ trống ([capFor], như máy tính `cache.default_limit`). Android tự dọn thư mục cache khi máy đầy, nên mất
+đoạn nào cũng chỉ là đọc lại.
  *
  * Đoạn "Làm trước" ([PrepareAhead]) được GHIM (danh sách khoá trong `pinFile`, ngoài thư mục đệm): khi dọn, đoạn không ghim đi trước hết, đoạn ghim chỉ đi khi
  * chỉ còn chúng - nghe trực tiếp không đẩy được đoạn đã làm trước ra trước khi người nghe tới. Nghe tới đoạn nào thì bỏ ghim đoạn ấy ([unpin]); phần dành cho đoạn
@@ -34,7 +36,15 @@ class ClipCache(
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     companion object {
+        /** Hạn mức thấp nhất; [capFor]: [FREE_SHARE] chỗ trống của bộ nhớ, không quá [MAX_CAP_BYTES] (máy tính cùng luật, sàn 500 MB). */
         const val CAP_BYTES = 300L * 1024 * 1024
+        const val MAX_CAP_BYTES = 2L * 1024 * 1024 * 1024
+        const val FREE_SHARE = 0.05
+        /** Vượt hạn mức thì dọn xuống còn chừng này phần hạn mức: các lần ghi sau không phải quét lại. */
+        const val TRIM_TO = 0.9
+
+        /** Hạn mức của bộ đệm trong [dir] theo chỗ trống lúc này (thư mục chưa có: [CAP_BYTES]). */
+        fun capFor(dir: File): Long = (dir.usableSpace * FREE_SHARE).toLong().coerceIn(CAP_BYTES, MAX_CAP_BYTES)
         private val EXTENSIONS = setOf("mp3", "wav")
 
         /**
@@ -74,6 +84,9 @@ class ClipCache(
     init { dir.mkdirs() }
 
     val cap: Long get() = capBytes
+
+    /** Tổng byte của các đoạn (tổng đang chạy); null = chưa đếm từ đĩa. */
+    private var total: Long? = null
 
     private val pinned: MutableSet<String> = pinFile?.takeIf { it.isFile }
         ?.let { file -> runCatching { file.readLines().map { it.trim() }.filter { it.isNotEmpty() } }.getOrNull() }
@@ -210,25 +223,42 @@ class ClipCache(
         val now = clock()
         audio.setLastModified(now)
         meta.setLastModified(now)
-        trim()
+        added(audio.length() + meta.length())
         return Clip(audio, durationMs, words, voice)
     }
 
-    /** Dọn tới khi còn trong hạn mức: xoá cả cặp (âm thanh + json) của đoạn dùng lâu nhất - đoạn không ghim trước; file mồ côi và file tạm cũ xoá luôn. */
+    /** Một đoạn vừa vào bộ đệm ([bytes] cả cặp): cộng vào tổng đang chạy, quá hạn mức mới dọn. Đoạn ghi đè đoạn cũ cùng khoá làm tổng dư - lần dọn đếm lại từ đĩa. */
+    @Synchronized
+    private fun added(bytes: Long) {
+        val now = total
+        if (now == null) {
+            trim()
+            return
+        }
+        total = now + bytes
+        if (now + bytes > capBytes) trim()
+    }
+
+    /** Dọn tới khi còn [TRIM_TO] hạn mức (chưa quá hạn mức thì thôi): xoá cả cặp (âm thanh + json) của đoạn dùng lâu nhất - đoạn không ghim trước; file mồ côi và file tạm cũ
+     *  xoá luôn. Đếm lại tổng từ đĩa. */
+    @Synchronized
     fun trim() {
         val files = dir.listFiles()?.filter { it.isFile } ?: return
         val now = clock()
         files.filter { it.name.endsWith(".part") && now - it.lastModified() > 10 * 60_000L }.forEach { it.delete() }
         val groups = files.filter { !it.name.endsWith(".part") }.groupBy { it.name.substringBefore('.') }
-        var total = groups.values.sumOf { group -> group.sumOf { it.length() } }
-        if (total <= capBytes) return
-        val keep = pinnedKeys()
-        val order = compareBy<Map.Entry<String, List<File>>> { it.key in keep }.thenBy { (_, group) -> group.maxOf { it.lastModified() } }
-        for ((_, group) in groups.entries.sortedWith(order)) {
-            if (total <= capBytes) break
-            total -= group.sumOf { it.length() }
-            group.forEach { it.delete() }
+        var sum = groups.values.sumOf { group -> group.sumOf { it.length() } }
+        if (sum > capBytes) {
+            val target = (capBytes * TRIM_TO).toLong()
+            val keep = pinnedKeys()
+            val order = compareBy<Map.Entry<String, List<File>>> { it.key in keep }.thenBy { (_, group) -> group.maxOf { it.lastModified() } }
+            for ((_, group) in groups.entries.sortedWith(order)) {
+                if (sum <= target) break
+                sum -= group.sumOf { it.length() }
+                group.forEach { it.delete() }
+            }
         }
+        total = sum
     }
 
     fun sizeBytes(): Long = dir.listFiles()?.filter { it.isFile }?.sumOf { it.length() } ?: 0L
@@ -242,6 +272,7 @@ class ClipCache(
             if (it.delete()) freed += size
         }
         clearPins()
+        total = null
         return freed
     }
 }

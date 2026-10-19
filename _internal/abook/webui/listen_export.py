@@ -428,22 +428,23 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
     run.count_open([chapter for chapter in chapters if chapter_ready(work, chapter, reading) is None])
     sources: list[Path] = []
     rates: list[int] = []
-    for index, chapter in enumerate(chapters):
-        run.check()
-        chapter_music = mixer.chapter(chapter.id) if mixer is not None else None
-        mixed = chapter_ready(work, chapter, reading, chapter_music) if chapter_music is not None else None
-        stamp = mixed or chapter_ready(work, chapter, reading)
-        if stamp is not None:
-            run.done_chars += chapter.chars
-            run.report(index, chapter, "voice")
-        else:
-            stamp = run.build_chapter(index, chapter)
-        if chapter_music is not None and mixer is not None:
-            if mixed is None:
-                stamp = run.mix_chapter(index, chapter, stamp, mixer)
-            mixer.lost[chapter.id] = int(stamp.get("musicMissing") or 0)
-        sources.append(_flac_path(work, chapter, chapter_music))
-        rates.append(int(stamp["rate"]))
+    with reader.holding(reading.voice):  # giọng trên máy: model không bị nhả trong lúc việc xuất đứng chờ người nghe (ReadAloud.release_idle)
+        for index, chapter in enumerate(chapters):
+            run.check()
+            chapter_music = mixer.chapter(chapter.id) if mixer is not None else None
+            mixed = chapter_ready(work, chapter, reading, chapter_music) if chapter_music is not None else None
+            stamp = mixed or chapter_ready(work, chapter, reading)
+            if stamp is not None:
+                run.done_chars += chapter.chars
+                run.report(index, chapter, "voice")
+            else:
+                stamp = run.build_chapter(index, chapter)
+            if chapter_music is not None and mixer is not None:
+                if mixed is None:
+                    stamp = run.mix_chapter(index, chapter, stamp, mixer)
+                mixer.lost[chapter.id] = int(stamp.get("musicMissing") or 0)
+            sources.append(_flac_path(work, chapter, chapter_music))
+            rates.append(int(stamp["rate"]))
     cover_source = book_edits.cover_file(path)
     try:
         if fmt == "mp3":

@@ -6,7 +6,7 @@ import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { api } from "@/studio/api";
 import { formatSize } from "@/studio/musicLocal";
-import { forgetVoices, switchVoices } from "./readAloudVoice";
+import { forgetVoices, switchVoices, watchVoiceModule } from "./readAloudVoice";
 import type { ReadAloudVoice } from "./readAloud";
 import {
   acceleratedNote,
@@ -97,9 +97,20 @@ export function useModuleStatus(backend: VieneuBackend, copy: ModuleCopy, onChan
   const wasWorking = useRef(false);
   useEffect(() => {
     if (!working) return;
-    const timer = setInterval(() => void client.invalidateQueries({ queryKey: ["readaloud", copy.key] }), 1000);
-    return () => clearInterval(timer);
-  }, [working, client, copy.key]);
+    // Nhịp hỏi lại sống cả phiên (watchVoiceModule), không theo thẻ: tải xong lúc đã rời Cài đặt thì danh sách giọng của trình phát vẫn làm mới.
+    watchVoiceModule(
+      copy.key,
+      async () => {
+        const next = await backend.status();
+        client.setQueryData(["readaloud", copy.key], next);
+        return next.state === "downloading" || Boolean(next.benchmarking);
+      },
+      () => {
+        void client.invalidateQueries({ queryKey: ["readaloud", "voices"] });
+        refreshModuleSizes(client);
+      },
+    );
+  }, [working, client, copy.key, backend]);
   useEffect(() => {
     // Mạng đổi (Wi-Fi về, sang dữ liệu di động, mất hẳn): hỏi lại ngay để dòng "đang dùng dữ liệu di động" đúng với mạng lúc này (soát a66).
     const refresh = () => void client.invalidateQueries({ queryKey: ["readaloud", copy.key] });
@@ -111,13 +122,8 @@ export function useModuleStatus(backend: VieneuBackend, copy: ModuleCopy, onChan
     };
   }, [client, copy.key]);
   useEffect(() => {
-    // Vừa tải / đo xong: danh sách giọng của trình phát hỏi lại để giọng mới hiện ngay; thẻ giọng khác hỏi lại cỡ (phần dùng chung vừa có).
-    if (wasWorking.current && !working) {
-      forgetVoices();
-      void client.invalidateQueries({ queryKey: ["readaloud", "voices"] });
-      refreshModuleSizes(client);
-      onChanged?.();
-    }
+    // Vừa tải / đo xong: danh sách giọng + cỡ thẻ kia đã làm mới (watchVoiceModule); báo người dùng thẻ.
+    if (wasWorking.current && !working) onChanged?.();
     wasWorking.current = working;
   }, [working, client, onChanged]);
   return { status, working };

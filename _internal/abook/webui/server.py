@@ -328,7 +328,8 @@ class App:
         # "Tính lại cảm xúc nhạc" (music_moods.py): việc nền theo từng cuốn {đường dẫn: {running, error}}.
         self._moods_jobs: dict[str, dict[str, Any]] = {}
         self._moods_lock = threading.Lock()
-        self._music_fetching: dict[str, threading.Lock] = {}  # mỗi bài một khoá: luồng tải sẵn và trình phát không ghi đè nhau
+        # mỗi bài đang tải một khoá + số người đang dùng nó: luồng tải sẵn và trình phát không ghi đè nhau; người cuối bỏ khoá (`_music_fetch`)
+        self._music_fetching: dict[str, tuple[threading.Lock, int]] = {}
         # Hàng tải sẵn bài kế của trình phát máy tính (`music_warm`): MỘT luồng nền, FIFO, bỏ trùng.
         self._music_warm_lock = threading.Lock()
         self._music_warm_queue: collections.deque[str] = collections.deque()
@@ -408,10 +409,10 @@ class App:
                                              # dấu model trong khoá bộ đệm: cập nhật model / đổi lịch đọc thì đoạn đã đọc sẵn được đọc lại
                                              model_mark=lambda voice, tier: supertonic_module.model_mark(voice, tier) or vieneu_module.model_mark(voice))
         voice_speed.configure(preferences.path.with_name(voice_speed.FILE))
-        vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=self.readaloud.vieneu.benchmark,
+        vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=lambda tier: self.readaloud.benchmark("vieneu", tier),
                                 after_install=lambda: self.readaloud.forget("vieneu"))
         # Giọng Supertonic (supertonic_module.py): cùng khung với VieNeu, mười giọng nam nữ, gỡ được.
-        supertonic_module.configure(preferences.path.with_name(supertonic_module.FOLDER), benchmark=self.readaloud.supertonic.benchmark,
+        supertonic_module.configure(preferences.path.with_name(supertonic_module.FOLDER), benchmark=lambda tier: self.readaloud.benchmark("supertonic", tier),
                                     after_install=lambda: self.readaloud.forget("supertonic"))
         # Giọng ZeroTTS (zerotts_module.py): máy đọc khác cho Studio, người nghe chọn tay ở "Đổi giọng"; tải khi bấm.
         zerotts_module.configure(preferences.path.with_name(zerotts_module.FOLDER))
@@ -2471,6 +2472,23 @@ class App:
             except Exception:  # noqa: BLE001 - luồng nền không được chết giữa hàng; bài ấy sẽ được tải (và báo lỗi) đúng lúc mốc của nó tới
                 pass
 
+    @contextlib.contextmanager
+    def _music_fetch(self, link: str) -> Iterator[None]:
+        """Giữ khoá tải của bài `link` trong lúc tải; người cuối cùng dùng khoá thì bỏ nó khỏi `_music_fetching` (soát a69: sổ chỉ thêm không bớt)."""
+        with self._music_lock:
+            lock, users = self._music_fetching.get(link) or (threading.Lock(), 0)
+            self._music_fetching[link] = (lock, users + 1)
+        try:
+            with lock:
+                yield
+        finally:
+            with self._music_lock:
+                lock, users = self._music_fetching[link]
+                if users > 1:
+                    self._music_fetching[link] = (lock, users - 1)
+                else:
+                    del self._music_fetching[link]
+
     def music_track_file(self, link: str, *, progress: Callable[[int, int | None], None] | None = None,
                          cancel: threading.Event | None = None) -> Path:
         """File nhạc của một bài trong danh mục: tải một lần từ nguồn gốc vào bộ nhớ đệm, lần sau dùng lại. Chỉ bài CÓ
@@ -2500,10 +2518,8 @@ class App:
             self._music_mark_too_big(link, size)
             raise ApiError(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, TOO_BIG_TRACK)
         target.parent.mkdir(parents=True, exist_ok=True)
-        with self._music_lock:
-            fetching = self._music_fetching.setdefault(link, threading.Lock())
         # Cùng một bài đang được tải (luồng tải sẵn sau khi đổi nhạc, hay trình phát khác): chờ nó xong rồi dùng luôn.
-        with fetching:
+        with self._music_fetch(link):
             if target.is_file():
                 return target
             failure: OSError | http.client.HTTPException | None = None

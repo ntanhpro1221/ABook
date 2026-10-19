@@ -87,8 +87,8 @@ export interface EbookPlayerPlugin {
     shakeSensitivity?: "gentle" | "normal" | "firm";
     flipToPause?: boolean;
     headsetSkips?: boolean;
-    rewindAfterMinutes?: number;
-    rewindSeconds?: number;
+    /** Tự lùi khi nghe lại (AutoRewind.kt, cùng luật với máy tính). */
+    autoRewind?: boolean;
     safetyStopHours?: number;
     schedule?: { from: string; to: string; minutes: number } | null;
     /** Máy tự chọn nhạc nền cho sách chỉ có chữ chưa chọn nhạc (Cài đặt > Nhạc nền). */

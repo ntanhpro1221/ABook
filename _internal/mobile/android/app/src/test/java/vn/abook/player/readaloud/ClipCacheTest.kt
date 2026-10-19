@@ -86,6 +86,30 @@ class ClipCacheTest {
     }
 
     @Test
+    fun underTheCapWritesOnlyAddToTheTotalAndOverItTrimsWithRoomToSpare() {
+        val cache = cache(10_000)
+        put(cache, "edge:v", "đoạn 0", 900) // lần đầu đếm thư mục một lần
+        // File lạ (cũ nhất) bỏ vào sau lần đếm: dưới hạn mức không ai quét thư mục nên nó chưa được tính và chưa bị dọn (soát a69: trước đây mỗi lần
+        // ghi quét cả thư mục - nó đã bị dọn từ đoạn thứ 6).
+        val foreign = File(dir, "${"f".repeat(64)}.mp3").apply { writeBytes(ByteArray(5_000)); setLastModified(0) }
+        for (n in 1 until 10) put(cache, "edge:v", "đoạn $n", 900)
+        assertTrue(foreign.exists())
+        put(cache, "edge:v", "đoạn 10", 900) // qua hạn mức theo tổng đang chạy: dọn, đếm lại từ đĩa
+        assertFalse(foreign.exists())
+        assertTrue("dọn xuống dưới hạn mức một khoảng", cache.sizeBytes() <= (10_000 * ClipCache.TRIM_TO).toLong())
+        assertTrue(cache.contains("edge:v", "đoạn 10"))
+        assertFalse("đoạn lâu không dùng nhất đi trước", cache.contains("edge:v", "đoạn 0"))
+    }
+
+    @Test
+    fun theCapFollowsFreeSpace() {
+        assertEquals("chưa có thư mục: sàn", ClipCache.CAP_BYTES, ClipCache.capFor(File(dir, "chua-co")))
+        val cap = ClipCache.capFor(dir)
+        assertTrue(cap in ClipCache.CAP_BYTES..ClipCache.MAX_CAP_BYTES)
+        assertEquals((dir.usableSpace * ClipCache.FREE_SHARE).toLong().coerceIn(ClipCache.CAP_BYTES, ClipCache.MAX_CAP_BYTES), cap)
+    }
+
+    @Test
     fun trimRemovesBothFilesOfAnEvictedClip() {
         val cache = cache(1500)
         val a = put(cache, "edge:v", "a", 1000)

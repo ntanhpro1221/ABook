@@ -14,10 +14,10 @@ export interface PlayerSettings {
   shakeSensitivity: "gentle" | "normal" | "firm";
   /** Úp màn hình xuống để tạm dừng, lật lên trong 10 phút để nghe tiếp. */
   flipToPause: boolean;
-  /** Nút Trước/Sau trên tai nghe, đồng hồ, xe hơi = lùi/tới 15 giây thay vì nhảy chương. */
+  /** Nút Trước/Sau trên tai nghe, đồng hồ, xe hơi = lùi/tới 15 giây (mặc định, quy ước app sách nói); tắt thì nhảy chương. */
   headsetSkips: boolean;
-  rewindSeconds: number;
-  rewindAfterMinutes: number;
+  /** Tạm dừng rồi nghe tiếp thì lùi lại một chút (luật chung hai nền: listen/sleep.ts `rewindAfter`). */
+  autoRewind: boolean;
   /** Phát liên tục chừng này giờ không ai chạm máy thì tự nhỏ dần rồi dừng (0 = tắt). */
   safetyStopHours: number;
   /** Lịch đêm tự hẹn giờ. */
@@ -34,9 +34,8 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   shakeAction: "extend",
   shakeSensitivity: "normal",
   flipToPause: false,
-  headsetSkips: false,
-  rewindSeconds: 5,
-  rewindAfterMinutes: 5,
+  headsetSkips: true,
+  autoRewind: true,
   safetyStopHours: 2,
   sleepSchedule: null,
   autoMusic: true,
@@ -69,9 +68,8 @@ export async function pushSettings(settings: PlayerSettings): Promise<void> {
     shakeAction: settings.shakeAction ?? "extend",
     shakeSensitivity: settings.shakeSensitivity ?? "normal",
     flipToPause: settings.flipToPause ?? false,
-    headsetSkips: settings.headsetSkips ?? false,
-    rewindSeconds: settings.rewindSeconds,
-    rewindAfterMinutes: settings.rewindAfterMinutes,
+    headsetSkips: settings.headsetSkips !== false,
+    autoRewind: settings.autoRewind !== false,
     safetyStopHours: settings.safetyStopHours,
     schedule: settings.sleepSchedule,
     autoMusic: settings.autoMusic !== false,
