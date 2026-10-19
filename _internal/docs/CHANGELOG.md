@@ -7,6 +7,19 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Máy tính
+
+- Màn Studio và Cài đặt cho bạn biết ngay, trước khi bấm Cài, card đồ hoạ của máy có đủ để làm sách nói không (từ 8 GB là đủ, 6-8 GB có thể chạy nhưng chưa thử), cần tải bao nhiêu và mỗi chương mất chừng bao lâu. Máy không đủ thì trình tạo sách nói nói thẳng "Máy này không làm sách nói được" thay vì hứa chờ cài xong, và mời bạn tạo trên máy tính đã ghép có Studio. Bấm "Cài Studio" ở Cài đặt là cài luôn.
+- Trình tạo sách nói và hộp Xuất sách nói giờ ước cùng một độ dài (trước đây cùng cuốn một nơi ghi 4 phút, nơi kia 7 phút).
+- Xuất lại sau khi Huỷ báo đúng phần đã đọc sẵn (vd "khoảng 52%") thay vì chỉ đếm chương đã xong.
+- Lỗi không ngờ khi thêm sách hiện một câu dễ hiểu; nguyên văn kỹ thuật nằm trong "Chi tiết". Ô dán đường dẫn không còn bị cắt chữ trên màn hẹp.
+
+### Nghe ngay
+
+- Mất mạng khi đang nghe bằng giọng trực tuyến: ABook mời tải một giọng chạy trên máy nhẹ nhất (khoảng 210 MB) thay vì cả gói 535 MB; gói đầy đủ vẫn có ở nút bên cạnh.
+- Đang tải giọng, nhạc hay công cụ ghép âm thanh mà mạng chập chờn thì thẻ tải ghi "Mạng chập chờn - đang thử lại…" thay vì đứng im; lời lỗi luôn chỉ đúng nút "Thử lại".
+- Hộp "Chọn giọng đọc" lần đầu có nút "Nghe thử" cho từng giọng. Cài đặt › Giọng của máy mở bằng các giọng tải được ngay trong app; cách cài giọng của Windows thành dòng phụ.
+
 ## [0.4.103] - 2026-10-19
 
 ### Nghe ngay

@@ -129,6 +129,10 @@ class ModuleCore:
         self._thread = threading.Thread(target=self._run, args=(needed, install, finish, tiers), name=self.thread_name, daemon=True)
         self._thread.start()
 
+    def retrying(self) -> bool:
+        """Đang tải mà mạng vừa hỏng, đang chờ thử lại (studio_setup.retrying): thẻ nói "Mạng chập chờn - đang thử lại…"."""
+        return bool(self.state["downloading"]) and studio_setup.retrying(self._thread)
+
     def join(self, timeout: float | None = None) -> None:
         thread = self._thread
         if thread is not None:

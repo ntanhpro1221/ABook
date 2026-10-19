@@ -1,14 +1,16 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Cpu, Download, LoaderCircle, Square, Trash2 } from "lucide-react";
+import { Check, Clapperboard, Cpu, Download, LoaderCircle, Square, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { cn } from "@/shared/cn";
+import { peerPage } from "@/shared/peerStudio";
 import { Button, Progress } from "@/shared/ui";
 import { api } from "./api";
 import { useAppInfo, useStudioMissing } from "./data";
 import { friendlySetupError } from "./errorText";
 import { formatSize } from "./musicLocal";
+import { noStudioLine, studioFit, type StudioFit, type StudioGpu } from "./studioFit";
 
 // App Windows đóng gói chỉ mang phần nghe; Studio - thư viện dây chuyền + model, ~20 GB - tải khi người dùng bấm
 // (webui/studio_setup.py). Bản dev không có thẻ này: Studio là runtime cạnh mã nguồn (`info.studio` = null).
@@ -32,13 +34,67 @@ interface SetupStatus {
   progress: { done: number; total: number } | null;
   detail: string;
   error: string | null;
-  gpu: { name: string; memory: number } | null;
+  /** Card NVIDIA - máy chủ dò ngay khi được hỏi, trước khi bấm Cài (studio_setup.detected_gpu). */
+  gpu: StudioGpu | null;
   root: string;
+}
+
+const SETUP_QUERY = { queryKey: ["studio-setup"], queryFn: () => api<SetupStatus>("/api/studio/setup") };
+
+/** Máy chưa cài Studio: card của máy có đủ để làm sách nói không (studioFit.ts). `null` khi chưa biết, máy đã cài, hay bản dev / Studio từ xa. */
+export function useStudioFit(): StudioFit | null {
+  const studio = useAppInfo().data?.studio;
+  const needed = Boolean(studio && !studio.installed);
+  const { data: status } = useQuery({ ...SETUP_QUERY, enabled: needed });
+  return needed && status && !status.installed ? studioFit(status.gpu) : null;
+}
+
+/** Máy tính đã ghép với máy này (Cài đặt > Thiết bị) - nơi mời tạo sách nói khi máy này không làm được. */
+export function usePairedComputers(enabled: boolean): { id: string; name: string }[] {
+  const { data } = useQuery({
+    queryKey: ["computers"],
+    queryFn: () => api<{ computers: { id: string; name: string; kind?: string }[] }>("/api/computers"),
+    enabled,
+  });
+  return (data?.computers ?? []).filter((computer) => computer.kind !== "phone");
 }
 
 /** Studio là gì và máy cần gì để cài - MỘT chỗ viết, thẻ "Cài Studio" ở màn Dự án và khối nhắc ở trình tạo sách nói dùng chung để hai nơi không lệch nhau. */
 export const STUDIO_WHAT = "Studio là phần biến truyện chữ thành sách nói: model đọc hiểu truyện, giọng đọc, nghe lại để kiểm từng câu.";
-export const STUDIO_NEEDS = "Cần card đồ hoạ NVIDIA, tải khoảng 20 GB, ổ đĩa trống 30 GB. Cài một lần; nghe sách không cần Studio.";
+// Thời gian một chương: số đo của dây chuyền trên card 8 GB của máy thử, phân tích + thu (docs/ANALYSIS_RESEARCH.md, mục máy Mac mini).
+export const STUDIO_NEEDS =
+  "Cần card đồ hoạ NVIDIA từ 8 GB bộ nhớ (card 6-8 GB có thể chạy nhưng chưa thử), tải khoảng 20 GB, ổ đĩa trống 30 GB. Trên card 8 GB mỗi chương " +
+  "mất khoảng 7-10 phút (đọc hiểu truyện + thu giọng). Cài một lần; nghe sách không cần Studio.";
+
+/** Máy này không làm sách nói được: nói thật, và nếu đã ghép máy tính khác thì mời tạo ở đó (Studio của máy ấy mở ngay trong app này -
+ *  webui/peer_studio.py). Không mời "tạo rồi chờ cài xong": dự án ấy sẽ không bao giờ chạy trên máy này (soát a64). */
+export function NoStudioHere({ fit, className }: { fit: StudioFit; className?: string }) {
+  const remote = Boolean(useAppInfo().data?.remote);
+  const peers = usePairedComputers(!remote);
+  return (
+    <section aria-label="Máy này không làm sách nói được" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
+      <Cpu className="mt-0.5 size-4 shrink-0 text-warning" />
+      <div className="min-w-0 flex-1 basis-[16rem]">
+        <p className="font-semibold text-pretty">{noStudioLine(fit.reason ?? "")}</p>
+        <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
+          {peers.length
+            ? "Máy tính đã ghép với máy này mà có Studio thì tạo sách nói ở đó: sách xong nghe được ở cả hai máy."
+            : "Có máy tính khác có card NVIDIA thì cài ABook và Studio ở đó, ghép với máy này (Cài đặt › Thiết bị) rồi tạo sách nói từ đây."}
+        </p>
+      </div>
+      {peers.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {peers.map((peer) => (
+            <Button key={peer.id} variant="secondary" size="sm" icon={Clapperboard} onClick={() => window.location.assign(peerPage(window.location.search, peer.id, "/studio/new"))}>
+              Tạo trên {peer.name}
+            </Button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 
 /** Khối nói thật với người đang tạo sách nói trên máy chưa có Studio (hay Studio cần cập nhật): cần gì, cài ở đâu, và dự án vẫn tạo được -
  *  nó chờ tới khi Studio sẵn sàng. Cùng chữ với thẻ "Cài Studio" ở màn Dự án (STUDIO_WHAT / STUDIO_NEEDS); nút dẫn tới thẻ ấy. Máy có
@@ -47,7 +103,9 @@ export function StudioInstallNotice({ className }: { className?: string }) {
   const { data: info } = useAppInfo();
   const navigate = useNavigate();
   const studio = useStudioMissing();
+  const fit = useStudioFit();
   if (!studio.missing) return null;
+  if (fit?.level === "no") return <NoStudioHere fit={fit} className={className} />;
   return (
     <section aria-label="Cần Studio" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
       <Cpu className="mt-0.5 size-4 shrink-0 text-warning" />
@@ -55,6 +113,7 @@ export function StudioInstallNotice({ className }: { className?: string }) {
         <p className="font-semibold">{studio.repair ? "Studio mất một phần, cần sửa trước khi làm sách" : studio.update ? "Studio cần cập nhật trước khi làm sách" : "Máy này chưa cài Studio"}</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
           {studio.update ? "" : `${STUDIO_WHAT} ${STUDIO_NEEDS} `}
+          {fit ? `${fit.line} ` : ""}
           Vẫn tạo dự án được: dự án chờ tới khi {studio.repair ? "sửa" : studio.update ? "cập nhật" : "cài"} xong, các bước đã chọn ở đây được giữ nguyên.
         </p>
       </div>
@@ -74,8 +133,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
   const client = useQueryClient();
   const needed = Boolean(info?.studio && (!info.studio.installed || info.studio.outdated));
   const { data: status } = useQuery({
-    queryKey: ["studio-setup"],
-    queryFn: () => api<SetupStatus>("/api/studio/setup"),
+    ...SETUP_QUERY,
     enabled: needed,
     refetchInterval: (query) => (query.state.data?.running ? 1000 : false),
   });
@@ -108,13 +166,17 @@ export function StudioSetupCard({ className }: { className?: string }) {
   const started = status.steps.some((step) => step.done);
   const current = status.steps.find((step) => step.id === status.step);
   const progress = status.progress && status.progress.total > 0 ? status.progress.done / status.progress.total : null;
+  // Card của máy, biết trước khi bấm Cài: máy không đủ thì nói thẳng và nút cài thành nút nhỏ "Vẫn cài" (soát a64).
+  const fit = !status.installed ? studioFit(status.gpu) : null;
+  const unfit = fit?.level === "no" && !status.running;
   return (
     <section className={cn("rounded-2xl border border-line bg-panel p-5 sm:p-6", className)} aria-labelledby="studio-setup-title">
+      {/* Màn hẹp: chữ chiếm cả hàng, nút xuống dưới - không ép chữ thành cột hẹp cạnh nút (soát a64, 390 px). */}
       <div className="flex flex-wrap items-start gap-4">
         <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text">
           <Cpu className="size-5" />
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 basis-[16rem]">
           <h2 id="studio-setup-title" className="text-base font-semibold">
             {repair ? "Sửa Studio" : update ? "Cập nhật Studio" : "Cài Studio để làm sách nói trên máy này"}
           </h2>
@@ -128,11 +190,20 @@ export function StudioSetupCard({ className }: { className?: string }) {
                 tiếp. Chỉ tải lại đúng phần ấy; sách đã làm và chỗ đang nghe giữ nguyên.`
               : `${STUDIO_WHAT} ${STUDIO_NEEDS} Mất mạng hay tắt máy giữa chừng thì bấm lại là làm tiếp.`}
           </p>
+          {fit && (
+            <p className={cn("mt-2 max-w-2xl text-[0.8125rem] leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>
+              {fit.level === "no" ? noStudioLine(fit.reason ?? "") : fit.line}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {status.running ? (
             <Button icon={Square} onClick={() => void call("/api/studio/setup/cancel")}>
               Dừng
+            </Button>
+          ) : unfit ? (
+            <Button variant="ghost" size="sm" icon={Download} onClick={() => void call("/api/studio/setup")}>
+              Vẫn cài
             </Button>
           ) : (
             <Button variant="primary" icon={Download} onClick={() => void call("/api/studio/setup")}>
@@ -200,11 +271,7 @@ export function StudioSettings() {
   const navigate = useNavigate();
   const [armed, setArmed] = useState(false);
   const [busy, setBusy] = useState(false);
-  const { data: status } = useQuery({
-    queryKey: ["studio-setup"],
-    queryFn: () => api<SetupStatus>("/api/studio/setup"),
-    enabled: Boolean(info?.studio),
-  });
+  const { data: status } = useQuery({ ...SETUP_QUERY, enabled: Boolean(info?.studio) });
   useEffect(() => {
     if (!armed) return;
     const timer = window.setTimeout(() => setArmed(false), 6000);
@@ -212,14 +279,40 @@ export function StudioSettings() {
   }, [armed]);
   if (!info?.studio || !status) return null;
   if (!status.installed) {
+    const fit = studioFit(status.gpu);
+    // Bấm là cài luôn rồi sang màn Dự án xem tiến độ - không phải bấm "Cài Studio" lần hai ở đó (soát a64).
+    const install = async () => {
+      setBusy(true);
+      try {
+        client.setQueryData(["studio-setup"], await api<SetupStatus>("/api/studio/setup", { method: "POST", body: {} }));
+        navigate("/studio");
+      } catch (error) {
+        toast.error("Không cài được Studio", { description: (error as Error).message });
+      } finally {
+        setBusy(false);
+      }
+    };
     return (
       <div className="mb-6 max-w-xl">
         <h3 className="text-sm font-semibold">Studio trên máy này</h3>
-        <p className="mt-1 text-sm">Chưa cài.</p>
+        <p className="mt-1 text-sm">{status.running ? "Đang cài." : "Chưa cài."}</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{STUDIO_NEEDS}</p>
-        <Button className="mt-3" variant="primary" icon={Download} onClick={() => navigate("/studio")}>
-          Cài Studio
-        </Button>
+        <p className={cn("mt-1 text-[0.8125rem] leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>
+          {fit.level === "no" ? noStudioLine(fit.reason ?? "") : fit.line}
+        </p>
+        {status.running ? (
+          <Button className="mt-3" variant="secondary" onClick={() => navigate("/studio")}>
+            Xem tiến độ cài
+          </Button>
+        ) : fit.level === "no" ? (
+          <Button className="mt-3" variant="ghost" size="sm" icon={Download} disabled={busy} onClick={() => void install()}>
+            Vẫn cài
+          </Button>
+        ) : (
+          <Button className="mt-3" variant="primary" icon={Download} disabled={busy} onClick={() => void install()}>
+            Cài Studio
+          </Button>
+        )}
       </div>
     );
   }

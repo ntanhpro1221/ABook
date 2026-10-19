@@ -16,7 +16,7 @@ from typing import Any
 
 import pytest
 
-from abook.readaloud import edge
+from abook.readaloud import edge, prepare
 from abook.readaloud.model import VoiceError
 from abook.readaloud.service import EdgeProvider, ReadAloud
 from abook.webui import export_jobs, listen_export
@@ -210,7 +210,7 @@ def test_the_plan_without_any_clip_of_the_book_keeps_the_old_rate(tmp_path: Path
     reading = listen_export.Reading(VOICE, None, {})
     plan = listen_export.plan(chapters, reading, tmp_path / "w", None, listen_export.cached_lookup(app.readaloud, reading, book_id))
     chars = sum(chapter.chars for chapter in chapters)
-    assert plan["readyChapters"] == 0 and plan["audioSeconds"] == round(chars / listen_export.CHARS_PER_SECOND + GAP)
+    assert plan["readyChapters"] == 0 and plan["audioSeconds"] == round(chars / prepare.CHARS_PER_SECOND + GAP)
 
 
 def test_an_export_notes_its_clips_in_the_book_so_the_next_plan_sees_them(tmp_path: Path) -> None:
@@ -382,3 +382,20 @@ def test_removing_a_book_while_it_exports_keeps_its_work(tmp_path: Path) -> None
         assert mine.exists()
     finally:
         release.set()
+
+
+def test_the_book_creator_and_the_export_box_guess_the_same_length(tmp_path: Path) -> None:
+    """Soát a64: trình tạo sách nói ước "4 phút" (số từ / 4,3), hộp Xuất sách nói "7 phút", thật 6:14 - giờ cả hai dùng prepare.listening_seconds trên
+    chữ của các đoạn đọc được, nên cùng một cuốn ra cùng một số."""
+    from abook.readaloud import paragraphs as px
+    from abook.webui import actions
+
+    text = "Chương 1\n\n" + "\n\n".join(f"Đoạn thứ {n}, gió thu thổi qua hàng cây ven sông và lá vàng rơi đầy lối đi." for n in range(40))
+    chapter = tmp_path / "001.txt"
+    chapter.write_bytes(text.encode("utf-8"))
+    scanned = actions.scan_inputs([str(chapter)])
+    split = px.split_paragraphs(text)
+    exported = listen_export.plan([listen_export.Chapter(1, "Chương 1", split, [0] * len(split))], listen_export.Reading("edge:x", None, {}),
+                                  tmp_path / "work", None, lambda _text: None)
+    assert scanned["totals"]["audioSeconds"] == exported["audioSeconds"] == scanned["files"][0]["audioSeconds"]
+    assert exported["audioSeconds"] == round(prepare.listening_seconds(exported["chars"]))

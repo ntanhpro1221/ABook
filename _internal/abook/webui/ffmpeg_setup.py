@@ -93,10 +93,10 @@ def cannot_download() -> str:
 def reason(error: BaseException) -> str:
     if isinstance(error, studio_setup.SetupError):
         if error.__cause__ is not None:  # download() bọc lỗi mạng
-            return "mạng bị ngắt - kiểm tra kết nối rồi bấm tải lại (phần đã tải được giữ)"
-        return "file tải về không đúng bản đã ghim (đã xoá) - thử lại"
+            return "mạng bị ngắt - kiểm tra kết nối rồi bấm Thử lại (phần đã tải được giữ)"
+        return "file tải về không đúng bản đã ghim (đã xoá) - bấm Thử lại"
     if isinstance(error, (zipfile.BadZipFile, KeyError)):
-        return "gói tải về không có ffmpeg - thử lại"
+        return "gói tải về không có ffmpeg - bấm Thử lại"
     if isinstance(error, OSError):
         return f"không ghi được vào ổ đĩa ({error.strerror or error})"
     return f"lỗi không ngờ ({type(error).__name__}: {error})"
@@ -132,6 +132,7 @@ def status() -> dict[str, object]:
         state = dict(_state)
     ok = ready()
     return {"ready": ok, "downloading": bool(state["downloading"]), "done": state["done"], "total": state["total"], "error": state["error"],
+            "retrying": bool(state["downloading"]) and studio_setup.retrying(_thread),
             "bytes": WHEEL.size, "blocked": "" if ok else cannot_download()}
 
 

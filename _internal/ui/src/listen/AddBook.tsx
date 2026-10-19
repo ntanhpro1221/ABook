@@ -22,6 +22,7 @@ import {
 import { FootnoteChoices } from "./FootnoteChoices";
 import { groupSuggestions, setSkipLine, SuggestionChoices } from "./ReadingSuggestions";
 import { useSource } from "./source";
+import { technicalOf } from "@/studio/api";
 import {
   chapterPicks,
   defaultPicked,
@@ -104,6 +105,11 @@ export function AddBookDialog({
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState<"reading" | "adding" | null>(null);
   const [problem, setProblem] = useState("");
+  const [technical, setTechnical] = useState(""); // nguyên văn lỗi không ngờ của máy chủ - thu trong "Chi tiết" dưới lời báo
+  const fail = (error: unknown) => {
+    setProblem((error as Error).message);
+    setTechnical(technicalOf(error));
+  };
   // Chọn / kéo thả nhiều file: hàng xem trước (importQueue.ts), mỗi cuốn qua đúng bước xem trước của một file. `null` = một file như trước. `queueRef` giữ
   // bản mới nhất cho các vòng async ("Thêm tất cả phần còn lại" đi qua nhiều cuốn trong một lần bấm).
   const [queue, setQueueState] = useState<QueueItem[] | null>(null);
@@ -204,7 +210,7 @@ export function AddBookDialog({
         clear();
         onOpenChange(false);
       } catch (error) {
-        setProblem((error as Error).message);
+        fail(error);
       } finally {
         setBusy(null);
       }
@@ -215,7 +221,7 @@ export function AddBookDialog({
     try {
       await loadPreview(picked);
     } catch (error) {
-      setProblem((error as Error).message);
+      fail(error);
       void importer.discard?.(picked).catch(() => undefined);
       setChoice(null);
     } finally {
@@ -286,7 +292,10 @@ export function AddBookDialog({
     if (plan.kind === "none") return;
     if (plan.kind === "single") {
       const only = plan.item;
-      if ("error" in only) setProblem(only.error);
+      if ("error" in only) {
+        setProblem(only.error);
+        setTechnical("");
+      }
       else if ("opened" in only) {
         clear();
         onOpenChange(false);
@@ -337,7 +346,7 @@ export function AddBookDialog({
         onOpenChange(false);
       } else if (picked) await read(picked);
     } catch (error) {
-      setProblem((error as Error).message);
+      fail(error);
     }
   };
   // "Chọn lại" sau khi đã chọn file: mở thẳng bộ chọn file (thư mục nếu lần trước chọn thư mục) thay vì quay về hộp rồi bắt bấm thêm một lần
@@ -542,18 +551,32 @@ export function AddBookDialog({
                 data-autofocus
                 onChange={(event) => setTyped(event.target.value)}
                 aria-label="Đường dẫn file hay thư mục"
-                placeholder={importer.choose ? "…hoặc dán đường dẫn file hay thư mục" : "Dán đường dẫn file sách (EPUB, Word, PDF, TXT) hay thư mục TXT, ví dụ D:\\Truyện\\Tên truyện.epub"}
-                className="h-10 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus"
+                aria-describedby={importer.choose ? undefined : "typed-path-hint"}
+                placeholder={importer.choose ? "…hoặc dán đường dẫn" : "Dán đường dẫn file hay thư mục"}
+                className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus"
               />
               <Button type="submit" disabled={!cleanPath(typed) || busy !== null} loading={busy === "reading" && !importer.choose}>
                 Mở
               </Button>
             </form>
           )}
-          {problem && (
-            <p role="alert" className="mt-3 text-sm text-danger">
-              {problem}
+          {/* Gợi ý dài nằm dưới ô, không nhét vào chữ mờ trong ô - màn 390 px cắt cụt nó (soát a64). Có nút chọn file thì lời đầu hộp đã kể các
+              loại file, không nhắc lại. */}
+          {importer.typedPath && !importer.choose && (
+            <p id="typed-path-hint" className="mt-1.5 text-pretty text-xs text-fg-3">
+              File sách (EPUB, Word, PDF, TXT) hay thư mục TXT, ví dụ D:\Truyện\Tên truyện.epub
             </p>
+          )}
+          {problem && (
+            <div role="alert" className="mt-3 text-sm text-danger">
+              <p>{problem}</p>
+              {technical && (
+                <details className="mt-1 text-xs">
+                  <summary className="cursor-pointer select-none">Chi tiết</summary>
+                  <p className="mt-1 select-text break-words font-mono">{technical}</p>
+                </details>
+              )}
+            </div>
           )}
           <p className="mt-4 text-xs text-fg-3">PDF phải có chữ - PDF chụp từ máy quét thì ABook chưa đọc được.</p>
         </div>
