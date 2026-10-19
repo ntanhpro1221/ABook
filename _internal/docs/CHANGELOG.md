@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.106] - 2026-10-19
+
 ### Nghe ngay
 
 - Máy tính và điện thoại: giọng VieNeu và Supertonic không còn chỗ to bị vỡ tiếng: câu nào ra quá to thì cả câu được hạ nhẹ xuống thay vì bị xén đỉnh. Lần đầu nghe lại một đoạn đã nghe trước đây bằng các giọng này, máy đọc lại đoạn ấy một lần.
