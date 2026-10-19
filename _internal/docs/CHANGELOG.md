@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Nghe ngay
 
 - Máy tính và điện thoại: với một số bài MP3, nhạc nền khi lặp lại không còn nhảy cóc ở chỗ nối vòng (trước đây có bài vào lại lệch tới 2 giây nên bạn nghe như hụt nhịp); giờ bài vào lại đúng điểm vòng.
+- Máy tính và điện thoại: Giọng VieNeu Nano đọc nhanh hơn nữa mà nghe như cũ: mỗi đoạn tốn ít hơn khoảng một phần năm thời gian (Nano đọc 6 bước thay vì 8). Giọng Hữu Quân được đo lại độ to cho cách đọc mới.
 
 ## [0.4.101] - 2026-10-19
 
