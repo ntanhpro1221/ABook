@@ -1,7 +1,6 @@
 package vn.abook.player
 
 import android.content.Context
-import android.os.Build
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedInputStream
@@ -80,7 +79,7 @@ object LibraryServer {
         if (!::devicesFile.isInitialized) devicesFile = File(context.filesDir, "share.json")
     }
 
-    fun name(): String = "${Build.MANUFACTURER} ${Build.MODEL}".trim().ifBlank { "Điện thoại" }
+    fun name(): String = appContext?.let(DeviceName::of) ?: "Điện thoại"
 
     /**
      * Tên máy kèm tên Bluetooth (`bluetoothName`) trong lời chào / ghép / thư viện: máy tính lưu tên Bluetooth người dùng đặt,

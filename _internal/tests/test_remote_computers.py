@@ -78,14 +78,15 @@ def test_the_place_you_are_listening_travels_both_ways_between_computers(library
         chapter = app.listen_book(book["id"])["chapters"][0]["id"]
         remote_id = book_id(project)
 
-        app.listening.progress(book["id"], chapter, 42.0, 100.0)
+        # Chương 1 của sách thử dài 9,7 giây: chỗ nghe phải nằm trong chương - máy nhận bỏ chỗ vượt độ dài (sync.trusted_state).
+        app.listening.progress(book["id"], chapter, 4.0, 9.7)
         app.sync_remote_state(book["id"], wait=True)
-        assert other_listening.get(remote_id)["last"]["seconds"] == 42.0, "máy kia biết máy này nghe tới đâu"
+        assert other_listening.get(remote_id)["last"]["seconds"] == 4.0, "máy kia biết máy này nghe tới đâu"
 
         time.sleep(0.05)
-        other_listening.progress(remote_id, chapter, 77.0, 100.0)
+        other_listening.progress(remote_id, chapter, 7.0, 9.7)
         view = app.listen_book(book["id"])
-        assert view["state"]["last"]["seconds"] == 77.0, "mở sách ở máy này thấy chỗ vừa nghe ở máy kia"
+        assert view["state"]["last"]["seconds"] == 7.0, "mở sách ở máy này thấy chỗ vừa nghe ở máy kia"
     finally:
         other.stop()
 

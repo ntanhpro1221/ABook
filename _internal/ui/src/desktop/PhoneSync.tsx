@@ -87,8 +87,21 @@ function useSync() {
   const pair = useMutation({ mutationFn: () => api<SyncView>("/api/sync/pairing", { method: "POST" }), onSuccess, onError });
   const cancel = useMutation({ mutationFn: () => api<SyncView>("/api/sync/pairing", { method: "DELETE" }), onSuccess, onError });
   const revoke = useMutation({
-    mutationFn: (id: string) => api<SyncView>(`/api/sync/devices/${id}`, { method: "DELETE" }),
-    onSuccess,
+    mutationFn: ({ id }: { id: string; name: string }) => api<SyncView>(`/api/sync/devices/${id}`, { method: "DELETE" }),
+    // Thôi ghép xong nói một câu (soát a68 lỗi 15): dòng thiết bị biến mất không đủ để biết đã xong và hệ quả là gì.
+    onSuccess: (data, { name }) => {
+      onSuccess(data);
+      toast.success(`Đã thôi ghép ${name}`, { description: "Sách đã tải về thiết bị ấy vẫn nghe được; muốn nối lại thì ghép bằng mã mới." });
+    },
+    onError,
+  });
+  // Đổi tên thiết bị đã ghép (soát a68 lỗi 16: tên thô "Google sdk_gphone64_x86_64").
+  const rename = useMutation({
+    mutationFn: ({ id, name }: { id: string; name: string }) => api<SyncView>(`/api/sync/devices/${id}/name`, { method: "POST", body: { name } }),
+    onSuccess: (data, { name }) => {
+      onSuccess(data);
+      toast.success(`Đã đổi tên thành “${name}”`);
+    },
     onError,
   });
   const studio = useMutation({
@@ -102,7 +115,7 @@ function useSync() {
     onSuccess,
     onError,
   });
-  return { ...query, toggle, pair, cancel, revoke, studio, deviceStudio };
+  return { ...query, toggle, pair, cancel, revoke, rename, studio, deviceStudio };
 }
 
 function useSecondsLeft(until: number | undefined): number {
@@ -168,14 +181,23 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
                 Mở ABook trên điện thoại, vào <span className="font-medium text-fg">Tải sách</span>.
               </li>
               <li>
-                Chọn máy <span className="font-medium text-fg">{sync.name}</span>.
+                Chọn máy <span className="font-medium text-fg">{sync.name}</span> trong danh sách máy tính tìm thấy
+                {sync.addresses.length > 0 && (
+                  <>
+                    {" "}
+                    - không thấy thì bấm <span className="font-medium text-fg">Nhập địa chỉ máy tính</span> và gõ{" "}
+                    <Where sync={sync} scheme={false} />
+                  </>
+                )}
+                .
               </li>
               <li>Gõ mã 6 số này. Mã chỉ dùng được một lần.</li>
             </ol>
             {/* Địa chỉ luôn hiện ở đây (máy tính khác không tự thấy máy này thì gõ địa chỉ), không chỉ khi bật điều khiển sản xuất. */}
             {sync.addresses.length > 0 && (
               <p className="mt-2 text-[0.8125rem] text-fg-2">
-                Địa chỉ máy này: <Where sync={sync} scheme={false} /> - gõ vào ô “Địa chỉ máy kia” khi ghép từ máy tính khác.
+                Địa chỉ máy này: <Where sync={sync} scheme={false} /> - điện thoại gõ ở “Nhập địa chỉ máy tính”, máy tính khác gõ vào ô
+                “Địa chỉ máy kia”.
               </p>
             )}
             {/* Ghép một chiều (soát a27 lỗi 9): ghép xong máy kia nghe sách của máy này, không ngược lại. */}
@@ -250,8 +272,9 @@ function PairingPanel({ sync, onPair, onCancel, busy }: { sync: SyncView; onPair
 
 /** Mục "Điện thoại" trong Cài đặt: bật đồng bộ, ghép nối bằng mã 6 số, quản lý điện thoại đã ghép. */
 export function PhoneSync() {
-  const { data: sync, toggle, pair, cancel, revoke, studio, deviceStudio } = useSync();
+  const { data: sync, toggle, pair, cancel, revoke, rename, studio, deviceStudio } = useSync();
   const [removing, setRemoving] = useState<SyncDevice | null>(null);
+  const [renaming, setRenaming] = useState<{ id: string; draft: string } | null>(null);
   // Bật điều khiển sản xuất từ xa phải hỏi lại (soát UX 29-09): thiết bị đã ghép bắt đầu / dừng sản xuất qua http trong mạng.
   const [confirmStudio, setConfirmStudio] = useState(false);
   const known = useRef<Set<string> | null>(null);
@@ -379,6 +402,9 @@ export function PhoneSync() {
                         />
                       </label>
                     )}
+                    <Button size="sm" variant="ghost" onClick={() => setRenaming({ id: device.id, draft: device.name })}>
+                      Đổi tên
+                    </Button>
                     <Button size="sm" variant="ghost" onClick={() => setRemoving(device)}>
                       Thôi ghép
                     </Button>
@@ -425,13 +451,44 @@ export function PhoneSync() {
           <Button
             variant="danger"
             onClick={() => {
-              if (removing) revoke.mutate(removing.id);
+              if (removing) revoke.mutate({ id: removing.id, name: removing.name });
               setRemoving(null);
             }}
           >
             Thôi ghép
           </Button>
         </div>
+      </Dialog>
+      <Dialog
+        open={renaming !== null}
+        onOpenChange={(open) => !open && setRenaming(null)}
+        title="Đổi tên thiết bị"
+        description="Tên hiện ở danh sách thiết bị đã ghép của máy này."
+      >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!renaming?.draft.trim()) return;
+            rename.mutate({ id: renaming.id, name: renaming.draft.trim() }, { onSuccess: () => setRenaming(null) });
+          }}
+          className="flex flex-col gap-4"
+        >
+          <input
+            data-autofocus
+            value={renaming?.draft ?? ""}
+            onChange={(event) => setRenaming((current) => current && { ...current, draft: event.target.value.slice(0, 80) })}
+            aria-label="Tên thiết bị"
+            className="h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
+          />
+          <div className="dialog-actions">
+            <Button type="button" variant="ghost" onClick={() => setRenaming(null)}>
+              Để nguyên
+            </Button>
+            <Button type="submit" variant="primary" disabled={!renaming?.draft.trim()} loading={rename.isPending}>
+              Lưu
+            </Button>
+          </div>
+        </form>
       </Dialog>
     </div>
   );

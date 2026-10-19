@@ -319,9 +319,9 @@ def test_a_paired_phone_downloads_a_book_and_syncs_its_place(library, tmp_path: 
         assert status == 404, "chỉ phát file có trong gói"
         status, data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/scripts/1.json", token)
         assert json.loads(data)["segments"][0]["kind"] == "heading"
-        phone_state = {"last": {"chapterId": 1, "seconds": 42.0, "at": time.time()}, "chapters": {}, "bookmarks": []}
+        phone_state = {"last": {"chapterId": 1, "seconds": 4.2, "at": time.time()}, "chapters": {}, "bookmarks": []}  # chương 1 dài 9,7 giây
         status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=phone_state)
-        assert status == 200 and listening.get(identifier)["last"]["seconds"] == 42.0
+        assert status == 200 and listening.get(identifier)["last"]["seconds"] == 4.2
     finally:
         server.stop()
 
