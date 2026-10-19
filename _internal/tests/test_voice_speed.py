@@ -57,7 +57,7 @@ def test_the_choice_is_one_per_machine_and_kept(tmp_path: Path) -> None:
 def test_only_supertonic_has_two_tiers() -> None:
     assert voice_speed.family("supertonic:F1") == "supertonic" and voice_speed.family("vieneu:nano/Nhẹ") == ""
     assert voice_speed.family("vieneu:turbo/A") == "" and voice_speed.family("edge:vi-VN-HoaiMyNeural") == ""
-    assert vieneu_engine.NANO_STEPS == 8, "Nano chỉ có một bậc: 8 bước"
+    assert vieneu_engine.NANO_STEPS == 6, "Nano chỉ có một bậc: 6 bước"
     assert supertonic.FAST == ("fast/vector_estimator.onnx", 5)
 
 

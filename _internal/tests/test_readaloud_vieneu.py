@@ -574,12 +574,12 @@ def test_parity_turbo_and_nano_waveforms(monkeypatch: pytest.MonkeyPatch) -> Non
     for index, sentence in enumerate(SENTENCES[:2]):
         phonemes = vieneu_engine.phonemize([sentence])
         expected = reference.infer(phonemes, speaker, style, seed=7 + index)
-        got = mine.infer(phonemes, speaker, style, seed=7 + index, steps=16, cfg_ends=True)  # gói vieneu: 16 bước, CFG mọi bước; app khác
+        got = mine.infer(phonemes, speaker, style, seed=7 + index, steps=16, cfg_last=True)  # gói vieneu: 16 bước, CFG mọi bước; app khác
         assert got.shape == expected.shape and float(np.abs(got - expected).max()) <= TOLERANCE, sentence
 
 
-@pytest.mark.parametrize("ends, unconditional", [(False, 6), (True, 8)])
-def test_nano_guides_only_the_inner_steps(ends: bool, unconditional: int) -> None:
+@pytest.mark.parametrize("last, unconditional", [(False, 5), (True, 6)])
+def test_nano_guides_every_step_but_the_last(last: bool, unconditional: int) -> None:
     import threading
 
     class Graph:
@@ -599,10 +599,11 @@ def test_nano_guides_only_the_inner_steps(ends: bool, unconditional: int) -> Non
     engine.dur = Graph(lambda feeds: np.zeros((1,), np.float32))
     engine.ve = Graph(lambda feeds: np.zeros_like(feeds["x"]))
     engine.dec = Graph(lambda feeds: np.zeros((1, 1, 2400), np.float32))
-    engine.infer("aaa", np.zeros(3, np.float32), np.zeros((2, 3), np.float32), seed=1, cfg_ends=ends)
+    engine.infer("aaa", np.zeros(3, np.float32), np.zeros((2, 3), np.float32), seed=1, cfg_last=last)
     nulls = [feeds["ctx"] is engine.null_ctx for feeds in engine.ve.feeds]
     assert len(nulls) == vieneu_engine.NANO_STEPS + unconditional and sum(nulls) == unconditional
-    assert vieneu_engine.NANO_CFG_ENDS is False  # 8 bước: 14 lần gọi bộ khử nhiễu
+    assert nulls[-1] is last  # bước cuối chỉ có nhánh có điều kiện
+    assert vieneu_engine.NANO_CFG_LAST is False  # 6 bước: 11 lần gọi bộ khử nhiễu
 
 
 def test_the_shipped_code_does_not_import_vieneu() -> None:
