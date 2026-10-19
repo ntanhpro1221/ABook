@@ -13,6 +13,11 @@ describe("spokenProgress", () => {
     expect(spokenProgress("Đang tải sẵn nhạc nền", 0.51)).toBe("Đang tải sẵn nhạc nền · 50%");
   });
 
+  it("chưa qua mốc đầu thì không nói 0% cạnh số thật trên màn (soát a69: '6%' và '· 0%' cùng lúc)", () => {
+    expect(spokenProgress("Đang tải giọng Supertonic", 0.06)).toBe("Đang tải giọng Supertonic");
+    expect(spokenProgress("Đang tải giọng Supertonic…", 0)).toBe("Đang tải giọng Supertonic…");
+  });
+
   it("không biết tiến độ thì chỉ nói pha", () => {
     expect(spokenProgress("Đang đóng gói sách…")).toBe("Đang đóng gói sách…");
     expect(progressMilestone(Number.NaN)).toBeNull();

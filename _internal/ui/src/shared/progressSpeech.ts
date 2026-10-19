@@ -8,9 +8,10 @@ export function progressMilestone(fraction: number | null | undefined): number |
   return Math.floor(Math.max(0, Math.min(1, fraction)) * 4) * 25;
 }
 
-/** "Đang tải sẵn nhạc nền · 50%": pha + mốc 25 % (pha đã có dấu "…" thì bỏ dấu ấy). Không biết tiến độ thì chỉ nói pha. */
+/** "Đang tải sẵn nhạc nền · 50%": pha + mốc 25 % (pha đã có dấu "…" thì bỏ dấu ấy). Không biết tiến độ, hay chưa qua mốc 25 % đầu, thì chỉ nói pha:
+ *  "· 0%" đứng cạnh số thật trên màn ("Đang tải … 6%") là hai số mâu thuẫn (soát a69, Cài đặt điện thoại). */
 export function spokenProgress(phase: string, fraction?: number | null): string {
   const at = progressMilestone(fraction);
   const name = phase.replace(/…$/, "");
-  return at === null ? phase : `${name} · ${at}%`;
+  return at === null || at === 0 ? phase : `${name} · ${at}%`;
 }
