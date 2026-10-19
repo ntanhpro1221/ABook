@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.107] - 2026-10-19
+
 ### Điện thoại
 
 - Màn "Tải sách" cho người chỉ có điện thoại biết máy tính thêm được gì (Studio làm sách nói nhiều giọng, gửi sang điện thoại nghe tiếp) và tải ABook cho máy tính ở đâu, trước phần ghép nối.
