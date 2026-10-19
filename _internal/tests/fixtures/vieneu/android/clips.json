@@ -5,10 +5,10 @@
    "voice": "vieneu:nano/Adam",
    "tier": "nano",
    "rate": 24000,
-   "samples": 187200,
-   "durationMs": 7800,
-   "float32Sha256": "f8e823fb2e7b3114acbad967526b09a799bb3ccaf099a93deac8998a03415fdf",
-   "wavSha256": "c038938e70b9d6e4674b8bee914e56721e29773d73393eda720d6a69439f970a",
+   "samples": 186960,
+   "durationMs": 7790,
+   "float32Sha256": "afedcf23b515e7e0dc8907a5356ec971950499f091ca3ed832f94385ecccb384",
+   "wavSha256": "c266c1a18a7206654557e568bd2cf887e6df9f014c4d924197513718991f411d",
    "voiceOrder": [
     "Adam",
     "Ái Hân",
@@ -33,7 +33,7 @@
       0,
       75600
      ],
-     "rms": 0.11190122099852642
+     "rms": 0.10407024593603073
     },
     {
      "pieces": [
@@ -43,9 +43,9 @@
      "seed": 310874602,
      "span": [
       86640,
-      187200
+      186960
      ],
-     "rms": 0.1158960562854534
+     "rms": 0.10794522895503543
     }
    ]
   },

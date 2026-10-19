@@ -15,8 +15,8 @@ import kotlin.math.min
  */
 object ClipLift {
     val PREFIXES = listOf("vieneu:", "supertonic:")
-    /** Dấu trong khoá bộ đệm (`loudness.LIFT_TAG`): clip VieNeu / Supertonic làm trước khi có bù không trúng đệm nữa. */
-    const val TAG = "ld1"
+    /** Dấu trong khoá bộ đệm (`loudness.LIFT_TAG`, xem [tag]): "ld1" = có bù theo clip; "ld2" = thêm trần đỉnh thật từng khúc ([underCeiling]). */
+    const val TAG = "ld2"
     const val DEADBAND_DB = 2.0
     const val MAX_DB = 8.0
     const val CEILING_DBTP = -1.0
@@ -27,6 +27,12 @@ object ClipLift {
 
     /** Giọng này được bù theo clip: giọng VieNeu / Supertonic đã có mức đo ([voiceId] trần, không kèm bậc tốc độ - cùng một mức cho cả hai bậc). */
     fun lifts(voiceId: String): Boolean = PREFIXES.any { voiceId.startsWith(it) } && VoiceGain.measured(voiceId) != null
+
+    /**
+     * Dấu của giọng [voiceId] (mã trần) trong khoá bộ đệm (`loudness.clip_tag`): mọi giọng VieNeu / Supertonic, đã đo mức hay chưa, vì khúc nào của chúng
+     * cũng qua [underCeiling] (giọng chưa đo trước đây không mang dấu: một dấu cho cả hai nhóm là đủ để clip cũ của mọi giọng ấy trượt đệm đúng một lần).
+     */
+    fun tag(voiceId: String): String = if (PREFIXES.any { voiceId.startsWith(it) }) TAG else ""
 
     private var table: MusicRender.Params? = null
 
@@ -45,10 +51,27 @@ object ClipLift {
         return meter.integrated()
     }
 
-    /** Đỉnh thật (dBTP) của clip, bằng bảng FIR chung của bản xuất kèm nhạc ([MusicRender.Params]). */
-    fun truePeakDbtp(samples: FloatArray, params: MusicRender.Params): Double {
-        val pcm = ShortArray(samples.size) { (samples[it].coerceIn(-1f, 1f) * 32767f).toInt().toShort() }
-        return TruePeak(params, 1).apply { feed(pcm) }.finish()[0]
+    /** Đỉnh thật (dBTP) của clip, bằng bảng FIR chung của bản xuất kèm nhạc ([MusicRender.Params]), đo trên mẫu thực chưa lượng tử: mẫu vượt ±1 (Nano,
+     *  Turbo thô) được đo đúng, không bị cắt trước khi đo. */
+    fun truePeakDbtp(samples: FloatArray, params: MusicRender.Params): Double = TruePeak(params, 1).apply { feed(samples) }.finish()[0]
+
+    /** Đỉnh mà trần [CEILING_DBTP] nhìn: đỉnh thật; `params` null (chưa nạp được bảng FIR) thì đỉnh mẫu (dBFS). Im hẳn / rỗng: -inf. */
+    fun peakDb(samples: FloatArray, params: MusicRender.Params?): Double {
+        if (params != null) return truePeakDbtp(samples, params)
+        val peak = samples.maxOfOrNull { Math.abs(it) }?.toDouble() ?: 0.0
+        return if (peak > 0.0) 20 * Math.log10(peak) else Double.NEGATIVE_INFINITY
+    }
+
+    /**
+     * `loudness.under_ceiling`: một khúc ngay khi engine giọng trên máy trả ra (Nano, Turbo; Supertonic qua [SupertonicText.louder]) - đỉnh ([peakDb]) vượt
+     * [CEILING_DBTP] thì hạ cả khúc xuống đúng trần (tại chỗ), không thì để nguyên từng mẫu. Thay cho cắt cứng [-1, 1]: Nano thô tới +0,8 dBFS, Turbo +1,7.
+     */
+    fun underCeiling(samples: FloatArray, params: MusicRender.Params?): FloatArray {
+        val peak = peakDb(samples, params)
+        if (peak <= CEILING_DBTP) return samples
+        val factor = Math.pow(10.0, (CEILING_DBTP - peak) / 20).toFloat()
+        for (i in samples.indices) samples[i] *= factor
+        return samples
     }
 
     /** Bao nhiêu dB nâng [samples] của giọng [voiceId]; 0 = giữ nguyên. `params` null (chưa nạp được bảng FIR): không nâng, vì không đo được đỉnh thật. */

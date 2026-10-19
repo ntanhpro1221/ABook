@@ -26,7 +26,7 @@ class SupertonicSpeakerTest {
     fun aParagraphBecomesOneLouderClipWithAWordTimingPerShownWord() {
         val engine = FakeEngine()
         val text = "Ngày 12/03, trời mưa. Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi suốt buổi chiều hôm ấy."
-        val spoken = SupertonicSpeaker { pieces -> pieces.joinToString(" ").lowercase() }.speak(engine, "F1", text)
+        val spoken = SupertonicSpeaker(null) { pieces -> pieces.joinToString(" ").lowercase() }.speak(engine, "F1", text)
         val (_, units) = VieneuUnits.units(text, SupertonicText.MAX_CHARS)
         assertEquals(units.size, engine.calls.size)
         for ((unit, call) in units.zip(engine.calls)) {
@@ -50,7 +50,7 @@ class SupertonicSpeakerTest {
     fun theBooksOwnReadingsComeAfterTheNames() {
         val engine = FakeEngine()
         val text = "Haruto gặp Kyouko."
-        val spoken = SupertonicSpeaker { pieces -> pieces.joinToString(" ").lowercase() }.speak(engine, "F1", text, "ja", mapOf("Haruto" to "Ha-ru-to"))
+        val spoken = SupertonicSpeaker(null) { pieces -> pieces.joinToString(" ").lowercase() }.speak(engine, "F1", text, "ja", mapOf("Haruto" to "Ha-ru-to"))
         assertEquals(listOf("ha-ru-to gặp ki-âu-cô."), engine.calls.map { it.first })
         assertEquals(WordTokens.count(text), spoken.words.size)
     }
@@ -59,7 +59,7 @@ class SupertonicSpeakerTest {
     fun aUnitEndingOnACommaGetsTheShortPauseAndASentenceTheLongOne() {
         val first = "Một hai ba bốn năm sáu bảy tám chín mười ".repeat(7).trim()
         val second = "hai chín ba mươi ba mốt ba hai ba ba ba bốn ba lăm ba sáu ba bảy."
-        val speaker = SupertonicSpeaker { pieces -> pieces.joinToString(" ") }
+        val speaker = SupertonicSpeaker(null) { pieces -> pieces.joinToString(" ") }
         val comma = speaker.speak(FakeEngine(), "F1", "$first, $second")
         val sentence = speaker.speak(FakeEngine(), "F1", "$first. ${second.replaceFirstChar { it.uppercase() }}")
         fun gap(spoken: VieneuSpeaker.Spoken) = spoken.spans[1][0] - spoken.spans[0][1] + 2205 + 2205 // inserted + silent edges

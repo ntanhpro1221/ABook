@@ -202,7 +202,7 @@ class LocalVoiceClipsTest {
         val cancel = ClipCancel()
         val engine = SlowEngine(cancel, cancelAfter = 2)
         val result = ClipRetry.run(online = false, delaysMs = LongArray(0), sleep = { false }, cancel = cancel) {
-            SupertonicSpeaker { it.joinToString(" ") }.speak(engine, "F1", long)
+            SupertonicSpeaker(null) { it.joinToString(" ") }.speak(engine, "F1", long)
             throw AssertionError("not reached")
         }
         assertTrue(result.exceptionOrNull() is CancellationException)
@@ -210,7 +210,7 @@ class LocalVoiceClipsTest {
         assertTrue(VieneuUnits.units(long, SupertonicText.MAX_CHARS).second.size > 5)
         // outside a cancellable read nothing changes (self-benchmark, tests)
         assertEquals(VieneuUnits.units(long, SupertonicText.MAX_CHARS).second.size, SlowEngine(null, 0).also {
-            SupertonicSpeaker { pieces -> pieces.joinToString(" ") }.speak(it, "F1", long)
+            SupertonicSpeaker(null) { pieces -> pieces.joinToString(" ") }.speak(it, "F1", long)
         }.calls)
     }
 
@@ -248,7 +248,7 @@ class LocalVoiceClipsTest {
             override val id = "supertonic:F1"
             override val extension = "wav"
             override fun synthesize(text: String, out: File): Clip {
-                val spoken = SupertonicSpeaker { it.joinToString(" ") }.speak(engine, "F1", text)
+                val spoken = SupertonicSpeaker(null) { it.joinToString(" ") }.speak(engine, "F1", text)
                 out.writeBytes(ByteArray(spoken.samples.size))
                 return Clip(out, spoken.durationMs, spoken.words, id)
             }
