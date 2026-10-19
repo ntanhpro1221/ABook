@@ -517,7 +517,7 @@ export function AddBookDialog({
           )}
           <QueueList items={queue} currentId={currentId} working={working} tall />
           {busy === null && (
-            <div className="mt-5 flex justify-end">
+            <div className="mt-5 dialog-actions">
               <Button variant="primary" onClick={() => close(false)}>
                 Xong
               </Button>

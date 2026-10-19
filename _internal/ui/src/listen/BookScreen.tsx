@@ -13,7 +13,7 @@ import { reveal, useScrollMemory } from "@/shared/scrollMemory";
 import { Windowed } from "@/shared/Windowed";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { toneLabel } from "./voiceTone";
-import { Button, Dialog, EmptyState, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
+import { Button, Dialog, EmptyState, heardBarProps, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
@@ -116,19 +116,19 @@ function ChapterRow({
           )}
         </div>
         {heard > 0 && heard < 1 && (
-          <div className="mt-1.5 h-[3px] w-24 overflow-hidden rounded-full bg-line-strong">
+          <div {...heardBarProps(heard)} className="mt-1.5 h-[3px] w-24 overflow-hidden rounded-full bg-line-strong">
             <div className="h-full bg-accent" style={{ width: `${heard * 100}%` }} />
           </div>
         )}
       </button>
-      <div className="size-8 shrink-0 max-sm:size-[44px]">
+      <div className="size-8 shrink-0 max-sm:size-[48px]">
         {(
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
                 type="button"
                 aria-label={`Tuỳ chọn ${chapter.fullTitle}`}
-                className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[44px]"
+                className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px]"
               >
                 <MoreHorizontal className="size-4" />
               </button>
@@ -727,7 +727,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               className="h-10 rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
             />
           )}
-          <div className="flex justify-end gap-2">
+          <div className="dialog-actions">
             <Button type="button" variant="ghost" onClick={() => setDialog(null)}>
               Huỷ
             </Button>

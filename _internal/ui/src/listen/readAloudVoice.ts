@@ -7,6 +7,8 @@ import type { ListenSource } from "./source";
 // rơi sang giọng kế - Edge rồi giọng của máy - mà không dừng.
 
 const GLOBAL_KEY = "abook-readaloud-voice";
+/** Sự kiện: người dùng vừa đặt giọng mặc định (Cài đặt → Giọng đọc) - lõi điện thoại nhớ theo (android/readAloud.ts). */
+export const DEFAULT_VOICE_EVENT = "abook:readaloud-default-voice";
 export const ONLINE_NOTICE = "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc.";
 export const FALLBACK_NOTICE = "Không dùng được giọng trực tuyến - tạm đọc bằng giọng của máy.";
 /** Sự kiện: người dùng vừa đổi khoá của giọng dùng khoá riêng (Cài đặt) - danh sách giọng phải hỏi lại. */
@@ -81,12 +83,18 @@ export function chosenVoice(bookId: string): string {
   return read(`abook-readaloud-voice-${bookId}`) || read(GLOBAL_KEY);
 }
 
-/** Chọn giọng cho cuốn (và làm giọng chung cho cuốn khác chưa chọn); chương đang đọc đổi giọng từ đoạn kế. */
+/** Chọn giọng cho RIÊNG cuốn này (menu Giọng đọc của trình phát, lời báo, hộp hỏi đồng ý); chương đang đọc đổi giọng từ đoạn kế. Giọng mặc định
+ *  của các cuốn khác giữ nguyên - chỉ Cài đặt đổi nó (soát a67: đổi giọng một cuốn lặng lẽ đổi luôn giọng mặc định). */
 export function chooseVoice(bookId: string, voice: string): void {
   write(`abook-readaloud-voice-${bookId}`, voice);
-  write(GLOBAL_KEY, voice);
   troubled.clear();
-  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: bookId }));
+  // Lần chọn đầu tiên (chưa có giọng mặc định): cũng làm giọng mặc định, để cuốn thứ hai không bắt người mới chọn lại từ đầu.
+  const first = !read(GLOBAL_KEY);
+  if (first) write(GLOBAL_KEY, voice);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: bookId }));
+    if (first) window.dispatchEvent(new CustomEvent(DEFAULT_VOICE_EVENT));
+  }
 }
 
 /** Người dùng bấm đổi giọng (giọng VieNeu không kịp nghe trên máy này): mọi cuốn đang chọn giọng có mã bắt đầu bằng `fromPrefix`, và lựa chọn
@@ -112,6 +120,7 @@ export function defaultVoice(): string {
 /** Đặt giọng mặc định từ Cài đặt: chỉ đổi giọng chung, cuốn đã chọn giọng riêng giữ nguyên (không báo trình phát đổi giọng giữa chừng). */
 export function chooseDefaultVoice(voice: string): void {
   write(GLOBAL_KEY, voice);
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(DEFAULT_VOICE_EVENT));
 }
 
 /** Câu đọc thử ("Thử giọng" trong Cài đặt): ngắn, có dấu câu để nghe cả chỗ ngắt. */

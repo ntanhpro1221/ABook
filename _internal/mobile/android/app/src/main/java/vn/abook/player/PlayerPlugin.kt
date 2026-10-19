@@ -169,6 +169,7 @@ class PlayerPlugin : Plugin() {
         call.getBoolean("headsetSkips")?.let { Playback.headsetSkips = it }
         // `readAloudBook`: cuốn mà người nghe vừa đổi giọng (nhớ cho cuốn ấy); không có thì cuốn đang nạp.
         call.getString("readAloudVoice")?.let { ReadAloud.chooseFor(call.getString("readAloudBook") ?: Playback.bookId, it) }
+        call.getString("readAloudDefault")?.let { ReadAloud.chooseDefault(it) }
         // Nhà cung cấp giọng trực tuyến người nghe đã đồng ý gửi chữ tới: lõi tự sang chương chữ chỉ khi giọng đang chọn đã được đồng ý.
         call.getArray("readAloudOnlineOk")?.let { list -> ReadAloud.allowOnline((0 until list.length()).map { list.optString(it) }) }
         call.getBoolean("flipToPause")?.let {

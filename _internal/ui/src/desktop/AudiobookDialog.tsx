@@ -224,7 +224,7 @@ export function AudiobookDialogHost() {
         music={music}
         onMusic={setMusic}
       />
-      <div className="mt-5 flex justify-end gap-2">
+      <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={() => setBook(null)}>
           Để sau
         </Button>

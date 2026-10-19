@@ -459,10 +459,11 @@ export function SettingsScreen() {
             title="Studio"
             description="Phần làm sách nói (thư viện, model đọc hiểu truyện, giọng đọc) - tải thêm khi cần, nằm riêng một thư mục."
           >
-            {/* Trạng thái Studio (đã cài / chưa cài + Gỡ hay Cài) ở đầu mục; chưa cài thì các tuỳ chọn bên dưới chỉ có tác dụng khi đã có Studio: mờ đi nhưng vẫn xem và chỉnh được. */}
+            {/* Trạng thái Studio (đã cài / chưa cài + Gỡ hay Cài) ở đầu mục; chưa cài thì các tuỳ chọn bên dưới chỉ có tác dụng khi đã có Studio: vẫn xem và
+                chỉnh được, đánh dấu bằng vạch bên trái - không làm mờ chữ (mờ 60 % chỉ còn 2,3-2,7:1, soát a67). */}
             <StudioSettings />
             {!info.studio.installed && <p className="mb-3 text-[0.8125rem] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p>}
-            <div className={cn(!info.studio.installed && "opacity-60")}>
+            <div className={cn(!info.studio.installed && "border-l-2 border-dashed border-line-strong pl-4")}>
               <div className="mb-4 flex max-w-xl items-start justify-between gap-6">
                 <label htmlFor="pause-on-battery" className="min-w-0 cursor-pointer">
                   <span id="pause-on-battery-name" className="block text-sm font-medium">Tạm dừng khi rút sạc</span>

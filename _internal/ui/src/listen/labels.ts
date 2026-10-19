@@ -1,3 +1,4 @@
+import { Capacitor } from "@capacitor/core";
 import { formatClock, formatLength, formatPercent } from "@/shared/format";
 
 // Nhãn của phần Nghe mà nhiều màn phải nói GIỐNG nhau (soát UX "Nghe ngay" 03-10): một chỗ chọn chữ, mỗi màn chỉ gọi. Nói theo cái người
@@ -64,10 +65,18 @@ export function toggleLabel(playing: boolean, buffering: boolean, speaking: bool
   return playing ? "Tạm dừng" : "Phát";
 }
 
+/** Máy này có phím tắt của trình phát: chỉ máy tính - trên app điện thoại trình phát không bắt phím (player.tsx). */
+export const SHORTCUTS = !Capacitor.isNativePlatform();
+
+/** Tên nút kèm phím tắt ("Lùi 15 giây (←)") ở máy tính; điện thoại chỉ tên - TalkBack từng đọc cả "(Shift+←)" (soát a67). */
+export function withShortcut(label: string, key: string, keys = SHORTCUTS): string {
+  return keys ? `${label} (${key})` : label;
+}
+
 /** Nút "Chương sau": chương cuối thì nói đó là chương cuối (nút mờ); chương sau có mà chưa nghe được thì nói vì sao (nút vẫn bấm được). */
-export function nextChapterLabel(hasNext: boolean, hasLater: boolean): string {
+export function nextChapterLabel(hasNext: boolean, hasLater: boolean, keys = SHORTCUTS): string {
   if (!hasLater) return "Đây là chương cuối";
-  return hasNext ? "Chương sau (Shift+→)" : "Chương sau chưa có audio";
+  return hasNext ? withShortcut("Chương sau", "Shift+→", keys) : "Chương sau chưa có audio";
 }
 
 /** Sách chỉ có chữ: MỘT dòng nói nghe được bằng gì, dùng ở mọi chỗ (thư viện, trang sách, màn đọc) - không còn "chưa có âm thanh" ngay cạnh

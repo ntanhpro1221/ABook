@@ -135,7 +135,7 @@ export function MergeDialog({
           {into.pendingVoice?.preset ? " (giọng vừa chọn, chờ áp dụng)" : ""}.
         </p>
       )}
-      <div className="mt-5 flex justify-end gap-2">
+      <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={close}>
           Thôi
         </Button>

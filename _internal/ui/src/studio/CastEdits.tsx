@@ -74,7 +74,7 @@ export function RenamePersonDialog({
           className="h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
         />
         {person?.originalName && <p className="mt-2 text-xs text-fg-2">Tên gốc: {cleanName(person.originalName)}</p>}
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 dialog-actions">
           {person?.originalName && (
             <Button type="button" variant="ghost" disabled={busy} onClick={() => void save("")}>
               Về tên gốc
@@ -169,7 +169,7 @@ export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved
           mọi câu đã thu của {name} sẽ được thu lại bằng giọng mới; nếu giọng đã hợp, chỉ ghi nhớ giới và không câu nào bị thu lại.
         </p>
       )}
-      <div className="mt-5 flex justify-end gap-2">
+      <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={onClose}>
           Thôi
         </Button>

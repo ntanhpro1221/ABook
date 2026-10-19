@@ -15,7 +15,7 @@ import { MorningRecap } from "@/listen/MorningRecap";
 import { ReaderScreen } from "@/listen/ReaderScreen";
 import { PlayerProvider, usePlayer } from "@/listen/player";
 import { SourceProvider, useSource } from "@/listen/source";
-import { Button, Dialog, EmptyState, TooltipProvider } from "@/shared/ui";
+import { Button, Dialog, EmptyState, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
 import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
 import { brokenMusicNote, keptEditsTitle, workshopMergeNote } from "@/shared/editsKept";
@@ -178,7 +178,7 @@ function RemoveImportedHost() {
       title={`Bỏ “${book?.title ?? ""}” khỏi thư viện?`}
       description={book ? removeAsk(book) : ""}
     >
-      <div className="flex justify-end gap-2">
+      <div className="dialog-actions">
         <Button variant="ghost" onClick={() => setBook(null)}>
           Để sau
         </Button>
@@ -499,6 +499,7 @@ export function App() {
   // Hộp thoại đang mở: thông báo (nhất là cái có nút "Ở lại đây") lên đầu màn, khỏi đè nút chính của hộp ở góc dưới
   // (soát UX 02-10: "Thiết bị khác đã nghe tới chỗ khác" che "Xuất" và "Chọn").
   const modalOpen = useModalOpen();
+  useFocusClearOfToasts();
   // Cửa sổ app Windows không mở được liên kết ngoài tự thân: nhờ máy chủ mở bằng trình duyệt mặc định (chỉ ở app đóng gói có hộp thoại).
   useEffect(() => {
     setExternalOpener(info?.dialogs ? (url) => api("/api/open-url", { method: "POST", body: { url } }).then(() => undefined) : null);

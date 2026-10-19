@@ -3,6 +3,7 @@
 // máy tính (abook/webui/supertonic_module.py) dùng cùng khung và cùng hình trạng thái, chỉ khác lời (`ModuleCopy`). Phần thuần (không React) để
 // thử riêng; thẻ ở VieneuModuleCard.tsx.
 
+import { spokenProgress } from "@/shared/progressSpeech";
 import { CANCELLED_NOTE, formatSize, RETRYING_NOTE } from "@/studio/musicLocal";
 
 export type VieneuChoiceId = "turbo" | "nano" | "aligner" | "supertonic" | "fast" | "supertonic_fast";
@@ -267,4 +268,18 @@ export function vieneuLabel(status: VieneuStatus, copy: ModuleCopy = VIENEU_COPY
   if (status.state === "outdated") return `${cancelled}${copy.name} có bản mới - ${formatSize(status.outdatedBytes)}. Bản đang dùng vẫn đọc bình thường.`;
   if (status.state === "ready") return `${copy.name} đã có trên máy: chọn trong nút Giọng đọc khi nghe sách chỉ có chữ.`;
   return `${cancelled}${copy.invite}`;
+}
+
+/** Phần câu chính mà trình đọc màn hình đọc khi trạng thái đổi (vùng role=status của thẻ): đang tải thì pha thật (đang thử lại hay đang tải) + mốc
+ *  25 %; vừa huỷ thì chỉ "Đã huỷ…" - đoạn giới thiệu dài phía sau vẫn đọc được khi duyệt trang, không bị đọc lại mỗi lần huỷ (soát a67). `rest`:
+ *  phần còn lại của câu chính, nằm ngoài vùng ấy. */
+export function vieneuSpoken(status: VieneuStatus, copy: ModuleCopy = VIENEU_COPY): { live: string; rest: string } {
+  const mid = lowerFirst(copy.name);
+  if (status.state === "downloading") {
+    const phase = status.retrying ? `${RETRYING_NOTE.replace(/…$/, "")} (${mid})` : `Đang tải ${mid}`;
+    return { live: spokenProgress(phase, vieneuPercent(status) / 100), rest: "" };
+  }
+  const label = vieneuLabel(status, copy);
+  if (status.cancelled && label.startsWith(`${CANCELLED_NOTE} `)) return { live: CANCELLED_NOTE, rest: label.slice(CANCELLED_NOTE.length + 1) };
+  return { live: label, rest: "" };
 }

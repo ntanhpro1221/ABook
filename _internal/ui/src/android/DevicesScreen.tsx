@@ -706,7 +706,7 @@ function SharePanel() {
         title={`Thôi ghép ${removing?.name ?? "máy này"}?`}
         description="Máy này sẽ không nghe được thư viện của điện thoại nữa cho tới khi ghép lại. Sách nó đã tải về vẫn nghe được."
       >
-        <div className="flex justify-end gap-2">
+        <div className="dialog-actions">
           <Button variant="ghost" onClick={() => setRemoving(null)}>
             Để nguyên
           </Button>

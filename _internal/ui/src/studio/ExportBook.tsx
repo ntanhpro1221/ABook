@@ -363,7 +363,7 @@ export function ExportDialog({
                 : ""}
             Sách dài thì có thể mất vài phút. Đóng hộp này cũng được - việc vẫn chạy và báo khi xong.
           </p>
-          <div className="mt-5 flex justify-end gap-2">
+          <div className="mt-5 dialog-actions">
             {(downloading || cancelling || kind === "abookproj") && (
               <Button variant="secondary" disabled={cancelling} onClick={cancelPacking}>
                 Huỷ xuất
@@ -381,7 +381,7 @@ export function ExportDialog({
             {finished.title}
           </p>
           <p className="mt-2 break-all rounded-xl bg-sunken p-3 text-sm text-fg-2">{finished.detail}</p>
-          <div className="mt-5 flex justify-end gap-2">
+          <div className="mt-5 dialog-actions">
             {!info?.remote && (
               <Button variant="secondary" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>
                 Mở thư mục
@@ -531,7 +531,7 @@ export function ExportDialog({
           )}
         </div>
       )}
-      <div className="mt-5 flex justify-end gap-2">
+      <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={() => handleOpenChange(false)}>
           Thôi
         </Button>

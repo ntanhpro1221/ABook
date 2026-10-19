@@ -83,7 +83,7 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
         title={`Khôi phục “${book.title}” từ bản sao cũ?`}
         description="Bản sao được chụp lúc app nâng cấp sổ làm việc của sách này. Những gì làm sau lúc ấy (phân tích, sửa, chương thu sau đó) sẽ phải làm lại; chương đã thu vẫn nằm trong thư mục sách. Bản hỏng được giữ lại cạnh đó."
       >
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 dialog-actions">
           <Button variant="ghost" onClick={() => setAsking(false)}>
             Để sau
           </Button>

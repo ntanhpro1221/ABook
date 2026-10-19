@@ -356,7 +356,7 @@ function BluetoothFallback({
             current ? "text-accent-text" : "text-fg-2",
           )}
         >
-          <Bluetooth className="size-[18px]" strokeWidth={2} />
+          <Bluetooth className="glyph" strokeWidth={2} />
           <span className="ml-1.5 text-sm sm:hidden">Bluetooth</span>
         </DropdownMenu.Trigger>
       </Tooltip>

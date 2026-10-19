@@ -23,7 +23,7 @@ const toasts = vi.hoisted(() => {
 });
 vi.mock("./plugins", () => ({ EbookLibrary: library, EbookPlayer: {}, ReadAloud: {} }));
 vi.mock("sonner", () => ({ toast: toasts }));
-vi.mock("@capacitor/core", () => ({ Capacitor: { convertFileSrc: (path: string) => path } }));
+vi.mock("@capacitor/core", () => ({ Capacitor: { convertFileSrc: (path: string) => path, isNativePlatform: () => true } }));
 
 import { AudiobookPhoneForm, chargerHint, finishedView, progressView, rereadText, spaceText, watchAudiobookExports } from "./ExportAudiobook";
 

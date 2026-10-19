@@ -7,7 +7,7 @@ import { ShortName } from "@/shared/ShortName";
 import { Windowed } from "@/shared/Windowed";
 import { cn } from "@/shared/cn";
 import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
-import { EmptyState, failedEmpty, LoadError, Progress, Segmented, Skeleton } from "@/shared/ui";
+import { EmptyState, failedEmpty, heardBarProps, LoadError, Progress, Segmented, Skeleton } from "@/shared/ui";
 import { caughtUpDetail, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, isLibrarySort, type LibrarySort } from "./librarySort";
 import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, resumeTarget, seriesIndex, twinBookIds, twinKind, volumeBadge, type ListenBook, type ListenChapter } from "./model";
@@ -160,7 +160,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
           )}
         </button>
         {book.progress.fraction > 0 && !book.progress.finished && (
-          <div className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-black/40">
+          <div {...heardBarProps(book.progress.fraction)} className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-black/40">
             <div className="h-full bg-accent" style={{ width: `${book.progress.fraction * 100}%` }} />
           </div>
         )}
@@ -458,10 +458,10 @@ export function LibraryScreen({
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <Segmented<Filter>
               label="Lọc sách"
-              // Điện thoại: mỗi nút lọc đủ 44 px để chạm; cả thanh trải hết bề ngang, các nút chia đều - chữ to (cỡ chữ hệ thống 1,3) không bị cắt "Nghe xong".
+              // Điện thoại: mỗi nút lọc đủ 48 px để chạm; cả thanh trải hết bề ngang, các nút chia đều - chữ to (cỡ chữ hệ thống 1,3) không bị cắt "Nghe xong".
               // Chữ to hơn nữa (cỡ chữ trình duyệt 32 px, soát uxfix32) thì nhãn xuống dòng trong nút thay vì đè lên nút bên cạnh.
               className="max-sm:flex max-sm:w-full"
-              itemClassName="max-sm:h-auto max-sm:min-h-[44px] max-sm:min-w-0 max-sm:flex-1 max-sm:px-1 max-sm:whitespace-normal"
+              itemClassName="max-sm:h-auto max-sm:min-h-[48px] max-sm:min-w-0 max-sm:flex-1 max-sm:px-1 max-sm:whitespace-normal"
               value={filter}
               onChange={setFilter}
               options={[
@@ -480,7 +480,7 @@ export function LibraryScreen({
                   setSort(event.target.value);
                   saveLibrarySort(event.target.value);
                 }}
-                className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2 text-sm text-fg outline-none focus:border-focus max-sm:h-[44px]"
+                className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2 text-sm text-fg outline-none focus:border-focus max-sm:h-[48px]"
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>

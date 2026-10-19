@@ -146,7 +146,7 @@ export function M4bMusicDialogHost() {
   return (
     <Dialog open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title={`Xuất M4B “${open?.book.title ?? ""}”`} width="max-w-md">
       <M4bMusicForm music={music} onMusic={setMusic} chapters={open?.book.chaptersAvailable ?? 0} />
-      <div className="mt-5 flex justify-end gap-2">
+      <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={() => setOpen(null)}>
           Để sau
         </Button>

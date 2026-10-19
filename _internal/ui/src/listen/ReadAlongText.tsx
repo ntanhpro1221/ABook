@@ -187,7 +187,7 @@ export function JumpToPlaying({ onClick, className }: { onClick: () => void; cla
       type="button"
       onClick={onClick}
       onMouseDown={(event) => event.preventDefault()}
-      className={cn("pointer-events-auto inline-flex min-h-[44px] items-center gap-2 rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg shadow-float", className)}
+      className={cn("pointer-events-auto inline-flex min-h-[48px] items-center gap-2 rounded-full bg-fg px-4 py-2 text-sm font-semibold text-bg shadow-float", className)}
     >
       <Locate className="size-4" /> Tới câu đang nghe
     </button>

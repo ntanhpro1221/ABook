@@ -72,7 +72,7 @@ export function TellerModeSwitch({ book, className }: { book: BookSummary; class
         title={asking === "teller" ? "Cho người kể “tôi” tự kể chuyện?" : "Trả câu kể về giọng dẫn?"}
         description={costText(data.plan, asking === "teller")}
       >
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 dialog-actions">
           <Button variant="ghost" onClick={() => setAsking(null)}>
             Thôi
           </Button>

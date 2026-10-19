@@ -504,7 +504,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
             />
           </label>
         )}
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="dialog-actions pt-2">
           <Button type="button" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ revert: true })}>
             Về tên gốc
           </Button>
@@ -623,7 +623,7 @@ export function SaveAsDialog({
           <span className="min-w-0 truncate text-fg-2">{folder ?? "Mặc định: thư mục Đã xuất"}</span>
         </div>
       )}
-      <div className="mt-5 flex justify-end gap-2">
+      <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
           Thôi
         </Button>

@@ -436,7 +436,7 @@ function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
           autoComplete="off"
           className="mt-1.5 h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
         />
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 dialog-actions">
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Huỷ
           </Button>
@@ -487,7 +487,7 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
       {/* Studio từ xa không nhận đường dẫn trên máy tính (soát a27 lỗi 10). */}
       {book.path && <p className="break-all rounded-lg bg-panel-2 px-3 py-2 text-xs text-fg-2">{book.path}</p>}
       {busy && <p className="mt-3 text-sm text-warning">Sách đang chạy - dừng sách trước rồi mới xoá được.</p>}
-      <div className="mt-5 flex justify-end gap-2">
+      <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
           Để sau
         </Button>
@@ -529,7 +529,7 @@ export function ProjectMenu({ book, rename = true, className }: { book: BookSumm
               className,
             )}
           >
-            <MoreHorizontal className="size-[18px]" />
+            <MoreHorizontal className="glyph" />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
@@ -833,7 +833,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
             aria-label={`Tuỳ chọn ${chapter.displayTitle}`}
             className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 opacity-0 transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
           >
-            <MoreHorizontal className="size-[18px]" />
+            <MoreHorizontal className="glyph" />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
@@ -866,7 +866,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
         title={`Thu lại cả ${chapter.displayTitle}?`}
         description={`${recorded} câu đã thu được thu lại bằng hạt giống mới - giọng như cũ, cách nói mỗi câu khác đi một chút. Hợp khi cả chương nghe không ổn; sai người nói hay sai chữ thì sửa ở Kịch bản, thu lại y chữ không chữa được.`}
       >
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 dialog-actions">
           <Button variant="ghost" onClick={() => setConfirm(false)}>
             Thôi
           </Button>
