@@ -76,10 +76,10 @@ def gain_db(voice_id: str) -> float:
 # PLAN_lx §9). `volume` của phần tử audio chỉ giảm được, nên câu nhỏ được nâng NGAY TRONG clip lúc làm ra (service.clip), trước khi vào bộ đệm;
 # mức giọng ở trên vẫn chỉnh lúc phát như cũ. Supertonic cùng cách (câu ngắn "Hả?", "Chờ đã!" nhỏ hơn mức giọng > 3 LU), cùng một bảng mức cho cả hai bậc tốc độ. Bản Kotlin: readaloud/ClipLift.kt (cùng hằng số, cùng fixture: tests/fixtures/vieneu/android/lift.json).
 LIFT_PREFIXES = ("vieneu:", "supertonic:")
-LIFT_TAG = "ld1"          # dấu trong khoá bộ đệm: clip VieNeu / Supertonic làm trước khi có bù không trúng đệm nữa (Edge giữ nguyên)
+LIFT_TAG = "ld2"          # dấu trong khoá bộ đệm (clip_tag): ld1 = có bù theo clip; ld2 = thêm trần đỉnh thật từng khúc (under_ceiling). Edge giữ nguyên
 LIFT_DEADBAND_DB = 2.0    # chỉ bù phần thiếu quá 2 LU: câu thường lệch tới -2 quanh mức giọng vẫn nguyên (đo 1080 câu thường: 99,8 % trong 2 LU)
 LIFT_MAX_DB = 8.0
-LIFT_CEILING_DBTP = -1.0  # đỉnh thật sau khi bù (bảng FIR của music_mix.json, như bản xuất kèm nhạc)
+LIFT_CEILING_DBTP = -1.0  # đỉnh thật sau khi bù, cũng là trần của từng khúc (under_ceiling) - bảng FIR của music_mix.json, như bản xuất kèm nhạc
 LIFT_SAFETY_DB = 0.01     # đệm cho làm tròn int16
 LIFT_PAD_SECONDS = 0.5    # đo clip ngắn như phiên Nhạc: đệm lặng hai đầu cho đủ một khối 400 ms (cổng tương đối lo phần lặng)
 LIFT_MIN_SECONDS = 0.15   # ngắn hơn: không đo được cho tin cậy
@@ -89,6 +89,12 @@ LIFT_MIN_LUFS = -45.0     # nhỏ hơn: hơi thở / nhiễu, không phải lờ
 def lifts(voice_id: str) -> bool:
     """Giọng này được bù theo clip: giọng VieNeu / Supertonic đã có mức đo (mã giọng trần, không kèm bậc tốc độ)."""
     return voice_id.startswith(LIFT_PREFIXES) and voice_id in MEASURED_LUFS
+
+
+def clip_tag(voice_id: str) -> str:
+    """Dấu của giọng `voice_id` (mã trần) trong khoá bộ đệm: mọi giọng VieNeu / Supertonic, đã đo mức hay chưa, vì khúc nào của chúng cũng qua
+    under_ceiling (giọng chưa đo trước đây không mang dấu: chỉ một dấu cho cả hai nhóm là đủ để clip cũ của mọi giọng ấy trượt đệm đúng một lần)."""
+    return LIFT_TAG if voice_id.startswith(LIFT_PREFIXES) else ""
 
 
 def clip_lufs(samples: Any, rate: int) -> float | None:
@@ -111,6 +117,18 @@ def true_peak_dbtp(samples: Any) -> float:
 
     x = np.asarray(samples, dtype=np.float64).reshape(-1, 1)
     return music_render.true_peak_db(x, music_mix.MIX["truePeakFir"]) if x.size else -math.inf
+
+
+def under_ceiling(samples: Any) -> Any:
+    """Một khúc ngay khi engine giọng trên máy trả ra (Nano, Turbo; Supertonic qua supertonic.louder): đỉnh thật (đo trên số thực, kể cả mẫu > 1)
+    vượt LIFT_CEILING_DBTP thì hạ cả khúc xuống đúng trần, không thì trả đúng mảng vào. Thay cho cắt cứng [-1, 1]: Nano thô tới +0,8 dBFS, Turbo
+    +1,7 dBFS (Corpus research/music/SPEC_truepeak.md). Bản Kotlin: ClipLift.underCeiling."""
+    import numpy as np
+
+    peak = true_peak_dbtp(samples)
+    if peak <= LIFT_CEILING_DBTP:
+        return samples
+    return (np.asarray(samples) * 10.0 ** ((LIFT_CEILING_DBTP - peak) / 20.0)).astype(np.asarray(samples).dtype, copy=False)
 
 
 def lift_db(voice_id: str, samples: Any, rate: int) -> float:

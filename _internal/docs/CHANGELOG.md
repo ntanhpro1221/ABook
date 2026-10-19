@@ -17,6 +17,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính và điện thoại: với giọng trên máy, máy đọc sẵn khoảng 20 giây âm thanh phía trước (tối đa 6 đoạn) thay vì một số đoạn cố định, nên đoạn ngắn nối nhau liền hơn.
 - Máy tính và điện thoại: tải tiếp một giọng sau khi Huỷ, dòng "Đang tải" ghi đúng số còn phải tải như trên nút và phần trăm tính từ 0 trên số ấy.
 - Máy tính và điện thoại: cài hay gỡ một giọng xong thì cỡ tải của các giọng khác cập nhật ngay (vd VieNeu nhỏ lại khi Supertonic đã cài phần dùng chung), không phải rời Cài đặt rồi vào lại.
+- Máy tính và điện thoại: giọng VieNeu và Supertonic không còn chỗ to bị vỡ tiếng: câu nào ra quá to thì cả câu được hạ nhẹ xuống thay vì bị xén đỉnh. Lần đầu nghe lại một đoạn đã nghe trước đây bằng các giọng này, máy đọc lại đoạn ấy một lần.
 
 ## [0.4.104] - 2026-10-19
 

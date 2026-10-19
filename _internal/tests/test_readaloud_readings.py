@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from abook.readaloud import cache, readings, vieneu
+from abook.readaloud import cache, loudness, readings, vieneu
 from abook.readaloud.service import ReadAloud
 from abook.webui import book_edits, packages
 from abook.webui.library import book_id
@@ -118,7 +118,8 @@ def test_a_voice_on_this_computer_applies_the_reading_after_the_names(fake_voice
     assert "ha-ru-to" in said and "ha-ru-tô" not in said and "kết" in said, "cách đọc của người nghe thắng luật phiên âm"
     assert len(clip["words"]) == len(text.split())
     key = cache.clip_key("vieneu", "turbo/Thường", text, "+".join([vieneu.reading_tag(text, "ja"),
-                                                                       readings.tag(text, {"Haruto": "Ha-ru-to", "Kate": "Kết"})]))
+                                                                       readings.tag(text, {"Haruto": "Ha-ru-to", "Kate": "Kết"}),
+                                                                       loudness.clip_tag("vieneu:turbo/Thường")]))
     assert clip["file"].startswith(key)
 
 

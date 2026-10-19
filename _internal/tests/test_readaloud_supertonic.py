@@ -366,7 +366,7 @@ def test_clips_are_raised_to_the_shared_loudness_without_clipping() -> None:
     quiet = np.full(100, 0.1, dtype=np.float32)
     assert np.allclose(supertonic.louder(quiet), 0.1 * 10 ** (supertonic.GAIN_DB / 20))
     loud = np.array([0.0, 0.95, -0.5], dtype=np.float32)
-    assert np.max(np.abs(supertonic.louder(loud))) <= max(0.95, supertonic.PEAK_CEILING) + 1e-6, "đỉnh cao thì không nâng quá trần"
+    assert loudness.true_peak_dbtp(supertonic.louder(loud)) <= loudness.LIFT_CEILING_DBTP + 1e-6, "đỉnh cao thì không nâng quá trần đỉnh thật (hạ nếu cần)"
     assert supertonic.louder(np.zeros(0, dtype=np.float32)).size == 0
 
 
