@@ -223,7 +223,8 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
   );
 }
 
-/** Mục "Giọng đọc" của Cài đặt. `deviceHint`: câu cho khi máy chưa có giọng tiếng Việt (mỗi nền tảng cài theo cách riêng). */
+/** Mục "Giọng đọc" của Cài đặt. `deviceHint`: câu cho khi máy chưa có giọng tiếng Việt của hệ điều hành (mỗi nền tảng cài theo cách riêng) - dòng
+ *  phụ dưới các giọng tải được trong app. */
 /** `modules`: phần tải thêm giọng của nền tảng (máy tính: thẻ "Giọng VieNeu" và "Giọng Supertonic" - VieneuModuleCard), nhận `reload` để danh sách giọng hỏi lại khi
  *  giọng mới vừa tải xong. */
 export function VoiceSettings({ api, deviceHint, modules, storage }: { api: VoiceSettingsApi; deviceHint: string; modules?: (reload: () => void) => ReactNode; storage?: ReadAloudStorageApi }) {
@@ -252,6 +253,9 @@ export function VoiceSettings({ api, deviceHint, modules, storage }: { api: Voic
     void load();
   };
   const current = voices?.length ? resolveVoice(voices, chosen) : undefined;
+  // Máy chưa có giọng tiếng Việt của hệ điều hành: nhóm "Giọng của máy" mở đầu bằng các giọng tải được ngay trong app (thẻ `modules`), câu cài
+  // giọng của Windows / điện thoại thành dòng phụ - không còn là đường duy nhất để nghe không cần mạng (soát a64).
+  const modulesInDevice = Boolean(modules && voices && !voices.some((voice) => voice.provider === "device"));
   return (
     <div className="grid gap-5">
       {loadError && <p className="text-[0.8125rem] text-danger">{loadError}</p>}
@@ -275,7 +279,8 @@ export function VoiceSettings({ api, deviceHint, modules, storage }: { api: Voic
               })}
             >
               <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</div>
-              {!list.length && <p className="py-1 text-[0.8125rem] text-fg-2 text-pretty">{deviceHint}</p>}
+              {!list.length && modulesInDevice && <div className="mt-2 grid gap-5">{modules?.(() => void load())}</div>}
+              {!list.length && <p className={cn("text-pretty", modulesInDevice ? "mt-3 text-xs text-fg-3" : "py-1 text-[0.8125rem] text-fg-2")}>{deviceHint}</p>}
               {voiceSections(list).map((section) => (
                 <div key={section.label ?? ""}>
                   {section.label && <div className="mb-0.5 mt-2 text-[0.8125rem] font-medium text-fg-2">{section.label}</div>}
@@ -331,7 +336,7 @@ export function VoiceSettings({ api, deviceHint, modules, storage }: { api: Voic
             </div>
           );
         })}
-      {modules?.(() => void load())}
+      {!modulesInDevice && modules?.(() => void load())}
       {storage && <ReadAloudStorage api={storage} />}
       {providers.length > 0 && (
         <div>

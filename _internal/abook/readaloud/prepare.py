@@ -15,12 +15,21 @@ from typing import Any, Callable, Mapping
 from . import supertonic
 from .model import VoiceError
 
-CHARS_PER_SECOND = 14  # như trình phát ước đoạn chưa đọc (readAloud.ts)
+# Ký tự lời đọc mỗi giây nghe khi chưa đo được trên chính cuốn / giọng ấy - MỘT cách ước độ dài cho mọi nơi (`listening_seconds`: "Làm trước", hộp
+# Xuất sách nói listen_export.py, trình tạo sách nói actions.scan_inputs; trình phát readAloud.ts cùng số). Đo 19-10 trên clip thật (soát a63/a64):
+# Supertonic F1 15,1; VieNeu Nano Ái Hân 13,8, Đức Trí 11,4; cả cuốn Edge Hoài My 13,6 kể cả quãng lặng -> ~14.
+CHARS_PER_SECOND = 14
 SHARE = 0.6
 # WAV 16-bit đơn kênh, theo tần số mẫu thật của từng giọng; giọng khác là MP3 ~6 KB/giây
 BYTES_PER_SECOND = {"vieneu:turbo/": 96_000, "vieneu:nano/": 48_000, supertonic.PREFIX + ":": 2 * supertonic.SAMPLE_RATE}
 OTHER_BYTES_PER_SECOND = 6_000
 CACHED_SECONDS = 0.05
+
+
+def listening_seconds(chars: int, rate: float | None = None) -> float:
+    """Giây nghe ước của `chars` ký tự lời đọc: theo tốc độ đo được của giọng trên chính cuốn ấy (`rate` ký tự/giây, từ clip đã đọc) nếu có, không
+    thì CHARS_PER_SECOND. Nơi hiện cho người dùng ghi "khoảng"."""
+    return chars / (rate if rate and rate > 0 else CHARS_PER_SECOND)
 
 
 def bytes_per_second(voice: str) -> int:
@@ -32,7 +41,7 @@ def fit(voice: str, chars: list[int], budget: int) -> int:
     used = 0.0
     rate = bytes_per_second(voice)
     count = 0
-    for size in (n / CHARS_PER_SECOND * rate for n in chars):
+    for size in (listening_seconds(n) * rate for n in chars):
         if count and used + size > budget:
             break
         count += 1
@@ -51,8 +60,8 @@ def estimate(voice: str, chapter_chars: list[int], budget: int, rtf: float | Non
     sizes = [n for n in chapter_chars if n > 0]
     taken = sizes[:fit(voice, sizes, budget)]
     chars = sum(taken)
-    return {"chapters": len(taken), "offered": len(sizes), "audioSeconds": round(chars / CHARS_PER_SECOND),
-            "secondsEstimate": round(chars / CHARS_PER_SECOND * rtf) if rtf and taken else None}
+    return {"chapters": len(taken), "offered": len(sizes), "audioSeconds": round(listening_seconds(chars)),
+            "secondsEstimate": round(listening_seconds(chars) * rtf) if rtf and taken else None}
 
 
 class Prepare:

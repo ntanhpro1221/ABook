@@ -25,7 +25,7 @@ const SHORTCUTS: [ReactNode, string, boolean][] = [
 
 /** Dòng mô tả công tắc "Phím tắt một chữ cái" (Cài đặt › Phím tắt). */
 export const LETTER_SHORTCUTS_HINT =
-  "B, M, [ ], ? khi nghe; J, K, 1–9 ở Việc cần duyệt; O, R khi nghe lại liền. Tắt nếu bạn nhập bằng giọng nói hay hay lỡ chạm phím - Space, mũi tên và Esc vẫn dùng được.";
+  "B, M, [ ], ? khi nghe; J, K, 1–9 ở Việc cần duyệt; O, R khi nghe lại liền. Tắt nếu bạn nhập bằng giọng nói hay lỡ chạm phím - Space, mũi tên và Esc vẫn dùng được.";
 
 /** `remote`: thiết bị ở xa (Studio từ xa) không đổi được cài đặt của máy tính - câu cuối không chỉ nó tới một công tắc nó không có. */
 export function ShortcutList({ remote = false }: { remote?: boolean }) {

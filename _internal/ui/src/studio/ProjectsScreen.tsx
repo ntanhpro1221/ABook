@@ -258,8 +258,8 @@ export function ProjectsScreen() {
             </Button>
           }
         >
-          Chọn thư mục chứa các chương TXT. ABook đọc cả truyện, nhận ra từng nhân vật, trao cho mỗi người một
-          giọng riêng rồi thu thành MP3 theo chương.
+          Chọn một file EPUB, Word (DOCX), PDF hay thư mục các chương TXT. ABook đọc cả truyện, nhận ra từng nhân vật, trao cho mỗi
+          người một giọng riêng rồi thu thành sách nói - nghe ngay trong Thư viện, xuất được MP3 hay M4B.
         </EmptyState>
       ) : (
         <>

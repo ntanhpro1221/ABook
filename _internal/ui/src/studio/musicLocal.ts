@@ -43,6 +43,8 @@ export interface MusicModuleStatus {
   error: string;
   /** Bộ phân tích đã cắm (dùng được, kể cả khi có bản mới hơn). */
   ready: boolean;
+  /** Đang tải mà mạng vừa hỏng, đang chờ thử lại (RETRYING_NOTE). */
+  retrying?: boolean;
   /** Máy này tải được không; không thì `reason` nói vì sao. */
   supported?: boolean;
   reason?: string;
@@ -108,6 +110,10 @@ export function formatSize(bytes: number): string {
 /** Lời báo lần tải vừa rồi bị huỷ - đứng đầu câu mô tả của thẻ để người dùng biết chuyện gì đã xảy ra và lần sau thế nào. */
 export const CANCELLED_NOTE = "Đã huỷ - lần tải sau làm tiếp từ chỗ dừng.";
 
+/** Đang tải mà mạng vừa hỏng, máy đang chờ để thử lại (`retrying` của máy chủ, studio_setup.retrying): nói ra thay vì đứng ở "Đang tải 62%"
+ *  suốt ~30 giây rồi mới báo lỗi (soát a64). Mọi thẻ tải (giọng, Phân tích nhạc, công cụ ghép âm thanh) dùng chung câu này. */
+export const RETRYING_NOTE = "Mạng chập chờn - đang thử lại…";
+
 export function modulePercent(module: Pick<MusicModuleStatus, "done" | "total">): number {
   return module.total > 0 ? Math.min(100, Math.floor((module.done / module.total) * 100)) : 0;
 }
@@ -115,7 +121,7 @@ export function modulePercent(module: Pick<MusicModuleStatus, "done" | "total">)
 /** Câu báo về mô-đun, nói bằng điều người nghe cần biết (không nói model nào). */
 export function moduleLabel(module: MusicModuleStatus): string {
   if (module.state === "error") return module.error;
-  if (module.state === "downloading") return `Đang tải Phân tích nhạc (${formatSize(module.total)}, một lần) ${modulePercent(module)}%`;
+  if (module.state === "downloading") return module.retrying ? `${RETRYING_NOTE} (Phân tích nhạc, ${modulePercent(module)}%)` : `Đang tải Phân tích nhạc (${formatSize(module.total)}, một lần) ${modulePercent(module)}%`;
   if (module.analysing) return "Đang nghe các bài bạn đã nhập để hiểu không khí của chúng…";
   if (module.state === "unsupported") return module.reason ? `Máy này chưa phân tích được nhạc: ${module.reason}.` : "Máy này chưa phân tích được nhạc.";
   if (module.state === "outdated" && module.stopped)
@@ -222,12 +228,14 @@ export function mineNote(item: Pick<LocalTrack, "analysed" | "vocalsLikely" | "a
   return notes.length ? notes.join(" · ") : undefined;
 }
 
-/** Gộp kết quả của nhiều lượt nhập (mỗi file một lượt, để thấy tiến độ). Danh sách bài lấy của lượt cuối. */
+/** Gộp kết quả của nhiều lượt nhập (mỗi file một lượt, để thấy tiến độ). Danh sách bài và trạng thái mô-đun "Phân tích nhạc" lấy của lượt
+ *  cuối - thiếu `module` thì lời mời "Tải Phân tích nhạc" chỉ hiện sau khi tải lại trang (soát a64). */
 export function mergeImports(results: ImportResult[]): ImportResult {
   const last = results[results.length - 1];
   return {
     tracks: last?.tracks ?? [],
     analyzer: last?.analyzer ?? false,
+    ...(last?.module ? { module: last.module } : {}),
     added: results.flatMap((result) => result.added),
     existing: results.flatMap((result) => result.existing),
     failed: results.flatMap((result) => result.failed),

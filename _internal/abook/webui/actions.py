@@ -22,11 +22,11 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Protocol
 
 from .. import importers
+from ..readaloud import paragraphs as px
+from ..readaloud.prepare import listening_seconds
 from ..io_utils import discover_txt_files, natural_key
 from . import humanize
 
-# Tiếng Việt đọc ~4,3 âm tiết/giây ở tốc độ kể chuyện; một "từ" tách bằng dấu cách là một âm tiết.
-SYLLABLES_PER_SECOND = 4.3
 SCAN_WORD_LIMIT_BYTES = 4 * 1024 * 1024
 # Studio từ xa: chương TXT gửi từ máy khác nằm ở đây, trong thư viện - dây chuyền còn đọc lại nguồn mỗi lần chạy tiếp.
 UPLOAD_FOLDER = "Nguồn tải lên"
@@ -424,11 +424,16 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
     files, found = _gather_inputs(paths, epub_root)
     rows = []
     total_words = 0
+    total_seconds = 0.0
     for path in files:
         head, tail, size, sha256 = _read_chapter(path)
         text = _decode_head(head)
         words = len(text.split())
         total_words += words
+        # Độ dài nghe ước: cùng cách với hộp Xuất sách nói (prepare.listening_seconds trên chữ của các đoạn đọc được) - soát a64: ở đây "4 phút",
+        # hộp xuất "7 phút", thật 6:14.
+        seconds = listening_seconds(sum(len(paragraph.text) for paragraph in px.split_paragraphs(text) if px.is_speakable(paragraph.text)))
+        total_seconds += seconds
         rows.append({
             "path": str(path),
             "name": path.name,
@@ -440,6 +445,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             "credits": _credits_at_top(head),
             "tailCredits": _credits_at_end(tail, size),  # dòng ủng hộ / quảng cáo cuối chương: đề xuất như trên
             "words": words,
+            "audioSeconds": round(seconds),
             # Số ký tự có chữ (không tính khoảng trắng): hiện cạnh tên chương để thấy chương nào rỗng / quá dài trước khi tạo.
             "chars": sum(not ch.isspace() for ch in text),
             "bytes": size,
@@ -472,7 +478,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
         "totals": {
             "chapters": len(rows),
             "words": total_words,
-            "audioSeconds": round(total_words / SYLLABLES_PER_SECOND),
+            "audioSeconds": round(total_seconds),
         },
     }
 

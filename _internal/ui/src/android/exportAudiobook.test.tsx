@@ -107,8 +107,8 @@ describe("hộp xuất sách nói trên điện thoại", () => {
   });
 
   it("chương đã đọc sẵn (đã nghe, lần xuất trước): nói phần ấy xuất ngay", () => {
-    expect(text(renderToString(<AudiobookPhoneForm voice={local} plan={plan({ readyChapters: 3 })} planError="" />))).toContain(
-      "Đã đọc sẵn 3/12 chương - phần này xuất ngay, không đọc lại.",
+    expect(text(renderToString(<AudiobookPhoneForm voice={local} plan={plan({ readyChapters: 3, readySeconds: 9000 })} planError="" />))).toContain(
+      "Đã đọc sẵn khoảng 25% - phần này xuất ngay, không đọc lại.",
     );
   });
 

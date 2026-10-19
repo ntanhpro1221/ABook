@@ -28,6 +28,7 @@ from typing import Any
 
 from ..io_utils import atomic_write_bytes, ffmpeg_available, ffmpeg_executable
 from ..readaloud import paragraphs as px
+from ..readaloud.prepare import listening_seconds
 from ..readaloud.edge import EdgeDropped
 from ..readaloud.model import VoiceError
 from ..readaloud.service import MAX_TEXT, ReadAloud
@@ -40,7 +41,6 @@ FORMATS = ("mp3", "m4b")
 CHAPTER_CHANNELS = 1  # sách nói giọng đọc: mono (MP3 64 kb/s mono; AAC 64 kb/s mono như M4B của Studio)
 MP3_ARGS = ["-c:a", "libmp3lame", "-b:a", "64k", "-ac", "1", "-f", "mp3"]
 FLAC_ARGS = ["-c:a", "flac", "-f", "flac"]
-CHARS_PER_SECOND = 14  # như trình phát ước đoạn chưa đọc (readAloud.ts, readaloud/prepare.py) - chỉ khi cuốn chưa có clip nào để đo
 CACHED_SECONDS = 0.05  # clip trả nhanh hơn thế là từ bộ đệm: không nói gì về tốc độ giọng
 RETRIES = 2  # lỗi thoáng qua khác của giọng trực tuyến (502, bị từ chối...): thử lại như trình phát, rồi mới dừng
 TRANSIENT = ("service", "rejected")
@@ -198,7 +198,8 @@ def plan(chapters: list[Chapter], reading: Reading, work: Path, speed: float | N
          cached: Callable[[str], int | None] = lambda _text: None) -> dict[str, Any]:
     """Cho hộp Xuất: số chương, số chữ, thời gian nghe, ước thời gian máy làm (chỉ khi giọng đã đo tốc độ `speed`), và phần đã có sẵn.
     `cached(chữ)`: độ dài (ms) clip của đoạn ấy trong bộ đệm Nghe ngay, None nếu chưa có (`cached_lookup`). Thời gian nghe = độ dài thật của phần đã có (chương đã
-    ghép từ lần xuất trước + clip trong bộ đệm + quãng lặng) + phần chưa có ước theo số chữ với tốc độ ĐO trên chính các clip ấy (chưa có clip nào: CHARS_PER_SECOND);
+    ghép từ lần xuất trước + clip trong bộ đệm + quãng lặng) + phần chưa có ước theo số chữ với tốc độ ĐO trên chính các clip ấy (chưa có clip nào: hằng chung
+    của prepare.listening_seconds - cùng số trình tạo sách nói dùng);
     soát a62: "khoảng 10 phút" cho cuốn thật 8:44. `readyChapters`: chương có đủ (đã ghép hay mọi đoạn có clip) - xuất ngay, không đọc lại; `readySeconds`: giây nghe
     đã có sẵn; máy chỉ phải đọc phần chưa có (`secondsEstimate`)."""
     chars = sum(chapter.chars for chapter in chapters)
@@ -223,8 +224,7 @@ def plan(chapters: list[Chapter], reading: Reading, work: Path, speed: float | N
         gaps += silence
         open_chars += missing
         ready += missing == 0
-    rate = heard_chars / heard_seconds if heard_chars and heard_seconds > 0 else CHARS_PER_SECOND
-    left = open_chars / rate
+    left = listening_seconds(open_chars, heard_chars / heard_seconds if heard_chars and heard_seconds > 0 else None)
     return {"chapters": len(chapters), "chars": chars, "audioSeconds": round(heard_seconds + gaps + left), "rtf": speed,
             "secondsEstimate": round(left * speed) if speed else None, "readyChapters": ready, "readySeconds": round(heard_seconds)}
 

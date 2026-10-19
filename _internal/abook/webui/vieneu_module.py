@@ -428,7 +428,7 @@ def status() -> dict[str, Any]:
             "outdatedParts": [part.label for part in behind], "outdatedBytes": sum(left[part.id] for part in behind),
             "benchmark": {tier: bench[tier] for tier in tiers if isinstance(bench.get(tier), dict)},
             "benchmarking": _state["benchmarking"], "suggestion": suggestion(bench, tiers) if not _state["benchmarking"] else None,
-            "cancelled": bool(_state["cancelled"]), "device": facts, "recommended": best, "restart": _restart_pending(), "slowRtf": SLOW_RTF,
+            "cancelled": bool(_state["cancelled"]), "retrying": _core.retrying(), "device": facts, "recommended": best, "restart": _restart_pending(), "slowRtf": SLOW_RTF,
             "accelerated": accelerated() if FAST in have else None,
             # Máy không chạy được bản tăng tốc: lựa chọn ấy ẩn đi, nhưng thẻ vẫn nói vì sao (không ẩn im lặng).
             "fastUnsupported": vieneu_gguf.unsupported_reason() if "turbo" in tiers else "",

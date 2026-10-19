@@ -60,6 +60,8 @@ export interface FfmpegStatus {
   bytes: number;
   /** Lý do không tải được trên máy này (rỗng nếu tải được). */
   blocked: string;
+  /** Đang tải mà mạng vừa hỏng, đang chờ thử lại (RETRYING_NOTE). */
+  retrying?: boolean;
 }
 
 export const fetchPlan = (bookId: string, voice: string) =>
@@ -88,11 +90,17 @@ export function planText(plan: Pick<AudiobookPlan, "chapters" | "audioSeconds" |
   return `${plan.chapters} chương · ${spokenDuration(plan.audioSeconds)} nghe${machine}.`;
 }
 
-/** Nói phần nào đã có sẵn (đã nghe, đã Làm trước, lần xuất trước): "Đã đọc sẵn 1/4 chương - phần này xuất ngay, không đọc lại." */
-export function resumeText(plan: Pick<AudiobookPlan, "chapters" | "readyChapters" | "readySeconds">): string {
+/** Nói phần nào đã có sẵn (đã nghe, đã Làm trước, lần xuất trước): "Đã đọc sẵn khoảng 52% - phần này xuất ngay, không đọc lại." Tính theo phần nghe
+ *  đã có trên cả cuốn, không đếm chương đủ: soát a63 huỷ khi chương 2/3 đã đọc 57% mà hộp báo "1/3 chương". */
+export function resumeText(plan: Pick<AudiobookPlan, "chapters" | "readyChapters" | "readySeconds" | "audioSeconds">): string {
+  // readyChapters chỉ còn để biết đủ cả cuốn.
   if (plan.chapters && plan.readyChapters >= plan.chapters) return "Đã đọc sẵn cả cuốn - chỉ còn ghép thành file, không đọc lại.";
-  if (plan.readyChapters) return `Đã đọc sẵn ${plan.readyChapters}/${plan.chapters} chương - phần này xuất ngay, không đọc lại.`;
-  if (plan.readySeconds && plan.readySeconds >= 60) return `Đã đọc sẵn ${spokenDuration(plan.readySeconds)} nghe - phần này xuất ngay, không đọc lại.`;
+  const ready = plan.readySeconds ?? 0;
+  if (ready >= 60 && plan.audioSeconds > 0) {
+    // Chưa đủ cả cuốn thì không nói 100% (quãng lặng giữa đoạn, làm tròn).
+    const percent = Math.min(99, Math.max(1, Math.round((ready / plan.audioSeconds) * 100)));
+    return `Đã đọc sẵn khoảng ${percent}% - phần này xuất ngay, không đọc lại.`;
+  }
   return "";
 }
 

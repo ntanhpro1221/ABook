@@ -6,11 +6,11 @@ import { Progress } from "@/shared/ui";
 import { CANCELLED_NOTE, formatSize } from "@/studio/musicLocal";
 import { useSource } from "./source";
 import { desktopVieneu, useModuleStatus } from "./VieneuModuleCard";
-import { initialChoices, meteredNotice, selectionBytes, VIENEU_COPY, vieneuLabel, vieneuPercent, type VieneuStatus } from "./vieneuModule";
+import { meteredNotice, offlineChoices, selectionBytes, VIENEU_COPY, vieneuLabel, vieneuPercent, type VieneuChoiceId, type VieneuStatus } from "./vieneuModule";
 
 /** Tải giọng VieNeu NGAY trong khối lỗi của trình phát (mất mạng mà giọng đang chọn cần mạng): cùng API với thẻ trong Cài đặt - máy tính hỏi máy chủ cục bộ,
  *  điện thoại hỏi lõi native (`source.vieneu`) - nên người nghe không rời màn nghe. Tải xong thì danh sách giọng hỏi lại, khối lỗi tự đổi nút sang
- *  “Đọc bằng …”. Chọn gì để tải: đúng phần đánh dấu sẵn của thẻ (initialChoices). */
+ *  “Đọc bằng …”. Chọn gì để tải: một giọng nhẹ nhất đủ đọc (offlineChoices); gói đánh dấu sẵn của thẻ là nút phụ. */
 export function VieneuDownload({ button, onOpenSettings }: { button: string; onOpenSettings: () => void }) {
   const source = useSource();
   const backend = source.vieneu ?? desktopVieneu;
@@ -18,12 +18,14 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
   const { status, working } = useModuleStatus(backend, VIENEU_COPY);
   const [busy, setBusy] = useState(false);
   if (!status) return null;
-  const missing = initialChoices(status).filter((id) => !status.choices.find((choice) => choice.id === id)?.installed);
+  const { light, full } = offlineChoices(status);
+  const missing = light.length ? light : full;
   const bytes = selectionBytes(status, missing);
-  const start = async () => {
+  const fullBytes = selectionBytes(status, full);
+  const start = async (choices: VieneuChoiceId[]) => {
     setBusy(true);
     try {
-      client.setQueryData(["readaloud", VIENEU_COPY.key], await backend.start(missing));
+      client.setQueryData(["readaloud", VIENEU_COPY.key], await backend.start(choices));
     } catch (error) {
       toast.error("Chưa tải được giọng VieNeu", { description: (error as Error).message });
     } finally {
@@ -71,11 +73,22 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
           <button
             type="button"
             disabled={busy}
-            onClick={() => void start()}
+            onClick={() => void start(missing)}
             onMouseDown={(event) => event.preventDefault()}
             className="min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover disabled:opacity-60 max-sm:min-h-[44px]"
           >
-            {failed ? "Tải lại" : bytes > 0 ? `${button} (${formatSize(bytes)})` : button}
+            {failed ? "Thử lại" : bytes > 0 ? `${button} (${formatSize(bytes)})` : button}
+          </button>
+        )}
+        {!downloading && !failed && status.state !== "unsupported" && light.length > 0 && fullBytes > bytes && (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void start(full)}
+            onMouseDown={(event) => event.preventDefault()}
+            className="min-h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-fg-2 underline underline-offset-2 hover:text-fg disabled:opacity-60 max-sm:min-h-[44px]"
+          >
+            Gói đầy đủ ({formatSize(fullBytes)})
           </button>
         )}
         <button

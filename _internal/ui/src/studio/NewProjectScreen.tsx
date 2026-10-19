@@ -69,7 +69,8 @@ import {
 } from "@/studio/upload";
 import { AnalysisModelPicker, analysisChoiceLabel, modelLabel, useAnalysisModels, useAvailableModelNames } from "@/studio/AnalysisModelPicker";
 import { DEFAULT_LABEL, applyTemplate, changedChoices, templateChoices, type BookTemplate, type Profile } from "@/studio/bookTemplates";
-import { StudioInstallNotice } from "@/studio/StudioSetup";
+import { NoStudioHere, StudioInstallNotice, useStudioFit } from "@/studio/StudioSetup";
+import type { StudioFit } from "@/studio/studioFit";
 import { TemplateBar } from "@/studio/TemplateBar";
 import { VolumeSplit } from "@/studio/VolumeSplit";
 import { inOrder, ranges, startNumbers, volumeTitles } from "@/studio/volumes";
@@ -1433,6 +1434,7 @@ function ConfirmStep({
   restart,
   onReview,
   noStudio,
+  unfit,
 }: {
   /** "Chia thành nhiều tập": các tập sẽ tạo (số chương mỗi tập), hay không có khi là một sách. */
   volumes?: { chapters: number }[];
@@ -1461,6 +1463,8 @@ function ConfirmStep({
   onReview: () => void;
   /** Máy chưa có Studio: tạo được nhưng không chạy được - không ước thời gian, không "bắt đầu ngay". */
   noStudio?: boolean;
+  /** Máy chưa có Studio và không đủ để làm sách nói (studioFit.ts): không tạo được ở đây - nói thật, mời tạo ở máy đã ghép. */
+  unfit?: StudioFit;
 }) {
   const models = useAnalysisModels().data;
   const option = PROFILES.find((item) => item.value === profile)!;
@@ -1505,7 +1509,9 @@ function ConfirmStep({
     ...(analysisModel || models?.default
       ? ([["Bộ phân tích truyện", analysisChoiceLabel(analysisModel, seed?.analysisModel)]] as [string, string][])
       : []),
-    ...(noStudio
+    ...(unfit
+      ? ([["Thời gian làm", "máy này không làm sách nói được"]] as [string, string][])
+      : noStudio
       ? ([["Thời gian làm", "tính được khi Studio đã cài - dự án chờ tới lúc đó"]] as [string, string][])
       : measured
         ? ([
@@ -1518,6 +1524,7 @@ function ConfirmStep({
   return (
     <div>
       <h2 className="text-xl font-semibold">Xem lại trước khi tạo</h2>
+      {unfit && <NoStudioHere fit={unfit} className="mt-4" />}
       <div className="mt-6 flex flex-col gap-6 rounded-2xl border border-line bg-panel p-6 sm:flex-row">
         <BookCover title={title} size="lg" className="w-40 max-sm:mx-auto" />
         <div className="min-w-0 flex-1">
@@ -1575,7 +1582,9 @@ function ConfirmStep({
         <span>
           <span id="start-now-name" className="block text-sm font-medium">Bắt đầu tạo ngay</span>
           <span id="start-now-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
-            {noStudio
+            {unfit
+              ? "Tắt vì máy này không làm sách nói được (lý do ở đầu trang)."
+              : noStudio
               ? "Chưa có Studio nên sách chưa chạy được. Sách được tạo và chờ; cài Studio xong thì bấm “Bắt đầu tạo sách nói” ở trang dự án."
               : startNow
               ? "Sách chạy nền: đóng cửa sổ vẫn tiếp tục, Windows báo khi xong. Chương nào xong là nghe được chương đó, không phải chờ cả cuốn."
@@ -1617,6 +1626,9 @@ export function NewProjectScreen() {
   const [problem, setProblem] = useState<{ text: string; subfolders: string[] } | null>(null);
   const submitting = useRef(false);
   const noStudio = useStudioMissing().missing;
+  // Máy không đủ để làm sách nói: dự án tạo ở đây sẽ không bao giờ chạy - không cho tạo, lý do ở bước đầu và bước cuối (soát a64).
+  const fit = useStudioFit();
+  const unfit = noStudio && fit?.level === "no" ? fit : undefined;
   const remote = Boolean(useAppInfo().data?.remote);
   const update = (changes: Partial<Draft>) => setDraft((current) => ({ ...current, ...changes }));
 
@@ -1784,7 +1796,8 @@ export function NewProjectScreen() {
     const kept = ordered.filter((file) => !excluded.has(file.path));
     const files = draft.limit && !splitting ? kept.slice(0, draft.limit) : kept;
     const words = files.reduce((sum, file) => sum + file.words, 0);
-    return { ...rawScan, files, totals: { chapters: files.length, words, audioSeconds: Math.round(words / 4.3) } };
+    const audioSeconds = files.reduce((sum, file) => sum + (file.audioSeconds ?? 0), 0); // ước của máy chủ, cùng cách hộp Xuất sách nói
+    return { ...rawScan, files, totals: { chapters: files.length, words, audioSeconds } };
   }, [rawScan, ordered, draft.excluded, draft.limit, splitting]);
   const volumeStarts = useMemo(
     () => (splitting && scan ? startNumbers(ordered, draft.volumeStarts, new Set(draft.excluded)) : [1]),
@@ -2065,6 +2078,7 @@ export function NewProjectScreen() {
               restart={draft.replaces?.restart ? { title: draft.replaces.title } : undefined}
               onReview={() => go(0)}
               noStudio={noStudio}
+              unfit={unfit}
             />
           )}
           {/* Ghim ở đáy vùng cuộn: bước xác nhận dài (thêm dòng "Dòng ghi công"...) đẩy nút tạo xuống dưới nếp màn hình - soát
@@ -2078,9 +2092,12 @@ export function NewProjectScreen() {
                 Tiếp tục <ArrowRight className="size-4" />
               </Button>
             ) : (
-              <Button variant="primary" icon={draft.startNow && !noStudio ? Wand2 : Mic} loading={create.isPending} disabled={!title.trim()} onClick={submit}>
-                {draft.startNow && !noStudio ? "Tạo và bắt đầu" : "Tạo sách"}
-              </Button>
+              <span className="flex min-w-0 items-center gap-3">
+                {unfit && <span className="min-w-0 text-right text-[0.8125rem] text-fg-2 text-pretty">Máy này không làm sách nói được</span>}
+                <Button variant="primary" icon={draft.startNow && !noStudio ? Wand2 : Mic} loading={create.isPending} disabled={!title.trim() || Boolean(unfit)} onClick={submit}>
+                  {draft.startNow && !noStudio ? "Tạo và bắt đầu" : "Tạo sách"}
+                </Button>
+              </span>
             )}
           </div>
         </section>

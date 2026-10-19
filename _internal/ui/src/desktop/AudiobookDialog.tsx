@@ -12,6 +12,7 @@ import { formatSize } from "@/shared/format";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { pickFolder, useAppInfo } from "@/studio/data";
+import { RETRYING_NOTE } from "@/studio/musicLocal";
 import { OPEN_AUDIOBOOK_EVENT, startExport } from "./ExportBookFileJob";
 import { MusicMixOption, useMusicChoice } from "./musicMix";
 import {
@@ -45,7 +46,7 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
       {status.downloading ? (
         <div className="mt-2 flex items-center gap-3">
           <Progress value={ffmpegPercent(status) / 100} size="sm" running label="Đang tải công cụ ghép âm thanh" />
-          <span className="tabular shrink-0 text-xs text-fg-2">{ffmpegPercent(status)}%</span>
+          <span className="tabular shrink-0 text-xs text-fg-2">{status.retrying ? `${RETRYING_NOTE} ${ffmpegPercent(status)}%` : `${ffmpegPercent(status)}%`}</span>
           <Button size="sm" variant="ghost" onClick={onStop}>
             Dừng
           </Button>
@@ -58,8 +59,9 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
         <p className="mt-2 text-warning">{status.blocked}</p>
       ) : (
         <div className="mt-2 flex items-center gap-3">
+          {/* Lời lỗi nói "bấm Thử lại" (ffmpeg_setup.reason): nút mang đúng tên ấy. */}
           <Button size="sm" onClick={onDownload}>
-            Tải công cụ
+            {status.error ? "Thử lại" : "Tải công cụ"}
           </Button>
           {status.error && <span className="text-xs text-danger">{status.error}</span>}
         </div>

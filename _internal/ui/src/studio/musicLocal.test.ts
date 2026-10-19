@@ -86,6 +86,12 @@ describe("import summary", () => {
     expect(merged.tracks).toHaveLength(2);
     expect(mergeImports([]).tracks).toEqual([]);
   });
+
+  it("keeps the music-analysis module status of the last import, so the download offer shows right after the first import", () => {
+    const module: MusicModuleStatus = { state: "missing", done: 0, total: 57_000_000, error: "", ready: false, analysing: false, metered: false };
+    expect(mergeImports([result({ added: [track()] }), result({ module })]).module).toEqual(module);
+    expect(mergeImports([]).module).toBeUndefined();
+  });
 });
 
 describe("mô-đun Phân tích nhạc", () => {
@@ -96,6 +102,7 @@ describe("mô-đun Phân tích nhạc", () => {
     expect(moduleLabel(status())).toContain(formatSize(92_000_000));
     expect(moduleLabel(status())).toContain("vẫn nhập, nghe và ghim tay được");
     expect(moduleLabel(status({ state: "downloading", done: 30, total: 60 }))).toContain("50%");
+    expect(moduleLabel(status({ state: "downloading", done: 30, total: 60, retrying: true }))).toBe("Mạng chập chờn - đang thử lại… (Phân tích nhạc, 50%)");
     expect(modulePercent(status({ done: 5, total: 0 }))).toBe(0);
     expect(modulePercent(status({ done: 99, total: 60 }))).toBe(100);
   });

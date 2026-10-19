@@ -409,7 +409,9 @@ class CutBlob(Blob):
 
 
 def test_a_download_cut_mid_way_keeps_its_part_and_resumes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(studio_setup.time, "sleep", lambda _seconds: None)
+    # Trong lúc chờ thử lại, luồng tải báo "đang thử lại" (thẻ mô-đun nói "Mạng chập chờn", soát a64); byte về lại / xong thì thôi.
+    waits: list[bool] = []
+    monkeypatch.setattr(studio_setup.time, "sleep", lambda _seconds: waits.append(studio_setup.retrying(threading.current_thread())))
     Blob.data = bytes(range(256)) * 4_000  # ~1 MB
     Blob.ranges = []
     CutBlob.cut = 300_000
@@ -422,6 +424,7 @@ def test_a_download_cut_mid_way_keeps_its_part_and_resumes(tmp_path: Path, monke
         studio_setup.download(item, target, lambda *_: None, lambda: False)
         assert target.read_bytes() == Blob.data, "nối lại sau mỗi lần đứt tới khi đủ"
         assert Blob.ranges == ["bytes=300000-", "bytes=600000-", "bytes=900000-"]
+        assert waits and all(waits) and not studio_setup.retrying(threading.current_thread())
 
         CutBlob.cut = 100_000  # 5 lượt không đủ: báo lỗi mạng, giữ phần đã tải để bấm Cài tiếp
         Blob.ranges = []
@@ -429,6 +432,7 @@ def test_a_download_cut_mid_way_keeps_its_part_and_resumes(tmp_path: Path, monke
         with pytest.raises(SetupError, match="Kiểm tra mạng"):
             studio_setup.download(item, other, lambda *_: None, lambda: False)
         assert other.with_name("uv.zip.part").stat().st_size == 500_000, "không xoá .part khi mạng đứt"
+        assert not studio_setup.retrying(threading.current_thread()), "báo lỗi rồi thì không còn 'đang thử lại'"
         CutBlob.cut = len(Blob.data)
         studio_setup.download(item, other, lambda *_: None, lambda: False)
         assert Blob.ranges[-1] == "bytes=500000-" and other.read_bytes() == Blob.data
@@ -622,3 +626,21 @@ def test_an_optional_model_download_that_fails_says_why(tmp_path: Path) -> None:
     setup.wait(10)
     status = setup.optional_status("qwen3.5:4b")
     assert status["installed"] is False and status["downloading"] is False and "Ollama" in (status["error"] or "")
+
+
+def test_the_card_is_known_before_install_is_pressed(tmp_path: Path) -> None:
+    """Màn Studio hỏi trạng thái trước khi bấm Cài: card NVIDIA (tên, bộ nhớ) đã có trong `gpu` để nói máy có đủ không (soát a64); dò
+    một lần mỗi phiên, bước Kiểm tra máy dò lại thật. Máy không có card thì `gpu` là None ngay từ đầu, không đợi tới lúc bấm."""
+    calls: list[int] = []
+
+    def card() -> dict[str, object]:
+        calls.append(1)
+        return {"name": "Card thử", "memory": 6 << 30}
+
+    setup = StudioSetup(tmp_path / "Studio", tmp_path, gpu=card)
+    assert setup.status()["gpu"] == {"name": "Card thử", "memory": 6 << 30}
+    setup.status()
+    assert len(calls) == 1, "dò một lần, không mỗi giây"
+    setup._step_check()
+    assert len(calls) == 2 and setup.status()["gpu"]["name"] == "Card thử"
+    assert StudioSetup(tmp_path / "Other", tmp_path, gpu=lambda: None).status()["gpu"] is None
