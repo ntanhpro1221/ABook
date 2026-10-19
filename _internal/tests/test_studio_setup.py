@@ -644,3 +644,28 @@ def test_the_card_is_known_before_install_is_pressed(tmp_path: Path) -> None:
     setup._step_check()
     assert len(calls) == 2 and setup.status()["gpu"]["name"] == "Card thử"
     assert StudioSetup(tmp_path / "Other", tmp_path, gpu=lambda: None).status()["gpu"] is None
+
+
+def test_a_failed_module_download_reads_as_vietnamese_with_the_raw_error_folded_away() -> None:
+    # Soát a66 mục 4: "Unable to resolve host …" / "<urlopen error …>" hiện nguyên văn. Lỗi mạng -> một câu chung; lỗi khác -> câu chung + chi tiết.
+    import socket
+    import urllib.error
+
+    network = studio_setup.NETWORK_FAILURE.format(retry="Thử lại")
+    assert network == "Không kết nối được tới máy chủ tải. Kiểm tra mạng rồi bấm Thử lại."
+    for cause in (urllib.error.URLError(socket.gaierror(11001, "getaddrinfo failed")), TimeoutError("timed out"),
+                  ConnectionResetError(10054, "reset")):
+        message, detail = studio_setup.download_failure("giọng VieNeu", cause)
+        assert message == network and type(cause).__name__ in detail
+        wrapped = SetupError("x")
+        wrapped.__cause__ = cause
+        assert studio_setup.download_failure("giọng VieNeu", wrapped)[0] == network
+    gone = urllib.error.HTTPError("https://x", 404, "Not Found", {}, None)  # type: ignore[arg-type]
+    wrapped = SetupError("x")
+    wrapped.__cause__ = gone
+    message, detail = studio_setup.download_failure("giọng VieNeu", wrapped)
+    assert message.startswith("Không tải được giọng VieNeu. Bấm Thử lại") and "404" in detail
+    assert "ghim" in studio_setup.download_failure("giọng VieNeu", SetupError("sai băm"))[0]
+    message, detail = studio_setup.download_failure("giọng VieNeu", RuntimeError("boom"))
+    assert "RuntimeError" not in message and detail == "RuntimeError: boom"
+    assert studio_setup.download_failure("Studio", OSError(28, "No space"), retry="Cài tiếp")[0].endswith("bấm Cài tiếp.")

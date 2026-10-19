@@ -253,6 +253,7 @@ def status() -> dict[str, Any]:
         return {
             "state": state, "done": _core.state["done"] if state == "downloading" else 0, "retrying": _core.retrying(),
             "total": _core.state["total"] if state == "downloading" else 0, "error": _core.state["error"],
+            "errorDetail": _core.state.get("error_detail", "") if _core.state["error"] else "",
             "supported": not blocked, "reason": blocked,
             "choices": choices,
             "parts": [{"id": part.id, "label": part.label, "bytes": left[part.id], "state": judged[part.id], "external": part.external}

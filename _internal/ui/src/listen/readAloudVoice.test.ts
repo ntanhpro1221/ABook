@@ -245,9 +245,10 @@ describe("giọng mặc định khi chưa chọn", () => {
     { id: "vieneu:nano/aihan", name: "Ái Hân (VieNeu Nano)", provider: "vieneu", online: false, gender: "female" },
   ] as ReadAloudVoice[];
 
-  it("defaults to the first VieNeu voice when the listener has chosen nothing and VieNeu is installed", async () => {
+  it("defaults to a VieNeu voice of the default voice's gender, never the first one (Adam), when no preferred voice is there", async () => {
     const { module } = await fresh();
-    expect(module.resolveVoice([...VOICES, ...nano], "")?.id).toBe("vieneu:nano/adam");
+    expect(VOICES.find((voice) => voice.default)?.gender).toBe("female");
+    expect(module.resolveVoice([...VOICES, ...nano], "")?.id).toBe("vieneu:nano/aihan");
   });
 
   it("prefers a neutral storytelling voice over the first one in the list (Adam bựa)", async () => {
@@ -264,13 +265,13 @@ describe("giọng mặc định khi chưa chọn", () => {
   it("follows the cases shared with the Android core (tests/fixtures/default_voice)", async () => {
     const { module } = await fresh();
     const shared = JSON.parse(readFileSync(new URL("../../../tests/fixtures/default_voice/cases.json", import.meta.url)).toString("utf8")) as {
-      preferred: string[];
-      cases: { name: string; ids: string[]; expect: string | null }[];
+      preferred: Record<string, string[]>;
+      cases: { name: string; gender: string | null; voices: [string, string][]; expect: string | null }[];
     };
-    expect([...module.NARRATOR_VOICES]).toEqual(shared.preferred);
+    expect(module.NARRATOR_VOICES).toEqual(shared.preferred);
     for (const item of shared.cases) {
-      const voices = item.ids.map((id) => ({ id, name: id, provider: "vieneu", online: false })) as ReadAloudVoice[];
-      expect(module.narratorVoice(voices)?.id ?? null, item.name).toBe(item.expect);
+      const voices = item.voices.map(([id, gender]) => ({ id, name: id, provider: "vieneu", online: false, gender })) as ReadAloudVoice[];
+      expect(module.narratorVoice(voices, item.gender ?? undefined)?.id ?? null, item.name).toBe(item.expect);
     }
   });
 

@@ -1,14 +1,11 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./desktop/App";
+import { createAppQueryClient } from "./shared/queryClient";
 import "./styles.css";
 
-const client = new QueryClient({
-  defaultOptions: {
-    queries: { retry: 1, refetchOnWindowFocus: true, staleTime: 1000 },
-  },
-});
+const client = createAppQueryClient();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

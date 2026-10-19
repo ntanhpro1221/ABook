@@ -1,4 +1,4 @@
-import { EbookPlayer } from "./plugins";
+import { EbookLibrary, EbookPlayer } from "./plugins";
 
 // Tuỳ chọn của trình phát trên điện thoại. Lưu trong WebView (localStorage) và đẩy phần native cần biết xuống
 // lõi phát mỗi lần mở app và mỗi lần đổi.
@@ -81,4 +81,12 @@ export async function pushSettings(settings: PlayerSettings): Promise<void> {
 export function applyTheme(theme: PlayerSettings["theme"]): void {
   const dark = theme === "dark" || (theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.dataset.theme = dark ? "dark" : "light";
+  // Thanh trạng thái theo giao diện vừa đặt (soát a66: đổi sang tối khi app đang mở, biểu tượng vẫn màu tối, dải trên cùng #303030 lệch thân app).
+  void EbookLibrary.systemBars({ dark, color: hexColor(getComputedStyle(document.body).backgroundColor) }).catch(() => undefined);
+}
+
+/** "rgb(14, 17, 21)" -> "#0e1115" (Android chỉ đọc dạng #rrggbb). */
+export function hexColor(css: string): string {
+  const [r = 0, g = 0, b = 0] = css.match(/\d+(\.\d+)?/g)?.map(Number) ?? [];
+  return `#${[r, g, b].map((value) => Math.round(value).toString(16).padStart(2, "0")).join("")}`;
 }

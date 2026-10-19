@@ -80,8 +80,15 @@ export function chooseVoiceText(voices: readonly Pick<ReadAloudVoice, "online">[
 export interface ConsentRequest {
   voice: ReadAloudVoice;
   voices: ReadAloudVoice[];
-  /** Mã giọng sẽ dùng (giọng đang hỏi, hay giọng khác vừa chọn trong hộp); null: người nghe đóng hộp - không phát. */
-  answer: (voiceId: string | null) => void;
+  /** Mã giọng sẽ dùng (giọng đang hỏi, hay giọng vừa chọn trong hộp); null: người nghe đóng hộp - không phát. `chosen`: người nghe chọn giọng ấy
+   *  trong danh sách "Chọn giọng khác" (kể cả chọn lại đúng giọng đang hỏi) - khác "Nghe", là lựa chọn giọng cho cuốn. */
+  answer: (voiceId: string | null, chosen?: boolean) => void;
+}
+
+/** Trả lời của hộp hỏi: giọng sẽ đọc + người nghe có tự chọn nó trong danh sách không (trình phát nhớ lựa chọn ấy cho cuốn). */
+export interface ConsentAnswer {
+  voice: string;
+  chosen: boolean;
 }
 
 let current: ConsentRequest | null = null;
@@ -101,21 +108,21 @@ export function pendingConsent(): ConsentRequest | null {
   return current;
 }
 
-/** Hỏi người nghe; xong thì trả mã giọng sẽ đọc (đã nhớ đồng ý nếu giọng ấy trực tuyến), hay null nếu người nghe đóng hộp. Đang có hộp mở thì
+/** Hỏi người nghe; xong thì trả giọng sẽ đọc (đã nhớ đồng ý nếu giọng ấy trực tuyến), hay null nếu người nghe đóng hộp. Đang có hộp mở thì
  *  hộp cũ coi như bị đóng. */
-export function askOnlineConsent(voice: ReadAloudVoice, voices: ReadAloudVoice[]): Promise<string | null> {
+export function askOnlineConsent(voice: ReadAloudVoice, voices: ReadAloudVoice[]): Promise<ConsentAnswer | null> {
   current?.answer(null);
   return new Promise((resolve) => {
     const request: ConsentRequest = {
       voice,
       voices,
-      answer: (voiceId) => {
+      answer: (voiceId, chosen = false) => {
         if (current !== request) return;
         const picked = voices.find((item) => item.id === voiceId);
         // Chọn một giọng trực tuyến trong danh sách ngay dưới lời hỏi cũng là đồng ý cho nhà cung cấp ấy.
         if (picked?.online) giveOnlineConsent(picked.provider);
         publish(null);
-        resolve(picked ? picked.id : null);
+        resolve(picked ? { voice: picked.id, chosen } : null);
       },
     };
     publish(request);

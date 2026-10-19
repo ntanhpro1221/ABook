@@ -625,7 +625,8 @@ export function App() {
         visibleToasts={2}
         // Thông báo vài giây che chữ thẻ bên dưới (soát UX a13 #17): nút ✕ để đọc xong là gạt đi ngay, không phải chờ hết hạn.
         closeButton
-        containerAriaLabel="Thông báo"
+        // Nhãn trọn (mặc định sonner nối "alt+T" thô): phím tắt nói bằng chữ của app.
+        customAriaLabel="Thông báo (Alt+T)"
         // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.
         className="pointer-events-auto"
         toastOptions={{

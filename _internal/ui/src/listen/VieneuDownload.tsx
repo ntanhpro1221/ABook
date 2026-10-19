@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/shared/cn";
+import { ErrorDetails } from "@/shared/ErrorDetails";
 import { Progress } from "@/shared/ui";
 import { CANCELLED_NOTE, formatSize } from "@/studio/musicLocal";
 import { useSource } from "./source";
@@ -67,6 +68,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
         </div>
       )}
       {note && <p className={cn("text-[0.8125rem] text-pretty", failed ? "text-danger" : "text-fg-2")}>{note}</p>}
+      {failed && <ErrorDetails technical={status.errorDetail} className="text-danger" />}
       {metered && <p className="text-[0.8125rem] text-fg-2 text-pretty">{metered}</p>}
       <div className={idle ? "contents" : "flex flex-wrap items-center gap-2"}>
         {!downloading && status.state !== "unsupported" && missing.length > 0 && (

@@ -1,6 +1,7 @@
 package vn.abook.player
 
 import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Process
 import org.json.JSONObject
 import java.io.File
@@ -31,7 +32,15 @@ object AndroidMusicStudent {
         }
     }
 
-    /** Mạng đang dùng tính phí (dữ liệu di động)? */
-    fun metered(context: android.content.Context): Boolean =
-        (context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as? ConnectivityManager)?.isActiveNetworkMetered ?: false
+    /** Điện thoại THẬT đang dùng dữ liệu di động (mạng đang dùng có Internet qua sóng di động)? Thẻ tải nói "Điện thoại đang dùng dữ liệu di
+     *  động", nên không có mạng nào phải là false - `isActiveNetworkMetered` lại trả true khi ấy (soát a66: lời báo hiện lúc mất mạng). */
+    fun metered(context: android.content.Context): Boolean {
+        val manager = context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as? ConnectivityManager ?: return false
+        val caps = manager.activeNetwork?.let { manager.getNetworkCapabilities(it) }
+        return onMobileData(caps != null, caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true,
+            caps?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true)
+    }
+
+    /** Luật của [metered], tách ra để thử không cần Android: có mạng đang dùng, mạng ấy có Internet, và đi qua sóng di động. */
+    internal fun onMobileData(network: Boolean, internet: Boolean, cellular: Boolean): Boolean = network && internet && cellular
 }
