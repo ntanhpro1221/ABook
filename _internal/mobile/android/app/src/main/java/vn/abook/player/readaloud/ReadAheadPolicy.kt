@@ -17,6 +17,38 @@ class ReadAheadPolicy(private val base: Int) {
         /** Từ ngần này (p80 thời gian lấy một clip) giọng được coi là CHẬM: đáng đọc song song hai đoạn một lúc ([slow]). Edge bình thường ~0,6-2 s; lúc chậm 9-24 s. */
         const val SLOW_MS = 4_000L
 
+        /** Giọng trên máy (uxfix72): đọc sẵn tới chừng này mili-giây âm thanh, không theo số đoạn - a65 (máy ảo, rtf ~0,22): hai dòng ngắn (hay lặp lại, lấy từ bộ đệm tức thì) đứng
+         *  trước một đoạn dài 18 s là đủ "2 đoạn" mà chỉ có vài giây âm thanh, đoạn dài bắt đầu đọc khi chỉ còn ~3,9 s phía trước và cần 4 s - im 0,16-0,35 s. 20 s đủ cho một đoạn ~300 ký tự
+         *  ở rtf tới ~1 (máy chậm). */
+        const val LOCAL_BUFFER_MS = 20_000L
+        /** Trần số đoạn đọc sẵn của giọng trên máy: đoạn người nghe nhảy qua là CPU / pin uổng. */
+        const val LOCAL_MAX_AHEAD = 6
+
+        /** Giọng trên máy: hàng đợi có `aheadMs` (các đoạn ĐÃ đọc xong sau đoạn đang nghe) - còn cần đọc thêm không? Tối thiểu `base` đoạn, rồi tới khi đủ [LOCAL_BUFFER_MS], tối đa [LOCAL_MAX_AHEAD] đoạn. */
+        fun localNeedsMore(aheadMs: List<Long>, base: Int): Boolean = needsMore(aheadMs, base, LOCAL_MAX_AHEAD, LOCAL_BUFFER_MS)
+
+        /** Mở chương bằng giọng trên máy (uxfix72): tiêu đề 2 giây phát xong trước khi đoạn đầu đọc xong - im giữa chừng (a65 máy ảo: Supertonic 1,44 s, Nano 0,74 s). Khoảng hụt ước từ
+         *  ngần này trở lên thì dời nó vào lúc bắt đầu (người nghe chịu chờ lúc mở hơn là khựng giữa)... */
+        const val OPENING_GAP_MS = 300L
+        /** ...nhưng chờ thêm không quá ngần này. */
+        const val OPENING_HOLD_MAX_MS = 1_500L
+
+        /**
+         * Giữ clip đầu (tiêu đề, `firstMs` âm thanh) bao lâu trước khi phát, để đoạn kế (`nextChars` ký tự, chưa có trong bộ đệm - null: không có / đã có) đọc xong trước khi clip đầu hết.
+         * `secondsPerChar`: tốc độ đã đo của giọng (null: chưa đo - giữ tới trần, đoạn kế xong sớm thì phát sớm). 0 = phát ngay.
+         */
+        fun openingHoldMs(firstMs: Long, nextChars: Int?, secondsPerChar: Double?): Long {
+            if (nextChars == null || nextChars <= 0) return 0L
+            val gap = if (secondsPerChar == null) OPENING_HOLD_MAX_MS else (secondsPerChar * nextChars * 1000).toLong() - firstMs
+            return if (gap < OPENING_GAP_MS) 0L else minOf(gap, OPENING_HOLD_MAX_MS)
+        }
+
+        private fun needsMore(aheadMs: List<Long>, base: Int, cap: Int, wantedMs: Long): Boolean {
+            if (aheadMs.size < base) return true
+            if (aheadMs.size >= maxOf(base, cap)) return false
+            return aheadMs.sum() < wantedMs
+        }
+
         /** Một lượt lấy clip đáng ghi làm số đo: lượt thành công, hay lượt hỏng mà đã chờ từ [SLOW_MS] (lượt hỏng tức thì không nói gì về tốc độ). Dùng chung cho [ClipRetry] và [measure]. */
         fun isMeasure(success: Boolean, spentMs: Long): Boolean = success || spentMs >= SLOW_MS
     }
@@ -59,9 +91,5 @@ class ReadAheadPolicy(private val base: Int) {
     fun slow(): Boolean = (p80() ?: 0L) >= SLOW_MS
 
     /** Hàng đợi đã có `aheadMs` mili-giây (các đoạn ĐÃ nạp sau đoạn đang nghe, theo thứ tự) - còn cần nạp thêm đoạn nữa không? Tối thiểu [base] đoạn; hơn nữa chỉ khi chưa đủ [wantedMs] và chưa chạm [MAX_AHEAD]. */
-    fun needMore(aheadMs: List<Long>): Boolean {
-        if (aheadMs.size < base) return true
-        if (aheadMs.size >= maxOf(base, MAX_AHEAD)) return false
-        return aheadMs.sum() < wantedMs()
-    }
+    fun needMore(aheadMs: List<Long>): Boolean = needsMore(aheadMs, base, MAX_AHEAD, wantedMs())
 }

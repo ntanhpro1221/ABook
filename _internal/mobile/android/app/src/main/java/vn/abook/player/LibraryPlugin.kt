@@ -105,6 +105,19 @@ class LibraryPlugin : Plugin() {
         if (error is Pin.ChangedException) call.reject(message, Pin.CODE) else call.reject(message)
     }
 
+    // Large options (the drawn cover of an export) wait in memory while a system picker is open - see HeldCallFields.
+    private val held = HeldCallFields()
+
+    override fun startActivityForResult(call: PluginCall, intent: Intent, callbackName: String) {
+        held.take(call.methodName, call.data)
+        super.startActivityForResult(call, intent, callbackName)
+    }
+
+    /** First thing in every @ActivityCallback: the call gets back the options [startActivityForResult] held. */
+    private fun answered(call: PluginCall?) {
+        if (call != null) held.putBack(call.methodName, call.data)
+    }
+
     @PluginMethod
     fun info(call: PluginCall) = call.resolve(JSObject().put("root", Store.root.absolutePath))
 
@@ -158,6 +171,7 @@ class LibraryPlugin : Plugin() {
 
     @ActivityCallback
     private fun pickedBook(call: PluginCall?, result: ActivityResult) {
+        answered(call)
         val uri = result.data?.data
         if (uri == null) {
             call?.resolve(JSObject().put("picked", false))
@@ -183,6 +197,7 @@ class LibraryPlugin : Plugin() {
 
     @ActivityCallback
     private fun pickedSource(call: PluginCall?, result: ActivityResult) {
+        answered(call)
         if (call == null) return
         val uris = ArrayList<Uri>()
         result.data?.clipData?.let { clip -> for (index in 0 until clip.itemCount) uris.add(clip.getItemAt(index).uri) }
@@ -296,6 +311,7 @@ class LibraryPlugin : Plugin() {
 
     @ActivityCallback
     private fun pickedMusic(call: PluginCall?, result: ActivityResult) {
+        answered(call)
         if (call == null) return
         val uris = ArrayList<Uri>()
         result.data?.clipData?.let { clip -> for (index in 0 until clip.itemCount) uris.add(clip.getItemAt(index).uri) }
@@ -1050,6 +1066,7 @@ class LibraryPlugin : Plugin() {
 
     @ActivityCallback
     private fun savedBook(call: PluginCall?, result: ActivityResult) {
+        answered(call)
         val uri = result.data?.data
         if (call == null) return
         if (uri == null) {
@@ -1142,6 +1159,7 @@ class LibraryPlugin : Plugin() {
 
     @ActivityCallback
     private fun pickedExportFolder(call: PluginCall?, result: ActivityResult) {
+        answered(call)
         if (call == null) return
         val tree = result.data?.data ?: return call.resolve(JSObject().put("started", false))
         try {
@@ -1208,6 +1226,7 @@ class LibraryPlugin : Plugin() {
 
     @ActivityCallback
     private fun pickedM4bFile(call: PluginCall?, result: ActivityResult) {
+        answered(call)
         if (call == null) return
         val file = result.data?.data ?: return call.resolve(JSObject().put("started", false))
         background(call) {
@@ -1274,6 +1293,7 @@ class LibraryPlugin : Plugin() {
 
     @ActivityCallback
     private fun pickedAudiobookFile(call: PluginCall?, result: ActivityResult) {
+        answered(call)
         if (call == null) return
         val file = result.data?.data ?: return call.resolve(JSObject().put("started", false))
         background(call) {

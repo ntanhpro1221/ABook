@@ -69,6 +69,34 @@ class ReadAheadTest {
         assertTrue("chỉ hai số đo thật, p80 vẫn là 20 s", policy.wantedMs() >= 40_000L)
     }
 
+    @Test
+    fun localVoicesReadAheadBySecondsOfAudioNotByParagraphs() {
+        // a65 (Supertonic, máy ảo): "Chờ đã!" hai lần (lần hai lấy từ bộ đệm) là đủ "2 đoạn" - đoạn dài 18 s kế đó bắt đầu đọc quá muộn.
+        assertTrue(ReadAheadPolicy.localNeedsMore(emptyList(), 2))
+        assertTrue("hai dòng ngắn 1,2 s chưa đủ", ReadAheadPolicy.localNeedsMore(listOf(1_200L, 1_200L), 2))
+        assertTrue(ReadAheadPolicy.localNeedsMore(listOf(1_200L, 1_200L, 2_000L), 2))
+        assertFalse("đã có đoạn dài: đủ 20 s", ReadAheadPolicy.localNeedsMore(listOf(1_200L, 1_200L, 18_340L), 2))
+        assertFalse("đoạn dài: vẫn chỉ tối thiểu 2 đoạn", ReadAheadPolicy.localNeedsMore(listOf(15_000L, 12_000L), 2))
+        assertTrue("dưới tối thiểu dù đã đủ giây", ReadAheadPolicy.localNeedsMore(listOf(25_000L), 2))
+        val short = List(10) { 1_000L }
+        assertTrue(ReadAheadPolicy.localNeedsMore(short.take(ReadAheadPolicy.LOCAL_MAX_AHEAD - 1), 2))
+        assertFalse("trần số đoạn", ReadAheadPolicy.localNeedsMore(short.take(ReadAheadPolicy.LOCAL_MAX_AHEAD), 2))
+    }
+
+    @Test
+    fun openingAChapterWithALocalVoiceWaitsForTheFirstParagraphInsteadOfStallingAfterTheHeading() {
+        // a65 Supertonic: tiêu đề 2,26 s, đoạn đầu 293 ký tự đọc mất ~3,9 s -> im 1,46 s sau tiêu đề; giờ chờ thêm (tối đa 1,5 s) trước khi phát.
+        val supertonic = 3_940.0 / 1000 / 293
+        assertEquals(1_500L, ReadAheadPolicy.openingHoldMs(2_260L, 293, supertonic))
+        // Nano: tiêu đề 3,34 s, đoạn đầu 310 ký tự ~4,1 s -> chờ ~0,74 s.
+        val nano = 4_080.0 / 1000 / 310
+        assertEquals(740.0, ReadAheadPolicy.openingHoldMs(3_340L, 310, nano).toDouble(), 5.0)
+        assertEquals("hụt dưới 0,3 s: phát ngay", 0L, ReadAheadPolicy.openingHoldMs(3_340L, 250, nano))
+        assertEquals("đoạn kế đã có / không có: phát ngay", 0L, ReadAheadPolicy.openingHoldMs(2_000L, null, supertonic))
+        assertEquals("clip đầu dài (nhảy vào đoạn dài): phát ngay", 0L, ReadAheadPolicy.openingHoldMs(20_000L, 300, supertonic))
+        assertEquals("giọng chưa đo tốc độ: chờ tới trần, đoạn kế xong sớm thì phát sớm", ReadAheadPolicy.OPENING_HOLD_MAX_MS, ReadAheadPolicy.openingHoldMs(2_000L, 300, null))
+    }
+
     // ---- thử lại ----------------------------------------------------------------------------------------------
 
     private val delays = longArrayOf(2_000L, 5_000L)
