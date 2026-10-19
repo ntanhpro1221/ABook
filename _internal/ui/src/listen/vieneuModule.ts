@@ -156,6 +156,18 @@ export const SUPERTONIC_COPY: ModuleCopy = {
   tiers: ["supertonic"],
 };
 
+/** Khoá truy vấn của dòng "Tốc độ giọng trên máy" (VoiceSpeedSetting.tsx). */
+export const VOICE_SPEED_KEY = ["readaloud", "voice-speed"] as const;
+
+/** Mọi thứ trong Cài đặt có cỡ "còn phải tải" tính cả phần dùng chung giữa các giọng (thư viện chạy model, bộ đọc chữ): thẻ VieNeu, thẻ Supertonic, dòng
+ *  "Tốc độ giọng trên máy". Một mô-đun cài / gỡ xong thì hỏi lại cả ba - trước đây thẻ VieNeu còn ghi 271 MB sau khi Supertonic đã cài phần chung (đúng là
+ *  228 MB) tới khi ra vào lại Cài đặt (soát a65). */
+export const MODULE_QUERY_KEYS: readonly (readonly string[])[] = [["readaloud", VIENEU_COPY.key], ["readaloud", SUPERTONIC_COPY.key], VOICE_SPEED_KEY];
+
+export function refreshModuleSizes(client: { invalidateQueries(filters: { queryKey: readonly unknown[] }): unknown }): void {
+  for (const queryKey of MODULE_QUERY_KEYS) void client.invalidateQueries({ queryKey });
+}
+
 const TIER_NAME: Record<ModuleTier, string> = { turbo: "Giọng VieNeu", nano: "Giọng VieNeu Nano", supertonic: "Giọng Supertonic" };
 
 export function tierName(tier: ModuleTier): string {

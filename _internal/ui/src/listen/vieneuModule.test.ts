@@ -6,6 +6,7 @@ import {
   initialChoices,
   offlineChoices,
   meteredNotice,
+  refreshModuleSizes,
   selectionBytes,
   SUPERTONIC_COPY,
   suggestionText,
@@ -178,5 +179,17 @@ describe("bản tăng tốc", () => {
     expect(acceleratedNote({ on: false, active: false, problem: "" })).toBe("Đang đọc bằng bản thường.");
     expect(acceleratedNote({ on: true, active: true, problem: "" })).toBe("Đang đọc bằng bản tăng tốc.");
     expect(acceleratedNote({ on: true, active: false, problem: "server thoát" })).toContain("chưa chạy được");
+  });
+});
+
+describe("cỡ các thẻ giọng sau khi một mô-đun cài / gỡ xong", () => {
+  it("hỏi lại thẻ VieNeu, thẻ Supertonic và dòng Tốc độ giọng (soát a65: thẻ VieNeu còn 271 MB sau khi Supertonic cài phần chung)", () => {
+    const asked: unknown[] = [];
+    refreshModuleSizes({ invalidateQueries: ({ queryKey }) => asked.push(queryKey) });
+    expect(asked).toEqual([
+      ["readaloud", "vieneu"],
+      ["readaloud", "supertonic"],
+      ["readaloud", "voice-speed"],
+    ]);
   });
 });

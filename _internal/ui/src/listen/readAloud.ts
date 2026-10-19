@@ -203,6 +203,9 @@ export function warmRankOf(behind: number, position: number): number {
   return Math.min(MAX_WARM_RANK, Math.max(1, behind + position));
 }
 const BUFFER_FACTOR = 2;
+/** Giọng chạy trên máy: số giây âm thanh đọc sẵn và trần số đoạn ([localReadAheadCount]; điện thoại ReadAheadPolicy.LOCAL_BUFFER_MS / LOCAL_MAX_AHEAD). */
+const LOCAL_BUFFER_SECONDS = 20;
+const LOCAL_MAX_READ_AHEAD = 6;
 const MIN_BUFFER_SECONDS = 20;
 const MAX_BUFFER_SECONDS = 60;
 /** Chỉ tính lượt lấy clip THẬT (qua dịch vụ): lấy từ bộ đệm của máy chủ về trong vài chục ms, làm loãng số đo. */
@@ -382,7 +385,17 @@ export function readAheadCount(base: number, fetchSeconds: number[], aheadSecond
   const sorted = [...fetchSeconds].sort((a, b) => a - b);
   const p80 = sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.8) - 1)];
   const wanted = Math.min(MAX_BUFFER_SECONDS, Math.max(MIN_BUFFER_SECONDS, BUFFER_FACTOR * p80));
-  const cap = Math.max(base, MAX_READ_AHEAD);
+  return fillCount(base, MAX_READ_AHEAD, wanted, aheadSeconds);
+}
+
+/** Giọng chạy trên máy ([SpeechTrack.serial]): đọc trước đủ [LOCAL_BUFFER_SECONDS] giây âm thanh (tối thiểu `base` đoạn, tối đa [LOCAL_MAX_READ_AHEAD]) - không theo số đoạn: vài dòng ngắn liền nhau
+ *  (hay lặp lại, lấy từ bộ đệm tức thì) đứng trước một đoạn dài thì đoạn dài bắt đầu đọc quá muộn (điện thoại a65: im 0,16-0,35 s; cùng luật ReadAheadPolicy.localNeedsMore). */
+export function localReadAheadCount(base: number, aheadSeconds: number[]): number {
+  return fillCount(base, LOCAL_MAX_READ_AHEAD, LOCAL_BUFFER_SECONDS, aheadSeconds);
+}
+
+function fillCount(base: number, most: number, wanted: number, aheadSeconds: number[]): number {
+  const cap = Math.max(base, most);
   let count = 0;
   let seconds = 0;
   while (count < cap && count < aheadSeconds.length && (count < base || seconds < wanted)) {
@@ -865,7 +878,7 @@ export class ReadAloudEngine implements AudioEngine {
   }
 
   private depth(index: number): number {
-    if (this.speech?.serial?.()) return this.readAhead;
+    if (this.speech?.serial?.()) return localReadAheadCount(this.readAhead, this.slots.slice(index + 1, index + 1 + LOCAL_MAX_READ_AHEAD).map((slot) => slot.duration));
     return readAheadCount(this.readAhead, this.fetchMeasures(), this.slots.slice(index + 1, index + 1 + MAX_READ_AHEAD).map((slot) => slot.duration));
   }
 

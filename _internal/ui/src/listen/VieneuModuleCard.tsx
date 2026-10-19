@@ -18,6 +18,7 @@ import {
   suggestionText,
   toggleChoice,
   lowerFirst,
+  refreshModuleSizes,
   tierVoicePrefix,
   VIENEU_COPY,
   vieneuLabel,
@@ -81,10 +82,11 @@ export function useModuleStatus(backend: VieneuBackend, copy: ModuleCopy, onChan
     return () => clearInterval(timer);
   }, [working, client, copy.key]);
   useEffect(() => {
-    // Vừa tải / đo xong: danh sách giọng của trình phát hỏi lại để giọng mới hiện ngay.
+    // Vừa tải / đo xong: danh sách giọng của trình phát hỏi lại để giọng mới hiện ngay; thẻ giọng khác hỏi lại cỡ (phần dùng chung vừa có).
     if (wasWorking.current && !working) {
       forgetVoices();
       void client.invalidateQueries({ queryKey: ["readaloud", "voices"] });
+      refreshModuleSizes(client);
       onChanged?.();
     }
     wasWorking.current = working;
@@ -131,6 +133,7 @@ export function VieneuModuleCard({
   const remove = async (id: VieneuChoiceId) => {
     if (!backend.remove) return;
     await run(() => backend.remove!(id), `Chưa gỡ được ${lowerName}`);
+    refreshModuleSizes(client); // gỡ giọng cuối dùng phần chung thì phần ấy đi theo: thẻ kia lại phải tải nó
     forgetVoices();
     void client.invalidateQueries({ queryKey: ["readaloud", "voices"] });
     onChanged?.();

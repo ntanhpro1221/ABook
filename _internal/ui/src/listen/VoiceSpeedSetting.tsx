@@ -5,7 +5,7 @@ import { Button, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { formatSize } from "@/studio/musicLocal";
 import { desktopSupertonic, useModuleStatus, type VieneuBackend } from "./VieneuModuleCard";
-import { SUPERTONIC_COPY } from "./vieneuModule";
+import { SUPERTONIC_COPY, VOICE_SPEED_KEY } from "./vieneuModule";
 import {
   needsFastDownload,
   VOICE_SPEED_OPTIONS,
@@ -28,7 +28,7 @@ export const desktopVoiceSpeed: VoiceSpeedBackend = {
   set: (choice) => api<VoiceSpeedStatus>("/api/readaloud/voice-speed", { method: "POST", body: { choice } }),
 };
 
-const KEY = ["readaloud", "voice-speed"];
+const KEY = VOICE_SPEED_KEY;
 
 /** "Tốc độ giọng trên máy": Tự động / Chất lượng cao nhất / Nhanh hơn, một lựa chọn cho cả máy; dưới đó mỗi giọng đã tải nói đang dùng bậc nào và vì sao.
  *  Muốn bậc nhanh mà chưa có bản nhanh hơn: nút tải kèm cỡ (tải qua thẻ của mô-đun ấy, nên tiến độ hiện ở thẻ). Chỉ giọng Supertonic có hai bậc;
