@@ -386,7 +386,8 @@ def test_the_ffmpeg_download_runs_in_the_background_and_says_why_it_fails(tmp_pa
     monkeypatch.setattr(ffmpeg_setup, "install", lambda progress, cancelled=lambda: False: (_ for _ in ()).throw(OSError(28, "No space left")))
     ffmpeg_setup.start()
     ffmpeg_setup.join(10)
-    assert "Không ghi được vào ổ đĩa" in str(ffmpeg_setup.status()["error"])
+    assert "không ghi được vào ổ đĩa" in str(ffmpeg_setup.status()["error"])
+    assert "No space left" in str(ffmpeg_setup.status()["errorDetail"])
 
 
 def test_a_job_reports_progress_and_ends_cancelled_when_asked() -> None:

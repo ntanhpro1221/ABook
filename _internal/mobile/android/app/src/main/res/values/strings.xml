@@ -10,4 +10,30 @@
     <string name="widget_forward">Tới 15 giây</string>
     <string name="widget_toggle">Phát hoặc tạm dừng</string>
     <string name="widget_sleep">Hẹn giờ ngủ</string>
+    <!-- media3 (thông báo đang phát, Android Auto, kênh thông báo): app chỉ có tiếng Việt, nên chữ của media3 là tiếng Việt cả khi máy để
+         tiếng Anh - không theo ngôn ngữ hệ thống ("Pause", "Now playing" - soát a66). -->
+    <string name="default_notification_channel_name">Đang phát</string>
+    <string name="media3_controls_pause_description">Tạm dừng</string>
+    <string name="media3_controls_play_description">Phát</string>
+    <string name="media3_controls_seek_back_description">Lùi</string>
+    <string name="media3_controls_seek_forward_description">Tới</string>
+    <string name="media3_controls_seek_to_next_description">Chương sau</string>
+    <string name="media3_controls_seek_to_previous_description">Chương trước</string>
+    <string name="error_message_authentication_expired">Hãy đăng nhập để dùng ứng dụng này</string>
+    <string name="error_message_bad_value">Dữ liệu đầu vào không chính xác</string>
+    <string name="error_message_concurrent_stream_limit">Đang nghe trên quá nhiều thiết bị</string>
+    <string name="error_message_content_already_playing">Đang phát nội dung đó</string>
+    <string name="error_message_disconnected">Đã ngắt kết nối khỏi ABook</string>
+    <string name="error_message_end_of_playlist">Không còn chương nào sau</string>
+    <string name="error_message_fallback">Đã xảy ra lỗi. Hãy thử lại sau.</string>
+    <string name="error_message_info_cancelled">Không làm xong được. Hãy thử lại.</string>
+    <string name="error_message_invalid_state">Chưa làm được việc đó lúc này</string>
+    <string name="error_message_io">Lỗi đọc ghi</string>
+    <string name="error_message_not_available_in_region">Không nghe được nội dung đó ở đây</string>
+    <string name="error_message_not_supported">ABook chưa làm được việc đó</string>
+    <string name="error_message_parental_control_restricted">Nội dung đó đã bị chặn</string>
+    <string name="error_message_permission_denied">Không được phép truy cập</string>
+    <string name="error_message_premium_account_required">Cần tài khoản trả phí</string>
+    <string name="error_message_setup_required">Cần thiết lập trước</string>
+    <string name="error_message_skip_limit_reached">Không bỏ qua thêm được nữa</string>
 </resources>

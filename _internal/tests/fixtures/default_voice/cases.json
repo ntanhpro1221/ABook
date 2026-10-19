@@ -1,13 +1,17 @@
 {
-  "note": "Giọng VieNeu mặc định cho người nghe CHƯA chọn giọng: ưu tiên theo tên (không theo vị trí trong danh sách, vị trí đầu là 'Adam bựa'), rơi về giọng VieNeu đầu danh sách. Dùng chung ui/src/listen/readAloudVoice.test.ts và NarratorVoiceTest.kt; đổi bên nào phải đổi cả hai (NARRATOR_VOICES / NarratorVoice.PREFERRED).",
-  "preferred": ["Phạm Tuyên", "Ngọc Linh", "Thanh Bình"],
+  "note": "Giọng VieNeu mặc định cho người nghe CHƯA chọn giọng: mỗi bản (turbo, nano) một danh sách ưu tiên theo tên, xét theo bậc (bậc 1 của mọi bản trước, cùng bậc thì giọng đứng trước trong danh sách); không có giọng ưu tiên thì giọng VieNeu đầu tiên cùng giới với giọng đang dùng ('gender'); không biết giới mới lấy giọng đầu danh sách (vị trí đầu là 'Adam bựa' / 'Adam'). Dùng chung ui/src/listen/readAloudVoice.test.ts và NarratorVoiceTest.kt; đổi bên nào phải đổi cả hai (NARRATOR_VOICES / NarratorVoice.PREFERRED).",
+  "preferred": {"turbo": ["Phạm Tuyên", "Ngọc Linh", "Thanh Bình"], "nano": ["Ái Hân", "Mỹ Duyên", "Đức Trí"]},
   "cases": [
-    {"name": "Phạm Tuyên đứng sau Adam bựa trong danh sách vẫn được chọn trước", "ids": ["vieneu:turbo/Adam bựa", "vieneu:turbo/Adam", "vieneu:turbo/Phạm Tuyên", "vieneu:turbo/Ngọc Linh"], "expect": "vieneu:turbo/Phạm Tuyên"},
-    {"name": "không có Phạm Tuyên thì Ngọc Linh", "ids": ["vieneu:turbo/Adam bựa", "vieneu:turbo/Thanh Bình", "vieneu:turbo/Ngọc Linh"], "expect": "vieneu:turbo/Ngọc Linh"},
-    {"name": "chỉ có bản Nano", "ids": ["vieneu:nano/Adam bựa", "vieneu:nano/Ngọc Linh"], "expect": "vieneu:nano/Ngọc Linh"},
-    {"name": "ưu tiên theo tên trước, bản Turbo hay Nano sau", "ids": ["vieneu:turbo/Ngọc Linh", "vieneu:nano/Phạm Tuyên"], "expect": "vieneu:nano/Phạm Tuyên"},
-    {"name": "cùng một tên ở cả hai bản: bản đứng trước trong danh sách", "ids": ["vieneu:turbo/Thanh Bình", "vieneu:nano/Thanh Bình"], "expect": "vieneu:turbo/Thanh Bình"},
-    {"name": "không có giọng nào trong danh sách ưu tiên: giọng VieNeu đầu danh sách", "ids": ["vieneu:turbo/Adam bựa", "vieneu:turbo/Adam"], "expect": "vieneu:turbo/Adam bựa"},
-    {"name": "máy chưa có giọng VieNeu nào", "ids": [], "expect": null}
+    {"name": "Phạm Tuyên đứng sau Adam bựa trong danh sách vẫn được chọn trước", "gender": "female", "voices": [["vieneu:turbo/Adam bựa", "male"], ["vieneu:turbo/Adam", "male"], ["vieneu:turbo/Phạm Tuyên", "male"], ["vieneu:turbo/Ngọc Linh", "female"]], "expect": "vieneu:turbo/Phạm Tuyên"},
+    {"name": "không có Phạm Tuyên thì Ngọc Linh", "gender": "female", "voices": [["vieneu:turbo/Adam bựa", "male"], ["vieneu:turbo/Thanh Bình", "male"], ["vieneu:turbo/Ngọc Linh", "female"]], "expect": "vieneu:turbo/Ngọc Linh"},
+    {"name": "chỉ có bản Nano (đủ 11 giọng, Adam đứng đầu): Ái Hân", "gender": "female", "voices": [["vieneu:nano/Adam", "male"], ["vieneu:nano/Ái Hân", "female"], ["vieneu:nano/Mỹ Duyên", "female"], ["vieneu:nano/Đức Trí", "male"], ["vieneu:nano/Hữu Quân", "male"], ["vieneu:nano/Xuân Tiên", "female"], ["vieneu:nano/Mai Anh", "female"], ["vieneu:nano/Trúc Ly", "female"], ["vieneu:nano/Anh Khôi", "male"], ["vieneu:nano/Minh Quân", "male"], ["vieneu:nano/Mạnh Dũng", "male"]], "expect": "vieneu:nano/Ái Hân"},
+    {"name": "Nano không có Ái Hân thì Mỹ Duyên", "gender": "male", "voices": [["vieneu:nano/Adam", "male"], ["vieneu:nano/Đức Trí", "male"], ["vieneu:nano/Mỹ Duyên", "female"]], "expect": "vieneu:nano/Mỹ Duyên"},
+    {"name": "cả hai bản: bậc 1 của mọi bản trước, cùng bậc thì giọng đứng trước", "gender": "female", "voices": [["vieneu:turbo/Ngọc Linh", "female"], ["vieneu:nano/Ái Hân", "female"], ["vieneu:turbo/Phạm Tuyên", "male"]], "expect": "vieneu:nano/Ái Hân"},
+    {"name": "tên của Turbo ở bản Nano không tính là giọng ưu tiên của Nano", "gender": "female", "voices": [["vieneu:nano/Phạm Tuyên", "male"], ["vieneu:nano/Mỹ Duyên", "female"]], "expect": "vieneu:nano/Mỹ Duyên"},
+    {"name": "bậc cao hơn thắng vị trí trong danh sách (Ngọc Linh bậc 2 đứng sau hai giọng bậc 3 vẫn được chọn)", "gender": "female", "voices": [["vieneu:turbo/Thanh Bình", "male"], ["vieneu:nano/Đức Trí", "male"], ["vieneu:turbo/Ngọc Linh", "female"]], "expect": "vieneu:turbo/Ngọc Linh"},
+    {"name": "không có giọng ưu tiên nào: giọng đầu tiên cùng giới với giọng đang dùng, không phải Adam", "gender": "female", "voices": [["vieneu:nano/Adam", "male"], ["vieneu:nano/Hữu Quân", "male"], ["vieneu:nano/Trúc Ly", "female"]], "expect": "vieneu:nano/Trúc Ly"},
+    {"name": "giọng đang dùng là giọng nam", "gender": "male", "voices": [["vieneu:turbo/Trúc Ly", "female"], ["vieneu:turbo/Hải Đăng", "male"]], "expect": "vieneu:turbo/Hải Đăng"},
+    {"name": "không biết giới, không có giọng ưu tiên: giọng VieNeu đầu danh sách", "gender": null, "voices": [["vieneu:turbo/Adam bựa", "male"], ["vieneu:turbo/Adam", "male"]], "expect": "vieneu:turbo/Adam bựa"},
+    {"name": "máy chưa có giọng VieNeu nào", "gender": "female", "voices": [], "expect": null}
   ]
 }

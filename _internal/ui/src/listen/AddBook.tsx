@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { ChapterPreview } from "@/shared/ChapterPreview";
 import { cn } from "@/shared/cn";
+import { ErrorDetails } from "@/shared/ErrorDetails";
 import { formatNumber } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
 import {
@@ -570,12 +571,7 @@ export function AddBookDialog({
           {problem && (
             <div role="alert" className="mt-3 text-sm text-danger">
               <p>{problem}</p>
-              {technical && (
-                <details className="mt-1 text-xs">
-                  <summary className="cursor-pointer select-none">Chi tiết</summary>
-                  <p className="mt-1 select-text break-words font-mono">{technical}</p>
-                </details>
-              )}
+              <ErrorDetails technical={technical} />
             </div>
           )}
           <p className="mt-4 text-xs text-fg-3">PDF phải có chữ - PDF chụp từ máy quét thì ABook chưa đọc được.</p>

@@ -6,6 +6,7 @@ import {
   initialChoices,
   offlineChoices,
   meteredNotice,
+  moduleAdvice,
   refreshModuleSizes,
   selectionBytes,
   SUPERTONIC_COPY,
@@ -191,5 +192,29 @@ describe("cỡ các thẻ giọng sau khi một mô-đun cài / gỡ xong", () =
       ["readaloud", "supertonic"],
       ["readaloud", "voice-speed"],
     ]);
+  });
+});
+
+describe("Cài đặt: hai mô-đun giọng trên máy, khuyên tải một (soát a66)", () => {
+  const supertonic = status({
+    choices: [{ id: "supertonic", label: "Giọng Supertonic", detail: "", needs: ["libs", "g2p", "supertonic"], bytes: 0, installed: false, recommended: false, default: true, removable: true }],
+    recommended: "supertonic",
+  });
+
+  it("máy chưa có giọng nào: khuyên bản VieNeu của máy, Supertonic không đánh dấu sẵn", () => {
+    const advice = moduleAdvice(status({ recommended: "nano" }), supertonic);
+    expect(advice.advice).toContain("Nên chọn giọng VieNeu Nano (đã đánh dấu sẵn)");
+    expect(advice.preselectSupertonic).toBe(false);
+    expect(initialChoices(supertonic, advice.preselectSupertonic)).toEqual([]);
+    expect(moduleAdvice(status({ recommended: "turbo" }), supertonic).advice).toContain("Nên chọn giọng VieNeu (đã đánh dấu sẵn)");
+  });
+
+  it("đã có một bộ giọng thì thôi khuyên; máy không chạy được VieNeu thì Supertonic đánh dấu sẵn như cũ", () => {
+    const installed = status({ choices: status().choices.map((choice) => ({ ...choice, installed: true })) });
+    expect(moduleAdvice(installed, supertonic)).toEqual({ advice: "", preselectSupertonic: false });
+    expect(moduleAdvice(status(), { ...supertonic, choices: supertonic.choices.map((choice) => ({ ...choice, installed: true })) }).advice).toBe("");
+    expect(moduleAdvice(status({ state: "unsupported" }), supertonic)).toEqual({ advice: "", preselectSupertonic: true });
+    // Trạng thái VieNeu chưa về: chưa đánh dấu Supertonic (tránh tích sẵn rồi bỏ tích trước mắt người dùng).
+    expect(moduleAdvice(undefined, supertonic).preselectSupertonic).toBe(false);
   });
 });

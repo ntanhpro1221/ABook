@@ -180,6 +180,39 @@ class Cancelled(Exception):
     pass
 
 
+# Lần tải không tới được máy chủ (không phân giải tên máy, hết giờ, kết nối bị ngắt) - cùng câu với điện thoại (PinnedFiles.NETWORK_FAILURE).
+NETWORK_FAILURE = "Không kết nối được tới máy chủ tải. Kiểm tra mạng rồi bấm {retry}."
+
+
+def _network(error: BaseException) -> bool:
+    """Lỗi của đường mạng, không phải của file hay của máy (HTTPError: máy chủ có trả lời - không tính)."""
+    if isinstance(error, urllib.error.HTTPError):
+        return False
+    return isinstance(error, (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError))
+
+
+def technical(error: BaseException) -> str:
+    """Nguyên văn lỗi, đủ ngắn cho phần "Chi tiết" thu gọn."""
+    return f"{type(error).__name__}: {error}".rstrip(": ")[:300]
+
+
+def download_failure(noun: str, error: BaseException, retry: str = "Thử lại") -> tuple[str, str]:
+    """(câu cho người dùng - đặt cạnh nút `retry`, chi tiết kỹ thuật cho "Chi tiết" - rỗng khi câu đã đủ) của một lần tải `noun` ("giọng VieNeu")
+    hỏng. Lỗi mạng -> NETWORK_FAILURE; file hỏng / ổ đầy -> nói thẳng; lỗi khác -> câu chung, nguyên văn thu vào chi tiết (soát a66: lời lỗi
+    tiếng Anh thô). Cùng luật với điện thoại (PinnedFiles.failure)."""
+    wrapped = isinstance(error, SetupError) and error.__cause__ is not None  # download() bọc lỗi đường truyền sau 5 lần thử
+    cause = error.__cause__ if wrapped else error
+    if _network(cause) or (wrapped and not isinstance(cause, urllib.error.HTTPError)):
+        return NETWORK_FAILURE.format(retry=retry), technical(cause)
+    if isinstance(error, SetupError) and not wrapped:  # download(): sai băm, file đã xoá
+        return f"Không tải được {noun}: file tải về không đúng bản đã ghim (đã xoá) - bấm {retry} để tải lại.", ""
+    if isinstance(error, (zipfile.BadZipFile, KeyError)):
+        return f"Không tải được {noun}: gói tải về bị hỏng - bấm {retry} để tải lại.", technical(error)
+    if isinstance(error, OSError):
+        return f"Không tải được {noun}: không ghi được vào ổ đĩa - kiểm tra chỗ trống rồi bấm {retry}.", technical(error)
+    return f"Không tải được {noun}. Bấm {retry}; nếu vẫn lỗi, mở Chi tiết để gửi cho người hỗ trợ.", technical(cause)
+
+
 def default_root() -> Path:
     base = os.environ.get("LOCALAPPDATA") or str(Path.home())
     return Path(base) / "ABook" / STUDIO_FOLDER
@@ -296,7 +329,8 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
                 break
             except (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError) as error:
                 if attempt == 4:
-                    raise SetupError(f"Không tải được {item.name} ({error}). Kiểm tra mạng rồi bấm Cài tiếp.") from error
+                    message = NETWORK_FAILURE.format(retry="Cài tiếp") if _network(error) else f"Không tải được {item.name} ({error}) - bấm Cài tiếp để thử lại."
+                    raise SetupError(message) from error
                 _retrying.add(threading.get_ident())
                 for _ in range(12 * (attempt + 1)):  # 3 * (attempt + 1) giây, nhưng nhả ra ngay khi bấm Huỷ
                     if cancelled():

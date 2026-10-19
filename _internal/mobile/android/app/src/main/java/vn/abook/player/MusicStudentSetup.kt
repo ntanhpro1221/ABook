@@ -3,7 +3,6 @@ package vn.abook.player
 import org.json.JSONObject
 import vn.abook.player.PinnedFiles.Part
 import java.io.File
-import java.io.IOException
 
 /**
  * "Gói nhạc" của điện thoại - mọi thứ bộ phân tích nhạc ([MusicStudent]) cần mà APK không mang: model (~59 MB) cùng thư viện chạy ONNX
@@ -37,6 +36,7 @@ class MusicStudentSetup(
     @Volatile
     private var state = MISSING
     private var error = ""
+    private var errorDetail = "" // nguyên văn lỗi cho "Chi tiết" (PinnedFiles.failure); chỉ hiện khi còn `error`
     private var cancelled = false // lần tải vừa rồi bị người dùng huỷ ("Đã huỷ - lần tải sau làm tiếp từ chỗ dừng"); xoá khi tải lại
     @Volatile
     private var cancelRequested = false
@@ -82,6 +82,7 @@ class MusicStudentSetup(
             else -> wireBytes(todo())
         }
         JSONObject().put("state", shown).put("done", finished + current).put("total", needed).put("error", error)
+            .put("errorDetail", if (error.isEmpty()) "" else errorDetail)
             .put("ready", state == READY).put("analysing", analysing).put("cancelled", cancelled).put("cancellable", true)
             .put("metered", runCatching { metered() }.getOrDefault(false)).put("supported", supported)
             .put("outdatedParts", org.json.JSONArray(behind.map { it.label }.distinct())).put("outdatedBytes", wireBytes(behind))
@@ -169,7 +170,8 @@ class MusicStudentSetup(
             }
             return
         } catch (failure: Exception) {
-            fail(describe(failure))
+            val said = PinnedFiles.failure("bộ phân tích nhạc", failure)
+            fail(said.message, said.detail)
             return
         } finally {
             runtime.done(KEY) // từ đây file model trên đĩa nói gói này cần gì
@@ -191,7 +193,7 @@ class MusicStudentSetup(
             // gói đủ file mà không dùng được (cấu hình lạ, đầu hỏng): xoá để lần bấm sau tải lại sạch; thư viện dùng chung chỉ đi khi không ai cần
             pinned.wipe(own)
             runtime.release(libs.groupBy { it.name.substringBefore('/') })
-            fail("Bộ phân tích tải về không dùng được (${failure.message ?: failure.javaClass.simpleName}) - bấm Thử lại để tải lại.")
+            fail("Bộ phân tích tải về không dùng được - bấm Thử lại để tải lại.", PinnedFiles.technical(failure))
             false
         }
     }
@@ -226,16 +228,11 @@ class MusicStudentSetup(
         }
     }
 
-    private fun fail(message: String) = synchronized(lock) {
+    private fun fail(message: String, detail: String = "") = synchronized(lock) {
         state = ERROR
         error = message
+        errorDetail = detail
         current = 0
-    }
-
-    private fun describe(failure: Exception): String = when (failure) {
-        is PinnedFiles.ChecksumError -> "Bộ phân tích tải về bị hỏng (không khớp mã kiểm) - bấm Thử lại để tải lại."
-        is IOException -> "Không tải được bộ phân tích nhạc (${failure.message ?: "mất kết nối"}). Bấm Thử lại - phần đã tải được giữ."
-        else -> "Không tải được bộ phân tích nhạc (${failure.message ?: failure.javaClass.simpleName})."
     }
 
     companion object {

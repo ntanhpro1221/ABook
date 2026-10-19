@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { ErrorDetails } from "@/shared/ErrorDetails";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { Button, LiveText, Progress } from "@/shared/ui";
 import { api } from "./api";
@@ -60,6 +61,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
           <p className={failed ? "text-danger" : undefined}>
             {downloadingModule ? <LiveText shown={label} spoken={spokenProgress("Đang tải Phân tích nhạc", modulePercent(module) / 100)} /> : label}
           </p>
+          {failed && <ErrorDetails technical={module.errorDetail} className="text-danger" />}
           {downloadingModule && (
             <div className="flex items-center gap-3">
               <Progress value={modulePercent(module) / 100} size="sm" running label="Đang tải Phân tích nhạc" className="flex-1" />
@@ -98,6 +100,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
               preciseLabel(precise)
             )}
           </p>
+          {precise.state === "error" && <ErrorDetails technical={precise.errorDetail} className="text-danger" />}
           {precise.state === "downloading" && (
             <Progress value={precise.total > 0 ? precise.done / precise.total : 0} size="sm" running label="Đang tải bộ đo cảm xúc chính xác hơn" />
           )}

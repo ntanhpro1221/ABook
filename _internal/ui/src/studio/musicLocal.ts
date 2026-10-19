@@ -41,6 +41,8 @@ export interface MusicModuleStatus {
   total: number;
   /** Lý do tải hỏng, tiếng Việt; rỗng nếu không lỗi. */
   error: string;
+  /** Nguyên văn lỗi của lần tải hỏng, thu trong "Chi tiết". */
+  errorDetail?: string;
   /** Bộ phân tích đã cắm (dùng được, kể cả khi có bản mới hơn). */
   ready: boolean;
   /** Đang tải mà mạng vừa hỏng, đang chờ thử lại (RETRYING_NOTE). */
@@ -84,6 +86,7 @@ export interface PreciseMood {
   done: number;
   total: number;
   error: string;
+  errorDetail?: string;
   working: boolean;
   pending: number;
   /** Lần tải vừa rồi bị huỷ (công tắc đã tắt, file dở giữ lại). */

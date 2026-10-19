@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { Button, LiveText, Progress } from "@/shared/ui";
 import { cn } from "@/shared/cn";
+import { ErrorDetails } from "@/shared/ErrorDetails";
 import { api } from "@/studio/api";
 import { formatSize } from "@/studio/musicLocal";
 import { forgetVoices, switchVoices } from "./readAloudVoice";
@@ -18,6 +19,7 @@ import {
   suggestionText,
   toggleChoice,
   lowerFirst,
+  moduleAdvice,
   refreshModuleSizes,
   tierVoicePrefix,
   VIENEU_COPY,
@@ -64,9 +66,26 @@ export const desktopSupertonic: VieneuBackend = {
   cancel: () => api<VieneuStatus>("/api/readaloud/supertonic/cancel", { method: "POST", body: {} }),
 };
 
-/** Thẻ của mô-đun giọng Supertonic: cùng thẻ, lời riêng (máy tính). */
-export function SupertonicModuleCard({ onChanged }: { onChanged?: () => void }) {
-  return <VieneuModuleCard backend={desktopSupertonic} copy={SUPERTONIC_COPY} onChanged={onChanged} />;
+/** Hai thẻ giọng trên máy của Cài đặt (máy tính và điện thoại) + một dòng khuyên tải cái nào (moduleAdvice): chỉ thẻ được khuyên đánh dấu sẵn.
+ *  `vieneuSlot`: mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ VieNeu (PlayerViews.PlayerAlert). */
+export function LocalVoiceModules({
+  vieneu = desktopVieneu,
+  supertonic = desktopSupertonic,
+  onChanged,
+}: { vieneu?: VieneuBackend; supertonic?: VieneuBackend; onChanged?: () => void }) {
+  // Cùng khoá truy vấn với thẻ (useModuleStatus): không hỏi thêm lần nào.
+  const { data: vieneuStatus } = useQuery({ queryKey: ["readaloud", VIENEU_COPY.key], queryFn: () => vieneu.status() });
+  const { data: supertonicStatus } = useQuery({ queryKey: ["readaloud", SUPERTONIC_COPY.key], queryFn: () => supertonic.status() });
+  const { advice, preselectSupertonic } = moduleAdvice(vieneuStatus, supertonicStatus);
+  return (
+    <>
+      {advice && <p className="max-w-xl text-[0.8125rem] text-fg-2 text-pretty">{advice}</p>}
+      <div id="vieneu-module" className="scroll-mt-4">
+        <VieneuModuleCard backend={vieneu} onChanged={onChanged} />
+      </div>
+      <VieneuModuleCard backend={supertonic} copy={SUPERTONIC_COPY} onChanged={onChanged} preselect={preselectSupertonic} />
+    </>
+  );
 }
 
 /** Trạng thái mô-đun giọng + nhịp hỏi lại khi đang tải / đo (mỗi giây); tải / đo xong thì danh sách giọng của trình phát hỏi lại để giọng mới hiện ngay.
@@ -81,6 +100,16 @@ export function useModuleStatus(backend: VieneuBackend, copy: ModuleCopy, onChan
     const timer = setInterval(() => void client.invalidateQueries({ queryKey: ["readaloud", copy.key] }), 1000);
     return () => clearInterval(timer);
   }, [working, client, copy.key]);
+  useEffect(() => {
+    // Mạng đổi (Wi-Fi về, sang dữ liệu di động, mất hẳn): hỏi lại ngay để dòng "đang dùng dữ liệu di động" đúng với mạng lúc này (soát a66).
+    const refresh = () => void client.invalidateQueries({ queryKey: ["readaloud", copy.key] });
+    window.addEventListener("online", refresh);
+    window.addEventListener("offline", refresh);
+    return () => {
+      window.removeEventListener("online", refresh);
+      window.removeEventListener("offline", refresh);
+    };
+  }, [client, copy.key]);
   useEffect(() => {
     // Vừa tải / đo xong: danh sách giọng của trình phát hỏi lại để giọng mới hiện ngay; thẻ giọng khác hỏi lại cỡ (phần dùng chung vừa có).
     if (wasWorking.current && !working) {
@@ -100,7 +129,8 @@ export function VieneuModuleCard({
   onChanged,
   backend = desktopVieneu,
   copy = VIENEU_COPY,
-}: { onChanged?: () => void; backend?: VieneuBackend; copy?: ModuleCopy } = {}) {
+  preselect = true,
+}: { onChanged?: () => void; backend?: VieneuBackend; copy?: ModuleCopy; preselect?: boolean } = {}) {
   const client = useQueryClient();
   const lowerName = lowerFirst(copy.name);
   const { status, working } = useModuleStatus(backend, copy, onChanged);
@@ -117,7 +147,7 @@ export function VieneuModuleCard({
   peak.current = downloading ? Math.max(peak.current, status.done) : 0;
   if (!downloading) sizes.current = Object.fromEntries(status.choices.map((choice) => [choice.id, choice.bytes]));
   const shown: VieneuStatus = downloading ? { ...status, done: peak.current } : status;
-  const picked = chosen ?? initialChoices(status);
+  const picked = chosen ?? initialChoices(status, preselect);
   const missing = picked.filter((id) => !status.choices.find((choice) => choice.id === id)?.installed);
   const bytes = selectionBytes(status, missing);
   const run = async (action: () => Promise<VieneuStatus>, failure = `Chưa tải được ${lowerName}`) => {
@@ -158,10 +188,13 @@ export function VieneuModuleCard({
   return (
     <div className="max-w-xl space-y-3">
       <h3 className="text-sm font-semibold">{copy.title}</h3>
-      <p role="status" className={cn("text-sm text-pretty", failed ? "text-danger" : "text-fg-2")}>
-        {/* Đang tải: % đổi liên tục - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
-        {status.state === "downloading" ? <LiveText shown={vieneuLabel(shown, copy)} spoken={spokenProgress(`Đang tải ${lowerName}`, vieneuPercent(shown) / 100)} /> : vieneuLabel(shown, copy)}
-      </p>
+      {/* Lỗi tải: không ở đầu thẻ mà ngay trên nút Thử lại, nơi người dùng đang nhìn (soát a66) - xem dưới cùng. */}
+      {!failed && (
+        <p role="status" className="text-sm text-fg-2 text-pretty">
+          {/* Đang tải: % đổi liên tục - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
+          {status.state === "downloading" ? <LiveText shown={vieneuLabel(shown, copy)} spoken={spokenProgress(`Đang tải ${lowerName}`, vieneuPercent(shown) / 100)} /> : vieneuLabel(shown, copy)}
+        </p>
+      )}
       {status.state === "downloading" && (
         <div className="flex items-center gap-3">
           <Progress value={vieneuPercent(shown) / 100} size="sm" running label={`Đang tải ${lowerName}`} className="flex-1" />
@@ -239,6 +272,12 @@ export function VieneuModuleCard({
           <Button size="sm" variant="secondary" className="mt-2" loading={busy} onClick={() => void switchTo()}>
             {suggestion.action}
           </Button>
+        </div>
+      )}
+      {failed && (
+        <div role="alert" className="text-sm text-danger text-pretty">
+          <p>{vieneuLabel(shown, copy)}</p>
+          <ErrorDetails technical={status.errorDetail} />
         </div>
       )}
       {canPick && !status.restart && (

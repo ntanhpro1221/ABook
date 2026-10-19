@@ -11,8 +11,11 @@ class NarratorVoiceTest {
 
     @Test
     fun theListIsTheSameAsTheInterfaces() {
-        val preferred = shared.getJSONArray("preferred")
-        assertEquals((0 until preferred.length()).map { preferred.getString(it) }, NarratorVoice.PREFERRED)
+        val preferred = shared.getJSONObject("preferred")
+        val fromFixture = preferred.keys().asSequence().associateWith { tier ->
+            preferred.getJSONArray(tier).let { list -> (0 until list.length()).map { list.getString(it) } }
+        }
+        assertEquals(fromFixture, NarratorVoice.PREFERRED)
     }
 
     @Test
@@ -20,9 +23,12 @@ class NarratorVoiceTest {
         val cases = shared.getJSONArray("cases")
         for (index in 0 until cases.length()) {
             val item = cases.getJSONObject(index)
-            val ids = item.getJSONArray("ids").let { list -> (0 until list.length()).map { list.getString(it) } }
+            val voices = item.getJSONArray("voices").let { list ->
+                (0 until list.length()).map { list.getJSONArray(it).let { pair -> pair.getString(0) to pair.getString(1) } }
+            }
+            val gender = if (item.isNull("gender")) null else item.getString("gender")
             val expected = if (item.isNull("expect")) null else item.getString("expect")
-            assertEquals(item.getString("name"), expected, NarratorVoice.pick(ids))
+            assertEquals(item.getString("name"), expected, NarratorVoice.pick(voices, gender))
         }
     }
 }

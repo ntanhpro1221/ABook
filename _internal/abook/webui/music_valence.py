@@ -283,7 +283,7 @@ def status() -> dict[str, Any]:
         pending = len(_store.valence_pending(VERSION)) if _store is not None and state == "ready" else 0
         return {"state": state, "enabled": enabled(), "present": have, "removable": removable(), "reason": reason, "bytes": total_bytes(),
                 "done": _state["done"] if state == "downloading" else 0, "total": _state["total"] if state == "downloading" else 0,
-                "error": _state["error"], "working": bool(_state["working"]), "pending": pending, "cancelled": bool(_state["cancelled"])}
+                "error": _state["error"], "errorDetail": _state.get("error_detail", "") if _state["error"] else "", "working": bool(_state["working"]), "pending": pending, "cancelled": bool(_state["cancelled"])}
 
 
 def enable() -> None:
@@ -366,8 +366,9 @@ def _download_run() -> None:
             _set_enabled(False)
         return
     except Exception as error:  # noqa: BLE001 - mọi lỗi thành một câu cho người dùng
+        message, detail = studio_setup.download_failure("bộ đo cảm xúc chính xác hơn", error)
         with _lock:
-            _state.update(downloading=False, error=f"Không tải được bộ đo cảm xúc chính xác hơn: {music_module._reason(error)}.")
+            _state.update(downloading=False, error=message, error_detail=detail)
         return
     kick()
 

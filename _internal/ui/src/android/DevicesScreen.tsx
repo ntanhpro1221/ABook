@@ -1,7 +1,7 @@
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BatteryCharging, Bluetooth, CheckCircle2, ChevronRight, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi } from "lucide-react";
-import { useEffect, useState } from "react";
+import { BatteryCharging, Bluetooth, CheckCircle2, ChevronRight, Copy, Download, FileAudio, Laptop, Link2, Loader2, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
@@ -10,16 +10,53 @@ import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
 import { Button, Dialog, EmptyState, Progress } from "@/shared/ui";
 import { useUnpair } from "@/shared/useUnpair";
 import { backgroundHelp } from "./backgroundHelp";
+import { BLUETOOTH_DENIED, BLUETOOTH_REASON, bluetoothStep } from "./bluetoothPermission";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
 import { hasNewWords } from "./bookUpdates";
 import { OpenStudioButton, useStudioComputers } from "./StudioOpen";
+import { openRelease } from "./UpdateNotice";
 import { booksBySize, useStorage } from "./storage";
 import { useListenLibrary } from "@/listen/source";
 import { EbookLibrary, type DownloadEvent, type RemoteBook, type ShareStatus } from "./plugins";
 
 // "Tải sách": lấy sách từ máy tính qua Wi-Fi. Ghép nối một lần bằng mã 6 số hiện trong Cài đặt của máy tính;
 // sau đó chỉ cần mở màn hình này để thấy sách mới và chương mới.
+
+/** Trang tải ABook cho máy tính (chữ chép được; lõi native chỉ mở địa chỉ bắt đầu bằng ".../ABook/" - LibraryPlugin.openRelease). */
+export const DESKTOP_RELEASES = "https://github.com/ntanhpro1221/ABook/releases";
+
+/** Mở đầu cho người chỉ có điện thoại (soát a66): máy tính thêm được gì và lấy ABook máy tính ở đâu - rồi mới tới các bước ghép nối. */
+function ComputerIntro() {
+  const copy = () =>
+    void navigator.clipboard
+      .writeText(DESKTOP_RELEASES)
+      .then(() => toast.success("Đã chép địa chỉ"), () => toast.error("Chưa chép được - giữ ngón tay lên địa chỉ để chọn rồi chép"));
+  return (
+    <div className="rounded-2xl border border-line bg-panel p-5 text-sm">
+      <div className="flex items-center gap-3">
+        <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text">
+          <Laptop className="size-5" />
+        </div>
+        <h2 className="font-semibold">Có thêm máy tính thì sao?</h2>
+      </div>
+      <p className="mt-3 text-pretty text-fg-2">
+        Điện thoại đã tự đọc được mọi sách bằng Nghe ngay. ABook trên máy tính còn làm được sách nói nhiều giọng bằng Studio (cần card đồ hoạ
+        NVIDIA) - mỗi nhân vật một giọng - rồi gửi sang đây để bạn nghe tiếp trên điện thoại.
+      </p>
+      <p className="mt-2 text-fg-2">Tải ABook cho máy tính (Windows) ở:</p>
+      <p className="mt-1 select-text break-all font-medium text-fg">{DESKTOP_RELEASES.replace("https://", "")}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button size="sm" variant="secondary" icon={Copy} onClick={copy}>
+          Chép địa chỉ
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => void openRelease(DESKTOP_RELEASES)}>
+          Mở trang tải
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 function PairPanel() {
   const client = useQueryClient();
@@ -29,6 +66,13 @@ function PairPanel() {
   const [address, setAddress] = useState("");
   const [code, setCode] = useState("");
   const [paired, setPaired] = useState<{ address: string; name: string; abook: boolean }[] | null>(null);
+  // Trước khi Android hỏi quyền "Thiết bị ở gần": "explain" = một câu vì sao cần + nút Cho phép; "settings" = đã từ chối hẳn, chỉ tới Cài đặt.
+  const [btAsk, setBtAsk] = useState<"explain" | "settings" | null>(null);
+  // Lời giải thích hiện ở chỗ nút vừa bấm, thường sát mép dưới màn: cuộn cho thấy cả câu lẫn nút "Cho phép".
+  const btBox = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (btAsk) btBox.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [btAsk]);
   const discover = useMutation({
     mutationFn: () => EbookLibrary.discover({ timeoutMs: 2500 }),
     onSuccess: ({ computers: found }) => {
@@ -44,8 +88,34 @@ function PairPanel() {
       setPaired(computersOnly);
       if (computersOnly.length === 1) setTarget({ host: `bt:${computersOnly[0].address}`, port: 0, name: computersOnly[0].name });
     },
-    onError: (error: Error) => toast.error("Chưa dùng được Bluetooth", { description: error.message }),
+    onError: async (error: Error) => {
+      // Vừa từ chối lần thứ hai (Android không hỏi nữa): chỉ đường tới Cài đặt thay vì một lời báo lặp lại mỗi lần bấm.
+      const { state } = await EbookLibrary.bluetoothPermission().catch(() => ({ state: "prompt" as const }));
+      if (bluetoothStep(state) === "settings") setBtAsk("settings");
+      else toast.error("Chưa dùng được Bluetooth", { description: error.message });
+    },
   });
+  useEffect(() => {
+    // Quay lại từ Cài đặt mà quyền đã bật: tìm máy luôn, không bắt bấm lại.
+    if (btAsk !== "settings") return;
+    const back = () => {
+      if (document.visibilityState !== "visible") return;
+      void EbookLibrary.bluetoothPermission().then(({ state }) => {
+        if (bluetoothStep(state) !== "go") return;
+        setBtAsk(null);
+        bluetooth.mutate();
+      }, () => undefined);
+    };
+    document.addEventListener("visibilitychange", back);
+    return () => document.removeEventListener("visibilitychange", back);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [btAsk]);
+  const startBluetooth = async () => {
+    const { state } = await EbookLibrary.bluetoothPermission().catch(() => ({ state: "granted" as const }));
+    const step = bluetoothStep(state);
+    if (step === "go") bluetooth.mutate();
+    else setBtAsk(step);
+  };
   const pair = useMutation({
     mutationFn: () => {
       if (target?.host.startsWith("bt:")) {
@@ -74,7 +144,7 @@ function PairPanel() {
             <Wifi className="size-5" />
           </div>
           <div>
-            <h2 className="font-semibold">Kết nối với máy tính</h2>
+            <h2 className="font-semibold">Đã có ABook trên máy tính? Kết nối</h2>
             <p className="text-sm text-fg-2">Điện thoại và máy tính cần cùng một mạng Wi-Fi.</p>
           </div>
         </div>
@@ -123,8 +193,26 @@ function PairPanel() {
 
       {!manual && (
         <div>
-          {paired === null ? (
-            <button type="button" onClick={() => bluetooth.mutate()} className="flex items-center gap-1.5 text-sm font-medium text-accent-text">
+          {paired === null && btAsk ? (
+            <div ref={btBox} className="space-y-3 rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
+              <p className="text-pretty">{btAsk === "explain" ? BLUETOOTH_REASON : BLUETOOTH_DENIED}</p>
+              <div className="flex flex-wrap gap-2">
+                {btAsk === "explain" ? (
+                  <Button size="sm" variant="primary" loading={bluetooth.isPending} onClick={() => { setBtAsk(null); bluetooth.mutate(); }}>
+                    Cho phép
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="primary" onClick={() => void EbookLibrary.openAppSettings().catch((error: Error) => toast.error(error.message))}>
+                    Mở Cài đặt
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" onClick={() => setBtAsk(null)}>
+                  Để sau
+                </Button>
+              </div>
+            </div>
+          ) : paired === null ? (
+            <button type="button" onClick={() => void startBluetooth()} className="flex items-center gap-1.5 text-sm font-medium text-accent-text">
               {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Không chung Wi-Fi? Kết nối qua Bluetooth
             </button>
           ) : paired.length ? (
@@ -697,7 +785,10 @@ export function DevicesScreen() {
       <div className="mt-5">
         {!connection.data?.paired ? (
           <>
-            <PairPanel />
+            <ComputerIntro />
+            <div className="mt-5">
+              <PairPanel />
+            </div>
             {/* Chưa ghép máy tính chính mà đã ghép máy tính khác (Peers): Studio của máy ấy vẫn mở được từ đây. */}
             <OpenStudioButton computers={studioComputers} className="mt-3 w-full" />
           </>

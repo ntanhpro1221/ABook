@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 /** Mạng về -> chờ chừng này rồi tự "Thử lại": sự kiện "online" tới trước khi tra được tên máy chủ. */
 export const ONLINE_RETRY_MS = 1500;
@@ -20,7 +20,14 @@ export function retryWhenOnline(retry: () => void, target: Pick<Window, "addEven
   };
 }
 
+/** Việc làm khi mạng về: người nghe còn muốn nghe (đã bấm phát, chưa bấm dừng - lỗi xảy ra lúc đang phát / đang chờ phát) thì "Thử lại";
+ *  lỗi sinh lúc mở app khi chưa bấm phát gì thì chỉ gỡ lời báo, không tự phát (soát a66: cuốn tự đọc tới hết khi người nghe đang ở Cài đặt). */
+export function whenBackOnline(wantsPlay: () => boolean, retry: () => void, dismiss: () => void): () => void {
+  return () => (wantsPlay() ? retry() : dismiss());
+}
+
 /** Chỉ khi đang báo mất mạng (`active`). */
-export function useRetryWhenOnline(active: boolean, retry: () => void) {
-  useEffect(() => (active ? retryWhenOnline(retry) : undefined), [active, retry]);
+export function useRetryWhenOnline(active: boolean, retry: () => void, dismiss: () => void, wantsPlay: () => boolean) {
+  const back = useCallback(() => whenBackOnline(wantsPlay, retry, dismiss)(), [wantsPlay, retry, dismiss]);
+  useEffect(() => (active ? retryWhenOnline(back) : undefined), [active, back]);
 }

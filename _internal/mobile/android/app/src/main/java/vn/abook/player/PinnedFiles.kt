@@ -1,14 +1,19 @@
 package vn.abook.player
 
 import org.json.JSONObject
+import java.io.EOFException
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.net.HttpURLConnection
+import java.net.SocketException
+import java.net.UnknownHostException
 import java.net.URL
 import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
 import java.util.zip.ZipInputStream
+import javax.net.ssl.SSLException
 
 /**
  * Files a downloadable module needs ("Gói nhạc" [MusicStudentSetup], "Giọng VieNeu" [vn.abook.player.vieneu.VieneuModule]): each one pinned by
@@ -47,6 +52,13 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     }
 
     class ChecksumError : IOException("sai mã kiểm")
+
+    /** The connection ended before the whole file came (a cut without an error): the network, not the file. */
+    class ShortRead(message: String) : IOException(message)
+
+    /** What the listener reads when a download failed ([message], next to the Thử lại button) and the raw cause for "Chi tiết" ([detail]; empty
+     *  when the sentence says it all). */
+    class Failure(val message: String, val detail: String)
 
     /** The download was stopped on request ([Progress.cancelled]): not an error, and never retried. */
     class Cancelled : Exception("đã huỷ")
@@ -221,7 +233,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
                 connection.disconnect()
             }
         }
-        if (partial.length() != size) throw IOException("tải chưa đủ (${partial.length()}/$size byte)")
+        if (partial.length() != size) throw ShortRead("tải chưa đủ (${partial.length()}/$size byte)")
         if (sha256(partial) != expected) {
             partial.delete()
             throw ChecksumError()
@@ -231,6 +243,27 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     companion object {
         const val STAMP = "bundle.json"
         private const val RETRIES = 3
+
+        /** A download that could not reach the server (no name lookup, timeout, connection cut) - same sentence as the desktop
+         *  (abook/webui/studio_setup.py NETWORK_FAILURE). */
+        const val NETWORK_FAILURE = "Không kết nối được tới máy chủ tải. Kiểm tra mạng rồi bấm Thử lại."
+
+        /** The network, not the file or the phone, failed: anywhere in the cause chain. */
+        fun isNetwork(error: Throwable): Boolean = generateSequence(error) { it.cause }.take(5).any {
+            it is UnknownHostException || it is InterruptedIOException || it is SocketException || it is SSLException || it is EOFException || it is ShortRead
+        }
+
+        /** The listener's sentence for a failed download of [what] ("giọng VieNeu"): network -> [NETWORK_FAILURE]; a damaged file -> say so; anything
+         *  else -> a plain Vietnamese sentence, with the raw error kept for "Chi tiết" (a66: "Unable to resolve host …" was shown as is). Same rule as
+         *  the desktop's `studio_setup.download_failure`. */
+        fun failure(what: String, error: Throwable): Failure = when {
+            error is ChecksumError -> Failure("Không tải được $what: file tải về bị hỏng (không khớp mã kiểm) - bấm Thử lại để tải lại.", "")
+            isNetwork(error) -> Failure(NETWORK_FAILURE, technical(error))
+            else -> Failure("Không tải được $what. Bấm Thử lại; nếu vẫn lỗi, mở Chi tiết để gửi cho người hỗ trợ.", technical(error))
+        }
+
+        /** The raw error, short enough for a folded "Chi tiết". */
+        fun technical(error: Throwable): String = "${error.javaClass.simpleName}: ${error.message.orEmpty()}".trimEnd(' ', ':').take(300)
 
         fun sha256Of(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 

@@ -8,6 +8,7 @@ import type { ListenBook } from "@/listen/model";
 import { useReadAloudVoices } from "@/listen/source";
 import { coverArtwork } from "@/shared/cover";
 import { cn } from "@/shared/cn";
+import { ErrorDetails } from "@/shared/ErrorDetails";
 import { formatSize } from "@/shared/format";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
@@ -59,11 +60,16 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
         <p className="mt-2 text-warning">{status.blocked}</p>
       ) : (
         <div className="mt-2 flex items-center gap-3">
-          {/* Lời lỗi nói "bấm Thử lại" (ffmpeg_setup.reason): nút mang đúng tên ấy. */}
+          {/* Lời lỗi nói "bấm Thử lại" (studio_setup.download_failure): nút mang đúng tên ấy. */}
           <Button size="sm" onClick={onDownload}>
             {status.error ? "Thử lại" : "Tải công cụ"}
           </Button>
-          {status.error && <span className="text-xs text-danger">{status.error}</span>}
+          {status.error && (
+            <div className="text-xs text-danger">
+              <span>{status.error}</span>
+              <ErrorDetails technical={status.errorDetail} />
+            </div>
+          )}
         </div>
       )}
     </div>

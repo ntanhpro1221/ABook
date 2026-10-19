@@ -152,6 +152,9 @@ interface PlayerActions {
   retry: () => void;
   /** Bỏ thông báo lỗi đang hiện mà không phát gì (vd. mạng đã về: lời "không có mạng" hết đúng, nhưng đừng tự phát lại giữa chừng). */
   dismissError: () => void;
+  /** Người nghe đang muốn nghe: đã bấm phát (ở app, thông báo, xe…) và chưa bấm dừng. Mạng về chỉ tự "Thử lại" khi đúng vậy - lỗi sinh lúc mở
+   *  app, chưa bấm phát gì, thì chỉ gỡ lời báo (soát a66: cuốn tự đọc khi người nghe đang ở Cài đặt). */
+  wantsPlay: () => boolean;
   pause: () => void;
   seek: (seconds: number) => void;
   skip: (delta: number) => void;
@@ -314,6 +317,8 @@ export function PlayerProvider({
     expanded: false,
     /** Cuốn có phần sau nghe nối (setContinues). */
     continues: null as string | null,
+    /** Ý định phát của người nghe (PlayerActions.wantsPlay): bật khi bấm phát / trình phát bắt đầu phát, tắt khi bấm dừng, hẹn giờ dừng, đóng. */
+    wantsPlay: false,
   });
   refs.current.track = track;
   refs.current.queue = queue;
@@ -406,7 +411,9 @@ export function PlayerProvider({
       }
       void askOnlineConsent(voice, voices).then((picked) => {
         if (picked === null) return;
-        if (picked !== voice.id) chooseVoice(bookId, picked);
+        // Chọn trong danh sách là lựa chọn cho cuốn, kể cả chọn lại đúng giọng đang hỏi (soát a66: không nhớ thì tải giọng trên máy xong cuốn
+        // tự sang giọng mặc định khác). "Nghe" thì không: cuốn vẫn theo giọng mặc định.
+        if (picked.chosen) chooseVoice(bookId, picked.voice);
         run();
       });
     };
@@ -700,6 +707,7 @@ export function PlayerProvider({
   }, [applyRate, source]);
 
   const playNow = useCallback((book: BookRef, chapters: ListenChapter[], chapter: ListenChapter, at: number | undefined, extra: Parameters<PlayerActions["play"]>[4]) => {
+    refs.current.wantsPlay = true;
     const chapterId = chapter.id;
     const current = refs.current.track;
     const sameSpot = current && current.bookId === book.id && current.chapterId === chapterId && at === undefined;
@@ -795,6 +803,7 @@ export function PlayerProvider({
   const resume = useCallback(() => {
     const current = refs.current.track;
     if (!current) return;
+    refs.current.wantsPlay = true;
     // Nguồn đã hỏng (máy kia tắt, mất mạng): bấm phát ở đâu cũng là nạp lại đúng chỗ - phát lại nguồn hỏng chỉ ra lỗi cũ (soát a27 lỗi 3).
     if (errorRef.current && !native) {
       retryRef.current();
@@ -843,6 +852,7 @@ export function PlayerProvider({
   }, [engine, load, native, resume, withConsent]);
   const retryRef = useRef(retry);
   retryRef.current = retry;
+  const wantsPlay = useCallback(() => refs.current.wantsPlay, []);
   const dismissError = useCallback(() => {
     stopPeerWatch.current();
     setError("");
@@ -858,6 +868,7 @@ export function PlayerProvider({
   }, []);
 
   const pause = useCallback(() => {
+    refs.current.wantsPlay = false;
     night.touch("pause", position(), true);
     engine.pause();
   }, [engine, night, position]);
@@ -1078,6 +1089,7 @@ export function PlayerProvider({
   }, [engine, native, night, position, refreshLists, source]);
 
   const close = useCallback(() => {
+    refs.current.wantsPlay = false;
     save(true);
     night.cancel(position());
     engine.stop();
@@ -1219,6 +1231,7 @@ export function PlayerProvider({
 
   /** Hẹn giờ vừa hết: dừng, trả âm lượng, ghi mốc "tự dừng" cho buổi sáng. */
   const stopBySleep = useCallback(() => {
+    refs.current.wantsPlay = false;
     night.stop(position());
     engine.pause();
     endFade();
@@ -1240,6 +1253,7 @@ export function PlayerProvider({
       }),
       engine.on("duration", syncClock),
       engine.on("play", () => {
+        refs.current.wantsPlay = true;
         setPlaying(true);
         setError(""); // phát lại được (vd có mạng lại khi nghe thẳng): thông báo lỗi cũ không còn đúng
         refs.current.pausedAt = 0;
@@ -1627,10 +1641,10 @@ export function PlayerProvider({
   const value = useMemo<PlayerValue>(() => ({
     track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
     canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline, musicLoading,
-    play, prepare, toggle, resume, retry, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
+    play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
     extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues,
   }), [track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
-    canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, pause, seek, skip, next, previous, jumpTo, goBack, restart,
+    canGoBack, error, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues]);
 
   // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ

@@ -107,7 +107,7 @@ export function TextBookItems({ book }: { book: ListenBook }) {
       </DropdownMenu.Item>
     );
   }
-  if (!toolchain) return <NeedStudioItem title="Làm sách nói từ cuốn này" phoneNote="Cần cài Studio trên máy tính - ở đây cuốn này chỉ để đọc" />;
+  if (!toolchain) return <NeedStudioItem title="Làm sách nói từ cuốn này" phoneNote="Chỉ làm được ở Studio trên máy tính. Ở đây bạn vẫn nghe cuốn này bằng Nghe ngay." />;
   return (
     <DropdownMenu.Item
       disabled={building}
