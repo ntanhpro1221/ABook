@@ -45,7 +45,10 @@ export interface Bookmark {
   chapterId: number;
   seconds: number;
   note: string;
+  /** Lần đổi cuối (sửa ghi chú, hoàn tác xoá) - mốc gộp hai máy. */
   at: number;
+  /** Lúc đặt dấu - điều dòng dấu trang hiện (dấu cũ không có thì dùng `at`). */
+  createdAt?: number;
   /** Dấu đặt ở màn đọc trỏ tới CÂU: thứ tự câu trong chương (như `?at=`) và ~60 chữ đầu câu. Dấu đặt từ trình phát không có hai trường này. */
   index?: number;
   quote?: string;
@@ -163,10 +166,14 @@ export interface ListenBook {
   capabilities?: Capabilities;
   /** Số thay đổi người nghe đã làm trên cuốn nhập từ file (lớp sửa, docs/EDITING.md); không có thì 0. */
   edits?: number;
+  /** Trong số `edits`: phần chưa nằm trong file nào (sau lần nhập file / lần lưu gần nhất) - nút "Lưu (N thay đổi)". */
+  unsaved?: number;
   /** Trong số `edits`: bao nhiêu là ý muốn chờ Studio (đổi giọng, giới, gộp người, cách đọc...) - chưa áp vào audio. */
   wishes?: number;
   /** Cuốn tải từ máy tính (điện thoại): phần sửa chưa gửi về máy tính và kết quả lần gửi gần nhất (EditsSync.kt). */
   editsSync?: EditsSyncState;
+  /** Cuốn nhập từ file ở máy này: bản của máy này mà máy đã ghép vừa gửi bản khác thay (người nói, cách đọc - package_share.notices). */
+  editsNotices?: EditsNotice[];
   /** Cuốn nhập từ file dự án `.abookproj` (docs/EDITING.md, P3); cuốn từ file `.abook`: null. `workshop` "present" - xưởng đi theo cuốn
    *  để lưu lại; "pending" - chỉ có phần nghe, chờ "Dựng xưởng" (`built` = mã dự án đã dựng). `views`: bản chụp chỉ đọc có trong file. */
   projectFile?: { workshop: "present" | "pending"; views: ("work" | "casting" | "names")[]; built?: string | null } | null;
@@ -520,4 +527,12 @@ export function twinBookIds(books: readonly Pick<ListenBook, "id" | "title">[]):
 /** Ô "Tìm sách": khớp tên, tác giả hoặc giọng kể, không phân biệt hoa thường và dấu ("nguyen" tìm ra "Nguyễn"). `folded` đã qua foldVietnamese. */
 export function bookMatchesQuery(book: Pick<ListenBook, "title" | "author" | "narrator">, folded: string): boolean {
   return !folded || foldVietnamese(`${book.title} ${book.author ?? ""} ${book.narrator}`).includes(folded);
+}
+
+/** Một lời báo "<máy> đã đổi … từ X sang Y" (webui/package_share.py `notices`). */
+export interface EditsNotice {
+  id: string;
+  at: number;
+  device: string;
+  label: string;
 }

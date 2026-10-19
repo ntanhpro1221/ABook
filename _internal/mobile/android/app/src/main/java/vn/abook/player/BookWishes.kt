@@ -691,6 +691,8 @@ object BookWishes {
     /** `shown_name` của Python: tên người nghe thấy của một người trong ý muốn ("người kể", tên đã đổi, hay chính chữ gõ). */
     private fun shownName(cast: List<JSONObject>, raw: String): String {
         if (characterKey(raw) == NARRATOR) return "người kể"
+        // The machine's key for an unnamed bit part never reaches the listener (review a70: "Người nói: UNNAMED").
+        if (raw == UNNAMED) return "vai phụ không tên"
         val found = person(cast, raw) ?: return raw
         return listOf(found.opt("displayName"), found.opt("name")).first { BookEdits.truthy(it) }.toString()
     }
@@ -711,8 +713,11 @@ object BookWishes {
         fun slot(stableId: String): JSONObject = lines.optJSONObject(stableId) ?: JSONObject().also { lines.put(stableId, it) }
         for (stableId in keys("speakers")) {
             val item = entry("speakers", stableId)
-            slot(stableId).put("speaker", JSONObject().put("name", item.getString("speaker")).put("shown", shownName(cast, item.getString("speaker")))
-                .put("requestedAt", item.getDouble("requested_at")))
+            val speaker = JSONObject().put("name", item.getString("speaker")).put("shown", shownName(cast, item.getString("speaker")))
+                .put("requestedAt", item.getDouble("requested_at"))
+            // A person the listener CREATED: the reader offers them again for other lines (same gender) - a70.
+            item.optJSONObject("new")?.optString("gender")?.takeIf { it.isNotEmpty() }?.let { speaker.put("newGender", it) }
+            slot(stableId).put("speaker", speaker)
         }
         for (stableId in keys("lines")) {
             val item = entry("lines", stableId)

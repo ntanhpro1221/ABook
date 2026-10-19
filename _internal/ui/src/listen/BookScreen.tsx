@@ -24,7 +24,7 @@ import { bookmarkReadPath, canPlay, chapterHeard, chaptersByPart, type CastMembe
 import { keepTogether, partialBookLine, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerViews";
-import { EditsSyncBanner, LocalEditsBanner, SendEditsItem } from "./SendEdits";
+import { EditsNoticesBanner, EditsSyncBanner, LocalEditsBanner, SendEditsItem } from "./SendEdits";
 import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { BookSuggestions } from "./ReadingSuggestions";
@@ -952,6 +952,7 @@ export function BookScreen({
           {notice?.(book)}
           {syncs && <EditsSyncBanner book={book} />}
           <LocalEditsBanner book={book} />
+          <EditsNoticesBanner book={book} />
           {textOnly && editable && <BookSuggestions book={book} />}
           <div className="mt-4 max-w-md max-sm:mx-auto">
             {!textOnly && (
@@ -990,9 +991,10 @@ export function BookScreen({
                 variant={textOnly && !point ? "primary" : "outline"}
                 size="lg"
                 icon={BookOpen}
-                onClick={() => navigate(`/book/${book.id}/read/${book.state.reading?.chapterId ?? point?.chapter.id ?? chapters[0]?.id ?? ""}`)}
+                // Đang nghe cuốn này: mở đúng chương đang phát (màn đọc tự tới câu đang nghe) - sửa câu vừa nghe không phải tìm lại (soát a70).
+                onClick={() => navigate(`/book/${book.id}/read/${(listening ? player.track?.chapterId : null) ?? book.state.reading?.chapterId ?? point?.chapter.id ?? chapters[0]?.id ?? ""}`)}
               >
-                {book.state.reading ? "Đọc tiếp" : "Đọc"}
+                {listening ? "Đọc" : book.state.reading ? "Đọc tiếp" : "Đọc"}
               </Button>
             </Tooltip>
             {chapters.length > 0 && (
@@ -1042,11 +1044,11 @@ export function BookScreen({
                       {!remoteEdit && !workshop && !syncs && !book.capabilities?.local && saver.available && (
                         <>
                           <DropdownMenu.Item
-                            disabled={!book.edits || saver.busy}
+                            disabled={!(book.unsaved ?? book.edits) || saver.busy}
                             onSelect={() => void saver.save()}
                             className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
                           >
-                            <Save className="size-4" /> {book.edits ? `Lưu (${book.edits} thay đổi)` : "Lưu (chưa có thay đổi)"}
+                            <Save className="size-4" /> {(book.unsaved ?? book.edits) ? `Lưu (${book.unsaved ?? book.edits} thay đổi)` : "Lưu (chưa có thay đổi)"}
                           </DropdownMenu.Item>
                           <DropdownMenu.Item onSelect={() => setSaveAsOpen(true)} className={MENU_ITEM}>
                             <FileDown className="size-4" /> Lưu thành…

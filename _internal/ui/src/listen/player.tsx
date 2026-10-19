@@ -11,7 +11,7 @@ import { tellSceneMusic } from "./musicHint";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit } from "./musicBed";
 import { SceneCues, isSceneCues, sceneRetryDelay } from "./sceneCues";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
-import { canPlay, newerElsewhere, resumePoint, startingRate, type Bookmark, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
+import { canPlay, newerElsewhere, resumePoint, startingRate, type Bookmark, type BookmarkSentence, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
 import { NightRecorder } from "./night";
 import { leftWithPeer, watchUntilBack } from "./peerBack";
 import {
@@ -33,6 +33,7 @@ import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useListenBook, useSource } from "./source";
 import { withFreshSkips } from "./textScript";
+import { sentenceIndexAt } from "./words";
 import { caughtUpDetail } from "./labels";
 import { reportSaveFailure } from "./saveFailure";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
@@ -1099,16 +1100,21 @@ export function PlayerProvider({
     if (!current || refs.current.bookmarking) return null;
     refs.current.bookmarking = true;
     try {
+      // Chương đọc to (Nghe ngay): dấu đặt từ trình phát cũng giữ câu đang đọc + câu trích như dấu đặt ở màn đọc - chương chữ không có kịch bản
+      // audio để dòng dấu trang tự tìm câu theo giờ (soát a70).
+      const script = client.getQueryData<Script>(["listen", "script", current.bookId, current.chapterId, "text"]);
+      const index = script?.timed ? sentenceIndexAt(script.segments.map((segment) => segment.start ?? 0), engine.time) : -1;
+      const sentence: BookmarkSentence | undefined = script && index >= 0 ? { index, quote: script.segments[index].text } : undefined;
       const mark = native
-        ? await native.addBookmark(note)
-        : await source.addBookmark(current.bookId, current.chapterId, engine.time, note ?? "", current.recordId);
+        ? await native.addBookmark(note, sentence)
+        : await source.addBookmark(current.bookId, current.chapterId, engine.time, note ?? "", current.recordId, sentence);
       night.touch("bookmark", position(), true);
       refreshLists(current.bookId);
       return mark;
     } finally {
       refs.current.bookmarking = false;
     }
-  }, [engine, native, night, position, refreshLists, source]);
+  }, [client, engine, native, night, position, refreshLists, source]);
 
   const close = useCallback(() => {
     refs.current.wantsPlay = false;

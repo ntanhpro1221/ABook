@@ -1396,7 +1396,7 @@ def send_edits(package: Path) -> dict[str, Any]:
         book_edits.subtract(package, edits, cover)
         _remember_send(package, {
             "state": "sent", "at": time.time(), "kept": book_edits.sent_marks(edits, book_edits.forget_marks(marks, removed)),
-            **{key: int(reply.get(key) or 0) for key in ("applied", "skipped", "requests", "waiting", "skippedWishes")},
+            **{key: int(reply.get(key) or 0) for key in ("applied", "skipped", "requests", "waiting", "studio", "skippedWishes")},
             "conflicts": [sender_label(item, entry["name"]) for item in reply.get("conflicts") or [] if isinstance(item, dict) and item.get("label")],
         })
         return edits_state(package)

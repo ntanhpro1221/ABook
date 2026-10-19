@@ -223,7 +223,7 @@ def test_edits_from_the_other_computer_land_in_the_packages_own_edits_layer(tmp_
         assert app.listen_book(value)["editsSync"]["pending"] == 3
         state = app.send_remote_edits(value)
         assert state["pending"] == 0 and state["last"]["state"] == "sent", state
-        assert (state["last"]["applied"], state["last"]["waiting"], state["last"]["conflicts"]) == (2, 1, [])
+        assert (state["last"]["applied"], state["last"]["waiting"], state["last"]["studio"], state["last"]["conflicts"]) == (2, 0, 1, [])
         layer = book_edits.load(folder)
         assert layer["title"] == "Tên đặt ở máy B" and layer["chapters"]["1"]["title"] == "Chương mở đầu"
         assert book_wishes.count(layer["wishes"]) == 1, "ý muốn chờ Studio nằm trong lớp sửa của cuốn, không mất"
@@ -295,7 +295,8 @@ def test_what_was_sent_and_then_dropped_is_withdrawn_on_the_holder_only_while_it
         state = app.listen_book(value)["editsSync"]
         assert state["pending"] == 4, "bỏ đi sau khi đã gửi cũng là thay đổi chờ gửi"
         state = app.send_remote_edits(value)
-        assert state["pending"] == 0 and state["last"]["applied"] == 4, state  # gỡ 3 (Heidi ở lại: A đã đổi) + dòng "Biên tập" còn trong lớp sửa gửi lại
+        # Gỡ 3 (Heidi ở lại: A đã đổi); dòng "Biên tập" còn trong lớp sửa gửi lại nhưng A đã có - không phải thay đổi (soát a70 mục 15).
+        assert state["pending"] == 0 and state["last"]["applied"] == 3, state
         layer = book_edits.load(folder)
         assert layer["readings"] == {"Heidi": "Hây-đi"} and layer["skip"] == {"1": ["Biên tập: Ai Đó"]} and "music" not in layer
         assert remote_books._sent_marks(path).get("readings") is None, "sổ đã gửi không còn nhắc cái đã gỡ"
@@ -317,3 +318,86 @@ def test_a_book_that_is_not_a_project_has_no_export_job_but_is_not_a_404(tmp_pat
         assert caught.value.status == 404
     finally:
         server.stop()
+
+
+def _sent_from_phone(tmp_path: Path, change: Any) -> Path:
+    """Gói phần sửa như điện thoại gửi: lớp sửa của một bản sao cuốn mẫu sau `change(thư mục)`."""
+    import zipfile
+
+    phone = tmp_path / "phone"
+    shutil.copytree(shared.BASE, phone)
+    change(phone)
+    out = tmp_path / "edits.zip"
+    with zipfile.ZipFile(out, "w") as archive:
+        archive.writestr(book_edits.EDITS_FILE, book_edits.dump(book_edits.load(phone)))
+    return out
+
+
+def test_what_the_phone_overwrote_is_reported_on_the_holder_and_can_be_put_back(tmp_path: Path) -> None:
+    """Soát a70 mục 5-6: bản đến sau vẫn thắng, nhưng máy giữ sách nói cụ thể đã đổi gì từ gì sang gì, Hoàn tác đặt lại bản của nó, và
+    "Việc đang chờ" ghi máy nào gửi."""
+    from abook.webui import package_share
+
+    _lib, sync, folder, _mirror = _holder(tmp_path)
+    (line, sha), *_ = book_wishes.chapter_lines(book_wishes.Lines(folder), 1)
+    book_wishes.request_speakers(folder, [(line, sha)], "LUCIEN", now=1000.0)
+    book_edits.set_reading(folder, "Heidi", "Hây-đi")
+
+    def on_phone(phone: Path) -> None:
+        book_wishes.request_speakers(phone, [(line, sha)], "HEIDI", now=2000.0)
+        book_edits.set_reading(phone, "Heidi", "Hai-đi")
+
+    reply = sync.receive_edits(folder, {"id": "abc", "name": "Pixel"}, _sent_from_phone(tmp_path, on_phone))
+    layer = book_edits.load(folder)
+    assert layer["wishes"]["speakers"][line]["speaker"] == "HEIDI" and layer["readings"]["Heidi"] == "Hai-đi", "bản đến sau thắng"
+    whats = sorted(item["what"] for item in reply["conflicts"])
+    assert whats[0] == "Cách đọc “Heidi”" and whats[1].startswith("Người nói câu “"), reply["conflicts"]
+    notes = package_share.notices(folder)
+    assert len(notes) == 2 and all(note["device"] == "Pixel" for note in notes)
+    speaker = next(note for note in notes if "người nói" in note["label"])
+    shown = [book_wishes.shown_name(book_wishes.people(folder), name) for name in ("LUCIEN", "HEIDI")]
+    assert speaker["label"].startswith("Pixel đã đổi người nói câu “") and speaker["label"].endswith(f"từ {shown[0]} sang {shown[1]}"), speaker
+    (item,) = [item for item in book_wishes.pending_details(folder, layer["wishes"])["items"] if item["section"] == "speakers"]
+    assert item["from"] == "Pixel", "việc đang chờ nói máy nào gửi"
+
+    package_share.undo_notice(folder, speaker["id"])
+    layer = book_edits.load(folder)
+    assert layer["wishes"]["speakers"][line]["speaker"] == "LUCIEN", "Hoàn tác đặt lại bản của máy này"
+    (item,) = [item for item in book_wishes.pending_details(folder, layer["wishes"])["items"] if item["section"] == "speakers"]
+    assert "from" not in item, "đặt lại ở đây thì không còn là của máy kia"
+    reading = next(note for note in package_share.notices(folder))
+    package_share.undo_notice(folder, reading["id"])
+    assert book_edits.load(folder)["readings"]["Heidi"] == "Hây-đi" and package_share.notices(folder) == []
+
+
+def test_the_holders_readings_skips_and_pending_speakers_are_served_to_the_paired_device(tmp_path: Path) -> None:
+    from abook.webui import package_share
+
+    _lib, _sync, folder, _mirror = _holder(tmp_path)
+    assert package_share.shared_edits(folder) is None and package_share.resolve_file(folder, package_share.SHARED_EDITS) is None
+    (line, sha), *_ = book_wishes.chapter_lines(book_wishes.Lines(folder), 1)
+    book_wishes.request_speakers(folder, [(line, sha)], "LUCIEN", now=1000.0)
+    book_edits.set_reading(folder, "Heidi", "Hây-đi")
+    book_edits.set_skip_line(folder, [1], "Dịch: Nhóm Lục Bình", True)
+    served = json.loads(package_share.resolve_file(folder, package_share.SHARED_EDITS))
+    assert served["readings"] == {"Heidi": "Hây-đi"} and served["skip"] == {"1": ["Dịch: Nhóm Lục Bình"]}
+    assert served["speakers"][line]["name"] == "LUCIEN"
+    key = book_id(folder)
+    assert package_share.library_entry(folder, key, {})["listenerEdits"] == served["stamp"]
+    book_edits.set_reading(folder, "Heidi", "")
+    assert package_share.library_entry(folder, key, {})["listenerEdits"] != served["stamp"], "đổi thì dấu đổi, máy kia xin lại"
+
+
+def test_save_counts_only_what_changed_since_the_file_was_opened_or_saved(tmp_path: Path) -> None:
+    """Soát a70 mục 15: "Lưu (N thay đổi)" không đếm phần sửa có sẵn trong file vừa nhập."""
+    folder = tmp_path / "book"
+    shutil.copytree(shared.BASE, folder)
+    book_edits.set_reading(folder, "Heidi", "Hây-đi")
+    book_edits.set_chapter_title(folder, 1, "Mở đầu")
+    assert book_edits.unsaved(folder, book_edits.load(folder)) == 2, "chưa có mốc: mọi thay đổi"
+    book_edits.mark_saved(folder)  # như vừa nhập file mang sẵn hai thay đổi này
+    assert book_edits.unsaved(folder, book_edits.load(folder)) == 0
+    book_edits.set_reading(folder, "Lucien", "Lu-xi-en")
+    book_edits.set_reading(folder, "Heidi", "")
+    assert book_edits.unsaved(folder, book_edits.load(folder)) == 2, "một cách đọc mới + một cách đọc đã bỏ"
+    assert book_edits.count(book_edits.load(folder)) == 2

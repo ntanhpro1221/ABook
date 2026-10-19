@@ -425,6 +425,8 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         # Số thay đổi của người nghe trên cuốn này (lớp sửa): giao diện ghi "N thay đổi" và mời lưu thành file. `wishes`: trong
         # số ấy, bao nhiêu là ý muốn chờ Studio (book_wishes.py) - chưa áp vào audio.
         "edits": book_edits.count(edits),
+        # Trong số ấy, phần chưa nằm trong file nào (nút "Lưu (N thay đổi)"): sửa có sẵn trong file vừa nhập không tính (soát a70).
+        "unsaved": book_edits.unsaved(Path(path), edits),
         "wishes": book_edits.count_wishes(edits),
         "projectFile": project_file(Path(path)),
         "lastChapterTitle": next((chapter["fullTitle"] for chapter in items
@@ -556,6 +558,7 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
     target = opened.extract(imported, _free_folder(imported, name) if separate else name)
     _note_broken_music(opened, report)
     _write_cover_meta(target, opened.book)
+    book_edits.mark_saved(target)  # phần sửa có sẵn trong file không phải "thay đổi chưa lưu"
     return target.resolve(), "new"
 
 

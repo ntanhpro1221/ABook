@@ -16,6 +16,8 @@ export interface EditsSyncLast {
   requests?: number;
   /** Ý muốn đang nằm trong hộp thư chờ duyệt trên máy tính. */
   waiting?: number;
+  /** Ý muốn máy tính đã nhận thẳng vào sách (cuốn nhập từ file, không có hộp duyệt) - chỉ còn chờ Studio thu lại giọng. */
+  studio?: number;
   skippedWishes?: number;
   /** Khoá chủ máy đã đổi từ lần trước: bản gửi từ điện thoại vẫn thắng, nhưng người dùng được báo. */
   conflicts?: string[];
@@ -58,7 +60,8 @@ export function editsSyncNote(state: EditsSyncState | null | undefined, where = 
   }
   if (last?.state !== "sent") return null;
   const lines: string[] = [];
-  if (last.applied) lines.push(`${last.applied} thay đổi đã áp trên ${where}`);
+  if (last.applied) lines.push(`${last.applied} thay đổi đã áp ngay trên ${where}`);
+  if (last.studio) lines.push(`${last.studio} việc cần thu lại giọng đã ghi trên ${where} - Studio sẽ thu lại khi bạn mở dự án trên ${where}`);
   if (last.requests) lines.push(`${last.requests} việc đã thành yêu cầu trên ${where}, chờ áp dụng ở Studio`);
   if (last.waiting) lines.push(`${last.waiting} việc đang chờ duyệt trên ${where} - chưa làm gì cho tới khi bạn đồng ý trên ${where}`);
   const skipped = (last.skipped ?? 0) + (last.skippedWishes ?? 0);

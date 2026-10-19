@@ -50,12 +50,13 @@ export function neverText(surface: string): string {
   return `Máy đọc ký hiệu trong “${surface}” thành một chỗ ngừng trước khi tra cách đọc, nên cách đọc cho chữ này không bao giờ được dùng. Muốn đọc khác, sửa “Chữ đem đọc” của từng câu có chữ ấy.`;
 }
 
-/** Dòng dưới ô khi đang thêm cách đọc: có bao nhiêu câu, bao nhiêu câu đã thu sẽ phải thu lại. */
-export function reachSummary(reach: Reach): string {
+/** Dòng dưới ô khi đang thêm cách đọc: có bao nhiêu câu, bao nhiêu câu đã thu sẽ phải thu lại. `later`: cuốn chờ Studio - thu lại khi nào
+ *  (decisions.retakeWhen), để dòng này hứa cùng điều với thông báo sau khi lưu. */
+export function reachSummary(reach: Reach, later?: string): string {
   // Lời giải thích đầy đủ (`neverText`) nằm ngay dưới ô sửa, cạnh nút "Lưu" đã tắt.
   if (reach.never) return `${reach.lines ? `Có ${reach.lines} câu có chữ này, nhưng m` : "M"}áy không dùng được cách đọc cho chữ có ký hiệu này.`;
   if (!reach.lines) return "Chưa có câu nào có chữ này - cách đọc sẽ được dùng khi chữ xuất hiện.";
-  const cost = reach.recorded ? `${reach.recorded} câu đã thu sẽ được thu lại` : "chưa thu câu nào nên không phải thu lại";
+  const cost = reach.recorded ? `${reach.recorded} câu đã thu sẽ được thu lại${later ? ` ${later}` : ""}` : "chưa thu câu nào nên không phải thu lại";
   const blocked = reach.blocked ? ` (${reach.blocked} câu khác không dùng được vì ký hiệu)` : "";
   return `${reach.reached} câu có chữ này · ${cost}${where(reach)}${blocked}`;
 }

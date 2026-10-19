@@ -1,26 +1,18 @@
 import * as Popover from "@radix-ui/react-popover";
-import { ArrowLeft, ArrowRight, BookmarkPlus, BookOpenText, ChevronLeft, ChevronRight, Headphones, Pencil, Play, Search, Type } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
-import { toast } from "sonner";
 import { cn } from "@/shared/cn";
-import { lineEditing } from "@/shared/capabilities";
 import { useMediaQuery } from "@/shared/media";
-import { excerpt } from "@/shared/format";
 import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
-import { useAppInfo } from "@/studio/data";
-import { canEditBook } from "./EditBook";
 import { FindInBook } from "./FindInBook";
-import { chapterToFollow, firstVisibleIndex, lineToEdit, type LineToEdit } from "./follow";
+import { chapterToFollow, firstVisibleIndex } from "./follow";
 import { chapterOpenProblem, readerHint } from "./labels";
-import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { usePlayer } from "./player";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
-import { canTeachWords, wordOf } from "./readings";
-import type { Script, ScriptSegment } from "./model";
-import { useChapterScript, useListenBook, useListenMutations, useSource } from "./source";
-import { WordReadingDialog } from "./WordReadings";
+import { useSentenceMenu, type SentenceEditing } from "./SentenceMenu";
+import { useChapterScript, useListenBook, useSource } from "./source";
 
 // Chế độ ĐỌC: văn bản chương như một cuốn ebook, đi cùng chỗ đang nghe.
 //
@@ -41,8 +33,6 @@ const SIZES = [16, 18, 20, 22, 24];
 const LEADINGS = [1.6, 1.8, 2];
 /** Điện thoại: nút trên thanh đầu đủ 48 px để chạm. */
 const TOUCH = "max-sm:size-[48px]";
-// Thanh nổi dưới câu đang chọn: điện thoại chỉ còn biểu tượng cho nút phụ (nhãn vẫn cho trình đọc màn hình) để cả thanh nằm MỘT hàng, không che chữ đang đọc.
-const BAR_LABEL = "max-sm:sr-only";
 /** Thanh nổi dưới đáy màn đọc: không chiếm chỗ (cao 0, nội dung neo lên từ mép dưới) - nổi trong khoảng đáy để trống của bài (pb-40)
  *  thay vì đẩy bài dài thêm lúc hiện ra. Hiện ra khi đang ở cuối chương thì thẻ "Chương tiếp theo" vẫn nằm trên nó (soát a26 L9). */
 const FLOATING = "pointer-events-none sticky bottom-6 h-0";
@@ -71,18 +61,8 @@ function visibleSentence(box: HTMLElement | null): number {
   return firstVisibleIndex(items, view);
 }
 
-/** `editing`: false ở thiết bị điều khiển từ xa (sửa từng câu / mở Studio không có ở đó). `teachWords`: dạy giọng đọc một từ (PUT readings, máy
- *  tính cho cả thiết bị từ xa có quyền sửa) - mặc định theo `editing`. `onOpenStudioScript`: máy tính, cuốn có xưởng - mở đúng câu ở
- *  tab Kịch bản của Studio, nơi sửa thật. */
-export function ReaderScreen({
-  editing = true,
-  teachWords = editing,
-  onOpenStudioScript,
-}: {
-  editing?: boolean;
-  teachWords?: boolean;
-  onOpenStudioScript?: (bookId: string, chapterId: number, stableId: string) => void;
-}) {
+/** Sửa được gì ở thiết bị này: SentenceMenu.SentenceEditing (cùng với tab "Đọc theo" của màn "Đang nghe"). */
+export function ReaderScreen(edit: SentenceEditing) {
   const { id = "", chapterId: chapterParam } = useParams();
   const [params] = useSearchParams();
   const location = useLocation();
@@ -90,42 +70,21 @@ export function ReaderScreen({
   const source = useSource();
   const player = usePlayer();
   const { data: book } = useListenBook(id);
-  const mutations = useListenMutations(id);
   const chapters = book?.chapters ?? [];
   const chapterId = Number(chapterParam ?? book?.state.reading?.chapterId ?? chapters[0]?.id ?? 0);
   const chapter = chapters.find((item) => item.id === chapterId);
   const index = chapters.findIndex((item) => item.id === chapterId);
   usePageTitle(book && chapter ? `${chapter.subtitle || chapter.title} · ${book.title}` : book?.title);
   const { data: script, isLoading, error: scriptError } = useChapterScript(id, chapter);
-  // Chương chỉ có chữ (sách nhập từ EPUB / DOCX / PDF / TXT, chưa có audio): đọc được, không sửa từng câu; máy có giọng thì giọng máy đọc.
+  // Chương chỉ có chữ (sách nhập từ EPUB / DOCX / PDF / TXT, chưa có audio): đọc được; máy có giọng thì giọng máy đọc.
   const textOnly = chapter?.state === "text";
   const { canSpeak, canListen, listenFrom } = useListenFrom(id, book, chapter, script);
-  // Sửa một câu (docs/EDITING.md, P2a): cuốn không có xưởng ghi ý muốn chờ Studio ngay tại đây; cuốn có xưởng sửa ở Studio; cuốn
-  // nghe thẳng từ máy khác hay chưa cài Studio: nút vẫn hiện, mờ đi, kèm lý do.
-  const lineEdit = editing && !textOnly ? lineEditing(book?.capabilities) : null;
-  const wishes = useWishes(id, lineEdit?.mode === "wish");
-  // Dấu "đang chờ Studio" sau câu: một hàm cố định tới khi danh sách việc chờ đổi - màn đọc vẽ lại theo từng đoạn (ReadAlongText), hàm mới
-  // mỗi lần vẽ thì đoạn nào cũng vẽ lại.
-  const waitingMark = useCallback(
-    (segment: ScriptSegment) => (segment.stableId && wishes.data?.lines[segment.stableId] ? <WaitingMark /> : null),
-    [wishes.data],
-  );
-  // "Đọc từ này là…": cuốn chỉ có chữ của máy này - giữ (hay bấm chuột phải) một chữ để dạy giọng đọc cách đọc nó cho cả cuốn.
-  // Thiết bị chỉ được nghe thì không dạy giọng đọc từ đây (máy tính từ chối): việc ấy ở máy tính, trang sách có dòng nói rõ.
-  const { data: appInfo } = useAppInfo();
-  const readingEdit = canTeachWords({ allowed: teachWords, textOnly, canEdit: canEditBook(book), listenOnly: Boolean(appInfo?.listenOnly) });
-  const [readingWord, setReadingWord] = useState<string | null>(null);
-  // Câu của hộp "Đọc từ này là…" mở từ nút “Sửa cách đọc” (cho chọn từ trong câu); giữ một chữ thì cũng kèm câu để đổi sang từ khác.
-  const [readingSentence, setReadingSentence] = useState("");
-  const [readingAt, setReadingAt] = useState<number | undefined>(undefined); // thứ tự chữ vừa giữ trong câu ấy
-  // Cuốn có audio: giữ một chữ mở hộp “Sửa câu này” thẳng ở bước sửa cách đọc từ ấy (cùng việc với cuốn chỉ có chữ).
-  const [wishWord, setWishWord] = useState<string | null>(null);
-  const [selectedWord, setSelectedWord] = useState(-1);
+  // "Nghe từ câu này" của thanh việc: hàm nghe khai báo sau (cần kịch bản đã nạp) - đi qua ref.
+  const listenRef = useRef<(sentence: number) => void>(() => undefined);
+  const menu = useSentenceMenu({ ...edit, bookId: id, book, chapter, script, canListen, onListen: (sentence) => listenRef.current(sentence) });
+  const { lineEdit, readingEdit, selected, select } = menu;
   const coarse = useMediaQuery("(pointer: coarse)");
   const [prefs, setPrefs] = useState<ReaderPrefs>(loadPrefs);
-  const [selected, setSelected] = useState<number | null>(null);
-  // Hộp "Sửa câu này" giữ đúng câu đã mở (chương + bản chữ lúc mở), không theo giọng sang chương sau (follow.lineToEdit).
-  const [editingLine, setEditingLine] = useState<LineToEdit<Script> | null>(null);
   const [current, setCurrent] = useState(0);
   const [finding, setFinding] = useState(false);
   const container = useRef<HTMLDivElement | null>(null);
@@ -195,9 +154,9 @@ export function ReaderScreen({
     // Chỗ vừa tìm thấy: chọn câu ấy để thấy nó sáng lên và có nút "Nghe từ câu này"; chọn nghe ngay thì nghe, không cần chọn.
     if (params.get("play") === "1" && canListen && listenFrom(target)) {
       follow.follow();
-      setSelected(null);
-    } else if (canListen || lineEdit) setSelected(target);
-  }, [book, canListen, chapterId, follow, id, lineEdit, listenFrom, location.key, params, playingIndex, script]);
+      select(null);
+    } else if (canListen || lineEdit) select(target);
+  }, [book, canListen, chapterId, follow, id, lineEdit, listenFrom, location.key, params, playingIndex, script, select]);
 
   // Chỗ đọc = câu đầu tiên còn thấy trong khung; lưu thưa (2 giây sau lần cuộn cuối).
   const onScroll = useCallback(() => {
@@ -217,6 +176,24 @@ export function ReaderScreen({
   }, [chapterId, follow, id, script, source]);
 
   useEffect(() => () => window.clearTimeout(saveTimer.current), []);
+
+  // Thông báo (Hoàn tác, dấu trang...) nằm dưới thanh đầu của màn đọc, không che nút "Nghe từ đây" ở góc trên (soát a70): vị trí trên của vùng
+  // thông báo theo mép dưới thanh đầu (App đọc --toast-top).
+  const header = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const root = document.documentElement;
+    const place = () => {
+      const bottom = header.current?.getBoundingClientRect().bottom;
+      if (bottom) root.style.setProperty("--toast-top", `${Math.round(bottom + 8)}px`);
+    };
+    place();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(place);
+    if (header.current) observer?.observe(header.current);
+    return () => {
+      observer?.disconnect();
+      root.style.removeProperty("--toast-top");
+    };
+  }, [book, isLoading]);
 
   if (!book || isLoading) {
     return (
@@ -239,21 +216,19 @@ export function ReaderScreen({
   const listen = (sentence: number, word = -1) => {
     if (!listenFrom(sentence, word)) return;
     follow.follow();
-    setSelected(null);
+    select(null);
     if (!prefs.tapped) setPrefs({ ...prefs, tapped: true });
   };
+  listenRef.current = listen;
   // Bấm vào câu: có nghe được thì nghe từ đúng chữ vừa bấm (như Đọc to của Edge); sửa được câu thì câu còn được chọn để hiện "Sửa câu này".
   // Bàn phím: mũi tên đi qua các câu, Enter là nghe từ câu ấy.
   const tapSentence = (sentence: number, word: number) => {
     if (canListen) {
       listen(sentence, word);
-      if (lineEdit || readingEdit) {
-        setSelected(sentence);
-        setSelectedWord(word);
-      }
+      if (menu.editable) select(sentence, word);
       return;
     }
-    setSelected(sentence === selected ? null : sentence);
+    select(sentence === selected ? null : sentence, word);
   };
   // "Nghe từ đây" trên thanh đầu: câu đang nghe dở (dừng) vẫn nằm trong màn thì nghe tiếp từ đúng chỗ ấy - trước đây nút luôn nhảy về câu đầu
   // màn hình (1:11 lùi về 0:41, soát UX 29-09). Không thì nghe từ câu đầu tiên còn thấy trên màn.
@@ -271,55 +246,16 @@ export function ReaderScreen({
   };
   // Câu nào cũng chọn được: ít nhất có "Đặt dấu trang ở câu này" (sách chỉ có chữ, máy không có giọng cũng đặt được).
   const selectable = true;
-  // Dấu trang theo câu: giữ vị trí câu + ~60 chữ đầu câu; chương có audio thì thêm giờ bắt đầu câu để trình phát cũng tới được.
-  const bookmarkSentence = (sentence: number) => {
-    const segment = script.segments[sentence];
-    if (!segment) return;
-    mutations.addBookmark.mutate(
-      { chapterId, seconds: segment.start ?? 0, note: "", sentence: { index: sentence, quote: segment.text } },
-      {
-        onSuccess: (mark) => {
-          setSelected(null);
-          if (mark.existing) {
-            toast("Đã có dấu trang ở câu này", { id: "bookmark-existing", description: excerpt(segment.text) });
-            return;
-          }
-          toast.success("Đã đặt dấu trang", {
-            id: "bookmark",
-            duration: 8000,
-            description: excerpt(segment.text),
-            cancel: { label: "Hoàn tác", onClick: () => mutations.deleteBookmark.mutate(mark.id) },
-          });
-        },
-        onError: () => toast.error("Chưa đặt được dấu trang"),
-      },
-    );
-  };
   const go = (step: 1 | -1) => {
     const next = chapters[index + step];
     if (next) navigate(`/book/${id}/read/${next.id}`, { replace: true });
   };
   const hint = readerHint({ textOnly, canSpeak, timed: script.timed, tapped: Boolean(prefs.tapped), coarse, wish: lineEdit?.mode === "wish", readings: readingEdit || lineEdit?.mode === "wish" });
-  // Giữ một chữ (điện thoại) / bấm chuột phải (máy tính): sửa cách đọc chữ ấy - cuốn chỉ có chữ lưu thẳng, cuốn có audio ghi thành việc chờ máy làm sách.
-  const wordMenu = readingEdit
-    ? (sentence: number, word: number) => {
-        setReadingSentence(script.segments[sentence].text);
-        setReadingAt(word);
-        setReadingWord(wordOf(script.segments[sentence].text, word) || null);
-      }
-    : lineEdit?.mode === "wish"
-      ? (sentence: number, word: number) => {
-          const held = wordOf(script.segments[sentence].text, word);
-          if (!held) return;
-          setWishWord(held);
-          setEditingLine(lineToEdit(script, sentence));
-        }
-      : undefined;
   const name = chapter.subtitle || chapter.title;
 
   return (
     <div className="flex h-full flex-col">
-      <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg/95 px-3 backdrop-blur max-sm:h-auto max-sm:flex-wrap max-sm:gap-y-0 sm:px-6">
+      <header ref={header} className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg/95 px-3 backdrop-blur max-sm:h-auto max-sm:flex-wrap max-sm:gap-y-0 sm:px-6">
         <IconButton label="Về trang sách" icon={ArrowLeft} onClick={() => navigate(`/book/${id}`)} className={TOUCH} />
         {/* Điện thoại: sáu nút đã chiếm gần hết bề ngang, tên chương bị cụt còn vài chữ - tên xuống hàng riêng dưới các nút (soát UX a11). */}
         <div className="min-w-0 flex-1 max-sm:order-last max-sm:basis-full max-sm:px-1 max-sm:pb-2">
@@ -397,13 +333,13 @@ export function ReaderScreen({
             script={script}
             playingIndex={playingIndex}
             onTap={selectable ? tapSentence : undefined}
-            onWordMenu={wordMenu}
+            onWordMenu={menu.wordMenu}
             focusIndex={playingIndex >= 0 ? playingIndex : current}
             selected={selected}
             heading="h1"
             headingClassName="pb-2 text-[1.5em] font-bold leading-snug tracking-tight"
             className="space-y-[0.9em]"
-            after={waitingMark}
+            after={menu.waitingMark}
           />
           {index < chapters.length - 1 && (
             <button
@@ -419,65 +355,10 @@ export function ReaderScreen({
             </button>
           )}
         </article>
-        {selected !== null && (
+        {menu.bar && (
           <div className={FLOATING}>
-            <div className={cn(FLOATING_BODY, "flex-col items-center gap-2")}>
-              <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
-                {canListen && (
-                  <button
-                    type="button"
-                    onClick={() => listen(selected)}
-                    onMouseDown={(event) => event.preventDefault()}
-                    className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-semibold text-bg shadow-float"
-                  >
-                    <Play className="size-4" fill="currentColor" strokeWidth={0} /> <span className="sm:hidden">Nghe từ đây</span>
-                    <span className="max-sm:hidden">Nghe từ câu này</span>
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => bookmarkSentence(selected)}
-                  onMouseDown={(event) => event.preventDefault()}
-                  className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
-                >
-                  <BookmarkPlus className="size-4" /> <span className={BAR_LABEL}>Đặt dấu trang ở câu này</span>
-                </button>
-                {readingEdit && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const text = script.segments[selected]?.text ?? "";
-                      setReadingSentence(text);
-                      setReadingAt(selectedWord >= 0 ? selectedWord : undefined);
-                      setReadingWord(selectedWord >= 0 ? wordOf(text, selectedWord) : "");
-                    }}
-                    onMouseDown={(event) => event.preventDefault()}
-                    className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line"
-                  >
-                    <Pencil className="size-4" /> <span className={BAR_LABEL}>Sửa cách đọc</span>
-                  </button>
-                )}
-                {lineEdit && (
-                  <button
-                    type="button"
-                    disabled={lineEdit.mode === "blocked"}
-                    onClick={() => {
-                      const stableId = script.segments[selected]?.stableId;
-                      if (lineEdit.mode === "wish") setEditingLine(lineToEdit(script, selected));
-                      else if (lineEdit.mode === "studio" && stableId) onOpenStudioScript?.(id, chapterId, stableId);
-                    }}
-                    onMouseDown={(event) => event.preventDefault()}
-                    className="inline-flex min-h-[48px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line disabled:opacity-60"
-                  >
-                    <Pencil className="size-4" /> <span className={BAR_LABEL}>{lineEdit.mode === "studio" ? "Sửa trong Studio" : "Sửa câu này"}</span>
-                  </button>
-                )}
-              </div>
-              {lineEdit?.mode === "blocked" && (
-                <p className="pointer-events-auto max-w-sm rounded-xl bg-panel px-3 py-1.5 text-center text-xs text-fg-2 shadow-float ring-1 ring-line">
-                  Sửa câu này: {lineEdit.note}
-                </p>
-              )}
+            <div className={FLOATING_BODY}>
+              <div className="w-full">{menu.bar}</div>
             </div>
           </div>
         )}
@@ -490,20 +371,7 @@ export function ReaderScreen({
         )}
       </div>
       <FindInBook book={book} open={finding} onOpenChange={setFinding} />
-      {readingEdit && <WordReadingDialog bookId={id} word={readingWord} sentence={readingSentence} wordIndex={readingAt} onClose={() => setReadingWord(null)} />}
-      {lineEdit?.mode === "wish" && (
-        <LineWishDialog
-          book={book}
-          script={editingLine?.script ?? script}
-          segmentIndex={editingLine?.index ?? null}
-          wishes={wishes.data}
-          word={wishWord}
-          onClose={() => {
-            setEditingLine(null);
-            setWishWord(null);
-          }}
-        />
-      )}
+      {menu.dialogs}
     </div>
   );
 }
