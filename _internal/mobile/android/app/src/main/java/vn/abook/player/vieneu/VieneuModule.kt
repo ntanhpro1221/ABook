@@ -72,6 +72,14 @@ class VieneuModule(
 
     override fun measurable() = installed() != null
 
+    /** Model mark of a VieNeu voice ("vieneu:nano/Adam") for the clip cache key (desktop `vieneu_module.model_mark`): the voice list and the
+     *  tier's model as downloaded, plus Nano's reading schedule ([VieneuNano.STEPS], [VieneuNano.CFG], [VieneuNano.CFG_LAST]). */
+    fun mark(voiceId: String): String = when (voiceId.removePrefix("vieneu:").substringBefore('/')) {
+        "nano" -> mark(listOf("voices", "nano"), "nano:${VieneuNano.STEPS}:${VieneuNano.CFG}:${VieneuNano.CFG_LAST}")
+        "turbo" -> mark(listOf("voices", "turbo"))
+        else -> ""
+    }
+
     /** Self-measured speed of a VieNeu voice ("vieneu:nano/...") on this phone, for "Làm trước" estimates; null when not measured. */
     fun rtf(voiceId: String): Double? {
         if (!voiceId.startsWith("vieneu:")) return null

@@ -92,7 +92,12 @@ class SupertonicModule(
     override fun speedInstalled() = installed() != null
     override fun speedRtf() = tierRtf(CHOICE)
     override fun speedFastReady() = fastEstimator() != null
-    override fun speedFastBytes() = groups[FAST_CHOICE].orEmpty().sumOf { it.wireSize }
+    override fun speedFastBytes() = if (FAST_CHOICE in groups) left(FAST_CHOICE, states()) else 0L
+
+    /** Model mark of the tier the clip is read at, for the clip cache key (desktop `supertonic_module.model_mark`): the fast tier reads with the
+     *  base model and its own estimator at [SupertonicText.FAST_STEPS], the quality tier with the base model at [SupertonicText.STEPS]. */
+    fun mark(fast: Boolean): String =
+        if (fast) mark(listOf(CHOICE, FAST_CHOICE), "fast:${SupertonicText.FAST_STEPS}") else mark(listOf(CHOICE), "quality:${SupertonicText.STEPS}")
 
     companion object {
         const val CHOICE = "supertonic"

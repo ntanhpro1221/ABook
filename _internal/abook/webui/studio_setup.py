@@ -215,9 +215,45 @@ def nvidia_gpu() -> dict[str, Any] | None:
         return None
 
 
+# Băm của file đã kiểm, theo (đường dẫn, cỡ, giờ sửa): `matches` không băm lại file cỡ trăm MB mỗi lần thẻ mô-đun hỏi "còn phải tải bao nhiêu".
+_hashed: dict[tuple[str, int, int], str] = {}
+_hashed_lock = threading.Lock()
+
+
+def _stamp(path: Path) -> tuple[str, int, int] | None:
+    try:
+        info = path.stat()
+    except OSError:
+        return None
+    return str(path), info.st_size, info.st_mtime_ns
+
+
+def matches(target: Path, item: Download) -> bool:
+    """`target` đã là đúng file `item` (cùng cỡ, cùng SHA-256): tải bỏ qua nó. Băm mỗi file một lần cho tới khi nó đổi."""
+    stamp = _stamp(target)
+    if stamp is None or stamp[1] != item.size:
+        return False
+    with _hashed_lock:
+        known = _hashed.get(stamp)
+    if known is None:
+        known = _sha256(target)
+        with _hashed_lock:
+            _hashed[stamp] = known
+    return known == item.sha256
+
+
+def left(item: Download, target: Path) -> int:
+    """Byte của `item` còn phải tải về `target`: 0 khi file đúng đã nằm đó, không thì phần chưa có trong `.part` (tải tiếp bằng Range) - cỡ nút "Tải" / "Cập nhật"."""
+    if matches(target, item):
+        return 0
+    part = target.with_name(target.name + ".part")
+    have = part.stat().st_size if part.is_file() else 0
+    return item.size - min(have, item.size)
+
+
 def download(item: Download, target: Path, progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> Path:
     """Tải về `target` (ghi `.part`, tải tiếp bằng Range), kiểm SHA-256 rồi mới đổi tên. Sai băm: xoá, báo lỗi."""
-    if target.is_file() and _sha256(target) == item.sha256:
+    if matches(target, item):
         progress(item.size, item.size)  # đã có sẵn: tính vào "đã tải" ngay, thanh tổng không tụt rồi nhảy
         return target
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -259,6 +295,10 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
         part.unlink(missing_ok=True)
         raise SetupError(f"{item.name} tải về không đúng bản đã ghim (SHA-256 {actual[:12]}…) - đã xoá, bấm Cài tiếp để tải lại.")
     os.replace(part, target)
+    stamp = _stamp(target)
+    if stamp is not None:
+        with _hashed_lock:
+            _hashed[stamp] = actual  # vừa băm xong: `matches` không phải băm lại
     return target
 
 

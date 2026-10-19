@@ -174,6 +174,7 @@ class SupertonicEngine(
             val total = keep(Tensors.floats(env, floatArrayOf(steps.toFloat()), 1))
             var latent = random.standardNormalFloats(latentDim * frames)
             for (step in 0 until steps) {
+                ClipBudget.stopIfCancelled() // the listener moved on: free the CPU between steps
                 latent = Tensors.floats(env, latent, 1, latentDim.toLong(), frames.toLong()).use { noisy ->
                     Tensors.floats(env, floatArrayOf(step.toFloat()), 1).use { current ->
                         timed(clock, 1) {
@@ -241,6 +242,7 @@ class SupertonicSpeaker(
         val waves = ArrayList<FloatArray>()
         val pauses = ArrayList<Double>()
         for (unit in units) {
+            ClipBudget.stopIfCancelled() // a cancelled read stops between chunks
             val spoken = normalize(unit.pieces)
             val random = NumpyRandomState(VieneuSpeaker.seedOf(SupertonicVoices.PREFIX, name, unit.pieces.joinToString(" ")))
             waves.add(SupertonicText.louder(engine.infer(spoken, name, random, SupertonicText.speedFor(spoken))))

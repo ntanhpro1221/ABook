@@ -1468,6 +1468,67 @@ describe("nhảy tới câu xa: lượt xin cũ không chặn câu vừa nhảy 
     await s.arrive(LONG[0]);
     expect(asked(s).slice(0, 2)).toEqual([LONG[0], LONG[2]]);
   });
+
+  /** Nguồn như httpSource: lượt bị bỏ (`signal`) thì hỏng ngay với lý do "cancelled" (kết nối đóng, máy chủ thôi đọc). */
+  function honouringAborts(s: Setup): (AbortSignal | undefined)[] {
+    const signals: (AbortSignal | undefined)[] = [];
+    const inner = s.track.fetchClip;
+    s.track.fetchClip = (voice, text, o) => {
+      if (!o?.cachedOnly) signals.push(o?.signal);
+      return new Promise((resolve, reject) => {
+        inner(voice, text, o).then(resolve, reject);
+        o?.signal?.addEventListener("abort", () => reject(new ReadAloudError("Đã bỏ đoạn này.", "cancelled")));
+      });
+    };
+    return signals;
+  }
+
+  it("giọng trên máy: nhảy xa thì lượt đang đọc của đoạn bỏ dở bị huỷ, đoạn vừa nhảy tới được xin ngay - không lỗi (uxfix70)", async () => {
+    const s = setup({ chapter });
+    s.track.serial = () => true;
+    const signals = honouringAborts(s);
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    expect(asked(s)).toEqual([LONG[0]]);
+    s.engine.seekWord(9, 0);
+    await flush();
+    expect(signals[0]?.aborted).toBe(true);
+    expect(asked(s)).toEqual([LONG[0], LONG[9]]); // không chờ đoạn 0 đọc xong
+    expect(s.events).not.toContain("error");
+    await s.arrive(LONG[9]);
+    expect(asked(s)).toEqual([LONG[0], LONG[9], LONG[10]]);
+    s.engine.seekWord(9, 0); // đoạn 10 còn trong cửa sổ đọc trước: không huỷ
+    await flush();
+    expect(signals[2]?.aborted).toBe(false);
+    s.engine.seekWord(0, 0); // quay về đoạn đã bỏ dở: đoạn 10 thôi, đoạn 0 xin lại như mới
+    await flush();
+    expect(signals[2]?.aborted).toBe(true);
+    expect(asked(s)).toEqual([LONG[0], LONG[9], LONG[10], LONG[0]]);
+  });
+
+  it("giọng trên máy: đổi giọng huỷ lượt của giọng cũ và xin lại bằng giọng mới; giọng trực tuyến không bị huỷ (uxfix70)", async () => {
+    const s = setup({ chapter });
+    let voice = "supertonic:F1";
+    s.track.voice = () => voice;
+    s.track.serial = () => voice.startsWith("supertonic:");
+    const signals = honouringAborts(s);
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    expect(asked(s)).toEqual([LONG[0]]);
+    voice = "supertonic:M4";
+    (s.engine as unknown as { voiceChanged(): void }).voiceChanged(); // như VOICE_CHANGED_EVENT (môi trường thử không có window)
+    await flush();
+    expect(signals[0]?.aborted).toBe(true);
+    expect(asked(s)).toEqual([LONG[0], LONG[0]]);
+
+    const online = setup({ chapter });
+    const kept = honouringAborts(online);
+    online.engine.load(online.trackInfo, 0, true);
+    await flush();
+    online.engine.seekWord(9, 0);
+    await flush();
+    expect(kept.every((signal) => signal === undefined)).toBe(true); // Edge: lượt đã gửi làm nốt, clip về vẫn dùng được
+  });
 });
 
 describe("dòng ngăn cảnh: quãng lặng 1,5 giây", () => {
