@@ -18,8 +18,10 @@ import mimetypes
 import os
 import re
 import secrets
+import select
 import shutil
 import socket
+import ssl
 import sqlite3
 import tempfile
 import threading
@@ -402,7 +404,9 @@ class App:
                                              vieneu_locate=vieneu_module.installed, supertonic_locate=supertonic_module.installed, vieneu_engines=vieneu_module.make_engine,
                                              rtf=lambda voice: supertonic_module.rtf(voice) or vieneu_module.rtf(voice),
                                              # "Tốc độ giọng trên máy" (voice_speed.py): bậc "Nhanh hơn" của Supertonic khi nghe trực tiếp
-                                             speed=voice_speed.live_tag, supertonic_fast_locate=supertonic_module.installed_fast)
+                                             speed=voice_speed.live_tag, supertonic_fast_locate=supertonic_module.installed_fast,
+                                             # dấu model trong khoá bộ đệm: cập nhật model / đổi lịch đọc thì đoạn đã đọc sẵn được đọc lại
+                                             model_mark=lambda voice, tier: supertonic_module.model_mark(voice, tier) or vieneu_module.model_mark(voice))
         voice_speed.configure(preferences.path.with_name(voice_speed.FILE))
         vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=self.readaloud.vieneu.benchmark,
                                 after_install=lambda: self.readaloud.forget("vieneu"))
@@ -5388,6 +5392,18 @@ class Handler(BaseHTTPRequestHandler):
         rank = body.get("rank")
         return rank if isinstance(rank, int) and not isinstance(rank, bool) and 0 <= rank < readaloud.edge.RANK_BACKGROUND else readaloud.edge.RANK_BACKGROUND
 
+    def _peer_gone(self) -> bool:
+        """Người gọi đã đóng kết nối giữa lúc chờ (trình phát bỏ đoạn này: nhảy đi nơi khác, đổi giọng, đổi chương - ui httpSource huỷ lượt xin): tín hiệu bỏ
+        lượt đọc của `ReadAloud.clip` (`cancelled`, uxfix70). Kết nối TLS (máy khác qua mạng) không nhìn trộm được: coi như còn."""
+        sock = self.connection
+        if isinstance(sock, ssl.SSLSocket):
+            return False
+        try:
+            readable, _, _ = select.select([sock], [], [], 0)
+            return bool(readable) and sock.recv(1, socket.MSG_PEEK) == b""  # có gì để đọc mà đọc ra rỗng = đầu kia đã đóng
+        except (OSError, ValueError):
+            return True
+
     def post_readaloud_clip(self, _query: dict[str, list[str]]) -> None:
         # Một đoạn chữ -> một clip (audio tốc độ 1,0 + mốc từng chữ). Lỗi nói đúng lý do (`reason`) để trình phát đổi sang giọng máy hay báo người nghe.
         body = self._body()
@@ -5398,8 +5414,9 @@ class Handler(BaseHTTPRequestHandler):
         # `stream: true` (trình phát gửi cho đoạn nó đang đứng chờ): clip chưa có trong bộ đệm thì phát luồng, còn lại JSON như thường (ReadAloud.clip tự bỏ qua `stream` khi không phát luồng được).
         stream = ClipStream(self) if body.get("stream") is True and rank == 0 and not body.get("cachedOnly") else None
         try:
+            # `cancelled`: trình phát đóng kết nối (bỏ đoạn này) thì lượt đọc dừng - mọi giọng, giọng trên máy dừng giữa các khúc / bước (uxfix70).
             clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")), origin=self._reading_origin(body),
-                                           readings=self._book_readings(body), book=self._clip_book(body), rank=rank, stream=stream)
+                                           readings=self._book_readings(body), book=self._clip_book(body), rank=rank, stream=stream, cancelled=self._peer_gone)
         except Exception as error:  # đã phát thì chỉ còn nói lỗi bằng bản ghi X; lỗi bất kỳ không được rơi xuống JSON giữa lời đáp chunked
             if stream is not None and stream.sent:
                 stream.fail(str(error), error.reason if isinstance(error, VoiceError) else "service")
@@ -5410,6 +5427,9 @@ class Handler(BaseHTTPRequestHandler):
                 # Chỉ tra bộ đệm mà chưa có là câu trả lời bình thường (trình phát hỏi hàng loạt lúc nạp chương), không phải lỗi: 200 để
                 # console của trình duyệt không đầy dòng 404 đỏ.
                 self._send_json(HTTPStatus.OK, {"cached": False, "reason": "uncached"})
+                return
+            if error.reason == "cancelled":  # người gọi đã đóng kết nối: không còn ai để trả lời
+                self.close_connection = True
                 return
             status = {"offline": HTTPStatus.SERVICE_UNAVAILABLE, "timeout": HTTPStatus.GATEWAY_TIMEOUT, "voice": HTTPStatus.BAD_REQUEST,
                       "empty": HTTPStatus.UNPROCESSABLE_ENTITY}.get(error.reason, HTTPStatus.BAD_GATEWAY)

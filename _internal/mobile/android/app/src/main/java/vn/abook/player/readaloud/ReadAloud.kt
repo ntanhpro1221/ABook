@@ -220,8 +220,19 @@ object ReadAloud {
     internal fun cache(): ClipCache = cache ?: run {
         val ctx = context ?: throw VoiceException("Chưa khởi động")
         VoiceSpeed.setup(ctx)
-        // giọng hai bậc ([VoiceSpeed]): mã giọng trần = bậc nghe trực tiếp lúc này; bản xuất hỏi [VoiceSpeed.quality]
-        ClipCache(File(ctx.cacheDir, "readaloud"), pinFile = File(ctx.filesDir, "readaloud-pins.txt"), tierOf = VoiceSpeed::liveTag).also { cache = it }
+        // giọng hai bậc ([VoiceSpeed]): mã giọng trần = bậc nghe trực tiếp lúc này; bản xuất hỏi [VoiceSpeed.quality]. Giọng trên máy: dấu model của bậc ấy trong khoá
+        // (mô-đun tính một lần mỗi lần tải / cập nhật / gỡ - VoiceModule.mark).
+        // Mô-đun lấy một lần: SupertonicVoices / VieneuVoices khoá cả lượt đọc, mỗi lần tra bộ đệm hỏi lại thì phải chờ đoạn đang đọc xong.
+        val supertonic by lazy { SupertonicVoices.module(ctx) }
+        val vieneu by lazy { VieneuVoices.module(ctx) }
+        val modelMark = { voice: String, tier: String ->
+            when {
+                voice.startsWith("${SupertonicVoices.PREFIX}:") -> supertonic.mark(VoiceSpeed.isFast(tier))
+                voice.startsWith("${VieneuVoices.PREFIX}:") -> vieneu.mark(voice)
+                else -> ""
+            }
+        }
+        ClipCache(File(ctx.cacheDir, "readaloud"), pinFile = File(ctx.filesDir, "readaloud-pins.txt"), tierOf = VoiceSpeed::liveTag, markOf = modelMark).also { cache = it }
     }
 
     private var speeds: VoiceSpeeds? = null

@@ -25,6 +25,8 @@ from typing import Any, Sequence
 
 import numpy as np
 
+from .model import stop_if_cancelled
+
 TURBO_RATE = 48_000
 NANO_RATE = 24_000
 DEFAULT_SAMPLING = {"temperature": 0.8, "top_k": 25, "top_p": 0.95, "repetition_penalty": 1.2, "repetition_window": 64}
@@ -523,6 +525,7 @@ class TurboEngine:
         hist = [_Window(sampling["repetition_window"]) for _ in range(self.n_vq)] if not math.isclose(sampling["repetition_penalty"], 1.0) else None
         frames: list[np.ndarray] = []
         for t in range(cap):
+            stop_if_cancelled()  # lượt đọc đã bị bỏ (ReadAloud.clip): dừng giữa các frame
             codes, eos = self._frame(h, sampling, hist, rng)
             frames.append(np.asarray(codes, dtype=np.int64))
             if eos:
@@ -547,7 +550,8 @@ class TurboEngine:
 
     def infer(self, phonemes: str, speaker_emb: np.ndarray, ref_codes: np.ndarray | None, *, rng: np.random.RandomState,
               sampling: dict | None = None, babble_retries: int = BABBLE_RETRIES) -> np.ndarray:
-        """Một khúc phoneme -> sóng âm 48 kHz (OnnxV3LiteEngine.infer, frame_cap bật)."""
+        """Một khúc phoneme -> sóng âm 48 kHz (OnnxV3LiteEngine.infer, frame_cap bật). Lượt đọc bị bỏ giữa chừng (`model.stop_if_cancelled`): VoiceError "cancelled"."""
+        stop_if_cancelled()
         sampling = {**DEFAULT_SAMPLING, **(sampling or {})}
         cap = min(MAX_NEW_FRAMES, max_expected_frames(phonemes))
         anchor = self._anchor(speaker_emb)
@@ -611,7 +615,8 @@ class NanoEngine:
     def infer(self, phonemes: str, speaker_emb: np.ndarray, style: np.ndarray, *, seed: int | None,
               steps: int = NANO_STEPS, cfg: float = NANO_CFG, cfg_last: bool = NANO_CFG_LAST) -> np.ndarray:
         """Một khúc phoneme -> sóng âm 24 kHz (OnnxV3NanoEngine.infer, sway 0, tốc độ 1). `cfg_last` False: bước cuối chỉ chạy nhánh có
-        điều kiện (trọng số hướng dẫn 1)."""
+        điều kiện (trọng số hướng dẫn 1). Lượt đọc bị bỏ giữa chừng (`model.stop_if_cancelled`, hỏi trước mỗi bước): VoiceError "cancelled"."""
+        stop_if_cancelled()
         with self._lock:
             spk = np.asarray(speaker_emb, dtype=np.float32).reshape(1, -1)
             style = np.asarray(style, dtype=np.float32)
@@ -626,6 +631,7 @@ class NanoEngine:
             grid = np.linspace(0.0, 1.0, n + 1, dtype=np.float64)
             grid = grid + 0.0 * (np.cos(np.pi / 2 * grid) - 1 + grid)
             for i in range(n):
+                stop_if_cancelled()
                 t = np.array([grid[i]], dtype=np.float32)
                 v = self.ve.run(None, {"x": x, "t": t, "ctx": ctx, "ctx_mask": mask, "spk": spk, "style": style})[0]
                 if cfg > 0 and (cfg_last or i < n - 1):

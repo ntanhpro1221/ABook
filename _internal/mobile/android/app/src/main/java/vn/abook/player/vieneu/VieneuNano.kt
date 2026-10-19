@@ -3,6 +3,7 @@ package vn.abook.player.vieneu
 import ai.onnxruntime.OnnxTensor
 import ai.onnxruntime.OrtEnvironment
 import org.json.JSONObject
+import vn.abook.player.readaloud.ClipBudget
 import java.io.File
 import kotlin.math.exp
 
@@ -64,8 +65,9 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
 
     /** One chunk of phonemes -> 24 kHz audio. [noise] is the start latent `[144][frames]` (the bench replays the desktop's); null draws it from [seed]
      *  exactly as the desktop does (`np.random.default_rng(seed).standard_normal`). */
-    fun synthesize(phones: String, speaker: FloatArray, style: FloatArray, noise: FloatArray?, seed: Long, steps: Int = STEPS, cfgScale: Float = 3f, sway: Double = 0.0, speed: Double = 1.0,
+    fun synthesize(phones: String, speaker: FloatArray, style: FloatArray, noise: FloatArray?, seed: Long, steps: Int = STEPS, cfgScale: Float = CFG, sway: Double = 0.0, speed: Double = 1.0,
                    cfgLast: Boolean = CFG_LAST): Result {
+        ClipBudget.stopIfCancelled()
         val timings = Timings()
         val started = System.nanoTime()
         val ids = encodePhones(phones)
@@ -94,6 +96,7 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
                 val frames = maxOf(MIN_FRAMES, Math.rint(seconds * fps).toInt())
                 var x = if (noise != null && noise.size == latentChannels * frames) noise.copyOf() else NumpyGenerator(seed).standardNormalFloats(latentChannels * frames)
                 for (i in 0 until steps) {
+                    ClipBudget.stopIfCancelled() // the listener moved on: free the CPU between steps
                     val from = swayed(i, steps, sway)
                     val to = swayed(i + 1, steps, sway)
                     val v = estimate(x, frames, from.toFloat(), ctxTensor, maskTensor, speakerTensor, styleTensor, clock)
@@ -146,6 +149,8 @@ class VieneuNano(dir: File, threads: Int, backend: VieneuBackend = VieneuBackend
         /** Euler steps (desktop vieneu_engine.NANO_STEPS): 6 since 19-10 - measured no worse on the test set than 8 steps guided on every step
          *  (docs/research/SUPERTONIC_PHONE.md, "R7"). */
         const val STEPS = 6
+        /** Classifier-free guidance scale (desktop vieneu_engine.NANO_CFG). */
+        const val CFG = 3f
         /** Guidance on the last step too (desktop vieneu_engine.NANO_CFG_LAST): false since 19-10 - the last step runs the conditional pass only
          *  (guidance in a limited interval), 11 estimator calls instead of 12 (SUPERTONIC_PHONE.md, "R7"). */
         const val CFG_LAST = false

@@ -82,6 +82,13 @@ class Component:
     external: bool = False  # máy đã có sẵn không do mô-đun (Studio, máy dev): không tải, không "cũ"
     blocked: str = ""  # lý do không tải được trên máy này (tiếng Việt), rỗng nếu tải được
     downloads: list[Any] = field(default_factory=list)
+    targets: list[Path] = field(default_factory=list)  # nơi từng file của `downloads` được tải về (cùng thứ tự); rỗng = không biết, `left` tính cả phần
+
+    def left(self) -> int:
+        """Byte còn phải tải của phần này (file đúng đã có thì không tính, `.part` dở thì chỉ tính phần còn lại) - cỡ ghi trên nút tải / cập nhật."""
+        if not self.targets:
+            return self.size
+        return sum(studio_setup.left(item, target) for item, target in zip(self.downloads, self.targets))
 
 
 # ---- cấu hình -----------------------------------------------------------------------------------------------------------------
@@ -207,7 +214,8 @@ def libs_pin() -> str:
 def libs_part(blocked: str | None = None) -> Component:
     """Phần "thư viện chạy model" (numpy + onnxruntime): MỘT bản cho cả máy - mô-đun nào tải trước thì mô-đun kia thấy đã có."""
     return Component("libs", "Thư viện chạy model", libs_pin(), sum(w.size for w in WHEELS), _libs_present(), external=_libs_external(),
-                     blocked=_cannot_install_libs() if blocked is None else blocked, downloads=list(WHEELS))
+                     blocked=_cannot_install_libs() if blocked is None else blocked, downloads=list(WHEELS),
+                     targets=[_folder / DOWNLOADS / f"{wheel.name}.whl" for wheel in WHEELS] if _folder is not None else [])
 
 
 def libs_state() -> str:

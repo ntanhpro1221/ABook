@@ -105,8 +105,29 @@ abstract class VoiceModule(
         return groups.keys.associateWith { partState(it, stamps) }
     }
 
+    /** Wire bytes of part [id]'s files that are not current (the download's progress counts every one of them, a resumed `.part` included). */
     private fun bytes(id: String, states: Map<String, String>): Long =
         if (states[id] == "current") 0L else groups.getValue(id).filter { !store(id).isCurrent(it) }.sumOf { it.wireSize }
+
+    /** Bytes part [id] still has to fetch: its files that are missing or pinned differently, less what a cut download left in `.part` - the
+     *  size shown on the card's buttons, right again after Huỷ (desktop `Component.left`). */
+    protected fun left(id: String, states: Map<String, String>): Long {
+        if (states[id] == "current") return 0L
+        val store = store(id)
+        val stamp = store.readStamp()
+        return groups.getValue(id).sumOf { store.left(it, stamp) }
+    }
+
+    /** Model mark of a voice for the clip cache key ([vn.abook.player.readaloud.ClipCache] `markOf`, desktop `ModuleCore.mark`): 8 hex of the
+     *  pins DOWNLOADED for [parts] (this module's stamp) and the reading [schedule] (steps...). A model update or a new schedule changes it, so old
+     *  clips no longer hit and the paragraph is read again once. Computed once per (parts, schedule) until a download or removal. */
+    fun mark(parts: List<String>, schedule: String = ""): String = modelMarks.getOrPut(parts to schedule) {
+        val stamp = pinned.readStamp()
+        val pins = parts.flatMap { id -> groups[id].orEmpty().map { "${it.name}=${stamp[it.name].orEmpty()}" } }
+        PinnedFiles.sha256Of((pins + schedule).joinToString("|").toByteArray(Charsets.UTF_8)).take(8)
+    }
+
+    private val modelMarks = java.util.concurrent.ConcurrentHashMap<Pair<List<String>, String>, String>()
 
     /** Choices whose parts are all on this phone (an older version counts). */
     protected fun have(states: Map<String, String>) = choices.filter { choice -> needs(choice).all { states[it] != "missing" } }
@@ -160,21 +181,22 @@ abstract class VoiceModule(
             // an add-on counts only its own parts: what it requires has its own line
             val base = requires(choice).flatMap { needs(it) }.toSet()
             val row = JSONObject().put("id", choice).put("label", label).put("detail", detail).put("needs", JSONArray(needs(choice)))
-                .put("bytes", lacking(listOf(choice), states).filter { it !in base }.sumOf { bytes(it, states) }).put("installed", choice in installedTiers)
+                .put("bytes", lacking(listOf(choice), states).filter { it !in base }.sumOf { left(it, states) }).put("installed", choice in installedTiers)
                 .put("recommended", recommended).put("default", ticked).put("removable", choice in installedTiers)
             if (requires(choice).isNotEmpty()) row.put("requires", JSONArray(requires(choice)))
             shown.put(row)
         }
         val parts = JSONArray()
         for (id in groups.keys) {
-            parts.put(JSONObject().put("id", id).put("label", partLabel(id)).put("bytes", groups.getValue(id).sumOf { it.wireSize })
+            val size = if (states[id] == "current") groups.getValue(id).sumOf { it.wireSize } else left(id, states)
+            parts.put(JSONObject().put("id", id).put("label", partLabel(id)).put("bytes", size)
                 .put("state", states.getValue(id)).put("external", common(id)))
         }
         val shownBench = JSONObject()
         for (tier in installedTiers) bench.optJSONObject(tier)?.let { shownBench.put(tier, it) }
         JSONObject().put("state", state).put("done", if (downloading) finished + current else 0).put("total", if (downloading) total else 0)
             .put("error", error).put("supported", unsupported.isEmpty()).put("reason", unsupported).put("choices", shown).put("parts", parts)
-            .put("outdatedParts", JSONArray(behind.map { partLabel(it) })).put("outdatedBytes", behind.sumOf { bytes(it, states) })
+            .put("outdatedParts", JSONArray(behind.map { partLabel(it) })).put("outdatedBytes", behind.sumOf { left(it, states) })
             .put("benchmark", shownBench).put("benchmarking", benchmarking)
             .put("suggestion", if (benchmarking) JSONObject.NULL else suggestion(bench, installedTiers) ?: JSONObject.NULL)
             .put("device", JSONObject().put("cores", facts.cores).put("ramGb", facts.ramGb).put("gpu", "").put("runs", "cpu"))
@@ -254,6 +276,7 @@ abstract class VoiceModule(
             synchronized(lock) { error = describe(failure) }
         } finally {
             runtime.done(key) // from here this module's own files on disk say what it needs
+            modelMarks.clear() // files replaced (also by a download stopped half way: the stamp is written per file)
             synchronized(lock) { downloading = false }
         }
     }
@@ -326,6 +349,7 @@ abstract class VoiceModule(
                 if (bench.length() == 0) benchFile.delete() else Store.writeAtomic(benchFile, bench.toString())
             }
             runtime.release(common.associateWith { groups.getValue(it) })
+            modelMarks.clear()
             error = ""
         }
     }

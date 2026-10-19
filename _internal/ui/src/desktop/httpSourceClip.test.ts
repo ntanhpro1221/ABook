@@ -45,6 +45,29 @@ describe("httpSource.readAloudClip tải luôn file audio (uxfix53)", () => {
     expect(sample).toContain("/media/readaloud/s.mp3");
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
+
+  it("bộ máy bỏ lượt xin (giọng trên máy, uxfix70): fetch nhận signal - huỷ là đóng kết nối, lỗi mang lý do cancelled (không thử lại)", async () => {
+    let seen: AbortSignal | undefined;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url: string, init?: RequestInit) =>
+          new Promise<Response>((_resolve, reject) => {
+            seen = init?.signal ?? undefined;
+            init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+          }),
+      ),
+    );
+    const controller = new AbortController();
+    const pending = httpSource.readAloudClip!("supertonic:F1", "Đoạn bị bỏ.", { signal: controller.signal }).catch((e) => e);
+    await Promise.resolve();
+    controller.abort();
+    const error = await pending;
+    expect(seen).toBe(controller.signal);
+    expect(error).toBeInstanceOf(ReadAloudError);
+    expect(error.reason).toBe("cancelled");
+    expect(isTransientClipError(error)).toBe(false);
+  });
 });
 
 /** Bản ghi như máy chủ gửi: 1 byte loại + 4 byte độ dài (big-endian) + nội dung. */
