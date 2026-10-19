@@ -427,6 +427,10 @@ def _b64_i16(array: np.ndarray) -> str:
     return base64.b64encode(np.asarray(array, dtype="<i2").tobytes()).decode()
 
 
+def _b64_f32(array: np.ndarray) -> str:
+    return base64.b64encode(np.asarray(array, dtype="<f4").tobytes()).decode()
+
+
 def text_fixture() -> dict:
     """Phonemes (sea-g2p via vieneu_engine.phonemize), units, frame caps, syllables and seeds - pure text, no models."""
     from sea_g2p import punc_norm
@@ -560,7 +564,35 @@ def lift_fixture() -> dict:
             result = np.frombuffer(handle.readframes(handle.getnframes()), dtype="<i2")
         cases[name] = {"voice": voice, "pcm": _b64_i16(pcm), "lufs": None if level is None else round(level, 4), "truePeak": round(loudness.true_peak_dbtp(samples), 4),
                        "liftDb": gain, "lifted": _b64_i16(result) if gain > 0 else None}
-    return {"rate": rate, "cases": cases}
+    return {"rate": rate, "cases": cases, "ceiling": ceiling_cases(rate)}
+
+
+def ceiling_cases(rate: int) -> dict:
+    """True-peak ceiling of one chunk as the engine gives it (float32, may pass +-1): loudness.under_ceiling (Nano, Turbo) and supertonic.louder."""
+    from abook.readaloud import loudness, supertonic
+
+    n = rate // 2
+    t = np.arange(n) / rate
+    rng = np.random.default_rng(29)
+
+    def speechy(peak_db: float) -> np.ndarray:  # a tone with noise, scaled to this SAMPLE peak (dBFS)
+        x = np.sin(2 * np.pi * 180 * t) * (0.6 + 0.4 * np.sin(2 * np.pi * 3 * t)) + rng.standard_normal(n) * 0.08
+        return x / np.abs(x).max() * 10 ** (peak_db / 20)
+
+    signals = {
+        "nano_raw": speechy(0.8),        # Nano's raw decoder output reaches +0.8 dBFS
+        "turbo_raw": speechy(1.7),       # Turbo's +1.7 dBFS
+        "between_samples": 0.95 * np.sin(2 * np.pi * (rate / 4) * t + np.pi / 4),  # samples at -3.5 dBFS, true peak -0.45 dBTP
+        "under": speechy(-3.5),          # under the ceiling: kept sample for sample; Supertonic raised less than +4 dB
+        "quiet": speechy(-9.0),          # Supertonic raised the full +4 dB
+    }
+    cases = {}
+    for name, signal in signals.items():
+        wave = signal.astype(np.float32)
+        kept = loudness.under_ceiling(wave)
+        cases[name] = {"wave": _b64_f32(wave), "truePeak": loudness.true_peak_dbtp(wave), "kept": kept is wave, "under": _b64_f32(kept),
+                       "louder": _b64_f32(supertonic.louder(wave.copy()))}
+    return cases
 
 
 def clip_fixture() -> dict:

@@ -25,6 +25,7 @@ from typing import Any, Sequence
 
 import numpy as np
 
+from . import loudness
 from .model import stop_if_cancelled
 
 TURBO_RATE = 48_000
@@ -572,7 +573,7 @@ class TurboEngine:
                 judged = babble_suspect(other, self.SAMPLE_RATE, phonemes, cap, len(again))
                 if babble_prefer(judged, best):
                     wav, best = other, judged
-        return wav
+        return loudness.under_ceiling(wav)  # thô tới +1,7 dBFS: hạ cả khúc xuống -1 dBTP thay vì để wav_bytes cắt lúc ghi
 
 
 # ---- Nano ----------------------------------------------------------------------------------------------------------------------
@@ -640,7 +641,8 @@ class NanoEngine:
                     v = vu + float(cfg) * (v - vu)
                 x = x + np.float32(grid[i + 1] - grid[i]) * v
             wav = self.dec.run(None, {"x": x})[0][0, 0]
-            return trim_and_fade(np.clip(wav, -1.0, 1.0).astype(np.float32), self.SAMPLE_RATE)
+            # thô tới +0,8 dBFS: hạ cả khúc xuống -1 dBTP trước (loudness.under_ceiling); np.clip còn lại chỉ phòng sai số, không cắt gì nữa
+            return trim_and_fade(np.clip(loudness.under_ceiling(wav), -1.0, 1.0).astype(np.float32), self.SAMPLE_RATE)
 
 
 def join(chunks: Sequence[np.ndarray], sr: int, pauses: Sequence[float]) -> tuple[np.ndarray, list[tuple[int, int]]]:

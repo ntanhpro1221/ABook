@@ -75,9 +75,76 @@ class ClipLiftTest {
         // both Supertonic tiers lift by the one level of the bare id: the cache (and the reader) work on the id without its tier tag
         assertTrue(!ClipLift.lifts("supertonic:F1#fast5") && ClipLift.lifts(VoiceSpeed.split("supertonic:F1#fast5").first))
         assertEquals(ClipLift.TAG, ClipCache.reading("supertonic:F3", "Hả?", null))
-        assertEquals("ld1", ClipLift.TAG)
+        assertEquals("ld2", ClipLift.TAG)
         assertEquals(ClipCache.reading("vieneu:turbo/Đức Trí", "Ừ.", null), ClipLift.TAG)
         assertEquals("", ClipCache.reading("device:vi-vn-x-gft-local", "Ừ.", null))
+        // every chunk of every VieNeu / Supertonic voice goes under the true-peak ceiling: unmeasured voices are keyed anew too (loudness.clip_tag)
+        assertEquals(ClipLift.TAG, ClipCache.reading("vieneu:turbo/Giọng chưa đo", "Ừ.", null))
+        assertEquals(ClipLift.TAG, ClipLift.tag("supertonic:X9"))
+        assertEquals("", ClipLift.tag("edge:vi-VN-HoaiMyNeural"))
+        assertEquals(SpokenText.TAG, ClipCache.reading("edge:vi-VN-HoaiMyNeural", "Ừ.", null)) // Edge: no new mark
+    }
+
+    private val ceiling = fixture.getJSONObject("ceiling")
+
+    private fun floats(b64: String): FloatArray {
+        val buffer = ByteBuffer.wrap(Base64.getDecoder().decode(b64)).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer()
+        return FloatArray(buffer.remaining()).also { buffer.get(it) }
+    }
+
+    @Test
+    fun aChunkIsBroughtUnderTheTruePeakCeilingLikeTheComputer() {
+        assertTrue(ceiling.length() >= 5)
+        for (name in ceiling.keys()) {
+            val case = ceiling.getJSONObject(name)
+            val wave = floats(case.getString("wave"))
+            assertEquals(name, case.getDouble("truePeak"), ClipLift.truePeakDbtp(wave, params), 1e-9) // measured on the float samples, past ±1 too
+            val out = ClipLift.underCeiling(wave.copyOf(), params)
+            val want = floats(case.getString("under"))
+            for (i in want.indices) assertEquals("$name[$i]", want[i], out[i], 1e-7f)
+            if (case.getBoolean("kept")) {
+                val same = wave.copyOf()
+                assertSame(name, same, ClipLift.underCeiling(same, params))
+                assertTrue(name, same.contentEquals(wave))
+            } else {
+                assertTrue(name, ClipLift.truePeakDbtp(out, params) <= ClipLift.CEILING_DBTP + 1e-4)
+                assertTrue(name, out.all { Math.abs(it) < 1f })
+            }
+        }
+        // (a) the raw chunks past full scale are lowered whole, never clipped: one factor for every sample
+        val raw = floats(ceiling.getJSONObject("turbo_raw").getString("wave"))
+        assertTrue(raw.any { Math.abs(it) > 1.2f })
+        val lowered = ClipLift.underCeiling(raw.copyOf(), params)
+        val ratios = raw.indices.filter { Math.abs(raw[it]) > 0.1f }.map { lowered[it] / raw[it] }
+        assertTrue(ratios.all { Math.abs(it - ratios[0]) < 1e-6f })
+    }
+
+    @Test
+    fun supertonicRaisesUpToTheTruePeakCeilingLikeTheComputer() {
+        for (name in ceiling.keys()) {
+            val case = ceiling.getJSONObject(name)
+            val want = floats(case.getString("louder"))
+            val got = SupertonicText.louder(floats(case.getString("wave")), params)
+            for (i in want.indices) assertEquals("$name[$i]", want[i], got[i], 1e-7f)
+        }
+        // (c) +4 dB would pass -1 dBTP: the gain is -1 - tp
+        val under = ceiling.getJSONObject("under")
+        val tp = under.getDouble("truePeak")
+        assertTrue(tp + SupertonicText.GAIN_DB > ClipLift.CEILING_DBTP)
+        val raised = SupertonicText.louder(floats(under.getString("wave")), params)
+        assertEquals(ClipLift.CEILING_DBTP, ClipLift.truePeakDbtp(raised, params), 1e-4)
+    }
+
+    @Test
+    fun withoutThePeakTableTheSamplePeakStandsInAndNothingIsClipped() {
+        val raw = floats(ceiling.getJSONObject("nano_raw").getString("wave"))
+        val out = ClipLift.underCeiling(raw.copyOf(), null)
+        assertEquals(ClipLift.CEILING_DBTP, 20 * Math.log10(out.maxOf { Math.abs(it) }.toDouble()), 1e-4)
+        val quiet = floats(ceiling.getJSONObject("quiet").getString("wave"))
+        assertSame(quiet, ClipLift.underCeiling(quiet, null))
+        val peak = 20 * Math.log10(quiet.maxOf { Math.abs(it) }.toDouble())
+        val raised = SupertonicText.louder(quiet.copyOf(), null)
+        assertEquals(minOf(peak + SupertonicText.GAIN_DB, ClipLift.CEILING_DBTP), 20 * Math.log10(raised.maxOf { Math.abs(it) }.toDouble()), 1e-4)
     }
 
     @Test

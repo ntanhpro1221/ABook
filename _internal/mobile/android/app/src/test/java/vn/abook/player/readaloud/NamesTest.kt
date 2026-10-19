@@ -99,7 +99,7 @@ class NamesTest {
         assertEquals("", ClipCache.reading("azure:vi-VN-X", "Haruto đến.", "ja"))
         assertEquals("ja+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Adam", "Haruto đến.", "ja")) // giọng VieNeu đã đo: thêm dấu bù theo clip
         assertEquals(ClipLift.TAG, ClipCache.reading("vieneu:nano/Adam", "Kate đến.", "ja"))
-        assertEquals("ja", ClipCache.reading("vieneu:nano/Giọng chưa đo", "Haruto đến.", "ja"))
+        assertEquals("ja+${ClipLift.TAG}", ClipCache.reading("vieneu:nano/Giọng chưa đo", "Haruto đến.", "ja")) // chưa đo: không bù, nhưng khúc vẫn qua trần đỉnh thật
     }
 
     @Test

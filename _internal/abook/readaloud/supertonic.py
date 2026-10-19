@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 from unicodedata import normalize as unicode_normalize
 
+from . import loudness
 from .model import Synthesis, Voice, VoiceError, stop_if_cancelled
 from .vieneu import Unit, reading_tag, seed_of, timed_synthesis, units
 
@@ -72,20 +73,15 @@ _TAG = re.compile(r"</?[a-z]{2,3}>")  # sea-g2p đánh dấu chữ nước ngoà
 
 # Mười giọng Supertonic ra -24,1..-25,6 LUFS (đo 03-10, scripts/measure_vieneu_loudness.py --supertonic), dưới đích -20 của mọi giọng
 # (loudness.TARGET_LUFS) 4-5 dB; trình phát chỉ GIẢM được âm lượng (loudness.gain_db <= 0), nên nâng ngay lúc tạo clip: +4 dB, đỉnh không
-# quá -1 dBFS (đoạn nào đỉnh cao thì nâng ít hơn - không bao giờ méo).
+# quá -1 dBTP (đoạn nào đỉnh cao thì nâng ít hơn, khúc nào đỉnh thật sẵn đã quá trần thì hạ - không bao giờ méo). Trần theo ĐỈNH THẬT, không theo
+# đỉnh mẫu: trần đỉnh mẫu -1 dBFS để đỉnh thật tới -0,49 dBTP (Corpus research/music/SPEC_truepeak.md).
 GAIN_DB = 4.0
-PEAK_CEILING = 10 ** (-1 / 20)
 
 
 def louder(wave: Any) -> Any:
-    """`wave` (float, -1..1) nâng GAIN_DB, hạ bớt nếu đỉnh vượt PEAK_CEILING."""
-    import numpy as np
-
-    peak = float(np.max(np.abs(wave))) if wave.size else 0.0
-    gain = 10 ** (GAIN_DB / 20)
-    if peak > 0 and peak * gain > PEAK_CEILING:
-        gain = max(1.0, PEAK_CEILING / peak)
-    return wave * gain
+    """Một khúc `wave` (float, -1..1) nâng GAIN_DB, ít hơn (hay hạ) để đỉnh thật không quá loudness.LIFT_CEILING_DBTP."""
+    gain_db = min(GAIN_DB, loudness.LIFT_CEILING_DBTP - loudness.true_peak_dbtp(wave))
+    return wave * 10 ** (gain_db / 20)
 
 
 def clean(text: str) -> str:
