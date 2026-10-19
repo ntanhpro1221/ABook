@@ -106,8 +106,8 @@ def test_each_failure_gets_its_own_reason(bare_machine: Path, monkeypatch) -> No
         monkeypatch.setattr(studio_setup, "download", fake)
         with pytest.raises(Exception) as error:
             ffmpeg_setup.install(lambda done, total: None)
-        reasons[name] = ffmpeg_setup.reason(error.value)
-    assert "mạng" in reasons["network"] and "không đúng bản đã ghim" in reasons["hash"]
+        reasons[name] = studio_setup.download_failure(ffmpeg_setup.NOUN, error.value)[0]
+    assert reasons["network"] == studio_setup.NETWORK_FAILURE.format(retry="Thử lại") and "không đúng bản đã ghim" in reasons["hash"]
     assert "ffmpeg" in reasons["zip"] and "ổ đĩa" in reasons["disk"]
     assert not (bare_machine / "ffmpeg.exe").exists() and not (bare_machine / "ffmpeg.exe.part").exists()
 

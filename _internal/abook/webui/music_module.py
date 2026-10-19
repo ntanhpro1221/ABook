@@ -303,7 +303,7 @@ def status() -> dict[str, Any]:
         return {
             "state": state, "done": _state["done"] if state == "downloading" else 0, "total": total,
             "retrying": state == "downloading" and studio_setup.retrying(_thread),
-            "error": _state["error"], "ready": state in ("ready", "outdated") and music_local.analyzer_available(),
+            "error": _state["error"], "errorDetail": _state.get("error_detail", "") if _state["error"] else "", "ready": state in ("ready", "outdated") and music_local.analyzer_available(),
             "supported": not blocked, "reason": blocked,
             "parts": [{"id": part.id, "label": part.label, "bytes": part.size, "state": judged[part.id], "external": part.external}
                       for part in components],
@@ -351,18 +351,6 @@ def join(timeout: float | None = None) -> None:
         thread.join(timeout)
 
 
-def _reason(error: BaseException) -> str:
-    if isinstance(error, studio_setup.SetupError):
-        if error.__cause__ is not None:  # download() bọc lỗi mạng
-            return "mạng bị ngắt - kiểm tra kết nối rồi bấm Thử lại (phần đã tải được giữ)"
-        return "file tải về không đúng bản đã ghim (đã xoá) - bấm Thử lại"
-    if isinstance(error, (zipfile.BadZipFile, KeyError)):
-        return "gói tải về hỏng - bấm Thử lại"
-    if isinstance(error, OSError):
-        return f"không ghi được vào ổ đĩa ({error.strerror or error})"
-    return f"lỗi không ngờ ({type(error).__name__}: {error})"
-
-
 def _run(needed: list[Component]) -> None:
     global _job
     try:
@@ -408,8 +396,9 @@ def _run(needed: list[Component]) -> None:
         with _lock:
             _state.update(downloading=False, error="", done=0, cancelled=True)
     except Exception as error:  # noqa: BLE001 - mọi lỗi đều thành một câu cho người dùng, không bao giờ im lặng
+        message, detail = studio_setup.download_failure("Phân tích nhạc", error)
         with _lock:
-            _state.update(downloading=False, error=f"Không tải được Phân tích nhạc: {_reason(error)}.")
+            _state.update(downloading=False, error=message, error_detail=detail)
     finally:
         with _lock:
             _state["downloading"] = False

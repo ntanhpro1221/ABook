@@ -51,7 +51,7 @@ describe("hỏi trước khi gửi chữ cho giọng trực tuyến", () => {
     const answer = askOnlineConsent(hoaiMy, voices);
     expect(pendingConsent()?.voice).toBe(hoaiMy);
     pendingConsent()!.answer(hoaiMy.id);
-    await expect(answer).resolves.toBe(hoaiMy.id);
+    await expect(answer).resolves.toEqual({ voice: hoaiMy.id, chosen: false });
     expect(pendingConsent()).toBeNull();
     expect(onlineConsentGiven("edge")).toBe(true);
     expect(needsOnlineConsent(hoaiMy)).toBe(false);
@@ -60,9 +60,16 @@ describe("hỏi trước khi gửi chữ cho giọng trực tuyến", () => {
 
   it("'Chọn giọng khác' rồi chọn giọng của máy: dùng giọng ấy, chưa đồng ý gửi chữ đi", async () => {
     const answer = askOnlineConsent(hoaiMy, voices);
-    pendingConsent()!.answer(device.id);
-    await expect(answer).resolves.toBe(device.id);
+    pendingConsent()!.answer(device.id, true);
+    await expect(answer).resolves.toEqual({ voice: device.id, chosen: true });
     expect(needsOnlineConsent(hoaiMy)).toBe(true);
+  });
+
+  it("chọn lại đúng giọng đang hỏi trong danh sách vẫn là một lựa chọn (trình phát nhớ cho cuốn) - soát a66", async () => {
+    const answer = askOnlineConsent(hoaiMy, voices);
+    pendingConsent()!.answer(hoaiMy.id, true);
+    await expect(answer).resolves.toEqual({ voice: hoaiMy.id, chosen: true });
+    expect(needsOnlineConsent(hoaiMy)).toBe(false);
   });
 
   it("đóng hộp: không phát, lần sau hỏi lại; hộp mới mở thì hộp cũ coi như đóng", async () => {

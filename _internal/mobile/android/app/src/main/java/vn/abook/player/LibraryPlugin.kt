@@ -5,10 +5,13 @@ import com.getcapacitor.annotation.Permission
 import com.getcapacitor.annotation.PermissionCallback
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import androidx.activity.result.ActivityResult
+import androidx.core.view.WindowCompat
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -423,6 +426,14 @@ class LibraryPlugin : Plugin() {
         bluetoothDevicesAfterPermission(call)
     }
 
+    /** Quyền "Thiết bị ở gần" lúc này, trước khi xin (giao diện giải thích trước, hay chỉ tới Cài đặt khi đã bị từ chối hẳn): "granted",
+     *  "prompt", "prompt-with-rationale" (đã từ chối một lần), "denied" (từ chối hẳn - hộp xin của Android không hiện nữa). Android < 12 không cần. */
+    @PluginMethod
+    fun bluetoothPermission(call: PluginCall) {
+        val state = if (BluetoothLink.permitted(context)) "granted" else getPermissionState("bluetooth")?.toString() ?: "prompt"
+        call.resolve(JSObject().put("state", state))
+    }
+
     @PermissionCallback
     private fun bluetoothDevicesAfterPermission(call: PluginCall) = background(call) {
         if (!BluetoothLink.permitted(context)) throw IllegalStateException("Cần cho ABook dùng \"Thiết bị ở gần\" để kết nối qua Bluetooth")
@@ -496,6 +507,39 @@ class LibraryPlugin : Plugin() {
         runCatching { context.startActivity(intent) }
             .onSuccess { call.resolve() }
             .onFailure { call.reject("Không mở được cài đặt của ABook") }
+    }
+
+    /** Giao diện của app lúc này (systemBars): sáng/tối + màu thân app. */
+    private var bars: Pair<Boolean, Int?>? = null
+
+    /**
+     * Thanh trạng thái + thanh điều hướng theo giao diện của APP chứ không theo sáng/tối của máy (app sáng trên máy tối và ngược lại; đổi
+     * khi đang mở thì Activity không dựng lại - uiMode trong configChanges): màu biểu tượng + dải nền sau thanh (nền của decorView) khớp thân app.
+     */
+    @PluginMethod
+    fun systemBars(call: PluginCall) {
+        val color = runCatching { Color.parseColor(call.getString("color") ?: "") }.getOrNull()
+        bars = (call.getBoolean("dark") ?: false) to color
+        activity.runOnUiThread {
+            applyBars()
+            call.resolve()
+        }
+    }
+
+    private fun applyBars() {
+        val (dark, color) = bars ?: return
+        val window = activity.window
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = !dark
+            isAppearanceLightNavigationBars = !dark
+        }
+        if (color != null) window.decorView.setBackgroundColor(color)
+    }
+
+    override fun handleOnConfigurationChanged(newConfig: Configuration) {
+        super.handleOnConfigurationChanged(newConfig)
+        // SystemBars của Capacitor đặt lại theo máy mỗi lần cấu hình đổi (xoay, máy chuyển sáng/tối): đặt lại theo app, sau nó.
+        bridge.executeOnMainThread { applyBars() }
     }
 
     @PluginMethod
