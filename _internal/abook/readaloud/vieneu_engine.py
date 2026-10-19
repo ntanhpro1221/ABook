@@ -49,6 +49,12 @@ GAP_SECONDS = {"para": 0.70, "sentence": 0.50, "minor": 0.30}
 ENCODER_PAD_CODE = 455
 
 
+def gap_after(said: str) -> float:
+    """Khoảng nghỉ tối thiểu sau một khúc đem đọc `said` (âm vị VieNeu / chữ Supertonic): hết câu thì nghỉ câu, không thì nghỉ ngắn.
+    (vieneu._speak - file khoá - viết lại đúng phép này tại chỗ.)"""
+    return GAP_SECONDS["sentence" if said.rstrip()[-1:] in ".!?" else "minor"]
+
+
 def phoneme_syllables(phonemes: str) -> int:
     """Số tiếng của chuỗi phoneme sea-g2p (core_utils.syllable_count)."""
     total = 0
@@ -648,16 +654,31 @@ class NanoEngine:
 def join(chunks: Sequence[np.ndarray], sr: int, pauses: Sequence[float]) -> tuple[np.ndarray, list[tuple[int, int]]]:
     """Ghép các khúc với khoảng nghỉ tối thiểu `pauses[i]` giữa khúc i và i+1 (core_utils.join_audio_chunks). Trả (sóng âm, [đầu, cuối)
     của từng khúc theo mẫu)."""
+    joiner = Joiner(sr)
     parts: list[np.ndarray] = []
-    spans: list[tuple[int, int]] = []
-    at = 0
     for index, chunk in enumerate(chunks):
-        if index:
-            pad = pause_pad_samples(chunks[index - 1], chunk, sr, pauses[index - 1] if index - 1 < len(pauses) else 0.0)
-            if pad > 0:
-                parts.append(np.zeros(pad, dtype=np.float32))
-                at += pad
-        parts.append(np.asarray(chunk, dtype=np.float32))
-        spans.append((at, at + len(chunk)))
-        at += len(chunk)
-    return (np.concatenate(parts) if parts else np.zeros(0, dtype=np.float32)), spans
+        pad, piece = joiner.add(chunk, pauses[index - 1] if 0 < index <= len(pauses) else 0.0)
+        if pad > 0:
+            parts.append(np.zeros(pad, dtype=np.float32))
+        parts.append(piece)
+    return (np.concatenate(parts) if parts else np.zeros(0, dtype=np.float32)), joiner.spans
+
+
+class Joiner:
+    """[join] từng khúc một (phát luồng giọng trên máy, local_stream.py: khúc vừa đọc xong đi ngay, không chờ khúc sau): `add` trả số mẫu lặng chèn TRƯỚC khúc
+    và khúc (float32); `spans` = [đầu, cuối) của các khúc đã thêm."""
+
+    def __init__(self, sr: int) -> None:
+        self.sr = sr
+        self.spans: list[tuple[int, int]] = []
+        self.samples = 0  # độ dài phần đã ghép
+        self._last: np.ndarray | None = None
+
+    def add(self, chunk: np.ndarray, pause_before: float = 0.0) -> tuple[int, np.ndarray]:
+        piece = np.asarray(chunk, dtype=np.float32)
+        pad = pause_pad_samples(self._last, chunk, self.sr, pause_before) if self._last is not None else 0
+        self.samples += pad
+        self.spans.append((self.samples, self.samples + len(piece)))
+        self.samples += len(piece)
+        self._last = chunk
+        return pad, piece

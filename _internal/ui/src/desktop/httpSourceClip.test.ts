@@ -116,7 +116,7 @@ describe("httpSource.readAloudClip phát luồng đoạn đang chờ (uxfix56)",
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(clip.live!.state).toBe("done");
     expect(clip.live!.final!.url).toContain("/media/readaloud/s.mp3");
-    expect(await clip.live!.final!.bytes.text()).toBe("\u0001\u0002");
+    expect(await clip.live!.final!.bytes!.text()).toBe("\u0001\u0002");
   });
 
   it("máy chủ có clip trong bộ đệm nên trả JSON như thường: vẫn tải file, không có live", async () => {
@@ -210,5 +210,72 @@ describe("httpSource.readAloudClip: clip đuôi khi bấm giữa đoạn (uxfix5
     server(() => json({ error: "hỏng", reason: "service" }, 500));
     await expect(httpSource.readAloudClip!("edge:v", full, { rank: 0, tailFrom: 2 })).rejects.toBeInstanceOf(ReadAloudError);
     expect(bodies).toHaveLength(1);
+  });
+});
+
+describe("httpSource.readAloudClip: giọng trên máy phát luồng (FLAC, local_stream)", () => {
+  const bodies: Record<string, unknown>[] = [];
+  const server = (types: string[], reply: () => Response) => {
+    bodies.length = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (_url: string, init?: RequestInit) => {
+        bodies.push(JSON.parse(String(init?.body)));
+        return reply();
+      }),
+    );
+    vi.stubGlobal("MediaSource", { isTypeSupported: (type: string) => types.includes(type) });
+  };
+  const FLAC = 'audio/mp4; codecs="flac"';
+
+  it("trình duyệt nhận FLAC: xin cả luồng giọng trên máy, kèm tốc độ đang nghe; bản ghi M đặt kiểu tiếng, file cuối là WAV (không gom byte)", async () => {
+    server(["audio/mpeg", FLAC], () =>
+      streamReply(
+        record("M", { mime: FLAC }),
+        record("A", new Uint8Array([1, 2, 3])),
+        record("W", { words: [[0, 400]], duration_ms: 800, heard_ms: 800 }),
+        record("E", { url: "/media/readaloud/s.wav", duration_ms: 800, words: [[0, 400]], exact: false }),
+      ),
+    );
+    const clip = await httpSource.readAloudClip!("supertonic:F1", "Xin chào.", { rank: 0, rate: 1.5 });
+    expect(bodies[0]).toMatchObject({ stream: true, localStream: true, rate: 1.5 });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const live = clip.live!;
+    expect(live.mime).toBe(FLAC);
+    expect(live.receivedMs).toBe(800);
+    expect(live.final).toMatchObject({ durationMs: 800, exact: false });
+    expect(live.final!.url).toContain("/media/readaloud/s.wav");
+    expect(live.final!.bytes).toBeUndefined();
+  });
+
+  it("trình duyệt không nhận FLAC: không xin luồng giọng trên máy (máy chủ trả JSON như cũ); tốc độ thường thì không gửi rate", async () => {
+    server(["audio/mpeg"], () => json({ url: "/media/readaloud/c.wav", duration_ms: 700, words: [] }));
+    await httpSource.readAloudClip!("supertonic:F1", "Xin chào.", { rank: 0 }).catch(() => undefined);
+    expect(bodies[0].stream).toBe(true);
+    expect(bodies[0].localStream).toBeUndefined();
+    expect(bodies[0].rate).toBeUndefined();
+  });
+
+  it("bị bỏ giữa luồng (giọng trên máy): clip đang về hỏng với lý do cancelled, không phải mất kết nối", async () => {
+    const controller = new AbortController();
+    let stop!: ReadableStreamDefaultController<Uint8Array>;
+    server(["audio/mpeg", FLAC], () =>
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(c) {
+            stop = c;
+            c.enqueue(record("M", { mime: FLAC }));
+            c.enqueue(record("A", new Uint8Array([1])));
+          },
+        }),
+        { status: 200, headers: { "Content-Type": "application/vnd.abook.clipstream" } },
+      ),
+    );
+    const clip = await httpSource.readAloudClip!("supertonic:F1", "Đoạn bị bỏ.", { rank: 0, signal: controller.signal });
+    controller.abort();
+    stop.error(new DOMException("aborted", "AbortError"));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(clip.live!.state).toBe("failed");
+    expect(clip.live!.error!.reason).toBe("cancelled");
   });
 });

@@ -9,6 +9,7 @@ import vn.abook.player.SharedRuntime
 import vn.abook.player.readaloud.Clip
 import vn.abook.player.readaloud.ClipLift
 import vn.abook.player.readaloud.IdleEngine
+import vn.abook.player.readaloud.LocalLive
 import vn.abook.player.readaloud.Voice
 import vn.abook.player.readaloud.VoiceException
 import vn.abook.player.readaloud.VoiceInfo
@@ -128,16 +129,24 @@ object VieneuVoices {
     fun synthesize(id: String, text: String, out: File, origin: String? = null, readings: Map<String, String>? = null): Clip {
         val (tier, name) = id.removePrefix("$PREFIX:").let { it.substringBefore('/') to it.substringAfter('/', "") }
         val ready = ready(tier, name)
+        val live = LocalLive.here(out, text, VieneuSpeaker.MAX_CHARS.getValue(tier), origin, readings) // the paragraph the listener waits for: unit by unit
         val spoken = try {
-            VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin, readings)
+            VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin, readings, live)
         } catch (failure: OutOfMemoryError) {
             forget()
-            throw VoiceException("Điện thoại không đủ bộ nhớ cho giọng VieNeu lúc này.", cause = failure, reason = "voice")
+            VoiceException("Điện thoại không đủ bộ nhớ cho giọng VieNeu lúc này.", cause = failure, reason = "voice").let {
+                live?.failed(it)
+                throw it
+            }
+        } catch (failure: Exception) {
+            live?.failed(failure)
+            throw failure
         } finally {
             if (engine != null) idle.used() // idle minutes count from the end of the last read
         }
         if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
-        VieneuAudio.writeWav(ClipLift.lifted(id, spoken.samples, spoken.rate, ClipLift.params(context)), spoken.rate, out) // câu ngắn nhỏ nâng lên mức giọng (như service.clip)
+        val final = ClipLift.lifted(id, spoken.samples, spoken.rate, ClipLift.params(context)) // câu ngắn nhỏ nâng lên mức giọng (như service.clip)
+        if (live != null) live.finish(final, spoken.rate) else VieneuAudio.writeWav(final, spoken.rate, out)
         return Clip(out, spoken.durationMs, spoken.words, id)
     }
 

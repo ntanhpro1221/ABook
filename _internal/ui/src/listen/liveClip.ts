@@ -6,6 +6,8 @@ import type { WordSpan } from "./words";
 //   A: byte MP3 (nối thẳng vào phần trước)   W: JSON {words, duration_ms, heard_ms} - mốc chữ tạm, thay bản trước
 //   E: JSON {url, duration_ms, words} - xong (giống JSON thường)   X: JSON {message, reason} - lỗi sau khi đã phát
 //   C: JSON {word} - một mảnh giữa clip hỏng (uxfix63): tiếng sẽ dừng trước chữ `word` của clip, phần trước vẫn về hết rồi mới tới X
+//   M: JSON {mime} - kiểu tiếng, trước A đầu (không có = MP3 của Edge). Giọng trên máy (VieNeu, Supertonic - abook/readaloud/local_stream.py): FLAC trong MP4 phân mảnh
+//      ([LOCAL_MIME]), mỗi khúc vừa đọc xong một mảnh; E có thêm `exact: false` khi tiếng đã phát luồng khác clip cuối (bù độ to cả clip) - bộ máy chuyển sang file cuối.
 
 export const CLIP_STREAM_TYPE = "application/vnd.abook.clipstream";
 
@@ -14,19 +16,27 @@ export type LiveEvent = "audio" | "words" | "cut" | "done" | "failed";
 /** Edge trả MP3 CBR 48 kbps (abook/readaloud/edge.py BITRATE_BPS): 6 byte mỗi ms - đổi số byte đã về ra thời lượng tiếng đã có. */
 export const MP3_BYTES_PER_MS = 6;
 
+/** Kiểu tiếng của clip Edge (mặc định) và của giọng trên máy phát luồng (bản ghi M). */
+export const MP3_MIME = "audio/mpeg";
+export const LOCAL_MIME = 'audio/mp4; codecs="flac"';
+
 /** Mốc (ms) đặt cho chữ chưa có tiếng khi tô sáng ([LiveClip.shownWords]): xa hơn mọi đoạn có thể dài, vẫn hữu hạn. */
 export const UNHEARD_MS = 1e9;
 
-/** Kết quả cuối của clip phát luồng (bản ghi E): file đã nằm trong bộ đệm của máy chủ, `bytes` = mọi khúc đã nhận nối lại. */
+/** Kết quả cuối của clip phát luồng (bản ghi E): file đã nằm trong bộ đệm của máy chủ, `bytes` = mọi khúc đã nhận nối lại (MP3 - chính là file ấy; giọng trên máy: không có,
+ *  file là WAV ở `url`). `exact` false: tiếng đã phát luồng khác file cuối (giọng trên máy, bù độ to cả clip). */
 export interface LiveFinal {
   url: string;
   durationMs: number;
   words: WordSpan[];
-  bytes: Blob;
+  bytes?: Blob;
+  exact?: boolean;
 }
 
 /** Clip đang về. Bộ máy phát nối `chunks` vào MediaSource ([LiveFeed]) và nghe `on` để cập nhật mốc chữ / độ dài khi xong / bỏ clip khi hỏng. */
 export class LiveClip {
+  /** Kiểu tiếng ([MP3_MIME] / [LOCAL_MIME], bản ghi M) - MediaSource mở SourceBuffer theo nó. */
+  mime = MP3_MIME;
   /** Các khúc MP3 đã về, theo thứ tự (giữ cả khi đã nối vào MediaSource: phần tử audio dựng lại giữa chừng thì nối lại từ đầu). */
   readonly chunks: Uint8Array[] = [];
   /** Mốc chữ tạm tính trên phần đã phát (chữ chưa tới đứng cuối phần ấy); `[]` tới bản ghi W đầu. */
@@ -46,10 +56,11 @@ export class LiveClip {
   }
 
   private bytes = 0;
+  private sentMs = 0;
 
-  /** Thời lượng tiếng (ms) của các byte đã về ([MP3_BYTES_PER_MS]). */
+  /** Thời lượng tiếng (ms) của các byte đã về: MP3 tính từ số byte ([MP3_BYTES_PER_MS]); giọng trên máy theo độ dài phần đã phát của bản W mới nhất (mỗi khúc một mảnh, W ngay sau nó). */
   get receivedMs(): number {
-    return this.bytes / MP3_BYTES_PER_MS;
+    return this.mime === MP3_MIME ? this.bytes / MP3_BYTES_PER_MS : this.sentMs;
   }
 
   push(chunk: Uint8Array): void {
@@ -66,9 +77,10 @@ export class LiveClip {
     return this.words.map((span): WordSpan => (span[0] >= heard ? [UNHEARD_MS, UNHEARD_MS] : span));
   }
 
-  setWords(words: WordSpan[], heardMs: number | null = null): void {
+  setWords(words: WordSpan[], heardMs: number | null = null, durationMs = 0): void {
     this.words = words;
     this.heardMs = heardMs;
+    this.sentMs = Math.max(this.sentMs, durationMs);
     this.fire("words");
   }
 
@@ -138,9 +150,10 @@ const spans = (value: unknown): WordSpan[] => (Array.isArray(value) ? (value as 
 
 /** Đọc lời đáp phát luồng của máy chủ. Trả clip NGAY khi bản ghi A đầu tiên về (`durationMs` 0 = chưa biết, bộ máy giữ độ dài ước; `words` rỗng; `live` là phần còn lại đang về);
  *  lỗi trước byte đầu (X, đứt kết nối) thì ném `ReadAloudError` như lúc máy chủ trả lỗi. Sau đó vẫn đọc tiếp trong nền: W / E / X / đứt kết nối cập nhật `live`. `toUrl`: đổi đường dẫn
- *  máy chủ trả sang địa chỉ dùng được (mã phiên). */
-export function clipFromStream(body: ReadableStream<Uint8Array> | null, toUrl: (path: string) => string): Promise<ReadAloudClip> {
-  const lost = () => new ReadAloudError("Mất kết nối với giọng đọc giữa chừng.", "service");
+ *  máy chủ trả sang địa chỉ dùng được (mã phiên). `signal`: bộ máy bỏ lượt này (giọng trên máy, [ClipOptions.signal]) - đứt vì nó là lý do "cancelled", không phải mất kết nối. */
+export function clipFromStream(body: ReadableStream<Uint8Array> | null, toUrl: (path: string) => string, signal?: AbortSignal): Promise<ReadAloudClip> {
+  const lost = () =>
+    signal?.aborted ? new ReadAloudError("Đã bỏ đoạn này.", "cancelled") : new ReadAloudError("Mất kết nối với giọng đọc giữa chừng.", "service");
   if (!body) return Promise.reject(lost());
   const reader = body.getReader();
   const records = new RecordReader();
@@ -156,12 +169,21 @@ export function clipFromStream(body: ReadableStream<Uint8Array> | null, toUrl: (
       if (record.kind === "A") {
         live.push(record.body);
         open();
+      } else if (record.kind === "M") {
+        live.mime = String(json(record.body).mime || MP3_MIME);
       } else if (record.kind === "W") {
         const tentative = json(record.body);
-        live.setWords(spans(tentative.words), typeof tentative.heard_ms === "number" ? tentative.heard_ms : null);
+        live.setWords(spans(tentative.words), typeof tentative.heard_ms === "number" ? tentative.heard_ms : null, Number(tentative.duration_ms) || 0);
       } else if (record.kind === "E") {
         const done = json(record.body);
-        live.finish({ url: toUrl(String(done.url)), durationMs: Number(done.duration_ms), words: spans(done.words), bytes: new Blob(live.chunks as BlobPart[], { type: "audio/mpeg" }) });
+        const mp3 = live.mime === MP3_MIME;
+        live.finish({
+          url: toUrl(String(done.url)),
+          durationMs: Number(done.duration_ms),
+          words: spans(done.words),
+          ...(mp3 ? { bytes: new Blob(live.chunks as BlobPart[], { type: MP3_MIME }) } : {}),
+          ...(done.exact === false ? { exact: false } : {}),
+        });
         open();
       } else if (record.kind === "C") {
         live.cut(Number(json(record.body).word));
@@ -191,10 +213,10 @@ export function clipFromStream(body: ReadableStream<Uint8Array> | null, toUrl: (
   });
 }
 
-/** Trình duyệt phát được MP3 qua MediaSource (phát luồng clip). */
-export function liveClipsSupported(): boolean {
+/** Trình duyệt phát được kiểu `mime` qua MediaSource (phát luồng clip): MP3 cho Edge, [LOCAL_MIME] cho giọng trên máy. */
+export function liveClipsSupported(mime = MP3_MIME): boolean {
   try {
-    return typeof MediaSource !== "undefined" && typeof MediaSource.isTypeSupported === "function" && MediaSource.isTypeSupported("audio/mpeg");
+    return typeof MediaSource !== "undefined" && typeof MediaSource.isTypeSupported === "function" && MediaSource.isTypeSupported(mime);
   } catch {
     return false;
   }

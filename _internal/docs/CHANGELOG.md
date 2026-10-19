@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Giọng trên máy (Supertonic, VieNeu) đọc đoạn dài: bạn nghe tiếng ngay khi phần đầu của đoạn đọc xong, không phải chờ đọc xong cả đoạn. Trên một máy tính chỉ dùng CPU, đoạn dài giữa chương bắt đầu sau 0,7 giây thay vì 1,9 giây với VieNeu Nano, sau 2,0 giây thay vì 2,9 giây với Supertonic (1,2 thay vì 1,7 giây ở bậc "Nhanh hơn"); đoạn đầu chương với Nano sau 0,3 giây thay vì 1,1 giây. Trên điện thoại (đo trên máy ảo Android), đoạn dài giữa chương bắt đầu sau 0,7 giây thay vì 1,9 giây với Nano, sau 2,2 giây thay vì 3,3 giây với Supertonic (1,3 thay vì 1,9 giây ở bậc "Nhanh hơn"). Đoạn ngắn đọc trong một lượt thì vẫn như trước. Âm thanh và chữ được tô sáng giữ y hệt. Máy đọc chậm hơn tốc độ bạn nghe thì app chờ đọc đủ trước rồi mới phát, nên tiếng không bị ngắt giữa đoạn. Có trên cả máy tính và điện thoại.
+
 ## [0.4.110] - 2026-10-20
 
 ### Nghe ngay
