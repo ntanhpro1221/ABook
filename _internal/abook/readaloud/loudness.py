@@ -45,7 +45,7 @@ MEASURED_LUFS = {
     "vieneu:nano/Ái Hân": -18.2,
     "vieneu:nano/Mỹ Duyên": -18.4,
     "vieneu:nano/Đức Trí": -18.6,
-    "vieneu:nano/Hữu Quân": -17.8,
+    "vieneu:nano/Hữu Quân": -18.4,
     "vieneu:nano/Xuân Tiên": -18.5,
     "vieneu:nano/Mai Anh": -18.5,
     "vieneu:nano/Trúc Ly": -18.1,

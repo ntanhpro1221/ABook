@@ -40,7 +40,7 @@ object VoiceGain {
         "vieneu:nano/Ái Hân" to -18.2,
         "vieneu:nano/Mỹ Duyên" to -18.4,
         "vieneu:nano/Đức Trí" to -18.6,
-        "vieneu:nano/Hữu Quân" to -17.8,
+        "vieneu:nano/Hữu Quân" to -18.4,
         "vieneu:nano/Xuân Tiên" to -18.5,
         "vieneu:nano/Mai Anh" to -18.5,
         "vieneu:nano/Trúc Ly" to -18.1,
