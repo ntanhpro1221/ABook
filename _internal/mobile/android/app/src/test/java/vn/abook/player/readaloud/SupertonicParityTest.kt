@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
+import vn.abook.player.MusicRender
 import vn.abook.player.vieneu.NumpyRandomState
 import vn.abook.player.vieneu.VieneuSpeaker
 import vn.abook.player.vieneu.VieneuUnits
@@ -91,7 +92,8 @@ class SupertonicParityTest {
 
     @Test
     fun theLoudnessRaiseIsTheDesktops() {
-        for (case in objects("louder")) assertArrayEquals(floats(case.getJSONArray("out")), SupertonicText.louder(floats(case.getJSONArray("wave"))), 0f)
+        val params = MusicRender.Params.parse(JSONObject(File("../../../abook/webui/assets/music_mix.json").readText()))
+        for (case in objects("louder")) assertArrayEquals(floats(case.getJSONArray("out")), SupertonicText.louder(floats(case.getJSONArray("wave")), params), 0f)
     }
 
     @Test
