@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.110] - 2026-10-20
+
 ### Nghe ngay
 
 - Giọng trên máy (Supertonic, VieNeu) trả lại bộ nhớ sau 3 phút bạn không nghe bằng giọng ấy, ví dụ khi bạn chuyển sang giọng trên mạng. Quay lại giọng ấy thì đoạn đầu chờ thêm một chút để nạp lại giọng. Lúc đang xuất sách nói hay "Làm trước" thì giọng được giữ nguyên.
