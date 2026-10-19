@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.102] - 2026-10-19
+
 ### Nghe ngay
 
 - Máy tính và điện thoại: với một số bài MP3, nhạc nền khi lặp lại không còn nhảy cóc ở chỗ nối vòng (trước đây có bài vào lại lệch tới 2 giây nên bạn nghe như hụt nhịp); giờ bài vào lại đúng điểm vòng.
