@@ -28,7 +28,7 @@ import {
   type SleepRequest,
 } from "./sleep";
 import { VOICE_CHANGED_EVENT, type ReadAloudVoice, type SpeechTrack } from "./readAloud";
-import { chooseVoice, chosenVoice, forgetVoiceTrouble, ONLINE_NOTICE, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
+import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, onVoiceChosen, ONLINE_NOTICE, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
 import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useListenBook, useSource } from "./source";
@@ -425,6 +425,19 @@ export function PlayerProvider({
     else void fresh.then(decide);
   }, [source]);
 
+  // Giọng riêng của cuốn đi theo hồ sơ nghe (soát a68 lỗi 8): chọn ở đây thì ghi vào hồ sơ; mở cuốn thì nhận giọng máy kia chọn sau, nếu máy này có.
+  useEffect(() => onVoiceChosen((bookId, voice) => void source.setVoice?.(bookId, voice).catch(() => undefined)), [source]);
+  const adoptVoice = useCallback((book: BookRef) => {
+    if (voicesRef.current) {
+      adoptSyncedVoice(book.id, book.state, voicesRef.current);
+      return;
+    }
+    void voicesOf(source).then((voices) => {
+      voicesRef.current = voices;
+      adoptSyncedVoice(book.id, book.state, voices);
+    }, () => undefined);
+  }, [source]);
+
   const load = useCallback((next: Track, at: number, autoplay: boolean) => {
     save(true);
     setError("");
@@ -746,13 +759,15 @@ export function PlayerProvider({
   const play = useCallback<PlayerActions["play"]>((book, chapters, chapterId, at, extra) => {
     const chapter = chapters.find((item) => item.id === chapterId);
     if (!chapter) return;
+    adoptVoice(book);
     withConsent(book.id, chapter, () => playNow(book, chapters, chapter, at, extra));
-  }, [playNow, withConsent]);
+  }, [adoptVoice, playNow, withConsent]);
 
   const prepare = useCallback<PlayerActions["prepare"]>((book, chapters, chapterId, at) => {
     if (refs.current.track) return;
     const chapter = chapters.find((item) => item.id === chapterId && canPlay(item));
     if (!chapter) return;
+    adoptVoice(book);
     const bookRate = adoptBook(book, chapters, "listen");
     const next: Track = { bookId: book.id, bookTitle: book.title, bookCover: book.cover ?? null, narrator: book.narrator, chapterId, chapterTitle: chapter.fullTitle,
       recordId: native ? undefined : activeRecord(book) };
@@ -771,7 +786,7 @@ export function PlayerProvider({
     // `load` tự gắn cuốn vào trình phát SAU lần lưu chỗ cũ của nó; gắn trước thì lần lưu ấy ghi 0:00 (chưa nạp audio)
     // vào chỗ nghe dở của chính cuốn này - mỗi lần mở lại app là mất chỗ nghe.
     load(next, Math.max(0, at - back), false);
-  }, [adoptBook, load, native]);
+  }, [adoptBook, adoptVoice, load, native]);
 
   /** Hết sách mà người nghe bấm phát: nói ra và mời nghe lại từ đầu (soát UX 03-10 - trước đây không có gì xảy ra). */
   const finishedToast = useCallback(() => {

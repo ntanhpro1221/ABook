@@ -2703,7 +2703,8 @@ class App:
         của chúng ở máy này là cuốn ảo, `localBookId`). Giao diện hỏi mỗi 1,5 giây nên ở đây không mở SQLite, không đợi mạng."""
         phones = []
         for phone in self.remote.view() if self.sync_server is not None else []:
-            path = self.library.resolve(phone["bookId"]) if phone["bookId"] else None
+            # Dự án hay cuốn nhập từ file (.abook): cả hai nghe được trên máy này ("Nghe trên máy này" + bìa - soát a68 lỗi 6).
+            path = self.library.resolve_listenable(phone["bookId"]) if phone["bookId"] else None
             phone["known"] = path is not None
             # điện thoại chưa đổi khoá báo mã kiểu cũ: giao diện luôn nhận mã hiện hành của cuốn
             phone["localBookId"] = book_id(path) if path is not None else None
@@ -2717,7 +2718,7 @@ class App:
                 continue
             path = remote_books.local_book(self.library.root, peer["device"], peer["bookId"]) if peer["bookId"] else None
             local = book_id(path) if path is not None else None
-            if path is None and peer["bookId"] and (own := self.library.resolve(peer["bookId"])) is not None:
+            if path is None and peer["bookId"] and (own := self.library.resolve_listenable(peer["bookId"])) is not None:
                 path, local = own, book_id(own)  # máy kia đang nghe thẳng sách của CHÍNH máy này
             peer["known"] = local is not None
             peer["localBookId"] = local
@@ -4947,6 +4948,13 @@ class Handler(BaseHTTPRequestHandler):
         self.app.remote.forget(device)
         self._send_json(HTTPStatus.OK, self.app.sync_view())
 
+    def post_sync_device_name(self, _query: dict[str, list[str]], device: str) -> None:
+        # Đổi tên thiết bị đã ghép ở máy này (soát a68 lỗi 16: "Google sdk_gphone64_x86_64"); điện thoại tự đổi tên mình thì báo qua /sync/v1/name.
+        self._mutating_guard()
+        if not self.app.devices.rename(device, str(self._body().get("name", ""))):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Tên thiết bị không được để trống")
+        self._send_json(HTTPStatus.OK, self.app.sync_view())
+
     def post_sync_device_studio(self, _query: dict[str, list[str]], device: str) -> None:
         # Quyền Studio từ xa theo TỪNG thiết bị (soát 28-09). Chỉ trên chính máy này - không nằm trong ALLOWED.
         self._mutating_guard()
@@ -5166,6 +5174,13 @@ class Handler(BaseHTTPRequestHandler):
     def post_rate(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
         self.app.listening.set_rate(value, float(self._body().get("rate", 1.0)))
+        self._send_json(HTTPStatus.OK, {"ok": True})
+
+    def post_listen_voice(self, _query: dict[str, list[str]], value: str) -> None:
+        # Giọng Nghe ngay riêng của cuốn: đi theo hồ sơ nghe sang máy kia như tốc độ (soát a68 lỗi 8).
+        self.app._listenable(value)
+        self.app.listening.set_voice(value, str(self._body().get("voice", "")))
+        self.app.sync_remote_state(value, wait=False)
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_bookmark(self, _query: dict[str, list[str]], value: str) -> None:
@@ -5951,6 +5966,7 @@ ROUTES: list[Route] = [
     ("DELETE", re.compile(r"/api/sync/pairing"), Handler.delete_sync_pairing),
     ("DELETE", re.compile(r"/api/sync/devices/([0-9a-f]+)"), Handler.delete_sync_device),
     ("POST", re.compile(r"/api/sync/devices/([0-9a-f]+)/studio"), Handler.post_sync_device_studio),
+    ("POST", re.compile(r"/api/sync/devices/([0-9a-f]+)/name"), Handler.post_sync_device_name),
     ("GET", re.compile(r"/api/computers"), Handler.get_computers),
     ("POST", re.compile(r"/api/computers"), Handler.post_computers),
     ("POST", re.compile(r"/api/computers/refresh"), Handler.post_computers_refresh),
@@ -5981,6 +5997,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(LISTEN + r"/chapters/(\d+)/done"), Handler.post_chapter_done),
     ("POST", re.compile(LISTEN + r"/finished"), Handler.post_finished),
     ("POST", re.compile(LISTEN + r"/rate"), Handler.post_rate),
+    ("POST", re.compile(LISTEN + r"/voice"), Handler.post_listen_voice),
     ("POST", re.compile(LISTEN + r"/bookmarks"), Handler.post_bookmark),
     ("PUT", re.compile(LISTEN + r"/bookmarks/([0-9a-f]+)"), Handler.put_bookmark),
     ("DELETE", re.compile(LISTEN + r"/bookmarks/([0-9a-f]+)"), Handler.delete_bookmark),

@@ -2,7 +2,6 @@ package vn.abook.player
 
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -42,7 +41,7 @@ object Peers {
 
     /** Ghép thiết bị đã ghép Bluetooth với điện thoại này (không chung Wi-Fi): cùng mã 6 số, đi qua đường hầm. */
     fun pairBluetooth(context: Context, address: String, code: String): JSONObject {
-        val device = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
+        val device = DeviceName.of(context)
         val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
         val root = BluetoothLink.base(context, address)
         val (reply, fingerprint) = try {
@@ -92,7 +91,7 @@ object Peers {
      *  thì thay chỗ cũ - sách đã tải và chỗ nghe giữ nguyên. */
     fun pair(context: Context, host: String, port: Int, code: String): JSONObject {
         SyncLink.refuseSelf(host, port)
-        val device = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
+        val device = DeviceName.of(context)
         val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
         val (reply, fingerprint) = SyncLink.pair(context, "https://$host:$port", body)
         val peers = all(context)
@@ -217,6 +216,8 @@ object Peers {
             } catch (error: Exception) {
                 entry.put("books", JSONArray()).put("error", error.message ?: "không kết nối được")
                 if (error is Pin.ChangedException) entry.put("pinChanged", true)
+                if (NetErrors.unpaired(error)) entry.put("unpaired", true) // máy ấy đã thôi ghép điện thoại này - không phải tắt máy
+                else NetErrors.kind(error)?.let { entry.put("error", NetErrors.message(it, peer.optString("name"))).put("technical", NetErrors.technical(error)) }
             }
             out.put(entry)
         }

@@ -12,6 +12,8 @@ import vn.abook.player.BookEdits
 import vn.abook.player.Playback
 import vn.abook.player.SleepTimer
 import vn.abook.player.Store
+import vn.abook.player.Streaming
+import vn.abook.player.SyncLink
 import vn.abook.player.mediaArtist
 import vn.abook.player.vieneu.VieneuVoices
 import java.io.File
@@ -575,6 +577,42 @@ object ReadAloud {
         return (0 until skip.length()).map { skip.getString(it) }
     }
 
+    /** Chữ chương đang lấy từ máy giữ sách ([fetchText]): khoá "<cuốn>/<mục chữ>" -> việc chờ chữ về (lần gọi sau thay lần trước). Luồng chính. */
+    private val textWaits = HashMap<String, (Boolean) -> Unit>()
+
+    /**
+     * Chương chữ của cuốn NGHE THẲNG mà máy này chưa có chữ (`texts/<n>.txt` chưa về - soát a68 lỗi 1: trước đây báo "Không đọc được chữ" và Thử lại vô ích):
+     * lấy từ máy giữ sách ở luồng nền (Streaming.fetchSmall cất vào thư mục sách - lần sau đọc ngay, kể cả khi mất mạng), xong thì `then` ở luồng chính nếu
+     * chưa ai nhảy đi chỗ khác; không lấy được thì báo đúng lý do. False: không phải trường hợp này (cuốn đã tải, chữ đã có, chương không phải chương chữ).
+     */
+    private fun fetchText(index: Int, then: () -> Unit): Boolean {
+        val chapter = chapters().getOrNull(index)?.takeIf { it.isText } ?: return false
+        val book = Playback.bookId
+        val ctx = context ?: return false
+        if (Store.rawManifest(book) != null) return false
+        if (runCatching { Store.file(book, chapter.text).isFile }.getOrDefault(true)) {
+            // Chữ vừa về bằng đường khác giữa lúc chapFor đọc và lúc này (giao diện xin chữ chương để hiện - LibraryPlugin.readText): đọc lại ngay.
+            if (chapFor(index) == null) return false
+            then()
+            return true
+        }
+        val token = generation
+        val key = "$book/${chapter.text}"
+        val running = key in textWaits
+        textWaits[key] = { ok ->
+            if (token == generation && Playback.bookId == book) {
+                if (ok) then() else fail("Không lấy được chữ chương “${chapter.title}” từ ${SyncLink.holderName(ctx, book)} - kiểm tra kết nối rồi bấm phát lại")
+            }
+        }
+        if (!running) {
+            worker.execute {
+                val ok = Streaming.fetchSmall(ctx, book, chapter.text) != null
+                Playback.onMain { textWaits.remove(key)?.invoke(ok) }
+            }
+        }
+        return true
+    }
+
     private fun chapFor(index: Int): Chap? {
         chaps[index]?.let { return it }
         val chapter = chapters().getOrNull(index) ?: return null
@@ -612,7 +650,17 @@ object ReadAloud {
         }
         val chap = chapFor(index)
         if (chap == null) {
+            // Hàng đợi còn mục của cuốn / chương trước: bỏ TRƯỚC khi báo lỗi hay chờ chữ - không thì vị trí, độ dài báo ra (lưu lại, đồng bộ sang máy tính) là của
+            // cuốn trước (soát a68 lỗi 2: "Nghe tiếp · 3:38" trên chương dài 3:15, rồi máy tính cũng nhận 3:38).
+            exo.pauseAtEndOfMediaItems = false
+            exo.clearMediaItems()
+            exo.playWhenReady = play
             waiting = Target(index, 0, 0, -1, play)
+            if (fetchText(index) { startAt(index, offsetMs, play, segment, word, within, hold) }) {
+                syncWants()
+                Playback.emit("state")
+                return
+            }
             fail("Không đọc được chữ của chương “${chapter.title}”")
             return
         }
@@ -694,6 +742,8 @@ object ReadAloud {
             if (waiting == null && feedSegment == 0 && needsConsent()) return
             val chap = chapFor(feedChapter)
             if (chap == null) {
+                // Cuốn nghe thẳng: chữ chương kế còn ở máy giữ sách - lấy về rồi nạp tiếp (hàng đợi vẫn phát phần đã có).
+                if (fetchText(feedChapter) { pump() }) return
                 fail("Không đọc được chữ của chương “${chapter.title}”")
                 return
             }

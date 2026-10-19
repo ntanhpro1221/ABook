@@ -75,6 +75,9 @@ export interface ListeningState {
   last?: { chapterId: number; seconds: number; at: number };
   chapters: Record<string, ChapterState>;
   rate?: number;
+  /** Giọng Nghe ngay riêng của cuốn và lúc chọn (giây Unix) - máy chọn sau thắng (readAloudVoice.ts adoptSyncedVoice). */
+  voice?: string;
+  voiceAt?: number;
   finished?: boolean;
   /** Lúc tự đánh dấu (chưa) nghe xong - nghe tiếp sau mốc này nghĩa là đang nghe lại. */
   finishedAt?: number;

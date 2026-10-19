@@ -164,11 +164,13 @@ object Streaming {
                 target.parentFile?.mkdirs()
                 val partial = File(target.path + ".part")
                 partial.outputStream().use { output -> connection.inputStream.use { it.copyTo(output) } }
-                if (!partial.renameTo(target)) {
+                // Hai lời xin cùng một file cùng lúc (giao diện xin chữ chương để hiện, trình đọc xin để đọc - soát lại uxfix75): lời kia đã đổi tên
+                // `.part` thành file thật thì file ấy là bản đủ - đừng xoá nó.
+                if (!partial.renameTo(target) && partial.isFile) {
                     target.delete()
                     partial.renameTo(target)
                 }
-                target
+                target.takeIf { it.isFile }
             } finally {
                 connection.disconnect()
             }

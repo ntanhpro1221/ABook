@@ -78,6 +78,33 @@ function write(key: string, value: string) {
   }
 }
 
+const stampKey = (bookId: string) => `abook-readaloud-voice-at-${bookId}`;
+
+// Nơi nhận lựa chọn giọng riêng của cuốn để ghi vào hồ sơ nghe (trình phát đăng ký - source.setVoice): máy kia đọc tiếp bằng đúng giọng ấy.
+let voiceSink: ((bookId: string, voice: string) => void) | null = null;
+
+/** Đăng ký nơi nhận lựa chọn giọng (một nơi một lúc); trả hàm gỡ. */
+export function onVoiceChosen(sink: (bookId: string, voice: string) => void): () => void {
+  voiceSink = sink;
+  return () => {
+    if (voiceSink === sink) voiceSink = null;
+  };
+}
+
+/** Giọng riêng của cuốn đến từ máy kia qua hồ sơ nghe (`voice`/`voiceAt`, soát a68 lỗi 8): chọn sau lựa chọn ở máy này thì nhận - trừ khi máy này
+ *  không có giọng ấy (giọng trên máy chưa tải, khoá nhà cung cấp chưa nhập): giữ giọng của máy này, không báo lỗi. True khi đã nhận. */
+export function adoptSyncedVoice(bookId: string, state: { voice?: string; voiceAt?: number } | undefined, available: readonly { id: string }[] | null | undefined): boolean {
+  const voice = state?.voice;
+  const at = state?.voiceAt ?? 0;
+  if (typeof voice !== "string" || !at || at <= Number(read(stampKey(bookId)) || 0)) return false;
+  if (voice && !available?.some((item) => item.id === voice)) return false;
+  write(`abook-readaloud-voice-${bookId}`, voice);
+  write(stampKey(bookId), String(at));
+  troubled.clear();
+  if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: bookId }));
+  return true;
+}
+
 /** Giọng đã chọn cho cuốn này; chưa chọn thì giọng chung; chưa có gì thì "" (= mặc định của máy). */
 export function chosenVoice(bookId: string): string {
   return read(`abook-readaloud-voice-${bookId}`) || read(GLOBAL_KEY);
@@ -87,6 +114,8 @@ export function chosenVoice(bookId: string): string {
  *  của các cuốn khác giữ nguyên - chỉ Cài đặt đổi nó (soát a67: đổi giọng một cuốn lặng lẽ đổi luôn giọng mặc định). */
 export function chooseVoice(bookId: string, voice: string): void {
   write(`abook-readaloud-voice-${bookId}`, voice);
+  write(stampKey(bookId), String(Date.now() / 1000));
+  voiceSink?.(bookId, voice);
   troubled.clear();
   // Lần chọn đầu tiên (chưa có giọng mặc định): cũng làm giọng mặc định, để cuốn thứ hai không bắt người mới chọn lại từ đầu.
   const first = !read(GLOBAL_KEY);

@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import { toast } from "sonner";
+import { errorDescription } from "./nativeError";
 import { EbookLibrary, type DownloadEvent } from "./plugins";
 
 // Tiến độ tải sách, nghe ở CẤP APP chứ không ở màn "Tải sách": trước đây listener nằm trong màn ấy, rời màn giữa
@@ -35,7 +36,8 @@ export function watchDownloads(client: QueryClient): () => void {
       void client.invalidateQueries({ queryKey: ["listen"] });
       void client.invalidateQueries({ queryKey: ["storage"] });
     }
-    if (event.error) toast.error("Tải bị gián đoạn", { description: event.error });
+    if (event.error) toast.error("Tải bị gián đoạn", { description: errorDescription(event.error, event.technical) });
+    if (event.cancelled) toast("Đã huỷ tải", { description: "Phần đã tải được giữ lại - bấm Tải lần sau là tải tiếp." });
   });
   return () => void handle.then((listener) => listener.remove());
 }

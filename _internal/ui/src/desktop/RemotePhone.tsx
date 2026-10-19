@@ -92,9 +92,9 @@ export function useRemotePhones() {
 
 /** Vị trí điện thoại lúc này: lần báo cuối cộng thời gian đã trôi (nếu đang phát). */
 export function phonePosition(phone: RemotePhone, receivedAt: number, now = Date.now()): number {
-  if (!phone.playing || phone.buffering) return phone.position;
-  const elapsed = phone.age + Math.max(0, now - receivedAt) / 1000;
-  const at = phone.position + elapsed * phone.rate;
+  const elapsed = phone.playing && !phone.buffering ? phone.age + Math.max(0, now - receivedAt) / 1000 : 0;
+  const at = Math.max(0, phone.position + elapsed * phone.rate);
+  // Kẹp cả khi đang dừng (soát a68 lỗi 17: "0:08 / 0:07") - vị trí điện thoại báo có thể nhỉnh hơn độ dài ghi trong gói sách.
   return phone.duration > 0 ? Math.min(at, phone.duration) : at;
 }
 
@@ -117,7 +117,10 @@ export function useRemoteCommand() {
             if (command.action === "toggle") return { ...base, playing: !phone.playing };
             if (command.action === "pause") return { ...base, playing: false };
             if (command.action === "play") return { ...base, playing: true };
-            if (command.action === "skip") return { ...base, position: Math.max(0, here + command.seconds) };
+            if (command.action === "skip") {
+              const target = Math.max(0, here + command.seconds);
+              return { ...base, position: phone.duration > 0 ? Math.min(target, phone.duration) : target };
+            }
             if (command.action === "sleep") return { ...base, sleep: remoteSleepAfter(command, phone.playing) };
             return base;
           }),

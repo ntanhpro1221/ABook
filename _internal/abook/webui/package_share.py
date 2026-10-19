@@ -41,6 +41,9 @@ def library_entry(path: Path, key: str, state: dict[str, Any]) -> dict[str, Any]
     entry = {name: view[name] for name in ("id", "title", "narrator", "duration", "chaptersTotal", "chaptersAvailable",
                                            "complete", "updatedAt")}
     entry["series"] = None
+    entry["producing"] = False  # cuốn nhập từ file không có Studio nào đang làm nó
+    # Cỡ khi tải về, đúng phần điện thoại sẽ tải (soát a68 lỗi 7; dự án: sync.SyncApp.library_view).
+    entry["bytes"] = download_bytes(manifest(path, key))
     if view.get("author"):
         entry["author"] = view["author"]  # tìm và sắp theo tác giả ở máy kia cần nó; dự án Studio không có tác giả nên không mang khoá
     meta = _cover_meta(path, packages.edited_manifest(path))
@@ -66,6 +69,14 @@ def _chapter(path: Path, chapter: dict[str, Any]) -> dict[str, Any]:
     if item.get("state") == packages.TEXT_STATE and "text" not in item:
         item.pop("state")
     return item
+
+
+def download_bytes(book: dict[str, Any]) -> int:
+    """Cỡ một cuốn khi máy đã ghép tải về theo `book.json` của nó (`manifest`): audio các chương nghe được + các bài nhạc nền kèm theo -
+    cùng phép tính bên điện thoại (DownloadSpace.bookBytes), nên cỡ hiện cạnh nút Tải khớp tổng của thanh tiến độ."""
+    chapters = sum(int(chapter.get("size") or 0) for chapter in book.get("chapters") or [] if isinstance(chapter, dict) and chapter.get("available"))
+    tracks = ((book.get("music") or {}).get("tracks") or {}) if isinstance(book.get("music"), dict) else {}
+    return chapters + sum(int(info.get("size") or 0) for info in tracks.values() if isinstance(info, dict))
 
 
 def manifest(path: Path, key: str) -> dict[str, Any]:

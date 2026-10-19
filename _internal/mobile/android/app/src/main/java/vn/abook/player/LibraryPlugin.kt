@@ -102,10 +102,26 @@ class LibraryPlugin : Plugin() {
         }
     }
 
-    /** Từ chối lời gọi; chứng chỉ máy kia đổi thì kèm mã [Pin.CODE] để giao diện hiện câu "ghép lại" thay vì "không kết nối được". */
+    /**
+     * Từ chối lời gọi; chứng chỉ máy kia đổi thì kèm mã [Pin.CODE] để giao diện hiện câu "ghép lại" thay vì "không kết nối được". Máy kia trả 401: mã
+     * [NetErrors.UNPAIRED] (nó đã thôi ghép máy này). Lỗi mạng: câu tiếng Việt theo loại, mã là tên loại, chữ gốc trong `data.technical` (soát a68 lỗi 4, 5).
+     */
     private fun fail(call: PluginCall, error: Exception, fallback: String = error.javaClass.simpleName) {
-        val message = error.message ?: fallback
-        if (error is Pin.ChangedException) call.reject(message, Pin.CODE) else call.reject(message)
+        val (message, technical) = describe(error, fallback)
+        when {
+            error is Pin.ChangedException -> call.reject(message, Pin.CODE)
+            NetErrors.unpaired(error) -> call.reject(message, NetErrors.UNPAIRED)
+            technical != null -> call.reject(message, NetErrors.kind(error)?.name, null, JSObject().put("technical", technical))
+            else -> call.reject(message)
+        }
+    }
+
+    /** Lời cho người nghe + chữ gốc (chỉ khi là lỗi mạng đã dịch thành câu) - dùng chung cho lời gọi bị từ chối và sự kiện "download". */
+    private fun describe(error: Exception, fallback: String = error.javaClass.simpleName): Pair<String, String?> {
+        if (error is Pin.ChangedException) return (error.message ?: Pin.CHANGED) to null
+        if (NetErrors.unpaired(error)) return "Máy kia đã thôi ghép với điện thoại này - ghép lại để tải và nghe thẳng sách của nó" to null
+        val kind = NetErrors.kind(error) ?: return (error.message ?: fallback) to null
+        return NetErrors.message(kind) to NetErrors.technical(error)
     }
 
     // Large options (the drawn cover of an export) wait in memory while a system picker is open - see HeldCallFields.
@@ -405,13 +421,25 @@ class LibraryPlugin : Plugin() {
         val host = call.getString("host") ?: throw IllegalArgumentException("thiếu địa chỉ máy tính")
         val port = call.getInt("port") ?: 47630
         SyncLink.refuseSelf(host, port)
-        val device = call.getString("device") ?: "${Build.MANUFACTURER} ${Build.MODEL}"
+        val device = call.getString("device") ?: DeviceName.of(context)
         val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
         val (reply, fingerprint) = SyncLink.pair(context, "https://$host:$port", body)
         SyncLink.saveRoutes(prefs.edit().putString("host", host).putInt("port", port).putString("token", reply.getString("token"))
             .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply).commit()
+        // Ô địa chỉ nhớ máy đã ghép lần trước (soát a68 lỗi 20): ngoài "sync" vì thôi ghép xoá sạch "sync" - ghép lại là lúc cần nó nhất.
+        context.getSharedPreferences("abook_self", Context.MODE_PRIVATE).edit().putString("lastAddress", "$host:$port").apply()
         Remote.ensure()
         call.resolve(JSObject().put("name", reply.optString("name")))
+    }
+
+    /** Đổi tên điện thoại này ở máy khác (soát a68 lỗi 16); rỗng = tên mặc định. Báo ngay máy tính chính và các máy đã ghép (máy tắt thì lần ghép sau). */
+    @PluginMethod
+    fun setDeviceName(call: PluginCall) = background(call) {
+        val name = DeviceName.set(context, call.getString("name") ?: "")
+        val body = JSONObject().put("name", name)
+        if (SyncLink.paired(context)) runCatching { SyncLink.request(context, "POST", "/sync/v1/name", body, readTimeoutMs = 5000, connectTimeoutMs = 2000) }
+        for (key in Peers.all(context).keys()) runCatching { Peers.request(context, key, "POST", "/sync/v1/name", body, readTimeoutMs = 5000, connectTimeoutMs = 2000) }
+        call.resolve(JSObject().put("name", name))
     }
 
     // ---- qua Bluetooth (BluetoothLink, BtMux) -------------------------------------------------------------------------
@@ -447,7 +475,7 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun pairBluetooth(call: PluginCall) = background(call) {
         val address = call.getString("address") ?: throw IllegalArgumentException("thiếu máy")
-        val device = call.getString("device") ?: "${Build.MANUFACTURER} ${Build.MODEL}"
+        val device = call.getString("device") ?: DeviceName.of(context)
         val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
         val root = BluetoothLink.base(context, address)
         val (reply, fingerprint) = try {
@@ -585,7 +613,9 @@ class LibraryPlugin : Plugin() {
         val paired = !prefs.getString("token", "").isNullOrBlank()
         call.resolve(
             JSObject().put("paired", paired).put("host", prefs.getString("host", "")).put("port", prefs.getInt("port", 47630))
-                .put("name", prefs.getString("name", "")).put("fingerprint", prefs.getString("fingerprint", "") ?: ""),
+                .put("name", prefs.getString("name", "")).put("fingerprint", prefs.getString("fingerprint", "") ?: "")
+                .put("lastAddress", context.getSharedPreferences("abook_self", Context.MODE_PRIVATE).getString("lastAddress", "") ?: "")
+                .put("deviceName", DeviceName.of(context)),
         )
     }
 
@@ -693,9 +723,16 @@ class LibraryPlugin : Plugin() {
             book.put("localChapters", local?.optInt("chaptersAvailable") ?: 0)
             book.put("localCoverVersion", local?.optJSONObject("cover")?.optLong("version") ?: 0L)
             book.put("localWordsVersion", local?.optString("wordsVersion") ?: "")
+            // Cỡ khi tải về, hiện trước khi bấm Tải (soát a68 lỗi 7): máy tính gửi kèm (`bytes`); máy tính đời trước thì lấy từ gói sách đã cất
+            // cho nghe thẳng nếu còn đúng - không hỏi máy tính từng cuốn (thư viện vài chục cuốn thành vài chục lượt mạng).
+            if (local == null && !book.has("bytes")) {
+                Store.streamManifest(book.getString("id"))?.takeIf { it.optInt("chaptersAvailable") == book.optInt("chaptersAvailable") }
+                    ?.let { book.put("bytes", DownloadSpace.bookBytes(it)) }
+            }
         }
         call.resolve(JSObject().put("name", reply.optString("name")).put("books", books))
         EditsSync.scheduleAllPending(context) // tới được máy tính: gửi nốt phần sửa còn tồn
+        StateSync.flushPending(context) // chỗ nghe ghi trong lúc mất kết nối (soát a68 lỗi 9)
     }
 
     /**
@@ -729,6 +766,15 @@ class LibraryPlugin : Plugin() {
 
     // ---- tải sách --------------------------------------------------------------------------------------------
 
+    /** Cuốn người nghe bấm Huỷ tải ([cancelDownload]): lượt tải dừng ở khối kế, giữ phần đã về (`.part`, file đã đủ) để lần bấm Tải sau tải tiếp. */
+    private val cancelledDownloads: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
+    private class DownloadCancelled : Exception("Đã huỷ tải")
+
+    private fun checkCancelled(id: String) {
+        if (id in cancelledDownloads) throw DownloadCancelled()
+    }
+
     /** Kết nối tới một file của sách bên máy kia (đã ghim chứng chỉ, mang mã thiết bị); `resumeFrom` > 0 thì xin tiếp từ byte ấy. */
     private fun fetchFile(id: String, relative: String, expectedSize: Long, link: Peers.Link, remote: String): Long {
         val target = Store.file(id, relative)
@@ -740,8 +786,21 @@ class LibraryPlugin : Plugin() {
         val code = Pin.guard { connection.responseCode }
         if (code >= 400) throw IllegalStateException("Không tải được $relative (mã $code)")
         val append = code == 206
-        java.io.FileOutputStream(partial, append).use { output -> connection.inputStream.use { it.copyTo(output, 256 * 1024) } }
-        connection.disconnect()
+        try {
+            java.io.FileOutputStream(partial, append).use { output ->
+                connection.inputStream.use { input ->
+                    val buffer = ByteArray(256 * 1024)
+                    while (true) {
+                        checkCancelled(id)
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        output.write(buffer, 0, read)
+                    }
+                }
+            }
+        } finally {
+            connection.disconnect()
+        }
         if (!partial.renameTo(target)) {
             target.delete()
             partial.renameTo(target)
@@ -755,18 +814,33 @@ class LibraryPlugin : Plugin() {
         val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
         // Sách của thiết bị ghép (Peers): `source` = mã thiết bị ở đây, `remoteId` = mã sách bên ấy.
         val source = call.getString("source")?.takeIf { it.isNotEmpty() }
+        cancelledDownloads.remove(id) // bấm Tải lại sau khi huỷ: lượt mới chạy như thường
         call.setKeepAlive(true)
         downloads.execute {
             try {
+                checkCancelled(id) // huỷ khi còn xếp hàng sau cuốn khác
                 downloadBook(id, source, call.getString("remoteId"), announce = true)
                 call.resolve(JSObject().put("bookId", id))
+            } catch (error: DownloadCancelled) {
+                cancelledDownloads.remove(id)
+                notifyListeners("download", JSObject().put("bookId", id).put("cancelled", true))
+                call.reject("Đã huỷ tải", "CANCELLED")
             } catch (error: Exception) {
-                notifyListeners("download", JSObject().put("bookId", id).put("error", error.message ?: "lỗi tải"))
+                val (message, technical) = describe(error, "lỗi tải")
+                notifyListeners("download", JSObject().put("bookId", id).put("error", message).apply { if (technical != null) put("technical", technical) })
                 fail(call, error, "lỗi tải")
             } finally {
                 call.setKeepAlive(false)
             }
         }
+    }
+
+    /** Nút Huỷ khi đang tải một cuốn (soát a68 lỗi 7): dừng thật ở khối kế; phần đã về giữ lại để lần Tải sau tải tiếp. */
+    @PluginMethod
+    fun cancelDownload(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        cancelledDownloads.add(id)
+        call.resolve()
     }
 
     /** Máy giữ sách vừa nhận phần sửa: cuốn đã tải thì tải lại (file đổi), cuốn nghe thẳng thì chỉ lấy lại gói sách và bìa - không tải cả cuốn. */
@@ -798,6 +872,10 @@ class LibraryPlugin : Plugin() {
             // Văn bản của MỌI chương (vài KB) - chế độ đọc đọc được cả chương chưa thu âm; audio chỉ chương đã có.
             val script = chapter.optString("script")
             if (script.isNotBlank() && script != "null") files += script to 0L
+            // Chữ của chương chỉ-có-chữ (`texts/<n>.txt`, sync.text_layer): sách chưa có audio nghe được bằng Nghe ngay khi đã tải, như bản máy tính
+            // (remote_books.wanted) - trước đây bỏ sót, tải xong chỉ có book.json + cast.json (soát a68 lỗi 1).
+            val text = chapter.optString("text")
+            if (text.isNotBlank() && text != "null") files += text to 0L
             if (!chapter.optBoolean("available")) continue
             files += chapter.getString("file") to chapter.optLong("size")
         }
@@ -811,9 +889,14 @@ class LibraryPlugin : Plugin() {
         // Nhạc nền: đúng các bài mà một mốc đang dùng (BookMusic.tracks) - nghe được cả khi không có mạng, và chuyển tiếp được cho máy khác.
         val tracks = BookMusic.tracks(manifest.optJSONObject("music"))
         val total = files.sumOf { it.second } + tracks.sumOf { it.size }
+        // Đủ chỗ trước khi tải (soát a68 lỗi 10): thiếu thì báo ngay, không tải dở rồi hỏng giữa chừng.
+        val missing = files.sumOf { (relative, size) -> DownloadSpace.stillNeeded(size, runCatching { Store.file(id, relative) }.getOrNull()) } +
+            tracks.sumOf { track -> DownloadSpace.stillNeeded(track.size, runCatching { Store.contained(Store.bookDir(id), track.name) }.getOrNull()) }
+        DownloadSpace.shortage(missing, Store.root.usableSpace)?.let { throw IllegalStateException(it) }
         val filesTotal = files.size + tracks.size
         var done = 0L
         files.forEachIndexed { index, (relative, size) ->
+            checkCancelled(id)
             fetchFile(id, relative, size, link, remote)
             done += size
             if (announce) {
@@ -822,6 +905,7 @@ class LibraryPlugin : Plugin() {
             }
         }
         tracks.forEachIndexed { index, track ->
+            checkCancelled(id)
             // Một bài không tải được (sai cỡ / mã băm, máy kia ngắt) thì bỏ bài ấy: sách vẫn lưu, chỗ đó nghe thẳng từ máy kia khi có mạng.
             BookMusic.fetch(Store.bookDir(id), track) { name -> SyncLink.musicSource(context, link, remote, name) }
             done += track.size
@@ -853,19 +937,30 @@ class LibraryPlugin : Plugin() {
 
     /**
      * Sách trên máy tính CHƯA tải mà nghe thẳng được (Streaming). Gói sách chỉ lấy lại khi máy tính có thêm chương, đổi
-     * tên hay đổi bìa, còn lại dùng bản đã cất. Máy tính không trả lời thì trả danh sách rỗng: những cuốn ấy không nằm trên
-     * điện thoại, hiện ra mà bấm không nghe được thì chỉ làm người nghe bối rối.
+     * tên hay đổi bìa, còn lại dùng bản đã cất. Máy tính không trả lời thì không liệt kê sách của nó: những cuốn ấy không nằm trên
+     * điện thoại, hiện ra mà bấm không nghe được thì chỉ làm người nghe bối rối - TRỪ cuốn đang nằm trong trình phát (`offline`): máy tắt hay
+     * mất mạng không phải thôi ghép, trình phát không được tưởng cuốn đã rời Thư viện mà đóng giữa câu (soát a68 lỗi 3). Chỉ khi máy kia trả 401
+     * (đã thôi ghép điện thoại này) cuốn mới thật sự rời đi.
      */
     @PluginMethod
     fun streamableBooks(call: PluginCall) = background(call) {
         val books = JSArray()
+        var computerAnswered = true
         val reply = if (SyncLink.paired(context)) {
-            runCatching { JSONObject(SyncLink.request(context, "GET", "/sync/v1/library", readTimeoutMs = 10_000, connectTimeoutMs = 1500)) }.getOrNull()
+            try {
+                JSONObject(SyncLink.request(context, "GET", "/sync/v1/library", readTimeoutMs = 10_000, connectTimeoutMs = 1500))
+            } catch (error: Exception) {
+                computerAnswered = NetErrors.unpaired(error) // 401: máy tính trả lời - nó đã thôi ghép; không giữ cuốn nào của nó
+                null
+            }
         } else null
         val remote = reply?.optJSONArray("books") ?: JSONArray()
         if (reply != null) {
             SyncLink.refreshRoutes(context, reply)
             matchImported(listed(remote))
+            StateSync.flushPending(context) // chỗ nghe ghi trong lúc mất kết nối về máy tính ngay khi nối lại (soát a68 lỗi 9)
+        } else if (!computerAnswered) {
+            keepPlaying(books) { it.optString("source").isEmpty() }
         }
         for (index in 0 until remote.length()) {
             val entry = remote.getJSONObject(index)
@@ -883,10 +978,11 @@ class LibraryPlugin : Plugin() {
             }
             books.put(JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true))
         }
-        // Thiết bị ghép (điện thoại khác, máy tính khác): cùng cách, gói ghi nguồn - thiết bị không trả lời thì bỏ qua.
+        // Thiết bị ghép (điện thoại khác, máy tính khác): cùng cách, gói ghi nguồn - thiết bị không trả lời thì bỏ qua (trừ cuốn đang phát, như trên).
         val peers = Peers.libraries(context)
         for (index in 0 until peers.length()) {
             val peer = peers.getJSONObject(index)
+            if (peer.has("error") && !peer.optBoolean("unpaired")) keepPlaying(books) { it.optString("source") == peer.optString("key") }
             val list = peer.optJSONArray("books") ?: continue
             for (item in 0 until list.length()) {
                 val entry = list.getJSONObject(item)
@@ -906,6 +1002,15 @@ class LibraryPlugin : Plugin() {
             }
         }
         call.resolve(JSObject().put("books", books))
+    }
+
+    /** Cuốn nghe thẳng đang nằm trong trình phát mà máy giữ nó không trả lời: vẫn ở danh sách (gói đã cất), đánh dấu `offline`. */
+    private fun keepPlaying(books: JSArray, ownedBy: (JSONObject) -> Boolean) {
+        val id = Playback.bookId.takeIf { it.isNotEmpty() } ?: return
+        if (Store.rawManifest(id) != null) return
+        val manifest = Store.streamManifest(id)?.takeIf(ownedBy) ?: return
+        books.put(JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
+            .put("offline", true))
     }
 
     // ---- thiết bị ghép khác (Peers: điện thoại khác, máy tính khác - mạng trạm bước 2) -----------------------------
@@ -1563,7 +1668,12 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun progress(call: PluginCall) = background(call) {
-        resolveState(call, Store.progress(call.getString("id")!!, call.getInt("chapterId")!!, call.getDouble("seconds")!!, call.getDouble("duration") ?: 0.0))
+        val id = call.getString("id")!!
+        val seconds = call.getDouble("seconds")!!
+        val duration = call.getDouble("duration") ?: 0.0
+        // Chỗ vượt độ dài chương là của thứ khác: không lưu (PlacePolicy, soát a68 lỗi 2).
+        if (!PlacePolicy.fits(seconds, duration)) return@background call.resolve(JSObject.fromJSONObject(Store.state(id)))
+        resolveState(call, Store.progress(id, call.getInt("chapterId")!!, seconds, duration))
     }
 
     @PluginMethod
@@ -1580,6 +1690,15 @@ class LibraryPlugin : Plugin() {
     fun setRate(call: PluginCall) = background(call) {
         Store.setRate(call.getString("id")!!, call.getDouble("rate") ?: 1.0)
         call.resolve()
+    }
+
+    /** Giọng Nghe ngay người nghe chọn riêng cho cuốn: lưu và báo máy giữ sách ngay (soát a68 lỗi 8) - máy kia có giọng ấy thì đọc tiếp bằng nó. */
+    @PluginMethod
+    fun setVoice(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        Store.setVoice(id, call.getString("voice") ?: "")
+        call.resolve()
+        runCatching { pushState(id) }
     }
 
     @PluginMethod
