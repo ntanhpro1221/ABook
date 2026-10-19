@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.111] - 2026-10-20
+
 ### Nghe ngay
 
 - Sửa ngay trong trình phát: ở tab "Đọc theo", chạm một câu hay một chữ là mở cùng menu như màn Đọc (Sửa cách đọc, Ai nói câu này, Dấu trang, Chép). Nút Đọc ở trang sách mở đúng chương đang phát.
