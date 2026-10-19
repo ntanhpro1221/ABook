@@ -273,3 +273,14 @@ So Nano reads in 6 steps guided on all but the last (desktop `vieneu_engine.NANO
 `CFG_LAST`): 11 estimator calls per chunk instead of 14, desktop estimator time -23 %. Loudness re-measured for the new schedule (only
 Hữu Quân moved more than 0.5 LU: -17.8 -> -18.4 LUFS). Reproduce: `S/fastvoice/r7_gen.py`, `r7_quality.py`, `r7_summarize.py`
 (REPORT_r7.md); phone `S/fastvoice/phone_nano_r7.sh`.
+
+A93, paired, 4 threads, warm, 5 sentences, on the charger with the screen off (afternoon), order 8 / 6 / 6 / 8 steps, both with the int8
+decoder:
+
+| | estimator calls per chunk | long sentence (7 s) RTF | estimator s | decoder s | all 5 sentences RTF | peak RSS |
+|---|---|---|---|---|---|---|
+| 8 steps, guided on 1-6 (0.4.100-0.4.101) | 14 | 0.94 / 0.94 | 5.5 | 0.83 | 1.01 / 1.01 | 462 MB |
+| 6 steps, guided on 0-4 (0.4.102) | 11 | 0.77 / 0.77 | 4.35 | 0.83 | 0.83 / 0.83 | 464 MB |
+
+18 % faster on the phone, so Nano now reads faster than real time on this phone (the R6 table above was taken at night and is slower
+overall - compare within a table).
