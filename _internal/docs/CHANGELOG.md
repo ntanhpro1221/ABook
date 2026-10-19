@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.109] - 2026-10-20
+
 ### Hai máy
 
 - Sách chỉ có chữ trên máy tính nghe được trên điện thoại, cả nghe thẳng lẫn tải về. Mở cuốn khác thất bại không còn ghi chỗ nghe của cuốn cũ sang cuốn mới.
