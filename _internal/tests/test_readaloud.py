@@ -521,8 +521,8 @@ class _RankedProvider(FakeProvider):
     def voices(self) -> list[Voice]:
         return [Voice("ranked:ngoc", "Ngọc", "ranked", False, True)]
 
-    def synthesize(self, text: str, native_voice: str, *, rank: int = 99) -> Synthesis:
-        self.ranks.append(rank)
+    def synthesize(self, text: str, native_voice: str, *, rank: int = 99, cancelled: object = None) -> Synthesis:
+        self.ranks.append(rank)  # `cancelled`: máy chủ giao diện truyền cờ bỏ lượt đọc cho mọi giọng (uxfix70), như EdgeProvider nhận
         return super().synthesize(text, native_voice)
 
 

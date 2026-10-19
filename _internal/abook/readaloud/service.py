@@ -16,7 +16,7 @@ from .byok import KeyedProvider
 from .cache import ClipBooks, ClipCache, clip_key
 from .keys import KeyStore
 from .mapping import Boundary, fold, map_boundaries, tokens
-from .model import Synthesis, Voice, VoiceError
+from .model import Synthesis, Voice, VoiceError, cancellable
 from .prepare import SHARE as PREPARE_SHARE
 from .prepare import Prepare
 
@@ -181,7 +181,9 @@ class ReadAloud:
     `rtf`: tốc độ tự đo của giọng (để "Làm trước" ước thời gian).
     Bậc "Nhanh hơn" của "Tốc độ giọng trên máy" (webui/voice_speed.py, chỉ Nghe ngay, chỉ giọng Supertonic): `speed(giọng)` = dấu bậc đang dùng ("fast<số bước>",
     "" = bậc chất lượng); khi khác rỗng, clip đọc bằng nhà cung cấp thứ hai của giọng ấy - `supertonic_fast_locate` (supertonic_module.installed_fast) - và dấu
-    ấy vào khoá bộ đệm."""
+    ấy vào khoá bộ đệm.
+    `model_mark(giọng, dấu bậc)`: dấu model của giọng trên máy (8 hex: ghim các file model đang dùng + lịch đọc - supertonic_module / vieneu_module.model_mark),
+    vào khoá bộ đệm của giọng có `reading_tag`: cập nhật model hay đổi lịch đọc thì clip cũ không trúng nữa, đoạn được đọc lại một lần."""
 
     def __init__(self, folder: Path | str, providers: list[Provider] | None = None, *, limit: int | None = None,
                  keys: KeyStore | None = None, vieneu_locate: Callable[[], vieneu.Installed | None] | None = None,
@@ -189,7 +191,8 @@ class ReadAloud:
                  vieneu_engines: Callable[[str, vieneu.Installed], Any] | None = None,
                  rtf: Callable[[str], float | None] = lambda _voice: None,
                  speed: Callable[[str], str] = lambda _voice: "",
-                 supertonic_fast_locate: Callable[[], supertonic.Installed | None] | None = None) -> None:
+                 supertonic_fast_locate: Callable[[], supertonic.Installed | None] | None = None,
+                 model_mark: Callable[[str, str], str] = lambda _voice, _tier: "") -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
         self.cache = ClipCache(self.folder, **kwargs)
@@ -207,6 +210,7 @@ class ReadAloud:
         if supertonic_fast_locate is not None:
             self.fast[supertonic.PREFIX] = supertonic.SupertonicProvider(supertonic_fast_locate)
         self._speed = speed
+        self._model_mark = model_mark
         self._locks: dict[str, threading.Lock] = {}
         self._locks_guard = threading.Lock()
         self._live = 0  # clip của người đang nghe đang được đọc: "Làm trước" nhường
@@ -306,10 +310,12 @@ class ReadAloud:
         đi trước khi hết chỗ kết nối; không nói thì đứng sau mọi đoạn có rank.
         `stream`: người nghe clip đang đọc (uxfix56) - CHỈ khi chưa có trong bộ đệm, không `cached_only` / `background`, giọng có `ranks_requests` và `rank` == 0 (đoạn người nghe đang đứng chờ):
         tiếng + mốc chữ tạm chảy tới đó ngay khi về (`StreamListener`); xong vẫn vào bộ đệm đúng như không phát luồng và trả dict như thường (người gọi gửi bản cuối). Ngoài ra `stream` bị bỏ qua.
-        `cancelled`: người gọi bỏ clip được giữa chừng (Huỷ xuất sách nói, soát a62): đang chờ lượt đọc cùng đoạn hay đang đọc bằng giọng có `ranks_requests` (Edge, ổ cắm bị cắt)
-        thì dừng trong vòng một phần giây với `VoiceError` lý do "cancelled" và không có gì vào bộ đệm. Giọng khác đọc nốt đoạn đang đọc.
+        `cancelled`: người gọi bỏ clip được giữa chừng (Huỷ xuất sách nói soát a62; người nghe nhảy đi nơi khác - máy chủ giao diện: trình phát đóng kết nối): đang chờ lượt
+        đọc cùng đoạn, đang đọc bằng giọng có `ranks_requests` (Edge, ổ cắm bị cắt) hay bằng giọng trên máy (engine hỏi `model.stop_if_cancelled` giữa các khúc và các bước,
+        uxfix70) thì dừng trong vòng một phần giây với `VoiceError` lý do "cancelled" và không có gì vào bộ đệm. Giọng khác đọc nốt đoạn đang đọc.
         `quality`: luôn bậc chất lượng của giọng (xuất sách nói, MP3 / M4B) - không thì giọng có hai bậc đọc bậc mà "Tốc độ giọng trên máy" đang dùng (`speed`);
-        clip bậc nhanh có dấu bậc trong khoá nên không bao giờ đứng thay clip chất lượng."""
+        clip bậc nhanh có dấu bậc trong khoá nên không bao giờ đứng thay clip chất lượng. Ngược lại thì được (uxfix70): nghe ở bậc nhanh mà đoạn đã có clip bậc chất lượng
+        (làm trước khi đổi bậc, hay xuất sách nói) thì dùng clip ấy, không đọc lại."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
@@ -327,9 +333,22 @@ class ReadAloud:
         else:
             name_tag = spoken.tag(text, origin, provider.speaks_english) if normalised else ""
         lifted = loudness.lifts(voice_id)  # câu ngắn nhỏ của giọng VieNeu / Supertonic được nâng ngay trong clip (loudness.lift_wav): dấu riêng trong khoá
-        tags = (name_tag, book_readings.tag(text, readings), loudness.LIFT_TAG if lifted else "", tier)
-        key = clip_key(provider.id, native, text, "+".join(tag for tag in tags if tag))
-        hit = self.cache.get(key)
+        tags = (name_tag, book_readings.tag(text, readings), loudness.LIFT_TAG if lifted else "")
+
+        def key_at(tier_tag: str) -> str:
+            """Khoá của đoạn ở bậc `tier_tag` ("" = chất lượng): dấu đọc + dấu bậc + dấu model (chỉ giọng trên máy)."""
+            mark = self._model_mark(voice_id, tier_tag) if reads_names else ""
+            return clip_key(provider.id, native, text, "+".join(tag for tag in (*tags, tier_tag, mark) if tag))
+
+        key = key_at(tier)
+        hit = None
+        if tier:  # nghe ở bậc nhanh: clip bậc chất lượng của đoạn này đã có thì dùng nó (không bao giờ ngược lại)
+            quality_key = key_at("")
+            hit = self.cache.get(quality_key)
+            if hit is not None:
+                key = quality_key
+        if hit is None:
+            hit = self.cache.get(key)
         if hit is None:
             if cached_only:
                 raise VoiceError("Chưa đọc đoạn này.", "uncached")
@@ -355,10 +374,9 @@ class ReadAloud:
                                 made = provider.synthesize(said, native, rank=rank, cancelled=cancelled)
                             else:
                                 made = provider.synthesize(said, native, rank=rank) if ranked else provider.synthesize(said, native)
-                        elif tags[1]:
-                            made = provider.synthesize(text, native, origin, readings)
                         else:
-                            made = provider.synthesize(text, native, origin)
+                            with cancellable(cancelled):  # engine hỏi cờ giữa các khúc / bước (model.stop_if_cancelled)
+                                made = provider.synthesize(text, native, origin, readings) if tags[1] else provider.synthesize(text, native, origin)
                         if lifted and made.ext == "wav":
                             made = replace(made, audio=loudness.lift_wav(voice_id, made.audio))
                         words = made.words if made.words is not None else map_boundaries(said, made.boundaries, made.duration_ms)

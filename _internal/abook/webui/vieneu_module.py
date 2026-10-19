@@ -275,17 +275,23 @@ def _parts() -> list[Component]:
     libs = music_module.libs_part(off or music_module.libs_problem())
     g2p_problem = off or ("bộ đọc chữ tiếng Việt tải sẵn chỉ có cho Windows 64-bit" if sys.platform != "win32" else "")
     voices_dir = _dir("voices")
+    # Nơi từng file được tải về (`Component.targets`, cho cỡ "còn phải tải"): gói wheel vào thư mục tải tạm (`_install`), file model thẳng vào chỗ.
+    wheel = (lambda item: [_core.folder / voice_module.DOWNLOADS / f"{item.name}.whl"]) if _core.folder is not None else (lambda _item: [])
     out = [libs, Component("g2p", PART_LABEL["g2p"], pin(FILES["g2p"]), G2P.size, _g2p_present(), external=_g2p_external(),
-                           blocked=g2p_problem, downloads=[G2P]),
+                           blocked=g2p_problem, downloads=[G2P], targets=wheel(G2P)),
            Component("voices", PART_LABEL["voices"], pin(FILES["voices"]), VOICES.size,
                      voices_dir is not None and all((voices_dir / name).is_file() for name in VOICE_MEMBERS.values()),
-                     blocked=off, downloads=[VOICES])]
+                     blocked=off, downloads=[VOICES], targets=wheel(VOICES))]
     for part in ("turbo", "nano", "aligner"):
-        files = FILES[part]
-        out.append(Component(part, PART_LABEL[part], pin(files), sum(item.size for item in files), _complete(_dir(part), files),
-                             external=part == "aligner" and _aligner_external(), blocked=off, downloads=list(files)))
+        files, where = FILES[part], _dir(part)
+        out.append(Component(part, PART_LABEL[part], pin(files), sum(item.size for item in files), _complete(where, files),
+                             external=part == "aligner" and _aligner_external(), blocked=off, downloads=list(files),
+                             targets=[where / item.name for item in files] if where is not None else []))
+    gguf = _dir("gguf")
     out.append(Component("gguf", PART_LABEL["gguf"], pin(GGUF_FILES), sum(item.size for item in GGUF_FILES), _gguf_present(),
-                         blocked=off or vieneu_gguf.unsupported_reason(), downloads=list(GGUF_FILES)))
+                         blocked=off or vieneu_gguf.unsupported_reason(), downloads=list(GGUF_FILES),
+                         targets=[_core.folder / voice_module.DOWNLOADS / SERVER_ZIP.name, gguf / GGUF_MODEL.name]
+                         if _core.folder is not None and gguf is not None else []))
     return out
 
 
@@ -340,6 +346,24 @@ def rtf(voice: str) -> float | None:
     return float(value) if isinstance(value, (int, float)) else None
 
 
+# Phần model mà clip của từng tầng phụ thuộc (dấu model, `model_mark`): danh sách giọng (vector giọng) + model của tầng; Turbo cả bản tăng tốc (đọc thay ONNX khi có).
+MARK_PARTS = {"turbo": ("voices", "turbo", "gguf"), "nano": ("voices", "nano")}
+
+
+def model_mark(voice: str) -> str:
+    """Dấu model của clip giọng VieNeu `voice` ("vieneu:nano/...") cho khoá bộ đệm: ghim các phần của tầng (`MARK_PARTS`) + lịch đọc của Nano
+    (vieneu_engine.NANO_STEPS, NANO_CFG, NANO_CFG_LAST). "" cho giọng khác. VieNeu chỉ có một bậc."""
+    tier = voice.removeprefix("vieneu:").partition("/")[0] if voice.startswith("vieneu:") else ""
+    if tier not in MARK_PARTS:
+        return ""
+    schedule = ""
+    if tier == "nano":
+        from ..readaloud import vieneu_engine as ve  # numpy: chỉ nạp khi giọng Nano thật sự đọc
+
+        schedule = f"nano:{ve.NANO_STEPS}:{ve.NANO_CFG}:{ve.NANO_CFG_LAST}"
+    return _core.mark(MARK_PARTS[tier], schedule)
+
+
 def suggestion(bench: dict[str, Any], tiers: list[str]) -> dict[str, Any] | None:
     """Giọng đã tải mà không kịp tốc độ nghe trên máy này -> đề nghị (người dùng quyết): Turbo chậm thì Nano (nếu Nano không chậm), còn lại thì
     giọng trực tuyến. None khi mọi giọng đều kịp (hay chưa đo)."""
@@ -383,6 +407,8 @@ def status() -> dict[str, Any]:
         else:
             state = "unsupported" if blocked else "missing"
         bench = _current_benchmarks(_core.benchmarks())
+        # cỡ trên nút tải / cập nhật = phần CÒN phải tải (file đúng đã có, phần dở sau Huỷ không tính lại); phần đủ rồi thì cỡ cả phần
+        left = {part.id: part.size if judged[part.id] == "current" else part.left() for part in parts}
         choices = []
         picks = {best, "aligner"} | ({FAST} if best == "turbo" else set())  # bản tăng tốc đi kèm Turbo: máy hợp Turbo thì khuyên cả hai
         for choice in _choices():
@@ -391,15 +417,15 @@ def status() -> dict[str, Any]:
             if choice == FAST:
                 lacking = [part for part in lacking if part.id == "gguf"]  # cỡ riêng của nó; phần Giọng VieNeu nó cần đã có dòng của mình
             choices.append({"id": choice, "label": label, "detail": detail, "needs": list(NEEDS[choice]),
-                            "bytes": sum(part.size for part in lacking), "installed": choice in have,
+                            "bytes": sum(left[part.id] for part in lacking), "installed": choice in have,
                             "recommended": choice in picks, "default": choice in picks, **({"requires": ["turbo"]} if choice == FAST else {})})
         return {
             "state": state, "done": _state["done"] if state == "downloading" else 0,
             "total": _state["total"] if state == "downloading" else 0, "error": _state["error"],
             "supported": not blocked, "reason": blocked, "choices": choices,
-            "parts": [{"id": part.id, "label": part.label, "bytes": part.size, "state": judged[part.id], "external": part.external}
+            "parts": [{"id": part.id, "label": part.label, "bytes": left[part.id], "state": judged[part.id], "external": part.external}
                       for part in parts],
-            "outdatedParts": [part.label for part in behind], "outdatedBytes": sum(part.size for part in behind),
+            "outdatedParts": [part.label for part in behind], "outdatedBytes": sum(left[part.id] for part in behind),
             "benchmark": {tier: bench[tier] for tier in tiers if isinstance(bench.get(tier), dict)},
             "benchmarking": _state["benchmarking"], "suggestion": suggestion(bench, tiers) if not _state["benchmarking"] else None,
             "cancelled": bool(_state["cancelled"]), "device": facts, "recommended": best, "restart": _restart_pending(), "slowRtf": SLOW_RTF,
