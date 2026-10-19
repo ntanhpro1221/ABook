@@ -69,3 +69,31 @@ def stop_if_cancelled() -> None:
     check = _cancelled.get()
     if check is not None and check():
         raise VoiceError("Đã bỏ lượt đọc này.", "cancelled")
+
+
+# Phát luồng giọng trên máy (local_stream.py): `ReadAloud.clip` đặt người nghe từng khúc ở đây quanh lời gọi giọng, rồi mỗi khúc vừa đọc xong - đúng sóng âm
+# sẽ được ghép vào clip - được báo cho nó (`unit_made`). VieNeu báo từ engine bọc (local_stream.reporting: vieneu._speak là file khoá), Supertonic từ chính
+# `_speak`. Không có người nghe (mọi lượt khác: làm trước, xuất, tự đo) thì không làm gì. Mỗi luồng một giá trị như `_cancelled`.
+_units: ContextVar[Callable[[object, int, str, float], None] | None] = ContextVar("readaloud_units", default=None)
+
+
+@contextmanager
+def hearing(listener: Callable[[object, int, str, float], None] | None) -> Iterator[None]:
+    """Trong khối này, `unit_made(sóng, tần số mẫu, chữ đem đọc, giây máy làm)` tới `listener` (None = không ai nghe)."""
+    token = _units.set(listener)
+    try:
+        yield
+    finally:
+        _units.reset(token)
+
+
+def listening() -> bool:
+    return _units.get() is not None
+
+
+def unit_made(wave: object, rate: int, said: str, seconds: float) -> None:
+    """Một khúc vừa đọc xong: `wave` = sóng âm đúng như sẽ ghép vào clip (`rate` mẫu mỗi giây), `said` = âm vị / chữ đem đọc (khoảng nghỉ sau nó - vieneu_engine.gap_after),
+    `seconds` = thời gian máy làm khúc ấy."""
+    listener = _units.get()
+    if listener is not None:
+        listener(wave, rate, said, seconds)

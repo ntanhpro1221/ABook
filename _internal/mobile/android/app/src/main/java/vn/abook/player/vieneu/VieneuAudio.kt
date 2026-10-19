@@ -12,6 +12,9 @@ import kotlin.math.sqrt
  */
 object VieneuAudio {
     val GAP_SECONDS = mapOf("para" to 0.70, "sentence" to 0.50, "minor" to 0.30)
+
+    /** The minimum pause after a unit read as [said] (phonemes for VieNeu, text for Supertonic): a sentence pause after a final mark, else a short one. */
+    fun gapAfter(said: String): Double = GAP_SECONDS.getValue(if (said.trimEnd().lastOrNull().let { it == null || it in ".!?" }) "sentence" else "minor")
     private const val ENCODER_PAD_CODE = 455
     private val MARKUP = Regex("<\\|emotion_\\d+\\|>|</?en>")
     private const val IPA_VOWELS = "aeiouyæɐɑɒɔəɘɛɜɤɯɵøœʉʊʌɪɨɚɝᵻᵿ"
@@ -197,38 +200,56 @@ object VieneuAudio {
 
     /** Join units with minimum pauses (`pauses[i]` between unit i and i + 1): the clip and each unit's [start, end) in samples. */
     fun join(chunks: List<FloatArray>, rate: Int, pauses: List<Double>): Pair<FloatArray, List<IntArray>> {
-        val pads = IntArray(chunks.size) { index ->
-            if (index == 0) 0 else pausePadSamples(chunks[index - 1], chunks[index], rate, pauses.getOrElse(index - 1) { 0.0 })
-        }
-        val out = FloatArray(chunks.sumOf { it.size } + pads.sum())
+        val joiner = Joiner(rate)
+        for ((index, chunk) in chunks.withIndex()) joiner.add(chunk, if (index == 0) 0.0 else pauses.getOrElse(index - 1) { 0.0 })
+        val out = FloatArray(joiner.samples)
+        for ((index, chunk) in chunks.withIndex()) chunk.copyInto(out, joiner.spans[index][0])
+        return out to joiner.spans
+    }
+
+    /** [join] one unit at a time (local voices streaming, [vn.abook.player.readaloud.LocalLive]: a unit plays as soon as it is read): [add] returns the silence
+     *  put BEFORE the unit; [spans] = [start, end) of the units added so far. */
+    class Joiner(private val rate: Int) {
         val spans = ArrayList<IntArray>()
-        var at = 0
-        for ((index, chunk) in chunks.withIndex()) {
-            at += pads[index]
-            chunk.copyInto(out, at)
-            spans.add(intArrayOf(at, at + chunk.size))
-            at += chunk.size
+        /** Length of what is joined so far. */
+        var samples = 0
+            private set
+        private var last: FloatArray? = null
+
+        fun add(chunk: FloatArray, pauseBefore: Double = 0.0): Int {
+            val pad = last?.let { pausePadSamples(it, chunk, rate, pauseBefore) } ?: 0
+            samples += pad
+            spans.add(intArrayOf(samples, samples + chunk.size))
+            samples += chunk.size
+            last = chunk
+            return pad
         }
-        return out to spans
     }
 
     /** 16-bit mono WAV of [samples] (clipped to [-1, 1], x 32767, truncated) - the same bytes as `vieneu.wav_bytes`. */
-    fun wavBytes(samples: FloatArray, rate: Int): ByteArray {
-        val out = ByteArrayOutputStream(44 + samples.size * 2)
+    fun wavBytes(samples: FloatArray, rate: Int): ByteArray = wavHeader(rate, samples.size * 2) + pcm16(samples)
+
+    /** The 44-byte header of a 16-bit mono WAV of [dataBytes] bytes of samples; null = still growing (both sizes 0xFFFFFFFF: Media3's WavExtractor then reads
+     *  until the end of input - [vn.abook.player.readaloud.LocalLive]). */
+    fun wavHeader(rate: Int, dataBytes: Int?): ByteArray {
+        val out = ByteArrayOutputStream(44)
         fun put32(v: Int) { for (i in 0 until 4) out.write((v ushr (8 * i)) and 0xFF) }
         fun put16(v: Int) { out.write(v and 0xFF); out.write((v ushr 8) and 0xFF) }
-        val data = samples.size * 2
-        out.write("RIFF".toByteArray()); put32(36 + data); out.write("WAVEfmt ".toByteArray()); put32(16)
+        out.write("RIFF".toByteArray()); put32(if (dataBytes == null) -1 else 36 + dataBytes); out.write("WAVEfmt ".toByteArray()); put32(16)
         put16(1); put16(1); put32(rate); put32(rate * 2); put16(2); put16(16)
-        out.write("data".toByteArray()); put32(data)
-        val pcm = ByteArray(data)
-        for (i in samples.indices) {
-            val v = (samples[i].coerceIn(-1f, 1f) * 32767f).toInt()
-            pcm[2 * i] = (v and 0xFF).toByte()
-            pcm[2 * i + 1] = ((v shr 8) and 0xFF).toByte()
-        }
-        out.write(pcm)
+        out.write("data".toByteArray()); put32(dataBytes ?: -1)
         return out.toByteArray()
+    }
+
+    /** The samples of [wavBytes]: clipped to [-1, 1], x 32767, truncated, 16-bit little-endian. */
+    fun pcm16(samples: FloatArray, from: Int = 0, to: Int = samples.size): ByteArray {
+        val pcm = ByteArray((to - from) * 2)
+        for (i in from until to) {
+            val v = (samples[i].coerceIn(-1f, 1f) * 32767f).toInt()
+            pcm[2 * (i - from)] = (v and 0xFF).toByte()
+            pcm[2 * (i - from) + 1] = ((v shr 8) and 0xFF).toByte()
+        }
+        return pcm
     }
 
     fun writeWav(samples: FloatArray, rate: Int, file: File) = file.writeBytes(wavBytes(samples, rate))

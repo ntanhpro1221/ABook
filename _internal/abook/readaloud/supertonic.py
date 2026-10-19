@@ -23,7 +23,7 @@ from typing import Any, Callable, Mapping
 from unicodedata import normalize as unicode_normalize
 
 from . import loudness
-from .model import Synthesis, Voice, VoiceError, stop_if_cancelled
+from .model import Synthesis, Voice, VoiceError, stop_if_cancelled, unit_made
 from .vieneu import Unit, reading_tag, seed_of, timed_synthesis, units
 
 PREFIX = "supertonic"
@@ -247,9 +247,11 @@ class SupertonicProvider:
         toks, parts = units(text, MAX_CHARS, origin, self.speaks_english, readings)
         waves, pauses = [], []
         for unit in parts:
+            began = time.perf_counter()
             spoken = self._normalize(unit.pieces)
             waves.append(louder(engine.infer(spoken, name, np.random.RandomState(seed_of(PREFIX, name, " ".join(unit.pieces))), speed_for(spoken))))
-            pauses.append(ve.GAP_SECONDS["sentence" if spoken.rstrip()[-1:] in ".!?" else "minor"])
+            pauses.append(ve.gap_after(spoken))
+            unit_made(waves[-1], engine.SAMPLE_RATE, spoken, time.perf_counter() - began)  # phát luồng (local_stream): khúc này nghe được ngay
         joined, spans = ve.join(waves, engine.SAMPLE_RATE, pauses[:-1])
         if not joined.size:
             raise VoiceError("Đoạn này không có chữ nào đọc được.", "empty")

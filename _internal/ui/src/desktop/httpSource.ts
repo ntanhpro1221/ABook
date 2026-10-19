@@ -6,7 +6,7 @@ import type { EditsSyncState } from "@/shared/editsSync";
 import { itemFromPath } from "@/listen/importQueue";
 import type { AddedBook, ImportPreview, PickedItem, TextImport } from "@/listen/textImport";
 import { ReadAloudError, fetchClipBytes, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "@/listen/readAloud";
-import { CLIP_STREAM_TYPE, clipFromStream, liveClipsSupported } from "@/listen/liveClip";
+import { CLIP_STREAM_TYPE, LOCAL_MIME, clipFromStream, liveClipsSupported } from "@/listen/liveClip";
 import { tailFromWord } from "@/listen/words";
 import { ApiError, api, apiOrStream, canStream, mediaUrl } from "@/studio/api";
 import { pickFiles, pickFolder } from "@/studio/data";
@@ -148,13 +148,22 @@ async function requestClip(voice: string, text: string, options?: ClipOptions): 
   }
   const init = {
     method: "POST",
-    body: { voice, text: stream && tail !== null ? tail : text, cachedOnly: options?.cachedOnly, bookId: options?.bookId, readings: options?.readings, rank: options?.rank, ...(stream ? { stream: true } : {}) },
+    body: {
+      voice,
+      text: stream && tail !== null ? tail : text,
+      cachedOnly: options?.cachedOnly,
+      bookId: options?.bookId,
+      readings: options?.readings,
+      rank: options?.rank,
+      // Giọng trên máy cũng phát luồng (từng khúc vừa đọc xong) khi trình duyệt nhận được FLAC qua MediaSource; `rate`: máy chủ chờ đủ tiếng cho tốc độ đang nghe.
+      ...(stream ? { stream: true, ...(liveClipsSupported(LOCAL_MIME) ? { localStream: true } : {}), ...(options?.rate ? { rate: options.rate } : {}) } : {}),
+    },
     signal: options?.signal, // bộ máy bỏ lượt này: kết nối đóng, máy chủ thôi đọc (server.py _peer_gone)
   };
   let clip: Reply | ReadAloudClip;
   try {
     clip = stream
-      ? await apiOrStream<Reply, ReadAloudClip>("/api/readaloud/clip", init, CLIP_STREAM_TYPE, (response) => clipFromStream(response.body, mediaUrl))
+      ? await apiOrStream<Reply, ReadAloudClip>("/api/readaloud/clip", init, CLIP_STREAM_TYPE, (response) => clipFromStream(response.body, mediaUrl, options?.signal))
       : await api<Reply>("/api/readaloud/clip", init);
   } catch (error) {
     if (options?.signal?.aborted) throw new ReadAloudError("Đã bỏ đoạn này.", "cancelled");
