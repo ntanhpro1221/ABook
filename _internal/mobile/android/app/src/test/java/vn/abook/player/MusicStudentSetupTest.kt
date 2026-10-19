@@ -398,7 +398,8 @@ class MusicStudentSetupTest {
         val status = setup.status()
         assertEquals("error", status.getString("state"))
         assertTrue(status.getString("error"), status.getString("error").startsWith("Không tải được bộ phân tích nhạc"))
-        assertTrue(status.getString("error").contains("404"))
+        // Nguyên văn lỗi máy chủ nằm trong "Chi tiết", không trong câu người dùng đọc (soát a66).
+        assertTrue(status.getString("errorDetail"), status.getString("errorDetail").contains("404"))
         assertFalse(status.getBoolean("ready"))
     }
 
@@ -410,7 +411,7 @@ class MusicStudentSetupTest {
         setup.join()
         val status = setup.status()
         assertEquals("error", status.getString("state"))
-        assertTrue(status.getString("error").contains("hop_length"))
+        assertTrue(status.getString("errorDetail"), status.getString("errorDetail").contains("hop_length"))
         assertFalse(File(root, "music/student/big.bin").exists())
         assertNull(store.analyzer)
     }

@@ -80,6 +80,8 @@ export interface VieneuStatus {
   restart?: boolean;
   /** Đang dùng mạng tính phí (dữ liệu di động của điện thoại): chỉ để nhắc, không chặn. */
   metered?: boolean;
+  /** Nguyên văn lỗi của lần tải hỏng (`error`), thu trong "Chi tiết" (studio_setup.download_failure / PinnedFiles.failure). */
+  errorDetail?: string;
   /** Lần tải vừa rồi bị người dùng huỷ: phần đã tải giữ, lần sau làm tiếp. */
   cancelled?: boolean;
   /** Đang tải mà mạng vừa hỏng, đang chờ thử lại (RETRYING_NOTE). */
@@ -183,9 +185,29 @@ export function lowerFirst(text: string): string {
   return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
-/** Lựa chọn đánh dấu sẵn: cái đã tải + cái mô-đun đánh dấu sẵn cho máy này. */
-export function initialChoices(status: Pick<VieneuStatus, "choices">): VieneuChoiceId[] {
-  return status.choices.filter((choice) => choice.installed || choice.default).map((choice) => choice.id);
+/** Lựa chọn đánh dấu sẵn: cái đã tải + cái mô-đun đánh dấu sẵn cho máy này (`preselect` = false: chỉ cái đã tải - mô-đun không phải cái
+ *  được khuyên, moduleAdvice). */
+export function initialChoices(status: Pick<VieneuStatus, "choices">, preselect = true): VieneuChoiceId[] {
+  return status.choices.filter((choice) => choice.installed || (preselect && choice.default)).map((choice) => choice.id);
+}
+
+/** Cài đặt có hai mô-đun giọng trên máy (VieNeu, Supertonic) mà người mới chỉ cần một (soát a66: cả hai thẻ đánh dấu sẵn, ~500 MB, không lời
+ *  khuyên). Khuyên theo cách app chọn giọng mặc định: giọng VieNeu (narratorVoice - readAloudVoice.ts) ở bản máy này được khuyên (Turbo / Nano);
+ *  Supertonic chỉ đánh dấu sẵn khi máy không chạy được VieNeu. `advice`: một dòng đặt trên hai thẻ, rỗng khi máy đã có một trong hai. */
+export function moduleAdvice(vieneu: Pick<VieneuStatus, "state" | "choices" | "recommended"> | undefined, supertonic: Pick<VieneuStatus, "choices"> | undefined): {
+  advice: string;
+  preselectSupertonic: boolean;
+} {
+  const has = (status: Pick<VieneuStatus, "choices"> | undefined) => Boolean(status?.choices.some((choice) => choice.installed));
+  // Trạng thái VieNeu chưa về: chưa đánh dấu gì ở Supertonic (tích sẵn rồi bỏ tích ngay trước mắt người dùng thì rối).
+  if (vieneu === undefined) return { advice: "", preselectSupertonic: false };
+  if (vieneu.state === "unsupported") return { advice: "", preselectSupertonic: true };
+  if (has(vieneu) || has(supertonic)) return { advice: "", preselectSupertonic: false };
+  const name = lowerFirst(tierName(vieneu.recommended === "nano" ? "nano" : "turbo"));
+  return {
+    advice: `Chỉ cần tải một bộ giọng. Nên chọn ${name} (đã đánh dấu sẵn) - ABook dùng nó làm giọng mặc định khi đọc sách chỉ có chữ. Giọng Supertonic là lựa chọn thêm nếu bạn muốn nghe giọng khác.`,
+    preselectSupertonic: false,
+  };
 }
 
 /** Khối "Không có mạng" của trình phát mời tải NHẸ NHẤT đủ đọc: đúng một giọng VieNeu máy này được khuyên (`recommended`: Turbo hay Nano, cùng cách

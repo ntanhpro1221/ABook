@@ -8,6 +8,7 @@ import type { KeyCheck, OnlineProviderInfo } from "@/listen/VoiceSettings";
 import type { Capabilities } from "@/shared/capabilities";
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { AddedBook, ImportPreview } from "@/listen/textImport";
+import type { BluetoothPermission } from "./bluetoothPermission";
 import type { MusicExportState } from "@/desktop/listenExport";
 import type { ImportResult } from "@/studio/musicLocal";
 import type { VieneuChoiceId, VieneuStatus } from "@/listen/vieneuModule";
@@ -390,9 +391,14 @@ export interface EbookLibraryPlugin {
   shareRevoke(options: { id: string }): Promise<ShareStatus>;
   /** Trang thông tin ứng dụng của ABook trong Cài đặt Android (cho ABook chạy nền). */
   openAppSettings(): Promise<void>;
+  /** Thanh trạng thái + thanh điều hướng theo giao diện của APP (settings.applyTheme), không theo sáng/tối của máy: chữ/biểu tượng sáng trên nền
+   *  tối khi `dark`, dải sau thanh mang màu `color` (#rrggbb) của thân app. */
+  systemBars(options: { dark: boolean; color: string }): Promise<void>;
   /** Hãng máy + ABook đã được chạy nền chưa (PowerManager.isIgnoringBatteryOptimizations) - màn xuất nhắc khi chưa (BackgroundNote.tsx). */
   backgroundStatus(): Promise<{ manufacturer: string; backgroundAllowed: boolean }>;
   pair(options: { host: string; port: number; code: string; device?: string }): Promise<{ name: string }>;
+  /** Quyền "Thiết bị ở gần" (Bluetooth) lúc này, chưa xin gì: "denied" = đã từ chối hẳn, chỉ Cài đặt Android bật lại được (bluetoothPermission.ts). */
+  bluetoothPermission(): Promise<{ state: BluetoothPermission }>;
   /** Máy đã ghép Bluetooth với điện thoại (BluetoothLink.kt); Android 12+ xin quyền "Thiết bị ở gần" lần đầu. */
   bluetoothDevices(): Promise<{ devices: { address: string; name: string; kind: "computer" | "phone"; abook: boolean }[] }>;
   /** Ghép máy tính chính qua Bluetooth - cùng mã 6 số, đi qua đường hầm; sau đó `connection().host` là "bt:<địa chỉ>". */

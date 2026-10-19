@@ -6,9 +6,8 @@ import { Button, Segmented, Sheet, TimeSelect } from "@/shared/ui";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { MyMusicSection } from "@/listen/MyMusic";
 import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
-import { VieneuModuleCard, type VieneuBackend } from "@/listen/VieneuModuleCard";
+import { LocalVoiceModules, type VieneuBackend } from "@/listen/VieneuModuleCard";
 import { VoiceSpeedSetting, type VoiceSpeedBackend } from "@/listen/VoiceSpeedSetting";
-import { SUPERTONIC_COPY } from "@/listen/vieneuModule";
 import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { androidSource, phoneVieneu } from "./androidSource";
 import { notificationState, openNotificationSettings, type NotificationState } from "./notifications";
@@ -148,11 +147,7 @@ export function SettingsScreen() {
             deviceHint="Giọng có sẵn của điện thoại: chưa có giọng tiếng Việt - cài trong Cài đặt của điện thoại → Chuyển văn bản thành giọng nói → tải dữ liệu giọng Tiếng Việt."
             modules={(reload) => (
               <>
-                {/* Mã để nút "Tải giọng VieNeu" ở khối báo mất mạng của trình phát cuộn tới đúng thẻ này (PlayerViews.PlayerAlert). */}
-                <div id="vieneu-module" className="scroll-mt-4">
-                  <VieneuModuleCard backend={phoneVieneu} onChanged={reload} />
-                </div>
-                <VieneuModuleCard backend={phoneSupertonic} copy={SUPERTONIC_COPY} onChanged={reload} />
+                <LocalVoiceModules vieneu={phoneVieneu} supertonic={phoneSupertonic} onChanged={reload} />
                 <VoiceSpeedSetting backend={phoneVoiceSpeed} supertonic={phoneSupertonic} />
               </>
             )}

@@ -60,6 +60,8 @@ export interface FfmpegStatus {
   bytes: number;
   /** Lý do không tải được trên máy này (rỗng nếu tải được). */
   blocked: string;
+  /** Nguyên văn lỗi của lần tải hỏng, thu trong "Chi tiết". */
+  errorDetail?: string;
   /** Đang tải mà mạng vừa hỏng, đang chờ thử lại (RETRYING_NOTE). */
   retrying?: boolean;
 }

@@ -251,7 +251,8 @@ def test_a_failed_download_says_why_and_a_retry_resumes_with_the_parts_still_mis
     music_module.start()
     music_module.join(10)
     status = music_module.status()
-    assert status["state"] == "error" and "mạng" in status["error"] and status["error"].startswith("Không tải được Phân tích nhạc")
+    assert status["state"] == "error" and status["error"] == studio_setup.NETWORK_FAILURE.format(retry="Thử lại")
+    assert "không có mạng" in status["errorDetail"], "nguyên văn lỗi thu vào Chi tiết"
     assert music_module._read_stamp() == {"ffmpeg": ffmpeg_setup.pin()}, "phần đã xong được nhớ"
     monkeypatch.setattr(studio_setup, "download", real)
     machine.calls.clear()

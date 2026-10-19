@@ -317,7 +317,8 @@ export function AndroidApp() {
       </SourceProvider>
       <Toaster
         position="top-center"
-        containerAriaLabel="Thông báo"
+        // Nhãn trọn của vùng thông báo: mặc định sonner nối thêm phím tắt "alt+T" - vô nghĩa trên điện thoại (TalkBack đọc ra, soát a66).
+        customAriaLabel="Thông báo"
         // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.
         className="pointer-events-auto"
         toastOptions={{
