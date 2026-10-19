@@ -13,7 +13,7 @@ from typing import Any
 import numpy as np
 import pytest
 
-from abook.readaloud import cache, supertonic, vieneu_engine, vieneu_gguf
+from abook.readaloud import cache, loudness, supertonic, vieneu_engine, vieneu_gguf
 from abook.readaloud.model import VoiceError
 from abook.readaloud.service import ReadAloud
 from abook.readaloud.supertonic import Installed, SupertonicEngine, SupertonicProvider
@@ -252,12 +252,12 @@ def test_live_listening_reads_the_fast_tier_and_an_export_only_ever_gets_quality
     text = "Trời hôm nay đẹp quá."
     live = service.clip("supertonic:F1", text)
     assert len(fast.calls) == 1 and quality.calls == [], "Nghe ngay: bậc nhanh"
-    assert live["file"].startswith(cache.clip_key("supertonic", "F1", text, "fast5")), "dấu bậc nằm trong khoá"
+    assert live["file"].startswith(cache.clip_key("supertonic", "F1", text, f"{loudness.LIFT_TAG}+fast5")), "dấu bù rồi dấu bậc nằm trong khoá"
     with pytest.raises(VoiceError) as error:
         service.clip("supertonic:F1", text, cached_only=True, quality=True)
     assert error.value.reason == "uncached", "clip bậc nhanh không bao giờ đứng thay clip chất lượng"
     exported = service.clip("supertonic:F1", text, quality=True)
-    assert len(quality.calls) == 1 and exported["file"].startswith(cache.clip_key("supertonic", "F1", text)) and exported != live
+    assert len(quality.calls) == 1 and exported["file"].startswith(cache.clip_key("supertonic", "F1", text, loudness.LIFT_TAG)) and exported != live
     assert service.clip("supertonic:F1", text, quality=True) == exported and len(quality.calls) == 1, "lần xuất sau lấy bộ đệm"
     tag["now"] = ""
     assert service.clip("supertonic:F1", text) == exported and len(fast.calls) == 1, "về bậc chất lượng: Nghe ngay dùng lại clip chất lượng"
@@ -269,4 +269,4 @@ def test_a_voice_without_a_second_tier_keeps_its_key(tmp_path: Path) -> None:
     plain = SupertonicProvider(lambda: found, engines=lambda _found: engine, aligner=lambda: None, normalize=lambda pieces: " ".join(pieces))
     service = ReadAloud(tmp_path / "cache", [plain], speed=lambda _voice: "fast5")  # không có nhà cung cấp bậc nhanh
     clip = service.clip("supertonic:F1", "Xin chào.")
-    assert clip["file"].startswith(cache.clip_key("supertonic", "F1", "Xin chào.")) and len(engine.calls) == 1
+    assert clip["file"].startswith(cache.clip_key("supertonic", "F1", "Xin chào.", loudness.LIFT_TAG)) and len(engine.calls) == 1

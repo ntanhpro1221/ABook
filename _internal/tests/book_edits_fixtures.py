@@ -723,7 +723,7 @@ def spoken_symbol_cases() -> list[dict[str, str]]:
 
 def speech_cases() -> dict[str, Any]:
     """Bộ ví dụ `readings/speech.json`: cùng chữ + cùng cách đọc riêng -> cùng chữ hiện, chữ đem đọc, dấu và khoá clip ở Python và Kotlin."""
-    from abook.readaloud import cache, readings, spoken, supertonic, vieneu
+    from abook.readaloud import cache, loudness, readings, spoken, supertonic, vieneu
     from abook.readaloud.service import EdgeProvider
     from abook.webui.word_timing import tokens
 
@@ -736,7 +736,7 @@ def speech_cases() -> dict[str, Any]:
         same = local or normalised.get(provider)  # cùng `vieneu.spoken_tokens`
         tag = readings.tag(text, READINGS)
         name_tag = vieneu.reading_tag(text, origin, local.speaks_english) if local else spoken.tag(text, origin, same.speaks_english) if same else ""
-        reading = "+".join(part for part in (name_tag, tag) if part)
+        reading = "+".join(part for part in (name_tag, tag, loudness.LIFT_TAG if loudness.lifts(voice) else "") if part)  # như service.clip: dấu bù theo clip đứng sau cách đọc
         layout = None if same else readings.spoken_layout(text, READINGS)
         cases.append({"voice": voice, "text": text, "origin": origin, "tokens": tokens(text),
                       "spokenTokens": vieneu.spoken_tokens(tokens(text), origin, same.speaks_english, READINGS) if same else None,

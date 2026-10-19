@@ -339,7 +339,7 @@ object SupertonicVoices {
             throw VoiceException("Điện thoại không đủ bộ nhớ cho giọng Supertonic lúc này.", cause = failure, reason = "voice")
         }
         if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
-        VieneuAudio.writeWav(spoken.samples, spoken.rate, out)
+        VieneuAudio.writeWav(ClipLift.lifted(voice, spoken.samples, spoken.rate, ClipLift.params(context)), spoken.rate, out) // short quiet lines up to the voice level (as service.clip); [voice] is the bare id: both tiers share one level
         return Clip(out, spoken.durationMs, spoken.words, voice)
     }
 

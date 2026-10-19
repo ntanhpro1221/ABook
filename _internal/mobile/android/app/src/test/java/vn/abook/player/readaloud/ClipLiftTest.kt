@@ -13,7 +13,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.Base64
 
-/** Bù theo clip cho giọng VieNeu ([ClipLift]) so với máy tính (loudness.py) trên cùng clip: tests/fixtures/vieneu/android/lift.json. */
+/** Bù theo clip cho giọng VieNeu và Supertonic ([ClipLift]) so với máy tính (loudness.py) trên cùng clip: tests/fixtures/vieneu/android/lift.json. */
 class ClipLiftTest {
     private val fixture = JSONObject(File("../../../tests/fixtures/vieneu/android/lift.json").readText(Charsets.UTF_8))
     private val params = MusicRender.Params.parse(JSONObject(File("../../../abook/webui/assets/music_mix.json").readText()))
@@ -68,9 +68,13 @@ class ClipLiftTest {
     }
 
     @Test
-    fun onlyMeasuredVieneuVoicesAreLiftedAndKeyedApart() {
+    fun onlyMeasuredVieneuAndSupertonicVoicesAreLiftedAndKeyedApart() {
         assertTrue(ClipLift.lifts("vieneu:turbo/Đức Trí"))
-        assertTrue(!ClipLift.lifts("vieneu:turbo/Giọng chưa đo") && !ClipLift.lifts("edge:vi-VN-HoaiMyNeural") && !ClipLift.lifts("supertonic:F1"))
+        assertTrue(!ClipLift.lifts("vieneu:turbo/Giọng chưa đo") && !ClipLift.lifts("edge:vi-VN-HoaiMyNeural") && !ClipLift.lifts("supertonic:X9"))
+        assertTrue(ClipLift.lifts("supertonic:F1") && ClipLift.lifts("supertonic:M5"))
+        // both Supertonic tiers lift by the one level of the bare id: the cache (and the reader) work on the id without its tier tag
+        assertTrue(!ClipLift.lifts("supertonic:F1#fast5") && ClipLift.lifts(VoiceSpeed.split("supertonic:F1#fast5").first))
+        assertEquals(ClipLift.TAG, ClipCache.reading("supertonic:F3", "Hả?", null))
         assertEquals("ld1", ClipLift.TAG)
         assertEquals(ClipCache.reading("vieneu:turbo/Đức Trí", "Ừ.", null), ClipLift.TAG)
         assertEquals("", ClipCache.reading("device:vi-vn-x-gft-local", "Ừ.", null))
@@ -80,9 +84,10 @@ class ClipLiftTest {
     fun theVoiceGainTableStillGivesTheOldGains() {
         assertEquals(-1.7, VoiceGain.db("edge:vi-VN-HoaiMyNeural"), 0.0)
         assertEquals(-0.9, VoiceGain.db("vieneu:turbo/Adam bựa"), 0.0)
-        assertEquals(-2.9, VoiceGain.db("vieneu:nano/Minh Quân"), 0.0)
+        assertEquals(-2.3, VoiceGain.db("vieneu:nano/Minh Quân"), 0.0)
         assertEquals(0.0, VoiceGain.db("vieneu:turbo/Mai Anh"), 0.0)
         assertEquals(0.0, VoiceGain.db("vieneu:turbo/Phạm Tuyên"), 0.0)
         assertEquals(0.0, VoiceGain.db("device:vi-vn-x-gft-local"), 0.0)
+        for (voice in listOf("F1", "F2", "F3", "F4", "F5", "M1", "M2", "M3", "M4", "M5")) assertEquals(voice, 0.0, VoiceGain.db("supertonic:$voice"), 0.0) // every level <= -20 LUFS: only the clip lift changes
     }
 }

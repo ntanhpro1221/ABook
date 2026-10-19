@@ -2,7 +2,7 @@ package vn.abook.player.readaloud
 
 /**
  * Độ to cố định của từng giọng khi phát, để mọi giọng đọc to nằm cùng -20 LUFS với âm thanh Studio (đo BS.1770, 03-10): chỉ nhân biên độ lúc phát
- * (`ExoPlayer.volume`), không mã hoá lại file. Mức đo của giọng VieNeu còn là mốc để nâng câu ngắn nhỏ trong clip ([ClipLift]).
+ * (`ExoPlayer.volume`), không mã hoá lại file. Mức đo của giọng VieNeu và Supertonic còn là mốc để nâng câu ngắn nhỏ trong clip ([ClipLift]).
  */
 object VoiceGain {
     const val TARGET_LUFS = -20.0
@@ -38,15 +38,25 @@ object VoiceGain {
         "vieneu:turbo/Quốc Tuấn" to -19.8,
         "vieneu:nano/Adam" to -19.5,
         "vieneu:nano/Ái Hân" to -18.2,
-        "vieneu:nano/Mỹ Duyên" to -17.7,
+        "vieneu:nano/Mỹ Duyên" to -18.4,
         "vieneu:nano/Đức Trí" to -18.6,
         "vieneu:nano/Hữu Quân" to -17.8,
         "vieneu:nano/Xuân Tiên" to -18.5,
         "vieneu:nano/Mai Anh" to -18.5,
         "vieneu:nano/Trúc Ly" to -18.1,
         "vieneu:nano/Anh Khôi" to -18.4,
-        "vieneu:nano/Minh Quân" to -17.1,
+        "vieneu:nano/Minh Quân" to -17.7,
         "vieneu:nano/Mạnh Dũng" to -17.9,
+        "supertonic:F1" to -20.8,
+        "supertonic:F2" to -20.8,
+        "supertonic:F3" to -21.7,
+        "supertonic:F4" to -20.2,
+        "supertonic:F5" to -20.7,
+        "supertonic:M1" to -21.2,
+        "supertonic:M2" to -20.0,
+        "supertonic:M3" to -20.1,
+        "supertonic:M4" to -20.8,
+        "supertonic:M5" to -21.1,
     )
 
     /** LUFS đã đo của giọng; null: chưa đo. */

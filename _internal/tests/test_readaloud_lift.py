@@ -1,4 +1,4 @@
-"""Bù theo clip cho giọng VieNeu (vnloud): câu ngắn nhỏ hơn mức giọng được nâng lên NGAY TRONG clip (loudness.lift_db / lift_wav, service.clip), câu thường
+"""Bù theo clip cho giọng VieNeu (vnloud) và Supertonic (stlift): câu ngắn nhỏ hơn mức giọng được nâng lên NGAY TRONG clip (loudness.lift_db / lift_wav, service.clip), câu thường
 giữ nguyên byte, đỉnh thật sau khi bù không vượt -1 dBTP, giọng khác / giọng chưa đo / clip lặng không bị đụng. Bản Kotlin (ClipLift.kt) đọc cùng
 tests/fixtures/vieneu/android/lift.json; test cuối kiểm file ấy không cũ."""
 from __future__ import annotations
@@ -12,9 +12,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from abook.readaloud import loudness, vieneu
+from abook.readaloud import loudness, supertonic, vieneu
 from abook.readaloud.cache import clip_key
 from abook.readaloud.service import ReadAloud
+from abook.readaloud.supertonic import Installed, SupertonicProvider
+from tests.test_readaloud_supertonic import FakeEngine as SupertonicFakeEngine
 from tests.test_readaloud_vieneu import FakeEngine, fake_voices  # noqa: F401 - fixture dùng chung
 
 RATE = 24_000
@@ -77,12 +79,14 @@ def test_silence_noise_and_clips_too_short_to_measure_are_left_alone() -> None:
     assert loudness.clip_lufs(_tone(0.1, 0.05), RATE) is None
 
 
-def test_only_measured_vieneu_voices_are_lifted() -> None:
+def test_only_measured_vieneu_and_supertonic_voices_are_lifted() -> None:
     quiet = _tone(0.8, 0.02)
     assert loudness.lift_db(VOICE, quiet, RATE) > 0
     assert loudness.lift_db("edge:vi-VN-HoaiMyNeural", quiet, RATE) == 0.0
     assert loudness.lift_db("vieneu:turbo/Giọng chưa đo", quiet, RATE) == 0.0
-    assert not loudness.lifts("supertonic:F1")
+    assert loudness.lifts("supertonic:F1") and loudness.lift_db("supertonic:F1", quiet, RATE) > 0
+    assert not loudness.lifts("supertonic:F1#fast5"), "mã giọng trần: bậc tốc độ không có mức riêng (service.clip đưa mã trần)"
+    assert not loudness.lifts("supertonic:X9")
     wav = _wav(quiet)
     assert loudness.lift_wav("edge:vi-VN-HoaiMyNeural", wav) is wav
 
@@ -105,6 +109,44 @@ def test_the_service_lifts_a_quiet_clip_before_it_is_cached_and_keys_it_apart(fa
     assert service.clip(voice, "Ừ.") == clip and len(engines["turbo"].calls) == 2, "lần sau lấy bộ đệm (2 = cả lần tự gọi ở trên)"
 
 
+def _supertonic_service(tmp_path: Path, scale: float, **kwargs) -> tuple[ReadAloud, SupertonicFakeEngine]:
+    engine = SupertonicFakeEngine()
+    infer = engine.infer
+    engine.infer = lambda *a, **k: infer(*a, **k) * np.float32(scale)
+    provider = SupertonicProvider(lambda: Installed(tmp_path, False), engines=lambda _found: engine, aligner=lambda: None, normalize=lambda pieces: " ".join(pieces).lower())
+    provider.speaks_english = False
+    return ReadAloud(tmp_path / "cache", [provider], **kwargs), engine
+
+
+def test_a_quiet_supertonic_line_is_lifted_in_the_clip_a_normal_one_is_not(tmp_path: Path) -> None:
+    quiet, _ = _supertonic_service(tmp_path / "q", 0.04)  # "Hả?" ra nhỏ hơn mức giọng nhiều
+    clip = quiet.clip("supertonic:F3", "Hả?")
+    cached = _pcm((tmp_path / "q" / "cache" / clip["file"]).read_bytes())
+    raw_engine = SupertonicFakeEngine()
+    raw = supertonic.louder(raw_engine.infer("hả?", "F3", None) * np.float32(0.04))
+    assert np.abs(cached).max() > 1.5 * np.abs(raw).max(), "mẫu to hơn bản chưa bù"
+    assert (tmp_path / "q" / "cache" / f"{clip_key('supertonic', 'F3', 'Hả?', loudness.LIFT_TAG)}.wav").exists(), "khoá có dấu bù"
+    normal, engine = _supertonic_service(tmp_path / "n", 0.2)  # câu thường: đã quá mức giọng, giữ nguyên
+    done = normal.clip("supertonic:F3", "Chờ đã nào các bạn ơi.")
+    plain = SupertonicProvider(lambda: Installed(tmp_path, False), engines=lambda _found: engine, aligner=lambda: None, normalize=lambda pieces: " ".join(pieces).lower())
+    plain.speaks_english = False
+    assert (tmp_path / "n" / "cache" / done["file"]).read_bytes() == plain.synthesize("Chờ đã nào các bạn ơi.", "F3").audio, "byte y hệt clip chưa qua bù"
+
+
+def test_both_supertonic_tiers_use_the_same_level_and_the_same_lift(tmp_path: Path) -> None:
+    service, _ = _supertonic_service(tmp_path / "a", 0.04, speed=lambda _voice: "fast5")
+    fast_engine = SupertonicFakeEngine()
+    infer = fast_engine.infer
+    fast_engine.infer = lambda *a, **k: infer(*a, **k) * np.float32(0.04)
+    fast = SupertonicProvider(lambda: Installed(tmp_path, False), engines=lambda _found: fast_engine, aligner=lambda: None, normalize=lambda pieces: " ".join(pieces).lower())
+    fast.speaks_english = False
+    service.fast["supertonic"] = fast
+    clip = service.clip("supertonic:M2", "Hả?")
+    assert fast_engine.calls and (tmp_path / "a" / "cache" / f"{clip_key('supertonic', 'M2', 'Hả?', loudness.LIFT_TAG + '+fast5')}.wav").exists(), "bậc nhanh: dấu bù rồi dấu bậc"
+    full = service.clip("supertonic:M2", "Hả?", quality=True)
+    assert _pcm((tmp_path / "a" / "cache" / full["file"]).read_bytes()).max() == pytest.approx(_pcm((tmp_path / "a" / "cache" / clip["file"]).read_bytes()).max())
+
+
 def test_the_phone_and_the_computer_lift_the_same_clips_by_the_same_amount() -> None:
     spec = importlib.util.spec_from_file_location("vieneu_android_fixtures", ROOT / "scripts" / "vieneu_android_fixtures.py")
     module = importlib.util.module_from_spec(spec)
@@ -115,3 +157,4 @@ def test_the_phone_and_the_computer_lift_the_same_clips_by_the_same_amount() -> 
     cases = fresh["cases"]
     assert cases["very_quiet"]["liftDb"] == loudness.LIFT_MAX_DB and cases["near_voice"]["liftDb"] == 0.0 and cases["loud"]["liftDb"] == 0.0
     assert cases["silent"]["lufs"] is None and cases["tiny"]["lufs"] is None and cases["other_provider"]["liftDb"] == 0.0
+    assert cases["quiet_supertonic"]["liftDb"] > 0 and 0 < cases["peaky_supertonic"]["liftDb"] < loudness.LIFT_MAX_DB

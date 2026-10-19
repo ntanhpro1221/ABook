@@ -326,7 +326,7 @@ class ReadAloud:
             name_tag = provider.reading_tag(text, origin)
         else:
             name_tag = spoken.tag(text, origin, provider.speaks_english) if normalised else ""
-        lifted = loudness.lifts(voice_id)  # câu ngắn nhỏ của giọng VieNeu được nâng ngay trong clip (loudness.lift_wav): dấu riêng trong khoá
+        lifted = loudness.lifts(voice_id)  # câu ngắn nhỏ của giọng VieNeu / Supertonic được nâng ngay trong clip (loudness.lift_wav): dấu riêng trong khoá
         tags = (name_tag, book_readings.tag(text, readings), loudness.LIFT_TAG if lifted else "", tier)
         key = clip_key(provider.id, native, text, "+".join(tag for tag in tags if tag))
         hit = self.cache.get(key)
