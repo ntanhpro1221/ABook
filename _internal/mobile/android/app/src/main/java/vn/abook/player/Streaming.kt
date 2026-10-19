@@ -3,6 +3,7 @@ package vn.abook.player
 import android.content.Context
 import android.net.Uri
 import androidx.annotation.OptIn
+import androidx.media3.common.C
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
@@ -16,8 +17,14 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.Extractor
+import androidx.media3.extractor.ExtractorOutput
 import androidx.media3.extractor.ExtractorsFactory
+import androidx.media3.extractor.ForwardingExtractor
+import androidx.media3.extractor.ForwardingExtractorOutput
+import androidx.media3.extractor.ForwardingSeekMap
+import androidx.media3.extractor.SeekMap
 import androidx.media3.extractor.mp3.Mp3Extractor
+import androidx.media3.extractor.wav.WavExtractor
 import vn.abook.player.readaloud.LiveClips
 import org.json.JSONObject
 import java.io.File
@@ -66,10 +73,24 @@ object Streaming {
     }
 
     /**
-     * Bộ tách cho clip Edge đang lớn: chỉ mp3, tua theo tốc độ bit không đổi dù chưa biết độ dài file (Edge 48 kbps CBR; clip chưa xong thì không có tiêu đề Xing / độ dài). Chỉ dùng cho `abooklive://`:
-     * mp3 khác (sách audio) giữ cách tách mặc định. Kiểm bằng bài thử rằng phát được và tua được trong phần đã ghi (LiveClipsTest).
+     * Bộ tách cho clip đang lớn: mp3 của Edge, tua theo tốc độ bit không đổi dù chưa biết độ dài file (Edge 48 kbps CBR; clip chưa xong thì không có tiêu đề Xing / độ dài); WAV của giọng trên máy
+     * ([vn.abook.player.readaloud.LocalLive]: cỡ 0xFFFFFFFF = đọc tới hết dữ liệu, [GrowingWav]). Chỉ dùng cho `abooklive://`: mp3 khác (sách audio) giữ cách tách mặc định. Kiểm bằng bài thử rằng
+     * phát được và tua được trong phần đã ghi (LiveClipsTest; WAV: LiveStreamOnDeviceTest trên máy ảo).
      */
-    fun liveExtractors(): Array<Extractor> = arrayOf(Mp3Extractor(Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING or Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING_ALWAYS))
+    fun liveExtractors(): Array<Extractor> =
+        arrayOf(GrowingWav(), Mp3Extractor(Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING or Mp3Extractor.FLAG_ENABLE_CONSTANT_BITRATE_SEEKING_ALWAYS))
+
+    /**
+     * WavExtractor cho WAV đang lớn: cỡ 0xFFFFFFFF làm nó báo độ dài ~13,5 giờ, mà ExoPlayer chỉ sang ENDED khi vị trí tới độ dài đã biết (máy ảo 20-10: phát hết tiếng rồi
+     * đứng READY mãi). Độ dài thành "chưa biết" như mp3 Edge đang lớn; tua vẫn theo bảng tua của WavExtractor.
+     */
+    private class GrowingWav : ForwardingExtractor(WavExtractor()) {
+        override fun init(output: ExtractorOutput) = super.init(object : ForwardingExtractorOutput(output) {
+            override fun seekMap(seekMap: SeekMap) = super.seekMap(object : ForwardingSeekMap(seekMap) {
+                override fun getDurationUs() = C.TIME_UNSET
+            })
+        })
+    }
 
     /** Mp3Extractor của bộ mặc định đổi thành [ExactSeekMp3Extractor]; các bộ tách khác và thứ tự giữ nguyên. */
     internal fun withExactMp3Seek(extractors: Array<Extractor>): Array<Extractor> =

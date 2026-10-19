@@ -1,6 +1,6 @@
 import type { LiveClip } from "./liveClip";
 
-// Nối các khúc MP3 của một clip đang về ([LiveClip]) vào một MediaSource để phần tử audio phát ngay từ khúc đầu. Phần dùng của MediaSource / SourceBuffer (để bài thử thay bằng đồ giả).
+// Nối các khúc (MP3 của Edge, FLAC phân mảnh của giọng trên máy - [LiveClip.mime]) của một clip đang về ([LiveClip]) vào một MediaSource để phần tử audio phát ngay từ khúc đầu. Phần dùng của MediaSource / SourceBuffer (để bài thử thay bằng đồ giả).
 
 export interface SourceBufferLike {
   mode: string;
@@ -17,8 +17,6 @@ export interface MediaSourceLike {
   addEventListener(type: string, listener: () => void): void;
   removeEventListener(type: string, listener: () => void): void;
 }
-
-export const LIVE_MIME = "audio/mpeg";
 
 /** Nối lần lượt từng khúc (chờ `updateend` mới nối khúc kế); clip xong và đã nối hết thì `endOfStream()` - từ đó phần tử audio mới báo "ended". Hết dữ liệu mà clip chưa xong thì
  *  phần tử tự dừng chờ ("waiting"). `broken`: nối lỗi (MediaSource không nhận) - bộ máy xử lý.
@@ -71,7 +69,7 @@ export class LiveFeed {
   private attach(): void {
     if (this.buffer || this.closed) return;
     try {
-      this.buffer = this.source.addSourceBuffer(LIVE_MIME);
+      this.buffer = this.source.addSourceBuffer(this.lives[0].mime);
       this.buffer.mode = "sequence";
       this.buffer.addEventListener("updateend", this.pump);
     } catch {
