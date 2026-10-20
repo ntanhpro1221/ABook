@@ -65,6 +65,13 @@ class ReadAloudPlugin : Plugin() {
         call.resolve(JSObject().put("voices", array))
     }
 
+    /** The listener opened a book's page / player with an on-device voice chosen: load its engine now so play does not wait (EnginePreload). Answers at once. */
+    @PluginMethod
+    fun warmVoice(call: PluginCall) {
+        val voice = call.getString("voice") ?: return call.reject("thiếu voice")
+        call.resolve(JSObject().put("started", ReadAloud.preload(voice)))
+    }
+
     @PluginMethod
     fun script(call: PluginCall) {
         val book = call.getString("bookId") ?: return call.reject("thiếu bookId")

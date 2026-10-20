@@ -8,7 +8,7 @@ import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
 import type { ChapterText } from "./bookSearch";
 import { mergeTimings, VOICE_CHANGED_EVENT, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
-import { bookVoiceCaption, chosenVoice, voicesOf } from "./readAloudVoice";
+import { bookVoiceCaption, chosenVoice, resolveVoice, runsOnThisMachine, voicesOf } from "./readAloudVoice";
 import { retryChapterText } from "./labels";
 import type { VieneuBackend } from "./VieneuModuleCard";
 import type { PreparePlan, PrepareRequest, PrepareStatus, ReadAloudCacheUsage } from "./prepareAhead";
@@ -72,6 +72,9 @@ export interface ListenSource {
   /** Xin máy chủ tải sẵn bài nhạc `link` (bài của mốc kế, bài đầu chương kế - POST /api/music/warm): trả ngay, tải ở nền; hỏng thì im lặng
    *  (mốc ấy tới thì tự tải như cũ). Nguồn nào không có thì bài chỉ tải khi mốc của nó tới. */
   musicWarm?(link: string): void;
+  /** Mở trang sách / trình phát của cuốn có giọng trên máy (VieNeu, Supertonic): xin nạp sẵn model của giọng ấy - trả ngay, nạp ở nền, hỏng hay máy không dư (pin yếu, thiếu RAM) thì im lặng
+   *  (bấm phát nạp như cũ). Máy tính: POST /api/readaloud/warm; điện thoại: ReadAloud.warmVoice. */
+  voiceWarm?(voice: string): void;
   /** Danh sách phát người nghe đã chọn cho cả cuốn (sách chỉ có chữ - playlistBed.ts): hàng bài theo thứ tự phát; không bài nào
    *  thì trình phát dùng mốc nhạc của chương như thường. Android: lõi native tự phát (MusicBed.kt). */
   musicPlaylist?(bookId: string): Promise<PlaylistQueue>;
@@ -367,6 +370,24 @@ function useVoiceChanged(): void {
 export function useChosenVoice(bookId: string | undefined): string {
   useVoiceChanged();
   return bookId ? chosenVoice(bookId) : "";
+}
+
+/** Giọng có engine nạp sẵn được: VieNeu, Supertonic (giọng của máy - TextToSpeech của hệ điều hành - không có gì để nạp). */
+export function hasLocalEngine(voice: Pick<ReadAloudVoice, "online" | "provider"> | undefined): boolean {
+  return runsOnThisMachine(voice) && (voice?.provider === "vieneu" || voice?.provider === "supertonic");
+}
+
+/** Trang sách / trình phát của cuốn `bookId` đang mở: giọng đang chọn chạy trên máy thì xin nạp sẵn model ([ListenSource.voiceWarm]) để bấm phát không phải chờ nạp. Đổi sang giọng khác
+ *  cũng nạp giọng ấy; mỗi lần mở là một lần dùng (model nhả lại sau 3 phút không ai dùng). */
+export function useWarmVoice(bookId: string | undefined): void {
+  const source = useSource();
+  const voices = useReadAloudVoices().data;
+  useVoiceChanged();
+  const voice = bookId && voices?.length ? resolveVoice(voices, chosenVoice(bookId)) : undefined;
+  const id = hasLocalEngine(voice) ? voice!.id : "";
+  useEffect(() => {
+    if (id) source.voiceWarm?.(id);
+  }, [source, id]);
 }
 
 /** Tên giọng đang đọc cuốn `bookId` ("Hoài My (Edge)", "Giọng đọc của máy"); "" khi máy chưa báo giọng nào. Đổi giọng giữa chừng thì cập nhật ngay. */

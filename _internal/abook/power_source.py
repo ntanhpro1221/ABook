@@ -26,6 +26,22 @@ def on_battery() -> bool | None:
     return _windows_on_battery() if os.name == "nt" else _psutil_on_battery()
 
 
+LOW_BATTERY_PERCENT = 20
+LOW_MEMORY_BYTES = 1 << 30  # engine giọng trên máy ~300-450 MB; dưới ngần này còn trống thì đừng nạp thêm khi chưa ai bấm nghe
+
+
+def spare_for_preload() -> bool:
+    """Máy còn dư để nạp sẵn model giọng khi chưa ai bấm nghe (`ReadAloud.preload`): không chạy pin dưới `LOW_BATTERY_PERCENT` %, và còn trống
+    ít nhất `LOW_MEMORY_BYTES` RAM. Không đọc được tín hiệu nào thì coi như dư (nạp sẵn chỉ là tiện, đọc thật vẫn nạp như cũ)."""
+    try:
+        battery = psutil.sensors_battery()
+        if battery is not None and on_battery() and battery.percent < LOW_BATTERY_PERCENT:
+            return False
+        return psutil.virtual_memory().available >= LOW_MEMORY_BYTES
+    except Exception:  # noqa: BLE001 - tín hiệu lạ không được làm hỏng việc nghe
+        return True
+
+
 def _psutil_on_battery() -> bool | None:
     try:
         battery = psutil.sensors_battery()

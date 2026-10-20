@@ -583,6 +583,8 @@ export interface ReadAloudPlugin {
   voices(): Promise<{ voices: ReadAloudVoice[] }>;
   /** Mốc hiện có của chương (mọi câu theo thứ tự; câu chưa đọc có mốc ước, không có `words`). */
   script(options: { bookId: string; chapterId: number }): Promise<ReadAloudTimings>;
+  /** Mở trang sách / trình phát với giọng trên máy: nạp sẵn model của giọng ấy (EnginePreload.kt). Trả ngay; `started` false = không có gì để nạp, đã nạp, hay máy không dư. */
+  warmVoice(options: { voice: string }): Promise<{ started: boolean }>;
   /** Lõi đã có mốc mới cho chương (một câu vừa đọc xong, hay nạp chương): hỏi lại `script`. */
   addListener(event: "readAloudScript", handler: (event: { bookId: string; chapterId: number }) => void): Promise<PluginListenerHandle>;
   /** Một đoạn vừa được đọc tạm bằng giọng kế (khoá bị từ chối / hết hạn mức / mất mạng): câu nói một lần cho người nghe. */

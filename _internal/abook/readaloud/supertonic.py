@@ -271,6 +271,10 @@ class SupertonicProvider:
         with self._engine_lock:
             self._engine = None
 
+    def preload(self, native_voice: str) -> None:
+        """Nạp engine mà không đọc gì (nạp sẵn lúc mở trang sách, `ReadAloud.preload`): bấm phát không phải chờ nạp (~4,6 s trên OPPO, livejoin3)."""
+        self.engine(self._installed(native_voice))
+
     def _speak(self, installed: Installed, name: str, text: str, origin: str | None = None, readings: Mapping[str, str] | None = None,
                ) -> tuple[Any, int, list[str], list[Unit], list[tuple[int, int]]]:
         """Đọc cả đoạn: (sóng âm, tần số mẫu, chữ hiện, các khúc, [đầu, cuối) của từng khúc theo mẫu). `origin`, `readings`: gốc và cách đọc

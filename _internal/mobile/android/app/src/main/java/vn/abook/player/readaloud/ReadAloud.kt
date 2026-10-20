@@ -253,6 +253,9 @@ object ReadAloud {
         ClipCache(File(ctx.cacheDir, "readaloud"), ClipCache.capFor(ctx.cacheDir), pinFile = File(ctx.filesDir, "readaloud-pins.txt"), tierOf = VoiceSpeed::liveTag, markOf = modelMark).also { cache = it }
     }
 
+    /** Load the engine of an on-device voice before play is pressed (the book's page or player was opened with it chosen): [EnginePreload]. Returns at once; false = nothing started. */
+    fun preload(voiceId: String): Boolean = EnginePreload.start(context, voiceId)
+
     private var speeds: VoiceSpeeds? = null
 
     /** Tốc độ đo được của từng giọng (ước thời gian "Làm trước"). */
@@ -1302,8 +1305,9 @@ object ReadAloud {
         val cached = runCatching { cache().contains(voiceId, text, origin, readings) }.getOrDefault(false)
         val perChar = runCatching { speeds().secondsPerChar(voiceId) }.getOrNull()
         // Đoạn kế nhiều khúc thì nhập luồng được ngay khi đủ điều kiện bắt đầu ([onLiveStarted]): chỉ cần giữ tới lúc ấy, không phải tới khi đọc xong cả đoạn.
-        val chars = if (cached) null else LocalLive.charsBeforeStreamStarts(voiceId, text, origin, readings, perChar, (Playback.player?.playbackParameters?.speed ?: 1f).toDouble())
-        val wait = ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, chars, perChar)
+        val speed = (Playback.player?.playbackParameters?.speed ?: 1f).toDouble()
+        val chars = if (cached) null else LocalLive.charsBeforeStreamStarts(voiceId, text, origin, readings, perChar, speed)
+        val wait = ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, chars, perChar, speed)
         if (wait <= 0) return false
         val token = generation
         opening = Opening(token, item, offset)

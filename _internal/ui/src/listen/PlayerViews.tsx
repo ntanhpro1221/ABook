@@ -71,7 +71,7 @@ import { useSentenceMenu, type SentenceEditing } from "./SentenceMenu";
 import { sentenceIndexAt } from "./words";
 import { cacheLabel, canPrepare, clearCacheQuestion, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import { READINGS_CHANGED_EVENT, type ReadAloudVoice, type ReadingsChanged } from "./readAloud";
-import { chapterScriptQuery, useBookVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource, useChosenVoice } from "./source";
+import { chapterScriptQuery, useBookVoice, useWarmVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource, useChosenVoice } from "./source";
 
 export function speedLabel(rate: number): string {
   return `${rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}×`;
@@ -1424,6 +1424,7 @@ export function PlayerBar({
   const { expanded, setExpanded } = useNowPlaying();
   const speaking = useSpeaking();
   useContinueIntoNextPart();
+  useWarmVoice(track?.bookId); // trình phát mở lại với cuốn đang dở: nạp sẵn model giọng trên máy
   if (!track) return null;
   if (compact) {
     return (

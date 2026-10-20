@@ -112,6 +112,9 @@ export const androidSource: ListenSource = {
   // "Nghe ngay": lõi native tự đọc chương chữ bằng giọng của máy (TextToSpeech); JS chỉ hỏi giọng và mốc (android/readAloud.ts).
   readAloudVoices: async () => (await ReadAloud.voices()).voices,
   readAloudTimings: (bookId, chapterId) => ReadAloud.script({ bookId, chapterId }),
+  voiceWarm: (voice) => {
+    void ReadAloud.warmVoice({ voice }).catch(() => undefined);
+  },
   readAloudSample: async (voice, text, options) => Capacitor.convertFileSrc((await ReadAloud.sample({ voice, text, ...options })).path),
   // "Làm trước": việc nền native đọc sẵn các chương tới (khi đang sạc, Wi-Fi) để nghe không cần mạng hay không phải chờ giọng chậm.
   ...phonePrepare(),
