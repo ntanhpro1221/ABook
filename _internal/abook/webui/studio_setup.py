@@ -161,14 +161,25 @@ PUBLISHED_MODELS: dict[str, PublishedModel] = {
         "1ecd40a6b6839fc986f1095001110ebbfd9043608d0e69b30be762a85673feeb",
         4_280_403_328,
     ),
+    # docs/models/abook-analyzer-v5.md - Qwen3-4B-Instruct-2507 + LoRA (lora-b9-s1234-4b = B9), GGUF Q8_0; mặc định từ 0.4.116,
+    # đi cặp với abook-speaker:v1 (quyết 06-10, đăng 21-10).
+    "abook-analyzer:v5": PublishedModel(
+        "abook-analyzer:v5",
+        (Download("abook-analyzer-v5.Q8_0.gguf",
+                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/6026d290f258d0cef0d337836a2a209c9e7956a8/"
+                  "abook-analyzer-v5.Q8_0.gguf",
+                  "b366713f0e5ac9c5500f0abd7738c18867f738b6a1171ce89d7347b1e9da543b", 4_280_403_424),),
+        "b366713f0e5ac9c5500f0abd7738c18867f738b6a1171ce89d7347b1e9da543b",
+        4_280_403_424,
+    ),
     # docs/models/abook-speaker-v1.md - Qwen3-4B-Instruct-2507 + LoRA (lora-b38pq-s1234-4b), GGUF Q8_0: lượt "người nói từng câu"
     # (abook/speaker_pass.py) chạy sau model phân tích abook-analyzer:v5. Băm + cỡ là của file thật (scripts/publish_model.py,
-    # 21-10). CHƯA ĐĂNG: URL còn PIN_REVISION - đăng bằng `publish_model.py ... --hf <repo>` rồi thay bằng mã commit
-    # (scripts/release.py từ chối dựng bản phát hành khi còn PIN_REVISION).
+    # 21-10, đăng cùng repo Hugging Face NGDtuanh/abook-analyzer).
     SPEAKER_MODEL: PublishedModel(
         SPEAKER_MODEL,
         (Download("abook-speaker-v1.Q8_0.gguf",
-                  "https://huggingface.co/NGDtuanh/abook-speaker/resolve/PIN_REVISION/abook-speaker-v1.Q8_0.gguf",
+                  "https://huggingface.co/NGDtuanh/abook-analyzer/resolve/391ac1cd5523cc5354fa8c706f13539e0aa04223/"
+                  "abook-speaker-v1.Q8_0.gguf",
                   "156f08246478eac7de78cfe61bcca2d14df75c6fdcb0b2e896738676c341e69a", 4_280_403_424),),
         "156f08246478eac7de78cfe61bcca2d14df75c6fdcb0b2e896738676c341e69a",
         4_280_403_424,
@@ -1317,7 +1328,7 @@ class StudioSetup:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Máy dev (scripts/setup_windows.ps1): `python -m abook.webui.studio_setup --install-model abook-analyzer:v4`."""
+    """Máy dev (scripts/setup_windows.ps1): `python -m abook.webui.studio_setup --install-model abook-analyzer:v5`."""
     import tempfile
 
     parser = argparse.ArgumentParser(description="Nạp model phân tích của dự án vào Ollama.")
