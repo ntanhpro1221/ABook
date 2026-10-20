@@ -1061,9 +1061,6 @@ class BookPipeline:
             if self.db.casting_is_finalized():
                 self.log("Voice casting đã khóa từ lần chạy trước; giữ nguyên mapping khi resume.")
             else:
-                # Sau khi phân tích xong cả cuốn, TRƯỚC mọi bước đụng tên/phân vai: nhãn người nói của từng câu thoại/nội tâm
-                # do model người nói trả (speaker_pass.py); từ đây trở đi là nguồn speaker của câu nói, bước phân vai chạy như cũ.
-                self._run_speaker_pass(analyzer)
                 self._state("running", "Đang khóa nhân vật theo tên và phân vai.")
                 self._state("running", "Đang chuẩn hóa cách đọc tên tiếng Anh.")
                 # Before names are locked: a speaker the analysis could only describe may
@@ -1083,6 +1080,10 @@ class BookPipeline:
                     ),
                     stop_requested=self.stop_requested,
                 )
+                # Sau hai lượt hoà giải, ngay trước phân vai - đúng thứ tự lượt đo B41 (dự án B9 đã xong cả hai lượt rồi mới hỏi):
+                # nhãn người nói của từng câu thoại/nội tâm do model người nói trả (speaker_pass.py) là nguồn speaker cuối của câu
+                # nói; hoà giải nhãn cục bộ KHÔNG chạy lại trên nhãn ấy (lượt đo không có bước đó).
+                self._run_speaker_pass(analyzer)
                 build_registry_and_cast(self.db, self.settings, self.log)
                 self.db.finalize_casting()
             self.db.update_book(status=BookStatus.CASTING.value, stage="voice_cast_locked")

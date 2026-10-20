@@ -471,8 +471,9 @@ def test_the_pass_sits_between_the_analysis_and_the_casting(monkeypatch: pytest.
     with pytest.raises(_Stop):
         pipeline.run(recovery_already_run=True)
     order = _Order.events
-    assert order.index("analyze_all") < order.index("speaker_pass") < order.index("reconcile_local_speaker_identities")
-    assert order.index("speaker_pass") < order.index("reconcile_name_pronunciations") < order.index("build_registry_and_cast")
+    # Thứ tự lượt đo B41: dự án B9 xong cả hai lượt hoà giải rồi mới hỏi người nói; không hoà giải lại nhãn ấy.
+    assert order.index("analyze_all") < order.index("reconcile_local_speaker_identities") < order.index("speaker_pass")
+    assert order.index("reconcile_name_pronunciations") < order.index("speaker_pass") < order.index("build_registry_and_cast")
     assert order.index("release_analysis_model") < order.index("speaker_pass"), "dỡ model phân tích trước khi nạp model người nói"
     assert order.index("speaker_pass") < order.index("release_speaker_model"), "nhả model người nói khi xong lượt"
     assert "gate:speaker pass chapter 1" in order
