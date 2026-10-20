@@ -59,12 +59,12 @@ class LocalLive(
         /** Seconds of sound per character of text assumed when only the machine's work per character is known ([charsBeforeStart]); ~15 characters a second (a65: 293 characters, 16.2 s). */
         const val AUDIO_PER_CHAR = 0.06
 
-        /** The characters per unit of [voice] ([VieneuUnits.units] limit, as [here] gets it from the voice); null for a voice that does not read by units. */
-        fun maxCharsOf(voice: String): Int? {
+        /** The shown words and the units [voice] will read [text] in (as [here] gets them from the voice); null for a voice that does not read by units. */
+        fun unitsOf(voice: String, text: String, origin: String?, readings: Map<String, String>?): Pair<List<String>, List<VieneuUnits.Unit>>? {
             val (provider, rest) = ClipCache.split(voice)
             return when (provider) {
-                SupertonicVoices.PREFIX -> SupertonicText.MAX_CHARS
-                VieneuVoices.PREFIX -> VieneuSpeaker.MAX_CHARS[rest.substringBefore('/')]
+                SupertonicVoices.PREFIX -> SupertonicText.units(text, origin, readings)
+                VieneuVoices.PREFIX -> VieneuSpeaker.MAX_CHARS[rest.substringBefore('/')]?.let { VieneuUnits.units(text, it, origin, readings) }
                 else -> null
             }
         }
@@ -88,18 +88,17 @@ class LocalLive(
          * its speed is not measured yet ([workPerChar] null) or the paragraph is one unit (no stream, [here] is null).
          */
         fun charsBeforeStreamStarts(voice: String, text: String, origin: String?, readings: Map<String, String>?, workPerChar: Double?, speed: Double = 1.0): Int {
-            val max = maxCharsOf(voice)
-            if (workPerChar == null || max == null) return text.length
-            val (tokens, units) = runCatching { VieneuUnits.units(text, max, origin, readings) }.getOrNull() ?: return text.length
+            if (workPerChar == null) return text.length
+            val (tokens, units) = runCatching { unitsOf(voice, text, origin, readings) }.getOrNull() ?: return text.length
             if (units.size < 2) return text.length
             return charsBeforeStart(units.map { it.text(tokens).length }, workPerChar, speed)
         }
 
         /** The streaming of a read of [text] into [out] when this thread reads for a listener who waits for it ([LiveClips.receiving]); null otherwise, and for a
-         *  paragraph of one unit (no sooner sound, one more lift - desktop `local_stream.for_clip`). Units as the voice will cut them ([VieneuUnits.units], [maxChars]). */
-        fun here(out: File, text: String, maxChars: Int, origin: String?, readings: Map<String, String>?): LocalLive? {
+         *  paragraph of one unit (no sooner sound, one more lift - desktop `local_stream.for_clip`). [cut]: the shown words and the units as the voice will cut the paragraph (asked for only when a listener waits). */
+        fun here(out: File, cut: () -> Pair<List<String>, List<VieneuUnits.Unit>>): LocalLive? {
             val target = LiveClips.here()?.target?.takeIf { it.accepting() } ?: return null
-            val (tokens, units) = VieneuUnits.units(text, maxChars, origin, readings)
+            val (tokens, units) = cut()
             if (units.size < 2) return null
             return LocalLive(target, out, tokens, units, target.speed().toDouble())
         }

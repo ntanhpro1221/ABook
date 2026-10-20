@@ -129,7 +129,7 @@ object VieneuVoices {
     fun synthesize(id: String, text: String, out: File, origin: String? = null, readings: Map<String, String>? = null): Clip {
         val (tier, name) = id.removePrefix("$PREFIX:").let { it.substringBefore('/') to it.substringAfter('/', "") }
         val ready = ready(tier, name)
-        val live = LocalLive.here(out, text, VieneuSpeaker.MAX_CHARS.getValue(tier), origin, readings) // the paragraph the listener waits for: unit by unit
+        val live = LocalLive.here(out) { VieneuUnits.units(text, VieneuSpeaker.MAX_CHARS.getValue(tier), origin, readings) } // the paragraph the listener waits for: unit by unit
         val spoken = try {
             VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin, readings, live)
         } catch (failure: OutOfMemoryError) {

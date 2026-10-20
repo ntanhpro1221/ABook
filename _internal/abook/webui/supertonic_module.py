@@ -23,7 +23,7 @@ import sys
 from pathlib import Path
 from typing import Any, Callable
 
-from ..readaloud.supertonic import FAST, PREFIX, QUALITY, TIER, Installed
+from ..readaloud.supertonic import FAST, OPENING_CUT, PREFIX, QUALITY, TIER, Installed
 from . import music_module, vieneu_module, voice_module, voice_speed, word_timing
 from .music_module import Component
 from .studio_setup import Download
@@ -204,8 +204,8 @@ def model_mark(voice: str, tier: str) -> str:
     if not voice.startswith(PREFIX + ":"):
         return ""
     if tier:
-        return _core.mark((CHOICE, FAST_CHOICE), f"fast:{FAST[1]}")
-    return _core.mark((CHOICE,), f"quality:{QUALITY[1]}")
+        return _core.mark((CHOICE, FAST_CHOICE), f"fast:{FAST[1]}:open{OPENING_CUT}")
+    return _core.mark((CHOICE,), f"quality:{QUALITY[1]}:open{OPENING_CUT}")
 
 
 def suggestion(bench: dict[str, Any], tiers: list[str]) -> dict[str, Any] | None:

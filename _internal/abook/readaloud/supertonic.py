@@ -24,7 +24,7 @@ from unicodedata import normalize as unicode_normalize
 
 from . import loudness
 from .model import Synthesis, Voice, VoiceError, stop_if_cancelled, unit_made
-from .vieneu import Unit, reading_tag, seed_of, timed_synthesis, units
+from .vieneu import PHRASE_END, SENTENCE_END, Unit, _ends, _groups, _length, reading_tag, seed_of, spoken_tokens, timed_synthesis, units
 
 PREFIX = "supertonic"
 TIER = "supertonic"  # khoá của kết quả tự đo (cùng hình với các tầng VieNeu)
@@ -50,6 +50,14 @@ def speed_for(text: str) -> float:
     share = min(1.0, max(0.0, (syllables - SHORT_SYLLABLES) / (LONG_SYLLABLES - SHORT_SYLLABLES)))
     return round(SHORT_SPEED + (SPEED - SHORT_SPEED) * share, 3)
 MAX_CHARS = 300  # như hãng (DEFAULT_MAX_CHUNK_LENGTH)
+# Khúc đầu của đoạn (Nghe ngay): đoạn <= 300 ký tự là MỘT khúc nên không có gì để phát luồng, mà khúc 238 ký tự mất 10,7 s khi máy bận - im ~7 s sau tiêu đề chương (livejoin2).
+# Khúc đầu dài hơn OPENING_OVER ký tự thì cắt ở ranh câu (hay ranh vế nếu không có) nằm trong OPENING_MIN..OPENING_MAX ký tự, gần OPENING_MAX nhất, nếu phần còn lại >= OPENING_TAIL.
+# Các khúc sau giữ nguyên. Điện thoại cùng luật (SupertonicText.OPENING_*), chung bảng ca tests/fixtures/supertonic/opening_cut.json. Đổi luật thì tăng OPENING_CUT (vào khoá bộ đệm).
+OPENING_OVER = 120
+OPENING_MIN = 40
+OPENING_MAX = 120
+OPENING_TAIL = 30
+OPENING_CUT = 1
 # Thứ tự hiện: bốn giọng chủ sách nghe thấy tốt trước (trang chấm 03-10), rồi các giọng còn lại. F = nữ, M = nam.
 NAMES = ("F1", "F3", "M4", "M5", "F2", "F4", "F5", "M1", "M2", "M3")
 ONNX = ("duration_predictor", "text_encoder", "vector_estimator", "vocoder")
@@ -105,6 +113,34 @@ def normalize_pieces(pieces: list[str]) -> str:
         return ve.normalize(pieces)
     except ImportError:
         return " ".join(pieces)
+
+
+def opening_boundary(toks: list[str], first: int, last: int) -> int | None:
+    """Chữ hiện cuối của khúc đầu sau khi cắt khúc `first`..`last` (None: không cắt): ranh câu trong OPENING_MIN..OPENING_MAX ký tự gần OPENING_MAX nhất, không có thì ranh vế."""
+    if _length(toks, first, last) <= OPENING_OVER:
+        return None
+    for marks in (SENTENCE_END, PHRASE_END):
+        found = [index for index in range(first, last)
+                 if _ends(toks[index], marks) and OPENING_MIN <= _length(toks, first, index) <= OPENING_MAX and _length(toks, index + 1, last) >= OPENING_TAIL]
+        if found:
+            return max(found, key=lambda index: _length(toks, first, index))
+    return None
+
+
+def cut(text: str, origin: str | None = None, speaks_english: bool = True, readings: Mapping[str, str] | None = None) -> tuple[list[str], list[Unit]]:
+    """Chữ hiện + các khúc Supertonic đọc của đoạn: các khúc của `vieneu.units` (tới MAX_CHARS ký tự), khúc đầu dài thì cắt đôi ([opening_boundary]) để tiếng đầu tới sớm."""
+    toks, parts = units(text, MAX_CHARS, origin, speaks_english, readings)
+    if not parts:
+        return toks, parts
+    at = opening_boundary(toks, parts[0].first, parts[0].last)
+    if at is None:
+        return toks, parts
+    said = spoken_tokens(toks, origin, speaks_english, readings)
+
+    def half(first: int, last: int) -> Unit:
+        return Unit(first, last, [" ".join(word for word in said[start:stop + 1] if word) for start, stop in _groups(toks, first, last, SENTENCE_END)])
+
+    return toks, [half(parts[0].first, at), half(at + 1, parts[0].last), *parts[1:]]
 
 
 # ---- engine ---------------------------------------------------------------------------------------------------------------------
@@ -244,7 +280,7 @@ class SupertonicProvider:
         from . import vieneu_engine as ve
 
         engine = self.engine(installed)
-        toks, parts = units(text, MAX_CHARS, origin, self.speaks_english, readings)
+        toks, parts = cut(text, origin, self.speaks_english, readings)
         waves, pauses = [], []
         for unit in parts:
             began = time.perf_counter()

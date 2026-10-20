@@ -97,7 +97,7 @@ class SupertonicModule(
     /** Model mark of the tier the clip is read at, for the clip cache key (desktop `supertonic_module.model_mark`): the fast tier reads with the
      *  base model and its own estimator at [SupertonicText.FAST_STEPS], the quality tier with the base model at [SupertonicText.STEPS]. */
     fun mark(fast: Boolean): String =
-        if (fast) mark(listOf(CHOICE, FAST_CHOICE), "fast:${SupertonicText.FAST_STEPS}") else mark(listOf(CHOICE), "quality:${SupertonicText.STEPS}")
+        if (fast) mark(listOf(CHOICE, FAST_CHOICE), "fast:${SupertonicText.FAST_STEPS}:open${SupertonicText.OPENING_CUT}") else mark(listOf(CHOICE), "quality:${SupertonicText.STEPS}:open${SupertonicText.OPENING_CUT}")
 
     companion object {
         const val CHOICE = "supertonic"

@@ -65,7 +65,7 @@ class SupertonicParityTest {
         for (paragraph in objects("paragraphs")) {
             val text = paragraph.getString("text")
             val origin = paragraph.optString("origin").takeIf { !paragraph.isNull("origin") }
-            val (_, units) = VieneuUnits.units(text, SupertonicText.MAX_CHARS, origin)
+            val (_, units) = VieneuUnits.units(text, SupertonicText.MAX_CHARS, origin) // the model-input fixture: the units as vieneu cuts them (the opening cut: SupertonicOpeningCutTest)
             val wanted = paragraph.getJSONArray("units").let { array -> List(array.length()) { array.getJSONObject(it) } }
             assertEquals(text, wanted.size, units.size)
             for ((unit, want) in units.zip(wanted)) {

@@ -207,9 +207,9 @@ class LocalVoiceClipsTest {
         }
         assertTrue(result.exceptionOrNull() is CancellationException)
         assertEquals(2, engine.calls)
-        assertTrue(VieneuUnits.units(long, SupertonicText.MAX_CHARS).second.size > 5)
+        assertTrue(SupertonicText.units(long).second.size > 5)
         // outside a cancellable read nothing changes (self-benchmark, tests)
-        assertEquals(VieneuUnits.units(long, SupertonicText.MAX_CHARS).second.size, SlowEngine(null, 0).also {
+        assertEquals(SupertonicText.units(long).second.size, SlowEngine(null, 0).also {
             SupertonicSpeaker(null) { pieces -> pieces.joinToString(" ") }.speak(it, "F1", long)
         }.calls)
     }
@@ -262,7 +262,7 @@ class LocalVoiceClipsTest {
         val seconds = (System.nanoTime() - began) / 1e9
         assertTrue(result.exceptionOrNull() is CancellationException)
         assertTrue("stopped after $seconds s", seconds < 0.5)
-        assertTrue(engine.calls < VieneuUnits.units(text, SupertonicText.MAX_CHARS).second.size)
+        assertTrue(engine.calls < SupertonicText.units(text).second.size)
         assertNull(cache.get("supertonic:F1#q", text))
         assertTrue(File(root, "cache").listFiles()!!.none { it.isFile })
     }

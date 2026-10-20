@@ -85,9 +85,10 @@ class ReadAheadTest {
 
     @Test
     fun openingAChapterWithALocalVoiceWaitsForTheFirstParagraphInsteadOfStallingAfterTheHeading() {
-        // a65 Supertonic: tiêu đề 2,26 s, đoạn đầu 293 ký tự đọc mất ~3,9 s -> im 1,46 s sau tiêu đề; giờ chờ thêm (tối đa 1,5 s) trước khi phát.
+        // a65 Supertonic: tiêu đề 2,26 s, đoạn đầu 293 ký tự đọc mất ~3,9 s -> im 1,68 s sau tiêu đề; giờ chờ thêm (tối đa 2,5 s) trước khi phát.
         val supertonic = 3_940.0 / 1000 / 293
-        assertEquals(1_500L, ReadAheadPolicy.openingHoldMs(2_260L, 293, supertonic))
+        assertEquals(1_680.0, ReadAheadPolicy.openingHoldMs(2_260L, 293, supertonic).toDouble(), 5.0)
+        assertEquals("khe dài hơn trần: chờ tới trần 2,5 s", 2_500L, ReadAheadPolicy.openingHoldMs(2_260L, 293, 8_000.0 / 1000 / 293))
         // Nano: tiêu đề 3,34 s, đoạn đầu 310 ký tự ~4,1 s -> chờ ~0,74 s.
         val nano = 4_080.0 / 1000 / 310
         assertEquals(740.0, ReadAheadPolicy.openingHoldMs(3_340L, 310, nano).toDouble(), 5.0)

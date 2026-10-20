@@ -5,7 +5,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import vn.abook.player.vieneu.NumpyRandomState
 import vn.abook.player.vieneu.VieneuSpeaker
-import vn.abook.player.vieneu.VieneuUnits
 
 /** Paragraph -> clip with a fake engine: one take per unit of normalised text, seeded from voice + shown pieces, at the chunk's speed, raised
  *  4 dB, the desktop's pauses, one word timing per shown word. */
@@ -27,7 +26,7 @@ class SupertonicSpeakerTest {
         val engine = FakeEngine()
         val text = "Ngày 12/03, trời mưa. Cô gái đứng bên cửa sổ, lặng lẽ nhìn mưa rơi suốt buổi chiều hôm ấy."
         val spoken = SupertonicSpeaker(null) { pieces -> pieces.joinToString(" ").lowercase() }.speak(engine, "F1", text)
-        val (_, units) = VieneuUnits.units(text, SupertonicText.MAX_CHARS)
+        val (_, units) = SupertonicText.units(text)
         assertEquals(units.size, engine.calls.size)
         for ((unit, call) in units.zip(engine.calls)) {
             val seed = VieneuSpeaker.seedOf("supertonic", "F1", unit.pieces.joinToString(" "))

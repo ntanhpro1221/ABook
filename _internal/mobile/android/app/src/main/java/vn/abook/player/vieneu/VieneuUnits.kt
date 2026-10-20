@@ -20,8 +20,8 @@ import java.util.Locale
  */
 object VieneuUnits {
     const val MIN_UNIT_CHARS = 20
-    private const val SENTENCE_END = ".!?…"
-    private const val PHRASE_END = ",;:"
+    internal const val SENTENCE_END = ".!?…"
+    internal const val PHRASE_END = ",;:"
     private const val CLOSERS = "\"'”’)]»"
     private const val OPENERS = "\"'“‘([«"
     /** Khung của bảng trạng thái / lời thoại kiểu Nhật: chữ La Mã sát trong khung vẫn là số. */
@@ -613,12 +613,12 @@ object VieneuUnits {
         return if (spokenTokens(toks, origin) != spokenTokens(toks)) origin else ""
     }
 
-    private fun ends(token: String, marks: String): Boolean {
+    internal fun ends(token: String, marks: String): Boolean {
         val core = token.trimEnd { it in CLOSERS }
         return core.isNotEmpty() && core.last() in marks
     }
 
-    private fun groups(toks: List<String>, first: Int, last: Int, marks: String): List<IntArray> {
+    internal fun groups(toks: List<String>, first: Int, last: Int, marks: String): List<IntArray> {
         val out = ArrayList<IntArray>()
         var start = first
         for (index in first..last) {
@@ -630,7 +630,7 @@ object VieneuUnits {
         return out
     }
 
-    private fun length(toks: List<String>, first: Int, last: Int): Int =
+    internal fun length(toks: List<String>, first: Int, last: Int): Int =
         (first..last).sumOf { toks[it].codePointCount(0, toks[it].length) } + (last - first)
 
     /** Merge neighbouring spans into the longest runs of at most [maxChars] characters. */

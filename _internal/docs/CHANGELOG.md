@@ -9,7 +9,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Nghe ngay
 
-- Giọng trên máy (Supertonic, VieNeu): đoạn máy đã đọc trước mà bạn nghe tới lúc nó còn đọc dở giờ cũng phát ngay khi phần đầu xong, thay vì đứng chờ cả đoạn (trên máy tính chỉ dùng CPU, đoạn dài 544 chữ có tiếng sau 4,6 giây thay vì 8,3 giây). Mở chương trên điện thoại, tiêu đề chương không còn bị bỏ khi đoạn đầu bắt đầu phát đúng lúc ấy. Đoạn ngắn đọc trọn một lần (Supertonic dưới 300 chữ) vẫn phải đợi đọc xong, nên trên máy đang bận khe giữa tiêu đề và đoạn đầu chưa hết.
+- Giọng trên máy (Supertonic, VieNeu): đoạn máy đã đọc trước mà bạn nghe tới lúc nó còn đọc dở giờ cũng phát ngay khi phần đầu xong, thay vì đứng chờ cả đoạn (trên máy tính chỉ dùng CPU, đoạn dài 544 chữ có tiếng sau 4,6 giây thay vì 8,3 giây). Mở chương trên điện thoại, tiêu đề chương không còn bị bỏ khi đoạn đầu bắt đầu phát đúng lúc ấy.
+- Supertonic mở chương và đoạn dài: phần đầu của đoạn được cắt ở dấu câu quanh chữ thứ 120 để đọc xong sớm hơn (đoạn 238 chữ trên máy tính chỉ dùng CPU có tiếng sau 3,0 giây thay vì 5,5 giây; tốc độ đọc không đổi). Trên điện thoại lúc máy rảnh, khe im giữa tiêu đề và đoạn đầu (trước đây 0,7-1,4 giây) không còn; lúc máy bận nặng khe vẫn còn vì đọc phần đầu cũng chậm theo. Chương mới mở giữ tiêu đề tới 2,5 giây (trước 1,5 giây) để đoạn đầu kịp vào, vì khe im sau tiêu đề khó chịu hơn chờ thêm một chút lúc bắt đầu. Đoạn đã đọc bằng Supertonic được đọc lại một lần vì cách chia đổi.
 
 ## [0.4.112] - 2026-10-20
 
