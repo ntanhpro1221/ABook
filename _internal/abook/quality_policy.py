@@ -13,6 +13,7 @@ from .audio_transform_contract import (
     POSTPROCESS_TEMPO_NUMERATOR,
 )
 from .config import canonical_json, settings_hash
+from .speaker_pass import ALGORITHM as SPEAKER_PASS_ALGORITHM
 from .runtime_contract import (
     TIMM_CACHE_REVISION,
     WAV2VEC2_CACHE_REVISION,
@@ -40,6 +41,7 @@ ANALYSIS_CASTING_IMPLEMENTATION_FILES = (
     "character_registry.py",
     "models.py",
     "name_snap.py",
+    "speaker_pass.py",
     "voice_balance.py",
     "assets/voice_balance.json",
     "voice_catalog.py",
@@ -62,6 +64,7 @@ QUALITY_IMPLEMENTATION_FILES = (
     "perceptual_qa.py",
     "perceptual_contract.py",
     "quality_policy.py",
+    "speaker_pass.py",
     "readaloud/names.py",
     "readaloud/abbreviations.py",
     "readaloud/readings.py",
@@ -170,6 +173,7 @@ def build_quality_policy(settings: dict[str, Any]) -> dict[str, Any]:
         "algorithms": {
             "text_parser": "spoken_token_invariant_v2",
             "casting": "canonical_identity_host_semantic_lock_director_ledger_v28",
+            "speaker_pass": SPEAKER_PASS_ALGORITHM,
             "segment_signal": "signal_gate_vocalization_delivery_v4",
             "candidate_postprocess": POSTPROCESS_ALGORITHM,
             "asr_content": "evidence_gated_name_pronunciation_delivery_v10",

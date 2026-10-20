@@ -101,8 +101,13 @@ export function formatEta(seconds: number, fraction?: number): string {
 export function etaOf(book: {
   eta: { phase: string; seconds: number } | null;
   progress: { analysis: number; synthesis: number };
+  speakerPass?: { done: number; total: number } | null;
 }): string | null {
   if (!book.eta) return null;
+  if (book.eta.phase === "speaker") {
+    const pass = book.speakerPass;
+    return `pha xác định người nói ${formatEta(book.eta.seconds, pass && pass.total ? pass.done / pass.total : undefined)}`;
+  }
   const synthesis = book.eta.phase === "synthesis";
   const left = formatEta(book.eta.seconds, synthesis ? book.progress.synthesis : book.progress.analysis);
   return `pha ${synthesis ? "thu âm" : "phân tích"} ${left}`;

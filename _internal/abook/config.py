@@ -11,6 +11,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from .database import ANALYSIS_CRITIC_CONFIDENCE_MAX
+from .speaker_pass import paired_speaker_model
 
 
 DEFAULT_SETTINGS: dict[str, Any] = {
@@ -428,6 +429,10 @@ def build_settings(profile: str = "high_quality", overrides: dict[str, Any] | No
     # An explicit num_ctx in the overrides still wins: a caller naming a number means it.
     if not (overrides or {}).get("analysis", {}).get("num_ctx"):
         settings["analysis"]["num_ctx"] = analysis_context_window(settings["analysis"])
+    # Lượt "người nói từng câu" (speaker_pass.py) khoá theo sách ngay lúc tạo: model người nói đi cặp với model phân tích đã đo (rỗng
+    # = không có cặp, không chạy lượt). Người gọi tắt bằng overrides analysis.speaker_model = "". Sách tạo trước không có khoá này.
+    if "speaker_model" not in settings["analysis"]:
+        settings["analysis"]["speaker_model"] = paired_speaker_model(str(settings["analysis"].get("model", "")))
     from .voice_catalog import DEFAULT_NARRATOR_BY_GENDER, preset_by_name
 
     voice_overrides = overrides.get("voices", {}) if overrides else {}
@@ -466,6 +471,9 @@ def validate_settings(settings: dict[str, Any]) -> None:
         or any(character.isspace() for character in model_name)
     ):
         raise ValueError("analysis.model must use an explicit canonical name:tag")
+    speaker_model = analysis.get("speaker_model", "")
+    if not isinstance(speaker_model, str) or (speaker_model and speaker_model != paired_speaker_model(model_name)):
+        raise ValueError("analysis.speaker_model must be empty or the speaker model paired with analysis.model")
     missing_director_settings = DIRECTOR_CRITIC_SETTING_KEYS - set(analysis)
     if missing_director_settings:
         raise ValueError(

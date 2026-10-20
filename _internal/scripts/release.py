@@ -166,11 +166,26 @@ def check_word_align_pinned() -> None:
         "điền mã commit thay PIN_REVISION")
 
 
+def check_speaker_model_pinned() -> None:
+    """Lượt "người nói từng câu" (speaker_pass) cần model `abook-speaker:v1`, Studio tải ở bước "llm": ghim ở
+    studio_setup.PUBLISHED_MODELS. Chưa đăng (URL còn PIN_REVISION) thì Studio cài từ bộ cài này hỏng ở bước ấy - không dựng bản phát hành."""
+    sys.path.insert(0, str(ROOT))
+    from abook.speaker_pass import SPEAKER_MODEL
+    from abook.webui.studio_setup import PUBLISHED_MODELS
+
+    model = PUBLISHED_MODELS.get(SPEAKER_MODEL)
+    assert model is not None and model.size > 0 and re.fullmatch(r"[0-9a-f]{64}", model.sha256) and all(
+        "PIN_REVISION" not in part.url and part.size > 0 and re.fullmatch(r"[0-9a-f]{64}", part.sha256) for part in model.parts), (
+        f"{SPEAKER_MODEL} (webui/studio_setup.py, PUBLISHED_MODELS) chưa ghim: chạy scripts/publish_model.py ... --hf <repo>, "
+        "điền mã commit thay PIN_REVISION")
+
+
 def build(version: str, out: Path) -> None:
     """Bộ cài Windows (NSIS + chữ ký cập nhật + latest.json) và APK ký khoá phát hành, chép vào `out`, kiểm cả hai."""
     assert current_version() == version, f"repo đang là {current_version()}, chưa bump {version}?"
     check_studio_assets_pinned()
     check_word_align_pinned()
+    check_speaker_model_pinned()
     out.mkdir(parents=True, exist_ok=True)
     _run(["powershell", "-ExecutionPolicy", "Bypass", "-File", str(ROOT / "scripts/build_windows_app.ps1")], ROOT, low=True)
     nsis = ROOT / "shell/src-tauri/target/release/bundle/nsis"

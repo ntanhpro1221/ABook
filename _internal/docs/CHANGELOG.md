@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Phân tích truyện
+
+- Sau khi phân tích xong cả truyện, app hỏi lại từng câu thoại và nội tâm "câu này ai nói" bằng một model nhỏ riêng (`abook-speaker:v1`, cài cùng model phân tích, thêm khoảng 4,3 GB trên đĩa), nên nhiều câu được giao đúng người hơn: trên 56 chương thử, độ đúng người nói theo giọng nghe tăng khoảng 5 điểm (từ 73,96 lên 79,00), đổi lại thời gian làm sách dài thêm khoảng 6% (chừng 1 phút mỗi chương). Màn dự án ghi bước này là "Xác định người nói từng câu", có số chương đã xong và thời gian còn lại. Chỉ sách phân tích bằng model phân tích v5 mới có bước này; sách đã làm giữ nguyên.
+
 ## [0.4.115] - 2026-10-20
 
 ### Nhạc nền

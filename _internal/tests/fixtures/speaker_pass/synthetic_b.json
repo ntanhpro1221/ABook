@@ -1,0 +1,409 @@
+{
+ "name": "synthetic_b",
+ "title": "Chương 1: Buổi sáng ở bến xe",
+ "narrator": "",
+ "limit_tokens": 3800,
+ "story": [
+  {
+   "kind": "narration",
+   "text": "Đêm ấy, quán trà cuối phố vắng khách."
+  },
+  {
+   "kind": "dialogue",
+   "text": {
+    "rep": [
+     "Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. ",
+     60
+    ]
+   },
+   "label": "Khoa"
+  },
+  {
+   "kind": "dialogue",
+   "text": {
+    "rep": [
+     "Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. ",
+     60
+    ]
+   },
+   "label": "Lan"
+  },
+  {
+   "kind": "dialogue",
+   "text": {
+    "rep": [
+     "Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. ",
+     60
+    ]
+   },
+   "label": "Khoa"
+  },
+  {
+   "kind": "narration",
+   "text": "Ngoài kia mưa bắt đầu rơi."
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Thôi, để mai nói tiếp.”",
+   "label": "Lan"
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     40
+    ]
+   }
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     40
+    ]
+   }
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Câu này nằm trước một dải đoạn dài.”",
+   "label": "NPC_LOCAL:chủ quán"
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     38
+    ]
+   }
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     38
+    ]
+   }
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     38
+    ]
+   }
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     38
+    ]
+   }
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     38
+    ]
+   }
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     38
+    ]
+   }
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Đã khuya rồi, anh về đi.”",
+   "label": "Lan"
+  },
+  {
+   "kind": "narration",
+   "text": "Lan thu dọn chén đĩa."
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     38
+    ]
+   }
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Câu A.”",
+   "label": "Khoa"
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     38
+    ]
+   }
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     38
+    ]
+   }
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Câu B.”",
+   "label": "Lan"
+  },
+  {
+   "kind": "narration",
+   "text": {
+    "rep": [
+     "Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. ",
+     38
+    ]
+   }
+  },
+  {
+   "kind": "dialogue",
+   "text": {
+    "rep": [
+     "Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. ",
+     160
+    ]
+   },
+   "label": "Khoa"
+  },
+  {
+   "kind": "narration",
+   "text": "Chủ quán thở dài."
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Câu cuối.”",
+   "label": "Lan"
+  },
+  {
+   "kind": "narration",
+   "text": "Đèn tắt."
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Lời thứ 1 của buổi nói chuyện cuối.”",
+   "label": "Khoa"
+  },
+  {
+   "kind": "narration",
+   "text": "Họ nhìn nhau."
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Lời thứ 2 của buổi nói chuyện cuối.”",
+   "label": "Lan"
+  },
+  {
+   "kind": "narration",
+   "text": "Họ nhìn nhau."
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Lời thứ 3 của buổi nói chuyện cuối.”",
+   "label": "Khoa"
+  },
+  {
+   "kind": "narration",
+   "text": "Họ nhìn nhau."
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Lời thứ 4 của buổi nói chuyện cuối.”",
+   "label": "Lan"
+  },
+  {
+   "kind": "narration",
+   "text": "Họ nhìn nhau."
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Lời thứ 5 của buổi nói chuyện cuối.”",
+   "label": "Khoa"
+  },
+  {
+   "kind": "narration",
+   "text": "Họ nhìn nhau."
+  },
+  {
+   "kind": "dialogue",
+   "text": "“Lời thứ 6 của buổi nói chuyện cuối.”",
+   "label": "Lan"
+  },
+  {
+   "kind": "narration",
+   "text": "Họ nhìn nhau."
+  }
+ ],
+ "system_pq_sha256": "c57dbfadf0f7477540bccaf7fc0a460272d2f3e3139cff665b394910e186c6ee",
+ "system_block_sha256": "4e5edb76e10ef436c4aa1f43fe856ce3f7e0aa50bd2fb9e13c60f6790a563327",
+ "chars3": {
+  "info": {
+   "blocks_trimmed": 9,
+   "blocks_truncated": 8,
+   "blocks": 9,
+   "unknown_lines": 1,
+   "blocks_dropped": 1,
+   "k_dist": {
+    "1": 8,
+    "7": 1
+   }
+  },
+  "targets": [
+   1,
+   2,
+   3,
+   5,
+   8,
+   15,
+   18,
+   21,
+   25,
+   27,
+   29,
+   31,
+   33,
+   35,
+   37
+  ],
+  "final": {
+   "1": "Khoa",
+   "2": "Lan",
+   "3": "Khoa",
+   "5": "Lan",
+   "8": "NPC_LOCAL:chủ quán",
+   "15": "Lan",
+   "18": "Khoa",
+   "21": "Lan",
+   "23": "UNKNOWN",
+   "25": "Lan",
+   "27": "Khoa",
+   "29": "Lan",
+   "31": "Khoa",
+   "33": "Lan",
+   "35": "Khoa",
+   "37": "Lan"
+  },
+  "users_sha256": [
+   "506988b0a19e6e48f7ff57b4de7dea77326b8808af1e45ed6ce74a211ccfae49",
+   "3ac8590ea90f22fa71acc0d0cfcf0d7b141a847adb96fe2ea678f56b5e0d987d",
+   "15a581de8e21e00b08987a82ed561046b06eae9b4cacd90aec698459a45d3d6e",
+   "f30f4934fc254e7f98df4b3ddcbb707e74ceab561a8d004d50ef1d5117e06bf4",
+   "dd090efd11710cb3c4c7ef11ea2a946e9d84d9cb4ee2c99aa3e85f7f641bbb98",
+   "bc715012338c8cae33c240673956f4ae1db39d4385a5f2009b13093025a95b18",
+   "0f4121d4149b5bd4597ee7a0d3473027d759993d8d71f08c36a8a1a2472cb7f2",
+   "1d440ac70bb3491f5668027fb37aff7c9ca63299a20b8ce1a6efa6fc372e4fb0",
+   "2d20eada657f285684e8f91ce534e08aff39ed33a3d82094dd23b46b40e48bd3",
+   "782848e114db565d5f99b5aea05a5c6f0f62359fd1ef5d1ecf07e5651f537cf9",
+   "f10f80c53227877ef388139e0c21e5c81091efd31335da84aec37d233fd79845",
+   "1026301ec95988518fa8c7da6ce9b2c3932a559e3b6b0cefd3d288746733306b",
+   "cf1571a55b9ec211f3b2012c6c20a191634fcf3d21483294cb476d767cce868f",
+   "753b3c69c37e26c370d0fbf389dba8c13578c946f34858d41cd68b94d9cb5ac3",
+   "a8fc1c6faa5c7b08043fc9474242b63d787e67f3b5be21a4f9e513faaf429b55"
+  ],
+  "users": [
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n(Chưa có nhân vật đã biết)\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 0,\n    \"text\": \"Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. \",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 1,\n    \"text\": \"Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên c...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 1,\n    \"text\": \"Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên c...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 2,\n    \"text\": \"Ngoài kia mưa bắt đầu rơi.\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 2,\n    \"text\": \"“Thôi, để mai nói tiếp.”\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 3,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 3,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Khoa; số lần đã gặp=1; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Đêm ấy, quán trà cuối phố vắng khách.\n- [thoại · Khoa] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 1,\n    \"text\": \"Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. \",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 1,\n    \"text\": \"Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên c...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 2,\n    \"text\": \"Ngoài kia mưa bắt đầu rơi.\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 2,\n    \"text\": \"“Thôi, để mai nói tiếp.”\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 3,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 3,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 4,\n    \"text\": \"“Câu này nằm trước một dải đoạn dài.”\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Khoa; số lần đã gặp=1; gender đã biết=unknown\n- Lan; số lần đã gặp=1; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Đêm ấy, quán trà cuối phố vắng khách.\n- [thoại · Khoa] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [thoại · Lan] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 1,\n    \"text\": \"Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. \",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 2,\n    \"text\": \"Ngoài kia mưa bắt đầu rơi.\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 2,\n    \"text\": \"“Thôi, để mai nói tiếp.”\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 3,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 3,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 4,\n    \"text\": \"“Câu này nằm trước một dải đoạn dài.”\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 4,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Khoa; số lần đã gặp=2; gender đã biết=unknown\n- Lan; số lần đã gặp=1; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Đêm ấy, quán trà cuối phố vắng khách.\n- [thoại · Khoa] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [thoại · Lan] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [thoại · Khoa] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [kể] Ngoài kia mưa bắt đầu rơi.\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 2,\n    \"text\": \"“Thôi, để mai nói tiếp.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 3,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 3,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 4,\n    \"text\": \"“Câu này nằm trước một dải đoạn dài.”\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 4,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 5,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 5,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Khoa; số lần đã gặp=2; gender đã biết=unknown\n- Lan; số lần đã gặp=2; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Đêm ấy, quán trà cuối phố vắng khách.\n- [thoại · Khoa] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [thoại · Lan] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [thoại · Khoa] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [kể] Ngoài kia mưa bắt đầu rơi.\n- [thoại · Lan] “Thôi, để mai nói tiếp.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 4,\n    \"text\": \"“Câu này nằm trước một dải đoạn dài.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 4,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 5,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 5,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 6,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 6,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 7,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Khoa; số lần đã gặp=2; gender đã biết=unknown\n- Lan; số lần đã gặp=2; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · NPC_LOCAL:chủ quán] “Câu này nằm trước một dải đoạn dài.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 7,\n    \"text\": \"“Đã khuya rồi, anh về đi.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 8,\n    \"text\": \"Lan thu dọn chén đĩa.\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 8,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 9,\n    \"text\": \"“Câu A.”\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 9,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 10,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 10,\n    \"text\": \"“Câu B.”\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Lan; số lần đã gặp=3; gender đã biết=unknown\n- Khoa; số lần đã gặp=2; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Lan] “Đã khuya rồi, anh về đi.”\n- [kể] Lan thu dọn chén đĩa.\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 9,\n    \"text\": \"“Câu A.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 9,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 10,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 10,\n    \"text\": \"“Câu B.”\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 11,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 11,\n    \"text\": \"Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên c...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 12,\n    \"text\": \"Chủ quán thở dài.\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Khoa; số lần đã gặp=3; gender đã biết=unknown\n- Lan; số lần đã gặp=3; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Lan] “Đã khuya rồi, anh về đi.”\n- [kể] Lan thu dọn chén đĩa.\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Khoa] “Câu A.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 10,\n    \"text\": \"“Câu B.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 11,\n    \"text\": \"Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bón...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 11,\n    \"text\": \"Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên c...\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 12,\n    \"text\": \"Chủ quán thở dài.\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 12,\n    \"text\": \"“Câu cuối.”\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 13,\n    \"text\": \"Đèn tắt.\",\n    \"xem_truoc\": true\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 13,\n    \"text\": \"“Lời thứ 1 của buổi nói chuyện cuối.”\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Lan; số lần đã gặp=4; gender đã biết=unknown\n- Khoa; số lần đã gặp=3; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Lan thu dọn chén đĩa.\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Khoa] “Câu A.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Lan] “Câu B.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · UNKNOWN] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [kể] Chủ quán thở dài.\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 12,\n    \"text\": \"“Câu cuối.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 13,\n    \"text\": \"Đèn tắt.\"\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 13,\n    \"text\": \"“Lời thứ 1 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q2\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 14,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 14,\n    \"text\": \"“Lời thứ 2 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q3\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 15,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 15,\n    \"text\": \"“Lời thứ 3 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q4\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D08\",\n    \"paragraph\": 16,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D09\",\n    \"paragraph\": 16,\n    \"text\": \"“Lời thứ 4 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q5\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D10\",\n    \"paragraph\": 17,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D11\",\n    \"paragraph\": 17,\n    \"text\": \"“Lời thứ 5 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q6\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D12\",\n    \"paragraph\": 18,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D13\",\n    \"paragraph\": 18,\n    \"text\": \"“Lời thứ 6 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q7\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D14\",\n    \"paragraph\": 19,\n    \"text\": \"Họ nhìn nhau.\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Lan; số lần đã gặp=4; gender đã biết=unknown\n- Khoa; số lần đã gặp=3; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Lan thu dọn chén đĩa.\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Khoa] “Câu A.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Lan] “Câu B.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · UNKNOWN] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [kể] Chủ quán thở dài.\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 12,\n    \"text\": \"“Câu cuối.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 13,\n    \"text\": \"Đèn tắt.\"\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 13,\n    \"text\": \"“Lời thứ 1 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q2\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 14,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 14,\n    \"text\": \"“Lời thứ 2 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q3\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 15,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 15,\n    \"text\": \"“Lời thứ 3 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q4\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D08\",\n    \"paragraph\": 16,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D09\",\n    \"paragraph\": 16,\n    \"text\": \"“Lời thứ 4 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q5\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D10\",\n    \"paragraph\": 17,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D11\",\n    \"paragraph\": 17,\n    \"text\": \"“Lời thứ 5 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q6\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D12\",\n    \"paragraph\": 18,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D13\",\n    \"paragraph\": 18,\n    \"text\": \"“Lời thứ 6 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q7\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D14\",\n    \"paragraph\": 19,\n    \"text\": \"Họ nhìn nhau.\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Lan; số lần đã gặp=4; gender đã biết=unknown\n- Khoa; số lần đã gặp=3; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Lan thu dọn chén đĩa.\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Khoa] “Câu A.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Lan] “Câu B.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · UNKNOWN] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [kể] Chủ quán thở dài.\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 12,\n    \"text\": \"“Câu cuối.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 13,\n    \"text\": \"Đèn tắt.\"\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 13,\n    \"text\": \"“Lời thứ 1 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q2\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Khoa\"\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 14,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 14,\n    \"text\": \"“Lời thứ 2 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q3\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 15,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 15,\n    \"text\": \"“Lời thứ 3 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q4\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D08\",\n    \"paragraph\": 16,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D09\",\n    \"paragraph\": 16,\n    \"text\": \"“Lời thứ 4 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q5\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D10\",\n    \"paragraph\": 17,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D11\",\n    \"paragraph\": 17,\n    \"text\": \"“Lời thứ 5 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q6\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D12\",\n    \"paragraph\": 18,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D13\",\n    \"paragraph\": 18,\n    \"text\": \"“Lời thứ 6 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q7\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D14\",\n    \"paragraph\": 19,\n    \"text\": \"Họ nhìn nhau.\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Lan; số lần đã gặp=4; gender đã biết=unknown\n- Khoa; số lần đã gặp=3; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Lan thu dọn chén đĩa.\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Khoa] “Câu A.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Lan] “Câu B.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · UNKNOWN] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [kể] Chủ quán thở dài.\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 12,\n    \"text\": \"“Câu cuối.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 13,\n    \"text\": \"Đèn tắt.\"\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 13,\n    \"text\": \"“Lời thứ 1 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q2\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Khoa\"\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 14,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 14,\n    \"text\": \"“Lời thứ 2 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q3\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 15,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 15,\n    \"text\": \"“Lời thứ 3 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q4\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D08\",\n    \"paragraph\": 16,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D09\",\n    \"paragraph\": 16,\n    \"text\": \"“Lời thứ 4 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q5\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D10\",\n    \"paragraph\": 17,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D11\",\n    \"paragraph\": 17,\n    \"text\": \"“Lời thứ 5 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q6\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D12\",\n    \"paragraph\": 18,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D13\",\n    \"paragraph\": 18,\n    \"text\": \"“Lời thứ 6 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q7\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D14\",\n    \"paragraph\": 19,\n    \"text\": \"Họ nhìn nhau.\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Lan; số lần đã gặp=4; gender đã biết=unknown\n- Khoa; số lần đã gặp=3; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Lan thu dọn chén đĩa.\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Khoa] “Câu A.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Lan] “Câu B.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · UNKNOWN] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [kể] Chủ quán thở dài.\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 12,\n    \"text\": \"“Câu cuối.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 13,\n    \"text\": \"Đèn tắt.\"\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 13,\n    \"text\": \"“Lời thứ 1 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q2\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Khoa\"\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 14,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 14,\n    \"text\": \"“Lời thứ 2 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q3\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 15,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 15,\n    \"text\": \"“Lời thứ 3 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q4\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Khoa\"\n  },\n  {\n    \"id\": \"D08\",\n    \"paragraph\": 16,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D09\",\n    \"paragraph\": 16,\n    \"text\": \"“Lời thứ 4 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q5\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D10\",\n    \"paragraph\": 17,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D11\",\n    \"paragraph\": 17,\n    \"text\": \"“Lời thứ 5 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q6\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D12\",\n    \"paragraph\": 18,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D13\",\n    \"paragraph\": 18,\n    \"text\": \"“Lời thứ 6 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q7\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D14\",\n    \"paragraph\": 19,\n    \"text\": \"Họ nhìn nhau.\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Lan; số lần đã gặp=4; gender đã biết=unknown\n- Khoa; số lần đã gặp=3; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Lan thu dọn chén đĩa.\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Khoa] “Câu A.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Lan] “Câu B.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · UNKNOWN] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [kể] Chủ quán thở dài.\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 12,\n    \"text\": \"“Câu cuối.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 13,\n    \"text\": \"Đèn tắt.\"\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 13,\n    \"text\": \"“Lời thứ 1 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q2\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Khoa\"\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 14,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 14,\n    \"text\": \"“Lời thứ 2 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q3\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 15,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 15,\n    \"text\": \"“Lời thứ 3 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q4\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Khoa\"\n  },\n  {\n    \"id\": \"D08\",\n    \"paragraph\": 16,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D09\",\n    \"paragraph\": 16,\n    \"text\": \"“Lời thứ 4 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q5\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D10\",\n    \"paragraph\": 17,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D11\",\n    \"paragraph\": 17,\n    \"text\": \"“Lời thứ 5 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q6\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D12\",\n    \"paragraph\": 18,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D13\",\n    \"paragraph\": 18,\n    \"text\": \"“Lời thứ 6 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q7\",\n    \"loai\": \"thoại\"\n  },\n  {\n    \"id\": \"D14\",\n    \"paragraph\": 19,\n    \"text\": \"Họ nhìn nhau.\",\n    \"xem_truoc\": true\n  }\n]",
+   "Các chương hiện tại: Chương 1: Buổi sáng ở bến xe\n\nNhân vật đã biết từ các phần trước:\n- Lan; số lần đã gặp=4; gender đã biết=unknown\n- Khoa; số lần đã gặp=3; gender đã biết=unknown\n\nCác đoạn ngay trước (đã phân tích xong - chỉ để nối lượt đối đáp, KHÔNG trả lời cho chúng):\n- [kể] Lan thu dọn chén đĩa.\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Khoa] “Câu A.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · Lan] “Câu B.”\n- [kể] Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài trên nền đất ẩm. Gió thổi qua mái hiên, chiếc đèn lồng đung đưa và bóng người kéo dài tr...\n- [thoại · UNKNOWN] Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay nên khóc. Anh cứ nói mãi một chuyện cũ như thế, em nghe mà không biết nên cười hay n...\n- [kể] Chủ quán thở dài.\n\nKhối cần gán người nói (chỉ trả lời cho đoạn có \"dich\": true; đoạn \"speaker\" đã gán xong, đoạn \"q\" không nhãn và đoạn \"xem_truoc\" chỉ để đọc tiếp, KHÔNG trả lời):\n[\n  {\n    \"id\": \"D01\",\n    \"paragraph\": 12,\n    \"text\": \"“Câu cuối.”\",\n    \"q\": \"Q1\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D02\",\n    \"paragraph\": 13,\n    \"text\": \"Đèn tắt.\"\n  },\n  {\n    \"id\": \"D03\",\n    \"paragraph\": 13,\n    \"text\": \"“Lời thứ 1 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q2\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Khoa\"\n  },\n  {\n    \"id\": \"D04\",\n    \"paragraph\": 14,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D05\",\n    \"paragraph\": 14,\n    \"text\": \"“Lời thứ 2 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q3\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D06\",\n    \"paragraph\": 15,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D07\",\n    \"paragraph\": 15,\n    \"text\": \"“Lời thứ 3 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q4\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Khoa\"\n  },\n  {\n    \"id\": \"D08\",\n    \"paragraph\": 16,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D09\",\n    \"paragraph\": 16,\n    \"text\": \"“Lời thứ 4 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q5\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Lan\"\n  },\n  {\n    \"id\": \"D10\",\n    \"paragraph\": 17,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D11\",\n    \"paragraph\": 17,\n    \"text\": \"“Lời thứ 5 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q6\",\n    \"loai\": \"thoại\",\n    \"speaker\": \"Khoa\"\n  },\n  {\n    \"id\": \"D12\",\n    \"paragraph\": 18,\n    \"text\": \"Họ nhìn nhau.\"\n  },\n  {\n    \"id\": \"D13\",\n    \"paragraph\": 18,\n    \"text\": \"“Lời thứ 6 của buổi nói chuyện cuối.”\",\n    \"q\": \"Q7\",\n    \"loai\": \"thoại\",\n    \"dich\": true\n  },\n  {\n    \"id\": \"D14\",\n    \"paragraph\": 19,\n    \"text\": \"Họ nhìn nhau.\",\n    \"xem_truoc\": true\n  }\n]"
+  ]
+ },
+ "tokenizer": {
+  "info": {
+   "blocks_trimmed": 9,
+   "blocks_truncated": 8,
+   "blocks": 9,
+   "unknown_lines": 1,
+   "blocks_dropped": 1,
+   "k_dist": {
+    "1": 8,
+    "7": 1
+   }
+  },
+  "targets": [
+   1,
+   2,
+   3,
+   5,
+   8,
+   15,
+   18,
+   21,
+   25,
+   27,
+   29,
+   31,
+   33,
+   35,
+   37
+  ],
+  "final": {
+   "1": "Khoa",
+   "2": "Lan",
+   "3": "Khoa",
+   "5": "Lan",
+   "8": "NPC_LOCAL:chủ quán",
+   "15": "Lan",
+   "18": "Khoa",
+   "21": "Lan",
+   "23": "UNKNOWN",
+   "25": "Lan",
+   "27": "Khoa",
+   "29": "Lan",
+   "31": "Khoa",
+   "33": "Lan",
+   "35": "Khoa",
+   "37": "Lan"
+  },
+  "users_sha256": [
+   "506988b0a19e6e48f7ff57b4de7dea77326b8808af1e45ed6ce74a211ccfae49",
+   "3ac8590ea90f22fa71acc0d0cfcf0d7b141a847adb96fe2ea678f56b5e0d987d",
+   "15a581de8e21e00b08987a82ed561046b06eae9b4cacd90aec698459a45d3d6e",
+   "f30f4934fc254e7f98df4b3ddcbb707e74ceab561a8d004d50ef1d5117e06bf4",
+   "dd090efd11710cb3c4c7ef11ea2a946e9d84d9cb4ee2c99aa3e85f7f641bbb98",
+   "bc715012338c8cae33c240673956f4ae1db39d4385a5f2009b13093025a95b18",
+   "0f4121d4149b5bd4597ee7a0d3473027d759993d8d71f08c36a8a1a2472cb7f2",
+   "1d440ac70bb3491f5668027fb37aff7c9ca63299a20b8ce1a6efa6fc372e4fb0",
+   "2d20eada657f285684e8f91ce534e08aff39ed33a3d82094dd23b46b40e48bd3",
+   "782848e114db565d5f99b5aea05a5c6f0f62359fd1ef5d1ecf07e5651f537cf9",
+   "f10f80c53227877ef388139e0c21e5c81091efd31335da84aec37d233fd79845",
+   "1026301ec95988518fa8c7da6ce9b2c3932a559e3b6b0cefd3d288746733306b",
+   "cf1571a55b9ec211f3b2012c6c20a191634fcf3d21483294cb476d767cce868f",
+   "753b3c69c37e26c370d0fbf389dba8c13578c946f34858d41cd68b94d9cb5ac3",
+   "a8fc1c6faa5c7b08043fc9474242b63d787e67f3b5be21a4f9e513faaf429b55"
+  ]
+ }
+}

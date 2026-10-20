@@ -42,7 +42,10 @@ export interface BookSummary {
   segments: { total: number; analyzed: number; pending?: number; recorded: number; finished: number; failed: number };
   progress: { overall: number; analysis: number; synthesis: number };
   audioSeconds: number;
-  eta: { phase: Phase; seconds: number } | null;
+  /** `phase` "speaker": lượt "Xác định người nói từng câu" sau khi phân tích xong cả truyện (speaker_pass.py). */
+  eta: { phase: Phase | "speaker"; seconds: number } | null;
+  /** Lượt "Xác định người nói từng câu" (chương xong / tổng, đang chạy lượt này không); null ở sách không có lượt ấy. */
+  speakerPass?: { done: number; total: number; active: boolean } | null;
   position: Position | null;
   /** Đang xếp hàng chờ cuốn khác chạy xong (thứ tự trong hàng), hoặc null. */
   queuePosition?: number | null;

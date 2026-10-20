@@ -1,6 +1,6 @@
 """Cài Studio (phần làm sách nói) từ trong app Windows đóng gói - docs/PACKAGING.md bước 5.
 
-App đóng gói chỉ mang phần nghe (Python nhúng, ~30 MB). Studio - thư viện của dây chuyền, model, Ollama, ~15-20 GB -
+App đóng gói chỉ mang phần nghe (Python nhúng, ~30 MB). Studio - thư viện của dây chuyền, model, Ollama, ~20-25 GB -
 chỉ tải khi người dùng bấm "Cài Studio". Mọi thứ nằm trong MỘT thư mục (`%LOCALAPPDATA%\\ABook\\Studio`): không đụng
 PATH, không cài gì toàn máy; mỗi công cụ tải về là một bản ghim cứng (URL + SHA-256), thư viện là đúng danh sách của
 runtime đã làm ra sách (`shell/python/studio-requirements.txt`). Từng bước có dấu hoàn tất: mất mạng hay tắt máy giữa
@@ -29,12 +29,22 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from ..speaker_pass import (
+    SPEAKER_MODEL,
+    TOKENIZER_FILE,
+    TOKENIZER_FOLDER,
+    TOKENIZER_SHA256,
+    TOKENIZER_SIZE,
+    TOKENIZER_URL,
+    paired_speaker_model,
+)
+
 STUDIO_FOLDER = "Studio"
 # Trong thư mục dự án: bản mã nào đã bắt đầu cuốn này (StudioSetup.code_for).
 CODE_PIN_FILE = "studio_code.json"
 CREATE_NO_WINDOW = 0x08000000
-# Thư viện ~6 GB, model ~10 GB, Ollama ~1,5 GB, cộng chỗ cho bản tải dở và cache.
-MIN_FREE_BYTES = 30 * 1024**3
+# Thư viện ~6 GB, model ~14 GB (hai model Q8 4,3 GB: phân tích + người nói), Ollama ~1,5 GB, cộng chỗ cho bản tải dở và cache.
+MIN_FREE_BYTES = 35 * 1024**3
 PYTHON_VERSION = "3.11"
 # Ollama RIÊNG của Studio (chủ sách 28-09: phụ thuộc nằm trọn trong app, gỡ là gỡ hết): bản trong Studio\tools\ollama,
 # model trong Studio\models\ollama, "home" (khoá định danh) trong Studio\ollama-home, cổng riêng - không bao giờ dùng
@@ -151,7 +161,23 @@ PUBLISHED_MODELS: dict[str, PublishedModel] = {
         "1ecd40a6b6839fc986f1095001110ebbfd9043608d0e69b30be762a85673feeb",
         4_280_403_328,
     ),
+    # docs/models/abook-speaker-v1.md - Qwen3-4B-Instruct-2507 + LoRA (lora-b38pq-s1234-4b), GGUF Q8_0: lượt "người nói từng câu"
+    # (abook/speaker_pass.py) chạy sau model phân tích abook-analyzer:v5. Băm + cỡ là của file thật (scripts/publish_model.py,
+    # 21-10). CHƯA ĐĂNG: URL còn PIN_REVISION - đăng bằng `publish_model.py ... --hf <repo>` rồi thay bằng mã commit
+    # (scripts/release.py từ chối dựng bản phát hành khi còn PIN_REVISION).
+    SPEAKER_MODEL: PublishedModel(
+        SPEAKER_MODEL,
+        (Download("abook-speaker-v1.Q8_0.gguf",
+                  "https://huggingface.co/NGDtuanh/abook-speaker/resolve/PIN_REVISION/abook-speaker-v1.Q8_0.gguf",
+                  "156f08246478eac7de78cfe61bcca2d14df75c6fdcb0b2e896738676c341e69a", 4_280_403_424),),
+        "156f08246478eac7de78cfe61bcca2d14df75c6fdcb0b2e896738676c341e69a",
+        4_280_403_424,
+    ),
 }
+
+# Bộ đếm token của lượt người nói (tokenizer.json của Qwen3-4B-Instruct-2507, ghim commit + băm ở speaker_pass): cắt khối đúng như
+# lúc đo. Studio đặt vào `runtime\models\speaker-tokenizer`; lượt tự tải đúng bản này khi policy cho phép (speaker_pass).
+SPEAKER_TOKENIZER = Download(TOKENIZER_FILE, TOKENIZER_URL, TOKENIZER_SHA256, TOKENIZER_SIZE)
 
 # (mã, nhãn cho người dùng, ước lượng cho người dùng)
 STEPS: tuple[tuple[str, str, str], ...] = (
@@ -163,7 +189,7 @@ STEPS: tuple[tuple[str, str, str], ...] = (
     ("vcruntime", "Thư viện C++ của Microsoft", "2 MB - đi kèm bộ cài"),
     ("packages", "Thư viện làm sách", "~6 GB - bước lâu nhất"),
     ("ollama", "Ollama", "1,5 GB - bản riêng của Studio"),
-    ("llm", "Model phân tích truyện", "~5 GB"),
+    ("llm", "Model phân tích truyện và model xác định người nói", "~9 GB"),
     ("voice", "Model giọng đọc", "~1 GB"),
     ("asr", "Model nghe lại (Whisper)", "~3 GB"),
     ("qa", "Model chấm chất lượng", "~1 GB"),
@@ -553,6 +579,7 @@ class StudioSetup:
         self.tools = root / "tools"
         self.assets = root / "assets"
         self.word_align = self.runtime / "models" / WORD_ALIGN_FOLDER
+        self.speaker_tokenizer = self.runtime / "models" / TOKENIZER_FOLDER / TOKENIZER_FILE
         self.state_path = root / "setup.json"
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
@@ -609,8 +636,15 @@ class StudioSetup:
     def _pins(self) -> dict[str, str]:
         """Bản ghim của các bước tải công cụ/model. App lên bản mới đổi ghim (nâng uv, Git, Ollama, đổi model phân tích)
         thì bước ấy phải chạy lại trên Studio đã cài - không thì Studio cứ chạy bản cũ mà app không hề biết."""
-        return {"uv": UV.sha256, "git": MINGIT.sha256, "ollama": OLLAMA.sha256, "llm": self.analysis_model,
+        return {"uv": UV.sha256, "git": MINGIT.sha256, "ollama": OLLAMA.sha256, "llm": self._llm_pin(),
                 "assets": STUDIO_ASSETS.sha256, "wordalign": word_align_pin()}
+
+    def _llm_pin(self) -> str:
+        """Ghim của bước "llm": model phân tích, và (nếu có cặp) model người nói + bộ đếm token của nó - đổi bản nào cũng phải tải lại."""
+        speaker = self._speaker_model()
+        if speaker is None:
+            return self.analysis_model
+        return f"{self.analysis_model}+{speaker.name}@{speaker.sha256}+{SPEAKER_TOKENIZER.sha256}"
 
     def damaged(self) -> list[str]:
         """Bước đã xong mà file của nó mất (người dùng xoá tay, diệt virus dọn): hiện chỉ Ollama riêng - thiếu nó thì sách không
@@ -917,7 +951,7 @@ class StudioSetup:
         self.root.mkdir(parents=True, exist_ok=True)
         free = shutil.disk_usage(self.root).free
         if free < MIN_FREE_BYTES:
-            raise SetupError(f"Ổ đĩa của {self.root} còn {free / 1024**3:.0f} GB - Studio cần khoảng 30 GB trống.")
+            raise SetupError(f"Ổ đĩa của {self.root} còn {free / 1024**3:.0f} GB - Studio cần khoảng 35 GB trống.")
 
     def ensure_assets(self) -> None:
         """Dữ liệu của Studio (ASSET_PATHS) có mặt trong mã của app: lúc cài xong, mỗi lần bắt đầu một cuốn, mỗi lần host mở -
@@ -1015,8 +1049,24 @@ class StudioSetup:
         published = PUBLISHED_MODELS.get(self.analysis_model)
         if published is not None:
             self._install_published(published)
+        else:
+            self._pull(self.analysis_model, self._set_progress, self._set_detail)
+        self._install_speaker_model()
+
+    def _speaker_model(self) -> PublishedModel | None:
+        """Model người nói đi cặp với model phân tích đang cài (speaker_pass.PAIRED_SPEAKER_MODELS); None khi không có cặp."""
+        return PUBLISHED_MODELS.get(paired_speaker_model(self.analysis_model))
+
+    def _install_speaker_model(self) -> None:
+        """Lượt "người nói từng câu" cần hai thứ: model người nói trong Ollama và bộ đếm token để cắt khối. Cài cùng lúc với model
+        phân tích - lượt chạy giữa chừng một cuốn không được tự tải (policy), nên máy phải có sẵn."""
+        speaker = self._speaker_model()
+        if speaker is None:
             return
-        self._pull(self.analysis_model, self._set_progress, self._set_detail)
+        self._detail = "Model xác định người nói"
+        self._install_published(speaker)
+        self._detail = "Bộ đếm token của model người nói"
+        self.fetch(SPEAKER_TOKENIZER, self.speaker_tokenizer, self._set_progress, self._cancelled)
 
     def _set_detail(self, text: str) -> None:
         self._detail = text

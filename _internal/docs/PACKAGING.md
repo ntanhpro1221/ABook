@@ -7,7 +7,7 @@ này là kế hoạch và là chỗ ghi các quyết định; làm tới đâu c
 
 Cửa sổ hiện tại (`desktop.py`) là giao diện web trong Qt WebEngine, chạy bằng runtime đầy đủ của dây chuyền. Đóng gói
 nguyên như thế là bắt người chỉ muốn **nghe** sách tải PySide6 + QtWebEngine (~350 MB) cộng torch CUDA, VieNeu, Whisper,
-Ollama và model (~15-20 GB). Phần lớn người dùng app nghe, không sản xuất.
+Ollama và model (~20-25 GB). Phần lớn người dùng app nghe, không sản xuất.
 
 Đo 28-09: server giao diện (`webui/`) lúc nạp chỉ cần thư viện chuẩn; khi dùng thì thêm Pillow (bìa), psutil + requests
 (các màn Studio đọc sổ nhân vật). Mọi thứ nặng chỉ cần khi **chạy** một cuốn (worker). Nên app chia hai phần:
@@ -15,7 +15,7 @@ Ollama và model (~15-20 GB). Phần lớn người dùng app nghe, không sản
 | phần | gồm | cỡ | khi nào có |
 |---|---|---|---|
 | **ABook** | vỏ Tauri (WebView2 của Windows) + Python nhúng + `abook` + giao diện đã build | ~20 MB bộ cài | cài là có |
-| **Studio** | venv dây chuyền (torch cu128, VieNeu, Whisper...) + Ollama + model | ~15-20 GB | bấm "Cài Studio" |
+| **Studio** | venv dây chuyền (torch cu128, VieNeu, Whisper...) + Ollama + model | ~20-25 GB | bấm "Cài Studio" |
 
 Không có Studio vẫn làm được mọi thứ trừ **chạy** sách: nghe, đồng bộ điện thoại, nghe máy tính khác, mở `.abook`, duyệt
 kịch bản, sửa người nói/giọng/cách đọc của sách đã có.
@@ -78,7 +78,7 @@ không được đụng PATH hay cài gì toàn máy, nên mỗi công cụ là 
 
 | bước | nguồn | cỡ |
 |---|---|---|
-| kiểm máy | NVML (`nvml.dll` của driver NVIDIA) - không có GPU NVIDIA thì dừng, nói rõ; ổ đĩa còn ≥ 30 GB | - |
+| kiểm máy | NVML (`nvml.dll` của driver NVIDIA) - không có GPU NVIDIA thì dừng, nói rõ; ổ đĩa còn ≥ 35 GB | - |
 | dữ liệu của Studio | `studio-assets-1.zip` (từ điển phát âm `cmudict.dict` + 21 giọng nghe thử `voice_previews`; `scripts/pack_studio_assets.py` đóng gói, ghim ở `studio_setup.STUDIO_ASSETS`) giải vào `Studio\assets`, rồi CHÉP vào `<mã app>\abook\assets` - đường mà mã khoá chất lượng (`analysis.CMUDICT_PATH`, `quality_policy.voice_preview_assets_hash`) đọc, nên hash không đổi. App cập nhật thay thư mục mã thì host (mỗi lần mở) và `code_for` (mỗi cuốn) đặt lại từ kho; gỡ Studio gỡ luôn bản đã đặt | ~15 MB |
 | uv | bản phát hành GitHub của astral-sh/uv, ghim | ~20 MB |
 | Python 3.11 + venv | `uv python install` + `uv venv` vào `Studio\runtime\.venv` | ~50 MB |

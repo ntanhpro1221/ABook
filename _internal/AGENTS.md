@@ -28,6 +28,7 @@ Máy đích hiện tại: Ryzen 9845HX, RTX 5060 Laptop, RAM 32 GB. Không hard-
 import + natural sort TXT
 → segment toàn book
 → Qwen phân tích toàn book, checkpoint theo batch
+→ lượt người nói từng câu (`speaker_pass.py`, nếu sách có cặp model), checkpoint theo chương
 → character registry theo speaker name + pronunciation
 → khóa voice mapping/preset/seed/settings
 → unload LLM
@@ -56,6 +57,12 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   đối chiếu lại đủ identity ngay trước khi kill/ghi state và từ chối nếu một instance mới đã thay thế instance được yêu cầu.
 - Hai tiến trình tạo cùng title/manifest phải serialize bằng OS creation lock xuyên suốt bước chọn project root,
   ghi settings và initialize SQLite; profile khác nhau không được ghi chéo settings/DB.
+- Lượt "người nói từng câu" (`speaker_pass.py`) là nguồn `segments.speaker` của câu thoại/nội tâm trước casting; kind và câu kể
+  luôn giữ của model phân tích. Mỗi chương commit một transaction (CAS theo speaker cũ), chương dở làm lại từ đầu chương;
+  nhãn trong đề là nhãn của CHÍNH lượt này (tuần tự), không bao giờ là nhãn của model phân tích. Digest model người nói khoá
+  theo sách, đổi giữa chừng thì fail-closed. Đề phải trùng mã đo từng byte (`tests/test_speaker_pass_prompts.py`) - sửa
+  `speaker_pass.py` là đổi hash khoá. Ledger `analysis_candidates` vẫn giữ projection của model phân tích (lượt ghi sau
+  analysis, cùng tiền lệ speaker repair của casting).
 - Mọi process nền trên Windows dùng `pythonw`/`CREATE_NO_WINDOW`, redirect stdio UTF-8 vào log; POSIX dùng session riêng.
 - SQLite là source of truth; không dùng existence/mtime làm bằng chứng hoàn tất.
 - WAV/MP3 luôn ghi `.part`, validate + checksum rồi atomic replace.
@@ -419,6 +426,10 @@ Module chính:
 - `pipeline.py`: orchestration và state transition.
 - `database.py`: schema/transaction API.
 - `analysis.py`: Qwen structured analysis.
+- `speaker_pass.py`: lượt "người nói từng câu" (B41) sau khi phân tích xong cả sách và TRƯỚC character registry/casting: hỏi lại
+  người nói của từng câu `dialogue`/`thought` bằng model đi cặp (`abook-speaker:v1`); dựng đề trùng từng byte với mã đo
+  (`tests/fixtures/speaker_pass`). Khoá model + digest + tokenizer theo sách (`speaker_pass_state`), commit theo chương
+  (`speaker_pass_chapters`), nhãn gốc của model phân tích giữ ở `speaker_pass_labels`.
 - `character_registry.py`: canonical speaker name và voice mapping; không hợp nhất identity khác tên.
 - `tts.py`: VieNeu preset adapter, emotion delivery và deterministic retry.
 - `asr.py`: Whisper và transcript metrics.

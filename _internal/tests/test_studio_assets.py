@@ -207,3 +207,23 @@ def test_the_pinned_word_model_matches_the_files_the_pack_script_makes_and_a_rel
                                                                          item.sha256, item.size) for item in files))
     with pytest.raises(AssertionError, match="chưa ghim"):  # chưa đăng: URL còn PIN_REVISION thì không dựng bản phát hành
         release.check_word_align_pinned()
+
+
+def test_a_release_cannot_be_built_while_the_speaker_model_is_unpublished(monkeypatch: pytest.MonkeyPatch) -> None:
+    import dataclasses
+
+    from abook import speaker_pass
+
+    spec = importlib.util.spec_from_file_location("release_script_speaker", INTERNAL / "scripts" / "release.py")
+    release = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(release)
+    model = studio_setup.PUBLISHED_MODELS[speaker_pass.SPEAKER_MODEL]
+    pinned = dataclasses.replace(model, parts=tuple(Download(part.name, part.url.replace("PIN_REVISION", "d" * 40), part.sha256, part.size)
+                                                    for part in model.parts))
+    monkeypatch.setitem(studio_setup.PUBLISHED_MODELS, speaker_pass.SPEAKER_MODEL, pinned)
+    release.check_speaker_model_pinned()
+    unpinned = dataclasses.replace(model, parts=tuple(Download(part.name, part.url.replace("d" * 40, "PIN_REVISION"), part.sha256, part.size)
+                                                      for part in pinned.parts))
+    monkeypatch.setitem(studio_setup.PUBLISHED_MODELS, speaker_pass.SPEAKER_MODEL, unpinned)
+    with pytest.raises(AssertionError, match="chưa ghim"):
+        release.check_speaker_model_pinned()
