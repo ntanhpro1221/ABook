@@ -41,6 +41,41 @@ object SupertonicText {
     const val LONG_SYLLABLES = 12
     const val MAX_CHARS = 300
 
+    /**
+     * The first unit of a paragraph (livejoin2; desktop supertonic.py OPENING_*, shared cases tests/fixtures/supertonic/opening_cut.json): a paragraph of up to [MAX_CHARS] is ONE unit, so there is
+     * nothing to stream, and a 238-character unit takes 10.7 s to read on a busy phone - silence ~7 s after the chapter title. A first unit over [OPENING_OVER] characters is cut at the sentence
+     * end (else the clause end) between [OPENING_MIN] and [OPENING_MAX] characters nearest [OPENING_MAX], when at least [OPENING_TAIL] characters are left. The later units are untouched.
+     * [OPENING_CUT] goes into the clip cache key ([SupertonicModule.mark]): raise it, with the desktop's, when the rule changes.
+     */
+    const val OPENING_OVER = 120
+    const val OPENING_MIN = 40
+    const val OPENING_MAX = 120
+    const val OPENING_TAIL = 30
+    const val OPENING_CUT = 1
+
+    /** The shown word the first unit [first]..[last] is cut after; null: not cut (desktop `opening_boundary`). */
+    fun openingBoundary(toks: List<String>, first: Int, last: Int): Int? {
+        if (VieneuUnits.length(toks, first, last) <= OPENING_OVER) return null
+        for (marks in listOf(VieneuUnits.SENTENCE_END, VieneuUnits.PHRASE_END)) {
+            val found = (first until last).filter {
+                VieneuUnits.ends(toks[it], marks) && VieneuUnits.length(toks, first, it) in OPENING_MIN..OPENING_MAX && VieneuUnits.length(toks, it + 1, last) >= OPENING_TAIL
+            }
+            if (found.isNotEmpty()) return found.maxBy { VieneuUnits.length(toks, first, it) }
+        }
+        return null
+    }
+
+    /** The shown words of a paragraph and the units Supertonic reads: [VieneuUnits.units] up to [MAX_CHARS], the first one cut short ([openingBoundary]) - desktop `supertonic.cut`. */
+    fun units(text: String, origin: String? = null, readings: Map<String, String>? = null): Pair<List<String>, List<VieneuUnits.Unit>> {
+        val (toks, parts) = VieneuUnits.units(text, MAX_CHARS, origin, readings)
+        if (parts.isEmpty()) return toks to parts
+        val at = openingBoundary(toks, parts[0].first, parts[0].last) ?: return toks to parts
+        val said = VieneuUnits.spokenTokens(toks, origin, readings)
+        fun half(first: Int, last: Int) = VieneuUnits.Unit(first, last, VieneuUnits.groups(toks, first, last, VieneuUnits.SENTENCE_END)
+            .map { said.subList(it[0], it[1] + 1).filter { word -> word.isNotEmpty() }.joinToString(" ") }.toMutableList())
+        return toks to listOf(half(parts[0].first, at), half(at + 1, parts[0].last)) + parts.drop(1)
+    }
+
     private const val EMOJI = "[\\x{1f600}-\\x{1f64f}\\x{1f300}-\\x{1f5ff}\\x{1f680}-\\x{1f6ff}\\x{1f700}-\\x{1f77f}\\x{1f780}-\\x{1f7ff}\\x{1f800}-\\x{1f8ff}" +
         "\\x{1f900}-\\x{1f9ff}\\x{1fa00}-\\x{1fa6f}\\x{1fa70}-\\x{1faff}\\x{2600}-\\x{26ff}\\x{2700}-\\x{27bf}\\x{1f1e6}-\\x{1f1ff}]+"
     private val emoji = Regex(EMOJI)
@@ -228,7 +263,7 @@ class SupertonicEngine(
 
 /**
  * Paragraph -> one clip, the phone's `SupertonicProvider._speak` + `synthesize`: the units of VieNeu ([VieneuUnits], up to
- * [SupertonicText.MAX_CHARS] characters; the book's origin and own readings applied as for VieNeu - readings after the names), each unit's text through sea-g2p's normaliser ([normalize]: numbers, dates, times spelled out),
+ * [SupertonicText.MAX_CHARS] characters, the first one cut short - [SupertonicText.units]; the book's origin and own readings applied as for VieNeu - readings after the names), each unit's text through sea-g2p's normaliser ([normalize]: numbers, dates, times spelled out),
  * one take per unit seeded from voice + text, raised [SupertonicText.louder], joined with the desktop's minimum pauses; word timings spread
  * by syllables ([VieneuSpeaker.timed]).
  */
@@ -240,7 +275,7 @@ class SupertonicSpeaker(
 ) {
     /** [live]: the paragraph the listener is waiting for streams - each unit goes to it as soon as it is read ([LocalLive]). */
     fun speak(engine: SupertonicSynth, name: String, text: String, origin: String? = null, readings: Map<String, String>? = null, live: LocalLive? = null): VieneuSpeaker.Spoken {
-        val (tokens, units) = VieneuUnits.units(text, SupertonicText.MAX_CHARS, origin, readings)
+        val (tokens, units) = SupertonicText.units(text, origin, readings)
         val waves = ArrayList<FloatArray>()
         val pauses = ArrayList<Double>()
         for (unit in units) {
@@ -346,7 +381,7 @@ object SupertonicVoices {
         val name = voice.removePrefix("$PREFIX:")
         if (name !in NAMES) throw VoiceException("Không có giọng Supertonic này.", reason = "voice")
         val (loaded, speaker) = ready(VoiceSpeed.isFast(tag))
-        val live = LocalLive.here(out, text, SupertonicText.MAX_CHARS, origin, readings) // the paragraph the listener waits for: unit by unit
+        val live = LocalLive.here(out) { SupertonicText.units(text, origin, readings) } // the paragraph the listener waits for: unit by unit
         val spoken = try {
             speaker.speak(loaded, name, text, origin, readings, live)
         } catch (failure: OutOfMemoryError) {

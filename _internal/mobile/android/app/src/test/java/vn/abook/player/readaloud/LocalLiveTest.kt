@@ -148,10 +148,10 @@ class LocalLiveTest {
     fun aOneUnitParagraphDoesNotStream() {
         val out = File(dir, "one.wav")
         LiveClips.receiving(Target()) {
-            assertEquals("its first unit IS the clip: no sooner sound", null, LocalLive.here(out, "Trời hôm nay đẹp quá.", 140, null, null))
-            assertTrue(LocalLive.here(out, text, 140, null, null) != null)
+            assertEquals("its first unit IS the clip: no sooner sound", null, LocalLive.here(out) { VieneuUnits.units("Trời hôm nay đẹp quá.", 140) })
+            assertTrue(LocalLive.here(out) { VieneuUnits.units(text, 140) } != null)
         }
-        assertEquals("no listener waiting", null, LocalLive.here(out, text, 140, null, null))
+        assertEquals("no listener waiting", null, LocalLive.here(out) { VieneuUnits.units(text, 140) })
     }
 
     @Test
@@ -175,16 +175,16 @@ class LocalLiveTest {
         assertEquals("một khúc: không có luồng, đọc cả đoạn", 293, LocalLive.charsBeforeStart(listOf(293), 0.0132))
         assertEquals("không bao giờ theo kịp: tới khúc cuối", 410, LocalLive.charsBeforeStart(listOf(10, 400), LocalLive.AUDIO_PER_CHAR))
         assertTrue("nghe nhanh hơn thì phải đọc nhiều hơn mới bắt đầu", LocalLive.charsBeforeStart(listOf(100, 100, 100), 0.04, speed = 2.0) > LocalLive.charsBeforeStart(listOf(100, 100, 100), 0.04))
-        assertEquals(300, LocalLive.maxCharsOf("supertonic:F1#fast5"))
-        assertEquals(140, LocalLive.maxCharsOf("vieneu:nano/Đức Trí"))
-        assertEquals(256, LocalLive.maxCharsOf("vieneu:turbo/x"))
-        assertEquals(null, LocalLive.maxCharsOf("edge:vi-VN-HoaiMyNeural"))
+        assertEquals("Supertonic: khúc đầu được cắt ngắn", SupertonicText.units(this.text, null, null).second.map { it.first to it.last }, LocalLive.unitsOf("supertonic:F1#fast5", this.text, null, null)!!.second.map { it.first to it.last })
+        assertEquals(VieneuUnits.units(this.text, 140).second.size, LocalLive.unitsOf("vieneu:nano/Đức Trí", this.text, null, null)!!.second.size)
+        assertEquals(VieneuUnits.units(this.text, 256).second.size, LocalLive.unitsOf("vieneu:turbo/x", this.text, null, null)!!.second.size)
+        assertEquals(null, LocalLive.unitsOf("edge:vi-VN-HoaiMyNeural", this.text, null, null))
         val sentence = "Một hai ba bốn năm sáu bảy tám chín mười mười một mười hai mười ba mười bốn mười lăm mười sáu mười bảy."
         val text = "$sentence $sentence"
         val start = LocalLive.charsBeforeStreamStarts("vieneu:nano/x", text, null, null, 0.0132)
         assertTrue("đoạn nhiều khúc: giữ tới khúc đầu", start in 1 until text.length)
         assertEquals("tốc độ giọng chưa đo: cả đoạn", text.length, LocalLive.charsBeforeStreamStarts("vieneu:nano/x", text, null, null, null))
         assertEquals("giọng không đọc theo khúc: cả đoạn", text.length, LocalLive.charsBeforeStreamStarts("edge:x", text, null, null, 0.0132))
-        assertEquals("Supertonic gói tới 300 ký tự một khúc: không có luồng", text.length, LocalLive.charsBeforeStreamStarts("supertonic:F1", text, null, null, 0.0132))
+        assertTrue("Supertonic: khúc đầu cắt ngắn nên đoạn 212 ký tự cũng có luồng", LocalLive.charsBeforeStreamStarts("supertonic:F1", text, null, null, 0.0132) in 1 until text.length)
     }
 }

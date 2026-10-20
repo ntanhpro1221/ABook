@@ -121,8 +121,9 @@ def reporting(make: Callable[[str, Any], Any] | None) -> Callable[[str, Any], An
 
 def plan(provider: Any, native: str, text: str, origin: str | None, readings: Any) -> tuple[list[str], list[vieneu.Unit]]:
     """Chữ hiện + các khúc của đoạn, đúng như nhà cung cấp sẽ chia (`vieneu.units` với cỡ khúc của giọng)."""
-    limit = vieneu.MAX_CHARS[native.partition("/")[0]] if provider.id == vieneu.PREFIX else supertonic.MAX_CHARS
-    return vieneu.units(text, limit, origin, provider.speaks_english, readings)
+    if provider.id == vieneu.PREFIX:
+        return vieneu.units(text, vieneu.MAX_CHARS[native.partition("/")[0]], origin, provider.speaks_english, readings)
+    return supertonic.cut(text, origin, provider.speaks_english, readings)  # khúc đầu của Supertonic được cắt ngắn
 
 
 def for_clip(listener: Any, provider: Any, native: str, text: str, origin: str | None, readings: Any, speed: float = 1.0) -> LocalStream | None:
