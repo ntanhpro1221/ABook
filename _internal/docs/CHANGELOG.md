@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.113] - 2026-10-20
+
 ### Nghe ngay
 
 - Giọng trên máy (Supertonic, VieNeu): đoạn máy đã đọc trước mà bạn nghe tới lúc nó còn đọc dở giờ cũng phát ngay khi phần đầu xong, thay vì đứng chờ cả đoạn (trên máy tính chỉ dùng CPU, đoạn dài 544 chữ có tiếng sau 4,6 giây thay vì 8,3 giây). Mở chương trên điện thoại, tiêu đề chương không còn bị bỏ khi đoạn đầu bắt đầu phát đúng lúc ấy.
