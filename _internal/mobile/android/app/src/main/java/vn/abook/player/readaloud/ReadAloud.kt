@@ -1044,6 +1044,8 @@ object ReadAloud {
             return
         }
         liveNow = job
+        // Clip đầu đang giữ chờ đoạn này ([holdOpening]) phát TRƯỚC, đoạn này nối sau nó: `waiting` còn đó thì [deliver] thay cả hàng đợi và tiêu đề mất.
+        releaseOpening()
         // Dời chỗ nạp TRƯỚC khi đặt vào ExoPlayer (như [onClipReady]): setMediaItems báo đổi mục ngay trong lúc gọi.
         feedSegment = job.segment + 1
         deliver(listOf(itemFor(job.chap, job.segment, Uri.parse(LiveClips.uri(job.entry.id)), VoiceGain.db(job.voice), job.resume?.baseMs ?: 0L)), 0L)
@@ -1286,7 +1288,8 @@ object ReadAloud {
 
     /**
      * Mở chương (hay nhảy) bằng giọng trên máy mà clip đầu ngắn (tiêu đề) sẽ hết trước khi đoạn kế đọc xong: chưa phát vội - người nghe vẫn thấy "đang chuẩn bị" thêm tối đa
-     * [ReadAheadPolicy.OPENING_HOLD_MAX_MS] (ước theo tốc độ đã đo của giọng, [ReadAheadPolicy.openingHoldMs]), đoạn kế xong sớm thì phát sớm. Khoảng chờ dời vào lúc bắt đầu thay
+     * [ReadAheadPolicy.OPENING_HOLD_MAX_MS] (ước theo tốc độ đã đo của giọng, [ReadAheadPolicy.openingHoldMs]), đoạn kế xong sớm thì phát sớm. Đoạn kế nhiều khúc phát luồng (livejoin): giữ tới lúc
+     * luồng của nó đủ điều kiện bắt đầu ([LocalLive.charsBeforeStreamStarts], [onLiveStarted] nhả ngay), không phải tới khi đọc xong cả đoạn. Khoảng chờ dời vào lúc bắt đầu thay
      * vì thành chỗ im giữa tiêu đề và đoạn đầu (a65). [pump] vẫn đọc đoạn kế như thường vì `waiting` còn đó. True = đã giữ.
      */
     private fun holdOpening(chap: Chap, segment: Int, clip: Clip, target: Target, item: MediaItem, offset: Long): Boolean {
@@ -1294,8 +1297,13 @@ object ReadAloud {
         val next = nextSpeakable(chap, segment) ?: return false
         val text = chap.paragraphs[next]
         val bookId = Playback.bookId
-        val cached = runCatching { cache().contains(voiceId, text, originOf(bookId), readingsOf(bookId)) }.getOrDefault(false)
-        val wait = ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, if (cached) null else text.length, runCatching { speeds().secondsPerChar(voiceId) }.getOrNull())
+        val origin = originOf(bookId)
+        val readings = readingsOf(bookId)
+        val cached = runCatching { cache().contains(voiceId, text, origin, readings) }.getOrDefault(false)
+        val perChar = runCatching { speeds().secondsPerChar(voiceId) }.getOrNull()
+        // Đoạn kế nhiều khúc thì nhập luồng được ngay khi đủ điều kiện bắt đầu ([onLiveStarted]): chỉ cần giữ tới lúc ấy, không phải tới khi đọc xong cả đoạn.
+        val chars = if (cached) null else LocalLive.charsBeforeStreamStarts(voiceId, text, origin, readings, perChar, (Playback.player?.playbackParameters?.speed ?: 1f).toDouble())
+        val wait = ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, chars, perChar)
         if (wait <= 0) return false
         val token = generation
         opening = Opening(token, item, offset)

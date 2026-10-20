@@ -309,11 +309,15 @@ object LivePolicy {
     val LOCAL = setOf("vieneu", "supertonic")
 
     /**
-     * Lượt đọc này có phát luồng cho ExoPlayer không? Chỉ giọng Edge (nhà cung cấp có xếp hàng theo rank; có mạng) hay giọng trên máy ([LOCAL]), đoạn người nghe đang đứng chờ (`rank` 0), không phải lần hỏi thăm ngầm; và không phải tua theo thanh thời gian
+     * Lượt đọc này có phát luồng cho ExoPlayer không? Giọng Edge (có mạng) chỉ cho đoạn người nghe đang đứng chờ (`rank` 0: nhà cung cấp xếp hàng theo rank, đoạn đọc trước nhường chỗ kết nối). Giọng trên máy ([LOCAL])
+     * cho MỌI đoạn, kể cả đọc trước (livejoin): máy chậm thì trình phát tới đoạn kế khi nó còn đang đọc dở - đoạn ấy đã nằm trong hàng đợi từ lúc đủ điều kiện bắt đầu ([LocalLive.readyToPlay]) nên nhập luồng được
+     * thay vì đợi đọc xong cả đoạn; giọng trên máy không có hàng đợi kết nối để nhường. Không phải lần hỏi thăm ngầm; và không phải tua theo thanh thời gian
      * tới giữa đoạn chưa đọc (`waitingOffsetMs` > 0 mà không bấm chữ - `waitingWord` < 0): chỗ ấy ở sâu trong clip, phải đợi gần hết clip mới tới nên đọc cả đoạn như cũ. `waitingOffsetMs` null = không có chỗ chờ (hàng đợi cạn).
      */
     fun streams(voice: String, online: Boolean, rank: Int, probe: Boolean, waitingOffsetMs: Long?, waitingWord: Int): Boolean {
         val provider = ClipCache.split(voice).first
-        return ((online && provider == "edge") || provider in LOCAL) && rank == 0 && !probe && (waitingOffsetMs == null || waitingOffsetMs <= 0 || waitingWord >= 0)
+        val seekDeepInside = waitingOffsetMs != null && waitingOffsetMs > 0 && waitingWord < 0
+        if (probe || seekDeepInside) return false
+        return provider in LOCAL || (online && provider == "edge" && rank == 0)
     }
 }

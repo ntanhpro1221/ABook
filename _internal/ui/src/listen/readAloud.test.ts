@@ -1495,6 +1495,25 @@ describe("nhảy tới câu xa: lượt xin cũ không chặn câu vừa nhảy 
     return signals;
   }
 
+  it("giọng trên máy: mọi lượt xin (cả đoạn đọc trước) mang onDevice để nguồn phát luồng; giọng trực tuyến thì không (livejoin)", async () => {
+    for (const serial of [true, false]) {
+      const s = setup({ chapter });
+      s.track.serial = () => serial;
+      const flags: (boolean | undefined)[] = [];
+      const inner = s.track.fetchClip;
+      s.track.fetchClip = (voice, text, o) => {
+        if (!o?.cachedOnly) flags.push(o?.onDevice);
+        return inner(voice, text, o);
+      };
+      s.engine.load(s.trackInfo, 0, true);
+      await flush();
+      await s.arrive(LONG[0]);
+      expect(flags.length).toBeGreaterThan(1); // đoạn đang chờ + đoạn đọc trước
+      expect(flags.every((flag) => flag === true)).toBe(serial);
+      if (!serial) expect(flags.every((flag) => flag === undefined)).toBe(true);
+    }
+  });
+
   it("giọng trên máy: nhảy xa thì lượt đang đọc của đoạn bỏ dở bị huỷ, đoạn vừa nhảy tới được xin ngay - không lỗi (uxfix70)", async () => {
     const s = setup({ chapter });
     s.track.serial = () => true;

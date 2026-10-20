@@ -18,7 +18,7 @@ class LiveStartTest {
     fun onlyTheParagraphTheListenerWaitsForOnEdgeStreams() {
         assertTrue(LivePolicy.streams("edge:vi-VN-HoaiMyNeural", online = true, rank = 0, probe = false, waitingOffsetMs = null, waitingWord = -1))
         assertTrue(LivePolicy.streams("edge:vi-VN-HoaiMyNeural", true, 0, false, 0L, -1)) // đầu chương / nhảy tới đầu đoạn
-        assertFalse("rank >= 1 (đọc trước) không phát luồng", LivePolicy.streams("edge:v", true, 1, false, null, -1))
+        assertFalse("rank >= 1 (đọc trước) không phát luồng", LivePolicy.streams("edge:v", true, 1, false, null, -1)) // giọng Edge nhường chỗ kết nối
         assertFalse("hỏi thăm ngầm", LivePolicy.streams("edge:v", true, 0, true, null, -1))
         assertFalse("giọng khác", LivePolicy.streams("azure:v", true, 0, false, null, -1))
         assertFalse("giọng khác", LivePolicy.streams("device:vi", true, 0, false, null, -1))
@@ -27,7 +27,11 @@ class LiveStartTest {
         assertTrue(LivePolicy.streams("vieneu:turbo/x", true, 0, false, null, -1))
         assertTrue(LivePolicy.streams("vieneu:nano/x", false, 0, false, null, -1))
         assertTrue(LivePolicy.streams("supertonic:F1#fast5", false, 0, false, null, -1))
-        assertFalse("rank >= 1 (đọc trước) không phát luồng", LivePolicy.streams("supertonic:F1", false, 1, false, null, -1))
+        // livejoin: giọng trên máy cũng phát luồng đoạn ĐỌC TRƯỚC (rank >= 1), để trình phát tới khi đoạn còn đang đọc thì nhập luồng; Edge thì không (nhường chỗ kết nối)
+        assertTrue("đọc trước bằng giọng trên máy phát luồng", LivePolicy.streams("supertonic:F1", false, 1, false, null, -1))
+        assertTrue(LivePolicy.streams("vieneu:nano/x", false, 3, false, null, -1))
+        assertFalse("hỏi thăm ngầm", LivePolicy.streams("vieneu:nano/x", false, 0, true, null, -1))
+        assertFalse("thanh thời gian giữa đoạn chưa đọc", LivePolicy.streams("supertonic:F1", false, 0, false, 9_000L, -1))
     }
 
     @Test
