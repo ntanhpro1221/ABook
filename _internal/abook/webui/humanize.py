@@ -93,6 +93,8 @@ def status_label(phase: str, stage: str, *, active: bool) -> str:
         # Worker đã chạy nhưng chưa làm câu nào (đang nạp model): "Chưa bắt đầu" cạnh nút Dừng là mâu thuẫn.
         return "Đang khởi động" if active else "Chưa bắt đầu"
     doing = {"analysis": "phân tích truyện", "casting": "phân vai", "synthesis": "thu âm"}[phase]
+    if phase == "analysis" and stage == "speaker_pass":
+        doing = "xác định người nói từng câu"  # lượt speaker_pass.py, sau khi cả truyện đã phân tích
     return f"Đang {doing}" if active else f"Tạm ngưng lúc {doing}"
 
 

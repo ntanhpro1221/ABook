@@ -271,7 +271,7 @@ export function upcomingStatus(book: ListenBook, canOpen: boolean): string {
     if (book.producing && book.pauseReason) return `Đang tạm dừng ${where}`;
     return book.producing ? `Đang làm ${where}` : `Chưa có chương nghe được · làm ${where}`;
   }
-  const eta = book.eta && book.eta.phase === "analysis" ? `chương đầu nghe được sau khoảng ${formatLength(book.eta.seconds + 600)}` : "đang chuẩn bị";
+  const eta = book.eta && (book.eta.phase === "analysis" || book.eta.phase === "speaker") ? `chương đầu nghe được sau khoảng ${formatLength(book.eta.seconds + 600)}` : "đang chuẩn bị";
   if (book.producing && book.pauseReason) {
     return book.pauseReason === "battery" ? "Đang tạm dừng · máy đang chạy pin" : `Đang tạm dừng${canOpen ? " · bấm để làm tiếp" : ""}`;
   }

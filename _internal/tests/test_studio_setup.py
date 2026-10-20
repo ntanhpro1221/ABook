@@ -535,6 +535,66 @@ def test_a_published_model_carries_the_chat_template_it_was_measured_with(tmp_pa
     }]
 
 
+def test_the_speaker_model_and_its_token_counter_come_with_the_analysis_model_they_are_paired_to(
+        tmp_path: Path, ollama: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Lượt "người nói từng câu" chạy giữa một cuốn, lúc ấy không được tự tải (policy) - nên Studio cài model người nói và
+    bộ đếm token cùng lúc model phân tích; ghim bước "llm" đổi theo bản của chúng; model không có cặp thì như cũ."""
+    from abook import speaker_pass
+
+    analysis = b"phan-tich" * 500
+    speaker = b"nguoi-noi" * 500
+    counter = b'{"tokenizer": true}'
+    models = {}
+    for name, weights in (("abook-test:v1", analysis), ("abook-test-speaker:v1", speaker)):
+        part = Download(name.replace(":", "-") + ".gguf", "https://example.invalid/" + name, hashlib.sha256(weights).hexdigest(),
+                        len(weights))
+        models[name] = studio_setup.PublishedModel(name, (part,), part.sha256, part.size)
+        monkeypatch.setitem(studio_setup.PUBLISHED_MODELS, name, models[name])
+    monkeypatch.setitem(speaker_pass.PAIRED_SPEAKER_MODELS, "abook-test:v1", "abook-test-speaker:v1")
+    tokenizer = Download("tokenizer.json", "https://example.invalid/tokenizer.json", hashlib.sha256(counter).hexdigest(), len(counter))
+    monkeypatch.setattr(studio_setup, "SPEAKER_TOKENIZER", tokenizer)
+    served = {models["abook-test:v1"].parts[0].name: analysis, models["abook-test-speaker:v1"].parts[0].name: speaker,
+              "tokenizer.json": counter}
+    fetched: list[str] = []
+
+    def fetch(item: Download, target: Path, progress, cancelled) -> Path:
+        fetched.append(item.name)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(served[item.name])
+        progress(item.size, item.size)
+        return target
+
+    setup = StudioSetup(tmp_path / "Studio", tmp_path, fetch=fetch, gpu=lambda: None, analysis_model="abook-test:v1",
+                        ollama_address=ollama)
+    setup._step_llm()
+    assert [body["model"] for body in FakeOllama.created] == ["abook-test:v1", "abook-test-speaker:v1"]
+    assert fetched == ["abook-test-v1.gguf", "abook-test-speaker-v1.gguf", "tokenizer.json"]
+    assert setup.speaker_tokenizer == setup.runtime / "models" / speaker_pass.TOKENIZER_FOLDER / speaker_pass.TOKENIZER_FILE
+    assert setup.speaker_tokenizer.read_bytes() == counter
+    pin = setup._pins()["llm"]
+    assert pin.startswith("abook-test:v1+abook-test-speaker:v1@") and models["abook-test-speaker:v1"].sha256 in pin and tokenizer.sha256 in pin
+
+    fetched.clear()
+    setup._step_llm()
+    assert fetched == ["tokenizer.json"], "model đã có thì không tải lại (bộ đếm đi qua `download`, nó tự bỏ qua file đúng băm)"
+    assert len(FakeOllama.created) == 2
+
+    unpaired = StudioSetup(tmp_path / "Other", tmp_path, fetch=fetch, gpu=lambda: None, analysis_model="qwen3:8b",
+                           ollama_address=ollama)
+    assert unpaired._pins()["llm"] == "qwen3:8b" and unpaired._speaker_model() is None
+
+
+def test_the_speaker_model_is_pinned_to_the_file_the_card_describes() -> None:
+    from abook import speaker_pass
+
+    model = studio_setup.PUBLISHED_MODELS[speaker_pass.SPEAKER_MODEL]
+    assert model.parts[0].sha256 == model.sha256 and model.parts[0].size == model.size > 4_000_000_000
+    card = (Path(__file__).resolve().parents[1] / "docs" / "models" / "abook-speaker-v1.md").read_text(encoding="utf-8")
+    assert model.sha256 in card, "thẻ model ghi đúng băm của file đã ghim"
+    assert speaker_pass.paired_speaker_model("abook-analyzer:v5") == speaker_pass.SPEAKER_MODEL
+    assert studio_setup.SPEAKER_TOKENIZER.sha256 == speaker_pass.TOKENIZER_SHA256
+
+
 def test_the_shipped_templates_are_what_their_models_pin() -> None:
     for model in studio_setup.PUBLISHED_MODELS.values():
         if model.template:

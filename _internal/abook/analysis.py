@@ -7255,7 +7255,9 @@ class OllamaBookAnalyzer:
         except requests.RequestException:
             return False
 
-    def _current_model_digest(self) -> str:
+    def _current_model_digest(self, model: str | None = None) -> str:
+        """Digest Ollama báo cho `model` (mặc định model phân tích); lượt người nói (speaker_pass.py) hỏi model của nó qua cùng đường."""
+        model = self.model if model is None else model
         try:
             response = self.session.get(f"{self.base_url}/api/tags", timeout=10)
             response.raise_for_status()
@@ -7270,7 +7272,7 @@ class OllamaBookAnalyzer:
             (
                 item
                 for item in models
-                if str(item.get("name", "")) == self.model
+                if str(item.get("name", "")) == model
             ),
             None,
         )
@@ -7281,7 +7283,7 @@ class OllamaBookAnalyzer:
         )
         if not digest:
             raise AnalysisModelDigestError(
-                f"Cannot verify digest for locked Ollama model {self.model}"
+                f"Cannot verify digest for locked Ollama model {model}"
             )
         return digest
 
@@ -7298,10 +7300,9 @@ class OllamaBookAnalyzer:
                 f"expected {locked_digest}, observed {current_digest}"
             )
 
-    def ensure_available(self) -> bool:
-        self._model_digest = None
-        if not self.settings.get("enabled", True):
-            return False
+    def ensure_server(self) -> bool:
+        """Ollama đang nghe ở `base_url`; chưa thì khởi động ẩn (log ở runtime/logs). False: không có Ollama / không khởi động được.
+        Pha phân tích và lượt người nói (speaker_pass.py) cùng dùng đường này."""
         executable = shutil.which("ollama")
         if not self._available():
             if not executable:
@@ -7332,6 +7333,15 @@ class OllamaBookAnalyzer:
             else:
                 self._stop_managed_ollama()
                 return False
+        return True
+
+    def ensure_available(self) -> bool:
+        self._model_digest = None
+        if not self.settings.get("enabled", True):
+            return False
+        executable = shutil.which("ollama")
+        if not self.ensure_server():
+            return False
         try:
             response = self.session.get(f"{self.base_url}/api/tags", timeout=10)
             models = [
@@ -7389,14 +7399,15 @@ class OllamaBookAnalyzer:
                 self.log(f"Không tải được {self.model}: {error}")
             return False
 
-    def _install_published_model(self) -> None:
-        """Đúng đường Studio và scripts/setup_windows.ps1 dùng: tải (kiểm băm), đẩy vào Ollama ở `base_url`, tạo model."""
+    def _install_published_model(self, name: str | None = None) -> None:
+        """Đúng đường Studio và scripts/setup_windows.ps1 dùng: tải (kiểm băm), đẩy vào Ollama ở `base_url`, tạo model
+        (`name` mặc định là model phân tích; lượt người nói tải model của nó qua cùng đường)."""
         from .webui.studio_setup import StudioSetup
 
         runtime_root = Path(os.environ.get("ABOOK_RUNTIME") or DEFAULT_RUNTIME_ROOT)
         setup = StudioSetup(runtime_root / "model-install", Path(__file__).resolve().parents[1],
                             ollama_address=self.base_url)
-        setup.install_published_model(self.model, report=self.log)
+        setup.install_published_model(self.model if name is None else name, report=self.log)
 
     def _narrator_of(self, chapter_id: int) -> str:
         """Người kể "tôi" của một chương: người kể theo chương nếu đặt (rỗng = ngôi thứ ba), không thì của cả cuốn."""

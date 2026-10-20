@@ -25,6 +25,7 @@ from typing import Any, ClassVar, Iterable, Iterator
 from . import humanize, listing_cache, word_timing
 from .. import names as renames
 from ..io_utils import atomic_write_bytes
+from ..speaker_pass import SPEAKER_PASS_SECONDS_PER_CHAPTER
 
 DB_NAME = "project.sqlite3"
 SETTINGS_NAME = "book_settings.json"
@@ -32,6 +33,9 @@ FINAL_SEGMENT_STATUSES = ("verified", "warning", "failed")
 ACCEPTED_SEGMENT_STATUSES = ("verified", "warning")
 # Tỉ trọng thời gian thật của hai pha trên máy này (lô 18, 26-09): phân tích 4,7 giờ, thu âm ~5 giờ.
 ANALYSIS_WEIGHT = 0.47
+# Lượt "người nói từng câu" (speaker_pass.py) là ~6 % thời gian cả cuốn (đo 21-10: ~58 giây mỗi chương), tức ~11 % của bước phân tích
+# (0,47 + 0,06): thanh "Phân tích truyện" chỉ đầy khi lượt này xong. Sách không có lượt ấy (không có cặp model) không đổi.
+SPEAKER_PASS_SHARE = 0.06 / (ANALYSIS_WEIGHT + 0.06)
 RATE_WINDOW_SECONDS = 30 * 60.0
 MIN_RATE_SAMPLES = 12
 # Giây làm lại một câu đã thu khi cuốn chưa có chương nào xong để đo (thu + nghe kiểm + đôi lần thu lại): cố ý dư tay trên card
@@ -627,6 +631,22 @@ def not_started(project_root: Path) -> bool:
         return book is not None and str(book["status"]) == "created" and not _analysis_begun(connection)
 
 
+def _speaker_pass(connection: sqlite3.Connection, settings: dict[str, Any], stage: str) -> dict[str, Any] | None:
+    """Lượt "người nói từng câu" của cuốn này: {done, total, active, seconds} (chương đã xong / tổng, đang chạy lượt, giây trung bình mỗi
+    chương đã đo), hoặc None khi sách không có lượt (analysis.speaker_model rỗng - model phân tích không có cặp)."""
+    analysis = settings.get("analysis")
+    if not isinstance(analysis, dict) or not str(analysis.get("speaker_model") or ""):
+        return None
+    total = int(connection.execute("SELECT COUNT(*) FROM chapters").fetchone()[0])
+    try:
+        row = connection.execute("SELECT COUNT(*) AS n, COALESCE(SUM(seconds), 0) AS seconds FROM speaker_pass_chapters").fetchone()
+    except sqlite3.OperationalError:  # sổ tạo trước khi có bảng: chưa có chương nào xong
+        row = {"n": 0, "seconds": 0.0}
+    done = int(row["n"] or 0)
+    seconds = float(row["seconds"] or 0.0) / done if done else SPEAKER_PASS_SECONDS_PER_CHAPTER
+    return {"done": done, "total": total, "active": stage == "speaker_pass", "seconds": seconds}
+
+
 def _analysis_cut(connection: sqlite3.Connection) -> bool:
     """Phân tích đã bắt đầu mà chưa xong: còn câu `pending` (AGENTS.md: khác 0 nghĩa là phân tích chưa xong), hay chưa câu nào
     được tách mà đã có ứng viên phân tích."""
@@ -1135,11 +1155,15 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         # Phân tích dở dang: đã bắt đầu, còn câu chờ, và không có tiến trình nào đang làm (Dừng, hay chết giữa chừng - pha là
         # "stopped" / "error" / "analysis" tuỳ cách ngắt). Chạy tiếp ra cuốn khác với chạy liền mạch.
         analysis_cut = phase != "done" and _analysis_cut(connection)
+        speaker = _speaker_pass(connection, settings, stage)
+        speaker_left = round((speaker["total"] - speaker["done"]) * speaker["seconds"]) if speaker else 0
         eta = None
-        if running and phase == "analysis" and total:
+        if running and phase == "analysis" and total and speaker and speaker["active"]:
+            eta = {"phase": "speaker", "seconds": speaker_left}
+        elif running and phase == "analysis" and total:
             rate = _rate(connection, "status != 'pending'", now)
             if rate:
-                eta = {"phase": "analysis", "seconds": round((total - analyzed) / rate)}
+                eta = {"phase": "analysis", "seconds": round((total - analyzed) / rate) + speaker_left}
         elif running and phase == "synthesis" and total:
             rate = _rate(connection, f"status IN {FINAL_SEGMENT_STATUSES}", now)
             if rate:
@@ -1148,6 +1172,8 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
     chapters = Counter({str(row["status"]): int(row["n"]) for row in chapter_rows})
     chapter_total = sum(chapters.values())
     analysis_fraction = analyzed / total if total else 0.0
+    if speaker and speaker["total"]:
+        analysis_fraction = (1 - SPEAKER_PASS_SHARE) * analysis_fraction + SPEAKER_PASS_SHARE * speaker["done"] / speaker["total"]
     synthesis_fraction = finished / total if total else 0.0
     if phase == "done":
         overall = 1.0
@@ -1207,6 +1233,8 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         },
         "audioSeconds": round(float(audio["seconds"] or 0.0) + redo_seconds, 1),
         "eta": eta,
+        # Lượt "người nói từng câu" (chương xong / tổng), hoặc None khi sách không có lượt: màn dự án ghi tiến độ của nó.
+        "speakerPass": {k: speaker[k] for k in ("done", "total", "active")} if speaker else None,
     }
 
 
