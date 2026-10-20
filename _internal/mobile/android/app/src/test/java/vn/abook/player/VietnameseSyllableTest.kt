@@ -66,4 +66,12 @@ class VietnameseSyllableTest {
         assertTrue(VietnameseSyllable.validSyllable("mãn"))
         assertTrue(VietnameseSyllable.validSyllable(Normalizer.normalize("nguyễn", Normalizer.Form.NFD)))
     }
+
+    @Test
+    fun aReadingThatOnlyChangesTheMarksIsARealReading() {
+        // listener_overrides.pronunciation_problem (soát a70): "thôi" -> "thoi", "Tám" -> "Tâm" là cách đọc khác thật.
+        org.junit.Assert.assertNull(VietnameseReading.problem("thôi", "thoi"))
+        org.junit.Assert.assertNull(VietnameseReading.problem("Tám", "Tâm"))
+        org.junit.Assert.assertEquals(VietnameseReading.NOT_VIETNAMESE, VietnameseReading.problem("thôi", "thoiz"))
+    }
 }

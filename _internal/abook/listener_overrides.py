@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sqlite3
 import tempfile
 from pathlib import Path
@@ -103,8 +104,13 @@ def pronunciation_problem(surface: str, spoken_form: str) -> str | None:
         # Đọc đúng như viết: phép kiểm tự động từ chối (máy không được lười phiên âm), người nghe thì được chọn - "Deck"
         # đọc là "Deck" (tests/test_pronounce_command.py).
         return None
-    from .analysis import _valid_vietnamese_spoken_form
+    from .analysis import _name_candidate_key, _valid_vietnamese_spoken_form, is_vietnamese_syllable
 
+    if _name_candidate_key(spoken_form) == _name_candidate_key(surface):
+        # Chỉ khác dấu ("thôi" -> "thoi", "Tám" -> "Tâm"): với máy đó là "đọc như viết" nên phép kiểm tự động từ chối, với
+        # người nghe là một cách đọc khác thật (soát a70) - chỉ cần mỗi âm tiết là âm tiết tiếng Việt.
+        syllables = [syllable for syllable in re.split(r"[ -]", " ".join(spoken_form.split())) if syllable]
+        return None if syllables and all(is_vietnamese_syllable(syllable) for syllable in syllables) else NOT_VIETNAMESE
     if not _valid_vietnamese_spoken_form(surface, spoken_form):
         return NOT_VIETNAMESE
     return None
