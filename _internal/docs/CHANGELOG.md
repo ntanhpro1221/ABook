@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.115] - 2026-10-20
+
 ### Nhạc nền
 
 - Nhạc nền ít quay lại bài vừa nghe: bài nối tiếp khi một bản hết giữa cảnh giờ cũng được tính là "vừa nghe", nên các chương sau tránh nó. Trên bộ 22 (68 giờ nghe), số lần một bài quay lại trong vòng 1 giờ giảm từ 0,57 xuống 0 mỗi giờ; đổi bài vẫn khoảng 17 lần mỗi giờ, nhạc lệch hẳn không khí từ 7,7% lên 8,0% thời gian nghe. Máy tính và điện thoại cùng đổi.
