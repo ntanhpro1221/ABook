@@ -124,6 +124,13 @@ object VieneuVoices {
         }
     }
 
+    /** Load the engine of [id]'s tier, reading nothing ([vn.abook.player.readaloud.EnginePreload]); counts as a use for the idle release. */
+    @Synchronized
+    fun preload(id: String) {
+        val (tier, name) = id.removePrefix("$PREFIX:").let { it.substringBefore('/') to it.substringAfter('/', "") }
+        ready(tier, name)
+    }
+
     /** One paragraph -> [out] (16-bit WAV at the tier's rate) + words. */
     @Synchronized
     fun synthesize(id: String, text: String, out: File, origin: String? = null, readings: Map<String, String>? = null): Clip {

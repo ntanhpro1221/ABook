@@ -232,6 +232,9 @@ export const httpSource: ListenSource = {
     const result = await api<MusicCues>(`/api/books/${bookId}/music/chapters/${chapterId}`);
     return { ...result, cues: result.cues.map((cue) => ({ ...cue, src: mediaUrl(cue.src) })) };
   },
+  voiceWarm: (voice) => {
+    void api(`/api/readaloud/warm?voice=${encodeURIComponent(voice)}`, { method: "POST" }).catch(() => undefined);
+  },
   musicWarm: (link) => {
     void api(`/api/music/warm?link=${encodeURIComponent(link)}`, { method: "POST" }).catch(() => undefined);
   },

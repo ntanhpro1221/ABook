@@ -85,10 +85,10 @@ class ReadAheadTest {
 
     @Test
     fun openingAChapterWithALocalVoiceWaitsForTheFirstParagraphInsteadOfStallingAfterTheHeading() {
-        // a65 Supertonic: tiêu đề 2,26 s, đoạn đầu 293 ký tự đọc mất ~3,9 s -> im 1,68 s sau tiêu đề; giờ chờ thêm (tối đa 2,5 s) trước khi phát.
+        // a65 Supertonic: tiêu đề 2,26 s, đoạn đầu 293 ký tự đọc mất ~3,9 s -> im 1,68 s sau tiêu đề; giờ chờ thêm (tối đa 1,5 s) trước khi phát.
         val supertonic = 3_940.0 / 1000 / 293
-        assertEquals(1_680.0, ReadAheadPolicy.openingHoldMs(2_260L, 293, supertonic).toDouble(), 5.0)
-        assertEquals("khe dài hơn trần: chờ tới trần 2,5 s", 2_500L, ReadAheadPolicy.openingHoldMs(2_260L, 293, 8_000.0 / 1000 / 293))
+        assertEquals(1_500.0, ReadAheadPolicy.openingHoldMs(2_260L, 293, supertonic).toDouble(), 5.0)
+        assertEquals("khe dài hơn trần: chờ tới trần 1,5 s", 1_500L, ReadAheadPolicy.openingHoldMs(2_260L, 293, 8_000.0 / 1000 / 293))
         // Nano: tiêu đề 3,34 s, đoạn đầu 310 ký tự ~4,1 s -> chờ ~0,74 s.
         val nano = 4_080.0 / 1000 / 310
         assertEquals(740.0, ReadAheadPolicy.openingHoldMs(3_340L, 310, nano).toDouble(), 5.0)
@@ -96,6 +96,17 @@ class ReadAheadTest {
         assertEquals("đoạn kế đã có / không có: phát ngay", 0L, ReadAheadPolicy.openingHoldMs(2_000L, null, supertonic))
         assertEquals("clip đầu dài (nhảy vào đoạn dài): phát ngay", 0L, ReadAheadPolicy.openingHoldMs(20_000L, 300, supertonic))
         assertEquals("giọng chưa đo tốc độ: chờ tới trần, đoạn kế xong sớm thì phát sớm", ReadAheadPolicy.OPENING_HOLD_MAX_MS, ReadAheadPolicy.openingHoldMs(2_000L, 300, null))
+    }
+
+    @Test
+    fun aVoiceSlowerThanListeningIsNotHeldAtTheOpening() {
+        // livejoin3, OPPO thật: Supertonic 0,071 s/ký tự + 2,1 s mỗi khúc (RTF 1,2-2,6): đoạn kế không chạy trước tiếng, giữ chỉ thêm im ở đầu.
+        val slow = 0.071
+        assertEquals(0L, ReadAheadPolicy.openingHoldMs(2_200L, 238, slow))
+        assertEquals("vừa đúng RTF 1", 0L, ReadAheadPolicy.openingHoldMs(2_200L, 238, LocalLive.AUDIO_PER_CHAR))
+        assertEquals("RTF 0,9: vẫn giữ", 1_500L, ReadAheadPolicy.openingHoldMs(2_200L, 238, LocalLive.AUDIO_PER_CHAR * 0.9))
+        assertEquals("nghe nhanh 1,25x: RTF 0,9 thành 1,1 - không giữ", 0L, ReadAheadPolicy.openingHoldMs(2_200L, 238, LocalLive.AUDIO_PER_CHAR * 0.9, 1.25))
+        assertEquals("chưa đo tốc độ: vẫn giữ tới trần", 1_500L, ReadAheadPolicy.openingHoldMs(2_200L, 238, null))
     }
 
     // ---- thử lại ----------------------------------------------------------------------------------------------

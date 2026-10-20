@@ -29,7 +29,7 @@ import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
-import { useBookVoice, useCast, useListenBook, useListenLibrary, useListenMutations, useSource } from "./source";
+import { useBookVoice, useCast, useListenBook, useListenLibrary, useListenMutations, useSource, useWarmVoice } from "./source";
 import { moreMenuHasItems } from "./bookMenu";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
@@ -800,6 +800,7 @@ export function BookScreen({
   const sharer = useShareBook(book ?? ({ id: id ?? "" } as ListenBook));
   // Chương đã "Làm trước" (điện thoại, PrepareAhead.kt): dấu "Đã làm sẵn" ở danh sách chương.
   const voice = useBookVoice(id);
+  useWarmVoice(id); // giọng trên máy: nạp sẵn model lúc mở trang sách, bấm phát không phải chờ
   const prepared = usePreparedChapters(id ?? "", Boolean(book?.chapters?.some((chapter) => chapter.state === "text" && chapter.speech)));
   // Điện thoại: mở sách là hỏi máy tính đã ghép bản mới nhất của hồ sơ nghe (chỗ nghe, tên, hồ sơ vừa chọn bên ấy) -
   // không thì chỉ biết khi chính điện thoại phát hay dừng cuốn này.

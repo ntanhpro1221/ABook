@@ -402,6 +402,14 @@ object SupertonicVoices {
         return Clip(out, spoken.durationMs, spoken.words, voice)
     }
 
+    /** Load the engine of the tier the listener's choice reads now, reading nothing ([EnginePreload]); counts as a use for [IdleEngine]. */
+    @Synchronized
+    fun preload(id: String) {
+        val (voice, _) = VoiceSpeed.split(id)
+        if (voice.removePrefix("$PREFIX:") !in NAMES) return
+        ready(VoiceSpeed.isFast(VoiceSpeed.liveTag(voice)))
+    }
+
     /** Self-benchmark (of the quality tier: "Tự động" of [VoiceSpeed] decides from it) after a download (desktop `SupertonicProvider.benchmark`): load the engine, read "Xin chào." once (not counted: ONNX
      *  Runtime's first run is slower), then [BENCH_TEXT] with the first voice. */
     fun benchmark(): VoiceModule.Benchmark = synchronized(this) {

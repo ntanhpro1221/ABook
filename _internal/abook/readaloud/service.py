@@ -202,7 +202,8 @@ class ReadAloud:
                  rtf: Callable[[str], float | None] = lambda _voice: None,
                  speed: Callable[[str], str] = lambda _voice: "",
                  supertonic_fast_locate: Callable[[], supertonic.Installed | None] | None = None,
-                 model_mark: Callable[[str, str], str] = lambda _voice, _tier: "", clock: Callable[[], float] = time.monotonic) -> None:
+                 model_mark: Callable[[str, str], str] = lambda _voice, _tier: "", clock: Callable[[], float] = time.monotonic,
+                 spare: Callable[[], bool] = lambda: True) -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
         self.cache = ClipCache(self.folder, **kwargs)
@@ -239,6 +240,8 @@ class ReadAloud:
         self._used: dict[str, float] = {}
         self._using: dict[str, int] = {}
         self._idle_timer: threading.Timer | None = None
+        self._spare = spare  # máy còn dư để nạp sẵn model chưa ai bấm nghe ([preload]): không chạy pin yếu, không thiếu RAM
+        self._preloading: set[str] = set()
 
     @property
     def live(self) -> int:
@@ -313,6 +316,52 @@ class ReadAloud:
                 del self._used[name]
                 self.forget(name)
         return idle
+
+    def preload(self, voice_id: str) -> bool:
+        """Nạp sẵn model của giọng trên máy `voice_id` ở luồng nền (trang sách / trình phát của cuốn đang mở): bấm phát không phải chờ nạp (~4,6 s trên OPPO, livejoin3).
+        Không đọc gì; tính như một lần dùng (nhả lại sau [IDLE_SECONDS] không ai dùng). Bỏ qua (False) với giọng không có engine, giọng chưa tải, model đã nạp / đang nạp, hay
+        máy không còn dư (`spare`: chạy pin dưới 20 %, thiếu RAM). Trả ngay; True = đã bắt đầu nạp."""
+        try:
+            provider, native = self._resolve(voice_id)
+        except VoiceError:
+            return False
+        tier = self._speed(voice_id)
+        if tier and provider.id in self.fast:
+            provider = self.fast[provider.id]
+        load = self._loader(provider, native)
+        if load is None or not self._spare():
+            return False
+        with self._idle_guard:
+            slot = f"{id(provider)}:{native}"
+            if slot in self._preloading:
+                return False
+            self._preloading.add(slot)
+
+        def run() -> None:
+            self._engine_use(provider.id, 1)
+            try:
+                load()
+            except Exception:  # noqa: BLE001 - chỉ là nạp sẵn; lỗi thật sẽ hiện khi đọc
+                pass
+            finally:
+                self._engine_use(provider.id, -1)
+                with self._idle_guard:
+                    self._preloading.discard(slot)
+
+        threading.Thread(target=run, name="readaloud-preload", daemon=True).start()
+        return True
+
+    def _loader(self, provider: Provider, native: str) -> Callable[[], Any] | None:
+        """Việc nạp engine của `provider` cho giọng `native` mà không đọc gì; None = giọng này không có engine để nạp sẵn."""
+        if isinstance(provider, supertonic.SupertonicProvider):
+            return lambda: provider.preload(native)
+        if isinstance(provider, vieneu.VieneuProvider):
+            def load() -> None:
+                installed = provider.locate()
+                if installed is not None:
+                    provider.engine(native.partition("/")[0], installed)
+            return load
+        return None
 
     def benchmark(self, provider_id: str, tier: str) -> dict[str, Any]:
         """Tự đo sau khi tải mô-đun (`benchmark` của nhà cung cấp): việc này cũng nạp model, nên tính như một lần dùng."""
