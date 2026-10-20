@@ -191,13 +191,13 @@
     "lines": 15,
     "key": "2:57",
     "pinned": false,
-    "link": "https://example.invalid/n0/t127.mp3",
-    "distance": 0.216,
+    "link": "https://example.invalid/n0/t134.mp3",
+    "distance": 0.218,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
     "stepDb": null,
-    "stopAt": null,
+    "stopAt": 618.215,
     "siblings": []
    },
    {
@@ -210,8 +210,8 @@
     "lines": 11,
     "key": "2:72",
     "pinned": false,
-    "link": "https://example.invalid/n0/t134.mp3",
-    "distance": 0.218,
+    "link": "https://example.invalid/n0/t057.mp3",
+    "distance": 0.46,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -248,8 +248,8 @@
     "lines": 12,
     "key": "4:0",
     "pinned": false,
-    "link": "https://example.invalid/n0/t057.mp3",
-    "distance": 0.46,
+    "link": "https://example.invalid/n0/t130.mp3",
+    "distance": 0.522,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -267,8 +267,8 @@
     "lines": 15,
     "key": "4:12",
     "pinned": false,
-    "link": "https://example.invalid/n0/t130.mp3",
-    "distance": 0.522,
+    "link": "https://example.invalid/n0/t103.mp3",
+    "distance": 0.831,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -286,7 +286,7 @@
     "lines": 16,
     "key": "4:27",
     "pinned": false,
-    "link": "https://example.invalid/n0/t130.mp3",
+    "link": "https://example.invalid/n0/t103.mp3",
     "distance": null,
     "continued": true,
     "silenced": false,
@@ -367,8 +367,8 @@
     "lines": 13,
     "key": "5:22",
     "pinned": false,
-    "link": "https://example.invalid/n0/t103.mp3",
-    "distance": 0.831,
+    "link": "https://example.invalid/n0/t054.mp3",
+    "distance": 0.864,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -386,13 +386,13 @@
     "lines": 7,
     "key": "5:35",
     "pinned": false,
-    "link": "https://example.invalid/n0/t059.mp3",
-    "distance": 0.548,
+    "link": "https://example.invalid/n0/t066.mp3",
+    "distance": 0.815,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
     "stepDb": null,
-    "stopAt": 369.685,
+    "stopAt": null,
     "siblings": []
    },
    {
@@ -405,8 +405,8 @@
     "lines": 13,
     "key": "5:42",
     "pinned": false,
-    "link": "https://example.invalid/n0/t054.mp3",
-    "distance": 0.864,
+    "link": "https://example.invalid/n0/t022.mp3",
+    "distance": 0.871,
     "continued": false,
     "silenced": false,
     "pinUnavailable": false,
@@ -471,14 +471,15 @@
     },
     {
      "start": 498.615,
-     "end": 628.615,
-     "link": "https://example.invalid/n0/t127.mp3",
-     "key": "2:57"
+     "end": 618.215,
+     "link": "https://example.invalid/n0/t134.mp3",
+     "key": "2:57",
+     "tail": true
     },
     {
      "start": 628.615,
      "end": 715.815,
-     "link": "https://example.invalid/n0/t134.mp3",
+     "link": "https://example.invalid/n0/t057.mp3",
      "key": "2:72"
     }
    ],
@@ -494,13 +495,13 @@
     {
      "start": 0.0,
      "end": 119.015,
-     "link": "https://example.invalid/n0/t057.mp3",
+     "link": "https://example.invalid/n0/t130.mp3",
      "key": "4:0"
     },
     {
      "start": 119.015,
      "end": 374.53,
-     "link": "https://example.invalid/n0/t130.mp3",
+     "link": "https://example.invalid/n0/t103.mp3",
      "key": "4:12"
     },
     {
@@ -534,20 +535,19 @@
     {
      "start": 187.915,
      "end": 308.685,
-     "link": "https://example.invalid/n0/t103.mp3",
+     "link": "https://example.invalid/n0/t054.mp3",
      "key": "5:22"
     },
     {
      "start": 308.685,
-     "end": 369.685,
-     "link": "https://example.invalid/n0/t059.mp3",
-     "key": "5:35",
-     "tail": true
+     "end": 374.27,
+     "link": "https://example.invalid/n0/t066.mp3",
+     "key": "5:35"
     },
     {
      "start": 374.27,
      "end": 476.68,
-     "link": "https://example.invalid/n0/t054.mp3",
+     "link": "https://example.invalid/n0/t022.mp3",
      "key": "5:42"
     }
    ]
@@ -608,14 +608,15 @@
     },
     {
      "start": 498.615,
-     "end": 628.615,
-     "link": "https://example.invalid/n0/t127.mp3",
-     "key": "2:57"
+     "end": 618.215,
+     "link": "https://example.invalid/n0/t134.mp3",
+     "key": "2:57",
+     "tail": true
     },
     {
      "start": 628.615,
      "end": 718.315,
-     "link": "https://example.invalid/n0/t134.mp3",
+     "link": "https://example.invalid/n0/t057.mp3",
      "key": "2:72"
     }
    ],
@@ -632,13 +633,13 @@
     {
      "start": 0.0,
      "end": 119.015,
-     "link": "https://example.invalid/n0/t057.mp3",
+     "link": "https://example.invalid/n0/t130.mp3",
      "key": "4:0"
     },
     {
      "start": 119.015,
      "end": 374.53,
-     "link": "https://example.invalid/n0/t130.mp3",
+     "link": "https://example.invalid/n0/t103.mp3",
      "key": "4:12"
     },
     {
@@ -672,20 +673,19 @@
     {
      "start": 187.915,
      "end": 308.685,
-     "link": "https://example.invalid/n0/t103.mp3",
+     "link": "https://example.invalid/n0/t054.mp3",
      "key": "5:22"
     },
     {
      "start": 308.685,
-     "end": 369.685,
-     "link": "https://example.invalid/n0/t059.mp3",
-     "key": "5:35",
-     "tail": true
+     "end": 374.27,
+     "link": "https://example.invalid/n0/t066.mp3",
+     "key": "5:35"
     },
     {
      "start": 374.27,
      "end": 479.18,
-     "link": "https://example.invalid/n0/t054.mp3",
+     "link": "https://example.invalid/n0/t022.mp3",
      "key": "5:42"
     }
    ]
@@ -735,6 +735,12 @@
     1798.0,
     true
    ],
+   "https://example.invalid/n0/t022.mp3": [
+    0.0,
+    330.0,
+    328.0,
+    true
+   ],
    "https://example.invalid/n0/t054.mp3": [
     0.0,
     330.0,
@@ -757,6 +763,12 @@
     0.0,
     260.0,
     258.0,
+    true
+   ],
+   "https://example.invalid/n0/t066.mp3": [
+    0.0,
+    75.0,
+    73.0,
     true
    ],
    "https://example.invalid/n0/t093.mp3": [

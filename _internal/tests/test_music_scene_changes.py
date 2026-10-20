@@ -292,6 +292,52 @@ def test_editing_one_chapter_reuses_the_sibling_hand_overs_of_untouched_scenes_w
     assert pinned[3]["link"] == before[3]["link"] and pinned[5]["link"] == tracks[2]["link"]  # mảnh sau chơi tiếp bài anh em ấy
 
 
+def _sibling_book(chapters: int) -> tuple[list[dict], list[dict], dict]:
+    """Mỗi chương một cảnh êm ~9 phút: bài đầu hết ở giây 450 - trong mảnh CUỐI, nên không mảnh nào chơi tiếp bài anh em (SPEC_rs: cả hai đều vào `recent`)."""
+    tracks = [_track("a", 0.25, -0.15, -0.2, 450), _track("s", 0.27, -0.18, -0.2, 450), _track("x", 0.2, -0.1, -0.15, 450),
+              _track("y", 0.22, -0.2, -0.25, 450)]
+    scenes = [dict(scene, chapterId=chapter) for chapter in range(1, chapters + 1) for scene in _chapter()[:3]]
+    return scenes, tracks, {track["link"]: track for track in tracks}
+
+
+def test_a_sibling_handed_over_to_is_penalised_as_recently_used_in_the_next_chapter(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(music_select, "SHORT_TRACK_PENALTY", 0.0)
+    scenes, tracks, info = _sibling_book(2)
+    a, s, x = (tracks[i]["link"] for i in range(3))
+    first = choose(scenes[:3], _near(tracks), book_key="b", track_info=info.get)
+    assert first[0]["link"] == a and [item["link"] for item in first[2]["siblings"]] == [s], "chương 1: a, rồi nối s"
+    head = scenes[3]
+    # Không có phạt thì s hợp hơn x; chỉ nối bài ĐẦU vào `recent` (như trước) thì chương 2 vẫn chọn s, vì s chưa bị phạt.
+    assert music_select.rank(head, _near(tracks), book_key="b", exclude={a})[0]["link"] == s
+    assert music_select.rank(head, _near(tracks), book_key="b", recent=[a], exclude={a})[0]["link"] == s
+    recent = [a, s]
+    assert music_select.rank(head, _near(tracks), book_key="b", recent=recent, exclude={a})[0]["link"] != s
+    chosen = choose(scenes, _near(tracks), book_key="b", track_info=info.get)
+    assert chosen[3]["link"] not in {a, s}, "chương 2 mở bằng bài khác cả bài đầu lẫn bài anh em của chương 1"
+
+
+def test_rebuilding_with_kept_siblings_gives_the_same_plan_as_a_fresh_build_chapter_after_chapter(
+        monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(music_select, "SHORT_TRACK_PENALTY", 0.0)
+    scenes, tracks, info = _sibling_book(4)
+    fresh = choose(scenes, _near(tracks), book_key="b", track_info=info.get)
+    assert any(item.get("siblings") for item in fresh), "phép thử có nghĩa: có nối bài anh em"
+    keys = [item["key"] for item in fresh]
+    old = {item["key"]: [sibling["link"] for sibling in item.get("siblings") or []] for item in fresh}
+
+    def plan(chosen: list[dict]) -> list[tuple]:
+        return [(item["link"], [(sibling["at"], sibling["link"]) for sibling in item.get("siblings") or []]) for item in chosen]
+
+    # Giữ nguyên cả cuốn: dùng lại bài anh em cũ, không xếp hạng.
+    keep = {item["key"]: item["link"] for item in fresh}
+    assert plan(choose(scenes, _near(tracks), book_key="b", keep=keep, kept_siblings=old, track_info=info.get)) == plan(fresh)
+    # Chỉ chương 1-2 giữ (nhánh `reuse`), chương 3-4 xếp lại: `recent` của chúng phải y hệt lần dựng liền mạch.
+    half = {key: link for key, link in keep.items() if key in keys[:6]}
+    rebuilt = choose(scenes, _near(tracks), book_key="b", keep=half, kept_siblings={key: old[key] for key in half},
+                     track_info=info.get)
+    assert plan(rebuilt) == plan(fresh)
+
+
 def test_a_rechosen_scene_avoids_the_track_playing_before_it_and_the_track_its_next_neighbour_keeps() -> None:
     tracks = [_track("a", 0.25, -0.15, -0.2, 600), _track("b", 0.25, -0.16, -0.2, 600), _track("c", 0.2, -0.3, -0.3, 600)]
     scenes = [{"chapterId": 1, "firstSegment": first, "valence": 0.25, "arousal": -0.15, "confidence": 0.8,
@@ -331,3 +377,9 @@ def test_each_track_is_checked_for_this_machine_once_per_choice() -> None:
     choose(_chapter() + [dict(scene, chapterId=8) for scene in _chapter()], _near(tracks), book_key="b",
            available=available, track_info={t["link"]: t for t in tracks}.get)
     assert counts and max(counts.values()) == 1
+
+
+def test_played_links_lists_every_track_in_play_order_without_adjacent_repeats() -> None:
+    chosen = [{"link": "a", "siblings": [{"at": 1.0, "link": "b"}]}, {"link": "b"}, {"link": None},
+              {"link": "c", "siblings": [{"at": 2.0, "link": "a"}, {"at": 3.0, "link": "a"}]}, {"link": "a"}]
+    assert music_select.played_links(chosen) == ["a", "b", "c", "a"]
