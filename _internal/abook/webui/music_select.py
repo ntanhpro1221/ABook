@@ -290,6 +290,10 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             intact = False  # bài anh em cũ vừa bị bỏ / máy này không lấy được: xếp hạng lại từ đây
         reuse = list(kept_siblings[key]) if intact else None
         carried = link is not None and link == playing  # bài của mảnh trước chơi tiếp sang mảnh này
+        # `recent` = mọi bài theo đúng thứ tự phát (SPEC_rs): bài đầu cảnh vào ngay khi được chọn, bài anh em vào lúc nó nối - vòng
+        # sau (và chương sau) phạt cả hai. Đoạn kề chọn trúng bài đang chơi: chơi tiếp, không phải bài "mới" (không tính là lặp).
+        if link and (not recent or recent[-1] != link):
+            recent.append(link)
         if result.get("continued"):
             tension = float(scene.get("tension") or 0.0)
             result["stepDb"] = max(-STEP_MAX_DB, min(STEP_MAX_DB, STEP_DB_PER_TENSION * (tension - head_tension)))
@@ -326,17 +330,27 @@ def choose(scenes: list[dict[str, Any]], candidates_near: Callable[[float, float
             if sibling:
                 playing = sibling
                 used.add(sibling)
+                if not recent or recent[-1] != sibling:
+                    recent.append(sibling)
                 siblings.append({"at": round(max(start, now), 3), "link": sibling})
         if siblings:
             result["siblings"] = siblings
         if link:
             used.add(link)
-            # Đoạn kề chọn trúng bài đang chơi: chơi tiếp, không phải bài "mới" (không tính là lặp).
-            if not recent or recent[-1] != link:
-                recent.append(link)
         chosen.append(result)
     _hold_steps(chosen)
     return chosen
+
+
+def played_links(chosen: Iterable[dict[str, Any]]) -> list[str]:
+    """`recent` của `build` dựng lại từ các đoạn đã chọn: mọi bài theo đúng thứ tự phát (bài đầu cảnh rồi các bài anh em), đoạn kề
+    cùng bài không tính lặp."""
+    recent: list[str] = []
+    for scene in chosen:
+        for link in [scene.get("link"), *(sibling.get("link") for sibling in scene.get("siblings") or [])]:
+            if link and (not recent or recent[-1] != link):
+                recent.append(link)
+    return recent
 
 
 def scene_heads(scenes: list[dict[str, Any]]) -> list[int]:

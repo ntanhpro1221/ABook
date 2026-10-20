@@ -1763,10 +1763,7 @@ class App:
         catalog = self.music_catalog()
         genres = (catalog.manifest().get("taxonomy") or {}).get("genres") or {}
         genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None
-        recent: list[str] = []  # như music_select.choose: bài đã chơi ở mấy đoạn trước, đoạn kề cùng bài không tính lặp
-        for scene in scenes[:index]:
-            if scene.get("link") and (not recent or recent[-1] != scene["link"]):
-                recent.append(scene["link"])
+        recent = music_select.played_links(scenes[:index])
         near = {"all": self._music_candidates, "catalog": lambda v, a: catalog.near(v, a, radius=1),
                 "mine": lambda v, a: self.my_music.near(v, a, radius=1)}[pool]
         return music_select.rank(scenes[index], near, book_key=book_key or book_id(path),

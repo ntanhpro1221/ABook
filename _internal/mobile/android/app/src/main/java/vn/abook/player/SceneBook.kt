@@ -137,19 +137,26 @@ class SceneBook(
         for (previous in order.subList(0, position).asReversed()) {
             val record = read(previous, textSha(previous)) ?: break
             found.add(0, record)
-            runs = linkRuns(found).size
+            runs = linkRuns(found, false).size
             if (runs > SceneChooser.RECENT_SCENES) break
         }
-        return linkRuns(found).toMutableList()
+        return linkRuns(found, true).toMutableList()
     }
 
-    private fun linkRuns(records: List<JSONObject>): List<String> {
+    /** Các bài theo đúng thứ tự phát (`music_select.build` nối cả bài anh em vào `recent`); `withSiblings` false chỉ đếm bài đầu cảnh (cỡ lịch sử như `SceneBook.history`). */
+    private fun linkRuns(records: List<JSONObject>, withSiblings: Boolean): List<String> {
         val runs = ArrayList<String>()
+        fun add(link: String) { if (runs.isEmpty() || runs.last() != link) runs.add(link) }
         for (record in records) {
             val scenes = record.optJSONArray("scenes") ?: continue
             for (index in 0 until scenes.length()) {
-                val link = scenes.getJSONObject(index).optString("link", "").takeIf { it.isNotEmpty() && it != "null" } ?: continue
-                if (runs.isEmpty() || runs.last() != link) runs.add(link)
+                val scene = scenes.getJSONObject(index)
+                val link = scene.optString("link", "").takeIf { it.isNotEmpty() && it != "null" } ?: continue
+                add(link)
+                val siblings = scene.optJSONArray("siblings")
+                if (withSiblings && siblings != null) for (at in 0 until siblings.length()) {
+                    siblings.getJSONObject(at).optString("link", "").takeIf { it.isNotEmpty() && it != "null" }?.let(::add)
+                }
             }
         }
         return runs
