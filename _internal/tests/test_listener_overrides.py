@@ -199,6 +199,14 @@ def test_a_request_follows_the_same_contract_as_a_machine_reading() -> None:
     assert pronunciation_problem("Hailkes", "Hlkx") == NOT_VIETNAMESE
 
 
+def test_a_reading_that_only_changes_the_marks_is_a_real_reading() -> None:
+    # Soát a70: "thôi" -> "thoi", "Tám" -> "Tam"/"Tâm" bị từ chối vì bỏ dấu thì giống chữ viết; với người nghe đó là cách đọc khác thật.
+    assert pronunciation_problem("thôi", "thoi") is None
+    assert pronunciation_problem("Tám", "Tam") is None
+    assert pronunciation_problem("Tám", "Tâm") is None
+    assert pronunciation_problem("thôi", "thoiz") == NOT_VIETNAMESE
+
+
 class _Tts:
     def __init__(self) -> None:
         self.forgotten = 0

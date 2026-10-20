@@ -105,6 +105,11 @@ object VietnameseReading {
         if (words(surface).size != 1) return MULTI_WORD
         // Đọc đúng như viết: máy không được lười phiên âm, người nghe thì được chọn.
         if (surfaceKey(spokenForm) == surfaceKey(surface)) return null
+        // Chỉ khác dấu ("thôi" -> "thoi", "Tám" -> "Tâm", soát a70): với người nghe là cách đọc khác thật - mỗi âm tiết là âm tiết tiếng Việt là đủ.
+        if (nameKey(spokenForm) == nameKey(surface)) {
+            val syllables = words(BookEdits.pyStrip(spokenForm)).joinToString(" ").split(' ', '-').filter { it.isNotEmpty() }
+            return if (syllables.isNotEmpty() && syllables.all { isSyllable(it) }) null else NOT_VIETNAMESE
+        }
         return if (validSpokenForm(surface, spokenForm)) null else NOT_VIETNAMESE
     }
 
