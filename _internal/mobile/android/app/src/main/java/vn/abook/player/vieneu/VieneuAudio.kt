@@ -87,44 +87,59 @@ object VieneuAudio {
         return cap
     }
 
-    /** numpy's float32 `add.reduce` over a contiguous run: pairwise summation in blocks of 8 (numpy `pairwise_sum`), starting from 0. */
-    private fun pairwiseSum(data: FloatArray, from: Int, n: Int, value: (Float) -> Float): Float {
+    /** What [pairwiseSum] adds up for a sample: x * x ([squared]) or |x|. Not a lambda: a function value boxes every sample, and this runs over whole clips. */
+    private fun term(x: Float, squared: Boolean): Float = if (squared) x * x else Math.abs(x)
+
+    /** numpy's float32 `add.reduce` over a contiguous run of `x * x` ([squared]) or `|x|`: pairwise summation in blocks of 8 (numpy `pairwise_sum`), starting from 0. */
+    private fun pairwiseSum(data: FloatArray, from: Int, n: Int, squared: Boolean): Float {
         if (n < 8) {
             var res = 0f
-            for (i in 0 until n) res += value(data[from + i])
+            for (i in 0 until n) res += term(data[from + i], squared)
             return res
         }
         if (n <= 128) {
-            val r = FloatArray(8) { value(data[from + it]) }
+            val r = FloatArray(8) { term(data[from + it], squared) }
             var i = 8
             while (i < n - n % 8) {
-                for (j in 0 until 8) r[j] += value(data[from + i + j])
+                for (j in 0 until 8) r[j] += term(data[from + i + j], squared)
                 i += 8
             }
             var res = ((r[0] + r[1]) + (r[2] + r[3])) + ((r[4] + r[5]) + (r[6] + r[7]))
-            while (i < n) res += value(data[from + i++])
+            while (i < n) res += term(data[from + i++], squared)
             return res
         }
         var half = n / 2
         half -= half % 8
-        return pairwiseSum(data, from, half, value) + pairwiseSum(data, from + half, n - half, value)
+        return pairwiseSum(data, from, half, squared) + pairwiseSum(data, from + half, n - half, squared)
     }
 
-    /** Per-window means of `value(x)` over windows of [win] samples (numpy `.reshape(n, win).mean(1)` in float32). */
-    private fun windowMeans(wav: FloatArray, win: Int, value: (Float) -> Float): FloatArray =
-        FloatArray(wav.size / win) { pairwiseSum(wav, it * win, win, value) / win.toFloat() }
+    /** Per-window means of `x * x` ([squared]) or `|x|` over windows of [win] samples (numpy `.reshape(n, win).mean(1)` in float32). */
+    private fun windowMeans(wav: FloatArray, win: Int, squared: Boolean): FloatArray =
+        FloatArray(wav.size / win) { pairwiseSum(wav, it * win, win, squared) / win.toFloat() }
 
-    /** (leading silence, trailing silence) in samples, by the mean |x| over 10 ms windows (core_utils.edge_silence, -45 dB). */
+    /** (leading silence, trailing silence) in samples, by the mean |x| over 10 ms windows (core_utils.edge_silence, -45 dB). Only the windows from each
+     *  end up to the first loud one are summed (each window's mean is the same number [windowMeans] gives): the middle of a clip is never looked at. */
     fun edgeSilence(wav: FloatArray, rate: Int): IntArray {
         val win = maxOf(1, (0.01 * rate).toInt())
-        val env = windowMeans(wav, win) { Math.abs(it) }
-        if (env.isEmpty()) return intArrayOf(wav.size, 0)
+        val count = wav.size / win
+        if (count == 0) return intArrayOf(wav.size, 0)
         val threshold = EDGE_THRESHOLD.toFloat()
-        val first = env.indexOfFirst { it > threshold }
-        if (first < 0) return intArrayOf(wav.size, 0)
-        val last = env.indexOfLast { it > threshold }
+        fun loud(window: Int) = pairwiseSum(wav, window * win, win, false) / win.toFloat() > threshold
+        var first = 0
+        while (first < count && !loud(first)) first++
+        if (first == count) return intArrayOf(wav.size, 0)
+        var last = count - 1
+        while (!loud(last)) last--
         return intArrayOf(first * win, wav.size - (last + 1) * win)
     }
+
+    /** The last ramp [fadeRamp] made: `n` of one rate is the same for every chunk, and its [n] StrictMath.cos calls are the slowest thing left in [trimAndFade] of a short chunk. */
+    @Volatile private var lastRamp: FloatArray? = null
+
+    private fun fadeRamp(n: Int): FloatArray = lastRamp?.takeIf { it.size == n } ?: FloatArray(n) { i ->
+        val x = if (n == 1) 0.0 else if (i == n - 1) Math.PI else i * (Math.PI / (n - 1)) // np.linspace(0, pi, n)
+        (0.5 - 0.5 * StrictMath.cos(x)).toFloat()
+    }.also { lastRamp = it }
 
     /** Trim the silence at both ends (keeping 40 ms), then a 15 ms raised-cosine fade at both edges (the Nano output). */
     fun trimAndFade(wav: FloatArray, rate: Int): FloatArray {
@@ -136,10 +151,7 @@ object VieneuAudio {
         val out = if (to > from) wav.copyOfRange(from, to) else FloatArray(0)
         val n = minOf((0.015 * rate).toInt(), out.size / 2)
         if (n > 0) {
-            val ramp = FloatArray(n) { i ->
-                val x = if (n == 1) 0.0 else if (i == n - 1) Math.PI else i * (Math.PI / (n - 1)) // np.linspace(0, pi, n)
-                (0.5 - 0.5 * StrictMath.cos(x)).toFloat()
-            }
+            val ramp = fadeRamp(n)
             for (i in 0 until n) out[i] *= ramp[i]
             for (i in 0 until n) out[out.size - n + i] *= ramp[n - 1 - i]
         }
@@ -157,7 +169,7 @@ object VieneuAudio {
     /** Bursts of speech at least 30 ms long, split by gaps over 60 ms, on the 10 ms RMS envelope (core_utils.count_speech_bursts). */
     fun countSpeechBursts(wav: FloatArray, rate: Int): Int {
         val hop = maxOf(1, (rate * 0.010).toInt())
-        val means = windowMeans(wav, hop) { it * it }
+        val means = windowMeans(wav, hop, true)
         if (means.isEmpty()) return 0
         val env = FloatArray(means.size) { sqrt(means[it]) }
         val peak = env.max().toDouble()
