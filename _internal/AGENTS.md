@@ -28,6 +28,7 @@ Máy đích hiện tại: Ryzen 9845HX, RTX 5060 Laptop, RAM 32 GB. Không hard-
 import + natural sort TXT
 → segment toàn book
 → Qwen phân tích toàn book, checkpoint theo batch
+→ hoà giải nhãn cục bộ + cách đọc tên
 → lượt người nói từng câu (`speaker_pass.py`, nếu sách có cặp model), checkpoint theo chương
 → character registry theo speaker name + pronunciation
 → khóa voice mapping/preset/seed/settings
@@ -426,7 +427,7 @@ Module chính:
 - `pipeline.py`: orchestration và state transition.
 - `database.py`: schema/transaction API.
 - `analysis.py`: Qwen structured analysis.
-- `speaker_pass.py`: lượt "người nói từng câu" (B41) sau khi phân tích xong cả sách và TRƯỚC character registry/casting: hỏi lại
+- `speaker_pass.py`: lượt "người nói từng câu" (B41) sau khi phân tích xong cả sách và sau hai lượt hoà giải, ngay TRƯỚC character registry/casting (đúng thứ tự lượt đo): hỏi lại
   người nói của từng câu `dialogue`/`thought` bằng model đi cặp (`abook-speaker:v1`); dựng đề trùng từng byte với mã đo
   (`tests/fixtures/speaker_pass`). Khoá model + digest + tokenizer theo sách (`speaker_pass_state`), commit theo chương
   (`speaker_pass_chapters`), nhãn gốc của model phân tích giữ ở `speaker_pass_labels`.
