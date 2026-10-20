@@ -426,6 +426,15 @@ cũng không đổi chữ model trả: 3/3 prompt giống từng byte trên qwen
 
 ---
 
+### Lượt người nói từng câu (B41) vào dây chuyền: sự kiện phiên bản (2026-10-21)
+
+Sau khi model phân tích mặc định (B9, `abook-analyzer:v5`) làm xong cả sách, model `abook-speaker:v1` (`lora-b38pq-s1234-4b`) hỏi lại
+người nói của từng câu thoại/nội tâm; kind và câu kể giữ của B9. Đo 56 chương (Model, 21-10): 79,00 / 78,51 so với B9 73,96 / 73,59
+(Δ +4,98; cổng 19 chương +3,73; Δ - c·SE = +1,69), giá +~58 giây mỗi chương (~6 %). Đề dựng trùng từng byte với mã đo
+(718 đề thật + 34 đề bịa phủ mọi nhánh cắt khối). Hệ quả: `speaker_pass.py` vào cả hai danh sách file khoá nên hash khoá đổi
+(`dd5ef8bb` -> `7498c75f`) và fingerprint stage casting đổi: sách đang dở pha phân tích trước bản này không resume được.
+Sách phân tích bằng model khác B9 không có cặp, không chạy lượt.
+
 ## v0.2.0-lo02 — 27/30, và **không chương nào** hỏng ở tầng QA chương
 
 Chương 030..059, 3.762 segment, gieo từ `lo01b_768c98bb4f`.

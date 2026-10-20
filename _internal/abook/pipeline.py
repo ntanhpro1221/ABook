@@ -14,6 +14,7 @@ import numpy as np
 import soundfile as sf
 
 from .analysis import AnalysisRequestStopped, OllamaBookAnalyzer
+from .speaker_pass import SpeakerPass
 from .asr import (
     ASR_INCONCLUSIVE,
     ASR_LOCKED_NAME_ANCHOR_MISMATCH,
@@ -1060,6 +1061,9 @@ class BookPipeline:
             if self.db.casting_is_finalized():
                 self.log("Voice casting đã khóa từ lần chạy trước; giữ nguyên mapping khi resume.")
             else:
+                # Sau khi phân tích xong cả cuốn, TRƯỚC mọi bước đụng tên/phân vai: nhãn người nói của từng câu thoại/nội tâm
+                # do model người nói trả (speaker_pass.py); từ đây trở đi là nguồn speaker của câu nói, bước phân vai chạy như cũ.
+                self._run_speaker_pass(analyzer)
                 self._state("running", "Đang khóa nhân vật theo tên và phân vai.")
                 self._state("running", "Đang chuẩn hóa cách đọc tên tiếng Anh.")
                 # Before names are locked: a speaker the analysis could only describe may
@@ -1116,6 +1120,33 @@ class BookPipeline:
         self._export_reports()
         self._progress("Xuất báo cáo", 1, 1)
         self._export_book_file()
+
+    def _run_speaker_pass(self, analyzer: OllamaBookAnalyzer) -> None:
+        """Lượt "người nói từng câu" (speaker_pass.py): mỗi chương một giao dịch, nên Dừng/tạm dừng/crash ở đâu cũng làm tiếp được từ
+        chương dở. Sách không có model người nói (khoá lúc tạo) thì bước này không làm gì."""
+        speaker_pass = SpeakerPass(analyzer, self.db, self.settings, self.log)
+        if not speaker_pass.pending():
+            return
+        self.db.update_book(status=BookStatus.ANALYZING.value, stage="speaker_pass")
+        self._state("running", "Đang xác định người nói của từng câu thoại.")
+        label = "Xác định người nói từng câu"
+
+        def progress(done: int, total: int, lines_done: int, lines: int) -> None:
+            self.emit("speaker_pass_progress", {"done": done, "total": total, "lines_done": lines_done, "lines": lines})
+            self._progress(label, done, total)
+
+        analyzer.release_model()  # dỡ model phân tích; model người nói nạp một lần cho cả lượt, nhả khi xong
+        try:
+            speaker_pass.run(
+                self.stop_requested,
+                progress=progress,
+                before_chapter=lambda index: self._resource_gate(
+                    f"speaker pass chapter {index}", release_active=speaker_pass.release_model
+                ),
+            )
+        finally:
+            speaker_pass.release_model()
+        self.db.update_book(status=BookStatus.ANALYZING.value, stage="full_book_analysis")
 
     def _export_book_file(self, *, only_if_missing: bool = False) -> None:
         """Đầu ra của máy sản xuất (chủ sách 27-09): cuốn đã XONG thành một file của app (webui/bookfile.py) trong

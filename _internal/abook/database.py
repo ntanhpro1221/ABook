@@ -2237,6 +2237,38 @@ CREATE TABLE IF NOT EXISTS analysis_state (
     updated_at REAL NOT NULL
 );
 
+-- Lượt "người nói từng câu" (speaker_pass.py), chạy SAU khi phân tích xong cả cuốn và TRƯỚC phân vai. Khoá model theo sách như
+-- model phân tích (tên + digest; đổi giữa chừng là dừng); mỗi chương một giao dịch: nhãn mới vào `segments.speaker`, nhãn gốc của
+-- model phân tích giữ ở `speaker_pass_labels` để kiểm/so, và dòng của chương trong `speaker_pass_chapters` (chưa có dòng này là chưa
+-- xong - resume làm lại chương từ đầu). Không nâng SCHEMA_VERSION (như analysis_responses): mã cũ bỏ qua bảng lạ.
+CREATE TABLE IF NOT EXISTS speaker_pass_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    model_name TEXT NOT NULL,
+    model_digest TEXT NOT NULL,
+    analysis_model TEXT NOT NULL,
+    tokenizer_sha256 TEXT NOT NULL,
+    algorithm TEXT NOT NULL,
+    locked_at REAL NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS speaker_pass_chapters (
+    chapter_id INTEGER PRIMARY KEY REFERENCES chapters(id) ON DELETE CASCADE,
+    spoken_lines INTEGER NOT NULL,
+    changed_lines INTEGER NOT NULL,
+    unknown_lines INTEGER NOT NULL,
+    calls INTEGER NOT NULL,
+    seconds REAL NOT NULL,
+    stats_json TEXT NOT NULL,
+    completed_at REAL NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS speaker_pass_labels (
+    segment_id INTEGER PRIMARY KEY REFERENCES segments(id) ON DELETE CASCADE,
+    chapter_id INTEGER NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+    analysis_speaker TEXT NOT NULL,
+    pass_speaker TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS runtime_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     timestamp REAL NOT NULL,
@@ -3175,6 +3207,91 @@ class ProjectDB:
                 raise RuntimeError(
                     "Analysis model differs from the model name/digest locked for this book"
                 )
+
+    # ---- lượt "người nói từng câu" (speaker_pass.py) ----------------------------------------------------------
+
+    def speaker_pass_lock(self) -> dict[str, Any] | None:
+        with self.connect() as conn:
+            row = conn.execute("SELECT * FROM speaker_pass_state WHERE id=1").fetchone()
+        if row is None:
+            return None
+        return {key: row[key] for key in row.keys()}
+
+    def lock_speaker_pass(self, *, model_name: str, model_digest: str, analysis_model: str, tokenizer_sha256: str,
+                          algorithm: str) -> None:
+        """Khoá model người nói của sách (tên + digest + cặp phân tích + tokenizer + thuật toán). Đã khoá thì phải trùng từng mục -
+        không thì dừng (fail-closed như `lock_analysis_model`): nửa cuốn nhãn bằng model này, nửa cuốn bằng model khác là hai quyển."""
+        wanted = {"model_name": str(model_name).strip(), "model_digest": str(model_digest).strip(),
+                  "analysis_model": str(analysis_model).strip(), "tokenizer_sha256": str(tokenizer_sha256).strip(),
+                  "algorithm": str(algorithm).strip()}
+        if not all(wanted.values()):
+            raise ValueError("Speaker pass lock needs a model name, digest, analysis model, tokenizer hash and algorithm")
+        with self.transaction() as conn:
+            row = conn.execute("SELECT * FROM speaker_pass_state WHERE id=1").fetchone()
+            if row is None:
+                conn.execute(
+                    "INSERT INTO speaker_pass_state(id,model_name,model_digest,analysis_model,tokenizer_sha256,algorithm,locked_at) "
+                    "VALUES(1,?,?,?,?,?,?)",
+                    (*wanted.values(), time.time()),
+                )
+                return
+            differs = [key for key, value in wanted.items() if str(row[key]) != value]
+            if differs:
+                raise RuntimeError(
+                    "Speaker pass differs from what is locked for this book: " + ", ".join(sorted(differs))
+                )
+
+    def speaker_pass_done_chapters(self) -> set[int]:
+        with self.connect() as conn:
+            return {int(row[0]) for row in conn.execute("SELECT chapter_id FROM speaker_pass_chapters")}
+
+    def speaker_pass_progress(self) -> tuple[int, int]:
+        """(số chương đã xong lượt, tổng số chương)."""
+        with self.connect() as conn:
+            done = int(conn.execute("SELECT COUNT(*) FROM speaker_pass_chapters").fetchone()[0])
+            total = int(conn.execute("SELECT COUNT(*) FROM chapters").fetchone()[0])
+        return done, total
+
+    def commit_speaker_pass_chapter(
+        self,
+        chapter_id: int,
+        labels: Sequence[tuple[int, str, str]],
+        stats: dict[str, Any],
+        *,
+        seconds: float,
+    ) -> int:
+        """Ghi kết quả MỘT chương trong một giao dịch: `labels` = (segment_id, nhãn của model phân tích mà lượt đã đọc, nhãn mới).
+        CAS trên nhãn cũ và trên kind (chỉ thoại/nội tâm được đổi người nói); chương đã có dòng kết quả thì từ chối. Trả số câu
+        đổi nhãn."""
+        now = time.time()
+        changed = 0
+        unknown = 0
+        with self.transaction() as conn:
+            if conn.execute("SELECT 1 FROM speaker_pass_chapters WHERE chapter_id=?", (int(chapter_id),)).fetchone():
+                raise RuntimeError("Speaker pass already committed for this chapter")
+            for segment_id, old_speaker, new_speaker in labels:
+                if not str(new_speaker).strip():
+                    raise ValueError("Speaker pass label must be non-empty")
+                cursor = conn.execute(
+                    "UPDATE segments SET speaker=?,updated_at=? WHERE id=? AND chapter_id=? AND speaker=? "
+                    "AND kind IN ('dialogue','thought') AND status!='pending'",
+                    (new_speaker, now, int(segment_id), int(chapter_id), old_speaker),
+                )
+                if cursor.rowcount != 1:
+                    raise RuntimeError("Speaker pass CAS failed: segment changed since the pass read it")
+                conn.execute(
+                    "INSERT INTO speaker_pass_labels(segment_id,chapter_id,analysis_speaker,pass_speaker) VALUES(?,?,?,?)",
+                    (int(segment_id), int(chapter_id), old_speaker, new_speaker),
+                )
+                changed += 1 if new_speaker != old_speaker else 0
+                unknown += 1 if new_speaker == "UNKNOWN" else 0
+            conn.execute(
+                "INSERT INTO speaker_pass_chapters(chapter_id,spoken_lines,changed_lines,unknown_lines,calls,seconds,stats_json,"
+                "completed_at) VALUES(?,?,?,?,?,?,?,?)",
+                (int(chapter_id), len(labels), changed, unknown, int(stats.get("calls", 0)), float(seconds),
+                 json.dumps(stats, ensure_ascii=False, sort_keys=True), now),
+            )
+        return changed
 
     def finalize_casting(self) -> None:
         with self.connect() as conn:

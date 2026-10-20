@@ -107,6 +107,19 @@ describe("formatEta", () => {
     // Bước phân tích gần xong vẫn còn thu âm phía sau: câu nói về bước, không hứa về cả cuốn.
     expect(etaOf({ eta: { phase: "analysis", seconds: 20 }, progress: { analysis: 0.97, synthesis: 0 } })).toBe("pha phân tích sắp xong");
   });
+
+  it("lượt xác định người nói từng câu có tên riêng, tính theo số chương đã xong của nó", () => {
+    const pass = { done: 3, total: 40 };
+    expect(etaOf({ eta: { phase: "speaker", seconds: 2200 }, progress: { analysis: 0.95, synthesis: 0 }, speakerPass: pass })).toBe(
+      "pha xác định người nói còn khoảng 37 phút",
+    );
+    expect(etaOf({ eta: { phase: "speaker", seconds: 30 }, progress: { analysis: 0.95, synthesis: 0 }, speakerPass: pass })).toBe(
+      "pha xác định người nói còn dưới 2 phút",
+    );
+    expect(etaOf({ eta: { phase: "speaker", seconds: 30 }, progress: { analysis: 1, synthesis: 0 }, speakerPass: { done: 39, total: 40 } })).toBe(
+      "pha xác định người nói sắp xong",
+    );
+  });
 });
 
 describe("formatLengthUp (soát a26 L10)", () => {

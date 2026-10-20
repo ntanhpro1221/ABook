@@ -157,7 +157,7 @@ class StudioRunner(BackgroundRunner):
 
     def start(self, project_root: Path) -> None:
         if not self.setup.installed():
-            raise RuntimeError("Máy này chưa cài Studio - vào Dự án, bấm \"Cài Studio\" (một lần, khoảng 20 GB).")
+            raise RuntimeError("Máy này chưa cài Studio - vào Dự án, bấm \"Cài Studio\" (một lần, khoảng 25 GB).")
         status = self.setup.status()
         if status["damaged"]:
             raise RuntimeError(f"Studio mất {', '.join(status['damaged'])} (file đã bị xoá hay hỏng) - vào Dự án, bấm "

@@ -249,7 +249,11 @@ function ProductionPanel({ book }: { book: BookSummary }) {
           state={analysis}
           icon={BookOpenText}
           title="Phân tích truyện"
-          detail="Đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu."
+          detail={
+            book.speakerPass?.active
+              ? `Xác định người nói từng câu: ${book.speakerPass.done}/${book.speakerPass.total} chương.`
+              : "Đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu."
+          }
           progress={book.progress.analysis}
         />
         <Step

@@ -12,7 +12,7 @@ import { friendlySetupError } from "./errorText";
 import { formatSize } from "./musicLocal";
 import { noStudioLine, studioFit, type StudioFit, type StudioGpu } from "./studioFit";
 
-// App Windows đóng gói chỉ mang phần nghe; Studio - thư viện dây chuyền + model, ~20 GB - tải khi người dùng bấm
+// App Windows đóng gói chỉ mang phần nghe; Studio - thư viện dây chuyền + model, ~25 GB - tải khi người dùng bấm
 // (webui/studio_setup.py). Bản dev không có thẻ này: Studio là runtime cạnh mã nguồn (`info.studio` = null).
 
 interface SetupStep {
@@ -63,7 +63,7 @@ export function usePairedComputers(enabled: boolean): { id: string; name: string
 export const STUDIO_WHAT = "Studio là phần biến truyện chữ thành sách nói: model đọc hiểu truyện, giọng đọc, nghe lại để kiểm từng câu.";
 // Thời gian một chương: số đo của dây chuyền trên card 8 GB của máy thử, phân tích + thu (docs/ANALYSIS_RESEARCH.md, mục máy Mac mini).
 export const STUDIO_NEEDS =
-  "Cần card đồ hoạ NVIDIA từ 8 GB bộ nhớ (card 6-8 GB có thể chạy nhưng chưa thử), tải khoảng 20 GB, ổ đĩa trống 30 GB. Trên card 8 GB mỗi chương " +
+  "Cần card đồ hoạ NVIDIA từ 8 GB bộ nhớ (card 6-8 GB có thể chạy nhưng chưa thử), tải khoảng 25 GB, ổ đĩa trống 35 GB. Trên card 8 GB mỗi chương " +
   "mất khoảng 7-10 phút (đọc hiểu truyện + thu giọng). Cài một lần; nghe sách không cần Studio.";
 
 /** Máy này không làm sách nói được: nói thật, và nếu đã ghép máy tính khác thì mời tạo ở đó (Studio của máy ấy mở ngay trong app này -
