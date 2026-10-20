@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.114] - 2026-10-20
+
 ### Sửa cách đọc
 
 - Cách đọc chỉ khác dấu so với chữ viết giờ lưu được, cả trên máy tính lẫn điện thoại: ví dụ "thôi" đọc là "thoi", "Tám" đọc là "Tâm". Trước đây app báo "chưa nhận là cách đọc tiếng Việt" dù đó là âm tiết tiếng Việt thật.
