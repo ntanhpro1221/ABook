@@ -226,7 +226,8 @@ try {
 }
 Invoke-NativeChecked { & ollama pull qwen3:8b } "Tải Qwen3 8B"
 Write-Host "Tải model phân tích của ABook (Hugging Face NGDtuanh/abook-analyzer)..."
-Invoke-NativeChecked { & $Python -m abook.webui.studio_setup --install-model abook-analyzer:v4 } "Tải model phân tích ABook"
+Invoke-NativeChecked { & $Python -m abook.webui.studio_setup --install-model abook-analyzer:v5 } "Tải model phân tích ABook"
+Invoke-NativeChecked { & $Python -m abook.webui.studio_setup --install-model abook-speaker:v1 } "Tải model người nói ABook"
 Write-Host "Tải Qwen3 4B cho profile Nhanh..."
 Invoke-NativeChecked { & ollama pull qwen3:4b } "Tải Qwen3 4B"
 

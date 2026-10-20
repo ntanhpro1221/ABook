@@ -218,8 +218,8 @@ def test_a_release_cannot_be_built_while_the_speaker_model_is_unpublished(monkey
     release = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(release)
     model = studio_setup.PUBLISHED_MODELS[speaker_pass.SPEAKER_MODEL]
-    pinned = dataclasses.replace(model, parts=tuple(Download(part.name, part.url.replace("PIN_REVISION", "d" * 40), part.sha256, part.size)
-                                                    for part in model.parts))
+    pinned = dataclasses.replace(model, parts=tuple(Download(part.name, re.sub(r"/resolve/[^/]+/", "/resolve/" + "d" * 40 + "/", part.url),
+                                                             part.sha256, part.size) for part in model.parts))
     monkeypatch.setitem(studio_setup.PUBLISHED_MODELS, speaker_pass.SPEAKER_MODEL, pinned)
     release.check_speaker_model_pinned()
     unpinned = dataclasses.replace(model, parts=tuple(Download(part.name, part.url.replace("d" * 40, "PIN_REVISION"), part.sha256, part.size)

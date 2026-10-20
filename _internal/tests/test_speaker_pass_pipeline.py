@@ -204,7 +204,7 @@ def test_a_book_without_a_paired_model_has_no_pass(tmp_path: Path, monkeypatch) 
     assert build_settings("high_quality", {"analysis": {"model": ANALYZER}})["analysis"]["speaker_model"] == sp.SPEAKER_MODEL
     for model in ("qwen3:8b", "abook-analyzer:v4", "abook-analyzer:v3"):
         assert build_settings("high_quality", {"analysis": {"model": model}})["analysis"]["speaker_model"] == ""
-    assert build_settings("fast")["analysis"]["speaker_model"] == ""
+    assert build_settings("fast")["analysis"]["speaker_model"] == sp.SPEAKER_MODEL  # cùng model phân tích mặc định -> cùng lượt
     assert build_settings("high_quality", {"analysis": {"model": ANALYZER, "speaker_model": ""}})["analysis"]["speaker_model"] == ""
     db = make_project(tmp_path / "p")
     ollama = FakeOllama(LABELS)
