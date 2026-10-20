@@ -3,6 +3,7 @@ package vn.abook.player.readaloud
 import vn.abook.player.vieneu.VieneuAudio
 import vn.abook.player.vieneu.VieneuSpeaker
 import vn.abook.player.vieneu.VieneuUnits
+import vn.abook.player.vieneu.VieneuVoices
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
@@ -53,6 +54,45 @@ class LocalLive(
                 ahead += length
             }
             return true
+        }
+
+        /** Seconds of sound per character of text assumed when only the machine's work per character is known ([charsBeforeStart]); ~15 characters a second (a65: 293 characters, 16.2 s). */
+        const val AUDIO_PER_CHAR = 0.06
+
+        /** The characters per unit of [voice] ([VieneuUnits.units] limit, as [here] gets it from the voice); null for a voice that does not read by units. */
+        fun maxCharsOf(voice: String): Int? {
+            val (provider, rest) = ClipCache.split(voice)
+            return when (provider) {
+                SupertonicVoices.PREFIX -> SupertonicText.MAX_CHARS
+                VieneuVoices.PREFIX -> VieneuSpeaker.MAX_CHARS[rest.substringBefore('/')]
+                else -> null
+            }
+        }
+
+        /**
+         * How many characters of a paragraph cut into units of [unitChars] must be read before its stream may start ([readyToPlay]) on a machine that works [workPerChar]
+         * seconds per character (sound per character [audioPerChar]). A paragraph of one unit (or one that never gets ahead of the sound) is read whole. The opening hold of
+         * a chapter waits for exactly this time, not for the whole paragraph ([ReadAheadPolicy.openingHoldMs]).
+         */
+        fun charsBeforeStart(unitChars: List<Int>, workPerChar: Double, speed: Double = 1.0, audioPerChar: Double = AUDIO_PER_CHAR): Int {
+            var done = 0
+            for (i in unitChars.indices) {
+                done += unitChars[i]
+                if (readyToPlay(done * audioPerChar, done * workPerChar, done, unitChars.drop(i + 1), speed)) return done
+            }
+            return done
+        }
+
+        /**
+         * The characters of [text] to be read by [voice] before its stream starts ([charsBeforeStart] over the units the voice will cut it into); all of it when the voice is unknown,
+         * its speed is not measured yet ([workPerChar] null) or the paragraph is one unit (no stream, [here] is null).
+         */
+        fun charsBeforeStreamStarts(voice: String, text: String, origin: String?, readings: Map<String, String>?, workPerChar: Double?, speed: Double = 1.0): Int {
+            val max = maxCharsOf(voice)
+            if (workPerChar == null || max == null) return text.length
+            val (tokens, units) = runCatching { VieneuUnits.units(text, max, origin, readings) }.getOrNull() ?: return text.length
+            if (units.size < 2) return text.length
+            return charsBeforeStart(units.map { it.text(tokens).length }, workPerChar, speed)
         }
 
         /** The streaming of a read of [text] into [out] when this thread reads for a listener who waits for it ([LiveClips.receiving]); null otherwise, and for a

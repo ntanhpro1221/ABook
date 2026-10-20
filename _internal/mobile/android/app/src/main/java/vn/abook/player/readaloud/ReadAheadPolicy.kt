@@ -34,7 +34,7 @@ class ReadAheadPolicy(private val base: Int) {
         const val OPENING_HOLD_MAX_MS = 1_500L
 
         /**
-         * Giữ clip đầu (tiêu đề, `firstMs` âm thanh) bao lâu trước khi phát, để đoạn kế (`nextChars` ký tự, chưa có trong bộ đệm - null: không có / đã có) đọc xong trước khi clip đầu hết.
+         * Giữ clip đầu (tiêu đề, `firstMs` âm thanh) bao lâu trước khi phát, để đoạn kế vào được trước khi clip đầu hết (`nextChars` = số ký tự phải đọc trước đó: cả đoạn, hay chỉ các khúc đầu nếu đoạn phát luồng - [LocalLive.charsBeforeStart]; null: không có / đã có trong bộ đệm).
          * `secondsPerChar`: tốc độ đã đo của giọng (null: chưa đo - giữ tới trần, đoạn kế xong sớm thì phát sớm). 0 = phát ngay.
          */
         fun openingHoldMs(firstMs: Long, nextChars: Int?, secondsPerChar: Double?): Long {

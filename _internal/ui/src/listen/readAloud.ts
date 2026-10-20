@@ -85,6 +85,9 @@ export interface ClipOptions {
   /** Bộ máy bỏ lượt xin này (người nghe nhảy đi nơi khác, đổi giọng, đổi chương): nguồn huỷ yêu cầu và đóng kết nối - máy chủ dừng lượt đọc của giọng trên máy giữa các khúc,
    *  CPU rảnh cho đoạn người nghe đang chờ (uxfix70). Lượt bị bỏ hỏng với `reason` "cancelled". Chỉ dùng cho giọng chạy trên máy ([SpeechTrack.serial]). */
   signal?: AbortSignal;
+  /** Giọng chạy trên máy ([SpeechTrack.serial]): phát luồng cả đoạn đọc trước (rank > 0) - giọng trên máy không có hàng chờ kết nối để nhường, và máy chậm thì người nghe tới đoạn kế khi nó còn đang
+   *  đọc dở: nhập luồng thay vì đợi đọc xong cả đoạn (livejoin). */
+  onDevice?: boolean;
   /** Tốc độ người nghe đang phát (1 = thường): giọng trên máy phát luồng chờ đủ tiếng để không đứt giữa chừng ở tốc độ ấy (abook/readaloud/local_stream.py). */
   rate?: number;
 }
@@ -1077,6 +1080,7 @@ export class ReadAloudEngine implements AudioEngine {
     const controller = speech.serial?.() ? new AbortController() : null;
     if (controller) {
       options.signal = controller.signal;
+      options.onDevice = true;
       this.aborts.set(index, { controller, id, epoch, voice });
     }
     // Rank = số đoạn DÀI người nghe phải nghe trước đoạn này ([isLongParagraph]): tiêu đề chương hay một dòng đối thoại đứng trước không đẩy đoạn dài kế nó xuống rank 1 (cắt 3 mảnh thay vì 6).

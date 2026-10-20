@@ -165,4 +165,26 @@ class LocalLiveTest {
         live.failed(VoiceException("Đã bỏ đoạn này.", reason = "cancelled"))
         assertEquals("failed", target.events.last())
     }
+
+    @Test
+    fun theOpeningHoldWaitsForTheStreamToStartNotForTheWholeParagraph() {
+        // Nano a65: 310 ký tự cắt 140 + 140 + 30, máy làm 0,0132 s mỗi ký tự: khúc đầu là đủ để bắt đầu luồng.
+        assertEquals(140, LocalLive.charsBeforeStart(listOf(140, 140, 30), 0.0132))
+        // máy chậm (làm bằng thời gian tiếng, r = 1): một khúc chưa đủ để theo kịp, hai khúc thì đủ.
+        assertEquals(200, LocalLive.charsBeforeStart(listOf(100, 100, 100), LocalLive.AUDIO_PER_CHAR))
+        assertEquals("một khúc: không có luồng, đọc cả đoạn", 293, LocalLive.charsBeforeStart(listOf(293), 0.0132))
+        assertEquals("không bao giờ theo kịp: tới khúc cuối", 410, LocalLive.charsBeforeStart(listOf(10, 400), LocalLive.AUDIO_PER_CHAR))
+        assertTrue("nghe nhanh hơn thì phải đọc nhiều hơn mới bắt đầu", LocalLive.charsBeforeStart(listOf(100, 100, 100), 0.04, speed = 2.0) > LocalLive.charsBeforeStart(listOf(100, 100, 100), 0.04))
+        assertEquals(300, LocalLive.maxCharsOf("supertonic:F1#fast5"))
+        assertEquals(140, LocalLive.maxCharsOf("vieneu:nano/Đức Trí"))
+        assertEquals(256, LocalLive.maxCharsOf("vieneu:turbo/x"))
+        assertEquals(null, LocalLive.maxCharsOf("edge:vi-VN-HoaiMyNeural"))
+        val sentence = "Một hai ba bốn năm sáu bảy tám chín mười mười một mười hai mười ba mười bốn mười lăm mười sáu mười bảy."
+        val text = "$sentence $sentence"
+        val start = LocalLive.charsBeforeStreamStarts("vieneu:nano/x", text, null, null, 0.0132)
+        assertTrue("đoạn nhiều khúc: giữ tới khúc đầu", start in 1 until text.length)
+        assertEquals("tốc độ giọng chưa đo: cả đoạn", text.length, LocalLive.charsBeforeStreamStarts("vieneu:nano/x", text, null, null, null))
+        assertEquals("giọng không đọc theo khúc: cả đoạn", text.length, LocalLive.charsBeforeStreamStarts("edge:x", text, null, null, 0.0132))
+        assertEquals("Supertonic gói tới 300 ký tự một khúc: không có luồng", text.length, LocalLive.charsBeforeStreamStarts("supertonic:F1", text, null, null, 0.0132))
+    }
 }
