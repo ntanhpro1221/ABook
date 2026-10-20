@@ -69,7 +69,7 @@ def text_fixture() -> dict:
     """Parts that need no model files (pytest recomputes them)."""
     paragraphs = []
     for text, origin in PARAGRAPHS:
-        _toks, parts = vieneu.units(text, st.MAX_CHARS, origin, st.SupertonicProvider.speaks_english)
+        _toks, parts = vieneu.units(text, st.MAX_CHARS, origin, st.SupertonicProvider.speaks_english)  # the model-input fixture: units as vieneu cuts them (the opening cut has its own, opening_cut.json)
         units = []
         for unit in parts:
             spoken = st.normalize_pieces(unit.pieces)

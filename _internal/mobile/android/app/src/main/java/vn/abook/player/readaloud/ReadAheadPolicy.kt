@@ -30,8 +30,8 @@ class ReadAheadPolicy(private val base: Int) {
         /** Mở chương bằng giọng trên máy (uxfix72): tiêu đề 2 giây phát xong trước khi đoạn đầu đọc xong - im giữa chừng (a65 máy ảo: Supertonic 1,44 s, Nano 0,74 s). Khoảng hụt ước từ
          *  ngần này trở lên thì dời nó vào lúc bắt đầu (người nghe chịu chờ lúc mở hơn là khựng giữa)... */
         const val OPENING_GAP_MS = 300L
-        /** ...nhưng chờ thêm không quá ngần này. */
-        const val OPENING_HOLD_MAX_MS = 1_500L
+        /** ...nhưng chờ thêm không quá ngần này (livejoin2: 1,5 -> 2,5 s - khe im sau tiêu đề tệ hơn chờ thêm 1 s lúc bắt đầu, a65: tiêu đề 3,34 s + 1,5 s vẫn thiếu ~0,8 s khúc đầu của Nano khi máy bận). */
+        const val OPENING_HOLD_MAX_MS = 2_500L
 
         /**
          * Giữ clip đầu (tiêu đề, `firstMs` âm thanh) bao lâu trước khi phát, để đoạn kế vào được trước khi clip đầu hết (`nextChars` = số ký tự phải đọc trước đó: cả đoạn, hay chỉ các khúc đầu nếu đoạn phát luồng - [LocalLive.charsBeforeStart]; null: không có / đã có trong bộ đệm).

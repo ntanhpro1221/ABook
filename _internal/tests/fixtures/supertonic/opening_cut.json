@@ -1,0 +1,192 @@
+{
+ "about": "Cắt khúc đầu của Supertonic (Nghe ngay): [văn bản, gốc cuốn] -> các khúc (chữ hiện + các câu đem đọc). Máy tính abook/readaloud/supertonic.py cut, điện thoại SupertonicText.units - cùng luật. Sinh bằng scratchpad mkfix.py; sửa luật thì tăng OPENING_CUT ở CẢ HAI nơi.",
+ "cases": [
+  {
+   "name": "ngắn, không cắt",
+   "text": "Trời hôm nay đẹp quá. Chúng ta đi dạo một vòng quanh hồ nhé, anh nghĩ em sẽ thích.",
+   "origin": null,
+   "units": [
+    {
+     "text": "Trời hôm nay đẹp quá. Chúng ta đi dạo một vòng quanh hồ nhé, anh nghĩ em sẽ thích.",
+     "pieces": [
+      "Trời hôm nay đẹp quá.",
+      "Chúng ta đi dạo một vòng quanh hồ nhé, anh nghĩ em sẽ thích."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "238 ký tự, cắt ở ranh câu",
+   "text": "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Cậu bé đứng trên bờ nhìn theo mãi, tay vẫn nắm chặt chiếc nón lá cũ của bà. Gió thổi qua những hàng tre, nghe như có ai đang khe khẽ gọi tên cậu từ rất xa.",
+   "origin": null,
+   "units": [
+    {
+     "text": "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa.",
+     "pieces": [
+      "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa."
+     ]
+    },
+    {
+     "text": "Cậu bé đứng trên bờ nhìn theo mãi, tay vẫn nắm chặt chiếc nón lá cũ của bà. Gió thổi qua những hàng tre, nghe như có ai đang khe khẽ gọi tên cậu từ rất xa.",
+     "pieces": [
+      "Cậu bé đứng trên bờ nhìn theo mãi, tay vẫn nắm chặt chiếc nón lá cũ của bà.",
+      "Gió thổi qua những hàng tre, nghe như có ai đang khe khẽ gọi tên cậu từ rất xa."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "chỉ có dấu phẩy, cắt ở ranh vế",
+   "text": "Anh bước vào căn phòng tối, đặt chiếc đèn lên bàn, kéo ghế ngồi xuống, mở cuốn sổ đã cũ, lật từng trang một cách chậm rãi, rồi thở dài nhìn ra ngoài cửa sổ nơi cơn mưa vẫn chưa chịu dứt",
+   "origin": null,
+   "units": [
+    {
+     "text": "Anh bước vào căn phòng tối, đặt chiếc đèn lên bàn, kéo ghế ngồi xuống, mở cuốn sổ đã cũ,",
+     "pieces": [
+      "Anh bước vào căn phòng tối, đặt chiếc đèn lên bàn, kéo ghế ngồi xuống, mở cuốn sổ đã cũ,"
+     ]
+    },
+    {
+     "text": "lật từng trang một cách chậm rãi, rồi thở dài nhìn ra ngoài cửa sổ nơi cơn mưa vẫn chưa chịu dứt",
+     "pieces": [
+      "lật từng trang một cách chậm rãi, rồi thở dài nhìn ra ngoài cửa sổ nơi cơn mưa vẫn chưa chịu dứt"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "không có ranh trong 40-120",
+   "text": "Anh bước vào căn phòng tối và đặt chiếc đèn lên bàn rồi kéo ghế ngồi xuống mở cuốn sổ đã cũ lật từng trang một cách chậm rãi rồi thở dài nhìn ra ngoài cửa sổ nơi cơn mưa vẫn chưa chịu dứt",
+   "origin": null,
+   "units": [
+    {
+     "text": "Anh bước vào căn phòng tối và đặt chiếc đèn lên bàn rồi kéo ghế ngồi xuống mở cuốn sổ đã cũ lật từng trang một cách chậm rãi rồi thở dài nhìn ra ngoài cửa sổ nơi cơn mưa vẫn chưa chịu dứt",
+     "pieces": [
+      "Anh bước vào căn phòng tối và đặt chiếc đèn lên bàn rồi kéo ghế ngồi xuống mở cuốn sổ đã cũ lật từng trang một cách chậm rãi rồi thở dài nhìn ra ngoài cửa sổ nơi cơn mưa vẫn chưa chịu dứt"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phần còn lại dưới 30 ký tự",
+   "text": "Anh bước vào căn phòng tối, đặt chiếc đèn lên bàn rồi kéo ghế ngồi xuống bên cạnh cuốn sổ cũ của cô ấy và hộp bút đã hết mực. Cô cười.",
+   "origin": null,
+   "units": [
+    {
+     "text": "Anh bước vào căn phòng tối, đặt chiếc đèn lên bàn rồi kéo ghế ngồi xuống bên cạnh cuốn sổ cũ của cô ấy và hộp bút đã hết mực. Cô cười.",
+     "pieces": [
+      "Anh bước vào căn phòng tối, đặt chiếc đèn lên bàn rồi kéo ghế ngồi xuống bên cạnh cuốn sổ cũ của cô ấy và hộp bút đã hết mực.",
+      "Cô cười."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "chọn ranh gần 120 nhất",
+   "text": "Mưa đã tạnh. Trời sáng dần lên. Những giọt nước còn đọng trên lá lấp lánh như những hạt ngọc. Con đường làng vắng lặng, chỉ có tiếng chim hót vọng lại từ phía bên kia đồi chè xanh ngắt. Họ lại lên đường.",
+   "origin": null,
+   "units": [
+    {
+     "text": "Mưa đã tạnh. Trời sáng dần lên. Những giọt nước còn đọng trên lá lấp lánh như những hạt ngọc.",
+     "pieces": [
+      "Mưa đã tạnh.",
+      "Trời sáng dần lên.",
+      "Những giọt nước còn đọng trên lá lấp lánh như những hạt ngọc."
+     ]
+    },
+    {
+     "text": "Con đường làng vắng lặng, chỉ có tiếng chim hót vọng lại từ phía bên kia đồi chè xanh ngắt. Họ lại lên đường.",
+     "pieces": [
+      "Con đường làng vắng lặng, chỉ có tiếng chim hót vọng lại từ phía bên kia đồi chè xanh ngắt.",
+      "Họ lại lên đường."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ranh câu thắng ranh vế dù vế gần 120 hơn",
+   "text": "Cô ấy đến muộn khi trời đã tối hẳn, tóc còn ướt. Cả phòng im lặng nhìn cô bước vào, không ai nói một lời nào, rồi mọi người lại quay về chỗ ngồi của mình và tiếp tục buổi họp.",
+   "origin": null,
+   "units": [
+    {
+     "text": "Cô ấy đến muộn khi trời đã tối hẳn, tóc còn ướt.",
+     "pieces": [
+      "Cô ấy đến muộn khi trời đã tối hẳn, tóc còn ướt."
+     ]
+    },
+    {
+     "text": "Cả phòng im lặng nhìn cô bước vào, không ai nói một lời nào, rồi mọi người lại quay về chỗ ngồi của mình và tiếp tục buổi họp.",
+     "pieces": [
+      "Cả phòng im lặng nhìn cô bước vào, không ai nói một lời nào, rồi mọi người lại quay về chỗ ngồi của mình và tiếp tục buổi họp."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "đoạn dài hai khúc: chỉ khúc đầu bị cắt",
+   "text": "Mặt trời lên cao, nắng vàng trải khắp cánh đồng. Người nông dân đã ra đồng từ sớm, lưng áo ướt đẫm mồ hôi. Họ cúi xuống gặt từng bó lúa chín vàng, miệng khe khẽ hát những câu hát xưa. Ở đầu làng, lũ trẻ chạy nhảy bên những chiếc diều giấy bay cao tận trời xanh, tiếng cười giòn tan vang khắp xóm nhỏ. Bà cụ ngồi bên hiên nhà, lặng lẽ nhìn theo bóng chúng, nhớ về một thời đã xa lắm mà tưởng như mới hôm qua.",
+   "origin": null,
+   "units": [
+    {
+     "text": "Mặt trời lên cao, nắng vàng trải khắp cánh đồng. Người nông dân đã ra đồng từ sớm, lưng áo ướt đẫm mồ hôi.",
+     "pieces": [
+      "Mặt trời lên cao, nắng vàng trải khắp cánh đồng.",
+      "Người nông dân đã ra đồng từ sớm, lưng áo ướt đẫm mồ hôi."
+     ]
+    },
+    {
+     "text": "Họ cúi xuống gặt từng bó lúa chín vàng, miệng khe khẽ hát những câu hát xưa. Ở đầu làng, lũ trẻ chạy nhảy bên những chiếc diều giấy bay cao tận trời xanh, tiếng cười giòn tan vang khắp xóm nhỏ.",
+     "pieces": [
+      "Họ cúi xuống gặt từng bó lúa chín vàng, miệng khe khẽ hát những câu hát xưa.",
+      "Ở đầu làng, lũ trẻ chạy nhảy bên những chiếc diều giấy bay cao tận trời xanh, tiếng cười giòn tan vang khắp xóm nhỏ."
+     ]
+    },
+    {
+     "text": "Bà cụ ngồi bên hiên nhà, lặng lẽ nhìn theo bóng chúng, nhớ về một thời đã xa lắm mà tưởng như mới hôm qua.",
+     "pieces": [
+      "Bà cụ ngồi bên hiên nhà, lặng lẽ nhìn theo bóng chúng, nhớ về một thời đã xa lắm mà tưởng như mới hôm qua."
+     ]
+    }
+   ]
+  },
+  {
+   "name": "dấu ngoặc kép sau dấu câu",
+   "text": "“Em không biết đâu.” Cô gái khẽ lắc đầu, ánh mắt nhìn xa xăm về phía chân trời. “Nhưng em tin anh sẽ quay lại, dù phải mất bao lâu đi nữa, dù con đường có xa đến đâu.”",
+   "origin": null,
+   "units": [
+    {
+     "text": "“Em không biết đâu.” Cô gái khẽ lắc đầu, ánh mắt nhìn xa xăm về phía chân trời.",
+     "pieces": [
+      "“Em không biết đâu.”",
+      "Cô gái khẽ lắc đầu, ánh mắt nhìn xa xăm về phía chân trời."
+     ]
+    },
+    {
+     "text": "“Nhưng em tin anh sẽ quay lại, dù phải mất bao lâu đi nữa, dù con đường có xa đến đâu.”",
+     "pieces": [
+      "“Nhưng em tin anh sẽ quay lại, dù phải mất bao lâu đi nữa, dù con đường có xa đến đâu.”"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "tên Nhật và số",
+   "text": "Haruto bước vào lớp lúc 7 giờ 30, trên tay cầm 1,500 yên mà Sakura đã đưa cho cậu hôm qua. Cô giáo nhìn cậu một lúc lâu rồi mỉm cười gật đầu, chỉ tay về chiếc bàn trống ở cuối lớp học.",
+   "origin": "ja",
+   "units": [
+    {
+     "text": "Haruto bước vào lớp lúc 7 giờ 30, trên tay cầm 1,500 yên mà Sakura đã đưa cho cậu hôm qua.",
+     "pieces": [
+      "Ha-ru-tô bước vào lớp lúc 7 giờ 30, trên tay cầm 1500 yên mà Xa-cu-ra đã đưa cho cậu hôm qua."
+     ]
+    },
+    {
+     "text": "Cô giáo nhìn cậu một lúc lâu rồi mỉm cười gật đầu, chỉ tay về chiếc bàn trống ở cuối lớp học.",
+     "pieces": [
+      "Cô giáo nhìn cậu một lúc lâu rồi mỉm cười gật đầu, chỉ tay về chiếc bàn trống ở cuối lớp học."
+     ]
+    }
+   ]
+  }
+ ]
+}
