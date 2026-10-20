@@ -35,7 +35,7 @@ from pathlib import Path, PureWindowsPath
 from typing import Any, Callable, Iterable, Iterator, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
-from .. import aliases, bracket_rule, continuation, importers, listener_overrides
+from .. import aliases, bracket_rule, continuation, importers, listener_overrides, power_source
 from ..io_utils import atomic_write_bytes, atomic_write_json, project_write_lock
 from ..readaloud import azure as readaloud_azure
 from ..readaloud import keys as readaloud_keys
@@ -407,7 +407,9 @@ class App:
                                              # "Tốc độ giọng trên máy" (voice_speed.py): bậc "Nhanh hơn" của Supertonic khi nghe trực tiếp
                                              speed=voice_speed.live_tag, supertonic_fast_locate=supertonic_module.installed_fast,
                                              # dấu model trong khoá bộ đệm: cập nhật model / đổi lịch đọc thì đoạn đã đọc sẵn được đọc lại
-                                             model_mark=lambda voice, tier: supertonic_module.model_mark(voice, tier) or vieneu_module.model_mark(voice))
+                                             model_mark=lambda voice, tier: supertonic_module.model_mark(voice, tier) or vieneu_module.model_mark(voice),
+                                             # nạp sẵn model lúc mở trang sách ([ReadAloud.preload]): không khi chạy pin yếu hay thiếu RAM
+                                             spare=power_source.spare_for_preload)
         voice_speed.configure(preferences.path.with_name(voice_speed.FILE))
         vieneu_module.configure(preferences.path.with_name(vieneu_module.FOLDER), benchmark=lambda tier: self.readaloud.benchmark("vieneu", tier),
                                 after_install=lambda: self.readaloud.forget("vieneu"))
@@ -4437,6 +4439,10 @@ class Handler(BaseHTTPRequestHandler):
     def get_my_music_file(self, _query: dict[str, list[str]], digest: str) -> None:
         self._send_file(self.app.my_music_file(digest), cache=True)
 
+    def post_readaloud_warm(self, query: dict[str, list[str]]) -> None:
+        # Nạp sẵn model giọng trên máy của cuốn vừa mở (trang sách / trình phát máy tính): trả ngay, nạp ở nền.
+        self._send_json(HTTPStatus.OK, {"started": self.app.readaloud.preload((query.get("voice") or [""])[0])})
+
     def post_music_warm(self, query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, {"queued": self.app.music_warm((query.get("link") or [""])[0])})
 
@@ -5964,6 +5970,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/music/files/(" + music_plan.TRACK_NAME + ")"), Handler.get_music_packaged),
     ("GET", re.compile(r"/api/music/track"), Handler.get_music_track),
     ("POST", re.compile(r"/api/music/warm"), Handler.post_music_warm),
+    ("POST", re.compile(r"/api/readaloud/warm"), Handler.post_readaloud_warm),
     # "Nhạc của tôi": chỉ trên máy này (Studio từ xa không có các đường này - nhạc của người dùng không ra khỏi máy trừ qua sách).
     ("GET", re.compile(r"/api/music/local"), Handler.get_my_music),
     ("POST", re.compile(r"/api/music/local/import"), Handler.post_my_music_import),
