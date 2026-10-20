@@ -5492,11 +5492,11 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hay chữ")
         rank = self._clip_rank(body)
         # `stream: true` (trình phát gửi cho đoạn nó đang đứng chờ): clip chưa có trong bộ đệm thì phát luồng, còn lại JSON như thường (ReadAloud.clip tự bỏ qua `stream` khi không phát luồng được).
-        # `localStream: true`: trình phát nhận được tiếng giọng trên máy phát luồng (FLAC, ClipStream), `rate`: tốc độ nó đang phát.
+        # `localStream: true`: trình phát nhận được tiếng giọng trên máy phát luồng (FLAC, ClipStream; cả đoạn đọc trước - rank > 0 - vì giọng trên máy không có hàng chờ kết nối để nhường), `rate`: tốc độ nó đang phát.
         speed = body.get("rate")
         speed = float(speed) if isinstance(speed, (int, float)) and not isinstance(speed, bool) and 0.25 <= speed <= 4 else 1.0
         stream = (ClipStream(self, local=body.get("localStream") is True, speed=speed)
-                  if body.get("stream") is True and rank == 0 and not body.get("cachedOnly") else None)
+                  if body.get("stream") is True and (rank == 0 or body.get("localStream") is True) and not body.get("cachedOnly") else None)
         try:
             # `cancelled`: trình phát đóng kết nối (bỏ đoạn này) thì lượt đọc dừng - mọi giọng, giọng trên máy dừng giữa các khúc / bước (uxfix70).
             clip = self.app.readaloud.clip(voice, text, cached_only=bool(body.get("cachedOnly")), origin=self._reading_origin(body),

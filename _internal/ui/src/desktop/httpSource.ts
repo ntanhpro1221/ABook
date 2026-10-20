@@ -126,9 +126,11 @@ export function desktopTextImport(dialogs: boolean): TextImport {
   };
 }
 
-/** Xin clip phát luồng ([clipFromStream]): đoạn người nghe đang đứng chờ (rank 0), hỏi thật (không chỉ tra bộ đệm), chỗ chờ đã biết giây (không `whole`), trình duyệt phát được MP3 qua MediaSource. */
+/** Xin clip phát luồng ([clipFromStream]): hỏi thật (không chỉ tra bộ đệm), chỗ chờ đã biết giây (không `whole`), và hoặc là đoạn người nghe đang đứng chờ (rank 0) mà trình duyệt phát được MP3 qua MediaSource,
+ *  hoặc là giọng trên máy (`onDevice`: cả đoạn đọc trước - đoạn kế mà người nghe tới khi còn đang đọc dở nhập luồng được) mà trình duyệt phát được FLAC ([LOCAL_MIME]). */
 export function wantsLiveClip(options?: ClipOptions): boolean {
-  return options?.rank === 0 && !options.cachedOnly && !options.whole && canStream() && liveClipsSupported();
+  if (!options || options.cachedOnly || options.whole || !canStream()) return false;
+  return (options.rank === 0 && liveClipsSupported()) || (options.onDevice === true && liveClipsSupported(LOCAL_MIME));
 }
 
 /** Hỏi máy chủ một clip (chưa tải file audio): ném `ReadAloudError` với đúng lý do máy chủ nêu. Đoạn người nghe đang chờ được phát dần ([wantsLiveClip]): trả clip ngay khi byte đầu về, trong đó

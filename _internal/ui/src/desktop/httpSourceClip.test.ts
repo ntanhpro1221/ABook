@@ -248,6 +248,19 @@ describe("httpSource.readAloudClip: giọng trên máy phát luồng (FLAC, loca
     expect(live.final!.bytes).toBeUndefined();
   });
 
+  it("giọng trên máy (onDevice): đoạn đọc trước (rank > 0) cũng xin luồng khi trình duyệt nhận FLAC; trình duyệt chỉ nhận MP3 thì không (livejoin)", async () => {
+    server(["audio/mpeg", FLAC], () => json({ url: "/media/readaloud/c.wav", duration_ms: 700, words: [] }));
+    await httpSource.readAloudClip!("supertonic:F1", "Đoạn đọc trước.", { rank: 2, onDevice: true }).catch(() => undefined);
+    expect(bodies[0]).toMatchObject({ stream: true, localStream: true, rank: 2 });
+    await httpSource.readAloudClip!("supertonic:F1", "Chỉ tra.", { rank: 2, onDevice: true, cachedOnly: true }).catch(() => undefined);
+    await httpSource.readAloudClip!("supertonic:F1", "Chờ giữa đoạn.", { rank: 2, onDevice: true, whole: true }).catch(() => undefined);
+    await httpSource.readAloudClip!("edge:v", "Edge đọc trước.", { rank: 2 }).catch(() => undefined);
+    expect(bodies.slice(1).map((body) => body.stream)).toEqual([undefined, undefined, undefined]);
+    server(["audio/mpeg"], () => json({ url: "/media/readaloud/c.wav", duration_ms: 700, words: [] }));
+    await httpSource.readAloudClip!("supertonic:F1", "Không FLAC.", { rank: 2, onDevice: true }).catch(() => undefined);
+    expect(bodies.at(-1)!.stream).toBeUndefined();
+  });
+
   it("trình duyệt không nhận FLAC: không xin luồng giọng trên máy (máy chủ trả JSON như cũ); tốc độ thường thì không gửi rate", async () => {
     server(["audio/mpeg"], () => json({ url: "/media/readaloud/c.wav", duration_ms: 700, words: [] }));
     await httpSource.readAloudClip!("supertonic:F1", "Xin chào.", { rank: 0 }).catch(() => undefined);

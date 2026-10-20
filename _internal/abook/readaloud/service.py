@@ -384,7 +384,7 @@ class ReadAloud:
         đi trước khi hết chỗ kết nối; không nói thì đứng sau mọi đoạn có rank.
         `stream`: người nghe clip đang đọc (uxfix56) - CHỈ khi chưa có trong bộ đệm, không `cached_only` / `background`, giọng có `ranks_requests` và `rank` == 0 (đoạn người nghe đang đứng chờ):
         tiếng + mốc chữ tạm chảy tới đó ngay khi về (`StreamListener`); xong vẫn vào bộ đệm đúng như không phát luồng và trả dict như thường (người gọi gửi bản cuối). Ngoài ra `stream` bị bỏ qua.
-        Giọng trên máy cũng vậy khi `stream.local` (trình phát nhận được FLAC): từng khúc vừa đọc xong đi ngay (local_stream.py, chờ đủ tiếng theo `stream.speed`), clip cuối không đổi một byte.
+        Giọng trên máy cũng vậy khi `stream.local` (trình phát nhận được FLAC), KHÔNG cần `rank` 0 (livejoin: đoạn đọc trước mà người nghe tới khi nó còn đang đọc dở nhập luồng thay vì đợi đọc xong cả đoạn): từng khúc vừa đọc xong đi ngay (local_stream.py, chờ đủ tiếng theo `stream.speed`), clip cuối không đổi một byte.
         `cancelled`: người gọi bỏ clip được giữa chừng (Huỷ xuất sách nói soát a62; người nghe nhảy đi nơi khác - máy chủ giao diện: trình phát đóng kết nối): đang chờ lượt
         đọc cùng đoạn, đang đọc bằng giọng có `ranks_requests` (Edge, ổ cắm bị cắt) hay bằng giọng trên máy (engine hỏi `model.stop_if_cancelled` giữa các khúc và các bước,
         uxfix70) thì dừng trong vòng một phần giây với `VoiceError` lý do "cancelled" và không có gì vào bộ đệm. Giọng khác đọc nốt đoạn đang đọc.
@@ -453,7 +453,7 @@ class ReadAloud:
                             else:
                                 made = provider.synthesize(said, native, rank=rank) if ranked else provider.synthesize(said, native)
                         else:
-                            if stream is not None and rank == 0 and not background and getattr(stream, "local", False):
+                            if stream is not None and not background and getattr(stream, "local", False):  # mọi rank: đoạn đọc trước cũng nhập luồng được khi người nghe tới nó lúc còn đang đọc dở
                                 local = local_stream.for_clip(stream, provider, native, text, origin, readings if tags[1] else None, getattr(stream, "speed", 1.0))
                             with cancellable(cancelled), hearing(local):  # engine hỏi cờ giữa các khúc / bước (model.stop_if_cancelled)
                                 made = provider.synthesize(text, native, origin, readings) if tags[1] else provider.synthesize(text, native, origin)

@@ -179,16 +179,25 @@ def test_the_streamed_clip_is_byte_identical_and_the_stream_is_its_samples(local
     assert total == streamed["duration_ms"] and last == streamed["words"], "khúc cuối xong: mốc tạm = mốc cuối"
 
 
-def test_without_local_or_off_rank_zero_nothing_streams(local_voices) -> None:
+def test_without_local_or_in_the_background_nothing_streams(local_voices) -> None:
     make, _, _ = local_voices
     service = make("cache")
     edge_only = Listener(local=False)
-    service.clip("vieneu:nano/Nhẹ", "Một câu.", rank=0, stream=edge_only)
-    later = Listener()
-    service.clip("vieneu:nano/Nhẹ", "Một câu khác.", rank=1, stream=later)
+    service.clip("vieneu:nano/Nhẹ", LONG.strip(), rank=0, stream=edge_only)
     background = Listener()
-    service.clip("vieneu:nano/Nhẹ", "Câu làm trước.", rank=0, stream=background, background=True)
-    assert not edge_only.events and not later.events and not background.events
+    service.clip("vieneu:nano/Nhẹ", LONG.strip() + " Làm trước.", rank=0, stream=background, background=True)
+    assert not edge_only.events and not background.events
+
+
+def test_a_read_ahead_paragraph_streams_too_so_the_player_can_join_it_while_it_is_read(local_voices, tmp_path: Path) -> None:
+    """livejoin: giọng trên máy không có hàng chờ kết nối để nhường, nên đoạn đọc trước (rank > 0) cũng phát luồng; clip cuối vẫn y hệt."""
+    make, _, _ = local_voices
+    plain = make("plain").clip("vieneu:nano/Nhẹ", LONG.strip(), rank=3)
+    ahead = Listener()
+    streamed = make("ahead").clip("vieneu:nano/Nhẹ", LONG.strip(), rank=3, stream=ahead)
+    assert ahead.events[:2] == ["started", "format"] and ahead.chunks
+    assert streamed == plain
+    assert (tmp_path / "ahead" / streamed["file"]).read_bytes() == (tmp_path / "plain" / plain["file"]).read_bytes()
 
 
 def test_the_aligner_runs_once_per_unit_when_streaming(local_voices, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -311,5 +320,10 @@ def test_the_server_streams_a_local_voice_only_when_the_player_takes_flac(local_
         assert kinds[:2] == ["M", "A"] and kinds[-1] == "E" and json.loads(found[0][1]) == {"mime": local_stream.MIME}
         final = json.loads(found[-1][1])
         assert "exact" not in final and final["url"].endswith(".wav")
+        # livejoin: đoạn đọc trước (rank > 0) của giọng trên máy cũng phát luồng; Edge (không `localStream`) thì vẫn chỉ rank 0
+        _, response, data = post_clip(server.port, {**body, "text": "Đoạn đọc trước. " + LONG.strip(), "rank": 2, "localStream": True})
+        assert response.getheader("Content-Type") == "application/vnd.abook.clipstream" and records(data)[0][0] == "M"
+        _, response, _ = post_clip(server.port, {**body, "text": "Đoạn khác nữa. " + LONG.strip(), "rank": 2})
+        assert response.getheader("Content-Type").startswith("application/json")
     finally:
         server.stop()
