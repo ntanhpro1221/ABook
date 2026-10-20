@@ -223,6 +223,9 @@ class SceneChooser(
             if (pinDown) result.pinUnavailable = true
             val link = result.link
             val carried = link != null && link == playing
+            // `recent` = mọi bài theo đúng thứ tự phát (SPEC_rs): bài đầu cảnh vào ngay khi được chọn, bài anh em vào lúc nó nối.
+            // Đoạn kề chọn trúng bài đang chơi: chơi tiếp, không phải bài "mới".
+            if (link != null && (recent.isEmpty() || recent.last() != link)) recent.add(link)
             if (result.continued) {
                 // Ở N0 tension của mọi đoạn là 0 nên bước âm lượng luôn 0; đoạn của học sinh nhích theo tension của nó so với đầu cảnh.
                 result.stepDb = max(-STEP_MAX_DB, min(STEP_MAX_DB, STEP_DB_PER_TENSION * (scene.tension - headTension)))
@@ -259,14 +262,11 @@ class SceneChooser(
                 if (sibling != null) {
                     playing = sibling
                     used.add(sibling)
+                    if (recent.isEmpty() || recent.last() != sibling) recent.add(sibling)
                     result.siblings.add(SceneSibling(Py.round(max(start, now), 3), sibling))
                 }
             }
-            if (link != null) {
-                used.add(link)
-                // Đoạn kề chọn trúng bài đang chơi: chơi tiếp, không phải bài "mới".
-                if (recent.isEmpty() || recent.last() != link) recent.add(link)
-            }
+            if (link != null) used.add(link)
             chosen.add(result)
         }
         holdSteps(chosen)
