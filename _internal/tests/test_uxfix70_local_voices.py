@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import os
 import socket
 import threading
 import time
@@ -157,6 +158,9 @@ def test_left_counts_only_missing_or_changed_files_and_the_rest_of_a_partial_one
     target.write_bytes(other)  # cùng cỡ, khác nội dung (bản cũ)
     assert studio_setup.left(item, target) == 7
     target.write_bytes(good)
+    # Hai lần ghi cùng cỡ trong một nhịp đồng hồ hệ thống có thể cùng giờ sửa (khoá băm của `matches`): đẩy giờ sửa đi như một lần tải thật.
+    stamp = target.stat().st_mtime_ns + 1_000_000_000
+    os.utime(target, ns=(stamp, stamp))
     assert studio_setup.left(item, target) == 0
     hashed: list[Path] = []
     real = studio_setup._sha256
