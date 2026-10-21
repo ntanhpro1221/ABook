@@ -223,6 +223,10 @@ object ReadAloud {
      *  giao diện hỏi đồng ý trước khi gửi lệnh phát (player.tsx withConsent). */
     private var held = false
     private var artwork: ByteArray? = null
+
+    fun refreshArtwork() {
+        artwork = Artwork.cover(Playback.bookTitle, Playback.bookId)
+    }
     private val scriptListeners = mutableSetOf<(String, Int) -> Unit>()
 
     fun init(appContext: Context) {

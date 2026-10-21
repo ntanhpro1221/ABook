@@ -31,8 +31,8 @@ import { VOICE_CHANGED_EVENT, type ReadAloudVoice, type SpeechTrack } from "./re
 import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, onVoiceChosen, ONLINE_NOTICE, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
 import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
-import { chapterScriptQuery, useListenBook, useSource } from "./source";
-import { withFreshSkips } from "./textScript";
+import { chapterScriptQuery, useSource } from "./source";
+import { useTrackMetadata } from "./trackMetadata";
 import { sentenceIndexAt } from "./words";
 import { caughtUpDetail } from "./labels";
 import { reportSaveFailure } from "./saveFailure";
@@ -333,10 +333,7 @@ export function PlayerProvider({
   refs.current.expanded = expanded;
   // Dòng ghi công người nghe tích / bỏ tích SAU khi nạp sách (trang sách): hàng đợi theo `skip` mới nhất, để giọng đọc và kịch bản dựng sẵn không còn đọc
   // theo bản cũ (kịch bản cũ nằm lại trong bộ nhớ đệm, màn đọc mở ra vẫn hiện dòng ấy).
-  const { data: playingBook } = useListenBook(track?.bookId, false);
-  useEffect(() => {
-    setQueue((current) => withFreshSkips(current, playingBook?.chapters));
-  }, [playingBook]);
+  useTrackMetadata(track, refs, setTrack, setQueue, native);
 
   const position = useCallback(
     (): NightPosition => ({
@@ -1117,6 +1114,7 @@ export function PlayerProvider({
   }, [client, engine, native, night, position, refreshLists, source]);
 
   const close = useCallback(() => {
+    toast.dismiss("jump");
     refs.current.wantsPlay = false;
     save(true);
     night.cancel(position());

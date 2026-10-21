@@ -1133,7 +1133,7 @@ class App:
                                                         self.music_dir / "files")
 
     def undo_trash(self, token: str) -> dict[str, Any]:
-        """"Hoàn tác" một lần xoá: thư mục về đúng đường gốc, thư viện thấy lại. Hàng chờ KHÔNG được xếp lại - ghi trong lời
+        """"Hoàn tác" một lần xoá: thư mục về đường gốc hoặc tên anh em còn trống, thư viện thấy lại. Hàng chờ KHÔNG được xếp lại - ghi trong lời
         báo (`wasQueued`) để người dùng tự xếp nếu muốn."""
         self._mutating()
         root = self.library.root.resolve()
@@ -1142,9 +1142,6 @@ class App:
         except trash_pending.NotPending as error:
             raise ApiError(HTTPStatus.NOT_FOUND, "Hết thời gian hoàn tác - cuốn này đã nằm trong Thùng rác của Windows, "
                                                  "khôi phục từ đó được.") from error
-        except trash_pending.Occupied as error:
-            raise ApiError(HTTPStatus.CONFLICT, "Đã có sách trùng tên ở đó - đổi tên hay dời cuốn kia đi rồi hoàn tác (cuốn vừa "
-                                                "xoá vẫn nằm chờ trong ít giây nữa).") from error
         except OSError as error:
             raise ApiError(HTTPStatus.CONFLICT, f"Không khôi phục được - có thể thư mục đích đang mở. ({error})") from error
         path = Path(meta["original"])
