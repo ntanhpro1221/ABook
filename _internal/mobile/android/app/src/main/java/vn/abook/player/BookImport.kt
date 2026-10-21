@@ -95,7 +95,8 @@ object BookImport {
     private const val MAX_HEADING = 120
     private const val TITLE_FROM_LINE = 80
     private const val CREDIT_HEAD_LINES = 64
-    private const val BROKEN = "không phải file %s thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+    private const val BROKEN = "Không phải file %s thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+    private const val EPUB_DRM = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
 
     private fun broken(kind: String) = Failed(BROKEN.format(kind))
 
@@ -692,14 +693,18 @@ object BookImport {
         } catch (_: Exception) {
             return null
         }
-        return try {
-            val text = charset.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
+        val text = strictDecode(raw, charset) ?: return null
+        return if (signed) text.removePrefix("﻿") else text
+    }
+
+    /** Chữ của `raw` theo `charset`, hay null nếu có byte hỏng hoặc không có trong bảng mã (CodingErrorAction.REPORT). */
+    private fun strictDecode(raw: ByteArray, charset: Charset): String? =
+        try {
+            charset.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
                 .decode(ByteBuffer.wrap(raw)).toString()
-            if (signed) text.removePrefix("﻿") else text
         } catch (_: CharacterCodingException) {
             null
         }
-    }
 
     // ---- thẻ (XHTML / XML) --------------------------------------------------------------------------------------------
 
@@ -901,11 +906,10 @@ object BookImport {
         /** Đọc một file XML: từ chối khai báo entity (bom XML), không thấy phần tử gốc là file hỏng. `strict`: thẻ đóng sai chỗ hay thiếu
          *  cũng là file hỏng, như ElementTree của máy tính (tệp mục lục: hỏng thì cả hai bên cùng bỏ nó, đọc theo spine). */
         fun parse(raw: ByteArray, kind: String, strict: Boolean = false): Node {
-            val head = String(raw, 0, minOf(raw.size, 4096), Charsets.UTF_8)
-            if (head.uppercase().contains("<!ENTITY")) throw Failed("có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
+            val text = xmlText(raw, kind)
             val stack = ArrayList<Node>()
             var root: Node? = null
-            for (token in tokenize(String(raw, Charsets.UTF_8))) {
+            for (token in tokenize(text)) {
                 when (token) {
                     is Start -> {
                         val scope = (stack.lastOrNull()?.scope ?: emptyMap()).let { if (token.declared.isEmpty()) it else it + token.declared }
@@ -930,6 +934,72 @@ object BookImport {
             if (strict && stack.isNotEmpty()) throw broken(kind)
             return root ?: throw broken(kind)
         }
+
+        /** `importers._xml_text`: chữ của một file XML, giải mã như expat nhận bảng mã nhưng với một bảng tên chung hai bên. Khai báo entity (bom
+         *  XML) bị chặn ở bất cứ đâu trong file, bảng mã nào. UTF-16: BOM, hay byte 0 ở byte đầu (BE) / byte thứ hai (LE), như expat; không thì
+         *  `<?xml encoding>` ở đầu file, không có là UTF-8 (`<meta charset>` là việc của trang - markupText). Byte không giải được (kể cả byte
+         *  ngoài bảng mã một byte) là file hỏng, không thay bằng ký tự hỏng. */
+        private fun xmlText(raw: ByteArray, kind: String): String {
+            if (declaresEntity(raw)) throw Failed("Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
+            var bytes = if (raw.size >= 3 && raw[0] == 0xEF.toByte() && raw[1] == 0xBB.toByte() && raw[2] == 0xBF.toByte()) raw.copyOfRange(3, raw.size) else raw
+            val wide = when {
+                bytes.size >= 2 && bytes[0] == 0xFE.toByte() && bytes[1] == 0xFF.toByte() -> Charsets.UTF_16BE.also { bytes = bytes.copyOfRange(2, bytes.size) }
+                bytes.size >= 2 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xFE.toByte() -> Charsets.UTF_16LE.also { bytes = bytes.copyOfRange(2, bytes.size) }
+                bytes.isNotEmpty() && bytes[0] == 0.toByte() -> Charsets.UTF_16BE
+                bytes.size >= 2 && bytes[1] == 0.toByte() -> Charsets.UTF_16LE
+                else -> null
+            }
+            val text = if (wide != null) {
+                val text = strictDecode(bytes, wide) ?: throw broken(kind)
+                val declared = XML_DECLARATION.matcher(text)
+                if (declared.lookingAt() && xmlCharset(declared.group(1)).let { it != Charsets.UTF_16 && it != wide }) throw broken(kind)
+                text
+            } else {
+                val declared = XML_DECLARATION.matcher(String(bytes, 0, minOf(bytes.size, 2048), Charsets.ISO_8859_1))
+                val charset = if (declared.lookingAt()) xmlCharset(declared.group(1)) else Charsets.UTF_8
+                if (charset == null || charset == Charsets.UTF_16 || charset == Charsets.UTF_16BE || charset == Charsets.UTF_16LE) throw broken(kind)
+                val text = strictDecode(bytes, charset) ?: throw broken(kind)
+                // Bảng ICU của Android có thể đọc byte windows-125x không định nghĩa (0x81...) thành ký tự điều khiển C1; Python thì báo lỗi.
+                if (charset.name().startsWith("windows-125") && text.any { it.code in 0x80..0x9F }) throw broken(kind)
+                text
+            }
+            if (text.any { it.code == 0 }) throw broken(kind)
+            return text
+        }
+
+        /** `importers._ENTITY_DECLARATION` trên byte đã bỏ 0: "<!ENTITY" (hoa thường ASCII như nhau) ở bất cứ đâu, bảng mã nào. */
+        private fun declaresEntity(raw: ByteArray): Boolean {
+            val target = "<!ENTITY"
+            var at = 0
+            for (byte in raw) {
+                if (byte == 0.toByte()) continue
+                val char = (byte.toInt() and 0xFF).toChar().let { if (it in 'a'..'z') it - 32 else it }
+                at = if (char == target[at]) at + 1 else if (char == '<') 1 else 0
+                if (at == target.length) return true
+            }
+            return false
+        }
+
+        /** `importers._xml_codec`: tên trong `<?xml encoding>` -> bảng mã, chuẩn hoá chung hai bên (Python qua `codecs.lookup`; ở đây bảng bí danh,
+         *  vì Java / Android không biết mọi tên Python biết, như "latin-1" hay "utf8"). Chỉ UTF-8, UTF-16 và bảng mã một byte (Shift_JIS, GB2312,
+         *  UTF-32 là file hỏng, như expat); tên lạ: null. */
+        private fun xmlCharset(name: String): Charset? {
+            val charset = try {
+                Charset.forName(XML_CHARSET_ALIASES[name.lowercase().replace('_', '-')] ?: name)
+            } catch (_: Exception) {
+                return null
+            }
+            if (charset == Charsets.UTF_8 || charset == Charsets.UTF_16 || charset == Charsets.UTF_16BE || charset == Charsets.UTF_16LE) return charset
+            return charset.takeIf { String(ByteArray(256) { it.toByte() }, it).length == 256 }
+        }
+
+        private val XML_DECLARATION = Pattern.compile("<\\?xml[ \\t\\r\\n][^>]*?encoding[ \\t\\r\\n]*=[ \\t\\r\\n]*[\"']([A-Za-z0-9._:-]+)")
+        private val XML_CHARSET_ALIASES = mapOf(
+            "utf8" to "UTF-8", "utf-8" to "UTF-8", "utf16" to "UTF-16", "utf-16" to "UTF-16", "utf-16be" to "UTF-16BE", "utf-16-be" to "UTF-16BE",
+            "utf-16le" to "UTF-16LE", "utf-16-le" to "UTF-16LE", "latin-1" to "ISO-8859-1", "latin1" to "ISO-8859-1", "l1" to "ISO-8859-1",
+            "iso-8859-1" to "ISO-8859-1", "iso8859-1" to "ISO-8859-1", "windows-1252" to "windows-1252", "cp1252" to "windows-1252",
+            "windows-1258" to "windows-1258", "cp1258" to "windows-1258", "ascii" to "US-ASCII", "us-ascii" to "US-ASCII",
+        )
     }
 
     // ---- zip ----------------------------------------------------------------------------------------------------------
@@ -944,7 +1014,7 @@ object BookImport {
         }
         if (zip.entries().asSequence().sumOf { maxOf(0L, it.size) } > MAX_TOTAL) {
             zip.close()
-            throw Failed("quá lớn khi giải nén (trên 300 MB) - không giống $kind truyện")
+            throw Failed("Quá lớn khi giải nén (trên 300 MB) - không giống $kind truyện")
         }
         return zip
     }
@@ -962,7 +1032,7 @@ object BookImport {
 
     private fun read(zip: ZipFile, name: String, kind: String): ByteArray {
         val entry = member(zip, name) ?: throw broken(kind)
-        if (entry.size > MAX_MEMBER) throw Failed("có một phần quá lớn (trên 20 MB) - không giống $kind truyện")
+        if (entry.size > MAX_MEMBER) throw Failed("Có một phần quá lớn (trên 20 MB) - không giống $kind truyện")
         return zip.getInputStream(entry).use { it.readBytes() }
     }
 
@@ -1005,8 +1075,9 @@ object BookImport {
                 bytes.write(text.substring(i + 1, i + 3).toInt(16))
                 i += 3
             } else {
-                bytes.write(c.toString().toByteArray(Charsets.UTF_8))
-                i++
+                val point = text.codePointAt(i)
+                bytes.write(String(Character.toChars(point)).toByteArray(Charsets.UTF_8))
+                i += Character.charCount(point)
             }
         }
         return String(bytes.toByteArray(), Charsets.UTF_8)
@@ -1600,6 +1671,55 @@ object BookImport {
         return zip.getInputStream(entry).use { it.readBytes() } to media
     }
 
+    /** `importers._BLANK`: khoảng trắng Unicode (đúng tập `str.isspace` của Python) và ký tự không bề rộng - một bảng chung hai bên, không
+     *  theo `Char.isWhitespace` (khác Python, như ở U+0085). */
+    private val BLANK: Set<Char> = (listOf(0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x85, 0xA0, 0x1680) + (0x2000..0x200A)
+        + listOf(0x2028, 0x2029, 0x202F, 0x205F, 0x3000, 0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF)).map { it.toChar() }.toSet()
+
+    /** Trang trông như chữ đã mã hoá (`importers._looks_encrypted`): bỏ khoảng trắng / ký tự không bề rộng ở đầu mà không mở bằng '<', hay hơn
+     *  10 % của 1.000 ký tự đầu là ký tự hỏng (U+FFFD) hoặc ký tự điều khiển C0 trừ tab / xuống dòng - đếm theo code point như Python, không
+     *  theo đơn vị UTF-16. Trang rỗng hay chỉ có khoảng trắng thì không. */
+    private fun looksEncrypted(raw: ByteArray): Boolean {
+        val text = markupText(raw).trimStart { it in BLANK }
+        val head = text.substring(0, text.offsetByCodePoints(0, minOf(1000, text.codePointCount(0, text.length))))
+        val bad = head.count { it.code == 0xFFFD || (it < ' ' && it !in "\t\r\n") }
+        return head.isNotEmpty() && (!head.startsWith("<") || bad * 10 > head.codePointCount(0, head.length))
+    }
+
+    /** Sách có sinf.xml (FairPlay), rights.xml (Adobe ADEPT, Kobo) hay license.lcpl (Readium LCP) có thể khoá mà không kèm encryption.xml:
+     *  true để soi chữ của chương. Dấu khoá trong các file ấy chưa đủ để từ chối - sách đã gỡ khoá (obok) vẫn giữ nguyên chúng
+     *  (`importers._epub_rights`). */
+    private fun epubRights(zip: ZipFile): Boolean = listOf("sinf.xml", "rights.xml", "license.lcpl").any { member(zip, "META-INF/$it") != null }
+
+    /** Từ chối DRM trước khi đọc chữ; làm rối font IDPF / Adobe vẫn hợp lệ (`importers._epub_encryption`). */
+    private fun epubEncryption(zip: ZipFile, manifest: Map<String, ManifestItem>, spine: Markup.Node) {
+        if (epubRights(zip)) {
+            // Có file quyền: một chương của thứ tự đọc trông như chữ đã mã hoá là sách còn khoá.
+            for (itemref in spine.children.filter { it.local == "itemref" }) {
+                val item = manifest[itemref.attr("idref") ?: ""] ?: continue
+                if (item.href.isNotEmpty() && item.media.contains("html") && member(zip, item.href) != null
+                    && looksEncrypted(read(zip, item.href, "EPUB"))) throw Failed(EPUB_DRM)
+            }
+        }
+        if (member(zip, "META-INF/encryption.xml") == null) return
+        val obfuscation = setOf("http://www.idpf.org/2008/embedding", "http://ns.adobe.com/pdf/enc#RC")
+        val spinePaths = spine.children.filter { it.local == "itemref" }.mapNotNull { manifest[it.attr("idref")]?.href?.let(::nfc) }.toSet()
+        val fonts = manifest.values.filter { item ->
+            item.media.startsWith("font/") || item.media.contains("font") || item.media == "application/vnd.ms-opentype" || item.href.substringAfterLast('.', "").lowercase() in setOf("otf", "ttf", "woff", "woff2")
+        }.map { nfc(it.href) }.toMutableSet()
+        // Font có trong ZIP mà OPF quên khai báo vẫn chỉ là làm rối font, không phải DRM.
+        val declared = manifest.values.map { nfc(it.href) }.toSet()
+        fonts.addAll(zip.entries().asSequence().filter { nfc(it.name) !in declared && it.name.substringAfterLast('.', "").lowercase() in setOf("otf", "ttf", "woff", "woff2") }.map { nfc(it.name) }.toList())
+        val root = xml(zip, "META-INF/encryption.xml", "EPUB", strict = true)
+        // Theo tên cục bộ, kể cả khi EncryptedData là gốc của file (`root.iter()` của máy tính tính cả gốc).
+        for (data in (sequenceOf(root) + root.descendants()).filter { it.local == "EncryptedData" }) {
+            val algorithm = data.child("EncryptionMethod")?.attr("Algorithm")
+            // URI tính từ gốc ZIP, không phải META-INF; thuật toán font không được che một chương mã hoá.
+            val paths = data.descendants().filter { it.local == "CipherReference" }.map { nfc(normpath(unquote(it.attr("URI") ?: ""))) }.toList()
+            if (algorithm !in obfuscation || paths.isEmpty() || paths.any { it !in fonts || it in spinePaths }) throw Failed(EPUB_DRM)
+        }
+    }
+
     private fun epub(file: File, choice: FootnoteChoice): Book = openZip(file, "EPUB").use { zip ->
         val container = xml(zip, "META-INF/container.xml", "EPUB")
         val opfPath = container.descendants().firstOrNull { it.local == "rootfile" }?.attr("full-path")
@@ -1613,6 +1733,7 @@ object BookImport {
             )
         }
         val spine = opf.child("spine") ?: throw broken("EPUB")
+        epubEncryption(zip, manifest, spine)
         val (tocEntries, declared) = toc(zip, manifest, spine.attr("toc") ?: "")
         val titles = linkedMapOf<String, String>() // file -> tên đầu tiên trỏ tới nó
         for (entry in tocEntries) titles.putIfAbsent(entry.href, entry.label)

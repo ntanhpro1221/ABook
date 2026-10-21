@@ -939,7 +939,9 @@ export function BookScreen({
           )}
           {book.missingFiles ? (
             <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-warning-soft px-3 py-1 text-xs font-medium text-warning">
-              {book.missingFiles} chương mất file trên máy này - mở lại file sách (.abook) của cuốn này để chép bù
+              {book.missingFiles} chương mất file trên máy này - {book.stage === "text"
+                ? "bạn hãy thêm lại đúng file sách gốc (EPUB, Word, PDF hoặc TXT) để chép bù"
+                : "bạn hãy mở lại file sách (.abook) của cuốn này để chép bù"}
             </p>
           ) : null}
           {book.remote && !downloaded && (
