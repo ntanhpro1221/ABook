@@ -172,6 +172,71 @@ def test_a_book_restored_under_a_sibling_name_takes_its_listening_data_along(stu
     assert not work.exists()
 
 
+@pytest.mark.parametrize("order", ["oldest first", "newest first"])
+def test_undoing_two_deletions_of_one_name_moves_data_only_off_a_newer_book(studio, recycled: list[Path], order: str) -> None:  # noqa: F811
+    """Xoá "X", thêm "X" mới đúng chỗ, xoá luôn nó, rồi hoàn tác cả hai: dữ liệu nghe theo mã đường gốc chỉ đi theo cuốn về "X (2)" khi
+    cuốn đang ở đường gốc ra đời SAU lần xoá cuốn ấy. Giao diện hoàn tác cũ trước: "X" cũ về chỗ mình và giữ dấu trang của nó."""
+    from abook.webui.library import book_id
+
+    paths, app, server, _runner = studio
+    original = paths.root.resolve()
+    old = book_id(original)
+    (original / "which.txt").write_text("cũ", encoding="utf-8")
+    app.listening.add_bookmark(old, 1, 12.0)
+    first = _delete(server, paths)
+    time.sleep(0.05)  # ngày tạo thư mục theo nấc đồng hồ của hệ thống file (~16 ms)
+    [held] = _pending(original.parent)
+    shutil.copytree(held / original.name, original)  # "X" mới: thư mục mới tạo, cùng đường, cùng mã sách
+    (original / "which.txt").write_text("mới", encoding="utf-8")
+    time.sleep(0.05)
+    second = _delete(server, paths)
+
+    results = [_call(server, "POST", f"/api/trash/{token}/undo")
+               for token in ([first, second] if order == "oldest first" else [second, first])]
+    assert [status for status, _data in results] == [200, 200], results
+    sibling = original.with_name(original.name + " (2)")
+    new = book_id(sibling)
+    later = results[1][1]
+    assert later["renamed"] is True and later["title"] == sibling.name
+    if order == "oldest first":
+        assert (original / "which.txt").read_text(encoding="utf-8") == "cũ", "cuốn cũ về đúng chỗ của nó"
+        assert "oldId" not in later, "cuốn cũ đang ở đường gốc có trước lần xoá cuốn mới: không lấy dữ liệu của nó"
+        assert [mark["seconds"] for mark in app.listening.get(old)["bookmarks"]] == [12.0]
+        assert new not in app.listening.books()
+    else:
+        assert (sibling / "which.txt").read_text(encoding="utf-8") == "cũ"
+        assert later["oldId"] == old and later["newId"] == new, "cuốn mới ra đời sau lần xoá cuốn cũ: dữ liệu theo cuốn cũ sang tên mới"
+        assert [mark["seconds"] for mark in app.listening.get(new)["bookmarks"]] == [12.0]
+        assert old not in app.listening.books()
+
+
+def test_listening_data_that_cannot_be_moved_still_finishes_the_undo(studio, recycled: list[Path],  # noqa: F811
+                                                                      monkeypatch: pytest.MonkeyPatch,
+                                                                      caplog: pytest.LogCaptureFixture) -> None:
+    """File nghe đang bị giữ lúc chuyển mã: thư mục đã về, mã hoàn tác đã dùng - vẫn là hoàn tác xong (không phải lỗi rồi bấm lại gặp 404),
+    lời báo nói dữ liệu chưa theo được, nhật ký ghi rõ."""
+    from abook.webui.library import book_id
+
+    paths, app, server, _runner = studio
+    original = paths.root.resolve()
+    old = book_id(original)
+    app.listening.add_bookmark(old, 1, 7.0)
+    token = _delete(server, paths)
+    time.sleep(0.05)
+    original.mkdir()
+
+    def held(_renamed: dict[str, str]) -> None:
+        raise PermissionError(13, "file đang bị giữ")
+
+    monkeypatch.setattr(app.listening, "rename_books", held)
+    status, data = _call(server, "POST", f"/api/trash/{token}/undo")
+    restored = original.with_name(original.name + " (2)")
+    assert status == 200 and data["renamed"] is True and data["dataLeft"] is True and "oldId" not in data, data
+    assert (restored / "project.sqlite3").is_file() and _pending(original.parent) == []
+    assert "không chuyển được dữ liệu nghe" in caplog.text
+    assert [mark["seconds"] for mark in app.listening.get(old)["bookmarks"]] == [7.0]
+
+
 def test_a_plain_undo_keeps_the_same_book_id(studio, recycled: list[Path]) -> None:  # noqa: F811
     from abook.webui.library import book_id
 

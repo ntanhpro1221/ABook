@@ -370,6 +370,24 @@ def test_the_player_writes_into_the_record_it_is_playing(tmp_path: Path) -> None
     assert playing not in json.dumps(listening.records("sach")), "không sống lại"
 
 
+def test_a_record_that_moved_to_another_book_does_not_swallow_the_players_saves(tmp_path: Path) -> None:
+    """Hoàn tác cuốn đã xoá về "X (2)" mang hồ sơ của nó sang mã mới trong lúc cuốn đang ở "X" còn phát với mã hồ sơ ấy: lần lưu của trình
+    phát vào hồ sơ đang dùng của chính sách đang phát (tạo mới nếu chưa có), không bị bỏ lặng lẽ tới khi nạp lại - và không đụng hồ sơ đã đi."""
+    listening = Listening(tmp_path / "listening.json")
+    listening.progress("x", 2, 50.0, 1000.0)
+    [playing] = [record["id"] for record in listening.records("x")]
+    listening.rename_books({"x": "x-2"})
+    assert listening.books() == ["x-2"]
+
+    listening.progress("x", 3, 160.0, 1000.0, record=playing)
+    listening.add_session("x", {"id": "phien", "listened": 60}, record=playing)
+    assert listening.get("x")["last"]["seconds"] == 160.0 and [item["id"] for item in listening.get("x")["sessions"]] == ["phien"]
+    [own] = listening.records("x")
+    assert own["id"] != playing, "sách đang phát có hồ sơ riêng"
+    assert listening.get("x-2")["last"] == {"chapterId": 2, "seconds": 50.0, "at": listening.get("x-2")["last"]["at"]}
+    assert not listening.get("x-2").get("sessions"), "hồ sơ đã sang cuốn kia không nhận lần lưu của cuốn này"
+
+
 def test_each_record_says_where_it_stopped(tmp_path: Path) -> None:
     """Hai hồ sơ cùng "nghe gần nhất hôm nay" không phân biệt được trong menu (soát UX 29-09): mỗi hồ sơ mang chỗ nghe cuối."""
     listening = Listening(tmp_path / "listening.json")

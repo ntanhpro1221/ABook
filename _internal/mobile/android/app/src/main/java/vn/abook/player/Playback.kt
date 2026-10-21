@@ -60,11 +60,12 @@ object Playback {
         val artwork = Artwork.cover(title, id)
         val exo = player
         val shown = exo?.takeIf { it.mediaItemCount > 0 }?.getMediaItemAt(0)?.mediaMetadata?.artworkData
+        // Trước khi thôi: hàng đọc to rỗng (đang tìm đoạn đầu) thì không có bìa nào để so - đổi bìa lúc ấy vẫn phải tới các đoạn dựng sau.
+        ReadAloud.refreshArtwork(artwork)
         if (!labelsChanged(bookTitle, narrator, chapters, title, narratorName, renamed, shown, artwork)) return
         bookTitle = title
         narrator = narratorName
         chapters = renamed
-        ReadAloud.refreshArtwork()
         if (exo != null && exo.mediaItemCount > 0) {
             val items = (0 until exo.mediaItemCount).map(exo::getMediaItemAt)
             exo.replaceMediaItems(0, items.size, relabelled(items, title, narratorName, titles, artwork))

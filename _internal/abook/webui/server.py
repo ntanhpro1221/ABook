@@ -14,6 +14,7 @@ import functools
 import hashlib
 import http.client
 import json
+import logging
 import math
 import mimetypes
 import os
@@ -64,6 +65,8 @@ from .gcast import discover as gcast_discover
 from .peer_players import PeerPlayers
 from .sync import (LOCAL_PLAYER, SYNC_PORT, Devices, ExclusiveHTTPServer, Remote, SyncApp, SyncServer, away_addresses,
                    local_addresses, remote_command)
+
+log = logging.getLogger(__name__)
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 MISSING_UI_PAGE = (
@@ -1137,7 +1140,8 @@ class App:
         báo (`wasQueued`) để người dùng tự xếp nếu muốn.
 
         Tên anh em là một mã sách khác (mã = đường dẫn): chỗ nghe, dấu trang, hồ sơ, tốc độ, giọng và lượt xuất dở đi theo cuốn sang mã mới - cuốn
-        đang chiếm đường gốc không giữ dữ liệu của cuốn đã xoá. Dự án nằm trong một chuỗi phần (`continues.json` trỏ tới / từ nó) thì không đổi
+        đang chiếm đường gốc (ra đời sau lần xoá) không giữ dữ liệu của cuốn đã xoá. Cuốn chiếm chỗ có trước - xoá "X", thêm "X" mới, xoá
+        luôn nó rồi hoàn tác cả hai (cũ trước): "X" cũ về chỗ mình - thì dữ liệu theo mã ấy là của nó, không chuyển. Dự án nằm trong một chuỗi phần (`continues.json` trỏ tới / từ nó) thì không đổi
         tên được: phần sau sẽ nối nhầm sang cuốn đang chiếm chỗ - từ chối như trước, người dùng bỏ cuốn kia rồi hoàn tác."""
         self._mutating()
         root = self.library.root.resolve()
@@ -1153,11 +1157,17 @@ class App:
         except OSError as error:
             raise ApiError(HTTPStatus.CONFLICT, f"Không khôi phục được - có thể thư mục đích đang mở. ({error})") from error
         path = Path(meta["original"])
-        if meta.get("renamedFrom"):
-            self._adopt_restored_id(book_id(Path(meta["renamedFrom"])), book_id(path))
+        result: dict[str, Any] = {"ok": True, "title": path.name, "renamed": bool(meta.get("renamedFrom")), "wasQueued": bool(meta.get("queued"))}
+        if meta.get("renamedFrom") and meta.get("occupantIsNewer"):
+            # Chỉ khi cuốn đang ở đường gốc ra đời sau lần xoá này: cuốn cũ hơn vừa hoàn tác về chỗ của nó giữ dữ liệu của nó.
+            old, new = book_id(Path(meta["renamedFrom"])), book_id(path)
+            if self._adopt_restored_id(old, new):
+                result |= {"oldId": old, "newId": new}  # giao diện chuyển theo những gì nó nhớ theo mã sách
+            else:
+                result["dataLeft"] = True
         if meta["kind"] == "project" and path.parent.resolve() != root:
             self.preferences.add_recent(path)  # dự án mở từ nơi khác thư viện: hiện lại qua "gần đây"
-        return {"ok": True, "title": path.name, "renamed": bool(meta.get("renamedFrom")), "wasQueued": bool(meta.get("queued"))}
+        return result
 
     def _in_series(self, meta: dict[str, Any], item: Path) -> bool:
         """Dự án đang chờ hoàn tác (`item`) có nằm trong một chuỗi phần: nó nối tiếp một phần trước, hay một dự án của thư viện nối tiếp đường gốc của nó."""
@@ -1168,15 +1178,22 @@ class App:
         original = Path(meta["original"])
         return any(continuation.previous_path(project) == original for project in self.library.projects())
 
-    def _adopt_restored_id(self, old: str, new: str) -> None:
-        """Cuốn vừa hoàn tác về tên anh em: dữ liệu nghe và lượt xuất dở theo mã cũ (đường gốc) sang mã mới."""
-        self._rename_book_ids({old: new}, ".pre-undo.bak", fresh_backup=True)
+    def _adopt_restored_id(self, old: str, new: str) -> bool:
+        """Cuốn vừa hoàn tác về tên anh em: dữ liệu nghe và lượt xuất dở theo mã cũ (đường gốc) sang mã mới. False khi dữ liệu nghe không
+        chuyển được (file đang bị giữ...): thư mục đã về và mã hoàn tác đã dùng, nên vẫn là hoàn tác xong - không văng thành lỗi mà bấm lại
+        chỉ gặp "hết thời gian". Hồ sơ nghe (chỗ nghe, dấu trang) chuyển trước chỗ nghe kiểu cũ: hỏng giữa chừng thì phần chính đã đi."""
+        try:
+            self._rename_book_ids({old: new}, ".pre-undo.bak", fresh_backup=True)
+        except Exception:  # noqa: BLE001 - cuốn đã về rồi; dữ liệu ở lại mã cũ, ghi lại để biết
+            log.exception("Hoàn tác về tên anh em: không chuyển được dữ liệu nghe từ mã %s sang %s - cuốn đang ở đường gốc còn giữ nó", old, new)
+            return False
         work = listen_export.work_folder(self.export_work_dir, old)
         if work.is_dir():
             try:
                 os.replace(work, listen_export.work_folder(self.export_work_dir, new))
             except OSError:
                 pass  # thư mục đích đã có / đang mở: lượt xuất làm lại từ đầu, không mất gì của sách
+        return True
 
     def remove_imported(self, value: str, *, undo: bool = False) -> dict[str, Any]:
         """Bỏ một cuốn NHẬP TỪ FILE `.abook` khỏi thư viện: thư mục đã giải nén vào Thùng rác. File `.abook` gốc không bị

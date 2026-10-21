@@ -109,7 +109,9 @@ class TrashPending:
                 may_rename: Callable[[dict[str, Any], Path], bool] = lambda _meta, _item: True) -> dict[str, Any]:
         """Hoàn tác về đường gốc, hoặc tên anh em còn trống khi đường gốc đã bị chiếm và `may_rename(meta, thư mục đang chờ)`
         cho phép (không thì `Occupied`, thư mục vẫn nằm chờ). `NotPending` khi mã lạ / hết hạn, OSError khi đổi tên không được.
-        Meta trả về chứa đường thực sự đã khôi phục (`original`) và, khi phải đổi tên, đường gốc (`renamedFrom`)."""
+        Meta trả về chứa đường thực sự đã khôi phục (`original`) và, khi phải đổi tên, đường gốc (`renamedFrom`) cùng `occupantIsNewer`:
+        cuốn đang ở đường gốc ra đời SAU lúc cuốn này bị xoá (dữ liệu nghe theo mã đường gốc là của cuốn này, phải đi theo nó). Cuốn
+        chiếm chỗ có trước - như cuốn cũ hơn vừa được hoàn tác về đúng chỗ của nó - thì dữ liệu ấy là của nó, không chuyển."""
         folder = self._folder(root, token)
         with self._lock:
             meta = self._meta(folder)
@@ -127,8 +129,9 @@ class TrashPending:
             while target.exists():
                 target = original.with_name(f"{original.name} ({number})")
                 number += 1
+            renamed = {"renamedFrom": str(original), "occupantIsNewer": _born_after(original, folder)} if target != original else {}
             os.replace(item, target)
-            meta = {**meta, "original": str(target), **({"renamedFrom": str(original)} if target != original else {})}
+            meta = {**meta, "original": str(target), **renamed}
             self._roots.pop(token, None)
             self._tidy(folder)
         self._tidy_base(root / FOLDER)
@@ -280,6 +283,24 @@ def _folder_id(path: Path) -> list[int] | None:
     except OSError:
         return None
     return [stat.st_dev, stat.st_ino] if stat.st_ino else None
+
+
+def _born(path: Path) -> float | None:
+    """Lúc thư mục ra đời: giữ nguyên qua đổi tên (`os.replace`). Windows: `st_ctime` là lúc tạo; nơi khác `st_ctime` là lúc đổi
+    inode (đổi tên cũng đổi) nên chỉ tin `st_birthtime`. None khi hệ thống không cho biết."""
+    try:
+        stat = path.stat()
+    except OSError:
+        return None
+    born = getattr(stat, "st_birthtime", None)
+    return stat.st_ctime if born is None and os.name == "nt" else born
+
+
+def _born_after(occupant: Path, folder: Path) -> bool:
+    """Thư mục `occupant` ra đời từ lúc (hay sau lúc) mã `folder` được tạo - tức sau lần xoá. Cùng đồng hồ của hệ thống file, không dùng
+    đồng hồ của bộ chờ (bài thử thay được). Không biết thì False: không chuyển dữ liệu của ai sang đâu cả."""
+    occupant_born, deleted = _born(occupant), _born(folder)
+    return occupant_born is not None and deleted is not None and occupant_born >= deleted
 
 
 def _same_folder(path: Path, expected: Any) -> bool:
