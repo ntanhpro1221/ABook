@@ -6008,3 +6008,12 @@ Phán quyết đo ở Corpus `research/music/PLAN_scenegap_confirm.md` mục 11 
 - Hai hướng sai chính là "căng mà bài êm" và "buồn mà bài vui", mỗi hướng 29 %.
 - Trần biết đúng: cắt mọi khúc ngắn thì −2,62 nhưng đổi bài 24 / giờ, vượt trần 22. Chỉ cắt khúc ngược màu thì −1,37 [−1,98; −0,82],
   18 / giờ. Kết luận GIỮA, đóng: một bộ dò từ chữ chỉ lấy được một phần của trần ấy.
+
+**Hướng dẫn chấm cảnh, trần đồng thuận ranh** (PLAN_v5b / v6 / v7, 22-10, Corpus `research/music`):
+- Bản 5 (H1 / H2) và bản 6 (K1 một ngưỡng 210 tiếng, K2 đổi nhỏ cần 420 tiếng) đều không phân biệt được với bản 4. Bộ 27 có 90 chương:
+  F1 mọi ranh ±20 s −0,033 [−0,094; +0,030], chặn gian 0,71. Hướng dẫn đang dùng giữ bản 4 + H3.
+- Sửa phía công cụ cũng không có đòn bẩy (D0 bằng máy, không tốn lượt chấm):
+  - đếm tiếng đúng: Δ ≈ 0;
+  - để máy quyết ranh từ nhãn: tệ hơn ở mọi ngưỡng.
+- Ghi nhận: F1 mọi ranh ~0,73 giữa hai người chấm Sonnet là TRẦN của nhiệm vụ này. Nhánh "đồng thuận ranh" đóng (Lead 22-10).
+  Mọi thước ranh của model nên đọc so với trần ấy.
