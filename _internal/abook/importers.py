@@ -14,6 +14,7 @@ EPUB chỉ cần zipfile + ElementTree; PDF cần `pypdf` (BSD-3-Clause, thuần
 """
 from __future__ import annotations
 
+import codecs
 import hashlib
 import html.entities
 import json
@@ -81,7 +82,8 @@ SUPERSCRIPT = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 HEADINGS = {"h1", "h2", "h3"}
 WRAPPERS = {"body", "section", "div", "article", "main"}  # khối bọc cả trang: vai của chúng (trước chữ đầu tiên) là vai của trang
 UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')  # ký tự Windows không nhận trong tên file
-BROKEN = "không phải file {kind} thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+BROKEN = "Không phải file {kind} thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+EPUB_DRM = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
 
 # Số của chương: chữ số, số La Mã, hay số viết bằng chữ ("Chương Một", "Hồi thứ hai").
 _NUMBER_WORDS = (
@@ -592,26 +594,74 @@ def split_txt_chapters(text: str) -> list[Chapter]:
 # --- XML an toàn -------------------------------------------------------------------------------------------------------
 
 _XML_ENTITIES = {"amp", "lt", "gt", "quot", "apos"}
-_NAMED_ENTITY = re.compile(rb"&([A-Za-z][A-Za-z0-9]{0,31});")
+_NAMED_ENTITY = re.compile(r"&([A-Za-z][A-Za-z0-9]{0,31});")
+_ENTITY_DECLARATION = re.compile(rb"<!ENTITY", re.IGNORECASE)
+_XML_DECLARATION = re.compile(r"""<\?xml[ \t\r\n][^>]*?encoding[ \t\r\n]*=[ \t\r\n]*["']([A-Za-z0-9._:-]+)""")
+_UTF16 = {"utf-16", "utf-16-be", "utf-16-le"}
 
 
-def _html_entities_as_numbers(raw: bytes) -> bytes:
+def _html_entities_as_numbers(text: str) -> str:
     """Mục lục / NCX hay mang thực thể HTML (`&nbsp;`) mà XML không biết - ElementTree sẽ coi cả cuốn là hỏng. Đổi chúng thành số
     (`&#160;`) trước khi đọc, như bộ đọc thẻ của bản Kotlin vẫn hiểu chúng. Tên lạ thì để nguyên (vẫn là file hỏng)."""
-    def numeric(match: re.Match[bytes]) -> bytes:
-        name = match.group(1).decode("ascii")
+    def numeric(match: re.Match[str]) -> str:
+        name = match.group(1)
         value = None if name in _XML_ENTITIES else html.entities.html5.get(f"{name};")
-        return match.group(0) if value is None else "".join(f"&#{ord(char)};" for char in value).encode("ascii")
+        return match.group(0) if value is None else "".join(f"&#{ord(char)};" for char in value)
 
-    return _NAMED_ENTITY.sub(numeric, raw) if b"&" in raw else raw
+    return _NAMED_ENTITY.sub(numeric, text) if "&" in text else text
+
+
+def _xml_codec(name: str) -> str | None:
+    """Tên bảng mã trong `<?xml encoding>` -> codec chuẩn ("utf8" -> "utf-8", "latin-1" -> "iso8859-1", "windows-1258" -> "cp1258"), hay None
+    nếu ABook không đọc: chỉ UTF-8, UTF-16 và bảng mã một byte (Shift_JIS, GB2312, UTF-32 là file hỏng, như expat). Kotlin: Markup.xmlCharset."""
+    try:
+        codec = codecs.lookup(name).name
+        if codec == "utf-8" or codec in _UTF16 or len(bytes(range(256)).decode(codec, "replace")) == 256:
+            return codec
+    except (LookupError, ValueError):  # tên lạ, hay codec không phải bảng mã chữ (base64, rot13)
+        pass
+    return None
+
+
+def _xml_text(raw: bytes, kind: str) -> str:
+    """Chữ của một file XML, giải mã như expat nhận bảng mã nhưng với một bảng tên chung hai bên. Khai báo entity (bom XML) bị chặn ở bất cứ
+    đâu trong file, bảng mã nào (soi byte đã bỏ 0 - UTF-16 cũng thấy). UTF-16: BOM, hay byte 0 ở byte đầu (BE) / byte thứ hai (LE); không
+    thì `<?xml encoding>` ở đầu file, không có là UTF-8. Byte không giải được (kể cả byte ngoài bảng mã một byte) là file hỏng. Kotlin:
+    Markup.xmlText."""
+    if _ENTITY_DECLARATION.search(raw.replace(b"\0", b"")):
+        raise ImportFailed("Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
+    raw = raw.removeprefix(b"\xef\xbb\xbf")
+    wide = {b"\xfe\xff": "utf-16-be", b"\xff\xfe": "utf-16-le"}.get(raw[:2])
+    if wide:
+        raw = raw[2:]
+    elif raw[:1] == b"\0":
+        wide = "utf-16-be"
+    elif raw[1:2] == b"\0":
+        wide = "utf-16-le"
+    try:
+        if wide:
+            text = raw.decode(wide)
+            declared = _XML_DECLARATION.match(text)
+            if declared and _xml_codec(declared.group(1)) not in {"utf-16", wide}:
+                raise ImportFailed(BROKEN.format(kind=kind))
+        else:
+            declared = _XML_DECLARATION.match(raw[:2048].decode("latin-1"))
+            codec = _xml_codec(declared.group(1)) if declared else "utf-8"
+            if codec is None or codec in _UTF16:
+                raise ImportFailed(BROKEN.format(kind=kind))
+            text = raw.decode(codec)
+    except UnicodeDecodeError as error:
+        raise ImportFailed(BROKEN.format(kind=kind)) from error
+    if "\0" in text:
+        raise ImportFailed(BROKEN.format(kind=kind))
+    return text
 
 
 def _xml(raw: bytes, kind: str = "EPUB") -> ElementTree.Element:
-    head = raw[:4096].decode("utf-8", errors="replace")
-    if "<!ENTITY" in head.upper():
-        raise ImportFailed("có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
+    text = _xml_text(raw, kind)
     try:
-        return ElementTree.fromstring(_html_entities_as_numbers(raw))
+        # Chữ đã giải mã: expat bỏ qua `<?xml encoding>` khi đọc str.
+        return ElementTree.fromstring(_html_entities_as_numbers(text))
     except ElementTree.ParseError as error:
         raise ImportFailed(BROKEN.format(kind=kind)) from error
 
@@ -637,7 +687,7 @@ def _read(book: _Zip, name: str, kind: str = "EPUB") -> bytes:
     if info is None:
         raise ImportFailed(BROKEN.format(kind=kind))
     if info.file_size > MAX_MEMBER:
-        raise ImportFailed(f"có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
+        raise ImportFailed(f"Có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
     return book.read(info)
 
 
@@ -648,7 +698,7 @@ def _open_zip(path: Path, kind: str) -> _Zip:
         raise ImportFailed(BROKEN.format(kind=kind)) from error
     if sum(info.file_size for info in book.infolist()) > MAX_TOTAL:
         book.close()
-        raise ImportFailed(f"quá lớn khi giải nén (trên 300 MB) - không giống {kind} truyện")
+        raise ImportFailed(f"Quá lớn khi giải nén (trên 300 MB) - không giống {kind} truyện")
     return book
 
 
@@ -1170,6 +1220,57 @@ def _epub_cover(book: _Zip, opf: ElementTree.Element, manifest: dict[str, tuple[
     return (book.read(info), media) if info is not None and info.file_size <= MAX_COVER else None
 
 
+# Khoảng trắng Unicode (đúng tập `str.isspace`) và ký tự không bề rộng, viết ra một bảng chung hai bên thay vì theo định nghĩa của từng nền tảng.
+_BLANK = ("\t\n\x0b\x0c\r\x1c\x1d\x1e\x1f \x85\xa0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f"
+          "\u205f\u3000\u200b\u200c\u200d\u2060\ufeff")
+
+
+def _looks_encrypted(raw: bytes) -> bool:
+    """Trang trông như chữ đã mã hoá: bỏ khoảng trắng / ký tự không bề rộng ở đầu mà không mở bằng '<', hay hơn 10 % của 1.000 ký tự (code
+    point) đầu là ký tự hỏng (�) hoặc ký tự điều khiển C0 trừ tab / xuống dòng. Trang rỗng hay chỉ có khoảng trắng thì không. Kotlin:
+    looksEncrypted."""
+    head = markup_text(raw).lstrip(_BLANK)[:1000]
+    bad = sum(1 for char in head if char == "\ufffd" or (char < " " and char not in "\t\r\n"))
+    return bool(head) and (not head.startswith("<") or bad * 10 > len(head))
+
+
+def _epub_rights(book: _Zip) -> bool:
+    """Sách có sinf.xml (FairPlay), rights.xml (Adobe ADEPT, Kobo) hay license.lcpl (Readium LCP) có thể khoá mà không kèm encryption.xml:
+    True để soi chữ của chương. Dấu khoá trong các file ấy chưa đủ để từ chối - sách đã gỡ khoá (obok) vẫn giữ nguyên chúng. Kotlin: epubRights."""
+    return any(book.member(f"META-INF/{name}") is not None for name in ("sinf.xml", "rights.xml", "license.lcpl"))
+
+
+def _epub_encryption(book: _Zip, manifest: dict[str, tuple[str, str, str]], spine: ElementTree.Element) -> None:
+    """Từ chối DRM trước khi đọc chữ; hai kiểu làm rối font của EPUB vẫn đọc được. Kotlin: epubEncryption."""
+    if _epub_rights(book):
+        # Có file quyền: một chương của thứ tự đọc trông như chữ đã mã hoá là sách còn khoá.
+        for ref in spine.iterfind("opf:itemref", NS):
+            href, media, _props = manifest.get(ref.get("idref", ""), ("", "", ""))
+            if href and "html" in media and book.member(href) is not None and _looks_encrypted(_read(book, href)):
+                raise ImportFailed(EPUB_DRM)
+    if book.member("META-INF/encryption.xml") is None:
+        return
+    obfuscation = {"http://www.idpf.org/2008/embedding", "http://ns.adobe.com/pdf/enc#RC"}
+    spine_paths = {_nfc(manifest.get(ref.get("idref", ""), ("", "", ""))[0]) for ref in spine.iterfind("opf:itemref", NS)}
+    fonts = {_nfc(href) for href, media, _props in manifest.values()
+             if media.startswith("font/") or "font" in media or media == "application/vnd.ms-opentype"
+             or posixpath.splitext(href)[1].lower() in {".otf", ".ttf", ".woff", ".woff2"}}
+    # Một số sách quên khai báo font trong OPF; file font có thật trong ZIP vẫn chỉ là làm rối font.
+    declared = {_nfc(href) for href, _media, _props in manifest.values()}
+    fonts.update(_nfc(info.filename) for info in book.infolist() if _nfc(info.filename) not in declared
+                 and posixpath.splitext(info.filename)[1].lower() in {".otf", ".ttf", ".woff", ".woff2"})
+    root = _xml(_read(book, "META-INF/encryption.xml"))
+    # Theo tên cục bộ: EncryptedData thiếu (hay sai) namespace vẫn là mã hoá - kể cả khi nó là gốc của file.
+    for data in (node for node in root.iter() if node.tag.rpartition("}")[2] == "EncryptedData"):
+        method = next((child for child in data if child.tag.rpartition("}")[2] == "EncryptionMethod"), None)
+        refs = [node for node in data.iter() if node.tag.rpartition("}")[2] == "CipherReference"]
+        # URI tính từ gốc ZIP, không phải thư mục META-INF. Không cho thuật toán font che một chương mã hoá.
+        paths = [_nfc(posixpath.normpath(unquote(ref.get("URI", "")))) for ref in refs]
+        if (method is None or method.get("Algorithm") not in obfuscation or not paths
+                or any(path not in fonts or path in spine_paths for path in paths)):
+            raise ImportFailed(EPUB_DRM)
+
+
 def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
     with _open_zip(path, "EPUB") as book:
         container = _xml(_read(book, "META-INF/container.xml"))
@@ -1187,6 +1288,7 @@ def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
         spine = opf.find("opf:spine", NS)
         if spine is None:
             raise ImportFailed(BROKEN.format(kind="EPUB"))
+        _epub_encryption(book, manifest, spine)
         titles: dict[str, str] = {}  # href -> tên đầu tiên trỏ tới nó
         listed_in: dict[str, list[tuple[str, str]]] = {}  # href -> [(mảnh, tên)] theo thứ tự mục lục
         toc, declared = _toc(book, manifest, spine.get("toc", ""))

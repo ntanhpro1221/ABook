@@ -51,6 +51,40 @@ lịch giữ **3.337 ms**. Ca `theRecordedHotOppoBookBCannotFitTheOldCapPlusHalf
 đồng thời thoả điều kiện không bắt đầu muộn với số đo ấy; ca B máy nhanh ở trên không thay cho log này. Đã hỏi người dùng về ưu tiên.
 Vitest/tsc không chạy vì không sửa UI. Hash khoá trước/sau cùng `49e8fd2dc212c7207cd0fbf66b308e6b0d1b49d220d64a16501d170bc906635f` (41 mục đọc từ code).
 
+Đợt a71fix2 (`dev/uxfix78`, nền 3b41e4a3): cả bảy lỗi có test đỏ trước sửa.
+Python tái hiện metadata quyền / OpenType / đếm chương complete; JVM bốn test riêng đều FAILED, 0 ERROR
+(metadata, MIME, XML UTF-16, URI ngoài BMP). Vitest ba test FAILED cho bộ chọn một/nhiều file trả muộn và
+mở .abook sau khi đóng hộp; kiểm bỏ riêng guard trước opened() cũng FAILED. Mỗi bộ đỏ exit 1.
+Sau sửa, pytest liên quan 239 passed, 0 FAILED / 0 ERROR, exit 0. Các fixture mới dùng chung Python/Kotlin và
+expected JSON bao phủ metadata rights/sinf rõ chữ, rights kèm font, ADEPT kèm chương mã hoá, toàn bộ MIME font
+trong bảng EPUB 3.3 (https://www.w3.org/TR/epub-33/#sec-core-media-types), OpenType IDPF/Adobe không đuôi font,
+XML UTF-16 có BOM và UTF-16LE/BE có khai báo, URI trộn emoji thô với percent-encoding.
+UI kiểm callback thật của AddBookDialog và useOpenBookPath: đóng hộp bỏ lựa chọn và lỗi muộn, không preview,
+không điều hướng/toast; cả đường một file và hàng .abook truyền session tới trước tác dụng phụ.
+Hash sau sửa vẫn `49e8fd2dc212c7207cd0fbf66b308e6b0d1b49d220d64a16501d170bc906635f`, trùng trước sửa.
+Kiểm tuần tự trên mã cuối: pytest toàn bộ 8395 ca = 8386 passed + 9 skipped, 0 FAILED / 0 ERROR, exit 0
+(1632,4 giây); Vitest 1214 passed + 1 skipped, 0 failed / 0 errors, exit 0; tsc --noEmit không lỗi, exit 0.
+Gradle :app:testDebugUnitTest --max-workers=4 --offline: 1171 ca = 1165 passed + 6 skipped,
+0 FAILED / 0 ERROR, exit 0 (106,1 giây). Giới hạn bốn CPU, CUDA_VISIBLE_DEVICES=-1; không đặt TRANSFORMERS_OFFLINE.
+Pytest có hai cảnh báo ngoài phạm vi sửa: ZIP trùng tên trong test EPUB và timeout accept của máy chủ giả trong
+test_music_truncated_download. Không có FAILED/ERROR. Compileall, LF và git diff --check qua; không còn tiến trình thử nền.
+
+Đợt a71fix (`dev/uxfix78`): bốn lỗi nhập sách/thư viện đã tái hiện bằng test đỏ trước sửa. Pytest mới:
+13 FAILED / 0 ERROR trong 15 ca (hai ca font hợp lệ đã qua); Vitest importQueue: 3 FAILED / 17 passed;
+JVM: 2 FAILED / 0 ERROR trong hai ca DRM và chữ hoa. Ca font không khai báo OPF được kiểm thêm: Python và JVM đều đỏ trước sửa bổ sung.
+Sau sửa, bộ pytest liên quan: 209 passed / 0 FAILED / 0 ERROR,
+exit 0; Vitest toàn bộ: 1207 passed, 1 skipped, 0 failed, exit 0; TypeScript `tsc --noEmit`: exit 0.
+Bộ ví dụ chung có DRM mã hoá chương, rights.xml, sinf.xml, thuật toán font gắn vào chương, cùng font IDPF/Adobe hợp lệ (cả font không khai báo OPF).
+Test nhập lại file gốc xác nhận chép bù chương mất/rỗng, giữ nguyên byte chữ; HTTP phân biệt mất chữ với chương không có chữ.
+Huỷ đọc ngăn kết quả/lỗi cũ, không đi tiếp hàng hay mở file .abook phía sau. CHANGELOG có một dòng cho mỗi lỗi.
+Hash khoá trước và sau: `49e8fd2dc212c7207cd0fbf66b308e6b0d1b49d220d64a16501d170bc906635f` (không đổi).
+Kiểm CPU tối đa bốn lõi, CUDA tắt; Gradle offline dùng dependency cục bộ và `--no-daemon`, không dùng thiết bị hay Ollama.
+JVM toàn bộ trên mã cuối (đếm XML): 1167 ca = 1161 passed + 6 skipped, 0 FAILED / 0 ERROR, exit 0.
+Pytest toàn bộ trên mã cuối (đếm XML): 8380 ca = 8371 passed + 9 skipped, 0 FAILED / 0 ERROR, exit 0, 1549,9 giây.
+Có ba cảnh báo: ZIP trùng tên trong test EPUB; luồng subprocess đọc cp1252 gặp UnicodeDecodeError; máy chủ thử của
+test_music_truncated_download chờ accept hết hạn. Các vùng này nằm ngoài phạm vi sửa; nguyên văn ở log full-py-final.
+Compileall, kiểm LF và `git diff --check` qua; tiến trình thử đã thoát hết.
+
 Đợt pqfix B41 (`dev/pqfix`): xác nhận cả 5 lỗi bằng test đỏ trước sửa (resume hoà giải lại chương đã commit; NPC thiếu phạm vi
 chương; câu đổi vai giữ giới/tuổi cũ; CLI cài thiếu tokenizer; kiểm digest rớt mạng không retry). Thêm 20 ca kiểm trong 5 file
 `test_speaker_pass_reconcile_resume.py`, `test_speaker_pass_local_scope.py`, `test_speaker_pass_traits.py`,
