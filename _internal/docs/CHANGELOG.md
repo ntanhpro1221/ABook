@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.120] - 2026-10-21
+
 ### Thư viện
 
 - Nâng setuptools 81.0.0 để vá CVE-2025-47273 mà vẫn dùng được pyworld; ctranslate2 4.8.3 sửa treo khi tắt trên Windows; cryptography 50.0.2, vitest 5.0.5, vite 8.3.5, plugin-react 6.1.2, react-query 5.104.5, Kotlin 2.4.21 và WorkManager 2.12.0 cập nhật bảo mật và sửa lỗi.
