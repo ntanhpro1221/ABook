@@ -151,11 +151,10 @@ class StalledClipsTest {
     }
 
     @Test
-    fun theWakeLockIsHeldOnlyForOnlineReadsTheListenerWaitsOn() {
-        assertTrue(StalledClips.holdsWake(online = true, listenerWants = true, probe = false))
-        assertFalse(StalledClips.holdsWake(online = true, listenerWants = true, probe = true))
-        assertFalse(StalledClips.holdsWake(online = true, listenerWants = false, probe = false))
-        assertFalse(StalledClips.holdsWake(online = false, listenerWants = true, probe = false))
+    fun theWakeLockIsHeldForEveryReadTheListenerWaitsOnIncludingOnDeviceVoices() {
+        assertTrue(StalledClips.holdsWake(listenerWants = true, probe = false))
+        assertFalse(StalledClips.holdsWake(listenerWants = true, probe = true))
+        assertFalse(StalledClips.holdsWake(listenerWants = false, probe = false))
     }
 
     // ---- a50: hẹn hỏi lại không sống qua lần nhảy ---------------------------------------------------------------------------

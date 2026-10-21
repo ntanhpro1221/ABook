@@ -136,6 +136,55 @@ class OpeningScheduleTest {
         assertEquals(b, speeds.work("supertonic:F1")!!.perChar, 1e-9)
     }
 
+    @Test fun theChapterScheduleUsesTheVoiceCutsSceneGapsAndCacheOfEveryParagraph() {
+        // Lịch cả chương (ReadAloud tính ở luồng nền): cùng khúc thật, quãng lặng và đoạn có sẵn như dựng tay rồi gọi holdMs.
+        val text = "Hồ Quang trở lại thăm cây đa đầu làng vào một sớm đầu thu. Lý Nam chậm rãi bước qua cánh đồng lúa chín vào lúc sương còn dày."
+        val chapter = listOf("Chương 1: Sớm thu", "Hả?", "Ai đó?", "***", text, "$text $text", "Ừ.") + List(12) { "$text $text $text" }
+        val gaps = IntArray(chapter.size).also { it[3] = 1_200 }
+        for (voice in listOf("supertonic:F1", "vieneu:nano/Đức Trí")) {
+            val shapes = chapter.mapIndexed { index, paragraph ->
+                if (index == 3) OpeningParagraph(emptyList(), silenceMs = 1_200) else {
+                    val (tokens, units) = LocalLive.unitsOf(voice, paragraph, null, null)!!
+                    OpeningParagraph(units.map { it.text(tokens).length }, paragraph.length, paragraph == "Ai đó?")
+                }
+            }
+            assertTrue(shapes[5].units.size > 1)
+            val expected = OpeningSchedule.holdMs(2_190, shapes.drop(1), work, audio, 1.0, shapes[0].units)
+            val hold = OpeningSchedule.forChapter(voice, chapter, { it == 3 }, gaps, 0, 2_190, work, audio, 1.0, null, null) { it == "Ai đó?" }
+            assertEquals(expected, hold)
+            assertTrue(hold > 0)
+            assertEquals(OpeningSchedule.holdMs(2_190, shapes.drop(2), work, audio, 1.0, shapes[1].units),
+                OpeningSchedule.forChapter(voice, chapter, { it == 3 }, gaps, 1, 2_190, work, audio, 1.0, null, null) { it == "Ai đó?" })
+        }
+        assertThrows(IllegalStateException::class.java) {
+            OpeningSchedule.forChapter("edge:vi-VN-HoaiMyNeural", chapter, { false }, gaps, 0, 2_190, work, audio, 1.0, null, null) { false }
+        }
+    }
+
+    @Test fun aStreamThatBreaksWhileHeldLeavesTheQueueSoOnlyItsReplacementIsReleased() {
+        // Codex P1: mục phát luồng đã vào hàng giữ rồi lượt đọc hỏng trước hạn - trước đây tới hạn nhả cả mục hỏng lẫn clip thay nối sau nó.
+        val queue = OpeningQueue("heading", scheduled = true)
+        queue.items += "short paragraph"
+        queue.items += "live:7"
+        assertTrue(queue.withdraw { it == "live:7" })
+        assertFalse("đã bỏ rồi", queue.withdraw { it == "live:7" })
+        queue.items += "clip:7"
+        assertFalse(queue.releases(ready = true))
+        assertTrue(queue.releases(ready = false))
+        assertEquals(listOf("heading", "short paragraph", "clip:7"), queue.items)
+        assertFalse("clip đang giữ không bao giờ bị bỏ", OpeningQueue("live:7", scheduled = true).withdraw { it == "live:7" })
+    }
+
+    @Test fun changingTheVoiceWhileNothingPlaysYetRestartsTheWaitingPlace() {
+        // Codex P2: đang giữ clip đầu (ExoPlayer rỗng) mà đổi giọng - trước đây không làm gì, đoạn đã giữ và lượt đang chạy vẫn giọng cũ.
+        assertEquals(ReadAloud.VoiceSwitch.RESTART, ReadAloud.VoiceSwitch.of(null, waitingText = true, failed = false))
+        assertEquals(ReadAloud.VoiceSwitch.REQUEUE, ReadAloud.VoiceSwitch.of(3, waitingText = false, failed = false))
+        assertEquals(ReadAloud.VoiceSwitch.REQUEUE, ReadAloud.VoiceSwitch.of(0, waitingText = true, failed = false))
+        assertEquals("chương audio", ReadAloud.VoiceSwitch.NONE, ReadAloud.VoiceSwitch.of(-1, waitingText = false, failed = false))
+        assertEquals("đang dừng vì lỗi: bấm phát mới đọc lại", ReadAloud.VoiceSwitch.NONE, ReadAloud.VoiceSwitch.of(null, waitingText = true, failed = true))
+        assertEquals("chờ chương audio / không chờ gì", ReadAloud.VoiceSwitch.NONE, ReadAloud.VoiceSwitch.of(null, waitingText = false, failed = false))
+    }
+
     @Test fun aScheduledOpeningQueuesBothFinishedAndStreamingClipsUntilTheDeadline() {
         val queue = OpeningQueue("heading", scheduled = true)
         queue.items += "short paragraph"
