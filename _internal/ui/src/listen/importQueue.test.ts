@@ -9,6 +9,8 @@ import {
   queueFocus,
   queueLabel,
   queueTotal,
+  ReadCancelled,
+  readSessions,
   settle,
   summarize,
   summaryText,
@@ -21,6 +23,43 @@ import type { AddedBook, ImportChoice, ImportPreview, PickedItem, TextImport } f
 
 const choice = (name: string): ImportChoice => ({ ref: `C:\\Sách\\${name}`, name });
 const ok = (name: string): PickedItem => ({ name, choice: choice(name) });
+
+describe("cancelled preview reads", () => {
+  it("keeps a live result and rejects late success after closing or starting a newer read", async () => {
+    const sessions = readSessions();
+    const first = sessions.start();
+    await expect(first.wait(Promise.resolve("live"))).resolves.toBe("live");
+    const late = first.wait(Promise.resolve("old preview"));
+    sessions.cancel();
+    await expect(late).rejects.toBeInstanceOf(ReadCancelled);
+    const second = sessions.start();
+    sessions.start();
+    expect(() => second.still()).toThrow(ReadCancelled);
+  });
+
+  it("turns an old read error into cancellation without cancelling the new read", async () => {
+    const sessions = readSessions();
+    const old = sessions.start();
+    const late = old.wait(Promise.reject(new Error("discarded upload")));
+    sessions.cancel();
+    const current = sessions.start();
+    await expect(late).rejects.toBeInstanceOf(ReadCancelled);
+    await expect(current.wait(Promise.resolve("new preview"))).resolves.toBe("new preview");
+    await expect(current.wait(Promise.reject(new Error("real error")))).rejects.toThrow("real error");
+  });
+
+  it("stops the queue on cancellation without marking an error or opening later books", async () => {
+    const queue = buildQueue([ok("a.epub"), ok("b.txt"), ok("c.abook")]);
+    const load = vi.fn(async () => { throw new ReadCancelled(); });
+    const openBooks = vi.fn(async (items: typeof queue) => items);
+    const failed = vi.fn();
+    await expect(advanceQueue(queue, load, openBooks, failed)).rejects.toBeInstanceOf(ReadCancelled);
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(failed).not.toHaveBeenCalled();
+    expect(openBooks).not.toHaveBeenCalled();
+    expect(queue.every((item) => item.state === "waiting")).toBe(true);
+  });
+});
 
 const preview = (title: string, extra: Partial<ImportPreview> = {}): ImportPreview => ({
   title,

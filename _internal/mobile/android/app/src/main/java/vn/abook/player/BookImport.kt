@@ -95,7 +95,8 @@ object BookImport {
     private const val MAX_HEADING = 120
     private const val TITLE_FROM_LINE = 80
     private const val CREDIT_HEAD_LINES = 64
-    private const val BROKEN = "không phải file %s thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+    private const val BROKEN = "Không phải file %s thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+    private const val EPUB_DRM = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
 
     private fun broken(kind: String) = Failed(BROKEN.format(kind))
 
@@ -902,7 +903,7 @@ object BookImport {
          *  cũng là file hỏng, như ElementTree của máy tính (tệp mục lục: hỏng thì cả hai bên cùng bỏ nó, đọc theo spine). */
         fun parse(raw: ByteArray, kind: String, strict: Boolean = false): Node {
             val head = String(raw, 0, minOf(raw.size, 4096), Charsets.UTF_8)
-            if (head.uppercase().contains("<!ENTITY")) throw Failed("có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
+            if (head.uppercase().contains("<!ENTITY")) throw Failed("Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
             val stack = ArrayList<Node>()
             var root: Node? = null
             for (token in tokenize(String(raw, Charsets.UTF_8))) {
@@ -944,7 +945,7 @@ object BookImport {
         }
         if (zip.entries().asSequence().sumOf { maxOf(0L, it.size) } > MAX_TOTAL) {
             zip.close()
-            throw Failed("quá lớn khi giải nén (trên 300 MB) - không giống $kind truyện")
+            throw Failed("Quá lớn khi giải nén (trên 300 MB) - không giống $kind truyện")
         }
         return zip
     }
@@ -962,7 +963,7 @@ object BookImport {
 
     private fun read(zip: ZipFile, name: String, kind: String): ByteArray {
         val entry = member(zip, name) ?: throw broken(kind)
-        if (entry.size > MAX_MEMBER) throw Failed("có một phần quá lớn (trên 20 MB) - không giống $kind truyện")
+        if (entry.size > MAX_MEMBER) throw Failed("Có một phần quá lớn (trên 20 MB) - không giống $kind truyện")
         return zip.getInputStream(entry).use { it.readBytes() }
     }
 
@@ -1600,6 +1601,27 @@ object BookImport {
         return zip.getInputStream(entry).use { it.readBytes() } to media
     }
 
+    /** Từ chối DRM trước khi đọc chữ; làm rối font IDPF / Adobe vẫn hợp lệ (`importers._epub_encryption`). */
+    private fun epubEncryption(zip: ZipFile, manifest: Map<String, ManifestItem>, spine: Markup.Node) {
+        if (listOf("rights", "sinf").any { member(zip, "META-INF/$it.xml") != null }) throw Failed(EPUB_DRM)
+        if (member(zip, "META-INF/encryption.xml") == null) return
+        val obfuscation = setOf("http://www.idpf.org/2008/embedding", "http://ns.adobe.com/pdf/enc#RC")
+        val spinePaths = spine.children.filter { it.local == "itemref" }.mapNotNull { manifest[it.attr("idref")]?.href?.let(::nfc) }.toSet()
+        val fonts = manifest.values.filter { item ->
+            item.media.startsWith("font/") || item.media.contains("font") || item.href.substringAfterLast('.', "").lowercase() in setOf("otf", "ttf", "woff", "woff2")
+        }.map { nfc(it.href) }.toMutableSet()
+        // Font có trong ZIP mà OPF quên khai báo vẫn chỉ là làm rối font, không phải DRM.
+        val declared = manifest.values.map { nfc(it.href) }.toSet()
+        fonts.addAll(zip.entries().asSequence().filter { nfc(it.name) !in declared && it.name.substringAfterLast('.', "").lowercase() in setOf("otf", "ttf", "woff", "woff2") }.map { nfc(it.name) }.toList())
+        val root = xml(zip, "META-INF/encryption.xml", "EPUB", strict = true)
+        for (data in root.descendants().filter { it.local == "EncryptedData" }) {
+            val algorithm = data.child("EncryptionMethod")?.attr("Algorithm")
+            // URI tính từ gốc ZIP, không phải META-INF; thuật toán font không được che một chương mã hoá.
+            val paths = data.descendants().filter { it.local == "CipherReference" }.map { nfc(normpath(unquote(it.attr("URI") ?: ""))) }.toList()
+            if (algorithm !in obfuscation || paths.isEmpty() || paths.any { it !in fonts || it in spinePaths }) throw Failed(EPUB_DRM)
+        }
+    }
+
     private fun epub(file: File, choice: FootnoteChoice): Book = openZip(file, "EPUB").use { zip ->
         val container = xml(zip, "META-INF/container.xml", "EPUB")
         val opfPath = container.descendants().firstOrNull { it.local == "rootfile" }?.attr("full-path")
@@ -1613,6 +1635,7 @@ object BookImport {
             )
         }
         val spine = opf.child("spine") ?: throw broken("EPUB")
+        epubEncryption(zip, manifest, spine)
         val (tocEntries, declared) = toc(zip, manifest, spine.attr("toc") ?: "")
         val titles = linkedMapOf<String, String>() // file -> tên đầu tiên trỏ tới nó
         for (entry in tocEntries) titles.putIfAbsent(entry.href, entry.label)
