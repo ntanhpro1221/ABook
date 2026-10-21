@@ -147,7 +147,7 @@ enum class VieneuBackend {
     }
 }
 
-/** ONNX Runtime session options the VieNeu graphs are run with (same as the desktop engine: no spinning, one inter-op thread). */
+/** ONNX Runtime session options the VieNeu graphs are run with (same as the desktop engine: one inter-op thread, no spinning unless [spinning] - see [vn.abook.player.readaloud.SpinPolicy]). */
 internal fun sessionOptions(threads: Int, backend: VieneuBackend = VieneuBackend.CPU, spinning: Boolean = false): OrtSession.SessionOptions =
     OrtSession.SessionOptions().apply {
         setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT)

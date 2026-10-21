@@ -362,13 +362,13 @@ def default_threads() -> int:
     return min(max((os.cpu_count() or 8) // 2, 1), 8)
 
 
-def _session_options(threads: int, device: str) -> Any:
+def _session_options(threads: int, device: str, spinning: bool = False) -> Any:
     import onnxruntime as ort
 
     options = ort.SessionOptions()
     options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
     options.inter_op_num_threads = 1
-    options.add_session_config_entry("session.intra_op.allow_spinning", "0")
+    options.add_session_config_entry("session.intra_op.allow_spinning", "1" if spinning else "0")
     options.intra_op_num_threads = int(threads) if threads and threads > 0 else default_threads()
     options.log_severity_level = 3
     if device == "dml":  # DirectML đòi tắt mem pattern và chạy tuần tự
