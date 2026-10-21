@@ -38,6 +38,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent a
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
+import { Windowed } from "@/shared/Windowed";
+import { reveal } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
@@ -1605,17 +1607,19 @@ export function chapterStatusLabel(producing: boolean): string {
   return producing ? "Đang thu âm…" : "Chưa có audio";
 }
 
-function ChapterPanel() {
+export function ChapterPanel() {
   const { track, queue, jumpTo, playing } = usePlayer();
   const { data: book } = useListenBook(track?.bookId);
   const voice = useBookVoice(track?.bookId);
   const container = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    container.current?.querySelector<HTMLElement>("[data-current=true]")?.scrollIntoView({ block: "center" });
+    const scroller = container.current;
+    const current = scroller?.querySelector<HTMLElement>("[data-current=true]");
+    if (scroller && current) reveal(scroller, current);
   }, []);
   return (
     <div ref={container} className="h-full overflow-y-auto px-3 py-4 sm:px-6">
-      {queue.map((chapter) => {
+      <Windowed items={queue} estimate={60} keep={queue.findIndex((chapter) => chapter.id === track?.chapterId)} row={(chapter) => {
         const current = chapter.id === track?.chapterId;
         const done = book?.state.chapters[String(chapter.id)]?.done;
         return (
@@ -1653,7 +1657,7 @@ function ChapterPanel() {
             </span>
           </button>
         );
-      })}
+      }} />
     </div>
   );
 }

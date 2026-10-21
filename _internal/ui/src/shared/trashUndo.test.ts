@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const toast = vi.hoisted(() => Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }));
+const toast = vi.hoisted(() => Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), dismiss: vi.fn() }));
 const api = vi.hoisted(() => vi.fn());
 vi.mock("sonner", () => ({ toast }));
 vi.mock("@/studio/api", () => ({ api }));
@@ -9,7 +9,9 @@ import { UNDO_SECONDS, UNDO_TOAST_MS, removedDescription, restoredNote, toastRem
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.useFakeTimers();
 });
+afterEach(() => { vi.runAllTimers(); vi.useRealTimers(); });
 
 describe("xoá sách có Hoàn tác", () => {
   it("nút Hoàn tác sống ngắn hơn hạn của máy chủ", () => {
@@ -83,4 +85,45 @@ describe("xoá sách có Hoàn tác", () => {
     expect(options.action).toBeUndefined();
     expect(options.duration).toBeUndefined();
   });
+});
+
+it("ba lần xoá dùng một toast và hoàn tác cả ba mã, kể cả điện thoại", async () => {
+  const restore = vi.fn().mockResolvedValue({ ok: true });
+  const onRestored = vi.fn();
+  for (const undo of ["one", "two", "three"]) toastRemoved({ message: "Đã xoá", title: undo, undo, note: "", restore, onRestored });
+  const calls = toast.success.mock.calls.slice(0, 3);
+  expect(new Set(calls.map(([, options]) => options.id)).size).toBe(1);
+  expect(calls[0][1].id).toBe("trash-undo");
+  expect(calls[2][0]).toBe("Đã bỏ 3 cuốn");
+  await calls[2][1].action.onClick();
+  expect(restore.mock.calls.map(([token]) => token)).toEqual(["one", "two", "three"]);
+  expect(onRestored).toHaveBeenCalledTimes(3);
+});
+
+it("mỗi mã giữ hạn riêng: thêm cuốn sau không kéo dài hạn cuốn trước", async () => {
+  const restore = vi.fn().mockResolvedValue({ ok: true });
+  const options = { message: "Đã xoá", title: "Sách", note: "", restore, onRestored: vi.fn() };
+  toastRemoved({ ...options, undo: "old" });
+  vi.advanceTimersByTime(20_000);
+  toastRemoved({ ...options, undo: "new" });
+  vi.advanceTimersByTime(8_000);
+  const [, toastOptions] = toast.success.mock.calls.at(-1)!;
+  await toastOptions.action.onClick();
+  expect(restore.mock.calls.map(([token]) => token)).toEqual(["new"]);
+});
+
+it("một mã lỗi không ngăn các mã khác khôi phục và vẫn còn nút thử lại", async () => {
+  const restore = vi.fn(async (token: string) => {
+    if (token === "busy") throw new Error("Bạn hãy thử lại");
+    return { ok: true };
+  });
+  const restored = vi.fn();
+  for (const undo of ["busy", "good"]) toastRemoved({ message: "Đã xoá", title: undo, undo, note: "", restore, onRestored: restored });
+  await toast.success.mock.calls.at(-1)![1].action.onClick();
+  expect(restored).toHaveBeenCalledOnce();
+  vi.advanceTimersByTime(0);
+  restore.mockClear();
+  await toast.success.mock.calls.at(-1)![1].action.onClick();
+  expect(restore).toHaveBeenCalledWith("busy");
+  expect(restore).toHaveBeenCalledTimes(1);
 });
