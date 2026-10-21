@@ -333,7 +333,7 @@ export function PlayerProvider({
   refs.current.expanded = expanded;
   // Dòng ghi công người nghe tích / bỏ tích SAU khi nạp sách (trang sách): hàng đợi theo `skip` mới nhất, để giọng đọc và kịch bản dựng sẵn không còn đọc
   // theo bản cũ (kịch bản cũ nằm lại trong bộ nhớ đệm, màn đọc mở ra vẫn hiện dòng ấy).
-  useTrackMetadata(track, refs, setTrack, setQueue, native);
+  const markLoaded = useTrackMetadata(track, refs, setTrack, setQueue, native);
 
   const position = useCallback(
     (): NightPosition => ({
@@ -734,8 +734,11 @@ export function PlayerProvider({
       setTrack(next);
       refs.current.track = next;
       if (sameSpot) native.play();
-      else native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at: at ?? 0, rate: bookRate, autoplay: true,
-        readAloudVoice: chosenVoice(book.id) });
+      else {
+        markLoaded(book, chapters);
+        native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at: at ?? 0, rate: bookRate, autoplay: true,
+          readAloudVoice: chosenVoice(book.id) });
+      }
       // Bấm một chữ của chương đọc to khi cuốn chưa phát: hàng đợi vừa nạp, rồi lõi vào đúng chữ ấy.
       if (!sameSpot && extra?.word && chapter.state === "text") native.jumpTo(chapterId, at ?? 0, extra.word);
       return;
@@ -752,7 +755,7 @@ export function PlayerProvider({
     }
     load(next, start, true);
     if (extra?.word) engine.seekWord?.(extra.word.segment, extra.word.word);
-  }, [adoptBook, engine, load, native]);
+  }, [adoptBook, engine, load, markLoaded, native]);
 
   const play = useCallback<PlayerActions["play"]>((book, chapters, chapterId, at, extra) => {
     const chapter = chapters.find((item) => item.id === chapterId);
@@ -773,6 +776,7 @@ export function PlayerProvider({
       setTrack(next);
       refs.current.track = next;
       if (!native.bookId) {
+        markLoaded(book, chapters);
         native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at, rate: bookRate, autoplay: false,
           readAloudVoice: chosenVoice(book.id) });
       }
@@ -784,7 +788,7 @@ export function PlayerProvider({
     // `load` tự gắn cuốn vào trình phát SAU lần lưu chỗ cũ của nó; gắn trước thì lần lưu ấy ghi 0:00 (chưa nạp audio)
     // vào chỗ nghe dở của chính cuốn này - mỗi lần mở lại app là mất chỗ nghe.
     load(next, Math.max(0, at - back), false);
-  }, [adoptBook, adoptVoice, load, native]);
+  }, [adoptBook, adoptVoice, load, markLoaded, native]);
 
   /** Hết sách mà người nghe bấm phát: nói ra và mời nghe lại từ đầu (soát UX 03-10 - trước đây không có gì xảy ra). */
   const finishedToast = useCallback(() => {
@@ -1410,6 +1414,14 @@ export function PlayerProvider({
             }
           }).catch(() => undefined);
         }
+      }),
+      engine.on("metadata", () => {
+        const current = refs.current.track;
+        if (!native || !current || current.bookId !== native.bookId || current.chapterId !== native.chapterId) return;
+        if (current.bookTitle === native.bookTitle && current.chapterTitle === native.chapterTitle) return;
+        const next = { ...current, bookTitle: native.bookTitle, chapterTitle: native.chapterTitle };
+        refs.current.track = next;
+        setTrack(next);
       }),
       engine.on("sleep", () => {
         if (!native) return;

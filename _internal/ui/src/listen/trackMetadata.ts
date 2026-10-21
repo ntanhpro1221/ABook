@@ -1,4 +1,4 @@
-import { useEffect, useRef, type MutableRefObject } from "react";
+import { useCallback, useEffect, useRef, type MutableRefObject } from "react";
 import type { CoverImage } from "@/shared/cover";
 import { coverArtwork } from "@/shared/cover";
 import type { NativeEngine } from "./engine";
@@ -7,16 +7,31 @@ import type { Track } from "./player";
 import { useListenBook } from "./source";
 import { withFreshSkips } from "./textScript";
 
-/** Chỉ đổi nhãn; giữ nguyên nguồn phát, vị trí và hồ sơ nghe. */
+type LabelledBook = Pick<ListenBook, "id" | "title" | "narrator" | "cover">;
+
+/** Nhãn lõi điện thoại đang giữ cho thẻ media: tên sách, giọng kể, bìa, tên các chương. */
+interface NativeLabels { id: string; title: string; narrator: string; cover: string; chapters: readonly ListenChapter[] }
+
+const labelsOf = (book: LabelledBook, chapters: readonly ListenChapter[] = []): NativeLabels =>
+  ({ id: book.id, title: book.title, narrator: book.narrator, cover: JSON.stringify(book.cover ?? null), chapters });
+
+/** So từng chương chỉ khi danh sách chương đổi tham chiếu (react-query giữ nguyên tham chiếu khi dữ liệu không đổi). */
+function sameLabels(a: NativeLabels | null, b: NativeLabels): boolean {
+  return !!a && a.id === b.id && a.title === b.title && a.narrator === b.narrator && a.cover === b.cover && (a.chapters === b.chapters ||
+    (a.chapters.length === b.chapters.length && a.chapters.every((chapter, index) => chapter.id === b.chapters[index].id && chapter.fullTitle === b.chapters[index].fullTitle)));
+}
+
+/** Chỉ đổi nhãn; giữ nguyên nguồn phát, vị trí và hồ sơ nghe. Trả về hàm gọi ngay trước `loadQueue` của điện thoại: lõi vừa nhận
+ *  đúng những nhãn ấy, nên lần mở sách không gửi lại cả cuốn xuống lõi. */
 export function useTrackMetadata(
   track: Track | null,
-  refs: MutableRefObject<{ track: Track | null; queue: ListenChapter[]; book: { title: string } | null }>,
+  refs: MutableRefObject<{ track: Track | null; queue: ListenChapter[]; book: { id: string; title: string } | null }>,
   setTrack: (track: Track) => void,
   setQueue: (queue: ListenChapter[]) => void,
   native: NativeEngine | null,
-) {
+): (book: LabelledBook, chapters: readonly ListenChapter[]) => void {
   const { data: book } = useListenBook(track?.bookId);
-  const nativeStamp = useRef("");
+  const nativeLabels = useRef<NativeLabels | null>(null);
   useEffect(() => {
     const current = refs.current.track;
     if (!book || !current || book.id !== current.bookId) return;
@@ -32,13 +47,12 @@ export function useTrackMetadata(
       refs.current.queue = chapters;
       setQueue(chapters);
     }
-    if (refs.current.book) refs.current.book.title = book.title;
+    if (refs.current.book?.id === book.id) refs.current.book.title = book.title;
     if (native) {
-      const stamp = JSON.stringify([book.id, book.title, book.narrator, book.cover, book.chapters?.map((chapter) => [chapter.id, chapter.fullTitle])]);
-      if (stamp !== nativeStamp.current) {
-        nativeStamp.current = stamp;
-        native.updateMetadata?.(book);
-      }
+      const labels = labelsOf(book, book.chapters);
+      const changed = !sameLabels(nativeLabels.current, labels);
+      nativeLabels.current = labels;
+      if (changed) native.updateMetadata?.(book);
     }
     const next = metadataTrack(current, book, chapters);
     if (next === current) return;
@@ -52,6 +66,9 @@ export function useTrackMetadata(
       });
     }
   }, [book, track?.bookId, refs, setTrack, setQueue, native]);
+  return useCallback((loaded, chapters) => {
+    nativeLabels.current = labelsOf(loaded, chapters);
+  }, []);
 }
 
 function metadataTrack(current: Track, book: ListenBook, chapters: ListenChapter[]): Track {

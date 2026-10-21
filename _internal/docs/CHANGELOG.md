@@ -9,10 +9,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
-- Khi bạn đổi tên sách, tên chương hoặc bìa lúc đang nghe, thanh phát và thẻ media hệ điều hành cập nhật ngay trên máy tính và điện thoại.
+- Khi bạn đổi tên sách, tên chương hoặc bìa lúc đang nghe, thanh phát và thẻ media hệ điều hành cập nhật ngay trên máy tính và điện thoại; mở sách nghìn chương trên điện thoại không còn khựng, và đổi tên lúc đã nghe hết sách vẫn giữ khối “Hết sách”.
 - Khi bạn quay lại Thư viện, danh sách nhớ chỗ cuộn theo bộ lọc và cách sắp xếp, kể cả thư viện nhiều sách.
-- Khi bạn hoàn tác xoá sách mà chỗ cũ đã có cuốn khác, sách được khôi phục sang tên còn trống cạnh đó.
-- Khi bạn xoá nhiều cuốn liên tiếp, một thông báo Hoàn tác chung giữ các cuốn còn hạn trên máy tính và điện thoại.
+- Khi bạn hoàn tác xoá sách mà chỗ cũ đã có cuốn khác, sách được khôi phục vào thư mục tên còn trống cạnh đó (lời báo nói tên thư mục mới) và mang theo chỗ nghe, dấu trang, tốc độ, giọng đọc; cuốn đang ở chỗ cũ không nhận nhầm những thứ ấy. Dự án là một phần của bộ nhiều phần thì vẫn chờ bạn bỏ cuốn kia rồi hoàn tác, để các phần không nối nhầm.
+- Khi bạn xoá nhiều cuốn liên tiếp, một thông báo Hoàn tác chung giữ các cuốn còn hạn trên máy tính và điện thoại; gạt thông báo đi là bỏ hoàn tác những cuốn ấy, và nút Hoàn tác không còn biến mất khi lần hoàn tác trước báo lỗi.
 - Khi bạn đóng hoặc xoá cuốn đang nghe, thông báo “Quay lại chỗ cũ” của cuốn ấy cũng được gỡ.
 - Khi bạn mở tab Chương của sách hàng nghìn chương, danh sách chỉ dựng phần gần màn hình và chương bạn đang nghe.
 - Khi bạn nhập EPUB có khoá bản quyền (DRM), máy tính và điện thoại báo rõ lý do cùng cách dùng bản không khoá; EPUB chỉ làm rối font vẫn đọc được.
