@@ -9,6 +9,7 @@ import { ClipProvider } from "@/listen/clip";
 import { WebAudioEngine } from "@/listen/engine";
 import { RoutedEngine } from "@/listen/readAloud";
 import { AddBookButton } from "@/listen/AddBook";
+import type { ReadSession } from "@/listen/importQueue";
 import { DropToAdd } from "@/listen/DropToAdd";
 import { LibraryScreen } from "@/listen/LibraryScreen";
 import { MorningRecap } from "@/listen/MorningRecap";
@@ -356,10 +357,14 @@ function UpdateListener() {
 }
 
 /** Hộp "Thêm sách từ file…" nhận được .abook / .abookproj (dán đường dẫn, kể cả từ trình duyệt): mở như "Mở file sách". */
-function useOpenBookPath() {
+export function useOpenBookPath() {
   const opened = useOpenedBook();
   return useCallback(
-    async (path: string) => opened(await api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: { path } })),
+    async (path: string, session?: ReadSession) => {
+      const book = await api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: { path } });
+      session?.still();
+      return opened(book);
+    },
     [opened],
   );
 }

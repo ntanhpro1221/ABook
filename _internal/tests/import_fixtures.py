@@ -869,7 +869,7 @@ DRM_ERROR = "EPUB này có khoá bản quyền (DRM), ABook không mở được
 
 
 def build_encrypted_epub(algorithm: str = "http://www.w3.org/2001/04/xmlenc#aes128-cbc", *, font: bool = False,
-                         marker: str = "", declared_font: bool = True) -> bytes:
+                         marker: str = "", declared_font: bool = True, metadata_only: bool = False) -> bytes:
     """Mã hoá nội dung khác với làm rối font; URI tính từ gốc ZIP, kể cả dấu cách được mã hoá."""
     data = _book("Sách có mã hoá", [("c1.xhtml", f"<h1>Chương 1</h1><p>{LINE}</p>")],
                  extra=(("fonts/chữ thử.otf", b"font obfuscated", "font/otf"),) if declared_font else ())
@@ -882,10 +882,11 @@ def build_encrypted_epub(algorithm: str = "http://www.w3.org/2001/04/xmlenc#aes1
     if not declared_font:
         entries.append(("OEBPS/fonts/chữ thử.otf", b"font obfuscated"))
     if marker:
-        entries.append((f"META-INF/{marker}.xml", b"<rights/>"))
-    else:
+        rights = b'<adept:rights xmlns:adept="http://ns.adobe.com/adept"><adept:licenseToken/></adept:rights>' if marker == "rights" and not metadata_only else b"<rights/>"
+        entries.append((f"META-INF/{marker}.xml", rights))
+    if not metadata_only:
         entries.append(("META-INF/encryption.xml", encryption.encode("utf-8")))
-    if not font and not marker:
+    if not font and not metadata_only:
         entries = [(name, b"CIPHER_BYTES_not_story" * 20 if name == "OEBPS/text/c1.xhtml" else raw) for name, raw in entries]
     return _zip(entries, stored_first="mimetype")
 
@@ -898,13 +899,47 @@ def build_font_obfuscated() -> bytes:
     return build_encrypted_epub("http://www.idpf.org/2008/embedding", font=True)
 
 
+def build_font_variant(*, media: str = "font/otf", encoding: str = "utf-8", emoji: bool = False,
+                       algorithm: str = "http://www.idpf.org/2008/embedding") -> bytes:
+    from urllib.parse import quote
+
+    data = build_encrypted_epub(algorithm, font=True)
+    name = "\U0001f600 regular.dat" if emoji else "obfuscated.dat"
+    old = "fonts/ch\u1eef th\u1eed.otf"
+    with zipfile.ZipFile(io.BytesIO(data)) as book:
+        entries = []
+        for info in book.infolist():
+            raw = book.read(info)
+            if info.filename.endswith(".opf"):
+                raw = raw.decode("utf-8").replace(quote(old), quote("fonts/" + name)).replace(old, "fonts/" + name).replace('media-type="font/otf"', f'media-type="{media}"').encode("utf-8")
+            if info.filename == "META-INF/encryption.xml":
+                text = raw.decode("utf-8").replace("fonts/ch%E1%BB%AF%20th%E1%BB%AD.otf", "fonts/" + ("\U0001f600%20regular.dat" if emoji else name))
+                raw = (f'<?xml version="1.0" encoding="{encoding}"?>' + text).encode(encoding)
+            entries.append((info.filename.replace(old, "fonts/" + name), raw))
+    return _zip(entries, stored_first="mimetype")
+
+
 ENCRYPTED = {
     "drm.epub": build_drm,
     "drm_rights.epub": lambda: build_encrypted_epub(marker="rights"),
     "drm_sinf.epub": lambda: build_encrypted_epub(marker="sinf"),
+    "rights_metadata.epub": lambda: build_encrypted_epub(marker="rights", metadata_only=True),
+    "sinf_metadata.epub": lambda: build_encrypted_epub(marker="sinf", metadata_only=True),
     "drm_fake_font.epub": lambda: build_encrypted_epub("http://www.idpf.org/2008/embedding"),
     "font_obfuscated.epub": build_font_obfuscated,
     "font_adobe.epub": lambda: build_encrypted_epub("http://ns.adobe.com/pdf/enc#RC", font=True),
+    "font_opentype.epub": lambda: build_font_variant(media="application/vnd.ms-opentype"),
+    "font_opentype_adobe.epub": lambda: build_font_variant(media="application/vnd.ms-opentype", algorithm="http://ns.adobe.com/pdf/enc#RC"),
+    "font_ttf.epub": lambda: build_font_variant(media="font/ttf"),
+    "font_sfnt.epub": lambda: build_font_variant(media="application/font-sfnt"),
+    "font_woff.epub": lambda: build_font_variant(media="font/woff"),
+    "font_woff_legacy.epub": lambda: build_font_variant(media="application/font-woff"),
+    "font_woff2.epub": lambda: build_font_variant(media="font/woff2"),
+    "rights_font.epub": lambda: build_encrypted_epub("http://www.idpf.org/2008/embedding", marker="rights", font=True),
+    "font_utf16.epub": lambda: build_font_variant(encoding="utf-16"),
+    "font_utf16le.epub": lambda: build_font_variant(encoding="UTF-16LE"),
+    "font_utf16be.epub": lambda: build_font_variant(encoding="UTF-16BE"),
+    "font_emoji.epub": lambda: build_font_variant(emoji=True),
     "font_unlisted.epub": lambda: build_encrypted_epub("http://www.idpf.org/2008/embedding", font=True, declared_font=False),
 }
 

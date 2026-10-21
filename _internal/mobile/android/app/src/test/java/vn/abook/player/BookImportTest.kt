@@ -37,9 +37,29 @@ class BookImportTest {
         for (name in listOf("drm", "drm_rights", "drm_sinf", "drm_fake_font")) {
             assertEquals(name, message, failure { BookImport.importFile(File(dir, "$name.epub")) })
         }
-        for (name in listOf("font_obfuscated", "font_adobe", "font_unlisted")) {
+        for (name in listOf("font_obfuscated", "font_adobe", "font_unlisted", "rights_metadata", "sinf_metadata", "rights_font", "font_opentype", "font_opentype_adobe", "font_ttf", "font_sfnt", "font_woff", "font_woff_legacy", "font_woff2", "font_utf16", "font_utf16le", "font_utf16be", "font_emoji")) {
             assertEquals(name, expectedText(name), dump(BookImport.importFile(File(dir, "$name.epub"))))
         }
+    }
+
+    @Test
+    fun rights_metadata_is_not_encryption() {
+        for (name in listOf("rights_metadata", "sinf_metadata")) assertEquals(expectedText(name), dump(BookImport.importFile(File(dir, "$name.epub"))))
+    }
+
+    @Test
+    fun opentype_mime_is_a_font() {
+        assertEquals(expectedText("font_opentype"), dump(BookImport.importFile(File(dir, "font_opentype.epub"))))
+    }
+
+    @Test
+    fun encryption_xml_honours_utf16_bom_and_declaration() {
+        for (name in listOf("font_utf16", "font_utf16le", "font_utf16be")) assertEquals(expectedText(name), dump(BookImport.importFile(File(dir, "$name.epub"))))
+    }
+
+    @Test
+    fun font_uri_preserves_non_bmp_codepoints() {
+        assertEquals(expectedText("font_emoji"), dump(BookImport.importFile(File(dir, "font_emoji.epub"))))
     }
 
     @Test

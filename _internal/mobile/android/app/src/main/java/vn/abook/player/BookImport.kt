@@ -902,11 +902,23 @@ object BookImport {
         /** Đọc một file XML: từ chối khai báo entity (bom XML), không thấy phần tử gốc là file hỏng. `strict`: thẻ đóng sai chỗ hay thiếu
          *  cũng là file hỏng, như ElementTree của máy tính (tệp mục lục: hỏng thì cả hai bên cùng bỏ nó, đọc theo spine). */
         fun parse(raw: ByteArray, kind: String, strict: Boolean = false): Node {
-            val head = String(raw, 0, minOf(raw.size, 4096), Charsets.UTF_8)
+            // XML có thể dùng UTF-16 có BOM hoặc nhận biết endian từ dấu '<'.
+            val encoding = when {
+                raw.size >= 2 && ((raw[0] == 0xFF.toByte() && raw[1] == 0xFE.toByte()) || (raw[0] == 0xFE.toByte() && raw[1] == 0xFF.toByte())) -> Charsets.UTF_16
+                raw.size >= 4 && raw[0] == 0.toByte() && raw[1] == '<'.code.toByte() -> Charsets.UTF_16BE
+                raw.size >= 4 && raw[0] == '<'.code.toByte() && raw[1] == 0.toByte() -> Charsets.UTF_16LE
+                else -> {
+                    val declaration = DECLARED_ENCODING.matcher(String(raw, 0, minOf(raw.size, 2048), Charsets.ISO_8859_1))
+                    try { if (declaration.find()) Charset.forName(declaration.group(1) ?: declaration.group(2)) else Charsets.UTF_8 }
+                    catch (_: Exception) { throw broken(kind) }
+                }
+            }
+            val text = String(raw, encoding)
+            val head = text.take(4096)
             if (head.uppercase().contains("<!ENTITY")) throw Failed("Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
             val stack = ArrayList<Node>()
             var root: Node? = null
-            for (token in tokenize(String(raw, Charsets.UTF_8))) {
+            for (token in tokenize(text)) {
                 when (token) {
                     is Start -> {
                         val scope = (stack.lastOrNull()?.scope ?: emptyMap()).let { if (token.declared.isEmpty()) it else it + token.declared }
@@ -1006,8 +1018,9 @@ object BookImport {
                 bytes.write(text.substring(i + 1, i + 3).toInt(16))
                 i += 3
             } else {
-                bytes.write(c.toString().toByteArray(Charsets.UTF_8))
-                i++
+                val point = text.codePointAt(i)
+                bytes.write(String(Character.toChars(point)).toByteArray(Charsets.UTF_8))
+                i += Character.charCount(point)
             }
         }
         return String(bytes.toByteArray(), Charsets.UTF_8)
@@ -1603,12 +1616,11 @@ object BookImport {
 
     /** Từ chối DRM trước khi đọc chữ; làm rối font IDPF / Adobe vẫn hợp lệ (`importers._epub_encryption`). */
     private fun epubEncryption(zip: ZipFile, manifest: Map<String, ManifestItem>, spine: Markup.Node) {
-        if (listOf("rights", "sinf").any { member(zip, "META-INF/$it.xml") != null }) throw Failed(EPUB_DRM)
         if (member(zip, "META-INF/encryption.xml") == null) return
         val obfuscation = setOf("http://www.idpf.org/2008/embedding", "http://ns.adobe.com/pdf/enc#RC")
         val spinePaths = spine.children.filter { it.local == "itemref" }.mapNotNull { manifest[it.attr("idref")]?.href?.let(::nfc) }.toSet()
         val fonts = manifest.values.filter { item ->
-            item.media.startsWith("font/") || item.media.contains("font") || item.href.substringAfterLast('.', "").lowercase() in setOf("otf", "ttf", "woff", "woff2")
+            item.media.startsWith("font/") || item.media.contains("font") || item.media == "application/vnd.ms-opentype" || item.href.substringAfterLast('.', "").lowercase() in setOf("otf", "ttf", "woff", "woff2")
         }.map { nfc(it.href) }.toMutableSet()
         // Font có trong ZIP mà OPF quên khai báo vẫn chỉ là làm rối font, không phải DRM.
         val declared = manifest.values.map { nfc(it.href) }.toSet()
