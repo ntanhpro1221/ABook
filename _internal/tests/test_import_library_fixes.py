@@ -124,3 +124,43 @@ def test_xml_follows_only_its_own_declaration(tmp_path: Path) -> None:
     nav = importers.import_text(tmp_path / "nav_meta_charset.epub")
     assert [chapter.title for chapter in nav.chapters] == ["Chương 1: Bến đò", "Chương 2: Mưa"]
     assert importers.import_text(tmp_path / "xml_koi8r.epub").title == "Книга"
+
+
+@pytest.mark.parametrize("name", ["entity_utf16_ws.epub", "entity_utf16be_ws.epub", "entity_long_comment.epub"])
+def test_the_entity_guard_reads_the_whole_file_in_any_encoding(tmp_path: Path, name: str) -> None:
+    source = tmp_path / name
+    source.write_bytes(shared.XML_ENCODINGS[name]())
+    with pytest.raises(importers.ImportFailed) as caught:
+        importers.import_text(source)
+    assert str(caught.value) == ENTITY_ERROR
+
+
+@pytest.mark.parametrize("name", ["nav_cp1258.epub", "nav_cp1252_undefined.epub"])
+def test_a_table_of_contents_that_does_not_decode_is_dropped_not_patched(tmp_path: Path, name: str) -> None:
+    source = tmp_path / name
+    source.write_bytes(shared.XML_ENCODINGS[name]())
+    book = importers.import_text(source)
+    assert len(book.chapters) == 2
+    assert not any("\ufffd" in chapter.title or "Café" in chapter.title for chapter in book.chapters), "mục lục hỏng: tên chương theo spine"
+
+
+def test_encoding_names_are_normalised_the_same_way_on_both_platforms(tmp_path: Path) -> None:
+    for name, title in (("xml_utf8_name.epub", "Tên sách"), ("xml_latin1_name.epub", "Café")):
+        (tmp_path / name).write_bytes(shared.XML_ENCODINGS[name]())
+        assert importers.import_text(tmp_path / name).title == title
+    results = {case["case"]: case.get("text", case.get("error")) for case in shared.xml_case_results()}
+    broken = importers.BROKEN.format(kind="EPUB")
+    readable = {"utf8 (utf-8)": "Tên sách", "UTF-8 (utf-8)": "Tên sách", "utf-16 (utf-16)": "Tên sách", "UTF-16BE (utf-16-be)": "Tên",
+                "latin-1 (latin-1)": "Café", "latin1 (latin-1)": "Café", "iso-8859-1 (latin-1)": "Café", "iso8859-1 (latin-1)": "Café",
+                "windows-1252 (cp1252)": "Café “x”", "cp1252 (cp1252)": "Café", "windows-1258 (cp1258)": "Tên", "cp1258 (cp1258)": "Tên",
+                "ascii (ascii)": "abc", "us-ascii (ascii)": "abc", "KOI8-R (koi8-r)": "Книга", "utf-8 bom": "Tên",
+                "utf-16-le không bom": "Tên", "utf-16-be không bom": "Tên"}
+    for case, text in readable.items():
+        assert results.pop(case) == text, case
+    for case in ("entity utf-16-le không bom, mở bằng xuống dòng", "entity utf-16-be không bom, mở bằng dấu cách", "entity sau chú thích dài",
+                 "entity chữ thường"):
+        assert results.pop(case) == ENTITY_ERROR, case
+    # Còn lại đều là file hỏng: UTF-16 khai trên file một byte, đầu UTF-16 lệch, UTF-32, bảng mã nhiều byte, tên lạ, byte ngoài bảng mã.
+    assert set(results) == {"utf-16 (utf-8)", "UTF-16LE (utf-16-be)", "us-ascii (utf-8)", "UTF-32 (utf-32)", "shift_jis (shift_jis)",
+                            "foo (utf-8)", "windows-1252 0x81", "windows-1252 0x8D", "utf-8 hỏng"}
+    assert set(results.values()) == {broken}

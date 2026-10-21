@@ -693,14 +693,18 @@ object BookImport {
         } catch (_: Exception) {
             return null
         }
-        return try {
-            val text = charset.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
+        val text = strictDecode(raw, charset) ?: return null
+        return if (signed) text.removePrefix("﻿") else text
+    }
+
+    /** Chữ của `raw` theo `charset`, hay null nếu có byte hỏng hoặc không có trong bảng mã (CodingErrorAction.REPORT). */
+    private fun strictDecode(raw: ByteArray, charset: Charset): String? =
+        try {
+            charset.newDecoder().onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT)
                 .decode(ByteBuffer.wrap(raw)).toString()
-            if (signed) text.removePrefix("﻿") else text
         } catch (_: CharacterCodingException) {
             null
         }
-    }
 
     // ---- thẻ (XHTML / XML) --------------------------------------------------------------------------------------------
 
@@ -902,23 +906,7 @@ object BookImport {
         /** Đọc một file XML: từ chối khai báo entity (bom XML), không thấy phần tử gốc là file hỏng. `strict`: thẻ đóng sai chỗ hay thiếu
          *  cũng là file hỏng, như ElementTree của máy tính (tệp mục lục: hỏng thì cả hai bên cùng bỏ nó, đọc theo spine). */
         fun parse(raw: ByteArray, kind: String, strict: Boolean = false): Node {
-            // XML có thể dùng UTF-16 có BOM hoặc nhận biết endian từ dấu '<'. Không thì chỉ khai báo XML định bảng mã, như expat của máy tính:
-            // `<meta charset>` là việc của trang (markupText), không phải của file XML.
-            val encoding = when {
-                raw.size >= 2 && ((raw[0] == 0xFF.toByte() && raw[1] == 0xFE.toByte()) || (raw[0] == 0xFE.toByte() && raw[1] == 0xFF.toByte())) -> Charsets.UTF_16
-                raw.size >= 4 && raw[0] == 0.toByte() && raw[1] == '<'.code.toByte() -> Charsets.UTF_16BE
-                raw.size >= 4 && raw[0] == '<'.code.toByte() && raw[1] == 0.toByte() -> Charsets.UTF_16LE
-                else -> {
-                    val declaration = DECLARED_ENCODING.matcher(String(raw, 0, minOf(raw.size, 2048), Charsets.ISO_8859_1))
-                    var name: String? = null
-                    while (name == null && declaration.find()) name = declaration.group(1)
-                    if (name == null) Charsets.UTF_8 else xmlCharset(name)
-                }
-            }
-            val text = String(raw, encoding ?: Charsets.UTF_8)
-            val head = text.take(4096)
-            if (head.uppercase().contains("<!ENTITY")) throw Failed("Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
-            if (encoding == null) throw broken(kind)
+            val text = xmlText(raw, kind)
             val stack = ArrayList<Node>()
             var root: Node? = null
             for (token in tokenize(text)) {
@@ -947,20 +935,71 @@ object BookImport {
             return root ?: throw broken(kind)
         }
 
-        /** Bảng mã trong `<?xml encoding>` như expat (ElementTree) của máy tính đọc: tên expat tự biết thì dùng thẳng; bảng mã khác chỉ nhận khi
-         *  mỗi byte là một ký tự (pyexpat từ chối "multi-byte encodings": Shift_JIS, GB2312, EUC-KR). Không nhận hay tên lạ: null - file hỏng. */
-        private fun xmlCharset(name: String): Charset? {
-            when (name.uppercase()) {
-                "UTF-8" -> return Charsets.UTF_8
-                "UTF-16" -> return Charsets.UTF_16
-                "UTF-16BE" -> return Charsets.UTF_16BE
-                "UTF-16LE" -> return Charsets.UTF_16LE
-                "ISO-8859-1" -> return Charsets.ISO_8859_1
-                "US-ASCII" -> return Charsets.US_ASCII
+        /** `importers._xml_text`: chữ của một file XML, giải mã như expat nhận bảng mã nhưng với một bảng tên chung hai bên. Khai báo entity (bom
+         *  XML) bị chặn ở bất cứ đâu trong file, bảng mã nào. UTF-16: BOM, hay byte 0 ở byte đầu (BE) / byte thứ hai (LE), như expat; không thì
+         *  `<?xml encoding>` ở đầu file, không có là UTF-8 (`<meta charset>` là việc của trang - markupText). Byte không giải được (kể cả byte
+         *  ngoài bảng mã một byte) là file hỏng, không thay bằng ký tự hỏng. */
+        private fun xmlText(raw: ByteArray, kind: String): String {
+            if (declaresEntity(raw)) throw Failed("Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
+            var bytes = if (raw.size >= 3 && raw[0] == 0xEF.toByte() && raw[1] == 0xBB.toByte() && raw[2] == 0xBF.toByte()) raw.copyOfRange(3, raw.size) else raw
+            val wide = when {
+                bytes.size >= 2 && bytes[0] == 0xFE.toByte() && bytes[1] == 0xFF.toByte() -> Charsets.UTF_16BE.also { bytes = bytes.copyOfRange(2, bytes.size) }
+                bytes.size >= 2 && bytes[0] == 0xFF.toByte() && bytes[1] == 0xFE.toByte() -> Charsets.UTF_16LE.also { bytes = bytes.copyOfRange(2, bytes.size) }
+                bytes.isNotEmpty() && bytes[0] == 0.toByte() -> Charsets.UTF_16BE
+                bytes.size >= 2 && bytes[1] == 0.toByte() -> Charsets.UTF_16LE
+                else -> null
             }
-            val charset = try { Charset.forName(name) } catch (_: Exception) { return null }
+            val text = if (wide != null) {
+                val text = strictDecode(bytes, wide) ?: throw broken(kind)
+                val declared = XML_DECLARATION.matcher(text)
+                if (declared.lookingAt() && xmlCharset(declared.group(1)).let { it != Charsets.UTF_16 && it != wide }) throw broken(kind)
+                text
+            } else {
+                val declared = XML_DECLARATION.matcher(String(bytes, 0, minOf(bytes.size, 2048), Charsets.ISO_8859_1))
+                val charset = if (declared.lookingAt()) xmlCharset(declared.group(1)) else Charsets.UTF_8
+                if (charset == null || charset == Charsets.UTF_16 || charset == Charsets.UTF_16BE || charset == Charsets.UTF_16LE) throw broken(kind)
+                val text = strictDecode(bytes, charset) ?: throw broken(kind)
+                // Bảng ICU của Android có thể đọc byte windows-125x không định nghĩa (0x81...) thành ký tự điều khiển C1; Python thì báo lỗi.
+                if (charset.name().startsWith("windows-125") && text.any { it.code in 0x80..0x9F }) throw broken(kind)
+                text
+            }
+            if (text.any { it.code == 0 }) throw broken(kind)
+            return text
+        }
+
+        /** `importers._ENTITY_DECLARATION` trên byte đã bỏ 0: "<!ENTITY" (hoa thường ASCII như nhau) ở bất cứ đâu, bảng mã nào. */
+        private fun declaresEntity(raw: ByteArray): Boolean {
+            val target = "<!ENTITY"
+            var at = 0
+            for (byte in raw) {
+                if (byte == 0.toByte()) continue
+                val char = (byte.toInt() and 0xFF).toChar().let { if (it in 'a'..'z') it - 32 else it }
+                at = if (char == target[at]) at + 1 else if (char == '<') 1 else 0
+                if (at == target.length) return true
+            }
+            return false
+        }
+
+        /** `importers._xml_codec`: tên trong `<?xml encoding>` -> bảng mã, chuẩn hoá chung hai bên (Python qua `codecs.lookup`; ở đây bảng bí danh,
+         *  vì Java / Android không biết mọi tên Python biết, như "latin-1" hay "utf8"). Chỉ UTF-8, UTF-16 và bảng mã một byte (Shift_JIS, GB2312,
+         *  UTF-32 là file hỏng, như expat); tên lạ: null. */
+        private fun xmlCharset(name: String): Charset? {
+            val charset = try {
+                Charset.forName(XML_CHARSET_ALIASES[name.lowercase().replace('_', '-')] ?: name)
+            } catch (_: Exception) {
+                return null
+            }
+            if (charset == Charsets.UTF_8 || charset == Charsets.UTF_16 || charset == Charsets.UTF_16BE || charset == Charsets.UTF_16LE) return charset
             return charset.takeIf { String(ByteArray(256) { it.toByte() }, it).length == 256 }
         }
+
+        private val XML_DECLARATION = Pattern.compile("<\\?xml[ \\t\\r\\n][^>]*?encoding[ \\t\\r\\n]*=[ \\t\\r\\n]*[\"']([A-Za-z0-9._:-]+)")
+        private val XML_CHARSET_ALIASES = mapOf(
+            "utf8" to "UTF-8", "utf-8" to "UTF-8", "utf16" to "UTF-16", "utf-16" to "UTF-16", "utf-16be" to "UTF-16BE", "utf-16-be" to "UTF-16BE",
+            "utf-16le" to "UTF-16LE", "utf-16-le" to "UTF-16LE", "latin-1" to "ISO-8859-1", "latin1" to "ISO-8859-1", "l1" to "ISO-8859-1",
+            "iso-8859-1" to "ISO-8859-1", "iso8859-1" to "ISO-8859-1", "windows-1252" to "windows-1252", "cp1252" to "windows-1252",
+            "windows-1258" to "windows-1258", "cp1258" to "windows-1258", "ascii" to "US-ASCII", "us-ascii" to "US-ASCII",
+        )
     }
 
     // ---- zip ----------------------------------------------------------------------------------------------------------
@@ -1632,33 +1671,34 @@ object BookImport {
         return zip.getInputStream(entry).use { it.readBytes() } to media
     }
 
-    /** Byte của một trang đọc ra markup: sau BOM / khoảng trắng mở bằng '<' và 1.000 ký tự đầu không có ký tự hỏng (�). Chữ đã mã hoá thì
-     *  không (`importers._looks_like_markup`). */
-    private fun looksLikeMarkup(raw: ByteArray): Boolean {
-        val head = markupText(raw).trimStart('\uFEFF', ' ', '\t', '\r', '\n').take(1000)
-        return head.startsWith("<") && '\uFFFD' !in head
+    /** `importers._BLANK`: khoảng trắng Unicode (đúng tập `str.isspace` của Python) và ký tự không bề rộng - một bảng chung hai bên, không
+     *  theo `Char.isWhitespace` (khác Python, như ở U+0085). */
+    private val BLANK: Set<Char> = (listOf(0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x1C, 0x1D, 0x1E, 0x1F, 0x20, 0x85, 0xA0, 0x1680) + (0x2000..0x200A)
+        + listOf(0x2028, 0x2029, 0x202F, 0x205F, 0x3000, 0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF)).map { it.toChar() }.toSet()
+
+    /** Trang trông như chữ đã mã hoá (`importers._looks_encrypted`): bỏ khoảng trắng / ký tự không bề rộng ở đầu mà không mở bằng '<', hay hơn
+     *  10 % của 1.000 ký tự đầu là ký tự hỏng (U+FFFD) hoặc ký tự điều khiển C0 trừ tab / xuống dòng - đếm theo code point như Python, không
+     *  theo đơn vị UTF-16. Trang rỗng hay chỉ có khoảng trắng thì không. */
+    private fun looksEncrypted(raw: ByteArray): Boolean {
+        val text = markupText(raw).trimStart { it in BLANK }
+        val head = text.substring(0, text.offsetByCodePoints(0, minOf(1000, text.codePointCount(0, text.length))))
+        val bad = head.count { it.code == 0xFFFD || (it < ' ' && it !in "\t\r\n") }
+        return head.isNotEmpty() && (!head.startsWith("<") || bad * 10 > head.codePointCount(0, head.length))
     }
 
-    /** Khoá không cần encryption.xml: FairPlay (sinf.xml), Adobe ADEPT / Kobo (rights.xml), Readium LCP (license.lcpl) -> từ chối. sinf.xml /
-     *  rights.xml không mang dấu nào chỉ là metadata quyền: true để soi chữ của chương (`importers._epub_rights`). */
-    private fun epubRights(zip: ZipFile): Boolean {
-        if (member(zip, "META-INF/license.lcpl") != null) throw Failed(EPUB_DRM)
-        val (sinf, rights) = listOf("sinf", "rights").map { name ->
-            if (member(zip, "META-INF/$name.xml") != null) markupText(read(zip, "META-INF/$name.xml", "EPUB")) else null
-        }
-        if ((sinf != null && "fairplay" in sinf.lowercase())
-            || (rights != null && (("http://ns.adobe.com/adept" in rights && "licenseToken" in rights) || "kdrm" in rights))) throw Failed(EPUB_DRM)
-        return sinf != null || rights != null
-    }
+    /** Sách có sinf.xml (FairPlay), rights.xml (Adobe ADEPT, Kobo) hay license.lcpl (Readium LCP) có thể khoá mà không kèm encryption.xml:
+     *  true để soi chữ của chương. Dấu khoá trong các file ấy chưa đủ để từ chối - sách đã gỡ khoá (obok) vẫn giữ nguyên chúng
+     *  (`importers._epub_rights`). */
+    private fun epubRights(zip: ZipFile): Boolean = listOf("sinf.xml", "rights.xml", "license.lcpl").any { member(zip, "META-INF/$it") != null }
 
     /** Từ chối DRM trước khi đọc chữ; làm rối font IDPF / Adobe vẫn hợp lệ (`importers._epub_encryption`). */
     private fun epubEncryption(zip: ZipFile, manifest: Map<String, ManifestItem>, spine: Markup.Node) {
         if (epubRights(zip)) {
-            // Có metadata quyền mà không thấy dấu khoá: chương của thứ tự đọc phải đọc ra markup, không thì chữ đã bị mã hoá.
+            // Có file quyền: một chương của thứ tự đọc trông như chữ đã mã hoá là sách còn khoá.
             for (itemref in spine.children.filter { it.local == "itemref" }) {
                 val item = manifest[itemref.attr("idref") ?: ""] ?: continue
                 if (item.href.isNotEmpty() && item.media.contains("html") && member(zip, item.href) != null
-                    && !looksLikeMarkup(read(zip, item.href, "EPUB"))) throw Failed(EPUB_DRM)
+                    && looksEncrypted(read(zip, item.href, "EPUB"))) throw Failed(EPUB_DRM)
             }
         }
         if (member(zip, "META-INF/encryption.xml") == null) return

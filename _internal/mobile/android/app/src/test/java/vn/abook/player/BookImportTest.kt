@@ -72,9 +72,12 @@ class BookImportTest {
         else assertEquals(name, expected, dump(BookImport.importFile(File(dir, "$name.epub"))))
     }
 
+    /** Không kèm encryption.xml: có sinf.xml / rights.xml / license.lcpl thì chương trông như chữ mã hoá mới là khoá - sách đã gỡ khoá, chương
+     *  rỗng hay mở bằng khoảng trắng lạ vẫn đọc được; cửa sổ soi đếm theo code point như Python. */
     @Test
-    fun drm_without_encryption_xml_is_refused_but_plain_rights_metadata_is_not() {
-        for (name in listOf("drm_fairplay", "drm_adept", "drm_kobo", "drm_lcp", "drm_rights_cipher", "drm_sinf_cipher", "drm_adept_font", "rights_adept_metadata", "rights_metadata", "sinf_metadata", "rights_font")) {
+    fun drm_without_encryption_xml_is_found_in_the_chapters_not_in_the_marker_files() {
+        for (name in listOf("drm_fairplay", "drm_adept", "drm_kobo", "drm_lcp", "drm_rights_cipher", "drm_sinf_cipher", "drm_adept_font", "drm_astral_window",
+            "unlocked_fairplay", "unlocked_adept", "unlocked_kobo", "lcp_clear", "rights_odd_pages", "rights_adept_metadata", "rights_metadata", "sinf_metadata", "rights_font")) {
             assertLikePython(name)
         }
         assertEquals(drmMessage, (StrictJson.parse(expectedText("drm_lcp")) as org.json.JSONObject).getString("error"))
@@ -87,7 +90,26 @@ class BookImportTest {
 
     @Test
     fun xml_files_follow_only_their_xml_declaration_like_expat() {
-        for (name in listOf("nav_meta_charset", "entity_utf16", "entity_utf16be", "xml_shift_jis", "xml_gb2312", "xml_euc_kr", "xml_koi8r")) assertLikePython(name)
+        for (name in listOf("nav_meta_charset", "entity_utf16", "entity_utf16be", "xml_shift_jis", "xml_gb2312", "xml_euc_kr", "xml_koi8r",
+            "entity_utf16_ws", "entity_utf16be_ws", "entity_long_comment", "nav_cp1258", "nav_cp1252_undefined", "xml_utf8_name", "xml_latin1_name")) assertLikePython(name)
+    }
+
+    /** Bảng ca bảng mã của file XML (tests/import_fixtures.py XML_NAME_CASES, xml_cases): cùng chữ hay cùng lời lỗi như `importers._xml`. */
+    @Test
+    fun xml_encoding_names_and_bytes_decide_exactly_like_python() {
+        val cases = StrictJson.parse(expectedText("xml_cases")) as JSONArray
+        assertTrue(cases.length() >= 30)
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val hex = case.getString("hex")
+            val raw = ByteArray(hex.length / 2) { hex.substring(2 * it, 2 * it + 2).toInt(16).toByte() }
+            val got = try {
+                BookImport.Markup.parse(raw, "EPUB", strict = true).allText()
+            } catch (error: BookImport.Failed) {
+                error.message ?: ""
+            }
+            assertEquals(case.getString("case"), case.optString("text", case.optString("error")), got)
+        }
     }
 
     @Test
