@@ -6,13 +6,14 @@ import { AddBookDialog } from "./AddBook";
 const mocks = vi.hoisted(() => ({
   importer: { choose: vi.fn(), chooseMany: vi.fn(), preview: vi.fn(), discard: vi.fn() },
   changes: [] as unknown[],
+  effects: [] as (() => void | (() => void))[],
 }));
 // Chạy chính callback của hộp; không cần DOM cho bộ chọn native trả Promise.
 vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
   useState: (value: unknown) => [value, (next: unknown) => mocks.changes.push(next)],
   useRef: (value: unknown) => ({ current: value }),
-  useEffect: () => undefined,
+  useEffect: (effect: () => void | (() => void)) => { mocks.effects.push(effect); },
 }));
 vi.mock("@tanstack/react-query", () => ({ useQueryClient: () => ({ invalidateQueries: vi.fn() }) }));
 vi.mock("react-router", () => ({ useNavigate: () => vi.fn() }));
@@ -31,7 +32,9 @@ function pending<T>() {
   return { promise, resolve };
 }
 const flush = async () => { for (let i = 0; i < 20; i++) await Promise.resolve(); };
-beforeEach(() => { vi.clearAllMocks(); mocks.changes.length = 0; mocks.importer.discard.mockResolvedValue(undefined); });
+beforeEach(() => { vi.clearAllMocks(); mocks.changes.length = 0; mocks.effects.length = 0; mocks.importer.discard.mockResolvedValue(undefined); });
+/** Gắn hộp như React: chạy mọi effect của lần vẽ, trả các hàm dọn (gỡ hộp). */
+const mount = () => mocks.effects.map((effect) => effect()).filter((cleanup): cleanup is () => void => typeof cleanup === "function");
 
 it.each([true, false])("discards a picker result after closing (many=%s)", async (many) => {
   const picked = { ref: "temp/a.epub", name: "a.epub" };
@@ -82,4 +85,35 @@ it("does not show a picker error returned after closing", async () => {
   reject(new Error("late picker error"));
   await flush();
   expect(mocks.changes).toEqual([]);
+});
+
+it("cancels a read in progress when the dialog leaves the page", async () => {
+  const late = pending<unknown>();
+  mocks.importer.preview.mockReturnValue(late.promise);
+  AddBookDialog({ open: true, onOpenChange: vi.fn(), initial: { ref: "a.epub", name: "a.epub" } });
+  const cleanups = mount();
+  await flush();
+  expect(mocks.importer.preview).toHaveBeenCalledTimes(1);
+  for (const cleanup of cleanups) cleanup();
+  mocks.changes.length = 0;
+  late.resolve({ title: "Sách muộn", chapters: [] });
+  await flush();
+  expect(mocks.changes).toEqual([]);
+});
+
+it("StrictMode's unmount and remount still reads the shared file", async () => {
+  const first = pending<unknown>();
+  const second = pending<unknown>();
+  mocks.importer.preview.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise);
+  AddBookDialog({ open: true, onOpenChange: vi.fn(), initial: { ref: "shared.epub", name: "shared.epub" } });
+  for (const cleanup of mount()) cleanup();
+  mount();
+  await flush();
+  expect(mocks.importer.preview).toHaveBeenCalledTimes(2);
+  first.resolve({ title: "Lần đọc đã huỷ", chapters: [] });
+  const shown = { title: "Sách chia sẻ", chapters: [] };
+  second.resolve(shown);
+  await flush();
+  expect(mocks.changes).toContain(shown);
+  expect(mocks.changes).not.toContainEqual({ title: "Lần đọc đã huỷ", chapters: [] });
 });

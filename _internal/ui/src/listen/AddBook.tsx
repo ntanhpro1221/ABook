@@ -158,6 +158,12 @@ export function AddBookDialog({
     initialRead.current = initial;
     void readInitial.current?.(initial);
   }, [open, initial]);
+  // Hộp bị gỡ khỏi trang (rời màn hình) cũng bỏ lần đọc dở. Quên thứ chọn sẵn đã đọc: StrictMode (android/main.tsx) gỡ rồi gắn lại ngay,
+  // lần gắn lại phải đọc lại file chia sẻ thay vì để nó mất theo lần đọc vừa huỷ.
+  useEffect(() => () => {
+    reads.current.cancel();
+    initialRead.current = null;
+  }, []);
   if (!importer) return null;
 
   const clearPreview = () => {

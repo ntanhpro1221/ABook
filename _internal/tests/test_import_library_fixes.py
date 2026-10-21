@@ -100,3 +100,27 @@ def test_audio_with_missing_text_still_counts_as_one_complete_chapter(tmp_path: 
     assert view["missingFiles"] == 1
     assert all(chapter["available"] for chapter in view["chapters"])
     assert view["complete"] is True
+
+
+ENTITY_ERROR = "Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy"
+
+
+@pytest.mark.parametrize(("name", "error"), [
+    ("entity_utf16.epub", ENTITY_ERROR), ("entity_utf16be.epub", ENTITY_ERROR),
+    ("xml_shift_jis.epub", importers.BROKEN.format(kind="EPUB")), ("xml_gb2312.epub", importers.BROKEN.format(kind="EPUB")),
+    ("xml_euc_kr.epub", importers.BROKEN.format(kind="EPUB")),
+])
+def test_utf16_entities_and_multibyte_xml_declarations_fail_in_words(tmp_path: Path, name: str, error: str) -> None:
+    source = tmp_path / name
+    source.write_bytes(shared.XML_ENCODINGS[name]())
+    with pytest.raises(importers.ImportFailed) as caught:
+        importers.import_text(source)
+    assert str(caught.value) == error
+
+
+def test_xml_follows_only_its_own_declaration(tmp_path: Path) -> None:
+    for name in ("nav_meta_charset.epub", "xml_koi8r.epub"):
+        (tmp_path / name).write_bytes(shared.XML_ENCODINGS[name]())
+    nav = importers.import_text(tmp_path / "nav_meta_charset.epub")
+    assert [chapter.title for chapter in nav.chapters] == ["Chương 1: Bến đò", "Chương 2: Mưa"]
+    assert importers.import_text(tmp_path / "xml_koi8r.epub").title == "Книга"

@@ -607,13 +607,27 @@ def _html_entities_as_numbers(raw: bytes) -> bytes:
     return _NAMED_ENTITY.sub(numeric, raw) if b"&" in raw else raw
 
 
+def _xml_head(raw: bytes) -> str:
+    """4.096 ký tự đầu của một file XML để soi khai báo entity: UTF-16 (có BOM, hay '<' cạnh byte 0 khi không BOM) phải giải mã đúng, không thì
+    `<!ENTITY` viết UTF-16 lọt qua. Kotlin: Markup.parse."""
+    if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+        codec = "utf-16"
+    elif len(raw) >= 4 and raw[:2] == b"\0<":
+        codec = "utf-16-be"
+    elif len(raw) >= 4 and raw[:2] == b"<\0":
+        codec = "utf-16-le"
+    else:
+        codec = "utf-8"
+    return raw[:16384].decode(codec, errors="replace")[:4096]
+
+
 def _xml(raw: bytes, kind: str = "EPUB") -> ElementTree.Element:
-    head = raw[:4096].decode("utf-8", errors="replace")
-    if "<!ENTITY" in head.upper():
+    if "<!ENTITY" in _xml_head(raw).upper():
         raise ImportFailed("Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
     try:
         return ElementTree.fromstring(_html_entities_as_numbers(raw))
-    except ElementTree.ParseError as error:
+    except (ElementTree.ParseError, ValueError, LookupError) as error:
+        # ValueError: expat không đọc bảng mã nhiều byte khai báo trong `<?xml encoding>` (Shift_JIS, GB2312, EUC-KR); LookupError: tên bảng mã lạ.
         raise ImportFailed(BROKEN.format(kind=kind)) from error
 
 
@@ -1171,8 +1185,34 @@ def _epub_cover(book: _Zip, opf: ElementTree.Element, manifest: dict[str, tuple[
     return (book.read(info), media) if info is not None and info.file_size <= MAX_COVER else None
 
 
+def _looks_like_markup(raw: bytes) -> bool:
+    """Byte của một trang đọc ra markup: sau BOM / khoảng trắng mở bằng '<' và 1.000 ký tự đầu không có ký tự hỏng (�). Chữ đã mã hoá thì
+    không. Kotlin: looksLikeMarkup."""
+    head = markup_text(raw).lstrip("\ufeff \t\r\n")[:1000]
+    return head.startswith("<") and "\ufffd" not in head
+
+
+def _epub_rights(book: _Zip) -> bool:
+    """Khoá không cần encryption.xml: FairPlay (sinf.xml), Adobe ADEPT / Kobo (rights.xml), Readium LCP (license.lcpl) -> từ chối. sinf.xml /
+    rights.xml không mang dấu nào chỉ là metadata quyền: True để soi chữ của chương. Kotlin: epubRights."""
+    if book.member("META-INF/license.lcpl") is not None:
+        raise ImportFailed(EPUB_DRM)
+    sinf, rights = (markup_text(_read(book, f"META-INF/{name}.xml")) if book.member(f"META-INF/{name}.xml") is not None else None
+                    for name in ("sinf", "rights"))
+    if ((sinf is not None and "fairplay" in sinf.lower())
+            or (rights is not None and (("http://ns.adobe.com/adept" in rights and "licenseToken" in rights) or "kdrm" in rights))):
+        raise ImportFailed(EPUB_DRM)
+    return sinf is not None or rights is not None
+
+
 def _epub_encryption(book: _Zip, manifest: dict[str, tuple[str, str, str]], spine: ElementTree.Element) -> None:
     """Từ chối DRM trước khi đọc chữ; hai kiểu làm rối font của EPUB vẫn đọc được. Kotlin: epubEncryption."""
+    if _epub_rights(book):
+        # Có metadata quyền mà không thấy dấu khoá: chương của thứ tự đọc phải đọc ra markup, không thì chữ đã bị mã hoá.
+        for ref in spine.iterfind("opf:itemref", NS):
+            href, media, _props = manifest.get(ref.get("idref", ""), ("", "", ""))
+            if href and "html" in media and book.member(href) is not None and not _looks_like_markup(_read(book, href)):
+                raise ImportFailed(EPUB_DRM)
     if book.member("META-INF/encryption.xml") is None:
         return
     obfuscation = {"http://www.idpf.org/2008/embedding", "http://ns.adobe.com/pdf/enc#RC"}
@@ -1185,10 +1225,10 @@ def _epub_encryption(book: _Zip, manifest: dict[str, tuple[str, str, str]], spin
     fonts.update(_nfc(info.filename) for info in book.infolist() if _nfc(info.filename) not in declared
                  and posixpath.splitext(info.filename)[1].lower() in {".otf", ".ttf", ".woff", ".woff2"})
     root = _xml(_read(book, "META-INF/encryption.xml"))
-    ns = "{http://www.w3.org/2001/04/xmlenc#}"
-    for data in root.iter(ns + "EncryptedData"):
-        method = data.find(ns + "EncryptionMethod")
-        refs = list(data.iter(ns + "CipherReference"))
+    # Theo tên cục bộ: EncryptedData thiếu (hay sai) namespace vẫn là mã hoá - kể cả khi nó là gốc của file.
+    for data in (node for node in root.iter() if node.tag.rpartition("}")[2] == "EncryptedData"):
+        method = next((child for child in data if child.tag.rpartition("}")[2] == "EncryptionMethod"), None)
+        refs = [node for node in data.iter() if node.tag.rpartition("}")[2] == "CipherReference"]
         # URI tính từ gốc ZIP, không phải thư mục META-INF. Không cho thuật toán font che một chương mã hoá.
         paths = [_nfc(posixpath.normpath(unquote(ref.get("URI", "")))) for ref in refs]
         if (method is None or method.get("Algorithm") not in obfuscation or not paths

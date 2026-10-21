@@ -902,20 +902,23 @@ object BookImport {
         /** Đọc một file XML: từ chối khai báo entity (bom XML), không thấy phần tử gốc là file hỏng. `strict`: thẻ đóng sai chỗ hay thiếu
          *  cũng là file hỏng, như ElementTree của máy tính (tệp mục lục: hỏng thì cả hai bên cùng bỏ nó, đọc theo spine). */
         fun parse(raw: ByteArray, kind: String, strict: Boolean = false): Node {
-            // XML có thể dùng UTF-16 có BOM hoặc nhận biết endian từ dấu '<'.
+            // XML có thể dùng UTF-16 có BOM hoặc nhận biết endian từ dấu '<'. Không thì chỉ khai báo XML định bảng mã, như expat của máy tính:
+            // `<meta charset>` là việc của trang (markupText), không phải của file XML.
             val encoding = when {
                 raw.size >= 2 && ((raw[0] == 0xFF.toByte() && raw[1] == 0xFE.toByte()) || (raw[0] == 0xFE.toByte() && raw[1] == 0xFF.toByte())) -> Charsets.UTF_16
                 raw.size >= 4 && raw[0] == 0.toByte() && raw[1] == '<'.code.toByte() -> Charsets.UTF_16BE
                 raw.size >= 4 && raw[0] == '<'.code.toByte() && raw[1] == 0.toByte() -> Charsets.UTF_16LE
                 else -> {
                     val declaration = DECLARED_ENCODING.matcher(String(raw, 0, minOf(raw.size, 2048), Charsets.ISO_8859_1))
-                    try { if (declaration.find()) Charset.forName(declaration.group(1) ?: declaration.group(2)) else Charsets.UTF_8 }
-                    catch (_: Exception) { throw broken(kind) }
+                    var name: String? = null
+                    while (name == null && declaration.find()) name = declaration.group(1)
+                    if (name == null) Charsets.UTF_8 else xmlCharset(name)
                 }
             }
-            val text = String(raw, encoding)
+            val text = String(raw, encoding ?: Charsets.UTF_8)
             val head = text.take(4096)
             if (head.uppercase().contains("<!ENTITY")) throw Failed("Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
+            if (encoding == null) throw broken(kind)
             val stack = ArrayList<Node>()
             var root: Node? = null
             for (token in tokenize(text)) {
@@ -942,6 +945,21 @@ object BookImport {
             }
             if (strict && stack.isNotEmpty()) throw broken(kind)
             return root ?: throw broken(kind)
+        }
+
+        /** Bảng mã trong `<?xml encoding>` như expat (ElementTree) của máy tính đọc: tên expat tự biết thì dùng thẳng; bảng mã khác chỉ nhận khi
+         *  mỗi byte là một ký tự (pyexpat từ chối "multi-byte encodings": Shift_JIS, GB2312, EUC-KR). Không nhận hay tên lạ: null - file hỏng. */
+        private fun xmlCharset(name: String): Charset? {
+            when (name.uppercase()) {
+                "UTF-8" -> return Charsets.UTF_8
+                "UTF-16" -> return Charsets.UTF_16
+                "UTF-16BE" -> return Charsets.UTF_16BE
+                "UTF-16LE" -> return Charsets.UTF_16LE
+                "ISO-8859-1" -> return Charsets.ISO_8859_1
+                "US-ASCII" -> return Charsets.US_ASCII
+            }
+            val charset = try { Charset.forName(name) } catch (_: Exception) { return null }
+            return charset.takeIf { String(ByteArray(256) { it.toByte() }, it).length == 256 }
         }
     }
 
@@ -1614,8 +1632,35 @@ object BookImport {
         return zip.getInputStream(entry).use { it.readBytes() } to media
     }
 
+    /** Byte của một trang đọc ra markup: sau BOM / khoảng trắng mở bằng '<' và 1.000 ký tự đầu không có ký tự hỏng (�). Chữ đã mã hoá thì
+     *  không (`importers._looks_like_markup`). */
+    private fun looksLikeMarkup(raw: ByteArray): Boolean {
+        val head = markupText(raw).trimStart('\uFEFF', ' ', '\t', '\r', '\n').take(1000)
+        return head.startsWith("<") && '\uFFFD' !in head
+    }
+
+    /** Khoá không cần encryption.xml: FairPlay (sinf.xml), Adobe ADEPT / Kobo (rights.xml), Readium LCP (license.lcpl) -> từ chối. sinf.xml /
+     *  rights.xml không mang dấu nào chỉ là metadata quyền: true để soi chữ của chương (`importers._epub_rights`). */
+    private fun epubRights(zip: ZipFile): Boolean {
+        if (member(zip, "META-INF/license.lcpl") != null) throw Failed(EPUB_DRM)
+        val (sinf, rights) = listOf("sinf", "rights").map { name ->
+            if (member(zip, "META-INF/$name.xml") != null) markupText(read(zip, "META-INF/$name.xml", "EPUB")) else null
+        }
+        if ((sinf != null && "fairplay" in sinf.lowercase())
+            || (rights != null && (("http://ns.adobe.com/adept" in rights && "licenseToken" in rights) || "kdrm" in rights))) throw Failed(EPUB_DRM)
+        return sinf != null || rights != null
+    }
+
     /** Từ chối DRM trước khi đọc chữ; làm rối font IDPF / Adobe vẫn hợp lệ (`importers._epub_encryption`). */
     private fun epubEncryption(zip: ZipFile, manifest: Map<String, ManifestItem>, spine: Markup.Node) {
+        if (epubRights(zip)) {
+            // Có metadata quyền mà không thấy dấu khoá: chương của thứ tự đọc phải đọc ra markup, không thì chữ đã bị mã hoá.
+            for (itemref in spine.children.filter { it.local == "itemref" }) {
+                val item = manifest[itemref.attr("idref") ?: ""] ?: continue
+                if (item.href.isNotEmpty() && item.media.contains("html") && member(zip, item.href) != null
+                    && !looksLikeMarkup(read(zip, item.href, "EPUB"))) throw Failed(EPUB_DRM)
+            }
+        }
         if (member(zip, "META-INF/encryption.xml") == null) return
         val obfuscation = setOf("http://www.idpf.org/2008/embedding", "http://ns.adobe.com/pdf/enc#RC")
         val spinePaths = spine.children.filter { it.local == "itemref" }.mapNotNull { manifest[it.attr("idref")]?.href?.let(::nfc) }.toSet()
@@ -1626,7 +1671,8 @@ object BookImport {
         val declared = manifest.values.map { nfc(it.href) }.toSet()
         fonts.addAll(zip.entries().asSequence().filter { nfc(it.name) !in declared && it.name.substringAfterLast('.', "").lowercase() in setOf("otf", "ttf", "woff", "woff2") }.map { nfc(it.name) }.toList())
         val root = xml(zip, "META-INF/encryption.xml", "EPUB", strict = true)
-        for (data in root.descendants().filter { it.local == "EncryptedData" }) {
+        // Theo tên cục bộ, kể cả khi EncryptedData là gốc của file (`root.iter()` của máy tính tính cả gốc).
+        for (data in (sequenceOf(root) + root.descendants()).filter { it.local == "EncryptedData" }) {
             val algorithm = data.child("EncryptionMethod")?.attr("Algorithm")
             // URI tính từ gốc ZIP, không phải META-INF; thuật toán font không được che một chương mã hoá.
             val paths = data.descendants().filter { it.local == "CipherReference" }.map { nfc(normpath(unquote(it.attr("URI") ?: ""))) }.toList()

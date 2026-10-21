@@ -32,6 +32,7 @@ hành vi hay bộ ví dụ). File zip dùng giờ cố định nên sinh lại r
 """
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import struct
@@ -919,6 +920,44 @@ def build_font_variant(*, media: str = "font/otf", encoding: str = "utf-8", emoj
     return _zip(entries, stored_first="mimetype")
 
 
+def _with_members(data: bytes, members: dict[str, bytes]) -> bytes:
+    """Gói `data` với các mục của `members` thay byte (mục chưa có thì thêm vào cuối)."""
+    with zipfile.ZipFile(io.BytesIO(data)) as book:
+        entries = [(info.filename, members.get(info.filename, book.read(info))) for info in book.infolist()]
+    entries += [(name, raw) for name, raw in members.items() if name not in {entry for entry, _raw in entries}]
+    return _zip(entries, stored_first="mimetype")
+
+
+def _cipher(size: int) -> bytes:
+    """Byte trông như chữ đã mã hoá (AES) nhưng cố định giữa các lần sinh: chuỗi sha256 nối nhau."""
+    out, block = b"", b"abook"
+    while len(out) < size:
+        block = hashlib.sha256(block).digest()
+        out += block
+    return out[:size]
+
+
+def build_marked_epub(member: str, content: bytes, *, cipher: bool = False) -> bytes:
+    """Khoá không kèm encryption.xml: `member` trong META-INF (FairPlay sinf.xml, ADEPT / Kobo rights.xml, LCP license.lcpl); `cipher`:
+    chương là byte mã hoá thay vì XHTML."""
+    data = _book("Sách có mã hoá", [("c1.xhtml", f"<h1>Chương 1</h1><p>{LINE}</p>")], raw_pages={"c1.xhtml": _cipher(3000)} if cipher else None)
+    return _with_members(data, {f"META-INF/{member}": content})
+
+
+def build_encryption_shape(shape: str, *, font: bool = False) -> bytes:
+    """encryption.xml lệch chuẩn: "bare" = không namespace xmlenc, "root" = EncryptedData là gốc của file. Hai bên so theo tên cục bộ."""
+    algorithm = "http://www.idpf.org/2008/embedding" if font else "http://www.w3.org/2001/04/xmlenc#aes128-cbc"
+    target = "OEBPS/fonts/ch%E1%BB%AF%20th%E1%BB%AD.otf" if font else "OEBPS/text/c1.xhtml"
+    data = (f'<EncryptedData><EncryptionMethod Algorithm="{algorithm}"/><CipherData><CipherReference URI="{target}"/></CipherData>'
+            '</EncryptedData>')
+    if shape == "root":
+        xml = data.replace("<EncryptedData>", '<EncryptedData xmlns="http://www.w3.org/2001/04/xmlenc#">')
+    else:
+        bare = data.replace("<EncryptedData>", '<EncryptedData xmlns="">')
+        xml = f'<encryption xmlns="urn:oasis:names:tc:opendocument:xmlns:container">{bare}</encryption>'
+    return _with_members(build_encrypted_epub(algorithm, font=font), {"META-INF/encryption.xml": xml.encode("utf-8")})
+
+
 ENCRYPTED = {
     "drm.epub": build_drm,
     "drm_rights.epub": lambda: build_encrypted_epub(marker="rights"),
@@ -935,12 +974,59 @@ ENCRYPTED = {
     "font_woff.epub": lambda: build_font_variant(media="font/woff"),
     "font_woff_legacy.epub": lambda: build_font_variant(media="application/font-woff"),
     "font_woff2.epub": lambda: build_font_variant(media="font/woff2"),
-    "rights_font.epub": lambda: build_encrypted_epub("http://www.idpf.org/2008/embedding", marker="rights", font=True),
+    "rights_font.epub": lambda: _with_members(build_encrypted_epub("http://www.idpf.org/2008/embedding", font=True), {"META-INF/rights.xml": b"<rights/>"}),
+    # Giấy phép ADEPT (licenseToken) là khoá dù encryption.xml chỉ kể font.
+    "drm_adept_font.epub": lambda: build_encrypted_epub("http://www.idpf.org/2008/embedding", marker="rights", font=True),
     "font_utf16.epub": lambda: build_font_variant(encoding="utf-16"),
     "font_utf16le.epub": lambda: build_font_variant(encoding="UTF-16LE"),
     "font_utf16be.epub": lambda: build_font_variant(encoding="UTF-16BE"),
     "font_emoji.epub": lambda: build_font_variant(emoji=True),
     "font_unlisted.epub": lambda: build_encrypted_epub("http://www.idpf.org/2008/embedding", font=True, declared_font=False),
+    # Khoá không kèm encryption.xml: dấu chắc chắn thì từ chối dù chương rõ chữ; chỉ có metadata quyền mà chương không đọc ra markup cũng là khoá.
+    "drm_fairplay.epub": lambda: build_marked_epub("sinf.xml", b'<fairplay:sinf xmlns:fairplay="http://itunes.apple.com/ns/epub"><fairplay:sData/></fairplay:sinf>'),
+    "drm_adept.epub": lambda: build_marked_epub("rights.xml", b'<adept:rights xmlns:adept="http://ns.adobe.com/adept"><adept:licenseToken/></adept:rights>'),
+    "drm_kobo.epub": lambda: build_marked_epub("rights.xml", b"<kdrm><kdrm.version>1</kdrm.version></kdrm>"),
+    "drm_lcp.epub": lambda: build_marked_epub("license.lcpl", b'{"id": "x", "encryption": {"profile": "http://readium.org/lcp/basic-profile"}}'),
+    "drm_rights_cipher.epub": lambda: build_marked_epub("rights.xml", b"<rights/>", cipher=True),
+    "drm_sinf_cipher.epub": lambda: build_marked_epub("sinf.xml", b"<sinf/>", cipher=True),
+    "rights_adept_metadata.epub": lambda: build_marked_epub("rights.xml", b'<adept:rights xmlns:adept="http://ns.adobe.com/adept"><adept:resource/></adept:rights>'),
+    # encryption.xml lệch chuẩn: không namespace, hay EncryptedData là gốc - hai bên cùng đọc theo tên cục bộ.
+    "drm_enc_bare.epub": lambda: build_encryption_shape("bare"),
+    "drm_enc_root.epub": lambda: build_encryption_shape("root"),
+    "font_enc_bare.epub": lambda: build_encryption_shape("bare", font=True),
+}
+
+
+def _opf_encoded(encoding: str, title: str, *, entity: bool = False) -> bytes:
+    """EPUB có content.opf viết bằng `encoding` (khai trong `<?xml encoding>`; "UTF-16" có BOM); `entity`: kèm khai báo entity (bom XML)."""
+    data = _book("x", [("c1.xhtml", f"<h1>Chương 1</h1><p>{LINE}</p>")])
+    with zipfile.ZipFile(io.BytesIO(data)) as book:
+        opf = book.read("OEBPS/content.opf").decode("utf-8")
+    body = opf.split("?>", 1)[1].replace("<dc:title>x</dc:title>", "<dc:title>&t;</dc:title>" if entity else f"<dc:title>{title}</dc:title>")
+    doctype = f'\n<!DOCTYPE package [<!ENTITY t "{title}">]>' if entity else ""
+    raw = (f'<?xml version="1.0" encoding="{encoding}"?>{doctype}{body}').encode(encoding)
+    return _with_members(data, {"OEBPS/content.opf": raw})
+
+
+def build_nav_meta_charset() -> bytes:
+    """Tệp nav UTF-8 không có `<?xml>` nhưng mang `<meta charset=windows-1252>`: XML chỉ nghe khai báo XML (expat) - đọc UTF-8."""
+    pages = [(f"c{n}.xhtml", f"<p>{LINE}</p>") for n in (1, 2)]
+    nav = '<nav epub:type="toc"><ol><li><a href="text/c1.xhtml">Chương 1: Bến đò</a></li><li><a href="text/c2.xhtml">Chương 2: Mưa</a></li></ol></nav>'
+    data = _book("Mục lục khai bảng mã", pages, nav=nav)
+    raw = f'<html {NAV_NS}><head><meta charset="windows-1252"/><title>Mục lục</title></head><body>{nav}</body></html>'.encode("utf-8")
+    return _with_members(data, {"OEBPS/nav.xhtml": raw})
+
+
+# Bảng mã của file XML (container / OPF / mục lục / encryption.xml), như expat của máy tính: chỉ khai báo XML định bảng mã, bảng mã nhiều byte
+# là file hỏng, entity viết UTF-16 vẫn bị chặn.
+XML_ENCODINGS = {
+    "nav_meta_charset.epub": build_nav_meta_charset,
+    "entity_utf16.epub": lambda: _opf_encoded("UTF-16", "Tên", entity=True),
+    "entity_utf16be.epub": lambda: _opf_encoded("UTF-16BE", "Tên", entity=True),
+    "xml_shift_jis.epub": lambda: _opf_encoded("Shift_JIS", "東京"),
+    "xml_gb2312.epub": lambda: _opf_encoded("GB2312", "中文"),
+    "xml_euc_kr.epub": lambda: _opf_encoded("EUC-KR", "한국"),
+    "xml_koi8r.epub": lambda: _opf_encoded("KOI8-R", "Книга"),
 }
 
 SOURCES = {
@@ -965,6 +1051,7 @@ NOTE_CHOICES = {"fn_marks": {"hideMarks": True}, "fn_end": {"hideMarks": True, "
 SOURCES.update(REAL_WORLD)
 SOURCES.update(NOTE_BOOKS)
 SOURCES.update(ENCRYPTED)
+SOURCES.update(XML_ENCODINGS)
 
 
 # Tên chương đặt từ dòng đầu (`importers.clip_title`, Kotlin BookImport.clipTitle): đủ ngắn, rơi giữa từ (lùi về dấu cách), từ cuối quá dài
