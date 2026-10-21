@@ -185,6 +185,59 @@ class OpeningScheduleTest {
         assertEquals("chờ chương audio / không chờ gì", ReadAloud.VoiceSwitch.NONE, ReadAloud.VoiceSwitch.of(null, waitingText = false, failed = false))
     }
 
+    @Test fun changingTheVoiceWhileTheChapterTextIsStillComingKeepsThePlace() {
+        // Rà 22f6dfec lỗi 1: chữ chương chưa về thì `waiting` chỉ là chỗ tạm ở đầu chương - đọc lại từ nó là về đầu chương; chữ về thì đọc đúng chỗ bằng giọng mới.
+        assertEquals(ReadAloud.VoiceSwitch.NONE, ReadAloud.VoiceSwitch.of(null, waitingText = true, failed = false, textPending = true))
+        assertEquals(ReadAloud.VoiceSwitch.RESTART, ReadAloud.VoiceSwitch.of(null, waitingText = true, failed = false, textPending = false))
+        assertEquals("đang phát: vẫn nạp lại sau đoạn đang phát", ReadAloud.VoiceSwitch.REQUEUE, ReadAloud.VoiceSwitch.of(2, waitingText = false, failed = false, textPending = true))
+    }
+
+    @Test fun retryingAfterTheChapterTextFailedToArriveGoesBackToTheChosenPlace() {
+        // Rà 22f6dfec: lấy chữ chương hỏng rồi bấm "Thử lại" - trước đây đọc lại từ chỗ tạm (đầu chương), mất chỗ người nghe đã chọn.
+        val chosen = ReadAloud.Place(3, 0, segment = 7, word = 4, within = 1_250)
+        assertEquals(chosen, ReadAloud.Target(3, 0, 0, -1, play = true, origin = chosen).place())
+        val byTime = ReadAloud.Place(3, 95_000)
+        assertEquals("mốc trong chương, chưa biết đoạn", byTime, ReadAloud.Target(3, 0, 0, -1, play = true, origin = byTime).place())
+        assertEquals("chỗ chờ thật: đúng đoạn, chữ, mốc trong đoạn", ReadAloud.Place(3, 0, 7, 4, 1_250), ReadAloud.Target(3, 7, 1_250, 4, play = false).place())
+    }
+
+    private class FakeLocks : FetchWake.Locks {
+        @Volatile var held = false
+        @Volatile var wifi = false
+        override fun acquire(timeoutMs: Long, network: Boolean) { held = true; wifi = wifi || network }
+        override fun release() { held = false }
+    }
+
+    @Test fun theOpeningPlanHoldsTheCpuWhileItRunsOnItsOwnThread() {
+        // Rà 22f6dfec lỗi 2-3: ExoPlayer rỗng không giữ khoá nào trong lúc tính lịch; lịch không xếp sau các lượt đọc của bể `worker`.
+        val locks = FakeLocks()
+        val before = FetchWake.factory
+        FetchWake.releaseAll()
+        FetchWake.factory = { locks }
+        try {
+            val planner = OpeningPlanner("opening-test")
+            val seen = java.util.concurrent.LinkedBlockingQueue<String>()
+            val gate = java.util.concurrent.CountDownLatch(1)
+            planner.plan({ true }, { gate.await(); "${Thread.currentThread().name} held=${locks.held}" }) { seen.put(it!!) }
+            assertTrue("giữ ngay khi giao việc", locks.held)
+            assertFalse("tính lịch không cần Wi-Fi", locks.wifi)
+            planner.plan({ false }, { "không được tính" }) { seen.put("stale: $it") }
+            planner.plan({ true }, { error("hỏng") }) { seen.put("failed: $it") }
+            gate.countDown()
+            assertEquals("opening-test held=true", seen.poll(5, java.util.concurrent.TimeUnit.SECONDS))
+            assertEquals("lần tính đã cũ bị bỏ, lần sau vẫn chạy", "failed: null", seen.poll(5, java.util.concurrent.TimeUnit.SECONDS))
+            planner.plan({ true }, { 1 }) { seen.put("done") }
+            assertEquals("done", seen.poll(5, java.util.concurrent.TimeUnit.SECONDS))
+            val until = System.nanoTime() + 5_000_000_000
+            while (FetchWake.heldCount() > 0 && System.nanoTime() < until) Thread.sleep(5)
+            assertEquals(0, FetchWake.heldCount())
+            assertFalse("tính xong thì nhả", locks.held)
+        } finally {
+            FetchWake.releaseAll()
+            FetchWake.factory = before
+        }
+    }
+
     @Test fun aScheduledOpeningQueuesBothFinishedAndStreamingClipsUntilTheDeadline() {
         val queue = OpeningQueue("heading", scheduled = true)
         queue.items += "short paragraph"

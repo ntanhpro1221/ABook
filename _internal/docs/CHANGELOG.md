@@ -11,7 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Khi bạn nghe bằng giọng trên điện thoại, đầu chương được giữ theo lịch dự đoán từ các khúc đã đo để bớt khựng sau chuỗi đoạn ngắn; chưa đo trên máy thật.
 - Lịch giữ đầu chương được tính ở nền nên bạn không còn bị khựng giao diện lúc mở chương dài (máy tính đo 20-68 ms cho chương 12 nghìn ký tự, điện thoại chậm hơn nhiều lần).
-- Khi bạn đổi giọng lúc đầu chương còn đang chuẩn bị, chỗ ấy được đọc lại ngay bằng giọng mới; một đoạn đọc hỏng trong lúc giữ đầu chương không còn bị phát hai lần.
+- Khi bạn đổi giọng lúc đầu chương còn đang chuẩn bị, chỗ ấy được đọc lại ngay bằng giọng mới, và nếu chữ chương còn đang tải về từ máy giữ sách thì bạn vẫn nghe tiếp đúng chỗ đã chọn chứ không bị đưa về đầu chương (cả khi bấm Thử lại sau lúc tải chữ hỏng); một đoạn đọc hỏng trong lúc giữ đầu chương không còn bị phát hai lần.
 - Khi bạn nghe giọng trên máy mà màn hình tắt, điện thoại được giữ thức trong lúc đọc đoạn bạn đang chờ; chưa đo trên máy thật.
 
 ## [0.4.120] - 2026-10-21
