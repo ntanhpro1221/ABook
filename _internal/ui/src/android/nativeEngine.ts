@@ -1,5 +1,5 @@
 import type { EngineEvent, NativeEngine, NativeQueue, TrackInfo } from "@/listen/engine";
-import type { Bookmark, BookmarkSentence } from "@/listen/model";
+import type { Bookmark, BookmarkSentence, ListenBook } from "@/listen/model";
 import type { MusicCredit } from "@/listen/musicBed";
 import type { SleepMode, SleepRequest } from "@/listen/sleep";
 import { chapterFiles, chapterTextEntry } from "./androidSource";
@@ -34,6 +34,8 @@ export class NativeAudioEngine implements NativeEngine {
     this.receivedAt = Date.now();
     // "record": máy khác đổi hồ sơ nghe của cuốn đang nạp, lõi đã nạp lại chỗ của hồ sơ mới - làm mới như đổi chương
     if (!previous || previous.chapterId !== next.chapterId || previous.bookId !== next.bookId || next.kind === "record") this.fire("chapter");
+    // Sửa tên sách / tên chương đang nghe: chỉ là nhãn - không phải sang chương (giữ khối "Hết sách" và hàng đợi).
+    else if (previous.bookTitle !== next.bookTitle || previous.chapterTitle !== next.chapterTitle) this.fire("metadata");
     if (!previous || previous.playing !== next.playing) this.fire(next.playing ? "play" : "pause");
     // Đã có tiếng rồi mới xin quyền thông báo (một lần duy nhất, có lời giải thích): hộp hệ thống không bao giờ chặn lần nghe đầu.
     if (next.playing && !this.offeredNotifications) {
@@ -94,6 +96,12 @@ export class NativeAudioEngine implements NativeEngine {
       autoplay: queue.autoplay,
       readAloudVoice: queue.readAloudVoice,
     }).then((state) => this.receive(state));
+  }
+
+  updateMetadata(book: ListenBook): void {
+    void EbookPlayer.updateMetadata({ bookId: book.id, title: book.title, narrator: book.narrator,
+      chapters: book.chapters?.map((chapter) => ({ id: chapter.id, title: chapter.fullTitle })) ?? [],
+    }).then((state) => this.receive(state)).catch(() => undefined);
   }
 
   load(_track: TrackInfo, _startAt: number, _autoplay: boolean): void {
