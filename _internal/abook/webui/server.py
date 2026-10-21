@@ -5110,6 +5110,12 @@ class Handler(BaseHTTPRequestHandler):
         # Chữ của chương trong sách CHỈ-CÓ-CHỮ (texts/<mã>.txt): trang đọc dựng các đoạn từ đây (listen/textScript.ts).
         path = self.app._listenable(value)
         text = packages.chapter_text(path, int(chapter)) if packages.is_package(path) else None
+        if not text and packages.is_package(path):
+            book = packages.manifest(path)
+            entry = next((item for item in book.get("chapters") or []
+                          if isinstance(item, dict) and item.get("id") == int(chapter)), {})
+            if entry.get("text") and remote_books.remote_of(book) is None:
+                raise ApiError(HTTPStatus.NOT_FOUND, "Mất file chữ của chương này trên máy. Bạn hãy thêm lại đúng file sách gốc để chép bù.")
         if text is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Chương này không có chữ riêng")
         self._send_json(HTTPStatus.OK, {"chapterId": int(chapter), "text": text})
@@ -6141,4 +6147,3 @@ def socket_name() -> str:
     import socket
 
     return socket.gethostname() or "Máy tính"
-

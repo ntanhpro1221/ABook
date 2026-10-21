@@ -9,6 +9,7 @@ import { ClipProvider } from "@/listen/clip";
 import { WebAudioEngine } from "@/listen/engine";
 import { RoutedEngine } from "@/listen/readAloud";
 import { AddBookButton } from "@/listen/AddBook";
+import type { ReadSession } from "@/listen/importQueue";
 import { DropToAdd } from "@/listen/DropToAdd";
 import { LibraryScreen } from "@/listen/LibraryScreen";
 import { MorningRecap } from "@/listen/MorningRecap";
@@ -219,6 +220,9 @@ const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, [string, string | unde
   studio: ["Đã mở dự án vào Studio", "Dự án đã chép vào thư viện Studio - xoá file gốc cũng không sao."],
 };
 
+/** Thư viện mà một file sách vừa mở làm đổi: thư viện Studio (dự án) hay thư viện nghe. */
+const openedLibrary = (result: OpenedBook) => ({ queryKey: [result.how === "studio" ? "library" : "listen"] });
+
 function useOpenedBook() {
   const navigate = useNavigate();
   const client = useQueryClient();
@@ -230,7 +234,7 @@ function useOpenedBook() {
       }
       if (!result.id) return false;
       if (result.how === "studio") {
-        void client.invalidateQueries({ queryKey: ["library"] });
+        void client.invalidateQueries(openedLibrary(result));
         navigate(`/studio/${result.id}`);
         if (result.edits) offerFold(client, result.id, result.edits); // file dự án đã được sửa ở máy khác (điện thoại)
         const lost = result.missingSources ?? 0;
@@ -241,7 +245,7 @@ function useOpenedBook() {
         });
         return true;
       }
-      void client.invalidateQueries({ queryKey: ["listen"] });
+      void client.invalidateQueries(openedLibrary(result));
       navigate(`/book/${result.id}`);
       const [said, description] = OPENED_SAID[result.how ?? "new"];
       const note = workshopMergeNote(result.workshop) ?? mergeNote(result) ?? description;
@@ -356,11 +360,22 @@ function UpdateListener() {
 }
 
 /** Hộp "Thêm sách từ file…" nhận được .abook / .abookproj (dán đường dẫn, kể cả từ trình duyệt): mở như "Mở file sách". */
-function useOpenBookPath() {
+export function useOpenBookPath() {
   const opened = useOpenedBook();
+  const client = useQueryClient();
   return useCallback(
-    async (path: string) => opened(await api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: { path } })),
-    [opened],
+    async (path: string, session?: ReadSession) => {
+      const book = await api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: { path } });
+      try {
+        session?.still();
+      } catch (cancelled) {
+        // Hộp đã đóng: không chuyển trang, nhưng máy đã nhập xong cuốn này - thư viện vẫn phải thấy nó.
+        if (book.id && !book.error) void client.invalidateQueries(openedLibrary(book));
+        throw cancelled;
+      }
+      return opened(book);
+    },
+    [client, opened],
   );
 }
 

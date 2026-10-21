@@ -32,6 +32,7 @@ hành vi hay bộ ví dụ). File zip dùng giờ cố định nên sinh lại r
 """
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import struct
@@ -865,6 +866,264 @@ def whole_titled_txt() -> bytes:
 
 # --- toàn bộ ----------------------------------------------------------------------------------------------------------
 
+DRM_ERROR = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
+
+
+def build_encrypted_epub(algorithm: str = "http://www.w3.org/2001/04/xmlenc#aes128-cbc", *, font: bool = False,
+                         marker: str = "", declared_font: bool = True, metadata_only: bool = False) -> bytes:
+    """Mã hoá nội dung khác với làm rối font; URI tính từ gốc ZIP, kể cả dấu cách được mã hoá."""
+    data = _book("Sách có mã hoá", [("c1.xhtml", f"<h1>Chương 1</h1><p>{LINE}</p>")],
+                 extra=(("fonts/chữ thử.otf", b"font obfuscated", "font/otf"),) if declared_font else ())
+    target = "OEBPS/fonts/ch%E1%BB%AF%20th%E1%BB%AD.otf" if font else "OEBPS/text/c1.xhtml"
+    encryption = (f'<encryption xmlns="urn:oasis:names:tc:opendocument:xmlns:container" xmlns:e="http://www.w3.org/2001/04/xmlenc#">'
+                  f'<e:EncryptedData><e:EncryptionMethod Algorithm="{algorithm}"/><e:CipherData>'
+                  f'<e:CipherReference URI="{target}"/></e:CipherData></e:EncryptedData></encryption>')
+    with zipfile.ZipFile(io.BytesIO(data)) as book:
+        entries = [(info.filename, book.read(info)) for info in book.infolist()]
+    if not declared_font:
+        entries.append(("OEBPS/fonts/chữ thử.otf", b"font obfuscated"))
+    if marker:
+        rights = b'<adept:rights xmlns:adept="http://ns.adobe.com/adept"><adept:licenseToken/></adept:rights>' if marker == "rights" and not metadata_only else b"<rights/>"
+        entries.append((f"META-INF/{marker}.xml", rights))
+    if not metadata_only:
+        entries.append(("META-INF/encryption.xml", encryption.encode("utf-8")))
+    if not font and not metadata_only:
+        entries = [(name, b"CIPHER_BYTES_not_story" * 20 if name == "OEBPS/text/c1.xhtml" else raw) for name, raw in entries]
+    return _zip(entries, stored_first="mimetype")
+
+
+def build_drm() -> bytes:
+    return build_encrypted_epub()
+
+
+def build_font_obfuscated() -> bytes:
+    return build_encrypted_epub("http://www.idpf.org/2008/embedding", font=True)
+
+
+def build_font_variant(*, media: str = "font/otf", encoding: str = "utf-8", emoji: bool = False,
+                       algorithm: str = "http://www.idpf.org/2008/embedding") -> bytes:
+    from urllib.parse import quote
+
+    data = build_encrypted_epub(algorithm, font=True)
+    name = "\U0001f600 regular.dat" if emoji else "obfuscated.dat"
+    old = "fonts/ch\u1eef th\u1eed.otf"
+    with zipfile.ZipFile(io.BytesIO(data)) as book:
+        entries = []
+        for info in book.infolist():
+            raw = book.read(info)
+            if info.filename.endswith(".opf"):
+                raw = raw.decode("utf-8").replace(quote(old), quote("fonts/" + name)).replace(old, "fonts/" + name).replace('media-type="font/otf"', f'media-type="{media}"').encode("utf-8")
+            if info.filename == "META-INF/encryption.xml":
+                text = raw.decode("utf-8").replace("fonts/ch%E1%BB%AF%20th%E1%BB%AD.otf", "fonts/" + ("\U0001f600%20regular.dat" if emoji else name))
+                raw = (f'<?xml version="1.0" encoding="{encoding}"?>' + text).encode(encoding)
+            entries.append((info.filename.replace(old, "fonts/" + name), raw))
+    return _zip(entries, stored_first="mimetype")
+
+
+def _with_members(data: bytes, members: dict[str, bytes]) -> bytes:
+    """Gói `data` với các mục của `members` thay byte (mục chưa có thì thêm vào cuối)."""
+    with zipfile.ZipFile(io.BytesIO(data)) as book:
+        entries = [(info.filename, members.get(info.filename, book.read(info))) for info in book.infolist()]
+    entries += [(name, raw) for name, raw in members.items() if name not in {entry for entry, _raw in entries}]
+    return _zip(entries, stored_first="mimetype")
+
+
+def _cipher(size: int) -> bytes:
+    """Byte trông như chữ đã mã hoá (AES) nhưng cố định giữa các lần sinh: chuỗi sha256 nối nhau."""
+    out, block = b"", b"abook"
+    while len(out) < size:
+        block = hashlib.sha256(block).digest()
+        out += block
+    return out[:size]
+
+
+def build_marked_epub(member: str, content: bytes, *, cipher: bool = False, title: str = "Sách có mã hoá") -> bytes:
+    """Dấu khoá không kèm encryption.xml: `member` trong META-INF (FairPlay sinf.xml, ADEPT / Kobo rights.xml, LCP license.lcpl); `cipher`:
+    chương là byte mã hoá thay vì XHTML (không thì là sách đã gỡ khoá - obok giữ nguyên rights.xml)."""
+    data = _book(title, [("c1.xhtml", f"<h1>Chương 1</h1><p>{LINE}</p>")], raw_pages={"c1.xhtml": _cipher(3000)} if cipher else None)
+    return _with_members(data, {f"META-INF/{member}": content})
+
+
+FAIRPLAY = b'<fairplay:sinf xmlns:fairplay="http://itunes.apple.com/ns/epub"><fairplay:sData/></fairplay:sinf>'
+ADEPT = b'<adept:rights xmlns:adept="http://ns.adobe.com/adept"><adept:licenseToken/></adept:rights>'
+KOBO = b"<kdrm><kdrm.version>1</kdrm.version></kdrm>"
+LCP = b'{"id": "x", "encryption": {"profile": "http://readium.org/lcp/basic-profile"}}'
+
+
+def build_rights_odd_pages() -> bytes:
+    """rights.xml trơn (metadata) và những chương lạ mà vẫn là chữ thật: rỗng, chỉ khoảng trắng, mở bằng NBSP / form feed / zero-width,
+    vài ký tự hỏng thật, windows-1252 khai utf-8 - không phải chữ đã mã hoá."""
+    pages = [(f"c{n}.xhtml", f"<h1>Chương {n}</h1><p>{LINE}</p>") for n in range(1, 9)]
+    page = {n: _xhtml(body) for n, (_name, body) in enumerate(pages, start=1)}
+    cp1252 = ('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>x</title></head><body>\n'
+              "<h1>Chapitre 8</h1><p>Café crème, déjà vu à l'été.</p>\n</body></html>").encode("cp1252")
+    members = {"OEBPS/text/c2.xhtml": b"", "OEBPS/text/c3.xhtml": b" \n\t\r\n", "OEBPS/text/c4.xhtml": "\u00a0".encode() + page[4],
+               "OEBPS/text/c5.xhtml": b"\x0c" + page[5], "OEBPS/text/c6.xhtml": "\u200b".encode() + page[6],
+               "OEBPS/text/c7.xhtml": _xhtml(f"<h1>Chương 7</h1><p>Chữ \ufffd hỏng \ufffd thật. {LINE}</p>"), "OEBPS/text/c8.xhtml": cp1252,
+               "META-INF/rights.xml": b"<rights/>"}
+    return _with_members(_book("Sách có metadata quyền", pages), members)
+
+
+def build_astral_window() -> bytes:
+    """Cửa sổ 1.000 ký tự đầu đếm theo ký tự (code point), không theo đơn vị UTF-16: 500 emoji rồi 500 byte hỏng - nửa cửa sổ là chữ hỏng."""
+    page = b"<p>" + ("\U0001f600" * 500).encode("utf-8") + b"\xff" * 500 + b"</p>"
+    data = _book("Sách có mã hoá", [("c1.xhtml", f"<h1>Chương 1</h1><p>{LINE}</p>")], raw_pages={"c1.xhtml": page})
+    return _with_members(data, {"META-INF/rights.xml": b"<rights/>"})
+
+
+def build_encryption_shape(shape: str, *, font: bool = False) -> bytes:
+    """encryption.xml lệch chuẩn: "bare" = không namespace xmlenc, "root" = EncryptedData là gốc của file. Hai bên so theo tên cục bộ."""
+    algorithm = "http://www.idpf.org/2008/embedding" if font else "http://www.w3.org/2001/04/xmlenc#aes128-cbc"
+    target = "OEBPS/fonts/ch%E1%BB%AF%20th%E1%BB%AD.otf" if font else "OEBPS/text/c1.xhtml"
+    data = (f'<EncryptedData><EncryptionMethod Algorithm="{algorithm}"/><CipherData><CipherReference URI="{target}"/></CipherData>'
+            '</EncryptedData>')
+    if shape == "root":
+        xml = data.replace("<EncryptedData>", '<EncryptedData xmlns="http://www.w3.org/2001/04/xmlenc#">')
+    else:
+        bare = data.replace("<EncryptedData>", '<EncryptedData xmlns="">')
+        xml = f'<encryption xmlns="urn:oasis:names:tc:opendocument:xmlns:container">{bare}</encryption>'
+    return _with_members(build_encrypted_epub(algorithm, font=font), {"META-INF/encryption.xml": xml.encode("utf-8")})
+
+
+ENCRYPTED = {
+    "drm.epub": build_drm,
+    "drm_rights.epub": lambda: build_encrypted_epub(marker="rights"),
+    "drm_sinf.epub": lambda: build_encrypted_epub(marker="sinf"),
+    "rights_metadata.epub": lambda: build_encrypted_epub(marker="rights", metadata_only=True),
+    "sinf_metadata.epub": lambda: build_encrypted_epub(marker="sinf", metadata_only=True),
+    "drm_fake_font.epub": lambda: build_encrypted_epub("http://www.idpf.org/2008/embedding"),
+    "font_obfuscated.epub": build_font_obfuscated,
+    "font_adobe.epub": lambda: build_encrypted_epub("http://ns.adobe.com/pdf/enc#RC", font=True),
+    "font_opentype.epub": lambda: build_font_variant(media="application/vnd.ms-opentype"),
+    "font_opentype_adobe.epub": lambda: build_font_variant(media="application/vnd.ms-opentype", algorithm="http://ns.adobe.com/pdf/enc#RC"),
+    "font_ttf.epub": lambda: build_font_variant(media="font/ttf"),
+    "font_sfnt.epub": lambda: build_font_variant(media="application/font-sfnt"),
+    "font_woff.epub": lambda: build_font_variant(media="font/woff"),
+    "font_woff_legacy.epub": lambda: build_font_variant(media="application/font-woff"),
+    "font_woff2.epub": lambda: build_font_variant(media="font/woff2"),
+    "rights_font.epub": lambda: _with_members(build_encrypted_epub("http://www.idpf.org/2008/embedding", font=True), {"META-INF/rights.xml": b"<rights/>"}),
+    # Giấy phép ADEPT và encryption.xml chỉ kể font, nhưng chương là byte mã hoá: khoá.
+    "drm_adept_font.epub": lambda: _with_members(build_encrypted_epub("http://www.idpf.org/2008/embedding", marker="rights", font=True),
+                                                 {"OEBPS/text/c1.xhtml": _cipher(3000)}),
+    "font_utf16.epub": lambda: build_font_variant(encoding="utf-16"),
+    "font_utf16le.epub": lambda: build_font_variant(encoding="UTF-16LE"),
+    "font_utf16be.epub": lambda: build_font_variant(encoding="UTF-16BE"),
+    "font_emoji.epub": lambda: build_font_variant(emoji=True),
+    "font_unlisted.epub": lambda: build_encrypted_epub("http://www.idpf.org/2008/embedding", font=True, declared_font=False),
+    # Không kèm encryption.xml: có sinf.xml / rights.xml / license.lcpl thì soi chương của thứ tự đọc - chương không đọc ra markup là khoá, dù
+    # file mang dấu khoá hay chỉ là metadata quyền; sách đã gỡ khoá (dấu còn, chương rõ chữ) và chương rỗng / mở lạ vẫn đọc được.
+    "drm_fairplay.epub": lambda: build_marked_epub("sinf.xml", FAIRPLAY, cipher=True),
+    "drm_adept.epub": lambda: build_marked_epub("rights.xml", ADEPT, cipher=True),
+    "drm_kobo.epub": lambda: build_marked_epub("rights.xml", KOBO, cipher=True),
+    "drm_lcp.epub": lambda: build_marked_epub("license.lcpl", LCP, cipher=True),
+    "drm_rights_cipher.epub": lambda: build_marked_epub("rights.xml", b"<rights/>", cipher=True),
+    "drm_sinf_cipher.epub": lambda: build_marked_epub("sinf.xml", b"<sinf/>", cipher=True),
+    "drm_astral_window.epub": build_astral_window,
+    "unlocked_fairplay.epub": lambda: build_marked_epub("sinf.xml", FAIRPLAY, title="Sách đã gỡ khoá"),
+    "unlocked_adept.epub": lambda: build_marked_epub("rights.xml", ADEPT, title="Sách đã gỡ khoá"),
+    "unlocked_kobo.epub": lambda: build_marked_epub("rights.xml", KOBO, title="Sách đã gỡ khoá"),
+    "lcp_clear.epub": lambda: build_marked_epub("license.lcpl", LCP, title="Sách đã gỡ khoá"),
+    "rights_odd_pages.epub": build_rights_odd_pages,
+    "rights_adept_metadata.epub": lambda: build_marked_epub("rights.xml", b'<adept:rights xmlns:adept="http://ns.adobe.com/adept"><adept:resource/></adept:rights>'),
+    # encryption.xml lệch chuẩn: không namespace, hay EncryptedData là gốc - hai bên cùng đọc theo tên cục bộ.
+    "drm_enc_bare.epub": lambda: build_encryption_shape("bare"),
+    "drm_enc_root.epub": lambda: build_encryption_shape("root"),
+    "font_enc_bare.epub": lambda: build_encryption_shape("bare", font=True),
+}
+
+
+def _opf_encoded(encoding: str, title: str, *, entity: bool = False, declared: bool = True, lead: str = "", comment: int = 0) -> bytes:
+    """EPUB có content.opf viết bằng `encoding` (khai trong `<?xml encoding>` trừ khi `declared=False`; "UTF-16" có BOM); `entity`: kèm khai
+    báo entity (bom XML); `lead`: chữ đứng trước cả file; `comment`: chú thích dài chừng ấy ký tự trước khai báo entity."""
+    data = _book("x", [("c1.xhtml", f"<h1>Chương 1</h1><p>{LINE}</p>")])
+    with zipfile.ZipFile(io.BytesIO(data)) as book:
+        opf = book.read("OEBPS/content.opf").decode("utf-8")
+    body = opf.split("?>", 1)[1].replace("<dc:title>x</dc:title>", "<dc:title>&t;</dc:title>" if entity else f"<dc:title>{title}</dc:title>")
+    doctype = f'\n<!DOCTYPE package [<!ENTITY t "{title}">]>' if entity else ""
+    head = (f'<?xml version="1.0" encoding="{encoding}"?>' if declared else "") + (f"<!--{'x' * comment}-->" if comment else "")
+    return _with_members(data, {"OEBPS/content.opf": (lead + head + doctype + body).encode(encoding)})
+
+
+def build_nav_meta_charset(charset: str = "windows-1252", encode: Any = None, declaration: str = "") -> bytes:
+    """Tệp nav mang `<meta charset>`: XML chỉ nghe khai báo XML (expat). UTF-8 không có `<?xml>` đọc như UTF-8; viết bằng bảng mã khác
+    (`encode`) mà byte không giải được theo khai báo thì là file hỏng ở cả hai bên - bỏ mục lục, đọc theo spine."""
+    pages = [(f"c{n}.xhtml", f"<p>{LINE}</p>") for n in (1, 2)]
+    nav = '<nav epub:type="toc"><ol><li><a href="text/c1.xhtml">Chương 1: Bến đò</a></li><li><a href="text/c2.xhtml">Chương 2: Mưa</a></li></ol></nav>'
+    data = _book("Mục lục khai bảng mã", pages, nav=nav)
+    raw = f'{declaration}<html {NAV_NS}><head><meta charset="{charset}"/><title>Mục lục</title></head><body>{nav}</body></html>'
+    return _with_members(data, {"OEBPS/nav.xhtml": encode(raw) if encode else raw.encode("utf-8")})
+
+
+def _cp1252_undefined(text: str) -> bytes:
+    """Chữ windows-1252 có byte 0x81 (bảng mã không định nghĩa) thay cho chữ Việt không có trong bảng."""
+    return text.replace("Chương", "Chapitre").replace("Bến đò", "Café\x81").replace("Mưa", "Été").replace("Mục lục", "Table").encode("latin-1")
+
+
+# Bảng mã trong `<?xml encoding>` của một file XML (Python: `importers._xml`, Kotlin: Markup.parse): mỗi ca là (nhãn, byte); hai bên cùng đọc ra
+# một chữ hay cùng báo một lỗi (expected/xml_cases.json). Tên chuẩn hoá chung (utf8, latin-1, cp1258...); chỉ UTF-8, UTF-16 và bảng mã một
+# byte; byte không giải được theo khai báo là file hỏng; khai báo entity bị chặn ở mọi chỗ trong file, mọi bảng mã.
+XML_NAME_CASES = [
+    ("utf8", "utf-8", "Tên sách"), ("UTF-8", "utf-8", "Tên sách"), ("utf-16", "utf-16", "Tên sách"), ("utf-16", "utf-8", "Tên"),
+    ("UTF-16BE", "utf-16-be", "Tên"), ("UTF-16LE", "utf-16-be", "Tên"), ("latin-1", "latin-1", "Café"), ("latin1", "latin-1", "Café"),
+    ("iso-8859-1", "latin-1", "Café"), ("iso8859-1", "latin-1", "Café"), ("windows-1252", "cp1252", "Café “x”"), ("cp1252", "cp1252", "Café"),
+    ("windows-1258", "cp1258", "Tên"), ("cp1258", "cp1258", "Tên"), ("ascii", "ascii", "abc"), ("us-ascii", "ascii", "abc"),
+    ("us-ascii", "utf-8", "Tên"), ("UTF-32", "utf-32", "Tên"), ("shift_jis", "shift_jis", "東京"), ("foo", "utf-8", "abc"),
+    ("KOI8-R", "koi8-r", "Книга"),
+]
+
+
+def xml_cases() -> list[tuple[str, bytes]]:
+    cases = [(f"{name} ({codec})", f'<?xml version="1.0" encoding="{name}"?><a>{text}</a>'.encode(codec)) for name, codec, text in XML_NAME_CASES]
+    entity = '<!DOCTYPE a [<!ENTITY x "HELLO">]><a>&x;</a>'
+    return cases + [
+        ("windows-1252 0x81", b'<?xml version="1.0" encoding="windows-1252"?><a>Caf\x81</a>'),
+        ("windows-1252 0x8D", b'<?xml version="1.0" encoding="windows-1252"?><a>Caf\x8d</a>'),
+        ("utf-8 hỏng", b"<a>Caf\xe9</a>"),
+        ("utf-8 bom", "\ufeff<a>Tên</a>".encode("utf-8")),
+        ("utf-16-le không bom", "<a>Tên</a>".encode("utf-16-le")),
+        ("utf-16-be không bom", "<a>Tên</a>".encode("utf-16-be")),
+        ("entity utf-16-le không bom, mở bằng xuống dòng", ("\n" + entity).encode("utf-16-le")),
+        ("entity utf-16-be không bom, mở bằng dấu cách", (" " + entity).encode("utf-16-be")),
+        ("entity sau chú thích dài", ('<?xml version="1.0"?><!--' + "x" * 5000 + "-->" + entity).encode("utf-8")),
+        ("entity chữ thường", entity.replace("ENTITY", "entity").encode("utf-8")),
+    ]
+
+
+def xml_case_results() -> list[dict[str, str]]:
+    from abook import importers
+
+    out = []
+    for label, raw in xml_cases():
+        try:
+            result = {"text": "".join(importers._xml(raw).itertext())}
+        except importers.ImportFailed as error:
+            result = {"error": str(error)}
+        out.append({"case": label, "hex": raw.hex(), **result})
+    return out
+
+
+# Bảng mã của file XML (container / OPF / mục lục / encryption.xml), như expat của máy tính: chỉ khai báo XML định bảng mã, bảng mã nhiều byte
+# là file hỏng, entity viết UTF-16 vẫn bị chặn.
+XML_ENCODINGS = {
+    "nav_meta_charset.epub": build_nav_meta_charset,
+    "entity_utf16.epub": lambda: _opf_encoded("UTF-16", "Tên", entity=True),
+    "entity_utf16be.epub": lambda: _opf_encoded("UTF-16BE", "Tên", entity=True),
+    "xml_shift_jis.epub": lambda: _opf_encoded("Shift_JIS", "東京"),
+    "xml_gb2312.epub": lambda: _opf_encoded("GB2312", "中文"),
+    "xml_euc_kr.epub": lambda: _opf_encoded("EUC-KR", "한국"),
+    "xml_koi8r.epub": lambda: _opf_encoded("KOI8-R", "Книга"),
+    # Chốt entity soi cả file: UTF-16 không BOM mở bằng khoảng trắng (expat nhận UTF-16 nhờ byte 0), entity sau chú thích dài.
+    "entity_utf16_ws.epub": lambda: _opf_encoded("utf-16-le", "Tên", entity=True, declared=False, lead="\n"),
+    "entity_utf16be_ws.epub": lambda: _opf_encoded("utf-16-be", "Tên", entity=True, declared=False, lead=" "),
+    "entity_long_comment.epub": lambda: _opf_encoded("utf-8", "Tên", entity=True, comment=5000),
+    # Byte không giải được theo bảng mã của file XML: mục lục hỏng ở cả hai bên (không thay ký tự hỏng vào tên chương).
+    "nav_cp1258.epub": lambda: build_nav_meta_charset("windows-1258", encode_cp1258),
+    "nav_cp1252_undefined.epub": lambda: build_nav_meta_charset("windows-1252", _cp1252_undefined, '<?xml version="1.0" encoding="windows-1252"?>'),
+    # Tên bảng mã chuẩn hoá chung: "utf8" và "latin-1" đọc được ở cả hai bên.
+    "xml_utf8_name.epub": lambda: _opf_encoded("utf8", "Tên sách"),
+    "xml_latin1_name.epub": lambda: _opf_encoded("latin-1", "Café"),
+}
+
 SOURCES = {
     "epub3.epub": build_epub3, "epub2.epub": build_epub2, "split.epub": build_epub_split, "headings.docx": build_docx_headings, "plain.docx": build_docx_plain,
     "story.pdf": build_story_pdf, "scan.pdf": build_scan_pdf,
@@ -886,6 +1145,8 @@ NOTE_BOOKS = {"notes3.epub": build_notes_epub3, "notes2.epub": build_notes_epub2
 NOTE_CHOICES = {"fn_marks": {"hideMarks": True}, "fn_end": {"hideMarks": True, "notes": "end"}, "fn_drop": {"notes": "drop"}}
 SOURCES.update(REAL_WORLD)
 SOURCES.update(NOTE_BOOKS)
+SOURCES.update(ENCRYPTED)
+SOURCES.update(XML_ENCODINGS)
 
 
 # Tên chương đặt từ dòng đầu (`importers.clip_title`, Kotlin BookImport.clipTitle): đủ ngắn, rơi giữa từ (lùi về dấu cách), từ cuối quá dài
@@ -958,6 +1219,7 @@ def expected_files(root: Path) -> dict[str, bytes]:
     out["expected/clip_title.json"] = dumps([{"text": text, "limit": limit, "clipped": importers.clip_title(text, limit)}
                                              for text, limit in CLIP_TITLE_CASES])
     out["expected/name_title.json"] = dumps([{"stem": stem, "title": importers.title_from_filename(stem)} for stem in NAME_TITLE_CASES])
+    out["expected/xml_cases.json"] = dumps(xml_case_results())
     out["expected/tail_credit_lines.json"] = dumps({
         "lines": [{"line": line, "suggested": importers.tail_credit_suggestions(line + "\n") == [line]} for line, _want in TAIL_LINE_CASES],
         "sources": [{"source": source, "tail": importers.tail_credit_suggestions(source),

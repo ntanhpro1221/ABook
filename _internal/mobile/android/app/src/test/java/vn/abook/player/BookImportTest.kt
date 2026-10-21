@@ -31,6 +31,96 @@ class BookImportTest {
 
     private fun titles(book: BookImport.Book) = book.chapters.map { it.title }
 
+    private val drmMessage = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
+
+    @Test
+    fun encrypted_epubs_are_refused_but_obfuscated_fonts_keep_the_text() {
+        val message = drmMessage
+        for (name in listOf("drm", "drm_rights", "drm_sinf", "drm_fake_font")) {
+            assertEquals(name, message, failure { BookImport.importFile(File(dir, "$name.epub")) })
+        }
+        for (name in listOf("font_obfuscated", "font_adobe", "font_unlisted", "rights_metadata", "sinf_metadata", "rights_font", "font_opentype", "font_opentype_adobe", "font_ttf", "font_sfnt", "font_woff", "font_woff_legacy", "font_woff2", "font_utf16", "font_utf16le", "font_utf16be", "font_emoji")) {
+            assertEquals(name, expectedText(name), dump(BookImport.importFile(File(dir, "$name.epub"))))
+        }
+    }
+
+    @Test
+    fun rights_metadata_is_not_encryption() {
+        for (name in listOf("rights_metadata", "sinf_metadata")) assertEquals(expectedText(name), dump(BookImport.importFile(File(dir, "$name.epub"))))
+    }
+
+    @Test
+    fun opentype_mime_is_a_font() {
+        assertEquals(expectedText("font_opentype"), dump(BookImport.importFile(File(dir, "font_opentype.epub"))))
+    }
+
+    @Test
+    fun encryption_xml_honours_utf16_bom_and_declaration() {
+        for (name in listOf("font_utf16", "font_utf16le", "font_utf16be")) assertEquals(expectedText(name), dump(BookImport.importFile(File(dir, "$name.epub"))))
+    }
+
+    @Test
+    fun font_uri_preserves_non_bmp_codepoints() {
+        assertEquals(expectedText("font_emoji"), dump(BookImport.importFile(File(dir, "font_emoji.epub"))))
+    }
+
+    /** Ví dụ dùng chung mà kết quả có thể là lỗi: cùng lời lỗi, hay cùng cuốn sách, như Python. */
+    private fun assertLikePython(name: String) {
+        val expected = expectedText(name)
+        val error = (StrictJson.parse(expected) as org.json.JSONObject).optString("error", "")
+        if (error.isNotEmpty()) assertEquals(name, error, failure { BookImport.importFile(File(dir, "$name.epub")) })
+        else assertEquals(name, expected, dump(BookImport.importFile(File(dir, "$name.epub"))))
+    }
+
+    /** Không kèm encryption.xml: có sinf.xml / rights.xml / license.lcpl thì chương trông như chữ mã hoá mới là khoá - sách đã gỡ khoá, chương
+     *  rỗng hay mở bằng khoảng trắng lạ vẫn đọc được; cửa sổ soi đếm theo code point như Python. */
+    @Test
+    fun drm_without_encryption_xml_is_found_in_the_chapters_not_in_the_marker_files() {
+        for (name in listOf("drm_fairplay", "drm_adept", "drm_kobo", "drm_lcp", "drm_rights_cipher", "drm_sinf_cipher", "drm_adept_font", "drm_astral_window",
+            "unlocked_fairplay", "unlocked_adept", "unlocked_kobo", "lcp_clear", "rights_odd_pages", "rights_adept_metadata", "rights_metadata", "sinf_metadata", "rights_font")) {
+            assertLikePython(name)
+        }
+        assertEquals(drmMessage, (StrictJson.parse(expectedText("drm_lcp")) as org.json.JSONObject).getString("error"))
+    }
+
+    @Test
+    fun encryption_xml_is_read_by_local_names_even_at_the_root() {
+        for (name in listOf("drm_enc_bare", "drm_enc_root", "font_enc_bare")) assertLikePython(name)
+    }
+
+    @Test
+    fun xml_files_follow_only_their_xml_declaration_like_expat() {
+        for (name in listOf("nav_meta_charset", "entity_utf16", "entity_utf16be", "xml_shift_jis", "xml_gb2312", "xml_euc_kr", "xml_koi8r",
+            "entity_utf16_ws", "entity_utf16be_ws", "entity_long_comment", "nav_cp1258", "nav_cp1252_undefined", "xml_utf8_name", "xml_latin1_name")) assertLikePython(name)
+    }
+
+    /** Bảng ca bảng mã của file XML (tests/import_fixtures.py XML_NAME_CASES, xml_cases): cùng chữ hay cùng lời lỗi như `importers._xml`. */
+    @Test
+    fun xml_encoding_names_and_bytes_decide_exactly_like_python() {
+        val cases = StrictJson.parse(expectedText("xml_cases")) as JSONArray
+        assertTrue(cases.length() >= 30)
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val hex = case.getString("hex")
+            val raw = ByteArray(hex.length / 2) { hex.substring(2 * it, 2 * it + 2).toInt(16).toByte() }
+            val got = try {
+                BookImport.Markup.parse(raw, "EPUB", strict = true).allText()
+            } catch (error: BookImport.Failed) {
+                error.message ?: ""
+            }
+            assertEquals(case.getString("case"), case.optString("text", case.optString("error")), got)
+        }
+    }
+
+    @Test
+    fun standalone_import_errors_start_with_a_capital() {
+        val work = Files.createTempDirectory("abook-capital").toFile()
+        for (kind in listOf("EPUB", "DOCX")) {
+            val file = File(work, "broken.${kind.lowercase()}").apply { writeText("not a zip") }
+            assertTrue(failure { BookImport.importFile(file) }.startsWith("Không phải file $kind"))
+        }
+    }
+
     private fun failure(block: () -> Unit): String =
         try {
             block()
