@@ -27,6 +27,20 @@ import vn.abook.player.readaloud.ReadAloud
     permissions = [Permission(strings = [Manifest.permission.POST_NOTIFICATIONS], alias = "notifications")],
 )
 class PlayerPlugin : Plugin() {
+    @PluginMethod
+    fun updateMetadata(call: PluginCall) {
+        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+        val array = call.getArray("chapters")
+        val titles = (0 until (array?.length() ?: 0)).associate { index ->
+            val chapter = array!!.getJSONObject(index)
+            chapter.getInt("id") to chapter.getString("title")
+        }
+        Playback.onMain {
+            Playback.updateMetadata(id, call.getString("title") ?: "", call.getString("narrator") ?: "", titles)
+            call.resolve(JSObject.fromJSONObject(Playback.state()))
+        }
+    }
+
     private var controller: ListenableFuture<MediaController>? = null
     private val listener: (JSONObject) -> Unit = { state ->
         notifyListeners("state", JSObject.fromJSONObject(state))
@@ -75,7 +89,7 @@ class PlayerPlugin : Plugin() {
             Playback.Chapter(it.getInt("id"), it.getString("title"), it.optString("file"), it.optDouble("duration", 0.0), LibraryTree.textEntry(it))
         } ?: return call.reject("thiếu chapters")
         withService {
-            call.getString("readAloudVoice")?.let { ReadAloud.chooseFor(book, it) }
+            call.getString("readAloudVoice")?.let { ReadAloud.rememberFor(book, it) } // Playback.load đặt giọng của cuốn (useVoiceOf)
             Playback.load(
                 book, call.getString("bookTitle") ?: "", call.getString("narrator") ?: "", chapters,
                 call.getInt("chapterId") ?: chapters.first().id, call.getDouble("seconds") ?: 0.0, call.getDouble("rate") ?: 1.0,

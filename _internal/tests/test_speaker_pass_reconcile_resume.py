@@ -4,11 +4,75 @@ from pathlib import Path
 import pytest
 
 from abook import pipeline as pipeline_module
+from abook.analysis import OllamaBookAnalyzer
 from abook.database import ProjectDB
 from test_speaker_pass_pipeline import (
     Crash, FakeOllama, LABELS, _Analyzer, _Stop, _pipeline,
     make_pass, make_project, pass_settings, speakers,
 )
+
+
+@pytest.mark.parametrize("failure", ["unavailable", "request"])
+def test_unreachable_model_reconciliation_is_retried_before_the_speaker_pass(tmp_path: Path, monkeypatch, failure: str) -> None:
+    pipeline = _pipeline(monkeypatch, finalized=False, pending=True)
+    pipeline.db = make_project(tmp_path / "p")
+    pipeline.settings = pass_settings()
+    pipeline.settings["analysis"]["local_identity_reconcile"] = "loose"
+    monkeypatch.delenv("ABOOK_LOCAL_IDENTITY_RECONCILE", raising=False)
+    with pipeline.db.transaction() as conn:
+        conn.execute("UPDATE segments SET speaker='Lan' WHERE stable_id='c1s1'")
+    analyzer = OllamaBookAnalyzer(pipeline.settings, pipeline.db, pipeline.log)
+    available = [False]
+    asked = []
+    monkeypatch.setattr(analyzer, "analyze_all", lambda *a, **kw: None)
+    monkeypatch.setattr(analyzer, "ensure_available", lambda: failure == "request" or available[0])
+    monkeypatch.setattr(analyzer, "unload", lambda: None)
+    monkeypatch.setattr(analyzer, "reconcile_name_pronunciations", lambda **kw: 0)
+
+    def request(*a, **kw):
+        asked.append(1)
+        if not available[0]:
+            raise RuntimeError("offline")
+        return {"identities": []}
+
+    monkeypatch.setattr(analyzer, "_stream_json_response", request)
+    monkeypatch.setattr(pipeline_module, "OllamaBookAnalyzer", lambda *a, **kw: analyzer)
+    passed = []
+    pipeline._run_speaker_pass = lambda _analyzer: passed.append(1)
+    if failure == "request":
+        # A failed request is not retried on resume: the seeded question would fail the same way
+        # every time and the book would never move on. The chapter keeps its local labels.
+        with pytest.raises(_Stop):
+            pipeline.run(recovery_already_run=True)
+        assert asked and passed == [1]
+        assert ProjectDB(pipeline.db.path).speaker_pass_is_reconciled()
+        return
+    with pytest.raises(RuntimeError, match="hoà giải"):
+        pipeline.run(recovery_already_run=True)
+    assert not ProjectDB(pipeline.db.path).speaker_pass_is_reconciled()
+    assert not passed and not pipeline.db.casting_is_finalized()
+    available[0] = True
+    with pytest.raises(_Stop):
+        pipeline.run(recovery_already_run=True)
+    assert asked and passed == [1]
+    assert ProjectDB(pipeline.db.path).speaker_pass_is_reconciled()
+
+
+def test_local_reconciliation_without_candidates_completes_without_a_model(tmp_path: Path, monkeypatch) -> None:
+    pipeline = _pipeline(monkeypatch, finalized=False, pending=False)
+    pipeline.db = make_project(tmp_path / "p")
+    with pipeline.db.transaction() as conn:
+        conn.execute("UPDATE segments SET speaker='UNKNOWN' WHERE speaker NOT LIKE 'NPC_LOCAL::%' AND speaker!='NARRATOR'")
+    pipeline.settings = pass_settings()
+    pipeline.settings["analysis"]["local_identity_reconcile"] = "loose"
+    monkeypatch.delenv("ABOOK_LOCAL_IDENTITY_RECONCILE", raising=False)
+    analyzer = OllamaBookAnalyzer(pipeline.settings, pipeline.db, pipeline.log)
+    monkeypatch.setattr(analyzer, "ensure_available", lambda: pytest.fail("không có ứng viên: không cần model"))
+    monkeypatch.setattr(_Analyzer, "reconcile_local_speaker_identities", lambda self, **kw: analyzer.reconcile_local_speaker_identities(**kw))
+    pipeline._run_speaker_pass = lambda _analyzer: None
+    with pytest.raises(_Stop):
+        pipeline.run(recovery_already_run=True)
+    assert ProjectDB(pipeline.db.path).speaker_pass_is_reconciled()
 
 
 @pytest.mark.parametrize("fail_after", [0, 5])
@@ -27,6 +91,7 @@ def test_pipeline_resume_does_not_reconcile_committed_pass_labels(tmp_path: Path
             calls.append("local")
             with pipeline.db.transaction() as conn:
                 conn.execute("UPDATE segments SET speaker='Iven' WHERE speaker LIKE 'NPC_LOCAL::%cậu bé'")
+            return 0
 
         def names(self, **_kw):
             calls.append("names")

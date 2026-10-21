@@ -159,14 +159,19 @@ def _link(project: Path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
-def previous_project(project: Path) -> Path | None:
-    """Dự án mà `project` làm tiếp, hoặc None (phần đầu, hay dự án trước đã bị xoá/dời)."""
+def previous_path(project: Path) -> Path | None:
+    """Đường mà `continues.json` của `project` trỏ về (dù ở đó còn dự án hay không), hoặc None (phần đầu, dự án lẻ)."""
     value = str(_link(project).get("previous") or "")
     if not value:
         return None
     # Ghi tương đối với thư mục thư viện khi hai dự án cùng thư viện: dời cả thư viện vẫn nối được.
-    candidate = Path(value) if Path(value).is_absolute() else Path(project).resolve().parent / value
-    return candidate.resolve() if is_project(candidate) else None
+    return (Path(value) if Path(value).is_absolute() else Path(project).resolve().parent / value).resolve()
+
+
+def previous_project(project: Path) -> Path | None:
+    """Dự án mà `project` làm tiếp, hoặc None (phần đầu, hay dự án trước đã bị xoá/dời)."""
+    candidate = previous_path(project)
+    return candidate if candidate is not None and is_project(candidate) else None
 
 
 def part_number(project: Path) -> int:
