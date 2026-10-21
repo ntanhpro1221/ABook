@@ -127,25 +127,154 @@ def _make_folder(path: Path) -> Path:
     return path.resolve()
 
 
-def test_undo_is_refused_when_the_original_place_is_taken(studio, recycled: list[Path]) -> None:  # noqa: F811
-    from abook.webui import trash_pending
+def test_undo_uses_a_free_sibling_when_the_original_place_is_taken(studio, recycled: list[Path]) -> None:
+    from abook.webui.library import book_id
 
     paths, app, server, _runner = studio
     original = paths.root.resolve()
     token = _delete(server, paths)
     original.mkdir()
-    (original / "cua_nguoi_khac.txt").write_text("giữ nguyên", encoding="utf-8")
+    (original / "new.txt").write_text("keep", encoding="utf-8")
+    original.with_name(original.name + " (2)").mkdir()
     status, data = _call(server, "POST", f"/api/trash/{token}/undo")
-    assert status == 409 and "trùng tên" in data["error"]
-    assert (original / "cua_nguoi_khac.txt").read_text(encoding="utf-8") == "giữ nguyên", "không đè lên thư mục đang ở đó"
+    assert status == 200 and data["ok"] is True, data
+    restored = original.with_name(original.name + " (3)")
+    assert (restored / "project.sqlite3").is_file()
+    assert (original / "new.txt").read_text(encoding="utf-8") == "keep"
+    assert _pending(original.parent) == [] and recycled == []
+    assert book_id(restored) in str(_call(server, "GET", "/api/library")[1])
+    assert _call(server, "POST", f"/api/trash/{token}/undo")[0] == 404
+
+
+def test_a_book_restored_under_a_sibling_name_takes_its_listening_data_along(studio, recycled: list[Path]) -> None:  # noqa: F811
+    from abook.webui import listen_export
+    from abook.webui.library import book_id
+
+    paths, app, server, _runner = studio
+    original = paths.root.resolve()
+    old = book_id(original)
+    app.listening.set_voice(old, "edge:vi-VN-NamMinhNeural")
+    app.listening.add_bookmark(old, 1, 12.0)
+    work = listen_export.work_folder(app.export_work_dir, old)
+    work.mkdir(parents=True)
+    (work / "part.mp3").write_bytes(b"dang xuat")
+    token = _delete(server, paths)
+    original.mkdir()  # cuốn mới mang đúng tên cũ: cùng mã sách với cuốn vừa xoá
+    status, data = _call(server, "POST", f"/api/trash/{token}/undo")
+    restored = original.with_name(original.name + " (2)")
+    assert status == 200 and data["renamed"] is True and data["title"] == restored.name, data
+    new = book_id(restored)
+    assert app.listening.get(new)["voice"] == "edge:vi-VN-NamMinhNeural"
+    assert [mark["seconds"] for mark in app.listening.get(new)["bookmarks"]] == [12.0]
+    assert old not in app.listening.books(), "cuốn đang chiếm chỗ không nhận chỗ nghe / dấu trang của cuốn đã xoá"
+    assert app.listening.get(old)["bookmarks"] == []
+    assert (listen_export.work_folder(app.export_work_dir, new) / "part.mp3").read_bytes() == b"dang xuat"
+    assert not work.exists()
+
+
+@pytest.mark.parametrize("order", ["oldest first", "newest first"])
+def test_undoing_two_deletions_of_one_name_moves_data_only_off_a_newer_book(studio, recycled: list[Path], order: str) -> None:  # noqa: F811
+    """Xoá "X", thêm "X" mới đúng chỗ, xoá luôn nó, rồi hoàn tác cả hai: dữ liệu nghe theo mã đường gốc chỉ đi theo cuốn về "X (2)" khi
+    cuốn đang ở đường gốc ra đời SAU lần xoá cuốn ấy. Giao diện hoàn tác cũ trước: "X" cũ về chỗ mình và giữ dấu trang của nó."""
+    from abook.webui.library import book_id
+
+    paths, app, server, _runner = studio
+    original = paths.root.resolve()
+    old = book_id(original)
+    (original / "which.txt").write_text("cũ", encoding="utf-8")
+    app.listening.add_bookmark(old, 1, 12.0)
+    first = _delete(server, paths)
+    time.sleep(0.05)  # ngày tạo thư mục theo nấc đồng hồ của hệ thống file (~16 ms)
+    [held] = _pending(original.parent)
+    shutil.copytree(held / original.name, original)  # "X" mới: thư mục mới tạo, cùng đường, cùng mã sách
+    (original / "which.txt").write_text("mới", encoding="utf-8")
+    time.sleep(0.05)
+    second = _delete(server, paths)
+
+    results = [_call(server, "POST", f"/api/trash/{token}/undo")
+               for token in ([first, second] if order == "oldest first" else [second, first])]
+    assert [status for status, _data in results] == [200, 200], results
+    sibling = original.with_name(original.name + " (2)")
+    new = book_id(sibling)
+    later = results[1][1]
+    assert later["renamed"] is True and later["title"] == sibling.name
+    if order == "oldest first":
+        assert (original / "which.txt").read_text(encoding="utf-8") == "cũ", "cuốn cũ về đúng chỗ của nó"
+        assert "oldId" not in later, "cuốn cũ đang ở đường gốc có trước lần xoá cuốn mới: không lấy dữ liệu của nó"
+        assert [mark["seconds"] for mark in app.listening.get(old)["bookmarks"]] == [12.0]
+        assert new not in app.listening.books()
+    else:
+        assert (sibling / "which.txt").read_text(encoding="utf-8") == "cũ"
+        assert later["oldId"] == old and later["newId"] == new, "cuốn mới ra đời sau lần xoá cuốn cũ: dữ liệu theo cuốn cũ sang tên mới"
+        assert [mark["seconds"] for mark in app.listening.get(new)["bookmarks"]] == [12.0]
+        assert old not in app.listening.books()
+
+
+def test_listening_data_that_cannot_be_moved_still_finishes_the_undo(studio, recycled: list[Path],  # noqa: F811
+                                                                      monkeypatch: pytest.MonkeyPatch,
+                                                                      caplog: pytest.LogCaptureFixture) -> None:
+    """File nghe đang bị giữ lúc chuyển mã: thư mục đã về, mã hoàn tác đã dùng - vẫn là hoàn tác xong (không phải lỗi rồi bấm lại gặp 404),
+    lời báo nói dữ liệu chưa theo được, nhật ký ghi rõ."""
+    from abook.webui.library import book_id
+
+    paths, app, server, _runner = studio
+    original = paths.root.resolve()
+    old = book_id(original)
+    app.listening.add_bookmark(old, 1, 7.0)
+    token = _delete(server, paths)
+    time.sleep(0.05)
+    original.mkdir()
+
+    def held(_renamed: dict[str, str]) -> None:
+        raise PermissionError(13, "file đang bị giữ")
+
+    monkeypatch.setattr(app.listening, "rename_books", held)
+    status, data = _call(server, "POST", f"/api/trash/{token}/undo")
+    restored = original.with_name(original.name + " (2)")
+    assert status == 200 and data["renamed"] is True and data["dataLeft"] is True and "oldId" not in data, data
+    assert (restored / "project.sqlite3").is_file() and _pending(original.parent) == []
+    assert "không chuyển được dữ liệu nghe" in caplog.text
+    assert [mark["seconds"] for mark in app.listening.get(old)["bookmarks"]] == [7.0]
+
+
+def test_a_plain_undo_keeps_the_same_book_id(studio, recycled: list[Path]) -> None:  # noqa: F811
+    from abook.webui.library import book_id
+
+    paths, app, server, _runner = studio
+    old = book_id(paths.root.resolve())
+    app.listening.add_bookmark(old, 1, 5.0)
+    token = _delete(server, paths)
+    status, data = _call(server, "POST", f"/api/trash/{token}/undo")
+    assert status == 200 and data["renamed"] is False
+    assert [mark["seconds"] for mark in app.listening.get(old)["bookmarks"]] == [5.0]
+
+
+@pytest.mark.parametrize("link", ["from", "to"])
+def test_a_project_in_a_series_is_not_restored_under_another_name(studio, recycled: list[Path], link: str) -> None:  # noqa: F811
+    import json
+
+    from abook import continuation
+
+    paths, app, server, _runner = studio
+    original = paths.root.resolve()
+    if link == "from":  # cuốn bị xoá là phần 2: nó trỏ về phần 1
+        (original / continuation.LINK_FILE).write_text(json.dumps({"previous": "Phan 1", "part": 2}), encoding="utf-8")
+    else:  # phần sau trỏ về cuốn bị xoá theo đường gốc
+        follower = original.with_name(original.name + " · Phần 2")
+        shutil.copytree(original, follower)
+        (follower / continuation.LINK_FILE).write_text(json.dumps({"previous": original.name, "part": 2}), encoding="utf-8")
+    token = _delete(server, paths)
+    original.mkdir()
+    (original / "new.txt").write_text("keep", encoding="utf-8")
+    status, data = _call(server, "POST", f"/api/trash/{token}/undo")
+    assert status == 409 and "nhiều phần" in data["error"] and "Hoàn tác" in data["error"], data
+    assert (original / "new.txt").read_text(encoding="utf-8") == "keep"
+    assert not original.with_name(original.name + " (2)").exists()
     [held] = _pending(original.parent)
     assert (held / original.name / "project.sqlite3").is_file(), "cuốn vừa xoá vẫn nằm chờ"
-
-    # Hết hạn mà đường gốc vẫn bị chiếm: không đè lên, cuốn cũ vào Thùng rác qua tên anh em còn trống (không kẹt mãi ở chỗ chờ).
-    app.trash.clock = lambda: time.time() + trash_pending.UNDO_SECONDS + 5
-    assert app.trash.sweep(original.parent) == 0
-    assert [path.parent for path in recycled] == [original.parent] and recycled[0] != original
-    assert (original / "cua_nguoi_khac.txt").is_file() and _pending(original.parent) == []
+    shutil.rmtree(original)  # người dùng bỏ cuốn vừa thêm rồi bấm Hoàn tác lại
+    status, data = _call(server, "POST", f"/api/trash/{token}/undo")
+    assert status == 200 and data["renamed"] is False and (original / "project.sqlite3").is_file()
 
 
 def test_the_pending_folder_is_never_a_book(studio, recycled: list[Path]) -> None:  # noqa: F811
@@ -313,6 +442,22 @@ def _hold(tmp_path: Path, name: str = "Sach", clock=lambda: 0.0):
     (book / "a.mp3").write_bytes(b"x" * 10)
     trash = TrashPending(clock=clock)
     return trash, library, book, trash.hold(library, book, "imported")
+
+
+def test_reopened_pending_trash_restores_to_a_free_sibling(tmp_path: Path, recycled: list[Path]) -> None:
+    from abook.webui.trash_pending import TrashPending
+
+    _trash, library, book, token = _hold(tmp_path)
+    book.mkdir()
+    (book / "new.mp3").write_bytes(b"new")
+    # Mất trạng thái trong RAM như khi app chết rồi mở lại; mã và dữ liệu vẫn ở đĩa.
+    reopened = TrashPending(clock=lambda: 1.0)
+    meta = reopened.restore(library, token)
+    restored = book.with_name("Sach (2)")
+    assert Path(meta["original"]) == restored
+    assert (restored / "a.mp3").read_bytes() == b"x" * 10
+    assert (book / "new.mp3").read_bytes() == b"new"
+    assert _pending(library) == [] and recycled == []
 
 
 def test_a_taken_original_path_still_lets_the_old_copy_reach_the_bin_under_a_free_sibling_name(

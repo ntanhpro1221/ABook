@@ -153,13 +153,36 @@ object ReadAloud {
     }
 
     /** Chỗ cần phát mà chưa có đoạn âm thanh để đặt vào ExoPlayer: đang chờ đọc. `word` >= 0 thắng `offsetMs` (bắt đầu đúng chữ ấy). */
-    private class Target(val chapterIndex: Int, val segment: Int, val offsetMs: Long, val word: Int, var play: Boolean)
+    internal class Target(val chapterIndex: Int, val segment: Int, val offsetMs: Long, val word: Int, var play: Boolean, private val origin: Place? = null) {
+        /** Chỗ để đọc lại (đổi giọng, "Thử lại"). Chỗ tạm lúc chữ chương chưa về (đầu chương) mang [origin] = chỗ người nghe đã chọn - đọc lại từ chỗ tạm là về đầu chương. */
+        fun place(): Place = origin ?: Place(chapterIndex, 0, segment, word, offsetMs)
+    }
+
+    /** Đối số của [startAt]: `segment` >= 0 thì đoạn ấy (`word`, `within` trong đoạn), không thì mốc `offsetMs` của chương. */
+    internal data class Place(val chapterIndex: Int, val offsetMs: Long, val segment: Int = -1, val word: Int = -1, val within: Long = 0)
+
+    /** Đổi giọng giữa lúc đọc ([setVoice]): nạp lại sau đoạn đang phát, đọc lại chỗ đang chờ khi ExoPlayer chưa có gì, hay không làm gì (chương audio, đang dừng vì lỗi). */
+    internal enum class VoiceSwitch {
+        NONE, REQUEUE, RESTART;
+
+        companion object {
+            /** [segment]: đoạn của mục đang phát (null = ExoPlayer chưa có gì, < 0 = chương audio); [waitingText]: đang chờ đọc một chỗ trong chương chữ;
+             *  [textPending]: chữ chương ấy còn đang lấy từ máy giữ sách ([fetchText]) - chưa đọc gì bằng giọng cũ, chữ về thì đọc đúng chỗ đã chọn bằng giọng mới. */
+            fun of(segment: Int?, waitingText: Boolean, failed: Boolean, textPending: Boolean = false): VoiceSwitch = when {
+                segment != null -> if (segment >= 0) REQUEUE else NONE
+                waitingText && !failed && !textPending -> RESTART
+                else -> NONE
+            }
+        }
+    }
 
     private var context: Context? = null
     private var reader: ClipReader? = null
     // Hai luồng: lần tua mới không phải đợi việc cũ (Edge có thể treo tới hạn 45 giây); giọng của máy tự xếp hàng riêng (DeviceEngine).
     // Bốn cái: một đoạn đang đọc + một đoạn đọc song song khi Edge chậm ([warm]) + chỗ cho lần tua sau (việc cũ chạy nốt, không huỷ giữa chừng được).
     private val worker = Executors.newFixedThreadPool(4) { Thread(it, "read-aloud").apply { isDaemon = true } }
+    /** Lịch giữ đầu chương ([holdOpening]): luồng riêng, không xếp sau các lượt đọc của [worker]. */
+    private val planner = OpeningPlanner("read-aloud-opening")
     /** Thời gian lấy clip thật của giọng trực tuyến đang chọn: quyết định phải đọc sẵn bao nhiêu đoạn ([needMore]) và có đọc song song đoạn kế không. */
     private val policy = ReadAheadPolicy(AHEAD)
     /** Dừng vì lỗi hay do người nghe tự dừng: dịch vụ trả lời lại thì tự nghe tiếp chỉ khi là lỗi dừng ([serviceAnswered]). */
@@ -196,6 +219,7 @@ object ReadAloud {
         running = keep
         reminder.cancel()
         opening = null
+        planning = false
         for (job in jobs) if (job !== keep?.cancel) job.cancel()
     }
     /** Lượt phát luồng của đoạn đang nghe được giữ qua lần đổi giọng / cách đọc ([requeueAhead]): đoạn ấy nói nốt bằng giọng cũ (như máy tính). Đọc cả ở luồng đọc. */
@@ -215,14 +239,23 @@ object ReadAloud {
     private var feedChapter = 0
     private var feedSegment = 0
     private var waiting: Target? = null
-    /** Clip đầu của lần mở / nhảy bằng giọng trên máy đang được giữ chờ đoạn kế ([holdOpening]): phát khi đoạn kế đọc xong hay hết hạn ([releaseOpening]). Luồng chính. */
+    /** Clip đầu của lần mở / nhảy bằng giọng trên máy đang được giữ ([holdOpening]): theo lịch đo được, hoặc chờ đoạn kế theo luật cũ khi chưa đủ số đo. Luồng chính. */
     private var opening: Opening? = null
-    private class Opening(val token: Int, val item: MediaItem, val offsetMs: Long)
+    /** Lịch giữ đầu chương ([holdOpening]) đang tính ở luồng nền: [pump] đứng chờ như khi phép tính còn chạy trên luồng chính; [bumpGeneration] bỏ nó. Luồng chính. */
+    private var planning = false
+    private class Opening(val token: Int, item: MediaItem, val offsetMs: Long, scheduled: Boolean, val deadline: Long) {
+        val queue = OpeningQueue(item, scheduled)
+    }
     private var failure: String? = null
     /** Đứng ở đầu một chương chữ mà giọng trực tuyến chưa được đồng ý (chương trước hết rồi tự sang): không đọc gì tới khi người nghe bấm phát -
      *  giao diện hỏi đồng ý trước khi gửi lệnh phát (player.tsx withConsent). */
     private var held = false
     private var artwork: ByteArray? = null
+
+    /** Bìa cho thẻ media của các đoạn đọc to dựng sau này (sửa sách đang nghe: [Playback.updateMetadata] đưa bìa nó vừa tính). */
+    fun refreshArtwork(cover: ByteArray = Artwork.cover(Playback.bookTitle, Playback.bookId)) {
+        artwork = cover
+    }
     private val scriptListeners = mutableSetOf<(String, Int) -> Unit>()
 
     fun init(appContext: Context) {
@@ -388,8 +421,14 @@ object ReadAloud {
 
     /** Giao diện gửi giọng của cuốn `bookId` (lúc nạp, lúc người nghe đổi): nhớ cho cuốn ấy; cuốn ấy đang nạp thì đổi ngay. */
     fun chooseFor(bookId: String, id: String) {
-        choices?.remember(bookId, id)
+        rememberFor(bookId, id)
         if (bookId.isEmpty() || bookId == Playback.bookId) setVoice(id)
+    }
+
+    /** Chỉ nhớ giọng của cuốn `bookId`, không đổi giọng đang đọc: lúc nạp cuốn ([vn.abook.player.PlayerPlugin.load]) - [useVoiceOf] của lần nạp đặt giọng ngay sau đó.
+     *  Qua [chooseFor] thì nạp lại cùng cuốn với giọng khác sẽ đọc lại chỗ chờ của lượt cũ bằng giọng mới, rồi lần nạp bỏ ngay lượt đọc ấy. */
+    fun rememberFor(bookId: String, id: String) {
+        choices?.remember(bookId, id)
     }
 
     /** Giọng mặc định (Cài đặt) cho cuốn chưa chọn giọng riêng. Không đổi giọng của chương đang đọc - như giao diện máy tính; lần nạp kế theo nó. */
@@ -460,9 +499,16 @@ object ReadAloud {
         voiceId = value
         if (!active) return
         val exo = Playback.player ?: return
-        val slot = currentSlot() ?: return
-        if (slot.segment < 0) return
-        requeueAhead(exo, slot)
+        val slot = currentSlot()
+        val target = waiting
+        // Chữ chương chưa về: `waiting` chỉ là chỗ tạm (đầu chương), chỗ thật nằm trong việc chờ chữ - đọc lại ở đây là về đầu chương và ghi đè vị trí đã lưu.
+        val textPending = target != null && chaps[target.chapterIndex] == null
+        when (VoiceSwitch.of(slot?.segment, target != null && chapters().getOrNull(target.chapterIndex)?.isText == true, failure != null, textPending)) {
+            VoiceSwitch.REQUEUE -> requeueAhead(exo, slot!!)
+            // ExoPlayer chưa có gì (chờ đoạn đầu, hay clip đầu đang giữ - [holdOpening]): đọc lại đúng chỗ chờ bằng giọng mới; lượt đang chạy và clip đang giữ là của giọng cũ.
+            VoiceSwitch.RESTART -> startAt(target!!.place(), target.play, held)
+            VoiceSwitch.NONE -> Unit
+        }
     }
 
     /** Cách đọc riêng của cuốn vừa đổi ("Đọc từ này là…", [LocalStudio]): các đoạn đã đọc sẵn mà chưa tới bỏ đi, đoạn kế đọc lại với cách đọc mới (bộ đệm khoá theo cách đọc
@@ -682,8 +728,9 @@ object ReadAloud {
             exo.pauseAtEndOfMediaItems = false
             exo.clearMediaItems()
             exo.playWhenReady = play
-            waiting = Target(index, 0, 0, -1, play)
-            if (fetchText(index) { startAt(index, offsetMs, play, segment, word, within, hold) }) {
+            val place = Place(index, offsetMs, segment, word, within)
+            waiting = Target(index, 0, 0, -1, play, place)
+            if (fetchText(index) { startAt(place, play, hold) }) {
                 syncWants()
                 Playback.emit("state")
                 return
@@ -702,6 +749,10 @@ object ReadAloud {
         Playback.emit("state")
         pump()
     }
+
+    /** [startAt] ở một chỗ đã ghi ([Target.place]). */
+    private fun startAt(place: Place, play: Boolean, hold: Boolean = false) =
+        startAt(place.chapterIndex, place.offsetMs, play, place.segment, place.word, place.within, hold)
 
     /**
      * Tua trong chương hiện tại tới `ms` (hay tới chữ `word` của đoạn `segment`). Đoạn đã có âm thanh và đang nằm trong hàng đợi: nhảy thẳng tới ĐÚNG chỗ trong đoạn
@@ -752,7 +803,7 @@ object ReadAloud {
 
     /** Giữ hàng đợi có đoạn kế: gọi mỗi khi đoạn đổi, đoạn mới sẵn sàng, đổi giọng, hủy hẹn giờ. */
     fun pump() {
-        if (!active || inFlight || failure != null || held) return
+        if (!active || inFlight || planning || failure != null || held) return
         val exo = Playback.player ?: return
         val all = chapters()
         var guard = 0
@@ -777,6 +828,7 @@ object ReadAloud {
             // Dòng ngăn cảnh không có quãng lặng (đầu / cuối chương, dòng thứ hai liền nhau) không phải là gì để phát: bỏ qua cả chuỗi mà không tốn vòng của `guard`.
             while (feedSegment < chap.paragraphs.size && chap.isBreak(feedSegment) && chap.gaps[feedSegment] == 0) feedSegment += 1
             if (feedSegment >= chap.paragraphs.size) {
+                if (opening?.queue?.scheduled == true) return // cả chương đã vào hàng chờ: đợi phát clip đầu, không báo nhầm "không có chữ" hay đọc sang chương khác
                 if (feedChapter + 1 >= all.size) {
                     if (waiting != null) fail("Chương “${chapter.title}” không có chữ để đọc")
                     return
@@ -833,6 +885,12 @@ object ReadAloud {
         val exo = Playback.player ?: return Long.MAX_VALUE
         if (!wantsPlay()) return Long.MAX_VALUE
         val now = System.nanoTime()
+        opening?.takeIf { it.queue.scheduled }?.let { hold ->
+            val lengths = hold.queue.items.map(::aheadMs)
+            if (lengths.any { it >= ReadAheadPolicy.MAX_BUFFER_MS }) return Long.MAX_VALUE
+            val leftMs = (lengths.sum() - hold.offsetMs).coerceAtLeast(0)
+            return maxOf(now, hold.deadline) + (leftMs / maxOf(exo.playbackParameters.speed, 0.1f) * 1_000_000).toLong()
+        }
         if (!listenerHasAudio(exo)) return now
         val current = exo.currentMediaItem?.let(::aheadMs) ?: return Long.MAX_VALUE
         val queued = ((exo.currentMediaItemIndex + 1) until exo.mediaItemCount).map { aheadMs(exo.getMediaItemAt(it)) }
@@ -897,6 +955,10 @@ object ReadAloud {
 
     /** Đặt `items` vào ExoPlayer: đang chờ chỗ bắt đầu thì thay cả hàng đợi, không thì nối đuôi. */
     private fun deliver(items: List<MediaItem>, offsetMs: Long) {
+        opening?.takeIf { it.queue.scheduled }?.let {
+            it.queue.items.addAll(items)
+            return
+        }
         val exo = Playback.player ?: return
         val target = waiting
         if (target != null) {
@@ -939,8 +1001,8 @@ object ReadAloud {
         val rank = if (continuing != null) 0 else Playback.player.let { exo ->
             StalledClips.listenerRank(exo?.let(::listenerHasAudio) == true, if (exo == null) 0 else longQueued(exo))
         }
-        // Người nghe đang chờ clip này qua mạng: giữ CPU + Wi-Fi tới khi xong (hàng đợi ExoPlayer đã cạn thì nó không giữ gì - [FetchWake]); đọc sẵn khi chưa ai chờ thì không.
-        val ticket = if (StalledClips.holdsWake(online, listenerWants, probe)) FetchWake.hold() else null
+        // Người nghe muốn nghe: giữ CPU (qua mạng thì cả Wi-Fi) tới khi lượt này xong - hàng đợi ExoPlayer cạn thì nó không giữ gì ([FetchWake]); đã tạm dừng thì không.
+        val ticket = if (StalledClips.holdsWake(listenerWants, probe)) FetchWake.hold(network = online) else null
         val cancel = ClipCancel().also { jobs.add(it) }
         continuing?.cancel = cancel
         // Đoạn người nghe đứng chờ (rank 0) bằng giọng Edge: ExoPlayer nhận clip ngay khi byte đầu về (uxfix57, [LiveClips]); bấm giữa đoạn thì chỉ đọc từ chữ ấy ([SeekPlan.tailFrom]).
@@ -987,7 +1049,7 @@ object ReadAloud {
                 // Người nghe đã tới đoạn này: đoạn làm trước thôi được ghim. Đọc thật (không phải lấy từ bộ đệm) bằng đúng giọng đã chọn thì ghi tốc độ.
                 runCatching { cache().unpin(clip.voice, readText, origin, readings) }
                 val seconds = (System.nanoTime() - began) / 1e9
-                if (clip.voice == voice && seconds * 1000 > PrepareRunner.CACHED_MS) runCatching { speeds().record(voice, readText.length, seconds, clip.durationMs / 1000.0) }
+                if (clip.voice == voice && seconds * 1000 > PrepareRunner.CACHED_MS) runCatching { speeds().recordRead(voice, readText, origin, readings, seconds, clip.durationMs / 1000.0) }
             }
             Playback.onMain { onClipReady(token, chap, segment, result, probe, tailFrom, liveJob, continuing) }
         }
@@ -1069,7 +1131,7 @@ object ReadAloud {
         }
         liveNow = job
         // Clip đầu đang giữ chờ đoạn này ([holdOpening]) phát TRƯỚC, đoạn này nối sau nó: `waiting` còn đó thì [deliver] thay cả hàng đợi và tiêu đề mất.
-        releaseOpening()
+        releaseOpening(ready = true)
         // Dời chỗ nạp TRƯỚC khi đặt vào ExoPlayer (như [onClipReady]): setMediaItems báo đổi mục ngay trong lúc gọi.
         feedSegment = job.segment + 1
         deliver(listOf(itemFor(job.chap, job.segment, Uri.parse(LiveClips.uri(job.entry.id)), VoiceGain.db(job.voice), job.resume?.baseMs ?: 0L)), 0L)
@@ -1097,10 +1159,10 @@ object ReadAloud {
     }
 
     /** Vị trí (chỉ số hàng đợi) của mục phát luồng của `job` trong ExoPlayer, -1 nếu không còn. Tìm theo địa chỉ clip: một đoạn đứt giữa chừng có hai mục (phần đã về, phần nối) cùng [Slot]. */
-    private fun liveIndex(exo: Player, job: LiveJob): Int {
-        val uri = LiveClips.uri(job.entry.id)
-        return (0 until exo.mediaItemCount).firstOrNull { exo.getMediaItemAt(it).localConfiguration?.uri?.toString() == uri } ?: -1
-    }
+    private fun liveIndex(exo: Player, job: LiveJob): Int =
+        (0 until exo.mediaItemCount).firstOrNull { isLiveItem(exo.getMediaItemAt(it), job) } ?: -1
+
+    private fun isLiveItem(item: MediaItem, job: LiveJob): Boolean = item.localConfiguration?.uri?.toString() == LiveClips.uri(job.entry.id)
 
     /** Lượt phát luồng `job` không còn chạy (xong, đứt, hỏng): quên nó ở mọi chỗ theo dõi. */
     private fun liveEnded(job: LiveJob?) {
@@ -1122,7 +1184,16 @@ object ReadAloud {
         val early = resume?.takeIf { it.head === job && !it.settled }
         if ((early == null && !current(job)) || !active || job.broke) return
         val exo = Playback.player ?: return
-        if (liveIndex(exo, job) < 0) return
+        if (liveIndex(exo, job) < 0) {
+            // Còn trong hàng giữ đầu chương ([Opening.queue]), chưa vào ExoPlayer: chưa ai nghe gì của nó - bỏ mục, đoạn đọc lại từ đầu; kết quả của lượt đọc (clip thay, hay lỗi)
+            // vào [onClipReady] như đoạn chưa phát luồng, đúng một lần. Không bỏ thì tới hạn nhả cả mục hỏng lẫn clip thay nối sau nó.
+            if (opening?.queue?.withdraw { isLiveItem(it, job) } == true) {
+                liveEnded(job)
+                feedChapter = job.chap.index
+                feedSegment = job.segment
+            }
+            return
+        }
         job.broke = true
         job.cancel?.cancel()
         liveEnded(job)
@@ -1241,7 +1312,7 @@ object ReadAloud {
             return
         }
         inFlight = false
-        releaseOpening() // đoạn kế của clip đang được giữ đã xong (hay hỏng): clip ấy phát trước, đoạn này nối sau nó
+        releaseOpening(ready = result.isSuccess) // chưa đủ số đo: đoạn kế xong thì nhả sớm; lịch nhiều đoạn giữ tới hạn. Lượt hỏng: nhả phần đã có.
         val streaming = live?.takeIf { it.started }
         val clip = result.getOrElse { error ->
             // Đã phát luồng mà lượt đọc hỏng không qua lời báo đứt ([LiveJob.failed]): tiếng đã về đủ thì đoạn coi như xong; chưa đủ mà mục còn trong hàng đợi thì như đứt giữa chừng.
@@ -1300,9 +1371,12 @@ object ReadAloud {
         // Dời chỗ nạp TRƯỚC khi đặt vào ExoPlayer: setMediaItems báo đổi mục ngay trong lúc gọi (onMediaTransition -> onClipChanged -> pump), và pump lúc ấy
         // mà còn thấy đoạn này là "đoạn kế" thì đọc lại nó - hàng đợi có hai lần cùng một đoạn, đồng hồ ảo lùi về đầu đoạn (thấy 03-10 trên máy thật).
         feedSegment = segment + 1
+        // Clip thay cho mục phát luồng hỏng còn nằm trong hàng giữ đầu chương: mục ấy chưa ai nghe, bỏ đi để chỉ clip này được nhả.
+        if (item != null && streaming != null) opening?.queue?.withdraw { isLiveItem(it, streaming) }
         if (item != null) {
             val offset = if (target != null) SeekPlan.offsetIn(whole, target.word, target.offsetMs) else 0L
-            if (target == null || !holdOpening(chap, segment, whole, target, item, offset)) deliver(listOf(item), offset)
+            // Lịch còn đang tính ([planning]): không tính lần hai - lần ấy thay mục đang chờ lịch và một trong hai mục mất.
+            if (opening != null || planning || target == null || !holdOpening(chap, segment, whole, target, item, offset)) deliver(listOf(item), offset)
         }
         notifyScript(chap)
         prune()
@@ -1311,10 +1385,9 @@ object ReadAloud {
     }
 
     /**
-     * Mở chương (hay nhảy) bằng giọng trên máy mà clip đầu ngắn (tiêu đề) sẽ hết trước khi đoạn kế đọc xong: chưa phát vội - người nghe vẫn thấy "đang chuẩn bị" thêm tối đa
-     * [ReadAheadPolicy.OPENING_HOLD_MAX_MS] (ước theo tốc độ đã đo của giọng, [ReadAheadPolicy.openingHoldMs]), đoạn kế xong sớm thì phát sớm. Đoạn kế nhiều khúc phát luồng (livejoin): giữ tới lúc
-     * luồng của nó đủ điều kiện bắt đầu ([LocalLive.charsBeforeStreamStarts], [onLiveStarted] nhả ngay), không phải tới khi đọc xong cả đoạn. Khoảng chờ dời vào lúc bắt đầu thay
-     * vì thành chỗ im giữa tiêu đề và đoạn đầu (a65). [pump] vẫn đọc đoạn kế như thường vì `waiting` còn đó. True = đã giữ.
+     * Mở chương bằng giọng trên máy: đủ số đo cả chi phí cố định mỗi khúc lẫn giây tiếng thì giữ theo lịch 60 s đầu ([OpeningSchedule]), tối đa 6 s. Đoạn tới trong lúc giữ nối vào
+     * [Opening.queue], không nhả sớm chỉ vì đoạn kế đã xong. Chưa đủ số đo (hay nhảy giữa chương): giữ nguyên luật cũ, tối đa 1,5 s và nhả sớm theo [LocalLive.charsBeforeStreamStarts].
+     * [pump] vẫn đọc tuần tự vì `waiting` còn đó. True = đã giữ, hay lịch đang tính ở luồng nền ([planning]): xong thì giữ hoặc phát, rồi mới [pump] - kết quả y như tính trên luồng chính.
      */
     private fun holdOpening(chap: Chap, segment: Int, clip: Clip, target: Target, item: MediaItem, offset: Long): Boolean {
         if (!target.play || PreparePlan.online(voiceId)) return false
@@ -1325,17 +1398,44 @@ object ReadAloud {
         val readings = readingsOf(bookId)
         val cached = runCatching { cache().contains(voiceId, text, origin, readings) }.getOrDefault(false)
         val perChar = runCatching { speeds().secondsPerChar(voiceId) }.getOrNull()
-        val audioPerChar = runCatching { speeds().audioPerChar(voiceId) }.getOrNull() ?: LocalLive.AUDIO_PER_CHAR
+        val measuredAudio = runCatching { speeds().audioPerChar(voiceId) }.getOrNull()
+        val audioPerChar = measuredAudio ?: LocalLive.AUDIO_PER_CHAR
+        val work = if (segment == 0 && measuredAudio != null) runCatching { speeds().work(voiceId) }.getOrNull() else null
         // Đoạn kế nhiều khúc thì nhập luồng được ngay khi đủ điều kiện bắt đầu ([onLiveStarted]): chỉ cần giữ tới lúc ấy, không phải tới khi đọc xong cả đoạn.
         val speed = (Playback.player?.playbackParameters?.speed ?: 1f).toDouble()
         val chars = if (cached) null else LocalLive.charsBeforeStreamStarts(voiceId, text, origin, readings, perChar, speed, audioPerChar)
-        val wait = ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, chars, perChar, speed, audioPerChar)
+        val legacy = { ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, chars, perChar, speed, audioPerChar) }
+        val model = work ?: return holdFor(legacy(), false, item, offset)
+        // Đọc cả chương để xét RTF kéo dài, chỉ hạn chế lịch thiếu tiếng ở cửa sổ đầu. Cắt cả chương và tra bộ đệm từng đoạn: luồng nền, không chặn luồng chính.
+        val token = generation
+        val voice = voiceId
+        val store = runCatching { cache() }.getOrNull()
+        planning = true
+        planner.plan({ token == generation }, {
+            OpeningSchedule.forChapter(voice, chap.paragraphs, chap::isBreak, chap.gaps, segment, clip.durationMs - offset, model, audioPerChar, speed, origin, readings) {
+                store!!.contains(voice, it, origin, readings)
+            }
+        }) { schedule ->
+            Playback.onMain {
+                if (token != generation || !planning) return@onMain
+                planning = false
+                if (!holdFor(schedule ?: legacy(), schedule != null, item, offset)) deliver(listOf(item), offset)
+                pump()
+                Playback.emit("state")
+            }
+        }
+        return true
+    }
+
+    /** Giữ clip đầu [wait] ms ([holdOpening]); [scheduled] = theo lịch nhiều đoạn. False = không giữ, người gọi phát ngay. */
+    private fun holdFor(wait: Long, scheduled: Boolean, item: MediaItem, offset: Long): Boolean {
         if (wait <= 0) return false
         val token = generation
-        opening = Opening(token, item, offset)
+        opening = Opening(token, item, offset, scheduled, System.nanoTime() + wait * 1_000_000)
         main.postDelayed({
             if (opening?.token == token) {
                 releaseOpening()
+                pump()
                 Playback.emit("state")
             }
         }, wait)
@@ -1343,14 +1443,15 @@ object ReadAloud {
     }
 
     /** Phát clip đang được giữ ([holdOpening]), nếu còn là việc hiện hành. `setMediaItems` gọi lồng [pump]: chặn nó - đoạn kế đang đọc, hay người gọi lo tiếp. */
-    private fun releaseOpening() {
+    private fun releaseOpening(ready: Boolean = false) {
         val held = opening ?: return
+        if (!held.queue.releases(ready)) return
         opening = null
         if (held.token != generation || waiting == null) return
         val busy = inFlight
         inFlight = true
         try {
-            deliver(listOf(held.item), held.offsetMs)
+            deliver(held.queue.items, held.offsetMs)
         } finally {
             inFlight = busy
         }
@@ -1511,7 +1612,7 @@ object ReadAloud {
         retryingByItself = byItself
         try {
             if (byItself) notices.retryingByItself()
-            if (target != null) startAt(target.chapterIndex, 0, true, target.segment, target.word, target.offsetMs)
+            if (target != null) startAt(target.place(), true)
             else {
                 Playback.player?.playWhenReady = true
                 pump()

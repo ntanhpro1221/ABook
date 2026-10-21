@@ -2,6 +2,55 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `dev/rvfix` (từ 0.4.120): giữ giới/tuổi khi lượt người nói đổi namespace của cùng vai local trong cùng chương;
+không checkpoint hoà giải khi thiếu model (request lỗi giữ nhãn cũ như trước); đóng luồng cả khi bù độ to/hoàn tất clip lỗi;
+huỷ hẹn giờ release khi clip xong/bị bỏ (Python và Kotlin); script Windows giữ `setuptools<82`.
+
+Test đỏ trước sửa (`S/rvfix/before-valid.log`): **8 failed, 3 passed, exit 1**; sau sửa cùng lựa chọn **11 passed, exit 0**.
+Các test mới: `test_local_pass_relabel_preserves_traits_only_for_the_same_role_in_the_same_chapter` (cùng vai đỏ;
+vai khác/chương khác xanh), `test_unreachable_model_reconciliation_is_retried_before_the_speaker_pass` (model không tới được thì thử lại; request lỗi thì giữ nhãn local, không kẹt - Lead sửa),
+`test_failure_before_local_close_drops_the_stream` (lift/close), `test_finished_local_stream_cancels_and_releases_its_timer`
+(close/drop), `test_windows_setup_keeps_pkg_resources_for_pyworld`. Không ứng viên vẫn hoàn tất không cần model
+(`test_local_reconciliation_without_candidates_completes_without_a_model`); các test named traits sẵn có vẫn qua.
+SQLite thật, reopen/resume qua BookPipeline.run, model/engine/HTTP giả; không Ollama/GPU/điện thoại.
+
+Pytest liên quan tuần tự: mọi `test_speaker_pass*`, `test_readaloud_local_stream*`, `test_pipeline_mock.py`,
+`test_perceptual_pipeline.py`, `test_analysis_required.py`, `test_one_click_startup.py`: **715 passed, 0 F/E, exit 0**,
+282,58 giây. Có 1 warning cp1252/UnicodeDecodeError trong subprocess readerthread ở test pipeline (ngoài phạm vi sửa).
+Toàn bộ pytest: **8365 passed, 1 FAILED, 0 ERROR, 9 skipped, 5 warnings, exit 1**, 1751,19 giây.
+Failure duy nhất: `test_perceptual_qa.py::test_model_load_is_offline_and_environment_is_restored`; runner của đợt này
+đặt sẵn `TRANSFORMERS_OFFLINE=1`, trong khi test yêu cầu biến ấy không tồn tại sau khi load giả kết thúc. Đã bỏ biến
+khỏi runner, chạy lại CẢ `test_perceptual_qa.py`: **28 passed, 0 F/E, exit 0**, 3,26 giây. Không sửa mã/test perceptual QA.
+Không gọi kết quả này là full-suite exit 0: lượt toàn bộ duy nhất vẫn có exit 1 như trên. Các warning là duplicate EPUB
+entry, ba cp1252 readerthread và một socket accept timeout trong server giả của test tải nhạc.
+
+Android offline `:app:testDebugUnitTest --max-workers=4`: XML **1166 tests, 0 failures, 0 errors, 6 skipped, exit 0**.
+Test mới `LocalLiveTest.finishingOrFailingCancelsThePendingWakeUp` đỏ trước sửa (1/11 failure, exit 1), xanh sau sửa
+(11/11 LocalLiveTest qua). Lượt toàn bộ đầu tiên có 1 failure EdgePiecesTest do hết 5 giây chờ đóng socket;
+chạy lại riêng test và toàn bộ không sửa mã đều qua. Không đổi logic Edge. Hỗ trợ build Capacitor được chép vào cây rvfix,
+init script trong scratchpad trỏ project dependency về cây này; không sửa cấu hình dependency đã theo dõi.
+
+CPU affinity 4 lõi, CUDA_VISIBLE_DEVICES=-1, OMP/MKL/OPENBLAS/NUMEXPR_NUM_THREADS=4; Gradle JVM ActiveProcessorCount=4,
+compiler in-process, no-daemon. Compileall, `git diff --check`, LF và BOM PowerShell đều qua.
+Hash khoá đọc từ code (41 mục): trước `49e8fd2dc212c7207cd0fbf66b308e6b0d1b49d220d64a16501d170bc906635f`;
+sau `f4adb8d13e3f714e52bf070a8819c014938711925af81014673036244fee08f1`. Mã chỉ sửa ở nhánh dev, chưa commit.
+
+Giữ đầu chương điện thoại (`dev/openhold`, từ 0.4.120): `VoiceSpeeds` khớp thời gian = chi phí mỗi khúc + giây/ký tự,
+theo tổng có trọng số 20.000 ký tự; ít hơn 4 mẫu hay không phân biệt được hai hệ số thì dùng luật cũ. Lịch 60 s tiếng đầu lấy
+mức giữ nhỏ nhất để các đoạn kịp bắt đầu, cộng biên 200 ms, trần 6.000 ms; RTF dự đoán toàn chương >= 1 thì phát ngay.
+Chỉ đổi lịch, không đổi bộ sinh/cắt/ghép tiếng. Desktop không có giữ đầu chương tương ứng (`holdUntil` ở UI là nhịp chờ sau nhảy).
+
+JVM offline, 4 worker, JVM ActiveProcessorCount=4, Kotlin in-process: **1.176 tests, 0 failures, 0 errors, 6 skipped, exit 0**
+(137 XML suites). `OpeningScheduleTest` **11/11**: sách A dựng từ số OPPO giữ **5.913 ms**, không đoạn nào muộn trong 60 s;
+sách B dạng đoạn dài với máy nhanh giữ **1.210 ms**, cũ **1.105 ms**; chưa đo / JSON cũ **1.500 ms** như cũ; RTF >= 1 **0 ms**.
+Kiểm thêm hồi quy/lưu/mờ số đo, bộ cắt thật, hàng chờ clip thường + phát luồng, ngăn cảnh/bộ đệm/cửa sổ, biên sát hạn **100 ms**.
+`LocalLiveTest` **10/10**, gồm đối chiếu byte clip phát luồng. Không đo điện thoại, máy ảo hay GPU; chưa đo trên máy thật.
+
+Riêng log OPPO nóng `c2_stB` của đợt gap: tiêu đề 2.230 ms, khúc đầu 5.367 ms => cần ít nhất **3.137 ms** chưa cộng biên,
+lịch giữ **3.337 ms**. Ca `theRecordedHotOppoBookBCannotFitTheOldCapPlusHalfASecond` ghi rõ yêu cầu B <= 2.000 ms không thể
+đồng thời thoả điều kiện không bắt đầu muộn với số đo ấy; ca B máy nhanh ở trên không thay cho log này. Đã hỏi người dùng về ưu tiên.
+Vitest/tsc không chạy vì không sửa UI. Hash khoá trước/sau cùng `49e8fd2dc212c7207cd0fbf66b308e6b0d1b49d220d64a16501d170bc906635f` (41 mục đọc từ code).
+
 Đợt a71fix2 (`dev/uxfix78`, nền 3b41e4a3): cả bảy lỗi có test đỏ trước sửa.
 Python tái hiện metadata quyền / OpenType / đếm chương complete; JVM bốn test riêng đều FAILED, 0 ERROR
 (metadata, MIME, XML UTF-16, URI ngoài BMP). Vitest ba test FAILED cho bộ chọn một/nhiều file trả muộn và
@@ -19,6 +68,34 @@ Gradle :app:testDebugUnitTest --max-workers=4 --offline: 1171 ca = 1165 passed +
 0 FAILED / 0 ERROR, exit 0 (106,1 giây). Giới hạn bốn CPU, CUDA_VISIBLE_DEVICES=-1; không đặt TRANSFORMERS_OFFLINE.
 Pytest có hai cảnh báo ngoài phạm vi sửa: ZIP trùng tên trong test EPUB và timeout accept của máy chủ giả trong
 test_music_truncated_download. Không có FAILED/ERROR. Compileall, LF và git diff --check qua; không còn tiến trình thử nền.
+
+Đợt a72fix2 (`dev/uxfix79`): năm lỗi do rà a72fix, mỗi lỗi có test đỏ trước sửa:
+1 điện thoại gửi nhãn cả cuốn xuống lõi mỗi lần mở sách, lõi thay từng mục hàng đợi (nay so nhãn, thay một lần `replaceMediaItems`);
+2 Sonner gỡ toast Hoàn tác hiện lại trong 200 ms sau cú bấm (nay mã toast mới mỗi lần bấm); 3 gạt toast không bỏ cuốn khỏi hàng hoàn tác;
+4 hoàn tác sang "<tên> (2)" mất dữ liệu nghe, cuốn chiếm chỗ nhận nhầm (nay chuyển mã; dự án trong chuỗi phần: 409 như cũ);
+5 đổi tên lúc đã hết sách phát sự kiện "chapter" (nay "metadata"). Test: `trackMetadata.test.ts`, `nativeMetadata.test.ts`,
+`trashUndo.test.ts`, `test_trash_undo.py`, JVM `BookMetadataTest`. Vitest 1223 passed + 1 skipped, exit 0; `tsc --noEmit` exit 0;
+Gradle 1170 ca = 1164 passed + 6 skipped, 0 FAILED / 0 ERROR, exit 0 (137 XML); pytest toàn bộ (XML) 8385 ca, 9 skipped,
+0 FAILED / 0 ERROR, exit 0, 1817,956 giây. Hash khoá trước/sau `49e8fd2d…` (không đổi).
+
+Đợt a72fix (`dev/uxfix79`): sáu lỗi thư viện/trình phát có test đỏ trước sửa:
+L1 media session còn nhãn cũ; L2 thư viện 226 cuốn không gọi nhớ cuộn;
+L3 HTTP 409 khi đường khôi phục bị chiếm; L4 ba lần xoá không dùng toast chung;
+L5 đóng trình phát chưa gỡ toast `jump`; L6 tab Chương dựng 2500 nút thay vì 80.
+Test UI: `playerMetadata.test.tsx`, `libraryPlayerWindow.test.tsx`, `trashUndo.test.ts`,
+và `nativeMetadata.test.ts`; test Python: `test_trash_undo.py`; JVM: `BookMetadataTest`.
+Sau sửa, Vitest toàn bộ: 1217 passed + 1 skipped, 0 failed, exit 0; `tsc --noEmit`: exit 0.
+Gradle `:app:testDebugUnitTest --max-workers=4 --offline`: 1168 ca = 1162 passed + 6 skipped,
+0 FAILED / 0 ERROR, exit 0 (137 XML). Metadata Media3 thay nhãn và bìa của cả hàng đợi;
+đoạn đọc to tiếp theo cũng lấy bìa mới. Hoàn tác dùng chung trên máy tính/điện thoại, mỗi mã giữ hạn riêng;
+một mã lỗi không chặn các mã khác và vẫn có thể thử lại trong hạn.
+Pytest toàn bộ (đếm XML): 8380 ca = 8371 passed + 9 skipped, 0 FAILED / 0 ERROR, exit 0,
+1798,456 giây. Lượt này thu thập trước khi thêm ca mở lại app; file Hoàn tác được kiểm riêng thêm sau đó:
+27 passed, 0 FAILED / 0 ERROR, exit 0 (18,585 giây), gồm ca app mở lại và đường gốc bị chiếm.
+Có ba cảnh báo cùng loại đã ghi ở đợt a71: ZIP trùng tên; subprocess đọc cp1252 gặp UnicodeDecodeError;
+máy chủ giả của `test_music_truncated_download` hết thời gian accept. Nguyên văn ở `S/a72fix/pytest-full.log`.
+Hash khoá trước/sau: `49e8fd2dc212c7207cd0fbf66b308e6b0d1b49d220d64a16501d170bc906635f` (không đổi).
+Compileall và `git diff --check` qua; nguồn đã giữ LF. CHANGELOG có sáu dòng sửa lỗi, xưng “bạn”.
 
 Đợt a71fix (`dev/uxfix78`): bốn lỗi nhập sách/thư viện đã tái hiện bằng test đỏ trước sửa. Pytest mới:
 13 FAILED / 0 ERROR trong 15 ca (hai ca font hợp lệ đã qua); Vitest importQueue: 3 FAILED / 17 passed;

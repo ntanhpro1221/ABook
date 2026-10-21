@@ -384,8 +384,12 @@ object SupertonicVoices {
         if (name !in NAMES) throw VoiceException("Không có giọng Supertonic này.", reason = "voice")
         val (loaded, speaker) = ready(VoiceSpeed.isFast(tag))
         val live = LocalLive.here(out) { SupertonicText.units(text, origin, readings) } // the paragraph the listener waits for: unit by unit
-        val spoken = try {
-            speaker.speak(loaded, name, text, origin, readings, live)
+        return try {
+            val spoken = speaker.speak(loaded, name, text, origin, readings, live)
+            if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
+            val final = ClipLift.lifted(voice, spoken.samples, spoken.rate, ClipLift.params(context)) // short quiet lines up to the voice level (as service.clip); [voice] is the bare id: both tiers share one level
+            if (live != null) live.finish(final, spoken.rate) else VieneuAudio.writeWav(final, spoken.rate, out)
+            Clip(out, spoken.durationMs, spoken.words, voice)
         } catch (failure: OutOfMemoryError) {
             forget()
             VoiceException("Điện thoại không đủ bộ nhớ cho giọng Supertonic lúc này.", cause = failure, reason = "voice").let {
@@ -398,10 +402,6 @@ object SupertonicVoices {
         } finally {
             if (engine != null) idle.used() // idle minutes count from the end of the last read
         }
-        if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
-        val final = ClipLift.lifted(voice, spoken.samples, spoken.rate, ClipLift.params(context)) // short quiet lines up to the voice level (as service.clip); [voice] is the bare id: both tiers share one level
-        if (live != null) live.finish(final, spoken.rate) else VieneuAudio.writeWav(final, spoken.rate, out)
-        return Clip(out, spoken.durationMs, spoken.words, voice)
     }
 
     /** Load the engine of the tier the listener's choice reads now, reading nothing ([EnginePreload]); counts as a use for [IdleEngine]. */

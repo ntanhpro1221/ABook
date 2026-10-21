@@ -202,7 +202,7 @@ if (-not (Test-Path -LiteralPath $Python -PathType Leaf)) {
     } "Kiểm tra Python venv"
 }
 
-Invoke-NativeChecked { & $Python -m pip install --upgrade pip setuptools wheel } "Cập nhật pip/setuptools/wheel"
+Invoke-NativeChecked { & $Python -m pip install --upgrade pip "setuptools<82" wheel } "Cập nhật pip/setuptools/wheel"
 Install-PytorchCudaStack
 
 Install-AppDependencies

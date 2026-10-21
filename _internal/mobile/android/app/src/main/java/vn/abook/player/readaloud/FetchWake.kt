@@ -10,14 +10,15 @@ import android.os.PowerManager
  * (WAKE_MODE_NETWORK chỉ giữ khi READY / BUFFERING), dịch vụ chỉ còn là dịch vụ nền - tắt màn hình thì CPU / Wi-Fi có thể ngủ giữa lượt gọi Edge hay quãng nghỉ thử lại và giọng im
  * tới khi người nghe bấm lại. Khoá chỉ giữ khi có một lượt lấy clip người nghe đang chờ ([hold]), nhả ngay khi xong, khi người nghe tạm dừng / tua / dừng ([release]); đồng hồ an toàn
  * [TIMEOUT_MS] tự nhả nếu có chỗ quên. Đếm số lượt đang giữ: lượt cũ nhả muộn không nhả hộ lượt mới. Chạy được trong test JVM (khoá do `factory` tạo).
+ * Giọng trên máy (gap2) cũng giữ, chỉ khoá CPU: hàng đợi cạn mà màn tắt thì không gì giữ CPU thức trong lúc đọc đoạn người nghe đang chờ - chưa đo trên máy thật.
  */
 object FetchWake {
     /** Một lượt lấy clip tối đa ~20 giây thử lại + lần đầu tới 45 giây ([ClipBudget]); quá chừng này là có gì quên - tự nhả. */
     const val TIMEOUT_MS = 90_000L
 
-    /** Hai khoá thật (CPU, Wi-Fi). `acquire(ms)` giữ tối đa `ms`; `release()` nhả. */
+    /** Hai khoá thật (CPU, Wi-Fi). `acquire(ms, network)` giữ CPU tối đa `ms`, `network` thì cả Wi-Fi; `release()` nhả cả hai. */
     interface Locks {
-        fun acquire(timeoutMs: Long)
+        fun acquire(timeoutMs: Long, network: Boolean)
         fun release()
     }
 
@@ -42,12 +43,12 @@ object FetchWake {
     private var timeout: java.util.concurrent.ScheduledFuture<*>? = null
     private val timer by lazy { java.util.concurrent.Executors.newSingleThreadScheduledExecutor { Thread(it, "clip-fetch-wake").apply { isDaemon = true } } }
 
-    /** Bắt đầu một lượt lấy clip người nghe chờ: giữ khoá (làm mới đồng hồ hẹn nhả nếu đã giữ). Trả "vé" cho [release] của chính lượt này. */
+    /** Bắt đầu một lượt lấy clip người nghe chờ: giữ khoá (làm mới đồng hồ hẹn nhả nếu đã giữ). Giọng trên máy ([network] false): chỉ CPU. Trả "vé" cho [release] của chính lượt này. */
     @Synchronized
-    fun hold(): Int {
+    fun hold(network: Boolean = true): Int {
         val current = locks ?: runCatching { factory() }.getOrNull()?.also { locks = it } ?: return epoch
         holders += 1
-        runCatching { current.acquire(TIMEOUT_MS) }
+        runCatching { current.acquire(TIMEOUT_MS, network) }
         // Khoá Wi-Fi không có hạn giờ riêng: đồng hồ chung nhả cả hai nếu có chỗ quên [release].
         timeout?.cancel(false)
         timeout = runCatching { timer.schedule({ releaseAll() }, TIMEOUT_MS, java.util.concurrent.TimeUnit.MILLISECONDS) }.getOrNull()
@@ -85,9 +86,9 @@ object FetchWake {
         val wifi = (context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager)
             .createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "abook:clipfetch").apply { setReferenceCounted(false) }
         return object : Locks {
-            override fun acquire(timeoutMs: Long) {
+            override fun acquire(timeoutMs: Long, network: Boolean) {
                 cpu.acquire(timeoutMs)
-                if (!wifi.isHeld) wifi.acquire() // WifiLock không có hạn giờ: nhả cùng CPU ở [release] (hạn của khoá CPU là lưới an toàn)
+                if (network && !wifi.isHeld) wifi.acquire() // WifiLock không có hạn giờ: nhả cùng CPU ở [release] (hạn của khoá CPU là lưới an toàn)
             }
 
             override fun release() {

@@ -9,6 +9,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.security.MessageDigest
+import java.util.concurrent.Future
 
 /**
  * Local voices (VieNeu, Supertonic) STREAM the paragraph the listener is waiting for (desktop: abook/readaloud/local_stream.py): each unit goes into the clip file
@@ -34,7 +35,7 @@ class LocalLive(
     /** [clock] time at which the listener runs out of sound before this paragraph ([LiveClips.Target.reachNanos]); [Long.MAX_VALUE]: not known / not playing. */
     private val reach: Long = Long.MAX_VALUE,
     /** Runs a task after so many milliseconds (another thread; tests run it by hand): releases what is held when [reach] passes between two units. */
-    private val later: (Long, () -> Unit) -> Unit = ::schedule,
+    private val later: (Long, () -> Unit) -> Future<*>? = ::schedule,
 ) {
     companion object {
         /** Margin on the guesses of the remaining units' length and of the machine's speed (desktop `local_stream.SAFETY`). */
@@ -112,12 +113,12 @@ class LocalLive(
         }
 
         private val timer by lazy {
-            java.util.concurrent.Executors.newSingleThreadScheduledExecutor { Thread(it, "local-live-reach").apply { isDaemon = true } }
+            java.util.concurrent.ScheduledThreadPoolExecutor(1) { Thread(it, "local-live-reach").apply { isDaemon = true } }
+                .apply { removeOnCancelPolicy = true }
         }
 
-        private fun schedule(delayMs: Long, task: () -> Unit) {
+        private fun schedule(delayMs: Long, task: () -> Unit): Future<*> =
             timer.schedule({ runCatching(task) }, delayMs, java.util.concurrent.TimeUnit.MILLISECONDS)
-        }
     }
 
     private val began = clock()
@@ -138,6 +139,7 @@ class LocalLive(
     /** [finish] or [failed] ran: a late [release] sends nothing. */
     private var closed = false
     private var waking = false
+    private var wakeUp: Future<*>? = null
 
     /** A unit was just read: [wave] exactly as it is joined into the clip, [said] = what was read (the pause after it - [VieneuAudio.gapAfter]). */
     @Synchronized
@@ -167,7 +169,7 @@ class LocalLive(
             flush()
         } else if (!waking && reach != Long.MAX_VALUE) {
             waking = true // the listener runs out of sound before the next unit is read: let them hear this one then
-            later(maxOf(0L, (reach - clock()) / 1_000_000)) { release() }
+            wakeUp = later(maxOf(0L, (reach - clock()) / 1_000_000)) { release() }
         }
     }
 
@@ -209,6 +211,8 @@ class LocalLive(
     @Synchronized
     fun finish(samples: FloatArray, rate: Int) {
         closed = true
+        wakeUp?.cancel(false)
+        wakeUp = null
         if (!started) {
             VieneuAudio.writeWav(samples, rate, out)
             return
@@ -232,6 +236,8 @@ class LocalLive(
     @Synchronized
     fun failed(error: Exception) {
         closed = true
+        wakeUp?.cancel(false)
+        wakeUp = null
         runCatching { stream?.close() }
         stream = null
         if (started) target.failed(error)

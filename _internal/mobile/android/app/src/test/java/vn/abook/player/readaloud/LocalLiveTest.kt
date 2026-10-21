@@ -148,7 +148,7 @@ class LocalLiveTest {
         val target = Target()
         val (tokens, units) = VieneuUnits.units(text, 140)
         val waits = ArrayList<Pair<Long, () -> Unit>>()
-        val live = LocalLive(target, File(dir, "reach.wav"), tokens, units, 1.0, { now }, reach = 30_000_000_000L) { ms, task -> waits += ms to task }
+        val live = LocalLive(target, File(dir, "reach.wav"), tokens, units, 1.0, { now }, reach = 30_000_000_000L) { ms, task -> waits += ms to task; null }
         val tier = FakeTier()
         val first = tier.infer(phonemize(units[0].pieces), preset, 0)
         now = 10_000_000_000L // read slowly: the old rule holds it
@@ -169,7 +169,7 @@ class LocalLiveTest {
         val (tokens, units) = VieneuUnits.units(text, 140)
         val waits = ArrayList<() -> Unit>()
         var now = 0L
-        val live = LocalLive(target, File(dir, "late.wav"), tokens, units, 1.0, { now }, reach = 50_000_000_000L) { _, task -> waits += task }
+        val live = LocalLive(target, File(dir, "late.wav"), tokens, units, 1.0, { now }, reach = 50_000_000_000L) { _, task -> waits += task; null }
         val tier = FakeTier()
         val waves = units.map { tier.infer(phonemize(it.pieces), preset, 0) }
         for ((index, wave) in waves.withIndex()) {
@@ -180,6 +180,32 @@ class LocalLiveTest {
         live.finish(joined, 24_000)
         waits.forEach { it() }
         assertEquals("read before the sound ran out: held to the last unit as before, nothing after the end", listOf("format", "grew", "done"), target.events)
+    }
+
+    @Test
+    fun finishingOrFailingCancelsThePendingWakeUp() {
+        for (failed in listOf(false, true)) {
+            val target = Target()
+            val (tokens, units) = VieneuUnits.units(text, 140)
+            val out = File(dir, "cancel-$failed.wav")
+            var now = 0L
+            val timer = java.util.concurrent.FutureTask<Unit> { }
+            var task: (() -> Unit)? = null
+            val live = LocalLive(target, out, tokens, units, clock = { now }, reach = 3_600_000_000_000L) { _, work ->
+                task = work
+                timer
+            }
+            val wave = FakeTier().infer(phonemize(units[0].pieces), preset, 0)
+            now = 10_000_000_000L
+            live.unit(wave, 24_000, phonemize(units[0].pieces))
+            assertTrue(task != null && target.events.isEmpty())
+            if (failed) live.failed(VoiceException("lift failed")) else live.finish(wave, 24_000)
+            val before = if (out.exists()) out.readBytes() else null
+            assertTrue("completed reads must release the timer and its target", timer.isCancelled)
+            task!!()
+            assertTrue(target.events.isEmpty())
+            if (before != null) assertArrayEquals(before, out.readBytes()) else assertFalse(out.exists())
+        }
     }
 
     @Test
