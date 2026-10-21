@@ -613,14 +613,19 @@ def _html_entities_as_numbers(text: str) -> str:
 
 def _xml_codec(name: str) -> str | None:
     """Tên bảng mã trong `<?xml encoding>` -> codec chuẩn ("utf8" -> "utf-8", "latin-1" -> "iso8859-1", "windows-1258" -> "cp1258"), hay None
-    nếu ABook không đọc: chỉ UTF-8, UTF-16 và bảng mã một byte (Shift_JIS, GB2312, UTF-32 là file hỏng, như expat). Kotlin: Markup.xmlCharset."""
+    nếu ABook không đọc. Chỉ những bảng mã cả hai nền tảng cùng có (`_XML_CODECS`): UTF-8, UTF-16 và các bảng một byte quen thuộc; Shift_JIS,
+    GB2312, ISO-2022-JP, HZ, UTF-32, mac-roman... là file hỏng ở cả hai bên. Kotlin: Markup.xmlCharset (XML_CHARSETS)."""
     try:
         codec = codecs.lookup(name).name
-        if codec == "utf-8" or codec in _UTF16 or len(bytes(range(256)).decode(codec, "replace")) == 256:
-            return codec
-    except (LookupError, ValueError):  # tên lạ, hay codec không phải bảng mã chữ (base64, rot13)
-        pass
-    return None
+    except LookupError:
+        return None
+    return codec if codec in _XML_CODECS else None
+
+
+# Bảng mã XML mà máy tính và điện thoại (Java/ICU) cùng đọc giống nhau - một danh sách tường minh thay vì thử "mỗi byte một ký tự", phép thử
+# ấy nhận cả bảng mã có trạng thái (ISO-2022-JP, HZ) mà Java từ chối. Kotlin: XML_CHARSETS.
+_XML_CODECS = {"utf-8", *_UTF16, "ascii", "koi8-r", "koi8-u", *(f"iso8859-{n}" for n in (1, 2, 3, 4, 5, 6, 7, 8, 9, 13, 15)),
+               *(f"cp125{n}" for n in range(9))}
 
 
 def _xml_text(raw: bytes, kind: str) -> str:
@@ -1227,10 +1232,10 @@ _BLANK = ("\t\n\x0b\x0c\r\x1c\x1d\x1e\x1f \x85\xa0\u1680\u2000\u2001\u2002\u2003
 
 def _looks_encrypted(raw: bytes) -> bool:
     """Trang trông như chữ đã mã hoá: bỏ khoảng trắng / ký tự không bề rộng ở đầu mà không mở bằng '<', hay hơn 10 % của 1.000 ký tự (code
-    point) đầu là ký tự hỏng (�) hoặc ký tự điều khiển C0 trừ tab / xuống dòng. Trang rỗng hay chỉ có khoảng trắng thì không. Kotlin:
-    looksEncrypted."""
+    point) đầu là ký tự hỏng (�). Ký tự điều khiển (NUL đệm, ngắt trang của Word) không tính: trang mở bằng markup có chúng vẫn là chữ rõ.
+    Trang rỗng hay chỉ có khoảng trắng thì không. Kotlin: looksEncrypted."""
     head = markup_text(raw).lstrip(_BLANK)[:1000]
-    bad = sum(1 for char in head if char == "\ufffd" or (char < " " and char not in "\t\r\n"))
+    bad = head.count("\ufffd")
     return bool(head) and (not head.startswith("<") or bad * 10 > len(head))
 
 

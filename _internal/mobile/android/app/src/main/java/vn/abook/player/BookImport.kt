@@ -981,17 +981,21 @@ object BookImport {
         }
 
         /** `importers._xml_codec`: tên trong `<?xml encoding>` -> bảng mã, chuẩn hoá chung hai bên (Python qua `codecs.lookup`; ở đây bảng bí danh,
-         *  vì Java / Android không biết mọi tên Python biết, như "latin-1" hay "utf8"). Chỉ UTF-8, UTF-16 và bảng mã một byte (Shift_JIS, GB2312,
-         *  UTF-32 là file hỏng, như expat); tên lạ: null. */
+         *  vì Java / Android không biết mọi tên Python biết, như "latin-1" hay "utf8"). Chỉ bảng mã trong XML_CHARSETS; còn lại (Shift_JIS,
+         *  GB2312, ISO-2022-JP, UTF-32...) và tên lạ: null - file hỏng. */
         private fun xmlCharset(name: String): Charset? {
             val charset = try {
                 Charset.forName(XML_CHARSET_ALIASES[name.lowercase().replace('_', '-')] ?: name)
             } catch (_: Exception) {
                 return null
             }
-            if (charset == Charsets.UTF_8 || charset == Charsets.UTF_16 || charset == Charsets.UTF_16BE || charset == Charsets.UTF_16LE) return charset
-            return charset.takeIf { String(ByteArray(256) { it.toByte() }, it).length == 256 }
+            return charset.takeIf { it.name() in XML_CHARSETS }
         }
+
+        /** Bảng mã XML mà máy tính (`importers._XML_CODECS`) và điện thoại cùng đọc giống nhau: danh sách tường minh, không thử "mỗi byte một ký
+         *  tự" (phép thử ấy nhận cả bảng mã có trạng thái như ISO-2022-JP, HZ). */
+        private val XML_CHARSETS = setOf("UTF-8", "UTF-16", "UTF-16BE", "UTF-16LE", "US-ASCII", "KOI8-R", "KOI8-U") +
+            listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 13, 15).map { "ISO-8859-$it" } + (0..8).map { "windows-125$it" }
 
         private val XML_DECLARATION = Pattern.compile("<\\?xml[ \\t\\r\\n][^>]*?encoding[ \\t\\r\\n]*=[ \\t\\r\\n]*[\"']([A-Za-z0-9._:-]+)")
         private val XML_CHARSET_ALIASES = mapOf(
@@ -1677,12 +1681,12 @@ object BookImport {
         + listOf(0x2028, 0x2029, 0x202F, 0x205F, 0x3000, 0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF)).map { it.toChar() }.toSet()
 
     /** Trang trông như chữ đã mã hoá (`importers._looks_encrypted`): bỏ khoảng trắng / ký tự không bề rộng ở đầu mà không mở bằng '<', hay hơn
-     *  10 % của 1.000 ký tự đầu là ký tự hỏng (U+FFFD) hoặc ký tự điều khiển C0 trừ tab / xuống dòng - đếm theo code point như Python, không
-     *  theo đơn vị UTF-16. Trang rỗng hay chỉ có khoảng trắng thì không. */
+     *  10 % của 1.000 ký tự đầu là ký tự hỏng (U+FFFD) - đếm theo code point như Python, không theo đơn vị UTF-16. Ký tự điều khiển (NUL
+     *  đệm, ngắt trang của Word) không tính: trang mở bằng markup có chúng vẫn là chữ rõ. Trang rỗng hay chỉ có khoảng trắng thì không. */
     private fun looksEncrypted(raw: ByteArray): Boolean {
         val text = markupText(raw).trimStart { it in BLANK }
         val head = text.substring(0, text.offsetByCodePoints(0, minOf(1000, text.codePointCount(0, text.length))))
-        val bad = head.count { it.code == 0xFFFD || (it < ' ' && it !in "\t\r\n") }
+        val bad = head.count { it.code == 0xFFFD }
         return head.isNotEmpty() && (!head.startsWith("<") || bad * 10 > head.codePointCount(0, head.length))
     }
 
