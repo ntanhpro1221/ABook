@@ -408,10 +408,13 @@ def parse_pq(content: str) -> str:
     return " ".join(value.split()) if isinstance(value, str) else ""
 
 
-def db_label(label: str) -> str:
-    """Nhãn cục bộ model viết `NPC_LOCAL:x` -> dạng lưu của sổ `NPC_LOCAL::x`."""
-    if label.startswith("NPC_LOCAL:") and not label.startswith("NPC_LOCAL::"):
-        return "NPC_LOCAL::" + label[len("NPC_LOCAL:"):]
+def db_label(label: str, chapter_id: int) -> str:
+    """Nhãn cục bộ của lượt này dùng cùng định dạng lưu với analysis, phạm vi cả chương."""
+    if label.startswith("NPC_LOCAL:"):
+        from .analysis import _scope_local_speaker  # noqa: PLC0415
+
+        description = label.rsplit("::", 1)[-1] if label.startswith("NPC_LOCAL::") else label[len("NPC_LOCAL:"):]
+        return _scope_local_speaker("NPC_LOCAL:" + description, {"chapter_id": chapter_id}, "speaker_pass")
     return label
 
 
@@ -584,9 +587,16 @@ class SpeakerPass:
             return self.analyzer._current_model_digest(self.model)
 
     def _verify_digest(self, phase: str) -> None:
-        from .analysis import AnalysisModelDigestError  # noqa: PLC0415
+        import requests  # noqa: PLC0415
 
-        current = self.analyzer._current_model_digest(self.model)
+        from .analysis import AnalysisModelDigestError, OLLAMA_TRANSPORT_EXCEPTIONS  # noqa: PLC0415
+
+        try:
+            current = self.analyzer._current_model_digest(self.model)
+        except AnalysisModelDigestError as exc:
+            if isinstance(exc.__cause__, (*OLLAMA_TRANSPORT_EXCEPTIONS, requests.HTTPError)):
+                raise exc.__cause__ from None
+            raise
         if current != self._digest:
             raise AnalysisModelDigestError(
                 f"Locked speaker model digest changed {phase}: expected {self._digest}, observed {current}"
@@ -608,13 +618,13 @@ class SpeakerPass:
         )
 
         payload = chat_payload(self.model, user)
-        self._verify_digest("before speaker request")
         last: BaseException | None = None
         for revival in range(SERVER_REVIVALS + 1):
             for attempt in range(OLLAMA_TRANSPORT_RECONNECT_ATTEMPTS + 1):
                 if self._stop():
                     raise AnalysisRequestStopped("Stop requested during Ollama request")
                 try:
+                    self._verify_digest("before speaker request")
                     response = self.analyzer.session.post(f"{self.analyzer.base_url}/api/chat", json=payload,
                                                           timeout=(10.0, self.timeout))
                     response.raise_for_status()
@@ -714,7 +724,7 @@ class SpeakerPass:
 
         info = run_piece(piece, ask, self._counter)
         by_seq = {int(row["seq"]): row for row in rows}
-        labels = [(int(by_seq[s.seq]["id"]), str(by_seq[s.seq]["speaker"] or ""), db_label(s.speaker or "UNKNOWN"))
+        labels = [(int(by_seq[s.seq]["id"]), str(by_seq[s.seq]["speaker"] or ""), db_label(s.speaker or "UNKNOWN", chapter_id))
                   for s in piece if s.spoken]
         stats = {**info, "calls": asker.calls, "retries": asker.retries, "failed_calls": asker.failed,
                  "token_counter": self._counter.kind}

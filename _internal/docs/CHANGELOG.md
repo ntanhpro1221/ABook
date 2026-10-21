@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- Khi bạn làm tiếp giữa lượt xác định người nói, các chương đã xong giữ nguyên nhãn đã chốt.
+- Vai phụ cùng mô tả ở hai chương khác nhau không còn bị gộp thành một người khi bạn tạo sách.
+- Câu được sửa người nói lấy giới và tuổi theo người mới, giúp bạn tránh nhận giọng của người cũ.
+- Khi bạn cài bằng script Windows, bộ đếm token của model người nói được cài sẵn để sách chạy hết pha phân tích.
+- Nếu Ollama mất kết nối lúc kiểm model người nói, app thử kết nối lại để bạn làm tiếp; model đổi nội dung vẫn bị chặn.
+
 ## [0.4.117] - 2026-10-21
 
 ### Nghe ngay
