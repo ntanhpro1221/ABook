@@ -1514,6 +1514,29 @@ describe("nhảy tới câu xa: lượt xin cũ không chặn câu vừa nhảy 
     }
   });
 
+  it("giọng trên máy: mỗi lượt xin nói người nghe còn bao nhiêu giây tiếng trước đoạn ấy (0 = đang chờ nó) để máy thôi giữ khúc đã đọc khi họ hết tiếng; đang dừng thì không nói (dev/gap)", async () => {
+    const s = setup();
+    s.track.serial = () => true;
+    const left = new Map<string, number | undefined>();
+    const inner = s.track.fetchClip;
+    s.track.fetchClip = (voice, text, o) => {
+      if (!o?.cachedOnly) left.set(text, o?.soundLeft);
+      return inner(voice, text, o);
+    };
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    expect(left.get(TEXTS[0])).toBe(0);
+    await s.arrive(TEXTS[0]);
+    expect(left.get(TEXTS[1])).toBeCloseTo(1.0); // đoạn 0 (1,0 s) đang phát từ đầu
+    s.engine.setRate(2);
+    await s.arrive(TEXTS[1]);
+    expect(left.get(TEXTS[2])).toBeCloseTo(1.5); // 1,0 + 2,0 s tiếng ở tốc độ 2
+    s.engine.pause();
+    await s.arrive(TEXTS[2]);
+    expect(left.has(TEXTS[3])).toBe(true);
+    expect(left.get(TEXTS[3])).toBeUndefined();
+  });
+
   it("giọng trên máy: nhảy xa thì lượt đang đọc của đoạn bỏ dở bị huỷ, đoạn vừa nhảy tới được xin ngay - không lỗi (uxfix70)", async () => {
     const s = setup({ chapter });
     s.track.serial = () => true;
