@@ -2,6 +2,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
+import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
 import { usePageTitle } from "@/shared/title";
@@ -47,7 +48,7 @@ function loadPrefs(): ReaderPrefs {
 }
 
 function localReadingKey(bookId: string) {
-  return `abook-reading-${bookId}`;
+  return BOOK_STORAGE.reading + bookId;
 }
 
 /** Câu đầu tiên còn thấy trong khung đọc (follow.firstVisibleIndex trên các câu đang hiện). */
