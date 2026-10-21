@@ -90,6 +90,9 @@ export interface ClipOptions {
   onDevice?: boolean;
   /** Tốc độ người nghe đang phát (1 = thường): giọng trên máy phát luồng chờ đủ tiếng để không đứt giữa chừng ở tốc độ ấy (abook/readaloud/local_stream.py). */
   rate?: number;
+  /** Giọng trên máy: giây (đồng hồ thật) người nghe còn nghe được trước đoạn này, 0 = đang đứng chờ nó ([ReadAloudEngine.soundBefore]) - từ lúc ấy máy gửi ngay khúc đã đọc xong thay vì
+   *  giữ chờ đủ tiếng (giữ thêm chỉ làm khoảng lặng dài hơn). Vắng = không biết. */
+  soundLeft?: number;
 }
 
 export type ClipFetcher = (voice: string, text: string, options?: ClipOptions) => Promise<ReadAloudClip>;
@@ -944,6 +947,18 @@ export class ReadAloudEngine implements AudioEngine {
     return warmRankOf(this.longAhead(this.slots.length), wanted.slice(0, position).filter(isLongParagraph).length);
   }
 
+  /** Giây (đồng hồ thật, ở tốc độ đang nghe) người nghe còn nghe được trước khi tới đoạn `index`: 0 khi đang đứng chờ nó; undefined khi đang dừng, đoạn đã qua hay có đoạn trước nó chưa có
+   *  clip (chưa biết lúc nào tới). Điện thoại cùng phép (ReadAloud.soundReachesNanos). */
+  private soundBefore(index: number): number | undefined {
+    const slot = this.slots[index];
+    if (!this.wanted || !this.ready || !slot || index < this.target.index) return undefined;
+    for (let i = this.target.index; i < index; i += 1) {
+      const before = this.slots[i];
+      if (before.speakable && !before.clip) return undefined;
+    }
+    return Math.max(0, slot.start - this.time) / this.rate;
+  }
+
   /** Số đoạn dài đọc được từ chỗ người nghe (kể cả đoạn họ đang nghe) tới trước đoạn `end`. */
   private longAhead(end: number): number {
     let count = 0;
@@ -1082,6 +1097,8 @@ export class ReadAloudEngine implements AudioEngine {
       options.signal = controller.signal;
       options.onDevice = true;
       this.aborts.set(index, { controller, id, epoch, voice });
+      const left = this.soundBefore(index);
+      if (left !== undefined) options.soundLeft = left;
     }
     // Rank = số đoạn DÀI người nghe phải nghe trước đoạn này ([isLongParagraph]): tiêu đề chương hay một dòng đối thoại đứng trước không đẩy đoạn dài kế nó xuống rank 1 (cắt 3 mảnh thay vì 6).
     if (index >= this.target.index) options.rank = this.longAhead(index);

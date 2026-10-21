@@ -110,7 +110,7 @@ class LocalLiveTest {
         val target = Target()
         val out = File(dir, "slow.wav")
         val (tokens, units) = VieneuUnits.units(text, 140)
-        val live = LocalLive(target, out, tokens, units, 1.0) { now }
+        val live = LocalLive(target, out, tokens, units, 1.0, { now })
         val tier = FakeTier()
         for ((index, unit) in units.withIndex()) {
             val wave = tier.infer(phonemize(unit.pieces), preset, 0)
@@ -119,6 +119,67 @@ class LocalLiveTest {
             if (index < units.lastIndex) assertTrue("nothing plays yet: it would stop halfway", target.events.isEmpty())
         }
         assertEquals(listOf("format", "grew"), target.events)
+    }
+
+    @Test
+    fun aListenerWithNoSoundLeftHearsTheFirstUnitAtOnceAndTheClipStaysTheSame() {
+        val (plain, _) = read("plain.wav", null)
+        var now = 0L
+        val target = Target()
+        val out = File(dir, "dry.wav")
+        val (tokens, units) = VieneuUnits.units(text, 140)
+        val live = LocalLive(target, out, tokens, units, 1.0, { now }, reach = 0L) { _, _ -> error("nothing to wait for") }
+        val tier = FakeTier()
+        val waves = ArrayList<FloatArray>()
+        for ((index, unit) in units.withIndex()) {
+            val wave = tier.infer(phonemize(unit.pieces), preset, 0).also { waves += it }
+            now += (2.5 * wave.size / 24_000 * 1e9).toLong() // 2.5 times slower than real time: the old rule would hold everything
+            live.unit(wave, 24_000, phonemize(unit.pieces))
+            if (index == 0) assertEquals("holding it back only makes the silence longer", listOf("format", "grew"), target.events)
+        }
+        val (joined, _) = VieneuAudio.join(waves, 24_000, units.dropLast(1).map { VieneuAudio.gapAfter(phonemize(it.pieces)) })
+        live.finish(joined, 24_000)
+        assertArrayEquals("the final file does not change by one byte", plain.readBytes(), out.readBytes())
+    }
+
+    @Test
+    fun theHeldUnitsGoOutWhenTheListenerRunsOutOfSoundBetweenTwoUnits() {
+        var now = 0L
+        val target = Target()
+        val (tokens, units) = VieneuUnits.units(text, 140)
+        val waits = ArrayList<Pair<Long, () -> Unit>>()
+        val live = LocalLive(target, File(dir, "reach.wav"), tokens, units, 1.0, { now }, reach = 30_000_000_000L) { ms, task -> waits += ms to task }
+        val tier = FakeTier()
+        val first = tier.infer(phonemize(units[0].pieces), preset, 0)
+        now = 10_000_000_000L // read slowly: the old rule holds it
+        live.unit(first, 24_000, phonemize(units[0].pieces))
+        assertTrue("the listener still has sound", target.events.isEmpty())
+        assertEquals("one wake-up, at the moment the sound runs out", listOf(20_000L), waits.map { it.first })
+        now = 30_000_000_000L
+        waits.single().second()
+        assertEquals(listOf("format", "grew"), target.events)
+        live.failed(VoiceException("x"))
+        waits.single().second()
+        assertEquals("nothing after the read is over", listOf("format", "grew", "failed"), target.events)
+    }
+
+    @Test
+    fun aLateWakeUpAfterTheClipIsDoneSendsNothing() {
+        val target = Target()
+        val (tokens, units) = VieneuUnits.units(text, 140)
+        val waits = ArrayList<() -> Unit>()
+        var now = 0L
+        val live = LocalLive(target, File(dir, "late.wav"), tokens, units, 1.0, { now }, reach = 50_000_000_000L) { _, task -> waits += task }
+        val tier = FakeTier()
+        val waves = units.map { tier.infer(phonemize(it.pieces), preset, 0) }
+        for ((index, wave) in waves.withIndex()) {
+            now += (2.5 * wave.size / 24_000 * 1e9).toLong()
+            live.unit(wave, 24_000, phonemize(units[index].pieces))
+        }
+        val (joined, _) = VieneuAudio.join(waves, 24_000, units.dropLast(1).map { VieneuAudio.gapAfter(phonemize(it.pieces)) })
+        live.finish(joined, 24_000)
+        waits.forEach { it() }
+        assertEquals("read before the sound ran out: held to the last unit as before, nothing after the end", listOf("format", "grew", "done"), target.events)
     }
 
     @Test

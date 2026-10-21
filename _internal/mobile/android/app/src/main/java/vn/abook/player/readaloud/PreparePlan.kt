@@ -154,7 +154,7 @@ object PreparePlan {
 
 /**
  * Tốc độ đo được của từng giọng (giây máy cần cho mỗi ký tự), từ cả lúc nghe trực tiếp lẫn lúc làm trước: ước "còn khoảng N phút" trước khi việc mới tự đo được.
- * Giữ tổng có trọng số: quá [WINDOW] ký tự thì chia đôi, số đo mới dần thắng.
+ * Giữ tổng có trọng số: quá [WINDOW] ký tự thì chia đôi, số đo mới dần thắng. Lúc nghe trực tiếp còn ghi giây tiếng ra ([audioPerChar]): giọng đọc nhanh hơn hay chậm hơn nghe.
  */
 class VoiceSpeeds(private val file: File) {
     companion object {
@@ -164,7 +164,7 @@ class VoiceSpeeds(private val file: File) {
     private val data: JSONObject = runCatching { JSONObject(file.readText()) }.getOrElse { JSONObject() }
 
     @Synchronized
-    fun record(voice: String, chars: Int, seconds: Double) {
+    fun record(voice: String, chars: Int, seconds: Double, audioSeconds: Double = 0.0) {
         if (chars <= 0 || seconds <= 0) return
         val entry = data.optJSONObject(voice) ?: JSONObject()
         var c = entry.optDouble("chars", 0.0) + chars
@@ -173,7 +173,13 @@ class VoiceSpeeds(private val file: File) {
             c /= 2
             s /= 2
         }
-        data.put(voice, JSONObject().put("chars", c).put("seconds", s))
+        var ac = entry.optDouble("audioChars", 0.0) + if (audioSeconds > 0) chars else 0
+        var a = entry.optDouble("audio", 0.0) + maxOf(audioSeconds, 0.0)
+        if (ac > WINDOW) {
+            ac /= 2
+            a /= 2
+        }
+        data.put(voice, JSONObject().put("chars", c).put("seconds", s).apply { if (ac > 0) put("audioChars", ac).put("audio", a) })
         runCatching {
             val part = File(file.path + ".part")
             part.writeBytes(data.toString().toByteArray(Charsets.UTF_8))
@@ -187,6 +193,14 @@ class VoiceSpeeds(private val file: File) {
         val entry = data.optJSONObject(voice) ?: return null
         val chars = entry.optDouble("chars", 0.0)
         return if (chars > 0) entry.optDouble("seconds", 0.0) / chars else null
+    }
+
+    /** Giây tiếng mỗi ký tự của giọng (đo lúc nghe trực tiếp); null: chưa đo. OPPO: Nano Đức Trí ~0,082, Supertonic ~0,06 (dev/gap). */
+    @Synchronized
+    fun audioPerChar(voice: String): Double? {
+        val entry = data.optJSONObject(voice) ?: return null
+        val chars = entry.optDouble("audioChars", 0.0)
+        return if (chars > 0) entry.optDouble("audio", 0.0) / chars else null
     }
 }
 

@@ -37,11 +37,12 @@ class ReadAheadPolicy(private val base: Int) {
          * Giữ clip đầu (tiêu đề, `firstMs` âm thanh) bao lâu trước khi phát, để đoạn kế vào được trước khi clip đầu hết (`nextChars` = số ký tự phải đọc trước đó: cả đoạn, hay chỉ các khúc đầu nếu đoạn phát luồng - [LocalLive.charsBeforeStart]; null: không có / đã có trong bộ đệm).
          * `secondsPerChar`: tốc độ đã đo của giọng (null: chưa đo - giữ tới trần, đoạn kế xong sớm thì phát sớm). 0 = phát ngay.
          * Giọng đọc chậm hơn nghe (RTF >= 1 ở tốc độ phát `speed`: máy thật OPPO, Supertonic 1,2-2,6): giữ không bớt khe im sau tiêu đề (đoạn kế không bao giờ chạy trước tiếng, livejoin3 máy thật),
-         * chỉ thêm im ở đầu - phát ngay.
+         * chỉ thêm im ở đầu - phát ngay. "Chậm hơn nghe" so với giây tiếng mỗi ký tự ĐO được của giọng (`audioPerChar`, [VoiceSpeeds.audioPerChar]): Nano đọc 0,082 s tiếng mỗi ký tự,
+         * so với 0,06 chung thì 0,065 s máy mỗi ký tự thành "chậm hơn nghe" và không giữ (dev/gap, OPPO: im 4,1 s sau tiêu đề dù RTF thật 0,72).
          */
-        fun openingHoldMs(firstMs: Long, nextChars: Int?, secondsPerChar: Double?, speed: Double = 1.0): Long {
+        fun openingHoldMs(firstMs: Long, nextChars: Int?, secondsPerChar: Double?, speed: Double = 1.0, audioPerChar: Double = LocalLive.AUDIO_PER_CHAR): Long {
             if (nextChars == null || nextChars <= 0) return 0L
-            if (secondsPerChar != null && secondsPerChar * maxOf(speed, 0.1) >= LocalLive.AUDIO_PER_CHAR) return 0L
+            if (secondsPerChar != null && secondsPerChar * maxOf(speed, 0.1) >= audioPerChar) return 0L
             val gap = if (secondsPerChar == null) OPENING_HOLD_MAX_MS else (secondsPerChar * nextChars * 1000).toLong() - firstMs
             return if (gap < OPENING_GAP_MS) 0L else minOf(gap, OPENING_HOLD_MAX_MS)
         }
