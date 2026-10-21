@@ -1067,13 +1067,15 @@ class BookPipeline:
                     # Before names are locked: a speaker the analysis could only describe may
                     # turn out to be a character the text names later in the same chapter.
                     self._state("running", "Đang phân giải danh tính nhân vật chỉ được mô tả.")
-                    analyzer.reconcile_local_speaker_identities(
+                    reconciled = analyzer.reconcile_local_speaker_identities(
                         before_batch=lambda index: self._resource_gate(
                             f"local identity batch {index}",
                             release_active=analyzer.release_model,
                         ),
                         stop_requested=self.stop_requested,
                     )
+                    if reconciled is None:
+                        raise RuntimeError("Chưa hoàn tất hoà giải danh tính cục bộ; hãy làm tiếp khi model sẵn sàng.")
                     analyzer.reconcile_name_pronunciations(
                         before_batch=lambda index: self._resource_gate(
                             f"name pronunciation batch {index}",

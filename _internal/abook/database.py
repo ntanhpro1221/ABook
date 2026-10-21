@@ -3319,6 +3319,8 @@ class ProjectDB:
         """Ghi kết quả MỘT chương trong một giao dịch: `labels` = (segment_id, nhãn của model phân tích mà lượt đã đọc, nhãn mới).
         CAS trên nhãn cũ và trên kind (chỉ thoại/nội tâm được đổi người nói); chương đã có dòng kết quả thì từ chối. Trả số câu
         đổi nhãn."""
+        from .analysis import local_speaker_label
+
         now = time.time()
         changed = 0
         unknown = 0
@@ -3336,7 +3338,11 @@ class ProjectDB:
                 )
                 if cursor.rowcount != 1:
                     raise RuntimeError("Speaker pass CAS failed: segment changed since the pass read it")
-                if new_speaker != old_speaker:
+                # Lượt người nói đổi namespace của cùng vai cục bộ, không đổi người.
+                local_prefix = f"NPC_LOCAL::c{int(chapter_id):05d}::"
+                same_local = (old_speaker.startswith(local_prefix) and new_speaker.startswith(local_prefix)
+                              and local_speaker_label(old_speaker) == local_speaker_label(new_speaker))
+                if new_speaker != old_speaker and not same_local:
                     gender, age = traits[new_speaker]
                     conn.execute("UPDATE segments SET gender=?,age=? WHERE id=?", (gender, age, int(segment_id)))
                 conn.execute(

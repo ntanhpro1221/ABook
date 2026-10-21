@@ -4,7 +4,30 @@ import pytest
 
 from abook.character_registry import resolve_gender
 from abook.database import ProjectDB
+from abook.speaker_pass import db_label
 from test_speaker_pass_pipeline import make_project
+
+
+@pytest.mark.parametrize("description,chapter_offset,expected", [
+    ("lính gác", 0, ("male", "adult")),
+    ("người hầu", 0, ("unknown", "unknown")),
+    ("lính gác", 1, ("unknown", "unknown")),
+])
+def test_local_pass_relabel_preserves_traits_only_for_the_same_role_in_the_same_chapter(
+    tmp_path: Path, description: str, chapter_offset: int, expected: tuple[str, str],
+) -> None:
+    db = make_project(tmp_path / "p")
+    chapter = int(db.list_chapters()[0]["id"])
+    old = f"NPC_LOCAL::c{chapter + chapter_offset:05d}::r0b1::lính gác"
+    new = db_label(f"NPC_LOCAL:{description}", chapter)
+    with db.transaction() as conn:
+        conn.execute("UPDATE segments SET speaker=?,gender='male',age='adult' WHERE stable_id IN ('c1s1','c1s3')", (old,))
+    rows = {str(row["stable_id"]): row for row in db.list_segments()}
+    db.commit_speaker_pass_chapter(chapter, [(rows[s]["id"], old, new) for s in ("c1s1", "c1s3")], {}, seconds=0)
+    for row in ProjectDB(db.path).list_segments():
+        if row["stable_id"] in {"c1s1", "c1s3"}:
+            assert row["speaker"] == new
+            assert (row["gender"], row["age"]) == expected
 
 
 @pytest.mark.parametrize("evidence", ["unchanged", "registry", "carried_registry", "missing", "conflicting", "pinned_conflict"])
