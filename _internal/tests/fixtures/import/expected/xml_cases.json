@@ -105,6 +105,26 @@
   "text": "Книга"
  },
  {
+  "case": "iso-8859-15 (iso8859-15)",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d2269736f2d383835392d3135223f3e3c613e436166e920a43c2f613e",
+  "text": "Café €"
+ },
+ {
+  "case": "ISO-2022-JP (iso2022_jp)",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d2249534f2d323032322d4a50223f3e3c613e1b2442456c357e1b28423c2f613e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "HZ-GB-2312 (hz)",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d22485a2d47422d32333132223f3e3c613e7e7b56504e447e7d3c2f613e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "mac-roman (mac-roman)",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d226d61632d726f6d616e223f3e3c613e4361668e3c2f613e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
   "case": "windows-1252 0x81",
   "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d2277696e646f77732d31323532223f3e3c613e436166813c2f613e",
   "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"

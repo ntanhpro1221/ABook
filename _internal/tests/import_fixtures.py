@@ -952,15 +952,16 @@ LCP = b'{"id": "x", "encryption": {"profile": "http://readium.org/lcp/basic-prof
 
 def build_rights_odd_pages() -> bytes:
     """rights.xml trơn (metadata) và những chương lạ mà vẫn là chữ thật: rỗng, chỉ khoảng trắng, mở bằng NBSP / form feed / zero-width,
-    vài ký tự hỏng thật, windows-1252 khai utf-8 - không phải chữ đã mã hoá."""
-    pages = [(f"c{n}.xhtml", f"<h1>Chương {n}</h1><p>{LINE}</p>") for n in range(1, 9)]
+    vài ký tự hỏng thật, windows-1252 khai utf-8, nhiều ngắt trang (Word), NUL đệm cuối trang - không phải chữ đã mã hoá."""
+    pages = [(f"c{n}.xhtml", f"<h1>Chương {n}</h1><p>{LINE}</p>") for n in range(1, 11)]
     page = {n: _xhtml(body) for n, (_name, body) in enumerate(pages, start=1)}
     cp1252 = ('<?xml version="1.0" encoding="utf-8"?>\n<html xmlns="http://www.w3.org/1999/xhtml"><head><title>x</title></head><body>\n'
               "<h1>Chapitre 8</h1><p>Café crème, déjà vu à l'été.</p>\n</body></html>").encode("cp1252")
     members = {"OEBPS/text/c2.xhtml": b"", "OEBPS/text/c3.xhtml": b" \n\t\r\n", "OEBPS/text/c4.xhtml": "\u00a0".encode() + page[4],
                "OEBPS/text/c5.xhtml": b"\x0c" + page[5], "OEBPS/text/c6.xhtml": "\u200b".encode() + page[6],
                "OEBPS/text/c7.xhtml": _xhtml(f"<h1>Chương 7</h1><p>Chữ \ufffd hỏng \ufffd thật. {LINE}</p>"), "OEBPS/text/c8.xhtml": cp1252,
-               "META-INF/rights.xml": b"<rights/>"}
+               "OEBPS/text/c9.xhtml": _xhtml("<h1>Chương 9</h1>" + "<p>\x0c</p>" * 60 + f"<p>{LINE}</p>"),
+               "OEBPS/text/c10.xhtml": page[10] + b"\0" * 400, "META-INF/rights.xml": b"<rights/>"}
     return _with_members(_book("Sách có metadata quyền", pages), members)
 
 
@@ -1068,7 +1069,8 @@ XML_NAME_CASES = [
     ("iso-8859-1", "latin-1", "Café"), ("iso8859-1", "latin-1", "Café"), ("windows-1252", "cp1252", "Café “x”"), ("cp1252", "cp1252", "Café"),
     ("windows-1258", "cp1258", "Tên"), ("cp1258", "cp1258", "Tên"), ("ascii", "ascii", "abc"), ("us-ascii", "ascii", "abc"),
     ("us-ascii", "utf-8", "Tên"), ("UTF-32", "utf-32", "Tên"), ("shift_jis", "shift_jis", "東京"), ("foo", "utf-8", "abc"),
-    ("KOI8-R", "koi8-r", "Книга"),
+    ("KOI8-R", "koi8-r", "Книга"), ("iso-8859-15", "iso8859-15", "Café €"), ("ISO-2022-JP", "iso2022_jp", "東京"),
+    ("HZ-GB-2312", "hz", "中文"), ("mac-roman", "mac-roman", "Café"),
 ]
 
 
