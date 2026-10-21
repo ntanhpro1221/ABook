@@ -138,8 +138,12 @@ object VieneuVoices {
         val (tier, name) = id.removePrefix("$PREFIX:").let { it.substringBefore('/') to it.substringAfter('/', "") }
         val ready = ready(tier, name)
         val live = LocalLive.here(out) { VieneuUnits.units(text, VieneuSpeaker.MAX_CHARS.getValue(tier), origin, readings) } // the paragraph the listener waits for: unit by unit
-        val spoken = try {
-            VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin, readings, live)
+        return try {
+            val spoken = VieneuSpeaker(ready.g2p::phonemize).speak(tier, ready.engine, ready.preset.name, ready.preset, text, origin, readings, live)
+            if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
+            val final = ClipLift.lifted(id, spoken.samples, spoken.rate, ClipLift.params(context)) // câu ngắn nhỏ nâng lên mức giọng (như service.clip)
+            if (live != null) live.finish(final, spoken.rate) else VieneuAudio.writeWav(final, spoken.rate, out)
+            Clip(out, spoken.durationMs, spoken.words, id)
         } catch (failure: OutOfMemoryError) {
             forget()
             VoiceException("Điện thoại không đủ bộ nhớ cho giọng VieNeu lúc này.", cause = failure, reason = "voice").let {
@@ -152,10 +156,6 @@ object VieneuVoices {
         } finally {
             if (engine != null) idle.used() // idle minutes count from the end of the last read
         }
-        if (spoken.samples.isEmpty()) throw VoiceException("Đoạn này không có chữ nào đọc được.", reason = "empty")
-        val final = ClipLift.lifted(id, spoken.samples, spoken.rate, ClipLift.params(context)) // câu ngắn nhỏ nâng lên mức giọng (như service.clip)
-        if (live != null) live.finish(final, spoken.rate) else VieneuAudio.writeWav(final, spoken.rate, out)
-        return Clip(out, spoken.durationMs, spoken.words, id)
     }
 
     /**
