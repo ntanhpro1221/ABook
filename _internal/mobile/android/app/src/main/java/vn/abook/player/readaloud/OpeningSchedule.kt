@@ -69,3 +69,23 @@ class OpeningQueue<T>(first: T, val scheduled: Boolean) {
     /** Bỏ mục chưa phát khớp [match] (mục phát luồng hỏng trong lúc giữ): chưa ai nghe gì của nó, kết quả của lượt đọc thay vào đúng một lần. True = đã bỏ. */
     fun withdraw(match: (T) -> Boolean): Boolean = items.subList(1, items.size).removeAll(match)
 }
+
+/**
+ * Tính lịch giữ đầu chương ở luồng nền: một luồng RIÊNG (không xếp sau các lượt đọc không huỷ được của bể `worker` - tua nhanh nhiều lần thì lịch mới không chờ lịch cũ), lần tính đã cũ
+ * ([current] false lúc tới lượt) thì bỏ không tính. Giữ CPU ([FetchWake], không Wi-Fi) suốt lúc tính: ExoPlayer chưa có gì nên không giữ khoá nào, vé của lượt đọc clip đầu đã nhả.
+ */
+class OpeningPlanner(name: String) {
+    private val executor = java.util.concurrent.Executors.newSingleThreadExecutor { Thread(it, name).apply { isDaemon = true } }
+
+    /** [compute] ở luồng tính lịch (lỗi -> null), rồi [then] với kết quả, vẫn ở luồng ấy (người gọi tự chuyển về luồng chính). */
+    fun <T> plan(current: () -> Boolean, compute: () -> T, then: (T?) -> Unit) {
+        val ticket = FetchWake.hold(network = false)
+        executor.execute {
+            try {
+                if (current()) then(runCatching(compute).getOrNull())
+            } finally {
+                FetchWake.release(ticket)
+            }
+        }
+    }
+}
