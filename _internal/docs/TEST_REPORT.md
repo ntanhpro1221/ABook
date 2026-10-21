@@ -69,6 +69,34 @@ Gradle :app:testDebugUnitTest --max-workers=4 --offline: 1171 ca = 1165 passed +
 Pytest có hai cảnh báo ngoài phạm vi sửa: ZIP trùng tên trong test EPUB và timeout accept của máy chủ giả trong
 test_music_truncated_download. Không có FAILED/ERROR. Compileall, LF và git diff --check qua; không còn tiến trình thử nền.
 
+Đợt a72fix2 (`dev/uxfix79`): năm lỗi do rà a72fix, mỗi lỗi có test đỏ trước sửa:
+1 điện thoại gửi nhãn cả cuốn xuống lõi mỗi lần mở sách, lõi thay từng mục hàng đợi (nay so nhãn, thay một lần `replaceMediaItems`);
+2 Sonner gỡ toast Hoàn tác hiện lại trong 200 ms sau cú bấm (nay mã toast mới mỗi lần bấm); 3 gạt toast không bỏ cuốn khỏi hàng hoàn tác;
+4 hoàn tác sang "<tên> (2)" mất dữ liệu nghe, cuốn chiếm chỗ nhận nhầm (nay chuyển mã; dự án trong chuỗi phần: 409 như cũ);
+5 đổi tên lúc đã hết sách phát sự kiện "chapter" (nay "metadata"). Test: `trackMetadata.test.ts`, `nativeMetadata.test.ts`,
+`trashUndo.test.ts`, `test_trash_undo.py`, JVM `BookMetadataTest`. Vitest 1223 passed + 1 skipped, exit 0; `tsc --noEmit` exit 0;
+Gradle 1170 ca = 1164 passed + 6 skipped, 0 FAILED / 0 ERROR, exit 0 (137 XML); pytest toàn bộ (XML) 8385 ca, 9 skipped,
+0 FAILED / 0 ERROR, exit 0, 1817,956 giây. Hash khoá trước/sau `49e8fd2d…` (không đổi).
+
+Đợt a72fix (`dev/uxfix79`): sáu lỗi thư viện/trình phát có test đỏ trước sửa:
+L1 media session còn nhãn cũ; L2 thư viện 226 cuốn không gọi nhớ cuộn;
+L3 HTTP 409 khi đường khôi phục bị chiếm; L4 ba lần xoá không dùng toast chung;
+L5 đóng trình phát chưa gỡ toast `jump`; L6 tab Chương dựng 2500 nút thay vì 80.
+Test UI: `playerMetadata.test.tsx`, `libraryPlayerWindow.test.tsx`, `trashUndo.test.ts`,
+và `nativeMetadata.test.ts`; test Python: `test_trash_undo.py`; JVM: `BookMetadataTest`.
+Sau sửa, Vitest toàn bộ: 1217 passed + 1 skipped, 0 failed, exit 0; `tsc --noEmit`: exit 0.
+Gradle `:app:testDebugUnitTest --max-workers=4 --offline`: 1168 ca = 1162 passed + 6 skipped,
+0 FAILED / 0 ERROR, exit 0 (137 XML). Metadata Media3 thay nhãn và bìa của cả hàng đợi;
+đoạn đọc to tiếp theo cũng lấy bìa mới. Hoàn tác dùng chung trên máy tính/điện thoại, mỗi mã giữ hạn riêng;
+một mã lỗi không chặn các mã khác và vẫn có thể thử lại trong hạn.
+Pytest toàn bộ (đếm XML): 8380 ca = 8371 passed + 9 skipped, 0 FAILED / 0 ERROR, exit 0,
+1798,456 giây. Lượt này thu thập trước khi thêm ca mở lại app; file Hoàn tác được kiểm riêng thêm sau đó:
+27 passed, 0 FAILED / 0 ERROR, exit 0 (18,585 giây), gồm ca app mở lại và đường gốc bị chiếm.
+Có ba cảnh báo cùng loại đã ghi ở đợt a71: ZIP trùng tên; subprocess đọc cp1252 gặp UnicodeDecodeError;
+máy chủ giả của `test_music_truncated_download` hết thời gian accept. Nguyên văn ở `S/a72fix/pytest-full.log`.
+Hash khoá trước/sau: `49e8fd2dc212c7207cd0fbf66b308e6b0d1b49d220d64a16501d170bc906635f` (không đổi).
+Compileall và `git diff --check` qua; nguồn đã giữ LF. CHANGELOG có sáu dòng sửa lỗi, xưng “bạn”.
+
 Đợt a71fix (`dev/uxfix78`): bốn lỗi nhập sách/thư viện đã tái hiện bằng test đỏ trước sửa. Pytest mới:
 13 FAILED / 0 ERROR trong 15 ca (hai ca font hợp lệ đã qua); Vitest importQueue: 3 FAILED / 17 passed;
 JVM: 2 FAILED / 0 ERROR trong hai ca DRM và chữ hoa. Ca font không khai báo OPF được kiểm thêm: Python và JVM đều đỏ trước sửa bổ sung.

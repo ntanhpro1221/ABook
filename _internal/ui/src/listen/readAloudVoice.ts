@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { VOICE_CHANGED_EVENT, isTransientClipError, type ClipFetcher, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
 import type { ListenSource } from "./source";
 
@@ -78,7 +79,8 @@ function write(key: string, value: string) {
   }
 }
 
-const stampKey = (bookId: string) => `abook-readaloud-voice-at-${bookId}`;
+const stampKey = (bookId: string) => BOOK_STORAGE.readAloudVoiceAt + bookId;
+const voiceKey = (bookId: string) => BOOK_STORAGE.readAloudVoice + bookId;
 
 // Nơi nhận lựa chọn giọng riêng của cuốn để ghi vào hồ sơ nghe (trình phát đăng ký - source.setVoice): máy kia đọc tiếp bằng đúng giọng ấy.
 let voiceSink: ((bookId: string, voice: string) => void) | null = null;
@@ -98,7 +100,7 @@ export function adoptSyncedVoice(bookId: string, state: { voice?: string; voiceA
   const at = state?.voiceAt ?? 0;
   if (typeof voice !== "string" || !at || at <= Number(read(stampKey(bookId)) || 0)) return false;
   if (voice && !available?.some((item) => item.id === voice)) return false;
-  write(`abook-readaloud-voice-${bookId}`, voice);
+  write(voiceKey(bookId), voice);
   write(stampKey(bookId), String(at));
   troubled.clear();
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: bookId }));
@@ -107,13 +109,13 @@ export function adoptSyncedVoice(bookId: string, state: { voice?: string; voiceA
 
 /** Giọng đã chọn cho cuốn này; chưa chọn thì giọng chung; chưa có gì thì "" (= mặc định của máy). */
 export function chosenVoice(bookId: string): string {
-  return read(`abook-readaloud-voice-${bookId}`) || read(GLOBAL_KEY);
+  return read(voiceKey(bookId)) || read(GLOBAL_KEY);
 }
 
 /** Chọn giọng cho RIÊNG cuốn này (menu Giọng đọc của trình phát, lời báo, hộp hỏi đồng ý); chương đang đọc đổi giọng từ đoạn kế. Giọng mặc định
  *  của các cuốn khác giữ nguyên - chỉ Cài đặt đổi nó (soát a67: đổi giọng một cuốn lặng lẽ đổi luôn giọng mặc định). */
 export function chooseVoice(bookId: string, voice: string): void {
-  write(`abook-readaloud-voice-${bookId}`, voice);
+  write(voiceKey(bookId), voice);
   write(stampKey(bookId), String(Date.now() / 1000));
   voiceSink?.(bookId, voice);
   troubled.clear();
@@ -132,7 +134,7 @@ export function switchVoices(fromPrefix: string, voice: string): void {
   try {
     for (let index = localStorage.length - 1; index >= 0; index--) {
       const key = localStorage.key(index) ?? "";
-      if (key.startsWith("abook-readaloud-voice-") && (localStorage.getItem(key) ?? "").startsWith(fromPrefix)) localStorage.setItem(key, voice);
+      if (key.startsWith(BOOK_STORAGE.readAloudVoice) && (localStorage.getItem(key) ?? "").startsWith(fromPrefix)) localStorage.setItem(key, voice);
     }
   } catch {
     /* không đọc được bộ nhớ: vẫn đổi lựa chọn chung */

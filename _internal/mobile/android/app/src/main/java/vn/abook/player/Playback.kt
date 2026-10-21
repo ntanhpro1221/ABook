@@ -34,7 +34,45 @@ internal fun msOf(seconds: Double): Long = Math.round(seconds * 1000).coerceAtLe
  *  speaks the card as "<chapter> by <artist> is playing from ABook" - a null artist came out as "by null" (a67). */
 fun mediaArtist(narratorName: String, bookTitle: String): String? = narratorName.ifBlank { bookTitle }.ifBlank { null }
 
+/** Giữ URI, tag và cấu hình phát của mục; chỉ thay nhãn của thẻ media. */
+internal fun withBookMetadata(item: MediaItem, title: String, narrator: String, chapter: String, artwork: ByteArray): MediaItem =
+    item.buildUpon().setMediaMetadata(item.mediaMetadata.buildUpon()
+        .setTitle(chapter).setDisplayTitle(chapter).setAlbumTitle(title).setSubtitle(title)
+        .setArtist(mediaArtist(narrator, title)).setArtworkData(artwork, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()).build()
+
+/** Cả hàng đợi mang nhãn mới (tên chương lấy theo mã mục, mục không có trong `titles` giữ tên cũ) - để thay MỘT lần. */
+internal fun relabelled(items: List<MediaItem>, title: String, narrator: String, titles: Map<Int, String>, artwork: ByteArray): List<MediaItem> =
+    items.map { item -> withBookMetadata(item, title, narrator, titles[item.mediaId.toIntOrNull()] ?: item.mediaMetadata.title?.toString().orEmpty(), artwork) }
+
+/** Thẻ media có gì khác không: tên sách, giọng kể, tên chương hay bìa (`shownArtwork` = bìa mục đang có, null khi hàng đợi rỗng). */
+internal fun labelsChanged(title: String, narrator: String, chapters: List<Playback.Chapter>,
+                           newTitle: String, newNarrator: String, renamed: List<Playback.Chapter>,
+                           shownArtwork: ByteArray?, artwork: ByteArray): Boolean =
+    title != newTitle || narrator != newNarrator || chapters != renamed || (shownArtwork != null && !shownArtwork.contentEquals(artwork))
+
 object Playback {
+    /** Sửa sách đang nghe: thay metadata của cả hàng đợi, không nạp lại tiếng hay tua. Giao diện gửi nhãn mỗi khi dữ liệu sách đổi,
+     *  nên không có gì khác thì thôi - thay hàng đợi 2.500 chương là dựng lại timeline và MediaSession đẩy lại cả hàng đợi trên luồng chính. */
+    @androidx.annotation.OptIn(UnstableApi::class)
+    fun updateMetadata(id: String, title: String, narratorName: String, titles: Map<Int, String>) {
+        if (bookId != id) return
+        val renamed = chapters.map { chapter -> titles[chapter.id]?.let { chapter.copy(title = it) } ?: chapter }
+        val artwork = Artwork.cover(title, id)
+        val exo = player
+        val shown = exo?.takeIf { it.mediaItemCount > 0 }?.getMediaItemAt(0)?.mediaMetadata?.artworkData
+        // Trước khi thôi: hàng đọc to rỗng (đang tìm đoạn đầu) thì không có bìa nào để so - đổi bìa lúc ấy vẫn phải tới các đoạn dựng sau.
+        ReadAloud.refreshArtwork(artwork)
+        if (!labelsChanged(bookTitle, narrator, chapters, title, narratorName, renamed, shown, artwork)) return
+        bookTitle = title
+        narrator = narratorName
+        chapters = renamed
+        if (exo != null && exo.mediaItemCount > 0) {
+            val items = (0 until exo.mediaItemCount).map(exo::getMediaItemAt)
+            exo.replaceMediaItems(0, items.size, relabelled(items, title, narratorName, titles, artwork))
+        }
+        emit("metadata")
+    }
+
     /** `text` = tên mục chữ trong gói (`texts/<n>.txt`) của chương CHỈ CÓ CHỮ (state "text"): không có file audio, giọng máy đọc to (ReadAloud). */
     data class Chapter(val id: Int, val title: String, val file: String, val duration: Double, val text: String = "") {
         val isText: Boolean get() = text.isNotEmpty()

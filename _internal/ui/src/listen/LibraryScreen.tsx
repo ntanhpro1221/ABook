@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
 import { ShortName } from "@/shared/ShortName";
 import { Windowed } from "@/shared/Windowed";
+import { useScrollMemory } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
 import { EmptyState, failedEmpty, heardBarProps, LoadError, Progress, Segmented, Skeleton } from "@/shared/ui";
@@ -301,7 +302,7 @@ const SHELF_GRID = "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-[repeat(auto-f
  *  cùng cột, hàng cuối của khối không hụt giữa chừng. */
 const SHELF_BLOCK = 60;
 
-function Shelf({ books, badges, twins }: { books: ListenBook[]; badges?: Map<string, string>; twins?: Set<string> }) {
+function Shelf({ books, badges, twins, memory }: { books: ListenBook[]; badges?: Map<string, string>; twins?: Set<string>; memory?: string }) {
   const tile = (book: ListenBook, index: number) => (
     // Hiện dần chỉ cho khối đầu: khối sau dựng khi cuộn tới, không nhún lại mỗi lần.
     <div key={book.id} className={index < SHELF_BLOCK ? "rise-in" : undefined} style={{ "--i": index } as CSSProperties}>
@@ -312,6 +313,7 @@ function Shelf({ books, badges, twins }: { books: ListenBook[]; badges?: Map<str
   return (
     <div role="list" aria-label="Sách" className="space-y-7">
       <Windowed
+        memory={memory}
         items={books}
         block={SHELF_BLOCK}
         estimate={90}
@@ -336,7 +338,7 @@ function badgesOf(items: { book: ListenBook; volume: number | null; unit: string
 }
 
 /** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
-function SeriesShelves({ books, twins }: { books: ListenBook[]; twins: Set<string> }) {
+function SeriesShelves({ books, twins, memory }: { books: ListenBook[]; twins: Set<string>; memory?: string }) {
   const places = seriesIndex(books);
   const groups = new Map<string, { book: ListenBook; volume: number | null; unit: string; name: string }[]>();
   for (const book of books) {
@@ -355,13 +357,13 @@ function SeriesShelves({ books, twins }: { books: ListenBook[]; twins: Set<strin
           <h2 className="mb-3 flex items-baseline gap-2 text-base font-semibold">
             {items[0].name} <span className="text-sm font-normal text-fg-2">· {items.length} {items[0].unit}</span>
           </h2>
-          <Shelf books={items.map((item) => item.book)} badges={badgesOf(items)} twins={twins} />
+          <Shelf books={items.map((item) => item.book)} badges={badgesOf(items)} twins={twins} memory={memory && `${memory}.series.${key}`} />
         </section>
       ))}
       {singles.length > 0 && (
         <section aria-label="Sách lẻ">
           {series.length > 0 && <h2 className="mb-3 text-base font-semibold">Sách khác</h2>}
-          <Shelf books={singles} twins={twins} />
+          <Shelf books={singles} twins={twins} memory={memory && `${memory}.singles`} />
         </section>
       )}
     </div>
@@ -395,6 +397,9 @@ export function LibraryScreen({
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<LibrarySort>(loadLibrarySort);
+  const container = useRef<HTMLDivElement | null>(null);
+  const memory = query.trim() ? undefined : `library.${filter}.${sort}`;
+  useScrollMemory(!isLoading && memory ? memory : null, container);
   const player = usePlayer();
   // Theo cuốn đang phát (không tính nghe kiểm trong Studio), không chỉ theo chỗ nghe đã lưu - chỗ ấy chỉ được làm mới khi dừng.
   const playingId = player.track && player.purpose !== "review" ? player.track.bookId : null;
@@ -413,7 +418,7 @@ export function LibraryScreen({
     [books, filter, folded, sort],
   );
   return (
-    <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
+    <div ref={container} className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
       {/* Hai nút cạnh tiêu đề không được bóp tiêu đề thành "Thư / viện" ở 390 px (soát UX 05-10): tiêu đề giữ một dòng, nút xuống dưới. */}
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="shrink-0">
@@ -514,10 +519,10 @@ export function LibraryScreen({
           </div>
           {shown.length ? (
             filter === "all" && !folded ? (
-              <SeriesShelves books={shown} twins={twins} />
+              <SeriesShelves books={shown} twins={twins} memory={memory} />
             ) : (
               <div className="mt-6">
-                <Shelf books={shown} twins={twins} />
+                <Shelf books={shown} twins={twins} memory={memory} />
               </div>
             )
           ) : (
