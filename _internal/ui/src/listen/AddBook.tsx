@@ -14,11 +14,14 @@ import {
   planPick,
   queueFocus,
   queueLabel,
+  ReadCancelled,
+  readSessions,
   settle,
   summarize,
   summaryText,
   waitingAfter,
   type QueueItem,
+  type ReadSession,
 } from "./importQueue";
 import { FootnoteChoices } from "./FootnoteChoices";
 import { groupSuggestions, setSkipLine, SuggestionChoices } from "./ReadingSuggestions";
@@ -146,6 +149,10 @@ export function AddBookDialog({
   // Đọc thứ chọn sẵn đúng một lần (`read` dựng ở dưới, sau chỗ trả sớm khi nguồn không nhập được).
   const readInitial = useRef<((picked: ImportChoice | PickedItem[]) => Promise<void>) | null>(null);
   const initialRead = useRef<ImportChoice | PickedItem[] | null>(null);
+  const reads = useRef(readSessions());
+  useEffect(() => {
+    if (!open) reads.current.cancel();
+  }, [open]);
   useEffect(() => {
     if (!open || !initial || initialRead.current === initial) return;
     initialRead.current = initial;
@@ -164,6 +171,8 @@ export function AddBookDialog({
     setNames({});
   };
   const clear = () => {
+    reads.current.cancel();
+    setBusy(null);
     clearPreview();
     setTyped("");
     setProblem("");
@@ -192,9 +201,12 @@ export function AddBookDialog({
   };
   // Đọc file thành bản xem trước: cả truyện trong một file mà máy chắc là nhiều chương thì mở sẵn với "tách" đã tích (bỏ tích được, danh sách
   // chương đổi theo).
-  const loadPreview = async (picked: ImportChoice) => {
+  const loadPreview = async (picked: ImportChoice, session: ReadSession) => {
+    session.still();
     setChoice(picked);
-    const { preview: result, split: sure } = await readPreview(importer, picked);
+    const { preview: result, split: sure } = await session.wait(readPreview(
+      { preview: (...args) => session.wait(importer.preview(...args)) }, picked,
+    ));
     setPreview(result);
     setPicked(defaultPicked(result.chapters));
     setTitle(result.title);
@@ -202,47 +214,52 @@ export function AddBookDialog({
     setFootnotes(NO_FOOTNOTES);
   };
   const read = async (picked: ImportChoice) => {
+    const session = reads.current.start();
     if (onBookFile && isBookFile(picked.ref)) {
       // Soát UX 05-10: dán đường dẫn .abook vào đây từng báo "Chưa đọc được file .abook" mà không chỉ sang "Mở file sách".
       setProblem("");
       setBusy("reading");
       try {
-        await onBookFile(picked.ref);
+        await session.wait(onBookFile(picked.ref));
         clear();
         onOpenChange(false);
       } catch (error) {
-        fail(error);
+        if (!(error instanceof ReadCancelled)) fail(error);
       } finally {
-        setBusy(null);
+        if (session.active()) setBusy(null);
       }
       return;
     }
     setProblem("");
     setBusy("reading");
     try {
-      await loadPreview(picked);
+      await loadPreview(picked, session);
     } catch (error) {
-      fail(error);
       void importer.discard?.(picked).catch(() => undefined);
+      if (error instanceof ReadCancelled) return;
+      fail(error);
       setChoice(null);
     } finally {
-      setBusy(null);
+      if (session.active()) setBusy(null);
     }
   };
   // ---- Hàng nhiều file (importQueue.ts) -------------------------------------------------------------------------------------
   // File sách .abook / .abookproj còn lại (đã xếp cuối hàng) mở như "Mở file sách". Mở xong app sang trang sách, nên đây là việc cuối cùng.
-  const openBookFiles = async (items: QueueItem[]) => {
+  const openBookFiles = async (items: QueueItem[], session?: ReadSession) => {
     let next = items;
     for (const item of items) {
+      session?.still();
       if (item.state !== "waiting" || !item.choice) continue;
       if (!onBookFile) {
         next = settle(next, item.id, { state: "error", note: "Ở đây chưa mở được file sách .abook - dùng nút “Mở file sách”." });
         continue;
       }
       try {
-        const ok = await onBookFile(item.choice.ref);
+        const opening = onBookFile(item.choice.ref);
+        const ok = await (session ? session.wait(opening) : opening);
         next = ok === false ? settle(next, item.id, { state: "error", note: "Không mở được file sách này." }) : settle(next, item.id, { state: "opened", note: "Đã mở" });
       } catch (error) {
+        if (error instanceof ReadCancelled) throw error;
         next = settle(next, item.id, { state: "error", note: (error as Error).message });
       }
     }
@@ -265,26 +282,31 @@ export function AddBookDialog({
   };
   // Sang cuốn kế trong hàng (advanceQueue): đọc nó cho bước xem trước; file không đọc được ghi lỗi vào hàng và đi tiếp, không chặn các cuốn sau.
   const goNext = async (start: QueueItem[]) => {
+    const session = reads.current.start();
     clearPreview();
     setBusy("reading");
     try {
       const { items, current } = await advanceQueue(
         start,
         async (next, items) => {
+          session.still();
           setCurrentId(next.id);
           setQueue(items);
-          await loadPreview(next.choice!);
+          await loadPreview(next.choice!, session);
         },
-        openBookFiles,
+        (items) => openBookFiles(items, session),
         (failed) => {
           void importer.discard?.(failed.choice!).catch(() => undefined);
           setChoice(null);
         },
       );
+      session.still();
       setQueue(items);
       if (!current) finish(items);
+    } catch (error) {
+      if (!(error instanceof ReadCancelled)) fail(error);
     } finally {
-      setBusy(null);
+      if (session.active()) setBusy(null);
     }
   };
   // Vừa chọn / kéo thả xong (planPick).
@@ -313,9 +335,10 @@ export function AddBookDialog({
   // sách chương vẫn y như trước - chú thích chỉ đổi chữ trong chương).
   const reread = async (next: { split: boolean; footnotes: FootnoteChoice }) => {
     if (!choice) return;
+    const session = reads.current.start();
     setBusy("reading");
     try {
-      const result = await importer.preview(choice, { splitChapters: next.split, footnotes: footnotesToSend(next.footnotes) });
+      const result = await session.wait(importer.preview(choice, { splitChapters: next.split, footnotes: footnotesToSend(next.footnotes) }));
       if (!(preview && sameRows(preview.chapters, result.chapters))) {
         setPicked(defaultPicked(result.chapters));
         setNames({});
@@ -325,9 +348,10 @@ export function AddBookDialog({
       setSplit(next.split);
       setFootnotes(next.footnotes);
     } catch (error) {
+      if (error instanceof ReadCancelled) return;
       toast.error("Chưa đọc lại được file", { description: (error as Error).message });
     } finally {
-      setBusy(null);
+      if (session.active()) setBusy(null);
     }
   };
   const changeSplit = (on: boolean) => reread({ split: on, footnotes });

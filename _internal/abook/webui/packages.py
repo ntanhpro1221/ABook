@@ -378,7 +378,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         # không nghe được, nhưng cũng không phải "file sách chỉ có các chương đã làm" (`lost` - soát a28 lỗi 9).
         promised = bool(chapter.get("available"))
         available = promised and (remote or _present(path, chapter.get("file")))
-        lost = promised and not available
+        lost = (promised and not available) or bool(chapter.get("text") and not remote and not _present(path, chapter["text"]))
         items.append({
             "id": chapter.get("id"),
             "index": chapter.get("index"),
@@ -408,7 +408,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "chaptersTotal": max(int(book.get("chaptersTotal") or 0), len(items)),
         "chaptersAvailable": len(available),
         "complete": complete,
-        # Chương có trong file sách mà mất file trên máy này: mở lại đúng file .abook ấy để chép bù.
+        # Chương có trong sách mà mất file trên máy này: thêm lại file gốc để chép bù (sách chữ: EPUB / DOCX / TXT…).
         "missingFiles": lost_count,
         # Giai đoạn của cả cuốn: "text" = chỉ có chữ (chưa chương nào có audio); None = như mọi sách nghe được.
         "stage": TEXT_STATE if text_book(book) else None,

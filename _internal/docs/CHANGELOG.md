@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- Khi bạn nhập EPUB có khoá bản quyền (DRM), máy tính và điện thoại báo rõ lý do cùng cách dùng bản không khoá; EPUB chỉ làm rối font vẫn đọc được.
+- Sách chỉ có chữ báo đúng số chương mất file và hướng dẫn bạn thêm lại file sách gốc để chép bù.
+- Khi bạn đóng hoặc nhấn Esc ở hộp thêm sách đang đọc file, bản xem trước và lỗi trả về muộn không còn hiện lại ở lần mở sau.
+- Lời lỗi nhập sách đứng riêng bắt đầu bằng chữ hoa trên máy tính và điện thoại để bạn dễ đọc.
+
 ## [0.4.120] - 2026-10-21
 
 ### Thư viện

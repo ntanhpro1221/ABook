@@ -81,7 +81,8 @@ SUPERSCRIPT = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 HEADINGS = {"h1", "h2", "h3"}
 WRAPPERS = {"body", "section", "div", "article", "main"}  # khối bọc cả trang: vai của chúng (trước chữ đầu tiên) là vai của trang
 UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')  # ký tự Windows không nhận trong tên file
-BROKEN = "không phải file {kind} thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+BROKEN = "Không phải file {kind} thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+EPUB_DRM = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
 
 # Số của chương: chữ số, số La Mã, hay số viết bằng chữ ("Chương Một", "Hồi thứ hai").
 _NUMBER_WORDS = (
@@ -609,7 +610,7 @@ def _html_entities_as_numbers(raw: bytes) -> bytes:
 def _xml(raw: bytes, kind: str = "EPUB") -> ElementTree.Element:
     head = raw[:4096].decode("utf-8", errors="replace")
     if "<!ENTITY" in head.upper():
-        raise ImportFailed("có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
+        raise ImportFailed("Có nội dung XML lạ (khai báo entity) - không mở để giữ an toàn máy")
     try:
         return ElementTree.fromstring(_html_entities_as_numbers(raw))
     except ElementTree.ParseError as error:
@@ -637,7 +638,7 @@ def _read(book: _Zip, name: str, kind: str = "EPUB") -> bytes:
     if info is None:
         raise ImportFailed(BROKEN.format(kind=kind))
     if info.file_size > MAX_MEMBER:
-        raise ImportFailed(f"có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
+        raise ImportFailed(f"Có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
     return book.read(info)
 
 
@@ -648,7 +649,7 @@ def _open_zip(path: Path, kind: str) -> _Zip:
         raise ImportFailed(BROKEN.format(kind=kind)) from error
     if sum(info.file_size for info in book.infolist()) > MAX_TOTAL:
         book.close()
-        raise ImportFailed(f"quá lớn khi giải nén (trên 300 MB) - không giống {kind} truyện")
+        raise ImportFailed(f"Quá lớn khi giải nén (trên 300 MB) - không giống {kind} truyện")
     return book
 
 
@@ -1170,6 +1171,32 @@ def _epub_cover(book: _Zip, opf: ElementTree.Element, manifest: dict[str, tuple[
     return (book.read(info), media) if info is not None and info.file_size <= MAX_COVER else None
 
 
+def _epub_encryption(book: _Zip, manifest: dict[str, tuple[str, str, str]], spine: ElementTree.Element) -> None:
+    """Từ chối DRM trước khi đọc chữ; hai kiểu làm rối font của EPUB vẫn đọc được. Kotlin: epubEncryption."""
+    if any(book.member(f"META-INF/{name}.xml") is not None for name in ("rights", "sinf")):
+        raise ImportFailed(EPUB_DRM)
+    if book.member("META-INF/encryption.xml") is None:
+        return
+    obfuscation = {"http://www.idpf.org/2008/embedding", "http://ns.adobe.com/pdf/enc#RC"}
+    spine_paths = {_nfc(manifest.get(ref.get("idref", ""), ("", "", ""))[0]) for ref in spine.iterfind("opf:itemref", NS)}
+    fonts = {_nfc(href) for href, media, _props in manifest.values()
+             if media.startswith("font/") or "font" in media or posixpath.splitext(href)[1].lower() in {".otf", ".ttf", ".woff", ".woff2"}}
+    # Một số sách quên khai báo font trong OPF; file font có thật trong ZIP vẫn chỉ là làm rối font.
+    declared = {_nfc(href) for href, _media, _props in manifest.values()}
+    fonts.update(_nfc(info.filename) for info in book.infolist() if _nfc(info.filename) not in declared
+                 and posixpath.splitext(info.filename)[1].lower() in {".otf", ".ttf", ".woff", ".woff2"})
+    root = _xml(_read(book, "META-INF/encryption.xml"))
+    ns = "{http://www.w3.org/2001/04/xmlenc#}"
+    for data in root.iter(ns + "EncryptedData"):
+        method = data.find(ns + "EncryptionMethod")
+        refs = list(data.iter(ns + "CipherReference"))
+        # URI tính từ gốc ZIP, không phải thư mục META-INF. Không cho thuật toán font che một chương mã hoá.
+        paths = [_nfc(posixpath.normpath(unquote(ref.get("URI", "")))) for ref in refs]
+        if (method is None or method.get("Algorithm") not in obfuscation or not paths
+                or any(path not in fonts or path in spine_paths for path in paths)):
+            raise ImportFailed(EPUB_DRM)
+
+
 def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
     with _open_zip(path, "EPUB") as book:
         container = _xml(_read(book, "META-INF/container.xml"))
@@ -1187,6 +1214,7 @@ def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
         spine = opf.find("opf:spine", NS)
         if spine is None:
             raise ImportFailed(BROKEN.format(kind="EPUB"))
+        _epub_encryption(book, manifest, spine)
         titles: dict[str, str] = {}  # href -> tên đầu tiên trỏ tới nó
         listed_in: dict[str, list[tuple[str, str]]] = {}  # href -> [(mảnh, tên)] theo thứ tự mục lục
         toc, declared = _toc(book, manifest, spine.get("toc", ""))

@@ -1,6 +1,22 @@
 # Test report
 
-Ngày cập nhật: 2026-10-21
+Ngày cập nhật: 2026-10-22
+
+Đợt a71fix (`dev/uxfix78`): bốn lỗi nhập sách/thư viện đã tái hiện bằng test đỏ trước sửa. Pytest mới:
+13 FAILED / 0 ERROR trong 15 ca (hai ca font hợp lệ đã qua); Vitest importQueue: 3 FAILED / 17 passed;
+JVM: 2 FAILED / 0 ERROR trong hai ca DRM và chữ hoa. Ca font không khai báo OPF được kiểm thêm: Python và JVM đều đỏ trước sửa bổ sung.
+Sau sửa, bộ pytest liên quan: 209 passed / 0 FAILED / 0 ERROR,
+exit 0; Vitest toàn bộ: 1207 passed, 1 skipped, 0 failed, exit 0; TypeScript `tsc --noEmit`: exit 0.
+Bộ ví dụ chung có DRM mã hoá chương, rights.xml, sinf.xml, thuật toán font gắn vào chương, cùng font IDPF/Adobe hợp lệ (cả font không khai báo OPF).
+Test nhập lại file gốc xác nhận chép bù chương mất/rỗng, giữ nguyên byte chữ; HTTP phân biệt mất chữ với chương không có chữ.
+Huỷ đọc ngăn kết quả/lỗi cũ, không đi tiếp hàng hay mở file .abook phía sau. CHANGELOG có một dòng cho mỗi lỗi.
+Hash khoá trước và sau: `49e8fd2dc212c7207cd0fbf66b308e6b0d1b49d220d64a16501d170bc906635f` (không đổi).
+Kiểm CPU tối đa bốn lõi, CUDA tắt; Gradle offline dùng dependency cục bộ và `--no-daemon`, không dùng thiết bị hay Ollama.
+JVM toàn bộ trên mã cuối (đếm XML): 1167 ca = 1161 passed + 6 skipped, 0 FAILED / 0 ERROR, exit 0.
+Pytest toàn bộ trên mã cuối (đếm XML): 8380 ca = 8371 passed + 9 skipped, 0 FAILED / 0 ERROR, exit 0, 1549,9 giây.
+Có ba cảnh báo: ZIP trùng tên trong test EPUB; luồng subprocess đọc cp1252 gặp UnicodeDecodeError; máy chủ thử của
+test_music_truncated_download chờ accept hết hạn. Các vùng này nằm ngoài phạm vi sửa; nguyên văn ở log full-py-final.
+Compileall, kiểm LF và `git diff --check` qua; tiến trình thử đã thoát hết.
 
 Đợt pqfix B41 (`dev/pqfix`): xác nhận cả 5 lỗi bằng test đỏ trước sửa (resume hoà giải lại chương đã commit; NPC thiếu phạm vi
 chương; câu đổi vai giữ giới/tuổi cũ; CLI cài thiếu tokenizer; kiểm digest rớt mạng không retry). Thêm 20 ca kiểm trong 5 file
