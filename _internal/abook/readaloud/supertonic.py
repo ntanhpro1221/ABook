@@ -159,7 +159,11 @@ class SupertonicEngine:
         self.latent_dim = int(config["ttl"]["latent_dim"]) * int(config["ttl"]["chunk_compress_factor"])
         self.folder = folder
         self.indexer = np.asarray(json.loads((folder / INDEXER_FILE).read_bytes().decode("utf-8")), dtype=np.int64)
-        options = ve._session_options(threads or ve.default_threads(), "cpu")
+        # Cắm điện thì để luồng onnxruntime quay chờ giữa hai nút: nhanh hơn 10-15 % (máy tính 4 luồng, dev/spin 21-10), cùng từng byte; chạy pin hay
+        # không biết thì giữ tắt (tốn pin).
+        from .. import power_source
+
+        options = ve._session_options(threads or ve.default_threads(), "cpu", spinning=power_source.on_battery() is False)
         self.steps = steps
         self.sessions = {name: ve._session(estimator if name == "vector_estimator" and estimator is not None else folder / "onnx" / f"{name}.onnx",
                                            options, "cpu") for name in ONNX}
