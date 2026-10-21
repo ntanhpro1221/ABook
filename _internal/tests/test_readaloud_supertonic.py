@@ -360,6 +360,23 @@ def test_parity_with_the_vendor_package(monkeypatch: pytest.MonkeyPatch) -> None
         assert len(expected) == len(got) and float(np.abs(expected - got).max()) <= 1e-5, text
 
 
+@pytest.mark.parametrize("on_battery, spinning", [(False, True), (True, False), (None, False)])
+def test_the_onnx_threads_spin_between_ops_only_while_plugged_in(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, on_battery: bool | None, spinning: bool) -> None:
+    from abook import power_source
+    from abook.readaloud import vieneu_engine
+
+    (tmp_path / "onnx").mkdir()
+    (tmp_path / supertonic.CONFIG_FILE).write_bytes(json.dumps({"ae": {"sample_rate": 44100, "base_chunk_size": 512}, "ttl": {"chunk_compress_factor": 6, "latent_dim": 24}}).encode())
+    (tmp_path / supertonic.INDEXER_FILE).write_bytes(b"[0, 1, 2]")
+    seen: list[str] = []
+    real = vieneu_engine._session_options
+    monkeypatch.setattr(vieneu_engine, "_session_options", lambda *args, **kwargs: (lambda options: (seen.append(options.get_session_config_entry("session.intra_op.allow_spinning")), options)[1])(real(*args, **kwargs)))
+    monkeypatch.setattr(vieneu_engine, "_session", lambda *_args, **_kwargs: object())
+    monkeypatch.setattr(power_source, "on_battery", lambda: on_battery)
+    SupertonicEngine(tmp_path, 2)
+    assert seen == ["1" if spinning else "0"]
+
+
 def test_clips_are_raised_to_the_shared_loudness_without_clipping() -> None:
     import numpy as np
 
