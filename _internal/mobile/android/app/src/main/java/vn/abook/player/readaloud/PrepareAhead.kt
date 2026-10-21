@@ -220,7 +220,7 @@ object PrepareAhead {
             stopped = { stopped() || synchronized(lock) { job?.id != mine.id } },
             save = { save(context, it); notify(context, it) },
             full = { cache.pinnedBytes() >= budget },
-            timed = { chars, seconds -> runCatching { ReadAloud.speeds().record(mine.voice, chars, seconds) } },
+            timed = { text, seconds -> runCatching { ReadAloud.speeds().recordRead(mine.voice, text, origin, readings, seconds) } },
             clock = SystemClock::elapsedRealtime,
             sliceMs = SLICE_MS,
         )
