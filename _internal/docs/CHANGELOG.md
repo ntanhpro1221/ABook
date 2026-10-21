@@ -9,9 +9,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
-- Khi bạn nhập EPUB mã hoá nội dung, máy tính và điện thoại báo rõ lý do cùng cách dùng bản không khoá; sách rõ chữ có metadata quyền và sách chỉ làm rối font hợp lệ vẫn đọc được, kể cả mô tả UTF-16 hoặc tên font có emoji.
+- Khi bạn nhập EPUB có khoá bản quyền (DRM) - của Apple, Adobe, Kobo, Readium LCP, hay chữ chương đã bị mã hoá kể cả khi sách không kèm mô tả mã hoá - máy tính và điện thoại báo rõ lý do cùng cách dùng bản không khoá; sách rõ chữ chỉ kèm thông tin quyền và sách chỉ làm rối font vẫn đọc được, kể cả mô tả UTF-16 hoặc tên font có emoji.
+- Điện thoại đọc tên chương trong mục lục EPUB giống máy tính khi file khai bảng mã lệch nhau; EPUB viết phần mô tả bằng bảng mã Nhật, Trung, Hàn mà ABook không đọc được thì cả hai báo file hỏng, thay vì máy tính báo lỗi khó hiểu.
 - Khi sách mất file chữ, bạn thấy đúng số chương cần chép bù và hướng dẫn thêm lại file sách gốc; sách đủ audio vẫn được báo đủ chương.
-- Khi bạn đóng hoặc nhấn Esc ở hộp thêm sách đang chọn hay đọc file, lựa chọn, bản xem trước và lỗi trả về muộn không còn hiện lại; mở file .abook trả muộn cũng không tự chuyển trang.
+- Khi bạn đóng hoặc nhấn Esc ở hộp thêm sách đang chọn hay đọc file (hay rời màn hình ấy), lựa chọn, bản xem trước và lỗi trả về muộn không còn hiện lại; mở file .abook trả muộn cũng không tự chuyển trang, nhưng cuốn đã mở xong vẫn hiện ngay trong thư viện của bạn.
 - Lời lỗi nhập sách đứng riêng bắt đầu bằng chữ hoa trên máy tính và điện thoại để bạn dễ đọc.
 
 ## [0.4.120] - 2026-10-21

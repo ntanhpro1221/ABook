@@ -8,18 +8,35 @@ vi.mock("@tanstack/react-query", async (original) => ({ ...await original<typeof
 vi.mock("@/studio/api", async (original) => ({ ...await original<typeof import("@/studio/api")>(), api: mocks.api }));
 vi.mock("sonner", async (original) => ({ ...await original<typeof import("sonner")>(), toast: Object.assign(vi.fn(), { success: mocks.success, error: mocks.error }) }));
 
-it("does not navigate or toast when the API returns after the dialog session was cancelled", async () => {
+it.each([
+  [{ id: "late", how: "new" }, ["listen"]],
+  [{ id: "late", how: "studio" }, ["library"]],
+])("does not navigate or toast when the API returns after the dialog closed, but the library still shows the imported book", async (book, key) => {
+  vi.clearAllMocks();
   let resolve!: (book: unknown) => void;
   mocks.api.mockReturnValue(new Promise((done) => { resolve = done; }));
   const { useOpenBookPath } = await import("./App");
   const sessions = readSessions();
   const opening = useOpenBookPath()("a.abook", sessions.start());
   sessions.cancel();
-  resolve({ id: "late", how: "new" });
+  resolve(book);
   await expect(opening).rejects.toBeInstanceOf(ReadCancelled);
   expect(mocks.navigate).not.toHaveBeenCalled();
-  expect(mocks.invalidate).not.toHaveBeenCalled();
+  expect(mocks.invalidate).toHaveBeenCalledTimes(1);
+  expect(mocks.invalidate).toHaveBeenCalledWith({ queryKey: key });
   expect(mocks.success).not.toHaveBeenCalled();
+  expect(mocks.error).not.toHaveBeenCalled();
+});
+
+it("a cancelled open that imported nothing refreshes nothing", async () => {
+  vi.clearAllMocks();
+  mocks.api.mockResolvedValue({ id: null, error: "hỏng", file: "a.abook" });
+  const { useOpenBookPath } = await import("./App");
+  const sessions = readSessions();
+  const session = sessions.start();
+  sessions.cancel();
+  await expect(useOpenBookPath()("a.abook", session)).rejects.toBeInstanceOf(ReadCancelled);
+  expect(mocks.invalidate).not.toHaveBeenCalled();
   expect(mocks.error).not.toHaveBeenCalled();
 });
 
