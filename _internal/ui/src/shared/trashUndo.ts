@@ -1,4 +1,5 @@
 import { toast } from "sonner";
+import { moveBookStorage } from "@/shared/bookStorage";
 import { api } from "@/studio/api";
 
 /** Khớp `trash_pending.UNDO_SECONDS` của máy tính và `TrashPending.UNDO_SECONDS` của điện thoại: hết chừng này giây cuốn vừa xoá mới đi tiếp (Thùng rác / xoá hẳn). */
@@ -6,8 +7,9 @@ export const UNDO_SECONDS = 30;
 /** Nút "Hoàn tác" sống ngắn hơn hạn của máy chủ một chút: bấm ở giây chót không bị 404 vì độ trễ. */
 export const UNDO_TOAST_MS = (UNDO_SECONDS - 2) * 1000;
 
-/** `renamed`: chỗ cũ đã có cuốn cùng tên nên cuốn về dưới tên khác (`title` - tên thư mục mới, "<tên> (2)"). */
-type Restored = { ok: boolean; title?: string; renamed?: boolean; wasQueued?: boolean };
+/** `renamed`: chỗ cũ đã có cuốn cùng tên nên cuốn về dưới tên khác (`title` - tên thư mục mới, "<tên> (2)"). Máy chủ đã chuyển chỗ nghe
+ *  sang mã sách mới thì kèm `oldId`/`newId` (máy này chuyển theo những gì nó nhớ theo mã sách); `dataLeft`: chưa chuyển được. */
+type Restored = { ok: boolean; title?: string; renamed?: boolean; wasQueued?: boolean; oldId?: string; newId?: string; dataLeft?: boolean };
 
 /** "Đã khôi phục “X”" - hay "… vào thư mục “X (2)”" khi chỗ cũ đã có cuốn cùng tên (thư viện vẫn hiện tên sách, không phải tên thư mục). */
 export function restoredMessage(title: string, result: Partial<Pick<Restored, "title" | "renamed">>): string {
@@ -15,9 +17,10 @@ export function restoredMessage(title: string, result: Partial<Pick<Restored, "t
 }
 
 /** Lời dưới "Đã khôi phục": vì sao cuốn về dưới tên khác; cuốn từng xếp hàng chờ thì nói rõ là hàng chờ không tự xếp lại. */
-export function restoredNote(result: Partial<Pick<Restored, "renamed" | "wasQueued">>): string | undefined {
+export function restoredNote(result: Partial<Pick<Restored, "renamed" | "wasQueued" | "dataLeft">>): string | undefined {
   const notes = [
     result.renamed ? "Chỗ cũ đã có một cuốn cùng tên, nên thư viện sẽ hiện hai cuốn trùng tên - bạn có thể đổi tên một cuốn cho dễ phân biệt." : "",
+    result.dataLeft ? "Chưa mang theo được chỗ đang nghe và dấu trang của cuốn này." : "",
     result.wasQueued ? "Cuốn này đã bị bỏ khỏi hàng chờ làm sách - bấm Bắt đầu nếu muốn xếp lại." : "",
   ].filter(Boolean);
   return notes.length ? notes.join(" ") : undefined;
@@ -71,6 +74,7 @@ function showPending(): void {
   const items = [...pending.values()];
   if (!items.length) {
     toast.dismiss(toastId());
+    generation += 1; // Sonner còn giữ toast đang thoát ~200 ms: lần bỏ kế hiện dưới mã mới, không gộp vào toast đang biến mất
     return;
   }
   const firstExpiry = Math.min(...items.map((item) => item.expires));
@@ -85,6 +89,7 @@ function showPending(): void {
     // Gạt / đóng toast = không hoàn tác những cuốn ấy: lần bỏ sau không gộp chúng vào "Đã bỏ N cuốn" và Hoàn tác không trả chúng về.
     onDismiss: () => {
       if (id !== toastId()) return;
+      generation += 1; // như trên: toast này đang thoát
       for (const token of shown) pending.delete(token);
       if (!pending.size) clearTimeout(timer);
     },
@@ -95,19 +100,22 @@ function showPending(): void {
         if (restoring) return;
         restoring = true;
         try {
-          await Promise.all([...pending].map(async ([token, item]) => {
-            if (item.expires <= Date.now()) { pending.delete(token); return; }
+          // Lần lượt, cũ trước (thứ tự bỏ): xoá "X", thêm "X" mới rồi bỏ luôn nó - "X" cũ về đúng chỗ của nó, cuốn mới vào "X (2)". Chạy
+          // cùng lúc thì ai về chỗ cũ là may rủi.
+          for (const [token, item] of [...pending]) {
+            if (item.expires <= Date.now()) { pending.delete(token); continue; }
             const restore = item.restore ?? ((value: string) => api<Restored>(`/api/trash/${value}/undo`, { method: "POST", body: {} }));
             try {
               const result = await restore(token);
               pending.delete(token);
               const restored = (result ?? {}) as Partial<Restored>;
+              if (restored.oldId && restored.newId) moveBookStorage(restored.oldId, restored.newId);
               toast.success(restoredMessage(item.title, restored), { description: restoredNote(restored) });
               item.onRestored();
             } catch (error) {
               toast.error("Chưa hoàn tác được", { description: (error as Error).message });
             }
-          }));
+          }
         } finally {
           restoring = false;
           // Sonner gỡ toast có action sau cú bấm: dựng lại những mã chưa hoàn tác được (dưới mã toast mới).

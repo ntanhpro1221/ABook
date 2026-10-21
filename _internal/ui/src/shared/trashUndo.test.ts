@@ -177,3 +177,52 @@ it("chỗ cũ đã có cuốn cùng tên: lời khôi phục nói tên mới c�
   await toast.success.mock.calls.at(-1)![1].action.onClick();
   expect(toast.success).toHaveBeenCalledWith("Đã khôi phục “Sách” vào thư mục “Sách (2)”", { description: "Chỗ cũ đã có một cuốn cùng tên, nên thư viện sẽ hiện hai cuốn trùng tên - bạn có thể đổi tên một cuốn cho dễ phân biệt." });
 });
+
+it("hoàn tác nhiều cuốn lần lượt, cũ trước: cuốn sau chỉ bắt đầu khi cuốn trước xong", async () => {
+  const waiting = new Map<string, () => void>();
+  const restore = vi.fn((token: string) => new Promise((resolve) => waiting.set(token, () => resolve({ ok: true }))));
+  const onRestored = vi.fn();
+  for (const undo of ["cu", "moi"]) toastRemoved({ message: "Đã xoá", title: undo, undo, note: "", restore, onRestored });
+  const clicked = toast.success.mock.calls.at(-1)![1].action.onClick();
+  await vi.waitFor(() => expect(restore).toHaveBeenCalledOnce());
+  expect(restore).toHaveBeenLastCalledWith("cu");
+  waiting.get("cu")!();
+  await vi.waitFor(() => expect(restore).toHaveBeenCalledTimes(2));
+  expect(restore).toHaveBeenLastCalledWith("moi");
+  waiting.get("moi")!();
+  await clicked;
+  expect(onRestored).toHaveBeenCalledTimes(2);
+});
+
+it("cuốn về dưới mã mới thì những gì máy này nhớ theo mã sách đi theo; chưa chuyển được thì lời báo nói", async () => {
+  const store = new Map([["abook-reading-old", '{"chapterId":3}'], ["abook-readaloud-voice-old", "edge:vi-VN-NamMinhNeural"]]);
+  (globalThis as unknown as { localStorage: Storage }).localStorage = {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => void store.set(key, value),
+    removeItem: (key: string) => void store.delete(key),
+  } as Storage;
+  try {
+    const restore = vi.fn().mockResolvedValue({ ok: true, title: "Sách (2)", renamed: true, oldId: "old", newId: "new" });
+    toastRemoved({ message: "Đã xoá", title: "Sách", undo: "doi-ma", note: "", restore, onRestored: vi.fn() });
+    await toast.success.mock.calls.at(-1)![1].action.onClick();
+    expect(Object.fromEntries(store)).toEqual({ "abook-reading-new": '{"chapterId":3}', "abook-readaloud-voice-new": "edge:vi-VN-NamMinhNeural" });
+  } finally {
+    delete (globalThis as { localStorage?: Storage }).localStorage;
+  }
+  expect(restoredNote({ renamed: true, dataLeft: true })).toContain("Chưa mang theo được chỗ đang nghe và dấu trang");
+});
+
+it("gạt toast hay hết mục thì lần bỏ kế hiện dưới mã mới (Sonner còn giữ toast đang thoát)", () => {
+  const options = { message: "Đã xoá", note: "", restore: vi.fn(), onRestored: vi.fn() };
+  toastRemoved({ ...options, title: "A", undo: "gat" });
+  const swiped = toast.success.mock.calls.at(-1)![1];
+  swiped.onDismiss();
+  toastRemoved({ ...options, title: "B", undo: "sau-gat" });
+  const next = toast.success.mock.calls.at(-1)![1];
+  expect(next.id).not.toBe(swiped.id);
+
+  vi.advanceTimersByTime(UNDO_TOAST_MS); // hết hạn: hết mục, toast được gỡ
+  expect(toast.dismiss).toHaveBeenLastCalledWith(next.id);
+  toastRemoved({ ...options, title: "C", undo: "sau-het" });
+  expect(toast.success.mock.calls.at(-1)![1].id).not.toBe(next.id);
+});
