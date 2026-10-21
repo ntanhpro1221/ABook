@@ -194,12 +194,17 @@ class Listening:
 
     def _held(self, book: str, record: str | None) -> dict[str, Any] | None:
         """State để trình phát ghi: đúng hồ sơ nó đang phát (`record`), không phải hồ sơ đang dùng - máy khác đổi hồ sơ
-        giữa lúc đang phát thì chỗ nghe vẫn vào hồ sơ cũ. Hồ sơ ấy đã xoá hay đã chuyển sang sách khác: None (bỏ lần
-        ghi). Không nói hồ sơ nào (điện thoại cũ, lời gọi cũ): hồ sơ đang dùng."""
+        giữa lúc đang phát thì chỗ nghe vẫn vào hồ sơ cũ. Hồ sơ ấy đã xoá: None (bỏ lần ghi). Không nói hồ sơ nào (điện
+        thoại cũ, lời gọi cũ), hay hồ sơ ấy đã sang sách khác (chuyển hồ sơ; hoàn tác cuốn đã xoá về tên khác mang hồ sơ của
+        nó đi trong lúc cuốn đang ở đường gốc còn phát): hồ sơ đang dùng của sách này - không bỏ lặng lẽ mọi lần lưu tới khi
+        trình phát nạp lại."""
         if record is None:
             return self._book(book)
-        if self._owner(record) != book:
+        owner = self._owner(record)
+        if owner is None:
             return None
+        if owner != book:
+            return self._book(book)
         state = self._data["records"][record].setdefault("state", _empty_state())
         state.setdefault("chapters", {})
         state.setdefault("bookmarks", [])

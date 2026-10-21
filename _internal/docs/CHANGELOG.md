@@ -14,6 +14,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nội dung XML lạ (khai báo entity) giấu ở bất cứ đâu trong EPUB, bảng mã nào, đều bị chặn trên máy tính và điện thoại để giữ an toàn máy của bạn.
 - Khi sách mất file chữ, bạn thấy đúng số chương cần chép bù và hướng dẫn thêm lại file sách gốc; sách đủ audio vẫn được báo đủ chương.
 - Khi bạn đóng hoặc nhấn Esc ở hộp thêm sách đang chọn hay đọc file (hay rời màn hình ấy), lựa chọn, bản xem trước và lỗi trả về muộn không còn hiện lại; mở file .abook trả muộn cũng không tự chuyển trang, nhưng cuốn đã mở xong vẫn hiện ngay trong thư viện của bạn.
+- Khi bạn đổi tên sách, tên chương hoặc bìa lúc đang nghe, thanh phát và thẻ media hệ điều hành cập nhật ngay trên máy tính và điện thoại; mở sách nghìn chương trên điện thoại không còn khựng, và đổi tên lúc đã nghe hết sách vẫn giữ khối “Hết sách”.
+- Khi bạn quay lại Thư viện, danh sách nhớ chỗ cuộn theo bộ lọc và cách sắp xếp, kể cả thư viện nhiều sách.
+- Khi bạn hoàn tác xoá sách mà chỗ cũ đã có cuốn khác, sách được khôi phục vào thư mục tên còn trống cạnh đó (lời báo nói tên thư mục mới) và mang theo chỗ nghe, dấu trang, tốc độ, giọng đọc, chỗ đang đọc chữ; cuốn mới thêm vào chỗ cũ không nhận nhầm những thứ ấy và vẫn lưu được chỗ nghe của nó. Bạn xoá một cuốn, thêm cuốn mới cùng tên rồi xoá luôn cuốn ấy và hoàn tác cả hai thì cuốn cũ về đúng chỗ của nó, giữ nguyên những gì của nó. Dự án là một phần của bộ nhiều phần thì vẫn chờ bạn bỏ cuốn kia rồi hoàn tác, để các phần không nối nhầm.
+- Khi bạn xoá nhiều cuốn liên tiếp, một thông báo Hoàn tác chung giữ các cuốn còn hạn trên máy tính và điện thoại; gạt thông báo đi là bỏ hoàn tác những cuốn ấy, và nút Hoàn tác không còn biến mất khi lần hoàn tác trước báo lỗi hay khi bạn xoá cuốn kế ngay lúc thông báo cũ đang tắt.
+- Khi bạn đóng hoặc xoá cuốn đang nghe, thông báo “Quay lại chỗ cũ” của cuốn ấy cũng được gỡ.
+- Khi bạn mở tab Chương của sách hàng nghìn chương, danh sách chỉ dựng phần gần màn hình và chương bạn đang nghe.
 - Lời lỗi nhập sách đứng riêng bắt đầu bằng chữ hoa trên máy tính và điện thoại để bạn dễ đọc.
 
 ## [0.4.121] - 2026-10-22

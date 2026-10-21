@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { Button, Dialog, IconButton } from "@/shared/ui";
 import { api } from "@/studio/api";
@@ -82,7 +83,7 @@ export function SuggestionChoices({ groups, isOn, onChange, disabled }: {
 
 // "Bỏ qua gợi ý": người nghe đã xem và quyết giữ nguyên - thẻ ở trang sách thôi đếm "N chưa áp" và thu lại (soát a70: thẻ nằm mãi). Nhớ trên máy
 // này theo từng dòng: gợi ý MỚI (dòng chưa từng bỏ qua) vẫn hiện lại. Mặc định vẫn không áp gì.
-const DISMISSED_KEY = "abook.suggestionsDismissed.";
+const DISMISSED_KEY = BOOK_STORAGE.suggestionsDismissed;
 
 function dismissedLines(bookId: string): string[] {
   try {

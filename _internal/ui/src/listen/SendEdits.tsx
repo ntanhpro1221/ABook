@@ -3,6 +3,7 @@ import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/reac
 import { CircleAlert, Laptop, Loader2, Send, Smartphone, Undo2, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { localEditsNote } from "@/shared/capabilities";
 import { cn } from "@/shared/cn";
 import { editsSyncNote, holderName, sentToast } from "@/shared/editsSync";
@@ -112,7 +113,7 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
   );
 }
 
-const SEEN_KEY = "abook.editsSentSeen.";
+const SEEN_KEY = BOOK_STORAGE.editsSentSeen;
 
 function seenAt(id: string): number {
   try {
