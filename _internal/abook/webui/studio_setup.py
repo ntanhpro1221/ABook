@@ -1076,6 +1076,9 @@ class StudioSetup:
             return
         self._detail = "Model xác định người nói"
         self._install_published(speaker)
+        self._install_speaker_tokenizer()
+
+    def _install_speaker_tokenizer(self) -> None:
         self._detail = "Bộ đếm token của model người nói"
         self.fetch(SPEAKER_TOKENIZER, self.speaker_tokenizer, self._set_progress, self._cancelled)
 
@@ -1336,9 +1339,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ollama", default="http://127.0.0.1:11434")
     parser.add_argument("--downloads", type=Path, default=Path(tempfile.gettempdir()) / "abook-model-install")
     args = parser.parse_args(argv)
-    setup = StudioSetup(args.downloads, Path(__file__).resolve().parents[2], ollama_address=args.ollama)
+    setup = StudioSetup(args.downloads, Path(__file__).resolve().parents[2], ollama_address=args.ollama, gpu=lambda: None)
     try:
         setup.install_published_model(args.install_model)
+        if args.install_model == SPEAKER_MODEL:
+            runtime = Path(os.environ.get("ABOOK_RUNTIME") or setup.app_root / "runtime")
+            setup.speaker_tokenizer = runtime / "models" / TOKENIZER_FOLDER / TOKENIZER_FILE
+            setup._install_speaker_tokenizer()
     except SetupError as error:
         print(error)
         return 2

@@ -1063,23 +1063,26 @@ class BookPipeline:
             else:
                 self._state("running", "Đang khóa nhân vật theo tên và phân vai.")
                 self._state("running", "Đang chuẩn hóa cách đọc tên tiếng Anh.")
-                # Before names are locked: a speaker the analysis could only describe may
-                # turn out to be a character the text names later in the same chapter.
-                self._state("running", "Đang phân giải danh tính nhân vật chỉ được mô tả.")
-                analyzer.reconcile_local_speaker_identities(
-                    before_batch=lambda index: self._resource_gate(
-                        f"local identity batch {index}",
-                        release_active=analyzer.release_model,
-                    ),
-                    stop_requested=self.stop_requested,
-                )
-                analyzer.reconcile_name_pronunciations(
-                    before_batch=lambda index: self._resource_gate(
-                        f"name pronunciation batch {index}",
-                        release_active=analyzer.release_model,
-                    ),
-                    stop_requested=self.stop_requested,
-                )
+                if not self.db.speaker_pass_is_reconciled():
+                    # Before names are locked: a speaker the analysis could only describe may
+                    # turn out to be a character the text names later in the same chapter.
+                    self._state("running", "Đang phân giải danh tính nhân vật chỉ được mô tả.")
+                    analyzer.reconcile_local_speaker_identities(
+                        before_batch=lambda index: self._resource_gate(
+                            f"local identity batch {index}",
+                            release_active=analyzer.release_model,
+                        ),
+                        stop_requested=self.stop_requested,
+                    )
+                    analyzer.reconcile_name_pronunciations(
+                        before_batch=lambda index: self._resource_gate(
+                            f"name pronunciation batch {index}",
+                            release_active=analyzer.release_model,
+                        ),
+                        stop_requested=self.stop_requested,
+                    )
+                    if self.settings.get("analysis", {}).get("speaker_model"):
+                        self.db.mark_speaker_pass_reconciled()
                 # Sau hai lượt hoà giải, ngay trước phân vai - đúng thứ tự lượt đo B41 (dự án B9 đã xong cả hai lượt rồi mới hỏi):
                 # nhãn người nói của từng câu thoại/nội tâm do model người nói trả (speaker_pass.py) là nguồn speaker cuối của câu
                 # nói; hoà giải nhãn cục bộ KHÔNG chạy lại trên nhãn ấy (lượt đo không có bước đó).
