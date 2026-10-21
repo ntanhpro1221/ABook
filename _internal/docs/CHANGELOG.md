@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- Sách đã gỡ khoá còn giữ file thông tin quyền mở được cả khi chương có nhiều ký tự ngắt trang (từ Word) hay ký tự trống đệm cuối trang, thay vì bị báo là có khoá bản quyền.
+- EPUB khai bảng mã ISO-2022-JP, HZ hay một bảng mã ít gặp được máy tính và điện thoại cùng xử lý như nhau (cùng báo file hỏng) thay vì máy tính mở được còn điện thoại báo hỏng.
+
 ## [0.4.122] - 2026-10-22
 
 ### Sửa lỗi
