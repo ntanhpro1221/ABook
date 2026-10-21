@@ -14,6 +14,7 @@ import functools
 import hashlib
 import http.client
 import json
+import math
 import mimetypes
 import os
 import re
@@ -3185,13 +3186,15 @@ class ClipStream:
     `X` JSON `{"message", "reason"}` (lỗi sau khi đã phát) rồi hết, `C` JSON `{"word"}` (một mảnh giữa clip hỏng: tiếng sẽ dừng trước chữ hiện `word` của clip, phần trước vẫn về hết rồi mới tới X - uxfix63).
     Giọng trên máy (readaloud/local_stream.py, chỉ khi trình phát nói nhận được - `local`): `M` JSON `{"mime"}` trước `A` đầu = kiểu tiếng (không có = MP3 như Edge; giọng trên máy:
     FLAC trong MP4 phân mảnh), `E` có thêm `"exact": false` khi tiếng đã phát luồng khác clip cuối (bù độ to cả clip) - trình phát chuyển sang file cuối tại chỗ đang nghe.
-    `speed`: tốc độ phát của người nghe (giọng trên máy chờ đủ tiếng để không đứt giữa chừng).
+    `speed`: tốc độ phát của người nghe (giọng trên máy chờ đủ tiếng để không đứt giữa chừng); `reach`: lúc (time.perf_counter) người nghe hết tiếng trước đoạn này -
+    từ đó giọng trên máy gửi ngay khúc đã đọc xong (local_stream.LocalStream; inf = không biết).
     Người nghe đóng kết nối giữa chừng: thôi ghi, việc đọc vẫn làm xong (clip vào bộ đệm, đoạn ấy nghe lại được)."""
 
-    def __init__(self, handler: Handler, *, local: bool = False, speed: float = 1.0) -> None:
+    def __init__(self, handler: Handler, *, local: bool = False, speed: float = 1.0, reach: float = math.inf) -> None:
         self.handler = handler
         self.local = local
         self.speed = speed
+        self.reach = reach
         self.sent = False  # đã mở lời đáp 200 (từ đó chỉ còn bản ghi, không còn JSON thường)
         self.exact = True
         self._broken = False
@@ -5498,7 +5501,10 @@ class Handler(BaseHTTPRequestHandler):
         # `localStream: true`: trình phát nhận được tiếng giọng trên máy phát luồng (FLAC, ClipStream; cả đoạn đọc trước - rank > 0 - vì giọng trên máy không có hàng chờ kết nối để nhường), `rate`: tốc độ nó đang phát.
         speed = body.get("rate")
         speed = float(speed) if isinstance(speed, (int, float)) and not isinstance(speed, bool) and 0.25 <= speed <= 4 else 1.0
-        stream = (ClipStream(self, local=body.get("localStream") is True, speed=speed)
+        # `soundLeft`: giây người nghe còn nghe được trước đoạn này (0 = đang đứng chờ nó) - từ lúc ấy giọng trên máy không giữ khúc đã đọc xong nữa (ClipStream.reach).
+        left = body.get("soundLeft")
+        reach = time.perf_counter() + left if isinstance(left, (int, float)) and not isinstance(left, bool) and 0 <= left <= 3600 else math.inf
+        stream = (ClipStream(self, local=body.get("localStream") is True, speed=speed, reach=reach)
                   if body.get("stream") is True and (rank == 0 or body.get("localStream") is True) and not body.get("cachedOnly") else None)
         try:
             # `cancelled`: trình phát đóng kết nối (bỏ đoạn này) thì lượt đọc dừng - mọi giọng, giọng trên máy dừng giữa các khúc / bước (uxfix70).

@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Giọng trên máy (Supertonic, VieNeu) không còn bắt bạn ngồi im khi khúc đầu của đoạn kế đã đọc xong: trước đây máy giữ khúc ấy lại tới khi chắc phần còn lại theo kịp, giờ hễ bạn hết tiếng là nghe ngay. Trên OPPO, Supertonic bản nhanh, đang sạc: lặng sau tiêu đề chương từ 4,0 và 11,0 giây xuống 0 và 2,0 giây, trước một đoạn dài từ 9,1 xuống 3,7 giây; VieNeu Nano sau tiêu đề từ 13,1 xuống 3,5 giây. Trên điện thoại, VieNeu Nano giờ cũng được chờ thêm tối đa 1,5 giây lúc mở chương (trước đây máy tưởng nhầm Nano đọc chậm hơn bạn nghe nên bỏ qua, để bạn im 4,1-4,6 giây sau tiêu đề). Tiếng đọc không đổi một mẫu.
+
 ## [0.4.117] - 2026-10-21
 
 ### Nghe ngay

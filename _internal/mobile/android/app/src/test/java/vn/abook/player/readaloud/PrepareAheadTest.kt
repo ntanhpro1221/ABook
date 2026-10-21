@@ -125,6 +125,11 @@ class PrepareAheadTest {
         repeat(10) { speeds.record("edge:a", 5000, 1000.0) } // máy chậm hẳn đi: 0,2 giây mỗi ký tự
         assertTrue(speeds.secondsPerChar("edge:a")!! > 0.19)
         assertNull(speeds.secondsPerChar("edge:b"))
+        assertNull("chưa ghi giây tiếng", speeds.audioPerChar("edge:a"))
+        speeds.record("vieneu:nano/a", 100, 6.0, 8.2)
+        speeds.record("vieneu:nano/a", 100, 7.0) // làm trước / xuất: không biết giây tiếng - phần tiếng giữ nguyên
+        assertEquals(0.082, VoiceSpeeds(file).audioPerChar("vieneu:nano/a")!!, 1e-9)
+        assertEquals(0.065, VoiceSpeeds(file).secondsPerChar("vieneu:nano/a")!!, 1e-9)
     }
 
     // ---- vòng làm -----------------------------------------------------------------------------------------------------
