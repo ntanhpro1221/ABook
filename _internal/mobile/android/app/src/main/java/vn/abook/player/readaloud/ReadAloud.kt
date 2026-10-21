@@ -85,6 +85,8 @@ object ReadAloud {
         var cutHandled = false
         /** Tốc độ phát lúc xin (giọng trên máy, [LiveClips.Target.speed]). */
         @Volatile var speed = 1f
+        /** Lúc người nghe hết tiếng trước đoạn này ([LiveClips.Target.reachNanos], [soundReachesNanos]). */
+        @Volatile var reach = Long.MAX_VALUE
 
         override fun accepting() = !started
 
@@ -93,6 +95,8 @@ object ReadAloud {
         }
 
         override fun speed() = speed
+
+        override fun reachNanos() = reach
 
         override fun grew(file: File, total: Long) {
             entry.grew(file, total)
@@ -821,6 +825,22 @@ object ReadAloud {
         return if (PreparePlan.online(voiceId)) policy.needMore(ahead) else ReadAheadPolicy.localNeedsMore(ahead, AHEAD)
     }
 
+    /**
+     * Lúc (System.nanoTime) người nghe hết tiếng trước đoạn sắp đọc: ngay bây giờ khi không còn gì để nghe (đang chờ đoạn này, hàng đợi cạn), không thì sau phần còn lại của mục đang phát và các mục
+     * đã nạp sau nó ở tốc độ đang nghe; [Long.MAX_VALUE] khi người nghe đang dừng hay có mục chưa biết độ dài. Giọng trên máy giữ khúc đã đọc tới lúc này là cùng ([LocalLive]).
+     */
+    private fun soundReachesNanos(): Long {
+        val exo = Playback.player ?: return Long.MAX_VALUE
+        if (!wantsPlay()) return Long.MAX_VALUE
+        val now = System.nanoTime()
+        if (!listenerHasAudio(exo)) return now
+        val current = exo.currentMediaItem?.let(::aheadMs) ?: return Long.MAX_VALUE
+        val queued = ((exo.currentMediaItemIndex + 1) until exo.mediaItemCount).map { aheadMs(exo.getMediaItemAt(it)) }
+        if (current >= ReadAheadPolicy.MAX_BUFFER_MS || queued.any { it >= ReadAheadPolicy.MAX_BUFFER_MS }) return Long.MAX_VALUE
+        val leftMs = (current - exo.currentPosition).coerceAtLeast(0) + queued.sum()
+        return now + (leftMs / maxOf(exo.playbackParameters.speed, 0.1f) * 1_000_000).toLong()
+    }
+
     /** Độ dài (ms) của một mục đã nạp phía trước; mục không phải đoạn đọc to (chương audio) tính là dài - đã đủ đệm. */
     private fun aheadMs(item: MediaItem): Long {
         val slot = item.localConfiguration?.tag as? Slot
@@ -928,6 +948,7 @@ object ReadAloud {
         val liveJob = if (LivePolicy.streams(voice, online, rank, probe, aim?.offsetMs, aim?.word ?: -1)) LiveJob(token, chap, segment, voice, continuing) else null
         liveJob?.cancel = cancel
         liveJob?.speed = Playback.player?.playbackParameters?.speed ?: 1f
+        liveJob?.reach = soundReachesNanos()
         running = liveJob
         // Lượt này còn là việc hiện hành ở luồng đọc (thử lại, đọc lại sau lượt song song hỏng): cùng thế hệ, hay là lượt phát luồng được giữ qua lần đổi giọng ([kept]).
         val alive = { token == generation || (liveJob != null && liveJob === kept) }
@@ -966,7 +987,7 @@ object ReadAloud {
                 // Người nghe đã tới đoạn này: đoạn làm trước thôi được ghim. Đọc thật (không phải lấy từ bộ đệm) bằng đúng giọng đã chọn thì ghi tốc độ.
                 runCatching { cache().unpin(clip.voice, readText, origin, readings) }
                 val seconds = (System.nanoTime() - began) / 1e9
-                if (clip.voice == voice && seconds * 1000 > PrepareRunner.CACHED_MS) runCatching { speeds().record(voice, readText.length, seconds) }
+                if (clip.voice == voice && seconds * 1000 > PrepareRunner.CACHED_MS) runCatching { speeds().record(voice, readText.length, seconds, clip.durationMs / 1000.0) }
             }
             Playback.onMain { onClipReady(token, chap, segment, result, probe, tailFrom, liveJob, continuing) }
         }
@@ -1304,10 +1325,11 @@ object ReadAloud {
         val readings = readingsOf(bookId)
         val cached = runCatching { cache().contains(voiceId, text, origin, readings) }.getOrDefault(false)
         val perChar = runCatching { speeds().secondsPerChar(voiceId) }.getOrNull()
+        val audioPerChar = runCatching { speeds().audioPerChar(voiceId) }.getOrNull() ?: LocalLive.AUDIO_PER_CHAR
         // Đoạn kế nhiều khúc thì nhập luồng được ngay khi đủ điều kiện bắt đầu ([onLiveStarted]): chỉ cần giữ tới lúc ấy, không phải tới khi đọc xong cả đoạn.
         val speed = (Playback.player?.playbackParameters?.speed ?: 1f).toDouble()
-        val chars = if (cached) null else LocalLive.charsBeforeStreamStarts(voiceId, text, origin, readings, perChar, speed)
-        val wait = ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, chars, perChar, speed)
+        val chars = if (cached) null else LocalLive.charsBeforeStreamStarts(voiceId, text, origin, readings, perChar, speed, audioPerChar)
+        val wait = ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, chars, perChar, speed, audioPerChar)
         if (wait <= 0) return false
         val token = generation
         opening = Opening(token, item, offset)
