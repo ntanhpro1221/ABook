@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.119] - 2026-10-21
+
 ### Sửa lỗi
 
 - Khi bạn làm tiếp giữa lượt xác định người nói, các chương đã xong giữ nguyên nhãn đã chốt.
