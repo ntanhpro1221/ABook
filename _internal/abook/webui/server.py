@@ -1134,20 +1134,49 @@ class App:
 
     def undo_trash(self, token: str) -> dict[str, Any]:
         """"Hoàn tác" một lần xoá: thư mục về đường gốc hoặc tên anh em còn trống, thư viện thấy lại. Hàng chờ KHÔNG được xếp lại - ghi trong lời
-        báo (`wasQueued`) để người dùng tự xếp nếu muốn."""
+        báo (`wasQueued`) để người dùng tự xếp nếu muốn.
+
+        Tên anh em là một mã sách khác (mã = đường dẫn): chỗ nghe, dấu trang, hồ sơ, tốc độ, giọng và lượt xuất dở đi theo cuốn sang mã mới - cuốn
+        đang chiếm đường gốc không giữ dữ liệu của cuốn đã xoá. Dự án nằm trong một chuỗi phần (`continues.json` trỏ tới / từ nó) thì không đổi
+        tên được: phần sau sẽ nối nhầm sang cuốn đang chiếm chỗ - từ chối như trước, người dùng bỏ cuốn kia rồi hoàn tác."""
         self._mutating()
         root = self.library.root.resolve()
         try:
-            meta = self.trash.restore(self.trash.root_of(token, root), token)  # thư viện lúc xoá, nếu đã đổi giữa hạn
+            meta = self.trash.restore(self.trash.root_of(token, root), token,  # thư viện lúc xoá, nếu đã đổi giữa hạn
+                                      may_rename=lambda held, item: not self._in_series(held, item))
         except trash_pending.NotPending as error:
             raise ApiError(HTTPStatus.NOT_FOUND, "Hết thời gian hoàn tác - cuốn này đã nằm trong Thùng rác của Windows, "
                                                  "khôi phục từ đó được.") from error
+        except trash_pending.Occupied as error:
+            raise ApiError(HTTPStatus.CONFLICT, "Chỗ cũ đã có một cuốn cùng tên, mà cuốn này là một phần của bộ nhiều phần nên không khôi phục "
+                                                "dưới tên khác được. Bạn xoá cuốn vừa thêm rồi bấm Hoàn tác lại (còn ít giây nữa).") from error
         except OSError as error:
             raise ApiError(HTTPStatus.CONFLICT, f"Không khôi phục được - có thể thư mục đích đang mở. ({error})") from error
         path = Path(meta["original"])
+        if meta.get("renamedFrom"):
+            self._adopt_restored_id(book_id(Path(meta["renamedFrom"])), book_id(path))
         if meta["kind"] == "project" and path.parent.resolve() != root:
             self.preferences.add_recent(path)  # dự án mở từ nơi khác thư viện: hiện lại qua "gần đây"
-        return {"ok": True, "title": path.name, "wasQueued": bool(meta.get("queued"))}
+        return {"ok": True, "title": path.name, "renamed": bool(meta.get("renamedFrom")), "wasQueued": bool(meta.get("queued"))}
+
+    def _in_series(self, meta: dict[str, Any], item: Path) -> bool:
+        """Dự án đang chờ hoàn tác (`item`) có nằm trong một chuỗi phần: nó nối tiếp một phần trước, hay một dự án của thư viện nối tiếp đường gốc của nó."""
+        if meta.get("kind") != "project":
+            return False
+        if continuation.previous_path(item) is not None:
+            return True
+        original = Path(meta["original"])
+        return any(continuation.previous_path(project) == original for project in self.library.projects())
+
+    def _adopt_restored_id(self, old: str, new: str) -> None:
+        """Cuốn vừa hoàn tác về tên anh em: dữ liệu nghe và lượt xuất dở theo mã cũ (đường gốc) sang mã mới."""
+        self._rename_book_ids({old: new}, ".pre-undo.bak", fresh_backup=True)
+        work = listen_export.work_folder(self.export_work_dir, old)
+        if work.is_dir():
+            try:
+                os.replace(work, listen_export.work_folder(self.export_work_dir, new))
+            except OSError:
+                pass  # thư mục đích đã có / đang mở: lượt xuất làm lại từ đầu, không mất gì của sách
 
     def remove_imported(self, value: str, *, undo: bool = False) -> dict[str, Any]:
         """Bỏ một cuốn NHẬP TỪ FILE `.abook` khỏi thư viện: thư mục đã giải nén vào Thùng rác. File `.abook` gốc không bị
