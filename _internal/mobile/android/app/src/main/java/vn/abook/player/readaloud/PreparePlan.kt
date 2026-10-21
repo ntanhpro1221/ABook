@@ -154,7 +154,7 @@ object PreparePlan {
 
 /**
  * Tốc độ đo được của từng giọng (giây máy cần cho mỗi ký tự), từ cả lúc nghe trực tiếp lẫn lúc làm trước: ước "còn khoảng N phút" trước khi việc mới tự đo được.
- * Giữ tổng có trọng số: quá [WINDOW] ký tự thì chia đôi, số đo mới dần thắng. Lúc nghe trực tiếp còn ghi giây tiếng ra ([audioPerChar]): giọng đọc nhanh hơn hay chậm hơn nghe.
+ * Giữ tổng có trọng số: quá [WINDOW] ký tự thì chia đôi, số đo mới dần thắng. [work] đo riêng chi phí cố định mỗi khúc và giây máy mỗi ký tự; [audioPerChar] đo giây tiếng mỗi ký tự.
  */
 class VoiceSpeeds(private val file: File) {
     companion object {
@@ -164,8 +164,8 @@ class VoiceSpeeds(private val file: File) {
     private val data: JSONObject = runCatching { JSONObject(file.readText()) }.getOrElse { JSONObject() }
 
     @Synchronized
-    fun record(voice: String, chars: Int, seconds: Double, audioSeconds: Double = 0.0) {
-        if (chars <= 0 || seconds <= 0) return
+    fun record(voice: String, chars: Int, seconds: Double, audioSeconds: Double = 0.0, units: Int = 0, unitChars: Int = chars) {
+        if (chars <= 0 || !seconds.isFinite() || seconds <= 0) return
         val entry = data.optJSONObject(voice) ?: JSONObject()
         var c = entry.optDouble("chars", 0.0) + chars
         var s = entry.optDouble("seconds", 0.0) + seconds
@@ -179,13 +179,49 @@ class VoiceSpeeds(private val file: File) {
             ac /= 2
             a /= 2
         }
-        data.put(voice, JSONObject().put("chars", c).put("seconds", s).apply { if (ac > 0) put("audioChars", ac).put("audio", a) })
+        entry.put("chars", c).put("seconds", s)
+        if (ac > 0) entry.put("audioChars", ac).put("audio", a)
+        // Hồi quy y = a*u + b*c trên cửa sổ có trọng số (u: số khúc THẬT, c: tổng ký tự của các khúc). Bản JSON cũ không có các tích này: không bịa số khúc cho số đo cũ.
+        if (units > 0 && unitChars > 0) {
+            val fit = entry.optJSONObject("work") ?: JSONObject()
+            val u = units.toDouble()
+            val x = unitChars.toDouble()
+            val terms = mapOf("uu" to u * u, "uc" to u * x, "cc" to x * x, "uy" to u * seconds, "cy" to x * seconds, "chars" to x, "samples" to 1.0, "units" to u)
+            for ((key, value) in terms) fit.put(key, fit.optDouble(key, 0.0) + value)
+            if (fit.optDouble("chars") > WINDOW) for (key in terms.keys) fit.put(key, fit.optDouble(key) / 2)
+            entry.put("work", fit)
+        }
+        data.put(voice, entry)
         runCatching {
             val part = File(file.path + ".part")
             part.writeBytes(data.toString().toByteArray(Charsets.UTF_8))
             file.delete()
             part.renameTo(file)
         }
+    }
+
+    /** Ghi hình dạng do chính bộ cắt của giọng tạo ra; chỉ đo lượt đọc thật, không phải lấy từ bộ đệm. */
+    fun recordRead(voice: String, text: String, origin: String?, readings: Map<String, String>?, seconds: Double, audioSeconds: Double = 0.0) {
+        val cut = runCatching { LocalLive.unitsOf(voice, text, origin, readings) }.getOrNull()
+        val lengths = cut?.let { (tokens, units) -> units.map { it.text(tokens).length } }.orEmpty()
+        record(voice, text.length, seconds, audioSeconds, lengths.size, lengths.sum())
+    }
+
+    /** Chưa có ít nhất bốn số đo có độ dài khúc khác nhau, hay hai hệ số vô lý: dùng luật cũ. Ma trận gần suy biến cũng không đủ để đo riêng a và b. */
+    @Synchronized
+    fun work(voice: String): VoiceWork? {
+        val fit = data.optJSONObject(voice)?.optJSONObject("work") ?: return null
+        if (fit.optDouble("samples", 0.0) < 4) return null
+        val uu = fit.optDouble("uu")
+        val uc = fit.optDouble("uc")
+        val cc = fit.optDouble("cc")
+        val uy = fit.optDouble("uy")
+        val cy = fit.optDouble("cy")
+        val det = uu * cc - uc * uc
+        if (det <= uu * cc * 1e-4) return null
+        val a = (uy * cc - cy * uc) / det
+        val b = (cy * uu - uy * uc) / det
+        return if (a.isFinite() && b.isFinite() && a >= 0 && b >= 0 && a + b > 0) VoiceWork(a, b) else null
     }
 
     @Synchronized
@@ -220,7 +256,7 @@ class PrepareRunner(
     private val save: (PrepareJob) -> Unit,
     /** Phần bộ đệm dành cho làm trước đã đầy. */
     private val full: () -> Boolean = { false },
-    private val timed: (Int, Double) -> Unit = { _, _ -> },
+    private val timed: (String, Double) -> Unit = { _, _ -> },
     /** Đồng hồ đơn điệu (ms). */
     private val clock: () -> Long = System::currentTimeMillis,
     private val sleep: (Long) -> Unit = { Thread.sleep(it) },
@@ -289,7 +325,7 @@ class PrepareRunner(
                 if (spent > CACHED_MS) {
                     job.charsTimed += text.length
                     job.seconds += spent / 1000.0
-                    timed(text.length, spent / 1000.0)
+                    timed(text, spent / 1000.0)
                 }
                 save(job)
             }

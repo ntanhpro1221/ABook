@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.122] - 2026-10-22
+
 ### Sửa lỗi
 
 - Khi bạn nhập EPUB còn khoá bản quyền (DRM) - của Apple, Adobe, Kobo, Readium LCP, kể cả khi sách không kèm mô tả mã hoá - mà chữ chương vẫn bị mã hoá, máy tính và điện thoại báo rõ lý do cùng cách dùng bản không khoá; sách đã gỡ khoá (vẫn giữ file thông tin quyền), sách có chương trống hay mở đầu bằng khoảng trắng lạ, và sách chỉ làm rối font vẫn đọc được, kể cả mô tả UTF-16 hoặc tên font có emoji.
@@ -14,7 +16,30 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nội dung XML lạ (khai báo entity) giấu ở bất cứ đâu trong EPUB, bảng mã nào, đều bị chặn trên máy tính và điện thoại để giữ an toàn máy của bạn.
 - Khi sách mất file chữ, bạn thấy đúng số chương cần chép bù và hướng dẫn thêm lại file sách gốc; sách đủ audio vẫn được báo đủ chương.
 - Khi bạn đóng hoặc nhấn Esc ở hộp thêm sách đang chọn hay đọc file (hay rời màn hình ấy), lựa chọn, bản xem trước và lỗi trả về muộn không còn hiện lại; mở file .abook trả muộn cũng không tự chuyển trang, nhưng cuốn đã mở xong vẫn hiện ngay trong thư viện của bạn.
+- Khi bạn đổi tên sách, tên chương hoặc bìa lúc đang nghe, thanh phát và thẻ media hệ điều hành cập nhật ngay trên máy tính và điện thoại; mở sách nghìn chương trên điện thoại không còn khựng, và đổi tên lúc đã nghe hết sách vẫn giữ khối “Hết sách”.
+- Khi bạn quay lại Thư viện, danh sách nhớ chỗ cuộn theo bộ lọc và cách sắp xếp, kể cả thư viện nhiều sách.
+- Khi bạn hoàn tác xoá sách mà chỗ cũ đã có cuốn khác, sách được khôi phục vào thư mục tên còn trống cạnh đó (lời báo nói tên thư mục mới) và mang theo chỗ nghe, dấu trang, tốc độ, giọng đọc, chỗ đang đọc chữ; cuốn mới thêm vào chỗ cũ không nhận nhầm những thứ ấy và vẫn lưu được chỗ nghe của nó. Bạn xoá một cuốn, thêm cuốn mới cùng tên rồi xoá luôn cuốn ấy và hoàn tác cả hai thì cuốn cũ về đúng chỗ của nó, giữ nguyên những gì của nó. Dự án là một phần của bộ nhiều phần thì vẫn chờ bạn bỏ cuốn kia rồi hoàn tác, để các phần không nối nhầm.
+- Khi bạn xoá nhiều cuốn liên tiếp, một thông báo Hoàn tác chung giữ các cuốn còn hạn trên máy tính và điện thoại; gạt thông báo đi là bỏ hoàn tác những cuốn ấy, và nút Hoàn tác không còn biến mất khi lần hoàn tác trước báo lỗi hay khi bạn xoá cuốn kế ngay lúc thông báo cũ đang tắt.
+- Khi bạn đóng hoặc xoá cuốn đang nghe, thông báo “Quay lại chỗ cũ” của cuốn ấy cũng được gỡ.
+- Khi bạn mở tab Chương của sách hàng nghìn chương, danh sách chỉ dựng phần gần màn hình và chương bạn đang nghe.
 - Lời lỗi nhập sách đứng riêng bắt đầu bằng chữ hoa trên máy tính và điện thoại để bạn dễ đọc.
+
+## [0.4.121] - 2026-10-22
+
+### Nghe ngay
+
+- Khi bạn nghe bằng giọng trên điện thoại, đầu chương được giữ theo lịch dự đoán từ các khúc đã đo để bớt khựng sau chuỗi đoạn ngắn; chưa đo trên máy thật.
+- Lịch giữ đầu chương được tính ở nền nên bạn không còn bị khựng giao diện lúc mở chương dài (máy tính đo 20-68 ms cho chương 12 nghìn ký tự, điện thoại chậm hơn nhiều lần).
+- Khi bạn đổi giọng lúc đầu chương còn đang chuẩn bị, chỗ ấy được đọc lại ngay bằng giọng mới, và nếu chữ chương còn đang tải về từ máy giữ sách thì bạn vẫn nghe tiếp đúng chỗ đã chọn chứ không bị đưa về đầu chương (cả khi bấm Thử lại sau lúc tải chữ hỏng); một đoạn đọc hỏng trong lúc giữ đầu chương không còn bị phát hai lần.
+- Khi bạn nghe giọng trên máy mà màn hình tắt, điện thoại được giữ thức trong lúc đọc đoạn bạn đang chờ; chưa đo trên máy thật.
+
+### Sửa lỗi
+
+- Vai phụ giữ đúng giới và tuổi khi lượt xác định người nói chỉ đổi dạng nhãn của cùng vai trong cùng chương; sửa lỗi từ 0.4.119 khiến bạn có thể nhận giọng chưa rõ giới.
+- Nếu model chưa sẵn sàng lúc hoà giải nhân vật, khi bạn làm tiếp app thử lại bước này trước khi xác định người nói và phân vai.
+- Khi bù độ to hoặc hoàn tất clip bị lỗi, luồng giọng trên máy được đóng cả trên máy tính và điện thoại, tránh gửi thêm tiếng sau khi bạn đã nhận báo lỗi.
+- Khi clip đã xong hoặc bị bỏ, app huỷ hẹn giờ phát còn chờ trên máy tính và điện thoại, tránh giữ tài nguyên khi bạn nghe lâu hoặc chuyển đoạn nhiều lần.
+- Khi bạn cài bằng script Windows, setuptools được giữ dưới bản 82 để pyworld vẫn nạp được.
 
 ## [0.4.120] - 2026-10-21
 

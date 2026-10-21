@@ -219,6 +219,58 @@ def test_a_failed_read_cancels_the_pending_release(local_voices, monkeypatch: py
     assert not listener.events, "lượt hỏng: không ghi gì vào lời đáp lỗi"
 
 
+@pytest.mark.parametrize("failure", ["lift", "close"])
+def test_failure_before_local_close_drops_the_stream(local_voices, monkeypatch: pytest.MonkeyPatch, failure: str) -> None:
+    make, _, _ = local_voices
+    pending = []
+    monkeypatch.setattr(local_stream, "_schedule", lambda delay, task: pending.append(task))
+    monkeypatch.setattr(local_stream, "ready_to_play", lambda *a, **kw: False)
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("post-synthesis failed")
+
+    monkeypatch.setattr(service_module.loudness, "lifts", lambda voice: True)
+    monkeypatch.setattr(service_module.loudness, "lift_wav", fail if failure == "lift" else lambda voice, audio: audio)
+    if failure == "close":
+        monkeypatch.setattr(local_stream.LocalStream, "close", fail)
+    listener = Listener()
+    listener.reach = time.perf_counter() + 3600
+    with pytest.raises(RuntimeError, match="post-synthesis failed"):
+        make("cache").clip("vieneu:nano/Nhẹ", LONG.strip(), rank=1, stream=listener)
+    assert pending and not listener.events
+    pending[0]()
+    assert not listener.events, "callback muộn không được ghi vào lời đáp lỗi"
+
+
+@pytest.mark.parametrize("end", ["close", "drop"])
+def test_finished_local_stream_cancels_and_releases_its_timer(monkeypatch: pytest.MonkeyPatch, end: str) -> None:
+    timers = []
+
+    class Timer:
+        def __init__(self, delay, task):
+            self.delay, self.task = delay, task
+            self.cancelled = False
+            timers.append(self)
+
+        def start(self):
+            pass
+
+        def cancel(self):
+            self.cancelled = True
+
+    monkeypatch.setattr(local_stream.threading, "Timer", Timer)
+    rate, now = 24_000, [0.0]
+    toks, parts = vieneu.units(LONG.strip(), 140)
+    listener = Listener()
+    stream = local_stream.LocalStream(listener, toks, parts, None, clock=lambda: now[0], reach=3600)
+    _slow_units(stream, parts, rate, now, 1)
+    assert len(timers) == 1 and timers[0].daemon
+    stream.close(b"") if end == "close" else stream.drop()
+    assert timers[0].cancelled
+    timers[0].task()
+    assert not listener.events
+
+
 # ---- clip qua ReadAloud: bất biến byte ---------------------------------------------------------------------------------------------
 @pytest.fixture
 def local_voices(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

@@ -8,6 +8,12 @@ INTERNAL_ROOT = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = INTERNAL_ROOT.parent
 
 
+def test_windows_setup_keeps_pkg_resources_for_pyworld() -> None:
+    setup = (INTERNAL_ROOT / "scripts/setup_windows.ps1").read_text(encoding="utf-8-sig")
+    upgrade = next(line for line in setup.splitlines() if "pip install --upgrade pip" in line)
+    assert '"setuptools<82"' in upgrade
+
+
 def test_one_click_startup_contract() -> None:
     start_path = INTERNAL_ROOT / "ABook.vbs"
     start_bytes = start_path.read_bytes()
