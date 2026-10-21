@@ -2,6 +2,22 @@
 
 Ngày cập nhật: 2026-10-21
 
+Giữ đầu chương điện thoại (`dev/openhold`, từ 0.4.120): `VoiceSpeeds` khớp thời gian = chi phí mỗi khúc + giây/ký tự,
+theo tổng có trọng số 20.000 ký tự; ít hơn 4 mẫu hay không phân biệt được hai hệ số thì dùng luật cũ. Lịch 60 s tiếng đầu lấy
+mức giữ nhỏ nhất để các đoạn kịp bắt đầu, cộng biên 200 ms, trần 6.000 ms; RTF dự đoán toàn chương >= 1 thì phát ngay.
+Chỉ đổi lịch, không đổi bộ sinh/cắt/ghép tiếng. Desktop không có giữ đầu chương tương ứng (`holdUntil` ở UI là nhịp chờ sau nhảy).
+
+JVM offline, 4 worker, JVM ActiveProcessorCount=4, Kotlin in-process: **1.176 tests, 0 failures, 0 errors, 6 skipped, exit 0**
+(137 XML suites). `OpeningScheduleTest` **11/11**: sách A dựng từ số OPPO giữ **5.913 ms**, không đoạn nào muộn trong 60 s;
+sách B dạng đoạn dài với máy nhanh giữ **1.210 ms**, cũ **1.105 ms**; chưa đo / JSON cũ **1.500 ms** như cũ; RTF >= 1 **0 ms**.
+Kiểm thêm hồi quy/lưu/mờ số đo, bộ cắt thật, hàng chờ clip thường + phát luồng, ngăn cảnh/bộ đệm/cửa sổ, biên sát hạn **100 ms**.
+`LocalLiveTest` **10/10**, gồm đối chiếu byte clip phát luồng. Không đo điện thoại, máy ảo hay GPU; chưa đo trên máy thật.
+
+Riêng log OPPO nóng `c2_stB` của đợt gap: tiêu đề 2.230 ms, khúc đầu 5.367 ms => cần ít nhất **3.137 ms** chưa cộng biên,
+lịch giữ **3.337 ms**. Ca `theRecordedHotOppoBookBCannotFitTheOldCapPlusHalfASecond` ghi rõ yêu cầu B <= 2.000 ms không thể
+đồng thời thoả điều kiện không bắt đầu muộn với số đo ấy; ca B máy nhanh ở trên không thay cho log này. Đã hỏi người dùng về ưu tiên.
+Vitest/tsc không chạy vì không sửa UI. Hash khoá trước/sau cùng `49e8fd2dc212c7207cd0fbf66b308e6b0d1b49d220d64a16501d170bc906635f` (41 mục đọc từ code).
+
 Đợt pqfix B41 (`dev/pqfix`): xác nhận cả 5 lỗi bằng test đỏ trước sửa (resume hoà giải lại chương đã commit; NPC thiếu phạm vi
 chương; câu đổi vai giữ giới/tuổi cũ; CLI cài thiếu tokenizer; kiểm digest rớt mạng không retry). Thêm 20 ca kiểm trong 5 file
 `test_speaker_pass_reconcile_resume.py`, `test_speaker_pass_local_scope.py`, `test_speaker_pass_traits.py`,

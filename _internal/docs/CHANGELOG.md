@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Khi bạn nghe bằng giọng trên điện thoại, đầu chương được giữ theo lịch dự đoán từ các khúc đã đo để bớt khựng sau chuỗi đoạn ngắn; chưa đo trên máy thật.
+
 ## [0.4.120] - 2026-10-21
 
 ### Thư viện

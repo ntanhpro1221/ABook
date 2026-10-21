@@ -215,9 +215,11 @@ object ReadAloud {
     private var feedChapter = 0
     private var feedSegment = 0
     private var waiting: Target? = null
-    /** Clip đầu của lần mở / nhảy bằng giọng trên máy đang được giữ chờ đoạn kế ([holdOpening]): phát khi đoạn kế đọc xong hay hết hạn ([releaseOpening]). Luồng chính. */
+    /** Clip đầu của lần mở / nhảy bằng giọng trên máy đang được giữ ([holdOpening]): theo lịch đo được, hoặc chờ đoạn kế theo luật cũ khi chưa đủ số đo. Luồng chính. */
     private var opening: Opening? = null
-    private class Opening(val token: Int, val item: MediaItem, val offsetMs: Long)
+    private class Opening(val token: Int, item: MediaItem, val offsetMs: Long, scheduled: Boolean, val deadline: Long) {
+        val queue = OpeningQueue(item, scheduled)
+    }
     private var failure: String? = null
     /** Đứng ở đầu một chương chữ mà giọng trực tuyến chưa được đồng ý (chương trước hết rồi tự sang): không đọc gì tới khi người nghe bấm phát -
      *  giao diện hỏi đồng ý trước khi gửi lệnh phát (player.tsx withConsent). */
@@ -777,6 +779,7 @@ object ReadAloud {
             // Dòng ngăn cảnh không có quãng lặng (đầu / cuối chương, dòng thứ hai liền nhau) không phải là gì để phát: bỏ qua cả chuỗi mà không tốn vòng của `guard`.
             while (feedSegment < chap.paragraphs.size && chap.isBreak(feedSegment) && chap.gaps[feedSegment] == 0) feedSegment += 1
             if (feedSegment >= chap.paragraphs.size) {
+                if (opening?.queue?.scheduled == true) return // cả chương đã vào hàng chờ: đợi phát clip đầu, không báo nhầm "không có chữ" hay đọc sang chương khác
                 if (feedChapter + 1 >= all.size) {
                     if (waiting != null) fail("Chương “${chapter.title}” không có chữ để đọc")
                     return
@@ -833,6 +836,12 @@ object ReadAloud {
         val exo = Playback.player ?: return Long.MAX_VALUE
         if (!wantsPlay()) return Long.MAX_VALUE
         val now = System.nanoTime()
+        opening?.takeIf { it.queue.scheduled }?.let { hold ->
+            val lengths = hold.queue.items.map(::aheadMs)
+            if (lengths.any { it >= ReadAheadPolicy.MAX_BUFFER_MS }) return Long.MAX_VALUE
+            val leftMs = (lengths.sum() - hold.offsetMs).coerceAtLeast(0)
+            return maxOf(now, hold.deadline) + (leftMs / maxOf(exo.playbackParameters.speed, 0.1f) * 1_000_000).toLong()
+        }
         if (!listenerHasAudio(exo)) return now
         val current = exo.currentMediaItem?.let(::aheadMs) ?: return Long.MAX_VALUE
         val queued = ((exo.currentMediaItemIndex + 1) until exo.mediaItemCount).map { aheadMs(exo.getMediaItemAt(it)) }
@@ -897,6 +906,10 @@ object ReadAloud {
 
     /** Đặt `items` vào ExoPlayer: đang chờ chỗ bắt đầu thì thay cả hàng đợi, không thì nối đuôi. */
     private fun deliver(items: List<MediaItem>, offsetMs: Long) {
+        opening?.takeIf { it.queue.scheduled }?.let {
+            it.queue.items.addAll(items)
+            return
+        }
         val exo = Playback.player ?: return
         val target = waiting
         if (target != null) {
@@ -987,7 +1000,7 @@ object ReadAloud {
                 // Người nghe đã tới đoạn này: đoạn làm trước thôi được ghim. Đọc thật (không phải lấy từ bộ đệm) bằng đúng giọng đã chọn thì ghi tốc độ.
                 runCatching { cache().unpin(clip.voice, readText, origin, readings) }
                 val seconds = (System.nanoTime() - began) / 1e9
-                if (clip.voice == voice && seconds * 1000 > PrepareRunner.CACHED_MS) runCatching { speeds().record(voice, readText.length, seconds, clip.durationMs / 1000.0) }
+                if (clip.voice == voice && seconds * 1000 > PrepareRunner.CACHED_MS) runCatching { speeds().recordRead(voice, readText, origin, readings, seconds, clip.durationMs / 1000.0) }
             }
             Playback.onMain { onClipReady(token, chap, segment, result, probe, tailFrom, liveJob, continuing) }
         }
@@ -1069,7 +1082,7 @@ object ReadAloud {
         }
         liveNow = job
         // Clip đầu đang giữ chờ đoạn này ([holdOpening]) phát TRƯỚC, đoạn này nối sau nó: `waiting` còn đó thì [deliver] thay cả hàng đợi và tiêu đề mất.
-        releaseOpening()
+        releaseOpening(ready = true)
         // Dời chỗ nạp TRƯỚC khi đặt vào ExoPlayer (như [onClipReady]): setMediaItems báo đổi mục ngay trong lúc gọi.
         feedSegment = job.segment + 1
         deliver(listOf(itemFor(job.chap, job.segment, Uri.parse(LiveClips.uri(job.entry.id)), VoiceGain.db(job.voice), job.resume?.baseMs ?: 0L)), 0L)
@@ -1241,7 +1254,7 @@ object ReadAloud {
             return
         }
         inFlight = false
-        releaseOpening() // đoạn kế của clip đang được giữ đã xong (hay hỏng): clip ấy phát trước, đoạn này nối sau nó
+        releaseOpening(ready = result.isSuccess) // chưa đủ số đo: đoạn kế xong thì nhả sớm; lịch nhiều đoạn giữ tới hạn. Lượt hỏng: nhả phần đã có.
         val streaming = live?.takeIf { it.started }
         val clip = result.getOrElse { error ->
             // Đã phát luồng mà lượt đọc hỏng không qua lời báo đứt ([LiveJob.failed]): tiếng đã về đủ thì đoạn coi như xong; chưa đủ mà mục còn trong hàng đợi thì như đứt giữa chừng.
@@ -1302,7 +1315,7 @@ object ReadAloud {
         feedSegment = segment + 1
         if (item != null) {
             val offset = if (target != null) SeekPlan.offsetIn(whole, target.word, target.offsetMs) else 0L
-            if (target == null || !holdOpening(chap, segment, whole, target, item, offset)) deliver(listOf(item), offset)
+            if (opening != null || target == null || !holdOpening(chap, segment, whole, target, item, offset)) deliver(listOf(item), offset)
         }
         notifyScript(chap)
         prune()
@@ -1311,10 +1324,9 @@ object ReadAloud {
     }
 
     /**
-     * Mở chương (hay nhảy) bằng giọng trên máy mà clip đầu ngắn (tiêu đề) sẽ hết trước khi đoạn kế đọc xong: chưa phát vội - người nghe vẫn thấy "đang chuẩn bị" thêm tối đa
-     * [ReadAheadPolicy.OPENING_HOLD_MAX_MS] (ước theo tốc độ đã đo của giọng, [ReadAheadPolicy.openingHoldMs]), đoạn kế xong sớm thì phát sớm. Đoạn kế nhiều khúc phát luồng (livejoin): giữ tới lúc
-     * luồng của nó đủ điều kiện bắt đầu ([LocalLive.charsBeforeStreamStarts], [onLiveStarted] nhả ngay), không phải tới khi đọc xong cả đoạn. Khoảng chờ dời vào lúc bắt đầu thay
-     * vì thành chỗ im giữa tiêu đề và đoạn đầu (a65). [pump] vẫn đọc đoạn kế như thường vì `waiting` còn đó. True = đã giữ.
+     * Mở chương bằng giọng trên máy: đủ số đo cả chi phí cố định mỗi khúc lẫn giây tiếng thì giữ theo lịch 60 s đầu ([OpeningSchedule]), tối đa 6 s. Đoạn tới trong lúc giữ nối vào
+     * [Opening.queue], không nhả sớm chỉ vì đoạn kế đã xong. Chưa đủ số đo (hay nhảy giữa chương): giữ nguyên luật cũ, tối đa 1,5 s và nhả sớm theo [LocalLive.charsBeforeStreamStarts].
+     * [pump] vẫn đọc tuần tự vì `waiting` còn đó. True = đã giữ.
      */
     private fun holdOpening(chap: Chap, segment: Int, clip: Clip, target: Target, item: MediaItem, offset: Long): Boolean {
         if (!target.play || PreparePlan.online(voiceId)) return false
@@ -1325,17 +1337,32 @@ object ReadAloud {
         val readings = readingsOf(bookId)
         val cached = runCatching { cache().contains(voiceId, text, origin, readings) }.getOrDefault(false)
         val perChar = runCatching { speeds().secondsPerChar(voiceId) }.getOrNull()
-        val audioPerChar = runCatching { speeds().audioPerChar(voiceId) }.getOrNull() ?: LocalLive.AUDIO_PER_CHAR
+        val measuredAudio = runCatching { speeds().audioPerChar(voiceId) }.getOrNull()
+        val audioPerChar = measuredAudio ?: LocalLive.AUDIO_PER_CHAR
+        val work = if (segment == 0 && measuredAudio != null) runCatching { speeds().work(voiceId) }.getOrNull() else null
         // Đoạn kế nhiều khúc thì nhập luồng được ngay khi đủ điều kiện bắt đầu ([onLiveStarted]): chỉ cần giữ tới lúc ấy, không phải tới khi đọc xong cả đoạn.
         val speed = (Playback.player?.playbackParameters?.speed ?: 1f).toDouble()
         val chars = if (cached) null else LocalLive.charsBeforeStreamStarts(voiceId, text, origin, readings, perChar, speed, audioPerChar)
-        val wait = ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, chars, perChar, speed, audioPerChar)
+        val schedule = work?.let { model ->
+            // MỘT bộ cắt cho cả ghi số đo và dự đoán; đọc cả chương để xét RTF kéo dài, chỉ hạn chế lịch thiếu tiếng ở cửa sổ đầu.
+            runCatching {
+                val paragraphs = chap.paragraphs.mapIndexed { index, paragraph ->
+                    if (chap.isBreak(index)) OpeningParagraph(emptyList(), silenceMs = chap.gaps[index].toLong()) else {
+                        val (tokens, units) = LocalLive.unitsOf(voiceId, paragraph, origin, readings) ?: error("Giọng không đọc theo khúc")
+                        OpeningParagraph(units.map { it.text(tokens).length }, paragraph.length, cache().contains(voiceId, paragraph, origin, readings))
+                    }
+                }
+                OpeningSchedule.holdMs(clip.durationMs - offset, paragraphs.drop(segment + 1), model, audioPerChar, speed, paragraphs[segment].units)
+            }.getOrNull()
+        }
+        val wait = schedule ?: ReadAheadPolicy.openingHoldMs(clip.durationMs - offset, chars, perChar, speed, audioPerChar)
         if (wait <= 0) return false
         val token = generation
-        opening = Opening(token, item, offset)
+        opening = Opening(token, item, offset, schedule != null, System.nanoTime() + wait * 1_000_000)
         main.postDelayed({
             if (opening?.token == token) {
                 releaseOpening()
+                pump()
                 Playback.emit("state")
             }
         }, wait)
@@ -1343,14 +1370,15 @@ object ReadAloud {
     }
 
     /** Phát clip đang được giữ ([holdOpening]), nếu còn là việc hiện hành. `setMediaItems` gọi lồng [pump]: chặn nó - đoạn kế đang đọc, hay người gọi lo tiếp. */
-    private fun releaseOpening() {
+    private fun releaseOpening(ready: Boolean = false) {
         val held = opening ?: return
+        if (!held.queue.releases(ready)) return
         opening = null
         if (held.token != generation || waiting == null) return
         val busy = inFlight
         inFlight = true
         try {
-            deliver(listOf(held.item), held.offsetMs)
+            deliver(held.queue.items, held.offsetMs)
         } finally {
             inFlight = busy
         }
