@@ -4,13 +4,14 @@ import { toast } from "sonner";
 import { AddBookDialog } from "./AddBook";
 import { useSource } from "./source";
 import type { PickedItem } from "./textImport";
+import type { ReadSession } from "./importQueue";
 
 // Kéo file vào màn Thư viện (máy tính): thả một hay nhiều file thì mở "Thêm sách từ file" ở đúng hàng xem trước như khi chọn nhiều file. Nguồn nào nhận
 // file thả thì có `textImport.watchDrops` (cửa sổ app nhận đường dẫn từ vỏ Tauri, trình duyệt gửi file lên máy tính - desktop/httpSource.ts).
 
 const dialogOpen = () => Boolean(document.querySelector('[role="dialog"]'));
 
-export function DropToAdd({ onBookFile }: { onBookFile?: (path: string) => Promise<void | boolean> }) {
+export function DropToAdd({ onBookFile }: { onBookFile?: (path: string, session?: ReadSession) => Promise<void | boolean> }) {
   const watch = useSource().textImport?.watchDrops;
   const [hovering, setHovering] = useState(false);
   const [dropped, setDropped] = useState<PickedItem[] | null>(null);

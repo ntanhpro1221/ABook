@@ -1173,14 +1173,13 @@ def _epub_cover(book: _Zip, opf: ElementTree.Element, manifest: dict[str, tuple[
 
 def _epub_encryption(book: _Zip, manifest: dict[str, tuple[str, str, str]], spine: ElementTree.Element) -> None:
     """Từ chối DRM trước khi đọc chữ; hai kiểu làm rối font của EPUB vẫn đọc được. Kotlin: epubEncryption."""
-    if any(book.member(f"META-INF/{name}.xml") is not None for name in ("rights", "sinf")):
-        raise ImportFailed(EPUB_DRM)
     if book.member("META-INF/encryption.xml") is None:
         return
     obfuscation = {"http://www.idpf.org/2008/embedding", "http://ns.adobe.com/pdf/enc#RC"}
     spine_paths = {_nfc(manifest.get(ref.get("idref", ""), ("", "", ""))[0]) for ref in spine.iterfind("opf:itemref", NS)}
     fonts = {_nfc(href) for href, media, _props in manifest.values()
-             if media.startswith("font/") or "font" in media or posixpath.splitext(href)[1].lower() in {".otf", ".ttf", ".woff", ".woff2"}}
+             if media.startswith("font/") or "font" in media or media == "application/vnd.ms-opentype"
+             or posixpath.splitext(href)[1].lower() in {".otf", ".ttf", ".woff", ".woff2"}}
     # Một số sách quên khai báo font trong OPF; file font có thật trong ZIP vẫn chỉ là làm rối font.
     declared = {_nfc(href) for href, _media, _props in manifest.values()}
     fonts.update(_nfc(info.filename) for info in book.infolist() if _nfc(info.filename) not in declared

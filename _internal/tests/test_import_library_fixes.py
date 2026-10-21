@@ -82,3 +82,21 @@ def test_standalone_import_error_starts_with_a_capital(tmp_path: Path, kind: str
     with pytest.raises(ApiError) as caught:
         getattr(studio, operation)(str(source))
     assert caught.value.message.startswith(f"Không phải file {kind}")
+
+
+def test_audio_with_missing_text_still_counts_as_one_complete_chapter(tmp_path: Path) -> None:
+    studio, added = _studio_with_text_book(tmp_path)
+    folder = studio._listenable(added["id"])
+    manifest_path = folder / "book.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["complete"] = True
+    for chapter in manifest["chapters"]:
+        chapter["available"] = True
+        chapter["file"] = f"{chapter['id']}.mp3"
+        (folder / chapter["file"]).write_bytes(b"audio")
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    (folder / "texts/2.txt").rename(tmp_path / "saved.txt")
+    view = studio.listen_book(added["id"])
+    assert view["missingFiles"] == 1
+    assert all(chapter["available"] for chapter in view["chapters"])
+    assert view["complete"] is True
