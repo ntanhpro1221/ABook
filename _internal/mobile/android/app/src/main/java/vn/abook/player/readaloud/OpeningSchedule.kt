@@ -43,10 +43,29 @@ object OpeningSchedule {
         val wait = deficit * 1000 + MARGIN_MS
         return if (wait <= 0) 0L else minOf(MAX_HOLD_MS, ceil(wait - 1e-7).toLong()) // bỏ nhiễu dấu phẩy động ở ranh mili-giây nguyên
     }
+
+    /**
+     * [holdMs] cho clip đầu là đoạn [segment] của một chương ([paragraphs] cả chương, [gaps] quãng lặng của dòng ngăn cảnh, [isBreak]). MỘT bộ cắt cho cả ghi số đo và dự đoán
+     * ([LocalLive.unitsOf]); [cached] tra bộ đệm từng đoạn. Cắt cả chương và tra bộ đệm tốn vài chục ms trở lên (JVM máy tính, chương 12 nghìn ký tự): [ReadAloud] gọi ở luồng nền.
+     */
+    fun forChapter(
+        voice: String, paragraphs: List<String>, isBreak: (Int) -> Boolean, gaps: IntArray, segment: Int, firstMs: Long, work: VoiceWork, audioPerChar: Double, speed: Double,
+        origin: String?, readings: Map<String, String>?, cached: (String) -> Boolean,
+    ): Long {
+        val shapes = paragraphs.mapIndexed { index, paragraph ->
+            if (isBreak(index)) OpeningParagraph(emptyList(), silenceMs = gaps[index].toLong()) else {
+                val (tokens, units) = LocalLive.unitsOf(voice, paragraph, origin, readings) ?: error("Giọng không đọc theo khúc")
+                OpeningParagraph(units.map { it.text(tokens).length }, paragraph.length, cached(paragraph))
+            }
+        }
+        return holdMs(firstMs, shapes.drop(segment + 1), work, audioPerChar, speed, shapes[segment].units)
+    }
 }
 
 /** Các mục sẵn sàng trong lúc giữ đầu: lịch nhiều đoạn không được nhả sớm chỉ vì ĐOẠN KẾ đã xong (luật cũ). Dùng cả cho clip thường và clip phát luồng. */
 class OpeningQueue<T>(first: T, val scheduled: Boolean) {
     val items = arrayListOf(first)
     fun releases(ready: Boolean): Boolean = !scheduled || !ready
+    /** Bỏ mục chưa phát khớp [match] (mục phát luồng hỏng trong lúc giữ): chưa ai nghe gì của nó, kết quả của lượt đọc thay vào đúng một lần. True = đã bỏ. */
+    fun withdraw(match: (T) -> Boolean): Boolean = items.subList(1, items.size).removeAll(match)
 }

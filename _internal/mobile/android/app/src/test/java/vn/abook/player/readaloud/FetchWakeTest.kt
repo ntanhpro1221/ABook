@@ -14,9 +14,10 @@ import org.junit.Test
 class FetchWakeTest {
     private class FakeLocks : FetchWake.Locks {
         var held = false
+        var wifi = false
         var acquires = 0
-        override fun acquire(timeoutMs: Long) { held = true; acquires += 1 }
-        override fun release() { held = false }
+        override fun acquire(timeoutMs: Long, network: Boolean) { held = true; wifi = wifi || network; acquires += 1 }
+        override fun release() { held = false; wifi = false }
     }
 
     private val locks = FakeLocks()
@@ -54,6 +55,20 @@ class FetchWakeTest {
         assertTrue("vé đợt cũ không nhả hộ lượt mới", locks.held)
         FetchWake.release(fresh)
         assertFalse(locks.held)
+    }
+
+    @Test
+    fun anOnDeviceVoiceHoldsOnlyTheCpu() {
+        // gap2: giọng trên máy đọc đoạn người nghe đang chờ (hàng đợi cạn, màn tắt) - CPU phải thức, Wi-Fi thì không cần.
+        val local = FetchWake.hold(network = false)
+        assertTrue(locks.held)
+        assertFalse(locks.wifi)
+        val online = FetchWake.hold()
+        assertTrue(locks.wifi)
+        FetchWake.release(local)
+        FetchWake.release(online)
+        assertFalse(locks.held)
+        assertFalse(locks.wifi)
     }
 
     @Test

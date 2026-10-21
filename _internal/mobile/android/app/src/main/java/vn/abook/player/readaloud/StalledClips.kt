@@ -46,8 +46,9 @@ class StalledClips(private val clock: () -> Long = System::nanoTime) {
         /** Nghỉ giữa các lần thử lại của lượt đọc này: hỏi thăm thì không có lần nào. */
         fun delaysFor(probe: Boolean, normal: LongArray): LongArray = if (probe) NO_RETRY else normal
 
-        /** Giữ khoá CPU / Wi-Fi ([FetchWake]) cho lượt đọc này? Chỉ khi người nghe ĐANG CHỜ qua mạng: hỏi thăm lúc người nghe còn âm thanh thì không (ExoPlayer đang giữ khoá của nó). */
-        fun holdsWake(online: Boolean, listenerWants: Boolean, probe: Boolean): Boolean = online && listenerWants && !probe
+        /** Giữ khoá CPU ([FetchWake]; giọng trực tuyến thêm Wi-Fi) cho lượt đọc này? Khi người nghe muốn nghe, cả giọng trên máy: hàng đợi cạn thì ExoPlayer không giữ khoá nào, màn tắt
+         *  thì CPU ngủ giữa lúc đọc đoạn họ đang chờ. Hỏi thăm thì không. */
+        fun holdsWake(listenerWants: Boolean, probe: Boolean): Boolean = listenerWants && !probe
 
         /**
          * `error`: lỗi cuối của đoạn; `wantsPlay`: người nghe đang muốn nghe; `listenerHasAudio`: còn âm thanh để nghe (đoạn này chưa phải của họ); `probe`: lượt này là hỏi thăm.
