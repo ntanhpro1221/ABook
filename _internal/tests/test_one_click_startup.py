@@ -131,7 +131,7 @@ def test_one_click_startup_contract() -> None:
         "imageio-ffmpeg==0.6.0",
         "openai-whisper==20250625",
         "faster-whisper==1.2.1",
-        "ctranslate2==4.8.2",
+        "ctranslate2==4.8.3",
         "torch==2.11.0",
         "torchaudio==2.11.0",
         "torchvision==0.26.0",
