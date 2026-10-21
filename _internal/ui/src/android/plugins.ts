@@ -53,6 +53,7 @@ export interface NativeState {
 export type BedtimeSession = NightSession;
 
 export interface EbookPlayerPlugin {
+  updateMetadata(options: { bookId: string; title: string; narrator: string; chapters: { id: number; title: string }[] }): Promise<NativeState>;
   load(options: {
     bookId: string;
     bookTitle: string;

@@ -9,6 +9,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi bạn đổi tên sách, tên chương hoặc bìa lúc đang nghe, thanh phát và thẻ media hệ điều hành cập nhật ngay trên máy tính và điện thoại.
+- Khi bạn quay lại Thư viện, danh sách nhớ chỗ cuộn theo bộ lọc và cách sắp xếp, kể cả thư viện nhiều sách.
+- Khi bạn hoàn tác xoá sách mà chỗ cũ đã có cuốn khác, sách được khôi phục sang tên còn trống cạnh đó.
+- Khi bạn xoá nhiều cuốn liên tiếp, một thông báo Hoàn tác chung giữ các cuốn còn hạn trên máy tính và điện thoại.
+- Khi bạn đóng hoặc xoá cuốn đang nghe, thông báo “Quay lại chỗ cũ” của cuốn ấy cũng được gỡ.
+- Khi bạn mở tab Chương của sách hàng nghìn chương, danh sách chỉ dựng phần gần màn hình và chương bạn đang nghe.
 - Khi bạn nhập EPUB có khoá bản quyền (DRM), máy tính và điện thoại báo rõ lý do cùng cách dùng bản không khoá; EPUB chỉ làm rối font vẫn đọc được.
 - Sách chỉ có chữ báo đúng số chương mất file và hướng dẫn bạn thêm lại file sách gốc để chép bù.
 - Khi bạn đóng hoặc nhấn Esc ở hộp thêm sách đang đọc file, bản xem trước và lỗi trả về muộn không còn hiện lại ở lần mở sau.

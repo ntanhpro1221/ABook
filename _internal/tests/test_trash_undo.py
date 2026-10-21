@@ -127,25 +127,23 @@ def _make_folder(path: Path) -> Path:
     return path.resolve()
 
 
-def test_undo_is_refused_when_the_original_place_is_taken(studio, recycled: list[Path]) -> None:  # noqa: F811
-    from abook.webui import trash_pending
+def test_undo_uses_a_free_sibling_when_the_original_place_is_taken(studio, recycled: list[Path]) -> None:
+    from abook.webui.library import book_id
 
     paths, app, server, _runner = studio
     original = paths.root.resolve()
     token = _delete(server, paths)
     original.mkdir()
-    (original / "cua_nguoi_khac.txt").write_text("giữ nguyên", encoding="utf-8")
+    (original / "new.txt").write_text("keep", encoding="utf-8")
+    original.with_name(original.name + " (2)").mkdir()
     status, data = _call(server, "POST", f"/api/trash/{token}/undo")
-    assert status == 409 and "trùng tên" in data["error"]
-    assert (original / "cua_nguoi_khac.txt").read_text(encoding="utf-8") == "giữ nguyên", "không đè lên thư mục đang ở đó"
-    [held] = _pending(original.parent)
-    assert (held / original.name / "project.sqlite3").is_file(), "cuốn vừa xoá vẫn nằm chờ"
-
-    # Hết hạn mà đường gốc vẫn bị chiếm: không đè lên, cuốn cũ vào Thùng rác qua tên anh em còn trống (không kẹt mãi ở chỗ chờ).
-    app.trash.clock = lambda: time.time() + trash_pending.UNDO_SECONDS + 5
-    assert app.trash.sweep(original.parent) == 0
-    assert [path.parent for path in recycled] == [original.parent] and recycled[0] != original
-    assert (original / "cua_nguoi_khac.txt").is_file() and _pending(original.parent) == []
+    assert status == 200 and data["ok"] is True, data
+    restored = original.with_name(original.name + " (3)")
+    assert (restored / "project.sqlite3").is_file()
+    assert (original / "new.txt").read_text(encoding="utf-8") == "keep"
+    assert _pending(original.parent) == [] and recycled == []
+    assert book_id(restored) in str(_call(server, "GET", "/api/library")[1])
+    assert _call(server, "POST", f"/api/trash/{token}/undo")[0] == 404
 
 
 def test_the_pending_folder_is_never_a_book(studio, recycled: list[Path]) -> None:  # noqa: F811
@@ -313,6 +311,22 @@ def _hold(tmp_path: Path, name: str = "Sach", clock=lambda: 0.0):
     (book / "a.mp3").write_bytes(b"x" * 10)
     trash = TrashPending(clock=clock)
     return trash, library, book, trash.hold(library, book, "imported")
+
+
+def test_reopened_pending_trash_restores_to_a_free_sibling(tmp_path: Path, recycled: list[Path]) -> None:
+    from abook.webui.trash_pending import TrashPending
+
+    _trash, library, book, token = _hold(tmp_path)
+    book.mkdir()
+    (book / "new.mp3").write_bytes(b"new")
+    # Mất trạng thái trong RAM như khi app chết rồi mở lại; mã và dữ liệu vẫn ở đĩa.
+    reopened = TrashPending(clock=lambda: 1.0)
+    meta = reopened.restore(library, token)
+    restored = book.with_name("Sach (2)")
+    assert Path(meta["original"]) == restored
+    assert (restored / "a.mp3").read_bytes() == b"x" * 10
+    assert (book / "new.mp3").read_bytes() == b"new"
+    assert _pending(library) == [] and recycled == []
 
 
 def test_a_taken_original_path_still_lets_the_old_copy_reach_the_bin_under_a_free_sibling_name(

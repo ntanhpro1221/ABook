@@ -34,7 +34,32 @@ internal fun msOf(seconds: Double): Long = Math.round(seconds * 1000).coerceAtLe
  *  speaks the card as "<chapter> by <artist> is playing from ABook" - a null artist came out as "by null" (a67). */
 fun mediaArtist(narratorName: String, bookTitle: String): String? = narratorName.ifBlank { bookTitle }.ifBlank { null }
 
+/** Giữ URI, tag và cấu hình phát của mục; chỉ thay nhãn của thẻ media. */
+internal fun withBookMetadata(item: MediaItem, title: String, narrator: String, chapter: String, artwork: ByteArray): MediaItem =
+    item.buildUpon().setMediaMetadata(item.mediaMetadata.buildUpon()
+        .setTitle(chapter).setDisplayTitle(chapter).setAlbumTitle(title).setSubtitle(title)
+        .setArtist(mediaArtist(narrator, title)).setArtworkData(artwork, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()).build()
+
 object Playback {
+    /** Sửa sách đang nghe: thay metadata của cả hàng đợi, không nạp lại tiếng hay tua. */
+    @androidx.annotation.OptIn(UnstableApi::class)
+    fun updateMetadata(id: String, title: String, narratorName: String, titles: Map<Int, String>) {
+        if (bookId != id) return
+        bookTitle = title
+        narrator = narratorName
+        chapters = chapters.map { chapter -> titles[chapter.id]?.let { chapter.copy(title = it) } ?: chapter }
+        val artwork = Artwork.cover(title, id)
+        ReadAloud.refreshArtwork()
+        player?.let { exo ->
+            for (index in 0 until exo.mediaItemCount) {
+                val item = exo.getMediaItemAt(index)
+                val chapter = titles[item.mediaId.toIntOrNull()] ?: item.mediaMetadata.title?.toString().orEmpty()
+                exo.replaceMediaItem(index, withBookMetadata(item, title, narratorName, chapter, artwork))
+            }
+        }
+        emit("metadata")
+    }
+
     /** `text` = tên mục chữ trong gói (`texts/<n>.txt`) của chương CHỈ CÓ CHỮ (state "text"): không có file audio, giọng máy đọc to (ReadAloud). */
     data class Chapter(val id: Int, val title: String, val file: String, val duration: Double, val text: String = "") {
         val isText: Boolean get() = text.isNotEmpty()

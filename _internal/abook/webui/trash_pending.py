@@ -49,10 +49,6 @@ class NotPending(LookupError):
     """Mã này không còn trong chỗ chờ (quá hạn đã vào Thùng rác, hoặc đã hoàn tác rồi)."""
 
 
-class Occupied(FileExistsError):
-    """Đường gốc đã có thư mục cùng tên - không đè lên được."""
-
-
 def _drive(path: Path) -> str:
     return os.path.splitdrive(os.path.abspath(path))[0].lower()
 
@@ -106,8 +102,8 @@ class TrashPending:
         return token
 
     def restore(self, root: Path, token: str) -> dict[str, Any]:
-        """Hoàn tác: thư mục về đúng đường gốc. Trả meta (original, name, kind, queued). `NotPending` khi mã lạ / hết hạn,
-        `Occupied` khi đường gốc đã có thư mục cùng tên (thư mục vẫn nằm chờ), OSError khi đổi tên không được."""
+        """Hoàn tác về đường gốc, hoặc tên anh em còn trống. `NotPending` khi mã lạ / hết hạn,
+        OSError khi đổi tên không được. Meta trả về chứa đường thực sự đã khôi phục."""
         folder = self._folder(root, token)
         with self._lock:
             meta = self._meta(folder)
@@ -117,10 +113,15 @@ class TrashPending:
             original = Path(meta["original"])
             if not item.is_dir():
                 raise NotPending(token)
-            if original.exists():
-                raise Occupied(str(original))
             original.parent.mkdir(parents=True, exist_ok=True)
+            target = original
+            number = 2
+            while target.exists():
+                target = original.with_name(f"{original.name} ({number})")
+                number += 1
+            original = target
             os.replace(item, original)
+            meta = {**meta, "original": str(original)}
             self._roots.pop(token, None)
             self._tidy(folder)
         self._tidy_base(root / FOLDER)

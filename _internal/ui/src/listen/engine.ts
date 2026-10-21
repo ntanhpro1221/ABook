@@ -6,7 +6,7 @@
 // cả cuốn trong hàng đợi và tự lo hết những việc đó ở lõi - vì tắt màn hình thì JavaScript bị treo, nên những thứ
 // phải chạy khi người nghe đã ngủ không được nằm ở JavaScript.
 
-import type { Bookmark, BookmarkSentence, ListenChapter } from "./model";
+import type { Bookmark, BookmarkSentence, ListenBook, ListenChapter } from "./model";
 import type { SpeechTrack } from "./readAloud";
 import type { MusicCredit } from "./musicBed";
 import type { SleepMode, SleepRequest } from "./sleep";
@@ -71,6 +71,7 @@ export interface NativeQueue {
 
 export interface NativeEngine extends AudioEngine {
   readonly native: true;
+  updateMetadata?(book: ListenBook): void;
   loadQueue(queue: NativeQueue): void;
   toggle(): void;
   skipBy(delta: number): void;
