@@ -20,7 +20,9 @@ import java.security.MessageDigest
  * [finish] only patches the two sizes in the header. A one-unit paragraph does not stream ([here] is null): its first unit IS the clip, so nothing comes sooner.
  * The clip-wide lift ([ClipLift.lifted]) is known only at the end: a paragraph that gets lifted (rare) is rewritten in place with the final samples (same length
  * and timings).
- * Play starts only when the remaining units will be ready before the sound reaches them ([readyToPlay], same rule and constant as the desktop).
+ * Play starts only when the remaining units will be ready before the sound reaches them ([readyToPlay], same rule and constant as the desktop) - or once the listener has
+ * no sound left before this paragraph ([reach]): from then on holding a finished unit back only makes the silence longer (dev/gap, OPPO, Supertonic fast: 4.0 s after a
+ * chapter heading and 9.1 s before a long paragraph while its first unit was ready; started at once, 0.5 + 0.6 s and 0.1 + 1.3 s, the pauses at sentence ends).
  */
 class LocalLive(
     private val target: LiveClips.Target,
@@ -29,6 +31,10 @@ class LocalLive(
     private val units: List<VieneuUnits.Unit>,
     private val speed: Double = 1.0,
     private val clock: () -> Long = System::nanoTime,
+    /** [clock] time at which the listener runs out of sound before this paragraph ([LiveClips.Target.reachNanos]); [Long.MAX_VALUE]: not known / not playing. */
+    private val reach: Long = Long.MAX_VALUE,
+    /** Runs a task after so many milliseconds (another thread; tests run it by hand): releases what is held when [reach] passes between two units. */
+    private val later: (Long, () -> Unit) -> Unit = ::schedule,
 ) {
     companion object {
         /** Margin on the guesses of the remaining units' length and of the machine's speed (desktop `local_stream.SAFETY`). */
@@ -87,11 +93,13 @@ class LocalLive(
          * The characters of [text] to be read by [voice] before its stream starts ([charsBeforeStart] over the units the voice will cut it into); all of it when the voice is unknown,
          * its speed is not measured yet ([workPerChar] null) or the paragraph is one unit (no stream, [here] is null).
          */
-        fun charsBeforeStreamStarts(voice: String, text: String, origin: String?, readings: Map<String, String>?, workPerChar: Double?, speed: Double = 1.0): Int {
+        fun charsBeforeStreamStarts(
+            voice: String, text: String, origin: String?, readings: Map<String, String>?, workPerChar: Double?, speed: Double = 1.0, audioPerChar: Double = AUDIO_PER_CHAR,
+        ): Int {
             if (workPerChar == null) return text.length
             val (tokens, units) = runCatching { unitsOf(voice, text, origin, readings) }.getOrNull() ?: return text.length
             if (units.size < 2) return text.length
-            return charsBeforeStart(units.map { it.text(tokens).length }, workPerChar, speed)
+            return charsBeforeStart(units.map { it.text(tokens).length }, workPerChar, speed, audioPerChar)
         }
 
         /** The streaming of a read of [text] into [out] when this thread reads for a listener who waits for it ([LiveClips.receiving]); null otherwise, and for a
@@ -100,7 +108,15 @@ class LocalLive(
             val target = LiveClips.here()?.target?.takeIf { it.accepting() } ?: return null
             val (tokens, units) = cut()
             if (units.size < 2) return null
-            return LocalLive(target, out, tokens, units, target.speed().toDouble())
+            return LocalLive(target, out, tokens, units, target.speed().toDouble(), reach = target.reachNanos())
+        }
+
+        private val timer by lazy {
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor { Thread(it, "local-live-reach").apply { isDaemon = true } }
+        }
+
+        private fun schedule(delayMs: Long, task: () -> Unit) {
+            timer.schedule({ runCatching(task) }, delayMs, java.util.concurrent.TimeUnit.MILLISECONDS)
         }
     }
 
@@ -119,8 +135,12 @@ class LocalLive(
         private set
     /** Writing the stream failed: nothing more is sent; [finish] still writes the final clip. */
     private var broken = false
+    /** [finish] or [failed] ran: a late [release] sends nothing. */
+    private var closed = false
+    private var waking = false
 
     /** A unit was just read: [wave] exactly as it is joined into the clip, [said] = what was read (the pause after it - [VieneuAudio.gapAfter]). */
+    @Synchronized
     fun unit(wave: FloatArray, rate: Int, said: String) {
         if (broken) return
         try {
@@ -143,7 +163,23 @@ class LocalLive(
         if (index < units.size) words += VieneuSpeaker.timedWords(tokens, listOf(units[index]), listOf(span), rate, span[1])
         val done = units.take(index + 1).sumOf { it.text(tokens).length }
         val left = units.drop(index + 1).map { it.text(tokens).length }
-        if (started || readyToPlay(joiner.samples.toDouble() / rate, (clock() - began) / 1e9, done, left, speed)) flush()
+        if (started || clock() >= reach || readyToPlay(joiner.samples.toDouble() / rate, (clock() - began) / 1e9, done, left, speed)) {
+            flush()
+        } else if (!waking && reach != Long.MAX_VALUE) {
+            waking = true // the listener runs out of sound before the next unit is read: let them hear this one then
+            later(maxOf(0L, (reach - clock()) / 1_000_000)) { release() }
+        }
+    }
+
+    /** [reach] has passed: the held units go out now (nothing when the stream started meanwhile, failed or the clip is done). */
+    @Synchronized
+    fun release() {
+        if (closed || broken) return
+        try {
+            flush()
+        } catch (error: IOException) {
+            broken = true
+        }
     }
 
     private fun flush() {
@@ -170,7 +206,9 @@ class LocalLive(
     }
 
     /** The clip is read: [samples] = the final clip (lifted) at [rate]. Leaves [out] exactly as [VieneuAudio.writeWav] would, then tells the listener it is done. */
+    @Synchronized
     fun finish(samples: FloatArray, rate: Int) {
+        closed = true
         if (!started) {
             VieneuAudio.writeWav(samples, rate, out)
             return
@@ -191,7 +229,9 @@ class LocalLive(
     }
 
     /** The read failed after the stream started: the listener hears what came and the player handles the rest ([LiveClips.Target.failed]). */
+    @Synchronized
     fun failed(error: Exception) {
+        closed = true
         runCatching { stream?.close() }
         stream = null
         if (started) target.failed(error)
