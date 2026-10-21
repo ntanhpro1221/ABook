@@ -161,6 +161,7 @@ class LocalStream:
         self.started = False
         self.closed = False  # [close] / [drop] đã chạy: [release] muộn không gửi gì
         self._waking = False
+        self._timer: Any = None
         self._guard = threading.Lock()  # khúc mới (luồng đọc), [release] (luồng hẹn giờ), [close]
         self.broken = False  # lỗi trong lúc đẩy luồng: thôi đẩy, clip cuối vẫn làm (trình phát chuyển sang file cuối - [close])
         self._joiner: ve.Joiner | None = None
@@ -211,7 +212,7 @@ class LocalStream:
             self._flush()
         elif not self._waking and self.reach != math.inf:
             self._waking = True  # người nghe hết tiếng trước khi khúc kế đọc xong: cho họ nghe khúc này từ lúc ấy
-            self.later(max(0.0, self.reach - now), self.release)
+            self._timer = self.later(max(0.0, self.reach - now), self.release)
 
     def release(self) -> None:
         """`reach` đã qua: các khúc đang giữ đi ngay (không gì khi luồng đã bắt đầu, đã hỏng hay clip đã xong)."""
@@ -250,6 +251,9 @@ class LocalStream:
         Chưa phát gì (máy chậm, chờ tới hết): không làm gì - người nghe nhận clip như thường."""
         with self._guard:
             self.closed = True
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
         if not self.started:
             return
         if self.broken or hashlib.sha1(wav[44:]).digest() != self._sent.digest():
@@ -259,9 +263,13 @@ class LocalStream:
         """Lượt đọc hỏng / bị bỏ: thôi gửi (một [release] hẹn trước không còn ghi vào lời đáp lỗi)."""
         with self._guard:
             self.closed = True
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
 
 
-def _schedule(delay: float, task: Callable[[], None]) -> None:
+def _schedule(delay: float, task: Callable[[], None]) -> threading.Timer:
     timer = threading.Timer(delay, task)
     timer.daemon = True
     timer.start()
+    return timer

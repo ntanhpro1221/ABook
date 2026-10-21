@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- Vai phụ giữ đúng giới và tuổi khi lượt xác định người nói chỉ đổi dạng nhãn của cùng vai trong cùng chương; sửa lỗi từ 0.4.119 khiến bạn có thể nhận giọng chưa rõ giới.
+- Nếu model chưa sẵn sàng lúc hoà giải nhân vật, khi bạn làm tiếp app thử lại bước này trước khi xác định người nói và phân vai.
+- Khi bù độ to hoặc hoàn tất clip bị lỗi, luồng giọng trên máy được đóng cả trên máy tính và điện thoại, tránh gửi thêm tiếng sau khi bạn đã nhận báo lỗi.
+- Khi clip đã xong hoặc bị bỏ, app huỷ hẹn giờ phát còn chờ trên máy tính và điện thoại, tránh giữ tài nguyên khi bạn nghe lâu hoặc chuyển đoạn nhiều lần.
+- Khi bạn cài bằng script Windows, setuptools được giữ dưới bản 82 để pyworld vẫn nạp được.
+
 ## [0.4.120] - 2026-10-21
 
 ### Thư viện

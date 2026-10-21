@@ -10079,7 +10079,7 @@ class OllamaBookAnalyzer:
         self,
         before_batch: Callable[[int], None] | None = None,
         stop_requested: Callable[[], bool] | None = None,
-    ) -> int:
+    ) -> int | None:
         """Resolve a locally-labelled speaker to the character they turn out to be.
 
         A speaker gets a local label when the batch that analysed them had not been told
@@ -10100,7 +10100,8 @@ class OllamaBookAnalyzer:
         Measured later, that question loses more than it wins (10 gate runs, 08-10/09-10:
         every run but one scores better with no merge at all), so `local_identity_mode`
         picks one of four versions - see LOCAL_IDENTITY_MODES. "loose" is the question
-        above, unchanged byte for byte so ledgers replay.
+        above, unchanged byte for byte so ledgers replay. None means the model could not be
+        reached: the pipeline must retry before checkpointing the pre-speaker pass.
         """
         mode = local_identity_mode(self.settings)
         if not self.settings.get("enabled", True) or mode == "off":
@@ -10168,7 +10169,7 @@ class OllamaBookAnalyzer:
             if before_batch is not None:
                 before_batch(batch_index)
             if not self.ensure_available():
-                return merged
+                return None
 
             prompt = (
                 "Mỗi mục dưới đây là một nhân vật chỉ được mô tả (chưa biết tên) trong một "
@@ -10217,9 +10218,13 @@ class OllamaBookAnalyzer:
                     ledger_role="local_identity",
                     ledger_group_fingerprint=f"chapter:{chapter_id}",
                 )
+            except AnalysisRequestStopped:
+                raise
             except Exception as exc:  # noqa: BLE001
-                # Identity resolution is an improvement, never a gate: a book that cannot
-                # reach the model keeps the local labels it already had.
+                # Identity resolution is an improvement, never a gate: a chapter whose request
+                # fails keeps the local labels it already had. Retrying it on resume would ask
+                # the same seeded question and fail the same way, so only an unreachable model
+                # (above) leaves the pre-pass checkpoint incomplete.
                 self.db.event(
                     "warning",
                     "LOCAL_IDENTITY_RECONCILE_FAILED",

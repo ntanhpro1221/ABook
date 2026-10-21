@@ -396,8 +396,9 @@ class _Analyzer:
     def analyze_all(self, *_args: Any, **_kwargs: Any) -> None:
         _Order.events.append("analyze_all")
 
-    def reconcile_local_speaker_identities(self, **_kw: Any) -> None:
+    def reconcile_local_speaker_identities(self, **_kw: Any) -> int:
         _Order.events.append("reconcile_local_speaker_identities")
+        return 0
 
     def reconcile_name_pronunciations(self, **_kw: Any) -> None:
         _Order.events.append("reconcile_name_pronunciations")
