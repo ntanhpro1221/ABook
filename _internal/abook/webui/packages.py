@@ -396,7 +396,7 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         })
     available = [chapter for chapter in items if chapter["available"]]
     lost_count = sum(1 for chapter in items if chapter.get("lost"))
-    complete = bool(book.get("complete")) and len(available) + lost_count == len(items)
+    complete = bool(book.get("complete")) and all(chapter["available"] or chapter.get("lost") for chapter in items)
     state = {key: value for key, value in state.items() if key not in HEAVY_KEYS}
     result: dict[str, Any] = {
         "format": FORMAT,

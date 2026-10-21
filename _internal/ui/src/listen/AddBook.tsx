@@ -71,7 +71,7 @@ export function AddBookButton({
   variant?: "secondary" | "ghost" | "primary";
   size?: "sm" | "md" | "lg";
   /** Chọn hay dán một file .abook / .abookproj: mở nó (máy có đường mở file sách) thay vì báo "chưa đọc được". */
-  onBookFile?: (path: string) => Promise<void | boolean>;
+  onBookFile?: (path: string, session?: ReadSession) => Promise<void | boolean>;
 }) {
   const source = useSource();
   const [open, setOpen] = useState(false);
@@ -94,7 +94,7 @@ export function AddBookDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onBookFile?: (path: string) => Promise<void | boolean>;
+  onBookFile?: (path: string, session?: ReadSession) => Promise<void | boolean>;
   /** Thứ đã chọn sẵn (điện thoại: file app khác gửi tới - android/imports.ts; máy tính: file kéo thả vào thư viện - DropToAdd.tsx): hộp mở thẳng ở bước
    *  đọc file / xem trước. Nhiều file thì thành hàng xem trước. */
   initial?: ImportChoice | PickedItem[] | null;
@@ -220,7 +220,7 @@ export function AddBookDialog({
       setProblem("");
       setBusy("reading");
       try {
-        await session.wait(onBookFile(picked.ref));
+        await session.wait(onBookFile(picked.ref, session));
         clear();
         onOpenChange(false);
       } catch (error) {
@@ -255,7 +255,7 @@ export function AddBookDialog({
         continue;
       }
       try {
-        const opening = onBookFile(item.choice.ref);
+        const opening = onBookFile(item.choice.ref, session);
         const ok = await (session ? session.wait(opening) : opening);
         next = ok === false ? settle(next, item.id, { state: "error", note: "Không mở được file sách này." }) : settle(next, item.id, { state: "opened", note: "Đã mở" });
       } catch (error) {
@@ -358,20 +358,30 @@ export function AddBookDialog({
   const changeFootnotes = (next: FootnoteChoice) => reread({ split, footnotes: next });
   const choose = async (kind: ImportKind) => {
     if (!importer.choose) return;
+    const session = reads.current.start();
     lastKind.current = kind;
     try {
       if (kind === "file" && importer.chooseMany) {
-        await startPicked(await importer.chooseMany());
+        const items = await importer.chooseMany();
+        if (!session.active()) {
+          for (const item of items) if ("choice" in item) void importer.discard?.(item.choice).catch(() => undefined);
+          return;
+        }
+        await startPicked(items);
         return;
       }
       const picked = await importer.choose(kind);
+      if (!session.active()) {
+        if (picked && picked !== "opened") void importer.discard?.(picked).catch(() => undefined);
+        return;
+      }
       if (picked === "opened") {
         // File sách .abook chọn trong hộp này: nguồn đã mở nó (toast "Đã thêm sách" kèm nút mở), hộp không còn việc.
         clear();
         onOpenChange(false);
       } else if (picked) await read(picked);
     } catch (error) {
-      fail(error);
+      if (session.active() && !(error instanceof ReadCancelled)) fail(error);
     }
   };
   // "Chọn lại" sau khi đã chọn file: mở thẳng bộ chọn file (thư mục nếu lần trước chọn thư mục) thay vì quay về hộp rồi bắt bấm thêm một lần
