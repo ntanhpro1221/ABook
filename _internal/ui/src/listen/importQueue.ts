@@ -3,6 +3,36 @@
 
 import { defaultPicked, isBookFile, readPreview, type ImportChoice, type PickedItem, type TextImport } from "./textImport";
 
+/** Hộp đã đóng / chọn lại: kết quả và lỗi trả về muộn đều thuộc lượt đọc cũ. */
+export class ReadCancelled extends Error {}
+
+export function readSessions() {
+  let generation = 0;
+  return {
+    cancel() { generation++; },
+    start() {
+      const current = ++generation;
+      const still = () => { if (generation !== current) throw new ReadCancelled(); };
+      return {
+        still,
+        active: () => generation === current,
+        async wait<T>(promise: Promise<T>): Promise<T> {
+          try {
+            const value = await promise;
+            still();
+            return value;
+          } catch (error) {
+            still();
+            throw error;
+          }
+        },
+      };
+    },
+  };
+}
+
+export type ReadSession = ReturnType<ReturnType<typeof readSessions>["start"]>;
+
 export type QueueState = "waiting" | "added" | "existing" | "skipped" | "error" | "opened";
 
 export interface QueueItem {
@@ -136,6 +166,7 @@ export async function advanceQueue(
       await load(next, items);
       return { items, current: next };
     } catch (error) {
+      if (error instanceof ReadCancelled) throw error;
       failed?.(next);
       items = settle(items, next.id, { state: "error", note: (error as Error).message });
     }

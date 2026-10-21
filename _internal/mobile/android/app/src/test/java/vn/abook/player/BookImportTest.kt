@@ -31,6 +31,26 @@ class BookImportTest {
 
     private fun titles(book: BookImport.Book) = book.chapters.map { it.title }
 
+    @Test
+    fun encrypted_epubs_are_refused_but_obfuscated_fonts_keep_the_text() {
+        val message = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
+        for (name in listOf("drm", "drm_rights", "drm_sinf", "drm_fake_font")) {
+            assertEquals(name, message, failure { BookImport.importFile(File(dir, "$name.epub")) })
+        }
+        for (name in listOf("font_obfuscated", "font_adobe", "font_unlisted")) {
+            assertEquals(name, expectedText(name), dump(BookImport.importFile(File(dir, "$name.epub"))))
+        }
+    }
+
+    @Test
+    fun standalone_import_errors_start_with_a_capital() {
+        val work = Files.createTempDirectory("abook-capital").toFile()
+        for (kind in listOf("EPUB", "DOCX")) {
+            val file = File(work, "broken.${kind.lowercase()}").apply { writeText("not a zip") }
+            assertTrue(failure { BookImport.importFile(file) }.startsWith("Không phải file $kind"))
+        }
+    }
+
     private fun failure(block: () -> Unit): String =
         try {
             block()

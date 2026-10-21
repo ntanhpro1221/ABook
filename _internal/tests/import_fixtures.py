@@ -865,6 +865,49 @@ def whole_titled_txt() -> bytes:
 
 # --- toàn bộ ----------------------------------------------------------------------------------------------------------
 
+DRM_ERROR = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
+
+
+def build_encrypted_epub(algorithm: str = "http://www.w3.org/2001/04/xmlenc#aes128-cbc", *, font: bool = False,
+                         marker: str = "", declared_font: bool = True) -> bytes:
+    """Mã hoá nội dung khác với làm rối font; URI tính từ gốc ZIP, kể cả dấu cách được mã hoá."""
+    data = _book("Sách có mã hoá", [("c1.xhtml", f"<h1>Chương 1</h1><p>{LINE}</p>")],
+                 extra=(("fonts/chữ thử.otf", b"font obfuscated", "font/otf"),) if declared_font else ())
+    target = "OEBPS/fonts/ch%E1%BB%AF%20th%E1%BB%AD.otf" if font else "OEBPS/text/c1.xhtml"
+    encryption = (f'<encryption xmlns="urn:oasis:names:tc:opendocument:xmlns:container" xmlns:e="http://www.w3.org/2001/04/xmlenc#">'
+                  f'<e:EncryptedData><e:EncryptionMethod Algorithm="{algorithm}"/><e:CipherData>'
+                  f'<e:CipherReference URI="{target}"/></e:CipherData></e:EncryptedData></encryption>')
+    with zipfile.ZipFile(io.BytesIO(data)) as book:
+        entries = [(info.filename, book.read(info)) for info in book.infolist()]
+    if not declared_font:
+        entries.append(("OEBPS/fonts/chữ thử.otf", b"font obfuscated"))
+    if marker:
+        entries.append((f"META-INF/{marker}.xml", b"<rights/>"))
+    else:
+        entries.append(("META-INF/encryption.xml", encryption.encode("utf-8")))
+    if not font and not marker:
+        entries = [(name, b"CIPHER_BYTES_not_story" * 20 if name == "OEBPS/text/c1.xhtml" else raw) for name, raw in entries]
+    return _zip(entries, stored_first="mimetype")
+
+
+def build_drm() -> bytes:
+    return build_encrypted_epub()
+
+
+def build_font_obfuscated() -> bytes:
+    return build_encrypted_epub("http://www.idpf.org/2008/embedding", font=True)
+
+
+ENCRYPTED = {
+    "drm.epub": build_drm,
+    "drm_rights.epub": lambda: build_encrypted_epub(marker="rights"),
+    "drm_sinf.epub": lambda: build_encrypted_epub(marker="sinf"),
+    "drm_fake_font.epub": lambda: build_encrypted_epub("http://www.idpf.org/2008/embedding"),
+    "font_obfuscated.epub": build_font_obfuscated,
+    "font_adobe.epub": lambda: build_encrypted_epub("http://ns.adobe.com/pdf/enc#RC", font=True),
+    "font_unlisted.epub": lambda: build_encrypted_epub("http://www.idpf.org/2008/embedding", font=True, declared_font=False),
+}
+
 SOURCES = {
     "epub3.epub": build_epub3, "epub2.epub": build_epub2, "split.epub": build_epub_split, "headings.docx": build_docx_headings, "plain.docx": build_docx_plain,
     "story.pdf": build_story_pdf, "scan.pdf": build_scan_pdf,
@@ -886,6 +929,7 @@ NOTE_BOOKS = {"notes3.epub": build_notes_epub3, "notes2.epub": build_notes_epub2
 NOTE_CHOICES = {"fn_marks": {"hideMarks": True}, "fn_end": {"hideMarks": True, "notes": "end"}, "fn_drop": {"notes": "drop"}}
 SOURCES.update(REAL_WORLD)
 SOURCES.update(NOTE_BOOKS)
+SOURCES.update(ENCRYPTED)
 
 
 # Tên chương đặt từ dòng đầu (`importers.clip_title`, Kotlin BookImport.clipTitle): đủ ngắn, rơi giữa từ (lùi về dấu cách), từ cuối quá dài
