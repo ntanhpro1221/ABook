@@ -1,6 +1,39 @@
 # Test report
 
-Ngày cập nhật: 2026-10-21
+Ngày cập nhật: 2026-10-22
+
+Đợt `dev/rvfix` (từ 0.4.120): giữ giới/tuổi khi lượt người nói đổi namespace của cùng vai local trong cùng chương;
+không checkpoint hoà giải khi thiếu model (request lỗi giữ nhãn cũ như trước); đóng luồng cả khi bù độ to/hoàn tất clip lỗi;
+huỷ hẹn giờ release khi clip xong/bị bỏ (Python và Kotlin); script Windows giữ `setuptools<82`.
+
+Test đỏ trước sửa (`S/rvfix/before-valid.log`): **8 failed, 3 passed, exit 1**; sau sửa cùng lựa chọn **11 passed, exit 0**.
+Các test mới: `test_local_pass_relabel_preserves_traits_only_for_the_same_role_in_the_same_chapter` (cùng vai đỏ;
+vai khác/chương khác xanh), `test_unreachable_model_reconciliation_is_retried_before_the_speaker_pass` (model không tới được thì thử lại; request lỗi thì giữ nhãn local, không kẹt - Lead sửa),
+`test_failure_before_local_close_drops_the_stream` (lift/close), `test_finished_local_stream_cancels_and_releases_its_timer`
+(close/drop), `test_windows_setup_keeps_pkg_resources_for_pyworld`. Không ứng viên vẫn hoàn tất không cần model
+(`test_local_reconciliation_without_candidates_completes_without_a_model`); các test named traits sẵn có vẫn qua.
+SQLite thật, reopen/resume qua BookPipeline.run, model/engine/HTTP giả; không Ollama/GPU/điện thoại.
+
+Pytest liên quan tuần tự: mọi `test_speaker_pass*`, `test_readaloud_local_stream*`, `test_pipeline_mock.py`,
+`test_perceptual_pipeline.py`, `test_analysis_required.py`, `test_one_click_startup.py`: **715 passed, 0 F/E, exit 0**,
+282,58 giây. Có 1 warning cp1252/UnicodeDecodeError trong subprocess readerthread ở test pipeline (ngoài phạm vi sửa).
+Toàn bộ pytest: **8365 passed, 1 FAILED, 0 ERROR, 9 skipped, 5 warnings, exit 1**, 1751,19 giây.
+Failure duy nhất: `test_perceptual_qa.py::test_model_load_is_offline_and_environment_is_restored`; runner của đợt này
+đặt sẵn `TRANSFORMERS_OFFLINE=1`, trong khi test yêu cầu biến ấy không tồn tại sau khi load giả kết thúc. Đã bỏ biến
+khỏi runner, chạy lại CẢ `test_perceptual_qa.py`: **28 passed, 0 F/E, exit 0**, 3,26 giây. Không sửa mã/test perceptual QA.
+Không gọi kết quả này là full-suite exit 0: lượt toàn bộ duy nhất vẫn có exit 1 như trên. Các warning là duplicate EPUB
+entry, ba cp1252 readerthread và một socket accept timeout trong server giả của test tải nhạc.
+
+Android offline `:app:testDebugUnitTest --max-workers=4`: XML **1166 tests, 0 failures, 0 errors, 6 skipped, exit 0**.
+Test mới `LocalLiveTest.finishingOrFailingCancelsThePendingWakeUp` đỏ trước sửa (1/11 failure, exit 1), xanh sau sửa
+(11/11 LocalLiveTest qua). Lượt toàn bộ đầu tiên có 1 failure EdgePiecesTest do hết 5 giây chờ đóng socket;
+chạy lại riêng test và toàn bộ không sửa mã đều qua. Không đổi logic Edge. Hỗ trợ build Capacitor được chép vào cây rvfix,
+init script trong scratchpad trỏ project dependency về cây này; không sửa cấu hình dependency đã theo dõi.
+
+CPU affinity 4 lõi, CUDA_VISIBLE_DEVICES=-1, OMP/MKL/OPENBLAS/NUMEXPR_NUM_THREADS=4; Gradle JVM ActiveProcessorCount=4,
+compiler in-process, no-daemon. Compileall, `git diff --check`, LF và BOM PowerShell đều qua.
+Hash khoá đọc từ code (41 mục): trước `49e8fd2dc212c7207cd0fbf66b308e6b0d1b49d220d64a16501d170bc906635f`;
+sau `f4adb8d13e3f714e52bf070a8819c014938711925af81014673036244fee08f1`. Mã chỉ sửa ở nhánh dev, chưa commit.
 
 Đợt pqfix B41 (`dev/pqfix`): xác nhận cả 5 lỗi bằng test đỏ trước sửa (resume hoà giải lại chương đã commit; NPC thiếu phạm vi
 chương; câu đổi vai giữ giới/tuổi cũ; CLI cài thiếu tokenizer; kiểm digest rớt mạng không retry). Thêm 20 ca kiểm trong 5 file
