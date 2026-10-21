@@ -159,6 +159,7 @@ class SupertonicEngine(
     threads: Int,
     estimator: File = File(folder, "onnx/vector_estimator.onnx"),
     private val steps: Int = SupertonicText.STEPS,
+    spinning: Boolean = false,
 ) : SupertonicSynth, AutoCloseable {
     class Style(val ttl: FloatArray, val ttlShape: LongArray, val dp: FloatArray, val dpShape: LongArray)
 
@@ -171,7 +172,7 @@ class SupertonicEngine(
     private val chunk = config.getJSONObject("ae").getInt("base_chunk_size") * config.getJSONObject("ttl").getInt("chunk_compress_factor")
     private val latentDim = config.getJSONObject("ttl").getInt("latent_dim") * config.getJSONObject("ttl").getInt("chunk_compress_factor")
     val indexer: IntArray = JSONArray(File(folder, INDEXER_FILE).readText(Charsets.UTF_8)).let { array -> IntArray(array.length()) { array.getInt(it) } }
-    private val options = sessionOptions(threads)
+    private val options = sessionOptions(threads, spinning = spinning)
     private val sessions: Map<String, OrtSession> = ONNX.associateWith {
         env.createSession((if (it == "vector_estimator") estimator else File(folder, "onnx/$it.onnx")).absolutePath, options)
     }
@@ -361,7 +362,8 @@ object SupertonicVoices {
             val loaded = engine?.takeIf { it.first == (estimator != null) }?.second ?: run {
                 forget()
                 val threads = minOf(Runtime.getRuntime().availableProcessors(), MAX_THREADS)
-                (if (estimator != null) SupertonicEngine(installed.model, threads, estimator, SupertonicText.FAST_STEPS) else SupertonicEngine(installed.model, threads))
+                // only the fast tier is measured with spinning ([SpinPolicy]): the quality tier keeps the desktop's setting
+                (if (estimator != null) SupertonicEngine(installed.model, threads, estimator, SupertonicText.FAST_STEPS, SpinPolicy.spinning(ctx)) else SupertonicEngine(installed.model, threads))
                     .also { engine = (estimator != null) to it }
             }
             idle.used()

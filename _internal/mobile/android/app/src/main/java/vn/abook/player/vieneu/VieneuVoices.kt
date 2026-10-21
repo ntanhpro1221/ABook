@@ -10,6 +10,7 @@ import vn.abook.player.readaloud.Clip
 import vn.abook.player.readaloud.ClipLift
 import vn.abook.player.readaloud.IdleEngine
 import vn.abook.player.readaloud.LocalLive
+import vn.abook.player.readaloud.SpinPolicy
 import vn.abook.player.readaloud.Voice
 import vn.abook.player.readaloud.VoiceException
 import vn.abook.player.readaloud.VoiceInfo
@@ -111,7 +112,7 @@ object VieneuVoices {
                     val dir = installed.turbo!!.first
                     TurboTier(VieneuTurbo(dir, installed.turbo.second, 2, 2, minOf(cores, 8)), ByteBpe(File(dir, "tokenizer.json")), ClipLift.params(ctx))
                 } else {
-                    NanoTier(VieneuNano(installed.nano!!, minOf(cores, 4)), ClipLift.params(ctx))
+                    NanoTier(VieneuNano(installed.nano!!, minOf(cores, 4), spinning = SpinPolicy.spinning(ctx)), ClipLift.params(ctx))
                 }
                 engine = tier to made
                 made

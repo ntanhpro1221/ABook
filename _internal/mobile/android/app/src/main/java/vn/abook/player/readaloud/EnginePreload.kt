@@ -24,7 +24,7 @@ object EnginePreload {
 
     private fun spare(context: Context): Boolean {
         val battery = context.getSystemService(BatteryManager::class.java)
-        val charging = battery?.isCharging == true
+        val charging = SpinPolicy.charging(context)
         val percent = battery?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY) ?: 100
         val info = ActivityManager.MemoryInfo()
         context.getSystemService(ActivityManager::class.java)?.getMemoryInfo(info)

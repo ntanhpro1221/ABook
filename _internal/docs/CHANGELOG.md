@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Giọng Supertonic (bản "Nhanh hơn") và VieNeu Nano đọc nhanh hơn khi bạn đang cắm sạc: trên OPPO một khúc 64 chữ của Supertonic từ 3,1 giây xuống 2,5 giây, khúc 128 chữ từ 5,1 xuống 4,5 giây; Nano khúc dài từ 4,7 xuống 3,7 giây; tiếng đọc không đổi một mẫu. Chạy pin thì giữ như cũ để không tốn pin. Máy tính chạy Supertonic nhanh hơn 10 đến 15% khi cắm điện.
+
 ## [0.4.115] - 2026-10-20
 
 ### Nhạc nền
