@@ -1,6 +1,23 @@
 # Test report
 
-Ngày cập nhật: 2026-09-27
+Ngày cập nhật: 2026-10-21
+
+Đợt pqfix B41 (`dev/pqfix`): xác nhận cả 5 lỗi bằng test đỏ trước sửa (resume hoà giải lại chương đã commit; NPC thiếu phạm vi
+chương; câu đổi vai giữ giới/tuổi cũ; CLI cài thiếu tokenizer; kiểm digest rớt mạng không retry). Thêm 20 ca kiểm trong 5 file
+`test_speaker_pass_reconcile_resume.py`, `test_speaker_pass_local_scope.py`, `test_speaker_pass_traits.py`,
+`test_studio_setup_cli_tokenizer.py`, `test_speaker_pass_digest_transport.py`. Test qua BookPipeline.run, SQLite thật với
+crash/reopen và migration DB cũ, HTTP/model giả; prompt vẫn dùng nhãn NPC không phạm vi. Không chạy Ollama/GPU hay tải mạng.
+
+Pytest tuần tự trên CPU (CUDA_VISIBLE_DEVICES=-1, OMP/MKL/OPENBLAS/NUMEXPR_NUM_THREADS=4), toàn bộ test speaker_pass,
+pipeline/resume, database, casting, studio_setup và analysis_replay: **898 passed, 0 FAILED, 0 ERROR, exit 0**, 390,57 giây.
+Có 1 PytestUnhandledThreadExceptionWarning tại test_perceptual_qa_uses_unshifted_baseline_when_pitch_variant_was_skipped:
+luồng subprocess._readerthread giải mã cp1252 gặp byte 0x90 (UnicodeDecodeError). Chưa sửa đường perceptual ngoài phạm vi này.
+Suite Studio trên ổ D ban đầu vướng 5 test do chỉ còn 25 GB < ngưỡng cài 35 GB; basetemp chuyển sang scratchpad trên C,
+26/26 test Studio qua, không đổi ngưỡng hay test. Compileall và git diff --check qua. Các file sửa giữ nguyên LF.
+
+Hash triển khai chất lượng trước: `4da08e178713be1cb53bc34a9eb4edddd537c649da116bbf9a8e74c07757055f`;
+sau: `922e4f135b7abfe4dd1060c722377a925ce5869e36e55fc002fb9edf87838b5a` (41 mục đọc từ QUALITY_IMPLEMENTATION_FILES).
+Hash đổi nằm trên nhánh dev, chưa đưa sang production.
 
 Truyện kể ngôi thứ nhất (nhánh `feat/narrator`, 2026-09-27): `voices.first_person_identity` giờ vào prompt phân tích mỗi
 batch và dấu vân tay sổ ứng viên (chỉ khi có đặt); Studio hỏi "'Tôi' là ai?" ở bước chọn giọng khi ~20 chương đầu có >= 30%

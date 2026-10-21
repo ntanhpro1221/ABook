@@ -1782,6 +1782,7 @@ CREATE TABLE IF NOT EXISTS book (
     last_error TEXT,
     run_generation INTEGER NOT NULL DEFAULT 0,
     casting_finalized INTEGER NOT NULL DEFAULT 0,
+    speaker_pass_reconciled INTEGER NOT NULL DEFAULT 0,
     analysis_model_name TEXT,
     analysis_model_digest TEXT,
     analysis_model_locked_at REAL,
@@ -2476,6 +2477,12 @@ class ProjectDB:
                 "ALTER TABLE characters ADD COLUMN locked_age TEXT NOT NULL DEFAULT ''"
             )
         book_columns = {str(row[1]) for row in conn.execute("PRAGMA table_info(book)")}
+        if "speaker_pass_reconciled" not in book_columns:
+            conn.execute("ALTER TABLE book ADD COLUMN speaker_pass_reconciled INTEGER NOT NULL DEFAULT 0")
+            conn.execute(
+                "UPDATE book SET speaker_pass_reconciled=1 WHERE EXISTS(SELECT 1 FROM speaker_pass_state) "
+                "OR EXISTS(SELECT 1 FROM speaker_pass_chapters)"
+            )
         if "casting_finalized" not in book_columns:
             conn.execute("ALTER TABLE book ADD COLUMN casting_finalized INTEGER NOT NULL DEFAULT 0")
             conn.execute(
@@ -3210,6 +3217,13 @@ class ProjectDB:
 
     # ---- lượt "người nói từng câu" (speaker_pass.py) ----------------------------------------------------------
 
+    def speaker_pass_is_reconciled(self) -> bool:
+        return bool(int(self.book()["speaker_pass_reconciled"]))
+
+    def mark_speaker_pass_reconciled(self) -> None:
+        with self.transaction() as conn:
+            conn.execute("UPDATE book SET speaker_pass_reconciled=1,updated_at=? WHERE id=1", (time.time(),))
+
     def speaker_pass_lock(self) -> dict[str, Any] | None:
         with self.connect() as conn:
             row = conn.execute("SELECT * FROM speaker_pass_state WHERE id=1").fetchone()
@@ -3252,6 +3266,48 @@ class ProjectDB:
             total = int(conn.execute("SELECT COUNT(*) FROM chapters").fetchone()[0])
         return done, total
 
+    @staticmethod
+    def _speaker_pass_traits_conn(
+        conn: sqlite3.Connection, labels: Sequence[tuple[int, str, str]],
+    ) -> dict[str, tuple[str, str]]:
+        changed = {new for _id, old, new in labels if old != new}
+        if not changed:
+            return {}
+        unchanged = {int(segment_id): old for segment_id, old, new in labels if old == new}
+        evidence: dict[str, dict[str, set[str]]] = {}
+        allowed = {"gender": {"male", "female"}, "age": LOCKABLE_AGES}
+        rows = conn.execute(
+            "SELECT s.id,s.speaker,s.gender,s.age,p.analysis_speaker,p.pass_speaker FROM segments s "
+            "LEFT JOIN speaker_pass_labels p ON p.segment_id=s.id "
+            "WHERE s.kind IN ('dialogue','thought') AND s.status!='pending'"
+        )
+        for row in rows:
+            speaker = str(row["speaker"])
+            if not (unchanged.get(int(row["id"])) == speaker
+                    or row["analysis_speaker"] == row["pass_speaker"] == speaker):
+                continue
+            traits = evidence.setdefault(_character_key(speaker), {"gender": set(), "age": set()})
+            for field, values in allowed.items():
+                if row[field] in values:
+                    traits[field].add(str(row[field]))
+        registry = {_character_key(str(row["canonical_name"])): row for row in conn.execute("SELECT * FROM characters")}
+        result = {}
+        for speaker in changed:
+            key = _character_key(speaker)
+            character = registry.get(key)
+            traits = []
+            for field, values in allowed.items():
+                votes = evidence.get(key, {}).get(field, set())
+                value = next(iter(votes)) if len(votes) == 1 else "unknown"
+                if character is not None:
+                    pinned = bool(character["locked"]) if field == "gender" else bool(character["locked_age"])
+                    registered = str(character[field] if field == "gender" else character["locked_age"] or character[field])
+                    if registered in values and (pinned or not votes):
+                        value = registered
+                traits.append(value if key not in {"UNKNOWN", "NARRATOR"} else "unknown")
+            result[speaker] = (traits[0], traits[1])
+        return result
+
     def commit_speaker_pass_chapter(
         self,
         chapter_id: int,
@@ -3269,6 +3325,7 @@ class ProjectDB:
         with self.transaction() as conn:
             if conn.execute("SELECT 1 FROM speaker_pass_chapters WHERE chapter_id=?", (int(chapter_id),)).fetchone():
                 raise RuntimeError("Speaker pass already committed for this chapter")
+            traits = self._speaker_pass_traits_conn(conn, labels)
             for segment_id, old_speaker, new_speaker in labels:
                 if not str(new_speaker).strip():
                     raise ValueError("Speaker pass label must be non-empty")
@@ -3279,6 +3336,9 @@ class ProjectDB:
                 )
                 if cursor.rowcount != 1:
                     raise RuntimeError("Speaker pass CAS failed: segment changed since the pass read it")
+                if new_speaker != old_speaker:
+                    gender, age = traits[new_speaker]
+                    conn.execute("UPDATE segments SET gender=?,age=? WHERE id=?", (gender, age, int(segment_id)))
                 conn.execute(
                     "INSERT INTO speaker_pass_labels(segment_id,chapter_id,analysis_speaker,pass_speaker) VALUES(?,?,?,?)",
                     (int(segment_id), int(chapter_id), old_speaker, new_speaker),
