@@ -47,6 +47,17 @@ class StaleVoiceTest {
     }
 
     @Test
+    fun loadingABookOnlyRemembersItsVoiceAndTheLoadAppliesIt() {
+        // Rà 22f6dfec lỗi 5: nạp lại cùng cuốn với giọng khác - trước đây đổi giọng ngay (đọc lại chỗ chờ của lượt cũ) rồi lần nạp bỏ lượt ấy.
+        val other = "vieneu:nano/Bella"
+        ReadAloud.rememberFor("sach-a", other)
+        assertEquals("chưa đổi giọng đang đọc", ReadAloud.DEFAULT_VOICE, ReadAloud.voiceId)
+        assertEquals(other, ReadAloud.choices!!.voiceFor("sach-a"))
+        ReadAloud.useVoiceOf("sach-a") // Playback.load
+        assertEquals(other, ReadAloud.voiceId)
+    }
+
+    @Test
     fun settingARemovedVoiceUsesTheDefault() {
         installed = false
         ReadAloud.setVoice(vieneu)

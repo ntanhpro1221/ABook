@@ -75,7 +75,7 @@ class PlayerPlugin : Plugin() {
             Playback.Chapter(it.getInt("id"), it.getString("title"), it.optString("file"), it.optDouble("duration", 0.0), LibraryTree.textEntry(it))
         } ?: return call.reject("thiếu chapters")
         withService {
-            call.getString("readAloudVoice")?.let { ReadAloud.chooseFor(book, it) }
+            call.getString("readAloudVoice")?.let { ReadAloud.rememberFor(book, it) } // Playback.load đặt giọng của cuốn (useVoiceOf)
             Playback.load(
                 book, call.getString("bookTitle") ?: "", call.getString("narrator") ?: "", chapters,
                 call.getInt("chapterId") ?: chapters.first().id, call.getDouble("seconds") ?: 0.0, call.getDouble("rate") ?: 1.0,
