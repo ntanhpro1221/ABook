@@ -3,6 +3,35 @@
 File này là trách nhiệm thường trực của người dev project, không phải một lần rà soát. Mỗi phiên bản
 phải kiểm lại bảng dưới và ghi kết quả vào `VERSIONS.md`.
 
+## Đợt nâng có kiểm 21-10-2026 — `dev/deps`, chưa phát hành
+
+Chỉ nâng các gói dưới đây; giữ số phiên bản dự án `0.4.117`, Radix, ORT, AGP và toàn bộ stack model.
+Các bảng có ngày cũ bên dưới là lịch sử, không phải pin hiện tại. Python được cài bằng `uv sync --frozen --extra dev`
+vào venv thử riêng; không cài vào runtime production. Pin runtime trong `shell/python/studio-requirements.txt`
+được đối chiếu với venv thử và lock, chỉ thay setuptools và ctranslate2. Đây là sự kiện đổi hash trên nhánh dev.
+
+| Gói | Cũ → mới | Lý do, rủi ro và kiểm chứng |
+|---|---|---|
+| setuptools | 78.1.0 → **81.0.0** | Bản ổn định cao nhất <82 theo PyPI; vá CVE-2025-47273 (từ 78.1.1), giữ `pkg_resources` mà pyworld 0.3.5 cần. Ghim cả build backend và constraint runtime; cài editable mới và `import pyworld` thành công. Không tuyên bố đã vá advisory Windows legacy-wheel chỉ có ở 84.1.0. |
+| ctranslate2 | 4.8.2 → **4.8.3** | Sửa treo/rò Ruy khi tắt trên Windows, TopK CUDA và lỗi nạp model từ file-like. Whisper cache large-v3-turbo được nạp CPU int8, phiên âm và thoát ở cả hai bản; `tone.wav` 1 giây cho chữ trùng từng byte. Đây là âm tổng hợp, câu nhận dạng là hallucination: chỉ là smoke test, chưa kiểm tiếng nói thật, CUDA fp16 hoặc repair decisions. Fixture `samples/3.wav` không phải WAV hợp lệ nên bỏ qua. |
+| cryptography (dev) | 50.0.0 → **50.0.2** | Wheel Windows cập nhật OpenSSL; dùng cho fixture chữ ký Ed25519/TLS, app xác minh bằng Python thuần. Nhóm chữ ký/TLS: 139 pass, 0 F/E, mã thoát 0. |
+| vitest | 5.0.2 → **5.0.5** | Sửa bảo vệ `fs.deny`, hook cleanup và mock retention; 1.203 pass, 1 skip, 0 F/E, mã thoát 0. |
+| vite | 8.3.1 → **8.3.5** | Sửa chunk/hash, URL asset/CSS. `tsc --noEmit`, build desktop và Android thành công; chưa chạy WebView trên điện thoại. |
+| @vitejs/plugin-react | 6.1.1 → **6.1.2** | Sửa HMR compound component và compiler diagnostics; hai bản production build thành công, chưa đo HMR tương tác. |
+| @tanstack/react-query | 5.104.0 → **5.104.5** | Sửa optimistic fetch và mutation snapshot; qua bộ UI 1.203 test, gồm polling/cache/edit/export. |
+| Kotlin Gradle plugin | 2.4.20 → **2.4.21** | Sửa reflection JVM và rò file handle script trên Windows. JDK 21, Gradle 8.14.3, giữ AGP; JVM: 1.155 pass, 6 skip, 0 F/E, exit 0. Offline đầu thiếu artifact mới; một lượt online và lượt offline sau đều thành công. |
+| androidx.work:work-runtime-ktx | 2.10.1 → **2.12.0** | Sửa mạng nền Android 15, retry/reschedule cho StudioAlerts. Kiểm JVM cùng Kotlin thành công; chưa kiểm thông báo khi app đóng/mất mạng trên máy Android 15/16. |
+
+Hồi quy Python: ASR 138 pass; WORLD 97 pass/2 skip, thêm vòng native WORLD thành công; chữ ký/TLS 139 pass.
+Toàn bộ `tests/`: 8.328 pass, 1 F, 0 E, 10 skip (exit 1). F duy nhất do lock UI bị ghi CRLF trong bước kiểm;
+đã trả về LF và chạy lại cả `test_release_script.py`: 3 pass (exit 0), không chạy lại toàn bộ sau sửa EOL.
+`uv pip check`: 111 gói tương thích. Không hoàn lại gói nào; chưa kiểm GPU hoặc audio tiếng nói thật.
+
+Nguồn đã đọc: [setuptools/PyPI](https://pypi.org/project/setuptools/81.0.0/),
+[CTranslate2 4.8.3](https://github.com/OpenNMT/CTranslate2/releases/tag/v4.8.3),
+[cryptography](https://cryptography.io/en/latest/changelog/#v50-0-2) và bảng nghiên cứu upstream của đợt này.
+Log, số F/E, mã thoát, hash trước/sau và giới hạn kiểm nằm ở `scratchpad/deps/PROGRESS.md` của phiên làm việc.
+
 ## Vì sao không nâng cấp bừa
 
 `QUALITY_IMPLEMENTATION_FILES` trong `quality_policy.py` bao gồm cả `../pyproject.toml` và `../uv.lock`,
