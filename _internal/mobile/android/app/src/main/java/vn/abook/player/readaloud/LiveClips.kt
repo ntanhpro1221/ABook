@@ -200,6 +200,9 @@ object LiveClips {
 
         /** Tốc độ người nghe đang phát (giọng trên máy chờ đủ tiếng để không đứt ở tốc độ ấy - [LocalLive.readyToPlay]). */
         fun speed(): Float = 1f
+
+        /** Lúc (System.nanoTime) người nghe hết tiếng trước đoạn này - từ đó giọng trên máy không giữ khúc đã đọc xong nữa ([LocalLive]); [Long.MAX_VALUE]: không biết / không phát. */
+        fun reachNanos(): Long = Long.MAX_VALUE
     }
 
     /** Chỗ nhận + cách đổi mốc chữ giọng nhận về chữ hiện ([Voice.synthesize] đổi chữ thô thành chữ chuẩn hoá thì đặt `expand`). */

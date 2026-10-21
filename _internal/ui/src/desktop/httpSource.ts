@@ -157,8 +157,16 @@ async function requestClip(voice: string, text: string, options?: ClipOptions): 
       bookId: options?.bookId,
       readings: options?.readings,
       rank: options?.rank,
-      // Giọng trên máy cũng phát luồng (từng khúc vừa đọc xong) khi trình duyệt nhận được FLAC qua MediaSource; `rate`: máy chủ chờ đủ tiếng cho tốc độ đang nghe.
-      ...(stream ? { stream: true, ...(liveClipsSupported(LOCAL_MIME) ? { localStream: true } : {}), ...(options?.rate ? { rate: options.rate } : {}) } : {}),
+      // Giọng trên máy cũng phát luồng (từng khúc vừa đọc xong) khi trình duyệt nhận được FLAC qua MediaSource; `rate`: máy chủ chờ đủ tiếng cho tốc độ đang nghe, `soundLeft`: hết tiếng thì
+      // thôi chờ.
+      ...(stream
+        ? {
+            stream: true,
+            ...(liveClipsSupported(LOCAL_MIME) ? { localStream: true } : {}),
+            ...(options?.rate ? { rate: options.rate } : {}),
+            ...(options?.soundLeft !== undefined ? { soundLeft: options.soundLeft } : {}),
+          }
+        : {}),
     },
     signal: options?.signal, // bộ máy bỏ lượt này: kết nối đóng, máy chủ thôi đọc (server.py _peer_gone)
   };

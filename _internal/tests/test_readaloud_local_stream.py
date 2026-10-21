@@ -7,6 +7,7 @@ import io
 import json
 import struct
 import threading
+import time
 from dataclasses import replace
 from pathlib import Path
 
@@ -141,6 +142,81 @@ def test_a_slow_machine_holds_the_units_until_the_rest_will_keep_up() -> None:
         if index < len(parts) - 1:
             assert not listener.events, "chưa phát: phát bây giờ thì đứt giữa chừng"
     assert listener.events[:3] == ["started", "format", "audio"] and listener.events.count("audio") == len(parts), "xong cả clip: gửi hết"
+
+
+def _slow_units(stream, parts, rate, now, upto=None):
+    """Đưa các khúc (tới `upto`) vào `stream` như máy chậm hơn thời gian thực 2,5 lần."""
+    engine = FakeEngine(rate)
+    for part in parts[:upto]:
+        wave = engine.infer(" ".join(part.pieces))
+        now[0] += 2.5 * len(wave) / rate
+        stream(wave, rate, " ".join(part.pieces) + ".", 2.5 * len(wave) / rate)
+
+
+def test_a_listener_with_no_sound_left_hears_the_first_unit_at_once() -> None:
+    """dev/gap (OPPO, Supertonic nhanh): khúc đầu đã xong mà bị giữ 3,4 s / 8,8 s trong lúc người nghe ngồi trong im lặng. Hết tiếng rồi thì giữ chỉ làm lặng dài thêm."""
+    rate, now = 24_000, [0.0]
+    toks, parts = vieneu.units(LONG.strip(), 140)
+    listener = Listener()
+    later: list[tuple[float, object]] = []
+    stream = local_stream.LocalStream(listener, toks, parts, None, clock=lambda: now[0], reach=0.0, later=lambda delay, task: later.append((delay, task)))
+    _slow_units(stream, parts, rate, now, 1)
+    assert listener.events == ["started", "format", "audio"] and not later, "khúc đầu đi ngay"
+    _slow_units(stream, parts[1:], rate, now)
+    assert listener.events.count("audio") == len(parts), "các khúc sau đi khi xong, như luồng đã bắt đầu"
+
+
+def test_the_held_units_go_out_when_the_listener_runs_out_of_sound_between_two_units() -> None:
+    rate, now = 24_000, [0.0]
+    toks, parts = vieneu.units(LONG.strip(), 140)
+    listener = Listener()
+    later: list[tuple[float, object]] = []
+    stream = local_stream.LocalStream(listener, toks, parts, None, clock=lambda: now[0], reach=1000.0, later=lambda delay, task: later.append((delay, task)))
+    _slow_units(stream, parts, rate, now, 1)
+    first = now[0]
+    _slow_units(stream, parts[1:], rate, now, 1)
+    assert not listener.events, "còn tiếng: giữ như cũ"
+    assert len(later) == 1, "hẹn đúng một lần"
+    delay, task = later[0]
+    assert delay == pytest.approx(1000.0 - first), "hẹn tới lúc người nghe hết tiếng"
+    task()
+    assert listener.events == ["started", "format", "audio", "audio"], "tới lúc người nghe hết tiếng: hai khúc đã xong đi ngay"
+    _slow_units(stream, parts[2:], rate, now)
+    assert listener.events.count("audio") == len(parts)
+
+
+def test_a_late_release_after_the_clip_is_done_or_failed_sends_nothing() -> None:
+    rate, now = 24_000, [0.0]
+    toks, parts = vieneu.units(LONG.strip(), 140)
+    for end in ("close", "drop"):
+        listener = Listener()
+        later: list[tuple[float, object]] = []
+        stream = local_stream.LocalStream(listener, toks, parts, None, clock=lambda: now[0], reach=1e9, later=lambda delay, task: later.append((delay, task)))
+        _slow_units(stream, parts, rate, now, 1)
+        stream.close(b"") if end == "close" else stream.drop()
+        later[0][1]()
+        assert not listener.events, end
+
+
+def test_a_failed_read_cancels_the_pending_release(local_voices, monkeypatch: pytest.MonkeyPatch) -> None:
+    make, engines, _ = local_voices
+    engines["nano"] = AskingEngine(24_000)
+    later: list[object] = []
+    monkeypatch.setattr(local_stream, "_schedule", lambda delay, task: later.append(task))
+    monkeypatch.setattr(local_stream, "ready_to_play", lambda *args, **kwargs: False)  # máy chậm: không bao giờ tự phát
+    calls = [0]
+
+    def gone() -> bool:
+        calls[0] += 1
+        return calls[0] > 2
+
+    listener = Listener()
+    listener.reach = time.perf_counter() + 60
+    with pytest.raises(VoiceError):
+        make("cache").clip("vieneu:nano/Nhẹ", LONG.strip(), rank=1, stream=listener, cancelled=gone)
+    assert later, "đã hẹn"
+    later[0]()
+    assert not listener.events, "lượt hỏng: không ghi gì vào lời đáp lỗi"
 
 
 # ---- clip qua ReadAloud: bất biến byte ---------------------------------------------------------------------------------------------
@@ -325,5 +401,27 @@ def test_the_server_streams_a_local_voice_only_when_the_player_takes_flac(local_
         assert response.getheader("Content-Type") == "application/vnd.abook.clipstream" and records(data)[0][0] == "M"
         _, response, _ = post_clip(server.port, {**body, "text": "Đoạn khác nữa. " + LONG.strip(), "rank": 2})
         assert response.getheader("Content-Type").startswith("application/json")
+    finally:
+        server.stop()
+
+
+def test_the_server_passes_the_sound_left_as_the_moment_to_stop_holding(local_voices, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from tests.test_readaloud import FakeProvider, _server
+    from tests.test_readaloud_edge_stream import post_clip
+
+    make, _, _ = local_voices
+    seen: list[float] = []
+    real = local_stream.for_clip
+    monkeypatch.setattr(local_stream, "for_clip", lambda *args: seen.append(args[-1]) or real(*args))
+    server = _server(tmp_path, FakeProvider())
+    server.app.readaloud = make("prefs/readaloud-cache")
+    try:
+        body = {"voice": "vieneu:nano/Nhẹ", "text": LONG.strip(), "rank": 1, "stream": True, "localStream": True}
+        before = time.perf_counter()
+        post_clip(server.port, {**body, "soundLeft": 7.5})
+        post_clip(server.port, {**body, "text": "Đoạn khác. " + LONG.strip()})
+        post_clip(server.port, {**body, "text": "Đoạn nữa. " + LONG.strip(), "soundLeft": "7"})
+        assert before + 7.5 <= seen[0] <= time.perf_counter() + 7.5, "giây còn nghe -> lúc hết tiếng"
+        assert seen[1:] == [float("inf"), float("inf")], "không nói / sai kiểu: không biết"
     finally:
         server.stop()

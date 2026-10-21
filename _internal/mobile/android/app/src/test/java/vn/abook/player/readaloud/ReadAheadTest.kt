@@ -109,6 +109,15 @@ class ReadAheadTest {
         assertEquals("chưa đo tốc độ: vẫn giữ tới trần", 1_500L, ReadAheadPolicy.openingHoldMs(2_200L, 238, null))
     }
 
+    @Test
+    fun aVoiceWithMoreSoundPerCharacterIsJudgedByItsOwnSound() {
+        // dev/gap, OPPO, Nano Đức Trí: 0,0646 s máy mỗi ký tự (kể cả câu ngắn), 0,082 s tiếng mỗi ký tự - RTF 0,79, không phải "chậm hơn nghe". Tiêu đề 3,54 s, đoạn đầu 125 ký tự.
+        val nano = 0.0646
+        assertEquals("so với 0,06 chung: tưởng chậm hơn nghe", 0L, ReadAheadPolicy.openingHoldMs(3_540L, 125, nano))
+        assertEquals("so với tiếng đo được: giữ tới trần", 1_500L, ReadAheadPolicy.openingHoldMs(3_540L, 125, nano, audioPerChar = 0.082))
+        assertEquals("nghe 1,3x: thành chậm hơn nghe", 0L, ReadAheadPolicy.openingHoldMs(3_540L, 125, nano, 1.3, audioPerChar = 0.082))
+    }
+
     // ---- thử lại ----------------------------------------------------------------------------------------------
 
     private val delays = longArrayOf(2_000L, 5_000L)
