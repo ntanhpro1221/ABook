@@ -34,6 +34,8 @@ export type EngineEvent =
   | "playing"
   /** chỉ bộ máy native: chương/cuốn đang phát đổi (tự sang chương, nút trên thông báo...). */
   | "chapter"
+  /** chỉ bộ máy native: tên sách / tên chương đang phát đổi (sửa sách), vẫn cùng cuốn, cùng chương. */
+  | "metadata"
   /** chỉ bộ máy native: hẹn giờ ngủ đổi (đặt, gia hạn, lắc máy, tự tắt). */
   | "sleep";
 

@@ -5,7 +5,7 @@ const api = vi.hoisted(() => vi.fn());
 vi.mock("sonner", () => ({ toast }));
 vi.mock("@/studio/api", () => ({ api }));
 
-import { UNDO_SECONDS, UNDO_TOAST_MS, removedDescription, restoredNote, toastRemoved } from "./trashUndo";
+import { UNDO_SECONDS, UNDO_TOAST_MS, removedDescription, restoredMessage, restoredNote, toastRemoved } from "./trashUndo";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -93,7 +93,7 @@ it("ba lần xoá dùng một toast và hoàn tác cả ba mã, kể cả điệ
   for (const undo of ["one", "two", "three"]) toastRemoved({ message: "Đã xoá", title: undo, undo, note: "", restore, onRestored });
   const calls = toast.success.mock.calls.slice(0, 3);
   expect(new Set(calls.map(([, options]) => options.id)).size).toBe(1);
-  expect(calls[0][1].id).toBe("trash-undo");
+  expect(calls[0][1].id).toMatch(/^trash-undo-/);
   expect(calls[2][0]).toBe("Đã bỏ 3 cuốn");
   await calls[2][1].action.onClick();
   expect(restore.mock.calls.map(([token]) => token)).toEqual(["one", "two", "three"]);
@@ -126,4 +126,54 @@ it("một mã lỗi không ngăn các mã khác khôi phục và vẫn còn nút
   await toast.success.mock.calls.at(-1)![1].action.onClick();
   expect(restore).toHaveBeenCalledWith("busy");
   expect(restore).toHaveBeenCalledTimes(1);
+});
+
+it("hoàn tác lỗi nhanh hiện lại nút dưới mã toast mới (Sonner gỡ toast vừa bấm theo mã cũ ~200 ms sau)", async () => {
+  const restore = vi.fn().mockRejectedValue(new Error("Đã có sách trùng tên ở đó"));
+  toastRemoved({ message: "Đã xoá", title: "Sách", undo: "fast", note: "", restore, onRestored: vi.fn() });
+  const clicked = toast.success.mock.calls.at(-1)![1];
+  await clicked.action.onClick();
+  vi.advanceTimersByTime(0);
+  const again = toast.success.mock.calls.at(-1)![1];
+  expect(again.action.label).toBe("Hoàn tác");
+  expect(again.id).not.toBe(clicked.id);
+  // bỏ thêm một cuốn ngay sau cú bấm: cũng không dùng mã của toast đang bị gỡ
+  toastRemoved({ message: "Đã xoá", title: "Khác", undo: "next", note: "", restore, onRestored: vi.fn() });
+  expect(toast.success.mock.calls.at(-1)![1].id).not.toBe(clicked.id);
+  toast.success.mock.calls.at(-1)![1].onDismiss();
+});
+
+it("gạt toast đi là không hoàn tác những cuốn ấy: lần bỏ sau không gộp và Hoàn tác không trả chúng về", async () => {
+  const restore = vi.fn().mockResolvedValue({ ok: true });
+  const options = { message: "Đã xoá", note: "", restore, onRestored: vi.fn() };
+  toastRemoved({ ...options, title: "A", undo: "a" });
+  toast.success.mock.calls.at(-1)![1].onDismiss();
+  toastRemoved({ ...options, message: "Đã xoá “B”", title: "B", undo: "b" });
+  const [message, shown] = toast.success.mock.calls.at(-1)!;
+  expect(message).toBe("Đã xoá “B”");
+  await shown.action.onClick();
+  expect(restore.mock.calls.map(([token]) => token)).toEqual(["b"]);
+});
+
+it("toast cũ bị gỡ theo mã sau khi đã hiện toast mới thì không xoá các cuốn đang chờ", async () => {
+  const restore = vi.fn().mockRejectedValue(new Error("Bạn hãy thử lại"));
+  toastRemoved({ message: "Đã xoá", title: "A", undo: "keep", note: "", restore, onRestored: vi.fn() });
+  const old = toast.success.mock.calls.at(-1)![1];
+  await old.action.onClick();
+  vi.advanceTimersByTime(0);
+  old.onDismiss();
+  restore.mockResolvedValue({ ok: true });
+  await toast.success.mock.calls.at(-1)![1].action.onClick();
+  expect(restore).toHaveBeenLastCalledWith("keep");
+});
+
+it("chỗ cũ đã có cuốn cùng tên: lời khôi phục nói tên mới của cuốn", async () => {
+  expect(restoredMessage("Sách", { title: "Sách (2)", renamed: true })).toBe("Đã khôi phục “Sách” vào thư mục “Sách (2)”");
+  expect(restoredMessage("Sách", { title: "Sách", renamed: false })).toBe("Đã khôi phục “Sách”");
+  expect(restoredNote({ renamed: true, wasQueued: true })).toBe("Chỗ cũ đã có một cuốn cùng tên, nên thư viện sẽ hiện hai cuốn trùng tên - bạn có thể đổi tên một cuốn cho dễ phân biệt. Cuốn này đã bị bỏ khỏi hàng chờ làm sách - bấm Bắt đầu nếu muốn xếp lại.");
+  api.mockResolvedValue({ ok: true, title: "Sách (2)", renamed: true });
+  const restored = vi.fn();
+  toastRemoved({ message: "Đã xoá", title: "Sách", undo: "12".repeat(16), note: "", onRestored: restored });
+  await toast.success.mock.calls.at(-1)![1].action.onClick();
+  expect(toast.success).toHaveBeenCalledWith("Đã khôi phục “Sách” vào thư mục “Sách (2)”", { description: "Chỗ cũ đã có một cuốn cùng tên, nên thư viện sẽ hiện hai cuốn trùng tên - bạn có thể đổi tên một cuốn cho dễ phân biệt." });
 });

@@ -2,6 +2,15 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt a72fix2 (`dev/uxfix79`): năm lỗi do rà a72fix, mỗi lỗi có test đỏ trước sửa:
+1 điện thoại gửi nhãn cả cuốn xuống lõi mỗi lần mở sách, lõi thay từng mục hàng đợi (nay so nhãn, thay một lần `replaceMediaItems`);
+2 Sonner gỡ toast Hoàn tác hiện lại trong 200 ms sau cú bấm (nay mã toast mới mỗi lần bấm); 3 gạt toast không bỏ cuốn khỏi hàng hoàn tác;
+4 hoàn tác sang "<tên> (2)" mất dữ liệu nghe, cuốn chiếm chỗ nhận nhầm (nay chuyển mã; dự án trong chuỗi phần: 409 như cũ);
+5 đổi tên lúc đã hết sách phát sự kiện "chapter" (nay "metadata"). Test: `trackMetadata.test.ts`, `nativeMetadata.test.ts`,
+`trashUndo.test.ts`, `test_trash_undo.py`, JVM `BookMetadataTest`. Vitest 1223 passed + 1 skipped, exit 0; `tsc --noEmit` exit 0;
+Gradle 1170 ca = 1164 passed + 6 skipped, 0 FAILED / 0 ERROR, exit 0 (137 XML); pytest toàn bộ (XML) 8385 ca, 9 skipped,
+0 FAILED / 0 ERROR, exit 0, 1817,956 giây. Hash khoá trước/sau `49e8fd2d…` (không đổi).
+
 Đợt a72fix (`dev/uxfix79`): sáu lỗi thư viện/trình phát có test đỏ trước sửa:
 L1 media session còn nhãn cũ; L2 thư viện 226 cuốn không gọi nhớ cuộn;
 L3 HTTP 409 khi đường khôi phục bị chiếm; L4 ba lần xoá không dùng toast chung;
