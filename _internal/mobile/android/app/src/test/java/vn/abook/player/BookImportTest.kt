@@ -31,9 +31,11 @@ class BookImportTest {
 
     private fun titles(book: BookImport.Book) = book.chapters.map { it.title }
 
+    private val drmMessage = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
+
     @Test
     fun encrypted_epubs_are_refused_but_obfuscated_fonts_keep_the_text() {
-        val message = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
+        val message = drmMessage
         for (name in listOf("drm", "drm_rights", "drm_sinf", "drm_fake_font")) {
             assertEquals(name, message, failure { BookImport.importFile(File(dir, "$name.epub")) })
         }
@@ -60,6 +62,32 @@ class BookImportTest {
     @Test
     fun font_uri_preserves_non_bmp_codepoints() {
         assertEquals(expectedText("font_emoji"), dump(BookImport.importFile(File(dir, "font_emoji.epub"))))
+    }
+
+    /** Ví dụ dùng chung mà kết quả có thể là lỗi: cùng lời lỗi, hay cùng cuốn sách, như Python. */
+    private fun assertLikePython(name: String) {
+        val expected = expectedText(name)
+        val error = (StrictJson.parse(expected) as org.json.JSONObject).optString("error", "")
+        if (error.isNotEmpty()) assertEquals(name, error, failure { BookImport.importFile(File(dir, "$name.epub")) })
+        else assertEquals(name, expected, dump(BookImport.importFile(File(dir, "$name.epub"))))
+    }
+
+    @Test
+    fun drm_without_encryption_xml_is_refused_but_plain_rights_metadata_is_not() {
+        for (name in listOf("drm_fairplay", "drm_adept", "drm_kobo", "drm_lcp", "drm_rights_cipher", "drm_sinf_cipher", "drm_adept_font", "rights_adept_metadata", "rights_metadata", "sinf_metadata", "rights_font")) {
+            assertLikePython(name)
+        }
+        assertEquals(drmMessage, (StrictJson.parse(expectedText("drm_lcp")) as org.json.JSONObject).getString("error"))
+    }
+
+    @Test
+    fun encryption_xml_is_read_by_local_names_even_at_the_root() {
+        for (name in listOf("drm_enc_bare", "drm_enc_root", "font_enc_bare")) assertLikePython(name)
+    }
+
+    @Test
+    fun xml_files_follow_only_their_xml_declaration_like_expat() {
+        for (name in listOf("nav_meta_charset", "entity_utf16", "entity_utf16be", "xml_shift_jis", "xml_gb2312", "xml_euc_kr", "xml_koi8r")) assertLikePython(name)
     }
 
     @Test
