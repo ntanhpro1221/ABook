@@ -495,29 +495,29 @@ class ReadAloud:
                         else:
                             said, slots = (text, None) if reads_names else book_readings.spoken_layout(text, readings)
                         local = None  # giọng trên máy phát luồng: người nghe từng khúc (local_stream.LocalStream)
-                        if not reads_names:
-                            ranked = getattr(provider, "ranks_requests", False)
-                            if ranked and stream is not None and rank == 0 and not background:
-                                made = provider.synthesize(said, native, rank=rank, sink=_Live(stream, said, spans, slots))
-                            elif ranked and cancelled is not None:
-                                made = provider.synthesize(said, native, rank=rank, cancelled=cancelled)
+                        try:
+                            if not reads_names:
+                                ranked = getattr(provider, "ranks_requests", False)
+                                if ranked and stream is not None and rank == 0 and not background:
+                                    made = provider.synthesize(said, native, rank=rank, sink=_Live(stream, said, spans, slots))
+                                elif ranked and cancelled is not None:
+                                    made = provider.synthesize(said, native, rank=rank, cancelled=cancelled)
+                                else:
+                                    made = provider.synthesize(said, native, rank=rank) if ranked else provider.synthesize(said, native)
                             else:
-                                made = provider.synthesize(said, native, rank=rank) if ranked else provider.synthesize(said, native)
-                        else:
-                            if stream is not None and not background and getattr(stream, "local", False):  # mọi rank: đoạn đọc trước cũng nhập luồng được khi người nghe tới nó lúc còn đang đọc dở
-                                local = local_stream.for_clip(stream, provider, native, text, origin, readings if tags[1] else None, getattr(stream, "speed", 1.0),
-                                                              getattr(stream, "reach", math.inf))
-                            try:
+                                if stream is not None and not background and getattr(stream, "local", False):  # mọi rank: đoạn đọc trước cũng nhập luồng được khi người nghe tới nó lúc còn đang đọc dở
+                                    local = local_stream.for_clip(stream, provider, native, text, origin, readings if tags[1] else None, getattr(stream, "speed", 1.0),
+                                                                  getattr(stream, "reach", math.inf))
                                 with cancellable(cancelled), hearing(local):  # engine hỏi cờ giữa các khúc / bước (model.stop_if_cancelled)
                                     made = provider.synthesize(text, native, origin, readings) if tags[1] else provider.synthesize(text, native, origin)
-                            except BaseException:
-                                if local is not None:
-                                    local.drop()
-                                raise
-                        if lifted and made.ext == "wav":
-                            made = replace(made, audio=loudness.lift_wav(voice_id, made.audio))
-                        if local is not None:
-                            local.close(made.audio)
+                            if lifted and made.ext == "wav":
+                                made = replace(made, audio=loudness.lift_wav(voice_id, made.audio))
+                            if local is not None:
+                                local.close(made.audio)
+                        except BaseException:
+                            if local is not None:
+                                local.drop()
+                            raise
                         words = made.words if made.words is not None else map_boundaries(said, made.boundaries, made.duration_ms)
                         words = _shown_words(words, spans, slots)  # chữ hiện thành nhiều chữ đọc / cụm đọc ngắn hơn số chữ hiện: mốc về đủ chữ hiện
                         hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
