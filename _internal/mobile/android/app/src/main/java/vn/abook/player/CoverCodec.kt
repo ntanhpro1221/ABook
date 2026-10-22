@@ -19,7 +19,19 @@ object Covers {
     const val MAX_UPLOAD_BYTES = 16 * 1024 * 1024
     const val MAX_SIDE = 1400
     const val MIN_SIDE = 64
+
+    /** Trần điểm ảnh sau khi giải mã - `covers.MAX_PIXELS`: ảnh nén nhỏ mà nhiều điểm ảnh (PNG 8000x8000) giải ra hàng trăm MB. */
+    const val MAX_PIXELS = 40_000_000L
     private val DATA_URL = Regex("""data:image/(png|jpe?g|webp|gif|bmp);base64,([A-Za-z0-9+/=\s]+)""", RegexOption.IGNORE_CASE)
+
+    /** Số điểm ảnh phải giải mã - `covers.render_cover`: JPEG được giải thẳng ở 1/8, 1/4 hay 1/2 cỡ (PIL `draft`) chừng nào CẢ HAI cạnh còn >= [MAX_SIDE];
+     *  định dạng khác giải đủ cỡ. */
+    fun decodedPixels(width: Int, height: Int, jpeg: Boolean): Long {
+        val scale = if (jpeg) listOf(8, 4, 2).firstOrNull { width / it >= MAX_SIDE && height / it >= MAX_SIDE } ?: 1 else 1
+        return (width / scale).toLong() * (height / scale)
+    }
+
+    fun tooManyPixels() = CoverCodec.CoverError("Ảnh có quá nhiều điểm ảnh (tối đa ${MAX_PIXELS / 1_000_000} triệu) - bạn thu nhỏ ảnh rồi thử lại")
 
     fun tooLarge() = CoverCodec.CoverError("Ảnh quá lớn (tối đa ${MAX_UPLOAD_BYTES / (1 shl 20)} MB)")
 

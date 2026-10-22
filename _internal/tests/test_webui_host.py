@@ -120,6 +120,16 @@ def test_the_update_the_shell_found_is_installed_only_when_the_listener_asks(app
     shell.thread.join(10)
 
 
+def test_checking_for_a_new_version_again_is_a_shell_request_the_listener_can_make(app_data: Path) -> None:
+    shell = Shell()
+    url = shell.start()
+    assert _request(url, "/api/app")["canCheckUpdate"] is True, "app đóng gói có vỏ: hiện nút kiểm lại"
+    assert _request(url, "/api/app/check-update", {}) == {"checking": True}
+    assert shell.receive() == {"check_update": True}, "vỏ được nhờ hỏi lại trang phát hành"
+    shell.send({"quit": True})
+    shell.thread.join(10)
+
+
 def test_a_shell_that_dies_mid_dialog_never_leaves_the_page_hanging(app_data: Path) -> None:
     shell = Shell()
     url = shell.start()

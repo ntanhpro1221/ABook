@@ -781,15 +781,37 @@ class LibraryPlugin : Plugin() {
         if (expectedSize > 0 && target.isFile && target.length() == expectedSize) return 0
         target.parentFile?.mkdirs()
         val partial = File(target.path + ".part")
-        val resumeFrom = if (partial.isFile) partial.length() else 0L
-        val connection = SyncLink.bookFile(context, link, remote, relative, resumeFrom)
-        val code = Pin.guard { connection.responseCode }
-        if (code >= 400) throw IllegalStateException("Không tải được $relative (mã $code)")
-        val append = code == 206
+        // Phần dở chỉ được nối khi biết nó thuộc phiên bản nào (ETag cạnh nó) và máy kia xác nhận đúng phiên bản + đúng chỗ (PartResume).
+        var (have, tag) = PartResume.point(partial, expectedSize)
+        var connection = SyncLink.bookFile(context, link, remote, relative, have, tag)
+        var code = Pin.guard { connection.responseCode }
+        // 416: phần dở dài hơn file hiện có trên máy kia (file đã đổi) - bỏ phần dở như đuôi lạ bên dưới.
+        if (code >= 400 && !(code == 416 && have > 0)) {
+            connection.disconnect()
+            throw IllegalStateException("Không tải được $relative (mã $code)")
+        }
+        var answer = if (code == 416) PartResume.Answer.STALE_TAIL
+        else PartResume.answer(code, connection.getHeaderField("Content-Range"), connection.getHeaderField("ETag"), have, tag)
+        if (have > 0 && answer == PartResume.Answer.STALE_TAIL) {
+            // 206 mà ETag lệch (máy kia bỏ qua If-Range): đây là đuôi của file khác. Bỏ phần dở, hỏi lại cả file.
+            connection.disconnect()
+            PartResume.discard(partial)
+            have = 0
+            connection = SyncLink.bookFile(context, link, remote, relative)
+            code = Pin.guard { connection.responseCode }
+            if (code >= 400) {
+                connection.disconnect()
+                throw IllegalStateException("Không tải được $relative (mã $code)")
+            }
+            answer = PartResume.Answer.WHOLE
+        }
+        val append = answer == PartResume.Answer.RESUME
         try {
             java.io.FileOutputStream(partial, append).use { output ->
+                // Ghi phiên bản SAU khi cắt `.part` (mở không nối): phần cũ không bao giờ mang ETag mới.
+                if (!append) PartResume.stamp(partial, connection.getHeaderField("ETag"))
                 connection.inputStream.use { input ->
-                    val buffer = ByteArray(256 * 1024)
+                    val buffer = ByteArray(64 * 1024)
                     while (true) {
                         checkCancelled(id)
                         val read = input.read(buffer)
@@ -801,10 +823,21 @@ class LibraryPlugin : Plugin() {
         } finally {
             connection.disconnect()
         }
+        // Cỡ cuối phải đúng cỡ sách ghi trước khi nhận file: thiếu thì giữ phần dở cho lần sau, khác thì bỏ - không bao giờ đổi tên file sai thành file thật.
+        when (PartResume.finish(partial.length(), expectedSize)) {
+            PartResume.Final.OK -> {}
+            PartResume.Final.SHORT -> throw java.io.IOException("Tải $relative chưa đủ (${partial.length()}/$expectedSize byte)")
+            PartResume.Final.WRONG -> {
+                val got = partial.length()
+                PartResume.discard(partial)
+                throw java.io.IOException("File $relative tải về không đúng cỡ ($got/$expectedSize byte)")
+            }
+        }
         if (!partial.renameTo(target)) {
             target.delete()
-            partial.renameTo(target)
+            if (!partial.renameTo(target)) throw java.io.IOException("Không ghi được $relative")
         }
+        PartResume.tagFile(partial).delete()
         return target.length()
     }
 

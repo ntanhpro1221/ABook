@@ -390,6 +390,23 @@ def test_a_download_resumes_where_it_stopped_and_refuses_a_wrong_file(tmp_path: 
         server.shutdown()
 
 
+def test_cancelling_a_download_is_heard_within_a_small_read_not_a_whole_megabyte(tmp_path: Path) -> None:
+    Blob.data = bytes(range(256)) * 12_000
+    Blob.ranges = []
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Blob)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    item = Download("uv", f"http://127.0.0.1:{server.server_address[1]}/uv.zip", hashlib.sha256(Blob.data).hexdigest(), len(Blob.data))
+    target = tmp_path / "downloads" / "uv.zip"
+    try:
+        seen: list[int] = []
+        with pytest.raises(studio_setup.Cancelled):
+            studio_setup.download(item, target, lambda done, _total: seen.append(done), lambda: len(seen) >= 1)
+        # Mạng nhỏ giọt: một lần đọc 1 MiB có thể kéo dài nhiều phút mà không ai kiểm cờ Huỷ. Khúc 64 KiB thì cờ được kiểm sau mỗi ngần ấy.
+        assert target.with_name("uv.zip.part").stat().st_size == 64 * 1024
+    finally:
+        server.shutdown()
+
+
 class CutBlob(Blob):
     """Mỗi lần trả lời chỉ gửi tối đa `cut` byte rồi đóng kết nối - Content-Length vẫn hứa đủ."""
 

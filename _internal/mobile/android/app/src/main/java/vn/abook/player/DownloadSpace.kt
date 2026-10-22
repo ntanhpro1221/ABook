@@ -15,8 +15,9 @@ object DownloadSpace {
         if (size <= 0) return 0
         if (target == null) return size
         if (target.isFile && target.length() == size) return 0
-        val partial = File(target.path + ".part")
-        return (size - (if (partial.isFile) partial.length() else 0L)).coerceAtLeast(0)
+        // Chỉ phần dở còn biết thuộc phiên bản nào mới được tải tiếp (PartResume), nên chỉ phần ấy được trừ.
+        val have = PartResume.point(File(target.path + ".part"), size).first
+        return (size - have).coerceAtLeast(0)
     }
 
     /** Cỡ cả cuốn khi tải về theo gói sách (`book.json`): audio các chương đã có + nhạc nền - hiện cạnh nút Tải trước khi bấm (soát a68 lỗi 7).

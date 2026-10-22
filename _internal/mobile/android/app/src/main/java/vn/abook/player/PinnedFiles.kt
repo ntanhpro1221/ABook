@@ -90,7 +90,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
      *  Range) - the size on "Tải" / "Cập nhật" / resume after Huỷ. */
     fun left(part: Part, stamp: Map<String, String> = readStamp()): Long {
         if (isCurrent(part, stamp)) return 0L
-        val have = File(wireFile(part).path + ".part").length()
+        val have = PartResume.point(File(wireFile(part).path + ".part"), part.wireSize).first
         return if (have > part.wireSize) part.wireSize else part.wireSize - have
     }
 
@@ -157,6 +157,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
             }
         }
         promote(partial, wire, part.name)
+        PartResume.tagFile(partial).delete()
         if (packed != null) {
             val raw = File(target.path + ".part")
             try {
@@ -194,11 +195,9 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     }
 
     private fun transfer(remote: String, expected: String, size: Long, partial: File, progress: Progress) {
-        var have = partial.length()
-        if (have > size) {
-            partial.delete()
-            have = 0
-        }
+        // Phần dở chỉ nối tiếp khi biết nó thuộc phiên bản nào (ETag cạnh nó, PartResume); không thì tải lại - băm cuối vẫn bắt file sai.
+        var (have, tag) = PartResume.point(partial, size)
+        if (have == 0L) PartResume.discard(partial)
         progress.current(have) // what a cut download left, even when it is already whole: the first report of a file is what was there
         if (have < size) {
             val url = if (remote.startsWith("https://") || remote.startsWith("http://")) remote else base + remote
@@ -207,14 +206,30 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
                 connection.connectTimeout = 20_000
                 connection.readTimeout = 30_000
                 connection.instanceFollowRedirects = true
-                if (have > 0) connection.setRequestProperty("Range", "bytes=$have-")
-                when (val code = connection.responseCode) {
-                    HttpURLConnection.HTTP_PARTIAL -> {}
-                    HttpURLConnection.HTTP_OK -> have = 0 // the server ignored Range: start over
-                    else -> throw IOException("máy chủ trả mã $code")
+                if (have > 0) {
+                    connection.setRequestProperty("Range", "bytes=$have-")
+                    connection.setRequestProperty("If-Range", tag)
+                }
+                val code = connection.responseCode
+                if (code == 416 && have > 0) {
+                    // The part is longer than the file the server holds now: drop it; the retry asks for the whole file.
+                    PartResume.discard(partial)
+                    throw ShortRead("phần tải dở không còn khớp file trên máy chủ - tải lại từ đầu")
+                }
+                if (code != HttpURLConnection.HTTP_PARTIAL && code != HttpURLConnection.HTTP_OK) throw IOException("máy chủ trả mã $code")
+                when (PartResume.answer(code, connection.getHeaderField("Content-Range"), connection.getHeaderField("ETag"), have, tag)) {
+                    PartResume.Answer.RESUME -> {}
+                    PartResume.Answer.WHOLE -> have = 0 // the server ignored Range, or the file changed: start over
+                    // A 206 that is not the tail of the file the part came from: drop the part; the retry asks for the whole file.
+                    PartResume.Answer.STALE_TAIL -> {
+                        PartResume.discard(partial)
+                        throw ShortRead("phần tải dở không còn khớp file trên máy chủ - tải lại từ đầu")
+                    }
                 }
                 connection.inputStream.use { input ->
                     FileOutputStream(partial, have > 0).use { output ->
+                        // The version goes down AFTER the part was cut, so an old part never carries a new tag.
+                        if (have == 0L) PartResume.stamp(partial, connection.getHeaderField("ETag"))
                         val buffer = ByteArray(1 shl 16)
                         var written = have
                         progress.current(written)
@@ -235,7 +250,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
         }
         if (partial.length() != size) throw ShortRead("tải chưa đủ (${partial.length()}/$size byte)")
         if (sha256(partial) != expected) {
-            partial.delete()
+            PartResume.discard(partial)
             throw ChecksumError()
         }
     }

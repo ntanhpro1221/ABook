@@ -126,10 +126,12 @@ class LocalVoiceClipsTest {
         assertEquals(3100L, choice(SupertonicModule.CHOICE)!!.getLong("bytes"))
         // Huỷ after 1200 bytes of the vocoder: the .part stays and the next tap resumes it
         File(folder, "model/onnx/vocoder.onnx.part").apply { parentFile.mkdirs() }.writeBytes(ByteArray(1200))
+        vn.abook.player.PartResume.stamp(File(folder, "model/onnx/vocoder.onnx.part"), "\"v1\"") // a part counts only when its version is known
         assertEquals(1900L, choice(SupertonicModule.CHOICE)!!.getLong("bytes"))
         assertEquals(1900L, partBytes(SupertonicModule.CHOICE))
         // the fast tier: its own bytes only, its .part counted too
         File(folder, "${SupertonicText.FAST_ESTIMATOR}.part").apply { parentFile.mkdirs() }.writeBytes(ByteArray(500))
+        vn.abook.player.PartResume.stamp(File(folder, "${SupertonicText.FAST_ESTIMATOR}.part"), "\"v1\"")
         assertEquals(1500L, module.speedFastBytes())
         // installed, then a newer pin for one file: "Cập nhật" shows that file, less its .part
         File(folder, "model/onnx/vocoder.onnx.part").delete()
@@ -138,6 +140,7 @@ class LocalVoiceClipsTest {
         assertEquals("outdated", outdated.getString("state"))
         assertEquals(3000L, outdated.getLong("outdatedBytes"))
         File(folder, "model/onnx/vocoder.onnx.part").writeBytes(ByteArray(1000))
+        vn.abook.player.PartResume.stamp(File(folder, "model/onnx/vocoder.onnx.part"), "\"v1\"")
         assertEquals(2000L, module.status().getLong("outdatedBytes"))
         // a current part shows its whole size
         assertEquals(430L, partBytes("ort"))
@@ -150,6 +153,8 @@ class LocalVoiceClipsTest {
         assertEquals(1000L, pinned.left(part))
         File(root, "p/model").mkdirs()
         File(root, "p/model/x.onnx.part").writeBytes(ByteArray(400))
+        assertEquals("no recorded version: nothing to resume", 1000L, pinned.left(part))
+        vn.abook.player.PartResume.stamp(File(root, "p/model/x.onnx.part"), "\"v1\"")
         assertEquals(600L, pinned.left(part))
         File(root, "p/model/x.onnx.part").writeBytes(ByteArray(1400)) // larger than pinned: downloaded again from the start
         assertEquals(1000L, pinned.left(part))

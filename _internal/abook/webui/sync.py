@@ -950,9 +950,16 @@ class SyncHandler(BaseHTTPRequestHandler):
             package.unlink(missing_ok=True)
 
     def _file(self, path: Path) -> None:
-        size = path.stat().st_size
+        info = path.stat()
+        size = info.st_size
+        # Phiên bản của file: máy kia nhận dở rồi tải tiếp bằng `Range` kèm `If-Range` (remote_books._save) - file đã đổi thì gửi lại cả file,
+        # không bao giờ ghép đầu cũ với đuôi mới. Điện thoại (LibraryServer.kt) tạo cùng dạng.
+        etag = f'"{size:x}-{info.st_mtime_ns:x}"'
         start, end, status = 0, size - 1, HTTPStatus.OK
-        match = re.match(r"bytes=(\d*)-(\d*)$", self.headers.get("Range") or "")
+        # `If-Range` lệch (hay không phải ETag của file này): bỏ `Range`, trả cả file.
+        wanted = self.headers.get("Range") or ""
+        if_range = self.headers.get("If-Range")
+        match = re.match(r"bytes=(\d*)-(\d*)$", wanted) if if_range is None or if_range.strip() == etag else None
         if match and size:
             first, last = match.groups()
             if first:
@@ -970,6 +977,7 @@ class SyncHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", music_plan.TRACK_TYPES.get(path.suffix.lower(), "audio/wav"))
         self.send_header("Accept-Ranges", "bytes")
+        self.send_header("ETag", etag)
         self.send_header("Content-Length", str(end - start + 1))
         if status == HTTPStatus.PARTIAL_CONTENT:
             self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
