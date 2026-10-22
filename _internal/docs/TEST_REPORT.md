@@ -2,6 +2,8 @@
 
 Ngày cập nhật: 2026-10-23
 
+Đợt `0.4.127` trên `ABook_rel437` (245eff98 = 0.4.126 + a94 `dev/uxfix108` + a95fix `dev/uxfix109` + nhãn giọng điện thoại `dev/uxfix110`): hộp Đổi giọng gửi khoá giọng, tên giọng máy khác trên cả hai nền, gỡ mô-đun giọng hỏi trước; chỗ đọc theo hồ sơ + anchor, hàng đợi nhận chương mới, chữ và tiếng giữ khớp tới lần nạp sau. Bộ đầy đủ t111: pytest 8963 passed, 9 skipped, 0 failed; Vitest 1419 passed, 1 skipped; tsc --noEmit exit 0; Gradle testDebugUnitTest XML 1481 tests, 0 failures, 0 errors. Hash khoá `c9176123`.
+
 Đợt `a95fix` trên `dev/uxfix109`, nền `895ea9a2` (0.4.126): sửa V1–V7, T1, T2 của soát đọc/nghe.
 Test nháp đã đưa cạnh mã và đảo thành hành vi đúng: lượt đầu 11 failed / 14 ca, sau sửa xanh.
 Chỗ đọc theo hồ sơ có anchor/thời điểm, bản mới hơn thắng, flush khi rời/ẩn và retry; native lưu/đồng bộ cùng hợp đồng.
