@@ -12,6 +12,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Hộp “Đổi giọng” chọn và nghe thử được mọi giọng ZeroTTS và Supertonic (trước đây bấm vào là báo lỗi, nút nghe mẫu không phát). Giọng lạ gửi tới sách mở từ file `.abook` bị từ chối ngay kèm lý do, không còn được ghi nhận rồi lặng lẽ bỏ khi áp.
 - Tên giọng ZeroTTS và Supertonic hiện đúng tên (“Bảo Trang”, “Supertonic F1”) ở tab Nhân vật, dòng “Chờ áp dụng”, hộp “Áp dụng thay đổi” và hộp Gộp, thay vì mã nội bộ (“baotrang”, “F1”).
 - “Gỡ” một giọng đã tải (Supertonic) giờ hỏi trước: nói bao nhiêu cuốn trong thư viện đang dùng giọng ấy, tên vài cuốn, và bao nhiêu câu chưa thu sẽ không đọc được tới khi bạn tải lại hay đổi giọng. Bạn vẫn quyết gỡ hay giữ.
+- Điện thoại cũng hiện tên giọng ZeroTTS và Supertonic (“Bảo Trang”, “Supertonic F1”) ở tab Nhân vật và dòng “Chờ áp dụng” của sách mở từ file `.abook`, thay vì “baotrang”, “F1”.
 
 ## [0.4.126] - 2026-10-23
 

@@ -51,6 +51,7 @@ class LocalStudioTest {
         // đồng hồ của ý muốn chạy từng bước: mỗi yêu cầu một dấu giờ riêng (rút đúng lần bấm theo `requestedAt`)
         var tick = 0
         LocalStudio.now = { 1_790_950_256.0 + (tick++) * 0.25 }
+        VoiceLabels.labels = VoiceLabels.parse(File("../../../abook/webui/assets/voice_labels.json").readText()) // tên giọng máy khác (ca wishes_voice_machine)
     }
 
     @After
@@ -58,6 +59,7 @@ class LocalStudioTest {
         CoverSearch.http = NoWeb
         LocalStudio.coverCodec = null
         LocalStudio.musicStore = null
+        VoiceLabels.labels = emptyMap()
         LocalStudio.now = { System.currentTimeMillis() / 1000.0 }
     }
 
