@@ -46,6 +46,9 @@ export function busyClick<E extends { preventDefault: () => void }>(loading: boo
   return (event: E) => event.preventDefault();
 }
 
+/** Nút có chữ dài (đường dẫn, tên mục): chữ xuống dòng, bẻ cả chuỗi liền, nút cao thêm thay vì rộng hơn khung - chữ hệ thống to ở 320 px không đẩy trang tràn ngang (soát a102). */
+export const WRAP_LABEL = "h-auto min-h-8 max-w-full whitespace-normal py-1.5 text-center [overflow-wrap:anywhere]";
+
 export function Button({
   variant = "secondary",
   size = "md",
