@@ -567,12 +567,26 @@ class Listening:
         with self._lock:
             return json.loads(json.dumps((self._active(book, create=False) or {}).get("sessions", [])))
 
-    def set_reading(self, book: str, chapter_id: int, index: int) -> None:
-        """Chỗ đọc dở ở chế độ đọc: câu thứ `index` của chương."""
+    def set_reading(self, book: str, chapter_id: int, index: int, *, at: float | None = None,
+                    anchor: dict[str, Any] | None = None, record: str | None = None) -> None:
+        """Chỗ đọc theo nội dung và hồ sơ; lượt lưu đến muộn không đè bản mới hơn."""
+        import math
+        from .reading_anchor import validated
+
+        when = time.time() if at is None else float(at)
+        if not math.isfinite(when) or when < 0:
+            raise ValueError("Thời điểm chỗ đọc không hợp lệ")
         with self._changing():
-            entry = self._book(book)
-            entry["reading"] = {"chapterId": int(chapter_id), "index": max(0, int(index)), "at": time.time()}
-            entry["updatedAt"] = entry["reading"]["at"]
+            if record is not None and self._owner(record) != book:
+                return
+            entry = self._held(book, record)
+            if entry is None or (entry.get("reading") or {}).get("at", 0) >= when:
+                return
+            place = {"chapterId": int(chapter_id), "index": max(0, int(index)), "at": when}
+            if clean := validated(anchor):
+                place["anchor"] = clean
+            entry["reading"] = place
+            entry["updatedAt"] = max(entry.get("updatedAt", 0), when)
             self._save()
 
     def save_night(self, book: str, night: dict[str, Any]) -> None:

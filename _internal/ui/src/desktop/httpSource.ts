@@ -297,8 +297,8 @@ export const httpSource: ListenSource = {
   addSession: async (bookId, session, record) => {
     await api(`/api/listen/books/${bookId}/sessions`, { method: "POST", body: { ...session, record } });
   },
-  saveReading: async (bookId, chapterId, index) => {
-    await api(`/api/listen/books/${bookId}/reading`, { method: "POST", body: { chapterId, index } });
+  saveReading: async (bookId, chapterId, index, position, record) => {
+    await api(`/api/listen/books/${bookId}/reading`, { method: "POST", body: { ...position, chapterId, index, record } });
   },
   saveNight: async (bookId, night) => {
     await api(`/api/listen/books/${bookId}/night`, { method: "POST", body: night });

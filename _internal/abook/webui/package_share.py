@@ -66,6 +66,9 @@ def _chapter(path: Path, chapter: dict[str, Any]) -> dict[str, Any]:
     item["available"] = audio is not None
     item["size"] = audio.stat().st_size if audio is not None else 0
     item["sha256"] = audio_revision.describe(audio)["sha256"] if audio is not None else ""
+    # Cùng dạng chương với sách đang làm (listen_view.chapters): gói không đổi audio/mốc chữ tại chỗ nên dấu là băm file, mốc chữ cố định.
+    item["audioVersion"] = item["sha256"]
+    item.setdefault("wordsVersion", "")
     if audio is not None:
         item["file"] = chapter["file"]
     elif chapter.get("text"):

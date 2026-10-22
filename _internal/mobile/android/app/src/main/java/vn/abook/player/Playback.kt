@@ -50,7 +50,41 @@ internal fun labelsChanged(title: String, narrator: String, chapters: List<Playb
                            shownArtwork: ByteArray?, artwork: ByteArray): Boolean =
     title != newTitle || narrator != newNarrator || chapters != renamed || (shownArtwork != null && !shownArtwork.contentEquals(artwork))
 
+internal fun refreshedChapters(old: List<Playback.Chapter>, fresh: List<Playback.Chapter>, currentId: Int?): List<Playback.Chapter> {
+    val current = old.firstOrNull { it.id == currentId }
+    val result = fresh.map { if (it.id == currentId && current != null) current.copy(title = it.title) else it }.toMutableList()
+    if (current != null && result.none { it.id == current.id }) result.add(old.indexOf(current).coerceAtMost(result.size), current)
+    return result
+}
+
 object Playback {
+    /** Thêm chương vừa có audio; mục đang nghe giữ nguyên nguồn và vị trí. */
+    @androidx.annotation.OptIn(UnstableApi::class)
+    fun refreshQueue(id: String, fresh: List<Chapter>) {
+        if (id != bookId || fresh.isEmpty()) return
+        val current = currentChapter
+        val updated = refreshedChapters(chapters, fresh, current?.id).let { items ->
+            if (ReadAloud.active) items + chapters.filter { old -> items.none { it.id == old.id } } else items
+        }
+        if (updated == chapters) return
+        val old = chapters
+        if (ReadAloud.active) {
+            ReadAloud.remapChapters(old, updated)
+            chapters = updated
+            return
+        }
+        val exo = player
+        chapters = updated
+        if (exo != null && current != null && exo.currentMediaItem != null) {
+            val items = mediaItems(id, bookTitle, narrator, updated)
+            val index = updated.indexOfFirst { it.id == current.id }
+            // Thay hai phía của mục đang phát, không nạp/tua lại mục ấy.
+            exo.replaceMediaItems(exo.currentMediaItemIndex + 1, exo.mediaItemCount, items.drop(index + 1))
+            exo.replaceMediaItems(0, exo.currentMediaItemIndex, items.take(index))
+        }
+        emit("metadata")
+    }
+
     /** Sửa sách đang nghe: thay metadata của cả hàng đợi, không nạp lại tiếng hay tua. Giao diện gửi nhãn mỗi khi dữ liệu sách đổi,
      *  nên không có gì khác thì thôi - thay hàng đợi 2.500 chương là dựng lại timeline và MediaSession đẩy lại cả hàng đợi trên luồng chính. */
     @androidx.annotation.OptIn(UnstableApi::class)

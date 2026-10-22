@@ -2,6 +2,17 @@
 
 Ngày cập nhật: 2026-10-23
 
+Đợt `a95fix` trên `dev/uxfix109`, nền `895ea9a2` (0.4.126): sửa V1–V7, T1, T2 của soát đọc/nghe.
+Test nháp đã đưa cạnh mã và đảo thành hành vi đúng: lượt đầu 11 failed / 14 ca, sau sửa xanh.
+Chỗ đọc theo hồ sơ có anchor/thời điểm, bản mới hơn thắng, flush khi rời/ẩn và retry; native lưu/đồng bộ cùng hợp đồng.
+Hàng đợi nhận chương mới; cache script theo phiên bản audio/mốc; bản chữ đang đọc to giữ cùng mốc tới lần nạp sau.
+Dấu trang tìm bằng câu trích, recap chia khoảng theo chương; Nhạc của tôi làm mới hàng bài và cỡ chữ có tên trợ năng riêng.
+Kiểm cuối: Vitest 1413 passed, 1 skipped (176 file); tsc --noEmit exit 0; pytest liên quan 76 passed,
+4 deselected vì cần socket HTTP (kiểm offline chặn mạng thật); Gradle testDebugUnitTest exit 0,
+XML 1478 tests, 0 failures, 0 errors, 7 skipped (192 suite). Các test Kotlin mới: StoreReadingTest, QueueRefreshTest.
+Hash khoá đầu/cuối `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`; không sửa file khoá.
+Chưa kiểm nghe/hiển thị trên thiết bị thật hay NVDA/TalkBack; không tạo model/audio. Bộ đầy đủ t109: pytest 1 trượt (chương của gói thiếu audioVersion/wordsVersion như chương dự án) -> sửa package_share._chapter, file liên quan xanh.
+
 Đợt `0.4.126` trên `ABook_rel437` (b1e1986e = a90a + a90b + a92 `dev/uxfix106` + a93 `dev/uxfix107` + p3w `dev/loopp3w`): Studio lần đầu (nút Tạo chờ quét nguồn hiện tại, đóng app dừng lượt cài + khoá cài liên tiến trình, Whisper tải nối, huỷ gửi nguồn, xem trước UTF-16/CP1258, thời gian là số tham khảo); liên kết hai máy (dấu băm audio lưu đĩa: 4200 file lượt sau 27,16 s -> 0,08 s kể cả sau khởi động lại; ghép lại theo vân tay chứng chỉ; dọn sách ảo đã mất; /sync/v1/library cô lập cuốn lỗi; điện thoại giữ chữ Đọc theo của chương không đổi); nhạc nền P3 sau cờ tắt (chuyển a87 -> P3 chờ AudioTrack P3 ra loa, khớp |δ| <= 10 ms; máy ảo §43 thử vòng 6 đạt 6/6, S6 δ 3,7 ms). Toàn bộ: pytest 1 failed (test hẹn giờ chập chờn khi máy bận, chạy riêng qua; nới hạn 0,05 -> 0,5 s ở 9847d0f2); vitest 1385 passed, 1 skipped; tsc exit 0; JVM 1474 tests, 0 F/E. Hash khoá c9176123 không đổi.
 
 Đợt `a90b` trên `dev/uxfix105` (nền 6aae011e): hàng "Cần nghe lại" tách mã cảnh báo ghép, cả họ "ASR không phán xử được" vào

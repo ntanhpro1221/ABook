@@ -36,6 +36,9 @@ class PlayerPlugin : Plugin() {
             chapter.getInt("id") to chapter.getString("title")
         }
         Playback.onMain {
+            call.getArray("queue")?.toList<JSONObject>()?.map {
+                Playback.Chapter(it.getInt("id"), it.getString("title"), it.optString("file"), it.optDouble("duration", 0.0), LibraryTree.textEntry(it))
+            }?.let { Playback.refreshQueue(id, it) }
             Playback.updateMetadata(id, call.getString("title") ?: "", call.getString("narrator") ?: "", titles)
             call.resolve(JSObject.fromJSONObject(Playback.state()))
         }
