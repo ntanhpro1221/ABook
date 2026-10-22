@@ -1684,7 +1684,9 @@ class LibraryPlugin : Plugin() {
             ?: throw IllegalStateException("Cuốn này nằm trên máy tính - kết nối cùng mạng với máy tính để nghe")
         if (StreamRefresh.coverNeeded(previous, manifest, Store.file(id, "cover.jpg").isFile)) Streaming.fetchSmall(context, id, "cover.jpg")
         downloads.execute {
-            if (!Store.file(id, "cast.json").isFile) Streaming.fetchSmall(context, id, "cast.json")
+            if (StreamRefresh.castNeeded(Store.bookDir(id), manifest) && Streaming.fetchSmall(context, id, "cast.json") != null) {
+                StreamRefresh.castFetched(Store.bookDir(id), manifest)
+            }
             val samples = manifest.optJSONArray("samples") ?: JSONArray()
             for (index in 0 until samples.length()) {
                 val sample = samples.getString(index)

@@ -1,25 +1,91 @@
 """Dấu nội dung dùng chung cho đồng bộ, nhập và bản xuất."""
 from __future__ import annotations
 
+import atexit
 import hashlib
 import json
 import os
 import threading
 import time
-from collections import Counter, OrderedDict
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-# Băm cả file audio mỗi lần điện thoại hỏi thư viện là hàng GB đọc lại: nhớ dấu theo (đường tuyệt đối, cỡ, mtime_ns). File đổi cỡ hay
-# mtime thì khoá khác -> băm lại. Máy chủ đa luồng: khoá chỉ giữ lúc đọc/ghi bảng, KHÔNG giữ lúc băm (hai luồng cùng băm một file thì
-# chỉ tốn công, kết quả như nhau).
-_CACHE_LIMIT = 4096
-_CACHE: "OrderedDict[tuple[str, int, int], str]" = OrderedDict()
+# Băm cả file audio mỗi lần điện thoại hỏi thư viện là hàng GB đọc lại: nhớ dấu theo đường tuyệt đối -> (cỡ, mtime_ns, sha256). File đổi cỡ
+# hay mtime thì băm lại và thay mục. Không có trần LRU (quét tuần tự thư viện lớn hơn trần sẽ đẩy hết mục ra trước khi tới lượt sau): mỗi
+# file một mục vài trăm byte, mục của file không còn thì dọn lúc ghi (`_flush`). Bảng được lưu ra đĩa (`configure`) nên khởi động lại app
+# không băm lại gì. Máy chủ đa luồng: khoá chỉ giữ lúc đọc/ghi bảng, KHÔNG giữ lúc băm (hai luồng cùng băm một file thì chỉ tốn công).
+_MEMO: dict[str, tuple[int, int, str]] = {}
 _CACHE_LOCK = threading.Lock()
+_STORE: Path | None = None  # file lưu bảng (nằm cạnh tuỳ chọn của app); None = chỉ nhớ trong bộ nhớ
+_FLUSH_SECONDS = 2.0
+_timer: threading.Timer | None = None
+_dirty = False
+_atexit_hooked = False
 # File mới ghi trong vài giây vừa qua chưa được nhớ: đồng hồ file thô (có hệ 1-2 giây, Windows vài chục ms) có thể cho hai lần ghi cùng
 # cỡ trùng mtime - giống "racily clean" của git. Qua ngưỡng này mới tin (cỡ, mtime) là đủ phân biệt bản thu.
 _SETTLE_NS = 3_000_000_000
+
+
+def configure(store_path: Path | None) -> None:
+    """App gọi lúc dựng: nạp bảng dấu đã lưu ở `store_path` (hỏng / thiếu thì bắt đầu rỗng, băm lại dần) và từ đó ghi lại khi có mục mới."""
+    global _STORE, _dirty, _atexit_hooked
+    _flush()  # bảng của lần cấu hình trước (tests dựng nhiều app) về đúng file của nó
+    loaded: dict[str, tuple[int, int, str]] = {}
+    if store_path is not None:
+        try:
+            raw = json.loads(Path(store_path).read_bytes().decode("utf-8"))
+            for name, item in (raw.get("files") or {}).items():
+                if isinstance(name, str) and isinstance(item, list) and len(item) == 3 and isinstance(item[0], int) and isinstance(item[1], int) \
+                        and isinstance(item[2], str) and len(item[2]) == 64:
+                    loaded[name] = (item[0], item[1], item[2])
+        except (OSError, ValueError, AttributeError):
+            loaded = {}
+    with _CACHE_LOCK:
+        _STORE = Path(store_path) if store_path is not None else None
+        _MEMO.clear()
+        _MEMO.update(loaded)
+        _dirty = bool(loaded)  # lần ghi đầu dọn mục của file đã mất
+    if store_path is not None:
+        if not _atexit_hooked:
+            atexit.register(_flush)
+            _atexit_hooked = True
+        if loaded:
+            _schedule()
+
+
+def _schedule() -> None:
+    global _timer
+    with _CACHE_LOCK:
+        if _timer is not None or _STORE is None:
+            return
+        _timer = threading.Timer(_FLUSH_SECONDS, _flush)
+        _timer.daemon = True
+        _timer.start()
+
+
+def _flush() -> None:
+    """Ghi bảng ra đĩa (nếu đổi), bỏ mục của file đã bị xoá (thư mục của nó còn mà file không còn: ổ rút ra thì giữ mục)."""
+    global _timer, _dirty
+    with _CACHE_LOCK:
+        _timer = None
+        if not _dirty or _STORE is None:
+            return
+        target, snapshot = _STORE, dict(_MEMO)
+        _dirty = False
+    gone = [name for name in snapshot if not os.path.exists(name) and os.path.isdir(os.path.dirname(name))]
+    for name in gone:
+        del snapshot[name]
+    with _CACHE_LOCK:
+        for name in gone:
+            _MEMO.pop(name, None)
+    try:
+        from ..io_utils import atomic_write_json
+        atomic_write_json(target, {"v": 1, "files": {name: list(item) for name, item in snapshot.items()}}, fsync=False, compact=True)
+    except OSError:
+        with _CACHE_LOCK:
+            _dirty = True  # lần sau thử lại
 
 
 def source_fingerprint(project: Path) -> str:
@@ -43,13 +109,13 @@ def source_fingerprint(project: Path) -> str:
 
 
 def describe(path: Path) -> dict[str, Any]:
+    global _dirty
     stat = path.stat()
-    key = (os.path.abspath(path), stat.st_size, stat.st_mtime_ns)
+    name = os.path.abspath(path)
     with _CACHE_LOCK:
-        known = _CACHE.get(key)
-        if known is not None:
-            _CACHE.move_to_end(key)
-            return {"size": stat.st_size, "sha256": known}
+        known = _MEMO.get(name)
+    if known is not None and known[0] == stat.st_size and known[1] == stat.st_mtime_ns:
+        return {"size": stat.st_size, "sha256": known[2]}
     digest = hashlib.sha256()
     size = 0
     with path.open("rb") as source:
@@ -61,10 +127,9 @@ def describe(path: Path) -> dict[str, Any]:
     after = path.stat()
     if (after.st_size, after.st_mtime_ns) == (stat.st_size, stat.st_mtime_ns) == (size, stat.st_mtime_ns) and time.time_ns() - stat.st_mtime_ns > _SETTLE_NS:
         with _CACHE_LOCK:
-            _CACHE[key] = result
-            _CACHE.move_to_end(key)
-            while len(_CACHE) > _CACHE_LIMIT:
-                _CACHE.popitem(last=False)
+            _MEMO[name] = (stat.st_size, stat.st_mtime_ns, result)
+            _dirty = True
+        _schedule()
     return {"size": size, "sha256": result}
 
 
