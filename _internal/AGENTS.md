@@ -42,6 +42,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 
 ## Invariant an toàn
 
+- Cập nhật Studio dùng `_busy_elsewhere()` và khoá hàng đợi để từ chối khi sách đang chạy/khởi động/tạm dừng; kiểm lại ngay trước thay runtime, không dừng sách để cập nhật.
+- Bộ gỡ Windows đọc `preferences.json.libraryRoot` trước mọi xoá đệ quy trong hook; không đọc được vị trí thì giữ dữ liệu. Chế độ nâng cấp truyền bằng cờ rõ ràng từ callback GUI trước PageReinstall hoặc `/UPDATE`, không suy tên bộ cài.
+- Thư viện tuỳ chọn giải trong staging riêng; chỉ công bố `lib.next` có dấu hoàn tất. Caller dùng chung phải giữ khoá đích xuyên suốt tải, giải và commit, rồi kiểm lại dưới khoá.
+- Studio đối chiếu hash distribution với `uv.lock` đi kèm app; dependency Git đối chiếu commit đầy đủ và không tự tải build dependency chưa ghim. Marker hoàn tất chỉ ghi sau verify và checkpoint.
 - **Trong lúc pha phân tích chạy, đừng chạy việc nặng nào khác trên máy** — kể cả `pytest`.
   Phân tích của dự án này tái lập hoàn hảo: alpha.48, .49 và .51 giống nhau **từng byte**.
   alpha.52 lệch **54 phân vai** so với cả ba, và hình dạng là *một* nhóm lệch ở thứ 45/201 rồi
@@ -71,6 +75,20 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Pending đồng bộ giữ đúng `(bookId, recordId, revision)` và snapshot; ACK cũ không gỡ revision mới.
   Chỗ nghe ReadAloud giữ `last.anchor` (đoạn, offset code point, vân tay chữ chương), ưu tiên khi văn bản còn khớp; Kotlin/TypeScript/Python cùng hợp đồng.
   Retake từ điện thoại có operation_id bền trước gửi; `book_wishes` giữ receipt và dấu giờ cũ khi retry, không đổi seed thêm lần nữa.
+- Dữ liệu peer: kiểm mã sách Android tại native trước I/O và trước thêm tiền tố peer; `bookDir` phải là con trực tiếp của `books/`.
+  Đường file gói qua kiểm tra từ vựng chung hai nền trước canonical/resolve/stat (cấm UNC, drive/ADS, backslash, tầng rỗng/dot,
+  tên thiết bị Windows, hậu tố chấm/khoảng trắng), rồi kiểm containment theo thành phần. Manifest mạng phải qua cùng gate trước ghi.
+- Cổng sync: desktop tối đa 32 kết nối/8 mỗi nguồn, keep-alive rỗi 30 giây; Android 8 worker/6 mỗi nguồn,
+  thêm tối đa 16 socket chờ 30 giây chỉ cho địa chỉ vừa xác thực trong 5 phút (địa chỉ không thay token từng request).
+  Nguồn lạ vượt trần bị đóng trước TLS; trả slot cả khi worker chưa khởi động được. Deadline header/TLS 30 giây;
+  thân gói sửa desktop và thân Android đã xác thực dùng 30 giây + cỡ/16 KiB/s cùng timeout recv và trần byte.
+  Nguồn chưa xác thực giữ deadline 30 giây; huỷ deadline trước trả lời để không cắt stream audio dài.
+  GET bị đóng trước response hoặc nhận 503 thử lại tối đa hai lần (200/800 ms), không replay POST hay bỏ kiểm pin.
+- Tải từ peer: `peer_limits.py` và `PeerTransfer.kt` giữ cùng trần byte (JSON/chữ 16 MiB, lỗi 64 KiB, bìa 8 MiB, WAV 64 MiB,
+  audio chương 8 GiB, nhạc 2 GiB; job 64 GiB/20.000 file). Kiểm byte trước ghi, đo chỗ trống từng khối; quá trần thì bỏ phần dở,
+  mất mạng/huỷ giữ phần dở khi cỡ đã biết, chỉ nối tiếp khi ETag khớp và máy kia xác nhận Range. File nhỏ dùng temporary riêng,
+  sync rồi rename, không xoá target cũ.
+  `share.json` hỏng phải giữ nguyên cùng bản `.corrupt-*`, chặn writer thay vì dựng danh sách rỗng; lỗi đọc cũng phải báo lên.
 - Phán quyết nghe của Studio nằm trong `reviews.json`, gắn với `stable_id` và checksum bản thu `wav_sha256`; bản thu đổi thì
   phán quyết cũ vào lịch sử, không được che câu chưa nghe ở hàng nghe lại hoặc hộp việc. Không ghi phán quyết này vào SQLite.
 - Xuất `.abook` phải đối chiếu checksum của byte thực ghi trước khi công bố gói; nguồn đổi giữa băm và ghi thì báo lỗi và dọn

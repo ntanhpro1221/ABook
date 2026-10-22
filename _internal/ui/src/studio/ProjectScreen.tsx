@@ -55,6 +55,7 @@ import {
   useAppInfo,
   useBook,
   useContinuation,
+  useLeaveQueue,
   useParts,
   usePause,
   useReveal,
@@ -599,7 +600,7 @@ function Actions({ book }: { book: BookSummary }) {
   const [confirmResume, setConfirmResume] = useState(false);
   const [exporting, setExporting] = useState(false);
   const live = book.running;
-  const stop = useStop();
+  const leaveQueue = useLeaveQueue();
   const pause = usePause();
   // Phân tích xong thì sổ nhân vật đã đủ để làm tiếp; nút chỉ hiện khi thư mục truyện có chương mới sau chương cuối.
   const analyzed = book.segments.total > 0 && book.segments.analyzed === book.segments.total;
@@ -633,7 +634,7 @@ function Actions({ book }: { book: BookSummary }) {
             Đang xếp hàng · thứ {book.queuePosition} - tự bắt đầu khi cuốn đang chạy xong
             {book.seedPending ? ", rồi mang giọng và cách đọc tên từ phần trước" : ""}
           </span>
-          <Button variant="ghost" size="lg" onClick={() => stop.mutate({ id: book.id, queued: true })}>
+          <Button variant="ghost" size="lg" onClick={() => leaveQueue.mutate({ id: book.id })}>
             Bỏ xếp hàng
           </Button>
         </>
@@ -664,6 +665,12 @@ function Actions({ book }: { book: BookSummary }) {
           <Button variant={book.canPause ? "ghost" : "outline"} size="lg" icon={Square} onClick={() => setConfirmStop(true)}>
             Dừng
           </Button>
+          {/* Thay đổi chờ áp khi máy đang chạy: xem được, và bỏ được khi đã tạm dừng tới checkpoint (soát a83 B5). */}
+          {book.pendingChanges ? (
+            <Button variant="ghost" size="lg" icon={RefreshCw} onClick={() => setConfirmApply(true)}>
+              {book.pendingChanges} thay đổi chờ áp
+            </Button>
+          ) : null}
         </>
       ) : book.phase === "idle" ? (
         <>
@@ -745,6 +752,7 @@ function Actions({ book }: { book: BookSummary }) {
         open={confirmApply}
         onOpenChange={setConfirmApply}
         onApply={() => begin(book.id)}
+        running={live ? (book.paused && book.status === "paused" ? "checkpoint" : "busy") : undefined}
       />
       {studio.missing && !live && (book.phase !== "done" || Boolean(book.pendingChanges) || redoWaiting > 0) && (
         <p className="flex basis-full flex-wrap items-center gap-x-3 gap-y-2 text-pretty text-sm text-fg-2">
@@ -820,7 +828,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
     onSuccess: ({ lines }) => {
       toast.success(`Đã ghi: thu lại ${lines} câu của ${chapter.displayTitle}`, {
         description: book.running
-          ? "Máy thu lại từ chương sau. Bỏ được trong hộp “Áp dụng thay đổi”."
+          ? "Máy thu lại từ chương sau. Muốn bỏ, bạn bấm “Tạm dừng” rồi mở “Thay đổi chờ áp” ở trang sách."
           : "Bấm “Áp dụng thay đổi” ở đầu trang để thu. Bỏ được trong hộp ấy.",
       });
       void client.invalidateQueries({ queryKey: ["book", book.id] });

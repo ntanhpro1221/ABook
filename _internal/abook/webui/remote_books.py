@@ -670,10 +670,29 @@ def _match_paired(computer: str) -> None:
         _COMPUTERS.note(computer, bt=address)
 
 
-def _read(response: http.client.HTTPResponse, size: int | None = None) -> bytes:
+def _read(response: http.client.HTTPResponse, size: int | None = None, *, limit: int | None = None) -> bytes:
     """Đọc thân trả lời; đứt giữa chừng (máy kia tắt, rớt mạng) là `RemoteError` như lúc không kết nối được."""
     try:
-        return response.read() if size is None else response.read(size)
+        if size is not None:
+            return response.read(size)
+        from .peer_limits import JSON_BYTES
+        cap = JSON_BYTES if limit is None else limit
+        announced = response.getheader("Content-Length")
+        if announced is not None:
+            try:
+                declared = int(announced)
+            except ValueError as error:
+                raise RemoteError("Cỡ dữ liệu không hợp lệ; bạn hãy kiểm tra lại máy gửi.", status=413) from error
+            if declared < 0 or declared > cap:
+                raise RemoteError("Dữ liệu trả về quá lớn; bạn hãy kiểm tra lại máy gửi.", status=413)
+        if response.length is not None and response.length > cap:
+            raise RemoteError("Dữ liệu trả về quá lớn; bạn hãy kiểm tra lại máy gửi.", status=413)
+        data = bytearray()
+        while chunk := response.read(min(64 * 1024, cap - len(data) + 1)):
+            if len(chunk) > cap - len(data):
+                raise RemoteError("Dữ liệu trả về quá lớn; bạn hãy kiểm tra lại máy gửi.", status=413)
+            data.extend(chunk)
+        return bytes(data)
     except (OSError, http.client.HTTPException) as error:
         raise RemoteError(UNREACHABLE) from error
 
@@ -696,25 +715,38 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
         headers["Content-Type"] = "application/json"
     connection: tls.PinnedHTTPSConnection | None = None
     try:
-        try:
-            connection = _connect(endpoint, timeout, wake=wake)
-            if read_timeout is not None and connection.sock is not None:
-                connection.sock.settimeout(read_timeout)
-            if upload is not None:
-                headers.update({"Content-Type": upload[1], "Content-Length": str(upload[0].stat().st_size)})
-                with upload[0].open("rb") as handle:
-                    connection.request(method, path, body=handle, headers=headers)
-            else:
-                connection.request(method, path, body=data, headers=headers)
-            response = connection.getresponse()
-        except tls.PinError as error:
-            raise RemoteError("Chứng chỉ bảo mật của máy kia đã khác lúc ghép (máy kia cài lại ABook?) - bấm Thôi ghép rồi ghép lại. "
-                              "Nếu máy kia không cài lại gì thì đừng ghép lại: có thể có ai chen vào mạng") from error
-        except (OSError, http.client.HTTPException) as error:
-            raise RemoteError(_unreachable(endpoint, error)) from error
+        for attempt in range(3):
+            try:
+                connection = _connect(endpoint, timeout, wake=wake)
+                if read_timeout is not None and connection.sock is not None:
+                    connection.sock.settimeout(read_timeout)
+                if upload is not None:
+                    headers.update({"Content-Type": upload[1], "Content-Length": str(upload[0].stat().st_size)})
+                    with upload[0].open("rb") as handle:
+                        connection.request(method, path, body=handle, headers=headers)
+                else:
+                    connection.request(method, path, body=data, headers=headers)
+                response = connection.getresponse()
+                if method != "GET" or response.status != 503 or attempt == 2:
+                    break
+            except tls.PinError as error:
+                raise RemoteError("Chứng chỉ bảo mật của máy kia đã khác lúc ghép (máy kia cài lại ABook?) - bấm Thôi ghép rồi ghép lại. "
+                                  "Nếu máy kia không cài lại gì thì đừng ghép lại: có thể có ai chen vào mạng") from error
+            except (OSError, http.client.HTTPException) as error:
+                if (method != "GET" or attempt == 2
+                        or not isinstance(error, (ConnectionResetError, ConnectionAbortedError, BrokenPipeError,
+                                                  http.client.RemoteDisconnected, ssl.SSLEOFError))):
+                    raise RemoteError(_unreachable(endpoint, error)) from error
+            if connection is not None:
+                connection.close()
+                connection = None
+            time.sleep((0.2, 0.8)[attempt])
         if response.status >= 400 and not passthrough:
             try:
-                message = json.loads(_read(response).decode("utf-8")).get("error")
+                from .peer_limits import ERROR_BYTES, check_json
+                data = _read(response, limit=ERROR_BYTES)
+                check_json(data)
+                message = json.loads(data.decode("utf-8")).get("error")
             except (ValueError, AttributeError):
                 message = ""
             raise RemoteError(message or f"Máy kia trả lỗi {response.status}", status=response.status)
@@ -728,7 +760,16 @@ def _exchange(endpoint: Endpoint, method: str, path: str, token: str, body: dict
               timeout: float = TIMEOUT, wake: bool = False) -> tuple[bytes, str]:
     """Một yêu cầu qua TLS ghim vân tay: (thân trả lời, vân tay chứng chỉ máy kia đã đưa ra)."""
     with _open(endpoint, method, path, token, body, timeout, wake=wake) as (response, seen):
-        return _read(response), seen
+        from .peer_limits import COVER_BYTES
+        cover = path.split("?")[0].endswith("/files/cover.jpg")
+        data = _read(response, limit=COVER_BYTES if cover else None)
+        if not cover:
+            from .peer_limits import check_json
+            try:
+                check_json(data)
+            except ValueError as error:
+                raise RemoteError(str(error)) from error
+        return data, seen
 
 
 def _request(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str, Any] | None = None,
@@ -882,6 +923,11 @@ def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str,
     """`built`: thư mục cuốn ảo đã dựng cho sách này - kể cả dựng theo mã cũ rồi đổi mã (`_follow_renamed`: tên thư mục
     còn mang dấu của mã cũ)."""
     manifest = json.loads(_request(_base(entry), "GET", f"/sync/v1/books/{book}/manifest", entry["token"]).decode("utf-8"))
+    from .peer_paths import check_manifest
+    try:
+        check_manifest(manifest)
+    except ValueError as error:
+        raise RemoteError(str(error)) from error
     title = str(manifest.get("title") or "Sách")
     target = built or folder / _folder(title, hashlib.sha256(book.encode()).hexdigest())
     target.mkdir(parents=True, exist_ok=True)
@@ -1029,7 +1075,6 @@ def fetch_soon(package: Path, relatives: list[str], manifest: dict[str, Any]) ->
 
 DOWNLOAD_FILE = "download.json"  # file nào đã tải theo phiên bản nào của sách (file không có cỡ trong book.json), file máy kia không có
 CHUNK = 64 * 1024  # nhỏ: mạng nhỏ giọt thì cờ huỷ vẫn được kiểm sau mỗi ngần ấy byte
-_SAFE_NAME = re.compile(r"[A-Za-z0-9_./ \-]+")
 _RECORD_LOCK = threading.Lock()
 _FILE_LOCKS: dict[str, threading.Lock] = {}
 
@@ -1089,8 +1134,14 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
     phần dở) - chương lớn trên Wi-Fi yếu không phải tải lại từ đầu, và file nguồn đã đổi (máy kia dựng lại chương) thì tải lại từ đầu thay
     vì ghép đầu cũ với đuôi mới; máy kia không hiểu `Range` thì cũng tải lại từ đầu. `progress(số byte vừa nhận)` (âm: bỏ phần dở đã tính),
     `cancelled()`: cho việc tải cả cuốn. Lỗi: `RemoteError` (hay `Cancelled`); máy kia ngừng trả lời giữa chừng thì nói tên máy ấy (`_cut`)."""
-    if not _SAFE_NAME.fullmatch(relative) or ".." in relative:
+    from .peer_paths import safe_relative
+    if not safe_relative(relative):
         raise RemoteError("Tên file lạ trong sách")
+    from .peer_limits import DISK_MARGIN, file_budget
+    try:
+        limit = file_budget(relative, size)
+    except ValueError as error:
+        raise RemoteError(str(error), status=413) from error
     entry, book_key = _entry_of(book)
     target = (package / relative).resolve()
     if not target.is_relative_to(package.resolve()):
@@ -1116,7 +1167,10 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
                             have, tag = 0, ""
                             continue
                         try:
-                            message = json.loads(_read(response).decode("utf-8")).get("error")
+                            from .peer_limits import ERROR_BYTES, check_json
+                            data = _read(response, limit=ERROR_BYTES)
+                            check_json(data)
+                            message = json.loads(data.decode("utf-8")).get("error")
                         except (ValueError, AttributeError):
                             message = ""
                         raise RemoteError(message or f"Máy kia trả lỗi {response.status}", status=response.status)
@@ -1133,6 +1187,8 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
                         continue
                     expected = response.length
                     received = 0
+                    if expected is not None and expected > limit - have:
+                        raise RemoteError("File vượt giới hạn tải; bạn hãy kiểm tra lại máy gửi sách.", status=413)
                     try:
                         with temporary.open("ab" if have else "wb") as sink:
                             if not have:
@@ -1140,10 +1196,14 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
                                     _etag_file(temporary).write_bytes(sent.encode("utf-8"))
                                 else:
                                     _etag_file(temporary).unlink(missing_ok=True)
-                            while chunk := _read(response, CHUNK):
+                            while chunk := _read(response, min(CHUNK, limit - have - received + 1)):
                                 if cancelled is not None and cancelled():
                                     keep = size is not None
                                     raise Cancelled
+                                if len(chunk) > limit - have - received:
+                                    raise RemoteError("File vượt giới hạn tải; bạn hãy kiểm tra lại máy gửi sách.", status=413)
+                                if shutil.disk_usage(target.parent).free < DISK_MARGIN + len(chunk):
+                                    raise RemoteError("Máy không đủ chỗ trống; bạn hãy dọn bớt rồi tải lại.", status=507)
                                 sink.write(chunk)
                                 received += len(chunk)
                                 if progress is not None:
@@ -1175,6 +1235,9 @@ def wanted(book: dict[str, Any]) -> list[tuple[str, int | None]]:
 
     def add(name: Any, size: Any = None) -> None:
         if isinstance(name, str) and name and name not in files:
+            from .peer_paths import safe_relative
+            if not safe_relative(name):
+                raise RemoteError("Đường dẫn trong sách không hợp lệ; bạn hãy kiểm tra lại máy gửi sách.")
             files[name] = int(size) if isinstance(size, (int, float)) and not isinstance(size, bool) and size > 0 else None
 
     for chapter in book.get("chapters") or []:
@@ -1190,6 +1253,12 @@ def wanted(book: dict[str, Any]) -> list[tuple[str, int | None]]:
     music = book.get("music") if isinstance(book.get("music"), dict) else {}
     for name, info in (music.get("tracks") or {}).items() if isinstance(music.get("tracks"), dict) else ():
         add(name, info.get("size") if isinstance(info, dict) else None)
+    from .peer_limits import JOB_BYTES, JOB_FILES, file_budget
+    try:
+        if len(files) > JOB_FILES or sum(file_budget(name, size) for name, size in files.items()) > JOB_BYTES:
+            raise ValueError("Cuốn sách vượt giới hạn tải; bạn hãy kiểm tra lại máy gửi sách.")
+    except ValueError as error:
+        raise RemoteError(str(error), status=413) from error
     return list(files.items())
 
 
@@ -1426,7 +1495,10 @@ def send_edits(package: Path) -> dict[str, Any]:
                     raise RemoteError("Phần sửa quá lớn để gửi một lần - bớt bài nhạc đã chọn rồi gửi lại")
                 with _open(_base(entry), "POST", f"/sync/v1/books/{book_key}/edits", entry["token"], timeout=120,
                            upload=(outgoing, "application/zip")) as (response, _seen):
-                    reply = json.loads(_read(response).decode("utf-8"))
+                    from .peer_limits import check_json
+                    data = _read(response)
+                    check_json(data)
+                    reply = json.loads(data.decode("utf-8"))
                 if not isinstance(reply, dict):
                     raise ValueError
             except book_edits.EditsError as error:

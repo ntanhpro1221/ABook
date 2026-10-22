@@ -6,6 +6,7 @@ import { formatWhen } from "@/shared/format";
 import { Button, IconButton } from "@/shared/ui";
 import { KIND_ICON } from "./ApplyChanges";
 import { api } from "./api";
+import { useWhenApplied } from "./decisions";
 import { pollDelay, retryUnlessGone } from "./polling";
 
 // Hộp thư thay đổi từ điện thoại (docs/EDITING.md, P2b; webui/edits_inbox.py). Điện thoại đã ghép gửi phần sửa của cuốn về máy tính:
@@ -74,8 +75,20 @@ export function describePush(push: RecentPush): string {
   return `${push.name} · ${formatWhen(push.at)}: ${parts.join(", ") || "không có gì mới"}`;
 }
 
+/** Lời dưới toast "Áp dụng" một việc từ hộp thư: điều đã xảy ra, rồi lúc nào máy làm (`when` = `useWhenApplied`: sách đang chạy thì máy tự áp từ
+ *  chương sau - không có nút "Áp dụng thay đổi" nào để bấm; soát a83 B12). */
+export function applyNote({ skipped, held }: { skipped: number; held: number }, when: string): string {
+  return [
+    skipped ? `${skipped} việc không còn khớp với sách nên bị bỏ qua.` : `Chưa thu lại gì. ${when}`,
+    held ? `${held} việc máy này đã đổi khác sau đó vẫn chờ bạn chọn từng việc.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function PhoneEdits({ bookId }: { bookId: string }) {
   const client = useQueryClient();
+  const when = useWhenApplied(bookId);
   const { data } = useInbox(bookId);
   const [busy, setBusy] = useState<string | null>(null);
   if (!data || (!data.devices.length && !data.recent.length)) return null;
@@ -92,12 +105,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
         const skipped = reply.skipped ?? 0;
         const held = reply.held ?? 0;
         toast.success(made ? `Đã ghi ${made} việc vào “Áp dụng thay đổi”` : "Không có việc nào ghi được", {
-          description: [
-            skipped ? `${skipped} việc không còn khớp với sách nên bị bỏ qua.` : "Chưa thu lại gì - bấm “Áp dụng thay đổi” khi muốn máy làm.",
-            held ? `${held} việc máy này đã đổi khác sau đó vẫn chờ bạn chọn từng việc.` : "",
-          ]
-            .filter(Boolean)
-            .join(" "),
+          description: applyNote({ skipped, held }, when),
         });
       } else {
         toast("Đã bỏ qua", { description: "Không có gì thay đổi trong sách." });

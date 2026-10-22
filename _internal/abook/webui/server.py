@@ -159,6 +159,9 @@ SPEAKER_PROBLEMS = {
     listener_overrides.NO_VOICE: "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được.",
 }
 
+NOT_CAST_YET = ("Sách chưa phân vai xong (xong ngay sau bước phân tích truyện) nên chưa gán người nói cho câu này được - "
+                "bạn thử lại khi máy phân vai xong.")
+
 UNNAMED_PROBLEM = ("Sách này chưa có nhóm “vai phụ không tên” để đưa câu vào. Chọn một người cụ thể, hay bấm “Người khác…” để đặt tên"
                    " cho vai này (vd “lính gác”) - vai ấy sẽ có giọng riêng.")
 
@@ -861,6 +864,8 @@ class App:
             with self._queue_lock:
                 if not self.queue or self.queue[0] != head:
                     continue
+                if self.studio is not None and self.studio.running():
+                    continue
                 if path is None or self.runner.running(path):
                     self._dequeue(head)  # dự án đã mất, hay worker đã chạy bằng đường khác
                     continue
@@ -894,6 +899,8 @@ class App:
         self._mutating()
         path = self._book(value)
         with self._queue_lock:
+            if self.studio is not None and self.studio.running():
+                raise ApiError(HTTPStatus.CONFLICT, "Studio đang cập nhật. Bạn hãy chờ cập nhật xong rồi chạy sách.")
             if self.runner.running(path) or self.jobs.starting(path):
                 return self.summary(path)
             if not now and self._busy_elsewhere(path) is not None:
@@ -1070,6 +1077,31 @@ class App:
                 return self.summary(path)  # chưa nhận lượt: "Dừng" nghĩa là bỏ khỏi hàng
         self.jobs.stop(path)
         return self.summary(path)
+
+    def paused_at_checkpoint(self, path: Path) -> bool:
+        """Cuốn đang chạy mà dây chuyền ĐÃ đứng ở checkpoint tạm dừng (sổ ghi "paused" - Pipeline._wait_pause_or_stop): không câu nào đang
+        bay, yêu cầu của người nghe chỉ được đọc lại sau khi làm tiếp, nên bỏ một yêu cầu lúc này không đua với việc áp (soát a83 B5)."""
+        if not self.runner.running(path) or not self.runner.pause_reason(path) or self.jobs.starting(path):
+            return False
+        try:
+            with closing(store.connect(path)) as connection:
+                row = connection.execute("SELECT status FROM book WHERE id=1").fetchone()
+        except Exception:  # noqa: BLE001 - sổ đang bận: coi như chưa tới checkpoint
+            return False
+        return row is not None and str(row["status"]) == "paused"
+
+    def leave_queue(self, value: str) -> dict[str, Any]:
+        """"Bỏ xếp hàng": CHỈ bỏ khỏi hàng. Cuốn đã được trao lượt (màn của người dùng cũ tới một nhịp poll) thì KHÔNG dừng - dừng
+        giữa pha phân tích là đổi quyển sách (AGENTS.md); giao diện nhận 409 và nói đúng điều đã xảy ra. Soát a83 B1."""
+        self._mutating()
+        path = self._book(value)
+        with self._queue_lock:
+            if not self.jobs.starting(path) and self._dequeue(value):
+                return self.summary(path)
+            started = self.jobs.starting(path) or self.runner.running(path)
+        if started:
+            raise ApiError(HTTPStatus.CONFLICT, "Cuốn này đã bắt đầu chạy nên không còn xếp hàng nữa. Muốn dừng, bạn dùng “Tạm dừng” hay “Dừng” ở trang sách")
+        return self.summary(path)  # đã không còn trong hàng (lệnh gửi hai lần): không có gì để bỏ
 
     def existing_projects(self, digests: list[str]) -> list[dict[str, Any]]:
         """Dự án đã làm từ chính những file vừa chọn - so NỘI DUNG (SHA-256), không so đường dẫn: truyện chép sang thư
@@ -3298,6 +3330,12 @@ def without_local_paths(value: Any) -> Any:
     return out
 
 
+def _withdraw_line_companions(path: Path, keys: list[str], requested_at: float) -> None:
+    """Sửa câu "lời kể -> lời thoại" kèm người nói ghi thêm một mục `speakers` cùng mốc: là MỘT thay đổi (store.line_companions), nên bỏ mục
+    `lines` là bỏ luôn mục ấy (chỉ mục đúng mốc đó - `requests_made_at`). Soát a83 B8."""
+    listener_overrides.withdraw_requests(path, "speakers", keys, requested_at)
+
+
 def _serialized_per_book(method: Callable[..., None]) -> Callable[..., None]:
     """Đường ghi yêu cầu của người nghe (overrides.json, aliases.json): cả lần đọc-sửa-ghi chạy dưới khoá ghi của dự án, nên ba lần
     bấm sát nhau không nuốt nhau (soát UX a32, lỗi 9). Sách không tìm thấy thì để chính đường ấy báo lỗi."""
@@ -3310,6 +3348,11 @@ def _serialized_per_book(method: Callable[..., None]) -> Callable[..., None]:
             method(self, query, value, *rest)
             return
         with project_write_lock(path):
+            try:
+                book_wishes.guard_overrides(path)
+            except notices.Unreadable as error:
+                raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Danh sách yêu cầu của cuốn này đang bị một chương trình khác giữ nên chưa lưu được. "
+                                                              "Bạn thử lại sau vài giây - các yêu cầu cũ vẫn còn nguyên") from error
             method(self, query, value, *rest)
 
     return wrapper
@@ -3746,13 +3789,14 @@ class Handler(BaseHTTPRequestHandler):
     @_serialized_per_book
     def post_pending_withdraw(self, _query: dict[str, list[str]], value: str) -> None:
         # Bỏ một thay đổi khỏi hộp "Áp dụng N thay đổi" trước khi áp (soát UX a6 01-10: muốn bỏ một mục thì phải đi tìm lại
-        # đúng thẻ / đúng câu ở ba tab khác nhau). Chỉ khi sách KHÔNG chạy: đang chạy thì dây chuyền có thể đang áp chính
-        # yêu cầu ấy ở ranh giới chương. Yêu cầu từng thay một yêu cầu cũ thì yêu cầu cũ trở lại (withdraw_requests).
+        # đúng thẻ / đúng câu ở ba tab khác nhau). Chỉ khi sách KHÔNG chạy, hoặc đã TẠM DỪNG tới checkpoint (`paused_at_checkpoint`): đang
+        # chạy thì dây chuyền có thể đang áp chính yêu cầu ấy ở ranh giới chương. Yêu cầu từng thay một yêu cầu cũ thì yêu cầu cũ trở lại.
         self.app._mutating()
         path = self.app._editable(value)
         package = packages.is_package(path)
-        if not package and (self.app.runner.running(path) or self.app.jobs.starting(path)):
-            raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - máy có thể đang áp chính thay đổi này. Tạm dừng hẳn rồi bỏ.")
+        if not package and (self.app.runner.running(path) or self.app.jobs.starting(path)) and not self.app.paused_at_checkpoint(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - máy có thể đang áp chính thay đổi này. Bạn bấm “Tạm dừng”, đợi tới khi báo "
+                                                "“Đã tạm dừng” rồi bỏ.")
         body = self._body()
         section, key = str(body.get("section") or ""), str(body.get("key") or "")
         try:
@@ -3777,6 +3821,8 @@ class Handler(BaseHTTPRequestHandler):
                 listener_overrides.cancel_retake(path, stable_id)
         else:
             listener_overrides.withdraw_requests(path, section, list(mine), requested_at)
+            if section == "lines":
+                _withdraw_line_companions(path, list(mine), requested_at)
             if section == "speakers":
                 # "Gộp vào…" ghi cả bí danh cùng mốc ấy: bỏ lần gộp là bỏ luôn bí danh.
                 aliases.remove_added_at(path, requested_at)
@@ -3923,6 +3969,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_stop(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.ACCEPTED, self.app.stop(value))
+
+    def post_dequeue(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.ACCEPTED, self.app.leave_queue(value))
 
     def post_pause(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.ACCEPTED, self.app.pause(value, self._body().get("paused") is not False))
@@ -4811,6 +4860,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.OK, {"undone": len(mine), "restored": True})
             return
         removed = listener_overrides.withdraw_requests(path, section, list(mine), requested_at)
+        if section == "lines":
+            _withdraw_line_companions(path, removed, requested_at)
         if section == "speakers" and removed:
             # Thẻ gộp tên ghi cả bí danh cùng mốc với các câu: rút lần bấm là rút luôn bí danh (như hộp "Áp dụng").
             aliases.remove_added_at(path, requested_at)
@@ -4848,6 +4899,9 @@ class Handler(BaseHTTPRequestHandler):
                 if problem == listener_overrides.NO_VOICE and speaker == listener_overrides.UNNAMED:
                     # Sách chưa có nhóm "vai phụ không tên" nào để mượn giọng (nhóm ấy do bước phân tích tạo khi gặp vai như vậy).
                     raise ApiError(HTTPStatus.BAD_REQUEST, UNNAMED_PROBLEM)
+                if problem == listener_overrides.NO_VOICE and not package and store.not_cast_yet(path):
+                    # Chưa phân vai: chưa ai có giọng, không phải "người này chưa nói câu nào" (soát a83 B9).
+                    raise ApiError(HTTPStatus.BAD_REQUEST, NOT_CAST_YET)
                 raise ApiError(HTTPStatus.BAD_REQUEST, SPEAKER_PROBLEMS.get(problem, "Không đổi được người nói câu này"))
         now = time.time()
         # Cửa sổ khác (hay máy khác) vừa sửa chính câu này: `seen` là điều giao diện này tưởng đang ghi cho từng câu ("" = chưa ai quyết).
@@ -5072,11 +5126,13 @@ class Handler(BaseHTTPRequestHandler):
             return
         chapter_id = int(body.get("chapterId", 0))
         asked_count = 0
-        for stable_id in stable_ids:
+        for written, stable_id in enumerate(stable_ids):
             try:
                 self.app.reviews.set(project, stable_id, verdict, chapter_id, audio_sha256=body.get("audioSha256"))
             except ValueError as error:
-                raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+                # Nhóm nhiều câu ghi lần lượt: các câu trước đã ghi thật - nói đúng số (soát a83 B11), không báo như chưa làm gì.
+                before = f" ({written} câu trước đó trong nhóm đã được ghi)" if written else ""
+                raise ApiError(HTTPStatus.CONFLICT, f"{error}{before}") from error
             # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
             # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.
             text_sha256 = store.segment_text_sha256(project, stable_id)
@@ -5939,6 +5995,13 @@ class Handler(BaseHTTPRequestHandler):
         allowed = {key: body[key] for key in ("theme", "libraryRoot") if key in body}
         if "libraryRoot" in allowed and not (isinstance(allowed["libraryRoot"], str) and allowed["libraryRoot"].strip()):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Chọn một thư mục cho thư viện")
+        if "libraryRoot" in allowed:
+            from .install_paths import validate_library_folder
+
+            try:
+                validate_library_folder(Path(allowed["libraryRoot"]), getattr(self.app, "studio", None))
+            except ValueError as error:
+                raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         # Tốc độ và âm lượng là SỐ trong khoảng giao diện đưa ra (player.SPEEDS 0,75-3; âm lượng 0-1): trình phát nạp lại
         # chúng lúc mở app, và một giá trị hỏng (chuỗi, 5) từng được lưu nguyên.
         for key, low, high in (("playbackRate", 0.5, 3.0), ("volume", 0.0, 1.0)):
@@ -6009,8 +6072,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_studio_setup(self, _query: dict[str, list[str]]) -> None:
         setup = self._studio_setup()
-        self.app.previews.shutdown()  # cập nhật thay Python của Studio: tiến trình nghe thử đang mở nó thì Windows không cho thay
-        self._send_json(HTTPStatus.OK, setup.start())
+        with self.app._queue_lock:
+            if self.app._busy_elsewhere() is not None:
+                raise ApiError(HTTPStatus.CONFLICT, "Bạn hãy chờ cuốn đang chạy, khởi động hoặc tạm dừng làm xong rồi cập nhật Studio.")
+            setup.busy = self.app._busy_elsewhere
+            self.app.previews.shutdown()
+            result = setup.start()
+        self._send_json(HTTPStatus.OK, result)
 
     def post_studio_setup_cancel(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self._studio_setup().cancel())
@@ -6128,6 +6196,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/chapters/(\d+)/script"), Handler.get_script),
     ("POST", re.compile(BOOK + r"/start"), Handler.post_start),
     ("POST", re.compile(BOOK + r"/stop"), Handler.post_stop),
+    ("POST", re.compile(BOOK + r"/dequeue"), Handler.post_dequeue),
     ("POST", re.compile(BOOK + r"/pause"), Handler.post_pause),
     ("GET", re.compile(BOOK + r"/precast"), Handler.get_precast),
     ("PUT", re.compile(BOOK + r"/precast"), Handler.put_precast),

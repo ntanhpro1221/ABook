@@ -109,6 +109,15 @@ def speaker_request_problem(project_root: Path, stable_id: str, text_sha256: str
     return problem
 
 
+def not_cast_yet(project_root: Path) -> bool:
+    """Chưa câu nào có giọng (chưa qua bước phân vai): chưa ai có giọng để gán lại cho một câu. Sổ không đọc được thì False (không đoán)."""
+    try:
+        with closing(connect(project_root)) as connection:
+            return connection.execute("SELECT 1 FROM segments WHERE voice_profile_id IS NOT NULL LIMIT 1").fetchone() is None
+    except sqlite3.Error:
+        return False
+
+
 def line_request_problem(project_root: Path, stable_id: str, text_sha256: str, *, kind: str = "", emotion: str = "",
                          intensity: int | None = None, speaker: str = "", spoken: str | None = None) -> str | None:
     """Mã lý do dây chuyền sẽ từ chối yêu cầu sửa cách đọc một câu (và người nói đi kèm khi câu từ lời kể thành lời thoại),
@@ -218,7 +227,12 @@ def already_applied(project_root: Path, section: str, entries: dict[str, dict[st
 
     with closing(connect(project_root)) as connection:
         if section == "speakers":
+            # Câu vốn đã ở đúng người từ trước khớp phép dò dù dây chuyền chưa áp gì: chỉ tính câu dây chuyền ĐÃ quét (biên nhận khớp) -
+            # không thì Hoàn tác cả nhóm có một câu như thế bị từ chối với lời sai (soát a83 B6).
+            receipts = receipts_of(project_root) or {}
             for wish in speaker_requests({"speakers": entries}):
+                if receipts.get(("speakers", wish["stable_id"])) != receipt_stamp(entries[wish["stable_id"]]):
+                    continue
                 target, _problem = speaker_target(connection, stable_id=wish["stable_id"],
                                                   text_sha256=wish["text_sha256"], speaker=wish["speaker"],
                                                   new_gender=wish.get("new_gender", ""))
@@ -762,6 +776,7 @@ def pending_changes(project_root: Path, since: float) -> int:
             if isinstance(entry, dict) and waiting(entry, section, str(key), since, receipts):
                 chosen[str(key)] = entry
         fresh[section] = chosen
+    _drop_line_companions(fresh)
     kept = _kept_as_is(project_root, fresh)
     # Một lần bấm gán / thu lại nhiều câu (cả nhóm vai phụ, "Gộp vào…", "Thu lại cả chương", Shift-chọn ở Kịch bản) ghi
     # mọi câu cùng một `requested_at`: một thay đổi, không phải trăm.
@@ -773,6 +788,21 @@ def pending_changes(project_root: Path, since: float) -> int:
 
 
 BY_CLICK = ("speakers", "retakes")
+
+
+def line_companions(fresh: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """{mã câu: mục `speakers`} của những câu mà MỘT lần sửa câu (lời kể -> lời thoại + người nói, `request_line(speaker=...)`) ghi hai mục:
+    `lines` và `speakers` cùng khoá, cùng mốc, cùng băm chữ. Với người dùng đó là MỘT thay đổi - hộp và bộ đếm chỉ có mục `lines`, "Bỏ" nó
+    bỏ cả hai (soát a83 B8)."""
+    lines, speakers = fresh.get("lines") or {}, fresh.get("speakers") or {}
+    return {key: speakers[key] for key, entry in lines.items()
+            if isinstance(speakers.get(key), dict) and _click(speakers[key]) == _click(entry) and _click(entry) > 0
+            and speakers[key].get("text_sha256") == entry.get("text_sha256")}
+
+
+def _drop_line_companions(fresh: dict[str, dict[str, Any]]) -> None:
+    for key in line_companions(fresh):
+        fresh["speakers"].pop(key, None)
 
 
 def _click(entry: Any) -> float:
@@ -806,7 +836,7 @@ def label_speaker(text: str, who: str, count: int) -> str:
     return f"{quote_line(text)} là lời của {who}" if count == 1 else f"{count} câu là lời của {who}"
 
 
-def label_line(text: str, entry: dict[str, Any]) -> str:
+def label_line(text: str, entry: dict[str, Any], speaker: str = "") -> str:
     what = []
     if entry.get("kind"):
         what.append(f"đọc là {LINE_KINDS.get(str(entry['kind']), str(entry['kind']))}")
@@ -814,6 +844,8 @@ def label_line(text: str, entry: dict[str, Any]) -> str:
         what.append(f"cảm xúc {EMOTIONS.get(str(entry['emotion']), str(entry['emotion'])).lower()}")
     if isinstance(entry.get("spoken"), str):
         what.append(f"chữ đem đọc “{entry['spoken'][:50]}”" if entry["spoken"] else "đọc lại theo chữ sách")
+    if speaker:
+        what.append(f"lời của {speaker}")
     return f"{quote_line(text)}: {', '.join(what) or 'cách đọc mới'}"
 
 
@@ -892,6 +924,8 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             str(key): entry for key, entry in (entries.items() if isinstance(entries, dict) else ())
             if isinstance(entry, dict) and waiting(entry, section, str(key), since, receipts)
         }
+    companions = line_companions(fresh)
+    _drop_line_companions(fresh)
     items: list[dict[str, Any]] = []
     affected: set[str] = set()
     chapters_hit: set[int] = set()
@@ -995,7 +1029,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             row = by_id.get(stable_id)
             if row is None:
                 continue
-            items.append({"kind": "line", "label": label_line(row["text"], entry),
+            items.append({"kind": "line", "label": label_line(row["text"], entry, who(companions[stable_id].get("speaker")) if stable_id in companions else ""),
                           "chapter": titles.get(int(row["chapter_id"]), ""), "lines": hit([stable_id]),
                           **handle("lines", stable_id, entry)})
         by_voice_key: dict[str, list[Any]] | None = None
