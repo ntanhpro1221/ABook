@@ -2,6 +2,11 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `musedge` trên `dev/uxfix84`: soát 10 ca biên của nhạc nền (catalog rỗng, tải thân rỗng, điểm vòng sát cuối file, đóng sách khi đang tải...).
+Thêm 26 lượt test nhạc Python/TS/JVM; sửa nhận thân tải rỗng trên Android và điểm vòng vượt cuối file thật trên cả ba nền tảng.
+Pytest các file nhạc: 544 pass, 2 skip, 0 F/E; Vitest 130 pass; JVM 203 pass; tsc --noEmit exit 0. Tất cả runner exit 0; hash quality implementation giữ nguyên.
+Toàn bộ (Lead chạy lại, kể cả stub android/os trong cây test JVM): pytest 8389 passed, 9 skipped, 0 F/E, exit 0; vitest 1252 passed; tsc exit 0; JVM 1222 tests, 0 F/E.
+
 Đợt `dev/rvfix` (từ 0.4.120): giữ giới/tuổi khi lượt người nói đổi namespace của cùng vai local trong cùng chương;
 không checkpoint hoà giải khi thiếu model (request lỗi giữ nhãn cũ như trước); đóng luồng cả khi bù độ to/hoàn tất clip lỗi;
 huỷ hẹn giờ release khi clip xong/bị bỏ (Python và Kotlin); script Windows giữ `setuptools<82`.
