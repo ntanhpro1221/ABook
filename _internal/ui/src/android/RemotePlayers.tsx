@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cast, Laptop, Loader2, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { noteCastHasNoMusic } from "@/listen/castMusic";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
 import { Back15, Forward15, RemoteSleepMenu } from "@/listen/PlayerViews";
@@ -120,9 +121,14 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
     if (state.chapterId == null) return;
     setMoving(true);
     try {
-      const here = positionOf(remote, receivedAt);
-      // Google Cast: dừng hẳn để màn hình TV / loa về như cũ; DLNA và máy khác chỉ cần tạm dừng.
-      send({ action: remote.protocol === "gcast" ? "stop" : "pause" });
+      // Google Cast: dừng hẳn để màn hình TV / loa về như cũ; DLNA và máy khác chỉ cần tạm dừng. Đợi máy kia dừng xong mới phát
+      // ở đây - không thì hai nơi cùng ra tiếng; không dừng được (lỗi đã hiện từ useRemotePlayerCommand) thì giữ nguyên nơi đang phát.
+      try {
+        await command.mutateAsync({ device: remote.device, command: { action: remote.protocol === "gcast" ? "stop" : "pause" } });
+      } catch {
+        return;
+      }
+      const here = positionOf(remote, receivedAt); // máy kia còn chạy trong lúc đợi lệnh dừng: lấy chỗ sau cùng
       const book = await source.book(remote.localBookId);
       player.play(book, book.chapters ?? [], state.chapterId, here);
       onDismiss();
@@ -273,6 +279,7 @@ export function PhoneHandOffButton() {
     const seconds = readClock().time;
     // Loa / TV mất vài giây (máy tính đưa chương, TV tải rồi mới tua tới đúng chỗ): có dòng "Đang mở…" tới lúc ấy.
     const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}…`) : undefined;
+    if (target.via === "cast") void noteCastHasNoMusic(client, track.bookId);
     try {
       await EbookLibrary.remoteCommand({
         device: target.device,

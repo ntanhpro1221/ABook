@@ -68,6 +68,7 @@ class Book:
             path.write_bytes(bytes([chapter]) * (50_000 + chapter))
             self.files[chapter] = path
         self.saved: list[tuple[str, int, float, float]] = []
+        self.records: list[str | None] = []  # hồ sơ nhận cùng mỗi lần lưu
 
     def view(self, value: str) -> dict[str, Any]:
         if value != "sach":
@@ -80,8 +81,9 @@ class Book:
     def audio(self, _value: str, chapter: int) -> Path | None:
         return self.files.get(chapter)
 
-    def save(self, value: str, chapter: int, seconds: float, duration: float) -> None:
+    def save(self, value: str, chapter: int, seconds: float, duration: float, record: str | None = None) -> None:
         self.saved.append((value, chapter, round(seconds, 1), duration))
+        self.records.append(record)
 
 
 @contextmanager

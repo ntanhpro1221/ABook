@@ -338,12 +338,13 @@ object Dlna {
     }
 
     /** Mô tả một chương (DIDL-Lite) cho SetAVTransportURI - TV hiện tên chương, tên sách. Không ghi DLNA.ORG_PN (như máy tính). */
-    fun didl(url: String, title: String, album: String, duration: Double, size: Long, mime: String): String {
+    fun didl(url: String, title: String, album: String, duration: Double, size: Long, mime: String, art: String = ""): String {
         val length = if (duration > 0) " duration=\"${clock(duration)}.000\"" else ""
+        val cover = if (art.isNotEmpty()) "<upnp:albumArtURI>${escape(art)}</upnp:albumArtURI>" else ""
         return "<DIDL-Lite xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" " +
             "xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\" xmlns:dlna=\"urn:schemas-dlna-org:metadata-1-0/\">" +
             "<item id=\"abook-chapter\" parentID=\"abook\" restricted=\"1\"><dc:title>${escape(title)}</dc:title>" +
-            "<dc:creator>ABook</dc:creator><upnp:album>${escape(album)}</upnp:album><upnp:artist>${escape(album)}</upnp:artist>" +
+            "<dc:creator>ABook</dc:creator><upnp:album>${escape(album)}</upnp:album><upnp:artist>${escape(album)}</upnp:artist>$cover" +
             "<upnp:class>object.item.audioItem.musicTrack</upnp:class>" +
             "<res protocolInfo=\"http-get:*:$mime:$FEATURES\"$length size=\"$size\">${escape(url)}</res></item></DIDL-Lite>"
     }
@@ -455,13 +456,16 @@ object Dlna {
                 "mp3" -> "audio/mpeg"
                 "m4a" -> "audio/mp4"
                 "wav" -> "audio/wav"
+                "jpg", "jpeg" -> "image/jpeg"
+                "png" -> "image/png"
+                "webp" -> "image/webp"
                 else -> "application/octet-stream"
             }
             val headLines = StringBuilder(if (partial) "HTTP/1.1 206 Partial Content\r\n" else "HTTP/1.1 200 OK\r\n")
                 .append("Content-Type: $type\r\nContent-Length: ${end - start + 1}\r\nAccept-Ranges: bytes\r\n")
                 // Ứng dụng nhận của Google Cast là trang web: tải audio bằng CORS.
                 .append("Access-Control-Allow-Origin: *\r\n")
-                .append("transferMode.dlna.org: Streaming\r\ncontentFeatures.dlna.org: $FEATURES\r\nConnection: close\r\n")
+                .append("transferMode.dlna.org: ${if (type.startsWith("image/")) "Interactive" else "Streaming"}\r\ncontentFeatures.dlna.org: $FEATURES\r\nConnection: close\r\n")
             if (partial) headLines.append("Content-Range: bytes $start-$end/$size\r\n")
             output.write(headLines.append("\r\n").toString().toByteArray())
             if (!headOnly) {

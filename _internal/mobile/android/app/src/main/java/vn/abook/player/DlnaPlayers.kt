@@ -27,7 +27,8 @@ import java.util.concurrent.locks.ReentrantLock
  */
 class DlnaPlayers(
     private val book: (String) -> Book?,
-    private val save: (String, Int, Double, Double) -> Unit,
+    /** Lưu chỗ nghe: (mã sách, chương, giây, độ dài, hồ sơ nghe chốt lúc load - null: hồ sơ đang dùng). */
+    private val save: (String, Int, Double, Double, String?) -> Unit,
     private val media: Dlna.Media = Dlna.Media(),
     private val find: () -> List<Pair<String, String>> = { Dlna.search() },
     private val read: (String, String) -> Dlna.Renderer? = { location, host -> Dlna.describe(location, host) },
@@ -36,11 +37,14 @@ class DlnaPlayers(
     private val backend: (Dlna.Renderer) -> CastBackend = ::backendFor,
     /** Vừa có phiên phát (đưa chương): app giữ một dịch vụ chạy nền để TV không đứt khi màn hình tắt (CastService). */
     private val onSession: () -> Unit = {},
+    /** Hồ sơ nghe đang dùng của sách - chốt vào phiên lúc load, để đổi hồ sơ giữa chừng không kéo chỗ nghe của TV theo (soát a104 F1). */
+    private val record: (String) -> String? = { null },
 ) : CastSource {
     data class Chapter(val id: Int, val title: String, val duration: Double, val file: File)
-    data class Book(val title: String, val chapters: List<Chapter>)
+    data class Book(val title: String, val chapters: List<Chapter>, val cover: File? = null)
 
-    private class Session(val bookId: String, val bookTitle: String, val chapters: List<Chapter>, var chapter: Chapter, val url: String) {
+    private class Session(val bookId: String, val bookTitle: String, val chapters: List<Chapter>, var chapter: Chapter, val url: String,
+                          val cover: File?, var record: String?) {
         var duration = chapter.duration
         var position = 0.0
         var playing = true
@@ -114,6 +118,7 @@ class DlnaPlayers(
     private var wanted = 0L
     private var searched = 0L
     private var thread: Thread? = null
+    private var controlled: String? = null // thiết bị phiên media đang điều khiển: đổi khi người nghe chọn nơi khác hay phiên hết, không theo Play/Pause
 
     // -- nhìn -----------------------------------------------------------------------------------------------------
 
@@ -150,10 +155,14 @@ class DlnaPlayers(
         sessions.filter { !it.value.ended }.map { it.key to it.value.playing }
     }
 
-    /** Phiên cho màn hình khoá, tai nghe: thiết bị đang phát trước, không thì phiên đang dừng đầu tiên; null khi không có. */
+    /**
+     * Phiên cho màn hình khoá, tai nghe: thiết bị người nghe đang điều khiển (đặt lúc "Phát trên…" - Tạm dừng một loa không làm
+     * khung media nhảy sang loa khác); chưa có thì thiết bị đang phát trước, không thì phiên đang dừng đầu tiên; null khi không có.
+     */
     override fun now(): CastNow? = synchronized(lock) {
-        val (id, session) = sessions.entries.filter { !it.value.ended && it.key in renderers }
-            .sortedByDescending { it.value.playing }.firstOrNull()?.toPair() ?: return null
+        val live = sessions.entries.filter { !it.value.ended && it.key in renderers }
+        val (id, session) = (live.firstOrNull { it.key == controlled } ?: live.sortedByDescending { it.value.playing }.firstOrNull())
+            ?.also { controlled = it.key }?.toPair() ?: return null
         CastNow(id, renderers.getValue(id).first.name, session.bookId, session.bookTitle,
             session.chapters.map { CastChapter(it.id, it.title, it.duration) }, session.chapter.id,
             session.estimate(System.currentTimeMillis()), session.duration, session.playing, session.buffering, session.volume)
@@ -161,11 +170,12 @@ class DlnaPlayers(
 
     /** Thôi phát trên thiết bị (nút "Dừng" của thông báo): thiết bị dừng hẳn, chỗ nghe lưu ở chỗ dừng, phiên đóng. */
     override fun end(id: String) {
-        val (renderer, session) = synchronized(lock) { renderers[id]?.first to sessions[id] }
-        if (renderer == null || session == null || session.ended) return
+        val renderer = synchronized(lock) { renderers[id]?.first } ?: return
         val device = deviceLocks.getOrPut(id) { ReentrantLock() }
         device.lock()
         try {
+            val session = synchronized(lock) { sessions[id] }
+            if (session == null || session.ended) return
             session.ended = true
             synchronized(lock) { sleeps.remove(id) }
             store(session, session.estimate(System.currentTimeMillis()))
@@ -194,13 +204,18 @@ class DlnaPlayers(
         media.close()
     }
 
-    /** Dừng thiết bị và trả nó về nguyên trạng; thiết bị không trả lời thì thôi - chỗ nghe đã lưu rồi. */
-    private fun stop(renderer: Dlna.Renderer, timeoutMs: Int) {
-        val client = synchronized(lock) { backends.remove(renderer.id) } ?: return
+    /**
+     * Dừng thiết bị và trả nó về nguyên trạng; thiết bị không trả lời thì thôi - chỗ nghe đã lưu rồi. [strict] ("Nghe ở đây" trên
+     * thanh phát): thiết bị không dừng được thì ném [Dlna.Failure] và giữ kết nối để thử lại.
+     */
+    private fun stop(renderer: Dlna.Renderer, timeoutMs: Int, strict: Boolean = false) {
+        val client = synchronized(lock) { if (strict) backends[renderer.id] else backends.remove(renderer.id) } ?: return
         try {
             client.stop(timeoutMs)
-        } catch (_: Dlna.Failure) {
+        } catch (error: Dlna.Failure) {
+            if (strict) throw error
         }
+        if (strict) synchronized(lock) { backends.remove(renderer.id) }
         runCatching { client.close(release = true) }
     }
 
@@ -220,11 +235,13 @@ class DlnaPlayers(
 
     /** Lệnh cùng hình dạng RemotePlayers gửi máy khác; lỗi -> [Dlna.Failure] "<tên thiết bị>: <vì sao>". */
     override fun send(id: String, command: JSONObject): JSONObject {
-        val (renderer, session) = synchronized(lock) { renderers[id]?.first to sessions[id] }
-        renderer ?: throw Dlna.Failure("Không còn thấy thiết bị này trong mạng")
+        val renderer = synchronized(lock) { renderers[id]?.first } ?: throw Dlna.Failure("Không còn thấy thiết bị này trong mạng")
         val device = deviceLocks.getOrPut(id) { ReentrantLock() }
         device.lock()
         try {
+            // Phiên lấy SAU khi giữ khoá: lệnh chờ ở đây đã thấy chương mà lệnh trước vừa đưa (hai "Chương sau" liền nhau phải ra
+            // chương 3, không phải nạp chương 2 hai lần - soát a104 F2).
+            val session = synchronized(lock) { sessions[id] }
             apply(renderer, session?.takeIf { !it.ended }, command)
         } catch (error: Dlna.Failure) {
             throw Dlna.Failure("${renderer.name}: ${error.message}", error.code)
@@ -241,8 +258,13 @@ class DlnaPlayers(
         if (action == "load") {
             val chosen = book(command.optString("bookId")) ?: throw Dlna.Failure("điện thoại không có cuốn này")
             val chapter = chosen.chapters.firstOrNull { it.id == command.optInt("chapterId", -1) } ?: throw Dlna.Failure("chương này chưa nghe được")
-            load(renderer, command.optString("bookId"), chosen.title, chosen.chapters, chapter, command.optDouble("seconds", 0.0))
-            synchronized(lock) { sleeps.remove(renderer.id) } // một lần "Phát trên…" mới: không mang hẹn giờ của lần trước
+            val bookId = command.optString("bookId")
+            load(renderer, bookId, chosen.title, chosen.chapters, chapter, command.optDouble("seconds", 0.0), chosen.cover,
+                command.optString("record").ifEmpty { null } ?: recordOf(bookId))
+            synchronized(lock) {
+                controlled = renderer.id // người nghe vừa chọn nơi này: phiên media điều khiển nó
+                sleeps.remove(renderer.id)
+            } // một lần "Phát trên…" mới: không mang hẹn giờ của lần trước
             return
         }
         if (action == "rate") {
@@ -261,11 +283,13 @@ class DlnaPlayers(
         val now = System.currentTimeMillis()
         when (action) {
             "stop" -> {
-                // Người nghe chuyển sang máy khác: dừng hẳn, trả thiết bị về nguyên trạng, chỗ nghe lưu đúng chỗ dừng.
+                // Người nghe chuyển sang máy khác: dừng hẳn, trả thiết bị về nguyên trạng, chỗ nghe lưu đúng chỗ dừng. Thiết bị không
+                // nhận lệnh dừng thì báo lỗi và GIỮ phiên (người nghe thử lại) - điện thoại không được phát thêm một nguồn nữa.
+                val at = session.estimate(now)
+                stop(renderer, 5000, strict = true)
                 session.ended = true
                 synchronized(lock) { sleeps.remove(renderer.id) }
-                store(session, session.estimate(now))
-                stop(renderer, 5000)
+                store(session, at)
             }
             "sleep" -> {
                 val sleep = when {
@@ -291,7 +315,7 @@ class DlnaPlayers(
                     return
                 }
                 if (session.held || session.state == "STOPPED" || session.state == "NO_MEDIA_PRESENT") {
-                    load(renderer, session.bookId, session.bookTitle, session.chapters, session.chapter, session.position)
+                    reload(renderer, session, session.chapter, session.position)
                     return
                 }
                 client.play()
@@ -304,7 +328,7 @@ class DlnaPlayers(
                 var target = command.optDouble("seconds", 0.0) + if (action == "skip") session.estimate(now) else 0.0
                 if (action == "skip" && session.duration > 0 && target >= session.duration - 1) {
                     neighbour(session, 1)?.let {
-                        load(renderer, session.bookId, session.bookTitle, session.chapters, it, 0.0)
+                        reload(renderer, session, it, 0.0)
                         return
                     }
                 }
@@ -321,8 +345,7 @@ class DlnaPlayers(
                     neighbour(session, if (action == "next") 1 else -1)
                         ?: throw Dlna.Failure(if (action == "next") "đã là chương cuối" else "đã là chương đầu")
                 }
-                load(renderer, session.bookId, session.bookTitle, session.chapters, chapter,
-                    if (action == "jump") command.optDouble("seconds", 0.0) else 0.0)
+                reload(renderer, session, chapter, if (action == "jump") command.optDouble("seconds", 0.0) else 0.0)
             }
             else -> throw Dlna.Failure("thiết bị chưa làm được lệnh này")
         }
@@ -364,12 +387,23 @@ class DlnaPlayers(
         store(session, 0.0)
     }
 
-    /** Đưa một chương cho thiết bị và phát từ [seconds]. Gọi khi đã giữ khoá thiết bị. */
-    private fun load(renderer: Dlna.Renderer, bookId: String, bookTitle: String, chapters: List<Chapter>, chapter: Chapter, seconds: Double) {
+    private fun recordOf(bookId: String): String? = runCatching { record(bookId) }.getOrNull()
+
+    /** Sang chương khác của phiên đang có (giữ bìa và hồ sơ nghe của nó). Gọi khi đã giữ khoá thiết bị. */
+    private fun reload(renderer: Dlna.Renderer, session: Session, chapter: Chapter, seconds: Double) =
+        load(renderer, session.bookId, session.bookTitle, session.chapters, chapter, seconds, session.cover, session.record)
+
+    /**
+     * Đưa một chương cho thiết bị và phát từ [seconds]; [cover] là bìa cho màn hình của TV, chỗ nghe ghi vào hồ sơ [record] (phiên giữ
+     * nó qua mọi lần sang chương). Gọi khi đã giữ khoá thiết bị.
+     */
+    private fun load(renderer: Dlna.Renderer, bookId: String, bookTitle: String, chapters: List<Chapter>, chapter: Chapter, seconds: Double,
+                     cover: File?, record: String?) {
         if (!chapter.file.isFile) throw Dlna.Failure("chương này chưa có trên điện thoại")
         val url = media.share(chapter.file, renderer.host)
         val mime = if (chapter.file.extension.equals("mp3", true)) "audio/mpeg" else "audio/mp4"
-        val track = CastTrack(url, chapter.title, bookTitle, chapter.duration, chapter.file.length(), mime)
+        val art = cover?.takeIf { it.isFile }?.let { runCatching { media.share(it, renderer.host) }.getOrNull() }.orEmpty()
+        val track = CastTrack(url, chapter.title, bookTitle, chapter.duration, chapter.file.length(), mime, art)
         val resume = seconds >= 1 && (chapter.duration <= 0 || seconds < chapter.duration - 1)
         val started = try {
             backendOf(renderer).load(track, if (resume) seconds else 0.0)
@@ -379,7 +413,7 @@ class DlnaPlayers(
             throw error
         }
         val now = System.currentTimeMillis()
-        val session = Session(bookId, bookTitle, chapters, chapter, url).apply {
+        val session = Session(bookId, bookTitle, chapters, chapter, url, cover, record).apply {
             polled = now
             heard = now
             saved = now
@@ -395,6 +429,7 @@ class DlnaPlayers(
         val previous = synchronized(lock) { sessions.put(renderer.id, session) }
         if (previous != null && !previous.ended && previous.chapter.id != chapter.id) store(previous, previous.position)
         store(session, session.position) // "Nghe tiếp" trỏ ngay tới chương đang phát trên thiết bị
+        if (session.record == null) session.record = recordOf(bookId) // cuốn chưa có hồ sơ: lần lưu vừa rồi mới tạo - chốt luôn
         runCatching(onSession)
     }
 
@@ -423,7 +458,7 @@ class DlnaPlayers(
 
     private fun store(session: Session, seconds: Double) {
         session.saved = System.currentTimeMillis()
-        runCatching { save(session.bookId, session.chapter.id, seconds, session.duration) }
+        runCatching { save(session.bookId, session.chapter.id, seconds, session.duration, session.record) }
     }
 
     // -- nền --------------------------------------------------------------------------------------------------------
@@ -527,7 +562,7 @@ class DlnaPlayers(
                     return
                 }
                 try {
-                    load(renderer, session.bookId, session.bookTitle, session.chapters, following, 0.0)
+                    reload(renderer, session, following, 0.0)
                 } catch (_: Dlna.Failure) {
                     finish(id, session)
                 }

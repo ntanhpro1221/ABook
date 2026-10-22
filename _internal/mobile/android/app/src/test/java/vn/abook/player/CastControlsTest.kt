@@ -13,8 +13,8 @@ import org.junit.Test
 class CastControlsTest {
     private val chapters = listOf(1, 2, 3)
 
-    private fun seek(command: Int, index: Int, positionMs: Long, current: Int = 1): JSONObject =
-        CastControls.seek(command, index, positionMs, current, chapters)
+    private fun seek(command: Int, index: Int, positionMs: Long, current: Int = 1, headsetSkips: Boolean = false): JSONObject =
+        CastControls.seek(command, index, positionMs, current, chapters, headsetSkips)
 
     private fun json(vararg pairs: Pair<String, Any>) = JSONObject().also { out -> pairs.forEach { out.put(it.first, it.second) } }
 
@@ -36,7 +36,20 @@ class CastControlsTest {
     }
 
     @Test
-    fun nextAndPreviousAreChapters() {
+    fun nextAndPreviousSkipFifteenSecondsWhileTheHeadsetSettingIsOn() {
+        // Cài đặt "Nút tai nghe lùi/tới" bật (mặc định): Sau / Trước của tai nghe, đồng hồ, xe hơi tới / lùi 15 giây như trình phát trong app.
+        for (command in listOf(Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)) {
+            assertEquals(json("action" to "skip", "seconds" to 15.0), seek(command, 2, C.TIME_UNSET, headsetSkips = true))
+        }
+        for (command in listOf(Player.COMMAND_SEEK_TO_PREVIOUS, Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)) {
+            assertEquals(json("action" to "skip", "seconds" to -15.0), seek(command, 0, C.TIME_UNSET, headsetSkips = true))
+        }
+        // Chọn hẳn một chương trong danh sách vẫn là nhảy chương.
+        assertEquals(json("action" to "jump", "chapterId" to 3, "seconds" to 0.0), seek(Player.COMMAND_SEEK_TO_MEDIA_ITEM, 2, 0, current = 0, headsetSkips = true))
+    }
+
+    @Test
+    fun nextAndPreviousAreChaptersWhileTheHeadsetSettingIsOff() {
         // "Sau": chương kế từ đầu. "Trước" trong 3 giây đầu: chương trước; muộn hơn: về đầu chương này.
         assertEquals(json("action" to "next"), seek(Player.COMMAND_SEEK_TO_NEXT, 2, C.TIME_UNSET))
         assertEquals(json("action" to "next"), seek(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, 2, 0))

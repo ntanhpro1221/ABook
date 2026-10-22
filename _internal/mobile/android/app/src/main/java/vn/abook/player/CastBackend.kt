@@ -55,7 +55,7 @@ class DlnaBackend(private val renderer: Dlna.Renderer) : CastBackend {
         Dlna.soap(renderer.avUrl, renderer.avType, action, listOf<Pair<String, Any>>("InstanceID" to 0) + arguments, timeoutMs)
 
     override fun load(track: CastTrack, seconds: Double): Double {
-        val metadata = Dlna.didl(track.url, track.title, track.album, track.duration, track.size, track.mime)
+        val metadata = Dlna.didl(track.url, track.title, track.album, track.duration, track.size, track.mime, track.art)
         val arguments = arrayOf<Pair<String, Any>>("CurrentURI" to track.url, "CurrentURIMetaData" to metadata)
         try {
             call("SetAVTransportURI", *arguments)

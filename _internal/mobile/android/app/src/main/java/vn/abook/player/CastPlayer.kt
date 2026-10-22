@@ -53,6 +53,9 @@ interface CastSource {
 object CastControls {
     const val SKIP_MS = 15_000L
 
+    private val NEXT_COMMANDS = setOf(Player.COMMAND_SEEK_TO_NEXT, Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+    private val PREVIOUS_COMMANDS = setOf(Player.COMMAND_SEEK_TO_PREVIOUS, Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+
     /** Một nấc phím âm lượng trên thang 0-100 (thang của DLNA, Cast nhân 100): 1 nấc là quá nhỏ để nghe ra. */
     const val VOLUME_STEP = 5
 
@@ -61,12 +64,16 @@ object CastControls {
     /**
      * [seekCommand]: lệnh Player.COMMAND_* mà phiên media chuyển tới; [index]: chương đích trong danh sách phát (chương nghe
      * được theo thứ tự - [chapters] là mã của chúng), [current]: chương đang phát; [positionMs] C.TIME_UNSET = đầu chương.
+     * [headsetSkips]: cài đặt "Nút tai nghe lùi/tới" (Playback.headsetSkips) - bật thì nút Sau / Trước của tai nghe, đồng hồ, xe hơi
+     * tới / lùi 15 giây như trình phát trong app; chọn hẳn một chương trong danh sách vẫn là nhảy chương.
      */
-    fun seek(seekCommand: Int, index: Int, positionMs: Long, current: Int, chapters: List<Int>): JSONObject {
+    fun seek(seekCommand: Int, index: Int, positionMs: Long, current: Int, chapters: List<Int>, headsetSkips: Boolean): JSONObject {
         val seconds = if (positionMs == C.TIME_UNSET) 0.0 else maxOf(0L, positionMs) / 1000.0
         return when {
             seekCommand == Player.COMMAND_SEEK_BACK -> JSONObject().put("action", "skip").put("seconds", -SKIP_MS / 1000.0)
             seekCommand == Player.COMMAND_SEEK_FORWARD -> JSONObject().put("action", "skip").put("seconds", SKIP_MS / 1000.0)
+            headsetSkips && seekCommand in NEXT_COMMANDS -> JSONObject().put("action", "skip").put("seconds", SKIP_MS / 1000.0)
+            headsetSkips && seekCommand in PREVIOUS_COMMANDS -> JSONObject().put("action", "skip").put("seconds", -SKIP_MS / 1000.0)
             index == current || index !in chapters.indices -> JSONObject().put("action", "seek").put("seconds", seconds)
             index == current + 1 && seconds == 0.0 -> JSONObject().put("action", "next")
             index == current - 1 && seconds == 0.0 -> JSONObject().put("action", "previous")
@@ -95,6 +102,22 @@ object CastControls {
 class CastPlayer(private val source: CastSource, looper: Looper = Looper.getMainLooper()) : SimpleBasePlayer(looper) {
     private val worker = Executors.newSingleThreadExecutor { Thread(it, "cast-session").apply { isDaemon = true } }
 
+    /** Bìa của cuốn đang phát (bìa thật hay bìa vẽ từ tên - như trình phát trong app), dựng lại khi đổi sách hay đổi bìa; kiểm bìa 10 giây một lần. */
+    private var coverCache: CoverCache? = null
+
+    private class CoverCache(val bookId: String, val title: String, val stamp: String, val checkedAt: Long, val bytes: ByteArray)
+
+    private fun artwork(now: CastNow): ByteArray {
+        val moment = System.currentTimeMillis()
+        val cached = coverCache?.takeIf { it.bookId == now.bookId && it.title == now.bookTitle }
+        if (cached != null && moment - cached.checkedAt < COVER_CHECK_MS) return cached.bytes
+        val file = Store.coverFile(now.bookId)
+        val stamp = "${file?.path}:${file?.lastModified()}"
+        val bytes = if (cached != null && cached.stamp == stamp) cached.bytes else Artwork.cover(now.bookTitle, now.bookId)
+        coverCache = CoverCache(now.bookId, now.bookTitle, stamp, moment, bytes)
+        return bytes
+    }
+
     /** Bản chụp lần dựng trạng thái cuối: lệnh nhắm thiết bị và danh sách chương người dùng đang thấy. */
     private var shown: CastNow? = null
 
@@ -105,10 +128,11 @@ class CastPlayer(private val source: CastSource, looper: Looper = Looper.getMain
             ?: return State.Builder().setAvailableCommands(Player.Commands.EMPTY).setPlaybackState(Player.STATE_IDLE).build()
         val chapters = now.chapters.ifEmpty { listOf(CastChapter(now.chapterId, "", now.duration)) }
         val index = chapters.indexOfFirst { it.id == now.chapterId }.coerceAtLeast(0)
+        val art = artwork(now)
         val items = chapters.mapIndexed { place, chapter ->
             val seconds = if (place == index && now.duration > 0) now.duration else chapter.duration
             val metadata = MediaMetadata.Builder().setTitle(chapter.title).setArtist(now.bookTitle).setAlbumTitle(now.bookTitle)
-                .setSubtitle("Trên ${now.device}").build()
+                .setSubtitle("Trên ${now.device}").setArtworkData(art, MediaMetadata.PICTURE_TYPE_FRONT_COVER).build()
             val uid = "${now.bookId}#${chapter.id}"
             MediaItemData.Builder(uid)
                 .setMediaItem(MediaItem.Builder().setMediaId(uid).setMediaMetadata(metadata).build())
@@ -136,7 +160,7 @@ class CastPlayer(private val source: CastSource, looper: Looper = Looper.getMain
     override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int): ListenableFuture<*> {
         val now = shown ?: return Futures.immediateVoidFuture()
         val chapters = now.chapters.map { it.id }
-        return send(CastControls.seek(seekCommand, mediaItemIndex, positionMs, chapters.indexOf(now.chapterId), chapters))
+        return send(CastControls.seek(seekCommand, mediaItemIndex, positionMs, chapters.indexOf(now.chapterId), chapters, Playback.headsetSkips))
     }
 
     override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int): ListenableFuture<*> = send(CastControls.volume(deviceVolume))
@@ -172,6 +196,8 @@ class CastPlayer(private val source: CastSource, looper: Looper = Looper.getMain
     }
 
     private companion object {
+        const val COVER_CHECK_MS = 10_000L
+
         val COMMANDS: Player.Commands = Player.Commands.Builder().addAll(
             Player.COMMAND_PLAY_PAUSE, Player.COMMAND_STOP, Player.COMMAND_RELEASE,
             Player.COMMAND_SEEK_BACK, Player.COMMAND_SEEK_FORWARD,

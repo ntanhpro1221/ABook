@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cast, Laptop, Loader2, MonitorSmartphone, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { noteCastHasNoMusic } from "@/listen/castMusic";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
 import { Back15, Forward15, RemoteSleepMenu } from "@/listen/PlayerViews";
@@ -67,7 +68,7 @@ type RemoteCommand =
   | { action: "skip" | "seek"; seconds: number }
   | { action: "jump"; chapterId: number; seconds: number }
   | { action: "rate"; rate: number }
-  | { action: "load"; bookId: string; chapterId: number; seconds: number }
+  | { action: "load"; bookId: string; chapterId: number; seconds: number; record?: string }
   | RemoteSleepCommand;
 
 type Ack = { id: string; ok: boolean; message: string };
@@ -198,9 +199,14 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
     if (phone.chapterId === null) return;
     setMoving(true);
     try {
-      const here = phonePosition(phone, receivedAt);
-      // Google Cast: dừng hẳn để màn hình TV / loa về như cũ; DLNA và điện thoại chỉ cần tạm dừng.
-      send({ action: phone.protocol === "gcast" ? "stop" : "pause" });
+      // Google Cast: dừng hẳn để màn hình TV / loa về như cũ; DLNA và điện thoại chỉ cần tạm dừng. Đợi máy kia dừng xong mới phát
+      // ở đây - không thì hai nơi cùng ra tiếng; không dừng được (lỗi đã hiện từ useRemoteCommand) thì giữ nguyên nơi đang phát.
+      try {
+        await command.mutateAsync({ device: phone.device, command: { action: phone.protocol === "gcast" ? "stop" : "pause" } });
+      } catch {
+        return;
+      }
+      const here = phonePosition(phone, receivedAt); // máy kia còn chạy trong lúc đợi lệnh dừng: lấy chỗ sau cùng
       const book = await source.book(phone.localBookId ?? phone.bookId);
       player.play(book, book.chapters ?? [], phone.chapterId, here);
       onDismiss();
@@ -376,8 +382,10 @@ export function HandOffButton({ className }: { className?: string }) {
     const wasPlaying = player.playing;
     player.pause();
     const waiting = target.via === "cast" ? toast.loading(`Đang mở trên ${target.name}…`) : undefined;
+    if (target.via === "cast") void noteCastHasNoMusic(client, track.bookId);
     command.mutate(
-      { device: target.device, command: { action: "load", bookId: track.bookId, chapterId: track.chapterId, seconds } },
+      // `record`: loa / TV ghi chỗ nghe vào đúng hồ sơ đang nghe ở đây, dù sau đó ai đổi hồ sơ của cuốn.
+      { device: target.device, command: { action: "load", bookId: track.bookId, chapterId: track.chapterId, seconds, record: target.via === "cast" ? track.recordId : undefined } },
       {
         // Máy kia đã nhận thì đóng hẳn trình phát ở đây (nó lưu chỗ trước khi đóng). Chỉ dừng thì lúc rời trang nó lưu lại
         // chỗ cũ đè lên chỗ máy kia đã nghe tới - gặp 01-10 với loa giả lập: loa dừng ở 0:56, tải lại trang thành 0:19.
