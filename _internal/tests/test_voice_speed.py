@@ -21,6 +21,8 @@ from abook.webui import music_module, studio_setup, supertonic_module, vieneu_mo
 from tests.test_readaloud_supertonic import FakeEngine
 from tests.test_readaloud_vieneu import Network
 
+pytestmark = pytest.mark.usefixtures("names_only_models")  # luồng tải thử bằng file giả: xem conftest.names_only_models
+
 
 # ---- luật chọn bậc ---------------------------------------------------------------------------------------------------------------------
 def test_auto_follows_the_measured_speed_of_the_quality_tier() -> None:

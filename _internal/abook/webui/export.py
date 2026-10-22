@@ -11,6 +11,7 @@ danh sách phát `.m3u8`. File chưa xong ghi ra `.part` rồi mới đổi tên
 from __future__ import annotations
 
 import base64
+import errno
 import logging
 import math
 import os
@@ -146,8 +147,31 @@ def write_chapter(ffmpeg: str, source: Path, final: Path, cover_path: Path | Non
         # Không để file `.part` nằm lại, không dán lệnh / lời ffmpeg cho người dùng (soát a28 lỗi 8) - lời ffmpeg vào nhật ký.
         partial.unlink(missing_ok=True)
         log.warning("ffmpeg không ghi được %s: %s", final.name, (error.stderr or "").strip()[-600:])
-        raise ValueError(f"Không ghi được chương “{title}” - file âm thanh của chương hay ảnh bìa không đọc được.") from error
+        raise ffmpeg_failure(error, final, f"Không ghi được chương “{title}” - file âm thanh của chương hay ảnh bìa không đọc được.",
+                             f"Không ghi được chương “{title}” - ffmpeg dừng giữa chừng, chưa rõ nguyên nhân (xem Chi tiết).") from error
     os.replace(partial, final)
+
+
+_DISK_FULL = re.compile(r"No space left on device|not enough space on the disk|WinError 112|Disk quota exceeded|ENOSPC", re.I)
+_DENIED = re.compile(r"Permission denied|Access is denied|Read-only file system|WinError 5", re.I)
+_UNREADABLE_SOURCE = re.compile(r"Error opening input|Invalid data found|moov atom not found|Error while decoding|Header missing|"
+                                r"could not find codec|Error reading|Failed to read|Invalid argument|Error splitting the argument", re.I)
+
+
+def ffmpeg_failure(error: subprocess.CalledProcessError, destination: Path, unreadable: str, otherwise: str) -> Exception:
+    """Vì sao ffmpeg thất bại, nói về ĐÚNG thứ hỏng: ổ đích hết chỗ / không ghi được -> OSError (ENOSPC / EACCES) để lượt xuất báo ổ nào cần dọn hay
+    chọn lại (humanize.write_error), chỉ khi stderr là lỗi đọc / giải mã mới trách file nguồn hay ảnh bìa (`unreadable`); còn lại `otherwise`.
+    stderr giữ ở `.detail` (cho "Chi tiết") và ở nhật ký, không dán vào câu cho người dùng (soát a28 lỗi 8; a96 V7)."""
+    text = error.stderr.decode("utf-8", "replace") if isinstance(error.stderr, bytes) else str(error.stderr or "")
+    tail = text.strip()[-600:]
+    if _DISK_FULL.search(text):
+        failure: Exception = OSError(errno.ENOSPC, "No space left on device", str(destination))
+    elif _DENIED.search(text) and "Error opening input" not in text:  # bị từ chối ĐỌC nguồn là chuyện của nguồn, không phải của ổ đích
+        failure = PermissionError(errno.EACCES, "Permission denied", str(destination))
+    else:
+        failure = ValueError(unreadable if _UNREADABLE_SOURCE.search(text) else otherwise)
+    failure.detail = tail  # type: ignore[attr-defined]
+    return failure
 
 
 def playlist_text(title: str, entries: list[tuple[float, str, str]]) -> str:
@@ -569,7 +593,8 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
             os.replace(partial, final)
         except subprocess.CalledProcessError as error:
             log.warning("ffmpeg không ghép được M4B: %s", (error.stderr or "").strip()[-600:])
-            raise ValueError("Không ghép được file M4B - ảnh bìa hay một chương không đọc được.") from error
+            raise ffmpeg_failure(error, final, "Không ghép được file M4B - ảnh bìa hay một chương không đọc được.",
+                                 "Không ghép được file M4B - ffmpeg dừng giữa chừng, chưa rõ nguyên nhân (xem Chi tiết).") from error
         finally:
             partial.unlink(missing_ok=True)
         if credits:

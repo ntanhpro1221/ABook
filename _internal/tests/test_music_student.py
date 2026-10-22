@@ -14,6 +14,8 @@ import soundfile
 
 from abook.webui import music_local, music_mel, music_student
 
+pytestmark = pytest.mark.usefixtures("names_only_models")  # luồng tải thử bằng file giả: xem conftest.names_only_models
+
 MUSIC = Path("D:/Novels/LLM_Train/music")
 PACKAGE = Path("D:/Novels/LLM_Train/models/abook_music_student")
 PARITY_TOLERANCE = 0.08  # yêu cầu gốc 0,05; một trong ba bài mẫu lệch 0,0504 vì cửa sổ trượt (xem test cuối)
