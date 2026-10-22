@@ -637,7 +637,7 @@ object LocalStudio {
         val entry = wished(dir, "voices").optJSONObject(BookWishes.characterKey(character))
         val recordedAt = (entry?.opt("requested_at") as? Number)?.toDouble() ?: 0.0
         if (Math.abs(recordedAt - seen) < 1e-6 || (seen == 0.0 && entry == null)) return JSONObject()
-        return JSONObject().put("voice", BookEdits.pyText(entry?.opt("preset"))).put("gender", BookEdits.pyText(entry?.opt("gender")))
+        return JSONObject().put("voice", VoiceLabels.label(BookEdits.pyText(entry?.opt("preset")))).put("gender", BookEdits.pyText(entry?.opt("gender")))
     }
 
     /** POST /line {stableId, textSha256, kind?, emotion?, intensity?, speaker?, spoken?}. */
