@@ -3,13 +3,11 @@ package vn.abook.player
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -126,9 +124,6 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
     override fun getForegroundInfo(): ForegroundInfo =
         ListenExports.foreground(applicationContext, id, ListenExports.inputs(inputData).bookId.orEmpty(), title, 0, 0, null)
 
-    /** Người dùng bấm "Dừng" (hay xuất lại cuốn này) khác hệ thống dừng việc (hết giờ chạy nền...): hệ thống dừng thì WorkManager tự chạy lại, file đích phải còn. */
-    private fun systemStop(): Boolean = Build.VERSION.SDK_INT >= 31 && stopReason != WorkInfo.STOP_REASON_CANCELLED_BY_APP && stopReason != WorkInfo.STOP_REASON_UNKNOWN
-
     override fun doWork(): Result {
         val context = applicationContext
         Playback.init(context)
@@ -219,7 +214,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
             // Hệ thống dừng việc (không phải người dùng): WorkManager chạy lại, file đích, quyền ghi và phần đã làm đều còn.
-            if (systemStop()) {
+            if (Mp3Exports.stoppedBySystem(this)) {
                 retrying = true
                 return Result.retry()
             }
