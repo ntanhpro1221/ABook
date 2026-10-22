@@ -240,8 +240,8 @@ class MusicOffline(music_catalog.CatalogError):
     """Dựng lại rãnh nhạc sẽ mất nhạc chỉ vì nguồn nhạc đang hỏng mạng: không ghi, giữ plan cũ (503 như danh mục không đọc được)."""
 
 
-class MirrorMismatch(OSError):
-    """Bản sao dự phòng của bài nhạc không khớp bản gốc (sha1 / số byte) - không phải lỗi mạng."""
+class TrackMismatch(OSError):
+    """Bài nhạc tải về (nguồn gốc hay bản sao dự phòng) không khớp danh mục (sha1 / số byte) - không phải lỗi mạng."""
 
 
 class DownloadCut(ConnectionError):
@@ -376,6 +376,8 @@ class App:
         self._music_clock: Callable[[], float] = time.time
         self._music_unavailable = self._read_unavailable()
         self._music_too_big = self._read_unavailable("too_big.json")  # {link: số byte}: bài quá MUSIC_TRACK_MAX_MB, không tải
+        self._music_checked: dict[str, tuple[int, int]] = {}  # link -> (cỡ, giờ sửa) của file bộ đệm đã kiểm khớp danh mục (`_music_cache_matches`)
+        self._music_check_after = 0.0  # danh mục chưa đọc được: tới giờ này mới kiểm bộ đệm tiếp
         self._music_sized: set[str] = set()  # bài đã tra cỡ trong danh mục (`music_track_available`) và không quá trần: khỏi tra lại
         self._music_uncredited: set[str] = set()  # bài danh mục phải ghi công mà thiếu tác giả (`music_catalog.lacks_credit`): không chọn, không ghim
         # Nguồn nhạc (host) nào vừa hỏng / vừa tải được: {host: (hỏng?, giờ)}. Một nguồn chết không chặn nguồn khác.
@@ -1935,7 +1937,7 @@ class App:
             extra = set(body) - {"enabled", "levelDb", "silence", "pins", "playlist"}
             if extra:
                 raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền")
-            return self._with_auto_playlist(value, path, book_edits.set_music(path, body, self._my_track))
+            return self._with_auto_playlist(value, path, book_edits.set_music(path, body, self._my_track, self._my_mine))
         music_plan.write_overrides(path, body)
         if music_plan.read_plan(path) is None:
             return self.music_view(value)
@@ -2042,6 +2044,11 @@ class App:
         sách đóng gói sang bài của người nghe)."""
         info, path = self.my_music.lookup([link]).get(link), self.my_music.file(link)
         return (info, path) if info is not None and path is not None else None
+
+    def _my_mine(self) -> list[tuple[dict[str, Any], Path]]:
+        """Mọi bài đang có trong "Nhạc của tôi" của máy này (thông tin, file), cũ trước - cho `book_edits.set_music` khi người nghe chọn danh sách
+        "Nhạc của tôi": đúng các bài ấy đi theo sách."""
+        return [(info, path) for info in reversed(self.my_music.entries()) if (path := self.my_music.file(info["link"])) is not None]
 
     def _packaged_alternatives(self, path: Path, scene_key: str) -> dict[str, Any]:
         """"Đổi bài" của sách đóng gói: mốc nhạc người làm sách gắn không có "không khí" để chấm điểm, nên danh mục không đề xuất
@@ -2242,6 +2249,23 @@ class App:
             return result
         level = float(changes.get("levelDb", music_plan.DEFAULT_LEVEL_DB))
         result.update(playlist=choice, levelDb=level)
+        if choice == music_playlist.MINE and changes.get("mine"):
+            # Sách mang theo đúng các bài người nghe đã chọn (file nằm trong sách): phát bản của cuốn, không giải lại từ kho của máy này.
+            carried = changes.get("tracks") or {}
+            info = {}
+            for sha in changes["mine"]:
+                entry = carried.get(sha) or {}
+                if (path / "music" / f"{sha}.{entry.get('ext')}").is_file():
+                    info[music_plan.LOCAL_PREFIX + sha] = {"link": music_plan.LOCAL_PREFIX + sha, "title": entry.get("title", ""),
+                                                           "creator": entry.get("creator", ""), "source": "local",
+                                                           **{key: entry[key] for key in ("duration", "lufs") if key in entry}}
+            links = list(info)
+            tracks = music_playlist.queue(links, info)
+            music_plan.apply_gain(tracks, level, info, lambda link: path / "music" / f"{music_plan.local_hash(link)}.{carried[music_plan.local_hash(link)]['ext']}")
+            for track in tracks:
+                sha = music_plan.local_hash(track["link"])
+                track["src"] = f"/api/books/{quote(value, safe='')}/music/files/{sha}.{carried[sha]['ext']}"
+            return {**result, "tracks": tracks, "credits": self._music_credits(tracks, info)}
         if choice == music_playlist.MINE:
             info = {entry["link"]: entry for entry in reversed(self.my_music.entries())}  # cũ trước: bài mới nhập nối vào cuối
             links = list(info)
@@ -2664,7 +2688,7 @@ class App:
     @staticmethod
     def _music_network_failure(exc: OSError | http.client.HTTPException) -> bool:
         """Lỗi tầng mạng (không có mạng, DNS, hết giờ, đứt kết nối, trả lời HTTP cụt) - khác nguồn trả lỗi HTTP hay bản sao sai sha1."""
-        if isinstance(exc, (urllib.error.HTTPError, MirrorMismatch, TrackTooBig)):
+        if isinstance(exc, (urllib.error.HTTPError, TrackMismatch, TrackTooBig)):
             return False
         return isinstance(exc, (urllib.error.URLError, socket.timeout, socket.gaierror, ConnectionError, http.client.HTTPException))
 
@@ -2761,6 +2785,42 @@ class App:
                 else:
                     del self._music_fetching[link]
 
+    @staticmethod
+    def _music_matches_catalog(path: Path, size: int | None, sha1: str | None) -> bool:
+        """File nhạc khớp số byte và sha1 danh mục ghi (mục nào danh mục không ghi thì không kiểm)."""
+        if size is not None and path.stat().st_size != size:
+            return False
+        if sha1 is None:
+            return True
+        with path.open("rb") as handle:
+            return hashlib.file_digest(handle, "sha1").hexdigest() == sha1.lower()
+
+    def _music_cache_matches(self, link: str, target: Path) -> bool:
+        """Bài trong bộ đệm còn khớp danh mục không (như `MusicCatalog.dropIfCut` của Android): sai cỡ / sai hash thì xoá để tải lại. Mỗi bản (cỡ + giờ sửa) kiểm một lần
+        mỗi lần chạy; danh mục chưa đọc được (mất mạng) thì giữ bài đang có và một phút sau mới hỏi lại - nghe offline không chờ mạng ở mỗi lượt xin file."""
+        stat = target.stat()
+        key = (stat.st_size, stat.st_mtime_ns)
+        with self._music_lock:
+            if self._music_checked.get(link) == key or self._music_check_after > self._music_clock():
+                return True
+        try:
+            info = self.music_catalog().lookup([link]).get(link)
+        except music_catalog.CatalogError:
+            with self._music_lock:
+                self._music_check_after = self._music_clock() + 60
+            return True
+        info = info if isinstance(info, dict) else {}
+        size = info.get("bytes") if isinstance(info.get("bytes"), int) else None
+        sha1 = info.get("sha1") if isinstance(info.get("sha1"), str) else None
+        if not self._music_matches_catalog(target, size, sha1):
+            log.warning("bộ đệm nhạc: %s khác danh mục - xoá, tải lại", target.name)
+            with contextlib.suppress(OSError):
+                target.unlink()
+            return False
+        with self._music_lock:
+            self._music_checked[link] = key
+        return True
+
     def music_track_file(self, link: str, *, progress: Callable[[int, int | None], None] | None = None,
                          cancel: threading.Event | None = None) -> Path:
         """File nhạc của một bài trong danh mục: tải một lần từ nguồn gốc vào bộ nhớ đệm, lần sau dùng lại. Chỉ bài CÓ
@@ -2769,7 +2829,7 @@ class App:
         if not link.startswith("https://"):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Link nhạc không hợp lệ")
         target = self._music_file(link)
-        if target.is_file():
+        if target.is_file() and self._music_cache_matches(link, target):
             self.music_cache.touch(target)  # đang nghe: lần dùng gần nhất, để dọn bộ đệm xoá bài khác trước
             return target
         try:
@@ -2802,9 +2862,9 @@ class App:
                     request = urllib.request.Request(url, headers={"User-Agent": music_catalog.USER_AGENT})
                     with urllib.request.urlopen(request, timeout=60) as response, part.open("wb") as sink:
                         self._music_copy(response, sink, progress, cancel)
-                    if url != link and ((size is not None and part.stat().st_size != size)
-                                        or hashlib.sha1(part.read_bytes()).hexdigest() != str(expected).lower()):
-                        raise MirrorMismatch(f"bản sao khác bản gốc: {url}")
+                    # Mọi nguồn (cả bản gốc) phải khớp `bytes` / `sha1` danh mục ghi: bài cụt hay bị đổi mà Content-Length tự nhất quán không được cất như bài tốt.
+                    if not self._music_matches_catalog(part, size, expected):
+                        raise TrackMismatch(f"bài tải về khác danh mục: {url}")
                     os.replace(part, target)
                     self._music_note(url, failed=False)  # tải được = nguồn ấy có mạng
                     self._music_mark(link, failed=False)
