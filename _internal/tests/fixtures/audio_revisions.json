@@ -1,0 +1,9 @@
+[
+  {"name":"unchanged", "local":{"a":"one","b":"two"},"incoming":{"a":"one","b":"two"},"localAt":"2026-10-22T02:00:00Z","incomingAt":"2026-10-22T01:00:00Z","status":"existing"},
+  {"name":"retake", "local":{"a":"one","b":"two"},"incoming":{"a":"one","b":"new"},"localAt":"2026-10-22T01:00:00Z","incomingAt":"2026-10-22T02:00:00Z","status":"updated"},
+  {"name":"older", "local":{"a":"one","b":"new"},"incoming":{"a":"one","b":"two"},"localAt":"2026-10-22T02:00:00Z","incomingAt":"2026-10-22T01:00:00Z","status":"older"},
+  {"name":"unknown_order", "local":{"a":"one","b":"two"},"incoming":{"a":"one","b":"new"},"localAt":"","incomingAt":"","status":"conflict"},
+  {"name":"fewer_chapters", "local":{"a":"one","b":"two"},"incoming":{"a":"one"},"localAt":"2026-10-22T01:00:00Z","incomingAt":"2026-10-22T02:00:00Z","status":"older"},
+  {"name":"flat_to_series", "local":{"chapters/a.mp3":{"size":3,"sha256":"one"}},"incoming":{"chapters/1/a.mp3":{"sha256":"one","size":3},"chapters/2/a.mp3":{"size":3,"sha256":"two"}},"localAt":"","incomingAt":"","status":"updated"},
+  {"name":"same_bytes_moved_to_part", "local":{"chapters/a.mp3":{"size":3,"sha256":"one"}},"incoming":{"chapters/1/a.mp3":{"sha256":"one","size":3}},"localAt":"","incomingAt":"","status":"existing"}
+]

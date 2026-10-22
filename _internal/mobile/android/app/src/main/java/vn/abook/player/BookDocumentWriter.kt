@@ -110,7 +110,7 @@ object BookDocumentWriter {
         for (name in sorted) described[name] = describe(name, files.getValue(name), known[name])
         val unknown = sorted.filter { !BookFileImport.contentPattern(version).matches(it) }
         if (unknown.isNotEmpty()) throw Refused("Không gói được các file có tên ngoài định dạng: ${unknown.take(3)}")
-        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'+00:00'", Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'+00:00'", Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }
         val packageInfo = LinkedHashMap<String, Any>()
         packageInfo["format"] = FORMAT
         packageInfo["version"] = version

@@ -635,7 +635,7 @@ class App:
         self.shell({"check_update": True})
         return {"checking": True}
 
-    def open_book_file(self, path: str = "") -> dict[str, Any]:
+    def open_book_file(self, path: str = "", *, allow_older: bool = False) -> dict[str, Any]:
         """Mở một file `.abook`: chọn bằng hộp thoại của cửa sổ app, hoặc đường dẫn có sẵn (bấm đúp file trong
         Explorer - desktop.py chuyển tới). Trả mã cuốn trong thư viện và cách mở (`packages.import_file`)."""
         self._mutating()
@@ -653,7 +653,7 @@ class App:
         report: dict[str, Any] = {}
         try:
             target, how = packages.import_file(Path(path), self.library.root, self.library.projects(), self.fingerprints,
-                                               report)
+                                               report, allow_older=allow_older)
         except bookfile.BookFileError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         except bookfile.ZIP_DAMAGE as error:  # ruột gói hỏng: không dán "BadZipFile: Bad CRC-32 ..." (soát a28 lỗi 7)
@@ -661,6 +661,8 @@ class App:
         except OSError as error:  # ổ đầy giữa chừng, thư viện không ghi được: nói thật thay vì "lỗi máy chủ"
             raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, humanize.write_error(error)) from error
         result: dict[str, Any] = {"id": book_id(target), "how": how}
+        if how in {"older", "conflict"}:
+            result["source"] = path
         if report.get("edits"):
             # File mang theo thay đổi của người nghe: cuốn của máy này thì chờ người dùng quyết áp vào dự án (`edits` =
             # số thay đổi, giao diện hiện thông báo có nút); cuốn nhập thì phần sửa đã được hợp vào máy (`merge`).
@@ -3407,7 +3409,7 @@ def without_local_paths(value: Any) -> Any:
             continue
         if key == "folder" and is_local_path(item):
             continue
-        out[key] = PureWindowsPath(item).name if key == "file" and is_local_path(item) else without_local_paths(item)
+        out[key] = PureWindowsPath(item).name if key in {"file", "target"} and is_local_path(item) else without_local_paths(item)
     for key in ("libraryRoot", "libraryRootSeen", "root") if "libraryRoot" in out or "books" in out else ():
         if isinstance(out.get(key), str):
             out[key] = ""
@@ -4263,7 +4265,8 @@ class Handler(BaseHTTPRequestHandler):
                                      self._music_fetching(app.mp3_jobs, key)) as source:
                 music = source if wanted else None
                 if parts is None:
-                    result = export_book(project, root, cover=body.get("cover"), music=music, cancelled=cancelled, progress=writing)
+                    result = export_book(project, root, cover=body.get("cover"), music=music, cancelled=cancelled, progress=writing,
+                                         chapter_ids=body.get("chapterIds"))
                 else:
                     result = export_series(parts, root, lambda part, folder, label: export_book(
                         part, folder, cover=body.get("cover"), folder_name=label, music=music, cancelled=cancelled, progress=writing))
@@ -4525,6 +4528,9 @@ class Handler(BaseHTTPRequestHandler):
         # "Huỷ" xuất có nhạc nền: dừng trước bài kế phải tải, không ghi file sách nào.
         self.app._mutating()
         self._send_json(HTTPStatus.OK, {"cancelling": self.app.cancel_music_export(self._music_key(query, value))})
+
+    def get_export_history(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, export_jobs.export_history(self.app._book(value)))
 
     def get_export_size(self, query: dict[str, list[str]], value: str) -> None:
         # Cỡ ước lượng của bản xuất `.abook` (audio các chương nghe được; `series=1`: cả bộ) - hộp Xuất báo trước và cảnh
@@ -5431,7 +5437,8 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.app.listen_library())
 
     def post_open_book_file(self, _query: dict[str, list[str]]) -> None:
-        self._send_json(HTTPStatus.OK, self.app.open_book_file(str(self._body().get("path") or "")))
+        body = self._body()
+        self._send_json(HTTPStatus.OK, self.app.open_book_file(str(body.get("path") or ""), allow_older=body.get("allowOlder") is True))
 
     def post_import_preview(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
@@ -6402,6 +6409,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/m4b-job/cancel"), Handler.post_m4b_job_cancel),
     ("GET", re.compile(BOOK + r"/export-music"), Handler.get_export_music),
     ("GET", re.compile(BOOK + r"/export-size"), Handler.get_export_size),
+    ("GET", re.compile(BOOK + r"/export-history"), Handler.get_export_history),
     ("GET", re.compile(BOOK + r"/music-export"), Handler.get_music_export),
     ("POST", re.compile(BOOK + r"/music-export/cancel"), Handler.post_music_export_cancel),
     ("GET", re.compile(LISTEN + r"/audiobook/plan"), Handler.get_audiobook_plan),

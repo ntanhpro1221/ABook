@@ -930,8 +930,77 @@ object Store {
         val all = printsBook()
         val entry = all.optJSONObject(id) ?: JSONObject()
         val known = entry.optJSONObject("chapters") ?: JSONObject()
-        for (name in chapters.keys()) known.put(name, chapters.getJSONObject(name))
+        for (name in chapters.keys()) {
+            // Mã băm của lượt nhập đã được kiểm với byte vừa giải ra: kèm dấu mtime để lần kiểm sau (AudioRevision.matches) khỏi băm lại.
+            val print = JSONObject(chapters.getJSONObject(name).toString())
+            val file = runCatching { file(id, name) }.getOrNull()
+            if (file != null && file.isFile && file.length() == print.optLong("size", -1) && print.optString("sha256").isNotEmpty()) print.put("modified", file.lastModified())
+            known.put(name, print)
+        }
         all.put(id, entry.put("chapters", known).put("imported", imported))
+        writeAtomic(printsFile, all.toString())
+    }
+
+    // ---- băm audio có nhớ ------------------------------------------------------------------------------------
+    //
+    // Mỗi chương trong sổ `prints.json` mang {size, modified, sha256}: cỡ + mtime khớp file thì mã băm còn đúng, không đọc lại cả file
+    // (sách 100 chương x vài chục MB mà băm lại mỗi lần máy tính hỏi thư viện hay mở trang thiết bị là hàng GB). Thiếu bản ghi, hay
+    // cỡ/mtime đổi thì băm lại rồi ghi. File mới ghi trong vài giây vừa qua chưa được tin (hai lần ghi cùng cỡ có thể trùng mtime thô);
+    // lượt tải thì khác: đã băm chính byte vừa tải, ghi thẳng bằng [rememberDigest].
+
+    private const val SETTLE_MS = 2000L
+
+    /** (mã sách, đường dẫn trong sách) nếu `file` là file của một cuốn trong thư viện (không kể `.part` đang tải); ngoài ra null. */
+    private fun located(file: File): Pair<String, String>? {
+        if (!::root.isInitialized || file.name.endsWith(".part")) return null
+        val books = File(root, "books").canonicalFile
+        val path = file.canonicalFile
+        if (!path.path.startsWith(books.path.trimEnd(File.separatorChar) + File.separator)) return null
+        val parts = path.relativeTo(books).invariantSeparatorsPath.split('/')
+        val id = parts.first()
+        if (parts.size < 2 || id.startsWith(".") || runCatching { requireBookId(id) }.isFailure) return null
+        return id to parts.drop(1).joinToString("/")
+    }
+
+    fun audioSha256(file: File): String = audioSha256s(listOf(file)).single()
+
+    /** Mã băm của từng file, theo thứ tự `files`; file đã nhớ (cỡ + mtime khớp) không bị đọc lại. Ghi bản ghi mới MỘT lần cho mỗi cuốn. */
+    fun audioSha256s(files: List<File>): List<String> {
+        val result = arrayOfNulls<String>(files.size)
+        val fresh = HashMap<String, MutableMap<String, JSONObject>>()
+        val prints = HashMap<String, JSONObject>()
+        for ((index, file) in files.withIndex()) {
+            val place = located(file)
+            val recorded = place?.let { (id, relative) -> prints.getOrPut(id) { chapterPrints(id) }.optJSONObject(relative) }
+            if (recorded != null && recorded.optString("sha256").isNotEmpty() && recorded.optLong("size", -1) == file.length() &&
+                recorded.optLong("modified", -1) == file.lastModified()) {
+                result[index] = recorded.getString("sha256")
+                continue
+            }
+            val size = file.length()
+            val modified = file.lastModified()
+            val sha256 = AudioRevision.sha256(file)
+            result[index] = sha256
+            if (place != null && file.length() == size && file.lastModified() == modified && System.currentTimeMillis() - modified > SETTLE_MS) {
+                fresh.getOrPut(place.first) { LinkedHashMap() }[place.second] = JSONObject().put("size", size).put("modified", modified).put("sha256", sha256)
+            }
+        }
+        for ((id, records) in fresh) recordDigests(id, records)
+        return result.map { it!! }
+    }
+
+    /** Ghi mã băm của `relative` (file `target` vừa đổi tên vào chỗ) - gọi sau khi đã băm đúng byte của file ấy. */
+    fun rememberDigest(id: String, relative: String, target: File, sha256: String) =
+        recordDigests(id, mapOf(relative to JSONObject().put("size", target.length()).put("modified", target.lastModified()).put("sha256", sha256)))
+
+    @Synchronized
+    private fun recordDigests(id: String, records: Map<String, JSONObject>) {
+        if (records.isEmpty() || !runCatching { bookDir(id).isDirectory }.getOrDefault(false)) return // cuốn vừa xoá: không dựng lại dòng sổ
+        val all = printsBook()
+        val entry = all.optJSONObject(id) ?: JSONObject()
+        val known = entry.optJSONObject("chapters") ?: JSONObject()
+        for ((name, print) in records) known.put(name, print)
+        all.put(id, entry.put("chapters", known))
         writeAtomic(printsFile, all.toString())
     }
 
@@ -967,8 +1036,8 @@ object Store {
     /**
      * Cuốn đã có trên máy (tải qua Wi-Fi hay mở từ file) có chung ít nhất một chương audio với `chapters`
      * ({"chapters/x.mp3": {size, sha256}}). So theo TÊN FILE, không kể thư mục: file cả bộ đặt audio ở
-     * `chapters/<phần>/x.mp3` còn cuốn tải qua Wi-Fi giữ `chapters/x.mp3`. Chỉ băm file trùng tên và cỡ, rồi ghi vào sổ để
-     * lần sau khỏi băm.
+     * `chapters/<phần>/x.mp3` còn cuốn tải qua Wi-Fi giữ `chapters/x.mp3`. Chỉ băm file trùng tên và cỡ (audioSha256: ghi vào sổ để
+     * lần sau khỏi băm).
      *
      * Cuốn chưa có audio nào thì `chapters` là mã băm CHỮ từng chương ({"texts/1.txt": ...}): hai cuốn khác nhau có thể chung một
      * chương ngắn ("Lời nói đầu"), nên phải trùng cả bộ chữ - mọi chương của file có mặt, và cuốn trên máy không có chương chữ nào
@@ -981,9 +1050,8 @@ object Store {
         for (book in books()) {
             val id = book.optString("id")
             if (id.isBlank()) continue
-            val known = chapterPrints(id)
             val own = chapterFiles(book)
-            val shares = { name: String -> sharesChapter(id, known, own, name, chapters.getJSONObject(name)) }
+            val shares = { name: String -> sharesChapter(id, own, name, chapters.getJSONObject(name)) }
             if (wholeBook) {
                 if (textChapterCount(book) == names.size && names.all(shares)) return id
             } else if (names.any(shares)) {
@@ -994,20 +1062,12 @@ object Store {
     }
 
     /** Cuốn `id` có đúng file của chương `name` (cỡ + mã băm như `wanted`) ở một trong các đường dẫn nó dùng? */
-    private fun sharesChapter(id: String, known: JSONObject, own: List<String>, name: String, wanted: JSONObject): Boolean {
+    private fun sharesChapter(id: String, own: List<String>, name: String, wanted: JSONObject): Boolean {
         val base = name.substringAfterLast('/')
         for (candidate in (own.filter { it.substringAfterLast('/') == base } + name).distinct()) {
             val local = runCatching { file(id, candidate) }.getOrNull() ?: continue
             if (!local.isFile || local.length() != wanted.optLong("size", -1)) continue
-            val recorded = known.optJSONObject(candidate)
-            val sha256 = if (recorded != null && recorded.optLong("size") == local.length()) {
-                recorded.optString("sha256")
-            } else {
-                sha256(local).also {
-                    rememberChapters(id, JSONObject().put(candidate, JSONObject().put("size", local.length()).put("sha256", it)), isImported(id))
-                }
-            }
-            if (sha256 == wanted.optString("sha256")) return true
+            if (audioSha256(local) == wanted.optString("sha256")) return true
         }
         return false
     }
@@ -1022,19 +1082,6 @@ object Store {
     private fun chapterFiles(book: JSONObject): List<String> {
         val array = book.optJSONArray("chapters") ?: return emptyList()
         return (0 until array.length()).mapNotNull { array.optJSONObject(it)?.optString("file")?.takeIf { file -> file.startsWith("chapters/") } }
-    }
-
-    private fun sha256(file: File): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        file.inputStream().use { input ->
-            val buffer = ByteArray(1 shl 16)
-            while (true) {
-                val read = input.read(buffer)
-                if (read < 0) break
-                digest.update(buffer, 0, read)
-            }
-        }
-        return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
     /**

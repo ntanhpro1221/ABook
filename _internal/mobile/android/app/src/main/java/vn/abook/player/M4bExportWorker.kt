@@ -161,6 +161,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 M4bExports.emit(event().put("phase", "music-fetch").put("done", index).put("total", count))
             }
             val plan = base.with(music.mixer, music.guard)
+            val snapshot = ExportHistory.snapshot(plan)
             val work = File(context.cacheDir, "m4b-export").apply { mkdirs() }.let { File(it, "$run.m4a") }
             val musicBytes = music.music?.let { json ->
                 val (rate, channels) = M4bAudio.layout(plan.chapters.first().file)
@@ -190,6 +191,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                     }
                 }, stopped = { isStopped })
             }
+            ExportHistory.remember(Store.bookDir(bookId), "m4b", file.toString(), snapshot)
             val missing = music.mixer?.missing(ids) ?: 0
             val over = encoded?.peakOver.orEmpty()
             if (over.isNotEmpty()) android.util.Log.w("M4bExport", "sau ${AacJoin.RETRIES} lượt mã hoá lại vẫn vượt trần: $over")

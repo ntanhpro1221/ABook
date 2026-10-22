@@ -420,8 +420,8 @@ def test_a_book_without_word_timings_keeps_its_sync_version_and_an_unchanged_one
     first, book = _book_version(project, tmp_path)
     again, _ = _book_version(project, tmp_path)
     assert "wordsVersion" not in book and first == again, "chưa căn chữ: phiên bản như trước khi có tính năng, gọi lại vẫn y nguyên"
-    old = hashlib.sha256(json.dumps([[(c["id"], c["size"]) for c in book["chapters"]], 0], sort_keys=True).encode()).hexdigest()[:16]
-    assert first == old, "băm không có mục `words` khi sách chưa căn - điện thoại đã tải không thấy gì đổi"
+    expected = hashlib.sha256(json.dumps([[(c["id"], c["sha256"]) for c in book["chapters"]], 0], sort_keys=True).encode()).hexdigest()[:16]
+    assert first == expected, "phiên bản dùng dấu audio từng chương; chưa căn thì không có mục words"
 
     word_timing._save(project, 1, {"version": word_timing.VERSION, "audio": {}, "lines": {}})
     aligned, with_words = _book_version(project, tmp_path)

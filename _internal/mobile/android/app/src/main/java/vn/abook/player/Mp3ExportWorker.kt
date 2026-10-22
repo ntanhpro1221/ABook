@@ -109,8 +109,9 @@ object Mp3Exports {
     // ---- việc nền ------------------------------------------------------------------------------------------------
 
     /** Bắt đầu xuất cuốn `bookId` vào thư mục `tree` (thay lượt đang chạy của cuốn ấy nếu có). Trả mã lượt - tin của lượt mang mã này. */
-    fun start(context: Context, bookId: String, tree: Uri, drawnCover: File?): String {
+    fun start(context: Context, bookId: String, tree: Uri, drawnCover: File?, chapterIds: List<Int>? = null): String {
         val data = Data.Builder().putString(KEY_BOOK, bookId).putString(KEY_TREE, tree.toString())
+        chapterIds?.let { data.putIntArray("chapterIds", it.toIntArray()) }
         drawnCover?.let { data.putString(KEY_COVER, it.absolutePath) }
         val request = OneTimeWorkRequestBuilder<Mp3ExportWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
@@ -277,7 +278,8 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
         var done = 0
         var retrying = false
         try {
-            val plan = Mp3Export.plan(bookId, cover?.takeIf { it.isFile }?.readBytes())
+            val plan = Mp3Export.plan(bookId, cover?.takeIf { it.isFile }?.readBytes(), inputData.getIntArray("chapterIds")?.toList())
+            val snapshot = ExportHistory.snapshot(plan)
             title = plan.title
             // Không vào được dịch vụ nền (Android 12+ khi app đã ở nền lúc việc bắt đầu): vẫn chạy, chỉ không có thông báo đứng.
             runCatching { setForegroundAsync(Mp3Exports.foreground(context, id, bookId, title, 0, plan.chapters.size)).get() }
@@ -292,10 +294,13 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                     runCatching { setForegroundAsync(Mp3Exports.foreground(context, id, bookId, title, written, total)) }
                 }
             }, stopped = { isStopped })
+            ExportHistory.remember(Store.bookDir(bookId), "mp3", result.uri ?: result.folder, snapshot)
             // Nói chỗ lưu trước (người nghe cần biết đi đâu tìm), rồi mới tới lưu ý chương thiếu.
-            val partial = if (result.files < result.chaptersTotal) " Các chương chưa làm xong sẽ không có trong bản xuất." else ""
+            val selection = inputData.getIntArray("chapterIds") != null
+            val partial = if (!selection && result.files < result.chaptersTotal) " Các chương chưa làm xong sẽ không có trong bản xuất." else ""
             Mp3Exports.finished(context, bookId, "Đã xuất ${result.files} chương", "$title · lưu ở ${result.folder}.$partial")
             Mp3Exports.emit(event().put("finished", true).put("files", result.files).put("chaptersTotal", result.chaptersTotal)
+                .put("selection", selection)
                 .put("folder", result.folder).put("uri", result.uri))
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {

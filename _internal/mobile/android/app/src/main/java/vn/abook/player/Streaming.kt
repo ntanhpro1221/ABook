@@ -38,7 +38,7 @@ import java.net.URL
  * phát qua mạng từ máy tính đã ghép (webui/sync.py - cùng các đường tải sách, có tua theo byte).
  *
  * Audio đi qua bộ đệm đĩa của Media3 (giới hạn [CACHE_BYTES], bỏ cái ít dùng nhất): tua lại hay nghe lại không tải
- * lại, và Wi-Fi chập chờn không cắt ngang đoạn đã đệm. Khoá đệm gồm cả kích thước file trong gói sách: máy tính thu lại
+ * lại, và Wi-Fi chập chờn không cắt ngang đoạn đã đệm. Khoá đệm gồm dấu SHA-256 của chương trong gói sách: máy tính thu lại
  * một chương (file cùng tên, khác nội dung) thì điện thoại không phát nhầm bản cũ.
  */
 @OptIn(UnstableApi::class)
@@ -138,19 +138,19 @@ object Streaming {
         return Uri.parse("${link.base}/sync/v1/books/${Uri.encode(remote)}/files/${Uri.encode(file, "/")}")
     }
 
-    /** Khoá bộ đệm: sách + file + kích thước trong gói (null = file trên máy, không qua bộ đệm). */
+    /** Khoá bộ đệm: sách + file + SHA-256 trong gói (null = file trên máy, không qua bộ đệm). */
     fun cacheKey(id: String, file: String): String? {
         val local = runCatching { Store.file(id, file) }.getOrNull()
         if (local != null && local.isFile) return null
         val chapters = Store.playableManifest(id)?.optJSONArray("chapters")
-        var size = 0L
+        var digest = ""
         if (chapters != null) {
             for (index in 0 until chapters.length()) {
                 val chapter = chapters.getJSONObject(index)
-                if (chapter.optString("file") == file) size = chapter.optLong("size")
+                if (chapter.optString("file") == file) digest = chapter.optString("sha256")
             }
         }
-        return "$id/$file#$size"
+        return "$id/$file#$digest"
     }
 
     /** Gói sách của một cuốn trên máy tính (hay thiết bị ghép - `source`, `remoteId`: Peers), cất vào `stream.json` để lần
