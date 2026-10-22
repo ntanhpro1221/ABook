@@ -339,13 +339,19 @@ function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => 
       let count = 0;
       for (const [speaker, group] of groups) {
         const refs = group.map((line) => ({ stableId: line.stableId, textSha256: line.textSha256 }));
-        const answer = await api<{ lines: number; requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${bookId}/speaker`, {
-          method: "POST",
-          body: { speaker, lines: refs, seen: Object.fromEntries(group.map((line) => [line.stableId, line.wish?.value ?? ""])) },
-        });
-        Object.assign(elsewhere, answer.elsewhere ?? {});
-        count += answer.lines;
-        made.push({ lines: refs, requestedAt: answer.requestedAt, keep: true });
+        try {
+          const answer = await api<{ lines: number; requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${bookId}/speaker`, {
+            method: "POST",
+            body: { speaker, lines: refs, seen: Object.fromEntries(group.map((line) => [line.stableId, line.wish?.value ?? ""])) },
+          });
+          Object.assign(elsewhere, answer.elsewhere ?? {});
+          count += answer.lines;
+          made.push({ lines: refs, requestedAt: answer.requestedAt, keep: true });
+        } catch (error) {
+          // Các nhóm trước đã ghi thật (mỗi nhóm một yêu cầu): nói đúng số, không báo như chưa làm gì (soát a83 B11).
+          if (count > 0) throw new Error(`Mới xác nhận được ${count} câu, còn lại chưa ghi: ${(error as Error).message}. Bạn bấm xác nhận lại - những câu đã ghi sẽ không bị làm lại.`);
+          throw error;
+        }
       }
       return { count, made, elsewhere };
     },
