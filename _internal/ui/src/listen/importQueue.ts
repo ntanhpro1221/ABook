@@ -110,7 +110,7 @@ export async function addWithDefaults(
   const title = preview.title.trim();
   if (!title) throw new Error("File này chưa có tên sách - thêm riêng để đặt tên.");
   if (defaultPicked(preview.chapters).size === 0) throw new Error("File này chưa có chương nào để thêm.");
-  const added = await importer.add(choice, title, false, { splitChapters: split });
+  const added = await importer.add(choice, title, false, { splitChapters: split, ...(preview.sourceFingerprint ? { sourceFingerprint: preview.sourceFingerprint } : {}) });
   return { state: added.how === "existing" ? "existing" : "added", note: added.how === "existing" ? "Đã có trong thư viện" : undefined, bookId: added.id };
 }
 

@@ -92,7 +92,7 @@ _NUMBER_WORDS = (
 )
 # Số thứ tự chỉ đứng sau "thứ" ("Hồi thứ nhất", "Chương thứ nhì", "Hồi thứ nhứt"): "Hồi nhất định…" là câu văn, không phải tiêu đề.
 _ORDINAL_WORDS = "nhất|nhứt|nhì"
-CHAPTER_WORDS = "chương|chuong|hồi|hoi|chapter|tiết"
+CHAPTER_WORDS = "chương|chuong|hồi|hoi|chapter|tiết|phần|phan"
 
 
 def heading_pattern(words: str) -> re.Pattern[str]:
@@ -110,6 +110,9 @@ def heading_pattern(words: str) -> re.Pattern[str]:
 HEADING = heading_pattern(CHAPTER_WORDS + "|quyển|quyen")
 # File TXT cả truyện tách theo "Chương N" thôi (như trình tạo sách, webui/txt_split.py): "Quyển N" là tên tập, không phải chương.
 TXT_HEADING = heading_pattern(CHAPTER_WORDS)
+TXT_VOLUME = re.compile(r"^\s*(?:tập|tap|quyển|quyen|volume|vol\.?|book)\s+(?:\d+|[ivxlcdm]+|" + _NUMBER_WORDS + r")(?:\s*[-:–—].*)?\s*$", re.IGNORECASE)
+COMBINED_VOLUME = re.compile(r"^\s*(?:tập|quyển|volume|book)\s+(?:\d+|[ivxlcdm]+)\s*[-:–—]\s*", re.IGNORECASE)
+SPECIAL_SECTION = re.compile(r"\s*(?:ngoại truyện|lời bạt|minh họa)(?:\s+\d+)?(?:\s*[:：–—-]\s*.+)?\s*", re.IGNORECASE)
 
 
 class ImportFailed(ValueError):
@@ -141,6 +144,8 @@ class ImportedBook:
     footnote_found: int = 0  # EPUB / DOCX có cấu trúc: số lời chú tìm thấy (đề xuất ở bước xem trước, `FootnoteChoice`); 0 = không có
     footnote_marks: int = 0  # ... trong đó số dấu gọi (số chú thích) nằm trong chữ của sách - ô "Không đọc số chú thích" chỉ có nghĩa khi > 0
     footnote_examples: list[tuple[str, str]] = field(default_factory=list)  # (dấu gọi kèm chữ đứng trước: "…trees²", lời chú) vài ví dụ
+    keep_matter: bool = False  # TXT/DOCX/PDF: nghi là phần đầu/cuối chỉ là gợi ý; mặc định giữ chữ.
+    default_skips: set[str] = field(default_factory=set)  # đề xuất PDF chắc chắn; chữ nguồn vẫn nguyên
 
     def chapter_source(self, chapter: Chapter) -> str:
         """Chữ của chương như FILE NGUỒN mà Studio đọc: TXT nguyên văn (tên chương nằm sẵn trong chữ); EPUB / DOCX / PDF: tên
@@ -271,7 +276,8 @@ def is_credit_note(note: str) -> bool:
 def default_picks(book: ImportedBook) -> list[tuple[int, str]]:
     """Lựa chọn chương mặc định của bước xem trước: mọi chương trừ mục rất ngắn (`Chapter.short`) và mục có vẻ không phải truyện
     (`Chapter.matter`). [(số chương 1-based, tên mới "")]. Kotlin: BookImport.defaultPicks."""
-    return [(number, "") for number, chapter in enumerate(book.chapters, start=1) if not chapter.short and not chapter.matter]
+    return [(number, "") for number, chapter in enumerate(book.chapters, start=1)
+            if not chapter.short and (book.keep_matter or not chapter.matter)]
 
 
 def select_chapters(book: ImportedBook, picks: list[tuple[int, str]]) -> ImportedBook:
@@ -404,7 +410,7 @@ _C0 = re.compile(r"[\x00-\x08\x0b\x0e-\x1f]")
 
 def _text_controls(text: str) -> str:
     """Chỉ bỏ điều khiển vô hình; form feed là ngắt đoạn, giữ mọi chữ thấy được."""
-    return _C0.sub("", text).replace("\x0c", "\n\n")
+    return _C0.sub("", re.sub(r"[\x0b\x1c-\x1f]", "\n\n", text)).replace("\x0c", "\n\n")
 
 
 def _clean_text(text: str) -> str:
@@ -423,8 +429,11 @@ def _txt_chapter(path: Path) -> tuple[Chapter, str]:
     người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1")."""
     from .webui.humanize import chapter_title
 
-    text, encoding = decode_text(path.read_bytes())
-    text = _clean_text(text)
+    try:
+        text, encoding = decode_text(path.read_bytes())
+    except UnicodeDecodeError as error:
+        raise ImportFailed(f"File “{path.name}” có byte chữ bị hỏng. Bạn hãy mở bản gốc, lưu lại dạng UTF-8 hoặc tải lại file rồi nhập lại.") from error
+    text = _clean_text(_text_controls(text))
     first = next((line.strip() for line in text.split("\n") if line.strip()), "")
     if is_heading_line(first):
         return Chapter(first, text), encoding
@@ -444,14 +453,14 @@ def _txt_folder(folder: Path) -> ImportedBook:
     if not files:
         raise ImportFailed("Thư mục này không có file .txt nào nằm ngay bên trong")
     read = [_txt_chapter(file) for file in files]
-    return ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[chapter for chapter, _ in read], text_has_title=True,
+    return ImportedBook(title=title_from_filename(folder.resolve().name), chapters=[chapter for chapter, _ in read], text_has_title=True, keep_matter=True,
                         notes=_encoding_notes(encoding for _, encoding in read))
 
 
 def _txt_file(path: Path, split: bool = False) -> ImportedBook:
     """Một file TXT là một chương - trừ khi nó là CẢ truyện (>= 2 dòng "Chương N") và người dùng tích tách: `split_txt_chapters`."""
     chapter, encoding = _txt_chapter(path)
-    book = ImportedBook(title=title_from_filename(path.stem), chapters=[chapter], text_has_title=True, notes=_encoding_notes([encoding]))
+    book = ImportedBook(title=title_from_filename(path.stem), chapters=[chapter], text_has_title=True, keep_matter=True, notes=_encoding_notes([encoding]))
     parts = split_txt_chapters(chapter.text)
     book.split_offer = len(parts)
     # Chương tách ra từ một dòng tiêu đề mang tên dòng ấy - không bao giờ trùng tên chương "Mở đầu".
@@ -462,8 +471,6 @@ def _txt_file(path: Path, split: bool = False) -> ImportedBook:
         from_text = title_from_line(first_text_line(chapter.text))
         lines = chapter.text.split("\n")
         alone = title_only_preamble(lines, next(iter(_txt_cuts(lines)), 0))
-        if split and alone:
-            book.notes.append(f"Dòng đầu “{alone}” là tên truyện - dùng làm tên sách, không đọc thành một chương.")
     else:
         from_text = standalone_title(chapter.text)  # file một chương mà mở bằng một dòng tên riêng ("Chuyện dài một chương"): tên ấy, không phải tên file
     book.title = from_text or book.title
@@ -580,6 +587,17 @@ def _txt_cuts(lines: list[str]) -> list[int]:
     return kept + (run if len(run) == 1 else [])
 
 
+def txt_starts(lines: list[str], found: list[int]) -> list[int]:
+    """Dòng tên tập sát chương đi cùng chương mở tập; chung với Studio."""
+    starts = []
+    for heading in found:
+        before = heading - 1
+        while before >= 0 and not lines[before].strip():
+            before -= 1
+        starts.append(before if before >= 0 and TXT_VOLUME.fullmatch(lines[before]) else heading)
+    return starts
+
+
 def split_txt_chapters(text: str) -> list[Chapter]:
     """Chữ (đã `_clean_text`) của một file TXT cả truyện -> các chương cắt ở đầu mỗi dòng tiêu đề "Chương N" (cùng luật nhận tiêu đề
     với trình tạo sách, `txt_split`: "Quyển N" không phải tiêu đề). Chữ giữ nguyên từng dòng, tiêu đề nằm trong chữ của chương; chữ
@@ -589,14 +607,15 @@ def split_txt_chapters(text: str) -> list[Chapter]:
     cuts = _txt_cuts(lines)
     if len(cuts) < 2:
         return []
+    starts = txt_starts(lines, cuts)
     # Chữ dẫn chỉ là một dòng tên truyện thì không thành chương "Mở đầu" - nó là tên sách (`title_only_preamble`).
-    lead = any(line.strip() for line in lines[: cuts[0]]) and not title_only_preamble(lines, cuts[0])
-    lead_text = "\n".join(lines[: cuts[0]]).strip("\n")
-    lead_matter = text_matter(PREAMBLE, lead_text) or (PREAMBLE_MATTER if len(lead_text.split()) <= PREAMBLE_MATTER_WORDS else "")  # lý do cụ thể (mục lục, Gutenberg) trước
+    lead = any(line.strip() for line in lines[: starts[0]])
+    lead_text = "\n".join(lines[: starts[0]]).strip("\n")
+    lead_matter = text_matter(PREAMBLE, lead_text)
     chapters = [Chapter(PREAMBLE, lead_text, matter=lead_matter)] if lead else []
     for position, start in enumerate(cuts):
-        end = cuts[position + 1] if position + 1 < len(cuts) else len(lines)
-        chapters.append(Chapter(lines[start].strip(), "\n".join(lines[start:end]).strip("\n")))
+        end = starts[position + 1] if position + 1 < len(cuts) else len(lines)
+        chapters.append(Chapter(lines[start].strip(), "\n".join(lines[starts[position]:end]).strip("\n")))
     return chapters
 
 
@@ -1430,18 +1449,34 @@ def _docx_styles(book: _Zip) -> dict[str, str]:
         root = _xml(_read(book, "word/styles.xml", "DOCX"), "DOCX")
     except ImportFailed:
         return {}
-    styles = {}
-    for style in root.iter(f"{W}style"):
-        name = style.find(f"{W}name")
-        if name is not None:
-            styles[style.get(f"{W}styleId", "")] = name.get(f"{W}val", "").casefold()
+    nodes = {style.get(f"{W}styleId", ""): style for style in root.iter(f"{W}style")}
+    styles: dict[str, str] = {}
+    for key in nodes:
+        seen: set[str] = set()
+        current = key
+        while current in nodes and current not in seen:
+            seen.add(current)
+            node = nodes[current]
+            name = node.find(f"{W}name")
+            label = name.get(f"{W}val", "").casefold() if name is not None else current.casefold()
+            styles.setdefault(key, label)
+            outline = node.find(f"{W}pPr/{W}outlineLvl")
+            if outline is not None:
+                value = outline.get(f"{W}val", "")
+                styles[key] = {"0": "heading 1", "1": "heading 2"}.get(value, "normal")
+                break
+            if label in HEADING_LEVELS or TOC_STYLE.fullmatch(label):
+                styles[key] = label
+                break
+            parent = node.find(f"{W}basedOn")
+            current = parent.get(f"{W}val", "") if parent is not None else ""
     return styles
 
 
 def _docx_paragraphs(element: ElementTree.Element) -> Iterator[ElementTree.Element]:
     """Mọi đoạn theo thứ tự trong file, kể cả trong bảng và khung chữ; bỏ bản dự phòng (mc:Fallback lặp lại khung chữ)."""
     for child in element:
-        if child.tag == MC_FALLBACK:
+        if child.tag in (MC_FALLBACK, f"{W}moveFrom", f"{W}del"):
             continue
         if child.tag == f"{W}p":
             yield child
@@ -1453,7 +1488,7 @@ def _docx_text(element: ElementTree.Element) -> list[str]:
     lines = [""]
     for child in element:
         tag = child.tag
-        if tag in (f"{W}pPr", f"{W}p", f"{W}txbxContent", MC_FALLBACK):
+        if tag in (f"{W}pPr", f"{W}p", f"{W}txbxContent", MC_FALLBACK, f"{W}moveFrom", f"{W}del"):
             continue
         if tag == f"{W}t":
             lines[-1] += child.text or ""
@@ -1461,7 +1496,7 @@ def _docx_text(element: ElementTree.Element) -> list[str]:
             lines[-1] += " "
         elif tag == f"{W}noBreakHyphen":
             lines[-1] += "-"
-        elif tag == f"{W}br" and child.get(f"{W}type", "textWrapping") == "textWrapping":
+        elif tag in (f"{W}br", f"{W}cr"):
             lines.append("")
         elif tag in (f"{W}footnoteReference", f"{W}endnoteReference"):  # chữ của lời chú ở footnotes.xml / endnotes.xml: giữ chỗ để biết dấu gọi ở đâu
             lines[-1] += NOTE_OPEN + ("f" if tag == f"{W}footnoteReference" else "e") + child.get(f"{W}id", "") + NOTE_CLOSE
@@ -1557,9 +1592,13 @@ def _docx(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
             # nhận nhầm là tiêu đề chương.
             toc_lines += 1
             continue
-        level, bold = HEADING_LEVELS.get(style, 0), _docx_bold(paragraph)
+        outline = paragraph.find(f"{W}pPr/{W}outlineLvl")
+        level = ({"0": 1, "1": 2}.get(outline.get(f"{W}val", ""), 0) if outline is not None else HEADING_LEVELS.get(style, 0))
+        bold = _docx_bold(paragraph)
         for raw in _join_wrapped([_words(line) for line in _docx_text(paragraph)]):
-            line, cites = _DOCX_REF.sub("", raw), []
+            labels = iter(range(references + 1, references + 1 + len(_DOCX_REF.findall(raw))))
+            line = _DOCX_REF.sub(lambda match: "" if choice.hide_marks else str(next(labels)).translate(SUPERSCRIPT), raw)
+            cites = []
             for match in _DOCX_REF.finditer(raw):
                 key = (match.group(1), match.group(2))
                 references += 1
@@ -1574,18 +1613,22 @@ def _docx(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
                 if not level and style == "title" and book_title is None:
                     book_title = line
                 items.append((level, line, bold, False))
-            if choice.notes == "end":  # lời chú Word (chưa từng vào sách): đề xuất, tích mới đưa về cuối chương chứa dấu gọi
+            if choice.notes != "drop":  # mặc định giữ lời chú ở cuối chương chứa dấu gọi
                 items += [(0, text, False, True) for key in cites for text in word_notes[key]]
     levels = [level for level, *_ in items if level]
+    leading_heading = None
     if levels.count(1) == 1 and len(items) > 1 and items[0][0] == 1 and not is_heading_line(items[0][1]):
         # Heading 1 duy nhất, ở đầu, không phải "Chương N": tên sách. Chương theo cấp kế (Heading 2), không có thì dòng "Chương N" / đậm.
-        book_title, items, chapter_levels = book_title or items[0][1], items[1:], {2}
+        book_title = book_title or items[0][1]
+        leading_heading = items[0][1]
+        items[0] = (0, *items[0][1:])  # chỉ gợi ý tên sách; dòng chữ vẫn còn
+        chapter_levels = {2}
     elif 1 in levels and 2 in levels:
         chapter_levels = {1}  # Heading 1 là chương, Heading 2 là cảnh trong chương: một dòng của chương
     else:
         chapter_levels = {1, 2}
     result = ImportedBook(title=meta_title or book_title or title_from_filename(path.stem), author=meta_author, language=meta_language,
-                          footnote_found=len(cited), footnote_examples=examples)
+                          footnote_found=len(cited), footnote_marks=references, footnote_examples=examples, keep_matter=True)
     if toc_lines:
         result.notes.append(f"Bỏ qua mục lục của tài liệu ({toc_lines} dòng).")
     if not any(level in chapter_levels for level, *_ in items):
@@ -1594,6 +1637,10 @@ def _docx(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
         result.chapters, notes = _split_on_headings([line for _, line, _, _ in items], result.title, roman if len(roman) >= 2 else (),
                                                     {index for index, item in enumerate(items) if item[3]})
         result.notes += notes
+        if leading_heading and len(result.chapters) == 1:
+            only = result.chapters[0]
+            if only.text.startswith(leading_heading + "\n\n"):
+                only.title, only.text = leading_heading, only.text[len(leading_heading) + 2:]
     else:
         sections: list[tuple[str | None, list[str], list[str]]] = [(None, [], [])]  # (tên chương theo kiểu Heading, các đoạn, lời chú ở cuối)
         for level, line, _, note in items:
@@ -1618,7 +1665,17 @@ def _docx(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
 # --- Chia chương theo dòng tiêu đề (DOCX không có Heading, PDF) -------------------------------------------------------
 
 def is_heading_line(line: str, pattern: re.Pattern[str] = HEADING) -> bool:
-    return len(line.strip()) <= MAX_HEADING and pattern.match(line) is not None
+    if pattern in (HEADING, TXT_HEADING):
+        if len(line.strip()) <= MAX_HEADING and SPECIAL_SECTION.fullmatch(line):
+            return True
+        line = COMBINED_VOLUME.sub("", line)
+    match = pattern.match(line)
+    if len(line.strip()) > MAX_HEADING or match is None:
+        return False
+    tail = line[match.end():].strip()
+    if pattern in (HEADING, TXT_HEADING) and tail and tail[0] not in ":：.-–—":
+        return not tail.endswith((".", "!", "?", "…", "。", "!\"", "?\"", '."'))
+    return True
 
 
 def _split_on_headings(paragraphs: list[str], book_title: str, extra: Iterable[int] = (), note_lines: Iterable[int] = ()) -> tuple[list[Chapter], list[str]]:
@@ -1673,7 +1730,7 @@ def _page_lines(raw: str) -> list[str]:
 
 
 def _running_key(line: str) -> str:
-    return re.sub(r"\d+", "#", line.casefold())
+    return re.sub(r"\d+", "#", line)  # chỉ gom đề xuất; bật sẵn vẫn đòi lặp y hệt
 
 
 def _strip_running(pages: list[list[str]]) -> tuple[list[list[str]], list[str]]:
@@ -1687,7 +1744,7 @@ def _strip_running(pages: list[list[str]]) -> tuple[list[list[str]], list[str]]:
     for lines, zone in zip(pages, zones):
         for key in {_running_key(lines[index]) for index in zone if not is_heading_line(lines[index])}:
             counts[key] = counts.get(key, 0) + 1
-    repeated = {key for key, seen in counts.items() if len(pages) >= RUNNING_MIN_PAGES and seen >= 3 and seen * 5 >= len(pages) * 2}
+    repeated = {key for key, seen in counts.items() if len(pages) >= RUNNING_MIN_PAGES and seen >= 3 and seen * 2 > len(pages)}
     removed: list[str] = []
     noted: set[str] = set()  # một ghi chú cho mỗi dòng lặp, dù số trang trong nó đổi theo trang
     result: list[list[str]] = []
@@ -1700,15 +1757,14 @@ def _strip_running(pages: list[list[str]]) -> tuple[list[list[str]], list[str]]:
             edge = index in (zone[0], zone[-1])
             key = _running_key(line)
             if key in repeated or (edge and _PAGE_NUMBER.match(line)):
-                drop.add(index)
-                if key not in noted and not _PAGE_NUMBER.match(line) and len(removed) < 5:
-                    noted.add(key)
+                if line not in noted:
+                    noted.add(line)
                     removed.append(line)
-        result.append([line for index, line in enumerate(lines) if index not in drop])
+        result.append(list(lines))
     return result, removed
 
 
-def _join_paragraphs(pages: list[list[str]]) -> list[str]:
+def _join_paragraphs(pages: list[list[str]], separate: Iterable[str] = ()) -> list[str]:
     """Các dòng của PDF -> đoạn văn. Một dòng cuối câu mà ngắn hơn hẳn dòng đầy (hay dòng kế mở đầu bằng
     gạch / ngoặc thoại) ngắt đoạn; "chữ-" cuối dòng nối liền (không dấu cách, giữ gạch nối) với chữ thường dòng sau, dấu nối mềm U+00AD thì bỏ; còn lại nối bằng một dấu cách. Hết trang KHÔNG
     ngắt đoạn (đoạn văn vắt qua trang)."""
@@ -1717,9 +1773,10 @@ def _join_paragraphs(pages: list[list[str]]) -> list[str]:
     paragraphs: list[str] = []
     current = ""
     last = 0  # độ dài dòng vật lý vừa nối vào `current`
+    separate = set(separate)
     for page in pages:
         for line in page:
-            if is_heading_line(line):
+            if is_heading_line(line) or line in separate:
                 if current:
                     paragraphs.append(current)
                 paragraphs.append(line)
@@ -1763,7 +1820,7 @@ def pdf_pages(path: Path) -> tuple[list[list[str]], str, str]:
     try:
         reader = PdfReader(str(path))
         if reader.is_encrypted and not reader.decrypt(""):
-            raise ImportFailed("PDF này có mật khẩu - ABook chưa mở được")
+            raise ImportFailed("PDF này có mật khẩu - ABook chưa mở được. Bạn hãy dùng bản PDF đã mở khóa hoặc bản TXT/DOCX.")
         raw_pages = [page.extract_text() or "" for page in reader.pages]
         metadata = reader.metadata
     except ImportFailed:
@@ -1781,18 +1838,30 @@ def import_pdf_pages(pages: list[list[str]], stem: str, title: str = "", author:
     if not pages:
         raise ImportFailed(BROKEN.format(kind="PDF"))
     chars = sum(len(line) for lines in pages for line in lines)
-    if chars < SCAN_CHARS_PER_PAGE * len(pages):
-        raise ImportFailed("PDF này là ảnh chụp, chưa có chữ để đọc.")
-    result = ImportedBook(title=title or stem, author=author or None)
+    if chars == 0:
+        raise ImportFailed("PDF này chưa trích được chữ để đọc (có thể là ảnh chụp). Bạn hãy nhận dạng chữ bằng OCR hoặc dùng bản TXT/DOCX có chữ.")
+    result = ImportedBook(title=title or stem, author=author or None, keep_matter=True)
     empty = sum(1 for lines in pages if not any(lines))
     if empty:
         result.notes.append(f"{empty} trang không có chữ (ảnh hay trang trống) - bỏ qua.")
     pages, removed = _strip_running(pages)
-    for line in removed:
-        result.notes.append(f"Bỏ dòng lặp đầu / cuối trang: “{line}”")
-    chapters, notes = _split_on_headings(_join_paragraphs(pages), result.title)
+    # Đề xuất không được tiêu thụ chữ. Giữ riêng dòng để người dùng có thể bật/tắt bỏ đọc.
+    chapters, notes = _split_on_headings(_join_paragraphs(pages, removed), result.title)
     result.chapters, result.notes = chapters, result.notes + notes
-    return _finish(result)
+    result = _finish(result)
+    for number, chapter in enumerate(result.chapters, 1):
+        for line in removed:
+            if line in chapter.text.split("\n\n"):
+                result.credits.append((number, line))
+                result.notes.append(f"Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “{line}”; bỏ chọn để giữ.")
+    for line in removed:
+        occurrences = sum(line in page[:RUNNING_ZONE] + page[-RUNNING_ZONE:] for page in pages)
+        if (occurrences >= 3 and occurrences * 2 > len(pages) and not line.endswith(_SENTENCE_END)
+                and not _PAGE_NUMBER.fullmatch(line)):
+            result.default_skips.add(line)
+        if line.isascii() and line.isdecimal() and any(line == str(i + 1) for i, page in enumerate(pages) if line in page):
+            result.default_skips.add(line)
+    return result
 
 
 # --- Studio: thư mục chương TXT ----------------------------------------------------------------------------------------

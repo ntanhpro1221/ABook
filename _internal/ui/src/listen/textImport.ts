@@ -22,6 +22,7 @@ export interface ImportPreviewChapter {
 
 /** Danh sách chương của bước xem trước - cùng hàng chữ với danh sách chương của trình tạo sách Studio. */
 export interface ImportPreview {
+  sourceFingerprint?: string;
   title: string;
   author: string | null;
   chapters: ImportPreviewChapter[];
@@ -91,6 +92,7 @@ export interface ChapterPick {
 
 /** Lựa chọn của người dùng ở bước xem trước. */
 export interface ImportOptions {
+  sourceFingerprint?: string;
   /** Tích "Tách thành N chương theo các dòng “Chương N”" - gửi kèm cả lúc xem trước lẫn lúc thêm. */
   splitChapters?: boolean;
   /** Các chương được giữ (theo hàng của bước xem trước) và tên mới - chỉ lúc thêm; giao diện luôn gửi ([chapterPicks]), không có = các chương mặc định của bên nhận (`default_picks`). */
@@ -102,6 +104,7 @@ export interface ImportOptions {
 export interface ImportSuggestion {
   chapter: number;
   line: string;
+  defaultOn?: boolean;
 }
 
 /** Thứ người dùng đã chọn: máy tính - đường dẫn; điện thoại - mã của bản sao tạm do native giữ. */

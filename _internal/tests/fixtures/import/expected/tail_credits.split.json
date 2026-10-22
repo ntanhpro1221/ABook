@@ -5,6 +5,10 @@
  "cover": null,
  "chapters": [
   {
+   "title": "Mở đầu",
+   "text": "Chuyến đò có ghi công"
+  },
+  {
    "title": "Chương 1: Bến đò",
    "text": "Chương 1: Bến đò\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nCon đò chở khách qua sông từ sáng đến tối, mỗi chuyến chừng mười lăm phút, và người lái đò nhớ mặt từng người.\n\nXin ủng hộ nhóm dịch: Momo 0912345678 - Agribank 1234567890123\n\nĐọc truyện mới nhất tại truyenthu.vn"
   },
@@ -18,14 +22,13 @@
   }
  ],
  "notes": [
-  "Dòng đầu “Chuyến đò có ghi công” là tên truyện - dùng làm tên sách, không đọc thành một chương.",
-  "Gợi ý: chương 1 có dòng ghi công, ủng hộ hay nguồn ở cuối - “Xin ủng hộ nhóm dịch: Momo 0912345678 - Agribank 1234567890123”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.",
-  "Gợi ý: chương 1 có dòng ghi công, ủng hộ hay nguồn ở cuối - “Đọc truyện mới nhất tại truyenthu.vn”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.",
-  "Gợi ý: chương 2 có dòng ghi công ở đầu - “Dịch: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.",
-  "Gợi ý: chương 2 có dòng ghi công, ủng hộ hay nguồn ở cuối - “Nguồn: truyenthu.vn”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.",
-  "Gợi ý: chương 2 có dòng ghi công, ủng hộ hay nguồn ở cuối - “Converter: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.",
-  "Gợi ý: chương 2 có dòng ghi công, ủng hộ hay nguồn ở cuối - “--- Hết chương ---”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ."
+  "Gợi ý: chương 2 có dòng ghi công, ủng hộ hay nguồn ở cuối - “Xin ủng hộ nhóm dịch: Momo 0912345678 - Agribank 1234567890123”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.",
+  "Gợi ý: chương 2 có dòng ghi công, ủng hộ hay nguồn ở cuối - “Đọc truyện mới nhất tại truyenthu.vn”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.",
+  "Gợi ý: chương 3 có dòng ghi công ở đầu - “Dịch: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.",
+  "Gợi ý: chương 3 có dòng ghi công, ủng hộ hay nguồn ở cuối - “Nguồn: truyenthu.vn”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.",
+  "Gợi ý: chương 3 có dòng ghi công, ủng hộ hay nguồn ở cuối - “Converter: Nhóm Lục Bình”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ.",
+  "Gợi ý: chương 3 có dòng ghi công, ủng hộ hay nguồn ở cuối - “--- Hết chương ---”. Có thể bỏ khỏi phần đọc, nhưng ABook không tự bỏ."
  ],
- "splitOffer": 3,
+ "splitOffer": 4,
  "splitHeadings": 3
 }

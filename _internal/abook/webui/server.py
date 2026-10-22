@@ -672,14 +672,22 @@ class App:
         người dùng đã tích (`importers.footnote_choice_from_json`)."""
         source = self._book_source(path)
         try:
+            digest = textbook.source_digest(source)
             book = importers.import_text(source, split_chapters=split_chapters, keep_short=True,
                                          footnotes=importers.footnote_choice_from_json(footnotes))
+            if textbook.source_digest(source) != digest:
+                raise importers.ImportFailed("File nguồn đã thay đổi. Bạn hãy xem lại danh sách chương rồi thêm sách.")
+            previews = getattr(self, "_text_source_previews", {})
+            previews[str(source.resolve())] = digest
+            while len(previews) > 32:
+                previews.pop(next(iter(previews)))
+            self._text_source_previews = previews
             # Đúng bộ chữ này đã có trong thư viện: hỏi ngay ở đây ("Mở cuốn đó" / "Thêm bản riêng"), đừng để người dùng sửa tên
             # rồi mới biết lúc thêm.
             existing = textbook.find_existing(book, self.library.root)
             # Cũng đúng FILE này đã được thêm (chọn chương khác, tách hay không tách): nói ngay, đừng để thành cuốn trùng tên không ai báo.
             same = textbook.find_same_source(textbook.source_digest(source), self.library.root)
-            return {**textbook.preview(book), "existing": self._existing_view(existing) if existing else None,
+            return {**textbook.preview(book), "sourceFingerprint": digest, "existing": self._existing_view(existing) if existing else None,
                     "sameSource": {**self._existing_view(same), "chapters": int(packages.manifest(same).get("chaptersTotal") or 0)} if same else None}
         except importers.ImportFailed as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
@@ -692,7 +700,7 @@ class App:
         return {"id": book_id(folder), "title": str(title)}
 
     def add_text_book(self, path: str, title: str = "", separate: bool = False, split_chapters: bool = False,
-                      chapters: Any = None, footnotes: Any = None) -> dict[str, Any]:
+                      chapters: Any = None, footnotes: Any = None, source_fingerprint: str | None = None) -> dict[str, Any]:
         """"Thêm sách từ file…": nhập thành sách CHỈ-CÓ-CHỮ trong thư viện (textbook.py) - đọc được ngay, chưa có audio. Nhập lại
         đúng file ấy thì về cuốn đã có (`how`: "new" / "existing"), trừ khi người dùng chọn "Thêm bản riêng" (`separate`). `split_chapters`: như bước xem trước.
         `chapters`: các chương người dùng tích ở bước xem trước, kèm tên mới (`textbook.picks_from_json`); không có thì các chương mặc định.
@@ -704,7 +712,8 @@ class App:
             folder, how, book = textbook.add_to_library(source, title, self.library.root, self.library.projects(), self.fingerprints,
                                                         separate=separate, split_chapters=split_chapters,
                                                         picks=textbook.picks_from_json(chapters),
-                                                        footnotes=importers.footnote_choice_from_json(footnotes))
+                                                        footnotes=importers.footnote_choice_from_json(footnotes),
+                                                        expected_digest=source_fingerprint or getattr(self, "_text_source_previews", {}).get(str(source.resolve())))
         except (importers.ImportFailed, bookfile.BookFileError) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         except OSError as error:
@@ -5324,7 +5333,7 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         self._send_json(HTTPStatus.OK, self.app.add_text_book(str(body.get("path") or ""), str(body.get("title") or ""),
                                                               body.get("separate") is True, body.get("splitChapters") is True,
-                                                              body.get("chapters"), body.get("footnotes")))
+                                                              body.get("chapters"), body.get("footnotes"), body.get("sourceFingerprint")))
 
     def get_chapter_text(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         # Chữ của chương trong sách CHỈ-CÓ-CHỮ (texts/<mã>.txt): trang đọc dựng các đoạn từ đây (listen/textScript.ts).
