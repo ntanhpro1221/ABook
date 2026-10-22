@@ -92,6 +92,44 @@ class MusicBedIntegrationTest {
         assertFalse(current.javaClass.getDeclaredField("entering").also { it.isAccessible = true }.getBoolean(current))
     }
 
+    /** Bài mới đang mờ vào (0,1 trong 2 s: 0,0025 mỗi nhịp 50 ms), còn đệm ở nhịp đầu (t = 0); tới t = 20 ms (giữa hai nhịp) nó READY và chạy. Trả trình phát giả. */
+    private fun newBedStartsPlayingBetweenTicks(fire: Boolean): FakePlayer {
+        val fake = FakePlayer().also { it.state = Player.STATE_BUFFERING; it.playing = false }
+        val current = bed(fake)
+        field("current").set(MusicBed, current)
+        MusicBed::class.java.getDeclaredMethod("watchPlaying", current.javaClass).also { it.isAccessible = true }.invoke(MusicBed, current) // như open()
+        invoke("startFade")
+        Handler.advance(0)
+        assertEquals("còn đệm: chưa nhích", 0f, fake.volume, 0f)
+        Handler.advance(20)
+        fake.state = Player.STATE_READY
+        fake.playing = true
+        if (fire) fake.listeners.toList().forEach { it.onIsPlayingChanged(true) }
+        Handler.advance(0)
+        return fake
+    }
+
+    @Test fun fadeInStartsTheMomentTheNewPlayerActuallyPlays() {
+        val fake = newBedStartsPlayingBetweenTicks(fire = true)
+        assertEquals("nhích ngay, không chờ nhịp 50 ms", 0.0025f, fake.volume, 1e-6f)
+        Handler.advance(30) // t = 50: nhịp cũ đã bị huỷ, pha ticker tính lại từ t = 20
+        assertEquals(0.0025f, fake.volume, 1e-6f)
+        Handler.advance(20) // t = 70
+        assertEquals("bước mờ không đổi", 0.005f, fake.volume, 1e-6f)
+        Handler.advance(2000)
+        assertEquals(0.1f, fake.volume, 1e-6f)
+        assertFalse(field("fadingTicker").getBoolean(MusicBed))
+    }
+
+    @Test fun withoutThePlayingEventTheFadeInWaitsForTheNextTick() {
+        val fake = newBedStartsPlayingBetweenTicks(fire = false)
+        assertEquals(0f, fake.volume, 0f)
+        Handler.advance(29) // t = 49
+        assertEquals(0f, fake.volume, 0f)
+        Handler.advance(1) // t = 50
+        assertEquals(0.0025f, fake.volume, 1e-6f)
+    }
+
     @Test fun closingReleasesCurrentAndFadingPlayersAndTheirBuffers() {
         val players = listOf(FakePlayer(), FakePlayer())
         val beds = players.map { bed(it) }
