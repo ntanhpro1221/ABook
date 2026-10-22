@@ -185,10 +185,13 @@ object Store {
     fun bookIds(): List<String> =
         bookFolders().filter { File(it, "book.json").isFile || File(it, "stream.json").isFile }.map { it.name }
 
-    @Synchronized
+    /**
+     * Gói sách của mọi cuốn đã tải. KHÔNG giữ khoá của Store suốt cả lượt: thư viện hàng trăm cuốn đọc + phủ lớp sửa từng gói mất hàng trăm mili giây, và
+     * trong lúc ấy mọi lần ghi (chỗ nghe, dấu trang) đứng chờ - mỗi cuốn một lần giữ khoá, ghi chen vào giữa được (soát a101 F6).
+     */
     fun books(): List<JSONObject> {
-        val prints = printsBook()
-        return bookFolders().mapNotNull { dir -> rawManifest(dir.name)?.let { shown(dir.name, it, prints) } }
+        val prints = synchronized(this) { printsBook() }
+        return bookFolders().mapNotNull { dir -> synchronized(this) { rawManifest(dir.name)?.let { shown(dir.name, it, prints) } } }
     }
 
     /**
@@ -205,11 +208,10 @@ object Store {
     /** Gói sách phát được: đã tải thì bản đã tải, không thì bản nghe thẳng đã cất. */
     fun playableManifest(id: String): JSONObject? = manifest(id) ?: streamManifest(id)?.let { shown(id, it, printsBook()) }
 
-    @Synchronized
     fun playableBooks(): List<JSONObject> {
-        val prints = printsBook()
+        val prints = synchronized(this) { printsBook() }
         return bookFolders().mapNotNull { dir ->
-            (rawManifest(dir.name) ?: streamManifest(dir.name))?.let { shown(dir.name, it, prints) }
+            synchronized(this) { (rawManifest(dir.name) ?: streamManifest(dir.name))?.let { shown(dir.name, it, prints) } }
         }
     }
 
@@ -1233,7 +1235,54 @@ object Store {
 
     fun sizeOf(dir: File): Long = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }
 
+    // Cỡ từng cuốn, nhớ theo dấu thư mục (sizes.json NGOÀI thư mục sách): đi cả cây mỗi lần mở Thư viện là hàng chục nghìn lần liệt kê file khi có 100+ cuốn
+    // (soát a101 F6). Dấu = mốc sửa của thư mục sách, các thư mục con có file lớn / hay đổi và book.json: thêm, xoá, thay file nào trong đó cũng đổi dấu.
+    private val STAMPED = listOf("", "chapters", "edits", "music", "book.json")
+    private val sizes = HashMap<String, Pair<String, Long>>()
+    private var sizesFrom: File? = null
+    private var sizesDirty = false
+
+    private fun sizeStamp(dir: File): String = STAMPED.joinToString("/") { File(dir, it).lastModified().toString() }
+
+    /** Cỡ (byte) của cuốn trong `dir`: dùng số đã nhớ khi dấu thư mục chưa đổi, không thì đo lại. Nhớ xuống đĩa ở [saveSizes]. */
+    fun bookBytes(dir: File): Long {
+        val stamp = sizeStamp(dir)
+        synchronized(sizes) {
+            loadSizes()
+            sizes[dir.name]?.takeIf { it.first == stamp }?.let { return it.second }
+        }
+        val bytes = sizeOf(dir)
+        synchronized(sizes) {
+            sizes[dir.name] = stamp to bytes
+            sizesDirty = true
+        }
+        return bytes
+    }
+
+    private fun loadSizes() {
+        if (sizesFrom == root) return
+        sizes.clear()
+        sizesDirty = false
+        sizesFrom = root
+        val saved = runCatching { JSONObject(File(root, "sizes.json").readText(Charsets.UTF_8)) }.getOrNull() ?: return
+        for (id in saved.keys()) {
+            val entry = saved.optJSONObject(id) ?: continue
+            sizes[id] = entry.optString("stamp") to entry.optLong("bytes")
+        }
+    }
+
+    /** Ghi các cỡ vừa đo xuống đĩa (cuốn đã xoá thì bỏ khỏi sổ). Lỗi ghi thì thôi: lần mở sau đo lại. */
+    fun saveSizes() {
+        val text = synchronized(sizes) {
+            if (sizes.keys.retainAll(bookFolders().map { it.name }.toSet())) sizesDirty = true
+            if (!sizesDirty) return
+            sizesDirty = false
+            JSONObject().also { all -> sizes.forEach { (id, entry) -> all.put(id, JSONObject().put("stamp", entry.first).put("bytes", entry.second)) } }.toString()
+        }
+        runCatching { writeAtomic(File(root, "sizes.json"), text) }
+    }
+
     /** Cỡ từng cuốn trên máy (mã cuốn -> byte) để màn "Tải sách" xếp cuốn nào chiếm nhiều nhất; tổng của chúng là cỡ cả thư viện. */
     fun bookSizes(): Map<String, Long> =
-        bookFolders().associate { it.name to sizeOf(it) }
+        bookFolders().associate { it.name to bookBytes(it) }.also { saveSizes() }
 }
