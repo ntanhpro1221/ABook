@@ -22,6 +22,7 @@ object AndroidCoverCodec : CoverCodec {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(raw, 0, raw.size, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw unreadable
+        if (Covers.decodedPixels(bounds.outWidth, bounds.outHeight, bounds.outMimeType == "image/jpeg") > Covers.MAX_PIXELS) throw Covers.tooManyPixels()
         if (minOf(bounds.outWidth, bounds.outHeight) < Covers.MIN_SIDE) {
             throw CoverCodec.CoverError("Ảnh quá nhỏ để làm bìa (cần ít nhất ${Covers.MIN_SIDE} điểm ảnh mỗi cạnh)")
         }

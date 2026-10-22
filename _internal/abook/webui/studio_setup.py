@@ -353,7 +353,7 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
                         have = 0  # máy chủ không nhận Range: tải lại từ đầu
                     with part.open("ab" if have else "wb") as handle:
                         done = have
-                        while chunk := response.read(1 << 20):
+                        while chunk := response.read(1 << 16):  # khúc nhỏ: mạng nhỏ giọt thì bấm Huỷ vẫn được nghe sau chừng ấy byte, không phải 1 MiB
                             if cancelled():
                                 raise Cancelled()
                             handle.write(chunk)

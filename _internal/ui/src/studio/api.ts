@@ -308,6 +308,8 @@ export interface AppInfo {
   peer?: { id: string; name: string };
   /** App Windows đóng gói (webui/host.py): bản mới vỏ Tauri tìm thấy trên GitHub Releases, chờ người dùng bấm cài. */
   update?: { version: string; notes: string } | null;
+  /** App đóng gói có vỏ Tauri: Cài đặt có nút "Kiểm tra bản mới" (lần tự kiểm lúc mở app im lặng khi mất mạng). */
+  canCheckUpdate?: boolean;
   /** App Windows đóng gói: Studio (thư viện + model làm sách) tải thêm đã cài chưa. null: bản dev (runtime cạnh mã). */
   studio?: { installed: boolean; outdated?: boolean; damaged?: boolean } | null;
   /** Máy này làm được gì (shared/capabilities.ts): `/api/app?book=<mã>` điền thêm `workshop` / `link` của cuốn ấy. */

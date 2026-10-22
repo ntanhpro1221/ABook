@@ -403,12 +403,12 @@ def test_forgetting_says_what_is_downloaded_keeps_the_listening_place_and_pairin
 class _Reply:
     """Trả lời của máy kia cho một file: `sent` byte đầu của phần được hỏi rồi đóng êm (như tắt máy giữa chừng); `length` là cỡ nó hứa."""
 
-    def __init__(self, body: bytes, *, status: int = 200, content_range: str = "", sent: int | None = None) -> None:
-        self.status, self.length, self._content_range = status, len(body), content_range
+    def __init__(self, body: bytes, *, status: int = 200, content_range: str = "", sent: int | None = None, etag: str = '"v1"') -> None:
+        self.status, self.length, self._content_range, self._etag = status, len(body), content_range, etag
         self._rest = body if sent is None else body[:sent]
 
     def getheader(self, name: str) -> str:
-        return self._content_range if name == "Content-Range" else ""
+        return {"Content-Range": self._content_range, "ETag": self._etag}.get(name, "")
 
     def read(self, amount: int | None = None) -> bytes:
         chunk, self._rest = self._rest[:amount], self._rest[amount:]
@@ -441,8 +441,91 @@ def test_a_cut_download_names_the_machine_keeps_the_part_and_resumes_with_a_rang
     assert remote_books._part_size(tmp_path, "chapters/1.mp3", len(data)) == 300
 
     remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(data))
-    assert asked[1] == {"Range": "bytes=300-"}
+    assert asked[1] == {"Range": "bytes=300-", "If-Range": '"v1"'}
     assert (tmp_path / "chapters" / "1.mp3").read_bytes() == data and not part.exists()
+    assert not list((tmp_path / "chapters").glob("*.etag")), "xong thì không để lại ghi chú phiên bản"
+
+
+def _cut_then(tmp_path: Path, monkeypatch, data: bytes, *replies):
+    """Tải `data` (ETag v1) cho tới khi máy kia tắt sau 300 byte; rồi các lần hỏi kế được trả lời lần lượt bằng `replies`. Trả danh sách đầu ra
+    `extra` của các yêu cầu, và những lần `progress` được gọi."""
+    from contextlib import contextmanager
+
+    asked: list[dict[str, str] | None] = []
+    plan = [lambda: _Reply(data, sent=300), *replies]
+
+    class Known:
+        def get(self, _computer: str) -> dict[str, Any]:
+            return {"id": "c1", "name": "Phòng khách", "token": "t", "host": "x", "port": 1, "fingerprint": "ab"}
+
+    @contextmanager
+    def fake_open(_endpoint, _method, _path, _token, *_args, extra=None, **_kwargs):
+        asked.append(extra)
+        yield plan[len(asked) - 1](), "ab"
+
+    monkeypatch.setattr(remote_books, "_COMPUTERS", Known())
+    monkeypatch.setattr(remote_books, "_open", fake_open)
+    book = {"package": {"remote": {"computer": "c1", "book": "b" * 24}}, "version": 1}
+    with pytest.raises(remote_books.RemoteError):
+        remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(data))
+    return asked, book
+
+
+def test_a_chapter_rebuilt_on_the_other_computer_is_downloaded_again_not_stitched(tmp_path: Path, monkeypatch) -> None:
+    old = bytes(range(200)) * 5
+    new = bytes(reversed(range(200))) * 6  # dựng lại: dài hơn, nội dung khác
+    asked, book = _cut_then(tmp_path, monkeypatch, old, lambda: _Reply(new, etag='"v2"'))
+    seen: list[int] = []
+    remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(new), progress=seen.append)
+    assert asked[1] == {"Range": "bytes=300-", "If-Range": '"v1"'}, "tải tiếp phải kèm If-Range"
+    assert (tmp_path / "chapters" / "1.mp3").read_bytes() == new, "không ghép đầu cũ với đuôi mới"
+    assert 300 + sum(seen) == len(new), "tiến độ đã tính 300 byte dở; bỏ phần dở thì trừ lại, chỉ còn đúng cỡ file mới"
+
+
+def test_a_server_that_ignores_if_range_and_sends_a_foreign_tail_is_asked_again_for_the_whole_file(tmp_path: Path, monkeypatch) -> None:
+    old = bytes(range(200)) * 5
+    new = bytes(reversed(range(200))) * 5  # cùng cỡ: chỉ ETag phân biệt được
+    tail = lambda: _Reply(new[300:], status=206, content_range=f"bytes 300-{len(new) - 1}/{len(new)}", etag='"v2"')  # noqa: E731
+    asked, book = _cut_then(tmp_path, monkeypatch, old, tail, lambda: _Reply(new, etag='"v2"'))
+    remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(new))
+    assert asked[2] is None, "hỏi lại cả file, không Range"
+    assert (tmp_path / "chapters" / "1.mp3").read_bytes() == new
+
+
+def test_a_part_the_other_computer_cannot_continue_416_is_dropped_and_the_whole_file_asked_again(tmp_path: Path, monkeypatch) -> None:
+    data = bytes(range(200)) * 5
+    asked, book = _cut_then(tmp_path, monkeypatch, data, lambda: _Reply(b"", status=416, content_range=f"bytes */{len(data)}"),
+                            lambda: _Reply(data))
+    remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(data))
+    assert asked[1] == {"Range": "bytes=300-", "If-Range": '"v1"'} and asked[2] is None, "416 thì bỏ phần dở, hỏi lại cả file"
+    assert (tmp_path / "chapters" / "1.mp3").read_bytes() == data
+
+
+def test_a_part_with_no_recorded_version_is_not_resumed(tmp_path: Path, monkeypatch) -> None:
+    data = bytes(range(200)) * 5
+    part = tmp_path / "chapters" / "1.mp3.part"
+    part.parent.mkdir(parents=True)
+    part.write_bytes(data[:300])  # phần dở của bản cũ hơn, không ai biết nó thuộc phiên bản nào
+    assert remote_books._part_size(tmp_path, "chapters/1.mp3", len(data)) == 0
+
+    from contextlib import contextmanager
+
+    asked: list[dict[str, str] | None] = []
+
+    class Known:
+        def get(self, _computer: str) -> dict[str, Any]:
+            return {"id": "c1", "name": "Phòng khách", "token": "t", "host": "x", "port": 1, "fingerprint": "ab"}
+
+    @contextmanager
+    def fake_open(_endpoint, _method, _path, _token, *_args, extra=None, **_kwargs):
+        asked.append(extra)
+        yield _Reply(data), "ab"
+
+    monkeypatch.setattr(remote_books, "_COMPUTERS", Known())
+    monkeypatch.setattr(remote_books, "_open", fake_open)
+    book = {"package": {"remote": {"computer": "c1", "book": "b" * 24}}, "version": 1}
+    remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(data))
+    assert asked == [None] and (tmp_path / "chapters" / "1.mp3").read_bytes() == data
 
 
 def test_an_interrupted_download_resumes_by_itself_when_the_other_computer_answers_again(library, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
@@ -467,5 +550,59 @@ def test_an_interrupted_download_resumes_by_itself_when_the_other_computer_answe
 
             time.sleep(0.05)
         assert app.remote_download(value, "status")["state"] == "done"
+    finally:
+        other.stop()
+
+
+def test_a_cover_that_failed_to_download_once_is_fetched_again_on_the_next_refresh(tmp_path: Path, monkeypatch) -> None:
+    book = "b" * 24
+    cover = {"color": "#102030", "width": 300, "height": 400, "version": 7}
+    manifest = {"title": "Sách thử", "chapters": [], "cover": cover}
+    covers_asked: list[int] = []
+    outcome = [remote_books.RemoteError("Máy kia không trả lời (tắt hay mất mạng)"), b"JPEG-MOI"]
+
+    def fake_request(_endpoint, _method, path, *_args, **_kwargs):
+        if path.endswith("/manifest"):
+            return json.dumps(manifest).encode("utf-8")
+        covers_asked.append(1)
+        result = outcome[len(covers_asked) - 1]
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    monkeypatch.setattr(remote_books, "_request", fake_request)
+    monkeypatch.setattr(remote_books, "_base", lambda _entry: None)
+    entry = {"token": "t"}
+    remote_books._refresh_book(entry, "c1", tmp_path, book)
+    (folder,) = [child for child in tmp_path.iterdir() if child.is_dir()]
+    assert not (folder / "cover.jpg").exists()
+    assert "cover" not in json.loads((folder / remote_books.MANIFEST).read_text(encoding="utf-8")), \
+        "sổ không được nhận bìa mới khi ảnh chưa về, không thì lượt sau tưởng đã có"
+
+    remote_books._refresh_book(entry, "c1", tmp_path, book)
+    assert len(covers_asked) == 2, "lượt sau hỏi lại bìa"
+    assert (folder / "cover.jpg").read_bytes() == b"JPEG-MOI"
+    assert json.loads((folder / remote_books.MANIFEST).read_text(encoding="utf-8"))["cover"] == cover
+    remote_books._refresh_book(entry, "c1", tmp_path, book)
+    assert len(covers_asked) == 2, "bìa đã về thì không hỏi lại"
+
+
+def test_edits_stay_in_the_layer_when_the_new_book_could_not_be_fetched_after_sending(library, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+    app, other, _sync, project, _devices, _computer, value, path = _two_computers(library, tmp_path)
+    try:
+        real_reload = remote_books._reload
+        monkeypatch.setattr(remote_books, "_reload", lambda *_args: False)  # gửi xong thì mạng đứt: không lấy được bản mới
+        app.rename(value, "Tên đặt ở máy B")
+        state = app.send_remote_edits(value)
+        assert state["last"]["state"] == "sent" and state["last"]["fetched"] is False
+        assert store.display_title(project, "") == "Tên đặt ở máy B", "máy kia đã nhận"
+        assert book_edits.load(path).get("title") == "Tên đặt ở máy B", "chưa có bản mới thì lớp sửa ở lại"
+        assert app.listen_book(value)["title"] == "Tên đặt ở máy B", "người nghe không thấy sách quay về tên cũ"
+
+        monkeypatch.setattr(remote_books, "_reload", real_reload)
+        state = app.send_remote_edits(value)
+        assert state["last"]["fetched"] is True and state["pending"] == 0
+        assert book_edits.is_empty(book_edits.load(path)), "lấy được bản mới rồi mới gỡ"
+        assert app.listen_book(value)["title"] == "Tên đặt ở máy B"
     finally:
         other.stop()

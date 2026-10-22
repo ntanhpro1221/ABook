@@ -129,7 +129,7 @@ class CoverSearchTest {
         } catch (error: CoverCodec.CoverError) {
             error.message.orEmpty()
         }
-        assertEquals("Không tải được ảnh: HTTP 404", failed)
+        assertEquals("lỗi mạng không lộ ra người nghe", CoverSearch.DOWNLOAD_FAILED, failed)
     }
 
     @Test
