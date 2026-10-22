@@ -110,3 +110,36 @@ describe("syncSettings lúc mở app", () => {
     expect(settings).toMatchObject({ sleepFadeSeconds: DEFAULT_SETTINGS.sleepFadeSeconds, autoRewind: false, sleepSchedule: null });
   });
 });
+
+describe("giao diện sáng/tối đi cùng native (soát a102 B4)", () => {
+  it("lưu thì đẩy theme xuống native cùng dấu giờ", () => {
+    saveSettings({ ...DEFAULT_SETTINGS, theme: "dark" });
+    expect(pushed()).toMatchObject({ theme: "dark", settingsStamp: expect.any(Number) });
+  });
+
+  it("localStorage mất sạch: native nhớ theme thì theme về lại", async () => {
+    h.listenPrefs.mockResolvedValue({ prefs: { theme: "dark", autoRewind: false, settingsStamp: 500 } });
+    const settings = await syncSettings();
+    expect(settings).toMatchObject({ theme: "dark", autoRewind: false, savedAt: 500 });
+    expect(JSON.parse(h.store.get(KEY)!)).toMatchObject({ theme: "dark" });
+  });
+
+  it("localStorage cũ hơn native thì theme của native thắng", async () => {
+    h.store.set(KEY, JSON.stringify({ theme: "dark", savedAt: 100 }));
+    h.listenPrefs.mockResolvedValue({ prefs: { theme: "light", settingsStamp: 200 } });
+    expect((await syncSettings()).theme).toBe("light");
+  });
+
+  it("localStorage mới hơn thì theme của nó được đẩy xuống, native không đè ngược", async () => {
+    h.store.set(KEY, JSON.stringify({ theme: "dark", savedAt: 300 }));
+    h.listenPrefs.mockResolvedValue({ prefs: { theme: "light", settingsStamp: 200 } });
+    expect((await syncSettings()).theme).toBe("dark");
+    expect(pushed()).toMatchObject({ theme: "dark", settingsStamp: 300 });
+  });
+
+  it("theme hỏng từ native về mặc định, các trường khác giữ", async () => {
+    h.listenPrefs.mockResolvedValue({ prefs: { theme: "purple", autoRewind: false, settingsStamp: 5 } });
+    expect(await syncSettings()).toMatchObject({ theme: "system", autoRewind: false });
+  });
+});
+

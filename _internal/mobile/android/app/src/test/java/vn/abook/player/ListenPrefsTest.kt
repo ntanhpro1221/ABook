@@ -48,7 +48,7 @@ class ListenPrefsTest {
     }
 
     private fun chosen() = JSONObject(
-        """{"headsetSkips":false,"autoRewind":false,"sleepExtendMinutes":15,"sleepFadeSeconds":20,"shakeToExtend":false,"shakeAction":"reset",
+        """{"headsetSkips":false,"autoRewind":false,"sleepExtendMinutes":15,"sleepFadeSeconds":10,"shakeToExtend":false,"shakeAction":"reset",
             "shakeSensitivity":"firm","flipToPause":false,"safetyStopHours":3.0,"schedule":{"from":"23:00","to":"06:30","minutes":45},"readAloudVoice":"edge:x"}""",
     )
 
@@ -62,7 +62,7 @@ class ListenPrefsTest {
         assertFalse("nút tai nghe chuyển chương vẫn là lựa chọn của bạn", Playback.headsetSkips)
         assertFalse("tự lùi vẫn tắt", playback("autoRewind").getBoolean(Playback))
         assertEquals(15, SleepTimer.extendMinutes)
-        assertEquals(20_000L, SleepTimer.fadeMs)
+        assertEquals(10_000L, SleepTimer.fadeMs)
         assertFalse(SleepTimer.shakeEnabled)
         assertTrue(SleepTimer.shakeResets)
         assertEquals(2.8, SleepTimer.shakeThresholdG, 0.0)
@@ -72,10 +72,10 @@ class ListenPrefsTest {
 
     @Test fun aPartialPushKeepsTheOthersAndALaterNullScheduleClearsIt() {
         ListenPrefs.apply(chosen())
-        ListenPrefs.apply(JSONObject("""{"sleepExtendMinutes":20,"readAloudVoice":"edge:y"}"""))
+        ListenPrefs.apply(JSONObject("""{"sleepExtendMinutes":5,"readAloudVoice":"edge:y"}"""))
         defaults()
         ListenPrefs.load()
-        assertEquals(20, SleepTimer.extendMinutes)
+        assertEquals(5, SleepTimer.extendMinutes)
         assertFalse(Playback.headsetSkips)
         assertNotNull(SleepTimer.schedule)
         ListenPrefs.apply(JSONObject("""{"schedule":null}"""))

@@ -1365,9 +1365,12 @@ class LibraryPlugin : Plugin() {
             val project = savesAsProject(call, id)
             val snapshot = ExportHistory.snapshot(Store.bookDir(id))
             // Gói dựng và kiểm trong file tạm trước, đích chỉ bị mở (và cắt) sau đó; chép hỏng giữa chừng thì bản lưu trước được trả lại (BookSave, soát a99 C2).
+            // Bản cũ không giữ được thì dừng trước khi ghi đè; trả lại cũng hỏng thì bản cũ nằm ở filesDir/ban-luu-cu (bền, không như cache); thiếu chỗ thì báo sớm.
             val written = BookSave.save(Store.bookDir(id), File(context.cacheDir, "save"), project,
-                previous = { runCatching { context.contentResolver.openInputStream(uri) }.getOrNull() },
-                open = { context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn") })
+                previous = { try { context.contentResolver.openInputStream(uri) } catch (_: java.io.FileNotFoundException) { null } },
+                open = { context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn") },
+                keepDir = File(context.filesDir, "ban-luu-cu"), keepName = Store.manifest(id)?.optString("title").orEmpty(),
+                previousSize = savedSize(uri))
             ExportHistory.remember(Store.bookDir(id), if (project) "abookproj" else "abook", uri.toString(), snapshot)
             BookEdits.markSaved(Store.bookDir(id)) // "Save (N changes)" counts again from here
             if (!direct) rememberSave(id, project, uri)
@@ -1385,6 +1388,13 @@ class LibraryPlugin : Plugin() {
             } else fail(call, error, "không lưu được file")
         }
     }
+
+    /** Cỡ file đang nằm ở `uri` (0 = không biết) - để BookSave tính chỗ trống cho cả bản cũ. */
+    private fun savedSize(uri: Uri): Long = runCatching {
+        context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.SIZE), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else 0L
+        }
+    }.getOrNull() ?: 0L
 
     /**
      * "Chia sẻ…": đóng cuốn (kèm thay đổi của người nghe, như "Lưu thành…") thành file trong `cacheDir/share` ([BookShare]) rồi mở bảng
