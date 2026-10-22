@@ -51,7 +51,7 @@ def make_project(root: Path, title: str = "Sách thử · Tập 1") -> Path:
                                  age TEXT, importance TEXT, mention_count INTEGER, locked_voice_key TEXT);
         CREATE TABLE voice_profiles (id INTEGER PRIMARY KEY, voice_key TEXT, preset_name TEXT,
                                      pitch_semitones REAL, formant_ratio REAL);
-        CREATE TABLE runtime_events (id INTEGER PRIMARY KEY, timestamp REAL, level TEXT, code TEXT, message TEXT);
+        CREATE TABLE runtime_events (id INTEGER PRIMARY KEY, timestamp REAL, level TEXT, code TEXT, message TEXT, details_json TEXT);
         """
     )
     now = time.time()

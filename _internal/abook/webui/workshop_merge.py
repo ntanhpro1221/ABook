@@ -6,7 +6,9 @@ phán quyết "Cần nghe lại" (`reviews.json`) và các thẻ đã quyết gh
 Luật gộp (bản Kotlin: WorkshopMerge.kt; hai bên đáp chung tests/fixtures/book_edits/workshop_merge/): mục chỉ có ở một bên thì
 lấy; cùng khoá khác giá trị thì bản có mốc thời gian của mục mới hơn thắng (`requested_at` / `at`; thiếu mốc = cũ nhất), bằng
 nhau thì giữ bản của máy này. Mục lấy từ file mang thêm `merged_at`: với máy này nó là sửa MỚI, nên hộp "Áp dụng N thay đổi" (chỉ kể
-yêu cầu ghi sau lần chạy cuối) vẫn hiện nó - còn mốc gốc giữ nguyên để lần gộp sau vẫn so đúng sửa nào mới hơn."""
+yêu cầu ghi sau lần chạy cuối) vẫn hiện nó - còn mốc gốc giữ nguyên để lần gộp sau vẫn so đúng sửa nào mới hơn.
+Yêu cầu đã RÚT ở một bên (thu lại rồi đổi ý, hoàn tác một sửa) không sống lại: bia ở `cancelled.json` (cancelled.py - luật so, và vì sao không
+tin đồng hồ máy kia, ghi ở đó) chôn mục tương ứng ở cả hai bên trước khi gộp; mục của máy này bị chôn tính là một mục gộp."""
 from __future__ import annotations
 
 import json
@@ -15,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from .. import aliases, bracket_rule, listener_overrides, narrator_sections
+from . import book_wishes, cancelled
 from .reviews import REVIEWS_NAME, Reviews
 
 MERGED_AT = "merged_at"
@@ -64,6 +67,7 @@ def _sections_out(entries: dict[str, Any]) -> dict[str, Any]:
 
 # Tên file trong thư mục dự án -> (trường mốc của từng mục, đọc nội dung ra {khoá: mục}, dựng lại nội dung từ {khoá: mục}).
 # `overrides.json` gộp theo từng phần (merge_overrides).
+# `cancelled.json` (bia) không có trong đây: nó gộp riêng (hợp hai bên, không đếm) và quyết định mục nào của overrides.json bị chôn.
 FILES: dict[str, tuple[str, Callable[[Any], dict[str, Any]], Callable[[dict[str, Any]], dict[str, Any]]]] = {
     listener_overrides.OVERRIDES_FILE: ("requested_at", _same, _same),
     REVIEWS_NAME: ("at", _same, _same),
@@ -103,10 +107,15 @@ def merge_entries(mine: dict[str, Any], theirs: dict[str, Any], field: str,
     return merged, taken, kept
 
 
-def merge_overrides(mine: dict[str, Any], theirs: dict[str, Any], now: float) -> tuple[dict[str, Any], int, int]:
-    """`overrides.json`: gộp từng mục của mọi phần ({khoá: mục}); phần khác (`version`) giữ của máy này."""
+def merge_overrides(mine: dict[str, Any], theirs: dict[str, Any], now: float,
+                    tombstones: dict[str, dict[str, Any]] | None = None) -> tuple[dict[str, Any], int, int]:
+    """`overrides.json`: gộp từng mục của mọi phần ({khoá: mục}); phần khác (`version`) giữ của máy này. `tombstones`: bia đã hợp của hai
+    máy - mục bị chôn bỏ khỏi cả hai bên trước khi gộp (của máy này mất đi thì tính là một mục gộp)."""
+    tombs = tombstones or {}
+    mine, buried = cancelled.bury(mine, tombs, now)
+    theirs, _ = cancelled.bury(theirs, tombs, now)
     merged = dict(mine)
-    taken = kept = 0
+    taken, kept = buried, 0
     for section, entries in theirs.items():
         if not isinstance(entries, dict):
             continue
@@ -117,10 +126,13 @@ def merge_overrides(mine: dict[str, Any], theirs: dict[str, Any], now: float) ->
     return merged, taken, kept
 
 
-def merge_file(name: str, mine: Any, theirs: Any, now: float) -> tuple[dict[str, Any], int, int]:
-    """Nội dung một file của máy này gộp với của file dự án -> (nội dung gộp, số mục lấy, số mục giữ)."""
+def merge_file(name: str, mine: Any, theirs: Any, now: float,
+               tombstones: dict[str, dict[str, Any]] | None = None) -> tuple[dict[str, Any], int, int]:
+    """Nội dung một file của máy này gộp với của file dự án -> (nội dung gộp, số mục lấy, số mục giữ). `tombstones`: bia đã hợp của hai máy."""
     if name == listener_overrides.OVERRIDES_FILE:
-        return merge_overrides(_same(mine), _same(theirs), now)
+        return merge_overrides(_same(mine), _same(theirs), now, tombstones)
+    if name == cancelled.FILE_NAME:
+        return cancelled.content_of(cancelled.union(cancelled.entries_of(mine), cancelled.entries_of(theirs))), 0, 0
     field, entries_of, content_of = FILES.get(name, ("at", _same, _same))
     merged, taken, kept = merge_entries(entries_of(mine), entries_of(theirs), field)
     return content_of(merged), taken, kept
@@ -130,8 +142,9 @@ def merge_files(mine: dict[str, Any], theirs: dict[str, Any], now: float) -> tup
     """{tên file: nội dung} của máy này gộp với của file - cùng hình dạng ca hợp đồng (`workshop_merge/<ca>.json`)."""
     merged: dict[str, Any] = {}
     report = {"merged": 0, "kept": 0}
+    tombstones = cancelled.union(cancelled.entries_of(mine.get(cancelled.FILE_NAME)), cancelled.entries_of(theirs.get(cancelled.FILE_NAME)))
     for name in sorted(set(mine) | set(theirs)):
-        merged[name], taken, kept = merge_file(name, mine.get(name), theirs.get(name), now)
+        merged[name], taken, kept = merge_file(name, mine.get(name), theirs.get(name), now, tombstones)
         report["merged"] += taken
         report["kept"] += kept
     return merged, report
@@ -162,21 +175,37 @@ def merge_workshop(project_root: Path, member: Callable[[str], bytes | None], re
     dự án `project_root`. Trả {"merged": N, "kept": M}."""
     root = Path(project_root)
     report = {"merged": 0, "kept": 0}
+    # Cả lượt dưới khoá ghi của dự án + guard_overrides như nút Studio (soát a89 V5): đang gộp mà người dùng bấm một nút thì nút ấy không bị nuốt.
+    with book_wishes.overrides_turn(root):
+        _merge_files(root, member, reviews, now, report)
+    return report
+
+
+def _parsed(member: Callable[[str], bytes | None], name: str) -> Any:
+    raw = member(name)
+    try:
+        return json.loads(raw.decode("utf-8")) if raw is not None else None
+    except (UnicodeDecodeError, ValueError):
+        return None
+
+
+def _merge_files(root: Path, member: Callable[[str], bytes | None], reviews: Reviews, now: float, report: dict[str, int]) -> None:
+    here = cancelled.read(root)
+    tombstones = cancelled.union(here, cancelled.entries_of(_parsed(member, cancelled.FILE_NAME)))
+    if tombstones != here:
+        cancelled.write(root, tombstones)
     for name, (field, _entries_of, _content_of) in FILES.items():
-        raw = member(name)
-        try:
-            theirs = json.loads(raw.decode("utf-8")) if raw is not None else None
-        except (UnicodeDecodeError, ValueError):
-            theirs = None
-        if not isinstance(theirs, dict) or not theirs:
+        theirs = _parsed(member, name)
+        if not isinstance(theirs, dict):
+            theirs = {}
+        if not theirs and not (tombstones and name == listener_overrides.OVERRIDES_FILE):
             continue
         if name == REVIEWS_NAME:
             taken, kept = reviews.merge(root, lambda mine, incoming=theirs, stamp=field: merge_entries(mine, incoming, stamp))
         else:
             mine = listener_overrides.read_overrides(root) if name == listener_overrides.OVERRIDES_FILE else _read(root / name)
-            merged, taken, kept = merge_file(name, mine, theirs, now)
+            merged, taken, kept = merge_file(name, mine, theirs, now, tombstones)
             if taken:
                 _write(root, name, merged)
         report["merged"] += taken
         report["kept"] += kept
-    return report

@@ -78,21 +78,17 @@ def test_a_speaker_decision_before_casting_gets_the_true_reason(studio) -> None:
     assert status == 400 and answer["error"] == NOT_CAST_YET
 
 
-def test_a_group_review_that_fails_midway_says_how_many_were_already_written(studio, monkeypatch) -> None:
-    """Soát a83 B11 (c): nhóm nhiều câu ghi lần lượt; lỗi giữa chừng không được báo như chưa ghi gì."""
+def test_a_group_review_with_one_changed_take_writes_nothing(studio) -> None:
+    """Soát a83 B11 (c) + a89 V2: nhóm ghi MỘT lần; một câu đã đổi bản thu thì không câu nào được ghi, và lời đáp nói đúng thế."""
+    from abook.database import ProjectDB
+    from abook.models import ProjectPaths
     from abook.webui import reviews as reviews_module
 
     paths, post = studio
-    real = reviews_module.Reviews.set
-    calls = {"n": 0}
-
-    def flaky(self, project, stable_id, *args, **kwargs):
-        calls["n"] += 1
-        if calls["n"] == 2:
-            raise ValueError("Bản thu đã đổi")
-        return real(self, project, stable_id, *args, **kwargs)
-
-    monkeypatch.setattr(reviews_module.Reviews, "set", flaky)
+    db = ProjectDB(ProjectPaths.build(paths.root).db)
+    with db.connect() as conn:
+        conn.execute("UPDATE segments SET wav_sha256='new-take' WHERE stable_id='c1s2'")
     lines = [{"stableId": "c1s1"}, {"stableId": "c1s2"}, {"stableId": "c1s3"}]
-    status, answer = post("review", {"verdict": "ok", "chapterId": 1, "lines": lines})
-    assert status == 409 and "1 câu trước đó" in answer["error"]
+    status, answer = post("review", {"verdict": "ok", "chapterId": 1, "lines": lines, "audioSha256": ""})
+    assert status == 409 and "bản thu" in answer["error"]
+    assert reviews_module.Reviews().get(paths.root) == {}
