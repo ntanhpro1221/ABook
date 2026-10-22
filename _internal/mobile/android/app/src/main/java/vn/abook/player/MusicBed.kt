@@ -46,7 +46,7 @@ import kotlin.math.pow
  * Mọi thao tác ở luồng chính, như Playback; danh mục / tải bài ở một luồng nền riêng.
  *
  * Nhạc của sách lặp bằng mờ chéo trong đoạn nghe được (lô 2 mix-loop, [MusicCues.loopBounds]): tới loopEnd - X một ExoPlayer MỚI của
- * chính bài vào từ loopStart (không có điểm vòng: E - X và A), cái cũ mờ đi trong X giây ([crossLoop]); bài quá ngắn và danh sách
+ * chính bài vào từ loopStart (không có điểm vòng: E - X và A), cái cũ mờ đi trong X giây ([enterLoop]); bài quá ngắn và danh sách
  * phát thì vẫn REPEAT_MODE_ONE.
  */
 object MusicBed {
@@ -74,7 +74,12 @@ object MusicBed {
         var fadeStep = 0.001f // âm lượng bớt mỗi nhịp khi mờ đi: bài to và bài nhỏ cùng tắt trong cùng thời gian
         var early = false // vào sớm: bài trước kết tự nhiên trước đầu mốc này; tới `cue.start` giọng vẫn ở mốc cũ - không chuyển ngược
         var final = false // vòng cuối của mốc `tail`: không mở phần tử lặp nữa, bài chơi tới E là hết
+        var released = false // đã nhả: lỗi muộn của nó không tính là bài hỏng
+        var at = 0.0 // bản lặp tạo sẵn: chỗ (giây trong bài) đã đặt, để biết có cần dời lại khi vào muộn
     }
+
+    /** Bản lặp mới và bản cũ nó nối vào: lúc bản mới có tiếng, sửa pha theo bản cũ một lần ([MusicCues.loopSettle]). */
+    private class Handoff(val old: Bed, val bounds: MusicCues.Loop)
 
     /** Vòng lặp của bài `player` theo mốc `cue` (độ dài thật chưa biết: NaN). */
     private fun boundsOf(cue: MusicCues.Cue, player: ExoPlayer): MusicCues.Loop =
@@ -89,6 +94,9 @@ object MusicBed {
     }
 
     private val main = Handler(Looper.getMainLooper())
+
+    /** Giờ vào bản lặp ([LoopHandoff]): hẹn đúng hạn loopEnd - X, vào muộn thì bù, không chờ nhịp đồng bộ của giọng. */
+    private val loopHandoff = LoopHandoff<Bed>(main, ::lookLoop, ::prepareLoop, { release(it) }, ::enterLoop)
     private const val TAG = "ABookMusic"
     /** Một bước tạo / nhả trình phát nhạc lâu hơn ngần này thì ghi logcat (soát a69: giọng đứng 19,2 s đúng lúc lặp mờ chéo tạo trình phát mới - lần soát sau
      *  thấy ngay bước nào chậm). */
@@ -106,6 +114,7 @@ object MusicBed {
 
     /** Nhả trình phát của [bed] trên luồng chính (luồng tạo ra nó), gỡ listener trước. */
     private fun release(bed: Bed) = timed("nhả trình phát nhạc") {
+        bed.released = true
         bed.listeners.forEach(bed.player::removeListener)
         bed.listeners.clear()
         bed.player.release()
@@ -231,6 +240,7 @@ object MusicBed {
             current?.cue = cue // cùng bài sang mốc kề: chơi tiếp, bước âm lượng theo mốc mới
             // Vừa tua trong cùng bài: dời nhạc theo chỗ mới, không chơi tiếp từ chỗ cũ (soát a26 L8).
             if (seeked) current?.let { bed ->
+                loopHandoff.reset() // vé hẹn và bản lặp tạo sẵn cho chỗ cũ không còn đúng
                 bed.final = false // vòng cuối của mốc `tail` tính lại theo chỗ mới (finishTail)
                 bed.player.repeatMode = repeatFor(cue, bed.player)
                 MusicCues.offsetMs(cue, seconds, bed.player.duration)?.let(bed.player::seekTo)
@@ -238,7 +248,7 @@ object MusicBed {
         }
         retarget(seconds, seeked)
         finishTail(appContext, seconds)
-        crossLoop(seconds)
+        loopHandoff.check()
         applyPlaying()
     }
 
@@ -264,27 +274,65 @@ object MusicBed {
         current?.early = true
     }
 
-    /** Lặp mờ chéo: bài đang kêu tới loopEnd - X ([MusicCues.loopDue]) thì một ExoPlayer MỚI của chính bài vào từ loopStart, mờ chéo X giây; cái
-     *  cũ mờ đi rồi nhả. Vòng cuối của mốc `tail` ([finishTail]), bài quá ngắn (lặp thường) và danh sách phát thì không. Bài mp3 vào
-     *  ở ranh khung gần loopStart nhất ([ExactSeekMp3Extractor.frameBoundarySeconds]). */
+    /** Lặp mờ chéo: bài đang kêu tới loopEnd - X ([MusicCues.loopDue]) thì một ExoPlayer của chính bài vào từ loopStart, mờ chéo X giây; cái
+     *  cũ mờ đi rồi nhả. Vòng cuối của mốc `tail` ([finishTail]), bài quá ngắn (lặp thường) và danh sách phát thì không. Giờ vào do [LoopHandoff] giữ
+     *  ([loopHandoff]); đây là phần nhìn bài đang kêu. */
+    private fun lookLoop(): LoopHandoff.Snapshot? {
+        val bed = current ?: return null
+        val cue = bed.cue ?: return null
+        val player = bed.player
+        if (bed.final || lastSeconds >= cue.end || player.duration <= 0) return null
+        return LoopHandoff.Snapshot(bed, boundsOf(cue, player), player.currentPosition / 1000.0, player.isPlaying)
+    }
+
+    /** Chỗ vào bản lặp `target` (giây trong bài): bài mp3 vào ở ranh khung gần chỗ ấy nhất ([ExactSeekMp3Extractor.frameBoundarySeconds]). */
     @OptIn(UnstableApi::class)
-    private fun crossLoop(seconds: Double) {
+    private fun frameAligned(player: ExoPlayer, target: Double): Double {
+        val format = player.audioFormat
+        return if (format?.sampleMimeType == MimeTypes.AUDIO_MPEG) ExactSeekMp3Extractor.frameBoundarySeconds(target, format.sampleRate) else target
+    }
+
+    /** Bước 0: tạo SẴN bản lặp của vòng hiện tại - ExoPlayer đã `prepare()` và đứng ở loopStart, câm, `playWhenReady` false (đo thật máy tính: trình phát mới
+     *  mất cả trăm mili giây mới có tiếng; tới hạn chỉ còn phát). Không có file bài / chưa có context thì null: tới hạn mở mới như trước. */
+    private fun prepareLoop(snap: LoopHandoff.Snapshot): Bed? {
+        val owner = snap.owner as Bed
+        val cue = owner.cue ?: return null
+        val appContext = context ?: return null
+        val uri = uriFor(appContext, owner.track) ?: return null
+        val fadeMs = Math.round(MusicCues.mix.loopCrossfadeSeconds * 1000)
+        val startAt = frameAligned(owner.player, snap.bounds.loopStart)
+        return timed("lặp mờ chéo: tạo sẵn trình phát") {
+            open(appContext, owner.track to uri, owner.goal, 0.0, cue, fadeMs, startAt, Handoff(owner, snap.bounds), standby = true)
+        }.also { it.at = startAt }
+    }
+
+    /** Vào bản lặp: bản mới (`ready`: đã tạo sẵn, hay mở mới) ở loopStart cộng phần trễ so với hạn ([MusicCues.loopStartAt]). */
+    private fun enterLoop(snap: LoopHandoff.Snapshot, ready: Bed?) {
         val bed = current ?: return
         val cue = bed.cue ?: return
         val player = bed.player
-        if (bed.final || seconds >= cue.end || player.duration <= 0) return
-        val bounds = boundsOf(cue, player)
-        if (!MusicCues.loopDue(bounds, player.currentPosition / 1000.0)) return
+        val bounds = snap.bounds
         val appContext = context ?: return
         val uri = uriFor(appContext, bed.track) ?: return
         val fadeMs = Math.round(MusicCues.mix.loopCrossfadeSeconds * 1000)
         bed.fadeStep = maxOf(player.volume, 0.01f) * STEP_MS / fadeMs
         fading += bed
-        val format = player.audioFormat
-        val startAt = if (format?.sampleMimeType == MimeTypes.AUDIO_MPEG) ExactSeekMp3Extractor.frameBoundarySeconds(bounds.loopStart, format.sampleRate)
-        else bounds.loopStart
-        current = timed("lặp mờ chéo: mở trình phát mới") { open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, startAt) }
-            .also { it.early = bed.early }
+        val startAt = frameAligned(player, MusicCues.loopStartAt(bounds, snap.position))
+        val next = if (ready != null) {
+            // Vào muộn: đặt lại chỗ; vẫn đúng loopStart thì không tua (khỏi đệm lại).
+            if (abs(ready.at - startAt) > 0.0005) {
+                ready.player.seekTo((startAt * 1000).toLong())
+                ready.at = startAt
+            }
+            ready.cue = cue
+            ready.goal = bed.goal
+            ready.perTick = bed.goal * STEP_MS / ready.fadeMs
+            if (playing) ready.player.play()
+            ready
+        } else {
+            timed("lặp mờ chéo: mở trình phát mới") { open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, startAt, Handoff(bed, bounds)) }
+        }
+        current = next.also { it.early = bed.early }
         startFade()
     }
 
@@ -325,6 +373,7 @@ object MusicBed {
         catalogRetry = null
         sceneRetry?.let(main::removeCallbacks)
         sceneRetry = null
+        loopHandoff.reset()
         sceneMode = false
         autoPicked = false
         sceneNotice = ""
@@ -661,6 +710,7 @@ object MusicBed {
      *  `cue`: mốc của sách (bước âm lượng; mốc `sibling` = nối bài anh em ở điểm kết bài: mờ chéo dài hơn, bài cũ chơi nốt rồi thôi,
      *  không quay lại đầu bài, mờ trong phần còn lại tới E nếu ngắn hơn - [MusicCues.siblingFadeSeconds]). */
     private fun switchTo(next: Pair<String, Uri>?, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue? = null) {
+        loopHandoff.reset()
         val mix = MusicCues.mix
         val fadeMs = if (cue?.sibling == true) mix.siblingFadeMs else mix.fadeMs
         current?.let {
@@ -685,7 +735,7 @@ object MusicBed {
      *  chỗ ấy (A), không căn theo giây chương - đồng hồ bài lệch giọng vài phần giây thì căn lại có khi rơi về cuối vòng. */
     @OptIn(UnstableApi::class)
     private fun open(appContext: Context, next: Pair<String, Uri>, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue?,
-                     fadeMs: Long, startAt: Double? = null): Bed {
+                     fadeMs: Long, startAt: Double? = null, handoff: Handoff? = null, standby: Boolean = false): Bed {
         val (track, uri) = next
         // Bộ giải mã đồng bộ: chế độ hàng đợi bất đồng bộ (mặc định Android 12+) tắt luồng gọi lại của MediaCodec trước khi nhả codec - mỗi lần nhả một bài
         // (lặp mờ chéo ~40 lần / 5 phút) codec còn gửi sự kiện tới luồng đã chết ("sending message to a Handler on a dead thread", soát a69: 360 lần / 40 phút).
@@ -721,11 +771,28 @@ object MusicBed {
                 }
             }
         })
+        if (handoff != null) listen(object : Player.Listener {
+            // Bản lặp mới vừa có tiếng (STATE_READY + playWhenReady): bù độ trễ mở trình phát, một lần. Nó gần như câm nên cú dời không nghe thấy.
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (!isPlaying) return
+                player.removeListener(this)
+                bed.listeners.remove(this)
+                val old = handoff.old
+                val to = MusicCues.loopSettle(handoff.bounds, old.player.currentPosition / 1000.0, player.currentPosition / 1000.0, player.volume, bed.goal,
+                    oldAlive = old in fading && old.player.isPlaying)
+                if (to != null) player.seekTo((to * 1000).toLong())
+            }
+        })
         listen(object : Player.Listener {
             // Nhạc của sách hỏng (file thiếu trong gói, mạng tới máy tính rớt khi nghe thẳng): đoạn này im lặng, RETRY_MS sau thử
             // lại như máy tính. Bài của danh sách phát phát hỏng (file hỏng) thì bỏ cả phiên - tải hỏng đã có fetch lo.
             override fun onPlayerError(error: PlaybackException) {
                 main.post {
+                    if (bed.released) return@post // đã nhả (bản tạo sẵn bị bỏ, bài mờ xong): lỗi muộn không tính là bài hỏng
+                    if (loopHandoff.prepared() === bed) { // bản lặp tạo sẵn hỏng trước khi dùng: bỏ êm, tới hạn mở mới
+                        loopHandoff.discardReady()
+                        return@post
+                    }
                     drop(track, retry = playlist == null)
                     release(bed)
                     if (current?.player === player) {
@@ -739,7 +806,7 @@ object MusicBed {
         if (startAt != null) player.setMediaItem(MediaItem.fromUri(uri), (startAt * 1000).toLong())
         else player.setMediaItem(MediaItem.fromUri(uri))
         player.prepare()
-        if (playing) player.play()
+        if (playing && !standby) player.play()
         return bed
     }
 

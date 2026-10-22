@@ -15,9 +15,12 @@ import {
   finalLoop,
   finished,
   loopBounds,
+  loopDrift,
   loopDue,
+  loopHandoffDelay,
   loopPosition,
   loopSchedule,
+  loopStartAt,
   siblingFadeSeconds,
   stepDbAt,
   type MusicCue,
@@ -598,7 +601,7 @@ describe("lặp mờ chéo trong đoạn nghe được (lô 2 mix-loop, MIX_QA 3
     expect(first.loop, "không lặp bằng audio.loop (nối thẳng có tách / lỗ im)").toBe(false);
     first.currentTime = 107.9;
     bed.sync(105.9, true);
-    expect(made["/a"]).toHaveLength(1);
+    expect(made["/a"].filter((audio) => !audio.paused), "chưa tới hạn: phần tử lặp chỉ tạo sẵn, chưa phát").toHaveLength(1);
     first.currentTime = 110 - LOOP_CROSSFADE_SECONDS;
     bed.sync(106, true);
     expect(made["/a"]).toHaveLength(2);
@@ -620,7 +623,7 @@ describe("lặp mờ chéo trong đoạn nghe được (lô 2 mix-loop, MIX_QA 3
     bed.sync(10, true);
     made["/a"][0].currentTime = 120 - LOOP_CROSSFADE_SECONDS - 0.1;
     bed.sync(117.9, true);
-    expect(made["/a"]).toHaveLength(1);
+    expect(made["/a"].filter((audio) => !audio.paused)).toHaveLength(1);
     made["/a"][0].currentTime = 120 - LOOP_CROSSFADE_SECONDS;
     bed.sync(118, true);
     expect(made["/a"]).toHaveLength(2);
@@ -847,7 +850,7 @@ describe("điểm vòng của bài có đoạn kết (PLAN_loop §10, tests/fixt
     music.sync(10, true);
     made[0].currentTime = 158.7;
     music.sync(157.2, true);
-    expect(made, "chưa tới loopEnd - X").toHaveLength(1);
+    expect(made.filter((audio) => !audio.paused), "chưa tới loopEnd - X: phần tử lặp chỉ tạo sẵn").toHaveLength(1);
     made[0].currentTime = 160.75 - LOOP_CROSSFADE_SECONDS;
     music.sync(157.25, true);
     expect(made).toHaveLength(2);
@@ -1302,5 +1305,281 @@ describe("bài mp3 phát qua MediaSource (loopfix)", () => {
     await flush();
     bed.stop();
     expect(made.revoked).toEqual(["blob:ms/1"]);
+  });
+});
+
+/** PLAN_loop §29-32 (a82loop): bản lặp mới vào ĐÚNG hạn loopEnd - X và bù phần trễ còn lại, không chờ nhịp đồng bộ của giọng. Cùng ca số
+ *  với MusicLoopTest.kt. */
+describe("bù trễ khi vào bản lặp (loop handoff)", () => {
+  afterEach(() => vi.useRealTimers());
+
+  const bounds = loopBounds({ audibleStart: 2, audibleEnd: 110, loopStart: 12, loopEnd: 100 }, 120);
+
+  it("ca số tính tay: bounds loopStart 12, loopEnd 100, X 2", () => {
+    expect(bounds.loopStart).toBe(12);
+    expect(bounds.loopEnd).toBe(100);
+    expect(LOOP_CROSSFADE_SECONDS).toBe(2);
+    expect(loopStartAt(bounds, 98)).toBeCloseTo(12, 9);
+    expect(loopStartAt(bounds, 98.25)).toBeCloseTo(12.25, 9);
+    expect(loopStartAt(bounds, 98.5)).toBeCloseTo(12.5, 9);
+    expect(loopStartAt(bounds, 97.9), "chưa tới hạn: không lùi dưới loopStart").toBeCloseTo(12, 9);
+    expect(loopHandoffDelay(bounds, 97.8, 0.25)).toBeCloseTo(0.2, 9);
+    expect(loopHandoffDelay(bounds, 97.0, 0.25)).toBeNull();
+    expect(loopHandoffDelay(bounds, 98.1, 0.25)).toBe(0);
+    expect(loopHandoffDelay(bounds, 98.0, 0.25), "đúng hạn").toBe(0);
+    expect(loopHandoffDelay(bounds, 97.0, 0.5), "nhịp 0,5: hẹn từ 1,5 x nhịp = 0,75 s trước hạn").toBeNull();
+    expect(loopHandoffDelay(bounds, 97.4, 0.5)).toBeCloseTo(0.6, 9);
+    expect(loopDrift(bounds, 98.6, 12.45)).toBeCloseTo(0.15, 9);
+    expect(loopDrift(bounds, 98.1, 12.3), "bản mới đi trước: âm").toBeCloseTo(-0.2, 9);
+  });
+
+  it("bài quá ngắn để mờ chéo không bao giờ hẹn", () => {
+    const short = loopBounds({ audibleStart: 0.2, audibleEnd: 4.9 }, 5);
+    expect(loopHandoffDelay(short, 4.0, 0.25)).toBeNull();
+  });
+
+  type Fake = {
+    paused: boolean; volume: number; loop: boolean; duration: number; ended: boolean; currentTime: number;
+    bornAt: number; playedAt: number | null; removed: string[]; loads: number; fire(type: string): void;
+    play(): Promise<void>; pause(): void; addEventListener(type: string, listener: () => void): void;
+    removeAttribute(name: string): void; load(): void;
+  };
+
+  /** Đồng hồ giả: mỗi phần tử chạy 1x từ lúc `play()` + `latency` giây (độ trễ mở trình phát L); tới lúc đó `currentTime` đứng yên và chưa có sự kiện
+   *  `playing`. */
+  function clocked(latency: number) {
+    const made: Fake[] = [];
+    const bed = new MusicBed(() => {
+      let anchor = 0;
+      let startedAt: number | null = null;
+      const listeners: Record<string, (() => void)[]> = {};
+      const fake = {
+        paused: true, volume: 0, loop: false, duration: 120, ended: false, bornAt: Date.now(), playedAt: null as number | null, removed: [] as string[], loads: 0,
+        fire(type: string) { for (const listener of listeners[type] ?? []) listener(); },
+        removeAttribute(name: string) { fake.removed.push(name); },
+        load() { fake.loads += 1; },
+        get currentTime() { return anchor + (startedAt === null ? 0 : (Date.now() - startedAt) / 1000); },
+        set currentTime(value: number) { anchor = value; if (startedAt !== null) startedAt = Date.now(); },
+        play() {
+          if (fake.paused) {
+            fake.paused = false;
+            fake.playedAt = Date.now();
+            setTimeout(() => {
+              if (fake.paused) return;
+              startedAt = Date.now();
+              for (const listener of listeners.playing ?? []) listener();
+            }, latency * 1000);
+          }
+          return Promise.resolve();
+        },
+        pause() { if (startedAt !== null) { anchor = fake.currentTime; startedAt = null; } fake.paused = true; },
+        addEventListener(type: string, listener: () => void) { (listeners[type] ??= []).push(listener); },
+      };
+      made.push(fake as unknown as Fake);
+      return fake as never;
+    });
+    return { bed, made };
+  }
+
+  const cue: MusicCue = { start: 0, end: 600, link: "a", key: "1:1", src: "/a", gainDb: -10, audibleStart: 2, audibleEnd: 110, loopStart: 12, loopEnd: 100 };
+  const DEADLINE = 98; // loopEnd - X
+  const TICK = 0.25;
+
+  for (const latency of [0, 0.12]) {
+    for (const phase of [0, 60, 125, 200, 249]) {
+      it(`sync mỗi 250 ms lệch pha ${phase} ms, trình phát trễ ${latency * 1000} ms: bản mới mở đúng hạn, lệch pha <= 0,02 s sau khi có tiếng`, () => {
+        vi.useFakeTimers();
+        const { bed, made } = clocked(latency);
+        bed.setCues([cue], -20, 0);
+        bed.sync(10, true);
+        vi.advanceTimersByTime(latency * 1000 + 1); // bản đầu bắt đầu chạy
+        const first = made[0];
+        const lead = 1.6; // còn 1,6 s tới hạn
+        first.currentTime = DEADLINE - lead;
+        const deadline = Date.now() + lead * 1000;
+        // nhịp đồng bộ: có một lần đồng bộ ở hạn + `phase` ms (phase < nhịp), mỗi 250 ms
+        let voice = 10;
+        setTimeout(() => {
+          bed.sync(voice, true);
+          setInterval(() => { voice += TICK; bed.sync(voice, true); }, TICK * 1000);
+        }, (lead * 1000 + phase) % (TICK * 1000));
+        vi.advanceTimersByTime(lead * 1000 + 40);
+        expect(made, "bản mới là phần tử đã tạo sẵn, không tạo thêm").toHaveLength(2);
+        const second = made[1];
+        expect(second.bornAt, "tạo sẵn từ trước hạn (rem < 3 s)").toBeLessThan(deadline - 1000);
+        expect(Math.abs((second.playedAt ?? -1e9) - deadline), "phát lúc đồng hồ = hạn (+-1 nhịp của đồng hồ giả)").toBeLessThanOrEqual(5);
+        vi.advanceTimersByTime(400);
+        const drift = (first.currentTime - DEADLINE) - (second.currentTime - 12);
+        expect(Math.abs(drift), "sau khi bản mới có tiếng, hai bản cùng pha").toBeLessThanOrEqual(0.02);
+        bed.stop();
+      });
+    }
+  }
+
+  it("sync đến muộn hơn hạn 0,3 s: bản mới vào ở loopStart + 0,3 (bù phần trễ), không phải loopStart", () => {
+    vi.useFakeTimers();
+    const { bed, made } = clocked(0);
+    bed.setCues([cue], -20, 0);
+    bed.sync(10, true);
+    vi.advanceTimersByTime(1);
+    made[0].currentTime = 98.3;
+    bed.sync(100, true);
+    expect(made).toHaveLength(2);
+    expect(made[1].currentTime).toBeCloseTo(12.3, 3);
+    bed.stop();
+  });
+
+  it("tua giữa lúc đã hẹn: vé bị huỷ, không mở bản lặp ở chỗ cũ", () => {
+    vi.useFakeTimers();
+    const { bed, made } = clocked(0);
+    bed.setCues([cue], -20, 0);
+    bed.sync(10, true);
+    vi.advanceTimersByTime(1);
+    made[0].currentTime = 97.8; // còn 0,2 s: đã hẹn
+    bed.sync(95, true);
+    expect(made, "phần tử lặp đã tạo sẵn").toHaveLength(2);
+    bed.sync(20, true, true); // người nghe tua: nhạc về giữa bài
+    expect(made[0].currentTime).toBeLessThan(90);
+    expect(made[1].removed, "tua: phần tử tạo sẵn được nhả").toEqual(["src"]);
+    vi.advanceTimersByTime(2000);
+    expect(made, "vé cũ không nổ, không tạo thêm").toHaveLength(2);
+    expect(made[1].playedAt).toBeNull();
+    bed.stop();
+  });
+
+  it("dừng nhạc giữa lúc đã hẹn: không mở gì", () => {
+    vi.useFakeTimers();
+    const { bed, made } = clocked(0);
+    bed.setCues([cue], -20, 0);
+    bed.sync(10, true);
+    vi.advanceTimersByTime(1);
+    made[0].currentTime = 97.8;
+    bed.sync(95, true);
+    expect(made).toHaveLength(2);
+    bed.stop();
+    expect(made[1].removed, "dừng: phần tử tạo sẵn được nhả").toEqual(["src"]);
+    vi.advanceTimersByTime(2000);
+    expect(made).toHaveLength(2);
+    expect(made[1].playedAt).toBeNull();
+  });
+
+  it("giọng tạm dừng giữa lúc đã hẹn: bài đứng yên, không vào bản lặp", () => {
+    vi.useFakeTimers();
+    const { bed, made } = clocked(0);
+    bed.setCues([cue], -20, 0);
+    bed.sync(10, true);
+    vi.advanceTimersByTime(1);
+    made[0].currentTime = 97.8;
+    bed.sync(95, true);
+    bed.sync(95, false);
+    vi.advanceTimersByTime(2000);
+    expect(made.filter((audio) => audio.playedAt !== null)).toHaveLength(1);
+    bed.stop();
+  });
+
+  describe("bước 0: phần tử lặp tạo sẵn khi còn < 3 s", () => {
+    const start = () => {
+      vi.useFakeTimers();
+      const world = clocked(0);
+      world.bed.setCues([cue], -20, 0);
+      world.bed.sync(10, true);
+      vi.advanceTimersByTime(1);
+      return world;
+    };
+
+    it("còn >= 3 s thì chưa tạo; còn < 3 s thì tạo đúng một lần, đứng ở loopStart, câm, chưa phát", () => {
+      const { bed, made } = start();
+      made[0].currentTime = 94.9; // còn 3,1 s
+      bed.sync(90, true);
+      expect(made).toHaveLength(1);
+      made[0].currentTime = 96; // còn 2 s
+      for (let i = 0; i < 5; i++) { bed.sync(91 + i * 0.1, true); vi.advanceTimersByTime(100); }
+      expect(made, "một lần mỗi vòng").toHaveLength(2);
+      expect(made[1].paused).toBe(true);
+      expect(made[1].volume).toBe(0);
+      expect(made[1].currentTime).toBe(12);
+      bed.stop();
+    });
+
+    it("tới hạn thì phát chính phần tử đã sẵn (không tạo mới); vòng sau lại tạo sẵn một phần tử mới", () => {
+      const { bed, made } = start();
+      made[0].currentTime = 96;
+      bed.sync(91, true);
+      const standby = made[1];
+      for (let i = 0; i < 9; i++) { vi.advanceTimersByTime(250); bed.sync(91 + (i + 1) * 0.25, true); } // giọng đồng bộ mỗi 250 ms tới quá hạn
+      expect(made).toHaveLength(2);
+      expect(standby.paused).toBe(false);
+      expect(bed.activeLink).toBe("a");
+      vi.advanceTimersByTime(85_000); // bản mới chạy tới gần cuối vòng kế
+      bed.sync(300, true);
+      expect(made.length, "vòng sau tạo sẵn phần tử mới").toBe(3);
+      bed.stop();
+    });
+
+    it("vào muộn 0,3 s: phần tử sẵn được đặt lại ở loopStart + 0,3", () => {
+      const { bed, made } = start();
+      made[0].currentTime = 95.5;
+      bed.sync(90, true);
+      expect(made[1].currentTime).toBe(12);
+      made[0].currentTime = 98.3; // sync đến muộn
+      bed.sync(93, true);
+      expect(made).toHaveLength(2);
+      expect(made[1].paused).toBe(false);
+      expect(made[1].currentTime).toBeCloseTo(12.3, 3);
+      bed.stop();
+    });
+
+    it("tua, đổi bài, dừng, bài hỏng: phần tử sẵn được nhả đúng một lần, không rò", () => {
+      for (const how of ["seek", "other-track", "stop"] as const) {
+        vi.useFakeTimers();
+        const { bed, made } = clocked(0);
+        bed.setCues([{ ...cue, end: 200 }, { start: 300, end: 500, link: "b", key: "1:9", src: "/b" }], -20, 0);
+        bed.sync(10, true);
+        vi.advanceTimersByTime(1);
+        made[0].currentTime = 96;
+        bed.sync(91, true);
+        expect(made, how).toHaveLength(2);
+        if (how === "seek") bed.sync(30, true, true);
+        else if (how === "other-track") bed.sync(310, true);
+        else bed.stop();
+        expect(made[1].removed, how).toEqual(["src"]);
+        expect(made[1].loads, how).toBe(1);
+        expect(made[1].playedAt, how).toBeNull();
+        bed.stop();
+        vi.useRealTimers();
+      }
+    });
+
+    it("phần tử sẵn hỏng (lỗi mạng) trước khi dùng: nhả êm, không tính là bài hỏng; tới hạn tạo cái mới", () => {
+      const { bed, made } = start();
+      made[0].currentTime = 96;
+      bed.sync(91, true);
+      made[1].fire("error");
+      expect(made[1].removed).toEqual(["src"]);
+      expect(bed.activeLink, "bài đang kêu vẫn là bài").toBe("a");
+      expect(bed.failing).toBe(false);
+      made[0].currentTime = 98.1;
+      bed.sync(93, true);
+      expect(made, "không còn phần tử sẵn: tạo mới như trước").toHaveLength(3);
+      expect(made[2].currentTime).toBeCloseTo(12.1, 3);
+      made[1].fire("error"); // lỗi muộn của phần tử đã nhả
+      expect(bed.failing).toBe(false);
+      bed.stop();
+    });
+  });
+
+  it("bài cũ đã tắt hẳn trước khi bản mới có tiếng: không sửa pha theo nó", () => {
+    vi.useFakeTimers();
+    const { bed, made } = clocked(3); // trình phát trễ 3 s: bài cũ mờ xong (2 s) trước khi bản mới có tiếng
+    bed.setCues([cue], -20, 0);
+    bed.sync(10, true);
+    vi.advanceTimersByTime(3001);
+    made[0].currentTime = 98;
+    bed.sync(88, true);
+    expect(made).toHaveLength(2);
+    vi.advanceTimersByTime(3200); // bản mới có tiếng lúc 3 s, chạy 0,2 s
+    expect(made[0].paused).toBe(true);
+    expect(made[1].currentTime, "không bị dời theo bài cũ đã tắt").toBeCloseTo(12.2, 1);
+    bed.stop();
   });
 });

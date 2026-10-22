@@ -2,6 +2,13 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a82loop` trên `dev/uxfix93` (nền cd9c766b): nhạc nền vào bản lặp đúng hạn - tạo sẵn phần tử/ExoPlayer lặp khi còn < 3 s,
+hẹn giờ đúng loopEnd - X thay vì chờ nhịp đồng bộ (250 ms máy tính / 500 ms điện thoại), mở ở loopStartAt (bù phần trễ), sửa pha một lần khi
+bản mới có tiếng; ba hàm thuần loopHandoffDelay/loopStartAt/loopDrift cùng ca số ở TS và Kotlin (MusicLoopTest). Đo thật máy tính (Music,
+PLAN_loop §34.3, 59 bài, Edge headless): lệch trung vị 120 -> 2,3 ms, lệch phách 98 % -> 22 % (= mức vào đúng giờ). Điện thoại chưa đo máy thật.
+Toàn bộ (Lead chạy): pytest 8573 passed, 9 skipped, 0 F/E, exit 0; vitest 1327 passed, 1 skipped; tsc exit 0; JVM 1335 tests, 6 skipped,
+0 F/E. Hash khoá c9176123 không đổi.
+
 Đợt `a79fix` trên `dev/uxfix91` (nền cây phát hành dcbd33a0): "Nghe ngay" không gửi chữ khi chưa đồng ý - chuỗi giọng
 thay thế chỉ có Edge khi đã đồng ý "edge" (máy tính + điện thoại); menu Giọng đọc hỏi đồng ý trước khi đổi sang giọng trực tuyến;
 lõi Android giữ (held) chương chữ với giọng chưa đồng ý ở startAt/onPlay/voicesChanged và "Làm trước" (Android Auto, widget, tai nghe);

@@ -282,6 +282,38 @@ export function loopDue(bounds: LoopBounds, currentTime: number): boolean {
   return bounds.crossfade && currentTime >= bounds.loopEnd - LOOP_CROSSFADE_SECONDS;
 }
 
+/** Nhịp đồng bộ với giọng của máy tính (`timeupdate` tới 250 ms): mốc hẹn giờ vào bản lặp tính theo nhịp này ([loopHandoffDelay]). */
+export const SYNC_TICK_SECONDS = 0.25;
+/** Lệch pha tối đa (giây) giữa bản lặp mới và bản cũ mà tai không nghe ra: dưới mức này không sửa pha ([loopDrift]). */
+export const LOOP_DRIFT_TOLERANCE_SECONDS = 0.02;
+/** Bản mới còn nhỏ hơn tỷ lệ này của âm lượng đích thì dời nó không ai nghe thấy ([MusicBed.fixHandoffDrift]). */
+const LOOP_DRIFT_QUIET = 0.1;
+/** Còn dưới chừng này giây tới hạn vào bản lặp thì tạo SẴN phần tử lặp ([MusicBed.prepareStandby]): đo thật máy tính, phần tử mới mất 53 ms (bài dài 601 ms, `mseAudio` tải + nạp
+ *  cả file) mới có tiếng - tạo sẵn thì tới hạn chỉ còn `play()` (PLAN_loop §34-35). */
+const LOOP_STANDBY_SECONDS = 3;
+/** Hẹn giờ nổ mà bài cũ còn thiếu chút ít tới hạn (đồng hồ bài lệch đồng hồ máy) vẫn tính là tới hạn. */
+const LOOP_TIMER_SLACK_SECONDS = 0.05;
+
+/** Phần còn lại (giây, nhạc chạy 1x) tới lúc phải mở bản lặp (loopEnd - X) mà bài cũ đang ở `oldPos`, nếu nhỏ hơn 1,5 nhịp đồng bộ
+ *  `tickSeconds` (lần đồng bộ kế có thể đến muộn hơn hạn nên phải hẹn giờ); 0 khi đã quá hạn; null khi chưa cần hẹn (hay bài không mờ chéo). */
+export function loopHandoffDelay(bounds: LoopBounds, oldPos: number, tickSeconds: number): number | null {
+  if (!bounds.crossfade) return null;
+  const rem = bounds.loopEnd - LOOP_CROSSFADE_SECONDS - oldPos;
+  if (rem <= 0) return 0;
+  return rem < 1.5 * tickSeconds ? rem : null;
+}
+
+/** Chỗ bản lặp mới phải vào khi bài cũ đang ở `oldPos`: loopStart cộng phần đã trễ so với hạn loopEnd - X (bù độ trễ của lần đồng bộ). */
+export function loopStartAt(bounds: LoopBounds, oldPos: number): number {
+  return bounds.loopStart + Math.max(0, oldPos - (bounds.loopEnd - LOOP_CROSSFADE_SECONDS));
+}
+
+/** Bản mới đi chậm bao nhiêu giây so với bản cũ (dương = chậm): (cũ - (loopEnd - X)) - (mới - loopStart). Dời bản mới thêm đúng số này
+ *  là hai bản cùng pha (bù độ trễ mở trình phát). */
+export function loopDrift(bounds: LoopBounds, oldPos: number, newPos: number): number {
+  return (oldPos - (bounds.loopEnd - LOOP_CROSSFADE_SECONDS)) - (newPos - bounds.loopStart);
+}
+
 /** Mốc `tail` đang ở vòng cuối: phần còn lại của mốc hơn phần còn lại của bài (tới E) chưa tới nửa chu kỳ - không mở phần tử lặp
  *  nữa, bài chơi (qua loopEnd) tới E là hết (lô 1, tính theo E thay vì độ dài file). Chưa biết độ dài bài: chưa phải. */
 export function finalLoop(cue: MusicCue, seconds: number, currentTime: number, bounds: LoopBounds): boolean {
@@ -374,6 +406,10 @@ export class MusicBed {
   // Phần tử đã [release]: lỗi muộn của nó không được tính là "bài hỏng".
   private released = new WeakSet<BedAudio>();
   private timer: ReturnType<typeof setInterval> | null = null;
+  // Vé hẹn giờ vào bản lặp (một vòng một vé): tua, đổi bài, dừng thì huỷ.
+  private loopTicket: ReturnType<typeof setTimeout> | null = null;
+  // Phần tử lặp tạo sẵn cho vòng hiện tại (bước 0): chưa play, âm lượng 0, đứng ở loopStart. Tua, đổi bài, dừng thì nhả.
+  private standby: { audio: BedAudio; owner: BedAudio; place: { at: number } } | null = null;
   private lastTime = 0;
   private listeners = new Set<(link: string | null) => void>();
   private loadListeners = new Set<(link: string, ok: boolean) => void>();
@@ -476,6 +512,8 @@ export class MusicBed {
   }
 
   stop(): void {
+    this.cancelLoopTicket();
+    this.cancelStandby();
     for (const audio of [this.current?.audio, ...this.fading]) if (audio) this.release(audio);
     this.current = null;
     this.fading = [];
@@ -499,6 +537,10 @@ export class MusicBed {
   private drop(cue: MusicCue, audio: BedAudio): void {
     if (this.released.has(audio)) return;
     this.failed.set(cue.link, Date.now() + RETRY_MS);
+    if (this.current?.audio === audio) {
+      this.cancelLoopTicket();
+      this.cancelStandby();
+    }
     this.release(audio);
     this.fading = this.fading.filter((other) => other !== audio);
     if (this.current?.audio === audio) {
@@ -576,17 +618,75 @@ export class MusicBed {
   }
 
   /** Lặp mờ chéo: phần tử đang kêu tới loopEnd - X thì một phần tử MỚI của chính bài vào từ loopStart, mờ chéo LOOP_CROSSFADE_SECONDS; phần
-   *  tử cũ mờ đi rồi dừng. Vòng cuối của mốc `tail` (`finishTail`) và bài quá ngắn (lặp thường) thì không. */
-  private crossLoop(seconds: number): void {
+   *  tử cũ mờ đi rồi dừng. Vòng cuối của mốc `tail` (`finishTail`) và bài quá ngắn (lặp thường) thì không. Chưa tới hạn mà sắp tới (dưới 1,5 nhịp
+   *  đồng bộ): hẹn giờ đúng lúc ([loopHandoffDelay]) thay vì chờ lần đồng bộ kế, vì `timeupdate` đến muộn tới 250 ms làm bản mới lệch pha với bản
+   *  cũ suốt lúc mờ chéo (PLAN_loop §29-32). Vào muộn thì mở bản mới ở chỗ đã bù ([loopStartAt]). `fromTimer`: lần chạy do vé nổ. */
+  private crossLoop(seconds: number, fromTimer = false): void {
+    this.cancelLoopTicket();
     const playing = this.current;
-    if (!playing || playing.final || seconds >= playing.cue.end || !(playing.audio.duration > 0)) return;
+    if (!playing || playing.final || seconds >= playing.cue.end || !(playing.audio.duration > 0)) {
+      this.cancelStandby();
+      return;
+    }
     const bounds = loopBounds(playing.cue, playing.audio.duration);
-    if (!loopDue(bounds, playing.audio.currentTime)) return;
+    const at = playing.audio.currentTime;
+    if (!loopDue(bounds, at) && !(fromTimer && !playing.audio.paused && at >= bounds.loopEnd - LOOP_CROSSFADE_SECONDS - LOOP_TIMER_SLACK_SECONDS)) {
+      if (bounds.crossfade && bounds.loopEnd - LOOP_CROSSFADE_SECONDS - at < LOOP_STANDBY_SECONDS) this.prepareStandby(playing, bounds);
+      else this.cancelStandby();
+      // Vé nổ mà chưa tới hạn (bài đứng chờ tải): không hẹn lại, lần đồng bộ kế hẹn tiếp.
+      if (!fromTimer && !playing.audio.paused) this.armLoopTicket(playing.audio, loopHandoffDelay(bounds, at, SYNC_TICK_SECONDS));
+      return;
+    }
     const old = playing.audio;
     this.fadeStep.set(old, (Math.max(old.volume, 0.01) * STEP_MS) / 1000 / LOOP_CROSSFADE_SECONDS);
     this.fading.push(old);
-    this.current = { ...this.open(playing.cue, seconds, LOOP_CROSSFADE_SECONDS, bounds.loopStart), early: playing.early };
+    const ready = this.standby?.owner === old ? this.standby : undefined;
+    if (!ready) this.cancelStandby();
+    this.standby = null; // phần tử sẵn (nếu có) thành bản mới: từ đây là của this.current
+    this.current = { ...this.open(playing.cue, seconds, LOOP_CROSSFADE_SECONDS, loopStartAt(bounds, at), { old, bounds }, ready), early: playing.early };
     this.startFade();
+  }
+
+  /** Bước 0: tạo SẴN phần tử lặp của vòng hiện tại (một lần mỗi vòng) - đứng ở loopStart, âm lượng 0, chưa `play()`; tới hạn `crossLoop` chỉ còn phát nó. */
+  private prepareStandby(playing: Playing, bounds: LoopBounds): void {
+    if (this.standby?.owner === playing.audio) return;
+    this.cancelStandby();
+    const place = { at: bounds.loopStart };
+    const audio = this.spawn(playing.cue, this.lastTime, place, { old: playing.audio, bounds });
+    this.standby = { audio, owner: playing.audio, place };
+  }
+
+  /** Nhả phần tử lặp tạo sẵn (tua, đổi bài, dừng, chương mới, bài hỏng): lỗi muộn của nó không còn tính là bài hỏng ([drop] bỏ qua phần tử đã nhả). */
+  private cancelStandby(): void {
+    const standby = this.standby;
+    if (!standby) return;
+    this.standby = null;
+    this.release(standby.audio);
+  }
+
+  private cancelLoopTicket(): void {
+    if (this.loopTicket === null) return;
+    globalThis.clearTimeout(this.loopTicket);
+    this.loopTicket = null;
+  }
+
+  /** Hẹn một lần sau `delay` giây (null = chưa cần) để `audio` (bài đang kêu) vào bản lặp; vé nổ mà bài đã đổi thì thôi. */
+  private armLoopTicket(audio: BedAudio, delay: number | null): void {
+    if (delay === null) return;
+    this.loopTicket = globalThis.setTimeout(() => {
+      this.loopTicket = null;
+      if (this.current?.audio === audio) this.crossLoop(this.lastTime, true);
+    }, delay * 1000);
+  }
+
+  /** Sửa pha một lần cho bản lặp mới `audio` khi nó vừa có tiếng (bù độ trễ mở trình phát): bản mới còn gần như câm nên cú dời không nghe thấy.
+   *  Bài cũ đã dừng hay đã mờ hết thì không còn gì để theo. */
+  private fixHandoffDrift(audio: BedAudio, cue: MusicCue, handoff: { old: BedAudio; bounds: LoopBounds }): void {
+    const { old, bounds } = handoff;
+    if (this.released.has(audio) || this.released.has(old) || old.paused || !this.fading.includes(old)) return;
+    if (audio.volume > LOOP_DRIFT_QUIET * this.target(cue)) return;
+    const drift = loopDrift(bounds, old.currentTime, audio.currentTime);
+    if (Math.abs(drift) > LOOP_DRIFT_TOLERANCE_SECONDS) audio.currentTime = Math.max(0, audio.currentTime + drift);
   }
 
   /** Đặt bài `audio` của mốc `cue` vào đúng chỗ ứng với giây `seconds` của chương (`alignedPosition`). Chưa biết độ dài bài thì
@@ -595,26 +695,47 @@ export class MusicBed {
     if (audio.duration > 0) audio.currentTime = alignedPosition(cue, seconds, loopBounds(cue, audio.duration));
   }
 
-  /** Một phần tử <audio> mới của mốc `cue`, mờ vào trong `fadeSeconds` giây. `startAt` (phần tử lặp): vào đúng chỗ ấy (loopStart), không căn
-   *  theo giây chương - đồng hồ bài lệch giọng vài phần giây thì căn lại có khi rơi về cuối vòng. */
-  private open(cue: MusicCue, seconds: number, fadeSeconds: number, startAt?: number): Playing {
+  /** Một phần tử <audio> của mốc `cue` với các hàm nghe, chưa `play()`, âm lượng 0. `place` (phần tử lặp): vào đúng chỗ ấy (loopStart + phần trễ, [loopStartAt]), không
+   *  căn theo giây chương - đồng hồ bài lệch giọng vài phần giây thì căn lại có khi rơi về cuối vòng; `place.at` đổi được tới lúc `loadedmetadata` (vào muộn). `handoff`
+   *  (phần tử lặp): bản cũ để sửa pha khi có tiếng ([fixHandoffDrift]). */
+  private spawn(cue: MusicCue, seconds: number, place?: { at: number }, handoff?: { old: BedAudio; bounds: LoopBounds }): BedAudio {
     const audio = this.createAudio(cue.src);
     audio.loop = !loopBounds(cue, audio.duration).crossfade;
     audio.volume = 0;
-    if (startAt !== undefined) audio.currentTime = startAt; // chưa có metadata: trình duyệt nhớ làm chỗ bắt đầu
+    if (place) audio.currentTime = place.at; // chưa có metadata: trình duyệt nhớ làm chỗ bắt đầu
     audio.addEventListener("loadedmetadata", () => {
       this.failed.delete(cue.link);
       audio.loop = !loopBounds(cue, audio.duration).crossfade && !(this.current?.audio === audio && this.current.final);
       // Bài tải xong sau khi giọng đã chạy tiếp (hay vừa tua): theo giây mới nhất, không phải giây lúc tạo bài.
-      if (startAt === undefined) this.align(audio, cue, this.current?.audio === audio ? this.lastTime : seconds);
-      else if (Math.abs(audio.currentTime - startAt) > 0.25) audio.currentTime = startAt;
+      if (!place) this.align(audio, cue, this.current?.audio === audio ? this.lastTime : seconds);
+      else if (Math.abs(audio.currentTime - place.at) > 0.25) audio.currentTime = place.at;
       for (const listener of [...this.loadListeners]) listener(cue.link, true);
     }, { once: true });
-    audio.addEventListener("error", () => this.drop(cue, audio), { once: true });
+    audio.addEventListener("error", () => {
+      if (this.released.has(audio)) return;
+      // Phần tử tạo sẵn hỏng trước khi dùng: bỏ nó, tới hạn tạo cái mới - không tính là bài hỏng.
+      if (this.standby?.audio === audio) this.cancelStandby();
+      else this.drop(cue, audio);
+    }, { once: true });
     audio.addEventListener("playing", () => {
       this.sounded.add(audio);
+      if (handoff) this.fixHandoffDrift(audio, cue, handoff);
       if (this.current?.audio === audio) this.startFade(); // phần tử đã chờ tiếng: bây giờ mới mờ vào
     }, { once: true });
+    return audio;
+  }
+
+  /** Một phần tử <audio> mới của mốc `cue` (hay `ready`: phần tử lặp đã tạo sẵn ở [prepareStandby], vào muộn thì đặt lại tới `startAt`), mờ vào trong `fadeSeconds` giây. */
+  private open(cue: MusicCue, seconds: number, fadeSeconds: number, startAt?: number, handoff?: { old: BedAudio; bounds: LoopBounds },
+               ready?: { audio: BedAudio; place: { at: number } }): Playing {
+    let audio: BedAudio;
+    if (ready && startAt !== undefined) {
+      audio = ready.audio;
+      ready.place.at = startAt;
+      if (Math.abs(audio.currentTime - startAt) > 0.001) audio.currentTime = startAt;
+    } else {
+      audio = this.spawn(cue, seconds, startAt === undefined ? undefined : { at: startAt }, handoff);
+    }
     const goal = this.target(cue);
     if (this.playing) void audio.play().catch(() => undefined);
     return { cue, audio, goal, perTick: (goal * STEP_MS) / 1000 / fadeSeconds, entering: true, fadeSeconds };
@@ -622,6 +743,10 @@ export class MusicBed {
 
   private switchTo(cue: MusicCue | null, seconds: number, seeked = false): void {
     this.warmNext(cue, seconds);
+    if (seeked || !(this.current && cue && this.current.cue.link === cue.link)) {
+      this.cancelLoopTicket();
+      this.cancelStandby();
+    }
     if (this.current && cue && this.current.cue.link === cue.link) {
       // Cùng bài (đoạn kề): chơi tiếp, không bắt đầu lại. Vừa tua (hay vừa nạp chương ở giữa): dời nhạc theo chỗ mới.
       this.current.cue = cue;
