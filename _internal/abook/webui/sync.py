@@ -44,6 +44,7 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
+from .. import listener_overrides
 from ..io_utils import atomic_write_json
 from . import book_edits, covers, edits_inbox, export, listen_view, music_plan, notices, package_share, packages, precast, remote_studio, store, tls, word_timing
 from .cast import CastError
@@ -1021,7 +1022,7 @@ class SyncHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
         except LookupError as error:
             self._json(HTTPStatus.CONFLICT, {"error": str(error)})
-        except notices.Unreadable:  # sổ yêu cầu đang bị chương trình khác giữ: điện thoại giữ nguyên phần sửa và gửi lại (edits_inbox / soát a83 B2)
+        except (notices.Unreadable, listener_overrides.OverridesUnreadable):  # sổ yêu cầu đang bị chương trình khác giữ: điện thoại giữ nguyên phần sửa và gửi lại (edits_inbox / soát a83 B2)
             self._json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "Máy tính đang bận, bạn thử lại sau ít giây"})
         finally:
             package.unlink(missing_ok=True)
