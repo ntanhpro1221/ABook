@@ -20,6 +20,19 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - “Nghe gần đây” trên điện thoại xếp theo lần nghe cuối, kể cả cuốn nghe thẳng từ máy tính.
 - Hai ảnh bìa đặt liền nhau trong cùng một giây không còn hiện nhầm ảnh cũ; địa chỉ ảnh bìa đổi theo nội dung ảnh.
 
+### Nhập sách
+
+- Tạo sách từ EPUB hay Word: bìa, trang bản quyền, mục lục và trang tên sách không còn được tích sẵn thành chương như một đoạn truyện; chúng hiện trong khung “trang phụ chưa chọn”, tích trang nào bạn muốn nghe (giống Nghe ngay).
+- Một file TXT hỏng chữ (tải dở, lưu sai bảng mã) chỉ bị bỏ riêng nó, kèm tên file và cách sửa; các chương còn lại vẫn đọc bình thường thay vì cả thư mục báo lỗi tiếng Anh.
+- EPUB hay Word hỏng giữa chừng (tải dở, lỗi đĩa) báo “không phải file thật hoặc bị hỏng, thử tải lại” và không kéo các file khác trong cùng lô chết theo.
+- PDF: dòng tiêu đề chạy ở đầu/chân trang và số trang lặp lại không còn lẫn vào chữ chương (giống Nghe ngay đã tích sẵn bỏ); ghi chú về PDF gộp lại tối đa 6 dòng, không còn mỗi chương một dòng.
+- File TXT cả truyện: đoạn văn mở bằng “Hồi…”, “Phần…” và kết bằng nháy cong (.” ?” …”) không còn bị nhận nhầm là tiêu đề chương (máy tính và điện thoại); “Chương cuối”, “Chương 5a” được nhận là tiêu đề.
+- Hết chỗ trên ổ đĩa giữa lúc tách EPUB báo bằng tiếng Việt kèm cách xử lý, không để lại nửa cuốn; thiết bị ở xa không còn thấy đường dẫn trên máy tính trong các lời báo.
+- File TXT dài hơn 4 MB: số chữ, ký tự và độ dài audio hiện dấu “~” (ước tính từ phần đầu) thay vì chỉ đếm 4 MB đầu mà không nói.
+- Trang tạo sách trong cửa sổ app nhận file và thư mục kéo thả vào khung nét đứt, như Thư viện.
+- Gửi từ thiết bị khác hay kéo vào trình duyệt nhận file tới 40 MB; file lớn hơn thì lời báo chỉ cách tách nhỏ hoặc mở ngay trên máy tính.
+- TXT mã hoá tiếng Việt cũ (TCVN3, VNI) được nhận ra và báo (chữ đang vỡ, cách chuyển sang UTF-8); ABook không tự đổi chữ.
+
 ### Sửa lỗi
 
 - Làm sách bằng nhiều tiến trình thu âm: nếu một tiến trình bị hệ thống tắt giữa chừng, lô đang thu không còn đứng chờ mãi - máy bỏ nhóm tiến trình ấy và thu lại các câu còn thiếu từng câu một, đúng giọng và đúng cách đọc đã định.

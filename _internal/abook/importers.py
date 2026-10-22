@@ -18,11 +18,17 @@ import codecs
 import hashlib
 import html.entities
 import json
+import lzma
+import os
 import posixpath
 import re
+import shutil
+import struct
 import sys
+import tempfile
 import unicodedata
 import zipfile
+import zlib
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field, replace
 from html.parser import HTMLParser
@@ -92,6 +98,8 @@ _NUMBER_WORDS = (
 )
 # Số thứ tự chỉ đứng sau "thứ" ("Hồi thứ nhất", "Chương thứ nhì", "Hồi thứ nhứt"): "Hồi nhất định…" là câu văn, không phải tiêu đề.
 _ORDINAL_WORDS = "nhất|nhứt|nhì"
+# "Chương cuối" chỉ khi đứng một mình hay trước dấu ngăn của tiêu đề: "Chương cuối cùng tôi viết…" là câu văn.
+_LAST_WORDS = r"cuối(?:\s+cùng)?(?=\s*(?:$|[:：.\-–—]))"
 CHAPTER_WORDS = "chương|chuong|hồi|hoi|chapter|tiết|phần|phan"
 
 
@@ -99,7 +107,7 @@ def heading_pattern(words: str) -> re.Pattern[str]:
     """Dòng tiêu đề chương: một trong `words` rồi số ("Chương 12", "Hồi thứ hai", "第三章")."""
     return re.compile(
         r"^\s*(?:"
-        r"(?:" + words + r")\s+(?:thứ\s+(?:" + _ORDINAL_WORDS + r")|(?:thứ\s+)?(?:\d+|[ivxlcdm]+|(?:(?:" + _NUMBER_WORDS + r")\s*)+))(?![\w])"
+        r"(?:" + words + r")\s+(?:thứ\s+(?:" + _ORDINAL_WORDS + r")|(?:thứ\s+)?(?:\d+[a-z]?|[ivxlcdm]+|(?:(?:" + _NUMBER_WORDS + r")\s*)+|" + _LAST_WORDS + r"))(?![\w])"
         r"|第\s*[\d一二三四五六七八九十百千零〇两]+\s*[章回]"
         r")",
         re.IGNORECASE,
@@ -146,6 +154,7 @@ class ImportedBook:
     footnote_examples: list[tuple[str, str]] = field(default_factory=list)  # (dấu gọi kèm chữ đứng trước: "…trees²", lời chú) vài ví dụ
     keep_matter: bool = False  # TXT/DOCX/PDF: nghi là phần đầu/cuối chỉ là gợi ý; mặc định giữ chữ.
     default_skips: set[str] = field(default_factory=set)  # đề xuất PDF chắc chắn; chữ nguồn vẫn nguyên
+    edge_lines: list[str] = field(default_factory=list)  # PDF: dòng lặp ở mép trang (tiêu đề chạy, số trang) còn nằm trong chữ chương; `default_skips` là phần chắc chắn của chúng
 
     def chapter_source(self, chapter: Chapter) -> str:
         """Chữ của chương như FILE NGUỒN mà Studio đọc: TXT nguyên văn (tên chương nằm sẵn trong chữ); EPUB / DOCX / PDF: tên
@@ -265,6 +274,9 @@ def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> I
 
 
 CREDIT_NOTE = "Gợi ý: chương "  # mở đầu ghi chú của một dòng ghi công (`book.credits` mang chính dòng ấy)
+PDF_EDGE_NOTE = "Gợi ý PDF: "  # mở đầu ghi chú của một dòng lặp ở mép trang PDF (`book.edge_lines`); ô bỏ chọn nằm ở bước xem trước của Nghe ngay
+PICK_NOTE = re.compile(r"\d+ mục .*chưa chọn - tích nếu muốn.*")  # ghi chú "N mục … chưa chọn" của `_finish` (keep_short)
+SHORT_REASON = "Mục rất ngắn (bìa, trang bản quyền?)"
 
 
 def is_credit_note(note: str) -> bool:
@@ -424,15 +436,64 @@ MEANINGLESS_NAME = re.compile(r"index_split_\d+|untitled(?:[\s_-]*\d+)?|part\d+|
 ENCODING_NAMES = {"cp1258": "tiếng Việt Windows (cp1258)", "windows-1252": "Tây Âu (cp1252)", "gb18030": "tiếng Trung (GB18030)"}
 
 
+# Bảng mã tiếng Việt CŨ (TCVN3 / ABC, VNI): file không có UTF-8 nào, `decode_text` đọc nó thành cp1252 và chữ vỡ. ABook chỉ NHẬN RA và nói - không tự đổi
+# chữ (chuyển mã là việc người dùng làm bằng UniKey rồi chọn lại file).
+LEGACY_NAMES = {"tcvn3": "TCVN3 (ABC)", "vni": "VNI"}
+LEGACY_SAMPLE = 64 * 1024
+LEGACY_MIN_HIGH = 24  # ít byte >= 0x80 hơn thế thì chưa đủ để kết luận
+_TCVN3_BYTES = {
+    0xB5: "à", 0xB6: "ả", 0xB7: "ã", 0xB8: "á", 0xB9: "ạ", 0xA8: "ă", 0xBB: "ằ", 0xBC: "ẳ", 0xBD: "ẵ", 0xBE: "ắ", 0xC6: "ặ",
+    0xA9: "â", 0xC7: "ầ", 0xC8: "ẩ", 0xC9: "ẫ", 0xCA: "ấ", 0xCB: "ậ", 0xCC: "è", 0xCE: "ẻ", 0xCF: "ẽ", 0xD0: "é", 0xD1: "ẹ",
+    0xAA: "ê", 0xD2: "ề", 0xD3: "ể", 0xD4: "ễ", 0xD5: "ế", 0xD6: "ệ", 0xD7: "ì", 0xD8: "ỉ", 0xDC: "ĩ", 0xDD: "í", 0xDE: "ị",
+    0xDF: "ò", 0xE1: "ỏ", 0xE2: "õ", 0xE3: "ó", 0xE4: "ọ", 0xAB: "ô", 0xE5: "ồ", 0xE6: "ổ", 0xE7: "ỗ", 0xE8: "ố", 0xE9: "ộ",
+    0xAC: "ơ", 0xEA: "ờ", 0xEB: "ở", 0xEC: "ỡ", 0xED: "ớ", 0xEE: "ợ", 0xEF: "ù", 0xF0: "ủ", 0xF1: "ũ", 0xF3: "ú", 0xF4: "ụ",
+    0xAD: "ư", 0xF5: "ừ", 0xF6: "ử", 0xF7: "ữ", 0xF8: "ứ", 0xF9: "ự", 0xFA: "ỳ", 0xFB: "ỷ", 0xFC: "ỹ", 0xFD: "ý", 0xFE: "ỵ",
+    0xAE: "đ", 0xA1: "Ă", 0xA2: "Â", 0xA3: "Ê", 0xA4: "Ô", 0xA5: "Ơ", 0xA6: "Ư", 0xA7: "Đ",
+}
+_VNI_COMBO = re.compile(r"[aeiouyAEIOUY][âäåãàáéèêëíìîïóòôõöøùúûü]")
+
+
+def legacy_encoding(raw: bytes, encoding: str) -> str:
+    """"tcvn3" / "vni" khi `raw` (đọc ra `encoding` = cp1252 / cp1258) thực ra là tiếng Việt mã hoá cũ; không thì "". TCVN3: đọc lại từng byte theo
+    bảng TCVN3 ra tiếng Việt thật (`looks_vietnamese`) VÀ phần lớn byte cao đọc theo cp1252 là ký hiệu chứ không phải chữ (chữ Bồ Đào Nha
+    cũng "ra tiếng Việt" qua bảng ấy, nhưng byte cao của nó là chữ cái). VNI: chữ "ñ" (đ) dày đặc cùng nguyên âm + dấu rời ("oâ", "oï", "eà")."""
+    from .io_utils import looks_vietnamese
+
+    if encoding not in ("windows-1252", "cp1258"):
+        return ""
+    sample = raw[:LEGACY_SAMPLE]
+    high = [byte for byte in sample if byte >= 0x80]
+    if len(high) < LEGACY_MIN_HIGH:
+        return ""
+    reads = sample.decode("cp1252", errors="replace")
+    symbols = sum(not char.isalpha() for char in reads if ord(char) >= 0x80)
+    if symbols / len(high) >= 0.2 and looks_vietnamese("".join(_TCVN3_BYTES.get(byte, chr(byte)) for byte in sample)):
+        return "tcvn3"
+    letters = sum(char.isalpha() for char in reads)
+    if letters and reads.count("ñ") + reads.count("Ñ") >= letters * 0.01 and len(_VNI_COMBO.findall(reads)) >= letters * 0.03:
+        return "vni"
+    return ""
+
+
+def legacy_note(kind: str, names: list[str]) -> str:
+    """Một ghi chú cho cả lô: những file nào có vẻ ở bảng mã cũ và cách đi tiếp."""
+    shown = ", ".join(names[:2]) + (" …" if len(names) > 2 else "")
+    who = f"{len(names)} file ({shown})" if names else "File này"
+    return (f"{who} có vẻ ở bảng mã tiếng Việt cũ {LEGACY_NAMES[kind]} nên chữ đang vỡ. Bạn hãy chuyển sang UTF-8 "
+            "(UniKey > Chuyển mã) rồi chọn lại - ABook không tự đổi chữ của truyện.")
+
+
 def _txt_chapter(path: Path) -> tuple[Chapter, str]:
     """Một file TXT là một chương (cùng bảng mã đã đọc). Tên chương: dòng đầu nếu nó là dòng tiêu đề ("Chương 1: Buổi sáng" - đúng thứ
     người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1")."""
     from .webui.humanize import chapter_title
 
     try:
-        text, encoding = decode_text(path.read_bytes())
+        raw = path.read_bytes()
+        text, encoding = decode_text(raw)
     except UnicodeDecodeError as error:
         raise ImportFailed(f"File “{path.name}” có byte chữ bị hỏng. Bạn hãy mở bản gốc, lưu lại dạng UTF-8 hoặc tải lại file rồi nhập lại.") from error
+    encoding = legacy_encoding(raw, encoding) or encoding
     text = _clean_text(_text_controls(text))
     first = next((line.strip() for line in text.split("\n") if line.strip()), "")
     if is_heading_line(first):
@@ -445,7 +506,8 @@ def _txt_chapter(path: Path) -> tuple[Chapter, str]:
 def _encoding_notes(encodings: Iterable[str]) -> list[str]:
     found = set(encodings)
     names = [name for encoding, name in ENCODING_NAMES.items() if encoding in found]
-    return [f"File chữ không phải UTF-8 - đã đọc theo bảng mã {', '.join(names)}. Nếu chữ lạ, lưu lại file dạng UTF-8 rồi nhập lại."] if names else []
+    notes = [f"File chữ không phải UTF-8 - đã đọc theo bảng mã {', '.join(names)}. Nếu chữ lạ, lưu lại file dạng UTF-8 rồi nhập lại."] if names else []
+    return notes + [legacy_note(kind, []) for kind in LEGACY_NAMES if kind in found]
 
 
 def _txt_folder(folder: Path) -> ImportedBook:
@@ -712,14 +774,18 @@ class _Zip(zipfile.ZipFile):
         total = sum(self._read_sizes.values()) - previous
         chunks: list[bytes] = []
         size = 0
-        with self.open(info) as stream:
-            while chunk := stream.read(min(64 * 1024, limit - size + 1, MAX_TOTAL - total - size + 1)):
-                size += len(chunk)
-                if size > limit:
-                    raise ImportFailed(f"Có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
-                if total + size > MAX_TOTAL:
-                    raise ImportFailed(f"Quá lớn khi giải nén (trên 300 MB) - không giống {kind} truyện")
-                chunks.append(chunk)
+        try:
+            with self.open(info) as stream:
+                while chunk := stream.read(min(64 * 1024, limit - size + 1, MAX_TOTAL - total - size + 1)):
+                    size += len(chunk)
+                    if size > limit:
+                        raise ImportFailed(f"Có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
+                    if total + size > MAX_TOTAL:
+                        raise ImportFailed(f"Quá lớn khi giải nén (trên 300 MB) - không giống {kind} truyện")
+                    chunks.append(chunk)
+        except (zipfile.BadZipFile, zlib.error, lzma.LZMAError, EOFError, NotImplementedError, RuntimeError, struct.error) as error:
+            # CRC sai, dữ liệu nén cụt (tải dở / lỗi đĩa), nén kiểu lạ, mục có mật khẩu: file hỏng - nói như mọi file hỏng khác.
+            raise ImportFailed(BROKEN.format(kind=kind)) from error
         self._read_sizes[info.filename] = max(previous, size)
         return b''.join(chunks)
 
@@ -1674,8 +1740,18 @@ def is_heading_line(line: str, pattern: re.Pattern[str] = HEADING) -> bool:
         return False
     tail = line[match.end():].strip()
     if pattern in (HEADING, TXT_HEADING) and tail and tail[0] not in ":：.-–—":
-        return not tail.endswith((".", "!", "?", "…", "。", "!\"", "?\"", '."'))
+        return not ends_sentence(tail)
     return True
+
+
+def ends_sentence(text: str) -> bool:
+    """Dòng kết bằng dấu câu (kể cả khi dấu ngoặc / nháy đóng đứng sau: `.”` `?”` `…”` `.)`) - câu văn, không phải tiêu đề. Nháy hay ngoặc
+    đóng đứng một mình ("Chương 5 “Gặp gỡ”", "Chương 100 (hết)") không kể. Kotlin: BookImport.endsSentence."""
+    return text.rstrip(CLOSERS)[-1:] in SENTENCE_STOPS
+
+
+SENTENCE_STOPS = (".", "!", "?", "…", "。")
+CLOSERS = "”’»\"')]"
 
 
 def _split_on_headings(paragraphs: list[str], book_title: str, extra: Iterable[int] = (), note_lines: Iterable[int] = ()) -> tuple[list[Chapter], list[str]]:
@@ -1853,7 +1929,9 @@ def import_pdf_pages(pages: list[list[str]], stem: str, title: str = "", author:
         for line in removed:
             if line in chapter.text.split("\n\n"):
                 result.credits.append((number, line))
-                result.notes.append(f"Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “{line}”; bỏ chọn để giữ.")
+                result.notes.append(f"{PDF_EDGE_NOTE}bạn có thể bỏ đọc dòng ở mép trang “{line}”; bỏ chọn để giữ.")
+                if line not in result.edge_lines:
+                    result.edge_lines.append(line)
     for line in removed:
         occurrences = sum(line in page[:RUNNING_ZONE] + page[-RUNNING_ZONE:] for page in pages)
         if (occurrences >= 3 and occurrences * 2 > len(pages) and not line.endswith(_SENTENCE_END)
@@ -1866,10 +1944,65 @@ def import_pdf_pages(pages: list[list[str]], stem: str, title: str = "", author:
 
 # --- Studio: thư mục chương TXT ----------------------------------------------------------------------------------------
 
+def _edge_split(book: ImportedBook) -> tuple[list[str], list[str]]:
+    """(dòng mép trang PDF chắc chắn - Nghe ngay tích sẵn bỏ khỏi phần đọc, dòng còn lại): `default_skips` là luật chung của hai nơi."""
+    return ([line for line in book.edge_lines if line in book.default_skips], [line for line in book.edge_lines if line not in book.default_skips])
+
+
+def _without_lines(text: str, lines: set[str]) -> str:
+    return "\n\n".join(paragraph for paragraph in text.split("\n\n") if paragraph not in lines)
+
+
+def _quoted(lines: list[str], count: int = 2) -> str:
+    shown = [f"“{line}”" for line in lines if not line.isdecimal()][:count]
+    return f" (ví dụ {', '.join(shown)})" if shown else ""
+
+
+def _studio_notes(book: ImportedBook) -> list[str]:
+    """Ghi chú của một file sách cho Studio: bỏ những câu nhắc ô chọn mà màn Studio không có (mục chưa chọn có khung riêng, dòng ghi công có
+    khung gợi ý riêng, dòng mép trang PDF gộp thành một ghi chú theo loại)."""
+    notes = [note for note in book.notes if not note.startswith(PDF_EDGE_NOTE) and not PICK_NOTE.fullmatch(note)]
+    dropped, kept = _edge_split(book)
+    if dropped:
+        notes.append(f"Không đưa vào chương {len(dropped)} dòng tiêu đề chạy hay số trang lặp ở mép trang PDF{_quoted(dropped)} - chữ truyện giữ nguyên.")
+    if kept:
+        notes.append(f"{len(kept)} dòng lặp ở mép trang PDF{_quoted(kept)} vẫn nằm trong chữ chương.")
+    return notes
+
+
+def _publish_folder(staging: Path, folder: Path) -> None:
+    """Đưa thư mục tạm `staging` (chương + sidecar, đã ghi đủ) thành `folder`. Thư mục `folder` còn lại từ một lần tách dở (không sidecar) thì
+    dọn phần của ta trước; không dọn hết được thì chuyển từng file vào, sidecar sau cùng."""
+    if folder.is_dir():
+        for stale in folder.iterdir():
+            if stale.is_file() and (stale.suffix.casefold() in (".txt", ".part") or stale.name == SIDECAR or stale.stem.casefold() == "cover"):
+                stale.unlink()
+        try:
+            folder.rmdir()
+        except OSError:
+            pass
+    try:
+        os.replace(staging, folder)
+    except OSError:
+        folder.mkdir(parents=True, exist_ok=True)
+        for child in sorted(staging.iterdir(), key=lambda entry: entry.name == SIDECAR):
+            os.replace(child, folder / child.name)
+        staging.rmdir()
+
+
 def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
     """Tách EPUB / DOCX / PDF thành thư mục chương TXT trong `folder_root` (đặt tên theo file + băm nội dung: mở lại cùng file thì
-    dùng lại thư mục, file khác cùng tên không đè lên nhau). Trả (thư mục, thông tin: title, author, language, notes, cover)."""
-    digest = hashlib.sha256(path.read_bytes()).hexdigest()[:8]
+    dùng lại thư mục, file khác cùng tên không đè lên nhau). Trả (thư mục, thông tin: title, author, language, notes, cover, matter).
+    `matter`: {tên file chương: lý do} cho chương mà Nghe ngay để CHƯA tích (bìa, bản quyền, mục lục, mục rất ngắn - `default_picks`, một
+    luật chung): Studio cũng không tích sẵn chúng, nhưng chúng vẫn là file chương để người dùng tích lại. PDF: dòng tiêu đề chạy và số trang
+    chắc chắn (`default_skips`) không vào file chương, như Nghe ngay tích sẵn bỏ chúng. Chương ghi vào thư mục tạm rồi mới đổi tên: hết chỗ giữa
+    chừng thì không để lại nửa cuốn."""
+    from .webui import humanize
+
+    try:
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()[:8]
+    except OSError as error:
+        raise ImportFailed(f"Không đọc được file này ({error.strerror or 'lỗi đọc đĩa'}) - kiểm tra file còn đó và không bị chương trình khác khoá.") from error
     stem = UNSAFE_NAME.sub(" ", path.stem).strip() or path.suffix.lstrip(".") or "sach"
     folder = folder_root / f"{stem[:80]} - {digest}"
     sidecar = folder / SIDECAR
@@ -1878,20 +2011,38 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
             info = json.loads(sidecar.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             info = None  # sidecar hỏng (tắt ngang lúc ghi): tách lại - trước đây nhập file ấy lỗi mãi (soát a28 lỗi 17)
-        if isinstance(info, dict):
+        if isinstance(info, dict) and "matter" in info:  # thư mục do bản cũ tách (không có cờ trang phụ): tách lại
             return folder, info
-    book = import_text(path)
-    folder.mkdir(parents=True, exist_ok=True)
+    book = import_text(path, keep_short=True)
+    picked = {number for number, _name in default_picks(book)}
+    dropped, _kept = _edge_split(book)
     width = max(4, len(str(len(book.chapters))))
-    for index, chapter in enumerate(book.chapters, start=1):
-        body = book.chapter_source(chapter)
-        label = clip_title(_words(UNSAFE_NAME.sub(" ", chapter.title)), 50).strip(" .")
-        (folder / f"{index:0{width}d}{' ' + label if label else ''}.txt").write_bytes(body.encode("utf-8"))
-    cover = ""
-    if book.cover_bytes:
-        cover = "cover" + {"image/png": ".png", "image/gif": ".gif", "image/webp": ".webp"}.get(book.cover_type or "", ".jpg")
-        (folder / cover).write_bytes(book.cover_bytes)
-    info = {"title": book.title, "author": book.author, "language": book.language, "notes": book.notes, "cover": cover}
-    # Ghi SAU CÙNG và nguyên tử: có sidecar nghĩa là các chương đã ghi đủ.
-    atomic_write_bytes(sidecar, json.dumps(info, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
+    matter: dict[str, str] = {}
+    try:
+        folder_root.mkdir(parents=True, exist_ok=True)
+        staging = Path(tempfile.mkdtemp(prefix=".abook-split-", dir=folder_root))
+    except OSError as error:
+        raise ImportFailed(humanize.write_error(error)) from error
+    try:
+        for index, chapter in enumerate(book.chapters, start=1):
+            body = book.chapter_source(replace(chapter, text=_without_lines(chapter.text, set(dropped))) if dropped else chapter)
+            label = clip_title(_words(UNSAFE_NAME.sub(" ", chapter.title)), 50).strip(" .")
+            name = f"{index:0{width}d}{' ' + label if label else ''}.txt"
+            (staging / name).write_bytes(body.encode("utf-8"))
+            if index not in picked:
+                matter[name] = chapter.matter or SHORT_REASON
+        cover = ""
+        if book.cover_bytes:
+            cover = "cover" + {"image/png": ".png", "image/gif": ".gif", "image/webp": ".webp"}.get(book.cover_type or "", ".jpg")
+            (staging / cover).write_bytes(book.cover_bytes)
+        info = {"title": book.title, "author": book.author, "language": book.language, "notes": _studio_notes(book), "cover": cover, "matter": matter}
+        # Ghi SAU CÙNG và nguyên tử: có sidecar nghĩa là các chương đã ghi đủ.
+        atomic_write_bytes(staging / SIDECAR, json.dumps(info, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
+        _publish_folder(staging, folder)
+    except OSError as error:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise ImportFailed(humanize.write_error(OSError(error.errno, error.strerror, str(folder_root / "x")))) from error
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
     return folder, info

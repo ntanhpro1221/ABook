@@ -205,6 +205,10 @@ export interface ScannedFile {
   tailCredits?: string[];
   /** Một file chứa nhiều tiêu đề "Chương N" (cả truyện trong một file): trình tạo sách ĐỀ XUẤT tách, không tự tách. */
   split?: { chapters: number; titles: string[]; preamble: boolean; titleLine?: string } | null;
+  /** Trang phụ của file sách (bìa, bản quyền, mục lục, mục rất ngắn - cùng luật với Nghe ngay): lý do. Chưa tích sẵn; người dùng tích lại được. */
+  matter?: string;
+  /** File dài hơn phần máy đọc để đếm: chữ, ký tự, thời lượng là ước tính (hiện "~"). */
+  estimated?: boolean;
 }
 
 /** Truyện kể ngôi thứ nhất? (abook/first_person.py) - cho câu hỏi "'Tôi' là ai?" ở bước chọn giọng. */
@@ -236,7 +240,7 @@ export interface ScanResult {
   /** Nhiều tập trong một nguồn (webui/volumes.py): máy ĐỀ XUẤT chia, null khi chỉ một tập. */
   volumes?: VolumeProposal | null;
   suggestedTitle: string;
-  totals: { chapters: number; words: number; audioSeconds: number };
+  totals: { chapters: number; words: number; audioSeconds: number; estimated?: boolean };
   /** Dự án đã làm từ chính những file này (so nội dung): `shared` file trùng, dự án ấy có `chapters` chương. */
   existing?: { id: string; title: string; statusLabel: string; shared: number; chapters: number }[];
 }

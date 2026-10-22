@@ -90,7 +90,8 @@ def test_the_text_of_a_chapter_is_the_file_studio_would_read(tmp_path: Path) -> 
     assert folder.chapter_source(folder.chapters[0]) == folder.chapters[0].text + "\n"
     extracted, _ = importers.extract(IMPORTS / "epub3.epub", tmp_path / "studio")
     written = sorted(extracted.glob("*.txt"))
-    assert [path.read_text(encoding="utf-8") for path in written] == [epub.chapter_source(chapter) for chapter in epub.chapters], \
+    whole = importers.import_text(IMPORTS / "epub3.epub", keep_short=True)  # Studio giữ cả mục rất ngắn (chưa tích), như bước xem trước của Nghe ngay
+    assert [path.read_text(encoding="utf-8") for path in written] == [whole.chapter_source(chapter) for chapter in whole.chapters], \
         "thư mục chương của Studio và chữ của sách chỉ-chữ là cùng một hàm"
 
 
