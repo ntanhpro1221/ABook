@@ -372,6 +372,32 @@ def test_the_background_job_aligns_then_repacks_and_reports_coverage(tmp_path: P
     assert seen == ["prepare", "repack"] and status["state"] == "done" and status["file"].endswith("x.abook")
 
 
+def test_coverage_is_remembered_until_the_book_or_its_word_cache_changes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Soát a101 F3: đếm câu đã căn đọc kịch bản mọi chương (sách 2000 chương 4,5 giây) - mở lại khối "Căn từng chữ" khi sách không đổi
+    không đọc lại; căn thêm (bộ nhớ đệm mốc chữ đổi) thì đếm lại."""
+    import os
+    import time
+
+    from abook.webui import store
+
+    project = make_project(tmp_path)
+    old = time.time() - 60  # qua cửa sổ "vừa ghi" của bộ nhớ (listing_cache.RACY_SECONDS)
+    for path in [project, *project.rglob("*")]:
+        os.utime(path, (old, old))
+    reads: list[int] = []
+    real = store.chapter_script
+    monkeypatch.setattr(store, "chapter_script", lambda root, chapter_id, *a, **kw: reads.append(chapter_id) or real(root, chapter_id, *a, **kw))
+    first = word_timing.coverage(project)
+    assert first == {"lines": 3, "words": 0} and reads
+    reads.clear()
+    assert word_timing.coverage(project) == first and reads == [], "sách không đổi: không đọc lại kịch bản"
+    folder = project / word_timing.CACHE_FOLDER
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / "1.json").write_text("{}", encoding="utf-8")
+    word_timing.coverage(project)
+    assert reads, "bộ nhớ đệm mốc chữ đổi: đếm lại"
+
+
 @needs_ffmpeg
 def test_the_studio_python_really_aligns_through_the_command_line(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """App đóng gói không có numpy: `prepare` chạy `python -m abook.webui.word_timing align --json` bằng Python của Studio (ở đây: chính

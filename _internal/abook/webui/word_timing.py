@@ -649,7 +649,14 @@ def audio_sha256(path: Path) -> str:
 
 
 def coverage(project_root: Path) -> dict[str, int]:
-    """{"lines": số câu có audio, "words": số câu đã có `words`} của cả dự án - cho nút "Căn từ cho sách đã làm"."""
+    """{"lines": số câu có audio, "words": số câu đã có `words`} của cả dự án - cho nút "Căn từ cho sách đã làm". Đọc kịch bản mọi chương
+    (sách 2000 chương 4,5 giây - soát a101 F3) nên nhớ theo chữ ký cuốn (`store._remembered`) cộng dấu bộ nhớ đệm mốc chữ (`stamp`)."""
+    from . import store
+
+    return store._remembered("word_coverage", project_root, (stamp(project_root),), lambda: _coverage(project_root))
+
+
+def _coverage(project_root: Path) -> dict[str, int]:
     from . import store
 
     total = done = 0
