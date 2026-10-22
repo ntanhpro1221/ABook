@@ -123,31 +123,69 @@ export function progressLabel(progress: UploadProgress): string {
   return `Đang gửi ${progress.files}/${progress.totalFiles} file · ${formatSize(progress.bytes)} / ${formatSize(progress.totalBytes)}`;
 }
 
-/** Gửi từng file của kế hoạch; trả đường dẫn trên máy tính để quét, theo thứ tự của kế hoạch: từng file lẻ, thư mục của mỗi nhóm thư mục. */
+export interface SendResult {
+  /** Đường dẫn trên máy tính của những gì ĐÃ tới nơi (theo thứ tự kế hoạch): file lẻ, và thư mục của mỗi nhóm đã có ít nhất một file. */
+  paths: string[];
+  sent: number;
+  total: number;
+  /** Người dùng huỷ (hay rời trang): dừng sạch, không phải lỗi. */
+  cancelled: boolean;
+  /** Gửi hỏng giữa chừng (không phải huỷ): file trước đó vẫn ở máy tính. */
+  error?: Error;
+}
+
+const aborted = (signal?: AbortSignal) => Boolean(signal?.aborted);
+const isAbort = (error: unknown) => error instanceof DOMException && error.name === "AbortError";
+
+/** "Đã gửi 3/12 file, giữ lại; 9 file chưa gửi." - nói rõ gì đã tới máy tính khi dừng giữa chừng. */
+export function sendSummary(result: Pick<SendResult, "sent" | "total">): string {
+  if (!result.sent) return "Chưa gửi file nào.";
+  const rest = result.total - result.sent;
+  return `Đã gửi ${result.sent}/${result.total} file, giữ lại${rest > 0 ? `; ${rest} file chưa gửi` : ""}.`;
+}
+
+/**
+ * Gửi từng file của kế hoạch. `signal` đi xuyên suốt: cờ được kiểm trước mỗi file và giữa lúc đọc file, từng yêu cầu gửi cũng nhận nó
+ * (huỷ là ngắt kết nối). Huỷ hay hỏng giữa chừng không bỏ gì đã gửi: kết quả mang đường dẫn của những file đã tới máy tính.
+ */
 export async function sendPlan(
   plan: UploadPlan<Picked & { file: File }>,
   onProgress: (progress: UploadProgress) => void,
-): Promise<string[]> {
+  signal?: AbortSignal,
+): Promise<SendResult> {
   const totalFiles = plan.groups.reduce((sum, group) => sum + group.files.length, 0);
   const progress = { files: 0, totalFiles, bytes: 0, totalBytes: plan.bytes };
   onProgress({ ...progress });
-  const paths: string[] = [];
-  for (const group of plan.groups) {
-    let folder = "";
-    for (const picked of group.files) {
-      const result = await api<{ folder: string; path: string }>("/api/sources/upload", {
-        method: "POST",
-        body: { folder: group.folder, name: picked.name, data: await toBase64(picked.file) },
-      });
-      folder = result.folder;
-      if (group.loose) paths.push(result.path);
-      progress.files += 1;
-      progress.bytes += picked.size;
-      onProgress({ ...progress });
+  const result: SendResult = { paths: [], sent: 0, total: totalFiles, cancelled: false };
+  try {
+    for (const group of plan.groups) {
+      let folder = "";
+      try {
+        for (const picked of group.files) {
+          if (aborted(signal)) throw new DOMException("Aborted", "AbortError");
+          const data = await toBase64(picked.file, signal);
+          const sentFile = await api<{ folder: string; path: string }>("/api/sources/upload", {
+            method: "POST",
+            body: { folder: group.folder, name: picked.name, data },
+            signal,
+          });
+          folder = sentFile.folder;
+          if (group.loose) result.paths.push(sentFile.path);
+          progress.files += 1;
+          progress.bytes += picked.size;
+          result.sent += 1;
+          onProgress({ ...progress });
+        }
+      } finally {
+        // Nhóm thư mục dừng giữa chừng vẫn trỏ tới thư mục chứa các file đã tới nơi.
+        if (!group.loose && folder) result.paths.push(folder);
+      }
     }
-    if (!group.loose) paths.push(folder);
+  } catch (error) {
+    if (isAbort(error) || aborted(signal)) result.cancelled = true;
+    else result.error = error instanceof Error ? error : new Error(String(error));
   }
-  return paths;
+  return result;
 }
 
 /** Ô chọn file (cả khi chọn thư mục: `webkitRelativePath`). */
@@ -188,11 +226,13 @@ async function walk(entry: FileSystemEntry, depth: number): Promise<(Picked & { 
   return (await Promise.all(children.map((child) => walk(child, depth + 1)))).flat();
 }
 
-async function toBase64(file: File): Promise<string> {
+async function toBase64(file: File, signal?: AbortSignal): Promise<string> {
   const bytes = new Uint8Array(await file.arrayBuffer());
   let binary = "";
   for (let start = 0; start < bytes.length; start += 0x8000) {
+    if (aborted(signal)) throw new DOMException("Aborted", "AbortError");
     binary += String.fromCharCode(...bytes.subarray(start, start + 0x8000));
   }
+  if (aborted(signal)) throw new DOMException("Aborted", "AbortError");
   return btoa(binary);
 }
