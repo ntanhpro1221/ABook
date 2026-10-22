@@ -14,6 +14,17 @@ interface CoverCodec {
     fun normalize(raw: ByteArray): Normalized
 }
 
+/**
+ * Phiên bản bìa THEO NỘI DUNG - `covers.content_version` (abook/webui/covers.py): 8 byte đầu SHA-256 của JPEG đã chuẩn hoá, chia dư 10^10 (lớp sửa
+ * nhận phiên bản tới 10^10). Hai ảnh khác nhau không bao giờ chung địa chỉ `?v=` dù đặt cùng một giây (soát a97 T2).
+ */
+object CoverVersion {
+    private val MODULUS = java.math.BigInteger.TEN.pow(10)
+
+    fun of(jpeg: ByteArray): Long =
+        java.math.BigInteger(1, java.security.MessageDigest.getInstance("SHA-256").digest(jpeg).copyOf(8)).mod(MODULUS).toLong()
+}
+
 /** Phần của covers.py không cần bộ giải mã ảnh: nhận ảnh từ giao diện gửi lên dạng data URL. */
 object Covers {
     const val MAX_UPLOAD_BYTES = 16 * 1024 * 1024

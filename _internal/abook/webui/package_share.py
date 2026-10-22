@@ -49,6 +49,7 @@ def library_entry(path: Path, key: str, state: dict[str, Any]) -> dict[str, Any]
     shared_book = manifest(path, key)
     entry["bytes"] = download_bytes(shared_book)
     entry["audioVersion"] = shared_book["audioVersion"]
+    entry["metaVersion"] = shared_book["metaVersion"]
     if view.get("author"):
         entry["author"] = view["author"]  # tìm và sắp theo tác giả ở máy kia cần nó; dự án Studio không có tác giả nên không mang khoá
     meta = _cover_meta(path, packages.edited_manifest(path))
@@ -109,7 +110,7 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
         [book.get("version"), [(chapter["id"], chapter["sha256"]) for chapter in chapters],
          hashlib.sha256(book_edits.dump(edits)).hexdigest() if not book_edits.is_empty(edits) else ""],
         sort_keys=True).encode()).hexdigest()[:16]
-    return {
+    result = {
         "format": listen_view.FORMAT,
         "id": key,
         "title": view["title"],
@@ -130,6 +131,8 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
         "cover": {**meta, "file": covers.COVER_FILE} if meta else None,
         **({"music": music} if music else {}),
     }
+    result["metaVersion"] = listen_view.metadata_version(result)
+    return result
 
 
 def _shared_cast(path: Path) -> bytes:

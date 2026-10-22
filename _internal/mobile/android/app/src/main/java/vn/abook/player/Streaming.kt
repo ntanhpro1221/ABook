@@ -165,7 +165,10 @@ object Streaming {
         )
         PeerPaths.checkManifest(manifest)
         require(manifest.getString("id") == remote) { "Mã sách máy gửi trả về không khớp; bạn hãy thử lại." }
-        if (peer != null) manifest.put("id", id).put("source", peer).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, peer))
+        if (peer != null) {
+            manifest.put("id", id).put("source", peer).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, peer))
+            Peers.localizeSeries(manifest, peer)
+        }
         // Gói đổi (thêm/thu lại chương, đổi bìa): chỉ bỏ chữ đọc theo của chương thật sự đổi; dàn nhân vật được thay khi tải được bản mới.
         val previous = Store.streamManifest(id)
         StreamRefresh.invalidateCover(Store.bookDir(id), previous, manifest)

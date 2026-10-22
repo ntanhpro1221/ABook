@@ -104,6 +104,20 @@ object Store {
     }
 
     /**
+     * Sửa `book.json` của cuốn đã tải tại chỗ (đọc, đổi, ghi nguyên tử dưới cùng khoá với mọi nơi khác ghi nó). Giữ mốc sửa của file: "Mới thêm" và
+     * `updatedAt` của thư viện chia sẻ đọc mốc ấy, nên chỉ đổi mô tả thì cuốn không nhảy lên đầu "Mới thêm". Cuốn không còn thì không làm gì.
+     */
+    @Synchronized
+    fun rewriteManifest(id: String, change: (JSONObject) -> JSONObject): Boolean {
+        val file = File(bookDir(id), "book.json")
+        val current = readJson(file) ?: return false
+        val stamp = file.lastModified()
+        writeAtomic(file, change(current).toString())
+        if (stamp > 0) file.setLastModified(stamp)
+        return true
+    }
+
+    /**
      * `book.json` như NGƯỜI NGHE thấy: lớp sửa (BookEdits: tên sách, bìa, tên chương, nhạc) phủ lên sách, kèm `edits` (số
      * thay đổi) và `capabilities` (docs/EDITING.md) - trình phát, thông báo, widget, thư viện đều đọc qua đây.
      */

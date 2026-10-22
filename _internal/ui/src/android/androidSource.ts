@@ -6,6 +6,7 @@ import type { VieneuBackend } from "@/listen/VieneuModuleCard";
 import { EbookLibrary, EbookPlayer, ReadAloud, type LocalBook } from "./plugins";
 import { phonePrepare } from "./readAloud";
 import { phoneTextImport } from "./textImport";
+import { recentFirst } from "@/listen/librarySort";
 
 // Phía Nghe trên Android: đọc sách đã tải về máy, và sách trên máy tính nghe thẳng qua mạng (EbookLibrary). Audio chương do lõi phát native mở thẳng từ
 // file, nên audioUrl không dùng tới; câu mẫu nhân vật phát trong WebView qua đường dẫn file đã chuyển đổi.
@@ -60,6 +61,8 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
       : null,
     chapters: withChapters ? chapters : undefined,
     parts: book.parts ?? [],
+    // Liên kết bộ truyện ("Làm tiếp cuốn này") đi cùng gói sách: giữ nguyên, đổi tên một phần không làm mất nhóm (soát a97 V2).
+    series: book.series ?? null,
     // Nghe thẳng từ thiết bị ghép (Peers.kt): "Trên <tên máy>"; từ máy tính chính: "Trên máy tính".
     remote: book.sourceName ? { computer: book.sourceName } : Boolean(book.streamed),
     // Dự án Studio của máy tính nhận phần sửa của cuốn (máy tính chính hay máy tính ghép thêm): mở Studio của máy ấy ở đúng cuốn.
@@ -100,7 +103,8 @@ export const androidSource: ListenSource = {
     // Sách trên máy tính chưa tải cũng là sách của thư viện này (nghe thẳng - Streaming.kt). Máy tính không trả lời
     // thì chúng không hiện: bấm vào mà không nghe được chỉ làm người nghe bối rối.
     const streamed = await EbookLibrary.streamableBooks().then((reply) => reply.books).catch(() => []);
-    return [...books, ...streamed].map((book) => toListenBook(book, false));
+    // Hai nguồn nối nhau không phải thứ tự "nghe gần đây": xếp theo lần nghe cuối (cùng khoá với máy tính) - soát a97 T1.
+    return recentFirst([...books, ...streamed].map((book) => toListenBook(book, false)));
   },
   async book(id) {
     const book = await EbookLibrary.book({ id });

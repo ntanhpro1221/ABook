@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hasNewWords, hasNewAudio } from "./bookUpdates";
+import { hasNewAudio, hasNewMeta, hasNewWords } from "./bookUpdates";
 
 it("bản thu cùng cỡ đã đổi: mời cập nhật; tải xong hết nhắc", () => {
   expect(hasNewAudio({ downloaded: true, audioVersion: "new", localAudioVersion: "old" })).toBe(true);
@@ -27,4 +27,12 @@ describe("sách đã tải có chữ sáng theo giọng đọc mới không", ()
     expect(hasNewWords({ downloaded: true, wordsVersion: "b2", localWordsVersion: "a1" })).toBe(true);
     expect(hasNewWords({ downloaded: true, wordsVersion: "b2", localWordsVersion: "b2" })).toBe(false);
   });
+});
+
+it("đổi riêng tên / tác giả / tên chương ở máy tính: dấu mô tả khác thì mời cập nhật tên, máy tính cũ không dấu thì không", () => {
+  expect(hasNewMeta({ downloaded: true, metaVersion: "m2", localMetaVersion: "m1" })).toBe(true);
+  expect(hasNewMeta({ downloaded: true, metaVersion: "m2" })).toBe(true);
+  expect(hasNewMeta({ downloaded: true, metaVersion: "m2", localMetaVersion: "m2" })).toBe(false);
+  expect(hasNewMeta({ downloaded: true, localMetaVersion: "m1" })).toBe(false);
+  expect(hasNewMeta({ downloaded: false, metaVersion: "m2" })).toBe(false);
 });
