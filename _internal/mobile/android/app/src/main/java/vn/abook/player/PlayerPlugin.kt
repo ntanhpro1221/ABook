@@ -135,6 +135,11 @@ class PlayerPlugin : Plugin() {
 
     @PluginMethod fun play(call: PluginCall) = act(call) { Playback.play() }
     @PluginMethod fun pause(call: PluginCall) = act(call) { Playback.pause() }
+    /** Đóng sách: tạm dừng giọng và nhả bộ phát nhạc nền ([MusicBed.release]) - không giữ bài nhạc tới lần mở sách sau. */
+    @PluginMethod fun release(call: PluginCall) = act(call) {
+        Playback.pause()
+        MusicBed.release()
+    }
     @PluginMethod fun toggle(call: PluginCall) = act(call) { Playback.toggle() }
     @PluginMethod fun next(call: PluginCall) = act(call) { Playback.next() }
     @PluginMethod fun previous(call: PluginCall) = act(call) { Playback.previous() }

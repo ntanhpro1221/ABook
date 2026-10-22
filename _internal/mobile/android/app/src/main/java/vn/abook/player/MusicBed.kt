@@ -181,6 +181,8 @@ object MusicBed {
     /** Giọng đọc đang ở `seconds` của chương `chapterId` trong cuốn `bookId`; `isPlaying` = giọng đang chạy. */
     fun sync(bookId: String, chapterId: Int?, seconds: Double, isPlaying: Boolean) {
         val appContext = context ?: return
+        if (MusicCues.staleAfterClose(closedBook, bookId, isPlaying)) return
+        closedBook = ""
         if (bookId != book) {
             stop()
             failed.clear()
@@ -302,6 +304,17 @@ object MusicBed {
             else -> bed.perTick = abs(goal - bed.player.volume) * STEP_MS / MusicCues.mix.stepRampMs
         }
         startFade()
+    }
+
+    /** Cuốn vừa đóng ([release]): tin "giọng dừng" đến muộn của chính cuốn ấy không được mở lại bài nhạc; chỉ giọng chạy lại hay cuốn khác mới thôi chặn. */
+    private var closedBook = ""
+
+    /** Đóng sách: như [stop] và nhớ cuốn đã đóng ([closedBook]) - tạm dừng giọng gửi tin `sync(false)` về sau, tin ấy không dựng lại trình phát nhạc. */
+    fun release() {
+        val was = book
+        stop()
+        book = ""
+        closedBook = was
     }
 
     /** Dừng hẳn (đổi cuốn, tắt dịch vụ phát): nhả mọi trình phát nhạc, ghi chỗ đang tới của danh sách phát. */
@@ -434,7 +447,7 @@ object MusicBed {
         if (isFailed(link)) return null
         if (link.startsWith(MusicStore.LOCAL_PREFIX)) return DeviceMusic.store(appContext).file(link)?.let { Uri.fromFile(it) }
         val catalog = DeviceMusic.catalog(appContext)
-        catalog.use(link)?.let { return Uri.fromFile(it) }
+        catalog.use(link, infos[link])?.let { return Uri.fromFile(it) } // file cụt (khác `bytes` danh mục) bị xoá ở đây rồi tải lại
         fetch(appContext, link)
         return null
     }
@@ -732,8 +745,10 @@ object MusicBed {
                 var busy = false
                 current?.let { bed ->
                     val player = bed.player
-                    player.volume = MusicCues.toward(player.volume, bed.goal, bed.perTick)
-                    if (abs(player.volume - bed.goal) < 1e-4f) bed.entering = false else busy = true
+                    // Bài còn tải / đệm thì chưa mờ vào: để lúc có tiếng mới nhích từ 0 lên, không nhảy thẳng tới mức (soát B3).
+                    val ready = player.playbackState.let { it == Player.STATE_READY || it == Player.STATE_ENDED }
+                    player.volume = MusicCues.towardWhenReady(player.volume, bed.goal, bed.perTick, ready)
+                    if (ready && abs(player.volume - bed.goal) < 1e-4f) bed.entering = false else busy = true
                 }
                 val iterator = fading.iterator()
                 while (iterator.hasNext()) {

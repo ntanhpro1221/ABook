@@ -570,3 +570,5 @@ SQLite `integrity_check` trả `ok` và không có lỗi khóa ngoại. Các seg
 - bộ dependency đã pin trên máy đích.
 
 Bắt buộc smoke test một chapter 2.000–5.000 từ trước khi chạy book rất lớn.
+
+- 22-10 dev/uxfix84 (musfix: ghi công nhạc trong bản xuất, bỏ bài thiếu tác giả, kiểm bytes/sha1 bài tải, mờ vào khi sẵn sàng, nhả nhạc khi đóng sách): pytest 8381 passed / 9 skipped / 0 F/E; vitest 1243 passed; tsc 0; gradle 1213 / 0 F/E / 6 skip; hash 67286434.

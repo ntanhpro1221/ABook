@@ -54,9 +54,10 @@ class ChapterMusic:
     cues: list[dict[str, Any]]
     files: dict[str, Path]
     dropped: int = 0
+    tracks: dict[str, dict[str, Any]] = field(default_factory=dict)  # tên bài trong gói -> thông tin ghi công (title, creator, license...)
 
     def fingerprint(self) -> str:
-        """Đổi mốc, mức hay bài (kể cả bài tải lại khác cỡ) thì đổi - bản tạm chương trộn sẵn không dùng lại được."""
+        """Đổi mốc, mức hay bài (kể cả bài tải lại khác cỡ) thì đổi - bản tạm chương trộn sẵn không dùng lại được. Ghi công không tính: không đổi âm thanh."""
         files = {name: [path.name, path.stat().st_size if path.is_file() else None] for name, path in self.files.items()}
         data = json.dumps([self.cues, files, self.dropped], sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(data.encode("utf-8")).hexdigest()
@@ -69,11 +70,13 @@ def studio_music(project_root: Path, chapter_ids: Iterable[int], track_file: Cal
     dropped: list[int] = []
     packed = music_plan.package(project_root, ids, track_file, include_disabled=True, dropped=dropped)
     chapters, files = (packed[0]["chapters"], packed[1]) if packed is not None else ({}, {})
+    tracks = packed[0]["tracks"] if packed is not None else {}
     out: dict[int, ChapterMusic] = {}
     for chapter_id in ids:
         cues = chapters.get(str(chapter_id)) or []
         if cues or chapter_id in dropped:
-            out[chapter_id] = ChapterMusic(cues, {cue["track"]: files[cue["track"]] for cue in cues}, dropped.count(chapter_id))
+            out[chapter_id] = ChapterMusic(cues, {cue["track"]: files[cue["track"]] for cue in cues}, dropped.count(chapter_id),
+                                           {cue["track"]: tracks[cue["track"]] for cue in cues if cue["track"] in tracks})
     return out
 
 
@@ -103,7 +106,9 @@ def packaged_music(path: Path, chapter_ids: Iterable[int]) -> dict[int, ChapterM
         files = {cue["track"]: file for cue in cues if (file := packages.music_file(path, cue["track"])) is not None}
         kept = [cue for cue in cues if cue["track"] in files]
         if cues:
-            out[int(chapter_id)] = ChapterMusic(kept, files, len(cues) - len(kept))
+            tracks = (music or {}).get("tracks") if isinstance((music or {}).get("tracks"), dict) else {}
+            out[int(chapter_id)] = ChapterMusic(kept, files, len(cues) - len(kept),
+                                                {cue["track"]: tracks[cue["track"]] for cue in kept if isinstance(tracks.get(cue["track"]), dict)})
     return out
 
 
@@ -113,6 +118,67 @@ def packaged_state(path: Path) -> dict[str, bool]:
     music = _book_music(path, include_disabled=True)
     available = isinstance(music, dict) and any((music.get("chapters") or {}).values())
     return {"available": available, "enabled": available and (book_edits.load(path).get("music") or {}).get("enabled") is not False}
+
+
+# ---- Ghi công nhạc nền trong file xuất -------------------------------------------------------------------------------
+# Nhạc CC BY đã trộn vào file thì người nhận file phải thấy tên bài, tác giả, giấy phép (và lời "đã chỉnh sửa" - app cắt vòng, trộn dưới giọng,
+# đổi âm lượng): mỗi MP3 mang ghi công các bài của chính chương ấy trong thẻ comment, M4B mang cả cuốn, và một file `.txt` đi kèm (export.CREDITS_FILE) có cả cuốn.
+MODIFIED_NOTE = "Đã chỉnh sửa: các bài nhạc được cắt vòng, trộn nhỏ dưới giọng đọc và chỉnh âm lượng cho vừa sách."
+_CC_KINDS = re.compile(r"^by(-(nc|nd|sa))*$")
+
+
+def license_label(code: Any, url: Any = None) -> str:
+    """Tên giấy phép như người đọc quen ("CC BY 4.0", "CC0"): từ đường dẫn creativecommons nếu có, không thì từ mã (`ui/src/shared/format.ts` licenseLabel)."""
+    match = re.search(r"creativecommons\.org/(licenses|publicdomain)/([a-z-]+)/(\d+(?:\.\d+)?)", str(url or ""), re.IGNORECASE)
+    if match:
+        kind, slug, version = match.groups()
+        if kind.lower() == "licenses":
+            return f"CC {slug.upper()} {version}"
+        if slug.lower() == "zero":
+            return f"CC0 {version}"
+    raw = str(code or "").strip()
+    lower = raw.lower()
+    if lower == "cc0":
+        return "CC0"
+    return f"CC {lower.upper()}" if _CC_KINDS.match(lower) else raw
+
+
+def needs_credit(info: dict[str, Any]) -> bool:
+    """Bài có giấy phép đòi ghi công (khác cc0) và không phải nhạc người dùng nhập."""
+    licence = str(info.get("license") or "").strip().lower()
+    return bool(licence) and licence != "cc0" and info.get("source") != "local"
+
+
+def credit_line(info: dict[str, Any]) -> str:
+    """Một dòng ghi công của bài: chuỗi `attribution` của danh mục khi bài có tác giả; bài cc0 hay nhạc người dùng nhập không tác giả thì tự dựng
+    từ tên bài (không bao giờ in "by" rỗng). Không có gì để nêu thì rỗng."""
+    title, creator = str(info.get("title") or "").strip(), str(info.get("creator") or "").strip()
+    attribution = str(info.get("attribution") or "").strip()
+    if attribution and creator:
+        return attribution
+    name = f"“{title}”" if title else ""
+    parts = [name + (f" - {creator}" if creator else "")] if (name or creator) else []
+    licence = license_label(info.get("license"), info.get("licenseUrl"))
+    if parts and licence and info.get("source") != "local":
+        parts.append(f"giấy phép {licence}")
+    link = str(info.get("licenseUrl") or info.get("landing") or "").strip()
+    if parts and link and info.get("source") != "local":
+        parts.append(link)
+    return ", ".join(parts)
+
+
+def credit_text(infos: Iterable[dict[str, Any]]) -> str:
+    """Ghi công của các bài `infos` (mỗi bài một dòng, bỏ trùng, theo thứ tự gặp) + lời "đã chỉnh sửa" nếu có bài đòi ghi công; không có dòng nào thì rỗng."""
+    lines: list[str] = []
+    credited = False
+    for info in infos:
+        line = credit_line(info)
+        if line and line not in lines:
+            lines.append(line)
+            credited = credited or needs_credit(info)
+    if not lines:
+        return ""
+    return "\n".join(["Nhạc nền:", *lines, *([MODIFIED_NOTE] if credited else [])]) + "\n"
 
 
 def need_numpy() -> None:
@@ -351,6 +417,15 @@ class Mixer:
             db = offsets[name]
             out.append({**element, "gain": [[at, None if level is None else level + db] for at, level in element["gain"]]} if db else element)
         return out
+
+    def credits(self, chapter_ids: Iterable[int]) -> str:
+        """Ghi công (`credit_text`) các bài nhạc của những chương này đã trộn vào bản xuất; chương không có nhạc thì không góp dòng nào."""
+        infos = []
+        for chapter_id in chapter_ids:
+            music = self.chapter(chapter_id)
+            if music is not None:
+                infos.extend(music.tracks[cue["track"]] for cue in music.cues if cue["track"] in music.tracks)
+        return credit_text(infos)
 
     def note(self, chapter_ids: Iterable[int]) -> dict[str, int]:
         """Phần thêm vào kết quả xuất: {"musicMissing": N} khi N đoạn của các chương đã xuất thiếu nhạc (kể cả chương mọi bài đều hỏng)."""

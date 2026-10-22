@@ -7,6 +7,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- Khi bạn xuất MP3 hay M4B có chọn "Kèm nhạc nền", tên bài, tác giả, giấy phép và lời "đã chỉnh sửa" của nhạc CC BY đi cùng file: nằm trong thẻ ghi chú (từng chương MP3 ghi nhạc của chính chương ấy), cùng một file "Ghi công nhạc nền.txt" bên cạnh bản xuất trên máy tính; M4B trên điện thoại mang ghi công trong thẻ ghi chú. Bài không có tác giả không còn hiện chữ "by" trống.
+- Nhạc nền không còn chọn bài mang giấy phép đòi ghi công mà danh mục thiếu tên tác giả, cả khi chọn tự động lẫn khi bạn ghim bài; máy tính và điện thoại cùng bỏ bài ấy.
+- Điện thoại kiểm bài nhạc tải về đúng dung lượng và dấu vân tay danh mục ghi; bài tải cụt hay hỏng bị xoá và tải lại, thay vì nhạc im hay vấp mãi.
+- Bài nhạc nền bạn ghim thay một bài cũ không còn thừa hưởng chỗ kết ("đuôi") của bài cũ nên không bị cắt hay dừng giữa chừng trên máy tính và điện thoại.
+- Nhạc nền trên điện thoại không còn vọt lên to giữa chừng khi bài tải chậm; nhạc chọn theo cảnh trên điện thoại cũng tính độ phân tán riêng của từng bài như máy tính, nên chọn bài giống nhau ở cả hai máy.
+- Khi bạn đóng sách trên điện thoại, nhạc nền được nhả hẳn thay vì giữ bài đang mở tới lần mở sách sau.
+
 ## [0.4.122] - 2026-10-22
 
 ### Sửa lỗi

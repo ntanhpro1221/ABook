@@ -206,4 +206,14 @@ object MusicCues {
         val move = maxOf(perTick, 1e-5f)
         return if (volume < goal) minOf(goal, volume + move) else maxOf(goal, volume - move)
     }
+
+    /** Tin `sync` đến sau khi sách `closed` đã đóng ([MusicBed.release]): của chính cuốn ấy mà giọng không chạy (tin "dừng" của lệnh tạm dừng) thì bỏ - không dựng lại trình phát nhạc. */
+    fun staleAfterClose(closed: String, bookId: String, playing: Boolean): Boolean = closed.isNotEmpty() && bookId == closed && !playing
+
+    /**
+     * [toward] cho bài đang mờ VÀO: chưa có tiếng (`ready` = false: bài còn đang tải / đệm, nhất là nghe thẳng từ máy tính qua Wi-Fi) thì giữ nguyên
+     * âm lượng - nếu cứ nhích thì mờ vào đã hết trước khi bài kêu, và nhạc nhảy thẳng tới mức khi tải xong. `ready` = trình phát đã có dữ liệu (Player.STATE_READY).
+     */
+    fun towardWhenReady(volume: Float, goal: Float, perTick: Float, ready: Boolean): Float =
+        if (ready) toward(volume, goal, perTick) else volume
 }

@@ -5,7 +5,7 @@ import { Ban, Download, Music2, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Sh
 import { toast } from "sonner";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
-import { formatClock } from "@/shared/format";
+import { MUSIC_MODIFIED_NOTE, formatClock, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { MUSIC_LEVELS as LEVELS, levelText } from "@/shared/musicLevels";
 import { Button, IconButton, LiveText, Progress } from "@/shared/ui";
@@ -64,6 +64,7 @@ interface TrackInfo {
   title?: string;
   creator?: string;
   attribution?: string;
+  license?: string;
   /** "local": bài người dùng tự nhập ("Nhạc của tôi") - không có ghi công / giấy phép, chỉ tên + nghệ sĩ của chính file. */
   source?: string;
 }
@@ -785,10 +786,11 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
               <li key={link} className="break-words">
                 {track.source === "local"
                   ? `${[track.title, track.creator].filter(Boolean).join(" · ")} - nhạc của bạn, không có thông tin giấy phép`
-                  : (track.attribution ?? link)}
+                  : musicCreditText(track) || link}
               </li>
             ))}
           </ul>
+          {Object.values(plan.tracks).some((track) => musicNeedsModifiedNote(track.license)) && <p className="mt-2">{MUSIC_MODIFIED_NOTE}</p>}
         </details>
       )}
     </div>

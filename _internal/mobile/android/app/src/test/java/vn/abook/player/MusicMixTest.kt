@@ -129,6 +129,23 @@ class MusicMixTest {
     }
 
     @Test
+    fun a_pinned_track_does_not_inherit_the_old_tracks_tail_flag() {
+        val music = JSONObject(
+            """{"levelDb": -14, "tracks": {"$track": {"lufs": -20.0}}, "chapters": {"1": [
+                {"start": 0, "end": 300, "track": "$track", "gainDb": -14.99, "tail": true, "loopStart": 2.0, "loopEnd": 30.0}
+            ]}}""",
+        )
+        val sha = "c".repeat(40)
+        val pinned = BookEdits.applyMusic(music, JSONObject(
+            """{"music": {"pins": {"1:0": "local:$sha"}, "tracks": {"$sha": {"ext": "mp3", "title": "Bài", "lufs": -20.0}}}}""",
+        )) as JSONObject
+        val cue = pinned.getJSONObject("chapters").getJSONArray("1").getJSONObject(0)
+        assertEquals("music/$sha.mp3", cue.getString("track"))
+        assertFalse("bài ghim không phải bài đuôi của bài cũ", cue.has("tail"))
+        assertFalse(cue.has("loopStart") || cue.has("loopEnd"))
+    }
+
+    @Test
     fun a_new_chapter_reopens_the_track_even_when_its_first_cue_uses_the_same_one() {
         val cue = MusicCues.Cue(0.0, 120.0, track, -9.0)
         assertTrue("cùng chương, cùng bài: chơi tiếp", MusicCues.continues(track, cue, newChapter = false))
