@@ -15,6 +15,7 @@ import { exportedOnComputer } from "@/desktop/bookFileExport";
 import { startExport, trackExport } from "@/desktop/ExportBookFileJob";
 import { ffmpegCancel, ffmpegStart, ffmpegStatus, type MusicExportState } from "@/desktop/listenExport";
 import { api, ApiError, type BookSummary } from "./api";
+import { packBookFile } from "./bookFilePacking";
 import { pickFolder, useAppInfo, useParts } from "./data";
 import { redoExportNote } from "./exportText";
 import { BOOK_FILE_SPAN, followPackJob, PackCancelled, PackDetached, packError, packView, type PackJob } from "./projectPacking";
@@ -102,10 +103,10 @@ export function ExportDialog({
   const parts = useParts(book.id).data?.parts ?? [];
   // Giữa lúc đóng gói .abook / .abookproj, máy có thể đang TẢI nhạc nền (vài phút): hỏi để nói bài thứ mấy và cho Huỷ.
   const packing = busy && (kind === "abook" || kind === "abookproj");
-  // Gói cả dự án (.abookproj) và file sách (.abook) một cuốn là việc nền ở máy chủ (mất cả phút với sách dài): hỏi pha + đã/tổng ("chương X/N")
+  // Gói cả dự án (.abookproj) và file sách (.abook), một cuốn hay cả bộ, là việc nền ở máy chủ: hỏi pha + đã/tổng ("chương X/N")
   // để hiện thanh tiến độ; đóng hộp hay chuyển trang thì việc vẫn chạy.
   const [packJob, setPackJob] = useState<PackJob | null>(null);
-  const bookJob = useRef(false); // lượt đang chạy là file sách theo việc nền (cả bộ thì không - mỗi phần đếm lại từ đầu)
+  const bookJob = useRef(false); // lượt đang chạy là file sách theo việc nền, kể cả cả bộ
   const alive = useRef(true);
   // Gỡ màn hình giữa lúc gói: việc vẫn chạy ở máy chủ - giao cho ExportJobHost (thông báo có tiến độ, Huỷ, báo khi xong) thay vì để thông báo "đang gói" của hộp treo mãi.
   const handoff = useRef<{ packing: boolean; id: string; kind: "projectfile" | "bookfile" }>({ packing: false, id: book.id, kind: "projectfile" });
@@ -136,7 +137,7 @@ export function ExportDialog({
   }, [busy]);
   const cancelPacking = () => {
     setCancelling(true);
-    const url = kind === "abookproj" ? `/api/books/${book.id}/projectfile-job/cancel` : `/api/books/${book.id}/music-export/cancel${musicKind(kind)}`;
+    const url = `/api/books/${book.id}/${kind === "abookproj" ? "projectfile" : "bookfile"}-job/cancel`;
     void api(url, { method: "POST", body: {} }).catch(() => setCancelling(false));
   };
   /** Theo việc gói dự án của cuốn này tới khi xong; trả kết quả, hay ném `PackCancelled` / `PackDetached` (màn hình đã gỡ) / lỗi của máy chủ. */
@@ -218,7 +219,7 @@ export function ExportDialog({
       onOpenChange(false);
       return;
     }
-    bookJob.current = kind === "abook" && !wholeSeries;
+    bookJob.current = kind === "abook";
     setBusy(true);
     setFinished(null);
     setPackJob(null);
@@ -229,12 +230,8 @@ export function ExportDialog({
           ? await (attach ? Promise.resolve() : api(`/api/books/${book.id}/projectfile-job`, { method: "POST", body: { target } })).then(
               () => followPacking() as Promise<Packed>,
             )
-          : bookJob.current
-          ? await api(`/api/books/${book.id}/bookfile-job`, { method: "POST", body: { target } }).then(() => followPacking("bookfile") as Promise<Packed>)
-          : await api<{ folder: string; file: string; size: number; missingSources?: string[] } & Partial<SeriesResult>>(
-              `/api/books/${book.id}/bookfile`,
-              { method: "POST", body: { target, series: wholeSeries, ...(wholeSeries ? { single: layout === "single" } : {}) } },
-            );
+          : await packBookFile(book.id, { target, series: wholeSeries, ...(wholeSeries ? { single: layout === "single" } : {}) },
+                               () => followPacking("bookfile") as Promise<Packed>, attach);
       const lost = "missingSources" in result ? (result.missingSources?.length ?? 0) : 0;
       const skipped = result.skipped?.length ? ` · chưa có chương nào nên bỏ qua: ${result.skipped.map((part) => `Phần ${part.part}`).join(", ")}` : "";
       // `file` chỉ có khi cả bộ (hay một phần) nằm trong MỘT file; cả bộ mỗi phần một file thì có `parts` mà không có `file`.
@@ -364,7 +361,7 @@ export function ExportDialog({
             Sách dài thì có thể mất vài phút. Đóng hộp này cũng được - việc vẫn chạy và báo khi xong.
           </p>
           <div className="mt-5 dialog-actions">
-            {(downloading || cancelling || kind === "abookproj") && (
+            {packing && (
               <Button variant="secondary" disabled={cancelling} onClick={cancelPacking}>
                 Huỷ xuất
               </Button>

@@ -288,20 +288,26 @@ def package_version(book: dict[str, Any]) -> int:
 
 
 def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer: str = "ABook",
-                music_track: Callable[[str], Path | None] | None = None) -> Path:
+                music_track: Callable[[str], Path | None] | None = None,
+                progress: Callable[[str, int, int], None] | None = None) -> Path:
     """Cả bộ nhiều phần ("Làm tiếp cuốn này") trong MỘT file, phiên bản 3. `parts`: (số phần, thư mục dự án) theo thứ tự
     - hay chỉ thư mục, số phần là vị trí từ 1. Số phần là số của bộ nên phần bị bỏ qua không làm các phần sau đổi mã.
     Phần chưa có chương nào nghe được không vào file (người gọi nói tên chúng với người dùng: export.series_split)."""
     books: list[tuple[int, Path, dict[str, Any]]] = []
     musics: list[tuple[int, dict[str, Any]]] = []
     files: dict[str, Path | bytes] = {}
+    if progress is not None:
+        progress("prepare", 0, 0)
     for number, root in _numbered(parts):
+        if progress is not None:
+            progress("listen", len(books), len(parts))
         book = _packaged_book(root)
         playable = [chapter["id"] for chapter in book["chapters"] if chapter.get("file")]
         if not playable:
             continue
         packed = music_plan.package(root, playable, music_track) if music_track is not None else None
-        _add_chapters(root, book, files, part=number)
+        _add_chapters(root, book, files, part=number, tick=None if progress is None else
+                      lambda done, total: progress("listen", done, total))
         books.append((number, root, book))
         if packed is not None:
             musics.append((number, packed[0]))
@@ -335,7 +341,7 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
     music = _merge_music(musics)
     if music is not None:
         merged["music"] = music
-    return seal(merged, files, Path(out), producer=producer, version=3)
+    return seal(merged, files, Path(out), producer=producer, version=3, progress=progress)
 
 
 def _numbered(parts: Sequence[tuple[int, Path] | Path]) -> list[tuple[int, Path]]:
@@ -416,12 +422,23 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
     if not any(name.startswith(("chapters/", "texts/")) for name in files):
         raise BookFileError("Sách chưa có chương nào nghe được hay đọc được để xuất.")
     known = known or {}
+    described_files = {}
+    total_hash = sum(source.stat().st_size if isinstance(source, Path) else len(source) for source in files.values())
+    hashed = 0
+    for name, source in sorted(files.items()):
+        if progress is not None:
+            progress("hash", hashed, total_hash)
+        described_files[name] = described(name, source, known, None if progress is None else
+                                          lambda inside: progress("hash", hashed + inside, total_hash))
+        hashed += int(described_files[name]["size"])
+    if progress is not None:
+        progress("hash", hashed, total_hash)
     book["package"] = {
         "format": FORMAT,
         "version": version,
         "createdAt": datetime.now(UTC).isoformat(timespec="seconds"),
         "producer": producer,
-        "files": {name: described(name, source, known) for name, source in sorted(files.items())},
+        "files": described_files,
     }
     allowed = content_pattern(version)
     unknown = [name for name in files if not allowed.fullmatch(name)]
@@ -435,7 +452,7 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
             archive.writestr(_entry(MANIFEST), json_bytes(book))
             archive.writestr(_entry(READIUM_MANIFEST), json_bytes(_readium(book_edits.apply_manifest(book, edits or {}))))
             if progress is None:
-                write_entries(archive, files, order=_order)
+                write_entries(archive, files, order=_order, expected=described_files)
             else:
                 sizes = {name: int(meta["size"]) for name, meta in book["package"]["files"].items()}
                 total, written = sum(sizes.values()), 0
@@ -445,11 +462,13 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
                     progress("write", written, total)
                     written += sizes[name]
 
-                write_entries(archive, files, order=_order, before=before,
+                write_entries(archive, files, order=_order, before=before, expected=described_files,
                               during=lambda name, inside: progress("write", written - sizes[name] + inside, total))
                 progress("write", total, total)
         with temporary.open("rb+") as handle:
             os.fsync(handle.fileno())
+        if progress is not None:
+            progress("write", total, total)
         os.replace(temporary, out)
     except BaseException:
         temporary.unlink(missing_ok=True)
@@ -472,7 +491,8 @@ def described(name: str, source: Path | bytes, known: dict[str, dict[str, Any]],
 
 def write_entries(archive: zipfile.ZipFile, files: dict[str, Path | bytes], *, order: Callable[[str], Any],
                   stored_suffixes: tuple[str, ...] = _STORED, before: Callable[[str], None] | None = None,
-                  during: Callable[[str, int], None] | None = None) -> None:
+                  during: Callable[[str, int], None] | None = None,
+                  expected: dict[str, dict[str, Any]] | None = None) -> None:
     """Ghi từng mục vào gói theo `order`: audio và ảnh KHÔNG nén (phát thẳng trong gói), còn lại nén. `before(tên mục)`
     gọi trước mỗi mục (báo tiến độ; ném thì dừng giữa hai mục). `during(tên mục, byte đã ghi của mục)`: mỗi `_TICK` byte trong
     một file lớn (ném thì dừng giữa file); byte ra y hệt `ZipFile.write`."""
@@ -481,18 +501,23 @@ def write_entries(archive: zipfile.ZipFile, files: dict[str, Path | bytes], *, o
             before(name)
         source = files[name]
         stored = name.lower().endswith(stored_suffixes)
-        if isinstance(source, Path) and during is not None:
+        if isinstance(source, Path) and (during is not None or expected is not None):
             # Đúng việc `ZipFile.write` làm (cùng ZipInfo, cùng khối 8 KiB) nhưng có điểm kiểm giữa chừng.
             info = zipfile.ZipInfo.from_file(source, name)
             info.compress_type = zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED
             copied = reported = 0
+            digest = hashlib.sha256() if expected is not None else None
             with source.open("rb") as handle, archive.open(info, "w") as sink:
                 while chunk := handle.read(8192):
                     sink.write(chunk)
                     copied += len(chunk)
-                    if copied - reported >= _TICK:
+                    if digest is not None:
+                        digest.update(chunk)
+                    if during is not None and copied - reported >= _TICK:
                         reported = copied
                         during(name, copied)
+            if expected is not None and (copied != expected[name]["size"] or digest.hexdigest() != expected[name]["sha256"]):
+                raise BookFileError(f"Nguồn {name} đã thay đổi trong lúc đóng gói; bạn hãy đợi thu xong rồi xuất lại.")
         elif isinstance(source, Path):
             archive.write(source, name, compress_type=zipfile.ZIP_STORED if stored else zipfile.ZIP_DEFLATED)
         else:

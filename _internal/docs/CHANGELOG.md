@@ -7,6 +7,20 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Nếu audio nguồn thay đổi lúc bạn xuất .abook, máy báo rõ để bạn xuất lại và không công bố gói bị sai checksum.
+
+- Khi bạn xuất .abook cả bộ qua Studio từ xa, việc chạy nền có tiến độ và mã job để nối lại, kể cả khi đóng trang rồi mở lại.
+
+- Khi bạn huỷ xuất M4B lúc đang ghép cuối, FFmpeg được dừng, file dở được dọn và lượt xuất báo đã dừng.
+
+- Bạn có thể huỷ xuất .abook cả lúc đang băm hoặc ghi gói; đóng ứng dụng cũng yêu cầu dừng và dọn file dở.
+
+- Khi bản thu của câu đổi, phán quyết nghe cũ của bạn được giữ trong lịch sử và câu trở lại “chưa nghe”.
+
+- Bạn có thể tải tiếp hàng “Cần nghe lại” sau 600 câu; bộ lọc “Chưa xem” và “Đã xem” áp dụng cho toàn bộ sách.
+
+- Khi bạn đổi người nói cho nhóm hơn 2.000 câu, máy tính và điện thoại ghi đủ cả nhóm; thông báo dùng đúng số câu máy chủ đã ghi.
+
 ## [0.4.122] - 2026-10-22
 
 ### Sửa lỗi
