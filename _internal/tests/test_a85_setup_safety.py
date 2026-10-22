@@ -240,12 +240,19 @@ def test_missing_lightweight_dependency_is_repairable(tmp_path, monkeypatch):
 
 
 def test_repair_reuses_venv_and_models_and_only_runs_packages_and_verify(tmp_path, monkeypatch):
+    from abook.webui import studio_setup
     from abook.webui.studio_setup import StudioSetup, STEPS
     setup = StudioSetup(tmp_path / "studio", tmp_path, gpu=lambda: None)
     setup.pythonw.parent.mkdir(parents=True)
     setup.pythonw.write_bytes(b"fake")
     setup.ollama_executable.parent.mkdir(parents=True)
     setup.ollama_executable.write_bytes(b"fake")
+    # Model còn nguyên (a96 V1: `damaged` đối chiếu file thật) - chỉ thư viện thiếu.
+    (setup.runtime / "models" / "whisper").mkdir(parents=True)
+    (setup.runtime / "models" / "whisper" / "large-v3-turbo.pt").write_bytes(b"fake")
+    setup.word_align.mkdir(parents=True)
+    for item in studio_setup.WORD_ALIGN_FILES:
+        (setup.word_align / item.name).write_bytes(b"fake")
     (tmp_path / "studio-requirements.txt").write_text("psutil==1\n")
     (tmp_path / "uv.lock").write_text('[[package]]\nname="psutil"\nversion="1"\nwheels=[{hash="sha256:' + "0" * 64 + '"}]\n')
     setup._save(done=[s for s, *_ in STEPS], pins=setup._pins())
@@ -326,7 +333,8 @@ def test_faster_whisper_download_never_follows_main(tmp_path, monkeypatch):
     requests = []
     models = []
     monkeypatch.setitem(sys.modules, "huggingface_hub", SimpleNamespace(snapshot_download=lambda **kw: requests.append(kw) or str(tmp_path / "snapshot")))
-    monkeypatch.setitem(sys.modules, "whisper", SimpleNamespace(load_model=lambda *_a, **_k: None))
+    monkeypatch.setitem(sys.modules, "whisper", SimpleNamespace(load_model=lambda *_a, **_k: None,
+                                                               _MODELS={"turbo": "https://example.invalid/models/" + "0" * 64 + "/large-v3-turbo.pt"}))
     monkeypatch.setitem(sys.modules, "faster_whisper", SimpleNamespace(WhisperModel=lambda name, **_kw: models.append(name)))
     monkeypatch.setenv("ABOOK_RUNTIME", str(tmp_path))
     monkeypatch.setenv("HF_HUB_CACHE", str(tmp_path / "hub"))

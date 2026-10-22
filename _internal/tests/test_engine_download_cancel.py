@@ -10,6 +10,8 @@ import pytest
 
 from abook.webui import server, studio_setup, supertonic_module, voice_picker, zerotts_module
 
+pytestmark = pytest.mark.usefixtures("names_only_models")  # luồng tải thử bằng file giả: xem conftest.names_only_models
+
 
 @pytest.fixture
 def module(tmp_path: Path):

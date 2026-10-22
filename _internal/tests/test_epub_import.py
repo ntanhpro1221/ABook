@@ -54,12 +54,13 @@ def test_an_epub_becomes_one_txt_chapter_per_spine_item_titled_by_its_table_of_c
     library = tmp_path / "lib" / "Nguồn EPUB"
     scan = actions.scan_inputs([str(epub)], epub_root=library)
     assert scan["errors"] == [] and scan["suggestedTitle"] == "Truyện thử EPUB"
-    assert [row["firstLine"] for row in scan["files"]] == ["Chương 1: Khởi đầu", "Chương 2: Gặp gỡ"], "bìa ngắn bị bỏ"
-    first = Path(scan["files"][0]["path"])
+    assert [row["firstLine"] for row in scan["files"]] == ["Bìa", "Chương 1: Khởi đầu", "Chương 2: Gặp gỡ"]
+    assert [bool(row.get("matter")) for row in scan["files"]] == [True, False, False], "bìa ngắn vẫn có mặt nhưng CHƯA tích, như Nghe ngay"
+    first = Path(scan["files"][1]["path"])
     assert first.parent.parent == library, "tách vào thư viện, không ghi cạnh file của người dùng"
     lines = [line for line in first.read_text(encoding="utf-8").splitlines() if line]
     assert lines == ["Chương 1: Khởi đầu", "“Xin chào,” Lucien nói.", "Trời mưa.", "Gió thổi & lá rơi."]
-    second = Path(scan["files"][1]["path"]).read_text(encoding="utf-8")
+    second = Path(scan["files"][2]["path"]).read_text(encoding="utf-8")
     assert "Natasha bước vào phòng." in second and "bad()" not in second
     # Mở lại cùng file: dùng lại thư mục đã tách, không tạo bản thứ hai.
     again = actions.scan_inputs([str(epub)], epub_root=library)
@@ -75,8 +76,9 @@ def test_two_volumes_in_one_folder_keep_their_own_order_and_titles_are_read_once
     _epub(volumes / "Tap 1.epub", OPF.replace("Truyện thử EPUB", "Truyện · Tập 1"))
     _epub(volumes / "Tap 2.epub", OPF.replace("Truyện thử EPUB", "Truyện · Tập 2").replace("Chương", "Hồi"))
     scan = actions.scan_inputs([str(volumes)], epub_root=tmp_path / "lib")
+    scan["files"] = [row for row in scan["files"] if not row.get("matter")]  # bìa của mỗi tập chưa tích
     assert [Path(row["path"]).parent.name.split(" - ")[0] for row in scan["files"]] == ["Tap 1", "Tap 1", "Tap 2", "Tap 2"]
-    assert [row["name"] for row in scan["files"]][:2] == ["0001 Chương 1 Khởi đầu.txt", "0002 Chương 2 Gặp gỡ.txt"]
+    assert [row["name"] for row in scan["files"]][:2] == ["0002 Chương 1 Khởi đầu.txt", "0003 Chương 2 Gặp gỡ.txt"]
     second = Path(scan["files"][1]["path"]).read_text(encoding="utf-8").splitlines()
     assert [line for line in second if line] == ["Chương 2: Gặp gỡ", "Natasha bước vào phòng."]
 
@@ -110,5 +112,5 @@ def test_credit_lines_of_an_epub_are_offered_once_not_repeated_as_notes(tmp_path
     with zipfile.ZipFile(epub, "a") as book:
         book.writestr("OEBPS/text/ch 2.xhtml", tail)
     scan = actions.scan_inputs([str(epub)], epub_root=tmp_path / "lib")
-    assert scan["files"][1]["tailCredits"], "khung gợi ý vẫn có các dòng ấy"
+    assert scan["files"][2]["tailCredits"], "khung gợi ý vẫn có các dòng ấy"
     assert not [note for note in scan["notes"] if "ghi công" in note], scan["notes"]

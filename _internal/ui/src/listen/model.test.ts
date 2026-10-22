@@ -273,7 +273,11 @@ describe("otherBooksToHear", () => {
 
 describe("bookmarkReadPath", () => {
   it("opens the reader on the sentence a reader bookmark points to; a player bookmark has no sentence", () => {
-    expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 12, quote: "Trời đã sáng." })).toBe("/book/b1/read/3?at=12");
+    const path = bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 12, quote: "Trời đã sáng." });
+    const url = new URL(path!, "http://local");
+    expect(url.pathname).toBe("/book/b1/read/3");
+    expect(url.searchParams.get("at")).toBe("12");
+    expect(url.searchParams.get("quote")).toBe("Trời đã sáng.");
     expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 0, quote: "" })).toBe("/book/b1/read/3?at=0");
     expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 64, note: "", at: 1 })).toBeNull();
   });
@@ -315,6 +319,14 @@ describe("nghe nối sang phần sau (soát a26 L1, L3)", () => {
     expect(continuingPart(part("Truyện · Phần 2"))?.id).toBe("Truyện · Phần 2");
     expect(continuingPart(part("Bộ · Tập 17"))).toBeNull();
     expect(continuingPart(undefined)).toBeNull();
+  });
+  it("phần nối tiếp đã đổi tên vẫn tự nghe nối: quan hệ lấy từ liên kết chuỗi, không từ hậu tố tên (soát a97 V3)", () => {
+    const renamed = { ...part("Ngày trở về"), series: { root: "first", part: 2 } } as ListenBook;
+    expect(seriesIndex([{ id: "first", title: "Bộ truyện" }, renamed]).get(renamed.id)!.unit).toBe("phần");
+    expect(partToContinue("finished", renamed)?.id).toBe("Ngày trở về");
+    expect(continuingPart(renamed)?.id).toBe("Ngày trở về");
+    // Không có liên kết thì vẫn đoán theo tên như trước; tập khác của bộ vẫn chỉ được mời.
+    expect(partToContinue("finished", part("Ngày trở về"))).toBeNull();
   });
 
   it("phần sau chưa có tốc độ riêng thì nghe tiếp đúng tốc độ phần trước, và nhớ luôn cho phần ấy", () => {

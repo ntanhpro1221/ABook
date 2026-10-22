@@ -24,6 +24,8 @@ from __future__ import annotations
 import multiprocessing as mp
 import os
 import sqlite3
+import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -214,6 +216,35 @@ class ReadOnlyVoiceDB:
             return list(connection.execute("SELECT * FROM segments ORDER BY chapter_id,seq"))
 
 
+TTS_POOL_POLL_SECONDS = 1.0
+TTS_POOL_STALL_SECONDS = 900.0
+"""Longest the parent waits with no result at all before giving up on the pool.
+
+Generous on purpose: the first result also waits for every worker to load its engines. A
+worker that dies is noticed within a poll; this only catches one that hangs alive."""
+TTS_POOL_JOIN_SECONDS = 60.0
+
+
+def _run_bounded(action: Any, seconds: float) -> bool:
+    """Run action on a helper thread; True if it finished within the time."""
+    done = threading.Event()
+
+    def run() -> None:
+        try:
+            action()
+        except Exception:  # noqa: BLE001 - a pool being torn down has nothing left to report
+            pass
+        finally:
+            done.set()
+
+    threading.Thread(target=run, daemon=True, name="tts-pool-teardown").start()
+    return done.wait(seconds)
+
+
+def _terminate_bounded(pool: Any) -> None:
+    _run_bounded(pool.terminate, TTS_POOL_JOIN_SECONDS)
+
+
 _COORDINATOR: list[Any] = []
 
 
@@ -277,9 +308,14 @@ class SynthesisPool:
         settings: dict[str, Any],
         database_path: Path,
         workers: int = TTS_POOL_WORKERS_DEFAULT,
+        *,
+        poll_seconds: float = TTS_POOL_POLL_SECONDS,
+        stall_seconds: float = TTS_POOL_STALL_SECONDS,
     ) -> None:
         if int(workers) < 1:
             raise ValueError("SynthesisPool needs at least one worker")
+        self.poll_seconds = float(poll_seconds)
+        self.stall_seconds = float(stall_seconds)
         self.settings = settings
         self.database_path = Path(database_path)
         self.workers = int(workers)
@@ -299,12 +335,40 @@ class SynthesisPool:
         pool, self._pool = self._pool, None
         if pool is None:
             return
-        pool.close()
-        pool.join()
+        # close()+join() waits for every submitted task; a task a dead worker took with it
+        # never finishes, so a plain join() would hang the caller exactly where the batch did.
+        def finish() -> None:
+            pool.close()
+            pool.join()
+
+        if not _run_bounded(finish, TTS_POOL_JOIN_SECONDS):
+            _terminate_bounded(pool)
 
     def restart(self) -> None:
         self.close()
         self.start()
+
+    def _worker_processes(self) -> list[Any]:
+        return list(getattr(self._pool, "_pool", None) or [])
+
+    def _lost_worker(self, original: list[Any]) -> bool:
+        """True when a worker present at the start of the batch has died.
+
+        mp.Pool quietly replaces a dead child, so the pool looks healthy afterwards, but the
+        task the dead child was running is gone and imap never yields it. Seeing the child
+        gone (or replaced by another pid) is the only signal there is.
+        """
+        current = {getattr(process, "pid", None) for process in self._worker_processes()}
+        for process in original:
+            if getattr(process, "exitcode", None) is not None or getattr(process, "pid", None) not in current:
+                return True
+        return False
+
+    def _abandon(self) -> None:
+        """Drop a pool that lost a task, without waiting for work that will never finish."""
+        pool, self._pool = self._pool, None
+        if pool is not None:
+            _terminate_bounded(pool)
 
     def synthesize_many(self, jobs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Synthesize a batch and return the results in the order the jobs were given.
@@ -317,7 +381,32 @@ class SynthesisPool:
         if not jobs:
             return []
         self.start()
-        return list(self._pool.imap(_worker_job, jobs))
+        original = self._worker_processes()
+        iterator = self._pool.imap(_worker_job, jobs)
+        # A real IMapIterator can be polled; anything else (a test double) is read plainly.
+        poll = getattr(iterator, "next", None)
+        if poll is None:
+            return list(iterator)
+        results: list[dict[str, Any]] = []
+        last_progress = time.monotonic()
+        while len(results) < len(jobs):
+            try:
+                results.append(poll(timeout=self.poll_seconds))
+                last_progress = time.monotonic()
+                continue
+            except mp.TimeoutError:
+                pass
+            if self._lost_worker(original):
+                reason = "một tiến trình TTS bị mất giữa chừng"
+            elif time.monotonic() - last_progress > self.stall_seconds:
+                reason = f"không có kết quả nào trong {self.stall_seconds:.0f} giây"
+            else:
+                continue
+            self._abandon()
+            # The caller already turns any exception into "redo these sequentially with the
+            # same seeds", so losing the pool costs speed and nothing else.
+            raise RuntimeError(f"Pool TTS song song không trả đủ kết quả ({len(results)}/{len(jobs)}): {reason}")
+        return results
 
     def __enter__(self) -> SynthesisPool:
         self.start()

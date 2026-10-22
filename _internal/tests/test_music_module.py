@@ -16,6 +16,8 @@ from abook.webui.music_local import LocalMusic
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from tests.test_music_local import songs  # noqa: F401 - fixture dùng chung
 
+pytestmark = pytest.mark.usefixtures("names_only_models")  # luồng tải thử bằng file giả: xem conftest.names_only_models
+
 
 class Machine:
     """Máy chỉ-nghe giả: không ffmpeg, không numpy/onnxruntime của riêng, không model; mọi lần "tải" ghi file giả và được đếm."""

@@ -8,6 +8,7 @@ import {
   meteredNotice,
   moduleAdvice,
   refreshModuleSizes,
+  removeAsk,
   selectionBytes,
   SUPERTONIC_COPY,
   suggestionText,
@@ -231,5 +232,25 @@ describe("câu trình đọc màn hình nghe ở thẻ mô-đun (soát a67)", ()
     expect(`${cancelled.live} ${cancelled.rest}`).toBe(label);
     expect(cancelled.live.length).toBeLessThan(label.length);
     expect(vieneuSpoken(status({ state: "error", error: "Không tải được." }))).toEqual({ live: "Không tải được.", rest: "" });
+  });
+});
+
+describe("removeAsk", () => {
+  const book = (title: string, left: number) => ({ title, people: ["Noah"], left });
+  it("nói số cuốn, vài tên cuốn và câu nào sẽ không đọc được", () => {
+    const text = removeAsk({ bookCount: 4, peopleCount: 6, left: 120, books: [book("A", 100), book("B", 20), book("C", 0), book("D", 0)] });
+    expect(text).toContain("4 cuốn đang dùng giọng này (“A”, “B”, “C” và 1 cuốn khác), 6 nhân vật.");
+    expect(text).toContain("120 câu chưa thu");
+    expect(text).toContain("tải lại giọng hay đổi giọng khác");
+    expect(text).toContain("câu đã thu vẫn nghe được");
+  });
+  it("cuốn đã thu xong thì chỉ báo khi cần thu lại", () => {
+    const text = removeAsk({ bookCount: 1, peopleCount: 2, left: 0, books: [book("A", 0)] });
+    expect(text).toContain("1 cuốn đang dùng giọng này (“A”)");
+    expect(text).not.toContain("chưa thu");
+  });
+  it("không cuốn nào dùng, hay không biết, vẫn có một câu hỏi ngắn", () => {
+    expect(removeAsk({ bookCount: 0, peopleCount: 0, left: 0, books: [] })).toContain("Chưa cuốn nào");
+    expect(removeAsk(null)).toContain("tải lại");
   });
 });

@@ -38,6 +38,7 @@ def test_progress_write_failure_rolls_back_then_retries(tmp_path, monkeypatch):
     before = listening.get("book")
     with monkeypatch.context() as patch:
         patch.setattr(module, "atomic_write_json", lambda *a, **k: (_ for _ in ()).throw(PermissionError("held")))
+        patch.setattr(module, "_append_journal", lambda *a, **k: (_ for _ in ()).throw(PermissionError("held")))  # chỗ nghe thường nối vào nhật ký
         with pytest.raises(OSError):
             listening.progress("book", 1, 20, 100)
     assert listening.get("book") == before

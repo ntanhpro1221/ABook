@@ -112,6 +112,23 @@ export function undoAction(client: QueryClient, bookId: string, endpoint: string
   return undoSteps(client, bookId, decisions.map((decision) => ({ endpoint, decision })), message);
 }
 
+/** Lời đáp của một bước hoàn tác. `sent`: lần bấm đã gửi sang máy giữ sách rồi - ở đây chỉ còn lời nhờ máy ấy rút lại. */
+export type UndoAnswer = { undone: number; restored: boolean; sent?: boolean };
+
+/** Thông báo sau khi hoàn tác - nói đúng điều đã xảy ra, không hứa hơn: lần bấm đã gửi sang máy giữ sách thì chưa chắc đã rút được. */
+export function undoToast(restored: boolean, sent: boolean, message?: string): [string, { description: string }] {
+  if (sent) {
+    return [
+      "Đã nhờ máy giữ sách rút lại",
+      { description: "Lần bấm này đã gửi sang máy giữ sách. Mình đã nhờ máy ấy rút lại; nếu nó đã đưa vào sách thì bạn sẽ thấy báo ở đây và cần chọn lại ở máy đó." },
+    ];
+  }
+  return [
+    "Đã hoàn tác",
+    { description: restored ? "Máy vừa đưa cách đọc mới vào sách, nên sẽ đọc lại theo cách cũ." : (message ?? "Việc trở lại như trước khi bấm.") },
+  ];
+}
+
 /** `undoAction` cho lần bấm đã đi nhiều đường (sửa cách đọc câu kèm người mới: /line rồi /speaker): rút lần lượt từng bước, theo thứ tự đưa vào. */
 export function undoSteps(client: QueryClient, bookId: string, steps: { endpoint: string; decision: Record<string, unknown> }[], message?: string) {
   return {
@@ -121,19 +138,17 @@ export function undoSteps(client: QueryClient, bookId: string, steps: { endpoint
         let done = 0;
         try {
           let restored = false;
+          let sent = false;
           for (const { endpoint, decision } of steps) {
-            const answer = await api<{ undone: number; restored: boolean }>(`/api/books/${bookId}/${endpoint}`, {
+            const answer = await api<UndoAnswer>(`/api/books/${bookId}/${endpoint}`, {
               method: "POST",
               body: { ...decision, withdraw: true },
             });
             restored ||= answer.restored;
+            sent ||= answer.sent === true;
             done += 1;
           }
-          toast.success("Đã hoàn tác", {
-            description: restored
-              ? "Máy vừa đưa cách đọc mới vào sách, nên sẽ đọc lại theo cách cũ."
-              : (message ?? "Việc trở lại như trước khi bấm."),
-          });
+          toast.success(...undoToast(restored, sent, message));
         } catch (error) {
           // Nhiều quyết định gửi lần lượt: một cái lỗi giữa chừng thì những cái trước đã hoàn tác thật - nói đúng số.
           toast.error(done > 0 ? `Mới hoàn tác được ${done}/${steps.length} việc` : "Không hoàn tác được", { description: (error as Error).message });

@@ -378,6 +378,21 @@ SENT_CASES: dict[str, dict[str, Any]] = {
         "previous": {"skip": {"1": ["Dịch: Nhóm Thử"], "2": ["Dịch: Nhóm Thử"]}},
         "current": {"skip": {"2": ["Dịch: Nhóm Thử"]}},
     },
+    # Ý muốn chờ Studio đã gửi: gỡ khỏi lớp sửa (subtract) nhưng biên nhận ở lại sổ để hoàn tác sau đó còn biết nhờ máy kia rút đúng thao tác nào (a90 V2).
+    "wish_receipt_stays_in_the_marks": {
+        "sent": {"wishes": {"speakers": {LUCIEN_LINE[0]: {"requested_at": 1759400002.0, "speaker": "HEIDI", "text_sha256": LUCIEN_LINE[1]}}}},
+        "current": {"wishes": {"speakers": {LUCIEN_LINE[0]: {"requested_at": 1759400002.0, "speaker": "HEIDI", "text_sha256": LUCIEN_LINE[1]}}}},
+    },
+    # Hoàn tác thao tác đã gửi: biên nhận chuyển sang `retract`, đếm là chưa gửi cho tới khi gói mang nó đi.
+    "retracted_wish_waits_for_the_next_send": {
+        "previous": {"retract": {"speakers": {LUCIEN_LINE[0]: 1759400002.0}}, "wishes": {"retakes": {NARRATION[0]: 1759400005.0}}},
+        "current": {},
+    },
+    "retracted_wish_goes_with_the_next_send": {
+        "previous": {"retract": {"speakers": {LUCIEN_LINE[0]: 1759400002.0}}, "wishes": {"retakes": {NARRATION[0]: 1759400005.0}}},
+        "sent": {"title": "Tên mới"},
+        "current": {"title": "Tên mới"},
+    },
 }
 # Chuỗi yêu cầu mỗi ca của hợp đồng máy chủ <-> LocalStudio (đường tính từ `/api/books/<mã>`). Ảnh bìa: `$cover` là data URL
 # của ảnh nhỏ (xem `tiny_cover`). Trường dễ đổi giữa hai bản cài (màu chủ đạo, phiên bản bìa) không so.
@@ -575,6 +590,17 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "GET", "path": "/edits"},
         {"method": "POST", "path": "/voice", "body": {"character": "NARRATOR", "preset": "Thiện Minh"}},
         {"method": "POST", "path": "/voice", "body": {"character": "NARRATOR", "avoid": "preset_a"}},
+        {"method": "GET", "path": "/edits"},
+    ],
+    # Giọng của máy đọc khác (ZeroTTS, Supertonic): khoá "baotrang"/"F1" đi vào ý muốn, người nghe thấy nhãn ("Bảo Trang") ở dàn nhân vật,
+    # ý muốn chờ và câu báo "đang chờ ở máy khác" - điện thoại đọc nhãn từ assets/voice_labels.json (VoiceLabels).
+    "wishes_voice_machine": [
+        {"method": "POST", "path": "/voice", "body": {"character": "HEIDI", "preset": "baotrang"}},
+        {"method": "GET", "path": "/cast"},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "POST", "path": "/voice", "body": {"character": "HEIDI", "preset": "F1", "seen": 0}},
+        {"method": "GET", "path": "/cast"},
+        {"method": "GET", "path": "/pending-changes"},
         {"method": "GET", "path": "/edits"},
     ],
     "wishes_retake_and_merge": [
@@ -866,6 +892,7 @@ def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str,
     from abook.webui.actions import FakeRunner
     from abook.webui.library import Preferences, book_id
     from abook.webui.listening import Listening
+    from abook.webui import server as server_module
     from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import _request
 
@@ -878,6 +905,9 @@ def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str,
         preferences.update({"libraryRoot": str(library)})
         app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(work / "prefs" / "listening.json"))
         server = Server(app, port=0).start()
+        # Điện thoại không có mô-đun giọng nào để tải, nên chọn giọng máy khác luôn qua; máy tính cũng coi như đã tải (ca wishes_voice_machine).
+        installed = server_module.engine_installed
+        server_module.engine_installed = lambda engine: True
         try:
             identifier = book_id(copy)
             recorded: list[dict[str, Any]] = []
@@ -899,6 +929,7 @@ def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str,
                                            headers={"X-Ebook-Token": "t"}, body=body)
                 recorded.append({**step, "status": status, "response": json.loads(data or b"null")})
         finally:
+            server_module.engine_installed = installed
             server.stop()
     return recorded
 

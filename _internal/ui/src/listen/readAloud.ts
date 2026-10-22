@@ -3,7 +3,7 @@ import type { Script, ScriptSegment } from "./model";
 import { makeAnchor, restoreAnchor, textFingerprint, type ReadingAnchor } from "./readingAnchor";
 import { LiveClip, MP3_MIME } from "./liveClip";
 import { LiveFeed, type MediaSourceLike } from "./liveFeed";
-import { isSpeakable, sceneBreakGaps } from "./textScript";
+import { isSpeakable, sceneBreakGaps, textScript } from "./textScript";
 import { absoluteWords, countTokens, usableWords, WORD_LEAD_MS, wordIndexAt, type WordSpan } from "./words";
 
 export { isSpeakable };
@@ -130,12 +130,23 @@ export interface SpeechTrack {
 /** Mốc thời gian của chương chỉ-có-chữ do nơi khác đọc (lõi native Android, plugin ReadAloud.script): từng câu theo thứ tự trong chương -
  *  `start` / `end` giây, `words` ms tính từ ĐẦU CHƯƠNG (cùng quy ước words.ts), vắng khi câu chưa đọc (chỉ có mốc ước). */
 export interface ReadAloudTimings {
+  textHash?: string;
+  /** Bản chữ chính xác của lõi; active chỉ đúng với chương đang phát/đứng chờ. */
+  paragraphs?: string[];
+  active?: boolean;
   segments: { start: number; end: number; words?: WordSpan[] }[];
+}
+
+/** Native đang giữ chương cũ: chữ và mốc phải lấy cùng một snapshot. */
+export function timedTextScript(script: Script, timings: ReadAloudTimings): Script {
+  const base = timings.active && timings.paragraphs ? textScript(script.chapterId, script.title, timings.paragraphs.join("\n\n")) : script;
+  return mergeTimings(base, timings);
 }
 
 /** Gắn mốc của nơi khác vào kịch bản chữ: màn đọc sáng đoạn / chữ đúng như khi bộ máy web tự điền (ReadAloudEngine.publish). */
 export function mergeTimings(script: Script, timings: ReadAloudTimings): Script {
-  if (!timings.segments.length) return script;
+  if (!timings.segments.length || timings.segments.length !== script.segments.length ||
+      timings.textHash !== textFingerprint(script.segments.map((segment) => segment.text))) return script;
   const segments = script.segments.map((segment, i): ScriptSegment => {
     const timed = timings.segments[i];
     if (!timed || !Number.isFinite(timed.start) || !Number.isFinite(timed.end)) return segment;

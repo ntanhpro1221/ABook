@@ -1,6 +1,33 @@
 # Test report
 
-Ngày cập nhật: 2026-10-22
+Ngày cập nhật: 2026-10-23
+
+Đợt `0.4.129` trên `ABook_rel437` (6d0d770a = 0.4.128 + a98fix `dev/uxfix114` + a99fix `dev/uxfix115` + nhạc P3 vòng 8 `dev/loopp3w` fe0779a0 + a100fix `dev/uxfix116`): nhập sách (mã TCVN3/VNI báo trước, file nén hỏng báo lỗi rõ, tiêu đề chương 'Chương 12a'/'cuối', dòng lề PDF, đề xuất phần đầu/cuối sách); xuất và chia sẻ (lưu .abook có bản lưu phòng, nhạc kèm sách đã nhập, ước cỡ đủ phần ngoài audio); cài đặt (hẹn giờ ngủ, khoảng số chung hai nền); nhạc P3 chỗ nối bed44gthu 10/10. Bộ đầy đủ t114: pytest 9060 passed, 9 skipped, 1 failed (test a68 còn chờ cỡ chỉ-audio, sửa theo ước cỡ mới - chạy lại file xanh); Vitest 1513 passed, 1 skipped; tsc --noEmit exit 0; Gradle testDebugUnitTest XML 1519 tests, 0 failures, 0 errors. Hash khoá `c9176123`.
+
+Đợt `0.4.128` trên `ABook_rel437` (90ef404d = 0.4.127 + a96fix `dev/uxfix111` + băm mô-đun nhớ qua lần mở `dev/uxfix113` + nhạc P3 vòng 6-7 `dev/loopp3w` c5ea23c0 + a97fix `dev/uxfix112`): Studio kiểm file mô-đun theo SHA, báo thiếu chỗ đĩa đúng ổ, tiến trình thu âm chết không treo lô; chỗ nối nhạc P3 khớp ≤ 0,5 ms (bed44chinh 10/10); quản lý thư viện (đổi thư viện, xoá/Bắt đầu chung khoá, metaVersion, series, Tải sách liệt kê phần tải dở, bìa theo nội dung). Bộ đầy đủ t113: pytest 9001 passed, 9 skipped, 0 failed; Vitest 1433 passed, 1 skipped; tsc --noEmit exit 0; Gradle testDebugUnitTest XML 1493 tests, 0 failures, 0 errors. Hash khoá `c9176123`.
+
+Đợt `0.4.127` trên `ABook_rel437` (245eff98 = 0.4.126 + a94 `dev/uxfix108` + a95fix `dev/uxfix109` + nhãn giọng điện thoại `dev/uxfix110`): hộp Đổi giọng gửi khoá giọng, tên giọng máy khác trên cả hai nền, gỡ mô-đun giọng hỏi trước; chỗ đọc theo hồ sơ + anchor, hàng đợi nhận chương mới, chữ và tiếng giữ khớp tới lần nạp sau. Bộ đầy đủ t111: pytest 8963 passed, 9 skipped, 0 failed; Vitest 1419 passed, 1 skipped; tsc --noEmit exit 0; Gradle testDebugUnitTest XML 1481 tests, 0 failures, 0 errors. Hash khoá `c9176123`.
+
+Đợt `a95fix` trên `dev/uxfix109`, nền `895ea9a2` (0.4.126): sửa V1–V7, T1, T2 của soát đọc/nghe.
+Test nháp đã đưa cạnh mã và đảo thành hành vi đúng: lượt đầu 11 failed / 14 ca, sau sửa xanh.
+Chỗ đọc theo hồ sơ có anchor/thời điểm, bản mới hơn thắng, flush khi rời/ẩn và retry; native lưu/đồng bộ cùng hợp đồng.
+Hàng đợi nhận chương mới; cache script theo phiên bản audio/mốc; bản chữ đang đọc to giữ cùng mốc tới lần nạp sau.
+Dấu trang tìm bằng câu trích, recap chia khoảng theo chương; Nhạc của tôi làm mới hàng bài và cỡ chữ có tên trợ năng riêng.
+Kiểm cuối: Vitest 1413 passed, 1 skipped (176 file); tsc --noEmit exit 0; pytest liên quan 76 passed,
+4 deselected vì cần socket HTTP (kiểm offline chặn mạng thật); Gradle testDebugUnitTest exit 0,
+XML 1478 tests, 0 failures, 0 errors, 7 skipped (192 suite). Các test Kotlin mới: StoreReadingTest, QueueRefreshTest.
+Hash khoá đầu/cuối `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`; không sửa file khoá.
+Chưa kiểm nghe/hiển thị trên thiết bị thật hay NVDA/TalkBack; không tạo model/audio. Bộ đầy đủ t109: pytest 1 trượt (chương của gói thiếu audioVersion/wordsVersion như chương dự án) -> sửa package_share._chapter, file liên quan xanh.
+
+Đợt `0.4.126` trên `ABook_rel437` (b1e1986e = a90a + a90b + a92 `dev/uxfix106` + a93 `dev/uxfix107` + p3w `dev/loopp3w`): Studio lần đầu (nút Tạo chờ quét nguồn hiện tại, đóng app dừng lượt cài + khoá cài liên tiến trình, Whisper tải nối, huỷ gửi nguồn, xem trước UTF-16/CP1258, thời gian là số tham khảo); liên kết hai máy (dấu băm audio lưu đĩa: 4200 file lượt sau 27,16 s -> 0,08 s kể cả sau khởi động lại; ghép lại theo vân tay chứng chỉ; dọn sách ảo đã mất; /sync/v1/library cô lập cuốn lỗi; điện thoại giữ chữ Đọc theo của chương không đổi); nhạc nền P3 sau cờ tắt (chuyển a87 -> P3 chờ AudioTrack P3 ra loa, khớp |δ| <= 10 ms; máy ảo §43 thử vòng 6 đạt 6/6, S6 δ 3,7 ms). Toàn bộ: pytest 1 failed (test hẹn giờ chập chờn khi máy bận, chạy riêng qua; nới hạn 0,05 -> 0,5 s ở 9847d0f2); vitest 1385 passed, 1 skipped; tsc exit 0; JVM 1474 tests, 0 F/E. Hash khoá c9176123 không đổi.
+
+Đợt `a90b` trên `dev/uxfix105` (nền 6aae011e): hàng "Cần nghe lại" tách mã cảnh báo ghép, cả họ "ASR không phán xử được" vào
+"Chưa kiểm được" và không hiện transcript ảo; một câu một thẻ (thẻ mang thêm lý do logprob); Hoàn tác sau khi điện thoại đã gửi:
+gói gửi mang lời nhờ rút (edits_removed wishes), máy giữ sách rút đúng thao tác theo mốc (cancelled.withdraw_folded), Python + Kotlin;
+"Việc cần bạn"/"Cần nghe lại" tự làm mới mỗi 15 s khi sách đang chạy. Toàn bộ: pytest exit 0 (9 skipped, 2 xfailed, 0 F/E);
+vitest 1361 passed, 1 skipped; tsc exit 0; JVM 1403 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
+
+Đợt `a90a` (C1/C2/V3) trên `dev/uxfix104`, nền `6aae011e`: dấu SHA-256 chương qua đồng bộ/thư viện/bộ đệm; nhập lại .abook cập nhật audio và hỏi trước bản cũ, giữ sửa/chỗ nghe; lưu dấu bản xuất, nhắc bản cũ và xuất riêng MP3 đổi. Kiểm 130 file pytest: 2 failed, 2046 passed, 3 skipped, 1 xfailed, 1 warning in 863.16s (0:14:23); chạy lại: 54 passed in 32.11s. Vitest: Tests  1354 passed | 1 skipped (1355); tsc exit 0. JVM 1401 passed, 0 F/E, 7 skipped. Hash khoá c9176123 không đổi. Thêm bộ đệm băm (máy tính theo cỡ+mtime_ns, điện thoại prints.json ghi lúc tải): sync.manifest lần 2 1,38 s -> 0,021 s (100 chương x 20 MB). Toàn bộ: pytest exit 0 (0 F/E); vitest 1354 passed, 1 skipped; tsc exit 0; JVM 1415 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
 
 Đợt `a88fix` trên `dev/uxfix102` (nền d787857c): Tạm dừng / Dừng / Tiếp tục / hồi phục sự cố trong Studio - trạng thái "Đang dừng…"
 khoá hai nút tới checkpoint kế; Dừng khi supervisor đã chết trả 409 tiếng Việt thay 500; "Làm lại phân tích từ đầu" kiểm trước, đưa bản dở

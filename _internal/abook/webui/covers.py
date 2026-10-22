@@ -14,10 +14,12 @@ from __future__ import annotations
 import base64
 import binascii
 import colorsys
+import hashlib
 import io
 import json
 import os
 import re
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -38,6 +40,35 @@ class CoverError(ValueError):
     """Ảnh không dùng được làm bìa - thông điệp đọc được cho người dùng."""
 
 
+VERSION_MODULUS = 10**10  # book_edits._clean_cover nhận phiên bản tới 10**10; điện thoại (Store.kt) tính cùng công thức
+
+
+def content_version(data: bytes) -> int:
+    """Phiên bản bìa THEO NỘI DUNG (8 byte đầu của SHA-256, chia dư 10**10): hai ảnh khác nhau không bao giờ chung `?v=` dù đặt cùng một giây,
+    cùng một ảnh thì cùng phiên bản ở mọi máy. Địa chỉ ảnh phát với `immutable` nên chỉ được trùng khi nội dung trùng (soát a97 T2)."""
+    return int.from_bytes(hashlib.sha256(data).digest()[:8], "big") % VERSION_MODULUS
+
+
+_FILE_VERSIONS: dict[str, tuple[int, int, int]] = {}  # đường dẫn -> (mốc sửa ns, cỡ, phiên bản): không băm lại bìa chưa đổi mỗi lần liệt kê thư viện
+_FILE_VERSIONS_LOCK = threading.Lock()
+
+
+def file_version(path: Path) -> int:
+    """`content_version` của một file bìa, nhớ theo (mốc sửa, cỡ)."""
+    stat = path.stat()
+    key = os.path.abspath(path)
+    with _FILE_VERSIONS_LOCK:
+        known = _FILE_VERSIONS.get(key)
+    if known is not None and known[:2] == (stat.st_mtime_ns, stat.st_size):
+        return known[2]
+    version = content_version(path.read_bytes())
+    with _FILE_VERSIONS_LOCK:
+        if len(_FILE_VERSIONS) > 4096:
+            _FILE_VERSIONS.clear()
+        _FILE_VERSIONS[key] = (stat.st_mtime_ns, stat.st_size, version)
+    return version
+
+
 def cover_file(project_root: Path) -> Path | None:
     path = project_root / COVER_FILE
     return path if path.is_file() else None
@@ -53,7 +84,7 @@ def cover_meta(project_root: Path) -> dict[str, Any] | None:
     except (OSError, ValueError):
         meta = {}
     return {
-        "version": int(path.stat().st_mtime),
+        "version": file_version(path),
         "color": str(meta.get("color") or ""),
         "width": int(meta.get("width") or 0),
         "height": int(meta.get("height") or 0),
