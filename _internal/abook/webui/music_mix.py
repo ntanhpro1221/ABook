@@ -76,6 +76,8 @@ def loop_bounds(seconds: Any, audible_start: Any = None, audible_end: Any = None
         whole = total if total is not None else end
         return LoopBounds(0.0, whole, whole, False, 0.0, whole)
     restart, out = number(loop_start), number(loop_end)
+    if out is not None and total is not None and out - LOOP_CROSSFADE_SECONDS <= end:
+        out = min(out, total)
     if (restart is not None and out is not None and start <= restart < out - LOOP_CROSSFADE_SECONDS <= end
             and out - restart - LOOP_CROSSFADE_SECONDS >= LOOP_MIN_PERIOD_SECONDS):
         return LoopBounds(start, end, out - restart - LOOP_CROSSFADE_SECONDS, True, restart, out)

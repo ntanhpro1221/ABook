@@ -1,0 +1,10 @@
+{
+ "format": "abook-music-catalog",
+ "version": 1,
+ "revision": "edge-empty",
+ "issued": "2026-10-04T00:00:00Z",
+ "grid": 5,
+ "shards": [],
+ "cells": {},
+ "files": {}
+}

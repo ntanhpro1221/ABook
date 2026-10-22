@@ -103,12 +103,12 @@ class M4bExportTest {
     )
 
     private fun finished(wide: Boolean = false, cover: Id3Tag.Cover? = null, artist: String = "Đức Trí", marked: List<Mp4Finish.Mark> = marks,
-                         delay: Int = 0): Pair<ByteArray, ByteArray> {
+                         delay: Int = 0, comment: String = ""): Pair<ByteArray, ByteArray> {
         val data = ByteArray(300) { (it * 7).toByte() }
         val source = File(scratch, "audio.m4a")
         muxerFile(data, source, wide = wide)
         val out = ByteArrayOutputStream()
-        Mp4Finish.finish(source, out, Mp4Finish.Tags("Sách thử: Tập 1", artist, cover), marked, delay)
+        Mp4Finish.finish(source, out, Mp4Finish.Tags("Sách thử: Tập 1", artist, cover, comment), marked, delay)
         return data to out.toByteArray()
     }
 
@@ -211,6 +211,17 @@ class M4bExportTest {
         val picture = items.last()
         assertEquals(13, ByteBuffer.wrap(result, picture.offset + 16, 4).int) // 13 = JPEG
         assertArrayEquals(cover.bytes, result.copyOfRange(picture.offset + 24, picture.offset + picture.size))
+    }
+
+    @Test
+    fun theMusicCreditsGoInTheCommentTagAndOnlyWhenThereAreSome() {
+        val credits = MusicCredits.text(listOf(JSONObject().put("title", "Bài A").put("creator", "Kevin").put("license", "by").put("attribution", "\"Bài A\" Kevin")))
+        val (_, result) = finished(comment = credits)
+        val items = tagItems(result)
+        assertEquals(listOf("©nam", "©ART", "aART", "©alb", "©gen", "©cmt"), items.map { String(result, it.offset + 4, 4, Charsets.ISO_8859_1) })
+        assertEquals(credits, String(result, items.last().offset + 24, items.last().size - 24, Charsets.UTF_8))
+        val plain = finished().second
+        assertEquals(listOf("©nam", "©ART", "aART", "©alb", "©gen"), tagItems(plain).map { String(plain, it.offset + 4, 4, Charsets.ISO_8859_1) })
     }
 
     @Test
