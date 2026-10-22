@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.126] - 2026-10-23
+
 ### Đồng bộ và xuất
 
 - Sách bạn đã tải trên điện thoại nhận được bản thu sửa, kể cả khi file mới cùng dung lượng; chỉ chương đổi cần tải lại. Nhập lại file `.abook` cập nhật bản thu và giữ chỉnh sửa, chỗ nghe của bạn; file cũ hơn sẽ hỏi trước khi thay.
