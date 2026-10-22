@@ -63,7 +63,7 @@ object M4bExport {
         try {
             val marks = encoder.encode(plan, work, stopped, progress)
             val counted = Counting(out)
-            Mp4Finish.finish(work, counted, Mp4Finish.Tags(plan.title, plan.narrator, plan.cover), marks, encoder.delay, stopped)
+            Mp4Finish.finish(work, counted, Mp4Finish.Tags(plan.title, plan.narrator, plan.cover, plan.music?.credits(plan.chapters.map { it.id }).orEmpty()), marks, encoder.delay, stopped)
             counted.flush()
             progress(plan.chapters.size, plan.chapters.size, 1.0)
             return Result(fileName(plan.title), counted.written, marks.size, plan.chaptersTotal)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { etaOf, excerpt, fileName, formatEta, formatFingerprint, formatLengthUp, formatSize, licenseLabel, shownReading } from "./format";
+import { MUSIC_MODIFIED_NOTE, etaOf, excerpt, fileName, formatEta, formatFingerprint, formatLengthUp, formatSize, licenseLabel, musicCreditText, musicNeedsModifiedNote, shownReading } from "./format";
 
 describe("shownReading", () => {
   it("capitalises each word of a name's reading for display", () => {
@@ -128,5 +128,24 @@ describe("formatLengthUp (soát a26 L10)", () => {
     expect(formatLengthUp(56)).toBe("1 phút");
     expect(formatLengthUp(3600)).toBe("1 giờ");
     expect(formatLengthUp(0)).toBe("0 phút");
+  });
+});
+
+describe("musicCreditText", () => {
+  it("uses the catalog's attribution when the track has an author, and never prints an empty 'by'", () => {
+    const by = { title: "Bài A", creator: "Kevin", attribution: '"Bài A" Kevin (incompetech.com), Licensed under Creative Commons' };
+    expect(musicCreditText(by)).toBe(by.attribution);
+    const cc0 = { title: "The Hope", creator: "", attribution: '"The Hope" by  licensed CC0: https://opengameart.org/content/the-hope' };
+    expect(musicCreditText(cc0)).toBe("The Hope");
+    expect(musicCreditText({ title: "Của tôi", creator: "Tôi" })).toBe("Của tôi - Tôi");
+    expect(musicCreditText({})).toBe("");
+  });
+  it("asks for the 'modified' note only for a licence that needs credit", () => {
+    expect(musicNeedsModifiedNote("by")).toBe(true);
+    expect(musicNeedsModifiedNote("by-sa")).toBe(true);
+    expect(musicNeedsModifiedNote("cc0")).toBe(false);
+    expect(musicNeedsModifiedNote("")).toBe(false);
+    expect(musicNeedsModifiedNote(undefined)).toBe(false);
+    expect(MUSIC_MODIFIED_NOTE).toMatch(/^Đã chỉnh sửa/);
   });
 });

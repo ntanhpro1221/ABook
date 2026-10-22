@@ -107,10 +107,19 @@ def chapter_file_name(number: int, total: int, full_title: str) -> str:
     return f"{number:0{width}d} - {safe_name(full_title, 90)}.mp3"
 
 
+CREDITS_FILE = "Ghi công nhạc nền.txt"  # file ghi công nhạc nền đi kèm bản xuất kèm nhạc (music_export.credit_text); điện thoại đặt đúng tên này
+
+
+def write_credits(path: Path, text: str) -> None:
+    """Ghi file ghi công nhạc nền (UTF-8, xuống dòng LF)."""
+    path.write_bytes(text.encode("utf-8"))
+
+
 def write_chapter(ffmpeg: str, source: Path, final: Path, cover_path: Path | None, *, title: str, album: str,
-                  narrator: str, number: int, total: int) -> None:
+                  narrator: str, number: int, total: int, comment: str = "") -> None:
     """Chép nguyên luồng âm thanh của `source` sang `final` với tag mới: ID3v2.3 + ID3v1, kèm bìa nếu có. Điện thoại ghi tag
-    bằng tay (Id3Tag.kt) cho ra đúng những byte này, trừ khung TSSE (tên phiên bản ffmpeg)."""
+    bằng tay (Id3Tag.kt) cho ra đúng những byte này, trừ khung TSSE (tên phiên bản ffmpeg). `comment`: thẻ comment (ghi công nhạc nền của
+    chương), rỗng thì không có thẻ."""
     partial = final.with_name(f"{final.name}.part")
     command = [ffmpeg, "-hide_banner", "-loglevel", "error", "-y", "-i", str(source)]
     if cover_path:
@@ -127,6 +136,7 @@ def write_chapter(ffmpeg: str, source: Path, final: Path, cover_path: Path | Non
         "-metadata", f"album_artist={narrator}",
         "-metadata", f"track={number}/{total}",
         "-metadata", "genre=Audiobook",
+        *(["-metadata", f"comment={comment}"] if comment else []),
         "-f", "mp3", str(partial),
     ]
     try:
@@ -148,18 +158,21 @@ def playlist_text(title: str, entries: list[tuple[float, str, str]]) -> str:
 
 
 def write_mp3_folder(ffmpeg: str, folder: Path, chapters: Iterable[tuple[str, Path]], *, title: str, narrator: str,
-                     cover_path: Path | None, total: int) -> int:
+                     cover_path: Path | None, total: int, comments: Callable[[int], str] | None = None, credits: str = "") -> int:
     """Mỗi chương một MP3 trong `folder` (tag + bìa, `write_chapter`) kèm `.m3u8`; trả số file. `chapters`: (tên chương, file MP3 nguồn) - có thể là
     bộ sinh làm ra file nguồn từng chương một (sách Nghe ngay mã hoá từ bản tạm: file nguồn dùng xong, bộ sinh mới được chạy tiếp và dọn nó). `total`: số chương sẽ có.
     Thời lượng trong `.m3u8` đếm từ khung MP3 của chính file đã ghi (readaloud/mp3.py) - không lấy độ dài ước của sổ (soát a61: lệch 4-9 giây).
-    Chung cho xuất MP3 của Studio (`export_book`) và của sách Nghe ngay (listen_export.py)."""
+    `comments(số chương từ 1)`: thẻ comment của chương (ghi công nhạc nền của chính chương ấy); `credits`: ghi công cả cuốn, thành file `CREDITS_FILE` cạnh các MP3
+    (rỗng thì không có file). Chung cho xuất MP3 của Studio (`export_book`) và của sách Nghe ngay (listen_export.py)."""
     entries: list[tuple[float, str, str]] = []
     for number, (full_title, source) in enumerate(chapters, start=1):
         name = chapter_file_name(number, total, full_title)
         write_chapter(ffmpeg, source, folder / name, cover_path, title=full_title, album=title,
-                      narrator=narrator, number=number, total=total)
+                      narrator=narrator, number=number, total=total, comment=comments(number) if comments is not None else "")
         entries.append((mp3.duration_ms((folder / name).read_bytes()) / 1000, full_title, name))
     (folder / f"{safe_name(title)}.m3u8").write_text(playlist_text(title, entries), encoding="utf-8")
+    if credits:
+        write_credits(folder / CREDITS_FILE, credits)
     return len(entries)
 
 
@@ -196,7 +209,9 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
             mixer = Mixer(ffmpeg, studio_music(project_root, [item[0] for item in listed], music))
             with tempfile.TemporaryDirectory(prefix=".music-", dir=target_root) as scratch:
                 files = write_mp3_folder(ffmpeg, folder, _mixed_mp3(ffmpeg, mixer, _counted(listed, len(listed), progress), Path(scratch), cancelled),
-                                         title=title, narrator=narrator, cover_path=cover_path, total=len(sources))
+                                         title=title, narrator=narrator, cover_path=cover_path, total=len(sources),
+                                         comments=lambda number: mixer.credits([listed[number - 1][0]]),
+                                         credits=mixer.credits(item[0] for item in listed))
             noted = mixer.note(item[0] for item in listed)
     except Cancelled:
         shutil.rmtree(folder, ignore_errors=True)  # thư mục mới của chính lượt này (free_path): bản xuất dở không được nằm lại như một bản xuất
@@ -413,14 +428,16 @@ class _Lowered:
 def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: Path, *, title: str, narrator: str,
                    cover_for: Callable[[Path], Path | None], on_chapter: Callable[[int], None] | None = None,
                    decode: Callable[[int, Path, int, int, Any], int] | None = None,
-                   on_peaks: Callable[[int, int], None] | None = None, cancelled: Callable[[], bool] | None = None) -> tuple[Path, int]:
+                   on_peaks: Callable[[int, int], None] | None = None, cancelled: Callable[[], bool] | None = None,
+                   credits: str = "") -> tuple[Path, int]:
     """Cả cuốn thành `<tên sách>.m4b` trong `target_root` từ các file chương `chapters` (tên chương, file âm thanh bất kỳ ffmpeg đọc được): AAC, mỗi chương một mục,
     bìa và tag. `cover_for(thư mục làm việc)` trả file bìa (hay None). `on_chapter(i)` gọi trước khi chương thứ i (từ 0) được ghép - chỗ báo tiến độ / dừng (ném
     lỗi để dừng). `decode(i, file, tần số, kênh, sink)` thay `pump_pcm` cho chương thứ i nếu có (kèm nhạc nền: `pump_mixed`), trả số byte
     đã đổ. Chương có đỉnh thật AAC vượt trần thì cả luồng được mã hoá lại với chương ấy hạ mức (`_PEAK_RETRIES`; `on_chapter` /
     `decode` được gọi lại từ đầu). `on_peaks(lượt, số chương vượt)` báo bước ấy: (k, 0) = đang đo đỉnh (sau lần mã hoá thứ k+1),
     (k, N) = đang mã hoá lại lượt k vì N chương vượt. `cancelled()` True: dừng ở khúc PCM kế / trước chương kế được đo đỉnh / trước lượt
-    ghép cuối, ném `export_jobs.Cancelled` - thư mục tạm bị xoá, không ghi file đích. Trả (file, số chương)."""
+    ghép cuối, ném `export_jobs.Cancelled` - thư mục tạm bị xoá, không ghi file đích. `credits`: ghi công nhạc nền của cuốn - vào thẻ comment của file và thành
+    file `<tên sách> - Ghi công nhạc nền.txt` (CREDITS_FILE) cạnh nó (rỗng thì không có). Trả (file, số chương)."""
     # Định dạng chung theo chương đầu; chương khác tần số / số kênh được ffmpeg đổi theo lúc giải mã - mốc vẫn đúng.
     rate, channels = audio_layout(ffmpeg, chapters[0][1])
     target_root.mkdir(parents=True, exist_ok=True)
@@ -493,6 +510,7 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
             "-metadata", f"artist={narrator}",
             "-metadata", f"album_artist={narrator}",
             "-metadata", "genre=Audiobook",
+            *(["-metadata", f"comment={credits}"] if credits else []),
             # Bộ ghi "ipod" là bộ ffmpeg dùng cho .m4b; nhãn "M4B " để Apple Books / iTunes xếp vào sách nói, không phải nhạc.
             "-brand", "M4B ", "-f", "ipod", str(partial),
         ]
@@ -503,6 +521,8 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
             log.warning("ffmpeg không ghép được M4B: %s", (error.stderr or "").strip()[-600:])
             raise ValueError("Không ghép được file M4B - ảnh bìa hay một chương không đọc được.") from error
         os.replace(partial, final)
+        if credits:
+            write_credits(final.with_name(f"{final.stem} - {CREDITS_FILE}"), credits)
     return final, len(marks)
 
 
@@ -542,7 +562,8 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
 
     final, count = m4b_from_files(ffmpeg, chapters, target_root, title=title, narrator=narrator,
                                   cover_for=lambda work: usable_cover(covers.cover_file(project_root)) or drawn_cover(work, cover),
-                                  decode=decode if mixer is not None else None, on_peaks=peaks, cancelled=cancelled)
+                                  decode=decode if mixer is not None else None, on_peaks=peaks, cancelled=cancelled,
+                                  credits=mixer.credits(ids) if mixer is not None else "")
     real = covers.cover_file(project_root)
     return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size,
             "chapters": count, "chaptersTotal": summary["chapters"]["total"], **(mixer.note(ids) if mixer is not None else {}),

@@ -137,7 +137,7 @@ export class NativeAudioEngine implements NativeEngine {
   }
 
   stop(): void {
-    void EbookPlayer.pause();
+    void EbookPlayer.release(); // tạm dừng và nhả bộ phát nhạc nền (đóng sách): không giữ bộ đệm bài nhạc tới lần mở sách sau
   }
 
   next(): void {
