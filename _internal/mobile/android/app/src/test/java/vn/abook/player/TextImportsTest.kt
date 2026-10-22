@@ -21,6 +21,28 @@ import org.junit.Test
  * nơi WebView (pdf.js) lấy chữ từng trang rồi đưa sang Kotlin (cầu `previewImport` với `pages`).
  */
 class TextImportsTest {
+    @Test fun a84_16_original_long_names_decide_folder_order_and_titles() {
+        val rows = JSONArray(File(imports, "a84_long_names.json").readText()).let { a -> (0 until a.length()).map { a.getJSONObject(it) } }
+        for (provided in listOf(rows, rows.reversed())) {
+            val staged = TextImports.stageFolder("Sách", provided.map { row -> row.getString("name") to { row.getString("text").byteInputStream() as java.io.InputStream? } })
+            val chapters = TextImports.preview(staged.ref).getJSONArray("chapters")
+            assertEquals(rows.map { it.getString("text") }, (0 until chapters.length()).map { chapters.getJSONObject(it).getString("firstLine") })
+            assertEquals(rows.map { it.getString("name").removeSuffix(".txt") }, (0 until chapters.length()).map { chapters.getJSONObject(it).getString("title") })
+        }
+    }
+    @Test fun a84_05_unreadable_child_fails_the_entire_folder_with_its_name() {
+        try {
+            TextImports.stageFolder("Truyện", listOf(
+                "1.txt" to { "Một.".byteInputStream() },
+                "2.txt" to { null },
+                "3.txt" to { "Ba.".byteInputStream() },
+            ))
+            fail("Không được nhập thiếu chương 2")
+        } catch (error: BookImport.Failed) {
+            assertTrue(error.message.orEmpty().contains("2.txt"))
+            assertTrue(error.message.orEmpty().contains("Bạn"))
+        }
+    }
     private lateinit var root: File
     private lateinit var cache: File
 
@@ -225,11 +247,11 @@ class TextImportsTest {
         val split = TextImports.preview(ref, splitChapters = true)
         assertEquals(listOf("Mở đầu", "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3"), titles(split))
         assertEquals(4, split.getInt("splitOffer"))
-        // Phần "Mở đầu" (tên truyện) hiện chưa tích, nên không tính vào tổng và không vào sách nếu người nghe không tích (như Python).
-        assertFalse(split.getJSONArray("chapters").getJSONObject(0).getBoolean("included"))
-        assertEquals(3, split.getJSONObject("totals").getInt("chapters"))
+        // a84: phần "Mở đầu" (tên truyện, giới thiệu) cũng được giữ mặc định - app không tự bỏ chữ của truyện (như Python).
+        assertTrue(split.getJSONArray("chapters").getJSONObject(0).getBoolean("included"))
+        assertEquals(4, split.getJSONObject("totals").getInt("chapters"))
         val added = TextImports.create(ref, "", cache)
-        assertEquals(3, added.getInt("chapters"))
+        assertEquals(4, added.getInt("chapters"))
         assertFalse(TextImports.preview(stageFile("epub3.epub").ref).has("splitOffer")) // không có gì để tách thì không có khoá
     }
 
@@ -271,7 +293,8 @@ class TextImportsTest {
         assertEquals(sharedPreview("story").getJSONObject("totals").toString(), preview.getJSONObject("totals").toString())
         val created = TextImports.create(staged.ref, "", cache)
         assertEquals("new", created.getString("how"))
-        assertEquals(3, created.getInt("chapters"))
+        // a84: dòng đầu/cuối trang không còn bị bỏ khỏi chữ, nên phần chữ trước "Chương 1" là một chương "Mở đầu" (4 chương, như Python).
+        assertEquals(4, created.getInt("chapters"))
         assertEquals(sharedExpected("story").getString("contentKey"), created.getString("id"))
         assertFalse("bản sao PDF được dọn", staged.pdf!!.exists())
     }
@@ -288,7 +311,10 @@ class TextImportsTest {
             TextImports.preview(staged.ref, listOf(emptyList(), emptyList(), emptyList()))
             fail("PDF scan")
         } catch (error: BookImport.Failed) {
-            assertTrue(error.message!!, error.message!!.startsWith("PDF này là ảnh chụp"))
+            // a84: lời báo nêu lý do và việc bạn làm được (OCR / bản TXT, DOCX) - cùng chữ với Python (expected/scan.json).
+            val expected = (StrictJson.parse(File(imports, "expected/scan.json").readText(Charsets.UTF_8)) as JSONObject).getString("error")
+            assertEquals(expected, error.message)
+            assertTrue(error.message!!, error.message!!.contains("ảnh chụp") && error.message!!.contains("OCR") && error.message!!.contains("Bạn"))
         }
     }
 
