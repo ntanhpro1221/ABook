@@ -395,6 +395,32 @@ def test_the_producer_skips_wishes_the_studio_would_refuse(tmp_path: Path) -> No
     assert listener_overrides.read_overrides(project) == {}, "không có yêu cầu nào bị ghi"
 
 
+def test_retried_retake_keeps_its_receipt_after_commit_before_ack(tmp_path: Path, monkeypatch) -> None:
+    project, db = _producer(tmp_path)
+    stable_id, sha = _line(db, "c1s1")
+    wishes = {"retakes": {stable_id: {"requested_at": 50.0, "text_sha256": sha,
+                                      "operation_id": "a" * 32}}}
+    real = listener_overrides.request_retake
+
+    def killed(*args, **kwargs):
+        real(*args, **kwargs)
+        raise SystemExit("killed before receipt acknowledgement")
+
+    monkeypatch.setattr(listener_overrides, "request_retake", killed)
+    with pytest.raises(SystemExit):
+        book_wishes.fold(project, wishes, now=100.0)
+    first = listener_overrides.read_overrides(project)
+    monkeypatch.setattr(listener_overrides, "request_retake", real)
+    book_wishes.fold(project, wishes, now=200.0)
+    assert listener_overrides.read_overrides(project) == first
+    assert book_wishes.fold(project, wishes, now=300.0)["requests"] == 0
+
+
+def test_retake_operation_id_survives_validation() -> None:
+    entry = {"requested_at": 50.0, "text_sha256": "b" * 64, "operation_id": "a" * 32}
+    assert book_wishes.validate({"retakes": {"c1s1": entry}})["retakes"]["c1s1"] == entry
+
+
 def test_a_file_of_wishes_is_offered_to_the_producer_and_the_fold_route_reports_the_requests(tmp_path: Path) -> None:
     """Đường thật: file `.abook` mang ý muốn mở ra đúng dự án của chính máy này -> chờ người dùng đồng ý."""
     producer = tmp_path / "may_san_xuat"

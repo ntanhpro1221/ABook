@@ -2,6 +2,54 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `dev/uxfix82` (`a74fix`, từ `c9a9baf1`): đã đối chiếu từng khẳng định với mã trong cây này, sửa #1, #2, #5, #6,
+#7, #10, #11, #8 theo thứ tự. #3 xác nhận là lỗi nhưng hoãn: cần receipt sau từng commit trong `pipeline.py` (khoá),
+không thể suy “đã áp” từ READY/run marker. #4 và #9 bỏ qua theo phạm vi được giao.
+
+- #1: giữ state nguồn đến sau commit records; `StoreMigrationCrashTest` đỏ 1F rồi xanh 1 test.
+- #2: snapshot điện thoại lưu ID bền trước gửi; desktop reserve receipt/dấu giờ trước ghi retake, retry giữ dấu cũ;
+  `test_book_wishes` đỏ 2F, JVM đỏ 1F; sau Python 24 test và JVM EditsSync/BookWishes 34 test qua.
+- #5: journal trước đổi thư mục; khởi động/retry hoàn tất manifest, liên kết và fingerprints. `StoreRekeyTest` đỏ 1F rồi xanh.
+  Rà thêm tình huống lỗi ghi liên kết rồi retry cùng tiến trình: đỏ 1F; copy records trước moveLinks, cache chỉ đổi sau commit;
+  rekey/record sync xanh 9 test.
+- #6: checkpoint thay nguyên tử qua Store, không xoá đích trước; đối chiếu job running với unique work khi mở plugin/status,
+  enqueue KEEP khi thiếu. `PrepareAheadTest` đỏ 2F, sau 17 test qua.
+- #7: pending chứa book/record/revision và snapshot; flush đúng hồ sơ, ACK chỉ gỡ đúng revision. Pending đời cũ gửi mọi hồ sơ
+  của cuốn. `StateSyncCrashTest` đỏ 1F; sau pending/hai thiết bị xanh 8 test.
+- #10: JSON bỏ tham chiếu bìa commit trước dọn asset. Kotlin đỏ 2F, Python remove_cover đỏ 1F; sau JVM 25 và Python 221 test qua.
+  Python subtract không phải lỗi: đã save trước dọn asset, giữ nguyên.
+- #11: FileOutputStream.fd.sync trước rename, kiểm lỗi thay file; giữ JSON hỏng ở .corrupt-time-UUID. Reader state/index/prints,
+  job và pending dùng cùng nguyên tắc. Đỏ 2F, sau nhóm durability/migration/rekey/sync/prepare xanh 31 test.
+  JVM kiểm lỗi ghi/thay file và giữ nguyên byte hỏng; không mô phỏng mất điện phần cứng.
+- #8: last.anchor gồm segment/charOffset/textHash (code point, FNV-1a64 UTF-8 các đoạn nối LF); khôi phục bằng chữ khi hash khớp.
+  Kotlin và TypeScript có cùng số vàng tiếng Việt+emoji. Python/HTTP lưu anchor, sync giữ nguyên last; dữ liệu cũ vẫn dùng giây.
+  Trước sửa JVM/Python/UI mỗi bộ 1F; sau JVM anchor/record/seek 14 test và UI đọc/anchor 136 test qua.
+
+Pytest liên quan tuần tự: **306 passed, 0 F/E, exit 0**, JUnit `S/a74fix/pytest-related.xml`.
+Các lượt đỏ có exit 1, mọi lượt xanh kể trên exit 0; log nằm ở `S/a74fix` (01/02/05/06/07/10/11/08-before/after).
+Rà thêm trước khi chốt: ID retake mới không lấy lại ID của entry cũ khi hai lần bấm trùng dấu giờ; checkpoint PrepareAhead
+hợp JSON nhưng thiếu schema vẫn được giữ thành .corrupt và không làm lỗi lúc mở. `review-before`: **2 F/0 E, exit 1**;
+cả hai ca qua trong full Gradle cuối sau sửa.
+
+Kiểm tổng tuần tự trên mã cuối:
+
+| Bộ | Passed | Failed | Error | Skipped | Exit |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| pytest liên quan | 306 | 0 | 0 | 0 | 0 |
+| pytest toàn bộ | 8450 | 0 | 0 | 9 | 0 |
+| vitest toàn bộ | 1241 | 0 | 0 | 1 | 0 |
+| tsc --noEmit | — | — | 0 | — | 0 |
+| Gradle toàn bộ, lượt cuối | 1211 | 0 | 0 | 6 | 0 |
+
+Pytest toàn bộ: 1586,132 giây; 5 warnings (1 duplicate EPUB entry, 3 cp1252 subprocess reader, 1 timeout server giả),
+không F/E. Log/JUnit tại `S/a74fix/pytest-full.log/xml`; UI: vitest-full.log, tsc-full.log; Android: gradle-final.log.
+Gradle đầu cũng exit 0 (1209 passed/6 skipped); đã chạy lại toàn bộ sau hai sửa Kotlin từ rà soát.
+Compileall abook/tests/scripts và git diff --check đều exit 0. Không còn tiến trình kiểm thử của a74fix.
+Hash trước và sau sửa: `67286434ac06a6706d20fd8fe7ee4b1fda99dc0f1c1310fd3d925775768337ff`.
+Danh sách khoá đọc từ `QUALITY_IMPLEMENTATION_FILES`; không sửa file khoá, pyproject.toml/uv.lock hay main.rs.
+Không Ollama/GPU/adb/điện thoại/GUI; pytest CUDA_VISIBLE_DEVICES=-1, không đặt TRANSFORMERS_OFFLINE; tối đa 4 luồng.
+Gradle offline, --no-daemon và Kotlin compiler in-process; cấu hình Android local không đưa vào diff.
+
 Đợt `dev/rvfix` (từ 0.4.120): giữ giới/tuổi khi lượt người nói đổi namespace của cùng vai local trong cùng chương;
 không checkpoint hoà giải khi thiếu model (request lỗi giữ nhãn cũ như trước); đóng luồng cả khi bù độ to/hoàn tất clip lỗi;
 huỷ hẹn giờ release khi clip xong/bị bỏ (Python và Kotlin); script Windows giữ `setuptools<82`.
@@ -570,3 +618,5 @@ SQLite `integrity_check` trả `ok` và không có lỗi khóa ngoại. Các seg
 - bộ dependency đã pin trên máy đích.
 
 Bắt buộc smoke test một chapter 2.000–5.000 từ trước khi chạy book rất lớn.
+
+- 22-10 dev/uxfix82 (a74fix: dữ liệu điện thoại bền khi app bị giết - migration/rekey journal/fsync/.corrupt, retake có operation_id, chỗ nghe ReadAloud có anchor, bìa xoá sau khi JSON đã ghi): pytest 8391 passed / 9 skipped / 0 F/E; vitest 1241 passed; tsc 0; gradle 1219 / 0 F/E / 6 skip; hash 67286434.

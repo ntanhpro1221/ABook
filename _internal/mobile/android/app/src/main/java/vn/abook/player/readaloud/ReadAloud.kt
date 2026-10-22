@@ -581,6 +581,23 @@ object ReadAloud {
     /** Vị trí ảo trong chương (ms), null nếu không ở chương chữ. */
     fun positionMs(): Long? = chapterMs(Playback.player?.currentPosition ?: 0L)
 
+    /** Vị trí chữ của đúng đoạn đang nghe/chờ đọc; lưu cùng giây, không dùng giây chương để suy đoạn. */
+    fun anchor(): JSONObject? {
+        if (!active) return null
+        val slot = currentSlot()?.takeIf { it.segment >= 0 }
+        val target = waiting
+        val index = slot?.chapterIndex ?: target?.chapterIndex ?: return null
+        val chap = chaps[index] ?: return null
+        val segment = slot?.segment ?: target?.segment ?: return null
+        val text = chap.paragraphs.getOrNull(segment) ?: return null
+        val ms = if (slot != null) slot.baseMs + (Playback.player?.currentPosition ?: 0L) else target?.offsetMs ?: 0L
+        val words = chap.clips[segment]?.words ?: chap.liveWords[segment]
+        val word = if (slot == null && target != null && target.word >= 0) target.word else
+            words?.indexOfLast { it.start <= ms && it.end > it.start }?.coerceAtLeast(chap.clips[segment]?.fromWord ?: 0)
+                ?: 0
+        return ReadingAnchor.make(chap.paragraphs, segment, word.coerceAtMost((WordTokens.count(text) - 1).coerceAtLeast(0)))
+    }
+
     /**
      * Mốc `clipMs` của đoạn đang phát, đổi sang đồng hồ ảo của chương (ms); đang chờ đọc đoạn thì là chỗ sẽ bắt đầu. null nếu không ở chương chữ. Cũng dùng cho
      * mốc đã đệm tới (thanh tiến độ ở thông báo / màn hình khoá - PlaybackService).
@@ -618,7 +635,11 @@ object ReadAloud {
         reset()
         active = true
         artwork = Artwork.cover(Playback.bookTitle, Playback.bookId)
-        startAt(index, offsetMs, autoplay)
+        val last = Store.state(Playback.bookId).optJSONObject("last")
+        val anchor = last?.takeIf {
+            it.optInt("chapterId", -1) == chapters().getOrNull(index)?.id && Math.abs(it.optDouble("seconds", -1.0) * 1000 - offsetMs) < 1000
+        }?.optJSONObject("anchor")
+        startAt(index, offsetMs, autoplay, anchor = anchor)
     }
 
     /** Hết cuốn / sang cuốn khác / dịch vụ tắt: bỏ việc đang làm, quên mọi chương. */
@@ -705,7 +726,7 @@ object ReadAloud {
      * Phát từ chương `index`: `segment` >= 0 thì từ đoạn ấy (`word` >= 0: từ đúng chữ ấy), không thì từ mốc `offsetMs` của chương. Chương chữ: xoá hàng đợi và đợi đoạn
      * âm thanh đầu tiên (giao diện thấy `buffering`); chương audio: đặt ngay.
      */
-    fun startAt(index: Int, offsetMs: Long, play: Boolean, segment: Int = -1, word: Int = -1, within: Long = 0, hold: Boolean = false) {
+    fun startAt(index: Int, offsetMs: Long, play: Boolean, segment: Int = -1, word: Int = -1, within: Long = 0, hold: Boolean = false, anchor: JSONObject? = null) {
         val exo = Playback.player ?: return
         val chapter = chapters().getOrNull(index) ?: return
         bumpGeneration()
@@ -730,7 +751,7 @@ object ReadAloud {
             exo.playWhenReady = play
             val place = Place(index, offsetMs, segment, word, within)
             waiting = Target(index, 0, 0, -1, play, place)
-            if (fetchText(index) { startAt(place, play, hold) }) {
+            if (fetchText(index) { startAt(index, offsetMs, play, segment, word, within, hold, anchor) }) {
                 syncWants()
                 Playback.emit("state")
                 return
@@ -738,9 +759,10 @@ object ReadAloud {
             fail("Không đọc được chữ của chương “${chapter.title}”")
             return
         }
-        val seg = if (chap.paragraphs.isEmpty()) 0 else if (segment >= 0) segment.coerceIn(0, chap.paragraphs.size - 1) else chap.timeline.segmentAt(offsetMs)
-        val inside = if (chap.paragraphs.isEmpty()) 0L else if (segment >= 0) within else (offsetMs - chap.timeline.startOf(seg)).coerceAtLeast(0)
-        waiting = Target(index, seg, inside, word, play)
+        val restored = if (segment < 0) ReadingAnchor.restore(chap.paragraphs, anchor) else null
+        val seg = restored?.first ?: if (chap.paragraphs.isEmpty()) 0 else if (segment >= 0) segment.coerceIn(0, chap.paragraphs.size - 1) else chap.timeline.segmentAt(offsetMs)
+        val inside = if (restored != null || chap.paragraphs.isEmpty()) 0L else if (segment >= 0) within else (offsetMs - chap.timeline.startOf(seg)).coerceAtLeast(0)
+        waiting = Target(index, seg, inside, restored?.second ?: word, play)
         feedSegment = seg
         exo.pauseAtEndOfMediaItems = false
         exo.clearMediaItems()
