@@ -62,6 +62,18 @@ def over_size_cap(info: dict[str, Any] | None, cap_bytes: int) -> bool:
     return isinstance(size, (int, float)) and not isinstance(size, bool) and size > cap_bytes
 
 
+def lacks_credit(info: dict[str, Any] | None) -> bool:
+    """Bài phải ghi công (có `license` và không phải cc0) mà thiếu tên tác giả (`creator`) hay chuỗi ghi công (`attribution`): ghi công không tên
+    tác giả vẫn vi phạm CC BY, nên bộ chọn bỏ bài ấy. Bài cc0, bài không ghi giấy phép và nhạc người dùng nhập (`source` "local") không bị đòi. Chỉ
+    mảnh `tracks/` có các trường này, ô `cells/` không. Bản Kotlin: `MusicCatalog.lacksCredit`."""
+    if not isinstance(info, dict) or info.get("source") == "local":
+        return False
+    licence = str(info.get("license") or "").strip().lower()
+    if not licence or licence == "cc0":
+        return False
+    return not str(info.get("creator") or "").strip() or not str(info.get("attribution") or "").strip()
+
+
 class MusicCatalog:
     def __init__(self, cache_dir: Path, source: str | None = None, *, public_key: bytes = PUBLIC_KEY) -> None:
         self.cache_dir = Path(cache_dir)

@@ -18,7 +18,9 @@ object MusicExport {
      * Nhạc của một chương: mốc ([MusicCues.Cue], `track` là khoá vào `files`), file từng bài, và số mốc của kế hoạch bị bỏ vì không lấy
      * được bài nào (`musicMissing`).
      */
-    class ChapterMusic(val cues: List<MusicCues.Cue>, val files: Map<String, File>, val dropped: Int = 0) {
+    class ChapterMusic(val cues: List<MusicCues.Cue>, val files: Map<String, File>, val dropped: Int = 0,
+                       /** Thông tin ghi công của từng bài (tên, tác giả, giấy phép - [MusicCredits]); không tính vào dấu vân tay: không đổi âm thanh. */
+                       val tracks: Map<String, JSONObject> = emptyMap()) {
         /** Đổi mốc, mức hay bài (kể cả bài tải lại khác cỡ) thì đổi - bản tạm chương trộn sẵn không dùng lại được. Chỉ cần ổn định trên máy này. */
         fun fingerprint(): String {
             val cues = JSONArray(cues.map(::cueJson))
@@ -169,6 +171,10 @@ object MusicExport {
                 )
             }
         }
+
+        /** Ghi công ([MusicCredits.text]) các bài nhạc của những chương này đã trộn vào bản xuất; chương không có nhạc thì không góp dòng nào. */
+        fun credits(ids: Iterable<Int>): String =
+            MusicCredits.text(ids.mapNotNull(::chapter).flatMap { music -> music.cues.mapNotNull { music.tracks[it.track] } })
 
         /** Số đoạn thiếu nhạc của các chương đã xuất (kể cả chương mọi bài đều hỏng) - `musicMissing` của kết quả; 0 = không báo. */
         fun missing(ids: Iterable<Int>): Int = ids.sumOf { lost[it] ?: music[it]?.dropped ?: 0 }

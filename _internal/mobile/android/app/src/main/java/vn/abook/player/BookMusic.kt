@@ -113,7 +113,8 @@ object BookMusic {
                 if (file != null) files[name] = file
             }
             val kept = cues.filter { it.track in files }
-            out[chapterId] = MusicExport.ChapterMusic(kept, files, cues.size - kept.size)
+            out[chapterId] = MusicExport.ChapterMusic(kept, files, cues.size - kept.size,
+                kept.map { it.track }.distinct().mapNotNull { name -> tracks.optJSONObject(name)?.let { name to it } }.toMap())
         }
         return out
     }
