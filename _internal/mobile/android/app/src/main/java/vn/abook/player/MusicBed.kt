@@ -1,6 +1,8 @@
 package vn.abook.player
 
 import android.content.Context
+import android.media.AudioTimestamp
+import android.media.AudioTrack
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -14,10 +16,19 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
+import androidx.media3.exoplayer.audio.TeeAudioProcessor
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.nio.ByteBuffer
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 import kotlin.math.pow
 
@@ -76,6 +87,7 @@ object MusicBed {
         var final = false // vòng cuối của mốc `tail`: không mở phần tử lặp nữa, bài chơi tới E là hết
         var released = false // đã nhả: lỗi muộn của nó không tính là bài hỏng
         var at = 0.0 // bản lặp tạo sẵn: chỗ (giây trong bài) đã đặt, để biết có cần dời lại khi vào muộn
+        var tee: LoopTee? = null // chỉ khi đang đo ([debugLoopProbe] != null lúc tạo): ống tee PCM của trình phát này
     }
 
     /** Bản lặp mới và bản cũ nó nối vào: lúc bản mới có tiếng, sửa pha theo bản cũ một lần ([MusicCues.loopSettle]). */
@@ -100,8 +112,16 @@ object MusicBed {
 
     // ---- móc đo của bài thử trên máy (MusicLoopOnDeviceTest, PLAN_loop §36): mặc định null / 0 / null nên bản thường không làm gì, không log, không cấp phát ----
     /** Nhận một dòng đo mỗi sự kiện của bản lặp: `EV <ns> standby|play|playing|drift <giây> applied|skipped|seek <ms>` và `POS <ns> <oldMs> <newMs> <oldVol> <newVol>`
-     *  (20 ms một dòng, từ `standby` - hay từ `play` nếu không có bản tạo sẵn - tới 4,5 s sau `playing`; bản đã nhả / chưa có ghi `-`). */
+     *  (20 ms một dòng, từ `standby` - hay từ `play` nếu không có bản tạo sẵn - tới 4,5 s sau `playing`; bản đã nhả / chưa có ghi `-`).
+     *  Thước PCM (§39): thêm `FMT`, `PCM`, `TS` ([LoopTee], [probeArm]); mọi `<ns>` là System.nanoTime. Gọi từ nhiều luồng (luồng chính + luồng phát của từng trình phát):
+     *  bên nhận phải an toàn đa luồng. Gán (kể cả null) là đặt lại toàn bộ trạng thái đo. */
     internal var debugLoopProbe: ((String) -> Unit)? = null
+        set(value) {
+            field = value
+            probeReset()
+        }
+    /** Tiền tố đường file của các file PCM tee (`<tiền tố>_p<k>.pcm`, [debugLoopFlush]); null = chỉ đếm khung, không giữ byte. */
+    internal var debugLoopPcmBase: File? = null
     /** false: bỏ bước 3 ([MusicCues.loopSettle]) - không tính, không tua; vẫn ghi `drift <giây> skipped` (thước hằng số pha của §38). Bản thường luôn true. */
     internal var debugLoopSettle = true
     /** Giây cộng thêm vào chỗ vào của bản lặp mới (bài kiểm lực của §36: cố ý đẩy lệch pha để bước 3 phải sửa). */
@@ -115,17 +135,115 @@ object MusicBed {
 
     private inline fun probe(line: () -> String) {
         val sink = debugLoopProbe ?: return
-        sink("EV ${SystemClock.elapsedRealtimeNanos()} ${line()}")
+        sink("EV ${System.nanoTime()} ${line()}")
     }
 
-    /** Bản lặp đang được đo (bản mới nhất đã gọi [probeLoopWatch]) và hạn dừng đo (ns; chưa `playing` thì vô hạn). */
+    /** Bản lặp đang được đo (bản mới nhất đã gọi [probeLoopWatch]) và hạn dừng đo (ns, System.nanoTime; chưa `playing` thì vô hạn). */
     private var probeBed: Bed? = null
     private var probeUntil = Long.MAX_VALUE
+
+    /** Mỗi lần gán [debugLoopProbe] tăng một: vòng đo (POS / TS) của lần gán trước tự dừng. */
+    private var probeEpoch = 0
+    @Volatile private var probeArmed = false // từ `standby` (hay `play` nếu không có bản chờ): tee bắt đầu giữ byte, TS bắt đầu chạy
+    private val probeTees = CopyOnWriteArrayList<LoopTee>()
+    private val probeNextK = AtomicInteger()
+
+    private fun probeReset() {
+        probeEpoch++
+        probeArmed = false
+        probeBed = null
+        probeUntil = Long.MAX_VALUE
+        probeTees.clear()
+        probeNextK.set(0)
+    }
 
     /** Bản lặp `new` vừa được gọi `play()` (nối vào `old`): ghi sự kiện `play`, rồi (nếu chưa đo từ `standby`) bắt đầu ghi vị trí. */
     private fun probeLoopPlay(old: Bed, new: Bed) {
         probe { "play" }
+        probeArm()
         probeLoopWatch(old, new)
+    }
+
+    /** Bắt đầu thước PCM (một lần): các tee giữ byte từ giờ, và cứ 20 ms một dòng `TS <ns_gọi> <k> <seg> <framePosition> <nanoTime>` cho mỗi trình phát còn sống
+     *  mà `AudioTrack.getTimestamp` trả true, tới hạn đo ([probeUntil]) hay khi [debugLoopProbe] đổi. */
+    private fun probeArm() {
+        if (probeArmed) return
+        val sink = debugLoopProbe ?: return
+        probeArmed = true
+        val epoch = probeEpoch
+        main.post(object : Runnable {
+            private val stamp = AudioTimestamp()
+            override fun run() {
+                if (epoch != probeEpoch || System.nanoTime() > probeUntil) return
+                for (tee in probeTees) {
+                    if (!tee.alive) continue
+                    val track = tee.track ?: continue
+                    val call = System.nanoTime()
+                    val ok = try { track.getTimestamp(stamp) } catch (_: Exception) { false } // AudioTrack đã nhả / chưa chạy: không có dấu thời gian
+                    if (ok) sink("TS $call ${tee.k} ${tee.seg} ${stamp.framePosition} ${stamp.nanoTime}")
+                }
+                main.postDelayed(this, PROBE_EVERY_MS)
+            }
+        })
+    }
+
+    /** Ghi các file `<debugLoopPcmBase>_p<k>.pcm` (PCM tee của từng trình phát từ lúc ARM; byte nối tiếp nhiều đoạn, `PCM` cho biết byte nào thuộc khung nào).
+     *  Gọi sau khi dừng nhạc, trước khi gán lại [debugLoopProbe]. Byte giữ trong bộ nhớ tới đây: luồng phát không phải chờ ghi đĩa. */
+    internal fun debugLoopFlush() {
+        val base = debugLoopPcmBase ?: return
+        for (tee in probeTees) File(base.path + "_p${tee.k}.pcm").writeBytes(tee.bytes())
+    }
+
+    /** Ống tee PCM của một ExoPlayer nhạc (§39): `FMT` mỗi lần sink cấu hình lại (một đoạn `seg` mới), `PCM` cho mỗi buffer đưa ra sink khi đã ARM. Chạy ở luồng phát của trình phát. */
+    @OptIn(UnstableApi::class)
+    private class LoopTee(val k: Int) : TeeAudioProcessor.AudioBufferSink {
+        @Volatile var seg = 0
+        @Volatile var track: AudioTrack? = null // AudioTrack mới nhất của trình phát này
+        @Volatile var alive = true // false khi nhả
+        private var frameSize = 0
+        private var frames = 0L // số khung đã qua trong đoạn hiện tại
+        private val pcm = ByteArrayOutputStream()
+
+        override fun flush(sampleRate: Int, channelCount: Int, encoding: Int) {
+            seg++
+            frames = 0
+            frameSize = runCatching { Util.getPcmFrameSize(encoding, channelCount) }.getOrDefault(0)
+            debugLoopProbe?.invoke("FMT ${System.nanoTime()} $k $seg $sampleRate $channelCount $encoding")
+        }
+
+        override fun handleBuffer(buffer: ByteBuffer) {
+            val bytes = buffer.remaining()
+            val count = if (frameSize > 0) bytes / frameSize else 0
+            val first = frames
+            frames += count
+            if (!probeArmed) return
+            val copy = ByteArray(bytes)
+            buffer.duplicate().get(copy)
+            val offset = synchronized(pcm) { pcm.size().also { pcm.write(copy) } }
+            debugLoopProbe?.invoke("PCM $k $seg $first $count $offset")
+        }
+
+        fun bytes(): ByteArray = synchronized(pcm) { pcm.toByteArray() }
+    }
+
+    /** Hãng trình phát nhạc khi đang đo: sink mặc định cộng [TeeAudioProcessor] (đường PCM trước AudioTrack) và giữ AudioTrack để hỏi dấu thời gian. */
+    @OptIn(UnstableApi::class)
+    @Suppress("DEPRECATION") // AudioTrackProvider: media3 1.11 khuyên AudioOutputProvider, nhưng sink mặc định vẫn dựng AudioTrackAudioOutputProvider từ nó - móc ngắn nhất tới AudioTrack
+    private fun probeRenderers(appContext: Context, tee: LoopTee) = object : DefaultRenderersFactory(appContext) {
+        override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): AudioSink {
+            val base = DefaultAudioSink.AudioTrackProvider.DEFAULT
+            return DefaultAudioSink.Builder(context)
+                .setEnableFloatOutput(enableFloatOutput)
+                .setEnableAudioOutputPlaybackParameters(enableAudioTrackPlaybackParams)
+                .setAudioProcessors(arrayOf(TeeAudioProcessor(tee)))
+                .setAudioTrackProvider(object : DefaultAudioSink.AudioTrackProvider {
+                    override fun getAudioTrack(config: AudioSink.AudioTrackConfig, attributes: androidx.media3.common.AudioAttributes, audioSessionId: Int, context: Context?): AudioTrack =
+                        base.getAudioTrack(config, attributes, audioSessionId, context).also { tee.track = it }
+
+                    override fun getAudioTrackChannelConfig(channelCount: Int): Int = base.getAudioTrackChannelConfig(channelCount)
+                })
+                .build()
+        }
     }
 
     /** Mỗi 20 ms một dòng vị trí + âm lượng hai bản tới 4,5 s sau `playing` của `new` (hay khi `new` đã nhả); một bản đã nhả ghi `-`. Gọi lại với cùng `new` thì bỏ qua. */
@@ -136,7 +254,7 @@ object MusicBed {
         probeUntil = Long.MAX_VALUE
         main.post(object : Runnable {
             override fun run() {
-                val now = SystemClock.elapsedRealtimeNanos()
+                val now = System.nanoTime()
                 if (probeBed !== new || debugLoopProbe == null || new.released || now > probeUntil) return
                 val oldMs = if (old.released) "-" else old.player.currentPosition.toString()
                 val oldVol = if (old.released) "-" else old.player.volume.toString()
@@ -164,6 +282,7 @@ object MusicBed {
     /** Nhả trình phát của [bed] trên luồng chính (luồng tạo ra nó), gỡ listener trước. */
     private fun release(bed: Bed) = timed("nhả trình phát nhạc") {
         bed.released = true
+        bed.tee?.alive = false
         bed.listeners.forEach(bed.player::removeListener)
         bed.listeners.clear()
         bed.player.release()
@@ -349,12 +468,14 @@ object MusicBed {
         val appContext = context ?: return null
         val uri = uriFor(appContext, owner.track) ?: return null
         val fadeMs = Math.round(MusicCues.mix.loopCrossfadeSeconds * 1000)
-        val startAt = frameAligned(owner.player, snap.bounds.loopStart)
+        // Bài kiểm (§36/§39): chỗ lệch cố ý áp NGAY ở đích tua của bản chờ - đến hạn không phải tua lại chỉ vì nó (tua ấy thêm ~110 ms trễ, làm nhiễu bài kiểm). Bản thường: 0.
+        val startAt = frameAligned(owner.player, snap.bounds.loopStart + debugLoopInject)
         return timed("lặp mờ chéo: tạo sẵn trình phát") {
             open(appContext, owner.track to uri, owner.goal, 0.0, cue, fadeMs, startAt, Handoff(owner, snap.bounds), standby = true)
         }.also {
             it.at = startAt
             probe { "standby" }
+            probeArm()
             probeLoopWatch(owner, it)
         }
     }
@@ -795,7 +916,9 @@ object MusicBed {
         val (track, uri) = next
         // Bộ giải mã đồng bộ: chế độ hàng đợi bất đồng bộ (mặc định Android 12+) tắt luồng gọi lại của MediaCodec trước khi nhả codec - mỗi lần nhả một bài
         // (lặp mờ chéo ~40 lần / 5 phút) codec còn gửi sự kiện tới luồng đã chết ("sending message to a Handler on a dead thread", soát a69: 360 lần / 40 phút).
-        val renderers = DefaultRenderersFactory(appContext).forceDisableMediaCodecAsynchronousQueueing()
+        // Đang đo (§39): sink có tee PCM + AudioTrack giữ lại; bản thường không tạo gì thêm.
+        val tee = if (debugLoopProbe != null) LoopTee(probeNextK.getAndIncrement()).also { probeTees += it } else null
+        val renderers = (if (tee != null) probeRenderers(appContext, tee) else DefaultRenderersFactory(appContext)).forceDisableMediaCodecAsynchronousQueueing()
         val player = ExoPlayer.Builder(appContext, renderers)
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
@@ -810,6 +933,7 @@ object MusicBed {
         player.volume = 0f
         val offsetMs = (offsetSeconds.coerceAtLeast(0.0) * 1000).toLong()
         val bed = Bed(track, player, targetGain, targetGain * STEP_MS / fadeMs, cue, fadeMs)
+        bed.tee = tee
         fun listen(listener: Player.Listener) {
             bed.listeners += listener
             player.addListener(listener)
@@ -837,7 +961,7 @@ object MusicBed {
                 player.removeListener(this)
                 bed.listeners.remove(this)
                 probe { "playing" }
-                if (probeBed === bed && debugLoopProbe != null) probeUntil = SystemClock.elapsedRealtimeNanos() + PROBE_AFTER_PLAYING_MS * 1_000_000
+                if (probeBed === bed && debugLoopProbe != null) probeUntil = System.nanoTime() + PROBE_AFTER_PLAYING_MS * 1_000_000
                 val old = handoff.old
                 val oldPos = old.player.currentPosition / 1000.0
                 val newPos = player.currentPosition / 1000.0

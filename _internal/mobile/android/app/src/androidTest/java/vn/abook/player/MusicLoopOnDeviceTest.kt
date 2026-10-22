@@ -22,7 +22,8 @@ import java.util.concurrent.TimeUnit
  *
  * Tham số (`am instrument -e ...`): `id`, `file` (mặc định `.../loopprobe/track.mp3`), `seconds` (độ dài bài), `audibleStart`, `audibleEnd`, `loopStart`, `loopEnd`,
  * `inject` (giây, mặc định 0: cố ý đẩy bản mới lệch pha để kiểm bước 3),
- * `settle` (mặc định true; false: bỏ bước 3 sửa pha - [MusicBed.debugLoopSettle]). Luồng nhạc của máy đang bằng 0 thì chạy im: test không đổi âm lượng hay cài đặt nào.
+ * `settle` (mặc định true; false: bỏ bước 3 sửa pha - [MusicBed.debugLoopSettle]). Thước PCM (§39): cạnh `<id>.txt` còn `<id>_p<k>.pcm` cho mỗi trình phát k
+ * (PCM tee từ `standby`; các dòng `FMT` / `PCM` / `TS` trong `<id>.txt` cho biết byte nào là khung nào, phát lúc nào). Luồng nhạc của máy đang bằng 0 thì chạy im: test không đổi âm lượng hay cài đặt nào.
  */
 @RunWith(AndroidJUnit4::class)
 class MusicLoopOnDeviceTest {
@@ -76,9 +77,11 @@ class MusicLoopOnDeviceTest {
                 MusicBed.debugTrack = Uri.fromFile(file)
                 MusicBed.debugLoopInject = inject
                 MusicBed.debugLoopSettle = settle
+                MusicBed.debugLoopPcmBase = File(dir, id) // PCM tee: <id>_p<k>.pcm cạnh <id>.txt (§39)
+                // Gọi từ nhiều luồng (luồng chính + luồng phát của từng trình phát): thêm dòng phải có khoá.
                 MusicBed.debugLoopProbe = { line ->
-                    lines += line
-                    if (line.split(' ').getOrNull(2) == "playing") main.postDelayed({
+                    synchronized(lines) { lines += line }
+                    if (line.startsWith("EV ") && line.split(' ').getOrNull(2) == "playing") main.postDelayed({
                         done = true
                         MusicBed.stop()
                         finished.countDown()
@@ -90,14 +93,23 @@ class MusicLoopOnDeviceTest {
         } finally {
             instrumentation.runOnMainSync {
                 done = true
-                MusicBed.debugLoopProbe = null
-                MusicBed.debugLoopInject = 0.0
-                MusicBed.debugLoopSettle = true
-                MusicBed.debugMusic = null
-                MusicBed.debugTrack = null
-                MusicBed.stop()
+                MusicBed.stop() // nhả mọi trình phát trước khi lấy PCM: sau đây không còn byte nào đến
             }
-            File(dir, "$id.txt").writeBytes((lines.joinToString("\n") + "\n").toByteArray(Charsets.UTF_8))
+            try {
+                MusicBed.debugLoopFlush()
+            } finally {
+                instrumentation.runOnMainSync {
+                    MusicBed.debugLoopProbe = null
+                    MusicBed.debugLoopPcmBase = null
+                    MusicBed.debugLoopInject = 0.0
+                    MusicBed.debugLoopSettle = true
+                    MusicBed.debugMusic = null
+                    MusicBed.debugTrack = null
+                    MusicBed.stop()
+                }
+                val text = synchronized(lines) { lines.joinToString("\n") + "\n" }
+                File(dir, "$id.txt").writeBytes(text.toByteArray(Charsets.UTF_8))
+            }
         }
     }
 }
