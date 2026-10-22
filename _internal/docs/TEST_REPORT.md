@@ -7,6 +7,13 @@ một đường phát tiếp duy nhất qua Playback.play (tự lùi, chuẩn b�
 tốc độ từ controller ngoài lên giao diện, lời giải thích quyền thông báo, khoá riêng danh sách giọng VieNeu/Supertonic. Mỗi mục test đỏ trước rồi xanh.
 Toàn bộ: JVM 1284 tests, 6 skipped, 0 F/E, exit 0; vitest 1262 passed, 1 skipped; tsc exit 0. Không đổi Python (pytest chạy ở lượt kiểm bản phát hành).
 Chưa thử trên máy thật: ANR khi đổi giọng chỉ đo trong test (voices() < 200 ms khi khoá chính bị giữ).
+Đợt `a78fix` trên `dev/uxfix89` (nền rc123, Codex tk1 bị cắt ở 99 % lúc kiểm cuối, Lead soát + làm nốt): máy tính nghe tin cậy -
+phiên phát theo lần nạp trang (`/progress/session`, 409 khi cửa sổ khác đã thay; giữ 16 phiên gần nhất), hộp chờ tiến độ sống qua
+nạp lại và chỉ gỡ khi ACK đúng bản, hẹn giờ phút chỉ đếm thời gian có tiếng, mờ dần áp cả nhạc nền, ý định phát chặn lần thử lại /
+chờ máy nguồn cũ, kết quả mở file giữ ở host tới khi trang ACK, đóng app dừng cả xuất .abook và xuất sách chữ. F13 (nhớ cửa sổ)
+làm riêng ở `dev/winstate90`. Lead sửa thêm: đổi chương lúc dừng không lưu (load coi chỗ mới là đã lưu) - test
+`playerReliability` đỏ 1F rồi xanh. Toàn bộ: pytest 8470 passed, 9 skipped, 0 F/E, exit 0; vitest 1271 passed, 1 skipped; tsc exit 0.
+Không đổi Kotlin. Hash khoá c9176123 không đổi.
 
 Đợt `a73fix2` trên `dev/uxfix81` (nền c9a9baf1): nhận lượt hàng đợi và nút chạy dưới cùng khoá,
 đánh dấu khởi động trước khi chuẩn bị, giữ hàng trên đĩa tới khi jobs nhận start; dọn Thùng rác nền theo hạn đóng app.

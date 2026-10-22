@@ -327,6 +327,7 @@ export interface AppInfo {
 }
 
 export interface Preferences {
+  readAloudVoice: string;
   libraryRoot: string;
   theme: "system" | "light" | "dark";
   playbackRate: number;
@@ -402,7 +403,7 @@ export function suggestionOf(error: unknown): string {
 }
 
 /** `signal`: người gọi bỏ lượt này (fetch bị huỷ, kết nối đóng - máy chủ thấy và thôi làm, vd lượt đọc của giọng trên máy, uxfix70); đường truyền native bỏ qua. */
-export type ApiInit = { method?: string; body?: unknown; signal?: AbortSignal };
+export type ApiInit = { method?: string; body?: unknown; signal?: AbortSignal; keepalive?: boolean };
 
 /** Đường truyền thay cho `fetch` tới server cục bộ: điện thoại không có server, các lệnh sửa sách ("áp ngay") đi thẳng vào
  *  lõi native (android/localStudio.ts, EbookLibrary.studio) với cùng đường dẫn, cùng JSON như máy chủ máy tính. Máy tính không đặt. */
@@ -427,6 +428,7 @@ function send(path: string, init?: ApiInit): Promise<Response> {
     },
     body: init?.body !== undefined ? JSON.stringify(init.body) : undefined,
     signal: init?.signal,
+    keepalive: init?.keepalive,
   });
 }
 

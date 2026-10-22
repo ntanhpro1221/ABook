@@ -22,9 +22,6 @@ import {
   rewindAfter,
   sleepExtended,
   sleepFrom,
-  sleepLeftMs,
-  sleepPaused,
-  sleepResumed,
   type SleepMode,
   type SleepRequest,
 } from "./sleep";
@@ -33,10 +30,11 @@ import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, onVoice
 import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useSource } from "./source";
-import { useTrackMetadata } from "./trackMetadata";
+import { publishTrackMetadata, useTrackMetadata } from "./trackMetadata";
 import { sentenceIndexAt } from "./words";
 import { caughtUpDetail } from "./labels";
 import { reportSaveFailure } from "./saveFailure";
+import { ProgressOutbox } from "./progressOutbox";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
 import { prefersReducedMotion } from "@/shared/motion";
 
@@ -302,8 +300,12 @@ export function PlayerProvider({
     sleep: { kind: "off" } as SleepMode,
     purpose: "listen" as Purpose,
     fading: false,
+    sleepGain: 1,
+    audible: false,
+    sleepMark: { at: Date.now(), seconds: 0 },
     pausedAt: 0,
     lastSaved: 0,
+    lastAttempt: 0,
     volume: defaultVolume,
     rate: defaultRate,
     defaultRate,
@@ -324,6 +326,8 @@ export function PlayerProvider({
     continues: null as string | null,
     /** Ý định phát của người nghe (PlayerActions.wantsPlay): bật khi bấm phát / trình phát bắt đầu phát, tắt khi bấm dừng, hẹn giờ dừng, đóng. */
     wantsPlay: false,
+    playIntent: 0,
+    playback: null as { id: string; revision: number; acked: number; bookId: string; record?: string; ready?: Promise<unknown> } | null,
   });
   refs.current.track = track;
   refs.current.queue = queue;
@@ -355,17 +359,65 @@ export function PlayerProvider({
     void client.invalidateQueries({ queryKey: ["listen", "book", bookId] });
   }, [client]);
 
-  const save = useCallback((force = false) => {
+  const ensurePlayback = useCallback(() => {
+    const session = refs.current.playback;
+    if (!session || !source.beginProgress) return Promise.resolve();
+    if (!session.ready) session.ready = source.beginProgress(session.bookId, session.id, session.record).catch((error) => {
+      session.ready = undefined;
+      throw error;
+    });
+    return session.ready;
+  }, [source]);
+
+  const progressOutbox = useMemo(() => new ProgressOutbox(
+    async (spot, keepalive) => {
+      if (spot.sessionId === refs.current.playback?.id) await ensurePlayback();
+      return source.saveProgress(spot.bookId, spot.chapterId, spot.seconds, spot.duration, spot.record, spot.anchor,
+        { sessionId: spot.sessionId, revision: spot.revision, keepalive });
+    },
+    undefined,
+    (spot) => {
+      const current = refs.current.track;
+      if (current?.bookId !== spot.bookId || current?.recordId !== spot.record) return;
+      if (spot.sessionId !== refs.current.playback?.id) return;
+      if (refs.current.playback && (spot.revision ?? 0) < refs.current.playback.acked) return;
+      if (refs.current.playback) refs.current.playback.acked = spot.revision ?? 0;
+      if ((spot.savedAt ?? 0) < refs.current.lastSaved) return;
+      refs.current.lastSaved = spot.savedAt ?? Date.now();
+      refs.current.stamp = refs.current.lastSaved;
+      refs.current.savedSpot = { chapterId: spot.chapterId, seconds: spot.seconds };
+    },
+  ), [ensurePlayback, source]);
+
+  const save = useCallback((force = false, keepalive = false) => {
     const current = refs.current.track;
     if (!current || native || refs.current.purpose === "review") return;
     const now = Date.now();
-    if (!force && now - refs.current.lastSaved < SAVE_EVERY_MS) return;
-    refs.current.lastSaved = now;
-    refs.current.stamp = now;
-    refs.current.savedSpot = { chapterId: current.chapterId, seconds: engine.time };
-    void source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId, engine.readingAnchor).catch(reportSaveFailure);
+    const saved = refs.current.savedSpot;
+    if (saved?.chapterId === current.chapterId && Math.abs(saved.seconds - engine.time) < 0.05) return;
+    if (!force && now - refs.current.lastAttempt < SAVE_EVERY_MS) return;
+    refs.current.lastAttempt = now;
+    const session = refs.current.playback;
+    const writing = progressOutbox.put({ bookId: current.bookId, chapterId: current.chapterId, seconds: engine.time,
+      duration: engine.duration, record: current.recordId, anchor: engine.readingAnchor, savedAt: now,
+      sessionId: session?.id, revision: session ? ++session.revision : undefined }, keepalive).catch(reportSaveFailure);
     if (force) refreshLists(current.bookId);
-  }, [engine, native, source, refreshLists]);
+    return writing;
+  }, [engine, native, progressOutbox, refreshLists]);
+
+  useEffect(() => {
+    if (native) return;
+    const retry = () => { void progressOutbox.flush().catch(reportSaveFailure); };
+    retry();
+    const timer = window.setInterval(retry, SAVE_EVERY_MS);
+    return () => window.clearInterval(timer);
+  }, [native, progressOutbox]);
+
+  useEffect(() => {
+    if (native) return;
+    const timer = window.setInterval(() => { if (!engine.paused) save(); }, SAVE_EVERY_MS);
+    return () => window.clearInterval(timer);
+  }, [engine, native, save]);
 
   const showNotice = useCallback((message: string) => {
     window.clearTimeout(noticeTimer.current);
@@ -401,22 +453,25 @@ export function PlayerProvider({
    *  "Nghe" thì chạy `run`, chọn giọng khác thì đổi giọng rồi chạy, đóng hộp thì thôi. Không chữ nào rời máy trước câu trả lời. Chương có
    *  audio, giọng của máy, hay đã đồng ý: chạy ngay. Máy tính và điện thoại như nhau (lõi Android cũng chỉ đọc khi được lệnh phát). */
   const withConsent = useCallback((bookId: string, chapter: ListenChapter | undefined, run: () => void) => {
+    const intent = refs.current.playIntent;
+    const guarded = () => { if (intent === refs.current.playIntent) run(); };
     if (chapter?.state !== "text") {
-      run();
+      guarded();
       return;
     }
     const decide = (voices: ReadAloudVoice[]) => {
+      if (intent !== refs.current.playIntent) return;
       const voice = resolveVoice(voices, chosenVoice(bookId));
       if (!needsOnlineConsent(voice)) {
-        run();
+        guarded();
         return;
       }
       void askOnlineConsent(voice, voices).then((picked) => {
-        if (picked === null) return;
+        if (picked === null || intent !== refs.current.playIntent) return;
         // Chọn trong danh sách là lựa chọn cho cuốn, kể cả chọn lại đúng giọng đang hỏi (soát a66: không nhớ thì tải giọng trên máy xong cuốn
         // tự sang giọng mặc định khác). "Nghe" thì không: cuốn vẫn theo giọng mặc định.
         if (picked.chosen) chooseVoice(bookId, picked.voice);
-        run();
+        guarded();
       });
     };
     const fresh = voicesOf(source).then((voices) => (voicesRef.current = voices));
@@ -438,13 +493,25 @@ export function PlayerProvider({
   }, [source]);
 
   const load = useCallback((next: Track, at: number, autoplay: boolean, readingAnchor?: ReadingAnchor) => {
+    if (refs.current.track && (refs.current.track.bookId !== next.bookId || refs.current.track.recordId !== next.recordId)) ++refs.current.playIntent;
+    refs.current.audible = false;
+    // Sang chương khác của cùng cuốn, cùng hồ sơ (Trước / Sau, hết chương): chỗ mới CHƯA được lưu - lưu khi nguồn báo độ dài ("duration"),
+    // kể cả khi đang dừng. Nạp cuốn / hồ sơ khác ở đúng chỗ đã lưu thì không: lưu lại là đóng dấu giờ mới lên chỗ cũ.
+    const previous = refs.current.track;
+    const moved = previous?.bookId === next.bookId && previous?.recordId === next.recordId && previous?.chapterId !== next.chapterId;
     save(true);
+    const session = refs.current.playback;
+    if (!native && (!session || session.bookId !== next.bookId || session.record !== next.recordId)) {
+      refs.current.playback = { id: crypto.randomUUID(), revision: 0, acked: 0, bookId: next.bookId, record: next.recordId };
+      void ensurePlayback().catch(reportSaveFailure);
+    }
     setError("");
     stopPeerWatch.current();
     setAtEnd("none");
     setTrack(next);
     refs.current.track = next;
-    refs.current.savedSpot = { chapterId: next.chapterId, seconds: at };
+    if (!native) publishTrackMetadata(next);
+    refs.current.savedSpot = moved ? null : { chapterId: next.chapterId, seconds: at };
     clock.set(at, 0);
     refs.current.stamp = Date.now();
     const chapter = refs.current.queue.find((item) => item.id === next.chapterId);
@@ -463,7 +530,7 @@ export function PlayerProvider({
       at,
       autoplay,
     );
-  }, [clock, engine, native, source, save, speechOf]);
+  }, [clock, engine, ensurePlayback, native, source, save, speechOf]);
 
   const remember = useCallback((from: { chapterId: number; seconds: number }, to: { chapterId: number; seconds: number }, note?: string) => {
     // Nhảy xa là một đoạn nghe khác: phiên cũ kết thúc ở chỗ trước khi nhảy.
@@ -701,7 +768,7 @@ export function PlayerProvider({
       bed.stop();
     };
   }, [bed, engine, nextWarm, playlistBed, scene]);
-  useEffect(() => bed?.setVolume(volume), [bed, volume]);
+  useEffect(() => bed?.setVolume(volume * refs.current.sleepGain), [bed, volume]);
 
   /** `push` tắt: chỉ đổi số trên giao diện - lõi điện thoại đã có (hay sẽ nhận cùng lệnh nạp) tốc độ ấy. */
   const applyRate = useCallback((value: number, push = true) => {
@@ -711,6 +778,12 @@ export function PlayerProvider({
   }, [engine]);
 
   const adoptBook = useCallback((book: BookRef, chapters: ListenChapter[], purposeValue: Purpose, carriedRate?: number) => {
+    const current = refs.current.track;
+    if (current && (current.bookId !== book.id || current.recordId !== activeRecord(book))) {
+      refs.current.history = [];
+      setCanGoBack(false);
+      toast.dismiss("jump");
+    }
     setQueue(chapters);
     refs.current.queue = chapters;
     // Sách chỉ-có-chữ không "đang làm": hết chương cuối là hết cuốn, không phải "chờ Studio làm tiếp".
@@ -762,6 +835,8 @@ export function PlayerProvider({
   const play = useCallback<PlayerActions["play"]>((book, chapters, chapterId, at, extra) => {
     const chapter = chapters.find((item) => item.id === chapterId);
     if (!chapter) return;
+    ++refs.current.playIntent;
+    refs.current.wantsPlay = true;
     adoptVoice(book);
     withConsent(book.id, chapter, () => playNow(book, chapters, chapter, at, extra));
   }, [adoptVoice, playNow, withConsent]);
@@ -827,6 +902,7 @@ export function PlayerProvider({
   const resume = useCallback(() => {
     const current = refs.current.track;
     if (!current) return;
+    const intent = ++refs.current.playIntent;
     refs.current.wantsPlay = true;
     if (errorRef.current) setErrorRepeat((count) => count + 1);
     // Nguồn đã hỏng (máy kia tắt, mất mạng): bấm phát ở đâu cũng là nạp lại đúng chỗ - phát lại nguồn hỏng chỉ ra lỗi cũ (soát a27 lỗi 3).
@@ -839,7 +915,7 @@ export function PlayerProvider({
     // tối đa FRESH_SPOT_MS rồi mới quyết. Mọi đường nghe tiếp (nút chính trang sách, thẻ, Space, phím tai nghe) đều qua đây.
     const resumeHere = () => withConsent(current.bookId, refs.current.queue.find((chapter) => chapter.id === current.chapterId), resumeNow);
     const decide = () => {
-      if (refs.current.track !== current || !engine.paused) return;
+      if (refs.current.playIntent !== intent || !refs.current.wantsPlay || refs.current.track !== current || !engine.paused) return;
       const book = client.getQueryData<ListenBook>(["listen", "book", current.bookId]);
       const active = book?.records?.find((record) => record.active)?.id;
       const away = !(current.recordId && active && current.recordId !== active)
@@ -863,6 +939,8 @@ export function PlayerProvider({
   const retry = useCallback(() => {
     const current = refs.current.track;
     if (!current) return;
+    ++refs.current.playIntent;
+    refs.current.wantsPlay = true;
     forgetVoiceTrouble(); // "Thử lại" gọi lại dịch vụ thật, không nhắc lại lỗi cũ của giọng trực tuyến
     stopPeerWatch.current();
     if (native) {
@@ -893,7 +971,9 @@ export function PlayerProvider({
   }, []);
 
   const pause = useCallback(() => {
+    ++refs.current.playIntent;
     refs.current.wantsPlay = false;
+    stopPeerWatch.current();
     night.touch("pause", position(), true);
     engine.pause();
   }, [engine, night, position]);
@@ -1052,17 +1132,20 @@ export function PlayerProvider({
     const clamped = Math.max(0, Math.min(1, value));
     refs.current.volume = clamped;
     setVolumeState(clamped);
-    if (!refs.current.fading) engine.setVolume(clamped);
+    engine.setVolume(clamped * refs.current.sleepGain);
+    bed?.setVolume(clamped * refs.current.sleepGain);
     night.touch("volume", position());
-  }, [engine, night, position]);
+  }, [bed, engine, night, position]);
 
   const endFade = useCallback(() => {
+    refs.current.sleepGain = 1;
     if (refs.current.fading) {
       refs.current.fading = false;
       setFading(false);
     }
     engine.setVolume(refs.current.volume);
-  }, [engine]);
+    bed?.setVolume(refs.current.volume);
+  }, [bed, engine]);
 
   const setSleep = useCallback((request: SleepRequest) => {
     if (native) {
@@ -1070,7 +1153,8 @@ export function PlayerProvider({
       return;
     }
     endFade();
-    applySleep(sleepFrom(request, !engine.paused, Date.now()));
+    refs.current.sleepMark = { at: Date.now(), seconds: engine.time };
+    applySleep(sleepFrom(request, refs.current.audible && !engine.paused, Date.now()));
     const book = refs.current.book;
     if (request.kind === "off") {
       night.cancel(position());
@@ -1093,7 +1177,7 @@ export function PlayerProvider({
     }
     if (refs.current.sleep.kind === "off") return;
     endFade();
-    applySleep(sleepExtended(refs.current.sleep, minutes, !engine.paused, Date.now()));
+    applySleep(sleepExtended(refs.current.sleep, minutes, refs.current.audible && !engine.paused, Date.now()));
     night.extend(minutes, position());
     toast.success(`Nghe thêm ${minutes} phút`, { id: "sleep-extend", duration: 2500 });
   }, [applySleep, endFade, engine, native, night, options.extendMinutes, position]);
@@ -1120,8 +1204,11 @@ export function PlayerProvider({
   }, [client, engine, native, night, position, refreshLists, source]);
 
   const close = useCallback(() => {
+    if (!native) publishTrackMetadata(null);
     toast.dismiss("jump");
     refs.current.wantsPlay = false;
+    ++refs.current.playIntent;
+    stopPeerWatch.current();
     save(true);
     night.cancel(position());
     engine.stop();
@@ -1130,6 +1217,7 @@ export function PlayerProvider({
     bedCuesFor.current = "";
     setTrack(null);
     refs.current.track = null;
+    refs.current.playback = null;
     setPlaying(false);
     setExpanded(false);
     endFade();
@@ -1138,7 +1226,7 @@ export function PlayerProvider({
     refs.current.purpose = "listen";
     refs.current.history = [];
     setCanGoBack(false);
-  }, [applySleep, bed, endFade, engine, night, position, save]);
+  }, [applySleep, bed, endFade, engine, native, night, position, save]);
 
   // Thôi ghép máy kia khi đang nạp một cuốn của nó: cuốn rời Thư viện thì trình phát đóng và nói vì sao (soát a27 lỗi 11). Chỉ đọc danh sách
   // Thư viện đã có trong bộ đệm (Thư viện, hộp thôi ghép làm mới nó) - không hỏi thêm.
@@ -1213,6 +1301,9 @@ export function PlayerProvider({
   // trước thì khỏi lưu: lưu lại là đóng dấu giờ mới lên chỗ CŨ, đè chỗ mới hơn mà máy khác vừa đồng bộ tới.
   // Lõi Android làm cả lượt ấy trên luồng chính của nó (Playback.switchRecord), ở đây chỉ việc chờ máy chủ.
   const switchRecord = useCallback<PlayerActions["switchRecord"]>(async (bookId, change, startOver = false) => {
+    toast.dismiss("jump");
+    const intent = ++refs.current.playIntent;
+    stopPeerWatch.current();
     const current = refs.current.track;
     const loaded = !native && current?.bookId === bookId && refs.current.purpose === "listen";
     if (current && loaded) {
@@ -1220,14 +1311,14 @@ export function PlayerProvider({
       const moved = !engine.paused || !saved || saved.chapterId !== current.chapterId || Math.abs(saved.seconds - engine.time) > 1;
       const writes = [
         moved
-          ? source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId, engine.readingAnchor).catch(reportSaveFailure)
+          ? save(true)
           : undefined,
         closeSession(),
       ];
-      refs.current.lastSaved = Date.now();
       night.cancel(position());
       engine.stop();
       refs.current.track = null;
+      refs.current.playback = null;
       setTrack(null);
       setPlaying(false);
       endFade();
@@ -1237,8 +1328,10 @@ export function PlayerProvider({
       await Promise.all(writes);
     }
     await change();
+    if (intent !== refs.current.playIntent) return;
     if (!loaded && !startOver) return;
     const book = await source.book(bookId);
+    if (intent !== refs.current.playIntent) return;
     const chapters = book.chapters ?? [];
     if (startOver) {
       const first = chapters.find(canPlay);
@@ -1247,7 +1340,7 @@ export function PlayerProvider({
     }
     const point = resumePoint(book, chapters);
     if (point) prepare(book, chapters, point.chapter.id, point.at);
-  }, [applySleep, closeSession, endFade, engine, native, night, play, position, prepare, source]);
+  }, [applySleep, closeSession, endFade, engine, native, night, play, position, prepare, save, source]);
 
   splitSessionRef.current = (at) => {
     const session = refs.current.session;
@@ -1266,6 +1359,8 @@ export function PlayerProvider({
 
   /** Hẹn giờ vừa hết: dừng, trả âm lượng, ghi mốc "tự dừng" cho buổi sáng. */
   const stopBySleep = useCallback(() => {
+    ++refs.current.playIntent;
+    stopPeerWatch.current();
     refs.current.wantsPlay = false;
     night.stop(position());
     engine.pause();
@@ -1288,25 +1383,38 @@ export function PlayerProvider({
         syncClock();
         save();
       }),
-      engine.on("duration", syncClock),
+      engine.on("duration", () => {
+        syncClock();
+        if (engine.paused && refs.current.savedSpot === null) save(true);
+      }),
+      engine.on("seeked", () => { refs.current.sleepMark = { at: Date.now(), seconds: engine.time }; syncClock(); save(true); }),
       engine.on("play", () => {
         refs.current.wantsPlay = true;
         setPlaying(true);
         setError(""); // phát lại được (vd có mạng lại khi nghe thẳng): thông báo lỗi cũ không còn đúng
         refs.current.pausedAt = 0;
         openSession();
-        if (!native) applySleep(sleepResumed(refs.current.sleep, Date.now()));
       }),
       engine.on("pause", () => {
         setPlaying(false);
         closeSession();
         syncClock();
         refs.current.pausedAt = Date.now();
-        if (!native) applySleep(sleepPaused(refs.current.sleep, Date.now()));
+        refs.current.audible = false;
+        if (!native && refs.current.sleep.kind === "minutes") applySleep({ ...refs.current.sleep, since: null });
         save(true);
       }),
-      engine.on("waiting", () => setBuffering(true)),
-      engine.on("playing", () => setBuffering(false)),
+      engine.on("waiting", () => {
+        setBuffering(true);
+        refs.current.audible = false;
+        refs.current.sleepMark = { at: Date.now(), seconds: engine.time };
+        if (!native && refs.current.sleep.kind === "minutes") applySleep({ ...refs.current.sleep, since: null });
+      }),
+      engine.on("playing", () => {
+        setBuffering(false);
+        refs.current.audible = true;
+        refs.current.sleepMark = { at: Date.now(), seconds: engine.time };
+      }),
       engine.on("ended", () => {
         const current = refs.current.track;
         if (!current) return;
@@ -1324,7 +1432,8 @@ export function PlayerProvider({
           if (target) {
             load({ ...current, chapterId: target.id, chapterTitle: target.fullTitle }, 0, false);
             if (refs.current.purpose === "listen") {
-              void source.saveProgress(current.bookId, target.id, 0, target.duration, current.recordId).then(() => refreshLists(current.bookId)).catch(reportSaveFailure);
+              refs.current.savedSpot = null;
+              save(true);
             }
           }
           return;
@@ -1353,6 +1462,7 @@ export function PlayerProvider({
       }),
       engine.on("recovered", () => setError("")),
       engine.on("error", () => {
+        const intent = refs.current.playIntent;
         // Lõi Android nói đúng lý do (nghe thẳng mà mất kết nối với máy tính khác hẳn file hỏng).
         const fallback = native?.error || engine.error || "Không phát được chương này - file có thể đã bị xoá hoặc đang được ghi lại.";
         setError(fallback);
@@ -1369,7 +1479,7 @@ export function PlayerProvider({
         if (!native && remote && typeof remote === "object" && remote.device) {
           void api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`)
             .then((answer) => {
-              if (answer.reachable || refs.current.book?.id !== bookId) return;
+              if (answer.reachable || refs.current.playIntent !== intent || !refs.current.wantsPlay || refs.current.book?.id !== bookId) return;
               const message = `Máy ${remote.computer || "kia"} không trả lời (tắt hay mất mạng) - chương này chưa tải về máy này.`;
               setError((current) => (current === fallback ? message : current));
               // Máy ấy trả lời lại thì tự thử một lần, đúng chỗ đang đứng.
@@ -1378,7 +1488,7 @@ export function PlayerProvider({
               stopPeerWatch.current = watchUntilBack(
                 () => api<{ reachable: boolean }>(`/api/computers/${remote.device}/reachable`).then((again) => again.reachable),
                 () => {
-                  if (refs.current.book?.id === bookId && refs.current.track?.chapterId === chapterId) retryRef.current();
+                  if (refs.current.playIntent === intent && refs.current.wantsPlay && refs.current.book?.id === bookId && refs.current.track?.chapterId === chapterId) retryRef.current();
                 },
               );
             })
@@ -1462,7 +1572,18 @@ export function PlayerProvider({
       const mode = refs.current.sleep;
       const now = Date.now();
       let left: number | null = null;
-      if (mode.kind === "minutes") left = sleepLeftMs(mode, now);
+      const mark = refs.current.sleepMark;
+      const wall = now - mark.at;
+      const sound = ((engine.time - mark.seconds) / Math.max(0.25, refs.current.rate)) * 1000;
+      refs.current.sleepMark = { at: now, seconds: engine.time };
+      if (mode.kind === "minutes") {
+        // Chỉ tính thời gian tiếng thật tiến lên. Khoảng mất nhịp >2s (ngủ máy / JS bị treo) không phải bằng chứng có tiếng.
+        const heard = refs.current.audible && !engine.paused && wall >= 0 && wall <= 2000 ? Math.max(0, Math.min(wall, sound)) : 0;
+        left = Math.max(0, mode.leftMs - heard);
+        const updated = { ...mode, leftMs: left, since: heard > 0 ? now : null };
+        refs.current.sleep = updated;
+        if (Math.ceil(left / 1000) !== Math.ceil(mode.leftMs / 1000) || (updated.since === null) !== (mode.since === null)) setSleepState(updated);
+      }
       else if (mode.kind === "chapter" && engine.duration > 0) {
         left = ((engine.duration - engine.time) / Math.max(0.25, refs.current.rate)) * 1000;
       }
@@ -1473,7 +1594,9 @@ export function PlayerProvider({
       }
       const fadeMs = options.fadeSeconds * 1000;
       if (left < fadeMs) {
-        engine.setVolume(refs.current.volume * fadeGain(left, fadeMs));
+        refs.current.sleepGain = fadeGain(left, fadeMs);
+        engine.setVolume(refs.current.volume * refs.current.sleepGain);
+        bed?.setVolume(refs.current.volume * refs.current.sleepGain);
         if (!refs.current.fading) {
           refs.current.fading = true;
           setFading(true);
@@ -1487,7 +1610,7 @@ export function PlayerProvider({
     tick();
     const timer = window.setInterval(tick, 100);
     return () => window.clearInterval(timer);
-  }, [endFade, engine, native, night, options.fadeSeconds, playing, position, sleep.kind, stopBySleep]);
+  }, [bed, endFade, engine, native, night, options.fadeSeconds, playing, position, sleep.kind, stopBySleep]);
 
   // Máy tính: chạm phím/chuột lúc đang nhỏ dần = "lắc máy" - nghe thêm. Phím ấy không làm gì khác (không tạm dừng).
   useEffect(() => {
@@ -1555,13 +1678,14 @@ export function PlayerProvider({
 
   useEffect(() => {
     const onHide = () => {
-      save(true);
+      const writing = save(true, true);
+      if (!writing) void progressOutbox.flush(true).catch(reportSaveFailure);
       closeSession(true);
       night.flush();
     };
     window.addEventListener("pagehide", onHide);
     return () => window.removeEventListener("pagehide", onHide);
-  }, [closeSession, night, save]);
+  }, [closeSession, night, progressOutbox, save]);
 
   // Phím tắt (máy tính). Không tranh phím với ô nhập, thanh trượt, tab, menu, hộp thoại; Space trên một nút chỉ
   // kích hoạt nút đó khi người dùng Tab tới nó bằng bàn phím (:focus-visible) - bấm chuột xong thì Space vẫn là

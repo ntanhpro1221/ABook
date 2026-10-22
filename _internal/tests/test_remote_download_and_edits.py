@@ -415,7 +415,8 @@ class _Reply:
         return chunk
 
 
-def test_a_cut_download_names_the_machine_keeps_the_part_and_resumes_with_a_range(tmp_path: Path, monkeypatch) -> None:
+@pytest.mark.parametrize("via_listen", [False, True])
+def test_a_cut_download_names_the_machine_keeps_the_part_and_resumes_with_a_range(tmp_path: Path, monkeypatch, via_listen) -> None:
     from contextlib import contextmanager
 
     data = bytes(range(200)) * 5
@@ -433,14 +434,17 @@ def test_a_cut_download_names_the_machine_keeps_the_part_and_resumes_with_a_rang
 
     monkeypatch.setattr(remote_books, "_COMPUTERS", Known())
     monkeypatch.setattr(remote_books, "_open", fake_open)
-    book = {"package": {"remote": {"computer": "c1", "book": "b" * 24}}, "version": 1}
+    book = {"package": {"remote": {"computer": "c1", "book": "b" * 24}, "files": {"chapters/1.mp3": {"size": len(data)}}}, "version": 1}
+    def fetch():
+        return (remote_books.fetch(tmp_path, "chapters/1.mp3", book, quiet=False) if via_listen
+                else remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(data)))
     with pytest.raises(remote_books.RemoteError, match=r"Máy Phòng khách không trả lời \(tắt hay mất mạng\)"):
-        remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(data))
+        fetch()
     part = tmp_path / "chapters" / "1.mp3.part"
     assert part.read_bytes() == data[:300] and not (tmp_path / "chapters" / "1.mp3").exists()
     assert remote_books._part_size(tmp_path, "chapters/1.mp3", len(data)) == 300
 
-    remote_books._save(tmp_path, "chapters/1.mp3", book, size=len(data))
+    fetch()
     assert asked[1] == {"Range": "bytes=300-", "If-Range": '"v1"'}
     assert (tmp_path / "chapters" / "1.mp3").read_bytes() == data and not part.exists()
     assert not list((tmp_path / "chapters").glob("*.etag")), "xong thì không để lại ghi chú phiên bản"

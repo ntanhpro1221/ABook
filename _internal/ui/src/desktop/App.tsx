@@ -8,6 +8,7 @@ import { BookScreen } from "@/listen/BookScreen";
 import { ClipProvider } from "@/listen/clip";
 import { WebAudioEngine } from "@/listen/engine";
 import { RoutedEngine } from "@/listen/readAloud";
+import { onDefaultVoiceChosen, restoreDefaultVoice } from "@/listen/readAloudVoice";
 import { AddBookButton } from "@/listen/AddBook";
 import type { ReadSession } from "@/listen/importQueue";
 import { DropToAdd } from "@/listen/DropToAdd";
@@ -37,6 +38,7 @@ import { AudiobookDialogHost } from "./AudiobookDialog";
 import { AudiobookMenuItem, BookFileMenuItem, ExportJobHost, M4bMenuItem, Mp3MenuItem } from "./ExportBookFileJob";
 import { RemoteDownloadMenuItem, RemoteDownloadStatus } from "./RemoteDownload";
 import { SettingsScreen } from "./SettingsScreen";
+import { OpenedInbox } from "./openedInbox";
 import { Shell } from "./Shell";
 
 function useTheme(theme: string | undefined) {
@@ -194,6 +196,7 @@ function RemoveImportedHost() {
 
 /** Kết quả mở một file sách (`POST /api/listen/open-book-file`, hay cửa sổ app khi bấm đúp file .abook - desktop.py). */
 interface OpenedBook {
+  eventId?: string;
   id: string | null;
   how?: "new" | "existing" | "updated" | "repaired" | "project" | "studio";
   /** File `.abookproj`: số file nguồn chương không có trong gói (đã bị dời hay xoá ở máy gói). */
@@ -318,13 +321,28 @@ function VolumeSaver() {
   return null;
 }
 
-function OpenedBookListener() {
+function OpenedBookListener({ local = true }: { local?: boolean }) {
   const opened = useOpenedBook();
   useEffect(() => {
-    const listener = (event: Event) => opened((event as CustomEvent<OpenedBook>).detail);
+    const inbox = new OpenedInbox<OpenedBook>(opened, (eventId) => api("/api/host/opened/ack", { method: "POST", body: { eventId } }));
+    let stopped = false, polling = false;
+    const receive = (event: OpenedBook) => inbox.receive(event).catch(() => undefined);
+    const listener = (event: Event) => { void receive((event as CustomEvent<OpenedBook>).detail); };
     window.addEventListener("abook-opened", listener);
-    return () => window.removeEventListener("abook-opened", listener);
-  }, [opened]);
+    // Listener đã gắn mới báo sẵn sàng. GET không lấy mất sự kiện: reload trước ACK vẫn nhận lại.
+    const replay = async () => {
+      if (polling || stopped) return;
+      polling = true;
+      try {
+        const events = await api<OpenedBook[]>("/api/host/opened");
+        for (const event of events) { if (stopped) break; await receive(event); }
+      } catch { /* Host đang bận / trang vừa nạp lại: nhịp sau thử tiếp. */ }
+      finally { polling = false; }
+    };
+    if (local) void replay();
+    const timer = local ? window.setInterval(() => void replay(), 1000) : undefined;
+    return () => { stopped = true; window.clearInterval(timer); window.removeEventListener("abook-opened", listener); };
+  }, [local, opened]);
   return null;
 }
 
@@ -501,7 +519,17 @@ function NotFound() {
 export function App() {
   const { data: info, error, refetch } = useAppInfo();
   const retry = useCallback(() => void refetch(), [refetch]);
-  const { data: preferences } = usePreferences();
+  const { data: preferences, error: preferencesError, refetch: reloadPreferences } = usePreferences();
+  const [voiceReady, setVoiceReady] = useState(false);
+  useEffect(() => {
+    if (!preferences || info?.remote) return;
+    restoreDefaultVoice(preferences.readAloudVoice ?? "");
+    setVoiceReady(true);
+    return onDefaultVoiceChosen((voice) => {
+      void api("/api/preferences", { method: "PUT", body: { readAloudVoice: voice } })
+        .catch(() => toast.error("Chưa lưu được giọng mặc định. Bạn hãy chọn lại để thử lại."));
+    });
+  }, [info?.remote, preferences?.readAloudVoice]);
   useTheme(preferences?.theme ?? info?.theme);
   // Cài đặt › Phím tắt: bộ bắt phím của trình phát, Việc cần duyệt, Cần nghe lại đọc cờ này lúc có phím.
   useEffect(() => setLetterShortcuts(preferences?.letterShortcuts !== false), [preferences?.letterShortcuts]);
@@ -525,7 +553,8 @@ export function App() {
     [info?.remote, info?.dialogs],
   );
   if (!info && error && currentPeer()) return <PeerTrouble error={error} retry={retry} />;
-  if (!info) return <div className="grid h-full place-items-center text-fg-3">Đang mở ABook…</div>;
+  if (info && !info.remote && !voiceReady && preferencesError) return <EmptyState icon={Laptop} title="Chưa đọc được cài đặt" action={<Button onClick={() => void reloadPreferences()}>Thử lại</Button>}>Bạn hãy thử lại để nạp giọng mặc định trước khi nghe.</EmptyState>;
+  if (!info || (!info.remote && !voiceReady)) return <div className="grid h-full place-items-center text-fg-3">Đang mở ABook…</div>;
   return (
     <TooltipProvider delayDuration={350} skipDelayDuration={150}>
       <SourceProvider source={source}>
@@ -540,7 +569,7 @@ export function App() {
         >
           <ClipBridge>
             <HashRouter>
-              <OpenedBookListener />
+              <OpenedBookListener local={!info.remote} />
               <UpdateListener />
               <ListenOnlyListener />
               {!info.remote && <StartupNotices notices={info.notices} />}

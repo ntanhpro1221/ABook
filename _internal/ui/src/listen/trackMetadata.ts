@@ -15,6 +15,16 @@ interface NativeLabels { id: string; title: string; narrator: string; cover: str
 const labelsOf = (book: LabelledBook, chapters: readonly ListenChapter[] = []): NativeLabels =>
   ({ id: book.id, title: book.title, narrator: book.narrator, cover: JSON.stringify(book.cover ?? null), chapters });
 
+/** Mọi loại chương (kể cả đọc to) dùng nhãn ở cấp trình phát. Đóng cuốn gỡ nhãn hệ điều hành. */
+export function publishTrackMetadata(track: Track | null): void {
+  if (!("mediaSession" in navigator)) return;
+  if (!track) { navigator.mediaSession.metadata = null; return; }
+  if (typeof MediaMetadata === "undefined") return;
+  const artwork = track.bookCover ? new URL(track.bookCover.url, window.location.href).href : coverArtwork(track.bookTitle);
+  navigator.mediaSession.metadata = new MediaMetadata({ title: track.chapterTitle, album: track.bookTitle, artist: track.narrator,
+    artwork: artwork ? [{ src: artwork, sizes: "512x512", type: "image/png" }] : [] });
+}
+
 /** So từng chương chỉ khi danh sách chương đổi tham chiếu (react-query giữ nguyên tham chiếu khi dữ liệu không đổi). */
 function sameLabels(a: NativeLabels | null, b: NativeLabels): boolean {
   return !!a && a.id === b.id && a.title === b.title && a.narrator === b.narrator && a.cover === b.cover && (a.chapters === b.chapters ||
@@ -58,13 +68,7 @@ export function useTrackMetadata(
     if (next === current) return;
     refs.current.track = next;
     setTrack(next);
-    if (!native && "mediaSession" in navigator) {
-      const artwork = next.bookCover ? new URL(next.bookCover.url, window.location.href).href : coverArtwork(next.bookTitle);
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: next.chapterTitle, album: next.bookTitle, artist: next.narrator,
-        artwork: artwork ? [{ src: artwork, sizes: "512x512", type: "image/png" }] : [],
-      });
-    }
+    if (!native) publishTrackMetadata(next);
   }, [book, track?.bookId, refs, setTrack, setQueue, native]);
   return useCallback((loaded, chapters) => {
     nativeLabels.current = labelsOf(loaded, chapters);
