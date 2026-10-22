@@ -24,6 +24,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Khi điện thoại tự dừng việc xuất MP3, M4B hay sách nói của bạn (hết giờ chạy nền, thiếu bộ nhớ, kể cả Android 11 trở xuống không báo lý do), file đích và quyền ghi được giữ để việc xuất chạy lại; chỉ khi bạn bấm Dừng hoặc xuất thay lượt cũ thì lượt ấy mới bị huỷ.
 - Khi máy tính bị tắt ngang lúc bạn xuất MP3, chương ghi dở được dọn ở lần mở app sau, và danh sách phát không còn bị cụt.
 - Khi bạn đóng app trên máy tính lúc đang xuất, app chờ dọn Thùng rác và các lượt xuất trong cùng vài giây; ổ đĩa hay Thùng rác chậm cũng không giữ app mở quá lâu. Sách bạn vừa xoá mà chưa dọn xong sẽ được dọn tiếp ở lần mở sau.
+- Khi bạn nhập sách đã gỡ khoá còn giữ thông tin quyền, chương có ký tự ngắt trang (từ Word) hay ký tự trống đệm vẫn mở được; ký tự điều khiển vô hình được bỏ trước khi lưu chữ, nên đọc lại không còn thành chữ rác.
+- Khi bạn nhập EPUB dùng tên bảng mã như latin-1, l1, cp1252 hay x-sjis, máy tính và điện thoại đọc chữ thống nhất; bảng mã XML không được hỗ trợ như ISO-2022-JP hay HZ đều báo file hỏng.
+- Khi bạn nhập EPUB có phần chữ hay bìa khai kích thước sai, cả hai nền tảng dừng đọc và báo rõ khi byte thực giải nén vượt giới hạn.
+- Khi bạn nhập EPUB có chương UTF-16 không BOM, cả hai nền tảng đọc đúng chữ và không còn báo nhầm khoá bản quyền.
+- Khi bạn nhập sách có XML hỏng (nhiều phần tử gốc, thiếu thẻ đóng hay chữ ngoài phần tử gốc), điện thoại từ chối giống máy tính; mục lục hỏng vẫn được bỏ qua để lấy tên chương từ chữ.
+- Khi bạn nhập EPUB có chương bị chia thành hàng nghìn tệp nhỏ, các mảnh được ghép nhanh hơn và giữ đúng thứ tự chữ, kể cả chú thích cuối chương.
 
 ## [0.4.122] - 2026-10-22
 

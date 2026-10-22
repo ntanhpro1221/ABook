@@ -1,0 +1,82 @@
+[
+ {
+  "case": "<a/><b/>",
+  "hex": "3c612f3e3c622f3e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a>",
+  "hex": "3c613e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a><b></a>",
+  "hex": "3c613e3c623e3c2f613e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a/></b>",
+  "hex": "3c612f3e3c2f623e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "text<a/>",
+  "hex": "746578743c612f3e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a/>text",
+  "hex": "3c612f3e74657874",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a><b/></a><!--",
+  "hex": "3c613e3c622f3e3c2f613e3c212d2d",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a x=\"1\" x=\"2\"/>",
+  "hex": "3c6120783d22312220783d2232222f3e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a x=1/>",
+  "hex": "3c6120783d312f3e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a>&unknown;</a>",
+  "hex": "3c613e26756e6b6e6f776e3b3c2f613e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a>&#0;</a>",
+  "hex": "3c613e2623303b3c2f613e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a/>\f",
+  "hex": "3c612f3e0c",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a><![CDATA[text</a>",
+  "hex": "3c613e3c215b43444154415b746578743c2f613e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a><?pi</a>",
+  "hex": "3c613e3c3f70693c2f613e",
+  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+ },
+ {
+  "case": "<a xmlns:p=\"urn:x\"><p:b/></a>",
+  "hex": "3c6120786d6c6e733a703d2275726e3a78223e3c703a622f3e3c2f613e",
+  "text": ""
+ },
+ {
+  "case": "<!--before--><?pi ok?><a/><!--after-->",
+  "hex": "3c212d2d6265666f72652d2d3e3c3f7069206f6b3f3e3c612f3e3c212d2d61667465722d2d3e",
+  "text": ""
+ }
+]
