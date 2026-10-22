@@ -581,6 +581,7 @@ export function App() {
           extendMinutes={preferences?.sleepExtendMinutes ?? info.sleepExtendMinutes}
           safetyStopHours={preferences?.safetyStopHours ?? info.safetyStopHours}
           sleepSchedule={preferences ? preferences.sleepSchedule : info.sleepSchedule}
+          autoRewind={preferences?.autoRewind !== false}
         >
           <ClipBridge>
             <HashRouter>

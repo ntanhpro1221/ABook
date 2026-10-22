@@ -48,7 +48,8 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
                listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, package_share, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
-from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
+from .library import (NUMBER_RANGES, SLEEP_CHOICES, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule,
+                      legacy_ids)
 from .listening import HEAVY_KEYS, RECORD_ID, Listening, StalePlayback
 from .opened_events import OpenedEvents
 from . import audio_revision, bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
@@ -6186,17 +6187,14 @@ class Handler(BaseHTTPRequestHandler):
                 raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         # Tốc độ và âm lượng là SỐ trong khoảng giao diện đưa ra (player.SPEEDS 0,75-3; âm lượng 0-1): trình phát nạp lại
         # chúng lúc mở app, và một giá trị hỏng (chuỗi, 5) từng được lưu nguyên.
-        for key, low, high in (("playbackRate", 0.5, 3.0), ("volume", 0.0, 1.0)):
+        for key, (low, high) in NUMBER_RANGES.items():
             value = body.get(key)
             if isinstance(value, (int, float)) and not isinstance(value, bool) and low <= float(value) <= high:
                 allowed[key] = float(value)
-        # Hai tuỳ chọn hẹn giờ ngủ chỉ nhận đúng các mức giao diện đưa ra.
-        if body.get("sleepFadeSeconds") in (10, 30, 60):
-            allowed["sleepFadeSeconds"] = body["sleepFadeSeconds"]
-        if body.get("sleepExtendMinutes") in (5, 10, 15):
-            allowed["sleepExtendMinutes"] = body["sleepExtendMinutes"]
-        if body.get("safetyStopHours") in (0, 1, 2, 3):
-            allowed["safetyStopHours"] = body["safetyStopHours"]
+        # Ba tuỳ chọn hẹn giờ ngủ chỉ nhận đúng các mức giao diện đưa ra (cùng bảng với lúc đọc file: library.SLEEP_CHOICES).
+        for key, choices in SLEEP_CHOICES.items():
+            if not isinstance(body.get(key), bool) and body.get(key) in choices:
+                allowed[key] = body[key]
         # Supervisor đọc thẳng khoá này (power_source.pause_on_battery_enabled) - chỉ nhận đúng True/False.
         if isinstance(body.get("pauseOnBattery"), bool):
             allowed["pauseOnBattery"] = body["pauseOnBattery"]
@@ -6204,6 +6202,8 @@ class Handler(BaseHTTPRequestHandler):
             allowed["autoMusic"] = body["autoMusic"]
         if isinstance(body.get("letterShortcuts"), bool):
             allowed["letterShortcuts"] = body["letterShortcuts"]
+        if isinstance(body.get("autoRewind"), bool):
+            allowed["autoRewind"] = body["autoRewind"]
         # Mặc định của trình tạo sách: chất lượng là một trong ba mức; giọng kể là tên giọng có thật ("" = máy đề xuất).
         if body.get("newBookProfile") in ("fast", "balanced", "high_quality"):
             allowed["newBookProfile"] = body["newBookProfile"]
@@ -6213,12 +6213,10 @@ class Handler(BaseHTTPRequestHandler):
                 allowed["newBookNarrator"] = narrator
         if "sleepSchedule" in body:
             schedule = body["sleepSchedule"]
-            clock = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
             if schedule is None:
                 allowed["sleepSchedule"] = None
-            elif (isinstance(schedule, dict) and clock.fullmatch(str(schedule.get("from", "")))
-                  and clock.fullmatch(str(schedule.get("to", ""))) and schedule.get("minutes") in (15, 30, 45, 60)):
-                allowed["sleepSchedule"] = {"from": schedule["from"], "to": schedule["to"], "minutes": schedule["minutes"]}
+            elif clean_sleep_schedule(schedule) is not None:
+                allowed["sleepSchedule"] = clean_sleep_schedule(schedule)
         old_root = self.app.library.root
         updated = self.app.preferences.update(allowed)
         if "libraryRoot" in allowed:

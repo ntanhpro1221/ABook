@@ -97,6 +97,8 @@ export interface EbookPlayerPlugin {
     autoRewind?: boolean;
     safetyStopHours?: number;
     schedule?: { from: string; to: string; minutes: number } | null;
+    /** Dấu giờ (ms) lần đổi cuối trong Cài đặt; native nhớ cùng các tuỳ chọn trên (settings.ts `syncSettings`). */
+    settingsStamp?: number;
     /** Máy tự chọn nhạc nền cho sách chỉ có chữ chưa chọn nhạc (Cài đặt > Nhạc nền). */
     autoMusic?: boolean;
     /** Giọng đọc của "Nghe ngay" (mã giọng của ReadAloud.voices); "" = giọng mặc định của máy. */
@@ -114,6 +116,8 @@ export interface EbookPlayerPlugin {
   requestNotificationAccess(): Promise<{ state: "granted" | "off" }>;
   /** Mở trang thông báo của ABook trong Cài đặt Android. */
   openNotificationSettings(): Promise<void>;
+  /** Tuỳ chọn nghe native đã nhớ (ListenPrefs.stored; kèm `settingsStamp`): lúc mở app giao diện lấy làm chuẩn khi bản localStorage cũ hơn. */
+  listenPrefs(): Promise<{ prefs: Record<string, unknown> }>;
   lastNight(): Promise<{ session: BedtimeSession | null }>;
   dismissLastNight(): Promise<void>;
   addListener(event: "state", handler: (state: NativeState) => void): Promise<PluginListenerHandle>;
