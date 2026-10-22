@@ -333,7 +333,8 @@ object LocalStudio {
         if (body.keys().asSequence().any { it !in EDITS_ONLY_KEYS }) {
             throw BookEdits.EditsError("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền")
         }
-        return withAutoPlaylist(dir, BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } }))
+        return withAutoPlaylist(dir, BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } },
+            musicStore?.let { store -> { store.entries().reversed().mapNotNull { info -> store.file(info.getString("link"))?.let { info to it } } } }))
     }
 
     /** `_with_auto_playlist` của server.py: màn "Nhạc nền" + nhạc theo cảnh mặc định - sách chưa có lựa chọn nào (`playlist` không có khoá) và không có

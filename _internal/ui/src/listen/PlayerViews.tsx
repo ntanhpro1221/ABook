@@ -442,10 +442,11 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
         <Switch id={id} label="Nhạc nền" checked={music.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
       </div>
       {music.enabled && broken && <p className="px-2 pb-1 text-xs text-warning">Bài nhạc chương này không phát được.</p>}
+      {music.error && <p className="px-2 pb-1 text-xs text-warning">{music.error}</p>}
       <div className={cn("transition-opacity", !music.enabled && "opacity-50")}>
         <LevelButtons level={music.levelDb} disabled={!music.enabled || change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} />
       </div>
-      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này.</p>
+      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{music.project ? "Nhạc của cuốn này. Đổi ở đây là đổi luôn trong Studio." : "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."}</p>
     </MenuShell>
   );
 }

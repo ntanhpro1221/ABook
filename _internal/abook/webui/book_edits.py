@@ -78,7 +78,9 @@ READING_SPOKEN_MAX = 200  # chữ đọc
 LEVEL_RANGE = (-40.0, -6.0)
 _TOP_KEYS = {"format", "version", "title", "author", "cover", "characters", "chapters", "skip", "readings", "music", "wishes"}
 _COVER_KEYS = {"color", "width", "height", "version"}
-_MUSIC_KEYS = {"enabled", "levelDb", "silenced", "pins", "tracks", "playlist"}
+_MUSIC_KEYS = {"enabled", "levelDb", "silenced", "pins", "tracks", "playlist", "mine"}
+MAX_MINE = 100  # số bài tối đa của "Nhạc của tôi" mang theo sách (mỗi bài là một file trong gói)
+_SHA1 = re.compile(r"[0-9a-f]{40}")
 _TRACK_KEYS = {"ext", "title", "creator", "duration", "lufs"}
 _LOCAL_LINK = re.compile(r"local:[0-9a-f]{40}")
 _PLAYLIST = re.compile(r"[a-z0-9_]{1,40}")  # mã danh sách phát của danh mục (music_playlist.MINE = "Nhạc của tôi")
@@ -358,10 +360,18 @@ def _validate_music(music: Any) -> dict[str, Any]:
             raise EditsError("Danh sách đoạn nhạc đã đổi bài trong phần sửa không hợp lệ.")
         out["pins"] = {key: pins[key] for key in sorted(pins)}
     wanted = {link[len(music_plan.LOCAL_PREFIX):] for link in pins.values()}
+    if "mine" in music:
+        # "Nhạc của tôi" mang theo sách: đúng các bài (theo thứ tự phát) người nghe đã chọn lúc chọn danh sách này; file nằm ở music/<sha1>.<đuôi> như bài đã ghim.
+        mine = music["mine"]
+        if (out.get("playlist") != "mine" or not isinstance(mine, list) or not mine or len(mine) > MAX_MINE or len(set(mine)) != len(mine)
+                or any(not isinstance(sha, str) or not _SHA1.fullmatch(sha) for sha in mine)):
+            raise EditsError("Danh sách Nhạc của tôi trong phần sửa không hợp lệ.")
+        out["mine"] = list(mine)
+        wanted |= set(mine)
     if "tracks" in music or wanted:
         tracks = music.get("tracks")
         if not isinstance(tracks, dict) or set(tracks) != wanted:
-            raise EditsError("Nhạc đã chọn trong phần sửa không khớp với các đoạn đổi bài.")
+            raise EditsError("Nhạc đã chọn trong phần sửa không khớp với các đoạn đổi bài và danh sách đã chọn.")
         out["tracks"] = {sha: _validate_track(tracks[sha]) for sha in sorted(tracks)}
     return out
 
@@ -423,8 +433,11 @@ def _ordered(edits: dict[str, Any]) -> dict[str, Any]:
     if edits.get("music"):
         music = edits["music"]
         out["music"] = {key: music[key] for key in ("enabled", "levelDb", "playlist", "silenced") if key in music}
+        if music.get("mine"):
+            out["music"]["mine"] = list(music["mine"])
         if music.get("pins"):
             out["music"]["pins"] = {key: music["pins"][key] for key in sorted(music["pins"])}
+        if music.get("tracks"):
             out["music"]["tracks"] = {sha: {key: music["tracks"][sha][key] for key in ("ext", "title", "creator", "duration", "lufs")
                                             if key in music["tracks"][sha]} for sha in sorted(music["tracks"])}
     if edits.get("wishes"):
@@ -553,10 +566,15 @@ def merge_clashes(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict
         if key in (incoming_music.get("pins") or {}) and incoming_music["pins"][key] != link:
             conflicts += 1
             clash("music", "pins")
+    # Các bài của "Nhạc của tôi" đi theo lựa chọn danh sách phát: lấy từ bên đã đặt lựa chọn ấy (máy này thắng nếu cả hai cùng đặt).
+    mine = (local_music if "playlist" in local_music else incoming_music).get("mine") if music.get("playlist") == "mine" else None
+    if mine:
+        music["mine"] = list(mine)
+    wanted = {link[len(music_plan.LOCAL_PREFIX):] for link in pins.values()} | set(mine or [])
     if pins:
-        wanted = {link[len(music_plan.LOCAL_PREFIX):] for link in pins.values()}
-        known = {**(incoming_music.get("tracks") or {}), **(local_music.get("tracks") or {})}
         music["pins"] = {key: pins[key] for key in sorted(pins)}
+    if wanted:
+        known = {**(incoming_music.get("tracks") or {}), **(local_music.get("tracks") or {})}
         music["tracks"] = {sha: copy.deepcopy(known[sha]) for sha in sorted(wanted)}
     if music:
         out["music"] = music
@@ -1125,19 +1143,24 @@ def _drop_unused(folder: Path, book: dict[str, Any], names: Iterable[str]) -> No
 
 
 def set_music(folder: Path, body: dict[str, Any],
-              track: Callable[[str], tuple[dict[str, Any], Path] | None] | None = None) -> dict[str, Any]:
+              track: Callable[[str], tuple[dict[str, Any], Path] | None] | None = None,
+              mine: Callable[[], list[tuple[dict[str, Any], Path]]] | None = None) -> dict[str, Any]:
     """Sửa nhạc nền của sách đóng gói: `enabled`, `levelDb` (kẹp -40..-6 như `music_plan.write_overrides`), `silence`
     {khoá mốc: True/False}, `pins` {khoá mốc: "local:<sha1>" | null} (đổi bài một mốc sang bài trong "Nhạc của tôi", null = về
     bài người làm sách gắn), `playlist` (mã danh sách phát, "mine", "off" = tắt, hay null = bỏ lựa chọn để máy tự chọn - sách không
     có nhạc của người làm sách).
     `track(link)` -> (thông tin, file) của bài trong kho của máy này; file được chép vào thư mục sách
-    (music/<sha1>.<đuôi>) để `repack` mang đi. Khoá lạ: `EditsError`. Trả `music_view`."""
+    (music/<sha1>.<đuôi>) để `repack` mang đi. `mine()` -> [(thông tin, file)] mọi bài đang có trong "Nhạc của tôi", cũ trước: chọn `playlist`
+    "mine" thì đúng các bài ấy (theo thứ tự đó, tối đa MAX_MINE) được chép vào sách và ghi vào `mine` - máy nhận phát bản của cuốn, không giải
+    lại từ kho riêng của nó; chọn lại "mine" là lấy lại các bài hiện có. Chọn danh sách khác thì bỏ chúng. Khoá lạ: `EditsError`. Trả `music_view`."""
     book = _base(folder)
     with _LOCK:
         edits = load(folder)
         music = dict(edits.get("music") or {})
         before = dict(music.get("tracks") or {})
         base_level = music_view(book, empty())["levelDb"]
+        placing: list[tuple[str, Path]] = []
+        shown = dict(before)  # thông tin các bài mang theo sách (đã ghim hay thuộc "Nhạc của tôi")
         if "enabled" in body:
             if body["enabled"]:
                 music.pop("enabled", None)
@@ -1159,6 +1182,19 @@ def set_music(folder: Path, body: dict[str, Any],
                 music["playlist"] = playlist
             else:
                 raise EditsError("Không có danh sách nhạc nền này")
+            music.pop("mine", None)
+            if music.get("playlist") == "mine" and mine is not None:
+                chosen: list[str] = []
+                for info, path in mine():
+                    sha = music_plan.local_hash(str(info.get("link")))
+                    if sha is None or sha in chosen or path.suffix.lower().lstrip(".") not in music_plan.TRACK_EXTENSIONS:
+                        continue
+                    if sha not in shown:
+                        shown[sha] = _track_entry(info, path)
+                        placing.append((pinned_name(sha, shown[sha]), path))
+                    chosen.append(sha)
+                if chosen:
+                    music["mine"] = chosen[:MAX_MINE]
         if body.get("silence"):
             if not isinstance(body["silence"], dict):
                 raise EditsError("Danh sách đoạn im lặng không hợp lệ")
@@ -1172,13 +1208,12 @@ def set_music(folder: Path, body: dict[str, Any],
                 music["silenced"] = sorted(silenced)
             else:
                 music.pop("silenced", None)
-        placing: list[tuple[str, Path]] = []
         if body.get("pins"):
             if not isinstance(body["pins"], dict):
                 raise EditsError("Phần sửa nhạc nền không hợp lệ.")
             known = {cue["key"] for cue in music_view(book, empty())["cues"]}
             original = base_links(book)
-            pins, shown = dict(music.get("pins") or {}), dict(before)
+            pins = dict(music.get("pins") or {})
             for key, link in body["pins"].items():
                 key = str(key)
                 if key not in known:
@@ -1200,12 +1235,15 @@ def set_music(folder: Path, body: dict[str, Any],
                     shown[sha] = _track_entry(info, path)
                     placing.append((pinned_name(sha, shown[sha]), path))
                 pins[key] = link
-            used = {link[len(music_plan.LOCAL_PREFIX):] for link in pins.values()}
             if pins:
-                music["pins"], music["tracks"] = pins, {sha: shown[sha] for sha in sorted(used)}
+                music["pins"] = pins
             else:
                 music.pop("pins", None)
-                music.pop("tracks", None)
+        used = {link[len(music_plan.LOCAL_PREFIX):] for link in (music.get("pins") or {}).values()} | set(music.get("mine") or [])
+        if used:
+            music["tracks"] = {sha: shown[sha] for sha in sorted(used)}
+        else:
+            music.pop("tracks", None)
         if music:
             edits["music"] = music
         else:
@@ -1261,11 +1299,13 @@ def subtract(folder: Path, sent: dict[str, Any], sent_cover: bytes | None) -> in
             else:
                 music.pop("silenced", None)
             remove_equal(music.get("pins"), sent_music.get("pins"))
-            if music.get("pins"):
-                used = {link[len(music_plan.LOCAL_PREFIX):] for link in music["pins"].values()}
+            if not music.get("pins"):
+                music.pop("pins", None)
+            # Bài của "Nhạc của tôi" ở lại cùng `playlist` (xem trên).
+            used = {link[len(music_plan.LOCAL_PREFIX):] for link in (music.get("pins") or {}).values()} | set(music.get("mine") or [])
+            if used:
                 music["tracks"] = {sha: info for sha, info in (music.get("tracks") or {}).items() if sha in used}
             else:
-                music.pop("pins", None)
                 music.pop("tracks", None)
             if not music:
                 edits.pop("music")

@@ -18,11 +18,12 @@ beforeEach(()=>{
 });
 afterEach(()=>vi.unstubAllGlobals());
 function hook(){let choice:any;function Probe(){choice=usePlaylistChoice('b');return null;}renderToString(<Probe/>);return choice;}
-it('đang dùng Nhạc của tôi: thêm bài báo trình phát làm mới hàng nhạc',async()=>{
+it('đang dùng Nhạc của tôi: thêm bài chọn lại mine để sách mang theo cả bài mới, rồi báo trình phát làm mới hàng nhạc',async()=>{
   const changed=vi.fn();window.addEventListener(MUSIC_CHANGED_EVENT,changed);
   await hook().addMusic();
   expect(h.setData).toHaveBeenCalled();
-  expect(h.mutations[0].mutate).not.toHaveBeenCalled();
+  expect(h.mutations[0].mutate).toHaveBeenCalledWith(expect.objectContaining({playlist:'mine'}));
+  h.mutations[0].options.onSuccess({playlist:'mine'},h.mutations[0].mutate.mock.calls[0][0]);
   expect(changed).toHaveBeenCalled();
 });
 it('đối chứng đang chọn off: thêm bài chọn mine, onSuccess có phát sự kiện',async()=>{
