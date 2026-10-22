@@ -882,13 +882,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
           Máy thấy các tiêu đề {quoted}
           {plan.chapters > plan.titles.length + (plan.preamble ? 1 : 0) ? " và các tiêu đề sau" : ""}. Hiện cả file được làm thành MỘT chương - một file
           audio dài, không chuyển chương được. Tách theo các tiêu đề ấy?
-          {outcome.titleAsName
-            ? ` Dòng đầu file “${plan.titleLine}” là tên truyện nên làm tên sách, không thành một chương riêng.`
-            : outcome.titleStays
-              ? ` Dòng đầu file “${plan.titleLine}” khác Tên sách bạn đã đặt nên vẫn thành chương “Mở đầu” - muốn nó làm tên sách thì đổi Tên sách thành “${plan.titleLine}” trước khi tách.`
-              : plan.preamble
-                ? " Phần chữ trước tiêu đề đầu tiên thành chương “Mở đầu”."
-                : ""}{" "}
+          {plan.preamble ? " Phần chữ trước tiêu đề đầu tiên được giữ trong chương “Mở đầu”, kể cả dòng trùng tên sách. Bạn có thể bỏ chọn phần ấy ở danh sách chương sau khi tách." : ""}{" "}
           File gốc giữ nguyên.
         </p>
         <div className="mt-2.5">

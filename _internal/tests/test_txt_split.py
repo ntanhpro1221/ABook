@@ -75,14 +75,14 @@ def test_a_lone_title_line_is_the_book_name_when_it_matches_the_title_and_stays_
     root = tmp_path / "out"
 
     same = txt_split.split(source, root, "  ngọn ĐÈN cuối cùng ")
-    assert sorted(path.name for path in same.glob("*.txt")) == ["0001 Chương 1 Chuyến phà đêm.txt", "0002 Chương 2 Căn nhà.txt"]
+    assert sorted(path.name for path in same.glob("*.txt")) == ["0000 Mở đầu.txt", "0001 Chương 1 Chuyến phà đêm.txt", "0002 Chương 2 Căn nhà.txt"]
     assert same.name == "ngon_den_cuoi_cung", "tên thư mục vẫn là tên file (tên sách do trình tạo sách giữ, không đọc lại từ đây)"
 
     other = txt_split.split(source, root, "Tên khác do tôi đặt")
-    assert other != same, "giữ hay bỏ dòng tên truyện ra hai bộ chương khác nhau"
+    assert other == same, "metadata tên sách không được bỏ dòng chữ"
     assert sorted(path.name for path in other.glob("*.txt"))[0] == "0000 Mở đầu.txt", "tên sách khác dòng ấy: chữ không bị bỏ, vẫn là chương 'Mở đầu'"
     assert (other / "0000 Mở đầu.txt").read_text(encoding="utf-8") == "Ngọn đèn cuối cùng\n"
-    assert txt_split.split(source, root) != same, "không có tên sách thì không bỏ gì"
+    assert txt_split.split(source, root) == same, "tên sách chỉ là metadata"
 
 
 def test_a_two_line_lead_is_never_taken_for_a_title(tmp_path: Path) -> None:

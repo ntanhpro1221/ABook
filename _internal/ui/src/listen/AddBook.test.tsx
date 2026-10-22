@@ -36,6 +36,18 @@ beforeEach(() => { vi.clearAllMocks(); mocks.changes.length = 0; mocks.effects.l
 /** Gắn hộp như React: chạy mọi effect của lần vẽ, trả các hàm dọn (gỡ hộp). */
 const mount = () => mocks.effects.map((effect) => effect()).filter((cleanup): cleanup is () => void => typeof cleanup === "function");
 
+it("a84_03 only turns on the reversible PDF proposals marked as defaults", async () => {
+  mocks.importer.preview.mockResolvedValue({ title: "PDF", chapters: [{ index: 1, title: "Chương 1" }], notes: [], suggestions: [
+    { chapter: 1, line: "TÊN SÁCH", defaultOn: true },
+    { chapter: 1, line: "Tôi vẫn chờ anh." },
+  ] });
+  AddBookDialog({ open: true, onOpenChange: vi.fn(), initial: { ref: "a.pdf", name: "a.pdf" } });
+  mount();
+  await flush();
+  const sets = mocks.changes.filter((change) => change instanceof Set) as Set<string>[];
+  expect(sets.some((set) => set.has("TÊN SÁCH") && !set.has("Tôi vẫn chờ anh."))).toBe(true);
+});
+
 it.each([true, false])("discards a picker result after closing (many=%s)", async (many) => {
   const picked = { ref: "temp/a.epub", name: "a.epub" };
   const late = pending<unknown>();
