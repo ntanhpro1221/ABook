@@ -97,6 +97,55 @@ object MusicBed {
 
     /** Giờ vào bản lặp ([LoopHandoff]): hẹn đúng hạn loopEnd - X, vào muộn thì bù, không chờ nhịp đồng bộ của giọng. */
     private val loopHandoff = LoopHandoff<Bed>(main, ::lookLoop, ::prepareLoop, { release(it) }, ::enterLoop)
+
+    // ---- móc đo của bài thử trên máy (MusicLoopOnDeviceTest, PLAN_loop §36): mặc định null / 0 / null nên bản thường không làm gì, không log, không cấp phát ----
+    /** Nhận một dòng đo mỗi sự kiện của bản lặp: `EV <ns> standby|play|playing|drift <giây> applied|skipped|seek <ms>` và `POS <ns> <oldMs> <newMs> <oldVol> <newVol>`
+     *  (20 ms một dòng, từ `standby` - hay từ `play` nếu không có bản tạo sẵn - tới 4,5 s sau `playing`; bản đã nhả / chưa có ghi `-`). */
+    internal var debugLoopProbe: ((String) -> Unit)? = null
+    /** false: bỏ bước 3 ([MusicCues.loopSettle]) - không tính, không tua; vẫn ghi `drift <giây> skipped` (thước hằng số pha của §38). Bản thường luôn true. */
+    internal var debugLoopSettle = true
+    /** Giây cộng thêm vào chỗ vào của bản lặp mới (bài kiểm lực của §36: cố ý đẩy lệch pha để bước 3 phải sửa). */
+    internal var debugLoopInject = 0.0
+    /** Mục `music` và file bài của cuốn giả [DEBUG_BOOK]: bài thử dựng mốc không qua Store (không đụng dữ liệu người dùng). */
+    internal var debugMusic: JSONObject? = null
+    internal var debugTrack: Uri? = null
+    internal const val DEBUG_BOOK = "loopprobe"
+    private const val PROBE_AFTER_PLAYING_MS = 4500L
+    private const val PROBE_EVERY_MS = 20L
+
+    private inline fun probe(line: () -> String) {
+        val sink = debugLoopProbe ?: return
+        sink("EV ${SystemClock.elapsedRealtimeNanos()} ${line()}")
+    }
+
+    /** Bản lặp đang được đo (bản mới nhất đã gọi [probeLoopWatch]) và hạn dừng đo (ns; chưa `playing` thì vô hạn). */
+    private var probeBed: Bed? = null
+    private var probeUntil = Long.MAX_VALUE
+
+    /** Bản lặp `new` vừa được gọi `play()` (nối vào `old`): ghi sự kiện `play`, rồi (nếu chưa đo từ `standby`) bắt đầu ghi vị trí. */
+    private fun probeLoopPlay(old: Bed, new: Bed) {
+        probe { "play" }
+        probeLoopWatch(old, new)
+    }
+
+    /** Mỗi 20 ms một dòng vị trí + âm lượng hai bản tới 4,5 s sau `playing` của `new` (hay khi `new` đã nhả); một bản đã nhả ghi `-`. Gọi lại với cùng `new` thì bỏ qua. */
+    private fun probeLoopWatch(old: Bed, new: Bed) {
+        val sink = debugLoopProbe ?: return
+        if (probeBed === new) return
+        probeBed = new
+        probeUntil = Long.MAX_VALUE
+        main.post(object : Runnable {
+            override fun run() {
+                val now = SystemClock.elapsedRealtimeNanos()
+                if (probeBed !== new || debugLoopProbe == null || new.released || now > probeUntil) return
+                val oldMs = if (old.released) "-" else old.player.currentPosition.toString()
+                val oldVol = if (old.released) "-" else old.player.volume.toString()
+                sink("POS $now $oldMs ${new.player.currentPosition} $oldVol ${new.player.volume}")
+                main.postDelayed(this, PROBE_EVERY_MS)
+            }
+        })
+    }
+
     private const val TAG = "ABookMusic"
     /** Một bước tạo / nhả trình phát nhạc lâu hơn ngần này thì ghi logcat (soát a69: giọng đứng 19,2 s đúng lúc lặp mờ chéo tạo trình phát mới - lần soát sau
      *  thấy ngay bước nào chậm). */
@@ -197,7 +246,7 @@ object MusicBed {
             stop()
             failed.clear()
             book = bookId
-            music = if (bookId.isEmpty()) null else Store.playableManifest(bookId)?.optJSONObject("music")
+            music = if (bookId.isEmpty()) null else debugMusic?.takeIf { bookId == DEBUG_BOOK } ?: Store.playableManifest(bookId)?.optJSONObject("music")
             val level = music?.optDouble("levelDb", -20.0) ?: -20.0
             gain = 10.0.pow(level.coerceIn(-40.0, -6.0) / 20.0).toFloat()
             chapter = Int.MIN_VALUE
@@ -303,7 +352,11 @@ object MusicBed {
         val startAt = frameAligned(owner.player, snap.bounds.loopStart)
         return timed("lặp mờ chéo: tạo sẵn trình phát") {
             open(appContext, owner.track to uri, owner.goal, 0.0, cue, fadeMs, startAt, Handoff(owner, snap.bounds), standby = true)
-        }.also { it.at = startAt }
+        }.also {
+            it.at = startAt
+            probe { "standby" }
+            probeLoopWatch(owner, it)
+        }
     }
 
     /** Vào bản lặp: bản mới (`ready`: đã tạo sẵn, hay mở mới) ở loopStart cộng phần trễ so với hạn ([MusicCues.loopStartAt]). */
@@ -317,7 +370,7 @@ object MusicBed {
         val fadeMs = Math.round(MusicCues.mix.loopCrossfadeSeconds * 1000)
         bed.fadeStep = maxOf(player.volume, 0.01f) * STEP_MS / fadeMs
         fading += bed
-        val startAt = frameAligned(player, MusicCues.loopStartAt(bounds, snap.position))
+        val startAt = frameAligned(player, MusicCues.loopStartAt(bounds, snap.position) + debugLoopInject)
         val next = if (ready != null) {
             // Vào muộn: đặt lại chỗ; vẫn đúng loopStart thì không tua (khỏi đệm lại).
             if (abs(ready.at - startAt) > 0.0005) {
@@ -327,7 +380,10 @@ object MusicBed {
             ready.cue = cue
             ready.goal = bed.goal
             ready.perTick = bed.goal * STEP_MS / ready.fadeMs
-            if (playing) ready.player.play()
+            if (playing) {
+                probeLoopPlay(bed, ready)
+                ready.player.play()
+            }
             ready
         } else {
             timed("lặp mờ chéo: mở trình phát mới") { open(appContext, bed.track to uri, bed.goal, 0.0, cue, fadeMs, startAt, Handoff(bed, bounds)) }
@@ -650,7 +706,7 @@ object MusicBed {
 
     /** File của bài `track` của mốc: bài theo cảnh lấy từ danh mục (chưa tải: tải nền, null), bài của người làm sách qua đường audio chương. */
     private fun uriFor(appContext: Context, track: String): Uri? =
-        if (sceneMode) uriOf(appContext, track) else Streaming.chapterUri(appContext, book, track)
+        debugTrack?.takeIf { book == DEBUG_BOOK } ?: if (sceneMode) uriOf(appContext, track) else Streaming.chapterUri(appContext, book, track)
 
     /** Bài của mốc kế tiếp (khác bài đang kêu) tải sẵn trong lúc bài này chơi: sang mốc không phải chờ mạng. */
     private fun prefetchNext(appContext: Context, seconds: Double) {
@@ -746,6 +802,9 @@ object MusicBed {
                 false,
             )
             .setMediaSourceFactory(Streaming.mediaSourceFactory(appContext, exactMp3Seek = true))
+            // media3 1.11 bật dynamic scheduling mặc định: luồng phát chỉ thức khi bộ đệm cần (~250 ms), currentPosition đứng
+            // yên rồi nhảy 250 ms - hẹn giờ lặp, độ trễ và độ trôi đọc vị trí này nên lệch tới chừng ấy (Music đo trên máy 22-10, PLAN_loop §36.1).
+            .experimentalSetDynamicSchedulingEnabled(false)
             .build()
         player.repeatMode = Player.REPEAT_MODE_ONE // biết độ dài bài (STATE_READY) mới biết lặp mờ chéo hay lặp thường
         player.volume = 0f
@@ -777,10 +836,18 @@ object MusicBed {
                 if (!isPlaying) return
                 player.removeListener(this)
                 bed.listeners.remove(this)
+                probe { "playing" }
+                if (probeBed === bed && debugLoopProbe != null) probeUntil = SystemClock.elapsedRealtimeNanos() + PROBE_AFTER_PLAYING_MS * 1_000_000
                 val old = handoff.old
-                val to = MusicCues.loopSettle(handoff.bounds, old.player.currentPosition / 1000.0, player.currentPosition / 1000.0, player.volume, bed.goal,
-                    oldAlive = old in fading && old.player.isPlaying)
-                if (to != null) player.seekTo((to * 1000).toLong())
+                val oldPos = old.player.currentPosition / 1000.0
+                val newPos = player.currentPosition / 1000.0
+                val to = if (debugLoopSettle) MusicCues.loopSettle(handoff.bounds, oldPos, newPos, player.volume, bed.goal, oldAlive = old in fading && old.player.isPlaying) else null
+                probe { "drift ${MusicCues.loopDrift(handoff.bounds, oldPos, newPos)} ${if (to != null) "applied" else "skipped"}" }
+                if (to != null) {
+                    val ms = (to * 1000).toLong()
+                    probe { "seek $ms" }
+                    player.seekTo(ms)
+                }
             }
         })
         listen(object : Player.Listener {
@@ -806,7 +873,10 @@ object MusicBed {
         if (startAt != null) player.setMediaItem(MediaItem.fromUri(uri), (startAt * 1000).toLong())
         else player.setMediaItem(MediaItem.fromUri(uri))
         player.prepare()
-        if (playing && !standby) player.play()
+        if (playing && !standby) {
+            if (handoff != null) probeLoopPlay(handoff.old, bed)
+            player.play()
+        }
         return bed
     }
 
