@@ -173,12 +173,16 @@ class Computers:
             raise RemoteError("Máy kia trả lời không đáng tin (chứng chỉ không khớp vân tay nó báo) - chưa ghép, thử lại; vẫn lỗi thì kiểm tra mạng")
         with self._lock:
             data = self._read()
-            # Ghép lại cùng một máy (cùng địa chỉ) thì thay chỗ cũ: sách đã tải và chỗ nghe giữ nguyên.
+            # Ghép lại cùng một máy thì thay chỗ cũ: sách đã tải và chỗ nghe giữ nguyên. Máy được nhận ra bằng vân tay chứng chỉ
+            # (đổi IP <-> tên .local <-> Tailscale vẫn là máy ấy: địa chỉ/mã mới ghi đè vào dòng cũ), rồi mới đến cùng địa chỉ.
             # Máy đã từng thôi ghép (cùng vân tay chứng chỉ, dù đổi địa chỉ) lấy lại mã cũ: mã sách ở máy này theo mã ấy, nên chỗ
             # nghe và dấu trang của các cuốn ấy hiện lại, không mất khi ghép lại.
             former = data.get("former", {}).pop(seen, None)
-            key = next((existing for existing, entry in data["computers"].items()
-                        if entry.get("host") == host and int(entry.get("port") or 0) == port), None) or former or secrets.token_hex(6)
+            key = (next((existing for existing, entry in data["computers"].items()
+                         if str(entry.get("fingerprint") or "").lower() == seen), None)
+                   or next((existing for existing, entry in data["computers"].items()
+                            if entry.get("host") == host and int(entry.get("port") or 0) == port), None)
+                   or former or secrets.token_hex(6))
             entry = {"name": name, "host": host, "port": port, "token": token, "fingerprint": seen,
                      "pairedAt": time.time(), "lastSeen": time.time(), "error": ""}
             # Đường Bluetooth dự phòng: máy kia báo trong lời đáp ghép (sync.py `routes`); không báo thì giữ cái đã biết.
@@ -859,6 +863,11 @@ def _refresh_computer(library_root: Path, computers: Computers, computer: str, r
         for book in listed:
             _refresh_book(entry, computer, folder, book, built.get(book))
             books += 1
+        # Làm mới THÀNH CÔNG: cuốn chưa tải gì về mà máy kia không còn thì bỏ (vỏ nghe thẳng); cuốn đã tải / có phần sửa giữ nguyên.
+        if isinstance(library.get("books"), list):
+            gone = set(built) - set(listed)
+            for book in gone:
+                _drop_if_empty(built[book])
         # `kind`: máy tính nhận phần sửa của cuốn (POST .../edits, như từ điện thoại); điện thoại chia sẻ thư viện thì không.
         reported = {} if str(entry["host"]).startswith("bt:") else {"bt": _routes_bluetooth(library)}  # máy báo đường Bluetooth của nó
         reported["btName"] = _bluetooth_name(library)
@@ -869,6 +878,17 @@ def _refresh_computer(library_root: Path, computers: Computers, computer: str, r
     except RemoteError as error:
         computers.note(computer, error=str(error))
         report[computer] = {"error": str(error)}
+
+
+def _drop_if_empty(package: Path) -> None:
+    """Xoá cuốn ảo chỉ có sổ + bìa (chưa tải chương, chữ đọc theo, nhạc hay lớp sửa nào về); có gì khác thì giữ."""
+    keep = (MANIFEST, "cover.jpg", "cover.json")
+    try:
+        if any(file.is_file() and file.relative_to(package).as_posix() not in keep for file in package.rglob("*")):
+            return
+        shutil.rmtree(package)
+    except OSError:
+        pass
 
 
 def _manifests(folder: Path, suffix: str = "") -> list[tuple[Path, dict[str, Any]]]:

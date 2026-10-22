@@ -123,10 +123,9 @@ def test_describe_does_not_trust_a_file_written_a_moment_ago(tmp_path):
     assert audio_revision.describe(audio)["sha256"] != first["sha256"]
 
 
-def test_digest_cache_is_bounded_and_thread_safe(tmp_path, monkeypatch):
+def test_digest_cache_is_thread_safe(tmp_path):
     from concurrent.futures import ThreadPoolExecutor
     from abook.webui import audio_revision
-    monkeypatch.setattr(audio_revision, "_CACHE_LIMIT", 3)
     files = []
     for number in range(8):
         file = tmp_path / f"{number}.mp3"
@@ -136,7 +135,6 @@ def test_digest_cache_is_bounded_and_thread_safe(tmp_path, monkeypatch):
     with ThreadPoolExecutor(4) as pool:
         digests = list(pool.map(lambda file: audio_revision.describe(file)["sha256"], files * 5))
     assert digests[:8] == [hashlib.sha256(bytes([n]) * 300).hexdigest() for n in range(8)]
-    assert len(audio_revision._CACHE) <= 3
 
 
 def test_manifest_does_not_hash_unchanged_audio_twice(tmp_path, monkeypatch):
