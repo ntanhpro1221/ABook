@@ -18,6 +18,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - File sách có hai mục chỉ khác nhau hoa thường hay dấu chấm cuối bị từ chối, vì Windows sẽ chép đè mục này lên mục kia và chương này phát nhầm giọng chương kia.
 - Khi bạn mở lại file có cùng âm thanh nhưng mang tên khác, app nói tên trong file không được lấy và bạn đổi tên ở đâu.
 - Trên điện thoại, nhập sách lớn không còn làm chậm việc lưu chỗ nghe; file zip tải dở báo "chép chưa xong" thay vì "không phải file sách", và bản chép tạm của lần nhập bị ngắt được dọn khi mở app.
+- Nhạc nền nối vòng đúng phách, không còn nghe đánh đôi hay vang ở chỗ lặp, cả trên máy tính lẫn điện thoại.
 
 ## [0.4.123] - 2026-10-22
 
@@ -32,7 +33,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Trên máy tính, “Làm trước” gặp lỗi lạ (ví dụ ổ đĩa đầy) thì báo lỗi thay vì hiện “đang làm trước” mãi, và bấm làm việc mới không còn phải chờ tới 30 giây; bộ đệm giọng cũng dọn các file ghi dở của lần tắt ngang.
 - Trên điện thoại, sau khi bạn sửa cách đọc của cuốn đang “Làm trước”, các đoạn đã làm theo cách cũ không còn được giữ mãi trong phần bộ đệm của “Làm trước”.
 - Khi hai máy mỗi bên có hàng nghìn cách đọc riêng khác nhau, gộp lại không còn làm cuốn mất cả phần sửa của bạn (tên nhân vật, dòng bỏ, nhạc): ABook giữ đủ của máy này rồi lấy thêm của máy kia đến giới hạn.
-- Nhạc nền nối vòng đúng phách, không còn nghe đánh đôi hay vang ở chỗ lặp, cả trên máy tính lẫn điện thoại.
 - Chữ đang đọc được tô sáng đúng chỗ cả khi văn bản chương có ký tự khoảng trắng lạ (U+0085, U+001C-U+001F, U+FEFF).
 - Trên điện thoại, hẹn giờ “hết chương” cho sách chữ dừng ở đầu chương kế như trên máy tính: sáng mai bấm Phát không phải nghe lại đoạn cuối chương vừa xong.
 - Trên máy tính, cửa sổ ABook nhớ kích thước, vị trí và trạng thái phóng to của lần trước; nếu màn hình phụ cũ đã rút ra thì cửa sổ mở trên màn hình còn lại, không nằm ngoài màn.
