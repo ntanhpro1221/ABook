@@ -319,6 +319,49 @@ def test_a_picked_folder_keeps_its_name_inside_its_own_upload(studio) -> None:
     assert status == 400, "tên thiết bị ở tầng nào cũng không nhận"
 
 
+@pytest.mark.parametrize("single", [True, False])
+def test_a_series_export_reconnects_after_the_forward_deadline(studio, tmp_path, monkeypatch, single):
+    import threading
+    from abook.webui import bookfile
+    from tests.test_export_series import _part
+
+    app, project = studio
+    _part(tmp_path, project.parent, "part-two", "Truyện · Phần 2", project)
+    app.set_remote_studio(True)
+    cookie = {"Cookie": _pair_browser(app)}
+    url = f"/api/books/{book_id(project)}/bookfile-job"
+    reached, release = threading.Event(), threading.Event()
+    real = bookfile.write_entries
+
+    def slow(*args, **kwargs):
+        reached.set()
+        assert release.wait(10)
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(bookfile, "write_entries", slow)
+    monkeypatch.setattr(remote_studio, "FORWARD_SECONDS", 0.5)
+    try:
+        status, raw, _ = _sync_request(app.sync_server.port, "POST", url, headers=cookie, body={"series": True, "single": single})
+        started = json.loads(raw)
+        assert status == 202 and started["id"] and reached.wait(10)
+        time.sleep(0.6)  # lượt đóng gói dài hơn hạn của một yêu cầu chuyển tiếp
+        status, raw, _ = _sync_request(app.sync_server.port, "GET", url, headers=cookie)
+        assert status == 200 and json.loads(raw)["id"] == started["id"]
+        release.set()
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            status, raw, _ = _sync_request(app.sync_server.port, "GET", url, headers=cookie)
+            job = json.loads(raw)
+            if job["state"] != "running":
+                break
+            time.sleep(0.03)
+        assert status == 200 and job["state"] == "done" and job["id"] == started["id"]
+        assert len(job["result"]["parts"]) == 2
+    finally:
+        release.set()
+        app.bookfile_jobs.shutdown()
+
+
 def test_a_browser_on_the_computer_uploads_too(studio) -> None:
     # Studio mở trong trình duyệt ngay trên máy tính (không có hộp chọn file của app): cũng gửi file lên như từ xa; tách
     # chương thì vào "Nguồn tách chương" như với file trên máy. File quá giới hạn bị từ chối, nói rõ giới hạn.

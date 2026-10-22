@@ -18,6 +18,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import time
 from collections.abc import Callable, Iterable, Iterator
 from pathlib import Path
 from typing import Any
@@ -321,6 +322,39 @@ def _tail(errors: Any) -> str:
     return errors.read().decode("utf-8", "replace").strip()[-300:]
 
 
+def _run_mux(command: list[str], cancelled: Callable[[], bool] | None) -> None:
+    """Chờ ghép M4B nhưng vẫn nhận Huỷ; luôn thu hồi FFmpeg trước khi dọn file tạm."""
+    if cancelled is None:
+        run_hidden(command, timeout=3600)
+        return
+    _stop_if(cancelled)
+    with tempfile.TemporaryFile() as errors:
+        child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=errors, creationflags=_HIDDEN)
+        deadline = time.monotonic() + 3600
+        try:
+            while True:
+                _stop_if(cancelled)
+                left = deadline - time.monotonic()
+                if left <= 0:
+                    raise subprocess.TimeoutExpired(command, 3600)
+                try:
+                    code = child.wait(timeout=min(0.1, left))
+                    break
+                except subprocess.TimeoutExpired:
+                    continue
+            _stop_if(cancelled)
+            if code:
+                raise subprocess.CalledProcessError(code, command, stderr=_tail(errors))
+        finally:
+            if child.poll() is None:
+                child.terminate()
+                try:
+                    child.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    child.kill()
+                    child.wait()
+
+
 def pump_pcm(ffmpeg: str, source: Path, rate: int, channels: int, sink: Any, lower_db: float = 0.0) -> int:
     """Giải mã một chương ra PCM 16-bit (đổi về `rate`/`channels` chung của cuốn) đổ vào `sink`; trả số byte đã đổ. `lower_db` > 0: hạ
     mức ngay trong ffmpeg (lần mã hoá lại M4B có chương vượt trần - không cần numpy, bản cài chỉ để nghe không có nó)."""
@@ -497,12 +531,14 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
             "-brand", "M4B ", "-f", "ipod", str(partial),
         ]
         try:
-            run_hidden(command, timeout=3600)
+            _run_mux(command, cancelled)
+            _stop_if(cancelled)
+            os.replace(partial, final)
         except subprocess.CalledProcessError as error:
-            partial.unlink(missing_ok=True)
             log.warning("ffmpeg không ghép được M4B: %s", (error.stderr or "").strip()[-600:])
             raise ValueError("Không ghép được file M4B - ảnh bìa hay một chương không đọc được.") from error
-        os.replace(partial, final)
+        finally:
+            partial.unlink(missing_ok=True)
     return final, len(marks)
 
 

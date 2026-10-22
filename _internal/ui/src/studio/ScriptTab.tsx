@@ -270,7 +270,7 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => b
         ),
       }));
     },
-    onSuccess: ({ requestedAt, elsewhere }, { lines, value, label }) => {
+    onSuccess: ({ lines: recorded, requestedAt, elsewhere }, { lines, value, label }) => {
       const line = lines[0];
       const replaced = Object.entries(elsewhere ?? {});
       const keep = lines.every((item) => value === item.current);
@@ -300,13 +300,13 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => b
       if (replaced.length) warnElsewhere(replaced.length, replaced[0][1] ? nameOf(replaced[0][1]) : "", run);
       const undo = { action: { label: action.label, onClick: run }, duration: UNDO_MS };
       if (keep) {
-        toast.success(lines.length > 1 ? `Đã xác nhận ${lines.length} câu của ${label}` : `Đã xác nhận: câu này của ${line.label}`, {
+        toast.success(recorded > 1 ? `Đã xác nhận ${recorded} câu của ${label}` : `Đã xác nhận: câu này của ${line.label}`, {
           description: "Máy sẽ không hỏi lại những câu này.",
           ...undo,
         });
         return;
       }
-      toast.success(lines.length > 1 ? `Đã ghi: ${lines.length} câu của ${label}` : `Đã ghi: câu này của ${label}`, {
+      toast.success(recorded > 1 ? `Đã ghi: ${recorded} câu của ${label}` : `Đã ghi: câu này của ${label}`, {
         // Chỉ câu đã thu mới phải thu lại - sách chưa thu thì không hứa điều ấy (soát UX a23).
         description: `${
           lines.some((item) => item.hasAudio) ? "Câu đã thu sẽ được thu lại bằng giọng của người ấy." : "Câu chưa thu nên không phải thu lại."
@@ -336,16 +336,18 @@ function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => 
       // Mỗi nhóm một yêu cầu: giữ `requestedAt` của từng lần ghi để một nút Hoàn tác lùi được cả chương.
       const made: Record<string, unknown>[] = [];
       const elsewhere: Record<string, string> = {};
+      let count = 0;
       for (const [speaker, group] of groups) {
         const refs = group.map((line) => ({ stableId: line.stableId, textSha256: line.textSha256 }));
-        const answer = await api<{ requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${bookId}/speaker`, {
+        const answer = await api<{ lines: number; requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${bookId}/speaker`, {
           method: "POST",
           body: { speaker, lines: refs, seen: Object.fromEntries(group.map((line) => [line.stableId, line.wish?.value ?? ""])) },
         });
         Object.assign(elsewhere, answer.elsewhere ?? {});
+        count += answer.lines;
         made.push({ lines: refs, requestedAt: answer.requestedAt, keep: true });
       }
-      return { count: lines.length, made, elsewhere };
+      return { count, made, elsewhere };
     },
     onSuccess: ({ count, made, elsewhere }) => {
       // Nút trên thông báo và Ctrl+Z dùng CHUNG một lần hoàn tác (như sửa người nói từng câu).

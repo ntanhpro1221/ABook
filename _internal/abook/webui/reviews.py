@@ -80,7 +80,7 @@ def review_items(project_root: Path) -> list[dict[str, Any]]:
 
     with closing(store.connect(project_root)) as connection:
         columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
-        extra = [column for column in ("text_sha256", "listener_text") if column in columns]
+        extra = [column for column in ("text_sha256", "listener_text", "wav_sha256") if column in columns]
         rows = connection.execute(
             "SELECT id, stable_id, chapter_id, seq, text, asr_text, asr_similarity, status, warning_code, speaker,"
             " wav_path" + "".join(f", {column}" for column in extra)
@@ -107,6 +107,7 @@ def review_items(project_root: Path) -> list[dict[str, Any]]:
         items.append({
             "segmentId": int(row["id"]),
             "stableId": str(row["stable_id"]),
+            "audioSha256": str(row["wav_sha256"] or "") if "wav_sha256" in row.keys() else "",
             "chapterId": int(row["chapter_id"]),
             "chapterTitle": chapter.get("full") or f"Chương {row['chapter_id']}",
             "text": str(row["text"] or ""),
@@ -160,18 +161,57 @@ class Reviews:
 
     def get(self, project_root: Path) -> dict[str, Any]:
         with self._lock:
-            return self._read(project_root)
+            entry = self._read(project_root)
+            if self._archive_changed(project_root, entry):
+                self._write(project_root, entry)
+            return entry
 
-    def set(self, project_root: Path, stable_id: str, verdict: str | None, chapter_id: int) -> None:
+    @staticmethod
+    def _audio(project_root: Path) -> dict[str, str]:
+        if not (project_root / store.DB_NAME).is_file():
+            return {}
+        with closing(store.connect(project_root)) as connection:
+            columns = {str(row[1]) for row in connection.execute("PRAGMA table_info(segments)")}
+            if "stable_id" not in columns:
+                return {}
+            checksum = "COALESCE(wav_sha256, '')" if "wav_sha256" in columns else "''"
+            return {str(row[0]): str(row[1]) for row in connection.execute(f"SELECT stable_id, {checksum} FROM segments")}
+
+    def _archive_changed(self, project_root: Path, entry: dict[str, Any]) -> bool:
+        changed = False
+        if not entry:
+            return False
+        audio = self._audio(project_root)
+        for stable_id, value in list(entry.items()):
+            if value.get("verdict") and value.get("audioSha256") != audio.get(stable_id, ""):
+                history = list(value.get("history") or [])
+                history.append({key: val for key, val in value.items() if key != "history"})
+                entry[stable_id] = {"history": history}
+                changed = True
+        return changed
+
+    def set(self, project_root: Path, stable_id: str, verdict: str | None, chapter_id: int,
+            *, audio_sha256: str | None = None) -> None:
         if verdict not in (None, "ok", "redo"):
             raise ValueError("verdict")
         with self._lock:
+            audio = self._audio(project_root).get(stable_id, "")
+            if audio_sha256 is not None and audio_sha256 != audio:
+                raise ValueError("Câu đã có bản thu khác; bạn hãy tải lại và nghe bản mới trước khi chấm.")
             entry = self._read(project_root)
+            self._archive_changed(project_root, entry)
+            history = (entry.get(stable_id) or {}).get("history") or []
             if verdict is None:
-                if entry.pop(stable_id, None) is None:
+                if stable_id not in entry:
                     return
+                if history:
+                    entry[stable_id] = {"history": history}
+                else:
+                    entry.pop(stable_id)
             else:
-                entry[stable_id] = {"verdict": verdict, "chapterId": int(chapter_id), "at": time.time()}
+                entry[stable_id] = {"verdict": verdict, "chapterId": int(chapter_id), "at": time.time(),
+                                    "audioSha256": audio,
+                                    **({"history": history} if history else {})}
             self._write(project_root, entry)
 
     def merge(self, project_root: Path, combine: Callable[[dict[str, Any]], tuple[dict[str, Any], int, int]]) -> tuple[int, int]:
@@ -189,22 +229,55 @@ class Reviews:
         os.replace(temporary, path)
 
 
+def current_verdict(item: dict[str, Any], verdicts: dict[str, Any]) -> str | None:
+    entry = verdicts.get(item["stableId"]) or {}
+    # Cùng câu nhưng khác bản thu: cả hàng nghe và hộp việc đều phải xem như chưa nghe.
+    if "audioSha256" in item and entry.get("audioSha256") != item["audioSha256"]:
+        return None
+    return entry.get("verdict")
+
+
 def awaiting(item: dict[str, Any], verdicts: dict[str, Any]) -> bool:
     """Câu còn chờ người nghe ở "Cần nghe lại": đáng lo (không phải tên khớp cao), chưa chấm, chưa sửa chữ đem đọc. Hộp việc
     (thẻ "Bản thu lỗi", work_items.py) đếm đúng những câu này - soát UX a23: chấm hết mà thẻ vẫn "Chưa nghe"."""
-    return (item["kind"] not in MINOR_KINDS and not (verdicts.get(item["stableId"]) or {}).get("verdict")
+    return (item["kind"] not in MINOR_KINDS and not current_verdict(item, verdicts)
             and item["pendingSpoken"] is None)
 
 
-def review_view(project_root: Path, verdicts: dict[str, Any], *, include_minor: bool) -> dict[str, Any]:
+def _page_key(item: dict[str, Any]) -> tuple[int, float, int, int, str]:
+    return (KINDS.index(item["kind"]), item["similarity"] if item["similarity"] is not None else 1.0,
+            item["chapterId"], item["segmentId"], item["stableId"])
+
+
+def review_view(project_root: Path, verdicts: dict[str, Any], *, include_minor: bool,
+                filter: str = "all", cursor: str = "", limit: int = 600) -> dict[str, Any]:
+    if filter not in ("all", "todo", "done") or not 1 <= limit <= 600:
+        raise ValueError("Bộ lọc hoặc số câu mỗi trang không hợp lệ")
+    after = None
+    if cursor:
+        try:
+            parts = json.loads(cursor)
+            if not isinstance(parts, list) or len(parts) != 5:
+                raise ValueError
+            after = (int(parts[0]), float(parts[1]), int(parts[2]), int(parts[3]), str(parts[4]))
+        except (ValueError, TypeError, OverflowError) as error:
+            raise ValueError("Mốc tải tiếp không hợp lệ; bạn hãy tải lại danh sách") from error
     items = review_items(project_root)
     counts = {kind: 0 for kind in KINDS}
     pending = 0
     for item in items:
         counts[item["kind"]] += 1
-        item["verdict"] = (verdicts.get(item["stableId"]) or {}).get("verdict")
+        item["verdict"] = current_verdict(item, verdicts)
         if awaiting(item, verdicts):
             pending += 1
     redo = sorted({int(value["chapterId"]) for value in verdicts.values() if value.get("verdict") == "redo"})
     shown = items if include_minor else [item for item in items if item["kind"] not in MINOR_KINDS or item["verdict"]]
-    return {"counts": counts, "pending": pending, "redoChapters": redo, "items": shown[:600]}
+    if filter != "all":
+        shown = [item for item in shown if bool(item["verdict"] or item["pendingSpoken"] is not None) == (filter == "done")]
+    shown.sort(key=_page_key)
+    if after is not None:
+        shown = [item for item in shown if _page_key(item) > after]
+    page = shown[:limit]
+    remaining = max(0, len(shown) - len(page))
+    return {"counts": counts, "pending": pending, "redoChapters": redo, "items": page,
+            "nextCursor": json.dumps(_page_key(page[-1])) if remaining else None, "remaining": remaining}
