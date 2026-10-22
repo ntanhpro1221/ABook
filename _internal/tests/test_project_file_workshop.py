@@ -193,12 +193,12 @@ def test_a_project_file_with_a_cover_edit_and_nothing_else_survives_the_trip(tmp
 
     packed = projectfile.pack(_with_cover(_project(tmp_path)), tmp_path / "du_an.abookproj")
     folder = _opened_as_a_book(packed, tmp_path / "dien_thoai")
-    book_edits.set_cover(folder, shared.tiny_cover(), now=1759400000)
+    cover_version = book_edits.set_cover(folder, shared.tiny_cover())["version"]
     saved = projectfile.repack(folder, tmp_path / "da_sua.abookproj")
     with ProjectFile(saved) as opened:
         opened.verify()
         assert opened.edits_cover() == (folder / "edits" / "cover.jpg").read_bytes()
-        assert opened.edits["cover"]["version"] == 1759400000
+        assert opened.edits["cover"]["version"] == cover_version
 
 
 # ---- bí danh hỏng ------------------------------------------------------------------------------------------------------

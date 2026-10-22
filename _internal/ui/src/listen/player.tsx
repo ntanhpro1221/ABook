@@ -18,12 +18,14 @@ import { leftWithPeer, watchUntilBack } from "./peerBack";
 import {
   DEFAULT_EXTEND_MINUTES,
   DEFAULT_FADE_SECONDS,
+  cleanSleepSchedule,
   fadeGain,
   rewindAfter,
   sleepExtended,
   sleepFrom,
   type SleepMode,
   type SleepRequest,
+  type SleepSchedule,
 } from "./sleep";
 import { VOICE_CHANGED_EVENT, type ReadAloudVoice, type SpeechTrack } from "./readAloud";
 import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, onVoiceChosen, ONLINE_NOTICE, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
@@ -70,12 +72,7 @@ export interface WordTarget {
 /** "review": nghe kiểm trong Studio - không ghi đè chỗ đang nghe dở của người nghe. */
 export type Purpose = "listen" | "review";
 
-/** Lịch đêm: bấm nghe trong khung giờ này thì tự hẹn giờ ngủ (giờ dạng "22:00", khung có thể qua nửa đêm). */
-export interface SleepSchedule {
-  from: string;
-  to: string;
-  minutes: number;
-}
+export type { SleepSchedule };
 
 export interface PlayerOptions {
   fadeSeconds: number;
@@ -83,6 +80,8 @@ export interface PlayerOptions {
   /** Phát liên tục chừng này giờ mà không ai chạm máy thì tự nhỏ dần rồi dừng (0 = tắt) - lưới cho người ngủ quên. */
   safetyStopHours: number;
   schedule: SleepSchedule | null;
+  /** Tạm dừng rồi nghe tiếp thì lùi lại một chút (`rewindAfter`). Tuỳ chọn theo máy; điện thoại có công tắc riêng ở lõi native. */
+  autoRewind: boolean;
 }
 
 function minutesOf(clock: string): number {
@@ -91,7 +90,9 @@ function minutesOf(clock: string): number {
 }
 
 /** Đang trong khung giờ của lịch? Trả về khoá của đêm ấy (ngày bắt đầu khung) để biết người dùng đã tắt nó chưa. */
-export function scheduleWindow(schedule: SleepSchedule | null, now = new Date()): string | null {
+export function scheduleWindow(raw: SleepSchedule | null, now = new Date()): string | null {
+  // Lịch sai cấu trúc (file tuỳ chọn sửa tay, bản app khác ghi) coi như chưa có lịch thay vì ném lỗi lúc bấm nghe (soát a100 V2).
+  const schedule = cleanSleepSchedule(raw);
   if (!schedule) return null;
   const from = minutesOf(schedule.from);
   const to = minutesOf(schedule.to);
@@ -240,6 +241,7 @@ export function PlayerProvider({
   extendMinutes = DEFAULT_EXTEND_MINUTES,
   safetyStopHours = 2,
   sleepSchedule = null,
+  autoRewind = true,
 }: {
   engine: AudioEngine;
   children: ReactNode;
@@ -250,6 +252,7 @@ export function PlayerProvider({
   extendMinutes?: number;
   safetyStopHours?: number;
   sleepSchedule?: SleepSchedule | null;
+  autoRewind?: boolean;
 }) {
   const source = useSource();
   const client = useQueryClient();
@@ -261,9 +264,9 @@ export function PlayerProvider({
   );
   const scheduleKey = sleepSchedule ? `${sleepSchedule.from}-${sleepSchedule.to}-${sleepSchedule.minutes}` : "";
   const options = useMemo<PlayerOptions>(
-    () => ({ fadeSeconds, extendMinutes, safetyStopHours, schedule: sleepSchedule }),
+    () => ({ fadeSeconds, extendMinutes, safetyStopHours, schedule: sleepSchedule, autoRewind }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fadeSeconds, extendMinutes, safetyStopHours, scheduleKey],
+    [fadeSeconds, extendMinutes, safetyStopHours, scheduleKey, autoRewind],
   );
 
   const [track, setTrack] = useState<Track | null>(null);
@@ -801,6 +804,8 @@ export function PlayerProvider({
     return bookRate;
   }, [applyRate, native, source]);
 
+  /** Giây lùi lại khi nghe tiếp sau lần dừng `pausedMs`; 0 nếu người nghe tắt "Tự lùi khi nghe lại" (ba đường nghe tiếp đều qua đây). */
+  const rewindBy = useCallback((pausedMs: number) => (options.autoRewind ? rewindAfter(pausedMs) : 0), [options.autoRewind]);
   const playNow = useCallback((book: BookRef, chapters: ListenChapter[], chapter: ListenChapter, at: number | undefined, extra: Parameters<PlayerActions["play"]>[4]) => {
     refs.current.wantsPlay = true;
     const chapterId = chapter.id;
@@ -830,11 +835,11 @@ export function PlayerProvider({
     let start = at ?? 0;
     const last = book.state?.last;
     if (at !== undefined && last && last.chapterId === chapterId && Math.abs(last.seconds - at) < 1) {
-      start = Math.max(0, at - rewindAfter(Date.now() - last.at * 1000));
+      start = Math.max(0, at - rewindBy(Date.now() - last.at * 1000));
     }
     load(next, start, true, !extra?.word && last?.chapterId === chapterId && at !== undefined && Math.abs(last.seconds - at) < 1 ? last.anchor : undefined);
     if (extra?.word) engine.seekWord?.(extra.word.segment, extra.word.word);
-  }, [adoptBook, engine, load, markLoaded, native]);
+  }, [adoptBook, engine, load, markLoaded, native, rewindBy]);
 
   const play = useCallback<PlayerActions["play"]>((book, chapters, chapterId, at, extra) => {
     const chapter = chapters.find((item) => item.id === chapterId);
@@ -864,12 +869,12 @@ export function PlayerProvider({
       return;
     }
     const last = book.state?.last;
-    const back = last ? rewindAfter(Date.now() - last.at * 1000) : 0;
+    const back = last ? rewindBy(Date.now() - last.at * 1000) : 0;
     refs.current.pausedAt = 0;
     // `load` tự gắn cuốn vào trình phát SAU lần lưu chỗ cũ của nó; gắn trước thì lần lưu ấy ghi 0:00 (chưa nạp audio)
     // vào chỗ nghe dở của chính cuốn này - mỗi lần mở lại app là mất chỗ nghe.
     load(next, Math.max(0, at - back), false, last?.chapterId === chapterId && Math.abs(last.seconds - at) < 1 ? last.anchor : undefined);
-  }, [adoptBook, adoptVoice, load, markLoaded, native]);
+  }, [adoptBook, adoptVoice, load, markLoaded, native, rewindBy]);
 
   /** Hết sách mà người nghe bấm phát: nói ra và mời nghe lại từ đầu (soát UX 03-10 - trước đây không có gì xảy ra). */
   const finishedToast = useCallback(() => {
@@ -898,10 +903,10 @@ export function PlayerProvider({
       else finishedToast();
       return;
     }
-    const back = refs.current.pausedAt ? rewindAfter(Date.now() - refs.current.pausedAt) : 0;
+    const back = refs.current.pausedAt ? rewindBy(Date.now() - refs.current.pausedAt) : 0;
     if (back) engine.seek(Math.max(0, engine.time - back));
     engine.play();
-  }, [caughtUpToast, engine, finishedToast, load, native, night, position]);
+  }, [caughtUpToast, engine, finishedToast, load, native, night, position, rewindBy]);
 
   const resume = useCallback(() => {
     const current = refs.current.track;

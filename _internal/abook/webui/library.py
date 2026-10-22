@@ -67,6 +67,9 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     # Phím tắt MỘT CHỮ CÁI của máy tính (B, M, [ ], ?, J/K/1-9 ở Việc cần duyệt, O/R ở Cần nghe lại; Cài đặt > Phím tắt; mặc định bật):
     # tắt cho người dùng phần mềm nhập bằng giọng nói / phím dính (WCAG 2.1.4). Space, mũi tên, Esc và phím có Ctrl/Alt vẫn chạy.
     "letterShortcuts": True,
+    # Tạm dừng rồi nghe tiếp thì lùi vài giây (listen/sleep.ts rewindAfter; Cài đặt > Nghe; mặc định bật). Theo máy này, không đồng bộ sang máy khác;
+    # điện thoại có công tắc cùng tên ở lõi native (soát a100 T1).
+    "autoRewind": True,
 }
 MAX_RECENTS = 30
 BOOK_PROFILES = ("fast", "balanced", "high_quality")
@@ -364,14 +367,49 @@ PREFERENCES_WHAT = "Cài đặt của app"
 CHOICES: dict[str, tuple[str, ...]] = {"theme": ("system", "light", "dark"), "newBookProfile": BOOK_PROFILES}
 
 
+# Hợp đồng của các tuỳ chọn hẹn giờ ngủ và trình phát: đúng các mức giao diện đưa ra. PUT /api/preferences và lúc ĐỌC file dùng chung
+# bảng này (soát a100 V2: file sửa tay / bản app khác ghi `{"from": 12}`, `-10` từng qua bước nạp rồi làm trình phát ném lỗi); Android có
+# bản cùng hợp đồng ở ui/src/android/settings.ts.
+SLEEP_CHOICES: dict[str, tuple[int, ...]] = {
+    "sleepFadeSeconds": (10, 30, 60),
+    "sleepExtendMinutes": (5, 10, 15),
+    "safetyStopHours": (0, 1, 2, 3),
+}
+SCHEDULE_MINUTES = (15, 30, 45, 60)
+NUMBER_RANGES: dict[str, tuple[float, float]] = {"playbackRate": (0.5, 3.0), "volume": (0.0, 1.0)}
+_CLOCK = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def clean_sleep_schedule(value: Any) -> dict[str, Any] | None:
+    """Lịch đêm `{"from": "HH:mm", "to": "HH:mm", "minutes": 15|30|45|60}` đã làm sạch, hay None nếu `value` không đúng cấu trúc / miền giá trị
+    (khoá thừa bỏ đi). None cũng là "không có lịch": người gọi phân biệt bằng `value is None`."""
+    if not isinstance(value, dict):
+        return None
+    start, end, minutes = value.get("from"), value.get("to"), value.get("minutes")
+    if not (isinstance(start, str) and _CLOCK.fullmatch(start) and isinstance(end, str) and _CLOCK.fullmatch(end)):
+        return None
+    if isinstance(minutes, bool) or minutes not in SCHEDULE_MINUTES:
+        return None
+    return {"from": start, "to": end, "minutes": minutes}
+
+
 def _fits(key: str, value: Any) -> bool:
     """Giá trị `value` của tuỳ chọn `key` đúng kiểu chưa (file sửa tay, bản app khác ghi: `[1]`, `null`, `"libraryRoot": 5` - soát a28
-    lỗi 3). Khoá lạ (không có trong DEFAULT_PREFERENCES) không xét."""
+    lỗi 3), và trong miền giao diện đưa ra (soát a100 V2). Khoá lạ (không có trong DEFAULT_PREFERENCES) không xét."""
     default = DEFAULT_PREFERENCES.get(key)
     if key in CHOICES:
         return value in CHOICES[key]
     if key == "sleepSchedule":
-        return value is None or isinstance(value, dict)
+        return value is None or clean_sleep_schedule(value) == value
+    if key in SLEEP_CHOICES:
+        return _is_number(value) and value in SLEEP_CHOICES[key]
+    if key in NUMBER_RANGES:
+        low, high = NUMBER_RANGES[key]
+        return _is_number(value) and low <= value <= high
     if key == "recents":
         return isinstance(value, list) and all(isinstance(item, str) for item in value)
     if key == "positions":
@@ -528,9 +566,10 @@ class Library:
         root = self.root
         if root.is_dir():
             return False
-        if _key(root) == _key(Path.home() / "Audiobooks"):
-            return False
-        return self.preferences.get().get("libraryRootSeen") == str(root) or not root.parent.is_dir()
+        seen = self.preferences.get().get("libraryRootSeen") == str(root)
+        if not seen and _key(root) == _key(Path.home() / "Audiobooks"):
+            return False  # mặc định CHƯA TỪNG có; đã thấy một lần rồi mà biến mất thì báo như mọi chỗ khác (soát a97 V4)
+        return seen or not root.parent.is_dir()
 
     def _saw_root(self, root: Path) -> None:
         if self.preferences.get().get("libraryRootSeen") != str(root):

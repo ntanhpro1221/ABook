@@ -1002,11 +1002,11 @@ object BookEdits {
         return readObject(inside(folder, castName(book))) ?: JSONObject().put("characters", JSONArray()).put("extras", JSONArray())
     }
 
-    /** Dàn nhân vật như người nghe thấy (tên đã đổi, chương đầu theo tên chương mới). */
+    /** Dàn nhân vật như người nghe thấy (tên đã đổi, chương đầu theo tên chương mới, tên giọng máy khác - `packages.cast`). */
     fun cast(folder: File, book: JSONObject): JSONObject {
         val raw = rawCast(folder, book)
         val edits = load(folder)
-        return if (isEmpty(edits)) raw else applyCast(raw, edits, book)
+        return VoiceLabels.labelCast(if (isEmpty(edits)) raw else applyCast(raw, edits, book))
     }
 
     /** Chữ đọc theo của một chương đã qua lớp sửa; null khi chương hay file không có. */
@@ -1071,10 +1071,10 @@ object BookEdits {
     }
 
     /**
-     * Đặt ảnh bìa từ byte ảnh thô: chuẩn hoá như bìa dự án (`codec`), cất ở edits/cover.jpg. `now`: số làm phiên bản (giây) để
-     * giao diện không giữ ảnh cũ. Trả mô tả bìa {color, width, height, version}.
+     * Đặt ảnh bìa từ byte ảnh thô: chuẩn hoá như bìa dự án (`codec`), cất ở edits/cover.jpg. Phiên bản = băm nội dung ([CoverVersion]): ảnh mới
+     * luôn có địa chỉ mới, giao diện không giữ ảnh cũ. Trả mô tả bìa {color, width, height, version}.
      */
-    fun setCover(folder: File, raw: ByteArray, now: Long, codec: CoverCodec): JSONObject {
+    fun setCover(folder: File, raw: ByteArray, codec: CoverCodec): JSONObject {
         if (raw.size > Covers.MAX_UPLOAD_BYTES) throw EditsError(Covers.tooLarge().message.orEmpty())
         val normalized = try {
             codec.normalize(raw)
@@ -1084,7 +1084,7 @@ object BookEdits {
         synchronized(lock) {
             val edits = load(folder)
             val cover = JSONObject().put("color", normalized.color).put("width", normalized.width.toLong())
-                .put("height", normalized.height.toLong()).put("version", now)
+                .put("height", normalized.height.toLong()).put("version", CoverVersion.of(normalized.jpeg))
             edits.put("cover", cover)
             Store.writeAtomic(File(folder, EDITS_COVER), normalized.jpeg)
             write(folder, edits)

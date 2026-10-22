@@ -48,7 +48,8 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
                listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, package_share, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
-from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
+from .library import (NUMBER_RANGES, SLEEP_CHOICES, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule,
+                      legacy_ids)
 from .listening import HEAVY_KEYS, RECORD_ID, Listening, StalePlayback
 from .opened_events import OpenedEvents
 from . import audio_revision, bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
@@ -410,6 +411,7 @@ class App:
         # mở lại thì hàng còn nguyên và tự chạy tiếp khi cuốn đang chạy (worker sống ngoài app) xong.
         self.queue: list[str] = []
         self._queue_lock = threading.RLock()  # summary() lấy lại khoá này từ trong start/stop
+        self._deleting: set[str] = set()  # sách đang được xoá (delete): Bắt đầu / hàng đợi không giữ lượt khởi động của chúng; ghi dưới _queue_lock
         self._queue_thread: threading.Thread | None = None
         self._queue_path = preferences.path.with_name(QUEUE_FILE)
         if not read_only:
@@ -499,6 +501,7 @@ class App:
         """Đổi khoá dữ liệu nghe {mã cũ: mã mới}, sao lưu từng file trước (`<file><backup_suffix>`; `fresh_backup`: thay bản sao cũ)."""
         if not renamed:
             return
+        self.listening.compact()  # chỗ nghe còn trong nhật ký vào bản sao lưu
         for file in (self.listening.path, self.preferences.path):
             backup = file.with_name(file.name + backup_suffix)
             try:
@@ -512,7 +515,9 @@ class App:
     def adopt_moved_library(self, old_root: Path) -> dict[str, str]:
         """Người dùng trỏ thư viện sang thư mục khác - thường là CHÍNH thư viện cũ đã chuyển chỗ / đổi tên (soát a28 lỗi 2). Mã sách là HMAC
         của đường dẫn nên mọi cuốn mang mã mới, chỗ nghe / dấu trang / lịch sử mồ côi. Cuốn ở cùng đường tương đối dưới thư viện cũ có dữ
-        liệu nghe theo mã cũ: đổi khoá sang mã mới (như `_adopt_new_book_ids`). Trả {mã cũ: mã mới}."""
+        liệu nghe theo mã cũ: đổi khoá sang mã mới (như `_adopt_new_book_ids`). Chỉ khi chỗ cũ ĐÃ TRỐNG (thư viện thật sự dời đi): cuốn cũ
+        còn nằm nguyên chỗ cũ nghĩa là thư viện kia vẫn đó (đổi sang thư viện khác, hay bản sao) - tên thư mục trùng không chứng minh cùng
+        nội dung, hồ sơ nghe ở lại mã cũ (soát a97 C1). Trả {mã cũ: mã mới}."""
         new_root = self.library.root
         if os.path.normcase(os.path.normpath(str(old_root))) == os.path.normcase(os.path.normpath(str(new_root))):
             return {}
@@ -525,7 +530,7 @@ class App:
             except ValueError:
                 continue  # cuốn mở ở nơi khác (gần đây): đường dẫn không đổi
             old, new = book_id(old_root / relative), book_id(path)
-            if old != new and old in known:
+            if old != new and old in known and not (old_root / relative).exists():
                 renamed[old] = new
         self._rename_book_ids(renamed, ".pre-move.bak", fresh_backup=True)
         return renamed
@@ -571,13 +576,9 @@ class App:
         return path
 
     def export_job_status(self, jobs: Any, value: str) -> dict[str, Any]:
-        """Việc xuất chạy nền của một cuốn. Cuốn không phải dự án (mở từ file, hay của máy khác) không bao giờ có lượt xuất: trả "idle" thay vì
-        404 - trang sách của chúng hỏi trạng thái này và không có gì để báo lỗi."""
-        path = self.library.resolve(value)
-        if path is None:
-            self._listenable(value)  # không có cuốn này thật thì vẫn 404
-            return {"state": "idle"}
-        return jobs.status(str(path))
+        """Việc xuất chạy nền của một cuốn (dự án, hay cuốn nhận từ file: MP3 / M4B xuất được từ cả hai). Cuốn chưa có lượt nào trả "idle" - trang sách
+        hỏi trạng thái này và không có gì để báo lỗi; không có cuốn này thật thì 404."""
+        return jobs.status(str(self._listenable(value)))
 
     def running_exports(self) -> dict[str, list[dict[str, Any]]]:
         """Việc xuất đang chạy theo từng kiểu ("bookfile" | "m4b" | "mp3" | "audiobook" | "projectfile"): mỗi việc là trạng thái của `export_job_status` kèm `bookId`. Giao diện vừa
@@ -823,6 +824,8 @@ class App:
         # tới đó sổ vẫn ghi pha đang làm, nên "đang tạm dừng" khác "đã tạm dừng".
         result["paused"] = self.runner.pause_reason(path) if running and not result["stopping"] else None
         result["canPause"] = bool(running and not result["stopping"] and self.runner.can_pause(path))
+        # Nhật ký phụ của lượt chạy không ghi được (antivirus giữ file, đĩa đầy): sách vẫn chạy, trang báo để bạn biết còn kiểm đĩa.
+        result["logLost"] = getattr(self.runner, "log_lost", lambda _path: None)(path) if running else None
         # Lượt chạy gần nhất chết vì sự cố (không phải bạn bấm Dừng): nguyên nhân do supervisor ghi, để trang sách nói ra.
         result["runEnd"] = None if running or result.get("starting") or result.get("phase") == "done" else self.runner.last_end(path)
         result["precast"] = precast.flags(path, result)
@@ -933,6 +936,8 @@ class App:
                 if path is None or self.runner.running(path):
                     self._dequeue(head)  # dự án đã mất, hay worker đã chạy bằng đường khác
                     continue
+                if str(path.resolve()) in self._deleting:
+                    continue  # đang xoá: để lệnh xoá bỏ nó khỏi hàng
                 if self.jobs.starting(path) or self._busy_elsewhere(path) is not None or not self.jobs.reserve(path):
                     continue
             try:
@@ -965,6 +970,8 @@ class App:
         with self._queue_lock:
             if self.studio is not None and self.studio.running():
                 raise ApiError(HTTPStatus.CONFLICT, "Studio đang cập nhật. Bạn hãy chờ cập nhật xong rồi chạy sách.")
+            if str(path.resolve()) in self._deleting:
+                raise ApiError(HTTPStatus.CONFLICT, "Sách này đang được xoá - không bắt đầu được")
             if self.runner.running(path) or self.jobs.starting(path):
                 return self.summary(path)
             if not now and self._busy_elsewhere(path) is not None:
@@ -1003,7 +1010,7 @@ class App:
         phần trước đã phân vai xong, và đây vẫn là sau `create` - trước mọi câu phân tích của phần này."""
         if not reserved:
             with self._queue_lock:
-                if self.runner.running(path) or not self.jobs.reserve(path):
+                if str(path.resolve()) in self._deleting or self.runner.running(path) or not self.jobs.reserve(path):
                     return
         try:
             self.previews.shutdown()  # nhả model nghe thử sau khi đã nhận lượt
@@ -1239,16 +1246,25 @@ class App:
         không thì vào Thùng rác ngay (cuốn cũ bị thay khi "làm lại" - người dùng không thấy gì để hoàn tác)."""
         self._mutating()
         path = self._book(value)
-        if self.runner.running(path) or self.jobs.starting(path):
-            raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - dừng sách rồi mới xoá được")
         resolved = path.resolve()
         if resolved == Path(resolved.anchor) or resolved == self.library.root.resolve() or not store.is_project(resolved):
             raise ApiError(HTTPStatus.CONFLICT, "Thư mục này không phải một dự án sách - không xoá")
-        queued = self._dequeue(value)
-        token = self._discard(
-            resolved, "project", undo=undo, queued=queued,
-            failure="Không chuyển được vào Thùng rác - có thể một file trong dự án đang mở (đang nghe cuốn này, hay thư mục"
-                    " đang mở trong cửa sổ khác). Đóng rồi thử lại. ({error})")
+        key = str(resolved)
+        # Kiểm "đang chạy / đang khởi động" và đánh dấu "đang xoá" CÙNG MỘT khoá với Bắt đầu / hàng đợi (_queue_lock): Bắt đầu tới sau dấu này bị từ chối,
+        # tới trước thì lệnh xoá thấy lượt khởi động và dừng - không còn kẽ giữa kiểm và dời thư mục (soát a97 V5).
+        with self._queue_lock:
+            if self.runner.running(path) or self.jobs.starting(path):
+                raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - dừng sách rồi mới xoá được")
+            self._deleting.add(key)
+        try:
+            queued = self._dequeue(value)
+            token = self._discard(
+                resolved, "project", undo=undo, queued=queued,
+                failure="Không chuyển được vào Thùng rác - có thể một file trong dự án đang mở (đang nghe cuốn này, hay thư mục"
+                        " đang mở trong cửa sổ khác). Đóng rồi thử lại. ({error})")
+        finally:
+            with self._queue_lock:
+                self._deleting.discard(key)
         self.library.forget(path)
         return {"ok": True, "title": path.name, **({"undo": token} if token else {})}
 
@@ -2918,7 +2934,7 @@ class App:
                               after_edits=lambda value, _report: self._music_after_change(value), reviews=self.reviews)
                 # Danh tính TLS sinh một lần, nằm cạnh tuỳ chọn: đổi nó là mọi thiết bị đã ghép phải ghép lại.
                 identity = tls.load_or_create(self.preferences.path.with_name(tls.FILE_NAME))
-                self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port, identity=identity).start()
+                self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port, identity=identity).start(warm=True)
                 self.sync_error = ""
                 if self.sync_host == "0.0.0.0":  # máy chủ thật (không phải bài thử chỉ nghe 127.0.0.1)
                     try:
@@ -3412,6 +3428,14 @@ def is_local_path(value: Any) -> bool:
     return isinstance(value, str) and LOCAL_PATH.match(value) is not None
 
 
+LOCAL_PATH_IN_TEXT = re.compile(r"""(?:[A-Za-z]:[\\/]|\\\\)[^\n'"“”]*""")
+
+
+def without_local_text(text: str) -> str:
+    """Câu báo cho thiết bị ở xa không mang đường dẫn trên máy này (có tên người dùng Windows): mỗi đường tìm thấy chỉ còn tên file / thư mục cuối."""
+    return LOCAL_PATH_IN_TEXT.sub(lambda found: PureWindowsPath(found.group().rstrip(" .,;:)")).name, text)
+
+
 def without_local_paths(value: Any) -> Any:
     """Lời đáp cho Studio từ xa không mang đường dẫn trên máy này (thư mục thư viện, thư mục từng dự án - có tên người dùng Windows):
     bỏ `path` của từng cuốn (mục có `id`), để trống `libraryRoot` / `libraryRootSeen` và `root` của thư viện (soát a27 lỗi 10), bỏ `folder`
@@ -3702,6 +3726,8 @@ class Handler(BaseHTTPRequestHandler):
             row["path"] = alias(row["path"])
         for key in ("missing", "skipped", "subfolders"):
             result[key] = [alias(item) for item in result.get(key, [])]
+        for key in ("errors", "notes"):  # lời báo viết cho người đọc, nhưng lỗi hệ thống lạ vẫn có thể kèm đường dẫn của máy này
+            result[key] = [without_local_text(item) if isinstance(item, str) else item for item in result.get(key, [])]
         proposal = result.get("volumes")
         if isinstance(proposal, dict):
             if proposal.get("order"):
@@ -3851,7 +3877,9 @@ class Handler(BaseHTTPRequestHandler):
             "canCheckUpdate": self.app.shell is not None,
             "studio": None if self.app.studio is None else {"installed": self.app.studio.installed(),
                                                              "outdated": bool(self.app.studio.outdated()),
-                                                             "damaged": bool(self.app.studio.damaged())},
+                                                             "damaged": bool(self.app.studio.damaged()),
+                                                             # Bước nào mất file (id trong studio_setup.STEPS): lời lỗi phân biệt "mất model" với "Ollama chưa chạy".
+                                                             "damagedSteps": self.app.studio.damaged()},
             "libraryRoot": prefs["libraryRoot"],
             "theme": prefs["theme"],
             "playbackRate": prefs["playbackRate"],
@@ -4212,13 +4240,16 @@ class Handler(BaseHTTPRequestHandler):
         kind = str(body.get("as") or ("abookproj" if packages.workshop_state(path) else "abook"))
         if kind not in ("abook", "abookproj"):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Loại file không biết")
+        from .export import free_path
+
         root = self._export_root(body)
         title = str(packages.edited_manifest(path).get("title") or path.name)
         try:
+            # Không bao giờ ghi lên file đã có (kể cả file gốc cuốn này đến từ): tên trống kế tiếp "Tên (2).abook" (soát a99 C1).
             if kind == "abookproj":
-                out = projectfile.repack(path, root / projectfile.default_name(title))
+                out = projectfile.repack(path, free_path(root / projectfile.default_name(title)))
             else:
-                out = bookfile.repack(path, root / bookfile.default_name(title))
+                out = bookfile.repack(path, free_path(root / bookfile.default_name(title)))
         except (bookfile.BookFileError, projectfile.ProjectFileError) as error:
             raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self.app.exports.add(str(out.parent))
@@ -4257,13 +4288,25 @@ class Handler(BaseHTTPRequestHandler):
 
         return fetching
 
+    @contextlib.contextmanager
+    def _export_music(self, project: Path, kind: str, jobs: Any, key: str, projects: list[Path]) -> Iterator[Any]:
+        """Nguồn bài nhạc của một lượt xuất MP3 / M4B: dự án tải bài còn thiếu (`music_exporting`); cuốn nhận từ file `.abook` đã mang nhạc trong
+        gói - không có gì để tải (export.packaged_tracks)."""
+        if packages.is_package(project):
+            from .export import packaged_tracks
+
+            yield packaged_tracks
+        else:
+            with self.app.music_exporting(self.app.music_key(project, kind), projects, self._music_fetching(jobs, key)) as source:
+                yield source
+
     def post_mp3_job(self, _query: dict[str, list[str]], value: str) -> None:
         # Thư mục MP3 (hay cả bộ, mỗi phần một thư mục con) của Studio - việc nền như M4B: hộp Xuất đóng giữa chừng vẫn còn tiến độ và Huỷ ở
         # thông báo nổi. Hỏi trạng thái bằng GET; đang có lượt chạy cho cuốn này thì trả lượt ấy. Lỗi (sách chưa có chương nào...) là trạng thái
         # "error" kèm lời; Huỷ là "cancelled" và thư mục xuất dở đã bị xoá (export.export_book / export_series).
         from .export import export_book, export_series
 
-        project = self.app._book(value)
+        project = self.app._listenable(value)  # dự án, hay cuốn nhận từ file `.abook` (soát a99 V4)
         body = self._body()
         root = self._export_root(body)
         parts = self._series_parts(value, body)
@@ -4279,8 +4322,7 @@ class Handler(BaseHTTPRequestHandler):
 
         def run() -> dict[str, Any]:
             # "Kèm nhạc nền": bài chưa có trên máy được tải như khi gói `.abook` (music_export.py), phase "music-fetch" k/n.
-            with app.music_exporting(app.music_key(project, "mp3"), (parts or [project]) if wanted else [],
-                                     self._music_fetching(app.mp3_jobs, key)) as source:
+            with self._export_music(project, "mp3", app.mp3_jobs, key, (parts or [project]) if wanted else []) as source:
                 music = source if wanted else None
                 if parts is None:
                     result = export_book(project, root, cover=body.get("cover"), music=music, cancelled=cancelled, progress=writing,
@@ -4300,7 +4342,7 @@ class Handler(BaseHTTPRequestHandler):
     def post_mp3_job_cancel(self, _query: dict[str, list[str]], value: str) -> None:
         # "Huỷ" như M4B: dừng ở khúc kế (bài nhạc đang tải, chương đang trộn), thư mục MP3 dở bị xoá.
         self.app._mutating()
-        key = str(self.app._book(value))
+        key = str(self.app._listenable(value))
         self.app.mp3_jobs.cancel(key)
         self.app.cancel_music_export(self.app.music_key(Path(key), "mp3"))
         self._send_json(HTTPStatus.OK, self.app.mp3_jobs.status(key))
@@ -4388,7 +4430,7 @@ class Handler(BaseHTTPRequestHandler):
         # hoá lại cả cuốn mất vài phút với sách dài. Hỏi trạng thái bằng GET; đang có lượt chạy cho cuốn này thì trả lượt ấy.
         from .export import export_m4b
 
-        project = self.app._book(value)
+        project = self.app._listenable(value)  # dự án, hay cuốn nhận từ file `.abook` (soát a99 V4)
         body = self._body()
         root = self._export_root(body)
         app = self.app
@@ -4406,8 +4448,7 @@ class Handler(BaseHTTPRequestHandler):
 
         def run() -> dict[str, Any]:
             # Huỷ (`post_m4b_job_cancel`) có hiệu lực ở mọi pha: trước bài nhạc kế phải tải, giữa lúc trộn / ghép, trước mỗi chương đo đỉnh.
-            with app.music_exporting(app.music_key(project, "m4b"), [project] if wanted else [],
-                                     self._music_fetching(app.m4b_jobs, key)) as source:
+            with self._export_music(project, "m4b", app.m4b_jobs, key, [project] if wanted else []) as source:
                 result = export_m4b(project, root, cover=body.get("cover"), music=source if wanted else None, progress=mixing, peaks=peaks,
                                     cancelled=cancelled)
             app.exports.add(result["folder"])
@@ -4421,14 +4462,15 @@ class Handler(BaseHTTPRequestHandler):
     def post_m4b_job_cancel(self, _query: dict[str, list[str]], value: str) -> None:
         # "Huỷ" như gói dự án: dừng sau bước đang làm (bài nhạc đang tải, khúc đang ghép), thư mục tạm `.m4b-*` bị xoá, không ghi file M4B nào.
         self.app._mutating()
-        key = str(self.app._book(value))
+        key = str(self.app._listenable(value))
         self.app.m4b_jobs.cancel(key)
         self.app.cancel_music_export(self.app.music_key(Path(key), "m4b"))
         self._send_json(HTTPStatus.OK, self.app.m4b_jobs.status(key))
 
     def get_export_music(self, _query: dict[str, list[str]], value: str) -> None:
         # Ô "Kèm nhạc nền" của hộp Xuất (MP3 / M4B): hiện khi cuốn có kế hoạch nhạc, mặc định theo công tắc Nhạc nền của cuốn.
-        self._send_json(HTTPStatus.OK, music_export.studio_state(self.app._book(value)))
+        path = self.app._listenable(value)
+        self._send_json(HTTPStatus.OK, music_export.packaged_state(path) if packages.is_package(path) else music_export.studio_state(path))
 
     # ---- xuất sách nói của sách Nghe ngay (listen_export.py) --------------------------------------------------------------
 
@@ -5297,7 +5339,7 @@ class Handler(BaseHTTPRequestHandler):
                 raw = (cover_search.download_image(str(body["url"])) if body.get("url")
                        else covers.decode_data_url(str(body.get("image", ""))))
                 with self.app.cover_turn(path, ticket):
-                    cover = book_edits.set_cover(path, raw, now=int(time.time()))
+                    cover = book_edits.set_cover(path, raw)
             except covers.CoverError as exc:
                 raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc
             self._send_json(HTTPStatus.OK, {"cover": cover})
@@ -6156,17 +6198,14 @@ class Handler(BaseHTTPRequestHandler):
                 raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         # Tốc độ và âm lượng là SỐ trong khoảng giao diện đưa ra (player.SPEEDS 0,75-3; âm lượng 0-1): trình phát nạp lại
         # chúng lúc mở app, và một giá trị hỏng (chuỗi, 5) từng được lưu nguyên.
-        for key, low, high in (("playbackRate", 0.5, 3.0), ("volume", 0.0, 1.0)):
+        for key, (low, high) in NUMBER_RANGES.items():
             value = body.get(key)
             if isinstance(value, (int, float)) and not isinstance(value, bool) and low <= float(value) <= high:
                 allowed[key] = float(value)
-        # Hai tuỳ chọn hẹn giờ ngủ chỉ nhận đúng các mức giao diện đưa ra.
-        if body.get("sleepFadeSeconds") in (10, 30, 60):
-            allowed["sleepFadeSeconds"] = body["sleepFadeSeconds"]
-        if body.get("sleepExtendMinutes") in (5, 10, 15):
-            allowed["sleepExtendMinutes"] = body["sleepExtendMinutes"]
-        if body.get("safetyStopHours") in (0, 1, 2, 3):
-            allowed["safetyStopHours"] = body["safetyStopHours"]
+        # Ba tuỳ chọn hẹn giờ ngủ chỉ nhận đúng các mức giao diện đưa ra (cùng bảng với lúc đọc file: library.SLEEP_CHOICES).
+        for key, choices in SLEEP_CHOICES.items():
+            if not isinstance(body.get(key), bool) and body.get(key) in choices:
+                allowed[key] = body[key]
         # Supervisor đọc thẳng khoá này (power_source.pause_on_battery_enabled) - chỉ nhận đúng True/False.
         if isinstance(body.get("pauseOnBattery"), bool):
             allowed["pauseOnBattery"] = body["pauseOnBattery"]
@@ -6174,6 +6213,8 @@ class Handler(BaseHTTPRequestHandler):
             allowed["autoMusic"] = body["autoMusic"]
         if isinstance(body.get("letterShortcuts"), bool):
             allowed["letterShortcuts"] = body["letterShortcuts"]
+        if isinstance(body.get("autoRewind"), bool):
+            allowed["autoRewind"] = body["autoRewind"]
         # Mặc định của trình tạo sách: chất lượng là một trong ba mức; giọng kể là tên giọng có thật ("" = máy đề xuất).
         if body.get("newBookProfile") in ("fast", "balanced", "high_quality"):
             allowed["newBookProfile"] = body["newBookProfile"]
@@ -6183,12 +6224,10 @@ class Handler(BaseHTTPRequestHandler):
                 allowed["newBookNarrator"] = narrator
         if "sleepSchedule" in body:
             schedule = body["sleepSchedule"]
-            clock = re.compile(r"([01]\d|2[0-3]):[0-5]\d")
             if schedule is None:
                 allowed["sleepSchedule"] = None
-            elif (isinstance(schedule, dict) and clock.fullmatch(str(schedule.get("from", "")))
-                  and clock.fullmatch(str(schedule.get("to", ""))) and schedule.get("minutes") in (15, 30, 45, 60)):
-                allowed["sleepSchedule"] = {"from": schedule["from"], "to": schedule["to"], "minutes": schedule["minutes"]}
+            elif clean_sleep_schedule(schedule) is not None:
+                allowed["sleepSchedule"] = clean_sleep_schedule(schedule)
         old_root = self.app.library.root
         updated = self.app.preferences.update(allowed)
         if "libraryRoot" in allowed:

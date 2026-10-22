@@ -320,6 +320,14 @@ describe("nghe nối sang phần sau (soát a26 L1, L3)", () => {
     expect(continuingPart(part("Bộ · Tập 17"))).toBeNull();
     expect(continuingPart(undefined)).toBeNull();
   });
+  it("phần nối tiếp đã đổi tên vẫn tự nghe nối: quan hệ lấy từ liên kết chuỗi, không từ hậu tố tên (soát a97 V3)", () => {
+    const renamed = { ...part("Ngày trở về"), series: { root: "first", part: 2 } } as ListenBook;
+    expect(seriesIndex([{ id: "first", title: "Bộ truyện" }, renamed]).get(renamed.id)!.unit).toBe("phần");
+    expect(partToContinue("finished", renamed)?.id).toBe("Ngày trở về");
+    expect(continuingPart(renamed)?.id).toBe("Ngày trở về");
+    // Không có liên kết thì vẫn đoán theo tên như trước; tập khác của bộ vẫn chỉ được mời.
+    expect(partToContinue("finished", part("Ngày trở về"))).toBeNull();
+  });
 
   it("phần sau chưa có tốc độ riêng thì nghe tiếp đúng tốc độ phần trước, và nhớ luôn cho phần ấy", () => {
     expect(startingRate(undefined, 1.5, 1)).toEqual({ rate: 1.5, keep: true });

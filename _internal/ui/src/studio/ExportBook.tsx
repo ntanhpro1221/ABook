@@ -157,6 +157,8 @@ export function ExportDialog({
   const total = book.chapters.total;
   const wholeSeries = scope === "series" && parts.length > 1 && kind !== "abookproj" && kind !== "m4b"; // M4B: mỗi phần một file riêng, như menu Thư viện
   const oneFile = kind === "abook" && (!wholeSeries || layout === "single");
+  // Dự án chỉ có chữ (chưa chương nào xong audio): `.abook` vẫn xuất được - gói mang chữ các chương (bookfile._add_texts); MP3 / M4B thì cần audio.
+  const textOnly = kind === "abook" && !wholeSeries && !ready && total > 0;
   // Cỡ ước lượng của file .abook (audio các chương nghe được): báo trước, và cảnh báo khi vượt giới hạn FAT32.
   const estimate = useQuery({
     queryKey: ["export-size", book.id, wholeSeries],
@@ -332,7 +334,8 @@ export function ExportDialog({
     whole
       ? [book.running && "Dự án đang chạy - gói khi nó đã chạy xong hoặc đã dừng."]
       : [
-          !wholeSeries && ready < total && `${formatNumber(total - ready)}/${formatNumber(total)} chương chưa có audio${missing ? ` (${missing} chương mất file)` : ""} - không có trong bản xuất.`,
+          textOnly && `Chưa chương nào có audio: file .abook chỉ mang chữ của ${formatNumber(total)} chương (đọc được, chưa nghe được). Có audio rồi, bạn xuất lại để file mang cả giọng đọc.`,
+          !wholeSeries && !textOnly && ready < total && `${formatNumber(total - ready)}/${formatNumber(total)} chương chưa có audio${missing ? ` (${missing} chương mất file)` : ""} - không có trong bản xuất.`,
           wholeSeries && "Phần nào chưa có chương xong sẽ bị bỏ qua; phần đang chạy chỉ có các chương đã xong tới lúc này.",
           !wholeSeries && book.running && "Sách đang chạy - bản xuất chỉ gồm các chương đã xong tới lúc này.",
           !wholeSeries && redoExportNote(book.chapters.redo ?? 0, kind === "abook"),
@@ -559,7 +562,7 @@ export function ExportDialog({
           variant="primary"
           icon={KINDS.find((item) => item.value === kind)?.icon ?? FolderDown}
           loading={busy}
-          disabled={whole ? Boolean(book.running) : needsFfmpeg || (!wholeSeries && !ready)}
+          disabled={whole ? Boolean(book.running) : needsFfmpeg || (!wholeSeries && !ready && !textOnly)}
           onClick={() => void run()}
         >
           {info?.dialogs ? "Chọn nơi lưu và xuất" : "Xuất"}

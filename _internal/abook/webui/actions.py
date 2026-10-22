@@ -27,12 +27,13 @@ from ..readaloud.prepare import listening_seconds
 from ..io_utils import discover_txt_files, natural_key
 from . import humanize
 
-SCAN_WORD_LIMIT_BYTES = 4 * 1024 * 1024
+SCAN_WORD_LIMIT_BYTES = 4 * 1024 * 1024  # đếm chữ / ký tự / thời lượng nghe trên chừng này byte đầu; file dài hơn thì ngoại suy (`estimated`)
+MAX_SCAN_NOTES = 6  # ghi chú tối đa liệt kê, như bước xem trước của Nghe ngay (phần còn lại gộp thành một dòng)
 # Studio từ xa: chương TXT gửi từ máy khác nằm ở đây, trong thư viện - dây chuyền còn đọc lại nguồn mỗi lần chạy tiếp.
 UPLOAD_FOLDER = "Nguồn tải lên"
 SPLIT_FOLDER = "Nguồn tách chương"
 UPLOAD_EPUB_FOLDER = "Sách đã tách"  # trong UPLOAD_FOLDER: chương tách từ EPUB / DOCX / PDF mà thiết bị ở xa gửi lên
-MAX_SOURCE_UPLOAD = 8 * 1024 * 1024  # một chương; chương dài nhất của kho truyện ~200 KB
+MAX_SOURCE_UPLOAD = 40 * 1024 * 1024  # một file: chương dài nhất của kho truyện ~200 KB, nhưng cả cuốn trong một file TXT / EPUB (hàng chục MB) cũng gửi được
 _UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 # Tên thiết bị của Windows: làm tên thư mục hay file là ghi vào THIẾT BỊ, không vào đĩa.
 _DEVICE_NAME = re.compile(r"^(con|prn|aux|nul|com[0-9¹²³]|lpt[0-9¹²³])(\..*)?$", re.IGNORECASE)
@@ -73,7 +74,8 @@ def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Pa
     if str(library_root) in ("", ".") or not library_root.is_dir():
         raise ValueError("Máy tính chưa có thư mục thư viện")
     if len(data) > MAX_SOURCE_UPLOAD:
-        raise ValueError(f"File quá lớn - tối đa {MAX_SOURCE_UPLOAD // 2**20} MB một file")
+        raise ValueError(f"File này lớn hơn {MAX_SOURCE_UPLOAD // 2**20} MB nên không gửi qua mạng được. Bạn hãy tách nó thành vài file nhỏ hơn rồi gửi lại, "
+                         "hoặc chép file vào máy tính rồi mở nó ngay trên máy tính.")
     parts = [part for part in (_upload_name(piece, 60) for piece in folder.replace("\\", "/").split("/")) if part]
     parts = parts[:3] or ["Tải lên"]
     file_name = _upload_name(name.replace("\\", "/").rsplit("/", 1)[-1], 120)
@@ -191,6 +193,15 @@ class BackgroundRunner:
             return get_status(project_root).can_pause
         except Exception:  # noqa: BLE001
             return False
+
+    def log_lost(self, project_root: Path) -> dict[str, Any] | None:
+        """Nhật ký phụ của lượt chạy không ghi được và đã bỏ dòng (`background_runner.log_loss`): sách vẫn chạy, trang chỉ báo."""
+        from ..background_runner import get_status
+
+        try:
+            return get_status(project_root).log_lost
+        except Exception:  # noqa: BLE001
+            return None
 
 
 class StudioRunner(BackgroundRunner):
@@ -426,6 +437,7 @@ def _gather_inputs(paths: list[str], epub_root: Path | None = None) -> tuple[lis
     subfolders: list[str] = []
     errors: list[str] = []
     notes: list[str] = []
+    matter: dict[str, str] = {}  # chương tách từ EPUB / DOCX không nên tích sẵn (bìa, bản quyền, mục lục...) -> lý do
     book_title = ""
     # Chương tách từ EPUB giữ thứ tự của TỪNG file (hai tập trong một thư mục: hết tập 1 rồi mới tới tập 2) - xếp theo tên
     # file thì "0001 …" của tập 1 và tập 2 xen nhau (soát UX 01-10). TXT là nhóm 0, mỗi file sách một nhóm theo thứ tự gặp.
@@ -437,15 +449,22 @@ def _gather_inputs(paths: list[str], epub_root: Path | None = None) -> tuple[lis
         try:
             folder, info = importers.extract(book, root)
             chapter_files = discover_txt_files(folder)
-        except (importers.ImportFailed, OSError) as error:
+        except importers.ImportFailed as error:
             errors.append(f"{book.name}: {error}")
+            return []
+        except OSError as error:  # lời báo không mang đường dẫn của máy này (thiết bị ở xa cũng đọc nó)
+            errors.append(f"{book.name}: {humanize.write_error(error) if humanize.is_write_problem(error) else 'không đọc được thư mục chương vừa tách'}")
             return []
         book_title = book_title or str(info.get("title") or "")
         # Dòng ghi công đã có khung gợi ý riêng (credits/tailCredits của từng chương) - không lặp thành ghi chú (soát UX a24, A1).
         notes.extend(f"{book.name}: {note}" for note in info.get("notes") or [] if not importers.is_credit_note(note))
         groups += 1
+        reasons = info.get("matter") if isinstance(info.get("matter"), dict) else {}
         for chapter in chapter_files:
-            group_of[os.path.normcase(str(chapter.resolve()))] = groups
+            key = os.path.normcase(str(chapter.resolve()))
+            group_of[key] = groups
+            if chapter.name in reasons:
+                matter[key] = str(reasons[chapter.name])
         return chapter_files
 
     for item in paths:
@@ -487,7 +506,15 @@ def _gather_inputs(paths: list[str], epub_root: Path | None = None) -> tuple[lis
                 files.append(candidate.resolve())
     files.sort(key=lambda path: (group_of.get(os.path.normcase(str(path)), 0), natural_key(path.name)))
     return files, {"skipped": skipped, "missing": missing, "subfolders": subfolders, "errors": errors, "notes": notes,
-                   "bookTitle": book_title}
+                   "bookTitle": book_title, "matter": matter}
+
+
+def capped_notes(notes: list[str]) -> list[str]:
+    """Tối đa `MAX_SCAN_NOTES` ghi chú, phần còn lại gộp thành một dòng - như bước xem trước của Nghe ngay (sách 600 trang từng ra 690 dòng)."""
+    unique = list(dict.fromkeys(notes))
+    if len(unique) <= MAX_SCAN_NOTES:
+        return unique
+    return [*unique[:MAX_SCAN_NOTES], f"…và {len(unique) - MAX_SCAN_NOTES} ghi chú nữa."]
 
 
 def input_files(paths: list[str]) -> list[Path]:
@@ -503,22 +530,45 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
 
     files, found = _gather_inputs(paths, epub_root)
     rows = []
+    errors = list(found["errors"])
+    legacy: dict[str, list[str]] = {}
     total_words = 0
     total_seconds = 0.0
+    estimated = False
     for path in files:
-        head, tail, size, sha256 = _read_chapter(path)
-        truncated = size > len(head)
-        text, encoding = _decode_head(head, truncated)
+        try:
+            head, tail, size, sha256 = _read_chapter(path)
+            truncated = size > len(head)
+            text, encoding = _decode_head(head, truncated)
+        except UnicodeDecodeError:
+            # Một file hỏng không chặn cả lô: nói tên nó và cách sửa, các file khác quét tiếp (dây chuyền cũng không đọc được file này).
+            errors.append(f"{path.name}: có byte chữ bị hỏng (file tải dở hay lưu sai bảng mã). Bạn hãy tải lại file, hoặc mở bản gốc rồi lưu lại dạng UTF-8.")
+            continue
+        except OSError as error:
+            errors.append(f"{path.name}: {humanize.write_error(error) if humanize.is_write_problem(error) else 'không đọc được file (đang bị chương trình khác khoá?)'}")
+            continue
+        kind = importers.legacy_encoding(head, encoding)
+        if kind:
+            legacy.setdefault(kind, []).append(path.name)
         words = len(text.split())
-        total_words += words
         # Độ dài nghe ước: cùng cách với hộp Xuất sách nói (prepare.listening_seconds trên chữ của các đoạn đọc được) - soát a64: ở đây "4 phút",
         # hộp xuất "7 phút", thật 6:14.
         seconds = listening_seconds(sum(len(paragraph.text) for paragraph in px.split_paragraphs(text) if px.is_speakable(paragraph.text)))
+        chars = sum(not ch.isspace() for ch in text)
+        # File dài hơn phần đầu đã đọc: chữ, ký tự, thời lượng ngoại suy theo cỡ file (giao diện ghi "~"), không đọc cả file chỉ để đếm.
+        if truncated and head:
+            scale = size / len(head)
+            words, chars, seconds, estimated = round(words * scale), round(chars * scale), seconds * scale, True
+        total_words += words
         total_seconds += seconds
+        reason = found["matter"].get(os.path.normcase(str(path)), "")
         rows.append({
             "path": str(path),
             "name": path.name,
             "title": humanize.chapter_title(path.stem),
+            # Không tích sẵn (bìa, bản quyền, mục lục, mục rất ngắn của EPUB / DOCX): cùng luật với Nghe ngay (importers.default_picks); vẫn tích lại được.
+            **({"matter": reason} if reason else {}),
+            **({"estimated": True} if truncated else {}),
             # Cả file nằm trong phần đầu đã đọc thì lấy dòng đầu từ đó; file dài hơn (hiếm) đọc lại như trước.
             "firstLine": _first_text_line(io.StringIO(text)),
             # Dòng ghi công ở đầu chương: trình tạo sách ĐỀ XUẤT bỏ chúng khỏi phần đọc (đếm trên đúng các chương còn chọn).
@@ -528,7 +578,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             "words": words,
             "audioSeconds": round(seconds),
             # Số ký tự có chữ (không tính khoảng trắng): hiện cạnh tên chương để thấy chương nào rỗng / quá dài trước khi tạo.
-            "chars": sum(not ch.isspace() for ch in text),
+            "chars": chars,
             "bytes": size,
             # Như chapters.input_sha256 của dây chuyền: nhận ra truyện đã có dự án (App.existing_projects).
             "sha256": sha256,
@@ -536,6 +586,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             # cả nghìn file chương của một thư mục bình thường.
             "split": txt_split.plan(path) if len(files) <= 3 else None,
         })
+    notes = [*found["notes"], *(importers.legacy_note(kind, names) for kind, names in legacy.items())]
     title = found["bookTitle"]
     if files and not title:
         from ..project import infer_book_title
@@ -548,9 +599,9 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
         "skipped": found["skipped"],
         "missing": found["missing"],
         # EPUB / DOCX / PDF không tách được (hỏng, PDF scan, không có chương nào có chữ...): nói lý do thay vì "không có chương nào".
-        "errors": found["errors"],
+        "errors": errors,
         # Không phải lỗi nhưng người dùng nên biết (thư mục có cả TXT lẫn EPUB: chỉ lấy TXT; trang chỉ có ảnh bị bỏ; gợi ý bỏ dòng ghi công).
-        "notes": found["notes"],
+        "notes": capped_notes(notes),
         # Tối đa MAX_VOLUMES: giao diện hiện vài thư mục đầu, và "dùng cả các thư mục này, mỗi thư mục một tập" cần đủ bộ.
         "subfolders": found["subfolders"][:volumes.MAX_VOLUMES],
         # Nhiều tập trong một nguồn (mỗi thư mục / EPUB một tập, hay tiêu đề "Tập 2"): ĐỀ XUẤT chia, None khi chỉ một tập.
@@ -560,6 +611,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             "chapters": len(rows),
             "words": total_words,
             "audioSeconds": round(total_seconds),
+            **({"estimated": True} if estimated else {}),
         },
     }
 

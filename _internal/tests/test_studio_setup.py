@@ -39,6 +39,7 @@ class FakeOllama(BaseHTTPRequestHandler):
     pulled: list[str] = []
     blobs: dict[str, int] = {}  # digest -> số byte đã nhận (chỉ khi đúng băm, như Ollama thật)
     created: list[dict] = []
+    removed: set[str] = set()  # model đã bị xoá khỏi kho (người dùng hay phần mềm dọn đĩa): /api/tags không còn liệt kê
 
     def log_message(self, *_args: object) -> None:
         pass
@@ -46,8 +47,9 @@ class FakeOllama(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802
         self.send_response(HTTPStatus.OK)
         self.end_headers()
-        self.wfile.write(json.dumps({"models": [{"name": body["model"], "model": body["model"]}
-                                                for body in FakeOllama.created]}).encode())
+        names = [body["model"] for body in FakeOllama.created] + FakeOllama.pulled  # Ollama thật: kéo xong là có trong /api/tags
+        self.wfile.write(json.dumps({"models": [{"name": name, "model": name} for name in names
+                                                if name not in FakeOllama.removed]}).encode())
 
     def do_HEAD(self) -> None:  # noqa: N802
         found = self.path.rsplit("/", 1)[-1] in FakeOllama.blobs
@@ -72,6 +74,7 @@ class FakeOllama(BaseHTTPRequestHandler):
             self.wfile.write(b'{"status": "success"}')
             return
         FakeOllama.pulled.append(body["model"])
+        FakeOllama.removed.discard(body["model"])
         self.send_response(HTTPStatus.OK)
         self.end_headers()
         for event in ({"status": "pulling manifest"}, {"status": "downloading", "completed": 50, "total": 100},
@@ -83,7 +86,7 @@ class FakeOllama(BaseHTTPRequestHandler):
 def ollama():
     server = ThreadingHTTPServer(("127.0.0.1", 0), FakeOllama)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    FakeOllama.pulled, FakeOllama.blobs, FakeOllama.created = [], {}, []
+    FakeOllama.pulled, FakeOllama.blobs, FakeOllama.created, FakeOllama.removed = [], {}, [], set()
     yield f"http://127.0.0.1:{server.server_address[1]}"
     server.shutdown()
 
@@ -332,6 +335,74 @@ def test_a_studio_that_lost_its_ollama_offers_to_repair_only_that(tmp_path: Path
     assert setup.damaged() == [] and setup.outdated() == [] and setup.status()["error"] is None
     assert setup.fetched == ["ollama"], "chỉ tải lại Ollama"  # type: ignore[attr-defined]
     assert commands == ["Kiểm tra lần cuối"]
+
+
+def _installed_studio(tmp_path: Path, ollama: str, monkeypatch: pytest.MonkeyPatch) -> tuple[StudioSetup, list[str]]:
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "localappdata"))
+    commands: list[str] = []
+    setup = _setup(tmp_path, ollama, commands)
+    setup.start()
+    setup.wait(30)
+    assert setup.status()["installed"] is True and setup.damaged() == [] and setup.outdated() == []
+    return setup, commands
+
+
+def test_a_studio_that_lost_its_whisper_checkpoint_repairs_only_that(tmp_path: Path, ollama: str,
+                                                                    monkeypatch: pytest.MonkeyPatch) -> None:
+    """Soát a96 V1: phần mềm dọn đĩa xoá checkpoint Whisper, sổ vẫn ghi "đã xong" -> Studio báo đã cài, không nút sửa."""
+    setup, commands = _installed_studio(tmp_path, ollama, monkeypatch)
+    (setup.runtime / "models" / "whisper" / WHISPER_CHECKPOINT).unlink()
+    status = setup.status()
+    assert status["damaged"] == ["Model nghe lại (Whisper)"] and status["damagedSteps"] == ["asr"]
+    assert [step["id"] for step in status["steps"] if not step["done"]] == ["asr"]
+    with pytest.raises(RuntimeError, match="Sửa Studio"):
+        StudioRunner(setup).start(tmp_path / "sach")
+
+    setup.fetched.clear()  # type: ignore[attr-defined]
+    setup.start()
+    setup.wait(30)
+    assert setup.damaged() == [] and setup.status()["error"] is None
+    assert setup.fetched == [WHISPER_CHECKPOINT], "chỉ tải lại Whisper"  # type: ignore[attr-defined]
+
+
+def test_a_truncated_whisper_checkpoint_counts_as_lost(tmp_path: Path, ollama: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    setup, _ = _installed_studio(tmp_path, ollama, monkeypatch)
+    (setup.runtime / "models" / "whisper" / WHISPER_CHECKPOINT).write_bytes(b"gia")
+    assert setup.damaged() == ["asr"]
+
+
+def test_a_studio_whose_analysis_model_left_ollama_repairs_only_the_model(tmp_path: Path, ollama: str,
+                                                                         monkeypatch: pytest.MonkeyPatch) -> None:
+    setup, _ = _installed_studio(tmp_path, ollama, monkeypatch)
+    FakeOllama.removed.add("qwen3:8b")
+    setup._tags_probe = None
+    status = setup.status()
+    assert status["damagedSteps"] == ["llm"] and status["outdated"] == status["damaged"]
+    with pytest.raises(RuntimeError, match="Sửa Studio"):
+        StudioRunner(setup).start(tmp_path / "sach")
+
+    FakeOllama.pulled.clear()
+    setup.fetched.clear()  # type: ignore[attr-defined]
+    setup.start()
+    setup.wait(30)
+    assert FakeOllama.pulled == ["qwen3:8b"], "chỉ kéo lại model phân tích"
+    assert setup.fetched == []  # type: ignore[attr-defined]
+    assert setup.damaged() == [] and setup.status()["error"] is None
+
+
+def test_an_ollama_that_is_not_running_is_not_mistaken_for_a_missing_model(tmp_path: Path, ollama: str,
+                                                                          monkeypatch: pytest.MonkeyPatch) -> None:
+    setup, _ = _installed_studio(tmp_path, ollama, monkeypatch)
+    setup.ollama_address = "http://127.0.0.1:9"  # Ollama của Studio chưa bật
+    setup._tags_probe = None
+    assert setup.damaged() == [] and setup.outdated() == []
+    assert setup._models_unchecked(), "Sửa Studio phải bật Ollama lên rồi xem thật"
+
+
+def test_a_missing_speaker_tokenizer_counts_as_a_lost_model(tmp_path: Path, ollama: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    setup, _ = _installed_studio(tmp_path, ollama, monkeypatch)
+    monkeypatch.setattr(setup, "_speaker_model", lambda: studio_setup.PUBLISHED_MODELS[next(iter(studio_setup.PUBLISHED_MODELS))])
+    assert "llm" in setup.damaged()
 
 
 def test_removing_the_studio_deletes_its_folder_even_read_only_files(tmp_path: Path, ollama: str) -> None:

@@ -323,10 +323,23 @@ def matches(target: Path, item: Download) -> bool:
     with _hashed_lock:
         known = _hashed.get(stamp)
     if known is None:
-        known = _sha256(target)
+        known = _digest(target)
         with _hashed_lock:
             _hashed[stamp] = known
     return known == item.sha256
+
+
+def _digest(path: Path) -> str:
+    """SHA-256 qua bảng dấu đã lưu ra đĩa của audio_revision: mở lại app không băm lại ~0,9 GB model ngay lượt hỏi trạng thái đầu tiên."""
+    from . import audio_revision
+    return audio_revision.describe(path)["sha256"]
+
+
+def intact(folder: Path | None, files: Any) -> bool:
+    """Mọi file của `files` (các `Download`) nằm ở `folder` ĐÚNG bản đã ghim (cùng cỡ, cùng SHA-256). Chỉ có tên file thì file cắt cụt /
+    hỏng vẫn được tính là "đã tải" - mô-đun báo sẵn sàng rồi lỗi lúc nạp, và nút tải không có việc để sửa (soát a96 V2). `matches` kiểm cỡ
+    trước và băm mỗi file MỘT lần cho tới khi dấu stat của nó đổi, nên hỏi trạng thái liên tục không băm lại model."""
+    return folder is not None and all(matches(folder / item.name, item) for item in files)
 
 
 def left(item: Download, target: Path) -> int:
@@ -675,6 +688,7 @@ class StudioSetup:
         self.busy: Callable[[], Path | None] = lambda: None
         self._memory_error: str | None = None
         self._package_probe: tuple[float, list[str]] | None = None
+        self._tags_probe: tuple[float, frozenset[str] | None] | None = None  # model Ollama đang có (None: Ollama không trả lời)
 
     # ---- trạng thái -------------------------------------------------------------------------------------------
 
@@ -765,7 +779,70 @@ class StudioSetup:
         damaged = ["ollama"] if "ollama" in done and not self.ollama_executable.is_file() else []
         if "packages" in done and self._probe_packages():
             damaged.append("packages")
+        # Model là thứ phần mềm dọn đĩa hay người dùng hay xoá nhất: đối chiếu file/model còn thật với sổ "đã xong".
+        if "llm" in done and self._llm_missing():
+            damaged.append("llm")
+        if "asr" in done and not self._whisper_present():
+            damaged.append("asr")
+        if "wordalign" in done and not self._word_align_present():
+            damaged.append("wordalign")
         return damaged
+
+    def _whisper_present(self) -> bool:
+        """Checkpoint Whisper còn nguyên: đúng tên + cỡ ghi lúc cài; Studio cài từ bản cũ chưa ghi thì cần có file .pt nào đó."""
+        folder = self.runtime / "models" / "whisper"
+        recorded = (self._state().get("outputs") or {}).get("whisper")
+        if isinstance(recorded, dict) and recorded.get("name"):
+            path = folder / str(recorded["name"])
+            try:
+                return path.is_file() and path.stat().st_size == int(recorded.get("size") or 0)
+            except (OSError, ValueError):
+                return False
+        return folder.is_dir() and any(path.is_file() for path in folder.glob("*.pt"))
+
+    def _word_align_present(self) -> bool:
+        try:
+            return all((self.word_align / item.name).is_file() and (self.word_align / item.name).stat().st_size > 0
+                       for item in WORD_ALIGN_FILES)
+        except OSError:
+            return False
+
+    def _llm_missing(self) -> bool:
+        """Model phân tích (và model người nói, bộ đếm token đi cặp) đã mất khỏi Studio. Hỏi Ollama của Studio qua HTTP
+        (/api/tags - không gọi CLI `ollama`, khi máy chủ tắt nó tự mở app khay): Ollama không trả lời thì chưa biết, KHÔNG coi là
+        mất (`start()` bật Ollama lên rồi hỏi lại)."""
+        speaker = self._speaker_model()
+        if speaker is not None and not self._speaker_tokenizer_present():
+            return True
+        models = self._ollama_models()
+        if models is None:
+            return False
+        wanted = [self.analysis_model] + ([speaker.name] if speaker is not None else [])
+        return any(not self._listed(name, models) for name in wanted)
+
+    def _speaker_tokenizer_present(self) -> bool:
+        try:
+            return self.speaker_tokenizer.is_file() and self.speaker_tokenizer.stat().st_size == SPEAKER_TOKENIZER.size
+        except OSError:
+            return False
+
+    @staticmethod
+    def _listed(name: str, models: frozenset[str]) -> bool:
+        return name in models or (":" not in name and f"{name}:latest" in models)
+
+    def _ollama_models(self, *, fresh: bool = False) -> frozenset[str] | None:
+        """Tên các model Ollama của Studio đang có, hay None khi Ollama không trả lời. Nhớ 10 giây: trang hỏi trạng thái liên tục."""
+        if not fresh and self._tags_probe is not None and time.monotonic() - self._tags_probe[0] < 10:
+            return self._tags_probe[1]
+        try:
+            with urllib.request.urlopen(f"{self.ollama_address}/api/tags", timeout=3) as response:
+                entries = json.loads(response.read().decode("utf-8")).get("models") or []
+            found: frozenset[str] | None = frozenset(str(value) for entry in entries if isinstance(entry, dict)
+                                                     for value in (entry.get("name"), entry.get("model")) if value)
+        except (urllib.error.URLError, OSError, ValueError, AttributeError):
+            found = None
+        self._tags_probe = (time.monotonic(), found)
+        return found
 
     @property
     def ollama_executable(self) -> Path:
@@ -792,13 +869,15 @@ class StudioSetup:
     def status(self) -> dict[str, Any]:
         state = self._state()
         outdated = set(self.outdated())
+        damaged = set(self.damaged())
         done = set(state.get("done") or []) - outdated
         running = self._thread is not None and self._thread.is_alive()
         progress = self._progress if running else None
         return {
             "installed": self.installed(),
             "outdated": [label for step, label, _hint in STEPS if step in outdated],
-            "damaged": [label for step, label, _hint in STEPS if step in set(self.damaged())],
+            "damaged": [label for step, label, _hint in STEPS if step in damaged],
+            "damagedSteps": [step for step, _label, _hint in STEPS if step in damaged],
             "running": running,
             "step": self._step if running else None,
             "steps": [{"id": step, "label": label, "hint": hint, "done": step in done} for step, label, hint in STEPS],
@@ -827,7 +906,8 @@ class StudioSetup:
     def start(self) -> dict[str, Any]:
         with self._lock:
             self._require_idle()
-            if not (self._thread is not None and self._thread.is_alive()) and (not self.installed() or self.outdated()):
+            if not (self._thread is not None and self._thread.is_alive()) and (
+                    not self.installed() or self.outdated() or self._models_unchecked()):
                 self._memory_error = None
                 other = self._install_lock.acquire("cài Studio")
                 if other is not None:
@@ -843,6 +923,11 @@ class StudioSetup:
                 self._thread = threading.Thread(target=self._run_all, name="studio-setup", daemon=True)
                 self._thread.start()
         return self.status()
+
+    def _models_unchecked(self) -> bool:
+        """Studio đã cài, model phân tích có trong sổ nhưng Ollama chưa trả lời: bấm "Sửa Studio" phải đi xem thật."""
+        return (self.installed() and "llm" in set(self._state().get("done") or [])
+                and self._ollama_models(fresh=True) is None)
 
     def _require_idle(self) -> None:
         if self.busy() is not None:
@@ -1047,6 +1132,7 @@ class StudioSetup:
         try:
             self._memory_error = None
             self._save(error=None)
+            self._look_for_missing_models()
             outdated = set(self.outdated())
             ran = False
             for step, _label, _hint in STEPS:
@@ -1074,7 +1160,19 @@ class StudioSetup:
             self._record_error(f"Lỗi ở bước {self._step}: {type(error).__name__}: {error}")
         finally:
             self._step, self._progress, self._process = None, None, None
+            self._tags_probe = None  # model vừa kéo/xoá: lần hỏi sau đừng dùng câu trả lời nhớ
             self._install_lock.release()
+
+    def _look_for_missing_models(self) -> None:
+        """Studio đã cài mà Ollama chưa chạy thì chưa biết model phân tích còn không (`_llm_missing`): bật Ollama riêng của
+        Studio lên rồi hỏi lại, để "Sửa Studio" thật sự kiểm model chứ không chỉ tin sổ "đã xong". Ollama không lên được thì
+        thôi - `damaged` đã báo thiếu Ollama nếu file mất."""
+        if self.installed() and "llm" in set(self._state().get("done") or []) and self.ollama_executable.is_file():
+            try:
+                self.ensure_ollama()
+            except (SetupError, OSError):
+                pass
+        self._tags_probe = None
 
     def _cancelled(self) -> bool:
         return self._cancel.is_set()
@@ -1413,12 +1511,8 @@ class StudioSetup:
             raise SetupError(f"Ollama không tạo được model {model.name}: {reply.get('error') or reply}")
 
     def _ollama_has(self, name: str) -> bool:
-        try:
-            with urllib.request.urlopen(f"{self.ollama_address}/api/tags", timeout=10) as response:
-                models = json.loads(response.read().decode("utf-8")).get("models") or []
-        except (urllib.error.URLError, ValueError):
-            return False
-        return any(entry.get("name") == name or entry.get("model") == name for entry in models if isinstance(entry, dict))
+        models = self._ollama_models(fresh=True)
+        return models is not None and name in models
 
     def _ollama_blob(self, digest: str) -> bool:
         try:
@@ -1491,7 +1585,10 @@ class StudioSetup:
         return self.fetch(item, target, self._set_progress, self._cancelled)
 
     def _step_asr(self) -> None:
-        self._fetch_whisper_checkpoint()
+        checkpoint = self._fetch_whisper_checkpoint()
+        outputs = dict(self._state().get("outputs") or {})
+        outputs["whisper"] = {"name": checkpoint.name, "size": checkpoint.stat().st_size}  # để lần sau biết file còn nguyên
+        self._save(outputs=outputs)
         self._run([str(self.python), "-c", ASR_SCRIPT], "Tải Whisper")
 
     def _step_qa(self) -> None:

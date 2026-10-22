@@ -200,6 +200,12 @@ class PlayerPlugin : Plugin() {
         call.getBoolean("musicSeamP3")?.let { MusicBed.rememberSeamP3(it) }
     }
 
+    /** Tuỳ chọn nghe native đã nhớ ([ListenPrefs.stored]): giao diện lúc mở app lấy làm chuẩn khi bản localStorage của WebView cũ hơn hay không ghi được. */
+    @PluginMethod
+    fun listenPrefs(call: PluginCall) {
+        call.resolve(JSObject().put("prefs", JSObject.fromJSONObject(ListenPrefs.stored())))
+    }
+
     @PluginMethod
     fun lastNight(call: PluginCall) {
         val latest = Bedtime.latest()

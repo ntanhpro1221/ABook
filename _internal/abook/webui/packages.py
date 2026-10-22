@@ -226,10 +226,13 @@ def _present(root: Path, relative: Any) -> bool:
 
 def damaged_files(folder: Path) -> list[str]:
     """File `book.json` của cuốn đã nhập hứa mà trên đĩa mất hay sai cỡ (xoá tay, ổ hỏng, chép thiếu - soát a28 lỗi 9). Mở lại đúng file
-    sách ấy thì chép bù (`import_opened`)."""
+    sách ấy thì chép bù (`import_opened`). Lớp sửa (edits.json, edits/cover.jpg) không tính: người nghe sửa tại chỗ nên cỡ đổi là bình
+    thường; file ấy hỏng thì book_edits.load coi như rỗng chứ không làm hỏng thư viện (soát a99 V2)."""
     files = (manifest(folder).get("package") or {}).get("files") or {}
     damaged = []
     for name, expected in files.items() if isinstance(files, dict) else ():
+        if name in (book_edits.EDITS_FILE, book_edits.EDITS_COVER):
+            continue
         found = _inside(folder, name)
         try:
             size = found.stat().st_size if found is not None else None
@@ -436,6 +439,8 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
         "state": state,
         "progress": (text_book_progress(state, items) if text_book(book) else book_progress(state, available, complete=complete)),
         "cover": book_edits.cover_view(Path(path), book_id),
+        # Liên kết bộ truyện ("Làm tiếp cuốn này") của cuốn máy khác: giữ nguyên qua máy nhận, đổi mã gốc sang mã trong thư viện này.
+        "series": _series_view(Path(path), book),
         # Số thay đổi của người nghe trên cuốn này (lớp sửa): giao diện ghi "N thay đổi" và mời lưu thành file. `wishes`: trong
         # số ấy, bao nhiêu là ý muốn chờ Studio (book_wishes.py) - chưa áp vào audio.
         "edits": book_edits.count(edits),
@@ -451,6 +456,26 @@ def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bo
     if with_chapters:
         result["chapters"] = items
     return result
+
+
+def _series_view(path: Path, book: dict[str, Any]) -> dict[str, Any] | None:
+    """`series` {root, part} của book.json (máy nguồn gửi: sync.book_manifest), với `root` là mã cuốn gốc TRONG THƯ VIỆN NÀY: cuốn ảo
+    của chính cuốn gốc nếu đã dựng (`remote_books.local_book`), không thì mã của máy kia kèm tên máy (không bao giờ lẫn vào mã cục bộ).
+    Nhờ vậy đổi tên một phần không làm mất nhóm - giao diện không phải đoán chuỗi từ hậu tố "Phần N" (soát a97 V2)."""
+    from .library import book_id
+    from .remote_books import REMOTE_FOLDER, local_book, remote_of
+
+    raw = book.get("series")
+    if not (isinstance(raw, dict) and isinstance(raw.get("root"), str) and raw["root"]
+            and isinstance(raw.get("part"), int) and not isinstance(raw["part"], bool)):
+        return None
+    remote = remote_of(book)
+    root = raw["root"]
+    if remote is not None:
+        shelf = path.parent.parent
+        found = local_book(shelf.parent, remote["computer"], root) if shelf.name == REMOTE_FOLDER else None
+        root = book_id(found) if found is not None else f"{remote['computer']}:{root}"
+    return {"root": root, "part": raw["part"]}
 
 
 def _parts(book: dict[str, Any]) -> list[dict[str, Any]]:
