@@ -7,6 +7,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Thư viện
+
+- Đổi sang một thư mục thư viện khác không còn kéo chỗ nghe và dấu trang của sách này sang sách khác chỉ vì trùng tên thư mục; chỉ khi thư viện cũ thật sự đã dời đi mới đi theo.
+- Thư viện mặc định đã từng có mà biến mất khỏi ổ giờ cũng được báo “Không thấy thư mục thư viện”, không tự tạo lại thư viện rỗng ở chỗ cũ.
+- Xoá một cuốn đúng lúc có máy khác bấm Bắt đầu cuốn ấy không làm mất cuốn đang khởi động: lệnh đến sau bị từ chối.
+- Đổi riêng tên, tác giả, người đọc hay tên chương của sách ở máy tính thì sách đã tải về điện thoại tự nhận tên mới, giữ nguyên bản thu; chưa nhận kịp thì hàng sách ở Tải sách có nút “Cập nhật tên”.
+- Phần nối tiếp của một cuốn vẫn nằm đúng bộ khi bạn đổi tên nó, ở cả điện thoại và máy tính nhận sách từ máy khác; hết phần trước vẫn tự nghe nối sang phần sau.
+- Tải sách trên điện thoại liệt kê cả phần tải dở và gói nghe thẳng đang chiếm chỗ, mỗi phần có nút “Xoá phần đã tải” (hỏi lại và Hoàn tác như xoá thường; đang tải thì chưa xoá được).
+- “Nghe gần đây” trên điện thoại xếp theo lần nghe cuối, kể cả cuốn nghe thẳng từ máy tính.
+- Hai ảnh bìa đặt liền nhau trong cùng một giây không còn hiện nhầm ảnh cũ; địa chỉ ảnh bìa đổi theo nội dung ảnh.
+
 ## [0.4.127] - 2026-10-23
 
 ### Sửa lỗi

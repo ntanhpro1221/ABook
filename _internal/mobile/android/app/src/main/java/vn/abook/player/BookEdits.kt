@@ -1071,10 +1071,10 @@ object BookEdits {
     }
 
     /**
-     * Đặt ảnh bìa từ byte ảnh thô: chuẩn hoá như bìa dự án (`codec`), cất ở edits/cover.jpg. `now`: số làm phiên bản (giây) để
-     * giao diện không giữ ảnh cũ. Trả mô tả bìa {color, width, height, version}.
+     * Đặt ảnh bìa từ byte ảnh thô: chuẩn hoá như bìa dự án (`codec`), cất ở edits/cover.jpg. Phiên bản = băm nội dung ([CoverVersion]): ảnh mới
+     * luôn có địa chỉ mới, giao diện không giữ ảnh cũ. Trả mô tả bìa {color, width, height, version}.
      */
-    fun setCover(folder: File, raw: ByteArray, now: Long, codec: CoverCodec): JSONObject {
+    fun setCover(folder: File, raw: ByteArray, codec: CoverCodec): JSONObject {
         if (raw.size > Covers.MAX_UPLOAD_BYTES) throw EditsError(Covers.tooLarge().message.orEmpty())
         val normalized = try {
             codec.normalize(raw)
@@ -1084,7 +1084,7 @@ object BookEdits {
         synchronized(lock) {
             val edits = load(folder)
             val cover = JSONObject().put("color", normalized.color).put("width", normalized.width.toLong())
-                .put("height", normalized.height.toLong()).put("version", now)
+                .put("height", normalized.height.toLong()).put("version", CoverVersion.of(normalized.jpeg))
             edits.put("cover", cover)
             Store.writeAtomic(File(folder, EDITS_COVER), normalized.jpeg)
             write(folder, edits)

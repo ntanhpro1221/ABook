@@ -528,9 +528,10 @@ class Library:
         root = self.root
         if root.is_dir():
             return False
-        if _key(root) == _key(Path.home() / "Audiobooks"):
-            return False
-        return self.preferences.get().get("libraryRootSeen") == str(root) or not root.parent.is_dir()
+        seen = self.preferences.get().get("libraryRootSeen") == str(root)
+        if not seen and _key(root) == _key(Path.home() / "Audiobooks"):
+            return False  # mặc định CHƯA TỪNG có; đã thấy một lần rồi mà biến mất thì báo như mọi chỗ khác (soát a97 V4)
+        return seen or not root.parent.is_dir()
 
     def _saw_root(self, root: Path) -> None:
         if self.preferences.get().get("libraryRootSeen") != str(root):

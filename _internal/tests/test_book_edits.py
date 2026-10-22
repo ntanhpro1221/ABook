@@ -386,7 +386,7 @@ def test_saving_writes_a_version_4_file_another_computer_opens_with_the_edits(tm
     app, folder, _identifier = _edited_library(tmp_path)
     book_edits.set_title(folder, "Sách của tôi")
     book_edits.set_character_name(folder, "LUCIEN", "Lu-xi-en")
-    book_edits.set_cover(folder, shared.tiny_cover(), now=1759400000)
+    cover_version = book_edits.set_cover(folder, shared.tiny_cover())["version"]
     book_edits.set_music(folder, {"silence": {"1:0": True}})
     server = Server(app, port=0).start()
     try:
@@ -419,7 +419,7 @@ def test_saving_writes_a_version_4_file_another_computer_opens_with_the_edits(tm
     opened_on_b = other.open_book_file(saved["file"])
     assert opened_on_b["how"] == "new"
     view = other.listen_book(opened_on_b["id"])
-    assert view["title"] == "Sách của tôi" and view["edits"] == 4 and view["cover"]["version"] == 1759400000
+    assert view["title"] == "Sách của tôi" and view["edits"] == 4 and view["cover"]["version"] == cover_version
     assert [person["displayName"] for person in packages.cast(other.library.resolve_listenable(opened_on_b["id"]))["characters"]
             ] == ["Hây-đi", "Lu-xi-en"]
 
@@ -760,7 +760,7 @@ def _producer_with_a_file_of_edits(tmp_path: Path):
     book_edits.set_title(folder, "Tên người nghe đặt")
     book_edits.set_character_name(folder, "LUCIEN", "Lu-xi-en")
     book_edits.set_chapter_title(folder, 1, "Chương Một", "Mở")
-    book_edits.set_cover(folder, shared.tiny_cover(), now=7)
+    book_edits.set_cover(folder, shared.tiny_cover())
     book_edits.set_music(folder, {"enabled": False, "levelDb": -26, "silence": {"1:60000": True}})
     return project, bookfile.repack(folder, tmp_path / "da_sua.abook")
 

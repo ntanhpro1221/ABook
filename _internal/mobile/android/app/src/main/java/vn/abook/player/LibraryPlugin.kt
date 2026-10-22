@@ -738,12 +738,14 @@ class LibraryPlugin : Plugin() {
         matchImported(listed(books))
         for (index in 0 until books.length()) {
             val book = books.getJSONObject(index)
+            runCatching { refreshMetadata(book.getString("id"), book) }
             val local = Store.rawManifest(book.getString("id"))
             book.put("downloaded", local != null)
             book.put("localChapters", local?.optInt("chaptersAvailable") ?: 0)
             book.put("localCoverVersion", local?.optJSONObject("cover")?.optLong("version") ?: 0L)
             book.put("localWordsVersion", local?.optString("wordsVersion") ?: "")
             book.put("localAudioVersion", local?.optString("audioVersion") ?: "")
+            book.put("localMetaVersion", local?.optString("metaVersion") ?: "")
             // Cỡ khi tải về, hiện trước khi bấm Tải (soát a68 lỗi 7): máy tính gửi kèm (`bytes`); máy tính đời trước thì lấy từ gói sách đã cất
             // cho nghe thẳng nếu còn đúng - không hỏi máy tính từng cuốn (thư viện vài chục cuốn thành vài chục lượt mạng).
             if (local == null && !book.has("bytes")) {
@@ -789,6 +791,8 @@ class LibraryPlugin : Plugin() {
 
     /** Cuốn người nghe bấm Huỷ tải ([cancelDownload]): lượt tải dừng ở khối kế, giữ phần đã về (`.part`, file đã đủ) để lần bấm Tải sau tải tiếp. */
     private val cancelledDownloads: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+    /** Cuốn có lượt tải đang chạy (kể cả đang xếp hàng): không xoá thư mục của nó, không sửa book.json của nó từ chỗ khác. */
+    private val activeDownloads: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
 
     private class DownloadCancelled : Exception("Đã huỷ tải")
 
@@ -877,6 +881,7 @@ class LibraryPlugin : Plugin() {
         val source = call.getString("source")?.takeIf { it.isNotEmpty() }
         cancelledDownloads.remove(id) // bấm Tải lại sau khi huỷ: lượt mới chạy như thường
         call.setKeepAlive(true)
+        activeDownloads.add(id)
         downloads.execute {
             try {
                 checkCancelled(id) // huỷ khi còn xếp hàng sau cuốn khác
@@ -891,9 +896,30 @@ class LibraryPlugin : Plugin() {
                 notifyListeners("download", JSObject().put("bookId", id).put("error", message).apply { if (technical != null) put("technical", technical) })
                 fail(call, error, "lỗi tải")
             } finally {
+                activeDownloads.remove(id)
                 call.setKeepAlive(false)
             }
         }
+    }
+
+    /**
+     * Phần mô tả của cuốn ĐÃ TẢI đổi ở máy giữ sách (tên, tác giả, người đọc, liên kết bộ, tên chương - `metaVersion`): lấy gói mới và sửa book.json tại
+     * chỗ, giữ nguyên audio và lớp sửa của máy này (StreamRefresh.withMetadata). Không mạng / máy kia lỗi thì thôi, lần sau thử lại. Cuốn đang tải
+     * thì để lượt tải ghi book.json mới (soát a97 V1).
+     */
+    private fun refreshMetadata(id: String, entry: JSONObject, source: String? = null, remoteId: String? = null) {
+        if (id in activeDownloads) return
+        val local = Store.rawManifest(id) ?: return
+        if (!StreamRefresh.metadataStale(local, entry)) return
+        val remote = remoteId ?: id
+        val fresh = JSONObject(
+            if (source != null) Peers.request(context, source, "GET", "/sync/v1/books/$remote/manifest")
+            else SyncLink.request(context, "GET", "/sync/v1/books/$id/manifest"),
+        )
+        PeerPaths.checkManifest(fresh)
+        if (fresh.optString("id") != remote) return
+        if (source != null) Peers.localizeSeries(fresh, source)
+        Store.rewriteManifest(id) { StreamRefresh.withMetadata(it, fresh) }
     }
 
     /** Nút Huỷ khi đang tải một cuốn (soát a68 lỗi 7): dừng thật ở khối kế; phần đã về giữ lại để lần Tải sau tải tiếp. */
@@ -949,7 +975,10 @@ class LibraryPlugin : Plugin() {
         val manifest = JSONObject(SyncLink.request(context, "GET", "/sync/v1/books/$remote/manifest", root = link.base, token = link.token))
         require(manifest.getString("id") == remote) { "Mã sách máy gửi trả về không khớp; bạn hãy thử tải lại." }
         PeerPaths.checkManifest(manifest)
-        if (source != null) manifest.put("id", id).put("source", source).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, source))
+        if (source != null) {
+            manifest.put("id", id).put("source", source).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, source))
+            Peers.localizeSeries(manifest, source)
+        }
         val chapters = manifest.getJSONArray("chapters")
         val files = mutableListOf<Pair<String, Long>>()
         for (index in 0 until chapters.length()) {
@@ -1054,6 +1083,7 @@ class LibraryPlugin : Plugin() {
             val entry = remote.getJSONObject(index)
             val id = entry.getString("id")
             if (Store.rawManifest(id) != null) {
+                runCatching { refreshMetadata(id, entry) }
                 runCatching { syncHolderEdits(id, entry) }
                 continue
             }
@@ -1076,6 +1106,7 @@ class LibraryPlugin : Plugin() {
                 val entry = list.getJSONObject(item)
                 val id = entry.getString("id")
                 if (Store.rawManifest(id) != null) {
+                    runCatching { refreshMetadata(id, entry, peer.getString("key"), entry.getString("remoteId")) }
                     runCatching { syncHolderEdits(id, entry) }
                     continue
                 }
@@ -1735,6 +1766,8 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun deleteBook(call: PluginCall) = background(call) {
         // Thiếu mã thì từ chối (Store.deletableBookDir) - trước đây `?: ""` biến thành xoá CẢ thư mục sách.
+        // Cuốn đang có lượt tải chạy thì không dời thư mục dưới chân nó (màn Tải sách tắt nút Xoá; đây là lớp chặn cuối, soát a97 V6).
+        require(call.getString("id").orEmpty() !in activeDownloads) { "Đang tải cuốn này - huỷ tải rồi mới xoá được." }
         // Cuốn nằm chờ UNDO_SECONDS giây (TrashPending) rồi mới xoá hẳn; `undo` là mã để "Hoàn tác" (không có khi xoá thẳng).
         val undo = Store.holdBook(call.getString("id").orEmpty())
         // Chương tạm của "Xuất sách nói" bỏ dở đi theo sách khi sách bị xoá hẳn (ListenExports.sweep - cuốn đang xuất không bị đụng).
@@ -1758,7 +1791,11 @@ class LibraryPlugin : Plugin() {
     fun storage(call: PluginCall) = background(call) {
         val sizes = Store.bookSizes()
         val books = JSArray()
-        for ((id, bytes) in sizes) books.put(JSObject().put("id", id).put("bytes", bytes))
+        // `title`: tên trong gói sách của thư mục (đã tải hay nghe thẳng) - thư mục tải dở chưa có gói nào thì không có, giao diện lấy tên từ danh sách máy tính.
+        for ((id, bytes) in sizes) {
+            val title = (Store.rawManifest(id) ?: Store.streamManifest(id))?.optString("title").orEmpty()
+            books.put(JSObject().put("id", id).put("bytes", bytes).apply { if (title.isNotEmpty()) put("title", title) })
+        }
         call.resolve(JSObject().put("bytes", sizes.values.sum()).put("free", Store.root.usableSpace).put("books", books))
     }
 

@@ -906,16 +906,16 @@ def set_author(folder: Path, author: str) -> str:
     return cleaned
 
 
-def set_cover(folder: Path, raw: bytes, *, now: int) -> dict[str, Any]:
-    """Đặt ảnh bìa từ byte ảnh thô: chuẩn hoá như bìa dự án (`covers.render_cover`), cất ở edits/cover.jpg. `now`: số làm
-    phiên bản (giây) để trình duyệt không giữ ảnh cũ. Trả mô tả bìa {color, width, height, version}."""
+def set_cover(folder: Path, raw: bytes) -> dict[str, Any]:
+    """Đặt ảnh bìa từ byte ảnh thô: chuẩn hoá như bìa dự án (`covers.render_cover`), cất ở edits/cover.jpg. Phiên bản = băm nội dung
+    (`covers.content_version`): ảnh mới luôn có địa chỉ mới, trình duyệt không giữ ảnh cũ. Trả mô tả bìa {color, width, height, version}."""
     try:
         jpeg, meta = covers.render_cover(raw)
     except covers.CoverError as exc:
         raise EditsError(str(exc)) from exc
     with _LOCK:
         edits = load(folder)
-        edits["cover"] = {"color": meta["color"], "width": meta["width"], "height": meta["height"], "version": int(now)}
+        edits["cover"] = {"color": meta["color"], "width": meta["width"], "height": meta["height"], "version": covers.content_version(jpeg)}
         atomic_write_bytes(Path(folder) / EDITS_COVER, jpeg)
         _write(folder, edits)
     return edits["cover"]

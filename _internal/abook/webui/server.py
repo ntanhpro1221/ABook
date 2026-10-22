@@ -410,6 +410,7 @@ class App:
         # mở lại thì hàng còn nguyên và tự chạy tiếp khi cuốn đang chạy (worker sống ngoài app) xong.
         self.queue: list[str] = []
         self._queue_lock = threading.RLock()  # summary() lấy lại khoá này từ trong start/stop
+        self._deleting: set[str] = set()  # sách đang được xoá (delete): Bắt đầu / hàng đợi không giữ lượt khởi động của chúng; ghi dưới _queue_lock
         self._queue_thread: threading.Thread | None = None
         self._queue_path = preferences.path.with_name(QUEUE_FILE)
         if not read_only:
@@ -512,7 +513,9 @@ class App:
     def adopt_moved_library(self, old_root: Path) -> dict[str, str]:
         """Người dùng trỏ thư viện sang thư mục khác - thường là CHÍNH thư viện cũ đã chuyển chỗ / đổi tên (soát a28 lỗi 2). Mã sách là HMAC
         của đường dẫn nên mọi cuốn mang mã mới, chỗ nghe / dấu trang / lịch sử mồ côi. Cuốn ở cùng đường tương đối dưới thư viện cũ có dữ
-        liệu nghe theo mã cũ: đổi khoá sang mã mới (như `_adopt_new_book_ids`). Trả {mã cũ: mã mới}."""
+        liệu nghe theo mã cũ: đổi khoá sang mã mới (như `_adopt_new_book_ids`). Chỉ khi chỗ cũ ĐÃ TRỐNG (thư viện thật sự dời đi): cuốn cũ
+        còn nằm nguyên chỗ cũ nghĩa là thư viện kia vẫn đó (đổi sang thư viện khác, hay bản sao) - tên thư mục trùng không chứng minh cùng
+        nội dung, hồ sơ nghe ở lại mã cũ (soát a97 C1). Trả {mã cũ: mã mới}."""
         new_root = self.library.root
         if os.path.normcase(os.path.normpath(str(old_root))) == os.path.normcase(os.path.normpath(str(new_root))):
             return {}
@@ -525,7 +528,7 @@ class App:
             except ValueError:
                 continue  # cuốn mở ở nơi khác (gần đây): đường dẫn không đổi
             old, new = book_id(old_root / relative), book_id(path)
-            if old != new and old in known:
+            if old != new and old in known and not (old_root / relative).exists():
                 renamed[old] = new
         self._rename_book_ids(renamed, ".pre-move.bak", fresh_backup=True)
         return renamed
@@ -933,6 +936,8 @@ class App:
                 if path is None or self.runner.running(path):
                     self._dequeue(head)  # dự án đã mất, hay worker đã chạy bằng đường khác
                     continue
+                if str(path.resolve()) in self._deleting:
+                    continue  # đang xoá: để lệnh xoá bỏ nó khỏi hàng
                 if self.jobs.starting(path) or self._busy_elsewhere(path) is not None or not self.jobs.reserve(path):
                     continue
             try:
@@ -965,6 +970,8 @@ class App:
         with self._queue_lock:
             if self.studio is not None and self.studio.running():
                 raise ApiError(HTTPStatus.CONFLICT, "Studio đang cập nhật. Bạn hãy chờ cập nhật xong rồi chạy sách.")
+            if str(path.resolve()) in self._deleting:
+                raise ApiError(HTTPStatus.CONFLICT, "Sách này đang được xoá - không bắt đầu được")
             if self.runner.running(path) or self.jobs.starting(path):
                 return self.summary(path)
             if not now and self._busy_elsewhere(path) is not None:
@@ -1003,7 +1010,7 @@ class App:
         phần trước đã phân vai xong, và đây vẫn là sau `create` - trước mọi câu phân tích của phần này."""
         if not reserved:
             with self._queue_lock:
-                if self.runner.running(path) or not self.jobs.reserve(path):
+                if str(path.resolve()) in self._deleting or self.runner.running(path) or not self.jobs.reserve(path):
                     return
         try:
             self.previews.shutdown()  # nhả model nghe thử sau khi đã nhận lượt
@@ -1239,16 +1246,25 @@ class App:
         không thì vào Thùng rác ngay (cuốn cũ bị thay khi "làm lại" - người dùng không thấy gì để hoàn tác)."""
         self._mutating()
         path = self._book(value)
-        if self.runner.running(path) or self.jobs.starting(path):
-            raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - dừng sách rồi mới xoá được")
         resolved = path.resolve()
         if resolved == Path(resolved.anchor) or resolved == self.library.root.resolve() or not store.is_project(resolved):
             raise ApiError(HTTPStatus.CONFLICT, "Thư mục này không phải một dự án sách - không xoá")
-        queued = self._dequeue(value)
-        token = self._discard(
-            resolved, "project", undo=undo, queued=queued,
-            failure="Không chuyển được vào Thùng rác - có thể một file trong dự án đang mở (đang nghe cuốn này, hay thư mục"
-                    " đang mở trong cửa sổ khác). Đóng rồi thử lại. ({error})")
+        key = str(resolved)
+        # Kiểm "đang chạy / đang khởi động" và đánh dấu "đang xoá" CÙNG MỘT khoá với Bắt đầu / hàng đợi (_queue_lock): Bắt đầu tới sau dấu này bị từ chối,
+        # tới trước thì lệnh xoá thấy lượt khởi động và dừng - không còn kẽ giữa kiểm và dời thư mục (soát a97 V5).
+        with self._queue_lock:
+            if self.runner.running(path) or self.jobs.starting(path):
+                raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - dừng sách rồi mới xoá được")
+            self._deleting.add(key)
+        try:
+            queued = self._dequeue(value)
+            token = self._discard(
+                resolved, "project", undo=undo, queued=queued,
+                failure="Không chuyển được vào Thùng rác - có thể một file trong dự án đang mở (đang nghe cuốn này, hay thư mục"
+                        " đang mở trong cửa sổ khác). Đóng rồi thử lại. ({error})")
+        finally:
+            with self._queue_lock:
+                self._deleting.discard(key)
         self.library.forget(path)
         return {"ok": True, "title": path.name, **({"undo": token} if token else {})}
 
@@ -5297,7 +5313,7 @@ class Handler(BaseHTTPRequestHandler):
                 raw = (cover_search.download_image(str(body["url"])) if body.get("url")
                        else covers.decode_data_url(str(body.get("image", ""))))
                 with self.app.cover_turn(path, ticket):
-                    cover = book_edits.set_cover(path, raw, now=int(time.time()))
+                    cover = book_edits.set_cover(path, raw)
             except covers.CoverError as exc:
                 raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc
             self._send_json(HTTPStatus.OK, {"cover": cover})

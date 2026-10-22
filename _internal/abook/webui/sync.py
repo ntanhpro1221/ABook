@@ -539,7 +539,7 @@ def manifest(project_root: Path, book: str, listening: Listening,
                                          cover["version"] if cover else 0] + ([music] if music else []) + ([{"words": words}] if words else [])
                                         + ([{"texts": {name: hashlib.sha256(text).hexdigest()[:16] for name, text in texts.items()}}] if texts else []),
                                         sort_keys=True).encode()).hexdigest()[:16]
-    return {
+    result = {
         "format": listen_view.FORMAT,
         "id": book,
         "title": view["title"],
@@ -562,6 +562,8 @@ def manifest(project_root: Path, book: str, listening: Listening,
         **({"music": music} if music else {}),
         **({"wordsVersion": words} if words else {}),
     }
+    result["metaVersion"] = listen_view.metadata_version(result)  # tên / người đọc / liên kết bộ / tên chương: điện thoại đã tải đổi riêng phần này mà giữ audio
+    return result
 
 
 # Chỗ nghe vượt độ dài chương quá chừng này (giây) là đồng hồ của thứ khác - cùng số với điện thoại (StateSync.kt PlacePolicy).
@@ -813,7 +815,9 @@ class SyncApp:
                 # Cỡ khi tải về (audio chương + nhạc nền, như ước cỡ file .abook trước khi xuất) - điện thoại hiện cạnh nút Tải trước khi bấm
                 # (soát a68 lỗi 7); "producing": máy đang làm cuốn này thật (lỗi 13).
                 entry["bytes"] = export.audio_bytes([path], self.music_track)[0]
-                entry["audioVersion"] = manifest(path, identifier, self.listening, self.music_track)["audioVersion"]
+                shared_book = manifest(path, identifier, self.listening, self.music_track)
+                entry["audioVersion"] = shared_book["audioVersion"]
+                entry["metaVersion"] = shared_book["metaVersion"]
                 meta = covers.cover_meta(path)
                 entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
                 if words := word_timing.stamp(path):  # điện thoại đã tải sách thấy chữ sáng theo giọng đọc là bản mới (cùng dấu với manifest)
