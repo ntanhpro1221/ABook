@@ -12,6 +12,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Sách bạn đã tải trên điện thoại nhận được bản thu sửa, kể cả khi file mới cùng dung lượng; chỉ chương đổi cần tải lại. Nhập lại file `.abook` cập nhật bản thu và giữ chỉnh sửa, chỗ nghe của bạn; file cũ hơn sẽ hỏi trước khi thay.
 - Sau khi bạn sửa và thu lại, mục Xuất nhắc những bản MP3, M4B hay `.abook` đã cũ để bạn thay bản đã chép hoặc gửi. Bạn có thể chỉ xuất lại các chương MP3 đã đổi; M4B cần dựng lại cả file.
 
+### Liên kết hai máy
+
+- Thư viện lớn (hàng nghìn chương) mở nhanh ở máy kia: app nhớ dấu của từng file âm thanh qua cả lần khởi động lại, không còn đọc lại cả thư viện mỗi lần điện thoại hay máy tính khác làm mới danh sách.
+- Ghép lại cùng một máy sau khi đổi mạng (IP, tên `.local`, Tailscale) không còn tạo thêm một “máy khác” và mỗi cuốn hai lần: máy được nhận ra, chỗ nghe và sách đã tải giữ nguyên.
+- Cuốn máy kia đã xoá hoặc bỏ khỏi kệ biến mất khỏi “Trên máy khác” nếu bạn chưa tải gì của nó; cuốn đã tải thì giữ.
+- Một cuốn bị lỗi trên máy kia không còn làm cả thư viện của máy ấy “không trả lời”: cuốn hỏng bị bỏ qua, các cuốn còn lại vẫn hiện.
+- Nghe thẳng một cuốn đang được làm: khi máy tính thêm chương mới, chữ “Đọc theo” của các chương bạn đã nghe được giữ lại, chỉ chương nào được thu lại mới tải lại.
+
 ### Sửa lỗi
 
 - Câu mà máy nghe lại không kiểm được (quá ngắn, hay máy nghe ra một câu không thể có thật) giờ hiện ở nhóm “Chưa kiểm được” ngay trong “Cần nghe lại”, kèm lời nhờ bạn nghe bằng tai, và không còn hiện một đoạn “máy nghe được” bịa ra.
