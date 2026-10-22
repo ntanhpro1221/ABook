@@ -49,8 +49,10 @@ nhắc cập nhật. Trong gói không có gì được "chạy".
 from __future__ import annotations
 
 import argparse
+import contextlib
 import hashlib
 import json
+import math
 import os
 import re
 import secrets
@@ -525,6 +527,20 @@ def write_entries(archive: zipfile.ZipFile, files: dict[str, Path | bytes], *, o
 
 
 DAMAGED = "File sách bị hỏng hoặc chép chưa xong - chép lại từ nguồn."
+UNREADABLE = "File sách này hỏng hoặc không đọc được. Bạn hãy xin người gửi gửi lại"
+# Cái gói zip của người lạ có thể làm ném: json lồng sâu (RecursionError), cờ mã hoá hay kiểu nén lạ (RuntimeError, NotImplementedError), trường sai
+# kiểu (TypeError, AttributeError, KeyError...). Người dùng chỉ cần biết "file này hỏng", không cần tên lỗi Python.
+FOREIGN_FAILURES = (RecursionError, TypeError, KeyError, AttributeError, IndexError, OverflowError, RuntimeError, NotImplementedError)
+UNSUPPORTED_ZIP = (RuntimeError, NotImplementedError)  # zip mã hoá / kiểu nén lạ: lúc đọc ruột
+
+
+@contextlib.contextmanager
+def refuse_unreadable(error: type[Exception] = BookFileError, kinds: tuple[type[BaseException], ...] = FOREIGN_FAILURES):
+    """Trong khối này, lỗi lạ của `kinds` thành `error` kèm lời tiếng Việt (`UNREADABLE`). Dùng chung cho `.abook` và `.abookproj`."""
+    try:
+        yield
+    except kinds as exc:
+        raise error(f"{UNREADABLE}.") from exc
 
 
 def looks_cut(path: Path) -> bool:
@@ -548,6 +564,7 @@ class BookFile:
         # Bài nhạc nền hỏng trong gói (sai cỡ lúc mở, sai mã băm lúc giải nén): bỏ bài ấy, sách vẫn mở - đoạn ấy im lặng (soát a26 L4).
         self.broken_music: set[str] = set()
         self._edits: dict[str, Any] = book_edits.empty()
+        self._names: set[str] = set()
         try:
             self._zip = zipfile.ZipFile(self.path)
         except zipfile.BadZipFile as exc:
@@ -557,7 +574,8 @@ class BookFile:
         except OSError as exc:
             raise BookFileError(f"Không đọc được file sách này ({exc.strerror or exc}).") from exc
         try:
-            self.book = self._validate()
+            with refuse_unreadable():
+                self.book = self._validate()
         except BaseException:
             self._zip.close()
             raise
@@ -593,6 +611,10 @@ class BookFile:
 
     def verify(self) -> None:
         """Mọi file đúng cỡ và mã băm ghi trong `book.json` - file tải dở hay bị sửa thì không được vào thư viện."""
+        with refuse_unreadable(BookFileError, UNSUPPORTED_ZIP):
+            self._verify()
+
+    def _verify(self) -> None:
         for name, expected in self.book["package"]["files"].items():
             digest = hashlib.sha256()
             size = 0
@@ -604,6 +626,10 @@ class BookFile:
                 raise BookFileError(f"File sách bị hỏng hoặc bị sửa ({name}). Hãy chép lại file từ nguồn.")
 
     def extract(self, library: Path, folder: str | None = None) -> Path:
+        with refuse_unreadable(BookFileError, UNSUPPORTED_ZIP):
+            return self._extract(library, folder)
+
+    def _extract(self, library: Path, folder: str | None = None) -> Path:
         """Giải nén vào `library/<folder>/` (mặc định: tên suy từ nội dung), kiểm cỡ + mã băm TRONG LÚC chép - một lần đọc,
         không đọc cả file hai lượt (cả bộ có thể vài GB). Thư mục tạm rồi đổi tên: hỏng giữa chừng thì không có gì vào
         thư viện, không bao giờ để lại nửa cuốn. Thư mục ấy đã có thì được thay - app chọn `folder` là cuốn cùng lần sản
@@ -617,7 +643,8 @@ class BookFile:
         staging = library / f".{name}.{secrets.token_hex(4)}.part"
         files = self.book["package"]["files"]
         try:
-            for entry in [MANIFEST, READIUM_MANIFEST, *self.content]:
+            described = [MANIFEST, *([READIUM_MANIFEST] if READIUM_MANIFEST in self._names else [])]  # manifest.json tuỳ chọn (điện thoại cũng vậy)
+            for entry in [*described, *self.content]:
                 if entry in self.broken_music:
                     continue
                 destination = staging.joinpath(*entry.split("/"))
@@ -639,13 +666,7 @@ class BookFile:
                 _drop_tracks(self.book, self.broken_music)
                 staging.joinpath(MANIFEST).write_bytes(json_bytes(self.book))
             self.last_merge = self._keep_local_edits(target, staging) if target.exists() else None
-            if target.exists():
-                retired = library / f".{name}.{secrets.token_hex(4)}.old"
-                os.replace(target, retired)
-                os.replace(staging, target)
-                shutil.rmtree(retired, ignore_errors=True)
-            else:
-                os.replace(staging, target)
+            swap_in(staging, target)
         except BaseException:
             shutil.rmtree(staging, ignore_errors=True)
             raise
@@ -675,8 +696,11 @@ class BookFile:
                 raise BookFileError(f"Gói có mục trùng hay thư mục lạ: {name!r}.")
             names.add(name)
             total += info.file_size
+        self._names = names
         if total > MAX_TOTAL_BYTES:
             raise BookFileError("File sách quá lớn.")
+        check_expansion(infos, BookFileError)
+        check_distinct(sorted(names), BookFileError)
         if MANIFEST not in names:
             raise BookFileError("File sách thiếu phần mô tả (book.json).")
         book = self._json(MANIFEST)
@@ -688,6 +712,7 @@ class BookFile:
             raise BookFileError("File sách có phiên bản định dạng không hợp lệ.")
         if version > FORMAT_VERSION:
             raise BookFileError("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
+        check_shape(book)
         files = package.get("files")
         content = names - {"mimetype", MANIFEST, READIUM_MANIFEST}
         # thư mục phần chỉ có từ phiên bản 3, lớp sửa (edits.json, edits/cover.jpg) từ phiên bản 4, chữ chương (texts/) từ phiên bản 5
@@ -756,8 +781,72 @@ class BookFile:
             raise BookFileError(f"{name} quá lớn.")
         try:
             return json.loads(self._zip.read(name).decode("utf-8"))
-        except (UnicodeDecodeError, ValueError) as exc:
-            raise BookFileError(f"{name} hỏng.") from exc
+        except (UnicodeDecodeError, ValueError, RecursionError) as exc:
+            raise BookFileError(f"{UNREADABLE} ({name} hỏng).") from exc
+
+
+# Kiểu của những trường book.json mà phía nghe đọc thẳng (`packages.listen`, `_parts`, `skip`...). Sai kiểu thì `listen()` ném TypeError và
+# kéo sập cả thư viện: từ chối ngay lúc nhập. None (thiếu / null) luôn được. "number" = số hữu hạn, không phải True/False.
+_BOOK_FIELDS = {"title": str, "author": str, "narrator": str, "cast": str, "chaptersTotal": int, "chaptersAvailable": int,
+                "duration": "number", "complete": bool, "chapters": list, "parts": list, "samples": list}
+_CHAPTER_FIELDS = {"id": int, "index": int, "part": int, "title": str, "subtitle": str, "fullTitle": str, "file": str, "text": str,
+                   "script": str, "state": str, "duration": "number", "available": bool, "skip": list}
+_PART_FIELDS = {"part": int, "title": str, "narrator": str, "duration": "number", "chapters": list}
+
+
+def _fits(value: Any, kind: Any) -> bool:
+    if value is None:
+        return True
+    if kind == "number":
+        return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+    return isinstance(value, kind) and (kind is bool or not isinstance(value, bool))
+
+
+def check_shape(book: dict[str, Any]) -> None:
+    """Các trường book.json đúng kiểu mà phía nghe trông đợi - không thì `BookFileError` (xem `_BOOK_FIELDS`)."""
+    def check(item: Any, fields: dict[str, Any], where: str) -> None:
+        if not isinstance(item, dict):
+            raise BookFileError(f"{UNREADABLE} ({where} sai dạng).")
+        for key, kind in fields.items():
+            if not _fits(item.get(key), kind):
+                raise BookFileError(f"{UNREADABLE} ({where}: «{key}» sai kiểu).")
+
+    check(book, _BOOK_FIELDS, "book.json")
+    for chapter in book.get("chapters") or []:
+        check(chapter, _CHAPTER_FIELDS, "một chương")
+    for part in book.get("parts") or []:
+        check(part, _PART_FIELDS, "một phần")
+
+
+# Bom nén: âm thanh / ảnh thật gần như không nén được (mp3 ~1:1), chữ nén vài chục lần là cùng. Mục nào "phồng" hơn trần dưới đây (và đủ lớn
+# để đáng kể) thì từ chối cả file TRƯỚC khi giải ra. Điện thoại dùng đúng các con số này (BookFileImport.kt MEDIA_RATIO...).
+MEDIA_RATIO = 20
+TEXT_RATIO = 100
+_MEDIA_FLOOR = 1024 * 1024
+_TEXT_FLOOR = 16 * 1024 * 1024
+
+
+def check_expansion(infos: Sequence[zipfile.ZipInfo], error: type[Exception], *, text: bool = True) -> None:
+    """Mục nào nén quá mức một file thật có thể (`MEDIA_RATIO` cho âm thanh / ảnh, `TEXT_RATIO` cho phần còn lại; `text=False`: chỉ kiểm
+    media - sổ SQLite của dự án có thể thưa) thì ném `error`. Dùng chung cho `.abook` và `.abookproj`."""
+    for info in infos:
+        packed, size = max(info.compress_size, 1), info.file_size
+        media = info.filename.lower().endswith(_STORED)
+        if (media and size >= _MEDIA_FLOOR and size > packed * MEDIA_RATIO) or (
+                text and not media and size >= _TEXT_FLOOR and size > packed * TEXT_RATIO):
+            raise error(f"File này có mục nén bất thường ({info.filename}) - có thể là file độc hoặc hỏng. "
+                        "Bạn hãy xin người gửi gửi lại.")
+
+
+def check_distinct(names: Sequence[str], error: type[Exception]) -> None:
+    """Hai mục khác tên mà cùng một file trên đĩa Windows / macOS (khác hoa-thường, hay chỉ khác dấu chấm / khoảng trắng cuối từng phần) thì ném
+    `error`: giải nén sẽ để mục sau đè mục trước, chương này phát âm thanh của chương kia mà không ai báo."""
+    seen: dict[str, str] = {}
+    for name in names:
+        key = "/".join(part.rstrip(". ").casefold() for part in name.split("/"))
+        if seen.setdefault(key, name) != name:
+            raise error(f"File này có hai mục trùng tên khi chép vào máy ({seen[key]!r} và {name!r}). "
+                        "Bạn hãy xin người gửi gửi lại.")
 
 
 def _is_music(name: str) -> bool:
@@ -776,6 +865,29 @@ def _drop_tracks(book: dict[str, Any], names: set[str]) -> None:
         for chapter, cues in music["chapters"].items():
             if isinstance(cues, list):
                 music["chapters"][chapter] = [cue for cue in cues if not (isinstance(cue, dict) and cue.get("track") in names)]
+
+
+IN_USE = "Cuốn này đang được mở hoặc đang phát. Bạn hãy dừng phát rồi mở lại file để cập nhật."
+
+
+def swap_in(staging: Path, target: Path) -> None:
+    """Đặt thư mục vừa giải nén `staging` vào chỗ `target` (thay bản cũ nếu có, rồi dọn nó). Windows không cho đổi tên thư mục có file
+    đang mở (chương đang phát): nói đúng việc ấy thay vì "thư mục chỉ đọc", và bản cũ còn nguyên. Dùng chung cho `BookFile.extract`
+    và `ProjectFile.extract`."""
+    if not target.exists():
+        os.replace(staging, target)
+        return
+    retired = target.with_name(f".{target.name}.{secrets.token_hex(4)}.old")
+    try:
+        os.replace(target, retired)
+    except PermissionError as exc:
+        raise BookFileError(IN_USE) from exc
+    try:
+        os.replace(staging, target)
+    except BaseException:
+        os.replace(retired, target)  # bản mới không vào được: trả bản cũ về chỗ cũ
+        raise
+    shutil.rmtree(retired, ignore_errors=True)
 
 
 def keep_local_edits(target: Path, staging: Path, incoming: dict[str, Any]) -> dict[str, Any] | None:
@@ -833,7 +945,7 @@ def ensure_room(library: Path, size: int) -> None:
     free = shutil.disk_usage(library).free
     if free < need:
         raise BookFileError(f"Ổ đĩa không đủ chỗ để mở sách này: cần khoảng {_gigabytes(need)}, còn {_gigabytes(free)}. "
-                            "Hãy dọn bớt ổ đĩa rồi mở lại file.")
+                            "Bạn hãy dọn bớt ổ đĩa rồi mở lại file.")
 
 
 def _gigabytes(size: int) -> str:

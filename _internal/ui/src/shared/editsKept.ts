@@ -22,3 +22,9 @@ export function brokenMusicNote(broken: number | null | undefined): string | nul
     ? "1 bài nhạc nền trong sách bị hỏng - đoạn ấy sẽ không có nhạc."
     : `${broken} bài nhạc nền trong sách bị hỏng - những đoạn ấy sẽ không có nhạc.`;
 }
+
+/** Mở lại file cùng âm thanh với cuốn đã có nhưng mang TÊN khác: cuốn giữ tên cũ - nói tên trong file không được lấy (soát a81 lỗi 15).
+ *  `null` khi tên như nhau. Dùng cho máy tính (desktop/App.tsx; `otherTitle` của `open_book_file`). */
+export function otherTitleNote(title: string | null | undefined): string | null {
+  return title ? `Tên trong file là “${title}”, khác tên đang dùng - bạn có thể đổi tên trong Sửa sách.` : null;
+}

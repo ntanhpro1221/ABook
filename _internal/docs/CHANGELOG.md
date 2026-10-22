@@ -7,6 +7,18 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- Một file sách bạn bè gửi mà thông tin bên trong sai kiểu (thời lượng, số chương, phần...) giờ bị từ chối ngay lúc mở, kèm lời nhờ xin người gửi gửi lại, thay vì làm cả thư viện nghe không hiện được; có một cuốn hỏng thì các cuốn còn lại vẫn hiện bình thường.
+- File sách bị nén bất thường (một mục nhỏ xíu giải ra hàng trăm MB) bị từ chối trước khi chép vào ổ đĩa của bạn, trên cả máy tính và điện thoại.
+- Khi bạn mở cùng một file sách hai lần liền, lượt sau báo cuốn đã có thay vì báo lỗi quyền ghi sai.
+- Khi bạn cập nhật một cuốn đang phát trên máy tính, app nói cuốn đang được mở hoặc đang phát và giữ nguyên bản cũ, không còn báo nhầm là thư mục chỉ đọc.
+- File sách hỏng hay mã hoá, và file dự án làm bằng bản ABook mới hơn, giờ báo bằng tiếng Việt cần làm gì thay vì tên lỗi tiếng Anh; file sách không có manifest.json mở được trên cả máy tính lẫn điện thoại.
+- File dự án chưa có chương nào hoàn thành, mở trên máy không có Studio, báo bạn mở nó bằng ABook Studio.
+- File sách có hai mục chỉ khác nhau hoa thường hay dấu chấm cuối bị từ chối, vì Windows sẽ chép đè mục này lên mục kia và chương này phát nhầm giọng chương kia.
+- Khi bạn mở lại file có cùng âm thanh nhưng mang tên khác, app nói tên trong file không được lấy và bạn đổi tên ở đâu.
+- Trên điện thoại, nhập sách lớn không còn làm chậm việc lưu chỗ nghe; file zip tải dở báo "chép chưa xong" thay vì "không phải file sách", và bản chép tạm của lần nhập bị ngắt được dọn khi mở app.
+
 ## [0.4.123] - 2026-10-22
 
 ### Sửa lỗi
@@ -113,6 +125,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bạn có thể tải tiếp hàng “Cần nghe lại” sau 600 câu; bộ lọc “Chưa xem” và “Đã xem” áp dụng cho toàn bộ sách.
 
 - Khi bạn đổi người nói cho nhóm hơn 2.000 câu, máy tính và điện thoại ghi đủ cả nhóm; thông báo dùng đúng số câu máy chủ đã ghi.
+
 
 ## [0.4.122] - 2026-10-22
 

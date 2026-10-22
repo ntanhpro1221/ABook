@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { brokenMusicNote, keptEditsTitle, workshopMergeNote } from "./editsKept";
+import { brokenMusicNote, keptEditsTitle, otherTitleNote, workshopMergeNote } from "./editsKept";
 
 describe("nhập lại sách đã sửa", () => {
   it("nói thay đổi của người nghe được giữ nguyên", () => {
@@ -31,5 +31,15 @@ describe("file sách có bài nhạc nền hỏng (soát a26 L4)", () => {
   it("không nói gì khi mọi bài đều lành", () => {
     expect(brokenMusicNote(0)).toBeNull();
     expect(brokenMusicNote(undefined)).toBeNull();
+  });
+});
+
+describe("mở lại file cùng âm thanh nhưng đổi tên (soát a81 lỗi 15)", () => {
+  it("nói tên trong file không được lấy và đổi tên ở đâu", () => {
+    expect(otherTitleNote("Tên mới")).toBe("Tên trong file là “Tên mới”, khác tên đang dùng - bạn có thể đổi tên trong Sửa sách.");
+  });
+  it("không nói gì khi tên như nhau", () => {
+    expect(otherTitleNote(undefined)).toBeNull();
+    expect(otherTitleNote("")).toBeNull();
   });
 });

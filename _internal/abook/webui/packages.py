@@ -13,6 +13,7 @@ from __future__ import annotations
 import functools
 import json
 import re
+import threading
 import time
 from collections.abc import Callable, Container, Iterable, Iterator
 from pathlib import Path
@@ -512,8 +513,26 @@ def import_file(source: Path, library_root: Path, projects: Iterable[Path],
         return import_opened(opened, library_root, projects, fingerprints, report, separate=separate)
 
 
+_IMPORTING_GUARD = threading.Lock()
+_IMPORTING: dict[str, threading.Lock] = {}
+
+
 def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fingerprints: Fingerprints,
                   report: dict[str, Any] | None = None, *, separate: bool = False) -> tuple[Path, str]:
+    """Nhập một file đã mở, MỘT lần cho mỗi cuốn: mở cùng file hai lần liền (đúp chuột hai lần, hai bản gửi cùng lúc) thì lượt sau chờ lượt
+    trước xong rồi thấy cuốn đã có ("existing") thay vì tranh nhau cùng một thư mục (`_import_opened` nói rõ các kết quả)."""
+    if getattr(opened, "book", True) is None:  # file dự án đang làm dở: chưa có chương nào xong thì chưa có gì để nghe
+        from .projectfile import ProjectFileError
+
+        raise ProjectFileError("Dự án này chưa có chương nào hoàn thành nên chưa nghe được. Bạn hãy mở nó bằng ABook Studio.")
+    with _IMPORTING_GUARD:
+        lock = _IMPORTING.setdefault(f"{Path(library_root).expanduser()}|{opened.content_key}", threading.Lock())
+    with lock:
+        return _import_opened(opened, library_root, projects, fingerprints, report, separate=separate)
+
+
+def _import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fingerprints: Fingerprints,
+                   report: dict[str, Any] | None = None, *, separate: bool = False) -> tuple[Path, str]:
     """Nhập một file đã mở (`bookfile.BookFile` hay `projectfile.ProjectFile`: cùng giao diện - chapter_prints, edits,
     extract...). Trả (thư mục cuốn trong thư viện, cách): "project" - file do chính máy này xuất, mở
     dự án ấy; "existing" - đã nhập rồi, bản đã có đủ chương bằng hoặc hơn; "updated" - đã nhập rồi, bản mới nhiều
@@ -548,6 +567,7 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
                 elif not book_edits.is_empty(local := book_edits.load(existing)):
                     # File không mang thay đổi nào, nhưng cuốn trên máy có: báo "giữ nguyên N thay đổi" cho người dùng.
                     report["merge"] = book_edits.merge(local, book_edits.empty())[1]
+                _note_other_title(opened, existing, report)
                 return existing, "existing"
             target = opened.extract(imported, existing.name)
             report["merge"] = opened.last_merge
@@ -560,6 +580,15 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
     _write_cover_meta(target, opened.book)
     book_edits.mark_saved(target)  # phần sửa có sẵn trong file không phải "thay đổi chưa lưu"
     return target.resolve(), "new"
+
+
+def _note_other_title(opened: Any, existing: Path, report: dict[str, Any]) -> None:
+    """Cuốn đã có giữ nguyên tên: file mới cùng âm thanh mà mang TÊN KHÁC thì `report["otherTitle"]` = tên trong file - người dùng được báo
+    tên ấy không được lấy (họ đổi tên trong Sửa sách nếu muốn), thay vì thấy "đã có" mà không hiểu vì sao tên không đổi."""
+    theirs = str(opened.book.get("title") or "").strip()
+    mine = str(edited_manifest(existing).get("title") or "").strip()
+    if theirs and theirs != mine:
+        report["otherTitle"] = theirs
 
 
 def _note_broken_music(opened: Any, report: dict[str, Any]) -> None:
