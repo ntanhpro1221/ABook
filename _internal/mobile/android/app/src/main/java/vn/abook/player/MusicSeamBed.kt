@@ -116,7 +116,7 @@ enum class DemoteReason(val word: String) { LATE("late"), FAIL("fail"), SEEK("se
  * - `seek <k> <sinceSeconds> <mụcIndex> <clip0|seam|clip> <expSample>` (expSample trên trục danh nghĩa của mục, như `EV seek` của MusicLoopSeamTest)
  * - `pos <k> <trackSecondsP3> <alignedA87>`, `item <k> <index> <reason> <kind>`, `audiotrack <k> <sr> <ch>`
  * - `vol <k> <v>`: MỖI lần MusicBed đặt volume của trình phát k (kể cả từng nhịp mờ; v 6 chữ số thập phân)
- * - `promote <k> loop`: bài a87 (mở vào giữa vòng khi chưa có Nối) chuyển sang P3 ở ranh lặp; k = trình phát P3 mới (dòng `open <k> p3` + `plan` + `attach` của nó đứng TRƯỚC, lúc tạo sẵn ~3 s trước ranh).
+ * - `promote <k> loop <viTriA87Giay>`: viTriA87Giay = vị trí của trình phát a87 (giây trong bài, 6 chữ số) mà promoteTo dùng để tính đích Nối. Bài a87 (mở vào giữa vòng khi chưa có Nối) chuyển sang P3 ở ranh lặp; k = trình phát P3 mới (dòng `open <k> p3` + `plan` + `attach` của nó đứng TRƯỚC, lúc tạo sẵn ~3 s trước ranh).
  *   Ngay sau dòng này `seek <k> ...` (mục 1 = Nối, mẫu = chỗ bài cũ đang ở), `vol <k> <âm lượng của bài cũ>`, rồi `vol <k cũ>` giảm dần về 0 trong một nhịp (~50 ms chồng nội dung, tuỳ chọn (1) của Music); không có `demote`.
  * Bên đo tự thêm `scenario <Sx>`, `scenario_end`, `sync <t> <nhảy 0|1>`, `FMT`, `PCM`.
  */
@@ -134,7 +134,7 @@ object SeamEvents {
     fun item(k: Int, index: Int, reason: Int, kind: String) = "item $k $index $reason $kind"
     fun audioTrack(k: Int, sampleRate: Int, channels: Int) = "audiotrack $k $sampleRate $channels"
     fun volume(k: Int, v: Float) = "vol $k ${f(v.toDouble(), 6)}"
-    fun promote(k: Int) = "promote $k loop"
+    fun promote(k: Int, legacyPositionSeconds: Double) = "promote $k loop ${f(legacyPositionSeconds)}"
 }
 
 /** Đồng hồ nhạc và tua của đường P3: tính theo (mục, vị trí trong mục) của ExoPlayer; bảng mục: 0 = Clip đầu, lẻ = Nối, chẵn >= 2 = Clip lặp ([LoopSeam]). */
