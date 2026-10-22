@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import secrets
@@ -52,6 +53,8 @@ from .library import Library, book_id
 from .listening import RECORD_ID, SYNC_KEYS, Listening
 from .remote_studio import StudioGate
 from .reviews import Reviews
+
+log = logging.getLogger(__name__)
 
 SYNC_PORT = 47630
 DISCOVERY_PORT = 47631
@@ -801,20 +804,23 @@ class SyncApp:
                 continue
             if not listen_view.on_shelf(summary, bool(summary.get("running"))):  # `running`: nhịp tim của worker (store.summarize)
                 continue
-            identifier = book_id(path)
-            summary["id"] = identifier
-            view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
-            entry = {key: view[key] for key in ("id", "title", "narrator", "duration", "chaptersTotal",
-                                                 "chaptersAvailable", "complete", "producing", "updatedAt", "series")}
-            # Cỡ khi tải về (audio chương + nhạc nền, như ước cỡ file .abook trước khi xuất) - điện thoại hiện cạnh nút Tải trước khi bấm
-            # (soát a68 lỗi 7); "producing": máy đang làm cuốn này thật (lỗi 13).
-            entry["bytes"] = export.audio_bytes([path], self.music_track)[0]
-            entry["audioVersion"] = manifest(path, identifier, self.listening, self.music_track)["audioVersion"]
-            meta = covers.cover_meta(path)
-            entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
-            if words := word_timing.stamp(path):  # điện thoại đã tải sách thấy chữ sáng theo giọng đọc là bản mới (cùng dấu với manifest)
-                entry["wordsVersion"] = words
-            out.append(entry)
+            try:
+                identifier = book_id(path)
+                summary["id"] = identifier
+                view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
+                entry = {key: view[key] for key in ("id", "title", "narrator", "duration", "chaptersTotal",
+                                                     "chaptersAvailable", "complete", "producing", "updatedAt", "series")}
+                # Cỡ khi tải về (audio chương + nhạc nền, như ước cỡ file .abook trước khi xuất) - điện thoại hiện cạnh nút Tải trước khi bấm
+                # (soát a68 lỗi 7); "producing": máy đang làm cuốn này thật (lỗi 13).
+                entry["bytes"] = export.audio_bytes([path], self.music_track)[0]
+                entry["audioVersion"] = manifest(path, identifier, self.listening, self.music_track)["audioVersion"]
+                meta = covers.cover_meta(path)
+                entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
+                if words := word_timing.stamp(path):  # điện thoại đã tải sách thấy chữ sáng theo giọng đọc là bản mới (cùng dấu với manifest)
+                    entry["wordsVersion"] = words
+                out.append(entry)
+            except Exception:  # noqa: BLE001 - một cuốn hỏng (file khoá, xoá giữa chừng) không làm cả thư viện trả 500
+                log.warning("library_view: bỏ qua %s", path, exc_info=True)
         # Cuốn nhập từ file ("Thêm sách") cũng nghe được ở máy đã ghép; cuốn ảo của máy khác thì không (chống vòng soi nhau).
         for path in self.library.imported_packages():
             identifier = book_id(path)

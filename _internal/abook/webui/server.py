@@ -51,7 +51,7 @@ from .fingerprints import Fingerprints
 from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
 from .listening import HEAVY_KEYS, RECORD_ID, Listening, StalePlayback
 from .opened_events import OpenedEvents
-from . import bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
+from . import audio_revision, bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
@@ -410,6 +410,8 @@ class App:
         # Máy tính khác đã ghép (remote_books.py): thư viện của chúng hiện thành sách "Trên máy khác".
         self.computers = remote_books.Computers(preferences.path.with_name("computers.json"))
         remote_books.configure(self.computers)
+        # Dấu băm audio nhớ qua lần khởi động lại: thư viện lớn không bị băm lại cả GB mỗi lần mở app (audio_revision.py).
+        audio_revision.configure(preferences.path.with_name("audio_digests.json"))
         self.peer_players = PeerPlayers(self.computers)
         # Loa / TV trong mạng nhà (DLNA - webui/cast.py, Google Cast - webui/gcast.py): hiện trong danh sách máy như điện
         # thoại, máy này phục vụ audio. ABOOK_CAST_DISCOVERY=0 tắt việc tìm cả hai (bài thử - tests/conftest.py - không gửi
