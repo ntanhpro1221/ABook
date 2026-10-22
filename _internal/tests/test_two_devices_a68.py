@@ -6,6 +6,7 @@ import json
 import time
 from pathlib import Path
 
+from abook.webui import export
 from abook.webui.listening import Listening, merge_states
 from abook.webui.sync import Devices, SyncApp, SyncServer, trusted_state
 from tests.test_webui_listen_and_sync import _sync_request, library  # noqa: F401 - fixture dùng chung
@@ -63,7 +64,7 @@ def test_renaming_a_paired_device(tmp_path: Path) -> None:
 
 
 def test_over_the_wire_the_phone_renames_itself_and_a_foreign_place_is_refused(library, tmp_path: Path) -> None:  # noqa: F811
-    lib, _project, listening = library
+    lib, project, listening = library
     devices = Devices(tmp_path / "devices.json")
     server = SyncServer(SyncApp(lib, listening, devices, "Máy thử"), host="127.0.0.1", port=0).start()
     try:
@@ -75,7 +76,9 @@ def test_over_the_wire_the_phone_renames_itself_and_a_foreign_place_is_refused(l
 
         _status, data, _ = _sync_request(server.port, "GET", "/sync/v1/library", token)
         book = json.loads(data)["books"][0]
-        assert book["bytes"] == 3 + 256 * 40, "cỡ audio khi tải về, trước khi bấm Tải"
+        # Điện thoại tải cả kịch bản, dàn nhân vật, câu mẫu, bìa (manifest) - cỡ báo trước là audio + phần ấy (soát a99 T1).
+        extras = export.packed_extras_bytes(project, [chapter["id"] for chapter in export._listenable(project)])
+        assert extras > 0 and book["bytes"] == 3 + 256 * 40 + extras, "cỡ khi tải về, trước khi bấm Tải"
         assert book["producing"] is False, "không chạy Studio thì không phải đang làm, dù cuốn chưa xong"
 
         identifier = book["id"]
