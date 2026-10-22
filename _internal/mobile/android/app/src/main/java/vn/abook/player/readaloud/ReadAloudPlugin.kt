@@ -48,6 +48,7 @@ class ReadAloudPlugin : Plugin() {
         ReadAloud.addScriptListener(listener)
         ReadAloud.addNoticeListener(noticeListener)
         PrepareAhead.addListener(prepareListener)
+        PrepareAhead.reconcile(context)
     }
 
     override fun handleOnDestroy() {

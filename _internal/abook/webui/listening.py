@@ -357,13 +357,18 @@ class Listening:
             return json.loads(json.dumps({book: self._active(book, create=False) for book in self._data["links"]}))
 
     def progress(self, book: str, chapter_id: int, seconds: float, duration: float,
-                 record: str | None = None) -> dict[str, Any]:
+                 record: str | None = None, anchor: dict[str, Any] | None = None) -> dict[str, Any]:
+        from .reading_anchor import validated
+
         now = time.time()
         with self._changing():
             entry = self._held(book, record)
             if entry is None:
                 return json.loads(json.dumps(self._active(book, create=False) or _empty_state()))
             entry["last"] = {"chapterId": int(chapter_id), "seconds": round(float(seconds), 1), "at": now}
+            saved_anchor = validated(anchor)
+            if saved_anchor is not None:
+                entry["last"]["anchor"] = saved_anchor
             chapter = entry["chapters"].setdefault(str(int(chapter_id)), {"heard": 0.0, "done": False})
             chapter["heard"] = round(max(float(chapter.get("heard", 0.0)), float(seconds)), 1)
             if duration > 0 and duration - float(seconds) <= DONE_TAIL_SECONDS:

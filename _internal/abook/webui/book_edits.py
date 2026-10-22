@@ -923,8 +923,8 @@ def remove_cover(folder: Path) -> None:
             edits.pop("cover", None)
         else:
             edits["cover"] = None
-        (Path(folder) / EDITS_COVER).unlink(missing_ok=True)
         _write(folder, edits)
+        (Path(folder) / EDITS_COVER).unlink(missing_ok=True)  # sau khi JSON mới đã ghi: ghi hỏng thì JSON cũ vẫn có ảnh nó trỏ tới
 
 
 def set_character_name(folder: Path, character: str, name: str) -> dict[str, Any]:

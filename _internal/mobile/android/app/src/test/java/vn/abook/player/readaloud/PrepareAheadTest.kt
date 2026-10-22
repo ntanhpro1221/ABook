@@ -12,6 +12,70 @@ import java.nio.file.Files
 
 /** "Làm trước": chọn chương vừa bộ đệm, điều kiện chạy, ước thời gian, vòng làm (bỏ qua đoạn đã có, nhường người nghe, dừng khi giọng mạng hỏng). */
 class PrepareAheadTest {
+    private class FilesContext : android.content.ContextWrapper(null) {
+        lateinit var directory: File
+        override fun getFilesDir(): File = directory
+    }
+
+    @Test
+    fun schema_broken_checkpoint_is_preserved_without_breaking_opening() {
+        val unsafeClass = Class.forName("sun.misc.Unsafe")
+        val unsafe = unsafeClass.getDeclaredField("theUnsafe").apply { isAccessible = true }.get(null)
+        val context = unsafeClass.getMethod("allocateInstance", Class::class.java).invoke(unsafe, FilesContext::class.java) as FilesContext
+        context.directory = dir
+        val target = File(dir, "readaloud-prepare.json").apply { writeText("{}") }
+        val loaded = PrepareAhead::class.java.getDeclaredField("loaded").apply { isAccessible = true }
+        val job = PrepareAhead::class.java.getDeclaredField("job").apply { isAccessible = true }
+        val wasLoaded = loaded.get(null)
+        val previous = job.get(null)
+        try {
+            loaded.set(null, false)
+            val current = PrepareAhead::class.java.getDeclaredMethod("current", android.content.Context::class.java).apply { isAccessible = true }
+            assertNull(current.invoke(PrepareAhead, context))
+            assertFalse(target.exists())
+            assertEquals("{}", dir.listFiles()!!.single { it.name.startsWith(target.name + ".corrupt-") }.readText())
+        } finally {
+            loaded.set(null, wasLoaded)
+            job.set(null, previous)
+        }
+    }
+
+    @Test
+    fun checkpoint_replacement_failure_does_not_delete_the_target() {
+        val unsafeClass = Class.forName("sun.misc.Unsafe")
+        val unsafe = unsafeClass.getDeclaredField("theUnsafe").apply { isAccessible = true }.get(null)
+        val context = unsafeClass.getMethod("allocateInstance", Class::class.java).invoke(unsafe, FilesContext::class.java) as FilesContext
+        context.directory = dir
+        val saved = job(listOf(chapter(1, 2, 42)))
+        val field = PrepareAhead::class.java.getDeclaredField("job").apply { isAccessible = true }
+        val previous = field.get(null)
+        val target = File(dir, "readaloud-prepare.json").apply { mkdirs() }
+        try {
+            field.set(null, saved)
+            runCatching { PrepareAhead::class.java.getDeclaredMethod("save", android.content.Context::class.java, PrepareJob::class.java)
+                .apply { isAccessible = true }.invoke(PrepareAhead, context, saved) }
+            assertTrue("a failed replacement must preserve the destination", target.isDirectory)
+        } finally {
+            field.set(null, previous)
+        }
+    }
+
+    @Test
+    fun restart_requeues_a_saved_running_job_only_without_unfinished_unique_work() {
+        val saved = job(listOf(chapter(1, 2, 42)))
+        val target = File(dir, "job.json")
+        target.writeText(saved.toJson().toString())
+        val restored = PrepareJob.fromJson(JSONObject(target.readText()))
+        val queued = ArrayList<String>()
+        val enqueue: (PrepareJob) -> Unit = { queued.add(it.id) }
+        val reconcile = PrepareAhead::class.java.getDeclaredMethod("reconcileJob", PrepareJob::class.java,
+            Boolean::class.javaPrimitiveType, kotlin.jvm.functions.Function1::class.java)
+        reconcile.invoke(PrepareAhead, restored, false, enqueue)
+        reconcile.invoke(PrepareAhead, restored, true, enqueue)
+        restored.state = "done"
+        reconcile.invoke(PrepareAhead, restored, false, enqueue)
+        assertEquals(listOf(saved.id), queued)
+    }
     private val dir: File = Files.createTempDirectory("prepare").toFile()
 
     @After

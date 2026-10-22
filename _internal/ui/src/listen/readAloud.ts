@@ -1,5 +1,6 @@
 import type { AudioEngine, EngineEvent, TrackInfo } from "./engine";
 import type { Script, ScriptSegment } from "./model";
+import { makeAnchor, restoreAnchor, textFingerprint, type ReadingAnchor } from "./readingAnchor";
 import { LiveClip, MP3_MIME } from "./liveClip";
 import { LiveFeed, type MediaSourceLike } from "./liveFeed";
 import { isSpeakable, sceneBreakGaps } from "./textScript";
@@ -490,7 +491,7 @@ export class ReadAloudEngine implements AudioEngine {
     void speech
       .script()
       .then((script) => {
-        if (id === this.loadId) return this.init(script, startAt, id);
+        if (id === this.loadId) return this.init(script, startAt, id, track.readingAnchor);
       })
       .catch((error) => {
         if (id === this.loadId) this.fail(error);
@@ -586,6 +587,14 @@ export class ReadAloudEngine implements AudioEngine {
     return last ? last.start + last.duration : 0;
   }
 
+  get readingAnchor(): ReadingAnchor | undefined {
+    if (!this.ready) return undefined;
+    const slot = this.slots[this.target.index];
+    if (!slot) return undefined;
+    const word = this.target.word ?? (slot.started ? this.positionWord(slot) : Math.max(0, wordIndexAt(slot.words ?? [], this.target.offset * 1000)));
+    return makeAnchor(this.slots.map((item) => item.text), this.target.index, word, this.textHash);
+  }
+
   get paused(): boolean {
     return !this.wanted;
   }
@@ -607,22 +616,27 @@ export class ReadAloudEngine implements AudioEngine {
 
   // ---- khởi tạo -------------------------------------------------------------------------------------------------
 
-  private async init(script: Script, startAt: number, id: number): Promise<void> {
+  private textHash = "";
+
+  private async init(script: Script, startAt: number, id: number, anchor?: ReadingAnchor): Promise<void> {
     this.base = script;
     const gaps = sceneBreakGaps(script.segments);
     this.slots = script.segments.map((segment, i) => this.slotFrom(segment, gaps[i] / 1000));
+    const paragraphs = this.slots.map((slot) => slot.text);
+    this.textHash = textFingerprint(paragraphs);
+    const restored = restoreAnchor(paragraphs, anchor, this.textHash);
     this.layout();
-    if (startAt > 1) await this.restore(startAt, id);
+    if (!restored && startAt > 1) await this.restore(startAt, id);
     if (id !== this.loadId) return;
-    const index = this.indexAt(startAt);
+    const index = restored?.segment ?? this.indexAt(startAt);
     const slot = this.slots[index];
-    this.target = { index, offset: slot ? Math.max(0, Math.min(slot.duration, startAt - slot.start)) : 0 };
-    if (slot && !slot.clip && startAt > slot.start && slot.duration > 0) {
+    this.target = restored ? { index, offset: 0, word: restored.word } : { index, offset: slot ? Math.max(0, Math.min(slot.duration, startAt - slot.start)) : 0 };
+    if (!restored && slot && !slot.clip && startAt > slot.start && slot.duration > 0) {
       this.target.offset = 0;
       this.target.fraction = (startAt - slot.start) / slot.duration;
     }
     this.ready = true;
-    const word = this.pendingWord;
+    const word = this.pendingWord ?? restored;
     this.pendingWord = null;
     this.publish();
     this.fire("duration");
@@ -2031,6 +2045,10 @@ export class RoutedEngine implements AudioEngine {
 
   seekWord(segment: number, word: number): void {
     this.speechEngine?.seekWord(segment, word);
+  }
+
+  get readingAnchor(): ReadingAnchor | undefined {
+    return this.speechEngine?.readingAnchor;
   }
 
   play(): void {

@@ -40,7 +40,7 @@ object BookWishes {
         "speakers" to setOf("speaker", "text_sha256", "requested_at", "new"),
         "lines" to setOf("text_sha256", "kind", "emotion", "intensity", "spoken", "requested_at"),
         "voices" to setOf("preset", "gender", "avoid", "requested_at"),
-        "retakes" to setOf("text_sha256", "requested_at"),
+        "retakes" to setOf("text_sha256", "requested_at", "operation_id"),
     )
     private val REPLACEABLE = setOf("pronunciations", "speakers", "voices")
     private val LINE_KINDS = listOf("narration", "dialogue", "thought")
@@ -140,6 +140,11 @@ object BookWishes {
                 val sha = raw.opt("text_sha256")
                 if (sha !is String || !SHA256.matches(sha)) throw bad
                 out.put("text_sha256", sha)
+                if (raw.has("operation_id")) {
+                    val operation = raw.opt("operation_id")
+                    if (operation !is String || !Regex("[0-9a-f]{32}").matches(operation)) throw bad
+                    out.put("operation_id", operation)
+                }
             }
         }
         if (raw.has("replaced")) out.put("replaced", entry(section, key, raw.opt("replaced"), nested = true))
