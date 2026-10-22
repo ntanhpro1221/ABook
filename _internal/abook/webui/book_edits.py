@@ -521,6 +521,13 @@ def merge_clashes(local: dict[str, Any], incoming: dict[str, Any]) -> tuple[dict
         out["skip"] = skip
     # Cách đọc riêng: như tên nhân vật - từ nào cả hai cùng đặt thì cách của máy này thắng.
     readings = {**(incoming.get("readings") or {}), **(local.get("readings") or {})}
+    if len(readings) > MAX_READINGS:
+        # Hai máy mỗi bên một đống cách đọc khác nhau: hợp vượt trần thì `parse` từ chối cả file và lớp sửa đọc ra rỗng (mất tên nhân vật, dòng bỏ, nhạc...). Giữ hết của máy này, lấy
+        # thêm của file theo thứ tự chữ cho tới trần - kết quả luôn đọc lại được (soát a79 lỗi 12). Kotlin (BookEdits.merge) cắt cùng cách.
+        ours = dict(sorted((local.get("readings") or {}).items())[:MAX_READINGS])
+        room = MAX_READINGS - len(ours)
+        theirs = dict(sorted((shown, spoken) for shown, spoken in (incoming.get("readings") or {}).items() if shown not in ours)[:room])
+        readings = {**theirs, **ours}
     for shown, spoken in (local.get("readings") or {}).items():
         if shown in (incoming.get("readings") or {}) and incoming["readings"][shown] != spoken:
             conflicts += 1

@@ -51,11 +51,14 @@ class PauseWhileWaitingTest {
         field(Playback::class.java, "bookId").set(Playback, "streamed-book")
         field(Playback::class.java, "chapters").set(Playback, listOf(Playback.Chapter(1, "Một", "", 0.0, text = "texts/1.txt")))
         field(ReadAloud::class.java, "context").set(ReadAloud, FakeContext())
+        // Bài này không bàn chuyện đồng ý gửi chữ đi (ConsentHoldTest): giọng Edge mặc định đã được đồng ý.
+        ReadAloud.choices = VoiceChoices(java.io.File(BookEditsFixtures.tempDir("pause-waiting-choices"), "readaloud-voices.json")).also { it.allowOnline(listOf("edge")) }
     }
 
     @After fun cleanup() {
         field(ReadAloud::class.java, "waiting").set(ReadAloud, null)
         field(ReadAloud::class.java, "context").set(ReadAloud, null)
+        ReadAloud.choices = null
         field(Playback::class.java, "bookId").set(Playback, "")
         field(Playback::class.java, "chapters").set(Playback, emptyList<Playback.Chapter>())
         Playback.player = null

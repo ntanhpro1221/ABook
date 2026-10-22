@@ -20,6 +20,8 @@ from .model import VoiceError
 # Supertonic F1 15,1; VieNeu Nano Ái Hân 13,8, Đức Trí 11,4; cả cuốn Edge Hoài My 13,6 kể cả quãng lặng -> ~14.
 CHARS_PER_SECOND = 14
 SHARE = 0.6
+# Huỷ việc đang làm: đợi luồng cũ nhả tối đa chừng này (giây). Nó còn đang đọc dở một đoạn thì không đợi hết - việc mới đã có sổ riêng, luồng cũ chỉ ghi vào sổ cũ.
+CANCEL_WAIT = 2.0
 # WAV 16-bit đơn kênh, theo tần số mẫu thật của từng giọng; giọng khác là MP3 ~6 KB/giây
 BYTES_PER_SECOND = {"vieneu:turbo/": 96_000, "vieneu:nano/": 48_000, supertonic.PREFIX + ":": 2 * supertonic.SAMPLE_RATE}
 OTHER_BYTES_PER_SECOND = 6_000
@@ -85,11 +87,11 @@ class Prepare:
         self.cancel()
         with self._lock:
             self._stop = threading.Event()
-            self._job = {"state": "running" if taken else "done", "voice": voice, "label": label, "bookId": book or "", "total": len(taken), "offered": len(texts),
-                         "done": 0, "failed": 0, "chars": sum(len(text) for text in taken), "charsDone": 0, "charsTimed": 0, "seconds": 0.0,
-                         "audioSeconds": round(sum(len(text) for text in taken) / CHARS_PER_SECOND), "error": "", "started": time.time()}
+            job = self._job = {"state": "running" if taken else "done", "voice": voice, "label": label, "bookId": book or "", "total": len(taken), "offered": len(texts),
+                               "done": 0, "failed": 0, "chars": sum(len(text) for text in taken), "charsDone": 0, "charsTimed": 0, "seconds": 0.0,
+                               "audioSeconds": round(sum(len(text) for text in taken) / CHARS_PER_SECOND), "error": "", "started": time.time()}
             if taken:
-                self._thread = threading.Thread(target=self._run, args=(voice, taken, self._stop, origin, readings, book), name="readaloud-prepare", daemon=True)
+                self._thread = threading.Thread(target=self._run, args=(job, voice, taken, self._stop, origin, readings, book), name="readaloud-prepare", daemon=True)
                 self._thread.start()
         return self.status()
 
@@ -101,7 +103,7 @@ class Prepare:
         self._stop.set()
         thread = self._thread
         if thread is not None and thread is not threading.current_thread():
-            thread.join(30)
+            thread.join(CANCEL_WAIT)
         with self._lock:
             if self._job.get("state") == "running":
                 self._job["state"] = "cancelled"
@@ -133,8 +135,9 @@ class Prepare:
                 job["secondsLeft"] = round(left / CHARS_PER_SECOND * rtf) if rtf else None
         return job
 
-    def _run(self, voice: str, texts: list[str], stop: threading.Event, origin: str | None, readings: Mapping[str, str] | None,
+    def _run(self, job: dict[str, Any], voice: str, texts: list[str], stop: threading.Event, origin: str | None, readings: Mapping[str, str] | None,
              book: str | None) -> None:
+        """`job`: sổ của CHÍNH việc này - luồng cũ còn đang đọc dở một đoạn khi việc mới thay chỗ thì chỉ ghi vào sổ cũ, không làm bẩn sổ mới."""
         for text in texts:
             while self._live() > 0 and not stop.is_set():  # người đang nghe đi trước
                 time.sleep(0.2)
@@ -147,19 +150,26 @@ class Prepare:
             except VoiceError as error:
                 ok = False
                 if error.reason not in ("empty",):
-                    with self._lock:
-                        self._job.update(state="error", error=str(error))
+                    self._fail(job, stop, str(error))
                     return
             except ValueError:
                 ok = False
+            except Exception as error:  # noqa: BLE001 - đầy ổ (OSError), lỗi lạ của giọng: dừng và nói, không để trạng thái kẹt "running" mãi
+                self._fail(job, stop, str(error) or type(error).__name__)
+                return
             with self._lock:
-                self._job["done"] += 1
-                self._job["failed"] += 0 if ok else 1
-                self._job["charsDone"] += len(text)
+                job["done"] += 1
+                job["failed"] += 0 if ok else 1
+                job["charsDone"] += len(text)
                 spent = time.perf_counter() - began
                 if spent > CACHED_SECONDS:  # đoạn đã có sẵn trong bộ đệm không nói gì về tốc độ
-                    self._job["charsTimed"] += len(text)
-                    self._job["seconds"] += spent
+                    job["charsTimed"] += len(text)
+                    job["seconds"] += spent
         with self._lock:
             if not stop.is_set():
-                self._job["state"] = "done"
+                job["state"] = "done"
+
+    def _fail(self, job: dict[str, Any], stop: threading.Event, message: str) -> None:
+        with self._lock:
+            if not stop.is_set():  # đã huỷ / bị thay: lỗi muộn của việc cũ không đè lên trạng thái "đã dừng"
+                job.update(state="error", error=message)

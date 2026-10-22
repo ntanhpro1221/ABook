@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import pytest
 
 from abook.webui.listening import Listening, merge_states
@@ -16,8 +19,17 @@ def test_progress_preserves_text_anchor_across_restart_and_sync(tmp_path):
     assert "anchor" not in state["last"]
 
 
+def test_paragraph_hash_is_kept_and_checked():
+    # Bộ ví dụ dùng chung với listen/readingAnchor.ts và ReadingAnchor.kt (soát a79 lỗi 5).
+    fixture = json.loads((Path(__file__).parent / "fixtures" / "reading_anchor" / "restore.json").read_text(encoding="utf-8"))
+    anchor = fixture["anchor"]["expect"]
+    assert validated(anchor) == anchor
+    assert validated({k: v for k, v in anchor.items() if k != "paragraphHash"}) == {k: v for k, v in anchor.items() if k != "paragraphHash"}
+
+
 @pytest.mark.parametrize("field,value", [("segment", -1), ("segment", True), ("charOffset", 1.5),
-                                         ("charOffset", 2**31), ("textHash", "changed")])
+                                         ("charOffset", 2**31), ("textHash", "changed"), ("paragraphHash", "changed"),
+                                         ("paragraphHash", None)])
 def test_invalid_anchor_is_ignored(field, value):
     anchor = {"segment": 1, "charOffset": 6, "textHash": "fnv1a64:bb657205cfbee8a0", field: value}
     assert validated(anchor) is None

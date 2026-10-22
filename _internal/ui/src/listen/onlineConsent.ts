@@ -53,16 +53,23 @@ export function spokenVoiceName(name: string): string {
   return name.replace(/\s*\([^)]*\)\s*$/, "").trim() || name;
 }
 
+/** Chữ đi tới đâu khi đọc bằng giọng trực tuyến của nhà cung cấp này: "FPT.AI" (khoá của người nghe), "máy chủ Microsoft", hay "dịch vụ ngoài". */
+export function onlineDestination(provider: string): string {
+  const keyed = KEYED_PROVIDERS[provider];
+  if (keyed) return keyed;
+  const company = COMPANIES[provider];
+  return company ? `máy chủ ${company}` : "dịch vụ ngoài";
+}
+
 /** Lời hỏi trong hộp. */
 export function onlinePromptText(voice: Pick<ReadAloudVoice, "name" | "provider">): string {
-  const company = COMPANIES[voice.provider];
   const name = spokenVoiceName(voice.name);
-  const keyed = KEYED_PROVIDERS[voice.provider];
-  if (keyed) return `Giọng ${name} dùng khóa ${keyed} của bạn: chữ của đoạn đang đọc được gửi tới ${keyed} để đọc, và dịch vụ có thể tính tiền vào tài khoản của bạn.`;
+  const where = onlineDestination(voice.provider);
+  if (KEYED_PROVIDERS[voice.provider]) return `Giọng ${name} dùng khóa ${where} của bạn: chữ của đoạn đang đọc được gửi tới ${where} để đọc, và dịch vụ có thể tính tiền vào tài khoản của bạn.`;
   // Người nghe biết giọng này là "Edge"; chữ đi tới đâu thì vẫn nói thật: máy chủ của công ty.
-  return company
-    ? `Giọng ${name} là giọng ${voice.provider === "edge" ? "Edge" : "trực tuyến"}: chữ của đoạn đang đọc được gửi tới máy chủ ${company} để đọc.`
-    : `Giọng ${name} là giọng trực tuyến: chữ của đoạn đang đọc được gửi tới dịch vụ ngoài để đọc.`;
+  return COMPANIES[voice.provider]
+    ? `Giọng ${name} là giọng ${voice.provider === "edge" ? "Edge" : "trực tuyến"}: chữ của đoạn đang đọc được gửi tới ${where} để đọc.`
+    : `Giọng ${name} là giọng trực tuyến: chữ của đoạn đang đọc được gửi tới ${where} để đọc.`;
 }
 
 /** Lời trong bước "Chọn giọng đọc": đúng với danh sách đang hiện - chỉ nói "không gửi chữ" khi trong đó có giọng chạy trên máy,
@@ -127,4 +134,12 @@ export function askOnlineConsent(voice: ReadAloudVoice, voices: ReadAloudVoice[]
     };
     publish(request);
   });
+}
+
+/** Chọn `voice` từ menu "Giọng đọc" LÚC ĐANG NGHE: giọng trực tuyến chưa được đồng ý thì hỏi TRƯỚC (đổi giọng đã làm đoạn kế gửi đi ngay - soát a79 lỗi 2). Trả mã giọng sẽ
+ *  dùng (giọng vừa bấm, hay giọng người nghe chọn lại trong hộp), hay null nếu người nghe đóng hộp - khi đó không đổi gì. */
+export async function pickVoiceWithConsent(voice: ReadAloudVoice, voices: ReadAloudVoice[]): Promise<string | null> {
+  if (!voice.online || onlineConsentGiven(voice.provider)) return voice.id;
+  const picked = await askOnlineConsent(voice, voices);
+  return picked ? picked.voice : null;
 }

@@ -35,6 +35,7 @@ class FakeExo {
             "getDuration" -> if (duration > 0) duration else androidx.media3.common.C.TIME_UNSET
             "getCurrentMediaItem" -> item
             "getMediaItemCount" -> if (item == null) 0 else 1
+            "clearMediaItems" -> { item = null; null }
             "seekTo" -> { position = args!!.last() as Long; null }
             "getPlaybackParameters" -> PlaybackParameters(speed)
             "setPlaybackParameters" -> { speed = (args!![0] as PlaybackParameters).speed; null }
