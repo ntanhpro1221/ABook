@@ -19,6 +19,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Khi bạn mở lại file có cùng âm thanh nhưng mang tên khác, app nói tên trong file không được lấy và bạn đổi tên ở đâu.
 - Trên điện thoại, nhập sách lớn không còn làm chậm việc lưu chỗ nghe; file zip tải dở báo "chép chưa xong" thay vì "không phải file sách", và bản chép tạm của lần nhập bị ngắt được dọn khi mở app.
 - Nhạc nền nối vòng đúng phách, không còn nghe đánh đôi hay vang ở chỗ lặp, cả trên máy tính lẫn điện thoại.
+- Trên điện thoại, nhạc nền biết chính xác đang phát tới đâu (trước đây số này chỉ cập nhật bốn lần mỗi giây), nên chỗ nối vòng không còn lệch tới một phần tư giây; bước tự chỉnh pha sau khi nối tạm tắt vì nó có thể làm bản lặp im chừng nửa giây.
 - "Bỏ xếp hàng" chỉ bỏ cuốn khỏi hàng: nếu cuốn vừa được tới lượt và đã bắt đầu chạy, app báo cuốn đã bắt đầu chạy thay vì dừng nó giữa lúc phân tích.
 - Khi điện thoại gửi sửa về cùng lúc bạn bấm sửa trên máy tính, hoặc bạn bấm "Áp dụng" trong hộp thay đổi từ máy khác, cả hai đều được giữ - không còn việc này nuốt mất việc kia.
 - Điện thoại đổi ý và gửi lại cùng một sửa mới hơn thì bản cũ rời khỏi hộp thay đổi từ máy khác, nên bấm "Áp dụng" không đè bản mới bằng bản cũ.
