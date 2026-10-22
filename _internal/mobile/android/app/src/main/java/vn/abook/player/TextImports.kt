@@ -68,6 +68,19 @@ object TextImports {
         return "${name.ifEmpty { "Sách" }}.$kind"
     }
 
+    /**
+     * File được CHIA SẺ tới app qua kiểu nội dung "chung" (octet-stream, zip - nơi gửi đặt cho mọi file lạ; AndroidManifest nhận hai kiểu ấy cho `.abook`):
+     * lời báo nếu nó không phải thứ app nhận được, null nếu cứ đi tiếp. Nhận được: tên có đuôi .abook / .abookproj, EPUB / DOCX / PDF / TXT theo đuôi, hay đầu
+     * file đúng dáng gói của app ([BookFileImport.looksLikeBookFile]; `head` chỉ được gọi khi tên chưa đủ để quyết). Kiểu nội dung khác không thuộc việc này.
+     */
+    fun refuseShared(mime: String?, displayName: String?, head: () -> ByteArray?): String? {
+        val type = mime?.substringBefore(';')?.trim()?.lowercase()
+        if (type != "application/octet-stream" && type != "application/zip") return null
+        if (incomingName(mime, displayName) != null || isAppBookFile(mime, displayName)) return null
+        if (BookFileImport.looksLikeBookFile(head() ?: ByteArray(0))) return null
+        return "Đây không phải file sách của ABook (.abook hay .abookproj). ABook chỉ nhận file sách của mình, hoặc EPUB, Word, PDF, TXT."
+    }
+
     /** File sách / dự án của app (.abook, .abookproj - theo đuôi tên, hay kiểu nội dung khi tên mất đuôi): đi đường mở file sách
      *  (BookFileImport), không phải bước xem trước của "Thêm sách từ file…". Cho một nút nhận mọi loại file (soát UX a9). */
     fun isAppBookFile(mime: String?, displayName: String?): Boolean {
