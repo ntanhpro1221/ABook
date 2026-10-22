@@ -500,6 +500,8 @@ def manifest(project_root: Path, book: str, listening: Listening,
 
     `music_track(link)` -> file bài nhạc nền ĐÃ có trên máy (không tải trong lượt hỏi này): có thì kèm mục `music` như
     file `.abook` (music_plan.package) - điện thoại nghe thẳng hay tải về đều có nhạc người sản xuất đã gắn."""
+    from . import audio_revision
+    from datetime import UTC, datetime
     summary = store.summarize(project_root)
     summary["id"] = book
     view = listen_view.book(project_root, book, summary, listening.get(book))
@@ -511,7 +513,7 @@ def manifest(project_root: Path, book: str, listening: Listening,
             **chapter,
             "available": path is not None,
             "file": f"chapters/{path.name}" if path else None,
-            "size": path.stat().st_size if path else 0,
+            **(audio_revision.describe(path) if path else {"size": 0, "sha256": ""}),
             "script": f"scripts/{chapter['id']}.json",
         })
     texts = {} if any(chapter["available"] for chapter in chapters) else text_layer(project_root, chapters)
@@ -530,7 +532,7 @@ def manifest(project_root: Path, book: str, listening: Listening,
     words = word_timing.stamp(project_root)
     # Đổi ảnh bìa hay nhạc nền cũng là một phiên bản mới của gói: điện thoại thấy "có cập nhật" và tải lại.
     # Chữ chương chỉ-chữ vào băm bằng mã băm riêng (cỡ luôn 0): sửa file nguồn là một phiên bản mới.
-    version = hashlib.sha256(json.dumps([[(c["id"], c["size"]) for c in chapters],
+    version = hashlib.sha256(json.dumps([[(c["id"], c["sha256"]) for c in chapters],
                                          cover["version"] if cover else 0] + ([music] if music else []) + ([{"words": words}] if words else [])
                                         + ([{"texts": {name: hashlib.sha256(text).hexdigest()[:16] for name, text in texts.items()}}] if texts else []),
                                         sort_keys=True).encode()).hexdigest()[:16]
@@ -547,6 +549,9 @@ def manifest(project_root: Path, book: str, listening: Listening,
         # Phần nối tiếp của "Làm tiếp cuốn này": sách đã tải về điện thoại vẫn gom theo chuỗi khi không nối máy tính.
         "series": view.get("series"),
         "version": version,
+        "audioVersion": audio_revision.version(chapters),
+        "audioUpdatedAt": datetime.fromtimestamp(max((path.stat().st_mtime for path in audio.values() if path.is_file()), default=0), UTC).isoformat(timespec="microseconds"),
+        "sourceFingerprint": audio_revision.source_fingerprint(project_root),
         "chapters": chapters,
         "cast": "cast.json",
         "samples": [f"samples/{sample}.wav" for sample in samples],
@@ -804,6 +809,7 @@ class SyncApp:
             # Cỡ khi tải về (audio chương + nhạc nền, như ước cỡ file .abook trước khi xuất) - điện thoại hiện cạnh nút Tải trước khi bấm
             # (soát a68 lỗi 7); "producing": máy đang làm cuốn này thật (lỗi 13).
             entry["bytes"] = export.audio_bytes([path], self.music_track)[0]
+            entry["audioVersion"] = manifest(path, identifier, self.listening, self.music_track)["audioVersion"]
             meta = covers.cover_meta(path)
             entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
             if words := word_timing.stamp(path):  # điện thoại đã tải sách thấy chữ sáng theo giọng đọc là bản mới (cùng dấu với manifest)

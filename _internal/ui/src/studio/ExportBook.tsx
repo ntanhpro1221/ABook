@@ -25,6 +25,7 @@ import { WordTimingsRow } from "./WordTimings";
 // lặng lẽ thiếu chương / bỏ qua sửa chưa áp). Hộp nói trước bản xuất sẽ có gì, rồi mới hỏi chỗ lưu.
 
 type Kind = "mp3" | "abook" | "m4b" | "abookproj";
+type ExportHistory = { kind: string; target: string; chapters: Record<string, string>; changed: number[] };
 /** Truyện chia nhiều phần bằng "Làm tiếp cuốn này": xuất riêng phần đang xem hay cả bộ. */
 type Scope = "part" | "series";
 /** Cả bộ ra `.abook`: gộp một file (mặc định), hay mỗi phần một file. */
@@ -95,6 +96,14 @@ export function ExportDialog({
   const [busy, setBusy] = useState(false);
   const [scope, setScope] = useState<Scope>("part");
   const [layout, setLayout] = useState<Layout>("single");
+  const [changedOnly, setChangedOnly] = useState(false);
+  const history = useQuery({
+    queryKey: ["export-history", book.id], enabled: open,
+    queryFn: () => api<ExportHistory[]>(`/api/books/${book.id}/export-history`),
+    staleTime: 0, refetchInterval: 5000,
+  });
+  const staleExports = (history.data ?? []).filter((item) => item.changed.length > 0);
+  const changedChapters = [...new Set(staleExports.filter((item) => item.kind === "mp3").flatMap((item) => item.changed))];
   const [finished, setFinished] = useState<Finished | null>(null);
   // Đóng hộp giữa lúc đang đóng gói: việc vẫn chạy, báo bằng thông báo nổi; hộp còn mở lúc xong thì báo ngay trong hộp.
   const openRef = useRef(open);
@@ -179,7 +188,8 @@ export function ExportDialog({
   const needsFfmpeg = (kind === "m4b" || mixes) && ffmpeg.data !== undefined && !ffmpeg.data.ready;
   const bytes = estimate.data?.bytes ?? 0;
   const musicPending = estimate.data?.musicPending ?? 0;
-  const countText = kind === "abookproj" ? undefined : wholeSeries ? `${parts.length} phần` : `${ready} chương`;
+  const selectedCount = kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? changedChapters.length : ready;
+  const countText = kind === "abookproj" ? undefined : wholeSeries ? `${parts.length} phần` : `${selectedCount} chương`;
   // Chỗ lưu nói trước khi bấm "Xuất": có hộp chọn thư mục của máy thì người dùng tự chọn, không thì vào thư mục "Đã xuất" của thư viện.
   const root = info?.libraryRoot ?? "";
   const computer = info?.remote ? listenOnlyOwner(info) : "";
@@ -214,8 +224,9 @@ export function ExportDialog({
     }
     if (kind === "m4b" || kind === "mp3") {
       // Việc nền do ExportJobHost (desktop/App.tsx) giữ: tiến độ, Huỷ và kết quả hiện ở thông báo nổi, nên đóng hộp ngay.
-      const extra = { ...(mixes ? { music: true } : {}), ...(kind === "mp3" && wholeSeries ? { series: true } : {}) };
-      startExport(kind, { id: book.id, chapters: wholeSeries ? 0 : ready, target, cover: coverArtwork(book.title), ...(Object.keys(extra).length ? { extra } : {}) });
+      const extra = { ...(mixes ? { music: true } : {}), ...(kind === "mp3" && wholeSeries ? { series: true } : {}),
+        ...(kind === "mp3" && !wholeSeries && changedOnly && changedChapters.length ? { chapterIds: changedChapters } : {}) };
+      startExport(kind, { id: book.id, chapters: wholeSeries ? 0 : selectedCount, target, cover: coverArtwork(book.title), ...(Object.keys(extra).length ? { extra } : {}) });
       onOpenChange(false);
       return;
     }
@@ -337,7 +348,7 @@ export function ExportDialog({
   const layoutValues: Layout[] = ["single", "perPart"];
   return (
     <Dialog open={open} onOpenChange={handleOpenChange} width="max-w-lg" title={`Xuất “${book.title}”`}
-      description={wholeSeries ? `Các chương nghe được của cả ${parts.length} phần sẽ vào bản xuất.` : `${formatNumber(ready)} chương nghe được sẽ vào bản xuất.`}>
+      description={wholeSeries ? `Các chương nghe được của cả ${parts.length} phần sẽ vào bản xuất.` : `${formatNumber(selectedCount)} chương sẽ vào bản xuất.`}>
       {busy ? (
         <div className="py-2" role="status">
           {packShown && !downloading && packShown.fraction !== null ? (
@@ -507,6 +518,18 @@ export function ExportDialog({
       {wholeSeries && kind === "mp3" && (
         <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần một thư mục con (“Phần 1 - …”, “Phần 2 - …”), cùng nằm trong một thư mục của bộ.</p>
       )}
+      {staleExports.length > 0 && <div className="mt-3 space-y-2 rounded-xl bg-warning-soft p-3 text-sm">
+        <p className="font-semibold">Bạn có bản xuất đã cũ sau khi sửa và thu lại:</p>
+        {staleExports.map((item) => <div key={item.target}>
+          <p className="break-all">{item.target} · {item.changed.length} chương đã đổi</p>
+          <Button size="sm" variant="secondary" onClick={() => { setKind(item.kind as Kind); setScope("part"); setChangedOnly(item.kind === "mp3"); }}>Xuất lại {item.kind === "m4b" ? "cả file M4B" : item.kind === "mp3" ? "các chương đã đổi" : "file sách"}</Button>
+          {item.kind === "m4b" && <p>M4B gộp cả cuốn: bạn cần dựng lại cả file và thay bản đã chép hoặc gửi.</p>}
+        </div>)}
+      </div>}
+      {kind === "mp3" && !wholeSeries && changedChapters.length > 0 && <label className="mt-3 flex items-center gap-2 text-sm">
+        <input type="checkbox" checked={changedOnly} onChange={(event) => setChangedOnly(event.target.checked)} />
+        Chỉ xuất {changedChapters.length} chương đã đổi (giữ số chương trong sách)
+      </label>}
       {(warnings.length > 0 || (!whole && Boolean(book.pendingChanges))) && (
         <div className="mt-3 space-y-1.5 rounded-xl bg-warning-soft p-3 text-sm">
           {warnings.map((line) => (
