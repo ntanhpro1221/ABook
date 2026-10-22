@@ -2,6 +2,12 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a88fix` trên `dev/uxfix102` (nền d787857c): Tạm dừng / Dừng / Tiếp tục / hồi phục sự cố trong Studio - trạng thái "Đang dừng…"
+khoá hai nút tới checkpoint kế; Dừng khi supervisor đã chết trả 409 tiếng Việt thay 500; "Làm lại phân tích từ đầu" kiểm trước, đưa bản dở
+vào chỗ chờ Hoàn tác và khôi phục nếu tạo cuốn mới hỏng; "Tiếp tục" lần hai giữ đồng ý chạy trên pin; UI dùng phản hồi máy chủ ngay, làm mới
+khi lỗi; điện thoại + máy tính báo "tạm dừng vì pin"; toast đúng, lời hộp Dừng nhất quán, nguyên nhân sự cố hiện trên trang sách, sách xếp
+hàng nói rõ chờ cuốn nào; giữ máy thức (không giữ màn hình) khi sách đang chạy thật. Toàn bộ (Lead chạy): pytest 8764 passed, 9 skipped,
+2 xfailed, 0 F/E; vitest 1343 passed, 1 skipped; tsc exit 0; JVM 1378 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
 Đợt `a80fix2` trên `dev/uxfix99` (Codex tk3 bị cắt ở lượt kiểm cuối, Lead chạy toàn bộ): gói sửa lớn từ máy đã ghép có hạn đọc theo cỡ
 (30 s + cỡ / 16 KiB/s), máy chưa ghép vẫn 30 s; trần kết nối 32 tổng / 8 mỗi nguồn (máy tính), 8 / 6 (điện thoại); GET đóng sớm/503 thử
 lại tối đa 2 lần (200/800 ms), không POST. Toàn bộ a80fix + a80fix2: pytest 8690 passed, 9 skipped, 1 xfailed (lỗi 3), 0 F/E;
