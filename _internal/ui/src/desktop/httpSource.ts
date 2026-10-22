@@ -9,6 +9,7 @@ import { ReadAloudError, fetchClipBytes, type ClipOptions, type ReadAloudClip, t
 import { CLIP_STREAM_TYPE, LOCAL_MIME, clipFromStream, liveClipsSupported } from "@/listen/liveClip";
 import { tailFromWord } from "@/listen/words";
 import { ApiError, api, apiOrStream, canStream, mediaUrl } from "@/studio/api";
+import { watchAppDropPaths } from "@/studio/appDrops";
 import { pickFiles, pickFolder } from "@/studio/data";
 import { batchName, pickedFromDrop, planUpload, sendPlan, UPLOAD_LIMIT, type Picked } from "@/studio/upload";
 import { toast } from "sonner";
@@ -22,17 +23,7 @@ const DROP_LIMIT_MB = UPLOAD_LIMIT / 2 ** 20;
 
 /** Cửa sổ app (Tauri): HTML5 không nhận file thả vào (WebView2 giao cho vỏ), nên vỏ đọc đường dẫn thật và phát `abook-drag` vào trang (main.rs). */
 function watchAppDrops({ hover, drop }: Parameters<NonNullable<TextImport["watchDrops"]>>[0]): () => void {
-  const listener = (event: Event) => {
-    const detail = (event as CustomEvent<{ state?: string; paths?: string[] }>).detail;
-    if (detail?.state === "enter") hover(true);
-    else if (detail?.state === "leave") hover(false);
-    else if (detail?.state === "drop") {
-      hover(false);
-      drop((detail.paths ?? []).map(itemFromPath));
-    }
-  };
-  window.addEventListener("abook-drag", listener);
-  return () => window.removeEventListener("abook-drag", listener);
+  return watchAppDropPaths({ hover, drop: (paths) => drop(paths.map(itemFromPath)) });
 }
 
 /** Trình duyệt: trang không biết đường dẫn file thả vào, nên gửi từng file lên máy tính (cùng đường với Studio - studio/upload.ts) rồi đọc bản đã gửi. */
