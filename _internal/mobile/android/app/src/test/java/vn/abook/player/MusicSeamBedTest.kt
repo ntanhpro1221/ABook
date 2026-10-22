@@ -314,25 +314,88 @@ class MusicSeamBedTest {
         assertEquals(SeamClock.Promote.NEVER, SeamClock.promote(other.state))
     }
 
-    @Test fun promoteTargetPutsP3OnTheSameContentSampleAsTheLegacyBed() {
+    @Test fun legacySampleMapsTheOldBedPositionOntoTheSeam() {
         val s = seam()
         val start = s.loopEndSamples - s.xFrames // a87 bắt đầu mờ chéo ở loopEnd' - X'
-        fun at(offsetFrames: Long) = SeamClock.promoteTarget(s, (start + offsetFrames).toDouble() / s.sampleRate)
-        assertEquals(1, at(0).index)
-        assertEquals(0L, at(0).sample)
-        assertEquals(480L, at(480).sample) // trễ 10 ms so với hạn: Nối vào đúng chỗ ấy, nội dung trùng bài cũ
-        assertEquals(0L, SeamClock.promoteTarget(s, (start - 5000).toDouble() / s.sampleRate).sample) // sớm hơn hạn: kẹp ở đầu Nối
-        assertEquals(s.xFrames - 1L, SeamClock.promoteTarget(s, (s.loopEndSamples + 99999).toDouble() / s.sampleRate).sample) // muộn quá Nối: kẹp ở cuối
+        fun at(offsetFrames: Long) = SeamClock.legacySample(s, (start + offsetFrames).toDouble() / s.sampleRate)
+        assertEquals(0L, at(0))
+        assertEquals(480L, at(480)) // trễ 10 ms so với hạn: Nối ở đúng chỗ ấy, nội dung trùng bài cũ
+        assertEquals(-5000L, at(-5000)) // sớm hơn hạn / muộn quá Nối: không kẹp, người gọi quyết
+        assertEquals(s.xFrames + 99999L, at(s.xFrames + 99999L))
     }
 
-    @Test fun promoteTargetMatchesTheLoopPositionOfTheSeamItem() {
+    @Test fun legacySampleMatchesTheLoopPositionOfTheSeamItem() {
         // Nối ở mẫu u ứng với vị trí bài loopStart' + u/sr (SeamClock.trackSeconds): bài cũ ở loopEnd' - X' + u/sr cùng nhịp mờ chéo
         val s = seam()
         val u = 12345L
         val oldPos = (s.loopEndSamples - s.xFrames + u).toDouble() / s.sampleRate
-        val target = SeamClock.promoteTarget(s, oldPos)
-        assertEquals(u, target.sample)
+        assertEquals(u, SeamClock.legacySample(s, oldPos))
         val seamItemMs = u * 1000 / s.sampleRate
         assertEquals(s.loopStart + seamItemMs / 1000.0, SeamClock.trackSeconds(s, 1, seamItemMs), 0.002)
+    }
+
+    // ---- a87 -> P3 không để quãng im (SeamHandover) ----
+
+    private fun legacyAt(s: LoopSeam.Seam, offsetMs: Double) = (s.loopEndSamples - s.xFrames).toDouble() / s.sampleRate + offsetMs / 1000.0
+
+    @Test fun handoverTargetIsWhereTheOldBedWillBeWhenP3IsAudible() {
+        val s = seam()
+        val t = SeamHandover.target(s, legacyAt(s, 100.0), 250)!!
+        assertEquals(1, t.index)
+        assertEquals(Math.round(0.350 * s.sampleRate), t.sample) // 100 ms vào Nối + 250 ms trễ khởi động
+        assertEquals(0L, SeamHandover.target(s, legacyAt(s, -20.0), 0)!!.sample) // hẹn sớm hơn hạn một chút: kẹp ở đầu Nối
+    }
+
+    @Test fun handoverTargetGivesUpWhenTheSeamIsAboutToEnd() {
+        val s = seam()
+        val seamMs = s.xFrames * 1000.0 / s.sampleRate // 960 ms
+        assertNotNull(SeamHandover.target(s, legacyAt(s, seamMs - SeamHandover.GUARD_MS - 5.0), 0))
+        assertNull(SeamHandover.target(s, legacyAt(s, seamMs - SeamHandover.GUARD_MS + 5.0), 0))
+        assertNull(SeamHandover.target(s, legacyAt(s, 100.0), 900)) // trễ khởi động đẩy chỗ ra ngoài Nối
+        assertEquals(seamMs - 100.0, SeamHandover.remainingMs(s, legacyAt(s, 100.0)), 0.01)
+    }
+
+    @Test fun p3PositionIsTheSeekTargetPlusTheFramesTheAudioTrackPlayed() {
+        val s = seam()
+        // đã tua tới mẫu 4800 của Nối (100 ms), AudioTrack đã phát 2400 khung (50 ms): P3 ở 150 ms vào Nối, trên trục a87
+        assertEquals(legacyAt(s, 150.0), SeamHandover.p3Seconds(s, 4800, 2400), 1e-9)
+    }
+
+    @Test fun startupLagLearnsFromTheMeasuredPhase() {
+        assertEquals(170L, SeamHandover.nextLag(250, 80.0)) // P3 ra loa sớm hơn dự tính 80 ms (lệch dương = P3 ở trước a87)
+        assertEquals(330L, SeamHandover.nextLag(250, -80.0))
+        assertEquals(20L, SeamHandover.nextLag(100, 500.0)) // kẹp
+        assertEquals(900L, SeamHandover.nextLag(800, -500.0))
+    }
+
+    @Test fun handoverWaitsInSilenceUntilP3IsAudibleAndInPhase() {
+        fun decide(elapsed: Long = 100, remaining: Double = 800.0, retunes: Int = 0, played: Double? = null, delta: Double? = null, steady: Int = 0) =
+            SeamHandover.decide(elapsed, remaining, retunes, played, delta, steady)
+        // P3 chưa ra loa (không có số đo AudioTrack) hay mới phát chưa đủ: a87 vẫn kêu, chưa đổi tiếng dù pha tình cờ khớp
+        assertEquals(SeamHandover.Act.WAIT, decide(played = null, delta = null))
+        assertEquals(SeamHandover.Act.WAIT, decide(played = 20.0, delta = 0.0, steady = 5))
+        // đã ra loa, pha khớp nhưng mới thấy 1-2 lần: chờ đủ số lần đọc liền
+        assertEquals(SeamHandover.Act.WAIT, decide(played = 80.0, delta = 4.0, steady = 2))
+        assertEquals(SeamHandover.Act.SWITCH, decide(played = 80.0, delta = 4.0, steady = SeamHandover.STEADY_READINGS))
+        assertEquals(SeamHandover.Act.SWITCH, decide(played = 80.0, delta = -SeamHandover.TOLERANCE_MS, steady = SeamHandover.STEADY_READINGS))
+    }
+
+    @Test fun handoverRetunesWhenOutOfPhaseThenGivesUp() {
+        fun decide(delta: Double, retunes: Int, elapsed: Long = 600) = SeamHandover.decide(elapsed, 800.0, retunes, 90.0, delta, SeamHandover.steady(3, delta))
+        assertEquals(SeamHandover.Act.RETUNE, decide(delta = 82.6, retunes = 0)) // ca đo được trên máy ảo: P3 muộn 82,6 ms
+        assertEquals(SeamHandover.Act.RETUNE, decide(delta = -11.0, retunes = SeamHandover.MAX_RETUNES - 1))
+        assertEquals(SeamHandover.Act.FALLBACK, decide(delta = 40.0, retunes = SeamHandover.MAX_RETUNES))
+    }
+
+    @Test fun handoverFallsBackAtTheDeadlineOrWhenTheSeamIsAlmostOver() {
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(SeamHandover.DEADLINE_MS, 800.0, 0, null, null, 0)) // P3 không chạy được
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(300, SeamHandover.GUARD_MS.toDouble(), 0, 90.0, 0.0, 9)) // a87 tới cuối vòng trước khi P3 sẵn sàng
+        assertEquals(SeamHandover.Act.WAIT, SeamHandover.decide(SeamHandover.DEADLINE_MS - 1, SeamHandover.GUARD_MS + 1.0, 0, null, null, 0))
+    }
+
+    @Test fun steadyCountResetsWhenThePhaseDrifts() {
+        assertEquals(1, SeamHandover.steady(0, 3.0))
+        assertEquals(3, SeamHandover.steady(2, -9.9))
+        assertEquals(0, SeamHandover.steady(2, 10.1))
     }
 }

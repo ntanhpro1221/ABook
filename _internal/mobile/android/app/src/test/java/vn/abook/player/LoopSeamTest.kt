@@ -2,6 +2,8 @@ package vn.abook.player
 
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -127,5 +129,16 @@ class LoopSeamTest {
         assertEquals(30 + 417, frames.offsets[0]) // sau thẻ ID3 và khung Info
         assertEquals(30 + 417 * 13 - 417, frames.offsets[11])
         assertEquals(5, checkNotNull(LoopSeam.scanMp3(data, 5)).count)
+    }
+
+    @Test fun seekToWhereThePlayerAlreadyStandsIsDetectedSoItCanBeForcedToFlush() {
+        // P3 đứng chờ ở đầu Nối (mục 1, 0 ms); tua tới mẫu 170 của Nối cũng là mili giây 0 -> ExoPlayer sẽ bỏ qua, cần tua đệm
+        assertTrue(LoopSeam.seekIsNoop(1, 0, 1, LoopSeam.seekPlan(seam(48000, 0), 1, 170).positionMs))
+        assertTrue(LoopSeam.seekIsNoop(1, 101, 1, 100))
+        assertFalse(LoopSeam.seekIsNoop(1, 0, 2, 0)) // khác mục
+        assertFalse(LoopSeam.seekIsNoop(1, 0, 1, 100)) // khác chỗ
+        assertEquals(1L, LoopSeam.stepAside(0))
+        assertEquals(99L, LoopSeam.stepAside(100))
+        assertTrue(LoopSeam.stepAside(0) != 0L && LoopSeam.stepAside(100) != 100L) // tua đệm là một vị trí khác nên không bị bỏ qua
     }
 }
