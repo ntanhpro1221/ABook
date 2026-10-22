@@ -250,4 +250,89 @@ class MusicSeamBedTest {
         assertEquals(4, SeamClock.stale(4)!!.last + 1) // removeMediaItems(2, 4): chẵn lẻ của mục không đổi
         assertEquals(2, SeamClock.stale(9)!!.first)
     }
+
+    // ---- vào giữa vòng (Task 3): a) Nối có sẵn trên đĩa -> P3 ngay; b) chưa có -> a87 phục vụ, xong thì P3 nhận ở ranh lặp ----
+
+    /** Giây kể từ đầu mốc rơi vào giữa Clip lặp thứ nhất (mục 2) / giữa Nối đầu (mục 1) của [seam]. */
+    private fun midLoopClip(s: LoopSeam.Seam = seam()): Double {
+        val clip0 = s.loopEndSamples - s.xFrames - s.audibleStartSamples
+        val period = s.loopEndSamples - s.loopStartSamples - s.xFrames
+        return (clip0 + s.xFrames + period / 2).toDouble() / s.sampleRate
+    }
+
+    private fun midSeam(s: LoopSeam.Seam = seam()): Double {
+        val clip0 = s.loopEndSamples - s.xFrames - s.audibleStartSamples
+        return (clip0 + s.xFrames / 2).toDouble() / s.sampleRate
+    }
+
+    @Test fun entryInsideTheFirstClipNeedsNoSeam() {
+        val built = (Rig().picker.choose(mp3(), cue) as SeamPicker.Choice.Use).built
+        assertEquals(SeamPicker.State.BUILDING, built.state)
+        assertTrue(SeamClock.servesEntry(built, 0.0))
+        assertTrue(SeamClock.servesEntry(built, 3.0))
+    }
+
+    @Test fun cachedSeamServesAMidLoopEntryAtOnceAndSeeksToTheExactItem() {
+        val rig = Rig(cached = true)
+        val built = (rig.picker.choose(mp3(), cue) as SeamPicker.Choice.Use).built
+        // a) WAV có sẵn: READY ngay trong choose, không việc nền, và mọi chỗ vào (giữa Nối, giữa Clip lặp) đều phục vụ được
+        assertEquals(SeamPicker.State.READY, built.state)
+        assertTrue(rig.jobs.isEmpty())
+        assertTrue(SeamClock.servesEntry(built, midSeam()))
+        assertTrue(SeamClock.servesEntry(built, midLoopClip()))
+        val t = SeamClock.target(built.seam, midLoopClip())
+        assertEquals(2, t.index)
+        val s = built.seam
+        val period = s.loopEndSamples - s.loopStartSamples - s.xFrames
+        assertTrue(Math.abs(period / 2 - t.sample) <= 1L)
+        assertEquals(1, SeamClock.target(built.seam, midSeam()).index)
+    }
+
+    @Test fun noCacheMidLoopEntryIsServedByTheLegacyPathWhileTheSeamBuilds() {
+        val rig = Rig()
+        val built = (rig.picker.choose(mp3(), cue) as SeamPicker.Choice.Use).built
+        assertEquals(SeamPicker.State.BUILDING, built.state)
+        assertFalse(SeamClock.servesEntry(built, midSeam()))
+        assertFalse(SeamClock.servesEntry(built, midLoopClip()))
+        assertEquals(1, rig.jobs.size) // Nối vẫn dựng nền cho lần nhận sau
+        // b) a87 phục vụ; ranh lặp mà Nối chưa xong thì đợi ranh sau; xong thì nhận; hỏng thì ở lại a87
+        assertEquals(SeamClock.Promote.WAIT, SeamClock.promote(built.state))
+        rig.runJobs()
+        assertEquals(SeamClock.Promote.NOW, SeamClock.promote(built.state))
+        assertTrue(SeamClock.servesEntry(built, midLoopClip())) // và lần vào kế (cùng Nối) đi P3 luôn
+    }
+
+    @Test fun brokenSeamNeverPromotes() {
+        val rig = Rig(renderFails = true)
+        val built = (rig.picker.choose(mp3(), cue) as SeamPicker.Choice.Use).built
+        rig.runJobs()
+        assertEquals(SeamClock.Promote.NEVER, SeamClock.promote(built.state))
+        // bản P3 tạo sẵn lỗi phát -> MusicBed gọi reject: cũng không nhận nữa
+        val rig2 = Rig()
+        val other = (rig2.picker.choose(mp3("b.mp3"), cue) as SeamPicker.Choice.Use).built
+        rig2.picker.reject(other, "lỗi phát")
+        assertEquals(SeamClock.Promote.NEVER, SeamClock.promote(other.state))
+    }
+
+    @Test fun promoteTargetPutsP3OnTheSameContentSampleAsTheLegacyBed() {
+        val s = seam()
+        val start = s.loopEndSamples - s.xFrames // a87 bắt đầu mờ chéo ở loopEnd' - X'
+        fun at(offsetFrames: Long) = SeamClock.promoteTarget(s, (start + offsetFrames).toDouble() / s.sampleRate)
+        assertEquals(1, at(0).index)
+        assertEquals(0L, at(0).sample)
+        assertEquals(480L, at(480).sample) // trễ 10 ms so với hạn: Nối vào đúng chỗ ấy, nội dung trùng bài cũ
+        assertEquals(0L, SeamClock.promoteTarget(s, (start - 5000).toDouble() / s.sampleRate).sample) // sớm hơn hạn: kẹp ở đầu Nối
+        assertEquals(s.xFrames - 1L, SeamClock.promoteTarget(s, (s.loopEndSamples + 99999).toDouble() / s.sampleRate).sample) // muộn quá Nối: kẹp ở cuối
+    }
+
+    @Test fun promoteTargetMatchesTheLoopPositionOfTheSeamItem() {
+        // Nối ở mẫu u ứng với vị trí bài loopStart' + u/sr (SeamClock.trackSeconds): bài cũ ở loopEnd' - X' + u/sr cùng nhịp mờ chéo
+        val s = seam()
+        val u = 12345L
+        val oldPos = (s.loopEndSamples - s.xFrames + u).toDouble() / s.sampleRate
+        val target = SeamClock.promoteTarget(s, oldPos)
+        assertEquals(u, target.sample)
+        val seamItemMs = u * 1000 / s.sampleRate
+        assertEquals(s.loopStart + seamItemMs / 1000.0, SeamClock.trackSeconds(s, 1, seamItemMs), 0.002)
+    }
 }

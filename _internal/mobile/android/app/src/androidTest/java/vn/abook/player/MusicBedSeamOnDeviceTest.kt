@@ -21,12 +21,13 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Đo đường P3 BÊN TRONG [MusicBed] (SPEC_loop_p3w_bed.md §43): cờ [MusicBed.musicSeamP3] bật, một sách giả có nhạc, đồng hồ giọng giả gọi [MusicBed.sync] mỗi 500 ms, bốn kịch bản
- * (S1 bình thường, S2 nhảy sớm tới chỗ cần Nối khi chưa dựng, S3 dựng không kịp, S4 đổi mốc giữa Nối). Không phát gì khác: nhạc ở âm lượng của MusicBed (levelDb -6),
- * tee PCM nằm TRƯỚC âm lượng nên bộ chấm đọc dòng `vol` để tính mức thật.
+ * Đo đường P3 BÊN TRONG [MusicBed] (SPEC_loop_p3w_bed.md §43): cờ [MusicBed.musicSeamP3] bật, một sách giả có nhạc, đồng hồ giọng giả gọi [MusicBed.sync] mỗi 500 ms, sáu kịch bản
+ * (S1 bình thường, S2 nhảy sớm tới chỗ cần Nối khi chưa dựng, S3 dựng không kịp, S4 mốc A hết giữa Nối đầu nên đổi sang bài B khi P3 đang trong Nối,
+ * S5 vào giữa Clip lặp khi Nối ĐÃ có trong cache -> `open p3` ngay, S6 vào giữa Clip lặp khi cache RỖNG -> `open a87` rồi `promote` sang P3 ở ranh lặp kế).
+ * Không phát gì khác: nhạc ở âm lượng của MusicBed (levelDb -6), tee PCM nằm TRƯỚC âm lượng nên bộ chấm đọc dòng `vol` để tính mức thật.
  *
  * Tham số (`am instrument -e ...`): `id` (tên bản ghi, mặc định `bed`), `file` / `file2` (mp3 của mốc A / B; S4 cần file2), `audibleStart` / `loopStart` / `loopEnd` (giây của bài A; `audibleEnd` tuỳ chọn;
- * hậu tố `2` cho bài B), `sc` (danh sách kịch bản, mặc định `S1,S2,S3,S4`), `seconds` (không dùng, giữ cho tương thích với MusicLoopSeamTest).
+ * hậu tố `2` cho bài B), `sc` (danh sách kịch bản, mặc định `S1,S2,S3,S4,S5,S6`), `seconds` (không dùng, giữ cho tương thích với MusicLoopSeamTest).
  *
  * Sách giả: ghi `book.json` + file nhạc thẳng vào `Store.bookDir(bookId)` (thư mục sách thật của app, nơi `Store.playableManifest` đọc - đúng đường MusicBed.sync dùng, cùng đường
  * `Streaming.chapterUri` lấy file bài `music/<sha1>.mp3`), thay vì giả `Store`/`MusicBed` - nên mốc, tên bài, `levelDb` và URI đều đi qua mã thật. `book.json` viết lại mỗi kịch bản
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * (hai bài giải mã liền mạch từ đầu như §41). Dòng (giây 6 chữ số, `<ns>` = System.nanoTime):
  * `SEAM ...` / `SEAM2 ...` như MusicLoopSeamTest, `RFMT`, `RFMT2`, `RINFO`, `RINFO2`, `GAIN <g>`,
  * `EV <ns> scenario <Sx>` / `EV <ns> scenario_end` (số trình phát k đánh lại từ 0 mỗi kịch bản), `EV <ns> sync <t> <nhảy 0|1>`,
- * và các sự kiện của MusicBed (xem [SeamEvents]): `open`, `plan`, `attach`, `demote`, `seek`, `pos`, `item`, `audiotrack`, `vol`, mỗi dòng sau `EV <ns> `;
+ * và các sự kiện của MusicBed (xem [SeamEvents]): `open`, `plan`, `attach`, `demote`, `promote`, `seek`, `pos`, `item`, `audiotrack`, `vol`, mỗi dòng sau `EV <ns> `;
  * cùng `FMT <ns> <k> <seg> <sr> <ch> <enc>` và `PCM <k> <seg> <f0> <n> <off> <ns>` (off = byte trong file `<id>_<sc>_p<k>.pcm`).
  */
 @OptIn(UnstableApi::class)
@@ -133,7 +134,7 @@ class MusicBedSeamOnDeviceTest {
         val file = File(args.getString("file") ?: File(dir, "track.mp3").path)
         assertTrue("không có file nhạc ${file.path}", file.isFile)
         val file2 = args.getString("file2")?.let(::File)?.takeIf { it.isFile }
-        val scenarios = (args.getString("sc") ?: "S1,S2,S3,S4").split(',').map { it.trim() }.filter { it.isNotEmpty() }
+        val scenarios = (args.getString("sc") ?: "S1,S2,S3,S4,S5,S6").split(',').map { it.trim() }.filter { it.isNotEmpty() }
         val aStart = number("audibleStart") ?: 0.0
         val aLoopStart = number("loopStart") ?: error("thiếu loopStart")
         val aLoopEnd = number("loopEnd") ?: error("thiếu loopEnd")
@@ -150,6 +151,7 @@ class MusicBedSeamOnDeviceTest {
         val trackB = trackName('b')
         val tees = mutableListOf<PlayerTee>()
         val attached = AtomicBoolean(false)
+        val promoted = AtomicBoolean(false)
         try {
             onMain {
                 Store.init(context)
@@ -172,7 +174,9 @@ class MusicBedSeamOnDeviceTest {
             val cueProbe = MusicCues.Cue(0.0, 1e6, trackA, null, audibleStart = aStart, audibleEnd = aAudibleEnd, loopStart = aLoopStart, loopEnd = aLoopEnd)
             val loopA = MusicCues.loopBounds(cueProbe, durationA)
             check(loopA.crossfade) { "bài A không lặp mờ chéo với các mốc đã cho" }
-            val seam = LoopSeam.plan(context, file, LoopSeam.Bounds(loopA.start, loopA.loopStart, loopA.loopEnd), x)
+            // Khoá bộ nhớ đệm Nối gồm đường dẫn file: dùng bản trong thư mục sách (đúng file MusicBed mở), không phải file gốc, thì S5 mới thấy Nối dựng sẵn.
+            val bookFileA = File(bookDir, trackA)
+            val seam = LoopSeam.plan(context, bookFileA, LoopSeam.Bounds(loopA.start, loopA.loopStart, loopA.loopEnd), x)
             log("SEAM ${seam.buildMs} ${seam.sampleRate} ${seam.channels} ${sec(seam.audibleStart)} ${sec(seam.loopStart)} ${sec(seam.loopEnd)} ${seam.xFrames}")
             val sr = seam.sampleRate.toDouble()
             val clip0 = (seam.loopEndSamples - seam.xFrames - seam.audibleStartSamples) / sr // giây từ đầu mốc tới đầu Nối đầu
@@ -193,20 +197,26 @@ class MusicBedSeamOnDeviceTest {
                 val cueB = MusicCues.Cue(0.0, 1e6, trackB, null, audibleStart = bStart, audibleEnd = bAudibleEnd, loopStart = bLoopStart, loopEnd = bLoopEnd)
                 val loopB = MusicCues.loopBounds(cueB, durationB)
                 if (loopB.crossfade) {
-                    val seam2 = LoopSeam.plan(context, file2, LoopSeam.Bounds(loopB.start, loopB.loopStart, loopB.loopEnd), x)
+                    val seam2 = LoopSeam.plan(context, File(bookDir, trackB), LoopSeam.Bounds(loopB.start, loopB.loopStart, loopB.loopEnd), x)
                     log("SEAM2 ${seam2.buildMs} ${seam2.sampleRate} ${seam2.channels} ${sec(seam2.audibleStart)} ${sec(seam2.loopStart)} ${sec(seam2.loopEnd)} ${seam2.xFrames}")
                 }
             }
 
             MusicBed.testEvents = { line ->
                 if (line.startsWith("attach ")) attached.set(true)
+                if (line.startsWith("promote ")) promoted.set(true)
                 log("EV ${System.nanoTime()} $line")
             }
 
             for (sc in scenarios) {
-                // 1. Sách của kịch bản: mốc A đủ cho 3 vòng (S4: ranh B nằm 1 s sau chỗ nhảy, giữa Nối đầu), mốc B ngay sau
+                // 1. Sách của kịch bản: mốc A đủ cho 3 vòng (S4: mốc A hết đúng giữa Nối đầu; S5, S6: dư một vòng vì vào giữa vòng), mốc B ngay sau
                 val tMid = clip0 + seamSec / 2
-                val endA = if (sc == "S4") tMid + 1.0 else clip0 + 3 * period + seamSec + 5.0
+                val tMidLoop = clip0 + seamSec + period / 2 // giữa Clip lặp thứ nhất (mục 2)
+                val endA = when (sc) {
+                    "S4" -> tMid
+                    "S5", "S6" -> clip0 + 4 * period + seamSec + 5.0
+                    else -> clip0 + 3 * period + seamSec + 5.0
+                }
                 if (sc == "S4" && !hasB) {
                     log("SKIP S4 cần file2 + loopStart2 + loopEnd2")
                     continue
@@ -222,21 +232,21 @@ class MusicBedSeamOnDeviceTest {
                     .put("chapters", JSONArray().put(JSONObject().put("id", 0).put("title", "c0").put("file", "c0.mp3"))).put("music", music)
                 File(bookDir, "book.json").writeBytes(manifest.toString().toByteArray(Charsets.UTF_8))
 
-                // 2. Bộ nhớ đệm Nối: xoá trước S1, S2, S3; giữ cho S4 (có sẵn từ S1, chưa có thì dựng một lần ngoài kịch bản)
+                // 2. Bộ nhớ đệm Nối: xoá trước mọi kịch bản; S5 dựng sẵn một lần ngoài kịch bản (Nối ĐÃ CÓ khi vào giữa vòng)
                 MusicBed.awaitIdle(60_000) // việc dựng chậm của kịch bản trước phải xong, không thì nó ghi WAV vào cache của kịch bản này
-                if (sc == "S4") {
-                    val built = LoopSeam.build(context, file, LoopSeam.Bounds(loopA.start, loopA.loopStart, loopA.loopEnd), x)
+                clearCache()
+                if (sc == "S5") {
+                    val built = LoopSeam.build(context, bookFileA, LoopSeam.Bounds(loopA.start, loopA.loopStart, loopA.loopEnd), x)
                     log("SEAMSRC ${if (built.cached) "cache" else "built"} ${built.buildMs}")
-                } else {
-                    clearCache()
                 }
                 MusicBed.testRenderDelayMs = when (sc) {
                     "S2" -> 4000L
                     "S3" -> (clip0 * 1000).toLong() + 5000L
-                    else -> 0L
+                    else -> 0L // S6 cũng 0: Nối dựng thật ở nền, xong thật lâu trước ranh lặp
                 }
                 MusicBed.testPlayerSeq = 0
                 attached.set(false)
+                promoted.set(false)
                 MusicBed.testAudioProcessor = {
                     val k = MusicBed.testCreating
                     val tee = PlayerTee(k, File(dir, "${id}_${sc}_p$k.pcm"))
@@ -271,8 +281,25 @@ class MusicBedSeamOnDeviceTest {
                             voice.drift(10.0)
                         }
                         "S4" -> {
-                            voice.at(tMid, false) // giữa Nối đầu; ranh B ở endA = tMid + 1 s
-                            voice.drift(5.0) // tới quá ranh B 4 s
+                            // Như S1 (vào từ đầu, chờ `attach`, nhảy tới 3 s trước Nối đầu), nhưng mốc A hết giữa Nối đầu: P3 đang ở trong Nối thì mốc đổi sang bài B.
+                            voice.at(0.0, false)
+                            voice.drift(3.0)
+                            voice.drift(10.0) { attached.get() }
+                            if (!attached.get()) log("NOATTACH S4")
+                            voice.at(clip0 - 3, true)
+                            voice.drift(3.0 + seamSec / 2 + 4.0) // tới ranh (tMid) rồi 4 s nữa
+                        }
+                        "S5" -> {
+                            // Vào giữa Clip lặp thứ nhất khi Nối ĐÃ nằm trong cache: phải `open p3` ngay (tua tới mục 2, đúng mẫu), không demote; trôi qua một Nối.
+                            voice.at(tMidLoop, true)
+                            voice.drift(period / 2 + 3.0)
+                        }
+                        "S6" -> {
+                            // Vào giữa Clip lặp thứ nhất, cache RỖNG: `open a87`, Nối dựng nền, tới ranh lặp kế thì `promote` sang P3; trôi tiếp qua một Nối của P3.
+                            voice.at(tMidLoop, true)
+                            voice.drift(1.6 * period + 5.0) { promoted.get() }
+                            if (!promoted.get()) log("NOPROMOTE S6")
+                            voice.drift(period + seamSec + 3.0)
                         }
                         else -> log("SKIP $sc kịch bản lạ")
                     }
