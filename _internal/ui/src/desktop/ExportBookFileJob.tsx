@@ -10,7 +10,7 @@ import { LiveText, Progress } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
 import { listenOnlyOwner } from "@/shared/peerStudio";
-import { BOOK_FILE_COPY, exportedOnComputer, exportWhereHint, jobView, lastExportHint, lastExportPlace, M4B_COPY, MP3_COPY, PROJECT_FILE_COPY, runningExports, type ExportCopy, type ExportJob } from "./bookFileExport";
+import { BOOK_FILE_COPY, exportable, exportedOnComputer, exportWhereHint, jobView, lastExportHint, lastExportPlace, M4B_COPY, MP3_COPY, PROJECT_FILE_COPY, runningExports, type ExportCopy, type ExportJob } from "./bookFileExport";
 import { AUDIOBOOK_COPY } from "./listenExport";
 
 // "Xuất file sách", "Xuất M4B", "Xuất MP3" và "Xuất sách nói" (sách Nghe ngay) chạy nền ở máy chủ (webui/export_jobs.py): menu (hay hộp Xuất sách nói) chỉ chọn
@@ -89,8 +89,8 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
   };
   return (
     <DropdownMenu.Item
-      // Chưa có chương nào nghe được thì không có gì để xuất (soát UX 29-09: bấm được rồi nhận lỗi 409); đang làm thì chờ xong.
-      disabled={!book.chaptersAvailable || job?.state === "running"}
+      // Chưa có gì để xuất thì khoá (soát UX 29-09: bấm được rồi nhận lỗi 409); file sách mang cả chữ chương chưa có audio (a99 V5); đang làm thì chờ xong.
+      disabled={!exportable(kind, book) || job?.state === "running"}
       onSelect={() => void run()}
       className="flex h-auto cursor-default items-center gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
@@ -98,7 +98,8 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
       <span className="min-w-0">
         <span className="block">{label}</span>
         <span className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
-          {lastExportHint(job, KINDS[kind].copy, dataUpdatedAt) ?? exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot)}
+          {lastExportHint(job, KINDS[kind].copy, dataUpdatedAt) ??
+            (kind === "bookfile" && !book.chaptersAvailable && book.chaptersTotal ? "Chưa có audio: file chỉ mang chữ của các chương" : exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot))}
         </span>
       </span>
     </DropdownMenu.Item>

@@ -20,6 +20,18 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Gửi từ thiết bị khác hay kéo vào trình duyệt nhận file tới 40 MB; file lớn hơn thì lời báo chỉ cách tách nhỏ hoặc mở ngay trên máy tính.
 - TXT mã hoá tiếng Việt cũ (TCVN3, VNI) được nhận ra và báo (chữ đang vỡ, cách chuyển sang UTF-8); ABook không tự đổi chữ.
 
+### Xuất và chia sẻ
+
+- “Lưu thành…” không bao giờ ghi đè lặng lẽ lên một file có sẵn: tên đã có thì sách lưu vào tên trống kế tiếp (ví dụ “Tên (2).abook”) và app nói rõ.
+- Điện thoại: “Lưu” vào file đã nhớ giờ dựng và kiểm gói trước, rồi mới ghi; lỗi giữa chừng (đầy ổ, mất kết nối) thì bản lưu trước vẫn còn nguyên thay vì file rỗng.
+- Lưu dự án (.abookproj) mà nguồn đổi giữa chừng thì báo bằng tiếng Việt và giữ file xuất cũ, như khi lưu .abook.
+- Mở lại cùng một file .abook đã có lớp sửa không còn bị báo “file hỏng” hay đòi thêm chỗ đĩa; cuốn có sẵn được mở lại luôn.
+- Điện thoại: “Xuất MP3” có ô “Kèm nhạc nền” như “Xuất M4B”, cùng mức nhạc và ghi công; điện thoại không ghi được MP3 có trộn nhạc nên mỗi chương ra file .m4a (hộp nói trước), kèm bìa, danh sách phát và file “Ghi công nhạc nền”.
+- Máy tính: sách nhận từ file .abook cũng có “Xuất MP3” và “Xuất M4B” như trên điện thoại.
+- Dự án chỉ có chữ: lưu .abook không còn bị khoá, và hộp nói rõ gói sẽ mang những gì.
+- Điện thoại: mở file .abook từ app khác qua “Chia sẻ” (kể cả khi file được gửi như tệp nhị phân hay zip); file không phải .abook thì báo rõ thay vì nhập hỏng.
+- Ước cỡ file .abook tính cả câu mẫu giọng, bìa, kịch bản và dàn nhân vật; cảnh báo ổ FAT32 dùng đúng con số ấy.
+
 ## [0.4.128] - 2026-10-23
 
 ### Thư viện

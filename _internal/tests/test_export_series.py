@@ -216,8 +216,9 @@ def test_the_export_dialog_can_ask_how_big_the_book_file_will_be(series: tuple[P
         alone_status, alone = _get(server, parts[1], "export-size")
     finally:
         server.stop()
-    assert (status, whole) == (200, {"bytes": 3 * each, "parts": 3, "musicPending": 0})
-    assert (alone_status, alone) == (200, {"bytes": each, "parts": 1, "musicPending": 0})
+    # Ngoài audio còn kịch bản, dàn nhân vật, sổ chương (export.packed_extras_bytes - soát a99 T1): số ước chỉ hơn audio một ít ở sách thử nhỏ.
+    assert (status, whole["parts"], whole["musicPending"]) == (200, 3, 0) and 3 * each < whole["bytes"] < 3 * each + 100_000
+    assert (alone_status, alone["parts"], alone["musicPending"]) == (200, 1, 0) and each < alone["bytes"] < each + 40_000
 
 
 def _get(server, project: Path, route: str) -> tuple[int, dict]:
@@ -250,7 +251,8 @@ def test_the_estimated_size_counts_the_background_music_that_travels_with_the_bo
         status, alone = _get(server, parts[1], "export-size")
     finally:
         server.stop()
-    assert (status, alone) == (200, {"bytes": each + 1000, "parts": 1, "musicPending": 1})
+    assert (status, alone["parts"], alone["musicPending"]) == (200, 1, 1)
+    assert each + 1000 < alone["bytes"] < each + 1000 + 40_000, "audio + bài nhạc trong bộ đệm + phần kịch bản / dàn nhân vật"
 
 
 def test_exporting_again_into_the_same_place_never_overwrites_the_first_export(tmp_path: Path) -> None:

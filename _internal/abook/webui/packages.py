@@ -226,10 +226,13 @@ def _present(root: Path, relative: Any) -> bool:
 
 def damaged_files(folder: Path) -> list[str]:
     """File `book.json` của cuốn đã nhập hứa mà trên đĩa mất hay sai cỡ (xoá tay, ổ hỏng, chép thiếu - soát a28 lỗi 9). Mở lại đúng file
-    sách ấy thì chép bù (`import_opened`)."""
+    sách ấy thì chép bù (`import_opened`). Lớp sửa (edits.json, edits/cover.jpg) không tính: người nghe sửa tại chỗ nên cỡ đổi là bình
+    thường; file ấy hỏng thì book_edits.load coi như rỗng chứ không làm hỏng thư viện (soát a99 V2)."""
     files = (manifest(folder).get("package") or {}).get("files") or {}
     damaged = []
     for name, expected in files.items() if isinstance(files, dict) else ():
+        if name in (book_edits.EDITS_FILE, book_edits.EDITS_COVER):
+            continue
         found = _inside(folder, name)
         try:
             size = found.stat().st_size if found is not None else None
