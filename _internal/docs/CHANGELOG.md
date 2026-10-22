@@ -31,6 +31,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Khi bạn nhập sách có XML hỏng (nhiều phần tử gốc, thiếu thẻ đóng hay chữ ngoài phần tử gốc), điện thoại từ chối giống máy tính; mục lục hỏng vẫn được bỏ qua để lấy tên chương từ chữ.
 - Khi bạn nhập EPUB có chương bị chia thành hàng nghìn tệp nhỏ, các mảnh được ghép nhanh hơn và giữ đúng thứ tự chữ, kể cả chú thích cuối chương.
 - Nút "Áp dụng" không còn tắt oan: nếu bạn sửa cách đọc hay người nói đúng lúc sách đang thu chương cuối, hoặc ngay lúc sách vừa khởi động, thay đổi ấy trước đây có thể chưa được áp mà bộ đếm vẫn về 0. Giờ máy áp chúng trước khi chốt "Hoàn tất", và nút chỉ tắt khi từng thay đổi đã thật sự được áp.
+- Khi điểm lặp nhạc nền vượt cuối file thật, máy tính và điện thoại dùng cuối file để bạn nghe nhạc nối vòng đúng lúc.
+- Khi nguồn nhạc trả về thân rỗng, điện thoại bỏ lần tải hỏng để bạn có thể tải lại bài, kể cả khi danh mục không ghi dung lượng.
+- Khi bạn xuất MP3 hay M4B có chọn "Kèm nhạc nền", tên bài, tác giả, giấy phép và lời "đã chỉnh sửa" của nhạc CC BY đi cùng file: nằm trong thẻ ghi chú (từng chương MP3 ghi nhạc của chính chương ấy), cùng một file "Ghi công nhạc nền.txt" bên cạnh bản xuất trên máy tính; M4B trên điện thoại mang ghi công trong thẻ ghi chú. Bài không có tác giả không còn hiện chữ "by" trống.
+- Nhạc nền không còn chọn bài mang giấy phép đòi ghi công mà danh mục thiếu tên tác giả, cả khi chọn tự động lẫn khi bạn ghim bài; máy tính và điện thoại cùng bỏ bài ấy.
+- Điện thoại kiểm bài nhạc tải về đúng dung lượng và dấu vân tay danh mục ghi; bài tải cụt hay hỏng bị xoá và tải lại, thay vì nhạc im hay vấp mãi.
+- Bài nhạc nền bạn ghim thay một bài cũ không còn thừa hưởng chỗ kết ("đuôi") của bài cũ nên không bị cắt hay dừng giữa chừng trên máy tính và điện thoại.
+- Nhạc nền trên điện thoại không còn vọt lên to giữa chừng khi bài tải chậm; nhạc chọn theo cảnh trên điện thoại cũng tính độ phân tán riêng của từng bài như máy tính, nên chọn bài giống nhau ở cả hai máy.
+- Khi bạn đóng sách trên điện thoại, nhạc nền được nhả hẳn thay vì giữ bài đang mở tới lần mở sách sau.
 
 ## [0.4.122] - 2026-10-22
 

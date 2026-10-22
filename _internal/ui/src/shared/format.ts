@@ -181,6 +181,25 @@ export function licenseLabel(code?: string | null, url?: string | null): string 
   return raw;
 }
 
+/** Dòng ghi công của một bài nhạc nền: chuỗi `attribution` của danh mục khi bài có tác giả; không có tác giả (bài cc0, nhạc người dùng nhập)
+ *  thì chỉ tên bài - không bao giờ in "by" rỗng. Bản Python: `music_export.credit_line`. */
+export function musicCreditText(track: { title?: string | null; creator?: string | null; attribution?: string | null }): string {
+  const creator = (track.creator ?? "").trim();
+  const attribution = (track.attribution ?? "").trim();
+  if (attribution && creator) return attribution;
+  return [(track.title ?? "").trim(), creator].filter(Boolean).join(" - ");
+}
+
+/** Nhạc nền này có giấy phép đòi ghi công (khác cc0; nhạc người dùng nhập không có giấy phép) - nhạc ấy trong sách đã được cắt vòng, trộn dưới giọng đọc
+ *  và chỉnh âm lượng, nên phải kèm [MUSIC_MODIFIED_NOTE] (CC BY đòi nói rõ đã chỉnh sửa). */
+export function musicNeedsModifiedNote(license?: string | null): boolean {
+  const code = (license ?? "").trim().toLowerCase();
+  return code !== "" && code !== "cc0";
+}
+
+/** Lời "đã chỉnh sửa" đi kèm ghi công nhạc CC BY; cùng câu với bản xuất MP3 / M4B (`music_export.MODIFIED_NOTE`). */
+export const MUSIC_MODIFIED_NOTE = "Đã chỉnh sửa: các bài nhạc được cắt vòng, trộn nhỏ dưới giọng đọc và chỉnh âm lượng cho vừa sách.";
+
 /** Vân tay chứng chỉ để người dùng nhìn và đối chiếu: nhóm 4 ký tự, hoa - "AB12 CD34 ..." như `tls.display` / `Pin.display`.
  *  Nhận cả dạng hex lưu sẵn lẫn dạng đã nhóm (chạy lại không đổi); rỗng thì trả rỗng. */
 export function formatFingerprint(value?: string | null): string {

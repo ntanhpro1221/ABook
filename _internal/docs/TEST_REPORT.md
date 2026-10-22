@@ -89,6 +89,10 @@ callback hẹn giờ chạy ba lần thay vì hai. Test này đã qua trong lư�
 **9 passed, 0 F/E, exit 0**. Giữ nguyên phạm vi sáu lỗi nhập sách; không gọi lượt đầy đủ là exit 0.
 Các lượt đầy đủ có warning cp1252 ở subprocess readerthread và timeout socket ở server giả tải nhạc, ngoài phạm vi nhập sách.
 Toàn bộ (Lead chạy lại): pytest 8453 passed, 9 skipped, 0 F/E, exit 0; vitest 1239 passed; tsc exit 0; JVM 1205 tests, 0 F/E.
+Đợt `musedge` trên `dev/uxfix84`: soát 10 ca biên của nhạc nền (catalog rỗng, tải thân rỗng, điểm vòng sát cuối file, đóng sách khi đang tải...).
+Thêm 26 lượt test nhạc Python/TS/JVM; sửa nhận thân tải rỗng trên Android và điểm vòng vượt cuối file thật trên cả ba nền tảng.
+Pytest các file nhạc: 544 pass, 2 skip, 0 F/E; Vitest 130 pass; JVM 203 pass; tsc --noEmit exit 0. Tất cả runner exit 0; hash quality implementation giữ nguyên.
+Toàn bộ (Lead chạy lại, kể cả stub android/os trong cây test JVM): pytest 8389 passed, 9 skipped, 0 F/E, exit 0; vitest 1252 passed; tsc exit 0; JVM 1222 tests, 0 F/E.
 
 Đợt `dev/rvfix` (từ 0.4.120): giữ giới/tuổi khi lượt người nói đổi namespace của cùng vai local trong cùng chương;
 không checkpoint hoà giải khi thiếu model (request lỗi giữ nhãn cũ như trước); đóng luồng cả khi bù độ to/hoàn tất clip lỗi;
@@ -660,3 +664,4 @@ SQLite `integrity_check` trả `ok` và không có lỗi khóa ngoại. Các seg
 Bắt buộc smoke test một chapter 2.000–5.000 từ trước khi chạy book rất lớn.
 
 - 22-10 dev/uxfix82 (a74fix: dữ liệu điện thoại bền khi app bị giết - migration/rekey journal/fsync/.corrupt, retake có operation_id, chỗ nghe ReadAloud có anchor, bìa xoá sau khi JSON đã ghi): pytest 8391 passed / 9 skipped / 0 F/E; vitest 1241 passed; tsc 0; gradle 1219 / 0 F/E / 6 skip; hash 67286434.
+- 22-10 dev/uxfix84 (musfix: ghi công nhạc trong bản xuất, bỏ bài thiếu tác giả, kiểm bytes/sha1 bài tải, mờ vào khi sẵn sàng, nhả nhạc khi đóng sách): pytest 8381 passed / 9 skipped / 0 F/E; vitest 1243 passed; tsc 0; gradle 1213 / 0 F/E / 6 skip; hash 67286434.

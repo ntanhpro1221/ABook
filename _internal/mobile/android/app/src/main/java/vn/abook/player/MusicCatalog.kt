@@ -56,8 +56,11 @@ class MusicCatalog(
     /** Nguồn trả lời nhưng báo lỗi HTTP (404, 403...): nguồn vẫn nối được, chỉ bài / file ấy hỏng - KHÔNG phải lỗi mạng (như `urllib.error.HTTPError`). */
     class HttpFailure(val code: Int) : IOException("HTTP $code")
 
-    /** Lỗi tại chỗ không do mạng (bản sao khác bản gốc, không ghi được file): bài ấy hỏng thật. */
+    /** Lỗi tại chỗ không do mạng (bản tải về khác `bytes` / `sha1` của danh mục, không ghi được file): bài ấy hỏng thật. */
     class LocalFailure(message: String) : IOException(message)
+
+    /** Nguồn đóng kết nối sớm, chưa đủ Content-Length: tải cụt, KHÔNG lưu như bài tốt (`DownloadCut` của webui/server.py). Là lỗi mạng: bài vẫn tốt, thử lại. */
+    class Cut(copied: Long, length: Long) : IOException("tải đứt sau $copied/$length byte")
 
     /** Mọi nguồn của bài hỏng vì MẠNG (không phân giải được tên, không nối được, hết giờ, đứt giữa chừng, bắt tay SSL): bài vẫn tốt, chỉ chưa
      *  tải được - người gọi không tính vào số lần bỏ bài, thử lại khi có mạng (như `network_only` của `music_track_file`). */
@@ -329,13 +332,23 @@ class MusicCatalog(
         return SceneMusic.near(grid, valence, arousal, radius, ::cell)
     }
 
-    /** File bài đã tải về máy (không tải); chưa có thì null. */
-    fun cached(link: String): File? = fileOf(link).takeIf { it.isFile }
+    /** File bài đã tải về máy (không tải); chưa có thì null. File rỗng (tải hỏng từ bản cũ) không phải bài. */
+    fun cached(link: String): File? = fileOf(link).takeIf { it.isFile && it.length() > 0 }
 
-    /** Như [cached] nhưng ghi nhận bài vừa được dùng (giờ sửa file = lần dùng gần nhất, để [prune] xoá bài lâu không nghe trước); chỉ ghi lại khi đã quá [TOUCH_MS]. */
-    fun use(link: String): File? = cached(link)?.also { file ->
+    /** Như [cached] nhưng ghi nhận bài vừa được dùng (giờ sửa file = lần dùng gần nhất, để [prune] xoá bài lâu không nghe trước); chỉ ghi lại khi đã quá [TOUCH_MS].
+     *  `info` (mục danh mục của bài, nếu biết): file khác `bytes` của danh mục là bài cụt - xoá để lần sau tải lại, trả null. */
+    fun use(link: String, info: JSONObject? = null): File? = cached(link)?.takeUnless { dropIfCut(it, info) }?.also { file ->
         val now = clock()
         if (now - file.lastModified() > TOUCH_MS) file.setLastModified(now)
+    }
+
+    /** File bài cụt (khác `bytes` danh mục ghi): xoá nó và trả true - bộ nhớ đệm không giữ bài hỏng như bài tốt, bài được tải lại. */
+    private fun dropIfCut(file: File, info: JSONObject?): Boolean {
+        val size = (info?.opt("bytes") as? Number)?.toLong() ?: return false
+        if (file.length() == size) return false
+        log("danh mục nhạc: ${file.name} dài ${file.length()} byte, danh mục ghi $size - xoá, tải lại")
+        file.delete()
+        return true
     }
 
     /**
@@ -398,6 +411,7 @@ class MusicCatalog(
      * thật ([markUnavailable], chưa quá [UNAVAILABLE_MS]). Chưa biết thì coi là được. Khác [usable] (chỉ cỡ): [usable] hỏi chuyện BÀI, hàm này hỏi cả chuyện MẠNG.
      */
     fun available(link: String): Boolean {
+        if (synchronized(lock) { link in uncredited }) return false // ghi công thiếu tên tác giả vẫn vi phạm CC BY: bài này không vào sách dù đã tải
         if (cached(link) != null) return true
         if (link.startsWith(MusicStore.LOCAL_PREFIX)) return false // nhạc người dùng nhập không tải từ đâu được: không có file là không dùng được
         if (!usable(link, null)) return false
@@ -409,41 +423,52 @@ class MusicCatalog(
     /** Bài đã tra cỡ trong danh mục ([verifySizes]) và không quá [TRACK_MAX_BYTES]: khỏi tra lại. */
     private val sized = HashSet<String>()
 
+    /** Bài phải ghi công mà thiếu tác giả ([lacksCredit]) đã gặp khi tra danh mục: không chọn, không ghim (`_music_uncredited` của server.py). */
+    private val uncredited = HashSet<String>()
+
     /**
      * Tra cỡ (`bytes` của mảnh `tracks/`; ô `cells/` không có) của các bài trong MỘT lượt (mảnh tải song song, [lookup]) và ghi sổ `too_big` bài nào quá [TRACK_MAX_MB]
-     * (`server.music_verify_sizes`). True khi VỪA phát hiện bài quá cỡ - người gọi chọn lại, [usable] từ đó loại nó. Bài đã tra / đã tải về khỏi tra lại; danh mục chưa đọc
-     * được hay bài không ghi cỡ: chưa biết, coi là vừa (Content-Length bù khi tải).
+     * (`server.music_verify_sizes`) và ghi sổ bài phải ghi công mà thiếu tác giả ([lacksCredit], cả bài đã tải). True khi VỪA phát hiện bài như thế - người gọi chọn lại,
+     * [usable] / [available] từ đó loại nó. Bài đã tra khỏi tra lại; danh mục chưa đọc được hay bài không ghi cỡ: chưa biết, coi là vừa (Content-Length bù khi tải).
      */
     fun verifySizes(links: Collection<String>): Boolean {
-        val unknown = synchronized(lock) { links.filter { it !in sized && (tooBig[it] ?: 0L) <= TRACK_MAX_BYTES } }.distinct().sorted().filter { cached(it) == null }
+        val unknown = synchronized(lock) { links.filter { it !in sized && it !in uncredited && (tooBig[it] ?: 0L) <= TRACK_MAX_BYTES } }.distinct().sorted()
         if (unknown.isEmpty()) return false
         val found = try {
             lookup(unknown)
         } catch (_: Exception) {
             return false
         }
-        var oversize = false
+        var flagged = false
         for (link in unknown) {
             val info = found[link] ?: continue
             val size = (info.opt("bytes") as? Number)?.toLong()
-            if (size != null && size > TRACK_MAX_BYTES) {
+            if (lacksCredit(info)) {
+                synchronized(lock) { uncredited.add(link) }
+                flagged = true
+            } else if (cached(link) == null && size != null && size > TRACK_MAX_BYTES) {
                 markTooBig(link, size)
-                oversize = true
+                flagged = true
             } else {
                 synchronized(lock) { sized.add(link) }
             }
         }
-        return oversize
+        return flagged
     }
 
     /** Chép bài đang tải, dừng ([TrackTooBig]) khi quá [TRACK_MAX_BYTES]: Content-Length báo trước, hay đếm thật khi nguồn không báo. */
     private fun copyCapped(input: InputStream, sink: OutputStream) {
-        (input as? Sized)?.length?.let { if (it > TRACK_MAX_BYTES) throw TrackTooBig(it) }
+        val length = (input as? Sized)?.length
+        if (length != null && length > TRACK_MAX_BYTES) throw TrackTooBig(length)
         val buffer = ByteArray(1 shl 16)
         var copied = 0L
         while (true) {
             val read = input.read(buffer)
-            if (read < 0) return
+            if (read < 0) {
+                if (copied == 0L) throw Cut(0, maxOf(1L, length ?: 0L))
+                if (length != null && copied < length) throw Cut(copied, length)
+                return
+            }
             copied += read
             if (copied > TRACK_MAX_BYTES) throw TrackTooBig(copied)
             sink.write(buffer, 0, read)
@@ -460,9 +485,10 @@ class MusicCatalog(
     fun download(link: String, info: JSONObject?): File? {
         if (!link.startsWith("https://")) return null
         val target = fileOf(link)
-        if (target.isFile) return target
         val expected = info?.optString("sha1")?.lowercase()?.takeIf { SHA1.matches(it) }
         val size = (info?.opt("bytes") as? Number)?.toLong()
+        if (target.isFile && target.length() > 0 && !dropIfCut(target, info)) return target
+        target.delete() // file rỗng hay cụt từ lần tải trước: tải lại
         if (size != null && size > TRACK_MAX_BYTES) {
             markTooBig(link, size)
             throw TrackTooBig(size)
@@ -480,7 +506,10 @@ class MusicCatalog(
             val part = File(target.path + ".${System.nanoTime()}.part")
             try {
                 open(url).use { input -> part.outputStream().use { copyCapped(input, it) } }
-                if (url != link && ((size != null && part.length() != size) || sha1(part.readBytes()) != expected)) throw LocalFailure("bản sao khác bản gốc")
+                // Mọi nguồn (cả bản gốc) phải khớp `bytes` / `sha1` danh mục ghi: bài cụt hay bị đổi không được cất như bài tốt (bản sao thì bài không có `sha1` đã không được dùng).
+                if ((size != null && part.length() != size) || (expected != null && sha1(part) != expected)) {
+                    throw LocalFailure(if (url == link) "bài tải về khác danh mục" else "bản sao khác bản gốc")
+                }
                 if (!part.renameTo(target) && !target.isFile) throw LocalFailure("không ghi được")
                 note(url, failed = false) // tải được = nguồn ấy có mạng
                 return target
@@ -533,6 +562,20 @@ class MusicCatalog(
 
         private fun sha1(bytes: ByteArray): String = MessageDigest.getInstance("SHA-1").digest(bytes).joinToString("") { "%02x".format(it) }
 
+        /** sha1 của cả file, đọc từng khúc (bài tới 40 MB: không nạp hết vào bộ nhớ). */
+        private fun sha1(file: File): String {
+            val digest = MessageDigest.getInstance("SHA-1")
+            file.inputStream().use { input ->
+                val buffer = ByteArray(1 shl 16)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    digest.update(buffer, 0, read)
+                }
+            }
+            return digest.digest().joinToString("") { "%02x".format(it) }
+        }
+
         private fun sha256(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
         /** Nhật ký mặc định; `android.util.Log` không chạy trong bài thử JVM nên nuốt lỗi (test truyền bộ ghi riêng). */
@@ -544,6 +587,15 @@ class MusicCatalog(
          *  bài quá lớn, lỗi ghi file (`_music_network_failure` của server.py). Lỗi không phải IOException cũng không phải lỗi mạng. */
         fun isNetworkFailure(error: Throwable): Boolean =
             error is IOException && error !is HttpFailure && error !is LocalFailure && error !is TrackTooBig && error !is FileNotFoundException
+
+        /** `music_catalog.lacks_credit`: bài có `license` khác cc0 mà thiếu `creator` hay `attribution` (nhạc người dùng nhập `source` "local" và danh mục không ghi giấy phép thì không bị đòi). */
+        fun lacksCredit(info: JSONObject?): Boolean {
+            if (info == null) return false
+            fun text(key: String) = if (info.isNull(key)) "" else info.optString(key).trim() // JSON null là "không có" (optString trả chữ "null")
+            val licence = text("license").lowercase()
+            if (text("source") == "local" || licence.isEmpty() || licence == "cc0") return false
+            return text("creator").isEmpty() || text("attribution").isEmpty()
+        }
 
         /** `music_catalog.shard_of`: hai ký tự đầu sha1 của link. */
         fun shardOf(link: String): String = sha1(link.toByteArray(Charsets.UTF_8)).take(2)

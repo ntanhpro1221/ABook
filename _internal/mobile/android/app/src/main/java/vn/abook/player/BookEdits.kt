@@ -880,7 +880,8 @@ object BookEdits {
                 cue.put("track", name)
                 val info = tracks.opt(name)
                 cue.put("gainDb", MusicGain.cueGainDb(level, trackNumber(info, "lufs"), trackNumber(info, "speechBand"), trackNumber(info, "s95")))
-                // Đoạn nghe được, điểm vòng của bài cũ: bài ghim dùng 0 và độ dài thật.
+                // Cờ `tail` (bài cũ kết đúng ở cuối mốc), đoạn nghe được, điểm vòng của bài cũ: bài ghim dùng 0 và độ dài thật (`music_plan.SUBSTITUTE_DROPS`).
+                cue.remove("tail")
                 cue.remove("audibleStart")
                 cue.remove("audibleEnd")
                 cue.remove("loopStart")

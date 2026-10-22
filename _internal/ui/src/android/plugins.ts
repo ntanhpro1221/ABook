@@ -68,6 +68,8 @@ export interface EbookPlayerPlugin {
   }): Promise<NativeState>;
   play(): Promise<NativeState>;
   pause(): Promise<NativeState>;
+  /** Đóng sách: tạm dừng giọng và nhả bộ phát nhạc nền (MusicBed.release). */
+  release(): Promise<NativeState>;
   toggle(): Promise<NativeState>;
   next(): Promise<NativeState>;
   previous(): Promise<NativeState>;

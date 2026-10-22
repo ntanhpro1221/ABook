@@ -881,3 +881,15 @@ def test_withdrawing_what_the_sender_dropped_only_removes_the_value_it_sent(tmp_
 def test_a_bad_withdrawal_is_refused(raw: Any) -> None:
     with pytest.raises(book_edits.EditsError):
         book_edits.validate_removed(raw)
+
+
+def test_a_pin_replaces_the_old_tracks_tail_flag_and_loop_points_with_nothing() -> None:
+    """Bài ghim thay bài cũ ở một mốc: cờ `tail` (bài cũ kết đúng ở cuối mốc), đoạn nghe được và điểm vòng của bài cũ không đi theo - như bài thay thế
+    (`music_plan.substituted`); không thì bài mới kết sớm hay bài kế vào sớm (FINDINGS_music B2)."""
+    music = {"levelDb": -18.0, "tracks": {f"music/{'a' * 40}.mp3": {"file": f"music/{'a' * 40}.mp3", "link": "https://x/a.mp3"}},
+             "chapters": {"1": [{"start": 0.0, "end": 60.0, "track": f"music/{'a' * 40}.mp3", "gainDb": -20.0, "tail": True,
+                                 "audibleStart": 1.0, "audibleEnd": 50.0, "loopStart": 2.0, "loopEnd": 40.0, "sibling": True}]}}
+    edits = {"music": {"pins": {"1:0": shared.TRACK_LINK}, "tracks": {shared.TRACK_SHA: {"ext": "wav"}}}}
+    [cue] = book_edits.apply_music(music, edits)["chapters"]["1"]
+    assert cue["track"] == f"music/{shared.TRACK_SHA}.wav" and "gainDb" in cue
+    assert not {"tail", "audibleStart", "audibleEnd", "loopStart", "loopEnd"} & set(cue), "đặc điểm của bài cũ không đi theo bài ghim"

@@ -233,7 +233,8 @@ export function loopBounds(cue: Pick<MusicCue, "audibleStart" | "audibleEnd" | "
     return { start: 0, end: whole, period: whole, crossfade: false, loopStart: 0, loopEnd: whole };
   }
   const restart = finite(cue.loopStart);
-  const out = finite(cue.loopEnd);
+  const rawOut = finite(cue.loopEnd);
+  const out = rawOut === null || total === null || rawOut - LOOP_CROSSFADE_SECONDS > end ? rawOut : Math.min(rawOut, total);
   if (restart !== null && out !== null && start <= restart && restart < out - LOOP_CROSSFADE_SECONDS
       && out - LOOP_CROSSFADE_SECONDS <= end && out - restart - LOOP_CROSSFADE_SECONDS >= LOOP_MIN_PERIOD_SECONDS) {
     return { start, end, period: out - restart - LOOP_CROSSFADE_SECONDS, crossfade: true, loopStart: restart, loopEnd: out };
