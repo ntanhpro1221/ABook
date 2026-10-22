@@ -90,6 +90,7 @@ from .listener_overrides import (
     overrides_path,
     pronunciation_problem,
     pronunciation_requests,
+    pronunciation_surface,
     read_overrides,
     line_requests,
     retake_requests,
@@ -1244,9 +1245,17 @@ class BookPipeline:
                 self.log(f"Không chụp được chữ đọc theo của các chương đã xong: {exc}")
         changed = False
         reset_chapters: set[int] = set()
+        # Khoá cũ có thể là NFD / chứa ký tự vô hình: dùng đúng khoá đã lưu để kiểm Hoàn tác và ghi biên nhận.
+        # Chỉ chữ đem khớp sách được chuẩn hoá; không viết lại file yêu cầu cũ.
+        pronunciation_keys = {
+            (entry["surface"].strip(), " ".join(entry["spoken_form"].split())): key
+            for key, entry in (overrides.get("pronunciations") or {}).items()
+            if isinstance(entry, dict) and isinstance(entry.get("surface"), str) and isinstance(entry.get("spoken_form"), str)
+        } if isinstance(overrides.get("pronunciations"), dict) else {}
         for request in self._acknowledging(
-            "pronunciations", pronunciation_requests(overrides), lambda item: surface_key(item["surface"]), overrides, receipts):
-            surface, spoken = request["surface"], request["spoken_form"]
+            "pronunciations", pronunciation_requests(overrides),
+            lambda item: pronunciation_keys[(item["surface"], item["spoken_form"])], overrides, receipts):
+            surface, spoken = pronunciation_surface(request["surface"]), request["spoken_form"]
             problem = pronunciation_problem(surface, spoken)
             if problem is not None:
                 self._report_rejected_override(

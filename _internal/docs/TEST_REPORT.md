@@ -2,6 +2,8 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt V3/V4/T1/T6 trên `dev/locked100` (nền bc3a3d37): post_review lưu retake theo nhóm; fold ý muốn từ điện thoại ghi một biên nhận và một nhóm retake, giữ operation_id khi crash/retry; khớp cách đọc NFC/Cf, giữ nguyên overrides cũ. T6 đã chỉ còn một lần đọc ở HEAD; test mock xác nhận. Test mới: 30 passed. Hồi quy 134 file chọn theo tên/nội dung: 3301 passed, 3 skipped, 0 failed, 0 errors, 1 warning subprocess cp1252 (đối chiếu log và 3304 testcase JUnit). Lượt đầu có một failure do runner đặt thêm TRANSFORMERS_OFFLINE; đã sửa runner, kiểm lại file 28 passed và chạy lại toàn bộ danh sách. e7 800 dòng: 22,778695 → 0,763184 giây; ghi biên nhận 1600 → 1, overrides 800 → 1. Hash khoá: 9e9c5a66 → 9180c365.
+
 Đợt `a80fix2` trên `dev/uxfix99` (Codex tk3 bị cắt ở lượt kiểm cuối, Lead chạy toàn bộ): gói sửa lớn từ máy đã ghép có hạn đọc theo cỡ
 (30 s + cỡ / 16 KiB/s), máy chưa ghép vẫn 30 s; trần kết nối 32 tổng / 8 mỗi nguồn (máy tính), 8 / 6 (điện thoại); GET đóng sớm/503 thử
 lại tối đa 2 lần (200/800 ms), không POST. Toàn bộ a80fix + a80fix2: pytest 8690 passed, 9 skipped, 1 xfailed (lỗi 3), 0 F/E;

@@ -5124,23 +5124,26 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.OK, {**reply(len(asked)), **({"elsewhere": elsewhere} if elsewhere else {})})
             return
         chapter_id = int(body.get("chapterId", 0))
-        asked_count = 0
-        for written, stable_id in enumerate(stable_ids):
-            try:
-                self.app.reviews.set(project, stable_id, verdict, chapter_id, audio_sha256=body.get("audioSha256"))
-            except ValueError as error:
-                # Nhóm nhiều câu ghi lần lượt: các câu trước đã ghi thật - nói đúng số (soát a83 B11), không báo như chưa làm gì.
-                before = f" ({written} câu trước đó trong nhóm đã được ghi)" if written else ""
-                raise ApiError(HTTPStatus.CONFLICT, f"{error}{before}") from error
-            # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
-            # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.
-            text_sha256 = store.segment_text_sha256(project, stable_id)
-            if verdict == "redo" and text_sha256:
-                listener_overrides.request_retake(project, stable_id, text_sha256, now=now)
-                asked_count += 1
-            elif verdict != "redo":
-                listener_overrides.cancel_retake(project, stable_id)
-        self._send_json(HTTPStatus.OK, {**reply(asked_count), **({"elsewhere": elsewhere} if elsewhere else {})})
+        asked: list[tuple[str, str]] = []
+        try:
+            for written, stable_id in enumerate(stable_ids):
+                try:
+                    self.app.reviews.set(project, stable_id, verdict, chapter_id, audio_sha256=body.get("audioSha256"))
+                except ValueError as error:
+                    # Nhóm nhiều câu ghi lần lượt: các câu trước đã ghi thật - nói đúng số (soát a83 B11), không báo như chưa làm gì.
+                    before = f" ({written} câu trước đó trong nhóm đã được ghi)" if written else ""
+                    raise ApiError(HTTPStatus.CONFLICT, f"{error}{before}") from error
+                # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
+                # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.
+                text_sha256 = store.segment_text_sha256(project, stable_id)
+                if verdict == "redo" and text_sha256:
+                    asked.append((stable_id, text_sha256))
+                elif verdict != "redo":
+                    listener_overrides.cancel_retake(project, stable_id)
+        finally:
+            if asked:
+                listener_overrides.request_retakes(project, asked, now=now)
+        self._send_json(HTTPStatus.OK, {**reply(len(asked)), **({"elsewhere": elsewhere} if elsewhere else {})})
 
     def put_cover(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()
