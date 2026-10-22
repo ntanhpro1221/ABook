@@ -306,19 +306,22 @@ object SupertonicVoices {
     /** Emulator 07-10: 1 thread RTF 0.39, 2 -> 0.33, 4 -> 0.32 (docs/research/SUPERTONIC_PHONE.md); more gains nothing on these small graphs. */
     private const val MAX_THREADS = 4
 
-    private var context: Context? = null
-    private var module: SupertonicModule? = null
+    @Volatile private var context: Context? = null
+    @Volatile private var module: SupertonicModule? = null
+    /** Metadata lock (review a77 #12): the object's monitor is held for a whole synthesis, so [module] / [voices] - asked on the main thread when the book or voice changes - take this one. */
+    private val meta = Any()
     /** The loaded engine and whether it reads the fast tier (one at a time: each holds a few hundred MB). */
     private var engine: Pair<Boolean, SupertonicEngine>? = null
     private val idle = IdleEngine(this, ::dropEngine)
 
-    @Synchronized
-    fun module(appContext: Context): SupertonicModule = module ?: run {
-        val ctx = appContext.applicationContext
-        context = ctx
-        VoiceSpeed.setup(ctx) // the card offers "Bản nhanh hơn" from that setting
-        SupertonicModule(File(ctx.filesDir, SupertonicModule.FOLDER), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), VieneuVoices.facts(ctx),
-            benchmark = { benchmark() }, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) }).also { module = it }
+    fun module(appContext: Context): SupertonicModule = module ?: synchronized(meta) {
+        module ?: run {
+            val ctx = appContext.applicationContext
+            context = ctx
+            VoiceSpeed.setup(ctx) // the card offers "Bản nhanh hơn" from that setting
+            SupertonicModule(File(ctx.filesDir, SupertonicModule.FOLDER), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), VieneuVoices.facts(ctx),
+                benchmark = { benchmark() }, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) }).also { module = it }
+        }
     }
 
     /** Drop the loaded engine (the module is about to replace or remove files). */

@@ -50,10 +50,40 @@ object SleepTimer {
     var shakeThresholdG = 2.2
     private var ticking = false
 
-    fun describe(): JSONObject {
+    /** Listener của lõi cho dịch vụ phát: hẹn giờ đặt / gia hạn / hết / lịch đêm tự bật (sự kiện "sleep") thì dựng lại nút thông báo - không phụ thuộc giao diện còn sống (soát a77 #10). */
+    fun buttonsListener(refresh: () -> Unit): (JSONObject) -> Unit = { event ->
+        if (event.optString("kind") == "sleep") refresh()
+    }
+
+    /**
+     * Nhớ hẹn giờ phút đang chạy ở kho native ([ListenPrefs]) để tiến trình chết rồi dậy lại (tai nghe / widget / xe) không mất nó: đang phát thì ghi MỐC KẾT THÚC tuyệt đối (đồng hồ thật tiếp tục
+     * trôi trong lúc tiến trình chết), đang tạm dừng thì ghi thời gian còn lại (đồng hồ đứng). Hết chương không khôi phục được (tính theo vị trí chương) - không ghi (soát a77 #6).
+     */
+    fun persist(now: Long = System.currentTimeMillis()) {
+        val timer = if (mode == Mode.MINUTES) JSONObject().put("minutes", minutes).also {
+            if (runningSinceMs > 0) it.put("endsAt", now + leftMs(now)) else it.put("remainingMs", leftMs(now))
+        } else null
+        ListenPrefs.saveTimer(timer)
+    }
+
+    /** Khôi phục hẹn giờ đã ghi ([persist]) lúc tiến trình dậy: chưa quá mốc kết thúc thì còn lại đúng phần chưa trôi, đồng hồ đứng tới khi phát ([onPlaying]); quá rồi thì bỏ. */
+    fun restore(timer: JSONObject?, now: Long = System.currentTimeMillis()) {
+        if (timer == null || mode != Mode.OFF) return
+        val left = if (timer.has("endsAt")) timer.optLong("endsAt") - now else timer.optLong("remainingMs", 0L)
+        if (left <= 0) {
+            ListenPrefs.saveTimer(null)
+            return
+        }
+        mode = Mode.MINUTES
+        minutes = timer.optInt("minutes", (left / 60_000L).toInt())
+        remainingMs = left
+        runningSinceMs = 0L
+    }
+
+    fun describe(now: Long = System.currentTimeMillis()): JSONObject {
         val json = JSONObject().put("mode", mode.name.lowercase())
         when (mode) {
-            Mode.MINUTES -> json.put("remaining", leftMs() / 1000.0).put("minutes", minutes).put("counting", runningSinceMs > 0)
+            Mode.MINUTES -> json.put("remaining", leftMs(now) / 1000.0).put("minutes", minutes).put("counting", runningSinceMs > 0)
             Mode.CHAPTER -> json.put("remaining", remainingInChapter())
             Mode.OFF -> if (stoppedAtMs > 0) json.put("stoppedAt", stoppedAtMs / 1000.0)
         }
@@ -74,11 +104,14 @@ object SleepTimer {
     fun onPlaying(isPlaying: Boolean) {
         if (mode != Mode.MINUTES) return
         val now = System.currentTimeMillis()
-        if (isPlaying && runningSinceMs == 0L) runningSinceMs = now
-        else if (!isPlaying && runningSinceMs > 0L) {
+        if (isPlaying && runningSinceMs == 0L) {
+            runningSinceMs = now
+            tick() // hẹn giờ khôi phục sau khi tiến trình chết ([restore]) chưa có vòng đếm
+        } else if (!isPlaying && runningSinceMs > 0L) {
             remainingMs = leftMs(now)
             runningSinceMs = 0L
         }
+        persist(now)
         Playback.emit("sleep")
     }
 
@@ -93,6 +126,7 @@ object SleepTimer {
         Bedtime.timerSet(value, reason)
         Motion.refresh()
         tick()
+        persist()
         Playback.emit("sleep")
     }
 
@@ -104,6 +138,7 @@ object SleepTimer {
         Bedtime.timerSet(-1)
         Motion.refresh()
         tick()
+        persist()
         Playback.emit("sleep")
     }
 
@@ -114,11 +149,14 @@ object SleepTimer {
         Playback.player?.pauseAtEndOfMediaItems = false
         restoreVolume()
         Motion.refresh()
+        persist()
         Playback.emit("sleep")
     }
 
     /** Thêm giờ: đang hẹn phút thì cộng thêm; đang hẹn hết chương thì chuyển thành N phút kể từ bây giờ. */
     fun extend(extra: Int = extendMinutes) {
+        // Hẹn giờ đã hết (hay đã tắt): nút "Nghe thêm" cũ còn trên thông báo không được dựng hẹn giờ mới ngoài ý bạn - như máy tính (extendSleep: kind off thì bỏ qua). Lắc sau khi vừa tự dừng có đường riêng ([onShake]).
+        if (mode == Mode.OFF) return
         val now = System.currentTimeMillis()
         remainingMs = (if (mode == Mode.MINUTES) leftMs(now) else 0L) + extra * 60_000L
         runningSinceMs = if (playing()) now else 0L
@@ -129,6 +167,7 @@ object SleepTimer {
         minutes = (remainingMs / 60_000L).toInt()
         restoreVolume()
         tick()
+        persist()
         Playback.emit("sleep")
     }
 
@@ -173,6 +212,7 @@ object SleepTimer {
         buzz(longArrayOf(0, 40))
         // Cảm biến còn nghe thêm 2 phút để "lắc để nghe tiếp" vẫn chạy.
         main.postDelayed({ Motion.refresh() }, 125_000L)
+        persist()
         Playback.emit("sleep")
     }
 

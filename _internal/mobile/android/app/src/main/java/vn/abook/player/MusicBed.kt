@@ -178,8 +178,9 @@ object MusicBed {
      *  "Nhạc nền: Bật" (ui/src/listen/musicBed.ts `failing`, soát a26 L7). */
     fun brokenHere(): Boolean = playlist == null && cues.any { isFailed(it.track) }
 
-    /** Giọng đọc đang ở `seconds` của chương `chapterId` trong cuốn `bookId`; `isPlaying` = giọng đang chạy. */
-    fun sync(bookId: String, chapterId: Int?, seconds: Double, isPlaying: Boolean) {
+    /** Giọng đọc đang ở `seconds` của chương `chapterId` trong cuốn `bookId`; `isPlaying` = giọng đang chạy. `stopNow`: giọng dừng là do người nghe
+     *  (nút, rút tai nghe, mất focus, cuộc gọi) chứ không phải khe nối hai đoạn - danh sách phát dừng ngay, không chờ [PAUSE_GRACE_MS]. */
+    fun sync(bookId: String, chapterId: Int?, seconds: Double, isPlaying: Boolean, stopNow: Boolean = false) {
         val appContext = context ?: return
         if (MusicCues.staleAfterClose(closedBook, bookId, isPlaying)) return
         closedBook = ""
@@ -194,7 +195,7 @@ object MusicBed {
             if (music == null && bookId.isNotEmpty()) openPlaylist(appContext, bookId)
         }
         if (playlist != null) {
-            syncPlaylist(isPlaying)
+            syncPlaylist(isPlaying, stopNow)
             return
         }
         val newChapter = (chapterId ?: Int.MIN_VALUE) != chapter
@@ -347,7 +348,8 @@ object MusicBed {
         // Chỉ bài đang kêu được chơi lại; bài đang mờ đi thì chỉ dừng cùng giọng (như `MusicBed.sync` của trình phát web).
         for (bed in listOfNotNull(current) + fading) {
             if (playing && !bed.player.isPlaying && bed === current) bed.player.play()
-            if (!playing && bed.player.isPlaying) bed.player.pause()
+            // Bài đang đệm có playWhenReady = true mà isPlaying = false: không pause thì đệm xong nó tự kêu riêng sau khi giọng đã dừng (soát a77 #1).
+            if (!playing && (bed.player.isPlaying || bed.player.playWhenReady)) bed.player.pause()
         }
     }
 
@@ -549,7 +551,7 @@ object MusicBed {
         saveClock()
     }
 
-    private fun syncPlaylist(isPlaying: Boolean) {
+    private fun syncPlaylist(isPlaying: Boolean, stopNow: Boolean = false) {
         val appContext = context ?: return
         if (isPlaying) {
             main.removeCallbacks(grace)
@@ -559,9 +561,13 @@ object MusicBed {
             }
             advanceClock()
         } else if (playing) {
-            // Giọng vừa ngừng: có thể chỉ là chỗ nối hai đoạn / hai chương - chờ một chút rồi mới dừng nhạc.
             main.removeCallbacks(grace)
-            main.postDelayed(grace, PAUSE_GRACE_MS)
+            if (stopNow) {
+                holdStill() // người nghe (hay hệ thống thay họ) đã dừng giọng: nhạc im ngay, không kêu thêm 2,5 giây
+            } else {
+                // Giọng vừa ngừng: có thể chỉ là chỗ nối hai đoạn / hai chương - chờ một chút rồi mới dừng nhạc.
+                main.postDelayed(grace, PAUSE_GRACE_MS)
+            }
         }
         // Sắp đổi bài: bài bỏ tạm vì mất mạng đã tới lúc thử lại thì về hàng (PlaylistQueue.at) - ngay lúc này chứ không giữa bài.
         val found = queue.at(clockSeconds, current?.track)
