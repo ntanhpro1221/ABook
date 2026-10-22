@@ -25,6 +25,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Xem trước nguồn đọc đúng file TXT lưu bằng Unicode (UTF-16) hay bảng mã cũ CP1258: tên dòng đầu, số chữ, số ký tự và dòng ghi công không còn ra chữ rác hay sai số.
 - Thời gian làm sách ghi rõ là số tham khảo đo trên một máy khác; máy hay bộ phân tích khác thì chỉ cho khoảng rộng, không còn nhãn “Trên máy này” cho số không phải đo trên máy bạn.
 
+### Nhạc nền
+
+- Điện thoại: thêm tuỳ chọn thử nghiệm (mặc định tắt) cho nhạc nền lặp liền mạch hơn: chỗ nhạc quay lại đầu đoạn được nối chính xác từng mẫu thay vì mở thêm một trình phát; nhạc vẫn vào ngay như thường, chỗ nào chưa nối kịp thì tự dùng cách cũ.
+
 ## [0.4.125] - 2026-10-22
 
 ### Sửa lỗi
