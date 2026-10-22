@@ -210,7 +210,7 @@ class OnlineVoicesTest {
 
     @Test
     fun aClosedPortIsOffline() {
-        val port = java.net.ServerSocket(0).use { it.localPort }
+        val port = java.net.ServerSocket(0, 1, java.net.InetAddress.getByName("127.0.0.1")).use { it.localPort }
         expectReason("offline") { OnlineHttp.request("GET", "http://127.0.0.1:$port/", emptyMap(), null, "Giả", 2000) }
     }
 
