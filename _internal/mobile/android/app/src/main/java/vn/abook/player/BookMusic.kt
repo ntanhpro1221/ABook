@@ -170,7 +170,14 @@ object BookMusic {
         return try {
             val source = open(track.name) ?: return false
             try {
-                source.stream.use { input -> part.outputStream().use { input.copyTo(it, 64 * 1024) } }
+                source.stream.use { input ->
+                    val limit = PeerTransfer.budget(track.name, track.size)
+                    if (source.length > limit) throw PeerTransfer.Limit()
+                    java.io.FileOutputStream(part).use {
+                        PeerTransfer.copy(input, it, limit, target.parentFile!!)
+                        it.fd.sync()
+                    }
+                }
             } finally {
                 runCatching { source.close() }
             }
@@ -179,11 +186,8 @@ object BookMusic {
                 return false
             }
             if (!part.renameTo(target)) {
-                target.delete()
-                if (!part.renameTo(target)) {
-                    part.delete()
-                    return false
-                }
+                part.delete()
+                return false
             }
             true
         } catch (_: Exception) {
