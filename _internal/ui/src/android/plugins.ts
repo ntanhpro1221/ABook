@@ -491,6 +491,9 @@ export interface EbookLibraryPlugin {
   streamableBooks(): Promise<{ books: LocalBook[] }>;
   book(options: { id: string }): Promise<LocalBook>;
   readText(options: { id: string; path: string }): Promise<{ text: string }>;
+  /** Văn bản của nhiều file trong gói một lượt (ô "Tìm trong sách"): theo thứ tự `paths`, null cho file không có; chữ quá nhiều thì trả phần đầu
+   *  (ít mục hơn `paths`) - hỏi lại phần còn lại. */
+  readTexts(options: { id: string; paths: string[] }): Promise<{ texts: (string | null)[] }>;
   /** Sửa sách "áp ngay" trên điện thoại (LocalStudio.kt): cùng đường dẫn `/api/books/<mã>/...`, cùng JSON như máy chủ máy tính
    *  (docs/EDITING.md); `status` >= 400 là lỗi, `body.error` là câu cho người dùng (android/localStudio.ts đổi thành ApiError). */
   studio(options: { method: string; path: string; body?: unknown }): Promise<{ status: number; body: unknown }>;

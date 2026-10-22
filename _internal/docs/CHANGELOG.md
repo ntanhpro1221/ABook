@@ -55,6 +55,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: ba ô chọn giờ của Lịch đêm đủ lớn để chạm (48 dp).
 - Điện thoại: không lưu được thay đổi cài đặt thì báo ngay; lúc mở app, cài đặt ghi gần nhất ở phần nghe của app được ưu tiên hơn bản cũ trong WebView, nên một lần lưu hỏng không làm tuỳ chọn quay lại giá trị cũ.
 
+### Hiệu năng
+
+- Điện thoại ghép với máy tính có hàng trăm cuốn: danh sách thư viện từ máy tính mất chừng 10 giây mỗi lần (quá hạn chờ của điện thoại nên sách biến mất khỏi Thư viện) nay chỉ tính lại cuốn nào vừa đổi, lần hỏi sau gần như tức thì; máy tính dựng sẵn danh sách khi mở app nếu đã ghép điện thoại.
+- Điện thoại: sách đã tải hiện ngay khi mở Thư viện, không chờ máy tính trả lời; sách nghe thẳng từ máy tính tự vào danh sách khi máy tính trả lời. Gói sách nghe thẳng lấy song song và có hạn chờ chung, không nối đuôi nhau.
+- Điện thoại: “Tìm trong sách” đọc cả lô chương một lượt như máy tính (sách 2000 chương không còn hàng trăm lượt), cỡ sách trong Thư viện được nhớ thay vì đo lại cả thư mục mỗi lần, và mở Thư viện không làm lưu chỗ nghe chờ.
+- Nghe lâu năm (hồ sơ nghe vài MB): lưu chỗ nghe mỗi 10 giây không còn ghi lại cả hồ sơ (hết ~0,3-0,7 giây CPU và ghi đĩa mỗi lần); tắt máy giữa chừng vẫn mở lại đúng chỗ nghe mới nhất.
+- Sách rất dày (hàng nghìn chương): trang sách không còn tính lại tóm tắt, danh sách chương và dàn nhân vật mỗi vài giây khi sách không đổi.
+
 ## [0.4.128] - 2026-10-23
 
 ### Thư viện
