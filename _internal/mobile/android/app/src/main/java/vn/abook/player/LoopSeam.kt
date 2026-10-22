@@ -8,14 +8,18 @@ import android.net.Uri
 import android.os.SystemClock
 import androidx.annotation.OptIn
 import androidx.media3.common.C
+import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
 import androidx.media3.common.StreamKey
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
 import androidx.media3.decoder.DecoderInputBuffer
 import androidx.media3.exoplayer.FormatHolder
 import androidx.media3.exoplayer.LoadingInfo
 import androidx.media3.exoplayer.SeekParameters
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.ForwardingAudioSink
 import androidx.media3.exoplayer.drm.DrmSessionManagerProvider
 import androidx.media3.exoplayer.source.MediaPeriod
 import androidx.media3.exoplayer.source.MediaSource
@@ -25,10 +29,12 @@ import androidx.media3.exoplayer.source.WrappingMediaSource
 import androidx.media3.exoplayer.trackselection.ExoTrackSelection
 import androidx.media3.exoplayer.upstream.Allocator
 import androidx.media3.exoplayer.upstream.LoadErrorHandlingPolicy
+import androidx.media3.extractor.MpegAudioUtil
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
@@ -48,7 +54,13 @@ import kotlin.math.roundToLong
  * (1) Clip bắt đầu giữa file thì bộ giải mã chạy nguội (không có khung trước: chồng MDCT = 0, bể bit rỗng), ~350 mẫu đầu sai (khuếch đại 0,5 -> 1);
  * (2) 529 mẫu CUỐI Clip là số 0 thay vì tiếng. Cách chữa (`prerollFrames` > 0): Clip mở sớm [prerollFrames] khung và đóng muộn một khung, rồi
  * [mediaSourceFactory] ghi đè `Format.encoderDelay` = prerollFrames * khung và `encoderPadding` = khung (sau khi ClippingMediaPeriod đã tự xoá về 0) để
- * TrimmingAudioProcessor của sink cắt đúng ngần ấy mẫu ở đầu và cuối. Trục đầu ra của codec đã bỏ 529 nên số cắt là bội đúng của khung, không có 529.
+ * [LoopSink] cắt đúng ngần ấy mẫu ở đầu (TrimmingAudioProcessor cắt padding ở cuối). Trục đầu ra của codec đã bỏ 529 nên số cắt là bội đúng của khung, không có 529.
+ *
+ * Vòng 2 (PLAN_loop §42): TUA phải chính xác từng mẫu tại mốc tuỳ ý. Ba nguyên nhân đo được khiến tua lệch, [seekToSample] xử lý cả ba:
+ * (1) Clip mp3: ExoPlayer bỏ nguyên khung có nhãn trước vị trí tua nên tiếng vào ở khung đầu tiên >= mốc, trễ 0-1 khung (tới 26 ms);
+ * (2) tua sang MỤC khác thì encoderDelay (preroll) của Clip lặp bị cắt luôn: trễ thêm 78 ms ở 44,1 kHz;
+ * (3) Nối WAV đã được đọc trước: ExoPlayer tua trong bộ đệm, khối WAV 100 ms chứa mốc bị bỏ cả khối, tiếng vào ở khối sau (+95 ms; lúc có lúc không: đây là lỗi R4 của §41).
+ * Cách chữa: đáp ở ranh khung / khối dưới mốc rồi [LoopSink] cắt phần dư theo số mẫu báo trước. Nối dựng bằng giải mã riêng từng vùng ([decodeRegion]) và đệm theo khoá file + mốc.
  */
 @OptIn(UnstableApi::class)
 object LoopSeam {
@@ -68,6 +80,8 @@ object LoopSeam {
         val buildMs: Long,
         /** Số khung mở sớm ở đầu Clip lặp (và cũng là cờ: 0 = bản gốc của SPEC, không chữa; > 0 thì đóng muộn một khung ở cuối mọi Clip). */
         val prerollFrames: Int = 0,
+        /** Nối lấy từ bộ nhớ đệm (không giải mã lại). */
+        val cached: Boolean = false,
     ) {
         val prerollSamples get() = prerollFrames * frameSamples
         /** Khung đóng muộn ở cuối Clip (đệm 0 của bộ giải mã rơi vào đó rồi bị cắt). */
@@ -111,21 +125,21 @@ object LoopSeam {
         }
     }
 
+    /** Nguồn khung nén cho [pump]: MediaExtractor (giải mã liền từ đầu file) hoặc danh sách khung tự quét ([decodeRegion]). */
+    private interface FrameSource {
+        /** Chép khung kế vào `into` (từ vị trí 0), trả cỡ; -1 = hết. */
+        fun read(into: ByteBuffer): Int
+        fun timeUs(): Long
+        fun advance()
+    }
+
     /**
-     * Giải mã LIỀN MỘT MẠCH từ đầu file (không tua, không cắt encoderDelay / encoderPadding) ra PCM16 LE; `onPcm(mẫu đầu, bộ đệm)` mỗi khối ra (bộ đệm chỉ hợp lệ trong lệnh gọi).
+     * Bơm khung nén vào MỘT MediaCodec mới (khởi động nguội) và gom PCM16 LE; `onPcm(mẫu đầu, bộ đệm)` mỗi khối ra (bộ đệm chỉ hợp lệ trong lệnh gọi).
      * Dừng khi đã đủ `stopAt` mẫu. `maxSkewSamples` = độ lệch lớn nhất giữa nhãn thời gian của codec và số mẫu đã đếm (0 khi trục khớp).
      */
-    fun decode(file: File, stopAt: Long = Long.MAX_VALUE, onPcm: (Long, ByteBuffer) -> Unit): Decoded {
-        val extractor = MediaExtractor()
+    private fun pump(format: MediaFormat, source: FrameSource, stopAt: Long, onPcm: (Long, ByteBuffer) -> Unit): Decoded {
         var codec: MediaCodec? = null
         try {
-            extractor.setDataSource(file.absolutePath)
-            val index = (0 until extractor.trackCount).first { extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
-            extractor.selectTrack(index)
-            val format = extractor.getTrackFormat(index)
-            // ExoPlayer không cắt gì ở Clip có mốc đầu/cuối (xem đầu lớp); codec nhận hai khoá này thì tự cắt (SkipCutBuffer) -> đặt 0.
-            format.setInteger("encoder-delay", 0)
-            format.setInteger("encoder-padding", 0)
             codec = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!)
             codec.configure(format, null, null, 0)
             codec.start()
@@ -141,13 +155,13 @@ object LoopSeam {
                 if (!inputDone) {
                     val slot = codec.dequeueInputBuffer(10_000)
                     if (slot >= 0) {
-                        val size = extractor.readSampleData(codec.getInputBuffer(slot)!!, 0)
+                        val size = source.read(codec.getInputBuffer(slot)!!)
                         if (size < 0) {
                             codec.queueInputBuffer(slot, 0, 0, 0, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
                             inputDone = true
                         } else {
-                            codec.queueInputBuffer(slot, 0, size, extractor.sampleTime, 0)
-                            extractor.advance()
+                            codec.queueInputBuffer(slot, 0, size, source.timeUs(), 0)
+                            source.advance()
                         }
                     }
                 }
@@ -182,14 +196,132 @@ object LoopSeam {
         } finally {
             runCatching { codec?.stop() }
             runCatching { codec?.release() }
-            extractor.release()
         }
     }
 
     /**
+     * Giải mã LIỀN MỘT MẠCH từ đầu file (không tua, không cắt encoderDelay / encoderPadding) ra PCM16 LE; `onPcm(mẫu đầu, bộ đệm)` mỗi khối ra (bộ đệm chỉ hợp lệ trong lệnh gọi).
+     * Dừng khi đã đủ `stopAt` mẫu. Đây là trục tham chiếu "R" của bộ đo; [build] không dùng nó nữa (xem [decodeRegion]) trừ khi quét khung hỏng.
+     */
+    fun decode(file: File, stopAt: Long = Long.MAX_VALUE, onPcm: (Long, ByteBuffer) -> Unit): Decoded {
+        val extractor = MediaExtractor()
+        try {
+            extractor.setDataSource(file.absolutePath)
+            val index = (0 until extractor.trackCount).first { extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
+            extractor.selectTrack(index)
+            val format = extractor.getTrackFormat(index)
+            // ExoPlayer không cắt gì ở Clip có mốc đầu/cuối (xem đầu lớp); codec nhận hai khoá này thì tự cắt (SkipCutBuffer) -> đặt 0.
+            format.setInteger("encoder-delay", 0)
+            format.setInteger("encoder-padding", 0)
+            return pump(format, object : FrameSource {
+                override fun read(into: ByteBuffer) = extractor.readSampleData(into, 0)
+                override fun timeUs() = extractor.sampleTime
+                override fun advance() {
+                    extractor.advance()
+                }
+            }, stopAt, onPcm)
+        } finally {
+            extractor.release()
+        }
+    }
+
+    /** Các khung mp3 của một file đã đọc hết vào bộ nhớ: vị trí byte + cỡ từng khung ÂM THANH (khung Xing / Info / VBRI không tính), cùng trục khung với Mp3Extractor và MediaExtractor. */
+    internal class Mp3Frames(val data: ByteArray, val offsets: IntArray, val sizes: IntArray, val count: Int, val samplesPerFrame: Int, val sampleRate: Int, val channels: Int)
+
+    private fun word(d: ByteArray, p: Int): Int =
+        ((d[p].toInt() and 0xff) shl 24) or ((d[p + 1].toInt() and 0xff) shl 16) or ((d[p + 2].toInt() and 0xff) shl 8) or (d[p + 3].toInt() and 0xff)
+
+    /** Quét tiêu đề khung từ đầu tới tối đa `maxFrames` khung; null nếu file không đều (mất đồng bộ, đổi tần số) để người gọi lùi về giải mã liền. Chỉ đọc tiêu đề: vài ms cho cả bài. */
+    internal fun scanMp3(data: ByteArray, maxFrames: Int): Mp3Frames? {
+        var pos = 0
+        while (pos + 10 <= data.size && data[pos] == 'I'.code.toByte() && data[pos + 1] == 'D'.code.toByte() && data[pos + 2] == '3'.code.toByte()) {
+            val size = ((data[pos + 6].toInt() and 0x7f) shl 21) or ((data[pos + 7].toInt() and 0x7f) shl 14) or ((data[pos + 8].toInt() and 0x7f) shl 7) or (data[pos + 9].toInt() and 0x7f)
+            pos += 10 + size + if (data[pos + 5].toInt() and 0x10 != 0) 10 else 0
+        }
+        val h = MpegAudioUtil.Header()
+        val next = MpegAudioUtil.Header()
+        fun valid(p: Int, into: MpegAudioUtil.Header) = p >= 0 && p + 4 <= data.size && (word(data, p) and 0xFFE00000.toInt()) == 0xFFE00000.toInt() && into.setForHeaderData(word(data, p))
+        var first = -1
+        var p = pos
+        while (p + 4 <= data.size && p < pos + 65536) {
+            // khung thật khi khung kế nối ngay sau và cùng phiên bản / tầng / tần số (như ExactSeekMp3Extractor)
+            if (valid(p, h) && valid(p + h.frameSize, next) && (word(data, p) and 0xFFFE0C00.toInt()) == (word(data, p + h.frameSize) and 0xFFFE0C00.toInt())) {
+                first = p
+                break
+            }
+            p++
+        }
+        if (first < 0) return null
+        valid(first, h)
+        val rate = h.sampleRate
+        val channels = h.channels
+        val spf = h.samplesPerFrame
+        val side = if (h.version == 3) (if (channels == 1) 17 else 32) else (if (channels == 1) 9 else 17)
+        val tag = word(data, first + 4 + side)
+        val vbri = first + 36 + 4 <= data.size && word(data, first + 36) == 0x56425249
+        p = if (tag == 0x58696e67 || tag == 0x496e666f || vbri) first + h.frameSize else first
+        val offsets = IntArray(maxFrames)
+        val sizes = IntArray(maxFrames)
+        var count = 0
+        while (count < maxFrames && p + 4 <= data.size) {
+            if (!valid(p, h) || h.sampleRate != rate || h.channels != channels || h.samplesPerFrame != spf) return null
+            if (p + h.frameSize > data.size) break // khung cuối cụt
+            offsets[count] = p
+            sizes[count] = h.frameSize
+            count++
+            p += h.frameSize
+        }
+        return Mp3Frames(data, offsets, sizes, count, spf, rate, channels)
+    }
+
+    /** Số khung đọc trước mỗi vùng Nối: bộ giải mã chạy nguội sai tối đa 2107 mẫu (1,83 khung, Music đo) rồi chính xác từng mẫu, 3 khung là dư. */
+    const val SEAM_PREREAD_FRAMES = 3
+
+    /**
+     * PCM16 xen kênh của `count` khung bắt đầu ở khung `first` trên trục giải mã liền (R), chỉ giải mã đoạn quanh vùng: bơm `pre` khung đọc trước (bỏ đầu ra), vùng, rồi MỘT khung
+     * thừa phía sau (bộ giải mã chậm 529 mẫu so với đầu vào). Mẫu k của đầu ra codec ứng với mẫu f0*spf + k của R: codec bỏ 529 mẫu đầu ở MỖI lần khởi động (cả bài liền lẫn đoạn này),
+     * nên hai trục lệch nhau đúng cùng một lượng - kiểm bằng so byte với bản giải mã liền (SEAMCHK trong bài thử).
+     */
+    internal fun decodeRegion(frames: Mp3Frames, first: Int, count: Int, pre: Int): ShortArray {
+        val f0 = first - pre
+        val last = first + count // khung thừa
+        require(f0 >= 0 && last < frames.count) { "vùng ngoài file: khung $f0..$last / ${frames.count}" }
+        val spf = frames.samplesPerFrame
+        val channels = frames.channels
+        val format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_MPEG, frames.sampleRate, channels)
+        var at = f0
+        val source = object : FrameSource {
+            override fun read(into: ByteBuffer): Int {
+                if (at > last) return -1
+                into.clear()
+                into.put(frames.data, frames.offsets[at], frames.sizes[at])
+                return frames.sizes[at]
+            }
+
+            override fun timeUs() = (at - f0).toLong() * spf * 1_000_000L / frames.sampleRate
+            override fun advance() {
+                at++
+            }
+        }
+        val out = ShortArray(count * spf * channels)
+        val start = pre.toLong() * spf
+        var filled = 0L
+        val decoded = pump(format, source, (pre + count).toLong() * spf) { firstSample, pcm -> filled += copyInto(firstSample, pcm, channels, start, out) }
+        check(decoded.sampleRate == frames.sampleRate && decoded.channels == channels) { "đầu ra bộ giải mã ${decoded.sampleRate}/${decoded.channels} khác định dạng đầu vào ${frames.sampleRate}/$channels" }
+        check(filled == count.toLong() * spf) { "giải mã vùng thiếu: được $filled / ${count.toLong() * spf} mẫu" }
+        return out
+    }
+
+    /** Khoá bộ nhớ đệm của Nối: file (đường dẫn, cỡ, ngày sửa) + mốc khung + phiên bản thuật toán (đổi cách dựng thì tăng). */
+    private fun cacheKey(file: File, ka: Long, ks: Long, ke: Long, kx: Long, rate: Int, channels: Int): String {
+        val text = "v3|${file.absolutePath}|${file.length()}|${file.lastModified()}|$ka|$ks|$ke|$kx|$rate|$channels"
+        return java.security.MessageDigest.getInstance("SHA-1").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }.take(16)
+    }
+
+    /**
      * Dựng Nối của `file`: biên căn khung mp3 ([ExactSeekMp3Extractor.frameBoundarySeconds]), X' = X làm tròn về bội số khung gần nhất, hai vùng
-     * [loopEnd' - X', loopEnd'] và [loopStart', loopStart' + X'] lấy từ MỘT lần giải mã liền ([decode]), trộn tuyến tính theo mẫu ([mix]), ghi WAV PCM16 cùng tần số / kênh
-     * vào `cacheDir/loopseam/<khoá>.wav`.
+     * [loopEnd' - X', loopEnd'] và [loopStart', loopStart' + X'] giải mã RIÊNG từng vùng với [SEAM_PREREAD_FRAMES] khung đọc trước ([decodeRegion]), trộn tuyến tính theo mẫu ([mix]), ghi WAV PCM16
+     * cùng tần số / kênh vào `cacheDir/loopseam/<khoá>.wav` (khoá theo file + mốc; có sẵn thì dùng lại, không giải mã). File mp3 không quét đều được thì lùi về giải mã liền từ đầu ([decode]).
      */
     fun build(context: Context, file: File, bounds: Bounds, xSeconds: Double, prerollFrames: Int = PREROLL_FRAMES): Seam {
         val began = SystemClock.elapsedRealtime()
@@ -203,21 +335,30 @@ object LoopSeam {
         val ke = frames(bounds.loopEnd)
         require(ks >= 0 && ke - ks > 2 * kx + 8 && ke - kx > ka) { "vòng quá ngắn cho Nối ($kx khung): audible=$ka loopStart=$ks loopEnd=$ke (khung)" }
         val n = (kx * spf).toInt()
-        val oldStart = (ke - kx) * spf
-        val newStart = ks * spf
-        val old = ShortArray(n * channels)
-        val new = ShortArray(n * channels)
-        var filled = 0L
-        val decoded = decode(file, stopAt = ke * spf) { first, pcm ->
-            filled += copyInto(first, pcm, channels, oldStart, old) + copyInto(first, pcm, channels, newStart, new)
-        }
-        check(decoded.sampleRate == rate && decoded.channels == channels) { "đầu ra bộ giải mã ${decoded.sampleRate}/${decoded.channels} khác định dạng đầu vào $rate/$channels" }
-        check(filled == 2L * n) { "giải mã thiếu: được $filled / ${2L * n} mẫu (file ngắn hơn loopEnd'?)" }
-        val mixed = mix(old, new, channels)
         val dir = File(context.cacheDir, "loopseam").apply { mkdirs() }
-        val wav = File(dir, "%08x.wav".format((file.absolutePath + file.length() + "/" + ka + "/" + ks + "/" + ke + "/" + kx).hashCode()))
-        writeWav(wav, mixed, rate, channels)
-        return Seam(file, wav, ka * spf, ks * spf, ke * spf, n, rate, channels, spf, SystemClock.elapsedRealtime() - began, prerollFrames)
+        val wav = File(dir, cacheKey(file, ka, ks, ke, kx, rate, channels) + ".wav")
+        fun seam(cached: Boolean) = Seam(file, wav, ka * spf, ks * spf, ke * spf, n, rate, channels, spf, SystemClock.elapsedRealtime() - began, prerollFrames, cached)
+        if (wav.length() == 44L + n.toLong() * channels * 2) return seam(true)
+        val scanned = scanMp3(file.readBytes(), (ke + 2).toInt())?.takeIf { it.sampleRate == rate && it.channels == channels && it.samplesPerFrame == spf && it.count > ke }
+        val old: ShortArray
+        val new: ShortArray
+        if (scanned != null) {
+            old = decodeRegion(scanned, (ke - kx).toInt(), kx.toInt(), SEAM_PREREAD_FRAMES.coerceAtMost((ke - kx).toInt()))
+            new = decodeRegion(scanned, ks.toInt(), kx.toInt(), SEAM_PREREAD_FRAMES.coerceAtMost(ks.toInt()))
+        } else {
+            old = ShortArray(n * channels)
+            new = ShortArray(n * channels)
+            var filled = 0L
+            val decoded = decode(file, stopAt = ke * spf) { first, pcm ->
+                filled += copyInto(first, pcm, channels, (ke - kx) * spf, old) + copyInto(first, pcm, channels, ks * spf, new)
+            }
+            check(decoded.sampleRate == rate && decoded.channels == channels) { "đầu ra bộ giải mã ${decoded.sampleRate}/${decoded.channels} khác định dạng đầu vào $rate/$channels" }
+            check(filled == 2L * n) { "giải mã thiếu: được $filled / ${2L * n} mẫu (file ngắn hơn loopEnd'?)" }
+        }
+        val tmp = File(dir, wav.name + ".tmp")
+        writeWav(tmp, mix(old, new, channels), rate, channels)
+        check(tmp.renameTo(wav) || wav.length() == tmp.length()) { "không đổi tên được ${tmp.name}" }
+        return seam(false)
     }
 
     /** Chép phần của khối `pcm` (mẫu đầu `first`) rơi vào vùng [start, start + dest.size / channels); trả số mẫu đã chép. */
@@ -265,6 +406,106 @@ object LoopSeam {
         }
     }
 
+    /**
+     * Sink bọc (đặt quanh DefaultAudioSink) lo MỌI việc cắt mẫu đầu mục - thay TrimmingAudioProcessor, thứ chỉ cắt khi có "cấu hình mới" nên gặp lúc tua thì cắt nhầm
+     * (mục Clip lặp có encoderDelay = preroll bị cắt cả khi tua thẳng vào, tiếng đi trước ~78 ms; còn đọc trước mục kế làm TrimmingAudioProcessor mang số cắt của mục KHÁC).
+     * Format chuyển xuống sink trong có `encoderDelay` = 0 (encoderPadding giữ cho TrimmingAudioProcessor cắt cuối mục). Số cắt đầu:
+     * - chuyển mục liền / mở mục: `encoderDelay` do [mediaSourceFactory] ghi (preroll của Clip lặp), áp ở lần `configure` kế;
+     * - tua: [seekToSample] gọi [armSeek]; lần `flush` đầu sau đó đặt số cắt = số mẫu từ khung đáp tới mốc tua, và lần `configure` theo sau (nếu mục đổi) KHÔNG ghi đè nó;
+     * mẫu bị cắt khỏi các buffer đầu dòng ngay trước khi đưa xuống sink trong, nên không phụ thuộc trạng thái nào của media3 ngoài thứ tự gọi flush -> configure -> handleBuffer.
+     * Phải đặt vào ExoPlayer qua `DefaultRenderersFactory.buildAudioSink`; app thật bọc sink MusicBed bằng cái này.
+     */
+    class LoopSink(inner: AudioSink) : ForwardingAudioSink(inner) {
+        private class Arm(val frames: Long, val ns: Long)
+
+        private val armed = AtomicReference<Arm?>(null)
+        private var toDrop = 0L
+        private var seekPending = false
+        private var frameBytes = 0
+        private var rate = 0
+
+        /** Gọi trước `player.seekTo`: lần flush kế (trong 2 s) mang số cắt `frames` khung đầu dòng. Số cắt cũ chưa dùng bị thay. */
+        internal fun armSeek(frames: Long) = armed.set(Arm(frames, System.nanoTime()))
+
+        override fun configure(config: AudioSink.AudioSinkConfig) {
+            val f = config.format
+            frameBytes = if (f.pcmEncoding != Format.NO_VALUE && f.channelCount > 0) Util.getPcmFrameSize(f.pcmEncoding, f.channelCount) else 0
+            rate = f.sampleRate
+            if (!seekPending) toDrop = maxOf(0, f.encoderDelay).toLong()
+            val stripped = AudioSink.AudioSinkConfig.Builder(f.buildUpon().setEncoderDelay(0).build())
+                .setPreferredBufferSizeOverride(config.preferredBufferSizeOverride)
+                .setOutputChannelMapping(config.outputChannelMapping)
+                .setTimeline(config.timeline)
+                .setMediaPeriodId(config.mediaPeriodId)
+                .build()
+            super.configure(stripped)
+        }
+
+        override fun flush() {
+            val arm = armed.getAndSet(null)?.takeIf { System.nanoTime() - it.ns < 2_000_000_000L }
+            if (arm != null) {
+                toDrop = arm.frames
+                seekPending = true
+            } else if (!seekPending) {
+                toDrop = 0
+            }
+            super.flush()
+        }
+
+        override fun handleBuffer(buffer: ByteBuffer, presentationTimeUs: Long, encodedAccessUnitCount: Int): Boolean {
+            seekPending = false
+            var pts = presentationTimeUs
+            if (toDrop > 0 && frameBytes > 0) {
+                val k = minOf(toDrop, (buffer.remaining() / frameBytes).toLong())
+                buffer.position(buffer.position() + (k * frameBytes).toInt())
+                toDrop -= k
+                if (rate > 0) pts += k * 1_000_000L / rate
+                if (!buffer.hasRemaining()) return true
+            }
+            return super.handleBuffer(buffer, pts, encodedAccessUnitCount)
+        }
+    }
+
+    /** Kế hoạch một cú tua: vị trí cửa sổ ExoPlayer (ms) tới khung đáp, và số khung PCM [LoopSink] phải cắt từ khung đáp tới mốc. */
+    internal class SeekPlan(val positionMs: Long, val trimFrames: Long)
+
+    /**
+     * Mốc tua `sample` là mẫu trên TRỤC DANH NGHĨA của mục `index` (0 = Clip đầu: mẫu 0 là audibleStart'; chẵn >= 2 = Clip lặp: mẫu 0 là loopStart' + X', không tính phần mở sớm; lẻ = Nối WAV).
+     * Clip mp3: ExoPlayer bỏ nguyên các khung có nhãn trước vị trí tua nên khung chứa mốc không bao giờ phát; vì thế đáp ở khung `b0` = ranh khung dưới mốc lùi [Seam.prerollFrames] khung
+     * (khung ấy được giữ vì ms làm tròn xuống, như mở Clip lặp), chạy nguội 3 khung, rồi cắt `mốc - b0` mẫu. Nối WAV: tua tới ranh khối 100 ms dưới mốc rồi cắt phần lẻ.
+     */
+    internal fun seekPlan(seam: Seam, index: Int, sample: Long): SeekPlan {
+        val sr = seam.sampleRate
+        if (index % 2 == 1) {
+            // WavExtractor đưa mẫu theo khối sr/10 khung (100 ms). Nối đã được đọc trước (bộ đệm) thì ExoPlayer tua TRONG bộ đệm: khối chứa mốc có nhãn trước mốc nên bị bỏ nguyên khối và tiếng
+            // bắt đầu ở khối sau (mốc 1005 ms -> 1100 ms, đo được +95 ms, lúc có lúc không tuỳ đã đọc trước chưa). Vì thế tua tới ĐÚNG ranh khối rồi cắt phần lẻ ở sink.
+            val chunk = (sr / 10).toLong().coerceAtLeast(1)
+            val b0 = sample / chunk * chunk
+            return SeekPlan(b0 * 1000 / sr, sample - b0)
+        }
+        val start = if (index == 0) seam.audibleStartSamples else seam.loopStartSamples + seam.xFrames
+        val open = if (index == 0) start else start - seam.prerollSamples // khung đầu cửa sổ của mục (ranh khung)
+        val t = start + sample
+        val spf = seam.frameSamples.toLong()
+        val b0 = maxOf(open, t / spf * spf - seam.prerollSamples)
+        // ExoPlayer cho vào khung đầu tiên có nhãn >= vị trí tua. Nhãn khung b0 là k*spf*1e6/sr làm tròn xuống µs nên khi ranh b0 đúng bằng một số ms nguyên (đo: mốc 139520 ms ở 44,1 kHz) nhãn
+        // có thể rớt dưới vị trí 1 µs và b0 bị bỏ, tiếng vào trễ đúng 1 khung. Lùi 1 ms (khung trước còn cách 24-72 ms nên vẫn không vào).
+        return SeekPlan((seam.ms(b0) - seam.ms(open) - 1).coerceAtLeast(0), t - b0)
+    }
+
+    /**
+     * API tua của Clip / Nối: tua tới mẫu `sample` (trục danh nghĩa của mục, xem [seekPlan]) chính xác từng mẫu; `sink` là [LoopSink] của chính player này. Gọi từ luồng của player.
+     */
+    fun seekToSample(player: Player, sink: LoopSink, seam: Seam, index: Int, sample: Long) {
+        val plan = seekPlan(seam, index, sample)
+        sink.armSeek(plan.trimFrames)
+        player.seekTo(index, plan.positionMs)
+    }
+
+    /** Như [seekToSample] với mốc là `ms` mili giây trên trục danh nghĩa (mẫu = round(ms * sr / 1000)). */
+    fun seekTo(player: Player, sink: LoopSink, seam: Seam, index: Int, ms: Long) =
+        seekToSample(player, sink, seam, index, Math.round(ms * seam.sampleRate / 1000.0))
+
     private fun item(file: File, id: String, startMs: Long? = null, endMs: Long? = null, trim: Trim? = null): MediaItem {
         val builder = MediaItem.Builder().setUri(Uri.fromFile(file)).setMediaId(id)
         if (trim != null) builder.setTag(trim)
@@ -304,10 +545,8 @@ object LoopSeam {
 
     /**
      * Bọc `inner`: mục có tag [Trim] (Clip của [mediaItems]) được ghi đè `Format.encoderDelay` / `encoderPadding` SAU ClippingMediaPeriod (nó tự đặt cả hai về 0 khi mốc đầu /
-     * cuối khác mặc định). TrimmingAudioProcessor của sink cắt đúng số mẫu ấy ở đầu / cuối mục. Cắt đầu chỉ chạy ở lần cấu hình sink đầu tiên của mục (chuyển mục liền
-     * hay tua sang MỤC khác): tua trong cùng mục không cắt lại.
-     * Lưu ý cho app thật: tua THẲNG vào giữa một Clip lặp từ mục khác cũng bị cắt `prerollSamples` đầu tiên (âm đi trước vị trí báo ~78 ms ở 44,1 kHz) - cần mục không preroll
-     * cho cú tua, hay bù vị trí.
+     * cuối khác mặc định). encoderDelay ở đây chỉ là LỜI NHẮN cho [LoopSink] (preroll cần cắt khi vào mục bằng chuyển mục liền); nó cắt đầu và đưa sink trong encoderDelay = 0.
+     * encoderPadding đi thẳng xuống TrimmingAudioProcessor, cắt cuối mục. Tua đi qua [seekToSample], không qua `player.seekTo`.
      */
     fun mediaSourceFactory(inner: MediaSource.Factory): MediaSource.Factory = object : MediaSource.Factory {
         override fun setDrmSessionManagerProvider(drmSessionManagerProvider: DrmSessionManagerProvider): MediaSource.Factory = apply { inner.setDrmSessionManagerProvider(drmSessionManagerProvider) }
