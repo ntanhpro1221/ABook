@@ -361,7 +361,7 @@ function BluetoothFallback({
         </DropdownMenu.Trigger>
       </Tooltip>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+        <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float">
           <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Khi Wi-Fi không tới được, đi Bluetooth qua</DropdownMenu.Label>
           {!devices.length && (
             <p className="px-2 py-1.5 text-xs text-fg-3">
