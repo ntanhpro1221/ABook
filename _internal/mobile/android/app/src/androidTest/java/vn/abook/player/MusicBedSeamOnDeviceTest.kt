@@ -1,6 +1,8 @@
 package vn.abook.player
 
 import android.content.Context
+import android.media.AudioTimestamp
+import android.media.AudioTrack
 import android.os.SystemClock
 import androidx.annotation.OptIn
 import androidx.media3.common.audio.AudioProcessor
@@ -37,7 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * (hai bài giải mã liền mạch từ đầu như §41). Dòng (giây 6 chữ số, `<ns>` = System.nanoTime):
  * `SEAM ...` / `SEAM2 ...` như MusicLoopSeamTest, `RFMT`, `RFMT2`, `RINFO`, `RINFO2`, `GAIN <g>`,
  * `EV <ns> scenario <Sx>` / `EV <ns> scenario_end` (số trình phát k đánh lại từ 0 mỗi kịch bản), `EV <ns> sync <t> <nhảy 0|1>`,
- * và các sự kiện của MusicBed (xem [SeamEvents]): `open`, `plan`, `attach`, `demote`, `promote`, `seek`, `pos`, `item`, `audiotrack`, `vol`, mỗi dòng sau `EV <ns> `;
+ * và các sự kiện của MusicBed (xem [SeamEvents]): `open`, `plan`, `attach`, `demote`, `promote` (`promote <k> loop <viTriA87Giay>`), `seek`, `pos`, `item`, `audiotrack`, `vol`, mỗi dòng sau `EV <ns> `;
+ * `EV <ns> ts <k> <framePosition> <tsNanoTime>` (luồng phụ 10 ms, AudioTrack mới nhất của từng k, chỉ ghi khi getTimestamp true và framePosition đổi), `EV <ns> underrun <k> <count>` (đầu kịch bản và mỗi khi đổi); luồng dừng ở scenario_end;
  * cùng `FMT <ns> <k> <seg> <sr> <ch> <enc>` và `PCM <k> <seg> <f0> <n> <off> <ns>` (off = byte trong file `<id>_<sc>_p<k>.pcm`).
  */
 @OptIn(UnstableApi::class)
@@ -119,6 +122,54 @@ class MusicBedSeamOnDeviceTest {
                     nextTick += 500
                 }
             }
+        }
+    }
+
+    /**
+     * Luồng phụ của một kịch bản (như MusicLoopSeamTest): mỗi 10 ms, với MỖI trình phát k, đọc AudioTrack MỚI NHẤT của k ([MusicBed.testTracks]):
+     * `EV <ns> ts <k> <framePosition> <tsNanoTime>` (chỉ khi getTimestamp trả true VÀ framePosition đổi), `EV <ns> underrun <k> <count>` (lần đọc đầu của mỗi AudioTrack và mỗi khi đổi).
+     * Trả hàm dừng luồng.
+     */
+    private fun startTrackPoller(): () -> Unit {
+        val stop = AtomicBoolean(false)
+        class State(var track: AudioTrack? = null, var frame: Long = -1L, var underrun: Int = -1)
+        val states = HashMap<Int, State>()
+        val thread = Thread {
+            val stamp = AudioTimestamp()
+            while (!stop.get()) {
+                for ((k, track) in MusicBed.testTracks.entries.map { it.key to it.value }) {
+                    val s = states.getOrPut(k) { State() }
+                    try {
+                        if (track !== s.track) {
+                            s.track = track
+                            s.frame = -1L
+                            s.underrun = -1
+                        }
+                        val underrun = track.underrunCount
+                        if (underrun != s.underrun) {
+                            s.underrun = underrun
+                            log("EV ${System.nanoTime()} underrun $k $underrun")
+                        }
+                        if (track.getTimestamp(stamp) && stamp.framePosition != s.frame) {
+                            s.frame = stamp.framePosition
+                            log("EV ${System.nanoTime()} ts $k ${stamp.framePosition} ${stamp.nanoTime}")
+                        }
+                    } catch (_: IllegalStateException) {
+                        // AudioTrack vừa bị nhả giữa hai lần đọc: lần sau đọc cái mới
+                    }
+                }
+                try {
+                    Thread.sleep(10)
+                } catch (_: InterruptedException) {
+                    return@Thread
+                }
+            }
+        }
+        thread.isDaemon = true
+        thread.start()
+        return {
+            stop.set(true)
+            thread.join(1000)
         }
     }
 
@@ -245,6 +296,7 @@ class MusicBedSeamOnDeviceTest {
                     else -> 0L // S6 cũng 0: Nối dựng thật ở nền, xong thật lâu trước ranh lặp
                 }
                 MusicBed.testPlayerSeq = 0
+                MusicBed.testTracks.clear()
                 attached.set(false)
                 promoted.set(false)
                 MusicBed.testAudioProcessor = {
@@ -257,6 +309,7 @@ class MusicBedSeamOnDeviceTest {
                 // 3. Kịch bản
                 log("EV ${System.nanoTime()} scenario $sc")
                 val voice = Voice(bookId)
+                val stopPoller = startTrackPoller()
                 try {
                     when (sc) {
                         "S1" -> {
@@ -305,6 +358,7 @@ class MusicBedSeamOnDeviceTest {
                     }
                 } finally {
                     log("EV ${System.nanoTime()} scenario_end")
+                    stopPoller()
                     onMain {
                         MusicBed.stop()
                         MusicBed.release() // lần sync kế (kịch bản sau) đọc lại sách

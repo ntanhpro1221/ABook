@@ -211,6 +211,9 @@ object MusicBed {
     /** MÓC ĐO: số thứ tự (từ 0) của trình phát kế tiếp MusicBed tạo; bên đo đặt 0 ở đầu mỗi kịch bản. */
     @VisibleForTesting @Volatile var testPlayerSeq = 0
 
+    /** MÓC ĐO: AudioTrack MỚI NHẤT của từng trình phát k (chỉ điền khi [testEvents] đặt); bên đo đọc `getTimestamp` / `underrunCount` và tự xoá ở đầu kịch bản. */
+    @VisibleForTesting val testTracks = java.util.concurrent.ConcurrentHashMap<Int, android.media.AudioTrack>()
+
     /** MÓC ĐO: số thứ tự của trình phát đang được tạo (hợp lệ trong lúc [testAudioProcessor] được gọi). */
     @VisibleForTesting @Volatile var testCreating = 0
 
@@ -576,7 +579,7 @@ object MusicBed {
         old.fadeStep = maxOf(old.player.volume, 0.01f) * STEP_MS / PROMOTE_OVERLAP_MS
         fading += old
         current = ready.also { it.early = old.early }
-        emit { SeamEvents.promote(ready.testK) }
+        emit { SeamEvents.promote(ready.testK, snap.position) }
         startFade()
     }
 
@@ -1116,6 +1119,7 @@ object MusicBed {
                 if (testEvents != null) builder.setAudioTrackProvider(object : DefaultAudioSink.AudioTrackProvider {
                     override fun getAudioTrack(config: AudioSink.AudioTrackConfig, attributes: AudioAttributes, audioSessionId: Int, context: Context?) =
                         DefaultAudioSink.AudioTrackProvider.DEFAULT.getAudioTrack(config, attributes, audioSessionId, context).also {
+                            testTracks[k] = it
                             emit { SeamEvents.audioTrack(k, it.sampleRate, it.channelCount) }
                         }
 
