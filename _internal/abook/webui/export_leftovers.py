@@ -107,6 +107,10 @@ STAGING = re.compile(r"^\..+\.[0-9a-f]{8}\.part$")  # bookfile / projectfile ext
 RETIRED = re.compile(r"^\.(?P<name>.+)\.[0-9a-f]{8}\.old$")  # bookfile / projectfile extract: bản cũ chờ xoá sau khi thay
 TEMP_SCRATCH = re.compile(r"^abook-(?:text|wishes)-[a-z0-9_]{8}$")  # textbook / book_wishes: TemporaryDirectory trong %TEMP%
 MUSIC_PART = re.compile(r"^.+\.[0-9a-f]{8}\.part$")  # server: bài nhạc đang tải f"{target.stem}.{secrets.token_hex(4)}.part"
+# export.write_chapter: f"{tên chương}.part" với tên chương = export.chapter_file_name ("01 - Tên.mp3"), trong thư mục cuốn ngay dưới
+# nơi lưu. Khớp cả số thứ tự đầu tên: ".mp3.part" trần là tên tạm của trình duyệt đang tải.
+MP3_PART = re.compile(r"^\d{2,} - .+\.mp3\.part$")
+BOOK_FOLDER = re.compile(r"^[^.]")  # thư mục cuốn của bản xuất MP3 (export.safe_name - không bắt đầu bằng ".")
 
 
 def _age(path: Path, now: float) -> float:
@@ -137,6 +141,9 @@ def sweep_crashed(export_folders: Iterable[Path], library_folders: Iterable[Path
     restored: list[Path] = []
     for folder in dict.fromkeys(export_folders):
         found += _entries(folder, BOOKFILE_PART) + _entries(folder, M4B_SCRATCH) + _entries(folder, MUSIC_SCRATCH)
+        for book in _entries(folder, BOOK_FOLDER):
+            if book.is_dir():
+                found += [entry for entry in _entries(book, MP3_PART) if entry.is_file()]
     for folder in dict.fromkeys(library_folders):
         found += _entries(folder, STAGING)
         for retired in _entries(folder, RETIRED):

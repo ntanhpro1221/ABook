@@ -55,8 +55,8 @@ cùng các việc qua ống. Cửa sổ Qt giữ nguyên làm lối lui trong b�
 - Nơi ở: `%LOCALAPPDATA%\ABook\Studio\` - MỌI thứ Studio cần nằm trong đó (mục "Tự chứa" dưới). Dữ liệu người dùng ở
   `%LOCALAPPDATA%\ABook\` như bản dev hôm nay (tuỳ chọn, `listening.json`, `devices.json`, `computers.json`...).
 - Gỡ app (chủ sách 28-09: "gỡ thì gỡ hết", `shell/src-tauri/windows/hooks.nsh`): LUÔN xoá Studio và bộ nhớ đệm WebView2
-  (`%LOCALAPPDATA%\com.ngdtuanh.abook`), dừng trước mọi tiến trình chạy từ hai chỗ ấy và từ thư mục cài (host Python,
-  worker, Ollama riêng); dữ liệu cá nhân chỉ xoá khi tích ô "xoá dữ liệu ứng dụng" của bộ gỡ; thư viện sách (thư mục người
+  (`%LOCALAPPDATA%\com.ngdtuanh.abook`), dừng trước mọi tiến trình chạy từ hai chỗ ấy (worker,
+  Ollama riêng) và từ `resources` của thư mục cài (host Python); dữ liệu cá nhân chỉ xoá khi tích ô "xoá dữ liệu ứng dụng" của bộ gỡ; thư viện sách (thư mục người
   dùng chọn) không bao giờ bị đụng. Bộ gỡ chạy vì bộ cài bản mới "gỡ trước khi cài" (tiến trình ông là `*setup*.exe`)
   thì giữ Studio - nâng cấp không bắt tải lại 13 GB.
 - Cài: màn "Cài Studio" chạy các bước của `scripts/setup_windows.ps1` (uv, venv từ `pyproject.toml` + `uv.lock` đi kèm
@@ -138,7 +138,9 @@ kế tiếp.
 
 ## Bộ cài (NSIS)
 
-- Cài cho người dùng hiện tại (`%LOCALAPPDATA%\Programs\ABook`), không cần quyền quản trị.
+- Cài cho người dùng hiện tại (`%LOCALAPPDATA%\ABook` - mẫu NSIS của Tauri đặt `$INSTDIR` = `$LOCALAPPDATA\${PRODUCTNAME}`),
+  không cần quyền quản trị. Thư mục cài cũng là cha của Studio và dữ liệu người dùng: bộ gỡ chạy trước khi cài lại chỉ dừng
+  tiến trình dưới `$INSTDIR\resources` (host Python nhúng), không đụng worker Studio đang làm sách.
 - Lối tắt Start Menu + màn hình nền "ABook", liên kết `.abook` (thay `register_file_types.ps1` của bản dev), AUMID
   giữ nguyên để Windows+A và thông báo không đổi.
 - WebView2: Windows 11 có sẵn; bộ cài tự tải khi thiếu.

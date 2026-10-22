@@ -15,8 +15,10 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
+import androidx.work.ListenableWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -36,6 +38,17 @@ import java.io.OutputStream
  * Việc chạy bằng WorkManager ở dịch vụ nền (dataSync) - ra khỏi app, tắt màn hình vẫn chạy tiếp; tiến độ ở thông báo có nút "Dừng".
  */
 object Mp3Exports {
+    /**
+     * Người dùng bấm "Dừng" (hay xuất lại cuốn này) khác hệ thống dừng việc (hết giờ chạy nền, máy thiếu bộ nhớ...): hệ thống dừng
+     * thì việc trả `Result.retry()` và WorkManager tự chạy lại - file đích, quyền ghi và ảnh bìa vẽ sẵn phải còn. Dùng chung cho
+     * ba kiểu xuất (MP3, M4B, sách nói). Dưới Android 12 không biết lý do: coi như người dùng dừng, như trước.
+     */
+    fun stoppedBySystem(sdk: Int, reason: Int): Boolean =
+        sdk >= 31 && reason != WorkInfo.STOP_REASON_CANCELLED_BY_APP && reason != WorkInfo.STOP_REASON_UNKNOWN
+
+    internal fun stoppedBySystem(worker: ListenableWorker): Boolean =
+        Build.VERSION.SDK_INT >= 31 && stoppedBySystem(Build.VERSION.SDK_INT, worker.stopReason)
+
     private const val CHANNEL = "export"
     private const val KEY_BOOK = "bookId"
     private const val KEY_TREE = "tree"
@@ -262,6 +275,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
         val run = id.toString()
         fun event() = JSONObject().put("bookId", bookId).put("run", run)
         var done = 0
+        var retrying = false
         try {
             val plan = Mp3Export.plan(bookId, cover?.takeIf { it.isFile }?.readBytes())
             title = plan.title
@@ -285,6 +299,11 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 .put("folder", result.folder).put("uri", result.uri))
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
+            // Hệ thống dừng việc (không phải người dùng): WorkManager chạy lại, ghi đè các chương đã xuất.
+            if (Mp3Exports.stoppedBySystem(this)) {
+                retrying = true
+                return Result.retry()
+            }
             Mp3Exports.finished(context, bookId, "Đã dừng xuất", "$title · đã xuất $done chương")
             Mp3Exports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
@@ -294,7 +313,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             Mp3Exports.emit(event().put("error", message))
             return Result.failure()
         } finally {
-            cover?.delete()
+            if (!retrying) cover?.delete()
         }
     }
 }

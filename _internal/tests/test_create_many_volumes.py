@@ -398,7 +398,7 @@ def test_after_a_restart_starting_any_part_requeues_the_pending_ones_after_it(st
     folder = _chapters(tmp_path / "tap3", ["Chương 1"])
     third = app._create_book({"profile": "fast"}, [str(next(folder.glob("*.txt")))], "T · Phần 3", None)
     continuation.link_pending(second, third)
-    assert app.queue == [], "mở lại app: hàng đợi trống, không gì tự chạy"
+    assert app.queue == [], "chưa phần nào trong hàng (vd. đã bỏ khỏi hàng)"
 
     app.start(book_id(second), now=True)  # phần 1 (bài thử) đã phân vai xong nên gieo được
 

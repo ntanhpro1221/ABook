@@ -155,7 +155,7 @@ object Remote {
 
     /** Sách đã tải xong về máy (có book.json) - máy tính biết cuốn nào nghe được cả khi mất mạng. */
     private fun downloadedBooks(): JSONArray = JSONArray().also { array ->
-        File(Store.root, "books").listFiles()?.filter { File(it, "book.json").isFile }?.forEach { array.put(it.name) }
+        Store.bookFolders().filter { File(it, "book.json").isFile }.forEach { array.put(it.name) }
     }
 
     private fun execute(received: JSONArray?) {
