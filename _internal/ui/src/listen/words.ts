@@ -90,6 +90,7 @@ export const LAST_WORD_HOLD_MS = 400;
 /** Chữ đang đọc ở `ms` (từ đầu chương): chữ cuối cùng đã bắt đầu (tìm nhị phân); -1 khi chưa tới chữ đầu hay chữ cuối đã qua lâu. Một chữ kết thúc
  *  đúng chỗ chữ sau bắt đầu nên khoảng ngắt giữa câu vẫn sáng chữ trước. */
 export function wordIndexAt(words: readonly WordSpan[], ms: number): number {
+  if (words.length === 0) return -1; // đoạn chưa đọc: chưa có mốc chữ nào để sáng
   const at = ms + WORD_LEAD_MS;
   let low = 0;
   let high = words.length - 1;

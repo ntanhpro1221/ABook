@@ -13,7 +13,7 @@ from __future__ import annotations
 import re
 import unicodedata
 
-from .mapping import Boundary
+from .mapping import TOKEN, Boundary
 
 SYLLABLE = 4  # đơn vị thời gian của một âm tiết
 COMMA_PAUSE = 4  # sau , ; : — –  (đo trên Edge: ngắt phẩy ~ một âm tiết)
@@ -21,7 +21,7 @@ SENTENCE_PAUSE = 8  # sau . ! ? …  (~ hai âm tiết)
 _CLOSERS = "\"'”’)]»"
 _COMMA = ",;:—–"
 _SENTENCE = ".!?…"
-_TOKEN = re.compile(r"\S+")
+_TOKEN = TOKEN
 
 
 def pause_after(token: str) -> int:

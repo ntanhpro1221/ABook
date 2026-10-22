@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { askOnlineConsent, chooseVoiceText, needsOnlineConsent, onlineConsentGiven, onlinePromptText, pendingConsent, spokenVoiceName } from "./onlineConsent";
+import { askOnlineConsent, chooseVoiceText, needsOnlineConsent, onlineConsentGiven, onlinePromptText, pendingConsent, pickVoiceWithConsent, spokenVoiceName } from "./onlineConsent";
 import type { ReadAloudVoice } from "./readAloud";
 
 const store = new Map<string, string>();
@@ -79,5 +79,23 @@ describe("hỏi trước khi gửi chữ cho giọng trực tuyến", () => {
     pendingConsent()!.answer(null);
     await expect(second).resolves.toBeNull();
     expect(needsOnlineConsent(hoaiMy)).toBe(true);
+  });
+
+  it("đổi sang giọng trực tuyến giữa lúc nghe: hỏi trước, đóng hộp thì không đổi, giọng của máy / đã đồng ý thì đổi ngay - soát a79 lỗi 2", async () => {
+    expect(await pickVoiceWithConsent(device, voices)).toBe(device.id);
+    const closed = pickVoiceWithConsent(hoaiMy, voices);
+    expect(pendingConsent()?.voice).toBe(hoaiMy); // hộp mở trước khi giọng đổi
+    pendingConsent()!.answer(null);
+    expect(await closed).toBeNull();
+    expect(needsOnlineConsent(hoaiMy)).toBe(true); // chưa gửi gì đi
+    const agreed = pickVoiceWithConsent(hoaiMy, voices);
+    pendingConsent()!.answer(hoaiMy.id);
+    expect(await agreed).toBe(hoaiMy.id);
+    expect(await pickVoiceWithConsent(namMinh, voices)).toBe(namMinh.id); // cùng Microsoft: không hỏi lại
+    expect(pendingConsent()).toBeNull();
+    store.clear();
+    const other = pickVoiceWithConsent(hoaiMy, voices);
+    pendingConsent()!.answer(device.id, true); // chọn giọng của máy ngay trong hộp
+    expect(await other).toBe(device.id);
   });
 });

@@ -1,0 +1,188 @@
+{
+  "note": "Dùng chung cho listen/readingAnchor.test.ts (TS) và ReadingAnchorTest.kt: make(before, segment, word) rồi restore(after) phải ra expect (null = không khôi phục). Soát a79 lỗi 5.",
+  "anchor": {
+    "paragraphs": [
+      "Chương một",
+      "😀 Một hai ba.",
+      "Đoạn sau.",
+      "Đoạn cuối cùng ở đây."
+    ],
+    "segment": 1,
+    "word": 2,
+    "expect": {
+      "segment": 1,
+      "charOffset": 6,
+      "textHash": "fnv1a64:25879321e74b8999",
+      "paragraphHash": "fnv1a64:ad1280923cf5e32d"
+    }
+  },
+  "cases": [
+    {
+      "name": "nguyên văn",
+      "before": [
+        "Chương một",
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây."
+      ],
+      "segment": 1,
+      "word": 2,
+      "after": [
+        "Chương một",
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây."
+      ],
+      "expect": {
+        "segment": 1,
+        "word": 2
+      }
+    },
+    {
+      "name": "thêm đoạn ở cuối chương",
+      "before": [
+        "Chương một",
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây."
+      ],
+      "segment": 1,
+      "word": 2,
+      "after": [
+        "Chương một",
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây.",
+        "Đoạn mới."
+      ],
+      "expect": {
+        "segment": 1,
+        "word": 2
+      }
+    },
+    {
+      "name": "sửa chính tả ở đoạn khác",
+      "before": [
+        "Chương một",
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây."
+      ],
+      "segment": 1,
+      "word": 2,
+      "after": [
+        "Chương một",
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây!"
+      ],
+      "expect": {
+        "segment": 1,
+        "word": 2
+      }
+    },
+    {
+      "name": "chèn đoạn lên đầu: đoạn đang nghe dịch xuống một",
+      "before": [
+        "Chương một",
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây."
+      ],
+      "segment": 1,
+      "word": 2,
+      "after": [
+        "Lời tựa.",
+        "Chương một",
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây."
+      ],
+      "expect": {
+        "segment": 2,
+        "word": 2
+      }
+    },
+    {
+      "name": "bỏ đoạn đầu: đoạn đang nghe dịch lên một",
+      "before": [
+        "Chương một",
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây."
+      ],
+      "segment": 1,
+      "word": 1,
+      "after": [
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây."
+      ],
+      "expect": {
+        "segment": 0,
+        "word": 1
+      }
+    },
+    {
+      "name": "sửa chính đoạn đang nghe: không còn chỗ để giữ",
+      "before": [
+        "Chương một",
+        "😀 Một hai ba.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây."
+      ],
+      "segment": 1,
+      "word": 2,
+      "after": [
+        "Chương một",
+        "😀 Một hai bốn.",
+        "Đoạn sau.",
+        "Đoạn cuối cùng ở đây."
+      ],
+      "expect": null
+    },
+    {
+      "name": "đoạn trùng lặp: đoạn cũ còn nguyên thì giữ đúng nó",
+      "before": [
+        "a b c",
+        "x",
+        "a b c",
+        "y"
+      ],
+      "segment": 2,
+      "word": 1,
+      "after": [
+        "a b c",
+        "x",
+        "a b c",
+        "y",
+        "a b c"
+      ],
+      "expect": {
+        "segment": 2,
+        "word": 1
+      }
+    },
+    {
+      "name": "đoạn trùng lặp: đoạn cũ đã đổi thì lấy bản gần chỗ cũ nhất",
+      "before": [
+        "a b c",
+        "x",
+        "a b c",
+        "y"
+      ],
+      "segment": 2,
+      "word": 1,
+      "after": [
+        "a b c",
+        "q",
+        "x",
+        "a b c"
+      ],
+      "expect": {
+        "segment": 3,
+        "word": 1
+      }
+    }
+  ]
+}

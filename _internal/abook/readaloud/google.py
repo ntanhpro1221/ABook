@@ -22,14 +22,14 @@ from xml.sax.saxutils import escape
 
 from . import byok, edge, mp3
 from .byok import Limits
-from .mapping import Boundary
+from .mapping import TOKEN, Boundary
 from .model import Synthesis, VoiceError
 
 BASE = "https://texttospeech.googleapis.com"
 MAX_SSML_BYTES = 4800  # dưới trần 5000 byte của Google, chừa chỗ cho thẻ bọc
 FAMILIES = re.compile(r"-(Standard|Wavenet|Neural2)-", re.IGNORECASE)
 NAME = "Google Cloud"
-_TOKEN = re.compile(r"\S+")
+_TOKEN = TOKEN
 
 
 def _family_label(name: str) -> str:

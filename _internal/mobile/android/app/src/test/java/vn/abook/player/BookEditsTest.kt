@@ -380,4 +380,26 @@ class BookEditsTest {
         assertEquals("12345678.0", StrictJson.pyFloat(12345678.0))
         assertEquals("0.1", StrictJson.pyFloat(0.1))
     }
+
+    @Test
+    fun merging_two_big_sets_of_readings_stays_readable_and_keeps_this_machines_first() {
+        // Soát a79 lỗi 12: hợp vượt MAX_READINGS thì parse từng từ chối cả file và lớp sửa đọc ra rỗng. Cùng ca với tests/test_book_edits.py.
+        val local = BookEdits.empty().put("title", "Tên của tôi")
+        val incoming = BookEdits.empty()
+        val ours = JSONObject()
+        val theirs = JSONObject()
+        for (i in 0 until 1200) {
+            ours.put("mot%04d".format(i), "đọc một $i")
+            theirs.put("hai%04d".format(i), "đọc hai $i")
+        }
+        local.put("readings", ours)
+        incoming.put("readings", theirs)
+        val merged = BookEdits.merge(local, incoming).first
+        val readings = merged.getJSONObject("readings")
+        assertEquals(BookEdits.MAX_READINGS, readings.length())
+        for (key in BookEdits.names(ours)) assertEquals(ours.get(key), readings.get(key))
+        assertEquals((0 until 800).map { "hai%04d".format(it) }, BookEdits.names(readings).filter { it.startsWith("hai") }.sorted())
+        assertJson("đọc lại được", merged, BookEdits.parse(BookEdits.dump(merged)))
+        assertEquals("Tên của tôi", merged.getString("title"))
+    }
 }

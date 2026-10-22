@@ -133,6 +133,10 @@ describe("Làm trước trên điện thoại", () => {
     expect(canPrepare({ provider: "device", online: false }, true)).toBe(false);
     expect(prepareIntro({ online: true })).toContain("không có mạng");
     expect(prepareIntro({ online: false })).toContain("Máy đọc chậm");
+    // Làm trước bằng giọng trực tuyến là gửi chữ đi: lời mời nói đi đâu (soát a79 lỗi 6).
+    expect(prepareIntro({ online: true, provider: "edge" })).toContain("gửi tới máy chủ Microsoft");
+    expect(prepareIntro({ online: true, provider: "fpt" })).toContain("gửi tới FPT.AI");
+    expect(prepareIntro({ online: false, provider: "vieneu" })).not.toContain("gửi");
   });
 
   it("tiến độ theo chương, còn bao lâu, đang chờ gì", () => {
