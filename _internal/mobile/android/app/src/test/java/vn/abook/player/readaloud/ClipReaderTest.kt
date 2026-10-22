@@ -385,4 +385,16 @@ class ClipReaderTest {
         assertEquals(2, edgeCalls)
         assertEquals("edge:v", reader.read("Hai", "edge:v").voice) // hết nghỉ luôn
     }
+
+    @Test
+    fun aRejectedKeyWithoutEdgeConsentFallsStraightToTheDeviceVoiceAndNeverCallsEdge() {
+        // onlineFallback trả null khi người nghe chưa đồng ý "edge" (ReadAloud.edgeFallback): chữ không được rời máy tới Microsoft (soát a79 lỗi 1).
+        val keyed = FakeVoice("azure:vi-VN-HoaiMyNeural", VoiceException("Azure từ chối khóa của bạn", reason = "auth"))
+        val edge = FakeVoice("edge:vi-VN-HoaiMyNeural")
+        val device = FakeVoice("device:vi")
+        val reader = ClipReader(ClipCache(dir), { if (it.startsWith("azure:")) keyed else edge }, { device }, { now }, onlineFallback = { null })
+        assertEquals("device:vi", reader.read("Xin", "azure:vi-VN-HoaiMyNeural").voice)
+        assertEquals(0, edge.calls)
+        assertEquals(listOf(1, 1), listOf(keyed.calls, device.calls))
+    }
 }

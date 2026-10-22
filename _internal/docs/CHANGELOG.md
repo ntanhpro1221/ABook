@@ -9,6 +9,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi giọng dùng khóa riêng của bạn (Azure, FPT.AI, Google) bị từ chối hay hết hạn mức, ABook chỉ đọc tiếp bằng giọng Edge nếu bạn đã cho phép gửi chữ tới Microsoft; chưa cho phép thì đọc tiếp bằng giọng của máy, chữ không rời máy.
+- Khi bạn đang nghe mà chọn một giọng trực tuyến chưa cho phép trong menu “Giọng đọc”, ABook hỏi trước rồi mới đổi giọng, không gửi chữ đi ngay như trước; trên điện thoại, nếu chưa cho phép thì giữ giọng cũ và báo bạn.
+- Trên điện thoại, mở sách chữ từ Android Auto, widget hay nút tai nghe khi giọng trực tuyến chưa được bạn cho phép thì ABook dừng chờ bạn bấm Phát trong app, không tự gửi chữ đi; gỡ giọng đã tải mà giọng thay thế cần mạng cũng vậy.
+- Trên máy tính, đóng sách hay chuyển chương ngay lúc chương đọc to chưa nghe lần nào còn đang chờ đoạn đầu không còn bị kẹt; chỗ nghe vẫn được lưu.
+- “Làm trước” bằng giọng trực tuyến hỏi bạn cho phép trước khi gửi chữ các chương đi, và lời mời nói rõ chữ sẽ được gửi tới đâu.
+- Khi bạn sửa chính tả ở một đoạn khác (hay chương được nối thêm đoạn) trong lúc đang nghe dở một chương đọc to, mở lại vẫn đúng đoạn và đúng chữ bạn đang nghe, không nhảy lệch.
+- Trên máy tính, “Làm trước” gặp lỗi lạ (ví dụ ổ đĩa đầy) thì báo lỗi thay vì hiện “đang làm trước” mãi, và bấm làm việc mới không còn phải chờ tới 30 giây; bộ đệm giọng cũng dọn các file ghi dở của lần tắt ngang.
+- Trên điện thoại, sau khi bạn sửa cách đọc của cuốn đang “Làm trước”, các đoạn đã làm theo cách cũ không còn được giữ mãi trong phần bộ đệm của “Làm trước”.
+- Khi hai máy mỗi bên có hàng nghìn cách đọc riêng khác nhau, gộp lại không còn làm cuốn mất cả phần sửa của bạn (tên nhân vật, dòng bỏ, nhạc): ABook giữ đủ của máy này rồi lấy thêm của máy kia đến giới hạn.
+- Chữ đang đọc được tô sáng đúng chỗ cả khi văn bản chương có ký tự khoảng trắng lạ (U+0085, U+001C-U+001F, U+FEFF).
+- Trên điện thoại, hẹn giờ “hết chương” cho sách chữ dừng ở đầu chương kế như trên máy tính: sáng mai bấm Phát không phải nghe lại đoạn cuối chương vừa xong.
 - Trên máy tính, cửa sổ ABook nhớ kích thước, vị trí và trạng thái phóng to của lần trước; nếu màn hình phụ cũ đã rút ra thì cửa sổ mở trên màn hình còn lại, không nằm ngoài màn.
 - Trên máy tính, chỗ nghe của bạn chỉ được báo đã lưu sau khi ghi thành công; nếu chưa ghi được, app giữ bản chờ để thử lại và nói rõ lỗi.
 - Khi bạn nghe cùng một cuốn ở nhiều tab hoặc cửa sổ, phiên cũ không còn ghi đè chỗ nghe của phiên mới.

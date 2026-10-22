@@ -13,7 +13,12 @@ import re
 import unicodedata
 from dataclasses import dataclass
 
-_TOKEN = re.compile(r"\S+")
+# "Chữ hiện" = đoạn không có khoảng trắng THEO JAVASCRIPT (`\s` của JS, `Paragraphs.JS_SPACE` bên Kotlin), không phải `\S` của Python: Python coi U+0085 và U+001C-U+001F là
+# khoảng trắng còn JS thì không, JS coi U+FEFF là khoảng trắng còn Python thì không - số chữ lệch thì mốc tô sáng lệch từ chỗ ấy trở đi (soát a79 lỗi 11).
+# Mọi nơi đếm chữ ở máy chủ dùng chung TOKEN này.
+JS_SPACE = "\t\n\x0b\x0c\r    -     　﻿"
+TOKEN = re.compile(f"[^{JS_SPACE}]+")
+_TOKEN = TOKEN
 # Mảnh không khớp ngay chữ đang chờ thì nhìn tới nhiều nhất chừng này chữ nữa: xa hơn là giọng đọc lời khác chữ (số, từ viết tắt), không phải
 # một chữ ở xa - khớp bừa vào chữ trùng (vd "và") ở xa còn tệ hơn bỏ qua mảnh ấy.
 LOOKAHEAD = 8

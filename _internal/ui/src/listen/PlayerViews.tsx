@@ -63,7 +63,7 @@ import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor
 import { bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, textChapterLine, toggleLabel, unquoted } from "./labels";
 import { useAfter } from "@/shared/useAfter";
 import { useRetryWhenOnline } from "./onlineRetry";
-import { spokenVoiceName } from "./onlineConsent";
+import { askOnlineConsent, onlineConsentGiven, pickVoiceWithConsent, spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
 import { ADD_MUSIC_LABEL, shortPlaylistLabel } from "./playlistBed";
 import { openExternal } from "@/shared/openExternal";
@@ -611,10 +611,15 @@ export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
                           aria-pressed={selected}
                           data-current-choice={selected ? "" : undefined}
                           onClick={() => {
-                            chooseVoice(track.bookId, voice.id);
-                            announce(`Đã chọn giọng ${spokenVoiceName(voice.name)}`);
-                            // Lõi điện thoại nhận giọng mới qua một lệnh riêng: cho nó kịp tới trước lệnh phát (như "Đọc bằng …").
-                            if (fromAlert.current) window.setTimeout(resume, 300);
+                            // Giọng trực tuyến chưa đồng ý: hỏi trước khi đổi - đổi giọng làm đoạn kế gửi đi ngay (không có lệnh phát nào chen vào để hỏi).
+                            const resumeAfter = fromAlert.current;
+                            void pickVoiceWithConsent(voice, voices).then((id) => {
+                              if (!id) return;
+                              chooseVoice(track.bookId, id);
+                              announce(`Đã chọn giọng ${spokenVoiceName(voices.find((item) => item.id === id)?.name ?? voice.name)}`);
+                              // Lõi điện thoại nhận giọng mới qua một lệnh riêng: cho nó kịp tới trước lệnh phát (như "Đọc bằng …").
+                              if (resumeAfter) window.setTimeout(resume, 300);
+                            });
                           }}
                           className={cn(
                             "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover max-sm:min-h-[48px]",
@@ -689,6 +694,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
   const client = useQueryClient();
   const { queue } = usePlayer();
   const { data: status } = usePrepareStatus();
+  const { data: voices } = useReadAloudVoices();
   const [busy, setBusy] = useState(false);
   const upcoming = upcomingTextChapters(queue, chapterId);
   const request = {
@@ -712,6 +718,15 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
   const start = async () => {
     setBusy(true);
     try {
+      // Giọng trực tuyến chưa đồng ý: "Làm trước" gửi chữ cả loạt chương đi ở nền - hỏi trước như lúc bấm phát (soát a79 lỗi 6). Chọn giọng khác trong hộp thì đổi giọng, chưa làm trước.
+      if (voice.online && !onlineConsentGiven(voice.provider)) {
+        const picked = await askOnlineConsent(voice, voices ?? [voice]);
+        if (!picked) return;
+        if (picked.voice !== voice.id) {
+          chooseVoice(bookId, picked.voice);
+          return;
+        }
+      }
       settle(await source.readAloudPrepare!({ ...request, chargingOnly }));
     } catch (error) {
       toast.error("Chưa làm trước được", { description: (error as Error).message });

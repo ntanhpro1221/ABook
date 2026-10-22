@@ -36,7 +36,7 @@ def _boundaries(case: dict) -> list[Boundary]:
 
 
 def _check_shape(text: str, words: list[list[int]], duration: int) -> None:
-    assert len(words) == len(text.split())
+    assert len(words) == len(mapping.TOKEN.findall(text))  # chữ hiện theo JavaScript (không phải str.split)
     last_start = 0
     for index, (start, end) in enumerate(words):
         assert 0 <= start <= end <= duration
@@ -802,3 +802,12 @@ def test_the_real_edge_service_returns_mp3_and_word_boundaries() -> None:
     words = map_boundaries(text, made.boundaries, made.duration_ms)
     assert len(words) == len(text.split()) and made.duration_ms > 1000
     _check_shape(text, words, made.duration_ms)
+
+
+def test_a_word_is_a_run_without_javascript_whitespace() -> None:
+    """Soát a79 lỗi 11: số chữ của máy chủ phải bằng số chữ màn đọc đếm (đoạn không có khoảng trắng theo JavaScript), không phải theo Python."""
+    tokens = mapping.TOKEN.findall
+    assert tokens("Một\u0085hai ba") == ["Một\u0085hai", "ba"], "U+0085 không phải khoảng trắng của JS"
+    assert tokens("a\u001cb c") == ["a\u001cb", "c"], "U+001C-U+001F cũng vậy"
+    assert tokens("bốn\ufeffnăm") == ["bốn", "năm"], "U+FEFF là khoảng trắng của JS"
+    assert tokens("x\u00a0y\u3000z\u2028w\tv\nu") == ["x", "y", "z", "w", "v", "u"]

@@ -132,8 +132,16 @@ object PrepareAhead {
             .put("secondsEstimate", perChar?.let { Math.round(chars * it) } ?: JSONObject.NULL)
     }
 
-    /** Bắt đầu (thay việc cũ). Đoạn đã có trong bộ đệm được bỏ qua, nên bấm lại sau khi dừng / mất mạng là làm tiếp. */
+    /** Việc "Làm trước" đang có (hay vừa xong) là của cuốn `bookId`: các ghim trong bộ đệm là của nó. */
+    internal fun pinsBelongTo(bookId: String): Boolean = synchronized(lock) { job?.bookId == bookId }
+
+    /** Câu từ chối khi giọng gửi chữ đi mà người nghe chưa đồng ý (giao diện hỏi trước; đây là lưới cuối - soát a79 lỗi 6), null nếu làm được. */
+    internal fun refusal(voice: String): String? =
+        if (ReadAloud.voiceNeedsConsent(voice)) "Chưa cho phép gửi chữ đi - cho phép giọng này (bấm Phát rồi chọn Nghe) hoặc chọn giọng của máy trước khi làm trước." else null
+
+    /** Bắt đầu (thay việc cũ). Đoạn đã có trong bộ đệm được bỏ qua, nên bấm lại sau khi dừng / mất mạng là làm tiếp. Giọng chưa được đồng ý: ném [VoiceException], không có việc nào. */
     fun start(context: Context, bookId: String, voice: String, ids: List<Int>, label: String, chargingOnly: Boolean): JSONObject {
+        refusal(voice)?.let { throw VoiceException(it) }
         prefs(context).edit().putBoolean("chargingOnly", chargingOnly).apply()
         val (accepted, offeredChapters, offeredParagraphs) = select(context, bookId, voice, ids)
         WorkManager.getInstance(context).cancelUniqueWork(WORK)

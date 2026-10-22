@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { VOICE_CHANGED_EVENT, isTransientClipError, type ClipFetcher, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
+import { onlineConsentGiven } from "./onlineConsent";
 import type { ListenSource } from "./source";
 
 // Giọng đọc của "Nghe ngay": nhớ lựa chọn theo từng cuốn (+ một lựa chọn chung cho cuốn mới), chọn giọng mặc định, và bọc việc lấy clip với hai
@@ -303,10 +304,12 @@ export function voicesOf(source: ListenSource): Promise<ReadAloudVoice[]> {
   return promise;
 }
 
-/** Giọng đỡ khi `voice` hỏng, theo thứ tự: giọng dùng khoá -> giọng Edge mặc định -> giọng của máy; Edge -> giọng của máy. */
-export function fallbackChain(voices: ReadAloudVoice[], voice: ReadAloudVoice): ReadAloudVoice[] {
+/** Giọng đỡ khi `voice` hỏng, theo thứ tự: giọng dùng khoá -> giọng Edge mặc định -> giọng của máy; Edge -> giọng của máy.
+ *  Edge chỉ vào chuỗi khi người nghe đã đồng ý gửi chữ cho Microsoft (`consented("edge")`): đồng ý của nhà cung cấp khác không thay được -
+ *  chưa đồng ý thì rơi thẳng sang giọng của máy, chữ không đi đâu. */
+export function fallbackChain(voices: ReadAloudVoice[], voice: ReadAloudVoice, consented: (provider: string) => boolean = onlineConsentGiven): ReadAloudVoice[] {
   if (!voice.online) return [];
-  const edges = voices.filter((item) => item.provider === "edge");
+  const edges = consented("edge") ? voices.filter((item) => item.provider === "edge") : [];
   const edge = edges.find((item) => item.default) ?? edges[0];
   const device = voices.find((item) => !item.online);
   return [voice.provider !== "edge" ? edge : undefined, device].filter((item): item is ReadAloudVoice => Boolean(item) && item!.id !== voice.id);
