@@ -7,19 +7,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
-## [0.4.128] - 2026-10-23
-
-### Thư viện
-
-- Đổi sang một thư mục thư viện khác không còn kéo chỗ nghe và dấu trang của sách này sang sách khác chỉ vì trùng tên thư mục; chỉ khi thư viện cũ thật sự đã dời đi mới đi theo.
-- Thư viện mặc định đã từng có mà biến mất khỏi ổ giờ cũng được báo “Không thấy thư mục thư viện”, không tự tạo lại thư viện rỗng ở chỗ cũ.
-- Xoá một cuốn đúng lúc có máy khác bấm Bắt đầu cuốn ấy không làm mất cuốn đang khởi động: lệnh đến sau bị từ chối.
-- Đổi riêng tên, tác giả, người đọc hay tên chương của sách ở máy tính thì sách đã tải về điện thoại tự nhận tên mới, giữ nguyên bản thu; chưa nhận kịp thì hàng sách ở Tải sách có nút “Cập nhật tên”.
-- Phần nối tiếp của một cuốn vẫn nằm đúng bộ khi bạn đổi tên nó, ở cả điện thoại và máy tính nhận sách từ máy khác; hết phần trước vẫn tự nghe nối sang phần sau.
-- Tải sách trên điện thoại liệt kê cả phần tải dở và gói nghe thẳng đang chiếm chỗ, mỗi phần có nút “Xoá phần đã tải” (hỏi lại và Hoàn tác như xoá thường; đang tải thì chưa xoá được).
-- “Nghe gần đây” trên điện thoại xếp theo lần nghe cuối, kể cả cuốn nghe thẳng từ máy tính.
-- Hai ảnh bìa đặt liền nhau trong cùng một giây không còn hiện nhầm ảnh cũ; địa chỉ ảnh bìa đổi theo nội dung ảnh.
-
 ### Nhập sách
 
 - Tạo sách từ EPUB hay Word: bìa, trang bản quyền, mục lục và trang tên sách không còn được tích sẵn thành chương như một đoạn truyện; chúng hiện trong khung “trang phụ chưa chọn”, tích trang nào bạn muốn nghe (giống Nghe ngay).
@@ -32,6 +19,19 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Trang tạo sách trong cửa sổ app nhận file và thư mục kéo thả vào khung nét đứt, như Thư viện.
 - Gửi từ thiết bị khác hay kéo vào trình duyệt nhận file tới 40 MB; file lớn hơn thì lời báo chỉ cách tách nhỏ hoặc mở ngay trên máy tính.
 - TXT mã hoá tiếng Việt cũ (TCVN3, VNI) được nhận ra và báo (chữ đang vỡ, cách chuyển sang UTF-8); ABook không tự đổi chữ.
+
+## [0.4.128] - 2026-10-23
+
+### Thư viện
+
+- Đổi sang một thư mục thư viện khác không còn kéo chỗ nghe và dấu trang của sách này sang sách khác chỉ vì trùng tên thư mục; chỉ khi thư viện cũ thật sự đã dời đi mới đi theo.
+- Thư viện mặc định đã từng có mà biến mất khỏi ổ giờ cũng được báo “Không thấy thư mục thư viện”, không tự tạo lại thư viện rỗng ở chỗ cũ.
+- Xoá một cuốn đúng lúc có máy khác bấm Bắt đầu cuốn ấy không làm mất cuốn đang khởi động: lệnh đến sau bị từ chối.
+- Đổi riêng tên, tác giả, người đọc hay tên chương của sách ở máy tính thì sách đã tải về điện thoại tự nhận tên mới, giữ nguyên bản thu; chưa nhận kịp thì hàng sách ở Tải sách có nút “Cập nhật tên”.
+- Phần nối tiếp của một cuốn vẫn nằm đúng bộ khi bạn đổi tên nó, ở cả điện thoại và máy tính nhận sách từ máy khác; hết phần trước vẫn tự nghe nối sang phần sau.
+- Tải sách trên điện thoại liệt kê cả phần tải dở và gói nghe thẳng đang chiếm chỗ, mỗi phần có nút “Xoá phần đã tải” (hỏi lại và Hoàn tác như xoá thường; đang tải thì chưa xoá được).
+- “Nghe gần đây” trên điện thoại xếp theo lần nghe cuối, kể cả cuốn nghe thẳng từ máy tính.
+- Hai ảnh bìa đặt liền nhau trong cùng một giây không còn hiện nhầm ảnh cũ; địa chỉ ảnh bìa đổi theo nội dung ảnh.
 
 ### Sửa lỗi
 
@@ -294,7 +294,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bạn có thể tải tiếp hàng “Cần nghe lại” sau 600 câu; bộ lọc “Chưa xem” và “Đã xem” áp dụng cho toàn bộ sách.
 
 - Khi bạn đổi người nói cho nhóm hơn 2.000 câu, máy tính và điện thoại ghi đủ cả nhóm; thông báo dùng đúng số câu máy chủ đã ghi.
-
 
 ## [0.4.122] - 2026-10-22
 
@@ -2168,7 +2167,6 @@ không ảnh hưởng).
   bấm. Chọn mẫu chỉ đổi các lựa chọn ấy, không đụng tới truyện hay tên sách; đổi tay sau khi chọn thì tên mẫu hiện "(đã sửa)".
   Đổi tên hay xoá mẫu (có "Hoàn tác") ở Cài đặt > Studio. Việc bỏ dòng ghi công vẫn do bạn đồng ý riêng từng cuốn, không nằm
   trong mẫu. Điều khiển từ xa chỉ chọn được mẫu có sẵn.
-
 
 ## [0.4.18] - 2026-10-02
 
