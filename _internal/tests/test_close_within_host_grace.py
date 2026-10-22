@@ -10,6 +10,7 @@ from pathlib import Path
 
 from abook.webui import export_jobs
 from abook.webui import server as server_module
+from abook.webui import actions, trash_pending
 from tests.test_a_project_can_be_renamed_or_deleted import studio  # noqa: F401 - fixture dùng chung
 
 MAIN_RS = Path(__file__).resolve().parents[1] / "shell" / "src-tauri" / "src" / "main.rs"
@@ -44,3 +45,66 @@ def test_closing_with_three_slow_exports_finishes_inside_the_shell_grace_and_swe
 
     assert took < server_module.CLOSE_SECONDS + 1.0 < grace, f"đóng app mất {took:.1f} giây"
     assert swept and swept[0] - begun < 1.0, "Thùng rác trước, không chờ các lượt xuất"
+
+
+def test_slow_trash_does_not_hold_close_past_the_shared_deadline(studio, monkeypatch):
+    _paths, app, _server, _runner = studio
+    entered, release = threading.Event(), threading.Event()
+    workers = []
+
+    def slow_sweep(**kwargs):
+        workers.append(threading.current_thread())
+        entered.set()
+        release.wait(1.0)
+
+    monkeypatch.setattr(server_module, "CLOSE_SECONDS", 0.05)
+    monkeypatch.setattr(app, "sweep_trash", slow_sweep)
+    begun = time.monotonic()
+    try:
+        app.close()
+        took = time.monotonic() - begun
+        assert entered.is_set()
+        assert took < 0.5
+    finally:
+        release.set()
+        for thread in workers:
+            if thread is not threading.current_thread():
+                thread.join(2)
+                assert not thread.is_alive()
+
+
+def test_next_open_finishes_trash_interrupted_in_recycling(tmp_path, monkeypatch):
+    root = tmp_path / "library"
+    original = root / "book"
+    original.mkdir(parents=True)
+    (original / "audio.wav").write_bytes(b"audio")
+    pending = trash_pending.TrashPending()
+    monkeypatch.setattr(actions, "recycle_bin_available", lambda path: None)
+    token = pending.hold(root, original, kind="project")
+    moved = []
+
+    def interrupted(path):
+        raise SystemExit  # host chết sau khi rename, trước khi Recycle Bin nhận
+
+    monkeypatch.setattr(actions, "move_to_recycle_bin", interrupted)
+    monkeypatch.setattr(actions, "recycle_bin_available", lambda path: None)
+    monkeypatch.setattr(actions, "recycle_bin_accepts", lambda path: True)
+    try:
+        pending.sweep(root, everything=True, ask=False)
+    except SystemExit:
+        pass
+    import json
+    import shutil
+    meta = json.loads((root / trash_pending.FOLDER / token / trash_pending.META).read_text(encoding="utf-8"))
+    assert meta["phase"] == "recycling" and Path(meta["via"]).is_dir()
+
+    def recycle(path):
+        moved.append(path)
+        assert (path / "audio.wav").read_bytes() == b"audio"
+        shutil.rmtree(path)
+
+    monkeypatch.setattr(actions, "move_to_recycle_bin", recycle)
+    # Cùng đường mở app: quét everything với một TrashPending mới, không dựa vào RAM phiên cũ.
+    assert trash_pending.TrashPending().sweep(root, everything=True) == 0
+    assert moved == [original]
+    assert not (root / trash_pending.FOLDER / token).exists()

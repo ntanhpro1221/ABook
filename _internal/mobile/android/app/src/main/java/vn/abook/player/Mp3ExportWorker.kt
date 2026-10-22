@@ -13,13 +13,11 @@ import android.provider.DocumentsContract
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.Data
-import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.ListenableWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
-import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.json.JSONObject
@@ -41,13 +39,15 @@ object Mp3Exports {
     /**
      * Người dùng bấm "Dừng" (hay xuất lại cuốn này) khác hệ thống dừng việc (hết giờ chạy nền, máy thiếu bộ nhớ...): hệ thống dừng
      * thì việc trả `Result.retry()` và WorkManager tự chạy lại - file đích, quyền ghi và ảnh bìa vẽ sẵn phải còn. Dùng chung cho
-     * ba kiểu xuất (MP3, M4B, sách nói). Dưới Android 12 không biết lý do: coi như người dùng dừng, như trước.
+     * ba kiểu xuất (MP3, M4B, sách nói). Không có dấu huỷ rõ ràng thì giữ tài nguyên, kể cả Android cũ không báo lý do.
      */
-    fun stoppedBySystem(sdk: Int, reason: Int): Boolean =
-        sdk >= 31 && reason != WorkInfo.STOP_REASON_CANCELLED_BY_APP && reason != WorkInfo.STOP_REASON_UNKNOWN
+    @Suppress("UNUSED_PARAMETER")
+    fun stoppedBySystem(sdk: Int, reason: Int, explicitlyCancelled: Boolean = false): Boolean = !explicitlyCancelled
 
-    internal fun stoppedBySystem(worker: ListenableWorker): Boolean =
-        Build.VERSION.SDK_INT >= 31 && stoppedBySystem(Build.VERSION.SDK_INT, worker.stopReason)
+    internal fun stoppedBySystem(worker: ListenableWorker): Boolean = stoppedBySystem(
+        Build.VERSION.SDK_INT, if (Build.VERSION.SDK_INT >= 31) worker.stopReason else WorkInfo.STOP_REASON_UNKNOWN,
+        ExportCancellation.cancelled(worker.applicationContext, worker.id),
+    )
 
     private const val CHANNEL = "export"
     private const val KEY_BOOK = "bookId"
@@ -116,7 +116,7 @@ object Mp3Exports {
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setInputData(data.build())
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork("mp3-export:$bookId", ExistingWorkPolicy.REPLACE, request)
+        ExportCancellation.enqueue(context, "mp3-export:$bookId", request)
         return request.id.toString()
     }
 
@@ -150,7 +150,7 @@ object Mp3Exports {
     internal fun foreground(context: Context, work: java.util.UUID, bookId: String, title: String, done: Int, total: Int,
                             tag: String = "mp3-export", fraction: Double? = null): ForegroundInfo {
         channel(context)
-        val stop = WorkManager.getInstance(context).createCancelPendingIntent(work)
+        val stop = ExportCancellation.stopIntent(context, work)
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.mipmap.ic_launcher_monochrome)
             .setContentTitle("Đang xuất sách…")
@@ -308,12 +308,16 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             Mp3Exports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Exception) {
+            if (isStopped && Mp3Exports.stoppedBySystem(this)) {
+                retrying = true
+                return Result.retry()
+            }
             val message = if (error is Mp3Export.Refused) error.message.orEmpty() else "Lỗi khi ghi: ${error.message ?: error.javaClass.simpleName}"
             Mp3Exports.finished(context, bookId, "Không xuất được", "$title · $message")
             Mp3Exports.emit(event().put("error", message))
             return Result.failure()
         } finally {
-            if (!retrying) cover?.delete()
+            if (!retrying && (!isStopped || !Mp3Exports.stoppedBySystem(this))) cover?.delete()
         }
     }
 }

@@ -4,11 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.work.Data
-import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.json.JSONObject
@@ -82,12 +80,12 @@ object ListenExports {
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setInputData(data.build())
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork("$TAG:$bookId", ExistingWorkPolicy.REPLACE, request)
+        ExportCancellation.enqueue(context, "$TAG:$bookId", request)
         return request.id.toString()
     }
 
     fun cancel(context: Context, bookId: String) {
-        WorkManager.getInstance(context).cancelUniqueWork("$TAG:$bookId")
+        ExportCancellation.cancel(context, "$TAG:$bookId")
     }
 
     internal fun foreground(context: Context, work: java.util.UUID, bookId: String, title: String, done: Int, total: Int, fraction: Double?): ForegroundInfo =
@@ -223,6 +221,10 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             ListenExports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Throwable) {
+            if (isStopped && Mp3Exports.stoppedBySystem(this)) {
+                retrying = true
+                return Result.retry()
+            }
             M4bExports.discard(context, file)
             val message = M4bExports.describe(error, lowSpace = context.filesDir.usableSpace < (32L shl 20))
             ListenExports.finished(context, bookId, "Không xuất được sách nói", "$title · $message")
@@ -231,7 +233,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
         } finally {
             ListenExports.active -= bookId
             music?.close()
-            if (!retrying) {
+            if (!retrying && (!isStopped || !Mp3Exports.stoppedBySystem(this))) {
                 input.cover?.delete()
                 M4bExports.release(context, file)
             }
