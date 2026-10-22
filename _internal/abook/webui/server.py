@@ -3350,10 +3350,10 @@ def _serialized_per_book(method: Callable[..., None]) -> Callable[..., None]:
         with project_write_lock(path):
             try:
                 book_wishes.guard_overrides(path)
-            except notices.Unreadable as error:
+                method(self, query, value, *rest)
+            except (notices.Unreadable, listener_overrides.OverridesUnreadable) as error:
                 raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Danh sách yêu cầu của cuốn này đang bị một chương trình khác giữ nên chưa lưu được. "
                                                               "Bạn thử lại sau vài giây - các yêu cầu cũ vẫn còn nguyên") from error
-            method(self, query, value, *rest)
 
     return wrapper
 
@@ -3938,8 +3938,7 @@ class Handler(BaseHTTPRequestHandler):
         if not rows:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Chương này chưa có câu nào đã thu để thu lại.")
         now = time.time()
-        for row in rows:
-            listener_overrides.request_retake(path, str(row["stable_id"]), str(row["text_sha256"]), now=now)
+        listener_overrides.request_retakes(path, [(str(row["stable_id"]), str(row["text_sha256"])) for row in rows], now=now)  # MỘT lần ghi
         self._send_json(HTTPStatus.OK, {"lines": len(rows), "requestedAt": now})
 
     def get_cast(self, _query: dict[str, list[str]], value: str) -> None:
