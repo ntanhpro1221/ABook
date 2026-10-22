@@ -43,6 +43,13 @@ STUDIO_FOLDER = "Studio"
 # Trong thư mục dự án: bản mã nào đã bắt đầu cuốn này (StudioSetup.code_for).
 CODE_PIN_FILE = "studio_code.json"
 CREATE_NO_WINDOW = 0x08000000
+# Revisions present in the measured local Studio cache; ONNX also matches vieneu_module._CODEC.
+MOSS_REVISIONS = {
+    "OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano": "6aa02b01e445cc585582cf0ba480bc3ea6c8dd68",
+    "OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX": "ceff0d0749bfb3fa2d61149794ec6feef0d1e1ae",
+}
+FASTER_WHISPER_REPO = "mobiuslabsgmbh/faster-whisper-large-v3-turbo"
+FASTER_WHISPER_REVISION = "0a363e9161cbc7ed1431c9597a8ceaf0c4f78fcf"
 # Thư viện ~6 GB, model ~14 GB (hai model Q8 4,3 GB: phân tích + người nói), Ollama ~1,5 GB, cộng chỗ cho bản tải dở và cache.
 MIN_FREE_BYTES = 35 * 1024**3
 PYTHON_VERSION = "3.11"
@@ -356,6 +363,8 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
                         while chunk := response.read(1 << 16):  # khúc nhỏ: mạng nhỏ giọt thì bấm Huỷ vẫn được nghe sau chừng ấy byte, không phải 1 MiB
                             if cancelled():
                                 raise Cancelled()
+                            if done + len(chunk) > item.size:
+                                raise OverflowError("download exceeds pinned size")
                             handle.write(chunk)
                             done += len(chunk)
                             _retrying.discard(threading.get_ident())  # byte lại về: hết "đang thử lại"
@@ -373,6 +382,9 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
                     if cancelled():
                         raise Cancelled()
                     time.sleep(0.25)
+    except OverflowError as error:
+        part.unlink(missing_ok=True)
+        raise SetupError(f"{item.name} lớn hơn cỡ đã ghim. Bạn hãy bấm Cài tiếp để tải lại.") from error
     finally:
         _retrying.discard(threading.get_ident())
     actual = _sha256(part)
@@ -449,8 +461,11 @@ from pathlib import Path
 from huggingface_hub import snapshot_download
 from abook import runtime_contract as c
 hub = Path(os.environ["HF_HUB_CACHE"])
-for extra in ("OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano", "OpenMOSS-Team/MOSS-Audio-Tokenizer-Nano-ONNX"):
-    snapshot_download(repo_id=extra, cache_dir=str(hub))
+for extra, revision in __MOSS_REVISIONS__.items():
+    snapshot_download(repo_id=extra, revision=revision, cache_dir=str(hub))
+    ref = hub / ("models--" + extra.replace("/", "--")) / "refs" / "main"
+    ref.parent.mkdir(parents=True, exist_ok=True)
+    ref.write_text(revision, encoding="utf-8")
 repo = c.VIENEU_CACHE_REPOSITORY.removeprefix("models--").replace("--", "/", 1)
 snapshot_download(repo_id=repo, revision=c.VIENEU_CACHE_REVISION, cache_dir=str(hub))
 ref = hub / c.VIENEU_CACHE_REPOSITORY / "refs" / "main"
@@ -472,7 +487,7 @@ if os.environ.get("ABOOK_STUDIO_SKIP_GPU_LOAD") != "1":
     engine.unload()
     print("VieNeu nạp được,", len(VIENEU_PRESETS), "giọng")
 print("VieNeu", c.VIENEU_CACHE_REVISION[:12], "ok")
-"""
+""".replace("__MOSS_REVISIONS__", repr(MOSS_REVISIONS))
 
 # Cả hai bộ nhận dạng: asr.engine chọn được một trong hai (setup_windows.ps1 cũng cài cả hai).
 ASR_SCRIPT = r"""
@@ -480,14 +495,19 @@ import os
 from pathlib import Path
 import whisper
 from faster_whisper import WhisperModel
+from huggingface_hub import snapshot_download
 root = Path(os.environ["ABOOK_RUNTIME"]) / "models" / "whisper"
 root.mkdir(parents=True, exist_ok=True)
 model = whisper.load_model("turbo", device="cpu", download_root=str(root))
 del model
-model = WhisperModel("turbo", device="cpu", compute_type="int8")
+snapshot = snapshot_download(repo_id=__FASTER_REPO__, revision=__FASTER_REVISION__, cache_dir=os.environ["HF_HUB_CACHE"])
+ref = Path(os.environ["HF_HUB_CACHE"]) / ("models--" + __FASTER_REPO__.replace("/", "--")) / "refs" / "main"
+ref.parent.mkdir(parents=True, exist_ok=True)
+ref.write_text(__FASTER_REVISION__, encoding="utf-8")
+model = WhisperModel(str(snapshot), device="cpu", compute_type="int8")
 del model
 print("Whisper turbo + faster-whisper turbo ok")
-"""
+""".replace("__FASTER_REPO__", repr(FASTER_WHISPER_REPO)).replace("__FASTER_REVISION__", repr(FASTER_WHISPER_REVISION))
 
 QA_SCRIPT = r"""
 import datetime, hashlib, json, os
@@ -547,10 +567,34 @@ import torch
 assert torch.cuda.is_available(), "PyTorch không thấy card NVIDIA (CUDA)"
 from abook.runtime_contract import runtime_contract_errors
 errors = runtime_contract_errors(Path(os.environ["ABOOK_RUNTIME"]))
+errors = [error for error in errors if not error.startswith("setup_marker:")]
 assert not errors, "; ".join(errors)
 if os.environ.get("ABOOK_STUDIO_SKIP_GPU_LOAD") != "1":
     print("GPU:", torch.cuda.get_device_name(0))
 print("hợp đồng runtime ok")
+"""
+
+PACKAGE_CHECK_SCRIPT = r"""
+import importlib.metadata as metadata, json, re, sys
+from pathlib import Path
+missing = []
+for line in Path(sys.argv[1]).read_text(encoding="utf-8").splitlines():
+    match = re.match(r"^([\w.-]+)==([^\s;]+)", line.strip())
+    git = re.match(r"^([\w.-]+)\s+@\s+git\+.*@([a-f0-9]{40})$", line.strip())
+    if not match and not git:
+        continue
+    name, expected = (match or git).groups()
+    try:
+        distribution = metadata.distribution(name)
+        if match and distribution.version != expected:
+            missing.append(name)
+        if git and json.loads(distribution.read_text("direct_url.json") or "{}").get("vcs_info", {}).get("commit_id") != expected:
+            missing.append(name)
+        if distribution.files and not all(distribution.locate_file(f).is_file() for f in distribution.files if str(f).endswith((".py", ".pyd", ".dll"))):
+            missing.append(name)
+    except (metadata.PackageNotFoundError, OSError, ValueError):
+        missing.append(name)
+print(json.dumps(missing))
 """
 
 
@@ -603,6 +647,9 @@ class StudioSetup:
         self._optional_progress: tuple[int, int] | None = None
         self._optional_error: str | None = None
         self._probed: tuple[dict[str, Any] | None] | None = None  # card NVIDIA dò sẵn (`detected_gpu`), một lần mỗi phiên
+        self.busy: Callable[[], Path | None] = lambda: None
+        self._memory_error: str | None = None
+        self._package_probe: tuple[float, list[str]] | None = None
 
     # ---- trạng thái -------------------------------------------------------------------------------------------
 
@@ -615,7 +662,8 @@ class StudioSetup:
         return self.venv / "Scripts" / "pythonw.exe"
 
     def installed(self) -> bool:
-        return (self.runtime / ".setup_complete").is_file() and self.pythonw.is_file()
+        return ((self.runtime / ".setup_complete").is_file() and self.pythonw.is_file()
+                and "verify" in set(self._state().get("done") or []))
 
     def _state(self) -> dict[str, Any]:
         # Windows: đọc đúng lúc luồng cài đang os.replace file này thì PermissionError - thử lại, đừng coi là "chưa cài gì"
@@ -647,8 +695,35 @@ class StudioSetup:
     def _pins(self) -> dict[str, str]:
         """Bản ghim của các bước tải công cụ/model. App lên bản mới đổi ghim (nâng uv, Git, Ollama, đổi model phân tích)
         thì bước ấy phải chạy lại trên Studio đã cài - không thì Studio cứ chạy bản cũ mà app không hề biết."""
+        from ..runtime_contract import VIENEU_CACHE_REVISION
         return {"uv": UV.sha256, "git": MINGIT.sha256, "ollama": OLLAMA.sha256, "llm": self._llm_pin(),
-                "assets": STUDIO_ASSETS.sha256, "wordalign": word_align_pin()}
+                "assets": STUDIO_ASSETS.sha256, "wordalign": word_align_pin(), "packages": self._packages_pin(),
+                "voice": hashlib.sha256((VOICE_SCRIPT + VIENEU_CACHE_REVISION).encode()).hexdigest(),
+                "asr": hashlib.sha256(ASR_SCRIPT.encode()).hexdigest()}
+
+    def _packages_pin(self) -> str:
+        try:
+            requirement = self._requirements()
+            lock = self.app_root / "uv.lock"
+            return hashlib.sha256(requirement.read_bytes() + (lock.read_bytes() if lock.is_file() else b"missing lock")).hexdigest()
+        except SetupError:
+            return "missing"
+
+    def _probe_packages(self) -> list[str]:
+        if self._package_probe is not None and time.monotonic() - self._package_probe[0] < 30:
+            return self._package_probe[1]
+        try:
+            result = subprocess.run([str(self.python), "-c", PACKAGE_CHECK_SCRIPT, str(self._requirements())],
+                                    capture_output=True, text=True, encoding="utf-8", timeout=20,
+                                    env={**os.environ, **self.environment()},
+                                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+            missing = json.loads(result.stdout) if result.returncode == 0 else ["runtime"]
+            if not isinstance(missing, list):
+                missing = ["runtime"]
+        except (OSError, ValueError, subprocess.SubprocessError, SetupError):
+            missing = ["runtime"]
+        self._package_probe = (time.monotonic(), missing)
+        return missing
 
     def _llm_pin(self) -> str:
         """Ghim của bước "llm": model phân tích, và (nếu có cặp) model người nói + bộ đếm token của nó - đổi bản nào cũng phải tải lại."""
@@ -658,12 +733,14 @@ class StudioSetup:
         return f"{self.analysis_model}+{speaker.name}@{speaker.sha256}+{SPEAKER_TOKENIZER.sha256}"
 
     def damaged(self) -> list[str]:
-        """Bước đã xong mà file của nó mất (người dùng xoá tay, diệt virus dọn): hiện chỉ Ollama riêng - thiếu nó thì sách không
-        khởi động được (ensure_ollama) mà thẻ "Cài tiếp" lại biến mất vì marker vẫn còn (soát UX a20). Máy chưa cài xong thì
-        chưa có gì để gọi là mất."""
-        if self.installed() and "ollama" in set(self._state().get("done") or []) and not self.ollama_executable.is_file():
-            return ["ollama"]
-        return []
+        """Bước đã hoàn tất nhưng thiếu Ollama hoặc dependency; repair dùng lại venv và model."""
+        if not self.installed():
+            return []
+        done = set(self._state().get("done") or [])
+        damaged = ["ollama"] if "ollama" in done and not self.ollama_executable.is_file() else []
+        if "packages" in done and self._probe_packages():
+            damaged.append("packages")
+        return damaged
 
     @property
     def ollama_executable(self) -> Path:
@@ -702,20 +779,34 @@ class StudioSetup:
             "steps": [{"id": step, "label": label, "hint": hint, "done": step in done} for step, label, hint in STEPS],
             "progress": {"done": progress[0], "total": progress[1]} if progress else None,
             "detail": self._detail if running else "",
-            "error": None if running else state.get("error"),
+            "error": None if running else self._memory_error or state.get("error"),
             "gpu": state.get("gpu") or self.detected_gpu(),
             "root": str(self.root),
         }
 
     # ---- điều khiển -------------------------------------------------------------------------------------------
 
+    def running(self) -> bool:
+        return self._thread is not None and self._thread.is_alive()
+
     def start(self) -> dict[str, Any]:
         with self._lock:
+            self._require_idle()
             if not (self._thread is not None and self._thread.is_alive()) and (not self.installed() or self.outdated()):
+                self._memory_error = None
+                try:
+                    self._save(error=None)  # Check mkdir/write/replace before accepting a background job.
+                except OSError as error:
+                    self._record_error(self._write_failure(error))
+                    return self.status()
                 self._cancel.clear()
                 self._thread = threading.Thread(target=self._run_all, name="studio-setup", daemon=True)
                 self._thread.start()
         return self.status()
+
+    def _require_idle(self) -> None:
+        if self.busy() is not None:
+            raise SetupError("Bạn hãy chờ cuốn đang chạy, khởi động hoặc tạm dừng làm xong rồi cập nhật Studio.")
 
     def cancel(self) -> dict[str, Any]:
         self._cancel.set()
@@ -885,28 +976,46 @@ class StudioSetup:
 
     # ---- các bước -----------------------------------------------------------------------------------------------
 
-    def _run_all(self) -> None:
-        self._save(error=None)
+    @staticmethod
+    def _write_failure(error: OSError) -> str:
+        return f"Bạn hãy kiểm tra chỗ trống và quyền ghi thư mục Studio rồi bấm Cài tiếp. ({technical(error)})"
+
+    def _record_error(self, message: str) -> None:
+        self._memory_error = message
         try:
+            self._save(error=message)
+        except OSError:
+            pass  # Disk failure must still be visible in status().
+
+    def _run_all(self) -> None:
+        try:
+            self._memory_error = None
+            self._save(error=None)
             outdated = set(self.outdated())
             ran = False
             for step, _label, _hint in STEPS:
                 fresh = step in set(self._state().get("done") or []) and step not in outdated
-                if fresh and not (step == "verify" and ran):  # cập nhật bước nào thì kiểm tra lần cuối lại
+                if fresh and not (step == "verify" and (ran or not self.installed())):
                     continue
+                if not ran:
+                    (self.runtime / ".setup_complete").unlink(missing_ok=True)
+                    self._save(done=sorted(set(self._state().get("done") or []) - {"verify"}))
                 ran = True
                 self._step, self._progress, self._detail = step, None, ""
+                self._require_idle()
                 getattr(self, f"_step_{step}")()
                 state, pins = self._state(), self._pins()
                 self._save(done=sorted(set(state.get("done") or []) | {step}),
                            pins={**(state.get("pins") or {}), **({step: pins[step]} if step in pins else {})})
             self._write_marker()
         except Cancelled:
-            self._save(error="Đã dừng - bấm Cài tiếp để làm tiếp từ bước dở.")
+            self._record_error("Đã dừng - bấm Cài tiếp để làm tiếp từ bước dở.")
         except SetupError as error:
-            self._save(error=str(error))
+            self._record_error(str(error))
+        except OSError as error:
+            self._record_error(self._write_failure(error))
         except Exception as error:  # noqa: BLE001 - lỗi lạ không được làm sập host
-            self._save(error=f"Lỗi ở bước {self._step}: {type(error).__name__}: {error}")
+            self._record_error(f"Lỗi ở bước {self._step}: {type(error).__name__}: {error}")
         finally:
             self._step, self._progress, self._process = None, None, None
 
@@ -921,6 +1030,7 @@ class StudioSetup:
 
     def _install_archive(self, item: Download, folder: Path) -> None:
         archive = self._get(item)
+        self._require_idle()
         self.stop_processes(folder)  # cập nhật: bản cũ đang chạy (Ollama riêng) thì không thay file được
         _unzip(archive, folder)
         archive.unlink(missing_ok=True)  # gói nén của Ollama 1,5 GB: không giữ hai bản
@@ -1037,8 +1147,30 @@ class StudioSetup:
         raise SetupError("Bản cài thiếu danh sách thư viện của Studio (studio-requirements.txt) - cài lại app.")
 
     def _step_packages(self) -> None:
+        from .studio_dependencies import locked_requirements
+        from ..io_utils import atomic_write_text
+
+        try:
+            hashed, git = locked_requirements(self._requirements(), self.app_root / "uv.lock")
+        except (OSError, ValueError) as error:
+            raise SetupError(f"Bản cài thiếu ghim thư viện tin cậy. Bạn hãy cài lại app. ({error})") from error
+        manifest = self.root / "requirements-verified.txt"
+        atomic_write_text(manifest, hashed)
+        # Bootstrap the backend for source-only openai-whisper from a hashed wheel.
+        if "setuptools" in self._probe_packages():
+            backend = [line for line in hashed.splitlines() if line.startswith(("--extra-index-url ", "setuptools=="))]
+            if any(line.startswith("setuptools==") for line in backend):
+                bootstrap = self.root / "requirements-build.txt"
+                atomic_write_text(bootstrap, "\n".join(backend) + "\n")
+                self._run([self._uv(), "pip", "install", "--python", str(self.python), "--no-deps", "--only-binary", ":all:",
+                           "--require-hashes", "-r", str(bootstrap)], "Chuẩn bị thư viện")
         self._run([self._uv(), "pip", "install", "--python", str(self.python), "--no-deps",
-                   "--index-strategy", "unsafe-best-match", "-r", str(self._requirements())], "Cài thư viện")
+                   "--require-hashes", "--no-build-isolation", "--index-strategy", "unsafe-best-match", "-r", str(manifest)], "Cài thư viện")
+        # Git has no distribution hash: the app's lock pins its complete source commit.
+        for requirement in git:
+            self._run([self._uv(), "pip", "install", "--python", str(self.python), "--no-deps", "--no-build-isolation", requirement],
+                      "Cài thư viện từ commit đã ghim")
+        self._package_probe = None
         # Chỉ ghi nhật ký, không chặn: runtime làm ra sách cũng có xung đột khai báo vô hại (datasets khai fsspec cũ
         # hơn bản đang dùng). Cửa chặn thật là bước "Kiểm tra lần cuối" - hợp đồng runtime nạp thật từng thư viện.
         try:
@@ -1288,13 +1420,8 @@ class StudioSetup:
         os.replace(staging, self.word_align)
 
     def _step_verify(self) -> None:
-        # Hợp đồng runtime đòi dấu cài đặt: ghi thử, kiểm, hỏng thì gỡ dấu (lần sau chạy lại bước này).
-        self._write_marker()
-        try:
-            self._run([str(self.python), "-c", VERIFY_SCRIPT], "Kiểm tra lần cuối")
-        except Exception:
-            (self.runtime / ".setup_complete").unlink(missing_ok=True)
-            raise
+        # The completion marker is published by _run_all only after verification and its checkpoint.
+        self._run([str(self.python), "-c", VERIFY_SCRIPT], "Kiểm tra lần cuối")
 
     def install_published_model(self, name: str, report: Callable[[str], None] = print) -> None:
         """Nạp một model của dự án (PUBLISHED_MODELS) vào Ollama ở `ollama_address` - máy dev dùng đúng đường Studio dùng."""

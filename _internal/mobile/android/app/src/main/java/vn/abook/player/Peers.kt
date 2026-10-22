@@ -80,7 +80,11 @@ object Peers {
 
     /** Mã sách cục bộ cho một cuốn của thiết bị ghép: chữ cái đầu "p" + mã thiết bị + mã sách bên ấy (mọi ký tự đều nằm
      *  trong [A-Za-z0-9_-] - thư viện của chính điện thoại này phục vụ lại được). */
-    fun localId(key: String, remoteId: String) = "p${key}_$remoteId"
+    fun localId(key: String, remoteId: String): String {
+        Store.requireBookId(key)
+        Store.requireBookId(remoteId)
+        return Store.requireBookId("p${key}_$remoteId")
+    }
 
     /** Ngược của `localId` cho một thiết bị đang ghép: (key, mã bên ấy), hay null nếu không phải sách của thiết bị ghép. */
     fun sourceOf(context: Context, localId: String): Pair<String, String>? =

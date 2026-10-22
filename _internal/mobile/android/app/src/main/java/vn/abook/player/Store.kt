@@ -36,7 +36,21 @@ object Store {
         }
     }
 
-    fun bookDir(id: String) = File(root, "books/$id")
+    internal fun requireBookId(id: String): String {
+        require(id.isNotEmpty() && id.length <= 200 && id.all { it.code < 128 && it.isLetterOrDigit() || it == '_' || it == '-' } &&
+            !Regex("(?i)CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9]").matches(id)) {
+            "Mã sách không hợp lệ; bạn hãy kiểm tra lại máy gửi sách."
+        }
+        return id
+    }
+
+    fun bookDir(id: String): File {
+        requireBookId(id)
+        val books = File(root, "books").canonicalFile
+        val dir = File(books, id).canonicalFile
+        require(dir.parentFile == books) { "Thư mục sách nằm ngoài thư viện của bạn." }
+        return dir
+    }
 
     /** Thư mục của từng cuốn trong books/ - trừ thư mục tạm tên bắt đầu bằng "." (bản đang giải `.<mã>.<số>.part`, bản cũ
      *  chờ xoá `.<mã>.<số>.old` của BookFileImport): bị cắt giữa chừng thì chúng có book.json mà không phải một cuốn. */
@@ -68,8 +82,13 @@ object Store {
 
     /** `relative` trong thư mục `dir`; ra ngoài thì từ chối (đường dẫn lấy từ book.json hay từ người lạ). */
     fun contained(dir: File, relative: String): File {
+        require(PeerPaths.safeRelative(relative)) { "Đường dẫn trong sách không hợp lệ; bạn hãy kiểm tra lại máy gửi sách." }
         val target = File(dir, relative).canonicalFile
-        require(target.path.startsWith(dir.canonicalPath)) { "đường dẫn ra ngoài thư mục sách" }
+        val base = dir.canonicalFile
+        // Ranh giới thành phần qua separator, dùng được cả Android 24/25 (java.nio.file cần API 26).
+        require(target != base && target.path.startsWith(base.path.trimEnd(File.separatorChar) + File.separator)) {
+            "Đường dẫn nằm ngoài thư mục sách của bạn."
+        }
         return target
     }
 

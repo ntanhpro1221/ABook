@@ -143,7 +143,7 @@ def test_this_computer_refuses_to_pair_with_itself(library, tmp_path: Path) -> N
         app.sync_server.stop()
 
 
-def test_a_computer_finds_other_computers_on_the_network_like_phones_do() -> None:
+def test_a_computer_finds_other_computers_on_the_network_like_phones_do(monkeypatch) -> None:
     """Khỏi gõ địa chỉ: máy này gửi đúng lời tìm điện thoại gửi, máy kia (sync.Discovery) trả tên + cổng đồng bộ.
     Chính máy này (cùng cổng đồng bộ) không hiện trong danh sách."""
     import socket
@@ -151,6 +151,10 @@ def test_a_computer_finds_other_computers_on_the_network_like_phones_do() -> Non
     from abook.webui import remote_books
     from abook.webui.sync import Discovery
 
+    # Discovery phục vụ mọi card khi dùng thật; bài thử chỉ nghe loopback.
+    bind = socket.socket.bind
+    monkeypatch.setattr(socket.socket, "bind", lambda client, address:
+                        bind(client, ("127.0.0.1", address[1]) if address[0] == "0.0.0.0" else address))
     free = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     free.bind(("127.0.0.1", 0))
     port = free.getsockname()[1]

@@ -55,6 +55,10 @@ object MusicBed {
     private const val PAUSE_GRACE_MS = 2500L
     private const val MAX_STEP_SECONDS = 3.0 // đồng hồ nhạc không nhảy xa khi máy ngủ giữa hai nhịp
     private const val SAVE_EVERY_MS = 5000L
+    // Bước 3 của nối vòng (sửa pha một lần khi bản lặp mới vừa có tiếng) TẠM TẮT trên điện thoại: đo trên máy 22-10 (PLAN_loop §37.1),
+    // lúc ấy vị trí bản mới còn đang được media3 làm mượt (~+100 ms/s) nên độ trôi đọc ra có thể là ảo, và seekTo làm bản lặp im ~0,4 s.
+    // Bật lại khi §38 đo được bước này có ích.
+    private const val LOOP_SETTLE = false
     private const val PREFS = "music_bed"
     /** Giọng của người nghe, không phải lỗi: nhạc nền chờ Wi-Fi (không tự tải bài nhạc lớn bằng dữ liệu di động). */
     private const val METERED_NOTICE = "Đang dùng dữ liệu di động nên nhạc nền tự chọn chờ có Wi-Fi mới tải. Muốn nghe ngay, bạn chọn nhạc ở nút Nhạc nền."
@@ -746,6 +750,9 @@ object MusicBed {
                 false,
             )
             .setMediaSourceFactory(Streaming.mediaSourceFactory(appContext, exactMp3Seek = true))
+            // media3 1.11 bật dynamic scheduling mặc định: luồng phát chỉ thức khi bộ đệm cần, currentPosition đứng yên rồi nhảy ~250 ms -
+            // hẹn giờ lặp đọc vị trí ấy nên lệch tới chừng đó. Tắt đi, bước vị trí còn 10-40 ms (đo trên máy 22-10, PLAN_loop §37.1).
+            .experimentalSetDynamicSchedulingEnabled(false)
             .build()
         player.repeatMode = Player.REPEAT_MODE_ONE // biết độ dài bài (STATE_READY) mới biết lặp mờ chéo hay lặp thường
         player.volume = 0f
@@ -771,7 +778,7 @@ object MusicBed {
                 }
             }
         })
-        if (handoff != null) listen(object : Player.Listener {
+        if (handoff != null && LOOP_SETTLE) listen(object : Player.Listener {
             // Bản lặp mới vừa có tiếng (STATE_READY + playWhenReady): bù độ trễ mở trình phát, một lần. Nó gần như câm nên cú dời không nghe thấy.
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 if (!isPlaying) return

@@ -2,6 +2,22 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a80fix2` trên `dev/uxfix99` (Codex tk3 bị cắt ở lượt kiểm cuối, Lead chạy toàn bộ): gói sửa lớn từ máy đã ghép có hạn đọc theo cỡ
+(30 s + cỡ / 16 KiB/s), máy chưa ghép vẫn 30 s; trần kết nối 32 tổng / 8 mỗi nguồn (máy tính), 8 / 6 (điện thoại); GET đóng sớm/503 thử
+lại tối đa 2 lần (200/800 ms), không POST. Toàn bộ a80fix + a80fix2: pytest 8690 passed, 9 skipped, 1 xfailed (lỗi 3), 0 F/E;
+vitest 1329 passed, 1 skipped; tsc exit 0; JVM 1370 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
+Đợt `a80fix` trên `dev/uxfix99` (nền cdba76cd): đã tái hiện trước sửa và xử lý 9 lỗi về mã sách/đường file peer,
+containment Android, bảo toàn danh sách máy đã ghép, công bố file tải đồng thời, giới hạn ghi đĩa/đọc RAM,
+MIME của file sách/dự án và tài nguyên cổng đồng bộ. Python/Kotlin dùng cùng luật đường dẫn và ngân sách tải;
+changelog và AGENTS ghi invariant mới. Không sửa file quality khóa; hash trước/sau c9176123.
+Lỗi 3 (MITM ghép lần đầu) chỉ có thiết kế giao thức mới, test `test_pairing_first_use_gap.py` strict xfail giữ dấu lỗi còn tồn tại;
+lỗi 11 chưa tái hiện được vì JVM không có Android CookieManager/WebView, không sửa phần Studio Bluetooth.
+Kiểm tra: pytest liên quan 222 passed, 1 xfailed, 0 F/E; vitest toàn bộ 1329 passed, 1 skipped, 0 failed; tsc exit 0;
+JVM toàn bộ 1356 tests: 1349 passed, 7 skipped, 0 F/E. Sau chỉnh containment dùng separator để không đòi API 26,
+kiểm lại Store*/PeerPaths/BookFileImport: 63 tests, 62 passed, 1 skipped, 0 F/E. Ca symlink mới skip vì runner Windows thiếu quyền.
+Chưa chạy relay TLS/Android WebView thật, flood LAN hay đo NTLM. Lượt JVM đầu có một fixture cũ dùng ServerSocket(0)
+để lấy cổng rồi đóng ngay (bind wildcard); đã sửa fixture OnlineVoicesTest chỉ bind loopback trước các lượt tiếp theo.
+
 Đợt `a82loop` trên `dev/uxfix93` (nền cd9c766b): nhạc nền vào bản lặp đúng hạn - tạo sẵn phần tử/ExoPlayer lặp khi còn < 3 s,
 hẹn giờ đúng loopEnd - X thay vì chờ nhịp đồng bộ (250 ms máy tính / 500 ms điện thoại), mở ở loopStartAt (bù phần trễ), sửa pha một lần khi
 bản mới có tiếng; ba hàm thuần loopHandoffDelay/loopStartAt/loopDrift cùng ca số ở TS và Kotlin (MusicLoopTest). Đo thật máy tính (Music,
@@ -9,6 +25,19 @@ PLAN_loop §34.3, 59 bài, Edge headless): lệch trung vị 120 -> 2,3 ms, lệ
 Toàn bộ (Lead chạy): pytest 8573 passed, 9 skipped, 0 F/E, exit 0; vitest 1327 passed, 1 skipped; tsc exit 0; JVM 1335 tests, 6 skipped,
 0 F/E. Hash khoá c9176123 không đổi.
 
+Đợt `a83fix` trên `dev/uxfix94` (nền 3b87b35c): hàng chờ và hộp thay đổi Studio - "Bỏ xếp hàng" chỉ bỏ khỏi hàng (409 khi cuốn đã chạy,
+không dừng giữa phân tích); sửa từ điện thoại và nút sửa máy tính dùng chung khoá dự án (không nuốt nhau); bản sửa mới hơn thay bản cũ trong hộp;
+danh sách yêu cầu tạm không đọc được thì báo "thử lại sau vài giây" thay vì ghi đè; bỏ thay đổi chờ áp khi đã tạm dừng ở chỗ nghỉ; hoàn tác
+người nói cả nhóm; một sửa lời kể -> lời thoại là một mục. Phần cần file khoá (đọc-sửa-ghi overrides, rút yêu cầu ở dây chuyền) nằm ở
+`dev/locked100`. Toàn bộ (Lead chạy): pytest 8646 passed, 9 skipped, 0 F/E, exit 0; vitest 1311 passed, 1 skipped; tsc exit 0;
+JVM 1329 tests, 6 skipped, 0 F/E. Hash khoá c9176123 không đổi.
+Đợt `a85fix` trên `dev/uxfix97` (nền 3b87b35c): cập nhật app, cài/gỡ và gói tuỳ chọn - cập nhật Studio bị từ chối khi sách đang chạy/tạm dừng
+(kiểm lại ngay trước thay runtime); bộ gỡ Windows đọc vị trí thư viện trước mọi xoá đệ quy, không đọc được thì giữ; chế độ nâng cấp truyền bằng
+cờ rõ ràng (không đoán tên bộ cài); thư viện tuỳ chọn giải ở staging, khoá đích suốt tải-giải-commit; Studio cài theo hash của uv.lock đi kèm
+(--require-hashes, commit Git đủ 40 hex); dấu cài xong chỉ ghi sau kiểm; đầy ổ / không ghi được báo rõ; điện thoại xoá được phần tải dở.
+Lỗi 1 (ghim mã cho worker đang chạy) chỉ thiết kế, giữ test strict xfail. Toàn bộ (Lead chạy): pytest 8644 passed, 9 skipped, 1 xfailed,
+0 F/E (sau khi Lead sửa test hook cũ còn tìm `RMDir /r` trần); vitest 1308 passed, 1 skipped; tsc exit 0; JVM 1333 tests, 6 skipped,
+0 F/E. Hash khoá c9176123 không đổi.
 Đợt `a79fix` trên `dev/uxfix91` (nền cây phát hành dcbd33a0): "Nghe ngay" không gửi chữ khi chưa đồng ý - chuỗi giọng
 thay thế chỉ có Edge khi đã đồng ý "edge" (máy tính + điện thoại); menu Giọng đọc hỏi đồng ý trước khi đổi sang giọng trực tuyến;
 lõi Android giữ (held) chương chữ với giọng chưa đồng ý ở startAt/onPlay/voicesChanged và "Làm trước" (Android Auto, widget, tai nghe);

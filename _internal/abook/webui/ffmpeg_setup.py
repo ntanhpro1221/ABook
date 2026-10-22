@@ -92,6 +92,22 @@ def cannot_download() -> str:
 
 
 def install(progress: Callable[[int, int], None], cancelled: Callable[[], bool] = lambda: False) -> Path:
+    from .install_locks import destination_lock
+
+    assert _folder is not None
+    with destination_lock(_folder / "install"):
+        stamp = _folder / "installed.sha256"
+        exe = _folder / EXE_NAME
+        if exe.is_file() and stamp.is_file() and stamp.read_text(encoding="utf-8") == pin():
+            io_utils.use_downloaded_ffmpeg(exe)
+            progress(WHEEL.size, WHEEL.size)
+            return exe
+        result = _install(progress, cancelled)
+        io_utils.atomic_write_text(stamp, pin())
+        return result
+
+
+def _install(progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> Path:
     """Tải bánh xe (ghim), lấy ra exe, đăng ký với io_utils. Đồng bộ - gọi ở luồng nền của mô-đun. Ném lỗi để mô-đun nói lý do (`reason`)."""
     assert _folder is not None
     _folder.mkdir(parents=True, exist_ok=True)

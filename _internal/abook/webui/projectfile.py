@@ -651,7 +651,7 @@ class ProjectFile:
         infos = self._zip.infolist()
         if not infos or infos[0].filename != "mimetype" or infos[0].compress_type != zipfile.ZIP_STORED:
             raise ProjectFileError("Đây không phải file dự án ABook.")
-        if self._zip.read("mimetype").decode("ascii", "replace").strip() != MIMETYPE:
+        if not bookfile.exact_mime(self._zip, infos[0], MIMETYPE):
             raise ProjectFileError("Đây không phải file dự án ABook.")
         if len(infos) > MAX_ENTRIES:
             raise ProjectFileError("File dự án có quá nhiều mục.")

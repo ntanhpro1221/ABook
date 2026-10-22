@@ -179,7 +179,11 @@ abstract class VoiceModule(
             val base = requires(choice).flatMap { needs(it) }.toSet()
             val row = JSONObject().put("id", choice).put("label", label).put("detail", detail).put("needs", JSONArray(needs(choice)))
                 .put("bytes", lacking(listOf(choice), states).filter { it !in base }.sumOf { left(it, states) }).put("installed", choice in installedTiers)
-                .put("recommended", recommended).put("default", ticked).put("removable", choice in installedTiers)
+                .put("recommended", recommended).put("default", ticked).put("removable", choice in installedTiers ||
+                    needs(choice).any { id ->
+                        if (common(id)) id !in runtime.inUse() && groups.getValue(id).any { runtime.pinned.hasBytes(it) }
+                        else groups.getValue(id).any { pinned.hasBytes(it) }
+                    })
             if (requires(choice).isNotEmpty()) row.put("requires", JSONArray(requires(choice)))
             shown.put(row)
         }

@@ -417,3 +417,19 @@ def test_the_desktop_lists_and_decides_the_inbox_through_the_ui_routes(tmp_path:
         assert _request(server.port, "GET", "/api/books/" + "0" * 24 + "/edits-inbox", headers=token)[0] == 404
     finally:
         server.stop()
+
+
+def test_a_newer_wish_replaces_the_held_older_one_for_the_same_key(tmp_path: Path, project: Path) -> None:
+    # Soát a83 B4: bản cũ bị giữ trong hộp thư; điện thoại đổi ý (bản mới hơn cả chủ máy) -> áp thẳng, và bản cũ phải rời hộp thư,
+    # không thì "Áp dụng" nó sau đó đè bản mới bằng bản cũ.
+    _owner_says(project, "Hây-kơ", HAILKES_AT + 60)
+    edits_inbox.receive(project, DEVICE, "Máy B", package(tmp_path, {"wishes": ONLY_HAILKES}), may_produce=True, now=HAILKES_AT + 600)
+    assert edits_inbox.waiting(project) == 1
+    newer = {"pronunciations": {"hailkes": {"requested_at": HAILKES_AT + 120, "spoken_form": "Hên-khơ-xê", "surface": "Hailkes"}}}
+    report = edits_inbox.receive(project, DEVICE, "Máy B", package(tmp_path, {"wishes": newer}), may_produce=True, now=HAILKES_AT + 700)
+    assert report["requests"] == 1 and report["waiting"] == 0
+    assert edits_inbox.waiting(project) == 0
+    assert [entry["spoken_form"] for entry in _overrides(project)["pronunciations"].values()] == ["Hên-khơ-xê"]
+    again = edits_inbox.apply(project, DEVICE, None, now=HAILKES_AT + 800)
+    assert (again["requests"], again["left"]) == (0, 0)
+    assert [entry["spoken_form"] for entry in _overrides(project)["pronunciations"].values()] == ["Hên-khơ-xê"]

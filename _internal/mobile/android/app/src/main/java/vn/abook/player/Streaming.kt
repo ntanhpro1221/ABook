@@ -9,6 +9,8 @@ import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.datasource.cache.CacheDataSource
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
@@ -59,7 +61,8 @@ object Streaming {
     fun mediaSourceFactory(context: Context, exactMp3Seek: Boolean = false): MediaSource.Factory {
         Pin.install(context)
         val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(5000).setReadTimeoutMs(20_000)
-        val authorized = ResolvingDataSource.Factory(http) { spec ->
+        val retrying = DataSource.Factory { RetryingDataSource(http.createDataSource()) }
+        val authorized = ResolvingDataSource.Factory(retrying) { spec ->
             spec.withAdditionalHeaders(mapOf("Authorization" to "Bearer ${SyncLink.tokenFor(context, spec.uri)}"))
         }
         val cached = CacheDataSource.Factory()
@@ -70,6 +73,27 @@ object Streaming {
         // Clip Edge đang đọc dở của Nghe ngay (abooklive://, uxfix57) đi qua nguồn riêng; mọi thứ khác như cũ.
         val routed = DataSource.Factory { LiveRoutingDataSource(LiveClipDataSource(), normal.createDataSource()) }
         return DefaultMediaSourceFactory(routed, liveAwareExtractors(exactMp3Seek))
+    }
+
+    /** Chỉ replay GET khi chưa giao byte audio nào; giữ nguyên Range/DataSpec và pin TLS. */
+    internal class RetryingDataSource(private val upstream: DataSource,
+        private val pause: (Long) -> Unit = { Thread.sleep(it) }) : DataSource by upstream {
+        override fun open(dataSpec: DataSpec): Long {
+            for (attempt in 0..2) {
+                try { return upstream.open(dataSpec) }
+                catch (error: java.io.IOException) {
+                    val busy = error is HttpDataSource.InvalidResponseCodeException && error.responseCode == 503
+                    val closed = generateSequence<Throwable>(error) { it.cause }.any {
+                        it is java.net.SocketException || it is java.io.EOFException || it is javax.net.ssl.SSLException
+                    }
+                    if (dataSpec.httpMethod != DataSpec.HTTP_METHOD_GET || attempt == 2 ||
+                        Pin.isCertificateProblem(error) || (!busy && !closed)) throw error
+                    runCatching { upstream.close() }
+                    pause(if (attempt == 0) 200 else 800)
+                }
+            }
+            error("unreachable")
+        }
     }
 
     /**
@@ -139,6 +163,8 @@ object Streaming {
             if (peer != null) Peers.request(context, peer, "GET", "/sync/v1/books/$remote/manifest")
             else SyncLink.request(context, "GET", "/sync/v1/books/$id/manifest"),
         )
+        PeerPaths.checkManifest(manifest)
+        require(manifest.getString("id") == remote) { "Mã sách máy gửi trả về không khớp; bạn hãy thử lại." }
         if (peer != null) manifest.put("id", id).put("source", peer).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, peer))
         // Gói đổi (thêm/thu lại chương, đổi bìa): bỏ văn bản và dàn nhân vật đã cất để lần đọc sau lấy bản mới.
         val previous = Store.streamManifest(id)
@@ -175,27 +201,38 @@ object Streaming {
      */
     fun fetchSmall(context: Context, id: String, relative: String): File? {
         val target = runCatching { Store.file(id, relative) }.getOrNull() ?: return null
-        return runCatching {
+        return fetchSmallFile(target) {
             val (link, remote) = SyncLink.linkFor(context, id)
             val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
             connection.connectTimeout = 3000
             connection.readTimeout = 15_000
             connection.setRequestProperty("Authorization", "Bearer ${link.token}")
-            try {
-                if (connection.responseCode != 200) return@runCatching null
-                target.parentFile?.mkdirs()
-                val partial = File(target.path + ".part")
-                partial.outputStream().use { output -> connection.inputStream.use { it.copyTo(output) } }
-                // Hai lời xin cùng một file cùng lúc (giao diện xin chữ chương để hiện, trình đọc xin để đọc - soát lại uxfix75): lời kia đã đổi tên
-                // `.part` thành file thật thì file ấy là bản đủ - đừng xoá nó.
-                if (!partial.renameTo(target) && partial.isFile) {
-                    target.delete()
-                    partial.renameTo(target)
-                }
-                target.takeIf { it.isFile }
-            } finally {
-                connection.disconnect()
-            }
-        }.getOrNull()
+            connection
+        }
     }
+
+    /** Luồng tải thật, tách phần tìm thiết bị để thử được bằng kết nối giả trên JVM. */
+    internal fun fetchSmallFile(target: File, connect: () -> HttpURLConnection): File? = runCatching {
+        val connection = PeerTransfer.openGet(connect = connect)
+        var partial: File? = null
+        try {
+            if (connection.responseCode != 200) return@runCatching null
+            target.parentFile?.mkdirs()
+            val pending = File.createTempFile(".${target.name}.", ".part", target.parentFile)
+            partial = pending
+            val limit = PeerTransfer.budget(target.name)
+            val expected = connection.getHeaderFieldLong("Content-Length", -1)
+            if (expected > limit) throw PeerTransfer.Limit()
+            java.io.FileOutputStream(pending).use { output ->
+                connection.inputStream.use { PeerTransfer.copy(it, output, limit, target.parentFile!!) }
+                output.fd.sync()
+            }
+            check(expected < 0 || pending.length() == expected) { "File tải chưa đủ; bạn hãy thử lại." }
+            check(pending.renameTo(target)) { "Không lưu được file; bạn hãy thử lại." }
+            target
+        } finally {
+            partial?.delete()
+            connection.disconnect()
+        }
+    }.getOrNull()
 }

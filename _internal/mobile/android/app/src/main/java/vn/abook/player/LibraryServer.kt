@@ -18,7 +18,9 @@ import java.net.URLDecoder
 import javax.net.ssl.SSLServerSocket
 import java.security.MessageDigest
 import java.security.SecureRandom
-import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.TimeUnit
 
 /**
  * Mạng trạm, bước 2 (chủ sách 27-09): điện thoại PHỤC VỤ thư viện của nó cho máy đã ghép - máy tính (và sau này điện
@@ -49,6 +51,12 @@ object LibraryServer {
     private const val MAX_HEADER_BYTES = 16 * 1024
     // Chỗ nghe của một cuốn dài (mỗi chương một mục, dấu trang) vài chục KB; ghép nối vài chục byte.
     private const val MAX_BODY_BYTES = 2 * 1024 * 1024
+    internal const val PEER_MAX_CONNECTIONS = 8
+    internal const val PEER_MAX_PER_SOURCE = 6
+    internal const val PEER_MAX_QUEUED = 16
+    internal const val PEER_QUEUE_MILLIS = 30_000L
+    internal const val PEER_HEADER_MILLIS = 30_000L
+    internal const val PEER_MIN_BODY_BYTES_PER_SECOND = 16 * 1024
     private val PROBE = "ABOOK_DISCOVER".toByteArray()
     private val BOOK_ID = Regex("[A-Za-z0-9_-]+")
     private val IDENT = Regex("[0-9a-f]{8,64}")
@@ -59,7 +67,26 @@ object LibraryServer {
     @Volatile var fingerprint = ""
         private set
     private var discovery: DatagramSocket? = null
-    private val workers = Executors.newFixedThreadPool(6)
+    private val workers = ThreadPoolExecutor(PEER_MAX_CONNECTIONS, PEER_MAX_CONNECTIONS, 0L, TimeUnit.MILLISECONDS,
+        ArrayBlockingQueue<Runnable>(PEER_MAX_QUEUED)) { task ->
+        Thread(task, "abook-share-client").apply { isDaemon = true }
+    }
+    private val connectionCounts = mutableMapOf<String, Int>()
+    private var connections = 0
+    private class Waiting(val client: Socket, val source: String, val serve: (Socket) -> Unit) {
+        var expiry: java.util.TimerTask? = null
+    }
+    private val waiting = mutableListOf<Waiting>()
+    private val queueTimer = java.util.Timer("abook-share-queue", true)
+    private val authenticatedSources = mutableMapOf<String, Long>()
+
+    // Đây chỉ là ưu tiên admission theo địa chỉ vừa xác thực, không thay kiểm token từng request.
+    internal fun authenticatedSource(source: String) = synchronized(connectionCounts) {
+        val now = System.nanoTime()
+        authenticatedSources.entries.removeAll { now - it.value > TimeUnit.MINUTES.toNanos(5) }
+        if (authenticatedSources.size >= 256) authenticatedSources.remove(authenticatedSources.minBy { it.value }.key)
+        authenticatedSources[source] = now
+    }
     private val random = SecureRandom()
     private var pairing: Pair<String, Long>? = null
     private var failures = 0
@@ -139,6 +166,11 @@ object LibraryServer {
         server = null
         discovery = null
         pairing = null
+        synchronized(connectionCounts) {
+            waiting.forEach { it.expiry?.cancel(); runCatching { it.client.close() } }
+            waiting.clear()
+            authenticatedSources.clear()
+        }
     }
 
     // ---- ghép nối -------------------------------------------------------------------------------------------------
@@ -189,9 +221,8 @@ object LibraryServer {
             }
             return null
         }
-        pairing = null // mã dùng một lần
-        val token = hex(32)
         val data = readDevices()
+        val token = hex(32)
         // Cùng máy (cùng mã máy nó gửi) ghép lại: thay dòng cũ, mã cũ hết hiệu lực - không thêm dòng trùng (sync.py `Devices.pair`).
         val same = if (IDENT.matches(ident)) ident else ""
         val devices = data.getJSONObject("devices")
@@ -202,6 +233,7 @@ object LibraryServer {
             .put("lastSeen", System.currentTimeMillis() / 1000.0)
             .apply { if (same.isNotEmpty()) put("ident", same) })
         Store.writeAtomic(devicesFile, data.toString())
+        pairing = null // chỉ tiêu thụ mã sau khi ghi danh sách thành công
         return token
     }
 
@@ -239,9 +271,29 @@ object LibraryServer {
     }
 
     private fun readDevices(): JSONObject {
-        val data = runCatching { JSONObject(devicesFile.readText()) }.getOrNull() ?: JSONObject()
-        if (data.optJSONObject("devices") == null) data.put("devices", JSONObject())
-        return data
+        if (!devicesFile.exists()) return JSONObject().put("devices", JSONObject())
+        val text = try { devicesFile.readText(Charsets.UTF_8) } catch (error: Exception) {
+            throw java.io.IOException("Không đọc được danh sách máy đã ghép; bạn hãy thử lại. Dữ liệu cũ vẫn được giữ.", error)
+        }
+        try {
+            val data = StrictJson.parse(text) as? JSONObject ?: error("sai dạng")
+            val devices = data.getJSONObject("devices")
+            for (key in devices.keys()) {
+                require(Regex("[0-9a-f]{64}").matches(key))
+                val entry = devices.getJSONObject(key)
+                require(entry.get("name") is String)
+                for (field in listOf("pairedAt", "lastSeen")) {
+                    require(!entry.has(field) || entry.get(field) is Number && entry.getDouble(field).isFinite())
+                }
+                require(!entry.has("ident") || entry.get("ident") is String)
+            }
+            return data
+        } catch (error: Exception) {
+            // Sao lưu, giữ nguyên file gốc để mọi writer tiếp theo vẫn fail-closed.
+            val copy = File(devicesFile.path + ".corrupt-${hash(text)}")
+            if (!copy.exists()) Store.writeAtomic(copy, text)
+            throw java.io.IOException("Danh sách máy đã ghép bị hỏng; bạn hãy khôi phục bản sao trước khi ghép hoặc thôi ghép. Dữ liệu cũ vẫn được giữ.", error)
+        }
     }
 
     private fun hash(token: String): String =
@@ -291,18 +343,82 @@ object LibraryServer {
             } catch (_: Exception) {
                 return
             }
-            workers.execute {
-                client.use { connection ->
-                    connection.soTimeout = 30_000
-                    runCatching { handle(connection) }
+            dispatch(client)
+        }
+    }
+
+    internal fun dispatch(client: Socket, queueMillis: Long = PEER_QUEUE_MILLIS, serve: (Socket) -> Unit = ::handle) {
+        val source = client.inetAddress.hostAddress.orEmpty()
+        val item = Waiting(client, source, serve)
+        synchronized(connectionCounts) {
+            if (!hasCapacity(source)) {
+                val seen = authenticatedSources[source]
+                if (seen != null && System.nanoTime() - seen <= TimeUnit.MINUTES.toNanos(5)
+                    && waiting.size < PEER_MAX_QUEUED) {
+                    waiting.add(item)
+                    item.expiry = object : java.util.TimerTask() {
+                        override fun run() {
+                            synchronized(connectionCounts) {
+                                if (waiting.remove(item)) runCatching { client.close() }
+                            }
+                        }
+                    }.also { queueTimer.schedule(it, queueMillis) }
+                } else runCatching { client.close() }
+                return
+            }
+            reserve(source)
+        }
+        submit(item)
+    }
+
+    private fun hasCapacity(source: String) = connections < PEER_MAX_CONNECTIONS &&
+        connectionCounts.getOrDefault(source, 0) < PEER_MAX_PER_SOURCE
+
+    private fun reserve(source: String) {
+        connections++
+        connectionCounts[source] = connectionCounts.getOrDefault(source, 0) + 1
+    }
+
+    private fun release(source: String) {
+        val ready = mutableListOf<Waiting>()
+        synchronized(connectionCounts) {
+            connections--
+            val left = connectionCounts.getValue(source) - 1
+            if (left == 0) connectionCounts.remove(source) else connectionCounts[source] = left
+            val iterator = waiting.iterator()
+            while (iterator.hasNext()) {
+                val item = iterator.next()
+                if (hasCapacity(item.source)) {
+                    iterator.remove()
+                    item.expiry?.cancel()
+                    reserve(item.source)
+                    ready.add(item)
                 }
             }
+        }
+        ready.forEach(::submit)
+    }
+
+    private fun submit(item: Waiting) {
+        val client = item.client
+        try {
+            client.soTimeout = 30_000 // đặt trước khi giao worker; không có socket xếp hàng không timeout
+            workers.execute {
+                try {
+                    client.use { connection ->
+                        runCatching { item.serve(connection) }
+                    }
+                } finally { release(item.source) }
+            }
+        } catch (_: Exception) {
+            release(item.source)
+            runCatching { client.close() }
         }
     }
 
     internal class Request(val method: String, val path: String, val headers: Map<String, String>, val body: ByteArray)
 
-    private fun read(input: InputStream): Request? {
+    private fun read(input: InputStream, onBody: (Map<String, String>, Int) -> Unit): Request? {
         val header = StringBuilder() // dòng đầu + header là ASCII (đường dẫn đã mã hoá %)
         while (!(header.endsWith("\r\n\r\n") || header.endsWith("\n\n"))) {
             if (header.length >= MAX_HEADER_BYTES) return null
@@ -318,21 +434,45 @@ object LibraryServer {
             if (colon <= 0) null else line.substring(0, colon).trim().lowercase() to line.substring(colon + 1).trim()
         }.toMap()
         val length = headers["content-length"]?.toIntOrNull() ?: 0
-        if (length > MAX_BODY_BYTES) return Request(parts[0], "", headers, ByteArray(0))
+        if (length < 0 || length > MAX_BODY_BYTES) return Request(parts[0], "", headers, ByteArray(0))
+        onBody(headers, length)
         val body = ByteArray(maxOf(0, length))
         var read = 0
         while (read < body.size) {
             val count = input.read(body, read, body.size - read)
-            if (count < 0) break
+            if (count < 0) return null
             read += count
         }
         return Request(parts[0].uppercase(), parts[1].substringBefore('?'), headers, body)
     }
 
     private fun handle(connection: Socket) {
-        val input = BufferedInputStream(connection.getInputStream())
-        val output = connection.getOutputStream()
-        val request = read(input) ?: return
+        handleRequest(connection)
+    }
+
+    internal fun handleRequest(connection: Socket, deadline: (Long, () -> Unit) -> (() -> Unit) = { millis, expire ->
+        val timer = java.util.Timer(true)
+        timer.schedule(object : java.util.TimerTask() { override fun run() { expire() } }, millis)
+        val cancel: () -> Unit = { timer.cancel() }
+        cancel
+    }) {
+        var cancel = deadline(PEER_HEADER_MILLIS) { runCatching { connection.close() } }
+        val request: Request
+        val output: OutputStream
+        try {
+            val input = BufferedInputStream(connection.getInputStream())
+            output = connection.getOutputStream()
+            request = read(input) { headers, length ->
+                val token = headers["authorization"]?.takeIf { it.startsWith("Bearer ") }?.removePrefix("Bearer ")?.trim().orEmpty()
+                if (identify(token) != null) {
+                    authenticatedSource(connection.inetAddress.hostAddress.orEmpty())
+                    cancel()
+                    cancel = deadline(PEER_HEADER_MILLIS + length * 1000L / PEER_MIN_BODY_BYTES_PER_SECOND) {
+                        runCatching { connection.close() }
+                    }
+                }
+            } ?: return
+        } finally { cancel() }
         try {
             route(request, output)
         } catch (error: Exception) {

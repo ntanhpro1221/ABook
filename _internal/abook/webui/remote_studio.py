@@ -130,6 +130,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("PUT", _BOOK + r"/skip"),
     ("POST", _BOOK + r"/start"),
     ("POST", _BOOK + r"/stop"),
+    ("POST", _BOOK + r"/dequeue"),
     ("POST", _BOOK + r"/pause"),
     # "Duyệt trước khi thu" (precast.py): xem mốc và bật/tắt "Chờ tôi duyệt"; "Thu âm" là /pause ở trên.
     ("GET", _BOOK + r"/precast"),

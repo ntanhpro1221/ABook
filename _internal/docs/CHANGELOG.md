@@ -9,6 +9,31 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi bạn gỡ ABook, bộ gỡ đọc vị trí thư viện đã lưu và giữ cây chứa sách; app cũng ngăn bạn chọn thư viện trong các thư mục sẽ bị gỡ.
+- Khi bạn có cuốn đang chạy, khởi động hoặc tạm dừng, Studio yêu cầu chờ làm xong trước khi cập nhật để giữ nguyên lượt phân tích.
+- Khi bạn đổi tên bộ cài, lần nâng cấp giữa các bản có bộ gỡ mới vẫn nhận đúng chế độ nâng cấp và giữ Studio.
+- Nếu bạn bị ngắt khi tải thư viện dùng chung, app giữ bản cũ và chỉ kích hoạt bản mới sau khi giải nén đủ các gói.
+- Khi bạn tải giọng và công cụ âm thanh cùng lúc, các lượt tải dùng chung được xếp lần lượt để tránh tranh ghi file.
+- Khi bạn nâng app hoặc Studio mất thư viện Python, app nhận ra phần cần sửa và dùng lại môi trường cùng các model đã tải.
+- Khi bạn cài thư viện Studio, app kiểm hash từng gói theo bản khóa đi kèm và đối chiếu commit của thư viện Git trước khi cài.
+- Khi bạn cài Studio, các model giọng phụ và Faster Whisper được tải theo phiên bản cố định thay vì thay đổi theo nhánh mới nhất.
+- Khi máy chủ gửi file quá cỡ đã ghim, app dừng tải và dọn phần dở để tránh chiếm hết ổ đĩa của bạn.
+- Khi điện thoại hết chỗ trong lúc giải nén gói, app nhờ bạn giải phóng bộ nhớ và giữ gói nén hợp lệ để thử lại.
+- Khi bạn chưa tải xong giọng trên điện thoại, nút “Xoá phần đã tải” giúp lấy lại dung lượng và giữ runtime mà mô-đun khác còn dùng.
+- Khi bạn cài Studio, trạng thái đã cài chỉ xuất hiện sau khi kiểm tra cuối cùng và lưu checkpoint thành công.
+- Nếu không ghi được trạng thái cài Studio, app vẫn hiện lỗi và nhờ bạn kiểm tra chỗ trống, quyền ghi rồi bấm Cài tiếp.
+- Khi đường dẫn của bạn có dấu nháy đơn hay ký tự đặc biệt, bộ gỡ truyền nguyên đường dẫn cho PowerShell và báo lỗi nếu không dừng được tiến trình.
+
+- Khi bạn gửi gói sửa lớn qua mạng chậm, máy đã ghép có đủ thời gian gửi thay vì bị ngắt sau 30 giây.
+- Khi bạn vừa nghe qua mạng vừa tải bìa và đồng bộ, app nhận nhiều kết nối hơn và tự thử lại lượt đọc khi máy kia tạm bận, giảm lỗi ngắt quãng.
+- File sách hoặc dự án có mục nhận diện lớn bất thường bị từ chối trước khi đọc vào bộ nhớ, giúp bạn mở file an toàn trên cả máy tính và điện thoại.
+- Khi bạn ghép máy hoặc đồng bộ, dữ liệu trả về quá lớn hay JSON lồng quá sâu bị từ chối sớm, tránh làm app hết bộ nhớ.
+- Khi bạn tải sách từ máy khác, app dừng ngay nếu dữ liệu vượt cỡ đã báo hoặc giới hạn tải, kiểm chỗ trống trong lúc tải và giữ nguyên file cũ khi lỗi.
+- Khi bạn mở Đọc theo cùng lúc trình phát tải chữ của chương, điện thoại không còn lưu nhầm file đang ghi dở; tải bị ngắt vẫn giữ bản cũ đầy đủ.
+- Nếu danh sách máy đã ghép trên điện thoại bị hỏng hoặc tạm thời không đọc được, app giữ dữ liệu cũ và báo bạn thay vì ghi đè bằng danh sách rỗng.
+- Đường dẫn trong sách từ máy đã ghép không còn có thể ghi sang thư mục sách khác của bạn trên điện thoại.
+- Khi bạn mở sách từ máy đã ghép, đường dẫn lạ trong sách bị từ chối trước khi máy tính dò file hay truy cập thư mục mạng.
+- Khi bạn tải sách từ máy đã ghép, mã sách không hợp lệ bị từ chối trước khi ghi vào thư viện điện thoại.
 - Một file sách bạn bè gửi mà thông tin bên trong sai kiểu (thời lượng, số chương, phần...) giờ bị từ chối ngay lúc mở, kèm lời nhờ xin người gửi gửi lại, thay vì làm cả thư viện nghe không hiện được; có một cuốn hỏng thì các cuốn còn lại vẫn hiện bình thường.
 - File sách bị nén bất thường (một mục nhỏ xíu giải ra hàng trăm MB) bị từ chối trước khi chép vào ổ đĩa của bạn, trên cả máy tính và điện thoại.
 - Khi bạn mở cùng một file sách hai lần liền, lượt sau báo cuốn đã có thay vì báo lỗi quyền ghi sai.
@@ -19,6 +44,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Khi bạn mở lại file có cùng âm thanh nhưng mang tên khác, app nói tên trong file không được lấy và bạn đổi tên ở đâu.
 - Trên điện thoại, nhập sách lớn không còn làm chậm việc lưu chỗ nghe; file zip tải dở báo "chép chưa xong" thay vì "không phải file sách", và bản chép tạm của lần nhập bị ngắt được dọn khi mở app.
 - Nhạc nền nối vòng đúng phách, không còn nghe đánh đôi hay vang ở chỗ lặp, cả trên máy tính lẫn điện thoại.
+- Trên điện thoại, nhạc nền biết chính xác đang phát tới đâu (trước đây số này chỉ cập nhật bốn lần mỗi giây), nên chỗ nối vòng không còn lệch tới một phần tư giây; bước tự chỉnh pha sau khi nối tạm tắt vì nó có thể làm bản lặp im chừng nửa giây.
+- "Bỏ xếp hàng" chỉ bỏ cuốn khỏi hàng: nếu cuốn vừa được tới lượt và đã bắt đầu chạy, app báo cuốn đã bắt đầu chạy thay vì dừng nó giữa lúc phân tích.
+- Khi điện thoại gửi sửa về cùng lúc bạn bấm sửa trên máy tính, hoặc bạn bấm "Áp dụng" trong hộp thay đổi từ máy khác, cả hai đều được giữ - không còn việc này nuốt mất việc kia.
+- Điện thoại đổi ý và gửi lại cùng một sửa mới hơn thì bản cũ rời khỏi hộp thay đổi từ máy khác, nên bấm "Áp dụng" không đè bản mới bằng bản cũ.
+- Khi danh sách yêu cầu của cuốn tạm bị chương trình khác giữ, nút sửa trên máy tính và gói sửa từ điện thoại báo "thử lại sau vài giây" thay vì lặng lẽ ghi đè mất các yêu cầu cũ.
+- Bỏ một thay đổi chờ áp khi sách đang chạy: lời hướng dẫn nay đúng ("Tạm dừng", đợi báo "Đã tạm dừng"), bỏ được ngay khi sách đã dừng lại ở chỗ nghỉ, và trang sách có nút "N thay đổi chờ áp" ngay cả lúc đang chạy.
+- "Hoàn tác" việc đổi người nói cho cả nhóm câu không còn bị từ chối vô lý chỉ vì trong nhóm có một câu vốn đã đúng người.
+- Sửa một câu từ lời kể thành lời thoại kèm người nói chỉ tính là một thay đổi chờ áp, và bỏ nó là bỏ cả hai.
+- Đổi người nói khi sách chưa phân vai xong báo đúng lý do ("chưa phân vai xong") thay vì bảo người ấy chưa nói câu nào.
+- Hoàn tác hay xác nhận cả chương mà trục trặc giữa chừng nói đúng đã làm được bao nhiêu việc; toast "Áp dụng" từ máy khác nói đúng lúc nào máy làm theo trạng thái sách.
+- Công tắc "Chờ tôi duyệt" không còn bị trả về giá trị cũ khi app đúng lúc báo sách phân tích xong.
 
 ## [0.4.123] - 2026-10-22
 
