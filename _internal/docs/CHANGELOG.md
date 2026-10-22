@@ -30,6 +30,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Khi bạn nhập EPUB có chương UTF-16 không BOM, cả hai nền tảng đọc đúng chữ và không còn báo nhầm khoá bản quyền.
 - Khi bạn nhập sách có XML hỏng (nhiều phần tử gốc, thiếu thẻ đóng hay chữ ngoài phần tử gốc), điện thoại từ chối giống máy tính; mục lục hỏng vẫn được bỏ qua để lấy tên chương từ chữ.
 - Khi bạn nhập EPUB có chương bị chia thành hàng nghìn tệp nhỏ, các mảnh được ghép nhanh hơn và giữ đúng thứ tự chữ, kể cả chú thích cuối chương.
+- Nút "Áp dụng" không còn tắt oan: nếu bạn sửa cách đọc hay người nói đúng lúc sách đang thu chương cuối, hoặc ngay lúc sách vừa khởi động, thay đổi ấy trước đây có thể chưa được áp mà bộ đếm vẫn về 0. Giờ máy áp chúng trước khi chốt "Hoàn tất", và nút chỉ tắt khi từng thay đổi đã thật sự được áp.
 
 ## [0.4.122] - 2026-10-22
 

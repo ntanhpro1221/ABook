@@ -2270,6 +2270,24 @@ CREATE TABLE IF NOT EXISTS speaker_pass_labels (
     pass_speaker TEXT NOT NULL
 );
 
+-- Biên nhận yêu cầu của người nghe (overrides.json): dây chuyền đã xét yêu cầu (section, key) mang requested_at và băm nội dung
+-- này (đã áp, hay không có gì để đổi, hay bị từ chối - đều là đã xét). Giao diện đếm "chờ áp dụng" theo bảng này, không suy từ
+-- thời gian sổ / lần khởi động. `listener_override_sweeps` có dòng khi dây chuyền đã quét yêu cầu ít nhất một lần (sau khi khoá phân
+-- vai): từ đó mới tin biên nhận. Không nâng SCHEMA_VERSION (như analysis_responses): mã cũ bỏ qua bảng lạ.
+CREATE TABLE IF NOT EXISTS listener_override_receipts (
+    section TEXT NOT NULL,
+    key TEXT NOT NULL,
+    requested_at REAL NOT NULL,
+    payload_sha256 TEXT NOT NULL,
+    applied_at REAL NOT NULL,
+    PRIMARY KEY (section, key)
+);
+
+CREATE TABLE IF NOT EXISTS listener_override_sweeps (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    first_at REAL NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS runtime_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     timestamp REAL NOT NULL,
@@ -9310,6 +9328,31 @@ class ProjectDB:
                     (LISTENER_REDO + reason, chapter_id, ChapterStatus.COMPLETED.value),
                 )
             return {"stable_id": stable_id, "chapter_id": chapter_id, "retakes": retakes, "reset": reset}
+
+    def listener_receipts(self) -> dict[tuple[str, str], tuple[float, str]]:
+        """{(section, key): (requested_at, băm nội dung)} các yêu cầu dây chuyền đã xét."""
+        with self.connect() as conn:
+            return {
+                (str(row["section"]), str(row["key"])): (float(row["requested_at"]), str(row["payload_sha256"]))
+                for row in conn.execute("SELECT section, key, requested_at, payload_sha256 FROM listener_override_receipts")
+            }
+
+    def mark_listener_sweep(self) -> None:
+        """Dây chuyền đã quét yêu cầu của người nghe (sau khi khoá phân vai) - kể cả lần quét không có yêu cầu nào."""
+        with self.transaction() as conn:
+            conn.execute("INSERT OR IGNORE INTO listener_override_sweeps(id, first_at) VALUES(1, ?)", (time.time(),))
+
+    def record_listener_receipt(self, section: str, key: str, requested_at: float, payload_sha256: str) -> None:
+        """Ghi biên nhận SAU khi yêu cầu đã commit (hay không có gì để đổi). Chết giữa hai việc thì lần chạy sau áp lại: mọi
+        phép `apply_listener_*` so với trạng thái sổ nên áp lại là không làm gì (kể cả thu lại: `listener_retake_at`)."""
+        with self.transaction() as conn:
+            conn.execute("INSERT OR IGNORE INTO listener_override_sweeps(id, first_at) VALUES(1, ?)", (time.time(),))
+            conn.execute(
+                "INSERT INTO listener_override_receipts(section, key, requested_at, payload_sha256, applied_at)"
+                " VALUES(?,?,?,?,?) ON CONFLICT(section, key) DO UPDATE SET requested_at=excluded.requested_at,"
+                " payload_sha256=excluded.payload_sha256, applied_at=excluded.applied_at",
+                (section, key, float(requested_at), payload_sha256, time.time()),
+            )
 
     def apply_listener_line(
         self,
