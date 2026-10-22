@@ -185,6 +185,17 @@ def studio(tmp_path: Path):
         server.stop()
 
 
+def test_speaker_group_over_2000_records_every_line(tmp_path: Path, studio, monkeypatch) -> None:
+    project = make_book(tmp_path)
+    monkeypatch.setattr("abook.webui.store.speaker_request_problem", lambda *args: None)
+    lines = [{"stableId": f"large-{i}", "textSha256": f"sha-{i}"} for i in range(2501)]
+    status, made = studio(project, {"lines": lines, "speaker": "LUCIEN"})
+    assert status == 200
+    assert made["lines"] == len(lines)
+    assert len(speaker_requests(read_overrides(project))) == len(lines)
+    assert studio(project, {"lines": lines, "withdraw": True, "requestedAt": made["requestedAt"]})[1]["undone"] == len(lines)
+
+
 def test_undo_takes_back_the_whole_group_in_one_step(tmp_path: Path, studio) -> None:
     project = make_book(tmp_path)
     card = _unnamed(project)["unnamed-role:lính gác"]

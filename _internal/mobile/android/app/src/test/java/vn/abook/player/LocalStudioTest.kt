@@ -99,6 +99,29 @@ class LocalStudioTest {
         file.writeText(script.toString(), Charsets.UTF_8)
     }
 
+    @Test
+    fun speaker_group_over_2000_records_and_withdraws_every_line() {
+        val scriptFile = File(dir, "scripts/1.json")
+        val script = JSONObject(scriptFile.readText(Charsets.UTF_8))
+        val sample = script.getJSONArray("segments").getJSONObject(2)
+        val segments = JSONArray()
+        val lines = JSONArray()
+        for (index in 1..2501) {
+            val stable = "c1_s${index.toString().padStart(4, '0')}_large"
+            segments.put(JSONObject(sample.toString()).put("id", index).put("stableId", stable))
+            lines.put(JSONObject().put("stableId", stable).put("textSha256", sample.getString("textSha256")))
+        }
+        script.put("segments", segments)
+        scriptFile.writeText(script.toString(), Charsets.UTF_8)
+        val response = call("POST", "/speaker", JSONObject().put("lines", lines).put("speaker", "HEIDI"))
+        assertEquals(200, response.first)
+        val data = response.second as JSONObject
+        assertEquals(2501, data.getInt("lines"))
+        assertEquals(2501, BookEdits.load(dir).getJSONObject("wishes").getJSONObject("speakers").length())
+        val undone = call("POST", "/speaker", JSONObject().put("lines", lines).put("withdraw", true).put("requestedAt", data.getDouble("requestedAt")))
+        assertEquals(2501, (undone.second as JSONObject).getInt("undone"))
+    }
+
     private fun dataUrl(): String =
         "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(BookEditsFixtures.bytes("edits/cover_set.cover.jpg"))
 

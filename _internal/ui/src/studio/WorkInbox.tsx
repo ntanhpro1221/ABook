@@ -441,9 +441,9 @@ function SpeakerFix({
           ...(item.kind === "bracket" && scope === "all" ? { bracketRule: true } : {}),
         },
       }),
-    onSuccess: ({ speaker, alias, requestedAt, elsewhere }) => {
+    onSuccess: ({ lines: recorded, speaker, alias, requestedAt, elsewhere }) => {
       refreshAfterDecision(client, bookId);
-      const which = (lines?.length ?? 1) > 1 ? `${lines?.length} câu này` : "câu này";
+      const which = recorded > 1 ? `${recorded} câu này` : "câu này";
       const keep = speaker === item.currentValue;
       // Thẻ "hai tên một người": máy chủ rút luôn bí danh ghi cùng mốc (server._withdraw) nên hoàn tác được. Quy ước 『』 cả cuốn còn ghi ở
       // cấp cuốn cho các phần sau - hoàn tác chỉ lùi được phần câu, nên không mời.
