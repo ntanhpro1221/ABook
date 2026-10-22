@@ -263,6 +263,9 @@ def test_a_chapter_whose_sentences_changed_is_asked_again(tmp_path: Path, book: 
 def test_pausing_waits_between_windows_without_asking(tmp_path: Path, book: list[dict], monkeypatch: pytest.MonkeyPatch) -> None:
     asked = _asking(monkeypatch)
     sleeps: list[float] = []
+    # Chỉ đồng hồ của music_bounds: thay `time.sleep` toàn cục thì bắt cả lời ngủ của luồng nền do test khác để lại (hàng đợi sản xuất ngủ 15 giây).
+    clock = music_bounds.time
+    monkeypatch.setattr(music_bounds, "time", SimpleNamespace(**{name: getattr(clock, name) for name in dir(clock) if not name.startswith("_")}))
     monkeypatch.setattr(music_bounds.time, "sleep", sleeps.append)
     paused = lambda: bool(asked) and len(sleeps) < 3  # noqa: E731
     total = _compute(tmp_path, pause_requested=paused)
