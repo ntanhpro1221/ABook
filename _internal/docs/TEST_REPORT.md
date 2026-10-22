@@ -2,6 +2,22 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a80fix2` trên `dev/uxfix99` (Codex tk3 bị cắt ở lượt kiểm cuối, Lead chạy toàn bộ): gói sửa lớn từ máy đã ghép có hạn đọc theo cỡ
+(30 s + cỡ / 16 KiB/s), máy chưa ghép vẫn 30 s; trần kết nối 32 tổng / 8 mỗi nguồn (máy tính), 8 / 6 (điện thoại); GET đóng sớm/503 thử
+lại tối đa 2 lần (200/800 ms), không POST. Toàn bộ a80fix + a80fix2: pytest 8690 passed, 9 skipped, 1 xfailed (lỗi 3), 0 F/E;
+vitest 1329 passed, 1 skipped; tsc exit 0; JVM 1370 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
+Đợt `a80fix` trên `dev/uxfix99` (nền cdba76cd): đã tái hiện trước sửa và xử lý 9 lỗi về mã sách/đường file peer,
+containment Android, bảo toàn danh sách máy đã ghép, công bố file tải đồng thời, giới hạn ghi đĩa/đọc RAM,
+MIME của file sách/dự án và tài nguyên cổng đồng bộ. Python/Kotlin dùng cùng luật đường dẫn và ngân sách tải;
+changelog và AGENTS ghi invariant mới. Không sửa file quality khóa; hash trước/sau c9176123.
+Lỗi 3 (MITM ghép lần đầu) chỉ có thiết kế giao thức mới, test `test_pairing_first_use_gap.py` strict xfail giữ dấu lỗi còn tồn tại;
+lỗi 11 chưa tái hiện được vì JVM không có Android CookieManager/WebView, không sửa phần Studio Bluetooth.
+Kiểm tra: pytest liên quan 222 passed, 1 xfailed, 0 F/E; vitest toàn bộ 1329 passed, 1 skipped, 0 failed; tsc exit 0;
+JVM toàn bộ 1356 tests: 1349 passed, 7 skipped, 0 F/E. Sau chỉnh containment dùng separator để không đòi API 26,
+kiểm lại Store*/PeerPaths/BookFileImport: 63 tests, 62 passed, 1 skipped, 0 F/E. Ca symlink mới skip vì runner Windows thiếu quyền.
+Chưa chạy relay TLS/Android WebView thật, flood LAN hay đo NTLM. Lượt JVM đầu có một fixture cũ dùng ServerSocket(0)
+để lấy cổng rồi đóng ngay (bind wildcard); đã sửa fixture OnlineVoicesTest chỉ bind loopback trước các lượt tiếp theo.
+
 Đợt `a82loop` trên `dev/uxfix93` (nền cd9c766b): nhạc nền vào bản lặp đúng hạn - tạo sẵn phần tử/ExoPlayer lặp khi còn < 3 s,
 hẹn giờ đúng loopEnd - X thay vì chờ nhịp đồng bộ (250 ms máy tính / 500 ms điện thoại), mở ở loopStartAt (bù phần trễ), sửa pha một lần khi
 bản mới có tiếng; ba hàm thuần loopHandoffDelay/loopStartAt/loopDrift cùng ca số ở TS và Kotlin (MusicLoopTest). Đo thật máy tính (Music,

@@ -118,19 +118,21 @@ object SyncLink {
         return name?.takeIf { it.isNotBlank() } ?: "máy tính"
     }
 
-    /** Một file của cuốn `remote` trên máy giữ sách `link` (chưa mở kết nối); `resumeFrom` > 0 = tải tiếp từ byte ấy (kèm `If-Range` = [ifRange]). */
+    /** Một file của cuốn `remote` trên máy giữ sách `link` (đã nhận header, có retry GET); `resumeFrom` > 0 = tải tiếp từ byte ấy (kèm `If-Range` = [ifRange]). */
     fun bookFile(context: Context, link: Peers.Link, remote: String, relative: String, resumeFrom: Long = 0, ifRange: String = ""): HttpURLConnection {
         Pin.install(context)
-        val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
-        connection.connectTimeout = 5000
-        connection.readTimeout = 30000
-        connection.setRequestProperty("Authorization", "Bearer ${link.token}")
-        if (resumeFrom > 0) {
-            connection.setRequestProperty("Range", "bytes=$resumeFrom-")
-            // Phiên bản của file mà phần dở thuộc về (PartResume): file đã đổi thì máy kia gửi lại cả file thay vì đuôi của file mới.
-            if (ifRange.isNotEmpty()) connection.setRequestProperty("If-Range", ifRange)
+        return PeerTransfer.openGet {
+            val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
+            connection.connectTimeout = 5000
+            connection.readTimeout = 30000
+            connection.setRequestProperty("Authorization", "Bearer ${link.token}")
+            if (resumeFrom > 0) {
+                connection.setRequestProperty("Range", "bytes=$resumeFrom-")
+                // Phiên bản của file mà phần dở thuộc về (PartResume): file đã đổi thì máy kia gửi lại cả file thay vì đuôi của file mới.
+                if (ifRange.isNotEmpty()) connection.setRequestProperty("If-Range", ifRange)
+            }
+            connection
         }
-        return connection
     }
 
     /** Nguồn một bài nhạc nền của cuốn cho [BookMusic.fetch]: null khi máy kia không có (mã khác 200). */
@@ -251,33 +253,64 @@ object SyncLink {
         firstUse: Array<String?>?,
         upload: File? = null,
     ): String {
-        val connection = URL(root + path).openConnection() as HttpURLConnection
-        // `firstUse` != null: yêu cầu ghép - nhận chứng chỉ lạ một lần và đọc vân tay ra mảng này.
-        if (firstUse != null && connection is HttpsURLConnection) Pin.firstUse(connection)
-        connection.requestMethod = method
-        connection.connectTimeout = connectTimeoutMs
-        connection.readTimeout = readTimeoutMs
-        if (token != null) connection.setRequestProperty("Authorization", "Bearer $token")
-        else if (auth) connection.setRequestProperty("Authorization", "Bearer ${prefs(context).getString("token", "")}")
-        if (upload != null) {
-            // Gói nhị phân lớn (phần sửa + bài nhạc ghim): đẩy thẳng từ file, không giữ cả gói trong bộ nhớ.
-            connection.doOutput = true
-            connection.setRequestProperty("Content-Type", "application/zip")
-            connection.setFixedLengthStreamingMode(upload.length())
-            upload.inputStream().use { input -> connection.outputStream.use { input.copyTo(it, 256 * 1024) } }
-        } else if (body != null) {
-            connection.doOutput = true
-            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-            connection.outputStream.use { it.write(body.toString().toByteArray()) }
+        fun connect(): HttpURLConnection {
+            val connection = URL(root + path).openConnection() as HttpURLConnection
+            // `firstUse` != null: yêu cầu ghép - nhận chứng chỉ lạ một lần và đọc vân tay ra mảng này.
+            if (firstUse != null && connection is HttpsURLConnection) Pin.firstUse(connection)
+            connection.requestMethod = method
+            connection.connectTimeout = connectTimeoutMs
+            connection.readTimeout = readTimeoutMs
+            if (token != null) connection.setRequestProperty("Authorization", "Bearer $token")
+            else if (auth) connection.setRequestProperty("Authorization", "Bearer ${prefs(context).getString("token", "")}")
+            if (upload != null) {
+                // Gói nhị phân lớn (phần sửa + bài nhạc ghim): đẩy thẳng từ file, không giữ cả gói trong bộ nhớ.
+                connection.doOutput = true
+                connection.setRequestProperty("Content-Type", "application/zip")
+                connection.setFixedLengthStreamingMode(upload.length())
+                upload.inputStream().use { input -> connection.outputStream.use { input.copyTo(it, 256 * 1024) } }
+            } else if (body != null) {
+                connection.doOutput = true
+                connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                connection.outputStream.use { it.write(body.toString().toByteArray()) }
+            }
+            return connection
         }
-        val code = connection.responseCode
-        val text = (if (code < 400) connection.inputStream else connection.errorStream)?.bufferedReader()?.use { it.readText() } ?: ""
-        if (firstUse != null && connection is HttpsURLConnection) firstUse[0] = Pin.peerFingerprint(connection)
-        connection.disconnect()
-        if (code >= 400) {
-            val message = runCatching { JSONObject(text).optString("error") }.getOrNull()
-            // Mang mã HTTP (NetErrors.Refused): 401 = máy kia đã thôi ghép máy này, giao diện nói đúng thế thay vì "không kết nối được".
-            throw NetErrors.Refused(code, message?.ifBlank { null } ?: "Máy tính trả lỗi $code")
+        val connection = if (method == "GET") PeerTransfer.openGet { connect() } else connect()
+        try {
+            val code = connection.responseCode
+            val text = responseText(connection, code)
+            if (firstUse != null && connection is HttpsURLConnection) firstUse[0] = Pin.peerFingerprint(connection)
+            if (code >= 400) {
+                val message = runCatching { JSONObject(text).optString("error") }.getOrNull()
+                // Mang mã HTTP (NetErrors.Refused): 401 = máy kia đã thôi ghép máy này, giao diện nói đúng thế thay vì "không kết nối được".
+                throw NetErrors.Refused(code, message?.ifBlank { null } ?: "Máy tính trả lỗi $code")
+            }
+            return text
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+    internal fun responseText(connection: HttpURLConnection, code: Int): String {
+        val cap = if (code >= 400) PeerTransfer.ERROR_BYTES else PeerTransfer.JSON_BYTES
+        val declared = connection.getHeaderField("Content-Length")
+        if (declared != null && (declared.toLongOrNull()?.let { it in 0..cap } != true)) throw PeerTransfer.Limit()
+        val input = (if (code < 400) connection.inputStream else connection.errorStream) ?: return ""
+        val bytes = java.io.ByteArrayOutputStream()
+        input.use {
+            val buffer = ByteArray(64 * 1024)
+            while (true) {
+                val count = it.read(buffer, 0, minOf(buffer.size.toLong(), cap - bytes.size() + 1).toInt())
+                if (count < 0) break
+                if (count > cap - bytes.size()) throw PeerTransfer.Limit()
+                bytes.write(buffer, 0, count)
+            }
+        }
+        val text = bytes.toString("UTF-8")
+        if (text.isNotEmpty()) try {
+            require(StrictJson.parse(text) is JSONObject)
+        } catch (error: Exception) {
+            throw IllegalArgumentException("Dữ liệu máy gửi không hợp lệ; bạn hãy thử lại.", error)
         }
         return text
     }

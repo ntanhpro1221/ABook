@@ -238,7 +238,7 @@ object BookFileImport {
             val entries = zip.entries().toList()
             val first = entries.firstOrNull()
             val kind = if (first == null || first.name != "mimetype" || first.method != ZipEntry.STORED) null
-            else zip.getInputStream(first).use { it.readBytes() }.toString(Charsets.US_ASCII).trim()
+            else readMime(first.size) { zip.getInputStream(first) }
             if (kind != MIMETYPE && kind != PROJECT_MIMETYPE) throw Refused("Đây không phải file sách của app.")
             val project = kind == PROJECT_MIMETYPE
             if (entries.size > if (project) PROJECT_MAX_ENTRIES else MAX_ENTRIES) throw Refused("File sách có quá nhiều mục.")
@@ -400,6 +400,25 @@ object BookFileImport {
      * `edits.json` đúng giao ước (BookEdits.validate - sai thì từ chối cả file) và bìa sửa đi đôi với nó: có `cover` là đối tượng
      * thì phải có edits/cover.jpg, và ngược lại; là JPEG, không quá cỡ (bookfile.py `_check_edits`).
      */
+    internal fun readMime(size: Long, open: () -> java.io.InputStream): String {
+        val allowed = listOf(MIMETYPE, PROJECT_MIMETYPE).map { it.toByteArray(Charsets.US_ASCII) }
+        val cap = allowed.maxOf { it.size }
+        if (size >= 0 && allowed.none { it.size.toLong() == size }) throw Refused("File sách có mimetype không hợp lệ; bạn hãy xin người gửi gửi lại.")
+        val bytes = open().use { input ->
+            val out = java.io.ByteArrayOutputStream()
+            val buffer = ByteArray(cap + 1)
+            while (out.size() <= cap) {
+                val count = input.read(buffer, 0, cap + 1 - out.size())
+                if (count < 0) break
+                out.write(buffer, 0, count)
+            }
+            out.toByteArray()
+        }
+        val match = allowed.firstOrNull { it.contentEquals(bytes) }
+            ?: throw Refused("File sách có mimetype không hợp lệ; bạn hãy xin người gửi gửi lại.")
+        return match.toString(Charsets.US_ASCII)
+    }
+
     private fun readEdits(zip: ZipFile, resolve: (String) -> String = { it }): Edits {
         var edits = BookEdits.empty()
         zip.getEntry(resolve(BookEdits.EDITS_FILE))?.let { entry ->
