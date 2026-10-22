@@ -400,7 +400,7 @@ object LibraryServer {
                 val target = if (!allowed) null else if (relative == "cover.jpg") Store.coverFile(book) else Store.file(book, relative)
                 if (overlaid != null) sendBytes(output, overlaid.toByteArray(Charsets.UTF_8), "application/json; charset=utf-8", request.method == "HEAD")
                 else if (target == null || !target.isFile) json(output, 404, JSONObject().put("error", "Không có file này"))
-                else sendFile(output, target, request.headers["range"], request.method == "HEAD")
+                else sendFile(output, target, request.headers["range"], request.method == "HEAD", request.headers["if-range"])
             }
             // Chỗ nghe hai chiều: máy kia gửi bản của nó, điện thoại gộp vào hồ sơ đang dùng của cuốn này (Store.mergeRemote,
             // cùng phép gộp của máy tính) và trả bản đã gộp.
@@ -565,12 +565,19 @@ object LibraryServer {
         output.flush()
     }
 
-    private fun sendFile(output: OutputStream, file: File, range: String?, headOnly: Boolean) {
+    /** Phiên bản của file (cỡ + giờ sửa): máy kia nhận dở rồi tải tiếp bằng `Range` + `If-Range` - file đã đổi (sách dựng lại chương) thì
+     *  gửi lại cả file, không bao giờ ghép đầu cũ với đuôi mới. Cùng dạng với máy tính (sync.py `_file`). */
+    private fun etag(file: File): String = "\"${file.length().toString(16)}-${file.lastModified().toString(16)}\""
+
+    private fun sendFile(output: OutputStream, file: File, range: String?, headOnly: Boolean, ifRange: String? = null) {
         val size = file.length()
         var start = 0L
         var end = size - 1
         var status = 200
-        val match = Regex("bytes=(\\d*)-(\\d*)").matchEntire(range?.trim().orEmpty())
+        val tag = etag(file)
+        // `If-Range` lệch (hay không phải ETag của file này): bỏ `Range`, trả cả file.
+        val usable = if (ifRange == null || ifRange.trim() == tag) range else null
+        val match = Regex("bytes=(\\d*)-(\\d*)").matchEntire(usable?.trim().orEmpty())
         if (match != null && size > 0) {
             val (first, last) = match.destructured
             if (first.isNotEmpty()) {
@@ -597,7 +604,7 @@ object LibraryServer {
             "png" -> "image/png"
             else -> "application/octet-stream"
         }
-        val extra = mutableMapOf("Accept-Ranges" to "bytes")
+        val extra = mutableMapOf("Accept-Ranges" to "bytes", "ETag" to tag)
         if (status == 206) extra["Content-Range"] = "bytes $start-$end/$size"
         head(output, status, type, end - start + 1, extra)
         if (!headOnly) {

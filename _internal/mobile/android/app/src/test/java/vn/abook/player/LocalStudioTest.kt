@@ -343,7 +343,7 @@ class LocalStudioTest {
         assertEquals(CoverSearch.REFUSAL, refused(WebStub(ByteArray(0)), "http://192.168.1.1/admin.png"))
         assertEquals(CoverSearch.REFUSAL, refused(WebStub(ByteArray(0)), "https://evil.example/x.jpg"))
         assertEquals("Ảnh quá lớn", refused(WebStub(ByteArray(Covers.MAX_UPLOAD_BYTES + 9) { 1 }), allowed))
-        assertEquals("Không tải được ảnh: HTTP 503", refused(WebStub(ByteArray(0), failWith = java.io.IOException("HTTP 503")), allowed))
+        assertEquals(CoverSearch.DOWNLOAD_FAILED, refused(WebStub(ByteArray(0), failWith = java.io.IOException("HTTP 503")), allowed))
         assertEquals("Không đọc được ảnh này", refused(WebStub(ByteArray(40) { 1 }), allowed))
         assertFalse("không có gì được ghi", File(dir, "edits.json").exists())
         assertFalse(File(dir, "edits/cover.jpg").exists())

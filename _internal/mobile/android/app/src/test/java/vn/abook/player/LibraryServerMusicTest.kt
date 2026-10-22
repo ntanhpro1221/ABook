@@ -52,10 +52,11 @@ class LibraryServerMusicTest {
         LocalStudio.now = { System.currentTimeMillis() / 1000.0 }
     }
 
-    private fun get(path: String, range: String? = null, authorized: Boolean = true): Reply {
+    private fun get(path: String, range: String? = null, authorized: Boolean = true, ifRange: String? = null): Reply {
         val headers = buildMap {
             if (authorized) put("authorization", "Bearer $token")
             if (range != null) put("range", range)
+            if (ifRange != null) put("if-range", ifRange)
         }
         val out = ByteArrayOutputStream()
         LibraryServer.route(LibraryServer.Request("GET", path, headers, ByteArray(0)), out)
@@ -68,7 +69,7 @@ class LibraryServerMusicTest {
 
     private fun manifest() = get("/sync/v1/books/$id/manifest").also { assertEquals(200, it.status) }.json()
 
-    private fun file(name: String, range: String? = null) = get("/sync/v1/books/$id/files/$name", range)
+    private fun file(name: String, range: String? = null, ifRange: String? = null) = get("/sync/v1/books/$id/files/$name", range, ifRange = ifRange)
 
     private fun edit(body: JSONObject) = assertEquals(200, LocalStudio.handle("PUT", "/api/books/$id/music", body).first)
 
@@ -108,6 +109,21 @@ class LibraryServerMusicTest {
         assertEquals(206, reply.status)
         assertEquals("bytes 10-49/${whole.size}", reply.headers["content-range"])
         assertArrayEquals(whole.copyOfRange(10, 50), reply.body)
+    }
+
+    @Test
+    fun a_resumed_download_is_only_continued_when_the_file_is_the_one_it_started_with() {
+        val whole = BookEditsFixtures.bytes("base/$calm")
+        val tag = file(calm).headers["etag"]!!
+        // File còn nguyên: Range + If-Range khớp thì nhận phần đuôi.
+        val tail = file(calm, "bytes=10-49", tag)
+        assertEquals(206, tail.status)
+        assertArrayEquals(whole.copyOfRange(10, 50), tail.body)
+        // File đã đổi (dựng lại chương): If-Range lệch thì gửi lại CẢ file, không phải đuôi của file mới.
+        val changed = file(calm, "bytes=10-49", "\"cu\"")
+        assertEquals(200, changed.status)
+        assertArrayEquals(whole, changed.body)
+        assertEquals(tag, changed.headers["etag"])
     }
 
     @Test
