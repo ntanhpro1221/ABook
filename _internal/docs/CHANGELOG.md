@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.128] - 2026-10-23
+
 ### Thư viện
 
 - Đổi sang một thư mục thư viện khác không còn kéo chỗ nghe và dấu trang của sách này sang sách khác chỉ vì trùng tên thư mục; chỉ khi thư viện cũ thật sự đã dời đi mới đi theo.
