@@ -20,6 +20,7 @@ import os
 import re
 import sqlite3
 import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -67,6 +68,39 @@ def read_overrides(project_root: Path) -> dict[str, Any]:
     try:
         data = json.loads(overrides_path(project_root).read_text(encoding="utf-8"))
     except (OSError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+class OverridesUnreadable(OSError):
+    """`overrides.json` CÓ trên đĩa mà tạm không đọc được (diệt virus, đồng bộ, replace đồng thời: PermissionError trên Windows). Người gọi
+    giao diện không được coi như "chưa có yêu cầu nào" rồi ghi đè: không ghi gì, báo bận, lần bấm sau thử lại (soát a83 B2)."""
+
+
+READ_FOR_UPDATE_ATTEMPTS = 15
+READ_FOR_UPDATE_PAUSE_SECONDS = 0.2
+
+
+def _read_for_update(project_root: Path) -> dict[str, Any]:
+    """Như `read_overrides` nhưng cho các hàm ĐỌC-SỬA-GHI (`request_*`, `cancel_retake`, `withdraw_requests`): chưa có file hay file hỏng (chỉ do
+    sửa tay) là {} như cũ, còn file có mà không đọc được thì thử lại vài giây rồi `OverridesUnreadable` - không bao giờ trả {} rồi để `_write`
+    ghi đè mất mọi yêu cầu cũ. Dây chuyền áp vẫn dùng `read_overrides` (đọc hỏng thì làm tiếp với cái máy đã quyết)."""
+    path = overrides_path(project_root)
+    for attempt in range(READ_FOR_UPDATE_ATTEMPTS):
+        try:
+            raw = path.read_text(encoding="utf-8")
+            break
+        except FileNotFoundError:
+            return {}
+        except UnicodeDecodeError:
+            return {}
+        except OSError as error:
+            if attempt == READ_FOR_UPDATE_ATTEMPTS - 1:
+                raise OverridesUnreadable(f"không đọc được {path.name}") from error
+            time.sleep(READ_FOR_UPDATE_PAUSE_SECONDS)
+    try:
+        data = json.loads(raw)
+    except ValueError:
         return {}
     return data if isinstance(data, dict) else {}
 
@@ -510,7 +544,7 @@ def line_target(
 
 def request_pronunciation(project_root: Path, surface: str, spoken_form: str, *, now: float) -> None:
     """Giao diện gọi: ghi (hoặc thay) mong muốn cho một từ."""
-    data = read_overrides(project_root)
+    data = _read_for_update(project_root)
     entries = data.get("pronunciations")
     entries = dict(entries) if isinstance(entries, dict) else {}
     entries[surface_key(surface)] = _replacing(entries.get(surface_key(surface)), {
@@ -540,7 +574,7 @@ def request_speakers(project_root: Path, lines: list[tuple[str, str]], speaker: 
                      new_gender: str = "") -> None:
     """Một người cho cả nhóm câu (mọi câu của một vai phụ không tên), trong MỘT lần ghi file: dây chuyền đọc file giữa
     hai lần ghi thì không bao giờ thấy nhóm câu nửa đã gán nửa chưa."""
-    data = read_overrides(project_root)
+    data = _read_for_update(project_root)
     entries = data.get("speakers")
     entries = dict(entries) if isinstance(entries, dict) else {}
     for stable_id, text_sha256 in lines:
@@ -561,7 +595,7 @@ def request_line(project_root: Path, stable_id: str, text_sha256: str, *, kind: 
     """Giao diện gọi: ghi mong muốn về cách đọc một câu, và - khi câu từ lời kể thành lời thoại - người nói của nó, trong
     MỘT lần ghi file (dây chuyền không bao giờ thấy nửa yêu cầu). Gộp với mong muốn cũ của câu: sửa chữ đem đọc không xoá
     cảm xúc vừa chọn mà dây chuyền chưa kịp áp, và ngược lại."""
-    data = read_overrides(project_root)
+    data = _read_for_update(project_root)
     lines = data.get("lines")
     lines = dict(lines) if isinstance(lines, dict) else {}
     previous = lines.get(str(stable_id))
@@ -613,7 +647,7 @@ def retake_requests(overrides: dict[str, Any]) -> list[dict[str, Any]]:
 
 def request_retake(project_root: Path, stable_id: str, text_sha256: str, *, now: float) -> None:
     """Giao diện gọi: người nghe bấm "Cần thu lại" cho một câu."""
-    data = read_overrides(project_root)
+    data = _read_for_update(project_root)
     entries = data.get("retakes")
     entries = dict(entries) if isinstance(entries, dict) else {}
     entries[str(stable_id)] = {"text_sha256": str(text_sha256).strip(), "requested_at": float(now)}
@@ -621,10 +655,22 @@ def request_retake(project_root: Path, stable_id: str, text_sha256: str, *, now:
     _write(project_root, data)
 
 
+def request_retakes(project_root: Path, lines: list[tuple[str, str]], *, now: float) -> None:
+    """Cả nhóm câu "Cần thu lại" (Thu lại cả chương) cùng một mốc, trong MỘT lần đọc và MỘT lần ghi file: từng câu một là O(n^2) (1600 câu ~ 21
+    giây, suốt thời gian đó khoá sách bị giữ) và mất điện giữa chừng để lại NỬA chương cùng một mốc (soát a83 B7)."""
+    data = _read_for_update(project_root)
+    entries = data.get("retakes")
+    entries = dict(entries) if isinstance(entries, dict) else {}
+    for stable_id, text_sha256 in lines:
+        entries[str(stable_id)] = {"text_sha256": str(text_sha256).strip(), "requested_at": float(now)}
+    data["retakes"] = entries
+    _write(project_root, data)
+
+
 def cancel_retake(project_root: Path, stable_id: str) -> None:
     """Người nghe bỏ phán quyết "Cần thu lại" trước khi dây chuyền kịp thu: bỏ yêu cầu. Đã thu rồi thì bản mới ở lại -
     bỏ một mục đã áp không đổi gì trong sách."""
-    data = read_overrides(project_root)
+    data = _read_for_update(project_root)
     entries = data.get("retakes")
     if isinstance(entries, dict) and str(stable_id) in entries:
         entries = dict(entries)
@@ -641,7 +687,7 @@ def character_key(character: str) -> str:
 def request_voice(project_root: Path, character: str, *, preset: str = "", gender: str = "", avoid: str = "",
                   now: float) -> None:
     """Giao diện gọi: ghi (hoặc thay) mong muốn về giọng/giới của một nhân vật."""
-    data = read_overrides(project_root)
+    data = _read_for_update(project_root)
     entries = data.get("voices")
     entries = dict(entries) if isinstance(entries, dict) else {}
     entries[character_key(character)] = _replacing(entries.get(character_key(character)), {
@@ -680,7 +726,7 @@ def withdraw_requests(project_root: Path, section: str, keys: list[str], request
 
     Yêu cầu đã áp thì bỏ khỏi file cũng không đổi gì trong sách (như `cancel_retake`): server hỏi SQLite trước, và chỉ
     gọi hàm này khi yêu cầu chưa vào sách."""
-    data = read_overrides(project_root)
+    data = _read_for_update(project_root)
     mine = requests_made_at(data, section, keys, requested_at)
     if mine:
         entries = {key: entry for key, entry in data[section].items() if key not in mine}

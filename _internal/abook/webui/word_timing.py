@@ -42,6 +42,7 @@ from pathlib import Path
 from typing import Any, Callable, Sequence
 
 from .. import io_utils
+from ..readaloud.mapping import TOKEN
 
 ENV_DIR = "ABOOK_WORD_ALIGN_DIR"
 ENV_SWITCH = "ABOOK_WORD_TIMING"  # "0" = không bao giờ căn chữ
@@ -62,7 +63,7 @@ MODEL_FILES = ("wav2vec2-vi-int8.onnx", "vocab.json", "preprocessor_config.json"
 PUNCT_END = set(",.!?:;…")
 STRIP = "\"'“”‘’()[]«»—–-…,.!?:;"
 FOREIGN_MAP = {"f": "ph", "j": "gi", "w": "u", "z": "d"}  # chỉ khi từ điển model thiếu chữ cái ấy
-_TOKEN = re.compile(r"\S+")
+_TOKEN = TOKEN  # chữ hiện kiểu JavaScript (U+0085 không tách chữ, U+FEFF thì tách) - soát a79 lỗi 11
 
 
 # ---- chữ -> âm tiết (không cần numpy) -------------------------------------------------------------------------------------

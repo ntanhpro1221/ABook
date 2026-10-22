@@ -85,8 +85,9 @@ from .database import (
     segment_candidate_split_seed_salt,
     thought_reads_as_narrator,
 )
-from .io_utils import sha256_file
+from .io_utils import file_stamp, sha256_file
 from .listener_overrides import (
+    overrides_path,
     pronunciation_problem,
     pronunciation_requests,
     read_overrides,
@@ -1227,6 +1228,8 @@ class BookPipeline:
         """
         if not self.db.casting_is_finalized():
             return set()
+        self._overrides_stamp = file_stamp(overrides_path(self.paths.root))  # TRƯỚC khi đọc: file đổi sau đó thì `_still_requested` thấy
+        self._overrides_latest = None
         overrides = read_overrides(self.paths.root)
         # Biên nhận (database.listener_receipts): lần quét đầu bật việc đếm "chờ áp dụng" theo biên nhận thay vì theo mốc thời gian.
         self.db.mark_listener_sweep()
@@ -1379,8 +1382,23 @@ class BookPipeline:
         vòng `continue` (không có gì để đổi, hay bị từ chối: đều là đã xét). Thân vòng nổ lỗi thì không biên nhận: yêu cầu còn
         chờ. Chết giữa commit và biên nhận thì lần chạy sau áp lại - mọi `apply_listener_*` so với sổ nên áp lại là không làm gì."""
         for request in requests:
+            if not self._still_requested(section, key_of(request), overrides):
+                continue  # người dùng vừa Hoàn tác / thay yêu cầu này SAU lúc file được đọc: không áp bản cũ (bản mới, nếu có, áp ở ranh giới sau)
             yield request
             self._acknowledge(section, key_of(request), overrides, receipts)
+
+    def _still_requested(self, section: str, key: str, snapshot: dict[str, Any]) -> bool:
+        """Yêu cầu `key` trong ảnh chụp `snapshot` còn nguyên trong overrides.json bây giờ không (cùng `receipt_stamp`). Chỉ đọc lại file khi nó
+        đã đổi từ lần đọc trước (một lệnh stat mỗi yêu cầu). Lô áp mất vài giây, đủ để người dùng bấm Hoàn tác giữa chừng (soát a83 B10)."""
+        from .webui.store import receipt_stamp
+
+        stamp = file_stamp(overrides_path(self.paths.root))
+        if stamp != self._overrides_stamp or self._overrides_latest is None:
+            self._overrides_stamp = stamp
+            self._overrides_latest = read_overrides(self.paths.root)
+        latest, then = self._overrides_latest.get(section), (snapshot.get(section) or {}).get(key)
+        now = latest.get(key) if isinstance(latest, dict) else None
+        return isinstance(now, dict) and isinstance(then, dict) and receipt_stamp(now) == receipt_stamp(then)
 
     def _acknowledge(self, section: str, key: str, overrides: dict[str, Any],
                      receipts: dict[tuple[str, str], tuple[float, str]]) -> None:

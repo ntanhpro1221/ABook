@@ -1,7 +1,7 @@
 """Cách đọc riêng của một cuốn chỉ có chữ ("Đọc từ này là…", lớp sửa `readings` - webui/book_edits.py): {khoá: chữ đọc}.
 
 Khoá là MỘT chữ ("Haruto") hay một CỤM 2..6 chữ liền nhau nối bằng một dấu cách ("Hạ Vy", "ông Tư"; `is_key`). Biến đổi để đọc, chữ hiện không
-đổi. Duyệt theo TỪNG CHỮ HIỆN (đơn vị `\\S+`, `word_timing.tokens`) từ trái sang phải, ở mỗi chỗ thử khoá DÀI NHẤT (theo số chữ) trước: các chữ hiện có lõi
+đổi. Duyệt theo TỪNG CHỮ HIỆN (đơn vị `mapping.TOKEN`: không khoảng trắng kiểu JavaScript, `word_timing.tokens`) từ trái sang phải, ở mỗi chỗ thử khoá DÀI NHẤT (theo số chữ) trước: các chữ hiện có lõi
 (bỏ dấu câu / ngoặc hai đầu) trùng đúng từng chữ của khoá (phân biệt hoa thường, chỉ cả từ) và không có dấu câu chen GIỮA cụm ("Hạ, Vy" không khớp
 "Hạ Vy") thì phần lõi được thay bằng chữ đọc, dấu câu đầu cụm và đuôi cụm giữ nguyên. Số chữ hiện không đổi nên mốc từng chữ vẫn khớp chữ hiện:
 chữ đọc tách theo khoảng trắng thành m từ, chia đều cho k chữ hiện của cụm (nhóm đầu nhận phần dư), mỗi nhóm nối bằng `JOINER` thành MỘT chữ.
@@ -19,11 +19,13 @@ import re
 import unicodedata
 from typing import Mapping
 
+from .mapping import TOKEN
+
 # Đo 06-10 (HoaiMy): Edge báo MỘT mốc cho cả "Ha-ru-tô" (550-1212 ms), dài ngang "Ha ru tô" (525-1225 ms) - không đọc dấu gạch. sea-g2p
 # cũng đọc liền (names.spoken_names đã nối tên bằng gạch).
 JOINER = "-"
 KEY_WORDS_MAX = 6  # khoá dài nhất: 6 chữ liền nhau
-_TOKEN = re.compile(r"\S+")
+_TOKEN = TOKEN  # chữ hiện kiểu JavaScript, dùng chung với mapping/spread/google (soát a79 lỗi 11)
 
 
 def _core_char(char: str) -> bool:
