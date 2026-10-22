@@ -346,6 +346,7 @@ class App:
         self._music_unavailable = self._read_unavailable()
         self._music_too_big = self._read_unavailable("too_big.json")  # {link: số byte}: bài quá MUSIC_TRACK_MAX_MB, không tải
         self._music_sized: set[str] = set()  # bài đã tra cỡ trong danh mục (`music_track_available`) và không quá trần: khỏi tra lại
+        self._music_uncredited: set[str] = set()  # bài danh mục phải ghi công mà thiếu tác giả (`music_catalog.lacks_credit`): không chọn, không ghim
         # Nguồn nhạc (host) nào vừa hỏng / vừa tải được: {host: (hỏng?, giờ)}. Một nguồn chết không chặn nguồn khác.
         self._music_hosts: dict[str, tuple[bool, float]] = {}
         if not read_only:
@@ -2405,6 +2406,8 @@ class App:
         không; chưa biết thì cứ coi là được. `network` False: bỏ qua chuyện mạng (bài sẽ dùng được khi có mạng lại). `sizes` False:
         chỉ dùng cỡ ĐÃ BIẾT (sổ `too_big`), không tra mảnh `tracks/` - bộ chọn xếp hạng hỏi hàng trăm bài, mỗi bài một mảnh là hàng trăm lượt
         tải (`music_nnscene.build_chapter` tra cỡ riêng các bài đã chọn, một lượt - `music_verify_sizes`)."""
+        if link in self._music_uncredited:
+            return False  # ghi công thiếu tên tác giả vẫn vi phạm CC BY: bài này không vào sách dù đã có trong bộ đệm
         if self.music_track_cached(link) is not None:
             return True
         if music_plan.is_local(link):
@@ -2421,30 +2424,34 @@ class App:
         return not sizes or not self.music_verify_sizes([link])
 
     def music_verify_sizes(self, links: Iterable[str]) -> bool:
-        """Tra cỡ (`bytes` của danh mục) của các bài trong MỘT lượt (mảnh `tracks/` tải song song) và ghi sổ `too_big` bài nào quá
-        MUSIC_TRACK_MAX_MB. True khi VỪA phát hiện bài quá cỡ (người gọi chọn lại: `music_track_available` từ đó loại nó). Ô `cells/` (cái
-        `near` trả về) KHÔNG có cỡ, chỉ mảnh `tracks/` có. Bài đã tra (không quá) khỏi tra lại; danh mục chưa đọc được / bài không ghi cỡ:
-        chưa biết, coi là vừa (Content-Length bù khi tải)."""
+        """Tra cỡ (`bytes` của danh mục) và ghi công của các bài trong MỘT lượt (mảnh `tracks/` tải song song): ghi sổ `too_big` bài nào quá
+        MUSIC_TRACK_MAX_MB, ghi sổ `_music_uncredited` bài phải ghi công mà thiếu tác giả (`music_catalog.lacks_credit`, cả bài đã có trong
+        bộ đệm). True khi VỪA phát hiện bài như thế (người gọi chọn lại: `music_track_available` từ đó loại nó). Ô `cells/` (cái `near` trả
+        về) KHÔNG có cỡ lẫn ghi công, chỉ mảnh `tracks/` có. Bài đã tra (không vấn đề) khỏi tra lại; danh mục chưa đọc được / bài không ghi
+        cỡ: chưa biết, coi là vừa (Content-Length bù khi tải)."""
         with self._music_lock:
-            unknown = sorted({link for link in links if link not in self._music_sized and not music_plan.is_local(link)
-                              and self._music_too_big.get(link, 0) <= MUSIC_TRACK_MAX_BYTES})
-        unknown = [link for link in unknown if self.music_track_cached(link) is None]
+            unknown = sorted({link for link in links if link not in self._music_sized and link not in self._music_uncredited
+                              and not music_plan.is_local(link) and self._music_too_big.get(link, 0) <= MUSIC_TRACK_MAX_BYTES})
         if not unknown:
             return False
         try:
             found = self.music_catalog().lookup(unknown)
         except (music_catalog.CatalogError, OSError, ValueError):
             return False
-        oversize = False
+        flagged = False
         for link in unknown:
             info = found.get(link)
-            if music_catalog.over_size_cap(info, MUSIC_TRACK_MAX_BYTES):
+            if music_catalog.lacks_credit(info):
+                with self._music_lock:
+                    self._music_uncredited.add(link)
+                flagged = True
+            elif self.music_track_cached(link) is None and music_catalog.over_size_cap(info, MUSIC_TRACK_MAX_BYTES):
                 self._music_mark_too_big(link, int(info["bytes"]))  # type: ignore[index]
-                oversize = True
+                flagged = True
             elif isinstance(info, dict):
                 with self._music_lock:
                     self._music_sized.add(link)
-        return oversize
+        return flagged
 
     def music_track_too_big(self, link: str) -> bool:
         """Bài này đã biết là quá MUSIC_TRACK_MAX_MB (lần tra danh mục hay lần tải trước): vĩnh viễn trên máy này, khác chuyện mạng."""

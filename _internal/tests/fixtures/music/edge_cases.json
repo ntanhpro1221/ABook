@@ -1,0 +1,552 @@
+{
+  "pinCases": [
+    {
+      "seconds": 50,
+      "music": {
+        "levelDb": -20,
+        "tracks": {
+          "music/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.mp3": {
+            "seconds": 60
+          },
+          "music/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.mp3": {
+            "seconds": 200
+          }
+        },
+        "chapters": {
+          "1": [
+            {
+              "start": 0,
+              "end": 60,
+              "track": "music/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.mp3",
+              "gainDb": -20,
+              "tail": true,
+              "audibleStart": 1,
+              "audibleEnd": 55,
+              "loopStart": 5,
+              "loopEnd": 50
+            },
+            {
+              "start": 60,
+              "end": 180,
+              "track": "music/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.mp3",
+              "gainDb": -20,
+              "sibling": true
+            }
+          ]
+        }
+      },
+      "edits": {
+        "music": {
+          "pins": {
+            "1:0": "local:cccccccccccccccccccccccccccccccccccccccc"
+          },
+          "tracks": {
+            "cccccccccccccccccccccccccccccccccccccccc": {
+              "ext": "wav",
+              "seconds": 50,
+              "duration": 50,
+              "lufs": -20
+            }
+          }
+        }
+      },
+      "expectedNext": 60,
+      "applied": {
+        "levelDb": -20,
+        "tracks": {
+          "music/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.mp3": {
+            "seconds": 60
+          },
+          "music/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.mp3": {
+            "seconds": 200
+          },
+          "music/cccccccccccccccccccccccccccccccccccccccc.wav": {
+            "file": "music/cccccccccccccccccccccccccccccccccccccccc.wav",
+            "link": "local:cccccccccccccccccccccccccccccccccccccccc",
+            "lufs": -20
+          }
+        },
+        "chapters": {
+          "1": [
+            {
+              "start": 0,
+              "end": 60,
+              "track": "music/cccccccccccccccccccccccccccccccccccccccc.wav",
+              "gainDb": -16.99
+            },
+            {
+              "start": 60,
+              "end": 180,
+              "track": "music/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.mp3",
+              "gainDb": -20,
+              "sibling": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "seconds": 150,
+      "music": {
+        "levelDb": -20,
+        "tracks": {
+          "music/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.mp3": {
+            "seconds": 60
+          },
+          "music/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.mp3": {
+            "seconds": 200
+          }
+        },
+        "chapters": {
+          "1": [
+            {
+              "start": 0,
+              "end": 60,
+              "track": "music/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.mp3",
+              "gainDb": -20,
+              "tail": true,
+              "audibleStart": 1,
+              "audibleEnd": 55,
+              "loopStart": 5,
+              "loopEnd": 50
+            },
+            {
+              "start": 60,
+              "end": 180,
+              "track": "music/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.mp3",
+              "gainDb": -20,
+              "sibling": true
+            }
+          ]
+        }
+      },
+      "edits": {
+        "music": {
+          "pins": {
+            "1:0": "local:cccccccccccccccccccccccccccccccccccccccc"
+          },
+          "tracks": {
+            "cccccccccccccccccccccccccccccccccccccccc": {
+              "ext": "wav",
+              "seconds": 150,
+              "duration": 150,
+              "lufs": -20
+            }
+          }
+        }
+      },
+      "expectedNext": 60,
+      "applied": {
+        "levelDb": -20,
+        "tracks": {
+          "music/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.mp3": {
+            "seconds": 60
+          },
+          "music/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.mp3": {
+            "seconds": 200
+          },
+          "music/cccccccccccccccccccccccccccccccccccccccc.wav": {
+            "file": "music/cccccccccccccccccccccccccccccccccccccccc.wav",
+            "link": "local:cccccccccccccccccccccccccccccccccccccccc",
+            "lufs": -20
+          }
+        },
+        "chapters": {
+          "1": [
+            {
+              "start": 0,
+              "end": 60,
+              "track": "music/cccccccccccccccccccccccccccccccccccccccc.wav",
+              "gainDb": -16.99
+            },
+            {
+              "start": 60,
+              "end": 180,
+              "track": "music/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.mp3",
+              "gainDb": -20,
+              "sibling": true
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "loop": {
+    "seconds": 100,
+    "audibleStart": 1,
+    "audibleEnd": 150,
+    "loopStart": 12,
+    "loopEnd": 101,
+    "expectedEnd": 100,
+    "expectedOpen": 97,
+    "expectedPosition": 98
+  },
+  "notes": {
+    "chapterId": 1,
+    "segments": [
+      {
+        "id": 1,
+        "text": "Chú thích đầu tiên của chương.",
+        "kind": "chu_thich"
+      },
+      {
+        "id": 2,
+        "text": "Chú thích cuối cùng của chương.",
+        "kind": "chu_thich"
+      }
+    ],
+    "expectedScenes": [
+      {
+        "chapterId": 1,
+        "firstSegment": 1,
+        "lastSegment": 2,
+        "start": 0.0,
+        "end": 3.965,
+        "valence": 0.0,
+        "arousal": 0.0,
+        "tension": 0.0,
+        "sd": {
+          "valence": 0.0,
+          "arousal": 0.0,
+          "tension": 0.0
+        },
+        "emotions": {
+          "peacefulness": 0.213,
+          "tenderness": 0.0,
+          "nostalgia": 0.0,
+          "sadness": 0.0,
+          "joy": 0.0,
+          "playful": 0.0,
+          "power": 0.0,
+          "wonder": 0.0,
+          "tension": 0.0,
+          "fear": 0.0,
+          "anger": 0.0,
+          "mystery": 0.0,
+          "moved": 0.0
+        },
+        "confidence": 0.0,
+        "reason": "chapter_start",
+        "lines": 2,
+        "moodSource": "labels",
+        "labelValence": 0.0,
+        "labelTension": 0.0
+      }
+    ]
+  },
+  "selectorCases": [
+    {
+      "mode": "sd",
+      "bookKey": "edge",
+      "tracks": [
+        {
+          "link": "https://example.invalid/a.mp3",
+          "valence": 0.3,
+          "arousal": -0.2,
+          "tension": 0.5,
+          "duration": 240,
+          "source": "incompetech",
+          "sd": {
+            "valence": 0.9,
+            "arousal": 0.9,
+            "tension": 0.9
+          }
+        },
+        {
+          "link": "https://example.invalid/b.mp3",
+          "valence": 0.2,
+          "arousal": 0,
+          "tension": 0.3,
+          "duration": 240,
+          "source": "incompetech",
+          "sd": {
+            "valence": 0.02,
+            "arousal": 0.02,
+            "tension": 0.02
+          }
+        },
+        {
+          "link": "https://example.invalid/c.mp3",
+          "valence": 0.05,
+          "arousal": 0.15,
+          "tension": 0.15,
+          "duration": 240,
+          "source": "incompetech"
+        }
+      ],
+      "scenes": [
+        {
+          "chapterId": 1,
+          "firstSegment": 1,
+          "lastSegment": 1,
+          "start": 0.0,
+          "end": 70.0,
+          "reason": "chapter_start",
+          "lines": 1,
+          "valence": 0.1,
+          "arousal": 0.1,
+          "tension": 0.2,
+          "confidence": 0.8,
+          "sd": {
+            "valence": 0.2,
+            "arousal": 0.3,
+            "tension": 0.25
+          }
+        },
+        {
+          "chapterId": 1,
+          "firstSegment": 2,
+          "lastSegment": 2,
+          "start": 70.0,
+          "end": 140.0,
+          "reason": "chapter_start",
+          "lines": 1,
+          "valence": 0.1,
+          "arousal": 0.1,
+          "tension": 0.2,
+          "confidence": 0.8,
+          "sd": {
+            "valence": 0.2,
+            "arousal": 0.3,
+            "tension": 0.25
+          }
+        }
+      ],
+      "rank": [
+        {
+          "link": "https://example.invalid/c.mp3",
+          "score": 0.224
+        },
+        {
+          "link": "https://example.invalid/a.mp3",
+          "score": 0.456
+        },
+        {
+          "link": "https://example.invalid/b.mp3",
+          "score": 0.554
+        }
+      ],
+      "chosen": [
+        "https://example.invalid/c.mp3",
+        "https://example.invalid/a.mp3"
+      ],
+      "plainOrder": [
+        "https://example.invalid/c.mp3",
+        "https://example.invalid/b.mp3",
+        "https://example.invalid/a.mp3"
+      ]
+    },
+    {
+      "mode": "vetVar",
+      "bookKey": "edge",
+      "tracks": [
+        {
+          "link": "https://example.invalid/a.mp3",
+          "valence": 0.3,
+          "arousal": -0.2,
+          "tension": 0.5,
+          "duration": 240,
+          "source": "incompetech"
+        },
+        {
+          "link": "https://example.invalid/b.mp3",
+          "valence": 0.2,
+          "arousal": 0,
+          "tension": 0.3,
+          "duration": 240,
+          "source": "incompetech",
+          "vetVar": {
+            "valence": 0.01
+          }
+        },
+        {
+          "link": "https://example.invalid/c.mp3",
+          "valence": 0.05,
+          "arousal": 0.15,
+          "tension": 0.15,
+          "duration": 240,
+          "source": "incompetech",
+          "vetVar": {
+            "valence": 0.8,
+            "arousal": 0.5,
+            "tension": 0.6
+          }
+        }
+      ],
+      "scenes": [
+        {
+          "chapterId": 1,
+          "firstSegment": 1,
+          "lastSegment": 1,
+          "start": 0.0,
+          "end": 70.0,
+          "reason": "chapter_start",
+          "lines": 1,
+          "valence": 0.1,
+          "arousal": 0.1,
+          "tension": 0.2,
+          "confidence": 0.8,
+          "sd": {
+            "valence": 0.2,
+            "arousal": 0.3,
+            "tension": 0.25
+          }
+        },
+        {
+          "chapterId": 1,
+          "firstSegment": 2,
+          "lastSegment": 2,
+          "start": 70.0,
+          "end": 140.0,
+          "reason": "chapter_start",
+          "lines": 1,
+          "valence": 0.1,
+          "arousal": 0.1,
+          "tension": 0.2,
+          "confidence": 0.8,
+          "sd": {
+            "valence": 0.2,
+            "arousal": 0.3,
+            "tension": 0.25
+          }
+        }
+      ],
+      "rank": [
+        {
+          "link": "https://example.invalid/b.mp3",
+          "score": 0.455
+        },
+        {
+          "link": "https://example.invalid/c.mp3",
+          "score": 1.145
+        },
+        {
+          "link": "https://example.invalid/a.mp3",
+          "score": 1.22
+        }
+      ],
+      "chosen": [
+        "https://example.invalid/b.mp3",
+        "https://example.invalid/c.mp3"
+      ],
+      "plainOrder": [
+        "https://example.invalid/c.mp3",
+        "https://example.invalid/b.mp3",
+        "https://example.invalid/a.mp3"
+      ]
+    },
+    {
+      "mode": "both",
+      "bookKey": "edge",
+      "tracks": [
+        {
+          "link": "https://example.invalid/a.mp3",
+          "valence": 0.3,
+          "arousal": -0.2,
+          "tension": 0.5,
+          "duration": 240,
+          "source": "incompetech",
+          "sd": {
+            "valence": 0.9,
+            "arousal": 0.9,
+            "tension": 0.9
+          }
+        },
+        {
+          "link": "https://example.invalid/b.mp3",
+          "valence": 0.2,
+          "arousal": 0,
+          "tension": 0.3,
+          "duration": 240,
+          "source": "incompetech",
+          "sd": {
+            "valence": 0.02,
+            "arousal": 0.02,
+            "tension": 0.02
+          },
+          "vetVar": {
+            "valence": 0.01
+          }
+        },
+        {
+          "link": "https://example.invalid/c.mp3",
+          "valence": 0.05,
+          "arousal": 0.15,
+          "tension": 0.15,
+          "duration": 240,
+          "source": "incompetech",
+          "vetVar": {
+            "valence": 0.8,
+            "arousal": 0.5,
+            "tension": 0.6
+          }
+        }
+      ],
+      "scenes": [
+        {
+          "chapterId": 1,
+          "firstSegment": 1,
+          "lastSegment": 1,
+          "start": 0.0,
+          "end": 70.0,
+          "reason": "chapter_start",
+          "lines": 1,
+          "valence": 0.1,
+          "arousal": 0.1,
+          "tension": 0.2,
+          "confidence": 0.8,
+          "sd": {
+            "valence": 0.2,
+            "arousal": 0.3,
+            "tension": 0.25
+          }
+        },
+        {
+          "chapterId": 1,
+          "firstSegment": 2,
+          "lastSegment": 2,
+          "start": 70.0,
+          "end": 140.0,
+          "reason": "chapter_start",
+          "lines": 1,
+          "valence": 0.1,
+          "arousal": 0.1,
+          "tension": 0.2,
+          "confidence": 0.8,
+          "sd": {
+            "valence": 0.2,
+            "arousal": 0.3,
+            "tension": 0.25
+          }
+        }
+      ],
+      "rank": [
+        {
+          "link": "https://example.invalid/a.mp3",
+          "score": 0.456
+        },
+        {
+          "link": "https://example.invalid/b.mp3",
+          "score": 0.564
+        },
+        {
+          "link": "https://example.invalid/c.mp3",
+          "score": 1.145
+        }
+      ],
+      "chosen": [
+        "https://example.invalid/a.mp3",
+        "https://example.invalid/b.mp3"
+      ],
+      "plainOrder": [
+        "https://example.invalid/c.mp3",
+        "https://example.invalid/b.mp3",
+        "https://example.invalid/a.mp3"
+      ]
+    }
+  ],
+  "emptyResponse": {
+    "cues": [],
+    "levelDb": -20.0
+  }
+}

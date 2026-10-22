@@ -99,6 +99,25 @@ class BookMusicExportTest {
     }
 
     @Test
+    fun theCreditsOfTheTracksTheMixerUsesComeFromThePackedTrackInfo() {
+        val tracks = JSONObject()
+            .put(a, JSONObject().put("size", 3).put("title", "Bài A").put("creator", "Kevin").put("license", "by").put("attribution", "\"Bài A\" Kevin"))
+            .put(b, JSONObject().put("size", 4).put("title", "Bài B").put("license", "cc0"))
+        book(JSONObject().put("1", JSONArray().put(cue(0.0, a))).put("2", JSONArray().put(cue(0.0, b))), tracks)
+        file(a, 3)
+        file(b, 4)
+        val music = BookMusic.exportMusic(id)!!
+        val chapters = BookMusic.chapterMusic(dir(), music, listOf(1, 2))
+        assertEquals(setOf(a), chapters.getValue(1).tracks.keys)
+        val mixer = MusicExport.Mixer(chapters, TrackPcmCache(File(root, "pcm"), { _, _, _, _ -> }), MusicRender.Params.parse(
+            JSONObject(File("../../../abook/webui/assets/music_mix.json").readText())))
+        assertEquals("Nhạc nền:\n\"Bài A\" Kevin\n${MusicCredits.MODIFIED_NOTE}\n", mixer.credits(listOf(1)))
+        assertEquals("Nhạc nền:\n“Bài B”, giấy phép CC0\n", mixer.credits(listOf(2)))
+        assertTrue(mixer.credits(listOf(1, 2)).contains("Bài B"))
+        assertEquals("", mixer.credits(listOf(3)))
+    }
+
+    @Test
     fun theSpaceEstimateAddsThreeTimesTheLargestTrackAsPcm() {
         book(JSONObject().put("1", JSONArray().put(cue(0.0, a)).put(cue(40.0, b))))
         file(b, 1_200_000) // không có độ dài trong gói: ước theo cỡ file, 12 000 byte/giây = 100 s

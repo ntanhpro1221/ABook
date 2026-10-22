@@ -448,9 +448,9 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
     cover_source = book_edits.cover_file(path)
     try:
         if fmt == "mp3":
-            result = _write_mp3(run, chapters, sources, rates, target_root, title, author, cover_source, cover_drawn)
+            result = _write_mp3(run, chapters, sources, rates, target_root, title, author, cover_source, cover_drawn, mixer)
         else:
-            result = _write_m4b(run, chapters, sources, target_root, title, author, cover_source, cover_drawn)
+            result = _write_m4b(run, chapters, sources, target_root, title, author, cover_source, cover_drawn, mixer)
     except subprocess.CalledProcessError as error:
         raise ExportError(f"Không ghép được file âm thanh: {(error.stderr or '').strip()[-300:]}") from error
     shutil.rmtree(work, ignore_errors=True)
@@ -459,7 +459,7 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
 
 
 def _write_mp3(run: _Run, chapters: list[Chapter], sources: list[Path], rates: list[int], target_root: Path, title: str, author: str,
-               cover_source: Path | None, cover_drawn: str | None) -> dict[str, Any]:
+               cover_source: Path | None, cover_drawn: str | None, mixer: Mixer | None = None) -> dict[str, Any]:
     folder = target_root / export.safe_name(title)
     folder.mkdir(parents=True, exist_ok=True)
     cover_path = export.copy_real_cover(cover_source, folder) or export.drawn_cover(folder, cover_drawn)
@@ -475,17 +475,20 @@ def _write_mp3(run: _Run, chapters: list[Chapter], sources: list[Path], rates: l
             yield chapter.title, temp
             temp.unlink(missing_ok=True)
 
-    files = export.write_mp3_folder(run.ffmpeg, folder, items(), title=title, narrator=author, cover_path=cover_path, total=len(chapters))
+    files = export.write_mp3_folder(run.ffmpeg, folder, items(), title=title, narrator=author, cover_path=cover_path, total=len(chapters),
+                                    comments=(lambda number: mixer.credits([chapters[number - 1].id])) if mixer is not None else None,
+                                    credits=mixer.credits(chapter.id for chapter in chapters) if mixer is not None else "")
     return {"folder": str(folder), "files": files, "size": sum(file.stat().st_size for file in folder.glob("*.mp3"))}
 
 
 def _write_m4b(run: _Run, chapters: list[Chapter], sources: list[Path], target_root: Path, title: str, author: str,
-               cover_source: Path | None, cover_drawn: str | None) -> dict[str, Any]:
+               cover_source: Path | None, cover_drawn: str | None, mixer: Mixer | None = None) -> dict[str, Any]:
     def before(index: int) -> None:
         run.check()
         run.report(index, chapters[index], "encode")
 
     final, _count = export.m4b_from_files(run.ffmpeg, [(chapter.title, source) for chapter, source in zip(chapters, sources)], target_root, title=title,
                                           narrator=author, cover_for=lambda scratch: export.usable_cover(cover_source) or export.drawn_cover(scratch, cover_drawn), on_chapter=before,
-                                          on_peaks=run.report_peaks, cancelled=run.cancelled)
+                                          on_peaks=run.report_peaks, cancelled=run.cancelled,
+                                          credits=mixer.credits(chapter.id for chapter in chapters) if mixer is not None else "")
     return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size}

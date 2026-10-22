@@ -22,7 +22,7 @@ object Mp4Finish {
     class Mark(val title: String, val startMs: Long, val endMs: Long)
 
     /** Tag của file: `title` là tên sách (vừa là tên vừa là album, như máy tính), `artist` giọng kể (rỗng thì không có tag). */
-    class Tags(val title: String, val artist: String, val cover: Id3Tag.Cover?)
+    class Tags(val title: String, val artist: String, val cover: Id3Tag.Cover?, val comment: String = "")
 
     private class Box(val type: String, val offset: Int, val header: Int, val size: Int)
 
@@ -90,6 +90,7 @@ object Mp4Finish {
         text("aART", tags.artist)
         text("©alb", tags.title)
         text("©gen", GENRE)
+        text("©cmt", tags.comment) // ghi công nhạc nền (MusicCredits), như thẻ comment ffmpeg ghi ở máy tính
         tags.cover?.let { list.write(item("covr", if (it.mime == "image/png") 14 else 13, it.bytes)) }
         val handler = box("hdlr", u32(0), u32(0), fourcc("mdir"), fourcc("appl"), u32(0), u32(0), u8(0))
         val meta = box("meta", u32(0), handler, box("ilst", list.toByteArray()))

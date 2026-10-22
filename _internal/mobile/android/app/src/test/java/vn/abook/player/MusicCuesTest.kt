@@ -114,4 +114,24 @@ class MusicCuesTest {
         assertEquals(null, MusicCues.nextAfter(cues, next)) // khoảng lặng 600-620: không có mốc kế liền
         assertEquals(null, MusicCues.nextAfter(cues, plain))
     }
+
+    @Test
+    fun aBedStillLoadingHoldsItsVolumeSoItDoesNotJumpToTheLevelWhenTheTrackArrives() {
+        // Mờ vào 2 giây = 40 nhịp. Bài chưa sẵn sàng 100 nhịp (tải qua Wi-Fi chậm): âm lượng đứng ở 0, rồi mới nhích lên từng nhịp.
+        var volume = 0f
+        repeat(100) { volume = MusicCues.towardWhenReady(volume, 0.1f, 0.0025f, ready = false) }
+        assertEquals(0f, volume, 0f)
+        volume = MusicCues.towardWhenReady(volume, 0.1f, 0.0025f, ready = true)
+        assertEquals("nhịp đầu sau khi có tiếng chỉ nhích một bước", 0.0025f, volume, 1e-6f)
+        repeat(100) { volume = MusicCues.towardWhenReady(volume, 0.1f, 0.0025f, ready = true) }
+        assertEquals(0.1f, volume, 1e-6f)
+    }
+
+    @Test
+    fun aClosedBooksLateStopMessageDoesNotReopenTheMusic() {
+        assertTrue(MusicCues.staleAfterClose("sach", "sach", false))
+        assertFalse("giọng chạy lại: mở sách lại", MusicCues.staleAfterClose("sach", "sach", true))
+        assertFalse("cuốn khác", MusicCues.staleAfterClose("sach", "khac", false))
+        assertFalse("chưa đóng cuốn nào", MusicCues.staleAfterClose("", "", false))
+    }
 }

@@ -54,7 +54,7 @@ from .. import listener_overrides
 from .. import names as renames
 from ..io_utils import atomic_write_bytes
 from ..readaloud import readings as book_readings
-from . import covers, music_mix, music_plan, store
+from . import covers, music_plan, store
 
 EDITS_FILE = "edits.json"
 EDITS_COVER = "edits/cover.jpg"
@@ -762,11 +762,11 @@ def apply_music(music: dict[str, Any] | None, edits: dict[str, Any]) -> dict[str
             tracks.setdefault(name, _pinned_track(link, name, shown[sha]))
             cue["track"] = name
             info = tracks[name]
+            # cờ `tail` (bài cũ kết đúng ở cuối mốc), đoạn nghe được, điểm vòng của bài cũ: bài ghim dùng 0 và độ dài thật - như bài thay thế (`music_plan.substituted`)
+            for key in music_plan.SUBSTITUTE_DROPS:
+                cue.pop(key, None)
             cue["gainDb"] = music_plan.cue_gain_db(level, _track_number(info, "lufs"), _track_number(info, "speechBand"),
                                                    _track_number(info, "s95"))
-            # đoạn nghe được, điểm vòng của bài cũ: bài ghim dùng 0 và độ dài thật
-            for key in ("audibleStart", "audibleEnd", *music_mix.LOOP_KEYS):
-                cue.pop(key, None)
     if "levelDb" in changes:
         out["levelDb"] = changes["levelDb"]
         for cues in (out.get("chapters") or {}).values():

@@ -43,7 +43,7 @@ import { reveal } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
-import { excerpt, formatClock, formatLength, formatWhen, licenseLabel, spokenClock } from "@/shared/format";
+import { MUSIC_MODIFIED_NOTE, excerpt, formatClock, formatLength, formatWhen, licenseLabel, musicCreditText, musicNeedsModifiedNote, spokenClock } from "@/shared/format";
 import { announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/PhoneSync";
 import { LEVEL_NOTES, levelOptions } from "@/shared/musicLevels";
@@ -1200,20 +1200,14 @@ function MusicCreditLine() {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        title={musicCredit.attribution || label}
+        title={musicCreditText(musicCredit) || label}
         className="max-w-full truncate rounded outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         Nhạc nền: {label}
       </button>
       {open && (
         <div className="mx-auto mt-1 max-w-sm break-words text-left">
-          {musicCredit.attribution && <p>{musicCredit.attribution}</p>}
-          {!musicCredit.attribution && (
-            <p>
-              {musicCredit.title}
-              {musicCredit.creator ? ` - ${musicCredit.creator}` : ""}
-            </p>
-          )}
+          <p>{musicCreditText(musicCredit)}</p>
           {musicCredit.license && (
             <p>
               Giấy phép:{" "}
@@ -1226,6 +1220,7 @@ function MusicCreditLine() {
               )}
             </p>
           )}
+          {musicNeedsModifiedNote(musicCredit.license) && <p>{MUSIC_MODIFIED_NOTE}</p>}
           {musicCredit.landing && (
             <p>
               <a href={musicCredit.landing} target="_blank" rel="noreferrer" onClick={(event) => openExternal(musicCredit.landing!, event)} className="underline">

@@ -25,6 +25,10 @@ class SceneTrack(
     /** Điểm vòng của bài có đoạn kết (danh mục, `music_mix.loop_bounds`). */
     val loopStart: Double? = null,
     val loopEnd: Double? = null,
+    /** Độ lệch chuẩn của bài theo trục (`sd`: valence / arousal / tension), chỉ khoá nào có; thiếu thì [SceneChooser.TRACK_SD_DEFAULT]. */
+    val sd: Map<String, Double> = emptyMap(),
+    /** Phương sai dư của bộ đoán từng trục (`vetVar`, chỉ bài nhập có); thiếu thì 0. */
+    val vetVar: Map<String, Double> = emptyMap(),
 ) {
     companion object {
         private fun number(json: JSONObject, key: String): Double? =
@@ -33,6 +37,14 @@ class SceneTrack(
         private fun text(json: JSONObject, key: String): String? =
             if (json.has(key) && !json.isNull(key)) (json.opt(key) as? String) else null
 
+        /** Mục `sd` / `vetVar` (valence, arousal, tension): chỉ trục nào là số hữu hạn; không phải đối tượng thì rỗng (Python: `isinstance(..., dict)`). */
+        private fun axes(json: JSONObject, key: String): Map<String, Double> {
+            val axes = json.opt(key) as? JSONObject ?: return emptyMap()
+            val out = HashMap<String, Double>()
+            for (axis in listOf("valence", "arousal", "tension")) number(axes, axis)?.let { out[axis] = it }
+            return out
+        }
+
         /** Mục danh mục -> bài; thiếu `link` / `valence` / `arousal` thì null (Python sẽ văng KeyError ở `float(track["valence"])`: bài hỏng không dùng). */
         fun of(json: JSONObject): SceneTrack? {
             val link = text(json, "link")?.takeIf { it.isNotEmpty() } ?: return null
@@ -40,7 +52,7 @@ class SceneTrack(
                 link, number(json, "valence") ?: return null, number(json, "arousal") ?: return null, number(json, "tension"),
                 text(json, "style"), text(json, "family"), number(json, "background"), text(json, "source"), number(json, "duration"),
                 number(json, "seconds"), number(json, "audibleStart"), number(json, "audibleEnd"), number(json, "loopStart"),
-                number(json, "loopEnd"),
+                number(json, "loopEnd"), axes(json, "sd"), axes(json, "vetVar"),
             )
         }
     }
@@ -288,6 +300,7 @@ class SceneChooser(
         const val TAU = 0.1
         const val SCENE_SD_DEFAULT = 0.25
         const val TRACK_SD_DEFAULT = 0.2
+        const val VET_VAR_WEIGHT = 0.1
         const val UNCERTAIN_SD = 0.35
         const val EMOTION_WEIGHT = 0.0
         const val RECENT_SCENES = 100
@@ -341,16 +354,18 @@ class SceneChooser(
         fun zDistance(track: SceneTrack, target: DoubleArray, sigma: DoubleArray? = null): Double {
             val s = sigma ?: doubleArrayOf(SCENE_SD_DEFAULT, SCENE_SD_DEFAULT, SCENE_SD_DEFAULT)
             var total = 0.0
-            var diff = track.valence - target[0]
-            total += W_VALENCE * (diff * diff) / (s[0] * s[0] + TRACK_SD_DEFAULT * TRACK_SD_DEFAULT + TAU * TAU)
-            diff = track.arousal - target[1]
-            total += W_AROUSAL * (diff * diff) / (s[1] * s[1] + TRACK_SD_DEFAULT * TRACK_SD_DEFAULT + TAU * TAU)
+            total += axisTerm(W_VALENCE, track.valence - target[0], track, "valence", s[0])
+            total += axisTerm(W_AROUSAL, track.arousal - target[1], track, "arousal", s[1])
             val tension = track.tension
-            if (target.size > 2 && tension != null) {
-                diff = tension - target[2]
-                total += W_TENSION * (diff * diff) / (s[2] * s[2] + TRACK_SD_DEFAULT * TRACK_SD_DEFAULT + TAU * TAU)
-            }
+            if (target.size > 2 && tension != null) total += axisTerm(W_TENSION, tension - target[2], track, "tension", s[2])
             return sqrt(total)
+        }
+
+        /** Một trục của `z_distance`: trọng số x (lệch^2 + VET_VAR_WEIGHT x vetVar) / (sig_đoạn^2 + sig_bài^2 + TAU^2), sig_bài = `sd` của bài ở trục ấy (thiếu: [TRACK_SD_DEFAULT]). */
+        private fun axisTerm(weight: Double, diff: Double, track: SceneTrack, axis: String, sigma: Double): Double {
+            val trackSd = track.sd[axis] ?: TRACK_SD_DEFAULT
+            val variance = track.vetVar[axis] ?: 0.0
+            return weight * (diff * diff + VET_VAR_WEIGHT * variance) / (sigma * sigma + trackSd * trackSd + TAU * TAU)
         }
 
         /** `_tiebreak`: hoà điểm tất định theo mã sách. */

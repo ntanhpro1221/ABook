@@ -1125,6 +1125,9 @@ export function PlayerProvider({
     save(true);
     night.cancel(position());
     engine.stop();
+    bed?.stop(); // bộ phát nhạc nền nhả hẳn (không chỉ tạm dừng cùng giọng): đóng sách thì không giữ bộ đệm bài nhạc tới lần mở sách sau
+    cuesChapter.current = "";
+    bedCuesFor.current = "";
     setTrack(null);
     refs.current.track = null;
     setPlaying(false);
@@ -1135,7 +1138,7 @@ export function PlayerProvider({
     refs.current.purpose = "listen";
     refs.current.history = [];
     setCanGoBack(false);
-  }, [applySleep, endFade, engine, night, position, save]);
+  }, [applySleep, bed, endFade, engine, night, position, save]);
 
   // Thôi ghép máy kia khi đang nạp một cuốn của nó: cuốn rời Thư viện thì trình phát đóng và nói vì sao (soát a27 lỗi 11). Chỉ đọc danh sách
   // Thư viện đã có trong bộ đệm (Thư viện, hộp thôi ghép làm mới nó) - không hỏi thêm.
