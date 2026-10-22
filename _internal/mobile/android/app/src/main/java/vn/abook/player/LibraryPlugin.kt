@@ -1727,7 +1727,11 @@ class LibraryPlugin : Plugin() {
     fun activateRecord(call: PluginCall) = background(call) {
         val id = call.getString("id")!!
         val left = Store.knownActiveRecord(id)
-        resolveRecords(call, switching(id) { Store.activateRecord(id, call.getString("record")!!) }, left)
+        val record = call.getString("record")!!
+        // Hồ sơ máy giữ sách báo trong danh sách mà điện thoại chưa có trạng thái (mới hiện ra ở bộ chọn): lấy trạng thái của đúng mã
+        // ấy trước khi nạp - đẩy hồ sơ rỗng, lời đáp mang trạng thái đã gộp (Store.applySync). Không với tới máy giữ sách thì chọn như cũ.
+        if (Store.hasRecord(record) && !Store.hasState(record)) runCatching { StateSync.pushNow(context, id, record) }
+        resolveRecords(call, switching(id) { Store.activateRecord(id, record) }, left)
     }
 
     @PluginMethod
@@ -1898,7 +1902,10 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun setRate(call: PluginCall) = background(call) {
-        Store.setRate(call.getString("id")!!, call.getDouble("rate") ?: 1.0)
+        val id = call.getString("id")!!
+        val record = call.getString("record")
+        if (record != null && !Store.holds(id, record)) return@background call.reject(RECORD_GONE)
+        Store.setRate(id, call.getDouble("rate") ?: 1.0, record)
         call.resolve()
     }
 
@@ -1906,9 +1913,11 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun setVoice(call: PluginCall) = background(call) {
         val id = call.getString("id")!!
-        Store.setVoice(id, call.getString("voice") ?: "")
+        val record = call.getString("record")
+        if (record != null && !Store.holds(id, record)) return@background call.reject(RECORD_GONE)
+        Store.setVoice(id, call.getString("voice") ?: "", record)
         call.resolve()
-        runCatching { pushState(id) }
+        runCatching { StateSync.pushNow(context, id, record) }
     }
 
     @PluginMethod
@@ -1947,6 +1956,9 @@ class LibraryPlugin : Plugin() {
      * cùng lựa chọn hồ sơ bên kia - bên chọn sau thắng (Store.applySync). Im lặng nếu không có mạng.
      */
     private fun pushState(id: String) = StateSync.pushNow(context, id)
+
+    /** Tốc độ / giọng gửi kèm hồ sơ đã bị xoá hay chuyển sang sách khác: báo rõ, không ghi sang hồ sơ khác (soát a105 F7). */
+    private val RECORD_GONE = "Hồ sơ nghe này đã bị xoá hoặc chuyển sang sách khác"
 
     @PluginMethod
     fun syncState(call: PluginCall) = background(call) {

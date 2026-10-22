@@ -122,6 +122,13 @@ object Playback {
 
     var bookId: String = ""
         private set
+    /**
+     * Hồ sơ nghe mà phiên phát này ghi vào - chốt lúc nạp cuốn (load / onQueueReplaced), không bao giờ lấy "hồ sơ đang dùng" lúc ghi: máy
+     * khác xoá hay đổi hồ sơ giữa chừng thì lần lưu kế vẫn về đúng hồ sơ ấy, hoặc bị bỏ nếu hồ sơ đã mất ([recordsGone]). Rỗng: chưa nạp cuốn nào.
+     */
+    @Volatile
+    var recordId: String = ""
+        private set
     var bookTitle: String = ""
         private set
     var narrator: String = ""
@@ -159,6 +166,7 @@ object Playback {
     private var sessionMarkMs = 0L
     private var sessionFrom: JSONObject? = null
     private var sessionBook = ""
+    private var sessionRecord = ""
 
     private fun place(): JSONObject = JSONObject().put("chapterId", currentChapter?.id ?: 0).put("seconds", positionSeconds)
 
@@ -173,6 +181,7 @@ object Playback {
         sessionMarkMs = now
         sessionFrom = place()
         sessionBook = bookId
+        sessionRecord = recordId
     }
 
     private fun closeSession() {
@@ -189,7 +198,7 @@ object Playback {
             .put("listened", sessionListenedMs / 1000.0)
             .put("from", from)
             .put("to", place())
-        runCatching { Store.addSession(sessionBook, session) }
+        runCatching { Store.addSession(sessionBook, session, sessionRecord.ifEmpty { null }) }
     }
 
     fun touched() {
@@ -409,8 +418,10 @@ object Playback {
         main.removeCallbacks(reconnect) // cuốn khác: thôi nối lại cuốn cũ
         reconnectDelayMs = 0L
         // Giọng "Nghe ngay" của cuốn này, nhớ trong lõi: phát tiếp từ widget / xe hơi sau khi khởi động lại vẫn đúng giọng người nghe đã chọn.
-        ReadAloud.useVoiceOf(id)
+        val record = Store.activeRecord(id)
+        ReadAloud.useVoiceOf(id, record)
         bookId = id
+        recordId = record
         bookTitle = title
         narrator = narratorName
         chapters = items
@@ -454,6 +465,7 @@ object Playback {
         closeSession()
         ReadAloud.stop()
         bookId = ""
+        recordId = ""
         pending = Pending(id, title, narratorName, items, startChapterId to msOf(startSeconds), rate)
     }
 
@@ -465,6 +477,8 @@ object Playback {
         val exo = player ?: return
         lastError = ""
         bookId = next.id
+        recordId = Store.activeRecord(next.id)
+        ReadAloud.useVoiceOf(next.id, recordId)
         bookTitle = next.title
         narrator = next.narrator
         chapters = next.items
@@ -582,17 +596,17 @@ object Playback {
     fun setRate(rate: Double) {
         touched()
         player?.let { applySpeed(it, rate) }
-        if (bookId.isNotEmpty()) Store.setRate(bookId, rate)
+        if (bookId.isNotEmpty()) Store.setRate(bookId, rate, recordId.ifEmpty { null })
         emit("rate")
     }
 
     /** [index] + [quote]: the sentence being read aloud (the web layer knows it from the chapter's timings), like a mark set in the reader. */
     fun addBookmark(note: String, index: Int? = null, quote: String = ""): JSONObject? {
         val chapter = currentChapter ?: return null
-        val mark = Store.addBookmark(bookId, chapter.id, positionSeconds, note, index, quote)
+        val mark = Store.addBookmark(bookId, chapter.id, positionSeconds, note, index, quote, recordId = recordId.ifEmpty { null })
         Bedtime.interaction("bookmark")
         emit("bookmark")
-        StateSync.pushSoon(appContext, bookId, force = true)
+        pushHeld(force = true)
         return mark
     }
 
@@ -614,7 +628,7 @@ object Playback {
         if (!playing) {
             pausedAtMs = System.currentTimeMillis()
             saveNow()
-            StateSync.pushSoon(appContext, bookId, force = true)
+            pushHeld(force = true)
             closeSession()
         } else {
             openSession()
@@ -671,7 +685,7 @@ object Playback {
     fun onRateChanged(speed: Float) {
         if (speed == knownSpeed) return
         knownSpeed = speed
-        if (bookId.isNotEmpty()) runCatching { Store.setRate(bookId, speed.toDouble()) }.onFailure { Log.w("ABookSave", "không lưu được tốc độ", it) }
+        if (bookId.isNotEmpty()) runCatching { Store.setRate(bookId, speed.toDouble(), recordId.ifEmpty { null }) }.onFailure { Log.w("ABookSave", "không lưu được tốc độ", it) }
         emit("rateChanged")
     }
 
@@ -738,7 +752,7 @@ object Playback {
                 beats += 1
                 if (beats % 10 == 0) {
                     saveNow()
-                    StateSync.pushSoon(appContext, bookId, force = false)
+                    pushHeld(force = false)
                 }
                 if (beats % 60 == 0) SleepTimer.maybeSafetyStop(lastInteractionMs)
                 Bedtime.checkpoint()
@@ -766,6 +780,29 @@ object Playback {
         return reloadAfter(id, change)
     }
 
+    /** Đẩy chỗ nghe của ĐÚNG hồ sơ phiên phát đang giữ lên máy giữ sách (không phải hồ sơ đang dùng); hồ sơ đã mất thì không đẩy gì. */
+    private fun pushHeld(force: Boolean) {
+        if (recordId.isNotEmpty() && !Store.holds(bookId, recordId)) return
+        StateSync.pushSoon(appContext, bookId, force, recordId.ifEmpty { null })
+    }
+
+    /**
+     * Máy khác xoá hồ sơ [ids] (bia mộ tới qua Store.applySync / mergeRecord, ở luồng nền): phiên phát đang giữ một trong số đó thì dừng,
+     * bỏ phiên nghe của nó, rồi nạp lại cuốn ở hồ sơ thay thế (Store đã chọn) ở trạng thái dừng. Cả lượt chạy trên luồng chính, và [saveNow] /
+     * [closeSession] / [pushHeld] không ghi vào hồ sơ đã mất - chỗ nghe và phiên của hồ sơ bị xoá không bị chuyển sang người còn lại.
+     */
+    fun recordsGone(ids: Set<String>) {
+        val id = bookId
+        if (recordId.isEmpty() || recordId !in ids) return
+        onMain {
+            if (bookId != id || recordId !in ids) return@onMain
+            pause()
+            sessionFrom = null
+            reloadAfter(id) { }
+            emit("record")
+        }
+    }
+
     /** Máy khác đổi hồ sơ nghe của cuốn đang nạp, lúc đang dừng (Store.applySync đã đổi): nạp lại đúng chỗ của hồ sơ
      *  mới, không lưu gì - chỗ của hồ sơ cũ đã lưu lúc dừng, lưu bây giờ là ghi nó vào hồ sơ mới. */
     fun follow(id: String) {
@@ -779,6 +816,7 @@ object Playback {
         val title = bookTitle
         val narratorName = narrator
         bookId = ""
+        recordId = ""
         try {
             return change()
         } finally {
@@ -810,7 +848,9 @@ object Playback {
         // Chỗ nghe phải khớp chương: vượt quá độ dài chương là đồng hồ của thứ khác (cuốn trước) - không lưu, không đồng bộ đi (soát a68 lỗi 2).
         if (!PlacePolicy.fits(positionSeconds, duration)) return
         try {
-            Store.progress(bookId, chapter.id, positionSeconds, duration, ReadAloud.anchor())
+            // Hồ sơ đã mất (máy khác xoá, đang chờ [recordsGone] dọn): không có chỗ để ghi - không rơi sang hồ sơ còn lại.
+            if (recordId.isNotEmpty() && !Store.holds(bookId, recordId)) return
+            Store.progress(bookId, chapter.id, positionSeconds, duration, ReadAloud.anchor(), recordId.ifEmpty { null })
         } catch (error: Exception) {
             Log.w("ABookSave", "không lưu được chỗ nghe (chương ${chapter.id}, ${"%.1f".format(positionSeconds)} s)", error)
             if (!saveFailing) {

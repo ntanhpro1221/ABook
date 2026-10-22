@@ -14,6 +14,9 @@ import java.io.File
  *  - lúc tự dừng.
  * Mỗi mốc ghi kèm chương + giây đang phát, và cứ 30 giây một mốc vị trí để suy ra "lúc X đang nghe tới đâu".
  * Sáng hôm sau giao diện hiện các mốc kèm câu văn đang đọc lúc đó để người nghe nhận ra đoạn cuối mình còn nhớ.
+ *
+ * Đêm là của một HỒ SƠ nghe (soát a105 F5): `recordId` chốt lúc hẹn giờ, mỗi hồ sơ một file `bedtime/<hồ sơ>.json`; chỉ người nghe ấy nối được
+ * đêm cũ, và thẻ buổi sáng chỉ hiện đêm của hồ sơ đang dùng của cuốn (không mời người này quay về chỗ của người kia).
  */
 object Bedtime {
     private const val STILL_DEVIATION = 0.06   // m/s² - máy nằm yên trên đệm
@@ -24,7 +27,7 @@ object Bedtime {
     private var stillSince = 0L
     private var stillRecorded = false
 
-    private fun file() = File(Store.root, "bedtime/latest.json")
+    private fun file(record: String) = File(Store.root, "bedtime/${record.ifEmpty { "latest" }}.json")
 
     private fun position(): JSONObject {
         val chapter = Playback.currentChapter
@@ -39,11 +42,11 @@ object Bedtime {
     /** Hẹn giờ mở (hoặc nối tiếp) một đêm: hẹn lại trong vòng 90 phút vẫn là cùng một đêm. */
     fun timerSet(minutes: Int, reason: String? = null) {
         val current = session
-        val continuing = current != null && current.optString("bookId") == Playback.bookId &&
-            nowSeconds() - current.optDouble("lastAt", 0.0) < 90 * 60
+        val continuing = continues(current, Playback.bookId, Playback.recordId, nowSeconds())
         if (!continuing) {
             session = JSONObject()
                 .put("bookId", Playback.bookId)
+                .put("recordId", Playback.recordId)
                 .put("bookTitle", Playback.bookTitle)
                 .put("startedAt", nowSeconds())
                 .put("events", JSONArray())
@@ -53,6 +56,11 @@ object Bedtime {
         }
         add("timer", JSONObject().put("minutes", minutes).also { if (reason != null) it.put("action", reason) })
     }
+
+    /** Hẹn giờ lại có nối tiếp đêm `current` không: cùng cuốn, CÙNG hồ sơ, trong vòng 90 phút. */
+    internal fun continues(current: JSONObject?, bookId: String, recordId: String, now: Double): Boolean =
+        current != null && current.optString("bookId") == bookId && current.optString("recordId") == recordId &&
+            now - current.optDouble("lastAt", 0.0) < 90 * 60
 
     /** Mốc "còn thức" đã biết từ trước (lần chạm máy cuối cùng trước khi lưới an toàn bật). */
     fun touchAt(atMs: Long, chapterId: Int?, seconds: Double) {
@@ -138,18 +146,29 @@ object Bedtime {
 
     private fun save() {
         val current = session ?: return
-        Store.writeAtomic(file(), current.toString())
+        write(current)
     }
 
-    fun latest(): JSONObject? {
-        val file = file()
-        return if (file.isFile) runCatching { JSONObject(file.readText()) }.getOrNull() else null
+    internal fun write(night: JSONObject) {
+        Store.writeAtomic(file(night.optString("recordId")), night.toString())
     }
+
+    /** Mọi đêm đã lưu, mỗi hồ sơ một file. */
+    internal fun all(): List<JSONObject> =
+        File(Store.root, "bedtime").listFiles { f -> f.isFile && f.name.endsWith(".json") }.orEmpty()
+            .mapNotNull { f -> runCatching { JSONObject(f.readText()) }.getOrNull() }
+
+    /** Đêm gần nhất của hồ sơ ĐANG DÙNG của cuốn (`activeOf`: mã cuốn -> hồ sơ đang dùng): đêm của người khác trong cùng cuốn không hiện. */
+    internal fun pickLatest(nights: List<JSONObject>, activeOf: (String) -> String?): JSONObject? =
+        nights.filter { night -> night.optString("recordId").let { it.isEmpty() || activeOf(night.optString("bookId")) == it } }
+            .maxByOrNull { it.optDouble("startedAt", 0.0) }
+
+    fun latest(): JSONObject? = pickLatest(all()) { Store.knownActiveRecord(it) }
 
     fun dismiss() {
         val latest = latest() ?: return
         latest.put("dismissed", true)
-        Store.writeAtomic(file(), latest.toString())
+        write(latest)
         if (session?.optDouble("startedAt") == latest.optDouble("startedAt")) session = null
     }
 }

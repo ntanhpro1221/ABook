@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Script } from "@/listen/model";
 import { VOICE_CHANGED_EVENT, mergeTimings, type ReadAloudTimings } from "@/listen/readAloud";
-import { chooseDefaultVoice, chooseVoice } from "@/listen/readAloudVoice";
+import { chooseDefaultVoice, chooseVoice, rememberRecordOf } from "@/listen/readAloudVoice";
 import { ONLINE_CONSENT_EVENT, giveOnlineConsent } from "@/listen/onlineConsent";
 import { textScript } from "@/listen/textScript";
 import { textFingerprint } from "@/listen/readingAnchor";
@@ -130,6 +130,10 @@ describe("watchReadAloud", () => {
     chooseVoice("b2", "device:vi-vn-an");
     expect(configure).toHaveBeenCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: "b2" });
     expect(configure).toHaveBeenLastCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: "b2" });
+    // Giọng riêng thuộc về hồ sơ nghe (soát a105 F4): lõi nhận kèm mã hồ sơ để nhớ theo (cuốn, hồ sơ).
+    rememberRecordOf("b3", "r-a");
+    chooseVoice("b3", "device:vi-vn-an");
+    expect(configure).toHaveBeenLastCalledWith({ readAloudVoice: "device:vi-vn-an", readAloudBook: "b3", readAloudRecord: "r-a" });
     giveOnlineConsent("edge");
     expect(configure).toHaveBeenCalledWith({ readAloudOnlineOk: ["edge"] });
     stop();
@@ -138,7 +142,7 @@ describe("watchReadAloud", () => {
     target.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: BOOK }));
     target.dispatchEvent(new CustomEvent(ONLINE_CONSENT_EVENT));
     chooseDefaultVoice("");
-    expect(configure).toHaveBeenCalledTimes(7);
+    expect(configure).toHaveBeenCalledTimes(8);
   });
 });
 

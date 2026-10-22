@@ -1,0 +1,96 @@
+{
+  "about": "Hợp đồng đồng bộ theo MÃ HỒ SƠ giữa máy giữ sách và máy gửi (tên, chọn, chuyển, bia mộ, lời đáp mang mã + state của đúng hồ sơ). Dùng chung cho pytest (tests/test_a105_profiles.py, webui/listening.py merge_record) và test JVM (A105ProfilesTest.kt, Store.mergeRecord của LibraryServer). `host`: sổ hồ sơ của máy giữ sách trước lần đẩy; `request`: thân POST .../state; `expect.reply`: những gì lời đáp phải nói; `expect.after`: sổ hồ sơ của máy giữ sách sau đó.",
+  "ids": {"a": "r-000000000000000a", "b": "r-000000000000000b", "c": "r-000000000000000c"},
+  "cases": {
+    "other_person_is_not_overwritten": {
+      "host": {
+        "records": {"b": {"name": "Bố", "nameAt": 5.0, "movedAt": 0.0,
+                         "state": {"last": {"chapterId": 1, "seconds": 100.0, "at": 1000.0},
+                                   "bookmarks": [{"id": "aaaaaaaaaaaa", "chapterId": 1, "seconds": 90.0, "note": "Ghi chú riêng của bố", "at": 1000.0}]}}},
+        "links": {"sach": {"records": ["b"], "active": "b", "activeAt": 1500.0}},
+        "deleted": {}
+      },
+      "request": {"book": "sach", "body": {"record": "a", "recordName": "Con", "nameAt": 10.0, "activeAt": 0.0, "movedAt": 0.0,
+                                           "deletedRecords": {}, "last": {"chapterId": 1, "seconds": 600.0, "at": 2000.0},
+                                           "chapters": {}, "bookmarks": []}},
+      "expect": {
+        "reply": {"record": "a", "book": "sach", "lastSeconds": 600.0, "bookmarkNotes": [], "recordName": "Con",
+                  "activeRecord": "b", "activeStateLastSeconds": 100.0, "recordIds": ["a", "b"]},
+        "after": {"links": {"sach": {"records": ["b", "a"], "active": "b"}}, "names": {"a": "Con", "b": "Bố"}, "deleted": [],
+                  "lastSeconds": {"a": 600.0, "b": 100.0}, "bookmarkNotes": {"a": [], "b": ["Ghi chú riêng của bố"]}}
+      }
+    },
+    "later_rename_wins_older_does_not": {
+      "host": {
+        "records": {"a": {"name": "Cùng tên", "nameAt": 5.0, "movedAt": 0.0, "state": {}},
+                    "b": {"name": "Cùng tên", "nameAt": 5.0, "movedAt": 0.0, "state": {}}},
+        "links": {"sach": {"records": ["a", "b"], "active": "b", "activeAt": 100.0}},
+        "deleted": {}
+      },
+      "request": {"book": "sach", "body": {"record": "a", "recordName": "Đổi tên", "nameAt": 50.0, "activeAt": 0.0, "movedAt": 0.0,
+                                           "deletedRecords": {}, "chapters": {}, "bookmarks": []}},
+      "expect": {
+        "reply": {"record": "a", "book": "sach", "recordName": "Đổi tên", "activeRecord": "b", "recordIds": ["a", "b"]},
+        "after": {"links": {"sach": {"records": ["a", "b"], "active": "b"}}, "names": {"a": "Đổi tên", "b": "Cùng tên"}, "deleted": []}
+      }
+    },
+    "older_rename_loses": {
+      "host": {
+        "records": {"a": {"name": "Tên mới", "nameAt": 80.0, "movedAt": 0.0, "state": {}}},
+        "links": {"sach": {"records": ["a"], "active": "a", "activeAt": 100.0}},
+        "deleted": {}
+      },
+      "request": {"book": "sach", "body": {"record": "a", "recordName": "Tên cũ", "nameAt": 20.0, "activeAt": 0.0, "movedAt": 0.0,
+                                           "deletedRecords": {}, "chapters": {}, "bookmarks": []}},
+      "expect": {
+        "reply": {"record": "a", "book": "sach", "recordName": "Tên mới"},
+        "after": {"links": {"sach": {"records": ["a"], "active": "a"}}, "names": {"a": "Tên mới"}, "deleted": []}
+      }
+    },
+    "tombstone_removes_and_does_not_come_back": {
+      "host": {
+        "records": {"a": {"name": "Mặc định", "nameAt": 0.0, "movedAt": 0.0, "state": {"last": {"chapterId": 1, "seconds": 10.0, "at": 1000.0}}},
+                    "b": {"name": "Con", "nameAt": 0.0, "movedAt": 0.0, "state": {"last": {"chapterId": 1, "seconds": 20.0, "at": 1000.0}}}},
+        "links": {"sach": {"records": ["a", "b"], "active": "b", "activeAt": 100.0}},
+        "deleted": {}
+      },
+      "request": {"book": "sach", "body": {"record": "a", "recordName": "Mặc định", "nameAt": 0.0, "activeAt": 0.0, "movedAt": 0.0,
+                                           "deletedRecords": {"b": 99.0}, "last": {"chapterId": 1, "seconds": 30.0, "at": 2000.0},
+                                           "chapters": {}, "bookmarks": []}},
+      "expect": {
+        "reply": {"record": "a", "book": "sach", "lastSeconds": 30.0, "recordIds": ["a"], "tombstones": ["b"], "activeRecord": "a"},
+        "after": {"links": {"sach": {"records": ["a"], "active": "a"}}, "names": {"a": "Mặc định"}, "deleted": ["b"], "lastSeconds": {"a": 30.0}}
+      }
+    },
+    "sending_a_deleted_record_is_refused": {
+      "host": {
+        "records": {"a": {"name": "Mặc định", "nameAt": 0.0, "movedAt": 0.0, "state": {}}},
+        "links": {"sach": {"records": ["a"], "active": "a", "activeAt": 100.0}},
+        "deleted": {"b": 99.0}
+      },
+      "request": {"book": "sach", "body": {"record": "b", "recordName": "Con", "nameAt": 0.0, "activeAt": 0.0, "movedAt": 0.0,
+                                           "deletedRecords": {}, "last": {"chapterId": 1, "seconds": 900.0, "at": 2000.0},
+                                           "chapters": {}, "bookmarks": []}},
+      "expect": {
+        "reply": {"record": "b", "deleted": true, "tombstones": ["b"]},
+        "after": {"links": {"sach": {"records": ["a"], "active": "a"}}, "names": {"a": "Mặc định"}, "deleted": ["b"]}
+      }
+    },
+    "later_move_to_another_book_wins": {
+      "host": {
+        "records": {"a": {"name": "Mặc định", "nameAt": 0.0, "movedAt": 0.0, "state": {}},
+                    "b": {"name": "Con", "nameAt": 0.0, "movedAt": 1000.0, "state": {}}},
+        "links": {"sach-cu": {"records": ["a", "b"], "active": "b", "activeAt": 1500.0}},
+        "deleted": {}
+      },
+      "request": {"book": "sach-moi", "body": {"record": "b", "recordName": "Con", "nameAt": 0.0, "activeAt": 2000.0, "movedAt": 2000.0,
+                                               "deletedRecords": {}, "last": {"chapterId": 7, "seconds": 55.0, "at": 1900.0},
+                                               "chapters": {}, "bookmarks": []}},
+      "expect": {
+        "reply": {"record": "b", "book": "sach-moi", "movedAt": 2000.0, "activeRecord": "b", "lastSeconds": 55.0},
+        "after": {"links": {"sach-cu": {"records": ["a"], "active": "a"}, "sach-moi": {"records": ["b"], "active": "b"}},
+                  "names": {"a": "Mặc định", "b": "Con"}, "deleted": [], "lastSeconds": {"b": 55.0}}
+      }
+    }
+  }
+}
