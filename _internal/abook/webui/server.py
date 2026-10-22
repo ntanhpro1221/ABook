@@ -451,6 +451,7 @@ class App:
         self._precast_lock = threading.RLock()
         self._precast_thread: threading.Thread | None = None
         self._precast_seen: dict[str, float] = {}  # lúc người gác thấy mốc lần đầu, theo cuốn (chờ supervisor giữ)
+        self._battery_told: set[str] = set()  # cuốn đã báo "tạm dừng vì pin" trong lần dừng hiện tại (cắm sạc / làm tiếp thì xoá)
         self.notify_desktop: Callable[[str, str], None] = (
             (lambda _title, _message: None) if self._fake_engine() or read_only else _desktop_toast)
 
@@ -783,12 +784,17 @@ class App:
 
     def summary(self, path: Path) -> dict[str, Any]:
         running = self.runner.running(path)
-        result = self.library.summary(path, running=running, starting=self.jobs.starting(path))
+        result = self.library.summary(path, running=running, starting=self.jobs.starting(path),
+                                      lease_after=self.runner.lease_after(path))
         result["startError"] = self.jobs.error(path)
+        # Đã bấm "Dừng": worker còn chạy tới checkpoint sạch kế (30 giây tới vài phút) - lúc ấy không tạm dừng hay làm tiếp được.
+        result["stopping"] = bool(running and self.runner.stopping(path))
         # Tạm dừng mà tiến trình vẫn sống (power_source): "battery" / "listener". Dây chuyền chỉ đứng ở checkpoint kế -
         # tới đó sổ vẫn ghi pha đang làm, nên "đang tạm dừng" khác "đã tạm dừng".
-        result["paused"] = self.runner.pause_reason(path) if running else None
-        result["canPause"] = bool(running and self.runner.can_pause(path))
+        result["paused"] = self.runner.pause_reason(path) if running and not result["stopping"] else None
+        result["canPause"] = bool(running and not result["stopping"] and self.runner.can_pause(path))
+        # Lượt chạy gần nhất chết vì sự cố (không phải bạn bấm Dừng): nguyên nhân do supervisor ghi, để trang sách nói ra.
+        result["runEnd"] = None if running or result.get("starting") or result.get("phase") == "done" else self.runner.last_end(path)
         result["precast"] = precast.flags(path, result)
         if running:
             self._watch_precast()
@@ -797,14 +803,33 @@ class App:
         result["series"] = {"root": book_id(place[0]), "part": place[1]} if place else None
         # Tập tạo cùng lúc với tập trước ("Tạo nhiều tập"): giọng và cách đọc tên sẽ gieo từ tập trước lúc nó bắt đầu chạy.
         result["seedPending"] = continuation.seed_pending(path)
-        if result["paused"]:
+        if result["stopping"]:
+            result["statusLabel"] = humanize.STOPPING_LABEL
+            result["eta"] = None
+        elif result["paused"]:
             result["statusLabel"] = humanize.pause_label(result["paused"], reached=result.get("status") == "paused")
             result["eta"] = None
         result["cover"] = covers.cover_view(path, result["id"])
         result.pop("position", None)
         with self._queue_lock:
             result["queuePosition"] = self.queue.index(result["id"]) + 1 if result["id"] in self.queue else None
+        # Cuốn xếp hàng mà cuốn đang giữ máy lại đang tạm dừng: hàng đứng yên cho tới khi người dùng làm tiếp / dừng nó (soát a88 T5).
+        result["queueWaitsOn"] = self._queue_blocker(path) if result["queuePosition"] else None
         return result
+
+    def _queue_blocker(self, path: Path) -> dict[str, Any] | None:
+        """Cuốn đang giữ máy mà đang tạm dừng (người dùng bấm, hay máy chạy pin): {title, paused}; None khi nó đang chạy thật."""
+        other = self._busy_elsewhere(path)
+        if other is None:
+            return None
+        reason = self.runner.pause_reason(other)
+        if not reason:
+            return None
+        try:
+            title = store.summarize(other, running=True)["title"]
+        except Exception:  # noqa: BLE001 - sổ đang bận: tên thư mục thay tên sách
+            title = other.name
+        return {"id": book_id(other), "title": str(title or other.name), "paused": reason}
 
     def busy_book(self) -> dict[str, Any] | None:
         """Cuốn đang chặn "nghe thử" (cuốn nào đang chạy / khởi động) - tên, mã và pha để lời từ chối nói đúng; None: máy rảnh."""
@@ -979,6 +1004,8 @@ class App:
         path = self._book(value)
         if not self.runner.running(path):
             raise ApiError(HTTPStatus.CONFLICT, "Sách này không đang chạy")
+        if self.runner.stopping(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách đang dừng - đợi dừng xong rồi bấm “Tiếp tục” để chạy lại")
         try:
             self.runner.pause(path, paused)
         except RuntimeError as error:
@@ -1056,12 +1083,14 @@ class App:
         running = 0
         for path in self.library.projects():
             if not self.runner.running(path):
+                self._battery_told.discard(str(path))
                 continue
             running += 1
             try:
                 summary = self.summary(path)
             except Exception:  # noqa: BLE001 - sổ đang ghi dở / sách hỏng: vòng sau
                 continue
+            self._tell_battery_pause(path, summary)
             with self._precast_lock:
                 if not precast.due(path, summary):
                     continue
@@ -1078,14 +1107,37 @@ class App:
             )
         return running
 
+    def _tell_battery_pause(self, path: Path, summary: dict[str, Any]) -> None:
+        """Supervisor vừa tạm dừng cuốn vì máy rút sạc (power_source): báo ra màn hình Windows MỘT lần mỗi lần dừng - 24-09 sạc
+        tuột 22:50 mà 00:07 mới có người thấy (điện thoại đã báo từ lâu, máy tính thì chưa - soát a88 V6)."""
+        key = str(path)
+        if summary.get("paused") != "battery":
+            self._battery_told.discard(key)
+            return
+        if key in self._battery_told:
+            return
+        self._battery_told.add(key)
+        self.notify_desktop(
+            f"“{summary.get('title') or path.name}” tạm dừng vì máy chạy pin",
+            "Tạo sách trên pin chậm hơn nhiều mà hao pin, nên Studio tạm dừng. Cắm sạc là tự làm tiếp; bấm “Tiếp tục” nếu muốn làm tiếp ngay trên pin.",
+        )
+
     def stop(self, value: str) -> dict[str, Any]:
         self._mutating()
         path = self._book(value)
         with self._queue_lock:
             if not self.jobs.starting(path) and self._dequeue(value):
                 return self.summary(path)  # chưa nhận lượt: "Dừng" nghĩa là bỏ khỏi hàng
-        self.jobs.stop(path)
-        return self.summary(path)
+        try:
+            self.jobs.stop(path)
+        except actions.RunnerGone as error:
+            # Tiến trình đã chết (hay sách đã xong) trước khi bấm: không còn gì để dừng. Trang tự làm mới thành "làm tiếp được".
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        result = self.summary(path)
+        if result["running"]:
+            # Supervisor đọc yêu cầu ở vòng kế (tới 0,25 giây): trả trạng thái SẼ có, như `pause`.
+            result.update({"stopping": True, "paused": None, "canPause": False, "statusLabel": humanize.STOPPING_LABEL, "eta": None})
+        return result
 
     def paused_at_checkpoint(self, path: Path) -> bool:
         """Cuốn đang chạy mà dây chuyền ĐÃ đứng ở checkpoint tạm dừng (sổ ghi "paused" - Pipeline._wait_pause_or_stop): không câu nào đang
@@ -1394,13 +1446,14 @@ class App:
         return overrides or None
 
     def _create_book(self, body: dict[str, Any], paths: list[str], title: str,
-                     first_person_chapters: dict[str, str] | None) -> Path:
-        """Tạo một dự án từ các lựa chọn của trình tạo sách - dùng chung cho sách thường và từng tập của "Tạo nhiều tập"."""
+                     first_person_chapters: dict[str, str] | None, *, overrides: dict[str, Any] | None = None) -> Path:
+        """Tạo một dự án từ các lựa chọn của trình tạo sách - dùng chung cho sách thường và từng tập của "Tạo nhiều tập".
+        `overrides`: cài đặt riêng đã kiểm sẵn (`_analysis_overrides`) - không có thì kiểm ở đây."""
         self.require_library_root()
         root = actions.create_book(
             self.library.root, paths, title, str(body.get("profile", "high_quality")),
             str(body.get("narrator", "")), str(body.get("firstPerson", "")),
-            settings_overrides=self._analysis_overrides(str(body.get("analysisModel", "") or "")),
+            settings_overrides=overrides if overrides is not None else self._analysis_overrides(str(body.get("analysisModel", "") or "")),
             first_person_chapters=first_person_chapters,
             first_person_gender=str(body.get("firstPersonGender") or "").strip(),
             teller_mode=body.get("tellerMode") is True,
@@ -1447,16 +1500,30 @@ class App:
             raise ApiError(HTTPStatus.CONFLICT, "Sách cũ đã bắt đầu chạy và qua bước phân tích - không làm lại được nữa. Tạo sách mới hay dùng "
                                                 "“Làm tiếp cuốn này”.")
         kept_covers: dict[str, bytes] = {}
+        held: str | None = None  # mã hoàn tác của bản dở đang nằm chờ (khôi phục nếu việc tạo cuốn mới hỏng)
+        # Kiểm điều kiện của cuốn mới (model phân tích có trong Ollama...) TRƯỚC khi đụng tới bản cũ: lỗi ở đây không được
+        # làm bản dở biến khỏi Studio (soát a88 V3).
+        overrides = self._analysis_overrides(str(body.get("analysisModel", "") or ""))
         if replaced is not None and not store.not_started(replaced):
             # "Làm lại phân tích" (bản dở: phân tích bị ngắt): dự án mới cùng tên, cùng thiết lập sẽ MỞ LẠI đúng thư mục cũ
-            # (project.create_or_open_project) và chạy tiếp bản dở - chính điều phải tránh. Nên bản dở vào Thùng rác TRƯỚC;
-            # không bỏ được thì thôi, chưa tạo gì. Bìa cầm trong bộ nhớ qua lúc ấy.
+            # (project.create_or_open_project) và chạy tiếp bản dở - chính điều phải tránh. Nên bản dở phải ra khỏi thư viện
+            # TRƯỚC khi tạo: vào chỗ chờ "Hoàn tác" (cùng ổ), tạo xong để nó tự vào Thùng rác lúc hết hạn; tạo hỏng thì khôi phục
+            # nguyên vẹn. Không bỏ được thì thôi, chưa tạo gì. Bìa cầm trong bộ nhớ qua lúc ấy.
             for name in (covers.COVER_FILE, covers.META_FILE):
                 if (replaced / name).is_file():
                     kept_covers[name] = (replaced / name).read_bytes()
-            self.delete(replaces)
+            held = self.delete(replaces, undo=True).get("undo")
             replaced = None
-        root = self._create_book(body, paths, str(body.get("title", "")), self._first_person_chapters(body))
+        try:
+            root = self._create_book(body, paths, str(body.get("title", "")), self._first_person_chapters(body),
+                                     overrides=overrides)
+        except BaseException:
+            if held:
+                try:
+                    self.undo_trash(held)
+                except ApiError:
+                    pass  # không khôi phục được (thư mục đích bị chiếm): bản dở vẫn nằm trong chỗ chờ, sau đó vào Thùng rác
+            raise
         for name, data in kept_covers.items():
             if not (root / name).exists():
                 atomic_write_bytes(root / name, data)

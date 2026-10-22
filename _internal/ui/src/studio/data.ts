@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   api,
@@ -20,6 +20,7 @@ import type { Phase } from "./api";
 import type { Tone } from "@/shared/ui";
 import { pollDelay, retryUnlessGone } from "./polling";
 import { staleTemplateError, type BookTemplateOp } from "./bookTemplates";
+import { pauseNotice } from "./stopText";
 
 export function phaseTone(phase: Phase, running: boolean): Tone {
   if (phase === "done") return "success";
@@ -128,6 +129,22 @@ function useRefresh() {
   };
 }
 
+/** Đặt phản hồi của máy chủ (trạng thái SẼ có sau lệnh) vào trang sách và thư viện ngay, không đợi nhịp hỏi kế (3 giây) - "Tạm dừng" /
+ *  "Tiếp tục" / "Dừng" từng hiện trễ cả nhịp (soát a88 V5). Không làm mới ngay sau đó: máy chủ trả trước khi supervisor kịp đọc yêu cầu
+ *  (tới 0,25 giây), lần hỏi lại tức thì sẽ kéo trang về trạng thái cũ rồi nhảy lại. Bản đang hỏi dở bị huỷ để nó không đè phản hồi. */
+export function adoptSummary(client: QueryClient, book: BookSummary) {
+  void client.cancelQueries({ queryKey: ["book", book.id] });
+  client.setQueryData<{ book: BookSummary; chapters: Chapter[] } | undefined>(["book", book.id], (old) => (old ? { ...old, book } : old));
+  client.setQueryData<{ root: string; rootMissing?: boolean; books: BookSummary[] } | undefined>(["library"], (old) =>
+    old ? { ...old, books: old.books.map((entry) => (entry.id === book.id ? { ...entry, ...book } : entry)) } : old,
+  );
+}
+
+function useAdopt() {
+  const client = useQueryClient();
+  return (book: BookSummary) => adoptSummary(client, book);
+}
+
 export function useStart() {
   const refresh = useRefresh();
   return useMutation({
@@ -151,19 +168,24 @@ export function useStart() {
  *  "dừng ở câu đang làm dở"). "Bỏ xếp hàng" KHÔNG đi qua đây: xem `useLeaveQueue`. */
 export function useStop() {
   const refresh = useRefresh();
+  const adopt = useAdopt();
   return useMutation({
     scope: { id: "start-stop" },
     mutationFn: ({ id }: { id: string; paused?: boolean }) =>
       api<BookSummary>(`/api/books/${id}/stop`, { method: "POST" }),
-    onSuccess: (_book, { id, paused }) => {
-      refresh(id);
+    onSuccess: (book, { paused }) => {
+      adopt(book);
       toast("Đang dừng", {
         description: paused
           ? "Sách dừng hẳn và nhả bộ nhớ card đồ hoạ; mọi thứ đã xong được giữ nguyên."
-          : "Sách sẽ dừng ở câu đang làm dở; mọi thứ đã xong được giữ nguyên.",
+          : "Sách sẽ dừng ở chỗ an toàn kế tiếp (lúc phân tích có thể mất vài phút); mọi thứ đã xong được giữ nguyên.",
       });
     },
-    onError: (error: Error) => toast.error("Không dừng được", { description: error.message }),
+    // Sách đã tự dừng / tiến trình đã chết trước khi bấm: làm mới để nút đổi sang trạng thái thật.
+    onError: (error: Error, { id }) => {
+      refresh(id);
+      toast.error("Không dừng được", { description: error.message });
+    },
   });
 }
 
@@ -188,20 +210,21 @@ export function useLeaveQueue() {
 /** "Tạm dừng" / "Tiếp tục" cuốn đang chạy: tiến trình vẫn sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích truyện. */
 export function usePause() {
   const refresh = useRefresh();
+  const adopt = useAdopt();
   return useMutation({
     scope: { id: "start-stop" },
-    mutationFn: ({ id, paused }: { id: string; paused: boolean }) =>
+    // `battery`: lúc bấm "Tiếp tục" sách đang dừng vì máy chạy pin - toast nói đúng là làm tiếp trên pin.
+    mutationFn: ({ id, paused }: { id: string; paused: boolean; battery?: boolean }) =>
       api<BookSummary>(`/api/books/${id}/pause`, { method: "POST", body: { paused } }),
-    onSuccess: (_book, { id, paused }) => {
-      refresh(id);
-      toast(paused ? "Đang tạm dừng" : "Đang làm tiếp", {
-        description: paused
-          ? "Sách đứng lại sau phần đang làm dở (lúc phân tích có thể mất vài phút) và giữ nguyên mọi thứ - bấm “Tiếp tục” là làm tiếp đúng chỗ ấy."
-          : "Sách làm tiếp đúng chỗ đã tạm dừng.",
-      });
+    onSuccess: (book, { paused, battery }) => {
+      adopt(book);
+      const notice = pauseNotice(paused, book, Boolean(battery));
+      (notice.warn ? toast.warning : toast)(notice.title, { description: notice.description });
     },
-    onError: (error: Error, { paused }) =>
-      toast.error(paused ? "Không tạm dừng được" : "Không làm tiếp được", { description: error.message }),
+    onError: (error: Error, { id, paused }) => {
+      refresh(id);
+      toast.error(paused ? "Không tạm dừng được" : "Không làm tiếp được", { description: error.message });
+    },
   });
 }
 

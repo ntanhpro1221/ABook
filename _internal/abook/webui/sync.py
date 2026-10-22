@@ -693,27 +693,31 @@ class SyncApp:
                 self._work[str(path)] = (stamp, count)
             return count
 
-        def status_of(path: Path) -> tuple[bool, str | None]:
-            # Đọc thẳng state của supervisor (như nhịp tim ở trên): sách chạy bằng dòng lệnh cũng được báo.
-            from ..background_runner import get_status
+        def status_of(path: Path) -> tuple[bool, str | None, str, float | None, str]:
+            # Đọc thẳng state của supervisor: nó là nguồn của "đang chạy" khi có (tiến trình chết là hết chạy ngay, không đợi nhịp
+            # tim trong sổ nguội); sách chạy bằng dòng lệnh không có supervisor thì nhịp tim trong sổ nói thay. `end`: lượt chạy
+            # gần nhất kết thúc ra sao - "stopped" là bạn bấm Dừng, "failed" / "lost" là máy sập (soát a88 T4).
+            from ..background_runner import get_status, lease_after_of
 
             try:
                 status = get_status(path)
-                return bool(status.running), status.pause_reason
+                end = status.state if status.state in ("stopped", "failed", "lost") else ""
+                detail = str(status.detail or "") if end in ("failed", "lost") else ""
+                return bool(status.running), status.pause_reason, end, lease_after_of(status), detail
             except Exception:  # noqa: BLE001
-                return False, None
+                return False, None, "", None, ""
 
         books = []
         for path in self.library.projects():
+            alive, paused, end, lease_after, end_detail = status_of(path)
             try:
-                summary = self.library.summary(path, running=False)
+                summary = self.library.summary(path, running=alive, lease_after=lease_after)
             except Exception:  # noqa: BLE001 - một sách hỏng không được làm mất cả danh sách
                 continue
             work = work_of(path)
-            alive, paused = status_of(path)
             chapters = summary.get("chapters") or {}
             try:
-                # `summary` dựng với running=False nên không mang tiến trình sống hay lý do tạm dừng - gắn vào để `held` đúng như ở thư viện.
+                # `summary` không mang lý do tạm dừng (nó nằm ở supervisor) - gắn vào để `held` đúng như ở thư viện.
                 hold = precast.flags(path, {**summary, "running": alive, "paused": paused})
             except Exception:  # noqa: BLE001
                 hold = {"ready": False, "held": False}
@@ -723,6 +727,9 @@ class SyncApp:
                 "phase": str(summary.get("phase") or ""),
                 "statusLabel": str(summary.get("statusLabel") or ""),
                 "running": bool(summary.get("running")),
+                # Lượt chạy gần nhất kết thúc ra sao ("stopped" / "failed" / "lost" / ""), và nguyên nhân khi máy sập.
+                "end": end,
+                "endDetail": end_detail[:300],
                 # "battery": máy tính rút sạc nên tự tạm dừng (power_source) - điện thoại báo để người ta biết máy tuột sạc.
                 "paused": paused,
                 # Phân tích xong và đang giữ chờ duyệt trước khi thu: điện thoại báo "Sẵn sàng duyệt".
