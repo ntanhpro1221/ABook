@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.129] - 2026-10-23
+
 ### Nhập sách
 
 - Tạo sách từ EPUB hay Word: bìa, trang bản quyền, mục lục và trang tên sách không còn được tích sẵn thành chương như một đoạn truyện; chúng hiện trong khung “trang phụ chưa chọn”, tích trang nào bạn muốn nghe (giống Nghe ngay).
