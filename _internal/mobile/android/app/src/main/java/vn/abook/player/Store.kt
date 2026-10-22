@@ -6,6 +6,7 @@ import org.json.JSONObject
 import java.io.File
 import java.security.MessageDigest
 import java.util.UUID
+import kotlin.concurrent.thread
 
 /**
  * Kho trên điện thoại: sách đã tải (books/<id>/book.json + file) và HỒ SƠ NGHE (state/<mã hồ sơ>.json).
@@ -25,10 +26,40 @@ object Store {
     fun init(context: Context) {
         if (!::root.isInitialized) {
             root = File(context.filesDir, "library").apply { mkdirs() }
+            // Mở file sách bị cắt giữa chừng (app bị giết, máy tắt): bản đang giải / bản cũ chờ xoá nằm lại trong books/.
+            // Đổi tên trả lại ngay (rẻ); xoá thì ở nền - danh sách sách không bao giờ thấy chúng (bookFolders).
+            val stale = recoverStaging()
+            if (stale.isNotEmpty()) thread(name = "abook-staging-sweep", isDaemon = true) { stale.forEach { it.deleteRecursively() } }
         }
     }
 
     fun bookDir(id: String) = File(root, "books/$id")
+
+    /** Thư mục của từng cuốn trong books/ - trừ thư mục tạm tên bắt đầu bằng "." (bản đang giải `.<mã>.<số>.part`, bản cũ
+     *  chờ xoá `.<mã>.<số>.old` của BookFileImport): bị cắt giữa chừng thì chúng có book.json mà không phải một cuốn. */
+    fun bookFolders(): List<File> =
+        File(root, "books").listFiles()?.filter { it.isDirectory && !it.name.startsWith(".") } ?: emptyList()
+
+    private val STAGING = Regex("""\.(.+)\.\d+\.(part|old)""")
+    const val STAGING_MAX_AGE_MS = 60 * 60 * 1000L
+
+    /**
+     * Thư mục tạm của BookFileImport còn lại sau một lần bị cắt: bản cũ (`.old`) mà bản chính vắng - cắt giữa hai lần đổi tên
+     * của `replace` - thì đổi tên trả lại; còn lại, cũ hơn [STAGING_MAX_AGE_MS], là thứ phải xoá (trả về để xoá ở nền).
+     */
+    @Synchronized
+    fun recoverStaging(now: Long = System.currentTimeMillis()): List<File> {
+        val stale = ArrayList<File>()
+        for (dir in File(root, "books").listFiles()?.filter { it.isDirectory && it.name.startsWith(".") } ?: emptyList()) {
+            val match = STAGING.matchEntire(dir.name) ?: continue
+            if (match.groupValues[2] == "old") {
+                val home = runCatching { deletableBookDir(match.groupValues[1]) }.getOrNull()
+                if (home != null && !home.exists() && dir.renameTo(home)) continue
+            }
+            if (now - dir.lastModified() > STAGING_MAX_AGE_MS) stale.add(dir)
+        }
+        return stale
+    }
 
     fun file(id: String, relative: String): File = contained(bookDir(id), relative)
 
@@ -116,12 +147,12 @@ object Store {
     /** Mã mọi cuốn có gói sách trên máy (đã tải hay nghe thẳng). */
     @Synchronized
     fun bookIds(): List<String> =
-        File(root, "books").listFiles()?.filter { it.isDirectory && (File(it, "book.json").isFile || File(it, "stream.json").isFile) }?.map { it.name } ?: emptyList()
+        bookFolders().filter { File(it, "book.json").isFile || File(it, "stream.json").isFile }.map { it.name }
 
     @Synchronized
     fun books(): List<JSONObject> {
         val prints = printsBook()
-        return File(root, "books").listFiles()?.mapNotNull { dir -> rawManifest(dir.name)?.let { shown(dir.name, it, prints) } } ?: emptyList()
+        return bookFolders().mapNotNull { dir -> rawManifest(dir.name)?.let { shown(dir.name, it, prints) } }
     }
 
     /**
@@ -141,9 +172,9 @@ object Store {
     @Synchronized
     fun playableBooks(): List<JSONObject> {
         val prints = printsBook()
-        return File(root, "books").listFiles()?.mapNotNull { dir ->
+        return bookFolders().mapNotNull { dir ->
             (rawManifest(dir.name) ?: streamManifest(dir.name))?.let { shown(dir.name, it, prints) }
-        } ?: emptyList()
+        }
     }
 
     /** Ảnh bìa người nghe thấy: bìa họ đặt (edits/cover.jpg), hay bìa của sách; null khi họ đã bỏ bìa hay sách không có. */
@@ -943,10 +974,10 @@ object Store {
     @Synchronized
     fun computerBooks(): List<String> {
         val prints = printsBook()
-        return File(root, "books").listFiles()?.filter { it.isDirectory }?.mapNotNull { dir ->
+        return bookFolders().mapNotNull { dir ->
             val manifest = rawManifest(dir.name) ?: streamManifest(dir.name) ?: return@mapNotNull null
             dir.name.takeIf { isComputer(manifest, prints.optJSONObject(dir.name)) }
-        } ?: emptyList()
+        }
     }
 
     /** Cuốn này lấy từ máy tính chính (không phải mở từ file, không phải của thiết bị ghép khác)? */
@@ -997,5 +1028,5 @@ object Store {
 
     /** Cỡ từng cuốn trên máy (mã cuốn -> byte) để màn "Tải sách" xếp cuốn nào chiếm nhiều nhất; tổng của chúng là cỡ cả thư viện. */
     fun bookSizes(): Map<String, Long> =
-        File(root, "books").listFiles { entry -> entry.isDirectory }.orEmpty().associate { it.name to sizeOf(it) }
+        bookFolders().associate { it.name to sizeOf(it) }
 }

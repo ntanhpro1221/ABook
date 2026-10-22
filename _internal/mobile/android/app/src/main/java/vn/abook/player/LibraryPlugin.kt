@@ -1398,8 +1398,10 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun cancelM4bExport(call: PluginCall) {
         val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
-        M4bExports.cancel(context, id)
-        call.resolve()
+        background(call) {
+            M4bExports.cancel(context, id)
+            call.resolve()
+        }
     }
 
     @ActivityCallback
@@ -1497,8 +1499,10 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun cancelAudiobookExport(call: PluginCall) {
         val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
-        ListenExports.cancel(context, id)
-        call.resolve()
+        background(call) {
+            ListenExports.cancel(context, id)
+            call.resolve()
+        }
     }
 
     /** Các lượt xuất sách nói đang chạy, tin cuối của từng lượt: giao diện vừa mở lại (hay tải lại) hiện lại thông báo tiến độ. */

@@ -5,11 +5,9 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.work.Data
-import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.json.JSONObject
@@ -77,12 +75,12 @@ object M4bExports {
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setInputData(data.build())
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork("$TAG:$bookId", ExistingWorkPolicy.REPLACE, request)
+        ExportCancellation.enqueue(context, "$TAG:$bookId", request)
         return request.id.toString()
     }
 
     fun cancel(context: Context, bookId: String) {
-        WorkManager.getInstance(context).cancelUniqueWork("$TAG:$bookId")
+        ExportCancellation.cancel(context, "$TAG:$bookId")
     }
 
     internal fun emit(event: JSONObject) {
@@ -151,6 +149,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
         val run = id.toString()
         fun event() = JSONObject().put("bookId", bookId).put("run", run)
         var done = 0
+        var retrying = false
         var music: ExportMusic? = null
         try {
             val base = Mp3Export.plan(bookId, cover?.takeIf { it.isFile }?.readBytes())
@@ -206,11 +205,20 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             M4bExports.emit(finished)
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
+            // Hệ thống dừng việc (không phải người dùng): WorkManager chạy lại, file đích, quyền ghi và bìa đều còn.
+            if (Mp3Exports.stoppedBySystem(this)) {
+                retrying = true
+                return Result.retry()
+            }
             M4bExports.discard(context, file)
             M4bExports.finished(context, bookId, "Đã dừng xuất M4B", "$title · file dở đã được xoá")
             M4bExports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Throwable) {
+            if (isStopped && Mp3Exports.stoppedBySystem(this)) {
+                retrying = true
+                return Result.retry()
+            }
             M4bExports.discard(context, file)
             val message = M4bExports.describe(error, lowSpace = context.cacheDir.usableSpace < (32L shl 20))
             M4bExports.finished(context, bookId, "Không xuất được M4B", "$title · $message")
@@ -218,8 +226,10 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             return Result.failure()
         } finally {
             music?.close()
-            cover?.delete()
-            M4bExports.release(context, file)
+            if (!retrying && (!isStopped || !Mp3Exports.stoppedBySystem(this))) {
+                cover?.delete()
+                M4bExports.release(context, file)
+            }
         }
     }
 
