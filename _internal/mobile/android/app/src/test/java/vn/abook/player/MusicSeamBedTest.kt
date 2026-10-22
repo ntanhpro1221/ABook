@@ -513,6 +513,20 @@ class MusicSeamBedTest {
         assertNull(SeamHandover.legacySeconds(21_000_000L, SeamHandover.Stamp(44_100, 900_000_000L, 44100, 1_000_000_000L), 5_010_000_000L)) // timestamp trước lần xả
     }
 
+    @Test fun handoverPhaseFromTheLoggedTimestampsMatchesTheContent() {
+        // bed44thu ls_30 S6 (APK43e): Nối 44,1 kHz loopEnd' = 6455808, X' = 88704; lần tua cuối của P3 tới mẫu 21777 (EV 19800468238029, xả 19800470893529).
+        // a87: khung đầu của AudioTrack ở mẫu 3184 x 1152 (thước Music, NCC 1,0 với bản giải mã liền) = startUs của app.
+        val s = LoopSeam.Seam(File("ls_30.mp3"), File("ls_30.wav"), 1152, 794_880, 6_455_808, 88_704, 44100, 2, 1152, 0, 3)
+        val now = 19_800_652_865_629L // P3 lên âm lượng (t_on của thước)
+        val startUs = Math.round(3184 * 1152 * 1e6 / 44100)
+        val a87 = SeamHandover.legacySeconds(startUs, SeamHandover.Stamp(2_724_015, 19_800_632_289_729L, 44100, 19_738_716_916_129L), now)!!
+        val p3 = SeamHandover.Stamp(3103, 19_800_632_289_729L, 44100, 19_800_470_893_529L)
+        val delta = SeamHandover.reading(s, 21_777, 19_800_468_238_029L, p3, now, a87)!!
+        assertEquals(0.0, delta, 0.1) // app: -0,05 ms; thước lấy cả timestamp của AudioTrack P3 CŨ sau lần tua (4083 khung lúc 19800473182329) nên ra -10,5 ms
+        assertEquals(4010, SeamHandover.played(s, p3, now))
+        assertEquals("hread 1 0.022 90.930", SeamEvents.handoverReading(1, delta, SeamHandover.played(s, p3, now) * 1000.0 / s.sampleRate))
+    }
+
     @Test fun legacyPositionIsMeasuredLikeP3() {
         // a87 tua tới khung bắt đầu ở 21,000 s (giây bài của khung đầu AudioTrack), đã phát 2205 khung ở 44,1 kHz: 21,050 s - cùng cách P3 = đích + framePosition / sr
         assertEquals(21.05, SeamHandover.legacySeconds(21_000_000L, 2205, 44100), 1e-9)
