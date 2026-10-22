@@ -24,8 +24,10 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.audio.AudioSink
 import androidx.media3.exoplayer.audio.DefaultAudioSink
+import androidx.media3.exoplayer.audio.ForwardingAudioSink
 import org.json.JSONObject
 import java.io.File
+import java.nio.ByteBuffer
 import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.pow
@@ -98,24 +100,61 @@ object MusicBed {
         var pending: SeamPicker.Built? = null
         var forcedTarget: SeamClock.Target? = null // bản P3 tạo sẵn để nhận ranh lặp: đích tua cố định (Nối, mẫu 0), [promoteTo] chỉnh lại theo chỗ bài cũ đang ở
         var testK = 0 // số thứ tự trình phát trong kịch bản đo ([testPlayerSeq]); chỉ cho dòng testEvents
-        var trackRef: TrackRef? = null // AudioTrack mới nhất của bài P3: bằng chứng P3 thật sự ra loa ([stepHandover])
+        var trackRef: TrackRef? = null // AudioTrack mới nhất + mốc của nó (cờ P3 bật / đang đo): P3 thật sự ra loa, pha P3 - a87 ([stepHandover])
     }
 
-    /** AudioTrack MỚI NHẤT của một trình phát (tạo ở luồng phát, đọc ở luồng chính). */
+    /**
+     * AudioTrack MỚI NHẤT của một trình phát (tạo ở luồng phát, đọc ở luồng chính) và mốc của nó ([TrackedSink]): `flushedNano` = [System.nanoTime] của lần xả bộ đệm cuối (mỗi lần tua;
+     * DefaultAudioSink nhả AudioTrack cũ và tạo cái mới, framePosition lại từ 0), `startUs` = giây bài (µs) của khung đầu tiên ghi vào AudioTrack ấy (buffer đang ghi lúc nó được tạo,
+     * `handlingUs`), [C.TIME_UNSET] khi chưa có.
+     */
     private class TrackRef {
         @Volatile var track: AudioTrack? = null
+        @Volatile var flushedNano = 0L
+        @Volatile var startUs = C.TIME_UNSET
+        @Volatile var handlingUs = C.TIME_UNSET
+
+        /** AudioTrack mới vừa được tạo (luồng phát, giữa lúc ghi buffer `handlingUs`). */
+        fun created(track: AudioTrack) {
+            startUs = handlingUs
+            this.track = track
+        }
+    }
+
+    /** Sink ghi mốc của [TrackRef]: giây bài của buffer đang ghi = presentationTimeUs - outputStreamOffsetUs (như DefaultAudioSink tính startMediaTimeUs). Không đổi gì ở tiếng. */
+    @OptIn(UnstableApi::class)
+    private class TrackedSink(inner: AudioSink, private val ref: TrackRef) : ForwardingAudioSink(inner) {
+        private var offsetUs = 0L
+
+        override fun setOutputStreamOffsetUs(outputStreamOffsetUs: Long) {
+            offsetUs = outputStreamOffsetUs
+            super.setOutputStreamOffsetUs(outputStreamOffsetUs)
+        }
+
+        override fun flush() {
+            ref.track = null // AudioTrack cũ sắp bị nhả: không đọc nó nữa
+            ref.startUs = C.TIME_UNSET
+            ref.flushedNano = System.nanoTime()
+            super.flush()
+        }
+
+        override fun handleBuffer(buffer: ByteBuffer, presentationTimeUs: Long, encodedAccessUnitCount: Int): Boolean {
+            ref.handlingUs = maxOf(0L, presentationTimeUs - offsetUs)
+            return super.handleBuffer(buffer, presentationTimeUs, encodedAccessUnitCount)
+        }
     }
 
     /**
      * Một lần chuyển a87 -> P3 đang diễn ra ([SeamHandover]): `old` (a87) vẫn là [current] và vẫn kêu; `p3` phát câm cho tới khi pha khớp. `lag` = trễ khởi động dùng cho lần tua kế;
-     * `targetSample` / `issuedNano` = lần tua cuối của P3 (mẫu đích của Nối, [System.nanoTime] lúc tua: timestamp AudioTrack cũ hơn mốc này là của trước lần tua).
+     * `targetSample` / `issuedNano` = lần tua cuối của P3 (mẫu đích của Nối, [System.nanoTime] lúc tua: chỉ AudioTrack sinh ra sau lần xả SAU mốc này mới tin, [SeamHandover.fresh]);
+     * `readings` = pha P3 - a87 (ms) của các lần đọc tin được kể từ lần tua cuối ([SeamHandover.decide]).
      */
     private class Handover(val p3: Bed, val old: Bed, val startedAt: Long, var lag: Long) {
         var issued = false
         var targetSample = 0L
         var issuedNano = 0L
         var retunes = 0
-        var steady = 0
+        val readings = ArrayList<Double>()
         var learned = false
     }
 
@@ -444,7 +483,7 @@ object MusicBed {
     @OptIn(UnstableApi::class)
     private fun seamSeek(bed: Bed, sinceSeconds: Double): Boolean {
         val built = bed.built ?: return false
-        return seamSeekTo(bed, SeamClock.target(built.seam, sinceSeconds), sinceSeconds)
+        return seamSeekTo(bed, SeamClock.target(built.seam, built.bounds, sinceSeconds), sinceSeconds)
     }
 
     @OptIn(UnstableApi::class)
@@ -631,14 +670,14 @@ object MusicBed {
         return true
     }
 
-    /** Tua P3 tới chỗ a87 sẽ ở sau `h.lag` ms rồi phát (câm); false khi không còn chỗ trong Nối / tua không được. */
+    /** Tua P3 tới chỗ a87 sẽ ở sau `h.lag` ms rồi phát (câm); false khi không còn chỗ trong Nối / tua không được. Các lần đọc pha trước đó bỏ hết (nói về AudioTrack cũ). */
     private fun issueHandover(h: Handover, legacySeconds: Double): Boolean {
         val p3 = h.p3
         val seam = p3.built?.seam ?: return false
         val target = SeamHandover.target(seam, legacySeconds, h.lag) ?: return false
         h.targetSample = target.sample
         h.issuedNano = System.nanoTime()
-        h.steady = 0
+        h.readings.clear()
         if (!h.issued) setVolume(p3, 0f) // P3 câm tới lúc đổi tiếng
         if (!seamSeekTo(p3, target, lastSeconds - (h.old.cue?.start ?: 0.0))) return false
         h.issued = true
@@ -646,13 +685,25 @@ object MusicBed {
         return true
     }
 
-    /** Số khung AudioTrack của P3 đã phát kể từ lần tua cuối (timestamp phần cứng ngoại suy tới bây giờ); null khi AudioTrack chưa chạy / timestamp cũ hơn lần tua. */
-    private fun p3FramesPlayed(h: Handover): Long? {
-        val track = h.p3.trackRef?.track ?: return null
+    /** Timestamp phần cứng của AudioTrack hiện tại của `ref` cùng mốc xả của nó; null khi chưa có AudioTrack / máy không cho timestamp. Tin hay không do [SeamHandover] quyết. */
+    private fun stampOf(ref: TrackRef?): SeamHandover.Stamp? {
+        ref ?: return null
+        val flushed = ref.flushedNano
+        val track = ref.track ?: return null
         val stamp = AudioTimestamp()
         val ok = try { track.getTimestamp(stamp) } catch (_: IllegalStateException) { false }
-        if (!ok || stamp.nanoTime < h.issuedNano || stamp.framePosition <= 0) return null
-        return stamp.framePosition + (System.nanoTime() - stamp.nanoTime) * track.sampleRate / 1_000_000_000L
+        return if (ok) SeamHandover.Stamp(stamp.framePosition, stamp.nanoTime, track.sampleRate, flushed) else null
+    }
+
+    /** Vị trí a87 (giây trong bài) đo như P3 ([SeamHandover.legacySeconds]); AudioTrack của nó không cho timestamp (bài mở trước khi bật P3, máy không hỗ trợ) thì currentPosition. */
+    private fun legacyPosition(bed: Bed): Double {
+        val ref = bed.trackRef
+        val start = ref?.startUs ?: C.TIME_UNSET
+        if (start != C.TIME_UNSET) stampOf(ref)?.let { stamp ->
+            val seconds = SeamHandover.legacySeconds(start, stamp, System.nanoTime())
+            if (seconds != null && ref?.startUs == start) return seconds
+        }
+        return bed.player.currentPosition / 1000.0
     }
 
     /** Một nhịp ([SeamHandover.POLL_MS]) của lần chuyển sang P3: tua + phát P3 câm khi P3 sẵn sàng, đo pha khi AudioTrack P3 chạy, rồi đổi tiếng / tua lại / bỏ ([SeamHandover.decide]). */
@@ -665,7 +716,7 @@ object MusicBed {
             cancelHandover()
             return
         }
-        val a87 = old.player.currentPosition / 1000.0
+        val a87 = legacyPosition(old)
         val elapsed = SystemClock.elapsedRealtime() - h.startedAt
         if (!h.issued) {
             if (elapsed >= SeamHandover.DEADLINE_MS) return abortHandover(DemoteReason.LATE)
@@ -673,20 +724,21 @@ object MusicBed {
             main.postDelayed(handoverTick, SeamHandover.POLL_MS)
             return
         }
-        val frames = p3FramesPlayed(h)
-        val delta = frames?.let { (SeamHandover.p3Seconds(seam, h.targetSample, it) - a87) * 1000.0 }
-        h.steady = if (delta == null) 0 else SeamHandover.steady(h.steady, delta)
-        val played = frames?.let { it * 1000.0 / seam.sampleRate }
-        if (delta != null && played != null && played >= SeamHandover.SETTLE_MS && !h.learned) {
-            h.learned = true // trễ khởi động đo ở lần khởi động nguội đầu tiên: dùng cho các ranh sau
-            p3LagMs = SeamHandover.nextLag(h.lag, delta)
+        // Pha theo AudioTrack MỚI của P3 (sinh sau lần tua cuối, đã phát >= SETTLE_MS); không thì nhịp này không có lần đọc.
+        val delta = stampOf(p3.trackRef)?.let { SeamHandover.reading(seam, h.targetSample, h.issuedNano, it, System.nanoTime(), a87) }
+        if (delta != null) h.readings += delta
+        val settled = SeamHandover.settled(h.readings)
+        if (settled != null && !h.learned) {
+            h.learned = true // trễ khởi động đo ở lần khởi động nguội đầu tiên (pha đã ổn định): dùng cho các ranh sau
+            p3LagMs = SeamHandover.nextLag(h.lag, settled)
         }
-        when (SeamHandover.decide(elapsed, SeamHandover.remainingMs(seam, a87), h.retunes, played, delta, h.steady)) {
-            SeamHandover.Act.SWITCH -> return completeHandover(h, a87, SeamHandover.p3Seconds(seam, h.targetSample, frames ?: 0L))
+        // Nhịp không có lần đọc mới thì chỉ xét hạn chót: không đổi tiếng / tua theo số cũ.
+        when (SeamHandover.decide(elapsed, SeamHandover.remainingMs(seam, a87), h.retunes, if (delta != null) h.readings else emptyList())) {
+            SeamHandover.Act.SWITCH -> return completeHandover(h, a87, a87 + delta!! / 1000.0)
             SeamHandover.Act.FALLBACK -> return abortHandover(DemoteReason.LATE)
             SeamHandover.Act.RETUNE -> {
                 h.retunes++
-                h.lag = SeamHandover.nextLag(h.lag, delta ?: 0.0)
+                h.lag = SeamHandover.nextLag(h.lag, settled ?: 0.0)
                 if (!issueHandover(h, a87)) return abortHandover(DemoteReason.LATE)
             }
             SeamHandover.Act.WAIT -> {}
@@ -1121,7 +1173,8 @@ object MusicBed {
         val k = testPlayerSeq++
         testCreating = k
         val trackRef = TrackRef()
-        val renderers = if (built == null && testAudioProcessor == null && testEvents == null) {
+        // Cờ P3 bật thì cả bài a87 cũng giữ AudioTrack + mốc của nó ([TrackRef]): lúc chuyển sang P3, vị trí a87 đo cùng cách với P3 ([legacyPosition]). Cờ tắt: renderers mặc định như cũ.
+        val renderers = if (built == null && testAudioProcessor == null && testEvents == null && !musicSeamP3) {
             DefaultRenderersFactory(appContext).forceDisableMediaCodecAsynchronousQueueing()
         } else {
             hookedRenderers(appContext, k, seam = built != null, trackRef) { loopSink = it }
@@ -1169,7 +1222,7 @@ object MusicBed {
                         // Như đường a87 bên dưới: theo giây mới nhất của chương; vào ở đầu mốc (Clip đầu, mẫu 0) thì không tua.
                         val mine = bed.cue
                         val since = if (mine != null && current === bed) lastSeconds - mine.start else offsetSeconds
-                        val target = bed.forcedTarget ?: SeamClock.target(built.seam, since)
+                        val target = bed.forcedTarget ?: SeamClock.target(built.seam, built.bounds, since)
                         if ((target.index != 0 || target.sample != 0L) && !seamSeekTo(bed, target, since)) demote(appContext, bed, DemoteReason.SEEK, reject = false)
                         return
                     }
@@ -1242,7 +1295,7 @@ object MusicBed {
         return bed
     }
 
-    /** MÓC ĐO ([testAudioProcessor], [testEvents]): như renderers mặc định, thêm bộ xử lý đo CUỐI chuỗi và dòng `audiotrack`; `seam`: bọc [LoopSeam.LoopSink] (đường P3). */
+    /** MÓC ĐO ([testAudioProcessor], [testEvents]) và cờ P3: như renderers mặc định, thêm bộ xử lý đo CUỐI chuỗi, dòng `audiotrack`, [TrackedSink] (mốc AudioTrack); `seam`: bọc [LoopSeam.LoopSink] (đường P3). */
     @OptIn(UnstableApi::class)
     @Suppress("DEPRECATION") // AudioTrackProvider: chỉ để đo, như MusicLoopSeamTest
     private fun hookedRenderers(appContext: Context, k: Int, seam: Boolean, trackRef: TrackRef, onSink: (LoopSeam.LoopSink) -> Unit): DefaultRenderersFactory =
@@ -1252,18 +1305,18 @@ object MusicBed {
                     .setEnableFloatOutput(enableFloatOutput)
                     .setEnableAudioOutputPlaybackParameters(enableAudioTrackPlaybackParams)
                 testAudioProcessor?.let { builder.setAudioProcessors(arrayOf(it())) }
-                // Bài P3 luôn giữ AudioTrack mới nhất (đo pha lúc chuyển từ a87, [stepHandover]); các bài khác chỉ khi đang đo.
-                if (testEvents != null || seam) builder.setAudioTrackProvider(object : DefaultAudioSink.AudioTrackProvider {
+                // Cờ P3 bật: mọi bài giữ AudioTrack mới nhất (đo pha lúc chuyển a87 -> P3, [stepHandover]); cờ tắt thì chỉ khi đang đo.
+                if (testEvents != null || seam || musicSeamP3) builder.setAudioTrackProvider(object : DefaultAudioSink.AudioTrackProvider {
                     override fun getAudioTrack(config: AudioSink.AudioTrackConfig, attributes: AudioAttributes, audioSessionId: Int, context: Context?) =
                         DefaultAudioSink.AudioTrackProvider.DEFAULT.getAudioTrack(config, attributes, audioSessionId, context).also {
-                            trackRef.track = it
+                            trackRef.created(it)
                             if (testEvents != null) testTracks[k] = it
                             emit { SeamEvents.audioTrack(k, it.sampleRate, it.channelCount) }
                         }
 
                     override fun getAudioTrackChannelConfig(channelCount: Int) = DefaultAudioSink.AudioTrackProvider.DEFAULT.getAudioTrackChannelConfig(channelCount)
                 })
-                val base = builder.build()
+                val base = TrackedSink(builder.build(), trackRef)
                 return if (seam) LoopSeam.LoopSink(base).also(onSink) else base
             }
         }.forceDisableMediaCodecAsynchronousQueueing()
