@@ -113,6 +113,7 @@ export function undoAction(client: QueryClient, bookId: string, endpoint: string
     label: "Hoàn tác",
     onClick: () => {
       void (async () => {
+        let done = 0;
         try {
           let restored = false;
           for (const decision of decisions) {
@@ -121,6 +122,7 @@ export function undoAction(client: QueryClient, bookId: string, endpoint: string
               body: { ...decision, withdraw: true },
             });
             restored ||= answer.restored;
+            done += 1;
           }
           toast.success("Đã hoàn tác", {
             description: restored
@@ -128,7 +130,8 @@ export function undoAction(client: QueryClient, bookId: string, endpoint: string
               : (message ?? "Việc trở lại như trước khi bấm."),
           });
         } catch (error) {
-          toast.error("Không hoàn tác được", { description: (error as Error).message });
+          // Nhiều quyết định gửi lần lượt: một cái lỗi giữa chừng thì những cái trước đã hoàn tác thật - nói đúng số.
+          toast.error(done > 0 ? `Mới hoàn tác được ${done}/${decisions.length} việc` : "Không hoàn tác được", { description: (error as Error).message });
         } finally {
           refreshAfterDecision(client, bookId);
         }

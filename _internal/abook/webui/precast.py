@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 import time
 from contextlib import closing
 from pathlib import Path
@@ -30,6 +31,9 @@ FILE_NAME = "studio_precast.json"
 HELD_FILE = "studio_precast_held.json"
 # Bước "Ai nói câu này" xét trước những câu ở ngần này chương sắp thu: chương ấy thu xong là sửa phải thu lại.
 UPCOMING = 3
+# `set_wait` (nút), `announce` (luồng báo mốc) và `release` (Thu âm) đọc-sửa-ghi CÙNG một file: không khoá thì lần ghi sau trả công tắc "Chờ tôi
+# duyệt" hay mốc đã báo về giá trị cũ (soát a83 B14).
+_LOCK = threading.RLock()
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -62,14 +66,16 @@ def _write(project_root: Path, record: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def set_wait(project_root: Path, wait: bool) -> dict[str, Any]:
-    return _write(project_root, {**read(project_root), "wait": bool(wait)})
+    with _LOCK:
+        return _write(project_root, {**read(project_root), "wait": bool(wait)})
 
 
 def release(project_root: Path, now: float | None = None) -> None:
     """Cuốn làm tiếp (nút "Thu âm" hay "Tiếp tục") sau khi supervisor giữ: không còn là cuốn đang chờ duyệt."""
-    record = read(project_root)
-    if record["heldAt"] is not None and record["releasedAt"] is None:
-        _write(project_root, {**record, "releasedAt": time.time() if now is None else now})
+    with _LOCK:
+        record = read(project_root)
+        if record["heldAt"] is not None and record["releasedAt"] is None:
+            _write(project_root, {**record, "releasedAt": time.time() if now is None else now})
 
 
 def hold_due(project_root: Path) -> bool:
@@ -114,7 +120,8 @@ def due(project_root: Path, summary: Mapping[str, Any]) -> bool:
 
 
 def announce(project_root: Path, now: float | None = None) -> dict[str, Any]:
-    return _write(project_root, {**read(project_root), "announcedAt": time.time() if now is None else now})
+    with _LOCK:
+        return _write(project_root, {**read(project_root), "announcedAt": time.time() if now is None else now})
 
 
 def flags(project_root: Path, summary: Mapping[str, Any]) -> dict[str, Any]:
