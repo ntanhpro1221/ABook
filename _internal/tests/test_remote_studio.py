@@ -377,10 +377,12 @@ def test_a_browser_on_the_computer_uploads_too(studio) -> None:
     assert status == 200, raw
     folder = Path(json.loads(raw)["folder"])
     assert folder.parent.parent == Path(app.preferences.get()["libraryRoot"]) / "Nguồn tách chương"
-    big = base64.b64encode(b"a" * (8 * 1024 * 1024 + 1)).decode("ascii")
+    from abook.webui import actions
+
+    big = base64.b64encode(b"a" * (actions.MAX_SOURCE_UPLOAD + 1)).decode("ascii")
     status, raw, _ = _request(app.local_port, "POST", "/api/sources/upload", headers=local, body={
         "folder": "Lần gửi d4", "name": "to.txt", "data": big})
-    assert status == 400 and "8 MB" in json.loads(raw)["error"]
+    assert status == 400 and f"{actions.MAX_SOURCE_UPLOAD // 2**20} MB" in json.loads(raw)["error"]
 
 
 # ---- soát bảo mật 28-09: mỗi test tái hiện đúng một cách tấn công của báo cáo ------------------------------------------
