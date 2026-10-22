@@ -62,15 +62,12 @@ export function PendingList({
   onDrop,
   showLines = true,
   extra,
-  locked = false,
 }: {
   items: PendingItem[];
   dropping: string | null;
   onDrop: (item: PendingItem) => void;
   showLines?: boolean;
   extra?: (item: PendingItem) => ReactNode;
-  /** Chưa bỏ được lúc này (sách đang chạy, chưa tạm dừng tới checkpoint): nút bỏ tắt. */
-  locked?: boolean;
 }) {
   return (
     <ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line">
@@ -95,7 +92,7 @@ export function PendingList({
               icon={X}
               label={dropLabel(item)}
               className="-my-1.5 -mr-1.5"
-              disabled={dropping !== null || locked}
+              disabled={dropping !== null}
               onClick={() => onDrop(item)}
             />
           </li>
@@ -118,7 +115,7 @@ export function ApplyChangesDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onApply: () => void;
-  /** Sách đang chạy: máy tự áp ở ranh giới chương kế nên không có nút "Áp dụng"; chỉ bỏ được khi đã tạm dừng tới checkpoint ("checkpoint"). */
+  /** Sách đang chạy: máy tự áp ở ranh giới chương kế nên không có nút "Áp dụng". Bỏ một việc thì bất cứ lúc nào (máy chủ từ chối việc đã áp). */
   running?: "busy" | "checkpoint";
 }) {
   const client = useQueryClient();
@@ -156,11 +153,9 @@ export function ApplyChangesDialog({
       width="max-w-xl"
       title={running ? `${count} thay đổi đang chờ áp` : `Áp dụng ${count} thay đổi?`}
       description={
-        running === "busy"
-          ? "Máy tự áp chúng ở chương kế tiếp. Muốn bỏ một việc, bạn bấm “Tạm dừng” ở trang sách, đợi tới khi báo “Đã tạm dừng” rồi mở lại hộp này."
-          : running
-            ? "Sách đã tạm dừng nên bỏ được một việc ở đây; làm tiếp thì máy áp những việc còn lại ở chương kế tiếp."
-            : "Máy chỉ thu lại những câu bị ảnh hưởng, rồi dựng lại các chương có câu ấy - không làm lại cả cuốn."
+        running
+          ? "Máy tự áp chúng ở chương kế tiếp. Bạn bỏ được một việc ở đây bất cứ lúc nào, miễn là máy chưa áp nó - việc đã áp rồi thì máy báo và giữ nguyên."
+          : "Máy chỉ thu lại những câu bị ảnh hưởng, rồi dựng lại các chương có câu ấy - không làm lại cả cuốn."
       }
     >
       {!data ? (
@@ -170,7 +165,6 @@ export function ApplyChangesDialog({
           <PendingList
             items={data.items}
             dropping={dropping}
-            locked={running === "busy"}
             onDrop={(item) => void drop(item)}
             extra={(item) => (item.voice ? tryVoice.button(item.voice, item.voice.preset || "mới") : null)}
           />

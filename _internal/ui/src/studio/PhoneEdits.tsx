@@ -1,12 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Link2, Smartphone, X } from "lucide-react";
+import { Check, Link2, RotateCcw, Smartphone, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatWhen } from "@/shared/format";
-import { Button, IconButton } from "@/shared/ui";
+import { Button, Dialog, IconButton } from "@/shared/ui";
 import { KIND_ICON } from "./ApplyChanges";
 import { api } from "./api";
-import { useWhenApplied } from "./decisions";
+import { UNDO_MS, useWhenApplied } from "./decisions";
 import { pollDelay, retryUnlessGone } from "./polling";
 
 // Hộp thư thay đổi từ điện thoại (docs/EDITING.md, P2b; webui/edits_inbox.py). Điện thoại đã ghép gửi phần sửa của cuốn về máy tính:
@@ -47,6 +47,18 @@ export interface EditsInbox {
   devices: InboxDevice[];
   waiting: number;
   recent: RecentPush[];
+  /** Khay “đã bỏ qua”: việc bạn bỏ qua nằm lại đây để khôi phục (điện thoại đã trừ chúng khỏi máy nó nên bỏ nhầm là mất). */
+  skipped: InboxDevice[];
+}
+
+type Verb = "apply" | "skip" | "restore";
+interface Reply {
+  requests?: number;
+  skipped?: number;
+  removed?: number;
+  restored?: number;
+  held?: number;
+  dropped?: { label: string }[];
 }
 
 function useInbox(bookId: string, enabled = true) {
@@ -77,9 +89,11 @@ export function describePush(push: RecentPush): string {
 
 /** Lời dưới toast "Áp dụng" một việc từ hộp thư: điều đã xảy ra, rồi lúc nào máy làm (`when` = `useWhenApplied`: sách đang chạy thì máy tự áp từ
  *  chương sau - không có nút "Áp dụng thay đổi" nào để bấm; soát a83 B12). */
-export function applyNote({ skipped, held }: { skipped: number; held: number }, when: string): string {
+export function applyNote({ skipped, held, dropped = [] }: { skipped: number; held: number; dropped?: string[] }, when: string): string {
+  // Nói rõ việc nào không áp được (câu đã đổi chữ, người chưa có giọng...), không chỉ một con số.
+  const which = dropped.length ? `: ${dropped.slice(0, 3).join("; ")}${dropped.length > 3 ? `; và ${dropped.length - 3} việc nữa` : ""}` : "";
   return [
-    skipped ? `${skipped} việc không còn khớp với sách nên bị bỏ qua.` : `Chưa thu lại gì. ${when}`,
+    skipped ? `${skipped} việc không còn khớp với sách nên bị bỏ qua${which}.` : `Chưa thu lại gì. ${when}`,
     held ? `${held} việc máy này đã đổi khác sau đó vẫn chờ bạn chọn từng việc.` : "",
   ]
     .filter(Boolean)
@@ -91,12 +105,13 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
   const when = useWhenApplied(bookId);
   const { data } = useInbox(bookId);
   const [busy, setBusy] = useState<string | null>(null);
-  if (!data || (!data.devices.length && !data.recent.length)) return null;
+  const [confirmSkipAll, setConfirmSkipAll] = useState<InboxDevice | null>(null);
+  if (!data || (!data.devices.length && !data.recent.length && !data.skipped?.length)) return null;
 
-  const decide = async (verb: "apply" | "skip", device: InboxDevice, item?: InboxItem) => {
+  const decide = async (verb: Verb, device: InboxDevice, item?: InboxItem) => {
     setBusy(`${device.id}:${item?.id ?? "all"}`);
     try {
-      const reply = await api<{ requests?: number; skipped?: number; removed?: number; held?: number }>(`/api/books/${bookId}/edits-inbox/${verb}`, {
+      const reply = await api<Reply>(`/api/books/${bookId}/edits-inbox/${verb}`, {
         method: "POST",
         body: { device: device.id, ...(item ? { items: [item.id] } : {}) },
       });
@@ -105,10 +120,17 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
         const skipped = reply.skipped ?? 0;
         const held = reply.held ?? 0;
         toast.success(made ? `Đã ghi ${made} việc vào “Áp dụng thay đổi”` : "Không có việc nào ghi được", {
-          description: applyNote({ skipped, held }, when),
+          description: applyNote({ skipped, held, dropped: (reply.dropped ?? []).map((row) => row.label) }, when),
         });
+      } else if (verb === "restore") {
+        toast.success("Đã khôi phục", { description: "Việc này chờ bạn quyết lại ở trên." });
       } else {
-        toast("Đã bỏ qua", { description: "Không có gì thay đổi trong sách." });
+        // Bỏ qua không mất hẳn: việc nằm ở khay “Đã bỏ qua” và bấm Khôi phục ngay trên thông báo được.
+        toast("Đã bỏ qua", {
+          description: "Không có gì thay đổi trong sách. Bạn khôi phục lại được ở mục “Đã bỏ qua” bên dưới.",
+          duration: UNDO_MS,
+          action: { label: "Khôi phục", onClick: () => void decide("restore", device, item) },
+        });
       }
       await client.invalidateQueries();
     } catch (error) {
@@ -126,7 +148,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
       {data.devices.length > 0 && (
         <p className="mt-1 text-pretty text-sm text-fg-2">
           Điện thoại hay máy tính đã ghép chưa được điều khiển sản xuất nên những việc dưới đây chờ bạn quyết - chưa có gì được làm. “Áp dụng” biến việc thành yêu
-          cầu trong “Áp dụng thay đổi” (chưa thu lại gì); “Bỏ qua” bỏ hẳn. Tên sách, bìa, tên nhân vật, tên chương và nhạc nền máy ấy gửi
+          cầu trong “Áp dụng thay đổi” (chưa thu lại gì); “Bỏ qua” cất việc sang mục “Đã bỏ qua” để bạn khôi phục khi cần. Tên sách, bìa, tên nhân vật, tên chương và nhạc nền máy ấy gửi
           thì đã áp ngay.
         </p>
       )}
@@ -139,7 +161,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
             <Button size="sm" variant="primary" icon={Check} loading={busy === `${device.id}:all`} disabled={busy !== null} onClick={() => void decide("apply", device)}>
               Áp dụng tất cả
             </Button>
-            <Button size="sm" variant="ghost" icon={X} disabled={busy !== null} onClick={() => void decide("skip", device)}>
+            <Button size="sm" variant="ghost" icon={X} disabled={busy !== null} onClick={() => setConfirmSkipAll(device)}>
               Bỏ qua tất cả
             </Button>
           </div>
@@ -162,6 +184,32 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
           </ul>
         </div>
       ))}
+      {(data.skipped?.length ?? 0) > 0 && (
+        <details className="mt-3 text-sm text-fg-2">
+          <summary className="cursor-pointer select-none">Đã bỏ qua ({data.skipped.reduce((sum, device) => sum + device.items.length, 0)})</summary>
+          {data.skipped.map((device) => (
+            <div key={device.id} className="mt-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{device.name}</h3>
+                <Button size="sm" variant="ghost" icon={RotateCcw} disabled={busy !== null} onClick={() => void decide("restore", device)}>
+                  Khôi phục tất cả
+                </Button>
+              </div>
+              <ul className="mt-1 divide-y divide-line overflow-hidden rounded-xl border border-line">
+                {device.items.map((item) => (
+                  <li key={item.id} className="flex items-start gap-3 px-3 py-2 text-sm">
+                    <span className="min-w-0 flex-1 text-pretty">
+                      {item.label}
+                      {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
+                    </span>
+                    <IconButton size="sm" icon={RotateCcw} label="Khôi phục việc này" className="-my-1.5 -mr-1.5" disabled={busy !== null} onClick={() => void decide("restore", device, item)} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </details>
+      )}
       {data.recent.length > 0 && (
         <details className="mt-3 text-sm text-fg-2">
           <summary className="cursor-pointer select-none">Điện thoại đã gửi gần đây ({data.recent.length})</summary>
@@ -179,6 +227,29 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
           </ul>
         </details>
       )}
+      <Dialog
+        open={confirmSkipAll !== null}
+        onOpenChange={(open) => !open && setConfirmSkipAll(null)}
+        width="max-w-md"
+        title={`Bỏ qua mọi việc từ ${confirmSkipAll?.name ?? "máy này"}?`}
+        description={`${confirmSkipAll?.items.length ?? 0} việc sẽ rời danh sách chờ. Không có gì thay đổi trong sách, và bạn khôi phục lại được ở mục “Đã bỏ qua”.`}
+      >
+        <div className="dialog-actions">
+          <Button variant="ghost" onClick={() => setConfirmSkipAll(null)}>
+            Thôi
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              const device = confirmSkipAll;
+              setConfirmSkipAll(null);
+              if (device) void decide("skip", device);
+            }}
+          >
+            Bỏ qua tất cả
+          </Button>
+        </div>
+      </Dialog>
     </section>
   );
 }

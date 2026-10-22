@@ -878,7 +878,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
     onSuccess: ({ lines }) => {
       toast.success(`Đã ghi: thu lại ${lines} câu của ${chapter.displayTitle}`, {
         description: book.running
-          ? "Máy thu lại từ chương sau. Muốn bỏ, bạn bấm “Tạm dừng” rồi mở “Thay đổi chờ áp” ở trang sách."
+          ? "Máy thu lại từ chương sau. Muốn bỏ, mở “Thay đổi chờ áp” ở trang sách - bỏ được bất cứ lúc nào, miễn là máy chưa thu."
           : "Bấm “Áp dụng thay đổi” ở đầu trang để thu. Bỏ được trong hộp ấy.",
       });
       void client.invalidateQueries({ queryKey: ["book", book.id] });

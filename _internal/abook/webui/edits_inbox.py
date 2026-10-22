@@ -38,6 +38,7 @@ SYNCED_FILE = "edits_synced.json"
 MAX_PACKAGE_BYTES = 160 * 1024 * 1024  # cả gói (bìa <= 8 MiB, nhạc ghim thường vài MiB mỗi bài)
 MAX_TRACK_BYTES = 128 * 1024 * 1024  # một bài nhạc ghim; hơn thế không phải nhạc nền
 MAX_RECENT = 10
+MAX_SKIPPED = 100  # số mục tối đa trong khay "đã bỏ qua" của mỗi thiết bị; quá thì bỏ mục cũ nhất
 _MEMBER = re.compile(r"edits\.json|edits_removed\.json|edits/cover\.jpg|music/[0-9a-f]{40}\.(?:mp3|m4a|ogg|opus|flac|wav)")
 _LOCK = threading.RLock()
 _CHUNK = 256 * 1024
@@ -253,11 +254,12 @@ def _load(project: Path) -> dict[str, Any]:
     data = _read(project, INBOX_FILE, {})
     devices = data.get("devices") if isinstance(data.get("devices"), dict) else {}
     recent = data.get("recent") if isinstance(data.get("recent"), list) else []
-    return {"devices": devices, "recent": recent}
+    skipped = data.get("skipped") if isinstance(data.get("skipped"), dict) else {}
+    return {"devices": devices, "recent": recent, "skipped": skipped}
 
 
 def _save(project: Path, data: dict[str, Any]) -> None:
-    if not data["devices"] and not data["recent"]:
+    if not data["devices"] and not data["recent"] and not data["skipped"]:
         (Path(project) / INBOX_FILE).unlink(missing_ok=True)
         return
     _write(project, INBOX_FILE, {"version": 1, **data})
@@ -405,7 +407,14 @@ def view(project: Path) -> dict[str, Any]:
                                  if item["id"] in held else {})} for item in _labelled(project, wishes, groups)]
             if items:
                 devices.append({"id": key, "name": str(entry.get("name") or "Điện thoại"), "at": float(entry.get("at") or 0), "items": items})
-        return {"devices": devices, "waiting": sum(len(device["items"]) for device in devices), "recent": data["recent"]}
+        # Khay "đã bỏ qua": bấm nhầm "Bỏ qua" thì khôi phục được (soát a89 T3: điện thoại đã trừ ý muốn khỏi máy nó, bỏ là mất hẳn).
+        tray = []
+        for key, entry in sorted(data["skipped"].items(), key=lambda pair: -float(pair[1].get("at") or 0)):
+            wishes = entry.get("wishes") or {}
+            items = _labelled(project, wishes, _groups(wishes))
+            if items:
+                tray.append({"id": key, "name": str(entry.get("name") or "Điện thoại"), "at": float(entry.get("at") or 0), "items": items})
+        return {"devices": devices, "waiting": sum(len(device["items"]) for device in devices), "recent": data["recent"], "skipped": tray}
 
 
 def apply(project: Path, device: str, item_ids: list[str] | None, *, now: float | None = None) -> dict[str, int]:
@@ -422,15 +431,22 @@ def apply(project: Path, device: str, item_ids: list[str] | None, *, now: float 
         groups = _groups(wishes)
         held = _held(project, wishes, groups) if item_ids is None else {}
         chosen = [item for item in groups if (item_ids is None and item["id"] not in held) or (item_ids is not None and item["id"] in item_ids)]
-        folded = book_wishes.fold(project, _subset(wishes, chosen), now=time.time() if now is None else now) if chosen else {"requests": 0, "skipped": 0}
+        dropped: list[tuple[str, str]] = []
+        folded = (book_wishes.fold(project, _subset(wishes, chosen), now=time.time() if now is None else now, dropped=dropped)
+                  if chosen else {"requests": 0, "skipped": 0})
         left = _without(wishes, chosen)
         _store(data, device, entry, left)
         _save(project, data)
-        return {**folded, "left": len(_groups(left)), "held": len(held)}
+        # Nói rõ việc nào không áp được (câu đã đổi chữ, người chưa có giọng...), không chỉ "N việc" (soát a89 T3).
+        lost = {pair for pair in dropped}
+        refused = [item for item in chosen if any((item["section"], key) in lost for key in item["keys"])]
+        return {**folded, "left": len(_groups(left)), "held": len(held), "dropped": [{"label": row["label"], **({"chapter": row["chapter"]} if row.get("chapter") else {})}
+                                                                                   for row in _labelled(project, wishes, refused)]}
 
 
 def skip(project: Path, device: str, item_ids: list[str] | None) -> dict[str, int]:
-    """Chủ máy bấm "Bỏ qua": các mục (hay mọi mục của thiết bị) bị bỏ khỏi hộp thư, không làm gì cả. Trả {"removed", "left"}."""
+    """Chủ máy bấm "Bỏ qua": các mục (hay mọi mục của thiết bị) rời hộp thư, không làm gì trong sách - nhưng nằm lại khay "đã bỏ qua"
+    (`restore` đem về), vì điện thoại đã trừ ý muốn khỏi máy nó nên bỏ nhầm là mất hẳn. Trả {"removed", "left"}."""
     with _LOCK:
         data = _load(project)
         entry = data["devices"].get(device)
@@ -439,9 +455,50 @@ def skip(project: Path, device: str, item_ids: list[str] | None) -> dict[str, in
         wishes = entry.get("wishes") or {}
         chosen = [item for item in _groups(wishes) if item_ids is None or item["id"] in item_ids]
         left = _without(wishes, chosen)
+        if chosen:
+            _tray(data, device, str(entry.get("name") or "Điện thoại"), _subset(wishes, chosen))
         _store(data, device, entry, left)
         _save(project, data)
         return {"removed": len(chosen), "left": len(_groups(left))}
+
+
+def _tray(data: dict[str, Any], device: str, name: str, wishes: dict[str, Any]) -> None:
+    """Thêm `wishes` vào khay đã bỏ qua của thiết bị (cái mới bỏ thắng cùng khoá); quá `MAX_SKIPPED` mục thì bỏ mục cũ nhất."""
+    before = (data["skipped"].get(device) or {}).get("wishes") or {}
+    merged, _ = book_wishes.merge(wishes, before)
+    groups = sorted(_groups(merged), key=lambda item: item["requestedAt"], reverse=True)
+    if len(groups) > MAX_SKIPPED:
+        merged = _without(merged, groups[MAX_SKIPPED:])
+    if merged:
+        data["skipped"][device] = {"name": name, "at": time.time(), "wishes": merged}
+    else:
+        data["skipped"].pop(device, None)
+
+
+def restore(project: Path, device: str, item_ids: list[str] | None) -> dict[str, int]:
+    """Chủ máy bấm "Khôi phục" trong khay đã bỏ qua: các mục (hay cả khay của thiết bị) về hộp thư chờ duyệt. Hộp thư đang có khoá
+    nào thì giữ bản trong hộp thư (mới hơn). Trả {"restored", "left"}."""
+    with _LOCK:
+        data = _load(project)
+        tray = data["skipped"].get(device)
+        if tray is None:
+            return {"restored": 0, "left": 0}
+        wishes = tray.get("wishes") or {}
+        chosen = [item for item in _groups(wishes) if item_ids is None or item["id"] in item_ids]
+        if chosen:
+            entry = data["devices"].get(device) or {"name": tray.get("name") or "Điện thoại", "at": time.time(), "wishes": {}}
+            merged, _ = book_wishes.merge(entry.get("wishes") or {}, _subset(wishes, chosen))
+            present = {(item["section"], key) for item in _groups(merged) for key in item["keys"]}
+            if any((item["section"], key) not in present for item in chosen for key in item["keys"]):
+                return {"restored": 0, "left": len(_groups(wishes))}  # hộp thư đầy (quá trần ý muốn): để nguyên trong khay, không làm mất
+            data["devices"][device] = {**entry, "wishes": merged}
+        left = _without(wishes, chosen)
+        if left:
+            data["skipped"][device] = {**tray, "wishes": left}
+        else:
+            data["skipped"].pop(device, None)
+        _save(project, data)
+        return {"restored": len(chosen), "left": len(_groups(left))}
 
 
 def _store(data: dict[str, Any], device: str, entry: dict[str, Any], wishes: dict[str, Any]) -> None:
