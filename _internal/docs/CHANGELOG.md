@@ -9,6 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Trên điện thoại màn nhỏ, menu "…" của trang sách không còn bị cắt mất các mục cuối ("Xuất sách nói (M4B)…", "Xoá khỏi điện thoại…"): menu nào dài hơn chỗ còn trên màn thì cuộn được, trên cả điện thoại lẫn máy tính.
 - Khi bạn đóng app lúc có sách đang xếp hàng chờ làm (kể cả các tập sau của "Tạo nhiều tập"), hàng chờ vẫn còn khi bạn mở lại, kể cả khi app bị tắt ngang lúc chuẩn bị chạy cuốn kế; các cuốn tự bắt đầu lần lượt khi cuốn đang chạy xong. Bạn bấm chạy cuốn khác hay bỏ cuốn khỏi hàng đúng lúc chuyển lượt cũng không làm hai cuốn tự chạy cùng lúc hoặc chạy cuốn vừa bỏ.
 - Khi bạn chạy bộ cài bản mới trên máy tính, cuốn đang làm trong Studio không còn bị dừng giữa chừng.
 - Khi điện thoại bị tắt ngang lúc bạn đang mở file sách, thư viện không còn hiện cuốn dở dang; bản cũ đang được thay thì trở lại, phần dở được dọn ở lần mở app sau.
