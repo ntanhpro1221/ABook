@@ -104,6 +104,28 @@ Toàn bộ (Lead chạy lại, kể cả stub android/os trong cây test JVM): p
 60 s đứng yên) và nút "Kiểm tra bản mới"; tìm bìa có hạn 12 s; bìa quá 40 triệu điểm ảnh bị từ chối hai nền. Test mới: PartResumeTest, CoverPixelsTest,
 PinnedFilesTest (đuôi lạ, 416), pytest 416 tải tiếp, cargo tải đứng yên. Toàn bộ (Lead chạy lại): pytest 8392 passed, 9 skipped, 0 F/E, exit 0;
 vitest 1245 passed; tsc exit 0; JVM 1210 tests, 0 F/E; cargo 4 passed. Hash khoá giữ nguyên.
+Đợt `dev/uxfix85` (a75fix, từ 0.4.122): ghi đủ nhóm người nói trên 2.000 câu (Python/Kotlin), thông báo theo số máy chủ;
+hàng nghe lại lọc ở máy chủ rồi phân trang bằng cursor; phán quyết nghe gắn checksum và lưu lịch sử khi bản thu đổi;
+huỷ `.abook` trong lúc băm/ghi và khi đóng app; huỷ FFmpeg ghép M4B và dọn bản dở; xuất cả bộ dùng job nền có tiến độ/nối lại;
+đối chiếu checksum byte thực ghi để từ chối nguồn thay đổi giữa băm và ghi. Không sửa F1/N1 hoặc file khoá.
+
+Test đỏ trước sửa: F2 Python 1F (2.000 != 2.501), JVM 1F cùng nguyên nhân; F4 2F thiếu phân trang/lọc;
+F3 1F phán quyết che bản thu mới, thêm 1F chống chấm từ trang giữ bản thu cũ; F5 3F (endpoint 404, không ngắt băm, thiếu shutdown);
+F6 2F (vẫn công bố sau huỷ, chưa theo dõi subprocess); F7 Python 2F thiếu tiến độ và Vitest 3F gọi đồng bộ/nối lại;
+N2 2F: thay MP3 bằng file cùng cỡ sau băm làm gói đã công bố bị verify từ chối (cả có/không callback tiến độ).
+Tất cả test hồi quy mới đã xanh; hai kiểu xuất bộ qua Studio từ xa chạy lâu hơn hạn chuyển tiếp giả 0,5 giây vẫn nối lại đúng job/kết quả.
+
+Pytest liên quan: lượt đầu **260 passed, 1F/0E, exit 1** (test hủy M4B mất 2,125 s, quá ngưỡng 2 s khi đang biên dịch Gradle);
+giữ nguyên mã/ngưỡng test, lượt sau **261 passed, 0F/0E, exit 0**, 141,07 s. Toàn bộ (Lead chạy lại): pytest 8383 passed, 9 skipped, 0 F/E, exit 0; vitest 1244 passed, 1 skipped; tsc exit 0; JVM 1199 tests, 6 skipped, 0 F/E.
+Vitest toàn bộ sau sửa cuối: **1244 passed, 1 skipped, 0F/E, exit 0** (142 file qua, 1 bỏ qua), 25,76 s; `npx tsc --noEmit`: **0 lỗi, exit 0**.
+Gradle offline `:app:testDebugUnitTest --max-workers=2`: lượt đầu **1199 tests, 1F/0E, 6 skipped, exit 1** ở EdgePiecesTest chờ đóng socket;
+LocalStudioTest chạy riêng **20 passed**, EdgePiecesTest chạy riêng **34 passed**; chạy lại toàn bộ không sửa Edge: **1199 tests, 1193 passed,
+0F/0E, 6 skipped, exit 0**, 123,92 s. Capacitor build dùng dependency trong worktree; cấu hình trỏ tạm đã khôi phục nguyên byte.
+
+Mọi lượt kiểm giới hạn CPU affinity 4 lõi, OMP/MKL/OPENBLAS/NUMEXPR=4, CUDA_VISIBLE_DEVICES=-1; không đặt TRANSFORMERS_OFFLINE.
+Gradle dùng JVM ActiveProcessorCount=4, compiler in-process, --no-daemon; không GPU/Ollama/adb hay thư viện thật.
+Hash khoá trước và sau sửa: **67286434ac06a6706d20fd8fe7ee4b1fda99dc0f1c1310fd3d925775768337ff** (41 mục đọc từ code), không đổi.
+LF và `git diff --check` qua. Chưa commit/stage/push. Log/JSON kiểm chi tiết nằm ở scratchpad `a75fix`.
 
 Đợt `dev/rvfix` (từ 0.4.120): giữ giới/tuổi khi lượt người nói đổi namespace của cùng vai local trong cùng chương;
 không checkpoint hoà giải khi thiếu model (request lỗi giữ nhãn cũ như trước); đóng luồng cả khi bù độ to/hoàn tất clip lỗi;

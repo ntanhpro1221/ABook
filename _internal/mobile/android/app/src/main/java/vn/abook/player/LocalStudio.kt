@@ -545,7 +545,7 @@ object LocalStudio {
         val speaker = clip(field(body, "speaker"), 200)
         val raw = body.opt("lines")
         val sources: List<Any?> = if (raw is JSONArray) (0 until raw.length()).map { raw.opt(it) } else listOf(body)
-        val lines = sources.take(2000).filterIsInstance<JSONObject>().map { clip(field(it, "stableId"), 120) to clip(field(it, "textSha256"), 64) }
+        val lines = sources.filterIsInstance<JSONObject>().map { clip(field(it, "stableId"), 120) to clip(field(it, "textSha256"), 64) }
         if (BookEdits.truthy(body.opt("withdraw"))) return withdraw(dir, "speakers", lines.map { it.first }.filter { it.isNotEmpty() }, body)
         if (speaker.isEmpty() || lines.isEmpty() || !lines.all { it.first.isNotEmpty() && it.second.isNotEmpty() }) throw Api(400, "Thiếu câu hoặc người nói")
         val newGender = BookEdits.pyStrip(field(body, "newGender"))
