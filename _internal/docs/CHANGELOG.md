@@ -9,6 +9,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi bạn chọn nhiều câu cần thu lại hoặc nhận nhóm yêu cầu từ điện thoại, Studio lưu cả nhóm nhanh hơn và giữ đúng yêu cầu khi bạn thử lại sau lỗi.
+- Khi bạn thêm cách đọc bằng tên có dấu tổ hợp hoặc ký tự vô hình, Studio khớp đúng từ trong sách để thu lại các câu liên quan.
 - Khi bạn gỡ ABook, bộ gỡ đọc vị trí thư viện đã lưu và giữ cây chứa sách; app cũng ngăn bạn chọn thư viện trong các thư mục sẽ bị gỡ.
 - Khi bạn có cuốn đang chạy, khởi động hoặc tạm dừng, Studio yêu cầu chờ làm xong trước khi cập nhật để giữ nguyên lượt phân tích.
 - Khi bạn đổi tên bộ cài, lần nâng cấp giữa các bản có bộ gỡ mới vẫn nhận đúng chế độ nâng cấp và giữ Studio.

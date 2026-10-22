@@ -400,17 +400,17 @@ def test_retried_retake_keeps_its_receipt_after_commit_before_ack(tmp_path: Path
     stable_id, sha = _line(db, "c1s1")
     wishes = {"retakes": {stable_id: {"requested_at": 50.0, "text_sha256": sha,
                                       "operation_id": "a" * 32}}}
-    real = listener_overrides.request_retake
+    real = listener_overrides.request_retakes
 
     def killed(*args, **kwargs):
         real(*args, **kwargs)
         raise SystemExit("killed before receipt acknowledgement")
 
-    monkeypatch.setattr(listener_overrides, "request_retake", killed)
+    monkeypatch.setattr(listener_overrides, "request_retakes", killed)
     with pytest.raises(SystemExit):
         book_wishes.fold(project, wishes, now=100.0)
     first = listener_overrides.read_overrides(project)
-    monkeypatch.setattr(listener_overrides, "request_retake", real)
+    monkeypatch.setattr(listener_overrides, "request_retakes", real)
     book_wishes.fold(project, wishes, now=200.0)
     assert listener_overrides.read_overrides(project) == first
     assert book_wishes.fold(project, wishes, now=300.0)["requests"] == 0

@@ -105,9 +105,18 @@ def _read_for_update(project_root: Path) -> dict[str, Any]:
     return data if isinstance(data, dict) else {}
 
 
+def pronunciation_surface(surface: str) -> str:
+    """Chữ để khớp nguyên từ; giữ dấu và hoa thường, bỏ định dạng vô hình."""
+    import unicodedata
+
+    return unicodedata.normalize("NFC", "".join(
+        char for char in str(surface) if unicodedata.category(char) != "Cf" and char != "\u034f"
+    ))
+
+
 def surface_key(surface: str) -> str:
     """Khoá một từ như `character_registry.normalize_name` - cùng khoá `pronunciations.normalized_surface`."""
-    return " ".join(str(surface).strip().casefold().split())
+    return " ".join(pronunciation_surface(surface).strip().casefold().split())
 
 
 def pronunciation_requests(overrides: dict[str, Any]) -> list[dict[str, str]]:
@@ -655,15 +664,26 @@ def request_retake(project_root: Path, stable_id: str, text_sha256: str, *, now:
     _write(project_root, data)
 
 
-def request_retakes(project_root: Path, lines: list[tuple[str, str]], *, now: float) -> None:
+def request_retakes(project_root: Path, lines: list[tuple[str, str]], *, now: float, operation_id: str = "") -> None:
     """Cả nhóm câu "Cần thu lại" (Thu lại cả chương) cùng một mốc, trong MỘT lần đọc và MỘT lần ghi file: từng câu một là O(n^2) (1600 câu ~ 21
     giây, suốt thời gian đó khoá sách bị giữ) và mất điện giữa chừng để lại NỬA chương cùng một mốc (soát a83 B7)."""
     data = _read_for_update(project_root)
     entries = data.get("retakes")
     entries = dict(entries) if isinstance(entries, dict) else {}
+    # Biên nhận hoàn tất đi CÙNG lần ghi yêu cầu. File retake_receipts.json giữ ý định trước đó:
+    # crash ở giữa hai file vẫn thử lại được; Hoàn tác sau khi ghi không làm operation sống lại.
+    operations = dict(data.get("retake_operations") or {}) if operation_id else {}
+    completed = dict(operations.get(operation_id) or {})
     for stable_id, text_sha256 in lines:
+        if operation_id:
+            completed[str(stable_id)] = str(text_sha256).strip()
+            if float((entries.get(str(stable_id)) or {}).get("requested_at") or 0) >= float(now):
+                continue  # retry không đè yêu cầu mới hơn của Studio
         entries[str(stable_id)] = {"text_sha256": str(text_sha256).strip(), "requested_at": float(now)}
     data["retakes"] = entries
+    if operation_id:
+        operations[operation_id] = completed
+        data["retake_operations"] = operations
     _write(project_root, data)
 
 

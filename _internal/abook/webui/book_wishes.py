@@ -794,6 +794,11 @@ def _fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int
         overrides.request_voice(project, key, preset=entry["preset"], gender=entry["gender"], avoid=entry["avoid"],
                                 now=stamps[entry["requested_at"]])
         requests += 1
+    retake_groups: dict[tuple[str, float], list[tuple[str, str]]] = {}
+    receipt_path = Path(project) / "retake_receipts.json"
+    receipts = None
+    receipts_changed = False
+    completed = None
     for stable_id in sorted(wishes.get("retakes") or {}):
         entry = wishes["retakes"][stable_id]
         if store.segment_text_sha256(project, stable_id) != entry["text_sha256"]:
@@ -801,9 +806,10 @@ def _fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int
             continue
         operation = entry.get("operation_id")
         if operation:
-            receipt_path = Path(project) / "retake_receipts.json"
-            # Biên nhận hỏng thì dừng hẳn (ném lỗi): quên nó là có thể đọc lại câu lần hai, đổi seed thêm lần nữa.
-            receipts = json.loads(receipt_path.read_text(encoding="utf-8")) if receipt_path.exists() else {}
+            if receipts is None:
+                # Hỏng thì dừng hẳn: không được quên dấu giờ đã giữ trước một lần crash.
+                receipts = json.loads(receipt_path.read_text(encoding="utf-8")) if receipt_path.exists() else {}
+                completed = overrides.read_overrides(project).get("retake_operations") or {}
             receipt = receipts.get(operation)
             if receipt is None:
                 receipt = {"at": stamps[entry["requested_at"]], "lines": {}}
@@ -811,18 +817,23 @@ def _fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int
             line = receipt["lines"].get(stable_id)
             if line is not None and line["sha"] != entry["text_sha256"]:
                 raise EditsError(BAD_WISHES)
-            if line is not None and line.get("done"):
+            if line is not None and (line.get("done") or stable_id in (completed.get(operation) or {})):
                 continue
-            receipt["lines"][stable_id] = {"sha": entry["text_sha256"], "done": False}
-            atomic_write_json(receipt_path, receipts)  # giữ dấu giờ cố định TRƯỚC khi yêu cầu
-            here = (overrides.read_overrides(project).get("retakes") or {}).get(stable_id) or {}
-            if float(here.get("requested_at") or 0) < receipt["at"]:
-                overrides.request_retake(project, stable_id, entry["text_sha256"], now=receipt["at"])
-            receipt["lines"][stable_id]["done"] = True
-            atomic_write_json(receipt_path, receipts)
+            if line is None:
+                receipt["lines"][stable_id] = {"sha": entry["text_sha256"], "done": False}
+                receipts_changed = True
+            at = receipt["at"]
         else:
-            overrides.request_retake(project, stable_id, entry["text_sha256"], now=stamps[entry["requested_at"]])
+            at = stamps[entry["requested_at"]]
+        retake_groups.setdefault((operation or "", at), []).append((stable_id, entry["text_sha256"]))
         requests += 1
+    if receipts_changed:
+        atomic_write_json(receipt_path, receipts)  # một lần giữ mọi ý định TRƯỚC khi ghi yêu cầu
+    for (operation, at), members in retake_groups.items():
+        if operation:
+            overrides.request_retakes(project, members, now=at, operation_id=operation)
+        else:
+            overrides.request_retakes(project, members, now=at)
     for item in sorted(wishes.get(ALIASES) or [], key=lambda item: item["at"]):
         alias_book.add(project, item["alias"], item["person"], now=stamps[item["at"]])
     return {"requests": requests, "skipped": skipped}
