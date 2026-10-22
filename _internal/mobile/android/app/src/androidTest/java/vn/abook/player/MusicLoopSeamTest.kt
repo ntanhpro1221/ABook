@@ -178,10 +178,7 @@ class MusicLoopSeamTest {
         }
     }
 
-    private fun shortsOf(bytes: ByteArray, skip: Int): ShortArray {
-        val view = ByteBuffer.wrap(bytes, skip, bytes.size - skip).order(java.nio.ByteOrder.LITTLE_ENDIAN).asShortBuffer()
-        return ShortArray(view.remaining()).also { view.get(it) }
-    }
+    private fun shortsOf(bytes: ByteArray, skip: Int) = SeamTestSupport.shortsOf(bytes, skip)
 
     /** Khung đầu (index p) của `w` (n khung xen kênh) trong `ref` quanh `center` ± `radius` khung, lệch từng mẫu <= 2; -1 nếu không thấy. */
     private fun locate(ref: ShortArray, channels: Int, center: Long, radius: Int, w: ShortArray): Long {
@@ -199,33 +196,9 @@ class MusicLoopSeamTest {
         return -1
     }
 
-    private fun <T> onMain(block: () -> T): T {
-        var result: Any? = null
-        var error: Throwable? = null
-        instrumentation.runOnMainSync {
-            try {
-                result = block()
-            } catch (t: Throwable) {
-                error = t
-            }
-        }
-        error?.let { throw it }
-        @Suppress("UNCHECKED_CAST")
-        return result as T
-    }
+    private fun <T> onMain(block: () -> T): T = SeamTestSupport.onMain(instrumentation, block)
 
-    /** Giải mã liền cả file ra PCM16 thô; trả định dạng. */
-    private fun decodeToFile(file: File, out: File): LoopSeam.Decoded {
-        FileOutputStream(out).use { stream ->
-            var scratch = ByteArray(1 shl 16)
-            return LoopSeam.decode(file) { _, pcm ->
-                if (scratch.size < pcm.remaining()) scratch = ByteArray(pcm.remaining())
-                val n = pcm.remaining()
-                pcm.get(scratch, 0, n)
-                stream.write(scratch, 0, n)
-            }
-        }
-    }
+    private fun decodeToFile(file: File, out: File): LoopSeam.Decoded = SeamTestSupport.decodeToFile(file, out)
 
     @Test
     fun seamOnOnePlayer() {

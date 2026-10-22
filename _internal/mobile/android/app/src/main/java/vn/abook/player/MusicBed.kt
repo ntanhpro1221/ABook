@@ -9,11 +9,13 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.OptIn
+import androidx.annotation.VisibleForTesting
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.audio.AudioProcessor
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
@@ -90,6 +92,7 @@ object MusicBed {
         var built: SeamPicker.Built? = null
         var sink: LoopSeam.LoopSink? = null
         var attached = false // đã nối Nối / Clip lặp vào hàng phát (trước đó chỉ có Clip đầu)
+        var testK = 0 // số thứ tự trình phát trong kịch bản đo ([testPlayerSeq]); chỉ cho dòng testEvents
     }
 
     /** Bản lặp mới và bản cũ nó nối vào: lúc bản mới có tiếng, sửa pha theo bản cũ một lần ([MusicCues.loopSettle]). */
@@ -189,12 +192,44 @@ object MusicBed {
         prefs(appContext).edit().putBoolean(SEAM_P3_KEY, value).apply()
     }
 
+    // ---- MÓC ĐO (chỉ cho androidTest MusicBedSeamOnDeviceTest; SPEC_loop_p3w_bed.md §1). Mặc định null / 0: bản phát hành không tốn gì và không đổi hành vi. ----
+
+    /** MÓC ĐO: mỗi ExoPlayer MusicBed tạo (đường P3 lẫn a87, kể cả bản lặp tạo sẵn) gắn thêm bộ xử lý này CUỐI chuỗi âm thanh (để ghi PCM). Đọc [testCreating] để biết đang tạo trình phát nào. */
+    @VisibleForTesting @Volatile var testAudioProcessor: (() -> AudioProcessor)? = null
+
+    /** MÓC ĐO: nhận một dòng sự kiện (định dạng ở [SeamEvents], không có `EV <ns>`: bên đo tự thêm). Gọi từ luồng chính, riêng `audiotrack` từ luồng phát. */
+    @VisibleForTesting @Volatile var testEvents: ((String) -> Unit)? = null
+
+    /** MÓC ĐO: ngủ thêm chừng này ms trước khi dựng Nối ở luồng nền (kịch bản dựng chậm). */
+    @VisibleForTesting @Volatile var testRenderDelayMs = 0L
+
+    /** MÓC ĐO: số thứ tự (từ 0) của trình phát kế tiếp MusicBed tạo; bên đo đặt 0 ở đầu mỗi kịch bản. */
+    @VisibleForTesting @Volatile var testPlayerSeq = 0
+
+    /** MÓC ĐO: số thứ tự của trình phát đang được tạo (hợp lệ trong lúc [testAudioProcessor] được gọi). */
+    @VisibleForTesting @Volatile var testCreating = 0
+
+    /** MÓC ĐO: chờ việc nền đang chạy / đã xếp ([worker]: dựng Nối, tải bài) xong, tối đa `timeoutMs`; true nếu xong. */
+    @VisibleForTesting fun awaitIdle(timeoutMs: Long): Boolean {
+        val done = java.util.concurrent.CountDownLatch(1)
+        worker.execute { done.countDown() }
+        return done.await(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS)
+    }
+
+    private fun emit(line: () -> String?) {
+        val sink = testEvents ?: return
+        line()?.let(sink)
+    }
+
     /** Chọn đường cho bài của mốc ([musicSeamP3]); việc dựng Nối ở luồng [worker], không bao giờ chặn việc phát. */
     private val seamPicker = SeamPicker(
         enabled = { musicSeamP3 },
         async = { worker.execute(it) },
         plan = { file, cue -> planSeam(file, cue) },
-        render = { built -> LoopSeam.render(built.seam) },
+        render = { built ->
+            if (testRenderDelayMs > 0) Thread.sleep(testRenderDelayMs)
+            LoopSeam.render(built.seam)
+        },
         note = { Log.w(TAG, it) },
     )
 
@@ -208,7 +243,7 @@ object MusicBed {
         return SeamPicker.Built(seam, bounds, duration, SeamPicker.keyOf(file, cue))
     }
 
-    private fun trackSeconds(file: File): Double? {
+    internal fun trackSeconds(file: File): Double? {
         val extractor = MediaExtractor()
         try {
             extractor.setDataSource(file.absolutePath)
@@ -307,7 +342,7 @@ object MusicBed {
                 loopHandoff.reset() // vé hẹn và bản lặp tạo sẵn cho chỗ cũ không còn đúng
                 bed.final = false // vòng cuối của mốc `tail` tính lại theo chỗ mới (finishTail)
                 if (bed.built != null) {
-                    if (!seamSeek(bed, seconds - cue.start)) demote(appContext, bed, "tua tới chỗ Nối chưa dựng xong", reject = false)
+                    if (!seamSeek(bed, seconds - cue.start)) demote(appContext, bed, DemoteReason.SEEK, reject = false)
                 } else {
                     bed.player.repeatMode = repeatFor(cue, bed.player)
                     MusicCues.offsetMs(cue, seconds, bed.player.duration)?.let(bed.player::seekTo)
@@ -317,6 +352,7 @@ object MusicBed {
         retarget(seconds, seeked)
         finishTail(appContext, seconds)
         seamTick(appContext)
+        emit { current?.takeIf { it.built != null && it.cue != null }?.let { SeamEvents.pos(it.testK, positionOf(it), MusicCues.alignedPosition(it.cue!!, seconds, it.built!!.bounds)) } }
         loopHandoff.check()
         applyPlaying()
     }
@@ -341,7 +377,7 @@ object MusicBed {
         val player = bed.player
         when (SeamClock.gate(built.state, bed.attached, SeamClock.clip0RemainingMs(built.seam, player.currentMediaItemIndex, player.currentPosition))) {
             SeamClock.Gate.ATTACH -> attachSeam(bed)
-            SeamClock.Gate.DEMOTE -> demote(appContext, bed, if (built.state == SeamPicker.State.DEAD) "dựng Nối lỗi" else "Nối chưa dựng kịp trước loopEnd", reject = false)
+            SeamClock.Gate.DEMOTE -> demote(appContext, bed, SeamClock.demoteReason(built.state), reject = false)
             else -> {}
         }
     }
@@ -362,6 +398,7 @@ object MusicBed {
         }
         bed.listeners += trim
         player.addListener(trim)
+        emit { SeamEvents.attach(bed.testK, player.mediaItemCount, built) }
     }
 
     /** Tua bài P3 tới `sinceSeconds` giây kể từ đầu mốc bằng [LoopSeam.seekToSample]; false khi chỗ ấy cần Nối / Clip lặp mà hàng chưa có (bài rơi về a87). */
@@ -371,6 +408,7 @@ object MusicBed {
         val sink = bed.sink ?: return false
         val target = SeamClock.target(built.seam, sinceSeconds)
         if (target.index != 0 && !bed.attached) return false
+        emit { SeamEvents.seek(bed.testK, sinceSeconds, target) }
         LoopSeam.seekToSample(bed.player, sink, built.seam, target.index, target.sample)
         return true
     }
@@ -383,9 +421,16 @@ object MusicBed {
     val trackPosition: Double? get() = current?.let(::positionOf)
 
     /** Bài P3 `bed` rơi về a87 (Nối chưa kịp / hỏng / tua tới chỗ chưa có Nối): bài ấy mờ ra, trình phát a87 vào ở chỗ giọng đang tới ([startCue] không chọn P3 lần này). `reject`: Nối hỏng thật, bỏ cả phiên. */
-    private fun demote(appContext: Context, bed: Bed, why: String, reject: Boolean) {
+    private fun demote(appContext: Context, bed: Bed, reason: DemoteReason, reject: Boolean) {
         val built = bed.built ?: return
+        val why = when (reason) {
+            DemoteReason.LATE -> "Nối chưa dựng kịp trước loopEnd"
+            DemoteReason.FAIL -> "dựng Nối lỗi"
+            DemoteReason.SEEK -> "tua tới chỗ Nối chưa dựng xong"
+            DemoteReason.ERROR -> "lỗi phát"
+        }
         Log.w(TAG, "đường P3 rơi về a87: $why (${built.key})")
+        emit { SeamEvents.demote(bed.testK, reason) }
         if (reject) seamPicker.reject(built, why)
         val cue = bed.cue
         if (current === bed && cue != null) {
@@ -491,7 +536,7 @@ object MusicBed {
         when {
             bed.entering -> bed.perTick = goal * STEP_MS / bed.fadeMs
             seeked -> {
-                bed.player.volume = goal
+                setVolume(bed, goal)
                 return
             }
             else -> bed.perTick = abs(goal - bed.player.volume) * STEP_MS / MusicCues.mix.stepRampMs
@@ -513,6 +558,7 @@ object MusicBed {
     /** Dừng hẳn (đổi cuốn, tắt dịch vụ phát): nhả mọi trình phát nhạc, ghi chỗ đang tới của danh sách phát. */
     fun stop() {
         main.removeCallbacks(grace)
+        seamPicker.clear()
         catalogRetry?.let(main::removeCallbacks)
         catalogRetry = null
         sceneRetry?.let(main::removeCallbacks)
@@ -885,15 +931,13 @@ object MusicBed {
         // (lặp mờ chéo ~40 lần / 5 phút) codec còn gửi sự kiện tới luồng đã chết ("sending message to a Handler on a dead thread", soát a69: 360 lần / 40 phút).
         // Đường P3 (`built`): sink bọc LoopSink (việc cắt mẫu của Nối) + nguồn media của LoopSeam; còn lại như nhau.
         var loopSink: LoopSeam.LoopSink? = null
-        val renderers = if (built == null) DefaultRenderersFactory(appContext).forceDisableMediaCodecAsynchronousQueueing() else object : DefaultRenderersFactory(appContext) {
-            override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): AudioSink {
-                val base = DefaultAudioSink.Builder(context)
-                    .setEnableFloatOutput(enableFloatOutput)
-                    .setEnableAudioOutputPlaybackParameters(enableAudioTrackPlaybackParams)
-                    .build()
-                return LoopSeam.LoopSink(base).also { loopSink = it }
-            }
-        }.forceDisableMediaCodecAsynchronousQueueing()
+        val k = testPlayerSeq++
+        testCreating = k
+        val renderers = if (built == null && testAudioProcessor == null && testEvents == null) {
+            DefaultRenderersFactory(appContext).forceDisableMediaCodecAsynchronousQueueing()
+        } else {
+            hookedRenderers(appContext, k, seam = built != null) { loopSink = it }
+        }
         val sourceFactory = Streaming.mediaSourceFactory(appContext, exactMp3Seek = true)
         val player = ExoPlayer.Builder(appContext, renderers)
             .setAudioAttributes(
@@ -911,6 +955,16 @@ object MusicBed {
         val bed = Bed(track, player, targetGain, targetGain * STEP_MS / fadeMs, cue, fadeMs)
         bed.built = built
         bed.sink = loopSink
+        bed.testK = k
+        emit { SeamEvents.open(k, built != null, track) }
+        if (built != null) emit { SeamEvents.plan(k, built.seam) }
+        emit { SeamEvents.volume(k, 0f) } // player.volume = 0f ở trên
+        if (testEvents != null) player.addListener(object : Player.Listener {
+            // Móc đo: mỗi lần chuyển mục của trình phát (hàng P3: 0 = Clip đầu, lẻ = Nối, chẵn >= 2 = Clip lặp; a87 chỉ một mục).
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                emit { SeamEvents.item(k, player.currentMediaItemIndex, reason, if (built != null) SeamEvents.kindOf(player.currentMediaItemIndex) else "a87") }
+            }
+        }.also { bed.listeners += it })
         fun listen(listener: Player.Listener) {
             bed.listeners += listener
             player.addListener(listener)
@@ -926,7 +980,7 @@ object MusicBed {
                         val mine = bed.cue
                         val since = if (mine != null && current === bed) lastSeconds - mine.start else offsetSeconds
                         val target = SeamClock.target(built.seam, since)
-                        if ((target.index != 0 || target.sample != 0L) && !seamSeek(bed, since)) demote(appContext, bed, "chỗ vào nằm sau Clip đầu, Nối chưa dựng xong", reject = false)
+                        if ((target.index != 0 || target.sample != 0L) && !seamSeek(bed, since)) demote(appContext, bed, DemoteReason.SEEK, reject = false)
                         return
                     }
                     val duration = player.duration
@@ -959,7 +1013,7 @@ object MusicBed {
                     if (bed.released) return@post // đã nhả (bản tạo sẵn bị bỏ, bài mờ xong): lỗi muộn không tính là bài hỏng
                     if (bed.built != null) {
                         // Đường P3 hỏng giữa chừng (Nối / Clip không phát được): bỏ Nối này cả phiên, bài phát tiếp bằng a87 ở chỗ giọng đang tới - không im lặng, không văng.
-                        if (current === bed) demote(appContext, bed, "lỗi phát ${error.errorCodeName}", reject = true)
+                        if (current === bed) demote(appContext, bed, DemoteReason.ERROR, reject = true)
                         else { seamPicker.reject(bed.built!!, "lỗi phát ${error.errorCodeName}"); release(bed); fading.removeAll { it === bed } }
                         return@post
                     }
@@ -988,6 +1042,35 @@ object MusicBed {
         return bed
     }
 
+    /** MÓC ĐO ([testAudioProcessor], [testEvents]): như renderers mặc định, thêm bộ xử lý đo CUỐI chuỗi và dòng `audiotrack`; `seam`: bọc [LoopSeam.LoopSink] (đường P3). */
+    @OptIn(UnstableApi::class)
+    @Suppress("DEPRECATION") // AudioTrackProvider: chỉ để đo, như MusicLoopSeamTest
+    private fun hookedRenderers(appContext: Context, k: Int, seam: Boolean, onSink: (LoopSeam.LoopSink) -> Unit): DefaultRenderersFactory =
+        object : DefaultRenderersFactory(appContext) {
+            override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): AudioSink {
+                val builder = DefaultAudioSink.Builder(context)
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioOutputPlaybackParameters(enableAudioTrackPlaybackParams)
+                testAudioProcessor?.let { builder.setAudioProcessors(arrayOf(it())) }
+                if (testEvents != null) builder.setAudioTrackProvider(object : DefaultAudioSink.AudioTrackProvider {
+                    override fun getAudioTrack(config: AudioSink.AudioTrackConfig, attributes: AudioAttributes, audioSessionId: Int, context: Context?) =
+                        DefaultAudioSink.AudioTrackProvider.DEFAULT.getAudioTrack(config, attributes, audioSessionId, context).also {
+                            emit { SeamEvents.audioTrack(k, it.sampleRate, it.channelCount) }
+                        }
+
+                    override fun getAudioTrackChannelConfig(channelCount: Int) = DefaultAudioSink.AudioTrackProvider.DEFAULT.getAudioTrackChannelConfig(channelCount)
+                })
+                val base = builder.build()
+                return if (seam) LoopSeam.LoopSink(base).also(onSink) else base
+            }
+        }.forceDisableMediaCodecAsynchronousQueueing()
+
+    /** Đặt âm lượng trình phát của `bed` (mọi chỗ MusicBed đổi volume đi qua đây); móc đo ghi `vol <k> <v>` mỗi lần, kể cả từng nhịp mờ. */
+    private fun setVolume(bed: Bed, volume: Float) {
+        bed.player.volume = volume
+        emit { SeamEvents.volume(bed.testK, volume) }
+    }
+
     private fun startFade() {
         if (fadingTicker) return
         fadingTicker = true
@@ -998,13 +1081,13 @@ object MusicBed {
                     val player = bed.player
                     // Bài còn tải / đệm thì chưa mờ vào: để lúc có tiếng mới nhích từ 0 lên, không nhảy thẳng tới mức (soát B3).
                     val ready = player.playbackState.let { it == Player.STATE_READY || it == Player.STATE_ENDED }
-                    player.volume = MusicCues.towardWhenReady(player.volume, bed.goal, bed.perTick, ready)
+                    setVolume(bed, MusicCues.towardWhenReady(player.volume, bed.goal, bed.perTick, ready))
                     if (ready && abs(player.volume - bed.goal) < 1e-4f) bed.entering = false else busy = true
                 }
                 val iterator = fading.iterator()
                 while (iterator.hasNext()) {
                     val bed = iterator.next()
-                    bed.player.volume = maxOf(0f, bed.player.volume - bed.fadeStep)
+                    setVolume(bed, maxOf(0f, bed.player.volume - bed.fadeStep))
                     if (bed.player.volume <= 0.001f) {
                         release(bed)
                         iterator.remove()
