@@ -31,6 +31,14 @@ class BookDocumentWriterTest {
 
     private fun sha256(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
+    /** Các số vàng này kiểm lớp sửa; dấu truyền audio được kiểm riêng trong AudioRevisionTest. */
+    private fun editingView(book: JSONObject): JSONObject = (BookEdits.deepCopy(book) as JSONObject).also { shown ->
+        listOf("id", "edits", "unsaved", "wishes", "capabilities", "projectFile", "package", "audioVersion").forEach(shown::remove)
+        shown.optJSONArray("chapters")?.let { chapters ->
+            for (index in 0 until chapters.length()) chapters.getJSONObject(index).remove("sha256")
+        }
+    }
+
     /** Một cuốn đã nhập (bản sao `base/`) mang phần sửa của ca `edits/<name>.json` (và bìa sửa của nó). */
     private fun bookWith(name: String?): File {
         val dir = BookEditsFixtures.copyBase(File(work, "book-${name ?: "none"}"))
@@ -78,7 +86,7 @@ class BookDocumentWriterTest {
             assertEquals("thứ tự mục như bookfile._order", rest.map { it.name }.sortedWith(compareBy({ rank(it) }, { it })), rest.map { it.name })
             assertEquals("abook", book.getJSONObject("package").getString("format"))
             assertEquals("ABook", book.getJSONObject("package").getString("producer"))
-            assertTrue(book.getJSONObject("package").getString("createdAt").matches(Regex("""\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\+00:00""")))
+            assertTrue(book.getJSONObject("package").getString("createdAt").matches(Regex("""\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?\+00:00""")))
             assertFalse("sách không mang mã nào", book.has("id"))
             return book
         }
@@ -124,7 +132,7 @@ class BookDocumentWriterTest {
             BookEditsFixtures.useStoreRoot(library)
             val imported = BookFileImport.importFile(file)
             assertTrue("$name: phần sửa còn nguyên", StrictJson.equal(edits, BookEdits.load(Store.bookDir(imported.id))))
-            val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "unsaved", "wishes", "capabilities", "projectFile", "package").forEach(it::remove) }
+            val shown = editingView(Store.manifest(imported.id)!!)
             assertTrue("$name: sách người nghe thấy khớp bản Python", StrictJson.equal(BookEditsFixtures.obj("expected/$name.json").getJSONObject("manifest"), shown))
             assertEquals(imported.title, shown.getString("title"))
         }
@@ -235,7 +243,7 @@ class BookDocumentWriterTest {
         assertArrayEquals(BookEditsFixtures.bytes("edits/everything.cover.jpg"), File(Store.bookDir(imported.id), "edits/cover.jpg").readBytes())
         assertEquals("Sách của tôi", imported.title)
         assertNotNull(Store.coverFile(imported.id))
-        val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "unsaved", "wishes", "capabilities", "projectFile", "package").forEach(it::remove) }
+        val shown = editingView(Store.manifest(imported.id)!!)
         assertTrue(StrictJson.equal(BookEditsFixtures.obj("expected/everything.json").getJSONObject("manifest"), shown))
         assertEquals(BookEdits.count(edits), Store.manifest(imported.id)!!.getInt("edits"))
         // và mở lại bản vừa nhập: ghi ra lần nữa vẫn đúng từng mục
@@ -291,7 +299,7 @@ class BookDocumentWriterTest {
         val dir = Store.bookDir(imported.id)
         assertTrue(StrictJson.equal(BookEdits.parse(BookEditsFixtures.bytes("edits/music_pin.json")), BookEdits.load(dir)))
         assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), File(dir, "music/$toneSha.wav").readBytes())
-        val shown = (BookEdits.deepCopy(Store.manifest(imported.id)!!) as JSONObject).also { listOf("id", "edits", "unsaved", "wishes", "capabilities", "projectFile", "package").forEach(it::remove) }
+        val shown = editingView(Store.manifest(imported.id)!!)
         assertTrue(StrictJson.equal(BookEditsFixtures.obj("expected/music_pin.json").getJSONObject("manifest"), shown))
         // ghi lại bản vừa nhập: vẫn mang bài ghim
         ZipFile(write(dir, "again.abook").first).use { zip -> assertNotNull(zip.getEntry("music/$toneSha.wav")) }
@@ -312,7 +320,7 @@ class BookDocumentWriterTest {
         assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), File(dir, "music/$toneSha.wav").readBytes())
         // 2) cuốn chưa có bài ghim, bản trên máy nhiều chương hơn file: file không giải nén lại nhưng phần sửa + file bài ghim của nó vào
         BookEdits.clear(dir)
-        assertFalse(File(dir, "music/$toneSha.wav").exists())
+        assertTrue("audio không đổi nên lớp sách gốc được giữ; bài trong package.files vẫn thuộc sách", File(dir, "music/$toneSha.wav").exists())
         File(dir, "book.json").writeText(JSONObject(File(dir, "book.json").readText()).put("chaptersAvailable", 99).toString())
         BookFileImport.importFile(withPins)
         assertEquals(1, BookEdits.count(BookEdits.load(dir)))

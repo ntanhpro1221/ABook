@@ -2,6 +2,8 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a90a` (C1/C2/V3) trên `dev/uxfix104`, nền `6aae011e`: dấu SHA-256 chương qua đồng bộ/thư viện/bộ đệm; nhập lại .abook cập nhật audio và hỏi trước bản cũ, giữ sửa/chỗ nghe; lưu dấu bản xuất, nhắc bản cũ và xuất riêng MP3 đổi. Kiểm 130 file pytest: 2 failed, 2046 passed, 3 skipped, 1 xfailed, 1 warning in 863.16s (0:14:23); chạy lại: 54 passed in 32.11s. Vitest: Tests  1354 passed | 1 skipped (1355); tsc exit 0. JVM 1401 passed, 0 F/E, 7 skipped. Hash khoá c9176123 không đổi. Thêm bộ đệm băm (máy tính theo cỡ+mtime_ns, điện thoại prints.json ghi lúc tải): sync.manifest lần 2 1,38 s -> 0,021 s (100 chương x 20 MB). Toàn bộ: pytest exit 0 (0 F/E); vitest 1354 passed, 1 skipped; tsc exit 0; JVM 1415 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
+
 Đợt `a88fix` trên `dev/uxfix102` (nền d787857c): Tạm dừng / Dừng / Tiếp tục / hồi phục sự cố trong Studio - trạng thái "Đang dừng…"
 khoá hai nút tới checkpoint kế; Dừng khi supervisor đã chết trả 409 tiếng Việt thay 500; "Làm lại phân tích từ đầu" kiểm trước, đưa bản dở
 vào chỗ chờ Hoàn tác và khôi phục nếu tạo cuốn mới hỏng; "Tiếp tục" lần hai giữ đồng ý chạy trên pin; UI dùng phản hồi máy chủ ngay, làm mới

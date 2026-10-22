@@ -159,7 +159,8 @@ def playlist_text(title: str, entries: list[tuple[float, str, str]]) -> str:
 
 
 def write_mp3_folder(ffmpeg: str, folder: Path, chapters: Iterable[tuple[str, Path]], *, title: str, narrator: str,
-                     cover_path: Path | None, total: int, comments: Callable[[int], str] | None = None, credits: str = "") -> int:
+                     cover_path: Path | None, total: int, comments: Callable[[int], str] | None = None, credits: str = "",
+                     numbers: list[int] | None = None) -> int:
     """Mỗi chương một MP3 trong `folder` (tag + bìa, `write_chapter`) kèm `.m3u8`; trả số file. `chapters`: (tên chương, file MP3 nguồn) - có thể là
     bộ sinh làm ra file nguồn từng chương một (sách Nghe ngay mã hoá từ bản tạm: file nguồn dùng xong, bộ sinh mới được chạy tiếp và dọn nó). `total`: số chương sẽ có.
     Thời lượng trong `.m3u8` đếm từ khung MP3 của chính file đã ghi (readaloud/mp3.py) - không lấy độ dài ước của sổ (soát a61: lệch 4-9 giây).
@@ -167,9 +168,11 @@ def write_mp3_folder(ffmpeg: str, folder: Path, chapters: Iterable[tuple[str, Pa
     (rỗng thì không có file). Chung cho xuất MP3 của Studio (`export_book`) và của sách Nghe ngay (listen_export.py)."""
     entries: list[tuple[float, str, str]] = []
     for number, (full_title, source) in enumerate(chapters, start=1):
+        ordinal = number
+        number = numbers[ordinal - 1] if numbers is not None else number
         name = chapter_file_name(number, total, full_title)
         write_chapter(ffmpeg, source, folder / name, cover_path, title=full_title, album=title,
-                      narrator=narrator, number=number, total=total, comment=comments(number) if comments is not None else "")
+                      narrator=narrator, number=number, total=total, comment=comments(ordinal) if comments is not None else "")
         entries.append((mp3.duration_ms((folder / name).read_bytes()) / 1000, full_title, name))
     atomic_write_text(folder / f"{safe_name(title)}.m3u8", playlist_text(title, entries))  # tắt ngang không để lại danh sách phát cụt
     if credits:
@@ -179,7 +182,8 @@ def write_mp3_folder(ffmpeg: str, folder: Path, chapters: Iterable[tuple[str, Pa
 
 def export_book(project_root: Path, target_root: Path, *, cover: str | None = None,
                 folder_name: str | None = None, music: Callable[[str], Path | None] | None = None,
-                cancelled: Callable[[], bool] | None = None, progress: Callable[[int, int], None] | None = None) -> dict[str, Any]:
+                cancelled: Callable[[], bool] | None = None, progress: Callable[[int, int], None] | None = None,
+                chapter_ids: list[int] | None = None) -> dict[str, Any]:
     """`folder_name`: tên thư mục thay cho tên sách - bản xuất cả bộ đặt mỗi phần vào "Phần N - ...".
     `progress(i, N)`: sắp làm chương thứ i (từ 1) trong N chương của cuốn này.
     `music`: nguồn file bài nhạc (như gói `.abook`, music_plan.TrackSource) = "Kèm nhạc nền": chương có nhạc được giải mã, trộn
@@ -189,6 +193,12 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     title = summary["title"] or project_root.name
     narrator = summary["settings"]["narrator"] or ""
     chapters = _listenable(project_root)
+    numbered = {chapter["id"]: index for index, chapter in enumerate(chapters, 1)}
+    total_available = len(chapters)
+    if chapter_ids is not None:
+        if not chapter_ids or any(type(key) is not int or key not in numbered for key in chapter_ids):
+            raise ValueError("Bạn hãy chọn các chương nghe được để xuất.")
+        chapters = [chapter for chapter in chapters if chapter["id"] in chapter_ids]
     if not chapters:
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
     folder = free_path(target_root / safe_name(folder_name or title))
@@ -199,18 +209,22 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     audio = store.chapter_audio_paths(project_root)
     listed = [(chapter["id"], chapter["fullTitle"], path) for chapter in chapters if (path := audio.get(chapter["id"])) is not None]
     sources = [(full_title, path) for _id, full_title, path in listed]
+    from .export_jobs import audio_snapshot, remember_export
+    selected_ids = {item[0] for item in listed}
+    snapshot = {key: digest for key, digest in audio_snapshot(project_root).items() if int(key) in selected_ids}
+    numbering = [numbered[item[0]] for item in listed]
     noted: dict[str, Any] = {}
     try:
         if music is None:
             files = write_mp3_folder(ffmpeg, folder, _counted(_checked(sources, cancelled), len(sources), progress), title=title,
-                                     narrator=narrator, cover_path=cover_path, total=len(sources))
+                                     narrator=narrator, cover_path=cover_path, total=total_available, numbers=numbering)
         else:
             from .music_export import Mixer, studio_music  # nhập muộn: music_export dùng pump_pcm của module này
 
             mixer = Mixer(ffmpeg, studio_music(project_root, [item[0] for item in listed], music))
             with tempfile.TemporaryDirectory(prefix=".music-", dir=target_root) as scratch:
                 files = write_mp3_folder(ffmpeg, folder, _mixed_mp3(ffmpeg, mixer, _counted(listed, len(listed), progress), Path(scratch), cancelled),
-                                         title=title, narrator=narrator, cover_path=cover_path, total=len(sources),
+                                         title=title, narrator=narrator, cover_path=cover_path, total=total_available, numbers=numbering,
                                          comments=lambda number: mixer.credits([listed[number - 1][0]]),
                                          credits=mixer.credits(item[0] for item in listed))
             noted = mixer.note(item[0] for item in listed)
@@ -218,6 +232,7 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
         shutil.rmtree(folder, ignore_errors=True)  # thư mục mới của chính lượt này (free_path): bản xuất dở không được nằm lại như một bản xuất
         raise
     # Ảnh bìa hỏng: bản xuất mang bìa vẽ từ tên - giao diện nói một câu (coverBroken).
+    remember_export(project_root, "mp3", str(folder), snapshot)
     return {"folder": str(folder), "files": files, "chaptersTotal": summary["chapters"]["total"], **noted,
             **({"coverBroken": True} if real is not None and usable_cover(real) is None else {})}
 
@@ -596,11 +611,14 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
             progress(index + 1, len(ids))
         return pump_mixed(ffmpeg, mixer, ids[index], source, rate, channels, sink)
 
+    from .export_jobs import audio_snapshot, remember_export
+    snapshot = audio_snapshot(project_root)
     final, count = m4b_from_files(ffmpeg, chapters, target_root, title=title, narrator=narrator,
                                   cover_for=lambda work: usable_cover(covers.cover_file(project_root)) or drawn_cover(work, cover),
                                   decode=decode if mixer is not None else None, on_peaks=peaks, cancelled=cancelled,
                                   credits=mixer.credits(ids) if mixer is not None else "")
     real = covers.cover_file(project_root)
+    remember_export(project_root, "m4b", str(final), snapshot)
     return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size,
             "chapters": count, "chaptersTotal": summary["chapters"]["total"], **(mixer.note(ids) if mixer is not None else {}),
             **({"coverBroken": True} if real is not None and usable_cover(real) is None else {})}

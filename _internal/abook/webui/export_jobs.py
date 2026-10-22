@@ -7,11 +7,48 @@ from __future__ import annotations
 import threading
 import time
 import uuid
+import json
+from pathlib import Path
 from typing import Any, Callable
 
 from . import humanize
 
 Clock = Callable[[], float]
+
+_HISTORY_LOCK = threading.RLock()
+HISTORY = "export_history.json"
+
+
+def audio_snapshot(project: Path) -> dict[str, str]:
+    from . import audio_revision, store
+    paths = store.chapter_audio_paths(project)
+    digests = {path: audio_revision.describe(path)["sha256"] for path in set(paths.values()) if path.is_file()}
+    return {str(key): digests[path] for key, path in paths.items() if path in digests}
+
+
+def _history(project: Path) -> list[dict[str, Any]]:
+    try:
+        return json.loads((project / HISTORY).read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return []
+
+
+def remember_export(project: Path, kind: str, target: str, chapters: dict[str, str]) -> None:
+    from ..io_utils import atomic_write_json
+    with _HISTORY_LOCK:
+        records = [item for item in _history(project) if item["target"] != target]
+        records.append({"kind": kind, "target": target, "chapters": chapters, "createdAt": time.time()})
+        atomic_write_json(project / HISTORY, records)
+
+
+def export_history(project: Path) -> list[dict[str, Any]]:
+    with _HISTORY_LOCK:
+        records = _history(project)
+        if not records:
+            return []
+        current = audio_snapshot(project)
+        return [{**item, "changed": [int(key) for key, digest in item["chapters"].items() if current.get(key) != digest]}
+                for item in records]
 
 
 class Cancelled(Exception):
