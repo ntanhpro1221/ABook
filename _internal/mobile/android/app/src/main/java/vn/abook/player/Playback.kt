@@ -356,13 +356,14 @@ object Playback {
         lastError = ""
     }
 
-    /** Hệ số mờ dần của hẹn giờ ngủ (1 = không mờ); âm lượng thật = mờ dần × độ to cố định của giọng đọc to. */
+    /** Hệ số mờ dần của hẹn giờ ngủ (1 = không mờ); âm lượng thật của giọng = mờ dần × độ to cố định của giọng đọc to; nhạc nền nhân cùng hệ số mờ ([MusicBed.setSleepFade]). */
     var fadeLevel = 1f
         private set
 
     fun applyVolume(fade: Float = fadeLevel) {
         fadeLevel = fade
         player?.volume = fade * ReadAloud.gainFactor()
+        MusicBed.setSleepFade(fade) // nhạc nền nhỏ dần cùng giọng; trả 1 (huỷ / gia hạn / hết giờ) thì nhạc về mức cũ
     }
 
     /** Hẹn giờ "hết chương": ExoPlayer dừng ở cuối mục. Chương đọc to gồm nhiều mục (mỗi đoạn một mục) nên không dùng được - ReadAloud tự dừng nạp ở cuối chương. */
