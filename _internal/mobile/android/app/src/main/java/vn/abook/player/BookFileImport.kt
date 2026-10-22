@@ -74,6 +74,20 @@ object BookFileImport {
         }
     }
 
+    /** Đầu file (vài trăm byte) có đúng dáng một gói của app không: mục đầu là `mimetype`, LƯU không nén, nội dung là kiểu `.abook` hay `.abookproj`
+     *  (cùng điều kiện `importFile` đòi). Cho file được chia sẻ qua kiểu chung (octet-stream, zip) khi tên mất đuôi - soát a99 V6. */
+    fun looksLikeBookFile(head: ByteArray): Boolean {
+        fun u16(at: Int) = (head[at].toInt() and 0xff) or ((head[at + 1].toInt() and 0xff) shl 8)
+        if (head.size < 30 || head[0] != 'P'.code.toByte() || head[1] != 'K'.code.toByte() || head[2].toInt() != 3 || head[3].toInt() != 4) return false
+        if (u16(8) != 0) return false // ZipEntry.STORED
+        val nameEnd = 30 + u16(26)
+        val dataStart = nameEnd + u16(28)
+        if (String(head, 30, minOf(u16(26), head.size - 30), Charsets.US_ASCII) != "mimetype") return false
+        return listOf(MIMETYPE, PROJECT_MIMETYPE).map { it.toByteArray(Charsets.US_ASCII) }.any { mime ->
+            dataStart + mime.size <= head.size && head.copyOfRange(dataStart, dataStart + mime.size).contentEquals(mime)
+        }
+    }
+
     /** Gói zip bị cắt (còn chữ ký "PK" ở đầu) hay file rỗng - khác một file lạ đổi đuôi (bookfile.looks_cut). */
     private fun looksCut(file: File): Boolean = runCatching {
         file.inputStream().use { input ->
@@ -164,21 +178,21 @@ object BookFileImport {
 
     /** `keptEdits`: số thay đổi của người nghe đã có sẵn trên cuốn này và được giữ nguyên (0 = cuốn mới hay chưa sửa gì) - giao
      *  diện nói "giữ nguyên N chỉnh sửa của bạn". */
-    data class Imported(val id: String, val title: String, val keptEdits: Int = 0, val brokenMusic: Int = 0)
+    data class Imported(val id: String, val title: String, val keptEdits: Int = 0, val brokenMusic: Int = 0, val how: String = "new")
 
     /** Chép từ content:// (trình quản lý file, Zalo, Drive...) vào bộ nhớ đệm rồi nhập. */
-    fun import(context: Context, uri: Uri): Imported {
+    fun import(context: Context, uri: Uri, allowOlder: Boolean = false): Imported {
         Store.init(context)
         // File dự án có thể vài chục GB (sổ dự án, từng câu đã thu): đọc thẳng từ chỗ nó nằm, chỉ phần nghe mới được chép.
         openInPlace(context, uri)?.let { descriptor ->
-            descriptor.use { return importFile(File("/proc/self/fd/${it.fd}")) }
+            descriptor.use { return importFile(File("/proc/self/fd/${it.fd}"), allowOlder = allowOlder) }
         }
         val copy = File(context.cacheDir, "import-${System.nanoTime()}.abook")
         try {
             sizeOf(context, uri)?.let { requireRoom(context.cacheDir, it + ROOM_MARGIN) }
             val input = context.contentResolver.openInputStream(uri) ?: throw Refused("Không đọc được file.")
             input.use { source -> copy.outputStream().use { source.copyTo(it) } }
-            return importFile(copy)
+            return importFile(copy, allowOlder = allowOlder)
         } finally {
             copy.delete()
         }
@@ -228,7 +242,7 @@ object BookFileImport {
     private fun gigabytes(bytes: Long) = "%.1f GB".format(java.util.Locale.ROOT, bytes / (1L shl 30).toDouble()).replace('.', ',')
 
     /** `separate`: người dùng chọn "Thêm bản riêng" dù cuốn đã có - không tìm cuốn trùng, luôn là cuốn mới với mã riêng. */
-    fun importFile(file: File, separate: Boolean = false, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
+    fun importFile(file: File, separate: Boolean = false, allowOlder: Boolean = false, freeSpace: (File) -> Long = { it.usableSpace }): Imported {
         val zip = try {
             ZipFile(file)
         } catch (error: Exception) {
@@ -298,7 +312,10 @@ object BookFileImport {
             val chapters = identityPrints(content, files)
             // Cùng cuốn đã có trên máy (tải qua Wi-Fi, hay mở từ file trước đó): nhập VÀO đúng cuốn ấy, giữ mã của nó để
             // chỗ nghe vẫn nối - không thành hai cuốn. Bản trên máy nhiều chương hơn file thì giữ nguyên bản trên máy.
-            val existing = if (separate) null else Store.findByChapters(chapters)
+            val source = book.optString("sourceFingerprint")
+            val existing = if (separate) null else (if (source.isEmpty()) null else Store.books().firstOrNull {
+                it.optString("sourceFingerprint") == source
+            }?.getString("id")) ?: Store.findByChapters(chapters)
             val key = contentKey(chapters)
             // Bản riêng của cuốn đã có: mã "<khoá>-2", "<khoá>-3"… (cùng chữ thì cùng khoá nội dung).
             val target = existing ?: if (separate && Store.bookDir(key).exists()) {
@@ -307,12 +324,18 @@ object BookFileImport {
                 key
             }
             val current = existing?.let { Store.rawManifest(it) }
+            val disposition = if (current == null) "new" else AudioRevision.importState(AudioRevision.chapterPrints(Store.bookDir(target), current), chapters,
+                current.optString("audioUpdatedAt").ifEmpty { current.optJSONObject("package")?.optString("createdAt") ?: "" },
+                book.optString("audioUpdatedAt").ifEmpty { pack.optString("createdAt") })
+            if (disposition in setOf("older", "conflict") && !allowOlder) {
+                return Imported(target, Store.manifest(target)?.optString("title") ?: current!!.optString("title"), how = disposition)
+            }
             // Chỉ cuốn mở từ file mới nhận phần sửa của người nghe; cuốn của máy tính thì sửa ở máy ấy.
             val editable = existing == null || Store.isImported(existing)
-            val keptEdits = if (existing != null && editable) BookEdits.count(BookEdits.load(Store.bookDir(target))) else 0
+            val keptEdits = if (existing != null) BookEdits.count(BookEdits.load(Store.bookDir(target))) else 0
             // Cuốn chỉ có chữ: tìm thấy nghĩa là CÙNG bộ chữ (Store.findByChapters) - không có bản "nhiều chương hơn" để thay, giữ bản trên máy.
-            val sameText = chapters.length() > 0 && chapters.keys().asSequence().all { it.startsWith("texts/") }
-            if (current != null && (sameText || current.optInt("chaptersAvailable") > book.optInt("chaptersAvailable"))) {
+            val gainsWorkshop = layout != null && !File(Store.bookDir(target), ProjectDocument.MANIFEST).isFile
+            if (current != null && disposition == "existing" && !gainsWorkshop) {
                 // Giữ bản trên máy, nhưng phần sửa trong file vẫn được hợp vào (bên máy này thắng) - không mất công của ai.
                 if (editable && BookEdits.count(incoming.edits) > 0) {
                     BookEdits.adopt(Store.bookDir(target), incoming.edits, incoming.cover) { name, destination -> extract(zip, resolve(name), destination) }
@@ -323,7 +346,7 @@ object BookFileImport {
                         if (layout.files.has("project/$name")) zip.getEntry(resolve("project/$name"))?.let { readLimited(zip, it, MAX_JSON_BYTES.toInt()) } else null
                     }
                 }
-                return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"), keptEdits)
+                return Imported(target, Store.manifest(target)?.optString("title") ?: current.optString("title"), keptEdits, how = "existing")
             }
             val books = File(Store.root, "books").apply { mkdirs() }
             // File dự án: chỗ cần là cỡ những gì sẽ giải ra (phần nghe, bản chụp, xưởng), không phải cả gói.
@@ -337,8 +360,11 @@ object BookFileImport {
                 val wanted = if (layout != null) listOf("book.json") + layout.materialize
                 else DESCRIPTIONS.filter { it != "mimetype" && it in names } + content.sorted()
                 for (name in wanted) {
-                    val (size, sha256) = extract(zip, resolve(name), File(staging, name))
-                    val expected = expectedFiles.optJSONObject(name) ?: continue
+                    val expected = expectedFiles.optJSONObject(name)
+                    val previous = if (name.startsWith("chapters/")) Store.file(target, name) else null
+                    val reuse = previous?.takeIf { expected != null && AudioRevision.matches(it, expected.optLong("size", -1), expected.optString("sha256")) }
+                    val (size, sha256) = extract(zip, resolve(name), File(staging, name), reuse)
+                    if (expected == null) continue
                     if (size != expected.optLong("size", -1) || sha256 != expected.optString("sha256")) {
                         if (layout != null || !MUSIC.matches(name)) throw Refused("File sách bị hỏng hoặc bị sửa ($name). Hãy chép lại file từ nguồn.")
                         File(staging, name).delete()
@@ -351,8 +377,16 @@ object BookFileImport {
                 if (layout != null && existing != null && ProjectDocument.kept(staging)?.workshop == ProjectDocument.PRESENT) {
                     mergeWorkshop(staging, Store.bookDir(target)) { name -> File(staging, "project/$name").takeIf { it.isFile }?.readBytes() }
                 }
-                if (editable) keepLocalEdits(Store.bookDir(target), staging, incoming.edits)
-                else File(staging, BookEdits.EDITS_FILE).delete().also { File(staging, BookEdits.EDITS_COVER).delete() }
+                if (!editable) File(staging, BookEdits.EDITS_FILE).delete().also { File(staging, BookEdits.EDITS_COVER).delete() }
+                keepLocalEdits(Store.bookDir(target), staging, if (editable) incoming.edits else BookEdits.empty())
+                File(Store.bookDir(target), ExportHistory.FILE).takeIf { it.isFile }?.copyTo(File(staging, ExportHistory.FILE), overwrite = true)
+                val bookChapters = book.optJSONArray("chapters") ?: org.json.JSONArray()
+                for (index in 0 until bookChapters.length()) {
+                    val chapter = bookChapters.getJSONObject(index)
+                    val meta = files.optJSONObject(chapter.optString("file"))
+                    chapter.put("sha256", meta?.optString("sha256") ?: "").put("size", meta?.optLong("size") ?: 0L)
+                }
+                book.put("audioVersion", AudioRevision.version(bookChapters))
                 // Bản sách của app trên máy mang mã thư mục của app (book.json không nằm trong danh sách mã băm).
                 Store.writeAtomic(File(staging, "book.json"), book.put("id", target).toString())
                 replace(books, staging, Store.bookDir(target), target)
@@ -361,7 +395,7 @@ object BookFileImport {
             }
             Store.rememberChapters(target, chapters, imported = existing == null || Store.isImported(existing))
             if (existing == null) BookEdits.markSaved(Store.bookDir(target)) // edits that came inside the file are not "unsaved" (a70)
-            return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"), keptEdits, brokenMusic.size)
+            return Imported(target, Store.manifest(target)?.optString("title") ?: book.optString("title"), keptEdits, brokenMusic.size, if (existing == null) "new" else "updated")
         }
     }
 
@@ -620,21 +654,25 @@ object BookFileImport {
         return "f-" + digest.joinToString("") { "%02x".format(it) }.take(24)
     }
 
-    private fun extract(zip: ZipFile, name: String, target: File): Pair<Long, String> {
+    private fun extract(zip: ZipFile, name: String, target: File, reuse: File? = null): Pair<Long, String> {
         target.parentFile?.mkdirs()
         val digest = MessageDigest.getInstance("SHA-256")
         var size = 0L
         zip.getInputStream(zip.getEntry(name)).use { source ->
-            target.outputStream().use { sink ->
+            (if (reuse == null) target.outputStream() else null).use { sink ->
                 val buffer = ByteArray(1 shl 16)
                 while (true) {
                     val read = source.read(buffer)
                     if (read < 0) break
                     digest.update(buffer, 0, read)
-                    sink.write(buffer, 0, read)
+                    sink?.write(buffer, 0, read)
                     size += read
                 }
             }
+        }
+        if (reuse != null) {
+            try { Os.link(reuse.absolutePath, target.absolutePath) }
+            catch (_: Exception) { reuse.copyTo(target); target.setLastModified(reuse.lastModified()) }
         }
         return size to digest.digest().joinToString("") { "%02x".format(it) }
     }

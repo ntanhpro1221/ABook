@@ -53,6 +53,8 @@ export interface BookSummary {
   paused?: "battery" | "listener" | null;
   /** Lượt chạy này tạm dừng được: bắt đầu bằng bản app có tính năng ấy (lượt cũ chạy mã cũ tới hết). */
   canPause?: boolean;
+  /** Nhật ký phụ của lượt chạy không ghi được (antivirus giữ file, đĩa đầy) và đã bỏ `lines` dòng: sách vẫn chạy bình thường. */
+  logLost?: { lines: number; lastError: string } | null;
   /** Đã bấm "Dừng": sách còn chạy tới chỗ dừng sạch kế (30 giây tới vài phút), chưa dừng hẳn - lúc ấy không tạm dừng hay làm tiếp được. */
   stopping?: boolean;
   /** Lượt chạy gần nhất chết vì sự cố (không phải bạn bấm Dừng): nguyên nhân do supervisor ghi, null khi không có. */
@@ -126,6 +128,8 @@ export interface Chapter {
 export interface VoiceProfile {
   key: string;
   preset: string;
+  /** Tên giọng để hiện (khoá `preset` gửi lại máy chủ). */
+  label?: string;
   tone: string;
 }
 
@@ -142,7 +146,7 @@ export interface CastMember {
 }
 
 export interface Cast {
-  narrator: { voice: string; lines: number; seconds: number; profile: VoiceProfile | null; pendingVoice?: { preset: string; gender: string } | null };
+  narrator: { voice: string; lines: number; seconds: number; profile: VoiceProfile | null; pendingVoice?: { preset: string; label?: string; gender: string } | null };
   characters: CastMember[];
   extras: CastMember[];
 }
@@ -201,6 +205,10 @@ export interface ScannedFile {
   tailCredits?: string[];
   /** Một file chứa nhiều tiêu đề "Chương N" (cả truyện trong một file): trình tạo sách ĐỀ XUẤT tách, không tự tách. */
   split?: { chapters: number; titles: string[]; preamble: boolean; titleLine?: string } | null;
+  /** Trang phụ của file sách (bìa, bản quyền, mục lục, mục rất ngắn - cùng luật với Nghe ngay): lý do. Chưa tích sẵn; người dùng tích lại được. */
+  matter?: string;
+  /** File dài hơn phần máy đọc để đếm: chữ, ký tự, thời lượng là ước tính (hiện "~"). */
+  estimated?: boolean;
 }
 
 /** Truyện kể ngôi thứ nhất? (abook/first_person.py) - cho câu hỏi "'Tôi' là ai?" ở bước chọn giọng. */
@@ -232,7 +240,7 @@ export interface ScanResult {
   /** Nhiều tập trong một nguồn (webui/volumes.py): máy ĐỀ XUẤT chia, null khi chỉ một tập. */
   volumes?: VolumeProposal | null;
   suggestedTitle: string;
-  totals: { chapters: number; words: number; audioSeconds: number };
+  totals: { chapters: number; words: number; audioSeconds: number; estimated?: boolean };
   /** Dự án đã làm từ chính những file này (so nội dung): `shared` file trùng, dự án ấy có `chapters` chương. */
   existing?: { id: string; title: string; statusLabel: string; shared: number; chapters: number }[];
 }
@@ -317,7 +325,7 @@ export interface AppInfo {
   /** App đóng gói có vỏ Tauri: Cài đặt có nút "Kiểm tra bản mới" (lần tự kiểm lúc mở app im lặng khi mất mạng). */
   canCheckUpdate?: boolean;
   /** App Windows đóng gói: Studio (thư viện + model làm sách) tải thêm đã cài chưa. null: bản dev (runtime cạnh mã). */
-  studio?: { installed: boolean; outdated?: boolean; damaged?: boolean } | null;
+  studio?: { installed: boolean; outdated?: boolean; damaged?: boolean; damagedSteps?: string[] } | null;
   /** Máy này làm được gì (shared/capabilities.ts): `/api/app?book=<mã>` điền thêm `workshop` / `link` của cuốn ấy. */
   capabilities?: Capabilities;
   libraryRoot: string;
@@ -353,6 +361,8 @@ export interface Preferences {
   bookTemplates?: BookTemplate[];
   /** Phím tắt một chữ cái (B, M, [ ], ?, J/K/1-9, O/R) - mặc định bật (shared/letterShortcuts.ts). */
   letterShortcuts?: boolean;
+  /** Tạm dừng rồi nghe tiếp thì lùi vài giây - mặc định bật, theo máy này (listen/sleep.ts rewindAfter). */
+  autoRewind?: boolean;
 }
 
 // Mã phiên do cửa sổ app gắn vào URL (?t=...). Giữ lại trong phiên để điều hướng nội bộ không làm mất nó.

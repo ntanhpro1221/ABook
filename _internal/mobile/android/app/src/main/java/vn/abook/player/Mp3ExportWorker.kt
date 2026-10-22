@@ -53,6 +53,7 @@ object Mp3Exports {
     private const val KEY_BOOK = "bookId"
     private const val KEY_TREE = "tree"
     private const val KEY_COVER = "cover"
+    private const val KEY_MUSIC = "music"
     private const val PREFS = "mp3_export"
 
     /** Giao diện đang mở thì nghe tin của việc nền ("mp3Export" của EbookLibrary): tiến độ, xong, dừng, lỗi. */
@@ -109,8 +110,9 @@ object Mp3Exports {
     // ---- việc nền ------------------------------------------------------------------------------------------------
 
     /** Bắt đầu xuất cuốn `bookId` vào thư mục `tree` (thay lượt đang chạy của cuốn ấy nếu có). Trả mã lượt - tin của lượt mang mã này. */
-    fun start(context: Context, bookId: String, tree: Uri, drawnCover: File?): String {
-        val data = Data.Builder().putString(KEY_BOOK, bookId).putString(KEY_TREE, tree.toString())
+    fun start(context: Context, bookId: String, tree: Uri, drawnCover: File?, chapterIds: List<Int>? = null, music: Boolean = false): String {
+        val data = Data.Builder().putString(KEY_BOOK, bookId).putString(KEY_TREE, tree.toString()).putBoolean(KEY_MUSIC, music)
+        chapterIds?.let { data.putIntArray("chapterIds", it.toIntArray()) }
         drawnCover?.let { data.putString(KEY_COVER, it.absolutePath) }
         val request = OneTimeWorkRequestBuilder<Mp3ExportWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
@@ -187,6 +189,9 @@ object Mp3Exports {
         data.getString(KEY_TREE)?.let(Uri::parse),
         data.getString(KEY_COVER)?.let(::File),
     )
+
+    /** Ô "Kèm nhạc nền" của lượt. */
+    internal fun music(data: Data): Boolean = data.getBoolean(KEY_MUSIC, false)
 }
 
 /** Thư mục đã chọn (SAF): mỗi bản xuất là một thư mục con mang tên sách. */
@@ -276,27 +281,79 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
         fun event() = JSONObject().put("bookId", bookId).put("run", run)
         var done = 0
         var retrying = false
+        var music: ExportMusic? = null
         try {
-            val plan = Mp3Export.plan(bookId, cover?.takeIf { it.isFile }?.readBytes())
-            title = plan.title
+            val base = Mp3Export.plan(bookId, cover?.takeIf { it.isFile }?.readBytes(), inputData.getIntArray("chapterIds")?.toList())
+            val snapshot = ExportHistory.snapshot(base)
+            title = base.title
             // Không vào được dịch vụ nền (Android 12+ khi app đã ở nền lúc việc bắt đầu): vẫn chạy, chỉ không có thông báo đứng.
-            runCatching { setForegroundAsync(Mp3Exports.foreground(context, id, bookId, title, 0, plan.chapters.size)).get() }
+            runCatching { setForegroundAsync(Mp3Exports.foreground(context, id, bookId, title, 0, base.chapters.size)).get() }
             val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Không mở được thư mục đã chọn - chọn lại nơi lưu")
+            val ids = base.chapters.map { it.id }
+            // "Kèm nhạc nền" (soát a99 V3): cùng bộ trộn, mức âm và ghi công với M4B; sách không có nhạc thì mỗi chương vẫn là MP3 như cũ.
+            music = ExportMusic.open(context, bookId, run, ids, Mp3Exports.music(inputData), { isStopped }) { index, count ->
+                Mp3Exports.emit(event().put("phase", "music-fetch").put("done", index).put("total", count))
+            }
+            val plan = base.with(music.mixer, music.guard)
             var shown = 0L
-            val result = Mp3Export.run(plan, Mp3Exports.destination(context, tree, treeName), progress = { written, total ->
-                done = written
-                Mp3Exports.emit(event().put("done", written).put("total", total))
+            fun report(written: Int, total: Int, fraction: Double) {
                 val now = System.currentTimeMillis()
                 if (now - shown > 700 || written == total) {
                     shown = now
-                    runCatching { setForegroundAsync(Mp3Exports.foreground(context, id, bookId, title, written, total)) }
+                    runCatching { setForegroundAsync(Mp3Exports.foreground(context, id, bookId, title, written, total, fraction = if (plan.music != null) fraction else null)) }
                 }
-            }, stopped = { isStopped })
+            }
+            val destination = Mp3Exports.destination(context, tree, treeName)
+            val result = if (plan.music == null) {
+                Mp3Export.run(plan, destination, progress = { written, total ->
+                    done = written
+                    Mp3Exports.emit(event().put("done", written).put("total", total))
+                    report(written, total, 0.0)
+                }, stopped = { isStopped })
+            } else {
+                val work = File(context.cacheDir, "mp3-export").apply { mkdirs() }.let { File(it, "$run.m4a") }
+                // Chỗ trống cho chương dài nhất: các chương làm lần lượt, file trung gian dùng lại.
+                val longest = plan.chapters.maxByOrNull { it.duration }!!
+                val musicBytes = music.music?.let { json ->
+                    val (rate, channels) = M4bAudio.layout(longest.file)
+                    BookMusic.pcmBytes(Store.bookDir(bookId), json, rate, channels)
+                } ?: 0L
+                val need = M4bExport.estimatedBytes(Mp3Export.Plan(plan.title, plan.narrator, listOf(longest), 1, plan.chaptersTotal, plan.cover, plan.coverName, plan.music, plan.guard), musicBytes)
+                if (work.parentFile!!.usableSpace < need) {
+                    throw Mp3Export.Refused("Điện thoại không đủ chỗ trống để trộn nhạc nền (cần khoảng ${need shr 20} MB) - dọn bớt rồi xuất lại")
+                }
+                var offset = 0
+                var phase: (JSONObject) -> JSONObject = { it }
+                val encoder = M4bAudio.encoder({ name, chapter, round, over ->
+                    phase = { event -> M4bExports.phase(event, name, offset + chapter, plan.chapters.size, round, over) }
+                    if (name == "peaks" || name == "reencode") Mp3Exports.emit(phase(event()))
+                }) { }
+                try {
+                    Mp3Export.runMixed(plan, destination, work, encoder, progress = { written, total ->
+                        done = written
+                        Mp3Exports.emit(phase(event().put("done", written).put("total", total)))
+                        report(written, total, written.toDouble() / total)
+                    }, stopped = { isStopped }, step = { finished, total, fraction ->
+                        offset = finished
+                        report(finished, total, (finished + fraction) / total)
+                    })
+                } finally {
+                    work.delete()
+                }
+            }
+            val missing = music.mixer?.missing(ids) ?: 0
+            ExportHistory.remember(Store.bookDir(bookId), "mp3", result.uri ?: result.folder, snapshot)
             // Nói chỗ lưu trước (người nghe cần biết đi đâu tìm), rồi mới tới lưu ý chương thiếu.
-            val partial = if (result.files < result.chaptersTotal) " Các chương chưa làm xong sẽ không có trong bản xuất." else ""
-            Mp3Exports.finished(context, bookId, "Đã xuất ${result.files} chương", "$title · lưu ở ${result.folder}.$partial")
-            Mp3Exports.emit(event().put("finished", true).put("files", result.files).put("chaptersTotal", result.chaptersTotal)
-                .put("folder", result.folder).put("uri", result.uri))
+            val selection = inputData.getIntArray("chapterIds") != null
+            val partial = if (!selection && result.files < result.chaptersTotal) " Các chương chưa làm xong sẽ không có trong bản xuất." else ""
+            val lost = if (missing > 0) " $missing đoạn thiếu nhạc vì chưa tải được bài." else ""
+            Mp3Exports.finished(context, bookId, "Đã xuất ${result.files} chương", "$title · lưu ở ${result.folder}.$partial$lost")
+            val finished = event().put("finished", true).put("files", result.files).put("chaptersTotal", result.chaptersTotal)
+                .put("selection", selection)
+                .put("folder", result.folder).put("uri", result.uri)
+            if (plan.music != null) finished.put("mixed", true)
+            if (missing > 0) finished.put("musicMissing", missing)
+            Mp3Exports.emit(finished)
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
             // Hệ thống dừng việc (không phải người dùng): WorkManager chạy lại, ghi đè các chương đã xuất.
@@ -317,6 +374,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             Mp3Exports.emit(event().put("error", message))
             return Result.failure()
         } finally {
+            music?.close()
             if (!retrying && (!isStopped || !Mp3Exports.stoppedBySystem(this))) cover?.delete()
         }
     }

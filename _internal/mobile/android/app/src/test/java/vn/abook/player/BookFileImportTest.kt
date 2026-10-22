@@ -36,10 +36,11 @@ class BookFileImportTest {
         MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
     /** Dựng một file .abook: `content` là {tên mục -> byte}; `book` là phần còn lại của book.json. */
-    private fun abook(name: String, version: Int, content: Map<String, ByteArray>, book: JSONObject = JSONObject()): File {
+    private fun abook(name: String, version: Int, content: Map<String, ByteArray>, book: JSONObject = JSONObject(), at: String? = null): File {
         val files = JSONObject()
         for ((entry, bytes) in content) files.put(entry, JSONObject().put("size", bytes.size).put("sha256", sha256(bytes)))
         book.put("package", JSONObject().put("format", "abook").put("version", version).put("files", files))
+        at?.let { book.getJSONObject("package").put("createdAt", it) }
         val target = File(work, name)
         ZipOutputStream(target.outputStream()).use { zip ->
             fun put(entry: String, bytes: ByteArray, stored: Boolean) {
@@ -60,6 +61,55 @@ class BookFileImportTest {
             for ((entry, bytes) in content) put(entry, bytes, stored = true)
         }
         return target
+    }
+
+    @Test
+    fun a_retake_with_the_same_chapter_count_updates_but_an_older_file_asks_first() {
+        fun revision(name: String, bytes: String, at: String): File {
+            val book = JSONObject().put("title", "Sách").put("chaptersAvailable", 2).put("chaptersTotal", 2)
+                .put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")).put(chapter(2, 0, "chapters/2.mp3")))
+            return abook(name, 1, mapOf("chapters/1.mp3" to "same".toByteArray(), "chapters/2.mp3" to bytes.toByteArray(),
+                "scripts/1.json" to "{}".toByteArray(), "scripts/2.json" to "{}".toByteArray()), book, at)
+        }
+        val old = revision("old.abook", "old", "2026-10-21T00:00:00Z")
+        val new = revision("new.abook", "new", "2026-10-22T00:00:00Z")
+        val first = BookFileImport.importFile(old)
+        val folder = Store.bookDir(first.id)
+        BookEdits.save(folder, BookEdits.empty().put("title", "Tên bạn đặt"))
+        Store.createRecord(first.id, "Bạn")
+        val record = Store.knownActiveRecord(first.id)
+        val unchanged = File(folder, "chapters/1.mp3").lastModified()
+        ExportHistory.remember(folder, "m4b", "old.m4b", ExportHistory.snapshot(folder))
+        val updated = BookFileImport.importFile(new)
+        assertEquals(first.id, updated.id)
+        assertEquals("updated", updated.how)
+        assertEquals("new", File(folder, "chapters/2.mp3").readText())
+        assertEquals(unchanged, File(folder, "chapters/1.mp3").lastModified())
+        assertEquals("Tên bạn đặt", BookEdits.load(folder).getString("title"))
+        assertEquals(record, Store.knownActiveRecord(first.id))
+        assertEquals(2, ExportHistory.view(folder).getJSONObject(0).getJSONArray("changed").getInt(0))
+        assertEquals("older", BookFileImport.importFile(old).how)
+        assertEquals("new", File(folder, "chapters/2.mp3").readText())
+        assertEquals("updated", BookFileImport.importFile(old, allowOlder = true).how)
+        assertEquals("old", File(folder, "chapters/2.mp3").readText())
+        assertEquals(record, Store.knownActiveRecord(first.id))
+    }
+
+    @Test
+    fun replacing_every_chapter_keeps_one_book_and_exporting_old_audio_later_is_still_older() {
+        fun revision(name: String, bytes: String, revision: String, exported: String): File {
+            val book = JSONObject().put("title", "Sách").put("sourceFingerprint", "same-source").put("audioUpdatedAt", revision)
+                .put("chaptersAvailable", 1).put("chaptersTotal", 1).put("chapters", JSONArray().put(chapter(1, 0, "chapters/1.mp3")))
+            return abook(name, 1, mapOf("chapters/1.mp3" to bytes.toByteArray(), "scripts/1.json" to "{}".toByteArray()), book, exported)
+        }
+        val old = revision("old-all.abook", "old", "2026-10-21T00:00:00Z", "2026-10-23T00:00:00Z")
+        val new = revision("new-all.abook", "new", "2026-10-22T00:00:00Z", "2026-10-22T00:00:00Z")
+        val first = BookFileImport.importFile(old)
+        val updated = BookFileImport.importFile(new)
+        assertEquals(first.id, updated.id)
+        assertEquals("updated", updated.how)
+        assertEquals("new", File(Store.bookDir(first.id), "chapters/1.mp3").readText())
+        assertEquals("older", BookFileImport.importFile(old).how)
     }
 
     @Test
@@ -663,7 +713,7 @@ class BookFileImportTest {
     fun the_local_cover_wins_over_the_files_cover() {
         val first = BookFileImport.importFile(editedBook("v1.abook", version = 1))
         val dir = dirOf(first)
-        BookEdits.setCover(dir, otherJpeg, 77L, FakeCodec("#aabbcc"))
+        BookEdits.setCover(dir, otherJpeg, FakeCodec("#aabbcc"))
 
         BookFileImport.importFile(editedBook("v4.abook", edits = BookEdits.empty().put("cover", cover("#112233", 5L)), cover = jpeg))
 

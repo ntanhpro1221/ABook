@@ -198,7 +198,8 @@ function RemoveImportedHost() {
 interface OpenedBook {
   eventId?: string;
   id: string | null;
-  how?: "new" | "existing" | "updated" | "repaired" | "project" | "studio";
+  how?: "new" | "existing" | "updated" | "repaired" | "project" | "studio" | "older" | "conflict";
+  source?: string;
   /** File `.abookproj`: số file nguồn chương không có trong gói (đã bị dời hay xoá ở máy gói). */
   missingSources?: number;
   /** File `.abook` phiên bản 4 mang thay đổi của người nghe (lớp sửa - docs/EDITING.md): số thay đổi. Cuốn là dự án của
@@ -219,7 +220,9 @@ interface OpenedBook {
 const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, [string, string | undefined]> = {
   new: ["Đã thêm sách vào thư viện", "Sách đã chép vào thư viện - xoá file gốc cũng không sao."],
   existing: ["Cuốn này đã có trong thư viện", undefined],
-  updated: ["Đã cập nhật lên bản nhiều chương hơn", "Chỗ đang nghe, dấu trang vẫn giữ nguyên."],
+  updated: ["Đã cập nhật bản sách", "Chỗ đang nghe, dấu trang và chỉnh sửa của bạn vẫn giữ nguyên."],
+  older: ["File này cũ hơn bản bạn đang có", "Bạn muốn thay bản đang có bằng file này?"],
+  conflict: ["File này có bản thu khác", "Chưa rõ bản nào mới hơn. Bạn muốn thay bản đang có bằng file này?"],
   repaired: ["Đã chép bù các file bị mất của cuốn này", "Chỗ đang nghe, dấu trang vẫn giữ nguyên."],
   project: ["Đây là sách do Studio máy này làm", "Mở đúng cuốn ấy, không chép thêm bản nào."],
   studio: ["Đã mở dự án vào Studio", "Dự án đã chép vào thư viện Studio - xoá file gốc cũng không sao."],
@@ -238,6 +241,16 @@ function useOpenedBook() {
         return false;
       }
       if (!result.id) return false;
+      if (result.how === "older" || result.how === "conflict") {
+        const [title, description] = OPENED_SAID[result.how];
+        toast.warning(title, { description, duration: Infinity,
+          action: { label: "Thay bằng file này", onClick: () => {
+            void api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: { path: result.source, allowOlder: true } })
+              .then((next) => { void client.invalidateQueries({ queryKey: ["listen"] }); navigate(`/book/${next.id}`); toast.success("Đã thay bản sách, giữ chỉnh sửa và chỗ nghe của bạn"); })
+              .catch((error: Error) => toast.error("Chưa thay được sách", { description: error.message }));
+          } }, cancel: { label: "Giữ bản đang có", onClick: () => undefined } });
+        return true;
+      }
       if (result.how === "studio") {
         void client.invalidateQueries(openedLibrary(result));
         navigate(`/studio/${result.id}`);
@@ -568,6 +581,7 @@ export function App() {
           extendMinutes={preferences?.sleepExtendMinutes ?? info.sleepExtendMinutes}
           safetyStopHours={preferences?.safetyStopHours ?? info.safetyStopHours}
           sleepSchedule={preferences ? preferences.sleepSchedule : info.sleepSchedule}
+          autoRewind={preferences?.autoRewind !== false}
         >
           <ClipBridge>
             <HashRouter>
@@ -599,6 +613,13 @@ export function App() {
                               <>
                                 {/* Sách chỉ có chữ (EPUB / TXT) thành sách nói: giọng của máy đọc cả cuốn rồi ghép file. */}
                                 {book.stage === "text" && <AudiobookMenuItem book={book} />}
+                                {/* Sách nhận từ file `.abook` có audio: mang sang trình phát khác như trên điện thoại (soát a99 V4). */}
+                                {book.stage !== "text" && (
+                                  <>
+                                    <Mp3MenuItem book={book} />
+                                    <M4bMenuItem book={book} />
+                                  </>
+                                )}
                                 <RemoveImportedMenuItem book={book} />
                               </>
                             )

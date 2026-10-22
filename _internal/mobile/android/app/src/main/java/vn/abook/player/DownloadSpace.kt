@@ -11,10 +11,10 @@ object DownloadSpace {
     const val MARGIN = 100L * 1024 * 1024
 
     /** Byte còn phải tải của một file cỡ `size` (0 = không biết cỡ, file nhỏ: không tính) đích `target`. */
-    fun stillNeeded(size: Long, target: File?): Long {
+    fun stillNeeded(size: Long, target: File?, digest: String = ""): Long {
         if (size <= 0) return 0
         if (target == null) return size
-        if (target.isFile && target.length() == size) return 0
+        if (target.isFile && target.length() == size && (digest.isEmpty() || AudioRevision.matches(target, size, digest))) return 0
         // Chỉ phần dở còn biết thuộc phiên bản nào mới được tải tiếp (PartResume), nên chỉ phần ấy được trừ.
         val have = PartResume.point(File(target.path + ".part"), size).first
         return (size - have).coerceAtLeast(0)

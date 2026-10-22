@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Button, LiveText, Progress, useFocusFollows } from "@/shared/ui";
+import { Button, Dialog, LiveText, Progress, useFocusFollows } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { api } from "@/studio/api";
@@ -20,6 +20,7 @@ import {
   lowerFirst,
   moduleAdvice,
   refreshModuleSizes,
+  removeAsk,
   tierVoicePrefix,
   VIENEU_COPY,
   vieneuLabel,
@@ -29,6 +30,7 @@ import {
   type ModuleCopy,
   type VieneuChoiceId,
   type VieneuStatus,
+  type VoiceUse,
 } from "./vieneuModule";
 
 const ONLINE_VOICE = "edge:vi-VN-HoaiMyNeural";
@@ -45,6 +47,8 @@ export interface VieneuBackend {
   remove?(choice: VieneuChoiceId): Promise<VieneuStatus>;
   /** Huỷ lần tải đang chạy: phần đã tải giữ để lần sau làm tiếp. */
   cancel?(): Promise<VieneuStatus>;
+  /** Cuốn nào trong thư viện máy này đang dùng giọng của mô-đun: nút "Gỡ" nói ra trước khi hỏi. Không có (điện thoại: không có sách dùng giọng này) thì chỉ hỏi ngắn. */
+  use?(): Promise<VoiceUse>;
   voices(): Promise<ReadAloudVoice[]>;
 }
 
@@ -64,6 +68,7 @@ export const desktopSupertonic: VieneuBackend = {
   measure: () => api<VieneuStatus>("/api/readaloud/supertonic/measure", { method: "POST", body: {} }),
   remove: (choice) => api<VieneuStatus>("/api/readaloud/supertonic/remove", { method: "POST", body: { choice } }),
   cancel: () => api<VieneuStatus>("/api/readaloud/supertonic/cancel", { method: "POST", body: {} }),
+  use: () => api<VoiceUse>("/api/studio/supertonic/use"),
 };
 
 /** Hai thẻ giọng trên máy của Cài đặt (máy tính và điện thoại) + một dòng khuyên tải cái nào (moduleAdvice): chỉ thẻ được khuyên đánh dấu sẵn.
@@ -142,6 +147,8 @@ export function VieneuModuleCard({
   const { status, working } = useModuleStatus(backend, copy, onChanged);
   const [chosen, setChosen] = useState<VieneuChoiceId[] | null>(null);
   const [busy, setBusy] = useState(false);
+  // "Gỡ" một giọng đã tải hỏi trước (soát a94 F2): `use` = cuốn đang dùng nó (undefined: đang hỏi máy chủ; null: không biết).
+  const [asking, setAsking] = useState<{ id: VieneuChoiceId; label: string; use: VoiceUse | null | undefined } | null>(null);
   // Trong lúc tải: % không bao giờ lùi (một lần nối lại mà máy chủ tải lại từ đầu file làm số nhảy lùi) và cỡ mỗi lựa chọn đứng yên ở cỡ lúc bấm tải
   // (số "còn thiếu" của lựa chọn co lại mỗi khi một phần dùng chung tải xong: 313 -> 297 MB giữa chừng).
   const peak = useRef(0);
@@ -187,6 +194,17 @@ export function VieneuModuleCard({
     }
     switchVoices(tierVoicePrefix(suggestion.tier), target);
     toast.success(suggestion.switchTo === "nano" ? "Đã chuyển sang giọng VieNeu Nano" : "Đã chuyển sang giọng trực tuyến");
+  };
+  // Bản tăng tốc chỉ là bản chạy nhanh hơn của cùng giọng: sách không cần nó, nên không hỏi cuốn nào.
+  const ask = (id: VieneuChoiceId, label: string) => {
+    const holdsVoices = id !== "fast" && id !== "supertonic_fast" && backend.use !== undefined;
+    setAsking({ id, label, use: holdsVoices ? undefined : null });
+    if (holdsVoices) {
+      backend.use!().then(
+        (use) => setAsking((now) => (now?.id === id ? { ...now, use } : now)),
+        () => setAsking((now) => (now?.id === id ? { ...now, use: null } : now)),
+      );
+    }
   };
   const toggle = (id: VieneuChoiceId, on: boolean) => setChosen(toggleChoice(status, picked, id, on));
   const failed = status.state === "error";
@@ -245,7 +263,7 @@ export function VieneuModuleCard({
                   {choice.installed ? "Đã có" : (downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) > 0 ? formatSize(downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) : "Đã có sẵn"}
                 </span>
                 {choice.removable && backend.remove && canPick && (
-                  <Button size="sm" variant="ghost" className="-my-1 shrink-0" loading={busy} onClick={(event) => { event.preventDefault(); void remove(choice.id); }}>
+                  <Button size="sm" variant="ghost" className="-my-1 shrink-0" loading={busy} onClick={(event) => { event.preventDefault(); if (choice.installed) ask(choice.id, choice.label); else void remove(choice.id); }}>
                     {choice.installed ? "Gỡ" : "Xoá phần đã tải"}
                   </Button>
                 )}
@@ -310,6 +328,29 @@ export function VieneuModuleCard({
           )}
         </div>
       )}
+      <Dialog
+        open={asking !== null}
+        onOpenChange={(open) => !open && setAsking(null)}
+        title={`Gỡ “${asking?.label ?? ""}” khỏi máy này?`}
+        description={asking?.use === undefined ? "Đang xem cuốn nào còn dùng giọng này…" : removeAsk(asking?.use ?? null)}
+      >
+        <div className="dialog-actions">
+          <Button variant="ghost" onClick={() => setAsking(null)}>
+            Giữ lại
+          </Button>
+          <Button
+            variant="danger"
+            disabled={asking?.use === undefined}
+            onClick={() => {
+              const id = asking!.id;
+              setAsking(null);
+              void remove(id);
+            }}
+          >
+            Gỡ giọng
+          </Button>
+        </div>
+      </Dialog>
     </div>
   );
 }

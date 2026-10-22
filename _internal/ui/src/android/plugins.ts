@@ -1,5 +1,5 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
-import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
+import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession, SeriesLink } from "@/listen/model";
 import type { PreparePlan, PrepareStatus } from "@/listen/prepareAhead";
 import type { MusicCredit } from "@/listen/musicBed";
 import type { RemoteSleep, RemoteSleepCommand } from "@/listen/sleep";
@@ -55,7 +55,8 @@ export interface NativeState {
 export type BedtimeSession = NightSession;
 
 export interface EbookPlayerPlugin {
-  updateMetadata(options: { bookId: string; title: string; narrator: string; chapters: { id: number; title: string }[] }): Promise<NativeState>;
+  updateMetadata(options: { bookId: string; title: string; narrator: string; chapters: { id: number; title: string }[];
+    queue?: { id: number; title: string; file: string; duration: number; text?: string }[] }): Promise<NativeState>;
   load(options: {
     bookId: string;
     bookTitle: string;
@@ -85,6 +86,8 @@ export interface EbookPlayerPlugin {
   setSleep(options: { mode: "off" | "minutes" | "chapter"; minutes?: number }): Promise<NativeState>;
   extendSleep(options: { minutes?: number }): Promise<NativeState>;
   configure(options: {
+    /** Giao diện sáng/tối/theo máy: native chỉ NHỚ (ListenPrefs) để giao diện lấy lại khi localStorage của WebView mất (settings.ts `syncSettings`). */
+    theme?: "system" | "light" | "dark";
     sleepExtendMinutes?: number;
     sleepFadeSeconds?: number;
     shakeToExtend?: boolean;
@@ -96,6 +99,8 @@ export interface EbookPlayerPlugin {
     autoRewind?: boolean;
     safetyStopHours?: number;
     schedule?: { from: string; to: string; minutes: number } | null;
+    /** Dấu giờ (ms) lần đổi cuối trong Cài đặt; native nhớ cùng các tuỳ chọn trên (settings.ts `syncSettings`). */
+    settingsStamp?: number;
     /** Máy tự chọn nhạc nền cho sách chỉ có chữ chưa chọn nhạc (Cài đặt > Nhạc nền). */
     autoMusic?: boolean;
     /** Giọng đọc của "Nghe ngay" (mã giọng của ReadAloud.voices); "" = giọng mặc định của máy. */
@@ -113,12 +118,19 @@ export interface EbookPlayerPlugin {
   requestNotificationAccess(): Promise<{ state: "granted" | "off" }>;
   /** Mở trang thông báo của ABook trong Cài đặt Android. */
   openNotificationSettings(): Promise<void>;
+  /** Tuỳ chọn nghe native đã nhớ (ListenPrefs.stored; kèm `settingsStamp`): lúc mở app giao diện lấy làm chuẩn khi bản localStorage cũ hơn. */
+  listenPrefs(): Promise<{ prefs: Record<string, unknown> }>;
   lastNight(): Promise<{ session: BedtimeSession | null }>;
   dismissLastNight(): Promise<void>;
   addListener(event: "state", handler: (state: NativeState) => void): Promise<PluginListenerHandle>;
 }
 
 export interface RemoteBook {
+  audioVersion?: string;
+  localAudioVersion?: string;
+  /** Dấu phần mô tả (tên, tác giả, người đọc, liên kết bộ, tên chương - sync.manifest `metaVersion`) trên máy tính và trong bản đã tải. */
+  metaVersion?: string;
+  localMetaVersion?: string;
   id: string;
   title: string;
   narrator: string;
@@ -201,6 +213,7 @@ export interface PeerLibrary {
 }
 
 export interface ManifestChapter {
+  sha256?: string;
   id: number;
   index: number;
   title: string;
@@ -218,6 +231,7 @@ export interface ManifestChapter {
   text?: string;
   /** Dòng người nghe bỏ khỏi phần đọc (lớp sửa `skip`, đã áp vào book.json - BookEdits.applyManifest). */
   skip?: string[];
+  wordsVersion?: string;
 }
 
 /** Máy tính đã ghép có Studio: `key` "" là máy tính chính, còn lại là mã máy ghép thêm (Peers.kt). */
@@ -232,6 +246,7 @@ export interface StudioComputer {
 }
 
 export interface LocalBook {
+  wordsVersion?: string;
   format: string;
   id: string;
   title: string;
@@ -246,6 +261,8 @@ export interface LocalBook {
   chapters: ManifestChapter[];
   /** File cả bộ (.abook phiên bản 3): các phần theo thứ tự. */
   parts?: BookPart[];
+  /** Phần nối tiếp của "Làm tiếp cuốn này": mã phần đầu + thứ tự phần (sync.manifest `series`); phần đầu và sách lẻ: null. */
+  series?: SeriesLink | null;
   samples: string[];
   /** Ảnh bìa thật tải về cùng gói (webui/covers.py), hoặc null. */
   cover?: { file: string; version: number; color: string; width: number; height: number } | null;
@@ -289,6 +306,7 @@ export interface DownloadEvent {
 
 /** Tin của một lượt "Xuất MP3" (Mp3ExportWorker.kt): tiến độ (`done`/`total`), xong (`finished`), dừng (`stopped`) hay lỗi (`error`). */
 export interface Mp3ExportEvent {
+  selection?: boolean;
   bookId: string;
   run: string;
   done?: number;
@@ -301,6 +319,15 @@ export interface Mp3ExportEvent {
   uri?: string;
   stopped?: boolean;
   error?: string;
+  /** "Kèm nhạc nền" (soát a99 V3): pha như `M4bExportEvent` (tải bài / trộn / kiểm đỉnh / mã hoá lại); `mixed`: chương ra file .m4a đã trộn nhạc; `musicMissing`: đoạn thiếu nhạc. */
+  phase?: "music-fetch" | "music" | "peaks" | "reencode";
+  chapter?: number;
+  chapters?: number;
+  peakRound?: number;
+  peakOver?: number;
+  percent?: number;
+  mixed?: boolean;
+  musicMissing?: number;
 }
 
 /** Tin của một lượt "Xuất M4B" (M4bExportWorker.kt): tiến độ (`done`/`total` chương, `percent` cả cuốn), xong (`finished`), dừng (`stopped`) hay lỗi. */
@@ -464,6 +491,9 @@ export interface EbookLibraryPlugin {
   streamableBooks(): Promise<{ books: LocalBook[] }>;
   book(options: { id: string }): Promise<LocalBook>;
   readText(options: { id: string; path: string }): Promise<{ text: string }>;
+  /** Văn bản của nhiều file trong gói một lượt (ô "Tìm trong sách"): theo thứ tự `paths`, null cho file không có; chữ quá nhiều thì trả phần đầu
+   *  (ít mục hơn `paths`) - hỏi lại phần còn lại. */
+  readTexts(options: { id: string; paths: string[] }): Promise<{ texts: (string | null)[] }>;
   /** Sửa sách "áp ngay" trên điện thoại (LocalStudio.kt): cùng đường dẫn `/api/books/<mã>/...`, cùng JSON như máy chủ máy tính
    *  (docs/EDITING.md); `status` >= 400 là lỗi, `body.error` là câu cho người dùng (android/localStudio.ts đổi thành ApiError). */
   studio(options: { method: string; path: string; body?: unknown }): Promise<{ status: number; body: unknown }>;
@@ -486,7 +516,7 @@ export interface EbookLibraryPlugin {
   /** "Xuất MP3 để nghe ở app khác" (Mp3Export.kt): thư mục MP3 như máy tính, chạy nền. Lần đầu (hay `pick`) hỏi chỗ lưu bằng bộ
    *  chọn thư mục của hệ thống rồi nhớ lại. `cover`: bìa tự vẽ (data URL PNG) khi sách không có bìa. Tiến độ / kết quả: sự kiện
    *  "mp3Export" mang cùng `run`. `started: false` khi không chọn thư mục. */
-  exportMp3(options: { bookId: string; cover?: string; pick?: boolean }): Promise<{ started: boolean; run?: string; folder?: string; chapters?: number }>;
+  exportMp3(options: { bookId: string; cover?: string; pick?: boolean; chapterIds?: number[]; music?: boolean }): Promise<{ started: boolean; run?: string; folder?: string; chapters?: number }>;
   /** "Mở thư mục" ở thông báo xuất xong: mở thư mục bản xuất bằng app Tệp. `opened: false` khi máy không có app nào mở được. */
   openFolder(options: { uri: string }): Promise<{ opened: boolean }>;
   addListener(event: "mp3Export", handler: (event: Mp3ExportEvent) => void): Promise<PluginListenerHandle>;
@@ -516,8 +546,9 @@ export interface EbookLibraryPlugin {
   /** Đưa cuốn vừa xoá về chỗ cũ; từ chối khi quá hạn (đã xoá hẳn) hay chỗ cũ đã có cuốn cùng mã. */
   undoDelete(options: { token: string }): Promise<void>;
   /** `bytes`: cả thư viện; `books`: cỡ từng cuốn trên máy (mã thư mục = mã cuốn). */
-  storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number }[] }>;
+  storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number; title?: string }[] }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor }): Promise<ListeningState>;
+  saveReading(options: { id: string; chapterId: number; index: number; at?: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor; quote?: string; record?: string }): Promise<ListeningState>;
   setChapterDone(options: { id: string; chapterId: number; done: boolean }): Promise<ListeningState>;
   setFinished(options: { id: string; finished: boolean }): Promise<ListeningState>;
   setRate(options: { id: string; rate: number }): Promise<void>;
@@ -536,6 +567,8 @@ export interface EbookLibraryPlugin {
   addListener(event: "download", handler: (event: DownloadEvent) => void): Promise<PluginListenerHandle>;
   /** Bộ chọn file của hệ thống để mở một file sách .abook; kết quả về qua sự kiện "import". */
   pickBook(): Promise<{ picked: boolean }>;
+  confirmOlderImport(options: { source: string }): Promise<void>;
+  exportHistory(options: { bookId: string }): Promise<{ exports: { kind: string; target: string; changed: number[] }[] }>;
   addListener(event: "import", handler: (event: ImportEvent) => void): Promise<PluginListenerHandle>;
   /** App khác gửi tới một file EPUB / DOCX / PDF / TXT ("Mở bằng", chia sẻ): native đã chép nó như `pickSource` - giao diện mở bước
    *  xem trước của "Thêm sách từ file…". `error`: không chép được, câu cho người dùng. */
@@ -574,6 +607,8 @@ export interface EbookLibraryPlugin {
 
 /** Kết quả mở một file sách (.abook): mã sách vừa vào Thư viện, hay lý do không nhận. */
 export interface ImportEvent {
+  how?: string;
+  source?: string;
   bookId?: string;
   title?: string;
   /** Cuốn đã có trên máy và đã có thay đổi của người nghe: số thay đổi được giữ nguyên (BookFileImport.Imported.keptEdits). */

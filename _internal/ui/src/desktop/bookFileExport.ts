@@ -323,3 +323,9 @@ function allExportJobs(): Promise<AllExportJobs> {
   });
   return asking;
 }
+
+/** Mục xuất trong menu sách có việc để làm không? File sách (`.abook`) mang cả chữ của chương chưa có audio (bookfile._add_texts), nên sách chỉ có chữ
+ *  vẫn xuất được; MP3 / M4B / sách nói cần chương đã nghe được. */
+export function exportable(kind: "bookfile" | "m4b" | "mp3" | "audiobook" | "projectfile", book: { chaptersAvailable: number; chaptersTotal: number }): boolean {
+  return kind === "bookfile" ? book.chaptersAvailable > 0 || book.chaptersTotal > 0 : book.chaptersAvailable > 0;
+}

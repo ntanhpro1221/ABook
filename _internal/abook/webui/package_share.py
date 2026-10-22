@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from ..io_utils import atomic_write_json
-from . import book_edits, book_wishes, covers, edits_inbox, listen_view, music_plan, packages, store
+from . import audio_revision, book_edits, book_wishes, covers, edits_inbox, listen_view, music_plan, packages, store
 
 
 _WHAT = {"title": "Tên sách", "author": "Tác giả", "cover": "Ảnh bìa", "character": "Tên nhân vật", "chapter": "Tên chương", "reading": "Cách đọc",
@@ -46,7 +46,10 @@ def library_entry(path: Path, key: str, state: dict[str, Any]) -> dict[str, Any]
     entry["series"] = None
     entry["producing"] = False  # cuốn nhập từ file không có Studio nào đang làm nó
     # Cỡ khi tải về, đúng phần điện thoại sẽ tải (soát a68 lỗi 7; dự án: sync.SyncApp.library_view).
-    entry["bytes"] = download_bytes(manifest(path, key))
+    shared_book = manifest(path, key)
+    entry["bytes"] = download_bytes(shared_book)
+    entry["audioVersion"] = shared_book["audioVersion"]
+    entry["metaVersion"] = shared_book["metaVersion"]
     if view.get("author"):
         entry["author"] = view["author"]  # tìm và sắp theo tác giả ở máy kia cần nó; dự án Studio không có tác giả nên không mang khoá
     meta = _cover_meta(path, packages.edited_manifest(path))
@@ -63,6 +66,10 @@ def _chapter(path: Path, chapter: dict[str, Any]) -> dict[str, Any]:
     audio = packages.chapter_file(path, chapter.get("id"))
     item["available"] = audio is not None
     item["size"] = audio.stat().st_size if audio is not None else 0
+    item["sha256"] = audio_revision.describe(audio)["sha256"] if audio is not None else ""
+    # Cùng dạng chương với sách đang làm (listen_view.chapters): gói không đổi audio/mốc chữ tại chỗ nên dấu là băm file, mốc chữ cố định.
+    item["audioVersion"] = item["sha256"]
+    item.setdefault("wordsVersion", "")
     if audio is not None:
         item["file"] = chapter["file"]
     elif chapter.get("text"):
@@ -100,10 +107,10 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
             info["size"] = file.stat().st_size  # cỡ từng file bài để bên tải kiểm (như sync.manifest)
     # Phiên bản đổi khi lớp sách (phiên bản lúc đóng gói), danh sách file có thật, hay lớp sửa đổi: máy đã tải thấy "có cập nhật".
     version = hashlib.sha256(json.dumps(
-        [book.get("version"), [(chapter["id"], chapter["size"]) for chapter in chapters],
+        [book.get("version"), [(chapter["id"], chapter["sha256"]) for chapter in chapters],
          hashlib.sha256(book_edits.dump(edits)).hexdigest() if not book_edits.is_empty(edits) else ""],
         sort_keys=True).encode()).hexdigest()[:16]
-    return {
+    result = {
         "format": listen_view.FORMAT,
         "id": key,
         "title": view["title"],
@@ -115,12 +122,17 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
         "complete": view["complete"],
         "series": None,
         "version": version,
+        "audioVersion": audio_revision.version(chapters),
+        "audioUpdatedAt": book.get("audioUpdatedAt", ""),
+        "sourceFingerprint": book.get("sourceFingerprint", ""),
         "chapters": chapters,
         "cast": "cast.json",
         "samples": samples,
         "cover": {**meta, "file": covers.COVER_FILE} if meta else None,
         **({"music": music} if music else {}),
     }
+    result["metaVersion"] = listen_view.metadata_version(result)
+    return result
 
 
 def _shared_cast(path: Path) -> bytes:
@@ -189,6 +201,10 @@ def receive_edits(path: Path, device: dict[str, Any], package: Path) -> dict[str
     before = book_edits.load(path)
     # Cái người gửi đã gửi trước đó rồi bỏ đi: gỡ ở đây, chỉ khi giá trị ở đây còn đúng như họ đã gửi (không đè bản chính máy này đã đổi).
     withdrawn = book_edits.apply_removed(path, removed) if removed else 0
+    # Thao tác chờ Studio người gửi đã gửi rồi hoàn tác: cuốn này giữ chúng trong lớp sửa của chính nó, mốc của người gửi còn nguyên (`adopt` không đóng dấu lại).
+    retracted = sum(len(book_wishes.withdraw(path, section, [key], at))
+                    for section, entries in (removed.get("wishes") or {}).items() for key, at in entries.items()
+                    if book_wishes.made_at(path, section, [key], at))
     scratch = Path(tempfile.mkdtemp(prefix=".edits_in_", dir=path))
     try:
         if tracks:
@@ -206,7 +222,7 @@ def receive_edits(path: Path, device: dict[str, Any], package: Path) -> dict[str
     # Chỉ đếm cái thật sự đổi ở đây: máy kia gửi lại cái máy này đã có (cùng file sách, vừa ghép) thì không phải "N thay đổi đã áp" (soát a70).
     change = book_edits.delta(before, book_edits.load(path))
     return {"applied": book_edits.count_applied(change) + withdrawn, "skipped": 0, "music": False, "requests": 0,
-            "waiting": 0, "studio": book_edits.count_wishes(change), "skippedWishes": 0, "conflicts": conflicts}
+            "waiting": 0, "studio": book_edits.count_wishes(change), "skippedWishes": 0, "withdrawn": retracted, "conflicts": conflicts}
 
 
 # ---- bản của máy này bị bản đến sau thay: báo cụ thể, đặt lại được ------------------------------------------------------------

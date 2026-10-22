@@ -154,6 +154,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("POST", _BOOK + r"/music-export/cancel"),
     ("GET", r"/api/export-jobs"),
     ("GET", _BOOK + r"/export-size"),
+    ("GET", _BOOK + r"/export-history"),
     ("GET", _BOOK + r"/export-music"),  # ô "Kèm nhạc nền" của hộp Xuất (chỉ đọc)
     ("GET", _BOOK + r"/review"),
     ("POST", _BOOK + r"/review"),

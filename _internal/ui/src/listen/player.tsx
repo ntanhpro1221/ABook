@@ -18,12 +18,14 @@ import { leftWithPeer, watchUntilBack } from "./peerBack";
 import {
   DEFAULT_EXTEND_MINUTES,
   DEFAULT_FADE_SECONDS,
+  cleanSleepSchedule,
   fadeGain,
   rewindAfter,
   sleepExtended,
   sleepFrom,
   type SleepMode,
   type SleepRequest,
+  type SleepSchedule,
 } from "./sleep";
 import { VOICE_CHANGED_EVENT, type ReadAloudVoice, type SpeechTrack } from "./readAloud";
 import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, onVoiceChosen, ONLINE_NOTICE, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
@@ -70,12 +72,7 @@ export interface WordTarget {
 /** "review": nghe kiểm trong Studio - không ghi đè chỗ đang nghe dở của người nghe. */
 export type Purpose = "listen" | "review";
 
-/** Lịch đêm: bấm nghe trong khung giờ này thì tự hẹn giờ ngủ (giờ dạng "22:00", khung có thể qua nửa đêm). */
-export interface SleepSchedule {
-  from: string;
-  to: string;
-  minutes: number;
-}
+export type { SleepSchedule };
 
 export interface PlayerOptions {
   fadeSeconds: number;
@@ -83,6 +80,8 @@ export interface PlayerOptions {
   /** Phát liên tục chừng này giờ mà không ai chạm máy thì tự nhỏ dần rồi dừng (0 = tắt) - lưới cho người ngủ quên. */
   safetyStopHours: number;
   schedule: SleepSchedule | null;
+  /** Tạm dừng rồi nghe tiếp thì lùi lại một chút (`rewindAfter`). Tuỳ chọn theo máy; điện thoại có công tắc riêng ở lõi native. */
+  autoRewind: boolean;
 }
 
 function minutesOf(clock: string): number {
@@ -91,7 +90,9 @@ function minutesOf(clock: string): number {
 }
 
 /** Đang trong khung giờ của lịch? Trả về khoá của đêm ấy (ngày bắt đầu khung) để biết người dùng đã tắt nó chưa. */
-export function scheduleWindow(schedule: SleepSchedule | null, now = new Date()): string | null {
+export function scheduleWindow(raw: SleepSchedule | null, now = new Date()): string | null {
+  // Lịch sai cấu trúc (file tuỳ chọn sửa tay, bản app khác ghi) coi như chưa có lịch thay vì ném lỗi lúc bấm nghe (soát a100 V2).
+  const schedule = cleanSleepSchedule(raw);
   if (!schedule) return null;
   const from = minutesOf(schedule.from);
   const to = minutesOf(schedule.to);
@@ -240,6 +241,7 @@ export function PlayerProvider({
   extendMinutes = DEFAULT_EXTEND_MINUTES,
   safetyStopHours = 2,
   sleepSchedule = null,
+  autoRewind = true,
 }: {
   engine: AudioEngine;
   children: ReactNode;
@@ -250,6 +252,7 @@ export function PlayerProvider({
   extendMinutes?: number;
   safetyStopHours?: number;
   sleepSchedule?: SleepSchedule | null;
+  autoRewind?: boolean;
 }) {
   const source = useSource();
   const client = useQueryClient();
@@ -261,9 +264,9 @@ export function PlayerProvider({
   );
   const scheduleKey = sleepSchedule ? `${sleepSchedule.from}-${sleepSchedule.to}-${sleepSchedule.minutes}` : "";
   const options = useMemo<PlayerOptions>(
-    () => ({ fadeSeconds, extendMinutes, safetyStopHours, schedule: sleepSchedule }),
+    () => ({ fadeSeconds, extendMinutes, safetyStopHours, schedule: sleepSchedule, autoRewind }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fadeSeconds, extendMinutes, safetyStopHours, scheduleKey],
+    [fadeSeconds, extendMinutes, safetyStopHours, scheduleKey, autoRewind],
   );
 
   const [track, setTrack] = useState<Track | null>(null);
@@ -432,7 +435,7 @@ export function PlayerProvider({
   const speechOf = useCallback((bookId: string, chapter: ListenChapter): SpeechTrack => {
     const query = chapterScriptQuery(source, bookId, chapter);
     return {
-      script: () => client.fetchQuery(query),
+      script: () => client.fetchQuery({ ...query, staleTime: 0 }),
       voice: () => chosenVoice(bookId),
       serial: () => runsOnThisMachine(voicesRef.current ? resolveVoice(voicesRef.current, chosenVoice(bookId)) : undefined),
       bookId,
@@ -443,7 +446,9 @@ export function PlayerProvider({
         if (!next || next.state !== "text") return [];
         return (await client.fetchQuery(chapterScriptQuery(source, bookId, next))).segments.map((segment) => segment.text);
       },
-      onScript: (script) => client.setQueryData(query.queryKey, script),
+      onScript: (script) => {
+        if (refs.current.track?.bookId === bookId && refs.current.track.chapterId === chapter.id) client.setQueryData(["playing-script", bookId], script);
+      },
     };
   }, [client, showNotice, source]);
 
@@ -498,6 +503,8 @@ export function PlayerProvider({
     // Sang chương khác của cùng cuốn, cùng hồ sơ (Trước / Sau, hết chương): chỗ mới CHƯA được lưu - lưu khi nguồn báo độ dài ("duration"),
     // kể cả khi đang dừng. Nạp cuốn / hồ sơ khác ở đúng chỗ đã lưu thì không: lưu lại là đóng dấu giờ mới lên chỗ cũ.
     const previous = refs.current.track;
+    if (previous) client.setQueryData(["playing-script", previous.bookId], null);
+    client.setQueryData(["playing-script", next.bookId], null);
     const moved = previous?.bookId === next.bookId && previous?.recordId === next.recordId && previous?.chapterId !== next.chapterId;
     save(true);
     const session = refs.current.playback;
@@ -530,7 +537,7 @@ export function PlayerProvider({
       at,
       autoplay,
     );
-  }, [clock, engine, ensurePlayback, native, source, save, speechOf]);
+  }, [client, clock, engine, ensurePlayback, native, source, save, speechOf]);
 
   const remember = useCallback((from: { chapterId: number; seconds: number }, to: { chapterId: number; seconds: number }, note?: string) => {
     // Nhảy xa là một đoạn nghe khác: phiên cũ kết thúc ở chỗ trước khi nhảy.
@@ -574,7 +581,7 @@ export function PlayerProvider({
       bed
         ? new SceneCues(bed, () => {
             const current = refs.current.track;
-            return current ? client.getQueryData<Script>(["listen", "script", current.bookId, current.chapterId, "text"]) : undefined;
+            return current ? client.getQueryData<Script>(["playing-script", current.bookId]) ?? client.getQueryData<Script>(["listen", "script", current.bookId, current.chapterId, "text"]) : undefined;
           })
         : null,
     [bed, client],
@@ -644,6 +651,8 @@ export function PlayerProvider({
   // không theo mốc của chương; hỏi lại khi đổi cuốn hay khi lựa chọn đổi (bedVersion), không hỏi lại mỗi chương.
   const [playlistBed, setPlaylistBed] = useState<PlaylistBedState | null>(null);
   const playlistAsked = useRef<{ key: string; queue: ReturnType<NonNullable<typeof source.musicPlaylist>> | null } | null>(null);
+  /** Lỗi của hàng bài (mất mạng, danh mục chưa tải được) đang báo trong trạng thái nhạc; rỗng khi ổn. Mốc của chương hỏi sau đó không được xoá nó. */
+  const playlistFault = useRef("");
   const cuesChapter = useRef("");
   /** Chương mà mốc đang nằm trong `bed` thuộc về: sang chương khác thì engine.load chạy trước lúc hiệu ứng bỏ mốc cũ, nhịp "time" đầu tiên không được mở bài đầu của chương CŨ. */
   const bedCuesFor = useRef("");
@@ -657,9 +666,12 @@ export function PlayerProvider({
     let cancelled = false;
     const book = track.bookId;
     const asked = `${book}#${bedVersion}`;
-    if (playlistAsked.current?.key !== asked) {
-      playlistAsked.current = { key: asked, queue: source.musicPlaylist?.(book) ?? null };
-    }
+    const askQueue = () => {
+      const queue = source.musicPlaylist?.(book) ?? null;
+      playlistAsked.current = { key: asked, queue };
+      return queue;
+    };
+    if (playlistAsked.current?.key !== asked) askQueue();
     // Sang chương khác: bỏ mốc chương cũ ngay, trước khi hỏi mốc mới - chương mới đã phát từ giây 0 thì không được mở lại bài
     // đầu hay chơi tiếp bài cuối của chương cũ trong lúc chờ (MIX_QA 3.3). Danh sách phát chạy theo đồng hồ của cuốn: không đụng.
     if (cuesChapter.current !== bedChapter) {
@@ -680,7 +692,7 @@ export function PlayerProvider({
         .then((result) => {
           if (cancelled) return;
           bedCredits.current = result.credits ?? {};
-          setMusicOffline(result.unavailable ?? ""); // danh mục chưa tải được: hộp "Nhạc nền" nói lý do (rỗng thì thôi)
+          setMusicOffline(result.unavailable || playlistFault.current); // danh mục chưa tải được: hộp "Nhạc nền" nói lý do (rỗng thì thôi)
           if (result.pending && attempt < SCENE_POLLS) {
             retry = setTimeout(() => void chapterCues(attempt + 1, misses), SCENE_POLL_MS);
             return;
@@ -701,17 +713,36 @@ export function PlayerProvider({
           bed.setCues([], -20);
           askAgain(misses);
         });
-    const queue = playlistAsked.current.queue;
-    if (!queue) {
-      setMusicLoading(false);
-      setPlaylistBed(null);
-      void chapterCues();
-    } else {
-      setMusicLoading(true);
+    // Hàng bài lỗi (mất mạng, danh mục chưa tải được - `error` của lời đáp, hay lời hỏi hỏng): báo trong trạng thái nhạc, KHÔNG giữ lời đáp lỗi (đổi chương hỏi lại) và hỏi lại
+    // có khoảng chờ lùi dần, ngay khi mạng về (như MusicBed.kt retryCatalogLater).
+    let again: ReturnType<typeof setTimeout> | undefined;
+    let detachOnline: (() => void) | undefined;
+    const settle = (queue: NonNullable<ReturnType<NonNullable<typeof source.musicPlaylist>>>, misses: number) => {
+      const fail = (message: string) => {
+        if (playlistAsked.current?.queue === queue) playlistAsked.current = null;
+        playlistFault.current = message;
+        setMusicOffline(message);
+        setPlaylistBed(null);
+        void chapterCues();
+        const delay = sceneRetryDelay(misses);
+        if (delay !== null) again = setTimeout(() => retryAsk(misses + 1), delay);
+        if (!detachOnline && typeof window.addEventListener === "function") {
+          const online = () => retryAsk(0);
+          window.addEventListener("online", online);
+          detachOnline = () => window.removeEventListener("online", online);
+        }
+      };
       void queue.then(
         (result) => {
           if (cancelled) return;
           setMusicLoading(false);
+          if (result.error && !result.tracks.length) return fail(result.error);
+          detachOnline?.();
+          detachOnline = undefined;
+          if (playlistFault.current) {
+            playlistFault.current = "";
+            setMusicOffline("");
+          }
           if (!result.playlist || !result.tracks.length) {
             setPlaylistBed(null);
             void chapterCues();
@@ -721,17 +752,35 @@ export function PlayerProvider({
           const key = `${book}:${result.playlist}`;
           setPlaylistBed((previous) => nextPlaylistBed(previous, key, result));
         },
-        () => {
+        (error: unknown) => {
           if (cancelled) return;
           setMusicLoading(false);
-          setPlaylistBed(null);
-          void chapterCues();
+          fail(error instanceof Error ? error.message : "");
         },
       );
+    };
+    const retryAsk = (misses: number) => {
+      if (cancelled) return;
+      clearTimeout(again);
+      detachOnline?.();
+      detachOnline = undefined;
+      const queue = askQueue();
+      if (queue) settle(queue, misses);
+    };
+    const queue = playlistAsked.current?.queue ?? null;
+    if (!queue) {
+      setMusicLoading(false);
+      setPlaylistBed(null);
+      void chapterCues();
+    } else {
+      setMusicLoading(true);
+      settle(queue, 0);
     }
     return () => {
       cancelled = true;
       clearTimeout(retry);
+      clearTimeout(again);
+      detachOnline?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bed, source, bedChapter, bedVersion]);
@@ -797,6 +846,8 @@ export function PlayerProvider({
     return bookRate;
   }, [applyRate, native, source]);
 
+  /** Giây lùi lại khi nghe tiếp sau lần dừng `pausedMs`; 0 nếu người nghe tắt "Tự lùi khi nghe lại" (ba đường nghe tiếp đều qua đây). */
+  const rewindBy = useCallback((pausedMs: number) => (options.autoRewind ? rewindAfter(pausedMs) : 0), [options.autoRewind]);
   const playNow = useCallback((book: BookRef, chapters: ListenChapter[], chapter: ListenChapter, at: number | undefined, extra: Parameters<PlayerActions["play"]>[4]) => {
     refs.current.wantsPlay = true;
     const chapterId = chapter.id;
@@ -826,11 +877,11 @@ export function PlayerProvider({
     let start = at ?? 0;
     const last = book.state?.last;
     if (at !== undefined && last && last.chapterId === chapterId && Math.abs(last.seconds - at) < 1) {
-      start = Math.max(0, at - rewindAfter(Date.now() - last.at * 1000));
+      start = Math.max(0, at - rewindBy(Date.now() - last.at * 1000));
     }
     load(next, start, true, !extra?.word && last?.chapterId === chapterId && at !== undefined && Math.abs(last.seconds - at) < 1 ? last.anchor : undefined);
     if (extra?.word) engine.seekWord?.(extra.word.segment, extra.word.word);
-  }, [adoptBook, engine, load, markLoaded, native]);
+  }, [adoptBook, engine, load, markLoaded, native, rewindBy]);
 
   const play = useCallback<PlayerActions["play"]>((book, chapters, chapterId, at, extra) => {
     const chapter = chapters.find((item) => item.id === chapterId);
@@ -860,12 +911,12 @@ export function PlayerProvider({
       return;
     }
     const last = book.state?.last;
-    const back = last ? rewindAfter(Date.now() - last.at * 1000) : 0;
+    const back = last ? rewindBy(Date.now() - last.at * 1000) : 0;
     refs.current.pausedAt = 0;
     // `load` tự gắn cuốn vào trình phát SAU lần lưu chỗ cũ của nó; gắn trước thì lần lưu ấy ghi 0:00 (chưa nạp audio)
     // vào chỗ nghe dở của chính cuốn này - mỗi lần mở lại app là mất chỗ nghe.
     load(next, Math.max(0, at - back), false, last?.chapterId === chapterId && Math.abs(last.seconds - at) < 1 ? last.anchor : undefined);
-  }, [adoptBook, adoptVoice, load, markLoaded, native]);
+  }, [adoptBook, adoptVoice, load, markLoaded, native, rewindBy]);
 
   /** Hết sách mà người nghe bấm phát: nói ra và mời nghe lại từ đầu (soát UX 03-10 - trước đây không có gì xảy ra). */
   const finishedToast = useCallback(() => {
@@ -894,10 +945,10 @@ export function PlayerProvider({
       else finishedToast();
       return;
     }
-    const back = refs.current.pausedAt ? rewindAfter(Date.now() - refs.current.pausedAt) : 0;
+    const back = refs.current.pausedAt ? rewindBy(Date.now() - refs.current.pausedAt) : 0;
     if (back) engine.seek(Math.max(0, engine.time - back));
     engine.play();
-  }, [caughtUpToast, engine, finishedToast, load, native, night, position]);
+  }, [caughtUpToast, engine, finishedToast, load, native, night, position, rewindBy]);
 
   const resume = useCallback(() => {
     const current = refs.current.track;
@@ -1215,6 +1266,7 @@ export function PlayerProvider({
     bed?.stop(); // bộ phát nhạc nền nhả hẳn (không chỉ tạm dừng cùng giọng): đóng sách thì không giữ bộ đệm bài nhạc tới lần mở sách sau
     cuesChapter.current = "";
     bedCuesFor.current = "";
+    if (refs.current.track) client.setQueryData(["playing-script", refs.current.track.bookId], null);
     setTrack(null);
     refs.current.track = null;
     refs.current.playback = null;
@@ -1226,7 +1278,7 @@ export function PlayerProvider({
     refs.current.purpose = "listen";
     refs.current.history = [];
     setCanGoBack(false);
-  }, [applySleep, bed, endFade, engine, native, night, position, save]);
+  }, [applySleep, bed, client, endFade, engine, native, night, position, save]);
 
   // Thôi ghép máy kia khi đang nạp một cuốn của nó: cuốn rời Thư viện thì trình phát đóng và nói vì sao (soát a27 lỗi 11). Chỉ đọc danh sách
   // Thư viện đã có trong bộ đệm (Thư viện, hộp thôi ghép làm mới nó) - không hỏi thêm.
@@ -1317,6 +1369,7 @@ export function PlayerProvider({
       ];
       night.cancel(position());
       engine.stop();
+      client.setQueryData(["playing-script", current.bookId], null);
       refs.current.track = null;
       refs.current.playback = null;
       setTrack(null);
@@ -1340,7 +1393,7 @@ export function PlayerProvider({
     }
     const point = resumePoint(book, chapters);
     if (point) prepare(book, chapters, point.chapter.id, point.at);
-  }, [applySleep, closeSession, endFade, engine, native, night, play, position, prepare, save, source]);
+  }, [applySleep, client, closeSession, endFade, engine, native, night, play, position, prepare, save, source]);
 
   splitSessionRef.current = (at) => {
     const session = refs.current.session;

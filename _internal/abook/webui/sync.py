@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import re
 import secrets
@@ -45,13 +46,15 @@ from typing import Any, Callable
 from urllib.parse import unquote, urlsplit
 
 from ..io_utils import atomic_write_json
-from . import book_edits, covers, edits_inbox, export, listen_view, music_plan, notices, package_share, packages, precast, remote_studio, store, tls, word_timing
+from . import book_edits, covers, edits_inbox, export, listen_view, listing_cache, music_plan, notices, package_share, packages, precast, remote_studio, store, tls, word_timing
 from .cast import CastError
 from .fingerprints import Fingerprints
 from .library import Library, book_id
 from .listening import RECORD_ID, SYNC_KEYS, Listening
 from .remote_studio import StudioGate
 from .reviews import Reviews
+
+log = logging.getLogger(__name__)
 
 SYNC_PORT = 47630
 DISCOVERY_PORT = 47631
@@ -500,6 +503,8 @@ def manifest(project_root: Path, book: str, listening: Listening,
 
     `music_track(link)` -> file bài nhạc nền ĐÃ có trên máy (không tải trong lượt hỏi này): có thì kèm mục `music` như
     file `.abook` (music_plan.package) - điện thoại nghe thẳng hay tải về đều có nhạc người sản xuất đã gắn."""
+    from . import audio_revision
+    from datetime import UTC, datetime
     summary = store.summarize(project_root)
     summary["id"] = book
     view = listen_view.book(project_root, book, summary, listening.get(book))
@@ -511,7 +516,7 @@ def manifest(project_root: Path, book: str, listening: Listening,
             **chapter,
             "available": path is not None,
             "file": f"chapters/{path.name}" if path else None,
-            "size": path.stat().st_size if path else 0,
+            **(audio_revision.describe(path) if path else {"size": 0, "sha256": ""}),
             "script": f"scripts/{chapter['id']}.json",
         })
     texts = {} if any(chapter["available"] for chapter in chapters) else text_layer(project_root, chapters)
@@ -530,11 +535,11 @@ def manifest(project_root: Path, book: str, listening: Listening,
     words = word_timing.stamp(project_root)
     # Đổi ảnh bìa hay nhạc nền cũng là một phiên bản mới của gói: điện thoại thấy "có cập nhật" và tải lại.
     # Chữ chương chỉ-chữ vào băm bằng mã băm riêng (cỡ luôn 0): sửa file nguồn là một phiên bản mới.
-    version = hashlib.sha256(json.dumps([[(c["id"], c["size"]) for c in chapters],
+    version = hashlib.sha256(json.dumps([[(c["id"], c["sha256"]) for c in chapters],
                                          cover["version"] if cover else 0] + ([music] if music else []) + ([{"words": words}] if words else [])
                                         + ([{"texts": {name: hashlib.sha256(text).hexdigest()[:16] for name, text in texts.items()}}] if texts else []),
                                         sort_keys=True).encode()).hexdigest()[:16]
-    return {
+    result = {
         "format": listen_view.FORMAT,
         "id": book,
         "title": view["title"],
@@ -547,6 +552,9 @@ def manifest(project_root: Path, book: str, listening: Listening,
         # Phần nối tiếp của "Làm tiếp cuốn này": sách đã tải về điện thoại vẫn gom theo chuỗi khi không nối máy tính.
         "series": view.get("series"),
         "version": version,
+        "audioVersion": audio_revision.version(chapters),
+        "audioUpdatedAt": datetime.fromtimestamp(max((path.stat().st_mtime for path in audio.values() if path.is_file()), default=0), UTC).isoformat(timespec="microseconds"),
+        "sourceFingerprint": audio_revision.source_fingerprint(project_root),
         "chapters": chapters,
         "cast": "cast.json",
         "samples": [f"samples/{sample}.wav" for sample in samples],
@@ -554,6 +562,8 @@ def manifest(project_root: Path, book: str, listening: Listening,
         **({"music": music} if music else {}),
         **({"wordsVersion": words} if words else {}),
     }
+    result["metaVersion"] = listen_view.metadata_version(result)  # tên / người đọc / liên kết bộ / tên chương: điện thoại đã tải đổi riêng phần này mà giữ audio
+    return result
 
 
 # Chỗ nghe vượt độ dài chương quá chừng này (giây) là đồng hồ của thứ khác - cùng số với điện thoại (StateSync.kt PlacePolicy).
@@ -579,6 +589,17 @@ def trusted_state(state: dict[str, Any], lengths: dict[int, float]) -> dict[str,
         out["chapters"] = {key: record for key, record in chapters.items()
                            if not isinstance(record, dict) or fits(key, record.get("heard", 0))}
     return out
+
+
+# Dòng thư viện `/sync/v1/library` nhớ tối đa chừng này giây (cộng một phần lệch theo mã cuốn để cả thư viện không hết hạn cùng lúc): lưới an toàn cho
+# thứ dòng đọc mà chữ ký không thấy (dòng đầu file nguồn của chương chưa tách câu...).
+ROW_MAX_AGE = 300.0
+ROW_MAX_AGE_SPREAD = 120
+ROW_CACHE_MAX = 4096
+
+
+class _SkipBook(Exception):
+    """Cuốn không đọc được sổ lúc này: bỏ khỏi danh sách, không nhớ."""
 
 
 class SyncApp:
@@ -616,6 +637,10 @@ class SyncApp:
         # Vân tay chứng chỉ TLS của cổng phục vụ app này (SyncServer điền lúc dựng): đi trong lời đáp ghép nối.
         self.fingerprint = ""
         self._work_lock = threading.Lock()
+        # Dòng thư viện của từng dự án (`_row`): mã cuốn -> (chữ ký, lúc nhớ, bài nhạc, cỡ bài đã tải, dòng).
+        self._rows: dict[str, tuple[tuple, float, tuple[str, ...], tuple, dict[str, Any] | None]] = {}
+        self._rows_lock = threading.Lock()
+        self._library_lock = threading.Lock()
 
     def book(self, value: str) -> Path | None:
         """Cuốn máy đã ghép đòi: dự án, hay cuốn nhập từ file (không cuốn ảo của máy khác)."""
@@ -789,26 +814,19 @@ class SyncApp:
 
     def library_view(self) -> list[dict[str, Any]]:
         out = []
-        for path in self.library.projects():
-            try:
-                summary = store.summarize(path)
-            except Exception:  # noqa: BLE001 - sách hỏng không làm hỏng danh sách
-                continue
-            if not listen_view.on_shelf(summary, bool(summary.get("running"))):  # `running`: nhịp tim của worker (store.summarize)
-                continue
-            identifier = book_id(path)
-            summary["id"] = identifier
-            view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
-            entry = {key: view[key] for key in ("id", "title", "narrator", "duration", "chaptersTotal",
-                                                 "chaptersAvailable", "complete", "producing", "updatedAt", "series")}
-            # Cỡ khi tải về (audio chương + nhạc nền, như ước cỡ file .abook trước khi xuất) - điện thoại hiện cạnh nút Tải trước khi bấm
-            # (soát a68 lỗi 7); "producing": máy đang làm cuốn này thật (lỗi 13).
-            entry["bytes"] = export.audio_bytes([path], self.music_track)[0]
-            meta = covers.cover_meta(path)
-            entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
-            if words := word_timing.stamp(path):  # điện thoại đã tải sách thấy chữ sáng theo giọng đọc là bản mới (cùng dấu với manifest)
-                entry["wordsVersion"] = words
-            out.append(entry)
+        # Một lượt dựng một lúc: điện thoại hết hạn chờ rồi hỏi lại thì lượt sau đợi lượt trước xong và dùng dòng đã nhớ, không chồng thêm một lượt
+        # 12 giây lên máy (cũng cho lượt "làm ấm" lúc mở cổng - SyncServer.start).
+        with self._library_lock:
+            for path in self.library.projects():
+                try:
+                    entry = self._row(path)
+                except _SkipBook:
+                    continue
+                except Exception:  # noqa: BLE001 - một cuốn hỏng (file khoá, xoá giữa chừng) không làm cả thư viện trả 500
+                    log.warning("library_view: bỏ qua %s", path, exc_info=True)
+                    continue
+                if entry is not None:
+                    out.append(dict(entry))
         # Cuốn nhập từ file ("Thêm sách") cũng nghe được ở máy đã ghép; cuốn ảo của máy khác thì không (chống vòng soi nhau).
         for path in self.library.imported_packages():
             identifier = book_id(path)
@@ -817,6 +835,61 @@ class SyncApp:
             except Exception:  # noqa: BLE001 - một cuốn hỏng không làm mất cả danh sách
                 continue
         return out
+
+    def _row(self, path: Path) -> dict[str, Any] | None:
+        """Dòng của một dự án trong `/sync/v1/library` (None: chưa lên kệ), nhớ theo chữ ký rẻ của cuốn - 300 cuốn tính lại hết mất 12 giây, quá hạn
+        chờ của điện thoại (soát a101 F1). Dòng chỉ tính lại khi một thứ nó đọc đổi: sổ và mọi file ngay trong thư mục sách (tên đặt lại, tên chương, cài
+        đặt, bìa, rãnh nhạc, yêu cầu của người nghe), file audio chương, mốc chữ đã căn, liên kết bộ, các bài nhạc đã tải. Cuốn đang làm (`producing`:
+        nhịp tim hết hạn theo đồng hồ chứ không theo file) và dòng mà file mới sửa trong vài giây không nhớ; mọi dòng hết hạn sau ROW_MAX_AGE."""
+        identifier = book_id(path)
+        series = listen_view.series(path)
+        stamp = (store.project_signature(path), store.audio_signature(path), word_timing.stamp(path),
+                 (series["root"], series["part"]) if series else None)
+        with self._rows_lock:
+            hit = self._rows.get(identifier)
+        if (hit is not None and hit[0] == stamp and time.monotonic() - hit[1] < ROW_MAX_AGE + hash(identifier) % ROW_MAX_AGE_SPREAD
+                and hit[3] == self._music_state(hit[2])):
+            return hit[4]
+        try:
+            summary = store.summarize(path)
+        except Exception as exc:  # noqa: BLE001 - sách hỏng không làm hỏng danh sách (và không nhớ: sổ đang khoá rồi sẽ mở được)
+            raise _SkipBook from exc
+        entry = None
+        links: tuple[str, ...] = ()
+        if listen_view.on_shelf(summary, bool(summary.get("running"))):  # `running`: nhịp tim của worker (store.summarize)
+            summary["id"] = identifier
+            view = listen_view.book(path, identifier, summary, self.listening.get(identifier), with_chapters=False)
+            entry = {key: view[key] for key in ("id", "title", "narrator", "duration", "chaptersTotal",
+                                                 "chaptersAvailable", "complete", "producing", "updatedAt", "series")}
+            # Cỡ khi tải về (audio chương + nhạc nền, như ước cỡ file .abook trước khi xuất) - điện thoại hiện cạnh nút Tải trước khi bấm
+            # (soát a68 lỗi 7); "producing": máy đang làm cuốn này thật (lỗi 13).
+            entry["bytes"] = export.audio_bytes([path], self.music_track)[0]
+            links = tuple(sorted(export.music_links(path, self.music_track)))
+            shared_book = manifest(path, identifier, self.listening, self.music_track)
+            entry["audioVersion"] = shared_book["audioVersion"]
+            entry["metaVersion"] = shared_book["metaVersion"]
+            meta = covers.cover_meta(path)
+            entry["cover"] = {"color": meta["color"], "version": meta["version"]} if meta else None
+            if words := word_timing.stamp(path):  # điện thoại đã tải sách thấy chữ sáng theo giọng đọc là bản mới (cùng dấu với manifest)
+                entry["wordsVersion"] = words
+        if entry is not None and entry["producing"] or not listing_cache.quiet(stamp[0] + stamp[1]):
+            return entry
+        with self._rows_lock:
+            if len(self._rows) > ROW_CACHE_MAX:  # thư viện lớn bất thường: bỏ bản nhớ, đừng để nó phình mãi
+                self._rows.clear()
+            self._rows[identifier] = (stamp, time.monotonic(), links, self._music_state(links), entry)
+        return entry
+
+    def _music_state(self, links: tuple[str, ...]) -> tuple[tuple[str, int | None], ...]:
+        """(bài nhạc, cỡ file đã tải hay None) của các bài rãnh nhạc dùng: tải xong một bài (`bytes` trong dòng đổi) không đổi file nào trong thư mục sách."""
+        state = []
+        for link in links:
+            track = self.music_track(link) if self.music_track is not None else None
+            try:
+                state.append((link, track.stat().st_size if track is not None else None))
+            except OSError:
+                state.append((link, None))
+        return tuple(state)
 
     def resolve_file(self, project_root: Path, relative: str) -> Path | bytes | None:
         """Đường dẫn file của gói (chỉ các tên trong manifest; không đi ra ngoài thư mục sách)."""
@@ -1324,13 +1397,23 @@ class SyncServer:
         self.port = int(self.httpd.server_address[1])
         self.discovery = Discovery(app.name, self.port, discovery_port) if host == "0.0.0.0" else None
         self._thread: threading.Thread | None = None
+        self.app = app
 
-    def start(self) -> "SyncServer":
+    def start(self, *, warm: bool = False) -> "SyncServer":
+        """`warm`: máy đã ghép điện thoại thì dựng sẵn danh sách thư viện ở nền - thư viện lớn dựng lần đầu mất hơn hạn chờ của điện thoại, lần đầu điện thoại hỏi thì đã có."""
         self._thread = threading.Thread(target=self.httpd.serve_forever, name="sync", daemon=True)
         self._thread.start()
+        if warm and self.app.devices.list():  # chưa ghép máy nào thì không ai hỏi
+            threading.Thread(target=self._warm, name="sync-warm", daemon=True).start()
         if self.discovery:
             self.discovery.start()
         return self
+
+    def _warm(self) -> None:
+        try:
+            self.app.library_view()
+        except Exception:  # noqa: BLE001 - làm ấm chỉ là tiện: lỗi thì lượt hỏi đầu tiên tự dựng
+            log.debug("sync: dựng sẵn thư viện không xong", exc_info=True)
 
     def stop(self) -> None:
         if self.discovery:

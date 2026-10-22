@@ -46,10 +46,6 @@ object LocalStudio {
     @Volatile
     var coverCodec: CoverCodec? = null
 
-    /** Đồng hồ (giây) - làm số phiên bản cho bìa; test đặt số cố định. */
-    @Volatile
-    var clock: () -> Long = { System.currentTimeMillis() / 1000 }
-
     /** Đồng hồ (giây, số thực) - dấu giờ của một ý muốn (`requestedAt`); test đặt đồng hồ chạy từng bước. Gọi ĐÚNG MỘT LẦN cho mỗi yêu cầu. */
     @Volatile
     var now: () -> Double = { System.currentTimeMillis() / 1000.0 }
@@ -120,6 +116,7 @@ object LocalStudio {
             method == "GET" && digest == null && !analyze -> 200 to musicView()
             method == "DELETE" && digest != null -> {
                 if (!store.remove(digest)) throw Api(404, "Bài này không còn trong Nhạc của tôi")
+                Playback.onMain { MusicBed.refreshMine() }
                 200 to musicView()
             }
             method == "POST" && analyze -> {
@@ -235,7 +232,7 @@ object LocalStudio {
 
     private fun setCover(dir: java.io.File, raw: ByteArray): JSONObject {
         val codec = coverCodec ?: AndroidCoverCodec
-        return JSONObject().put("cover", BookEdits.setCover(dir, raw, clock(), codec))
+        return JSONObject().put("cover", BookEdits.setCover(dir, raw, codec))
     }
 
     /** POST /characters/rename {character, name}. */
@@ -336,7 +333,8 @@ object LocalStudio {
         if (body.keys().asSequence().any { it !in EDITS_ONLY_KEYS }) {
             throw BookEdits.EditsError("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền")
         }
-        return withAutoPlaylist(dir, BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } }))
+        return withAutoPlaylist(dir, BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } },
+            musicStore?.let { store -> { store.entries().reversed().mapNotNull { info -> store.file(info.getString("link"))?.let { info to it } } } }))
     }
 
     /** `_with_auto_playlist` của server.py: màn "Nhạc nền" + nhạc theo cảnh mặc định - sách chưa có lựa chọn nào (`playlist` không có khoá) và không có
@@ -439,7 +437,12 @@ object LocalStudio {
         val at = requestedAt(body)
         if (keys.isEmpty() || at <= 0) throw Api(400, "Thiếu quyết định cần hoàn tác")
         val mine = BookWishes.madeAt(dir, section, keys, at)
-        if (mine.isEmpty()) throw Api(409, "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác.")
+        if (mine.isEmpty()) {
+            // Đã gửi về máy giữ sách (gửi xong là gỡ khỏi lớp sửa): nhờ máy ấy rút đúng thao tác này, lần gửi kế mang đi.
+            val asked = EditsSync.retract(dir, section, keys, at)
+            if (asked.isNotEmpty()) return JSONObject().put("undone", asked.size).put("restored", false).put("sent", true)
+            throw Api(409, "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác.")
+        }
         val removed = BookWishes.withdraw(dir, section, mine.keys.toList(), at)
         return JSONObject().put("undone", removed.size).put("restored", false)
     }
@@ -631,7 +634,7 @@ object LocalStudio {
         val entry = wished(dir, "voices").optJSONObject(BookWishes.characterKey(character))
         val recordedAt = (entry?.opt("requested_at") as? Number)?.toDouble() ?: 0.0
         if (Math.abs(recordedAt - seen) < 1e-6 || (seen == 0.0 && entry == null)) return JSONObject()
-        return JSONObject().put("voice", BookEdits.pyText(entry?.opt("preset"))).put("gender", BookEdits.pyText(entry?.opt("gender")))
+        return JSONObject().put("voice", VoiceLabels.label(BookEdits.pyText(entry?.opt("preset")))).put("gender", BookEdits.pyText(entry?.opt("gender")))
     }
 
     /** POST /line {stableId, textSha256, kind?, emotion?, intensity?, speaker?, spoken?}. */
@@ -706,16 +709,19 @@ object LocalStudio {
             if (seen != null && seen.has(stableId) && before != BookEdits.pyText(seen.opt(stableId))) elsewhere.put(stableId, before)
         }
         val asked = ArrayList<Pair<String, String>>()
+        val sent = ArrayList<String>()
         for (stableId in stableIds) {
             val found = index.get(stableId)
             if (verdict == "redo" && found != null && BookEdits.truthy(found.second.opt("textSha256"))) {
                 asked.add(stableId to BookEdits.pyText(found.second.opt("textSha256")))
             } else if (verdict != "redo") {
                 BookWishes.cancelRetake(dir, stableId)
+                if (!retakes.has(stableId)) sent.addAll(EditsSync.retract(dir, "retakes", listOf(stableId))) // đã gửi đi rồi: nhờ máy giữ sách rút
             }
         }
         if (asked.isNotEmpty()) BookWishes.requestRetakes(dir, asked, at)
         val reply = JSONObject().put("ok", true)
+        if (sent.isNotEmpty()) reply.put("sent", true)
         return withElsewhere(if (refs == null) reply else reply.put("lines", asked.size).put("requestedAt", at), elsewhere)
     }
 

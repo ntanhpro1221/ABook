@@ -46,6 +46,9 @@ export function busyClick<E extends { preventDefault: () => void }>(loading: boo
   return (event: E) => event.preventDefault();
 }
 
+/** Nút có chữ dài (đường dẫn, tên mục): chữ xuống dòng, bẻ cả chuỗi liền, nút cao thêm thay vì rộng hơn khung - chữ hệ thống to ở 320 px không đẩy trang tràn ngang (soát a102). */
+export const WRAP_LABEL = "h-auto min-h-8 max-w-full whitespace-normal py-1.5 text-center [overflow-wrap:anywhere]";
+
 export function Button({
   variant = "secondary",
   size = "md",
@@ -714,9 +717,13 @@ export function Stat({ label, value, hint }: { label: string; value: ReactNode; 
 }
 
 /** Nhóm radio theo mẫu WAI-ARIA: Tab vào đúng MỘT nút (nút đang chọn), mũi tên / Home / End chọn luôn mục kế và
- * đưa tiêu điểm tới đó. Gắn vào phần tử `role="radiogroup"`; các nút `role="radio"` phải theo đúng thứ tự `values`. */
+ * đưa tiêu điểm tới đó. Gắn vào phần tử `role="radiogroup"`; các nút `role="radio"` phải theo đúng thứ tự `values`.
+ * Chỉ nhận phím đến từ một nút radio CỦA CHÍNH nhóm, chưa bị ai xử lý: phím của nhóm con (tốc độ nằm trong nhóm giọng) nổi lên không đổi lựa chọn nhóm ngoài. */
 export function radioGroupKeys<T>(values: readonly T[], value: T, onChange: (value: T) => void) {
   return (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.defaultPrevented || !values.length) return;
+    const radio = (event.target as HTMLElement | null)?.closest?.('[role="radio"]');
+    if (!radio || radio.closest('[role="radiogroup"]') !== event.currentTarget) return;
     const step = ({ ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 } as Record<string, number>)[event.key];
     const index = values.indexOf(value);
     // Chưa chọn mục nào của nhóm (giá trị nằm ở nhóm khác): mũi tên tới mục đầu / cuối thay vì bỏ qua mục đầu.
@@ -805,7 +812,7 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
   options: { value: T; label: string }[];
   label: string;
-  /** Nhiều lựa chọn (8 loại việc): xuống hàng thay vì bóp chữ - soát UX 29-09, thanh lọc cần ~1089px. */
+  /** Trải hết bề ngang của khung (nhiều lựa chọn - 8 loại việc, thanh lọc cần ~1089px). Nhóm nào cũng xuống hàng khi khung hẹp hay chữ lớn, không tràn ngang (soát a100 V5). */
   wrap?: boolean;
   /** Thêm cho khung ngoài (vd. trải hết bề ngang trên điện thoại). */
   className?: string;
@@ -818,7 +825,7 @@ export function Segmented<T extends string>({
       role="radiogroup"
       aria-label={label}
       onKeyDown={radioGroupKeys(values, value, onChange)}
-      className={cn("rounded-lg border border-line bg-panel-2 p-0.5", wrap ? "flex flex-wrap gap-0.5" : "inline-flex", className)}
+      className={cn("flex-wrap gap-0.5 rounded-lg border border-line bg-panel-2 p-0.5", wrap ? "flex" : "inline-flex max-w-full", className)}
     >
       {options.map((option, index) => (
         <button

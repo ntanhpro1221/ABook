@@ -22,8 +22,8 @@ android {
         }
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 127
-        versionName "0.4.125"
+        versionCode 131
+        versionName "0.4.129"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -35,7 +35,7 @@ android {
     sourceSets {
         test.java.srcDirs += "src/sharedTest/java"
         androidTest.java.srcDirs += "src/sharedTest/java"
-        // Hằng số trộn nhạc (music_mix.json): MỘT file của máy tính (abook/webui/assets), điện thoại đọc đúng file ấy như asset (MusicMix).
+        // Hằng số trộn nhạc (music_mix.json) và tên giọng máy khác (voice_labels.json): MỘT file của máy tính (abook/webui/assets), điện thoại đọc đúng file ấy như asset (MusicMix, VoiceLabels).
         main.assets.srcDirs += "../../../abook/webui/assets"
         // Mp3 + số vàng của bộ phân tích nhạc (tests/music_student_goldens.py) dùng chung với pytest; bài thử trên máy Android đọc từ assets.
         androidTest.assets.srcDirs += "../../../tests/fixtures/music_student"

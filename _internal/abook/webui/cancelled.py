@@ -129,3 +129,26 @@ def withdraw_requests(project_root: Path, section: str, keys: list[str], request
     record(project_root, section, {name: (float(entry["requested_at"]), isinstance(entry.get("replaced"), dict))
                                    for name, entry in mine.items()}, now=now)
     return listener_overrides.withdraw_requests(project_root, section, keys, requested_at)
+
+
+def withdraw_folded(project_root: Path, section: str, keys: list[str], requested_at: float, *, now: float) -> list[str]:
+    """Rút yêu cầu của đúng lần bấm `requested_at` (hộp "Áp dụng", thông báo "Hoàn tác" và gói điện thoại nhờ rút - edits_inbox.receive) ra khỏi
+    overrides.json kèm bia, và mọi thứ cùng mốc ấy ghi theo: yêu cầu "người nói" đi kèm cách đọc câu (lời kể -> lời thoại), bí danh của lần
+    "Gộp vào…" (chỉ khi không còn câu nào của lần bấm ấy). "Thu lại" rút từng câu. Chưa kiểm yêu cầu đã vào sách chưa - người gọi hỏi
+    `store.already_applied` trước. Trả các khoá đã rút."""
+    from .. import aliases
+
+    mine = listener_overrides.requests_made_at(listener_overrides.read_overrides(project_root), section, keys, requested_at)
+    if section == "retakes":
+        for stable_id in mine:
+            cancel_retake(project_root, stable_id, now=now)
+        return list(mine)
+    removed = withdraw_requests(project_root, section, list(mine), requested_at, now=now)
+    if section == "lines" and removed:
+        withdraw_requests(project_root, "speakers", removed, requested_at, now=now)
+    if section == "speakers" and removed:
+        left = listener_overrides.requests_made_at(listener_overrides.read_overrides(project_root), "speakers",
+                                                   list(listener_overrides.read_overrides(project_root).get("speakers") or {}), requested_at)
+        if not left:
+            aliases.remove_added_at(project_root, requested_at)
+    return removed

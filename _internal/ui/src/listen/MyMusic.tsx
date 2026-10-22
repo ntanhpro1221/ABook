@@ -3,12 +3,13 @@ import { Music2, Pin, Trash2, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatClock } from "@/shared/format";
-import { Button } from "@/shared/ui";
+import { Button, WRAP_LABEL } from "@/shared/ui";
 import { api, type AppInfo } from "@/studio/api";
 import { hasNativeMusicImport, importMusic } from "@/studio/musicImport";
 import { analysisLabel, importSummary, LOCAL_PREFIX, MY_MUSIC_INTRO, mineNote, type LocalMusicView, type LocalTrack } from "@/studio/musicLocal";
 import { AutoPickNote } from "@/studio/AutoPickNote";
 import { MusicModuleNotice } from "@/studio/MusicModuleNotice";
+import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT } from "./musicBed";
 
 // "Nhạc của tôi" trên trang sửa sách (docs/MUSIC_IMPORT.md): nhạc bạn tự có làm nhạc nền. Nhập, xem, xoá ở đây; "Đổi bài" ở từng đoạn
 // nhạc của sách. Cùng JSON ở máy tính (server.py) và điện thoại (LocalStudio.kt, MusicStore.kt).
@@ -96,6 +97,8 @@ export function MyMusicSection() {
   const refresh = (view: LocalMusicView) => {
     client.setQueryData(MY_MUSIC_KEY, view);
     void client.invalidateQueries({ queryKey: ["music-alternatives"] });
+    void client.invalidateQueries({ queryKey: ["music", "playlists"] });
+    window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: MUSIC_CHANGED_ALL }));
   };
   const importFiles = async () => {
     try {
@@ -129,7 +132,7 @@ export function MyMusicSection() {
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="text-sm font-medium">Nhạc của tôi{tracks.length ? ` (${tracks.length})` : ""}</h3>
         {canImport && (
-          <Button size="sm" variant="secondary" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()}>
+          <Button size="sm" variant="secondary" icon={Upload} className={WRAP_LABEL} loading={Boolean(progress)} onClick={() => void importFiles()}>
             {progress ? `Đang nhập ${progress.done}/${progress.total}…` : "Nhập nhạc của tôi…"}
           </Button>
         )}

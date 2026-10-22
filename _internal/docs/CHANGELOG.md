@@ -7,6 +7,145 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Hiệu năng
+
+- Điện thoại ghép với máy tính có hàng trăm cuốn: danh sách thư viện từ máy tính mất chừng 10 giây mỗi lần (quá hạn chờ của điện thoại nên sách biến mất khỏi Thư viện) nay chỉ tính lại cuốn nào vừa đổi, lần hỏi sau gần như tức thì; máy tính dựng sẵn danh sách khi mở app nếu đã ghép điện thoại.
+- Điện thoại: sách đã tải hiện ngay khi mở Thư viện, không chờ máy tính trả lời; sách nghe thẳng từ máy tính tự vào danh sách khi máy tính trả lời. Gói sách nghe thẳng lấy song song và có hạn chờ chung, không nối đuôi nhau.
+- Điện thoại: “Tìm trong sách” đọc cả lô chương một lượt như máy tính (sách 2000 chương không còn hàng trăm lượt), cỡ sách trong Thư viện được nhớ thay vì đo lại cả thư mục mỗi lần, và mở Thư viện không làm lưu chỗ nghe chờ.
+- Nghe lâu năm (hồ sơ nghe vài MB): lưu chỗ nghe mỗi 10 giây không còn ghi lại cả hồ sơ (hết ~0,3-0,7 giây CPU và ghi đĩa mỗi lần); tắt máy giữa chừng vẫn mở lại đúng chỗ nghe mới nhất.
+- Sách rất dày (hàng nghìn chương): trang sách không còn tính lại tóm tắt, danh sách chương và dàn nhân vật mỗi vài giây khi sách không đổi.
+
+### Nhạc nền
+
+- Bấm Tạm dừng thì nhạc nền dừng theo ngay, kể cả khi bài nhạc vừa tải xong sau lúc bạn dừng giọng; đổi bài hay tua lúc đang dừng cũng không làm nhạc tự phát lại.
+- Bài nhạc tải về cụt hay sai so với danh mục (từ nguồn gốc cũng như bản sao) không còn được giữ làm bài nghe; bài đã lưu sẵn mà sai kích thước hay nội dung thì tự bị bỏ và tải lại.
+- Máy tính: nút Nhạc nền (bật/tắt và độ to) cũng có ở chương của dự án Studio ngay trong trình nghe, đổi ở đây là đổi luôn trong Studio.
+- Máy tính: danh sách nhạc nền bị lỗi mạng không còn kẹt đến khi mở lại sách; app tự hỏi lại sau một lúc, ngay khi mạng về và khi sang chương khác, và báo “nhạc chưa tải được” trong lúc chờ.
+- Điện thoại: hẹn giờ ngủ làm nhỏ dần cả nhạc nền cùng giọng đọc; huỷ hay gia hạn hẹn giờ thì nhạc về mức cũ.
+
+### Xuất và chia sẻ
+
+- “Lưu” hay “Chia sẻ” file .abook khi đã chọn “Nhạc của tôi”: sách mang theo đúng các bài bạn đã chọn (đủ file, đúng thứ tự, kèm tên bài và tác giả), máy mở sách nghe đúng các bài ấy dù kho nhạc của nó khác; chọn danh sách khác thì các bài ấy không đi theo.
+- Điện thoại: “Lưu” không giữ được bản cũ để phòng hỏng thì dừng trước khi ghi, file đang lưu không bị thay; thiếu chỗ trống thì báo sớm kèm số MB cần; nếu lưu hỏng và bản cũ cũng chưa trả lại được thì bản cũ được giữ trong bộ nhớ của app và lời báo nói rõ nó nằm đâu.
+
+### Cài đặt và trợ năng
+
+- Trang Cài đặt ở chữ rất to trên màn hẹp không còn tràn ngang: nút “Nhập nhạc của tôi…”, “Đổi thư mục”, “Thành phần bên thứ ba” và địa chỉ github xuống dòng gọn trong khung.
+- Điện thoại: lõi nghe tự kiểm các lựa chọn hẹn giờ ngủ, lắc máy, tự lùi và lịch đêm — giá trị lạ (file hỏng, bản app khác ghi) về mặc định của riêng lựa chọn ấy, kể cả khi app được đánh thức từ tai nghe hay widget mà chưa mở giao diện.
+- Điện thoại: giao diện sáng/tối cũng được máy nhớ riêng; bộ nhớ của app bị xoá hay hỏng thì lần mở sau vẫn giữ đúng màu bạn đã chọn.
+
+## [0.4.129] - 2026-10-23
+
+### Nhập sách
+
+- Tạo sách từ EPUB hay Word: bìa, trang bản quyền, mục lục và trang tên sách không còn được tích sẵn thành chương như một đoạn truyện; chúng hiện trong khung “trang phụ chưa chọn”, tích trang nào bạn muốn nghe (giống Nghe ngay).
+- Một file TXT hỏng chữ (tải dở, lưu sai bảng mã) chỉ bị bỏ riêng nó, kèm tên file và cách sửa; các chương còn lại vẫn đọc bình thường thay vì cả thư mục báo lỗi tiếng Anh.
+- EPUB hay Word hỏng giữa chừng (tải dở, lỗi đĩa) báo “không phải file thật hoặc bị hỏng, thử tải lại” và không kéo các file khác trong cùng lô chết theo.
+- PDF: dòng tiêu đề chạy ở đầu/chân trang và số trang lặp lại không còn lẫn vào chữ chương (giống Nghe ngay đã tích sẵn bỏ); ghi chú về PDF gộp lại tối đa 6 dòng, không còn mỗi chương một dòng.
+- File TXT cả truyện: đoạn văn mở bằng “Hồi…”, “Phần…” và kết bằng nháy cong (.” ?” …”) không còn bị nhận nhầm là tiêu đề chương (máy tính và điện thoại); “Chương cuối”, “Chương 5a” được nhận là tiêu đề.
+- Hết chỗ trên ổ đĩa giữa lúc tách EPUB báo bằng tiếng Việt kèm cách xử lý, không để lại nửa cuốn; thiết bị ở xa không còn thấy đường dẫn trên máy tính trong các lời báo.
+- File TXT dài hơn 4 MB: số chữ, ký tự và độ dài audio hiện dấu “~” (ước tính từ phần đầu) thay vì chỉ đếm 4 MB đầu mà không nói.
+- Trang tạo sách trong cửa sổ app nhận file và thư mục kéo thả vào khung nét đứt, như Thư viện.
+- Gửi từ thiết bị khác hay kéo vào trình duyệt nhận file tới 40 MB; file lớn hơn thì lời báo chỉ cách tách nhỏ hoặc mở ngay trên máy tính.
+- TXT mã hoá tiếng Việt cũ (TCVN3, VNI) được nhận ra và báo (chữ đang vỡ, cách chuyển sang UTF-8); ABook không tự đổi chữ.
+
+### Xuất và chia sẻ
+
+- “Lưu thành…” không bao giờ ghi đè lặng lẽ lên một file có sẵn: tên đã có thì sách lưu vào tên trống kế tiếp (ví dụ “Tên (2).abook”) và app nói rõ.
+- Điện thoại: “Lưu” vào file đã nhớ giờ dựng và kiểm gói trước, rồi mới ghi; lỗi giữa chừng (đầy ổ, mất kết nối) thì bản lưu trước vẫn còn nguyên thay vì file rỗng.
+- Lưu dự án (.abookproj) mà nguồn đổi giữa chừng thì báo bằng tiếng Việt và giữ file xuất cũ, như khi lưu .abook.
+- Mở lại cùng một file .abook đã có lớp sửa không còn bị báo “file hỏng” hay đòi thêm chỗ đĩa; cuốn có sẵn được mở lại luôn.
+- Điện thoại: “Xuất MP3” có ô “Kèm nhạc nền” như “Xuất M4B”, cùng mức nhạc và ghi công; điện thoại không ghi được MP3 có trộn nhạc nên mỗi chương ra file .m4a (hộp nói trước), kèm bìa, danh sách phát và file “Ghi công nhạc nền”.
+- Máy tính: sách nhận từ file .abook cũng có “Xuất MP3” và “Xuất M4B” như trên điện thoại.
+- Dự án chỉ có chữ: lưu .abook không còn bị khoá, và hộp nói rõ gói sẽ mang những gì.
+- Điện thoại: mở file .abook từ app khác qua “Chia sẻ” (kể cả khi file được gửi như tệp nhị phân hay zip); file không phải .abook thì báo rõ thay vì nhập hỏng.
+- Ước cỡ file .abook tính cả câu mẫu giọng, bìa, kịch bản và dàn nhân vật; cảnh báo ổ FAT32 dùng đúng con số ấy.
+
+### Cài đặt và trợ năng
+
+- Giọng đọc: dùng phím mũi tên đổi “Tốc độ giọng trên máy” hay các thẻ tải giọng không còn làm giọng mặc định đang chọn bị đổi bậy; mũi tên chỉ đổi lựa chọn của đúng nhóm đang đứng.
+- Lịch đêm, nhỏ dần, nghe thêm và dừng an toàn: file cài đặt bị sửa tay hay ghi dở (lịch thiếu giờ, số âm…) không còn làm lúc bấm nghe báo lỗi hay màn Cài đặt trên điện thoại không mở được; riêng cài đặt hỏng quay về mặc định và các cài đặt khác giữ nguyên, bản hỏng được giữ lại và báo (máy tính và điện thoại).
+- Máy tính: “Đã đổi thư mục thư viện” chỉ hiện khi máy thật sự nhận thư mục mới; thư mục bị từ chối hay cài đặt không ghi được thì có lời báo lỗi bằng tiếng Việt kèm lý do.
+- “Dọn bản đọc đã làm” hỏi trong hộp thoại: bàn phím vào được hộp, Esc là “Giữ lại”, đóng xong con trỏ về lại chỗ cũ.
+- Chữ hệ thống to hay màn hẹp: các nhóm lựa chọn (Nhỏ dần, Mỗi lần nghe thêm, Tự tắt khi ngủ quên, Màu…) xuống hàng thay vì tràn ngang bắt phải cuộn.
+- Máy tính: thêm công tắc “Tự lùi khi nghe lại” như điện thoại (theo từng máy); mô tả cũ ghi sai số giây lùi, nay đúng với cách app lùi.
+- Điện thoại: ba ô chọn giờ của Lịch đêm đủ lớn để chạm (48 dp).
+- Điện thoại: không lưu được thay đổi cài đặt thì báo ngay; lúc mở app, cài đặt ghi gần nhất ở phần nghe của app được ưu tiên hơn bản cũ trong WebView, nên một lần lưu hỏng không làm tuỳ chọn quay lại giá trị cũ.
+
+## [0.4.128] - 2026-10-23
+
+### Thư viện
+
+- Đổi sang một thư mục thư viện khác không còn kéo chỗ nghe và dấu trang của sách này sang sách khác chỉ vì trùng tên thư mục; chỉ khi thư viện cũ thật sự đã dời đi mới đi theo.
+- Thư viện mặc định đã từng có mà biến mất khỏi ổ giờ cũng được báo “Không thấy thư mục thư viện”, không tự tạo lại thư viện rỗng ở chỗ cũ.
+- Xoá một cuốn đúng lúc có máy khác bấm Bắt đầu cuốn ấy không làm mất cuốn đang khởi động: lệnh đến sau bị từ chối.
+- Đổi riêng tên, tác giả, người đọc hay tên chương của sách ở máy tính thì sách đã tải về điện thoại tự nhận tên mới, giữ nguyên bản thu; chưa nhận kịp thì hàng sách ở Tải sách có nút “Cập nhật tên”.
+- Phần nối tiếp của một cuốn vẫn nằm đúng bộ khi bạn đổi tên nó, ở cả điện thoại và máy tính nhận sách từ máy khác; hết phần trước vẫn tự nghe nối sang phần sau.
+- Tải sách trên điện thoại liệt kê cả phần tải dở và gói nghe thẳng đang chiếm chỗ, mỗi phần có nút “Xoá phần đã tải” (hỏi lại và Hoàn tác như xoá thường; đang tải thì chưa xoá được).
+- “Nghe gần đây” trên điện thoại xếp theo lần nghe cuối, kể cả cuốn nghe thẳng từ máy tính.
+- Hai ảnh bìa đặt liền nhau trong cùng một giây không còn hiện nhầm ảnh cũ; địa chỉ ảnh bìa đổi theo nội dung ảnh.
+
+### Sửa lỗi
+
+- Làm sách bằng nhiều tiến trình thu âm: nếu một tiến trình bị hệ thống tắt giữa chừng, lô đang thu không còn đứng chờ mãi - máy bỏ nhóm tiến trình ấy và thu lại các câu còn thiếu từng câu một, đúng giọng và đúng cách đọc đã định.
+- Studio báo “đã cài” dù model Whisper, model phân tích truyện, bộ đếm token hay model căn chữ đã bị xoá: nay trang Studio nói đúng phần nào mất, và “Sửa Studio” bật Ollama của Studio lên, kiểm thật rồi chỉ tải lại đúng phần ấy. Lỗi “model phân tích không sẵn sàng” phân biệt Ollama chưa chạy với Studio đã mất model.
+- Giọng ZeroTTS, Supertonic, VieNeu và model nghe nhạc đã tải nhưng một file bị cắt cụt hay hỏng không còn hiện “sẵn sàng”: nút ghi “Sửa giọng” và chỉ tải lại đúng file hỏng.
+- Xuất MP3 / M4B mà ổ đích hết chỗ hoặc không ghi được thì báo đúng ổ cần dọn hay đổi thư mục, thay vì bảo file âm thanh hay ảnh bìa hỏng; lời báo kỹ thuật của FFmpeg giữ trong Chi tiết.
+- Nhật ký phụ của lượt làm sách (events.jsonl, supervisor.log) bị phần mềm diệt virus giữ hay đĩa đầy không còn làm dừng cả lượt thu âm: máy thử lại, bỏ dòng nhật ký không ghi được, và trang sách báo bằng một dòng cảnh báo.
+- Lỗi “database or disk is full” và “disk free … GB” được nhận là thiếu chỗ trên ổ đĩa: trang sách nói ổ chứa thư viện còn bao nhiêu GB và cần giải phóng thêm.
+- Mở lại app rồi vào Studio không còn phải chờ máy kiểm lại từng file model giọng đã tải (gần 1 GB với ZeroTTS): kết quả kiểm được nhớ qua các lần mở, chỉ file đổi mới kiểm lại.
+
+## [0.4.127] - 2026-10-23
+
+### Sửa lỗi
+
+- Hộp “Đổi giọng” chọn và nghe thử được mọi giọng ZeroTTS và Supertonic (trước đây bấm vào là báo lỗi, nút nghe mẫu không phát). Giọng lạ gửi tới sách mở từ file `.abook` bị từ chối ngay kèm lý do, không còn được ghi nhận rồi lặng lẽ bỏ khi áp.
+- Tên giọng ZeroTTS và Supertonic hiện đúng tên (“Bảo Trang”, “Supertonic F1”) ở tab Nhân vật, dòng “Chờ áp dụng”, hộp “Áp dụng thay đổi” và hộp Gộp, thay vì mã nội bộ (“baotrang”, “F1”).
+- “Gỡ” một giọng đã tải (Supertonic) giờ hỏi trước: nói bao nhiêu cuốn trong thư viện đang dùng giọng ấy, tên vài cuốn, và bao nhiêu câu chưa thu sẽ không đọc được tới khi bạn tải lại hay đổi giọng. Bạn vẫn quyết gỡ hay giữ.
+- Điện thoại cũng hiện tên giọng ZeroTTS và Supertonic (“Bảo Trang”, “Supertonic F1”) ở tab Nhân vật và dòng “Chờ áp dụng” của sách mở từ file `.abook`, thay vì “baotrang”, “F1”.
+
+### Đọc và nghe
+
+- Chương vừa thu xong vào ngay hàng đợi; kịch bản làm mới khi bản thu hoặc mốc chữ đổi, giữ chỗ bạn đang nghe.
+- Đổi gợi ý bỏ dòng khi đang nghe giữ chữ và tiếng khớp nhau đến lần nạp chương sau.
+- “Tìm đúng câu” trên thẻ buổi sáng hiển thị đủ khoảng đã nghe qua nhiều chương và mở đúng chương bạn chọn.
+- Chỗ đọc của bạn được lưu theo hồ sơ và đồng bộ giữa máy tính với điện thoại.
+- Rời màn đọc hoặc ẩn app vẫn giữ ngay vị trí bạn vừa cuộn tới.
+- Chỗ đọc mới hơn được ưu tiên; app báo và thử lại nếu chưa lưu được vào hồ sơ.
+- Dấu trang và chỗ đọc tìm lại đúng đoạn sau khi bạn chọn bỏ dòng ghi công.
+- Thêm hoặc xoá Nhạc của tôi cập nhật ngay hàng nhạc nền đang dùng.
+- Các nút cỡ chữ có nhãn số rõ ràng cho trình đọc màn hình.
+
+## [0.4.126] - 2026-10-23
+
+### Đồng bộ và xuất
+
+- Sách bạn đã tải trên điện thoại nhận được bản thu sửa, kể cả khi file mới cùng dung lượng; chỉ chương đổi cần tải lại. Nhập lại file `.abook` cập nhật bản thu và giữ chỉnh sửa, chỗ nghe của bạn; file cũ hơn sẽ hỏi trước khi thay.
+- Sau khi bạn sửa và thu lại, mục Xuất nhắc những bản MP3, M4B hay `.abook` đã cũ để bạn thay bản đã chép hoặc gửi. Bạn có thể chỉ xuất lại các chương MP3 đã đổi; M4B cần dựng lại cả file.
+
+### Liên kết hai máy
+
+- Thư viện lớn (hàng nghìn chương) mở nhanh ở máy kia: app nhớ dấu của từng file âm thanh qua cả lần khởi động lại, không còn đọc lại cả thư viện mỗi lần điện thoại hay máy tính khác làm mới danh sách.
+- Ghép lại cùng một máy sau khi đổi mạng (IP, tên `.local`, Tailscale) không còn tạo thêm một “máy khác” và mỗi cuốn hai lần: máy được nhận ra, chỗ nghe và sách đã tải giữ nguyên.
+- Cuốn máy kia đã xoá hoặc bỏ khỏi kệ biến mất khỏi “Trên máy khác” nếu bạn chưa tải gì của nó; cuốn đã tải thì giữ.
+- Một cuốn bị lỗi trên máy kia không còn làm cả thư viện của máy ấy “không trả lời”: cuốn hỏng bị bỏ qua, các cuốn còn lại vẫn hiện.
+- Nghe thẳng một cuốn đang được làm: khi máy tính thêm chương mới, chữ “Đọc theo” của các chương bạn đã nghe được giữ lại, chỉ chương nào được thu lại mới tải lại.
+
+### Sửa lỗi
+
+- Câu mà máy nghe lại không kiểm được (quá ngắn, hay máy nghe ra một câu không thể có thật) giờ hiện ở nhóm “Chưa kiểm được” ngay trong “Cần nghe lại”, kèm lời nhờ bạn nghe bằng tai, và không còn hiện một đoạn “máy nghe được” bịa ra.
+- Một câu chỉ còn một thẻ trong “Việc cần bạn”: khi máy vừa nghi người nói của câu ấy vừa nghi nó nói với chính mình, các lý do được gộp vào cùng một thẻ thay vì hiện hai thẻ cho cùng một câu.
+- Hoàn tác một lựa chọn sau khi nó đã được gửi sang máy giữ sách (điện thoại hay máy tính khác tự gửi sau vài giây) không còn báo “đã được thay bằng một lựa chọn sau”: máy bạn nhờ máy giữ sách rút đúng lựa chọn ấy, và thông báo nói thật điều đó - nếu máy ấy đã đưa vào sách rồi thì bạn được báo là cần chọn lại ở máy đó.
+- “Việc cần duyệt” và “Cần nghe lại” tự làm mới (mỗi 15 giây) khi sách đang chạy, cả con số trên nhãn tab: việc mới hiện ra mà không phải tải lại trang, và chỗ bạn đang đứng không bị xô.
+- Thêm hay bớt file nguồn rồi bấm tạo ngay khi máy còn đang đọc lại nguồn không còn tạo ra cuốn thiếu chương vừa chọn: nút tạo hiện “Đang đọc nguồn…” và chờ máy đọc xong, trong lúc đó bạn vẫn chỉnh được các thiết lập khác.
+- Đóng ABook khi đang cài Studio giờ dừng hẳn việc cài (không còn để tiến trình cài chạy ngầm không ai trông). Lần mở sau, nếu còn một lượt cài cũ chạy ngầm hay một cửa sổ ABook khác đang cài, bạn được báo rõ và chọn chờ hoặc “Dừng lượt cũ” thay vì cài chồng lên nhau.
+- Cài Studio bị ngắt giữa lúc tải Whisper (mất mạng, bấm Dừng) thì “Cài tiếp” tải nối phần đã có, không còn tải lại cả file từ đầu.
+- Gửi chương từ điện thoại hay trình duyệt có nút “Huỷ gửi”; rời trang cũng dừng gửi. Các file đã gửi được giữ lại và máy nói rõ đã gửi bao nhiêu trên tổng số.
+- Xem trước nguồn đọc đúng file TXT lưu bằng Unicode (UTF-16) hay bảng mã cũ CP1258: tên dòng đầu, số chữ, số ký tự và dòng ghi công không còn ra chữ rác hay sai số.
+- Thời gian làm sách ghi rõ là số tham khảo đo trên một máy khác; máy hay bộ phân tích khác thì chỉ cho khoảng rộng, không còn nhãn “Trên máy này” cho số không phải đo trên máy bạn.
+
+### Nhạc nền
+
 - Điện thoại: thêm tuỳ chọn thử nghiệm (mặc định tắt) cho nhạc nền lặp liền mạch hơn: chỗ nhạc quay lại đầu đoạn được nối chính xác từng mẫu thay vì mở thêm một trình phát; nhạc vẫn vào ngay như thường, chỗ nào chưa nối kịp thì tự dùng cách cũ.
 
 ## [0.4.125] - 2026-10-22
@@ -207,7 +346,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bạn có thể tải tiếp hàng “Cần nghe lại” sau 600 câu; bộ lọc “Chưa xem” và “Đã xem” áp dụng cho toàn bộ sách.
 
 - Khi bạn đổi người nói cho nhóm hơn 2.000 câu, máy tính và điện thoại ghi đủ cả nhóm; thông báo dùng đúng số câu máy chủ đã ghi.
-
 
 ## [0.4.122] - 2026-10-22
 
@@ -2081,7 +2219,6 @@ không ảnh hưởng).
   bấm. Chọn mẫu chỉ đổi các lựa chọn ấy, không đụng tới truyện hay tên sách; đổi tay sau khi chọn thì tên mẫu hiện "(đã sửa)".
   Đổi tên hay xoá mẫu (có "Hoàn tác") ở Cài đặt > Studio. Việc bỏ dòng ghi công vẫn do bạn đồng ý riêng từng cuốn, không nằm
   trong mẫu. Điều khiển từ xa chỉ chọn được mẫu có sẵn.
-
 
 ## [0.4.18] - 2026-10-02
 

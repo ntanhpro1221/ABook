@@ -24,6 +24,16 @@ def pin(files: tuple[studio_setup.Download, ...]) -> str:
     return hashlib.sha256("\n".join(f"{item.name} {item.sha256}" for item in files).encode()).hexdigest()
 
 
+def files_intact(folder: Path | None, files: tuple[studio_setup.Download, ...] | list[studio_setup.Download]) -> bool:
+    """Các mô-đun giọng coi một phần là "đã tải" khi file nằm đó ĐÚNG bản ghim (`studio_setup.intact`), không chỉ có tên (soát a96 V2)."""
+    return studio_setup.intact(folder, files)
+
+
+def has_damaged_part(parts: list[Component], pins: dict[str, str]) -> bool:
+    """Có phần đã từng tải xong (có ghim) mà giờ file thiếu / sai bản: nút tải khi ấy là SỬA đúng phần đó, không phải tải lần đầu."""
+    return any(not part.present and not part.external and part.id in pins for part in parts)
+
+
 def download_files(part: Component, target: Path, progress: Callable[[int], None], cancelled: Callable[[], bool] = lambda: False) -> None:
     """Tải các file của `part` thẳng vào `target`: `studio_setup.download` ghi `.part` rồi đổi tên sau khi khớp băm, nên engine đang chạy chỉ thấy file đủ.
     `cancelled` (người dùng bấm Huỷ): dừng giữa chừng, `.part` ở lại để lần tải sau làm tiếp bằng Range."""

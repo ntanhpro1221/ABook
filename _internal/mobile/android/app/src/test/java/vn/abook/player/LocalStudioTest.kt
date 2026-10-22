@@ -47,10 +47,10 @@ class LocalStudioTest {
         LocalStudio.coverCodec = FakeCodec()
         CoverSearch.http = NoWeb
         LocalStudio.musicStore = MusicStore(File(root, "music"), FakeTags)
-        LocalStudio.clock = { 1_790_950_256L }
         // đồng hồ của ý muốn chạy từng bước: mỗi yêu cầu một dấu giờ riêng (rút đúng lần bấm theo `requestedAt`)
         var tick = 0
         LocalStudio.now = { 1_790_950_256.0 + (tick++) * 0.25 }
+        VoiceLabels.labels = VoiceLabels.parse(File("../../../abook/webui/assets/voice_labels.json").readText()) // tên giọng máy khác (ca wishes_voice_machine)
     }
 
     @After
@@ -58,6 +58,7 @@ class LocalStudioTest {
         CoverSearch.http = NoWeb
         LocalStudio.coverCodec = null
         LocalStudio.musicStore = null
+        VoiceLabels.labels = emptyMap()
         LocalStudio.now = { System.currentTimeMillis() / 1000.0 }
     }
 
@@ -293,7 +294,7 @@ class LocalStudioTest {
         assertEquals("#aa5522", cover.getString("color"))
         assertEquals(96, cover.getInt("width"))
         assertEquals(128, cover.getInt("height"))
-        assertEquals(1_790_950_256L, cover.getLong("version"))
+        assertEquals(CoverVersion.of(File(dir, "edits/cover.jpg").readBytes()), cover.getLong("version"))
         assertTrue(File(dir, "edits/cover.jpg").isFile)
         assertEquals(File(dir, "edits/cover.jpg").canonicalPath, Store.coverFile(id)!!.canonicalPath)
         assertEquals("edits/cover.jpg", Store.manifest(id)!!.getJSONObject("cover").getString("file"))
@@ -347,7 +348,7 @@ class LocalStudioTest {
         assertEquals(200, status)
         val cover = (reply as JSONObject).getJSONObject("cover")
         assertEquals("#aa5522", cover.getString("color"))
-        assertEquals(1_790_950_256L, cover.getLong("version"))
+        assertEquals(CoverVersion.of(jpeg), cover.getLong("version"))
         assertEquals(listOf("https://covers.openlibrary.org/b/id/42-L.jpg"), web.asked)
         assertArrayEquals("ảnh đã chuẩn hoá nằm ở edits/cover.jpg, bìa của sách giữ nguyên", jpeg, File(dir, "edits/cover.jpg").readBytes())
         assertEquals("edits/cover.jpg", Store.manifest(id)!!.getJSONObject("cover").getString("file"))
