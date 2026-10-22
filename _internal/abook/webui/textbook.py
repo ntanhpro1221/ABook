@@ -123,6 +123,7 @@ def preview(book: importers.ImportedBook) -> dict[str, Any]:
     bản quyền - hiện ra CHƯA tích, kèm `short`; phần không phải truyện - kèm `matter`, lý do như "Trang bản quyền"); người dùng tích / bỏ tích rồi gửi lại danh sách khi thêm (`picks_from_json`).
     `suggestions[].chapter` và `index` đều là số thứ tự trong danh sách này, không phải mã chương trong sách."""
     rows = []
+    defaults = {number for number, _ in importers.default_picks(book)}
     for number, chapter in enumerate(book.chapters, start=1):
         source = book.chapter_source(chapter)
         rows.append({
@@ -131,7 +132,7 @@ def preview(book: importers.ImportedBook) -> dict[str, Any]:
             "firstLine": next((line.strip() for line in source.splitlines() if line.strip()), "")[:200],
             "words": len(source.split()),
             "chars": sum(not ch.isspace() for ch in source),
-            "included": not chapter.short and not chapter.matter,
+            "included": number in defaults,
             **({"short": True} if chapter.short else {}),
             **({"matter": chapter.matter} if chapter.matter else {}),
         })
@@ -143,7 +144,8 @@ def preview(book: importers.ImportedBook) -> dict[str, Any]:
         # `splitHeadings`: số dòng "Chương N"; nhãn nói thêm phần "Mở đầu" khi chữ trước tiêu đề đầu thành một chương riêng.
         **({"splitOffer": book.split_offer, "splitHeadings": book.split_headings} if book.split_offer else {}),
         # Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
-        "suggestions": [{"chapter": number, "line": line} for number, line in book.credits],
+        "suggestions": [{"chapter": number, "line": line, **({"defaultOn": True} if line in book.default_skips else {})}
+                        for number, line in book.credits],
         # Chú thích (EPUB / DOCX có cấu trúc): tìm thấy N lời chú - giao diện đề xuất "không đọc số", "đọc lời chú ở cuối chương" / "bỏ lời chú" (mặc định KHÔNG tích).
         **({"footnotes": book.footnote_offer()} if book.footnote_found else {}),
         "totals": {"chapters": len(kept), "words": sum(row["words"] for row in kept)},
@@ -169,7 +171,8 @@ def picks_from_json(raw: Any) -> list[tuple[int, str]] | None:
 def add_to_library(source: Path, title: str | None, library_root: Path, projects: Iterable[Path],
                    fingerprints: Fingerprints, *, separate: bool = False,
                    split_chapters: bool = False, picks: list[tuple[int, str]] | None = None,
-                   footnotes: importers.FootnoteChoice | None = None) -> tuple[Path, str, importers.ImportedBook]:
+                   footnotes: importers.FootnoteChoice | None = None,
+                   expected_digest: str | None = None) -> tuple[Path, str, importers.ImportedBook]:
     """Đọc `source` (thư mục TXT / .epub / .docx / .pdf / .txt) và đưa vào thư viện thành sách chỉ-chữ. Trả (thư mục cuốn, cách -
     "new" / "existing" / "updated" như `packages.import_opened`, cuốn đã đọc). `title` (nếu có) thay tên sách của file.
     `separate`: "Thêm bản riêng" - cuốn mới dù thư viện đã có đúng bộ chữ này. `split_chapters`: file .txt cả truyện tách theo "Chương N".
@@ -178,7 +181,13 @@ def add_to_library(source: Path, title: str | None, library_root: Path, projects
     `importers.ImportFailed` / `bookfile.BookFileError` khi không nhập được."""
     # Danh sách chương như bước xem trước (mục rất ngắn vẫn nằm trong đó); không có `picks` thì đúng các chương xem trước đã tích sẵn
     # (`default_picks`: bỏ mục rất ngắn VÀ mục không phải truyện như trang tên sách) - cuốn thêm vào là cuốn người dùng đã thấy.
+    digest = source_digest(source)
+    changed = "File nguồn đã thay đổi. Bạn hãy xem lại danh sách chương rồi thêm sách."
+    if expected_digest is not None and digest != expected_digest:
+        raise importers.ImportFailed(changed)
     book = importers.import_text(source, split_chapters=split_chapters, keep_short=True, footnotes=footnotes)
+    if source_digest(source) != digest:
+        raise importers.ImportFailed(changed)
     book = importers.select_chapters(book, picks if picks is not None else importers.default_picks(book))
     if title and store.clean_title(title):
         book.title = title
@@ -186,5 +195,5 @@ def add_to_library(source: Path, title: str | None, library_root: Path, projects
         packed = build(book, Path(scratch) / bookfile.default_name(book.title))
         folder, how = packages.import_file(packed, library_root, projects, fingerprints, separate=separate)
     if how == "new":
-        remember_source(folder, source_digest(source))
+        remember_source(folder, digest)
     return folder, how, book

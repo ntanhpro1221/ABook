@@ -10,7 +10,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
-from ..importers import MAX_HEADING, PREAMBLE, TXT_HEADING, clip_title, title_only_preamble
+from ..importers import MAX_HEADING, PREAMBLE, TXT_HEADING, _txt_cuts, _text_controls, clip_title, title_only_preamble, txt_starts
 from ..io_utils import decode_text_bytes
 from .volumes import is_volume_heading
 
@@ -19,25 +19,19 @@ _UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 
 
 def _lines(path: Path) -> list[str]:
-    return decode_text_bytes(path.read_bytes()).replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    return _text_controls(decode_text_bytes(path.read_bytes())).replace("\r\n", "\n").replace("\r", "\n").split("\n")
 
 
 def headings(lines: list[str]) -> list[int]:
     """Chỉ số các dòng là tiêu đề chương."""
-    return [index for index, line in enumerate(lines) if len(line.strip()) <= MAX_HEADING and HEADING.match(line)]
+    return _txt_cuts(lines)
 
 
 def starts(lines: list[str], found: list[int]) -> list[int]:
     """Dòng bắt đầu của từng chương: dòng tiêu đề, hay dòng "Tập 2" đứng ngay trước nó (chỉ cách các dòng trống) - nó thuộc về
     chương mở tập ấy, không phải cái đuôi của chương cuối tập trước; trình tạo sách nhìn dòng đầu chương mà đề xuất chia tập
     (volumes.py)."""
-    result = []
-    for index in found:
-        before = index - 1
-        while before >= 0 and not lines[before].strip():
-            before -= 1
-        result.append(before if before >= 0 and is_volume_heading(lines[before]) else index)
-    return result
+    return txt_starts(lines, found)
 
 
 def same_title(a: str, b: str) -> bool:
@@ -86,9 +80,9 @@ def split(path: Path, root: Path, title: str = "") -> Path:
         raise ValueError("File này không có đủ tiêu đề chương để tách")
     stem = " ".join(_UNSAFE_NAME.sub(" ", path.stem).split()).strip(" .")[:80] or "truyen"
     lead = _title_line(lines, found)
-    drop = bool(lead) and same_title(lead, title)
+    drop = False  # metadata tên sách không phải sự đồng ý bỏ dòng chữ
     # Bỏ hay giữ dòng tên truyện ra hai bộ chương khác nhau: hai thư mục khác nhau.
-    folder = root / hashlib.sha256(raw + (b"+title" if drop else b"")).hexdigest()[:8] / stem
+    folder = root / hashlib.sha256(raw + b"+keep-preamble-v2").hexdigest()[:8] / stem
     if folder.is_dir() and any(folder.glob("*.txt")):
         return folder
     width = max(4, len(str(len(found))))

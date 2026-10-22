@@ -12,6 +12,9 @@ const workerSrc = pathToFileURL(createRequire(import.meta.url).resolve("pdfjs-di
 const read = (name: string) => readFileSync(new URL(name, FIXTURES));
 
 describe("pdfPages", () => {
+  it("a84_19 tells you how to unlock a password protected PDF", async () => {
+    await expect(pdfPages(read("a84_locked.pdf"), workerSrc)).rejects.toThrow(/mật khẩu.*Bạn.*mở khóa/);
+  });
   it("reads the same lines per page as pypdf on the shared sample", async () => {
     const expected = JSON.parse(read("pages/story.pages.json").toString("utf-8")) as { title: string; author: string; pages: string[][] };
     const result = await pdfPages(read("story.pdf"), workerSrc);

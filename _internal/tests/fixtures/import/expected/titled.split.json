@@ -5,6 +5,10 @@
  "cover": null,
  "chapters": [
   {
+   "title": "Mở đầu",
+   "text": "Ngọn đèn cuối cùng"
+  },
+  {
    "title": "Chương 1: Chuyến phà đêm",
    "text": "Chương 1: Chuyến phà đêm\n\nSương xuống rất sớm."
   },
@@ -13,9 +17,7 @@
    "text": "Chương 2: Căn nhà bên sông\n\nĐèn còn sáng."
   }
  ],
- "notes": [
-  "Dòng đầu “Ngọn đèn cuối cùng” là tên truyện - dùng làm tên sách, không đọc thành một chương."
- ],
- "splitOffer": 2,
+ "notes": [],
+ "splitOffer": 3,
  "splitHeadings": 2
 }
