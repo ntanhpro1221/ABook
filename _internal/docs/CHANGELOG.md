@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.125] - 2026-10-22
+
 ### Sửa lỗi
 
 - Chấm cả nhóm câu “Cần thu lại” nhanh hơn nhiều với sách lớn (trước đây mỗi câu đọc lại cả sổ), và mở danh sách “Cần nghe lại” không còn âm thầm ghi vào sổ chấm.
