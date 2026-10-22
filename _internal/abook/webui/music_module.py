@@ -27,6 +27,7 @@ import os
 import shutil
 import sys
 import threading
+import tempfile
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -141,12 +142,20 @@ def activate_libs() -> bool:
     lib, pending = _lib(), _lib_next()
     if lib is None or pending is None:
         return False
-    if pending.is_dir() and (not lib.is_dir() or not _libs_loaded()):  # lần đầu: chưa có gì của mô-đun được nạp nên đổi chỗ ngay
-        shutil.rmtree(lib, ignore_errors=True)
+    previous = lib.with_name("lib.previous")
+    if not lib.exists() and previous.is_dir():
+        os.replace(previous, lib)
+    if _complete_libs(pending) and (not lib.is_dir() or not _libs_loaded()):
         try:
+            shutil.rmtree(previous, ignore_errors=True)
+            if lib.exists():
+                os.replace(lib, previous)
             os.replace(pending, lib)
         except OSError:
+            if not lib.exists() and previous.exists():
+                os.replace(previous, lib)
             return lib.is_dir() and _register_path(lib)
+        shutil.rmtree(previous, ignore_errors=True)
     return lib.is_dir() and _register_path(lib)
 
 
@@ -159,7 +168,16 @@ def _register_path(lib: Path) -> bool:
 
 
 def _libs_present() -> bool:
-    return any(folder is not None and folder.is_dir() for folder in (_lib(), _lib_next()))
+    lib, pending = _lib(), _lib_next()
+    return (lib is not None and lib.is_dir()) or (pending is not None and _complete_libs(pending))
+
+
+def _complete_libs(folder: Path) -> bool:
+    try:
+        stamp = json.loads((folder / ".complete.json").read_text(encoding="utf-8"))
+        return stamp.get("pin") == libs_pin() and all((folder / name / "__init__.py").is_file() for name in LIB_MODULES)
+    except (OSError, ValueError, AttributeError):
+        return False
 
 
 def _libs_external() -> bool:
@@ -193,17 +211,29 @@ def _cannot_install_libs() -> str:
 def _install_libs(progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> None:
     assert _folder is not None
     cache = _folder / DOWNLOADS
-    staging = _lib_next()
-    assert staging is not None
-    shutil.rmtree(staging, ignore_errors=True)
-    staging.mkdir(parents=True)
-    done = 0
-    for wheel in WHEELS:
-        target = cache / f"{wheel.name}.whl"
-        studio_setup.download(wheel, target, lambda have, total, base=done: progress(base + have, sum(w.size for w in WHEELS)), cancelled)
-        done += wheel.size
-        with zipfile.ZipFile(target) as bundle:
-            bundle.extractall(staging)
+    _folder.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix="lib.staging-", dir=_folder))
+    try:
+        done = 0
+        for wheel in WHEELS:
+            target = cache / f"{wheel.name}.whl"
+            studio_setup.download(wheel, target, lambda have, total, base=done: progress(base + have, sum(w.size for w in WHEELS)), cancelled)
+            done += wheel.size
+            with zipfile.ZipFile(target) as bundle:
+                if not bundle.namelist():
+                    raise studio_setup.SetupError("Gói thư viện trống. Bạn hãy bấm Thử lại.")
+                bundle.extractall(staging)
+        if cancelled():
+            raise studio_setup.Cancelled()
+        io_utils.atomic_write_json(staging / ".complete.json", {"pin": libs_pin()})
+        if not _complete_libs(staging):
+            raise studio_setup.SetupError("Gói thư viện chưa đủ file. Bạn hãy bấm Thử lại.")
+        pending = _lib_next()
+        assert pending is not None
+        shutil.rmtree(pending, ignore_errors=True)
+        os.replace(staging, pending)
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
     shutil.rmtree(cache, ignore_errors=True)
 
 
@@ -226,11 +256,17 @@ def libs_state() -> str:
 
 def install_libs_part(progress: Callable[[int, int], None], cancelled: Callable[[], bool] = lambda: False) -> None:
     """Tải phần thư viện cho mô-đun khác (Giọng VieNeu): giải vào chỗ chung, ghi dấu của mô-đun nhạc, đưa vào sys.path."""
-    with _lock:
+    from .install_locks import destination_lock
+
+    assert _folder is not None
+    with destination_lock(_folder / "lib.install"):
+        if libs_state() == "current":
+            return
         _install_libs(progress, cancelled)
-        stamp = _read_stamp()
-        stamp["libs"] = libs_pin()
-        _write_stamp(stamp)
+        with _lock:
+            stamp = _read_stamp()
+            stamp["libs"] = libs_pin()
+            _write_stamp(stamp)
     activate_libs()
 
 
@@ -265,7 +301,7 @@ def judge_parts(components: list[Component], stamp: dict[str, str]) -> dict[str,
             judged[part.id] = "current"
         elif not part.present:
             judged[part.id] = "missing"
-        elif part.id in stamp and stamp[part.id] != part.pin:
+        elif (part.id == "libs" and part.id not in stamp) or (part.id in stamp and stamp[part.id] != part.pin):
             judged[part.id] = "outdated"
         else:
             judged[part.id] = "current"  # có file mà chưa có dấu (đặt tay) thì coi là đúng - dấu chỉ ghi lúc mô-đun tự tải
@@ -367,7 +403,7 @@ def _run(needed: list[Component]) -> None:
             if part.id == "ffmpeg":
                 ffmpeg_setup.install(progress, _cancel.is_set)
             elif part.id == "libs":
-                _install_libs(progress, _cancel.is_set)
+                install_libs_part(progress, _cancel.is_set)
             else:
                 directory = music_student.package_dir()
                 assert directory is not None
@@ -377,8 +413,10 @@ def _run(needed: list[Component]) -> None:
                     studio_setup.download(item, directory / item.name, lambda have, _t, offset=done: progress(offset + have), _cancel.is_set)
                     done += item.size
             finished += part.size
-            stamp[part.id] = part.pin
-            _write_stamp(stamp)
+            with _lock:
+                stamp = _read_stamp()
+                stamp[part.id] = part.pin
+                _write_stamp(stamp)
             with _lock:
                 _state["done"] = finished
         activate_libs()

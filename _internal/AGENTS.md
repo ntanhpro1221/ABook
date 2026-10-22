@@ -42,6 +42,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 
 ## Invariant an toàn
 
+- Cập nhật Studio dùng `_busy_elsewhere()` và khoá hàng đợi để từ chối khi sách đang chạy/khởi động/tạm dừng; kiểm lại ngay trước thay runtime, không dừng sách để cập nhật.
+- Bộ gỡ Windows đọc `preferences.json.libraryRoot` trước mọi xoá đệ quy trong hook; không đọc được vị trí thì giữ dữ liệu. Chế độ nâng cấp truyền bằng cờ rõ ràng từ callback GUI trước PageReinstall hoặc `/UPDATE`, không suy tên bộ cài.
+- Thư viện tuỳ chọn giải trong staging riêng; chỉ công bố `lib.next` có dấu hoàn tất. Caller dùng chung phải giữ khoá đích xuyên suốt tải, giải và commit, rồi kiểm lại dưới khoá.
+- Studio đối chiếu hash distribution với `uv.lock` đi kèm app; dependency Git đối chiếu commit đầy đủ và không tự tải build dependency chưa ghim. Marker hoàn tất chỉ ghi sau verify và checkpoint.
 - **Trong lúc pha phân tích chạy, đừng chạy việc nặng nào khác trên máy** — kể cả `pytest`.
   Phân tích của dự án này tái lập hoàn hảo: alpha.48, .49 và .51 giống nhau **từng byte**.
   alpha.52 lệch **54 phân vai** so với cả ba, và hình dạng là *một* nhóm lệch ở thứ 45/201 rồi

@@ -141,6 +141,8 @@ def run(reader: TextIO, writer: TextIO, argv: list[str] | None = None) -> int:
     runner = FakeRunner() if fake else StudioRunner(studio) if studio is not None else BackgroundRunner()
     web = App(preferences=preferences, runner=runner, token=new_token(), dialogs=dialogs, version=args.version)
     web.studio = studio
+    if studio is not None:
+        studio.busy = web._busy_elsewhere
     web.shell = channel.send  # "Cập nhật": App.install_update gửi {"install_update": true} về vỏ
     if preferences.get().get("syncEnabled"):
         web.set_sync(True)
