@@ -1,6 +1,8 @@
 package vn.abook.player
 
 import android.content.Context
+import android.media.AudioTimestamp
+import android.media.AudioTrack
 import android.os.SystemClock
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
@@ -40,7 +42,8 @@ import java.nio.ByteBuffer
  * `<id>_seam.wav` (Nối của máy), `<id>_R1.pcm` ... (mỗi lượt một file tee). Dòng (giây 6 chữ số, `<ns>` là System.nanoTime):
  * `SEAM <buildMs> <sr> <ch> <audibleStart'> <loopStart'> <loopEnd'> <xFrames>`, `SEAMSRC built|cache <ms>`, `RFMT <sr> <ch>`,
  * `EV <ns> seek <Rk> <mụcIndex> <ms> <loại> <expSample>` (ms và expSample = round(ms * sr / 1000) trên TRỤC DANH NGHĨA của mục, không tính phần mở sớm; loại = clip0 | seam | clip; ghi TRƯỚC seekTo, tee đổi file ngay lúc đó),
- * `EV <ns> item <index> <lý do> <loại>` (lý do = số media3, 1 = tự động), `EV <ns> audiotrack <sr> <ch>`, `EV <ns> fmtin <index> <encoderDelay> <encoderPadding>` (thông tin), `EV <ns> switch` (R5, ghi trước setMediaItems),
+ * `EV <ns> play <Rk>` (ngay lúc đặt playWhenReady = true của lượt), `EV <ns> ts <framePosition> <tsNanoTime>` (luồng phụ cứ 10 ms gọi AudioTrack.getTimestamp trên AudioTrack MỚI NHẤT; chỉ ghi khi trả true và framePosition đổi),
+ * `EV <ns> underrun <count>` (AudioTrack.getUnderrunCount ở đầu mỗi lượt và mỗi khi giá trị đổi), `EV <ns> item <index> <lý do> <loại>` (lý do = số media3, 1 = tự động), `EV <ns> audiotrack <sr> <ch>`, `EV <ns> fmtin <index> <encoderDelay> <encoderPadding>` (thông tin), `EV <ns> switch` (R5, ghi trước setMediaItems),
  * `EV <ns> sinkcfg / sinkflush / sinkbuf` (nhật ký sink, thông tin), `FMT <ns> 0 <seg> <sr> <ch> <enc>`, `PCM 0 <seg> <f0> <n> <off>` (k = 0: một trình phát; seg đếm
  * tăng suốt bài; off = byte trong file tee của lượt chứa seg, lượt = `EV seek` gần nhất trước FMT). Bảng mục: 0 = Clip đầu, lẻ = Nối, chẵn >= 2 = Clip lặp.
  * Luồng nhạc của máy bằng 0 thì chạy im (tee lấy PCM trước AudioTrack): test không đổi âm lượng hay cài đặt nào.
@@ -53,6 +56,8 @@ class MusicLoopSeamTest {
     private val context: Context = instrumentation.targetContext
     private val args = InstrumentationRegistry.getArguments()
     private val lines = mutableListOf<String>()
+    /** AudioTrack mới nhất mà sink đã tạo (luồng đo `ts` / `underrun` đọc). */
+    @Volatile private var newestTrack: AudioTrack? = null
 
     private fun number(name: String): Double? = args.getString(name)?.toDoubleOrNull()?.takeIf { it.isFinite() }
     private fun log(line: String) = synchronized(lines) { lines += line }
@@ -125,6 +130,51 @@ class MusicLoopSeamTest {
                 log("EV ${System.nanoTime()} sinkbuf $presentationTimeUs ${buffer.remaining()}")
             }
             return super.handleBuffer(buffer, presentationTimeUs, encodedAccessUnitCount)
+        }
+    }
+
+    /** Luồng phụ của một lượt: mỗi 10 ms đọc AudioTrack mới nhất (`ts`, `underrun`). Trả hàm dừng luồng. */
+    private fun startTrackPoller(): () -> Unit {
+        val stop = java.util.concurrent.atomic.AtomicBoolean(false)
+        val thread = Thread {
+            var lastTrack: AudioTrack? = null
+            var lastFrame = -1L
+            var lastUnderrun = -1
+            val stamp = AudioTimestamp()
+            while (!stop.get()) {
+                val track = newestTrack
+                if (track != null) {
+                    try {
+                        if (track !== lastTrack) {
+                            lastTrack = track
+                            lastFrame = -1L
+                            lastUnderrun = -1
+                        }
+                        val underrun = track.underrunCount
+                        if (underrun != lastUnderrun) {
+                            lastUnderrun = underrun
+                            log("EV ${System.nanoTime()} underrun $underrun")
+                        }
+                        if (track.getTimestamp(stamp) && stamp.framePosition != lastFrame) {
+                            lastFrame = stamp.framePosition
+                            log("EV ${System.nanoTime()} ts ${stamp.framePosition} ${stamp.nanoTime}")
+                        }
+                    } catch (_: IllegalStateException) {
+                        // AudioTrack vừa bị nhả giữa hai lần đọc: lần sau đọc cái mới
+                    }
+                }
+                try {
+                    Thread.sleep(10)
+                } catch (_: InterruptedException) {
+                    return@Thread
+                }
+            }
+        }
+        thread.isDaemon = true
+        thread.start()
+        return {
+            stop.set(true)
+            thread.join(1000)
         }
     }
 
@@ -258,6 +308,7 @@ class MusicLoopSeamTest {
                                 // Mỗi AudioTrack mới của trình phát ghi một dòng EV: bằng chứng AudioTrack có bị dựng lại ở chỗ chuyển mục không (FMT chỉ đếm lần flush bộ xử lý).
                                 override fun getAudioTrack(config: AudioSink.AudioTrackConfig, attributes: AudioAttributes, audioSessionId: Int, context: Context?) =
                                     DefaultAudioSink.AudioTrackProvider.DEFAULT.getAudioTrack(config, attributes, audioSessionId, context).also {
+                                        newestTrack = it
                                         log("EV ${System.nanoTime()} audiotrack ${it.sampleRate} ${it.channelCount}")
                                     }
 
@@ -344,16 +395,19 @@ class MusicLoopSeamTest {
                 val seekNs = System.nanoTime()
                 log("EV $seekNs seek $label $index ${"%.3f".format(java.util.Locale.ROOT, ms)} ${kindOf(index)} $exp")
                 tee.begin()
-                onMain {
-                    LoopSeam.seekToSample(p, sink, seam, index, exp)
-                    p.playWhenReady = true
-                }
+                val stopPoller = startTrackPoller()
                 try {
+                    onMain {
+                        LoopSeam.seekToSample(p, sink, seam, index, exp)
+                        p.playWhenReady = true
+                        log("EV ${System.nanoTime()} play $label")
+                    }
                     afterSwitch?.invoke()
                     waitUntil(label, done = done)
                 } finally {
                     onMain { p.playWhenReady = false }
                     Thread.sleep(300)
+                    stopPoller()
                     val marks = synchronized(tee.marks) { tee.marks.toList() }
                     val bytes = tee.end()
                     if (saveTee) File(dir, "${id}_$label.pcm").writeBytes(bytes)

@@ -1,6 +1,8 @@
 package vn.abook.player
 
 import android.content.Context
+import android.media.MediaExtractor
+import android.media.MediaFormat
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
@@ -16,7 +18,10 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import org.json.JSONObject
+import java.io.File
 import java.util.concurrent.Executors
 import kotlin.math.abs
 import kotlin.math.pow
@@ -63,6 +68,7 @@ object MusicBed {
     /** Giọng của người nghe, không phải lỗi: nhạc nền chờ Wi-Fi (không tự tải bài nhạc lớn bằng dữ liệu di động). */
     private const val METERED_NOTICE = "Đang dùng dữ liệu di động nên nhạc nền tự chọn chờ có Wi-Fi mới tải. Muốn nghe ngay, bạn chọn nhạc ở nút Nhạc nền."
     private const val AUTO_KEY = "auto-scene-music"
+    private const val SEAM_P3_KEY = "music-seam-p3"
     private const val SCENE_POLL_MS = 1500L // nhạc theo cảnh dựng nền: chương chưa xong thì hỏi lại mỗi chừng này, tối đa SCENE_POLLS lần (ui/src/listen/player.tsx)
     private const val SCENE_POLLS = 80
     /** Mốc cảnh của chương trả `unavailable` (danh mục chưa tải được) hay hỏi hỏng: hỏi lại sau chừng này, lùi dần, có hạn - như `sceneRetryDelay` của ui/src/listen/sceneCues.ts. */
@@ -80,6 +86,10 @@ object MusicBed {
         var final = false // vòng cuối của mốc `tail`: không mở phần tử lặp nữa, bài chơi tới E là hết
         var released = false // đã nhả: lỗi muộn của nó không tính là bài hỏng
         var at = 0.0 // bản lặp tạo sẵn: chỗ (giây trong bài) đã đặt, để biết có cần dời lại khi vào muộn
+        // Đường P3 ([musicSeamP3], MusicSeamBed.kt): một ExoPlayer phát [Clip, Nối, Clip lặp, ...] qua LoopSink; built null = đường cũ (a87).
+        var built: SeamPicker.Built? = null
+        var sink: LoopSeam.LoopSink? = null
+        var attached = false // đã nối Nối / Clip lặp vào hàng phát (trước đó chỉ có Clip đầu)
     }
 
     /** Bản lặp mới và bản cũ nó nối vào: lúc bản mới có tiếng, sửa pha theo bản cũ một lần ([MusicCues.loopSettle]). */
@@ -161,6 +171,57 @@ object MusicBed {
         MusicCues.mix = MusicMix.load(appContext)
         // "Tự chọn nhạc nền" do giao diện gửi mỗi lần mở app: tiến trình khởi động lại từ widget / tai nghe / Android Auto (không có WebView) phải theo lựa chọn đã lưu, không về mặc định "bật".
         Playlists.autoEnabled = prefs(appContext).getBoolean(AUTO_KEY, true)
+        musicSeamP3 = prefs(appContext).getBoolean(SEAM_P3_KEY, false)
+    }
+
+    /**
+     * TUỲ CHỌN THỬ NGHIỆM (mặc định TẮT): bài nhạc mp3 có vòng lặp mờ chéo phát bằng MỘT trình phát nối chính xác từng mẫu ([LoopSeam], MusicSeamBed.kt) thay vì mở trình phát mới ở
+     * mỗi chỗ lặp (đường a87). Bật: `PlayerPlugin.configure({musicSeamP3: true})` hay [rememberSeamP3]; chỉ ảnh hưởng bài mở SAU đó. Bài không dùng được (mốc `tail`, không phải mp3,
+     * dựng Nối lỗi / không kịp) tự rơi về a87 và ghi logcat "ABookMusic".
+     */
+    @Volatile var musicSeamP3 = false
+        private set
+
+    /** Bật / tắt [musicSeamP3] và nhớ qua lần khởi động tiến trình. */
+    fun rememberSeamP3(value: Boolean) {
+        musicSeamP3 = value
+        val appContext = context ?: return
+        prefs(appContext).edit().putBoolean(SEAM_P3_KEY, value).apply()
+    }
+
+    /** Chọn đường cho bài của mốc ([musicSeamP3]); việc dựng Nối ở luồng [worker], không bao giờ chặn việc phát. */
+    private val seamPicker = SeamPicker(
+        enabled = { musicSeamP3 },
+        async = { worker.execute(it) },
+        plan = { file, cue -> planSeam(file, cue) },
+        render = { built -> LoopSeam.render(built.seam) },
+        note = { Log.w(TAG, it) },
+    )
+
+    /** Hình học Nối của `file` theo vòng của `cue` (null: bài không lặp mờ chéo). Cỡ mili giây: đọc độ dài + định dạng file; bản WAV Nối dựng sau ([LoopSeam.render]). */
+    private fun planSeam(file: File, cue: MusicCues.Cue): SeamPicker.Built? {
+        val appContext = context ?: return null
+        val duration = trackSeconds(file) ?: return null
+        val bounds = MusicCues.loopBounds(cue, duration)
+        if (!bounds.crossfade) return null
+        val seam = LoopSeam.plan(appContext, file, LoopSeam.Bounds(bounds.start, bounds.loopStart, bounds.loopEnd), MusicCues.mix.loopCrossfadeSeconds)
+        return SeamPicker.Built(seam, bounds, duration, SeamPicker.keyOf(file, cue))
+    }
+
+    private fun trackSeconds(file: File): Double? {
+        val extractor = MediaExtractor()
+        try {
+            extractor.setDataSource(file.absolutePath)
+            for (i in 0 until extractor.trackCount) {
+                val format = extractor.getTrackFormat(i)
+                if (format.getString(MediaFormat.KEY_MIME)?.startsWith("audio/") == true && format.containsKey(MediaFormat.KEY_DURATION)) {
+                    return format.getLong(MediaFormat.KEY_DURATION) / 1_000_000.0
+                }
+            }
+            return null
+        } finally {
+            extractor.release()
+        }
     }
 
     /** Nhớ lựa chọn "Tự chọn nhạc nền" ([Playlists.autoEnabled]) qua lần khởi động tiến trình. */
@@ -235,25 +296,103 @@ object MusicBed {
             val mine = bed.cue
             if (!seeked && mine != null && seconds < mine.start) cue = mine else bed.early = false
         }
-        if (!MusicCues.continues(current?.track, cue, newChapter) && (cue != null || current != null)) {
+        val sameSeam = current?.built?.let { built -> cue != null && SeamPicker.compatible(built, cue) } ?: true // bài P3 sang mốc kề có vòng khác (hay `tail`): mở lại bằng đường chọn lại
+        if ((!MusicCues.continues(current?.track, cue, newChapter) || !sameSeam) && (cue != null || current != null)) {
             // Bài của mốc chưa có file (danh mục đang tải): bài trước mờ đi, bài này vào ngay khi có file - lần `sync` sau.
-            val uri = cue?.let { uriFor(appContext, it.track) }
-            if (cue != null && uri != null) switchTo(cue.track to uri, MusicCues.targetGain(cue, seconds, gain), seconds - cue.start, cue)
-            else switchTo(null, gain, 0.0)
+            if (cue == null || !startCue(appContext, cue, seconds, seconds - cue.start)) switchTo(null, gain, 0.0)
         } else if (cue != null) {
             current?.cue = cue // cùng bài sang mốc kề: chơi tiếp, bước âm lượng theo mốc mới
             // Vừa tua trong cùng bài: dời nhạc theo chỗ mới, không chơi tiếp từ chỗ cũ (soát a26 L8).
             if (seeked) current?.let { bed ->
                 loopHandoff.reset() // vé hẹn và bản lặp tạo sẵn cho chỗ cũ không còn đúng
                 bed.final = false // vòng cuối của mốc `tail` tính lại theo chỗ mới (finishTail)
-                bed.player.repeatMode = repeatFor(cue, bed.player)
-                MusicCues.offsetMs(cue, seconds, bed.player.duration)?.let(bed.player::seekTo)
+                if (bed.built != null) {
+                    if (!seamSeek(bed, seconds - cue.start)) demote(appContext, bed, "tua tới chỗ Nối chưa dựng xong", reject = false)
+                } else {
+                    bed.player.repeatMode = repeatFor(cue, bed.player)
+                    MusicCues.offsetMs(cue, seconds, bed.player.duration)?.let(bed.player::seekTo)
+                }
             }
         }
         retarget(seconds, seeked)
         finishTail(appContext, seconds)
+        seamTick(appContext)
         loopHandoff.check()
         applyPlaying()
+    }
+
+    /** Mở bài của mốc `cue` (bắt đầu `offsetSeconds` giây trong mốc), chọn đường P3 hay a87 ([seamPicker]); false khi chưa mở được (chưa có file: bài trước mờ đi, lần `sync` sau thử lại). */
+    private fun startCue(appContext: Context, cue: MusicCues.Cue, seconds: Double, offsetSeconds: Double, allowSeam: Boolean = true): Boolean {
+        val uri = uriFor(appContext, cue.track) ?: return false
+        var built: SeamPicker.Built? = null
+        if (allowSeam && musicSeamP3 && uri.scheme == "file") {
+            built = (seamPicker.choose(File(uri.path!!), cue) as? SeamPicker.Choice.Use)?.built
+            // Chỗ vào nằm sau Clip đầu mà Nối chưa dựng xong thì Clip đầu không phục vụ được: đường cũ cho bài này.
+            if (built != null && built.state != SeamPicker.State.READY && SeamClock.target(built.seam, offsetSeconds).index != 0) built = null
+        }
+        switchTo(cue.track to uri, MusicCues.targetGain(cue, seconds, gain), offsetSeconds, cue, built)
+        return true
+    }
+
+    /** Nhịp đồng bộ của bài P3 ([SeamClock.gate]): Nối dựng xong thì nối vào hàng; hỏng / không kịp trước khi hết Clip đầu thì rơi về a87. */
+    private fun seamTick(appContext: Context) {
+        val bed = current ?: return
+        val built = bed.built ?: return
+        val player = bed.player
+        when (SeamClock.gate(built.state, bed.attached, SeamClock.clip0RemainingMs(built.seam, player.currentMediaItemIndex, player.currentPosition))) {
+            SeamClock.Gate.ATTACH -> attachSeam(bed)
+            SeamClock.Gate.DEMOTE -> demote(appContext, bed, if (built.state == SeamPicker.State.DEAD) "dựng Nối lỗi" else "Nối chưa dựng kịp trước loopEnd", reject = false)
+            else -> {}
+        }
+    }
+
+    /** Nối Nối + Clip lặp vào hàng phát của bài P3 (hàng đang chỉ có Clip đầu) và giữ hàng gọn khi các vòng trôi qua ([SeamClock.stale]). */
+    @OptIn(UnstableApi::class)
+    private fun attachSeam(bed: Bed) {
+        val built = bed.built ?: return
+        if (bed.attached) return
+        bed.attached = true
+        val player = bed.player
+        player.addMediaItems(LoopSeam.mediaItems(built.seam).drop(1))
+        bed.listeners += LoopSeam.attach(player, built.seam)
+        val trim = object : Player.Listener {
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                SeamClock.stale(player.currentMediaItemIndex)?.let { player.removeMediaItems(it.first, it.last + 1) }
+            }
+        }
+        bed.listeners += trim
+        player.addListener(trim)
+    }
+
+    /** Tua bài P3 tới `sinceSeconds` giây kể từ đầu mốc bằng [LoopSeam.seekToSample]; false khi chỗ ấy cần Nối / Clip lặp mà hàng chưa có (bài rơi về a87). */
+    @OptIn(UnstableApi::class)
+    private fun seamSeek(bed: Bed, sinceSeconds: Double): Boolean {
+        val built = bed.built ?: return false
+        val sink = bed.sink ?: return false
+        val target = SeamClock.target(built.seam, sinceSeconds)
+        if (target.index != 0 && !bed.attached) return false
+        LoopSeam.seekToSample(bed.player, sink, built.seam, target.index, target.sample)
+        return true
+    }
+
+    /** Vị trí nhạc (giây trong bài) của `bed`: bài P3 tính theo (mục, vị trí) của hàng phát ([SeamClock.trackSeconds]), bài a87 là vị trí của trình phát. */
+    private fun positionOf(bed: Bed): Double =
+        bed.built?.let { SeamClock.trackSeconds(it.seam, bed.player.currentMediaItemIndex, bed.player.currentPosition) } ?: (bed.player.currentPosition / 1000.0)
+
+    /** Vị trí nhạc của bài đang kêu (giây trong bài), null khi im lặng - cho kiểm thử trên máy. */
+    val trackPosition: Double? get() = current?.let(::positionOf)
+
+    /** Bài P3 `bed` rơi về a87 (Nối chưa kịp / hỏng / tua tới chỗ chưa có Nối): bài ấy mờ ra, trình phát a87 vào ở chỗ giọng đang tới ([startCue] không chọn P3 lần này). `reject`: Nối hỏng thật, bỏ cả phiên. */
+    private fun demote(appContext: Context, bed: Bed, why: String, reject: Boolean) {
+        val built = bed.built ?: return
+        Log.w(TAG, "đường P3 rơi về a87: $why (${built.key})")
+        if (reject) seamPicker.reject(built, why)
+        val cue = bed.cue
+        if (current === bed && cue != null) {
+            if (!startCue(appContext, cue, lastSeconds, lastSeconds - cue.start, allowSeam = false)) switchTo(null, gain, 0.0)
+        } else if (current === bed) {
+            switchTo(null, gain, 0.0)
+        }
     }
 
     /** Mốc `tail`: vòng cuối thì thôi lặp ([MusicCues.finalLoop]), bài chơi tới E là hết ([MusicCues.finished]). Bài đã hết trước
@@ -261,6 +400,7 @@ object MusicBed {
      *  kế thì im tới hết mốc. */
     private fun finishTail(appContext: Context, seconds: Double) {
         val bed = current ?: return
+        if (bed.built != null) return // bài P3 không bao giờ ở mốc `tail` (sync mở lại bằng a87)
         val cue = bed.cue?.takeIf { it.tail } ?: return
         val player = bed.player
         val bounds = boundsOf(cue, player)
@@ -273,8 +413,7 @@ object MusicBed {
         val done = if (bed.final) MusicCues.finished(bounds, position, ended) else ended
         if (!done || seconds >= cue.end) return
         val next = MusicCues.nextAfter(cues, cue)?.takeUnless { it.track == cue.track || isFailed(it.track) } ?: return
-        val uri = uriFor(appContext, next.track) ?: return
-        switchTo(next.track to uri, MusicCues.targetGain(next, seconds, gain), 0.0, next)
+        if (!startCue(appContext, next, seconds, 0.0)) return
         current?.early = true
     }
 
@@ -285,6 +424,7 @@ object MusicBed {
         val bed = current ?: return null
         val cue = bed.cue ?: return null
         val player = bed.player
+        if (bed.built != null) return null // bài P3 tự lặp trong hàng phát của nó
         if (bed.final || lastSeconds >= cue.end || player.duration <= 0) return null
         return LoopHandoff.Snapshot(bed, boundsOf(cue, player), player.currentPosition / 1000.0, player.isPlaying)
     }
@@ -713,7 +853,7 @@ object MusicBed {
     /** Bài đang kêu mờ đi; `next` = (tên bài, file) thì bài ấy vào, bắt đầu ở giây `offsetSeconds` của nó, lên tới `targetGain`.
      *  `cue`: mốc của sách (bước âm lượng; mốc `sibling` = nối bài anh em ở điểm kết bài: mờ chéo dài hơn, bài cũ chơi nốt rồi thôi,
      *  không quay lại đầu bài, mờ trong phần còn lại tới E nếu ngắn hơn - [MusicCues.siblingFadeSeconds]). */
-    private fun switchTo(next: Pair<String, Uri>?, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue? = null) {
+    private fun switchTo(next: Pair<String, Uri>?, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue? = null, built: SeamPicker.Built? = null) {
         loopHandoff.reset()
         val mix = MusicCues.mix
         val fadeMs = if (cue?.sibling == true) mix.siblingFadeMs else mix.fadeMs
@@ -723,7 +863,7 @@ object MusicBed {
                 it.player.repeatMode = Player.REPEAT_MODE_OFF
                 val was = it.cue
                 if (was != null && it.player.duration > 0) {
-                    oldFadeMs = Math.round(MusicCues.siblingFadeSeconds(boundsOf(was, it.player), it.player.currentPosition / 1000.0) * 1000)
+                    oldFadeMs = Math.round(MusicCues.siblingFadeSeconds(it.built?.bounds ?: boundsOf(was, it.player), positionOf(it)) * 1000)
                 }
             }
             it.fadeStep = maxOf(it.player.volume, 0.01f) * STEP_MS / oldFadeMs
@@ -731,7 +871,7 @@ object MusicBed {
         }
         current = null
         val appContext = context ?: return
-        if (next != null) current = open(appContext, next, targetGain, offsetSeconds, cue, fadeMs)
+        if (next != null) current = open(appContext, next, targetGain, offsetSeconds, cue, fadeMs, built = built)
         startFade()
     }
 
@@ -739,25 +879,38 @@ object MusicBed {
      *  chỗ ấy (A), không căn theo giây chương - đồng hồ bài lệch giọng vài phần giây thì căn lại có khi rơi về cuối vòng. */
     @OptIn(UnstableApi::class)
     private fun open(appContext: Context, next: Pair<String, Uri>, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue?,
-                     fadeMs: Long, startAt: Double? = null, handoff: Handoff? = null, standby: Boolean = false): Bed {
+                     fadeMs: Long, startAt: Double? = null, handoff: Handoff? = null, standby: Boolean = false, built: SeamPicker.Built? = null): Bed {
         val (track, uri) = next
         // Bộ giải mã đồng bộ: chế độ hàng đợi bất đồng bộ (mặc định Android 12+) tắt luồng gọi lại của MediaCodec trước khi nhả codec - mỗi lần nhả một bài
         // (lặp mờ chéo ~40 lần / 5 phút) codec còn gửi sự kiện tới luồng đã chết ("sending message to a Handler on a dead thread", soát a69: 360 lần / 40 phút).
-        val renderers = DefaultRenderersFactory(appContext).forceDisableMediaCodecAsynchronousQueueing()
+        // Đường P3 (`built`): sink bọc LoopSink (việc cắt mẫu của Nối) + nguồn media của LoopSeam; còn lại như nhau.
+        var loopSink: LoopSeam.LoopSink? = null
+        val renderers = if (built == null) DefaultRenderersFactory(appContext).forceDisableMediaCodecAsynchronousQueueing() else object : DefaultRenderersFactory(appContext) {
+            override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): AudioSink {
+                val base = DefaultAudioSink.Builder(context)
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioOutputPlaybackParameters(enableAudioTrackPlaybackParams)
+                    .build()
+                return LoopSeam.LoopSink(base).also { loopSink = it }
+            }
+        }.forceDisableMediaCodecAsynchronousQueueing()
+        val sourceFactory = Streaming.mediaSourceFactory(appContext, exactMp3Seek = true)
         val player = ExoPlayer.Builder(appContext, renderers)
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
                 false,
             )
-            .setMediaSourceFactory(Streaming.mediaSourceFactory(appContext, exactMp3Seek = true))
+            .setMediaSourceFactory(if (built == null) sourceFactory else LoopSeam.mediaSourceFactory(sourceFactory))
             // media3 1.11 bật dynamic scheduling mặc định: luồng phát chỉ thức khi bộ đệm cần, currentPosition đứng yên rồi nhảy ~250 ms -
             // hẹn giờ lặp đọc vị trí ấy nên lệch tới chừng đó. Tắt đi, bước vị trí còn 10-40 ms (đo trên máy 22-10, PLAN_loop §37.1).
             .experimentalSetDynamicSchedulingEnabled(false)
             .build()
-        player.repeatMode = Player.REPEAT_MODE_ONE // biết độ dài bài (STATE_READY) mới biết lặp mờ chéo hay lặp thường
+        if (built == null) player.repeatMode = Player.REPEAT_MODE_ONE // biết độ dài bài (STATE_READY) mới biết lặp mờ chéo hay lặp thường; bài P3 tự lặp trong hàng phát
         player.volume = 0f
         val offsetMs = (offsetSeconds.coerceAtLeast(0.0) * 1000).toLong()
         val bed = Bed(track, player, targetGain, targetGain * STEP_MS / fadeMs, cue, fadeMs)
+        bed.built = built
+        bed.sink = loopSink
         fun listen(listener: Player.Listener) {
             bed.listeners += listener
             player.addListener(listener)
@@ -768,6 +921,14 @@ object MusicBed {
                     player.removeListener(this)
                     bed.listeners.remove(this)
                     failed.forget(track)
+                    if (built != null) {
+                        // Như đường a87 bên dưới: theo giây mới nhất của chương; vào ở đầu mốc (Clip đầu, mẫu 0) thì không tua.
+                        val mine = bed.cue
+                        val since = if (mine != null && current === bed) lastSeconds - mine.start else offsetSeconds
+                        val target = SeamClock.target(built.seam, since)
+                        if ((target.index != 0 || target.sample != 0L) && !seamSeek(bed, since)) demote(appContext, bed, "chỗ vào nằm sau Clip đầu, Nối chưa dựng xong", reject = false)
+                        return
+                    }
                     val duration = player.duration
                     player.repeatMode = repeatFor(bed.cue, player, bed.final)
                     if (startAt != null || duration <= 0) return
@@ -796,6 +957,12 @@ object MusicBed {
             override fun onPlayerError(error: PlaybackException) {
                 main.post {
                     if (bed.released) return@post // đã nhả (bản tạo sẵn bị bỏ, bài mờ xong): lỗi muộn không tính là bài hỏng
+                    if (bed.built != null) {
+                        // Đường P3 hỏng giữa chừng (Nối / Clip không phát được): bỏ Nối này cả phiên, bài phát tiếp bằng a87 ở chỗ giọng đang tới - không im lặng, không văng.
+                        if (current === bed) demote(appContext, bed, "lỗi phát ${error.errorCodeName}", reject = true)
+                        else { seamPicker.reject(bed.built!!, "lỗi phát ${error.errorCodeName}"); release(bed); fading.removeAll { it === bed } }
+                        return@post
+                    }
                     if (loopHandoff.prepared() === bed) { // bản lặp tạo sẵn hỏng trước khi dùng: bỏ êm, tới hạn mở mới
                         loopHandoff.discardReady()
                         return@post
@@ -810,7 +977,11 @@ object MusicBed {
                 }
             }
         })
-        if (startAt != null) player.setMediaItem(MediaItem.fromUri(uri), (startAt * 1000).toLong())
+        if (built != null) {
+            // Chỉ Clip đầu: phát ngay, không chờ Nối. Nối + Clip lặp nối vào khi dựng xong ([seamTick] -> [attachSeam]).
+            player.setMediaItem(LoopSeam.mediaItems(built.seam).first())
+            if (built.state == SeamPicker.State.READY) attachSeam(bed)
+        } else if (startAt != null) player.setMediaItem(MediaItem.fromUri(uri), (startAt * 1000).toLong())
         else player.setMediaItem(MediaItem.fromUri(uri))
         player.prepare()
         if (playing && !standby) player.play()

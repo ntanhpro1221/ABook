@@ -324,6 +324,15 @@ object LoopSeam {
      * cùng tần số / kênh vào `cacheDir/loopseam/<khoá>.wav` (khoá theo file + mốc; có sẵn thì dùng lại, không giải mã). File mp3 không quét đều được thì lùi về giải mã liền từ đầu ([decode]).
      */
     fun build(context: Context, file: File, bounds: Bounds, xSeconds: Double, prerollFrames: Int = PREROLL_FRAMES): Seam {
+        val planned = plan(context, file, bounds, xSeconds, prerollFrames)
+        return if (planned.cached) planned else render(planned)
+    }
+
+    /**
+     * Phần HÌNH HỌC của [build] (không giải mã, cỡ mili giây: chỉ đọc định dạng file): biên khung, X', đường dẫn WAV trong bộ nhớ đệm, `cached` = WAV đã có đủ. Đủ để phát Clip đầu
+     * ([mediaItems] mục 0) ngay; Nối thì [render] dựng sau, ở luồng nền ([MusicBed] bật `musicSeamP3`).
+     */
+    fun plan(context: Context, file: File, bounds: Bounds, xSeconds: Double, prerollFrames: Int = PREROLL_FRAMES): Seam {
         val began = SystemClock.elapsedRealtime()
         val (rate, channels) = probeFormat(file)
         val spf = if (rate >= 32000) 1152 else 576 // như ExactSeekMp3Extractor.frameBoundarySeconds
@@ -338,7 +347,23 @@ object LoopSeam {
         val dir = File(context.cacheDir, "loopseam").apply { mkdirs() }
         val wav = File(dir, cacheKey(file, ka, ks, ke, kx, rate, channels) + ".wav")
         fun seam(cached: Boolean) = Seam(file, wav, ka * spf, ks * spf, ke * spf, n, rate, channels, spf, SystemClock.elapsedRealtime() - began, prerollFrames, cached)
-        if (wav.length() == 44L + n.toLong() * channels * 2) return seam(true)
+        return seam(wav.length() == 44L + n.toLong() * channels * 2)
+    }
+
+    /** Phần GIẢI MÃ của [build]: dựng WAV của Nối theo hình học của `seam` ([plan]); có sẵn đủ thì không làm gì. Chạy ở luồng nền (vài trăm ms tới vài giây). */
+    fun render(seam: Seam): Seam {
+        val began = SystemClock.elapsedRealtime()
+        val file = seam.file
+        val wav = seam.wav
+        val rate = seam.sampleRate
+        val channels = seam.channels
+        val spf = seam.frameSamples
+        val n = seam.xFrames
+        val ks = seam.loopStartSamples / spf
+        val ke = seam.loopEndSamples / spf
+        val kx = (n / spf).toLong()
+        if (wav.length() == 44L + n.toLong() * channels * 2) return seam
+        val dir = wav.parentFile!!
         val scanned = scanMp3(file.readBytes(), (ke + 2).toInt())?.takeIf { it.sampleRate == rate && it.channels == channels && it.samplesPerFrame == spf && it.count > ke }
         val old: ShortArray
         val new: ShortArray
@@ -358,7 +383,7 @@ object LoopSeam {
         val tmp = File(dir, wav.name + ".tmp")
         writeWav(tmp, mix(old, new, channels), rate, channels)
         check(tmp.renameTo(wav) || wav.length() == tmp.length()) { "không đổi tên được ${tmp.name}" }
-        return seam(false)
+        return Seam(file, wav, seam.audibleStartSamples, seam.loopStartSamples, seam.loopEndSamples, n, rate, channels, spf, seam.buildMs + SystemClock.elapsedRealtime() - began, seam.prerollFrames, false)
     }
 
     /** Chép phần của khối `pcm` (mẫu đầu `first`) rơi vào vùng [start, start + dest.size / channels); trả số mẫu đã chép. */
