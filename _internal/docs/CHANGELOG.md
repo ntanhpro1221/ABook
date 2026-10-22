@@ -9,6 +9,25 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi PDF không có lớp chữ hoặc có mật khẩu, app nói rõ bạn cần OCR, dùng bản đã mở khóa hoặc chọn TXT/DOCX để tiếp tục.
+- Khi bạn nhập thư mục TXT có tên Unicode như ß/SS hay các dạng sigma, điện thoại xếp chương cùng thứ tự với máy tính.
+- Khi PDF của bạn có ít trang chữ xen nhiều trang minh họa, app vẫn cho xem và nhập phần chữ, kèm số trang không trích được chữ.
+- Trên điện thoại, các TXT có tên rất dài vẫn giữ tên chương và thứ tự theo tên gốc của bạn, dù tên bản chép tạm phải rút ngắn.
+- Khi TXT của bạn bị cụt byte hoặc hỏng bảng mã, cả máy tính và điện thoại đều báo bạn lưu lại UTF-8 hoặc tải lại, không tự thay chữ bằng dấu �.
+- Khi bạn nhập DOCX dùng kiểu tiêu đề tự đặt tên, kế thừa kiểu hoặc cấp dàn ý, chương được chia theo cấu trúc của tài liệu.
+- Khi bạn nhập DOCX có một Heading 1 ở đầu, dòng ấy vẫn nằm trong sách, kể cả khi thông tin tài liệu ghi tên sách khác.
+- Khi bạn nhập DOCX có theo dõi thay đổi, câu đã di chuyển chỉ được đọc một lần ở vị trí cuối cùng.
+- Khi TXT của bạn có ký tự phân cách ẩn, các từ và tiêu đề chương vẫn được ngăn đúng, không còn dính chữ khi nhập.
+- Khi bạn nhập DOCX, ngắt trang, ngắt cột và xuống dòng cứng không còn làm dính hai từ vào nhau.
+- Khi bạn nhập light novel, tiêu đề ghép tập–chương, ngoại truyện, lời bạt, minh họa và phần có số được nhận riêng để bạn chọn chương trên cả hai nền.
+- Khi bạn nhập sách, câu kể như “Hồi hai đứa còn học…” hoặc “Chương 1 này hay thật.” không còn bị cắt thành chương mới.
+- Khi bạn chia TXT, dòng “Tập 2” sát tiêu đề chương đi cùng chương mở tập ấy ở cả Studio, máy tính và điện thoại.
+- Khi bạn chia TXT trong Studio, các dòng mục lục không còn thành hàng loạt chương rỗng; điểm chia giống màn Thêm sách.
+- Trên điện thoại, nếu một TXT trong thư mục không đọc được, bạn được báo đúng tên file và cách chọn lại; app không còn nhập thiếu chương âm thầm.
+- Khi nguồn TXT hay thư mục chương đổi sau bước xem trước, bạn được yêu cầu xem lại trước khi thêm, tránh nhập nhầm chương theo hàng cũ.
+- Khi bạn nhập PDF, dòng nghi là đầu/chân trang trở thành lựa chọn có thể tắt ở bước xem trước; câu lặp và câu khác nhau ở con số được giữ nguyên, bạn có thể xem lại cả số trang.
+- Khi bạn chia TXT thành chương, phần mở đầu luôn được giữ và chọn sẵn, kể cả chỉ có một dòng giống tên sách; bạn bỏ chọn nếu không muốn đọc phần ấy.
+- Khi bạn nhập DOCX, số gọi và lời chú cuối trang/cuối sách được giữ mặc định; bạn chỉ bỏ chúng khi chọn ở bước xem trước.
 - Một file sách bạn bè gửi mà thông tin bên trong sai kiểu (thời lượng, số chương, phần...) giờ bị từ chối ngay lúc mở, kèm lời nhờ xin người gửi gửi lại, thay vì làm cả thư viện nghe không hiện được; có một cuốn hỏng thì các cuốn còn lại vẫn hiện bình thường.
 - File sách bị nén bất thường (một mục nhỏ xíu giải ra hàng trăm MB) bị từ chối trước khi chép vào ổ đĩa của bạn, trên cả máy tính và điện thoại.
 - Khi bạn mở cùng một file sách hai lần liền, lượt sau báo cuốn đã có thay vì báo lỗi quyền ghi sai.

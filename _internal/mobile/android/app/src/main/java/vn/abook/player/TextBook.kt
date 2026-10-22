@@ -94,12 +94,13 @@ object TextBook {
 
     fun preview(book: BookImport.Book): JSONObject {
         val rows = JSONArray()
+        val defaults = BookImport.defaultPicks(book).map { it.first }.toSet()
         var words = 0
         var chapters = 0
         for ((index, chapter) in book.chapters.withIndex()) {
             val source = BookImport.chapterSource(book, chapter)
             val count = BookImport.wordCount(source)
-            if (!chapter.short && chapter.matter.isEmpty()) {
+            if (index + 1 in defaults) {
                 words += count
                 chapters++
             }
@@ -107,7 +108,7 @@ object TextBook {
             rows.put(
                 JSONObject().put("index", index + 1).put("title", cleanTitle(chapter.name.ifEmpty { chapter.title }, "Chương ${index + 1}"))
                     .put("firstLine", BookEdits.cut(first, 200)).put("words", count).put("chars", BookImport.charCount(source))
-                    .put("included", !chapter.short && chapter.matter.isEmpty()).also { if (chapter.short) it.put("short", true) }
+                    .put("included", index + 1 in defaults).also { if (chapter.short) it.put("short", true) }
                     .also { if (chapter.matter.isNotEmpty()) it.put("matter", chapter.matter) },
             )
         }
@@ -115,7 +116,7 @@ object TextBook {
             .put("language", book.language ?: JSONObject.NULL).put("hasCover", book.cover != null).put("chapters", rows)
             .put("notes", JSONArray(book.notes))
             // Gợi ý chọn được: dòng ghi công người nghe có thể bỏ khỏi phần đọc (mặc định KHÔNG bỏ). `chapter` = mã chương trong sách.
-            .put("suggestions", JSONArray(book.credits.map { (chapter, line) -> JSONObject().put("chapter", chapter).put("line", line) }))
+            .put("suggestions", JSONArray(book.credits.map { (chapter, line) -> JSONObject().put("chapter", chapter).put("line", line).also { if (line in book.defaultSkips) it.put("defaultOn", true) } }))
             // Chú thích (EPUB / DOCX có cấu trúc): tìm thấy N lời chú - giao diện đề xuất "không đọc số", "đọc lời chú ở cuối chương" / "bỏ lời chú" (mặc định KHÔNG tích).
             .also { if (book.footnoteFound > 0) it.put("footnotes", footnotes(book)) }
             .put("totals", JSONObject().put("chapters", chapters).put("words", words))

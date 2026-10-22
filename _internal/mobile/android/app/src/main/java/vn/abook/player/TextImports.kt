@@ -23,6 +23,14 @@ object TextImports {
     private val SUPPORTED = setOf("epub", "docx", "pdf", "txt")
     private val UNSAFE = Regex("""[<>:"/\\|?*\u0000-\u001f]""")
     private val kept = ConcurrentHashMap<String, BookImport.Book>()
+    private const val FOLDER_NAMES = ".abook-import-names.json"
+
+    private fun originalNames(source: File): Map<String, String> {
+        val file = File(source, FOLDER_NAMES)
+        if (!source.isDirectory || !file.isFile) return emptyMap()
+        val names = JSONObject(file.readText(Charsets.UTF_8))
+        return names.keys().asSequence().associateWith { names.getString(it) }
+    }
 
     /** Bộ chuẩn hoá ảnh bìa của máy (AndroidCoverCodec); không có thì sách không có bìa. */
     @Volatile var codec: CoverCodec? = null
@@ -140,10 +148,18 @@ object TextImports {
         try {
             var budget = MAX_SOURCE_BYTES
             val used = HashSet<String>()
+            val names = JSONObject()
             for ((fileName, open) in texts) {
-                val input = open() ?: continue
-                budget -= input.use { copy(it, File(folder, uniqueName(safeName(fileName, "chuong.txt"), used)), budget) }
+                try {
+                    val input = open() ?: throw BookImport.Failed("Không mở được file.")
+                    val diskName = uniqueName(safeName(fileName, "chuong.txt"), used)
+                    budget -= input.use { copy(it, File(folder, diskName), budget) }
+                    names.put(diskName, fileName)
+                } catch (error: Exception) {
+                    throw BookImport.Failed("Không đọc được “$fileName”. Bạn hãy kiểm tra quyền đọc hoặc chép đủ file về máy rồi chọn lại thư mục.")
+                }
             }
+            File(folder, FOLDER_NAMES).writeText(names.toString(), Charsets.UTF_8)
         } catch (error: Exception) {
             dir(ref).deleteRecursively()
             throw error
@@ -169,7 +185,7 @@ object TextImports {
         val book = if (source.isFile && source.extension.lowercase() == "pdf") {
             BookImport.fromPdfPages(source.nameWithoutExtension, pages ?: throw BookImport.Failed("Chưa lấy được chữ của PDF này - thử lại."), title, author)
         } else {
-            BookImport.importFile(source, splitChapters, keepShort = true, footnotes = footnotes)
+            BookImport.importFile(source, splitChapters, keepShort = true, footnotes = footnotes, originalNames = originalNames(source))
         }
         kept[ref] = book
         // Đúng bộ chữ này đã có trong thư viện (với các chương mặc định): hỏi ngay ở bước xem trước ("Mở cuốn đó" / "Thêm bản riêng") - như máy
@@ -190,9 +206,10 @@ object TextImports {
     /** Mã băm của thứ người dùng chọn để thêm sách: nội dung file, hay (thư mục TXT) tên + nội dung từng file theo thứ tự tên (`textbook.source_digest`). */
     private fun sourceDigest(source: File): String {
         val digest = java.security.MessageDigest.getInstance("SHA-256")
-        val files = if (source.isDirectory) source.listFiles()!!.sortedBy { it.name } else listOf(source)
+        val names = originalNames(source)
+        val files = if (source.isDirectory) source.listFiles()!!.filter { it.name != FOLDER_NAMES }.sortedBy { names[it.name] ?: it.name } else listOf(source)
         for (file in files.filter { it.isFile }) {
-            if (source.isDirectory) digest.update(file.name.toByteArray(Charsets.UTF_8))
+            if (source.isDirectory) digest.update((names[file.name] ?: file.name).toByteArray(Charsets.UTF_8))
             file.inputStream().use { input ->
                 val buffer = ByteArray(1 shl 16)
                 while (true) {

@@ -5,6 +5,10 @@
  "cover": null,
  "chapters": [
   {
+   "title": "Mở đầu",
+   "text": "Ba hồi trên sông"
+  },
+  {
    "title": "Hồi thứ nhất",
    "text": "Hồi thứ nhất\nCon đò rời bến lúc trời còn tối."
   },
@@ -17,9 +21,7 @@
    "text": "Hồi thứ ba\nĐò cập bến bên kia."
   }
  ],
- "notes": [
-  "Dòng đầu “Ba hồi trên sông” là tên truyện - dùng làm tên sách, không đọc thành một chương."
- ],
- "splitOffer": 3,
+ "notes": [],
+ "splitOffer": 4,
  "splitHeadings": 3
 }
