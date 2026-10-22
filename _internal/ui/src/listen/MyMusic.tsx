@@ -9,6 +9,7 @@ import { hasNativeMusicImport, importMusic } from "@/studio/musicImport";
 import { analysisLabel, importSummary, LOCAL_PREFIX, MY_MUSIC_INTRO, mineNote, type LocalMusicView, type LocalTrack } from "@/studio/musicLocal";
 import { AutoPickNote } from "@/studio/AutoPickNote";
 import { MusicModuleNotice } from "@/studio/MusicModuleNotice";
+import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT } from "./musicBed";
 
 // "Nhạc của tôi" trên trang sửa sách (docs/MUSIC_IMPORT.md): nhạc bạn tự có làm nhạc nền. Nhập, xem, xoá ở đây; "Đổi bài" ở từng đoạn
 // nhạc của sách. Cùng JSON ở máy tính (server.py) và điện thoại (LocalStudio.kt, MusicStore.kt).
@@ -96,6 +97,8 @@ export function MyMusicSection() {
   const refresh = (view: LocalMusicView) => {
     client.setQueryData(MY_MUSIC_KEY, view);
     void client.invalidateQueries({ queryKey: ["music-alternatives"] });
+    void client.invalidateQueries({ queryKey: ["music", "playlists"] });
+    window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: MUSIC_CHANGED_ALL }));
   };
   const importFiles = async () => {
     try {

@@ -21,6 +21,9 @@ export interface ListenChapter {
   speech?: boolean;
   /** Dòng người nghe đã bỏ khỏi phần đọc (lớp sửa `skip`, gợi ý dòng ghi công): màn đọc và đọc to bỏ qua - textScript.ts `withoutLines`. */
   skip?: string[];
+  /** Phiên bản audio / mốc chữ do nguồn cung cấp, đổi thì hỏi lại kịch bản. */
+  audioVersion?: string;
+  wordsVersion?: string;
 }
 
 /** Bấm nghe được: chương có audio, hay chương chỉ-có-chữ mà máy có giọng đọc. */
@@ -58,7 +61,7 @@ export interface Bookmark {
 
 /** Màn đọc mở đúng câu của một dấu trang đặt ở màn đọc (`?at=` - ReaderScreen); dấu đặt từ trình phát (không có câu) thì null. */
 export function bookmarkReadPath(bookId: string, mark: Bookmark): string | null {
-  return typeof mark.index === "number" ? `/book/${bookId}/read/${mark.chapterId}?at=${mark.index}` : null;
+  return typeof mark.index === "number" ? `/book/${bookId}/read/${mark.chapterId}?${new URLSearchParams({ at: String(mark.index), ...(mark.quote ? { quote: mark.quote } : {}) })}` : null;
 }
 
 /** Câu mà dấu trang đặt ở màn đọc trỏ tới. */
@@ -86,7 +89,7 @@ export interface ListeningState {
   finishedAt?: number;
   bookmarks: Bookmark[];
   /** Chỗ đọc dở ở chế độ đọc (câu thứ `index` của chương). */
-  reading?: { chapterId: number; index: number; at: number };
+  reading?: import("./readingPosition").ReadingPosition;
   updatedAt?: number;
 }
 

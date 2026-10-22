@@ -692,6 +692,21 @@ object Store {
 
     private fun now() = System.currentTimeMillis() / 1000.0
 
+    /** Chỗ đọc cùng hợp đồng anchor với chỗ nghe; flush của hồ sơ cũ vẫn về đúng hồ sơ ấy. */
+    @Synchronized
+    fun saveReading(id: String, chapterId: Int, index: Int, at: Double = now(), anchor: JSONObject? = null, record: String? = null): JSONObject {
+        require(at.isFinite() && at >= 0) { "Thời điểm chỗ đọc không hợp lệ" }
+        val target = record ?: activeRecord(id)
+        require(records(id).let { rows -> (0 until rows.length()).any { rows.getJSONObject(it).optString("id") == target } }) { "Hồ sơ đọc không còn thuộc cuốn này" }
+        val state = recordState(target)
+        if ((state.optJSONObject("reading")?.optDouble("at", 0.0) ?: 0.0) >= at) return state
+        val place = JSONObject().put("chapterId", chapterId).put("index", index.coerceAtLeast(0)).put("at", at)
+        vn.abook.player.readaloud.ReadingAnchor.validated(anchor)?.let { place.put("anchor", it) }
+        state.put("reading", place).put("updatedAt", maxOf(state.optDouble("updatedAt", 0.0), at))
+        writeAtomic(recordFile(target), state.toString())
+        return state
+    }
+
     @Synchronized
     fun progress(id: String, chapterId: Int, seconds: Double, duration: Double, anchor: JSONObject? = null): JSONObject {
         val state = state(id)

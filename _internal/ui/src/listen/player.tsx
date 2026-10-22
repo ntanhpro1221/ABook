@@ -432,7 +432,7 @@ export function PlayerProvider({
   const speechOf = useCallback((bookId: string, chapter: ListenChapter): SpeechTrack => {
     const query = chapterScriptQuery(source, bookId, chapter);
     return {
-      script: () => client.fetchQuery(query),
+      script: () => client.fetchQuery({ ...query, staleTime: 0 }),
       voice: () => chosenVoice(bookId),
       serial: () => runsOnThisMachine(voicesRef.current ? resolveVoice(voicesRef.current, chosenVoice(bookId)) : undefined),
       bookId,
@@ -443,7 +443,9 @@ export function PlayerProvider({
         if (!next || next.state !== "text") return [];
         return (await client.fetchQuery(chapterScriptQuery(source, bookId, next))).segments.map((segment) => segment.text);
       },
-      onScript: (script) => client.setQueryData(query.queryKey, script),
+      onScript: (script) => {
+        if (refs.current.track?.bookId === bookId && refs.current.track.chapterId === chapter.id) client.setQueryData(["playing-script", bookId], script);
+      },
     };
   }, [client, showNotice, source]);
 
@@ -498,6 +500,8 @@ export function PlayerProvider({
     // Sang chương khác của cùng cuốn, cùng hồ sơ (Trước / Sau, hết chương): chỗ mới CHƯA được lưu - lưu khi nguồn báo độ dài ("duration"),
     // kể cả khi đang dừng. Nạp cuốn / hồ sơ khác ở đúng chỗ đã lưu thì không: lưu lại là đóng dấu giờ mới lên chỗ cũ.
     const previous = refs.current.track;
+    if (previous) client.setQueryData(["playing-script", previous.bookId], null);
+    client.setQueryData(["playing-script", next.bookId], null);
     const moved = previous?.bookId === next.bookId && previous?.recordId === next.recordId && previous?.chapterId !== next.chapterId;
     save(true);
     const session = refs.current.playback;
@@ -530,7 +534,7 @@ export function PlayerProvider({
       at,
       autoplay,
     );
-  }, [clock, engine, ensurePlayback, native, source, save, speechOf]);
+  }, [client, clock, engine, ensurePlayback, native, source, save, speechOf]);
 
   const remember = useCallback((from: { chapterId: number; seconds: number }, to: { chapterId: number; seconds: number }, note?: string) => {
     // Nhảy xa là một đoạn nghe khác: phiên cũ kết thúc ở chỗ trước khi nhảy.
@@ -574,7 +578,7 @@ export function PlayerProvider({
       bed
         ? new SceneCues(bed, () => {
             const current = refs.current.track;
-            return current ? client.getQueryData<Script>(["listen", "script", current.bookId, current.chapterId, "text"]) : undefined;
+            return current ? client.getQueryData<Script>(["playing-script", current.bookId]) ?? client.getQueryData<Script>(["listen", "script", current.bookId, current.chapterId, "text"]) : undefined;
           })
         : null,
     [bed, client],
@@ -1215,6 +1219,7 @@ export function PlayerProvider({
     bed?.stop(); // bộ phát nhạc nền nhả hẳn (không chỉ tạm dừng cùng giọng): đóng sách thì không giữ bộ đệm bài nhạc tới lần mở sách sau
     cuesChapter.current = "";
     bedCuesFor.current = "";
+    if (refs.current.track) client.setQueryData(["playing-script", refs.current.track.bookId], null);
     setTrack(null);
     refs.current.track = null;
     refs.current.playback = null;
@@ -1226,7 +1231,7 @@ export function PlayerProvider({
     refs.current.purpose = "listen";
     refs.current.history = [];
     setCanGoBack(false);
-  }, [applySleep, bed, endFade, engine, native, night, position, save]);
+  }, [applySleep, bed, client, endFade, engine, native, night, position, save]);
 
   // Thôi ghép máy kia khi đang nạp một cuốn của nó: cuốn rời Thư viện thì trình phát đóng và nói vì sao (soát a27 lỗi 11). Chỉ đọc danh sách
   // Thư viện đã có trong bộ đệm (Thư viện, hộp thôi ghép làm mới nó) - không hỏi thêm.
@@ -1317,6 +1322,7 @@ export function PlayerProvider({
       ];
       night.cancel(position());
       engine.stop();
+      client.setQueryData(["playing-script", current.bookId], null);
       refs.current.track = null;
       refs.current.playback = null;
       setTrack(null);
@@ -1340,7 +1346,7 @@ export function PlayerProvider({
     }
     const point = resumePoint(book, chapters);
     if (point) prepare(book, chapters, point.chapter.id, point.at);
-  }, [applySleep, closeSession, endFade, engine, native, night, play, position, prepare, save, source]);
+  }, [applySleep, client, closeSession, endFade, engine, native, night, play, position, prepare, save, source]);
 
   splitSessionRef.current = (at) => {
     const session = refs.current.session;

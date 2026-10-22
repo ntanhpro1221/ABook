@@ -5718,7 +5718,8 @@ class Handler(BaseHTTPRequestHandler):
     def post_reading(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
         body = self._body()
-        self.app.listening.set_reading(value, int(body.get("chapterId", 0)), int(body.get("index", 0)))
+        self.app.listening.set_reading(value, int(body.get("chapterId", 0)), int(body.get("index", 0)),
+                                       at=body.get("at"), anchor=body.get("anchor"), record=_held_record(body))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_night(self, _query: dict[str, list[str]], value: str) -> None:

@@ -91,8 +91,11 @@ export function MorningRecap({ className }: { className?: string }) {
       Date.now() / 1000 - session.endedAt < RECENT_HOURS * 3600,
   );
   const markers = useMemo(() => (session && fresh ? markersOf(session) : []), [session, fresh]);
-  const chapterIds = [...new Set(markers.map((marker) => marker.chapterId))];
-  const { data: book, error: bookError } = useListenBook(fresh && chapterIds.length > 0 ? bookId : undefined);
+  const { data: book, error: bookError } = useListenBook(fresh && markers.length > 0 ? bookId : undefined);
+  const ordered = book?.chapters ?? [];
+  const markedIndices = markers.map(marker => ordered.findIndex(chapter => chapter.id === marker.chapterId)).filter(index => index >= 0);
+  const range = markedIndices.length ? ordered.slice(Math.min(...markedIndices), Math.max(...markedIndices) + 1) : [];
+  const chapterIds = range.length ? range.map(chapter => chapter.id) : [...new Set(markers.map(marker => marker.chapterId))];
   const scripts = useQuery({
     queryKey: ["listen", "night-scripts", bookId, chapterIds.join(",")],
     enabled: fresh && chapterIds.length > 0 && Boolean(book),
@@ -125,17 +128,22 @@ export function MorningRecap({ className }: { className?: string }) {
   };
   const suggested = markers.find((marker) => marker.suggested)!;
   const script = scripts.data?.[suggested.chapterId];
-  const starts = script?.timed ? script.segments.map((segment) => segment.start ?? 0) : [];
-  const indexAt = (seconds: number) => {
+  const indexAt = (script: Script, seconds: number) => {
     let found = 0;
-    starts.forEach((start, index) => {
-      if (start <= seconds) found = index;
+    script.segments.forEach((segment, index) => {
+      if ((segment.start ?? 0) <= seconds) found = index;
     });
     return found;
   };
-  const earliest = markers.find((marker) => marker.chapterId === suggested.chapterId) ?? suggested;
-  const scrubFrom = indexAt(earliest.seconds);
-  const scrubTo = Math.max(scrubFrom, indexAt(markers[markers.length - 1].seconds));
+  const scrub = chapterIds.flatMap((chapterId, index) => {
+    const chapterScript = scripts.data?.[chapterId];
+    if (!chapterScript?.timed) return [];
+    const points = markers.filter(marker => marker.chapterId === chapterId).map(marker => marker.seconds);
+    const from = index === 0 && points.length ? Math.max(0, indexAt(chapterScript, Math.min(...points)) - 2) : 0;
+    const to = index === chapterIds.length - 1 && points.length ? indexAt(chapterScript, Math.max(...points)) + 3 : chapterScript.segments.length;
+    return [{ chapterId, title: ordered.find(chapter => chapter.id === chapterId)?.fullTitle ?? markers.find(marker => marker.chapterId === chapterId)?.chapterTitle,
+      segments: chapterScript.segments.slice(from, to) }];
+  });
 
   return (
     <section className={cn("relative overflow-hidden rounded-2xl border border-line bg-panel p-4 shadow-card sm:p-5", className)} aria-label={sessionLabel(session.endedAt)}>
@@ -195,17 +203,20 @@ export function MorningRecap({ className }: { className?: string }) {
       {scrubbing && script?.timed && (
         <div className="mt-4 max-h-80 overflow-y-auto rounded-xl border border-line">
           <p className="sticky top-0 bg-panel px-3 py-2 text-xs text-fg-2">Chọn câu cuối cùng còn nhớ:</p>
-          {script.segments.slice(Math.max(0, scrubFrom - 2), scrubTo + 3).map((segment) => (
+          {scrub.map(group => <section key={group.chapterId} aria-label={group.title}>
+            <h3 className="bg-hover px-3 py-2 text-sm font-semibold">{group.title}</h3>
+            {group.segments.map((segment) => (
             <button
               key={segment.id}
               type="button"
-              onClick={() => void resume(suggested.chapterId, segment.start ?? 0)}
+              onClick={() => void resume(group.chapterId, segment.start ?? 0)}
               className="block w-full border-t border-line px-3 py-2.5 text-left text-[0.9375rem] leading-snug hover:bg-hover active:bg-hover"
             >
               {segment.speaker && <span className="mr-1.5 text-[0.6875rem] font-semibold uppercase text-accent-text">{segment.speaker}</span>}
               {segment.text}
             </button>
-          ))}
+            ))}
+          </section>)}
         </div>
       )}
     </section>

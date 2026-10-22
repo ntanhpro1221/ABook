@@ -273,7 +273,11 @@ describe("otherBooksToHear", () => {
 
 describe("bookmarkReadPath", () => {
   it("opens the reader on the sentence a reader bookmark points to; a player bookmark has no sentence", () => {
-    expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 12, quote: "Trời đã sáng." })).toBe("/book/b1/read/3?at=12");
+    const path = bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 12, quote: "Trời đã sáng." });
+    const url = new URL(path!, "http://local");
+    expect(url.pathname).toBe("/book/b1/read/3");
+    expect(url.searchParams.get("at")).toBe("12");
+    expect(url.searchParams.get("quote")).toBe("Trời đã sáng.");
     expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 0, quote: "" })).toBe("/book/b1/read/3?at=0");
     expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 64, note: "", at: 1 })).toBeNull();
   });
