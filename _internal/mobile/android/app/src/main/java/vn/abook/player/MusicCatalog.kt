@@ -465,6 +465,7 @@ class MusicCatalog(
         while (true) {
             val read = input.read(buffer)
             if (read < 0) {
+                if (copied == 0L) throw Cut(0, maxOf(1L, length ?: 0L))
                 if (length != null && copied < length) throw Cut(copied, length)
                 return
             }

@@ -127,7 +127,7 @@ object MusicCues {
             return Loop(0.0, whole, whole, false)
         }
         val restart = cue.loopStart?.takeIf { it.isFinite() }
-        val out = cue.loopEnd?.takeIf { it.isFinite() }
+        val out = cue.loopEnd?.takeIf { it.isFinite() }?.let { if (total != null && it - x <= end) minOf(it, total) else it }
         if (restart != null && out != null && start <= restart && restart < out - x && out - x <= end && out - restart - x >= mix.loopMinPeriodSeconds) {
             return Loop(start, end, out - restart - x, true, restart, out)
         }

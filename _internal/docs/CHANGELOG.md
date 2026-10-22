@@ -9,6 +9,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi điểm lặp nhạc nền vượt cuối file thật, máy tính và điện thoại dùng cuối file để bạn nghe nhạc nối vòng đúng lúc.
+- Khi nguồn nhạc trả về thân rỗng, điện thoại bỏ lần tải hỏng để bạn có thể tải lại bài, kể cả khi danh mục không ghi dung lượng.
 - Khi bạn xuất MP3 hay M4B có chọn "Kèm nhạc nền", tên bài, tác giả, giấy phép và lời "đã chỉnh sửa" của nhạc CC BY đi cùng file: nằm trong thẻ ghi chú (từng chương MP3 ghi nhạc của chính chương ấy), cùng một file "Ghi công nhạc nền.txt" bên cạnh bản xuất trên máy tính; M4B trên điện thoại mang ghi công trong thẻ ghi chú. Bài không có tác giả không còn hiện chữ "by" trống.
 - Nhạc nền không còn chọn bài mang giấy phép đòi ghi công mà danh mục thiếu tên tác giả, cả khi chọn tự động lẫn khi bạn ghim bài; máy tính và điện thoại cùng bỏ bài ấy.
 - Điện thoại kiểm bài nhạc tải về đúng dung lượng và dấu vân tay danh mục ghi; bài tải cụt hay hỏng bị xoá và tải lại, thay vì nhạc im hay vấp mãi.
