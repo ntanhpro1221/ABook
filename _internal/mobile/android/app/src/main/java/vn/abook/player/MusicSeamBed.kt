@@ -123,6 +123,9 @@ enum class DemoteReason(val word: String) { LATE("late"), FAIL("fail"), SEEK("se
  * - `handover <k> <viTriA87Giay> <viTriP3Giay>`: lúc thực sự chuyển tiếng sang P3 (|P3 - a87| <= [SeamHandover.TOLERANCE_MS]). Cả hai vị trí tính trên TRỤC a87 (giây trong bài, 6 chữ số), cùng một cách đo:
  *   a87 = giây bài của khung đầu AudioTrack hiện tại của a87 + framePosition của nó / sr ([SeamHandover.legacySeconds]; máy không cho timestamp thì currentPosition như trước), P3 = (loopEnd' - X' + mẫu đích của lần tua cuối + framePosition của AudioTrack P3) / sr,
  *   nên hiệu hai số là pha lệch lúc chuyển (chỉ để đối chiếu). Ngay sau: `vol <k> <âm lượng của a87>` (> 0) rồi `vol <k cũ> 0` (lần đầu a87 về 0 nằm SAU lúc P3 ra loa); không có `demote`.
+ * - `hread <k> <deltaMs> <playedMs>`: MỖI lần đọc pha được tính vào quyết định ([SeamHandover.reading] khác null), giữa `promote` và `handover` / `demote`: deltaMs = P3 - a87 (ms, cùng cách đo
+ *   như `handover`), playedMs = P3 đã phát bao lâu kể từ lần xả sau lần tua cuối ([SeamHandover.played]); 3 chữ số thập phân. Danh sách lần đọc bắt đầu lại sau mỗi `seek <k>`.
+ *   Thước so pha theo dòng `ts` thì chỉ lấy timestamp có nanoTime sau dòng `audiotrack <k>` đầu tiên sau lần tua cuối (như [SeamHandover.fresh]).
  * Bên đo tự thêm `scenario <Sx>`, `scenario_end`, `sync <t> <nhảy 0|1>`, `FMT`, `PCM`.
  */
 object SeamEvents {
@@ -141,6 +144,7 @@ object SeamEvents {
     fun volume(k: Int, v: Float) = "vol $k ${f(v.toDouble(), 6)}"
     fun promote(k: Int, legacyPositionSeconds: Double) = "promote $k loop ${f(legacyPositionSeconds)}"
     fun handover(k: Int, legacySeconds: Double, p3Seconds: Double) = "handover $k ${f(legacySeconds)} ${f(p3Seconds)}"
+    fun handoverReading(k: Int, deltaMs: Double, playedMs: Double) = "hread $k ${f(deltaMs, 3)} ${f(playedMs, 3)}"
 }
 
 /** Đồng hồ nhạc và tua của đường P3: tính theo (mục, vị trí trong mục) của ExoPlayer; bảng mục: 0 = Clip đầu, lẻ = Nối, chẵn >= 2 = Clip lặp ([LoopSeam]). */
@@ -303,10 +307,14 @@ object SeamHandover {
      */
     fun reading(seam: LoopSeam.Seam, targetSample: Long, issuedNano: Long, stamp: Stamp, nowNano: Long, legacySeconds: Double): Double? {
         if (!fresh(issuedNano, stamp.flushedNano, stamp.nanoTime, stamp.framePosition)) return null
-        val played = stamp.framesAt(nowNano).let { if (stamp.sampleRate == seam.sampleRate) it else it * seam.sampleRate / stamp.sampleRate }
+        val played = played(seam, stamp, nowNano)
         if (played * 1000.0 / seam.sampleRate < SETTLE_MS) return null
         return (p3Seconds(seam, targetSample, played) - legacySeconds) * 1000.0
     }
+
+    /** Số khung AudioTrack P3 đã phát tới `nowNano` (ngoại suy từ `stamp`), quy về tần số của Nối: cái [reading] cộng vào mẫu đích; dòng `hread` ghi nó theo ms. */
+    fun played(seam: LoopSeam.Seam, stamp: Stamp, nowNano: Long): Long =
+        stamp.framesAt(nowNano).let { if (stamp.sampleRate == seam.sampleRate) it else it * seam.sampleRate / stamp.sampleRate }
 
     /** Các lần đọc cuối chênh nhau không quá chừng này (ms) mới coi là pha đã ổn định (tua lại theo trung bình của chúng). */
     const val STABLE_MS = 5.0

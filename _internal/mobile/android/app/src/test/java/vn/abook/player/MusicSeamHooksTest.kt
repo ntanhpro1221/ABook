@@ -98,6 +98,7 @@ class MusicSeamHooksTest {
         assertEquals("vol 3 0.002500", SeamEvents.volume(3, 0.0025f))
         assertEquals("promote 2 loop 22.987500", SeamEvents.promote(2, 22.9875))
         assertEquals("handover 2 23.012500 23.009000", SeamEvents.handover(2, 23.0125, 23.009))
+        assertEquals("hread 2 -7.437 85.011", SeamEvents.handoverReading(2, -7.4374, 85.0109))
     }
 
     @Test fun demoteReasonFollowsTheGateOutcome() {
