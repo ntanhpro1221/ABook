@@ -946,6 +946,8 @@ class SyncHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
         except LookupError as error:
             self._json(HTTPStatus.CONFLICT, {"error": str(error)})
+        except notices.Unreadable:  # sổ yêu cầu đang bị chương trình khác giữ: điện thoại giữ nguyên phần sửa và gửi lại (edits_inbox / soát a83 B2)
+            self._json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "Máy tính đang bận, bạn thử lại sau ít giây"})
         finally:
             package.unlink(missing_ok=True)
 
