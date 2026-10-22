@@ -37,7 +37,8 @@ object PhoneCast {
     val players: DlnaPlayers by lazy {
         DlnaPlayers(
             book = ::book,
-            save = { id, chapter, seconds, duration -> Store.progress(id, chapter, seconds, duration) },
+            save = { id, chapter, seconds, duration, record -> Store.progress(id, chapter, seconds, duration, recordId = record) },
+            record = { id -> Store.activeRecord(id) },
             findGoogle = { GCast.discover() }, // Chromecast, Google TV, loa Nest (mDNS - trả lời về thẳng, không cần MulticastLock)
             onSession = { CastService.start(appContext) },
         )
@@ -55,7 +56,7 @@ object PhoneCast {
             DlnaPlayers.Chapter(chapter.getInt("id"), chapter.optString("fullTitle").ifEmpty { chapter.optString("title") },
                 chapter.optDouble("duration", 0.0), file)
         }
-        return if (list.isEmpty()) null else DlnaPlayers.Book(manifest.optString("title"), list)
+        return if (list.isEmpty()) null else DlnaPlayers.Book(manifest.optString("title"), list, Store.coverFile(id))
     }
 }
 

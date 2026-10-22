@@ -68,7 +68,7 @@ class CastSessionOnDeviceTest {
         }
         val players = DlnaPlayers(
             book = { id -> if (id == "sach") DlnaPlayers.Book("Sách thử", chapters) else null },
-            save = { _, _, _, _ -> },
+            save = { _, _, _, _, _ -> },
             media = Dlna.Media("127.0.0.1"),
             find = { Dlna.search(400, listOf(device.ssdp), multicast = false) },
         ).apply {

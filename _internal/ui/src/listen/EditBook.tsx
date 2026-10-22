@@ -135,10 +135,14 @@ export type MusicChange = { enabled?: boolean; levelDb?: number; silence?: Recor
 
 /** Nhạc nền đã gắn sẵn của cuốn (người làm sách) + cách đổi: dùng chung cho hộp "Sửa sách" và nút nhạc nền của trình phát - một lệnh
  *  PUT, một khoá nhớ, nên đổi ở đâu thì nơi kia thấy ngay. `onChanged`: việc riêng của chỗ gọi sau khi đổi xong. */
+export function musicQuery(bookId: string) {
+  return { queryKey: ["listen", "edit-music", bookId], queryFn: () => api<MusicEditView | ProjectMusicView>(`/api/books/${bookId}/music`), staleTime: 30_000 };
+}
+
 export function useBookMusic(bookId: string, onChanged?: () => void) {
   const client = useQueryClient();
-  const key = ["listen", "edit-music", bookId];
-  const view = useQuery({ queryKey: key, queryFn: () => api<MusicEditView | ProjectMusicView>(`/api/books/${bookId}/music`), staleTime: 30_000, select: musicEditView });
+  const key = musicQuery(bookId).queryKey;
+  const view = useQuery({ ...musicQuery(bookId), select: musicEditView });
   const change = useMutation({
     mutationFn: (body: MusicChange) => api<MusicEditView | ProjectMusicView>(`/api/books/${bookId}/music`, { method: "PUT", body }),
     onSuccess: (next) => {

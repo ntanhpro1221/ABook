@@ -48,7 +48,7 @@ class GCastTest {
     private fun players(device: FakeCastReceiver, chosen: DlnaPlayers.Book, saved: MutableList<List<Any>>, lostAfter: Long = 1500): DlnaPlayers =
         DlnaPlayers(
             book = { id -> if (id == "sach") chosen else null },
-            save = { id, chapter, seconds, duration -> synchronized(saved) { saved += listOf(id, chapter, Math.round(seconds * 10) / 10.0, duration) } },
+            save = { id, chapter, seconds, duration, _ -> synchronized(saved) { saved += listOf(id, chapter, Math.round(seconds * 10) / 10.0, duration) } },
             media = Dlna.Media("127.0.0.1"),
             find = { emptyList() },
             findGoogle = { GCast.discover(400, listOf(device.mdns), multicast = false) },
