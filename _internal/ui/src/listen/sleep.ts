@@ -119,3 +119,32 @@ export function rewindAfter(pausedMs: number): number {
   if (pausedMs <= REWIND_LONG_MS) return 5;
   return 10;
 }
+
+/** Lịch đêm: bấm nghe trong khung giờ này thì tự hẹn giờ ngủ (giờ dạng "22:00", khung có thể qua nửa đêm). */
+export interface SleepSchedule {
+  from: string;
+  to: string;
+  minutes: number;
+}
+
+// Hợp đồng của các tuỳ chọn hẹn giờ ngủ: đúng các mức giao diện đưa ra, cùng bảng với webui/library.py (SLEEP_CHOICES, SCHEDULE_MINUTES,
+// clean_sleep_schedule) - file tuỳ chọn sửa tay / bản app khác ghi không được lọt vào trình phát (soát a100 V2). Android dùng lại ở settings.ts.
+export const FADE_CHOICES = [10, 30, 60];
+export const EXTEND_CHOICES = [5, 10, 15];
+export const SAFETY_STOP_CHOICES = [0, 1, 2, 3];
+export const SCHEDULE_MINUTES = [15, 30, 45, 60];
+const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/** `value` nếu là một trong `choices` (đúng kiểu số), không thì `fallback` - trường sai về mặc định RIÊNG trường ấy. */
+export function choiceOr(value: unknown, choices: readonly number[], fallback: number): number {
+  return typeof value === "number" && choices.includes(value) ? value : fallback;
+}
+
+/** Lịch đêm đúng cấu trúc ("HH:mm" 00:00-23:59 hai đầu, số phút trong các mức), hay null: sai kiểu, thiếu trường, giờ lạ, số phút lạ. */
+export function cleanSleepSchedule(value: unknown): SleepSchedule | null {
+  if (!value || typeof value !== "object") return null;
+  const { from, to, minutes } = value as Record<string, unknown>;
+  if (typeof from !== "string" || !CLOCK.test(from) || typeof to !== "string" || !CLOCK.test(to)) return null;
+  if (typeof minutes !== "number" || !SCHEDULE_MINUTES.includes(minutes)) return null;
+  return { from, to, minutes };
+}

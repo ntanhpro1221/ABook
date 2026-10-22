@@ -1,0 +1,21 @@
+{
+  "_": "Miền giá trị và mặc định của các tuỳ chọn nghe - MỘT nguồn cho ba bên: Python (abook/webui/library.py), giao diện (ui/src/listen/sleep.ts, ui/src/android/settings.ts) và lõi Kotlin (ListenPrefs.kt). Mỗi bên có test đọc file này; đổi miền ở một bên mà quên bên kia thì test đỏ.",
+  "choices": {
+    "theme": { "values": ["system", "light", "dark"], "default": "system" },
+    "sleepFadeSeconds": { "values": [10, 30, 60], "default": 30 },
+    "sleepExtendMinutes": { "values": [5, 10, 15], "default": 10 },
+    "safetyStopHours": { "values": [0, 1, 2, 3], "default": 2 },
+    "shakeAction": { "values": ["extend", "reset"], "default": "extend" },
+    "shakeSensitivity": { "values": ["gentle", "normal", "firm"], "default": "normal" }
+  },
+  "booleans": {
+    "shakeToExtend": true,
+    "flipToPause": false,
+    "headsetSkips": true,
+    "autoRewind": true
+  },
+  "schedule": {
+    "minutes": [15, 30, 45, 60],
+    "clock": "^([01]\\d|2[0-3]):[0-5]\\d$"
+  }
+}

@@ -22,8 +22,19 @@ class MusicSeamBedTest {
         MusicCues.mix = MusicMix.parse(File("../../../abook/webui/assets/music_mix.json").readText())
     }
 
-    /** audibleStart' = khung 10, loopStart' = khung 100, loopEnd' = khung 1000, X' = 40 khung, 48 kHz (mọi khung là 24 ms). */
-    private fun seam(cached: Boolean = false) = LoopSeam.Seam(File("a.mp3"), File("a.wav"), 10 * spf, 100 * spf, 1000 * spf, (40 * spf).toInt(), 48000, 2, spf.toInt(), 0, 3, cached)
+    /** audibleStart' = khung 10, loopStart' = khung 100, loopEnd' = khung 1000, X' = 83 khung (1,992 s, X = 2 s làm tròn về khung như LoopSeam.plan), 48 kHz (mọi khung là 24 ms). */
+    private fun seam(cached: Boolean = false) = LoopSeam.Seam(File("a.mp3"), File("a.wav"), 10 * spf, 100 * spf, 1000 * spf, (83 * spf).toInt(), 48000, 2, spf.toInt(), 0, 3, cached)
+
+    /** Giây trong bài của đích tua (như thước §43 (f): plan + kind + expSample; Nối tính trên trục bài cũ loopEnd' - X'). */
+    private fun trackOf(s: LoopSeam.Seam, t: SeamClock.Target): Double = when {
+        t.index == 0 -> (s.audibleStartSamples + t.sample).toDouble() / s.sampleRate
+        t.index % 2 == 1 -> (s.loopEndSamples - s.xFrames + t.sample).toDouble() / s.sampleRate
+        else -> (s.loopStartSamples + s.xFrames + t.sample).toDouble() / s.sampleRate
+    }
+
+    private fun fold(x: Double, period: Double) = x - Math.round(x / period) * period
+
+    private fun periodOf(s: LoopSeam.Seam) = (s.loopEndSamples - s.loopStartSamples - s.xFrames).toDouble() / s.sampleRate
 
     private val cue = MusicCues.Cue(0.0, 600.0, "music/${"a".repeat(40)}.mp3", -20.0, audibleStart = 0.24, audibleEnd = 24.0, loopStart = 2.4, loopEnd = 24.0)
 
@@ -185,53 +196,105 @@ class MusicSeamBedTest {
         // Nối: bản lặp mới vừa vào, loopStart' = 100 khung = 2,4 s
         assertEquals(2.4, SeamClock.trackSeconds(s, 1, 0), 1e-9)
         assertEquals(2.4 + 0.5, SeamClock.trackSeconds(s, 1, 500), 1e-9)
-        assertEquals(2.4 + 0.96, SeamClock.trackSeconds(s, 1, 5000), 1e-9) // kẹp ở cuối Nối (X' = 0,96 s)
-        // Clip lặp: mẫu danh nghĩa đầu là loopStart' + X' = 140 khung = 3,36 s, mở sớm 3 khung = 72 ms
-        assertEquals(3.36, SeamClock.trackSeconds(s, 2, s.loopClipLeadMs.toLong()), 1e-3)
-        assertEquals(3.36 + 1.0, SeamClock.trackSeconds(s, 2, s.loopClipLeadMs.toLong() + 1000), 1e-3)
-        assertEquals(3.36, SeamClock.trackSeconds(s, 4, 0), 1e-9) // chưa tới chỗ cắt preroll: không lùi trước đầu Clip
+        assertEquals(2.4 + 1.992, SeamClock.trackSeconds(s, 1, 5000), 1e-9) // kẹp ở cuối Nối (X' = 1,992 s)
+        // Clip lặp: mẫu danh nghĩa đầu là loopStart' + X' = 183 khung = 4,392 s, mở sớm 3 khung = 72 ms
+        assertEquals(4.392, SeamClock.trackSeconds(s, 2, s.loopClipLeadMs.toLong()), 1e-3)
+        assertEquals(4.392 + 1.0, SeamClock.trackSeconds(s, 2, s.loopClipLeadMs.toLong() + 1000), 1e-3)
+        assertEquals(4.392, SeamClock.trackSeconds(s, 4, 0), 1e-9) // chưa tới chỗ cắt preroll: không lùi trước đầu Clip
+    }
+
+    /** Nối mà biên khung trùng biên khai báo: 46080 Hz (chỉ để thử) làm X = 2 s đúng 80 khung (25 ms một khung); A = 10, loopStart = 100, loopEnd = 1000 khung. */
+    private fun exactSeam(): Pair<LoopSeam.Seam, MusicCues.Loop> {
+        val rate = 46080
+        val x = Math.round(MusicCues.mix.loopCrossfadeSeconds * rate)
+        val s = LoopSeam.Seam(File("a.mp3"), File("a.wav"), 10 * spf, 100 * spf, 1000 * spf, x.toInt(), rate, 2, spf.toInt(), 0, 3)
+        assertEquals(0L, x % spf)
+        return s to MusicCues.Loop(s.audibleStart, 1e9, s.loopEnd - s.loopStart - MusicCues.mix.loopCrossfadeSeconds, true, s.loopStart, s.loopEnd)
     }
 
     @Test fun seekTargetSplitsFirstPassSeamAndLoopClip() {
-        val s = seam()
-        val sr = 48000.0
-        // Clip đầu dài (1000 - 40 - 10) khung
-        val clip0 = (1000 - 40 - 10) * spf
-        assertEquals(0, SeamClock.target(s, 0.0).index)
-        assertEquals(0L, SeamClock.target(s, 0.0).sample)
-        val inClip0 = SeamClock.target(s, 5.0)
+        val (s, b) = exactSeam()
+        val sr = s.sampleRate.toDouble()
+        val x = s.xFrames.toLong()
+        val clip0 = 1000 * spf - x - 10 * spf
+        assertEquals(0, SeamClock.target(s, b, 0.0).index)
+        assertEquals(0L, SeamClock.target(s, b, 0.0).sample)
+        val inClip0 = SeamClock.target(s, b, 5.0)
         assertEquals(0, inClip0.index)
-        assertEquals(240000L, inClip0.sample)
+        assertEquals(5L * s.sampleRate, inClip0.sample)
         // ngay sau Clip đầu: Nối (mục 1)
-        val atSeam = SeamClock.target(s, (clip0 + 1000) / sr)
+        val atSeam = SeamClock.target(s, b, (clip0 + 1000) / sr)
         assertEquals(1, atSeam.index)
         assertEquals(1000L, atSeam.sample)
-        // hết Nối (X' = 40 khung): Clip lặp (mục 2), mẫu tính từ loopStart' + X'
-        val atClip = SeamClock.target(s, (clip0 + 40 * spf + 5000) / sr)
+        // hết Nối: Clip lặp (mục 2), mẫu tính từ loopStart' + X'
+        val atClip = SeamClock.target(s, b, (clip0 + x + 5000) / sr)
         assertEquals(2, atClip.index)
         assertEquals(5000L, atClip.sample)
-        // vòng kế: chu kỳ P' = loopEnd' - loopStart' - X' = 860 khung
-        val period = (1000 - 100 - 40) * spf
-        val again = SeamClock.target(s, (clip0 + period + 40 * spf + 5000) / sr)
+        // vòng kế: chu kỳ P' = loopEnd' - loopStart' - X'
+        val period = 1000 * spf - 100 * spf - x
+        val again = SeamClock.target(s, b, (clip0 + period + x + 5000) / sr)
         assertEquals(2, again.index)
         assertEquals(5000L, again.sample)
-        val againSeam = SeamClock.target(s, (clip0 + 3 * period + 7) / sr)
+        val againSeam = SeamClock.target(s, b, (clip0 + 3 * period + 7) / sr)
         assertEquals(1, againSeam.index)
         assertEquals(7L, againSeam.sample)
     }
 
     @Test fun seekTargetAgreesWithTheLegacyLoopPositionWithinAFrame() {
-        // Cùng một giây của mốc: đích P3 (mục, mẫu) -> giây trong bài phải trùng MusicCues.loopPosition (đường a87). Tần số 46080 Hz (chỉ để thử) làm X = 2 s đúng 80 khung.
-        val rate = 46080
-        val x = (MusicCues.mix.loopCrossfadeSeconds * rate / spf).toInt() * spf
-        val s = LoopSeam.Seam(File("a.mp3"), File("a.wav"), 10 * spf, 100 * spf, 1000 * spf, x.toInt(), rate, 2, spf.toInt(), 0, 3)
-        assertEquals(MusicCues.mix.loopCrossfadeSeconds * rate, x.toDouble(), 0.0)
-        val b = MusicCues.Loop(s.audibleStart, 1e9, s.loopEnd - s.loopStart - MusicCues.mix.loopCrossfadeSeconds, true, s.loopStart, s.loopEnd)
+        // Cùng một giây của mốc: đích P3 (mục, mẫu) -> giây trong bài phải trùng MusicCues.loopPosition (đường a87).
+        val (s, b) = exactSeam()
+        val rate = s.sampleRate
         for (t in listOf(0.0, 3.0, 20.0, 22.7, 22.8, 23.0, 24.9, 25.0, 45.0, 45.6, 46.0, 60.0, 100.0)) {
-            val target = SeamClock.target(s, t)
+            val target = SeamClock.target(s, b, t)
             val pos = target.sample * 1000 / rate + if (target.index == 2) s.loopClipLeadMs.toLong() else 0L
             assertEquals("t=$t index=${target.index}", MusicCues.loopPosition(b, t), SeamClock.trackSeconds(s, target.index, pos), 0.01)
         }
+    }
+
+    /** Nối dựng như LoopSeam.plan từ mốc khai báo không nằm trên ranh khung (44,1 kHz): A, loopStart, loopEnd làm tròn về khung, X' = X làm tròn về bội khung. */
+    private fun offGridSeam(): Pair<LoopSeam.Seam, MusicCues.Loop> {
+        val rate = 44100
+        val cue = MusicCues.Cue(0.0, 900.0, "music/${"b".repeat(40)}.mp3", -20.0, audibleStart = 0.25, audibleEnd = 24.5, loopStart = 2.40, loopEnd = 23.99)
+        val b = MusicCues.loopBounds(cue, 30.0)
+        fun frames(sec: Double) = Math.round(ExactSeekMp3Extractor.frameBoundarySeconds(sec, rate) * rate / spf)
+        val kx = Math.round(MusicCues.mix.loopCrossfadeSeconds * rate / spf)
+        val s = LoopSeam.Seam(File("b.mp3"), File("b.wav"), maxOf(1L, frames(b.start)) * spf, frames(b.loopStart) * spf, frames(b.loopEnd) * spf, (kx * spf).toInt(), rate, 2, spf.toInt(), 0, 3)
+        return s to b
+    }
+
+    @Test fun seekTargetFollowsTheDeclaredLoopNotTheFrameGridOverManyLoops() {
+        // PLAN §43.2 (f): biên căn khung làm P' lệch P (ở đây 24 ms mỗi vòng); đếm vòng theo P' từ đầu mốc thì vài vòng đã lệch quá 1 khung. Đích phải trùng bản đồ khai báo (alignedA87) ở MỌI vòng.
+        val (s, b) = offGridSeam()
+        val sr = s.sampleRate.toDouble()
+        val p = periodOf(s)
+        assertTrue("P' khác P thật", Math.abs(p - b.period) > 0.010)
+        val clip0 = (s.loopEndSamples - s.xFrames - s.audibleStartSamples) / sr
+        var worstOwnGrid = 0.0
+        var t = 0.0
+        while (t < 400.0) {
+            val target = SeamClock.target(s, b, t)
+            val declared = MusicCues.loopPosition(b, t)
+            val err = Math.abs(fold(trackOf(s, target) - declared, p))
+            // trước audibleStart' (A' làm tròn lên) thì kẹp ở đầu Clip đầu: < 1 khung; còn lại đúng tới 1 mẫu
+            val tol = if (target.index == 0 && target.sample == 0L) spf / sr else 1.0 / sr + 1e-9
+            assertTrue("t=$t index=${target.index} lệch ${err * 1000} ms", err <= tol)
+            // cách cũ (đếm chu kỳ P' từ A'): để thấy phép thử này bắt được lỗi
+            val own = if (t < clip0) s.audibleStart + t else s.loopStart + (t - clip0) % p
+            worstOwnGrid = maxOf(worstOwnGrid, Math.abs(fold(own - declared, p)))
+            t += 0.37
+        }
+        assertTrue("cách cũ phải lệch quá 1 khung + 1 ms ($worstOwnGrid s)", worstOwnGrid > spf / sr + 0.001)
+    }
+
+    @Test fun declaredPositionJustBeforeTheFrameAlignedLoopStartLandsAtTheEndOfTheLoopClip() {
+        // loopStart khai báo sớm hơn loopStart' (làm tròn lên): chỗ ấy trên Nối là cuối Clip lặp của chu kỳ trước (cùng nội dung), không phải mẫu âm.
+        val (s, b) = offGridSeam()
+        assertTrue(s.loopStart > b.loopStart)
+        val t = b.loopEnd - MusicCues.mix.loopCrossfadeSeconds - b.start + 0.001 // vừa qua loopEnd - X khai báo: bài ở loopStart + 1 ms
+        val target = SeamClock.target(s, b, t)
+        assertEquals(2, target.index)
+        assertTrue(target.sample > 0)
+        assertEquals(0.0, fold(trackOf(s, target) - MusicCues.loopPosition(b, t), periodOf(s)), 1.0 / s.sampleRate + 1e-9)
     }
 
     @Test fun clip0RemainingIsNullOncePastTheFirstClip() {
@@ -280,12 +343,11 @@ class MusicSeamBedTest {
         assertTrue(rig.jobs.isEmpty())
         assertTrue(SeamClock.servesEntry(built, midSeam()))
         assertTrue(SeamClock.servesEntry(built, midLoopClip()))
-        val t = SeamClock.target(built.seam, midLoopClip())
+        val t = SeamClock.target(built.seam, built.bounds, midLoopClip())
         assertEquals(2, t.index)
         val s = built.seam
-        val period = s.loopEndSamples - s.loopStartSamples - s.xFrames
-        assertTrue(Math.abs(period / 2 - t.sample) <= 1L)
-        assertEquals(1, SeamClock.target(built.seam, midSeam()).index)
+        assertEquals(0.0, fold(trackOf(s, t) - MusicCues.alignedPosition(cue, midLoopClip(), built.bounds), periodOf(s)), 1.0 / s.sampleRate + 1e-9)
+        assertEquals(1, SeamClock.target(built.seam, built.bounds, midSeam()).index)
     }
 
     @Test fun noCacheMidLoopEntryIsServedByTheLegacyPathWhileTheSeamBuilds() {
@@ -351,7 +413,7 @@ class MusicSeamBedTest {
         val seamMs = s.xFrames * 1000.0 / s.sampleRate // 960 ms
         assertNotNull(SeamHandover.target(s, legacyAt(s, seamMs - SeamHandover.GUARD_MS - 5.0), 0))
         assertNull(SeamHandover.target(s, legacyAt(s, seamMs - SeamHandover.GUARD_MS + 5.0), 0))
-        assertNull(SeamHandover.target(s, legacyAt(s, 100.0), 900)) // trễ khởi động đẩy chỗ ra ngoài Nối
+        assertNull(SeamHandover.target(s, legacyAt(s, 1000.0), 900)) // trễ khởi động đẩy chỗ ra ngoài Nối
         assertEquals(seamMs - 100.0, SeamHandover.remainingMs(s, legacyAt(s, 100.0)), 0.01)
     }
 
@@ -369,33 +431,166 @@ class MusicSeamBedTest {
     }
 
     @Test fun handoverWaitsInSilenceUntilP3IsAudibleAndInPhase() {
-        fun decide(elapsed: Long = 100, remaining: Double = 800.0, retunes: Int = 0, played: Double? = null, delta: Double? = null, steady: Int = 0) =
-            SeamHandover.decide(elapsed, remaining, retunes, played, delta, steady)
-        // P3 chưa ra loa (không có số đo AudioTrack) hay mới phát chưa đủ: a87 vẫn kêu, chưa đổi tiếng dù pha tình cờ khớp
-        assertEquals(SeamHandover.Act.WAIT, decide(played = null, delta = null))
-        assertEquals(SeamHandover.Act.WAIT, decide(played = 20.0, delta = 0.0, steady = 5))
-        // đã ra loa, pha khớp nhưng mới thấy 1-2 lần: chờ đủ số lần đọc liền
-        assertEquals(SeamHandover.Act.WAIT, decide(played = 80.0, delta = 4.0, steady = 2))
-        assertEquals(SeamHandover.Act.SWITCH, decide(played = 80.0, delta = 4.0, steady = SeamHandover.STEADY_READINGS))
-        assertEquals(SeamHandover.Act.SWITCH, decide(played = 80.0, delta = -SeamHandover.TOLERANCE_MS, steady = SeamHandover.STEADY_READINGS))
+        fun decide(readings: List<Double>) = SeamHandover.decide(100, 800.0, 0, readings)
+        // P3 chưa ra loa / chưa phát đủ SETTLE_MS (chưa có lần đọc tin được): a87 vẫn kêu
+        assertEquals(SeamHandover.Act.WAIT, decide(emptyList()))
+        // pha khớp nhưng mới thấy 1-2 lần: chờ đủ số lần đọc liền
+        assertEquals(SeamHandover.Act.WAIT, decide(listOf(4.0, 3.0)))
+        assertEquals(SeamHandover.Act.SWITCH, decide(listOf(4.0, 3.0, 5.0)))
+        assertEquals(SeamHandover.Act.SWITCH, decide(listOf(80.0, 4.0, -SeamHandover.TOLERANCE_MS, 2.0))) // chỉ xét STEADY_READINGS lần cuối
     }
 
-    @Test fun handoverRetunesWhenOutOfPhaseThenGivesUp() {
-        fun decide(delta: Double, retunes: Int, elapsed: Long = 600) = SeamHandover.decide(elapsed, 800.0, retunes, 90.0, delta, SeamHandover.steady(3, delta))
-        assertEquals(SeamHandover.Act.RETUNE, decide(delta = 82.6, retunes = 0)) // ca đo được trên máy ảo: P3 muộn 82,6 ms
-        assertEquals(SeamHandover.Act.RETUNE, decide(delta = -11.0, retunes = SeamHandover.MAX_RETUNES - 1))
-        assertEquals(SeamHandover.Act.FALLBACK, decide(delta = 40.0, retunes = SeamHandover.MAX_RETUNES))
+    @Test fun aSingleOutOfPhaseReadingNeverRetunes() {
+        // PLAN §43.2 g6: tua lại 11-13 ms sau lần tua trước, theo một lần đọc lẻ. Nay cần STEADY_READINGS lần đọc ổn định (chênh <= STABLE_MS) mới tua lại.
+        fun decide(readings: List<Double>, retunes: Int = 0) = SeamHandover.decide(600, 800.0, retunes, readings)
+        assertEquals(SeamHandover.Act.WAIT, decide(listOf(82.6)))
+        assertEquals(SeamHandover.Act.WAIT, decide(listOf(82.6, 40.0)))
+        assertEquals(SeamHandover.Act.WAIT, decide(listOf(300.0, 82.6, 40.0, 20.0))) // còn trôi: chưa ổn định
+        assertEquals(SeamHandover.Act.RETUNE, decide(listOf(82.6, 81.0, 83.5))) // ca đo được trên máy ảo: P3 muộn 82,6 ms, ổn định
+        assertEquals(82.367, SeamHandover.settled(listOf(300.0, 82.6, 81.0, 83.5))!!, 0.001) // tua theo trung bình các lần ổn định
+        assertNull(SeamHandover.settled(listOf(82.6, 81.0, 88.0)))
+        assertEquals(SeamHandover.Act.RETUNE, decide(listOf(-11.0, -12.0, -11.5), retunes = SeamHandover.MAX_RETUNES - 1))
+        assertEquals(SeamHandover.Act.FALLBACK, decide(listOf(40.0, 41.0, 40.5), retunes = SeamHandover.MAX_RETUNES))
+        assertEquals(SeamHandover.Act.WAIT, decide(listOf(40.0, 60.0, 50.0), retunes = SeamHandover.MAX_RETUNES)) // chưa ổn định: không đốt lần tua, không bỏ sớm
+    }
+
+    @Test fun onlyTimestampsOfTheAudioTrackBornAfterTheLastSeekCount() {
+        val issued = 1_000_000_000L
+        // lần tua chưa tới luồng phát (chưa xả sau mốc): AudioTrack cũ vẫn chạy, timestamp mới nhưng nói về tiếng cũ
+        assertFalse(SeamHandover.fresh(issued, issued - 5_000_000, issued + 10_000_000, 900_000))
+        // đã xả sau lần tua, nhưng timestamp chụp trước lần xả
+        assertFalse(SeamHandover.fresh(issued, issued + 3_000_000, issued + 2_000_000, 900))
+        // AudioTrack mới chưa chạy
+        assertFalse(SeamHandover.fresh(issued, issued + 3_000_000, issued + 90_000_000, 0))
+        assertTrue(SeamHandover.fresh(issued, issued + 3_000_000, issued + 90_000_000, 2_400))
+    }
+
+    @Test fun staleTimestampTwelveMsAfterASeekNeverRetunes() {
+        // Chuỗi đo được (PLAN §43.2 g6, Music S6x3 ls_00 #3): tua -> 12 ms sau đọc được timestamp của AudioTrack CŨ (còn chạy, framePosition lớn) -> trước đây RETUNE ngay.
+        val s = seam()
+        val ms = 1_000_000L
+        val sr = s.sampleRate
+        val issued = 10_000 * ms // lần tua (mẫu đích 4800 = 100 ms vào Nối)
+        val target = 4800L
+        val readings = ArrayList<Double>() // MusicBed xoá ở mỗi lần tua
+        fun tick(stamp: SeamHandover.Stamp, now: Long, a87: Double): SeamHandover.Act {
+            val delta = SeamHandover.reading(s, target, issued, stamp, now, a87)
+            if (delta != null) readings += delta
+            return SeamHandover.decide(400, 800.0, 0, if (delta != null) readings else emptyList())
+        }
+        val a87At = { now: Long -> legacyAt(s, 100.0 + 40.0 + (now - issued) / 1e6) } // a87 đi trước đích 40 ms: cần tua lại
+        // +12 ms: lần tua chưa xả (AudioTrack cũ, xả lần cuối từ lâu), timestamp mới chụp, đã phát 0,6 s
+        val old = SeamHandover.Stamp(28_800, issued + 11 * ms, sr, issued - 900 * ms)
+        assertNull(SeamHandover.reading(s, target, issued, old, issued + 12 * ms, a87At(issued + 12 * ms)))
+        assertEquals(SeamHandover.Act.WAIT, tick(old, issued + 12 * ms, a87At(issued + 12 * ms)))
+        // trước đây: nanoTime sau lần tua + framePosition > 0 là tin -> pha rác, |δ| > 10 ms -> RETUNE ở chính nhịp này
+        assertTrue(Math.abs((SeamHandover.p3Seconds(s, target, old.framesAt(issued + 12 * ms)) - a87At(issued + 12 * ms)) * 1000) > SeamHandover.TOLERANCE_MS)
+        // +4 ms đã xả, AudioTrack mới chưa chạy / mới phát 30 ms: chưa tính
+        val flushed = issued + 4 * ms
+        assertEquals(SeamHandover.Act.WAIT, tick(SeamHandover.Stamp(0, issued + 20 * ms, sr, flushed), issued + 22 * ms, a87At(issued + 22 * ms)))
+        val startAt = issued + 80 * ms // AudioTrack mới ra loa
+        fun running(now: Long) = SeamHandover.Stamp((now - 2 * ms - startAt) * sr / 1_000_000_000L, now - 2 * ms, sr, flushed)
+        assertEquals(SeamHandover.Act.WAIT, tick(running(startAt + 30 * ms), startAt + 30 * ms, a87At(startAt + 30 * ms)))
+        assertTrue(readings.isEmpty())
+        // đã phát >= SETTLE_MS: cần STEADY_READINGS lần đọc ổn định rồi mới tua lại, theo pha trung bình
+        var act = SeamHandover.Act.WAIT
+        var now = startAt + 60 * ms
+        var ticks = 0
+        while (act == SeamHandover.Act.WAIT && ticks < 10) {
+            act = tick(running(now), now, a87At(now - startAt + issued)) // a87 cùng dòng thời gian, P3 vào sau startAt
+            now += SeamHandover.POLL_MS * ms
+            ticks++
+        }
+        assertEquals(SeamHandover.Act.RETUNE, act)
+        assertEquals(SeamHandover.STEADY_READINGS, ticks)
+        assertTrue(Math.abs(SeamHandover.settled(readings)!!) > SeamHandover.TOLERANCE_MS)
+    }
+
+    @Test fun legacyTimestampIsUsedOnlyWhenTheAudioTrackRuns() {
+        val stamp = SeamHandover.Stamp(44_100, 5_000_000_000L, 44100, 1_000_000_000L)
+        assertEquals(21.0 + 1.0 + 0.01, SeamHandover.legacySeconds(21_000_000L, stamp, 5_010_000_000L)!!, 1e-6) // ngoại suy 10 ms
+        assertNull(SeamHandover.legacySeconds(21_000_000L, SeamHandover.Stamp(0, 5_000_000_000L, 44100, 1_000_000_000L), 5_010_000_000L))
+        assertNull(SeamHandover.legacySeconds(21_000_000L, SeamHandover.Stamp(44_100, 900_000_000L, 44100, 1_000_000_000L), 5_010_000_000L)) // timestamp trước lần xả
+    }
+
+    @Test fun handoverPhaseFromTheLoggedTimestampsMatchesTheContent() {
+        // bed44thu ls_30 S6 (APK43e): Nối 44,1 kHz loopEnd' = 6455808, X' = 88704; lần tua cuối của P3 tới mẫu 21777 (EV 19800468238029, xả 19800470893529).
+        // a87: khung đầu của AudioTrack ở mẫu 3184 x 1152 (thước Music, NCC 1,0 với bản giải mã liền) = startUs của app.
+        val s = LoopSeam.Seam(File("ls_30.mp3"), File("ls_30.wav"), 1152, 794_880, 6_455_808, 88_704, 44100, 2, 1152, 0, 3)
+        val now = 19_800_652_865_629L // P3 lên âm lượng (t_on của thước)
+        val startUs = Math.round(3184 * 1152 * 1e6 / 44100)
+        val a87 = SeamHandover.legacySeconds(startUs, SeamHandover.Stamp(2_724_015, 19_800_632_289_729L, 44100, 19_738_716_916_129L), now)!!
+        val p3 = SeamHandover.Stamp(3103, 19_800_632_289_729L, 44100, 19_800_470_893_529L)
+        val delta = SeamHandover.reading(s, 21_777, 19_800_468_238_029L, p3, now, a87)!!
+        assertEquals(0.0, delta, 0.1) // app: -0,05 ms; thước lấy cả timestamp của AudioTrack P3 CŨ sau lần tua (4083 khung lúc 19800473182329) nên ra -10,5 ms
+        assertEquals(4010, SeamHandover.played(s, p3, now))
+        assertEquals("hread 1 0.022 90.930", SeamEvents.handoverReading(1, delta, SeamHandover.played(s, p3, now) * 1000.0 / s.sampleRate))
+    }
+
+    @Test fun legacyPositionIsMeasuredLikeP3() {
+        // a87 tua tới khung bắt đầu ở 21,000 s (giây bài của khung đầu AudioTrack), đã phát 2205 khung ở 44,1 kHz: 21,050 s - cùng cách P3 = đích + framePosition / sr
+        assertEquals(21.05, SeamHandover.legacySeconds(21_000_000L, 2205, 44100), 1e-9)
+        val s = seam()
+        val a87 = SeamHandover.legacySeconds(Math.round(legacyAt(s, 100.0) * 1_000_000), 4800, 48000) // a87 ở 200 ms vào Nối
+        assertEquals(0.0, (SeamHandover.p3Seconds(s, 7200, 2400) - a87) * 1000.0, 0.01) // P3 tua tới 150 ms + phát 50 ms: cùng chỗ
+    }
+
+    /** Nối như MusicBed.planSeam dựng (bounds = loopBounds(cue, độ dài), 44,1 kHz, mốc khai báo lệch ranh khung), mốc bắt đầu ở giây 12 của chương; `file` quyết định có phải mp3. */
+    private fun demoteRig(file: String = "b.mp3"): Triple<SeamPicker.Built, MusicCues.Cue, Int> {
+        val rate = 44100
+        val cue = MusicCues.Cue(12.0, 900.0, "music/${"b".repeat(40)}.mp3", -20.0, audibleStart = 0.25, audibleEnd = 24.5, loopStart = 2.40, loopEnd = 23.99)
+        val duration = 30.0
+        val b = MusicCues.loopBounds(cue, duration)
+        fun frames(sec: Double) = Math.round(ExactSeekMp3Extractor.frameBoundarySeconds(sec, rate) * rate / spf)
+        val kx = Math.round(MusicCues.mix.loopCrossfadeSeconds * rate / spf)
+        val s = LoopSeam.Seam(File(file), File("b.wav"), maxOf(1L, frames(b.start)) * spf, frames(b.loopStart) * spf, frames(b.loopEnd) * spf, (kx * spf).toInt(), rate, 2, spf.toInt(), 0, 3)
+        return Triple(SeamPicker.Built(s, b, duration, "k"), cue, rate)
+    }
+
+    @Test fun demotedLegacyPlayerStartsAtTheDeclaredMapOnAFrameBoundary() {
+        val (built, cue, rate) = demoteRig()
+        // Bản đồ READY cũ của a87 (MusicCues.offsetMs) dùng loopBounds(cue, độ dài); Built mang đúng vòng ấy (planSeam, SeamPicker.compatible).
+        assertEquals(MusicCues.loopBounds(cue, built.durationSeconds), built.bounds)
+        assertTrue(SeamPicker.compatible(built, cue))
+        val frame = spf.toDouble() / rate
+        for (since in listOf(5.123, 60.7, 141.37)) { // vòng đầu (A + t) và các vòng sau loopStart (có X)
+            val seconds = cue.start + since
+            val aligned = MusicCues.alignedPosition(cue, seconds, built.bounds)
+            val start = SeamClock.legacyStart(built, cue, seconds)
+            assertEquals("since=$since", ExactSeekMp3Extractor.frameBoundarySeconds(aligned, rate), start, 1e-12)
+            val k = start * rate / spf
+            assertEquals("since=$since ở ranh khung", Math.round(k).toDouble(), k, 1e-6)
+            // Cùng chỗ đường READY cũ tua tới (ms, cắt phần lẻ), lệch dưới 1 khung.
+            val ready = MusicCues.offsetMs(cue, seconds, Math.round(built.durationSeconds * 1000))!!
+            assertTrue("since=$since lệch ${start * 1000 - ready} ms", Math.abs(start * 1000 - ready) < frame * 1000)
+        }
+        assertTrue(MusicCues.firstPass(built.bounds, 5.123))
+        assertFalse(MusicCues.firstPass(built.bounds, 60.7))
+        assertTrue("vòng sau bắt đầu từ loopStart", SeamClock.legacyStart(built, cue, cue.start + 60.7) >= built.bounds.loopStart - frame)
+    }
+
+    @Test fun demotedLegacyPlayerOfANonMp3TrackIsNotFrameAligned() {
+        val (built, cue, rate) = demoteRig("b.m4a")
+        val seconds = cue.start + 5.123
+        val aligned = MusicCues.alignedPosition(cue, seconds, built.bounds)
+        assertEquals(aligned, SeamClock.legacyStart(built, cue, seconds), 0.0)
+        assertTrue("phép thử có lực: chỗ này không nằm trên ranh khung", Math.abs(ExactSeekMp3Extractor.frameBoundarySeconds(aligned, rate) - aligned) > 1e-4)
+        assertEquals(aligned, MusicCues.frameAligned(aligned, null), 0.0)
+    }
+
+    @Test fun aLegacyPlayerOpenedWithStartAtIsNotSeekedAgainWhenReady() {
+        // demote mở a87 với startAt: lúc READY không tua (lần tua ấy tạo AudioTrack thứ hai).
+        assertNull(MusicCues.readySeekMs(21.3, 200_000, 21_300, 0))
+        assertNull(MusicCues.readySeekMs(0.0, 200_000, null, 5_000))
+        // Đối chứng: không có startAt thì tua như cũ - theo giây mới nhất của chương, không thì chỗ vào gấp theo độ dài; chưa biết độ dài thì không tua.
+        assertEquals(21_300L, MusicCues.readySeekMs(null, 200_000, 21_300, 0))
+        assertEquals(5_000L, MusicCues.readySeekMs(null, 200_000, null, 205_000))
+        assertNull(MusicCues.readySeekMs(null, 0, null, 5_000))
     }
 
     @Test fun handoverFallsBackAtTheDeadlineOrWhenTheSeamIsAlmostOver() {
-        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(SeamHandover.DEADLINE_MS, 800.0, 0, null, null, 0)) // P3 không chạy được
-        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(300, SeamHandover.GUARD_MS.toDouble(), 0, 90.0, 0.0, 9)) // a87 tới cuối vòng trước khi P3 sẵn sàng
-        assertEquals(SeamHandover.Act.WAIT, SeamHandover.decide(SeamHandover.DEADLINE_MS - 1, SeamHandover.GUARD_MS + 1.0, 0, null, null, 0))
-    }
-
-    @Test fun steadyCountResetsWhenThePhaseDrifts() {
-        assertEquals(1, SeamHandover.steady(0, 3.0))
-        assertEquals(3, SeamHandover.steady(2, -9.9))
-        assertEquals(0, SeamHandover.steady(2, 10.1))
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(SeamHandover.DEADLINE_MS, 800.0, 0, emptyList())) // P3 không chạy được
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(300, SeamHandover.GUARD_MS.toDouble(), 0, listOf(0.0, 0.0, 0.0))) // a87 tới cuối vòng trước khi P3 sẵn sàng
+        assertEquals(SeamHandover.Act.WAIT, SeamHandover.decide(SeamHandover.DEADLINE_MS - 1, SeamHandover.GUARD_MS + 1.0, 0, emptyList()))
     }
 }

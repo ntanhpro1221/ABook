@@ -155,8 +155,13 @@ def model_id() -> str:
 
 def _complete(directory: Path | None, name: str | None = None) -> bool:
     name = name or backend()
-    return directory is not None and name is not None and all(
-        (directory / file).is_file() for file in PACKAGE_FILES[name] if file not in OPTIONAL_FILES)
+    if directory is None or name is None:
+        return False
+    # Đúng bản đã ghim (cỡ + SHA-256, băm một lần cho tới khi file đổi), không chỉ có tên file: file cắt cụt không được tính là đã tải (soát a96 V2).
+    from . import studio_setup
+
+    return studio_setup.intact(directory, [studio_setup.Download(file, "", *PACKAGE_HASHES[file])
+                                           for file in PACKAGE_FILES[name] if file not in OPTIONAL_FILES])
 
 
 def available() -> bool:

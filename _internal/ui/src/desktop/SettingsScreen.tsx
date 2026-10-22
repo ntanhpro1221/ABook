@@ -1,9 +1,9 @@
-import { Check, Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
+import { Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/shared/media";
-import { Button, Dialog, Segmented, TimeSelect, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { Button, Dialog, Segmented, TimeSelect, WRAP_LABEL, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { cn } from "@/shared/cn";
 import { openExternal } from "@/shared/openExternal";
@@ -233,7 +233,7 @@ function ThirdPartyButton() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button className="mt-3" size="sm" variant="secondary" onClick={() => setOpen(true)}>
+      <Button className={cn("mt-3", WRAP_LABEL)} size="sm" variant="secondary" onClick={() => setOpen(true)}>
         Thành phần bên thứ ba
       </Button>
       <Dialog open={open} onOpenChange={setOpen} title="Thành phần bên thứ ba" width="max-w-2xl">
@@ -250,10 +250,8 @@ export function SettingsScreen() {
   const changeLibrary = async () => {
     try {
       const path = await pickFolder("Chọn thư mục thư viện", preferences?.libraryRoot ?? "");
-      if (path) {
-        update({ libraryRoot: path });
-        toast.success("Đã đổi thư mục thư viện");
-      }
+      // Báo "đã đổi" chỉ khi máy chủ đã nhận; bị từ chối thì usePreferences báo lý do (soát a100 V3).
+      if (path) update({ libraryRoot: path }, { onSuccess: () => toast.success("Đã đổi thư mục thư viện") });
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -288,13 +286,13 @@ export function SettingsScreen() {
         )}
         {!info?.listenOnly && (
         <Section id="library" title="Thư viện" description="Thư mục chứa sách của bạn. Sách thêm vào hay mới làm đều nằm ở đây.">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-lg bg-sunken px-3 text-sm text-fg-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex h-10 min-w-0 flex-1 basis-48 items-center gap-2 rounded-lg bg-sunken px-3 text-sm text-fg-2">
               <FolderOpen className="size-4 shrink-0" />
               <span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
             </div>
             {info?.dialogs && (
-              <Button icon={FolderOpen} className="touch-row" onClick={() => void changeLibrary()}>
+              <Button icon={FolderOpen} className={cn("touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>
                 Đổi thư mục
               </Button>
             )}
@@ -424,12 +422,14 @@ export function SettingsScreen() {
             </Field>
             <Field
               label="Tự lùi khi nghe lại"
-              hint="Dừng dưới 5 phút: không lùi. Từ 5 phút tới 1 giờ: lùi 10 giây. Lâu hơn (ngủ dậy): lùi 30 giây."
+              hint="Tạm dừng quá nửa phút rồi nghe tiếp thì lùi 5 giây (quá 10 phút: lùi 10 giây) để bạn bắt lại mạch truyện. Chỉ áp cho máy này."
             >
-              {/* Thông tin, không phải lựa chọn (soát UX 29-09: chữ "Tự động" trông như một nút mà không bấm được). */}
-              <span className="inline-flex items-center gap-1 text-[0.8125rem] text-fg-2">
-                <Check className="size-3.5 text-success" /> Luôn bật
-              </span>
+              <Switch
+                id="auto-rewind"
+                label="Tự lùi khi nghe lại"
+                checked={preferences?.autoRewind !== false}
+                onCheckedChange={(value) => update({ autoRewind: value })}
+              />
             </Field>
           </div>
         </Section>
@@ -574,7 +574,7 @@ export function SettingsScreen() {
           {/* Liên kết mở ở cửa sổ mới (target="_blank", như ghi công nhạc ở trình phát), không điều hướng chính cửa sổ app; cửa sổ app Windows nuốt target nên openExternal nhờ máy chủ mở; Android: SOURCE_URL. */}
           <p className="mt-2 select-text text-sm text-fg-2">
             Mã nguồn mở, giấy phép MIT:{" "}
-            <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" onClick={(event) => openExternal(SOURCE_URL, event)} className="font-medium text-accent-text underline underline-offset-2">
+            <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" onClick={(event) => openExternal(SOURCE_URL, event)} className="font-medium text-accent-text underline underline-offset-2 [overflow-wrap:anywhere]">
               github.com/ntanhpro1221/ABook
             </a>{" "}
             - bản mới,

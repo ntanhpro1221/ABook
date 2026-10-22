@@ -57,6 +57,17 @@ describe("Cài đặt", () => {
     expect(html).toMatch(/<button[^>]*id="auto-music"[^>]*aria-describedby="auto-music-hint"/);
   });
 
+  it("máy tính có công tắc Tự lùi khi nghe lại như điện thoại (soát a100 T1), mô tả đúng luật lùi", async () => {
+    const { SettingsScreen } = await import("@/desktop/SettingsScreen");
+    const html = wrap(<SettingsScreen />);
+    const control = html.match(/<button[^>]*id="auto-rewind"[^>]*>/)?.[0] ?? "";
+    expect(control).toContain('role="switch"');
+    expect(control).toContain('aria-label="Tự lùi khi nghe lại"');
+    expect(control).toContain('aria-checked="true"'); // mặc định bật
+    expect(html).toContain("quá nửa phút rồi nghe tiếp thì lùi 5 giây");
+    expect(html).not.toContain("Luôn bật");
+  });
+
   it("điện thoại có nhóm Nhạc nền và Giới thiệu", async () => {
     const { SettingsScreen } = await import("@/android/SettingsScreen");
     const html = wrap(<SettingsScreen />);

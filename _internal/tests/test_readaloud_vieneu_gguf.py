@@ -23,6 +23,8 @@ from abook.readaloud import vieneu, vieneu_gguf
 from abook.readaloud.vieneu_gguf import AcceleratedEngine, GgufEngine, GgufError, GgufFiles
 from abook.webui import music_module, studio_setup, vieneu_module, word_timing
 
+pytestmark = pytest.mark.usefixtures("names_only_models")  # luồng tải thử bằng file giả: xem conftest.names_only_models
+
 FAKE_SERVER = '''
 import json, struct, sys, time, wave, io, os
 from http.server import BaseHTTPRequestHandler, HTTPServer

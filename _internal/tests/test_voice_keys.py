@@ -209,3 +209,16 @@ def test_label_cast_voices_labels_every_voice_and_never_mutates_the_input() -> N
     assert labelled["characters"][0]["voice"]["label"] == "Gia Huy" and labelled["characters"][1]["voice"] is None
     assert label_cast_voices({"characters": [{"voice": {"preset": "Thiện Minh"}}]})["characters"][0]["voice"] == {"preset": "Thiện Minh"}
     assert "label" not in cast["narrator"]["profile"] and "label" not in cast["characters"][0]["voice"]
+
+
+def test_the_shared_label_file_for_the_phone_is_the_engine_voice_catalogue() -> None:
+    """`abook/webui/assets/voice_labels.json` ({khoá: nhãn}) là bản của ENGINE_VOICES cho điện thoại (Kotlin `VoiceLabels` đọc đúng file này như
+    asset): đổi danh mục giọng thì file phải đổi theo, nếu không điện thoại hiện khoá thô ("baotrang") thay vì tên máy tính hiện."""
+    from abook.voice_catalog import ENGINE_VOICES
+    from abook.webui import humanize
+
+    file = Path(server_module.__file__).parent / "assets" / "voice_labels.json"
+    shared = json.loads(file.read_text(encoding="utf-8"))
+    assert shared == {voice["name"]: voice["label"] for voice in ENGINE_VOICES}, "chạy lại: ghi {name: label} của ENGINE_VOICES vào voice_labels.json"
+    assert shared == humanize._ENGINE_VOICE_LABELS
+    assert b"\r" not in file.read_bytes() and file.read_bytes().endswith(b"\n")

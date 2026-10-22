@@ -46,10 +46,6 @@ object LocalStudio {
     @Volatile
     var coverCodec: CoverCodec? = null
 
-    /** Đồng hồ (giây) - làm số phiên bản cho bìa; test đặt số cố định. */
-    @Volatile
-    var clock: () -> Long = { System.currentTimeMillis() / 1000 }
-
     /** Đồng hồ (giây, số thực) - dấu giờ của một ý muốn (`requestedAt`); test đặt đồng hồ chạy từng bước. Gọi ĐÚNG MỘT LẦN cho mỗi yêu cầu. */
     @Volatile
     var now: () -> Double = { System.currentTimeMillis() / 1000.0 }
@@ -236,7 +232,7 @@ object LocalStudio {
 
     private fun setCover(dir: java.io.File, raw: ByteArray): JSONObject {
         val codec = coverCodec ?: AndroidCoverCodec
-        return JSONObject().put("cover", BookEdits.setCover(dir, raw, clock(), codec))
+        return JSONObject().put("cover", BookEdits.setCover(dir, raw, codec))
     }
 
     /** POST /characters/rename {character, name}. */
@@ -637,7 +633,7 @@ object LocalStudio {
         val entry = wished(dir, "voices").optJSONObject(BookWishes.characterKey(character))
         val recordedAt = (entry?.opt("requested_at") as? Number)?.toDouble() ?: 0.0
         if (Math.abs(recordedAt - seen) < 1e-6 || (seen == 0.0 && entry == null)) return JSONObject()
-        return JSONObject().put("voice", BookEdits.pyText(entry?.opt("preset"))).put("gender", BookEdits.pyText(entry?.opt("gender")))
+        return JSONObject().put("voice", VoiceLabels.label(BookEdits.pyText(entry?.opt("preset")))).put("gender", BookEdits.pyText(entry?.opt("gender")))
     }
 
     /** POST /line {stableId, textSha256, kind?, emotion?, intensity?, speaker?, spoken?}. */

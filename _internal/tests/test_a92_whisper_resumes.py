@@ -103,7 +103,10 @@ def test_a_server_that_ignores_range_restarts_cleanly_and_a_wrong_hash_is_refuse
 def test_the_asr_step_fetches_the_checkpoint_first_and_loads_it_from_its_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     setup = _setup(tmp_path, monkeypatch, FakeNetwork())
     order: list[str] = []
-    setup._fetch_whisper_checkpoint = lambda: order.append("fetch")  # type: ignore[method-assign]
+    checkpoint = _checkpoint(setup)
+    checkpoint.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint.write_bytes(b"gia:whisper")
+    setup._fetch_whisper_checkpoint = lambda: order.append("fetch") or checkpoint  # type: ignore[method-assign]
     setup._run = lambda command, what: order.append(what) or ""  # type: ignore[method-assign]
     setup._step_asr()
     assert order == ["fetch", "Tải Whisper"]

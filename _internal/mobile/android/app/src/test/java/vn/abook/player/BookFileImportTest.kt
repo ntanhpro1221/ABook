@@ -713,7 +713,7 @@ class BookFileImportTest {
     fun the_local_cover_wins_over_the_files_cover() {
         val first = BookFileImport.importFile(editedBook("v1.abook", version = 1))
         val dir = dirOf(first)
-        BookEdits.setCover(dir, otherJpeg, 77L, FakeCodec("#aabbcc"))
+        BookEdits.setCover(dir, otherJpeg, FakeCodec("#aabbcc"))
 
         BookFileImport.importFile(editedBook("v4.abook", edits = BookEdits.empty().put("cover", cover("#112233", 5L)), cover = jpeg))
 

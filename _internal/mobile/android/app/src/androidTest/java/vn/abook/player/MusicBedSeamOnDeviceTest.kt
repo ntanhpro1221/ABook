@@ -128,6 +128,7 @@ class MusicBedSeamOnDeviceTest {
     /**
      * Luồng phụ của một kịch bản (như MusicLoopSeamTest): mỗi 10 ms, với MỖI trình phát k, đọc AudioTrack MỚI NHẤT của k ([MusicBed.testTracks]):
      * `EV <ns> ts <k> <framePosition> <tsNanoTime>` (chỉ khi getTimestamp trả true VÀ framePosition đổi), `EV <ns> underrun <k> <count>` (lần đọc đầu của mỗi AudioTrack và mỗi khi đổi).
+     * Từ lần xả (tua) tới khi AudioTrack mới được tạo, k không có mục nào ([MusicBed.testTracks]): không có dòng `ts` của AudioTrack cũ sau lần tua.
      * Trả hàm dừng luồng.
      */
     private fun startTrackPoller(): () -> Unit {
@@ -150,7 +151,8 @@ class MusicBedSeamOnDeviceTest {
                             s.underrun = underrun
                             log("EV ${System.nanoTime()} underrun $k $underrun")
                         }
-                        if (track.getTimestamp(stamp) && stamp.framePosition != s.frame) {
+                        // còn là AudioTrack hiện tại sau khi đọc: lần xả (tua) chen giữa thì timestamp nói về AudioTrack cũ, bỏ
+                        if (track.getTimestamp(stamp) && MusicBed.testTracks[k] === track && stamp.framePosition != s.frame) {
                             s.frame = stamp.framePosition
                             log("EV ${System.nanoTime()} ts $k ${stamp.framePosition} ${stamp.nanoTime}")
                         }

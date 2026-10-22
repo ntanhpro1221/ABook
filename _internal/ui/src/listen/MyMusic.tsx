@@ -3,7 +3,7 @@ import { Music2, Pin, Trash2, Upload } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { formatClock } from "@/shared/format";
-import { Button } from "@/shared/ui";
+import { Button, WRAP_LABEL } from "@/shared/ui";
 import { api, type AppInfo } from "@/studio/api";
 import { hasNativeMusicImport, importMusic } from "@/studio/musicImport";
 import { analysisLabel, importSummary, LOCAL_PREFIX, MY_MUSIC_INTRO, mineNote, type LocalMusicView, type LocalTrack } from "@/studio/musicLocal";
@@ -132,7 +132,7 @@ export function MyMusicSection() {
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="text-sm font-medium">Nhạc của tôi{tracks.length ? ` (${tracks.length})` : ""}</h3>
         {canImport && (
-          <Button size="sm" variant="secondary" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()}>
+          <Button size="sm" variant="secondary" icon={Upload} className={WRAP_LABEL} loading={Boolean(progress)} onClick={() => void importFiles()}>
             {progress ? `Đang nhập ${progress.done}/${progress.total}…` : "Nhập nhạc của tôi…"}
           </Button>
         )}

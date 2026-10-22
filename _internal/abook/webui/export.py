@@ -11,6 +11,9 @@ danh sách phát `.m3u8`. File chưa xong ghi ra `.part` rồi mới đổi tên
 from __future__ import annotations
 
 import base64
+import contextlib
+import errno
+import json
 import logging
 import math
 import os
@@ -20,6 +23,7 @@ import subprocess
 import tempfile
 import time
 from collections.abc import Callable, Iterable, Iterator
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -101,6 +105,64 @@ def _listenable(project_root: Path) -> list[dict[str, Any]]:
     return [chapter for chapter in listen_view.chapters(project_root) if chapter["available"]]
 
 
+@dataclass(frozen=True)
+class Facts:
+    """Những gì MP3 / M4B cần biết về một cuốn: dự án (sổ SQLite) hay cuốn nhận từ file `.abook` (thư mục giải nén trong thư viện) - cùng
+    hai đường xuất cho cả hai (soát a99 V4: người nhận file mang sách sang trình phát khác từ chính player)."""
+
+    title: str
+    narrator: str
+    chapters: list[dict[str, Any]]  # chương nghe được: {id, fullTitle, ...}
+    audio: dict[int, Path]
+    total: int  # số chương của cuốn (kể cả chưa nghe được)
+    cover: Path | None
+    music: Callable[[list[int], Callable[[str], Path | None]], dict[int, Any]]  # (mã chương, nguồn bài) -> nhạc từng chương
+    package: bool
+
+
+def _project_facts(project_root: Path) -> Facts:
+    from .music_export import studio_music  # nhập muộn: music_export dùng pump_pcm của module này
+
+    summary = store.summarize(project_root)
+    return Facts(summary["title"] or project_root.name, summary["settings"]["narrator"] or "", _listenable(project_root),
+                 store.chapter_audio_paths(project_root), summary["chapters"]["total"], covers.cover_file(project_root),
+                 lambda ids, track: studio_music(project_root, ids, track), False)
+
+
+def _package_facts(folder: Path) -> Facts:
+    from . import book_edits, packages
+    from .music_export import packaged_music
+
+    book = packages.edited_manifest(folder)
+    chapters, audio = [], {}
+    for chapter in book.get("chapters") or []:
+        if not isinstance(chapter, dict) or not isinstance(chapter.get("id"), int) or not chapter.get("available"):
+            continue
+        found = packages.chapter_file(folder, chapter["id"])
+        if found is not None:
+            chapters.append({"id": chapter["id"], "fullTitle": chapter.get("fullTitle") or chapter.get("title") or ""})
+            audio[chapter["id"]] = found
+    # File nhạc đã nằm trong gói: không có gì để tải, nguồn bài của dự án không dùng tới.
+    return Facts(str(book.get("title") or folder.name), str(book.get("narrator") or ""), chapters, audio,
+                 max(int(book.get("chaptersTotal") or 0), len(book.get("chapters") or [])), book_edits.cover_file(folder),
+                 lambda ids, _track: packaged_music(folder, ids), True)
+
+
+def packaged_tracks(_link: str) -> None:
+    """Nguồn bài nhạc của cuốn nhận từ file: `Facts.music` lấy file bài ngay trong gói, nên không bài nào cần tải - hàm này chỉ báo "Kèm nhạc nền" đang bật."""
+    return None
+
+
+def book_facts(root: Path) -> Facts:
+    from . import packages
+
+    if not packages.is_package(root):
+        return _project_facts(root)
+    if packages._remote(root):
+        raise ValueError("Cuốn này nằm ở máy tính khác - bạn hãy tải về máy này rồi xuất.")
+    return _package_facts(root)
+
+
 def chapter_file_name(number: int, total: int, full_title: str) -> str:
     """Tên file MP3 của chương thứ `number` trong `total` chương được xuất. Điện thoại (Mp3Export.kt) đặt đúng tên này -
     bộ ví dụ chung tests/fixtures/mp3_export."""
@@ -146,8 +208,31 @@ def write_chapter(ffmpeg: str, source: Path, final: Path, cover_path: Path | Non
         # Không để file `.part` nằm lại, không dán lệnh / lời ffmpeg cho người dùng (soát a28 lỗi 8) - lời ffmpeg vào nhật ký.
         partial.unlink(missing_ok=True)
         log.warning("ffmpeg không ghi được %s: %s", final.name, (error.stderr or "").strip()[-600:])
-        raise ValueError(f"Không ghi được chương “{title}” - file âm thanh của chương hay ảnh bìa không đọc được.") from error
+        raise ffmpeg_failure(error, final, f"Không ghi được chương “{title}” - file âm thanh của chương hay ảnh bìa không đọc được.",
+                             f"Không ghi được chương “{title}” - ffmpeg dừng giữa chừng, chưa rõ nguyên nhân (xem Chi tiết).") from error
     os.replace(partial, final)
+
+
+_DISK_FULL = re.compile(r"No space left on device|not enough space on the disk|WinError 112|Disk quota exceeded|ENOSPC", re.I)
+_DENIED = re.compile(r"Permission denied|Access is denied|Read-only file system|WinError 5", re.I)
+_UNREADABLE_SOURCE = re.compile(r"Error opening input|Invalid data found|moov atom not found|Error while decoding|Header missing|"
+                                r"could not find codec|Error reading|Failed to read|Invalid argument|Error splitting the argument", re.I)
+
+
+def ffmpeg_failure(error: subprocess.CalledProcessError, destination: Path, unreadable: str, otherwise: str) -> Exception:
+    """Vì sao ffmpeg thất bại, nói về ĐÚNG thứ hỏng: ổ đích hết chỗ / không ghi được -> OSError (ENOSPC / EACCES) để lượt xuất báo ổ nào cần dọn hay
+    chọn lại (humanize.write_error), chỉ khi stderr là lỗi đọc / giải mã mới trách file nguồn hay ảnh bìa (`unreadable`); còn lại `otherwise`.
+    stderr giữ ở `.detail` (cho "Chi tiết") và ở nhật ký, không dán vào câu cho người dùng (soát a28 lỗi 8; a96 V7)."""
+    text = error.stderr.decode("utf-8", "replace") if isinstance(error.stderr, bytes) else str(error.stderr or "")
+    tail = text.strip()[-600:]
+    if _DISK_FULL.search(text):
+        failure: Exception = OSError(errno.ENOSPC, "No space left on device", str(destination))
+    elif _DENIED.search(text) and "Error opening input" not in text:  # bị từ chối ĐỌC nguồn là chuyện của nguồn, không phải của ổ đích
+        failure = PermissionError(errno.EACCES, "Permission denied", str(destination))
+    else:
+        failure = ValueError(unreadable if _UNREADABLE_SOURCE.search(text) else otherwise)
+    failure.detail = tail  # type: ignore[attr-defined]
+    return failure
 
 
 def playlist_text(title: str, entries: list[tuple[float, str, str]]) -> str:
@@ -189,11 +274,9 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
     `music`: nguồn file bài nhạc (như gói `.abook`, music_plan.TrackSource) = "Kèm nhạc nền": chương có nhạc được giải mã, trộn
     (music_export.py) rồi mã hoá lại MP3 cùng bitrate; không có thì chép nguyên luồng như cũ.
     `cancelled()` True (người dùng bấm Huỷ): dừng trước chương kế / giữa lúc trộn, xoá thư mục bản xuất dở và ném `export_jobs.Cancelled`."""
-    summary = store.summarize(project_root)
-    title = summary["title"] or project_root.name
-    narrator = summary["settings"]["narrator"] or ""
-    chapters = _listenable(project_root)
-    numbered = {chapter["id"]: index for index, chapter in enumerate(chapters, 1)}
+    facts = book_facts(project_root)
+    title, narrator, chapters = facts.title, facts.narrator, facts.chapters
+    numbered ={chapter["id"]: index for index, chapter in enumerate(chapters, 1)}
     total_available = len(chapters)
     if chapter_ids is not None:
         if not chapter_ids or any(type(key) is not int or key not in numbered for key in chapter_ids):
@@ -203,15 +286,14 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
     folder = free_path(target_root / safe_name(folder_name or title))
     folder.mkdir(parents=True, exist_ok=True)
-    real = covers.cover_file(project_root)
+    real = facts.cover
     cover_path = copy_real_cover(real, folder) or drawn_cover(folder, cover)
     ffmpeg = ffmpeg_executable()
-    audio = store.chapter_audio_paths(project_root)
-    listed = [(chapter["id"], chapter["fullTitle"], path) for chapter in chapters if (path := audio.get(chapter["id"])) is not None]
+    listed = [(chapter["id"], chapter["fullTitle"], path) for chapter in chapters if (path := facts.audio.get(chapter["id"])) is not None]
     sources = [(full_title, path) for _id, full_title, path in listed]
     from .export_jobs import audio_snapshot, remember_export
     selected_ids = {item[0] for item in listed}
-    snapshot = {key: digest for key, digest in audio_snapshot(project_root).items() if int(key) in selected_ids}
+    snapshot = {} if facts.package else {key: digest for key, digest in audio_snapshot(project_root).items() if int(key) in selected_ids}
     numbering = [numbered[item[0]] for item in listed]
     noted: dict[str, Any] = {}
     try:
@@ -219,9 +301,9 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
             files = write_mp3_folder(ffmpeg, folder, _counted(_checked(sources, cancelled), len(sources), progress), title=title,
                                      narrator=narrator, cover_path=cover_path, total=total_available, numbers=numbering)
         else:
-            from .music_export import Mixer, studio_music  # nhập muộn: music_export dùng pump_pcm của module này
+            from .music_export import Mixer  # nhập muộn: music_export dùng pump_pcm của module này
 
-            mixer = Mixer(ffmpeg, studio_music(project_root, [item[0] for item in listed], music))
+            mixer = Mixer(ffmpeg, facts.music([item[0] for item in listed], music))
             with tempfile.TemporaryDirectory(prefix=".music-", dir=target_root) as scratch:
                 files = write_mp3_folder(ffmpeg, folder, _mixed_mp3(ffmpeg, mixer, _counted(listed, len(listed), progress), Path(scratch), cancelled),
                                          title=title, narrator=narrator, cover_path=cover_path, total=total_available, numbers=numbering,
@@ -232,8 +314,9 @@ def export_book(project_root: Path, target_root: Path, *, cover: str | None = No
         shutil.rmtree(folder, ignore_errors=True)  # thư mục mới của chính lượt này (free_path): bản xuất dở không được nằm lại như một bản xuất
         raise
     # Ảnh bìa hỏng: bản xuất mang bìa vẽ từ tên - giao diện nói một câu (coverBroken).
-    remember_export(project_root, "mp3", str(folder), snapshot)
-    return {"folder": str(folder), "files": files, "chaptersTotal": summary["chapters"]["total"], **noted,
+    if not facts.package:
+        remember_export(project_root, "mp3", str(folder), snapshot)
+    return {"folder": str(folder), "files": files, "chaptersTotal": facts.total, **noted,
             **({"coverBroken": True} if real is not None and usable_cover(real) is None else {})}
 
 
@@ -569,7 +652,8 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
             os.replace(partial, final)
         except subprocess.CalledProcessError as error:
             log.warning("ffmpeg không ghép được M4B: %s", (error.stderr or "").strip()[-600:])
-            raise ValueError("Không ghép được file M4B - ảnh bìa hay một chương không đọc được.") from error
+            raise ffmpeg_failure(error, final, "Không ghép được file M4B - ảnh bìa hay một chương không đọc được.",
+                                 "Không ghép được file M4B - ffmpeg dừng giữa chừng, chưa rõ nguyên nhân (xem Chi tiết).") from error
         finally:
             partial.unlink(missing_ok=True)
         if credits:
@@ -585,12 +669,10 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
     `music`: nguồn file bài nhạc = "Kèm nhạc nền" (như `export_book`): nhạc trộn vào PCM trước bộ mã hoá AAC; `progress(i, N)` báo đang
     trộn nhạc chương thứ i (từ 1) trong N; `peaks(lượt, số chương vượt)`: bước kiểm đỉnh AAC (`m4b_from_files` on_peaks). `cancelled()`: Huỷ
     (`m4b_from_files`) - bài nhạc còn phải tải thì do nguồn `music` tự dừng (server.music_exporting)."""
-    summary = store.summarize(project_root)
-    title = summary["title"] or project_root.name
-    narrator = summary["settings"]["narrator"] or ""
-    audio = store.chapter_audio_paths(project_root)
-    listed = [(chapter["id"], chapter["fullTitle"], path) for chapter in _listenable(project_root)
-              if (path := audio.get(chapter["id"])) is not None]
+    facts = book_facts(project_root)
+    title, narrator = facts.title, facts.narrator
+    listed = [(chapter["id"], chapter["fullTitle"], path) for chapter in facts.chapters
+              if (path := facts.audio.get(chapter["id"])) is not None]
     chapters = [(full_title, path) for _id, full_title, path in listed]
     if not chapters:
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
@@ -600,9 +682,9 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
     ids = [chapter_id for chapter_id, _title, _path in listed]
     mixer: Any = None
     if music is not None:
-        from .music_export import Mixer, studio_music  # nhập muộn: music_export dùng pump_pcm của module này
+        from .music_export import Mixer  # nhập muộn: music_export dùng pump_pcm của module này
 
-        mixer = Mixer(ffmpeg, studio_music(project_root, ids, music))
+        mixer = Mixer(ffmpeg, facts.music(ids, music))
 
     def decode(index: int, source: Path, rate: int, channels: int, sink: Any) -> int:
         if mixer is None or not mixer.has(ids[index]):
@@ -612,15 +694,16 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
         return pump_mixed(ffmpeg, mixer, ids[index], source, rate, channels, sink)
 
     from .export_jobs import audio_snapshot, remember_export
-    snapshot = audio_snapshot(project_root)
+    snapshot = {} if facts.package else audio_snapshot(project_root)
     final, count = m4b_from_files(ffmpeg, chapters, target_root, title=title, narrator=narrator,
-                                  cover_for=lambda work: usable_cover(covers.cover_file(project_root)) or drawn_cover(work, cover),
+                                  cover_for=lambda work: usable_cover(facts.cover) or drawn_cover(work, cover),
                                   decode=decode if mixer is not None else None, on_peaks=peaks, cancelled=cancelled,
                                   credits=mixer.credits(ids) if mixer is not None else "")
-    real = covers.cover_file(project_root)
-    remember_export(project_root, "m4b", str(final), snapshot)
+    real = facts.cover
+    if not facts.package:
+        remember_export(project_root, "m4b", str(final), snapshot)
     return {"file": str(final), "folder": str(target_root), "size": final.stat().st_size,
-            "chapters": count, "chaptersTotal": summary["chapters"]["total"], **(mixer.note(ids) if mixer is not None else {}),
+            "chapters": count, "chaptersTotal": facts.total, **(mixer.note(ids) if mixer is not None else {}),
             **({"coverBroken": True} if real is not None and usable_cover(real) is None else {})}
 
 
@@ -643,21 +726,60 @@ def series_split(parts: list[Path]) -> tuple[list[tuple[int, Path]], list[dict[s
     return listed, skipped
 
 
+SCRIPT_LINE_BYTES = 260  # JSON một câu trong scripts/<chương>.json (mã, số câu, kiểu, người nói, mốc, tag trình bày...)
+SCRIPT_TEXT_FACTOR = 2  # mốc từng chữ (`words`) ghi thêm cỡ chừng ấy lần chữ của câu - cận trên, gói nén nên thật thường nhỏ hơn
+PACK_FIXED_BYTES = 16 * 1024  # book.json, manifest Readium, cast.json: phần cố định
+CHAPTER_ENTRY_BYTES = 400  # một mục chương trong book.json
+
+
+def packed_extras_bytes(project: Path, chapter_ids: Iterable[int]) -> int:
+    """Cỡ (cận trên) của mọi thứ trong file `.abook` NGOÀI audio chương và nhạc: câu mẫu WAV của nhân vật, bìa, kịch bản đọc theo của các chương
+    nghe được, dàn nhân vật và sổ chương. Không dựng gói thử (kịch bản căn mốc chữ rất tốn) - đếm từ sổ dự án (soát a99 T1: câu mẫu ~1 MiB báo thành 10 KB)."""
+    wanted = set(chapter_ids)
+    total = PACK_FIXED_BYTES + CHAPTER_ENTRY_BYTES * len(wanted)
+    with contextlib.closing(store.connect(project)) as connection:
+        for row in connection.execute("SELECT chapter_id, COUNT(*) AS lines, COALESCE(SUM(LENGTH(CAST(text AS BLOB))), 0) AS bytes "
+                                      "FROM segments GROUP BY chapter_id"):
+            if int(row["chapter_id"]) in wanted:
+                total += int(row["lines"]) * SCRIPT_LINE_BYTES + int(row["bytes"]) * (1 + SCRIPT_TEXT_FACTOR)
+    cast = store.cast(project)
+    total += len(json.dumps(cast, ensure_ascii=False))
+    for sample in {person["sampleId"] for person in cast["characters"] + cast["extras"] if person.get("sampleId")}:
+        path = store.sample_audio_path(project, int(sample))
+        if path is not None and path.is_file():
+            total += path.stat().st_size
+    cover = covers.cover_file(project)
+    if cover is not None and cover.is_file():
+        total += cover.stat().st_size
+    return total
+
+
+def music_links(project: Path, music_track: Callable[[str], Path | None] | None,
+                listed: list[dict[str, Any]] | None = None) -> set[str]:
+    """Các bài nhạc nền (liên kết) mà đoạn nhạc của những chương nghe được `listed` (mặc định: mọi chương nghe được) trong rãnh nhạc đang bật của
+    cuốn dùng - mỗi bài một lần. Không có `music_track` (máy không giữ nhạc) hay rãnh nhạc tắt: rỗng."""
+    plan = music_plan.read_plan(project) if music_track is not None else None
+    if plan is None:
+        return set()
+    return {cue["link"] for chapter in (_listenable(project) if listed is None else listed)
+            for cue in music_plan.chapter_cues(plan, chapter["id"])}
+
+
 def audio_bytes(projects: list[Path], music_track: Callable[[str], Path | None] | None = None) -> tuple[int, int]:
-    """(cỡ, số bài nhạc chưa tải) ước lượng của file `.abook` trước khi xuất: audio các chương nghe được + các bài nhạc nền
-    sẽ đóng kèm (đoạn nhạc của các chương ấy trong rãnh nhạc đang bật; mỗi bài một lần dù nhiều đoạn, nhiều phần). Không tải gì:
+    """(cỡ, số bài nhạc chưa tải) ước lượng của file `.abook` trước khi xuất: audio các chương nghe được + câu mẫu, bìa, kịch bản, dàn nhân vật
+    (`packed_extras_bytes`) + các bài nhạc nền sẽ đóng kèm (đoạn nhạc của các chương ấy trong rãnh nhạc đang bật; mỗi bài một lần dù nhiều đoạn, nhiều phần). Không tải gì:
     `music_track(link)` chỉ trả bài đã có trong bộ đệm; bài chưa tải được đếm riêng - lúc xuất mới tải và thêm vào."""
     total = 0
     links: set[str] = set()
     for project in projects:
-        plan = music_plan.read_plan(project) if music_track is not None else None
         audio = store.chapter_audio_paths(project)
-        for chapter in _listenable(project):
+        listed = _listenable(project)
+        total += packed_extras_bytes(project, [chapter["id"] for chapter in listed])
+        for chapter in listed:
             path = audio.get(chapter["id"])
             if path is not None:
                 total += path.stat().st_size
-            if plan is not None:
-                links.update(cue["link"] for cue in music_plan.chapter_cues(plan, chapter["id"]))
+        links |= music_links(project, music_track, listed)
     pending = 0
     for link in links:
         path = music_track(link) if music_track is not None else None

@@ -25,6 +25,8 @@ export interface EngineModuleStatus {
   cancelled?: boolean;
   /** Đang tải và huỷ được: hộp hiện nút "Huỷ". */
   cancellable?: boolean;
+  /** Giọng đã tải xong từng lần nhưng một phần bị mất hay hỏng (file cắt cụt, sai bản): nút tải là nút SỬA đúng phần ấy. */
+  damaged?: boolean;
 }
 
 export interface EngineGroup<V extends EngineVoice> {
@@ -79,6 +81,7 @@ export function moduleNote(status: EngineModuleStatus | undefined): string | nul
   if (status.state === "error") return status.error || "Chưa tải được giọng - thử lại.";
   if (status.state === "unsupported") return "Máy này chưa dùng được những giọng này.";
   const cancelled = status.cancelled ? `${CANCELLED_NOTE} ` : "";
+  if (status.damaged) return `${cancelled}Giọng này đã tải nhưng một phần bị mất hay hỏng - bấm Sửa giọng để tải lại đúng phần ấy.`;
   if (status.state === "outdated") return `${cancelled}Có bản giọng mới (${formatSize(status.bytes)}) - tải để dùng tiếp.`;
   return `${cancelled}Máy đọc khác: cần tải thêm ${formatSize(status.bytes)}, một lần.`;
 }

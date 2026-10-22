@@ -43,6 +43,28 @@ describe("friendlyError", () => {
     }
   });
 
+  it("đĩa đầy của SQLite và cổng tài nguyên được nhận là thiếu đĩa, nói số GB còn lại (a96)", () => {
+    expect(friendlyError("sqlite3.OperationalError: database or disk is full").summary).toBe("Ổ đĩa hết chỗ trống.");
+    const gate = friendlyError("disk free 4.0 GB", true);
+    expect(gate.summary).toBe("Ổ đĩa chứa thư viện sách chỉ còn 4.0 GB.");
+    expect(gate.hint).toContain("Giải phóng thêm dung lượng");
+    expect(friendlyError("disk free 8.0 GB", true, true).hint).not.toMatch(/[Bb]ấm Tiếp tục/);
+  });
+
+  it("model phân tích không sẵn sàng: không khẳng định là lỗi kết nối; Studio biết model mất thì nói thẳng và chỉ Sửa Studio (a96)", () => {
+    const raw = "Ollama/Qwen model abook-analyzer:v4 không sẵn sàng. Pipeline dừng thay vì âm thầm hạ chất lượng phân tích toàn book.";
+    const unknown = friendlyError(raw, true);
+    expect(unknown.summary).toContain("Ollama chưa chạy hoặc chưa có model");
+    expect(unknown.hint).toContain("Sửa Studio");
+    const lost = friendlyError(raw, true, false, true);
+    expect(lost.summary).toBe("Studio mất model phân tích truyện (file đã bị xoá hay hỏng).");
+    expect(lost.hint).toContain("Sửa Studio");
+    expect(lost.detail).toBe(raw);
+    expect(friendlyError(raw, true, true, true).hint).toContain("Làm lại phân tích từ đầu");
+    // Không có model mất thì lỗi kết nối thật vẫn là lỗi kết nối.
+    expect(friendlyError("httpx.ConnectError: actively refused it", true, false, false).summary).toContain("kết nối được Ollama");
+  });
+
   it("lỗi lạ: câu chung, nguyên văn chỉ nằm ở chi tiết", () => {
     const shown = friendlyError("  KeyError: 'speaker'  ");
     expect(shown.summary).toBe("Có lỗi khi làm sách.");

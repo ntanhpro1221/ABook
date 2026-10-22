@@ -2201,16 +2201,19 @@ object BookImport {
     /** Số thứ tự chỉ đứng sau "thứ" ("Hồi thứ nhất", "Hồi thứ nhứt"): "Hồi nhất định…" là câu văn (importers._ORDINAL_WORDS). */
     private const val ORDINAL_WORDS = "nhất|nhứt|nhì"
 
+    /** "Chương cuối" chỉ khi đứng một mình hay trước dấu ngăn của tiêu đề: "Chương cuối cùng tôi viết…" là câu văn (importers._LAST_WORDS). */
+    private const val LAST_WORDS = "cuối(?:\\s+cùng)?(?=\\s*(?:\$|[:：.\\-–—]))"
+
     /** Dòng tiêu đề chương: "Chương 12", "Hồi thứ hai", "Quyển 2", "第三章" (importers.HEADING). */
     private val HEADING: Pattern = Pattern.compile(
-        "^\\s*(?:(?:chương|chuong|hồi|hoi|chapter|tiết|phần|phan|quyển|quyen)\\s+(?:thứ\\s+(?:$ORDINAL_WORDS)|(?:thứ\\s+)?(?:\\d+|[ivxlcdm]+|(?:(?:$NUMBER_WORDS)\\s*)+))(?![\\w])" +
+        "^\\s*(?:(?:chương|chuong|hồi|hoi|chapter|tiết|phần|phan|quyển|quyen)\\s+(?:thứ\\s+(?:$ORDINAL_WORDS)|(?:thứ\\s+)?(?:\\d+[a-z]?|[ivxlcdm]+|(?:(?:$NUMBER_WORDS)\\s*)+|$LAST_WORDS))(?![\\w])" +
             "|第\\s*[\\d一二三四五六七八九十百千零〇两]+\\s*[章回])",
         Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
     )
 
     /** Tiêu đề chương của file TXT cả truyện: "Chương N" thôi, như trình tạo sách (importers.TXT_HEADING) - "Quyển N" là tên tập. */
-    private val TXT_HEADING: Pattern = Pattern.compile(
-        "^\\s*(?:(?:chương|chuong|hồi|hoi|chapter|tiết|phần|phan)\\s+(?:thứ\\s+(?:$ORDINAL_WORDS)|(?:thứ\\s+)?(?:\\d+|[ivxlcdm]+|(?:(?:$NUMBER_WORDS)\\s*)+))(?![\\w])" +
+    internal val TXT_HEADING: Pattern = Pattern.compile(
+        "^\\s*(?:(?:chương|chuong|hồi|hoi|chapter|tiết|phần|phan)\\s+(?:thứ\\s+(?:$ORDINAL_WORDS)|(?:thứ\\s+)?(?:\\d+[a-z]?|[ivxlcdm]+|(?:(?:$NUMBER_WORDS)\\s*)+|$LAST_WORDS))(?![\\w])" +
             "|第\\s*[\\d一二三四五六七八九十百千零〇两]+\\s*[章回])",
         Pattern.CASE_INSENSITIVE or Pattern.UNICODE_CASE or UNICODE_CLASSES,
     )
@@ -2223,10 +2226,17 @@ object BookImport {
         if (cpLen(pyStrip(line)) > MAX_HEADING || !match.lookingAt()) return false
         val tail = pyStrip(candidate.substring(match.end()))
         if ((pattern === HEADING || pattern === TXT_HEADING) && tail.isNotEmpty() && tail[0] !in ":：.-–—") {
-            return listOf(".", "!", "?", "…", "。", "!\"", "?\"", ".\"").none { tail.endsWith(it) }
+            return !endsSentence(tail)
         }
         return true
     }
+
+    private const val SENTENCE_STOPS = ".!?…。"
+    private const val CLOSERS = "”’»\"')]"
+
+    /** Dòng kết bằng dấu câu, kể cả khi nháy / ngoặc đóng đứng sau (`.”` `?”` `…”` `.)`) - câu văn, không phải tiêu đề; nháy hay ngoặc đóng đứng một mình
+     *  ("Chương 5 “Gặp gỡ”", "Chương 100 (hết)") không kể (importers.ends_sentence). */
+    internal fun endsSentence(text: String): Boolean = text.trimEnd { it in CLOSERS }.lastOrNull()?.let { it in SENTENCE_STOPS } ?: false
     private val TXT_VOLUME = Regex("^\\s*(?:tập|tap|quyển|quyen|volume|vol\\.?|book)\\s+(?:\\d+|[ivxlcdm]+|$NUMBER_WORDS)(?:\\s*[-:–—].*)?\\s*$", RegexOption.IGNORE_CASE)
     private val COMBINED_VOLUME = Regex("^\\s*(?:tập|quyển|volume|book)\\s+(?:\\d+|[ivxlcdm]+)\\s*[-:–—]\\s*", RegexOption.IGNORE_CASE)
     private val SPECIAL_SECTION = Regex("\\s*(?:ngoại truyện|lời bạt|minh họa)(?:\\s+\\d+)?(?:\\s*[:：–—-]\\s*.+)?\\s*", RegexOption.IGNORE_CASE)

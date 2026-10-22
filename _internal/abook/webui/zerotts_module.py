@@ -105,7 +105,7 @@ def _dir(part: str) -> Path | None:
 
 
 def _complete(folder: Path | None) -> bool:
-    return folder is not None and all((folder / item.name).is_file() for item in MODEL_FILES)
+    return voice_module.files_intact(folder, MODEL_FILES)
 
 
 def _code_present() -> bool:
@@ -122,7 +122,8 @@ def _parts() -> list[Component]:
     return [
         Component("code", PART_LABEL["code"], pin((CODE,)), CODE.size, _code_present(), blocked=off, downloads=[CODE]),
         Component(CHOICE, PART_LABEL[CHOICE], pin(MODEL_FILES), sum(item.size for item in MODEL_FILES), _complete(_dir(CHOICE)),
-                  blocked=off, downloads=list(MODEL_FILES)),
+                  blocked=off, downloads=list(MODEL_FILES),
+                  targets=[model / item.name for item in MODEL_FILES] if (model := _dir(CHOICE)) is not None else []),
     ]
 
 
@@ -161,7 +162,7 @@ def status() -> dict[str, Any]:
         return {
             "state": state, "done": _core.state["done"] if state == "downloading" else 0,
             "total": _core.state["total"] if state == "downloading" else 0, "error": _core.state["error"],
-            "bytes": sum(part.size for part in lacking),
+            "bytes": sum(part.left() for part in lacking), "damaged": voice_module.has_damaged_part(parts, _core.pins()),
             "cancelled": bool(_core.state["cancelled"]), "cancellable": state == "downloading",
         }
 

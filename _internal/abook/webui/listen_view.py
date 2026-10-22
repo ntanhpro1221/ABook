@@ -15,6 +15,21 @@ from .listening import HEAVY_KEYS, book_progress
 FORMAT = "abook-book/1"  # không ai đọc trường này, mã phiên bản gói không tính nó
 
 
+def metadata_version(book: dict[str, Any]) -> str:
+    """Dấu phiên bản của PHẦN MÔ TẢ cuốn (tên, tác giả, người đọc, liên kết bộ, tên từng chương) - không đụng audio / bìa / chữ. Gói sách
+    (`book.json`) và dòng thư viện `/sync/v1/library` cùng mang nó: máy đã tải thấy dấu khác thì lấy lại phần mô tả mà giữ nguyên audio
+    (điện thoại: LibraryPlugin.refreshMetadata), và đổi riêng tên sách không còn lặng lẽ để bản đã tải mang tên cũ (soát a97 V1)."""
+    import hashlib
+    import json
+
+    series = book.get("series")
+    chapters = [[chapter.get("id"), chapter.get("title") or "", chapter.get("subtitle") or "", chapter.get("fullTitle") or ""]
+                for chapter in book.get("chapters") or [] if isinstance(chapter, dict)]
+    return hashlib.sha256(json.dumps([book.get("title") or "", book.get("author") or "", book.get("narrator") or "",
+                                      [series.get("root"), series.get("part")] if isinstance(series, dict) else None, chapters],
+                                     ensure_ascii=False).encode()).hexdigest()[:16]
+
+
 _CACHE: dict[str, tuple[tuple, list[dict[str, Any]]]] = {}
 
 
@@ -91,13 +106,13 @@ def book(project_root: Path, book_id: str, summary: dict[str, Any], state: dict[
     }
     # Phần nối tiếp của "Làm tiếp cuốn này": phần đầu + thứ tự phần theo continues.json - thư viện gom các phần theo chuỗi,
     # không theo tên (soát UX 29-09, N10). Phần đầu không mang gì: giao diện nhận ra nó là sách mà các phần khác trỏ về.
-    result["series"] = _series(project_root)
+    result["series"] = series(project_root)
     if with_chapters:
         result["chapters"] = items
     return result
 
 
-def _series(project_root: Path) -> dict[str, Any] | None:
+def series(project_root: Path) -> dict[str, Any] | None:
     from .. import continuation
     from .library import book_id
 

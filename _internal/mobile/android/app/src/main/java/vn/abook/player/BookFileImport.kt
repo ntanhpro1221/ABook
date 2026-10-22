@@ -74,6 +74,20 @@ object BookFileImport {
         }
     }
 
+    /** Đầu file (vài trăm byte) có đúng dáng một gói của app không: mục đầu là `mimetype`, LƯU không nén, nội dung là kiểu `.abook` hay `.abookproj`
+     *  (cùng điều kiện `importFile` đòi). Cho file được chia sẻ qua kiểu chung (octet-stream, zip) khi tên mất đuôi - soát a99 V6. */
+    fun looksLikeBookFile(head: ByteArray): Boolean {
+        fun u16(at: Int) = (head[at].toInt() and 0xff) or ((head[at + 1].toInt() and 0xff) shl 8)
+        if (head.size < 30 || head[0] != 'P'.code.toByte() || head[1] != 'K'.code.toByte() || head[2].toInt() != 3 || head[3].toInt() != 4) return false
+        if (u16(8) != 0) return false // ZipEntry.STORED
+        val nameEnd = 30 + u16(26)
+        val dataStart = nameEnd + u16(28)
+        if (String(head, 30, minOf(u16(26), head.size - 30), Charsets.US_ASCII) != "mimetype") return false
+        return listOf(MIMETYPE, PROJECT_MIMETYPE).map { it.toByteArray(Charsets.US_ASCII) }.any { mime ->
+            dataStart + mime.size <= head.size && head.copyOfRange(dataStart, dataStart + mime.size).contentEquals(mime)
+        }
+    }
+
     /** Gói zip bị cắt (còn chữ ký "PK" ở đầu) hay file rỗng - khác một file lạ đổi đuôi (bookfile.looks_cut). */
     private fun looksCut(file: File): Boolean = runCatching {
         file.inputStream().use { input ->

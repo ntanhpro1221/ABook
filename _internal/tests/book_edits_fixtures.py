@@ -592,6 +592,17 @@ CONTRACT: dict[str, list[dict[str, Any]]] = {
         {"method": "POST", "path": "/voice", "body": {"character": "NARRATOR", "avoid": "preset_a"}},
         {"method": "GET", "path": "/edits"},
     ],
+    # Giọng của máy đọc khác (ZeroTTS, Supertonic): khoá "baotrang"/"F1" đi vào ý muốn, người nghe thấy nhãn ("Bảo Trang") ở dàn nhân vật,
+    # ý muốn chờ và câu báo "đang chờ ở máy khác" - điện thoại đọc nhãn từ assets/voice_labels.json (VoiceLabels).
+    "wishes_voice_machine": [
+        {"method": "POST", "path": "/voice", "body": {"character": "HEIDI", "preset": "baotrang"}},
+        {"method": "GET", "path": "/cast"},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "POST", "path": "/voice", "body": {"character": "HEIDI", "preset": "F1", "seen": 0}},
+        {"method": "GET", "path": "/cast"},
+        {"method": "GET", "path": "/pending-changes"},
+        {"method": "GET", "path": "/edits"},
+    ],
     "wishes_retake_and_merge": [
         {"method": "POST", "path": "/chapters/1/retake"},
         {"method": "POST", "path": "/chapters/9/retake"},
@@ -881,6 +892,7 @@ def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str,
     from abook.webui.actions import FakeRunner
     from abook.webui.library import Preferences, book_id
     from abook.webui.listening import Listening
+    from abook.webui import server as server_module
     from abook.webui.server import App, Server
     from tests.test_webui_listen_and_sync import _request
 
@@ -893,6 +905,9 @@ def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str,
         preferences.update({"libraryRoot": str(library)})
         app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(work / "prefs" / "listening.json"))
         server = Server(app, port=0).start()
+        # Điện thoại không có mô-đun giọng nào để tải, nên chọn giọng máy khác luôn qua; máy tính cũng coi như đã tải (ca wishes_voice_machine).
+        installed = server_module.engine_installed
+        server_module.engine_installed = lambda engine: True
         try:
             identifier = book_id(copy)
             recorded: list[dict[str, Any]] = []
@@ -914,6 +929,7 @@ def record_contract(folder: Path, steps: list[dict[str, Any]]) -> list[dict[str,
                                            headers={"X-Ebook-Token": "t"}, body=body)
                 recorded.append({**step, "status": status, "response": json.loads(data or b"null")})
         finally:
+            server_module.engine_installed = installed
             server.stop()
     return recorded
 

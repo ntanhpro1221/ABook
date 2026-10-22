@@ -51,6 +51,9 @@ import { narratorIsAuto, recommendedFor, type TellerGender } from "@/studio/narr
 import { TELLER_TITLE, tellerHint } from "@/studio/tellerMode";
 import { creditKind, creditLine, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS, type CreditDrop, type Credits } from "@/studio/credits";
 import { samePath } from "@/studio/samePath";
+import { watchAppDropPaths } from "@/studio/appDrops";
+import { MatterSuggestion } from "@/studio/MatterSuggestion";
+import { allExcluded, approx, keepMatter } from "@/studio/scanView";
 import { createGate, scanIsCurrent, sourcesKey, type ScannedSources } from "@/studio/scanState";
 import { isSourceRef, sourceName } from "@/studio/sourceRef";
 import { splitOutcome } from "@/studio/splitOffer";
@@ -65,6 +68,7 @@ import {
   progressLabel,
   sendPlan,
   sendSummary,
+  UPLOAD_LIMIT,
   type Picked,
   type UploadProgress,
 } from "@/studio/upload";
@@ -116,6 +120,8 @@ const CHAPTER_LIMITS = [20, 50, 100];
 interface Draft {
   paths: string[];
   excluded: string[];
+  /** Trang phụ của file sách (bìa, bản quyền, mục lục...) mà người dùng đã TÍCH lại: mặc định chúng chưa vào sách, như Nghe ngay. */
+  keepMatter?: string[];
   title: string;
   titleEdited: boolean;
   narrator: string;
@@ -272,7 +278,12 @@ function SourceStep({
   volumeSplit,
   splitting,
   volumeStarts,
+  matter,
+  onKeepMatter,
 }: {
+  /** Trang phụ của file sách (EPUB / DOCX) trong lần quét: chưa tích sẵn; `keep` là những trang người dùng đã tích lại. */
+  matter: { files: ScannedFile[]; keep: string[] };
+  onKeepMatter: (path: string, on: boolean) => void;
   /** Số chương đầu mỗi tập khi đang chia: số chương soát riêng từng tập (mỗi tập đánh số lại từ 1). */
   volumeStarts?: number[];
   /** "Chia thành nhiều tập": khung đề xuất / danh sách tập (VolumeSplit) và đang chia hay không (chia rồi thì "N chương đầu" vô nghĩa). */
@@ -367,6 +378,20 @@ function SourceStep({
     if (chosen.length) (append ? onAddFiles : onPaths)(chosen);
   };
   const files = scan?.files ?? [];
+  // Cửa sổ app: vỏ Tauri nuốt sự kiện thả của HTML5 và phát `abook-drag` kèm đường dẫn thật (như Thư viện) - nghe nó để khung nét đứt nhận file.
+  const dropTarget = useRef({ files: files.length, onPaths, onAddFiles });
+  dropTarget.current = { files: files.length, onPaths, onAddFiles };
+  const appWindow = Boolean(info?.dialogs);
+  useEffect(() => {
+    if (!appWindow) return undefined;
+    return watchAppDropPaths({
+      hover: setDragging,
+      drop: (paths) => {
+        const target = dropTarget.current;
+        if (paths.length) (target.files ? target.onAddFiles : target.onPaths)(paths);
+      },
+    });
+  }, [appWindow]);
   const onPicked = (event: { target: HTMLInputElement }) => {
     if (event.target.files) void upload(pickedFromInput(event.target.files), appending.current);
     event.target.value = "";
@@ -442,11 +467,11 @@ function SourceStep({
                 ? folderPick
                   ? "Chọn hay kéo thả vào đây các chương của truyện"
                   : "Gửi các chương từ máy này"
-                : "Chọn thư mục truyện hay một file EPUB, DOCX, PDF"}
+                : "Chọn hay kéo thả vào đây thư mục truyện, hay một file EPUB, DOCX, PDF"}
           </p>
           <p className="mt-1 text-sm text-fg-2 text-pretty">
             {browser
-              ? `Mọi file .txt của truyện (chọn cùng lúc${folderPick ? ", hay cả thư mục truyện" : ""}), hay một file .epub / .docx / .pdf - tối đa 8 MB mỗi file. Máy tính giữ chúng trong mục “Nguồn tải lên” của thư viện.`
+              ? `Mọi file .txt của truyện (chọn cùng lúc${folderPick ? ", hay cả thư mục truyện" : ""}), hay một file .epub / .docx / .pdf - mỗi file tới ${UPLOAD_LIMIT / 2 ** 20} MB; file lớn hơn thì chép vào máy tính rồi mở ở đó. Máy tính giữ chúng trong mục “Nguồn tải lên” của thư viện.`
               : "Chỉ lấy file nằm ngay trong thư mục, không quét thư mục con."}
           </p>
           {browser && (
@@ -493,7 +518,7 @@ function SourceStep({
           )}
           {info?.remote ? null : browser && !advanced ? (
             // Studio từ xa: đường dẫn trên máy tính chỉ máy tính có - thiết bị gửi chương lên (hay "Làm lại" / "Làm tiếp" dùng chương của chính cuốn ấy).
-            // Đường dẫn trên máy tính chỉ người rành máy mới cần (thư mục đã có sẵn trên máy tính, file quá 8 MB).
+            // Đường dẫn trên máy tính chỉ người rành máy mới cần (thư mục đã có sẵn trên máy tính, file quá lớn để gửi).
             <button
               type="button"
               aria-expanded={false}
@@ -626,6 +651,7 @@ function SourceStep({
           {files.filter((file) => file.split).map((file) => (
             <SplitSuggestion key={file.path} file={file} title={title} onSplit={onSplit} />
           ))}
+          <MatterSuggestion files={matter.files} keep={matter.keep} onKeep={onKeepMatter} />
           {/* Gợi ý chia phần đứng TRƯỚC lời nhắc số chương: truyện nhiều tập đánh số lại từ 1 ở mỗi tập, lời nhắc "trùng số" chỉ là
               hệ quả của việc chưa chia. */}
           {volumeSplit}
@@ -644,7 +670,7 @@ function SourceStep({
           <CreditSuggestion files={files} drop={dropCredits} onChange={onDropCredits} />
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2">
             <div className="tabular text-sm text-fg-2">
-              <span className="font-semibold text-fg">{files.length} chương</span> · {formatNumber(scan!.totals.words)} chữ · khoảng{" "}
+              <span className="font-semibold text-fg">{files.length} chương</span> · {approx(scan!.totals.words, scan!.totals.estimated)} chữ · khoảng{" "}
               {formatLength(scan!.totals.audioSeconds)} audio
             </div>
             <div className="flex gap-1">
@@ -712,8 +738,8 @@ function SourceStep({
                       <div className="truncate text-xs text-fg-2">{file.name}</div>
                     </div>
                     <div className="tabular text-right text-xs text-fg-2">
-                      <div>{formatNumber(file.words)} chữ</div>
-                      {file.chars > 0 && <div className="text-fg-3">{formatNumber(file.chars)} ký tự</div>}
+                      <div>{approx(file.words, file.estimated)} chữ</div>
+                      {file.chars > 0 && <div className="text-fg-3">{approx(file.chars, file.estimated)} ký tự</div>}
                     </div>
                     <button
                       type="button"
@@ -1466,7 +1492,7 @@ function ConfirmStep({
   const guess = estimate(scan.totals.words, scan.files.length, exact);
   const measured = profile === "high_quality" && !noStudio;
   const rows: [string, string][] = [
-    ["Chương", `${scan.files.length} chương · ${formatNumber(scan.totals.words)} chữ`],
+    ["Chương", `${scan.files.length} chương · ${approx(scan.totals.words, scan.totals.estimated)} chữ`],
     // Tập 1 là sách thường, tập sau nối tiếp nó (continuation.py): nói rõ tên từng sách và việc "tự chạy khi tập trước xong".
     ...(volumes
       ? ([
@@ -1794,22 +1820,25 @@ export function NewProjectScreen() {
   // Chia nhiều tập: các chương theo thứ tự của đề xuất (mỗi thư mục / EPUB liền nhau - quét theo tên file thì chương các tập
   // xen nhau), và "N chương đầu" không áp (nó cắt một sách, không phải một bộ).
   const splitting = draft.volumeStarts != null;
+  // Trang phụ của file sách chưa tích lại cũng là chương không vào sách (cùng luật chọn mặc định với Nghe ngay).
+  const excludedPaths = useMemo(() => allExcluded(rawScan?.files ?? [], draft.excluded, draft.keepMatter ?? []), [rawScan, draft.excluded, draft.keepMatter]);
   const ordered = useMemo(
     () => (rawScan ? (splitting ? inOrder(rawScan.files, rawScan.volumes?.order) : rawScan.files) : []),
     [rawScan, splitting],
   );
   const scan = useMemo<ScanResult | null>(() => {
     if (!rawScan) return null;
-    const excluded = new Set(draft.excluded);
+    const excluded = new Set(excludedPaths);
     const kept = ordered.filter((file) => !excluded.has(file.path));
     const files = draft.limit && !splitting ? kept.slice(0, draft.limit) : kept;
     const words = files.reduce((sum, file) => sum + file.words, 0);
     const audioSeconds = files.reduce((sum, file) => sum + (file.audioSeconds ?? 0), 0); // ước của máy chủ, cùng cách hộp Xuất sách nói
-    return { ...rawScan, files, totals: { chapters: files.length, words, audioSeconds } };
-  }, [rawScan, ordered, draft.excluded, draft.limit, splitting]);
+    const estimated = files.some((file) => file.estimated);
+    return { ...rawScan, files, totals: { chapters: files.length, words, audioSeconds, ...(estimated ? { estimated } : {}) } };
+  }, [rawScan, ordered, excludedPaths, draft.limit, splitting]);
   const volumeStarts = useMemo(
-    () => (splitting && scan ? startNumbers(ordered, draft.volumeStarts, new Set(draft.excluded)) : [1]),
-    [splitting, scan, ordered, draft.volumeStarts, draft.excluded],
+    () => (splitting && scan ? startNumbers(ordered, draft.volumeStarts, new Set(excludedPaths)) : [1]),
+    [splitting, scan, ordered, draft.volumeStarts, excludedPaths],
   );
 
   // Cùng khoá truy vấn với bước "Tôi là ai?": lấy từ bộ nhớ đệm, không đọc lại sách.
@@ -1981,14 +2010,16 @@ export function NewProjectScreen() {
               title={title}
               onTitle={(value) => update({ title: value, titleEdited: true })}
               scanning={scanMutation.isPending}
-              onPaths={(paths) => update({ paths, excluded: [], limit: null, volumeStarts: null, titleEdited: paths.length ? draft.titleEdited : false })}
+              onPaths={(paths) => update({ paths, excluded: [], keepMatter: [], limit: null, volumeStarts: null, titleEdited: paths.length ? draft.titleEdited : false })}
+              matter={{ files: rawScan?.files ?? [], keep: draft.keepMatter ?? [] }}
+              onKeepMatter={(path, on) => setDraft((current) => ({ ...current, ...keepMatter(current, path, on) }))}
               onAddFiles={(paths) => setDraft((current) => ({ ...current, paths: [...current.paths, ...paths], volumeStarts: null }))}
               splitting={splitting}
               volumeStarts={volumeStarts}
               volumeSplit={
                 <VolumeSplit
                   ordered={ordered}
-                  excluded={draft.excluded}
+                  excluded={excludedPaths}
                   files={scan?.files ?? []}
                   proposal={rawScan?.volumes}
                   title={title.trim()}
@@ -1998,7 +2029,7 @@ export function NewProjectScreen() {
               }
               total={rawScan?.files.length ?? 0}
               limit={draft.limit ?? null}
-              later={(rawScan?.files.filter((file) => !draft.excluded.includes(file.path)).length ?? 0) - (scan?.files.length ?? 0)}
+              later={(rawScan?.files.filter((file) => !excludedPaths.includes(file.path)).length ?? 0) - (scan?.files.length ?? 0)}
               onLimit={(count) => update({ limit: count })}
               onRemove={(path) => {
                 update({ excluded: [...draft.excluded, path] });
@@ -2028,7 +2059,7 @@ export function NewProjectScreen() {
                   const keepTitle = draft.title.trim() ? { titleEdited: true } : {};
                   update(
                     replaced
-                      ? { paths: draft.paths.map((item) => (samePath(item, path) ? folder : item)), excluded: [], limit: null, volumeStarts: null, ...keepTitle }
+                      ? { paths: draft.paths.map((item) => (samePath(item, path) ? folder : item)), excluded: [], keepMatter: [], limit: null, volumeStarts: null, ...keepTitle }
                       : { paths: [...draft.paths, folder], excluded: [...draft.excluded, path], limit: null, volumeStarts: null, ...keepTitle },
                   );
                   const plan = scan?.files.find((file) => samePath(file.path, path))?.split;

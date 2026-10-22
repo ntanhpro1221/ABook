@@ -96,6 +96,18 @@ object Peers {
         return Store.requireBookId("p${key}_$remoteId")
     }
 
+    /**
+     * Liên kết bộ truyện (`series`) của gói sách một thiết bị ghép gửi nói bằng mã sách CỦA MÁY ẤY; trong thư viện này cuốn gốc mang mã [localId].
+     * Đổi `root` sang mã cục bộ để các phần của bộ gom đúng nhóm, không lẫn với mã của máy khác (soát a97 V2). Mã không hợp lệ thì bỏ liên kết.
+     */
+    fun localizeSeries(manifest: JSONObject, key: String): JSONObject {
+        val series = manifest.optJSONObject("series") ?: return manifest
+        val root = series.optString("root")
+        val local = if (root.isEmpty()) null else runCatching { localId(key, root) }.getOrNull()
+        if (local == null) manifest.remove("series") else series.put("root", local)
+        return manifest
+    }
+
     /** Ngược của `localId` cho một thiết bị đang ghép: (key, mã bên ấy), hay null nếu không phải sách của thiết bị ghép. */
     fun sourceOf(context: Context, localId: String): Pair<String, String>? =
         all(context).keys().asSequence().firstOrNull { localId.startsWith("p${it}_") }
@@ -225,6 +237,7 @@ object Peers {
                         .put("localCoverVersion", downloaded?.optJSONObject("cover")?.optLong("version") ?: 0L)
                         .put("localWordsVersion", downloaded?.optString("wordsVersion") ?: "")
                         .put("localAudioVersion", downloaded?.optString("audioVersion") ?: "")
+                        .put("localMetaVersion", downloaded?.optString("metaVersion") ?: "")
                 }
                 entry.put("name", reply.optString("name", peer.optString("name"))).put("books", books)
             } catch (error: Exception) {

@@ -13,10 +13,10 @@ import { backgroundHelp } from "./backgroundHelp";
 import { BLUETOOTH_DENIED, BLUETOOTH_REASON, bluetoothStep } from "./bluetoothPermission";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
-import { hasNewAudio, hasNewWords } from "./bookUpdates";
+import { hasNewAudio, hasNewMeta, hasNewWords } from "./bookUpdates";
 import { OpenStudioButton, useStudioComputers } from "./StudioOpen";
 import { openRelease } from "./UpdateNotice";
-import { booksBySize, useStorage } from "./storage";
+import { isDownloading, storedEntries, useStorage, type RemovableFromPhone, type StoredFolder } from "./storage";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { isUnpaired, nativeError, toastNativeError } from "./nativeError";
 import { useListenLibrary } from "@/listen/source";
@@ -289,11 +289,12 @@ function PairPanel() {
   );
 }
 
-function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?: DownloadEvent; onDownload: () => void }) {
+export function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?: DownloadEvent; onDownload: () => void }) {
   const newChapters = book.downloaded ? book.chaptersAvailable - book.localChapters : 0;
   const newCover = book.downloaded && (book.cover?.version ?? 0) !== (book.localCoverVersion ?? 0);
   const newWords = hasNewWords(book);
   const newAudio = hasNewAudio(book);
+  const newMeta = hasNewMeta(book);
   const downloading = progress && !progress.finished && !progress.error && !progress.cancelled;
   const fraction = progress?.total ? (progress.done ?? 0) / progress.total : (progress?.files ?? 0) / Math.max(1, progress?.filesTotal ?? 1);
   const percent = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
@@ -334,13 +335,13 @@ function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?
             <X className="size-4" />
           </button>
         </div>
-      ) : book.downloaded && newChapters <= 0 && !newCover && !newWords && !newAudio ? (
+      ) : book.downloaded && newChapters <= 0 && !newCover && !newWords && !newAudio && !newMeta ? (
         <span className="flex items-center gap-1 text-xs text-success">
           <CheckCircle2 className="size-4" /> Đã tải
         </span>
       ) : (
         <Button size="sm" variant={book.downloaded ? "secondary" : "primary"} icon={Download} onClick={onDownload}>
-          {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : newAudio ? "Cập nhật bản thu" : newCover ? "Cập nhật bìa" : "Cập nhật chữ"}
+          {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : newAudio ? "Cập nhật bản thu" : newCover ? "Cập nhật bìa" : newMeta ? "Cập nhật tên" : "Cập nhật chữ"}
         </Button>
       )}
     </div>
@@ -873,31 +874,40 @@ function DeviceNameRow() {
   );
 }
 
-/** Sách trên máy: tổng, rồi từng cuốn chiếm bao nhiêu (nhiều nhất trước) để chọn cuốn xoá cho nhẹ máy. */
-function StoragePanel({ storage }: { storage: { bytes: number; free: number; books: { id: string; bytes: number }[] } }) {
+/** Sách trên máy: tổng, rồi từng thứ đang chiếm chỗ (nhiều nhất trước) để chọn cái xoá cho nhẹ máy - cuốn đã tải, và cả phần tải dở / gói nghe thẳng đã nhớ
+ *  ("Xoá phần đã tải"; cuốn vẫn ở máy tính). Cuốn đang có lượt tải chạy thì chưa xoá được. */
+export function StoragePanel({ storage, names }: { storage: { bytes: number; free: number; books: StoredFolder[] }; names?: ReadonlyMap<string, string> }) {
   const { data: library } = useListenLibrary();
-  const sized = booksBySize(storage.books, library ?? []);
+  const progress = useDownloadProgress();
+  const entries = storedEntries(storage.books, library ?? [], names);
   return (
     <section className="mt-8" aria-label="Dung lượng sách trên máy">
       <p className="text-center text-xs text-fg-3">
         Sách trên máy: {formatSize(storage.bytes)} · còn trống {formatSize(storage.free)}
       </p>
-      {sized.length > 0 && (
+      {entries.length > 0 && (
         <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-panel">
-          {sized.map(({ book, bytes }) => (
-            <li key={book.id} className="flex items-center gap-3 px-4 py-2.5">
-              <div className="min-w-0 flex-1 truncate text-sm">{book.title}</div>
-              <div className="shrink-0 text-xs text-fg-2">{formatSize(bytes)}</div>
-              <button
-                type="button"
-                aria-label={`Xoá ${book.title} khỏi điện thoại`}
-                onClick={() => window.dispatchEvent(new CustomEvent("abook-remove-from-phone", { detail: book }))}
-                className="grid size-9 shrink-0 place-items-center rounded-full text-fg-2"
-              >
-                <Trash2 className="size-4" />
-              </button>
-            </li>
-          ))}
+          {entries.map(({ id, title, bytes, kind }) => {
+            const busy = isDownloading(progress[id]);
+            return (
+              <li key={id} className="flex items-center gap-3 px-4 py-2.5">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm">{title}</div>
+                  {kind === "partial" && <div className="text-xs text-fg-3">{busy ? "Đang tải" : "Phần đã tải, chưa thành sách trên máy"}</div>}
+                </div>
+                <div className="shrink-0 text-xs text-fg-2">{formatSize(bytes)}</div>
+                <button
+                  type="button"
+                  disabled={busy}
+                  aria-label={kind === "book" ? `Xoá ${title} khỏi điện thoại` : `Xoá phần đã tải của ${title}`}
+                  onClick={() => window.dispatchEvent(new CustomEvent<RemovableFromPhone>("abook-remove-from-phone", { detail: { id, title, partial: kind === "partial" } }))}
+                  className="grid size-9 shrink-0 place-items-center rounded-full text-fg-2 disabled:opacity-40"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
@@ -1038,7 +1048,7 @@ export function DevicesScreen() {
       <DeviceNameRow />
       <PeersPanel />
       <SharePanel />
-      {storage.data && <StoragePanel storage={storage.data} />}
+      {storage.data && <StoragePanel storage={storage.data} names={new Map((remote.data?.books ?? []).map((book) => [book.id, book.title]))} />}
     </div>
   );
 }

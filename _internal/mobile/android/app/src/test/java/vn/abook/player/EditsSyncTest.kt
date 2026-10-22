@@ -62,7 +62,6 @@ class EditsSyncTest {
         BookEditsFixtures.copyBase(dir) // tải từ máy tính: có book.json, KHÔNG ghi sổ "mở từ file"
         LocalStudio.coverCodec = FakeCodec()
         LocalStudio.musicStore = MusicStore(File(root, "music"), FakeTags)
-        LocalStudio.clock = { 1_790_950_256L }
         LocalStudio.now = { 1_790_950_256.0 }
         EditsSync.clock = { 1_790_960_000L }
         EditsSync.refresh = null
@@ -270,7 +269,6 @@ class EditsSyncTest {
     fun a_newer_cover_is_not_lost_when_an_older_one_was_sent() {
         call("PUT", "/cover", JSONObject().put("image", dataUrl()))
         val view = EditsSync.push(id) {
-            LocalStudio.clock = { 1_790_950_999L }
             call("PUT", "/cover", JSONObject().put("image", "data:image/jpeg;base64," + Base64.getEncoder().encodeToString(byteArrayOf(0xFF.toByte(), 1, 2, 3, 4))))
             accepted()
         }
