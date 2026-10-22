@@ -200,7 +200,7 @@ def decode_text(raw: bytes) -> tuple[str, str]:
         return guesses[encoding], encoding
     if "cp1258" in guesses:
         return guesses["cp1258"], "cp1258"
-    return unicodedata.normalize("NFC", raw.decode("utf-8", errors="replace")), "utf-8"
+    return unicodedata.normalize("NFC", raw.decode("utf-8")), "utf-8"
 
 
 def _strict(raw: bytes, encoding: str) -> str | None:

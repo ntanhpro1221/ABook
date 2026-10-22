@@ -2,6 +2,15 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a84fix` trên `dev/uxfix95` (nền 3b87b35c): nhập TXT/DOCX/PDF/thư mục, 19 mục, luật chung Python + Kotlin qua fixture chung
+`tests/fixtures/import/a84_*` - không tự bỏ chữ của truyện: chữ dẫn, dòng tên truyện và Heading 1 đơn ở lại trong thân ("Mở đầu" tích sẵn);
+dòng đầu/chân trang PDF thành gợi ý bỏ đọc bỏ chọn được; lời chú/dấu gọi DOCX giữ mặc định; thêm sách từ chối khi nguồn đổi sau lần xem trước;
+một file con không đọc được làm hỏng cả thư mục kèm tên file; Studio dùng cùng luật mục lục/tập/tiêu đề với Nhập; ngắt dòng/trang DOCX và
+ký tự điều khiển TXT giữ ranh giới từ; tracked move đọc một lần; kiểu Heading kế thừa/outline; byte TXT hỏng báo rõ, không thay ký tự âm thầm;
+thứ tự thư mục theo tên gốc dài + casefold Unicode 14 như Python; PDF thưa chữ giữ chữ và cảnh báo trang ảnh; lỗi PDF nêu lý do và việc bạn
+làm được (OCR/mở khoá/TXT/DOCX). Lead sửa A84ImportTest (JSONObject.similar không có trong vỏ android.jar) và cập nhật 6 test JVM cũ theo luật
+mới. Toàn bộ: pytest 8645 passed, 9 skipped, 0 F/E; vitest 1310 passed, 1 skipped; tsc exit 0; JVM 1347 tests, 6 skipped, 0 F/E.
+Hash khoá c9176123 không đổi.
 Đợt `a79fix` trên `dev/uxfix91` (nền cây phát hành dcbd33a0): "Nghe ngay" không gửi chữ khi chưa đồng ý - chuỗi giọng
 thay thế chỉ có Edge khi đã đồng ý "edge" (máy tính + điện thoại); menu Giọng đọc hỏi đồng ý trước khi đổi sang giọng trực tuyến;
 lõi Android giữ (held) chương chữ với giọng chưa đồng ý ở startAt/onPlay/voicesChanged và "Làm trước" (Android Auto, widget, tai nghe);

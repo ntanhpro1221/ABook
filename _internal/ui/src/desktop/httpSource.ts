@@ -118,6 +118,7 @@ export function desktopTextImport(dialogs: boolean): TextImport {
           title,
           separate: Boolean(separate),
           splitChapters: Boolean(options?.splitChapters),
+          ...(options?.sourceFingerprint ? { sourceFingerprint: options.sourceFingerprint } : {}),
           ...(options?.footnotes ? { footnotes: options.footnotes } : {}),
           // Chương người dùng giữ + tên mới; không đổi gì thì không gửi (máy chủ lấy các chương mặc định).
           ...(options?.chapters ? { chapters: options.chapters } : {}),

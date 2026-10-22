@@ -326,11 +326,11 @@ def test_a_whole_story_txt_is_split_into_chapters_only_when_the_listener_ticks_i
         server.stop()
     assert plain["totals"]["chapters"] == 1 and plain["splitOffer"] == 4, "mặc định một chương, và cho biết tách sẽ ra bao nhiêu"
     assert plain["splitHeadings"] == 3, "nhãn: 3 dòng 'Chương N', thêm phần 'Mở đầu' thành 4 chương"
-    assert split["totals"]["chapters"] == 3 and split["splitOffer"] == 4, "phần 'Mở đầu' (tên truyện) hiện chưa tích nên không tính vào tổng"
+    assert split["totals"]["chapters"] == 4 and split["splitOffer"] == 4, "phần mở đầu cũng được giữ mặc định"
     assert [row["title"] for row in split["chapters"]][:2] == ["Mở đầu", "Chương 1: Bến phà lúc bình minh"]
-    assert [row["included"] for row in split["chapters"]][:2] == [False, True]
+    assert [row["included"] for row in split["chapters"]][:2] == [True, True]
     # Cuốn thêm vào là cuốn người dùng đã thấy: không gửi danh sách chương (người gọi khác) thì cũng bỏ phần chưa tích sẵn.
-    assert added["chapters"] == 3 and len(studio.listen_book(added["id"])["chapters"]) == 3
+    assert added["chapters"] == 4 and len(studio.listen_book(added["id"])["chapters"]) == 4
     assert "splitOffer" not in studio.preview_text_book(str(IMPORTS / "epub3.epub")), "sách không có gì để tách thì không có gợi ý"
 
 

@@ -1,0 +1,1002 @@
+[
+  {
+    "file": "a84_bad_be.txt",
+    "error": "File “a84_bad_be.txt” có byte chữ bị hỏng. Bạn hãy mở bản gốc, lưu lại dạng UTF-8 hoặc tải lại file rồi nhập lại."
+  },
+  {
+    "file": "a84_bad_le.txt",
+    "error": "File “a84_bad_le.txt” có byte chữ bị hỏng. Bạn hãy mở bản gốc, lưu lại dạng UTF-8 hoặc tải lại file rồi nhập lại."
+  },
+  {
+    "file": "a84_bad_tail.txt",
+    "error": "File “a84_bad_tail.txt” có byte chữ bị hỏng. Bạn hãy mở bản gốc, lưu lại dạng UTF-8 hoặc tải lại file rồi nhập lại."
+  },
+  {
+    "file": "a84_breaks.docx",
+    "book": {
+      "title": "a84 breaks",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "a84 breaks",
+          "text": "Xin chào.\n\nXin chào.\n\nXin chào.\n\nXin chào."
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương."
+      ]
+    },
+    "preview": {
+      "title": "a84 breaks",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "a84 breaks",
+          "firstLine": "a84 breaks",
+          "words": 10,
+          "chars": 41,
+          "included": true
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương."
+      ],
+      "suggestions": [],
+      "totals": {
+        "chapters": 1,
+        "words": 10
+      }
+    }
+  },
+  {
+    "file": "a84_controls.txt",
+    "book": {
+      "title": "Xin",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Mở đầu",
+          "text": "Xin\n\nchào.\nXin\n\nchào.\nXin\n\nchào.\nXin\n\nchào.\nXin\n\nchào."
+        },
+        {
+          "title": "Chương 1",
+          "text": "Chương 1\nMột."
+        },
+        {
+          "title": "Chương 2",
+          "text": "Chương 2\nHai."
+        }
+      ],
+      "notes": [],
+      "splitOffer": 3,
+      "splitHeadings": 2
+    },
+    "preview": {
+      "title": "Xin",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Mở đầu",
+          "firstLine": "Xin",
+          "words": 10,
+          "chars": 40,
+          "included": true
+        },
+        {
+          "index": 2,
+          "title": "Chương 1",
+          "firstLine": "Chương 1",
+          "words": 3,
+          "chars": 11,
+          "included": true
+        },
+        {
+          "index": 3,
+          "title": "Chương 2",
+          "firstLine": "Chương 2",
+          "words": 3,
+          "chars": 11,
+          "included": true
+        }
+      ],
+      "notes": [],
+      "splitOffer": 3,
+      "splitHeadings": 2,
+      "suggestions": [],
+      "totals": {
+        "chapters": 3,
+        "words": 16
+      }
+    }
+  },
+  {
+    "file": "a84_h1_meta.docx",
+    "book": {
+      "title": "Tên sách",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Lời mở đầu",
+          "text": "Câu chuyện bắt đầu."
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương."
+      ]
+    },
+    "preview": {
+      "title": "Tên sách",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Lời mở đầu",
+          "firstLine": "Lời mở đầu",
+          "words": 7,
+          "chars": 24,
+          "included": true
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương."
+      ],
+      "suggestions": [],
+      "totals": {
+        "chapters": 1,
+        "words": 7
+      }
+    }
+  },
+  {
+    "file": "a84_h1_plain.docx",
+    "book": {
+      "title": "Lời mở đầu",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Lời mở đầu",
+          "text": "Câu chuyện bắt đầu."
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương."
+      ]
+    },
+    "preview": {
+      "title": "Lời mở đầu",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Lời mở đầu",
+          "firstLine": "Lời mở đầu",
+          "words": 7,
+          "chars": 24,
+          "included": true
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương."
+      ],
+      "suggestions": [],
+      "totals": {
+        "chapters": 1,
+        "words": 7
+      }
+    }
+  },
+  {
+    "file": "a84_lead_one.txt",
+    "book": {
+      "title": "Đêm ấy tôi không về",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Mở đầu",
+          "text": "Đêm ấy tôi không về"
+        },
+        {
+          "title": "Chương 1",
+          "text": "Chương 1\nBuổi sáng."
+        },
+        {
+          "title": "Chương 2",
+          "text": "Chương 2\nBuổi trưa."
+        },
+        {
+          "title": "Chương 3",
+          "text": "Chương 3\nBuổi tối."
+        }
+      ],
+      "notes": [],
+      "splitOffer": 4,
+      "splitHeadings": 3
+    },
+    "preview": {
+      "title": "Đêm ấy tôi không về",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Mở đầu",
+          "firstLine": "Đêm ấy tôi không về",
+          "words": 5,
+          "chars": 15,
+          "included": true
+        },
+        {
+          "index": 2,
+          "title": "Chương 1",
+          "firstLine": "Chương 1",
+          "words": 4,
+          "chars": 16,
+          "included": true
+        },
+        {
+          "index": 3,
+          "title": "Chương 2",
+          "firstLine": "Chương 2",
+          "words": 4,
+          "chars": 16,
+          "included": true
+        },
+        {
+          "index": 4,
+          "title": "Chương 3",
+          "firstLine": "Chương 3",
+          "words": 4,
+          "chars": 15,
+          "included": true
+        }
+      ],
+      "notes": [],
+      "splitOffer": 4,
+      "splitHeadings": 3,
+      "suggestions": [],
+      "totals": {
+        "chapters": 4,
+        "words": 17
+      }
+    }
+  },
+  {
+    "file": "a84_lead_two.txt",
+    "book": {
+      "title": "a84 lead two",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Mở đầu",
+          "text": "Tôi trở về nhà.\nMẹ đã đi xa."
+        },
+        {
+          "title": "Chương 1",
+          "text": "Chương 1\nBuổi sáng."
+        },
+        {
+          "title": "Chương 2",
+          "text": "Chương 2\nBuổi trưa."
+        },
+        {
+          "title": "Chương 3",
+          "text": "Chương 3\nBuổi tối."
+        }
+      ],
+      "notes": [],
+      "splitOffer": 4,
+      "splitHeadings": 3
+    },
+    "preview": {
+      "title": "a84 lead two",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Mở đầu",
+          "firstLine": "Tôi trở về nhà.",
+          "words": 8,
+          "chars": 21,
+          "included": true
+        },
+        {
+          "index": 2,
+          "title": "Chương 1",
+          "firstLine": "Chương 1",
+          "words": 4,
+          "chars": 16,
+          "included": true
+        },
+        {
+          "index": 3,
+          "title": "Chương 2",
+          "firstLine": "Chương 2",
+          "words": 4,
+          "chars": 16,
+          "included": true
+        },
+        {
+          "index": 4,
+          "title": "Chương 3",
+          "firstLine": "Chương 3",
+          "words": 4,
+          "chars": 15,
+          "included": true
+        }
+      ],
+      "notes": [],
+      "splitOffer": 4,
+      "splitHeadings": 3,
+      "suggestions": [],
+      "totals": {
+        "chapters": 4,
+        "words": 20
+      }
+    }
+  },
+  {
+    "file": "a84_moves.docx",
+    "book": {
+      "title": "a84 moves",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "a84 moves",
+          "text": "Xin chào.\n\nĐã chuyển.\n\nĐã thêm."
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương."
+      ]
+    },
+    "preview": {
+      "title": "a84 moves",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "a84 moves",
+          "firstLine": "a84 moves",
+          "words": 8,
+          "chars": 32,
+          "included": true
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương."
+      ],
+      "suggestions": [],
+      "totals": {
+        "chapters": 1,
+        "words": 8
+      }
+    }
+  },
+  {
+    "file": "a84_pdf_headers.json",
+    "book": {
+      "title": "Sách",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Sách",
+          "text": "TÊN SÁCH\n\nMột câu chuyện ở trang 1, còn nguyên nội dung để bạn nghe.\n\n1\n\nTÊN SÁCH\n\nMột câu chuyện ở trang 2, còn nguyên nội dung để bạn nghe.\n\n2\n\nTÊN SÁCH\n\nMột câu chuyện ở trang 3, còn nguyên nội dung để bạn nghe.\n\n3"
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “TÊN SÁCH”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Một câu chuyện ở trang 1, còn nguyên nội dung để bạn nghe.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “1”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Một câu chuyện ở trang 2, còn nguyên nội dung để bạn nghe.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “2”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Một câu chuyện ở trang 3, còn nguyên nội dung để bạn nghe.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “3”; bỏ chọn để giữ."
+      ]
+    },
+    "preview": {
+      "title": "Sách",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Sách",
+          "firstLine": "Sách",
+          "words": 49,
+          "chars": 166,
+          "included": true
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “TÊN SÁCH”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Một câu chuyện ở trang 1, còn nguyên nội dung để bạn nghe.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “1”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Một câu chuyện ở trang 2, còn nguyên nội dung để bạn nghe.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “2”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Một câu chuyện ở trang 3, còn nguyên nội dung để bạn nghe.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “3”; bỏ chọn để giữ."
+      ],
+      "suggestions": [
+        {
+          "chapter": 1,
+          "line": "TÊN SÁCH",
+          "defaultOn": true
+        },
+        {
+          "chapter": 1,
+          "line": "Một câu chuyện ở trang 1, còn nguyên nội dung để bạn nghe."
+        },
+        {
+          "chapter": 1,
+          "line": "1",
+          "defaultOn": true
+        },
+        {
+          "chapter": 1,
+          "line": "Một câu chuyện ở trang 2, còn nguyên nội dung để bạn nghe."
+        },
+        {
+          "chapter": 1,
+          "line": "2",
+          "defaultOn": true
+        },
+        {
+          "chapter": 1,
+          "line": "Một câu chuyện ở trang 3, còn nguyên nội dung để bạn nghe."
+        },
+        {
+          "chapter": 1,
+          "line": "3",
+          "defaultOn": true
+        }
+      ],
+      "totals": {
+        "chapters": 1,
+        "words": 49
+      }
+    }
+  },
+  {
+    "file": "a84_pdf_lines.json",
+    "book": {
+      "title": "Sách",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Sách",
+          "text": "Tôi vẫn chờ anh.\n\nĐồng hồ điểm 1 giờ.\n\nMột câu chuyện khác kéo dài đủ chữ để kiểm tra việc giữ nguyên nội dung của trang đầu tiên.\n\n1984\n\nTôi vẫn chờ anh.\n\nĐồng hồ điểm 2 giờ.\n\nMột câu chuyện khác kéo dài đủ chữ để kiểm tra việc giữ nguyên nội dung của trang thứ hai.\n\n2\n\nTôi vẫn chờ anh.\n\nĐồng hồ điểm 3 giờ.\n\nMột câu chuyện khác kéo dài đủ chữ để kiểm tra việc giữ nguyên nội dung của trang thứ ba.\n\n3"
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Tôi vẫn chờ anh.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Đồng hồ điểm 1 giờ.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “1984”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Đồng hồ điểm 2 giờ.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “2”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Đồng hồ điểm 3 giờ.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “3”; bỏ chọn để giữ."
+      ]
+    },
+    "preview": {
+      "title": "Sách",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Sách",
+          "firstLine": "Sách",
+          "words": 91,
+          "chars": 307,
+          "included": true
+        }
+      ],
+      "notes": [
+        "Không thấy tiêu đề chương (Chương N, Chapter N…) - cả file là một chương.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Tôi vẫn chờ anh.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Đồng hồ điểm 1 giờ.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “1984”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Đồng hồ điểm 2 giờ.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “2”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Đồng hồ điểm 3 giờ.”; bỏ chọn để giữ.",
+        "Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “3”; bỏ chọn để giữ."
+      ],
+      "suggestions": [
+        {
+          "chapter": 1,
+          "line": "Tôi vẫn chờ anh."
+        },
+        {
+          "chapter": 1,
+          "line": "Đồng hồ điểm 1 giờ."
+        },
+        {
+          "chapter": 1,
+          "line": "1984"
+        },
+        {
+          "chapter": 1,
+          "line": "Đồng hồ điểm 2 giờ."
+        },
+        {
+          "chapter": 1,
+          "line": "2",
+          "defaultOn": true
+        },
+        {
+          "chapter": 1,
+          "line": "Đồng hồ điểm 3 giờ."
+        },
+        {
+          "chapter": 1,
+          "line": "3",
+          "defaultOn": true
+        }
+      ],
+      "totals": {
+        "chapters": 1,
+        "words": 91
+      }
+    }
+  },
+  {
+    "file": "a84_prose.txt",
+    "book": {
+      "title": "a84 prose",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Chương 1",
+          "text": "Chương 1\nHồi hai đứa còn học, tôi đã quen cô ấy.\nĐó là lần đầu gặp nhau.\nChương 1 này hay thật."
+        },
+        {
+          "title": "Chương 2",
+          "text": "Chương 2\nTrời đã sáng."
+        }
+      ],
+      "notes": [],
+      "splitOffer": 2,
+      "splitHeadings": 2
+    },
+    "preview": {
+      "title": "a84 prose",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Chương 1",
+          "firstLine": "Chương 1",
+          "words": 23,
+          "chars": 73,
+          "included": true
+        },
+        {
+          "index": 2,
+          "title": "Chương 2",
+          "firstLine": "Chương 2",
+          "words": 5,
+          "chars": 18,
+          "included": true
+        }
+      ],
+      "notes": [],
+      "splitOffer": 2,
+      "splitHeadings": 2,
+      "suggestions": [],
+      "totals": {
+        "chapters": 2,
+        "words": 28
+      }
+    }
+  },
+  {
+    "file": "a84_sparse_pdf.json",
+    "book": {
+      "title": "Sách",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Chương 1",
+          "text": "Một ngày yên ả, người lữ khách trở về căn nhà nhỏ bên bờ sông và kể lại những câu chuyện cũ với người thân đang chờ đợi. Sáng hôm sau họ cùng nhau lên đường."
+        }
+      ],
+      "notes": [
+        "9 trang không có chữ (ảnh hay trang trống) - bỏ qua."
+      ]
+    },
+    "preview": {
+      "title": "Sách",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Chương 1",
+          "firstLine": "Chương 1",
+          "words": 38,
+          "chars": 129,
+          "included": true
+        }
+      ],
+      "notes": [
+        "9 trang không có chữ (ảnh hay trang trống) - bỏ qua."
+      ],
+      "suggestions": [],
+      "totals": {
+        "chapters": 1,
+        "words": 38
+      }
+    }
+  },
+  {
+    "file": "a84_special.txt",
+    "book": {
+      "title": "a84 special",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Quyển 2 - Chương 3",
+          "text": "Quyển 2 - Chương 3\nBuổi sáng."
+        },
+        {
+          "title": "Quyển 2 - Chương 4",
+          "text": "Quyển 2 - Chương 4\nBuổi trưa."
+        },
+        {
+          "title": "Ngoại truyện: Ngày nghỉ",
+          "text": "Ngoại truyện: Ngày nghỉ\nMột ngày yên ả."
+        },
+        {
+          "title": "Ngoại truyện 2",
+          "text": "Ngoại truyện 2\nMột chuyến đi."
+        },
+        {
+          "title": "Lời bạt",
+          "text": "Lời bạt\nLời tác giả."
+        },
+        {
+          "title": "Minh họa",
+          "text": "Minh họa\nMột bức tranh."
+        },
+        {
+          "title": "Phần 1",
+          "text": "Phần 1\nMở phần mới."
+        }
+      ],
+      "notes": [],
+      "splitOffer": 7,
+      "splitHeadings": 7
+    },
+    "preview": {
+      "title": "a84 special",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Quyển 2 - Chương 3",
+          "firstLine": "Quyển 2 - Chương 3",
+          "words": 7,
+          "chars": 23,
+          "included": true
+        },
+        {
+          "index": 2,
+          "title": "Quyển 2 - Chương 4",
+          "firstLine": "Quyển 2 - Chương 4",
+          "words": 7,
+          "chars": 23,
+          "included": true
+        },
+        {
+          "index": 3,
+          "title": "Ngoại truyện: Ngày nghỉ",
+          "firstLine": "Ngoại truyện: Ngày nghỉ",
+          "words": 8,
+          "chars": 32,
+          "included": true
+        },
+        {
+          "index": 4,
+          "title": "Ngoại truyện 2",
+          "firstLine": "Ngoại truyện 2",
+          "words": 6,
+          "chars": 24,
+          "included": true
+        },
+        {
+          "index": 5,
+          "title": "Lời bạt",
+          "firstLine": "Lời bạt",
+          "words": 5,
+          "chars": 16,
+          "included": true
+        },
+        {
+          "index": 6,
+          "title": "Minh họa",
+          "firstLine": "Minh họa",
+          "words": 5,
+          "chars": 19,
+          "included": true
+        },
+        {
+          "index": 7,
+          "title": "Phần 1",
+          "firstLine": "Phần 1",
+          "words": 5,
+          "chars": 15,
+          "included": true
+        }
+      ],
+      "notes": [],
+      "splitOffer": 7,
+      "splitHeadings": 7,
+      "suggestions": [],
+      "totals": {
+        "chapters": 7,
+        "words": 43
+      }
+    }
+  },
+  {
+    "file": "a84_styles.docx",
+    "book": {
+      "title": "a84 styles",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Bến đò",
+          "text": "Thân truyện."
+        },
+        {
+          "title": "Cơn mưa",
+          "text": "Thân truyện."
+        },
+        {
+          "title": "Đêm xuống",
+          "text": "Thân truyện."
+        },
+        {
+          "title": "Bình minh",
+          "text": "Thân truyện."
+        }
+      ],
+      "notes": []
+    },
+    "preview": {
+      "title": "a84 styles",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Bến đò",
+          "firstLine": "Bến đò",
+          "words": 4,
+          "chars": 16,
+          "included": true
+        },
+        {
+          "index": 2,
+          "title": "Cơn mưa",
+          "firstLine": "Cơn mưa",
+          "words": 4,
+          "chars": 17,
+          "included": true
+        },
+        {
+          "index": 3,
+          "title": "Đêm xuống",
+          "firstLine": "Đêm xuống",
+          "words": 4,
+          "chars": 19,
+          "included": true
+        },
+        {
+          "index": 4,
+          "title": "Bình minh",
+          "firstLine": "Bình minh",
+          "words": 4,
+          "chars": 19,
+          "included": true
+        }
+      ],
+      "notes": [],
+      "suggestions": [],
+      "totals": {
+        "chapters": 4,
+        "words": 16
+      }
+    }
+  },
+  {
+    "file": "a84_toc.txt",
+    "book": {
+      "title": "a84 toc",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Mở đầu",
+          "text": "MỤC LỤC\nChương 1\nChương 2\nChương 3",
+          "matter": "Mục lục"
+        },
+        {
+          "title": "Chương 1",
+          "text": "Chương 1\nA."
+        },
+        {
+          "title": "Chương 2",
+          "text": "Chương 2\nB."
+        },
+        {
+          "title": "Chương 3",
+          "text": "Chương 3\nC."
+        }
+      ],
+      "notes": [
+        "1 mục có vẻ không phải truyện (bìa, bản quyền, mục lục…) chưa chọn - tích nếu muốn nghe."
+      ],
+      "splitOffer": 4,
+      "splitHeadings": 3
+    },
+    "preview": {
+      "title": "a84 toc",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Mở đầu",
+          "firstLine": "MỤC LỤC",
+          "words": 8,
+          "chars": 27,
+          "included": true,
+          "matter": "Mục lục"
+        },
+        {
+          "index": 2,
+          "title": "Chương 1",
+          "firstLine": "Chương 1",
+          "words": 3,
+          "chars": 9,
+          "included": true
+        },
+        {
+          "index": 3,
+          "title": "Chương 2",
+          "firstLine": "Chương 2",
+          "words": 3,
+          "chars": 9,
+          "included": true
+        },
+        {
+          "index": 4,
+          "title": "Chương 3",
+          "firstLine": "Chương 3",
+          "words": 3,
+          "chars": 9,
+          "included": true
+        }
+      ],
+      "notes": [
+        "1 mục có vẻ không phải truyện (bìa, bản quyền, mục lục…) chưa chọn - tích nếu muốn nghe."
+      ],
+      "splitOffer": 4,
+      "splitHeadings": 3,
+      "suggestions": [],
+      "totals": {
+        "chapters": 4,
+        "words": 17
+      }
+    }
+  },
+  {
+    "file": "a84_volume.txt",
+    "book": {
+      "title": "a84 volume",
+      "author": null,
+      "language": null,
+      "cover": null,
+      "chapters": [
+        {
+          "title": "Chương 1",
+          "text": "Chương 1\nA."
+        },
+        {
+          "title": "Chương 2",
+          "text": "Tập 2\n\nChương 2\nB."
+        }
+      ],
+      "notes": [],
+      "splitOffer": 2,
+      "splitHeadings": 2
+    },
+    "preview": {
+      "title": "a84 volume",
+      "author": null,
+      "language": null,
+      "hasCover": false,
+      "chapters": [
+        {
+          "index": 1,
+          "title": "Chương 1",
+          "firstLine": "Chương 1",
+          "words": 3,
+          "chars": 9,
+          "included": true
+        },
+        {
+          "index": 2,
+          "title": "Chương 2",
+          "firstLine": "Tập 2",
+          "words": 5,
+          "chars": 13,
+          "included": true
+        }
+      ],
+      "notes": [],
+      "splitOffer": 2,
+      "splitHeadings": 2,
+      "suggestions": [],
+      "totals": {
+        "chapters": 2,
+        "words": 8
+      }
+    }
+  }
+]

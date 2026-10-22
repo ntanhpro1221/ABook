@@ -169,6 +169,12 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
 - Không kill CUDA giữa kernel chỉ để nhường tài nguyên.
 - Khi resume, settings hash và voice mapping phải giữ nguyên.
 - TXT phải được decode từ đúng byte đã hash; ưu tiên BOM/UTF-8/CP1258 và chỉ thử UTF-16 không BOM khi có NUL heuristic.
+- Nhập TXT/DOCX/PDF giữ chữ mặc định: phần mở đầu, trang tên và lời chú đều được giữ; suy đoán tên sách không được tiêu thụ dòng chữ.
+  Byte TXT hỏng phải báo bạn lưu lại UTF-8/tải lại, không thay bằng ký tự replacement. Chia TXT dùng chung `_txt_cuts`/`txt_starts`
+  cho Studio và màn Thêm sách; Kotlin cùng hợp đồng fixture. DOCX giữ dấu gọi/lời chú, đọc trạng thái cuối của tracked moves,
+  nhận kế thừa style/outline có chặn vòng lặp. PDF chỉ đề xuất bỏ đọc dòng mép trang, chữ nguồn vẫn còn; đề xuất chắc chắn
+  (lặp y hệt đa số trang, số trang trần theo thứ tự) bật sẵn và tắt được. Nguồn máy tính phải khớp fingerprint của preview
+  trước/sau parse khi thêm; staging Android giữ tên gốc riêng với tên đĩa để sort/đặt tên/checksum không lệch.
 - Pronunciation confidence được lưu trong SQLite; cùng một text đã chuyển cách đọc phải được dùng cho TTS và expected ASR.
 - Pronunciation chỉ được lưu theo **từng từ**. Entry nhiều từ phải được tách thành một entry cho mỗi từ;
   không tách được (số từ hai vế lệch nhau) thì bỏ hẳn, vì các từ vẫn có đề xuất riêng trong cùng batch.

@@ -272,7 +272,10 @@ class BookImportTest {
         assertEquals(expectedText("titled"), dump(plain))
         val split = BookImport.importFile(file, splitChapters = true)
         assertEquals(expectedText("titled.split"), dump(split))
-        assertEquals(listOf("Chương 1: Chuyến phà đêm", "Chương 2: Căn nhà bên sông"), titles(split))
+        // a84: dòng tên truyện chỉ là gợi ý tên sách, chữ vẫn ở lại trong chương "Mở đầu" (không bỏ chữ của truyện).
+        assertEquals(listOf("Mở đầu", "Chương 1: Chuyến phà đêm", "Chương 2: Căn nhà bên sông"), titles(split))
+        assertEquals("Ngọn đèn cuối cùng", split.chapters[0].text)
+        assertTrue(split.notes.isEmpty())
         assertEquals("Ngọn đèn cuối cùng", BookImport.titleFromLine("# Ngọn đèn cuối cùng"))
         for (line in listOf("Chương 1: Bến phà", "“Hôm nay nước lớn,” ông nói.", "Anh ta đi.", "- Ông đi đâu", "", "   ", "123")) {
             assertEquals(line, "", BookImport.titleFromLine(line))
@@ -386,8 +389,10 @@ class BookImportTest {
         assertTrue(BookImport.splitTxtChapters("Quyển 1\nA\n\nQuyển 2\nB").isEmpty())
         // "Chương trình hôm nay là gì." không phải tiêu đề: nó là chữ dẫn ("Mở đầu"), rồi hai chương thật.
         assertEquals(listOf("Mở đầu", "Chương 1", "Chương 2"), BookImport.splitTxtChapters("Chương trình hôm nay là gì.\n\nChương 1\nA\n\nChương 2\nB").map { it.title })
-        // Chữ dẫn chỉ là một dòng tên truyện thì là tên sách, không phải một chương "Mở đầu" 4 chữ.
-        assertEquals(listOf("Chương 1", "Chương 2"), BookImport.splitTxtChapters("Chương trình hôm nay\n\nChương 1\nA\n\nChương 2\nB").map { it.title })
+        // a84: chữ dẫn chỉ là một dòng tên truyện vẫn không bị bỏ - nó ở lại trong chương "Mở đầu" (tên sách chỉ là gợi ý).
+        val lone = BookImport.splitTxtChapters("Chương trình hôm nay\n\nChương 1\nA\n\nChương 2\nB")
+        assertEquals(listOf("Mở đầu", "Chương 1", "Chương 2"), lone.map { it.title })
+        assertEquals("Chương trình hôm nay", lone[0].text)
     }
 
     @Test
@@ -452,14 +457,18 @@ class BookImportTest {
         val pages = (1..5).map { n -> listOf("Chương $n") + (0 until 5).map { "$body Dòng $n.$it" } + "- $n -" }
         val book = BookImport.fromPdfPages("x", pages)
         assertEquals((1..5).map { "Chương $it" }, titles(book))
-        assertTrue(book.chapters.none { it.text.contains("- ") })
+        // a84: số trang "- N -" chỉ là gợi ý bỏ đọc (người nghe bỏ chọn được), chữ vẫn nằm trong sách như Python.
+        assertTrue((1..5).all { n -> book.chapters[n - 1].text.contains("- $n -") })
         val filler = (0 until 5).map { "$body Dòng $it." }
         val two = BookImport.fromPdfPages("x", listOf(listOf("Sách thử") + filler + "1", listOf("Sách thử") + filler.reversed() + "2"))
         assertTrue(two.chapters[0].text.contains("Sách thử"))
-        assertFalse(two.chapters[0].text.endsWith("2"))
-        // Tiêu đề chạy mang số trang: bỏ ở mọi trang, ghi chú một lần.
+        assertTrue(two.chapters[0].text.endsWith("2"))
+        // Tiêu đề chạy mang số trang: không còn bị bỏ khỏi chữ, mỗi dòng nghi là một gợi ý "bạn có thể bỏ đọc" (chọn bằng tay).
         val numbered = BookImport.fromPdfPages("x", (1..5).map { n -> listOf("Sách thử · $n") + (0 until 5).map { "$body " + "x".repeat(n * 5 + it) } + "$n" })
-        assertEquals(listOf("Bỏ dòng lặp đầu / cuối trang: “Sách thử · 1”"), numbered.notes.filter { it.startsWith("Bỏ dòng lặp") })
+        assertTrue(numbered.notes.none { it.startsWith("Bỏ dòng lặp") })
+        assertEquals((1..5).flatMap { n -> listOf(1 to "Sách thử · $n", 1 to "$n") }, numbered.credits)
+        assertEquals("Gợi ý PDF: bạn có thể bỏ đọc dòng ở mép trang “Sách thử · 1”; bỏ chọn để giữ.", numbered.notes.first { it.startsWith("Gợi ý PDF") })
+        assertTrue((1..5).all { n -> numbered.chapters[0].text.contains("Sách thử · $n") })
     }
 
     @Test
