@@ -23,7 +23,7 @@ describe("offerNotificationAccess", () => {
     expect(await offerNotificationAccess(plugin, notify, memory())).toBe(true);
     expect(notify).toHaveBeenCalledTimes(1);
     const [message, allow] = notify.mock.calls[0];
-    expect(message).toContain("khay thông báo");
+    expect(message).toContain("sách xong");
     expect(plugin.asked).not.toHaveBeenCalled();
     allow();
     expect(plugin.asked).toHaveBeenCalledTimes(1);
