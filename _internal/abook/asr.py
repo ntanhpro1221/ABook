@@ -1727,6 +1727,16 @@ def load_audio_for_whisper(path: Path) -> np.ndarray:
     return resample_audio(array, int(sample_rate), WHISPER_SAMPLE_RATE)
 
 
+def is_asr_memory_error(error: BaseException) -> bool:
+    message = str(error).casefold()
+    return any(marker in message for marker in (
+        "out of memory", "cuda_error_out_of_memory", "cudaerrormemoryallocation",
+        "cublas_status_alloc_failed", "cudnn_status_alloc_failed",
+    )) and not any(marker in message for marker in (
+        "cuda driver", "illegal memory access", "device-side assert",
+    ))
+
+
 class WhisperVerifier:
     def __init__(self, settings: dict[str, Any], log: Callable[[str], None]) -> None:
         self.settings = settings["asr"]
@@ -1784,6 +1794,8 @@ class WhisperVerifier:
                 local_files_only=True,
             )
         except Exception as exc:  # noqa: BLE001
+            if is_asr_memory_error(exc):
+                raise
             raise RuntimeError(
                 f"Thiếu faster-whisper {model_name} trong cache Hugging Face: {exc}. "
                 "Job không được tự tải model giữa chừng. Chạy lại scripts/setup_windows.ps1 "
@@ -1803,6 +1815,8 @@ class WhisperVerifier:
                 return self._load_faster()
             except Exception as exc:  # noqa: BLE001
                 self.log(f"Không nạp được faster-whisper: {exc}")
+                if is_asr_memory_error(exc):
+                    raise
                 if self.settings.get("required", False) or self.settings.get("failure_policy") == "fail":
                     raise
                 return False
@@ -1839,14 +1853,16 @@ class WhisperVerifier:
             return True
         except Exception as exc:  # noqa: BLE001
             self.log(f"Không nạp được Whisper: {exc}")
+            if is_asr_memory_error(exc):
+                raise
             if self.settings.get("required", False) or self.settings.get("failure_policy") == "fail":
                 raise
             return False
 
-    def unload(self) -> None:
+    def unload(self, *, after_memory_error: bool = False) -> None:
         had_model = self.model is not None
         self.model = None
-        if not had_model:
+        if not had_model and not after_memory_error:
             return
         gc.collect()
         try:
@@ -2144,6 +2160,8 @@ class WhisperVerifier:
             )
         except Exception as exc:  # noqa: BLE001
             self.log(f"Whisper inference lỗi cho {wav_path.name}: {exc}")
+            if is_asr_memory_error(exc):
+                raise
             if self.settings.get("required", False) or self.settings.get("failure_policy") == "fail":
                 raise
             return {

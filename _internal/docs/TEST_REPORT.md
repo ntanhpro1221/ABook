@@ -2,6 +2,16 @@
 
 Ngày cập nhật: 2026-10-23
 
+Đợt `a96lk` trên `dev/locked100`, nền `4363dba5`: hồi quy lỗi tài nguyên V3/V4/V5/V6/V9.
+Test mới: `test_database_resource_failures.py`, `test_pipeline_resource_wait.py`,
+`test_tts_resource_failures.py`, `test_asr_memory_recovery.py`, `test_audio_io_resource_failures.py`.
+SQLite FULL giữ lỗi gốc; trạng thái chờ đĩa/RAM được lưu bằng runtime event và trang đọc bằng kết nối chỉ đọc;
+mã cấp phát cuBLAS/cuDNN vào hồi phục có hạn; Whisper thử lại cùng WAV trên thiết bị đã chọn;
+đổi tên WAV/MP3 thử lại tối đa 12 lần, không thu lại vì khoá file, giữ đích cũ và candidate khi hết trần.
+Các phép thử dùng lỗi giả lập, model giả và audio CPU; không dùng GPU/model/Ollama thật hay mạng.
+Không thay seed, tham số tổng hợp, ngưỡng QA/tài nguyên hoặc thứ tự xử lý của đường thành công.
+Kiểm cuối: 1.017 pytest qua, exit 0 (169,44 giây), chạy tuần tự `-rf -p no:cacheprovider`, tối đa bốn CPU.
+
 Đợt `a95fix` trên `dev/uxfix109`, nền `895ea9a2` (0.4.126): sửa V1–V7, T1, T2 của soát đọc/nghe.
 Test nháp đã đưa cạnh mã và đảo thành hành vi đúng: lượt đầu 11 failed / 14 ca, sau sửa xanh.
 Chỗ đọc theo hồ sơ có anchor/thời điểm, bản mới hơn thắng, flush khi rời/ẩn và retry; native lưu/đồng bộ cùng hợp đồng.

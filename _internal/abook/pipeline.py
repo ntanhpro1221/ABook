@@ -27,6 +27,7 @@ from .asr import (
     LOCKED_NAME_ANCHOR_METRICS_VERSION,
     SHORT_CONTEXT_REPEAT_COUNT,
     WhisperVerifier,
+    is_asr_memory_error,
     adjudicate_collapsed_repeated_short,
     adjudicate_locked_name_anchors,
     asr_answer_is_about_other_audio,
@@ -489,6 +490,27 @@ class BookPipeline:
             raise PipelineStopped("Stop requested")
         return paused_for
 
+    def _publish_resource_wait(self, snapshot: Any, checkpoint: str, *, critical_ram: bool = False) -> None:
+        details = self.resources.waiting_details(snapshot, critical_ram=critical_ram)
+        if details is not None:
+            details["checkpoint"] = checkpoint
+            # Cổng đo lại mỗi 2 giây: ghi sổ khi loại thiếu đổi hay mỗi 60 giây, không thì chờ vài giờ là hàng nghìn dòng hoạt động.
+            kinds = (details["disk_to_free_gb"] > 0, details["ram_to_free_gb"] > 0)
+            last = getattr(self, "_resource_wait_logged", None)
+            now = time.monotonic()
+            if last is None or last[0] != kinds or now - last[1] >= 60.0:
+                self.db.event("warning", "RESOURCE_WAIT", details["reason"], details)
+                self._resource_wait_logged = (kinds, now)
+            self._resource_waiting = True
+            self.emit("resource_wait", details)
+
+    def _clear_resource_wait(self) -> None:
+        if getattr(self, "_resource_waiting", False):
+            self.db.event("info", "RESOURCE_READY", "Đã đủ tài nguyên; đang làm tiếp.")
+            self._resource_waiting = False
+            self._resource_wait_logged = None
+            self.emit("resource_wait", None)
+
     def _resource_gate(
         self,
         checkpoint: str,
@@ -550,12 +572,14 @@ class BookPipeline:
                 )
                 self.log(f"Resource mode: {decision.level.value} — {decision.reason}")
                 if "disk free" in decision.reason:
+                    details = self.resources.waiting_details(snapshot)
                     self.notifier.notify(
                         "ABook đang chờ tài nguyên",
-                        f"{decision.reason}. Pipeline đã dừng cấp tác vụ mới tại checkpoint an toàn.",
+                        details["reason"] if details else decision.reason,
                         project_path=self.paths.root,
                     )
             if decision.critical:
+                self._clear_resource_wait()
                 book = self.db.book()
                 self.db.update_book(status=BookStatus.STOPPED.value, stage="critical_stop", error=decision.reason)
                 self.db.event(
@@ -585,7 +609,9 @@ class BookPipeline:
             gpu_ok = (not require_gpu) or decision.allow_new_gpu_batch
             cpu_ok = (not require_cpu_io) or decision.allow_cpu_heavy_work
             if gpu_ok and cpu_ok:
+                self._clear_resource_wait()
                 return decision
+            self._publish_resource_wait(snapshot, checkpoint)
             time.sleep(2.0)
 
     def _wait_for_foreign_ram(
@@ -610,6 +636,7 @@ class BookPipeline:
         announced = False
         last_logged = 0.0
         while time.monotonic() - started < CRITICAL_RAM_WAIT_TIMEOUT_SECONDS:
+            self._publish_resource_wait(snapshot, checkpoint, critical_ram=True)
             if not announced:
                 announced = True
                 self.log(
@@ -4463,6 +4490,8 @@ class BookPipeline:
                 self._reset_tts_failure_streak()
                 return checkpoint
             except Exception as exc:  # noqa: BLE001
+                if isinstance(exc, PermissionError):
+                    raise
                 if is_transient_tts_memory_error(exc) and self._recover_from_memory_pressure(
                     f"sinh candidate {row['stable_id']}", str(exc)
                 ):
@@ -4591,6 +4620,8 @@ class BookPipeline:
                 self._reset_tts_failure_streak()
                 return checkpoint
             except Exception as exc:  # noqa: BLE001
+                if isinstance(exc, PermissionError):
+                    raise
                 last_error = f"{last_error}; split={exc}"
 
         failed = self.db.mark_segment_candidate_tts_failed(
@@ -4862,6 +4893,7 @@ class BookPipeline:
                 {"segments": len(jobs)},
             )
             return {}
+        self._raise_pool_publish_errors(results)
         return {
             str(item["stable_id"]): item
             for item in results
@@ -4917,11 +4949,20 @@ class BookPipeline:
                 {"segments": len(jobs)},
             )
             return {}
+        self._raise_pool_publish_errors(results)
         return {
             str(item["stable_id"]): item
             for item in results
             if item.get("stable_id") and not item.get("error")
         }
+
+    @staticmethod
+    def _raise_pool_publish_errors(results: list[dict[str, Any]]) -> None:
+        for item in results:
+            error = str(item.get("error") or "")
+            if error.startswith("PermissionError:"):
+                # A validated WAV could not be published; a new seed cannot fix it.
+                raise PermissionError(error)
 
     def _claim_prefetched_segment(
         self,
@@ -5049,6 +5090,8 @@ class BookPipeline:
                 # attempt again - the retry loop is bounded, and so is the wait, so this
                 # cannot spin. Only when the wait runs out does it fall through to the
                 # fatal path it used to take immediately.
+                if isinstance(exc, PermissionError):
+                    raise
                 if is_transient_tts_memory_error(exc) and self._recover_from_memory_pressure(
                     f"tổng hợp {row['stable_id']}", str(exc)
                 ):
@@ -5163,6 +5206,8 @@ class BookPipeline:
                 self.log(f"Đã cứu TTS segment {row['stable_id']} bằng cách chia nhỏ.")
                 return
             except Exception as exc:  # noqa: BLE001
+                if isinstance(exc, PermissionError):
+                    raise
                 last_error = f"{last_error}; split={exc}"
 
         relaxed_error = self._retry_in_normal_pace_band(
@@ -5253,6 +5298,8 @@ class BookPipeline:
                     delivery_mode=delivery_mode,
                 )
             except Exception as exc:  # noqa: BLE001
+                if isinstance(exc, PermissionError):
+                    raise
                 last = f"pace_band={exc}"
                 continue
             if metrics.get("pace_outlier"):
@@ -5462,6 +5509,35 @@ class BookPipeline:
             },
         )
 
+    def _verify_with_memory_recovery(
+        self,
+        verifier: WhisperVerifier,
+        expected: str,
+        wav_path: Path,
+        *,
+        confirmation: bool,
+        repeated: bool = False,
+    ) -> dict[str, Any]:
+        for attempt in range(3):
+            try:
+                verify = verifier.verify_repeated_short if repeated else verifier.verify
+                return verify(expected, wav_path, confirmation=confirmation)
+            except Exception as exc:
+                if not is_asr_memory_error(exc):
+                    raise
+                # Keep the WAV, decode mode, device and all QA settings unchanged.
+                # Unload before waiting, including failed/partial model loads.
+                exc.__traceback__ = None
+                verifier.unload(after_memory_error=True)
+                if attempt == 2 or not self._recover_from_memory_pressure(
+                    f"Whisper kiểm tra {wav_path.name}", str(exc)
+                ):
+                    raise RuntimeError(
+                        f"Whisper thiếu bộ nhớ card đồ hoạ khi kiểm tra {wav_path.name}; "
+                        "đã hết lượt thử hoặc thời gian chờ VRAM. Hãy đóng ứng dụng dùng GPU rồi thử lại."
+                    ) from exc
+        raise AssertionError("unreachable")
+
     def _decode_audio_candidate(
         self,
         item: dict[str, Any],
@@ -5474,7 +5550,8 @@ class BookPipeline:
     ) -> dict[str, Any]:
         expected_text, locked_name_anchors = self._spoken_text_and_anchors(item)
         wav_path = Path(str(item["wav_path"]))
-        direct = verifier.verify(
+        direct = self._verify_with_memory_recovery(
+            verifier,
             expected_text,
             wav_path,
             confirmation=confirmation,
@@ -5493,10 +5570,12 @@ class BookPipeline:
         if _asr_verdict(direct) != ASR_PASS and verifier.can_verify_repeated_short(
             expected_text
         ):
-            repeated_raw = verifier.verify_repeated_short(
+            repeated_raw = self._verify_with_memory_recovery(
+                verifier,
                 expected_text,
                 wav_path,
                 confirmation=confirmation,
+                repeated=True,
             )
             repeated = adjudicate_locked_name_anchors(
                 expected_text,

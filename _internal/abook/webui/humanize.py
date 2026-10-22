@@ -412,6 +412,8 @@ def _rejected(_message: str, _chapters: dict[int, str]) -> str:
 
 
 EVENT_TEXT = {
+    "RESOURCE_WAIT": lambda message, _chapters: message,
+    "RESOURCE_READY": lambda message, _chapters: message,
     "LISTENER_OVERRIDE_REJECTED": _rejected,
     "ASR_MISMATCH_UNRESOLVED": _mismatch,
     "NAME_PRONUNCIATION_FROM_DICTIONARY": _dictionary,

@@ -266,13 +266,45 @@ class AdaptiveResourceManager:
         self._last_snapshot_at = now
         return snapshot
 
+    def waiting_details(self, snapshot: ResourceSnapshot, *, critical_ram: bool = False) -> dict[str, Any] | None:
+        """Describe the measured shortage without changing dispatch thresholds."""
+        disk_threshold = float(self.settings["min_free_disk_gb"])
+        ram_threshold = float(self.settings["critical_free_ram_gb" if critical_ram else "min_free_ram_gb"])
+        reasons = []
+        if snapshot.disk_free_gb <= disk_threshold:
+            reasons.append(
+                f"đĩa {self.project_root.resolve()} còn {snapshot.disk_free_gb:.1f} GB, "
+                f"cần trên {disk_threshold:.1f} GB; giải phóng thêm hơn "
+                f"{max(0.0, disk_threshold - snapshot.disk_free_gb):.1f} GB"
+            )
+        if snapshot.free_ram_gb <= ram_threshold:
+            reasons.append(
+                f"RAM còn {snapshot.free_ram_gb:.1f} GB, cần trên {ram_threshold:.1f} GB; "
+                f"cần trả thêm hơn {max(0.0, ram_threshold - snapshot.free_ram_gb):.1f} GB"
+            )
+        if not reasons:
+            return None
+        return {
+            "reason": "Đang chờ tài nguyên: " + "; ".join(reasons) + ". Sẽ tự làm tiếp khi đủ.",
+            "disk_path": str(self.project_root.resolve()),
+            "disk_free_gb": snapshot.disk_free_gb,
+            "disk_threshold_gb": disk_threshold,
+            "disk_to_free_gb": max(0.0, disk_threshold - snapshot.disk_free_gb),
+            "ram_free_gb": snapshot.free_ram_gb,
+            "ram_threshold_gb": ram_threshold,
+            "ram_to_free_gb": max(0.0, ram_threshold - snapshot.free_ram_gb),
+        }
+
     def decide(self, snapshot: ResourceSnapshot | None = None) -> ResourceDecision:
         s = snapshot or self.snapshot()
         cfg = self.settings
 
         critical_reasons: list[str] = []
         if s.disk_free_gb <= float(cfg["critical_free_disk_gb"]):
-            critical_reasons.append(f"disk free {s.disk_free_gb:.1f} GB")
+            critical_reasons.append(
+                f"Thiếu dung lượng đĩa tại {self.project_root.resolve()}: "
+                f"còn {s.disk_free_gb:.1f} GB, ngưỡng khẩn {float(cfg['critical_free_disk_gb']):.1f} GB"
+            )
         if s.free_ram_gb <= float(cfg["critical_free_ram_gb"]):
             critical_reasons.append(f"available RAM {s.free_ram_gb:.1f} GB")
         if s.gpu_temp_c is not None and s.gpu_temp_c >= int(cfg["critical_gpu_temp_c"]):

@@ -54,6 +54,11 @@ class _Resources:
     def is_ram_only_critical(self, _snapshot) -> bool:
         return self._current()[2]
 
+    def waiting_details(self, _snapshot, *, critical_ram=False):
+        # These tests isolate the wait clock/stop policy; durable publication uses
+        # the real resource manager + SQLite in test_pipeline_resource_wait.py.
+        return None
+
 
 class _Notifier:
     def __init__(self) -> None:
