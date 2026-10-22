@@ -9,6 +9,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi bạn sửa ghi chú, đặt dấu trang hoặc đổi chỗ nghe trong lúc điện thoại chờ đồng bộ, lời đáp cũ giữ những thay đổi mới của đúng hồ sơ.
+- Khi bạn xuất MP3 nhiều lần trên điện thoại, mỗi lần dùng thư mục mới “(2)”, “(3)” để giữ bản xuất trước.
+- Khi bạn thêm ghi chú vào chỗ đã có dấu trang trống trên điện thoại, ghi chú được bổ sung và vẫn giữ lúc đặt dấu ban đầu.
+- Khi bạn đặt dấu trang từ trình phát, điện thoại gộp các dấu trong phạm vi 5 giây cùng chương giống máy tính.
+- Khi bạn hoàn tác xoá dấu trang trên điện thoại, dấu giữ nguyên mã và lúc đặt để đồng bộ không nhân đôi hoặc xoá lại nó.
+- Khi bạn hẹn “Hết chương” trên điện thoại, tiếng nhỏ dần theo thời gian nghe thực ở tốc độ bạn đã chọn.
+- Khi bạn bỏ bìa trên sách vốn không có bìa, điện thoại không tạo thêm thay đổi chưa gửi.
+- Khi bạn nghe thẳng sách từ thiết bị đã ghép, điện thoại lấy lại bìa khi bìa của sách đổi.
+- Khi bạn mở phần sửa sách có mã chương hoặc mốc nhạc dùng chữ số ngoài 0–9, máy tính từ chối giống điện thoại.
+- Dấu trang bạn xoá trên điện thoại (hoặc trên máy tính đang nghe sách của máy khác) không còn sống lại trên máy tính sau lần đồng bộ kế.
+- Khi bạn nghe sách nằm trên máy tính khác, các phiên nghe và đêm nghe cũng được gửi qua lại như với điện thoại, nên thống kê nghe ở hai máy khớp nhau.
 - Khi bạn nghe tiếp chương đọc to sau khi app bị đóng hoặc bộ đệm bị dọn, app nhớ đúng đoạn và chữ đang nghe nếu văn bản chương còn khớp.
 - Dữ liệu nghe của bạn được đồng bộ xuống bộ nhớ bền trước khi thay file; nếu JSON bị hỏng, app giữ riêng bản hỏng để có thể phục hồi.
 - Khi app tắt ngang lúc bỏ bìa hoặc dọn phần sửa đã gửi, bìa của bạn chỉ được xoá sau khi phần sửa đã lưu xong, tránh chặn lần đóng gói tiếp theo.

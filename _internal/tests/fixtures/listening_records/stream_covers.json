@@ -1,0 +1,8 @@
+[
+  {"name":"cover_only_changed", "old":{"version":1,"color":"#111111"}, "new":{"version":2,"color":"#222222"}, "exists":true, "fetch":true},
+  {"name":"same_cover", "old":{"version":2}, "new":{"version":2}, "exists":true, "fetch":false},
+  {"name":"missing_cached_file", "old":{"version":2}, "new":{"version":2}, "exists":false, "fetch":true},
+  {"name":"cover_added", "old":null, "new":{"version":1}, "exists":false, "fetch":true},
+  {"name":"cover_removed", "old":{"version":1}, "new":null, "exists":true, "fetch":false},
+  {"name":"descriptor_changed", "old":{"version":1,"width":90}, "new":{"version":1,"width":96}, "exists":true, "fetch":true}
+]

@@ -18,6 +18,17 @@ class Mp3ExportTest {
     private lateinit var root: File
     private lateinit var out: File
 
+    @Test
+    fun repeated_exports_keep_the_files_in_previous_folders() {
+        val destination = Mp3Export.FileDestination(out)
+        destination.folder("Sách").write("cover.jpg") { it.write(byteArrayOf(1)) }
+        destination.folder("Sách").write("cover.jpg") { it.write(byteArrayOf(2)) }
+        destination.folder("Sách").write("cover.jpg") { it.write(byteArrayOf(3)) }
+        assertArrayEquals(byteArrayOf(1), File(out, "Sách/cover.jpg").readBytes())
+        assertArrayEquals(byteArrayOf(2), File(out, "Sách (2)/cover.jpg").readBytes())
+        assertArrayEquals(byteArrayOf(3), File(out, "Sách (3)/cover.jpg").readBytes())
+    }
+
     @Before
     fun setUp() {
         root = Files.createTempDirectory("abook-mp3").toFile()

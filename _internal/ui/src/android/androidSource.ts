@@ -143,8 +143,8 @@ export const androidSource: ListenSource = {
   updateBookmark: (id, markId, note) => EbookLibrary.updateBookmark({ id, markId, note }),
   deleteBookmark: (id, markId) => EbookLibrary.deleteBookmark({ id, markId }),
   restoreBookmark: async (id, mark) => {
-    // Hoàn tác xoá: giữ lúc đặt dấu gốc - dòng dấu trang không thành "vừa xong" (soát a70).
-    await EbookLibrary.addBookmark({ id, chapterId: mark.chapterId, seconds: mark.seconds, note: mark.note, index: mark.index, quote: mark.quote, createdAt: mark.createdAt ?? mark.at });
+    // Hoàn tác đúng ID và lúc đặt dấu gốc; lõi gỡ bia mộ để đồng bộ không xoá dấu lần nữa.
+    await EbookLibrary.restoreBookmark({ id, mark });
   },
   async sessions(bookId) {
     const book = await EbookLibrary.book({ id: bookId });

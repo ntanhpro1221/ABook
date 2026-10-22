@@ -335,8 +335,9 @@ object Playback {
         player?.pauseAtEndOfMediaItems = on && !ReadAloud.inText()
     }
 
-    /** Thời gian còn lại của chương (ms); chương đọc to tính trên đồng hồ ảo. */
-    fun remainingInChapterMs(): Long = (durationMs() - positionMs).coerceAtLeast(0L)
+    /** Thời gian nghe thực còn lại của chương (ms); chương đọc to tính từ đồng hồ ảo, rồi chia tốc độ phát. */
+    fun remainingInChapterMs(): Long = ChapterSleepTime.remainingMs(durationMs(), positionMs,
+        player?.playbackParameters?.speed?.toDouble() ?: 1.0)
 
     /** Hàng đợi của một cuốn: chương có file trên máy phát file, chưa có thì phát thẳng từ máy tính (Streaming). */
     @androidx.annotation.OptIn(UnstableApi::class)

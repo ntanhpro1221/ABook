@@ -316,7 +316,10 @@ object Store {
 
     private fun stateFile(bookId: String) = recordFile(activeRecord(bookId))
 
-    private fun withoutSyncKeys(value: JSONObject) = JSONObject(value.toString()).also { copy -> SYNC_KEYS.forEach(copy::remove) }
+    private fun withoutSyncKeys(value: JSONObject) = JSONObject(value.toString()).also { copy ->
+        // `deleted` còn là bảng bia mộ dấu trang; chỉ cờ boolean mới là metadata xoá hồ sơ.
+        SYNC_KEYS.filterNot { it == "deleted" && copy.opt(it) is JSONObject }.forEach(copy::remove)
+    }
 
     /**
      * Gói gửi máy tính (webui/listening.py merge_record): trạng thái hồ sơ đang dùng + mã, tên và lúc đặt tên, lúc chọn
@@ -346,7 +349,7 @@ object Store {
     fun applySync(bookId: String, reply: JSONObject, player: () -> Pair<String, Boolean> = { Playback.bookId to Playback.isPlaying }) {
         val record = reply.optString("record")
         if (!RECORD_ID.matches(record)) {
-            save(bookId, withoutSyncKeys(reply))
+            save(bookId, mergeStates(state(bookId), withoutSyncKeys(reply)))
             return
         }
         val book = recordsBook()
@@ -360,16 +363,17 @@ object Store {
             forget(book, gone)
             book.getJSONObject("deleted").put(gone, tombstones.optDouble(gone, now()))
         }
-        if (reply.optBoolean("deleted")) {
+        if (reply.optBoolean("deleted") || book.getJSONObject("deleted").has(record)) {
             saveRecords(book)
             return
         }
-        writeAtomic(recordFile(record), withoutSyncKeys(reply).toString())
+        // Trong lúc chờ mạng người nghe vẫn sửa hồ sơ: gộp với bản đang có của ĐÚNG mã vừa gửi.
+        writeAtomic(recordFile(record), mergeStates(recordState(record), withoutSyncKeys(reply)).toString())
         val known = reply.optJSONArray("records") ?: JSONArray()
         for (index in 0 until known.length()) {
             val item = known.optJSONObject(index) ?: continue
             val id = item.optString("id")
-            if (!RECORD_ID.matches(id)) continue
+            if (!RECORD_ID.matches(id) || book.getJSONObject("deleted").has(id)) continue
             val meta = records.optJSONObject(id) ?: JSONObject().put("createdAt", now()).put("nameAt", 0.0)
             // tên: bên đổi sau thắng
             if (!meta.has("name") || item.optDouble("nameAt", 0.0) > meta.optDouble("nameAt", 0.0)) {
@@ -399,7 +403,8 @@ object Store {
         // kéo nó về (máy tính theo lần chuyển ấy khi điện thoại đẩy hồ sơ đó dưới cuốn mới của nó).
         val movedAway = chosen != record && ownerOf(links, chosen).let { it != null && it != owner } &&
             (records.optJSONObject(chosen)?.optDouble("movedAt", 0.0) ?: 0.0) > remoteMovedAt(known, chosen)
-        if (RECORD_ID.matches(chosen) && chosenAt > link.optDouble("activeAt", 0.0) && !(holding && playing) && !movedAway) {
+        if (RECORD_ID.matches(chosen) && !book.getJSONObject("deleted").has(chosen) &&
+            chosenAt > link.optDouble("activeAt", 0.0) && !(holding && playing) && !movedAway) {
             follow = holding && link.optString("active") != chosen
             // máy tính đã chuyển hồ sơ ấy sang cuốn này: gỡ khỏi cuốn cũ ở đây, nhớ lúc chuyển
             ownerOf(links, chosen)?.takeIf { it != owner }?.let { unlink(links, it, chosen) }
@@ -408,7 +413,9 @@ object Store {
             }
             addRecord(link, chosen)
             link.put("active", chosen).put("activeAt", chosenAt)
-            reply.optJSONObject("activeState")?.let { writeAtomic(recordFile(chosen), withoutSyncKeys(it).toString()) }
+            reply.optJSONObject("activeState")?.let {
+                writeAtomic(recordFile(chosen), mergeStates(recordState(chosen), withoutSyncKeys(it)).toString())
+            }
         }
         if (link.optString("active").isBlank()) link.put("active", record)
         links.put(owner, link)
@@ -596,8 +603,8 @@ object Store {
     }
 
     private const val MAX_SESSIONS = 200
-    /** Two bookmarks of one chapter this close (seconds) are the same place. */
-    private const val BOOKMARK_SAME_SECONDS = 1.0
+    /** Cùng chương, cách nhau tối đa 5 giây là cùng chỗ (listening.py). */
+    private const val BOOKMARK_SAME_SECONDS = 5.0
 
     private fun stamp(value: JSONObject?, key: String = "at") = value?.optDouble(key, 0.0)?.takeIf { !it.isNaN() } ?: 0.0
 
@@ -749,19 +756,29 @@ object Store {
     fun addBookmark(id: String, chapterId: Int, seconds: Double, note: String, index: Int? = null, quote: String = "", createdAt: Double? = null): JSONObject {
         val state = state(id)
         val marks = state.getJSONArray("bookmarks")
+        val cleanNote = note.trim().take(500)
         // Same place twice (a double tap, or the same sentence): one bookmark, flagged `existing` like the computer's add_bookmark.
         for (i in 0 until marks.length()) {
             val current = marks.optJSONObject(i) ?: continue
             if (current.optInt("chapterId", -1) != chapterId) continue
             val same = if (index != null && index >= 0) current.has("index") && current.optInt("index") == index
-                else !current.has("index") && Math.abs(current.optDouble("seconds", 0.0) - seconds) <= BOOKMARK_SAME_SECONDS
-            if (same) return JSONObject(current.toString()).put("existing", true)
+                else Math.abs(current.optDouble("seconds", 0.0) - seconds) <= BOOKMARK_SAME_SECONDS
+            if (same) {
+                if (cleanNote.isNotEmpty() && current.optString("note").isEmpty()) {
+                    val at = now()
+                    if (!current.has("createdAt")) current.put("createdAt", current.optDouble("at", at))
+                    current.put("note", cleanNote).put("at", at)
+                    state.put("updatedAt", at)
+                    save(id, state)
+                }
+                return JSONObject(current.toString()).put("existing", true)
+            }
         }
         val at = now()
         // `at` = last change (what a merge compares); `createdAt` = when it was set (what the list shows) - an undo keeps the original.
         val mark = JSONObject()
             .put("id", UUID.randomUUID().toString().replace("-", "").substring(0, 12))
-            .put("chapterId", chapterId).put("seconds", seconds).put("note", note.take(500)).put("at", at)
+            .put("chapterId", chapterId).put("seconds", seconds).put("note", cleanNote).put("at", at)
             .put("createdAt", createdAt?.takeIf { it > 0 && it <= at } ?: at)
         if (index != null && index >= 0) mark.put("index", index).put("quote", bookmarkQuote(quote))
         marks.put(mark)
@@ -798,6 +815,30 @@ object Store {
         deleted.put(markId, now())
         state.put("deleted", deleted).put("updatedAt", now())
         save(id, state)
+    }
+
+    /** Hoàn tác đúng dấu cũ như listening.restore_bookmark: giữ ID/lúc đặt, đổi mốc sửa và gỡ bia mộ ở đây. */
+    @Synchronized
+    fun restoreBookmark(id: String, mark: JSONObject): JSONObject {
+        val state = state(id)
+        val at = now()
+        val created = stamp(mark, "createdAt").takeIf { it > 0 } ?: stamp(mark)
+        val restored = JSONObject().put("id", mark.getString("id").take(40))
+            .put("chapterId", mark.getInt("chapterId")).put("seconds", mark.getDouble("seconds"))
+            .put("note", mark.optString("note").take(500)).put("at", at)
+            .put("createdAt", created.takeIf { it > 0 && it <= at } ?: at)
+        val index = mark.opt("index")
+        if (index is Int && index >= 0) restored.put("index", index).put("quote", bookmarkQuote(mark.optString("quote")))
+        val marks = state.getJSONArray("bookmarks")
+        val kept = JSONArray()
+        for (i in 0 until marks.length()) {
+            val current = marks.getJSONObject(i)
+            if (current.optString("id") != restored.getString("id")) kept.put(current)
+        }
+        state.put("bookmarks", kept.put(restored)).put("updatedAt", at)
+        state.optJSONObject("deleted")?.remove(restored.getString("id"))
+        save(id, state)
+        return restored
     }
 
     /** Mã sách hợp lệ để XOÁ: không rỗng, chỉ [A-Za-z0-9_-], và thư mục của nó nằm ngay trong books/. Mã rỗng là CẢ thư
