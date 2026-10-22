@@ -138,10 +138,13 @@ object MusicCues {
     /** Chỗ trong bài (giây) sau `t` >= 0 giây kể từ lúc bài vào từ A (`music_mix.loop_position`): vòng đầu A + t, sau đó
      *  loopStart + ((t - (loopStart - A)) mod P) - không có điểm vòng thì đúng A + (t mod P) như trước. */
     fun loopPosition(bounds: Loop, t: Double): Double {
-        if (!bounds.period.isFinite()) return bounds.start + t
-        if (bounds.crossfade && t < bounds.loopEnd - mix.loopCrossfadeSeconds - bounds.start) return bounds.start + t
+        if (firstPass(bounds, t)) return bounds.start + t
         return bounds.loopStart + (t - (bounds.loopStart - bounds.start)) % bounds.period
     }
+
+    /** `t` giây kể từ lúc bài vào từ A còn ở vòng đầu (chưa tới loopEnd - X lần nào): [loopPosition] là A + t. */
+    fun firstPass(bounds: Loop, t: Double): Boolean =
+        !bounds.period.isFinite() || (bounds.crossfade && t < bounds.loopEnd - mix.loopCrossfadeSeconds - bounds.start)
 
     /** Lúc mở các phần tử lặp và lúc nhạc hết của một mốc dài `length` giây mà bài vào từ A ở giây 0. */
     class Schedule(val opens: List<Double>, val end: Double)
