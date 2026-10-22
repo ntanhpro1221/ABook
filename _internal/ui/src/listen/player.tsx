@@ -1812,10 +1812,11 @@ export function PlayerProvider({
     };
     report();
     const timer = playing ? window.setInterval(report, 5000) : undefined;
-    const off = engine.on("duration", report);
+    // Tua (thanh tua trong app, `seekto` của hệ thống) khi đang dừng không đổi độ dài hay trạng thái: báo lại vị trí sau mỗi lần nhảy.
+    const offs = [engine.on("duration", report), engine.on("seeked", report)];
     return () => {
       window.clearInterval(timer);
-      off();
+      offs.forEach((off) => off());
     };
   }, [engine, native, playing, rate, track]);
 

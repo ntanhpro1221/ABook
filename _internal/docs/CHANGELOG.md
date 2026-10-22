@@ -18,12 +18,19 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Xuất và chia sẻ
 
 - Điện thoại: “Lưu” không giữ được bản cũ để phòng hỏng thì dừng trước khi ghi, file đang lưu không bị thay; thiếu chỗ trống thì báo sớm kèm số MB cần; nếu lưu hỏng và bản cũ cũng chưa trả lại được thì bản cũ được giữ trong bộ nhớ của app và lời báo nói rõ nó nằm đâu.
+- Phát ra loa, TV: chỗ nghe luôn ghi vào hồ sơ bạn đang nghe lúc bấm “Phát trên…”, kể cả khi sang chương khác hay ai đó đổi hồ sơ của cuốn trong lúc loa vẫn phát (máy tính và điện thoại).
+- Bấm “Chương sau” liên tiếp khi loa, TV còn đang tải chương: mỗi lần bấm đi tới một chương, không còn nạp lại cùng một chương.
+- “Nghe trên máy này” / “Nghe ở đây” chờ loa, TV dừng xong mới phát tiếng ở máy bạn (nút quay tròn trong lúc chờ); loa, TV không dừng được thì báo và giữ nguyên chỗ đang phát, không để hai nơi cùng ra tiếng.
+- Cuốn có nhạc nền riêng đang bật: trước khi phát ra loa, TV có dòng báo “Loa, TV chỉ phát giọng đọc”, vì nhạc nền chưa phát được ở đó.
+- Điện thoại phát ra loa, TV: bìa của cuốn hiện trên TV và trên khung điều khiển ở màn hình khoá; Tạm dừng một loa không làm khung điều khiển nhảy sang loa khác đang phát.
 
 ### Cài đặt và trợ năng
 
 - Trang Cài đặt ở chữ rất to trên màn hẹp không còn tràn ngang: nút “Nhập nhạc của tôi…”, “Đổi thư mục”, “Thành phần bên thứ ba” và địa chỉ github xuống dòng gọn trong khung.
 - Điện thoại: lõi nghe tự kiểm các lựa chọn hẹn giờ ngủ, lắc máy, tự lùi và lịch đêm — giá trị lạ (file hỏng, bản app khác ghi) về mặc định của riêng lựa chọn ấy, kể cả khi app được đánh thức từ tai nghe hay widget mà chưa mở giao diện.
 - Điện thoại: giao diện sáng/tối cũng được máy nhớ riêng; bộ nhớ của app bị xoá hay hỏng thì lần mở sau vẫn giữ đúng màu bạn đã chọn.
+- Máy tính: kéo thanh tua khi đang tạm dừng thì thanh tiến độ của điều khiển media Windows cũng nhảy đúng chỗ mới, không đứng ở chỗ cũ.
+- Điện thoại phát ra loa, TV: nút Sau / Trước của tai nghe, đồng hồ, xe hơi tuân theo cài đặt “Nút tai nghe lùi/tới” (tới / lùi 15 giây) như khi nghe trên điện thoại; chọn hẳn một chương trong danh sách vẫn nhảy chương.
 
 ## [0.4.129] - 2026-10-23
 

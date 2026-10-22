@@ -131,6 +131,7 @@ object RemotePlayers {
         if (reply.has("ok") && !reply.optBoolean("ok")) {
             throw IllegalStateException(reply.optString("message").ifBlank { "Máy kia không làm được lệnh này" })
         }
+        if (cast && command.optString("action") == "load") ComputerCasts.choose(device.removePrefix(CAST))
         return reply
     }
 }

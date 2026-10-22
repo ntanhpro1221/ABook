@@ -638,6 +638,7 @@ class _Session:
     grace: float = 0.0  # trước lúc này STOPPED chỉ là thiết bị chưa kịp chạy
     held: bool = False  # người dùng dừng hẳn (thiết bị không có Pause): STOPPED không phải hết chương
     ended: bool = False
+    record: str | None = None  # hồ sơ nghe chốt lúc nhận lệnh load - đổi hồ sơ giữa chừng thì thiết bị vẫn là của người đã bấm
 
     @property
     def token(self) -> str:
@@ -686,15 +687,17 @@ class CastPlayers:
     """
 
     def __init__(self, book: Callable[[str], dict[str, Any]], audio: Callable[[str, int], Path | None],
-                 save: Callable[[str, int, float, float], None], *,
+                 save: Callable[[str, int, float, float, str | None], None], *,
                  cover: Callable[[str], Path | None] = lambda _book: None, media: CastMedia | None = None,
+                 record: Callable[[str], str | None] = lambda _book: None,
                  find: Callable[[], list[tuple[str, str]]] = search,
                  read: Callable[[str, str], Renderer | None] = describe,
                  find_google: Callable[[], list[Renderer]] = list,
                  backend: Callable[[Renderer], Backend] = backend_for) -> None:
         """`find` + `read`: DLNA (SSDP rồi đọc mô tả). `find_google`: Google Cast (mDNS, đã đủ thông tin) - mặc định
-        không tìm gì, để bài thử không gửi multicast ra mạng người chạy; app đưa `gcast.discover` vào."""
-        self.book, self.audio, self.save, self.cover = book, audio, save, cover
+        không tìm gì, để bài thử không gửi multicast ra mạng người chạy; app đưa `gcast.discover` vào. `record(sách)`: hồ sơ
+        nghe đang dùng của sách - chốt vào phiên lúc load, `save` nhận nó ở mỗi lần lưu (soát a104 F1)."""
+        self.book, self.audio, self.save, self.cover, self.record = book, audio, save, cover, record
         self.media = media or CastMedia()
         self.find, self.read, self.find_google, self.backend = find, read, find_google, backend
         self._lock = threading.Lock()
@@ -749,16 +752,21 @@ class CastPlayers:
             backend.close()
         self.media.close()
 
-    def _stop(self, renderer: Renderer, timeout: float) -> None:
-        """Dừng thiết bị và trả nó về nguyên trạng; thiết bị không trả lời thì thôi - chỗ nghe đã lưu rồi."""
+    def _stop(self, renderer: Renderer, timeout: float, *, strict: bool = False) -> None:
+        """Dừng thiết bị và trả nó về nguyên trạng; thiết bị không trả lời thì thôi - chỗ nghe đã lưu rồi. `strict` (bàn giao
+        "Nghe trên máy này"): thiết bị không dừng được thì ném CastError và giữ nguyên kết nối để thử lại."""
         with self._lock:
-            backend = self._backends.pop(renderer.id, None)
+            backend = self._backends.get(renderer.id) if strict else self._backends.pop(renderer.id, None)
         if backend is None:
             return
         try:
             backend.stop(timeout)
         except CastError:
-            pass
+            if strict:
+                raise
+        if strict:
+            with self._lock:
+                self._backends.pop(renderer.id, None)
         backend.close(release=True)
 
     @staticmethod
@@ -781,12 +789,15 @@ class CastPlayers:
         """Lệnh đã kiểm (sync.remote_command) cho thiết bị `device`; lỗi -> CastError "<tên>: <vì sao>"."""
         with self._lock:
             entry = self._renderers.get(device)
-            session = self._sessions.get(device)
         if entry is None:
             raise CastError("Không còn thấy thiết bị này trong mạng")
         renderer = entry[0]
         try:
             with self._device(device):
+                # Phiên lấy SAU khi giữ khoá: lệnh chờ ở đây đã thấy chương mà lệnh trước vừa đưa (hai "Chương sau" liền nhau
+                # phải ra chương 3, không phải nạp chương 2 hai lần - soát a104 F2).
+                with self._lock:
+                    session = self._sessions.get(device)
                 self._apply(renderer, session if session is not None and not session.ended else None, command)
         except CastError as error:
             raise CastError(f"{renderer.name}: {error}", error.code) from None
@@ -804,7 +815,8 @@ class CastPlayers:
             chapter = next((item for item in chapters if item["id"] == command["chapterId"]), None)
             if chapter is None:
                 raise CastError("chương này chưa nghe được")
-            self._load(renderer, command["bookId"], str(view.get("title") or ""), chapters, chapter, command["seconds"])
+            self._load(renderer, command["bookId"], str(view.get("title") or ""), chapters, chapter, command["seconds"],
+                       command.get("record") or self._record(command["bookId"]))
             with self._lock:
                 self._sleeps.pop(renderer.id, None)  # một lần "Phát trên…" mới: không mang hẹn giờ của lần trước
             return
@@ -819,12 +831,14 @@ class CastPlayers:
         backend = self._backend(renderer)
         now = time.time()
         if action == "stop":
-            # Người nghe chuyển về máy này: dừng hẳn, trả thiết bị về nguyên trạng, chỗ nghe lưu đúng chỗ dừng.
+            # Người nghe chuyển về máy này: dừng hẳn, trả thiết bị về nguyên trạng, chỗ nghe lưu đúng chỗ dừng. Thiết bị không
+            # nhận lệnh dừng thì báo lỗi và GIỮ phiên (người nghe thử lại) - máy này không được phát thêm một nguồn nữa.
+            at = session.estimate(now)
+            self._stop(renderer, 5.0, strict=True)
             session.ended = True
             with self._lock:
                 self._sleeps.pop(renderer.id, None)
-            self._store(session, session.estimate(now))
-            self._stop(renderer, 5.0)
+            self._store(session, at)
             return
         if action == "sleep":
             minutes = command.get("minutes") or 0.0
@@ -843,7 +857,8 @@ class CastPlayers:
                 return
             if session.held or session.state in ("STOPPED", "NO_MEDIA_PRESENT"):
                 chapter = self._chapter(session, session.chapter_id)
-                self._load(renderer, session.book_id, session.book_title, session.chapters, chapter, session.position)
+                self._load(renderer, session.book_id, session.book_title, session.chapters, chapter, session.position,
+                           session.record)
                 return
             backend.play()
             session.grace = now + GRACE_SECONDS
@@ -854,7 +869,8 @@ class CastPlayers:
             if action == "skip" and session.duration > 0 and target >= session.duration - 1:
                 following = self._neighbour(session, 1)
                 if following is not None:
-                    self._load(renderer, session.book_id, session.book_title, session.chapters, following, 0.0)
+                    self._load(renderer, session.book_id, session.book_title, session.chapters, following, 0.0,
+                               session.record)
                     return
             target = max(0.0, min(target, session.duration - 1 if session.duration > 1 else target))
             backend.seek(target)
@@ -868,7 +884,7 @@ class CastPlayers:
                 if chapter is None:
                     raise CastError("đã là chương cuối" if action == "next" else "đã là chương đầu")
             self._load(renderer, session.book_id, session.book_title, session.chapters, chapter,
-                       command.get("seconds", 0.0) if action == "jump" else 0.0)
+                       command.get("seconds", 0.0) if action == "jump" else 0.0, session.record)
             return
         raise CastError("thiết bị chưa làm được lệnh này")
 
@@ -891,8 +907,9 @@ class CastPlayers:
             return sleep.remaining(now)
 
     def _load(self, renderer: Renderer, book_id: str, book_title: str, chapters: list[dict[str, Any]],
-              chapter: dict[str, Any], seconds: float) -> None:
-        """Đưa một chương cho thiết bị và phát từ `seconds`. Gọi khi đã giữ khoá thiết bị."""
+              chapter: dict[str, Any], seconds: float, record: str | None) -> None:
+        """Đưa một chương cho thiết bị và phát từ `seconds`, chỗ nghe ghi vào hồ sơ `record` (phiên giữ nó qua mọi lần sang
+        chương). Gọi khi đã giữ khoá thiết bị."""
         path = self.audio(book_id, chapter["id"])
         if path is None:
             raise CastError("chương này chưa nghe được trên máy này")
@@ -914,7 +931,7 @@ class CastPlayers:
         now = time.time()
         session = _Session(book_id=book_id, book_title=book_title, chapters=chapters, chapter_id=chapter["id"],
                            chapter_title=chapter["title"], duration=chapter["duration"], url=url, position=0.0,
-                           polled=now, heard=now, saved=now, grace=now + GRACE_SECONDS)
+                           polled=now, heard=now, saved=now, grace=now + GRACE_SECONDS, record=record)
         if resume:
             session.position = session.peak = started
         with self._lock:
@@ -923,6 +940,8 @@ class CastPlayers:
         if previous is not None and not previous.ended and previous.chapter_id != session.chapter_id:
             self._store(previous, previous.position)
         self._store(session, session.position)  # "Nghe tiếp" trỏ ngay tới chương đang phát trên thiết bị
+        if session.record is None:  # cuốn chưa có hồ sơ nào: lần lưu vừa rồi mới tạo - chốt luôn, đừng để theo hồ sơ "đang dùng"
+            session.record = self._record(book_id)
 
     def _backend(self, renderer: Renderer) -> Backend:
         with self._lock:
@@ -967,10 +986,16 @@ class CastPlayers:
         index = ids.index(session.chapter_id) + step
         return session.chapters[index] if 0 <= index < len(ids) else None
 
+    def _record(self, book_id: str) -> str | None:
+        try:
+            return self.record(book_id)
+        except Exception:  # noqa: BLE001 - không đọc được hồ sơ thì lưu theo hồ sơ đang dùng, như trước
+            return None
+
     def _store(self, session: _Session, seconds: float) -> None:
         session.saved = time.time()
         try:
-            self.save(session.book_id, session.chapter_id, seconds, session.duration)
+            self.save(session.book_id, session.chapter_id, seconds, session.duration, session.record)
         except Exception:  # noqa: BLE001, S110 - lưu chỗ nghe hỏng không được làm ngừng việc hỏi thiết bị
             pass
 
@@ -1091,7 +1116,8 @@ class CastPlayers:
                     self._park(session, following)
                     return
                 try:
-                    self._load(renderer, session.book_id, session.book_title, session.chapters, following, 0.0)
+                    self._load(renderer, session.book_id, session.book_title, session.chapters, following, 0.0,
+                               session.record)
                 except CastError:
                     self._end(device, session)
                 return
