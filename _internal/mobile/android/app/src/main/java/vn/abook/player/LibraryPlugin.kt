@@ -1706,7 +1706,7 @@ class LibraryPlugin : Plugin() {
         val duration = call.getDouble("duration") ?: 0.0
         // Chỗ vượt độ dài chương là của thứ khác: không lưu (PlacePolicy, soát a68 lỗi 2).
         if (!PlacePolicy.fits(seconds, duration)) return@background call.resolve(JSObject.fromJSONObject(Store.state(id)))
-        resolveState(call, Store.progress(id, call.getInt("chapterId")!!, seconds, duration))
+        resolveState(call, Store.progress(id, call.getInt("chapterId")!!, seconds, duration, call.getObject("anchor")))
     }
 
     @PluginMethod

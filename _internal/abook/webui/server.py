@@ -5329,6 +5329,7 @@ class Handler(BaseHTTPRequestHandler):
         state = self.app.listening.progress(
             value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), float(body.get("duration", 0)),
             record=_held_record(body),
+            anchor=body.get("anchor"),
         )
         self._send_json(HTTPStatus.OK, state)
 

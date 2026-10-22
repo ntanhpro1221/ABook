@@ -154,6 +154,24 @@ function setup(options: { chapter?: string; cached?: Record<string, ReadAloudCli
 
 const audioOf = (s: Setup, text: string) => s.audios.find((a) => a.src === `/clip/${encodeURIComponent(text)}`);
 
+it("khôi phục đúng chữ sau khi cache và độ dài thật của các đoạn đã mất", async () => {
+  type Anchored = { readingAnchor?: { segment: number; charOffset: number; textHash: string } };
+  const first = setup();
+  first.engine.load(first.trackInfo, 0, false);
+  await flush();
+  const segment = first.published[0].segments.findIndex((s) => s.text === TEXTS[1]);
+  first.engine.seekWord(segment, 2);
+  const anchor = (first.engine as unknown as Anchored).readingAnchor;
+  expect(anchor).toBeDefined();
+  expect(anchor?.segment).toBe(segment);
+  first.engine.stop();
+  const restarted = setup();
+  restarted.engine.load({ ...restarted.trackInfo, readingAnchor: anchor } as TrackInfo, 999, false);
+  await flush();
+  expect((restarted.engine as unknown as Anchored).readingAnchor).toEqual(anchor);
+  restarted.engine.stop();
+});
+
 describe("ước tính và đồng hồ ảo", () => {
   it("ước ~14 ký tự mỗi giây, đoạn không có chữ không tốn thời gian", () => {
     expect(isSpeakable("* * *")).toBe(false);

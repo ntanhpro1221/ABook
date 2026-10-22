@@ -10,6 +10,7 @@ import type { Bookmark, BookmarkSentence, ListenBook, ListenChapter } from "./mo
 import type { SpeechTrack } from "./readAloud";
 import type { MusicCredit } from "./musicBed";
 import type { SleepMode, SleepRequest } from "./sleep";
+import type { ReadingAnchor } from "./readingAnchor";
 
 export interface TrackInfo {
   url: string;
@@ -19,6 +20,7 @@ export interface TrackInfo {
   artwork?: string;
   /** Chương chỉ-có-chữ (nghe ngay): bộ máy đọc to dựng chương từ các đoạn chữ; `url` bỏ trống (readAloud.ts). */
   speech?: SpeechTrack;
+  readingAnchor?: ReadingAnchor;
 }
 
 export type EngineEvent =
@@ -53,6 +55,7 @@ export interface AudioEngine {
   readonly ended: boolean;
   /** Lý do lỗi gần nhất, nói bằng lời người nghe hiểu (bộ máy đọc to); không có thì trình phát dùng câu chung. */
   readonly error?: string;
+  readonly readingAnchor?: ReadingAnchor;
   /** Bấm vào một chữ: nghe từ đúng chữ thứ `word` của đoạn `segment` (bộ máy đọc to; chương có audio đi bằng `seek`). */
   seekWord?(segment: number, word: number): void;
   on(event: EngineEvent, handler: () => void): () => void;

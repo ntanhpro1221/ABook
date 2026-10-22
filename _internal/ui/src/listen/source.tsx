@@ -82,7 +82,7 @@ export interface ListenSource {
   sampleUrl(bookId: string, sampleId: number): string;
   voiceUrl(name: string): string;
   /** `record`: hồ sơ nghe mà trình phát đang phát - ghi vào đúng hồ sơ ấy dù máy khác vừa đổi hồ sơ đang dùng. */
-  saveProgress(bookId: string, chapterId: number, seconds: number, duration: number, record?: string): Promise<ListeningState | void>;
+  saveProgress(bookId: string, chapterId: number, seconds: number, duration: number, record?: string, anchor?: import("./readingAnchor").ReadingAnchor): Promise<ListeningState | void>;
   setChapterDone(bookId: string, chapterId: number, done: boolean): Promise<ListeningState>;
   setFinished(bookId: string, finished: boolean): Promise<ListeningState>;
   setRate(bookId: string, rate: number): Promise<void>;

@@ -66,6 +66,11 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   analysis, cùng tiền lệ speaker repair của casting).
 - Mọi process nền trên Windows dùng `pythonw`/`CREATE_NO_WINDOW`, redirect stdio UTF-8 vào log; POSIX dùng session riêng.
 - SQLite là source of truth; không dùng existence/mtime làm bằng chứng hoàn tất.
+- Android: `Store.writeAtomic` sync dữ liệu trước rename, không xoá đích trước; JSON hồ sơ hỏng phải giữ ở `.corrupt-…`.
+  Migration state giữ nguồn đến sau commit `records.json`; adopt/rekey ghi journal trước đổi thư mục và hoàn tất liên kết/fingerprints khi mở lại.
+  Pending đồng bộ giữ đúng `(bookId, recordId, revision)` và snapshot; ACK cũ không gỡ revision mới.
+  Chỗ nghe ReadAloud giữ `last.anchor` (đoạn, offset code point, vân tay chữ chương), ưu tiên khi văn bản còn khớp; Kotlin/TypeScript/Python cùng hợp đồng.
+  Retake từ điện thoại có operation_id bền trước gửi; `book_wishes` giữ receipt và dấu giờ cũ khi retry, không đổi seed thêm lần nữa.
 - WAV/MP3 luôn ghi `.part`, validate + checksum rồi atomic replace.
 - MP3 phải được FFmpeg decode toàn bộ trước khi commit.
 - TTS retry theo thứ tự: seed VieNeu khác → chia nhỏ an toàn nếu câu đủ dài → `failed`; câu cảm thán

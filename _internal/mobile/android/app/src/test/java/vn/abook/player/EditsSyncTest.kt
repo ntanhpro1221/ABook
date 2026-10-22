@@ -20,6 +20,33 @@ import org.junit.Test
  * gói đúng tên mục máy tính nhận, nhận xong thì gỡ đúng phần đã gửi (không mất sửa mới làm giữa chừng), lỗi thì giữ nguyên và nói lý do.
  */
 class EditsSyncTest {
+    @Test
+    fun retry_keeps_the_phone_operation_id_and_a_new_click_gets_a_new_one() {
+        val line = "c1s1" to "b".repeat(64)
+        BookWishes.requestRetakes(dir, listOf(line), now = 50.0)
+        fun operation() = EditsSync.snapshot(dir)!!.edits.getJSONObject("wishes")
+            .getJSONObject("retakes").getJSONObject(line.first).getString("operation_id")
+        val first = operation()
+        assertEquals(first, operation())
+        assertEquals(first, BookEdits.load(dir).getJSONObject("wishes")
+            .getJSONObject("retakes").getJSONObject(line.first).getString("operation_id"))
+        BookWishes.requestRetakes(dir, listOf(line), now = 60.0)
+        assertFalse(first == operation())
+    }
+
+    @Test
+    fun a_new_click_at_the_same_clock_value_does_not_reuse_an_already_sent_batch_id() {
+        val line = "c1s1" to "b".repeat(64)
+        val other = "c1s2" to "c".repeat(64)
+        BookWishes.requestRetakes(dir, listOf(line, other), now = 50.0)
+        fun entries() = EditsSync.snapshot(dir)!!.edits.getJSONObject("wishes").getJSONObject("retakes")
+        val first = entries().getJSONObject(line.first).getString("operation_id")
+        BookWishes.requestRetakes(dir, listOf(line), now = 50.0)
+        val latest = entries()
+        assertFalse(first == latest.getJSONObject(line.first).getString("operation_id"))
+        assertEquals(first, latest.getJSONObject(other.first).getString("operation_id"))
+        assertEquals(latest.toString(), entries().toString())
+    }
     private lateinit var root: File
     private val id = "0123456789abcdef01234567"
     private val dir get() = Store.bookDir(id)
