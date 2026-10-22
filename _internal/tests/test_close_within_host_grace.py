@@ -26,11 +26,12 @@ def _slow_job(jobs: export_jobs.BookFileJobs, key: str, release: threading.Event
     assert jobs.status(key)["state"] == "running"
 
 
-def test_closing_with_three_slow_exports_finishes_inside_the_shell_grace_and_sweeps_the_trash_first(studio, monkeypatch) -> None:  # noqa: F811
+def test_closing_with_all_slow_exports_finishes_inside_the_shell_grace_and_sweeps_the_trash_first(studio, monkeypatch) -> None:  # noqa: F811
     _paths, app, _server, _runner = studio
     grace = int(re.search(r"HOST_STOP_GRACE: Duration = Duration::from_secs\((\d+)\)", MAIN_RS.read_text(encoding="utf-8"))[1])
     release = threading.Event()
-    for jobs in (app.projectfile_jobs, app.m4b_jobs, app.mp3_jobs):
+    groups = (app.projectfile_jobs, app.m4b_jobs, app.mp3_jobs, app.bookfile_jobs, app.listen_exports)
+    for jobs in groups:
         _slow_job(jobs, "cuon", release)
     swept: list[float] = []
     real_sweep = app.sweep_trash
@@ -40,8 +41,11 @@ def test_closing_with_three_slow_exports_finishes_inside_the_shell_grace_and_swe
     try:
         app.close()
         took = time.monotonic() - begun
+        assert all(jobs.cancelled("cuon") for jobs in groups), "mọi nhóm xuất đều nhận huỷ trong cùng hạn"
     finally:
         release.set()
+        for jobs in groups:
+            jobs.shutdown()
 
     assert took < server_module.CLOSE_SECONDS + 1.0 < grace, f"đóng app mất {took:.1f} giây"
     assert swept and swept[0] - begun < 1.0, "Thùng rác trước, không chờ các lượt xuất"

@@ -25,6 +25,7 @@ export interface TrackInfo {
 
 export type EngineEvent =
   | "time"
+  | "seeked"
   | "duration"
   | "play"
   | "pause"
@@ -121,6 +122,8 @@ export class WebAudioEngine implements AudioEngine {
   private pendingSeek: number | null = null;
   /** Chỗ vừa nhảy tới khi chương mới có độ dài, chờ `seeked` xác nhận (missedSeek). */
   private landing: number | null = null;
+  private generation = 0;
+  private lastError = "";
 
   constructor() {
     this.audio.preload = "auto";
@@ -141,25 +144,29 @@ export class WebAudioEngine implements AudioEngine {
   }
 
   load(track: TrackInfo, startAt: number, autoplay: boolean): void {
+    ++this.generation;
+    this.lastError = "";
     this.pendingSeek = startAt > 0 ? startAt : null;
     this.landing = null;
     this.audio.src = track.url;
-    if ("mediaSession" in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: track.title,
-        album: track.album,
-        artist: track.artist,
-        artwork: track.artwork ? [{ src: track.artwork, sizes: "512x512", type: "image/png" }] : [],
-      });
-    }
-    if (autoplay) void this.audio.play().catch(() => undefined);
+    if (autoplay) this.play();
   }
 
   play(): void {
-    void this.audio.play().catch(() => undefined);
+    const generation = ++this.generation;
+    this.lastError = "";
+    void this.audio.play().catch((error: unknown) => {
+      // Đổi nguồn / bấm dừng huỷ play đang chờ (thường là AbortError): không báo lỗi của nguồn cũ.
+      if (generation !== this.generation) return;
+      this.lastError = `Không phát được chương này. Bạn hãy bấm Phát để thử lại.${error instanceof Error ? ` (${error.message})` : ""}`;
+      this.audio.pause();
+      this.audio.dispatchEvent(new Event("pause"));
+      this.audio.dispatchEvent(new Event("error"));
+    });
   }
 
   pause(): void {
+    ++this.generation;
     this.audio.pause();
   }
 
@@ -181,6 +188,7 @@ export class WebAudioEngine implements AudioEngine {
   }
 
   stop(): void {
+    ++this.generation;
     this.audio.pause();
     this.audio.removeAttribute("src");
     this.audio.load();
@@ -203,11 +211,14 @@ export class WebAudioEngine implements AudioEngine {
     return this.audio.ended;
   }
 
+  get error(): string { return this.lastError; }
+
   on(event: EngineEvent, handler: () => void): () => void {
     const names: Partial<Record<EngineEvent, string>> = {
       time: "timeupdate",
       duration: "loadedmetadata",
       play: "play",
+      seeked: "seeked",
       pause: "pause",
       ended: "ended",
       error: "error",

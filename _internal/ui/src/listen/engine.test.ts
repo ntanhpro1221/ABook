@@ -11,6 +11,7 @@ class FakeAudio extends EventTarget {
   muted = false;
   preload = "";
   src = "";
+  getAttribute(name: string) { return name === "src" ? this.src : null; }
   seeks: number[] = [];
   constructor() {
     super();
@@ -63,6 +64,22 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+it("play bị từ chối phát error/pause; AbortError do đổi nguồn không báo lỗi", async () => {
+  const engine = new WebAudioEngine();
+  const error = vi.fn(), pause = vi.fn();
+  engine.on("error", error); engine.on("pause", pause);
+  engine.load(track, 0, false);
+  vi.spyOn(audio, "play").mockRejectedValueOnce(new DOMException("blocked", "NotAllowedError"));
+  engine.play(); await Promise.resolve();
+  expect(error).toHaveBeenCalledTimes(1);
+  expect(pause).toHaveBeenCalledTimes(1);
+  expect(engine.error).toContain("Không phát được");
+  vi.mocked(audio.play).mockRejectedValueOnce(new DOMException("source changed", "AbortError"));
+  engine.load(track, 0, true);
+  engine.load({ ...track, url: "/other" }, 0, false); await Promise.resolve();
+  expect(error).toHaveBeenCalledTimes(1);
 });
 
 describe("missedSeek", () => {

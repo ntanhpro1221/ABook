@@ -253,8 +253,10 @@ export const httpSource: ListenSource = {
   audioUrl: (bookId, chapterId) => mediaUrl(`/media/books/${bookId}/chapters/${chapterId}`),
   sampleUrl: (bookId, sampleId) => mediaUrl(`/media/books/${bookId}/samples/${sampleId}`),
   voiceUrl: (name) => mediaUrl(`/media/voices/${encodeURIComponent(name)}`),
-  saveProgress: (bookId, chapterId, seconds, duration, record, anchor) =>
-    api<ListeningState>(`/api/listen/books/${bookId}/progress`, { method: "POST", body: { chapterId, seconds, duration, record, anchor } }),
+  beginProgress: (bookId, sessionId, record) => api(`/api/listen/books/${bookId}/progress/session`, { method: "POST", body: { sessionId, record } }),
+  saveProgress: (bookId, chapterId, seconds, duration, record, anchor, delivery) =>
+    api<ListeningState>(`/api/listen/books/${bookId}/progress`, { method: "POST", body: { chapterId, seconds, duration, record, anchor,
+      sessionId: delivery?.sessionId, revision: delivery?.revision }, keepalive: delivery?.keepalive }),
   setChapterDone: (bookId, chapterId, done) =>
     api<ListeningState>(`/api/listen/books/${bookId}/chapters/${chapterId}/done`, { method: "POST", body: { done } }),
   setFinished: (bookId, finished) =>

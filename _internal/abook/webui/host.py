@@ -163,7 +163,8 @@ def run(reader: TextIO, writer: TextIO, argv: list[str] | None = None) -> int:
                 result = {"id": None, "error": error.message, "file": Path(path).name}
             except Exception as error:  # noqa: BLE001 - lỗi lạ khi nhập không được làm sập app
                 result = {"id": None, "error": f"Không mở được file sách: {error}", "file": Path(path).name}
-            channel.send({"event": OPENED_EVENT, "detail": result})
+            pending = web.opened_events.publish(result)
+            channel.send({"event": OPENED_EVENT, "detail": pending})
 
         threading.Thread(target=work, name="open-book-file", daemon=True).start()
 
