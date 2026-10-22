@@ -18,6 +18,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - File sách có hai mục chỉ khác nhau hoa thường hay dấu chấm cuối bị từ chối, vì Windows sẽ chép đè mục này lên mục kia và chương này phát nhầm giọng chương kia.
 - Khi bạn mở lại file có cùng âm thanh nhưng mang tên khác, app nói tên trong file không được lấy và bạn đổi tên ở đâu.
 - Trên điện thoại, nhập sách lớn không còn làm chậm việc lưu chỗ nghe; file zip tải dở báo "chép chưa xong" thay vì "không phải file sách", và bản chép tạm của lần nhập bị ngắt được dọn khi mở app.
+- "Bỏ xếp hàng" chỉ bỏ cuốn khỏi hàng: nếu cuốn vừa được tới lượt và đã bắt đầu chạy, app báo cuốn đã bắt đầu chạy thay vì dừng nó giữa lúc phân tích.
+- Khi điện thoại gửi sửa về cùng lúc bạn bấm sửa trên máy tính, hoặc bạn bấm "Áp dụng" trong hộp thay đổi từ máy khác, cả hai đều được giữ - không còn việc này nuốt mất việc kia.
+- Điện thoại đổi ý và gửi lại cùng một sửa mới hơn thì bản cũ rời khỏi hộp thay đổi từ máy khác, nên bấm "Áp dụng" không đè bản mới bằng bản cũ.
+- Khi danh sách yêu cầu của cuốn tạm bị chương trình khác giữ, nút sửa trên máy tính và gói sửa từ điện thoại báo "thử lại sau vài giây" thay vì lặng lẽ ghi đè mất các yêu cầu cũ.
+- Bỏ một thay đổi chờ áp khi sách đang chạy: lời hướng dẫn nay đúng ("Tạm dừng", đợi báo "Đã tạm dừng"), bỏ được ngay khi sách đã dừng lại ở chỗ nghỉ, và trang sách có nút "N thay đổi chờ áp" ngay cả lúc đang chạy.
+- "Hoàn tác" việc đổi người nói cho cả nhóm câu không còn bị từ chối vô lý chỉ vì trong nhóm có một câu vốn đã đúng người.
+- Sửa một câu từ lời kể thành lời thoại kèm người nói chỉ tính là một thay đổi chờ áp, và bỏ nó là bỏ cả hai.
+- Đổi người nói khi sách chưa phân vai xong báo đúng lý do ("chưa phân vai xong") thay vì bảo người ấy chưa nói câu nào.
+- Hoàn tác hay xác nhận cả chương mà trục trặc giữa chừng nói đúng đã làm được bao nhiêu việc; toast "Áp dụng" từ máy khác nói đúng lúc nào máy làm theo trạng thái sách.
+- Công tắc "Chờ tôi duyệt" không còn bị trả về giá trị cũ khi app đúng lúc báo sách phân tích xong.
 
 ## [0.4.123] - 2026-10-22
 

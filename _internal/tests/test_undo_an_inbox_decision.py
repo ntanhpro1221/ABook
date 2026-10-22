@@ -158,3 +158,16 @@ def test_undo_without_its_decision_is_refused(studio) -> None:
     _paths, _db, post = studio
     status, answer = post("speaker", {"lines": [LINE], "withdraw": True})
     assert status == 400 and "hoàn tác" in answer["error"]
+
+
+def test_a_group_with_a_line_already_on_that_speaker_is_still_undone_before_the_pipeline_runs(studio) -> None:
+    """Soát a83 B6: Shift-chọn hai câu, một câu vốn đã là Natasha, gán cả hai cho Natasha rồi Hoàn tác NGAY: dây chuyền chưa áp gì nên
+    phải hoàn tác được - câu vốn sẵn đúng người không phải bằng chứng "máy đã đưa vào sách"."""
+    paths, _db, post = studio
+    lines = [{"stableId": "c1s1", "textSha256": "sha-c1s1"}, {"stableId": "c1s3", "textSha256": "sha-c1s3"}]
+    _status, made = post("speaker", {"lines": lines, "speaker": "NATASHA"})
+
+    status, undone = post("speaker", {"lines": lines, "withdraw": True, "requestedAt": made["requestedAt"]})
+
+    assert status == 200 and undone == {"undone": 2, "restored": False}
+    assert read_overrides(paths.root).get("speakers", {}) == {}

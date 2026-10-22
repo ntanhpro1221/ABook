@@ -2,6 +2,12 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a83fix` trên `dev/uxfix94` (nền 3b87b35c): hàng chờ và hộp thay đổi Studio - "Bỏ xếp hàng" chỉ bỏ khỏi hàng (409 khi cuốn đã chạy,
+không dừng giữa phân tích); sửa từ điện thoại và nút sửa máy tính dùng chung khoá dự án (không nuốt nhau); bản sửa mới hơn thay bản cũ trong hộp;
+danh sách yêu cầu tạm không đọc được thì báo "thử lại sau vài giây" thay vì ghi đè; bỏ thay đổi chờ áp khi đã tạm dừng ở chỗ nghỉ; hoàn tác
+người nói cả nhóm; một sửa lời kể -> lời thoại là một mục. Phần cần file khoá (đọc-sửa-ghi overrides, rút yêu cầu ở dây chuyền) nằm ở
+`dev/locked100`. Toàn bộ (Lead chạy): pytest 8646 passed, 9 skipped, 0 F/E, exit 0; vitest 1311 passed, 1 skipped; tsc exit 0;
+JVM 1329 tests, 6 skipped, 0 F/E. Hash khoá c9176123 không đổi.
 Đợt `a79fix` trên `dev/uxfix91` (nền cây phát hành dcbd33a0): "Nghe ngay" không gửi chữ khi chưa đồng ý - chuỗi giọng
 thay thế chỉ có Edge khi đã đồng ý "edge" (máy tính + điện thoại); menu Giọng đọc hỏi đồng ý trước khi đổi sang giọng trực tuyến;
 lõi Android giữ (held) chương chữ với giọng chưa đồng ý ở startAt/onPlay/voicesChanged và "Làm trước" (Android Auto, widget, tai nghe);
