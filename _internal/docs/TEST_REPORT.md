@@ -1,6 +1,8 @@
 # Test report
 
-Ngày cập nhật: 2026-10-22
+Ngày cập nhật: 2026-10-23
+
+Đợt `0.4.126` trên `ABook_rel437` (b1e1986e = a90a + a90b + a92 `dev/uxfix106` + a93 `dev/uxfix107` + p3w `dev/loopp3w`): Studio lần đầu (nút Tạo chờ quét nguồn hiện tại, đóng app dừng lượt cài + khoá cài liên tiến trình, Whisper tải nối, huỷ gửi nguồn, xem trước UTF-16/CP1258, thời gian là số tham khảo); liên kết hai máy (dấu băm audio lưu đĩa: 4200 file lượt sau 27,16 s -> 0,08 s kể cả sau khởi động lại; ghép lại theo vân tay chứng chỉ; dọn sách ảo đã mất; /sync/v1/library cô lập cuốn lỗi; điện thoại giữ chữ Đọc theo của chương không đổi); nhạc nền P3 sau cờ tắt (chuyển a87 -> P3 chờ AudioTrack P3 ra loa, khớp |δ| <= 10 ms; máy ảo §43 thử vòng 6 đạt 6/6, S6 δ 3,7 ms). Toàn bộ: pytest 1 failed (test hẹn giờ chập chờn khi máy bận, chạy riêng qua; nới hạn 0,05 -> 0,5 s ở 9847d0f2); vitest 1385 passed, 1 skipped; tsc exit 0; JVM 1474 tests, 0 F/E. Hash khoá c9176123 không đổi.
 
 Đợt `a90b` trên `dev/uxfix105` (nền 6aae011e): hàng "Cần nghe lại" tách mã cảnh báo ghép, cả họ "ASR không phán xử được" vào
 "Chưa kiểm được" và không hiện transcript ảo; một câu một thẻ (thẻ mang thêm lý do logprob); Hoàn tác sau khi điện thoại đã gửi:
