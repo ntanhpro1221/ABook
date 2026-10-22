@@ -5,7 +5,6 @@ import type { NativeEngine } from "./engine";
 import type { ListenBook, ListenChapter } from "./model";
 import type { Track } from "./player";
 import { useListenBook } from "./source";
-import { withFreshSkips } from "./textScript";
 
 type LabelledBook = Pick<ListenBook, "id" | "title" | "narrator" | "cover">;
 
@@ -28,14 +27,14 @@ export function publishTrackMetadata(track: Track | null): void {
 /** So từng chương chỉ khi danh sách chương đổi tham chiếu (react-query giữ nguyên tham chiếu khi dữ liệu không đổi). */
 function sameLabels(a: NativeLabels | null, b: NativeLabels): boolean {
   return !!a && a.id === b.id && a.title === b.title && a.narrator === b.narrator && a.cover === b.cover && (a.chapters === b.chapters ||
-    (a.chapters.length === b.chapters.length && a.chapters.every((chapter, index) => chapter.id === b.chapters[index].id && chapter.fullTitle === b.chapters[index].fullTitle)));
+    (a.chapters.length === b.chapters.length && a.chapters.every((chapter, index) => JSON.stringify(chapter) === JSON.stringify(b.chapters[index]))));
 }
 
-/** Chỉ đổi nhãn; giữ nguyên nguồn phát, vị trí và hồ sơ nghe. Trả về hàm gọi ngay trước `loadQueue` của điện thoại: lõi vừa nhận
+/** Làm mới hàng đợi và nhãn; giữ nguyên chương đang phát, vị trí và hồ sơ nghe. Trả về hàm gọi ngay trước `loadQueue` của điện thoại: lõi vừa nhận
  *  đúng những nhãn ấy, nên lần mở sách không gửi lại cả cuốn xuống lõi. */
 export function useTrackMetadata(
   track: Track | null,
-  refs: MutableRefObject<{ track: Track | null; queue: ListenChapter[]; book: { id: string; title: string } | null }>,
+  refs: MutableRefObject<{ track: Track | null; queue: ListenChapter[]; book: { id: string; title: string; complete?: boolean } | null }>,
   setTrack: (track: Track) => void,
   setQueue: (queue: ListenChapter[]) => void,
   native: NativeEngine | null,
@@ -45,19 +44,15 @@ export function useTrackMetadata(
   useEffect(() => {
     const current = refs.current.track;
     if (!book || !current || book.id !== current.bookId) return;
-    const fresh = new Map(book.chapters?.map((chapter) => [chapter.id, chapter]));
-    const skipped = withFreshSkips(refs.current.queue, book.chapters);
-    const labelled = skipped.map((chapter) => {
-      const updated = fresh.get(chapter.id);
-      return updated && (updated.title !== chapter.title || updated.subtitle !== chapter.subtitle || updated.fullTitle !== chapter.fullTitle)
-        ? { ...chapter, title: updated.title, subtitle: updated.subtitle, fullTitle: updated.fullTitle } : chapter;
-    });
-    const chapters = labelled.every((chapter, index) => chapter === skipped[index]) ? skipped : labelled;
+    const chapters = book.chapters ?? refs.current.queue;
     if (chapters !== refs.current.queue) {
       refs.current.queue = chapters;
       setQueue(chapters);
     }
-    if (refs.current.book?.id === book.id) refs.current.book.title = book.title;
+    if (refs.current.book?.id === book.id) {
+      refs.current.book.title = book.title;
+      refs.current.book.complete = book.stage === "text" || book.complete;
+    }
     if (native) {
       const labels = labelsOf(book, book.chapters);
       const changed = !sameLabels(nativeLabels.current, labels);

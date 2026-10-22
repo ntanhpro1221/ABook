@@ -13,6 +13,18 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tên giọng ZeroTTS và Supertonic hiện đúng tên (“Bảo Trang”, “Supertonic F1”) ở tab Nhân vật, dòng “Chờ áp dụng”, hộp “Áp dụng thay đổi” và hộp Gộp, thay vì mã nội bộ (“baotrang”, “F1”).
 - “Gỡ” một giọng đã tải (Supertonic) giờ hỏi trước: nói bao nhiêu cuốn trong thư viện đang dùng giọng ấy, tên vài cuốn, và bao nhiêu câu chưa thu sẽ không đọc được tới khi bạn tải lại hay đổi giọng. Bạn vẫn quyết gỡ hay giữ.
 
+### Đọc và nghe
+
+- Chương vừa thu xong vào ngay hàng đợi; kịch bản làm mới khi bản thu hoặc mốc chữ đổi, giữ chỗ bạn đang nghe.
+- Đổi gợi ý bỏ dòng khi đang nghe giữ chữ và tiếng khớp nhau đến lần nạp chương sau.
+- “Tìm đúng câu” trên thẻ buổi sáng hiển thị đủ khoảng đã nghe qua nhiều chương và mở đúng chương bạn chọn.
+- Chỗ đọc của bạn được lưu theo hồ sơ và đồng bộ giữa máy tính với điện thoại.
+- Rời màn đọc hoặc ẩn app vẫn giữ ngay vị trí bạn vừa cuộn tới.
+- Chỗ đọc mới hơn được ưu tiên; app báo và thử lại nếu chưa lưu được vào hồ sơ.
+- Dấu trang và chỗ đọc tìm lại đúng đoạn sau khi bạn chọn bỏ dòng ghi công.
+- Thêm hoặc xoá Nhạc của tôi cập nhật ngay hàng nhạc nền đang dùng.
+- Các nút cỡ chữ có nhãn số rõ ràng cho trình đọc màn hình.
+
 ## [0.4.126] - 2026-10-23
 
 ### Đồng bộ và xuất

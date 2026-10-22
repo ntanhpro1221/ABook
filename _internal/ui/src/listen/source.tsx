@@ -7,7 +7,7 @@ import type { EditsSyncState } from "@/shared/editsSync";
 import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
 import type { ChapterText } from "./bookSearch";
-import { mergeTimings, VOICE_CHANGED_EVENT, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
+import { timedTextScript, VOICE_CHANGED_EVENT, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
 import { bookVoiceCaption, chosenVoice, resolveVoice, runsOnThisMachine, voicesOf } from "./readAloudVoice";
 import { retryChapterText } from "./labels";
 import type { VieneuBackend } from "./VieneuModuleCard";
@@ -108,7 +108,7 @@ export interface ListenSource {
   /** Gửi được cả lúc trang đang đóng (fetch keepalive). */
   addSessionOnExit?(bookId: string, session: ListeningSession, record?: string): void;
   /** Chỗ đọc dở ở chế độ đọc (nguồn nào không có thì giao diện tự nhớ trong máy). */
-  saveReading?(bookId: string, chapterId: number, index: number): Promise<void>;
+  saveReading?(bookId: string, chapterId: number, index: number, position?: import("./readingPosition").ReadingPosition, record?: string): Promise<void>;
   /** Lưu cuốn nhập từ file (kèm thay đổi của người nghe) thành file `.abook` mới: máy tính ghi vào thư mục xuất (hay
    *  `folder`), điện thoại hỏi chỗ lưu bằng hộp thoại của hệ thống lần đầu rồi nhớ (`ask` hỏi lại). `saved: false` khi người dùng bỏ qua. */
   saveBook?(bookId: string, options?: { folder?: string; as?: "abook" | "abookproj"; ask?: boolean }): Promise<SavedBook>;
@@ -245,18 +245,18 @@ export async function chapterTexts(source: ListenSource, bookId: string, chapter
   return out;
 }
 
-/** Truy vấn kịch bản để ĐỌC của một chương: chương nghe được thì kịch bản có mốc thời gian, chương chỉ-có-chữ thì các đoạn dựng từ chữ. Dùng chung với
- *  trình phát (nó đọc to chương chữ và ghi mốc thời gian vào đúng khoá này - readAloud.ts). */
+/** Truy vấn kịch bản của một chương: chương nghe được có mốc, chương chữ dựng từ chữ. Native trả cả chữ và mốc của bản đang nạp;
+ *  desktop giữ snapshot đang phát ở khoá playing-script, tách khỏi bản dùng cho lần nạp sau. */
 export function chapterScriptQuery(source: ListenSource, bookId: string, chapter: ListenChapter) {
   const textOnly = isTextOnly(chapter);
   return {
-    queryKey: ["listen", "script", bookId, chapter.id, textOnly ? "text" : "audio"] as const,
+    queryKey: chapterScriptKey(bookId, chapter),
     queryFn: async (): Promise<Script> => {
       if (!textOnly) return source.script(bookId, chapter.id);
       const script = textChapterScript(chapter, await source.chapterText(bookId, chapter.id));
       // Chương đã được đọc to (lõi native tự đọc): mốc thời gian đã có thì gắn vào, màn đọc sáng đoạn / chữ ngay khi mở.
       const timings = await source.readAloudTimings?.(bookId, chapter.id).catch(() => null);
-      return timings ? mergeTimings(script, timings) : script;
+      return timings ? timedTextScript(script, timings) : script;
     },
     staleTime: Infinity,
   };
@@ -264,13 +264,20 @@ export function chapterScriptQuery(source: ListenSource, bookId: string, chapter
 
 export function useChapterScript(bookId: string | undefined, chapter: ListenChapter | undefined) {
   const source = useSource();
-  return useQuery({
-    queryKey: ["listen", "script", bookId, chapter?.id, chapter?.state === "text" ? "text" : "audio"] as const,
+  const active = useQuery<Script | null>({ queryKey: ["playing-script", bookId], queryFn: () => null, enabled: false, staleTime: Infinity });
+  const query = useQuery({
+    queryKey: chapterScriptKey(bookId, chapter),
     enabled: Boolean(bookId && chapter),
     queryFn: () => chapterScriptQuery(source, bookId!, chapter!).queryFn(),
     staleTime: Infinity,
     retry: retryChapterText,
   });
+  return source.kind !== "android" && active.data && active.data.chapterId === chapter?.id ? { ...query, data: active.data } : query;
+}
+
+export function chapterScriptKey(bookId: string | undefined, chapter: ListenChapter | undefined) {
+  const base = ["listen", "script", bookId, chapter?.id, chapter?.state === "text" ? "text" : "audio"] as const;
+  return chapter?.state === "text" ? base : [...base, chapter?.available, chapter?.duration, chapter?.audioVersion, chapter?.wordsVersion];
 }
 
 /** Nhật ký đêm gần nhất (thẻ "Tối qua" ở Thư viện); null: máy này chưa có đêm nào ghi lại. */

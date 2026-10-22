@@ -55,7 +55,8 @@ export interface NativeState {
 export type BedtimeSession = NightSession;
 
 export interface EbookPlayerPlugin {
-  updateMetadata(options: { bookId: string; title: string; narrator: string; chapters: { id: number; title: string }[] }): Promise<NativeState>;
+  updateMetadata(options: { bookId: string; title: string; narrator: string; chapters: { id: number; title: string }[];
+    queue?: { id: number; title: string; file: string; duration: number; text?: string }[] }): Promise<NativeState>;
   load(options: {
     bookId: string;
     bookTitle: string;
@@ -221,6 +222,7 @@ export interface ManifestChapter {
   text?: string;
   /** Dòng người nghe bỏ khỏi phần đọc (lớp sửa `skip`, đã áp vào book.json - BookEdits.applyManifest). */
   skip?: string[];
+  wordsVersion?: string;
 }
 
 /** Máy tính đã ghép có Studio: `key` "" là máy tính chính, còn lại là mã máy ghép thêm (Peers.kt). */
@@ -235,6 +237,7 @@ export interface StudioComputer {
 }
 
 export interface LocalBook {
+  wordsVersion?: string;
   format: string;
   id: string;
   title: string;
@@ -522,6 +525,7 @@ export interface EbookLibraryPlugin {
   /** `bytes`: cả thư viện; `books`: cỡ từng cuốn trên máy (mã thư mục = mã cuốn). */
   storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number }[] }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor }): Promise<ListeningState>;
+  saveReading(options: { id: string; chapterId: number; index: number; at?: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor; quote?: string; record?: string }): Promise<ListeningState>;
   setChapterDone(options: { id: string; chapterId: number; done: boolean }): Promise<ListeningState>;
   setFinished(options: { id: string; finished: boolean }): Promise<ListeningState>;
   setRate(options: { id: string; rate: number }): Promise<void>;
