@@ -9,12 +9,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
-- Khi bạn đóng app lúc có sách đang xếp hàng chờ làm (kể cả các tập sau của "Tạo nhiều tập"), hàng chờ vẫn còn khi bạn mở lại và các cuốn tự bắt đầu lần lượt khi cuốn đang chạy xong; cuốn bạn đã xoá thì tự ra khỏi hàng.
+- Khi bạn đóng app lúc có sách đang xếp hàng chờ làm (kể cả các tập sau của "Tạo nhiều tập"), hàng chờ vẫn còn khi bạn mở lại, kể cả khi app bị tắt ngang lúc chuẩn bị chạy cuốn kế; các cuốn tự bắt đầu lần lượt khi cuốn đang chạy xong. Bạn bấm chạy cuốn khác hay bỏ cuốn khỏi hàng đúng lúc chuyển lượt cũng không làm hai cuốn tự chạy cùng lúc hoặc chạy cuốn vừa bỏ.
 - Khi bạn chạy bộ cài bản mới trên máy tính, cuốn đang làm trong Studio không còn bị dừng giữa chừng.
 - Khi điện thoại bị tắt ngang lúc bạn đang mở file sách, thư viện không còn hiện cuốn dở dang; bản cũ đang được thay thì trở lại, phần dở được dọn ở lần mở app sau.
-- Khi điện thoại tự dừng việc xuất MP3 hay M4B của bạn (hết giờ chạy nền, thiếu bộ nhớ), việc xuất tự chạy lại thay vì báo "Đã dừng" và xoá file M4B đã chọn.
+- Khi điện thoại tự dừng việc xuất MP3, M4B hay sách nói của bạn (hết giờ chạy nền, thiếu bộ nhớ, kể cả Android 11 trở xuống không báo lý do), file đích và quyền ghi được giữ để việc xuất chạy lại; chỉ khi bạn bấm Dừng hoặc xuất thay lượt cũ thì lượt ấy mới bị huỷ.
 - Khi máy tính bị tắt ngang lúc bạn xuất MP3, chương ghi dở được dọn ở lần mở app sau, và danh sách phát không còn bị cụt.
-- Khi bạn đóng app trên máy tính lúc đang xuất, sách bạn vừa xoá vẫn kịp vào Thùng rác và app đóng trong vài giây.
+- Khi bạn đóng app trên máy tính lúc đang xuất, app chờ dọn Thùng rác và các lượt xuất trong cùng vài giây; ổ đĩa hay Thùng rác chậm cũng không giữ app mở quá lâu. Sách bạn vừa xoá mà chưa dọn xong sẽ được dọn tiếp ở lần mở sau.
 
 ## [0.4.122] - 2026-10-22
 

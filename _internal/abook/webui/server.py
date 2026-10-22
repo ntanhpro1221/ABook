@@ -825,19 +825,19 @@ class App:
                     return
                 head = self.queue[0]
             path = self.library.resolve(head)
-            if path is None or self.runner.running(path) or self.jobs.starting(path):
-                self._dequeue(head)  # dự án đã mất, hay đã chạy bằng đường khác
-                continue
-            if self._busy_elsewhere(path) is None:
-                with self._queue_lock:
-                    if self.queue and self.queue[0] == head:
-                        self._dequeue(head)
-                try:
-                    self._launch(path)
-                except ApiError as error:
-                    # Không chạy được (phần trước chưa phân vai xong): ra khỏi hàng, nói ở trang sách; các phần sau trong hàng
-                    # cũng sẽ gặp đúng lỗi này và nói như thế.
-                    self.jobs.fail(path, error.message)
+            with self._queue_lock:
+                if not self.queue or self.queue[0] != head:
+                    continue
+                if path is None or self.runner.running(path):
+                    self._dequeue(head)  # dự án đã mất, hay worker đã chạy bằng đường khác
+                    continue
+                if self.jobs.starting(path) or self._busy_elsewhere(path) is not None or not self.jobs.reserve(path):
+                    continue
+            try:
+                self._launch(path, reserved=True)
+            except ApiError as error:
+                self._dequeue(head)  # lỗi đã biết, nói ở trang sách; không tự thử vô hạn
+                self.jobs.fail(path, error.message)
 
     def library_view(self) -> dict[str, Any]:
         books = []
@@ -860,13 +860,15 @@ class App:
     def start(self, value: str, *, now: bool = False) -> dict[str, Any]:
         self._mutating()
         path = self._book(value)
-        if self.runner.running(path):
-            return self.summary(path)
-        if not now and self._busy_elsewhere(path) is not None:
-            self._enqueue(value)
-            return self.summary(path)
-        self._dequeue(value)
-        self._launch(path)
+        with self._queue_lock:
+            if self.runner.running(path) or self.jobs.starting(path):
+                return self.summary(path)
+            if not now and self._busy_elsewhere(path) is not None:
+                self._enqueue(value)
+                return self.summary(path)
+            if not self.jobs.reserve(path):
+                return self.summary(path)
+        self._launch(path, reserved=True)
         return self.summary(path)
 
     def _enqueue(self, value: str) -> None:
@@ -888,25 +890,34 @@ class App:
             if continuation.seed_pending(part) and not self.runner.running(part) and not self.jobs.starting(part):
                 self._enqueue(book_id(part))
 
-    def _launch(self, path: Path) -> None:
+    def _launch(self, path: Path, *, reserved: bool = False) -> None:
         """Khởi động lượt chạy và ghi mốc (store.mark_run_started) - mốc lấy TRƯỚC khi khởi động: yêu cầu ghi trong lúc
         khởi động vẫn tính là đang chờ. Khởi động chạy nền (jobs.start) nên mốc chỉ ghi khi nó XONG VÀ KHÔNG LỖI: khởi
         động hỏng (chưa cài Studio, thiếu Ollama...) thì không ghi gì, sửa chờ áp vẫn còn nút "Áp dụng".
 
         Phần nối tiếp tạo cùng lúc với phần trước ("Tạo nhiều tập", continuation.link_pending) gieo ở đây: tới lượt chạy thì
         phần trước đã phân vai xong, và đây vẫn là sau `create` - trước mọi câu phân tích của phần này."""
-        self.previews.shutdown()  # model nghe thử giữ VRAM: nhả trước khi cuốn bắt đầu (cả hai đường tới đây: Bắt đầu và hàng đợi)
+        if not reserved:
+            with self._queue_lock:
+                if self.runner.running(path) or not self.jobs.reserve(path):
+                    return
         try:
-            continuation.seed_when_ready(path)
-        except continuation.ContinuationError as error:
-            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
-        started_at = time.time()
+            self.previews.shutdown()  # nhả model nghe thử sau khi đã nhận lượt
+            try:
+                continuation.seed_when_ready(path)
+            except continuation.ContinuationError as error:
+                raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+            started_at = time.time()
 
-        def mark_when_started() -> None:
-            if not self.jobs.error(path):
-                store.mark_run_started(path, started_at)
+            def mark_when_started() -> None:
+                if not self.jobs.error(path):
+                    store.mark_run_started(path, started_at)
 
-        self.jobs.start(path, on_done=mark_when_started)
+            self.jobs.start(path, on_done=mark_when_started, reserved=True)
+        except BaseException:
+            self.jobs.unreserve(path)
+            raise
+        self._dequeue(book_id(path))  # jobs đã nhận start; host chết trước đây thì hàng trên đĩa còn để mở lại
         precast.release(path)  # "Thu âm" sau khi tiến trình giữ đã chết: bấm làm tiếp là cho thu, như nút Thu âm lúc đang giữ
         self._queue_successors(path)
         self._watch_precast()
@@ -1021,8 +1032,9 @@ class App:
     def stop(self, value: str) -> dict[str, Any]:
         self._mutating()
         path = self._book(value)
-        if self._dequeue(value):
-            return self.summary(path)  # đang xếp hàng: "Dừng" nghĩa là bỏ khỏi hàng, không có gì để dừng
+        with self._queue_lock:
+            if not self.jobs.starting(path) and self._dequeue(value):
+                return self.summary(path)  # chưa nhận lượt: "Dừng" nghĩa là bỏ khỏi hàng
         self.jobs.stop(path)
         return self.summary(path)
 
@@ -2771,18 +2783,20 @@ class App:
 
         Vỏ Tauri cho host HOST_STOP_GRACE (5 giây, shell/src-tauri/src/main.rs) rồi giết - Windows tắt máy / đăng xuất cũng chỉ chờ cỡ ấy,
         nên nâng hạn ở vỏ không cứu được gì. Thay vào đó: mọi lượt xuất được bảo dừng CÙNG LÚC và chờ chung một hạn `CLOSE_SECONDS`
-        (trước đây mỗi loại chờ riêng 3 giây, nối nhau quá 5 giây), và Thùng rác - dữ liệu người dùng - làm trước khi chờ chúng."""
+        (trước đây mỗi loại chờ riêng 3 giây, nối nhau quá 5 giây). Thùng rác cũng dọn nền trong cùng hạn; metadata còn lại
+        giúp lần mở sau tiếp tục khi dọn chưa xong."""
         deadline = time.monotonic() + CLOSE_SECONDS
         # Đang gói dự án / xuất M4B / MP3: dừng ở file / khúc kế, dọn file tạm và bản xuất dở - bảo dừng ngay, chờ ở cuối.
         stopping = [*self.projectfile_jobs.stop_all(), *self.m4b_jobs.stop_all(), *self.mp3_jobs.stop_all()]
         self._trash_sweeper.cancel()
         # Hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác - trừ cuốn Thùng rác không nhận trọn (Windows sẽ hỏi
         # "xoá hẳn", mà đóng app không được chờ ai bấm): nó ở lại chỗ chờ tới lần mở sau.
-        self.sweep_trash(everything=True, ask=False)
+        trash_thread = threading.Thread(target=lambda: self.sweep_trash(everything=True, ask=False), name="trash-close", daemon=True)
+        trash_thread.start()
         self._stop_sync()
         self.cast.close()
         self.previews.shutdown()
-        export_jobs.join_until(stopping, deadline)
+        export_jobs.join_until([trash_thread, *stopping], deadline)
 
     def routes(self) -> dict[str, Any]:
         """Các đường tới máy này cho thiết bị vừa ghép: địa chỉ LAN + cổng đồng bộ, và địa chỉ Bluetooth khi cổng

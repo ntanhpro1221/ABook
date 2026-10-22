@@ -2,6 +2,15 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a73fix2` trên `dev/uxfix81` (nền c9a9baf1): nhận lượt hàng đợi và nút chạy dưới cùng khoá,
+đánh dấu khởi động trước khi chuẩn bị, giữ hàng trên đĩa tới khi jobs nhận start; dọn Thùng rác nền theo hạn đóng app.
+Android ghi dấu huỷ theo id việc trước khi cancel (nút trong app, thông báo, xuất thay lượt cũ); dừng không rõ lý do giữ URI/quyền/bìa.
+Test đỏ trước: bỏ đầu hàng trong khe và ngắt trước jobs.start đều hỏng (2 F, exit 1); sweep chậm hỏng (1 F);
+JVM quyết định giữ tài nguyên với UNKNOWN/API cũ hỏng (1 F, exit 1). Sau sửa nhóm pytest liên quan **119 passed, 0 F/E, exit 0**.
+Test phục hồi tạo TrashPending mới từ metadata `recycling` đã xác nhận lần dọn kế tiếp nhận đúng byte audio.
+Các bài dùng runner/Thùng rác giả và thư mục tạm; JVM kiểm quyết định và thứ tự commit dấu huỷ trước cancel,
+không kiểm SAF/receiver trên Android thật. Toàn bộ (Lead chạy lại): pytest 8390 passed, 9 skipped, 0 F/E, exit 0; vitest 1239 passed; tsc exit 0; JVM 1202 tests, 0 F/E.
+
 Đợt `dev/rvfix` (từ 0.4.120): giữ giới/tuổi khi lượt người nói đổi namespace của cùng vai local trong cùng chương;
 không checkpoint hoà giải khi thiếu model (request lỗi giữ nhãn cũ như trước); đóng luồng cả khi bù độ to/hoàn tất clip lỗi;
 huỷ hẹn giờ release khi clip xong/bị bỏ (Python và Kotlin); script Windows giữ `setuptools<82`.
