@@ -198,7 +198,8 @@ def test_my_music_plays_oldest_first_from_this_machines_store(tmp_path: Path) ->
         expected = [entry["link"] for entry in reversed(app.my_music.entries())]
         assert [track["link"] for track in queue["tracks"]] == expected
         digest = music_plan.local_hash(expected[0])
-        assert queue["tracks"][0]["src"] == f"/api/music/local/{digest}/file"
+        # Chọn "Nhạc của tôi" là chép đúng các bài ấy vào sách: nghe bản của cuốn, không phải kho của máy.
+        assert queue["tracks"][0]["src"] == f"/api/books/{book}/music/files/{digest}.wav"
         assert all(isinstance(track["gainDb"], float) and track["gainDb"] <= 0 for track in queue["tracks"])
     finally:
         server.stop()

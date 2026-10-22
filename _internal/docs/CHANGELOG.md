@@ -15,8 +15,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nghe lâu năm (hồ sơ nghe vài MB): lưu chỗ nghe mỗi 10 giây không còn ghi lại cả hồ sơ (hết ~0,3-0,7 giây CPU và ghi đĩa mỗi lần); tắt máy giữa chừng vẫn mở lại đúng chỗ nghe mới nhất.
 - Sách rất dày (hàng nghìn chương): trang sách không còn tính lại tóm tắt, danh sách chương và dàn nhân vật mỗi vài giây khi sách không đổi.
 
+### Nhạc nền
+
+- Bấm Tạm dừng thì nhạc nền dừng theo ngay, kể cả khi bài nhạc vừa tải xong sau lúc bạn dừng giọng; đổi bài hay tua lúc đang dừng cũng không làm nhạc tự phát lại.
+- Bài nhạc tải về cụt hay sai so với danh mục (từ nguồn gốc cũng như bản sao) không còn được giữ làm bài nghe; bài đã lưu sẵn mà sai kích thước hay nội dung thì tự bị bỏ và tải lại.
+- Máy tính: nút Nhạc nền (bật/tắt và độ to) cũng có ở chương của dự án Studio ngay trong trình nghe, đổi ở đây là đổi luôn trong Studio.
+- Máy tính: danh sách nhạc nền bị lỗi mạng không còn kẹt đến khi mở lại sách; app tự hỏi lại sau một lúc, ngay khi mạng về và khi sang chương khác, và báo “nhạc chưa tải được” trong lúc chờ.
+- Điện thoại: hẹn giờ ngủ làm nhỏ dần cả nhạc nền cùng giọng đọc; huỷ hay gia hạn hẹn giờ thì nhạc về mức cũ.
+
 ### Xuất và chia sẻ
 
+- “Lưu” hay “Chia sẻ” file .abook khi đã chọn “Nhạc của tôi”: sách mang theo đúng các bài bạn đã chọn (đủ file, đúng thứ tự, kèm tên bài và tác giả), máy mở sách nghe đúng các bài ấy dù kho nhạc của nó khác; chọn danh sách khác thì các bài ấy không đi theo.
 - Điện thoại: “Lưu” không giữ được bản cũ để phòng hỏng thì dừng trước khi ghi, file đang lưu không bị thay; thiếu chỗ trống thì báo sớm kèm số MB cần; nếu lưu hỏng và bản cũ cũng chưa trả lại được thì bản cũ được giữ trong bộ nhớ của app và lời báo nói rõ nó nằm đâu.
 
 ### Cài đặt và trợ năng

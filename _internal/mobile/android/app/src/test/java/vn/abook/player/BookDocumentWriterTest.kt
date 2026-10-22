@@ -500,4 +500,57 @@ class BookDocumentWriterTest {
         val (file, _) = write(dir, "textonly.abookproj", asProject = true)
         assertEquals("pending", verifyProject(file).getString("workshop"))
     }
+
+    /** "Nhạc của tôi" của một cuốn đã chọn: bài trong kho, thứ tự cũ trước - đúng đường của app (LocalStudio.music). */
+    private fun chooseMine(dir: File, store: MusicStore, playlist: String = "mine") =
+        BookEdits.setMusic(dir, JSONObject().put("playlist", playlist), store::track, { store.entries().reversed().mapNotNull { info -> store.file(info.getString("link"))?.let { info to it } } })
+
+    @Test
+    fun my_music_chosen_for_a_book_travels_with_the_file_and_the_receiver_plays_the_books_copy() {
+        val dir = bookWith(null)
+        val store = MusicStore(File(work, "music"), FakeTags)
+        store.importFile(BookEditsFixtures.file("track/tone.wav"))
+        chooseMine(dir, store)
+        val edits = BookEdits.load(dir)
+        assertEquals(listOf("local:$toneSha"), (0 until edits.getJSONObject("music").getJSONArray("mine").length()).map { "local:" + edits.getJSONObject("music").getJSONArray("mine").getString(it) })
+        val carried = BookEdits.carriedMine(dir)!!
+        assertEquals(listOf("local:$toneSha"), carried.infos.keys.toList())
+        val (file, _) = write(dir, "mine.abook")
+        verify(file)
+        ZipFile(file).use { zip -> assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), zip.getInputStream(zip.getEntry("music/$toneSha.wav")).readBytes()) }
+        // máy nhận: giữ nguyên danh sách và file của cuốn, không đọc kho của nó
+        BookEditsFixtures.useStoreRoot(BookEditsFixtures.tempDir("abook-mine-receiver"))
+        val imported = BookFileImport.importFile(file)
+        val received = BookEdits.carriedMine(Store.bookDir(imported.id))!!
+        assertEquals(listOf("local:$toneSha"), received.infos.keys.toList())
+        assertArrayEquals(BookEditsFixtures.bytes("track/tone.wav"), received.files.getValue("local:$toneSha").readBytes())
+        // gửi cho máy tính xong (subtract): danh sách ở lại cùng lựa chọn
+        BookEdits.subtract(Store.bookDir(imported.id), BookEdits.load(Store.bookDir(imported.id)), null)
+        assertNotNull(BookEdits.carriedMine(Store.bookDir(imported.id)))
+        // chọn danh sách khác: bỏ bài đã mang theo
+        chooseMine(dir, store, "calm")
+        assertNull(BookEdits.carriedMine(dir))
+        assertFalse(File(dir, "music/$toneSha.wav").exists())
+    }
+
+    @Test
+    fun the_carried_my_music_list_is_only_valid_with_its_choice_and_its_files() {
+        val sha = "0".repeat(40)
+        val tracks = JSONObject().put(sha, JSONObject().put("ext", "wav"))
+        fun edits(music: JSONObject) = JSONObject().put("format", "abook-edits").put("version", 1).put("music", music).toString().toByteArray()
+        val ok = JSONObject().put("playlist", "mine").put("mine", org.json.JSONArray().put(sha)).put("tracks", tracks)
+        assertEquals(1, BookEdits.parse(edits(ok)).getJSONObject("music").getJSONArray("mine").length())
+        for (broken in listOf(
+            JSONObject().put("playlist", "calm").put("mine", org.json.JSONArray().put(sha)).put("tracks", tracks),
+            JSONObject().put("playlist", "mine").put("mine", org.json.JSONArray().put(sha).put(sha)).put("tracks", tracks),
+            JSONObject().put("playlist", "mine").put("mine", org.json.JSONArray().put(sha)),
+            JSONObject().put("playlist", "mine").put("mine", org.json.JSONArray().put("x")).put("tracks", JSONObject().put("x", JSONObject().put("ext", "wav"))),
+        )) {
+            try {
+                BookEdits.parse(edits(broken))
+                fail("lẽ ra bị từ chối: $broken")
+            } catch (_: BookEdits.EditsError) {
+            }
+        }
+    }
 }

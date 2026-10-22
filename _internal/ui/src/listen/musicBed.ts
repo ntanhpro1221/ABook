@@ -483,7 +483,8 @@ export class MusicBed {
     for (const audio of [this.current?.audio, ...this.fading]) {
       if (!audio) continue;
       if (playing && audio.paused && !audio.ended && audio === this.current?.audio) void audio.play().catch(() => undefined);
-      if (!playing && !audio.paused) audio.pause();
+      // Luôn pause, kể cả phần tử đang `paused` (bài còn đang tải qua mseAudio giữ ý định phát: pause() mới huỷ nó, không thì tải xong nhạc tự kêu khi giọng đã dừng).
+      if (!playing) audio.pause();
     }
   }
 
