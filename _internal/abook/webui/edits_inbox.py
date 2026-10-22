@@ -32,7 +32,7 @@ from typing import Any
 from .. import listener_overrides as overrides
 from .. import names as renames
 from ..io_utils import atomic_write_bytes, project_write_lock
-from . import book_edits, book_wishes, cancelled, covers, music_plan, store
+from . import book_edits, book_wishes, cancelled, covers, humanize, music_plan, store
 
 INBOX_FILE = "edits_inbox.json"
 SYNCED_FILE = "edits_synced.json"
@@ -368,7 +368,7 @@ def _wish_value(project: Path, section: str, entry: dict[str, Any]) -> str:
     if section == "speakers":
         return store.person_label(project, str(entry.get("speaker") or ""))
     if section == "voices":
-        return str(entry.get("preset") or "")
+        return humanize.voice_label(str(entry.get("preset") or ""))
     if section == "lines":
         return str(entry.get("spoken") or entry.get("emotion") or "")
     return ""

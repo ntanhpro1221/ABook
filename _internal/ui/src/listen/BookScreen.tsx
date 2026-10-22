@@ -20,7 +20,7 @@ import { useClip } from "./clip";
 import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
-import { bookmarkReadPath, canPlay, chapterHeard, chaptersByPart, type CastMember, type ListenBook, type ListenChapter } from "./model";
+import { bookmarkReadPath, canPlay, chapterHeard, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
 import { keepTogether, partialBookLine, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerViews";
@@ -278,13 +278,13 @@ export function PersonRow({
         {person.originalName && <div className="break-words text-xs text-fg-3">(tên gốc: {cleanName(person.originalName)})</div>}
         <div className="mt-0.5 break-words text-xs text-fg-2">
           <AudioLines className="mr-1 inline size-3.5 -translate-y-px text-fg-3" />
-          {person.voice ? `${person.voice.preset}${person.voice.tone ? ` · ${toneLabel(person.voice.tone)}` : ""}` : "Chưa có giọng"}
+          {person.voice ? `${voiceName(person.voice)}${person.voice.tone ? ` · ${toneLabel(person.voice.tone)}` : ""}` : "Chưa có giọng"}
         </div>
         {/* Việc của Studio (giọng người nghe đã chọn, chưa áp) - trang nghe không cần (soát UX 29-09). */}
         {person.pendingVoice && (onPickVoice || waiting) && (
           <div className="mt-0.5 truncate text-xs font-medium text-accent-text">
             {waiting ? "Đang chờ máy làm sách" : "Chờ áp dụng"}:{" "}
-            {[person.pendingVoice.preset && `giọng ${person.pendingVoice.preset}`, person.pendingVoice.gender.toLowerCase()]
+            {[person.pendingVoice.preset && `giọng ${voiceName(person.pendingVoice)}`, person.pendingVoice.gender.toLowerCase()]
               .filter(Boolean)
               .join(" · ")}
           </div>
@@ -409,7 +409,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
           <div className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">Người kể chuyện</div>
           <div className="mt-0.5 font-semibold">{cast.narrator.voice || "Mặc định"}</div>
           {onPickNarrator && cast.narrator.pendingVoice?.preset && (
-            <div className="mt-0.5 truncate text-xs font-medium text-accent-text">Chờ áp dụng: giọng {cast.narrator.pendingVoice.preset}</div>
+            <div className="mt-0.5 truncate text-xs font-medium text-accent-text">Chờ áp dụng: giọng {voiceName(cast.narrator.pendingVoice)}</div>
           )}
           <div className="tabular text-xs text-fg-2">{formatNumber(cast.narrator.lines)} câu dẫn truyện{cast.narrator.seconds > 0 ? ` · ${formatLength(cast.narrator.seconds)}` : ""}
             {/* Sau "Áp dụng" đổi giọng kể: các câu đã thu chờ thu lại bằng giọng mới (soát UX a24). */}

@@ -353,7 +353,8 @@ export interface CastMember {
   age: string;
   lines: number;
   seconds: number;
-  voice: { key: string; preset: string; tone: string } | null;
+  /** `preset` là KHOÁ giọng (gửi lại máy chủ); `label` là tên người nghe thấy ("Bảo Trang") - hiện bằng `voiceName`. */
+  voice: { key: string; preset: string; label?: string; tone: string } | null;
   sampleId: number | null;
   firstChapter: string;
   /** Sách cả bộ: những phần người này lên tiếng. */
@@ -361,7 +362,7 @@ export interface CastMember {
   /** Số câu đã có tiếng (store.cast) - "Đổi giới tính" nói trước bấy nhiêu câu có thể phải thu lại. */
   recorded?: number;
   /** Giọng/giới người nghe đã chọn mà dây chuyền chưa áp (store.pending_voices). */
-  pendingVoice?: { preset: string; gender: string } | null;
+  pendingVoice?: { preset: string; label?: string; gender: string } | null;
   /** Đã "Gộp vào…" người khác mà chưa áp (store.cast): tên người sẽ nhận các câu của người này. */
   mergedInto?: string | null;
   /** Mốc của lần “Gộp vào…” ấy (cùng mốc với các câu đã đổi người nói) - đủ để tìm lại và rút (“Bỏ gộp”). Chỉ ở dự án có xưởng. */
@@ -370,7 +371,7 @@ export interface CastMember {
 
 export interface Cast {
   /** `pendingVoice`: giọng người kể người nghe đã chọn ở Studio mà dây chuyền chưa áp (store.cast). */
-  narrator: { voice: string; lines: number; seconds: number; pendingVoice?: { preset: string; gender: string } | null; /** Câu kể chờ thu lại theo sửa của người nghe. */ redo?: number };
+  narrator: { voice: string; lines: number; seconds: number; pendingVoice?: { preset: string; label?: string; gender: string } | null; /** Câu kể chờ thu lại theo sửa của người nghe. */ redo?: number };
   characters: CastMember[];
   extras: CastMember[];
   /** Studio, phần nối tiếp: giọng mang từ phần trước của những người chưa nói câu nào ở phần này. */
@@ -535,4 +536,9 @@ export interface EditsNotice {
   at: number;
   device: string;
   label: string;
+}
+
+/** Tên giọng để HIỆN cho người nghe: nhãn ("Bảo Trang") nếu máy chủ gửi, không thì khoá (VieNeu: khoá cũng là tên). Chỗ GỬI giọng về máy chủ dùng `preset`. */
+export function voiceName(voice: { preset: string; label?: string } | null | undefined): string {
+  return voice?.label || voice?.preset || "";
 }

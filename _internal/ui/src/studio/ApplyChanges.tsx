@@ -27,6 +27,8 @@ export interface PendingItem {
   requestedAt: number;
   /** Đổi giọng: đủ để nghe thử đúng giọng sẽ áp (POST …/voice/preview). */
   voice?: VoiceRequest;
+  /** Tên giọng đang chờ để hiện ("Bảo Trang"); `voice.preset` là khoá gửi máy chủ. */
+  voiceLabel?: string;
   /** Tên máy đã ghép gửi việc này tới (cuốn nhập từ file - book_wishes.note_sources); không có: ghi ở chính máy này. */
   from?: string;
 }
@@ -166,7 +168,7 @@ export function ApplyChangesDialog({
             items={data.items}
             dropping={dropping}
             onDrop={(item) => void drop(item)}
-            extra={(item) => (item.voice ? tryVoice.button(item.voice, item.voice.preset || "mới") : null)}
+            extra={(item) => (item.voice ? tryVoice.button(item.voice, item.voiceLabel || "mới") : null)}
           />
           {tryVoice.note && <div className="mt-2">{tryVoice.note}</div>}
           <p className="mt-3 text-sm text-pretty">

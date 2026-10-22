@@ -19,5 +19,9 @@ describe("hộp Gộp nhân vật (soát UX a23)", () => {
     expect(voiceToUse({ voice, pendingVoice: { preset: "Hải Đăng", gender: "" } })).toBe("Hải Đăng");
     expect(voiceToUse({ voice, pendingVoice: { preset: "", gender: "Nữ" } })).toBe("Phạm Tuyên");
     expect(voiceToUse({ voice, pendingVoice: null })).toBe("Phạm Tuyên");
+    // Giọng máy khác: khoá "baotrang", người nghe thấy nhãn.
+    const engine = { key: "k", preset: "baotrang", label: "Bảo Trang", tone: "" };
+    expect(voiceToUse({ voice: engine, pendingVoice: null })).toBe("Bảo Trang");
+    expect(voiceToUse({ voice, pendingVoice: { preset: "F1", label: "Supertonic F1", gender: "" } })).toBe("Supertonic F1");
   });
 });

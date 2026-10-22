@@ -186,6 +186,29 @@ export function lowerFirst(text: string): string {
   return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
+/** Những cuốn trong thư viện máy này đang dùng giọng của một mô-đun (voice_picker.engine_use): hỏi trước khi gỡ. */
+export interface VoiceUse {
+  bookCount: number;
+  peopleCount: number;
+  /** Câu của những người đó chưa thu: gỡ mô-đun thì các câu ấy không đọc được tới khi tải lại hay đổi giọng. */
+  left: number;
+  books: { title: string; people: string[]; left: number }[];
+}
+
+/** Lời hỏi trước khi gỡ một giọng khỏi máy, nói từ phía người nghe: cuốn nào còn cần, câu nào sẽ không đọc được. `use` null: không biết
+ *  (máy này không có sách dùng giọng ấy, hay chưa hỏi được) - vẫn hỏi một câu ngắn. */
+export function removeAsk(use: VoiceUse | null): string {
+  if (!use) return "Giọng sẽ không còn trên máy này cho tới khi bạn tải lại.";
+  if (!use.bookCount) return "Chưa cuốn nào trong thư viện này dùng giọng ấy. Gỡ xong, bạn tải lại được bất cứ lúc nào.";
+  const titles = use.books.slice(0, 3).map((book) => `“${book.title}”`).join(", ");
+  const more = use.bookCount > 3 ? ` và ${use.bookCount - 3} cuốn khác` : "";
+  const who = `${use.bookCount} cuốn đang dùng giọng này (${titles}${more}), ${use.peopleCount} nhân vật.`;
+  const rest = use.left
+    ? `${use.left} câu chưa thu của họ sẽ không đọc được tới khi bạn tải lại giọng hay đổi giọng khác; câu đã thu vẫn nghe được.`
+    : "Các câu đã thu vẫn nghe được; khi cần thu lại thì bạn phải tải lại giọng hay đổi giọng khác.";
+  return `${who} ${rest}`;
+}
+
 /** Lựa chọn đánh dấu sẵn: cái đã tải + cái mô-đun đánh dấu sẵn cho máy này (`preselect` = false: chỉ cái đã tải - mô-đun không phải cái
  *  được khuyên, moduleAdvice). */
 export function initialChoices(status: Pick<VieneuStatus, "choices">, preselect = true): VieneuChoiceId[] {

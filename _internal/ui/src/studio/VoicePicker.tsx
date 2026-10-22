@@ -29,6 +29,8 @@ type Gender = "male" | "female";
 const GENDER_WORD: Record<Gender, string> = { male: "nam", female: "nữ" };
 
 interface VoiceOption extends EngineVoice {
+  /** Khoá giọng - cái duy nhất máy chủ nhận (POST /voice, /voice/preview, /media/voices); `name` chỉ để hiện cho người nghe. */
+  key: string;
   gender: Gender;
   genderLabel: string;
   region: string;
@@ -131,7 +133,7 @@ function PreviewButton({ voice }: { voice: VoiceOption }) {
   return (
     <button
       type="button"
-      onClick={() => clip.toggle(id, urls.voice(voice.name))}
+      onClick={() => clip.toggle(id, urls.voice(voice.key))}
       aria-label={active ? "Dừng nghe thử" : `Nghe thử giọng ${voice.name}`}
       className={cn(
         "grid size-9 shrink-0 place-items-center rounded-full border transition-colors",
@@ -181,7 +183,7 @@ export function VoicePicker({
         method: "POST",
         // Có `gender` thì giới ghi cùng giọng (cùng đường overrides `voices`): dòng "chờ áp dụng" ở tab Nhân vật hiện giới mới.
         // `seen`: mốc của lựa chọn đang chờ hộp này thấy (0 = không có) - máy/cửa sổ khác vừa chọn khác thì được hỏi (uxfix28 A).
-        body: { character: data!.character.value, preset: voice.name, ...(withGender ? { gender: voice.gender } : {}), seen: data!.pending?.requestedAt ?? 0 },
+        body: { character: data!.character.value, preset: voice.key, ...(withGender ? { gender: voice.gender } : {}), seen: data!.pending?.requestedAt ?? 0 },
       }),
     onSuccess: ({ requestedAt, elsewhere }, { voice, withGender }) => {
       // Dòng nhân vật hiện "Chờ áp dụng" ngay (store.pending_voices), không đợi lần làm mới sau 60 giây.
@@ -310,11 +312,11 @@ export function VoicePicker({
                 ) : null}
                 <ul className="space-y-1">
             {group.voices.map((voice) => (
-              <li key={voice.name} className={cn("flex items-center gap-3 rounded-xl px-2 py-2", voice.current ? "bg-accent-soft" : "hover:bg-hover")}>
+              <li key={voice.key} className={cn("flex items-center gap-3 rounded-xl px-2 py-2", voice.current ? "bg-accent-soft" : "hover:bg-hover")}>
                 <PreviewButton voice={voice} />
                 {data.tryLine &&
-                  tryVoice.button({ character: data.character.value, preset: voice.name }, voice.name, {
-                    fallbackUrl: voice.preview ? urls.voice(voice.name) : undefined,
+                  tryVoice.button({ character: data.character.value, preset: voice.key }, voice.name, {
+                    fallbackUrl: voice.preview ? urls.voice(voice.key) : undefined,
                     compact: true,
                     disabled: !voice.installed,
                   })}
