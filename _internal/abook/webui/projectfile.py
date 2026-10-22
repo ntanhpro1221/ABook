@@ -397,8 +397,11 @@ def _seal(out: Path, files: dict[str, Path | bytes], book: dict[str, Any] | None
             def during(name: str, inside: int) -> None:  # giữa một file audio lớn: báo + cho Huỷ
                 progress("write", written - described[name]["size"] + inside, total)
 
-            bookfile.write_entries(archive, stored, order=_order, stored_suffixes=_STORED, before=before,
-                                   during=None if progress is None else during)
+            try:  # nguồn đổi giữa lúc băm và lúc chép (đổi bìa...): từ chối công bố, giữ file xuất cũ (soát a99 V1)
+                bookfile.write_entries(archive, stored, order=_order, stored_suffixes=_STORED, before=before,
+                                       during=None if progress is None else during, expected=described)
+            except bookfile.BookFileError as exc:
+                raise ProjectFileError(str(exc)) from exc
             if progress is not None:
                 progress("write", total, total)
         with temporary.open("rb+") as handle:

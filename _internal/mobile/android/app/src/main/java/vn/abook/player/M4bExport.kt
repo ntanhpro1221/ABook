@@ -57,13 +57,14 @@ object M4bExport {
     /**
      * Làm file M4B của `plan` ghi vào `out` (người gọi mở và đóng; hỏng hay dừng giữa chừng thì người gọi xoá phần dở). `work` là file
      * trung gian, luôn xoá khi xong. `progress` như [AudioEncoder.encode]; `stopped` được hỏi suốt lúc mã hoá và lúc chép.
+     * `tagTitle`: tên ghi ở thẻ tên bài thay tên sách (file MỘT chương của [Mp3Export.runMixed]: tên sách xuống thẻ album).
      */
     fun run(plan: Mp3Export.Plan, work: File, out: OutputStream, encoder: AudioEncoder, progress: (Int, Int, Double) -> Unit = { _, _, _ -> },
-            stopped: () -> Boolean = { false }): Result {
+            stopped: () -> Boolean = { false }, tagTitle: String? = null): Result {
         try {
             val marks = encoder.encode(plan, work, stopped, progress)
             val counted = Counting(out)
-            Mp4Finish.finish(work, counted, Mp4Finish.Tags(plan.title, plan.narrator, plan.cover, plan.music?.credits(plan.chapters.map { it.id }).orEmpty()), marks, encoder.delay, stopped)
+            Mp4Finish.finish(work, counted, Mp4Finish.Tags(tagTitle ?: plan.title, plan.narrator, plan.cover, plan.music?.credits(plan.chapters.map { it.id }).orEmpty(), album = if (tagTitle != null) plan.title else null), marks, encoder.delay, stopped)
             counted.flush()
             progress(plan.chapters.size, plan.chapters.size, 1.0)
             return Result(fileName(plan.title), counted.written, marks.size, plan.chaptersTotal)

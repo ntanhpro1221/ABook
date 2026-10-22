@@ -612,6 +612,13 @@ export function App() {
                               <>
                                 {/* Sách chỉ có chữ (EPUB / TXT) thành sách nói: giọng của máy đọc cả cuốn rồi ghép file. */}
                                 {book.stage === "text" && <AudiobookMenuItem book={book} />}
+                                {/* Sách nhận từ file `.abook` có audio: mang sang trình phát khác như trên điện thoại (soát a99 V4). */}
+                                {book.stage !== "text" && (
+                                  <>
+                                    <Mp3MenuItem book={book} />
+                                    <M4bMenuItem book={book} />
+                                  </>
+                                )}
                                 <RemoveImportedMenuItem book={book} />
                               </>
                             )

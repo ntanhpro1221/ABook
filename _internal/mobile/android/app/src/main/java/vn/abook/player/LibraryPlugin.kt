@@ -39,6 +39,7 @@ private const val SHARE_KEY = ShareService.SHARE_KEY
 
 /** Số file tối đa trong một lần chọn nhiều file của "Thêm sách từ file…" (mỗi file được chép vào thư mục tạm của app trước khi xem trước). */
 private const val PICK_SOURCE_LIMIT = 40
+private const val HEAD_BYTES = 512 // đầu file đủ để thấy mục `mimetype` của gói (BookFileImport.looksLikeBookFile)
 
 /** Số file tối đa trong một lượt nhập "Nhạc của tôi" (server.MY_MUSIC_IMPORT_LIMIT). */
 private const val MY_MUSIC_IMPORT_LIMIT = 500
@@ -186,8 +187,17 @@ class LibraryPlugin : Plugin() {
      */
     fun openFrom(uri: Uri, mime: String?) = io.execute {
         val type = mime ?: runCatching { context.contentResolver.getType(uri) }.getOrNull()
-        val name = TextImports.incomingName(type, displayName(uri) ?: uri.lastPathSegment)
+        val shown = displayName(uri) ?: uri.lastPathSegment
+        val name = TextImports.incomingName(type, shown)
         if (name == null) {
+            // Chia sẻ qua kiểu chung (octet-stream, zip): kiểm tên / đầu file trước khi nhập, file lạ thì nói rõ (soát a99 V6).
+            val refusal = TextImports.refuseShared(type, shown) {
+                runCatching { context.contentResolver.openInputStream(uri)?.use { input -> ByteArray(HEAD_BYTES).let { buffer -> buffer.copyOf(maxOf(0, input.read(buffer))) } } }.getOrNull()
+            }
+            if (refusal != null) {
+                notifyListeners("import", JSObject().put("error", refusal), true)
+                return@execute
+            }
             importFrom(uri)
             return@execute
         }
@@ -1353,9 +1363,11 @@ class LibraryPlugin : Plugin() {
         try {
             if (id == null) throw IllegalArgumentException("thiếu id")
             val project = savesAsProject(call, id)
-            val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn")
             val snapshot = ExportHistory.snapshot(Store.bookDir(id))
-            val written = out.use { BookDocumentWriter.write(Store.bookDir(id), it, project) }
+            // Gói dựng và kiểm trong file tạm trước, đích chỉ bị mở (và cắt) sau đó; chép hỏng giữa chừng thì bản lưu trước được trả lại (BookSave, soát a99 C2).
+            val written = BookSave.save(Store.bookDir(id), File(context.cacheDir, "save"), project,
+                previous = { runCatching { context.contentResolver.openInputStream(uri) }.getOrNull() },
+                open = { context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn") })
             ExportHistory.remember(Store.bookDir(id), if (project) "abookproj" else "abook", uri.toString(), snapshot)
             BookEdits.markSaved(Store.bookDir(id)) // "Save (N changes)" counts again from here
             if (!direct) rememberSave(id, project, uri)
@@ -1366,7 +1378,8 @@ class LibraryPlugin : Plugin() {
             }.getOrNull() ?: ""
             call.resolve(JSObject().put("saved", true).put("name", name).put("size", written.size).put("edits", written.edits))
         } catch (error: Exception) {
-            if (direct && id != null) {
+            // Gói dựng hỏng (thiếu file nguồn...) thì chỗ lưu không có lỗi: giữ chỗ nhớ, báo đúng lý do thay vì hỏi chỗ khác rồi hỏng y hệt.
+            if (direct && id != null && error !is BookDocumentWriter.Refused && error !is BookSave.Failed) {
                 savePlaces().edit().remove(id).apply()
                 activity.runOnUiThread { askSaveLocation(call, id, savesAsProject(call, id)) }
             } else fail(call, error, "không lưu được file")
@@ -1422,7 +1435,8 @@ class LibraryPlugin : Plugin() {
 
     /**
      * Xuất cuốn `bookId` thành thư mục MP3 như máy tính. Lần đầu (hay `pick`, hay thư mục cũ không còn ghi được) hỏi chỗ lưu bằng bộ
-     * chọn thư mục của hệ thống, rồi nhớ lại. `cover`: data URL PNG bìa giao diện tự vẽ, dùng khi sách không có bìa thật. Trả
+     * chọn thư mục của hệ thống, rồi nhớ lại. `cover`: data URL PNG bìa giao diện tự vẽ, dùng khi sách không có bìa thật. `music`: ô "Kèm nhạc nền" (mỗi
+     * chương ra file .m4a đã trộn nhạc vì máy không có bộ mã hoá MP3 - [Mp3Export.runMixed]). Trả
      * {started, run, folder, chapters} - tiến độ và kết quả đến qua sự kiện "mp3Export" mang `run` - hay {started: false} khi huỷ chọn.
      */
     @PluginMethod
@@ -1455,7 +1469,7 @@ class LibraryPlugin : Plugin() {
         val coverFile = drawn?.let { bytes ->
             File(context.cacheDir, "mp3-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
         }
-        val run = Mp3Exports.start(context, id, tree, coverFile, selected)
+        val run = Mp3Exports.start(context, id, tree, coverFile, selected, call.getBoolean("music", false) == true)
         call.resolve(JSObject().put("started", true).put("run", run).put("folder", "$treeName/${Mp3Export.folderName(plan.title)}")
             .put("chapters", plan.chapters.size))
     }
