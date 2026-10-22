@@ -26,6 +26,17 @@ class ExportStopTest {
     }
 
     @Test
+    fun stop_markers_are_dropped_only_once_work_manager_has_forgotten_the_work() {
+        val live = java.util.UUID.randomUUID()
+        val gone = java.util.UUID.randomUUID()
+        val keys = listOf("cancel:$live", "cancel:$gone", "cancel:not-a-uuid", "other")
+        org.junit.Assert.assertEquals(
+            listOf("cancel:$gone", "cancel:not-a-uuid", "other"),
+            ExportCancellation.staleKeys(keys) { it == live },
+        )
+    }
+
+    @Test
     fun only_the_listener_or_the_app_cancelling_is_a_real_stop() {
         assertTrue(Mp3Exports.stoppedBySystem(34, WorkInfo.STOP_REASON_CANCELLED_BY_APP))
         assertTrue("không rõ lý do: giữ tài nguyên", Mp3Exports.stoppedBySystem(34, WorkInfo.STOP_REASON_UNKNOWN))
