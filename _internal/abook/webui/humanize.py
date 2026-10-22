@@ -98,6 +98,10 @@ def status_label(phase: str, stage: str, *, active: bool) -> str:
     return f"Đang {doing}" if active else f"Tạm ngưng lúc {doing}"
 
 
+# Đã bấm "Dừng": worker còn chạy tới checkpoint sạch kế, chưa dừng hẳn.
+STOPPING_LABEL = "Đang dừng…"
+
+
 def pause_label(reason: str, *, reached: bool) -> str:
     """Nhãn trạng thái khi cuốn đang tạm dừng (power_source). Chưa tới checkpoint thì dây chuyền còn làm nốt việc dở."""
     if not reached:

@@ -32,6 +32,17 @@ describe("friendlyError", () => {
     expect(friendlySetupError("Đã dừng - bấm Cài tiếp để làm tiếp từ bước dở.")).toEqual({ summary: "Đã dừng - bấm Cài tiếp để làm tiếp từ bước dở.", detail: "" });
   });
 
+  it("phân tích bị ngắt: lời khuyên chỉ nút chính 'Làm lại phân tích từ đầu', không bảo bấm Tiếp tục (a88 T3)", () => {
+    for (const raw of ["RuntimeError: CUDA out of memory", "httpx.ConnectError: actively refused it", "OSError: [Errno 28] No space left on device", "KeyError: 'x'"]) {
+      expect(friendlyError(raw).hint).toMatch(/[Bb]ấm Tiếp tục/);
+      for (const studio of [false, true]) {
+        const redo = friendlyError(raw, studio, true).hint;
+        expect(redo).not.toMatch(/[Bb]ấm Tiếp tục/);
+        expect(redo).toMatch(/Làm lại phân tích từ đầu/);
+      }
+    }
+  });
+
   it("lỗi lạ: câu chung, nguyên văn chỉ nằm ở chi tiết", () => {
     const shown = friendlyError("  KeyError: 'speaker'  ");
     expect(shown.summary).toBe("Có lỗi khi làm sách.");
