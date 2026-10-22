@@ -65,6 +65,31 @@ class MusicDownloadCheckTest {
     }
 
     @Test
+    fun truncatedAndEmptyResponsesAreNotCachedAndTheNextDownloadRetries() {
+        for ((name, body, length) in listOf(
+            Triple("truncated", good.copyOf(1000), good.size.toLong()),
+            Triple("empty-sized", byteArrayOf(), 0L),
+            Triple("empty-unknown", byteArrayOf(), -1L),
+        )) {
+            var now = 1_000_000L
+            var calls = 0
+            val catalog = MusicCatalog(File(root, name), "https://catalog/", clock = { now }, open = {
+                calls++
+                val bytes = if (calls == 1) body else good
+                if (calls == 1 && length >= 0) MusicCatalog.Sized(ByteArrayInputStream(bytes), length)
+                else ByteArrayInputStream(bytes)
+            }, publicKey = CatalogSigning.publicKey)
+            val first = runCatching { catalog.download(link, null) }
+            assertTrue("$name: không nhận file hỏng", first.getOrNull() == null)
+            assertNull("$name: cache không có bài hỏng", catalog.cached(link))
+            assertTrue("$name: không giữ file hay .part", File(root, "$name/files").listFiles().orEmpty().isEmpty())
+            now += MusicCatalog.HOST_REST_MS + 1
+            assertEquals("$name: tải lại đủ bài", good.size.toLong(), catalog.download(link, null)!!.length())
+            assertEquals("$name: phải gọi nguồn lại", 2, calls)
+        }
+    }
+
+    @Test
     fun aMirrorIsUsedWhenTheOriginalIsWrong() {
         val mirror = "https://mirror/calm.mp3"
         val catalog = catalog({ url -> ByteArrayInputStream(if (url == link) good.copyOf(100) else good) })
