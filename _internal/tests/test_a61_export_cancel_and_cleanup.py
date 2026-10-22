@@ -135,6 +135,67 @@ def test_export_m4b_stops_at_every_step_and_cleans_its_scratch(tmp_path: Path, m
     assert (len(measured) == 0) if when in ("feed", "peaks") else (len(measured) == 2)
 
 
+def test_cancel_after_mux_finishes_never_publishes_m4b(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project, _tracks = _studio_book(tmp_path)
+    flag = threading.Event()
+    real = export.run_hidden
+
+    def finish_then_cancel(command, **kwargs):
+        result = real(command, **kwargs)
+        if "-brand" in command:
+            flag.set()
+        return result
+
+    monkeypatch.setattr(export, "run_hidden", finish_then_cancel)
+    # Cũng theo dõi helper mới khi lượt ghép được tách ra để có thể ngắt subprocess.
+    if hasattr(export, "_run_mux"):
+        real_mux = export._run_mux
+
+        def mux(*args, **kwargs):
+            result = real_mux(*args, **kwargs)
+            flag.set()
+            return result
+
+        monkeypatch.setattr(export, "_run_mux", mux)
+    with pytest.raises(export_jobs.Cancelled):
+        export.export_m4b(project, tmp_path / "xuat", cancelled=flag.is_set)
+    assert _leftovers(tmp_path / "xuat") == []
+
+
+def test_mux_cancellation_terminates_and_reaps_process(monkeypatch: pytest.MonkeyPatch) -> None:
+    import subprocess
+
+    flag = threading.Event()
+
+    class Child:
+        returncode = None
+        terminated = False
+        reaped = False
+
+        def wait(self, timeout=None):
+            if self.returncode is None:
+                flag.set()
+                raise subprocess.TimeoutExpired("ffmpeg", timeout)
+            self.reaped = True
+            return self.returncode
+
+        def poll(self):
+            return self.returncode
+
+        def terminate(self):
+            self.terminated = True
+            self.returncode = -1
+
+        def kill(self):
+            self.returncode = -9
+
+    child = Child()
+    monkeypatch.setattr(export.subprocess, "Popen", lambda *args, **kwargs: child)
+    with pytest.raises(export_jobs.Cancelled):
+        export._run_mux(["ffmpeg"], flag.is_set)
+    assert child.terminated and child.reaped
+
+
 # ---- MP3: Huỷ cùng cơ chế -----------------------------------------------------------------------------------------------------
 
 def test_cancelling_an_mp3_export_removes_the_half_written_folder(tmp_path: Path) -> None:

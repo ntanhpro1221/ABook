@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { AlertTriangle, Check, Clock, Ear, FileText, ListMusic, Loader2, PenLine, Play, RotateCcw, ShieldCheck, Square, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ type Kind = "failed" | "unverified" | "name-low" | "text-low" | "name" | "text";
 interface ReviewItem {
   segmentId: number;
   stableId: string;
+  audioSha256: string;
   chapterId: number;
   chapterTitle: string;
   text: string;
@@ -60,6 +61,8 @@ interface ReviewView {
   pending: number;
   redoChapters: number[];
   items: ReviewItem[];
+  nextCursor: string | null;
+  remaining: number;
 }
 
 const KIND_LABEL: Record<Kind, string> = {
@@ -379,16 +382,22 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     return () => window.removeEventListener("keydown", onKey);
   }, [continuous, clip]);
   const unrecorded = notRecordedYet(useCachedBook(bookId).data?.book.segments);
-  const { data, isLoading } = useQuery({
-    queryKey: ["review", bookId, showMinor],
-    queryFn: () => api<ReviewView>(`/api/books/${bookId}/review${showMinor ? "?all=1" : ""}`),
+  const { data: pages, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+    queryKey: ["review", bookId, showMinor, filter],
+    initialPageParam: "",
+    queryFn: ({ pageParam }) => {
+      const query = new URLSearchParams({ filter, ...(showMinor ? { all: "1" } : {}), ...(pageParam ? { cursor: pageParam } : {}) });
+      return api<ReviewView>(`/api/books/${bookId}/review?${query}`);
+    },
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
+  const data = pages && { ...pages.pages[0], items: pages.pages.flatMap((page) => page.items) };
   const verdict = useMutation({
     // `seen`: phán quyết màn này đang thấy cho câu - máy/cửa sổ khác vừa quyết khác thì hỏi giữ của mình hay lấy của máy kia (soát a27 lỗi 4).
-    mutationFn: (body: { stableId: string; chapterId: number; verdict: ReviewItem["verdict"]; seen: ReviewItem["verdict"] }) =>
+    mutationFn: (body: { stableId: string; chapterId: number; audioSha256: string; verdict: ReviewItem["verdict"]; seen: ReviewItem["verdict"] }) =>
       api<{ elsewhere?: Record<string, string> }>(`/api/books/${bookId}/review`, {
         method: "POST",
-        body: { stableId: body.stableId, chapterId: body.chapterId, verdict: body.verdict, seen: { [body.stableId]: body.seen ?? "" } },
+        body: { stableId: body.stableId, chapterId: body.chapterId, audioSha256: body.audioSha256, verdict: body.verdict, seen: { [body.stableId]: body.seen ?? "" } },
       }),
     onSuccess: ({ elsewhere }, body) => {
       const theirs = elsewhere?.[body.stableId];
@@ -396,18 +405,21 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       warnElsewhere(1, verdictWord(theirs), () =>
         void api(`/api/books/${bookId}/review`, {
           method: "POST",
-          body: { stableId: body.stableId, chapterId: body.chapterId, verdict: theirs || null },
+          body: { stableId: body.stableId, chapterId: body.chapterId, audioSha256: body.audioSha256, verdict: theirs || null },
         }).finally(() => void client.invalidateQueries({ queryKey: ["review", bookId] })),
       );
     },
     onMutate: async (body) => {
       // Cập nhật ngay trên màn hình; hỏi lại máy chủ sau.
-      const key = ["review", bookId, showMinor];
-      const previous = client.getQueryData<ReviewView>(key);
+      const key = ["review", bookId, showMinor, filter];
+      await client.cancelQueries({ queryKey: key });
+      const previous = client.getQueryData<InfiniteData<ReviewView>>(key);
       if (previous) {
-        client.setQueryData<ReviewView>(key, {
+        client.setQueryData<InfiniteData<ReviewView>>(key, {
           ...previous,
-          items: previous.items.map((item) => (item.stableId === body.stableId ? { ...item, verdict: body.verdict } : item)),
+          pages: previous.pages.map((page) => ({ ...page,
+            items: page.items.map((item) => (item.stableId === body.stableId ? { ...item, verdict: body.verdict } : item)),
+          })),
         });
       }
     },
@@ -417,6 +429,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       void client.invalidateQueries({ queryKey: ["book", bookId] });
       void client.invalidateQueries({ queryKey: ["library"] });
     },
+    onError: (error: Error) => toast.error("Chưa ghi được phán quyết nghe", { description: error.message }),
   });
 
   const refresh = () => {
@@ -432,7 +445,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     // Câu vừa phán rời danh sách đang lọc: đưa tiêu điểm sang câu kế (hay câu trước), đừng để nó rơi về đầu trang.
     const leaves = filter === "todo" ? value !== null : value === null;
     if (leaves) setFocusAfter((items[index + 1] ?? items[index - 1])?.stableId ?? EMPTY);
-    verdict.mutate({ stableId: item.stableId, chapterId: item.chapterId, verdict: value, seen: item.verdict });
+    verdict.mutate({ stableId: item.stableId, chapterId: item.chapterId, audioSha256: item.audioSha256, verdict: value, seen: item.verdict });
   };
   const minor = (data.counts.name ?? 0) + (data.counts.text ?? 0);
   live.current = { items, judge };
@@ -513,6 +526,11 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
               : "Nghe một câu rồi bấm Ổn hoặc Cần thu lại."}
           </EmptyState>
         </div>
+      )}
+      {hasNextPage && (
+        <Button className="mt-4" variant="secondary" disabled={isFetchingNextPage} onClick={() => void fetchNextPage()}>
+          {isFetchingNextPage ? "Đang tải…" : `Tải tiếp · còn ${pages?.pages.at(-1)?.remaining ?? 0} câu`}
+        </Button>
       )}
       {minor > 0 && (
         <button type="button" onClick={() => setShowMinor((value) => !value)} className="touch-row mt-4 text-sm font-medium text-fg-2 hover:text-fg">

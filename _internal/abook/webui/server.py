@@ -2820,7 +2820,11 @@ class App:
         giúp lần mở sau tiếp tục khi dọn chưa xong."""
         deadline = time.monotonic() + CLOSE_SECONDS
         # Đang gói dự án / xuất M4B / MP3: dừng ở file / khúc kế, dọn file tạm và bản xuất dở - bảo dừng ngay, chờ ở cuối.
-        stopping = [*self.projectfile_jobs.stop_all(), *self.m4b_jobs.stop_all(), *self.mp3_jobs.stop_all()]
+        # Xuất .abook đang trộn nhạc nền: huỷ lượt trộn trước, rồi bảo mọi lượt xuất dừng cùng lúc.
+        for key, _state in self.bookfile_jobs.running():
+            self.cancel_music_export(self.music_key(Path(key)))
+        stopping = [*self.projectfile_jobs.stop_all(), *self.m4b_jobs.stop_all(), *self.mp3_jobs.stop_all(),
+                    *self.bookfile_jobs.stop_all()]
         self._trash_sweeper.cancel()
         # Hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác - trừ cuốn Thùng rác không nhận trọn (Windows sẽ hỏi
         # "xoá hẳn", mà đóng app không được chờ ai bấm): nó ở lại chỗ chờ tới lần mở sau.
@@ -4131,7 +4135,7 @@ class Handler(BaseHTTPRequestHandler):
     def _bookfile_packer(self, value: str, progress: Callable[[str, int, int], None] | None = None) -> Callable[[], dict[str, Any]]:
         """Đọc yêu cầu xuất `.abook` (thuộc luồng yêu cầu: thân, `target`, các phần của bộ) và trả việc đóng gói chưa chạy: gọi nó
         thì ghi file, trả {file, folder, size...} và ghi nhớ thư mục cho "Mở thư mục". Lỗi đóng gói/đầu vào ném ApiError 409.
-        `progress(pha, đã, tổng)` (bookfile.pack): tiến độ của một cuốn - cả bộ thì không (mỗi phần đếm lại từ đầu)."""
+        `progress(pha, đã, tổng)` (bookfile.pack): tiến độ đóng gói; bộ mỗi phần một file thì đếm lại ở mỗi phần."""
         # Một cuốn trong một file (bookfile.py) - mở bằng app ở máy khác, gửi cho người khác. Cả bộ: `single` (mặc định của
         # giao diện) gộp mọi phần vào MỘT file phiên bản 3 (bookfile.pack_series); không thì mỗi phần một file trong thư
         # mục bộ - cần khi thẻ nhớ / USB FAT32 không chứa nổi file trên 4 GiB.
@@ -4149,7 +4153,7 @@ class Handler(BaseHTTPRequestHandler):
                 with app.music_exporting(app.music_key(project), parts or [project]) as music:
                     def pack(part: Path, folder: Path, name: str) -> dict[str, Any]:
                         path = bookfile.pack(part, free_path(folder / bookfile.default_name(name)), music_track=music,
-                                             progress=progress if parts is None else None)
+                                             progress=progress)
                         return {"file": str(path), "size": path.stat().st_size}
 
                     if parts is None:
@@ -4157,7 +4161,7 @@ class Handler(BaseHTTPRequestHandler):
                         result = {**path, "folder": str(Path(path["file"]).parent)}
                     elif single:
                         result = export_series_file(parts, root, lambda listed, file: bookfile.pack_series(
-                            listed, file, music_track=music))
+                            listed, file, music_track=music, progress=progress))
                     else:
                         result = export_series(parts, root, pack)
                         result["size"] = sum(part["size"] for part in result["parts"])
@@ -4198,6 +4202,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_bookfile_job(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.export_job_status(self.app.bookfile_jobs, value))
+
+    def post_bookfile_job_cancel(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._mutating()
+        project = self.app._book(value)
+        self.app.bookfile_jobs.cancel(str(project))
+        self.app.cancel_music_export(self.app.music_key(project))
+        self._send_json(HTTPStatus.OK, self.app.bookfile_jobs.status(str(project)))
 
     def post_m4b_job(self, _query: dict[str, list[str]], value: str) -> None:
         # Cả cuốn thành một file `.m4b` có mục lục chương (export.export_m4b) - việc nền như "Xuất file sách": giải mã và mã
@@ -4433,7 +4444,13 @@ class Handler(BaseHTTPRequestHandler):
     def get_review(self, query: dict[str, list[str]], value: str) -> None:
         project = self.app._book(value)
         verdicts = self.app.reviews.get(project)
-        self._send_json(HTTPStatus.OK, review_view(project, verdicts, include_minor=query.get("all") == ["1"]))
+        try:
+            view = review_view(project, verdicts, include_minor=query.get("all") == ["1"],
+                               filter=(query.get("filter") or ["all"])[0], cursor=(query.get("cursor") or [""])[0],
+                               limit=int((query.get("limit") or ["600"])[0]))
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self._send_json(HTTPStatus.OK, view)
 
     def _view(self, value: str, name: str, make: Callable[[Path], Any]) -> Any:
         """Một màn chỉ đọc của xưởng: dự án có xưởng trên máy này thì tính từ sổ dự án; cuốn nhập từ `.abookproj` thì đọc bản chụp
@@ -4805,7 +4822,7 @@ class Handler(BaseHTTPRequestHandler):
         # Một câu ("Ai nói câu này") hay cả nhóm câu của một vai phụ; cả nhóm được nhận hoặc cả nhóm bị từ chối.
         raw_lines = body.get("lines") if isinstance(body.get("lines"), list) else [body]
         lines = [(str(line.get("stableId", "")).strip()[:120], str(line.get("textSha256", "")).strip()[:64])
-                 for line in raw_lines[:2000] if isinstance(line, dict)]
+                 for line in raw_lines if isinstance(line, dict)]
         if body.get("withdraw"):
             self._withdraw(path, "speakers", [stable_id for stable_id, _sha in lines if stable_id], body)
             return
@@ -5049,7 +5066,10 @@ class Handler(BaseHTTPRequestHandler):
         chapter_id = int(body.get("chapterId", 0))
         asked_count = 0
         for stable_id in stable_ids:
-            self.app.reviews.set(project, stable_id, verdict, chapter_id)
+            try:
+                self.app.reviews.set(project, stable_id, verdict, chapter_id, audio_sha256=body.get("audioSha256"))
+            except ValueError as error:
+                raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
             # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
             # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.
             text_sha256 = store.segment_text_sha256(project, stable_id)
@@ -6153,6 +6173,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/bookfile"), Handler.post_bookfile),
     ("POST", re.compile(BOOK + r"/bookfile-job"), Handler.post_bookfile_job),
     ("GET", re.compile(BOOK + r"/bookfile-job"), Handler.get_bookfile_job),
+    ("POST", re.compile(BOOK + r"/bookfile-job/cancel"), Handler.post_bookfile_job_cancel),
     ("POST", re.compile(BOOK + r"/m4b-job"), Handler.post_m4b_job),
     ("GET", re.compile(BOOK + r"/m4b-job"), Handler.get_m4b_job),
     ("POST", re.compile(BOOK + r"/m4b-job/cancel"), Handler.post_m4b_job_cancel),
