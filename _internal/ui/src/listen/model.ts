@@ -210,9 +210,11 @@ export function seriesOf(title: string): SeriesPlace {
 }
 
 /** Cuốn kế (`next`, useNextVolume) là PHẦN sau của cùng cuốn ("Làm tiếp cuốn này"): hết phần này là nghe nối sang nó - trả nó.
- *  Tập khác của một bộ ("Tập 17") chỉ được mời, không tự nghe: null (soát a26 L1). */
+ *  Quyết định theo quan hệ THẬT: có liên kết chuỗi (`series`, continues.json) thì là phần nối tiếp dù đã đổi tên; chỉ khi không có liên
+ *  kết (sách nhập từ file, máy chủ cũ) mới đoán từ hậu tố "Phần N" của tên. Tập khác của một bộ ("Tập 17") chỉ được mời, không tự nghe:
+ *  null (soát a26 L1, a97 V3). */
 export function continuingPart(next: ListenBook | null | undefined): ListenBook | null {
-  return next && seriesOf(next.title).unit === "phần" ? next : null;
+  return next && (next.series || seriesOf(next.title).unit === "phần") ? next : null;
 }
 
 /** Hết một phần (`atEnd` "finished") mà có phần sau để nghe nối (continuingPart): trả phần ấy. */
