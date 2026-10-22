@@ -9,8 +9,8 @@ import { formatSize } from "@/studio/musicLocal";
  * nguyên vẹn (base64): bảng mã do dây chuyền nhận, như với file trên máy.
  */
 
-/** Trần mỗi file của máy tính (webui/actions.MAX_SOURCE_UPLOAD): kiểm trước khi gửi, khỏi chờ gửi xong mới bị từ chối. */
-export const UPLOAD_LIMIT = 8 * 1024 * 1024;
+/** Trần mỗi file của máy tính (webui/actions.MAX_SOURCE_UPLOAD): kiểm trước khi gửi, khỏi chờ gửi xong mới bị từ chối. Đủ cho cả cuốn trong một file TXT / EPUB. */
+export const UPLOAD_LIMIT = 40 * 1024 * 1024;
 const LIMIT_MB = UPLOAD_LIMIT / 2 ** 20;
 const ACCEPTED = /\.(txt|epub|docx|pdf)$/i;
 export const UPLOAD_ACCEPT =
@@ -106,7 +106,9 @@ function listed(names: string[]): string {
 export function planNotice(plan: UploadPlan<Picked>): string | null {
   const lines = [
     plan.rejected.length ? `${listed(plan.rejected)} không phải file truyện - chỉ nhận .txt, .epub, .docx, .pdf.` : "",
-    plan.tooBig.length ? `${listed(plan.tooBig)} lớn hơn ${LIMIT_MB} MB - máy tính chỉ nhận file tới ${LIMIT_MB} MB.` : "",
+    plan.tooBig.length
+      ? `${listed(plan.tooBig)} lớn hơn ${LIMIT_MB} MB nên không gửi qua mạng được. Bạn hãy tách thành vài file nhỏ hơn rồi gửi lại, hoặc chép file vào máy tính rồi mở nó ngay trên máy tính.`
+      : "",
   ].filter(Boolean);
   return lines.length ? lines.join(" ") : null;
 }

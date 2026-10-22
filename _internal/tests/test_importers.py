@@ -434,8 +434,9 @@ def test_extract_writes_studio_chapter_files_once_and_reuses_them(tmp_path: Path
     folder, info = importers.extract(FIXTURES / "epub3.epub", tmp_path / "lib")
     assert info["title"] == "Chuyến phà cuối ngày" and info["cover"] == "cover.png" and (folder / "cover.png").is_file()
     names = sorted(path.name for path in folder.glob("*.txt"))
-    assert names == ["0001 Chương 1 Bến phà lúc bình minh.txt", "0002 Chương 2 Người khách lạ.txt", "0003 Chương 3.txt"]
-    first = (folder / names[0]).read_text(encoding="utf-8")
+    assert names == ["0001 Chuyến phà cuối ngày.txt", "0002 Chương 1 Bến phà lúc bình minh.txt", "0003 Chương 2 Người khách lạ.txt", "0004 Chương 3.txt"]
+    assert list(info["matter"]) == [names[0]], "trang tên sách có file nhưng chưa tích (Chapter.matter / short)"
+    first = (folder / names[1]).read_text(encoding="utf-8")
     assert first.startswith("Chương 1: Bến phà lúc bình minh\n\nSương còn phủ kín")
     again, same = importers.extract(FIXTURES / "epub3.epub", tmp_path / "lib")
     assert again == folder and same == info and len(list((tmp_path / "lib").iterdir())) == 1

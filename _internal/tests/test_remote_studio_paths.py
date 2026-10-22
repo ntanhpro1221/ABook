@@ -383,10 +383,11 @@ def test_a_remote_epub_is_unpacked_inside_the_upload_folder_so_its_chapters_can_
     (Path(app.preferences.get()["libraryRoot"]) / "Nguồn tải lên" / "Lần gửi e1" / "truyen.epub").write_bytes(epub.read_bytes())
     status, data, _ = _sync_request(port, "POST", "/api/scan", headers=cookie, body={"paths": [sent["path"]]})
     scan = json.loads(data)
-    assert status == 200 and len(scan["files"]) == 2 and scan["errors"] == [], data
+    assert status == 200 and len(scan["files"]) == 3 and scan["errors"] == [], data
+    assert [bool(row.get("matter")) for row in scan["files"]] == [True, False, False], "bìa ngắn có trong danh sách nhưng chưa tích"
     assert _leaks(data, [str(tmp_path), str(Path(app.preferences.get()["libraryRoot"]))]) == []
     assert all(remote_sources.parse(row["path"]) for row in scan["files"])
-    status, data, _ = _sync_request(port, "POST", "/api/books", headers=cookie, body={"paths": [row["path"] for row in scan["files"]], "title": "EPUB từ xa"})
+    status, data, _ = _sync_request(port, "POST", "/api/books", headers=cookie, body={"paths": [row["path"] for row in scan["files"] if not row.get("matter")], "title": "EPUB từ xa"})
     assert status == 201, data
 
 
