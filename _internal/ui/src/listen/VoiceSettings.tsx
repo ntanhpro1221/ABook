@@ -269,18 +269,20 @@ export function VoiceSettings({ api, deviceHint, modules, storage }: { api: Voic
           // giọng mặc định nằm ở nhóm khác). Nút "Thử giọng" chỉ vào vòng Tab ở đúng giọng ấy - 27 giọng không thành 27 điểm Tab.
           const ids = voiceSections(list).flatMap((section) => section.voices.map(({ voice }) => voice.id));
           return (
-            <div
-              key={provider}
-              role="radiogroup"
-              aria-label={title}
-              onKeyDown={radioGroupKeys(ids, current?.id ?? "", (id) => {
-                chooseDefaultVoice(id);
-                setChosen(id);
-              })}
-            >
+            <div key={provider}>
               <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</div>
+              {/* Thẻ tải giọng và dòng gợi ý đứng NGOÀI nhóm radio: nhóm giọng rỗng không được nhận phím của thẻ tốc độ nằm trong nó (soát a100 V1). */}
               {!list.length && modulesInDevice && <div className="mt-2 grid gap-5">{modules?.(() => void load())}</div>}
               {!list.length && <p className={cn("text-pretty", modulesInDevice ? "mt-3 text-xs text-fg-3" : "py-1 text-[0.8125rem] text-fg-2")}>{deviceHint}</p>}
+              {list.length > 0 && (
+              <div
+                role="radiogroup"
+                aria-label={title}
+                onKeyDown={radioGroupKeys(ids, current?.id ?? "", (id) => {
+                  chooseDefaultVoice(id);
+                  setChosen(id);
+                })}
+              >
               {voiceSections(list).map((section) => (
                 <div key={section.label ?? ""}>
                   {section.label && <div className="mb-0.5 mt-2 text-[0.8125rem] font-medium text-fg-2">{section.label}</div>}
@@ -332,6 +334,8 @@ export function VoiceSettings({ api, deviceHint, modules, storage }: { api: Voic
                   </ul>
                 </div>
               ))}
+              </div>
+              )}
               {notice && list.length > 0 && <p className="mt-1 text-xs text-fg-2 text-pretty">{notice}</p>}
             </div>
           );
