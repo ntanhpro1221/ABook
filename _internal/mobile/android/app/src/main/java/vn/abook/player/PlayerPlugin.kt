@@ -44,7 +44,6 @@ class PlayerPlugin : Plugin() {
     private var controller: ListenableFuture<MediaController>? = null
     private val listener: (JSONObject) -> Unit = { state ->
         notifyListeners("state", JSObject.fromJSONObject(state))
-        if (state.optString("kind") == "sleep") PlaybackService.instance?.refreshButtons()
     }
 
     override fun load() {
@@ -99,7 +98,7 @@ class PlayerPlugin : Plugin() {
         }
     }
 
-    /** Quyền hiện thông báo (Android 13+): "granted" (hay máy cũ không cần), "off" (chưa cho: khay thông báo / màn khoá không có nút tạm dừng, tua). */
+    /** Quyền hiện thông báo (Android 13+): "granted" (hay máy cũ không cần), "off" (chưa cho: không có thông báo sách xong / việc cần duyệt / xuất MP3; nút tạm dừng, tua của phiên media vẫn có - Android miễn quyền cho chúng). */
     @PluginMethod
     fun notificationAccess(call: PluginCall) {
         call.resolve(JSObject().put("state", if (needsNotificationPermission()) "off" else "granted"))
@@ -181,39 +180,19 @@ class PlayerPlugin : Plugin() {
 
     @PluginMethod
     fun configure(call: PluginCall) = act(call) {
-        call.getInt("sleepExtendMinutes")?.let { SleepTimer.extendMinutes = it }
-        call.getInt("sleepFadeSeconds")?.let { SleepTimer.fadeMs = it * 1000L }
-        call.getBoolean("shakeToExtend")?.let { SleepTimer.shakeEnabled = it }
-        call.getString("shakeAction")?.let { SleepTimer.shakeResets = it == "reset" }
-        call.getBoolean("headsetSkips")?.let { Playback.headsetSkips = it }
+        // Tuỳ chọn nghe mà Kotlin cần cả khi không có WebView (nút tai nghe, tự lùi, lắc / úp, lịch ngủ, số phút thêm, dừng an toàn): áp VÀ nhớ ở kho native.
+        ListenPrefs.apply(call.data)
         // `readAloudBook`: cuốn mà người nghe vừa đổi giọng (nhớ cho cuốn ấy); không có thì cuốn đang nạp.
         call.getString("readAloudVoice")?.let { ReadAloud.chooseFor(call.getString("readAloudBook") ?: Playback.bookId, it) }
         call.getString("readAloudDefault")?.let { ReadAloud.chooseDefault(it) }
         // Nhà cung cấp giọng trực tuyến người nghe đã đồng ý gửi chữ tới: lõi tự sang chương chữ chỉ khi giọng đang chọn đã được đồng ý.
         call.getArray("readAloudOnlineOk")?.let { list -> ReadAloud.allowOnline((0 until list.length()).map { list.optString(it) }) }
-        call.getBoolean("flipToPause")?.let {
-            Motion.flipEnabled = it
-            Motion.refresh()
-        }
-        call.getString("shakeSensitivity")?.let {
-            SleepTimer.shakeThresholdG = when (it) { "gentle" -> 1.6; "firm" -> 2.8; else -> 2.2 }
-        }
-        call.getDouble("safetyStopHours")?.let { SleepTimer.safetyStopHours = it }
-        if (call.data.has("schedule")) {
-            val schedule = call.getObject("schedule")
-            fun minutesOf(clock: String?) = clock?.split(":")?.let { (it[0].toIntOrNull() ?: 0) * 60 + (it.getOrNull(1)?.toIntOrNull() ?: 0) }
-            val from = minutesOf(schedule?.getString("from"))
-            val to = minutesOf(schedule?.getString("to"))
-            val planned = schedule?.getInteger("minutes")
-            SleepTimer.schedule = if (from != null && to != null && planned != null) Triple(from, to, planned) else null
-        }
         call.getBoolean("autoMusic")?.let {
             // Sách chữ đang nghe mà chưa chọn nhạc: bật / tắt "Tự chọn nhạc nền" đổi nhạc theo cảnh ngay, không đợi mở lại sách.
             if (it != Playlists.autoEnabled) MusicBed.invalidate(Playback.bookId)
             Playlists.autoEnabled = it
             MusicBed.rememberAuto(it)
         }
-        Playback.configure(call.getBoolean("autoRewind") ?: true)
     }
 
     @PluginMethod

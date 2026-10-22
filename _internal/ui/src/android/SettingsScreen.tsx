@@ -10,7 +10,7 @@ import { LocalVoiceModules, type VieneuBackend } from "@/listen/VieneuModuleCard
 import { VoiceSpeedSetting, type VoiceSpeedBackend } from "@/listen/VoiceSpeedSetting";
 import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { androidSource, phoneVieneu } from "./androidSource";
-import { notificationState, openNotificationSettings, type NotificationState } from "./notifications";
+import { NOTIFICATION_ROW_HINT, notificationState, openNotificationSettings, type NotificationState } from "./notifications";
 import { ReadAloud } from "./plugins";
 import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
 import { openRelease } from "./UpdateNotice";
@@ -77,7 +77,7 @@ function NotificationRow() {
   }, []);
   if (state === "granted") return null;
   return (
-    <Row label="Thông báo" hint="Khay thông báo và màn khoá chưa có nút tạm dừng, tua vì ABook chưa được phép hiện thông báo.">
+    <Row label="Thông báo" hint={NOTIFICATION_ROW_HINT}>
       <Button size="sm" onClick={() => void openNotificationSettings().catch(() => undefined)}>
         Mở cài đặt
       </Button>
