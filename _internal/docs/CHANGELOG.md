@@ -7,8 +7,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
-## [0.4.124] - 2026-10-22
-
 ### Sửa lỗi
 
 - Khi bạn bấm Dừng, sách hiện “Đang dừng…” và khoá nút Tạm dừng lẫn Dừng cho tới khi dừng hẳn; bấm Tạm dừng lúc ấy được báo đúng là sách đang dừng, không còn nói “không đang chạy”.
@@ -20,6 +18,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Hộp Dừng giữa lúc phân tích nói đúng: phần đã phân tích được giữ nguyên nhưng làm tiếp từ chỗ dừng có thể ra cuốn khác, và mời bạn bấm Tạm dừng; lời khuyên khi gặp lỗi chỉ đúng nút chính của trang (“Làm lại phân tích từ đầu” khi phân tích bị ngắt).
 - Cuốn xếp hàng sau một cuốn đang tạm dừng nói rõ vì sao chưa tới lượt và bạn cần làm gì.
 - Khi sách đang chạy, Windows không tự cho máy ngủ giữa chừng (làm Ollama treo); tạm dừng, dừng hay xong là máy được ngủ lại như thường.
+
+## [0.4.124] - 2026-10-22
+
+### Sửa lỗi
+
 - Khi bạn gỡ ABook, bộ gỡ đọc vị trí thư viện đã lưu và giữ cây chứa sách; app cũng ngăn bạn chọn thư viện trong các thư mục sẽ bị gỡ.
 - Khi bạn có cuốn đang chạy, khởi động hoặc tạm dừng, Studio yêu cầu chờ làm xong trước khi cập nhật để giữ nguyên lượt phân tích.
 - Khi bạn đổi tên bộ cài, lần nâng cấp giữa các bản có bộ gỡ mới vẫn nhận đúng chế độ nâng cấp và giữ Studio.
