@@ -3,6 +3,7 @@
 // việc nền chỉ chạy khi đang sạc, Wi-Fi). Phần thuần để thử riêng; nút ở VoiceMenu (PlayerViews.tsx).
 
 import type { ListenChapter } from "./model";
+import { onlineDestination } from "./onlineConsent";
 import type { ReadAloudVoice } from "./readAloud";
 import { formatSize } from "@/shared/format";
 import { splitParagraphs, withoutLines } from "./textScript";
@@ -113,9 +114,10 @@ export function canPrepare(voice: Pick<ReadAloudVoice, "provider" | "online">, o
 }
 
 /** Câu mời khi chưa có việc: nói đúng cái lợi người nghe nhận được với giọng này. */
-export function prepareIntro(voice: Pick<ReadAloudVoice, "online">): string {
+export function prepareIntro(voice: Pick<ReadAloudVoice, "online"> & Partial<Pick<ReadAloudVoice, "provider">>): string {
+  // Giọng trực tuyến: làm trước là gửi chữ các chương ấy đi - nói thẳng chữ đi đâu (soát a79 lỗi 6), không chỉ nói cái lợi.
   return voice.online
-    ? "Sắp không có mạng (tàu điện, máy bay)? Làm trước các chương tới để nghe được cả khi không có mạng."
+    ? `Sắp không có mạng (tàu điện, máy bay)? Làm trước các chương tới để nghe được cả khi không có mạng${voice.provider ? ` - chữ các chương này sẽ được gửi tới ${onlineDestination(voice.provider)} để đọc` : ""}.`
     : "Máy đọc chậm? Làm trước các chương tới ở nền để nghe liền mạch, không phải chờ giữa các đoạn.";
 }
 

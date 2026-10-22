@@ -88,6 +88,21 @@ class PrepareAheadTest {
     private fun job(chapters: List<PrepareChapter>, voice: String = "edge:vi-VN-HoaiMyNeural", chargingOnly: Boolean = true) =
         PrepareJob("j1", "book", voice, "3 chương tới", PreparePlan.online(voice), chapters, chapters.size, chapters.sumOf { it.paragraphs }, chargingOnly, 0L)
 
+    @Test
+    fun pinsBelongToTheBookOfTheCurrentJob() {
+        val field = PrepareAhead::class.java.getDeclaredField("job").apply { isAccessible = true }
+        val previous = field.get(null)
+        try {
+            field.set(null, job(listOf(chapter(1, 2, 42)))) // sách "book"
+            assertTrue("đổi cách đọc của cuốn đang làm trước: ghim của nó phải bỏ", PrepareAhead.pinsBelongTo("book"))
+            assertFalse("cuốn khác không đụng ghim", PrepareAhead.pinsBelongTo("other"))
+            field.set(null, null)
+            assertFalse(PrepareAhead.pinsBelongTo("book"))
+        } finally {
+            field.set(null, previous)
+        }
+    }
+
     // ---- chọn -------------------------------------------------------------------------------------------------------
 
     @Test

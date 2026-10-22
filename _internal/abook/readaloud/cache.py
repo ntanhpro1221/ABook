@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -23,6 +24,7 @@ LIMIT_BYTES = 500 * 1024 * 1024
 MAX_LIMIT_BYTES = 2 * 1024 * 1024 * 1024
 FREE_SHARE = 0.05
 TRIM_TO = 0.9  # vượt trần thì tỉa xuống còn chừng này phần trần
+STALE_PART_SECONDS = 10 * 60  # file `.part` (ghi dở) cũ hơn chừng này là của một lần ghi đã chết giữa chừng - bỏ (Android: ClipCache.kt `trim`)
 NAME = re.compile(r"[0-9a-f]{64}\.(mp3|wav)")
 CLIP_FILE = re.compile(r"[0-9a-f]{64}\.(json|mp3|wav)")
 TYPES = {"mp3": "audio/mpeg", "wav": "audio/wav"}
@@ -70,6 +72,7 @@ class ClipCache:
         self.limit = default_limit(self.folder) if limit is None else limit
         self._lock = threading.RLock()
         self._size: int | None = None
+        self._sweep_parts()  # tắt máy giữa lúc ghi để lại `.part` mồ côi: không được tính vào tổng nên `trim` không bao giờ thấy (soát a79 lỗi 9)
 
     def get(self, key: str) -> Cached | None:
         meta = self.folder / f"{key}.json"
@@ -164,12 +167,27 @@ class ClipCache:
         except OSError:
             return []
 
+    def _sweep_parts(self, now: float | None = None) -> None:
+        """Xoá file `.part` cũ hơn [STALE_PART_SECONDS]; file mới có thể là lần ghi đang chạy nên giữ."""
+        stamp = time.time() if now is None else now
+        try:
+            parts = [entry for entry in self.folder.iterdir() if entry.name.endswith(".part")]
+        except OSError:
+            return
+        for entry in parts:
+            try:
+                if stamp - entry.stat().st_mtime > STALE_PART_SECONDS:
+                    entry.unlink()
+            except OSError:
+                pass
+
     def trim(self) -> None:
         """Quá trần: bỏ clip lâu không dùng nhất cho tới khi còn <= TRIM_TO trần. Chưa quá trần thì không đụng tới đĩa (tổng đang chạy `_size`).
         Clip `<khoá>.json` + `<khoá>.mp3|wav`: thứ tự theo mtime của file JSON (trúng đệm ghi lại), chỉ stat - không đọc file nào."""
         with self._lock:
             if self.size() <= self.limit:
                 return
+            self._sweep_parts()
             target = int(self.limit * TRIM_TO)
             clips: dict[str, list[tuple[float, Path, int]]] = {}
             for entry in self._entries():

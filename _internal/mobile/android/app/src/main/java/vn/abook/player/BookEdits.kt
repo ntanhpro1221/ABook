@@ -601,8 +601,11 @@ object BookEdits {
         val ourReadings = local.optJSONObject("readings") ?: JSONObject()
         val theirReadings = incoming.optJSONObject("readings") ?: JSONObject()
         val readings = JSONObject()
-        for (word in names(theirReadings)) readings.put(word, theirReadings.opt(word))
-        for (word in names(ourReadings)) {
+        // Hợp vượt trần thì `parse` từ chối cả file và lớp sửa đọc ra rỗng: giữ hết của máy này, lấy thêm của file theo thứ tự chữ cho tới trần (như Python `merge_clashes`; soát a79 lỗi 12).
+        val ours = names(ourReadings).sortedWith { a, b -> byCodePoints(a, b) }.take(MAX_READINGS)
+        val theirs = names(theirReadings).filter { it !in ours }.sortedWith { a, b -> byCodePoints(a, b) }.take(MAX_READINGS - ours.size)
+        for (word in theirs) readings.put(word, theirReadings.opt(word))
+        for (word in ours) {
             readings.put(word, ourReadings.opt(word))
             if (theirReadings.has(word) && theirReadings.opt(word) != ourReadings.opt(word)) conflicts++
         }

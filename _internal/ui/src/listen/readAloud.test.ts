@@ -172,6 +172,15 @@ it("khôi phục đúng chữ sau khi cache và độ dài thật của các đo
   restarted.engine.stop();
 });
 
+it("vừa nạp chương, clip đầu chưa về: readingAnchor không ném (đóng sách / đổi chương lúc ấy vẫn lưu được) - soát a79 lỗi 4", async () => {
+  const s = setup();
+  s.engine.load(s.trackInfo, 0, false);
+  await flush();
+  expect(() => s.engine.readingAnchor).not.toThrow();
+  expect(s.engine.readingAnchor?.segment).toBe(0);
+  s.engine.stop();
+});
+
 describe("ước tính và đồng hồ ảo", () => {
   it("ước ~14 ký tự mỗi giây, đoạn không có chữ không tốn thời gian", () => {
     expect(isSpeakable("* * *")).toBe(false);
