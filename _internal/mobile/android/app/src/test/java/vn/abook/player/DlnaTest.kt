@@ -43,7 +43,7 @@ class DlnaTest {
     private fun players(device: FakeRenderer, chosen: DlnaPlayers.Book, saved: MutableList<List<Any>>): DlnaPlayers =
         DlnaPlayers(
             book = { id -> if (id == "sach") chosen else null },
-            save = { id, chapter, seconds, duration -> synchronized(saved) { saved += listOf(id, chapter, Math.round(seconds * 10) / 10.0, duration) } },
+            save = { id, chapter, seconds, duration, _ -> synchronized(saved) { saved += listOf(id, chapter, Math.round(seconds * 10) / 10.0, duration) } },
             media = Dlna.Media("127.0.0.1"),
             find = { Dlna.search(400, listOf(device.ssdp), multicast = false) },
         ).apply {

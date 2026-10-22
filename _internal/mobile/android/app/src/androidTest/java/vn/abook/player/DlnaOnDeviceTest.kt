@@ -49,7 +49,7 @@ class DlnaOnDeviceTest {
         val saved = mutableListOf<List<Any>>()
         val players = DlnaPlayers(
             book = { id -> if (id == "sach") DlnaPlayers.Book("Sách thử", chapters) else null },
-            save = { id, chapter, seconds, duration -> synchronized(saved) { saved += listOf(id, chapter, Math.round(seconds * 10) / 10.0, duration) } },
+            save = { id, chapter, seconds, duration, _ -> synchronized(saved) { saved += listOf(id, chapter, Math.round(seconds * 10) / 10.0, duration) } },
             media = Dlna.Media("127.0.0.1"),
             find = { Dlna.search(400, listOf(device.ssdp), multicast = false) },
         ).apply {

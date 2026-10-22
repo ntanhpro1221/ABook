@@ -145,6 +145,9 @@ def remote_command(body: dict[str, Any], *, cast: bool = False) -> dict[str, Any
         if not BOOK_ID.fullmatch(book):
             raise ValueError("Thiếu sách")
         command["bookId"] = book
+        # Loa / TV chốt hồ sơ nghe của người bấm "Phát trên…" (cast.py); máy kia có hồ sơ riêng của nó nên không nhận mã này.
+        if cast and isinstance(body.get("record"), str) and body["record"]:
+            command["record"] = _text(body["record"], 100)
     if action == "rate":
         command["rate"] = _number(body.get("rate"), 0.5, 3.0)
     if action == "sleep":

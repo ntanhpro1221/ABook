@@ -315,6 +315,12 @@ class Listening:
         state.setdefault("bookmarks", [])
         return state
 
+    def active_record(self, book: str) -> str | None:
+        """Mã hồ sơ đang dùng của sách (None: sách chưa có hồ sơ nào - lần lưu đầu mới tạo)."""
+        with self._lock:
+            active = (self._data["links"].get(book) or {}).get("active")
+            return active if active in self._data["records"] else None
+
     def records(self, book: str) -> list[dict[str, Any]]:
         """Các hồ sơ gắn với `book`: mã, tên, lúc tạo, lúc nghe gần nhất, chỗ nghe cuối, có đang dùng không."""
         with self._lock:
