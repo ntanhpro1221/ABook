@@ -123,7 +123,7 @@ enum class DemoteReason(val word: String) { LATE("late"), FAIL("fail"), SEEK("se
  * - `promote <k> loop <viTriA87Giay>`: viTriA87Giay = vị trí của trình phát a87 (giây trong bài, 6 chữ số) mà promoteTo dùng để tính đích Nối. Bài a87 (mở vào giữa vòng khi chưa có Nối) chuyển sang P3 ở ranh lặp; k = trình phát P3 mới (dòng `open <k> p3` + `plan` + `attach` của nó đứng TRƯỚC, lúc tạo sẵn ~3 s trước ranh).
  *   Dòng này chỉ báo QUYẾT ĐỊNH chuyển, chưa đổi tiếng: a87 vẫn kêu ở âm lượng cũ, P3 khởi động CÂM ([SeamHandover]). Sau nó: `seek <k> ...` (mục 1 = Nối, mẫu = chỗ a87 sẽ ở khi P3 ra loa, [SeamHandover.target]) và `vol <k> 0`;
  *   P3 có thể được tua lại (thêm `seek <k> ...`) cho tới khi pha khớp. Rồi MỘT trong hai: `handover` (êm) hay `demote <k> late|error` (a87 lặp mờ chéo như khi không có Nối).
- * - `handover <k> <viTriA87Giay> <viTriP3Giay>`: lúc thực sự chuyển tiếng sang P3 (|P3 - a87| <= [SeamHandover.TOLERANCE_MS]). Cả hai vị trí tính trên TRỤC a87 (giây trong bài, 6 chữ số), cùng một cách đo:
+ * - `handover <k> <viTriA87Giay> <viTriP3Giay>`: lúc thực sự chuyển tiếng sang P3 (|P3 - a87| <= [SeamHandover.TOLERANCE_MS] = 5 ms). Cả hai vị trí tính trên TRỤC a87 (giây trong bài, 6 chữ số), cùng một cách đo:
  *   a87 = giây bài của khung đầu AudioTrack hiện tại của a87 + framePosition của nó / sr ([SeamHandover.legacySeconds]; máy không cho timestamp thì currentPosition như trước), P3 = (loopEnd' - X' + mẫu đích của lần tua cuối + framePosition của AudioTrack P3) / sr,
  *   nên hiệu hai số là pha lệch lúc chuyển (chỉ để đối chiếu). Ngay sau: `vol <k> <âm lượng của a87>` (> 0) rồi `vol <k cũ> 0` (lần đầu a87 về 0 nằm SAU lúc P3 ra loa); không có `demote`.
  * - `hread <k> <deltaMs> <playedMs>`: MỖI lần đọc pha được tính vào quyết định ([SeamHandover.reading] khác null), giữa `promote` và `handover` / `demote`: deltaMs = P3 - a87 (ms, cùng cách đo
@@ -250,13 +250,15 @@ object SeamClock {
  *
  * Nhịp một lần tua: xả + AudioTrack mới ra loa (máy ảo 70-200 ms, máy thật 160-450 ms) + [SETTLE_MS] + [STEADY_READINGS] x [POLL_MS] = ~150-300 ms trên máy ảo, tới ~550 ms máy thật nguội.
  * [DEADLINE_MS] 1,5 s chứa đủ lần tua đầu + [MAX_RETUNES] lần sửa trên máy ảo, và vẫn nằm trong Nối (X = 2 s trừ [GUARD_MS]); máy thật thì từ ranh thứ hai trễ đã học nên thường một lần sửa là khớp.
+ * Dung sai ±5 ms (PLAN_loop §44.1/§44.3: ca nguội đổi tiếng ở |δ| 8,2 / 8,8 ms với ±10) nên lần khởi động nguội lệch 5-10 ms tốn thêm một lần sửa (~150-300 ms máy ảo), vẫn trong [DEADLINE_MS] khi lần tua đầu
+ * + một lần sửa dưới ~1,2 s; hết lượt sửa hay hết hạn thì a87 lặp mờ chéo như trước.
  */
 object SeamHandover {
     /** Từ lúc quyết định chuyển; quá chừng này mà P3 chưa khớp thì ở lại đường a87. */
     const val DEADLINE_MS = 1500L
 
-    /** Pha lệch tối đa giữa P3 và a87 lúc đổi tiếng (luật f6b). */
-    const val TOLERANCE_MS = 10.0
+    /** Pha lệch tối đa giữa P3 và a87 lúc đổi tiếng (luật f6b; siết 10 -> 5 ms theo PLAN_loop §44.1/§44.3). */
+    const val TOLERANCE_MS = 5.0
 
     /** P3 phải đã phát ít nhất chừng này (theo AudioTrack) thì số đo mới tin. */
     const val SETTLE_MS = 60.0

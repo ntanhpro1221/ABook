@@ -35,13 +35,14 @@ import java.util.concurrent.atomic.AtomicBoolean
  * `Streaming.chapterUri` lấy file bài `music/<sha1>.mp3`), thay vì giả `Store`/`MusicBed` - nên mốc, tên bài, `levelDb` và URI đều đi qua mã thật. `book.json` viết lại mỗi kịch bản
  * (S4 đổi độ dài mốc A); `MusicBed.release()` giữa các kịch bản để lần `sync` kế đọc lại sách. Xong thì `Store.deleteBook`.
  *
- * Ra `getExternalFilesDir(null)/loopseam/`: `<id>.txt` (dòng dưới đây), `<id>_<sc>_p<k>.pcm` (PCM đúng byte đưa xuống AudioTrack của trình phát k của kịch bản), `<id>_R.pcm` / `<id>_R2nd.pcm`
+ * Ra `getExternalFilesDir(null)/loopseam/`: `<id>.txt` (dòng dưới đây), `<id>_<sc>_p<k>.pcm` (PCM đúng byte đưa xuống AudioTrack của trình phát k của kịch bản; kịch bản lặp tên trong cùng lượt,
+ * vd `-e sc S6,S6,S6`, thì lần thứ n >= 2 ghi `<id>_<sc>#<n>_p<k>.pcm`, vd `ls_12_S6#2_p1.pcm` - cùng tên lần lặp `S6`, `S6#2`, `S6#3` của thước loopbed43), `<id>_R.pcm` / `<id>_R2nd.pcm`
  * (hai bài giải mã liền mạch từ đầu như §41). Dòng (giây 6 chữ số, `<ns>` = System.nanoTime):
  * `SEAM ...` / `SEAM2 ...` như MusicLoopSeamTest, `RFMT`, `RFMT2`, `RINFO`, `RINFO2`, `GAIN <g>`,
  * `EV <ns> scenario <Sx>` / `EV <ns> scenario_end` (số trình phát k đánh lại từ 0 mỗi kịch bản), `EV <ns> sync <t> <nhảy 0|1>`,
  * và các sự kiện của MusicBed (xem [SeamEvents]): `open`, `plan`, `attach`, `demote`, `promote` (`promote <k> loop <viTriA87Giay>`), `seek`, `pos`, `item`, `audiotrack`, `vol`, mỗi dòng sau `EV <ns> `;
  * `EV <ns> ts <k> <framePosition> <tsNanoTime>` (luồng phụ 10 ms, AudioTrack mới nhất của từng k, chỉ ghi khi getTimestamp true và framePosition đổi), `EV <ns> underrun <k> <count>` (đầu kịch bản và mỗi khi đổi); luồng dừng ở scenario_end;
- * cùng `FMT <ns> <k> <seg> <sr> <ch> <enc>` và `PCM <k> <seg> <f0> <n> <off> <ns>` (off = byte trong file `<id>_<sc>_p<k>.pcm`).
+ * cùng `FMT <ns> <k> <seg> <sr> <ch> <enc>` và `PCM <k> <seg> <f0> <n> <off> <ns>` (off = byte trong file `<id>_<sc>_p<k>.pcm` / `<id>_<sc>#<n>_p<k>.pcm` của chính lần ấy).
  */
 @OptIn(UnstableApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -261,6 +262,7 @@ class MusicBedSeamOnDeviceTest {
                 log("EV ${System.nanoTime()} $line")
             }
 
+            val runs = HashMap<String, Int>() // lần thứ mấy của mỗi tên kịch bản trong lượt: tên file tee của lần lặp
             for (sc in scenarios) {
                 // 1. Sách của kịch bản: mốc A đủ cho 3 vòng (S4: mốc A hết đúng giữa Nối đầu; S5, S6: dư một vòng vì vào giữa vòng), mốc B ngay sau
                 val tMid = clip0 + seamSec / 2
@@ -274,6 +276,8 @@ class MusicBedSeamOnDeviceTest {
                     log("SKIP S4 cần file2 + loopStart2 + loopEnd2")
                     continue
                 }
+                val run = runs.merge(sc, 1, Int::plus)!!
+                val tag = if (run == 1) sc else "$sc#$run" // '#' hợp lệ trong tên file ở bộ nhớ ngoài (FileUtils.isValidFatFilenameChar chỉ cấm ký tự điều khiển và " * / : < > ? \ |)
                 val cues = JSONArray().put(cueJson(0.0, endA, trackA, aStart, aLoopStart, aLoopEnd, aAudibleEnd))
                 val tracks = JSONObject().put(trackA, JSONObject())
                 if (hasB) {
@@ -303,7 +307,7 @@ class MusicBedSeamOnDeviceTest {
                 promoted.set(false)
                 MusicBed.testAudioProcessor = {
                     val k = MusicBed.testCreating
-                    val tee = PlayerTee(k, File(dir, "${id}_${sc}_p$k.pcm"))
+                    val tee = PlayerTee(k, File(dir, "${id}_${tag}_p$k.pcm"))
                     tees += tee
                     TeeAudioProcessor(tee) as AudioProcessor
                 }

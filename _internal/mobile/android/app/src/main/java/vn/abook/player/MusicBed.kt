@@ -763,7 +763,7 @@ object MusicBed {
         main.postDelayed(handoverTick, SeamHandover.POLL_MS)
     }
 
-    /** Pha đã khớp, P3 đang kêu câm: P3 lên âm lượng của a87 và a87 về 0 trong cùng một lần (cùng nội dung, lệch <= 10 ms nên không chồng nghe ra); a87 nhả ở nhịp mờ kế. */
+    /** Pha đã khớp, P3 đang kêu câm: P3 lên âm lượng của a87 và a87 về 0 trong cùng một lần (cùng nội dung, lệch <= [SeamHandover.TOLERANCE_MS] nên không chồng nghe ra); a87 nhả ở nhịp mờ kế. */
     private fun completeHandover(h: Handover, a87: Double, p3Seconds: Double) {
         handover = null
         val p3 = h.p3

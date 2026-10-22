@@ -454,6 +454,41 @@ class MusicSeamBedTest {
         assertEquals(SeamHandover.Act.WAIT, decide(listOf(40.0, 60.0, 50.0), retunes = SeamHandover.MAX_RETUNES)) // chưa ổn định: không đốt lần tua, không bỏ sớm
     }
 
+    @Test fun aColdHandoverNineMsOffRetunesOnceMoreThenSwitches() {
+        // PLAN_loop §44.3, bed44s6thu1 #1: hread 160,8 x3 -> RETUNE -> -8,96 / -8,98 / -8,84 -> SWITCH với ±10 ms. Dung sai nay ±5: tua lại thêm một lần.
+        val after = listOf(-8.96, -8.98, -8.84)
+        assertTrue("với ±10 cũ thì đã đổi tiếng", after.all { Math.abs(it) <= 10.0 })
+        assertEquals(SeamHandover.Act.RETUNE, SeamHandover.decide(600, 800.0, 0, listOf(160.8, 160.8, 160.8)))
+        assertEquals(SeamHandover.Act.RETUNE, SeamHandover.decide(900, 700.0, 1, after))
+        // tua lại theo pha trung bình như luật cũ: P3 muộn 8,93 ms -> trễ mới = trễ cũ + 9
+        val settled = SeamHandover.settled(after)!!
+        assertEquals(-8.927, settled, 0.001)
+        assertEquals(259L, SeamHandover.nextLag(250, settled))
+        // lần đọc sau lần tua ấy (danh sách đọc bắt đầu lại) trong ±5: đổi tiếng
+        assertEquals(SeamHandover.Act.WAIT, SeamHandover.decide(1100, 600.0, 2, listOf(0.4, -0.7)))
+        assertEquals(SeamHandover.Act.SWITCH, SeamHandover.decide(1150, 550.0, 2, listOf(0.4, -0.7, 0.2)))
+    }
+
+    @Test fun handoverToleranceIsFiveMsInclusive() {
+        assertEquals(5.0, SeamHandover.TOLERANCE_MS, 0.0)
+        fun decide(readings: List<Double>) = SeamHandover.decide(600, 800.0, 1, readings)
+        assertEquals(SeamHandover.Act.SWITCH, decide(listOf(5.0, 5.0, 5.0)))
+        assertEquals(SeamHandover.Act.SWITCH, decide(listOf(-5.0, 4.9, -5.0)))
+        assertEquals(SeamHandover.Act.RETUNE, decide(listOf(5.1, 5.1, 5.1)))
+        assertEquals(SeamHandover.Act.RETUNE, decide(listOf(-5.1, -5.1, -5.1)))
+        assertEquals(SeamHandover.Act.RETUNE, decide(listOf(5.0, 5.1, 5.0))) // một lần ngoài dung sai mà ba lần ổn định: tua lại
+        assertEquals(SeamHandover.Act.WAIT, decide(listOf(-5.1, 5.1, 0.0))) // ngoài dung sai mà chưa ổn định (chênh > STABLE_MS): chờ
+    }
+
+    @Test fun handoverOutOfFiveMsWithNoRetunesLeftFallsBack() {
+        val after = listOf(-8.96, -8.98, -8.84)
+        assertEquals(SeamHandover.Act.RETUNE, SeamHandover.decide(900, 700.0, SeamHandover.MAX_RETUNES - 1, after))
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(900, 700.0, SeamHandover.MAX_RETUNES, after))
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(SeamHandover.DEADLINE_MS, 700.0, 1, after)) // hết hạn cũng thế
+        assertEquals(3, SeamHandover.MAX_RETUNES)
+        assertEquals(1500L, SeamHandover.DEADLINE_MS)
+    }
+
     @Test fun onlyTimestampsOfTheAudioTrackBornAfterTheLastSeekCount() {
         val issued = 1_000_000_000L
         // lần tua chưa tới luồng phát (chưa xả sau mốc): AudioTrack cũ vẫn chạy, timestamp mới nhưng nói về tiếng cũ
