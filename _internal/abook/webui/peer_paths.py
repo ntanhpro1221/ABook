@@ -1,8 +1,21 @@
 """Lexical checks for untrusted package names, before filesystem access."""
 import re
+import os
+from pathlib import Path
 from typing import Any
 
 _DEVICE = re.compile(r"(?i)(CON|PRN|AUX|NUL|CONIN[$]|CONOUT[$]|COM[0-9¹²³]|LPT[0-9¹²³])\Z")
+
+
+def canonical(path: Path) -> Path:
+    resolved = path.resolve()
+    if os.name == "nt":
+        name = str(resolved)
+        if name.startswith("\\\\?\\UNC\\"):
+            return Path("\\\\" + name[8:])
+        if name.startswith("\\\\?\\"):
+            return Path(name[4:])
+    return resolved
 
 
 def safe_relative(name: Any) -> bool:

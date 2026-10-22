@@ -1486,7 +1486,64 @@ object BookEdits {
         previous?.optJSONObject("music")?.let { for (key in names(it)) music.put(key, it.get(key)) }
         edits.optJSONObject("music")?.takeIf { it.has("playlist") }?.let { music.put("playlist", it.get("playlist")) }
         if (music.length() > 0) out.put("music", music)
+        // Biên nhận của ý muốn chờ Studio đã gửi ([subtract] gỡ chúng khỏi lớp sửa): hoàn tác SAU khi gửi chỉ còn cách nhờ máy tính rút, và máy
+        // ấy chỉ rút được đúng thao tác này khi biết mốc `requested_at` của nó. `retract`: những thao tác đã nhờ rút mà chưa gửi (webui/book_edits.py `sent_marks`).
+        val receipts = receipts(previous?.optJSONObject("wishes"), edits.optJSONObject("wishes"))
+        if (receipts.length() > 0) out.put("wishes", receipts)
+        previous?.optJSONObject("retract")?.takeIf { it.length() > 0 }?.let { out.put("retract", deepCopy(it)) }
         return out
+    }
+
+    /** Biên nhận mỗi phần: giữ các lần bấm mới nhất (hoàn tác chỉ có nghĩa vài giây - vài phút sau lần bấm). */
+    const val MAX_RECEIPTS = 1000
+
+    /** {phần: {khoá: requested_at}} của các lần gửi trước (`earlier`) cộng ý muốn vừa gửi (`sent`: mục `wishes` của lớp sửa); lần sau thắng. */
+    private fun receipts(earlier: JSONObject?, sent: JSONObject?): JSONObject {
+        val out = JSONObject()
+        for (section in BookWishes.SECTIONS) {
+            val merged = LinkedHashMap<String, Double>()
+            earlier?.optJSONObject(section)?.let { for (key in names(it)) merged[key] = it.getDouble(key) }
+            sent?.optJSONObject(section)?.let { for (key in names(it)) merged[key] = it.getJSONObject(key).getDouble("requested_at") }
+            var kept = merged.entries.toList()
+            if (kept.size > MAX_RECEIPTS) kept = kept.sortedWith(compareBy<Map.Entry<String, Double>> { it.value }.thenComparator { a, b -> byCodePoints(a.key, b.key) }).takeLast(MAX_RECEIPTS)
+            if (kept.isEmpty()) continue
+            val entries = JSONObject()
+            for (entry in kept.sortedWith { a, b -> byCodePoints(a.key, b.key) }) entries.put(entry.key, entry.value)
+            out.put(section, entries)
+        }
+        return out
+    }
+
+    /**
+     * Người nghe hoàn tác một thao tác ĐÃ GỬI: các khoá `keys` của `section` mà biên nhận trong `marks` khớp đúng lần bấm `requestedAt` chuyển từ
+     * `wishes` sang `retract` (chờ báo máy giữ sách rút). Trả (sổ mới, các khoá đã nhận). Lần bấm khác (đã bị thay) hay đã nhờ rút rồi: không nhận.
+     */
+    fun retractSent(marks: JSONObject?, section: String, keys: List<String>, requestedAt: Double): Pair<JSONObject, List<String>> {
+        val out = if (marks == null) JSONObject() else deepCopy(marks) as JSONObject
+        val receipts = out.optJSONObject("wishes")
+        val done = ArrayList<String>()
+        for (key in keys.distinct()) {
+            val entries = receipts?.optJSONObject(section) ?: continue
+            if (!entries.has(key) || Math.abs(entries.getDouble(key) - requestedAt) >= 1e-6) continue
+            val at = entries.getDouble(key)
+            entries.remove(key)
+            val retract = out.optJSONObject("retract") ?: JSONObject().also { out.put("retract", it) }
+            (retract.optJSONObject(section) ?: JSONObject().also { retract.put(section, it) }).put(key, at)
+            done.add(key)
+        }
+        if (receipts != null) {
+            for (section in names(receipts)) if (receipts.getJSONObject(section).length() == 0) receipts.remove(section)
+            if (receipts.length() == 0) out.remove("wishes")
+        }
+        return Pair(out, done)
+    }
+
+    /** {khoá: lần bấm} của các thao tác đã gửi mà máy này còn giữ biên nhận trong `marks`; `requestedAt` cho trước: chỉ những khoá đúng lần bấm ấy. */
+    fun sentWishMarks(marks: JSONObject?, section: String, keys: List<String>, requestedAt: Double? = null): Map<String, Double> {
+        val receipts = marks?.optJSONObject("wishes")?.optJSONObject(section) ?: return emptyMap()
+        val found = LinkedHashMap<String, Double>()
+        for (key in keys.distinct()) if (receipts.has(key) && (requestedAt == null || Math.abs(receipts.getDouble(key) - requestedAt) < 1e-6)) found[key] = receipts.getDouble(key)
+        return found
     }
 
     /** `edits` trừ những gì `marks` ([sentMarks] các lần gửi trước) đã nói là máy tính có rồi - để đếm phần CHƯA gửi. Không sửa `edits`. */
@@ -1544,6 +1601,11 @@ object BookEdits {
         }
         val sentPlaylist = marks?.optJSONObject("music")?.takeIf { it.has("playlist") }
         if (sentPlaylist != null && edits.optJSONObject("music")?.has("playlist") != true) out.put("playlist", sentPlaylist.get("playlist"))
+        marks?.optJSONObject("retract")?.takeIf { it.length() > 0 }?.let { retract ->
+            val wishes = JSONObject()
+            for (section in names(retract)) if (retract.getJSONObject(section).length() > 0) wishes.put(section, deepCopy(retract.getJSONObject(section)))
+            out.put("wishes", wishes)
+        }
         return out
     }
 
@@ -1594,7 +1656,8 @@ object BookEdits {
     /** Số thay đổi trong [removedMarks] (một dòng bỏ ở trăm chương là một). */
     fun countRemoved(removed: JSONObject): Int =
         (removed.optJSONObject("skip")?.let { skip -> names(skip).flatMap { skipLines(skip, it) }.toSet().size } ?: 0) +
-            (removed.optJSONObject("readings")?.length() ?: 0) + (if (removed.has("playlist")) 1 else 0)
+            (removed.optJSONObject("readings")?.length() ?: 0) + (if (removed.has("playlist")) 1 else 0) +
+            (removed.optJSONObject("wishes")?.let { wishes -> names(wishes).sumOf { wishes.getJSONObject(it).length() } } ?: 0)
 
     /** `marks` trừ phần đã gỡ ở máy tính ([removedMarks]): sổ mới không còn nhắc tới chúng. Không sửa `marks`. */
     fun forgetMarks(marks: JSONObject?, removed: JSONObject): JSONObject {
@@ -1619,6 +1682,17 @@ object BookEdits {
             if (removed.has("playlist")) music.remove("playlist")
             if (music.length() == 0) out.remove("music")
         }
+        for (held in listOf("retract", "wishes")) {
+            val entries = out.optJSONObject(held) ?: continue
+            removed.optJSONObject("wishes")?.let { gone ->
+                for (section in names(gone)) {
+                    val items = entries.optJSONObject(section) ?: continue
+                    for (key in names(gone.getJSONObject(section))) items.remove(key)
+                }
+            }
+            for (section in names(entries)) if (entries.getJSONObject(section).length() == 0) entries.remove(section)
+            if (entries.length() == 0) out.remove(held)
+        }
         return out
     }
 
@@ -1632,6 +1706,12 @@ object BookEdits {
             out["readings"] = names(readings).sortedWith { a, b -> byCodePoints(a, b) }.associateWith { readings.opt(it) }
         }
         if (removed.has("playlist")) out["playlist"] = removed.opt("playlist")
+        removed.optJSONObject("wishes")?.takeIf { it.length() > 0 }?.let { wishes ->
+            out["wishes"] = names(wishes).sorted().associateWith { section ->
+                val entries = wishes.getJSONObject(section)
+                names(entries).sortedWith { a, b -> byCodePoints(a, b) }.associateWith { entries.opt(it) }
+            }
+        }
         return (StrictJson.dumps(out, 1) + "\n").toByteArray(Charsets.UTF_8)
     }
 

@@ -11,6 +11,7 @@ import errno
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 from ..voice_catalog import ENGINE_VOICES
 
@@ -43,17 +44,39 @@ GENDER_LABELS = {"male": "Nam", "female": "Nữ"}
 
 # Tên giọng VieNeu là tên hiện hành của VieNeu (3.8.3) và cũng là khoá - không đổi qua lại. Chỉ giọng của máy đọc khác
 # (voice_catalog.ENGINE_VOICES) có nhãn riêng: khoá là tên giọng của máy ("baotrang"), người nghe thấy "Bảo Trang" -
-# đổi sang nhãn khi đưa ra giao diện (`voice_label`), đổi ngược khi nhận về (`voice_key`).
+# đổi sang nhãn khi đưa ra giao diện (`voice_label`). Chiều ngược KHÔNG có: giao diện gửi lại khoá (`key` của từng giọng trong
+# voice_picker), máy chủ chỉ nhận khoá - một nguồn sự thật.
 _ENGINE_VOICE_LABELS = {str(voice["name"]): str(voice["label"]) for voice in ENGINE_VOICES}
-_VOICE_KEYS = {label: key for key, label in _ENGINE_VOICE_LABELS.items()}
 
 
 def voice_label(name: str) -> str:
     return _ENGINE_VOICE_LABELS.get(name, name)
 
 
-def voice_key(name: str) -> str:
-    return _VOICE_KEYS.get(name, name)
+def labelled_voice(voice: dict[str, Any]) -> dict[str, Any]:
+    """Bản sao của một giọng `{"preset": khoá, ...}` kèm `label` - tên người nghe thấy - khi nó KHÁC khoá (giọng máy khác: "baotrang" ->
+    "Bảo Trang"). Giọng VieNeu có nhãn là chính khoá nên không thêm gì: hợp đồng với app Android (tests/fixtures/book_edits) không đổi,
+    và giao diện rơi về `preset` khi không có `label` (`voiceName`)."""
+    preset = str(voice.get("preset") or "")
+    label = voice_label(preset)
+    return {**voice, "label": label} if label != preset else dict(voice)
+
+
+def label_cast_voices(cast: Any) -> Any:
+    """Dàn nhân vật của sách mở từ file (packages.cast) kèm `label` cho mỗi giọng (`voice`, `profile`, `pendingVoice`): `preset` vẫn là
+    KHOÁ (workshop, gửi lại máy chủ), người nghe thấy nhãn như ở dự án (store._voice_view / store.pending_voices). Không sửa bản gốc."""
+    def one(value: Any) -> Any:
+        return labelled_voice(value) if isinstance(value, dict) and isinstance(value.get("preset"), str) else value
+
+    def person(item: Any) -> Any:
+        if not isinstance(item, dict):
+            return item
+        return {**item, **{field: one(item[field]) for field in ("voice", "profile", "pendingVoice") if field in item}}
+
+    if not isinstance(cast, dict):
+        return cast
+    return {key: ([person(item) for item in value] if isinstance(value, list) else person(value) if key == "narrator" else value)
+            for key, value in cast.items()}
 AGE_LABELS = {
     "child": "Trẻ em",
     "teen": "Thiếu niên",

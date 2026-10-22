@@ -4,6 +4,7 @@ import { VOICE_CHANGED_EVENT, mergeTimings, type ReadAloudTimings } from "@/list
 import { chooseDefaultVoice, chooseVoice } from "@/listen/readAloudVoice";
 import { ONLINE_CONSENT_EVENT, giveOnlineConsent } from "@/listen/onlineConsent";
 import { textScript } from "@/listen/textScript";
+import { textFingerprint } from "@/listen/readingAnchor";
 import type { ReadAloudPlugin } from "./plugins";
 import { PREPARE_STATUS_KEY, type PrepareStatus } from "@/listen/prepareAhead";
 import { phonePrepare, refreshScript, textScriptKey, watchReadAloud } from "./readAloud";
@@ -28,6 +29,7 @@ function memory(initial?: Script) {
 }
 
 const TIMINGS: ReadAloudTimings = {
+  textHash: textFingerprint(textScript(1, "Chương 1", TEXT).segments.map(segment => segment.text)),
   segments: [
     { start: 0, end: 1.2 },
     { start: 1.2, end: 3.2, words: [[1200, 1800], [1800, 2300], [2300, 2700], [2700, 3200]] },
@@ -52,12 +54,12 @@ describe("mergeTimings", () => {
     expect(base.timed).toBe(false); // không đổi bản gốc
   });
 
-  it("thiếu mốc ở một câu thì câu ấy giữ nguyên; không mốc nào thì trả kịch bản cũ", () => {
+  it("thiếu mốc hoặc thiếu dấu bản chữ thì từ chối ghép", () => {
     const base = textScript(1, "Chương 1", TEXT);
     expect(mergeTimings(base, { segments: [] })).toBe(base);
     const partial = mergeTimings(base, { segments: [{ start: 0, end: 2 }] });
     expect(partial.segments[1].start).toBeNull();
-    expect(partial.segments[0].end).toBe(2);
+    expect(partial).toBe(base);
   });
 });
 

@@ -326,7 +326,8 @@ def test_faster_whisper_download_never_follows_main(tmp_path, monkeypatch):
     requests = []
     models = []
     monkeypatch.setitem(sys.modules, "huggingface_hub", SimpleNamespace(snapshot_download=lambda **kw: requests.append(kw) or str(tmp_path / "snapshot")))
-    monkeypatch.setitem(sys.modules, "whisper", SimpleNamespace(load_model=lambda *_a, **_k: None))
+    monkeypatch.setitem(sys.modules, "whisper", SimpleNamespace(load_model=lambda *_a, **_k: None,
+                                                               _MODELS={"turbo": "https://example.invalid/models/" + "0" * 64 + "/large-v3-turbo.pt"}))
     monkeypatch.setitem(sys.modules, "faster_whisper", SimpleNamespace(WhisperModel=lambda name, **_kw: models.append(name)))
     monkeypatch.setenv("ABOOK_RUNTIME", str(tmp_path))
     monkeypatch.setenv("HF_HUB_CACHE", str(tmp_path / "hub"))

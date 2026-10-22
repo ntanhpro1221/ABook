@@ -151,17 +151,31 @@ class LibraryPlugin : Plugin() {
      * Drive (MainActivity) hay nút "Nhập sách". Sự kiện được GIỮ tới khi giao diện nghe: mở app lạnh bằng file thì
      * việc nhập có thể xong trước khi trang web kịp gắn listener.
      */
-    fun importFrom(uri: Uri) = bookImports.execute {
+    fun importFrom(uri: Uri, allowOlder: Boolean = false) = bookImports.execute {
         val event = try {
-            val imported = BookFileImport.import(context, uri)
+            val imported = BookFileImport.import(context, uri, allowOlder)
             JSObject().put("bookId", imported.id).put("title", imported.title).put("keptEdits", imported.keptEdits)
                 .put("brokenMusic", imported.brokenMusic)
+                .put("how", imported.how).put("source", uri.toString())
         } catch (error: BookFileImport.Refused) {
             JSObject().put("error", error.message)
         } catch (error: Exception) {
             JSObject().put("error", "Không mở được file sách: ${error.message ?: error.javaClass.simpleName}")
         }
         notifyListeners("import", event, true)
+    }
+
+    @PluginMethod
+    fun confirmOlderImport(call: PluginCall) {
+        val source = call.getString("source") ?: return call.reject("thiếu file nguồn")
+        importFrom(Uri.parse(source), true)
+        call.resolve()
+    }
+
+    @PluginMethod
+    fun exportHistory(call: PluginCall) = background(call) {
+        val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
+        call.resolve(JSObject().put("exports", ExportHistory.view(Store.bookDir(id))))
     }
 
     /**
@@ -374,6 +388,7 @@ class LibraryPlugin : Plugin() {
             }
             notifyListeners("musicImport", JSObject().put("done", index + 1).put("total", uris.size))
         }
+        if (added.isNotEmpty()) Playback.onMain { MusicBed.refreshMine() }
         return JSObject.fromJSONObject(LocalStudio.importAnswer(added, existing, failed)).put("picked", true)
     }
 
@@ -727,6 +742,7 @@ class LibraryPlugin : Plugin() {
             book.put("localChapters", local?.optInt("chaptersAvailable") ?: 0)
             book.put("localCoverVersion", local?.optJSONObject("cover")?.optLong("version") ?: 0L)
             book.put("localWordsVersion", local?.optString("wordsVersion") ?: "")
+            book.put("localAudioVersion", local?.optString("audioVersion") ?: "")
             // Cỡ khi tải về, hiện trước khi bấm Tải (soát a68 lỗi 7): máy tính gửi kèm (`bytes`); máy tính đời trước thì lấy từ gói sách đã cất
             // cho nghe thẳng nếu còn đúng - không hỏi máy tính từng cuốn (thư viện vài chục cuốn thành vài chục lượt mạng).
             if (local == null && !book.has("bytes")) {
@@ -780,10 +796,10 @@ class LibraryPlugin : Plugin() {
     }
 
     /** Kết nối tới một file của sách bên máy kia (đã ghim chứng chỉ, mang mã thiết bị); `resumeFrom` > 0 thì xin tiếp từ byte ấy. */
-    private fun fetchFile(id: String, relative: String, expectedSize: Long, link: Peers.Link, remote: String): Long {
+    private fun fetchFile(id: String, relative: String, expectedSize: Long, link: Peers.Link, remote: String, digest: String): Long {
         val limit = PeerTransfer.budget(relative, expectedSize)
         val target = Store.file(id, relative)
-        if (expectedSize > 0 && target.isFile && target.length() == expectedSize) return 0
+        if (expectedSize > 0 && AudioRevision.matches(target, expectedSize, digest)) return 0
         target.parentFile?.mkdirs()
         val partial = File(target.path + ".part")
         // Phần dở chỉ được nối khi biết nó thuộc phiên bản nào (ETag cạnh nó) và máy kia xác nhận đúng phiên bản + đúng chỗ (PartResume).
@@ -838,9 +854,16 @@ class LibraryPlugin : Plugin() {
                 throw java.io.IOException("File $relative tải về không đúng cỡ ($got/$expectedSize byte)")
             }
         }
+        // Băm đúng byte vừa tải (không qua bộ nhớ: `.part` là file đang đổi), rồi ghi vào sổ khi đã đổi tên - lần kiểm sau không băm lại.
+        val actual = if (digest.isEmpty()) "" else AudioRevision.sha256(partial)
+        if (actual != digest) {
+            PartResume.discard(partial)
+            throw java.io.IOException("Bản thu đã đổi trong lúc tải; bạn hãy tải lại.")
+        }
         if (!partial.renameTo(target)) {
             throw java.io.IOException("Không ghi được file; bạn hãy thử tải lại.")
         }
+        if (actual.isNotEmpty()) Store.rememberDigest(id, relative, target, actual)
         PartResume.tagFile(partial).delete()
         return target.length()
     }
@@ -951,7 +974,9 @@ class LibraryPlugin : Plugin() {
         PeerTransfer.checkJob(files + tracks.map { it.name to it.size })
         val total = files.sumOf { it.second } + tracks.sumOf { it.size }
         // Đủ chỗ trước khi tải (soát a68 lỗi 10): thiếu thì báo ngay, không tải dở rồi hỏng giữa chừng.
-        val missing = files.sumOf { (relative, size) -> DownloadSpace.stillNeeded(size, runCatching { Store.file(id, relative) }.getOrNull()) } +
+        val missing = files.sumOf { (relative, size) ->
+            DownloadSpace.stillNeeded(size, Store.file(id, relative), AudioRevision.expected(manifest, relative))
+        } +
             tracks.sumOf { track -> DownloadSpace.stillNeeded(track.size, runCatching { Store.contained(Store.bookDir(id), track.name) }.getOrNull()) }
         DownloadSpace.shortage(missing, Store.root.usableSpace)?.let { throw IllegalStateException(it) }
         if (cover == null) Store.file(id, "cover.jpg").delete()
@@ -959,7 +984,7 @@ class LibraryPlugin : Plugin() {
         var done = 0L
         files.forEachIndexed { index, (relative, size) ->
             checkCancelled(id)
-            fetchFile(id, relative, size, link, remote)
+            fetchFile(id, relative, size, link, remote, AudioRevision.expected(manifest, relative))
             done += size
             if (announce) {
                 notifyListeners("download", JSObject().put("bookId", id).put("done", done).put("total", total)
@@ -1297,7 +1322,9 @@ class LibraryPlugin : Plugin() {
             if (id == null) throw IllegalArgumentException("thiếu id")
             val project = savesAsProject(call, id)
             val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn")
+            val snapshot = ExportHistory.snapshot(Store.bookDir(id))
             val written = out.use { BookDocumentWriter.write(Store.bookDir(id), it, project) }
+            ExportHistory.remember(Store.bookDir(id), if (project) "abookproj" else "abook", uri.toString(), snapshot)
             BookEdits.markSaved(Store.bookDir(id)) // "Save (N changes)" counts again from here
             if (!direct) rememberSave(id, project, uri)
             val name = runCatching {
@@ -1332,7 +1359,9 @@ class LibraryPlugin : Plugin() {
             val file = BookShare.target(context.cacheDir, title, project)
             try {
                 file.parentFile?.mkdirs()
+                val snapshot = ExportHistory.snapshot(Store.bookDir(id))
                 file.outputStream().use { BookDocumentWriter.write(Store.bookDir(id), it, project) }
+                ExportHistory.remember(Store.bookDir(id), if (project) "abookproj" else "abook", file.name, snapshot)
                 val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
                 val mime = BookShare.mimeType(project)
                 val send = Intent(Intent.ACTION_SEND).setType(mime)
@@ -1388,12 +1417,13 @@ class LibraryPlugin : Plugin() {
     private fun startMp3Export(call: PluginCall, tree: Uri) = background(call) {
         val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
         val drawn = drawnCover(call.getString("cover"))
-        val plan = Mp3Export.plan(id, drawn) // sách không có gì để xuất: từ chối ngay, không bắt đầu việc nền
+        val selected = call.getArray("chapterIds")?.let { array -> (0 until array.length()).map { array.getInt(it) } }
+        val plan = Mp3Export.plan(id, drawn, selected) // sách không có gì để xuất: từ chối ngay, không bắt đầu việc nền
         val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Không mở được thư mục đã chọn - chọn lại nơi lưu")
         val coverFile = drawn?.let { bytes ->
             File(context.cacheDir, "mp3-export").apply { mkdirs() }.let { File(it, "${java.util.UUID.randomUUID()}.png") }.also { it.writeBytes(bytes) }
         }
-        val run = Mp3Exports.start(context, id, tree, coverFile)
+        val run = Mp3Exports.start(context, id, tree, coverFile, selected)
         call.resolve(JSObject().put("started", true).put("run", run).put("folder", "$treeName/${Mp3Export.folderName(plan.title)}")
             .put("chapters", plan.chapters.size))
     }
@@ -1655,7 +1685,9 @@ class LibraryPlugin : Plugin() {
             ?: throw IllegalStateException("Cuốn này nằm trên máy tính - kết nối cùng mạng với máy tính để nghe")
         if (StreamRefresh.coverNeeded(previous, manifest, Store.file(id, "cover.jpg").isFile)) Streaming.fetchSmall(context, id, "cover.jpg")
         downloads.execute {
-            if (!Store.file(id, "cast.json").isFile) Streaming.fetchSmall(context, id, "cast.json")
+            if (StreamRefresh.castNeeded(Store.bookDir(id), manifest) && Streaming.fetchSmall(context, id, "cast.json") != null) {
+                StreamRefresh.castFetched(Store.bookDir(id), manifest)
+            }
             val samples = manifest.optJSONArray("samples") ?: JSONArray()
             for (index in 0 until samples.length()) {
                 val sample = samples.getString(index)
@@ -1745,6 +1777,16 @@ class LibraryPlugin : Plugin() {
         // Chỗ vượt độ dài chương là của thứ khác: không lưu (PlacePolicy, soát a68 lỗi 2).
         if (!PlacePolicy.fits(seconds, duration)) return@background call.resolve(JSObject.fromJSONObject(Store.state(id)))
         resolveState(call, Store.progress(id, call.getInt("chapterId")!!, seconds, duration, call.getObject("anchor")))
+    }
+
+    @PluginMethod
+    fun saveReading(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        val record = call.getString("record") ?: Store.activeRecord(id)
+        val state = Store.saveReading(id, call.getInt("chapterId")!!, call.getInt("index")!!,
+            call.getDouble("at") ?: System.currentTimeMillis() / 1000.0, call.getObject("anchor"), record)
+        call.resolve(JSObject.fromJSONObject(state))
+        runCatching { StateSync.pushNow(context, id, record) }
     }
 
     @PluginMethod

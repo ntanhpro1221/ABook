@@ -51,13 +51,22 @@ from .fingerprints import Fingerprints
 from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
 from .listening import HEAVY_KEYS, RECORD_ID, Listening, StalePlayback
 from .opened_events import OpenedEvents
-from . import bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
+from . import audio_revision, bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_stamp, casting_view
 from .name_readings import name_readings_view, never_text, package_reading_reach, reading_reach
-from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices, waiting_voice
+from .voice_picker import (
+    cancel_engine_module,
+    engine_installed,
+    engine_module_status,
+    engine_use,
+    preview_file,
+    start_engine_module,
+    voice_choices,
+    waiting_voice,
+)
 from . import narrator_cards, remote_sources
 from .work_items import card_examples, for_page, open_count, work_view
 from .cast import CastError, CastPlayers
@@ -410,6 +419,8 @@ class App:
         # Máy tính khác đã ghép (remote_books.py): thư viện của chúng hiện thành sách "Trên máy khác".
         self.computers = remote_books.Computers(preferences.path.with_name("computers.json"))
         remote_books.configure(self.computers)
+        # Dấu băm audio nhớ qua lần khởi động lại: thư viện lớn không bị băm lại cả GB mỗi lần mở app (audio_revision.py).
+        audio_revision.configure(preferences.path.with_name("audio_digests.json"))
         self.peer_players = PeerPlayers(self.computers)
         # Loa / TV trong mạng nhà (DLNA - webui/cast.py, Google Cast - webui/gcast.py): hiện trong danh sách máy như điện
         # thoại, máy này phục vụ audio. ABOOK_CAST_DISCOVERY=0 tắt việc tìm cả hai (bài thử - tests/conftest.py - không gửi
@@ -635,7 +646,7 @@ class App:
         self.shell({"check_update": True})
         return {"checking": True}
 
-    def open_book_file(self, path: str = "") -> dict[str, Any]:
+    def open_book_file(self, path: str = "", *, allow_older: bool = False) -> dict[str, Any]:
         """Mở một file `.abook`: chọn bằng hộp thoại của cửa sổ app, hoặc đường dẫn có sẵn (bấm đúp file trong
         Explorer - desktop.py chuyển tới). Trả mã cuốn trong thư viện và cách mở (`packages.import_file`)."""
         self._mutating()
@@ -653,7 +664,7 @@ class App:
         report: dict[str, Any] = {}
         try:
             target, how = packages.import_file(Path(path), self.library.root, self.library.projects(), self.fingerprints,
-                                               report)
+                                               report, allow_older=allow_older)
         except bookfile.BookFileError as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         except bookfile.ZIP_DAMAGE as error:  # ruột gói hỏng: không dán "BadZipFile: Bad CRC-32 ..." (soát a28 lỗi 7)
@@ -661,6 +672,8 @@ class App:
         except OSError as error:  # ổ đầy giữa chừng, thư viện không ghi được: nói thật thay vì "lỗi máy chủ"
             raise ApiError(HTTPStatus.INSUFFICIENT_STORAGE, humanize.write_error(error)) from error
         result: dict[str, Any] = {"id": book_id(target), "how": how}
+        if how in {"older", "conflict"}:
+            result["source"] = path
         if report.get("edits"):
             # File mang theo thay đổi của người nghe: cuốn của máy này thì chờ người dùng quyết áp vào dự án (`edits` =
             # số thay đổi, giao diện hiện thông báo có nút); cuốn nhập thì phần sửa đã được hợp vào máy (`merge`).
@@ -2948,6 +2961,12 @@ class App:
         stopping = [*self.projectfile_jobs.stop_all(), *self.m4b_jobs.stop_all(), *self.mp3_jobs.stop_all(),
                     *self.bookfile_jobs.stop_all(), *self.listen_exports.stop_all()]
         self._trash_sweeper.cancel()
+        # Đang cài Studio (soát a92 V2): bảo lượt cài dừng cùng lúc - tiến trình con của nó (uv, python tải model) bị giết thay vì
+        # sống tiếp mồ côi sau khi host chết, không còn tiến độ hay nút huỷ nào - và chờ chung hạn bên dưới. Lượt dở ghi lại
+        # "Đã dừng - bấm Cài tiếp"; lần mở sau làm tiếp từ bước dở.
+        studio = self.studio
+        if studio is not None:
+            studio.stop()
         # Hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác - trừ cuốn Thùng rác không nhận trọn (Windows sẽ hỏi
         # "xoá hẳn", mà đóng app không được chờ ai bấm): nó ở lại chỗ chờ tới lần mở sau.
         trash_thread = threading.Thread(target=lambda: self.sweep_trash(everything=True, ask=False), name="trash-close", daemon=True)
@@ -2956,6 +2975,8 @@ class App:
         self.cast.close()
         self.previews.shutdown()
         export_jobs.join_until([trash_thread, *stopping], deadline)
+        if studio is not None:
+            studio.wait(max(0.0, deadline - time.monotonic()))
 
     def routes(self) -> dict[str, Any]:
         """Các đường tới máy này cho thiết bị vừa ghép: địa chỉ LAN + cổng đồng bộ, và địa chỉ Bluetooth khi cổng
@@ -3200,7 +3221,7 @@ class App:
         for path in packages.folders(self.library.root):
             try:
                 book = packages.manifest(path)
-                if remote_books.sends_edits(book) and not book_edits.is_empty(book_edits.load(path)):
+                if remote_books.sends_edits(book) and remote_books.pending_changes(path):
                     remote_books.send_edits(path)
             except (remote_books.RemoteError, OSError, ValueError):
                 continue
@@ -3407,17 +3428,11 @@ def without_local_paths(value: Any) -> Any:
             continue
         if key == "folder" and is_local_path(item):
             continue
-        out[key] = PureWindowsPath(item).name if key == "file" and is_local_path(item) else without_local_paths(item)
+        out[key] = PureWindowsPath(item).name if key in {"file", "target"} and is_local_path(item) else without_local_paths(item)
     for key in ("libraryRoot", "libraryRootSeen", "root") if "libraryRoot" in out or "books" in out else ():
         if isinstance(out.get(key), str):
             out[key] = ""
     return out
-
-
-def _withdraw_line_companions(path: Path, keys: list[str], requested_at: float) -> None:
-    """Sửa câu "lời kể -> lời thoại" kèm người nói ghi thêm một mục `speakers` cùng mốc: là MỘT thay đổi (store.line_companions), nên bỏ mục
-    `lines` là bỏ luôn mục ấy (chỉ mục đúng mốc đó - `requests_made_at`). Soát a83 B8."""
-    cancelled.withdraw_requests(path, "speakers", keys, requested_at, now=time.time())
 
 
 def _overrides_busy() -> ApiError:
@@ -3905,17 +3920,9 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.CONFLICT, WITHDRAW_APPLIED[section])  # máy vừa áp nó (ranh giới chương rơi đúng lúc này)
         if package:
             book_wishes.withdraw(path, section, list(mine), requested_at)  # cả bí danh của lần "Gộp vào…" ấy
-        elif section == "retakes":
-            # "Thu lại cả chương" là một nhóm: bỏ cả nhóm - chỉ những câu còn đúng lần bấm ấy.
-            for stable_id in mine:
-                cancelled.cancel_retake(path, stable_id, now=time.time())
         else:
-            cancelled.withdraw_requests(path, section, list(mine), requested_at, now=time.time())
-            if section == "lines":
-                _withdraw_line_companions(path, list(mine), requested_at)
-            if section == "speakers":
-                # "Gộp vào…" ghi cả bí danh cùng mốc ấy: bỏ lần gộp là bỏ luôn bí danh.
-                aliases.remove_added_at(path, requested_at)
+            # "Thu lại cả chương" là một nhóm: bỏ cả nhóm - chỉ những câu còn đúng lần bấm ấy; "Gộp vào…" bỏ luôn bí danh cùng mốc.
+            cancelled.withdraw_folded(path, section, list(mine), requested_at, now=time.time())
         self._send_json(HTTPStatus.OK, {"withdrawn": len(mine)})
 
     @_serialized_per_book
@@ -4276,7 +4283,8 @@ class Handler(BaseHTTPRequestHandler):
                                      self._music_fetching(app.mp3_jobs, key)) as source:
                 music = source if wanted else None
                 if parts is None:
-                    result = export_book(project, root, cover=body.get("cover"), music=music, cancelled=cancelled, progress=writing)
+                    result = export_book(project, root, cover=body.get("cover"), music=music, cancelled=cancelled, progress=writing,
+                                         chapter_ids=body.get("chapterIds"))
                 else:
                     result = export_series(parts, root, lambda part, folder, label: export_book(
                         part, folder, cover=body.get("cover"), folder_name=label, music=music, cancelled=cancelled, progress=writing))
@@ -4538,6 +4546,9 @@ class Handler(BaseHTTPRequestHandler):
         # "Huỷ" xuất có nhạc nền: dừng trước bài kế phải tải, không ghi file sách nào.
         self.app._mutating()
         self._send_json(HTTPStatus.OK, {"cancelling": self.app.cancel_music_export(self._music_key(query, value))})
+
+    def get_export_history(self, _query: dict[str, list[str]], value: str) -> None:
+        self._send_json(HTTPStatus.OK, export_jobs.export_history(self.app._book(value)))
 
     def get_export_size(self, query: dict[str, list[str]], value: str) -> None:
         # Cỡ ước lượng của bản xuất `.abook` (audio các chương nghe được; `series=1`: cả bộ) - hộp Xuất báo trước và cảnh
@@ -4961,6 +4972,12 @@ class Handler(BaseHTTPRequestHandler):
         package = packages.is_package(path)
         mine = (book_wishes.made_at(path, section, keys, requested_at) if package
                 else listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, keys, requested_at))
+        if not mine and package:
+            # Thao tác đã gửi về máy giữ sách (gửi xong là gỡ khỏi lớp sửa nên không còn ở đây): nhờ máy ấy rút đúng thao tác này.
+            asked = remote_books.retract_wish(path, section, keys, requested_at)
+            if asked:
+                self._send_json(HTTPStatus.OK, {"undone": len(asked), "restored": False, "sent": True})
+                return
         if not mine:
             raise ApiError(HTTPStatus.CONFLICT, "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác.")
         if package:
@@ -4974,12 +4991,8 @@ class Handler(BaseHTTPRequestHandler):
             restore(time.time())
             self._send_json(HTTPStatus.OK, {"undone": len(mine), "restored": True})
             return
-        removed = cancelled.withdraw_requests(path, section, list(mine), requested_at, now=time.time())
-        if section == "lines":
-            _withdraw_line_companions(path, removed, requested_at)
-        if section == "speakers" and removed:
-            # Thẻ gộp tên ghi cả bí danh cùng mốc với các câu: rút lần bấm là rút luôn bí danh (như hộp "Áp dụng").
-            aliases.remove_added_at(path, requested_at)
+        # Cả mục đi kèm cùng mốc (người nói của sửa câu, bí danh của thẻ gộp tên) đi theo - như hộp "Áp dụng".
+        removed = cancelled.withdraw_folded(path, section, list(mine), requested_at, now=time.time())
         self._send_json(HTTPStatus.OK, {"undone": len(removed), "restored": False})
 
     @_serialized_per_book
@@ -5195,7 +5208,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Giọng này cần tải thêm trước khi chọn")
         if package and not (preset or gender or avoid):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hoặc giới tính")
-        problem = (book_wishes.voice_problem(book_wishes.people(path), character, gender=gender, avoid=avoid) if package
+        problem = (book_wishes.voice_problem(book_wishes.people(path), character, preset=preset, gender=gender, avoid=avoid) if package
                    else store.voice_request_problem(path, character, preset=preset, gender=gender, avoid=avoid))
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, VOICE_PROBLEMS.get(problem, "Không đổi được giọng nhân vật này"))
@@ -5238,15 +5251,19 @@ class Handler(BaseHTTPRequestHandler):
             # Cuốn không có xưởng chưa có hàng đợi "Cần nghe lại": chỉ phần "Cần thu lại" - ý muốn chờ Studio.
             lines = book_wishes.Lines(project)
             asked: list[tuple[str, str]] = []
+            sent: list[str] = []
             for stable_id in stable_ids:
                 found = lines.get(stable_id)
                 if verdict == "redo" and found is not None and found[1].get("textSha256"):
                     asked.append((stable_id, str(found[1]["textSha256"])))
                 elif verdict != "redo":
                     book_wishes.cancel_retake(project, stable_id)
+                    if stable_id not in retakes:
+                        sent.extend(remote_books.retract_wish(project, "retakes", [stable_id]))  # đã gửi đi rồi: nhờ máy giữ sách rút
             if asked:
                 book_wishes.request_retakes(project, asked, now=now)
-            self._send_json(HTTPStatus.OK, {**reply(len(asked)), **({"elsewhere": elsewhere} if elsewhere else {})})
+            self._send_json(HTTPStatus.OK, {**reply(len(asked)), **({"sent": True} if sent else {}),
+                                            **({"elsewhere": elsewhere} if elsewhere else {})})
             return
         chapter_id = int(body.get("chapterId", 0))
         asked: list[tuple[str, str]] = []
@@ -5439,7 +5456,8 @@ class Handler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, self.app.listen_library())
 
     def post_open_book_file(self, _query: dict[str, list[str]]) -> None:
-        self._send_json(HTTPStatus.OK, self.app.open_book_file(str(self._body().get("path") or "")))
+        body = self._body()
+        self._send_json(HTTPStatus.OK, self.app.open_book_file(str(body.get("path") or ""), allow_older=body.get("allowOlder") is True))
 
     def post_import_preview(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
@@ -5709,7 +5727,8 @@ class Handler(BaseHTTPRequestHandler):
     def post_reading(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
         body = self._body()
-        self.app.listening.set_reading(value, int(body.get("chapterId", 0)), int(body.get("index", 0)))
+        self.app.listening.set_reading(value, int(body.get("chapterId", 0)), int(body.get("index", 0)),
+                                       at=body.get("at"), anchor=body.get("anchor"), record=_held_record(body))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_night(self, _query: dict[str, list[str]], value: str) -> None:
@@ -5992,6 +6011,14 @@ class Handler(BaseHTTPRequestHandler):
         # Mô-đun tải thêm của máy đọc khác ở hộp "Đổi giọng" (voice_picker.engine_module_status): ZeroTTS, Supertonic.
         self._send_json(HTTPStatus.OK, engine_module_status(engine))
 
+    def get_studio_engine_use(self, _query: dict[str, list[str]], engine: str) -> None:
+        # Trước khi gỡ mô-đun giọng: những cuốn trong thư viện máy này đang dùng giọng của nó (voice_picker.engine_use) - nút "Gỡ" nói ra
+        # rồi mới hỏi. Chỉ để nói; không chặn gỡ.
+        try:
+            self._send_json(HTTPStatus.OK, engine_use(self.app.library.projects(), engine))
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+
     def post_studio_engine(self, _query: dict[str, list[str]], engine: str) -> None:
         # "Tải giọng" ở hộp "Đổi giọng": tải phần còn thiếu / đã cũ ở luồng nền; hộp hỏi lại trạng thái mỗi giây.
         self.app._mutating()
@@ -6265,6 +6292,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/studio/setup"), Handler.post_studio_setup),
     ("POST", re.compile(r"/api/studio/setup/cancel"), Handler.post_studio_setup_cancel),
     ("GET", re.compile(r"/api/studio/(zerotts|supertonic)"), Handler.get_studio_engine),
+    ("GET", re.compile(r"/api/studio/(zerotts|supertonic)/use"), Handler.get_studio_engine_use),
     ("POST", re.compile(r"/api/studio/(zerotts|supertonic)"), Handler.post_studio_engine),
     ("POST", re.compile(r"/api/studio/(zerotts|supertonic)/cancel"), Handler.post_studio_engine_cancel),
     ("POST", re.compile(r"/api/studio/zerotts/remove"), Handler.post_studio_zerotts_remove),
@@ -6410,6 +6438,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(BOOK + r"/m4b-job/cancel"), Handler.post_m4b_job_cancel),
     ("GET", re.compile(BOOK + r"/export-music"), Handler.get_export_music),
     ("GET", re.compile(BOOK + r"/export-size"), Handler.get_export_size),
+    ("GET", re.compile(BOOK + r"/export-history"), Handler.get_export_history),
     ("GET", re.compile(BOOK + r"/music-export"), Handler.get_music_export),
     ("POST", re.compile(BOOK + r"/music-export/cancel"), Handler.post_music_export_cancel),
     ("GET", re.compile(LISTEN + r"/audiobook/plan"), Handler.get_audiobook_plan),

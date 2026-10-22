@@ -283,21 +283,46 @@ def _read_chapter(path: Path) -> tuple[bytes, bytes, int, str]:
     return head, tail, size, digest.hexdigest()
 
 
-def _decode_head(raw: bytes) -> str:
-    for encoding in ("utf-8-sig", "cp1258"):
-        try:
-            return raw.decode(encoding)
-        except UnicodeDecodeError:
-            continue
-    return raw.decode("utf-8", errors="replace")
+_UNICODE_ENCODINGS = frozenset({"utf-8-sig", "utf-8", "utf-16", "utf-16-le", "utf-16-be"})
+_FIRST_LINE_BYTES = 64 * 1024
+
+
+def _decode_head(raw: bytes, truncated: bool = False) -> tuple[str, str]:
+    """(chữ, bảng mã) của đầu một file chương, bằng đúng bộ nhận bảng mã của dây chuyền (`io_utils.decode_text`: UTF-16, UTF-8, CP1258...).
+    `truncated`: đầu file bị cắt ở một mốc byte nào đó, có thể rơi giữa một ký tự (UTF-8 nhiều byte, cặp thay thế UTF-16) - lùi tới ranh
+    ký tự gần nhất, không thì phần đuôi lỗi làm cả đoạn bị đoán thành CP1258 và ra chữ rác."""
+    from ..io_utils import decode_text
+
+    if truncated:
+        for cut in range(4):
+            try:
+                text, encoding = decode_text(raw[: len(raw) - cut] if cut else raw)
+            except UnicodeDecodeError:
+                continue
+            if encoding in _UNICODE_ENCODINGS:
+                return text, encoding
+    return decode_text(raw)
+
+
+def _decode_tail(tail: bytes, encoding: str, head: bytes, size: int) -> str:
+    """Chữ của 8 KB cuối một file dài hơn phần đầu đã đọc, theo bảng mã đã nhận ra từ phần đầu (`encoding`). Mốc cắt có thể rơi giữa một
+    ký tự: UTF-16 lệch chẵn lẻ thì bỏ byte đầu, ký tự dở thì bỏ qua."""
+    codec = encoding
+    if encoding == "utf-16":  # BOM chỉ nằm ở đầu file: phần cuối cần biết thứ tự byte
+        codec = "utf-16-be" if head.startswith(b"\xfe\xff") else "utf-16-le"
+    if codec.startswith("utf-16") and (size - len(tail)) % 2:
+        tail = tail[1:]
+    return tail.decode(codec, errors="ignore")
 
 
 def _first_line(path: Path) -> str:
+    """Dòng đầu có chữ của file (gợi ý tên truyện): đọc phần đầu, cùng bộ nhận bảng mã với cả trình tạo sách."""
     try:
-        with path.open("r", encoding="utf-8-sig", errors="replace") as handle:
-            return _first_text_line(handle)
+        with path.open("rb") as handle:
+            raw = handle.read(_FIRST_LINE_BYTES + 1)
     except OSError:
         return ""
+    return _first_text_line(io.StringIO(_decode_head(raw[:_FIRST_LINE_BYTES], len(raw) > _FIRST_LINE_BYTES)[0]))
 
 
 def _first_text_line(lines: Iterable[str]) -> str:
@@ -348,25 +373,25 @@ def _loose_upload_title(files: list[Path]) -> str | None:
     return _common_name(stems)
 
 
-def _credits_at_top(head: bytes) -> list[str]:
+def _credits_at_top(text: str) -> list[str]:
     """Dòng ghi công người dịch / biên tập ở đầu chương (text_processing.credit_lines) - để trình tạo sách ĐỀ XUẤT bỏ
-    chúng khỏi phần đọc; chỉ áp dụng khi người dùng đồng ý. Chỉ xét 8 KB đầu file (`head`: phần đầu file)."""
-    from ..io_utils import decode_text_bytes
+    chúng khỏi phần đọc; chỉ áp dụng khi người dùng đồng ý. Chỉ xét 8 KB chữ đầu (`text`: phần đầu file, đã giải mã)."""
     from ..text_processing import credit_lines
 
-    head = head[:_TAIL_BYTES]
-    cut = head.rfind(b"\n")
-    return credit_lines(decode_text_bytes(head[:cut] if cut > 0 else head))
+    head = text[:_TAIL_BYTES]
+    cut = head.rfind("\n")
+    return credit_lines(head[:cut] if cut > 0 else head)
 
 
-def _credits_at_end(tail: bytes, size: int) -> list[str]:
+def _credits_at_end(text: str, midfile: bool) -> list[str]:
     """Dòng xin ủng hộ / quảng cáo / nguồn ở cuối chương (text_processing.tail_credit_lines, luật chung với sách nhập) - trình
-    tạo sách ĐỀ XUẤT bỏ như dòng ghi công đầu chương. Chỉ xét 8 KB cuối (`tail`) của file `size` byte."""
-    from ..io_utils import decode_text_bytes
+    tạo sách ĐỀ XUẤT bỏ như dòng ghi công đầu chương. Chỉ xét 8 KB chữ cuối (`text`); `midfile`: `text` bắt đầu giữa file nên dòng đầu
+    của nó có thể dở - bỏ qua."""
     from ..text_processing import tail_credit_lines
 
-    cut = tail.find(b"\n") if size > _TAIL_BYTES else -1
-    return tail_credit_lines(decode_text_bytes(tail[cut + 1:] if cut >= 0 else tail))
+    tail = text if midfile else text[-_TAIL_BYTES:]
+    cut = tail.find("\n") if midfile or len(text) > _TAIL_BYTES else -1
+    return tail_credit_lines(tail[cut + 1:] if cut >= 0 else tail)
 
 
 # Thư mục cha chung có tên chung chung (hay của chính app) không phải tên truyện.
@@ -482,7 +507,8 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
     total_seconds = 0.0
     for path in files:
         head, tail, size, sha256 = _read_chapter(path)
-        text = _decode_head(head)
+        truncated = size > len(head)
+        text, encoding = _decode_head(head, truncated)
         words = len(text.split())
         total_words += words
         # Độ dài nghe ước: cùng cách với hộp Xuất sách nói (prepare.listening_seconds trên chữ của các đoạn đọc được) - soát a64: ở đây "4 phút",
@@ -494,11 +520,11 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             "name": path.name,
             "title": humanize.chapter_title(path.stem),
             # Cả file nằm trong phần đầu đã đọc thì lấy dòng đầu từ đó; file dài hơn (hiếm) đọc lại như trước.
-            "firstLine": _first_text_line(io.TextIOWrapper(io.BytesIO(head), encoding="utf-8-sig", errors="replace"))
-            if size == len(head) else _first_line(path),
+            "firstLine": _first_text_line(io.StringIO(text)),
             # Dòng ghi công ở đầu chương: trình tạo sách ĐỀ XUẤT bỏ chúng khỏi phần đọc (đếm trên đúng các chương còn chọn).
-            "credits": _credits_at_top(head),
-            "tailCredits": _credits_at_end(tail, size),  # dòng ủng hộ / quảng cáo cuối chương: đề xuất như trên
+            "credits": _credits_at_top(text),
+            # dòng ủng hộ / quảng cáo cuối chương: đề xuất như trên (file dài hơn phần đầu đã đọc thì giải mã 8 KB cuối theo bảng mã của phần đầu)
+            "tailCredits": _credits_at_end(_decode_tail(tail, encoding, head, size) if truncated else text, truncated),
             "words": words,
             "audioSeconds": round(seconds),
             # Số ký tự có chữ (không tính khoảng trắng): hiện cạnh tên chương để thấy chương nào rỗng / quá dài trước khi tạo.

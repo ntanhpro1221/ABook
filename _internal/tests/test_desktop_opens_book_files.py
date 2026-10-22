@@ -129,7 +129,7 @@ def test_a_fuller_file_of_the_same_book_replaces_it_and_keeps_the_listening(tmp_
     view = app.listen_book(first["id"])
     assert [chapter["available"] for chapter in view["chapters"]] == [True, True]
     assert view["state"]["last"]["seconds"] == 7.0
-    assert app.open_book_file(str(file))["how"] == "existing", "bản ít chương hơn không đè bản đủ"
+    assert app.open_book_file(str(file))["how"] == "older", "bản ít chương hơn hỏi trước, không đè bản đủ"
 
 
 def test_a_damaged_or_foreign_file_is_refused_with_a_reason(tmp_path: Path) -> None:
@@ -293,7 +293,7 @@ def test_a_longer_series_file_replaces_the_book_and_the_listening_survives(tmp_p
     assert [c["id"] for c in view["chapters"] if c["available"]] == [100001, 200001, 300001]
     assert view["state"]["last"] == {**view["state"]["last"], "chapterId": 200001, "seconds": 7.0}
     assert [m["chapterId"] for m in view["state"]["bookmarks"]] == [100001]
-    assert app.open_book_file(str(short))["how"] == "existing", "bản ít phần hơn không đè bản đủ"
+    assert app.open_book_file(str(short))["how"] == "older", "bản ít phần hơn hỏi trước, không đè bản đủ"
 
 
 def test_a_series_file_is_the_same_book_as_a_single_part_file_of_it(tmp_path: Path) -> None:

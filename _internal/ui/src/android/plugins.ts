@@ -55,7 +55,8 @@ export interface NativeState {
 export type BedtimeSession = NightSession;
 
 export interface EbookPlayerPlugin {
-  updateMetadata(options: { bookId: string; title: string; narrator: string; chapters: { id: number; title: string }[] }): Promise<NativeState>;
+  updateMetadata(options: { bookId: string; title: string; narrator: string; chapters: { id: number; title: string }[];
+    queue?: { id: number; title: string; file: string; duration: number; text?: string }[] }): Promise<NativeState>;
   load(options: {
     bookId: string;
     bookTitle: string;
@@ -119,6 +120,8 @@ export interface EbookPlayerPlugin {
 }
 
 export interface RemoteBook {
+  audioVersion?: string;
+  localAudioVersion?: string;
   id: string;
   title: string;
   narrator: string;
@@ -201,6 +204,7 @@ export interface PeerLibrary {
 }
 
 export interface ManifestChapter {
+  sha256?: string;
   id: number;
   index: number;
   title: string;
@@ -218,6 +222,7 @@ export interface ManifestChapter {
   text?: string;
   /** Dòng người nghe bỏ khỏi phần đọc (lớp sửa `skip`, đã áp vào book.json - BookEdits.applyManifest). */
   skip?: string[];
+  wordsVersion?: string;
 }
 
 /** Máy tính đã ghép có Studio: `key` "" là máy tính chính, còn lại là mã máy ghép thêm (Peers.kt). */
@@ -232,6 +237,7 @@ export interface StudioComputer {
 }
 
 export interface LocalBook {
+  wordsVersion?: string;
   format: string;
   id: string;
   title: string;
@@ -289,6 +295,7 @@ export interface DownloadEvent {
 
 /** Tin của một lượt "Xuất MP3" (Mp3ExportWorker.kt): tiến độ (`done`/`total`), xong (`finished`), dừng (`stopped`) hay lỗi (`error`). */
 export interface Mp3ExportEvent {
+  selection?: boolean;
   bookId: string;
   run: string;
   done?: number;
@@ -486,7 +493,7 @@ export interface EbookLibraryPlugin {
   /** "Xuất MP3 để nghe ở app khác" (Mp3Export.kt): thư mục MP3 như máy tính, chạy nền. Lần đầu (hay `pick`) hỏi chỗ lưu bằng bộ
    *  chọn thư mục của hệ thống rồi nhớ lại. `cover`: bìa tự vẽ (data URL PNG) khi sách không có bìa. Tiến độ / kết quả: sự kiện
    *  "mp3Export" mang cùng `run`. `started: false` khi không chọn thư mục. */
-  exportMp3(options: { bookId: string; cover?: string; pick?: boolean }): Promise<{ started: boolean; run?: string; folder?: string; chapters?: number }>;
+  exportMp3(options: { bookId: string; cover?: string; pick?: boolean; chapterIds?: number[] }): Promise<{ started: boolean; run?: string; folder?: string; chapters?: number }>;
   /** "Mở thư mục" ở thông báo xuất xong: mở thư mục bản xuất bằng app Tệp. `opened: false` khi máy không có app nào mở được. */
   openFolder(options: { uri: string }): Promise<{ opened: boolean }>;
   addListener(event: "mp3Export", handler: (event: Mp3ExportEvent) => void): Promise<PluginListenerHandle>;
@@ -518,6 +525,7 @@ export interface EbookLibraryPlugin {
   /** `bytes`: cả thư viện; `books`: cỡ từng cuốn trên máy (mã thư mục = mã cuốn). */
   storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number }[] }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor }): Promise<ListeningState>;
+  saveReading(options: { id: string; chapterId: number; index: number; at?: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor; quote?: string; record?: string }): Promise<ListeningState>;
   setChapterDone(options: { id: string; chapterId: number; done: boolean }): Promise<ListeningState>;
   setFinished(options: { id: string; finished: boolean }): Promise<ListeningState>;
   setRate(options: { id: string; rate: number }): Promise<void>;
@@ -536,6 +544,8 @@ export interface EbookLibraryPlugin {
   addListener(event: "download", handler: (event: DownloadEvent) => void): Promise<PluginListenerHandle>;
   /** Bộ chọn file của hệ thống để mở một file sách .abook; kết quả về qua sự kiện "import". */
   pickBook(): Promise<{ picked: boolean }>;
+  confirmOlderImport(options: { source: string }): Promise<void>;
+  exportHistory(options: { bookId: string }): Promise<{ exports: { kind: string; target: string; changed: number[] }[] }>;
   addListener(event: "import", handler: (event: ImportEvent) => void): Promise<PluginListenerHandle>;
   /** App khác gửi tới một file EPUB / DOCX / PDF / TXT ("Mở bằng", chia sẻ): native đã chép nó như `pickSource` - giao diện mở bước
    *  xem trước của "Thêm sách từ file…". `error`: không chép được, câu cho người dùng. */
@@ -574,6 +584,8 @@ export interface EbookLibraryPlugin {
 
 /** Kết quả mở một file sách (.abook): mã sách vừa vào Thư viện, hay lý do không nhận. */
 export interface ImportEvent {
+  how?: string;
+  source?: string;
   bookId?: string;
   title?: string;
   /** Cuốn đã có trên máy và đã có thay đổi của người nghe: số thay đổi được giữ nguyên (BookFileImport.Imported.keptEdits). */
