@@ -339,6 +339,9 @@ export function usePreferences() {
       client.setQueryData(["preferences"], data);
       void client.invalidateQueries({ queryKey: ["library"] });
     },
+    // Máy chủ từ chối hay file tuỳ chọn không ghi được: nói thẳng, kèm lời máy chủ (vd. thư mục thư viện không dùng được). Màn hình chỉ báo "đã xong"
+    // trong `onSuccess` của lời gọi `update` (soát a100 V3), nên lời báo này không đi cùng một lời báo thành công.
+    onError: (error: Error) => toast.error("Chưa lưu được cài đặt", { id: "preferences-not-saved", description: error.message }),
   });
   return { ...query, update: mutation.mutate, updating: mutation.isPending };
 }
