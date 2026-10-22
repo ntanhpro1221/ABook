@@ -3430,6 +3430,14 @@ def is_local_path(value: Any) -> bool:
     return isinstance(value, str) and LOCAL_PATH.match(value) is not None
 
 
+LOCAL_PATH_IN_TEXT = re.compile(r"""(?:[A-Za-z]:[\\/]|\\\\)[^\n'"“”]*""")
+
+
+def without_local_text(text: str) -> str:
+    """Câu báo cho thiết bị ở xa không mang đường dẫn trên máy này (có tên người dùng Windows): mỗi đường tìm thấy chỉ còn tên file / thư mục cuối."""
+    return LOCAL_PATH_IN_TEXT.sub(lambda found: PureWindowsPath(found.group().rstrip(" .,;:)")).name, text)
+
+
 def without_local_paths(value: Any) -> Any:
     """Lời đáp cho Studio từ xa không mang đường dẫn trên máy này (thư mục thư viện, thư mục từng dự án - có tên người dùng Windows):
     bỏ `path` của từng cuốn (mục có `id`), để trống `libraryRoot` / `libraryRootSeen` và `root` của thư viện (soát a27 lỗi 10), bỏ `folder`
@@ -3720,6 +3728,8 @@ class Handler(BaseHTTPRequestHandler):
             row["path"] = alias(row["path"])
         for key in ("missing", "skipped", "subfolders"):
             result[key] = [alias(item) for item in result.get(key, [])]
+        for key in ("errors", "notes"):  # lời báo viết cho người đọc, nhưng lỗi hệ thống lạ vẫn có thể kèm đường dẫn của máy này
+            result[key] = [without_local_text(item) if isinstance(item, str) else item for item in result.get(key, [])]
         proposal = result.get("volumes")
         if isinstance(proposal, dict):
             if proposal.get("order"):

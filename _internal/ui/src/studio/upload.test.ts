@@ -38,7 +38,8 @@ describe("planUpload", () => {
     expect(plan.tooBig).toEqual(["to.epub"]);
     expect(names(plan.groups[0].files)).toEqual(["1.txt"]);
     expect(planNotice(plan)).toBe(
-      "“anh.jpg”, “sach.mobi” không phải file truyện - chỉ nhận .txt, .epub, .docx, .pdf. “to.epub” lớn hơn 8 MB - máy tính chỉ nhận file tới 8 MB.",
+      "“anh.jpg”, “sach.mobi” không phải file truyện - chỉ nhận .txt, .epub, .docx, .pdf. “to.epub” lớn hơn 40 MB nên không gửi qua mạng được. " +
+        "Bạn hãy tách thành vài file nhỏ hơn rồi gửi lại, hoặc chép file vào máy tính rồi mở nó ngay trên máy tính.",
     );
     expect(planNotice(planUpload([file("1.txt")], "B"))).toBeNull();
   });
