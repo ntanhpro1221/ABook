@@ -37,7 +37,22 @@ object ExportCancellation {
     @Synchronized
     fun enqueue(context: Context, name: String, request: OneTimeWorkRequest) {
         cancel(context, name)
+        prune(context)
         WorkManager.getInstance(context).enqueueUniqueWork(name, ExistingWorkPolicy.REPLACE, request)
+    }
+
+    /** Chỉ bỏ dấu của việc WorkManager đã quên hẳn: việc vừa huỷ có thể còn đang chạy tới catch và cần đọc dấu. */
+    internal fun staleKeys(keys: Collection<String>, known: (UUID) -> Boolean): List<String> = keys.filter { key ->
+        val id = key.removePrefix("cancel:").takeIf { key.startsWith("cancel:") }
+            ?.let { runCatching { UUID.fromString(it) }.getOrNull() }
+        id == null || !known(id)
+    }
+
+    private fun prune(context: Context) {
+        val prefs = prefs(context)
+        val manager = WorkManager.getInstance(context)
+        val stale = staleKeys(prefs.all.keys) { manager.getWorkInfoById(it).get() != null }
+        if (stale.isNotEmpty()) prefs.edit().apply { stale.forEach(::remove) }.apply()
     }
 
     fun stopIntent(context: Context, id: UUID): PendingIntent = PendingIntent.getBroadcast(
