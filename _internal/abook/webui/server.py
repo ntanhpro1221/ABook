@@ -2948,6 +2948,12 @@ class App:
         stopping = [*self.projectfile_jobs.stop_all(), *self.m4b_jobs.stop_all(), *self.mp3_jobs.stop_all(),
                     *self.bookfile_jobs.stop_all(), *self.listen_exports.stop_all()]
         self._trash_sweeper.cancel()
+        # Đang cài Studio (soát a92 V2): bảo lượt cài dừng cùng lúc - tiến trình con của nó (uv, python tải model) bị giết thay vì
+        # sống tiếp mồ côi sau khi host chết, không còn tiến độ hay nút huỷ nào - và chờ chung hạn bên dưới. Lượt dở ghi lại
+        # "Đã dừng - bấm Cài tiếp"; lần mở sau làm tiếp từ bước dở.
+        studio = self.studio
+        if studio is not None:
+            studio.stop()
         # Hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác - trừ cuốn Thùng rác không nhận trọn (Windows sẽ hỏi
         # "xoá hẳn", mà đóng app không được chờ ai bấm): nó ở lại chỗ chờ tới lần mở sau.
         trash_thread = threading.Thread(target=lambda: self.sweep_trash(everything=True, ask=False), name="trash-close", daemon=True)
@@ -2956,6 +2962,8 @@ class App:
         self.cast.close()
         self.previews.shutdown()
         export_jobs.join_until([trash_thread, *stopping], deadline)
+        if studio is not None:
+            studio.wait(max(0.0, deadline - time.monotonic()))
 
     def routes(self) -> dict[str, Any]:
         """Các đường tới máy này cho thiết bị vừa ghép: địa chỉ LAN + cổng đồng bộ, và địa chỉ Bluetooth khi cổng

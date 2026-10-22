@@ -13,6 +13,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Một câu chỉ còn một thẻ trong “Việc cần bạn”: khi máy vừa nghi người nói của câu ấy vừa nghi nó nói với chính mình, các lý do được gộp vào cùng một thẻ thay vì hiện hai thẻ cho cùng một câu.
 - Hoàn tác một lựa chọn sau khi nó đã được gửi sang máy giữ sách (điện thoại hay máy tính khác tự gửi sau vài giây) không còn báo “đã được thay bằng một lựa chọn sau”: máy bạn nhờ máy giữ sách rút đúng lựa chọn ấy, và thông báo nói thật điều đó - nếu máy ấy đã đưa vào sách rồi thì bạn được báo là cần chọn lại ở máy đó.
 - “Việc cần duyệt” và “Cần nghe lại” tự làm mới (mỗi 15 giây) khi sách đang chạy, cả con số trên nhãn tab: việc mới hiện ra mà không phải tải lại trang, và chỗ bạn đang đứng không bị xô.
+- Thêm hay bớt file nguồn rồi bấm tạo ngay khi máy còn đang đọc lại nguồn không còn tạo ra cuốn thiếu chương vừa chọn: nút tạo hiện “Đang đọc nguồn…” và chờ máy đọc xong, trong lúc đó bạn vẫn chỉnh được các thiết lập khác.
+- Đóng ABook khi đang cài Studio giờ dừng hẳn việc cài (không còn để tiến trình cài chạy ngầm không ai trông). Lần mở sau, nếu còn một lượt cài cũ chạy ngầm hay một cửa sổ ABook khác đang cài, bạn được báo rõ và chọn chờ hoặc “Dừng lượt cũ” thay vì cài chồng lên nhau.
+- Cài Studio bị ngắt giữa lúc tải Whisper (mất mạng, bấm Dừng) thì “Cài tiếp” tải nối phần đã có, không còn tải lại cả file từ đầu.
+- Gửi chương từ điện thoại hay trình duyệt có nút “Huỷ gửi”; rời trang cũng dừng gửi. Các file đã gửi được giữ lại và máy nói rõ đã gửi bao nhiêu trên tổng số.
+- Xem trước nguồn đọc đúng file TXT lưu bằng Unicode (UTF-16) hay bảng mã cũ CP1258: tên dòng đầu, số chữ, số ký tự và dòng ghi công không còn ra chữ rác hay sai số.
+- Thời gian làm sách ghi rõ là số tham khảo đo trên một máy khác; máy hay bộ phân tích khác thì chỉ cho khoảng rộng, không còn nhãn “Trên máy này” cho số không phải đo trên máy bạn.
 
 ## [0.4.125] - 2026-10-22
 
