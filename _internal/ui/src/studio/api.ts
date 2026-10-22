@@ -126,6 +126,8 @@ export interface Chapter {
 export interface VoiceProfile {
   key: string;
   preset: string;
+  /** Tên giọng để hiện (khoá `preset` gửi lại máy chủ). */
+  label?: string;
   tone: string;
 }
 
@@ -142,7 +144,7 @@ export interface CastMember {
 }
 
 export interface Cast {
-  narrator: { voice: string; lines: number; seconds: number; profile: VoiceProfile | null; pendingVoice?: { preset: string; gender: string } | null };
+  narrator: { voice: string; lines: number; seconds: number; profile: VoiceProfile | null; pendingVoice?: { preset: string; label?: string; gender: string } | null };
   characters: CastMember[];
   extras: CastMember[];
 }
