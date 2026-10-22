@@ -69,20 +69,35 @@ object StudioAlerts {
         val reply = runCatching {
             JSONObject(SyncLink.request(context, "GET", "/sync/v1/studio", readTimeoutMs = 20_000, connectTimeoutMs = 4000))
         }.getOrNull() ?: return
-        val books = reply.optJSONArray("books") ?: return
+        if (reply.optJSONArray("books") == null) return
         val prefs = state(context)
         val before = runCatching { JSONObject(prefs.getString("snapshot", "{}") ?: "{}") }.getOrElse { JSONObject() }
-        val seeded = prefs.getBoolean("seeded", false)
+        // Giá trị của lần hỏi TRƯỚC: đọc trước khi ghi lần này (ghi trước rồi đọc lại thì luôn thấy chính lần này và tin "tạm dừng vì
+        // pin" của từng cuốn không bao giờ tới - soát a88 V6).
+        val poll = evaluate(reply, before, prefs.getBoolean("seeded", false), prefs.getBoolean("onBattery", false))
+        prefs.edit().putBoolean("onBattery", poll.onBattery).putString("snapshot", poll.snapshot.toString()).putBoolean("seeded", true).apply()
+        for (note in poll.alerts) post(context, note.key, note.title, note.text, note.path)
+    }
+
+    /** Kết quả một lần hỏi: các tin cần đăng, ảnh chụp để so lần sau, máy tính có đang chạy pin không. */
+    data class Poll(val alerts: List<Alert>, val snapshot: JSONObject, val onBattery: Boolean)
+
+    /**
+     * So câu trả lời của máy tính với ảnh chụp lần trước. Hàm thuần (không Context) để test JVM.
+     * `seeded`: đã có ảnh chụp trước (lần đầu chỉ chụp, không báo); `wasOnBattery`: máy tính đã chạy pin ở lần hỏi trước.
+     */
+    fun evaluate(reply: JSONObject, before: JSONObject, seeded: Boolean, wasOnBattery: Boolean): Poll {
+        val out = mutableListOf<Alert>()
         // Máy tính tuột sạc (cấp máy, kể cả khi không có sách nào chạy): báo một lần mỗi lần rút; máy bàn gửi false/null.
         val unplugged = !reply.isNull("onBattery") && reply.optBoolean("onBattery")
-        if (seeded && unplugged && !prefs.getBoolean("onBattery", false)) {
-            post(context, "machine:battery", "Máy tính đang chạy pin",
+        if (seeded && unplugged && !wasOnBattery) {
+            out += Alert("machine:battery", "Máy tính đang chạy pin",
                 "${reply.optString("name").ifBlank { "Máy tính" }} đang chạy bằng pin - cắm sạc lại nếu không định rút.", "/#/studio")
         }
-        prefs.edit().putBoolean("onBattery", unplugged).apply()
+        val books = reply.optJSONArray("books")
         val after = JSONObject()
-        for (index in 0 until books.length()) {
-            val book = books.optJSONObject(index) ?: continue
+        for (index in 0 until (books?.length() ?: 0)) {
+            val book = books?.optJSONObject(index) ?: continue
             val id = book.optString("id")
             if (id.isBlank()) continue
             after.put(id, JSONObject()
@@ -92,13 +107,9 @@ object StudioAlerts {
                 .put("held", heldOf(book))
                 .put("work", if (book.isNull("work")) JSONObject.NULL else book.optInt("work")))
             val old = before.optJSONObject(id)
-            if (seeded && old != null) {
-                for (note in alerts(book, old, prefs.getBoolean("onBattery", false))) {
-                    post(context, note.key, note.title, note.text, note.path)
-                }
-            }
+            if (seeded && old != null) out += alerts(book, old, wasOnBattery)
         }
-        prefs.edit().putString("snapshot", after.toString()).putBoolean("seeded", true).apply()
+        return Poll(out, after, unplugged)
     }
 
     /** Một tin sắp đăng: `key` = (cuốn, loại tin) - tin mới cùng loại thay tin cũ. */
@@ -106,7 +117,7 @@ object StudioAlerts {
 
     /**
      * Những tin cần báo khi so trạng thái một cuốn với ảnh chụp lần trước (`old`). Hàm thuần (không Context) để test JVM.
-     * `machineOnBattery`: máy tính đã được báo "đang chạy pin" ở cấp máy - không báo lại cho từng cuốn.
+     * `machineOnBattery`: máy tính đã chạy pin từ lần hỏi TRƯỚC (đã được báo ở cấp máy) - không báo lại cho từng cuốn.
      */
     fun alerts(book: JSONObject, old: JSONObject, machineOnBattery: Boolean): List<Alert> {
         val out = mutableListOf<Alert>()
@@ -129,7 +140,16 @@ object StudioAlerts {
                     "Phân tích xong - duyệt giọng, tên lạ, câu chưa chắc trước khi thu.", "/#/studio/$id?tab=precast")
             old.optBoolean("running") && !book.optBoolean("running") && phase != "done" && phase != "error" &&
                 !heldOf(book) ->
-                out += Alert("$id:stopped", "Đã dừng: $title", "${book.optString("statusLabel")} · $progress", "/#/studio/$id")
+                // Máy tính nói lượt chạy kết thúc ra sao (`end`): bạn bấm Dừng khác với máy sập - tin sau cần mở Studio xem nguyên nhân
+                // (soát a88 T4). Máy tính đời cũ không gửi `end` thì giữ tin cũ.
+                out += when (book.optString("end")) {
+                    "failed", "lost" -> Alert("$id:crashed", "Máy tính gặp sự cố: $title",
+                        (if (book.optString("end") == "lost") "Tiến trình làm sách bị tắt đột ngột (máy khởi động lại, hết điện hay bị đóng)."
+                        else book.optString("endDetail").ifBlank { "Dây chuyền thoát bất thường." }.take(160)) +
+                            " · $progress. Mở Studio để xem và làm tiếp.", "/#/studio/$id")
+                    "stopped" -> Alert("$id:stopped", "Đã dừng theo yêu cầu: $title", "Bạn đã bấm Dừng · $progress", "/#/studio/$id")
+                    else -> Alert("$id:stopped", "Đã dừng: $title", "${book.optString("statusLabel")} · $progress", "/#/studio/$id")
+                }
             // Máy tính rút sạc nên Studio tự tạm dừng (power_source.py): báo để người ta biết máy tuột sạc - 24-09 sạc tuột
             // 22:50 mà 00:07 mới có người thấy.
             pausedOf(book) == "battery" && pausedOf(old) != "battery" && !machineOnBattery ->
