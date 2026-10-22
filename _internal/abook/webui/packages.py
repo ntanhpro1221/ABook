@@ -273,10 +273,12 @@ def music_file(path: Path, name: str) -> Path | None:
     đã ghim, `book_edits.apply_music`)."""
     from .music_plan import TRACK_FILE
 
+    if not TRACK_FILE.fullmatch(name):
+        return None
     music = edited_manifest(path).get("music")
     tracks = music.get("tracks") if isinstance(music, dict) else None
-    if not TRACK_FILE.fullmatch(name) or not isinstance(tracks, dict) or name not in tracks:
-        return None
+    if (not isinstance(tracks, dict) or name not in tracks) and name not in book_edits.pinned_files(book_edits.load(path)):
+        return None  # cũng nhận bài của "Nhạc của tôi" mà sách chữ mang theo (edits.json): sách chữ không có mục `music`
     return _file(path, name)
 
 

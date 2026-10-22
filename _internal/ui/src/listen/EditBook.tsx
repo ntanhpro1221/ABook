@@ -87,6 +87,10 @@ async function imageToDataUrl(file: Blob): Promise<string> {
 }
 
 export interface MusicEditView {
+  /** Cuốn là dự án Studio (không phải sách đóng gói): bật/tắt và mức là của chính dự án, đổi ở đây cũng là đổi trong Studio. */
+  project?: boolean;
+  /** Lời báo của máy chủ khi nhạc chưa dựng lại được (mất mạng...): lựa chọn đã lưu. */
+  error?: string;
   hasMusic: boolean;
   enabled: boolean;
   levelDb: number;
@@ -105,6 +109,28 @@ export interface MusicEditView {
   }[];
 }
 
+/** Lời đáp `GET /api/books/<mã>/music` của dự án Studio (`music_view` của server.py): rãnh nhạc + lựa chọn của người dùng, không có hình của sách đóng gói. */
+interface ProjectMusicView {
+  plan?: { enabled?: boolean; levelDb?: number; scenes?: unknown[] } | null;
+  overrides?: { enabled?: boolean; levelDb?: number };
+  error?: string;
+}
+
+/** Màn nhạc của cuốn dưới một hình duy nhất cho nút "Nhạc nền" và hộp "Sửa sách": sách đóng gói giữ nguyên, dự án Studio đọc `plan` / `overrides` (cùng lệnh PUT cập nhật nhạc của dự án). */
+export function musicEditView(raw: MusicEditView | ProjectMusicView): MusicEditView {
+  if ("hasMusic" in raw) return raw;
+  const level = raw.overrides?.levelDb ?? raw.plan?.levelDb ?? -20;
+  return {
+    project: true,
+    hasMusic: Boolean(raw.plan?.scenes?.length),
+    enabled: raw.overrides?.enabled !== false,
+    levelDb: level,
+    defaultLevelDb: -20,
+    cues: [],
+    error: raw.error,
+  };
+}
+
 export type MusicChange = { enabled?: boolean; levelDb?: number; silence?: Record<string, boolean>; pins?: Record<string, string | null> };
 
 /** Nhạc nền đã gắn sẵn của cuốn (người làm sách) + cách đổi: dùng chung cho hộp "Sửa sách" và nút nhạc nền của trình phát - một lệnh
@@ -112,9 +138,9 @@ export type MusicChange = { enabled?: boolean; levelDb?: number; silence?: Recor
 export function useBookMusic(bookId: string, onChanged?: () => void) {
   const client = useQueryClient();
   const key = ["listen", "edit-music", bookId];
-  const view = useQuery({ queryKey: key, queryFn: () => api<MusicEditView>(`/api/books/${bookId}/music`), staleTime: 30_000 });
+  const view = useQuery({ queryKey: key, queryFn: () => api<MusicEditView | ProjectMusicView>(`/api/books/${bookId}/music`), staleTime: 30_000, select: musicEditView });
   const change = useMutation({
-    mutationFn: (body: MusicChange) => api<MusicEditView>(`/api/books/${bookId}/music`, { method: "PUT", body }),
+    mutationFn: (body: MusicChange) => api<MusicEditView | ProjectMusicView>(`/api/books/${bookId}/music`, { method: "PUT", body }),
     onSuccess: (next) => {
       client.setQueryData(key, next);
       onChanged?.();
