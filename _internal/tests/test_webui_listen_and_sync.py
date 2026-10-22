@@ -315,6 +315,14 @@ def test_a_paired_phone_downloads_a_book_and_syncs_its_place(library, tmp_path: 
         status, data, headers = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/{chapter['file']}", token,
                                          headers={"Range": "bytes=10-19"})
         assert status == 206 and len(data) == 10 and headers["Content-Range"].startswith("bytes 10-19/")
+        # Tải tiếp phải kiểm được file còn nguyên: ETag đi kèm, `If-Range` khớp thì vẫn nhận Range, lệch thì nhận cả file.
+        etag = headers["ETag"]
+        status, data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/{chapter['file']}", token,
+                                        headers={"Range": "bytes=10-19", "If-Range": etag})
+        assert status == 206 and len(data) == 10
+        status, whole, headers = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/{chapter['file']}", token,
+                                               headers={"Range": "bytes=10-19", "If-Range": '"da-doi"'})
+        assert status == 200 and len(whole) > 10 and "Content-Range" not in headers and headers["ETag"] == etag, "file đã đổi: gửi lại cả file"
         status, _data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/../book_settings.json", token)
         assert status == 404, "chỉ phát file có trong gói"
         status, data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/scripts/1.json", token)

@@ -13,8 +13,9 @@ use std::fs::{self, OpenOptions};
 use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, DragDropEvent, Manager, RunEvent, Url, WindowEvent};
@@ -207,57 +208,159 @@ fn forward_drag_drop(app: &AppHandle, event: &DragDropEvent) {
     }
 }
 
+/// Hỏi trang phát hành quá chừng này mà không thấy trả lời: coi là không có mạng (nút "Kiểm tra bản mới" trở lại bấm được).
+const UPDATE_CHECK_TIMEOUT: Duration = Duration::from_secs(30);
+/// Đang tải gói mà chừng này không thêm byte nào: coi là đứt mạng. Gói vài trăm MB nên không đặt hạn cho cả lần tải,
+/// chỉ canh chỗ đứng yên.
+const UPDATE_STALL: Duration = Duration::from_secs(60);
+
+/// Lời báo cho người dùng khi tìm / tải / cài bản mới hỏng - câu cố định, không lộ chuỗi lỗi của thư viện (chi tiết vào `host.log`).
+fn update_failure(error: &tauri_plugin_updater::Error) -> &'static str {
+    use tauri_plugin_updater::Error;
+    match error {
+        Error::Minisign(_) | Error::Base64(_) | Error::SignatureUtf8(_) => {
+            "Gói tải về không khớp chữ ký của ABook nên bạn chưa nên cài nó. Bạn thử lại sau ít phút."
+        }
+        Error::Io(_) | Error::Extract(_) => "Không cài được bản mới. Bạn đóng rồi mở lại ABook, rồi thử lại.",
+        _ => UPDATE_NETWORK,
+    }
+}
+
+const UPDATE_NETWORK: &str =
+    "Chưa lấy được bản mới - mạng chập chờn hoặc không tới được trang phát hành. Bạn kiểm tra mạng rồi thử lại.";
+const UPDATE_STALLED: &str =
+    "Đường tải bản mới đứng yên quá lâu. Bạn kiểm tra mạng rồi bấm Cập nhật lần nữa.";
+
+/// Ghi một dòng vào `%LOCALAPPDATA%\ABook\logs\host.log` (cùng file với stderr của host) cho những lỗi mà trang chỉ nói gọn.
+fn log_line(line: &str) {
+    let Some(base) = std::env::var_os("LOCALAPPDATA") else {
+        return;
+    };
+    let folder = Path::new(&base).join("ABook").join("logs");
+    let _ = fs::create_dir_all(&folder);
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(folder.join("host.log")) {
+        let _ = writeln!(file, "[shell] {line}");
+    }
+}
+
+/// Chờ kết quả của việc chạy nền; bỏ cuộc (None) khi `progress` (mili giây từ `started` ở lần nhích gần nhất) đứng quá `stall`,
+/// hay việc nền chết mà không trả gì.
+fn wait_unless_stalled<T>(receiver: &Receiver<T>, started: Instant, progress: &AtomicU64, stall: Duration) -> Option<T> {
+    loop {
+        match receiver.recv_timeout(Duration::from_millis(250)) {
+            Ok(value) => return Some(value),
+            Err(RecvTimeoutError::Disconnected) => return None,
+            Err(RecvTimeoutError::Timeout) => {
+                let idle = started.elapsed().saturating_sub(Duration::from_millis(progress.load(Ordering::Relaxed)));
+                if idle > stall {
+                    return None;
+                }
+            }
+        }
+    }
+}
+
 /// Tìm bản mới một lần mỗi lần mở app, gói phải có chữ ký khớp khoá công khai trong tauri.conf.json. Không có mạng hay
 /// chưa có bản phát hành nào: im lặng, lần mở sau thử lại. Bản dev không tìm, trừ khi thử bằng `ABOOK_UPDATE_URL`.
-fn check_for_update(app: &AppHandle) {
+/// `manual` (người dùng bấm "Kiểm tra bản mới"): kết quả nào cũng báo trang qua `abook-update-checked`
+/// (`state` = `found` / `latest` / `failed` kèm `message`), để nút không đứng im.
+fn check_for_update(app: &AppHandle, manual: bool) {
     let endpoint = std::env::var("ABOOK_UPDATE_URL").ok();
+    let report = {
+        let app = app.clone();
+        move |detail: Value| {
+            if manual {
+                dispatch_event(&app, "abook-update-checked", &detail);
+            }
+        }
+    };
     if cfg!(debug_assertions) && endpoint.is_none() {
+        report(json!({"state": "latest"}));
         return;
     }
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
-        let mut builder = app.updater_builder();
+        let mut builder = app.updater_builder().timeout(UPDATE_CHECK_TIMEOUT);
         if let Some(url) = endpoint.and_then(|url| url.parse::<Url>().ok()) {
             let Ok(with_endpoint) = builder.endpoints(vec![url]) else {
-                return;
+                return report(json!({"state": "failed", "message": UPDATE_NETWORK}));
             };
             builder = with_endpoint;
         }
-        let Ok(updater) = builder.build() else { return };
-        if let Ok(Some(update)) = updater.check().await {
-            let notes = update.body.clone().unwrap_or_default();
-            let message = json!({"update": {"version": update.version, "notes": notes}});
-            *app.state::<PendingUpdate>().0.lock().unwrap() = Some(update);
-            app.state::<Host>().send(&message);
+        let updater = match builder.build() {
+            Ok(updater) => updater,
+            Err(error) => {
+                log_line(&format!("kiểm bản mới: không dựng được bộ kiểm: {error}"));
+                return report(json!({"state": "failed", "message": update_failure(&error)}));
+            }
+        };
+        match updater.check().await {
+            Ok(Some(mut update)) => {
+                // Hạn của lần kiểm không được dính sang lần tải gói (canh bằng `UPDATE_STALL`).
+                update.timeout = None;
+                let notes = update.body.clone().unwrap_or_default();
+                let message = json!({"update": {"version": update.version, "notes": notes}});
+                *app.state::<PendingUpdate>().0.lock().unwrap() = Some(update);
+                app.state::<Host>().send(&message);
+                report(json!({"state": "found"}));
+            }
+            Ok(None) => report(json!({"state": "latest"})),
+            Err(error) => {
+                log_line(&format!("kiểm bản mới hỏng: {error}"));
+                report(json!({"state": "failed", "message": update_failure(&error)}));
+            }
         }
     });
 }
 
 /// Người dùng bấm "Cập nhật": tải gói (kiểm chữ ký), dừng host để bộ cài ghi đè được Python nhúng, chạy bộ cài. Trên
-/// Windows `install` tự thoát app; bộ cài chế độ passive mở lại app khi xong. Tải hỏng: trang được báo, bấm lại được.
+/// Windows `install` tự thoát app; bộ cài chế độ passive mở lại app khi xong. Tải hỏng hay đứng yên quá `UPDATE_STALL`:
+/// trang được báo, bấm lại được.
 fn install_update(app: &AppHandle) {
     let Some(update) = app.state::<PendingUpdate>().0.lock().unwrap().take() else {
         return;
     };
     let app = app.clone();
-    thread::spawn(
-        move || match tauri::async_runtime::block_on(update.download(|_, _| {}, || {})) {
-            Ok(bytes) => {
+    thread::spawn(move || {
+        let started = Instant::now();
+        let progress = Arc::new(AtomicU64::new(0));
+        let (sender, receiver) = mpsc::channel();
+        let job = {
+            let (update, progress) = (update.clone(), progress.clone());
+            tauri::async_runtime::spawn(async move {
+                let result = update
+                    .download(
+                        move |_, _| progress.store(started.elapsed().as_millis() as u64, Ordering::Relaxed),
+                        || {},
+                    )
+                    .await;
+                let _ = sender.send(result);
+            })
+        };
+        let fail = |message: &str| {
+            *app.state::<PendingUpdate>().0.lock().unwrap() = Some(update.clone());
+            dispatch_event(&app, "abook-update-failed", &Value::from(message));
+        };
+        match wait_unless_stalled(&receiver, started, &progress, UPDATE_STALL) {
+            Some(Ok(bytes)) => {
                 QUITTING.store(true, Ordering::SeqCst);
                 app.state::<Host>().stop();
                 if let Err(error) = update.install(bytes) {
-                    show_failure(
-                        &app,
-                        &format!("Không cài được bản mới ({error}). Đóng rồi mở lại ABook."),
-                    );
+                    log_line(&format!("cài bản mới hỏng: {error}"));
+                    show_failure(&app, "Không cài được bản mới. Bạn đóng rồi mở lại ABook.");
                 }
             }
-            Err(error) => {
-                *app.state::<PendingUpdate>().0.lock().unwrap() = Some(update);
-                dispatch_event(&app, "abook-update-failed", &Value::from(error.to_string()));
+            Some(Err(error)) => {
+                log_line(&format!("tải bản mới hỏng: {error}"));
+                fail(update_failure(&error));
             }
-        },
-    );
+            None => {
+                job.abort();
+                log_line("tải bản mới: đứng yên quá lâu, bỏ");
+                fail(UPDATE_STALLED);
+            }
+        }
+    });
 }
 
 fn answer_dialog(app: &AppHandle, message: &Value) {
@@ -316,6 +419,8 @@ fn pump(app: AppHandle, stdout: ChildStdout) {
             dispatch_event(&app, event, message.get("detail").unwrap_or(&Value::Null));
         } else if message.get("install_update").is_some() {
             install_update(&app);
+        } else if message.get("check_update").is_some() {
+            check_for_update(&app, true);
         }
     }
     if !QUITTING.load(Ordering::SeqCst) {
@@ -362,7 +467,7 @@ fn main() {
                     for path in book_files(&args) {
                         app.state::<Host>().send(&json!({"open": path}));
                     }
-                    check_for_update(&handle);
+                    check_for_update(&handle, false);
                     thread::spawn(move || pump(handle, stdout));
                 }
                 Err(error) => {
@@ -407,5 +512,39 @@ mod tests {
         ];
         assert_eq!(book_files(&args), vec![book.display().to_string(), project.display().to_string()]);
         let _ = fs::remove_dir_all(&folder);
+    }
+
+    #[test]
+    fn a_download_that_stops_moving_is_given_up_not_waited_for_forever() {
+        let (_sender, receiver) = mpsc::channel::<u8>();
+        let progress = AtomicU64::new(0);
+        let started = Instant::now();
+        assert_eq!(wait_unless_stalled(&receiver, started, &progress, Duration::from_millis(300)), None);
+        assert!(started.elapsed() < Duration::from_secs(5));
+    }
+
+    #[test]
+    fn a_slow_download_that_keeps_moving_is_not_given_up() {
+        let (sender, receiver) = mpsc::channel();
+        let progress = Arc::new(AtomicU64::new(0));
+        let started = Instant::now();
+        let ticker = progress.clone();
+        thread::spawn(move || {
+            for _ in 0..8 {
+                thread::sleep(Duration::from_millis(100));
+                ticker.store(started.elapsed().as_millis() as u64, Ordering::Relaxed);
+            }
+            let _ = sender.send(7u8);
+        });
+        // Cả lần tải (~800 ms) dài hơn hạn đứng yên (400 ms) nhưng không lúc nào đứng yên quá hạn.
+        assert_eq!(wait_unless_stalled(&receiver, started, &progress, Duration::from_millis(400)), Some(7));
+    }
+
+    #[test]
+    fn a_download_task_that_died_without_answering_counts_as_failed() {
+        let (sender, receiver) = mpsc::channel::<u8>();
+        drop(sender);
+        let progress = AtomicU64::new(0);
+        assert_eq!(wait_unless_stalled(&receiver, Instant::now(), &progress, Duration::from_secs(60)), None);
     }
 }

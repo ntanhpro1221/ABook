@@ -11,25 +11,49 @@ gửi lên một URL; nếu cho tải URL bất kỳ thì trang web nào lừa �
 from __future__ import annotations
 
 import json
+import logging
 import re
+import time
 import urllib.parse
 import urllib.request
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, wait
 from typing import Any, Callable
 
 from . import covers
 
-TIMEOUT = 8
+log = logging.getLogger(__name__)
+
+TIMEOUT = 8  # mỗi thao tác socket; một nguồn nhỏ giọt từng byte không bị cắt bởi nó, nên còn hạn tổng ở dưới
+SEARCH_DEADLINE = 12  # giây cho CẢ lượt tìm (mọi nguồn): quá hạn thì trả những gì đã có
+DOWNLOAD_DEADLINE = 30  # giây cho một ảnh bìa
+JSON_LIMIT = 2 * 1024 * 1024
+DOWNLOAD_FAILED = "Chưa tải được ảnh này, bạn thử lại hoặc chọn ảnh khác"
 USER_AGENT = "ABook/1 (cover search)"
 ALLOWED_IMAGE_HOSTS = re.compile(
     r"^(is\d+-ssl\.mzstatic\.com|covers\.openlibrary\.org|books\.google\.com|books\.googleusercontent\.com)$"
 )
 
 
+def _read_within(response: Any, limit: int, seconds: float) -> bytes:
+    """Đọc tối đa `limit` byte (+1 để biết là vượt) trong `seconds` giây tính từ giờ - nguồn nhỏ giọt thì bỏ, không để luồng treo mãi."""
+    deadline = time.monotonic() + seconds
+    chunks: list[bytes] = []
+    total = 0
+    while total <= limit:
+        if time.monotonic() > deadline:
+            raise TimeoutError("quá hạn đọc")
+        chunk = response.read(min(64 * 1024, limit + 1 - total))
+        if not chunk:
+            break
+        chunks.append(chunk)
+        total += len(chunk)
+    return b"".join(chunks)
+
+
 def _get_json(url: str) -> Any:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=TIMEOUT) as response:  # noqa: S310 - URL cố định theo nguồn ở dưới
-        return json.loads(response.read().decode("utf-8"))
+        return json.loads(_read_within(response, JSON_LIMIT, SEARCH_DEADLINE).decode("utf-8"))
 
 
 def _itunes(query: str) -> list[dict[str, Any]]:
@@ -101,13 +125,20 @@ def search(query: str) -> dict[str, Any]:
         return {"query": query, "results": [], "failed": []}
     results: list[dict[str, Any]] = []
     failed: list[str] = []
-    with ThreadPoolExecutor(max_workers=len(PROVIDERS)) as pool:
+    # Không dùng `with ThreadPoolExecutor`: thoát khối ấy là chờ mọi luồng xong, một nguồn treo kéo cả lượt tìm treo theo.
+    pool = ThreadPoolExecutor(max_workers=len(PROVIDERS))
+    try:
         futures = {pool.submit(provider, query): provider.__name__.strip("_") for provider in PROVIDERS}
+        wait(futures, timeout=SEARCH_DEADLINE)
         for future, name in futures.items():
             try:
-                results += future.result(timeout=TIMEOUT + 2)
+                if not future.done():
+                    raise TimeoutError(name)
+                results += future.result()
             except Exception:  # noqa: BLE001 - một nguồn hỏng không được làm hỏng các nguồn khác
                 failed.append(name)
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
     seen: set[str] = set()
     unique = []
     for item in results:
@@ -129,9 +160,11 @@ def download_image(url: str) -> bytes:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(request, timeout=TIMEOUT * 2) as response:  # noqa: S310 - đã kiểm tên miền
-            data = response.read(covers.MAX_UPLOAD_BYTES + 1)
-    except OSError as exc:
-        raise covers.CoverError(f"Không tải được ảnh: {exc}") from exc
+            data = _read_within(response, covers.MAX_UPLOAD_BYTES, DOWNLOAD_DEADLINE)
+    except OSError as exc:  # gồm URLError, HTTPError, TimeoutError
+        # Người dùng chỉ cần biết "chưa được, thử lại": `HTTP Error 503` / `<urlopen error ...>` đi vào nhật ký, không lên màn hình.
+        log.warning("Không tải được ảnh bìa %s: %s", url, exc)
+        raise covers.CoverError(DOWNLOAD_FAILED) from exc
     if len(data) > covers.MAX_UPLOAD_BYTES:
         raise covers.CoverError("Ảnh quá lớn")
     return data

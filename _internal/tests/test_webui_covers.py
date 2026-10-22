@@ -99,3 +99,76 @@ def test_a_failing_provider_does_not_spoil_the_search(monkeypatch: pytest.Monkey
         "trùng thì gộp, host lạ thì bỏ"
     assert found["failed"] == ["breaks"]
     assert cover_search.search("x")["results"] == []
+
+
+def test_a_source_that_trickles_cannot_hold_the_whole_search_past_its_deadline(monkeypatch: pytest.MonkeyPatch) -> None:
+    import threading
+    import time
+
+    from abook.webui import cover_search
+
+    release = threading.Event()
+    hit = {"provider": "A", "title": "x", "author": "", "thumb": "https://covers.openlibrary.org/b/id/1-M.jpg",
+           "url": "https://covers.openlibrary.org/b/id/1-L.jpg"}
+
+    def works(_query: str) -> list[dict]:
+        return [hit]
+
+    def trickles(_query: str) -> list[dict]:
+        release.wait(30)  # nguồn nhỏ giọt: từng thao tác socket đều chưa quá hạn nhưng không bao giờ xong
+        return []
+
+    monkeypatch.setattr(cover_search, "PROVIDERS", [works, trickles])
+    monkeypatch.setattr(cover_search, "SEARCH_DEADLINE", 0.4)
+    started = time.monotonic()
+    try:
+        found = cover_search.search("Tên sách")
+        assert time.monotonic() - started < 3, "ra khỏi khối tìm không được chờ luồng của nguồn treo"
+    finally:
+        release.set()
+    assert [item["url"] for item in found["results"]] == [hit["url"]] and found["failed"] == ["trickles"]
+
+
+def test_a_dribbling_download_is_dropped_and_the_listener_never_sees_the_library_error_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    import time
+    import urllib.error
+
+    from abook.webui import cover_search
+
+    url = "https://covers.openlibrary.org/b/id/1-L.jpg"
+    for error in (urllib.error.URLError("[Errno 11001] getaddrinfo failed"),
+                  urllib.error.HTTPError(url, 503, "Service Unavailable", {}, None),  # type: ignore[arg-type]
+                  TimeoutError("timed out")):
+        def refuse(*_args, _error=error, **_kwargs):
+            raise _error
+
+        monkeypatch.setattr(cover_search.urllib.request, "urlopen", refuse)
+        with pytest.raises(covers.CoverError) as caught:
+            cover_search.download_image(url)
+        message = str(caught.value)
+        assert message == cover_search.DOWNLOAD_FAILED
+        assert "urlopen" not in message and "HTTP Error" not in message and "Errno" not in message
+
+    class Dribble:
+        def read(self, _amount: int) -> bytes:
+            time.sleep(0.02)
+            return b"x"
+
+    with pytest.raises(TimeoutError):
+        cover_search._read_within(Dribble(), covers.MAX_UPLOAD_BYTES, 0.2)
+
+
+def test_a_picture_with_too_many_pixels_is_refused_before_it_is_unpacked() -> None:
+    # PNG đơn sắc nén còn vài chục KB nhưng giải nén ra ~200 MB: không được giải nén.
+    huge = Image.new("L", (8000, 8000), 7)
+    buffer = io.BytesIO()
+    huge.save(buffer, "PNG", optimize=False)
+    assert len(buffer.getvalue()) < covers.MAX_UPLOAD_BYTES
+    with pytest.raises(covers.CoverError, match="quá nhiều điểm ảnh"):
+        covers.render_cover(buffer.getvalue())
+
+    # Ảnh chụp điện thoại lớn (JPEG) vẫn dùng được: giải mã thẳng ở cỡ nhỏ.
+    photo = io.BytesIO()
+    Image.new("RGB", (8000, 6000), (180, 40, 60)).save(photo, "JPEG", quality=60)
+    jpeg, meta = covers.render_cover(photo.getvalue())
+    assert max(meta["width"], meta["height"]) <= covers.MAX_SIDE and jpeg

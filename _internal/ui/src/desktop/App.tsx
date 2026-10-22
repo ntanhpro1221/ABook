@@ -345,10 +345,8 @@ function UpdateListener() {
   const client = useQueryClient();
   useEffect(() => {
     const found = () => void client.invalidateQueries({ queryKey: ["app"] });
-    const failed = (event: Event) =>
-      toast.error("Chưa tải được bản mới", {
-        description: `${(event as CustomEvent<string>).detail} - kiểm tra mạng rồi bấm Cập nhật lần nữa.`,
-      });
+    // Lời của vỏ đã viết sẵn cho người nghe (không lộ chuỗi lỗi của thư viện) và đã nói bước tiếp theo.
+    const failed = (event: Event) => toast.error("Chưa tải được bản mới", { description: (event as CustomEvent<string>).detail });
     window.addEventListener("abook-update", found);
     window.addEventListener("abook-update-failed", failed);
     return () => {

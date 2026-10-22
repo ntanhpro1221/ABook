@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { latestRequest, wasAborted } from "@/shared/latestRequest";
 import { Button, Dialog } from "@/shared/ui";
-import { api } from "@/studio/api";
+import { api, ApiError } from "@/studio/api";
 
 /** Tên nguồn bìa như người đọc biết (máy chủ trả tên hàm: "google_books"). */
 const PROVIDER_NAMES: Record<string, string> = { itunes: "iTunes", open_library: "Open Library", google_books: "Google Books" };
@@ -33,6 +34,8 @@ export function failedSourcesNote(failed: string[]): string {
  * nên chỉ là gợi ý - người dùng chọn, không bao giờ tự đặt. Máy tính hỏi qua server (webui/cover_search.py), điện thoại qua lõi
  * native (CoverSearch.kt); ảnh được chọn thì `PUT /cover {url}` và nơi nhận tự tải, chỉ từ các nguồn đã cho phép.
  * `doneNote`: dòng mô tả của thông báo "Đã đặt ảnh bìa" (Studio: điện thoại nhận ảnh ở lần đồng bộ sau).
+ * `onBusy`: đang đặt ảnh đã chọn (trang chủ coi như đang bận, không cho đặt bìa khác chen vào). Đóng hộp thì huỷ yêu cầu còn chạy:
+ * lời đáp về muộn không hiện đè lên, ảnh chọn xong mà bị bỏ không đè lên bìa người dùng đặt sau (máy chủ cũng kiểm thứ tự).
  */
 export function CoverSearchDialog({
   bookId,
@@ -41,6 +44,7 @@ export function CoverSearchDialog({
   onOpenChange,
   onChosen,
   doneNote,
+  onBusy,
 }: {
   bookId: string;
   defaultQuery: string;
@@ -48,31 +52,60 @@ export function CoverSearchDialog({
   onOpenChange: (open: boolean) => void;
   onChosen: () => void;
   doneNote?: string;
+  onBusy?: (busy: boolean) => void;
 }) {
   const [query, setQuery] = useState(defaultQuery);
+  const searches = useRef(latestRequest());
+  const choices = useRef(latestRequest());
+  // Ảnh nhỏ tải lỗi (nguồn xoá ảnh, mạng đứt giữa chừng): bỏ khỏi lưới, không để ô trống mà vẫn bấm chọn được.
+  const [broken, setBroken] = useState<ReadonlySet<string>>(new Set());
   const search = useMutation({
-    mutationFn: (q: string) => api<CoverSearchResult>(`/api/books/${bookId}/cover/search?q=${encodeURIComponent(q)}`),
-    onError: (error: Error) => toast.error("Chưa tìm được bìa", { description: error.message }),
+    mutationFn: (q: string) =>
+      api<CoverSearchResult>(`/api/books/${bookId}/cover/search?q=${encodeURIComponent(q)}`, { signal: searches.current.next() }),
+    onError: (error: Error) => {
+      if (!wasAborted(error)) toast.error("Chưa tìm được bìa", { description: error.message });
+    },
   });
   const choose = useMutation({
-    mutationFn: (found: FoundCover) => api(`/api/books/${bookId}/cover`, { method: "PUT", body: { url: found.url } }),
+    mutationFn: (found: FoundCover) =>
+      api(`/api/books/${bookId}/cover`, { method: "PUT", body: { url: found.url }, signal: choices.current.next() }),
     onSuccess: () => {
       onChosen();
       onOpenChange(false);
       toast.success("Đã đặt ảnh bìa", doneNote ? { description: doneNote } : undefined);
     },
-    onError: (error: Error) => toast.error("Chưa đặt được ảnh này", { description: error.message }),
+    onError: (error: Error) => {
+      // Bị huỷ (đóng hộp) hay bị bìa đặt sau lấn (máy chủ trả 409): người dùng đã tự quyết, không báo lỗi.
+      if (wasAborted(error) || (error instanceof ApiError && error.status === 409)) return;
+      toast.error("Chưa đặt được ảnh này", { description: error.message });
+    },
   });
+  useEffect(() => {
+    onBusy?.(choose.isPending);
+    return () => onBusy?.(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [choose.isPending]);
+  useEffect(() => {
+    const pending = [searches.current, choices.current];
+    return () => pending.forEach((request) => request.cancel());
+  }, []);
+  const changeOpen = (next: boolean) => {
+    if (!next) {
+      searches.current.cancel();
+      choices.current.cancel();
+    }
+    onOpenChange(next);
+  };
   useEffect(() => {
     if (open && !search.data && !search.isPending) search.mutate(query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
-  const results = search.data?.results ?? [];
+  const results = (search.data?.results ?? []).filter((found) => !broken.has(found.thumb));
   const failed = search.data?.failed ?? [];
   return (
     <Dialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={changeOpen}
       title="Tìm ảnh bìa trên mạng"
       description="Từ iTunes, Open Library và Google Books. Truyện mạng dịch thường không có ở đó - khi ấy dùng ảnh có sẵn trên máy."
       width="max-w-3xl"
@@ -111,7 +144,13 @@ export function CoverSearchDialog({
                 title={`${found.title}${found.author ? " - " + found.author : ""} (${found.provider})`}
               >
                 <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-hover">
-                  <img src={found.thumb} alt="" loading="lazy" className="size-full object-cover" />
+                  <img
+                    src={found.thumb}
+                    alt=""
+                    loading="lazy"
+                    className="size-full object-cover"
+                    onError={() => setBroken((now) => new Set(now).add(found.thumb))}
+                  />
                   {choose.isPending && choose.variables?.url === found.url && (
                     <div className="absolute inset-0 grid place-items-center bg-black/40 text-white">
                       <Loader2 className="size-5 animate-spin" />
