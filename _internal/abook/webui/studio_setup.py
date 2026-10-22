@@ -323,10 +323,16 @@ def matches(target: Path, item: Download) -> bool:
     with _hashed_lock:
         known = _hashed.get(stamp)
     if known is None:
-        known = _sha256(target)
+        known = _digest(target)
         with _hashed_lock:
             _hashed[stamp] = known
     return known == item.sha256
+
+
+def _digest(path: Path) -> str:
+    """SHA-256 qua bảng dấu đã lưu ra đĩa của audio_revision: mở lại app không băm lại ~0,9 GB model ngay lượt hỏi trạng thái đầu tiên."""
+    from . import audio_revision
+    return audio_revision.describe(path)["sha256"]
 
 
 def intact(folder: Path | None, files: Any) -> bool:
