@@ -8,6 +8,12 @@ vào chỗ chờ Hoàn tác và khôi phục nếu tạo cuốn mới hỏng; "T
 khi lỗi; điện thoại + máy tính báo "tạm dừng vì pin"; toast đúng, lời hộp Dừng nhất quán, nguyên nhân sự cố hiện trên trang sách, sách xếp
 hàng nói rõ chờ cuốn nào; giữ máy thức (không giữ màn hình) khi sách đang chạy thật. Toàn bộ (Lead chạy): pytest 8764 passed, 9 skipped,
 2 xfailed, 0 F/E; vitest 1343 passed, 1 skipped; tsc exit 0; JVM 1378 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
+Đợt `a89fix` trên `dev/uxfix103` (nền 6a053bc5): soát can thiệp người dùng trong Studio - chuyển lời dẫn thành thoại chọn được
+mọi người nói (dùng SpeakerMenu), sửa dòng có Hoàn tác + rút lại, yêu cầu bị pipeline từ chối hiện thẻ trong "Việc cần bạn",
+Reviews.set_many đọc/ghi một lần, GET không ghi, review_view có cache; shared_readings/workshop_merge ghi overrides trong khoá;
+trộn workshop có bia mộ (cancelled.json, cả Kotlin); kiểm tên nhân vật (name_rules.py + NameRules.kt); khay "Bỏ qua" khôi phục được.
+8 file test mới (47 test). Toàn bộ: pytest 8844 thu được, exit 0 (9 skipped, 2 xfailed, 0 F/E); vitest 1347 passed, 1 skipped;
+tsc exit 0; JVM 1382 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
 Đợt `a80fix2` trên `dev/uxfix99` (Codex tk3 bị cắt ở lượt kiểm cuối, Lead chạy toàn bộ): gói sửa lớn từ máy đã ghép có hạn đọc theo cỡ
 (30 s + cỡ / 16 KiB/s), máy chưa ghép vẫn 30 s; trần kết nối 32 tổng / 8 mỗi nguồn (máy tính), 8 / 6 (điện thoại); GET đóng sớm/503 thử
 lại tối đa 2 lần (200/800 ms), không POST. Toàn bộ a80fix + a80fix2: pytest 8690 passed, 9 skipped, 1 xfailed (lỗi 3), 0 F/E;

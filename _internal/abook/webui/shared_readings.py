@@ -22,7 +22,7 @@ from typing import Any, Iterable
 
 from .. import listener_overrides
 from ..io_utils import atomic_write_bytes, decode_text_bytes
-from . import store
+from . import book_wishes, store
 
 FILE_NAME = "shared_readings.json"
 
@@ -139,7 +139,8 @@ def apply(project_root: Path, entries: list[dict[str, Any]], *, now: float | Non
     """Ghi các mục thành yêu cầu cách đọc của cuốn sách (như người dùng sửa từng tên); trả về các từ đã ghi."""
     moment = time.time() if now is None else now
     applied = []
-    for entry in entries:
-        listener_overrides.request_pronunciation(project_root, str(entry["surface"]), str(entry["spokenForm"]), now=moment)
-        applied.append(str(entry["surface"]))
+    with book_wishes.overrides_turn(project_root):
+        for entry in entries:
+            listener_overrides.request_pronunciation(project_root, str(entry["surface"]), str(entry["spokenForm"]), now=moment)
+            applied.append(str(entry["surface"]))
     return applied

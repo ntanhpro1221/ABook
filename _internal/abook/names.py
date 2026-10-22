@@ -19,9 +19,21 @@ FILE_NAME = "names.json"
 MAX_NAME = 80
 
 
+def tidy(text: Any) -> str:
+    """Chữ người gõ, chưa cắt: NFC, bỏ ký tự định dạng vô hình (nhóm Cf: khoảng trắng rộng 0, BOM, dấu nối mềm, đánh dấu chiều chữ) và
+    ký tự điều khiển, một dấu cách giữa các từ. Phép kiểm ở máy chủ (webui/name_rules.py) cũng dùng đúng hàm này."""
+    kept = []
+    for char in unicodedata.normalize("NFC", text if isinstance(text, str) else "" if text is None else str(text)):
+        category = unicodedata.category(char)
+        if category == "Cf" or (category == "Cc" and not char.isspace()):
+            continue
+        kept.append(" " if char.isspace() else char)
+    return " ".join("".join(kept).split())
+
+
 def clean(name: Any) -> str:
-    """Tên người gõ: NFC, một dấu cách giữa các từ, không dài quá `MAX_NAME`."""
-    return " ".join(unicodedata.normalize("NFC", str(name or "")).split())[:MAX_NAME]
+    """Tên người gõ: `tidy`, không dài quá `MAX_NAME`."""
+    return tidy(name)[:MAX_NAME]
 
 
 def name_key(character: str) -> str:

@@ -46,6 +46,7 @@ SEVERITY = {
     "unnamed": 0.3,
     "audio": 0.9,
     "voice-wish": 0.6,  # giọng đã chọn mà không áp được: ý muốn của người nghe đang mất
+    "refused": 1.0,  # yêu cầu của chính người nghe mà máy đã từ chối: họ đang tin nó đã được làm
     "snap": 0.4,  # máy đã đổi nhãn về tên chương viết - luật đo 0 câu xấu đi / ~11.000 câu, nên hỏi nhẹ, sau các thẻ người nói
     "teller-voice": 0.5,  # giọng dẫn khác giới người kể "tôi": sở thích hơn là lỗi
     "teller-thought": 0.5,  # nội tâm của chính "tôi" đọc bằng giọng nhân vật: như trên
@@ -842,6 +843,58 @@ def card_examples(view: dict[str, Any], key: str, offset: int, limit: int) -> di
     return {"examples": item["examples"][offset:offset + limit], "total": len(item["examples"])}
 
 
+def _refused_requests(project_root: Path, overrides: dict[str, Any]) -> list[dict[str, Any]]:
+    """6c. Yêu cầu của người nghe mà dây chuyền ĐÃ XÉT và từ chối (sự kiện LISTENER_OVERRIDE_REJECTED, pipeline._report_rejected_override), còn
+    nguyên trong overrides.json (soát a89 V8): trước đây chỉ có một dòng cảnh báo kỹ thuật, người nghe không thấy gì trong "Việc cần bạn" nên
+    tưởng yêu cầu đã được làm. Thẻ nói yêu cầu nào, vì sao máy không làm được, và cho bỏ yêu cầu ấy. Bỏ yêu cầu hay gửi yêu cầu khác cho cùng
+    mục thì thẻ tự rơi (sự kiện cũ không còn khớp yêu cầu hiện có)."""
+    from ..listener_overrides import (character_key, line_requests, pronunciation_requests, retake_requests, speaker_requests,
+                                      surface_key, voice_requests)
+    from .humanize import _json, rejected_request
+
+    current = {
+        "pronunciations": {surface_key(request["surface"]): request for request in pronunciation_requests(overrides)},
+        "lines": {request["stable_id"]: request for request in line_requests(overrides)},
+        "speakers": {request["stable_id"]: request for request in speaker_requests(overrides)},
+        "voices": {character_key(request["character"]): request for request in voice_requests(overrides)},
+        "retakes": {request["stable_id"]: request for request in retake_requests(overrides)},
+    }
+    if not any(current.values()):
+        return []
+    cards: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    with closing(store.connect(project_root)) as connection:
+        if "runtime_events" not in store._table_names(connection):
+            return []
+        for row in connection.execute("SELECT details_json FROM runtime_events WHERE code='LISTENER_OVERRIDE_REJECTED' ORDER BY id DESC LIMIT 500"):
+            details = _json(row["details_json"])
+            found = rejected_request(details)
+            if found is None or (found["section"], found["key"]) in seen:
+                continue
+            request = current[found["section"]].get(found["key"])
+            raw = (overrides.get(found["section"]) or {}).get(found["key"])
+            if request is None or not isinstance(raw, dict) or any(request.get(key) != value for key, value in details.items() if key != "problem"):
+                continue
+            seen.add((found["section"], found["key"]))
+            if details.get("stable_id"):
+                line = connection.execute("SELECT text FROM segments WHERE stable_id=?", (str(details["stable_id"]),)).fetchone()
+                found = rejected_request(details, store.quote_line(str(line["text"] or "")) if line is not None else "") or found
+            cards.append({
+                "kind": "refused",
+                "key": f"refused:{found['section']}:{found['key']}",
+                "title": found["title"],
+                "problem": f"Máy đã xét yêu cầu của bạn nhưng không làm được: {found['reason']}. Bạn bỏ yêu cầu này, hay sửa lại ở tab tương ứng.",
+                "affected": 1,
+                "doubt": 1.0,
+                "options": ["Bỏ yêu cầu này"],
+                "current": "Chưa áp dụng được",
+                "examples": [],
+                "refused": {"section": found["section"], "key": found["key"], "requestedAt": float(raw.get("requested_at") or 0)},
+                "requested": None,
+            })
+    return cards
+
+
 def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> dict[str, Any]:
     """`verdicts`: phán quyết "Cần nghe lại" của cuốn (reviews.Reviews.get) - câu đã chấm rơi khỏi thẻ "Bản thu lỗi"."""
     items: list[dict[str, Any]] = []
@@ -1615,6 +1668,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         })
 
     items.extend(_blocked_voice_wishes(project_root, overrides, characters, spoken, speaker_label))
+    items.extend(_refused_requests(project_root, overrides))
     items.extend(_teller_cards(project_root, overrides, names, speaker_wishes, speaker_label, audio))
     items.extend(_snapped_labels(project_root, spoken, names, speaker_wishes, speaker_label, audio))
 

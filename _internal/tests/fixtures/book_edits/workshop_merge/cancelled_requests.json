@@ -1,0 +1,76 @@
+{
+ "now": 2000.0,
+ "local": {
+  "overrides.json": {
+   "version": 1,
+   "retakes": {
+    "a": {"text_sha256": "sha-a", "requested_at": 100.0},
+    "c": {"text_sha256": "sha-c", "requested_at": 500.0},
+    "e": {"text_sha256": "sha-e", "requested_at": 900.0},
+    "g": {"text_sha256": "sha-g", "requested_at": 950.0}
+   },
+   "speakers": {
+    "s1": {"speaker": "LUCIEN", "text_sha256": "sha-s1", "requested_at": 150.0}
+   }
+  },
+  "cancelled.json": {
+   "version": 1,
+   "cancelled": {
+    "retakes:b": {"requested_at": 100.0, "cancelled_at": 200.0},
+    "retakes:f": {"requested_at": 120.0, "cancelled_at": 300.0},
+    "retakes:h": {"requested_at": 1000.0, "cancelled_at": 1100.0},
+    "retakes:i": {"requested_at": 700.0, "cancelled_at": 800.0, "exact": true}
+   }
+  }
+ },
+ "incoming": {
+  "overrides.json": {
+   "version": 1,
+   "retakes": {
+    "b": {"text_sha256": "sha-b", "requested_at": 100.0},
+    "d": {"text_sha256": "sha-d", "requested_at": 150.0},
+    "f": {"text_sha256": "sha-f", "requested_at": 50.0},
+    "h": {"text_sha256": "sha-h", "requested_at": 1500.0},
+    "i": {"text_sha256": "sha-i", "requested_at": 600.0}
+   }
+  },
+  "cancelled.json": {
+   "version": 1,
+   "cancelled": {
+    "retakes:a": {"requested_at": 100.0, "cancelled_at": 210.0},
+    "retakes:c": {"requested_at": 400.0, "cancelled_at": 450.0},
+    "retakes:e": {"requested_at": 9000000000.0, "cancelled_at": 9000000000.0},
+    "retakes:g": {"requested_at": 950.0, "cancelled_at": 9000000000.0},
+    "speakers:s1": {"requested_at": 150.0, "cancelled_at": 160.0}
+   }
+  }
+ },
+ "merged": {
+  "overrides.json": {
+   "version": 1,
+   "retakes": {
+    "c": {"text_sha256": "sha-c", "requested_at": 500.0},
+    "d": {"text_sha256": "sha-d", "requested_at": 150.0, "merged_at": 2000.0},
+    "e": {"text_sha256": "sha-e", "requested_at": 900.0},
+    "h": {"text_sha256": "sha-h", "requested_at": 1500.0, "merged_at": 2000.0},
+    "i": {"text_sha256": "sha-i", "requested_at": 600.0, "merged_at": 2000.0}
+   },
+   "speakers": {}
+  },
+  "cancelled.json": {
+   "version": 1,
+   "cancelled": {
+    "retakes:a": {"requested_at": 100.0, "cancelled_at": 210.0},
+    "retakes:b": {"requested_at": 100.0, "cancelled_at": 200.0},
+    "retakes:c": {"requested_at": 400.0, "cancelled_at": 450.0},
+    "retakes:e": {"requested_at": 9000000000.0, "cancelled_at": 9000000000.0},
+    "retakes:f": {"requested_at": 120.0, "cancelled_at": 300.0},
+    "retakes:g": {"requested_at": 950.0, "cancelled_at": 9000000000.0},
+    "retakes:h": {"requested_at": 1000.0, "cancelled_at": 1100.0},
+    "retakes:i": {"requested_at": 700.0, "cancelled_at": 800.0, "exact": true},
+    "speakers:s1": {"requested_at": 150.0, "cancelled_at": 160.0}
+   }
+  }
+ },
+ "report": {"merged": 6, "kept": 0}
+}
