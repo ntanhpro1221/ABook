@@ -513,7 +513,7 @@ export interface EbookLibraryPlugin {
   undoDelete(options: { token: string }): Promise<void>;
   /** `bytes`: cả thư viện; `books`: cỡ từng cuốn trên máy (mã thư mục = mã cuốn). */
   storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number }[] }>;
-  progress(options: { id: string; chapterId: number; seconds: number; duration: number }): Promise<ListeningState>;
+  progress(options: { id: string; chapterId: number; seconds: number; duration: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor }): Promise<ListeningState>;
   setChapterDone(options: { id: string; chapterId: number; done: boolean }): Promise<ListeningState>;
   setFinished(options: { id: string; finished: boolean }): Promise<ListeningState>;
   setRate(options: { id: string; rate: number }): Promise<void>;

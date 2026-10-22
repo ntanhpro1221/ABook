@@ -537,7 +537,8 @@ object BookEdits {
     /** Ghi `edits.json` nguyên tử; không còn thay đổi nào thì xoá cả file lẫn bìa sửa. */
     fun save(folder: File, edits: JSONObject) = synchronized(lock) {
         if (isEmpty(edits)) {
-            File(folder, EDITS_FILE).delete()
+            val file = File(folder, EDITS_FILE)
+            check(!file.exists() || file.delete()) { "Không lưu được phần sửa sách của bạn" }
             File(folder, EDITS_COVER).delete()
             return@synchronized
         }
@@ -1091,8 +1092,8 @@ object BookEdits {
     fun removeCover(folder: File) = synchronized(lock) {
         val edits = load(folder)
         edits.put("cover", JSONObject.NULL)
-        File(folder, EDITS_COVER).delete()
         write(folder, edits)
+        File(folder, EDITS_COVER).delete() // sau khi JSON mới đã ghi: ghi hỏng thì JSON cũ vẫn có ảnh nó trỏ tới
         Unit
     }
 
@@ -1449,8 +1450,8 @@ object BookEdits {
             }
             if (wishes.length() == 0) edits.remove("wishes")
         }
-        if (edits.opt("cover") !is JSONObject) File(folder, EDITS_COVER).delete()
         save(folder, edits)
+        if (edits.opt("cover") !is JSONObject) File(folder, EDITS_COVER).delete() // sau khi JSON đã ghi
         val after = pinnedFiles(edits).toSet()
         val dropped = before.filter { it !in after }
         if (dropped.isNotEmpty() && book != null) dropUnused(folder, book, dropped)

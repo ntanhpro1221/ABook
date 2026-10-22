@@ -4,8 +4,10 @@ import android.content.Context
 import android.os.SystemClock
 import org.json.JSONArray
 import org.json.JSONObject
+import org.json.JSONException
 import java.io.File
 import java.util.concurrent.Executors
+import java.util.UUID
 
 /**
  * Đẩy hồ sơ nghe đang dùng của một cuốn lên máy tính đã ghép (POST /sync/v1/books/<id>/state - webui/listening.py
@@ -26,24 +28,44 @@ object StateSync {
     /** Đẩy ngay trên luồng hiện tại (đã ở luồng nền). `only`: đúng hồ sơ ấy thay vì hồ sơ đang dùng (xem Store.syncBody). */
     fun pushNow(context: Context, bookId: String, only: String? = null) {
         if (bookId.isBlank()) return
+        val saved = pending.add(bookId, Store.syncBody(bookId, only))
+        send(context, saved)
+    }
+
+    private fun send(context: Context, saved: JSONObject) {
+        val bookId = saved.getString("bookId")
+        val record = saved.getString("recordId")
         // Sách của thiết bị ghép (Peers) đẩy về đúng thiết bị ấy; sách của máy tính chính cần máy tính đã ghép.
         val fromPeer = !Store.playableManifest(bookId)?.optString("source").isNullOrEmpty()
         if (!fromPeer && !SyncLink.paired(context)) return
         val (link, remote) = runCatching { SyncLink.linkFor(context, bookId) }.getOrNull() ?: return
-        pending.add(bookId) // gỡ khi máy kia đã nhận
         val reply = runCatching {
-            JSONObject(SyncLink.request(context, "POST", "/sync/v1/books/$remote/state", Store.syncBody(bookId, only),
+            JSONObject(SyncLink.request(context, "POST", "/sync/v1/books/$remote/state", saved.getJSONObject("body"),
                 readTimeoutMs = 10_000, connectTimeoutMs = 3000, root = link.base, token = link.token))
         }.getOrNull() ?: return
+        if (reply.has("record") && reply.optString("record") != record) return
         lastPushMs = SystemClock.elapsedRealtime()
+        // Máy giữ sách đời cũ không trả mã hồ sơ: câu trả lời vẫn thuộc đúng hồ sơ vừa gửi.
+        reply.put("record", record)
         Store.applySync(bookId, reply)
-        pending.remove(bookId)
+        pending.ack(bookId, record, saved.getString("revision"))
     }
 
     /** Vừa nói chuyện được với máy giữ sách: đẩy các cuốn có chỗ nghe chưa tới được nó (ở luồng nền của StateSync). */
     fun flushPending(context: Context) {
         if (pending.ids().isEmpty()) return
-        io.execute { pending.ids().forEach { runCatching { pushNow(context, it) } } }
+        io.execute {
+            // Hàng chờ đời cũ chỉ biết cuốn: gửi mọi hồ sơ của nó, tránh đánh mất hồ sơ vừa rời.
+            pending.legacyIds().forEach { book -> runCatching {
+                val records = Store.records(book)
+                for (index in 0 until records.length()) {
+                    val record = records.getJSONObject(index).getString("id")
+                    pending.add(book, Store.syncBody(book, record))
+                }
+                if (records.length() > 0) pending.remove(book)
+            } }
+            pending.entries().forEach { runCatching { send(context, it) } }
+        }
     }
 
     /** Trình phát: `force` khi vừa dừng; đang phát thì bỏ qua nếu vừa đẩy chưa tới một phút. */
@@ -54,29 +76,61 @@ object StateSync {
     }
 }
 
-/** Các cuốn có chỗ nghe chưa đẩy được lên máy giữ sách (mất mạng, máy tắt) - lưu ra file để cả khi app đóng rồi mở lại vẫn nhớ. */
+/** Mỗi hồ sơ giữ một snapshot bền. ACK của lượt cũ không được gỡ revision vừa được ghi trong lúc gửi. */
 class PendingPushes(private val file: File) {
+    private fun read(): JSONArray {
+        if (!file.isFile) return JSONArray()
+        return try {
+            JSONArray(file.readText())
+        } catch (error: JSONException) {
+            Store.preserveCorrupt(file)
+            JSONArray()
+        }
+    }
+
     @Synchronized
-    fun ids(): Set<String> = runCatching {
-        val array = JSONArray(file.readText())
-        (0 until array.length()).map { array.getString(it) }.toSet()
-    }.getOrDefault(emptySet())
+    fun ids(): Set<String> {
+        val array = read()
+        return (0 until array.length()).map { array.optJSONObject(it)?.getString("bookId") ?: array.getString(it) }.toSet()
+    }
+
+    @Synchronized
+    fun entries(): List<JSONObject> = read().let { array -> (0 until array.length()).mapNotNull { array.optJSONObject(it) } }
+
+    @Synchronized
+    fun legacyIds(): Set<String> = read().let { array -> (0 until array.length()).mapNotNull { array.opt(it) as? String }.toSet() }
+
+    @Synchronized
+    fun add(bookId: String, body: JSONObject): JSONObject {
+        val record = body.getString("record")
+        val saved = JSONObject().put("bookId", bookId).put("recordId", record).put("revision", UUID.randomUUID().toString())
+            .put("body", JSONObject(body.toString()))
+        val kept = entries().filterNot { it.optString("bookId") == bookId && it.optString("recordId") == record }
+        write(JSONArray(kept + saved).also { array -> legacyIds().sorted().forEach { array.put(it) } })
+        return saved
+    }
+
+    @Synchronized
+    fun ack(bookId: String, recordId: String, revision: String) {
+        val kept = entries().filterNot {
+            it.optString("bookId") == bookId && it.optString("recordId") == recordId && it.optString("revision") == revision
+        }
+        write(JSONArray(kept).also { array -> legacyIds().sorted().forEach { array.put(it) } })
+    }
 
     @Synchronized
     fun add(id: String) {
-        val now = ids()
-        if (id !in now) write(now + id)
+        if (id !in legacyIds()) write(read().put(id))
     }
 
     @Synchronized
     fun remove(id: String) {
-        val now = ids()
-        if (id in now) write(now - id)
+        write(JSONArray(entries()).also { array -> (legacyIds() - id).sorted().forEach { array.put(it) } })
     }
 
-    private fun write(ids: Set<String>) {
+    private fun write(ids: JSONArray) {
         file.parentFile?.mkdirs()
-        Store.writeAtomic(file, JSONArray(ids.sorted()).toString())
+        Store.writeAtomic(file, ids.toString())
     }
 }
 
