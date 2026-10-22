@@ -1,0 +1,45 @@
+{
+  "request": {
+    "chapters": {"1": {"heard": 10, "at": 10}},
+    "bookmarks": [
+      {"id": "note", "chapterId": 1, "seconds": 10, "note": "", "at": 10, "createdAt": 1},
+      {"id": "gone", "chapterId": 1, "seconds": 30, "note": "", "at": 10, "createdAt": 2}
+    ],
+    "last": {"chapterId": 1, "seconds": 10, "at": 10},
+    "rate": 1, "rateAt": 10, "updatedAt": 10
+  },
+  "current": {
+    "chapters": {"1": {"heard": 20, "at": 20}},
+    "bookmarks": [
+      {"id": "note", "chapterId": 1, "seconds": 10, "note": "Ghi trong lúc chờ", "at": 20, "createdAt": 1},
+      {"id": "new", "chapterId": 2, "seconds": 5, "note": "Dấu mới", "at": 20, "createdAt": 20},
+      {"id": "undo", "chapterId": 3, "seconds": 8, "note": "Hoàn tác", "at": 20, "createdAt": 3}
+    ],
+    "deleted": {"gone": 20},
+    "last": {"chapterId": 1, "seconds": 20, "at": 20},
+    "rate": 2, "rateAt": 20, "updatedAt": 20
+  },
+  "reply": {
+    "chapters": {"1": {"heard": 10, "at": 10}, "2": {"heard": 40, "at": 30}},
+    "bookmarks": [
+      {"id": "note", "chapterId": 1, "seconds": 10, "note": "", "at": 10, "createdAt": 1},
+      {"id": "gone", "chapterId": 1, "seconds": 30, "note": "", "at": 10, "createdAt": 2},
+      {"id": "remote", "chapterId": 4, "seconds": 5, "note": "Từ máy kia", "at": 30, "createdAt": 30}
+    ],
+    "deleted": {"undo": 15},
+    "last": {"chapterId": 1, "seconds": 10, "at": 10},
+    "rate": 1, "rateAt": 10, "voice": "edge:test", "voiceAt": 30, "updatedAt": 30
+  },
+  "expected": {
+    "chapters": {"1": {"heard": 20, "at": 20}, "2": {"heard": 40, "at": 30}},
+    "bookmarks": [
+      {"id": "note", "chapterId": 1, "seconds": 10, "note": "Ghi trong lúc chờ", "at": 20, "createdAt": 1},
+      {"id": "undo", "chapterId": 3, "seconds": 8, "note": "Hoàn tác", "at": 20, "createdAt": 3},
+      {"id": "new", "chapterId": 2, "seconds": 5, "note": "Dấu mới", "at": 20, "createdAt": 20},
+      {"id": "remote", "chapterId": 4, "seconds": 5, "note": "Từ máy kia", "at": 30, "createdAt": 30}
+    ],
+    "deleted": {"gone": 20, "undo": 15},
+    "last": {"chapterId": 1, "seconds": 20, "at": 20},
+    "rate": 2, "rateAt": 20, "voice": "edge:test", "voiceAt": 30, "updatedAt": 30
+  }
+}

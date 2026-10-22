@@ -84,8 +84,8 @@ _LOCAL_LINK = re.compile(r"local:[0-9a-f]{40}")
 _PLAYLIST = re.compile(r"[a-z0-9_]{1,40}")  # mã danh sách phát của danh mục (music_playlist.MINE = "Nhạc của tôi")
 _SHA1 = re.compile(r"[0-9a-f]{40}")
 _CHAPTER_KEYS = {"title", "subtitle"}
-_CHAPTER_ID = re.compile(r"\d{1,9}")
-_CUE_KEY = re.compile(r"\d{1,9}:\d{1,12}")
+_CHAPTER_ID = re.compile(r"[0-9]{1,9}")
+_CUE_KEY = re.compile(r"[0-9]{1,9}:[0-9]{1,12}")
 _COLOR = re.compile(r"#[0-9a-f]{6}")
 _LOCK = threading.RLock()
 

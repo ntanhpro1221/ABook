@@ -1,0 +1,6 @@
+[
+  {"name": "no_original_cover", "base": false, "edited": false, "hasCoverKey": false},
+  {"name": "edited_cover_without_original", "base": false, "edited": true, "hasCoverKey": false},
+  {"name": "original_cover", "base": true, "edited": false, "hasCoverKey": true},
+  {"name": "edited_cover_over_original", "base": true, "edited": true, "hasCoverKey": true}
+]

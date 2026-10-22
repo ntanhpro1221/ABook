@@ -1023,11 +1023,7 @@ class LibraryPlugin : Plugin() {
                 continue
             }
             val cached = Store.streamManifest(id)
-            val stale = cached == null ||
-                cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
-                cached.optString("title") != entry.optString("title") ||
-                cached.optString("author") != entry.optString("author") ||
-                cached.optJSONObject("cover")?.optLong("version") != entry.optJSONObject("cover")?.optLong("version")
+            val stale = StreamRefresh.stale(cached, entry)
             val manifest = (if (stale) runCatching { Streaming.fetchManifest(context, id) }.getOrNull() else null) ?: cached ?: continue
             if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
                 Streaming.fetchSmall(context, id, "cover.jpg")
@@ -1049,8 +1045,7 @@ class LibraryPlugin : Plugin() {
                     continue
                 }
                 val cached = Store.streamManifest(id)
-                val stale = cached == null || cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
-                    cached.optString("title") != entry.optString("title") || cached.optString("author") != entry.optString("author")
+                val stale = StreamRefresh.stale(cached, entry)
                 val manifest = (if (stale) runCatching {
                     Streaming.fetchManifest(context, id, peer.getString("key"), entry.getString("remoteId"))
                 }.getOrNull() else null) ?: cached ?: continue
@@ -1645,10 +1640,11 @@ class LibraryPlugin : Plugin() {
         // Sách của thiết bị ghép chưa từng mở thư viện của nó ở đây (chưa có stream.json): mã `p<key>_<mã bên ấy>` nói
         // nguồn - "Nghe ở đây" từ thanh trình phát của máy kia đi thẳng tới đó thay vì hỏi nhầm máy tính chính.
         val peer = Peers.sourceOf(context, id)
+        val previous = Store.streamManifest(id)
         val manifest = runCatching { Streaming.fetchManifest(context, id, peer?.first, peer?.second) }.getOrNull()
             ?: Store.streamManifest(id)
             ?: throw IllegalStateException("Cuốn này nằm trên máy tính - kết nối cùng mạng với máy tính để nghe")
-        if (manifest.optJSONObject("cover") != null && !Store.file(id, "cover.jpg").isFile) Streaming.fetchSmall(context, id, "cover.jpg")
+        if (StreamRefresh.coverNeeded(previous, manifest, Store.file(id, "cover.jpg").isFile)) Streaming.fetchSmall(context, id, "cover.jpg")
         downloads.execute {
             if (!Store.file(id, "cast.json").isFile) Streaming.fetchSmall(context, id, "cast.json")
             val samples = manifest.optJSONArray("samples") ?: JSONArray()
@@ -1774,6 +1770,14 @@ class LibraryPlugin : Plugin() {
         call.resolve(JSObject.fromJSONObject(mark))
         // Bookmarks reach the computer like the listening position does (a70: a bookmark set in the reader never left the phone).
         runCatching { pushState(call.getString("id")!!) }
+    }
+
+    @PluginMethod
+    fun restoreBookmark(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        val mark = Store.restoreBookmark(id, call.getObject("mark")!!)
+        call.resolve(JSObject.fromJSONObject(mark))
+        runCatching { pushState(id) }
     }
 
     @PluginMethod
