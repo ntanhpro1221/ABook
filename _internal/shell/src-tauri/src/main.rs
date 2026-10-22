@@ -341,6 +341,13 @@ fn main() {
         }))
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        // Nhớ kích thước, vị trí, phóng to của cửa sổ qua các lần mở; vị trí chỉ khôi phục khi màn hình cũ còn (rút màn phụ thì
+        // cửa sổ không nằm ngoài màn). Hiện / ẩn cửa sổ vẫn do app quyết, không theo lần đóng trước.
+        .plugin(
+            tauri_plugin_window_state::Builder::default()
+                .with_state_flags(tauri_plugin_window_state::StateFlags::all() - tauri_plugin_window_state::StateFlags::VISIBLE)
+                .build(),
+        )
         .on_window_event(|window, event| {
             if let WindowEvent::DragDrop(drag) = event {
                 forward_drag_drop(window.app_handle(), drag);
