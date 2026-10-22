@@ -57,6 +57,38 @@ Hash trước và sau sửa: `67286434ac06a6706d20fd8fe7ee4b1fda99dc0f1c1310fd3d
 Danh sách khoá đọc từ `QUALITY_IMPLEMENTATION_FILES`; không sửa file khoá, pyproject.toml/uv.lock hay main.rs.
 Không Ollama/GPU/adb/điện thoại/GUI; pytest CUDA_VISIBLE_DEVICES=-1, không đặt TRANSFORMERS_OFFLINE; tối đa 4 luồng.
 Gradle offline, --no-daemon và Kotlin compiler in-process; cấu hình Android local không đưa vào diff.
+Đợt `imp80fix` (`dev/uxfix80`, nền 396400e2): sáu lỗi nhập sách rev_396 được kiểm bằng pytest và JVM,
+cùng fixture trong `tests/import_fixtures.py` và `tests/fixtures/import/expected/`.
+
+- Byte giải nén được đếm thực theo khối 64 KiB: 20 MiB/mục, 300 MiB/gói, cả bìa; đọc lại cùng mục không tính trùng.
+  Stream giả khai 1 byte tái hiện đường vượt trần (Python 3F, JVM 1F trước sửa); ca bìa gọi trực tiếp _epub_cover/epubCover.
+  Chưa khẳng định exploit ZIP thật vượt được zipfile CPython.
+- 401 NUL và các C0 vô hình được bỏ trước khi xuất chữ; form feed ngắt đoạn, tab/newline/CR giữ nguyên. Round-trip extract → decode_text
+  giữ nguyên chữ thấy được (Python 2F, JVM 1F trước sửa). Form feed trong script/HTML ẩn không ngắt chữ thấy được
+  (bổ sung Python 1F trước guard, fixture review_controls dùng chung). Snapshot rights_odd_pages bỏ NUL có chủ ý.
+- Bảng alias XML/XHTML Kotlin dùng chung, XML vẫn giữ whitelist; chương và DRM kiểm latin-1/latin1/l1/cp1252/utf8/x-sjis,
+  thêm mọi alias XML Python biết (JVM 1F trước sửa; Python đã đúng).
+- UTF-16LE/BE không BOM được nhận trước UTF-8 ở đường chương và DRM, có/không khai báo XML (Python 4F, JVM 1F trước sửa).
+- XML strict kiểm một root, thẻ đóng/mở, chữ ngoài root, thuộc tính, entity và namespace bằng SAX; external DTD không được tải.
+  Container/OPF/DOCX cũng strict giống ElementTree. 16 ca XML chung và ba gói bị thêm root (JVM 2F trước sửa; Python đã đúng).
+- EPUB 5.000 mảnh khoảng 4 KiB/mảnh, mục lục chỉ trỏ mảnh đầu: ghép list rồi nối một lần, giữ SHA-256 chữ/thứ tự/chú thích.
+  Python 12,139 → 0,787 giây; JVM sau sửa 1,033 giây; cả hai vượt ngưỡng 12 giây trước sửa (mỗi bên 1F).
+
+Kiểm liên quan: `test_import_review.py`, `test_importers.py`, `test_import_library_fixes.py`, `test_epub_import.py`,
+`test_txt_split.py`: **236 passed, 0 F/E, exit 0**.
+Hash khoá trước/sau sửa: `67286434ac06a6706d20fd8fe7ee4b1fda99dc0f1c1310fd3d925775768337ff`, không đổi.
+Không sửa file trong QUALITY_IMPLEMENTATION_FILES; không dùng Ollama/GPU/điện thoại.
+Vitest đầy đủ: **1239 passed, 1 skipped, 0 F/E, exit 0** (140 file pass, 1 skipped). `npx tsc --noEmit`: **0 lỗi, exit 0**.
+Gradle offline `:app:testDebugUnitTest --max-workers=4 --no-daemon`: XML **1205 tests, 0 F/E, 6 skipped, exit 0**, 139 suites.
+Lượt pytest đầy đủ đầu hoàn tất: **8478 passed, 1 F, 0 E, 9 skipped, exit 1**, 1456,394 giây.
+Failure duy nhất là kiểm catalog XML cũ trong `test_encoding_names_are_normalised_the_same_way_on_both_platforms`:
+fixture nay có thêm các alias hợp lệ. Đã bổ sung kiểm từng alias mới phải ra chữ A, giữ nguyên tập ca hỏng; cả 236 test liên quan qua.
+Lượt đầy đủ sau cập nhật test: **8478 passed, 1 F, 0 E, 9 skipped, exit 1**, 1535,602 giây. Mọi test nhập sách qua.
+Failure duy nhất lần này là `test_work_items_at_scale.py::test_many_deletes_share_one_sweep_timer_and_the_earliest_deadline_wins`:
+callback hẹn giờ chạy ba lần thay vì hai. Test này đã qua trong lượt đầy đủ trước; kiểm lại nguyên file, không đổi mã/test:
+**9 passed, 0 F/E, exit 0**. Giữ nguyên phạm vi sáu lỗi nhập sách; không gọi lượt đầy đủ là exit 0.
+Các lượt đầy đủ có warning cp1252 ở subprocess readerthread và timeout socket ở server giả tải nhạc, ngoài phạm vi nhập sách.
+Toàn bộ (Lead chạy lại): pytest 8453 passed, 9 skipped, 0 F/E, exit 0; vitest 1239 passed; tsc exit 0; JVM 1205 tests, 0 F/E.
 
 Đợt `dev/rvfix` (từ 0.4.120): giữ giới/tuổi khi lượt người nói đổi namespace của cùng vai local trong cùng chương;
 không checkpoint hoà giải khi thiếu model (request lỗi giữ nhãn cũ như trước); đóng luồng cả khi bù độ to/hoàn tất clip lỗi;

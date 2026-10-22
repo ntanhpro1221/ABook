@@ -1,0 +1,86 @@
+[
+ {
+  "case": "latin-1: <?xml version=\"1.0\" encoding=\"latin-1\"?>",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d226c6174696e2d31223f3e3c68746d6c3e3c626f64793e3c703ee974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e9203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<?xml version=\"1.0\" encoding=\"latin-1\"?><html><body><p>été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été </p></body></html>",
+  "body": "été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été"
+ },
+ {
+  "case": "latin-1: <meta charset=\"latin-1\"/>",
+  "hex": "3c6d65746120636861727365743d226c6174696e2d31222f3e3c68746d6c3e3c626f64793e3c703ee974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e9203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<meta charset=\"latin-1\"/><html><body><p>été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été </p></body></html>",
+  "body": "été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été"
+ },
+ {
+  "case": "latin1: <?xml version=\"1.0\" encoding=\"latin1\"?>",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d226c6174696e31223f3e3c68746d6c3e3c626f64793e3c703ee974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e9203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<?xml version=\"1.0\" encoding=\"latin1\"?><html><body><p>été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été </p></body></html>",
+  "body": "été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été"
+ },
+ {
+  "case": "latin1: <meta charset=\"latin1\"/>",
+  "hex": "3c6d65746120636861727365743d226c6174696e31222f3e3c68746d6c3e3c626f64793e3c703ee974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e9203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<meta charset=\"latin1\"/><html><body><p>été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été </p></body></html>",
+  "body": "été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été"
+ },
+ {
+  "case": "l1: <?xml version=\"1.0\" encoding=\"l1\"?>",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d226c31223f3e3c68746d6c3e3c626f64793e3c703ee974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e9203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<?xml version=\"1.0\" encoding=\"l1\"?><html><body><p>été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été </p></body></html>",
+  "body": "été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été"
+ },
+ {
+  "case": "l1: <meta charset=\"l1\"/>",
+  "hex": "3c6d65746120636861727365743d226c31222f3e3c68746d6c3e3c626f64793e3c703ee974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e9203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<meta charset=\"l1\"/><html><body><p>été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été </p></body></html>",
+  "body": "été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été"
+ },
+ {
+  "case": "iso8859-1: <?xml version=\"1.0\" encoding=\"iso8859-1\"?>",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d2269736f383835392d31223f3e3c68746d6c3e3c626f64793e3c703ee974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e9203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<?xml version=\"1.0\" encoding=\"iso8859-1\"?><html><body><p>été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été </p></body></html>",
+  "body": "été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été"
+ },
+ {
+  "case": "iso8859-1: <meta charset=\"iso8859-1\"/>",
+  "hex": "3c6d65746120636861727365743d2269736f383835392d31222f3e3c68746d6c3e3c626f64793e3c703ee974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e9203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<meta charset=\"iso8859-1\"/><html><body><p>été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été </p></body></html>",
+  "body": "été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été"
+ },
+ {
+  "case": "cp1252: <?xml version=\"1.0\" encoding=\"cp1252\"?>",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d22637031323532223f3e3c68746d6c3e3c626f64793e3c703ee974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e9203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<?xml version=\"1.0\" encoding=\"cp1252\"?><html><body><p>été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été </p></body></html>",
+  "body": "été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été"
+ },
+ {
+  "case": "cp1252: <meta charset=\"cp1252\"/>",
+  "hex": "3c6d65746120636861727365743d22637031323532222f3e3c68746d6c3e3c626f64793e3c703ee974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e920e974e9203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<meta charset=\"cp1252\"/><html><body><p>été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été </p></body></html>",
+  "body": "été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été été"
+ },
+ {
+  "case": "utf8: <?xml version=\"1.0\" encoding=\"utf8\"?>",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d2275746638223f3e3c68746d6c3e3c626f64793e3c703e436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b2203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<?xml version=\"1.0\" encoding=\"utf8\"?><html><body><p>Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò </p></body></html>",
+  "body": "Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò"
+ },
+ {
+  "case": "utf8: <meta charset=\"utf8\"/>",
+  "hex": "3c6d65746120636861727365743d2275746638222f3e3c68746d6c3e3c626f64793e3c703e436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b220436f6e20c491c3b2203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<meta charset=\"utf8\"/><html><body><p>Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò </p></body></html>",
+  "body": "Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò Con đò"
+ },
+ {
+  "case": "x-sjis: <?xml version=\"1.0\" encoding=\"x-sjis\"?>",
+  "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d22782d736a6973223f3e3c68746d6c3e3c626f64793e3c703e938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<?xml version=\"1.0\" encoding=\"x-sjis\"?><html><body><p>東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 </p></body></html>",
+  "body": "東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京"
+ },
+ {
+  "case": "x-sjis: <meta charset=\"x-sjis\"/>",
+  "hex": "3c6d65746120636861727365743d22782d736a6973222f3e3c68746d6c3e3c626f64793e3c703e938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e20938c8b9e203c2f703e3c2f626f64793e3c2f68746d6c3e",
+  "text": "<meta charset=\"x-sjis\"/><html><body><p>東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 </p></body></html>",
+  "body": "東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京 東京"
+ }
+]

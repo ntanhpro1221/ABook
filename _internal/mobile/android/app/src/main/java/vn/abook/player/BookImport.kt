@@ -2,6 +2,8 @@ package vn.abook.player
 
 import java.io.File
 import java.io.IOException
+import java.io.ByteArrayOutputStream
+import java.io.StringReader
 import java.math.BigInteger
 import java.nio.ByteBuffer
 import java.nio.charset.CharacterCodingException
@@ -12,6 +14,11 @@ import java.text.Normalizer
 import java.util.regex.Pattern
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
+import javax.xml.parsers.SAXParserFactory
+import org.xml.sax.InputSource
+import org.xml.sax.SAXException
+import org.xml.sax.SAXParseException
+import org.xml.sax.helpers.DefaultHandler
 import vn.abook.player.readaloud.Paragraphs
 
 /**
@@ -196,7 +203,7 @@ object BookImport {
     private fun finish(book: Book, keepShort: Boolean = false, source: String = ""): Book {
         book.title = nfc(book.title).let { title -> TOC_SUFFIX.matcher(title).replaceAll("").ifEmpty { title } } // "Lều chõng — Mục lục" -> "Lều chõng"
         book.author = book.author?.takeIf { it.isNotEmpty() }?.let(::nfc)
-        var all = book.chapters.map { Chapter(nfc(it.title).replace(BOM, ""), nfc(it.text).replace(BOM, ""), it.short, it.name, it.matter) }
+        var all = book.chapters.map { Chapter(nfc(textControls(it.title)).replace(BOM, ""), nfc(textControls(it.text)).replace(BOM, ""), it.short, it.name, it.matter) }
             .map { Chapter(it.title, it.text, it.short, it.name, it.matter.ifEmpty { textMatter(it.title, it.text) }) }
         if (all.all { it.matter.isNotEmpty() || it.short }) {
             // Cả cuốn "không phải truyện" là nhận nhầm (TXT cả truyện mở bằng lời Project Gutenberg): không cờ nào (`importers._finish`).
@@ -327,6 +334,9 @@ object BookImport {
     // ---- thư mục TXT --------------------------------------------------------------------------------------------------
 
     /** Đổi định dạng thôi: xuống dòng \n, bỏ khoảng trắng cuối dòng, tối đa một dòng trống liền nhau, bỏ dòng trống hai đầu. */
+    private val C0 = Regex("[\\x00-\\x08\\x0b\\x0e-\\x1f]")
+    private fun textControls(text: String) = C0.replace(text, "").replace("\u000c", "\n\n")
+
     internal fun cleanText(text: String): String {
         val lines = text.replace("\r\n", "\n").replace("\r", "\n").replace(BOM, "").split("\n").map { pyRstrip(it) }
         return lines.joinToString("\n").replace(Regex("\n{3,}"), "\n\n").trim('\n')
@@ -669,20 +679,66 @@ object BookImport {
         "iso-8859-1" to "windows-1252", "latin1" to "windows-1252", "us-ascii" to "windows-1252", "ascii" to "windows-1252",
     )
 
-    /** `importers.markup_text`: chữ một trang XHTML - UTF-8 (hay UTF-16 có BOM) nếu đọc trọn được, không thì theo khai báo
+    /** Bí danh của codecs.lookup trong whitelist XML, cùng các bảng mã XHTML quen thuộc.
+     *  XML và XHTML dùng chung bảng; XML lọc thêm XML_CHARSETS. Không phụ thuộc bí danh riêng của JVM/ICU. */
+    private val CHARSET_ALIASES = buildMap<String, String> {
+        for ((charset, names) in mapOf(
+        "US-ASCII" to "646 ansi-x3-4-1968 ansi-x3.4-1968 ansi-x3.4-1986 ascii cp367 csascii ibm367 iso-646.irv-1991 iso-ir-6 iso646-us us us-ascii",
+        "Big5" to "big5 big5-tw csbig5 x-mac-trad-chinese",
+        "windows-1250" to "1250 cp1250 windows-1250",
+        "windows-1251" to "1251 cp1251 windows-1251",
+        "windows-1252" to "1252 cp1252 windows-1252",
+        "windows-1253" to "1253 cp1253 windows-1253",
+        "windows-1254" to "1254 cp1254 windows-1254",
+        "windows-1255" to "1255 cp1255 windows-1255",
+        "windows-1256" to "1256 cp1256 windows-1256",
+        "windows-1257" to "1257 cp1257 windows-1257",
+        "windows-1258" to "1258 cp1258 windows-1258",
+        "windows-31j" to "932 cp932 ms-kanji ms932 mskanji",
+        "EUC-JP" to "euc-jp eucjp u-jis ujis",
+        "EUC-KR" to "euc-kr euckr korean ks-c-5601 ks-c-5601-1987 ks-x-1001 ksc5601 ksx1001 x-mac-korean",
+        "GB18030" to "gb18030 gb18030-2000",
+        "ISO-8859-1" to "8859 cp819 csisolatin1 ibm819 iso-8859-1 iso-8859-1-1987 iso-ir-100 iso8859 iso8859-1 l1 latin latin-1 latin1",
+        "ISO-8859-13" to "iso-8859-13 iso8859-13 l7 latin7",
+        "ISO-8859-15" to "iso-8859-15 iso8859-15 l9 latin9",
+        "ISO-8859-2" to "csisolatin2 iso-8859-2 iso-8859-2-1987 iso-ir-101 iso8859-2 l2 latin2",
+        "ISO-8859-3" to "csisolatin3 iso-8859-3 iso-8859-3-1988 iso-ir-109 iso8859-3 l3 latin3",
+        "ISO-8859-4" to "csisolatin4 iso-8859-4 iso-8859-4-1988 iso-ir-110 iso8859-4 l4 latin4",
+        "ISO-8859-5" to "csisolatincyrillic cyrillic iso-8859-5 iso-8859-5-1988 iso-ir-144 iso8859-5",
+        "ISO-8859-6" to "arabic asmo-708 csisolatinarabic ecma-114 iso-8859-6 iso-8859-6-1987 iso-ir-127 iso8859-6",
+        "ISO-8859-7" to "csisolatingreek ecma-118 elot-928 greek greek8 iso-8859-7 iso-8859-7-1987 iso-ir-126 iso8859-7",
+        "ISO-8859-8" to "csisolatinhebrew hebrew iso-8859-8 iso-8859-8-1988 iso-ir-138 iso8859-8",
+        "ISO-8859-9" to "csisolatin5 iso-8859-9 iso-8859-9-1989 iso-ir-148 iso8859-9 l5 latin5",
+        "KOI8-R" to "cskoi8r koi8-r",
+        "KOI8-U" to "koi8-u",
+        "Shift_JIS" to "csshiftjis s-jis shift-jis shiftjis sjis x-mac-japanese x-sjis",
+        "UTF-16" to "u16 utf-16 utf16",
+        "UTF-16BE" to "unicodebigunmarked utf-16-be utf-16be",
+        "UTF-16LE" to "unicodelittleunmarked utf-16-le utf-16le",
+        "UTF-8" to "cp65001 u8 utf utf-8 utf8 utf8-ucs2 utf8-ucs4",
+        )) for (name in names.split(' ')) put(name, charset)
+    }
+
+    private fun encodingCharset(name: String): Charset? {
+        val normalized = name.lowercase(java.util.Locale.ROOT).replace(Regex("[^a-z0-9.]+"), "-").trim('-')
+        val canonical = CHARSET_ALIASES[normalized] ?: return null
+        return try { Charset.forName(canonical) } catch (_: Exception) { null }
+    }
+
+    /** `importers.markup_text`: nhận UTF-16 qua BOM hoặc mẫu byte XML trước UTF-8, không thì theo khai báo
      *  `<?xml encoding>` / `<meta charset>` trong 2 KB đầu, không có thì UTF-8. */
     internal fun markupText(raw: ByteArray): String {
         if (raw.size >= 2 && ((raw[0] == 0xFF.toByte() && raw[1] == 0xFE.toByte()) || (raw[0] == 0xFE.toByte() && raw[1] == 0xFF.toByte()))) {
             return String(raw, Charsets.UTF_16)
         }
+        if (raw.size >= 4) {
+            if (raw[0] == '<'.code.toByte() && raw[1] == 0.toByte() && raw[3] == 0.toByte()) return String(raw, Charsets.UTF_16LE)
+            if (raw[0] == 0.toByte() && raw[1] == '<'.code.toByte() && raw[2] == 0.toByte()) return String(raw, Charsets.UTF_16BE)
+        }
         strictDecode(raw, "utf-8-sig")?.let { return it }
         val match = DECLARED_ENCODING.matcher(String(raw, 0, minOf(raw.size, 2048), Charsets.ISO_8859_1))
         val name = if (match.find()) (match.group(1) ?: match.group(2)).lowercase() else "utf-8"
-        val charset = try {
-            Charset.forName(ENCODING_ALIASES[name] ?: name)
-        } catch (_: Exception) {
-            Charsets.UTF_8
-        }
+        val charset = encodingCharset(ENCODING_ALIASES[name] ?: name) ?: Charsets.UTF_8
         return String(raw, charset)
     }
 
@@ -907,6 +963,7 @@ object BookImport {
          *  cũng là file hỏng, như ElementTree của máy tính (tệp mục lục: hỏng thì cả hai bên cùng bỏ nó, đọc theo spine). */
         fun parse(raw: ByteArray, kind: String, strict: Boolean = false): Node {
             val text = xmlText(raw, kind)
+            if (strict) validateXml(text, kind)
             val stack = ArrayList<Node>()
             var root: Node? = null
             for (token in tokenize(text)) {
@@ -933,6 +990,30 @@ object BookImport {
             }
             if (strict && stack.isNotEmpty()) throw broken(kind)
             return root ?: throw broken(kind)
+        }
+
+        /** Cùng cú pháp ElementTree, kể cả phần ngoài root và thuộc tính. Chỉ XHTML của chương mới chịu thẻ HTML thiếu đóng.
+         *  Entity nội bộ đã bị xmlText chặn; external DTD không được đọc từ đĩa hay mạng. */
+        private fun validateXml(text: String, kind: String) {
+            val numeric = Regex("&([A-Za-z][A-Za-z0-9]{0,31});").replace(text) { match ->
+                val name = match.groupValues[1]
+                val value = if (name in setOf("amp", "lt", "gt", "apos", "quot")) null else HtmlEntities.byName["$name;"]
+                value?.codePoints()?.toArray()?.joinToString("") { "&#$it;" } ?: match.value
+            }
+            val handler = object : DefaultHandler() {
+                override fun resolveEntity(publicId: String?, systemId: String?) = InputSource(StringReader(""))
+                override fun error(error: SAXParseException) { throw error }
+                override fun fatalError(error: SAXParseException) { throw error }
+            }
+            try {
+                val reader = SAXParserFactory.newInstance().apply { isNamespaceAware = true }.newSAXParser().xmlReader
+                reader.contentHandler = handler
+                reader.errorHandler = handler
+                reader.entityResolver = handler
+                reader.parse(InputSource(StringReader(numeric)))
+            } catch (_: SAXException) {
+                throw broken(kind)
+            }
         }
 
         /** `importers._xml_text`: chữ của một file XML, giải mã như expat nhận bảng mã nhưng với một bảng tên chung hai bên. Khai báo entity (bom
@@ -981,25 +1062,20 @@ object BookImport {
         }
 
         /** `importers._xml_codec`: tên trong `<?xml encoding>` -> bảng mã, chuẩn hoá chung hai bên (Python qua `codecs.lookup`; ở đây bảng bí danh,
-         *  vì Java / Android không biết mọi tên Python biết, như "latin-1" hay "utf8"). Chỉ UTF-8, UTF-16 và bảng mã một byte (Shift_JIS, GB2312,
-         *  UTF-32 là file hỏng, như expat); tên lạ: null. */
+         *  vì Java / Android không biết mọi tên Python biết, như "latin-1" hay "utf8"). Chỉ bảng mã trong XML_CHARSETS; còn lại (Shift_JIS,
+         *  GB2312, ISO-2022-JP, UTF-32...) và tên lạ: null - file hỏng. */
         private fun xmlCharset(name: String): Charset? {
-            val charset = try {
-                Charset.forName(XML_CHARSET_ALIASES[name.lowercase().replace('_', '-')] ?: name)
-            } catch (_: Exception) {
-                return null
-            }
-            if (charset == Charsets.UTF_8 || charset == Charsets.UTF_16 || charset == Charsets.UTF_16BE || charset == Charsets.UTF_16LE) return charset
-            return charset.takeIf { String(ByteArray(256) { it.toByte() }, it).length == 256 }
+            val charset = encodingCharset(name) ?: return null
+            return charset.takeIf { it.name() in XML_CHARSETS }
         }
 
+        /** Bảng mã XML mà máy tính (`importers._XML_CODECS`) và điện thoại cùng đọc giống nhau: danh sách tường minh, không thử "mỗi byte một ký
+         *  tự" (phép thử ấy nhận cả bảng mã có trạng thái như ISO-2022-JP, HZ). */
+        private val XML_CHARSETS = setOf("UTF-8", "UTF-16", "UTF-16BE", "UTF-16LE", "US-ASCII", "KOI8-R", "KOI8-U") +
+            listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 13, 15).map { "ISO-8859-$it" } + (0..8).map { "windows-125$it" }
+
         private val XML_DECLARATION = Pattern.compile("<\\?xml[ \\t\\r\\n][^>]*?encoding[ \\t\\r\\n]*=[ \\t\\r\\n]*[\"']([A-Za-z0-9._:-]+)")
-        private val XML_CHARSET_ALIASES = mapOf(
-            "utf8" to "UTF-8", "utf-8" to "UTF-8", "utf16" to "UTF-16", "utf-16" to "UTF-16", "utf-16be" to "UTF-16BE", "utf-16-be" to "UTF-16BE",
-            "utf-16le" to "UTF-16LE", "utf-16-le" to "UTF-16LE", "latin-1" to "ISO-8859-1", "latin1" to "ISO-8859-1", "l1" to "ISO-8859-1",
-            "iso-8859-1" to "ISO-8859-1", "iso8859-1" to "ISO-8859-1", "windows-1252" to "windows-1252", "cp1252" to "windows-1252",
-            "windows-1258" to "windows-1258", "cp1258" to "windows-1258", "ascii" to "US-ASCII", "us-ascii" to "US-ASCII",
-        )
+
     }
 
     // ---- zip ----------------------------------------------------------------------------------------------------------
@@ -1021,6 +1097,29 @@ object BookImport {
 
     /** Mục tên NFC -> mục, cho các gói có tên dạng rời: một lần mỗi gói (cuốn nghìn chương NFD không quét lại nghìn lần). */
     private val nfcNames = java.util.WeakHashMap<ZipFile, Map<String, java.util.zip.ZipEntry>>()
+    private val readSizes = java.util.WeakHashMap<ZipFile, MutableMap<String, Long>>()
+
+    /** Byte thực, không tin entry.size. Một mục đọc lại để soi DRM chỉ tính một lần. */
+    private fun readLimited(zip: ZipFile, entry: java.util.zip.ZipEntry, kind: String, limit: Long): ByteArray {
+        val sizes = synchronized(readSizes) { readSizes.getOrPut(zip) { mutableMapOf() } }
+        val previous = sizes[entry.name] ?: 0L
+        val total = sizes.values.sum() - previous
+        val out = ByteArrayOutputStream()
+        val buffer = ByteArray(64 * 1024)
+        var size = 0L
+        zip.getInputStream(entry).use { stream ->
+            while (true) {
+                val count = stream.read(buffer, 0, minOf(buffer.size.toLong(), limit - size + 1, MAX_TOTAL - total - size + 1).toInt())
+                if (count < 0) break
+                size += count
+                if (size > limit) throw Failed("Có một phần quá lớn (trên 20 MB) - không giống $kind truyện")
+                if (total + size > MAX_TOTAL) throw Failed("Quá lớn khi giải nén (trên 300 MB) - không giống $kind truyện")
+                out.write(buffer, 0, count)
+            }
+        }
+        sizes[entry.name] = maxOf(previous, size)
+        return out.toByteArray()
+    }
 
     /** Mục [name] của gói (`importers._Zip.member`): tên trong zip viết Unicode dạng rời (NFD - zip làm trên macOS) mà manifest viết dạng gộp
      *  (hay ngược lại) vẫn khớp. Không có: null. */
@@ -1033,10 +1132,10 @@ object BookImport {
     private fun read(zip: ZipFile, name: String, kind: String): ByteArray {
         val entry = member(zip, name) ?: throw broken(kind)
         if (entry.size > MAX_MEMBER) throw Failed("Có một phần quá lớn (trên 20 MB) - không giống $kind truyện")
-        return zip.getInputStream(entry).use { it.readBytes() }
+        return readLimited(zip, entry, kind, MAX_MEMBER)
     }
 
-    private fun xml(zip: ZipFile, name: String, kind: String, strict: Boolean = false) = Markup.parse(read(zip, name, kind), kind, strict)
+    private fun xml(zip: ZipFile, name: String, kind: String, strict: Boolean = true) = Markup.parse(read(zip, name, kind), kind, strict)
 
     private fun metaText(root: Markup.Node, local: String): String? {
         val node = root.descendants().firstOrNull { it.local == local && it.name.startsWith("dc:") } ?: return null
@@ -1366,20 +1465,21 @@ object BookImport {
                     }
                     is Markup.End -> close(token.name.lowercase())
                     is Markup.Text -> if (skip == 0 && hiddenDepth == 0) {
+                        val text = C0.replace(token.text, "")
                         // Chữ cái đầu là ảnh ("M" + "ọi chuyện…"): chỉ ghép khi chữ ngay sau dính liền (`importers._Text.handle_data`).
-                        if (cap.isNotEmpty() && token.text.isNotEmpty()) {
-                            if (Character.isLetter(token.text.codePointAt(0))) current.append(cap)
+                        if (cap.isNotEmpty() && text.isNotEmpty()) {
+                            if (Character.isLetter(text.codePointAt(0))) current.append(cap)
                             cap = ""
                         }
-                        if (pre > 0) {
-                            val parts = token.text.split("\n")
+                        if (pre > 0 || '\u000c' in text) {
+                            val parts = if (pre > 0) text.split('\n', '\u000c') else text.split('\u000c')
                             current.append(parts[0])
                             for (line in parts.drop(1)) {
                                 flush()
                                 current.append(line)
                             }
                         } else {
-                            current.append(token.text)
+                            current.append(text)
                         }
                     }
                 }
@@ -1668,7 +1768,7 @@ object BookImport {
         if (href.isEmpty() || !media.startsWith("image/")) return null
         val entry = member(zip, href) ?: return null
         if (entry.size > MAX_COVER) return null
-        return zip.getInputStream(entry).use { it.readBytes() } to media
+        return readLimited(zip, entry, "EPUB", MAX_COVER) to media
     }
 
     /** `importers._BLANK`: khoảng trắng Unicode (đúng tập `str.isspace` của Python) và ký tự không bề rộng - một bảng chung hai bên, không
@@ -1677,12 +1777,12 @@ object BookImport {
         + listOf(0x2028, 0x2029, 0x202F, 0x205F, 0x3000, 0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF)).map { it.toChar() }.toSet()
 
     /** Trang trông như chữ đã mã hoá (`importers._looks_encrypted`): bỏ khoảng trắng / ký tự không bề rộng ở đầu mà không mở bằng '<', hay hơn
-     *  10 % của 1.000 ký tự đầu là ký tự hỏng (U+FFFD) hoặc ký tự điều khiển C0 trừ tab / xuống dòng - đếm theo code point như Python, không
-     *  theo đơn vị UTF-16. Trang rỗng hay chỉ có khoảng trắng thì không. */
+     *  10 % của 1.000 ký tự đầu là ký tự hỏng (U+FFFD) - đếm theo code point như Python, không theo đơn vị UTF-16. Ký tự điều khiển (NUL
+     *  đệm, ngắt trang của Word) không tính: trang mở bằng markup có chúng vẫn là chữ rõ. Trang rỗng hay chỉ có khoảng trắng thì không. */
     private fun looksEncrypted(raw: ByteArray): Boolean {
         val text = markupText(raw).trimStart { it in BLANK }
         val head = text.substring(0, text.offsetByCodePoints(0, minOf(1000, text.codePointCount(0, text.length))))
-        val bad = head.count { it.code == 0xFFFD || (it < ' ' && it !in "\t\r\n") }
+        val bad = head.count { it.code == 0xFFFD }
         return head.isNotEmpty() && (!head.startsWith("<") || bad * 10 > head.codePointCount(0, head.length))
     }
 
@@ -1766,7 +1866,7 @@ object BookImport {
         result.footnoteFound = notes.found
         result.footnoteMarks = notes.marks
         result.footnoteExamples.addAll(notes.examples)
-        val stored = mutableListOf<Pair<List<String>, List<String>>>() // thân + lời chú ở cuối của từng chương trong `result.chapters` (nối file sau vào chương trước)
+        val stored = mutableListOf<Pair<MutableList<String>, MutableList<String>>>() // thân + lời chú ở cuối của từng chương (nối file sau vào chương trước)
         for ((at, entry) in entries.withIndex()) {
             val (href, page) = entry
             // Nhiều chương trong MỘT file: mục lục trỏ vào các mảnh (#id) của file này thì cắt chữ tại các mảnh ấy, theo thứ tự đọc,
@@ -1794,10 +1894,8 @@ object BookImport {
                     !isHeadingLine(lines[0]) && textMatter("", lines.joinToString("\n\n")).isEmpty() &&
                     result.chapters.isNotEmpty() && result.chapters.last().matter.isEmpty()
                 ) {
-                    val merged = Pair(stored.last().first + body, stored.last().second + tail)
-                    stored[stored.size - 1] = merged
-                    val last = result.chapters.removeAt(result.chapters.size - 1)
-                    result.chapters.add(Chapter(last.title, (merged.first + merged.second).filter { it.isNotEmpty() }.joinToString("\n\n"), last.short, last.name, last.matter))
+                    stored.last().first.addAll(body)
+                    stored.last().second.addAll(tail)
                     continue
                 }
                 if (lines.isEmpty() && page.images > 0 && points.isEmpty() && !taken.removed) {
@@ -1819,9 +1917,14 @@ object BookImport {
                     if (body.isNotEmpty()) body = body.drop(1) else tail = tail.drop(1)
                 }
                 if (taken.removed && lines.isEmpty()) continue // trang chỉ có lời chú (chương Endnotes) mà lời chú đã đặt về chương của chúng / bị bỏ: không còn gì
-                result.chapters.add(Chapter(title, lines.joinToString("\n\n"), short = isShort, matter = pageMatter))
-                stored.add(body to tail)
+                result.chapters.add(Chapter(title, "", short = isShort, matter = pageMatter))
+                stored.add(body.toMutableList() to tail.toMutableList())
             }
+        }
+        for ((index, parts) in stored.withIndex()) {
+            val chapter = result.chapters[index]
+            val text = (parts.first.asSequence() + parts.second.asSequence()).filter { it.isNotEmpty() }.joinToString("\n\n")
+            result.chapters[index] = Chapter(chapter.title, text, chapter.short, chapter.name, chapter.matter)
         }
         if (images > 0) result.notes.add("Bỏ qua $images trang chỉ có ảnh.")
         if (missing > 0) result.notes.add("Bỏ qua $missing phần bị thiếu trong file (file có thể tải chưa trọn).")

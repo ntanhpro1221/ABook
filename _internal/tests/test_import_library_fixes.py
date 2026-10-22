@@ -149,18 +149,25 @@ def test_encoding_names_are_normalised_the_same_way_on_both_platforms(tmp_path: 
         (tmp_path / name).write_bytes(shared.XML_ENCODINGS[name]())
         assert importers.import_text(tmp_path / name).title == title
     results = {case["case"]: case.get("text", case.get("error")) for case in shared.xml_case_results()}
+    # Các bí danh codecs.lookup trong whitelist được bổ sung vào fixture chung; chúng đều chứa chữ A.
+    aliases = [case for case in results if case.startswith("alias ")]
+    assert aliases
+    for case in aliases:
+        assert results.pop(case) == "A", case
     broken = importers.BROKEN.format(kind="EPUB")
     readable = {"utf8 (utf-8)": "Tên sách", "UTF-8 (utf-8)": "Tên sách", "utf-16 (utf-16)": "Tên sách", "UTF-16BE (utf-16-be)": "Tên",
                 "latin-1 (latin-1)": "Café", "latin1 (latin-1)": "Café", "iso-8859-1 (latin-1)": "Café", "iso8859-1 (latin-1)": "Café",
                 "windows-1252 (cp1252)": "Café “x”", "cp1252 (cp1252)": "Café", "windows-1258 (cp1258)": "Tên", "cp1258 (cp1258)": "Tên",
-                "ascii (ascii)": "abc", "us-ascii (ascii)": "abc", "KOI8-R (koi8-r)": "Книга", "utf-8 bom": "Tên",
+                "ascii (ascii)": "abc", "us-ascii (ascii)": "abc", "KOI8-R (koi8-r)": "Книга", "iso-8859-15 (iso8859-15)": "Café €", "utf-8 bom": "Tên",
                 "utf-16-le không bom": "Tên", "utf-16-be không bom": "Tên"}
     for case, text in readable.items():
         assert results.pop(case) == text, case
     for case in ("entity utf-16-le không bom, mở bằng xuống dòng", "entity utf-16-be không bom, mở bằng dấu cách", "entity sau chú thích dài",
                  "entity chữ thường"):
         assert results.pop(case) == ENTITY_ERROR, case
-    # Còn lại đều là file hỏng: UTF-16 khai trên file một byte, đầu UTF-16 lệch, UTF-32, bảng mã nhiều byte, tên lạ, byte ngoài bảng mã.
+    # Còn lại đều là file hỏng: UTF-16 khai trên file một byte, đầu UTF-16 lệch, UTF-32, bảng mã nhiều byte (kể cả có trạng thái: ISO-2022-JP,
+    # HZ), bảng mã một byte ngoài danh sách chung hai bên (mac-roman), tên lạ, byte ngoài bảng mã.
     assert set(results) == {"utf-16 (utf-8)", "UTF-16LE (utf-16-be)", "us-ascii (utf-8)", "UTF-32 (utf-32)", "shift_jis (shift_jis)",
+                            "ISO-2022-JP (iso2022_jp)", "HZ-GB-2312 (hz)", "mac-roman (mac-roman)",
                             "foo (utf-8)", "windows-1252 0x81", "windows-1252 0x8D", "utf-8 hỏng"}
     assert set(results.values()) == {broken}
