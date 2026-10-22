@@ -1,4 +1,4 @@
-import { Check, Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
+import { Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -250,10 +250,8 @@ export function SettingsScreen() {
   const changeLibrary = async () => {
     try {
       const path = await pickFolder("Chọn thư mục thư viện", preferences?.libraryRoot ?? "");
-      if (path) {
-        update({ libraryRoot: path });
-        toast.success("Đã đổi thư mục thư viện");
-      }
+      // Báo "đã đổi" chỉ khi máy chủ đã nhận; bị từ chối thì usePreferences báo lý do (soát a100 V3).
+      if (path) update({ libraryRoot: path }, { onSuccess: () => toast.success("Đã đổi thư mục thư viện") });
     } catch (error) {
       toast.error((error as Error).message);
     }
@@ -424,12 +422,14 @@ export function SettingsScreen() {
             </Field>
             <Field
               label="Tự lùi khi nghe lại"
-              hint="Dừng dưới 5 phút: không lùi. Từ 5 phút tới 1 giờ: lùi 10 giây. Lâu hơn (ngủ dậy): lùi 30 giây."
+              hint="Tạm dừng quá nửa phút rồi nghe tiếp thì lùi 5 giây (quá 10 phút: lùi 10 giây) để bạn bắt lại mạch truyện. Chỉ áp cho máy này."
             >
-              {/* Thông tin, không phải lựa chọn (soát UX 29-09: chữ "Tự động" trông như một nút mà không bấm được). */}
-              <span className="inline-flex items-center gap-1 text-[0.8125rem] text-fg-2">
-                <Check className="size-3.5 text-success" /> Luôn bật
-              </span>
+              <Switch
+                id="auto-rewind"
+                label="Tự lùi khi nghe lại"
+                checked={preferences?.autoRewind !== false}
+                onCheckedChange={(value) => update({ autoRewind: value })}
+              />
             </Field>
           </div>
         </Section>

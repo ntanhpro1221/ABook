@@ -85,6 +85,23 @@ class ListenPrefsTest {
         assertFalse(Playback.headsetSkips)
     }
 
+    @Test fun theInterfaceCanReadBackWhatNativeRememberedWithItsStamp() {
+        assertEquals("chưa có file thì không có gì", 0, ListenPrefs.stored().length())
+        ListenPrefs.apply(JSONObject("""{"autoRewind":false,"sleepFadeSeconds":60,"schedule":null,"settingsStamp":1700000000123,"readAloudVoice":"edge:x"}"""))
+        sleep("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
+        sleep("remainingMs").setLong(SleepTimer, 10 * 60_000L)
+        SleepTimer.persist(1_000_000_000L)
+        val stored = ListenPrefs.stored()
+        assertEquals(false, stored.getBoolean("autoRewind"))
+        assertEquals(60, stored.getInt("sleepFadeSeconds"))
+        assertEquals(1700000000123L, stored.getLong("settingsStamp"))
+        assertFalse("hẹn giờ đang chạy không phải tuỳ chọn", stored.has("timer"))
+        assertFalse("giọng đọc có đường riêng", stored.has("readAloudVoice"))
+        ListenPrefs.apply(JSONObject("""{"autoRewind":true,"settingsStamp":1700000000999}"""))
+        assertEquals("bản sau gộp vào bản trước", 60, ListenPrefs.stored().getInt("sleepFadeSeconds"))
+        assertEquals(1700000000999L, ListenPrefs.stored().getLong("settingsStamp"))
+    }
+
     @Test fun aRunningSleepTimerComesBackUntilItsAbsoluteEnd() {
         val now = 1_000_000_000L
         sleep("mode").set(SleepTimer, SleepTimer.Mode.MINUTES)
