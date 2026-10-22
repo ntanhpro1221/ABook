@@ -189,6 +189,10 @@ def receive_edits(path: Path, device: dict[str, Any], package: Path) -> dict[str
     before = book_edits.load(path)
     # Cái người gửi đã gửi trước đó rồi bỏ đi: gỡ ở đây, chỉ khi giá trị ở đây còn đúng như họ đã gửi (không đè bản chính máy này đã đổi).
     withdrawn = book_edits.apply_removed(path, removed) if removed else 0
+    # Thao tác chờ Studio người gửi đã gửi rồi hoàn tác: cuốn này giữ chúng trong lớp sửa của chính nó, mốc của người gửi còn nguyên (`adopt` không đóng dấu lại).
+    retracted = sum(len(book_wishes.withdraw(path, section, [key], at))
+                    for section, entries in (removed.get("wishes") or {}).items() for key, at in entries.items()
+                    if book_wishes.made_at(path, section, [key], at))
     scratch = Path(tempfile.mkdtemp(prefix=".edits_in_", dir=path))
     try:
         if tracks:
@@ -206,7 +210,7 @@ def receive_edits(path: Path, device: dict[str, Any], package: Path) -> dict[str
     # Chỉ đếm cái thật sự đổi ở đây: máy kia gửi lại cái máy này đã có (cùng file sách, vừa ghép) thì không phải "N thay đổi đã áp" (soát a70).
     change = book_edits.delta(before, book_edits.load(path))
     return {"applied": book_edits.count_applied(change) + withdrawn, "skipped": 0, "music": False, "requests": 0,
-            "waiting": 0, "studio": book_edits.count_wishes(change), "skippedWishes": 0, "conflicts": conflicts}
+            "waiting": 0, "studio": book_edits.count_wishes(change), "skippedWishes": 0, "withdrawn": retracted, "conflicts": conflicts}
 
 
 # ---- bản của máy này bị bản đến sau thay: báo cụ thể, đặt lại được ------------------------------------------------------------

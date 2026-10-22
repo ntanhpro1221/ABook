@@ -11,6 +11,7 @@ ghi vào SQLite của sách (đó là của dây chuyền). Các chương có c�
 from __future__ import annotations
 
 import bisect
+import functools
 import hashlib
 import json
 import os
@@ -29,7 +30,7 @@ KINDS = ("failed", "unverified", "name-low", "text-low", "name", "text")
 MINOR_KINDS = ("name", "text")
 REASONS = {
     "failed": "Thu âm hỏng sau mọi lần thử - chương này chưa xuất được",
-    "unverified": "Máy nghe lại không kiểm được (câu quá ngắn) - nên nghe bằng tai",
+    "unverified": "Máy nghe lại không kiểm được câu này (quá ngắn hoặc máy nghe nhầm) - bạn nên nghe bằng tai",
     "name-low": "Tên riêng đọc khác nhiều so với chữ viết",
     "name": "Tên riêng đọc hơi khác chữ viết - thường vẫn ổn",
     "text-low": "Máy nghe ra khác nhiều so với chữ viết",
@@ -66,12 +67,23 @@ def _shown_transcript(kind: str, similarity: float | None, text: str, heard: str
     return heard
 
 
+@functools.cache
+def _unanswerable_codes() -> frozenset[str]:
+    """Họ cảnh báo "ASR không phán xử được" (asr.py + pipeline.py): câu quá ngắn, mốc thời gian hay tốc độ chữ bất khả - bằng chứng
+    về Whisper, không phải về bản thu. Lấy mã từ chính asr.py để thêm mã ở đó thì hàng nghe lại theo ngay."""
+    from .. import asr
+
+    return frozenset({asr.ASR_UNVERIFIABLE_SHORT_TEXT, asr.ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE, asr.ASR_TRANSCRIPT_RATE_IMPOSSIBLE})
+
+
 def _kind(status: str, code: str, similarity: float | None) -> str:
     if status == "failed":
         return "failed"
-    if code == "ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE":
+    codes = [part.strip() for part in code.split("|")]
+    # Mã có thể ghép bằng `|` ("TTS_GENERATION_CEILING_REACHED|ASR_TRANSCRIPT_TIMELINE_IMPOSSIBLE"): mọi mã đều xét, không chỉ chuỗi đơn.
+    if _unanswerable_codes().intersection(codes):
         return "unverified"
-    about_name = any(name_code in code.split("|") for name_code in _NAME_CODES)
+    about_name = any(name_code in codes for name_code in _NAME_CODES)
     if similarity is not None and similarity < LOW_SIMILARITY:
         return "name-low" if about_name else "text-low"
     return "name" if about_name else "text"

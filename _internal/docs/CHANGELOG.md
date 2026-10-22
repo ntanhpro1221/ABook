@@ -11,6 +11,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Câu mà máy nghe lại không kiểm được (quá ngắn, hay máy nghe ra một câu không thể có thật) giờ hiện ở nhóm “Chưa kiểm được” ngay trong “Cần nghe lại”, kèm lời nhờ bạn nghe bằng tai, và không còn hiện một đoạn “máy nghe được” bịa ra.
+- Một câu chỉ còn một thẻ trong “Việc cần bạn”: khi máy vừa nghi người nói của câu ấy vừa nghi nó nói với chính mình, các lý do được gộp vào cùng một thẻ thay vì hiện hai thẻ cho cùng một câu.
+- Hoàn tác một lựa chọn sau khi nó đã được gửi sang máy giữ sách (điện thoại hay máy tính khác tự gửi sau vài giây) không còn báo “đã được thay bằng một lựa chọn sau”: máy bạn nhờ máy giữ sách rút đúng lựa chọn ấy, và thông báo nói thật điều đó - nếu máy ấy đã đưa vào sách rồi thì bạn được báo là cần chọn lại ở máy đó.
+- “Việc cần duyệt” và “Cần nghe lại” tự làm mới (mỗi 15 giây) khi sách đang chạy, cả con số trên nhãn tab: việc mới hiện ra mà không phải tải lại trang, và chỗ bạn đang đứng không bị xô.
 - Chấm cả nhóm câu “Cần thu lại” nhanh hơn nhiều với sách lớn (trước đây mỗi câu đọc lại cả sổ), và mở danh sách “Cần nghe lại” không còn âm thầm ghi vào sổ chấm.
 - Mở file dự án của cùng một cuốn từ máy khác, hay áp từ điển cách đọc dùng chung, không còn có thể đè lên chỗ bạn đang sửa; việc bạn đã rút (đã huỷ “Thu lại”, đã hoàn tác một sửa) không sống lại khi gộp với bản của máy khác.
 - Bảng “Cách đọc câu này”: đổi lời kể thành lời thoại thì chọn người nói bằng đủ cách như “Ai nói câu này” (tìm, người của chương, người khác, “Người mới…”); sửa cách đọc một câu có nút “Hoàn tác” như các lựa chọn khác, trên máy tính lẫn điện thoại.
