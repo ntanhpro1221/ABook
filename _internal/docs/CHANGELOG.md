@@ -18,6 +18,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Trên máy tính, “Làm trước” gặp lỗi lạ (ví dụ ổ đĩa đầy) thì báo lỗi thay vì hiện “đang làm trước” mãi, và bấm làm việc mới không còn phải chờ tới 30 giây; bộ đệm giọng cũng dọn các file ghi dở của lần tắt ngang.
 - Trên điện thoại, sau khi bạn sửa cách đọc của cuốn đang “Làm trước”, các đoạn đã làm theo cách cũ không còn được giữ mãi trong phần bộ đệm của “Làm trước”.
 - Khi hai máy mỗi bên có hàng nghìn cách đọc riêng khác nhau, gộp lại không còn làm cuốn mất cả phần sửa của bạn (tên nhân vật, dòng bỏ, nhạc): ABook giữ đủ của máy này rồi lấy thêm của máy kia đến giới hạn.
+- Nhạc nền nối vòng đúng phách, không còn nghe đánh đôi hay vang ở chỗ lặp, cả trên máy tính lẫn điện thoại.
 - Chữ đang đọc được tô sáng đúng chỗ cả khi văn bản chương có ký tự khoảng trắng lạ (U+0085, U+001C-U+001F, U+FEFF).
 - Trên điện thoại, hẹn giờ “hết chương” cho sách chữ dừng ở đầu chương kế như trên máy tính: sáng mai bấm Phát không phải nghe lại đoạn cuối chương vừa xong.
 - Trên máy tính, cửa sổ ABook nhớ kích thước, vị trí và trạng thái phóng to của lần trước; nếu màn hình phụ cũ đã rút ra thì cửa sổ mở trên màn hình còn lại, không nằm ngoài màn.
