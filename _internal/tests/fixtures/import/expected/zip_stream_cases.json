@@ -1,0 +1,41 @@
+[
+ {
+  "case": "entry",
+  "sizes": [
+   20971521
+  ],
+  "cover": false,
+  "error": "Có một phần quá lớn (trên 20 MB) - không giống EPUB truyện"
+ },
+ {
+  "case": "cover",
+  "sizes": [
+   20971521
+  ],
+  "cover": true,
+  "error": "Có một phần quá lớn (trên 20 MB) - không giống EPUB truyện"
+ },
+ {
+  "case": "total",
+  "sizes": [
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520,
+   20971520
+  ],
+  "cover": false,
+  "error": "Quá lớn khi giải nén (trên 300 MB) - không giống EPUB truyện"
+ }
+]

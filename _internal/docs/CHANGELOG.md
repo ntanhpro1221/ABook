@@ -9,8 +9,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
-- Sách đã gỡ khoá còn giữ file thông tin quyền mở được cả khi chương có nhiều ký tự ngắt trang (từ Word) hay ký tự trống đệm cuối trang, thay vì bị báo là có khoá bản quyền.
-- EPUB khai bảng mã ISO-2022-JP, HZ hay một bảng mã ít gặp được máy tính và điện thoại cùng xử lý như nhau (cùng báo file hỏng) thay vì máy tính mở được còn điện thoại báo hỏng.
+- Khi bạn nhập sách đã gỡ khoá còn giữ thông tin quyền, chương có ký tự ngắt trang (từ Word) hay ký tự trống đệm vẫn mở được; ký tự điều khiển vô hình được bỏ trước khi lưu chữ, nên đọc lại không còn thành chữ rác.
+- Khi bạn nhập EPUB dùng tên bảng mã như latin-1, l1, cp1252 hay x-sjis, máy tính và điện thoại đọc chữ thống nhất; bảng mã XML không được hỗ trợ như ISO-2022-JP hay HZ đều báo file hỏng.
+- Khi bạn nhập EPUB có phần chữ hay bìa khai kích thước sai, cả hai nền tảng dừng đọc và báo rõ khi byte thực giải nén vượt giới hạn.
+- Khi bạn nhập EPUB có chương UTF-16 không BOM, cả hai nền tảng đọc đúng chữ và không còn báo nhầm khoá bản quyền.
+- Khi bạn nhập sách có XML hỏng (nhiều phần tử gốc, thiếu thẻ đóng hay chữ ngoài phần tử gốc), điện thoại từ chối giống máy tính; mục lục hỏng vẫn được bỏ qua để lấy tên chương từ chữ.
+- Khi bạn nhập EPUB có chương bị chia thành hàng nghìn tệp nhỏ, các mảnh được ghép nhanh hơn và giữ đúng thứ tự chữ, kể cả chú thích cuối chương.
 
 ## [0.4.122] - 2026-10-22
 
