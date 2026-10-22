@@ -10,6 +10,7 @@ cho "đã thu", `chapters.completed_at` cho mốc chương xong. Nhãn tiếng V
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -726,7 +727,8 @@ def set_display_title(project_root: Path, title: str) -> None:
 def mark_run_started(project_root: Path, started_at: float) -> None:
     """Studio đã khởi động một lượt chạy lúc `started_at`: lượt ấy áp MỌI yêu cầu ghi trước đó (Pipeline._recover áp
     overrides trước mọi việc) - kể cả khi chẳng có gì phải thu lại và dây chuyền không ghi gì vào sổ, nên mốc
-    `book.updated_at` một mình thì nút "Áp dụng" không bao giờ tắt."""
+    `book.updated_at` một mình thì nút "Áp dụng" không bao giờ tắt. Chỉ còn là bằng chứng với sách chưa có biên nhận (`receipts`
+    None): sách dây chuyền đã quét thì đếm theo biên nhận, mốc này không nói gì về yêu cầu lưu trong khe READY -> recovery."""
     try:
         atomic_write_bytes(project_root / RUN_MARKER, json.dumps({"startedAt": started_at}).encode("utf-8"))
     except OSError:
@@ -734,7 +736,8 @@ def mark_run_started(project_root: Path, started_at: float) -> None:
 
 
 def changes_since(project_root: Path, book_updated_at: float) -> float:
-    """Mốc mà yêu cầu sửa ghi SAU nó còn chờ áp: lần dây chuyền ghi sổ cuối hay lần Studio khởi động lượt chạy cuối."""
+    """Mốc mà yêu cầu sửa ghi SAU nó còn chờ áp: lần dây chuyền ghi sổ cuối hay lần Studio khởi động lượt chạy cuối. Chỉ dùng cho
+    sách dây chuyền chưa quét yêu cầu lần nào (`receipts` None); sách đã quét thì mốc này bị bỏ qua - xem `waiting`."""
     try:
         started = float(json.loads((project_root / RUN_MARKER).read_text(encoding="utf-8")).get("startedAt") or 0)
     except (OSError, ValueError, AttributeError, TypeError):
@@ -750,12 +753,13 @@ def pending_changes(project_root: Path, since: float) -> int:
     from ..listener_overrides import read_overrides
 
     data = read_overrides(project_root)
+    receipts = receipts_of(project_root)
     fresh: dict[str, dict[str, Any]] = {}
     for section in ("pronunciations", "speakers", "lines", "voices", "retakes"):
         entries = data.get(section)
         chosen: dict[str, Any] = {}
         for key, entry in (entries.items() if isinstance(entries, dict) else ()):
-            if isinstance(entry, dict) and _requested_after(entry, since):
+            if isinstance(entry, dict) and waiting(entry, section, str(key), since, receipts):
                 chosen[str(key)] = entry
         fresh[section] = chosen
     kept = _kept_as_is(project_root, fresh)
@@ -880,12 +884,13 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
     from ..text_processing import spoken_symbols_to_words
 
     data = read_overrides(project_root)
+    receipts = receipts_of(project_root)
     fresh: dict[str, dict[str, Any]] = {}
     for section in ("pronunciations", "speakers", "lines", "voices", "retakes"):
         entries = data.get(section)
         fresh[section] = {
             str(key): entry for key, entry in (entries.items() if isinstance(entries, dict) else ())
-            if isinstance(entry, dict) and _requested_after(entry, since)
+            if isinstance(entry, dict) and waiting(entry, section, str(key), since, receipts)
         }
     items: list[dict[str, Any]] = []
     affected: set[str] = set()
@@ -1052,6 +1057,47 @@ def _requested_after(entry: dict[str, Any], since: float) -> bool:
         return max(float(entry.get("requested_at") or 0), float(entry.get("merged_at") or 0)) > since
     except (TypeError, ValueError):
         return False
+
+
+def receipt_stamp(entry: dict[str, Any]) -> tuple[float, str]:
+    """(requested_at, băm nội dung) của một yêu cầu trong overrides.json - cái dây chuyền ghi vào biên nhận và cái giao diện đối
+    chiếu. `replaced` (yêu cầu cũ giữ để Hoàn tác, dây chuyền không đọc) không tính; còn lại - kể cả `merged_at` - đổi gì là
+    yêu cầu khác."""
+    try:
+        requested_at = float(entry.get("requested_at") or 0)
+    except (TypeError, ValueError):
+        requested_at = 0.0
+    payload = {key: value for key, value in entry.items() if key != "replaced"}
+    text = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return requested_at, hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def receipts_of(project_root: Path) -> dict[tuple[str, str], tuple[float, str]] | None:
+    """Biên nhận dây chuyền đã ghi ({(section, key): receipt_stamp}), hay None khi dây chuyền chưa quét yêu cầu lần nào (sách
+    chưa khoá phân vai, hay chưa chạy từ bản có biên nhận; sổ chưa có bảng): khi ấy chưa có bằng chứng nào, và
+    `waiting` quay về suy từ mốc thời gian như cũ."""
+    if not (Path(project_root) / DB_NAME).is_file():
+        return None
+    try:
+        with closing(connect(project_root)) as connection:
+            if connection.execute("SELECT 1 FROM listener_override_sweeps").fetchone() is None:
+                return None
+            return {
+                (str(row["section"]), str(row["key"])): (float(row["requested_at"]), str(row["payload_sha256"]))
+                for row in connection.execute("SELECT section, key, requested_at, payload_sha256 FROM listener_override_receipts")
+            }
+    except sqlite3.Error:
+        return None
+
+
+def waiting(entry: dict[str, Any], section: str, key: str, since: float,
+            receipts: dict[tuple[str, str], tuple[float, str]] | None) -> bool:
+    """Yêu cầu còn chờ áp. Có biên nhận (dây chuyền đã quét): chờ khi chưa có biên nhận KHỚP (requested_at + băm) - mốc sổ /
+    lần khởi động không phải bằng chứng, vì dây chuyền chỉ đọc yêu cầu ở ranh giới (soát a75 F1) và đọc sau READY (a74 #3).
+    Chưa có (`receipts` None): suy từ `since` như trước."""
+    if receipts is None:
+        return _requested_after(entry, since)
+    return receipts.get((section, key)) != receipt_stamp(entry)
 
 
 def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> set[tuple[str, str]]:
@@ -1626,12 +1672,13 @@ def pending_voices(project_root: Path, since: float) -> dict[str, dict[str, str]
     from ..listener_overrides import read_overrides
 
     entries = read_overrides(project_root).get("voices")
+    receipts = receipts_of(project_root)
     pending: dict[str, dict[str, str]] = {}
     for key, entry in (entries.items() if isinstance(entries, dict) else ()):
         if not isinstance(entry, dict):
             continue
         preset, gender = str(entry.get("preset") or ""), str(entry.get("gender") or "")
-        if _requested_after(entry, since) and (preset or gender):
+        if waiting(entry, "voices", str(key), since, receipts) and (preset or gender):
             pending[speaker_key(str(key))] = {"preset": preset,
                                               "gender": humanize.GENDER_LABELS.get(gender, "")}
     return pending

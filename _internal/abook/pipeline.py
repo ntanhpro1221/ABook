@@ -8,7 +8,7 @@ import os
 import threading
 import time
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 
 import numpy as np
 import soundfile as sf
@@ -1211,6 +1211,9 @@ class BookPipeline:
                     {"done": chapter_no, "total": len(chapters), "chapter_id": int(chapter["id"])},
                 )
                 self._safe_export_reports(incremental=True)
+            # Ranh giới kết thúc: yêu cầu lưu trong lúc thu chương cuối chưa ai đọc (chỉ đọc TRƯỚC mỗi chương). Áp ở đây, rồi
+            # chương bị đặt lại thu lại ở vòng sau - sách không chốt hoàn tất khi còn yêu cầu đã nằm đó chưa áp.
+            revisit |= self._apply_listener_overrides()
             chapters = [row for row in self.db.list_chapters() if int(row["id"]) in revisit]
 
     def _apply_listener_overrides(self) -> set[int]:
@@ -1225,6 +1228,9 @@ class BookPipeline:
         if not self.db.casting_is_finalized():
             return set()
         overrides = read_overrides(self.paths.root)
+        # Biên nhận (database.listener_receipts): lần quét đầu bật việc đếm "chờ áp dụng" theo biên nhận thay vì theo mốc thời gian.
+        self.db.mark_listener_sweep()
+        receipts = self.db.listener_receipts()
         if overrides:
             # Trước mọi lần đặt lại: chương đã xong giữ chữ đọc theo khớp MP3 cũ - chương chờ thu lại vẫn đọc theo được.
             from .webui.store import keep_heard_scripts
@@ -1235,7 +1241,8 @@ class BookPipeline:
                 self.log(f"Không chụp được chữ đọc theo của các chương đã xong: {exc}")
         changed = False
         reset_chapters: set[int] = set()
-        for request in pronunciation_requests(overrides):
+        for request in self._acknowledging(
+            "pronunciations", pronunciation_requests(overrides), lambda item: surface_key(item["surface"]), overrides, receipts):
             surface, spoken = request["surface"], request["spoken_form"]
             problem = pronunciation_problem(surface, spoken)
             if problem is not None:
@@ -1265,7 +1272,7 @@ class BookPipeline:
                 forget()
         # Loại đoạn / cảm xúc của một câu - TRƯỚC "ai nói câu này": câu vừa từ lời kể thành lời thoại thì mới gán người
         # nói được.
-        for request in line_requests(overrides):
+        for request in self._acknowledging("lines", line_requests(overrides), lambda item: item["stable_id"], overrides, receipts):
             result = self.db.apply_listener_line(
                 stable_id=request["stable_id"],
                 text_sha256=request["text_sha256"],
@@ -1291,7 +1298,7 @@ class BookPipeline:
                 + (f", đọc là {result['listener_text']!r}" if result.get("listener_text") else "")
                 + ("; thu lại." if result["reset"] else ".")
             )
-        for request in speaker_requests(overrides):
+        for request in self._acknowledging("speakers", speaker_requests(overrides), lambda item: item["stable_id"], overrides, receipts):
             stable_id, speaker = request["stable_id"], request["speaker"]
             result = self.db.apply_listener_speaker(
                 stable_id=stable_id,
@@ -1317,7 +1324,7 @@ class BookPipeline:
                 + ("; thu lại bằng giọng mới." if result["reset"] else ".")
             )
         # Giọng và giới của một nhân vật - SAU "ai nói câu nào": câu vừa được gán cho người ấy cũng sang giọng mới.
-        for request in voice_requests(overrides):
+        for request in self._acknowledging("voices", voice_requests(overrides), lambda item: item["character"], overrides, receipts):
             result = self.db.apply_listener_voice(
                 character=request["character"],
                 voices=self.settings["voices"],
@@ -1341,7 +1348,7 @@ class BookPipeline:
             )
         # Thu lại nguyên câu (tab "Cần nghe lại": "Cần thu lại") - SAU mọi thứ khác: câu vừa đổi cách đọc/người nói cũng
         # thu bằng hạt giống mới nếu người nghe đã chê bản thu của nó.
-        for request in retake_requests(overrides):
+        for request in self._acknowledging("retakes", retake_requests(overrides), lambda item: item["stable_id"], overrides, receipts):
             result = self.db.apply_listener_retake(
                 stable_id=request["stable_id"],
                 text_sha256=request["text_sha256"],
@@ -1359,7 +1366,35 @@ class BookPipeline:
             if result["reset"]:
                 reset_chapters.add(int(result["chapter_id"]))
             self.log(f"Người nghe yêu cầu thu lại câu {result['stable_id']} (lần {result['retakes']}).")
+        # Mục không đọc được thành yêu cầu (thiếu chữ, mã băm...) cũng là đã xét - không thì nút "Áp dụng" đếm chúng mãi.
+        for section in ("pronunciations", "speakers", "lines", "voices", "retakes"):
+            entries = overrides.get(section)
+            for key in (entries if isinstance(entries, dict) else ()):
+                self._acknowledge(section, str(key), overrides, receipts)
         return reset_chapters
+
+    def _acknowledging(self, section: str, requests: list[Any], key_of: Callable[[Any], str],
+                       overrides: dict[str, Any], receipts: dict[tuple[str, str], tuple[float, str]]) -> Iterator[Any]:
+        """Đưa từng yêu cầu ra cho vòng áp, và ghi biên nhận của nó khi vòng quay lại lấy yêu cầu kế (hay hết) - kể cả khi thân
+        vòng `continue` (không có gì để đổi, hay bị từ chối: đều là đã xét). Thân vòng nổ lỗi thì không biên nhận: yêu cầu còn
+        chờ. Chết giữa commit và biên nhận thì lần chạy sau áp lại - mọi `apply_listener_*` so với sổ nên áp lại là không làm gì."""
+        for request in requests:
+            yield request
+            self._acknowledge(section, key_of(request), overrides, receipts)
+
+    def _acknowledge(self, section: str, key: str, overrides: dict[str, Any],
+                     receipts: dict[tuple[str, str], tuple[float, str]]) -> None:
+        from .webui.store import receipt_stamp
+
+        entries = overrides.get(section)
+        entry = entries.get(key) if isinstance(entries, dict) else None
+        if not isinstance(entry, dict):
+            return
+        stamp = receipt_stamp(entry)
+        if receipts.get((section, key)) == stamp:
+            return
+        self.db.record_listener_receipt(section, key, stamp[0], stamp[1])
+        receipts[(section, key)] = stamp
 
     def _report_rejected_override(self, key: tuple[str, str], message: str, details: dict[str, Any]) -> None:
         """Một lần mỗi lần chạy: file yêu cầu được đọc lại ở MỌI ranh giới chương."""
