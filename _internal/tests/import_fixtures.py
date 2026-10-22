@@ -33,6 +33,8 @@ hành vi hay bộ ví dụ). File zip dùng giờ cố định nên sinh lại r
 from __future__ import annotations
 
 import hashlib
+import codecs
+import encodings.aliases
 import io
 import json
 import struct
@@ -965,6 +967,16 @@ def build_rights_odd_pages() -> bytes:
     return _with_members(_book("Sách có metadata quyền", pages), members)
 
 
+def build_review_nul() -> bytes:
+    return _book("Đệm NUL", [("c.xhtml", "")], raw_pages={"c.xhtml":
+        _xhtml(f"<h1>Chương 10</h1><p>{LINE}</p>") + b"\0" * 401})
+
+
+def build_review_controls() -> bytes:
+    return _book("Điều khiển", [("c.xhtml", "<h1>Chương 1</h1><p>Trư\x01ớc\x0cSau " + LINE + "</p>" +
+        "<p>Gi\x00ữ ng<script>ẩn\x0cnữa</script>uyên chữ\x02.</p>")])
+
+
 def build_astral_window() -> bytes:
     """Cửa sổ 1.000 ký tự đầu đếm theo ký tự (code point), không theo đơn vị UTF-16: 500 emoji rồi 500 byte hỏng - nửa cửa sổ là chữ hỏng."""
     page = b"<p>" + ("\U0001f600" * 500).encode("utf-8") + b"\xff" * 500 + b"</p>"
@@ -1077,6 +1089,14 @@ XML_NAME_CASES = [
 def xml_cases() -> list[tuple[str, bytes]]:
     cases = [(f"{name} ({codec})", f'<?xml version="1.0" encoding="{name}"?><a>{text}</a>'.encode(codec)) for name, codec, text in XML_NAME_CASES]
     entity = '<!DOCTYPE a [<!ENTITY x "HELLO">]><a>&x;</a>'
+    from abook.importers import _XML_CODECS
+    for alias in sorted(encodings.aliases.aliases):
+        try:
+            codec = codecs.lookup(alias).name
+        except LookupError:
+            continue
+        if codec in _XML_CODECS and alias[0].isalpha():
+            cases.append((f'alias {alias}', f'<?xml version="1.0" encoding="{alias}"?><a>A</a>'.encode(codec)))
     return cases + [
         ("windows-1252 0x81", b'<?xml version="1.0" encoding="windows-1252"?><a>Caf\x81</a>'),
         ("windows-1252 0x8D", b'<?xml version="1.0" encoding="windows-1252"?><a>Caf\x8d</a>'),
@@ -1102,6 +1122,56 @@ def xml_case_results() -> list[dict[str, str]]:
             result = {"error": str(error)}
         out.append({"case": label, "hex": raw.hex(), **result})
     return out
+
+
+def markup_alias_cases() -> list[dict[str, str]]:
+    cases = []
+    names = [(name, 'latin-1', 'été ' * 50) for name in ('latin-1', 'latin1', 'l1', 'iso8859-1', 'cp1252')]
+    names += [('utf8', 'utf-8', 'Con đò ' * 50), ('x-sjis', 'shift_jis', '東京 ' * 50)]
+    for name, codec, body in names:
+        for declaration in (f'<?xml version="1.0" encoding="{name}"?>', f'<meta charset="{name}"/>'):
+            text = declaration + f'<html><body><p>{body}</p></body></html>'
+            cases.append({'case': f'{name}: {declaration}', 'hex': text.encode(codec).hex(), 'text': text, 'body': body.strip()})
+    return cases
+
+
+def markup_utf16_cases() -> list[dict[str, str]]:
+    cases = []
+    for codec in ('utf-16-le', 'utf-16-be'):
+        for declared in (False, True):
+            declaration = f'<?xml version="1.0" encoding="{codec}"?>' if declared else ''
+            body = LINE * 3
+            text = declaration + f'<html><body><p>{body}</p></body></html>'
+            cases.append({'case': f'{codec} declared={declared}', 'hex': text.encode(codec).hex(), 'text': text, 'body': body})
+    return cases
+
+
+def malformed_xml_cases() -> list[dict[str, str]]:
+    from abook import importers
+    cases = []
+    for text in ('<a/><b/>', '<a>', '<a><b></a>', '<a/></b>', 'text<a/>', '<a/>text',
+                 '<a><b/></a><!--', '<a x="1" x="2"/>', '<a x=1/>', '<a>&unknown;</a>',
+                 '<a>&#0;</a>', '<a/>\f', '<a><![CDATA[text</a>', '<a><?pi</a>',
+                 '<a xmlns:p="urn:x"><p:b/></a>', '<!--before--><?pi ok?><a/><!--after-->'):
+        try:
+            result = {'text': ''.join(importers._xml(text.encode()).itertext())}
+        except importers.ImportFailed as error:
+            result = {'error': str(error)}
+        cases.append({'case': text, 'hex': text.encode().hex(), **result})
+    return cases
+
+
+def many_parts_case() -> dict:
+    import hashlib
+    lines = [f'{index:04d}: ' + 'Con do roi ben luc troi con toi. ' * 132 for index in range(5000)]
+    text = '\n\n'.join(line.strip() for line in lines)
+    return {'parts': len(lines), 'title': 'Chương 1: Bến đò', 'max_seconds': 12,
+            'length': len(text), 'sha256': hashlib.sha256(text.encode()).hexdigest()}
+
+
+def build_many_parts() -> bytes:
+    pages = [(f'part{index:04d}.xhtml', f'<p>{index:04d}: ' + 'Con do roi ben luc troi con toi. ' * 132 + '</p>') for index in range(5000)]
+    return _book('Nhiều mảnh', pages, ncx=_ncx([('Chương 1: Bến đò', 'text/part0000.xhtml')]), version='2.0')
 
 
 # Bảng mã của file XML (container / OPF / mục lục / encryption.xml), như expat của máy tính: chỉ khai báo XML định bảng mã, bảng mã nhiều byte
@@ -1149,6 +1219,7 @@ SOURCES.update(REAL_WORLD)
 SOURCES.update(NOTE_BOOKS)
 SOURCES.update(ENCRYPTED)
 SOURCES.update(XML_ENCODINGS)
+SOURCES.update({"review_nul.epub": build_review_nul, "review_controls.epub": build_review_controls})
 
 
 # Tên chương đặt từ dòng đầu (`importers.clip_title`, Kotlin BookImport.clipTitle): đủ ngắn, rơi giữa từ (lùi về dấu cách), từ cuối quá dài
@@ -1183,6 +1254,7 @@ def source_files() -> dict[str, bytes]:
     files.update({f"txt/{name}": data for name, data in txt_files().items()})
     files["whole.txt"] = whole_txt()
     files["titled.txt"] = whole_titled_txt()
+    files["many_parts.epub"] = build_many_parts()
     return files
 
 
@@ -1191,12 +1263,24 @@ def expected_files(root: Path) -> dict[str, bytes]:
     from abook import importers
 
     out: dict[str, bytes] = {}
+    out["expected/zip_stream_cases.json"] = dumps([
+        {"case": "entry", "sizes": [20 * 1024 * 1024 + 1], "cover": False,
+         "error": "Có một phần quá lớn (trên 20 MB) - không giống EPUB truyện"},
+        {"case": "cover", "sizes": [20 * 1024 * 1024 + 1], "cover": True,
+         "error": "Có một phần quá lớn (trên 20 MB) - không giống EPUB truyện"},
+        {"case": "total", "sizes": [20 * 1024 * 1024] * 16, "cover": False,
+         "error": "Quá lớn khi giải nén (trên 300 MB) - không giống EPUB truyện"},
+    ])
     for name in [*SOURCES, "txt"]:
         stem = name.rsplit(".", 1)[0] if name != "txt" else "txt"
         try:
             value = importers.import_text(root / name).to_dict()
         except importers.ImportFailed as error:
             value = {"error": str(error)}
+        if name == 'review_nul.epub':
+            value['chapters'][0]['text'] = LINE
+        elif name == 'review_controls.epub':
+            value['chapters'][0]['text'] = f'Trước\n\nSau {LINE}\n\nGiữ nguyên chữ.'
         out[f"expected/{stem}.json"] = dumps(value)
     # Một file TXT cả truyện: không tách (mặc định) và có tách (người dùng tích ô gợi ý).
     out["expected/whole.json"] = dumps(importers.import_text(root / "whole.txt").to_dict())
@@ -1222,6 +1306,10 @@ def expected_files(root: Path) -> dict[str, bytes]:
                                              for text, limit in CLIP_TITLE_CASES])
     out["expected/name_title.json"] = dumps([{"stem": stem, "title": importers.title_from_filename(stem)} for stem in NAME_TITLE_CASES])
     out["expected/xml_cases.json"] = dumps(xml_case_results())
+    out["expected/markup_alias_cases.json"] = dumps(markup_alias_cases())
+    out["expected/markup_utf16_cases.json"] = dumps(markup_utf16_cases())
+    out["expected/malformed_xml_cases.json"] = dumps(malformed_xml_cases())
+    out["expected/many_parts.json"] = dumps(many_parts_case())
     out["expected/tail_credit_lines.json"] = dumps({
         "lines": [{"line": line, "suggested": importers.tail_credit_suggestions(line + "\n") == [line]} for line, _want in TAIL_LINE_CASES],
         "sources": [{"source": source, "tail": importers.tail_credit_suggestions(source),

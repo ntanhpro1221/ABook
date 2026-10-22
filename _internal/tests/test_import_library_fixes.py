@@ -149,6 +149,11 @@ def test_encoding_names_are_normalised_the_same_way_on_both_platforms(tmp_path: 
         (tmp_path / name).write_bytes(shared.XML_ENCODINGS[name]())
         assert importers.import_text(tmp_path / name).title == title
     results = {case["case"]: case.get("text", case.get("error")) for case in shared.xml_case_results()}
+    # Các bí danh codecs.lookup trong whitelist được bổ sung vào fixture chung; chúng đều chứa chữ A.
+    aliases = [case for case in results if case.startswith("alias ")]
+    assert aliases
+    for case in aliases:
+        assert results.pop(case) == "A", case
     broken = importers.BROKEN.format(kind="EPUB")
     readable = {"utf8 (utf-8)": "Tên sách", "UTF-8 (utf-8)": "Tên sách", "utf-16 (utf-16)": "Tên sách", "UTF-16BE (utf-16-be)": "Tên",
                 "latin-1 (latin-1)": "Café", "latin1 (latin-1)": "Café", "iso-8859-1 (latin-1)": "Café", "iso8859-1 (latin-1)": "Café",
