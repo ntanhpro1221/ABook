@@ -3,7 +3,9 @@ package vn.abook.player
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
+import org.json.JSONException
 import java.io.File
+import java.io.FileOutputStream
 import java.security.MessageDigest
 import java.util.UUID
 import kotlin.concurrent.thread
@@ -29,6 +31,7 @@ object Store {
             // Mở file sách bị cắt giữa chừng (app bị giết, máy tắt): bản đang giải / bản cũ chờ xoá nằm lại trong books/.
             // Đổi tên trả lại ngay (rẻ); xoá thì ở nền - danh sách sách không bao giờ thấy chúng (bookFolders).
             val stale = recoverStaging()
+            recoverRekeys()
             if (stale.isNotEmpty()) thread(name = "abook-staging-sweep", isDaemon = true) { stale.forEach { it.deleteRecursively() } }
         }
     }
@@ -78,7 +81,7 @@ object Store {
     @Synchronized
     fun rawManifest(id: String): JSONObject? {
         val file = File(bookDir(id), "book.json")
-        return if (file.isFile) JSONObject(file.readText()) else null
+        return readJson(file)
     }
 
     /**
@@ -163,7 +166,7 @@ object Store {
     @Synchronized
     fun streamManifest(id: String): JSONObject? {
         val file = File(bookDir(id), "stream.json")
-        return if (file.isFile) runCatching { JSONObject(file.readText()) }.getOrNull() else null
+        return readJson(file)
     }
 
     /** Gói sách phát được: đã tải thì bản đã tải, không thì bản nghe thẳng đã cất. */
@@ -202,14 +205,33 @@ object Store {
 
     fun writeAtomic(target: File, text: String) = writeAtomic(target, text.toByteArray(Charsets.UTF_8))
 
+    @Synchronized
     fun writeAtomic(target: File, bytes: ByteArray) {
+        check(!target.isDirectory) { "Không ghi được dữ liệu của bạn lên thư mục: ${target.name}" }
         target.parentFile?.mkdirs()
         val temporary = File(target.path + ".part")
-        temporary.writeBytes(bytes)
-        if (!temporary.renameTo(target)) {
-            target.delete()
-            temporary.renameTo(target)
+        FileOutputStream(temporary).use { stream ->
+            stream.write(bytes)
+            stream.fd.sync()
         }
+        check(temporary.renameTo(target)) { "Không lưu được dữ liệu của bạn: ${target.name}" }
+    }
+
+    /** Giữ nguyên byte hỏng để có thể cứu lại, trước khi reader tạo dữ liệu mới. Lỗi I/O vẫn phải báo cho nơi gọi. */
+    @Synchronized
+    fun readJson(file: File): JSONObject? {
+        if (!file.isFile) return null
+        return try {
+            JSONObject(file.readText(Charsets.UTF_8))
+        } catch (error: JSONException) {
+            preserveCorrupt(file)
+            null
+        }
+    }
+
+    fun preserveCorrupt(file: File) {
+        val copy = File(file.path + ".corrupt-${System.currentTimeMillis()}-${UUID.randomUUID()}")
+        check(file.renameTo(copy)) { "Không giữ được bản dữ liệu hỏng của bạn: ${file.name}" }
     }
 
     // ---- hồ sơ nghe + liên kết với sách ----------------------------------------------------------------------
@@ -239,32 +261,38 @@ object Store {
      */
     private fun recordsBook(): JSONObject {
         recordsCache?.let { return it }
-        val loaded = if (recordsFile.isFile) runCatching { JSONObject(recordsFile.readText()) }.getOrNull() else null
+        val loaded = readJson(recordsFile)
         val book = loaded ?: upgradeStates()
         if (!book.has("deleted")) book.put("deleted", JSONObject())
         recordsCache = book
         return book
     }
 
-    /** Bản cũ state/<mã sách>.json: mỗi sách thành một hồ sơ "Mặc định" (file đổi tên theo mã hồ sơ). */
+    /** Bản cũ state/<mã sách>.json: giữ nguồn tới khi bảng liên kết đã commit để restart làm tiếp được. */
     private fun upgradeStates(): JSONObject {
         val book = JSONObject().put("version", 2).put("records", JSONObject()).put("links", JSONObject())
-        File(root, "state").listFiles()?.filter { it.isFile && it.name.endsWith(".json") && !RECORD_ID.matches(it.name.removeSuffix(".json")) }
-            ?.forEach { file ->
-                val record = defaultRecordId(file.name.removeSuffix(".json"))
-                if (file.renameTo(File(root, "state/$record.json"))) {
-                    book.getJSONObject("records").put(record, JSONObject().put("name", DEFAULT_RECORD_NAME).put("createdAt", now()).put("nameAt", 0.0))
-                    book.getJSONObject("links").put(file.name.removeSuffix(".json"),
-                        JSONObject().put("records", JSONArray().put(record)).put("active", record).put("activeAt", 0.0))
-                }
-            }
+        val sources = File(root, "state").listFiles()?.filter {
+            it.isFile && it.name.endsWith(".json") && !RECORD_ID.matches(it.name.removeSuffix(".json"))
+        } ?: emptyList()
+        for (file in sources) {
+            val bookId = file.name.removeSuffix(".json")
+            val record = defaultRecordId(bookId)
+            val target = File(root, "state/$record.json")
+            writeAtomic(target, file.readBytes())
+            check(target.isFile) { "Không lưu được hồ sơ nghe của bạn" }
+            book.getJSONObject("records").put(record, JSONObject().put("name", DEFAULT_RECORD_NAME).put("createdAt", now()).put("nameAt", 0.0))
+            book.getJSONObject("links").put(bookId,
+                JSONObject().put("records", JSONArray().put(record)).put("active", record).put("activeAt", 0.0))
+        }
         writeAtomic(recordsFile, book.toString())
+        check(recordsFile.isFile) { "Không lưu được liên kết hồ sơ nghe của bạn" }
+        sources.forEach { it.delete() }
         return book
     }
 
     private fun saveRecords(book: JSONObject) {
-        recordsCache = book
         writeAtomic(recordsFile, book.toString())
+        recordsCache = book
     }
 
     /** Hồ sơ đang dùng của sách - chưa có thì tạo hồ sơ "Mặc định" và gắn vào. */
@@ -434,7 +462,7 @@ object Store {
         for (index in 0 until list.length()) {
             val id = list.optString(index)
             val meta = records.optJSONObject(id) ?: continue
-            val state = recordFile(id).takeIf { it.isFile }?.let { runCatching { JSONObject(it.readText()) }.getOrNull() }
+            val state = readJson(recordFile(id))
             out.put(JSONObject().put("id", id).put("name", meta.optString("name", DEFAULT_RECORD_NAME))
                 .put("createdAt", meta.optDouble("createdAt", 0.0))
                 .put("updatedAt", state?.optDouble("updatedAt", 0.0) ?: JSONObject.NULL)
@@ -514,7 +542,7 @@ object Store {
 
     /** Liên kết hồ sơ của cuốn mở từ file sang mã máy tính khi hai bên nhận ra là một cuốn (adopt). */
     private fun moveLinks(from: String, to: String) {
-        val book = recordsBook()
+        val book = JSONObject(recordsBook().toString())
         val links = book.getJSONObject("links")
         val moved = links.optJSONObject(from) ?: return
         links.remove(from)
@@ -546,7 +574,7 @@ object Store {
 
     private fun recordState(record: String?): JSONObject {
         val file = record?.let(::recordFile)
-        val state = if (file != null && file.isFile) runCatching { JSONObject(file.readText()) }.getOrElse { JSONObject() } else JSONObject()
+        val state = file?.let(::readJson) ?: JSONObject()
         if (!state.has("chapters")) state.put("chapters", JSONObject())
         if (!state.has("bookmarks")) state.put("bookmarks", JSONArray())
         return state
@@ -639,10 +667,11 @@ object Store {
     private fun now() = System.currentTimeMillis() / 1000.0
 
     @Synchronized
-    fun progress(id: String, chapterId: Int, seconds: Double, duration: Double): JSONObject {
+    fun progress(id: String, chapterId: Int, seconds: Double, duration: Double, anchor: JSONObject? = null): JSONObject {
         val state = state(id)
         val at = now()
         state.put("last", JSONObject().put("chapterId", chapterId).put("seconds", seconds).put("at", at))
+        vn.abook.player.readaloud.ReadingAnchor.validated(anchor)?.let { state.getJSONObject("last").put("anchor", it) }
         val chapters = state.getJSONObject("chapters")
         val record = chapters.optJSONObject(chapterId.toString()) ?: JSONObject().put("heard", 0.0).put("done", false)
         record.put("heard", maxOf(record.optDouble("heard", 0.0), seconds))
@@ -834,7 +863,7 @@ object Store {
     private val printsFile get() = File(root, "prints.json")
 
     private fun printsBook(): JSONObject =
-        if (printsFile.isFile) runCatching { JSONObject(printsFile.readText()) }.getOrElse { JSONObject() } else JSONObject()
+        readJson(printsFile) ?: JSONObject()
 
     @Synchronized
     fun rememberChapters(id: String, chapters: JSONObject, imported: Boolean) {
@@ -955,18 +984,9 @@ object Store {
      */
     @Synchronized
     fun adopt(localId: String, syncId: String) {
+        recoverRekeys()
         if (localId == syncId || !isImported(localId) || rawManifest(localId) == null || rawManifest(syncId) != null) return
-        val target = bookDir(syncId)
-        target.deleteRecursively() // chỉ là bộ nhớ đệm nghe thẳng (stream.json + file nhỏ): lấy lại được
-        if (!bookDir(localId).renameTo(target)) return
-        val book = rawManifest(syncId) ?: return
-        writeAtomic(File(target, "book.json"), book.put("id", syncId).toString())
-        moveLinks(localId, syncId)
-        val all = printsBook()
-        val entry = all.optJSONObject(localId)
-        all.remove(localId)
-        if (entry != null) all.put(syncId, entry.put("imported", false))
-        writeAtomic(printsFile, all.toString())
+        beginRekey(localId, syncId, adopt = true)
     }
 
     /** Cuốn của máy tính đã ghép chính - tải hẳn hay nghe thẳng; không kể cuốn mở từ file, cuốn của thiết bị ghép khác
@@ -1008,20 +1028,71 @@ object Store {
      */
     @Synchronized
     fun rekey(oldId: String, newId: String) {
+        recoverRekeys()
         if (oldId == newId) return
         val target = runCatching { deletableBookDir(newId) }.getOrNull() ?: return
         val source = runCatching { deletableBookDir(oldId) }.getOrNull() ?: return
         if (!source.isDirectory || rawManifest(newId) != null) return
-        target.deleteRecursively() // chỉ có thể là bộ nhớ đệm nghe thẳng của mã mới: lấy lại được
-        if (!source.renameTo(target)) return
+        beginRekey(oldId, newId, adopt = false)
+    }
+
+    private val rekeyJournal get() = File(root, "rekey_journal.json")
+
+    private fun beginRekey(oldId: String, newId: String, adopt: Boolean) {
+        deletableBookDir(oldId)
+        deletableBookDir(newId)
+        val journal = readJson(rekeyJournal) ?: JSONObject()
+        val action = JSONObject().put("to", newId).put("adopt", adopt)
+        journal.put(oldId, action)
+        writeAtomic(rekeyJournal, journal.toString())
+        check(rekeyJournal.isFile) { "Không lưu được việc đổi mã sách của bạn" }
+        // Lần đổi này báo lỗi cho nơi gọi (journal còn, lần mở sau làm tiếp); chỉ phần khôi phục lúc mở app mới nuốt lỗi.
+        if (finishRekey(oldId, action)) {
+            journal.remove(oldId)
+            writeAtomic(rekeyJournal, journal.toString())
+        }
+    }
+
+    /** Journal đi trước rename; mỗi bước ghi lại được, kể cả thư mục đã chuyển nhưng liên kết còn ở mã cũ.
+     *  Gọi cả lúc mở app: mục không làm tiếp được thì bỏ (không đổi gì thêm), lỗi tạm thì giữ để lần sau - không bao giờ làm app văng mỗi lần mở. */
+    @Synchronized
+    fun recoverRekeys() {
+        val journal = readJson(rekeyJournal) ?: return
+        for (oldId in journal.keys().asSequence().toList()) {
+            try {
+                if (finishRekey(oldId, journal.getJSONObject(oldId))) {
+                    journal.remove(oldId)
+                    writeAtomic(rekeyJournal, journal.toString())
+                }
+            } catch (error: Exception) {
+                runCatching { android.util.Log.w("Store", "đổi mã sách $oldId chưa xong, thử lại lần sau", error) } // Log không chạy trong test JVM
+            }
+        }
+    }
+
+    /** Làm tiếp một mục journal; true = mục đã xong (hay bỏ hẳn vì không còn gì để làm), bỏ khỏi journal. */
+    private fun finishRekey(oldId: String, action: JSONObject): Boolean {
+        val newId = action.optString("to")
+        val source = runCatching { deletableBookDir(oldId) }.getOrNull() ?: return true
+        val target = runCatching { deletableBookDir(newId) }.getOrNull() ?: return true
+        if (source.isDirectory) {
+            if (rawManifest(newId) != null) return true // mã mới đã thành một cuốn khác: bỏ việc đổi, cuốn cũ giữ nguyên
+            target.deleteRecursively() // chỉ là cache nghe thẳng, như trước khi có journal
+            check(source.renameTo(target)) { "Không chuyển được thư mục sách của bạn" }
+        }
+        if (!target.isDirectory) return true // cả hai thư mục đã mất (sách bị xoá): không còn gì để làm
         rawManifest(newId)?.let { writeAtomic(File(target, "book.json"), it.put("id", newId).toString()) }
         streamManifest(newId)?.let { writeAtomic(File(target, "stream.json"), it.put("id", newId).toString()) }
         moveLinks(oldId, newId)
         val all = printsBook()
-        val entry = all.optJSONObject(oldId) ?: return
-        all.remove(oldId)
-        all.put(newId, entry)
-        writeAtomic(printsFile, all.toString())
+        val entry = all.optJSONObject(oldId)
+        if (entry != null) {
+            all.remove(oldId)
+            if (action.optBoolean("adopt")) entry.put("imported", false)
+            all.put(newId, entry)
+            writeAtomic(printsFile, all.toString())
+        }
+        return true
     }
 
     fun sizeOf(dir: File): Long = dir.walkTopDown().filter { it.isFile }.sumOf { it.length() }

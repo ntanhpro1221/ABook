@@ -10,7 +10,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Sửa lỗi
 
 - Trên điện thoại màn nhỏ, menu "…" của trang sách không còn bị cắt mất các mục cuối ("Xuất sách nói (M4B)…", "Xoá khỏi điện thoại…"): menu nào dài hơn chỗ còn trên màn thì cuộn được, trên cả điện thoại lẫn máy tính.
-- Khi bạn đóng app lúc có sách đang xếp hàng chờ làm (kể cả các tập sau của "Tạo nhiều tập"), hàng chờ vẫn còn khi bạn mở lại, kể cả khi app bị tắt ngang lúc chuẩn bị chạy cuốn kế; các cuốn tự bắt đầu lần lượt khi cuốn đang chạy xong. Bạn bấm chạy cuốn khác hay bỏ cuốn khỏi hàng đúng lúc chuyển lượt cũng không làm hai cuốn tự chạy cùng lúc hoặc chạy cuốn vừa bỏ.
+- Khi bạn đóng app lúc có sách đang xếp hàng chờ làm (kể cả các tập sau của "Tạo nhiều tập"), hàng chờ vẫn còn khi bạn mở lại, kể cả khi app bị tắt ngang lúc chuẩn bị chạy cuốn kế; các cuốn tự bắt đầu lần lượt khi cuốn đang chạy xong. Bạn bấm chạy cuốn khác hay bỏ cuốn khỏi hàng đúng lúc chuyển lượt cũng không làm hai cuốn tự chạy cùng lúc hoặc chạy cuốn vừa bỏ; cuốn bạn đã xoá thì tự ra khỏi hàng.
+- Khi bạn nghe tiếp chương đọc to sau khi app bị đóng hoặc bộ đệm bị dọn, app nhớ đúng đoạn và chữ đang nghe nếu văn bản chương còn khớp.
+- Dữ liệu nghe của bạn được đồng bộ xuống bộ nhớ bền trước khi thay file; nếu JSON bị hỏng, app giữ riêng bản hỏng để có thể phục hồi.
+- Khi app tắt ngang lúc bỏ bìa hoặc dọn phần sửa đã gửi, bìa của bạn chỉ được xoá sau khi phần sửa đã lưu xong, tránh chặn lần đóng gói tiếp theo.
+- Khi bạn đổi hồ sơ nghe rồi điện thoại tắt ngang lúc đồng bộ, chỗ nghe của hồ sơ vừa rời vẫn được gửi lại đúng hồ sơ; trả lời cũ không xoá thay đổi mới đang chờ gửi.
+- Khi điện thoại tắt ngang lúc bạn bật “Làm trước”, việc đã lưu tự được xếp lại khi mở app; cập nhật tiến độ không còn xoá checkpoint cũ trước khi ghi bản mới.
+- Khi bạn cập nhật điện thoại và app bị tắt ngang lúc chuyển hồ sơ nghe, chỗ nghe và dấu trang vẫn được gắn lại khi mở app.
+- Khi điện thoại hoặc máy tính bị tắt ngang sau khi nhận yêu cầu thu lại của bạn, gửi lại yêu cầu ấy không làm câu bị thu lại thêm lần nữa.
+- Khi điện thoại bị tắt ngang lúc nhận hoặc đổi mã sách từ máy tính, hồ sơ nghe của bạn tiếp tục đi theo đúng cuốn khi mở lại app.
 - Khi bạn chạy bộ cài bản mới trên máy tính, cuốn đang làm trong Studio không còn bị dừng giữa chừng.
 - Khi điện thoại bị tắt ngang lúc bạn đang mở file sách, thư viện không còn hiện cuốn dở dang; bản cũ đang được thay thì trở lại, phần dở được dọn ở lần mở app sau.
 - Khi điện thoại tự dừng việc xuất MP3, M4B hay sách nói của bạn (hết giờ chạy nền, thiếu bộ nhớ, kể cả Android 11 trở xuống không báo lý do), file đích và quyền ghi được giữ để việc xuất chạy lại; chỉ khi bạn bấm Dừng hoặc xuất thay lượt cũ thì lượt ấy mới bị huỷ.

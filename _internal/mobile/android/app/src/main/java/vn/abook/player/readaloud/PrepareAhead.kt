@@ -19,8 +19,10 @@ import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.json.JSONObject
+import org.json.JSONException
 import vn.abook.player.Playback
 import vn.abook.player.R
+import vn.abook.player.Store
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.CopyOnWriteArraySet
@@ -57,8 +59,16 @@ object PrepareAhead {
 
     private fun current(context: Context): PrepareJob? = synchronized(lock) {
         if (!loaded) {
+            val saved = file(context)
+            job = Store.readJson(saved)?.let {
+                try {
+                    PrepareJob.fromJson(it)
+                } catch (error: JSONException) {
+                    Store.preserveCorrupt(saved)
+                    null
+                }
+            }
             loaded = true
-            job = runCatching { PrepareJob.fromJson(JSONObject(file(context).readText())) }.getOrNull()
         }
         job
     }
@@ -67,11 +77,7 @@ object PrepareAhead {
     private fun save(context: Context, saved: PrepareJob) {
         synchronized(lock) {
             if (job?.id != saved.id) return
-            val target = file(context)
-            val part = File(target.path + ".part")
-            part.writeBytes(saved.toJson().toString().toByteArray(Charsets.UTF_8))
-            target.delete()
-            part.renameTo(target)
+            Store.writeAtomic(file(context), saved.toJson().toString())
         }
         emit(context)
     }
@@ -86,6 +92,23 @@ object PrepareAhead {
     }
 
     // ---- lệnh từ giao diện (plugin ReadAloud, chạy ở luồng nền) ----------------------------------------------------------------------------
+
+    /** Checkpoint đã ghi mà app chưa kịp enqueue: đối chiếu với WorkManager khi mở lại. KEEP chống xếp trùng. */
+    fun reconcile(context: Context) {
+        val saved = current(context)?.takeIf { it.state == "running" } ?: return
+        val work = WorkManager.getInstance(context).getWorkInfosForUniqueWork(WORK)
+        work.addListener({
+            val unfinished = runCatching { work.get().any { !it.state.isFinished } }.getOrNull() ?: return@addListener
+            synchronized(lock) {
+                if (job?.id == saved.id) reconcileJob(saved, unfinished) { enqueue(context, it, ExistingWorkPolicy.KEEP) }
+            }
+        }, { it.run() })
+    }
+
+    @JvmName("reconcileJob")
+    internal fun reconcileJob(saved: PrepareJob, unfinished: Boolean, enqueue: (PrepareJob) -> Unit) {
+        if (saved.state == "running" && !unfinished) enqueue(saved)
+    }
 
     /** Các chương sẽ nhận (vừa phần bộ đệm dành cho làm trước) + số đoạn đã đưa. */
     private fun select(context: Context, bookId: String, voice: String, ids: List<Int>): Triple<List<PrepareChapter>, Int, Int> {
@@ -152,6 +175,7 @@ object PrepareAhead {
     }
 
     fun status(context: Context): JSONObject {
+        reconcile(context)
         val now = current(context) ?: return JSONObject().put("state", "idle").put("chargingOnly", chargingOnly(context))
         if (now.state != "running" && !working) recheck(now)
         val perChar = runCatching { ReadAloud.speeds().secondsPerChar(now.voice) }.getOrNull()

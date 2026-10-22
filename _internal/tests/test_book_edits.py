@@ -33,6 +33,27 @@ TOKEN = {"X-Ebook-Token": "t"}
 CASES = sorted(shared.CASES)
 
 
+def test_remove_cover_keeps_asset_if_json_commit_fails(tmp_path, monkeypatch):
+    folder = tmp_path / "book"
+    shutil.copytree(shared.BASE, folder)
+    cover = folder / book_edits.EDITS_COVER
+    cover.parent.mkdir(parents=True, exist_ok=True)
+    cover.write_bytes(b"cover")
+    book_edits.save(folder, {"version": 1, "title": "Tên mới", "cover": {
+        "color": "#123456", "width": 10, "height": 10, "version": 1}})
+
+    def killed(*args, **kwargs):
+        raise OSError("killed before JSON commit")
+
+    monkeypatch.setattr(book_edits, "atomic_write_bytes", killed)
+    with pytest.raises(OSError):
+        book_edits.remove_cover(folder)
+    assert cover.read_bytes() == b"cover"
+    monkeypatch.undo()
+    book_edits.remove_cover(folder)
+    assert book_edits.load(folder)["cover"] is None and not cover.exists(), "JSON đã ghi thì ảnh bìa cũ không nằm lại"
+
+
 def _read(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
