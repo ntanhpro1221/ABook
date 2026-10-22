@@ -312,12 +312,14 @@ object MusicBed {
         }
     }
 
-    /** Mỗi 20 ms một dòng vị trí + âm lượng hai bản tới 4,5 s sau `playing` của `new` (hay khi `new` đã nhả); một bản đã nhả ghi `-`. Gọi lại với cùng `new` thì bỏ qua. */
+    /** Mỗi [debugLoopTsEveryMs] một dòng vị trí + âm lượng hai bản tới 4,5 s sau `playing` của `new` (hay khi `new` đã nhả); một bản đã nhả ghi `-`. Gọi lại với cùng `new` thì bỏ qua.
+     *  Tee tắt ([debugLoopTee] false, §40 nhóm B/C/D) thì KHÔNG ghi `POS` (chỉ còn `EV` và `TS`). */
     private fun probeLoopWatch(old: Bed, new: Bed) {
         val sink = debugLoopProbe ?: return
         if (probeBed === new) return
         probeBed = new
         probeUntil = Long.MAX_VALUE
+        if (!debugLoopTee) return
         main.post(object : Runnable {
             override fun run() {
                 val now = System.nanoTime()
@@ -325,7 +327,7 @@ object MusicBed {
                 val oldMs = if (old.released) "-" else old.player.currentPosition.toString()
                 val oldVol = if (old.released) "-" else old.player.volume.toString()
                 sink("POS $now $oldMs ${new.player.currentPosition} $oldVol ${new.player.volume}")
-                main.postDelayed(this, PROBE_EVERY_MS)
+                main.postDelayed(this, debugLoopTsEveryMs)
             }
         })
     }
