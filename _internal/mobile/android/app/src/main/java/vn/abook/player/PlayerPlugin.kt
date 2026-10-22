@@ -193,6 +193,8 @@ class PlayerPlugin : Plugin() {
             Playlists.autoEnabled = it
             MusicBed.rememberAuto(it)
         }
+        // Tuỳ chọn thử nghiệm (mặc định tắt): nhạc lặp qua MỘT trình phát nối chính xác từng mẫu (MusicBed.musicSeamP3); chỉ ảnh hưởng bài mở sau đó.
+        call.getBoolean("musicSeamP3")?.let { MusicBed.rememberSeamP3(it) }
     }
 
     @PluginMethod

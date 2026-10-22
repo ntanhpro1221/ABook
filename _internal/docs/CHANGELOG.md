@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Điện thoại: thêm tuỳ chọn thử nghiệm (mặc định tắt) cho nhạc nền lặp liền mạch hơn: chỗ nhạc quay lại đầu đoạn được nối chính xác từng mẫu thay vì mở thêm một trình phát; nhạc vẫn vào ngay như thường, chỗ nào chưa nối kịp thì tự dùng cách cũ.
+
 ## [0.4.125] - 2026-10-22
 
 ### Sửa lỗi
