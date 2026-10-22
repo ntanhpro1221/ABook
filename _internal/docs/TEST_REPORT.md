@@ -2,6 +2,12 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a77fix` trên `dev/uxfix88` (nền rc123): 12 mục nghe trên Android - nút tai nghe/xe sau khi dịch vụ bị dọn (MediaButtonReceiver),
+một đường phát tiếp duy nhất qua Playback.play (tự lùi, chuẩn bị lại sau lỗi), tuỳ chọn nghe + hẹn giờ ngủ phút nhớ ở kho native (ListenPrefs),
+tốc độ từ controller ngoài lên giao diện, lời giải thích quyền thông báo, khoá riêng danh sách giọng VieNeu/Supertonic. Mỗi mục test đỏ trước rồi xanh.
+Toàn bộ: JVM 1284 tests, 6 skipped, 0 F/E, exit 0; vitest 1262 passed, 1 skipped; tsc exit 0. Không đổi Python (pytest chạy ở lượt kiểm bản phát hành).
+Chưa thử trên máy thật: ANR khi đổi giọng chỉ đo trong test (voices() < 200 ms khi khoá chính bị giữ).
+
 Đợt `a73fix2` trên `dev/uxfix81` (nền c9a9baf1): nhận lượt hàng đợi và nút chạy dưới cùng khoá,
 đánh dấu khởi động trước khi chuẩn bị, giữ hàng trên đĩa tới khi jobs nhận start; dọn Thùng rác nền theo hạn đóng app.
 Android ghi dấu huỷ theo id việc trước khi cancel (nút trong app, thông báo, xuất thay lượt cũ); dừng không rõ lý do giữ URI/quyền/bìa.

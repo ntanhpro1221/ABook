@@ -170,6 +170,7 @@ object Playback {
         Remote.init(appContext)
         MusicBed.init(appContext)
         ReadAloud.init(appContext)
+        ListenPrefs.loadOnce() // tuỳ chọn nghe + hẹn giờ ngủ còn dở: tiến trình dậy từ tai nghe / widget / xe chưa có WebView đẩy chúng xuống
     }
 
     fun onMain(block: () -> Unit) {
@@ -245,6 +246,7 @@ object Playback {
             .put("rate", exo?.playbackParameters?.speed?.toDouble() ?: 1.0)
             .put("sleep", SleepTimer.describe())
             .put("error", lastError)
+            .put("saveError", if (saveFailing) SAVE_FAILED else "")
             .put("musicCredit", MusicBed.credit() ?: JSONObject.NULL)
             .put("musicBroken", MusicBed.brokenHere())
             .put("musicOffline", MusicBed.offlineNotice())
@@ -381,7 +383,7 @@ object Playback {
             // Sách có chương chỉ-có-chữ: ReadAloud đọc đoạn nào đặt đoạn ấy vào hàng đợi (giọng Edge cần mạng, nên giữ Wi-Fi thức khi tắt màn hình).
             exo.setWakeMode(C.WAKE_MODE_NETWORK)
             savedPlace = items.getOrNull(index)?.let { it.id to msOf(startSeconds) }
-            exo.playbackParameters = PlaybackParameters(rate.toFloat())
+            applySpeed(exo, rate)
             ReadAloud.begin(index, msOf(startSeconds), autoplay)
             if (autoplay) startTicking()
             emit("load")
@@ -392,9 +394,10 @@ object Playback {
         val media = mediaItems(id, title, narratorName, items)
         // Có chương phát qua mạng thì giữ Wi-Fi thức khi tắt màn hình; sách đã tải hết thì không tốn pin cho việc ấy.
         exo.setWakeMode(if (media.any { it.localConfiguration?.uri?.scheme == "https" }) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
-        exo.setMediaItems(media, index, msOf(startSeconds))
+        // Chỗ vừa nạp ghi TRƯỚC khi đặt hàng đợi: sự kiện tua của ExoPlayer ([onSeekSettled]) đến ngay trong lời gọi, thấy chỗ cũ của cuốn trước thì sẽ lưu chỗ vừa nạp như người nghe vừa tua.
         savedPlace = items.getOrNull(index)?.let { it.id to msOf(startSeconds) }
-        exo.playbackParameters = PlaybackParameters(rate.toFloat())
+        exo.setMediaItems(media, index, msOf(startSeconds))
+        applySpeed(exo, rate)
         exo.prepare()
         // Mở lại app: nạp sẵn đúng chỗ đang nghe dở ở trạng thái dừng, người nghe bấm phát khi sẵn sàng.
         if (autoplay) {
@@ -431,7 +434,7 @@ object Playback {
         chapters = next.items
         val streamed = next.items.any { Streaming.chapterUri(appContext, next.id, it.file).scheme == "https" }
         exo.setWakeMode(if (streamed) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
-        exo.playbackParameters = PlaybackParameters(next.rate.toFloat())
+        applySpeed(exo, next.rate)
         savedPlace = next.place
         if (exo.isPlaying) {
             openSession()
@@ -480,6 +483,7 @@ object Playback {
     fun seekTo(seconds: Double, segment: Int = -1, word: Int = -1) {
         touched()
         seekToMs(msOf(seconds), segment, word)
+        saveIfParked()
         Bedtime.interaction("seek")
         emit("seek")
     }
@@ -498,6 +502,7 @@ object Playback {
             exo.seekTo(index, msOf(seconds))
             exo.play()
         }
+        saveIfParked()
         Bedtime.interaction("chapter")
         emit("chapter")
     }
@@ -510,6 +515,7 @@ object Playback {
             if (index >= 0 && index + 1 < chapters.size) {
                 saveNow()
                 ReadAloud.jump(index + 1, 0)
+                saveIfParked()
                 Bedtime.interaction("next")
             }
             return
@@ -517,6 +523,7 @@ object Playback {
         if (exo.hasNextMediaItem()) {
             saveNow()
             exo.seekToNextMediaItem()
+            saveIfParked()
             Bedtime.interaction("next")
         }
     }
@@ -527,16 +534,18 @@ object Playback {
         if (ReadAloud.active) {
             val index = chapters.indexOfFirst { it.id == currentChapter?.id }
             if (positionMs > 5000 || index <= 0) seekToMs(0) else ReadAloud.jump(index - 1, 0)
+            saveIfParked()
             Bedtime.interaction("previous")
             return
         }
         if (exo.currentPosition > 5000 || !exo.hasPreviousMediaItem()) exo.seekTo(0) else exo.seekToPreviousMediaItem()
+        saveIfParked()
         Bedtime.interaction("previous")
     }
 
     fun setRate(rate: Double) {
         touched()
-        player?.playbackParameters = PlaybackParameters(rate.toFloat())
+        player?.let { applySpeed(it, rate) }
         if (bookId.isNotEmpty()) Store.setRate(bookId, rate)
         emit("rate")
     }
@@ -551,8 +560,9 @@ object Playback {
         return mark
     }
 
-    fun configure(rewind: Boolean) {
-        autoRewind = rewind
+    /** `rewind` null: lần `configure` này không mang `autoRewind` (đổi giọng...) - giữ nguyên lựa chọn đang có (soát a77 #7). */
+    fun configure(rewind: Boolean?) {
+        if (rewind != null) autoRewind = rewind
     }
 
     // ---- sự kiện từ ExoPlayer ------------------------------------------------------------------------------
@@ -582,7 +592,9 @@ object Playback {
     /** Báo nhạc nền giọng đang chạy hay không. Đọc to mà hàng đợi cạn (Edge chậm, đang chờ đoạn kế - [ReadAloud.starved]) thì người nghe vẫn đang nghe: nhạc theo cảnh không ngắt rồi phải
      *  vào lại ở từng khe im (trước đây `isPlaying` rơi về false ngay khi ExoPlayer ENDED nên nhạc dừng cùng giọng). Người nghe bấm dừng thì `starved` tắt ngay. */
     private fun syncMusic(playing: Boolean) {
-        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, playing || ReadAloud.starved())
+        val voiceOn = playing || ReadAloud.starved()
+        // Giọng dừng vì người nghe (nút, rút tai nghe, mất focus, cuộc gọi: playWhenReady = false) thì nhạc dừng ngay; giọng chỉ đang đệm / chờ đoạn kế (playWhenReady vẫn true) là khe nối - nhạc chờ.
+        MusicBed.sync(bookId, currentChapter?.id, positionSeconds, voiceOn, stopNow = !voiceOn && player?.playWhenReady != true)
     }
 
     private const val STALL_LOG_MS = 3_000L
@@ -601,9 +613,40 @@ object Playback {
         stalledSince = 0L
     }
 
-    /** Người nghe đổi ý phát / dừng mà `isPlaying` không đổi (đang chờ đoạn kế của đọc to): nhạc cũng theo. */
+    /** Người nghe đổi ý phát / dừng mà `isPlaying` không đổi (đang chờ đoạn kế của đọc to, hay giọng đang đệm): nhạc cũng theo. */
     fun onWantsChanged() {
-        if (ReadAloud.active && !isPlaying) syncMusic(false)
+        if (!isPlaying && player != null) syncMusic(false)
+    }
+
+    /** ExoPlayer vừa tua (nút trong app, màn khoá, controller ngoài): đang dừng thì lưu chỗ mới - nhịp lưu chỉ chạy khi đang phát, nên dừng ở phút 30, tua về phút 10, để máy nghỉ
+     *  rồi bị giết tiến trình là mở lại ở phút 30 (soát a77 #3). Chuyển mục tự động, thay hàng đợi (REMOVE) không phải tua của người nghe. */
+    /** Tốc độ ExoPlayer đang dùng mà lõi đã biết (đã lưu / đã báo): chính lõi đặt nó qua [applySpeed]. Lệnh khác với nó là của controller ngoài. */
+    private var knownSpeed = 1f
+
+    private fun applySpeed(exo: ExoPlayer, rate: Double) {
+        knownSpeed = rate.toFloat() // trước khi đặt: ExoPlayer báo onPlaybackParametersChanged ngay trong lời gọi
+        exo.playbackParameters = PlaybackParameters(knownSpeed)
+    }
+
+    /**
+     * ExoPlayer báo tốc độ đổi (PlaybackService). Tốc độ do lõi tự đặt ([applySpeed]: nút trong app, nạp sách) đã lưu / báo đúng chỗ của nó. Controller ngoài (xe, đồng hồ, Android Auto) đổi thì
+     * tiếng đổi mà sách vẫn nhớ tốc độ cũ và giao diện còn hiện tốc độ cũ (soát a77 #9): lưu vào sách và báo "rateChanged" để giao diện cập nhật độc lập với đổi chương.
+     */
+    fun onRateChanged(speed: Float) {
+        if (speed == knownSpeed) return
+        knownSpeed = speed
+        if (bookId.isNotEmpty()) runCatching { Store.setRate(bookId, speed.toDouble()) }.onFailure { Log.w("ABookSave", "không lưu được tốc độ", it) }
+        emit("rateChanged")
+    }
+
+    fun onSeekSettled(reason: Int) {
+        if (reason == Player.DISCONTINUITY_REASON_SEEK || reason == Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT) saveIfParked()
+    }
+
+    /** Lưu chỗ vừa tua khi giọng đang dừng. [moved]: chỗ vừa nạp trùng chỗ đã lưu (nạp hàng đợi, đổi hồ sơ) thì không lưu - lưu lại là đóng dấu giờ mới lên chỗ cũ ([savedPlace]);
+     *  [saveNow] vẫn chặn lúc thay hàng đợi (`bookId` rỗng khi `adopt`), chữ chương chưa về, chỗ của cuốn khác. */
+    private fun saveIfParked() {
+        if (!isPlaying && moved()) saveNow()
     }
 
     fun onChapterChanged() {
@@ -716,13 +759,31 @@ object Playback {
         return saved.first != chapter.id || kotlin.math.abs(saved.second - positionMs) > 1000
     }
 
+    /** Lần lưu chỗ nghe gần nhất hỏng (bộ nhớ đầy, ghi/đổi tên lỗi): đang báo người nghe rồi, chưa báo lần nữa tới khi lưu được. */
+    private var saveFailing = false
+    private const val SAVE_FAILED = "Chưa lưu được chỗ bạn đang nghe - bộ nhớ trong máy có thể đã đầy. Bạn cứ nghe tiếp, ABook sẽ thử lưu lại sau ít giây."
+
+    /**
+     * Lưu chỗ nghe. Lỗi ghi (Store.progress: ghi file, sync, đổi tên) KHÔNG được thoát ra khỏi đây - các nơi gọi chạy ở luồng chính (nhịp 5 giây, sự kiện dừng/lỗi của ExoPlayer), ném là văng cả
+     * bộ phát (soát a77 #4). Hỏng thì chỗ đã lưu trước đó còn nguyên (ghi nguyên tử), ghi logcat, báo bạn MỘT lần ("saveFailed"); `savedPlace` không đổi nên lần lưu kế (nhịp sau) tự thử lại.
+     */
     fun saveNow() {
         val chapter = currentChapter ?: return
         if (bookId.isEmpty() || ReadAloud.unknownPlace() || foreignItem()) return
         val duration = durationMs().takeIf { it > 0 }?.div(1000.0) ?: chapter.duration
         // Chỗ nghe phải khớp chương: vượt quá độ dài chương là đồng hồ của thứ khác (cuốn trước) - không lưu, không đồng bộ đi (soát a68 lỗi 2).
         if (!PlacePolicy.fits(positionSeconds, duration)) return
-        Store.progress(bookId, chapter.id, positionSeconds, duration, ReadAloud.anchor())
+        try {
+            Store.progress(bookId, chapter.id, positionSeconds, duration, ReadAloud.anchor())
+        } catch (error: Exception) {
+            Log.w("ABookSave", "không lưu được chỗ nghe (chương ${chapter.id}, ${"%.1f".format(positionSeconds)} s)", error)
+            if (!saveFailing) {
+                saveFailing = true
+                emit("saveFailed")
+            }
+            return
+        }
+        saveFailing = false
         savedPlace = chapter.id to positionMs
     }
 

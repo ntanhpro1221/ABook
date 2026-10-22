@@ -45,6 +45,7 @@ import vn.abook.player.readaloud.ReadAloud
  */
 class PlaybackService : MediaLibraryService() {
     private var session: MediaLibrarySession? = null
+    private val sleepButtons = SleepTimer.buttonsListener { refreshButtons() }
 
     companion object {
         /**
@@ -83,6 +84,7 @@ class PlaybackService : MediaLibraryService() {
         super.onCreate()
         instance = this
         Playback.init(this)
+        Playback.addListener(sleepButtons)
         val player = ExoPlayer.Builder(this)
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_SPEECH).build(),
@@ -108,11 +110,15 @@ class PlaybackService : MediaLibraryService() {
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) = Playback.onMediaTransition(mediaItem)
 
+            override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) = Playback.onSeekSettled(reason)
+
             // Người nghe bấm phát / dừng bằng đường nào cũng được (thông báo, tai nghe, xe hơi): đọc to cần biết ở luồng nền để bỏ lần thử lại khi chẳng ai nghe.
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                ReadAloud.syncWants()
+                ReadAloud.onPlayWhenReadyChanged(playWhenReady, userRequested = reason == Player.PLAY_WHEN_READY_CHANGE_REASON_USER_REQUEST)
                 Playback.onWantsChanged()
             }
+
+            override fun onPlaybackParametersChanged(playbackParameters: androidx.media3.common.PlaybackParameters) = Playback.onRateChanged(playbackParameters.speed)
 
             override fun onPlaybackStateChanged(state: Int) {
                 if (state == Player.STATE_ENDED) Playback.onEnded()
@@ -226,10 +232,12 @@ class PlaybackService : MediaLibraryService() {
 
         // Phát/dừng từ thông báo, màn hình khoá, tai nghe khi đang đọc to đi qua lõi (ReadAloud.onPlay/onPause): lúc chờ đọc đoạn đầu hàng đợi còn rỗng,
         // sau lỗi đọc thì bấm phát là thử lại đúng đoạn hỏng.
-        override fun play() = if (ReadAloud.active) Playback.play() else super.play()
+        // "Người nghe bấm phát tiếp" CHỈ có một đường: [Playback.play] (tự lùi, chuẩn bị lại sau lỗi, hẹn giờ ngủ) - nút trong app, thông báo, tai nghe, xe đều qua đó, sách audio cũng vậy (soát a77 #8).
+        // Phục hồi tự động (hết đệm, focus trở lại) do ExoPlayer tự làm, không đi qua lớp này nên không bị lùi.
+        override fun play() = if (Playback.player != null) Playback.play() else super.play()
         override fun pause() = if (ReadAloud.active) Playback.pause() else super.pause()
         override fun setPlayWhenReady(playWhenReady: Boolean) =
-            if (ReadAloud.active) { if (playWhenReady) Playback.play() else Playback.pause() } else super.setPlayWhenReady(playWhenReady)
+            if (playWhenReady) play() else if (ReadAloud.active) Playback.pause() else super.setPlayWhenReady(false)
 
         // Cuốn có chương chữ do lõi tự nạp (Playback.load) rồi trả [READ_ALOUD] cho phiên media: hàng đợi ấy không bao giờ vào ExoPlayer.
         override fun setMediaItems(mediaItems: MutableList<MediaItem>) { if (!isReadAloud(mediaItems)) super.setMediaItems(mediaItems) }
@@ -428,6 +436,7 @@ class PlaybackService : MediaLibraryService() {
     }
 
     override fun onDestroy() {
+        Playback.removeListener(sleepButtons)
         Playback.saveNow()
         session?.run {
             player.release()

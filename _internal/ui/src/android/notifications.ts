@@ -1,7 +1,8 @@
 import { toast } from "sonner";
 import { EbookPlayer } from "./plugins";
 
-// Quyền hiện thông báo của Android 13+ (khay thông báo và màn khoá có nút tạm dừng / tua). Hộp xin quyền của hệ thống từng bật ngay lúc chọn giọng và
+// Quyền hiện thông báo của Android 13+. Nút tạm dừng / tua ở khay và màn khoá là thông báo của phiên media - Android miễn quyền này cho chúng (soát a77 #11);
+// quyền chỉ cần cho các thông báo khác (sách xong, việc cần duyệt, xuất MP3 xong). Hộp xin quyền của hệ thống từng bật ngay lúc chọn giọng và
 // chặn lần nghe đầu cho tới khi người nghe trả lời (soát điện thoại 03-10). Giờ: phát trước; một lần duy nhất sau khi đã có tiếng, nói vì sao rồi người nghe
 // bấm "Cho phép" mới tới hộp hệ thống. Từ chối / bỏ qua: Cài đặt › Nghe có một dòng và nút mở cài đặt thông báo của ABook.
 
@@ -32,7 +33,11 @@ export async function notificationState(api: Pick<NotificationApi, "notification
   }
 }
 
-export const NOTIFICATION_WHY = "Để có nút tạm dừng và tua ở khay thông báo và màn khoá, cho phép ABook hiện thông báo.";
+export const NOTIFICATION_WHY = "Để ABook báo khi sách xong, có việc cần duyệt hay xuất MP3 xong, cho phép ABook hiện thông báo.";
+
+/** Dòng ở Cài đặt › Nghe khi chưa có quyền: nói điều thật sự mất (thông báo khác), và rằng nút nghe vẫn dùng được. */
+export const NOTIFICATION_ROW_HINT =
+  "ABook chưa được phép hiện thông báo nên sẽ không báo khi sách xong, có việc cần duyệt hay xuất MP3 xong. Nút tạm dừng, tua ở màn khoá vẫn dùng được.";
 
 /** Nói vì sao rồi mời xin quyền, tối đa MỘT lần (mã thông báo "notification-access" nằm trong PRIORITY_TOASTS của listen/musicHint.ts: nhắc nhạc chờ nó) (nhớ lại, kể cả khi người nghe bỏ qua câu này). `notify` hiện câu + nút "Cho phép" (gọi `allow`).
  *  Trả true nếu đã mời. */

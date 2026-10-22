@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import type { EngineEvent, NativeEngine, NativeQueue, TrackInfo } from "@/listen/engine";
 import type { Bookmark, BookmarkSentence, ListenBook } from "@/listen/model";
 import type { MusicCredit } from "@/listen/musicBed";
@@ -45,8 +46,11 @@ export class NativeAudioEngine implements NativeEngine {
     if (!previous || previous.duration !== next.duration) this.fire("duration");
     if (!previous || JSON.stringify(previous.sleep) !== JSON.stringify(next.sleep)) this.fire("sleep");
     if (!previous || previous.buffering !== next.buffering) this.fire(next.buffering ? "waiting" : "playing");
+    if (next.kind === "rateChanged") this.fire("rate");
     if (next.kind === "ended") this.fire("ended");
     if (next.kind === "error") this.fire("error");
+    // Lưu chỗ nghe hỏng (bộ nhớ đầy): nghe vẫn tiếp, lõi tự thử lại; báo bạn một lần (lõi chỉ gửi sự kiện này khi bắt đầu hỏng).
+    if (next.kind === "saveFailed" && next.saveError) toast.error("Chưa lưu được chỗ đang nghe", { description: next.saveError });
     this.fire("time");
   }
 

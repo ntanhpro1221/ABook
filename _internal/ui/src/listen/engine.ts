@@ -39,7 +39,9 @@ export type EngineEvent =
   /** chỉ bộ máy native: tên sách / tên chương đang phát đổi (sửa sách), vẫn cùng cuốn, cùng chương. */
   | "metadata"
   /** chỉ bộ máy native: hẹn giờ ngủ đổi (đặt, gia hạn, lắc máy, tự tắt). */
-  | "sleep";
+  | "sleep"
+  /** chỉ bộ máy native: tốc độ đổi từ controller ngoài (xe, đồng hồ, Android Auto), lõi đã lưu vào sách. Nút tốc độ trong app không báo ngược. */
+  | "rate";
 
 export interface AudioEngine {
   load(track: TrackInfo, startAt: number, autoplay: boolean): void;

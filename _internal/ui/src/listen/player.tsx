@@ -1428,6 +1428,10 @@ export function PlayerProvider({
         refs.current.track = next;
         setTrack(next);
       }),
+      // Tốc độ đổi từ controller ngoài: màn hình theo ngay, không đợi đổi chương (lõi đã lưu vào sách).
+      engine.on("rate", () => {
+        if (native && native.rate > 0 && Math.abs(native.rate - refs.current.rate) > 1e-6) applyRate(native.rate, false);
+      }),
       engine.on("sleep", () => {
         if (!native) return;
         const previousKind = refs.current.sleep.kind;

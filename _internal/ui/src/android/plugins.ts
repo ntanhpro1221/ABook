@@ -39,6 +39,8 @@ export interface NativeState {
   sleep: NativeSleep;
   /** Lỗi phát gần nhất (Playback.onError): mất kết nối khi nghe thẳng, hay file hỏng. Rỗng khi ổn. */
   error?: string;
+  /** Lõi chưa lưu được chỗ đang nghe (bộ nhớ đầy...): lời báo cho người nghe (Playback.saveNow); rỗng khi ổn. Sự kiện `kind: "saveFailed"` mang nó MỘT lần. */
+  saveError?: string;
   /** Ghi công bài nhạc nền đang kêu (MusicBed.credit); null khi im lặng. */
   musicCredit?: MusicCredit | null;
   /** Bài nhạc nền của chương đang nghe không phát được (MusicBed.brokenHere): đoạn ấy im lặng. */

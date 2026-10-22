@@ -39,6 +39,18 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bài nhạc nền bạn ghim thay một bài cũ không còn thừa hưởng chỗ kết ("đuôi") của bài cũ nên không bị cắt hay dừng giữa chừng trên máy tính và điện thoại.
 - Nhạc nền trên điện thoại không còn vọt lên to giữa chừng khi bài tải chậm; nhạc chọn theo cảnh trên điện thoại cũng tính độ phân tán riêng của từng bài như máy tính, nên chọn bài giống nhau ở cả hai máy.
 - Khi bạn đóng sách trên điện thoại, nhạc nền được nhả hẳn thay vì giữ bài đang mở tới lần mở sách sau.
+- Khi bạn tạm dừng hay rút tai nghe lúc nhạc nền còn đang tải bài, nhạc không còn tự phát lại riêng sau khi giọng đã dừng.
+- Khi bạn bấm tạm dừng lúc app đang lấy chữ của chương đọc to, hay rút tai nghe, sách không còn tự đọc tiếp khi chữ về; chỉ mất tiếng tạm thời (có cuộc gọi, báo thức) mới tự đọc lại.
+- Khi bạn tua lúc đang tạm dừng rồi hệ thống đóng app, mở lại vẫn đúng chỗ vừa tua.
+- Khi điện thoại hết bộ nhớ lúc lưu chỗ nghe, app không còn dừng đột ngột: chỗ đã lưu cũ được giữ, bạn được báo một lần và app thử lưu lại ở lần sau.
+- Đổi giọng đọc không còn bật lại "Tự lùi" mà bạn đã tắt.
+- Nút Phát trên tai nghe cũng tự lùi vài giây như nút Phát trong app, đúng theo lựa chọn của bạn.
+- Khi bạn đổi tốc độ nghe từ thông báo, tai nghe hay xe, thanh tốc độ trong app đổi theo.
+- Nút "Nghe thêm" ở thông báo hẹn giờ ngủ chỉ hiện khi hẹn giờ còn chạy, và biến mất ngay khi bạn tắt hẹn giờ.
+- Nút Phát của tai nghe và xe vẫn nghe tiếp đúng cuốn gần nhất sau khi app bị dọn khỏi bộ nhớ hay máy khởi động lại.
+- Nút tai nghe, tự lùi, lắc hay úp máy, lịch ngủ, số phút nghe thêm và dừng an toàn giữ lựa chọn của bạn khi app khởi động từ tai nghe, widget hay xe; hẹn giờ ngủ đang chạy vẫn tính đến giờ đã hẹn và được khôi phục nếu chưa hết.
+- Lời mời cho phép thông báo nói đúng điều bạn nhận được (báo khi sách xong, có việc cần duyệt, xuất MP3 xong); nút tạm dừng, tua ở màn khoá vẫn dùng được khi bạn không cho phép.
+- Đổi sách hay giọng đọc trên máy lúc giọng VieNeu hay Supertonic đang đọc dở không còn làm app đứng chờ.
 
 ## [0.4.122] - 2026-10-22
 
