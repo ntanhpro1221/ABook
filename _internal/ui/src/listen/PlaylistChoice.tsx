@@ -103,6 +103,7 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
         void client.invalidateQueries({ queryKey: ["music", "playlists"] }); // số bài của "Nhạc của tôi"
         void client.invalidateQueries({ queryKey: ["music-alternatives"] });
         const notice = addMusicOutcome(result);
+        if (notice.select && chosen === MINE_PLAYLIST) window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: bookId }));
         if (notice.select && chosen !== MINE_PLAYLIST) choose.mutate({ playlist: MINE_PLAYLIST, notice });
         else toast[notice.kind](notice.title, { id: ADD_TOAST, description: notice.description });
       } else {

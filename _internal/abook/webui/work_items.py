@@ -1028,39 +1028,6 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             **fix,
         })
 
-    # 0c2. Ai nói câu này - theo ĐỘ TIN logprob của chính model (speaker_logprobs.py, cờ ABOOK_SPEAKER_LOGPROBS): câu mà token
-    #      đầu của tên người nói có xác suất thấp. Đo sớm trên 3 chương: AUROC ~0,77, duyệt 10% câu p_first thấp nhất thì 63% câu
-    #      duyệt là câu sai. Chỉ hỏi câu mà nhãn hiện tại CÒN là nhãn model sinh (khác = dây chuyền hay người nghe đã đổi, số đo
-    #      không còn nói về nhãn ấy) và câu chưa có thẻ nào ở trên (một câu một thẻ). Không có số đo = không thẻ.
-    confidences = speaker_logprobs.read_confidences(project_root)
-    if confidences:
-        carded = {str(line["stableId"]) for item in items for line in item.get("lines", [])}
-        unsure, budget = unsure_speaker_lines(spoken, confidences, carded)
-        for row, found in unsure:
-            if budget <= 0:
-                break
-            stable_id = str(row["stable_id"])
-            current = str(row["speaker"])
-            choices = _cast_choices(spoken, {int(row["chapter_id"])}, {current.casefold()}, speaker_label)
-            choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
-            fix = _speaker_fix([row], choices, current, speaker_wishes, speaker_label)
-            if fix is None:
-                continue
-            budget -= 1
-            items.append({
-                "kind": "speaker",
-                "key": f"speaker:{stable_id}",
-                "title": f"Ai nói câu này - {speaker_label(current)}?",
-                "problem": f"Máy gán cho {speaker_label(current)} nhưng chỉ chắc khoảng {round(float(found['p_first']) * 100)}%.",
-                "suggested": False,  # không có ứng viên nào được đề xuất: nút đầu không được tô như "máy đề xuất"
-                "affected": 1,
-                "doubt": round(1 - float(found["p_first"]), 3),
-                "options": list(dict.fromkeys([speaker_label(current)] + [choice["label"] for choice in choices])),
-                "current": speaker_label(current),
-                "examples": [_example(row, names, speaker_label, audio)],
-                **fix,
-            })
-
     # 0d. Người kể của ĐOẠN khác người kể "tôi" của sách (narrator_sections.py, ngưỡng đã đo ở b14err/P_RULE.md): model vẫn được
     #     dặn "người kể là X" nên gán thừa lời người khác cho X. Đề xuất có ngay sau khi chia câu, người dùng nhận lúc nào cũng
     #     được; lô đã phân tích rồi thì lựa chọn chỉ áp khi làm lại sách - thẻ nói rõ điều đó. Chưa trả lời = không áp.
@@ -1277,6 +1244,51 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
                 # đang tính "nhắc nhở Heit") - xen kẽ sẽ sai cả ba.
                 "allLines": [{"stableId": str(row["stable_id"]), "textSha256": str(row["text_sha256"] or "")}
                              for row in lines],
+            })
+
+    # 0c2. Ai nói câu này - theo ĐỘ TIN logprob của chính model (speaker_logprobs.py, cờ ABOOK_SPEAKER_LOGPROBS): câu mà token
+    #      đầu của tên người nói có xác suất thấp. Đo sớm trên 3 chương: AUROC ~0,77, duyệt 10% câu p_first thấp nhất thì 63% câu
+    #      duyệt là câu sai. Chỉ hỏi câu mà nhãn hiện tại CÒN là nhãn model sinh (khác = dây chuyền hay người nghe đã đổi, số đo
+    #      không còn nói về nhãn ấy). Chạy SAU các thẻ "ai nói câu này" khác (xưng hô, hai người chung tên, gọi tên chính mình, đối
+    #      đáp liền nhau) để gom tín hiệu theo câu TRƯỚC khi cấp ngân sách: câu đã có thẻ thì không ăn suất logprob, và thẻ ấy ghi
+    #      thêm lý do "máy cũng chỉ chắc N%" (một câu một thẻ, thẻ mang các lý do). Không có số đo = không thẻ.
+    confidences = speaker_logprobs.read_confidences(project_root)
+    if confidences:
+        every_unsure, budget = unsure_speaker_lines(spoken, confidences, set())
+        weak = {str(row["stable_id"]): found for row, found in every_unsure}
+        carded = {str(line["stableId"]) for item in items for line in item.get("lines", [])}
+        for item in items:
+            if item["kind"] not in ("speaker", "vocative", "turn"):
+                continue
+            percents = [round(float(weak[line["stableId"]]["p_first"]) * 100)
+                        for line in item.get("lines", []) if line["stableId"] in weak]
+            if percents:
+                item["problem"] += (f" Máy cũng chỉ chắc khoảng {percents[0]}% người nói câu này." if len(percents) == 1
+                                    else f" Máy cũng kém chắc người nói ở {len(percents)} câu trong số này.")
+        unsure = [(row, found) for row, found in every_unsure if str(row["stable_id"]) not in carded]
+        for row, found in unsure:
+            if budget <= 0:
+                break
+            stable_id = str(row["stable_id"])
+            current = str(row["speaker"])
+            choices = _cast_choices(spoken, {int(row["chapter_id"])}, {current.casefold()}, speaker_label)
+            choices += [{"label": "Người kể", "value": NARRATOR}, {"label": "Vai phụ không tên", "value": UNNAMED}]
+            fix = _speaker_fix([row], choices, current, speaker_wishes, speaker_label)
+            if fix is None:
+                continue
+            budget -= 1
+            items.append({
+                "kind": "speaker",
+                "key": f"speaker:{stable_id}",
+                "title": f"Ai nói câu này - {speaker_label(current)}?",
+                "problem": f"Máy gán cho {speaker_label(current)} nhưng chỉ chắc khoảng {round(float(found['p_first']) * 100)}%.",
+                "suggested": False,  # không có ứng viên nào được đề xuất: nút đầu không được tô như "máy đề xuất"
+                "affected": 1,
+                "doubt": round(1 - float(found["p_first"]), 3),
+                "options": list(dict.fromkeys([speaker_label(current)] + [choice["label"] for choice in choices])),
+                "current": speaker_label(current),
+                "examples": [_example(row, names, speaker_label, audio)],
+                **fix,
             })
 
     # 3. Nghi là MỘT người mang hai tên (bí danh): tên ngắn nằm trọn ở đầu hay cuối tên dài, không khác giới. Tên nào dài

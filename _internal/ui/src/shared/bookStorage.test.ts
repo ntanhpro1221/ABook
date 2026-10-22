@@ -4,6 +4,8 @@ import { BOOK_STORAGE, moveBookStorage } from "./bookStorage";
 function memoryStorage(entries: Record<string, string>) {
   const store = new Map(Object.entries(entries));
   (globalThis as unknown as { localStorage: Storage }).localStorage = {
+    get length() { return store.size; },
+    key: (index: number) => [...store.keys()][index] ?? null,
     getItem: (key: string) => store.get(key) ?? null,
     setItem: (key: string, value: string) => void store.set(key, value),
     removeItem: (key: string) => void store.delete(key),
@@ -16,6 +18,19 @@ afterEach(() => {
 });
 
 describe("những gì máy này nhớ theo mã sách", () => {
+  it("chỗ đọc của mọi hồ sơ đi theo cuốn khi đổi mã", () => {
+    const store = memoryStorage({
+      [`${BOOK_STORAGE.reading}old#r-a`]: "a",
+      [`${BOOK_STORAGE.reading}old#r-b`]: "b",
+      [`${BOOK_STORAGE.reading}other#r-c`]: "c",
+    });
+    moveBookStorage("old", "new");
+    expect(Object.fromEntries(store)).toEqual({
+      [`${BOOK_STORAGE.reading}new#r-a`]: "a",
+      [`${BOOK_STORAGE.reading}new#r-b`]: "b",
+      [`${BOOK_STORAGE.reading}other#r-c`]: "c",
+    });
+  });
   it("cuốn đổi mã mang theo mọi khoá của nó, khoá cũ bỏ, cuốn khác không đụng", () => {
     const store = memoryStorage({
       [`${BOOK_STORAGE.readAloudVoice}old`]: "edge:vi-VN-NamMinhNeural",

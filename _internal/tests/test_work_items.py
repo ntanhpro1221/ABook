@@ -667,6 +667,11 @@ def test_the_models_own_doubt_asks_only_the_least_sure_fifth_of_the_measured_lin
     from abook.listener_overrides import NARRATOR, UNNAMED
 
     project = make_book(tmp_path)
+    # "b" không được gọi tên người nói: đã là thẻ "gọi tên chính mình" thì không ăn suất logprob (a90 T1, test_a90_one_card_per_line).
+    database = sqlite3.connect(project / "project.sqlite3")
+    database.execute("UPDATE segments SET text='“Các cậu đi đâu vậy?”' WHERE stable_id='b'")
+    database.commit()
+    database.close()
     rows = [lp("b", "HEIDI", 0.2), lp("c", "LUCIEN", 0.5), lp("d", "ÁO CHOÀNG ĐEN", 0.9), lp("e", "ÁO CHOÀNG ĐEN", 0.95),
             lp("f", "RHINE", 0.99), lp("g", "NPC_LOCAL::c00001::r1::người gác", 0.7)]
     write_logprobs(project, rows)

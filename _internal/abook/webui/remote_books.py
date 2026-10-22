@@ -173,12 +173,16 @@ class Computers:
             raise RemoteError("Máy kia trả lời không đáng tin (chứng chỉ không khớp vân tay nó báo) - chưa ghép, thử lại; vẫn lỗi thì kiểm tra mạng")
         with self._lock:
             data = self._read()
-            # Ghép lại cùng một máy (cùng địa chỉ) thì thay chỗ cũ: sách đã tải và chỗ nghe giữ nguyên.
+            # Ghép lại cùng một máy thì thay chỗ cũ: sách đã tải và chỗ nghe giữ nguyên. Máy được nhận ra bằng vân tay chứng chỉ
+            # (đổi IP <-> tên .local <-> Tailscale vẫn là máy ấy: địa chỉ/mã mới ghi đè vào dòng cũ), rồi mới đến cùng địa chỉ.
             # Máy đã từng thôi ghép (cùng vân tay chứng chỉ, dù đổi địa chỉ) lấy lại mã cũ: mã sách ở máy này theo mã ấy, nên chỗ
             # nghe và dấu trang của các cuốn ấy hiện lại, không mất khi ghép lại.
             former = data.get("former", {}).pop(seen, None)
-            key = next((existing for existing, entry in data["computers"].items()
-                        if entry.get("host") == host and int(entry.get("port") or 0) == port), None) or former or secrets.token_hex(6)
+            key = (next((existing for existing, entry in data["computers"].items()
+                         if str(entry.get("fingerprint") or "").lower() == seen), None)
+                   or next((existing for existing, entry in data["computers"].items()
+                            if entry.get("host") == host and int(entry.get("port") or 0) == port), None)
+                   or former or secrets.token_hex(6))
             entry = {"name": name, "host": host, "port": port, "token": token, "fingerprint": seen,
                      "pairedAt": time.time(), "lastSeen": time.time(), "error": ""}
             # Đường Bluetooth dự phòng: máy kia báo trong lời đáp ghép (sync.py `routes`); không báo thì giữ cái đã biết.
@@ -859,6 +863,11 @@ def _refresh_computer(library_root: Path, computers: Computers, computer: str, r
         for book in listed:
             _refresh_book(entry, computer, folder, book, built.get(book))
             books += 1
+        # Làm mới THÀNH CÔNG: cuốn chưa tải gì về mà máy kia không còn thì bỏ (vỏ nghe thẳng); cuốn đã tải / có phần sửa giữ nguyên.
+        if isinstance(library.get("books"), list):
+            gone = set(built) - set(listed)
+            for book in gone:
+                _drop_if_empty(built[book])
         # `kind`: máy tính nhận phần sửa của cuốn (POST .../edits, như từ điện thoại); điện thoại chia sẻ thư viện thì không.
         reported = {} if str(entry["host"]).startswith("bt:") else {"bt": _routes_bluetooth(library)}  # máy báo đường Bluetooth của nó
         reported["btName"] = _bluetooth_name(library)
@@ -869,6 +878,17 @@ def _refresh_computer(library_root: Path, computers: Computers, computer: str, r
     except RemoteError as error:
         computers.note(computer, error=str(error))
         report[computer] = {"error": str(error)}
+
+
+def _drop_if_empty(package: Path) -> None:
+    """Xoá cuốn ảo chỉ có sổ + bìa (chưa tải chương, chữ đọc theo, nhạc hay lớp sửa nào về); có gì khác thì giữ."""
+    keep = (MANIFEST, "cover.jpg", "cover.json")
+    try:
+        if any(file.is_file() and file.relative_to(package).as_posix() not in keep for file in package.rglob("*")):
+            return
+        shutil.rmtree(package)
+    except OSError:
+        pass
 
 
 def _manifests(folder: Path, suffix: str = "") -> list[tuple[Path, dict[str, Any]]]:
@@ -1040,6 +1060,8 @@ def fetch(package: Path, relative: str, manifest: dict[str, Any], *, quiet: bool
     try:
         files = (manifest.get("package") or {}).get("files") or {}
         item = files.get(relative) if isinstance(files, dict) else None
+        if not isinstance(item, dict):
+            item = next((c for c in manifest.get("chapters", []) if c.get("file") == relative), None)
         size = item.get("size") if isinstance(item, dict) else None
         size = size if type(size) is int and size >= 0 else None
         return _save(Path(package), relative, manifest, size=size)
@@ -1134,7 +1156,7 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
     phần dở) - chương lớn trên Wi-Fi yếu không phải tải lại từ đầu, và file nguồn đã đổi (máy kia dựng lại chương) thì tải lại từ đầu thay
     vì ghép đầu cũ với đuôi mới; máy kia không hiểu `Range` thì cũng tải lại từ đầu. `progress(số byte vừa nhận)` (âm: bỏ phần dở đã tính),
     `cancelled()`: cho việc tải cả cuốn. Lỗi: `RemoteError` (hay `Cancelled`); máy kia ngừng trả lời giữa chừng thì nói tên máy ấy (`_cut`)."""
-    from .peer_paths import safe_relative
+    from .peer_paths import canonical, safe_relative
     if not safe_relative(relative):
         raise RemoteError("Tên file lạ trong sách")
     from .peer_limits import DISK_MARGIN, file_budget
@@ -1143,8 +1165,8 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
     except ValueError as error:
         raise RemoteError(str(error), status=413) from error
     entry, book_key = _entry_of(book)
-    target = (package / relative).resolve()
-    if not target.is_relative_to(package.resolve()):
+    target = canonical(package / relative)
+    if not target.is_relative_to(canonical(package)):
         raise RemoteError("Tên file lạ trong sách")
     with _RECORD_LOCK:
         lock = _FILE_LOCKS.setdefault(str(target), threading.Lock())
@@ -1219,6 +1241,9 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
                 break
             if size is not None and temporary.stat().st_size != size:
                 raise RemoteError("File tải về không đủ - thử lại")
+            from .audio_revision import expected, matches
+            if not matches(temporary, size, expected(book, relative)):
+                raise RemoteError("Bản thu đã đổi trong lúc tải; bạn hãy tải lại.")
             _replace_with_retry(temporary, target)
         finally:
             if not keep:
@@ -1275,7 +1300,10 @@ def missing(package: Path, book: dict[str, Any]) -> list[tuple[str, int | None]]
         except OSError:
             out.append((relative, size))
             continue
-        if (found != size) if size is not None else record["files"].get(relative, ...) != version:
+        from .audio_revision import expected, matches
+        digest = expected(book, relative)
+        stale = not matches(package / relative, size, digest) if digest else ((found != size) if size is not None else record["files"].get(relative, ...) != version)
+        if stale:
             out.append((relative, size))
     return out
 
@@ -1455,6 +1483,30 @@ def pending_changes(package: Path, edits: dict[str, Any] | None = None) -> int:
     return book_edits.count(book_edits.unmarked(edits, marks)) + book_edits.count_removed(book_edits.removed_marks(edits, marks))
 
 
+def sent_wish_marks(package: Path, section: str, keys: list[str], requested_at: float | None = None) -> dict[str, float]:
+    """{khoá: lần bấm} của các thao tác ĐÃ GỬI về máy giữ sách mà máy này còn giữ biên nhận (sổ `wishes` của `book_edits.sent_marks`).
+    `requested_at` cho trước: chỉ những khoá đúng lần bấm ấy."""
+    receipts = (_sent_marks(package).get("wishes") or {}).get(section) or {}
+    return {key: float(receipts[key]) for key in dict.fromkeys(keys)
+            if key in receipts and (requested_at is None or abs(float(receipts[key]) - requested_at) < 1e-6)}
+
+
+def retract_wish(package: Path, section: str, keys: list[str], requested_at: float | None = None) -> list[str]:
+    """Người nghe hoàn tác một thao tác đã gửi đi (và vì thế đã gỡ khỏi lớp sửa): đổi biên nhận của nó thành lời nhờ máy giữ sách rút đúng
+    thao tác ấy (`book_edits.retract_sent`) - đi theo lần gửi kế. `requested_at` trống: lần bấm đang ghi trong biên nhận. Trả các khoá
+    đã nhận; rỗng = không có biên nhận khớp (đã bị lần bấm sau thay, hay chưa từng gửi)."""
+    with _SEND_LOCK:
+        marks = _sent_marks(package)
+        done: list[str] = []
+        here = (book_edits.load(package).get("wishes") or {}).get(section) or {}  # lần bấm sau của chính khoá này còn ở đây: nó mới là cái đang chờ, không rút nhầm
+        for key, at in sent_wish_marks(package, section, [key for key in keys if key not in here], requested_at).items():
+            marks, took = book_edits.retract_sent(marks, section, [key], at)
+            done.extend(took)
+        if done:
+            _remember_send(package, {**(_last_sent(package) or {}), "kept": marks})
+        return done
+
+
 def _remember_send(package: Path, state: dict[str, Any]) -> None:
     if "kept" not in state and _sent_marks(package):
         state = {**state, "kept": _sent_marks(package)}  # lần gửi lỗi không làm quên cái đã gửi trước đó
@@ -1521,7 +1573,7 @@ def send_edits(package: Path) -> dict[str, Any]:
         _remember_send(package, {
             "state": "sent", "at": time.time(), "fetched": fetched,
             "kept": book_edits.sent_marks(edits, book_edits.forget_marks(marks, removed)),
-            **{key: int(reply.get(key) or 0) for key in ("applied", "skipped", "requests", "waiting", "studio", "skippedWishes")},
+            **{key: int(reply.get(key) or 0) for key in ("applied", "skipped", "requests", "waiting", "studio", "skippedWishes", "withdrawn")},
             "conflicts": [sender_label(item, entry["name"]) for item in reply.get("conflicts") or [] if isinstance(item, dict) and item.get("label")],
         })
         return edits_state(package)

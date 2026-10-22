@@ -597,6 +597,7 @@ object LibraryServer {
             val chapters = availableChapters(id, manifest)
             if (chapters == 0) continue
             val entry = JSONObject().put("id", id).put("title", manifest.optString("title"))
+                .put("audioVersion", served(id, manifest).getString("audioVersion"))
                 .put("narrator", manifest.opt("narrator") ?: JSONObject.NULL)
                 .put("duration", manifest.optDouble("duration", 0.0))
                 .put("chaptersTotal", manifest.optInt("chaptersTotal", chapters))
@@ -632,13 +633,21 @@ object LibraryServer {
         // Bìa người nghe đặt (edits/cover.jpg) đi ra dưới tên bìa thường - máy kia chỉ biết một cover.jpg.
         copy.optJSONObject("cover")?.put("file", "cover.jpg")
         val chapters = copy.optJSONArray("chapters") ?: JSONArray()
+        val present = (0 until chapters.length()).map { index ->
+            val chapter = chapters.getJSONObject(index)
+            chapter.optBoolean("available") && runCatching { Store.file(id, chapter.getString("file")).isFile }.getOrDefault(false)
+        }
+        // Một lượt cho cả cuốn: file đã nhớ (cỡ + mtime khớp) không bị đọc lại, bản ghi mới ghi một lần.
+        val digests = Store.audioSha256s((0 until chapters.length()).filter { present[it] }.map { Store.file(id, chapters.getJSONObject(it).getString("file")) })
+        var next = 0
         for (index in 0 until chapters.length()) {
             val chapter = chapters.getJSONObject(index)
-            val present = chapter.optBoolean("available") &&
-                runCatching { Store.file(id, chapter.getString("file")).isFile }.getOrDefault(false)
-            if (!present) chapter.put("available", false).put("file", JSONObject.NULL).put("size", 0)
+            if (!present[index]) chapter.put("available", false).put("file", JSONObject.NULL).put("size", 0)
+            chapter.put("sha256", if (present[index]) digests[next++] else "")
         }
         copy.put("chaptersAvailable", availableChapters(id, manifest))
+        copy.put("audioVersion", AudioRevision.version(chapters))
+        copy.put("version", "${copy.optString("version")}:${copy.getString("audioVersion")}")
         // Nhạc nền như người nghe nghe ở đây (đã qua lớp sửa: tắt, mức, im lặng, bài họ ghim), cùng hình `music` của file sách /
         // gói máy tính (music_plan.package): chỉ mốc có file bài thật, và chỉ các bài ấy.
         val music = playableMusic(id, copy.optJSONObject("music"))

@@ -12,6 +12,58 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Khi bạn bỏ một thay đổi đang chờ, máy kiểm lại ngay trước lúc áp để không làm theo hoặc báo “đã áp” một yêu cầu bạn vừa rút.
 - Khi bạn chọn nhiều câu cần thu lại hoặc nhận nhóm yêu cầu từ điện thoại, Studio lưu cả nhóm nhanh hơn và giữ đúng yêu cầu khi bạn thử lại sau lỗi.
 - Khi bạn thêm cách đọc bằng tên có dấu tổ hợp hoặc ký tự vô hình, Studio khớp đúng từ trong sách để thu lại các câu liên quan.
+- Hộp “Đổi giọng” chọn và nghe thử được mọi giọng ZeroTTS và Supertonic (trước đây bấm vào là báo lỗi, nút nghe mẫu không phát). Giọng lạ gửi tới sách mở từ file `.abook` bị từ chối ngay kèm lý do, không còn được ghi nhận rồi lặng lẽ bỏ khi áp.
+- Tên giọng ZeroTTS và Supertonic hiện đúng tên (“Bảo Trang”, “Supertonic F1”) ở tab Nhân vật, dòng “Chờ áp dụng”, hộp “Áp dụng thay đổi” và hộp Gộp, thay vì mã nội bộ (“baotrang”, “F1”).
+- “Gỡ” một giọng đã tải (Supertonic) giờ hỏi trước: nói bao nhiêu cuốn trong thư viện đang dùng giọng ấy, tên vài cuốn, và bao nhiêu câu chưa thu sẽ không đọc được tới khi bạn tải lại hay đổi giọng. Bạn vẫn quyết gỡ hay giữ.
+
+### Đọc và nghe
+
+- Chương vừa thu xong vào ngay hàng đợi; kịch bản làm mới khi bản thu hoặc mốc chữ đổi, giữ chỗ bạn đang nghe.
+- Đổi gợi ý bỏ dòng khi đang nghe giữ chữ và tiếng khớp nhau đến lần nạp chương sau.
+- “Tìm đúng câu” trên thẻ buổi sáng hiển thị đủ khoảng đã nghe qua nhiều chương và mở đúng chương bạn chọn.
+- Chỗ đọc của bạn được lưu theo hồ sơ và đồng bộ giữa máy tính với điện thoại.
+- Rời màn đọc hoặc ẩn app vẫn giữ ngay vị trí bạn vừa cuộn tới.
+- Chỗ đọc mới hơn được ưu tiên; app báo và thử lại nếu chưa lưu được vào hồ sơ.
+- Dấu trang và chỗ đọc tìm lại đúng đoạn sau khi bạn chọn bỏ dòng ghi công.
+- Thêm hoặc xoá Nhạc của tôi cập nhật ngay hàng nhạc nền đang dùng.
+- Các nút cỡ chữ có nhãn số rõ ràng cho trình đọc màn hình.
+
+## [0.4.126] - 2026-10-23
+
+### Đồng bộ và xuất
+
+- Sách bạn đã tải trên điện thoại nhận được bản thu sửa, kể cả khi file mới cùng dung lượng; chỉ chương đổi cần tải lại. Nhập lại file `.abook` cập nhật bản thu và giữ chỉnh sửa, chỗ nghe của bạn; file cũ hơn sẽ hỏi trước khi thay.
+- Sau khi bạn sửa và thu lại, mục Xuất nhắc những bản MP3, M4B hay `.abook` đã cũ để bạn thay bản đã chép hoặc gửi. Bạn có thể chỉ xuất lại các chương MP3 đã đổi; M4B cần dựng lại cả file.
+
+### Liên kết hai máy
+
+- Thư viện lớn (hàng nghìn chương) mở nhanh ở máy kia: app nhớ dấu của từng file âm thanh qua cả lần khởi động lại, không còn đọc lại cả thư viện mỗi lần điện thoại hay máy tính khác làm mới danh sách.
+- Ghép lại cùng một máy sau khi đổi mạng (IP, tên `.local`, Tailscale) không còn tạo thêm một “máy khác” và mỗi cuốn hai lần: máy được nhận ra, chỗ nghe và sách đã tải giữ nguyên.
+- Cuốn máy kia đã xoá hoặc bỏ khỏi kệ biến mất khỏi “Trên máy khác” nếu bạn chưa tải gì của nó; cuốn đã tải thì giữ.
+- Một cuốn bị lỗi trên máy kia không còn làm cả thư viện của máy ấy “không trả lời”: cuốn hỏng bị bỏ qua, các cuốn còn lại vẫn hiện.
+- Nghe thẳng một cuốn đang được làm: khi máy tính thêm chương mới, chữ “Đọc theo” của các chương bạn đã nghe được giữ lại, chỉ chương nào được thu lại mới tải lại.
+
+### Sửa lỗi
+
+- Câu mà máy nghe lại không kiểm được (quá ngắn, hay máy nghe ra một câu không thể có thật) giờ hiện ở nhóm “Chưa kiểm được” ngay trong “Cần nghe lại”, kèm lời nhờ bạn nghe bằng tai, và không còn hiện một đoạn “máy nghe được” bịa ra.
+- Một câu chỉ còn một thẻ trong “Việc cần bạn”: khi máy vừa nghi người nói của câu ấy vừa nghi nó nói với chính mình, các lý do được gộp vào cùng một thẻ thay vì hiện hai thẻ cho cùng một câu.
+- Hoàn tác một lựa chọn sau khi nó đã được gửi sang máy giữ sách (điện thoại hay máy tính khác tự gửi sau vài giây) không còn báo “đã được thay bằng một lựa chọn sau”: máy bạn nhờ máy giữ sách rút đúng lựa chọn ấy, và thông báo nói thật điều đó - nếu máy ấy đã đưa vào sách rồi thì bạn được báo là cần chọn lại ở máy đó.
+- “Việc cần duyệt” và “Cần nghe lại” tự làm mới (mỗi 15 giây) khi sách đang chạy, cả con số trên nhãn tab: việc mới hiện ra mà không phải tải lại trang, và chỗ bạn đang đứng không bị xô.
+- Thêm hay bớt file nguồn rồi bấm tạo ngay khi máy còn đang đọc lại nguồn không còn tạo ra cuốn thiếu chương vừa chọn: nút tạo hiện “Đang đọc nguồn…” và chờ máy đọc xong, trong lúc đó bạn vẫn chỉnh được các thiết lập khác.
+- Đóng ABook khi đang cài Studio giờ dừng hẳn việc cài (không còn để tiến trình cài chạy ngầm không ai trông). Lần mở sau, nếu còn một lượt cài cũ chạy ngầm hay một cửa sổ ABook khác đang cài, bạn được báo rõ và chọn chờ hoặc “Dừng lượt cũ” thay vì cài chồng lên nhau.
+- Cài Studio bị ngắt giữa lúc tải Whisper (mất mạng, bấm Dừng) thì “Cài tiếp” tải nối phần đã có, không còn tải lại cả file từ đầu.
+- Gửi chương từ điện thoại hay trình duyệt có nút “Huỷ gửi”; rời trang cũng dừng gửi. Các file đã gửi được giữ lại và máy nói rõ đã gửi bao nhiêu trên tổng số.
+- Xem trước nguồn đọc đúng file TXT lưu bằng Unicode (UTF-16) hay bảng mã cũ CP1258: tên dòng đầu, số chữ, số ký tự và dòng ghi công không còn ra chữ rác hay sai số.
+- Thời gian làm sách ghi rõ là số tham khảo đo trên một máy khác; máy hay bộ phân tích khác thì chỉ cho khoảng rộng, không còn nhãn “Trên máy này” cho số không phải đo trên máy bạn.
+
+### Nhạc nền
+
+- Điện thoại: thêm tuỳ chọn thử nghiệm (mặc định tắt) cho nhạc nền lặp liền mạch hơn: chỗ nhạc quay lại đầu đoạn được nối chính xác từng mẫu thay vì mở thêm một trình phát; nhạc vẫn vào ngay như thường, chỗ nào chưa nối kịp thì tự dùng cách cũ.
+
+## [0.4.125] - 2026-10-22
+
+### Sửa lỗi
+
 - Chấm cả nhóm câu “Cần thu lại” nhanh hơn nhiều với sách lớn (trước đây mỗi câu đọc lại cả sổ), và mở danh sách “Cần nghe lại” không còn âm thầm ghi vào sổ chấm.
 - Mở file dự án của cùng một cuốn từ máy khác, hay áp từ điển cách đọc dùng chung, không còn có thể đè lên chỗ bạn đang sửa; việc bạn đã rút (đã huỷ “Thu lại”, đã hoàn tác một sửa) không sống lại khi gộp với bản của máy khác.
 - Bảng “Cách đọc câu này”: đổi lời kể thành lời thoại thì chọn người nói bằng đủ cách như “Ai nói câu này” (tìm, người của chương, người khác, “Người mới…”); sửa cách đọc một câu có nút “Hoàn tác” như các lựa chọn khác, trên máy tính lẫn điện thoại.
@@ -29,6 +81,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Hộp Dừng giữa lúc phân tích nói đúng: phần đã phân tích được giữ nguyên nhưng làm tiếp từ chỗ dừng có thể ra cuốn khác, và mời bạn bấm Tạm dừng; lời khuyên khi gặp lỗi chỉ đúng nút chính của trang (“Làm lại phân tích từ đầu” khi phân tích bị ngắt).
 - Cuốn xếp hàng sau một cuốn đang tạm dừng nói rõ vì sao chưa tới lượt và bạn cần làm gì.
 - Khi sách đang chạy, Windows không tự cho máy ngủ giữa chừng (làm Ollama treo); tạm dừng, dừng hay xong là máy được ngủ lại như thường.
+
+## [0.4.124] - 2026-10-22
+
+### Sửa lỗi
 
 - Khi bạn gỡ ABook, bộ gỡ đọc vị trí thư viện đã lưu và giữ cây chứa sách; app cũng ngăn bạn chọn thư viện trong các thư mục sẽ bị gỡ.
 - Khi bạn có cuốn đang chạy, khởi động hoặc tạm dừng, Studio yêu cầu chờ làm xong trước khi cập nhật để giữ nguyên lượt phân tích.
