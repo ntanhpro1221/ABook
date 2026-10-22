@@ -32,6 +32,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: mở file .abook từ app khác qua “Chia sẻ” (kể cả khi file được gửi như tệp nhị phân hay zip); file không phải .abook thì báo rõ thay vì nhập hỏng.
 - Ước cỡ file .abook tính cả câu mẫu giọng, bìa, kịch bản và dàn nhân vật; cảnh báo ổ FAT32 dùng đúng con số ấy.
 
+### Cài đặt và trợ năng
+
+- Giọng đọc: dùng phím mũi tên đổi “Tốc độ giọng trên máy” hay các thẻ tải giọng không còn làm giọng mặc định đang chọn bị đổi bậy; mũi tên chỉ đổi lựa chọn của đúng nhóm đang đứng.
+- Lịch đêm, nhỏ dần, nghe thêm và dừng an toàn: file cài đặt bị sửa tay hay ghi dở (lịch thiếu giờ, số âm…) không còn làm lúc bấm nghe báo lỗi hay màn Cài đặt trên điện thoại không mở được; riêng cài đặt hỏng quay về mặc định và các cài đặt khác giữ nguyên, bản hỏng được giữ lại và báo (máy tính và điện thoại).
+- Máy tính: “Đã đổi thư mục thư viện” chỉ hiện khi máy thật sự nhận thư mục mới; thư mục bị từ chối hay cài đặt không ghi được thì có lời báo lỗi bằng tiếng Việt kèm lý do.
+- “Dọn bản đọc đã làm” hỏi trong hộp thoại: bàn phím vào được hộp, Esc là “Giữ lại”, đóng xong con trỏ về lại chỗ cũ.
+- Chữ hệ thống to hay màn hẹp: các nhóm lựa chọn (Nhỏ dần, Mỗi lần nghe thêm, Tự tắt khi ngủ quên, Màu…) xuống hàng thay vì tràn ngang bắt phải cuộn.
+- Máy tính: thêm công tắc “Tự lùi khi nghe lại” như điện thoại (theo từng máy); mô tả cũ ghi sai số giây lùi, nay đúng với cách app lùi.
+- Điện thoại: ba ô chọn giờ của Lịch đêm đủ lớn để chạm (48 dp).
+- Điện thoại: không lưu được thay đổi cài đặt thì báo ngay; lúc mở app, cài đặt ghi gần nhất ở phần nghe của app được ưu tiên hơn bản cũ trong WebView, nên một lần lưu hỏng không làm tuỳ chọn quay lại giá trị cũ.
+
 ## [0.4.128] - 2026-10-23
 
 ### Thư viện

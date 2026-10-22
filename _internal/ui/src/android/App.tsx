@@ -35,7 +35,7 @@ import { NativeAudioEngine } from "./nativeEngine";
 import { SettingsScreen } from "./SettingsScreen";
 import { StudioChipHost } from "./StudioOpen";
 import { UpdateNotice } from "./UpdateNotice";
-import { applyTheme, loadSettings, pushSettings } from "./settings";
+import { applyTheme, loadSettings, syncSettings } from "./settings";
 import { dismissTopLayer } from "./backLayers";
 import { useBookBytes, type RemovableFromPhone } from "./storage";
 import { formatSize } from "@/shared/format";
@@ -260,10 +260,14 @@ function ClipBridge({ children }: { children: ReactNode }) {
 export function AndroidApp() {
   const engine = useMemo(() => new NativeAudioEngine(), []);
   useFocusClearOfToasts();
+  // Lần đồng bộ tuỳ chọn với native xong (mới hơn bản WebView thì lấy của native): hiện lại các màn đọc tuỳ chọn lúc dựng (soát a100 T3).
+  const [synced, setSynced] = useState(0);
   useEffect(() => {
-    const settings = loadSettings();
-    applyTheme(settings.theme);
-    void pushSettings(settings);
+    applyTheme(loadSettings().theme);
+    void syncSettings().then((settings) => {
+      applyTheme(settings.theme);
+      setSynced((count) => count + 1);
+    });
   }, []);
   // "Theo hệ thống" phải theo cả khi đang mở app: Activity khai uiMode trong configChanges nên KHÔNG dựng lại khi
   // điện thoại chuyển sáng/tối (vd tự tối lúc chiều) - trước đây app giữ nguyên giao diện cũ tới lần mở sau.
@@ -315,7 +319,7 @@ export function AndroidApp() {
                   />
                   <Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} />
                   <Route path="/devices" element={<DevicesScreen />} />
-                  <Route path="/settings" element={<SettingsScreen />} />
+                  <Route path="/settings" element={<SettingsScreen key={synced} />} />
                 </Routes>
               </MobileShell>
             </HashRouter>

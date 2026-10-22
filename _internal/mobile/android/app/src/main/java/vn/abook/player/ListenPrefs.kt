@@ -15,6 +15,8 @@ object ListenPrefs {
     private val KEYS = listOf(
         "sleepExtendMinutes", "sleepFadeSeconds", "shakeToExtend", "shakeAction", "shakeSensitivity", "flipToPause",
         "headsetSkips", "autoRewind", "safetyStopHours", "schedule",
+        // Dấu giờ (ms) lần đổi cuối của giao diện: lúc mở app giao diện so với dấu này để biết bản nào mới hơn (soát a100 T3).
+        "settingsStamp",
     )
     private var loaded = false
 
@@ -54,6 +56,15 @@ object ListenPrefs {
     private fun remember(json: JSONObject) {
         if (KEYS.none(json::has)) return
         update { stored -> for (key in KEYS) if (json.has(key)) stored.put(key, json.get(key)) }
+    }
+
+    /**
+     * Các tuỳ chọn nghe đã nhớ (không kèm hẹn giờ đang chạy), cho giao diện lúc mở app: WebView mất/không ghi được localStorage thì lấy bản này làm chuẩn
+     * (so `settingsStamp`). Chưa có file: `{}`.
+     */
+    fun stored(): JSONObject {
+        val saved = try { Store.readJson(file()) } catch (error: Exception) { null } ?: return JSONObject()
+        return JSONObject().also { out -> for (key in KEYS) if (saved.has(key)) out.put(key, saved.get(key)) }
     }
 
     /** Hẹn giờ ngủ đang chạy (hay null = không còn): ghi vào cùng file. */
