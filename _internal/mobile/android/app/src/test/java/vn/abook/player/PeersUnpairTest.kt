@@ -21,7 +21,6 @@ class PeersUnpairTest {
     fun setUp() {
         root = BookEditsFixtures.tempDir("abook-unpair")
         BookEditsFixtures.useStoreRoot(root)
-        LocalStudio.clock = { 1_790_950_256L }
         LocalStudio.now = { 1_790_950_256.0 }
         EditsSync.clock = { 1_790_960_000L }
         EditsSync.refresh = null

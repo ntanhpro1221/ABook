@@ -8,7 +8,42 @@ internal object StreamRefresh {
     fun stale(cached: JSONObject?, entry: JSONObject): Boolean = cached == null ||
         cached.optInt("chaptersAvailable") != entry.optInt("chaptersAvailable") ||
         cached.optString("title") != entry.optString("title") ||
-        cached.optString("author") != entry.optString("author") || !StrictJson.equal(listedCover(cached), listedCover(entry))
+        cached.optString("author") != entry.optString("author") || !StrictJson.equal(listedCover(cached), listedCover(entry)) ||
+        metadataStale(cached, entry)
+
+    /**
+     * Phần MÔ TẢ của cuốn (tên, tác giả, người đọc, liên kết bộ, tên chương) đổi ở máy giữ sách: dấu `metaVersion` (sync.manifest) trong danh sách
+     * khác dấu trong gói đã cất / đã tải. Máy cũ không gửi dấu thì không bao giờ "đổi" (soát a97 V1).
+     */
+    fun metadataStale(local: JSONObject?, entry: JSONObject): Boolean =
+        local != null && entry.optString("metaVersion").isNotEmpty() && local.optString("metaVersion") != entry.optString("metaVersion")
+
+    /**
+     * `local` (book.json của cuốn đã tải) với phần mô tả lấy từ gói mới `fresh`: tên, tác giả, người đọc, `series`, `metaVersion`, và tên từng chương
+     * (khớp theo mã chương). Audio, chữ, bìa, nhạc, danh sách file và lớp sửa của máy này giữ nguyên - chỉ "Cập nhật bản thu" mới đụng tới chúng.
+     */
+    fun withMetadata(local: JSONObject, fresh: JSONObject): JSONObject {
+        val out = JSONObject(local.toString())
+        for (key in listOf("title", "author", "narrator", "series", "metaVersion")) {
+            val value = fresh.opt(key)
+            if (value == null || value == JSONObject.NULL) out.remove(key) else out.put(key, value)
+        }
+        val named = HashMap<Long, JSONObject>()
+        fresh.optJSONArray("chapters")?.let { list ->
+            for (i in 0 until list.length()) list.optJSONObject(i)?.let { named[it.optLong("id")] = it }
+        }
+        out.optJSONArray("chapters")?.let { list ->
+            for (i in 0 until list.length()) {
+                val chapter = list.optJSONObject(i) ?: continue
+                val source = named[chapter.optLong("id")] ?: continue
+                for (key in listOf("title", "subtitle", "fullTitle")) {
+                    val value = source.opt(key)
+                    if (value == null || value == JSONObject.NULL) chapter.remove(key) else chapter.put(key, value)
+                }
+            }
+        }
+        return out
+    }
 
     // /library chỉ có màu và phiên bản; manifest có thêm kích thước/tên file, không đem các trường ấy so với danh sách.
     private fun listedCover(value: JSONObject): JSONObject? = value.optJSONObject("cover")?.let {
