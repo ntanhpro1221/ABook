@@ -1455,6 +1455,30 @@ def pending_changes(package: Path, edits: dict[str, Any] | None = None) -> int:
     return book_edits.count(book_edits.unmarked(edits, marks)) + book_edits.count_removed(book_edits.removed_marks(edits, marks))
 
 
+def sent_wish_marks(package: Path, section: str, keys: list[str], requested_at: float | None = None) -> dict[str, float]:
+    """{khoá: lần bấm} của các thao tác ĐÃ GỬI về máy giữ sách mà máy này còn giữ biên nhận (sổ `wishes` của `book_edits.sent_marks`).
+    `requested_at` cho trước: chỉ những khoá đúng lần bấm ấy."""
+    receipts = (_sent_marks(package).get("wishes") or {}).get(section) or {}
+    return {key: float(receipts[key]) for key in dict.fromkeys(keys)
+            if key in receipts and (requested_at is None or abs(float(receipts[key]) - requested_at) < 1e-6)}
+
+
+def retract_wish(package: Path, section: str, keys: list[str], requested_at: float | None = None) -> list[str]:
+    """Người nghe hoàn tác một thao tác đã gửi đi (và vì thế đã gỡ khỏi lớp sửa): đổi biên nhận của nó thành lời nhờ máy giữ sách rút đúng
+    thao tác ấy (`book_edits.retract_sent`) - đi theo lần gửi kế. `requested_at` trống: lần bấm đang ghi trong biên nhận. Trả các khoá
+    đã nhận; rỗng = không có biên nhận khớp (đã bị lần bấm sau thay, hay chưa từng gửi)."""
+    with _SEND_LOCK:
+        marks = _sent_marks(package)
+        done: list[str] = []
+        here = (book_edits.load(package).get("wishes") or {}).get(section) or {}  # lần bấm sau của chính khoá này còn ở đây: nó mới là cái đang chờ, không rút nhầm
+        for key, at in sent_wish_marks(package, section, [key for key in keys if key not in here], requested_at).items():
+            marks, took = book_edits.retract_sent(marks, section, [key], at)
+            done.extend(took)
+        if done:
+            _remember_send(package, {**(_last_sent(package) or {}), "kept": marks})
+        return done
+
+
 def _remember_send(package: Path, state: dict[str, Any]) -> None:
     if "kept" not in state and _sent_marks(package):
         state = {**state, "kept": _sent_marks(package)}  # lần gửi lỗi không làm quên cái đã gửi trước đó
@@ -1521,7 +1545,7 @@ def send_edits(package: Path) -> dict[str, Any]:
         _remember_send(package, {
             "state": "sent", "at": time.time(), "fetched": fetched,
             "kept": book_edits.sent_marks(edits, book_edits.forget_marks(marks, removed)),
-            **{key: int(reply.get(key) or 0) for key in ("applied", "skipped", "requests", "waiting", "studio", "skippedWishes")},
+            **{key: int(reply.get(key) or 0) for key in ("applied", "skipped", "requests", "waiting", "studio", "skippedWishes", "withdrawn")},
             "conflicts": [sender_label(item, entry["name"]) for item in reply.get("conflicts") or [] if isinstance(item, dict) and item.get("label")],
         })
         return edits_state(package)
