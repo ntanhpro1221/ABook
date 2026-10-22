@@ -39,6 +39,7 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     "theme": "system",
     "positions": {},
     "playbackRate": 1.0,
+    "readAloudVoice": "",
     "volume": 0.9,
     "syncEnabled": False,
     # Studio từ xa (remote_studio.py): thiết bị đã ghép được điều khiển sản xuất. Tắt mặc định, tách khỏi quyền nghe.

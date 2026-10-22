@@ -8,6 +8,17 @@ import type { ListenSource } from "./source";
 // rơi sang giọng kế - Edge rồi giọng của máy - mà không dừng.
 
 const GLOBAL_KEY = "abook-readaloud-voice";
+let defaultVoiceSink: ((voice: string) => void) | null = null;
+export function onDefaultVoiceChosen(sink: (voice: string) => void): () => void {
+  defaultVoiceSink = sink;
+  return () => { if (defaultVoiceSink === sink) defaultVoiceSink = null; };
+}
+/** Nạp trước khi mở player: cổng Tauri đổi vẫn nhận cùng lựa chọn từ hồ sơ máy chủ. */
+export function restoreDefaultVoice(voice: string): void { write(GLOBAL_KEY, voice); }
+function storeDefaultVoice(voice: string): void {
+  write(GLOBAL_KEY, voice);
+  defaultVoiceSink?.(voice);
+}
 /** Sự kiện: người dùng vừa đặt giọng mặc định (Cài đặt → Giọng đọc) - lõi điện thoại nhớ theo (android/readAloud.ts). */
 export const DEFAULT_VOICE_EVENT = "abook:readaloud-default-voice";
 export const ONLINE_NOTICE = "Giọng Edge gửi chữ của sách tới máy chủ Microsoft để đọc.";
@@ -121,7 +132,7 @@ export function chooseVoice(bookId: string, voice: string): void {
   troubled.clear();
   // Lần chọn đầu tiên (chưa có giọng mặc định): cũng làm giọng mặc định, để cuốn thứ hai không bắt người mới chọn lại từ đầu.
   const first = !read(GLOBAL_KEY);
-  if (first) write(GLOBAL_KEY, voice);
+  if (first) storeDefaultVoice(voice);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: bookId }));
     if (first) window.dispatchEvent(new CustomEvent(DEFAULT_VOICE_EVENT));
@@ -139,7 +150,7 @@ export function switchVoices(fromPrefix: string, voice: string): void {
   } catch {
     /* không đọc được bộ nhớ: vẫn đổi lựa chọn chung */
   }
-  write(GLOBAL_KEY, voice);
+  storeDefaultVoice(voice);
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: "" }));
 }
 
@@ -150,7 +161,7 @@ export function defaultVoice(): string {
 
 /** Đặt giọng mặc định từ Cài đặt: chỉ đổi giọng chung, cuốn đã chọn giọng riêng giữ nguyên (không báo trình phát đổi giọng giữa chừng). */
 export function chooseDefaultVoice(voice: string): void {
-  write(GLOBAL_KEY, voice);
+  storeDefaultVoice(voice);
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(DEFAULT_VOICE_EVENT));
 }
 

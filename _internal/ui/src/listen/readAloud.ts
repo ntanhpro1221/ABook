@@ -793,6 +793,7 @@ export class ReadAloudEngine implements AudioEngine {
     this.releaseOutside();
     this.dropQueuedOutside();
     this.fire("time");
+    this.fire("seeked");
     if (this.wanted) this.playCurrent();
   }
 
@@ -1986,7 +1987,7 @@ export class ReadAloudEngine implements AudioEngine {
 
 // ---- bộ chuyển giữa audio thường và đọc to ----------------------------------------------------------------------------
 
-const EVENTS: EngineEvent[] = ["time", "duration", "play", "pause", "ended", "error", "recovered", "waiting", "playing"];
+const EVENTS: EngineEvent[] = ["time", "seeked", "duration", "play", "pause", "ended", "error", "recovered", "waiting", "playing"];
 
 /** Bộ máy của trình phát trên máy tính: chương có audio đi qua `web` (WebAudioEngine), chương chỉ-có-chữ (`TrackInfo.speech`) đi qua một
  *  ReadAloudEngine mới cho mỗi lần nạp. Sự kiện chỉ lấy từ bộ máy đang chạy - bộ cũ dừng im lặng, trình phát không thấy "pause" giả. */

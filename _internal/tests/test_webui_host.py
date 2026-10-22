@@ -130,6 +130,27 @@ def test_checking_for_a_new_version_again_is_a_shell_request_the_listener_can_ma
     shell.thread.join(10)
 
 
+def test_open_before_page_ready_is_replayed_until_that_event_is_acknowledged(app_data: Path) -> None:
+    shell = Shell()
+    url = shell.start()
+    try:
+        shell.send({"open": str(app_data / "first.abook")})
+        first = shell.receive()["detail"]
+        # eval một lần lúc React chưa mount đã mất: trang báo sẵn sàng, vẫn nhận được; GET không phải ACK.
+        pending = _request(url, "/api/host/opened")
+        assert pending == [first] == _request(url, "/api/host/opened")
+        shell.send({"open": str(app_data / "second.abook")})
+        second = shell.receive()["detail"]
+        _request(url, "/api/host/opened/ack", {"eventId": first["eventId"]})
+        assert _request(url, "/api/host/opened") == [second]
+        _request(url, "/api/host/opened/ack", {"eventId": first["eventId"]})
+        assert _request(url, "/api/host/opened") == [second], "ACK cũ không gỡ sự kiện mới"
+    finally:
+        shell.send({"quit": True})
+        shell.thread.join(10)
+        assert not shell.thread.is_alive()
+
+
 def test_a_shell_that_dies_mid_dialog_never_leaves_the_page_hanging(app_data: Path) -> None:
     shell = Shell()
     url = shell.start()

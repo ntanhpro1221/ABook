@@ -128,6 +128,13 @@ def _upgrade(raw: Any) -> dict[str, Any]:
     return data
 
 
+PLAYBACK_SESSIONS_KEPT = 16  # số phiên phát (lần nạp trang) nhớ mỗi hồ sơ
+
+
+class StalePlayback(ValueError):
+    """Phiên phát đã bị cửa sổ khác thay thế, hoặc bản ghi đã cũ."""
+
+
 class Listening:
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or listening_path()
@@ -146,7 +153,7 @@ class Listening:
         return notices.read_json(self.path, "Hồ sơ nghe (chỗ nghe dở, dấu trang)", _well_formed)
 
     @contextlib.contextmanager
-    def _changing(self) -> Iterator[None]:
+    def _changing(self, *, require_commit: bool = False) -> Iterator[None]:
         """Sửa dữ liệu nghe: khoá luồng + khoá file; tiến trình khác cùng hồ sơ đã ghi từ lần mình đọc / ghi cuối thì đọc lại trước khi
         sửa (soát a28 lỗi 14: hai bên giữ cả bảng trong bộ nhớ, bên ghi sau đè mất chỗ nghe của bên kia). File mất / hỏng giữa chừng: giữ
         bản trong bộ nhớ, lần ghi này đưa nó lại ra đĩa."""
@@ -161,7 +168,15 @@ class Listening:
                         self._data = _upgrade(raw or {})
                     self._unread = False
                 self._stamp = file_stamp(self.path)
-            yield
+            if require_commit and self._unread:
+                raise OSError("Chưa đọc được hồ sơ nghe. Bạn hãy thử lại.")
+            before = json.loads(json.dumps(self._data)) if require_commit else None
+            try:
+                yield
+            except BaseException:
+                if before is not None:
+                    self._data = before
+                raise
 
     # ---- liên kết sách - hồ sơ ---------------------------------------------------------------------------------
 
@@ -356,13 +371,51 @@ class Listening:
         with self._lock:
             return json.loads(json.dumps({book: self._active(book, create=False) for book in self._data["links"]}))
 
+    def _playback_owner(self, entry: dict[str, Any]) -> dict[str, Any]:
+        # Quyền ghi cục bộ nằm NGOÀI state đồng bộ; điện thoại vẫn gộp theo timestamp.
+        return next(row for row in self._data["records"].values() if row.get("state") is entry)
+
+    def begin_progress(self, book: str, session_id: str, record: str | None = None) -> None:
+        with self._changing(require_commit=True):
+            entry = self._held(book, record)
+            if entry is None:
+                raise StalePlayback("Hồ sơ nghe đã bị xoá.")
+            owner = self._playback_owner(entry)
+            sessions = owner.setdefault("_playbackSessions", {})
+            playback = owner.get("_playback") or {}
+            if session_id in sessions:
+                if sessions[session_id] < playback.get("generation", 0):
+                    raise StalePlayback("Phiên nghe này đã bị cửa sổ khác thay thế. Bạn hãy nạp lại sách.")
+                return
+            owner["_playbackSerial"] = int(owner.get("_playbackSerial", 0)) + 1
+            sessions[session_id] = owner["_playbackSerial"]
+            # Mỗi lần nạp trang là một phiên: chỉ giữ các phiên gần nhất, phiên cũ hơn bị bỏ cũng là phiên đã bị thay thế.
+            for stale in sorted(sessions, key=sessions.__getitem__)[:-PLAYBACK_SESSIONS_KEPT]:
+                del sessions[stale]
+            # Tab vừa mở nhưng còn đứng yên chưa vượt phiên đang phát: chỉ nhận quyền ở lần progress đầu.
+            self._save()
+
     def progress(self, book: str, chapter_id: int, seconds: float, duration: float,
-                 record: str | None = None, anchor: dict[str, Any] | None = None) -> dict[str, Any]:
+                 record: str | None = None, anchor: dict[str, Any] | None = None,
+                 *, session_id: str | None = None, revision: int = 0) -> dict[str, Any]:
         from .reading_anchor import validated
 
         now = time.time()
-        with self._changing():
+        with self._changing(require_commit=True):
             entry = self._held(book, record)
+            if session_id is not None:
+                owner = self._playback_owner(entry) if entry is not None else {}
+                playback = owner.get("_playback") or {}
+                generation = (owner.get("_playbackSessions") or {}).get(session_id)
+                if generation is None or generation < playback.get("generation", 0):
+                    raise StalePlayback("Chỗ nghe đã được cửa sổ khác cập nhật. Bạn hãy nạp lại sách để nghe tiếp.")
+                if playback.get("id") != session_id:
+                    playback = owner["_playback"] = {"id": session_id, "revision": 0, "generation": generation}
+                if revision < playback.get("revision", 0) or revision <= 0:
+                    raise StalePlayback("Chỗ nghe đã được cửa sổ khác cập nhật. Bạn hãy nạp lại sách để nghe tiếp.")
+                if revision == playback.get("revision"):
+                    return json.loads(json.dumps(entry))  # ACK bị mất: thử lại đúng bản, không đổi dấu giờ.
+                playback["revision"] = revision
             if entry is None:
                 return json.loads(json.dumps(self._active(book, create=False) or _empty_state()))
             entry["last"] = {"chapterId": int(chapter_id), "seconds": round(float(seconds), 1), "at": now}
