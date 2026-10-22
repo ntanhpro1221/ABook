@@ -12,6 +12,8 @@ mở đầu bằng lời gọi chính người nói, xưng hô lệch khỏi ng�
 """
 from __future__ import annotations
 
+import hashlib
+import sqlite3
 from collections import Counter
 from contextlib import closing
 from pathlib import Path
@@ -184,12 +186,27 @@ def _retake(row: Any, request: dict[str, Any] | None) -> str | None:
 
 
 def casting_stamp(project_root: Path) -> int:
-    """Lần ghi yêu cầu cuối của người nghe (mốc sửa của overrides.json; 0 = chưa ai sửa gì). Giao diện hỏi nhẹ mỗi vài giây: đổi nghĩa là
-    một cửa sổ khác vừa sửa, nên chương đang xem phải tải lại (soát UX a23 B19) - rẻ hơn nhiều so với tải lại cả chương để so."""
+    """Dấu "tab Kịch bản đang xem còn đúng không": lần ghi yêu cầu cuối của người nghe (mốc sửa của overrides.json) VÀ biên nhận dây chuyền
+    đã ghi (số biên nhận + lần áp cuối). 0 = chưa có gì. Dây chuyền áp yêu cầu chỉ ghi sổ + biên nhận chứ không đụng overrides.json, nên
+    chỉ nhìn file ấy thì thẻ "đang chờ" ở lại cho tới khi có thao tác khác (soát a89 T7). Giao diện hỏi nhẹ mỗi vài giây: đổi nghĩa là
+    chương đang xem phải tải lại (soát UX a23 B19) - rẻ hơn nhiều so với tải lại cả chương để so. Không dùng chữ ký cả thư mục dự án: sổ
+    đổi liên tục khi đang thu, tab sẽ tải lại chương mỗi lượt hỏi."""
     try:
-        return (Path(project_root) / OVERRIDES_FILE).stat().st_mtime_ns
+        written = (Path(project_root) / OVERRIDES_FILE).stat().st_mtime_ns
     except OSError:
-        return 0
+        written = 0
+    receipts, applied = 0, 0.0
+    if (Path(project_root) / store.DB_NAME).is_file():
+        try:
+            with closing(store.connect(project_root)) as connection:
+                row = connection.execute("SELECT COUNT(*), COALESCE(MAX(applied_at), 0) FROM listener_override_receipts").fetchone()
+                receipts, applied = int(row[0]), float(row[1])
+        except sqlite3.Error:
+            pass  # sổ chưa có bảng biên nhận (chưa quét lần nào): chỉ còn mốc overrides.json
+    if not receipts:
+        return written
+    # Gộp thành một số nguyên an toàn cho JavaScript (< 2^53); biên nhận mới thì số đổi.
+    return int(hashlib.sha1(f"{written}:{receipts}:{applied!r}".encode()).hexdigest()[:12], 16) or 1
 
 
 def casting_view(project_root: Path) -> dict[str, Any]:

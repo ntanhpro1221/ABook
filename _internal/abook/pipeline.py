@@ -85,9 +85,8 @@ from .database import (
     segment_candidate_split_seed_salt,
     thought_reads_as_narrator,
 )
-from .io_utils import file_stamp, sha256_file
+from .io_utils import sha256_file
 from .listener_overrides import (
-    overrides_path,
     pronunciation_problem,
     pronunciation_requests,
     pronunciation_surface,
@@ -1229,8 +1228,6 @@ class BookPipeline:
         """
         if not self.db.casting_is_finalized():
             return set()
-        self._overrides_stamp = file_stamp(overrides_path(self.paths.root))  # TRƯỚC khi đọc: file đổi sau đó thì `_still_requested` thấy
-        self._overrides_latest = None
         overrides = read_overrides(self.paths.root)
         # Biên nhận (database.listener_receipts): lần quét đầu bật việc đếm "chờ áp dụng" theo biên nhận thay vì theo mốc thời gian.
         self.db.mark_listener_sweep()
@@ -1397,15 +1394,15 @@ class BookPipeline:
             self._acknowledge(section, key_of(request), overrides, receipts)
 
     def _still_requested(self, section: str, key: str, snapshot: dict[str, Any]) -> bool:
-        """Yêu cầu `key` trong ảnh chụp `snapshot` còn nguyên trong overrides.json bây giờ không (cùng `receipt_stamp`). Chỉ đọc lại file khi nó
-        đã đổi từ lần đọc trước (một lệnh stat mỗi yêu cầu). Lô áp mất vài giây, đủ để người dùng bấm Hoàn tác giữa chừng (soát a83 B10)."""
+        """Đọc lại ngay trước khi áp/ghi biên nhận: đúng phần, khoá và requested_at
+        (cùng nội dung receipt_stamp) phải còn trong overrides.json hiện tại.
+        Không dùng dấu file để tin bản đệm: người nghe có thể vừa rút yêu cầu sau
+        ảnh chụp đầu lượt hoặc giữa hai yêu cầu (soát a91 T2).
+        """
         from .webui.store import receipt_stamp
 
-        stamp = file_stamp(overrides_path(self.paths.root))
-        if stamp != self._overrides_stamp or self._overrides_latest is None:
-            self._overrides_stamp = stamp
-            self._overrides_latest = read_overrides(self.paths.root)
-        latest, then = self._overrides_latest.get(section), (snapshot.get(section) or {}).get(key)
+        latest = read_overrides(self.paths.root).get(section)
+        then = (snapshot.get(section) or {}).get(key)
         now = latest.get(key) if isinstance(latest, dict) else None
         return isinstance(now, dict) and isinstance(then, dict) and receipt_stamp(now) == receipt_stamp(then)
 
@@ -1420,6 +1417,8 @@ class BookPipeline:
         stamp = receipt_stamp(entry)
         if receipts.get((section, key)) == stamp:
             return
+        if not self._still_requested(section, key, overrides):
+            return  # đã rút/thay sau ảnh chụp: cả vòng vét mục cuối lượt cũng không ghi "đã áp"
         self.db.record_listener_receipt(section, key, stamp[0], stamp[1])
         receipts[(section, key)] = stamp
 

@@ -40,4 +40,13 @@ describe("lời dưới toast Áp dụng", () => {
     expect(applyNote({ skipped: 0, held: 0 }, SENTENCE.done)).toContain("Áp dụng thay đổi");
     expect(applyNote({ skipped: 2, held: 1 }, SENTENCE.done)).toBe("2 việc không còn khớp với sách nên bị bỏ qua. 1 việc máy này đã đổi khác sau đó vẫn chờ bạn chọn từng việc.");
   });
+
+  it("kể tên các việc không áp được (tối đa ba, còn lại đếm)", async () => {
+    const { applyNote } = await import("./PhoneEdits");
+    const { SENTENCE } = await import("./decisions");
+    expect(applyNote({ skipped: 1, held: 0, dropped: ["“A” đọc là “a”"] }, SENTENCE.done)).toBe("1 việc không còn khớp với sách nên bị bỏ qua: “A” đọc là “a”.");
+    expect(applyNote({ skipped: 5, held: 0, dropped: ["một", "hai", "ba", "bốn", "năm"] }, SENTENCE.done)).toBe(
+      "5 việc không còn khớp với sách nên bị bỏ qua: một; hai; ba; và 2 việc nữa.",
+    );
+  });
 });

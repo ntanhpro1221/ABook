@@ -2,8 +2,30 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a91lk` trên `dev/locked100`: gộp a88/a89, giữ khoá ghi + guard và retake theo nhóm có operation_id;
+59 file test liên quan: 863 passed, 3 skipped, 0 failed/errors. T2 đọc lại yêu cầu ngay trước áp và trước ghi biên nhận,
+bỏ yêu cầu đã rút kể cả ảnh chụp cũ / dấu file còn cũ, không phát cảnh báo từ chối. Test mới
+`test_a91_withdraw_before_apply.py`: đỏ 12 failed, 1 passed trước sửa; xanh cùng hồi quy 50 passed.
+V6: grep và AST danh sách QUALITY_IMPLEMENTATION_FILES không có lời gọi cancel_retake/withdraw_requests bỏ qua cancelled.py.
+Toàn bộ cuối: 8913 passed, 9 skipped, 2 xfailed, 0 failed/errors, 23 warnings (22 ngoại lệ luồng nền, 1 tên ZIP trùng);
+đếm ký tự kết quả khớp JUnit 8924 testcase, failures=0/errors=0/skipped=11 (gồm 2 xfailed). Lượt đầu 1 failure ở test_release_script
+do CHANGELOG giải xung đột thành CRLF; đã khôi phục LF, kiểm riêng 3 passed rồi chạy lại toàn bộ. Compileall sạch;
+vitest 1350 passed, 1 skipped (160 file passed, 1 skipped); npx --offline tsc --noEmit exit 0.
+
 Đợt V3/V4/T1/T6 trên `dev/locked100` (nền bc3a3d37): post_review lưu retake theo nhóm; fold ý muốn từ điện thoại ghi một biên nhận và một nhóm retake, giữ operation_id khi crash/retry; khớp cách đọc NFC/Cf, giữ nguyên overrides cũ. T6 đã chỉ còn một lần đọc ở HEAD; test mock xác nhận. Test mới: 30 passed. Hồi quy 134 file chọn theo tên/nội dung: 3301 passed, 3 skipped, 0 failed, 0 errors, 1 warning subprocess cp1252 (đối chiếu log và 3304 testcase JUnit). Lượt đầu có một failure do runner đặt thêm TRANSFORMERS_OFFLINE; đã sửa runner, kiểm lại file 28 passed và chạy lại toàn bộ danh sách. e7 800 dòng: 22,778695 → 0,763184 giây; ghi biên nhận 1600 → 1, overrides 800 → 1. Hash khoá: 9e9c5a66 → 9180c365.
 
+Đợt `a88fix` trên `dev/uxfix102` (nền d787857c): Tạm dừng / Dừng / Tiếp tục / hồi phục sự cố trong Studio - trạng thái "Đang dừng…"
+khoá hai nút tới checkpoint kế; Dừng khi supervisor đã chết trả 409 tiếng Việt thay 500; "Làm lại phân tích từ đầu" kiểm trước, đưa bản dở
+vào chỗ chờ Hoàn tác và khôi phục nếu tạo cuốn mới hỏng; "Tiếp tục" lần hai giữ đồng ý chạy trên pin; UI dùng phản hồi máy chủ ngay, làm mới
+khi lỗi; điện thoại + máy tính báo "tạm dừng vì pin"; toast đúng, lời hộp Dừng nhất quán, nguyên nhân sự cố hiện trên trang sách, sách xếp
+hàng nói rõ chờ cuốn nào; giữ máy thức (không giữ màn hình) khi sách đang chạy thật. Toàn bộ (Lead chạy): pytest 8764 passed, 9 skipped,
+2 xfailed, 0 F/E; vitest 1343 passed, 1 skipped; tsc exit 0; JVM 1378 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
+Đợt `a89fix` trên `dev/uxfix103` (nền 6a053bc5): soát can thiệp người dùng trong Studio - chuyển lời dẫn thành thoại chọn được
+mọi người nói (dùng SpeakerMenu), sửa dòng có Hoàn tác + rút lại, yêu cầu bị pipeline từ chối hiện thẻ trong "Việc cần bạn",
+Reviews.set_many đọc/ghi một lần, GET không ghi, review_view có cache; shared_readings/workshop_merge ghi overrides trong khoá;
+trộn workshop có bia mộ (cancelled.json, cả Kotlin); kiểm tên nhân vật (name_rules.py + NameRules.kt); khay "Bỏ qua" khôi phục được.
+8 file test mới (47 test). Toàn bộ: pytest 8844 thu được, exit 0 (9 skipped, 2 xfailed, 0 F/E); vitest 1347 passed, 1 skipped;
+tsc exit 0; JVM 1382 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
 Đợt `a80fix2` trên `dev/uxfix99` (Codex tk3 bị cắt ở lượt kiểm cuối, Lead chạy toàn bộ): gói sửa lớn từ máy đã ghép có hạn đọc theo cỡ
 (30 s + cỡ / 16 KiB/s), máy chưa ghép vẫn 30 s; trần kết nối 32 tổng / 8 mỗi nguồn (máy tính), 8 / 6 (điện thoại); GET đóng sớm/503 thử
 lại tối đa 2 lần (200/800 ms), không POST. Toàn bộ a80fix + a80fix2: pytest 8690 passed, 9 skipped, 1 xfailed (lỗi 3), 0 F/E;
@@ -40,6 +62,15 @@ cờ rõ ràng (không đoán tên bộ cài); thư viện tuỳ chọn giải �
 Lỗi 1 (ghim mã cho worker đang chạy) chỉ thiết kế, giữ test strict xfail. Toàn bộ (Lead chạy): pytest 8644 passed, 9 skipped, 1 xfailed,
 0 F/E (sau khi Lead sửa test hook cũ còn tìm `RMDir /r` trần); vitest 1308 passed, 1 skipped; tsc exit 0; JVM 1333 tests, 6 skipped,
 0 F/E. Hash khoá c9176123 không đổi.
+Đợt `a84fix` trên `dev/uxfix95` (nền 3b87b35c): nhập TXT/DOCX/PDF/thư mục, 19 mục, luật chung Python + Kotlin qua fixture chung
+`tests/fixtures/import/a84_*` - không tự bỏ chữ của truyện: chữ dẫn, dòng tên truyện và Heading 1 đơn ở lại trong thân ("Mở đầu" tích sẵn);
+dòng đầu/chân trang PDF thành gợi ý bỏ đọc bỏ chọn được; lời chú/dấu gọi DOCX giữ mặc định; thêm sách từ chối khi nguồn đổi sau lần xem trước;
+một file con không đọc được làm hỏng cả thư mục kèm tên file; Studio dùng cùng luật mục lục/tập/tiêu đề với Nhập; ngắt dòng/trang DOCX và
+ký tự điều khiển TXT giữ ranh giới từ; tracked move đọc một lần; kiểu Heading kế thừa/outline; byte TXT hỏng báo rõ, không thay ký tự âm thầm;
+thứ tự thư mục theo tên gốc dài + casefold Unicode 14 như Python; PDF thưa chữ giữ chữ và cảnh báo trang ảnh; lỗi PDF nêu lý do và việc bạn
+làm được (OCR/mở khoá/TXT/DOCX). Lead sửa A84ImportTest (JSONObject.similar không có trong vỏ android.jar) và cập nhật 6 test JVM cũ theo luật
+mới. Toàn bộ: pytest 8645 passed, 9 skipped, 0 F/E; vitest 1310 passed, 1 skipped; tsc exit 0; JVM 1347 tests, 6 skipped, 0 F/E.
+Hash khoá c9176123 không đổi.
 Đợt `a79fix` trên `dev/uxfix91` (nền cây phát hành dcbd33a0): "Nghe ngay" không gửi chữ khi chưa đồng ý - chuỗi giọng
 thay thế chỉ có Edge khi đã đồng ý "edge" (máy tính + điện thoại); menu Giọng đọc hỏi đồng ý trước khi đổi sang giọng trực tuyến;
 lõi Android giữ (held) chương chữ với giọng chưa đồng ý ở startAt/onPlay/voicesChanged và "Làm trước" (Android Auto, widget, tai nghe);

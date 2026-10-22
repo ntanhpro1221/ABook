@@ -100,13 +100,25 @@ def speaker_request_problem(project_root: Path, stable_id: str, text_sha256: str
                             new_gender: str = "") -> str | None:
     """Mã lý do dây chuyền sẽ từ chối yêu cầu "ai nói câu này", hoặc None - hỏi bằng ĐÚNG phép dây chuyền dùng
     (`listener_overrides.speaker_target`), trên SQLite chỉ đọc, để người nghe biết ngay chứ không phải chờ ranh giới.
-    `new_gender`: người nghe TẠO người nói mới (chưa có giọng) - hợp lệ khi tên dùng được."""
+    `new_gender`: người nghe TẠO người nói mới (chưa có giọng) - hợp lệ khi tên dùng được.
+    Câu đang có yêu cầu đổi CÁCH ĐỌC chờ áp (`lines`) thì xét với loại đoạn của yêu cầu ấy, vì dây chuyền áp `lines` TRƯỚC `speakers`: "câu này
+    thành lời dẫn" rồi "đổi người nói câu đó" bị từ chối ngay ở đây chứ không lặng lẽ ở ranh giới chương (soát a89 V8)."""
     from ..listener_overrides import speaker_target
 
     with closing(connect(project_root)) as connection:
         _target, problem = speaker_target(connection, stable_id=stable_id, text_sha256=text_sha256, speaker=speaker,
-                                          new_gender=new_gender)
+                                          as_kind=pending_line_kind(project_root, stable_id, text_sha256), new_gender=new_gender)
     return problem
+
+
+def pending_line_kind(project_root: Path, stable_id: str, text_sha256: str) -> str:
+    """Loại đoạn mà yêu cầu sửa cách đọc đang chờ của câu này muốn đặt ("" = không có yêu cầu, hay nó không đổi loại đoạn)."""
+    from ..listener_overrides import line_requests, read_overrides
+
+    for request in line_requests(read_overrides(project_root)):
+        if request["stable_id"] == stable_id and request["text_sha256"] == text_sha256:
+            return str(request.get("kind") or "")
+    return ""
 
 
 def not_cast_yet(project_root: Path) -> bool:
@@ -222,7 +234,7 @@ def already_applied(project_root: Path, section: str, entries: dict[str, dict[st
     đổi gì - hỏi bằng ĐÚNG phép các bước áp dùng để bỏ qua yêu cầu đã áp (database.apply_listener_*), trên SQLite chỉ
     đọc. Chỉ có nghĩa với quyết định ĐỔI: "giữ nguyên" thì áp hay chưa, sách vẫn như cũ."""
     from ..database import LISTENER_PRONUNCIATION_SOURCE
-    from ..listener_overrides import (pronunciation_requests, speaker_requests, speaker_target, surface_key,
+    from ..listener_overrides import (line_requests, pronunciation_requests, speaker_requests, speaker_target, surface_key,
                                       voice_requests, voice_target)
 
     with closing(connect(project_root)) as connection:
@@ -239,6 +251,19 @@ def already_applied(project_root: Path, section: str, entries: dict[str, dict[st
                 if (target is not None and "create" not in target
                         and target["line"]["canonical_character_id"] == target["character_id"]
                         and target["line"]["voice_profile_id"] == target["voice_profile_id"]):
+                    return True
+        elif section == "lines":
+            # Cách đọc câu: biên nhận khớp VÀ câu đang mang đúng cách đọc ấy (cùng phép `casting_review._line_wish`); yêu cầu bị từ chối cũng
+            # có biên nhận nhưng sách không đổi - rút nó không mất gì.
+            from . import casting_review
+
+            receipts = receipts_of(project_root) or {}
+            for wish in line_requests({"lines": entries}):
+                if receipts.get(("lines", wish["stable_id"])) != receipt_stamp(entries[wish["stable_id"]]):
+                    continue
+                row = connection.execute("SELECT * FROM segments WHERE stable_id=?", (wish["stable_id"],)).fetchone()
+                shown = casting_review._line_wish(connection, row, wish) if row is not None else None
+                if shown is not None and shown["state"] == "applied":
                     return True
         elif section == "pronunciations":
             for wish in pronunciation_requests({"pronunciations": entries}):
@@ -1181,8 +1206,11 @@ def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> set[tup
     return kept
 
 
-def summarize(project_root: Path, *, running: bool = False, now: float | None = None) -> dict[str, Any]:
-    """Tóm tắt một cuốn cho thư viện và phần đầu trang sách."""
+def summarize(project_root: Path, *, running: bool = False, lease_after: float | None = None, now: float | None = None) -> dict[str, Any]:
+    """Tóm tắt một cuốn cho thư viện và phần đầu trang sách. `lease_after`: chỉ nhịp tim worker trong sổ MỚI HƠN mốc này (giây
+    epoch) mới tính là "đang chạy" - supervisor là nguồn của việc ấy: lượt chạy của nó còn dở (kể cả đã chết) thì mốc là vô cực,
+    đã kết thúc thì mốc là lúc kết thúc (nhịp tim cuối của worker vừa dừng không làm trang báo "đang chạy" thêm 120 giây); chưa từng
+    có supervisor (chạy bằng dòng lệnh) thì None và mọi nhịp tim còn mới đều tính (soát a88 V2)."""
     now = time.time() if now is None else now
     settings = read_settings(project_root)
     with closing(connect(project_root)) as connection:
@@ -1259,7 +1287,8 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         overall = 1.0
     else:
         overall = ANALYSIS_WEIGHT * analysis_fraction + (1 - ANALYSIS_WEIGHT) * synthesis_fraction
-    active = running or (beat_age is not None and beat_age <= LEASE_FRESH_SECONDS and phase in humanize.WORKING_PHASES)
+    active = running or (beat_age is not None and beat_age <= LEASE_FRESH_SECONDS and phase in humanize.WORKING_PHASES
+                         and (lease_after is None or now - beat_age > lease_after))
     profile = str(settings.get("quality_profile") or "")
     return {
         "path": str(project_root),
@@ -1887,6 +1916,17 @@ def sample_audio_path(project_root: Path, segment_id: int) -> Path | None:
     return segment_audio(project_root, row["wav_path"]) if row else None
 
 
+def rejected_event_text(connection: sqlite3.Connection, details_json: Any) -> str:
+    """Câu báo cho một yêu cầu bị từ chối ("Chưa gán được câu “…” cho Lucien: câu này là lời dẫn…"); "" khi sự kiện không đọc được."""
+    details = humanize._json(details_json)
+    quote = ""
+    if details.get("stable_id"):
+        row = connection.execute("SELECT text FROM segments WHERE stable_id=?", (str(details["stable_id"]),)).fetchone()
+        quote = quote_line(str(row["text"] or "")) if row is not None else ""
+    found = humanize.rejected_request(details, quote)
+    return f"{found['title']}: {found['reason']}" if found else ""
+
+
 def activity(project_root: Path, *, technical: bool = False, limit: int = 200) -> list[dict[str, Any]]:
     """Nhật ký cho người đọc: mốc chương xong, lỗi và cảnh báo có nghĩa với người nghe. `technical=True` trả
     thẳng các dòng sự kiện gần nhất, không dịch."""
@@ -1917,11 +1957,13 @@ def activity(project_root: Path, *, technical: bool = False, limit: int = 200) -
         if "runtime_events" in tables:
             placeholders = ",".join("?" for _ in humanize.EVENT_TEXT)
             for row in connection.execute(
-                f"SELECT id, timestamp, level, code, message FROM runtime_events WHERE code IN ({placeholders})"
+                f"SELECT id, timestamp, level, code, message, details_json FROM runtime_events WHERE code IN ({placeholders})"
                 " ORDER BY id DESC LIMIT 400",
                 tuple(humanize.EVENT_TEXT),
             ):
                 text = humanize.event_text(str(row["code"]), str(row["message"]), chapter_titles)
+                if row["code"] == "LISTENER_OVERRIDE_REJECTED":
+                    text = rejected_event_text(connection, row["details_json"]) or text
                 if text:
                     items.append({"id": f"e{row['id']}", "at": float(row["timestamp"] or 0),
                                   "level": humanize.event_level(str(row["code"]), str(row["level"])),

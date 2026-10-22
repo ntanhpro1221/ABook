@@ -80,7 +80,7 @@ def test_writes_still_in_the_wal_travel_with_the_project(tmp_path: Path) -> None
     try:
         writer.execute("PRAGMA journal_mode=WAL")
         writer.execute("PRAGMA wal_autocheckpoint=0")
-        writer.execute("INSERT INTO runtime_events VALUES (99, 1.0, 'INFO', 'X', 'còn trong wal')")
+        writer.execute("INSERT INTO runtime_events (id, timestamp, level, code, message) VALUES (99, 1.0, 'INFO', 'X', 'còn trong wal')")
         writer.commit()
         assert (project / f"{store.DB_NAME}-wal").stat().st_size > 0
         packed = projectfile.pack(project, tmp_path / "du_an.abookproj")

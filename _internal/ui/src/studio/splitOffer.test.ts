@@ -9,9 +9,9 @@ describe("split offer and the lone title line", () => {
     expect(sameTitle("", "")).toBe(false);
   });
 
-  it("drops the title line from the chapters only when it is the book name already filled in", () => {
+  it("a84_02 keeps the title line in the chapter count even when it also names the book", () => {
     const plan = { chapters: 5, preamble: true, titleLine: "Ngọn đèn cuối cùng" };
-    expect(splitOutcome(plan, "Ngọn đèn cuối cùng")).toEqual({ chapters: 4, titleAsName: true, titleStays: false });
+    expect(splitOutcome(plan, "Ngọn đèn cuối cùng")).toEqual({ chapters: 5, titleAsName: true, titleStays: true });
     expect(splitOutcome(plan, "Tên khác")).toEqual({ chapters: 5, titleAsName: false, titleStays: true });
   });
 

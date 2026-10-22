@@ -1,0 +1,141 @@
+[
+ {
+  "fn": "tidy",
+  "input": "Lu\u200bcien\u00a0 Ha\u0300",
+  "out": "Lucien H\u00e0"
+ },
+ {
+  "fn": "tidy",
+  "input": "A\ufeffB\u00adC\u202e",
+  "out": "ABC"
+ },
+ {
+  "fn": "tidy",
+  "input": "a\tb\nc  d",
+  "out": "a b c d"
+ },
+ {
+  "fn": "tidy",
+  "input": "Ho\u0302\u0301",
+  "out": "H\u1ed1"
+ },
+ {
+  "fn": "person",
+  "input": "\u200b\u200b",
+  "error": "T\u00ean ch\u1ec9 c\u00f3 k\u00fd t\u1ef1 kh\u00f4ng nh\u00ecn th\u1ea5y - b\u1ea1n g\u00f5 l\u1ea1i b\u1eb1ng ch\u1eef th\u01b0\u1eddng."
+ },
+ {
+  "fn": "person",
+  "input": "\ufeff",
+  "error": "T\u00ean ch\u1ec9 c\u00f3 k\u00fd t\u1ef1 kh\u00f4ng nh\u00ecn th\u1ea5y - b\u1ea1n g\u00f5 l\u1ea1i b\u1eb1ng ch\u1eef th\u01b0\u1eddng."
+ },
+ {
+  "fn": "person",
+  "input": "   ",
+  "error": "B\u1ea1n ch\u01b0a g\u00f5 t\u00ean."
+ },
+ {
+  "fn": "person",
+  "input": "   ",
+  "allowEmpty": true,
+  "out": ""
+ },
+ {
+  "fn": "person",
+  "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+ },
+ {
+  "fn": "person",
+  "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "error": "T\u00ean d\u00e0i t\u1ed1i \u0111a 80 k\u00fd t\u1ef1 (b\u1ea1n \u0111ang g\u00f5 81) - b\u1ea1n r\u00fat ng\u1eafn l\u1ea1i."
+ },
+ {
+  "fn": "person",
+  "input": "Ng\u01b0\u1eddi k\u1ec3",
+  "error": "\u201cNg\u01b0\u1eddi k\u1ec3\u201d l\u00e0 t\u00ean m\u00e1y d\u00f9ng cho ng\u01b0\u1eddi k\u1ec3 hay vai ph\u1ee5 kh\u00f4ng t\u00ean - b\u1ea1n \u0111\u1eb7t t\u00ean kh\u00e1c."
+ },
+ {
+  "fn": "person",
+  "input": "NARRATOR",
+  "error": "\u201cNARRATOR\u201d l\u00e0 t\u00ean m\u00e1y d\u00f9ng cho ng\u01b0\u1eddi k\u1ec3 hay vai ph\u1ee5 kh\u00f4ng t\u00ean - b\u1ea1n \u0111\u1eb7t t\u00ean kh\u00e1c."
+ },
+ {
+  "fn": "person",
+  "input": "Vai ph\u1ee5 kh\u00f4ng t\u00ean",
+  "error": "\u201cVai ph\u1ee5 kh\u00f4ng t\u00ean\u201d l\u00e0 t\u00ean m\u00e1y d\u00f9ng cho ng\u01b0\u1eddi k\u1ec3 hay vai ph\u1ee5 kh\u00f4ng t\u00ean - b\u1ea1n \u0111\u1eb7t t\u00ean kh\u00e1c."
+ },
+ {
+  "fn": "person",
+  "input": "Anonymous_Male",
+  "error": "\u201cAnonymous_Male\u201d l\u00e0 t\u00ean m\u00e1y d\u00f9ng cho ng\u01b0\u1eddi k\u1ec3 hay vai ph\u1ee5 kh\u00f4ng t\u00ean - b\u1ea1n \u0111\u1eb7t t\u00ean kh\u00e1c."
+ },
+ {
+  "fn": "person",
+  "input": "a::b",
+  "error": "\u201ca::b\u201d l\u00e0 t\u00ean m\u00e1y d\u00f9ng cho ng\u01b0\u1eddi k\u1ec3 hay vai ph\u1ee5 kh\u00f4ng t\u00ean - b\u1ea1n \u0111\u1eb7t t\u00ean kh\u00e1c."
+ },
+ {
+  "fn": "person",
+  "input": "natasha ",
+  "others": [
+   "Lucien",
+   "Natasha"
+  ],
+  "error": "Trong s\u00e1ch \u0111\u00e3 c\u00f3 ng\u01b0\u1eddi t\u00ean \u201cNatasha\u201d - b\u1ea1n \u0111\u1eb7t t\u00ean kh\u00e1c \u0111\u1ec3 kh\u1ecfi nh\u1ea7m hai ng\u01b0\u1eddi."
+ },
+ {
+  "fn": "person",
+  "input": "Natasa",
+  "others": [
+   "Natasha"
+  ],
+  "out": "Natasa"
+ },
+ {
+  "fn": "person",
+  "input": "H\u1ea1",
+  "others": [
+   "H\u00e0"
+  ],
+  "out": "H\u1ea1"
+ },
+ {
+  "fn": "person",
+  "input": "Lu\u200bcien",
+  "others": [
+   "Natasha"
+  ],
+  "out": "Lucien"
+ },
+ {
+  "fn": "surface",
+  "input": "Lu\u200bcien",
+  "out": "Lucien"
+ },
+ {
+  "fn": "surface",
+  "input": "\u200b",
+  "error": "T\u1eeb c\u1ea7n \u0111\u1ed5i c\u00e1ch \u0111\u1ecdc ch\u1ec9 c\u00f3 k\u00fd t\u1ef1 kh\u00f4ng nh\u00ecn th\u1ea5y - b\u1ea1n g\u00f5 l\u1ea1i b\u1eb1ng ch\u1eef th\u01b0\u1eddng."
+ },
+ {
+  "fn": "surface",
+  "input": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+  "error": "T\u1eeb c\u1ea7n \u0111\u1ed5i c\u00e1ch \u0111\u1ecdc d\u00e0i t\u1ed1i \u0111a 80 k\u00fd t\u1ef1 (b\u1ea1n \u0111ang g\u00f5 81) - b\u1ea1n r\u00fat ng\u1eafn l\u1ea1i."
+ },
+ {
+  "fn": "spoken",
+  "input": "Lu  xi en",
+  "out": "Lu xi en"
+ },
+ {
+  "fn": "spoken",
+  "input": "\u200b",
+  "error": "C\u00e1ch \u0111\u1ecdc ch\u1ec9 c\u00f3 k\u00fd t\u1ef1 kh\u00f4ng nh\u00ecn th\u1ea5y - b\u1ea1n g\u00f5 l\u1ea1i b\u1eb1ng ch\u1eef th\u01b0\u1eddng."
+ },
+ {
+  "fn": "spoken",
+  "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "error": "C\u00e1ch \u0111\u1ecdc d\u00e0i t\u1ed1i \u0111a 120 k\u00fd t\u1ef1 (b\u1ea1n \u0111ang g\u00f5 121) - b\u1ea1n r\u00fat ng\u1eafn l\u1ea1i."
+ }
+]

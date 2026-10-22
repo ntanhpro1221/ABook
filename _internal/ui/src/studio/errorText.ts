@@ -31,12 +31,15 @@ const KNOWN: { pattern: RegExp; summary: string; hint: string; studioHint?: stri
 ];
 
 /** Lỗi thô -> câu cho người nghe + việc nên làm + nguyên văn. Lỗi lạ: "Có lỗi khi làm sách" (không đọc nguyên văn lên mặt).
- *  `bundledStudio`: app đóng gói có Studio (Ollama riêng, không có biểu tượng khay) - lời khuyên theo đó. */
-export function friendlyError(raw: string, bundledStudio = false): FriendlyError {
+ *  `bundledStudio`: app đóng gói có Studio (Ollama riêng, không có biểu tượng khay) - lời khuyên theo đó.
+ *  `redo`: phân tích đã bị ngắt giữa chừng - nút chính của trang là "Làm lại phân tích từ đầu", "Tiếp tục" chỉ là lối phụ có giá
+ *  (stopText.asksBeforeResume), nên lời khuyên chỉ nút chính (soát a88 T3). */
+export function friendlyError(raw: string, bundledStudio = false, redo = false): FriendlyError {
   const detail = raw.trim();
   const known = KNOWN.find((entry) => entry.pattern.test(detail));
-  if (known) return { summary: known.summary, hint: (bundledStudio && known.studioHint) || known.hint, detail };
-  return { summary: "Có lỗi khi làm sách.", hint: "Bấm Tiếp tục để thử lại; nếu vẫn lỗi, mở Chi tiết bên dưới để gửi cho người hỗ trợ.", detail };
+  const advice = (hint: string) => (redo ? hint.replace(/([Bb])ấm Tiếp tục/g, "$1ấm Làm lại phân tích từ đầu") : hint);
+  if (known) return { summary: known.summary, hint: advice((bundledStudio && known.studioHint) || known.hint), detail };
+  return { summary: "Có lỗi khi làm sách.", hint: advice("Bấm Tiếp tục để thử lại; nếu vẫn lỗi, mở Chi tiết bên dưới để gửi cho người hỗ trợ."), detail };
 }
 
 const OFFLINE = /getaddrinfo failed|\[Errno 11001\]|WinError 11001|WinError 10051|WinError 10060|Network is unreachable|Temporary failure in name resolution|Name or service not known|timed out|Connection (?:aborted|reset)|RemoteDisconnected|IncompleteRead/i;

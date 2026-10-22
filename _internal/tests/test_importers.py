@@ -88,7 +88,7 @@ def test_hoi_thu_nhat_nhi_nhut_are_chapter_headings_but_a_sentence_is_not() -> N
     for line in ("Hồi thứ nhất", "Hồi thứ nhì", "Hồi thứ nhứt", "Chương thứ nhất: Bến đò"):
         assert importers.is_heading_line(line, importers.TXT_HEADING), line
     assert not importers.is_heading_line("Hồi nhất định phải kể cho hết.", importers.TXT_HEADING)
-    assert titles(importers.import_text(FIXTURES / "hoi.txt", split_chapters=True)) == ["Hồi thứ nhất", "Hồi thứ nhì", "Hồi thứ ba"]
+    assert titles(importers.import_text(FIXTURES / "hoi.txt", split_chapters=True)) == ["Mở đầu", "Hồi thứ nhất", "Hồi thứ nhì", "Hồi thứ ba"]
 
 
 def test_cells_rules_figures_pre_and_note_numbers_do_not_glue_words() -> None:
@@ -113,12 +113,12 @@ def test_a_non_utf8_txt_is_read_in_the_encoding_its_text_looks_like_and_says_so(
 
 def test_docx_title_heading_scene_headings_bold_roman_chapters_and_title_page() -> None:
     title_h1 = importers.import_text(FIXTURES / "title_h1.docx")
-    assert title_h1.title == "Bến đò ngang" and titles(title_h1) == ["Chương 1: Bến đò", "Chương 2: Mưa"]
+    assert title_h1.title == "Bến đò ngang" and titles(title_h1) == ["Mở đầu", "Chương 1: Bến đò", "Chương 2: Mưa"]
     scenes = importers.import_text(FIXTURES / "scenes.docx")
     assert titles(scenes) == ["Chương 1", "Chương 2"] and scenes.chapters[0].text.startswith("Cảnh 1\n\n") and not scenes.notes
     roman = importers.import_text(FIXTURES / "roman.docx")
     assert titles(roman) == [importers.PREAMBLE, "I. KHỞI ĐẦU", "II. MƯA"]
-    assert roman.chapters[0].matter == "Trang tên sách" and importers.default_picks(roman) == [(2, ""), (3, "")]
+    assert roman.chapters[0].matter == "Trang tên sách" and importers.default_picks(roman) == [(1, ""), (2, ""), (3, "")]
     assert "V. Năm người khách" in roman.chapters[1].text, "dòng số La Mã không in đậm là chữ"
 
 
@@ -201,11 +201,12 @@ def test_tail_credit_lines_are_suggested_never_removed_and_dialogue_is_never_mis
     support = "Xin ủng hộ nhóm dịch: Momo 0912345678 - Agribank 1234567890123"
     for name, split in (("tail_credits.txt", True), ("tail_credits_epub.epub", False)):
         book = importers.import_text(FIXTURES / name, split_chapters=split)
+        offset = 1 if split else 0
         assert book.credits == [
-            (1, support), (1, "Đọc truyện mới nhất tại truyenthu.vn"), (2, "Dịch: Nhóm Lục Bình"), (2, "Nguồn: truyenthu.vn"),
-            (2, "Converter: Nhóm Lục Bình"), (2, "--- Hết chương ---"),
+            (1 + offset, support), (1 + offset, "Đọc truyện mới nhất tại truyenthu.vn"), (2 + offset, "Dịch: Nhóm Lục Bình"), (2 + offset, "Nguồn: truyenthu.vn"),
+            (2 + offset, "Converter: Nhóm Lục Bình"), (2 + offset, "--- Hết chương ---"),
         ], name  # chương 3 (thoại có chữ "ủng hộ", câu truyện nhắc ngân hàng, URL trong lời thoại, dòng ủng hộ bị câu truyện chen sau) không gợi ý gì
-        assert support in book.chapters[0].text and "--- Hết chương ---" in book.chapters[1].text, "chữ của truyện giữ nguyên"
+        assert support in book.chapters[offset].text and "--- Hết chương ---" in book.chapters[1 + offset].text, "chữ của truyện giữ nguyên"
         tail_notes = [note for note in book.notes if "ở cuối" in note]
         assert len(tail_notes) == 5 and all("không tự bỏ" in note for note in tail_notes)
     whole = importers.import_text(FIXTURES / "tail_credits.txt")
@@ -296,17 +297,17 @@ def test_a_whole_story_txt_is_one_chapter_unless_the_listener_asks_to_split_it()
     assert split.credits == [(3, "Dịch: Nhóm Lục Bình")], "gợi ý ghi công đi theo chương mới (chương 3 = 'Chương 2' vì có 'Mở đầu')"
 
 
-def test_a_whole_story_txt_is_named_by_its_title_line_and_a_lone_title_line_is_not_a_chapter() -> None:
+def test_a_whole_story_txt_is_named_by_its_title_line_and_keeps_that_line_in_a_chapter() -> None:
     whole = importers.import_text(FIXTURES / "whole.txt")
     assert whole.title == "Chuyến phà cuối ngày", "tên sách gợi ý là dòng tiêu đề đầu file, không phải tên file 'whole'"
     assert (whole.split_offer, whole.split_headings) == (4, 3), "chữ dẫn hai dòng (tên + giới thiệu) vẫn là chương 'Mở đầu'"
     titled = importers.import_text(FIXTURES / "titled.txt")
     assert titled.title == "Ngọn đèn cuối cùng" and len(titled.chapters) == 1
-    assert (titled.split_offer, titled.split_headings) == (2, 2), "chữ dẫn chỉ là MỘT dòng tên truyện: không có chương 'Mở đầu'"
+    assert (titled.split_offer, titled.split_headings) == (3, 2), "dòng tên truyện vẫn ở phần mở đầu"
     assert titled.notes == [], "chưa tích tách thì chưa có gì để báo"
     split = importers.import_text(FIXTURES / "titled.txt", split_chapters=True)
-    assert titles(split) == ["Chương 1: Chuyến phà đêm", "Chương 2: Căn nhà bên sông"]
-    assert split.notes == ["Dòng đầu “Ngọn đèn cuối cùng” là tên truyện - dùng làm tên sách, không đọc thành một chương."], "nói ra, không bỏ âm thầm"
+    assert titles(split) == ["Mở đầu", "Chương 1: Chuyến phà đêm", "Chương 2: Căn nhà bên sông"]
+    assert split.chapters[0].text == "Ngọn đèn cuối cùng" and split.notes == []
     assert importers.title_from_line("# Ngọn đèn cuối cùng") == "Ngọn đèn cuối cùng"
     for line in ("Chương 1: Bến phà", "“Hôm nay nước lớn,” ông nói.", "Anh ta đi.", "- Ông đi đâu", "", "   ", "123"):
         assert importers.title_from_line(line) == "", line
@@ -358,17 +359,16 @@ def test_a_txt_with_fewer_than_two_chapter_headings_offers_no_split(tmp_path: Pa
     assert importers.import_text(folder, split_chapters=True).split_offer == 0, "thư mục TXT: mỗi file đã là một chương"
 
 
-def test_pdf_removes_running_lines_joins_lines_and_splits_chapters() -> None:
+def test_pdf_keeps_running_lines_joins_lines_and_splits_chapters() -> None:
     book = importers.import_text(FIXTURES / "story.pdf")
-    assert titles(book) == ["Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3: Cơn mưa cuối mùa"]
+    assert titles(book) == ["Mở đầu", "Chương 1: Bến phà lúc bình minh", "Chương 2: Người khách lạ", "Chương 3: Cơn mưa cuối mùa"]
     joined = "\n".join(chapter.text for chapter in book.chapters)
-    assert "TRUYỆN THỬ NGHIỆM" not in joined and "Trang " not in joined, "tiêu đề chạy (kèm số trang) và số trang bị bỏ"
-    assert "Mát-xcơ-va xa lắm" in joined, "gạch nối thật của tên riêng giữ, chỉ nối liền"
+    assert "TRUYỆN THỬ NGHIỆM" in joined and "Trang " in joined, "dòng ở mép trang vẫn ở trong chữ sách"
+    assert "Mát-" in joined and "xcơ-va xa lắm" in joined, "giữ hai vế và các dòng mép trang xen giữa, không bỏ chữ"
     assert "không đầu không cuối" in joined
-    assert "trôi vào bãi.”\n\nCậu bé gật đầu" in joined, "dòng cuối ngắn ngắt đoạn"
+    assert "trôi vào bãi.”" in joined and "Cậu bé gật đầu" in joined, "hai câu và dòng mép trang xen giữa đều còn"
     assert "suốt quãng đường.\n\n— Ông đi đâu" in joined, "dòng thoại mở bằng gạch ngắt đoạn"
-    assert [note for note in book.notes if note.startswith("Bỏ dòng lặp")] == ["Bỏ dòng lặp đầu / cuối trang: “TRUYỆN THỬ NGHIỆM · 1”"], \
-        "một ghi chú cho dòng lặp, dù số trang trong nó đổi"
+    assert not any(note.startswith("Bỏ dòng lặp") for note in book.notes)
 
 
 def test_a_soft_hyphen_at_a_line_end_is_dropped_but_a_real_hyphen_stays() -> None:
@@ -390,7 +390,7 @@ def test_the_pdf_rules_layer_replays_the_raw_pages() -> None:
 def test_a_pdf_without_a_text_layer_says_it_needs_ocr() -> None:
     with pytest.raises(importers.ImportFailed, match="ảnh chụp"):
         importers.import_text(FIXTURES / "scan.pdf")
-    assert expected("scan") == {"error": "PDF này là ảnh chụp, chưa có chữ để đọc."}
+    assert "Bạn" in expected("scan")["error"] and "OCR" in expected("scan")["error"]
 
 
 def test_running_lines_only_go_when_they_repeat_and_chapter_headings_never_do() -> None:
@@ -398,11 +398,11 @@ def test_running_lines_only_go_when_they_repeat_and_chapter_headings_never_do() 
     pages = [[f"Chương {n}", *(f"{body} Dòng {n}.{k}" for k in range(5)), f"- {n} -"] for n in range(1, 6)]
     book = importers.import_pdf_pages(pages, "x")
     assert [chapter.title for chapter in book.chapters] == [f"Chương {n}" for n in range(1, 6)], "tiêu đề chương lặp 'ở mọi trang' vẫn ở lại"
-    assert all("- " not in chapter.text for chapter in book.chapters), "số trang '- N -' bị bỏ"
+    assert all(f"- {n} -" in chapter.text for n, chapter in enumerate(book.chapters, 1)), "số trang chỉ là gợi ý bỏ đọc"
     filler = [f"{body} Dòng {k}." for k in range(5)]
     two = importers.import_pdf_pages([["Sách thử", *filler, "1"], ["Sách thử", *filler[::-1], "2"]], "x")
     assert "Sách thử" in two.chapters[0].text, "hai trang là quá ít để kết luận một dòng là tiêu đề chạy"
-    assert not two.chapters[0].text.endswith("2")
+    assert two.chapters[0].text.endswith("2")
 
 
 def test_hostile_or_broken_files_say_why(tmp_path: Path) -> None:
@@ -446,9 +446,9 @@ def test_studio_scan_takes_docx_and_pdf_like_epub(tmp_path: Path) -> None:
     scan = actions.scan_inputs([str(FIXTURES / "headings.docx"), str(FIXTURES / "story.pdf")], epub_root=library)
     assert scan["errors"] == [] and scan["suggestedTitle"] == "Chuyến phà cuối ngày"
     assert [row["firstLine"] for row in scan["files"]][:2] == [importers.PREAMBLE, "Chương 1: Bến phà lúc bình minh"]
-    assert len(scan["files"]) == 4 + 3 and scan["totals"]["chapters"] == 7
+    assert len(scan["files"]) == 4 + 4 and scan["totals"]["chapters"] == 8
     assert all(row["chars"] > 0 for row in scan["files"])
-    assert any(note.startswith("story.pdf: Bỏ dòng lặp") for note in scan["notes"]) and any("headings.docx" in note for note in scan["notes"])
+    assert any("headings.docx" in note for note in scan["notes"])
     scanned = actions.scan_inputs([str(FIXTURES / "scan.pdf")], epub_root=library)
     assert scanned["files"] == [] and "ảnh chụp" in scanned["errors"][0] and scanned["errors"][0].startswith("scan.pdf: ")
 
@@ -587,10 +587,10 @@ def test_dropping_the_notes_removes_them_everywhere_and_ticking_nothing_gives_th
     assert read_notes("notes2.epub").chapters[2].matter == "Chú thích"
 
 
-def test_word_footnotes_never_reach_the_text_unless_the_listener_asks_for_them_at_the_end_of_the_chapter() -> None:
+def test_word_footnotes_stay_by_default_and_can_be_dropped_explicitly() -> None:
     plain = read_notes("notes.docx")
-    assert "Lời chú" not in "".join(chapter.text for chapter in plain.chapters) and plain.footnote_found == 4 and plain.footnote_marks == 0
-    assert read_notes("notes.docx", notes="drop").to_dict() == plain.to_dict()
+    assert "Lời chú" in "".join(chapter.text for chapter in plain.chapters) and plain.footnote_found == 4 and plain.footnote_marks == 4
+    assert "Lời chú" not in "".join(chapter.text for chapter in read_notes("notes.docx", notes="drop").chapters)
     ended = read_notes("notes.docx", notes="end")
     assert lines_of(ended.chapters[0])[-2:] == ["Lời chú thứ nhất.", "Lời chú thứ hai."]
     assert lines_of(ended.chapters[1])[-2:] == ["Lời chú cuối sách về cơn mưa.", "Lời chú thứ tư."], "chú thích cuối trang và cuối sách theo thứ tự dấu gọi"

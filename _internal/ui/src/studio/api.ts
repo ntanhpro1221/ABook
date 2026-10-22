@@ -53,6 +53,12 @@ export interface BookSummary {
   paused?: "battery" | "listener" | null;
   /** Lượt chạy này tạm dừng được: bắt đầu bằng bản app có tính năng ấy (lượt cũ chạy mã cũ tới hết). */
   canPause?: boolean;
+  /** Đã bấm "Dừng": sách còn chạy tới chỗ dừng sạch kế (30 giây tới vài phút), chưa dừng hẳn - lúc ấy không tạm dừng hay làm tiếp được. */
+  stopping?: boolean;
+  /** Lượt chạy gần nhất chết vì sự cố (không phải bạn bấm Dừng): nguyên nhân do supervisor ghi, null khi không có. */
+  runEnd?: { state: "failed" | "lost"; detail: string; exitCode: number | null } | null;
+  /** Cuốn xếp hàng mà cuốn đang giữ máy lại đang tạm dừng: hàng đứng yên cho tới khi người dùng làm tiếp hay dừng cuốn ấy. */
+  queueWaitsOn?: { id: string; title: string; paused: "battery" | "listener" } | null;
   /** Phần nối tiếp của "Làm tiếp cuốn này" (continues.json): mã phần đầu + thứ tự phần; phần đầu và sách lẻ: null. */
   series?: { root: string; part: number } | null;
   /** Tập tạo cùng lúc với tập trước ("Tạo nhiều tập"): giọng và cách đọc tên gieo từ tập trước lúc tập này bắt đầu chạy. */

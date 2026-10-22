@@ -51,7 +51,7 @@ from .fingerprints import Fingerprints
 from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
 from .listening import HEAVY_KEYS, RECORD_ID, Listening, StalePlayback
 from .opened_events import OpenedEvents
-from . import bluetooth, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
+from . import bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
@@ -150,6 +150,7 @@ WITHDRAW_APPLIED = {
                 " ở tab Kịch bản.",
     "pronunciations": "Máy vừa đưa cách đọc này vào sách nên không hoàn tác được nữa.",
     "voices": "Máy vừa đưa quyết định này vào sách nên không hoàn tác được nữa - muốn đổi lại, đổi giọng ở tab Nhân vật.",
+    "lines": "Máy vừa đưa cách đọc câu này vào sách nên không hoàn tác được nữa - muốn đổi lại, sửa cách đọc câu ở tab Kịch bản.",
 }
 
 SPEAKER_PROBLEMS = {
@@ -189,6 +190,19 @@ class ApiError(Exception):
         self.status = status
         self.message = message
         self.extra = extra
+
+
+def _typed(rule: Callable[[Any], str], raw: Any) -> str:
+    """Chữ người nghe gõ qua phép kiểm của `name_rules` (NFC, bỏ ký tự vô hình, giới hạn dài báo rõ); không đạt thì 400 kèm lời tiếng Việt."""
+    try:
+        return rule(raw)
+    except name_rules.NameProblem as problem:
+        raise ApiError(HTTPStatus.BAD_REQUEST, str(problem)) from problem
+
+
+def _typed_surface(raw: Any) -> str:
+    """Chữ cần đổi cách đọc đã làm sạch; "" khi người gõ chưa gõ gì (nơi gọi tự nói "thiếu")."""
+    return _typed(name_rules.surface, raw) if isinstance(raw, str) and raw.strip() else ""
 
 
 def _needs_download(preset: str) -> bool:
@@ -451,6 +465,7 @@ class App:
         self._precast_lock = threading.RLock()
         self._precast_thread: threading.Thread | None = None
         self._precast_seen: dict[str, float] = {}  # lúc người gác thấy mốc lần đầu, theo cuốn (chờ supervisor giữ)
+        self._battery_told: set[str] = set()  # cuốn đã báo "tạm dừng vì pin" trong lần dừng hiện tại (cắm sạc / làm tiếp thì xoá)
         self.notify_desktop: Callable[[str, str], None] = (
             (lambda _title, _message: None) if self._fake_engine() or read_only else _desktop_toast)
 
@@ -672,14 +687,22 @@ class App:
         người dùng đã tích (`importers.footnote_choice_from_json`)."""
         source = self._book_source(path)
         try:
+            digest = textbook.source_digest(source)
             book = importers.import_text(source, split_chapters=split_chapters, keep_short=True,
                                          footnotes=importers.footnote_choice_from_json(footnotes))
+            if textbook.source_digest(source) != digest:
+                raise importers.ImportFailed("File nguồn đã thay đổi. Bạn hãy xem lại danh sách chương rồi thêm sách.")
+            previews = getattr(self, "_text_source_previews", {})
+            previews[str(source.resolve())] = digest
+            while len(previews) > 32:
+                previews.pop(next(iter(previews)))
+            self._text_source_previews = previews
             # Đúng bộ chữ này đã có trong thư viện: hỏi ngay ở đây ("Mở cuốn đó" / "Thêm bản riêng"), đừng để người dùng sửa tên
             # rồi mới biết lúc thêm.
             existing = textbook.find_existing(book, self.library.root)
             # Cũng đúng FILE này đã được thêm (chọn chương khác, tách hay không tách): nói ngay, đừng để thành cuốn trùng tên không ai báo.
             same = textbook.find_same_source(textbook.source_digest(source), self.library.root)
-            return {**textbook.preview(book), "existing": self._existing_view(existing) if existing else None,
+            return {**textbook.preview(book), "sourceFingerprint": digest, "existing": self._existing_view(existing) if existing else None,
                     "sameSource": {**self._existing_view(same), "chapters": int(packages.manifest(same).get("chaptersTotal") or 0)} if same else None}
         except importers.ImportFailed as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
@@ -692,7 +715,7 @@ class App:
         return {"id": book_id(folder), "title": str(title)}
 
     def add_text_book(self, path: str, title: str = "", separate: bool = False, split_chapters: bool = False,
-                      chapters: Any = None, footnotes: Any = None) -> dict[str, Any]:
+                      chapters: Any = None, footnotes: Any = None, source_fingerprint: str | None = None) -> dict[str, Any]:
         """"Thêm sách từ file…": nhập thành sách CHỈ-CÓ-CHỮ trong thư viện (textbook.py) - đọc được ngay, chưa có audio. Nhập lại
         đúng file ấy thì về cuốn đã có (`how`: "new" / "existing"), trừ khi người dùng chọn "Thêm bản riêng" (`separate`). `split_chapters`: như bước xem trước.
         `chapters`: các chương người dùng tích ở bước xem trước, kèm tên mới (`textbook.picks_from_json`); không có thì các chương mặc định.
@@ -704,7 +727,8 @@ class App:
             folder, how, book = textbook.add_to_library(source, title, self.library.root, self.library.projects(), self.fingerprints,
                                                         separate=separate, split_chapters=split_chapters,
                                                         picks=textbook.picks_from_json(chapters),
-                                                        footnotes=importers.footnote_choice_from_json(footnotes))
+                                                        footnotes=importers.footnote_choice_from_json(footnotes),
+                                                        expected_digest=source_fingerprint or getattr(self, "_text_source_previews", {}).get(str(source.resolve())))
         except (importers.ImportFailed, bookfile.BookFileError) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         except OSError as error:
@@ -758,7 +782,10 @@ class App:
                     return None
 
             # Sửa trong xưởng của file (máy kia sửa thêm): gộp, không bỏ im lặng (soát UX a25 T5) - và nói đã gộp gì.
-            merged = workshop_merge.merge_workshop(project, member, self.reviews, time.time())
+            try:
+                merged = workshop_merge.merge_workshop(project, member, self.reviews, time.time())
+            except notices.Unreadable as error:
+                raise _overrides_busy() from error
             self.library.preferences.add_recent(project)
             return {"id": book_id(project), "how": "project", **({"edits": edits} if edits else {}),
                     **({"workshop": merged} if any(merged.values()) else {})}
@@ -774,12 +801,17 @@ class App:
 
     def summary(self, path: Path) -> dict[str, Any]:
         running = self.runner.running(path)
-        result = self.library.summary(path, running=running, starting=self.jobs.starting(path))
+        result = self.library.summary(path, running=running, starting=self.jobs.starting(path),
+                                      lease_after=self.runner.lease_after(path))
         result["startError"] = self.jobs.error(path)
+        # Đã bấm "Dừng": worker còn chạy tới checkpoint sạch kế (30 giây tới vài phút) - lúc ấy không tạm dừng hay làm tiếp được.
+        result["stopping"] = bool(running and self.runner.stopping(path))
         # Tạm dừng mà tiến trình vẫn sống (power_source): "battery" / "listener". Dây chuyền chỉ đứng ở checkpoint kế -
         # tới đó sổ vẫn ghi pha đang làm, nên "đang tạm dừng" khác "đã tạm dừng".
-        result["paused"] = self.runner.pause_reason(path) if running else None
-        result["canPause"] = bool(running and self.runner.can_pause(path))
+        result["paused"] = self.runner.pause_reason(path) if running and not result["stopping"] else None
+        result["canPause"] = bool(running and not result["stopping"] and self.runner.can_pause(path))
+        # Lượt chạy gần nhất chết vì sự cố (không phải bạn bấm Dừng): nguyên nhân do supervisor ghi, để trang sách nói ra.
+        result["runEnd"] = None if running or result.get("starting") or result.get("phase") == "done" else self.runner.last_end(path)
         result["precast"] = precast.flags(path, result)
         if running:
             self._watch_precast()
@@ -788,14 +820,33 @@ class App:
         result["series"] = {"root": book_id(place[0]), "part": place[1]} if place else None
         # Tập tạo cùng lúc với tập trước ("Tạo nhiều tập"): giọng và cách đọc tên sẽ gieo từ tập trước lúc nó bắt đầu chạy.
         result["seedPending"] = continuation.seed_pending(path)
-        if result["paused"]:
+        if result["stopping"]:
+            result["statusLabel"] = humanize.STOPPING_LABEL
+            result["eta"] = None
+        elif result["paused"]:
             result["statusLabel"] = humanize.pause_label(result["paused"], reached=result.get("status") == "paused")
             result["eta"] = None
         result["cover"] = covers.cover_view(path, result["id"])
         result.pop("position", None)
         with self._queue_lock:
             result["queuePosition"] = self.queue.index(result["id"]) + 1 if result["id"] in self.queue else None
+        # Cuốn xếp hàng mà cuốn đang giữ máy lại đang tạm dừng: hàng đứng yên cho tới khi người dùng làm tiếp / dừng nó (soát a88 T5).
+        result["queueWaitsOn"] = self._queue_blocker(path) if result["queuePosition"] else None
         return result
+
+    def _queue_blocker(self, path: Path) -> dict[str, Any] | None:
+        """Cuốn đang giữ máy mà đang tạm dừng (người dùng bấm, hay máy chạy pin): {title, paused}; None khi nó đang chạy thật."""
+        other = self._busy_elsewhere(path)
+        if other is None:
+            return None
+        reason = self.runner.pause_reason(other)
+        if not reason:
+            return None
+        try:
+            title = store.summarize(other, running=True)["title"]
+        except Exception:  # noqa: BLE001 - sổ đang bận: tên thư mục thay tên sách
+            title = other.name
+        return {"id": book_id(other), "title": str(title or other.name), "paused": reason}
 
     def busy_book(self) -> dict[str, Any] | None:
         """Cuốn đang chặn "nghe thử" (cuốn nào đang chạy / khởi động) - tên, mã và pha để lời từ chối nói đúng; None: máy rảnh."""
@@ -970,6 +1021,8 @@ class App:
         path = self._book(value)
         if not self.runner.running(path):
             raise ApiError(HTTPStatus.CONFLICT, "Sách này không đang chạy")
+        if self.runner.stopping(path):
+            raise ApiError(HTTPStatus.CONFLICT, "Sách đang dừng - đợi dừng xong rồi bấm “Tiếp tục” để chạy lại")
         try:
             self.runner.pause(path, paused)
         except RuntimeError as error:
@@ -1047,12 +1100,14 @@ class App:
         running = 0
         for path in self.library.projects():
             if not self.runner.running(path):
+                self._battery_told.discard(str(path))
                 continue
             running += 1
             try:
                 summary = self.summary(path)
             except Exception:  # noqa: BLE001 - sổ đang ghi dở / sách hỏng: vòng sau
                 continue
+            self._tell_battery_pause(path, summary)
             with self._precast_lock:
                 if not precast.due(path, summary):
                     continue
@@ -1069,26 +1124,37 @@ class App:
             )
         return running
 
+    def _tell_battery_pause(self, path: Path, summary: dict[str, Any]) -> None:
+        """Supervisor vừa tạm dừng cuốn vì máy rút sạc (power_source): báo ra màn hình Windows MỘT lần mỗi lần dừng - 24-09 sạc
+        tuột 22:50 mà 00:07 mới có người thấy (điện thoại đã báo từ lâu, máy tính thì chưa - soát a88 V6)."""
+        key = str(path)
+        if summary.get("paused") != "battery":
+            self._battery_told.discard(key)
+            return
+        if key in self._battery_told:
+            return
+        self._battery_told.add(key)
+        self.notify_desktop(
+            f"“{summary.get('title') or path.name}” tạm dừng vì máy chạy pin",
+            "Tạo sách trên pin chậm hơn nhiều mà hao pin, nên Studio tạm dừng. Cắm sạc là tự làm tiếp; bấm “Tiếp tục” nếu muốn làm tiếp ngay trên pin.",
+        )
+
     def stop(self, value: str) -> dict[str, Any]:
         self._mutating()
         path = self._book(value)
         with self._queue_lock:
             if not self.jobs.starting(path) and self._dequeue(value):
                 return self.summary(path)  # chưa nhận lượt: "Dừng" nghĩa là bỏ khỏi hàng
-        self.jobs.stop(path)
-        return self.summary(path)
-
-    def paused_at_checkpoint(self, path: Path) -> bool:
-        """Cuốn đang chạy mà dây chuyền ĐÃ đứng ở checkpoint tạm dừng (sổ ghi "paused" - Pipeline._wait_pause_or_stop): không câu nào đang
-        bay, yêu cầu của người nghe chỉ được đọc lại sau khi làm tiếp, nên bỏ một yêu cầu lúc này không đua với việc áp (soát a83 B5)."""
-        if not self.runner.running(path) or not self.runner.pause_reason(path) or self.jobs.starting(path):
-            return False
         try:
-            with closing(store.connect(path)) as connection:
-                row = connection.execute("SELECT status FROM book WHERE id=1").fetchone()
-        except Exception:  # noqa: BLE001 - sổ đang bận: coi như chưa tới checkpoint
-            return False
-        return row is not None and str(row["status"]) == "paused"
+            self.jobs.stop(path)
+        except actions.RunnerGone as error:
+            # Tiến trình đã chết (hay sách đã xong) trước khi bấm: không còn gì để dừng. Trang tự làm mới thành "làm tiếp được".
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        result = self.summary(path)
+        if result["running"]:
+            # Supervisor đọc yêu cầu ở vòng kế (tới 0,25 giây): trả trạng thái SẼ có, như `pause`.
+            result.update({"stopping": True, "paused": None, "canPause": False, "statusLabel": humanize.STOPPING_LABEL, "eta": None})
+        return result
 
     def leave_queue(self, value: str) -> dict[str, Any]:
         """"Bỏ xếp hàng": CHỈ bỏ khỏi hàng. Cuốn đã được trao lượt (màn của người dùng cũ tới một nhịp poll) thì KHÔNG dừng - dừng
@@ -1385,13 +1451,14 @@ class App:
         return overrides or None
 
     def _create_book(self, body: dict[str, Any], paths: list[str], title: str,
-                     first_person_chapters: dict[str, str] | None) -> Path:
-        """Tạo một dự án từ các lựa chọn của trình tạo sách - dùng chung cho sách thường và từng tập của "Tạo nhiều tập"."""
+                     first_person_chapters: dict[str, str] | None, *, overrides: dict[str, Any] | None = None) -> Path:
+        """Tạo một dự án từ các lựa chọn của trình tạo sách - dùng chung cho sách thường và từng tập của "Tạo nhiều tập".
+        `overrides`: cài đặt riêng đã kiểm sẵn (`_analysis_overrides`) - không có thì kiểm ở đây."""
         self.require_library_root()
         root = actions.create_book(
             self.library.root, paths, title, str(body.get("profile", "high_quality")),
             str(body.get("narrator", "")), str(body.get("firstPerson", "")),
-            settings_overrides=self._analysis_overrides(str(body.get("analysisModel", "") or "")),
+            settings_overrides=overrides if overrides is not None else self._analysis_overrides(str(body.get("analysisModel", "") or "")),
             first_person_chapters=first_person_chapters,
             first_person_gender=str(body.get("firstPersonGender") or "").strip(),
             teller_mode=body.get("tellerMode") is True,
@@ -1438,16 +1505,30 @@ class App:
             raise ApiError(HTTPStatus.CONFLICT, "Sách cũ đã bắt đầu chạy và qua bước phân tích - không làm lại được nữa. Tạo sách mới hay dùng "
                                                 "“Làm tiếp cuốn này”.")
         kept_covers: dict[str, bytes] = {}
+        held: str | None = None  # mã hoàn tác của bản dở đang nằm chờ (khôi phục nếu việc tạo cuốn mới hỏng)
+        # Kiểm điều kiện của cuốn mới (model phân tích có trong Ollama...) TRƯỚC khi đụng tới bản cũ: lỗi ở đây không được
+        # làm bản dở biến khỏi Studio (soát a88 V3).
+        overrides = self._analysis_overrides(str(body.get("analysisModel", "") or ""))
         if replaced is not None and not store.not_started(replaced):
             # "Làm lại phân tích" (bản dở: phân tích bị ngắt): dự án mới cùng tên, cùng thiết lập sẽ MỞ LẠI đúng thư mục cũ
-            # (project.create_or_open_project) và chạy tiếp bản dở - chính điều phải tránh. Nên bản dở vào Thùng rác TRƯỚC;
-            # không bỏ được thì thôi, chưa tạo gì. Bìa cầm trong bộ nhớ qua lúc ấy.
+            # (project.create_or_open_project) và chạy tiếp bản dở - chính điều phải tránh. Nên bản dở phải ra khỏi thư viện
+            # TRƯỚC khi tạo: vào chỗ chờ "Hoàn tác" (cùng ổ), tạo xong để nó tự vào Thùng rác lúc hết hạn; tạo hỏng thì khôi phục
+            # nguyên vẹn. Không bỏ được thì thôi, chưa tạo gì. Bìa cầm trong bộ nhớ qua lúc ấy.
             for name in (covers.COVER_FILE, covers.META_FILE):
                 if (replaced / name).is_file():
                     kept_covers[name] = (replaced / name).read_bytes()
-            self.delete(replaces)
+            held = self.delete(replaces, undo=True).get("undo")
             replaced = None
-        root = self._create_book(body, paths, str(body.get("title", "")), self._first_person_chapters(body))
+        try:
+            root = self._create_book(body, paths, str(body.get("title", "")), self._first_person_chapters(body),
+                                     overrides=overrides)
+        except BaseException:
+            if held:
+                try:
+                    self.undo_trash(held)
+                except ApiError:
+                    pass  # không khôi phục được (thư mục đích bị chiếm): bản dở vẫn nằm trong chỗ chờ, sau đó vào Thùng rác
+            raise
         for name, data in kept_covers.items():
             if not (root / name).exists():
                 atomic_write_bytes(root / name, data)
@@ -1531,10 +1612,10 @@ class App:
         return {"entries": self.shared_readings.entries()}
 
     def put_shared_reading(self, body: dict[str, Any], source: str = "") -> dict[str, Any]:
-        surface = " ".join(str(body.get("surface", "")).split())[:80]
+        surface = _typed_surface(body.get("surface", ""))
         if body.get("remove"):
             return {"removed": self.shared_readings.remove(surface)}
-        spoken = " ".join(str(body.get("spokenForm", "")).split())[:120]
+        spoken = _typed(name_rules.spoken, body.get("spokenForm")) if name_rules.clean(body.get("spokenForm")) else ""
         if not surface or not spoken:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu từ hoặc cách đọc")
         try:
@@ -1549,7 +1630,10 @@ class App:
         if not apply:
             return {"entries": waiting}
         self._mutating()
-        return {"applied": shared_readings.apply(path, waiting)}
+        try:
+            return {"applied": shared_readings.apply(path, waiting)}
+        except notices.Unreadable as error:
+            raise _overrides_busy() from error
 
     def _pinned_model(self, plan: dict[str, Any]) -> None:
         """Model đọc hiểu đã ghim của cuốn cũ: bỏ đi nếu là mặc định của app, chuyển sang `analysisModelMissing` nếu Ollama
@@ -3333,7 +3417,12 @@ def without_local_paths(value: Any) -> Any:
 def _withdraw_line_companions(path: Path, keys: list[str], requested_at: float) -> None:
     """Sửa câu "lời kể -> lời thoại" kèm người nói ghi thêm một mục `speakers` cùng mốc: là MỘT thay đổi (store.line_companions), nên bỏ mục
     `lines` là bỏ luôn mục ấy (chỉ mục đúng mốc đó - `requests_made_at`). Soát a83 B8."""
-    listener_overrides.withdraw_requests(path, "speakers", keys, requested_at)
+    cancelled.withdraw_requests(path, "speakers", keys, requested_at, now=time.time())
+
+
+def _overrides_busy() -> ApiError:
+    return ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Danh sách yêu cầu của cuốn này đang bị một chương trình khác giữ nên chưa lưu được. "
+                                                   "Bạn thử lại sau vài giây - các yêu cầu cũ vẫn còn nguyên")
 
 
 def _serialized_per_book(method: Callable[..., None]) -> Callable[..., None]:
@@ -3352,8 +3441,7 @@ def _serialized_per_book(method: Callable[..., None]) -> Callable[..., None]:
                 book_wishes.guard_overrides(path)
                 method(self, query, value, *rest)
             except (notices.Unreadable, listener_overrides.OverridesUnreadable) as error:
-                raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Danh sách yêu cầu của cuốn này đang bị một chương trình khác giữ nên chưa lưu được. "
-                                                              "Bạn thử lại sau vài giây - các yêu cầu cũ vẫn còn nguyên") from error
+                raise _overrides_busy() from error
 
     return wrapper
 
@@ -3789,14 +3877,13 @@ class Handler(BaseHTTPRequestHandler):
     @_serialized_per_book
     def post_pending_withdraw(self, _query: dict[str, list[str]], value: str) -> None:
         # Bỏ một thay đổi khỏi hộp "Áp dụng N thay đổi" trước khi áp (soát UX a6 01-10: muốn bỏ một mục thì phải đi tìm lại
-        # đúng thẻ / đúng câu ở ba tab khác nhau). Chỉ khi sách KHÔNG chạy, hoặc đã TẠM DỪNG tới checkpoint (`paused_at_checkpoint`): đang
-        # chạy thì dây chuyền có thể đang áp chính yêu cầu ấy ở ranh giới chương. Yêu cầu từng thay một yêu cầu cũ thì yêu cầu cũ trở lại.
+        # đúng thẻ / đúng câu ở ba tab khác nhau). Bỏ được MỌI LÚC như "Hoàn tác" trên thông báo (soát a89 T2: trước đây đang chạy thì bắt bấm "Tạm
+        # dừng"): dây chuyền chỉ đọc yêu cầu ở ranh giới chương, chụp một lần rồi áp từ bản chụp, nên yêu cầu đã rút thì lần quét sau không thấy;
+        # còn yêu cầu nó đã đưa vào sách (chỉ có thể xảy ra lúc đang chạy) thì dưới đây hỏi sổ (`already_applied`) và nói thật, như `_withdraw`. Yêu cầu từng thay một yêu cầu cũ
+        # thì yêu cầu cũ trở lại.
         self.app._mutating()
         path = self.app._editable(value)
         package = packages.is_package(path)
-        if not package and (self.app.runner.running(path) or self.app.jobs.starting(path)) and not self.app.paused_at_checkpoint(path):
-            raise ApiError(HTTPStatus.CONFLICT, "Sách đang chạy - máy có thể đang áp chính thay đổi này. Bạn bấm “Tạm dừng”, đợi tới khi báo "
-                                                "“Đã tạm dừng” rồi bỏ.")
         body = self._body()
         section, key = str(body.get("section") or ""), str(body.get("key") or "")
         try:
@@ -3813,14 +3900,17 @@ class Handler(BaseHTTPRequestHandler):
             mine = listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, group or [key], requested_at)
         if not mine:
             raise ApiError(HTTPStatus.CONFLICT, "Thay đổi này vừa được thay bằng một lựa chọn sau - mở lại hộp để xem.")
+        running = self.app.runner.running(path) or self.app.jobs.starting(path)
+        if not package and running and section in WITHDRAW_APPLIED and store.already_applied(path, section, mine):
+            raise ApiError(HTTPStatus.CONFLICT, WITHDRAW_APPLIED[section])  # máy vừa áp nó (ranh giới chương rơi đúng lúc này)
         if package:
             book_wishes.withdraw(path, section, list(mine), requested_at)  # cả bí danh của lần "Gộp vào…" ấy
         elif section == "retakes":
             # "Thu lại cả chương" là một nhóm: bỏ cả nhóm - chỉ những câu còn đúng lần bấm ấy.
             for stable_id in mine:
-                listener_overrides.cancel_retake(path, stable_id)
+                cancelled.cancel_retake(path, stable_id, now=time.time())
         else:
-            listener_overrides.withdraw_requests(path, section, list(mine), requested_at)
+            cancelled.withdraw_requests(path, section, list(mine), requested_at, now=time.time())
             if section == "lines":
                 _withdraw_line_companions(path, list(mine), requested_at)
             if section == "speakers":
@@ -3892,6 +3982,20 @@ class Handler(BaseHTTPRequestHandler):
         aliases.add(path, source, target, now=now)
         self._send_json(HTTPStatus.OK, {"lines": len(lines), "requestedAt": now})
 
+    def _checked_name(self, path: Path, raw: Any, *, mine: str = "", allow_empty: bool = False) -> str:
+        """Tên người nghe gõ cho một người (đổi tên, "Người mới…") sau phép kiểm của name_rules; `mine` = người đang được đổi tên (không tính là "người khác")."""
+        try:
+            cast = packages.cast(path) if packages.is_package(path) else store.cast(path)
+        except sqlite3.OperationalError as error:
+            if "no such" not in str(error):
+                raise
+            cast = {}  # sách chưa qua bước phân tích nào: chưa có bảng nhân vật nên chưa có người nào để trùng
+        others = [str(person.get("displayName") or person.get("name") or "")
+                  for kind in ("characters", "extras", "carried") for person in (cast.get(kind) or [] if isinstance(cast, dict) else [])
+                  if isinstance(person, dict) and not (mine and renames.name_key(str(person.get("name") or "")) == renames.name_key(mine))]
+        return _typed(lambda typed: name_rules.person(typed, others, allow_empty=allow_empty), raw)
+
+    @_serialized_per_book
     def post_rename_character(self, _query: dict[str, list[str]], value: str) -> None:
         # Tab Nhân vật: "Đổi tên" - chỉ cái tên trên màn hình (names.json cạnh sổ dự án), không đụng sổ nhân vật, giọng hay
         # audio, nên có hiệu lực ngay chứ không chờ "Áp dụng". Tên rỗng hay đúng tên gốc là trở về tên gốc.
@@ -3903,6 +4007,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu nhân vật")
         new_name = body.get("name")
         new_name = new_name if isinstance(new_name, str) else ""  # null / số / danh sách = bỏ tên đã đặt, không phải chữ "None"
+        new_name = self._checked_name(path, new_name, mine=character, allow_empty=True)
         if packages.is_package(path):
             self._send_json(HTTPStatus.OK, book_edits.set_character_name(path, character, new_name))
             return
@@ -4080,6 +4185,11 @@ class Handler(BaseHTTPRequestHandler):
     def post_edits_inbox_skip(self, _query: dict[str, list[str]], value: str) -> None:
         path, device, items = self._inbox_target(value)
         self._send_json(HTTPStatus.OK, edits_inbox.skip(path, device, items))
+
+    def post_edits_inbox_restore(self, _query: dict[str, list[str]], value: str) -> None:
+        # Khay "đã bỏ qua": đem một mục (`items`) hay cả khay của thiết bị về hộp thư chờ duyệt.
+        path, device, items = self._inbox_target(value)
+        self._send_json(HTTPStatus.OK, edits_inbox.restore(path, device, items))
 
     def post_workshop(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.CREATED, self.app.build_workshop(value))
@@ -4677,7 +4787,7 @@ class Handler(BaseHTTPRequestHandler):
     def get_reading_reach(self, query: dict[str, list[str]], value: str) -> None:
         # Ô "Thêm cách đọc cho từ bất kỳ" (NameReadings.tsx), và "Đọc từ này là…" ở trang đọc của cuốn mở từ file (LineWishes.tsx):
         # trước khi lưu, nói cách đọc sẽ chạm tới bao nhiêu câu (name_readings.reading_reach / package_reading_reach).
-        surface = " ".join(((query.get("surface") or [""])[0]).split())[:80]
+        surface = _typed_surface((query.get("surface") or [""])[0])
         if not surface:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu chữ cần xem")
         path = self.app._listenable(value)
@@ -4704,9 +4814,10 @@ class Handler(BaseHTTPRequestHandler):
     def _checked_reading(self, body: dict[str, Any], surface: str) -> str:
         """Cách đọc người nghe gửi (`spokenForm`) cho tên `surface`, sau phép kiểm của dây chuyền - dùng chung cho "Lưu" và
         "Nghe thử": nghe được là lưu được."""
-        spoken = " ".join(str(body.get("spokenForm", "")).split())[:120]
-        if not surface or not spoken:
+        raw = body.get("spokenForm", "")
+        if not surface or not isinstance(raw, str) or not raw.strip():
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu tên hoặc cách đọc")
+        spoken = _typed(name_rules.spoken, raw)
         problem = listener_overrides.pronunciation_problem(surface, spoken)
         if problem is not None:
             # Gõ theo tai mà sai chính tả ("Hên-kơ"): nói đúng âm tiết sai và mời dùng bản sửa - bản sửa qua đúng phép kiểm
@@ -4726,7 +4837,7 @@ class Handler(BaseHTTPRequestHandler):
         # được (soát a70: "Thoi" nghe thử được rồi Lưu mới báo lỗi). Không ghi gì.
         path = self.app._listenable(value)
         body = self._body()
-        surface = str(body.get("surface", "")).strip()[:80]
+        surface = _typed_surface(body.get("surface", ""))
         spoken = self._checked_reading(body, surface)
         if (package_reading_reach if packages.is_package(path) else reading_reach)(path, surface)["never"]:
             raise ApiError(HTTPStatus.BAD_REQUEST, never_text(surface))
@@ -4737,7 +4848,7 @@ class Handler(BaseHTTPRequestHandler):
         self.app._mutating()
         path = self.app._book(value)
         body = self._body()
-        surface = str(body.get("surface", "")).strip()[:80]
+        surface = _typed_surface(body.get("surface", ""))
         spoken = self._checked_reading(body, surface)
         segment = body.get("segmentId")
         try:
@@ -4784,18 +4895,18 @@ class Handler(BaseHTTPRequestHandler):
         path = self.app._editable(value)
         package = packages.is_package(path)  # không có xưởng: ý muốn vào lớp sửa (book_wishes), chờ Studio
         body = self._body()
-        surface = str(body.get("surface", "")).strip()[:80]
+        surface = _typed_surface(body.get("surface", ""))
         if body.get("withdraw") and package:
             self._withdraw(path, "pronunciations", [listener_overrides.surface_key(surface)] if surface else [], body)
             return
         if body.get("withdraw"):
             # Cách đọc chỉ sửa được trên thẻ, mà thẻ biến mất khi cách đọc đã vào sách: đã áp thì hoàn tác bằng cách xin
             # lại cách đọc cũ (`previous`, cách máy đọc lúc bấm) - câu có từ ấy được đọc lại như trước.
-            previous = " ".join(str(body.get("previous", "") or "").split())[:120]
+            previous = name_rules.clean(body.get("previous"))[:name_rules.SPOKEN_MAX]
             usable = bool(previous) and listener_overrides.pronunciation_problem(surface, previous) is None
             # Lần sửa ấy cũng đưa cách đọc vào từ điển chung ("Dùng cho mọi sách"): hoàn tác gỡ luôn mục ấy - nếu nó vẫn là
             # đúng cách đọc ấy (soát UX 01-10: hoàn tác xong, sách khác vẫn được mời dùng cách đọc vừa bỏ).
-            shared = " ".join(str(body.get("shared", "") or "").split())
+            shared = name_rules.clean(body.get("shared"))
             if shared and any(entry["surface"].casefold() == surface.casefold() and entry["spokenForm"] == shared
                               for entry in self.app.shared_readings.entries()):
                 self.app.shared_readings.remove(surface)
@@ -4805,11 +4916,16 @@ class Handler(BaseHTTPRequestHandler):
             return
         spoken = self._checked_reading(body, surface)
         # Cách đọc không bao giờ được dùng ("Mở/đóng"): giao diện tắt nút Lưu, gửi thẳng qua API cũng không được (soát UX a25 T2).
-        if (package_reading_reach if package else reading_reach)(path, surface)["never"]:
+        reach = (package_reading_reach if package else reading_reach)(path, surface)
+        if reach["never"]:
             raise ApiError(HTTPStatus.BAD_REQUEST, never_text(surface))
+        # Chữ chưa có câu nào trong sách (gõ sai, hay chỉ có ở chương sau): vẫn ghi - nhưng nói để người nghe soát lại chữ đã gõ.
+        warning = {} if reach.get("lines") else {"warning": f"Trong sách này chưa có câu nào có chữ “{surface}” - đã ghi, nhưng chưa đổi cách đọc câu nào. "
+                                                           "Bạn kiểm lại chữ đã gõ có đúng như trong sách không."}
         now = time.time()
         if package:
             book_wishes.request_pronunciation(path, surface, spoken, now=now)
+            # Lời đáp của cuốn mở từ file giữ đúng hợp đồng với LocalStudio của điện thoại (test_book_edits): ở đó trang đọc tự hỏi `reading-reach` và nói trước khi lưu.
             self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken, "requestedAt": now})
             return
         # Như người nói (`_edited_elsewhere`): máy/cửa sổ khác vừa đổi cách đọc từ này khác điều giao diện đã thấy - vẫn ghi, báo lại.
@@ -4818,7 +4934,7 @@ class Handler(BaseHTTPRequestHandler):
         if body.get("everywhere") is True:
             # "Dùng cho mọi sách": cùng cách đọc vào từ điển chung - sách mới có từ này tự nhận nó.
             self.app.put_shared_reading({"surface": surface, "spokenForm": spoken}, source=store.summarize(path)["title"])
-        self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken, "requestedAt": now, "elsewhere": elsewhere})
+        self._send_json(HTTPStatus.OK, {"surface": surface, "spokenForm": spoken, "requestedAt": now, "elsewhere": elsewhere, **warning})
 
     @staticmethod
     def _reading_elsewhere(path: Path, surface: str, seen: Any) -> dict[str, str]:
@@ -4858,7 +4974,7 @@ class Handler(BaseHTTPRequestHandler):
             restore(time.time())
             self._send_json(HTTPStatus.OK, {"undone": len(mine), "restored": True})
             return
-        removed = listener_overrides.withdraw_requests(path, section, list(mine), requested_at)
+        removed = cancelled.withdraw_requests(path, section, list(mine), requested_at, now=time.time())
         if section == "lines":
             _withdraw_line_companions(path, removed, requested_at)
         if section == "speakers" and removed:
@@ -4889,10 +5005,14 @@ class Handler(BaseHTTPRequestHandler):
         new_gender = str(body.get("newGender", "")).strip()
         if new_gender and new_gender not in listener_overrides.NEW_CHARACTER_GENDERS:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Giới của người mới không hợp lệ")
+        if new_gender:
+            speaker = self._checked_name(path, speaker)
         if package:
             index, cast = book_wishes.Lines(path), book_wishes.people(path)
+            wishes = book_edits.load(path).get("wishes")
         for stable_id, text_sha256 in lines:
-            problem = (book_wishes.speaker_problem(index, cast, stable_id, text_sha256, speaker, new_gender) if package
+            problem = (book_wishes.speaker_problem(index, cast, stable_id, text_sha256, speaker, new_gender,
+                                                   as_kind=book_wishes.pending_line_kind(wishes, stable_id, text_sha256)) if package
                        else store.speaker_request_problem(path, stable_id, text_sha256, speaker, new_gender))
             if problem is not None:
                 if problem == listener_overrides.NO_VOICE and speaker == listener_overrides.UNNAMED:
@@ -5011,6 +5131,10 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         stable_id = str(body.get("stableId", "")).strip()[:120]
         text_sha256 = str(body.get("textSha256", "")).strip()[:64]
+        if body.get("withdraw"):
+            # "Hoàn tác" trên thông báo: bỏ đúng lần sửa ấy (`requestedAt`), yêu cầu nó thay trở lại; đã vào sách thì nói thật (soát a89 V7).
+            self._withdraw(path, "lines", [stable_id] if stable_id else [], body)
+            return
         kind = str(body.get("kind") or "").strip()[:20]
         emotion = str(body.get("emotion") or "").strip()[:20]
         speaker = str(body.get("speaker") or "").strip()[:200]
@@ -5033,10 +5157,11 @@ class Handler(BaseHTTPRequestHandler):
         # Như người nói: máy/cửa sổ khác vừa đổi cách đọc câu này khác điều giao diện đã thấy - vẫn ghi, báo lại (chỉ khi lệch).
         elsewhere = self._line_elsewhere(path, stable_id, text_sha256, body)
         write = book_wishes.request_line if package else listener_overrides.request_line
+        now = time.time()
         write(path, stable_id, text_sha256, kind=kind, emotion=emotion, intensity=intensity,
-              speaker=speaker, spoken=spoken, now=time.time())
+              speaker=speaker, spoken=spoken, now=now)
         self._send_json(HTTPStatus.OK, {"stableId": stable_id, "kind": kind, "emotion": emotion, "intensity": intensity,
-                                        "spoken": spoken, **({"elsewhere": elsewhere} if elsewhere else {})})
+                                        "spoken": spoken, "requestedAt": now, **({"elsewhere": elsewhere} if elsewhere else {})})
 
     def post_narrator_section(self, _query: dict[str, list[str]], value: str) -> None:
         # Thẻ "người kể của đoạn khác" (narrator_cards.py): quyết định lưu ở narrator_sections.json cạnh sổ dự án; dây chuyền
@@ -5126,23 +5251,21 @@ class Handler(BaseHTTPRequestHandler):
         chapter_id = int(body.get("chapterId", 0))
         asked: list[tuple[str, str]] = []
         try:
-            for written, stable_id in enumerate(stable_ids):
-                try:
-                    self.app.reviews.set(project, stable_id, verdict, chapter_id, audio_sha256=body.get("audioSha256"))
-                except ValueError as error:
-                    # Nhóm nhiều câu ghi lần lượt: các câu trước đã ghi thật - nói đúng số (soát a83 B11), không báo như chưa làm gì.
-                    before = f" ({written} câu trước đó trong nhóm đã được ghi)" if written else ""
-                    raise ApiError(HTTPStatus.CONFLICT, f"{error}{before}") from error
-                # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
-                # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.
-                text_sha256 = store.segment_text_sha256(project, stable_id)
-                if verdict == "redo" and text_sha256:
-                    asked.append((stable_id, text_sha256))
-                elif verdict != "redo":
-                    listener_overrides.cancel_retake(project, stable_id)
-        finally:
-            if asked:
-                listener_overrides.request_retakes(project, asked, now=now)
+            # Cả nhóm ghi MỘT lần (reviews.set_many): có câu đã đổi bản thu thì không câu nào được ghi (soát a89 V2).
+            self.app.reviews.set_many(project, stable_ids, verdict, chapter_id, audio_sha256=body.get("audioSha256"))
+        except ValueError as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        for stable_id in stable_ids:
+            # "Cần thu lại" là một yêu cầu cho dây chuyền (overrides.json `retakes`: thu bằng hạt giống mới ở lần chạy tới -
+            # sách đã xong: nút "Áp dụng thay đổi"); đổi ý thì bỏ yêu cầu chưa áp.
+            # Cả nhóm thu lại được lưu bằng một request_retakes sau vòng duyệt.
+            text_sha256 = store.segment_text_sha256(project, stable_id)
+            if verdict == "redo" and text_sha256:
+                asked.append((stable_id, text_sha256))
+            elif verdict != "redo":
+                cancelled.cancel_retake(project, stable_id, now=now)
+        if asked:
+            listener_overrides.request_retakes(project, asked, now=now)
         self._send_json(HTTPStatus.OK, {**reply(len(asked)), **({"elsewhere": elsewhere} if elsewhere else {})})
 
     def put_cover(self, _query: dict[str, list[str]], value: str) -> None:
@@ -5326,7 +5449,7 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         self._send_json(HTTPStatus.OK, self.app.add_text_book(str(body.get("path") or ""), str(body.get("title") or ""),
                                                               body.get("separate") is True, body.get("splitChapters") is True,
-                                                              body.get("chapters"), body.get("footnotes")))
+                                                              body.get("chapters"), body.get("footnotes"), body.get("sourceFingerprint")))
 
     def get_chapter_text(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         # Chữ của chương trong sách CHỈ-CÓ-CHỮ (texts/<mã>.txt): trang đọc dựng các đoạn từ đây (listen/textScript.ts).
@@ -6220,6 +6343,7 @@ ROUTES: list[Route] = [
     ("GET", re.compile(BOOK + r"/edits-inbox"), Handler.get_edits_inbox),
     ("POST", re.compile(BOOK + r"/edits-inbox/apply"), Handler.post_edits_inbox_apply),
     ("POST", re.compile(BOOK + r"/edits-inbox/skip"), Handler.post_edits_inbox_skip),
+    ("POST", re.compile(BOOK + r"/edits-inbox/restore"), Handler.post_edits_inbox_restore),
     ("POST", re.compile(BOOK + r"/save"), Handler.post_save),
     ("POST", re.compile(BOOK + r"/workshop"), Handler.post_workshop),
     ("DELETE", re.compile(BOOK), Handler.delete_book),
