@@ -91,6 +91,7 @@ def _setup(tmp_path: Path, ollama: str, commands: list[str], *, fail_on: str = "
     app = tmp_path / "app"
     app.mkdir()
     (app / "studio-requirements.txt").write_text("torch==2.11.0+cu128\n", encoding="utf-8")
+    (app / "uv.lock").write_text('[[package]]\nname="torch"\nversion="2.11.0+cu128"\nwheels=[{hash="sha256:' + "0" * 64 + '"}]\n')
     fetched: list[str] = []
 
     def fetch(item: Download, target: Path, progress, cancelled) -> Path:
@@ -108,6 +109,7 @@ def _setup(tmp_path: Path, ollama: str, commands: list[str], *, fail_on: str = "
     setup = StudioSetup(tmp_path / "Studio", app, fetch=fetch, gpu=lambda: {"name": "Card thử", "memory": 8 << 30},
                         ollama_address=ollama)
     setup.fetched = fetched  # type: ignore[attr-defined]
+    setup._probe_packages = lambda: []  # fake executables have no distribution metadata
     setup._run = _runner(setup, commands, fail_on)  # type: ignore[method-assign]
     return setup
 
@@ -672,6 +674,7 @@ def test_starting_a_book_runs_its_supervisor_from_the_code_it_is_pinned_to(tmp_p
 
 
 def _mark_installed(setup: StudioSetup) -> None:
+    setup._save(done=["verify"])
     (setup.runtime / ".setup_complete").parent.mkdir(parents=True, exist_ok=True)
     (setup.runtime / ".setup_complete").write_text("{}", encoding="utf-8")
     (setup.venv / "Scripts").mkdir(parents=True, exist_ok=True)

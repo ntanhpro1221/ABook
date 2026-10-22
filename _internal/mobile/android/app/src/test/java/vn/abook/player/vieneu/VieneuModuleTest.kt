@@ -40,6 +40,26 @@ import java.util.zip.ZipOutputStream
  * the modules still installed need - decided from what is on disk, with no record that could be lost.
  */
 class VieneuModuleTest {
+    @Test
+    fun incompleteVoiceCanBeRemovedWithoutTouchingAnotherRuntimeUser() {
+        val module = module()
+        val partial = File(root, "${VieneuModule.FOLDER}/turbo/turbo.bin.part")
+        partial.parentFile.mkdirs()
+        partial.writeBytes(byteArrayOf(1, 2, 3))
+        val runtime = SharedRuntime.inFiles(root)
+        runtime.claim("other", listOf("ort", "g2p"))
+        val shared = File(runtime.dir, "ort/libonnxruntime.so")
+        shared.parentFile.mkdirs()
+        shared.writeText("keep")
+        val rows = module.status().getJSONArray("choices")
+        val row = (0 until rows.length()).map { rows.getJSONObject(it) }.first { it.getString("id") == "turbo" }
+        assertFalse(row.getBoolean("installed"))
+        assertTrue("partial bytes need a remove action", row.getBoolean("removable"))
+        module.remove("turbo")
+        assertFalse(partial.exists())
+        assertEquals("keep", shared.readText())
+        runtime.done("other")
+    }
     private lateinit var server: ServerSocket
     private lateinit var root: File
     private val requests = CopyOnWriteArrayList<String>()
