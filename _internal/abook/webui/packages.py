@@ -210,7 +210,12 @@ def _inside(root: Path, relative: Any) -> Path | None:
         return None
     locator = _locator(Path(root))
     candidate, is_file = locator.probe(locator.root / relative)
-    return candidate if is_file and locator.within_root(candidate) else None
+    if not is_file:
+        return None
+    if locator.within_root(candidate):
+        return candidate
+    from .peer_paths import canonical
+    return candidate if canonical(candidate).is_relative_to(canonical(root)) else None
 
 
 def _present(root: Path, relative: Any) -> bool:
@@ -239,15 +244,20 @@ def _file(path: Path, relative: Any, *, strict: bool = False) -> Path | None:
     """File trong gói; sách của máy tính khác thì tải về lần đầu cần tới (remote_books.fetch) rồi dùng như file đã có. `strict`: máy kia
     không trả lời thì để `RemoteError` đi lên (người gọi nói đúng lý do), không thì None như file không có."""
     found = _inside(path, relative)
-    if found is not None or not isinstance(relative, str):
+    if not isinstance(relative, str):
         return found
     from .remote_books import fetch, remote_of
 
     book = manifest(path)
     if remote_of(book) is None:
-        return None
+        return found
+    from .audio_revision import expected, matches
+    digest = expected(book, relative)
+    if found is not None and (not digest or matches(found, None, digest)):
+        return found
     fetch(path, relative, book, quiet=not strict)
-    return _inside(path, relative)
+    found = _inside(path, relative)
+    return found if found is not None and matches(found, None, digest) else None
 
 
 def has(path: Path, relative: Any) -> bool:
@@ -503,7 +513,7 @@ def _free_folder(parent: Path, name: str) -> str:
 
 
 def import_file(source: Path, library_root: Path, projects: Iterable[Path],
-                fingerprints: Fingerprints, report: dict[str, Any] | None = None, *, separate: bool = False) -> tuple[Path, str]:
+                fingerprints: Fingerprints, report: dict[str, Any] | None = None, *, separate: bool = False, allow_older: bool = False) -> tuple[Path, str]:
     """Nhập một file `.abook` (hay `.abookproj` mà máy chỉ nhập như một cuốn sách - xem `import_opened`). File hỏng, bị sửa hay
     không phải sách: `bookfile.BookFileError` / `projectfile.ProjectFileError`."""
     from . import bookfile, projectfile
@@ -511,7 +521,7 @@ def import_file(source: Path, library_root: Path, projects: Iterable[Path],
     opened = (projectfile.ProjectFile(Path(source)) if str(source).lower().endswith(projectfile.EXTENSION)
               else bookfile.BookFile(Path(source)))
     with opened:
-        return import_opened(opened, library_root, projects, fingerprints, report, separate=separate)
+        return import_opened(opened, library_root, projects, fingerprints, report, separate=separate, allow_older=allow_older)
 
 
 _IMPORTING_GUARD = threading.Lock()
@@ -519,7 +529,7 @@ _IMPORTING: dict[str, threading.Lock] = {}
 
 
 def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fingerprints: Fingerprints,
-                  report: dict[str, Any] | None = None, *, separate: bool = False) -> tuple[Path, str]:
+                  report: dict[str, Any] | None = None, *, separate: bool = False, allow_older: bool = False) -> tuple[Path, str]:
     """Nhập một file đã mở, MỘT lần cho mỗi cuốn: mở cùng file hai lần liền (đúp chuột hai lần, hai bản gửi cùng lúc) thì lượt sau chờ lượt
     trước xong rồi thấy cuốn đã có ("existing") thay vì tranh nhau cùng một thư mục (`_import_opened` nói rõ các kết quả)."""
     if getattr(opened, "book", True) is None:  # file dự án đang làm dở: chưa có chương nào xong thì chưa có gì để nghe
@@ -529,11 +539,11 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
     with _IMPORTING_GUARD:
         lock = _IMPORTING.setdefault(f"{Path(library_root).expanduser()}|{opened.content_key}", threading.Lock())
     with lock:
-        return _import_opened(opened, library_root, projects, fingerprints, report, separate=separate)
+        return _import_opened(opened, library_root, projects, fingerprints, report, separate=separate, allow_older=allow_older)
 
 
 def _import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fingerprints: Fingerprints,
-                   report: dict[str, Any] | None = None, *, separate: bool = False) -> tuple[Path, str]:
+                   report: dict[str, Any] | None = None, *, separate: bool = False, allow_older: bool = False) -> tuple[Path, str]:
     """Nhập một file đã mở (`bookfile.BookFile` hay `projectfile.ProjectFile`: cùng giao diện - chapter_prints, edits,
     extract...). Trả (thư mục cuốn trong thư viện, cách): "project" - file do chính máy này xuất, mở
     dự án ấy; "existing" - đã nhập rồi, bản đã có đủ chương bằng hoặc hơn; "updated" - đã nhập rồi, bản mới nhiều
@@ -555,14 +565,21 @@ def _import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fi
         return project, "project"
     imported = Path(library_root).expanduser() / IMPORTED_FOLDER
     for existing in [] if separate else folders(library_root):
-        theirs = chapter_prints(manifest(existing))
-        if same_book(prints, theirs):
+        current = manifest(existing)
+        theirs = chapter_prints(current)
+        same_source = bool(opened.book.get("sourceFingerprint")) and opened.book.get("sourceFingerprint") == current.get("sourceFingerprint")
+        if same_source or same_book(prints, theirs):
+            from .audio_revision import import_state
+            disposition = import_state(theirs, prints, current.get("audioUpdatedAt") or (current.get("package") or {}).get("createdAt", ""),
+                                       opened.book.get("audioUpdatedAt") or (opened.book.get("package") or {}).get("createdAt", ""))
+            if disposition in {"older", "conflict"} and not allow_older:
+                return existing, disposition
             # Cuốn đã nhập từ file `.abook`, nay gặp file `.abookproj` của nó: nhập lại để cuốn mang phần xưởng (project.json).
             gains_workshop = hasattr(opened, "workshop") and not (existing / PROJECT_MARKER).is_file()
             # Cuốn trên máy mất / hỏng file mà file này đủ chương: giải nén lại tại chỗ (phần sửa của người nghe được giữ) - mở lại đúng file
             # sách là cách sửa (soát a28 lỗi 9: trước đây "đã có trong thư viện" và chương mất file mất luôn).
             repair = len(prints) >= len(theirs) and not _remote(existing) and bool(damaged_files(existing))
-            if not repair and (len(prints) < len(theirs) or (len(prints) == len(theirs) and not gains_workshop)):
+            if not repair and disposition == "existing" and not gains_workshop:
                 if report["edits"]:
                     report["merge"] = book_edits.adopt(existing, opened.edits, opened.edits_cover(), opened.copy_member)
                 elif not book_edits.is_empty(local := book_edits.load(existing)):

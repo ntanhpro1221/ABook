@@ -28,6 +28,7 @@ import { DevicesScreen } from "./DevicesScreen";
 import { AudiobookPhoneDialogHost, ExportAudiobookMenuItem, watchAudiobookExports } from "./ExportAudiobook";
 import { ExportM4bMenuItem, M4bMusicDialogHost, watchM4bExports } from "./ExportM4b";
 import { ExportMp3MenuItem, watchMp3Exports } from "./ExportMp3";
+import { ExportRevisionNotice } from "./ExportRevisions";
 import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { NativeAudioEngine } from "./nativeEngine";
@@ -291,6 +292,7 @@ export function AndroidApp() {
                     element={
                       <BookScreen
                         studioLink={(book) => <StudioChipHost book={book} />}
+                        notice={(book) => <ExportRevisionNotice book={book} />}
                         extraActions={(book) =>
                           book.remote ? (
                             <DownloadMenuItem book={book} />

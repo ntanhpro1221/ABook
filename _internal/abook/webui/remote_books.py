@@ -1040,6 +1040,8 @@ def fetch(package: Path, relative: str, manifest: dict[str, Any], *, quiet: bool
     try:
         files = (manifest.get("package") or {}).get("files") or {}
         item = files.get(relative) if isinstance(files, dict) else None
+        if not isinstance(item, dict):
+            item = next((c for c in manifest.get("chapters", []) if c.get("file") == relative), None)
         size = item.get("size") if isinstance(item, dict) else None
         size = size if type(size) is int and size >= 0 else None
         return _save(Path(package), relative, manifest, size=size)
@@ -1134,7 +1136,7 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
     phần dở) - chương lớn trên Wi-Fi yếu không phải tải lại từ đầu, và file nguồn đã đổi (máy kia dựng lại chương) thì tải lại từ đầu thay
     vì ghép đầu cũ với đuôi mới; máy kia không hiểu `Range` thì cũng tải lại từ đầu. `progress(số byte vừa nhận)` (âm: bỏ phần dở đã tính),
     `cancelled()`: cho việc tải cả cuốn. Lỗi: `RemoteError` (hay `Cancelled`); máy kia ngừng trả lời giữa chừng thì nói tên máy ấy (`_cut`)."""
-    from .peer_paths import safe_relative
+    from .peer_paths import canonical, safe_relative
     if not safe_relative(relative):
         raise RemoteError("Tên file lạ trong sách")
     from .peer_limits import DISK_MARGIN, file_budget
@@ -1143,8 +1145,8 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
     except ValueError as error:
         raise RemoteError(str(error), status=413) from error
     entry, book_key = _entry_of(book)
-    target = (package / relative).resolve()
-    if not target.is_relative_to(package.resolve()):
+    target = canonical(package / relative)
+    if not target.is_relative_to(canonical(package)):
         raise RemoteError("Tên file lạ trong sách")
     with _RECORD_LOCK:
         lock = _FILE_LOCKS.setdefault(str(target), threading.Lock())
@@ -1219,6 +1221,9 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
                 break
             if size is not None and temporary.stat().st_size != size:
                 raise RemoteError("File tải về không đủ - thử lại")
+            from .audio_revision import expected, matches
+            if not matches(temporary, size, expected(book, relative)):
+                raise RemoteError("Bản thu đã đổi trong lúc tải; bạn hãy tải lại.")
             _replace_with_retry(temporary, target)
         finally:
             if not keep:
@@ -1275,7 +1280,10 @@ def missing(package: Path, book: dict[str, Any]) -> list[tuple[str, int | None]]
         except OSError:
             out.append((relative, size))
             continue
-        if (found != size) if size is not None else record["files"].get(relative, ...) != version:
+        from .audio_revision import expected, matches
+        digest = expected(book, relative)
+        stale = not matches(package / relative, size, digest) if digest else ((found != size) if size is not None else record["files"].get(relative, ...) != version)
+        if stale:
             out.append((relative, size))
     return out
 

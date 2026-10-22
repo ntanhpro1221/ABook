@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { hasNewWords } from "./bookUpdates";
+import { hasNewWords, hasNewAudio } from "./bookUpdates";
+
+it("bản thu cùng cỡ đã đổi: mời cập nhật; tải xong hết nhắc", () => {
+  expect(hasNewAudio({ downloaded: true, audioVersion: "new", localAudioVersion: "old" })).toBe(true);
+  expect(hasNewAudio({ downloaded: true, audioVersion: "new", localAudioVersion: "new" })).toBe(false);
+  expect(hasNewAudio({ downloaded: false, audioVersion: "new" })).toBe(false);
+});
 
 describe("sách đã tải có chữ sáng theo giọng đọc mới không", () => {
   it("chưa tải thì chưa có gì để cập nhật", () => {

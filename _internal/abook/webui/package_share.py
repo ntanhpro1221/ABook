@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from ..io_utils import atomic_write_json
-from . import book_edits, book_wishes, covers, edits_inbox, listen_view, music_plan, packages, store
+from . import audio_revision, book_edits, book_wishes, covers, edits_inbox, listen_view, music_plan, packages, store
 
 
 _WHAT = {"title": "Tên sách", "author": "Tác giả", "cover": "Ảnh bìa", "character": "Tên nhân vật", "chapter": "Tên chương", "reading": "Cách đọc",
@@ -46,7 +46,9 @@ def library_entry(path: Path, key: str, state: dict[str, Any]) -> dict[str, Any]
     entry["series"] = None
     entry["producing"] = False  # cuốn nhập từ file không có Studio nào đang làm nó
     # Cỡ khi tải về, đúng phần điện thoại sẽ tải (soát a68 lỗi 7; dự án: sync.SyncApp.library_view).
-    entry["bytes"] = download_bytes(manifest(path, key))
+    shared_book = manifest(path, key)
+    entry["bytes"] = download_bytes(shared_book)
+    entry["audioVersion"] = shared_book["audioVersion"]
     if view.get("author"):
         entry["author"] = view["author"]  # tìm và sắp theo tác giả ở máy kia cần nó; dự án Studio không có tác giả nên không mang khoá
     meta = _cover_meta(path, packages.edited_manifest(path))
@@ -63,6 +65,7 @@ def _chapter(path: Path, chapter: dict[str, Any]) -> dict[str, Any]:
     audio = packages.chapter_file(path, chapter.get("id"))
     item["available"] = audio is not None
     item["size"] = audio.stat().st_size if audio is not None else 0
+    item["sha256"] = audio_revision.describe(audio)["sha256"] if audio is not None else ""
     if audio is not None:
         item["file"] = chapter["file"]
     elif chapter.get("text"):
@@ -100,7 +103,7 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
             info["size"] = file.stat().st_size  # cỡ từng file bài để bên tải kiểm (như sync.manifest)
     # Phiên bản đổi khi lớp sách (phiên bản lúc đóng gói), danh sách file có thật, hay lớp sửa đổi: máy đã tải thấy "có cập nhật".
     version = hashlib.sha256(json.dumps(
-        [book.get("version"), [(chapter["id"], chapter["size"]) for chapter in chapters],
+        [book.get("version"), [(chapter["id"], chapter["sha256"]) for chapter in chapters],
          hashlib.sha256(book_edits.dump(edits)).hexdigest() if not book_edits.is_empty(edits) else ""],
         sort_keys=True).encode()).hexdigest()[:16]
     return {
@@ -115,6 +118,9 @@ def manifest(path: Path, key: str) -> dict[str, Any]:
         "complete": view["complete"],
         "series": None,
         "version": version,
+        "audioVersion": audio_revision.version(chapters),
+        "audioUpdatedAt": book.get("audioUpdatedAt", ""),
+        "sourceFingerprint": book.get("sourceFingerprint", ""),
         "chapters": chapters,
         "cast": "cast.json",
         "samples": samples,

@@ -13,7 +13,7 @@ import { backgroundHelp } from "./backgroundHelp";
 import { BLUETOOTH_DENIED, BLUETOOTH_REASON, bluetoothStep } from "./bluetoothPermission";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
-import { hasNewWords } from "./bookUpdates";
+import { hasNewAudio, hasNewWords } from "./bookUpdates";
 import { OpenStudioButton, useStudioComputers } from "./StudioOpen";
 import { openRelease } from "./UpdateNotice";
 import { booksBySize, useStorage } from "./storage";
@@ -293,6 +293,7 @@ function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?
   const newChapters = book.downloaded ? book.chaptersAvailable - book.localChapters : 0;
   const newCover = book.downloaded && (book.cover?.version ?? 0) !== (book.localCoverVersion ?? 0);
   const newWords = hasNewWords(book);
+  const newAudio = hasNewAudio(book);
   const downloading = progress && !progress.finished && !progress.error && !progress.cancelled;
   const fraction = progress?.total ? (progress.done ?? 0) / progress.total : (progress?.files ?? 0) / Math.max(1, progress?.filesTotal ?? 1);
   const percent = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
@@ -333,13 +334,13 @@ function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?
             <X className="size-4" />
           </button>
         </div>
-      ) : book.downloaded && newChapters <= 0 && !newCover && !newWords ? (
+      ) : book.downloaded && newChapters <= 0 && !newCover && !newWords && !newAudio ? (
         <span className="flex items-center gap-1 text-xs text-success">
           <CheckCircle2 className="size-4" /> Đã tải
         </span>
       ) : (
         <Button size="sm" variant={book.downloaded ? "secondary" : "primary"} icon={Download} onClick={onDownload}>
-          {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : newCover ? "Cập nhật bìa" : "Cập nhật chữ"}
+          {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : newAudio ? "Cập nhật bản thu" : newCover ? "Cập nhật bìa" : "Cập nhật chữ"}
         </Button>
       )}
     </div>

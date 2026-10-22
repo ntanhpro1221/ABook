@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Sách bạn đã tải trên điện thoại nhận được bản thu sửa, kể cả khi file mới cùng dung lượng; chỉ chương đổi cần tải lại. Nhập lại file `.abook` cập nhật bản thu và giữ chỉnh sửa, chỗ nghe của bạn; file cũ hơn sẽ hỏi trước khi thay.
+- Sau khi bạn sửa và thu lại, mục Xuất nhắc những bản MP3, M4B hay `.abook` đã cũ để bạn thay bản đã chép hoặc gửi. Bạn có thể chỉ xuất lại các chương MP3 đã đổi; M4B cần dựng lại cả file.
+
 ### Sửa lỗi
 
 - Chấm cả nhóm câu “Cần thu lại” nhanh hơn nhiều với sách lớn (trước đây mỗi câu đọc lại cả sổ), và mở danh sách “Cần nghe lại” không còn âm thầm ghi vào sổ chấm.

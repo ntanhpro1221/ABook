@@ -153,7 +153,7 @@ object Mp3Export {
      * Việc xuất cuốn `id` như người nghe thấy nó (Store.manifest: tên sách, tên chương, bìa đã sửa). Chỉ chương nghe được - như máy
      * tính, số thứ tự đếm trên các chương ấy. `drawnCover`: PNG bìa giao diện tự vẽ, chỉ dùng khi sách không có bìa thật.
      */
-    fun plan(id: String, drawnCover: ByteArray? = null): Plan {
+    fun plan(id: String, drawnCover: ByteArray? = null, chapterIds: List<Int>? = null): Plan {
         val book = Store.manifest(id) ?: throw Refused("Không tìm thấy sách này trên điện thoại")
         val chapters = book.optJSONArray("chapters")
         val listenable = ArrayList<JSONObject>()
@@ -166,11 +166,13 @@ object Mp3Export {
             val file = runCatching { Store.file(id, chapter.optString("file")) }.getOrNull()?.takeIf { it.isFile } ?: return@mapIndexedNotNull null
             Chapter(index + 1, chapter.optString("fullTitle"), chapter.optDouble("duration", 0.0).takeIf { !it.isNaN() } ?: 0.0, file, chapter.optInt("id", index + 1))
         }
+        val selected = if (chapterIds == null) planned else planned.filter { it.id in chapterIds }
+        if (selected.isEmpty() || chapterIds?.any { wanted -> planned.none { it.id == wanted } } == true) throw Refused("Bạn hãy chọn các chương nghe được để xuất.")
         val (cover, coverName) = coverOf(id, drawnCover)
         return Plan(
             title = book.optString("title").ifEmpty { id },
             narrator = book.optString("narrator"),
-            chapters = planned,
+            chapters = selected,
             numbered = listenable.size,
             chaptersTotal = book.optInt("chaptersTotal", chapters?.length() ?: 0),
             cover = cover,

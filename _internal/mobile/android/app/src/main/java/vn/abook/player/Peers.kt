@@ -215,6 +215,7 @@ object Peers {
                         .put("localChapters", downloaded?.optInt("chaptersAvailable") ?: 0)
                         .put("localCoverVersion", downloaded?.optJSONObject("cover")?.optLong("version") ?: 0L)
                         .put("localWordsVersion", downloaded?.optString("wordsVersion") ?: "")
+                        .put("localAudioVersion", downloaded?.optString("audioVersion") ?: "")
                 }
                 entry.put("name", reply.optString("name", peer.optString("name"))).put("books", books)
             } catch (error: Exception) {
