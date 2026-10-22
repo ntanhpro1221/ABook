@@ -22,7 +22,9 @@ import java.util.concurrent.TimeUnit
  *
  * Tham số (`am instrument -e ...`): `id`, `file` (mặc định `.../loopprobe/track.mp3`), `seconds` (độ dài bài), `audibleStart`, `audibleEnd`, `loopStart`, `loopEnd`,
  * `inject` (giây, mặc định 0: cố ý đẩy bản mới lệch pha để kiểm bước 3),
- * `settle` (mặc định true; false: bỏ bước 3 sửa pha - [MusicBed.debugLoopSettle]). Thước PCM (§39): cạnh `<id>.txt` còn `<id>_p<k>.pcm` cho mỗi trình phát k
+ * `settle` (mặc định true; false: bỏ bước 3 sửa pha - [MusicBed.debugLoopSettle]). Phân biệt móc đo / nền tảng (§40): `tee` (mặc định true; false: không tee PCM -
+ * [MusicBed.debugLoopTee]), `tsEveryMs` (mặc định 20), `silentTrack` (mặc định false: một AudioTrack câm ngoài ExoPlayer suốt bài), `preroll` (giây, mặc định 0 = tắt:
+ * bản chờ chạy câm trước hạn; chạy tới 4,5 s sau `EV play`). Thước PCM (§39): cạnh `<id>.txt` còn `<id>_p<k>.pcm` cho mỗi trình phát k
  * (PCM tee từ `standby`; các dòng `FMT` / `PCM` / `TS` trong `<id>.txt` cho biết byte nào là khung nào, phát lúc nào). Luồng nhạc của máy đang bằng 0 thì chạy im: test không đổi âm lượng hay cài đặt nào.
  */
 @RunWith(AndroidJUnit4::class)
@@ -32,6 +34,7 @@ class MusicLoopOnDeviceTest {
     private val args = InstrumentationRegistry.getArguments()
 
     private fun number(name: String): Double? = args.getString(name)?.toDoubleOrNull()?.takeIf { it.isFinite() }
+    private fun flag(name: String, default: Boolean): Boolean = args.getString(name)?.lowercase()?.let { it != "false" && it != "0" } ?: default
 
     @Test
     fun loopHandoffOnTheRealPlayer() {
@@ -45,7 +48,12 @@ class MusicLoopOnDeviceTest {
         val loopStart = number("loopStart")
         val loopEnd = number("loopEnd")
         val inject = number("inject") ?: 0.0
-        val settle = args.getString("settle")?.lowercase()?.let { it != "false" && it != "0" } ?: true
+        val settle = flag("settle", true)
+        val tee = flag("tee", true)
+        val tsEveryMs = number("tsEveryMs")?.toLong()?.takeIf { it > 0 } ?: 20L
+        val silentTrack = flag("silentTrack", false)
+        val preroll = number("preroll")?.takeIf { it > 0 } ?: 0.0
+        val stopAfter = if (preroll > 0) "play" else "playing" // 4,5 s sau `play` (hạn) nếu bản chờ đã chạy trước, bằng không sau `playing`
         instrumentation.runOnMainSync { MusicBed.init(context) } // nạp hằng số trộn (MusicCues.mix)
         val fade = MusicCues.mix.loopCrossfadeSeconds
         // Bài vào ở loopEnd - X - 6: bản tạo sẵn (3 giây trước hạn) và hạn vào bản lặp đều rơi vào đoạn chạy, còn dư thời gian cho tải bài.
@@ -77,16 +85,21 @@ class MusicLoopOnDeviceTest {
                 MusicBed.debugTrack = Uri.fromFile(file)
                 MusicBed.debugLoopInject = inject
                 MusicBed.debugLoopSettle = settle
+                MusicBed.debugLoopTee = tee
+                MusicBed.debugLoopTsEveryMs = tsEveryMs
+                MusicBed.debugLoopSilentTrack = silentTrack
+                MusicBed.debugLoopPreroll = preroll
                 MusicBed.debugLoopPcmBase = File(dir, id) // PCM tee: <id>_p<k>.pcm cạnh <id>.txt (§39)
                 // Gọi từ nhiều luồng (luồng chính + luồng phát của từng trình phát): thêm dòng phải có khoá.
                 MusicBed.debugLoopProbe = { line ->
                     synchronized(lines) { lines += line }
-                    if (line.startsWith("EV ") && line.split(' ').getOrNull(2) == "playing") main.postDelayed({
+                    if (line.startsWith("EV ") && line.split(' ').getOrNull(2) == stopAfter) main.postDelayed({
                         done = true
                         MusicBed.stop()
                         finished.countDown()
                     }, 4500)
                 }
+                MusicBed.debugLoopSilentStart() // track câm chạy TRƯỚC khi bài vào (no-op nếu silentTrack tắt)
                 main.post(clock)
             }
             assertTrue("bản lặp không có tiếng trong 90 giây (bài thiếu vòng lặp mờ chéo?)", finished.await(90, TimeUnit.SECONDS))
@@ -94,6 +107,7 @@ class MusicLoopOnDeviceTest {
             instrumentation.runOnMainSync {
                 done = true
                 MusicBed.stop() // nhả mọi trình phát trước khi lấy PCM: sau đây không còn byte nào đến
+                MusicBed.debugLoopSilentStop()
             }
             try {
                 MusicBed.debugLoopFlush()
@@ -103,6 +117,10 @@ class MusicLoopOnDeviceTest {
                     MusicBed.debugLoopPcmBase = null
                     MusicBed.debugLoopInject = 0.0
                     MusicBed.debugLoopSettle = true
+                    MusicBed.debugLoopTee = true
+                    MusicBed.debugLoopTsEveryMs = 20L
+                    MusicBed.debugLoopSilentTrack = false
+                    MusicBed.debugLoopPreroll = 0.0
                     MusicBed.debugMusic = null
                     MusicBed.debugTrack = null
                     MusicBed.stop()
