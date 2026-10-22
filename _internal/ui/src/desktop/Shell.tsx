@@ -107,15 +107,15 @@ function Producing() {
           <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-md" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 truncate text-xs font-medium">
-              {book.paused ? (
-                <Pause className="size-3 shrink-0 text-warning" aria-label="Đang tạm dừng" />
+              {book.paused || book.stopping ? (
+                <Pause className="size-3 shrink-0 text-warning" aria-label={book.stopping ? "Đang dừng" : "Đang tạm dừng"} />
               ) : (
                 <Vu className="h-2 text-accent" />
               )}
               <span className="truncate">{book.title}</span>
             </div>
             <div className="mt-1 flex items-center gap-2">
-              <Progress value={book.progress.overall} running={!book.paused} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />
+              <Progress value={book.progress.overall} running={!book.paused && !book.stopping} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />
               <span className="tabular text-[0.6875rem] text-fg-2">{book.starting ? "…" : formatPercent(book.progress.overall)}</span>
             </div>
           </div>

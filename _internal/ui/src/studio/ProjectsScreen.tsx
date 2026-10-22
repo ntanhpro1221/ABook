@@ -133,8 +133,8 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
           <StatusPill
             label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
             // Cùng trạng thái = cùng màu với chip ở trang dự án (soát UX a8 05-10); việc còn lại của sách xong nói ở dòng tiến độ.
-            tone={book.queuePosition || book.paused ? "warning" : phaseTone(book.phase, live)}
-            live={live && !book.paused}
+            tone={book.queuePosition || book.paused || book.stopping ? "warning" : phaseTone(book.phase, live)}
+            live={live && !book.paused && !book.stopping}
           />
         </div>
         <div className="col-start-2 min-w-0 md:col-start-auto">
@@ -156,9 +156,9 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
           )}
         </div>
         <div
-          className={cn("tabular hidden text-right text-xs xl:block", live ? (book.paused ? "text-warning" : "text-accent-text") : "text-fg-2")}
+          className={cn("tabular hidden text-right text-xs xl:block", live ? (book.paused || book.stopping ? "text-warning" : "text-accent-text") : "text-fg-2")}
         >
-          {live ? (book.paused ? "tạm dừng" : "đang chạy") : formatRelative(book.updatedAt)}
+          {live ? (book.stopping ? "đang dừng" : book.paused ? "tạm dừng" : "đang chạy") : formatRelative(book.updatedAt)}
         </div>
       </button>
       <div className="absolute right-2 top-2.5 md:top-1/2 md:-translate-y-1/2">

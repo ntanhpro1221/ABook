@@ -80,7 +80,7 @@ import { useUnmerge } from "./useUnmerge";
 import { CoverEditor } from "./CoverEditor";
 import { ChapterError } from "./ChapterError";
 import { friendlyError } from "./errorText";
-import { ANALYSIS_CUT_COST, asksBeforeResume, stopAnalysisAdvice } from "./stopText";
+import { ANALYSIS_CUT_COST, ANALYSIS_STOP_FACT, asksBeforeResume, queueWaitNotice, stopAnalysisAdvice } from "./stopText";
 import { bookFailure, failureText, isListenOnly, isOffline, useSideError } from "./polling";
 import { ReviewQueue, useReviewCount } from "./ReviewQueue";
 import { PhoneEdits, useInboxCount } from "./PhoneEdits";
@@ -115,7 +115,7 @@ function usePlayChapter() {
 type StepState = "done" | "active" | "paused" | "pending";
 
 function stepStates(book: BookSummary): [StepState, StepState, StepState] {
-  const live = (book.running || book.starting) && !book.paused;
+  const live = (book.running || book.starting) && !book.paused && !book.stopping;
   const now: StepState = live ? "active" : "paused";
   if (book.phase === "done") return ["done", "done", "done"];
   if (book.phase === "idle") return ["pending", "pending", "pending"];
@@ -191,14 +191,44 @@ function StartError({ book }: { book: BookSummary }) {
 }
 
 /** Lỗi của lần làm sách: câu cho người nghe + việc nên làm; nguyên văn kỹ thuật thu vào "Chi tiết". */
-function LastError({ raw }: { raw: string }) {
-  const shown = friendlyError(raw, Boolean(useAppInfo().data?.studio));
+function LastError({ raw, redo = false }: { raw: string; redo?: boolean }) {
+  const shown = friendlyError(raw, Boolean(useAppInfo().data?.studio), redo);
   return (
     <div className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
       <CircleAlert className="mt-0.5 size-4 shrink-0" />
       <div className="min-w-0">
         <p>
           {shown.summary} {shown.hint}
+        </p>
+        {shown.detail && (
+          <details className="mt-1 text-xs">
+            <summary className="cursor-pointer select-none">Chi tiết</summary>
+            <p className="mt-1 select-text break-words font-mono">{shown.detail}</p>
+          </details>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Lượt chạy gần nhất chết vì sự cố mà sổ không có lỗi nào để hiện (tiến trình bị tắt, worker sập): nói nguyên nhân do supervisor ghi
+ *  thay vì im lặng (soát a88 T4). Bạn bấm Dừng thì không phải sự cố - máy chủ không gửi `runEnd`. */
+export function RunEnd({ end, redo }: { end: NonNullable<BookSummary["runEnd"]>; redo: boolean }) {
+  const studio = Boolean(useAppInfo().data?.studio);
+  const detail = [end.detail, end.exitCode ? `mã thoát ${end.exitCode}` : ""].filter(Boolean).join(" - ");
+  const shown = friendlyError(detail, studio, redo);
+  const summary =
+    end.state === "lost"
+      ? "Lần chạy trước bị ngắt đột ngột (tiến trình làm sách bị tắt, máy khởi động lại hay hết điện)."
+      : shown.summary === "Có lỗi khi làm sách."
+        ? "Lần chạy trước dừng vì sự cố."
+        : shown.summary;
+  return (
+    <div role="alert" className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
+      <CircleAlert className="mt-0.5 size-4 shrink-0" />
+      <div className="min-w-0">
+        <p>
+          {summary} {shown.hint}
         </p>
         {shown.detail && (
           <details className="mt-1 text-xs">
@@ -234,7 +264,7 @@ function ProductionPanel({ book }: { book: BookSummary }) {
   const live = book.running || book.starting;
   // Giữ chờ duyệt (precast.held) cũng là `paused` nhưng là đợi người nghe, không phải ai bấm Tạm dừng (soát UX a23: "47% tổng"
   // đứng yên không nói vì sao).
-  const eta = book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "đang tạm dừng") : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
+  const eta = book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "đang tạm dừng") : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
   return (
     <section className="mt-8">
       <div className="mb-3 flex items-baseline justify-between">
@@ -276,7 +306,10 @@ function ProductionPanel({ book }: { book: BookSummary }) {
       {/* Trước mốc phân tích xong: đặt sẵn "Chờ tôi duyệt trước khi thu" cho cuốn này (webui/precast.py). */}
       {!book.castLocked && book.precast && <PrecastWaitSwitch book={book} className="mt-3" />}
       <StartError book={book} />
-      {book.lastError && book.phase === "error" && <LastError raw={book.lastError} />}
+      {book.lastError && book.phase === "error" && <LastError raw={book.lastError} redo={asksBeforeResume(book)} />}
+      {book.runEnd && !book.running && !book.starting && !(book.lastError && book.phase === "error") && (
+        <RunEnd end={book.runEnd} redo={asksBeforeResume(book)} />
+      )}
     </section>
   );
 }
@@ -359,7 +392,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
           <div className="text-pretty">
             <p>
-              <span className="font-semibold">Dừng giữa lúc phân tích thì mất phần đã làm,</span> và chạy lại {ANALYSIS_CUT_COST}.
+              <span className="font-semibold">{ANALYSIS_STOP_FACT}</span> - {ANALYSIS_CUT_COST}.
             </p>
             <p className="mt-2 text-fg-2">
               Nên để chạy hết bước này{eta ? ` (${eta})` : ""}. {stopAnalysisAdvice(book)}
@@ -581,7 +614,7 @@ export function ProjectMenu({ book, rename = true, className }: { book: BookSumm
   );
 }
 
-function Actions({ book }: { book: BookSummary }) {
+export function Actions({ book }: { book: BookSummary }) {
   const start = useStart();
   const reveal = useReveal();
   const remote = Boolean(useAppInfo().data?.remote);
@@ -637,6 +670,8 @@ function Actions({ book }: { book: BookSummary }) {
           <Button variant="ghost" size="lg" onClick={() => leaveQueue.mutate({ id: book.id })}>
             Bỏ xếp hàng
           </Button>
+          {/* Cuốn đang giữ máy tạm dừng thì hàng không tự đi: nói vì sao chờ và làm gì (soát a88 T5). */}
+          {book.queueWaitsOn && <p className="basis-full text-pretty text-sm text-fg-2">{queueWaitNotice(book.queueWaitsOn)}</p>}
         </>
       ) : book.starting ? (
         <Button variant="primary" size="lg" loading>
@@ -645,14 +680,27 @@ function Actions({ book }: { book: BookSummary }) {
       ) : live ? (
         // Tạm dừng giữ tiến trình sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích; "Dừng" kết thúc lượt chạy.
         <>
-          {book.paused ? (
+          {book.stopping ? (
+            // Đã bấm Dừng: sách còn chạy tới chỗ dừng sạch kế. Hai nút khoá - tạm dừng / dừng thêm lần nữa không còn nghĩa (soát a88 V1).
+            <>
+              <Button variant="outline" size="lg" icon={Pause} disabled>
+                Tạm dừng
+              </Button>
+              <Button variant="outline" size="lg" icon={Square} loading disabled>
+                Đang dừng…
+              </Button>
+              <p className="basis-full text-pretty text-sm text-fg-2">
+                Sách sẽ dừng ở chỗ an toàn kế tiếp - lúc phân tích có thể mất vài phút. Mọi thứ đã xong được giữ nguyên.
+              </p>
+            </>
+          ) : book.paused ? (
             // Giữ chờ duyệt: "Tiếp tục" và "Thu âm" là MỘT việc - chỉ có nút này, tên là "Thu âm" (soát UX a8 05-10, mục 12).
             <Button
               variant="primary"
               size="lg"
               icon={book.precast?.held ? Mic2 : Play}
               loading={pause.isPending}
-              onClick={() => pause.mutate({ id: book.id, paused: false })}
+              onClick={() => pause.mutate({ id: book.id, paused: false, battery: book.paused === "battery" })}
             >
               {book.precast?.held ? "Thu âm" : "Tiếp tục"}
             </Button>
@@ -662,9 +710,11 @@ function Actions({ book }: { book: BookSummary }) {
             </Button>
           ) : null}
           {/* Lượt chạy bắt đầu bằng bản app cũ không tạm dừng được: "Dừng" là nút duy nhất, giữ như trước. */}
-          <Button variant={book.canPause ? "ghost" : "outline"} size="lg" icon={Square} onClick={() => setConfirmStop(true)}>
-            Dừng
-          </Button>
+          {!book.stopping && (
+            <Button variant={book.canPause ? "ghost" : "outline"} size="lg" icon={Square} onClick={() => setConfirmStop(true)}>
+              Dừng
+            </Button>
+          )}
           {/* Thay đổi chờ áp khi máy đang chạy: xem được, và bỏ được khi đã tạm dừng tới checkpoint (soát a83 B5). */}
           {book.pendingChanges ? (
             <Button variant="ghost" size="lg" icon={RefreshCw} onClick={() => setConfirmApply(true)}>
@@ -1236,8 +1286,8 @@ export function ProjectScreen() {
           <div className="min-w-0 sm:contents">
           <StatusPill
             label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
-            tone={book.paused ? "warning" : phaseTone(book.phase, live)}
-            live={live && !book.paused}
+            tone={book.paused || book.stopping ? "warning" : phaseTone(book.phase, live)}
+            live={live && !book.paused && !book.stopping}
           />
           <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-[1.875rem]">{book.title}</h1>
           {/* Điện thoại: một dòng gọn (số chương) + "Chi tiết" gập - giọng kể, chất lượng, model, ngày tạo từng chiếm 3 dòng đầu
