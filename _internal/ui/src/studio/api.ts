@@ -53,6 +53,8 @@ export interface BookSummary {
   paused?: "battery" | "listener" | null;
   /** Lượt chạy này tạm dừng được: bắt đầu bằng bản app có tính năng ấy (lượt cũ chạy mã cũ tới hết). */
   canPause?: boolean;
+  /** Nhật ký phụ của lượt chạy không ghi được (antivirus giữ file, đĩa đầy) và đã bỏ `lines` dòng: sách vẫn chạy bình thường. */
+  logLost?: { lines: number; lastError: string } | null;
   /** Đã bấm "Dừng": sách còn chạy tới chỗ dừng sạch kế (30 giây tới vài phút), chưa dừng hẳn - lúc ấy không tạm dừng hay làm tiếp được. */
   stopping?: boolean;
   /** Lượt chạy gần nhất chết vì sự cố (không phải bạn bấm Dừng): nguyên nhân do supervisor ghi, null khi không có. */
@@ -319,7 +321,7 @@ export interface AppInfo {
   /** App đóng gói có vỏ Tauri: Cài đặt có nút "Kiểm tra bản mới" (lần tự kiểm lúc mở app im lặng khi mất mạng). */
   canCheckUpdate?: boolean;
   /** App Windows đóng gói: Studio (thư viện + model làm sách) tải thêm đã cài chưa. null: bản dev (runtime cạnh mã). */
-  studio?: { installed: boolean; outdated?: boolean; damaged?: boolean } | null;
+  studio?: { installed: boolean; outdated?: boolean; damaged?: boolean; damagedSteps?: string[] } | null;
   /** Máy này làm được gì (shared/capabilities.ts): `/api/app?book=<mã>` điền thêm `workshop` / `link` của cuốn ấy. */
   capabilities?: Capabilities;
   libraryRoot: string;

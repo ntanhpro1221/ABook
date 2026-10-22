@@ -24,6 +24,8 @@ from abook.readaloud.vieneu import Installed, VieneuProvider, units
 from abook.webui import music_module, studio_setup, vieneu_module, word_timing
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 
+pytestmark = pytest.mark.usefixtures("names_only_models")  # luồng tải thử bằng file giả: xem conftest.names_only_models
+
 
 # ---- chia đoạn ---------------------------------------------------------------------------------------------------------------------
 def _cover(text: str, max_chars: int) -> list[str]:

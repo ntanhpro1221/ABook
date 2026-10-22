@@ -243,6 +243,15 @@ def _no_real_bluetooth(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(bluetooth, "find_channel", find_channel)
 
 
+@pytest.fixture
+def names_only_models(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Mô-đun giọng / nhạc coi một phần là đã tải khi file ĐÚNG bản ghim (`studio_setup.intact`: cỡ + SHA-256). Bài thử về luồng tải dùng
+    file giả không có băm thật, nên chúng chỉ cần file có mặt; bài thử về file hỏng (test_module_files_intact.py) KHÔNG dùng fixture này."""
+    from abook.webui import studio_setup
+
+    monkeypatch.setattr(studio_setup, "intact", lambda folder, files: folder is not None and all((folder / item.name).is_file() for item in files))
+
+
 def pytest_terminal_summary(terminalreporter, exitstatus, config) -> None:  # noqa: ANN001
     if not _CALLS:
         return

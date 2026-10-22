@@ -142,10 +142,11 @@ class BookFileJobs:
                 return
             except OSError as error:
                 # Thư mục xuất chỉ đọc, ổ đầy: lời người dùng (humanize.write_error), không "[WinError 5] Access is denied: '...'".
-                finish(state="error", error=humanize.write_error(error) if humanize.is_write_problem(error) else str(error) or type(error).__name__)
+                finish(state="error", error=humanize.write_error(error) if humanize.is_write_problem(error) else str(error) or type(error).__name__,
+                       detail=getattr(error, "detail", ""))
                 return
             except Exception as error:  # noqa: BLE001 - lỗi lạ phải tới được người dùng, không giết luồng im lặng
-                finish(state="error", error=str(error) or type(error).__name__)
+                finish(state="error", error=str(error) or type(error).__name__, detail=getattr(error, "detail", ""))
                 return
             finish(state="done", result=result)
 

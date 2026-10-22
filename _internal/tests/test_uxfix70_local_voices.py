@@ -24,6 +24,8 @@ from abook.readaloud.service import ReadAloud
 from abook.webui import music_module, studio_setup, supertonic_module, vieneu_module, voice_module
 from abook.webui.studio_setup import Download
 
+pytestmark = pytest.mark.usefixtures("names_only_models")  # luồng tải thử bằng file giả: xem conftest.names_only_models
+
 
 class PlainVoice:
     """Giọng giả đọc đoạn thành `chunks` khúc, mỗi khúc `step` giây, hỏi cờ bỏ giữa các khúc như engine thật. Không có `reading_tag`: như Edge / giọng dùng khoá."""

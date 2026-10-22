@@ -823,6 +823,8 @@ class App:
         # tới đó sổ vẫn ghi pha đang làm, nên "đang tạm dừng" khác "đã tạm dừng".
         result["paused"] = self.runner.pause_reason(path) if running and not result["stopping"] else None
         result["canPause"] = bool(running and not result["stopping"] and self.runner.can_pause(path))
+        # Nhật ký phụ của lượt chạy không ghi được (antivirus giữ file, đĩa đầy): sách vẫn chạy, trang báo để bạn biết còn kiểm đĩa.
+        result["logLost"] = getattr(self.runner, "log_lost", lambda _path: None)(path) if running else None
         # Lượt chạy gần nhất chết vì sự cố (không phải bạn bấm Dừng): nguyên nhân do supervisor ghi, để trang sách nói ra.
         result["runEnd"] = None if running or result.get("starting") or result.get("phase") == "done" else self.runner.last_end(path)
         result["precast"] = precast.flags(path, result)
@@ -3851,7 +3853,9 @@ class Handler(BaseHTTPRequestHandler):
             "canCheckUpdate": self.app.shell is not None,
             "studio": None if self.app.studio is None else {"installed": self.app.studio.installed(),
                                                              "outdated": bool(self.app.studio.outdated()),
-                                                             "damaged": bool(self.app.studio.damaged())},
+                                                             "damaged": bool(self.app.studio.damaged()),
+                                                             # Bước nào mất file (id trong studio_setup.STEPS): lời lỗi phân biệt "mất model" với "Ollama chưa chạy".
+                                                             "damagedSteps": self.app.studio.damaged()},
             "libraryRoot": prefs["libraryRoot"],
             "theme": prefs["theme"],
             "playbackRate": prefs["playbackRate"],

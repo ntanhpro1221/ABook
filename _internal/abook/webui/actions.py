@@ -192,6 +192,15 @@ class BackgroundRunner:
         except Exception:  # noqa: BLE001
             return False
 
+    def log_lost(self, project_root: Path) -> dict[str, Any] | None:
+        """Nhật ký phụ của lượt chạy không ghi được và đã bỏ dòng (`background_runner.log_loss`): sách vẫn chạy, trang chỉ báo."""
+        from ..background_runner import get_status
+
+        try:
+            return get_status(project_root).log_lost
+        except Exception:  # noqa: BLE001
+            return None
+
 
 class StudioRunner(BackgroundRunner):
     """App Windows đóng gói (webui/host.py): sách chạy bằng Python của Studio tải thêm (webui/studio_setup.py) và đúng
