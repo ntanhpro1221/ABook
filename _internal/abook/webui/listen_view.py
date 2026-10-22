@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from . import covers, store
+from . import covers, store, word_timing
 from .listening import HEAVY_KEYS, book_progress
 
 FORMAT = "abook-book/1"  # không ai đọc trường này, mã phiên bản gói không tính nó
@@ -28,11 +28,14 @@ def on_shelf(summary: dict[str, Any], producing: bool) -> bool:
 def chapters(project_root: Path) -> list[dict[str, Any]]:
     """Danh sách chương cho người nghe, đệm theo lần ghi cuối của DB - thư viện hỏi lại mỗi vài giây. Tên chương người nghe đặt lại nằm ở file
     riêng cạnh sổ (store.CHAPTER_TITLES_FILE), không đổi sổ: dấu của nó cũng thuộc chữ ký, không thì đổi tên xong trang vẫn trả tên cũ."""
-    stamp = store.db_signature(project_root, store.CHAPTER_TITLES_FILE)
+    words = word_timing.stamp(project_root)
+    stamp = (*store.db_signature(project_root, store.CHAPTER_TITLES_FILE), words)
     cached = _CACHE.get(str(project_root))
     if cached and cached[0] == stamp:
         return cached[1]
     result = _chapters(project_root)
+    for chapter in result:
+        chapter["wordsVersion"] = words
     _CACHE[str(project_root)] = (stamp, result)
     return result
 
@@ -51,6 +54,7 @@ def _chapters(project_root: Path) -> list[dict[str, Any]]:
             "fullTitle": chapter["fullTitle"],
             "duration": round(float(duration), 1),
             "available": bool(chapter["playable"]),
+            "audioVersion": str(chapter["completedAt"] or ""),
         })
     return out
 

@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 import type { Script } from "@/listen/model";
-import { mergeTimings, VOICE_CHANGED_EVENT, type ReadAloudTimings } from "@/listen/readAloud";
+import { timedTextScript, VOICE_CHANGED_EVENT, type ReadAloudTimings } from "@/listen/readAloud";
 import { chosenVoice, DEFAULT_VOICE_EVENT, defaultVoice } from "@/listen/readAloudVoice";
 import { ONLINE_CONSENT_EVENT, onlineConsents } from "@/listen/onlineConsent";
 import { PREPARE_STATUS_KEY, type PrepareRequest, type PrepareStatus } from "@/listen/prepareAhead";
@@ -57,7 +57,7 @@ export async function refreshScript(
   }
   const current = (client.getQueryData(key) as Script | undefined);
   if (!current) return false;
-  client.setQueryData(key, mergeTimings(current, timings));
+  client.setQueryData(key, timedTextScript(current, timings));
   return true;
 }
 

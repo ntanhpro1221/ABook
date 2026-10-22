@@ -103,8 +103,13 @@ export class NativeAudioEngine implements NativeEngine {
   }
 
   updateMetadata(book: ListenBook): void {
+    const files = chapterFiles.get(book.id);
+    const queue = book.chapters?.filter((chapter) => (chapter.available && files?.get(chapter.id)) || (chapter.state === "text" && chapter.speech))
+      .map((chapter) => ({ id: chapter.id, title: chapter.fullTitle, file: chapter.state === "text" ? "" : files!.get(chapter.id)!,
+        duration: chapter.duration, ...(chapter.state === "text" ? { text: chapterTextEntry(book.id, chapter.id) } : {}) }));
     void EbookPlayer.updateMetadata({ bookId: book.id, title: book.title, narrator: book.narrator,
       chapters: book.chapters?.map((chapter) => ({ id: chapter.id, title: chapter.fullTitle })) ?? [],
+      ...(queue?.length ? { queue } : {}),
     }).then((state) => this.receive(state)).catch(() => undefined);
   }
 
