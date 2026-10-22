@@ -121,9 +121,12 @@ object MusicBed {
         }
     }
 
-    /** Sink ghi mốc của [TrackRef]: giây bài của buffer đang ghi = presentationTimeUs - outputStreamOffsetUs (như DefaultAudioSink tính startMediaTimeUs). Không đổi gì ở tiếng. */
+    /**
+     * Sink ghi mốc của [TrackRef]: giây bài của buffer đang ghi = presentationTimeUs - outputStreamOffsetUs (như DefaultAudioSink tính startMediaTimeUs). Không đổi gì ở tiếng.
+     * `onFlush`: gọi lúc xả, trước khi AudioTrack cũ bị nhả (móc đo bỏ AudioTrack cũ khỏi [testTracks]).
+     */
     @OptIn(UnstableApi::class)
-    private class TrackedSink(inner: AudioSink, private val ref: TrackRef) : ForwardingAudioSink(inner) {
+    private class TrackedSink(inner: AudioSink, private val ref: TrackRef, private val onFlush: () -> Unit = {}) : ForwardingAudioSink(inner) {
         private var offsetUs = 0L
 
         override fun setOutputStreamOffsetUs(outputStreamOffsetUs: Long) {
@@ -135,6 +138,7 @@ object MusicBed {
             ref.track = null // AudioTrack cũ sắp bị nhả: không đọc nó nữa
             ref.startUs = C.TIME_UNSET
             ref.flushedNano = System.nanoTime()
+            onFlush()
             super.flush()
         }
 
@@ -275,7 +279,10 @@ object MusicBed {
     /** MÓC ĐO: số thứ tự (từ 0) của trình phát kế tiếp MusicBed tạo; bên đo đặt 0 ở đầu mỗi kịch bản. */
     @VisibleForTesting @Volatile var testPlayerSeq = 0
 
-    /** MÓC ĐO: AudioTrack MỚI NHẤT của từng trình phát k (chỉ điền khi [testEvents] đặt); bên đo đọc `getTimestamp` / `underrunCount` và tự xoá ở đầu kịch bản. */
+    /**
+     * MÓC ĐO: AudioTrack MỚI NHẤT của từng trình phát k (chỉ điền khi [testEvents] đặt); bên đo đọc `getTimestamp` / `underrunCount` và tự xoá ở đầu kịch bản.
+     * Mỗi lần xả (tua) bỏ mục k cho tới khi AudioTrack mới được tạo: không đọc timestamp của AudioTrack cũ sau lần tua (như [SeamHandover.fresh]).
+     */
     @VisibleForTesting val testTracks = java.util.concurrent.ConcurrentHashMap<Int, android.media.AudioTrack>()
 
     /** MÓC ĐO: số thứ tự của trình phát đang được tạo (hợp lệ trong lúc [testAudioProcessor] được gọi). */
@@ -725,8 +732,13 @@ object MusicBed {
             return
         }
         // Pha theo AudioTrack MỚI của P3 (sinh sau lần tua cuối, đã phát >= SETTLE_MS); không thì nhịp này không có lần đọc.
-        val delta = stampOf(p3.trackRef)?.let { SeamHandover.reading(seam, h.targetSample, h.issuedNano, it, System.nanoTime(), a87) }
-        if (delta != null) h.readings += delta
+        val now = System.nanoTime()
+        val stamp = stampOf(p3.trackRef)
+        val delta = stamp?.let { SeamHandover.reading(seam, h.targetSample, h.issuedNano, it, now, a87) }
+        if (delta != null && stamp != null) {
+            h.readings += delta
+            emit { SeamEvents.handoverReading(p3.testK, delta, SeamHandover.played(seam, stamp, now) * 1000.0 / seam.sampleRate) }
+        }
         val settled = SeamHandover.settled(h.readings)
         if (settled != null && !h.learned) {
             h.learned = true // trễ khởi động đo ở lần khởi động nguội đầu tiên (pha đã ổn định): dùng cho các ranh sau
@@ -1316,7 +1328,8 @@ object MusicBed {
 
                     override fun getAudioTrackChannelConfig(channelCount: Int) = DefaultAudioSink.AudioTrackProvider.DEFAULT.getAudioTrackChannelConfig(channelCount)
                 })
-                val base = TrackedSink(builder.build(), trackRef)
+                // Móc đo: xả thì bỏ AudioTrack cũ khỏi testTracks - nó còn chạy vài ms sau lần tua, timestamp của nó lọt vào thước pha thì P3 sai ~10 ms (bed44thu, vòng 7).
+                val base = TrackedSink(builder.build(), trackRef) { if (testEvents != null) testTracks.remove(k) }
                 return if (seam) LoopSeam.LoopSink(base).also(onSink) else base
             }
         }.forceDisableMediaCodecAsynchronousQueueing()
