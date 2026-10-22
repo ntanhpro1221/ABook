@@ -392,7 +392,8 @@ def test_a_held_listening_file_is_never_overwritten(tmp_path: Path, monkeypatch:
     original = path.open("rb").read()
     held = _Held(monkeypatch, path)
     listening = Listening(path)
-    listening.progress("book-b", 2, 10.0, 100.0)
+    with pytest.raises(OSError):
+        listening.progress("book-b", 2, 10.0, 100.0)
     assert path.open("rb").read() == original
     held.release()
     listening.progress("book-b", 2, 10.0, 100.0)

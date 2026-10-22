@@ -992,7 +992,11 @@ def fetch(package: Path, relative: str, manifest: dict[str, Any], *, quiet: bool
     """Tải một file của sách trên máy khác vào thư mục đệm của nó, trả đường dẫn; máy kia không trả lời thì None (`quiet` False:
     `RemoteError` đi lên - lời báo nói tên máy và lý do)."""
     try:
-        return _save(Path(package), relative, manifest)
+        files = (manifest.get("package") or {}).get("files") or {}
+        item = files.get(relative) if isinstance(files, dict) else None
+        size = item.get("size") if isinstance(item, dict) else None
+        size = size if type(size) is int and size >= 0 else None
+        return _save(Path(package), relative, manifest, size=size)
     except RemoteError:
         if not quiet:
             raise
