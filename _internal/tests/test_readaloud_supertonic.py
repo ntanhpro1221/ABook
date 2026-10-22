@@ -24,6 +24,8 @@ from abook.webui import music_module, studio_setup, supertonic_module, vieneu_mo
 from tests.test_a_project_can_be_renamed_or_deleted import _call, studio  # noqa: F401 - fixture dùng chung
 from tests.test_readaloud_vieneu import Network
 
+pytestmark = pytest.mark.usefixtures("names_only_models")  # luồng tải thử bằng file giả: xem conftest.names_only_models
+
 
 # ---- chữ đưa vào model ----------------------------------------------------------------------------------------------------------------
 def test_clean_follows_the_vendor_text_rules() -> None:

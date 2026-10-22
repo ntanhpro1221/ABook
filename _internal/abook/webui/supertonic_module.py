@@ -105,7 +105,7 @@ def _fast_dir() -> Path | None:
 
 
 def _complete(folder: Path | None, files: tuple[Download, ...] | None = None) -> bool:
-    return folder is not None and all((folder / item.name).is_file() for item in (FILES if files is None else files))
+    return voice_module.files_intact(folder, FILES if files is None else files)
 
 
 def _download_off() -> str:
@@ -254,7 +254,7 @@ def status() -> dict[str, Any]:
             "state": state, "done": _core.state["done"] if state == "downloading" else 0, "retrying": _core.retrying(),
             "total": _core.state["total"] if state == "downloading" else 0, "error": _core.state["error"],
             "errorDetail": _core.state.get("error_detail", "") if _core.state["error"] else "",
-            "supported": not blocked, "reason": blocked,
+            "supported": not blocked, "reason": blocked, "damaged": voice_module.has_damaged_part(parts, _core.pins()),
             "choices": choices,
             "parts": [{"id": part.id, "label": part.label, "bytes": left[part.id], "state": judged[part.id], "external": part.external}
                       for part in parts],
