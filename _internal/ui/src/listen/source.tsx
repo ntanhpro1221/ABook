@@ -30,6 +30,9 @@ export interface SavedBook {
 export interface ListenSource {
   kind: "desktop" | "android";
   library(): Promise<ListenBook[]>;
+  /** Danh sách thư viện đổi mà người hỏi không hay (điện thoại: máy tính trả lời chậm, sách nghe thẳng về sau `library()`): gọi `listener` để lấy lại
+   *  danh sách. Trả hàm huỷ đăng ký. Nguồn trả đủ trong `library()` thì không có. */
+  libraryChanged?(listener: () => void): () => void;
   book(id: string): Promise<ListenBook>;
   script(bookId: string, chapterId: number): Promise<Script>;
   /** Chữ của chương chỉ-có-chữ (`ListenChapter.state` "text"): màn đọc dựng các đoạn từ đây (textScript.ts). */
@@ -182,6 +185,8 @@ export function useSource(): ListenSource {
  *  truyền false - thư viện lớn (300 cuốn) mất ~1,3 giây mỗi lần hỏi, mà trang dự án đứng đó cả giờ vẫn bị hỏi mỗi 30 giây (soát a21). */
 export function useListenLibrary(poll = true) {
   const source = useSource();
+  const client = useQueryClient();
+  useEffect(() => source.libraryChanged?.(() => void client.invalidateQueries({ queryKey: ["listen", "library"] })), [client, source]);
   return useQuery({
     queryKey: ["listen", "library"],
     queryFn: () => source.library(),
