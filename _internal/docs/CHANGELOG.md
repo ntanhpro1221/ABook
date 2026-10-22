@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.123] - 2026-10-22
+
 ### Sửa lỗi
 
 - Khi giọng dùng khóa riêng của bạn (Azure, FPT.AI, Google) bị từ chối hay hết hạn mức, ABook chỉ đọc tiếp bằng giọng Edge nếu bạn đã cho phép gửi chữ tới Microsoft; chưa cho phép thì đọc tiếp bằng giọng của máy, chữ không rời máy.
