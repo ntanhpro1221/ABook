@@ -60,6 +60,10 @@ PAIRING_SECONDS = 300
 PAIRING_ATTEMPTS = 5
 CHUNK = 256 * 1024
 MAX_BODY = 2 * 1024 * 1024
+PEER_MAX_CONNECTIONS = 32
+PEER_MAX_PER_SOURCE = 8
+PEER_HEADER_SECONDS = 30
+PEER_MIN_UPLOAD_BYTES_PER_SECOND = 16 * 1024
 REMOTE_WAIT_SECONDS = 25  # trần của một lần "hỏi dài"; điện thoại đặt thời gian chờ đọc dài hơn thế
 PRESENCE_SECONDS = 40  # quá ngần này không nghe tin (hỏi dài chỉ kéo 25 giây) là điện thoại đã đi
 COMMAND_SECONDS = 15  # lệnh chưa tới tay điện thoại sau ngần này thì bỏ: "dừng" tới trễ hai phút là một cú giật mình
@@ -272,7 +276,45 @@ class TlsHTTPServer(ExclusiveHTTPServer):
 
     def __init__(self, address: tuple[str, int], handler: type[BaseHTTPRequestHandler], context: ssl.SSLContext) -> None:
         self.context = context
+        self._admission_lock = threading.Lock()
+        self._active_requests: dict[int, str] = {}
+        self._active_sources: dict[str, int] = {}
         super().__init__(address, handler)
+
+    def process_request(self, request: Any, client_address: Any) -> None:
+        source = str(client_address[0])
+        with self._admission_lock:
+            allowed = (len(self._active_requests) < PEER_MAX_CONNECTIONS
+                       and self._active_sources.get(source, 0) < PEER_MAX_PER_SOURCE)
+            if allowed:
+                self._active_requests[id(request)] = source
+                self._active_sources[source] = self._active_sources.get(source, 0) + 1
+        if not allowed:
+            # Chưa bắt tay TLS: không thể gửi HTTP 503 trên socket này.
+            self.shutdown_request(request)
+            return
+        try:
+            super().process_request(request, client_address)
+        except BaseException:
+            self._release_request(request)
+            self.shutdown_request(request)
+            raise
+
+    def _release_request(self, request: Any) -> None:
+        with self._admission_lock:
+            source = self._active_requests.pop(id(request), None)
+            if source is not None:
+                left = self._active_sources[source] - 1
+                if left:
+                    self._active_sources[source] = left
+                else:
+                    self._active_sources.pop(source, None)
+
+    def process_request_thread(self, request: Any, client_address: Any) -> None:
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self._release_request(request)
 
     def get_request(self) -> tuple[Any, Any]:
         client, address = super().get_request()
@@ -811,7 +853,7 @@ class SyncHandler(BaseHTTPRequestHandler):
     server_version = "ABookSync"
     protocol_version = "HTTP/1.1"
     # Một kết nối im lặng quá lâu (gửi dở thân, giữ kết nối) bị cắt; "hỏi dài" của điện thoại chờ tối đa 25 giây.
-    timeout = 60
+    timeout = PEER_HEADER_SECONDS
     app: SyncApp
 
     def setup(self) -> None:
@@ -819,6 +861,27 @@ class SyncHandler(BaseHTTPRequestHandler):
         self.request.settimeout(tls.HANDSHAKE_SECONDS)
         self.request.do_handshake()
         super().setup()
+
+    def handle_one_request(self) -> None:
+        # Timeout trên từng recv không chặn được peer cứ gửi một byte trước khi hết hạn.
+        self._read_deadline = threading.Timer(PEER_HEADER_SECONDS, self._expire_read)
+        self._read_deadline.daemon = True
+        self._read_deadline.start()
+        try:
+            super().handle_one_request()
+        finally:
+            self._read_deadline.cancel()
+
+    def _expire_read(self) -> None:
+        try:
+            self.connection.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
+
+    def end_headers(self) -> None:
+        # Thân yêu cầu đã đọc xong; không cắt stream audio dài sau khi bắt đầu trả lời.
+        self._read_deadline.cancel()
+        super().end_headers()
 
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
         return
@@ -858,6 +921,16 @@ class SyncHandler(BaseHTTPRequestHandler):
         if length < 0 or length > limit:
             self.close_connection = True
             return None
+        if self._device() is None:
+            self.close_connection = True
+            return None
+        # Chỉ peer đã xác thực được thêm thời gian cho gói lớn. Recv vẫn có timeout;
+        # deadline theo cỡ chặn peer nhỏ giọt ngay cả khi từng recv chưa hết hạn.
+        self._read_deadline.cancel()
+        self._read_deadline = threading.Timer(
+            PEER_HEADER_SECONDS + length / PEER_MIN_UPLOAD_BYTES_PER_SECOND, self._expire_read)
+        self._read_deadline.daemon = True
+        self._read_deadline.start()
         handle = tempfile.NamedTemporaryFile(prefix="abook_edits_", suffix=".zip", delete=False)
         try:
             with handle:
@@ -871,6 +944,8 @@ class SyncHandler(BaseHTTPRequestHandler):
         except BaseException:
             Path(handle.name).unlink(missing_ok=True)
             raise
+        finally:
+            self._read_deadline.cancel()
         return Path(handle.name)
 
     def _device(self, *, cookie: bool = False) -> dict[str, Any] | None:
