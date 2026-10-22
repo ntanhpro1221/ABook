@@ -192,7 +192,8 @@ function StartError({ book }: { book: BookSummary }) {
 
 /** Lỗi của lần làm sách: câu cho người nghe + việc nên làm; nguyên văn kỹ thuật thu vào "Chi tiết". */
 function LastError({ raw, redo = false }: { raw: string; redo?: boolean }) {
-  const shown = friendlyError(raw, Boolean(useAppInfo().data?.studio), redo);
+  const studio = useAppInfo().data?.studio;
+  const shown = friendlyError(raw, Boolean(studio), redo, Boolean(studio?.damagedSteps?.includes("llm")));
   return (
     <div className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
       <CircleAlert className="mt-0.5 size-4 shrink-0" />
@@ -214,9 +215,9 @@ function LastError({ raw, redo = false }: { raw: string; redo?: boolean }) {
 /** Lượt chạy gần nhất chết vì sự cố mà sổ không có lỗi nào để hiện (tiến trình bị tắt, worker sập): nói nguyên nhân do supervisor ghi
  *  thay vì im lặng (soát a88 T4). Bạn bấm Dừng thì không phải sự cố - máy chủ không gửi `runEnd`. */
 export function RunEnd({ end, redo }: { end: NonNullable<BookSummary["runEnd"]>; redo: boolean }) {
-  const studio = Boolean(useAppInfo().data?.studio);
+  const info = useAppInfo().data?.studio;
   const detail = [end.detail, end.exitCode ? `mã thoát ${end.exitCode}` : ""].filter(Boolean).join(" - ");
-  const shown = friendlyError(detail, studio, redo);
+  const shown = friendlyError(detail, Boolean(info), redo, Boolean(info?.damagedSteps?.includes("llm")));
   const summary =
     end.state === "lost"
       ? "Lần chạy trước bị ngắt đột ngột (tiến trình làm sách bị tắt, máy khởi động lại hay hết điện)."
@@ -274,6 +275,15 @@ function ProductionPanel({ book }: { book: BookSummary }) {
           {eta && <span className="text-fg-3"> · {eta}</span>}
         </div>
       </div>
+      {live && book.logLost && (
+        <p role="status" className="mb-3 flex gap-2 rounded-xl bg-warning-soft px-4 py-2 text-sm text-warning">
+          <CircleAlert className="mt-0.5 size-4 shrink-0" />
+          <span>
+            Sách vẫn đang chạy bình thường, nhưng nhật ký làm sách không ghi được ({book.logLost.lines} dòng đã bỏ) - thường do phần mềm diệt virus,
+            đồng bộ đám mây giữ file hoặc ổ đĩa gần đầy. Kiểm lại chỗ trống ở ổ chứa thư viện.
+          </span>
+        </p>
+      )}
       <div className="flex flex-col gap-3 sm:flex-row">
         <Step
           index={1}

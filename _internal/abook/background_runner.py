@@ -6,6 +6,7 @@ import multiprocessing as mp
 import os
 import subprocess
 import sys
+import threading
 import time
 import uuid
 from dataclasses import asdict, dataclass
@@ -115,6 +116,8 @@ class BackgroundStatus:
     stop_requested: bool = False
     last_event: dict[str, Any] | None = None
     detail: str | None = None
+    # Nhật ký phụ (events.jsonl / supervisor.log) không ghi được và đã bỏ dòng: `{"lines", "lastError", "since"}`. Sách vẫn chạy bình thường.
+    log_lost: dict[str, Any] | None = None
     # Tạm dừng mà tiến trình vẫn sống (power_source): "battery" = máy đang chạy pin, "listener" = người dùng bấm.
     pause_reason: str | None = None
     paused_at: str | None = None
@@ -154,13 +157,69 @@ def _append_line(path: Path, line: str) -> None:
         handle.flush()
 
 
+# Nhật ký phụ (events.jsonl, supervisor.log) là để người ta đọc lại, không phải điều kiện để sách chạy: antivirus/đồng bộ giữ file hay đĩa đầy
+# ở riêng file ấy không được giết worker đang thu âm (soát a96 V8). Ghi lỗi thì thử lại vài lần, vẫn lỗi thì BỎ dòng đó, ĐẾM số dòng mất, và nghỉ
+# `LOG_RETRY_PAUSE_SECONDS` rồi mới thử lại (không chặn vòng nghe worker mỗi sự kiện). Ghi state.json / SQLite vẫn nghiêm như cũ.
+LOG_WRITE_ATTEMPTS = 3
+LOG_RETRY_DELAY_SECONDS = 0.05
+LOG_RETRY_PAUSE_SECONDS = 5.0
+
+
+class _LogLoss:
+    """Dòng nhật ký đã mất của MỘT dự án: số dòng, lỗi cuối, và mốc được thử ghi lại (riêng từng file: events.jsonl hỏng không làm supervisor.log nghỉ)."""
+
+    def __init__(self) -> None:
+        self.lines = 0
+        self.last_error = ""
+        self.since: str | None = None
+        self.retry_at: dict[str, float] = {}
+
+    def as_dict(self) -> dict[str, Any]:
+        return {"lines": self.lines, "lastError": self.last_error, "since": self.since}
+
+
+_LOG_LOSS: dict[str, _LogLoss] = {}
+_LOG_LOSS_LOCK = threading.Lock()
+
+
+def log_loss(paths: BackgroundPaths) -> dict[str, Any] | None:
+    """Nhật ký của dự án này đã mất dòng nào chưa: `{"lines", "lastError", "since"}` hay None (cảnh báo cho trang sách)."""
+    with _LOG_LOSS_LOCK:
+        loss = _LOG_LOSS.get(str(paths.root))
+        return loss.as_dict() if loss is not None and loss.lines else None
+
+
+def _append_line_safely(paths: BackgroundPaths, path: Path, line: str) -> bool:
+    """Ghi một dòng nhật ký phụ; không bao giờ ném. False khi dòng bị bỏ (đã đếm trong `_LOG_LOSS`)."""
+    with _LOG_LOSS_LOCK:
+        loss = _LOG_LOSS.setdefault(str(paths.root), _LogLoss())
+        waiting = time.monotonic() < loss.retry_at.get(path.name, 0.0)
+    error: OSError | None = None
+    if not waiting:
+        for attempt in range(LOG_WRITE_ATTEMPTS):
+            try:
+                _append_line(path, line)
+                return True
+            except OSError as exc:
+                error = exc
+                if attempt + 1 < LOG_WRITE_ATTEMPTS:
+                    time.sleep(LOG_RETRY_DELAY_SECONDS)
+    with _LOG_LOSS_LOCK:
+        loss.lines += 1
+        loss.since = loss.since or _utc_now()
+        if error is not None:
+            loss.last_error = f"{path.name}: {type(error).__name__}: {error.strerror or error}"
+            loss.retry_at[path.name] = time.monotonic() + LOG_RETRY_PAUSE_SECONDS
+    return False
+
+
 def _append_log(paths: BackgroundPaths, message: str) -> None:
-    _append_line(paths.log, f"{_utc_now()} | {message}")
+    _append_line_safely(paths, paths.log, f"{_utc_now()} | {message}")
 
 
 def _append_event(paths: BackgroundPaths, event: Mapping[str, Any]) -> None:
     payload = json.dumps(dict(event), ensure_ascii=False, separators=(",", ":"), default=str)
-    _append_line(paths.events, payload)
+    _append_line_safely(paths, paths.events, payload)
     _append_log(paths, f"EVENT {event.get('kind', 'unknown')} {payload}")
 
 
@@ -334,6 +393,7 @@ def _status_from_state(paths: BackgroundPaths, state: Mapping[str, Any]) -> Back
         stop_requested=bool(state.get("stop_requested", False)),
         last_event=dict(last_event) if isinstance(last_event, dict) else None,
         detail=detail,
+        log_lost=dict(state["log_lost"]) if running and isinstance(state.get("log_lost"), dict) else None,
         pause_reason=str(state["pause_reason"]) if running and state.get("pause_reason") else None,
         paused_at=str(state["paused_at"]) if running and state.get("paused_at") else None,
         can_pause=running and "pause_reason" in state and recorded_state != "stopping",
@@ -871,6 +931,9 @@ def _record_worker_event(
     normalized["observed_at"] = _utc_now()
     _append_event(paths, normalized)
     state["last_event"] = normalized
+    lost = log_loss(paths)
+    if lost is not None:
+        state["log_lost"] = lost  # sang state.json ở nhịp ghi kế: trang sách báo "nhật ký không ghi được" thay vì im lặng
     return normalized
 
 
