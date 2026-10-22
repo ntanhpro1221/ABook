@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.127] - 2026-10-23
+
 ### Sửa lỗi
 
 - Hộp “Đổi giọng” chọn và nghe thử được mọi giọng ZeroTTS và Supertonic (trước đây bấm vào là báo lỗi, nút nghe mẫu không phát). Giọng lạ gửi tới sách mở từ file `.abook` bị từ chối ngay kèm lý do, không còn được ghi nhận rồi lặng lẽ bỏ khi áp.
