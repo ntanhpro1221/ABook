@@ -395,6 +395,12 @@ object BookWishes {
         return null
     }
 
+    /** `book_wishes.pending_line_kind`: loại đoạn mà ý muốn sửa cách đọc đang chờ của câu này muốn đặt ("" = không có hay không đổi loại). */
+    fun pendingLineKind(wishes: JSONObject?, stableId: String, textSha256: String): String {
+        val entry = wishes?.optJSONObject("lines")?.optJSONObject(stableId) ?: return ""
+        return if (BookEdits.pyText(entry.opt("text_sha256")) == textSha256) BookEdits.pyText(entry.opt("kind")) else ""
+    }
+
     /**
      * Mã lý do Studio sẽ từ chối "ai nói câu này", hay null - như `speaker_target`: câu còn đó, chữ chưa đổi, là lời nói, người ấy
      * có giọng (hay người nghe TẠO người mới), trên chữ đọc theo của cuốn.
