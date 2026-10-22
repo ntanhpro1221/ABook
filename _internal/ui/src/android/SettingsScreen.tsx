@@ -1,5 +1,6 @@
 import * as Switch from "@radix-ui/react-switch";
 import { ChevronDown, ChevronRight, Download } from "lucide-react";
+import { toast } from "sonner";
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/shared/cn";
 import { Button, Segmented, Sheet, TimeSelect } from "@/shared/ui";
@@ -60,7 +61,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
         <div className="text-[0.9375rem] font-medium">{label}</div>
         {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2">{hint}</div>}
       </div>
-      <div className="ml-auto shrink-0">{children}</div>
+      <div className="ml-auto max-w-full">{children}</div>
     </div>
   );
 }
@@ -121,6 +122,9 @@ export function AboutGroup({ version }: { version: string | null }) {
   );
 }
 
+/** Bộ nhớ của WebView không ghi được (đầy, bị chặn): thay đổi vẫn dùng ngay và lõi nghe vẫn nhớ, nhưng báo để bạn kiểm lại lần mở sau. */
+export const SAVE_FAILED = "Chưa lưu được thay đổi này vào bộ nhớ của app. Bây giờ vẫn nghe theo lựa chọn mới, nhưng lần mở lại bạn nên xem lại cài đặt.";
+
 export function SettingsScreen() {
   const [settings, setSettings] = useState<PlayerSettings>(loadSettings);
   const { current, update } = useAppUpdate();
@@ -128,7 +132,7 @@ export function SettingsScreen() {
   const change = (patch: Partial<PlayerSettings>) => {
     const next = { ...settings, ...patch };
     setSettings(next);
-    saveSettings(next);
+    if (!saveSettings(next)) toast.error(SAVE_FAILED, { id: "settings-not-saved" });
     if (patch.theme) applyTheme(patch.theme);
   };
   return (
@@ -186,27 +190,28 @@ export function SettingsScreen() {
             <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
           </Switch.Root>
         </Row>
+        {/* Ba ô chọn giờ / số phút cao tối thiểu 48 dp như mọi đích chạm khác của Android (soát a100 T2). */}
         {settings.sleepSchedule && (
           <div className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm">
             <TimeSelect
               label="Từ"
               value={settings.sleepSchedule.from}
               onChange={(value) => change({ sleepSchedule: { ...settings.sleepSchedule!, from: value } })}
-              className="h-10 rounded-lg border border-line bg-bg px-2"
+              className="min-h-[48px] rounded-lg border border-line bg-bg px-2"
             />
             <span className="text-fg-2">đến</span>
             <TimeSelect
               label="Đến"
               value={settings.sleepSchedule.to}
               onChange={(value) => change({ sleepSchedule: { ...settings.sleepSchedule!, to: value } })}
-              className="h-10 rounded-lg border border-line bg-bg px-2"
+              className="min-h-[48px] rounded-lg border border-line bg-bg px-2"
             />
             <span className="text-fg-2">hẹn</span>
             <select
               aria-label="Số phút hẹn"
               value={settings.sleepSchedule.minutes}
               onChange={(event) => change({ sleepSchedule: { ...settings.sleepSchedule!, minutes: Number(event.target.value) } })}
-              className="h-10 rounded-lg border border-line bg-bg px-2"
+              className="min-h-[48px] rounded-lg border border-line bg-bg px-2"
             >
               {[15, 30, 45, 60].map((minutes) => (
                 <option key={minutes} value={minutes}>
