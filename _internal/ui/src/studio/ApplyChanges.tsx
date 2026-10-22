@@ -62,12 +62,15 @@ export function PendingList({
   onDrop,
   showLines = true,
   extra,
+  locked = false,
 }: {
   items: PendingItem[];
   dropping: string | null;
   onDrop: (item: PendingItem) => void;
   showLines?: boolean;
   extra?: (item: PendingItem) => ReactNode;
+  /** Chưa bỏ được lúc này (sách đang chạy, chưa tạm dừng tới checkpoint): nút bỏ tắt. */
+  locked?: boolean;
 }) {
   return (
     <ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line">
@@ -92,7 +95,7 @@ export function PendingList({
               icon={X}
               label={dropLabel(item)}
               className="-my-1.5 -mr-1.5"
-              disabled={dropping !== null}
+              disabled={dropping !== null || locked}
               onClick={() => onDrop(item)}
             />
           </li>
@@ -108,12 +111,15 @@ export function ApplyChangesDialog({
   open,
   onOpenChange,
   onApply,
+  running,
 }: {
   bookId: string;
   count: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onApply: () => void;
+  /** Sách đang chạy: máy tự áp ở ranh giới chương kế nên không có nút "Áp dụng"; chỉ bỏ được khi đã tạm dừng tới checkpoint ("checkpoint"). */
+  running?: "busy" | "checkpoint";
 }) {
   const client = useQueryClient();
   const [dropping, setDropping] = useState<string | null>(null);
@@ -148,8 +154,14 @@ export function ApplyChangesDialog({
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-xl"
-      title={`Áp dụng ${count} thay đổi?`}
-      description="Máy chỉ thu lại những câu bị ảnh hưởng, rồi dựng lại các chương có câu ấy - không làm lại cả cuốn."
+      title={running ? `${count} thay đổi đang chờ áp` : `Áp dụng ${count} thay đổi?`}
+      description={
+        running === "busy"
+          ? "Máy tự áp chúng ở chương kế tiếp. Muốn bỏ một việc, bạn bấm “Tạm dừng” ở trang sách, đợi tới khi báo “Đã tạm dừng” rồi mở lại hộp này."
+          : running
+            ? "Sách đã tạm dừng nên bỏ được một việc ở đây; làm tiếp thì máy áp những việc còn lại ở chương kế tiếp."
+            : "Máy chỉ thu lại những câu bị ảnh hưởng, rồi dựng lại các chương có câu ấy - không làm lại cả cuốn."
+      }
     >
       {!data ? (
         <p className="text-sm text-fg-2">Đang xem các thay đổi…</p>
@@ -158,6 +170,7 @@ export function ApplyChangesDialog({
           <PendingList
             items={data.items}
             dropping={dropping}
+            locked={running === "busy"}
             onDrop={(item) => void drop(item)}
             extra={(item) => (item.voice ? tryVoice.button(item.voice, item.voice.preset || "mới") : null)}
           />
@@ -177,18 +190,20 @@ export function ApplyChangesDialog({
       )}
       <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Để sau
+          {running ? "Đóng" : "Để sau"}
         </Button>
-        <Button
-          variant="primary"
-          icon={RefreshCw}
-          onClick={() => {
-            onOpenChange(false);
-            onApply();
-          }}
-        >
-          Áp dụng
-        </Button>
+        {!running && (
+          <Button
+            variant="primary"
+            icon={RefreshCw}
+            onClick={() => {
+              onOpenChange(false);
+              onApply();
+            }}
+          >
+            Áp dụng
+          </Button>
+        )}
       </div>
     </Dialog>
   );

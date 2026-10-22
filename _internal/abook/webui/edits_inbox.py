@@ -30,7 +30,7 @@ from typing import Any
 
 from .. import listener_overrides as overrides
 from .. import names as renames
-from ..io_utils import atomic_write_bytes
+from ..io_utils import atomic_write_bytes, project_write_lock
 from . import book_edits, book_wishes, covers, music_plan, store
 
 INBOX_FILE = "edits_inbox.json"
@@ -413,7 +413,7 @@ def apply(project: Path, device: str, item_ids: list[str] | None, *, now: float 
     vừa bấm trong Studio, vào danh sách "Áp dụng N thay đổi", chưa chạy gì. Mục Studio sẽ từ chối ngay (câu đã đổi chữ...) bị bỏ
     qua và đếm. "Áp dụng tất cả" (`item_ids` None) KHÔNG lấy mục chủ máy đã đổi khác sau lúc máy kia sửa (`_held`): mục ấy ở lại
     chờ chủ máy chọn từng việc. Xong thì rút khỏi hộp thư. Trả {"requests", "skipped", "left", "held"}."""
-    with _LOCK:
+    with project_write_lock(project), _LOCK:  # khoá dự án NGOÀI cùng, như nút Studio (`fold` ghi overrides.json - soát a83 B3)
         data = _load(project)
         entry = data["devices"].get(device)
         if entry is None:
@@ -465,7 +465,7 @@ def receive(project: Path, device: str, name: str, package: Path, *, my_music: A
     edits, cover, tracks = read_package(package)
     layer = {key: value for key, value in edits.items() if key != "wishes"}
     wishes = edits.get("wishes") or {}
-    with _LOCK:
+    with project_write_lock(project), _LOCK:
         local = book_edits.chapter_resolver(project)
         conflicts = _conflicts(project, device, name, layer, cover, local)
         scratch = Path(tempfile.mkdtemp(prefix=".edits_in_", dir=project))
@@ -479,6 +479,7 @@ def receive(project: Path, device: str, name: str, package: Path, *, my_music: A
         requests = skipped_wishes = 0
         held = 0
         waiting_wishes = {} if may_produce else wishes
+        folded_now: list[dict[str, Any]] = []
         if wishes and may_produce:
             # Chủ máy đã đổi khác SAU lúc máy kia sửa: không đè - vào hộp thư chờ chủ máy chọn, người gửi được báo.
             groups = _groups(wishes)
@@ -489,9 +490,15 @@ def receive(project: Path, device: str, name: str, package: Path, *, my_music: A
             if fresh:
                 folded = book_wishes.fold(project, fresh, now=now)
                 requests, skipped_wishes = folded["requests"], folded["skipped"]
+                folded_now = _groups(fresh)
         data = _load(project)
+        previous = (data["devices"].get(device) or {}).get("wishes") or {}
+        if folded_now:
+            # Bản mới đã áp thẳng: bản CŨ hơn cùng khoá còn chờ trong hộp thư phải đi, không thì "Áp dụng" nó đè bản mới (soát a83 B4).
+            previous = _without(previous, folded_now)
+            if not waiting_wishes and device in data["devices"]:
+                _store(data, device, data["devices"][device], previous)
         if waiting_wishes:
-            previous = (data["devices"].get(device) or {}).get("wishes") or {}
             merged, _ = book_wishes.merge(waiting_wishes, previous)  # bản đến sau thắng từng khoá
             data["devices"][device] = {"name": name, "at": now, "wishes": merged}
         held = len(_groups((data["devices"].get(device) or {}).get("wishes") or {}))
