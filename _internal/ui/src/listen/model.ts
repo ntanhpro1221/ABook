@@ -75,7 +75,7 @@ export interface ChapterState {
 }
 
 export interface ListeningState {
-  last?: { chapterId: number; seconds: number; at: number };
+  last?: { chapterId: number; seconds: number; at: number; anchor?: import("./readingAnchor").ReadingAnchor };
   chapters: Record<string, ChapterState>;
   rate?: number;
   /** Giọng Nghe ngay riêng của cuốn và lúc chọn (giây Unix) - máy chọn sau thắng (readAloudVoice.ts adoptSyncedVoice). */

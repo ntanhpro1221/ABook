@@ -53,6 +53,43 @@ class StoreRekeyTest {
     }
 
     @Test
+    fun restart_finishes_a_journal_whose_directory_already_moved() {
+        File(root, "rekey_journal.json").writeText(JSONObject().put(old,
+            JSONObject().put("to", new).put("adopt", false)).toString())
+        assertTrue(File(root, "books/$old").renameTo(File(root, "books/$new")))
+        Store.rekey(old, new)
+        assertEquals("r-1", Store.knownActiveRecord(new))
+        assertNull(Store.knownActiveRecord(old))
+        assertEquals(new, Store.rawManifest(new)!!.getString("id"))
+        assertTrue(JSONObject(File(root, "prints.json").readText()).has(new))
+        // A second restart is harmless even after some writes were already completed.
+        Store.rekey(old, new)
+        assertEquals("r-1", Store.knownActiveRecord(new))
+    }
+
+    @Test
+    fun retry_after_a_failed_links_write_still_commits_links_before_clearing_the_journal() {
+        val blocker = File(root, "records.json.part").apply { mkdirs() }
+        assertTrue(runCatching { Store.rekey(old, new) }.isFailure)
+        assertTrue(File(root, "rekey_journal.json").isFile)
+        assertTrue(blocker.delete())
+        Store.recoverRekeys()
+        val links = JSONObject(File(root, "records.json").readText()).getJSONObject("links")
+        assertFalse(links.has(old))
+        assertEquals("r-1", links.getJSONObject(new).getString("active"))
+    }
+
+    @Test
+    fun a_journal_that_cannot_go_on_is_dropped_without_failing_the_app_start() {
+        File(root, "rekey_journal.json").writeText(JSONObject()
+            .put("gone1", JSONObject().put("to", "gone2").put("adopt", false)) // sách đã bị xoá: không còn thư mục nào
+            .put("../x", JSONObject().put("to", new)).toString())
+        Store.recoverRekeys()
+        assertEquals(0, JSONObject(File(root, "rekey_journal.json").readText()).length())
+        assertEquals("r-1", Store.knownActiveRecord(old))
+    }
+
+    @Test
     fun an_escaping_id_or_a_copy_already_under_the_new_id_changes_nothing() {
         Store.rekey(old, "../x")
         Store.rekey(old, "")

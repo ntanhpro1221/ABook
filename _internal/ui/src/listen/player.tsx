@@ -7,6 +7,7 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
+import type { ReadingAnchor } from "./readingAnchor";
 import { tellSceneMusic } from "./musicHint";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit } from "./musicBed";
 import { SceneCues, isSceneCues, sceneRetryDelay } from "./sceneCues";
@@ -362,7 +363,7 @@ export function PlayerProvider({
     refs.current.lastSaved = now;
     refs.current.stamp = now;
     refs.current.savedSpot = { chapterId: current.chapterId, seconds: engine.time };
-    void source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId).catch(reportSaveFailure);
+    void source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId, engine.readingAnchor).catch(reportSaveFailure);
     if (force) refreshLists(current.bookId);
   }, [engine, native, source, refreshLists]);
 
@@ -436,7 +437,7 @@ export function PlayerProvider({
     }, () => undefined);
   }, [source]);
 
-  const load = useCallback((next: Track, at: number, autoplay: boolean) => {
+  const load = useCallback((next: Track, at: number, autoplay: boolean, readingAnchor?: ReadingAnchor) => {
     save(true);
     setError("");
     stopPeerWatch.current();
@@ -452,6 +453,7 @@ export function PlayerProvider({
         // Chương chỉ-có-chữ: không có file, bộ máy đọc to tự dựng chương từ các đoạn chữ (readAloud.ts).
         url: chapter?.state === "text" ? "" : source.audioUrl(next.bookId, next.chapterId),
         speech: chapter?.state === "text" && !native ? speechOf(next.bookId, chapter) : undefined,
+        readingAnchor,
         title: next.chapterTitle,
         album: next.bookTitle,
         artist: next.narrator,
@@ -753,7 +755,7 @@ export function PlayerProvider({
     if (at !== undefined && last && last.chapterId === chapterId && Math.abs(last.seconds - at) < 1) {
       start = Math.max(0, at - rewindAfter(Date.now() - last.at * 1000));
     }
-    load(next, start, true);
+    load(next, start, true, !extra?.word && last?.chapterId === chapterId && at !== undefined && Math.abs(last.seconds - at) < 1 ? last.anchor : undefined);
     if (extra?.word) engine.seekWord?.(extra.word.segment, extra.word.word);
   }, [adoptBook, engine, load, markLoaded, native]);
 
@@ -787,7 +789,7 @@ export function PlayerProvider({
     refs.current.pausedAt = 0;
     // `load` tự gắn cuốn vào trình phát SAU lần lưu chỗ cũ của nó; gắn trước thì lần lưu ấy ghi 0:00 (chưa nạp audio)
     // vào chỗ nghe dở của chính cuốn này - mỗi lần mở lại app là mất chỗ nghe.
-    load(next, Math.max(0, at - back), false);
+    load(next, Math.max(0, at - back), false, last?.chapterId === chapterId && Math.abs(last.seconds - at) < 1 ? last.anchor : undefined);
   }, [adoptBook, adoptVoice, load, markLoaded, native]);
 
   /** Hết sách mà người nghe bấm phát: nói ra và mời nghe lại từ đầu (soát UX 03-10 - trước đây không có gì xảy ra). */
@@ -1215,7 +1217,7 @@ export function PlayerProvider({
       const moved = !engine.paused || !saved || saved.chapterId !== current.chapterId || Math.abs(saved.seconds - engine.time) > 1;
       const writes = [
         moved
-          ? source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId).catch(reportSaveFailure)
+          ? source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId, engine.readingAnchor).catch(reportSaveFailure)
           : undefined,
         closeSession(),
       ];

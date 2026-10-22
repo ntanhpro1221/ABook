@@ -55,7 +55,7 @@ _ENTRY_KEYS = {
     "speakers": {"speaker", "text_sha256", "requested_at", "new"},
     "lines": {"text_sha256", "kind", "emotion", "intensity", "spoken", "requested_at"},
     "voices": {"preset", "gender", "avoid", "requested_at"},
-    "retakes": {"text_sha256", "requested_at"},
+    "retakes": {"text_sha256", "requested_at", "operation_id"},
 }
 _REPLACEABLE = {"pronunciations", "speakers", "voices"}  # các mục `_replacing` của listener_overrides giữ mong muốn cũ
 
@@ -127,6 +127,11 @@ def _entry(section: str, key: Any, entry: Any, *, nested: bool = False) -> dict[
         if not isinstance(sha, str) or not _SHA256.fullmatch(sha):
             raise bad
         out["text_sha256"] = sha
+        if "operation_id" in entry:
+            operation = entry["operation_id"]
+            if not isinstance(operation, str) or not re.fullmatch(r"[0-9a-f]{32}", operation):
+                raise bad
+            out["operation_id"] = operation
     if "replaced" in entry:
         out["replaced"] = _entry(section, key, entry["replaced"], nested=True)
     return out
@@ -708,7 +713,7 @@ def pending_details(folder: Path, wishes: dict[str, Any] | None) -> dict[str, An
 
 
 def _wanted(entry: dict[str, Any]) -> dict[str, Any]:
-    return {key: value for key, value in entry.items() if key not in ("requested_at", "replaced")}
+    return {key: value for key, value in entry.items() if key not in ("requested_at", "replaced", "operation_id")}
 
 
 def newer_here(project: Path, wishes: dict[str, Any]) -> dict[tuple[str, str], dict[str, Any]]:
@@ -727,6 +732,12 @@ def newer_here(project: Path, wishes: dict[str, Any]) -> dict[tuple[str, str], d
 
 
 def fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int]:
+    # Giữ chỗ biên nhận và ghi overrides dưới cùng khoá với các đường sửa sách.
+    with book_edits._LOCK:
+        return _fold(project, wishes, now=now)
+
+
+def _fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int]:
     """Đọc lại ý muốn của một file `.abook` thành YÊU CẦU của dự án bằng chính các hàm Studio dùng
     (`listener_overrides.request_*`, `aliases.add`) - ghi vào overrides.json như thể người dùng vừa bấm trong Studio, KHÔNG áp:
     chúng vào danh sách "Áp dụng N thay đổi" như mọi yêu cầu. `requested_at` được đóng dấu lại (đồng hồ điện thoại có thể lệch;
@@ -778,7 +789,29 @@ def fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int]
         if store.segment_text_sha256(project, stable_id) != entry["text_sha256"]:
             skipped += 1
             continue
-        overrides.request_retake(project, stable_id, entry["text_sha256"], now=stamps[entry["requested_at"]])
+        operation = entry.get("operation_id")
+        if operation:
+            receipt_path = Path(project) / "retake_receipts.json"
+            # Biên nhận hỏng thì dừng hẳn (ném lỗi): quên nó là có thể đọc lại câu lần hai, đổi seed thêm lần nữa.
+            receipts = json.loads(receipt_path.read_text(encoding="utf-8")) if receipt_path.exists() else {}
+            receipt = receipts.get(operation)
+            if receipt is None:
+                receipt = {"at": stamps[entry["requested_at"]], "lines": {}}
+                receipts[operation] = receipt
+            line = receipt["lines"].get(stable_id)
+            if line is not None and line["sha"] != entry["text_sha256"]:
+                raise EditsError(BAD_WISHES)
+            if line is not None and line.get("done"):
+                continue
+            receipt["lines"][stable_id] = {"sha": entry["text_sha256"], "done": False}
+            atomic_write_json(receipt_path, receipts)  # giữ dấu giờ cố định TRƯỚC khi yêu cầu
+            here = (overrides.read_overrides(project).get("retakes") or {}).get(stable_id) or {}
+            if float(here.get("requested_at") or 0) < receipt["at"]:
+                overrides.request_retake(project, stable_id, entry["text_sha256"], now=receipt["at"])
+            receipt["lines"][stable_id]["done"] = True
+            atomic_write_json(receipt_path, receipts)
+        else:
+            overrides.request_retake(project, stable_id, entry["text_sha256"], now=stamps[entry["requested_at"]])
         requests += 1
     for item in sorted(wishes.get(ALIASES) or [], key=lambda item: item["at"]):
         alias_book.add(project, item["alias"], item["person"], now=stamps[item["at"]])

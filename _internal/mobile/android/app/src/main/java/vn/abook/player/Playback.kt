@@ -722,7 +722,7 @@ object Playback {
         val duration = durationMs().takeIf { it > 0 }?.div(1000.0) ?: chapter.duration
         // Chỗ nghe phải khớp chương: vượt quá độ dài chương là đồng hồ của thứ khác (cuốn trước) - không lưu, không đồng bộ đi (soát a68 lỗi 2).
         if (!PlacePolicy.fits(positionSeconds, duration)) return
-        Store.progress(bookId, chapter.id, positionSeconds, duration)
+        Store.progress(bookId, chapter.id, positionSeconds, duration, ReadAloud.anchor())
         savedPlace = chapter.id to positionMs
     }
 

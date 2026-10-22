@@ -6,6 +6,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
@@ -100,6 +101,24 @@ object EditsSync {
     /** Lớp sửa hiện có của cuốn, kèm byte bìa mới; null khi không còn gì để gửi. Thiếu file bìa / file nhạc đã chọn: lỗi nói rõ. */
     fun snapshot(dir: File): Snapshot? = BookEdits.locked {
         val edits = BookEdits.load(dir)
+        // Older edits get an identity before the first send. Retrying reads the same saved ID;
+        // a new click replaces the entry, so it will receive a new ID.
+        val retakes = edits.optJSONObject("wishes")?.optJSONObject("retakes")
+        val operations = HashMap<Double, String>()
+        var assigned = false
+        if (retakes != null) {
+            // Only unassigned entries share a new ID: an older snapshot can have the same clock value as a new click.
+            for (key in retakes.keys()) {
+                val entry = retakes.getJSONObject(key)
+                if (!entry.has("operation_id")) {
+                    entry.put("operation_id", operations.getOrPut(entry.getDouble("requested_at")) {
+                        UUID.randomUUID().toString().replace("-", "")
+                    })
+                    assigned = true
+                }
+            }
+        }
+        if (assigned) BookEdits.write(dir, edits)
         val removed = BookEdits.removedMarks(edits, marks(dir))
         if (BookEdits.isEmpty(edits) && removed.length() == 0) return@locked null
         var cover: ByteArray? = null
