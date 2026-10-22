@@ -124,7 +124,11 @@ class ReadAloudPlugin : Plugin() {
         val voice = call.getString("voice") ?: return call.reject("thiếu voice")
         val ids = chapterIds(call) ?: return call.reject("thiếu chapterIds")
         val chargingOnly = call.getBoolean("chargingOnly", PrepareAhead.chargingOnly(context))!!
-        call.resolve(JSObject.fromJSONObject(PrepareAhead.start(context, book, voice, ids, call.getString("label", "")!!, chargingOnly)))
+        try {
+            call.resolve(JSObject.fromJSONObject(PrepareAhead.start(context, book, voice, ids, call.getString("label", "")!!, chargingOnly)))
+        } catch (error: VoiceException) {
+            call.reject(error.message)
+        }
     }
 
     @PluginMethod

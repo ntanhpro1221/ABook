@@ -310,9 +310,12 @@ object ReadAloud {
     @Synchronized
     private fun reader(): ClipReader = reader ?: run {
         val ctx = context ?: throw VoiceException("Chưa khởi động")
-        // Giọng dùng khoá hỏng (khoá bị từ chối, hết hạn mức, mất mạng): Edge đỡ trước giọng của máy; mỗi chuyện báo người nghe một lần.
-        ClipReader(cache(), ::voiceFor, { fallbackVoice(ctx) }, onlineFallback = { EdgeTts("vi-VN-HoaiMyNeural") }, notice = ::notice).also { reader = it }
+        // Giọng dùng khoá hỏng (khoá bị từ chối, hết hạn mức, mất mạng): Edge đỡ trước giọng của máy - NẾU người nghe đã đồng ý gửi chữ cho Microsoft; mỗi chuyện báo người nghe một lần.
+        ClipReader(cache(), ::voiceFor, { fallbackVoice(ctx) }, onlineFallback = ::edgeFallback, notice = ::notice).also { reader = it }
     }
+
+    /** Giọng Edge đỡ cho giọng dùng khoá hỏng: chỉ khi "edge" đã được đồng ý (đồng ý của nhà cung cấp khác không thay được) - chưa thì null, chuỗi giọng rơi thẳng sang giọng của máy. */
+    internal fun edgeFallback(): Voice? = if (choices?.onlineAllowed("edge") == true) EdgeTts("vi-VN-HoaiMyNeural") else null
 
     private fun voiceFor(id: String): Voice {
         val (provider, name) = ClipCache.split(id)
@@ -476,7 +479,8 @@ object ReadAloud {
      *  thì giọng của người chưa chọn: còn giọng VieNeu khác thì dùng nó). Gọi ở luồng chính. */
     fun voicesChanged() {
         if (stillOffered(voiceId)) return
-        setVoice(if (choices?.voiceFor(voiceBook).isNullOrBlank()) "" else DEFAULT_VOICE)
+        // Giọng cũ không còn: bắt buộc đổi; nếu giọng thay thế gửi chữ đi mà chưa được đồng ý thì dừng ở chỗ đang nghe, chưa gửi gì ([switchVoice]).
+        switchVoice(usableOrDefault(if (choices?.voiceFor(voiceBook).isNullOrBlank()) "" else DEFAULT_VOICE), forced = true)
     }
 
     /** Giao diện gửi danh sách nhà cung cấp đã được đồng ý (lúc mở app, mỗi lần người nghe đồng ý): đang dừng nạp ở ranh giới chương vì chưa
@@ -486,19 +490,42 @@ object ReadAloud {
         pump()
     }
 
-    /** Giọng đang chọn là giọng trực tuyến mà người nghe chưa đồng ý gửi chữ tới (giọng của máy, VieNeu, Supertonic: không gửi gì đi). */
-    private fun needsConsent(): Boolean {
-        val provider = ClipCache.split(voiceId).first
-        return PreparePlan.online(voiceId) && choices?.onlineAllowed(provider) != true
+    /** Giọng `voice` (mặc định: giọng đang chọn) là giọng trực tuyến mà người nghe chưa đồng ý gửi chữ tới (giọng của máy, VieNeu, Supertonic: không gửi gì đi). */
+    private fun needsConsent(voice: String = voiceId): Boolean {
+        val provider = ClipCache.split(voice).first
+        return PreparePlan.online(voice) && choices?.onlineAllowed(provider) != true
     }
 
-    /** Đổi giọng: các đoạn đã đọc sẵn mà chưa tới thì bỏ, đoạn kế đọc bằng giọng mới. */
-    fun setVoice(id: String) {
-        val value = usableOrDefault(id)
+    /** Giọng `voice` gửi chữ đi mà người nghe chưa đồng ý với nhà cung cấp ấy ("Làm trước" hỏi trước khi gửi cả loạt chương ở nền). */
+    internal fun voiceNeedsConsent(voice: String): Boolean = needsConsent(voice)
+
+    /** Chương `index` là chương chữ và giọng `voice` chưa được đồng ý: đọc nó sẽ gửi chữ đi. */
+    private fun sendsText(index: Int, voice: String = voiceId): Boolean = chapters().getOrNull(index)?.isText == true && needsConsent(voice)
+
+    /** Lời khi chữ sắp rời máy mà người nghe chưa đồng ý (đường không qua giao diện: Android Auto, widget, nút tai nghe; giao diện thì hỏi trước - player.tsx withConsent). */
+    internal const val CONSENT_NOTICE = "Giọng này gửi chữ của sách ra ngoài máy: mở ABook và bấm Phát để cho phép, hoặc chọn giọng của máy."
+
+    /** Đổi giọng: các đoạn đã đọc sẵn mà chưa tới thì bỏ, đoạn kế đọc bằng giọng mới. Đang nghe chương chữ mà giọng mới gửi chữ đi chưa được đồng ý thì từ chối: giữ giọng cũ, báo người nghe
+     *  (giao diện hỏi đồng ý TRƯỚC khi đổi - listen/PlayerViews.tsx; đây là lưới cuối cho đường không qua nó). */
+    fun setVoice(id: String) = switchVoice(usableOrDefault(id), forced = false)
+
+    /** `forced`: giọng cũ không còn nữa (gỡ mô-đun, xoá khoá) nên không thể giữ - giọng mới chưa được đồng ý thì dừng lại (`held`), chưa gửi chữ nào, tới khi người nghe bấm Phát và đồng ý. */
+    private fun switchVoice(value: String, forced: Boolean) {
         if (value == voiceId) return
+        val refuse = active && sendsText(chapterIndexNow() ?: -1, value)
+        if (refuse && !forced) {
+            notice(CONSENT_NOTICE)
+            return
+        }
         voiceId = value
         if (!active) return
         val exo = Playback.player ?: return
+        if (refuse) {
+            held = true
+            waiting?.play = false
+            exo.pause()
+            notice(CONSENT_NOTICE)
+        }
         val slot = currentSlot()
         val target = waiting
         // Chữ chương chưa về: `waiting` chỉ là chỗ tạm (đầu chương), chỗ thật nằm trong việc chờ chữ - đọc lại ở đây là về đầu chương và ghi đè vị trí đã lưu.
@@ -515,6 +542,9 @@ object ReadAloud {
      *  nên đoạn không có chữ ấy lấy lại ngay). Đoạn đang phát nói nốt, nhưng clip của nó và của đoạn trước còn giữ để tua lùi cũng bỏ: nghe lại đoạn ấy thì đọc lại
      *  bằng cách đọc mới, như máy tính (soát a70). Gọi từ luồng nào cũng được. */
     fun readingsChanged(bookId: String) {
+        // Ghim của "Làm trước" tính theo cách đọc lúc làm: đổi cách đọc thì khoá đổi, `unpin` lúc nghe tới không trúng khoá cũ nên clip cũ ghim mãi (chiếm phần bộ đệm làm trước tới khi
+        // "Dọn bản đọc đã làm") - bỏ ghim của việc ấy; clip còn trúng ở lại, theo LRU như clip thường (soát a79 lỗi 8).
+        if (PrepareAhead.pinsBelongTo(bookId)) runCatching { cache().clearPins() }
         if (!active) return
         Playback.onMain {
             if (!active || Playback.bookId != bookId) return@onMain
@@ -734,11 +764,16 @@ object ReadAloud {
         failure = null
         errorPause.listenerActed()
         if (!retryingByItself) notices.forget()
-        held = hold
+        // Chương chữ + giọng trực tuyến chưa được đồng ý: dừng ở đầu đoạn, không gọi mạng (như handleEnded ở ranh giới chương) - Android Auto, widget, nút tai nghe, "Phát trên điện thoại" đi
+        // thẳng vào đây mà không qua hộp hỏi của giao diện. Bấm Phát ([onPlay]) mới đi tiếp, và chỉ khi đã đồng ý.
+        val unconsented = sendsText(index)
+        val go = play && !unconsented
+        if (unconsented && play) notice(CONSENT_NOTICE)
+        held = hold || unconsented
         feedChapter = index
         feedSegment = 0
         if (!chapter.isText) {
-            waiting = Target(index, 0, offsetMs, -1, play)
+            waiting = Target(index, 0, offsetMs, -1, go)
             pump()
             return
         }
@@ -748,9 +783,9 @@ object ReadAloud {
             // cuốn trước (soát a68 lỗi 2: "Nghe tiếp · 3:38" trên chương dài 3:15, rồi máy tính cũng nhận 3:38).
             exo.pauseAtEndOfMediaItems = false
             exo.clearMediaItems()
-            exo.playWhenReady = play
+            exo.playWhenReady = go
             val place = Place(index, offsetMs, segment, word, within)
-            waiting = Target(index, 0, 0, -1, play, place)
+            waiting = Target(index, 0, 0, -1, go, place)
             // Chữ về muộn (qua mạng chậm): ý phát LÚC ĐÓ, không phải `play` của lúc xin - người nghe bấm dừng trong lúc chờ thì `waiting.play` đã false (soát a77 #2).
             if (fetchText(index) { startAt(index, offsetMs, wantsPlay(), segment, word, within, hold, anchor) }) {
                 syncWants()
@@ -763,11 +798,11 @@ object ReadAloud {
         val restored = if (segment < 0) ReadingAnchor.restore(chap.paragraphs, anchor) else null
         val seg = restored?.first ?: if (chap.paragraphs.isEmpty()) 0 else if (segment >= 0) segment.coerceIn(0, chap.paragraphs.size - 1) else chap.timeline.segmentAt(offsetMs)
         val inside = if (restored != null || chap.paragraphs.isEmpty()) 0L else if (segment >= 0) within else (offsetMs - chap.timeline.startOf(seg)).coerceAtLeast(0)
-        waiting = Target(index, seg, inside, restored?.second ?: word, play)
+        waiting = Target(index, seg, inside, restored?.second ?: word, go)
         feedSegment = seg
         exo.pauseAtEndOfMediaItems = false
         exo.clearMediaItems()
-        exo.playWhenReady = play
+        exo.playWhenReady = go
         syncWants()
         Playback.emit("state")
         pump()
@@ -1542,14 +1577,16 @@ object ReadAloud {
         if (waiting != null || inFlight || failure != null) return true
         pump()
         if (inFlight || waiting != null || failure != null) return true
+        val current = Playback.currentChapter
+        val index = if (current == null) -1 else chapters().indexOfFirst { it.id == current.id }
         if (SleepTimer.mode == SleepTimer.Mode.CHAPTER) {
             SleepTimer.onPausedAtChapterEnd()
+            parkAtNextChapter(index)
             Playback.saveNow()
             Playback.emit("pause")
             return true
         }
-        val current = Playback.currentChapter ?: return false
-        val index = chapters().indexOfFirst { it.id == current.id }
+        if (current == null) return false
         if (index in 0 until chapters().size - 1 && feedChapter > index) {
             if (chapters()[index + 1].isText && needsConsent()) {
                 startAt(index + 1, 0, false, hold = true)
@@ -1561,6 +1598,14 @@ object ReadAloud {
             return true
         }
         return false
+    }
+
+    /**
+     * Hẹn giờ "hết chương" vừa dừng ở cuối chương `index`: đứng ở ĐẦU chương kế như máy tính (player.tsx nạp chương kế ở 0:00) - sáng mai bấm Phát không phải nghe lại đoạn cuối chương vừa xong, và app bị
+     * giết giữa đêm thì "Tiếp tục" cũng vào chương kế (soát a79 lỗi 13). `hold`: chưa ai bấm phát nên chưa gọi mạng đọc đoạn đầu của nó. Chương cuối thì ở lại (EndPlan.restartSpot lo khi bấm Phát).
+     */
+    internal fun parkAtNextChapter(index: Int) {
+        if (index in 0 until chapters().size - 1) startAt(index + 1, 0, false, hold = true)
     }
 
     /** Hẹn giờ "hết chương" vừa bật lúc đang đọc to: bỏ các đoạn của chương SAU đã nạp sẵn để hàng đợi cạn đúng cuối chương này. */
@@ -1598,6 +1643,11 @@ object ReadAloud {
     fun onPlay(): Boolean {
         if (!active) return false
         if (retryAfterFailure()) return true
+        // Đang dừng chờ đồng ý ([startAt], [handleEnded]): chưa đồng ý thì bấm Phát từ nơi không có hộp hỏi (tai nghe, Android Auto) cũng không gửi chữ đi.
+        if (held && sendsText(waiting?.chapterIndex ?: chapterIndexNow() ?: -1)) {
+            notice(CONSENT_NOTICE)
+            return true
+        }
         waiting?.play = true
         syncWants()
         if (held) held = false

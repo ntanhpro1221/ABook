@@ -7,7 +7,7 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
-import type { ReadingAnchor } from "./readingAnchor";
+import { anchorOf, type ReadingAnchor } from "./readingAnchor";
 import { tellSceneMusic } from "./musicHint";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit } from "./musicBed";
 import { SceneCues, isSceneCues, sceneRetryDelay } from "./sceneCues";
@@ -363,7 +363,7 @@ export function PlayerProvider({
     refs.current.lastSaved = now;
     refs.current.stamp = now;
     refs.current.savedSpot = { chapterId: current.chapterId, seconds: engine.time };
-    void source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId, engine.readingAnchor).catch(reportSaveFailure);
+    void source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId, anchorOf(engine)).catch(reportSaveFailure);
     if (force) refreshLists(current.bookId);
   }, [engine, native, source, refreshLists]);
 
@@ -1220,7 +1220,7 @@ export function PlayerProvider({
       const moved = !engine.paused || !saved || saved.chapterId !== current.chapterId || Math.abs(saved.seconds - engine.time) > 1;
       const writes = [
         moved
-          ? source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId, engine.readingAnchor).catch(reportSaveFailure)
+          ? source.saveProgress(current.bookId, current.chapterId, engine.time, engine.duration, current.recordId, anchorOf(engine)).catch(reportSaveFailure)
           : undefined,
         closeSession(),
       ];

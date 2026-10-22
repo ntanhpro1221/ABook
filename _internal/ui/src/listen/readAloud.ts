@@ -591,7 +591,7 @@ export class ReadAloudEngine implements AudioEngine {
     if (!this.ready) return undefined;
     const slot = this.slots[this.target.index];
     if (!slot) return undefined;
-    const word = this.target.word ?? (slot.started ? this.positionWord(slot) : Math.max(0, wordIndexAt(slot.words ?? [], this.target.offset * 1000)));
+    const word = this.target.word ?? (slot.started ? this.positionWord(slot) : (slot.words?.length ? Math.max(0, wordIndexAt(slot.words, this.target.offset * 1000)) : 0));
     return makeAnchor(this.slots.map((item) => item.text), this.target.index, word, this.textHash);
   }
 
