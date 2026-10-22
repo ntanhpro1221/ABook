@@ -3,7 +3,7 @@ import { GitMerge, Search } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { cleanName } from "@/listen/BookScreen";
-import type { CastMember } from "@/listen/model";
+import { voiceName, type CastMember } from "@/listen/model";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
@@ -23,7 +23,7 @@ export function mergedDescription(when: string, recorded: number): string {
 
 /** Giọng người ấy SẼ đọc: giọng người nghe vừa chọn mà chưa áp, nếu có (soát UX a23 B4: hộp Gộp nói giọng cũ). */
 export function voiceToUse(member: Pick<CastMember, "voice" | "pendingVoice">): string {
-  return member.pendingVoice?.preset || member.voice?.preset || "";
+  return member.pendingVoice?.preset ? voiceName(member.pendingVoice) : voiceName(member.voice);
 }
 
 export function MergeDialog({
