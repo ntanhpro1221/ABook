@@ -225,7 +225,8 @@ def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> I
     book.title = TOC_SUFFIX.sub("", _nfc(book.title)) or _nfc(book.title)  # "Lều chõng — Mục lục" (tên trang mục lục Wikisource) -> "Lều chõng"
     book.author = _nfc(book.author) if book.author else None
     for chapter in book.chapters:
-        chapter.title, chapter.text = _nfc(chapter.title).replace(BOM, ""), _nfc(chapter.text).replace(BOM, "")
+        chapter.title = _nfc(_text_controls(chapter.title)).replace(BOM, "")
+        chapter.text = _nfc(_text_controls(chapter.text)).replace(BOM, "")
     book.notes = [_nfc(note) for note in book.notes]
     for chapter in book.chapters:
         chapter.matter = chapter.matter or text_matter(chapter.title, chapter.text)
@@ -397,6 +398,14 @@ def text_matter(title: str, text: str) -> str:
 
 
 # --- Thư mục TXT -------------------------------------------------------------------------------------------------------
+
+_C0 = re.compile(r"[\x00-\x08\x0b\x0e-\x1f]")
+
+
+def _text_controls(text: str) -> str:
+    """Chỉ bỏ điều khiển vô hình; form feed là ngắt đoạn, giữ mọi chữ thấy được."""
+    return _C0.sub("", text).replace("\x0c", "\n\n")
+
 
 def _clean_text(text: str) -> str:
     """Đổi định dạng thôi: xuống dòng \\n, bỏ khoảng trắng cuối dòng, tối đa một dòng trống liền nhau, bỏ dòng trống hai đầu."""
@@ -676,6 +685,25 @@ class _Zip(zipfile.ZipFile):
 
     _by_nfc: dict[str, zipfile.ZipInfo] | None = None
 
+    def read_limited(self, info: zipfile.ZipInfo, kind: str, limit: int) -> bytes:
+        """Đếm byte thực; một mục đọc lại để soi DRM không tiêu ngân sách hai lần."""
+        if not hasattr(self, '_read_sizes'):
+            self._read_sizes: dict[str, int] = {}
+        previous = self._read_sizes.get(info.filename, 0)
+        total = sum(self._read_sizes.values()) - previous
+        chunks: list[bytes] = []
+        size = 0
+        with self.open(info) as stream:
+            while chunk := stream.read(min(64 * 1024, limit - size + 1, MAX_TOTAL - total - size + 1)):
+                size += len(chunk)
+                if size > limit:
+                    raise ImportFailed(f"Có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
+                if total + size > MAX_TOTAL:
+                    raise ImportFailed(f"Quá lớn khi giải nén (trên 300 MB) - không giống {kind} truyện")
+                chunks.append(chunk)
+        self._read_sizes[info.filename] = max(previous, size)
+        return b''.join(chunks)
+
     def member(self, name: str) -> zipfile.ZipInfo | None:
         """Mục `name`, hay None nếu gói không có. Kotlin: BookImport.member."""
         try:
@@ -693,7 +721,7 @@ def _read(book: _Zip, name: str, kind: str = "EPUB") -> bytes:
         raise ImportFailed(BROKEN.format(kind=kind))
     if info.file_size > MAX_MEMBER:
         raise ImportFailed(f"Có một phần quá lớn (trên 20 MB) - không giống {kind} truyện")
-    return book.read(info)
+    return book.read_limited(info, kind, MAX_MEMBER)
 
 
 def _open_zip(path: Path, kind: str) -> _Zip:
@@ -921,6 +949,15 @@ class _Text(HTMLParser):
             self._close_block(tag)
 
     def handle_data(self, data: str) -> None:
+        if self._skip or self._hidden_depth:
+            return
+        data = _C0.sub("", data)
+        if "\x0c" in data:
+            for index, part in enumerate(data.split("\x0c")):
+                if index:
+                    self._flush()
+                self.handle_data(part)
+            return
         if not self._skip and not self._hidden_depth:
             if self._cap and data:
                 # Chữ cái đầu là ảnh ("M" + "ọi chuyện…"): chỉ ghép khi chữ ngay sau dính liền - ảnh minh hoạ, chữ cách ra thì không.
@@ -988,14 +1025,19 @@ def _types(attrs: Iterable[tuple[str, str | None]]) -> set[str]:
 
 _DECLARED_ENCODING = re.compile(rb"""<\?xml[^>]*?encoding\s*=\s*["']([\w.:-]+)|<meta[^>]*?charset\s*=\s*["']?([\w.:-]+)""", re.IGNORECASE)
 ENCODING_ALIASES = {"gb2312": "gb18030", "gbk": "gb18030", "x-gbk": "gb18030", "iso-8859-1": "windows-1252", "latin1": "windows-1252",
-                    "us-ascii": "windows-1252", "ascii": "windows-1252"}  # như trình duyệt (WHATWG): nhãn cũ đọc bằng bảng mã rộng hơn
+                    "us-ascii": "windows-1252", "ascii": "windows-1252", "x-sjis": "shift_jis"}  # như trình duyệt (WHATWG): nhãn cũ đọc bằng bảng mã rộng hơn
 
 
 def markup_text(raw: bytes) -> str:
-    """Chữ của một trang XHTML: UTF-8 (hay UTF-16 có BOM) nếu đọc trọn được - nhiều file khai báo sai -, không thì theo khai báo
+    """Chữ của một trang XHTML: nhận UTF-16 qua BOM hoặc mẫu byte XML trước UTF-8 - nhiều file khai báo sai -, không thì theo khai báo
     `<?xml encoding>` / `<meta charset>` trong 2 KB đầu, không có khai báo thì UTF-8 (byte hỏng thành �)."""
     if raw.startswith((b"\xff\xfe", b"\xfe\xff")):
         return raw.decode("utf-16", errors="replace")
+    if len(raw) >= 4:
+        if raw[:2] == b"<\0" and raw[3] == 0:
+            return raw.decode("utf-16-le", errors="replace")
+        if raw[:3] == b"\0<\0":
+            return raw.decode("utf-16-be", errors="replace")
     try:
         return raw.decode("utf-8-sig")
     except UnicodeDecodeError:
@@ -1222,7 +1264,7 @@ def _epub_cover(book: _Zip, opf: ElementTree.Element, manifest: dict[str, tuple[
     if not href or not media.startswith("image/"):
         return None
     info = book.member(href)
-    return (book.read(info), media) if info is not None and info.file_size <= MAX_COVER else None
+    return (book.read_limited(info, "EPUB", MAX_COVER), media) if info is not None and info.file_size <= MAX_COVER else None
 
 
 # Khoảng trắng Unicode (đúng tập `str.isspace`) và ký tự không bề rộng, viết ra một bảng chung hai bên thay vì theo định nghĩa của từng nền tảng.
@@ -1348,8 +1390,8 @@ def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
                 if (has_toc and not points and not listed and not page_matter and not page.heading and lines
                         and not is_heading_line(lines[0]) and not text_matter("", "\n\n".join(lines))
                         and result.chapters and not result.chapters[-1].matter):
-                    stored[-1] = (stored[-1][0] + body, stored[-1][1] + tail)
-                    result.chapters[-1].text = "\n\n".join(filter(None, [*stored[-1][0], *stored[-1][1]]))
+                    stored[-1][0].extend(body)
+                    stored[-1][1].extend(tail)
                     continue
                 if not lines and page.images and not points and not removed:
                     images += 1
@@ -1369,8 +1411,10 @@ def _epub(path: Path, choice: FootnoteChoice = NO_FOOTNOTES) -> ImportedBook:
                     body, tail = (body[1:], tail) if body else (body, tail[1:])
                 if removed and not lines:
                     continue  # trang chỉ có lời chú (chương Endnotes) mà lời chú đã đặt về chương của chúng / bị bỏ: không còn gì
-                result.chapters.append(Chapter(title, "\n\n".join(lines), short=is_short, matter=page_matter))
+                result.chapters.append(Chapter(title, "", short=is_short, matter=page_matter))
                 stored.append((body, tail))
+        for chapter, (body, tail) in zip(result.chapters, stored):
+            chapter.text = "\n\n".join(filter(None, [*body, *tail]))
         if images:
             result.notes.append(f"Bỏ qua {images} trang chỉ có ảnh.")
         if missing:
