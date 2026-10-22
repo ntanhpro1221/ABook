@@ -625,6 +625,7 @@ export function SaveAsDialog({
           <span className="min-w-0 truncate text-fg-2">{folder ?? "Mặc định: thư mục Đã xuất"}</span>
         </div>
       )}
+      {pickFolder && <p className="mt-2 text-xs text-fg-3">Đã có file cùng tên trong thư mục ấy thì file mới thêm số (2) ở cuối tên - không đè lên file cũ.</p>}
       <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
           Thôi
