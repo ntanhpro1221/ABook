@@ -24,6 +24,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Hộp “Đổi giọng” chọn và nghe thử được mọi giọng ZeroTTS và Supertonic (trước đây bấm vào là báo lỗi, nút nghe mẫu không phát). Giọng lạ gửi tới sách mở từ file `.abook` bị từ chối ngay kèm lý do, không còn được ghi nhận rồi lặng lẽ bỏ khi áp.
+- Tên giọng ZeroTTS và Supertonic hiện đúng tên (“Bảo Trang”, “Supertonic F1”) ở tab Nhân vật, dòng “Chờ áp dụng”, hộp “Áp dụng thay đổi” và hộp Gộp, thay vì mã nội bộ (“baotrang”, “F1”).
+- “Gỡ” một giọng đã tải (Supertonic) giờ hỏi trước: nói bao nhiêu cuốn trong thư viện đang dùng giọng ấy, tên vài cuốn, và bao nhiêu câu chưa thu sẽ không đọc được tới khi bạn tải lại hay đổi giọng. Bạn vẫn quyết gỡ hay giữ.
 - Câu mà máy nghe lại không kiểm được (quá ngắn, hay máy nghe ra một câu không thể có thật) giờ hiện ở nhóm “Chưa kiểm được” ngay trong “Cần nghe lại”, kèm lời nhờ bạn nghe bằng tai, và không còn hiện một đoạn “máy nghe được” bịa ra.
 - Một câu chỉ còn một thẻ trong “Việc cần bạn”: khi máy vừa nghi người nói của câu ấy vừa nghi nó nói với chính mình, các lý do được gộp vào cùng một thẻ thay vì hiện hai thẻ cho cùng một câu.
 - Hoàn tác một lựa chọn sau khi nó đã được gửi sang máy giữ sách (điện thoại hay máy tính khác tự gửi sau vài giây) không còn báo “đã được thay bằng một lựa chọn sau”: máy bạn nhờ máy giữ sách rút đúng lựa chọn ấy, và thông báo nói thật điều đó - nếu máy ấy đã đưa vào sách rồi thì bạn được báo là cần chọn lại ở máy đó.

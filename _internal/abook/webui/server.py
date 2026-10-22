@@ -57,7 +57,16 @@ from .remote_studio import REMOTE_HEADER, StudioGate
 from .reviews import Reviews, review_view
 from .casting_review import casting_chapter, casting_stamp, casting_view
 from .name_readings import name_readings_view, never_text, package_reading_reach, reading_reach
-from .voice_picker import cancel_engine_module, engine_installed, engine_module_status, preview_file, start_engine_module, voice_choices, waiting_voice
+from .voice_picker import (
+    cancel_engine_module,
+    engine_installed,
+    engine_module_status,
+    engine_use,
+    preview_file,
+    start_engine_module,
+    voice_choices,
+    waiting_voice,
+)
 from . import narrator_cards, remote_sources
 from .work_items import card_examples, for_page, open_count, work_view
 from .cast import CastError, CastPlayers
@@ -5200,7 +5209,7 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Giọng này cần tải thêm trước khi chọn")
         if package and not (preset or gender or avoid):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu giọng hoặc giới tính")
-        problem = (book_wishes.voice_problem(book_wishes.people(path), character, gender=gender, avoid=avoid) if package
+        problem = (book_wishes.voice_problem(book_wishes.people(path), character, preset=preset, gender=gender, avoid=avoid) if package
                    else store.voice_request_problem(path, character, preset=preset, gender=gender, avoid=avoid))
         if problem is not None:
             raise ApiError(HTTPStatus.BAD_REQUEST, VOICE_PROBLEMS.get(problem, "Không đổi được giọng nhân vật này"))
@@ -6001,6 +6010,14 @@ class Handler(BaseHTTPRequestHandler):
         # Mô-đun tải thêm của máy đọc khác ở hộp "Đổi giọng" (voice_picker.engine_module_status): ZeroTTS, Supertonic.
         self._send_json(HTTPStatus.OK, engine_module_status(engine))
 
+    def get_studio_engine_use(self, _query: dict[str, list[str]], engine: str) -> None:
+        # Trước khi gỡ mô-đun giọng: những cuốn trong thư viện máy này đang dùng giọng của nó (voice_picker.engine_use) - nút "Gỡ" nói ra
+        # rồi mới hỏi. Chỉ để nói; không chặn gỡ.
+        try:
+            self._send_json(HTTPStatus.OK, engine_use(self.app.library.projects(), engine))
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+
     def post_studio_engine(self, _query: dict[str, list[str]], engine: str) -> None:
         # "Tải giọng" ở hộp "Đổi giọng": tải phần còn thiếu / đã cũ ở luồng nền; hộp hỏi lại trạng thái mỗi giây.
         self.app._mutating()
@@ -6274,6 +6291,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/studio/setup"), Handler.post_studio_setup),
     ("POST", re.compile(r"/api/studio/setup/cancel"), Handler.post_studio_setup_cancel),
     ("GET", re.compile(r"/api/studio/(zerotts|supertonic)"), Handler.get_studio_engine),
+    ("GET", re.compile(r"/api/studio/(zerotts|supertonic)/use"), Handler.get_studio_engine_use),
     ("POST", re.compile(r"/api/studio/(zerotts|supertonic)"), Handler.post_studio_engine),
     ("POST", re.compile(r"/api/studio/(zerotts|supertonic)/cancel"), Handler.post_studio_engine_cancel),
     ("POST", re.compile(r"/api/studio/zerotts/remove"), Handler.post_studio_zerotts_remove),

@@ -21,7 +21,7 @@ from typing import Any
 
 from .. import continuation
 from ..io_utils import atomic_write_bytes
-from . import book_edits, covers, listing_cache, project_views, store
+from . import book_edits, covers, humanize, listing_cache, project_views, store
 from .fingerprints import Fingerprints, base_name, identity_prints, is_text_identity
 from .listen_view import FORMAT
 from .listening import HEAVY_KEYS, book_progress, text_book_progress
@@ -374,7 +374,9 @@ def cast(path: Path) -> Any:
     """Dàn nhân vật như người nghe thấy (tên đã đổi, chương đầu theo tên chương mới)."""
     result = raw_cast(path)
     edits = book_edits.load(path)
-    return result if book_edits.is_empty(edits) or not isinstance(result, dict) else book_edits.apply_cast(result, edits, manifest(path))
+    if not (book_edits.is_empty(edits) or not isinstance(result, dict)):
+        result = book_edits.apply_cast(result, edits, manifest(path))
+    return humanize.label_cast_voices(result)
 
 
 def listen(path: Path, book_id: str, state: dict[str, Any], *, with_chapters: bool = True) -> dict[str, Any]:
