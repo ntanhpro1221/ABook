@@ -1,6 +1,7 @@
 package vn.abook.player
 
 import org.json.JSONObject
+import kotlin.math.abs
 import kotlin.math.pow
 
 /**
@@ -178,6 +179,45 @@ object MusicCues {
     /** Phần tử đang kêu ở `currentTime` (giây trong bài) đã tới loopEnd - X: lúc mở phần tử lặp mới từ loopStart. */
     fun loopDue(bounds: Loop, currentTime: Double): Boolean =
         bounds.crossfade && currentTime >= bounds.loopEnd - mix.loopCrossfadeSeconds
+
+    /** Nhịp đồng bộ giọng của điện thoại (Playback gọi [MusicBed.sync] mỗi 500 ms): hẹn giờ vào bản lặp tính theo nhịp này ([loopHandoffDelay]). */
+    const val SYNC_TICK_SECONDS = 0.5
+
+    /** Còn dưới chừng này giây tới hạn vào bản lặp thì tạo SẴN bản lặp ([LoopHandoff]): đo thật máy tính, phần tử mới mất 53 ms (bài dài 601 ms) mới có tiếng. */
+    const val LOOP_STANDBY_SECONDS = 3.0
+
+    /** Lệch pha (giây) giữa bản lặp mới và bản cũ mà tai không nghe ra: dưới mức này không sửa pha ([loopDrift]). */
+    const val LOOP_DRIFT_TOLERANCE_SECONDS = 0.02
+
+    /** Bản mới còn nhỏ hơn tỷ lệ này của âm lượng đích thì dời nó không ai nghe thấy ([loopSettle]). */
+    const val LOOP_DRIFT_QUIET = 0.1f
+
+    /** Phần còn lại (giây, nhạc chạy 1x) tới lúc phải mở bản lặp (loopEnd - X) mà bài cũ đang ở `oldPos`, nếu nhỏ hơn 1,5 nhịp đồng bộ
+     *  `tickSeconds` (lần đồng bộ kế có thể đến muộn hơn hạn nên phải hẹn giờ); 0 khi đã quá hạn; null khi chưa cần hẹn (hay bài không mờ chéo).
+     *  Cùng ca số với ui/src/listen/musicBed.ts `loopHandoffDelay`. */
+    fun loopHandoffDelay(bounds: Loop, oldPos: Double, tickSeconds: Double): Double? {
+        if (!bounds.crossfade) return null
+        val rem = bounds.loopEnd - mix.loopCrossfadeSeconds - oldPos
+        if (rem <= 0) return 0.0
+        return if (rem < 1.5 * tickSeconds) rem else null
+    }
+
+    /** Chỗ bản lặp mới phải vào khi bài cũ đang ở `oldPos`: loopStart cộng phần đã trễ so với hạn loopEnd - X (bù độ trễ của lần đồng bộ). */
+    fun loopStartAt(bounds: Loop, oldPos: Double): Double =
+        bounds.loopStart + maxOf(0.0, oldPos - (bounds.loopEnd - mix.loopCrossfadeSeconds))
+
+    /** Bản mới đi chậm bao nhiêu giây so với bản cũ (dương = chậm): (cũ - (loopEnd - X)) - (mới - loopStart). Dời bản mới thêm đúng số này
+     *  là hai bản cùng pha (bù độ trễ mở trình phát). */
+    fun loopDrift(bounds: Loop, oldPos: Double, newPos: Double): Double =
+        (oldPos - (bounds.loopEnd - mix.loopCrossfadeSeconds)) - (newPos - bounds.loopStart)
+
+    /** Sửa pha một lần cho bản lặp mới vừa có tiếng: chỗ (giây trong bài) cần dời bản mới tới, hoặc null nếu không cần. Bài cũ đã dừng
+     *  (`oldAlive` false) thì không còn gì để theo; bản mới đã to hơn [LOOP_DRIFT_QUIET] của `goal` thì dời sẽ nghe thấy. */
+    fun loopSettle(bounds: Loop, oldPos: Double, newPos: Double, newVolume: Float, goal: Float, oldAlive: Boolean): Double? {
+        if (!oldAlive || newVolume > LOOP_DRIFT_QUIET * goal) return null
+        val drift = loopDrift(bounds, oldPos, newPos)
+        return if (abs(drift) > LOOP_DRIFT_TOLERANCE_SECONDS) maxOf(0.0, newPos + drift) else null
+    }
 
     /** Mốc `tail` đang ở vòng cuối (ui/src/listen/musicBed.ts `finalLoop`): phần còn lại của mốc hơn phần còn lại của bài (tới E)
      *  chưa tới nửa chu kỳ - không mở phần tử lặp nữa, bài chơi (qua loopEnd) tới E là hết. Chưa biết độ dài bài: chưa phải. */
