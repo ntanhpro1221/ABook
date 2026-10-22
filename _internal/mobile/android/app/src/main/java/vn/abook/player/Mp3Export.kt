@@ -113,10 +113,16 @@ object Mp3Export {
     }
 
     /** Tên file của chương thứ `number` trong `total` chương xuất: "01 - Chương 1 · Mở đầu.mp3" (`chapter_file_name`). */
-    fun chapterFileName(number: Int, total: Int, fullTitle: String): String {
+    fun chapterFileName(number: Int, total: Int, fullTitle: String, extension: String = ".mp3"): String {
         val width = maxOf(2, total.toString().length)
-        return fitName("${number.toString().padStart(width, '0')} - ", safeName(fullTitle, 90), ".mp3")
+        return fitName("${number.toString().padStart(width, '0')} - ", safeName(fullTitle, 90), extension)
     }
+
+    /** File ghi công nhạc nền cạnh các chương (`export.CREDITS_FILE` của máy tính). */
+    const val CREDITS_FILE = "Ghi công nhạc nền.txt"
+
+    /** Đuôi file chương của bản xuất kèm nhạc nền: điện thoại không có bộ mã hoá MP3 (chỉ AAC có sẵn), nên chương đã trộn nhạc là `.m4a`. */
+    const val MIXED_EXTENSION = ".m4a"
 
     /** Tên thư mục của bản xuất (tên sách). */
     fun folderName(title: String): String = fitName("", safeName(title), "")
@@ -153,7 +159,7 @@ object Mp3Export {
      * Việc xuất cuốn `id` như người nghe thấy nó (Store.manifest: tên sách, tên chương, bìa đã sửa). Chỉ chương nghe được - như máy
      * tính, số thứ tự đếm trên các chương ấy. `drawnCover`: PNG bìa giao diện tự vẽ, chỉ dùng khi sách không có bìa thật.
      */
-    fun plan(id: String, drawnCover: ByteArray? = null): Plan {
+    fun plan(id: String, drawnCover: ByteArray? = null, chapterIds: List<Int>? = null): Plan {
         val book = Store.manifest(id) ?: throw Refused("Không tìm thấy sách này trên điện thoại")
         val chapters = book.optJSONArray("chapters")
         val listenable = ArrayList<JSONObject>()
@@ -166,11 +172,13 @@ object Mp3Export {
             val file = runCatching { Store.file(id, chapter.optString("file")) }.getOrNull()?.takeIf { it.isFile } ?: return@mapIndexedNotNull null
             Chapter(index + 1, chapter.optString("fullTitle"), chapter.optDouble("duration", 0.0).takeIf { !it.isNaN() } ?: 0.0, file, chapter.optInt("id", index + 1))
         }
+        val selected = if (chapterIds == null) planned else planned.filter { it.id in chapterIds }
+        if (selected.isEmpty() || chapterIds?.any { wanted -> planned.none { it.id == wanted } } == true) throw Refused("Bạn hãy chọn các chương nghe được để xuất.")
         val (cover, coverName) = coverOf(id, drawnCover)
         return Plan(
             title = book.optString("title").ifEmpty { id },
             narrator = book.optString("narrator"),
-            chapters = planned,
+            chapters = selected,
             numbered = listenable.size,
             chaptersTotal = book.optInt("chaptersTotal", chapters?.length() ?: 0),
             cover = cover,
@@ -182,6 +190,35 @@ object Mp3Export {
     fun coverOf(id: String, drawnCover: ByteArray? = null): Pair<Id3Tag.Cover?, String> {
         val real = Store.coverFile(id)?.let { runCatching { Id3Tag.Cover.of(it.readBytes()) }.getOrNull() }
         return (real ?: drawnCover?.let(Id3Tag.Cover::of)?.takeIf { it.mime == "image/png" }) to if (real != null) "cover.jpg" else "cover.png"
+    }
+
+    /**
+     * Bản xuất "Kèm nhạc nền" (`plan.music` có bộ trộn): cùng thư mục, tên file, bìa, danh sách phát và file ghi công như [run], nhưng mỗi chương
+     * được giải mã, trộn nhạc rồi mã hoá AAC thành một file `.m4a` (cùng đường [M4bExport] với M4B nên cùng mức trộn, chặn đỉnh và ghi công; tên chương
+     * ở thẻ tên bài, tên sách ở thẻ album, ghi công của chính chương ấy ở thẻ ghi chú). `work`: file trung gian dùng lại cho từng chương.
+     * `step(chương đã xong, tổng, phần đã làm 0..1 của chương đang làm)` cho thanh tiến độ trong chương.
+     */
+    fun runMixed(plan: Plan, destination: Destination, work: File, encoder: M4bExport.AudioEncoder, progress: (Int, Int) -> Unit = { _, _ -> },
+                 stopped: () -> Boolean = { false }, step: (Int, Int, Double) -> Unit = { _, _, _ -> }): Result {
+        val folder = destination.folder(folderName(plan.title))
+        plan.cover?.let { cover -> folder.write(plan.coverName) { it.write(cover.bytes) } }
+        val listed = plan.chapters.size
+        val entries = ArrayList<Triple<Double, String, String>>()
+        progress(0, listed)
+        for (chapter in plan.chapters) {
+            if (stopped()) throw Stopped()
+            val name = chapterFileName(chapter.number, plan.numbered, chapter.fullTitle, MIXED_EXTENSION)
+            val single = Plan(plan.title, plan.narrator, listOf(chapter), 1, plan.chaptersTotal, plan.cover, plan.coverName, plan.music, plan.guard)
+            val before = entries.size
+            folder.write(name) { out ->
+                M4bExport.run(single, work, out, encoder, progress = { _, _, fraction -> step(before, listed, fraction) }, stopped = stopped, tagTitle = chapter.fullTitle)
+            }
+            entries += Triple(chapter.duration, chapter.fullTitle, name)
+            progress(entries.size, listed)
+        }
+        folder.write(playlistName(plan.title)) { it.write(playlist(plan.title, entries).toByteArray(Charsets.UTF_8)) }
+        plan.music?.credits(plan.chapters.map { it.id })?.takeIf { it.isNotEmpty() }?.let { text -> folder.write(CREDITS_FILE) { it.write(text.toByteArray(Charsets.UTF_8)) } }
+        return Result(folder.label, entries.size, plan.chaptersTotal, folder.uri)
     }
 
     /**

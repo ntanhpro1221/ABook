@@ -10,6 +10,7 @@ import { api } from "./api";
 import { useAppInfo, useStudioMissing } from "./data";
 import { friendlySetupError } from "./errorText";
 import { formatSize } from "./musicLocal";
+import { leftoverLine, type SetupLeftover } from "./setupLeftover";
 import { noStudioLine, studioFit, type StudioFit, type StudioGpu } from "./studioFit";
 
 // App Windows đóng gói chỉ mang phần nghe; Studio - thư viện dây chuyền + model, ~25 GB - tải khi người dùng bấm
@@ -37,6 +38,8 @@ interface SetupStatus {
   /** Card NVIDIA - máy chủ dò ngay khi được hỏi, trước khi bấm Cài (studio_setup.detected_gpu). */
   gpu: StudioGpu | null;
   root: string;
+  /** Lượt cài của lần mở app trước (hay cửa sổ khác) còn chạy - không cài chồng lên nó (webui/install_lock.py). */
+  leftover?: SetupLeftover | null;
 }
 
 const SETUP_QUERY = { queryKey: ["studio-setup"], queryFn: () => api<SetupStatus>("/api/studio/setup") };
@@ -47,6 +50,13 @@ export function useStudioFit(): StudioFit | null {
   const needed = Boolean(studio && !studio.installed);
   const { data: status } = useQuery({ ...SETUP_QUERY, enabled: needed });
   return needed && status && !status.installed ? studioFit(status.gpu) : null;
+}
+
+/** Card NVIDIA của máy làm sách (cho ước lượng thời gian: chỉ máy cùng loại card đã đo mới được nói số đo). `null` khi chưa biết (bản dev, hay máy không có Studio). */
+export function useStudioGpu(): StudioGpu | null {
+  const studio = useAppInfo().data?.studio;
+  const { data: status } = useQuery({ ...SETUP_QUERY, enabled: Boolean(studio) });
+  return status?.gpu ?? null;
 }
 
 /** Máy tính đã ghép với máy này (Cài đặt > Thiết bị) - nơi mời tạo sách nói khi máy này không làm được. */
@@ -135,7 +145,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
   const { data: status } = useQuery({
     ...SETUP_QUERY,
     enabled: needed,
-    refetchInterval: (query) => (query.state.data?.running ? 1000 : false),
+    refetchInterval: (query) => (query.state.data?.running ? 1000 : query.state.data?.leftover ? 2000 : false),
   });
   const wasRunning = useRef(false);
   useEffect(() => {
@@ -201,6 +211,16 @@ export function StudioSetupCard({ className }: { className?: string }) {
             <Button icon={Square} onClick={() => void call("/api/studio/setup/cancel")}>
               Dừng
             </Button>
+          ) : status.leftover ? (
+            status.leftover.orphan ? (
+              <Button icon={Square} onClick={() => void call("/api/studio/setup/cancel")}>
+                Dừng lượt cũ
+              </Button>
+            ) : (
+              <Button variant="primary" icon={Download} disabled>
+                Cài tiếp
+              </Button>
+            )
           ) : unfit ? (
             <Button variant="ghost" size="sm" icon={Download} onClick={() => void call("/api/studio/setup")}>
               Vẫn cài
@@ -213,7 +233,13 @@ export function StudioSetupCard({ className }: { className?: string }) {
         </div>
       </div>
 
-      {status.error && !status.running && (
+      {status.leftover && !status.running && (
+        <p role="status" className="mt-4 rounded-lg bg-warning-soft px-3 py-2 text-[0.8125rem] leading-relaxed text-pretty">
+          {leftoverLine(status.leftover)}
+        </p>
+      )}
+
+      {status.error && !status.running && !status.leftover && (
         <div role="alert" className="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-[0.8125rem] leading-relaxed text-danger">
           <p>{friendlySetupError(status.error).summary}</p>
           {friendlySetupError(status.error).detail && (

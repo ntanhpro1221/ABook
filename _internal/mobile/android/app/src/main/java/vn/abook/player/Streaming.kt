@@ -38,7 +38,7 @@ import java.net.URL
  * phát qua mạng từ máy tính đã ghép (webui/sync.py - cùng các đường tải sách, có tua theo byte).
  *
  * Audio đi qua bộ đệm đĩa của Media3 (giới hạn [CACHE_BYTES], bỏ cái ít dùng nhất): tua lại hay nghe lại không tải
- * lại, và Wi-Fi chập chờn không cắt ngang đoạn đã đệm. Khoá đệm gồm cả kích thước file trong gói sách: máy tính thu lại
+ * lại, và Wi-Fi chập chờn không cắt ngang đoạn đã đệm. Khoá đệm gồm dấu SHA-256 của chương trong gói sách: máy tính thu lại
  * một chương (file cùng tên, khác nội dung) thì điện thoại không phát nhầm bản cũ.
  */
 @OptIn(UnstableApi::class)
@@ -138,19 +138,19 @@ object Streaming {
         return Uri.parse("${link.base}/sync/v1/books/${Uri.encode(remote)}/files/${Uri.encode(file, "/")}")
     }
 
-    /** Khoá bộ đệm: sách + file + kích thước trong gói (null = file trên máy, không qua bộ đệm). */
+    /** Khoá bộ đệm: sách + file + SHA-256 trong gói (null = file trên máy, không qua bộ đệm). */
     fun cacheKey(id: String, file: String): String? {
         val local = runCatching { Store.file(id, file) }.getOrNull()
         if (local != null && local.isFile) return null
         val chapters = Store.playableManifest(id)?.optJSONArray("chapters")
-        var size = 0L
+        var digest = ""
         if (chapters != null) {
             for (index in 0 until chapters.length()) {
                 val chapter = chapters.getJSONObject(index)
-                if (chapter.optString("file") == file) size = chapter.optLong("size")
+                if (chapter.optString("file") == file) digest = chapter.optString("sha256")
             }
         }
-        return "$id/$file#$size"
+        return "$id/$file#$digest"
     }
 
     /** Gói sách của một cuốn trên máy tính (hay thiết bị ghép - `source`, `remoteId`: Peers), cất vào `stream.json` để lần
@@ -165,14 +165,14 @@ object Streaming {
         )
         PeerPaths.checkManifest(manifest)
         require(manifest.getString("id") == remote) { "Mã sách máy gửi trả về không khớp; bạn hãy thử lại." }
-        if (peer != null) manifest.put("id", id).put("source", peer).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, peer))
-        // Gói đổi (thêm/thu lại chương, đổi bìa): bỏ văn bản và dàn nhân vật đã cất để lần đọc sau lấy bản mới.
+        if (peer != null) {
+            manifest.put("id", id).put("source", peer).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, peer))
+            Peers.localizeSeries(manifest, peer)
+        }
+        // Gói đổi (thêm/thu lại chương, đổi bìa): chỉ bỏ chữ đọc theo của chương thật sự đổi; dàn nhân vật được thay khi tải được bản mới.
         val previous = Store.streamManifest(id)
         StreamRefresh.invalidateCover(Store.bookDir(id), previous, manifest)
-        if (previous != null && previous.optString("version") != manifest.optString("version")) {
-            File(Store.bookDir(id), "scripts").deleteRecursively()
-            File(Store.bookDir(id), "cast.json").delete()
-        }
+        StreamRefresh.invalidateScripts(Store.bookDir(id), previous, manifest)
         Store.writeAtomic(File(Store.bookDir(id), "stream.json"), manifest.toString())
         return manifest
     }

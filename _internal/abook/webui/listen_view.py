@@ -9,10 +9,25 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from . import covers, store
+from . import covers, store, word_timing
 from .listening import HEAVY_KEYS, book_progress
 
 FORMAT = "abook-book/1"  # không ai đọc trường này, mã phiên bản gói không tính nó
+
+
+def metadata_version(book: dict[str, Any]) -> str:
+    """Dấu phiên bản của PHẦN MÔ TẢ cuốn (tên, tác giả, người đọc, liên kết bộ, tên từng chương) - không đụng audio / bìa / chữ. Gói sách
+    (`book.json`) và dòng thư viện `/sync/v1/library` cùng mang nó: máy đã tải thấy dấu khác thì lấy lại phần mô tả mà giữ nguyên audio
+    (điện thoại: LibraryPlugin.refreshMetadata), và đổi riêng tên sách không còn lặng lẽ để bản đã tải mang tên cũ (soát a97 V1)."""
+    import hashlib
+    import json
+
+    series = book.get("series")
+    chapters = [[chapter.get("id"), chapter.get("title") or "", chapter.get("subtitle") or "", chapter.get("fullTitle") or ""]
+                for chapter in book.get("chapters") or [] if isinstance(chapter, dict)]
+    return hashlib.sha256(json.dumps([book.get("title") or "", book.get("author") or "", book.get("narrator") or "",
+                                      [series.get("root"), series.get("part")] if isinstance(series, dict) else None, chapters],
+                                     ensure_ascii=False).encode()).hexdigest()[:16]
 
 
 _CACHE: dict[str, tuple[tuple, list[dict[str, Any]]]] = {}
@@ -28,11 +43,14 @@ def on_shelf(summary: dict[str, Any], producing: bool) -> bool:
 def chapters(project_root: Path) -> list[dict[str, Any]]:
     """Danh sách chương cho người nghe, đệm theo lần ghi cuối của DB - thư viện hỏi lại mỗi vài giây. Tên chương người nghe đặt lại nằm ở file
     riêng cạnh sổ (store.CHAPTER_TITLES_FILE), không đổi sổ: dấu của nó cũng thuộc chữ ký, không thì đổi tên xong trang vẫn trả tên cũ."""
-    stamp = store.db_signature(project_root, store.CHAPTER_TITLES_FILE)
+    words = word_timing.stamp(project_root)
+    stamp = (*store.db_signature(project_root, store.CHAPTER_TITLES_FILE), words)
     cached = _CACHE.get(str(project_root))
     if cached and cached[0] == stamp:
         return cached[1]
     result = _chapters(project_root)
+    for chapter in result:
+        chapter["wordsVersion"] = words
     _CACHE[str(project_root)] = (stamp, result)
     return result
 
@@ -51,6 +69,7 @@ def _chapters(project_root: Path) -> list[dict[str, Any]]:
             "fullTitle": chapter["fullTitle"],
             "duration": round(float(duration), 1),
             "available": bool(chapter["playable"]),
+            "audioVersion": str(chapter["completedAt"] or ""),
         })
     return out
 
@@ -87,13 +106,13 @@ def book(project_root: Path, book_id: str, summary: dict[str, Any], state: dict[
     }
     # Phần nối tiếp của "Làm tiếp cuốn này": phần đầu + thứ tự phần theo continues.json - thư viện gom các phần theo chuỗi,
     # không theo tên (soát UX 29-09, N10). Phần đầu không mang gì: giao diện nhận ra nó là sách mà các phần khác trỏ về.
-    result["series"] = _series(project_root)
+    result["series"] = series(project_root)
     if with_chapters:
         result["chapters"] = items
     return result
 
 
-def _series(project_root: Path) -> dict[str, Any] | None:
+def series(project_root: Path) -> dict[str, Any] | None:
     from .. import continuation
     from .library import book_id
 

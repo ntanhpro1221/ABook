@@ -1,6 +1,6 @@
 import { foldVietnamese, type ListenBook } from "./model";
 
-// Thứ tự sách trong Thư viện (máy tính và điện thoại dùng chung): mặc định "Nghe gần đây" - thứ tự máy chủ đã xếp theo lần nghe cuối;
+// Thứ tự sách trong Thư viện (máy tính và điện thoại dùng chung): mặc định "Nghe gần đây" - thứ tự nguồn đã xếp theo lần nghe cuối;
 // người nghe đổi được sang tên sách, tác giả, hay mới thêm. Nhớ lựa chọn trên từng máy (localStorage của máy / WebView), như các cài đặt nhỏ khác.
 
 export type LibrarySort = "recent" | "title" | "author" | "added";
@@ -41,8 +41,15 @@ function compareNames(a: string, b: string): number {
   return foldVietnamese(a).localeCompare(foldVietnamese(b), "vi", { numeric: true });
 }
 
+/** Thứ tự "Nghe gần đây" của nguồn tự gộp nhiều chỗ (điện thoại: sách đã tải + sách nghe thẳng): lần nghe cuối mới nhất đứng đầu, cùng mốc (hay chưa
+ *  nghe) thì lần cập nhật cuối, rồi giữ thứ tự nhận vào. Cùng khoá với máy chủ máy tính (server.listen_library). */
+export function recentFirst(books: ListenBook[]): ListenBook[] {
+  const key = (book: ListenBook): [number, number] => [book.state.last?.at ?? 0, book.updatedAt ?? 0];
+  return [...books].sort((a, b) => key(b)[0] - key(a)[0] || key(b)[1] - key(a)[1]);
+}
+
 /**
- * Xếp sách theo `sort`. "recent" giữ nguyên thứ tự nhận vào (máy chủ đã xếp theo lần nghe cuối). Các kiểu khác: cùng khoá thì giữ
+ * Xếp sách theo `sort`. "recent" giữ nguyên thứ tự nhận vào (nguồn đã xếp theo lần nghe cuối: máy chủ máy tính, hay `recentFirst` ở điện thoại). Các kiểu khác: cùng khoá thì giữ
  * thứ tự cũ (sắp xếp ổn định); sách không có tác giả đứng sau, theo tên. "Mới thêm": cuốn vừa vào thư viện lên đầu (không có mốc
  * thì lấy lần cập nhật cuối, không có nữa thì cuối).
  */

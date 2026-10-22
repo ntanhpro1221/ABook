@@ -225,7 +225,13 @@ def pack(project_root: Path, out: Path | None = None, *, producer: str = "ABook"
         progress("prepare", 0, 0)
     book, files = listening_layer(project_root, music_track, progress)
     out = Path(out) if out is not None else project_root / "output" / default_name(book["title"])
-    return seal(book, files, out, producer=producer, version=package_version(book), progress=progress)
+    sealed = seal(book, files, out, producer=producer, version=package_version(book), progress=progress)
+    from .export_jobs import remember_export
+    with BookFile(sealed) as opened:
+        prints = opened.chapter_prints
+        snapshot = {str(c["id"]): prints[c["file"]]["sha256"] for c in book["chapters"] if c.get("file") in prints}
+    remember_export(project_root, "abook", str(sealed), snapshot)
+    return sealed
 
 
 def book_layer(folder: Path) -> tuple[dict[str, Any], dict[str, Path | bytes], dict[str, dict[str, Any]], dict[str, Any]]:
@@ -331,6 +337,8 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
         "chaptersAvailable": sum(int(book["chaptersAvailable"]) for _, _, book in books),
         "complete": all(book["complete"] for _, _, book in books),
         "version": hashlib.sha256("".join(str(book["version"]) for _, _, book in books).encode()).hexdigest()[:16],
+        "sourceFingerprint": hashlib.sha256(json.dumps([book["sourceFingerprint"] for _, _, book in books]).encode()).hexdigest() if all(book.get("sourceFingerprint") for _, _, book in books) else "",
+        "audioUpdatedAt": max((book.get("audioUpdatedAt", "") for _, _, book in books), default=""),
         "chapters": [chapter for _, _, book in books for chapter in book["chapters"]],
         "cast": "cast.json",
         "samples": samples,
@@ -343,7 +351,14 @@ def pack_series(parts: Sequence[tuple[int, Path] | Path], out: Path, *, producer
     music = _merge_music(musics)
     if music is not None:
         merged["music"] = music
-    return seal(merged, files, Path(out), producer=producer, version=3, progress=progress)
+    sealed = seal(merged, files, Path(out), producer=producer, version=3, progress=progress)
+    from .export_jobs import remember_export
+    with BookFile(sealed) as opened:
+        prints = opened.chapter_prints
+        for number, project, book in books:
+            snapshot = {str(c["id"] - number * PART_SPAN): prints[c["file"]]["sha256"] for c in book["chapters"] if c.get("file") in prints}
+            remember_export(project, "abook", str(sealed), snapshot)
+    return sealed
 
 
 def _numbered(parts: Sequence[tuple[int, Path] | Path]) -> list[tuple[int, Path]]:
@@ -438,7 +453,7 @@ def seal(book: dict[str, Any], files: dict[str, Path | bytes], out: Path, *, pro
     book["package"] = {
         "format": FORMAT,
         "version": version,
-        "createdAt": datetime.now(UTC).isoformat(timespec="seconds"),
+        "createdAt": datetime.now(UTC).isoformat(timespec="microseconds"),
         "producer": producer,
         "files": described_files,
     }
@@ -649,23 +664,41 @@ class BookFile:
                     continue
                 destination = staging.joinpath(*entry.split("/"))
                 destination.parent.mkdir(parents=True, exist_ok=True)
+                from .audio_revision import matches
+                expected = files.get(entry)  # book.json / manifest.json không nằm trong danh sách mã băm
+                previous = target.joinpath(*entry.split("/"))
+                reuse = entry.startswith("chapters/") and expected is not None and matches(previous, expected["size"], expected["sha256"])
                 digest = hashlib.sha256()
                 size = 0
-                with self._zip.open(entry) as source, destination.open("wb") as sink:
+                with self._zip.open(entry) as source, (contextlib.nullcontext(None) if reuse else destination.open("wb")) as sink:
                     while chunk := source.read(_CHUNK):
                         digest.update(chunk)
-                        sink.write(chunk)
+                        if sink is not None:
+                            sink.write(chunk)
                         size += len(chunk)
-                expected = files.get(entry)  # book.json / manifest.json không nằm trong danh sách mã băm
                 if expected is not None and (size != expected["size"] or digest.hexdigest() != expected["sha256"]):
                     if not _is_music(entry):
                         raise BookFileError(f"File sách bị hỏng hoặc bị sửa ({entry}). Hãy chép lại file từ nguồn.")
                     destination.unlink()
                     self.broken_music.add(entry)
+                elif reuse:
+                    try:
+                        os.link(previous, destination)
+                    except OSError:
+                        shutil.copy2(previous, destination)
             if self.broken_music:
                 _drop_tracks(self.book, self.broken_music)
-                staging.joinpath(MANIFEST).write_bytes(json_bytes(self.book))
+            from .audio_revision import version as audio_version
+            for chapter in self.book.get("chapters", []):
+                meta = files.get(chapter.get("file"), {})
+                chapter["sha256"] = meta.get("sha256", "")
+                chapter["size"] = meta.get("size", 0)
+            self.book["audioVersion"] = audio_version(self.book.get("chapters", []))
+            staging.joinpath(MANIFEST).write_bytes(json_bytes(self.book))
             self.last_merge = self._keep_local_edits(target, staging) if target.exists() else None
+            history = target / "export_history.json"
+            if history.is_file():
+                shutil.copy2(history, staging / history.name)
             swap_in(staging, target)
         except BaseException:
             shutil.rmtree(staging, ignore_errors=True)

@@ -21,6 +21,9 @@ export interface ListenChapter {
   speech?: boolean;
   /** Dòng người nghe đã bỏ khỏi phần đọc (lớp sửa `skip`, gợi ý dòng ghi công): màn đọc và đọc to bỏ qua - textScript.ts `withoutLines`. */
   skip?: string[];
+  /** Phiên bản audio / mốc chữ do nguồn cung cấp, đổi thì hỏi lại kịch bản. */
+  audioVersion?: string;
+  wordsVersion?: string;
 }
 
 /** Bấm nghe được: chương có audio, hay chương chỉ-có-chữ mà máy có giọng đọc. */
@@ -58,7 +61,7 @@ export interface Bookmark {
 
 /** Màn đọc mở đúng câu của một dấu trang đặt ở màn đọc (`?at=` - ReaderScreen); dấu đặt từ trình phát (không có câu) thì null. */
 export function bookmarkReadPath(bookId: string, mark: Bookmark): string | null {
-  return typeof mark.index === "number" ? `/book/${bookId}/read/${mark.chapterId}?at=${mark.index}` : null;
+  return typeof mark.index === "number" ? `/book/${bookId}/read/${mark.chapterId}?${new URLSearchParams({ at: String(mark.index), ...(mark.quote ? { quote: mark.quote } : {}) })}` : null;
 }
 
 /** Câu mà dấu trang đặt ở màn đọc trỏ tới. */
@@ -86,7 +89,7 @@ export interface ListeningState {
   finishedAt?: number;
   bookmarks: Bookmark[];
   /** Chỗ đọc dở ở chế độ đọc (câu thứ `index` của chương). */
-  reading?: { chapterId: number; index: number; at: number };
+  reading?: import("./readingPosition").ReadingPosition;
   updatedAt?: number;
 }
 
@@ -207,9 +210,11 @@ export function seriesOf(title: string): SeriesPlace {
 }
 
 /** Cuốn kế (`next`, useNextVolume) là PHẦN sau của cùng cuốn ("Làm tiếp cuốn này"): hết phần này là nghe nối sang nó - trả nó.
- *  Tập khác của một bộ ("Tập 17") chỉ được mời, không tự nghe: null (soát a26 L1). */
+ *  Quyết định theo quan hệ THẬT: có liên kết chuỗi (`series`, continues.json) thì là phần nối tiếp dù đã đổi tên; chỉ khi không có liên
+ *  kết (sách nhập từ file, máy chủ cũ) mới đoán từ hậu tố "Phần N" của tên. Tập khác của một bộ ("Tập 17") chỉ được mời, không tự nghe:
+ *  null (soát a26 L1, a97 V3). */
 export function continuingPart(next: ListenBook | null | undefined): ListenBook | null {
-  return next && seriesOf(next.title).unit === "phần" ? next : null;
+  return next && (next.series || seriesOf(next.title).unit === "phần") ? next : null;
 }
 
 /** Hết một phần (`atEnd` "finished") mà có phần sau để nghe nối (continuingPart): trả phần ấy. */
@@ -353,7 +358,8 @@ export interface CastMember {
   age: string;
   lines: number;
   seconds: number;
-  voice: { key: string; preset: string; tone: string } | null;
+  /** `preset` là KHOÁ giọng (gửi lại máy chủ); `label` là tên người nghe thấy ("Bảo Trang") - hiện bằng `voiceName`. */
+  voice: { key: string; preset: string; label?: string; tone: string } | null;
   sampleId: number | null;
   firstChapter: string;
   /** Sách cả bộ: những phần người này lên tiếng. */
@@ -361,7 +367,7 @@ export interface CastMember {
   /** Số câu đã có tiếng (store.cast) - "Đổi giới tính" nói trước bấy nhiêu câu có thể phải thu lại. */
   recorded?: number;
   /** Giọng/giới người nghe đã chọn mà dây chuyền chưa áp (store.pending_voices). */
-  pendingVoice?: { preset: string; gender: string } | null;
+  pendingVoice?: { preset: string; label?: string; gender: string } | null;
   /** Đã "Gộp vào…" người khác mà chưa áp (store.cast): tên người sẽ nhận các câu của người này. */
   mergedInto?: string | null;
   /** Mốc của lần “Gộp vào…” ấy (cùng mốc với các câu đã đổi người nói) - đủ để tìm lại và rút (“Bỏ gộp”). Chỉ ở dự án có xưởng. */
@@ -370,7 +376,7 @@ export interface CastMember {
 
 export interface Cast {
   /** `pendingVoice`: giọng người kể người nghe đã chọn ở Studio mà dây chuyền chưa áp (store.cast). */
-  narrator: { voice: string; lines: number; seconds: number; pendingVoice?: { preset: string; gender: string } | null; /** Câu kể chờ thu lại theo sửa của người nghe. */ redo?: number };
+  narrator: { voice: string; lines: number; seconds: number; pendingVoice?: { preset: string; label?: string; gender: string } | null; /** Câu kể chờ thu lại theo sửa của người nghe. */ redo?: number };
   characters: CastMember[];
   extras: CastMember[];
   /** Studio, phần nối tiếp: giọng mang từ phần trước của những người chưa nói câu nào ở phần này. */
@@ -535,4 +541,9 @@ export interface EditsNotice {
   at: number;
   device: string;
   label: string;
+}
+
+/** Tên giọng để HIỆN cho người nghe: nhãn ("Bảo Trang") nếu máy chủ gửi, không thì khoá (VieNeu: khoá cũng là tên). Chỗ GỬI giọng về máy chủ dùng `preset`. */
+export function voiceName(voice: { preset: string; label?: string } | null | undefined): string {
+  return voice?.label || voice?.preset || "";
 }

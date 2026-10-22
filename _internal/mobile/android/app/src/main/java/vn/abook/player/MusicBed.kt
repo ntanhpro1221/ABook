@@ -101,6 +101,7 @@ object MusicBed {
         var forcedTarget: SeamClock.Target? = null // bản P3 tạo sẵn để nhận ranh lặp: đích tua cố định (Nối, mẫu 0), [promoteTo] chỉnh lại theo chỗ bài cũ đang ở
         var testK = 0 // số thứ tự trình phát trong kịch bản đo ([testPlayerSeq]); chỉ cho dòng testEvents
         var trackRef: TrackRef? = null // AudioTrack mới nhất + mốc của nó (cờ P3 bật / đang đo): P3 thật sự ra loa, pha P3 - a87 ([stepHandover])
+        var volume = 0f // âm lượng LOGIC (mờ vào / mờ đi / bước âm lượng, dòng đo `vol`); ExoPlayer.volume = volume x [sleepFactor] - mọi chỗ đọc mức đọc từ đây, không đọc ngược player.volume
     }
 
     /**
@@ -211,7 +212,7 @@ object MusicBed {
     }
     private val worker = Executors.newSingleThreadExecutor()
     private var context: Context? = null
-    private var book = ""
+    @Volatile private var book = ""
     private var music: JSONObject? = null
     private var chapter = Int.MIN_VALUE
     private var cues: List<MusicCues.Cue> = emptyList()
@@ -347,6 +348,29 @@ object MusicBed {
     /** Lớp sửa của cuốn `bookId` vừa đổi (nhạc bật/tắt, mức, im lặng một đoạn, danh sách phát): lần `sync` kế đọc lại. */
     fun invalidate(bookId: String) {
         if (bookId == book) book = ""
+    }
+
+    /** Nhập/xoá kho riêng: thay hàng bài, giữ bài đang kêu và đồng hồ nhạc. */
+    fun refreshMine() {
+        val appContext = context ?: return
+        if (playlist != Playlists.MINE) return
+        val ticket = generation
+        worker.execute {
+            // Sách mang theo đúng các bài đã chọn (BookEdits.setMusic): kho vừa đổi thì chụp lại các bài hiện có vào sách rồi mới dựng hàng bài.
+            runCatching {
+                BookEdits.setMusic(Store.bookDir(book), JSONObject().put("playlist", Playlists.MINE), null, DeviceMusic.store(appContext).let { store ->
+                    { store.entries().reversed().mapNotNull { info -> store.file(info.getString("link"))?.let { info to it } } }
+                })
+            }
+            val resolved = runCatching { resolve(appContext, Playlists.MINE, 20 * kotlin.math.log10(gain.toDouble())) }.getOrNull()
+            main.post {
+                if (ticket != generation || playlist != Playlists.MINE || resolved == null) return@post
+                advanceClock()
+                infos = resolved.infos
+                queue.replace(resolved.tracks, current?.track, clockSeconds)
+                syncPlaylist(playing)
+            }
+        }
     }
 
     /** Bài đang kêu (tên trong gói, hay link với danh sách phát) hay null khi im lặng - cho kiểm thử trên máy. */
@@ -615,7 +639,7 @@ object MusicBed {
             ready = null
         }
         val fadeMs = Math.round(MusicCues.mix.loopCrossfadeSeconds * 1000)
-        bed.fadeStep = maxOf(player.volume, 0.01f) * STEP_MS / fadeMs
+        bed.fadeStep = maxOf(bed.volume, 0.01f) * STEP_MS / fadeMs
         fading += bed
         val startAt = frameAligned(player, MusicCues.loopStartAt(bounds, snap.position))
         val next = if (ready != null) {
@@ -772,7 +796,7 @@ object MusicBed {
         p3.goal = old.goal
         p3.perTick = old.perTick
         p3.entering = old.entering
-        setVolume(p3, old.player.volume)
+        setVolume(p3, old.volume) // mức logic: hệ số hẹn giờ ngủ do setVolume nhân một lần ở p3
         setVolume(old, 0f)
         old.fadeStep = 0.001f
         fading += old
@@ -795,7 +819,7 @@ object MusicBed {
                 setVolume(bed, goal)
                 return
             }
-            else -> bed.perTick = abs(goal - bed.player.volume) * STEP_MS / MusicCues.mix.stepRampMs
+            else -> bed.perTick = abs(goal - bed.volume) * STEP_MS / MusicCues.mix.stepRampMs
         }
         startFade()
     }
@@ -887,6 +911,11 @@ object MusicBed {
     /** Hàng bài của lựa chọn `choice` (luồng nền: danh mục cần mạng lần đầu): bài + thông tin bài (để tải / bản sao). */
     private fun resolve(appContext: Context, choice: String, levelDb: Double): Resolved {
         if (choice == Playlists.MINE) {
+            // Sách mang theo đúng các bài người nghe đã chọn (file nằm trong sách): phát bản của cuốn, không giải lại từ kho của máy này.
+            BookEdits.carriedMine(Store.bookDir(book))?.let { carried ->
+                val found = carried.infos.mapValues { (link, info) -> info.put("path", carried.files.getValue(link).path) }
+                return Resolved(Playlists.queue(found.keys.toList(), found, levelDb), found, false)
+            }
             val store = DeviceMusic.store(appContext)
             val entries = store.entries().reversed() // cũ trước: bài mới nhập nối vào cuối, chỗ đang nghe không xô lệch
             val found = entries.associateBy { it.getString("link") }
@@ -942,7 +971,10 @@ object MusicBed {
     /** File của một bài để phát; bài danh mục chưa tải thì tải ở luồng nền (lần `sync` sau mới phát) và trả null. */
     private fun uriOf(appContext: Context, link: String): Uri? {
         if (isFailed(link)) return null
-        if (link.startsWith(MusicStore.LOCAL_PREFIX)) return DeviceMusic.store(appContext).file(link)?.let { Uri.fromFile(it) }
+        if (link.startsWith(MusicStore.LOCAL_PREFIX)) {
+            infos[link]?.optString("path")?.takeIf { it.isNotEmpty() }?.let(::File)?.takeIf { it.isFile }?.let { return Uri.fromFile(it) } // bài sách mang theo
+            return DeviceMusic.store(appContext).file(link)?.let { Uri.fromFile(it) }
+        }
         val catalog = DeviceMusic.catalog(appContext)
         catalog.use(link, infos[link])?.let { return Uri.fromFile(it) } // file cụt (khác `bytes` danh mục) bị xoá ở đây rồi tải lại
         fetch(appContext, link)
@@ -1168,7 +1200,7 @@ object MusicBed {
                     oldFadeMs = Math.round(MusicCues.siblingFadeSeconds(it.built?.bounds ?: boundsOf(was, it.player), positionOf(it)) * 1000)
                 }
             }
-            it.fadeStep = maxOf(it.player.volume, 0.01f) * STEP_MS / oldFadeMs
+            it.fadeStep = maxOf(it.volume, 0.01f) * STEP_MS / oldFadeMs
             fading += it
         }
         current = null
@@ -1261,7 +1293,7 @@ object MusicBed {
                 player.removeListener(this)
                 bed.listeners.remove(this)
                 val old = handoff.old
-                val to = MusicCues.loopSettle(handoff.bounds, old.player.currentPosition / 1000.0, player.currentPosition / 1000.0, player.volume, bed.goal,
+                val to = MusicCues.loopSettle(handoff.bounds, old.player.currentPosition / 1000.0, player.currentPosition / 1000.0, bed.volume, bed.goal,
                     oldAlive = old in fading && old.player.isPlaying)
                 if (to != null) player.seekTo((to * 1000).toLong())
             }
@@ -1342,8 +1374,24 @@ object MusicBed {
 
     /** Đặt âm lượng trình phát của `bed` (mọi chỗ MusicBed đổi volume đi qua đây); móc đo ghi `vol <k> <v>` mỗi lần, kể cả từng nhịp mờ. */
     private fun setVolume(bed: Bed, volume: Float) {
-        bed.player.volume = volume
+        bed.volume = volume
+        bed.player.volume = volume * sleepFactor
         emit { SeamEvents.volume(bed.testK, volume) }
+    }
+
+    /** Hệ số mờ dần của hẹn giờ ngủ (1 = không mờ), nhân vào âm lượng THẬT của mọi bài nhạc nền, một chỗ duy nhất ([setVolume]); mức logic không đổi nên mờ vào / mờ đi / chuyển Nối chạy như cũ. */
+    @Volatile
+    private var sleepFactor = 1f
+
+    /** Hẹn giờ ngủ ([Playback.applyVolume]) đổi hệ số mờ: áp ngay cho bài đang kêu và các bài đang mờ đi (kể cả đang mờ chéo); 1 = trả về mức cũ. */
+    fun setSleepFade(factor: Float) {
+        val to = factor.coerceIn(0f, 1f)
+        main.post {
+            sleepFactor = to
+            current?.let { it.player.volume = it.volume * to }
+            for (bed in fading) bed.player.volume = bed.volume * to
+            handover?.p3?.let { it.player.volume = it.volume * to }
+        }
     }
 
     /** Một nhịp mờ ([STEP_MS]) của bài đang kêu (mờ vào / trượt bước âm lượng) và các bài đang mờ đi; còn việc thì hẹn nhịp kế. */
@@ -1354,14 +1402,14 @@ object MusicBed {
                 val player = bed.player
                 // Bài còn tải / đệm thì chưa mờ vào: để lúc có tiếng mới nhích từ 0 lên, không nhảy thẳng tới mức (soát B3).
                 val ready = player.playbackState.let { it == Player.STATE_READY || it == Player.STATE_ENDED }
-                setVolume(bed, MusicCues.towardWhenReady(player.volume, bed.goal, bed.perTick, ready))
-                if (ready && abs(player.volume - bed.goal) < 1e-4f) bed.entering = false else busy = true
+                setVolume(bed, MusicCues.towardWhenReady(bed.volume, bed.goal, bed.perTick, ready))
+                if (ready && abs(bed.volume - bed.goal) < 1e-4f) bed.entering = false else busy = true
             }
             val iterator = fading.iterator()
             while (iterator.hasNext()) {
                 val bed = iterator.next()
-                setVolume(bed, maxOf(0f, bed.player.volume - bed.fadeStep))
-                if (bed.player.volume <= 0.001f) {
+                setVolume(bed, maxOf(0f, bed.volume - bed.fadeStep))
+                if (bed.volume <= 0.001f) {
                     release(bed)
                     iterator.remove()
                 } else {

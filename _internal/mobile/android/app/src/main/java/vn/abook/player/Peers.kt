@@ -51,13 +51,23 @@ object Peers {
         }
         val host = "bt:$address"
         val peers = all(context)
-        val key = peers.keys().asSequence().firstOrNull { peers.getJSONObject(it).optString("host") == host }
+        val key = existingKey(peers, host, 0, fingerprint)
             ?: takeFormer(context, fingerprint) ?: UUID.randomUUID().toString().replace("-", "").take(8)
         peers.put(key, JSONObject().put("name", reply.optString("name", address)).put("host", host).put("port", 0)
             .put("token", reply.getString("token")).put("fingerprint", fingerprint)
             .put("pairedAt", System.currentTimeMillis() / 1000.0))
         save(context, peers)
         return JSONObject().put("key", key).put("name", reply.optString("name", address))
+    }
+
+    /** Thiết bị đang ghép mà lần ghép này là ghép lại: nhận ra bằng vân tay chứng chỉ (đổi IP <-> tên .local <-> Tailscale vẫn là máy ấy -
+     *  địa chỉ và mã mới ghi đè vào dòng cũ, chỗ nghe và sách đã tải giữ nguyên), rồi mới đến cùng địa chỉ. */
+    internal fun existingKey(peers: JSONObject, host: String, port: Int, fingerprint: String): String? {
+        val keys = peers.keys().asSequence().toList()
+        if (fingerprint.isNotEmpty()) {
+            keys.firstOrNull { peers.getJSONObject(it).optString("fingerprint").equals(fingerprint, ignoreCase = true) }?.let { return it }
+        }
+        return keys.firstOrNull { peers.getJSONObject(it).let { peer -> peer.optString("host") == host && peer.optInt("port") == port } }
     }
 
     /** Vân tay -> mã của thiết bị đã thôi ghép: ghép lại đúng máy ấy (dù đổi địa chỉ) lấy lại mã cũ, nên mã sách cục bộ ([localId]) và chỗ
@@ -86,22 +96,33 @@ object Peers {
         return Store.requireBookId("p${key}_$remoteId")
     }
 
+    /**
+     * Liên kết bộ truyện (`series`) của gói sách một thiết bị ghép gửi nói bằng mã sách CỦA MÁY ẤY; trong thư viện này cuốn gốc mang mã [localId].
+     * Đổi `root` sang mã cục bộ để các phần của bộ gom đúng nhóm, không lẫn với mã của máy khác (soát a97 V2). Mã không hợp lệ thì bỏ liên kết.
+     */
+    fun localizeSeries(manifest: JSONObject, key: String): JSONObject {
+        val series = manifest.optJSONObject("series") ?: return manifest
+        val root = series.optString("root")
+        val local = if (root.isEmpty()) null else runCatching { localId(key, root) }.getOrNull()
+        if (local == null) manifest.remove("series") else series.put("root", local)
+        return manifest
+    }
+
     /** Ngược của `localId` cho một thiết bị đang ghép: (key, mã bên ấy), hay null nếu không phải sách của thiết bị ghép. */
     fun sourceOf(context: Context, localId: String): Pair<String, String>? =
         all(context).keys().asSequence().firstOrNull { localId.startsWith("p${it}_") }
             ?.let { it to localId.removePrefix("p${it}_") }
 
-    /** Ghép bằng mã 6 số đang hiện trên thiết bị kia (điện thoại: màn Tải sách; máy tính: Cài đặt). Ghép lại cùng địa chỉ
-     *  thì thay chỗ cũ - sách đã tải và chỗ nghe giữ nguyên. */
+    /** Ghép bằng mã 6 số đang hiện trên thiết bị kia (điện thoại: màn Tải sách; máy tính: Cài đặt). Ghép lại cùng máy (cùng vân tay
+     *  chứng chỉ, hay cùng địa chỉ) thì thay chỗ cũ - sách đã tải và chỗ nghe giữ nguyên. */
     fun pair(context: Context, host: String, port: Int, code: String): JSONObject {
         SyncLink.refuseSelf(host, port)
         val device = DeviceName.of(context)
         val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
         val (reply, fingerprint) = SyncLink.pair(context, "https://$host:$port", body)
         val peers = all(context)
-        val key = peers.keys().asSequence().firstOrNull { existing ->
-            peers.getJSONObject(existing).let { it.optString("host") == host && it.optInt("port") == port }
-        } ?: takeFormer(context, fingerprint) ?: UUID.randomUUID().toString().replace("-", "").take(8)
+        val key = existingKey(peers, host, port, fingerprint)
+            ?: takeFormer(context, fingerprint) ?: UUID.randomUUID().toString().replace("-", "").take(8)
         peers.put(key, JSONObject().put("name", reply.optString("name", host)).put("host", host).put("port", port)
             .put("token", reply.getString("token")).put("fingerprint", fingerprint)
             .put("pairedAt", System.currentTimeMillis() / 1000.0))
@@ -215,6 +236,8 @@ object Peers {
                         .put("localChapters", downloaded?.optInt("chaptersAvailable") ?: 0)
                         .put("localCoverVersion", downloaded?.optJSONObject("cover")?.optLong("version") ?: 0L)
                         .put("localWordsVersion", downloaded?.optString("wordsVersion") ?: "")
+                        .put("localAudioVersion", downloaded?.optString("audioVersion") ?: "")
+                        .put("localMetaVersion", downloaded?.optString("metaVersion") ?: "")
                 }
                 entry.put("name", reply.optString("name", peer.optString("name"))).put("books", books)
             } catch (error: Exception) {

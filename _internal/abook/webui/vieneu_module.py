@@ -223,7 +223,7 @@ def recommend(facts: dict[str, Any]) -> str:
 
 # ---- các phần ---------------------------------------------------------------------------------------------------------------------
 def _complete(folder: Path | None, files: tuple[Download, ...]) -> bool:
-    return folder is not None and all((folder / item.name).is_file() for item in files)
+    return voice_module.files_intact(folder, files)
 
 
 def _dir(part: str) -> Path | None:
@@ -267,7 +267,7 @@ def _choices() -> tuple[str, ...]:
 
 def _gguf_present() -> bool:
     folder = _dir("gguf")
-    return folder is not None and (folder / SERVER_FOLDER / vieneu_gguf.SERVER_EXE).is_file() and (folder / vieneu_gguf.MODEL_FILE).is_file()
+    return folder is not None and (folder / SERVER_FOLDER / vieneu_gguf.SERVER_EXE).is_file() and voice_module.files_intact(folder, (GGUF_MODEL,))
 
 
 def _parts() -> list[Component]:
@@ -423,7 +423,7 @@ def status() -> dict[str, Any]:
             "state": state, "done": _state["done"] if state == "downloading" else 0,
             "total": _state["total"] if state == "downloading" else 0, "error": _state["error"],
             "errorDetail": _state.get("error_detail", "") if _state["error"] else "",
-            "supported": not blocked, "reason": blocked, "choices": choices,
+            "supported": not blocked, "reason": blocked, "damaged": voice_module.has_damaged_part(parts, _core.pins()), "choices": choices,
             "parts": [{"id": part.id, "label": part.label, "bytes": left[part.id], "state": judged[part.id], "external": part.external}
                       for part in parts],
             "outdatedParts": [part.label for part in behind], "outdatedBytes": sum(left[part.id] for part in behind),

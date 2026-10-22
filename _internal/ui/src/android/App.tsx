@@ -27,16 +27,17 @@ import { androidSource } from "./androidSource";
 import { DevicesScreen } from "./DevicesScreen";
 import { AudiobookPhoneDialogHost, ExportAudiobookMenuItem, watchAudiobookExports } from "./ExportAudiobook";
 import { ExportM4bMenuItem, M4bMusicDialogHost, watchM4bExports } from "./ExportM4b";
-import { ExportMp3MenuItem, watchMp3Exports } from "./ExportMp3";
+import { ExportMp3MenuItem, Mp3MusicDialogHost, watchMp3Exports } from "./ExportMp3";
+import { ExportRevisionNotice } from "./ExportRevisions";
 import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { NativeAudioEngine } from "./nativeEngine";
 import { SettingsScreen } from "./SettingsScreen";
 import { StudioChipHost } from "./StudioOpen";
 import { UpdateNotice } from "./UpdateNotice";
-import { applyTheme, loadSettings, pushSettings } from "./settings";
+import { applyTheme, loadSettings, syncSettings } from "./settings";
 import { dismissTopLayer } from "./backLayers";
-import { useBookBytes } from "./storage";
+import { useBookBytes, type RemovableFromPhone } from "./storage";
 import { formatSize } from "@/shared/format";
 
 // Vỏ Android: cùng các màn hình Nghe với máy tính, bố cục một tay - điều hướng dưới đáy, trình phát thu nhỏ ngay
@@ -180,7 +181,7 @@ function RemoveFromPhoneMenuItem({ book }: { book: ListenBook }) {
   const bytes = useBookBytes(book.id);
   return (
     <DropdownMenu.Item
-      onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>("abook-remove-from-phone", { detail: book }))}
+      onSelect={() => window.dispatchEvent(new CustomEvent<RemovableFromPhone>("abook-remove-from-phone", { detail: { id: book.id, title: book.title } }))}
       className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
     >
       <Trash2 className="size-4" /> Xoá khỏi điện thoại…
@@ -190,7 +191,7 @@ function RemoveFromPhoneMenuItem({ book }: { book: ListenBook }) {
 }
 
 function RemoveFromPhoneHost() {
-  const [book, setBook] = useState<ListenBook | null>(null);
+  const [book, setBook] = useState<RemovableFromPhone | null>(null);
   const [busy, setBusy] = useState(false);
   const client = useQueryClient();
   const navigate = useNavigate();
@@ -198,7 +199,7 @@ function RemoveFromPhoneHost() {
   const player = usePlayer();
   const bytes = useBookBytes(book?.id ?? "");
   useEffect(() => {
-    const listener = (event: Event) => setBook((event as CustomEvent<ListenBook>).detail);
+    const listener = (event: Event) => setBook((event as CustomEvent<RemovableFromPhone>).detail);
     window.addEventListener("abook-remove-from-phone", listener);
     return () => window.removeEventListener("abook-remove-from-phone", listener);
   }, []);
@@ -214,7 +215,7 @@ function RemoveFromPhoneHost() {
       void client.invalidateQueries();
       // "Hoàn tác" (TrashPending.kt): cuốn nằm chờ vài chục giây rồi mới xoá hẳn - điện thoại không có Thùng rác.
       toastRemoved({
-        message: `Đã xoá “${book.title}” khỏi điện thoại`,
+        message: book.partial ? `Đã xoá phần đã tải của “${book.title}”` : `Đã xoá “${book.title}” khỏi điện thoại`,
         title: book.title,
         undo: undo ?? undefined,
         note: "",
@@ -232,15 +233,19 @@ function RemoveFromPhoneHost() {
     <Dialog
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
-      title={`Xoá “${book?.title ?? ""}” khỏi điện thoại?`}
-      description={`${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Bản trên điện thoại bị xoá hẳn để lấy lại chỗ trống; lỡ tay thì bấm Hoàn tác trong ${UNDO_SECONDS} giây. Sách của máy tính hay thiết bị đã ghép thì tải lại được, chỗ nghe đồng bộ lại từ máy ấy; sách mở từ file .abook thì mở lại file ấy.`}
+      title={book?.partial ? `Xoá phần đã tải của “${book.title}”?` : `Xoá “${book?.title ?? ""}” khỏi điện thoại?`}
+      description={
+        book?.partial
+          ? `${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Đây là phần đã tải dở hay đã nhớ để nghe thẳng, chưa thành sách trên điện thoại. Xoá thì lần tải sau bắt đầu lại từ đầu; sách vẫn ở máy tính. Lỡ tay thì bấm Hoàn tác trong ${UNDO_SECONDS} giây.`
+          : `${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Bản trên điện thoại bị xoá hẳn để lấy lại chỗ trống; lỡ tay thì bấm Hoàn tác trong ${UNDO_SECONDS} giây. Sách của máy tính hay thiết bị đã ghép thì tải lại được, chỗ nghe đồng bộ lại từ máy ấy; sách mở từ file .abook thì mở lại file ấy.`
+      }
     >
       <div className="dialog-actions">
         <Button variant="ghost" onClick={() => setBook(null)}>
           Để sau
         </Button>
         <Button variant="danger" icon={Trash2} loading={busy} onClick={() => void remove()}>
-          Xoá khỏi điện thoại
+          {book?.partial ? "Xoá phần đã tải" : "Xoá khỏi điện thoại"}
         </Button>
       </div>
     </Dialog>
@@ -255,10 +260,14 @@ function ClipBridge({ children }: { children: ReactNode }) {
 export function AndroidApp() {
   const engine = useMemo(() => new NativeAudioEngine(), []);
   useFocusClearOfToasts();
+  // Lần đồng bộ tuỳ chọn với native xong (mới hơn bản WebView thì lấy của native): hiện lại các màn đọc tuỳ chọn lúc dựng (soát a100 T3).
+  const [synced, setSynced] = useState(0);
   useEffect(() => {
-    const settings = loadSettings();
-    applyTheme(settings.theme);
-    void pushSettings(settings);
+    applyTheme(loadSettings().theme);
+    void syncSettings().then((settings) => {
+      applyTheme(settings.theme);
+      setSynced((count) => count + 1);
+    });
   }, []);
   // "Theo hệ thống" phải theo cả khi đang mở app: Activity khai uiMode trong configChanges nên KHÔNG dựng lại khi
   // điện thoại chuyển sáng/tối (vd tự tối lúc chiều) - trước đây app giữ nguyên giao diện cũ tới lần mở sau.
@@ -283,6 +292,7 @@ export function AndroidApp() {
               <RemoveFromPhoneHost />
               <AudiobookPhoneDialogHost />
               <M4bMusicDialogHost />
+              <Mp3MusicDialogHost />
               <MobileShell>
                 <Routes>
                   <Route path="/" element={<LibraryPage />} />
@@ -291,6 +301,7 @@ export function AndroidApp() {
                     element={
                       <BookScreen
                         studioLink={(book) => <StudioChipHost book={book} />}
+                        notice={(book) => <ExportRevisionNotice book={book} />}
                         extraActions={(book) =>
                           book.remote ? (
                             <DownloadMenuItem book={book} />
@@ -308,7 +319,7 @@ export function AndroidApp() {
                   />
                   <Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} />
                   <Route path="/devices" element={<DevicesScreen />} />
-                  <Route path="/settings" element={<SettingsScreen />} />
+                  <Route path="/settings" element={<SettingsScreen key={synced} />} />
                 </Routes>
               </MobileShell>
             </HashRouter>

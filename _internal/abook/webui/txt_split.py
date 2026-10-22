@@ -52,7 +52,7 @@ def plan(path: Path) -> dict[str, Any] | None:
     `titleLine`: chữ dẫn chỉ là một dòng tên truyện - bước tạo sách bỏ nó khỏi chương khi nó trùng Tên sách (`split`)."""
     try:
         lines = _lines(path)
-    except OSError:
+    except (OSError, UnicodeDecodeError):  # file hỏng byte: không có gì để đề xuất (`scan_inputs` báo riêng file ấy)
         return None
     found = headings(lines)
     if len(found) < 2:

@@ -269,3 +269,15 @@ describe("project file export (.abookproj)", () => {
     });
   });
 });
+
+describe("exportable", () => {
+  it("lets a text-only book be packed as a book file but not as audio", async () => {
+    const { exportable } = await import("./bookFileExport");
+    const textOnly = { chaptersAvailable: 0, chaptersTotal: 3 };
+    expect(exportable("bookfile", textOnly)).toBe(true);
+    expect(exportable("mp3", textOnly)).toBe(false);
+    expect(exportable("m4b", textOnly)).toBe(false);
+    expect(exportable("bookfile", { chaptersAvailable: 0, chaptersTotal: 0 })).toBe(false);
+    expect(exportable("m4b", { chaptersAvailable: 2, chaptersTotal: 3 })).toBe(true);
+  });
+});

@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from .install_lock import InstallLock, kill_tree
 from ..speaker_pass import (
     SPEAKER_MODEL,
     TOKENIZER_FILE,
@@ -322,10 +323,23 @@ def matches(target: Path, item: Download) -> bool:
     with _hashed_lock:
         known = _hashed.get(stamp)
     if known is None:
-        known = _sha256(target)
+        known = _digest(target)
         with _hashed_lock:
             _hashed[stamp] = known
     return known == item.sha256
+
+
+def _digest(path: Path) -> str:
+    """SHA-256 qua bảng dấu đã lưu ra đĩa của audio_revision: mở lại app không băm lại ~0,9 GB model ngay lượt hỏi trạng thái đầu tiên."""
+    from . import audio_revision
+    return audio_revision.describe(path)["sha256"]
+
+
+def intact(folder: Path | None, files: Any) -> bool:
+    """Mọi file của `files` (các `Download`) nằm ở `folder` ĐÚNG bản đã ghim (cùng cỡ, cùng SHA-256). Chỉ có tên file thì file cắt cụt /
+    hỏng vẫn được tính là "đã tải" - mô-đun báo sẵn sàng rồi lỗi lúc nạp, và nút tải không có việc để sửa (soát a96 V2). `matches` kiểm cỡ
+    trước và băm mỗi file MỘT lần cho tới khi dấu stat của nó đổi, nên hỏi trạng thái liên tục không băm lại model."""
+    return folder is not None and all(matches(folder / item.name, item) for item in files)
 
 
 def left(item: Download, target: Path) -> int:
@@ -335,6 +349,19 @@ def left(item: Download, target: Path) -> int:
     part = target.with_name(target.name + ".part")
     have = part.stat().st_size if part.is_file() else 0
     return item.size - min(have, item.size)
+
+
+def remote_size(url: str) -> int:
+    """Cỡ file ở `url` (HEAD): cỡ chưa ghim sẵn trong app thì hỏi máy chủ, rồi vẫn kiểm băm đã ghim."""
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, method="HEAD"), timeout=60) as response:
+            size = int(response.headers.get("Content-Length") or 0)
+    except (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError, ValueError) as error:
+        message = NETWORK_FAILURE.format(retry="Cài tiếp") if _network(error) else f"Không hỏi được cỡ file ({error}) - bấm Cài tiếp để thử lại."
+        raise SetupError(message) from error
+    if size <= 0:
+        raise SetupError("Máy chủ tải không cho biết cỡ file - bấm Cài tiếp để thử lại.")
+    return size
 
 
 def download(item: Download, target: Path, progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> Path:
@@ -497,8 +524,9 @@ import whisper
 from faster_whisper import WhisperModel
 from huggingface_hub import snapshot_download
 root = Path(os.environ["ABOOK_RUNTIME"]) / "models" / "whisper"
-root.mkdir(parents=True, exist_ok=True)
-model = whisper.load_model("turbo", device="cpu", download_root=str(root))
+# Checkpoint đã được app tải (Range + kiểm băm, StudioSetup._fetch_whisper_checkpoint): nạp từ đường dẫn, không để whisper tự tải lại từ đầu.
+checkpoint = root / os.path.basename(whisper._MODELS["turbo"])
+model = whisper.load_model(str(checkpoint), device="cpu")
 del model
 snapshot = snapshot_download(repo_id=__FASTER_REPO__, revision=__FASTER_REVISION__, cache_dir=os.environ["HF_HUB_CACHE"])
 ref = Path(os.environ["HF_HUB_CACHE"]) / ("models--" + __FASTER_REPO__.replace("/", "--")) / "refs" / "main"
@@ -508,6 +536,12 @@ model = WhisperModel(str(snapshot), device="cpu", compute_type="int8")
 del model
 print("Whisper turbo + faster-whisper turbo ok")
 """.replace("__FASTER_REPO__", repr(FASTER_WHISPER_REPO)).replace("__FASTER_REVISION__", repr(FASTER_WHISPER_REVISION))
+
+# Đường tải checkpoint "turbo" mà openai-whisper (bản ghim) dùng: đọc từ chính gói đã cài, không chép tay URL/băm.
+WHISPER_PIN_SCRIPT = r"""
+import json, whisper
+print(json.dumps({"turbo": whisper._MODELS["turbo"]}))
+"""
 
 QA_SCRIPT = r"""
 import datetime, hashlib, json, os
@@ -620,6 +654,7 @@ class StudioSetup:
         *,
         fetch: Callable[..., Path] = download,
         gpu: Callable[[], dict[str, Any] | None] = nvidia_gpu,
+        size_of: Callable[[str], int] = remote_size,
         analysis_model: str = "qwen3:8b",
         ollama_address: str = OLLAMA_ADDRESS,
     ) -> None:
@@ -627,6 +662,7 @@ class StudioSetup:
         self.app_root = app_root
         self.fetch = fetch
         self.gpu = gpu
+        self.size_of = size_of
         self.analysis_model = analysis_model
         self.ollama_address = ollama_address
         self.runtime = root / "runtime"
@@ -637,6 +673,8 @@ class StudioSetup:
         self.speaker_tokenizer = self.runtime / "models" / TOKENIZER_FOLDER / TOKENIZER_FILE
         self.state_path = root / "setup.json"
         self._lock = threading.Lock()
+        # Khoá cài giữa các tiến trình (install_lock.py): host chết mà tiến trình con của lượt cài còn chạy thì lần mở sau không cài chồng.
+        self._install_lock = InstallLock(root)
         self._thread: threading.Thread | None = None
         self._cancel = threading.Event()
         self._process: subprocess.Popen[str] | None = None
@@ -650,6 +688,7 @@ class StudioSetup:
         self.busy: Callable[[], Path | None] = lambda: None
         self._memory_error: str | None = None
         self._package_probe: tuple[float, list[str]] | None = None
+        self._tags_probe: tuple[float, frozenset[str] | None] | None = None  # model Ollama đang có (None: Ollama không trả lời)
 
     # ---- trạng thái -------------------------------------------------------------------------------------------
 
@@ -740,7 +779,70 @@ class StudioSetup:
         damaged = ["ollama"] if "ollama" in done and not self.ollama_executable.is_file() else []
         if "packages" in done and self._probe_packages():
             damaged.append("packages")
+        # Model là thứ phần mềm dọn đĩa hay người dùng hay xoá nhất: đối chiếu file/model còn thật với sổ "đã xong".
+        if "llm" in done and self._llm_missing():
+            damaged.append("llm")
+        if "asr" in done and not self._whisper_present():
+            damaged.append("asr")
+        if "wordalign" in done and not self._word_align_present():
+            damaged.append("wordalign")
         return damaged
+
+    def _whisper_present(self) -> bool:
+        """Checkpoint Whisper còn nguyên: đúng tên + cỡ ghi lúc cài; Studio cài từ bản cũ chưa ghi thì cần có file .pt nào đó."""
+        folder = self.runtime / "models" / "whisper"
+        recorded = (self._state().get("outputs") or {}).get("whisper")
+        if isinstance(recorded, dict) and recorded.get("name"):
+            path = folder / str(recorded["name"])
+            try:
+                return path.is_file() and path.stat().st_size == int(recorded.get("size") or 0)
+            except (OSError, ValueError):
+                return False
+        return folder.is_dir() and any(path.is_file() for path in folder.glob("*.pt"))
+
+    def _word_align_present(self) -> bool:
+        try:
+            return all((self.word_align / item.name).is_file() and (self.word_align / item.name).stat().st_size > 0
+                       for item in WORD_ALIGN_FILES)
+        except OSError:
+            return False
+
+    def _llm_missing(self) -> bool:
+        """Model phân tích (và model người nói, bộ đếm token đi cặp) đã mất khỏi Studio. Hỏi Ollama của Studio qua HTTP
+        (/api/tags - không gọi CLI `ollama`, khi máy chủ tắt nó tự mở app khay): Ollama không trả lời thì chưa biết, KHÔNG coi là
+        mất (`start()` bật Ollama lên rồi hỏi lại)."""
+        speaker = self._speaker_model()
+        if speaker is not None and not self._speaker_tokenizer_present():
+            return True
+        models = self._ollama_models()
+        if models is None:
+            return False
+        wanted = [self.analysis_model] + ([speaker.name] if speaker is not None else [])
+        return any(not self._listed(name, models) for name in wanted)
+
+    def _speaker_tokenizer_present(self) -> bool:
+        try:
+            return self.speaker_tokenizer.is_file() and self.speaker_tokenizer.stat().st_size == SPEAKER_TOKENIZER.size
+        except OSError:
+            return False
+
+    @staticmethod
+    def _listed(name: str, models: frozenset[str]) -> bool:
+        return name in models or (":" not in name and f"{name}:latest" in models)
+
+    def _ollama_models(self, *, fresh: bool = False) -> frozenset[str] | None:
+        """Tên các model Ollama của Studio đang có, hay None khi Ollama không trả lời. Nhớ 10 giây: trang hỏi trạng thái liên tục."""
+        if not fresh and self._tags_probe is not None and time.monotonic() - self._tags_probe[0] < 10:
+            return self._tags_probe[1]
+        try:
+            with urllib.request.urlopen(f"{self.ollama_address}/api/tags", timeout=3) as response:
+                entries = json.loads(response.read().decode("utf-8")).get("models") or []
+            found: frozenset[str] | None = frozenset(str(value) for entry in entries if isinstance(entry, dict)
+                                                     for value in (entry.get("name"), entry.get("model")) if value)
+        except (urllib.error.URLError, OSError, ValueError, AttributeError):
+            found = None
+        self._tags_probe = (time.monotonic(), found)
+        return found
 
     @property
     def ollama_executable(self) -> Path:
@@ -767,13 +869,15 @@ class StudioSetup:
     def status(self) -> dict[str, Any]:
         state = self._state()
         outdated = set(self.outdated())
+        damaged = set(self.damaged())
         done = set(state.get("done") or []) - outdated
         running = self._thread is not None and self._thread.is_alive()
         progress = self._progress if running else None
         return {
             "installed": self.installed(),
             "outdated": [label for step, label, _hint in STEPS if step in outdated],
-            "damaged": [label for step, label, _hint in STEPS if step in set(self.damaged())],
+            "damaged": [label for step, label, _hint in STEPS if step in damaged],
+            "damagedSteps": [step for step, _label, _hint in STEPS if step in damaged],
             "running": running,
             "step": self._step if running else None,
             "steps": [{"id": step, "label": label, "hint": hint, "done": step in done} for step, label, hint in STEPS],
@@ -782,6 +886,8 @@ class StudioSetup:
             "error": None if running else self._memory_error or state.get("error"),
             "gpu": state.get("gpu") or self.detected_gpu(),
             "root": str(self.root),
+            # Lượt cài của lần mở app trước (hay app khác) còn chạy: pid, từ lúc nào, và tiến trình mồ côi hay host còn sống.
+            "leftover": None if running else self._install_lock.holder(),
         }
 
     # ---- điều khiển -------------------------------------------------------------------------------------------
@@ -789,14 +895,28 @@ class StudioSetup:
     def running(self) -> bool:
         return self._thread is not None and self._thread.is_alive()
 
+    @staticmethod
+    def _leftover_message(other: dict[str, Any]) -> str:
+        when = time.strftime("%H:%M", time.localtime(other["since"])) if other.get("since") else "trước"
+        if other.get("orphan"):
+            return (f"Lượt cài lúc {when} (lần mở app trước) vẫn còn chạy ngầm. Bạn chờ nó xong rồi bấm Cài tiếp, "
+                    "hoặc bấm Dừng lượt cũ để làm lại từ chỗ dở.")
+        return f"Một cửa sổ ABook khác đang cài Studio từ {when}. Bạn đóng nó hoặc chờ nó xong rồi bấm Cài tiếp."
+
     def start(self) -> dict[str, Any]:
         with self._lock:
             self._require_idle()
-            if not (self._thread is not None and self._thread.is_alive()) and (not self.installed() or self.outdated()):
+            if not (self._thread is not None and self._thread.is_alive()) and (
+                    not self.installed() or self.outdated() or self._models_unchecked()):
                 self._memory_error = None
+                other = self._install_lock.acquire("cài Studio")
+                if other is not None:
+                    self._record_error(self._leftover_message(other))
+                    return self.status()
                 try:
                     self._save(error=None)  # Check mkdir/write/replace before accepting a background job.
                 except OSError as error:
+                    self._install_lock.release()
                     self._record_error(self._write_failure(error))
                     return self.status()
                 self._cancel.clear()
@@ -804,15 +924,34 @@ class StudioSetup:
                 self._thread.start()
         return self.status()
 
+    def _models_unchecked(self) -> bool:
+        """Studio đã cài, model phân tích có trong sổ nhưng Ollama chưa trả lời: bấm "Sửa Studio" phải đi xem thật."""
+        return (self.installed() and "llm" in set(self._state().get("done") or [])
+                and self._ollama_models(fresh=True) is None)
+
     def _require_idle(self) -> None:
         if self.busy() is not None:
             raise SetupError("Bạn hãy chờ cuốn đang chạy, khởi động hoặc tạm dừng làm xong rồi cập nhật Studio.")
 
-    def cancel(self) -> dict[str, Any]:
+    def stop(self) -> None:
+        """Bảo lượt cài đang chạy dừng NGAY: tiến trình con của nó (cả cây) bị giết, các bước tải thấy cờ và thoát. Không đụng
+        tiến trình nào ngoài lượt này. Rẻ, không dò trạng thái (đường đóng app dùng - `status()` có thể chạy lệnh dò thư viện)."""
         self._cancel.set()
         process = self._process
         if process is not None and process.poll() is None:
-            process.kill()
+            try:
+                import psutil
+
+                kill_tree(psutil.Process(process.pid))
+            except Exception:  # noqa: BLE001 - dừng không được làm hỏng đường gọi
+                pass
+            if process.poll() is None:
+                process.kill()
+
+    def cancel(self) -> dict[str, Any]:
+        self.stop()
+        if not self.running():
+            self._install_lock.stop_leftover()  # lượt cài mồ côi của lần mở trước: dừng đúng cây tiến trình của nó
         return self.status()
 
     def remove(self) -> dict[str, Any]:
@@ -854,9 +993,11 @@ class StudioSetup:
         return stopped
 
     def wait(self, timeout: float | None = None) -> None:
+        """Chờ các luồng cài xong, TỔNG cộng không quá `timeout` giây (một hạn chung cho cả hai luồng)."""
+        deadline = None if timeout is None else time.monotonic() + timeout
         for thread in (self._thread, self._optional_thread):
             if thread is not None:
-                thread.join(timeout)
+                thread.join(None if deadline is None else max(0.0, deadline - time.monotonic()))
 
     def code_for(self, project_root: Path) -> Path:
         """Thư mục mã chạy cuốn này. Đổi một file khoá chất lượng là cuốn đang làm dở không làm tiếp được (AGENTS.md), mà
@@ -991,6 +1132,7 @@ class StudioSetup:
         try:
             self._memory_error = None
             self._save(error=None)
+            self._look_for_missing_models()
             outdated = set(self.outdated())
             ran = False
             for step, _label, _hint in STEPS:
@@ -1018,6 +1160,19 @@ class StudioSetup:
             self._record_error(f"Lỗi ở bước {self._step}: {type(error).__name__}: {error}")
         finally:
             self._step, self._progress, self._process = None, None, None
+            self._tags_probe = None  # model vừa kéo/xoá: lần hỏi sau đừng dùng câu trả lời nhớ
+            self._install_lock.release()
+
+    def _look_for_missing_models(self) -> None:
+        """Studio đã cài mà Ollama chưa chạy thì chưa biết model phân tích còn không (`_llm_missing`): bật Ollama riêng của
+        Studio lên rồi hỏi lại, để "Sửa Studio" thật sự kiểm model chứ không chỉ tin sổ "đã xong". Ollama không lên được thì
+        thôi - `damaged` đã báo thiếu Ollama nếu file mất."""
+        if self.installed() and "llm" in set(self._state().get("done") or []) and self.ollama_executable.is_file():
+            try:
+                self.ensure_ollama()
+            except (SetupError, OSError):
+                pass
+        self._tags_probe = None
 
     def _cancelled(self) -> bool:
         return self._cancel.is_set()
@@ -1048,6 +1203,7 @@ class StudioSetup:
                 env=environment, cwd=str(self.root), creationflags=CREATE_NO_WINDOW if os.name == "nt" else 0,
             )
             assert self._process.stdout is not None
+            self._install_lock.note_child(self._process.pid)
             for line in self._process.stdout:
                 handle.write(line)
                 text = line.strip()
@@ -1055,6 +1211,7 @@ class StudioSetup:
                     lines.append(text)
                     self._detail = text[-160:]
             code = self._process.wait()
+        self._install_lock.note_child(None)
         if self._cancelled():
             raise Cancelled()
         if code != 0:
@@ -1264,6 +1421,10 @@ class StudioSetup:
             if not self.installed():
                 raise SetupError("Chưa cài Studio - cài Studio trước rồi mới tải được model này.")
             if self._optional_thread is None or not self._optional_thread.is_alive():
+                other = self._install_lock.acquire(f"tải {model}")
+                if other is not None:
+                    self._optional_progress, self._optional_error = None, self._leftover_message(other)
+                    return self.optional_status(model)
                 self._cancel.clear()
                 self._optional_progress, self._optional_error = None, None
                 self._optional_thread = threading.Thread(target=self._run_optional, args=(model,),
@@ -1281,6 +1442,8 @@ class StudioSetup:
             self._optional_error = str(error)
         except Exception as error:  # noqa: BLE001 - lỗi lạ không được làm sập host
             self._optional_error = f"Lỗi khi tải {model}: {type(error).__name__}: {error}"
+        finally:
+            self._install_lock.release()
 
     def _install_published(self, model: PublishedModel) -> None:
         """Tải từng phần (kiểm băm từng phần, tải tiếp được), đẩy CẢ file vào Ollama bằng /api/blobs - ghép ngay trên
@@ -1348,12 +1511,8 @@ class StudioSetup:
             raise SetupError(f"Ollama không tạo được model {model.name}: {reply.get('error') or reply}")
 
     def _ollama_has(self, name: str) -> bool:
-        try:
-            with urllib.request.urlopen(f"{self.ollama_address}/api/tags", timeout=10) as response:
-                models = json.loads(response.read().decode("utf-8")).get("models") or []
-        except (urllib.error.URLError, ValueError):
-            return False
-        return any(entry.get("name") == name or entry.get("model") == name for entry in models if isinstance(entry, dict))
+        models = self._ollama_models(fresh=True)
+        return models is not None and name in models
 
     def _ollama_blob(self, digest: str) -> bool:
         try:
@@ -1396,7 +1555,40 @@ class StudioSetup:
     def _step_voice(self) -> None:
         self._run([str(self.python), "-c", VOICE_SCRIPT], "Tải model giọng")
 
+    def _whisper_pin(self) -> str:
+        """URL checkpoint "turbo" của openai-whisper đã cài trong Studio (băm SHA-256 là đoạn áp chót của URL)."""
+        try:
+            result = subprocess.run([str(self.python), "-c", WHISPER_PIN_SCRIPT], capture_output=True, text=True, encoding="utf-8",
+                                    timeout=120, env={**os.environ, **self.environment()},
+                                    creationflags=CREATE_NO_WINDOW if os.name == "nt" else 0)
+            lines = [line for line in result.stdout.splitlines() if line.startswith("{")]
+            url = str(json.loads(lines[-1])["turbo"]) if result.returncode == 0 and lines else ""
+        except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+            raise SetupError(f"Không đọc được đường tải Whisper từ thư viện đã cài ({technical(error)}) - bấm Cài tiếp để thử lại.") from error
+        digest = url.rstrip("/").split("/")[-2] if url.count("/") >= 2 else ""
+        if not url.startswith("https://") or not re.fullmatch(r"[0-9a-f]{64}", digest) or not url.endswith(".pt"):
+            raise SetupError("Thư viện Whisper đã cài khai đường tải không như mong đợi - cài lại Studio.")
+        return url
+
+    def _fetch_whisper_checkpoint(self) -> Path:
+        """Tải checkpoint Whisper bằng downloader của Studio (Range, kiểm SHA-256 của openai-whisper) vào đúng chỗ whisper tìm.
+        `whisper.load_model(tên)` tự tải bằng `_download`: file dở sai băm thì mở lại bằng `wb`, không Range - mất mạng giữa chừng là
+        tải lại cả 1,5 GB (soát a92 V3)."""
+        url = self._whisper_pin()
+        item = Download(url.rsplit("/", 1)[-1], url, url.rstrip("/").split("/")[-2], self.size_of(url))
+        target = self.runtime / "models" / "whisper" / item.name
+        part = target.with_name(target.name + ".part")
+        # Lượt cài cũ để lại file dở dưới tên cuối (đó là cách whisper ghi): nhận nó làm phần đã tải.
+        if target.is_file() and not part.exists() and 0 < target.stat().st_size < item.size:
+            os.replace(target, part)
+        self._detail = item.name
+        return self.fetch(item, target, self._set_progress, self._cancelled)
+
     def _step_asr(self) -> None:
+        checkpoint = self._fetch_whisper_checkpoint()
+        outputs = dict(self._state().get("outputs") or {})
+        outputs["whisper"] = {"name": checkpoint.name, "size": checkpoint.stat().st_size}  # để lần sau biết file còn nguyên
+        self._save(outputs=outputs)
         self._run([str(self.python), "-c", ASR_SCRIPT], "Tải Whisper")
 
     def _step_qa(self) -> None:

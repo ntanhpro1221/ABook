@@ -1,8 +1,8 @@
 import * as Popover from "@radix-ui/react-popover";
 import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
-import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
 import { usePageTitle } from "@/shared/title";
@@ -14,6 +14,8 @@ import { usePlayer } from "./player";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { useSentenceMenu, type SentenceEditing } from "./SentenceMenu";
 import { useChapterScript, useListenBook, useSource } from "./source";
+import { makeAnchor, textFingerprint } from "./readingAnchor";
+import { latestReading, localReading, readingIndex, readingKey, readingRecord, type ReadingPosition } from "./readingPosition";
 
 // Chế độ ĐỌC: văn bản chương như một cuốn ebook, đi cùng chỗ đang nghe.
 //
@@ -47,10 +49,6 @@ function loadPrefs(): ReaderPrefs {
   }
 }
 
-function localReadingKey(bookId: string) {
-  return BOOK_STORAGE.reading + bookId;
-}
-
 /** Câu đầu tiên còn thấy trong khung đọc (follow.firstVisibleIndex trên các câu đang hiện). */
 function visibleSentence(box: HTMLElement | null): number {
   if (!box) return 0;
@@ -72,7 +70,9 @@ export function ReaderScreen(edit: SentenceEditing) {
   const player = usePlayer();
   const { data: book } = useListenBook(id);
   const chapters = book?.chapters ?? [];
-  const chapterId = Number(chapterParam ?? book?.state.reading?.chapterId ?? chapters[0]?.id ?? 0);
+  const reading = latestReading(book);
+  const record = readingRecord(book);
+  const chapterId = Number(chapterParam ?? reading?.chapterId ?? chapters[0]?.id ?? 0);
   const chapter = chapters.find((item) => item.id === chapterId);
   const index = chapters.findIndex((item) => item.id === chapterId);
   usePageTitle(book && chapter ? `${chapter.subtitle || chapter.title} · ${book.title}` : book?.title);
@@ -91,6 +91,11 @@ export function ReaderScreen(edit: SentenceEditing) {
   const container = useRef<HTMLDivElement | null>(null);
   const saveTimer = useRef<number | undefined>(undefined);
   const restored = useRef("");
+  const touched = useRef("");
+  const { pending, saving } = useMemo(() => ({ pending: { current: undefined as ReadingPosition | undefined }, saving: { current: false } }), [id, record]);
+  const owner = `${id}:${record}:${chapterId}`;
+  const paragraphs = useMemo(() => script?.segments.map((segment) => segment.text) ?? [], [script]);
+  const textHash = useMemo(() => textFingerprint(paragraphs), [paragraphs]);
 
   const listeningHere = player.track?.bookId === id && player.track.chapterId === chapterId;
   const playingIndex = usePlayingSentence(script, listeningHere);
@@ -132,19 +137,14 @@ export function ReaderScreen(edit: SentenceEditing) {
   // cùng chỗ lần nữa - location.key đổi) thì tới đó; `&play=1` (chọn từ ô tìm lúc đang nghe cuốn này): nghe tiếp từ chính câu ấy.
   useEffect(() => {
     if (!script || !book) return;
-    const key = `${id}:${chapterId}:${location.key}`;
+    const key = `${owner}:${location.key}:${textHash}:${reading?.at ?? 0}`;
     if (restored.current === key) return;
+    if (restored.current.startsWith(`${owner}:${location.key}:${textHash}:`) && touched.current === owner) return;
     restored.current = key;
     const requested = params.get("at");
-    const reading = book.state.reading?.chapterId === chapterId ? book.state.reading.index : null;
-    let local: number | null = null;
-    try {
-      const saved = JSON.parse(localStorage.getItem(localReadingKey(id)) ?? "null");
-      if (saved?.chapterId === chapterId) local = saved.index;
-    } catch {
-      /* bỏ qua */
-    }
-    const target = requested !== null ? Number(requested) : playingIndex >= 0 ? playingIndex : reading ?? local ?? 0;
+    const saved = reading?.chapterId === chapterId ? reading : undefined;
+    const target = readingIndex(script, requested !== null ? { index: Number(requested), quote: params.get("quote") ?? undefined }
+      : playingIndex >= 0 ? { index: playingIndex } : saved ?? { index: 0 });
     window.requestAnimationFrame(() => {
       // Đầu chương: về đầu trang, không cuộn tới câu đầu - dòng nhắc đứng TRƯỚC câu ấy và từng bị cuộn khuất ngay lúc mở (soát UX 29-09).
       if (target <= 0) container.current?.scrollTo({ top: 0 });
@@ -157,26 +157,59 @@ export function ReaderScreen(edit: SentenceEditing) {
       follow.follow();
       select(null);
     } else if (canListen || lineEdit) select(target);
-  }, [book, canListen, chapterId, follow, id, lineEdit, listenFrom, location.key, params, playingIndex, script, select]);
+  }, [book, canListen, chapterId, follow, id, lineEdit, listenFrom, location.key, params, playingIndex, script, select, owner, reading, textHash]);
+
+  // Bản local ghi ngay; ACK chỉ xác nhận đúng phiên bản, không xoá chỗ mới vừa cuộn tới.
+  const flushReading = useCallback(async () => {
+    const place = pending.current;
+    if (!place || saving.current || !source.saveReading) return;
+    saving.current = true;
+    try {
+      await source.saveReading(id, place.chapterId, place.index, place, record === "default" ? undefined : record);
+      if (pending.current === place) pending.current = undefined;
+      const local = localReading(id, record);
+      if (local?.at === place.at) {
+        try { localStorage.setItem(readingKey(id, record), JSON.stringify({ ...place, pending: false })); } catch { /* nguồn đã lưu */ }
+      }
+    } catch (error) {
+      const backup = localReading(id, record)?.at === place.at;
+      toast.error("Chưa lưu được chỗ đọc vào hồ sơ", { id: "reading-save", description: `${backup ? "Bạn vẫn có bản lưu trên máy này." : "App sẽ thử lưu lại chỗ đọc của bạn."} ${(error as Error).message}` });
+    } finally {
+      saving.current = false;
+    }
+  }, [id, record, source, pending, saving]);
 
   // Chỗ đọc = câu đầu tiên còn thấy trong khung; lưu thưa (2 giây sau lần cuộn cuối).
   const onScroll = useCallback(() => {
     follow.onScroll();
     if (!script) return;
     const found = visibleSentence(container.current);
+    touched.current = owner;
     setCurrent(found);
+    const place: ReadingPosition = { chapterId, index: found, at: Date.now() / 1000, anchor: makeAnchor(paragraphs, found, 0, textHash), quote: paragraphs[found]?.slice(0, 200), pending: true };
+    pending.current = place;
+    try { localStorage.setItem(readingKey(id, record), JSON.stringify(place)); }
+    catch { toast.error("Chưa lưu được bản dự phòng chỗ đọc", { id: "reading-local" }); }
     window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => {
-      try {
-        localStorage.setItem(localReadingKey(id), JSON.stringify({ chapterId, index: found, at: Date.now() / 1000 }));
-      } catch {
-        /* bỏ qua */
-      }
-      void source.saveReading?.(id, chapterId, found).catch(() => undefined);
-    }, 2000);
-  }, [chapterId, follow, id, script, source]);
+    saveTimer.current = window.setTimeout(() => void flushReading(), 2000);
+  }, [chapterId, follow, id, script, record, owner, paragraphs, textHash, flushReading]);
 
-  useEffect(() => () => window.clearTimeout(saveTimer.current), []);
+  useEffect(() => {
+    const saved = localReading(id, record);
+    if (saved?.pending) pending.current = saved;
+    const flush = () => { void flushReading(); };
+    const hidden = () => { if (document.visibilityState === "hidden") flush(); };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", hidden);
+    const retry = window.setInterval(flush, 5000);
+    return () => {
+      window.clearTimeout(saveTimer.current);
+      window.clearInterval(retry);
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", hidden);
+      flush();
+    };
+  }, [id, record, chapterId, flushReading]);
 
   // Thông báo (Hoàn tác, dấu trang...) nằm dưới thanh đầu của màn đọc, không che nút "Nghe từ đây" ở góc trên (soát a70): vị trí trên của vùng
   // thông báo theo mép dưới thanh đầu (App đọc --toast-top).
@@ -276,12 +309,13 @@ export function ReaderScreen(edit: SentenceEditing) {
           <Popover.Portal>
             <Popover.Content align="end" sideOffset={8} className="z-50 w-64 rounded-xl border border-line bg-panel p-3 shadow-float">
               <div className="text-xs font-medium text-fg-2">Cỡ chữ</div>
-              <div className="mt-1.5 grid grid-cols-5 gap-1">
+              <div role="group" aria-label="Cỡ chữ" className="mt-1.5 grid grid-cols-5 gap-1">
                 {SIZES.map((size) => (
                   <button
                     key={size}
                     type="button"
                     aria-pressed={prefs.size === size}
+                    aria-label={`Cỡ chữ ${size}`}
                     onClick={() => setPrefs({ ...prefs, size })}
                     className={cn("h-9 rounded-lg max-sm:h-[48px]", prefs.size === size ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
                     style={{ fontSize: Math.round(size * 0.75) }}

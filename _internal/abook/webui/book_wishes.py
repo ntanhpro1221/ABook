@@ -415,18 +415,34 @@ def line_problem(lines: Lines, cast: list[dict[str, Any]], stable_id: str, text_
     return None
 
 
-def voice_problem(cast: list[dict[str, Any]], character: str, *, gender: str = "", avoid: str = "") -> str | None:
-    """Mã lý do Studio sẽ từ chối giọng/giới của một nhân vật, hoặc None. Tên giọng (`preset`) không kiểm ở đây - bảng giọng
-    dùng được nằm ở máy có Studio, nơi bước áp kiểm lại (UNKNOWN_PRESET). Người kể (NARRATOR) chỉ đổi được giọng, như `voice_target`:
+def _known_presets(narrator: bool) -> set[str]:
+    """Tên giọng (khoá, không phải nhãn) người nghe chọn được theo danh mục: giọng kể chuyện cho người kể; giọng phân vai và giọng
+    máy khác chọn tay cho nhân vật. Chưa tính giọng người kể/nhân vật đang giữ (cuốn này không có sổ) - bước áp của Studio kiểm tiếp."""
+    from ..voice_catalog import castable_engine_voices, casting_presets, narrator_presets
+
+    if narrator:
+        return {str(item["name"]) for item in narrator_presets()}
+    return {str(item["name"]) for gender in ("male", "female") for item in casting_presets(gender)} | {
+        str(item["name"]) for item in castable_engine_voices()}
+
+
+def voice_problem(cast: list[dict[str, Any]], character: str, *, preset: str = "", gender: str = "", avoid: str = "") -> str | None:
+    """Mã lý do Studio sẽ từ chối giọng/giới của một nhân vật, hoặc None. Tên giọng (`preset`) phải là KHOÁ của danh mục
+    (`voice_catalog`) - giọng lạ bị từ chối ngay (UNKNOWN_PRESET) thay vì ghi nhận rồi để Studio bỏ lặng lẽ lúc áp; chuyện giọng đã
+    có người giữ thì bước áp kiểm lại (cuốn này không có sổ giọng). Người kể (NARRATOR) chỉ đổi được giọng, như `voice_target`:
     thẻ "Lời dẫn nên đọc bằng giọng nữ…" của bản chụp dự án phải bấm được cả ở đây (soát UX a32, P1)."""
     if gender not in ("", "male", "female"):
         return overrides.BAD_GENDER
     if overrides.character_key(character) == overrides.NARRATOR:
-        return overrides.NARRATOR_VOICE_ONLY if gender or avoid else None
+        if gender or avoid:
+            return overrides.NARRATOR_VOICE_ONLY
+        return overrides.UNKNOWN_PRESET if preset and preset not in _known_presets(True) else None
     person = _person(cast, character)
     if person is None:
         return overrides.UNKNOWN_CHARACTER
-    return None if person.get("voice") else overrides.NO_VOICE
+    if not person.get("voice"):
+        return overrides.NO_VOICE
+    return overrides.UNKNOWN_PRESET if preset and preset not in _known_presets(False) else None
 
 
 def speaker_lines(lines: Lines, cast: list[dict[str, Any]], source: str) -> list[tuple[str, str]]:
