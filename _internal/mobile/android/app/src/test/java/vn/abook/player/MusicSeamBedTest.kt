@@ -535,6 +535,59 @@ class MusicSeamBedTest {
         assertEquals(0.0, (SeamHandover.p3Seconds(s, 7200, 2400) - a87) * 1000.0, 0.01) // P3 tua tới 150 ms + phát 50 ms: cùng chỗ
     }
 
+    /** Nối như MusicBed.planSeam dựng (bounds = loopBounds(cue, độ dài), 44,1 kHz, mốc khai báo lệch ranh khung), mốc bắt đầu ở giây 12 của chương; `file` quyết định có phải mp3. */
+    private fun demoteRig(file: String = "b.mp3"): Triple<SeamPicker.Built, MusicCues.Cue, Int> {
+        val rate = 44100
+        val cue = MusicCues.Cue(12.0, 900.0, "music/${"b".repeat(40)}.mp3", -20.0, audibleStart = 0.25, audibleEnd = 24.5, loopStart = 2.40, loopEnd = 23.99)
+        val duration = 30.0
+        val b = MusicCues.loopBounds(cue, duration)
+        fun frames(sec: Double) = Math.round(ExactSeekMp3Extractor.frameBoundarySeconds(sec, rate) * rate / spf)
+        val kx = Math.round(MusicCues.mix.loopCrossfadeSeconds * rate / spf)
+        val s = LoopSeam.Seam(File(file), File("b.wav"), maxOf(1L, frames(b.start)) * spf, frames(b.loopStart) * spf, frames(b.loopEnd) * spf, (kx * spf).toInt(), rate, 2, spf.toInt(), 0, 3)
+        return Triple(SeamPicker.Built(s, b, duration, "k"), cue, rate)
+    }
+
+    @Test fun demotedLegacyPlayerStartsAtTheDeclaredMapOnAFrameBoundary() {
+        val (built, cue, rate) = demoteRig()
+        // Bản đồ READY cũ của a87 (MusicCues.offsetMs) dùng loopBounds(cue, độ dài); Built mang đúng vòng ấy (planSeam, SeamPicker.compatible).
+        assertEquals(MusicCues.loopBounds(cue, built.durationSeconds), built.bounds)
+        assertTrue(SeamPicker.compatible(built, cue))
+        val frame = spf.toDouble() / rate
+        for (since in listOf(5.123, 60.7, 141.37)) { // vòng đầu (A + t) và các vòng sau loopStart (có X)
+            val seconds = cue.start + since
+            val aligned = MusicCues.alignedPosition(cue, seconds, built.bounds)
+            val start = SeamClock.legacyStart(built, cue, seconds)
+            assertEquals("since=$since", ExactSeekMp3Extractor.frameBoundarySeconds(aligned, rate), start, 1e-12)
+            val k = start * rate / spf
+            assertEquals("since=$since ở ranh khung", Math.round(k).toDouble(), k, 1e-6)
+            // Cùng chỗ đường READY cũ tua tới (ms, cắt phần lẻ), lệch dưới 1 khung.
+            val ready = MusicCues.offsetMs(cue, seconds, Math.round(built.durationSeconds * 1000))!!
+            assertTrue("since=$since lệch ${start * 1000 - ready} ms", Math.abs(start * 1000 - ready) < frame * 1000)
+        }
+        assertTrue(MusicCues.firstPass(built.bounds, 5.123))
+        assertFalse(MusicCues.firstPass(built.bounds, 60.7))
+        assertTrue("vòng sau bắt đầu từ loopStart", SeamClock.legacyStart(built, cue, cue.start + 60.7) >= built.bounds.loopStart - frame)
+    }
+
+    @Test fun demotedLegacyPlayerOfANonMp3TrackIsNotFrameAligned() {
+        val (built, cue, rate) = demoteRig("b.m4a")
+        val seconds = cue.start + 5.123
+        val aligned = MusicCues.alignedPosition(cue, seconds, built.bounds)
+        assertEquals(aligned, SeamClock.legacyStart(built, cue, seconds), 0.0)
+        assertTrue("phép thử có lực: chỗ này không nằm trên ranh khung", Math.abs(ExactSeekMp3Extractor.frameBoundarySeconds(aligned, rate) - aligned) > 1e-4)
+        assertEquals(aligned, MusicCues.frameAligned(aligned, null), 0.0)
+    }
+
+    @Test fun aLegacyPlayerOpenedWithStartAtIsNotSeekedAgainWhenReady() {
+        // demote mở a87 với startAt: lúc READY không tua (lần tua ấy tạo AudioTrack thứ hai).
+        assertNull(MusicCues.readySeekMs(21.3, 200_000, 21_300, 0))
+        assertNull(MusicCues.readySeekMs(0.0, 200_000, null, 5_000))
+        // Đối chứng: không có startAt thì tua như cũ - theo giây mới nhất của chương, không thì chỗ vào gấp theo độ dài; chưa biết độ dài thì không tua.
+        assertEquals(21_300L, MusicCues.readySeekMs(null, 200_000, 21_300, 0))
+        assertEquals(5_000L, MusicCues.readySeekMs(null, 200_000, null, 205_000))
+        assertNull(MusicCues.readySeekMs(null, 0, null, 5_000))
+    }
+
     @Test fun handoverFallsBackAtTheDeadlineOrWhenTheSeamIsAlmostOver() {
         assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(SeamHandover.DEADLINE_MS, 800.0, 0, emptyList())) // P3 không chạy được
         assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(300, SeamHandover.GUARD_MS.toDouble(), 0, listOf(0.0, 0.0, 0.0))) // a87 tới cuối vòng trước khi P3 sẵn sàng
