@@ -550,6 +550,18 @@ function newRecordDialog(book: ListenBook): RecordDialog {
   return { kind: "create", name: `Lần nghe ${(book.records?.length ?? 0) + 1}` };
 }
 
+/** Việc làm với hồ sơ nghe khi cuốn chỉ có MỘT hồ sơ (không có nút "Hồ sơ nghe:"): menu "Tuỳ chọn khác" liệt kê các việc này. Nhiều hồ sơ thì RecordPicker lo. */
+export function singleRecordActions(book: ListenBook): { key: string; label: string; icon: typeof Plus; dialog: RecordDialog; danger?: boolean }[] {
+  if (book.records?.length !== 1) return [];
+  const name = book.records[0].name;
+  return [
+    { key: "create", label: "Nghe lại từ đầu (hồ sơ mới)…", icon: Plus, dialog: newRecordDialog(book) },
+    { key: "move", label: "Chuyển chỗ nghe sang cuốn khác…", icon: ArrowRightLeft, dialog: { kind: "move", name } },
+    { key: "rename", label: "Đổi tên hồ sơ…", icon: Pencil, dialog: { kind: "rename", name } },
+    { key: "delete", label: "Xoá hồ sơ…", icon: Trash2, dialog: { kind: "delete", name }, danger: true },
+  ];
+}
+
 /** Chọn cuốn nhận hồ sơ: mọi cuốn trong thư viện trừ cuốn này. Chỉ hỏi thư viện lúc hộp đang mở. */
 function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string; onChange: (target: { id: string; title: string }) => void }) {
   const { data, isLoading } = useListenLibrary();
@@ -1020,17 +1032,12 @@ export function BookScreen({
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
                 <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-[min(20rem,calc(100vw-24px))] rounded-xl border border-line bg-panel p-1.5 shadow-float">
-                  {source.records && book.records?.length === 1 && (
-                    <DropdownMenu.Item onSelect={() => setRecordDialog(newRecordDialog(book))} className={MENU_ITEM}>
-                      <Plus className="size-4" /> Nghe lại từ đầu (hồ sơ mới)…
+                  {/* Một hồ sơ thì không có nút hồ sơ nghe: tạo / chuyển / đổi tên / xoá hồ sơ duy nhất nằm ở đây (soát a105 F9), dùng chung hộp thoại của RecordPicker. */}
+                  {source.records && singleRecordActions(book).map((action) => (
+                    <DropdownMenu.Item key={action.key} onSelect={() => setRecordDialog(action.dialog)} className={action.danger ? cn(MENU_ITEM, "text-danger") : MENU_ITEM}>
+                      <action.icon className="size-4" /> {action.label}
                     </DropdownMenu.Item>
-                  )}
-                  {/* Một hồ sơ thì không có nút hồ sơ nghe: chuyển chỗ nghe sang cuốn khác (bản làm lại của cùng truyện) nằm ở đây. */}
-                  {source.records && book.records?.length === 1 && (
-                    <DropdownMenu.Item onSelect={() => setRecordDialog({ kind: "move", name: book.records![0].name })} className={MENU_ITEM}>
-                      <ArrowRightLeft className="size-4" /> Chuyển chỗ nghe sang cuốn khác…
-                    </DropdownMenu.Item>
-                  )}
+                  ))}
                   {!textOnly && (
                     <DropdownMenu.Item onSelect={() => mutations.finished.mutate(!book.progress.finished)} className={MENU_ITEM}>
                       <CheckCheck className="size-4" />

@@ -47,8 +47,26 @@ object StateSync {
         lastPushMs = SystemClock.elapsedRealtime()
         // Máy giữ sách đời cũ không trả mã hồ sơ: câu trả lời vẫn thuộc đúng hồ sơ vừa gửi.
         reply.put("record", record)
+        localizeReply(bookId, remote, Store.playableManifest(bookId)?.optString("source").orEmpty(), reply)
         Store.applySync(bookId, reply)
         pending.ack(bookId, record, saved.getString("revision"))
+    }
+
+    /**
+     * Lời đáp nói sách bằng mã của MÁY GIỮ SÁCH (`remote`: máy tính chính dùng đúng mã cục bộ, thiết bị ghép có mã cục bộ riêng
+     * `p<thiết bị>_<mã bên ấy>`, Peers.localId). `Store.applySync` coi `book` là mã cục bộ - không dịch thì hồ sơ bị gỡ khỏi cuốn
+     * `p<thiết bị>_sach` rồi gắn sang `sach` (cuốn khác, hay của thiết bị ghép khác cùng mã). Dịch về namespace của đúng máy giữ sách,
+     * kể cả cuốn đích khi hồ sơ được chuyển sách; mã không dịch được thì coi như chưa chuyển (hồ sơ ở nguyên cuốn đang gửi).
+     */
+    internal fun localizeReply(bookId: String, remote: String, source: String, reply: JSONObject) {
+        val replied = reply.optString("book")
+        if (replied.isEmpty()) return
+        val local = when {
+            replied == remote -> bookId
+            source.isEmpty() -> replied
+            else -> runCatching { Peers.localId(source, replied) }.getOrDefault(bookId)
+        }
+        reply.put("book", local)
     }
 
     /** Vừa nói chuyện được với máy giữ sách: đẩy các cuốn có chỗ nghe chưa tới được nó (ở luồng nền của StateSync). */
@@ -69,10 +87,10 @@ object StateSync {
     }
 
     /** Trình phát: `force` khi vừa dừng; đang phát thì bỏ qua nếu vừa đẩy chưa tới một phút. */
-    fun pushSoon(context: Context, bookId: String, force: Boolean) {
+    fun pushSoon(context: Context, bookId: String, force: Boolean, only: String? = null) {
         if (!force && SystemClock.elapsedRealtime() - lastPushMs < WHILE_PLAYING_MS) return
         lastPushMs = SystemClock.elapsedRealtime()
-        io.execute { runCatching { pushNow(context, bookId) } }
+        io.execute { runCatching { pushNow(context, bookId, only) } }
     }
 }
 

@@ -50,7 +50,7 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
 from .fingerprints import Fingerprints
 from .library import (NUMBER_RANGES, SLEEP_CHOICES, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule,
                       legacy_ids)
-from .listening import HEAVY_KEYS, RECORD_ID, Listening, StalePlayback
+from .listening import HEAVY_KEYS, RECORD_ID, Listening, RecordGone, StalePlayback
 from .opened_events import OpenedEvents
 from . import audio_revision, bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
 from .. import names as renames
@@ -434,7 +434,7 @@ class App:
                                 find_google=lambda: gcast_discover() if _cast_discovery() else [])
         self._remote_refreshed = 0.0
         self._remote_lock = threading.Lock()
-        self._state_synced: dict[str, float] = {}
+        self._state_synced: dict[tuple[str, str], float] = {}
         # "Tải về máy" cho sách "Trên máy khác"; phần sửa các cuốn của máy tính khác tự gửi về máy ấy sau `edits_send_delay` giây
         # kể từ lần sửa cuối (như điện thoại - EditsSync.kt), và mỗi lần làm mới thư viện. None: chỉ gửi khi bấm (bài thử).
         self.remote_downloads = remote_books.Downloads()
@@ -3201,25 +3201,38 @@ class App:
         remote_books.stop_waiting(computer)
         return self.computers_view()
 
-    def sync_remote_state(self, value: str, *, wait: bool) -> None:
+    def sync_remote_state(self, value: str, *, wait: bool, record: str | None = None) -> None:
         """Chỗ nghe của một cuốn "Trên máy khác", hai chiều: gửi bản của máy này, gộp bản máy kia trả về (theo mốc thời gian
         từng phần, như điện thoại với máy tính). Mở sách: đợi, trần 1,5 giây (máy kia tắt thì trang không đứng chờ). Đang
-        nghe / đánh dấu: chạy nền, tối đa mỗi 30 giây một lần - mọi phần mang mốc thời gian, gửi muộn vẫn gộp đúng."""
+        nghe / đánh dấu: chạy nền, tối đa mỗi 30 giây một lần - mọi phần mang mốc thời gian, gửi muộn vẫn gộp đúng.
+        Gửi theo MÃ HỒ SƠ (`Listening.sync_request`): `record` là hồ sơ nơi gọi đã chốt (trình phát đang phát nó), không nói thì hồ
+        sơ đang dùng lúc gọi; lời đáp gộp đúng mã ấy dù người dùng đã đổi hồ sơ trong lúc chờ mạng (`Listening.merge_reply`)."""
         path = self.library.resolve_listenable(value)
         if path is None or not packages.is_package(path):
             return
         book = packages.manifest(path)
-        if remote_books.remote_of(book) is None:
+        remote = remote_books.remote_of(book)
+        if remote is None:
             return
+        record = record or self.listening.active_record(value)  # chốt NGAY: thread nền chạy sau có thể gặp hồ sơ khác
         now = time.time()
-        if not wait and now - self._state_synced.get(value, 0.0) < 30:
+        key = (value, record or "")
+        if not wait and now - self._state_synced.get(key, 0.0) < 30:
             return
-        self._state_synced[value] = now
+        self._state_synced[key] = now
+
+        def resolve(remote_id: str) -> str | None:
+            moved = remote_books.local_book(self.library.root, remote["computer"], remote_id)
+            return book_id(moved) if moved is not None else None
 
         def run() -> None:
-            reply = remote_books.exchange_state(book, self.listening.get(value), timeout=1.5 if wait else 4)
+            # thân yêu cầu dựng lúc chạy (mang cả phần vừa sửa), nhưng của đúng hồ sơ đã chốt: đã xoá / chuyển sách thì không gửi
+            request = self.listening.sync_request(value, remote["book"], record)
+            if request is None:
+                return
+            reply = remote_books.exchange_state(book, request, timeout=1.5 if wait else 4)
             if reply is not None:
-                self.listening.merge(value, reply)
+                self.listening.merge_reply(value, request["record"], reply, remote_book=remote["book"], resolve=resolve)
         if wait:
             run()
         else:
@@ -5711,8 +5724,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_progress(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
-        self.app.sync_remote_state(value, wait=False)
         body = self._body()
+        self.app.sync_remote_state(value, wait=False, record=_held_record(body))
         try:
             state = self.app.listening.progress(
                 value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), float(body.get("duration", 0)),
@@ -5739,20 +5752,28 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_rate(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
-        self.app.listening.set_rate(value, float(self._body().get("rate", 1.0)))
+        body = self._body()
+        try:  # hồ sơ của phiên phát (cửa sổ khác có thể đã đổi hồ sơ đang dùng): ghi đúng nó, đã xoá / chuyển thì từ chối rõ
+            self.app.listening.set_rate(value, float(body.get("rate", 1.0)), _held_record(body))
+        except RecordGone as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_listen_voice(self, _query: dict[str, list[str]], value: str) -> None:
         # Giọng Nghe ngay riêng của cuốn: đi theo hồ sơ nghe sang máy kia như tốc độ (soát a68 lỗi 8).
         self.app._listenable(value)
-        self.app.listening.set_voice(value, str(self._body().get("voice", "")))
-        self.app.sync_remote_state(value, wait=False)
+        body = self._body()
+        try:
+            self.app.listening.set_voice(value, str(body.get("voice", "")), _held_record(body))
+        except RecordGone as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        self.app.sync_remote_state(value, wait=False, record=_held_record(body))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_bookmark(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
-        self.app.sync_remote_state(value, wait=False)
         body = self._body()
+        self.app.sync_remote_state(value, wait=False, record=_held_record(body))
         mark = self.app.listening.add_bookmark(
             value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), str(body.get("note", "")),
             record=_held_record(body), index=body["index"] if isinstance(body.get("index"), int) else None,
@@ -5838,7 +5859,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_night(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
-        self.app.listening.save_night(value, self._body())
+        body = self._body()
+        try:
+            self.app.listening.save_night(value, body, _held_record(body))
+        except RecordGone as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def get_night(self, _query: dict[str, list[str]]) -> None:
