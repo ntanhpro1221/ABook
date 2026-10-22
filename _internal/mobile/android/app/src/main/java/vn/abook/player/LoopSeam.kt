@@ -524,8 +524,17 @@ object LoopSeam {
     fun seekToSample(player: Player, sink: LoopSink, seam: Seam, index: Int, sample: Long) {
         val plan = seekPlan(seam, index, sample)
         sink.armSeek(plan.trimFrames)
+        // ExoPlayer BỎ QUA lệnh tua tới đúng mục + vị trí nó đang đứng (đo: P3 đứng chờ ở đầu Nối, tua tới mẫu 170 cũng là mili giây 0 -> không xả bộ đệm, số cắt không áp, P3 phát tiếp từ mẫu 0).
+        // Nên lệch sang bên một bước trước: tua đó thật, rồi tua tới mốc cũng thật; số cắt đã nạp sống qua lần xả đầu (`seekPending` của [LoopSink]).
+        if (seekIsNoop(player.currentMediaItemIndex, player.currentPosition, index, plan.positionMs)) player.seekTo(index, stepAside(plan.positionMs))
         player.seekTo(index, plan.positionMs)
     }
+
+    /** Lệnh tua tới (`index`, `positionMs`) khi trình phát đang ở (`currentIndex`, `currentMs`) có bị ExoPlayer bỏ qua không (cùng mục, cách nhau <= 2 ms). */
+    internal fun seekIsNoop(currentIndex: Int, currentMs: Long, index: Int, positionMs: Long): Boolean = currentIndex == index && Math.abs(currentMs - positionMs) <= 2
+
+    /** Vị trí khác vị trí tua thật 1 ms (trong cùng mục) để lần tua đệm không bị bỏ qua. */
+    internal fun stepAside(positionMs: Long): Long = if (positionMs > 0) positionMs - 1 else 1
 
     /** Như [seekToSample] với mốc là `ms` mili giây trên trục danh nghĩa (mẫu = round(ms * sr / 1000)). */
     fun seekTo(player: Player, sink: LoopSink, seam: Seam, index: Int, ms: Long) =
