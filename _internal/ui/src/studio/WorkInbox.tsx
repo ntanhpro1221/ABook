@@ -23,7 +23,7 @@ import { letterShortcutsOn } from "@/shared/letterShortcuts";
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
 // (bước 2): mong muốn ghi vào overrides.json, dây chuyền áp ở ranh giới chương và thu lại những câu có tên ấy.
 
-export type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator" | "voice-wish" | "snap" | "teller-voice" | "teller-thought";
+export type WorkKind = "speaker" | "turn" | "gender" | "vocative" | "alias" | "bracket" | "shared-voice" | "pronunciation" | "unnamed" | "audio" | "narrator" | "voice-wish" | "snap" | "teller-voice" | "teller-thought" | "refused";
 
 interface WorkExample {
   segmentId: number;
@@ -85,6 +85,8 @@ export interface WorkItem {
    *  ghi yêu cầu rỗng cho từng người trong `keepCharacters` (thẻ thôi hỏi). */
   voiceChoices?: VoiceChoice[];
   keepCharacters?: string[];
+  /** Thẻ "Yêu cầu bị từ chối": yêu cầu của bạn máy đã xét mà không làm được - phần, khoá và mốc để bỏ đúng yêu cầu ấy. */
+  refused?: { section: string; key: string; requestedAt: number };
   /** Thẻ "Giọng chưa đổi được": người có giọng đã chọn mà không áp được - nút "Chọn giọng khác…" mở hộp "Đổi giọng" của họ. */
   pickVoice?: { name: string; displayName: string };
   /** Chương của các câu thẻ sẽ đổi (hay của câu ví dụ) - "Duyệt trước khi thu" hỏi trước thẻ ở chương sắp thu. */
@@ -151,6 +153,7 @@ const KIND_LABEL: Record<WorkKind, string> = {
   snap: "Hai cách viết một tên",
   "teller-voice": "Giọng lời dẫn",
   "teller-thought": "Nội tâm của người kể",
+  refused: "Yêu cầu bị từ chối",
 };
 
 const PAGE = 40;
@@ -726,6 +729,29 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   );
 }
 
+// Yêu cầu máy đã xét và từ chối (soát a89 V8): bạn không phải đoán vì sao nó không được làm - thẻ nói lý do (`problem`) và cho bỏ yêu cầu ấy;
+// sửa lại thì làm ở tab tương ứng (Kịch bản, Nhân vật, Cách đọc tên). Bỏ hay gửi yêu cầu khác cho cùng mục thì thẻ tự rơi.
+function RefusedFix({ bookId, item }: { bookId: string; item: WorkItem }) {
+  const client = useQueryClient();
+  const drop = useMutation({
+    mutationFn: () =>
+      api(`/api/books/${bookId}/pending-changes/withdraw`, {
+        method: "POST",
+        body: { section: item.refused!.section, key: item.refused!.key, requestedAt: item.refused!.requestedAt },
+      }),
+    onSuccess: () => {
+      refreshAfterDecision(client, bookId);
+      toast.success("Đã bỏ yêu cầu này", { description: "Sách giữ nguyên như trước khi bạn yêu cầu." });
+    },
+    onError: (error: Error) => toast.error("Chưa bỏ được", { description: error.message }),
+  });
+  return (
+    <Button size="sm" variant="secondary" className="mt-3" loading={drop.isPending} onClick={() => drop.mutate()}>
+      Bỏ yêu cầu này
+    </Button>
+  );
+}
+
 // Giọng / giới của một nhân vật: một lần bấm. Dây chuyền chọn giọng mới như bước phân vai (mọi người khác giữ giọng) và
 // chỉ thu lại khi giọng thật sự đổi - ghi chú dưới mỗi nút nói trước cái giá ấy.
 function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
@@ -918,6 +944,8 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
         <PronunciationFix bookId={bookId} item={item} onOpenNames={openNames} />
       ) : item.kind === "narrator" && item.narratorSection ? (
         <NarratorFix bookId={bookId} item={item} />
+      ) : item.kind === "refused" && item.refused ? (
+        <RefusedFix bookId={bookId} item={item} />
       ) : item.kind === "voice-wish" ? (
         <div className="flex flex-wrap items-end gap-2">
           {item.pickVoice && onPickVoice && (
