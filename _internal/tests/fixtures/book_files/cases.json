@@ -1,0 +1,550 @@
+{
+ "cases": [
+  {
+   "name": "sách một chương",
+   "expect": "ok",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   }
+  },
+  {
+   "name": "không có manifest.json (Readium)",
+   "expect": "ok",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   },
+   "manifest": false
+  },
+  {
+   "name": "tên sách null",
+   "expect": "ok",
+   "book": {
+    "title": null,
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   }
+  },
+  {
+   "name": "phần có đủ trường",
+   "expect": "ok",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null,
+    "parts": [
+     {
+      "part": 1,
+      "title": "P1",
+      "chapters": [
+       1,
+       1
+      ],
+      "duration": 1.0,
+      "narrator": "A"
+     }
+    ]
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   }
+  },
+  {
+   "name": "thời lượng chương là mảng",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": [
+       1
+      ]
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   }
+  },
+  {
+   "name": "bỏ qua dòng là số",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0,
+      "skip": 5
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   }
+  },
+  {
+   "name": "số chương là chuỗi",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": "3",
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   }
+  },
+  {
+   "name": "số chương là mảng",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": [
+     1
+    ],
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   }
+  },
+  {
+   "name": "chapters là số",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": 5,
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   }
+  },
+  {
+   "name": "parts là số",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null,
+    "parts": 5
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   }
+  },
+  {
+   "name": "chương trỏ tới audio không có trong gói",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/999.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   }
+  },
+  {
+   "name": "phiên bản là chuỗi",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   },
+   "version": "3"
+  },
+  {
+   "name": "phiên bản 0",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   },
+   "version": 0
+  },
+  {
+   "name": "phiên bản mới hơn app",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   },
+   "version": 99
+  },
+  {
+   "name": "mục lạ trong gói",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}",
+    "evil.txt": "x"
+   }
+  },
+  {
+   "name": "hai mục chỉ khác hoa thường",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}",
+    "chapters/A.mp3": "ID3-a",
+    "chapters/a.mp3": "ID3-b"
+   }
+  },
+  {
+   "name": "mục audio nén một chọi nghìn",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": {
+     "zeros": 41943040
+    },
+    "cast.json": "{}"
+   },
+   "deflate": [
+    "chapters/001.mp3"
+   ]
+  },
+  {
+   "name": "danh sách file thiếu một mục",
+   "expect": "refused",
+   "book": {
+    "title": "Sách thử",
+    "narrator": "A",
+    "chaptersTotal": 1,
+    "chaptersAvailable": 1,
+    "complete": true,
+    "duration": 1.0,
+    "chapters": [
+     {
+      "id": 1,
+      "index": 1,
+      "title": "Chương 1",
+      "file": "chapters/001.mp3",
+      "available": true,
+      "duration": 1.0
+     }
+    ],
+    "cast": "cast.json",
+    "samples": [],
+    "cover": null
+   },
+   "entries": {
+    "chapters/001.mp3": "ID3-chuong-mot",
+    "cast.json": "{}"
+   },
+   "omitFromFiles": [
+    "cast.json"
+   ]
+  }
+ ]
+}

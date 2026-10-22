@@ -2,6 +2,13 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a81fix` trên `dev/uxfix92` (nền a74aca2e): mở/nhập .abook/.abookproj - book.json sai kiểu bị từ chối lúc nhập và một cuốn hỏng
+không kéo sập thư viện; trần tỉ lệ nén (20:1 media, 100:1 chữ) cả hai nền; nhập cùng file hai lần liền chờ nhau; thay cuốn đang phát báo "đang phát"
+và trả bản cũ; tên mục trùng khi bỏ hoa-thường/dấu chấm cuối bị từ chối; sổ dự án bản mới hơn bị từ chối trước khi giải nén; báo tên khác khi
+mở lại cùng sách; điện thoại nhập ở luồng riêng, zip cụt báo "chép chưa xong", dọn import-*.abook cũ, trần độ lồng JSON; bộ file vàng chung
+tests/fixtures/book_files (18 ca) cho pytest và JVM. Toàn bộ (Lead chạy): pytest 8633 passed, 9 skipped, 0 F/E, exit 0; vitest 1292 passed,
+1 skipped; tsc exit 0; JVM 1314 tests, 6 skipped, 0 F/E. Hash khoá c9176123 không đổi.
+
 Đợt `a77fix` trên `dev/uxfix88` (nền rc123): 12 mục nghe trên Android - nút tai nghe/xe sau khi dịch vụ bị dọn (MediaButtonReceiver),
 một đường phát tiếp duy nhất qua Playback.play (tự lùi, chuẩn bị lại sau lỗi), tuỳ chọn nghe + hẹn giờ ngủ phút nhớ ở kho native (ListenPrefs),
 tốc độ từ controller ngoài lên giao diện, lời giải thích quyền thông báo, khoá riêng danh sách giọng VieNeu/Supertonic. Mỗi mục test đỏ trước rồi xanh.

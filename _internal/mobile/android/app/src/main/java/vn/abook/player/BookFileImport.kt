@@ -57,6 +57,107 @@ object BookFileImport {
     /** Phiên bản 5 thêm chữ của chương: texts/<mã chương>.txt (sách chỉ có chữ - docs/LISTEN_ANYTHING.md mục 1). */
     private val CONTENT_V5 = Regex("""$COMMON|chapters/(?:\d{1,4}/)?[0-9A-Za-z_.\-]+\.mp3|edits\.json|edits/cover\.jpg|texts/\d{1,9}\.txt""")
     private val DESCRIPTIONS = setOf("mimetype", "book.json", "manifest.json")
+    /** Bom nén (bookfile.check_expansion, cùng các con số): âm thanh / ảnh thật gần như không nén được, chữ nén vài chục lần là cùng. */
+    private const val MEDIA_RATIO = 20L
+    private const val TEXT_RATIO = 100L
+    private const val MEDIA_FLOOR = 1L shl 20
+    private const val TEXT_FLOOR = 16L shl 20
+    private val MEDIA_SUFFIXES = listOf(".mp3", ".jpg", ".wav", ".m4a", ".ogg", ".opus", ".flac")
+
+    /** Mục `name` (`size` byte khi giải, `packed` byte trong gói) nén quá mức một file thật có thể thì từ chối cả file TRƯỚC khi giải ra.
+     *  `text` = false (file dự án): chỉ kiểm media, vì sổ SQLite của dự án có thể thưa. */
+    internal fun checkExpansion(name: String, size: Long, packed: Long, text: Boolean = true) {
+        val media = MEDIA_SUFFIXES.any { name.lowercase().endsWith(it) }
+        val room = maxOf(packed, 1L)
+        if ((media && size >= MEDIA_FLOOR && size > room * MEDIA_RATIO) || (text && !media && size >= TEXT_FLOOR && size > room * TEXT_RATIO)) {
+            throw Refused("File này có mục nén bất thường ($name) - có thể là file độc hoặc hỏng. Bạn hãy xin người gửi gửi lại.")
+        }
+    }
+
+    /** Gói zip bị cắt (còn chữ ký "PK" ở đầu) hay file rỗng - khác một file lạ đổi đuôi (bookfile.looks_cut). */
+    private fun looksCut(file: File): Boolean = runCatching {
+        file.inputStream().use { input ->
+            val head = ByteArray(2)
+            val read = input.read(head)
+            read <= 0 || (read == 2 && head[0] == 'P'.code.toByte() && head[1] == 'K'.code.toByte())
+        }
+    }.getOrDefault(false)
+
+    const val DAMAGED = "File sách bị hỏng hoặc chép chưa xong - chép lại từ nguồn."
+
+    /** Trần độ lồng của JSON lấy từ file lạ: org.json đệ quy nên `[[[[…` hàng chục nghìn tầng làm tràn ngăn xếp (Error, không phải Exception). */
+    private const val MAX_JSON_DEPTH = 256
+
+    /** JSON của file lạ -> đối tượng; quá lồng thì ném (người gọi nói "hỏng"). */
+    private fun parseObject(bytes: ByteArray): JSONObject {
+        var depth = 0
+        var quoted = false
+        var escaped = false
+        for (byte in bytes) {
+            val c = byte.toInt().toChar()
+            when {
+                escaped -> escaped = false
+                quoted -> if (c == '\\') escaped = true else if (c == '"') quoted = false
+                c == '"' -> quoted = true
+                c == '[' || c == '{' -> if (++depth > MAX_JSON_DEPTH) throw IllegalArgumentException("JSON lồng quá sâu")
+                c == ']' || c == '}' -> depth--
+            }
+        }
+        return try {
+            JSONObject(bytes.toString(Charsets.UTF_8))
+        } catch (error: StackOverflowError) {
+            throw IllegalArgumentException("JSON lồng quá sâu")
+        }
+    }
+
+    /** Dọn bản chép tạm `import-*.abook` (nhập từ trình quản lý file) mà lần nhập trước bị giết nên không kịp xoá: có thể hàng GB. */
+    fun sweepCache(dir: File, now: Long = System.currentTimeMillis(), maxAgeMs: Long = Store.STAGING_MAX_AGE_MS) {
+        dir.listFiles { file -> file.isFile && file.name.startsWith("import-") && file.name.endsWith(".abook") && now - file.lastModified() > maxAgeMs }
+            ?.forEach { it.delete() }
+    }
+
+    /** Hai mục khác tên mà cùng một file trên đĩa (khác hoa-thường, hay chỉ khác dấu chấm / khoảng trắng cuối từng phần) -> từ chối
+     *  (bookfile.check_distinct): giải nén để mục sau đè mục trước thì chương này phát âm thanh của chương kia. */
+    private fun checkDistinct(names: Collection<String>) {
+        val seen = HashMap<String, String>()
+        for (name in names.sorted()) {
+            val key = name.split("/").joinToString("/") { it.trimEnd('.', ' ').lowercase(java.util.Locale.ROOT) }
+            val first = seen.getOrPut(key) { name }
+            if (first != name) throw Refused("File này có hai mục trùng tên khi chép vào máy ($first và $name). Bạn hãy xin người gửi gửi lại.")
+        }
+    }
+
+    private enum class Kind { STR, INT, NUMBER, BOOL, LIST }
+
+    // Kiểu trường book.json như máy tính (bookfile._BOOK_FIELDS...): sai kiểu thì thư viện của máy tính sập, nên cả hai nền cùng từ chối.
+    private val BOOK_FIELDS = mapOf("title" to Kind.STR, "author" to Kind.STR, "narrator" to Kind.STR, "cast" to Kind.STR,
+        "chaptersTotal" to Kind.INT, "chaptersAvailable" to Kind.INT, "duration" to Kind.NUMBER, "complete" to Kind.BOOL,
+        "chapters" to Kind.LIST, "parts" to Kind.LIST, "samples" to Kind.LIST)
+    private val CHAPTER_FIELDS = mapOf("id" to Kind.INT, "index" to Kind.INT, "part" to Kind.INT, "title" to Kind.STR, "subtitle" to Kind.STR,
+        "fullTitle" to Kind.STR, "file" to Kind.STR, "text" to Kind.STR, "script" to Kind.STR, "state" to Kind.STR,
+        "duration" to Kind.NUMBER, "available" to Kind.BOOL, "skip" to Kind.LIST)
+    private val PART_FIELDS = mapOf("part" to Kind.INT, "title" to Kind.STR, "narrator" to Kind.STR, "duration" to Kind.NUMBER, "chapters" to Kind.LIST)
+
+    private fun fits(value: Any?, kind: Kind): Boolean = when {
+        value == null || value == JSONObject.NULL -> true
+        kind == Kind.STR -> value is String
+        kind == Kind.INT -> value is Int || value is Long || value is java.math.BigInteger
+        kind == Kind.NUMBER -> value is Number && value.toDouble().isFinite()
+        kind == Kind.BOOL -> value is Boolean
+        else -> value is org.json.JSONArray
+    }
+
+    internal fun checkShape(book: JSONObject) {
+        fun check(item: Any?, fields: Map<String, Kind>) {
+            if (item !is JSONObject) throw Refused("File sách này hỏng hoặc không đọc được. Bạn hãy xin người gửi gửi lại (mô tả sai dạng).")
+            for ((key, kind) in fields) {
+                if (!fits(item.opt(key), kind)) throw Refused("File sách này hỏng hoặc không đọc được. Bạn hãy xin người gửi gửi lại (\u00ab$key\u00bb sai kiểu).")
+            }
+        }
+        check(book, BOOK_FIELDS)
+        book.optJSONArray("chapters")?.let { for (index in 0 until it.length()) check(it.opt(index), CHAPTER_FIELDS) }
+        book.optJSONArray("parts")?.let { for (index in 0 until it.length()) check(it.opt(index), PART_FIELDS) }
+    }
 
     /** Lý do không nhận file - câu chữ để người dùng đọc. */
     class Refused(message: String) : Exception(message)
@@ -120,7 +221,7 @@ object BookFileImport {
         val free = freeSpace(dir)
         if (free < need) {
             throw Refused("Bộ nhớ máy không đủ chỗ để mở sách này: cần khoảng ${gigabytes(need)}, còn ${gigabytes(free)}. " +
-                "Hãy xoá bớt rồi mở lại file.")
+                "Bạn hãy xoá bớt rồi mở lại file.")
         }
     }
 
@@ -131,7 +232,7 @@ object BookFileImport {
         val zip = try {
             ZipFile(file)
         } catch (error: Exception) {
-            throw Refused("Đây không phải file sách của app.")
+            throw Refused(if (looksCut(file)) DAMAGED else "Đây không phải file sách của app.")
         }
         zip.use {
             val entries = zip.entries().toList()
@@ -147,23 +248,28 @@ object BookFileImport {
                 val name = entry.name
                 if (entry.isDirectory || !names.add(name)) throw Refused("Gói có mục trùng hay thư mục lạ: $name")
                 total += maxOf(0L, entry.size)
+                checkExpansion(name, entry.size, entry.compressedSize, text = !project)
             }
             if (!project && total > MAX_TOTAL_BYTES) throw Refused("File sách quá lớn.")
+            checkDistinct(names)
             val layout = if (project) projectLayout(zip, names) else null
             val bookEntry = zip.getEntry("book.json") ?: throw Refused(
                 if (project) "Dự án này chưa có chương nào nghe được - hãy mở nó bằng ABook trên máy tính."
                 else "File sách thiếu phần mô tả (book.json).")
             if (bookEntry.size > MAX_JSON_BYTES) throw Refused("book.json quá lớn.")
             val book = try {
-                JSONObject(zip.getInputStream(bookEntry).use { it.readBytes() }.toString(Charsets.UTF_8))
+                parseObject(zip.getInputStream(bookEntry).use { it.readBytes() })
             } catch (error: Exception) {
                 throw Refused("book.json hỏng.")
             }
             val pack = book.optJSONObject("package")
             if (pack == null || pack.optString("format") != FORMAT) throw Refused("Đây không phải file sách của app.")
-            val version = pack.optInt("version", -1)
+            // Phiên bản phải là số nguyên thật ("3", 3.5, true không phải) - như máy tính; org.json ép kiểu mềm nên kiểm trước.
+            val declared = pack.opt("version")
+            val version = if (declared is Int || declared is Long) (declared as Number).toInt() else -1
             if (version < 1) throw Refused("File sách có phiên bản định dạng không hợp lệ.")
             if (version > FORMAT_VERSION) throw Refused("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
+            checkShape(book)
             // Thư mục phần chỉ có từ phiên bản 3, lớp sửa của người nghe từ phiên bản 4.
             if (!project) for (name in names - DESCRIPTIONS) if (!contentPattern(version).matches(name)) throw Refused("Gói có mục lạ: $name")
             val files = pack.optJSONObject("files") ?: throw Refused("Danh sách file trong sách không khớp nội dung gói.")
@@ -180,6 +286,8 @@ object BookFileImport {
             // Chương nào trỏ tới chữ cũng phải có chữ ấy trong gói (file dự án: `checkListening` lo).
             val listed = if (layout == null) book.optJSONArray("chapters") else null
             for (index in 0 until (listed?.length() ?: 0)) {
+                val reference = listed?.optJSONObject(index)?.opt("file")
+                if (reference is String && reference.isNotEmpty() && reference !in content) throw Refused("File sách thiếu audio của một chương.")
                 val written = listed?.optJSONObject(index)?.opt("text")
                 if (written != null && written != JSONObject.NULL && (written !is String || written.isNotEmpty() && written !in content)) {
                     throw Refused("File sách thiếu chữ của một chương.")
@@ -417,7 +525,7 @@ object BookFileImport {
         if (entry.size > MAX_JSON_BYTES) throw Refused("project.json quá lớn.")
         val bytes = zip.getInputStream(entry).use { it.readBytes() }
         val manifest = try {
-            JSONObject(bytes.toString(Charsets.UTF_8))
+            parseObject(bytes)
         } catch (error: Exception) {
             throw Refused("project.json hỏng.")
         }

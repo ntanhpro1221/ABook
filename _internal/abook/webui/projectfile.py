@@ -68,6 +68,7 @@ from datetime import UTC, datetime
 from pathlib import Path, PureWindowsPath
 from typing import Any, Callable, Self
 
+from ..database import SCHEMA_VERSION
 from . import book_edits, bookfile, covers, project_views, store
 from .fingerprints import content_key, identity_prints
 
@@ -442,7 +443,8 @@ class ProjectFile:
         except OSError as exc:
             raise ProjectFileError(f"Không đọc được file dự án này ({exc.strerror or exc}).") from exc
         try:
-            self.manifest = self._validate()
+            with bookfile.refuse_unreadable(ProjectFileError):
+                self.manifest = self._validate()
         except BaseException:
             self._zip.close()
             raise
@@ -533,6 +535,10 @@ class ProjectFile:
 
     def verify(self) -> None:
         """Mọi mục thật đúng cỡ và mã băm ghi trong `project.json` (bí danh có cỡ + mã băm của mục thật - `_validate` đã kiểm)."""
+        with bookfile.refuse_unreadable(ProjectFileError, bookfile.UNSUPPORTED_ZIP):
+            self._verify()
+
+    def _verify(self) -> None:
         for name, expected in self.manifest["files"].items():
             if name in self.aliases:
                 continue
@@ -547,6 +553,10 @@ class ProjectFile:
 
     def _copy_checked(self, name: str, destination: Path) -> None:
         """Chép mục `name` (qua bí danh nếu cần) ra `destination`, kiểm cỡ + mã băm TRONG LÚC chép - một lần đọc."""
+        with bookfile.refuse_unreadable(ProjectFileError, bookfile.UNSUPPORTED_ZIP):
+            self._copy_entry(name, destination)
+
+    def _copy_entry(self, name: str, destination: Path) -> None:
         destination.parent.mkdir(parents=True, exist_ok=True)
         digest = hashlib.sha256()
         size = 0
@@ -614,13 +624,7 @@ class ProjectFile:
                 self._copy_checked(entry, staging.joinpath(*entry.split("/")))
             (staging / MANIFEST).write_bytes(self._zip.read(MANIFEST))
             self.last_merge = bookfile.keep_local_edits(target, staging, self.edits) if target.exists() else None
-            if target.exists():
-                retired = library / f".{name}.{secrets.token_hex(4)}.old"
-                os.replace(target, retired)
-                os.replace(staging, target)
-                shutil.rmtree(retired, ignore_errors=True)
-            else:
-                os.replace(staging, target)
+            bookfile.swap_in(staging, target)
         except BaseException:
             shutil.rmtree(staging, ignore_errors=True)
             raise
@@ -664,6 +668,8 @@ class ProjectFile:
             total += info.file_size
         if total > MAX_TOTAL_BYTES:
             raise ProjectFileError("File dự án quá lớn.")
+        bookfile.check_expansion(infos, ProjectFileError, text=False)
+        bookfile.check_distinct(sorted(names), ProjectFileError)
         if MANIFEST not in names:
             raise ProjectFileError("File dự án thiếu phần mô tả (project.json).")
         if self._zip.getinfo(MANIFEST).file_size > MAX_JSON_BYTES:
@@ -705,6 +711,7 @@ class ProjectFile:
         if manifest["workshop"] == PRESENT:
             if f"project/{store.DB_NAME}" not in content or f"project/{store.SETTINGS_NAME}" not in content:
                 raise ProjectFileError("File dự án thiếu sổ dự án hay cài đặt sách.")
+            self._check_schema()
         elif any(name.startswith("project/") for name in files):
             raise ProjectFileError("File dự án chưa có xưởng mà lại mang sổ dự án.")
         elif bookfile.MANIFEST not in content:
@@ -716,6 +723,14 @@ class ProjectFile:
         if bookfile.MANIFEST in content:
             self._check_listening(manifest, content)
         return manifest
+
+    def _check_schema(self) -> None:
+        """Sổ dự án làm bằng bản app MỚI hơn thì từ chối ngay (đọc 100 byte đầu của SQLite: `user_version` ở byte 60), trước khi giải nén
+        gì - mở nó sau đó chỉ ra lỗi tiếng Anh và còn bị báo nhầm là "dự án tạo dở"."""
+        with self._zip.open(f"project/{store.DB_NAME}") as handle:
+            header = handle.read(100)
+        if header.startswith(b"SQLite format 3\x00") and len(header) == 100 and int.from_bytes(header[60:64], "big") > SCHEMA_VERSION:
+            raise ProjectFileError("Dự án này được làm bằng bản ABook mới hơn. Bạn hãy cập nhật app để mở.")
 
     def _check_aliases(self, files: dict[str, Any], aliases: dict[str, Any], content: set[str]) -> None:
         for alias, target in aliases.items():
@@ -753,6 +768,10 @@ class ProjectFile:
         if set(listed) != listening or any(
                 not isinstance(meta, dict) or meta != manifest["files"][name] for name, meta in listed.items()):
             raise ProjectFileError("Phần nghe của dự án không khớp nội dung gói.")
+        try:
+            bookfile.check_shape(book)
+        except bookfile.BookFileError as exc:
+            raise ProjectFileError(str(exc)) from exc
         for chapter in book.get("chapters") or []:
             reference = chapter.get("file") if isinstance(chapter, dict) else None
             if reference and reference not in listed:
