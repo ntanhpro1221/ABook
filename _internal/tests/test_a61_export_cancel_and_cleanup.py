@@ -206,6 +206,29 @@ def test_scratch_of_an_export_killed_in_a_chosen_folder_is_swept_once_old(tmp_pa
     shutil.rmtree(young)
 
 
+def test_a_chapter_cut_mid_write_is_swept_but_other_part_files_are_not(tmp_path: Path) -> None:
+    """Soát a73 (F5): xuất MP3 ghi từng chương ra "<NN - tên>.mp3.part" trong thư mục cuốn rồi mới đổi tên; app tắt ngang lúc ấy thì
+    file dở nằm lại mãi. Chỉ đúng mẫu tên chương của app - file ".mp3.part" của trình duyệt đang tải cạnh đó không bị đụng."""
+    project, _tracks = _studio_book(tmp_path)
+    app, server = _studio(tmp_path, project.parent)
+    chosen = tmp_path / "o_rieng"
+    try:
+        assert _mp3_job(server, project, {"target": str(chosen)})["state"] == "done"
+    finally:
+        server.stop()
+    book = next(entry for entry in chosen.iterdir() if entry.is_dir())
+    cut, young = book / "01 - Chương một.mp3.part", book / "02 - Chương hai.mp3.part"
+    browser, note = chosen / "bai hat.mp3.part", book / "ghi chu.mp3.part"
+    for path in (cut, young, browser, note):
+        path.write_bytes(b"x" * 10)
+    two_hours = time.time() - 2 * 3600
+    for path in (cut, browser, note):
+        os.utime(path, (two_hours, two_hours))
+    removed = app.sweep_export_leftovers()
+    assert cut in removed and not cut.exists()
+    assert young.exists() and browser.exists() and note.exists()
+
+
 # ---- #EXTINF = độ dài thật của file đã ghi -----------------------------------------------------------------------------------
 
 def test_the_playlist_gives_each_chapter_its_real_length(tmp_path: Path) -> None:
@@ -213,6 +236,8 @@ def test_the_playlist_gives_each_chapter_its_real_length(tmp_path: Path) -> None
     for music in (None, tracks.get):
         folder = Path(export.export_book(project, tmp_path / ("co" if music else "khong"), music=music)["folder"])
         playlist = next(folder.glob("*.m3u8")).read_text(encoding="utf-8")
+        # Ghi nguyên tử (soát a73, F5): không sót tên tạm, và đúng byte như điện thoại (LF, không CRLF của write_text trên Windows).
+        assert b"\r" not in next(folder.glob("*.m3u8")).read_bytes() and not list(folder.glob("*.part"))
         lengths = [int(value) for value in re.findall(r"#EXTINF:(\d+),", playlist)]
         files = sorted(folder.glob("*.mp3"))
         assert lengths == [round(mp3.duration_ms(file.read_bytes()) / 1000) for file in files] == [20, 6]

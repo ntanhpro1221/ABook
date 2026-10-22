@@ -162,6 +162,8 @@ UNNAMED_PROBLEM = ("Sách này chưa có nhóm “vai phụ không tên” để
                    " cho vai này (vd “lính gác”) - vai ấy sẽ có giọng riêng.")
 
 
+CLOSE_SECONDS = 3.0  # `App.close` chờ các lượt xuất dọn file tạm tới chừng này (cả lượt đóng phải xong trong 5 giây của vỏ Tauri)
+QUEUE_FILE = "production-queue.json"  # hàng đợi sản xuất (mã sách theo thứ tự), cạnh file tuỳ chọn
 # Người gác mốc "Duyệt trước khi thu" (App._precast_tick): từ mốc phân tích xong tới lúc thu xong chương đầu là vài phút.
 PRECAST_POLL_SECONDS = 10.0
 # Cuốn bật "Chờ tôi duyệt": supervisor giữ trong nhịp kiểm nguồn điện (5 giây) - chờ ngần này trước khi báo dù chưa thấy giữ.
@@ -372,10 +374,14 @@ class App:
         if not read_only:
             self._sweep_export_leftovers_at_start()
         # Hàng đợi sản xuất: hai cuốn chạy cùng lúc tranh nhau GPU (phân tích cần ~6,2 GB trên card 8 GB), nên cuốn
-        # thứ hai xếp hàng và tự bắt đầu khi cuốn đang chạy xong. Hàng đợi sống cùng app (đóng app là bỏ hàng).
+        # thứ hai xếp hàng và tự bắt đầu khi cuốn đang chạy xong. Hàng đợi ghi ra file mỗi lần đổi (QUEUE_FILE): đóng app rồi
+        # mở lại thì hàng còn nguyên và tự chạy tiếp khi cuốn đang chạy (worker sống ngoài app) xong.
         self.queue: list[str] = []
         self._queue_lock = threading.RLock()  # summary() lấy lại khoá này từ trong start/stop
         self._queue_thread: threading.Thread | None = None
+        self._queue_path = preferences.path.with_name(QUEUE_FILE)
+        if not read_only:
+            self._restore_queue()
         # Cổng của chính máy chủ giao diện này (Server đặt) - Studio từ xa chuyển tiếp API về đây. 0: chưa chạy.
         self.local_port = 0
         # Máy tính khác đã ghép (remote_books.py): thư viện của chúng hiện thành sách "Trên máy khác".
@@ -773,6 +779,43 @@ class App:
                 return other
         return None
 
+    def _restore_queue(self) -> None:
+        """Hàng đợi của lần mở trước (QUEUE_FILE): bỏ mục trỏ dự án đã mất hay đang chạy, còn gì thì người xếp hàng chạy tiếp."""
+        try:
+            saved = json.loads(self._queue_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return
+        if not isinstance(saved, list):
+            return
+        kept: list[str] = []
+        for value in saved:
+            path = self.library.resolve(value) if isinstance(value, str) else None
+            if path is not None and value not in kept and not self.runner.running(path):
+                kept.append(value)
+        with self._queue_lock:
+            self.queue = kept
+            if kept != saved:
+                self._save_queue()
+            if kept:
+                self._queue_thread = threading.Thread(target=self._drain_queue, name="production-queue", daemon=True)
+                self._queue_thread.start()
+
+    def _save_queue(self) -> None:
+        """Ghi hàng đợi ra đĩa (nguyên tử) - gọi trong `_queue_lock` sau mỗi lần đổi. Ghi hỏng không làm hỏng việc xếp hàng."""
+        try:
+            atomic_write_json(self._queue_path, self.queue)
+        except OSError:
+            pass
+
+    def _dequeue(self, value: str) -> bool:
+        """Bỏ `value` khỏi hàng (và ghi lại); False: nó không có trong hàng."""
+        with self._queue_lock:
+            if value not in self.queue:
+                return False
+            self.queue.remove(value)
+            self._save_queue()
+            return True
+
     def _drain_queue(self) -> None:
         while True:
             time.sleep(15)
@@ -782,14 +825,13 @@ class App:
                     return
                 head = self.queue[0]
             path = self.library.resolve(head)
-            if path is None:
-                with self._queue_lock:
-                    self.queue.remove(head)
+            if path is None or self.runner.running(path) or self.jobs.starting(path):
+                self._dequeue(head)  # dự án đã mất, hay đã chạy bằng đường khác
                 continue
             if self._busy_elsewhere(path) is None:
                 with self._queue_lock:
                     if self.queue and self.queue[0] == head:
-                        self.queue.pop(0)
+                        self._dequeue(head)
                 try:
                     self._launch(path)
                 except ApiError as error:
@@ -823,9 +865,7 @@ class App:
         if not now and self._busy_elsewhere(path) is not None:
             self._enqueue(value)
             return self.summary(path)
-        with self._queue_lock:
-            if value in self.queue:
-                self.queue.remove(value)
+        self._dequeue(value)
         self._launch(path)
         return self.summary(path)
 
@@ -833,14 +873,15 @@ class App:
         with self._queue_lock:
             if value not in self.queue:
                 self.queue.append(value)
+                self._save_queue()
             if self._queue_thread is None:
                 self._queue_thread = threading.Thread(target=self._drain_queue, name="production-queue", daemon=True)
                 self._queue_thread.start()
 
     def _queue_successors(self, path: Path) -> None:
         """Các phần sau của "Tạo nhiều tập" còn chờ gieo (continuation.seed_pending) xếp hàng theo thứ tự sau phần vừa chạy,
-        trừ phần đã xếp hàng / đang chạy. Hàng đợi chỉ sống cùng app: mở lại app thì không gì tự chạy, nhưng bấm chạy một phần
-        là các phần chờ sau nó vào hàng lại."""
+        trừ phần đã xếp hàng / đang chạy. Hàng đợi còn sau khi mở lại app (`_restore_queue`); phần chờ gieo không nằm trong
+        hàng (người dùng đã bỏ khỏi hàng, hay tạo mà không bấm chạy) thì bấm chạy một phần là các phần chờ sau nó vào hàng lại."""
         chain = continuation.series_parts(path, self.library.projects())
         here = path.resolve()
         for part in chain[chain.index(here) + 1:] if here in chain else []:
@@ -980,13 +1021,8 @@ class App:
     def stop(self, value: str) -> dict[str, Any]:
         self._mutating()
         path = self._book(value)
-        with self._queue_lock:
-            queued = value in self.queue
-            if queued:
-                # Đang xếp hàng: "Dừng" nghĩa là bỏ khỏi hàng, không có gì để dừng.
-                self.queue.remove(value)
-        if queued:
-            return self.summary(path)  # ngoài khoá: summary() cũng lấy khoá này (Lock không vào lại được)
+        if self._dequeue(value):
+            return self.summary(path)  # đang xếp hàng: "Dừng" nghĩa là bỏ khỏi hàng, không có gì để dừng
         self.jobs.stop(path)
         return self.summary(path)
 
@@ -1052,10 +1088,7 @@ class App:
         resolved = path.resolve()
         if resolved == Path(resolved.anchor) or resolved == self.library.root.resolve() or not store.is_project(resolved):
             raise ApiError(HTTPStatus.CONFLICT, "Thư mục này không phải một dự án sách - không xoá")
-        with self._queue_lock:
-            queued = value in self.queue
-            if queued:
-                self.queue.remove(value)
+        queued = self._dequeue(value)
         token = self._discard(
             resolved, "project", undo=undo, queued=queued,
             failure="Không chuyển được vào Thùng rác - có thể một file trong dự án đang mở (đang nghe cuốn này, hay thư mục"
@@ -2734,17 +2767,22 @@ class App:
             self.sync_server = None
 
     def close(self) -> None:
-        """App đóng: tắt cổng đồng bộ nhưng giữ nguyên lựa chọn của người dùng cho lần mở sau."""
-        self._stop_sync()
-        self.cast.close()
-        self.previews.shutdown()
-        self.projectfile_jobs.shutdown()  # đang gói dự án: dừng ở file kế, dọn file tạm (không treo tắt app quá vài giây)
-        for jobs in (self.m4b_jobs, self.mp3_jobs):
-            jobs.shutdown()  # đang xuất M4B / MP3: dừng ở khúc kế, xoá bản xuất dở
+        """App đóng: tắt cổng đồng bộ nhưng giữ nguyên lựa chọn của người dùng cho lần mở sau.
+
+        Vỏ Tauri cho host HOST_STOP_GRACE (5 giây, shell/src-tauri/src/main.rs) rồi giết - Windows tắt máy / đăng xuất cũng chỉ chờ cỡ ấy,
+        nên nâng hạn ở vỏ không cứu được gì. Thay vào đó: mọi lượt xuất được bảo dừng CÙNG LÚC và chờ chung một hạn `CLOSE_SECONDS`
+        (trước đây mỗi loại chờ riêng 3 giây, nối nhau quá 5 giây), và Thùng rác - dữ liệu người dùng - làm trước khi chờ chúng."""
+        deadline = time.monotonic() + CLOSE_SECONDS
+        # Đang gói dự án / xuất M4B / MP3: dừng ở file / khúc kế, dọn file tạm và bản xuất dở - bảo dừng ngay, chờ ở cuối.
+        stopping = [*self.projectfile_jobs.stop_all(), *self.m4b_jobs.stop_all(), *self.mp3_jobs.stop_all()]
         self._trash_sweeper.cancel()
         # Hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác - trừ cuốn Thùng rác không nhận trọn (Windows sẽ hỏi
         # "xoá hẳn", mà đóng app không được chờ ai bấm): nó ở lại chỗ chờ tới lần mở sau.
         self.sweep_trash(everything=True, ask=False)
+        self._stop_sync()
+        self.cast.close()
+        self.previews.shutdown()
+        export_jobs.join_until(stopping, deadline)
 
     def routes(self) -> dict[str, Any]:
         """Các đường tới máy này cho thiết bị vừa ghép: địa chỉ LAN + cổng đồng bộ, và địa chỉ Bluetooth khi cổng
