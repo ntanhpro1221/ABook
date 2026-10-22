@@ -12,11 +12,12 @@ const VOICES: ReadAloudVoice[] = [
 ];
 
 /** Mỗi bài một bản module mới: lời nhắn "một lần cho cả phiên" không rò sang bài khác. */
-async function fresh() {
+async function fresh(consents: string[] = ["edge"]) {
   vi.resetModules();
   const target = new EventTarget();
   (globalThis as unknown as { window: EventTarget }).window = target;
-  const store = new Map<string, string>();
+  // Mặc định người nghe đã đồng ý gửi chữ cho Microsoft (giọng Edge được phép đỡ); bài về chưa đồng ý truyền [].
+  const store = new Map<string, string>([["abook-readaloud-online-ok", JSON.stringify(consents)]]);
   (globalThis as unknown as { localStorage: Storage }).localStorage = {
     getItem: (k: string) => store.get(k) ?? null,
     setItem: (k: string, v: string) => void store.set(k, v),
@@ -58,6 +59,16 @@ describe("giọng dự phòng của Nghe ngay", () => {
     expect(module.fallbackChain(VOICES, VOICES[2]).map((v) => v.id)).toEqual(["edge:vi-VN-HoaiMyNeural", "device:an"]);
     expect(module.fallbackChain(VOICES, VOICES[1]).map((v) => v.id)).toEqual(["device:an"]);
     expect(module.fallbackChain(VOICES, VOICES[4])).toEqual([]);
+  });
+
+  it("chưa đồng ý gửi chữ cho Edge: giọng dùng khóa hỏng rơi thẳng sang giọng của máy, không gọi Edge", async () => {
+    const { module } = await fresh(["azure"]);
+    expect(module.fallbackChain(VOICES, VOICES[3]).map((v) => v.id)).toEqual(["device:an"]);
+    expect(module.fallbackChain(VOICES, VOICES[3], () => true).map((v) => v.id)).toEqual(["edge:vi-VN-HoaiMyNeural", "device:an"]);
+    const { value, calls } = source({ "azure:vi-VN-HoaiMyNeural": "auth" });
+    const clip = await module.speechFetcher(value, "b1", vi.fn())("azure:vi-VN-HoaiMyNeural", "Một.");
+    expect(clip.url).toBe("/clip/device:an");
+    expect(calls).toEqual(["azure:vi-VN-HoaiMyNeural", "device:an"]);
   });
 
   it("khóa hết hạn mức: đoạn ấy đọc bằng Edge, nói một lần, các đoạn sau đi thẳng sang Edge", async () => {

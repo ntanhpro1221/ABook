@@ -922,3 +922,17 @@ def test_a_slow_web_cover_chosen_earlier_never_overwrites_a_cover_set_after_it(i
     assert late and late[0][0] == 409 and "đổi bìa khác" in late[0][1]["error"]
     assert not (folder / book_edits.EDITS_COVER).exists(), "ảnh về muộn không được hiện lại"
     assert call("PUT", "/api/books/{id}/cover", {"image": shared.cover_data_url()})[0] == 200, "thao tác mới sau đó vẫn đặt được"
+
+
+def test_merging_two_big_sets_of_readings_stays_readable_and_keeps_this_machines_first() -> None:
+    """Soát a79 lỗi 12: hợp vượt MAX_READINGS thì `parse` từng từ chối cả file và lớp sửa đọc ra rỗng (mất luôn tên nhân vật, nhạc...)."""
+    local, incoming = book_edits.empty(), book_edits.empty()
+    local["title"] = "Tên của tôi"
+    local["readings"] = {f"mot{i:04d}": f"đọc một {i}" for i in range(1200)}
+    incoming["readings"] = {f"hai{i:04d}": f"đọc hai {i}" for i in range(1200)}
+    merged, _report = book_edits.merge(local, incoming)
+    assert len(merged["readings"]) == book_edits.MAX_READINGS
+    assert all(merged["readings"][key] == value for key, value in local["readings"].items()), "bên máy này giữ đủ"
+    assert [key for key in merged["readings"] if key.startswith("hai")] == [f"hai{i:04d}" for i in range(800)], "bên kia lấy theo thứ tự chữ tới trần"
+    assert book_edits.parse(book_edits.dump(merged)) == merged, "kết quả đọc lại được, không rỗng"
+    assert merged["title"] == "Tên của tôi"

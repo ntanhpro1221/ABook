@@ -42,6 +42,11 @@ describe("mốc chữ dùng được", () => {
 });
 
 describe("chữ đang đọc theo đồng hồ phát", () => {
+  it("đoạn chưa có mốc chữ nào (chưa đọc) thì không chữ nào sáng - soát a79 lỗi 4", () => {
+    expect(wordIndexAt([], 0)).toBe(-1);
+    expect(wordIndexAt([], 5000)).toBe(-1);
+  });
+
   it("chưa tới chữ đầu thì chưa sáng chữ nào", () => {
     expect(wordIndexAt(WORDS, 0)).toBe(-1);
     expect(wordIndexAt(WORDS, 100 - WORD_LEAD_MS - 1)).toBe(-1);

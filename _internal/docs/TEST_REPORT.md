@@ -2,6 +2,14 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a79fix` trên `dev/uxfix91` (nền cây phát hành dcbd33a0): "Nghe ngay" không gửi chữ khi chưa đồng ý - chuỗi giọng
+thay thế chỉ có Edge khi đã đồng ý "edge" (máy tính + điện thoại); menu Giọng đọc hỏi đồng ý trước khi đổi sang giọng trực tuyến;
+lõi Android giữ (held) chương chữ với giọng chưa đồng ý ở startAt/onPlay/voicesChanged và "Làm trước" (Android Auto, widget, tai nghe);
+wordIndexAt([]) không ném (close/load không đứng); vị trí đọc giữ khi sửa đoạn khác (băm đoạn, fixture chung Python/TS/Kotlin);
+Prepare không kẹt "running", dọn .part cũ, hợp cách đọc vượt trần, hẹn "hết chương" đứng ở đầu chương kế. Lỗi 11 làm nửa
+(readings.py/word_timing.py là file khoá). Toàn bộ (Lead chạy): pytest 8501 passed, 9 skipped, 0 F/E, exit 0; vitest 1288 passed,
+1 skipped; tsc exit 0; JVM 1312 tests, 6 skipped, 0 F/E. Hash khoá c9176123 không đổi.
+
 Đợt `a77fix` trên `dev/uxfix88` (nền rc123): 12 mục nghe trên Android - nút tai nghe/xe sau khi dịch vụ bị dọn (MediaButtonReceiver),
 một đường phát tiếp duy nhất qua Playback.play (tự lùi, chuẩn bị lại sau lỗi), tuỳ chọn nghe + hẹn giờ ngủ phút nhớ ở kho native (ListenPrefs),
 tốc độ từ controller ngoài lên giao diện, lời giải thích quyền thông báo, khoá riêng danh sách giọng VieNeu/Supertonic. Mỗi mục test đỏ trước rồi xanh.

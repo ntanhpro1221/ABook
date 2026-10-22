@@ -7,7 +7,7 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
-import type { ReadingAnchor } from "./readingAnchor";
+import { anchorOf, type ReadingAnchor } from "./readingAnchor";
 import { tellSceneMusic } from "./musicHint";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit } from "./musicBed";
 import { SceneCues, isSceneCues, sceneRetryDelay } from "./sceneCues";
@@ -399,7 +399,7 @@ export function PlayerProvider({
     refs.current.lastAttempt = now;
     const session = refs.current.playback;
     const writing = progressOutbox.put({ bookId: current.bookId, chapterId: current.chapterId, seconds: engine.time,
-      duration: engine.duration, record: current.recordId, anchor: engine.readingAnchor, savedAt: now,
+      duration: engine.duration, record: current.recordId, anchor: anchorOf(engine), savedAt: now,
       sessionId: session?.id, revision: session ? ++session.revision : undefined }, keepalive).catch(reportSaveFailure);
     if (force) refreshLists(current.bookId);
     return writing;
