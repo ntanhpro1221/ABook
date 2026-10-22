@@ -323,7 +323,7 @@ def _waiting(project_root: Path, key: str, written_at: float) -> dict[str, Any] 
         requested_at = float(entry.get("requested_at") or 0)
     except (TypeError, ValueError):
         return None
-    if requested_at <= store.changes_since(project_root, written_at):
+    if not store.waiting(entry, "voices", key, store.changes_since(project_root, written_at), store.receipts_of(project_root)):
         return None
     preset = str(entry.get("preset") or "")
     gender = str(entry.get("gender") or "")
