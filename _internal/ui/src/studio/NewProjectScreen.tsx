@@ -27,7 +27,6 @@ import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
-import { listenOnlyOwner } from "@/shared/peerStudio";
 import { usePageTitle } from "@/shared/title";
 import { formatLength, formatNumber } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
@@ -52,6 +51,7 @@ import { narratorIsAuto, recommendedFor, type TellerGender } from "@/studio/narr
 import { TELLER_TITLE, tellerHint } from "@/studio/tellerMode";
 import { creditKind, creditLine, creditRows, creditSummary, creditWhere, droppedLines, KEEP_CREDITS, type CreditDrop, type Credits } from "@/studio/credits";
 import { samePath } from "@/studio/samePath";
+import { createGate, scanIsCurrent, sourcesKey, type ScannedSources } from "@/studio/scanState";
 import { isSourceRef, sourceName } from "@/studio/sourceRef";
 import { splitOutcome } from "@/studio/splitOffer";
 import {
@@ -64,12 +64,14 @@ import {
   planUpload,
   progressLabel,
   sendPlan,
+  sendSummary,
   type Picked,
   type UploadProgress,
 } from "@/studio/upload";
 import { AnalysisModelPicker, analysisChoiceLabel, modelLabel, useAnalysisModels, useAvailableModelNames } from "@/studio/AnalysisModelPicker";
 import { DEFAULT_LABEL, applyTemplate, changedChoices, templateChoices, type BookTemplate, type Profile } from "@/studio/bookTemplates";
-import { NoStudioHere, StudioInstallNotice, useStudioFit } from "@/studio/StudioSetup";
+import { NoStudioHere, StudioInstallNotice, useStudioFit, useStudioGpu } from "@/studio/StudioSetup";
+import { estimate, lengthRange, matchesMeasured, timeBasis } from "@/studio/timeEstimate";
 import type { StudioFit } from "@/studio/studioFit";
 import { TemplateBar } from "@/studio/TemplateBar";
 import { VolumeSplit } from "@/studio/VolumeSplit";
@@ -108,28 +110,6 @@ const PROFILES: { value: Profile; title: string; pace: string; summary: string; 
 const PROFILE_VALUES = PROFILES.map((option) => option.value);
 // Chọn nhanh số chương cho một đợt - chỉ hiện khi nguồn có nhiều hơn mức nhỏ nhất.
 const CHAPTER_LIMITS = [20, 50, 100];
-
-// Ước lượng thời gian làm trên máy này, đo từ hai lô gần nhất của cuốn 2 (26-09, mức Chất lượng cao): lô 18 có
-// 113 nghìn chữ, phân tích ~4 giờ, thu âm 4,6-7,1 giờ. Hai mức kia chưa đo trên máy này nên không đoán con số.
-const MEASURED = { analysisPerKiloword: 2.1 * 60, synthesisPerKiloword: [2.5 * 60, 3.8 * 60] as const };
-
-function estimate(words: number, chapters: number) {
-  const kilo = words / 1000;
-  const analysis = kilo * MEASURED.analysisPerKiloword;
-  const [low, high] = MEASURED.synthesisPerKiloword.map((seconds) => kilo * seconds);
-  return {
-    analysis,
-    totalLow: analysis + low,
-    totalHigh: analysis + high,
-    firstChapter: analysis + high / Math.max(1, chapters),
-  };
-}
-
-function lengthRange(low: number, high: number): string {
-  const a = formatLength(low);
-  const b = formatLength(high);
-  return a === b ? `khoảng ${a}` : `${a} - ${b}`;
-}
 
 // ---- Nháp: rời trang rồi quay lại không mất gì ----------------------------------------------------------------
 
@@ -332,6 +312,14 @@ function SourceStep({
   const appending = useRef(false);
   const folderPick = useMemo(canPickFolder, []);
   const [uploading, setUploading] = useState<UploadProgress | null>(null);
+  // Huỷ gửi (soát a92 V4): tín hiệu đi xuyên đọc + gửi từng file; rời trang thì dừng luôn, khỏi gửi nốt vào "Nguồn tải lên" khi không ai theo dõi.
+  const sending = useRef<AbortController | null>(null);
+  const [stopping, setStopping] = useState(false);
+  useEffect(() => () => sending.current?.abort(), []);
+  const cancelUpload = () => {
+    setStopping(true);
+    sending.current?.abort();
+  };
   const [dragging, setDragging] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const upload = async (picked: (Picked & { file: File })[], append: boolean) => {
@@ -345,12 +333,17 @@ function SourceStep({
       return;
     }
     if (notice) toast.warning("Có file không gửi", { description: notice });
+    const controller = new AbortController();
+    sending.current = controller;
     try {
-      const paths = await sendPlan(plan, setUploading);
-      (append ? onAddFiles : onPaths)(paths);
-    } catch (error) {
-      toast.error("Không gửi được các chương", { description: (error as Error).message });
+      const result = await sendPlan(plan, setUploading, controller.signal);
+      // File đã tới máy tính thì giữ (huỷ hay hỏng giữa chừng cũng vậy): người dùng làm tiếp được, và nói rõ đã gửi bao nhiêu.
+      if (result.paths.length) (append ? onAddFiles : onPaths)(result.paths);
+      if (result.error) toast.error("Không gửi hết các chương", { description: `${result.error.message} ${sendSummary(result)}` });
+      else if (result.cancelled) toast(result.sent ? "Đã dừng gửi" : "Đã huỷ gửi", { description: sendSummary(result) });
     } finally {
+      sending.current = null;
+      setStopping(false);
       setUploading(null);
     }
   };
@@ -483,6 +476,9 @@ function SourceStep({
               <p className="tabular mt-1.5 text-xs text-fg-2">
                 <LiveText shown={progressLabel(uploading)} spoken={spokenProgress("Đang gửi các chương", uploading.totalBytes ? uploading.bytes / uploading.totalBytes : null)} />
               </p>
+              <Button className="mt-2" size="sm" variant="ghost" disabled={stopping} onClick={cancelUpload}>
+                {stopping ? "Đang dừng…" : "Huỷ gửi"}
+              </Button>
             </div>
           )}
           {info?.dialogs && (
@@ -660,6 +656,11 @@ function SourceStep({
               {browser && (
                 <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(uploading)} onClick={() => browse(filesInput.current, true)}>
                   {uploading ? progressLabel(uploading) : "Thêm file"}
+                </Button>
+              )}
+              {browser && uploading && (
+                <Button size="sm" variant="ghost" disabled={stopping} onClick={cancelUpload}>
+                  {stopping ? "Đang dừng…" : "Huỷ gửi"}
                 </Button>
               )}
               <Button size="sm" variant="ghost" onClick={() => onPaths([])}>
@@ -1326,10 +1327,9 @@ function QualityStep({
   /** Máy chưa có Studio: số đo thời gian không nói gì về máy này - không hiện. */
   noStudio?: boolean;
 }) {
-  const guess = estimate(words, chapters);
-  // Studio từ xa: số đo là của máy tính đang làm sách, không phải của máy đang cầm.
-  const { data: info } = useAppInfo();
-  const where = info?.remote ? `máy tính ${listenOnlyOwner(info)}` : "máy này";
+  // Số đo là của MỘT máy: máy khác / model phân tích khác chỉ được khoảng rộng, có nhãn tham khảo (timeEstimate.ts).
+  const exact = matchesMeasured(useStudioGpu(), analysisModel);
+  const guess = estimate(words, chapters, exact);
   return (
     <div>
       <h2 className="text-xl font-semibold">Chọn mức chất lượng</h2>
@@ -1388,11 +1388,11 @@ function QualityStep({
                   <span>Thời gian làm tính được khi Studio đã cài.</span>
                 ) : option.value === "high_quality" ? (
                   <span>
-                    Trên {where}: <span className="font-semibold text-fg">{lengthRange(guess.totalLow, guess.totalHigh)}</span> cho{" "}
-                    {chapters} chương
+                    Tham khảo: <span className="font-semibold text-fg">{lengthRange(guess.totalLow, guess.totalHigh)}</span> cho {chapters}{" "}
+                    chương. {timeBasis(exact)}.
                   </span>
                 ) : (
-                  <span>Nhanh hơn Chất lượng cao; chưa đo trên {where}.</span>
+                  <span>Nhanh hơn Chất lượng cao; chưa có số đo.</span>
                 )}
               </div>
             </button>
@@ -1462,7 +1462,8 @@ function ConfirmStep({
 }) {
   const models = useAnalysisModels().data;
   const option = PROFILES.find((item) => item.value === profile)!;
-  const guess = estimate(scan.totals.words, scan.files.length);
+  const exact = matchesMeasured(useStudioGpu(), analysisModel);
+  const guess = estimate(scan.totals.words, scan.files.length, exact);
   const measured = profile === "high_quality" && !noStudio;
   const rows: [string, string][] = [
     ["Chương", `${scan.files.length} chương · ${formatNumber(scan.totals.words)} chữ`],
@@ -1509,11 +1510,12 @@ function ConfirmStep({
       ? ([["Thời gian làm", "tính được khi Studio đã cài - dự án chờ tới lúc đó"]] as [string, string][])
       : measured
         ? ([
-            ["Thời gian làm", lengthRange(guess.totalLow, guess.totalHigh)],
-            ["Chương đầu nghe được sau", `khoảng ${formatLength(guess.firstChapter)}`],
+            ["Thời gian làm (tham khảo)", lengthRange(guess.totalLow, guess.totalHigh)],
+            ["Chương đầu nghe được sau (tham khảo)", `${exact ? "khoảng" : "tối đa khoảng"} ${formatLength(guess.firstChapter)}`],
+            ["Số tham khảo từ đâu", timeBasis(exact)],
           ] as [string, string][])
         : // "Nhanh" chưa có số đo trên máy này - vẫn nói được trần trên thay vì im lặng (soát UX a5 01-10).
-          ([["Thời gian làm", `chưa đo cho chế độ này - ngắn hơn “Chất lượng cao” (dưới ${formatLength(guess.totalHigh)})`]] as [string, string][])),
+          ([["Thời gian làm", `chưa đo cho chế độ này - ngắn hơn “Chất lượng cao” (dưới ${formatLength(guess.totalHigh)}, số tham khảo)`]] as [string, string][])),
   ];
   return (
     <div>
@@ -1538,7 +1540,7 @@ function ConfirmStep({
         <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
         <p className="text-pretty">
           <span className="font-semibold">Giai đoạn đầu là phân tích cả truyện</span>
-          {noStudio ? "" : measured ? ` (khoảng ${formatLength(guess.analysis)})` : " (truyện dài có thể mất nhiều giờ)"}: trong lúc đó đừng tắt máy, đừng cho máy ngủ và đừng bấm
+          {noStudio ? "" : measured ? ` (tham khảo: ${exact ? `khoảng ${formatLength(guess.analysis)}` : lengthRange(guess.analysisLow, guess.analysisHigh)})` : " (truyện dài có thể mất nhiều giờ)"}: trong lúc đó đừng tắt máy, đừng cho máy ngủ và đừng bấm
           Dừng. Dừng giữa chừng rồi chạy tiếp sẽ ra cách phân vai khác với chạy liền một mạch - cần máy rảnh một lúc thì bấm{" "}
           <span className="font-semibold">Tạm dừng</span>, an toàn mọi lúc. Qua giai đoạn này thì dừng lúc nào cũng được.
         </p>
@@ -1616,7 +1618,10 @@ export function NewProjectScreen() {
   const { data: preferences } = usePreferences();
   const modelNames = useAvailableModelNames();
   const [draft, setDraft] = useState<Draft>(loadDraft);
-  const [rawScan, setRawScan] = useState<ScanResult | null>(null);
+  // Kết quả quét gắn với đúng danh sách nguồn đã quét (soát a92 V1): nguồn đổi thì kết quả cũ chỉ còn để xem / chỉnh, không dùng để tạo sách.
+  const [scanned, setScanned] = useState<ScannedSources | null>(null);
+  const rawScan = scanned?.result ?? null;
+  const latestSources = useRef("");
   const [problem, setProblem] = useState<{ text: string; subfolders: string[] } | null>(null);
   const submitting = useRef(false);
   const noStudio = useStudioMissing().missing;
@@ -1752,13 +1757,18 @@ export function NewProjectScreen() {
   // Quét lại chỉ khi danh sách nguồn đổi; bỏ một chương là lọc ngay ở đây, không đọc lại cả thư mục.
   useEffect(() => {
     if (!draft.paths.length) {
-      setRawScan(null);
+      latestSources.current = "";
+      setScanned(null);
       setProblem(null);
       return;
     }
+    const key = sourcesKey(draft.paths);
+    latestSources.current = key;
     scanMutation.mutate({ paths: draft.paths, seedFrom: draft.seed?.id }, {
       onSuccess: (result) => {
-        setRawScan(result);
+        // Lượt quét của danh sách nguồn đã bị thay thì bỏ, đừng để nó đè lên kết quả của danh sách hiện tại.
+        if (latestSources.current !== key) return;
+        setScanned({ key, result });
         if (!result.files.length) {
           setProblem(
             result.errors?.length
@@ -1772,7 +1782,11 @@ export function NewProjectScreen() {
         setProblem(null);
         setDraft((current) => (current.titleEdited || !result.suggestedTitle ? current : { ...current, title: result.suggestedTitle }));
       },
-      onError: (error: Error) => setProblem({ text: `Không đọc được: ${error.message}`, subfolders: [] }),
+      onError: (error: Error) => {
+        if (latestSources.current !== key) return;
+        setScanned({ key, result: null });
+        setProblem({ text: `Không đọc được: ${error.message}`, subfolders: [] });
+      },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft.paths.join("\n")]);
@@ -1822,7 +1836,8 @@ export function NewProjectScreen() {
   // lại, trình tạo KHÔNG tự nhảy tới bước cũ trong URL.
   // Nhưng KHÔNG trong lúc nháp đang quét lại file (tải lại trang ở bước 4): lúc ấy chưa có chương nên mọi bước sau đều
   // "chưa được phép" - kéo URL về bước 1 thì quét xong người dùng mất chỗ (soát UX 29-09).
-  const scanning = draft.paths.length > 0 && !rawScan;
+  const reading = !scanIsCurrent(scanned, draft.paths);
+  const scanning = reading;
   useEffect(() => {
     if (scanning) return;
     if (params.get("step") && requested !== step) setParams(step ? { step: String(step) } : {}, { replace: true });
@@ -1834,7 +1849,10 @@ export function NewProjectScreen() {
     setParams(target ? { step: String(target) } : {});
   };
 
+  const gate = createGate({ title, reading, unfit: Boolean(unfit) });
   const submit = () => {
+    // Đang đọc lại nguồn (vừa thêm / bớt file): `scan` còn là của danh sách cũ - đợi, đừng tạo sách thiếu chương vừa chọn.
+    if (reading) return;
     if (!scan?.files.length || !title.trim() || submitting.current) {
       if (!title.trim()) go(0);
       return;
@@ -1943,7 +1961,8 @@ export function NewProjectScreen() {
               onClick={() => {
                 saveDraft(null);
                 setDraft(EMPTY_DRAFT);
-                setRawScan(null);
+                latestSources.current = "";
+                setScanned(null);
                 go(0);
               }}
               className="touch-row mt-4 px-2.5 text-[0.8125rem] text-fg-2 hover:text-fg"
@@ -1963,7 +1982,7 @@ export function NewProjectScreen() {
               onTitle={(value) => update({ title: value, titleEdited: true })}
               scanning={scanMutation.isPending}
               onPaths={(paths) => update({ paths, excluded: [], limit: null, volumeStarts: null, titleEdited: paths.length ? draft.titleEdited : false })}
-              onAddFiles={(paths) => update({ paths: [...draft.paths, ...paths], volumeStarts: null })}
+              onAddFiles={(paths) => setDraft((current) => ({ ...current, paths: [...current.paths, ...paths], volumeStarts: null }))}
               splitting={splitting}
               volumeStarts={volumeStarts}
               volumeSplit={
@@ -2088,8 +2107,8 @@ export function NewProjectScreen() {
             ) : (
               <span className="flex min-w-0 items-center gap-3">
                 {unfit && <span className="min-w-0 text-right text-[0.8125rem] text-fg-2 text-pretty">Máy này không làm sách nói được</span>}
-                <Button variant="primary" icon={draft.startNow && !noStudio ? Wand2 : Mic} loading={create.isPending} disabled={!title.trim() || Boolean(unfit)} onClick={submit}>
-                  {draft.startNow && !noStudio ? "Tạo và bắt đầu" : "Tạo sách"}
+                <Button variant="primary" icon={draft.startNow && !noStudio ? Wand2 : Mic} loading={create.isPending || gate.reading} disabled={gate.disabled} onClick={submit}>
+                  {gate.label ?? (draft.startNow && !noStudio ? "Tạo và bắt đầu" : "Tạo sách")}
                 </Button>
               </span>
             )}

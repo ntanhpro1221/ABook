@@ -29,6 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable
 
+from .install_lock import InstallLock, kill_tree
 from ..speaker_pass import (
     SPEAKER_MODEL,
     TOKENIZER_FILE,
@@ -337,6 +338,19 @@ def left(item: Download, target: Path) -> int:
     return item.size - min(have, item.size)
 
 
+def remote_size(url: str) -> int:
+    """Cỡ file ở `url` (HEAD): cỡ chưa ghim sẵn trong app thì hỏi máy chủ, rồi vẫn kiểm băm đã ghim."""
+    try:
+        with urllib.request.urlopen(urllib.request.Request(url, method="HEAD"), timeout=60) as response:
+            size = int(response.headers.get("Content-Length") or 0)
+    except (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError, ValueError) as error:
+        message = NETWORK_FAILURE.format(retry="Cài tiếp") if _network(error) else f"Không hỏi được cỡ file ({error}) - bấm Cài tiếp để thử lại."
+        raise SetupError(message) from error
+    if size <= 0:
+        raise SetupError("Máy chủ tải không cho biết cỡ file - bấm Cài tiếp để thử lại.")
+    return size
+
+
 def download(item: Download, target: Path, progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> Path:
     """Tải về `target` (ghi `.part`, tải tiếp bằng Range), kiểm SHA-256 rồi mới đổi tên. Sai băm: xoá, báo lỗi."""
     if matches(target, item):
@@ -497,8 +511,9 @@ import whisper
 from faster_whisper import WhisperModel
 from huggingface_hub import snapshot_download
 root = Path(os.environ["ABOOK_RUNTIME"]) / "models" / "whisper"
-root.mkdir(parents=True, exist_ok=True)
-model = whisper.load_model("turbo", device="cpu", download_root=str(root))
+# Checkpoint đã được app tải (Range + kiểm băm, StudioSetup._fetch_whisper_checkpoint): nạp từ đường dẫn, không để whisper tự tải lại từ đầu.
+checkpoint = root / os.path.basename(whisper._MODELS["turbo"])
+model = whisper.load_model(str(checkpoint), device="cpu")
 del model
 snapshot = snapshot_download(repo_id=__FASTER_REPO__, revision=__FASTER_REVISION__, cache_dir=os.environ["HF_HUB_CACHE"])
 ref = Path(os.environ["HF_HUB_CACHE"]) / ("models--" + __FASTER_REPO__.replace("/", "--")) / "refs" / "main"
@@ -508,6 +523,12 @@ model = WhisperModel(str(snapshot), device="cpu", compute_type="int8")
 del model
 print("Whisper turbo + faster-whisper turbo ok")
 """.replace("__FASTER_REPO__", repr(FASTER_WHISPER_REPO)).replace("__FASTER_REVISION__", repr(FASTER_WHISPER_REVISION))
+
+# Đường tải checkpoint "turbo" mà openai-whisper (bản ghim) dùng: đọc từ chính gói đã cài, không chép tay URL/băm.
+WHISPER_PIN_SCRIPT = r"""
+import json, whisper
+print(json.dumps({"turbo": whisper._MODELS["turbo"]}))
+"""
 
 QA_SCRIPT = r"""
 import datetime, hashlib, json, os
@@ -620,6 +641,7 @@ class StudioSetup:
         *,
         fetch: Callable[..., Path] = download,
         gpu: Callable[[], dict[str, Any] | None] = nvidia_gpu,
+        size_of: Callable[[str], int] = remote_size,
         analysis_model: str = "qwen3:8b",
         ollama_address: str = OLLAMA_ADDRESS,
     ) -> None:
@@ -627,6 +649,7 @@ class StudioSetup:
         self.app_root = app_root
         self.fetch = fetch
         self.gpu = gpu
+        self.size_of = size_of
         self.analysis_model = analysis_model
         self.ollama_address = ollama_address
         self.runtime = root / "runtime"
@@ -637,6 +660,8 @@ class StudioSetup:
         self.speaker_tokenizer = self.runtime / "models" / TOKENIZER_FOLDER / TOKENIZER_FILE
         self.state_path = root / "setup.json"
         self._lock = threading.Lock()
+        # Khoá cài giữa các tiến trình (install_lock.py): host chết mà tiến trình con của lượt cài còn chạy thì lần mở sau không cài chồng.
+        self._install_lock = InstallLock(root)
         self._thread: threading.Thread | None = None
         self._cancel = threading.Event()
         self._process: subprocess.Popen[str] | None = None
@@ -782,6 +807,8 @@ class StudioSetup:
             "error": None if running else self._memory_error or state.get("error"),
             "gpu": state.get("gpu") or self.detected_gpu(),
             "root": str(self.root),
+            # Lượt cài của lần mở app trước (hay app khác) còn chạy: pid, từ lúc nào, và tiến trình mồ côi hay host còn sống.
+            "leftover": None if running else self._install_lock.holder(),
         }
 
     # ---- điều khiển -------------------------------------------------------------------------------------------
@@ -789,14 +816,27 @@ class StudioSetup:
     def running(self) -> bool:
         return self._thread is not None and self._thread.is_alive()
 
+    @staticmethod
+    def _leftover_message(other: dict[str, Any]) -> str:
+        when = time.strftime("%H:%M", time.localtime(other["since"])) if other.get("since") else "trước"
+        if other.get("orphan"):
+            return (f"Lượt cài lúc {when} (lần mở app trước) vẫn còn chạy ngầm. Bạn chờ nó xong rồi bấm Cài tiếp, "
+                    "hoặc bấm Dừng lượt cũ để làm lại từ chỗ dở.")
+        return f"Một cửa sổ ABook khác đang cài Studio từ {when}. Bạn đóng nó hoặc chờ nó xong rồi bấm Cài tiếp."
+
     def start(self) -> dict[str, Any]:
         with self._lock:
             self._require_idle()
             if not (self._thread is not None and self._thread.is_alive()) and (not self.installed() or self.outdated()):
                 self._memory_error = None
+                other = self._install_lock.acquire("cài Studio")
+                if other is not None:
+                    self._record_error(self._leftover_message(other))
+                    return self.status()
                 try:
                     self._save(error=None)  # Check mkdir/write/replace before accepting a background job.
                 except OSError as error:
+                    self._install_lock.release()
                     self._record_error(self._write_failure(error))
                     return self.status()
                 self._cancel.clear()
@@ -808,11 +848,25 @@ class StudioSetup:
         if self.busy() is not None:
             raise SetupError("Bạn hãy chờ cuốn đang chạy, khởi động hoặc tạm dừng làm xong rồi cập nhật Studio.")
 
-    def cancel(self) -> dict[str, Any]:
+    def stop(self) -> None:
+        """Bảo lượt cài đang chạy dừng NGAY: tiến trình con của nó (cả cây) bị giết, các bước tải thấy cờ và thoát. Không đụng
+        tiến trình nào ngoài lượt này. Rẻ, không dò trạng thái (đường đóng app dùng - `status()` có thể chạy lệnh dò thư viện)."""
         self._cancel.set()
         process = self._process
         if process is not None and process.poll() is None:
-            process.kill()
+            try:
+                import psutil
+
+                kill_tree(psutil.Process(process.pid))
+            except Exception:  # noqa: BLE001 - dừng không được làm hỏng đường gọi
+                pass
+            if process.poll() is None:
+                process.kill()
+
+    def cancel(self) -> dict[str, Any]:
+        self.stop()
+        if not self.running():
+            self._install_lock.stop_leftover()  # lượt cài mồ côi của lần mở trước: dừng đúng cây tiến trình của nó
         return self.status()
 
     def remove(self) -> dict[str, Any]:
@@ -854,9 +908,11 @@ class StudioSetup:
         return stopped
 
     def wait(self, timeout: float | None = None) -> None:
+        """Chờ các luồng cài xong, TỔNG cộng không quá `timeout` giây (một hạn chung cho cả hai luồng)."""
+        deadline = None if timeout is None else time.monotonic() + timeout
         for thread in (self._thread, self._optional_thread):
             if thread is not None:
-                thread.join(timeout)
+                thread.join(None if deadline is None else max(0.0, deadline - time.monotonic()))
 
     def code_for(self, project_root: Path) -> Path:
         """Thư mục mã chạy cuốn này. Đổi một file khoá chất lượng là cuốn đang làm dở không làm tiếp được (AGENTS.md), mà
@@ -1018,6 +1074,7 @@ class StudioSetup:
             self._record_error(f"Lỗi ở bước {self._step}: {type(error).__name__}: {error}")
         finally:
             self._step, self._progress, self._process = None, None, None
+            self._install_lock.release()
 
     def _cancelled(self) -> bool:
         return self._cancel.is_set()
@@ -1048,6 +1105,7 @@ class StudioSetup:
                 env=environment, cwd=str(self.root), creationflags=CREATE_NO_WINDOW if os.name == "nt" else 0,
             )
             assert self._process.stdout is not None
+            self._install_lock.note_child(self._process.pid)
             for line in self._process.stdout:
                 handle.write(line)
                 text = line.strip()
@@ -1055,6 +1113,7 @@ class StudioSetup:
                     lines.append(text)
                     self._detail = text[-160:]
             code = self._process.wait()
+        self._install_lock.note_child(None)
         if self._cancelled():
             raise Cancelled()
         if code != 0:
@@ -1264,6 +1323,10 @@ class StudioSetup:
             if not self.installed():
                 raise SetupError("Chưa cài Studio - cài Studio trước rồi mới tải được model này.")
             if self._optional_thread is None or not self._optional_thread.is_alive():
+                other = self._install_lock.acquire(f"tải {model}")
+                if other is not None:
+                    self._optional_progress, self._optional_error = None, self._leftover_message(other)
+                    return self.optional_status(model)
                 self._cancel.clear()
                 self._optional_progress, self._optional_error = None, None
                 self._optional_thread = threading.Thread(target=self._run_optional, args=(model,),
@@ -1281,6 +1344,8 @@ class StudioSetup:
             self._optional_error = str(error)
         except Exception as error:  # noqa: BLE001 - lỗi lạ không được làm sập host
             self._optional_error = f"Lỗi khi tải {model}: {type(error).__name__}: {error}"
+        finally:
+            self._install_lock.release()
 
     def _install_published(self, model: PublishedModel) -> None:
         """Tải từng phần (kiểm băm từng phần, tải tiếp được), đẩy CẢ file vào Ollama bằng /api/blobs - ghép ngay trên
@@ -1396,7 +1461,37 @@ class StudioSetup:
     def _step_voice(self) -> None:
         self._run([str(self.python), "-c", VOICE_SCRIPT], "Tải model giọng")
 
+    def _whisper_pin(self) -> str:
+        """URL checkpoint "turbo" của openai-whisper đã cài trong Studio (băm SHA-256 là đoạn áp chót của URL)."""
+        try:
+            result = subprocess.run([str(self.python), "-c", WHISPER_PIN_SCRIPT], capture_output=True, text=True, encoding="utf-8",
+                                    timeout=120, env={**os.environ, **self.environment()},
+                                    creationflags=CREATE_NO_WINDOW if os.name == "nt" else 0)
+            lines = [line for line in result.stdout.splitlines() if line.startswith("{")]
+            url = str(json.loads(lines[-1])["turbo"]) if result.returncode == 0 and lines else ""
+        except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
+            raise SetupError(f"Không đọc được đường tải Whisper từ thư viện đã cài ({technical(error)}) - bấm Cài tiếp để thử lại.") from error
+        digest = url.rstrip("/").split("/")[-2] if url.count("/") >= 2 else ""
+        if not url.startswith("https://") or not re.fullmatch(r"[0-9a-f]{64}", digest) or not url.endswith(".pt"):
+            raise SetupError("Thư viện Whisper đã cài khai đường tải không như mong đợi - cài lại Studio.")
+        return url
+
+    def _fetch_whisper_checkpoint(self) -> Path:
+        """Tải checkpoint Whisper bằng downloader của Studio (Range, kiểm SHA-256 của openai-whisper) vào đúng chỗ whisper tìm.
+        `whisper.load_model(tên)` tự tải bằng `_download`: file dở sai băm thì mở lại bằng `wb`, không Range - mất mạng giữa chừng là
+        tải lại cả 1,5 GB (soát a92 V3)."""
+        url = self._whisper_pin()
+        item = Download(url.rsplit("/", 1)[-1], url, url.rstrip("/").split("/")[-2], self.size_of(url))
+        target = self.runtime / "models" / "whisper" / item.name
+        part = target.with_name(target.name + ".part")
+        # Lượt cài cũ để lại file dở dưới tên cuối (đó là cách whisper ghi): nhận nó làm phần đã tải.
+        if target.is_file() and not part.exists() and 0 < target.stat().st_size < item.size:
+            os.replace(target, part)
+        self._detail = item.name
+        return self.fetch(item, target, self._set_progress, self._cancelled)
+
     def _step_asr(self) -> None:
+        self._fetch_whisper_checkpoint()
         self._run([str(self.python), "-c", ASR_SCRIPT], "Tải Whisper")
 
     def _step_qa(self) -> None:
