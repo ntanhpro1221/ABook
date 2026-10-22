@@ -3200,7 +3200,7 @@ class App:
         for path in packages.folders(self.library.root):
             try:
                 book = packages.manifest(path)
-                if remote_books.sends_edits(book) and not book_edits.is_empty(book_edits.load(path)):
+                if remote_books.sends_edits(book) and remote_books.pending_changes(path):
                     remote_books.send_edits(path)
             except (remote_books.RemoteError, OSError, ValueError):
                 continue
@@ -3412,12 +3412,6 @@ def without_local_paths(value: Any) -> Any:
         if isinstance(out.get(key), str):
             out[key] = ""
     return out
-
-
-def _withdraw_line_companions(path: Path, keys: list[str], requested_at: float) -> None:
-    """Sửa câu "lời kể -> lời thoại" kèm người nói ghi thêm một mục `speakers` cùng mốc: là MỘT thay đổi (store.line_companions), nên bỏ mục
-    `lines` là bỏ luôn mục ấy (chỉ mục đúng mốc đó - `requests_made_at`). Soát a83 B8."""
-    cancelled.withdraw_requests(path, "speakers", keys, requested_at, now=time.time())
 
 
 def _overrides_busy() -> ApiError:
@@ -3905,17 +3899,9 @@ class Handler(BaseHTTPRequestHandler):
             raise ApiError(HTTPStatus.CONFLICT, WITHDRAW_APPLIED[section])  # máy vừa áp nó (ranh giới chương rơi đúng lúc này)
         if package:
             book_wishes.withdraw(path, section, list(mine), requested_at)  # cả bí danh của lần "Gộp vào…" ấy
-        elif section == "retakes":
-            # "Thu lại cả chương" là một nhóm: bỏ cả nhóm - chỉ những câu còn đúng lần bấm ấy.
-            for stable_id in mine:
-                cancelled.cancel_retake(path, stable_id, now=time.time())
         else:
-            cancelled.withdraw_requests(path, section, list(mine), requested_at, now=time.time())
-            if section == "lines":
-                _withdraw_line_companions(path, list(mine), requested_at)
-            if section == "speakers":
-                # "Gộp vào…" ghi cả bí danh cùng mốc ấy: bỏ lần gộp là bỏ luôn bí danh.
-                aliases.remove_added_at(path, requested_at)
+            # "Thu lại cả chương" là một nhóm: bỏ cả nhóm - chỉ những câu còn đúng lần bấm ấy; "Gộp vào…" bỏ luôn bí danh cùng mốc.
+            cancelled.withdraw_folded(path, section, list(mine), requested_at, now=time.time())
         self._send_json(HTTPStatus.OK, {"withdrawn": len(mine)})
 
     @_serialized_per_book
@@ -4962,6 +4948,12 @@ class Handler(BaseHTTPRequestHandler):
         package = packages.is_package(path)
         mine = (book_wishes.made_at(path, section, keys, requested_at) if package
                 else listener_overrides.requests_made_at(listener_overrides.read_overrides(path), section, keys, requested_at))
+        if not mine and package:
+            # Thao tác đã gửi về máy giữ sách (gửi xong là gỡ khỏi lớp sửa nên không còn ở đây): nhờ máy ấy rút đúng thao tác này.
+            asked = remote_books.retract_wish(path, section, keys, requested_at)
+            if asked:
+                self._send_json(HTTPStatus.OK, {"undone": len(asked), "restored": False, "sent": True})
+                return
         if not mine:
             raise ApiError(HTTPStatus.CONFLICT, "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác.")
         if package:
@@ -4975,12 +4967,8 @@ class Handler(BaseHTTPRequestHandler):
             restore(time.time())
             self._send_json(HTTPStatus.OK, {"undone": len(mine), "restored": True})
             return
-        removed = cancelled.withdraw_requests(path, section, list(mine), requested_at, now=time.time())
-        if section == "lines":
-            _withdraw_line_companions(path, removed, requested_at)
-        if section == "speakers" and removed:
-            # Thẻ gộp tên ghi cả bí danh cùng mốc với các câu: rút lần bấm là rút luôn bí danh (như hộp "Áp dụng").
-            aliases.remove_added_at(path, requested_at)
+        # Cả mục đi kèm cùng mốc (người nói của sửa câu, bí danh của thẻ gộp tên) đi theo - như hộp "Áp dụng".
+        removed = cancelled.withdraw_folded(path, section, list(mine), requested_at, now=time.time())
         self._send_json(HTTPStatus.OK, {"undone": len(removed), "restored": False})
 
     @_serialized_per_book
@@ -5239,15 +5227,19 @@ class Handler(BaseHTTPRequestHandler):
             # Cuốn không có xưởng chưa có hàng đợi "Cần nghe lại": chỉ phần "Cần thu lại" - ý muốn chờ Studio.
             lines = book_wishes.Lines(project)
             asked: list[tuple[str, str]] = []
+            sent: list[str] = []
             for stable_id in stable_ids:
                 found = lines.get(stable_id)
                 if verdict == "redo" and found is not None and found[1].get("textSha256"):
                     asked.append((stable_id, str(found[1]["textSha256"])))
                 elif verdict != "redo":
                     book_wishes.cancel_retake(project, stable_id)
+                    if stable_id not in retakes:
+                        sent.extend(remote_books.retract_wish(project, "retakes", [stable_id]))  # đã gửi đi rồi: nhờ máy giữ sách rút
             if asked:
                 book_wishes.request_retakes(project, asked, now=now)
-            self._send_json(HTTPStatus.OK, {**reply(len(asked)), **({"elsewhere": elsewhere} if elsewhere else {})})
+            self._send_json(HTTPStatus.OK, {**reply(len(asked)), **({"sent": True} if sent else {}),
+                                            **({"elsewhere": elsewhere} if elsewhere else {})})
             return
         chapter_id = int(body.get("chapterId", 0))
         asked_count = 0

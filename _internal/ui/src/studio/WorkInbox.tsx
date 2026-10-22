@@ -15,6 +15,7 @@ import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, use
 import { seenFor, warnElsewhere } from "./elsewhere";
 import { examplesPage, keepRequests, moreText, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
 import { decidedTitle, inboxLead, markNames, midSentence, narratorButtons, rerecordSentence, sentence } from "./workText";
+import { useProducingRefetch } from "./liveRefresh";
 import { focusCard, useCardFocus, type CardFocusEnds } from "./useCardFocus";
 import type { WorkLists } from "./workFocus";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
@@ -159,10 +160,12 @@ const KIND_LABEL: Record<WorkKind, string> = {
 const PAGE = 40;
 
 export function useWork(bookId: string, enabled = true) {
+  const refetchInterval = useProducingRefetch(bookId); // sách đang chạy: việc mới sinh ra theo chương, hộp tự thấy (soát a90 V4)
   return useQuery({
     queryKey: ["work", bookId],
     queryFn: () => api<WorkView>(`/api/books/${bookId}/work`),
     enabled: Boolean(bookId) && enabled,
+    refetchInterval,
     staleTime: 60_000,
     retry: retryUnlessGone,
     retryOnMount: false, // sổ lỗi: mỗi chỗ gắn thêm một người quan sát không được kéo thêm một lượt hỏi
@@ -178,10 +181,12 @@ export { isOpenWork };
  *  (tab đang mở cần máy chủ trước). */
 export function useWorkCount(bookId: string, fromList = false, enabled = true) {
   const { data: list } = useWork(bookId, fromList && enabled);
+  const refetchInterval = useProducingRefetch(bookId);
   const { data: counted } = useQuery({
     queryKey: ["work", bookId, "count"],
     queryFn: () => api<{ count: number }>(`/api/books/${bookId}/work?count=1`),
     enabled: Boolean(bookId) && !fromList && enabled,
+    refetchInterval,
     staleTime: 60_000,
     retry: retryUnlessGone,
     retryOnMount: false,
@@ -1212,9 +1217,11 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
   // Quyết / hoàn tác làm thẻ đang giữ tiêu điểm rời danh sách: tiêu điểm sang thẻ kế thay vì rơi về BODY (useCardFocus.ts).
   const lists = useRef<WorkLists | null>(null);
   useCardFocus(lists, INBOX_ENDS);
+  const refetchInterval = useProducingRefetch(bookId);
   const { data, isLoading } = useQuery({
     queryKey: ["work", bookId],
     queryFn: () => api<WorkView>(`/api/books/${bookId}/work`),
+    refetchInterval,
   });
   // Trở lại từ Kịch bản (Back hay "Về Việc cần duyệt"): cuộn tới đúng thẻ vừa rời, mở đủ trang để thấy nó - một lần.
   const focused = useRef(false);

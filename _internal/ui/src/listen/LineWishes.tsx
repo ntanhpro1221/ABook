@@ -7,7 +7,7 @@ import { studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { holderName } from "@/shared/editsSync";
 import { Button, Dialog } from "@/shared/ui";
 import { api } from "@/studio/api";
-import { refreshAfterDecision, retakeWhen, UNDO_MS, undoAction, waitingStudio } from "@/studio/decisions";
+import { refreshAfterDecision, retakeWhen, UNDO_MS, undoAction, undoToast, waitingStudio } from "@/studio/decisions";
 import { theirDelivery, verdictWord, warnElsewhere } from "@/studio/elsewhere";
 import { EditReading } from "@/studio/NameReadings";
 import { reachSummary, useReach } from "@/studio/readingReach";
@@ -380,8 +380,12 @@ export function LineWishDialog({
         action: {
           label: "Hoàn tác",
           onClick: () =>
-            void api(`/api/books/${book.id}/review`, { method: "POST", body: { verdict: null, stableId: ref.stableId } })
-              .then(done)
+            void api<{ sent?: boolean }>(`/api/books/${book.id}/review`, { method: "POST", body: { verdict: null, stableId: ref.stableId } })
+              .then((answer) => {
+                done();
+                // Câu đã gửi sang máy giữ sách rồi: chỉ nhờ được máy ấy rút lại - nói đúng điều đó, đừng làm như đã xong.
+                if (answer?.sent) toast.success(...undoToast(false, true));
+              })
               .catch((error: Error) => toast.error("Không hoàn tác được", { description: error.message })),
         },
         duration: UNDO_MS,

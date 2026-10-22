@@ -20,6 +20,7 @@ import hashlib
 import json
 import re
 import shutil
+import sqlite3
 import tempfile
 import threading
 import time
@@ -31,7 +32,7 @@ from typing import Any
 from .. import listener_overrides as overrides
 from .. import names as renames
 from ..io_utils import atomic_write_bytes, project_write_lock
-from . import book_edits, book_wishes, covers, music_plan, store
+from . import book_edits, book_wishes, cancelled, covers, music_plan, store
 
 INBOX_FILE = "edits_inbox.json"
 SYNCED_FILE = "edits_synced.json"
@@ -39,6 +40,7 @@ MAX_PACKAGE_BYTES = 160 * 1024 * 1024  # cả gói (bìa <= 8 MiB, nhạc ghim t
 MAX_TRACK_BYTES = 128 * 1024 * 1024  # một bài nhạc ghim; hơn thế không phải nhạc nền
 MAX_RECENT = 10
 MAX_SKIPPED = 100  # số mục tối đa trong khay "đã bỏ qua" của mỗi thiết bị; quá thì bỏ mục cũ nhất
+MAX_RECEIPTS = 2000  # biên nhận mỗi thiết bị (xem `_record_receipts`): giữ các mục mới nhất
 _MEMBER = re.compile(r"edits\.json|edits_removed\.json|edits/cover\.jpg|music/[0-9a-f]{40}\.(?:mp3|m4a|ogg|opus|flac|wav)")
 _LOCK = threading.RLock()
 _CHUNK = 256 * 1024
@@ -255,11 +257,12 @@ def _load(project: Path) -> dict[str, Any]:
     devices = data.get("devices") if isinstance(data.get("devices"), dict) else {}
     recent = data.get("recent") if isinstance(data.get("recent"), list) else []
     skipped = data.get("skipped") if isinstance(data.get("skipped"), dict) else {}
-    return {"devices": devices, "recent": recent, "skipped": skipped}
+    receipts = data.get("receipts") if isinstance(data.get("receipts"), dict) else {}
+    return {"devices": devices, "recent": recent, "skipped": skipped, "receipts": receipts}
 
 
 def _save(project: Path, data: dict[str, Any]) -> None:
-    if not data["devices"] and not data["recent"] and not data["skipped"]:
+    if not data["devices"] and not data["recent"] and not data["skipped"] and not data["receipts"]:
         (Path(project) / INBOX_FILE).unlink(missing_ok=True)
         return
     _write(project, INBOX_FILE, {"version": 1, **data})
@@ -434,6 +437,8 @@ def apply(project: Path, device: str, item_ids: list[str] | None, *, now: float 
         dropped: list[tuple[str, str]] = []
         folded = (book_wishes.fold(project, _subset(wishes, chosen), now=time.time() if now is None else now, dropped=dropped)
                   if chosen else {"requests": 0, "skipped": 0})
+        if chosen:
+            _record_receipts(project, data, device, chosen, wishes, dropped)  # chủ máy bấm "Áp dụng" rồi người gửi hoàn tác vẫn rút được
         left = _without(wishes, chosen)
         _store(data, device, entry, left)
         _save(project, data)
@@ -508,6 +513,91 @@ def _store(data: dict[str, Any], device: str, entry: dict[str, Any], wishes: dic
         data["devices"].pop(device, None)
 
 
+# ---- rút lại thao tác đã nhận (người gửi hoàn tác sau khi lần gửi đã tới) ----------------------------------------------------
+#
+# Điện thoại / máy khách gửi xong là gỡ ý muốn khỏi lớp sửa của mình, nên "Hoàn tác" sau đó không còn gì để rút ở đó: nó nhờ máy này rút
+# bằng `edits_removed.json` (`wishes`: {phần: {khoá: requested_at của người gửi}}). Ý muốn còn chờ trong hộp thư (hay khay đã bỏ qua) thì
+# bỏ đi; ý muốn đã thành yêu cầu thật thì rút theo MỐC MÁY NÀY ĐÃ ĐÓNG DẤU LẠI (`book_wishes.fold`), nên hộp thư nhớ cặp mốc ở sổ biên nhận
+# `receipts`; dây chuyền đã đưa yêu cầu vào sách thì không rút được và người gửi được báo thật (không giả vờ đã hoàn tác).
+
+
+def _record_receipts(project: Path, data: dict[str, Any], device: str, folded: list[dict[str, Any]], wishes: dict[str, Any],
+                     dropped: list[tuple[str, str]]) -> None:
+    """Ghi cặp (mốc của người gửi, mốc máy này đóng dấu) cho từng ý muốn vừa thành yêu cầu thật - đọc ngay từ overrides.json (nơi `fold` vừa ghi)."""
+    asked = overrides.read_overrides(project)
+    ledger = data["receipts"].setdefault(device, {})
+    for item in folded:
+        section = item["section"]
+        if section == book_wishes.ALIASES:
+            continue
+        for key in item["keys"]:
+            entry = (asked.get(section) or {}).get(key)
+            if (section, key) in dropped or not isinstance(entry, dict) or "requested_at" not in entry:
+                continue
+            ledger[f"{section}:{key}"] = {"at": float(wishes[section][key]["requested_at"]), "stamp": float(entry["requested_at"])}
+    if len(ledger) > MAX_RECEIPTS:
+        newest = sorted(ledger, key=lambda name: ledger[name]["stamp"], reverse=True)[:MAX_RECEIPTS]
+        data["receipts"][device] = {name: ledger[name] for name in newest}
+    if not data["receipts"][device]:
+        del data["receipts"][device]
+
+
+def _drop_waiting(data: dict[str, Any], device: str, section: str, key: str, at: float) -> bool:
+    """Bỏ ý muốn `section`/`key` của đúng lần bấm `at` khỏi hộp thư và khay đã bỏ qua của thiết bị. True khi có gì bị bỏ."""
+    found = False
+    for where in ("devices", "skipped"):
+        entry = data[where].get(device)
+        wishes = (entry or {}).get("wishes") or {}
+        current = (wishes.get(section) or {}).get(key)
+        if current is None or abs(float(current["requested_at"]) - at) >= 1e-6:
+            continue
+        found = True
+        left = _without(wishes, [{"section": section, "keys": [key]}])
+        if left:
+            data[where][device] = {**entry, "wishes": left}
+        else:
+            data[where].pop(device)
+    return found
+
+
+def _retract(project: Path, device: str, retractions: dict[str, dict[str, float]]) -> tuple[int, list[dict[str, Any]]]:
+    """Rút các thao tác `retractions` ({phần: {khoá: requested_at của người gửi}}) mà thiết bị `device` đã gửi. Trả (số đã rút, lời báo cho các
+    thao tác không rút được vì dây chuyền đã đưa vào sách). Thao tác không còn dấu vết (đã bị lần bấm sau thay, đã rút, chủ máy đã tự bỏ): bỏ qua im lặng.
+    Gọi dưới khoá dự án và `_LOCK`."""
+    data = _load(project)
+    ledger = data["receipts"].get(device) or {}
+    withdrawn = 0
+    refused: list[dict[str, Any]] = []
+    for section in book_wishes.SECTIONS:
+        for key, at in sorted((retractions.get(section) or {}).items()):
+            if _drop_waiting(data, device, section, key, at):
+                withdrawn += 1
+                continue
+            receipt = ledger.get(f"{section}:{key}")
+            if receipt is None or abs(float(receipt["at"]) - at) >= 1e-6:
+                continue
+            stamp = float(receipt["stamp"])
+            mine = overrides.requests_made_at(overrides.read_overrides(project), section, [key], stamp)
+            ledger.pop(f"{section}:{key}", None)
+            if not mine:
+                continue
+            try:
+                applied = store.already_applied(project, section, mine)
+            except sqlite3.Error:  # không hỏi được sổ: rút luôn (yêu cầu đã áp thì bỏ khỏi file cũng không đổi gì trong sách)
+                applied = False
+            if applied:
+                refused.append(conflict("retract", key, "", f"{_WISH_WHAT[section]}: máy giữ sách đã đưa việc này vào sách nên không rút được - "
+                                                            "muốn đổi lại thì chọn lại ở đó"))
+                continue
+            withdrawn += len(cancelled.withdraw_folded(project, section, [key], stamp, now=time.time()))
+    if ledger:
+        data["receipts"][device] = ledger
+    else:
+        data["receipts"].pop(device, None)
+    _save(project, data)
+    return withdrawn, refused
+
+
 # ---- nhận một gói ------------------------------------------------------------------------------------------------------
 
 
@@ -520,11 +610,14 @@ def receive(project: Path, device: str, name: str, package: Path, *, my_music: A
     project = Path(project)
     now = time.time() if now is None else now
     edits, cover, tracks = read_package(package)
+    retractions = read_removed(package).get("wishes") or {}
     layer = {key: value for key, value in edits.items() if key != "wishes"}
     wishes = edits.get("wishes") or {}
     with project_write_lock(project), _LOCK:
+        # Rút thao tác cũ TRƯỚC khi nhận ý muốn mới: gói có cả hai thì lần bấm mới cùng khoá không bị rút nhầm.
+        withdrawn, refused = _retract(project, device, retractions) if retractions else (0, [])
         local = book_edits.chapter_resolver(project)
-        conflicts = _conflicts(project, device, name, layer, cover, local)
+        conflicts = _conflicts(project, device, name, layer, cover, local) + refused
         scratch = Path(tempfile.mkdtemp(prefix=".edits_in_", dir=project))
         try:
             if tracks:
@@ -545,10 +638,13 @@ def receive(project: Path, device: str, name: str, package: Path, *, my_music: A
             waiting_wishes = _subset(wishes, [item for item in groups if item["id"] in newer])
             fresh = _without(wishes, [item for item in groups if item["id"] in newer])
             if fresh:
-                folded = book_wishes.fold(project, fresh, now=now)
+                dropped: list[tuple[str, str]] = []
+                folded = book_wishes.fold(project, fresh, now=now, dropped=dropped)
                 requests, skipped_wishes = folded["requests"], folded["skipped"]
                 folded_now = _groups(fresh)
         data = _load(project)
+        if folded_now:
+            _record_receipts(project, data, device, folded_now, fresh, dropped)  # để người gửi hoàn tác sau này vẫn rút đúng yêu cầu
         previous = (data["devices"].get(device) or {}).get("wishes") or {}
         if folded_now:
             # Bản mới đã áp thẳng: bản CŨ hơn cùng khoá còn chờ trong hộp thư phải đi, không thì "Áp dụng" nó đè bản mới (soát a83 B4).
@@ -561,9 +657,9 @@ def receive(project: Path, device: str, name: str, package: Path, *, my_music: A
         held = len(_groups((data["devices"].get(device) or {}).get("wishes") or {}))
         entry = {"at": now, "device": device, "name": name, "applied": report["applied"], "skipped": report["skipped"] + skipped_wishes,
                  "requests": requests, "waiting": held, "conflicts": [item["label"] for item in conflicts]}
-        if report["applied"] or report["skipped"] or requests or skipped_wishes or wishes or conflicts:
+        if report["applied"] or report["skipped"] or requests or skipped_wishes or wishes or conflicts or withdrawn:
             data["recent"] = ([entry] + data["recent"])[:MAX_RECENT]
         _save(project, data)
     return {"applied": report["applied"], "skipped": report["skipped"], "music": report["music"], "requests": requests,
-            "waiting": held, "skippedWishes": skipped_wishes, "conflicts": conflicts,
+            "waiting": held, "skippedWishes": skipped_wishes, "withdrawn": withdrawn, "conflicts": conflicts,
             **({"reasons": report["reasons"]} if report.get("reasons") else {})}

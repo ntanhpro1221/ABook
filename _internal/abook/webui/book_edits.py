@@ -1314,7 +1314,52 @@ def sent_marks(edits: dict[str, Any], previous: dict[str, Any] | None = None) ->
         music["playlist"] = edits["music"]["playlist"]
     if music:
         out["music"] = music
+    # Biên nhận của ý muốn chờ Studio đã gửi (subtract gỡ chúng khỏi lớp sửa): hoàn tác SAU khi gửi chỉ còn cách nhờ máy kia rút, và máy kia
+    # chỉ rút được đúng thao tác này khi biết mốc `requested_at` của nó. `retract`: những thao tác đã nhờ rút mà chưa gửi.
+    receipts = _receipts(previous.get("wishes"), edits.get("wishes"))
+    if receipts:
+        out["wishes"] = receipts
+    if previous.get("retract"):
+        out["retract"] = copy.deepcopy(previous["retract"])
     return out
+
+
+MAX_RECEIPTS = 1000  # biên nhận mỗi phần: giữ các lần bấm mới nhất (hoàn tác chỉ có nghĩa vài giây - vài phút sau lần bấm)
+
+
+def _receipts(earlier: Any, sent: Any) -> dict[str, dict[str, float]]:
+    """{phần: {khoá: requested_at}} của các lần gửi trước (`earlier`) cộng ý muốn vừa gửi (`sent`: phần `wishes` của lớp sửa); lần sau thắng."""
+    from . import book_wishes
+
+    out: dict[str, dict[str, float]] = {}
+    for section in book_wishes.SECTIONS:
+        merged = {key: float(at) for key, at in ((earlier or {}).get(section) or {}).items()}
+        merged.update({key: float(entry["requested_at"]) for key, entry in ((sent or {}).get(section) or {}).items()})
+        if len(merged) > MAX_RECEIPTS:
+            merged = dict(sorted(merged.items(), key=lambda pair: (pair[1], pair[0]))[-MAX_RECEIPTS:])
+        if merged:
+            out[section] = dict(sorted(merged.items()))
+    return out
+
+
+def retract_sent(marks: dict[str, Any], section: str, keys: list[str], requested_at: float) -> tuple[dict[str, Any], list[str]]:
+    """Người nghe hoàn tác một thao tác ĐÃ GỬI: các khoá `keys` của `section` mà biên nhận trong `marks` khớp đúng lần bấm `requested_at` chuyển từ
+    `wishes` sang `retract` (chờ báo máy giữ sách rút). Trả (sổ mới, các khoá đã nhận). Lần bấm khác (đã bị thay) hay đã nhờ rút rồi: không nhận."""
+    out = copy.deepcopy(marks)
+    receipts = out.get("wishes") or {}
+    done: list[str] = []
+    for key in dict.fromkeys(keys):
+        at = (receipts.get(section) or {}).get(key)
+        if at is None or abs(float(at) - requested_at) >= 1e-6:
+            continue
+        del receipts[section][key]
+        out.setdefault("retract", {}).setdefault(section, {})[key] = float(at)
+        done.append(key)
+    for section_name in [name for name, entries in receipts.items() if not entries]:
+        del receipts[section_name]
+    if not receipts:
+        out.pop("wishes", None)
+    return out, done
 
 
 def unmarked(edits: dict[str, Any], marks: dict[str, Any]) -> dict[str, Any]:
@@ -1349,7 +1394,7 @@ def unmarked(edits: dict[str, Any], marks: dict[str, Any]) -> dict[str, Any]:
 # gỡ khi giá trị của nó còn đúng bằng giá trị ấy (`apply_removed`: không đè lên bản chính máy kia đã đổi khác). Cùng luật với BookEdits.kt.
 
 REMOVED_FILE = "edits_removed.json"
-_REMOVED_KEYS = {"skip", "readings", "playlist"}
+_REMOVED_KEYS = {"skip", "readings", "playlist", "wishes"}
 
 
 def removed_marks(edits: dict[str, Any], marks: dict[str, Any]) -> dict[str, Any]:
@@ -1367,13 +1412,15 @@ def removed_marks(edits: dict[str, Any], marks: dict[str, Any]) -> dict[str, Any
     playlist = (marks.get("music") or {}).get("playlist")
     if playlist is not None and "playlist" not in (edits.get("music") or {}):
         out["playlist"] = playlist
+    if marks.get("retract"):
+        out["wishes"] = {section: dict(sorted(entries.items())) for section, entries in marks["retract"].items() if entries}
     return out
 
 
 def count_removed(removed: dict[str, Any]) -> int:
     """Số thay đổi trong `removed` (một dòng bỏ ở trăm chương là một)."""
     return (len({line for lines in (removed.get("skip") or {}).values() for line in lines}) + len(removed.get("readings") or {})
-            + ("playlist" in removed))
+            + ("playlist" in removed) + sum(len(entries) for entries in (removed.get("wishes") or {}).values()))
 
 
 def forget_marks(marks: dict[str, Any], removed: dict[str, Any]) -> dict[str, Any]:
@@ -1396,6 +1443,15 @@ def forget_marks(marks: dict[str, Any], removed: dict[str, Any]) -> dict[str, An
         music.pop("playlist", None)
     if not music:
         out.pop("music", None)
+    for held in ("retract", "wishes"):
+        entries = out.get(held) or {}
+        for section, gone in (removed.get("wishes") or {}).items():
+            for key in gone:
+                (entries.get(section) or {}).pop(key, None)
+        for section in [name for name, items in entries.items() if not items]:
+            del entries[section]
+        if not entries:
+            out.pop(held, None)
     return out
 
 
@@ -1412,6 +1468,33 @@ def validate_removed(raw: Any) -> dict[str, Any]:
         if not isinstance(raw["playlist"], str) or not _PLAYLIST.fullmatch(raw["playlist"]):
             raise EditsError("Phần gỡ trong gói sửa không hợp lệ.")
         out["playlist"] = raw["playlist"]
+    if "wishes" in raw:
+        out["wishes"] = _validate_retractions(raw["wishes"])
+    return out
+
+
+def _validate_retractions(raw: Any) -> dict[str, dict[str, float]]:
+    """`wishes` của `edits_removed.json`: {phần: {khoá: requested_at}} - đúng thứ biên nhận (`_receipts`) ghi, người lạ gửi nên kiểm chặt."""
+    from . import book_wishes
+
+    bad = EditsError("Phần gỡ trong gói sửa không hợp lệ.")
+    if not isinstance(raw, dict) or not raw or set(raw) - set(book_wishes.SECTIONS):
+        raise bad
+    out: dict[str, dict[str, float]] = {}
+    total = 0
+    for section, entries in raw.items():
+        if not isinstance(entries, dict) or not entries:
+            raise bad
+        kept: dict[str, float] = {}
+        for key, at in entries.items():
+            if (not isinstance(key, str) or not key or not _is_clean(key, 200) or isinstance(at, bool)
+                    or not isinstance(at, (int, float)) or not 0 < at <= 1e11):
+                raise bad
+            kept[key] = float(at)
+        total += len(kept)
+        out[section] = kept
+    if total > MAX_RECEIPTS * len(book_wishes.SECTIONS):
+        raise bad
     return out
 
 
@@ -1424,6 +1507,8 @@ def dump_removed(removed: dict[str, Any]) -> bytes:
         ordered["readings"] = dict(sorted(removed["readings"].items()))
     if "playlist" in removed:
         ordered["playlist"] = removed["playlist"]
+    if removed.get("wishes"):
+        ordered["wishes"] = {section: dict(sorted(removed["wishes"][section].items())) for section in sorted(removed["wishes"])}
     return (json.dumps(ordered, ensure_ascii=False, indent=1) + "\n").encode("utf-8")
 
 
