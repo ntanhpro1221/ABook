@@ -71,6 +71,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Pending đồng bộ giữ đúng `(bookId, recordId, revision)` và snapshot; ACK cũ không gỡ revision mới.
   Chỗ nghe ReadAloud giữ `last.anchor` (đoạn, offset code point, vân tay chữ chương), ưu tiên khi văn bản còn khớp; Kotlin/TypeScript/Python cùng hợp đồng.
   Retake từ điện thoại có operation_id bền trước gửi; `book_wishes` giữ receipt và dấu giờ cũ khi retry, không đổi seed thêm lần nữa.
+- Phán quyết nghe của Studio nằm trong `reviews.json`, gắn với `stable_id` và checksum bản thu `wav_sha256`; bản thu đổi thì
+  phán quyết cũ vào lịch sử, không được che câu chưa nghe ở hàng nghe lại hoặc hộp việc. Không ghi phán quyết này vào SQLite.
+- Xuất `.abook` phải đối chiếu checksum của byte thực ghi trước khi công bố gói; nguồn đổi giữa băm và ghi thì báo lỗi và dọn
+  file dở. Xuất cả bộ dùng cùng job nền có tiến độ/huỷ/nối lại như một cuốn; huỷ M4B phải thu hồi FFmpeg trước khi dọn file dở.
 - WAV/MP3 luôn ghi `.part`, validate + checksum rồi atomic replace.
 - MP3 phải được FFmpeg decode toàn bộ trước khi commit.
 - TTS retry theo thứ tự: seed VieNeu khác → chia nhỏ an toàn nếu câu đủ dài → `failed`; câu cảm thán

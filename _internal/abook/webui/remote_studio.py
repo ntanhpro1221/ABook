@@ -143,6 +143,7 @@ ALLOWED: tuple[tuple[str, re.Pattern[str]], ...] = LISTEN_ROUTES + tuple((method
     ("POST", _BOOK + r"/bookfile"),
     ("POST", _BOOK + r"/bookfile-job"),  # xuất file sách chạy nền (export_jobs.py): bắt đầu + hỏi trạng thái
     ("GET", _BOOK + r"/bookfile-job"),
+    ("POST", _BOOK + r"/bookfile-job/cancel"),
     ("POST", _BOOK + r"/m4b-job"),  # xuất M4B chạy nền như file sách; nơi ghi vẫn là "Đã xuất" trong thư viện (_target)
     ("GET", _BOOK + r"/m4b-job"),
     ("POST", _BOOK + r"/m4b-job/cancel"),  # "Huỷ" trong thông báo tiến độ M4B
