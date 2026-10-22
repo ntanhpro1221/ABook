@@ -1207,6 +1207,18 @@ def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> set[tup
     return kept
 
 
+def _resource_wait(connection: sqlite3.Connection, book_updated_at: float) -> dict[str, Any] | None:
+    if "runtime_events" not in _table_names(connection):
+        return None
+    row = connection.execute(
+        "SELECT code, timestamp, details_json FROM runtime_events "
+        "WHERE code IN ('RESOURCE_WAIT', 'RESOURCE_READY') ORDER BY id DESC LIMIT 1"
+    ).fetchone()
+    if row is None or row["code"] != "RESOURCE_WAIT" or float(row["timestamp"]) < book_updated_at:
+        return None
+    return humanize._json(row["details_json"])
+
+
 def summarize(project_root: Path, *, running: bool = False, lease_after: float | None = None, now: float | None = None) -> dict[str, Any]:
     """Tóm tắt một cuốn cho thư viện và phần đầu trang sách. `lease_after`: chỉ nhịp tim worker trong sổ MỚI HƠN mốc này (giây
     epoch) mới tính là "đang chạy" - supervisor là nguồn của việc ấy: lượt chạy của nó còn dở (kể cả đã chết) thì mốc là vô cực,
@@ -1265,6 +1277,7 @@ def summarize(project_root: Path, *, running: bool = False, lease_after: float |
         # "stopped" / "error" / "analysis" tuỳ cách ngắt). Chạy tiếp ra cuốn khác với chạy liền mạch.
         analysis_cut = phase != "done" and _analysis_cut(connection)
         speaker = _speaker_pass(connection, settings, stage)
+        resource_wait = _resource_wait(connection, float(book["updated_at"] or 0))
         speaker_left = round((speaker["total"] - speaker["done"]) * speaker["seconds"]) if speaker else 0
         eta = None
         if running and phase == "analysis" and total and speaker and speaker["active"]:
@@ -1291,13 +1304,15 @@ def summarize(project_root: Path, *, running: bool = False, lease_after: float |
     active = running or (beat_age is not None and beat_age <= LEASE_FRESH_SECONDS and phase in humanize.WORKING_PHASES
                          and (lease_after is None or now - beat_age > lease_after))
     profile = str(settings.get("quality_profile") or "")
+    resource_wait = resource_wait if active and status != "paused" else None
     return {
         "path": str(project_root),
         "title": display_title(project_root, str(book["title"])),
         "status": status,
         "stage": stage,
         "phase": phase,
-        "statusLabel": humanize.status_label(phase, stage, active=active),
+        "statusLabel": str(resource_wait["reason"]) if resource_wait else humanize.status_label(phase, stage, active=active),
+        "resourceWait": resource_wait,
         "running": bool(active),
         "interrupted": phase in humanize.WORKING_PHASES and not active,
         "analysisInterrupted": bool(analysis_cut and not active),

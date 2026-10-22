@@ -21,7 +21,7 @@ from .audio_transform_contract import (
     POSTPROCESS_SOURCE_SAMPLES_FIELD,
     POSTPROCESS_TEMPO_FACTOR,
 )
-from .io_utils import atomic_write_text, ffmpeg_executable, run_hidden, sha256_file
+from .io_utils import _replace_with_retry, atomic_write_text, ffmpeg_executable, run_hidden, sha256_file
 from .text_processing import VIETNAMESE_UNITS, vietnamese_number_words
 from . import voice_balance
 
@@ -994,6 +994,19 @@ def inspect_wav(
         return False, {}, str(exc)
 
 
+def _publish_audio_with_retry(temp: Path, output: Path) -> None:
+    try:
+        _replace_with_retry(temp, output)
+    except PermissionError as exc:
+        raise PermissionError(
+            exc.errno,
+            f"Chưa chốt được file âm thanh: file đang bị ứng dụng khác giữ hoặc thiếu quyền ghi thư mục. "
+            f"Hãy đóng ứng dụng đang mở file và kiểm tra quyền thư mục {output.parent}. "
+            f"Bản tạm đã kiểm tra vẫn ở {temp}. Chi tiết: {exc}",
+            str(output),
+        ) from exc
+
+
 def atomic_write_wav(
     path: Path,
     audio: Any,
@@ -1022,7 +1035,7 @@ def atomic_write_wav(
         temp.unlink(missing_ok=True)
         raise AudioQualityError(f"temporary WAV failed validation: {reason}")
     checksum = sha256_file(temp)
-    os.replace(temp, path)
+    _publish_audio_with_retry(temp, path)
     metrics.update(level_info)
     return checksum, metrics
 
@@ -1689,6 +1702,7 @@ def assemble_chapter_atomic_with_metrics(
     temp.unlink(missing_ok=True)
     decoded_temp.unlink(missing_ok=True)
     candidate_checksum: str | None = None
+    preserve_candidate = False
     audio = settings["audio"]
     ffmpeg = ffmpeg_executable()
     concat_input = ["-f", "concat", "-safe", "0", "-i", str(concat)]
@@ -1796,7 +1810,11 @@ def assemble_chapter_atomic_with_metrics(
             )
         with temp.open("rb+") as handle:
             os.fsync(handle.fileno())
-        os.replace(temp, output)
+        try:
+            _publish_audio_with_retry(temp, output)
+        except PermissionError:
+            preserve_candidate = True
+            raise
         return ChapterAssemblyResult(checksum=candidate_checksum, quality=quality)
     except ChapterQualityError:
         raise
@@ -1810,7 +1828,7 @@ def assemble_chapter_atomic_with_metrics(
     finally:
         concat.unlink(missing_ok=True)
         decoded_temp.unlink(missing_ok=True)
-        if temp.exists() and temp != output:
+        if temp.exists() and temp != output and not preserve_candidate:
             temp.unlink(missing_ok=True)
 
 

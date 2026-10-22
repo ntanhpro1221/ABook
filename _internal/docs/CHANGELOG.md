@@ -9,6 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi thiếu đĩa/RAM, Studio hiện rõ lý do chờ và tự tiếp tục; thiếu VRAM lúc đọc/kiểm giọng hoặc khoá file âm thanh thoáng qua được thử lại có hạn, lỗi đầy đĩa giữ đúng nguyên nhân.
 - Khi bạn bỏ một thay đổi đang chờ, máy kiểm lại ngay trước lúc áp để không làm theo hoặc báo “đã áp” một yêu cầu bạn vừa rút.
 - Khi bạn chọn nhiều câu cần thu lại hoặc nhận nhóm yêu cầu từ điện thoại, Studio lưu cả nhóm nhanh hơn và giữ đúng yêu cầu khi bạn thử lại sau lỗi.
 - Khi bạn thêm cách đọc bằng tên có dấu tổ hợp hoặc ký tự vô hình, Studio khớp đúng từ trong sách để thu lại các câu liên quan.

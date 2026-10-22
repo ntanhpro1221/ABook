@@ -100,6 +100,11 @@ TRANSIENT_TTS_MEMORY_MARKERS = (
     "defaultcpuallocator",
     "alloc_cpu.cpp",
     "cuda_error_out_of_memory",
+    "cudaerrormemoryallocation",
+)
+ALLOCATION_TTS_MEMORY_MARKERS = (
+    "cublas_status_alloc_failed",
+    "cudnn_status_alloc_failed",
 )
 
 # Delivery metadata no longer touches sampling, and this is why.
@@ -190,15 +195,24 @@ def is_fatal_tts_error(error: BaseException) -> bool:
     Memory pressure is deliberately not in this set. See TRANSIENT_TTS_MEMORY_MARKERS.
     """
     message = str(error).casefold()
+    if any(marker in message for marker in ALLOCATION_TTS_MEMORY_MARKERS):
+        # Only the explicit allocation status exempts its generic library marker.
+        # An accompanying driver/missing-engine failure still wins.
+        return bool(re.search(r"(?:cublas|cudnn)_status_(?!alloc_failed\b)\w+", message)) or any(
+            marker in message for marker in FATAL_TTS_MARKERS
+            if marker not in {"cublas", "cudnn"}
+        )
     return any(marker in message for marker in FATAL_TTS_MARKERS)
 
 
 def is_transient_tts_memory_error(error: BaseException) -> bool:
     """A failure that ends when whoever took the memory gives it back."""
     message = str(error).casefold()
-    if any(marker in message for marker in FATAL_TTS_MARKERS):
+    if is_fatal_tts_error(error):
         return False
-    return any(marker in message for marker in TRANSIENT_TTS_MEMORY_MARKERS)
+    return any(marker in message for marker in (
+        *TRANSIENT_TTS_MEMORY_MARKERS, *ALLOCATION_TTS_MEMORY_MARKERS
+    ))
 
 
 def _set_generation_seed(seed: int) -> None:

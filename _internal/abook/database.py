@@ -3110,7 +3110,13 @@ class ProjectDB:
                 yield conn
                 conn.execute("COMMIT")
             except Exception:
-                conn.execute("ROLLBACK")
+                try:
+                    if conn.in_transaction:
+                        conn.execute("ROLLBACK")
+                except Exception:
+                    # SQLITE_FULL may already have rolled back. Cleanup must never hide
+                    # the original write/commit error from the worker and its UI.
+                    pass
                 raise
 
     def initialize_book(
