@@ -86,6 +86,8 @@ export interface EbookPlayerPlugin {
   setSleep(options: { mode: "off" | "minutes" | "chapter"; minutes?: number }): Promise<NativeState>;
   extendSleep(options: { minutes?: number }): Promise<NativeState>;
   configure(options: {
+    /** Giao diện sáng/tối/theo máy: native chỉ NHỚ (ListenPrefs) để giao diện lấy lại khi localStorage của WebView mất (settings.ts `syncSettings`). */
+    theme?: "system" | "light" | "dark";
     sleepExtendMinutes?: number;
     sleepFadeSeconds?: number;
     shakeToExtend?: boolean;
