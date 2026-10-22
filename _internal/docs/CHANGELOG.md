@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+
+- Nút "Áp dụng" không còn tắt oan: nếu bạn sửa cách đọc hay người nói đúng lúc sách đang thu chương cuối, hoặc ngay lúc sách vừa khởi động, thay đổi ấy trước đây có thể chưa được áp mà bộ đếm vẫn về 0. Giờ máy áp chúng trước khi chốt "Hoàn tất", và nút chỉ tắt khi từng thay đổi đã thật sự được áp.
+
 ## [0.4.122] - 2026-10-22
 
 ### Sửa lỗi
