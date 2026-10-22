@@ -244,9 +244,9 @@ export function VieneuModuleCard({
                 <span id={`${id}-size`} className="shrink-0 pt-0.5 text-xs text-fg-2">
                   {choice.installed ? "Đã có" : (downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) > 0 ? formatSize(downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) : "Đã có sẵn"}
                 </span>
-                {choice.installed && choice.removable && backend.remove && canPick && (
+                {choice.removable && backend.remove && canPick && (
                   <Button size="sm" variant="ghost" className="-my-1 shrink-0" loading={busy} onClick={(event) => { event.preventDefault(); void remove(choice.id); }}>
-                    Gỡ
+                    {choice.installed ? "Gỡ" : "Xoá phần đã tải"}
                   </Button>
                 )}
               </label>

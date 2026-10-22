@@ -26,7 +26,7 @@ class PinnedFilesTest {
     private lateinit var server: ServerSocket
     private lateinit var root: File
     private val ranges = CopyOnWriteArrayList<String?>()
-    private val body = ByteArray(400_000) { (it * 31 + it / 7).toByte() }
+    private var body = ByteArray(400_000) { (it * 31 + it / 7).toByte() }
 
     /** The next [cuts] responses send only [cutAfter] bytes and close the connection (the Content-Length still says the whole rest). */
     @Volatile
@@ -115,6 +115,61 @@ class PinnedFilesTest {
     }
 
     private val partial get() = File(dir, "model.bin.part")
+
+    @Test
+    fun unpackWriteFailureKeepsVerifiedArchiveAndOriginalCause() {
+        val raw = "native runtime".toByteArray()
+        val compressed = java.io.ByteArrayOutputStream()
+        java.util.zip.GZIPOutputStream(compressed).use { it.write(raw) }
+        body = compressed.toByteArray()
+        val packed = PinnedFiles.Part("runtime.so", digest(raw), raw.size.toLong(),
+            packed = PinnedFiles.Packed(digest(body), body.size.toLong()))
+        File(dir, "runtime.so.part").mkdirs() // deterministic output failure, without filling a real disk
+        File(dir, "runtime.so").writeText("old")
+        try {
+            files().download(listOf(packed), Watch())
+            fail("unpack must fail")
+        } catch (error: IOException) {
+            assertFalse("output failure must not become a checksum error", error is PinnedFiles.ChecksumError)
+        }
+        assertTrue(File(dir, "runtime.so.gz").isFile)
+        assertEquals("old", File(dir, "runtime.so").readText())
+    }
+
+    @Test
+    fun enospcDuringUnpackIsActionableAndRetainsWire() {
+        val raw = "native runtime".toByteArray()
+        val compressed = java.io.ByteArrayOutputStream()
+        java.util.zip.GZIPOutputStream(compressed).use { it.write(raw) }
+        body = compressed.toByteArray()
+        val packed = PinnedFiles.Part("runtime.so", digest(raw), raw.size.toLong(),
+            packed = PinnedFiles.Packed(digest(body), body.size.toLong()))
+        val files = PinnedFiles(dir, base, output = { throw IOException("ENOSPC: No space left on device") })
+        try {
+            files.download(listOf(packed), Watch())
+            fail("unpack must fail")
+        } catch (error: IOException) {
+            assertFalse(error is PinnedFiles.ChecksumError)
+            assertTrue(PinnedFiles.failure("gói", error).message.contains("Bạn giải phóng"))
+        }
+        assertTrue(File(dir, "runtime.so.gz").isFile)
+        assertFalse(File(dir, "runtime.so").exists())
+        val requests = ranges.size
+        PinnedFiles(dir, base).download(listOf(packed), Watch())
+        assertEquals(requests, ranges.size) // retry unpacks the already verified archive
+        assertEquals(raw.toList(), File(dir, "runtime.so").readBytes().toList())
+    }
+
+    @Test
+    fun spaceCheckIncludesUnpackedSizeBeforeAnyNetwork() {
+        val part = PinnedFiles.Part("runtime.so", "unused", 100_000,
+            packed = PinnedFiles.Packed("unused", 10))
+        try {
+            PinnedFiles(dir, base, freeBytes = { DownloadSpace.MARGIN + 100 }).download(listOf(part), Watch())
+            fail("unpacked staging needs space too")
+        } catch (_: PinnedFiles.SpaceError) { }
+        assertTrue(ranges.isEmpty())
+    }
 
     @Test
     fun aConnectionCutHalfWayKeepsThePartAndTheRetryResumesWithRange() {
