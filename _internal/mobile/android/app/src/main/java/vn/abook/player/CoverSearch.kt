@@ -33,6 +33,13 @@ object CoverSearch {
     var http: Http = UrlConnectionHttp
 
     const val TIMEOUT_SECONDS = 8
+
+    /** Giây cho CẢ lượt tìm (mọi nguồn) và cho một ảnh bìa - như SEARCH_DEADLINE / DOWNLOAD_DEADLINE của cover_search.py. */
+    const val SEARCH_DEADLINE_SECONDS = 12
+    const val DOWNLOAD_DEADLINE_SECONDS = 30
+
+    /** Lời báo khi tải ảnh hỏng: chi tiết (HTTP 503, ...) không lên màn hình - như DOWNLOAD_FAILED của máy tính. */
+    const val DOWNLOAD_FAILED = "Chưa tải được ảnh này, bạn thử lại hoặc chọn ảnh khác"
     const val REFUSAL = "Chỉ lấy ảnh từ iTunes, Open Library hoặc Google Books"
     private const val USER_AGENT = "ABook/1 (cover search)"
     private const val QUERY_MAX = 120
@@ -59,9 +66,11 @@ object CoverSearch {
         val failed = ArrayList<String>()
         try {
             val futures = PROVIDERS.map { provider -> provider to pool.submit(Callable { provider.find(query) }) }
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(SEARCH_DEADLINE_SECONDS.toLong())
             for ((provider, future) in futures) {
                 try {
-                    found += future.get((TIMEOUT_SECONDS + 2).toLong(), TimeUnit.SECONDS)
+                    // Hạn tổng cho cả lượt: một nguồn nhỏ giọt không kéo dài lượt tìm (mỗi nguồn trước đây được thêm 10 giây).
+                    found += future.get(maxOf(0L, deadline - System.nanoTime()), TimeUnit.NANOSECONDS)
                 } catch (error: Exception) { // một nguồn hỏng không được làm hỏng các nguồn khác
                     future.cancel(true)
                     failed += provider.name
@@ -204,7 +213,8 @@ object CoverSearch {
         val data = try {
             http.getBytes(url, Covers.MAX_UPLOAD_BYTES + 1, TIMEOUT_SECONDS * 2)
         } catch (error: IOException) {
-            throw CoverCodec.CoverError("Không tải được ảnh: ${error.message}")
+            // Chi tiết (HTTP 503, ...) không lên màn hình; điện thoại không có nhật ký riêng để ghi.
+            throw CoverCodec.CoverError(DOWNLOAD_FAILED)
         }
         if (data.size > Covers.MAX_UPLOAD_BYTES) throw CoverCodec.CoverError("Ảnh quá lớn")
         return data
@@ -213,11 +223,12 @@ object CoverSearch {
     // ---- mạng thật ---------------------------------------------------------------------------------------------------
 
     private object UrlConnectionHttp : Http {
-        override fun getText(url: String): String = String(fetch(url, JSON_MAX_BYTES, TIMEOUT_SECONDS), Charsets.UTF_8)
+        override fun getText(url: String): String = String(fetch(url, JSON_MAX_BYTES, TIMEOUT_SECONDS, SEARCH_DEADLINE_SECONDS), Charsets.UTF_8)
 
-        override fun getBytes(url: String, limit: Int, timeoutSeconds: Int): ByteArray = fetch(url, limit, timeoutSeconds)
+        override fun getBytes(url: String, limit: Int, timeoutSeconds: Int): ByteArray = fetch(url, limit, timeoutSeconds, DOWNLOAD_DEADLINE_SECONDS)
 
-        private fun fetch(first: String, limit: Int, timeoutSeconds: Int): ByteArray {
+        private fun fetch(first: String, limit: Int, timeoutSeconds: Int, deadlineSeconds: Int): ByteArray {
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(deadlineSeconds.toLong())
             var url = first
             repeat(MAX_REDIRECTS + 1) {
                 val connection = URL(url).openConnection() as HttpURLConnection
@@ -234,7 +245,7 @@ object CoverSearch {
                         return@repeat
                     }
                     if (code >= 400) throw IOException("HTTP $code")
-                    return connection.inputStream.use { readUpTo(it, limit) }
+                    return connection.inputStream.use { readUpTo(it, limit, deadline) }
                 } finally {
                     connection.disconnect()
                 }
@@ -242,11 +253,12 @@ object CoverSearch {
             throw IOException("chuyển hướng quá nhiều lần")
         }
 
-        /** `response.read(limit)`: đọc tối đa `limit` byte (đủ để thấy ảnh vượt trần mà không nạp cả file khổng lồ). */
-        private fun readUpTo(input: InputStream, limit: Int): ByteArray {
+        /** `response.read(limit)`: đọc tối đa `limit` byte (đủ để thấy ảnh vượt trần mà không nạp cả file khổng lồ); nguồn nhỏ giọt quá hạn thì bỏ. */
+        private fun readUpTo(input: InputStream, limit: Int, deadline: Long): ByteArray {
             val out = ByteArrayOutputStream()
             val buffer = ByteArray(16 * 1024)
             while (out.size() < limit) {
+                if (System.nanoTime() - deadline > 0) throw IOException("quá hạn đọc")
                 val read = input.read(buffer, 0, minOf(buffer.size, limit - out.size()))
                 if (read < 0) break
                 out.write(buffer, 0, read)

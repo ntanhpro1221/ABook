@@ -290,7 +290,8 @@ export function EditBookDialog({
     },
     onError: (error: Error) => toast.error("Chưa bỏ được thay đổi", { description: error.message }),
   });
-  const busy = rename.isPending || changeAuthor.isPending || setCover.isPending || removeCover.isPending;
+  const [choosingCover, setChoosingCover] = useState(false); // ảnh bìa mạng đã chọn đang về
+  const busy = rename.isPending || changeAuthor.isPending || setCover.isPending || removeCover.isPending || choosingCover;
   return (
     <Dialog
       open={open}
@@ -392,6 +393,7 @@ export function EditBookDialog({
           open={searching}
           onOpenChange={setSearching}
           onChosen={() => refreshAfterEdit(client, book.id)}
+          onBusy={setChoosingCover}
         />
         {book.stage !== "text" && (
         <Section title="Nhạc nền">

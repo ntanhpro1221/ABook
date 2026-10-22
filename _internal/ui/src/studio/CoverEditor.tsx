@@ -79,7 +79,8 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
   }, [upload]);
 
   const [searching, setSearching] = useState(false);
-  const busy = upload.isPending || remove.isPending;
+  const [choosing, setChoosing] = useState(false); // ảnh mạng đã chọn đang về
+  const busy = upload.isPending || remove.isPending || choosing;
   // Điện thoại: bìa nhỏ nằm cạnh tên sách (trang dự án chiếm ~590 px đầu màn nếu bìa to nằm trên tên), nút chỉ còn biểu tượng.
   const narrow = useMediaQuery("(max-width: 639px)");
   return (
@@ -147,6 +148,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
         open={searching}
         onOpenChange={setSearching}
         onChosen={refresh}
+        onBusy={setChoosing}
         doneNote="Điện thoại nhận ảnh mới ở lần đồng bộ sau."
       />
       <input

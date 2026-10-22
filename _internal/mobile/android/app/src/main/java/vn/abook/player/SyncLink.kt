@@ -118,14 +118,18 @@ object SyncLink {
         return name?.takeIf { it.isNotBlank() } ?: "máy tính"
     }
 
-    /** Một file của cuốn `remote` trên máy giữ sách `link` (chưa mở kết nối); `resumeFrom` > 0 = tải tiếp từ byte ấy. */
-    fun bookFile(context: Context, link: Peers.Link, remote: String, relative: String, resumeFrom: Long = 0): HttpURLConnection {
+    /** Một file của cuốn `remote` trên máy giữ sách `link` (chưa mở kết nối); `resumeFrom` > 0 = tải tiếp từ byte ấy (kèm `If-Range` = [ifRange]). */
+    fun bookFile(context: Context, link: Peers.Link, remote: String, relative: String, resumeFrom: Long = 0, ifRange: String = ""): HttpURLConnection {
         Pin.install(context)
         val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
         connection.connectTimeout = 5000
         connection.readTimeout = 30000
         connection.setRequestProperty("Authorization", "Bearer ${link.token}")
-        if (resumeFrom > 0) connection.setRequestProperty("Range", "bytes=$resumeFrom-")
+        if (resumeFrom > 0) {
+            connection.setRequestProperty("Range", "bytes=$resumeFrom-")
+            // Phiên bản của file mà phần dở thuộc về (PartResume): file đã đổi thì máy kia gửi lại cả file thay vì đuôi của file mới.
+            if (ifRange.isNotEmpty()) connection.setRequestProperty("If-Range", ifRange)
+        }
         return connection
     }
 
