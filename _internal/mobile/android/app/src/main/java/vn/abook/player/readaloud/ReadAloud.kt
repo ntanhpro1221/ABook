@@ -426,15 +426,15 @@ object ReadAloud {
     }
 
     /** Giao diện gửi giọng của cuốn `bookId` (lúc nạp, lúc người nghe đổi): nhớ cho cuốn ấy; cuốn ấy đang nạp thì đổi ngay. */
-    fun chooseFor(bookId: String, id: String) {
-        rememberFor(bookId, id)
-        if (bookId.isEmpty() || bookId == Playback.bookId) setVoice(id)
+    fun chooseFor(bookId: String, id: String, recordId: String = "") {
+        rememberFor(bookId, id, recordId)
+        if (bookId.isEmpty() || (bookId == Playback.bookId && (recordId.isEmpty() || recordId == Playback.recordId))) setVoice(id)
     }
 
     /** Chỉ nhớ giọng của cuốn `bookId`, không đổi giọng đang đọc: lúc nạp cuốn ([vn.abook.player.PlayerPlugin.load]) - [useVoiceOf] của lần nạp đặt giọng ngay sau đó.
      *  Qua [chooseFor] thì nạp lại cùng cuốn với giọng khác sẽ đọc lại chỗ chờ của lượt cũ bằng giọng mới, rồi lần nạp bỏ ngay lượt đọc ấy. */
-    fun rememberFor(bookId: String, id: String) {
-        choices?.remember(bookId, id)
+    fun rememberFor(bookId: String, id: String, recordId: String = "") {
+        choices?.remember(bookId, id, recordId)
     }
 
     /** Giọng mặc định (Cài đặt) cho cuốn chưa chọn giọng riêng. Không đổi giọng của chương đang đọc - như giao diện máy tính; lần nạp kế theo nó. */
@@ -444,13 +444,15 @@ object ReadAloud {
 
     /** Nạp một cuốn - bằng bất cứ đường nào (giao diện, widget, xe hơi, máy tính điều khiển): đọc bằng giọng đã nhớ của cuốn ấy. Chỉ đặt giọng;
      *  [begin] / [stop] ngay sau đó dựng lại hàng đợi. */
-    fun useVoiceOf(bookId: String) {
+    fun useVoiceOf(bookId: String, recordId: String = "") {
         voiceBook = bookId
-        voiceId = usableOrDefault(choices?.voiceFor(bookId).orEmpty())
+        voiceRecord = recordId
+        voiceId = usableOrDefault(choices?.voiceFor(bookId, recordId).orEmpty())
     }
 
     /** Cuốn mà [voiceId] đang đọc (lần [useVoiceOf] gần nhất). */
     private var voiceBook = ""
+    private var voiceRecord = ""
 
     /** Giọng này còn trên máy không? Giọng tải thêm (VieNeu, giọng dùng khoá) chỉ khi còn trong danh sách của máy; Edge và giọng của máy luôn có. */
     internal var stillOffered: (String) -> Boolean = { id ->
@@ -483,7 +485,7 @@ object ReadAloud {
     fun voicesChanged() {
         if (stillOffered(voiceId)) return
         // Giọng cũ không còn: bắt buộc đổi; nếu giọng thay thế gửi chữ đi mà chưa được đồng ý thì dừng ở chỗ đang nghe, chưa gửi gì ([switchVoice]).
-        switchVoice(usableOrDefault(if (choices?.voiceFor(voiceBook).isNullOrBlank()) "" else DEFAULT_VOICE), forced = true)
+        switchVoice(usableOrDefault(if (choices?.voiceFor(voiceBook, voiceRecord).isNullOrBlank()) "" else DEFAULT_VOICE), forced = true)
     }
 
     /** Giao diện gửi danh sách nhà cung cấp đã được đồng ý (lúc mở app, mỗi lần người nghe đồng ý): đang dừng nạp ở ranh giới chương vì chưa

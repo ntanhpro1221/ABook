@@ -28,7 +28,7 @@ import {
   type SleepSchedule,
 } from "./sleep";
 import { VOICE_CHANGED_EVENT, type ReadAloudVoice, type SpeechTrack } from "./readAloud";
-import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, onVoiceChosen, ONLINE_NOTICE, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
+import { adoptSyncedVoice, chooseVoice, chosenVoice, forgetVoiceTrouble, onVoiceChosen, ONLINE_NOTICE, recordOf, rememberRecordOf, resolveVoice, runsOnThisMachine, speechFetcher, voicesOf } from "./readAloudVoice";
 import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useSource } from "./source";
@@ -259,7 +259,7 @@ export function PlayerProvider({
   const native = isNative(engine) ? engine : null;
   const clock = useMemo(() => new Clock(), []);
   const night = useMemo(
-    () => new NightRecorder(source.saveNight ? (bookId, session) => source.saveNight!(bookId, session) : undefined),
+    () => new NightRecorder(source.saveNight ? (bookId, session, record) => source.saveNight!(bookId, session, record) : undefined),
     [source],
   );
   const scheduleKey = sleepSchedule ? `${sleepSchedule.from}-${sleepSchedule.to}-${sleepSchedule.minutes}` : "";
@@ -299,7 +299,7 @@ export function PlayerProvider({
   const refs = useRef({
     track: null as Track | null,
     queue: [] as ListenChapter[],
-    book: null as { id: string; title: string; complete: boolean; remote?: ListenBook["remote"] } | null,
+    book: null as { id: string; title: string; complete: boolean; remote?: ListenBook["remote"]; record?: string } | null,
     sleep: { kind: "off" } as SleepMode,
     purpose: "listen" as Purpose,
     fading: false,
@@ -485,15 +485,18 @@ export function PlayerProvider({
   }, [source]);
 
   // Giọng riêng của cuốn đi theo hồ sơ nghe (soát a68 lỗi 8): chọn ở đây thì ghi vào hồ sơ; mở cuốn thì nhận giọng máy kia chọn sau, nếu máy này có.
-  useEffect(() => onVoiceChosen((bookId, voice) => void source.setVoice?.(bookId, voice).catch(() => undefined)), [source]);
+  useEffect(() => onVoiceChosen((bookId, voice, record) => void source.setVoice?.(bookId, voice, record).catch(() => undefined)), [source]);
   const adoptVoice = useCallback((book: BookRef) => {
+    // Giọng riêng là của HỒ SƠ đang nghe: báo hồ sơ này cho bộ nhớ giọng trước, rồi nhận giọng máy kia chọn cho đúng hồ sơ ấy.
+    const record = activeRecord(book);
+    rememberRecordOf(book.id, record);
     if (voicesRef.current) {
-      adoptSyncedVoice(book.id, book.state, voicesRef.current);
+      adoptSyncedVoice(book.id, book.state, voicesRef.current, record ?? null);
       return;
     }
     void voicesOf(source).then((voices) => {
       voicesRef.current = voices;
-      adoptSyncedVoice(book.id, book.state, voices);
+      adoptSyncedVoice(book.id, book.state, voices, record ?? null);
     }, () => undefined);
   }, [source]);
 
@@ -503,6 +506,7 @@ export function PlayerProvider({
     // Sang chương khác của cùng cuốn, cùng hồ sơ (Trước / Sau, hết chương): chỗ mới CHƯA được lưu - lưu khi nguồn báo độ dài ("duration"),
     // kể cả khi đang dừng. Nạp cuốn / hồ sơ khác ở đúng chỗ đã lưu thì không: lưu lại là đóng dấu giờ mới lên chỗ cũ.
     const previous = refs.current.track;
+    if (next.recordId) rememberRecordOf(next.bookId, next.recordId);
     if (previous) client.setQueryData(["playing-script", previous.bookId], null);
     client.setQueryData(["playing-script", next.bookId], null);
     const moved = previous?.bookId === next.bookId && previous?.recordId === next.recordId && previous?.chapterId !== next.chapterId;
@@ -836,13 +840,13 @@ export function PlayerProvider({
     setQueue(chapters);
     refs.current.queue = chapters;
     // Sách chỉ-có-chữ không "đang làm": hết chương cuối là hết cuốn, không phải "chờ Studio làm tiếp".
-    refs.current.book = { id: book.id, title: book.title, complete: book.stage === "text" || (book.complete ?? true), remote: book.remote };
+    refs.current.book = { id: book.id, title: book.title, complete: book.stage === "text" || (book.complete ?? true), remote: book.remote, record: activeRecord(book) };
     refs.current.purpose = purposeValue;
     setPurpose(purposeValue);
     const { rate: bookRate, keep } = startingRate(book.state?.rate, carriedRate, refs.current.defaultRate);
     // Điện thoại: tốc độ đi cùng lệnh nạp cuốn (loadQueue); đặt trước lệnh ấy thì lõi ghi nó vào cuốn ĐANG nạp - cuốn cũ mất tốc độ riêng.
     if (bookRate !== refs.current.rate) applyRate(bookRate, !native);
-    if (keep && purposeValue === "listen") void source.setRate(book.id, bookRate).catch(() => undefined);
+    if (keep && purposeValue === "listen") void source.setRate(book.id, bookRate, activeRecord(book)).catch(() => undefined);
     return bookRate;
   }, [applyRate, native, source]);
 
@@ -863,7 +867,7 @@ export function PlayerProvider({
       else {
         markLoaded(book, chapters);
         native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at: at ?? 0, rate: bookRate, autoplay: true,
-          readAloudVoice: chosenVoice(book.id) });
+          readAloudVoice: chosenVoice(book.id), readAloudRecord: recordOf(book.id) || undefined });
       }
       // Bấm một chữ của chương đọc to khi cuốn chưa phát: hàng đợi vừa nạp, rồi lõi vào đúng chữ ấy.
       if (!sameSpot && extra?.word && chapter.state === "text") native.jumpTo(chapterId, at ?? 0, extra.word);
@@ -906,7 +910,7 @@ export function PlayerProvider({
       if (!native.bookId) {
         markLoaded(book, chapters);
         native.loadQueue({ bookId: book.id, bookTitle: book.title, narrator: book.narrator, chapters, chapterId, at, rate: bookRate, autoplay: false,
-          readAloudVoice: chosenVoice(book.id) });
+          readAloudVoice: chosenVoice(book.id), readAloudRecord: recordOf(book.id) || undefined });
       }
       return;
     }
@@ -1171,11 +1175,13 @@ export function PlayerProvider({
     if (current && refs.current.purpose !== "review") {
       // Tốc độ nhớ riêng của cuốn cũng nằm trong bộ nhớ của trang sách / thư viện (ListenBook.state.rate): đổi ngay ở đó, không thì "Nghe lại từ đầu" /
       // "Nghe tiếp" ngay sau phím [ ] nạp lại tốc độ cũ của cuốn đè lên tốc độ vừa chọn (adoptBook).
-      const remember = (book: ListenBook): ListenBook => ({ ...book, state: { ...(book.state ?? { chapters: {} }), rate: value } });
+      // Chỉ bộ nhớ của hồ sơ đang nghe: cửa sổ khác đã chuyển cuốn sang người khác thì tốc độ vừa chọn không phải của họ.
+      const remember = (book: ListenBook): ListenBook =>
+        current.recordId && activeRecord(book) !== current.recordId ? book : { ...book, state: { ...(book.state ?? { chapters: {} }), rate: value } };
       client.setQueryData<ListenBook>(["listen", "book", current.bookId], (book) => book && remember(book));
       client.setQueryData<ListenBook[]>(["listen", "library"], (books) => books?.map((book) => (book.id === current.bookId ? remember(book) : book)));
       // Điện thoại cũng ghi (soát a67): lõi chỉ ghi khi có cuốn đang nạp, và bộ nhớ của trang sách phải theo kịp như máy tính.
-      void source.setRate(current.bookId, value).catch(() => undefined);
+      void source.setRate(current.bookId, value, current.recordId).catch(() => undefined);
     }
   }, [applyRate, client, night, position, source]);
 

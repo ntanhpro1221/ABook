@@ -1039,8 +1039,9 @@ def computer_kind(manifest: dict[str, Any]) -> str:
 
 
 def exchange_state(manifest: dict[str, Any], state: dict[str, Any], *, timeout: float = TIMEOUT) -> dict[str, Any] | None:
-    """Gửi chỗ nghe của máy này cho máy kia và nhận bản đã gộp - đúng đường điện thoại dùng (POST .../state; máy kia gộp
-    vào hồ sơ đang dùng theo mốc thời gian từng phần, `listening.merge`). Máy kia không trả lời: None, lần sau gửi lại."""
+    """Gửi chỗ nghe của máy này cho máy kia và nhận bản đã gộp - đúng đường điện thoại dùng (POST .../state). `state` là thân
+    `Listening.sync_request`: có mã hồ sơ, nên máy kia gộp vào đúng hồ sơ ấy (`merge_record`), không phải hồ sơ nó đang chọn.
+    Máy kia không trả lời: None, lần sau gửi lại."""
     remote = remote_of(manifest)
     entry = _COMPUTERS.get(remote["computer"]) if remote and _COMPUTERS is not None else None
     if entry is None:

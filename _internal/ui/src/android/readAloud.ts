@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import type { Script } from "@/listen/model";
 import { timedTextScript, VOICE_CHANGED_EVENT, type ReadAloudTimings } from "@/listen/readAloud";
-import { chosenVoice, DEFAULT_VOICE_EVENT, defaultVoice } from "@/listen/readAloudVoice";
+import { chosenVoice, DEFAULT_VOICE_EVENT, defaultVoice, recordOf } from "@/listen/readAloudVoice";
 import { ONLINE_CONSENT_EVENT, onlineConsents } from "@/listen/onlineConsent";
 import { PREPARE_STATUS_KEY, type PrepareRequest, type PrepareStatus } from "@/listen/prepareAhead";
 import type { ListenSource } from "@/listen/source";
@@ -65,7 +65,7 @@ export async function refreshScript(
 export function watchReadAloud(
   client: ScriptCache,
   api: Pick<ReadAloudPlugin, "script" | "addListener"> = ReadAloud,
-  configure: (options: { readAloudVoice?: string; readAloudBook?: string; readAloudDefault?: string; readAloudOnlineOk?: string[] }) => unknown = (options) =>
+  configure: (options: { readAloudVoice?: string; readAloudBook?: string; readAloudRecord?: string; readAloudDefault?: string; readAloudOnlineOk?: string[] }) => unknown = (options) =>
     EbookPlayer.configure(options).catch(() => undefined),
   notify: (message: string) => unknown = (message) => toast(message, { duration: 8000 }),
 ): () => void {
@@ -77,7 +77,7 @@ export function watchReadAloud(
   // Người nghe đổi giọng ở menu "Giọng đọc": lõi nhớ cho cuốn ấy (phát tiếp từ widget / xe hơi vẫn đúng giọng) và đọc các đoạn sau bằng giọng mới.
   const onVoice = (event: Event) => {
     const bookId = String((event as CustomEvent).detail ?? "");
-    void configure({ readAloudVoice: chosenVoice(bookId), readAloudBook: bookId });
+    void configure({ readAloudVoice: chosenVoice(bookId), readAloudBook: bookId, readAloudRecord: recordOf(bookId) || undefined });
   };
   window.addEventListener(VOICE_CHANGED_EVENT, onVoice);
   // Giọng mặc định (Cài đặt) cho cuốn chưa chọn giọng riêng: lõi nhớ theo, để cuốn mở từ widget / máy tính điều khiển cũng đọc bằng nó.
