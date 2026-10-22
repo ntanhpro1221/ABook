@@ -15,6 +15,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Xuất MP3 / M4B mà ổ đích hết chỗ hoặc không ghi được thì báo đúng ổ cần dọn hay đổi thư mục, thay vì bảo file âm thanh hay ảnh bìa hỏng; lời báo kỹ thuật của FFmpeg giữ trong Chi tiết.
 - Nhật ký phụ của lượt làm sách (events.jsonl, supervisor.log) bị phần mềm diệt virus giữ hay đĩa đầy không còn làm dừng cả lượt thu âm: máy thử lại, bỏ dòng nhật ký không ghi được, và trang sách báo bằng một dòng cảnh báo.
 - Lỗi “database or disk is full” và “disk free … GB” được nhận là thiếu chỗ trên ổ đĩa: trang sách nói ổ chứa thư viện còn bao nhiêu GB và cần giải phóng thêm.
+- Mở lại app rồi vào Studio không còn phải chờ máy kiểm lại từng file model giọng đã tải (gần 1 GB với ZeroTTS): kết quả kiểm được nhớ qua các lần mở, chỉ file đổi mới kiểm lại.
 
 ## [0.4.127] - 2026-10-23
 
