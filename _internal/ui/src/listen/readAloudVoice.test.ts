@@ -24,6 +24,18 @@ async function fresh() {
   return { module: await import("./readAloudVoice"), target, store };
 }
 
+it("giọng mặc định nhận từ backend ở origin mới trước khi chọn cho cuốn mới", async () => {
+  const { module } = await fresh();
+  const persist = vi.fn();
+  const disconnect = module.onDefaultVoiceChosen(persist);
+  module.restoreDefaultVoice("edge:vi-VN-NamMinhNeural");
+  expect(module.chosenVoice("new-book")).toBe("edge:vi-VN-NamMinhNeural");
+  expect(persist).not.toHaveBeenCalled();
+  module.chooseDefaultVoice("device:an");
+  expect(persist).toHaveBeenCalledWith("device:an");
+  disconnect();
+});
+
 /** Nguồn giả: `fail[mã giọng]` = lý do lỗi của giọng ấy; ghi lại mọi lần gọi. */
 function source(fail: Record<string, string> = {}, voices: ReadAloudVoice[] = VOICES) {
   const calls: string[] = [];

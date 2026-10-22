@@ -49,7 +49,8 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
 from .library import BookTemplateError, Library, Preferences, apply_book_template_op, book_id, legacy_ids
-from .listening import HEAVY_KEYS, RECORD_ID, Listening
+from .listening import HEAVY_KEYS, RECORD_ID, Listening, StalePlayback
+from .opened_events import OpenedEvents
 from . import bluetooth, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
 from .. import names as renames
 from .remote_studio import REMOTE_HEADER, StudioGate
@@ -367,6 +368,7 @@ class App:
         self.mp3_jobs = export_jobs.BookFileJobs()
         # "Xuất sách nói" của sách Nghe ngay (listen_export.py): bản ghi riêng có tiến độ + huỷ; chương đã ghép dở nằm trong `export_work` để làm tiếp.
         self.listen_exports = export_jobs.BookFileJobs()
+        self.opened_events = OpenedEvents()
         # "Xuất cả dự án (.abookproj)" cũng chạy nền, có tiến độ (pha + đã/tổng) và Huỷ; đóng app thì huỷ gọn (`close`).
         self.projectfile_jobs = export_jobs.BookFileJobs()
         # Đóng app lúc đang gói dự án quá vài giây (hay máy tắt đột ngột) để lại file `.part` / thư mục tạm: nhớ nơi đã xuất, lần mở sau dọn.
@@ -2794,7 +2796,8 @@ class App:
         giúp lần mở sau tiếp tục khi dọn chưa xong."""
         deadline = time.monotonic() + CLOSE_SECONDS
         # Đang gói dự án / xuất M4B / MP3: dừng ở file / khúc kế, dọn file tạm và bản xuất dở - bảo dừng ngay, chờ ở cuối.
-        stopping = [*self.projectfile_jobs.stop_all(), *self.m4b_jobs.stop_all(), *self.mp3_jobs.stop_all()]
+        stopping = [*self.projectfile_jobs.stop_all(), *self.m4b_jobs.stop_all(), *self.mp3_jobs.stop_all(),
+                    *self.bookfile_jobs.stop_all(), *self.listen_exports.stop_all()]
         self._trash_sweeper.cancel()
         # Hết hạn "Hoàn tác" hay chưa, đóng app là cuốn vừa xoá vào Thùng rác - trừ cuốn Thùng rác không nhận trọn (Windows sẽ hỏi
         # "xoá hẳn", mà đóng app không được chờ ai bấm): nó ở lại chỗ chờ tới lần mở sau.
@@ -5329,15 +5332,35 @@ class Handler(BaseHTTPRequestHandler):
     def post_send_edits(self, _query: dict[str, list[str]], value: str) -> None:
         self._send_json(HTTPStatus.OK, self.app.send_remote_edits(value))
 
+    def post_progress_session(self, _query: dict[str, list[str]], value: str) -> None:
+        self.app._listenable(value)
+        body = self._body()
+        session = body.get("sessionId")
+        if not isinstance(session, str) or not 1 <= len(session) <= 100:
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Thiếu mã phiên nghe.")
+        try:
+            self.app.listening.begin_progress(value, session, _held_record(body))
+        except StalePlayback as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        except OSError as error:
+            raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Chưa mở được hồ sơ nghe. Bạn hãy thử lại.") from error
+        self._send_json(HTTPStatus.OK, {"ok": True})
+
     def post_progress(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
         self.app.sync_remote_state(value, wait=False)
         body = self._body()
-        state = self.app.listening.progress(
-            value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), float(body.get("duration", 0)),
-            record=_held_record(body),
-            anchor=body.get("anchor"),
-        )
+        try:
+            state = self.app.listening.progress(
+                value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), float(body.get("duration", 0)),
+                record=_held_record(body),
+                anchor=body.get("anchor"),
+                session_id=body.get("sessionId"), revision=int(body.get("revision", 0)),
+            )
+        except StalePlayback as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        except OSError as error:
+            raise ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Chưa lưu được chỗ nghe. Bạn hãy thử lại.") from error
         self._send_json(HTTPStatus.OK, state)
 
     def post_chapter_done(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
@@ -5533,6 +5556,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_voices(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.voices())
+
+    def get_opened_events(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.opened_events.pending())
+
+    def post_opened_ack(self, _query: dict[str, list[str]]) -> None:
+        self.app.opened_events.ack(str(self._body().get("eventId") or ""))
+        self._send_json(HTTPStatus.OK, {"ok": True})
 
     def get_preferences(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.preferences.get())
@@ -6010,6 +6040,8 @@ ROUTES: list[Route] = [
     ("DELETE", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.delete_readaloud_online),
     ("POST", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)/check"), Handler.post_readaloud_online_check),
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),
+    ("GET", re.compile(r"/api/host/opened"), Handler.get_opened_events),
+    ("POST", re.compile(r"/api/host/opened/ack"), Handler.post_opened_ack),
     ("PUT", re.compile(r"/api/preferences"), Handler.put_preferences),
     ("POST", re.compile(r"/api/book-templates"), Handler.post_book_templates),
     ("POST", re.compile(r"/api/scan"), Handler.post_scan),
@@ -6184,6 +6216,7 @@ ROUTES: list[Route] = [
     # Chỉ trên máy này (remote_studio không có): bỏ một cuốn nhập từ file .abook khỏi thư viện.
     ("DELETE", re.compile(LISTEN), Handler.delete_listen_book),
     ("POST", re.compile(LISTEN + r"/progress"), Handler.post_progress),
+    ("POST", re.compile(LISTEN + r"/progress/session"), Handler.post_progress_session),
     ("POST", re.compile(LISTEN + r"/chapters/(\d+)/done"), Handler.post_chapter_done),
     ("POST", re.compile(LISTEN + r"/finished"), Handler.post_finished),
     ("POST", re.compile(LISTEN + r"/rate"), Handler.post_rate),
