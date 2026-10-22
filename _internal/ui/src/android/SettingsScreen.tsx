@@ -59,7 +59,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3.5">
       <div className="min-w-0 flex-[1_1_12rem]">
         <div className="text-[0.9375rem] font-medium">{label}</div>
-        {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2">{hint}</div>}
+        {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
       </div>
       <div className="ml-auto max-w-full">{children}</div>
     </div>
@@ -109,7 +109,7 @@ export function AboutGroup({ version }: { version: string | null }) {
         trigger={
           <button type="button" className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left">
             <span className="min-w-0">
-              <span className="block text-[0.9375rem] font-medium">Thành phần bên thứ ba</span>
+              <span className="block text-[0.9375rem] font-medium [overflow-wrap:anywhere]">Thành phần bên thứ ba</span>
               <span className="mt-0.5 block text-xs leading-snug text-fg-2">Thư viện, giọng đọc và nhạc ABook dùng, cùng giấy phép của từng thứ.</span>
             </span>
             <ChevronRight className="size-5 shrink-0 text-fg-3" />

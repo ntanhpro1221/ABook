@@ -116,6 +116,7 @@ export async function syncSettings(): Promise<PlayerSettings> {
 
 export async function pushSettings(settings: PlayerSettings): Promise<void> {
   await EbookPlayer.configure({
+    theme: settings.theme,
     sleepExtendMinutes: settings.sleepExtendMinutes,
     sleepFadeSeconds: settings.sleepFadeSeconds,
     shakeToExtend: settings.shakeToExtend,
