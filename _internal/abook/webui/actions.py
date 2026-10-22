@@ -583,13 +583,24 @@ class Jobs:
         with self._lock:
             self._errors[str(project_root)] = message
 
-    def start(self, project_root: Path, on_done: Callable[[], None] | None = None) -> None:
+    def reserve(self, project_root: Path) -> bool:
+        """Nhận lượt trước khi chuẩn bị chạy; App giữ khoá hàng khi kiểm máy rảnh và gọi hàm này."""
         key = str(project_root)
         with self._lock:
             if key in self._starting:
-                return
+                return False
             self._starting[key] = time.time()
             self._errors.pop(key, None)
+            return True
+
+    def unreserve(self, project_root: Path) -> None:
+        with self._lock:
+            self._starting.pop(str(project_root), None)
+
+    def start(self, project_root: Path, on_done: Callable[[], None] | None = None, *, reserved: bool = False) -> None:
+        key = str(project_root)
+        if not reserved and not self.reserve(project_root):
+            return
 
         def work() -> None:
             try:
@@ -603,7 +614,11 @@ class Jobs:
                 if on_done:
                     on_done()
 
-        threading.Thread(target=work, name=f"start {project_root.name}", daemon=True).start()
+        try:
+            threading.Thread(target=work, name=f"start {project_root.name}", daemon=True).start()
+        except BaseException:
+            self.unreserve(project_root)
+            raise
 
     def stop(self, project_root: Path) -> None:
         self.runner.stop(project_root)

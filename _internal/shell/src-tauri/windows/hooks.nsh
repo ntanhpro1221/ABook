@@ -45,8 +45,11 @@ Var AbookProjAssociationBackup
 !macroend
 
 !macro NSIS_HOOK_PREUNINSTALL
-  ; Host Python nhúng của app (con của ABook.exe) - bộ cài của Tauri chỉ dừng ABook.exe.
-  !insertmacro ABOOK_STOP_PROCESSES_UNDER "$INSTDIR"
+  ; Host Python nhúng của app (con của ABook.exe) - bộ cài của Tauri chỉ dừng ABook.exe. CHỈ thư mục resources: cài cho
+  ; người dùng hiện tại thì $INSTDIR là %LOCALAPPDATA%\ABook, cũng là cha của Studio và dữ liệu người dùng. Dừng cả
+  ; $INSTDIR là giết worker Studio đang làm sách (nó sống ngoài app) mỗi khi chạy tay bộ cài bản mới ("gỡ trước khi cài") -
+  ; giữa pha phân tích là ra một quyển sách khác. Gỡ thật thì POSTUNINSTALL dừng Studio trước khi xoá.
+  !insertmacro ABOOK_STOP_PROCESSES_UNDER "$INSTDIR\resources"
 !macroend
 
 !macro NSIS_HOOK_POSTUNINSTALL
@@ -76,6 +79,7 @@ Var AbookProjAssociationBackup
       RMDir /r "$LOCALAPPDATA\ABook\Studio"
       RMDir /r "$LOCALAPPDATA\${BUNDLEID}"
       ${If} $DeleteAppDataCheckboxState = 1
+        !insertmacro ABOOK_STOP_PROCESSES_UNDER "$LOCALAPPDATA\ABook"
         RMDir /r "$LOCALAPPDATA\ABook"
       ${EndIf}
     ${EndIf}

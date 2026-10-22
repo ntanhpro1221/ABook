@@ -537,7 +537,7 @@ export function ProjectMenu({ book, rename = true, className }: { book: BookSumm
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content align="end" sideOffset={4} className="z-50 min-w-52 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-xl border border-line bg-panel p-1.5 shadow-float">
             {rename && (
               <>
                 <DropdownMenu.Item onSelect={() => setDialog("rename")} className={MENU_ITEM}>
@@ -841,7 +841,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content align="end" sideOffset={4} className="z-50 min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
             {chapter.playable && (
               <DropdownMenu.Item onSelect={onPlay} className={MENU_ITEM}>
                 <Play className="size-4" /> Nghe chương

@@ -18,6 +18,12 @@ class Cancelled(Exception):
     """Việc nền ném khi người dùng bấm Huỷ và nó dừng ở chỗ an toàn kế tiếp: lượt xuất kết thúc ở trạng thái "cancelled" (không phải lỗi)."""
 
 
+def join_until(threads: list[threading.Thread], deadline: float) -> None:
+    """Chờ các luồng xong, tới mốc `deadline` (time.monotonic) là thôi."""
+    for thread in threads:
+        thread.join(max(0.0, deadline - time.monotonic()))
+
+
 class BookFileJobs:
     """Mỗi cuốn một bản ghi: `state` idle | running | done | error | cancelled. `work()` trả kết quả của `post_bookfile` (file, folder, size,
     hoặc parts...) và ném `Exception` có lời cho người dùng khi hỏng."""
@@ -63,15 +69,18 @@ class BookFileJobs:
     def shutdown(self, timeout: float = 3.0) -> None:
         """App đóng: bảo mọi việc đang chạy dừng ở chỗ an toàn kế tiếp rồi chờ chúng dọn xong (file tạm), tổng cộng không quá `timeout` giây
         - đóng app không được treo vì một lượt xuất. Việc không có chỗ dừng trong ngần ấy giây thì bỏ lại (luồng nền chết cùng tiến trình)."""
+        join_until(self.stop_all(), time.monotonic() + timeout)
+
+    def stop_all(self) -> list[threading.Thread]:
+        """Bảo mọi việc đang chạy dừng ở chỗ an toàn kế tiếp, KHÔNG chờ; trả luồng của chúng để chờ (`join_until`). App đóng bảo mọi
+        loại việc dừng cùng lúc rồi chờ chung một hạn (server `App.close`)."""
         with self._lock:
             running = [key for key, state in self._state.items() if state.get("state") == "running"]
             stops = [self._stops[key] for key in running if key in self._stops]
             threads = [self._threads[key] for key in running if key in self._threads and self._threads[key].ident is not None]
         for stop in stops:
             stop.set()
-        deadline = time.monotonic() + timeout
-        for thread in threads:
-            thread.join(max(0.0, deadline - time.monotonic()))
+        return threads
 
     def cancelled(self, key: str) -> bool:
         """Việc đang chạy của `key` đã bị bảo dừng? (Lượt đã xong / đã huỷ thì không: cờ cũ không được dừng lượt đồng bộ sau đó.)"""
