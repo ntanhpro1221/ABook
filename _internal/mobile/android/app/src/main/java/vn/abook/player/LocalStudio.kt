@@ -439,7 +439,12 @@ object LocalStudio {
         val at = requestedAt(body)
         if (keys.isEmpty() || at <= 0) throw Api(400, "Thiếu quyết định cần hoàn tác")
         val mine = BookWishes.madeAt(dir, section, keys, at)
-        if (mine.isEmpty()) throw Api(409, "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác.")
+        if (mine.isEmpty()) {
+            // Đã gửi về máy giữ sách (gửi xong là gỡ khỏi lớp sửa): nhờ máy ấy rút đúng thao tác này, lần gửi kế mang đi.
+            val asked = EditsSync.retract(dir, section, keys, at)
+            if (asked.isNotEmpty()) return JSONObject().put("undone", asked.size).put("restored", false).put("sent", true)
+            throw Api(409, "Quyết định này đã được thay bằng một lựa chọn sau - không còn gì để hoàn tác.")
+        }
         val removed = BookWishes.withdraw(dir, section, mine.keys.toList(), at)
         return JSONObject().put("undone", removed.size).put("restored", false)
     }
@@ -706,16 +711,19 @@ object LocalStudio {
             if (seen != null && seen.has(stableId) && before != BookEdits.pyText(seen.opt(stableId))) elsewhere.put(stableId, before)
         }
         val asked = ArrayList<Pair<String, String>>()
+        val sent = ArrayList<String>()
         for (stableId in stableIds) {
             val found = index.get(stableId)
             if (verdict == "redo" && found != null && BookEdits.truthy(found.second.opt("textSha256"))) {
                 asked.add(stableId to BookEdits.pyText(found.second.opt("textSha256")))
             } else if (verdict != "redo") {
                 BookWishes.cancelRetake(dir, stableId)
+                if (!retakes.has(stableId)) sent.addAll(EditsSync.retract(dir, "retakes", listOf(stableId))) // đã gửi đi rồi: nhờ máy giữ sách rút
             }
         }
         if (asked.isNotEmpty()) BookWishes.requestRetakes(dir, asked, at)
         val reply = JSONObject().put("ok", true)
+        if (sent.isNotEmpty()) reply.put("sent", true)
         return withElsewhere(if (refs == null) reply else reply.put("lines", asked.size).put("requestedAt", at), elsewhere)
     }
 
