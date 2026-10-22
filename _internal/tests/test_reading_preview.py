@@ -429,6 +429,12 @@ class Studio:
     def outdated(self) -> list[str]:
         return list(self._outdated)
 
+    def stop(self) -> None:  # App.close bảo lượt cài dừng (soát a92 V2)
+        pass
+
+    def wait(self, timeout: float | None = None) -> None:
+        pass
+
 
 @pytest.fixture()
 def studio_app(tmp_path: Path, monkeypatch):

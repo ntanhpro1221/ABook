@@ -32,6 +32,7 @@ ASSET_FILES = {"cmudict.dict": b"hello HH AH0 L OW1\n", "voice_previews/adam.wav
 
 
 WORD_ALIGN_NAMES = [item.name for item in studio_setup.WORD_ALIGN_FILES]
+WHISPER_CHECKPOINT = "large-v3-turbo.pt"
 
 
 class FakeOllama(BaseHTTPRequestHandler):
@@ -99,6 +100,10 @@ def _setup(tmp_path: Path, ollama: str, commands: list[str], *, fail_on: str = "
         progress(item.size, item.size)
         if item.name == "studio-assets":
             return _zip_with(target, ASSET_FILES)
+        if item.name == WHISPER_CHECKPOINT:  # checkpoint Whisper: Studio tự tải bằng downloader có Range (soát a92 V3)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(b"gia:whisper")
+            return target
         if item.name in WORD_ALIGN_NAMES:  # model căn chữ: ba file lẻ, không nén
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(b"gia:" + item.name.encode())
@@ -107,7 +112,8 @@ def _setup(tmp_path: Path, ollama: str, commands: list[str], *, fail_on: str = "
         return _zip_with(target, {inner: b"exe"})
 
     setup = StudioSetup(tmp_path / "Studio", app, fetch=fetch, gpu=lambda: {"name": "Card thử", "memory": 8 << 30},
-                        ollama_address=ollama)
+                        size_of=lambda _url: 11, ollama_address=ollama)
+    setup._whisper_pin = lambda: f"https://example.invalid/models/{'0' * 64}/{WHISPER_CHECKPOINT}"  # type: ignore[method-assign]
     setup.fetched = fetched  # type: ignore[attr-defined]
     setup._probe_packages = lambda: []  # fake executables have no distribution metadata
     setup._run = _runner(setup, commands, fail_on)  # type: ignore[method-assign]
@@ -155,7 +161,7 @@ def test_the_studio_installs_step_by_step_and_resumes_where_it_stopped(tmp_path:
     status = setup.status()
     assert status["error"] is None and status["installed"] is True
     assert commands == ["Tải Whisper", "Tải model chấm chất lượng", "Kiểm tra lần cuối"]
-    assert setup.fetched == ["studio-assets", "uv", "git", "ollama", *WORD_ALIGN_NAMES], "không tải lại công cụ đã có"  # type: ignore[attr-defined]
+    assert setup.fetched == ["studio-assets", "uv", "git", "ollama", WHISPER_CHECKPOINT, WHISPER_CHECKPOINT, *WORD_ALIGN_NAMES], "không tải lại công cụ đã có (Whisper hai lần: lượt hỏng, rồi lượt tiếp - downloader thật thấy file đủ thì bỏ qua)"  # type: ignore[attr-defined]
     assert sorted(path.name for path in setup.word_align.iterdir()) == sorted(WORD_ALIGN_NAMES), "model căn chữ nằm đủ ba file ở runtime/models/wordalign"
     assert not list((setup.root / "downloads").glob("*.onnx")), "file đã tải được chuyển đi, không giữ hai bản"
     marker = json.loads((setup.runtime / ".setup_complete").read_text(encoding="utf-8"))

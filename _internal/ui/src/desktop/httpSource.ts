@@ -45,7 +45,9 @@ async function droppedItems(files: Promise<(Picked & { file: File })[]>): Promis
   if (!plan.groups.length) return items;
   const sending = toast.loading("Đang gửi file lên máy tính…");
   try {
-    return [...(await sendPlan(plan, () => undefined)).map(itemFromPath), ...items];
+    const result = await sendPlan(plan, () => undefined);
+    if (result.error) throw result.error;
+    return [...result.paths.map(itemFromPath), ...items];
   } finally {
     toast.dismiss(sending);
   }
