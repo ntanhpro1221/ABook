@@ -429,7 +429,7 @@ class App:
         # Loa / TV trong mạng nhà (DLNA - webui/cast.py, Google Cast - webui/gcast.py): hiện trong danh sách máy như điện
         # thoại, máy này phục vụ audio. ABOOK_CAST_DISCOVERY=0 tắt việc tìm cả hai (bài thử - tests/conftest.py - không gửi
         # multicast ra mạng người chạy).
-        self.cast = CastPlayers(self._cast_book, self._cast_audio, self._cast_save, cover=self._cast_cover,
+        self.cast = CastPlayers(self._cast_book, self._cast_audio, self._cast_save, cover=self._cast_cover, record=self._cast_record,
                                 find=lambda: cast_search() if _cast_discovery() else [],
                                 find_google=lambda: gcast_discover() if _cast_discovery() else [])
         self._remote_refreshed = 0.0
@@ -3145,9 +3145,12 @@ class App:
             return None
         return packages.chapter_file(book, chapter) if packages.is_package(book) else store.chapter_audio_path(book, chapter)
 
-    def _cast_save(self, value: str, chapter: int, seconds: float, duration: float) -> None:
-        self.listening.progress(value, chapter, seconds, duration)
+    def _cast_save(self, value: str, chapter: int, seconds: float, duration: float, record: str | None = None) -> None:
+        self.listening.progress(value, chapter, seconds, duration, record)  # hồ sơ chốt lúc load: đổi hồ sơ không kéo theo thiết bị
         self.sync_remote_state(value, wait=False)
+
+    def _cast_record(self, value: str) -> str | None:
+        return self.listening.active_record(value)
 
     def _cast_cover(self, value: str) -> Path | None:
         book = self.library.resolve_listenable(value)

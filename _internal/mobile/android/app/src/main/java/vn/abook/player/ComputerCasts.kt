@@ -25,6 +25,7 @@ object ComputerCasts : CastSource {
     private var seenAt = 0L // lượt hỏi cuối (được hay hỏng)
     private var failingSince = 0L // 0: lượt cuối trả lời được
     private val books = HashMap<String, List<CastChapter>>() // mã sách -> chương nghe được (gói sách của máy tính)
+    private var controlled = "" // loa / TV người nghe đang điều khiển: giữ qua Play/Pause, đổi khi họ chọn nơi khác ([choose]) hay phiên hết
 
     /**
      * RemotePlayers.all vừa hỏi xong: [renderers] là /sync/v1/cast của máy tính (null: không tới được lượt này). Có loa / TV
@@ -34,6 +35,9 @@ object ComputerCasts : CastSource {
         appContext = context.applicationContext
         if (record(renderers) != null) CastService.ensure(context)
     }
+
+    /** Người nghe vừa chọn "Phát trên…" loa / TV [renderer] (mã máy tính, không có tiền tố "cast:"): phiên media điều khiển nó. */
+    fun choose(renderer: String) = synchronized(lock) { controlled = renderer }
 
     /** Còn phiên máy tính cho phiên media không. */
     fun active(): Boolean = synchronized(lock) { entry != null }
@@ -81,10 +85,18 @@ object ComputerCasts : CastSource {
         synchronized(lock) { entry = null }
     }
 
-    /** Loa / TV đang có sách (đang phát trước). */
-    private fun pick(renderers: List<JSONObject>): JSONObject? =
-        renderers.filter { it.optJSONObject("state")?.optString("bookId").orEmpty().isNotEmpty() }
-            .sortedByDescending { it.optJSONObject("state")?.optBoolean("playing") == true }.firstOrNull()
+    /**
+     * Loa / TV đang có sách: cái người nghe đang điều khiển nếu nó còn sách (Tạm dừng nó không làm khung media nhảy sang loa khác
+     * còn đang phát), không thì cái đang phát trước.
+     */
+    private fun pick(renderers: List<JSONObject>): JSONObject? {
+        val busy = renderers.filter { it.optJSONObject("state")?.optString("bookId").orEmpty().isNotEmpty() }
+        return synchronized(lock) {
+            (busy.firstOrNull { it.optString("id") == controlled }
+                ?: busy.sortedByDescending { it.optJSONObject("state")?.optBoolean("playing") == true }.firstOrNull())
+                .also { controlled = it?.optString("id").orEmpty() }
+        }
+    }
 
     /** Chương nghe được của cuốn (để "chương trước / sau" có nghĩa): gói đã có trên điện thoại, không thì hỏi máy tính một lần. */
     private fun learn(bookId: String) {

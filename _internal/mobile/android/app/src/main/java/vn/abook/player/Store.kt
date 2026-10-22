@@ -611,6 +611,13 @@ object Store {
     @Synchronized
     fun hasRecord(record: String): Boolean = recordsBook().getJSONObject("records").has(record)
 
+    /** Hồ sơ [record] còn gắn với cuốn [bookId] (không đọc file trạng thái nào). */
+    private fun ownsRecord(bookId: String, record: String): Boolean {
+        val book = recordsBook()
+        val list = book.getJSONObject("links").optJSONObject(bookId)?.optJSONArray("records") ?: return false
+        return book.getJSONObject("records").has(record) && (0 until list.length()).any { list.optString(it) == record }
+    }
+
     @Synchronized
     fun state(id: String): JSONObject = knownActiveRecord(id)?.let(::recordState) ?: recordState(null)
 
@@ -723,9 +730,14 @@ object Store {
         return state
     }
 
+    /**
+     * Ghi chỗ nghe. [recordId]: hồ sơ phiên phát đã chốt lúc bắt đầu (loa / TV - [DlnaPlayers]) - lần lưu vẫn vào hồ sơ ấy dù người nghe
+     * vừa đổi hồ sơ đang dùng; hồ sơ không còn thuộc cuốn này (xoá, chuyển sách) thì bỏ lần lưu. null: hồ sơ đang dùng.
+     */
     @Synchronized
-    fun progress(id: String, chapterId: Int, seconds: Double, duration: Double, anchor: JSONObject? = null): JSONObject {
-        val state = state(id)
+    fun progress(id: String, chapterId: Int, seconds: Double, duration: Double, anchor: JSONObject? = null, recordId: String? = null): JSONObject {
+        val target = if (recordId == null) activeRecord(id) else recordId.takeIf { ownsRecord(id, it) } ?: return state(id)
+        val state = recordState(target)
         val at = now()
         state.put("last", JSONObject().put("chapterId", chapterId).put("seconds", seconds).put("at", at))
         vn.abook.player.readaloud.ReadingAnchor.validated(anchor)?.let { state.getJSONObject("last").put("anchor", it) }
@@ -737,7 +749,7 @@ object Store {
         record.put("at", at)
         chapters.put(chapterId.toString(), record)
         state.put("updatedAt", at)
-        save(id, state)
+        writeAtomic(recordFile(target), state.toString())
         return state
     }
 
