@@ -46,10 +46,6 @@ object LocalStudio {
     @Volatile
     var coverCodec: CoverCodec? = null
 
-    /** Đồng hồ (giây) - làm số phiên bản cho bìa; test đặt số cố định. */
-    @Volatile
-    var clock: () -> Long = { System.currentTimeMillis() / 1000 }
-
     /** Đồng hồ (giây, số thực) - dấu giờ của một ý muốn (`requestedAt`); test đặt đồng hồ chạy từng bước. Gọi ĐÚNG MỘT LẦN cho mỗi yêu cầu. */
     @Volatile
     var now: () -> Double = { System.currentTimeMillis() / 1000.0 }
@@ -236,7 +232,7 @@ object LocalStudio {
 
     private fun setCover(dir: java.io.File, raw: ByteArray): JSONObject {
         val codec = coverCodec ?: AndroidCoverCodec
-        return JSONObject().put("cover", BookEdits.setCover(dir, raw, clock(), codec))
+        return JSONObject().put("cover", BookEdits.setCover(dir, raw, codec))
     }
 
     /** POST /characters/rename {character, name}. */
