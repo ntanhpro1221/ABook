@@ -623,6 +623,11 @@ tiếp đúng chỗ khi cắm sạc. Tiến trình không chết, nên **tạm d
 /api/books/<id>/pause`, file `runtime/background/pause.request` gắn với lần chạy như `stop.request`).
 
 - "Tiếp tục" bấm lúc đang chạy pin = làm tiếp trên pin tới lần kế máy thấy sạc (`_pause_reason`); rút lần sau lại dừng.
+  Máy đang chạy pin đủ lâu để dừng (state `battery_pause`) thì "Tiếp tục" luôn là đồng ý đó, kể cả khi sách đang dừng vì nút
+  "Tạm dừng" hay "Chờ tôi duyệt"; bấm lần hai lúc sách đã chạy lại không làm mất nó (`_write_pause_request`, soát a88 V4/T1).
+- Máy không được ngủ khi sách đang chạy (soát a88 T6): supervisor gọi `SetThreadExecutionState(ES_CONTINUOUS | ES_SYSTEM_REQUIRED)`
+  (`power_source.keep_awake`) từ vòng chính của nó khi worker chạy thật, nhả khi tạm dừng / bấm Dừng / xong / supervisor chết
+  (luồng chết là Windows tự nhả). Không giữ màn hình sáng. Nơi khác Windows: không làm gì.
 - Tắt ở Cài đặt → Studio → "Tạm dừng khi rút sạc" (`pauseOnBattery` trong preferences.json - supervisor đọc thẳng mỗi 5
   giây, kể cả khi đã đóng cửa sổ app). Máy bàn (không pin) không bao giờ dừng.
 - Pin cạn khi đang tạm dừng: Windows ngủ đông ở 2%, tiến trình đang đứng sống qua được. Máy tắt hẳn thì lần chạy sau là

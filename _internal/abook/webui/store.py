@@ -1181,8 +1181,11 @@ def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> set[tup
     return kept
 
 
-def summarize(project_root: Path, *, running: bool = False, now: float | None = None) -> dict[str, Any]:
-    """Tóm tắt một cuốn cho thư viện và phần đầu trang sách."""
+def summarize(project_root: Path, *, running: bool = False, lease_after: float | None = None, now: float | None = None) -> dict[str, Any]:
+    """Tóm tắt một cuốn cho thư viện và phần đầu trang sách. `lease_after`: chỉ nhịp tim worker trong sổ MỚI HƠN mốc này (giây
+    epoch) mới tính là "đang chạy" - supervisor là nguồn của việc ấy: lượt chạy của nó còn dở (kể cả đã chết) thì mốc là vô cực,
+    đã kết thúc thì mốc là lúc kết thúc (nhịp tim cuối của worker vừa dừng không làm trang báo "đang chạy" thêm 120 giây); chưa từng
+    có supervisor (chạy bằng dòng lệnh) thì None và mọi nhịp tim còn mới đều tính (soát a88 V2)."""
     now = time.time() if now is None else now
     settings = read_settings(project_root)
     with closing(connect(project_root)) as connection:
@@ -1259,7 +1262,8 @@ def summarize(project_root: Path, *, running: bool = False, now: float | None = 
         overall = 1.0
     else:
         overall = ANALYSIS_WEIGHT * analysis_fraction + (1 - ANALYSIS_WEIGHT) * synthesis_fraction
-    active = running or (beat_age is not None and beat_age <= LEASE_FRESH_SECONDS and phase in humanize.WORKING_PHASES)
+    active = running or (beat_age is not None and beat_age <= LEASE_FRESH_SECONDS and phase in humanize.WORKING_PHASES
+                         and (lease_after is None or now - beat_age > lease_after))
     profile = str(settings.get("quality_profile") or "")
     return {
         "path": str(project_root),

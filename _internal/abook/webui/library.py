@@ -617,7 +617,7 @@ class Library:
             return project
         return self.find(value, self.packages())
 
-    def summary(self, project: Path, *, running: bool, starting: bool = False) -> dict[str, Any]:
+    def summary(self, project: Path, *, running: bool, starting: bool = False, lease_after: float | None = None) -> dict[str, Any]:
         # Cả mốc của overrides.json (yêu cầu mới của người nghe đổi "pendingChanges") và tên đặt lại - không chạm DB.
         stamp = (store.touched(project), _mtime(overrides_path(project)), _mtime(project / store.RUN_MARKER),
                  _mtime(project / store.TITLE_FILE))
@@ -627,7 +627,7 @@ class Library:
         if cached and cached[0] == stamp and not running and not cached[1].get("running") and not starting:
             result = dict(cached[1])
         else:
-            result = store.summarize(project, running=running)
+            result = store.summarize(project, running=running, lease_after=lease_after)
             with self._lock:
                 self._cache[key] = (stamp, result)
             result = dict(result)
