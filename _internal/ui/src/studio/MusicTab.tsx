@@ -477,7 +477,7 @@ function SceneMenu({
         <IconButton label="Thêm tuỳ chọn cho đoạn này" icon={MoreHorizontal} size="sm" disabled={disabled} className="data-[state=open]:bg-hover" />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+        <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
           <DropdownMenu.Item onSelect={onSilence} className={MENU_ITEM}>
             <VolumeX className="size-4" /> {scene.silenced ? "Cho đoạn này có nhạc" : "Để đoạn này im lặng"}
           </DropdownMenu.Item>
