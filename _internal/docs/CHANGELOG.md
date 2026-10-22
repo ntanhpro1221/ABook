@@ -9,6 +9,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Làm sách bằng nhiều tiến trình thu âm: nếu một tiến trình bị hệ thống tắt giữa chừng, lô đang thu không còn đứng chờ mãi - máy bỏ nhóm tiến trình ấy và thu lại các câu còn thiếu từng câu một, đúng giọng và đúng cách đọc đã định.
+- Studio báo “đã cài” dù model Whisper, model phân tích truyện, bộ đếm token hay model căn chữ đã bị xoá: nay trang Studio nói đúng phần nào mất, và “Sửa Studio” bật Ollama của Studio lên, kiểm thật rồi chỉ tải lại đúng phần ấy. Lỗi “model phân tích không sẵn sàng” phân biệt Ollama chưa chạy với Studio đã mất model.
+- Giọng ZeroTTS, Supertonic, VieNeu và model nghe nhạc đã tải nhưng một file bị cắt cụt hay hỏng không còn hiện “sẵn sàng”: nút ghi “Sửa giọng” và chỉ tải lại đúng file hỏng.
+- Xuất MP3 / M4B mà ổ đích hết chỗ hoặc không ghi được thì báo đúng ổ cần dọn hay đổi thư mục, thay vì bảo file âm thanh hay ảnh bìa hỏng; lời báo kỹ thuật của FFmpeg giữ trong Chi tiết.
+- Nhật ký phụ của lượt làm sách (events.jsonl, supervisor.log) bị phần mềm diệt virus giữ hay đĩa đầy không còn làm dừng cả lượt thu âm: máy thử lại, bỏ dòng nhật ký không ghi được, và trang sách báo bằng một dòng cảnh báo.
+- Lỗi “database or disk is full” và “disk free … GB” được nhận là thiếu chỗ trên ổ đĩa: trang sách nói ổ chứa thư viện còn bao nhiêu GB và cần giải phóng thêm.
 - Hộp “Đổi giọng” chọn và nghe thử được mọi giọng ZeroTTS và Supertonic (trước đây bấm vào là báo lỗi, nút nghe mẫu không phát). Giọng lạ gửi tới sách mở từ file `.abook` bị từ chối ngay kèm lý do, không còn được ghi nhận rồi lặng lẽ bỏ khi áp.
 - Tên giọng ZeroTTS và Supertonic hiện đúng tên (“Bảo Trang”, “Supertonic F1”) ở tab Nhân vật, dòng “Chờ áp dụng”, hộp “Áp dụng thay đổi” và hộp Gộp, thay vì mã nội bộ (“baotrang”, “F1”).
 - “Gỡ” một giọng đã tải (Supertonic) giờ hỏi trước: nói bao nhiêu cuốn trong thư viện đang dùng giọng ấy, tên vài cuốn, và bao nhiêu câu chưa thu sẽ không đọc được tới khi bạn tải lại hay đổi giọng. Bạn vẫn quyết gỡ hay giữ.
