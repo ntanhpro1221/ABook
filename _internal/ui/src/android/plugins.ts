@@ -1,5 +1,5 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
-import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession } from "@/listen/model";
+import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession, SeriesLink } from "@/listen/model";
 import type { PreparePlan, PrepareStatus } from "@/listen/prepareAhead";
 import type { MusicCredit } from "@/listen/musicBed";
 import type { RemoteSleep, RemoteSleepCommand } from "@/listen/sleep";
@@ -122,6 +122,9 @@ export interface EbookPlayerPlugin {
 export interface RemoteBook {
   audioVersion?: string;
   localAudioVersion?: string;
+  /** Dấu phần mô tả (tên, tác giả, người đọc, liên kết bộ, tên chương - sync.manifest `metaVersion`) trên máy tính và trong bản đã tải. */
+  metaVersion?: string;
+  localMetaVersion?: string;
   id: string;
   title: string;
   narrator: string;
@@ -252,6 +255,8 @@ export interface LocalBook {
   chapters: ManifestChapter[];
   /** File cả bộ (.abook phiên bản 3): các phần theo thứ tự. */
   parts?: BookPart[];
+  /** Phần nối tiếp của "Làm tiếp cuốn này": mã phần đầu + thứ tự phần (sync.manifest `series`); phần đầu và sách lẻ: null. */
+  series?: SeriesLink | null;
   samples: string[];
   /** Ảnh bìa thật tải về cùng gói (webui/covers.py), hoặc null. */
   cover?: { file: string; version: number; color: string; width: number; height: number } | null;
@@ -523,7 +528,7 @@ export interface EbookLibraryPlugin {
   /** Đưa cuốn vừa xoá về chỗ cũ; từ chối khi quá hạn (đã xoá hẳn) hay chỗ cũ đã có cuốn cùng mã. */
   undoDelete(options: { token: string }): Promise<void>;
   /** `bytes`: cả thư viện; `books`: cỡ từng cuốn trên máy (mã thư mục = mã cuốn). */
-  storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number }[] }>;
+  storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number; title?: string }[] }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor }): Promise<ListeningState>;
   saveReading(options: { id: string; chapterId: number; index: number; at?: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor; quote?: string; record?: string }): Promise<ListeningState>;
   setChapterDone(options: { id: string; chapterId: number; done: boolean }): Promise<ListeningState>;
