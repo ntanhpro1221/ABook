@@ -32,7 +32,7 @@ Var AbookProjAssociationBackup
 ; Gỡ là gỡ hết (chủ sách 28-09: "phụ thuộc nằm hoàn toàn bên trong app, gỡ thì gỡ hết"). Mọi thứ app tải thêm nằm trong
 ; %LOCALAPPDATA%\ABook\Studio (Python, thư viện, Ollama riêng + model, Git, cache) và bộ nhớ đệm WebView2 nằm trong
 ; %LOCALAPPDATA%\<mã app> - cả hai LUÔN xoá. Dữ liệu cá nhân (%LOCALAPPDATA%\ABook: chỗ đang nghe, dấu trang, thiết bị
-; đã ghép, tuỳ chọn) chỉ xoá khi người dùng tích ô "xoá dữ liệu" của bộ gỡ - gỡ nhầm rồi cài lại không mất chỗ đang nghe.
+; đã ghép, tuỳ chọn; cùng cách sắp cửa sổ ở %APPDATA%\<mã app>) chỉ xoá khi người dùng tích ô "xoá dữ liệu" của bộ gỡ - gỡ nhầm rồi cài lại không mất chỗ đang nghe.
 ; Thư viện sách (thư mục người dùng chọn) không bao giờ bị đụng.
 
 ; Dừng mọi tiến trình chạy TỪ một thư mục (file đang chạy thì không xoá được). Theo đường dẫn file chạy, không theo tên -
@@ -81,6 +81,8 @@ Var AbookProjAssociationBackup
       ${If} $DeleteAppDataCheckboxState = 1
         !insertmacro ABOOK_STOP_PROCESSES_UNDER "$LOCALAPPDATA\ABook"
         RMDir /r "$LOCALAPPDATA\ABook"
+        ; Kích thước, vị trí cửa sổ (tauri-plugin-window-state).
+        RMDir /r "$APPDATA\${BUNDLEID}"
       ${EndIf}
     ${EndIf}
   ${EndIf}
