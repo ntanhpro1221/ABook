@@ -147,20 +147,16 @@ export function useStart() {
   });
 }
 
-/** `paused` / `queued`: sách đang ở trạng thái nào lúc bấm - thông báo nói đúng điều xảy ra (soát UX 30-09: dừng một sách
- *  đang tạm dừng vẫn báo "dừng ở câu đang làm dở", bỏ xếp hàng cũng vậy). */
+/** `paused`: sách đang tạm dừng lúc bấm - thông báo nói đúng điều xảy ra (soát UX 30-09: dừng một sách đang tạm dừng vẫn báo
+ *  "dừng ở câu đang làm dở"). "Bỏ xếp hàng" KHÔNG đi qua đây: xem `useLeaveQueue`. */
 export function useStop() {
   const refresh = useRefresh();
   return useMutation({
     scope: { id: "start-stop" },
-    mutationFn: ({ id }: { id: string; paused?: boolean; queued?: boolean }) =>
+    mutationFn: ({ id }: { id: string; paused?: boolean }) =>
       api<BookSummary>(`/api/books/${id}/stop`, { method: "POST" }),
-    onSuccess: (_book, { id, paused, queued }) => {
+    onSuccess: (_book, { id, paused }) => {
       refresh(id);
-      if (queued) {
-        toast("Đã bỏ xếp hàng", { description: "Cuốn này không tự bắt đầu nữa." });
-        return;
-      }
       toast("Đang dừng", {
         description: paused
           ? "Sách dừng hẳn và nhả bộ nhớ card đồ hoạ; mọi thứ đã xong được giữ nguyên."
@@ -168,6 +164,24 @@ export function useStop() {
       });
     },
     onError: (error: Error) => toast.error("Không dừng được", { description: error.message }),
+  });
+}
+
+/** "Bỏ xếp hàng": lệnh riêng, máy chủ CHỈ bỏ khỏi hàng. Cuốn đã được trao lượt (màn cũ một nhịp) thì máy chủ trả 409 và không dừng gì -
+ *  dừng giữa pha phân tích là đổi quyển sách (soát a83 B1). Sau lỗi vẫn làm mới để nút đổi sang trạng thái thật. */
+export function useLeaveQueue() {
+  const refresh = useRefresh();
+  return useMutation({
+    scope: { id: "start-stop" },
+    mutationFn: ({ id }: { id: string }) => api<BookSummary>(`/api/books/${id}/dequeue`, { method: "POST" }),
+    onSuccess: (_book, { id }) => {
+      refresh(id);
+      toast("Đã bỏ xếp hàng", { description: "Cuốn này không tự bắt đầu nữa." });
+    },
+    onError: (error: Error, { id }) => {
+      refresh(id);
+      toast.error("Chưa bỏ xếp hàng được", { description: error.message });
+    },
   });
 }
 

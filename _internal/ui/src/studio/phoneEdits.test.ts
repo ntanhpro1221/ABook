@@ -24,3 +24,20 @@ describe("kể lần điện thoại gửi phần sửa về", () => {
     expect(describePush(push({}))).toContain("không có gì mới");
   });
 });
+
+describe("lời dưới toast Áp dụng", () => {
+  it("sách đang chạy: nói máy tự áp từ chương sau, không bảo bấm nút không có", async () => {
+    const { applyNote } = await import("./PhoneEdits");
+    const { SENTENCE } = await import("./decisions");
+    const text = applyNote({ skipped: 0, held: 0 }, SENTENCE.running);
+    expect(text).toContain("từ chương sau");
+    expect(text).not.toContain("Áp dụng thay đổi");
+  });
+
+  it("sách đã xong: vẫn chỉ nút Áp dụng thay đổi; việc bỏ qua và việc giữ lại được kể", async () => {
+    const { applyNote } = await import("./PhoneEdits");
+    const { SENTENCE } = await import("./decisions");
+    expect(applyNote({ skipped: 0, held: 0 }, SENTENCE.done)).toContain("Áp dụng thay đổi");
+    expect(applyNote({ skipped: 2, held: 1 }, SENTENCE.done)).toBe("2 việc không còn khớp với sách nên bị bỏ qua. 1 việc máy này đã đổi khác sau đó vẫn chờ bạn chọn từng việc.");
+  });
+});

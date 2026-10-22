@@ -33,8 +33,8 @@ from typing import Any, Callable
 
 from .. import aliases as alias_book
 from .. import listener_overrides as overrides
-from ..io_utils import atomic_write_json
-from . import book_edits, humanize, store
+from ..io_utils import atomic_write_json, project_write_lock
+from . import book_edits, humanize, notices, store
 from .book_edits import EditsError
 
 SECTIONS = ("pronunciations", "speakers", "lines", "voices", "retakes")
@@ -731,9 +731,19 @@ def newer_here(project: Path, wishes: dict[str, Any]) -> dict[tuple[str, str], d
     return out
 
 
+def guard_overrides(project: Path) -> None:
+    """Gọi TRƯỚC mọi đọc-sửa-ghi overrides.json của Studio / gói điện thoại. `listener_overrides.read_overrides` coi lỗi đọc là "chưa có
+    yêu cầu nào" (đúng cho dây chuyền đọc), nên lần ghi kế sẽ ĐÈ mất mọi yêu cầu cũ khi file chỉ tạm bị chương trình khác giữ (soát a83 B2).
+    Ở đây: file có mà không đọc được -> thử lại vài giây rồi `notices.Unreadable` (người gọi trả 503, không ghi gì); file hỏng -> giữ bản
+    hỏng cạnh nó rồi mới để ghi file mới."""
+    notices.read_json(overrides.overrides_path(project), "Danh sách yêu cầu của cuốn này", lambda data: isinstance(data, dict))
+
+
 def fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int]:
-    # Giữ chỗ biên nhận và ghi overrides dưới cùng khoá với các đường sửa sách.
-    with book_edits._LOCK:
+    # Giữ chỗ biên nhận và ghi overrides dưới cùng khoá với các đường sửa sách VÀ với các nút Studio (khoá ghi của dự án, ngoài cùng:
+    # `request_*` đọc-sửa-ghi cả overrides.json, hai khoá khác nhau thì lần ghi sau nuốt lần ghi trước - soát a83 B3).
+    with project_write_lock(project), book_edits._LOCK:
+        guard_overrides(project)
         return _fold(project, wishes, now=now)
 
 
