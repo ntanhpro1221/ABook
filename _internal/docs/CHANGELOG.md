@@ -24,6 +24,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nếu không ghi được trạng thái cài Studio, app vẫn hiện lỗi và nhờ bạn kiểm tra chỗ trống, quyền ghi rồi bấm Cài tiếp.
 - Khi đường dẫn của bạn có dấu nháy đơn hay ký tự đặc biệt, bộ gỡ truyền nguyên đường dẫn cho PowerShell và báo lỗi nếu không dừng được tiến trình.
 
+- Khi bạn gửi gói sửa lớn qua mạng chậm, máy đã ghép có đủ thời gian gửi thay vì bị ngắt sau 30 giây.
+- Khi bạn vừa nghe qua mạng vừa tải bìa và đồng bộ, app nhận nhiều kết nối hơn và tự thử lại lượt đọc khi máy kia tạm bận, giảm lỗi ngắt quãng.
+- File sách hoặc dự án có mục nhận diện lớn bất thường bị từ chối trước khi đọc vào bộ nhớ, giúp bạn mở file an toàn trên cả máy tính và điện thoại.
+- Khi bạn ghép máy hoặc đồng bộ, dữ liệu trả về quá lớn hay JSON lồng quá sâu bị từ chối sớm, tránh làm app hết bộ nhớ.
+- Khi bạn tải sách từ máy khác, app dừng ngay nếu dữ liệu vượt cỡ đã báo hoặc giới hạn tải, kiểm chỗ trống trong lúc tải và giữ nguyên file cũ khi lỗi.
+- Khi bạn mở Đọc theo cùng lúc trình phát tải chữ của chương, điện thoại không còn lưu nhầm file đang ghi dở; tải bị ngắt vẫn giữ bản cũ đầy đủ.
+- Nếu danh sách máy đã ghép trên điện thoại bị hỏng hoặc tạm thời không đọc được, app giữ dữ liệu cũ và báo bạn thay vì ghi đè bằng danh sách rỗng.
+- Đường dẫn trong sách từ máy đã ghép không còn có thể ghi sang thư mục sách khác của bạn trên điện thoại.
+- Khi bạn mở sách từ máy đã ghép, đường dẫn lạ trong sách bị từ chối trước khi máy tính dò file hay truy cập thư mục mạng.
+- Khi bạn tải sách từ máy đã ghép, mã sách không hợp lệ bị từ chối trước khi ghi vào thư viện điện thoại.
 - Một file sách bạn bè gửi mà thông tin bên trong sai kiểu (thời lượng, số chương, phần...) giờ bị từ chối ngay lúc mở, kèm lời nhờ xin người gửi gửi lại, thay vì làm cả thư viện nghe không hiện được; có một cuốn hỏng thì các cuốn còn lại vẫn hiện bình thường.
 - File sách bị nén bất thường (một mục nhỏ xíu giải ra hàng trăm MB) bị từ chối trước khi chép vào ổ đĩa của bạn, trên cả máy tính và điện thoại.
 - Khi bạn mở cùng một file sách hai lần liền, lượt sau báo cuốn đã có thay vì báo lỗi quyền ghi sai.

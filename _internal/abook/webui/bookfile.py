@@ -684,7 +684,7 @@ class BookFile:
         infos = self._zip.infolist()
         if not infos or infos[0].filename != "mimetype" or infos[0].compress_type != zipfile.ZIP_STORED:
             raise BookFileError("Đây không phải file sách của app.")
-        if self._zip.read("mimetype").decode("ascii", "replace").strip() != MIMETYPE:
+        if not exact_mime(self._zip, infos[0], MIMETYPE):
             raise BookFileError("Đây không phải file sách của app.")
         if len(infos) > MAX_ENTRIES:
             raise BookFileError("File sách có quá nhiều mục.")
@@ -836,6 +836,14 @@ def check_expansion(infos: Sequence[zipfile.ZipInfo], error: type[Exception], *,
                 text and not media and size >= _TEXT_FLOOR and size > packed * TEXT_RATIO):
             raise error(f"File này có mục nén bất thường ({info.filename}) - có thể là file độc hoặc hỏng. "
                         "Bạn hãy xin người gửi gửi lại.")
+
+
+def exact_mime(archive: zipfile.ZipFile, info: zipfile.ZipInfo, mime: str) -> bool:
+    expected = mime.encode("ascii")
+    if info.file_size != len(expected):
+        return False
+    with archive.open(info) as source:
+        return source.read(len(expected) + 1) == expected
 
 
 def check_distinct(names: Sequence[str], error: type[Exception]) -> None:

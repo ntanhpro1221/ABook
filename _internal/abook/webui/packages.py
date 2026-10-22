@@ -25,6 +25,7 @@ from . import book_edits, covers, listing_cache, project_views, store
 from .fingerprints import Fingerprints, base_name, identity_prints, is_text_identity
 from .listen_view import FORMAT
 from .listening import HEAVY_KEYS, book_progress, text_book_progress
+from .peer_paths import safe_relative
 
 TEXT_STATE = "text"  # = bookfile.TEXT_STATE
 MANIFEST = "book.json"  # = bookfile.MANIFEST (bookfile nhập library, library nhập module này - nên không nhập ở đây)
@@ -205,7 +206,7 @@ def _locator(root: Path) -> store.AudioLocator:
 
 def _inside(root: Path, relative: Any) -> Path | None:
     """Đường dẫn trong gói - tên lấy từ `book.json`, nên không cho nó trỏ ra ngoài thư mục của cuốn."""
-    if not isinstance(relative, str) or not relative:
+    if not safe_relative(relative):
         return None
     locator = _locator(Path(root))
     candidate, is_file = locator.probe(locator.root / relative)
