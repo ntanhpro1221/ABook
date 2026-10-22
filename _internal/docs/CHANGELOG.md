@@ -9,6 +9,20 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Trên máy tính, chỗ nghe của bạn chỉ được báo đã lưu sau khi ghi thành công; nếu chưa ghi được, app giữ bản chờ để thử lại và nói rõ lỗi.
+- Khi bạn nghe cùng một cuốn ở nhiều tab hoặc cửa sổ, phiên cũ không còn ghi đè chỗ nghe của phiên mới.
+- Khi bạn bấm chương trước / chương sau lúc đang dừng trên máy tính, app lưu chương mới ngay, máy khác mở sách thấy đúng chương ấy.
+- Khi bạn tua lúc đang dừng hoặc đóng trang nghe, app gửi chỗ mới ngay; khi đang phát, app cũng lưu theo nhịp riêng dù sự kiện thời gian đến chậm.
+- Khi bạn đổi sách hoặc hồ sơ nghe trên máy tính, lịch sử và thông báo “Quay lại chỗ cũ” của cuốn trước được gỡ.
+- Khi bạn đóng app trên máy tính, cả lượt xuất file sách và lượt tạo sách nói từ sách chữ đều nhận yêu cầu huỷ trong cùng hạn đóng app.
+- Nếu máy tính từ chối phát tiếng, bạn nhận được lời báo lỗi và có thể bấm Phát để thử lại.
+- Khi bạn hẹn giờ ngủ trên máy tính, cả giọng đọc lẫn nhạc nền cùng nhỏ dần và trở lại âm lượng cũ khi bạn gia hạn hoặc huỷ.
+- Hẹn giờ phút trên máy tính chỉ tính lúc tiếng đang tiến, nên bạn không mất thời gian nghe trong lúc chờ dữ liệu hoặc khi máy ngủ mà không phát tiếng.
+- Khi bạn bấm Tạm dừng trên máy tính, lượt kiểm tra chỗ nghe hoặc chờ máy nguồn quay lại không còn tự phát sau đó.
+- Khi bạn nghe sách chữ trên máy tính, thẻ media hệ điều hành nhận đúng tên sách và chương; đóng trình phát sẽ gỡ tên sách cũ.
+- Giọng đọc mặc định bạn chọn trên máy tính được nhớ qua các lần mở lại app, kể cả khi địa chỉ cục bộ đổi cổng.
+- Khi bạn nghe sách từ thiết bị khác trên máy tính và tải chương bị đứt, lần thử lại tiếp tục phần đã tải nếu sách có ghi dung lượng chương.
+- Khi bạn mở file sách lúc trang máy tính còn đang khởi động hoặc nạp lại, kết quả được giữ tới khi trang sẵn sàng để mở sách hoặc báo lỗi cho bạn.
 - Trên điện thoại màn nhỏ, menu "…" của trang sách không còn bị cắt mất các mục cuối ("Xuất sách nói (M4B)…", "Xoá khỏi điện thoại…"): menu nào dài hơn chỗ còn trên màn thì cuộn được, trên cả điện thoại lẫn máy tính.
 - Khi bạn đóng app lúc có sách đang xếp hàng chờ làm (kể cả các tập sau của "Tạo nhiều tập"), hàng chờ vẫn còn khi bạn mở lại, kể cả khi app bị tắt ngang lúc chuẩn bị chạy cuốn kế; các cuốn tự bắt đầu lần lượt khi cuốn đang chạy xong. Bạn bấm chạy cuốn khác hay bỏ cuốn khỏi hàng đúng lúc chuyển lượt cũng không làm hai cuốn tự chạy cùng lúc hoặc chạy cuốn vừa bỏ; cuốn bạn đã xoá thì tự ra khỏi hàng.
 - Khi bạn nghe tiếp chương đọc to sau khi app bị đóng hoặc bộ đệm bị dọn, app nhớ đúng đoạn và chữ đang nghe nếu văn bản chương còn khớp.
