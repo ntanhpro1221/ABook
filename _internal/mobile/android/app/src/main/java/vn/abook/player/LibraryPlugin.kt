@@ -71,6 +71,7 @@ class LibraryPlugin : Plugin() {
     override fun load() {
         val musicStore = DeviceMusic.store(context)
         LocalStudio.musicStore = musicStore
+        VoiceLabels.labels = VoiceLabels.load(context)
         LocalStudio.catalog = DeviceMusic.catalog(context)
         // Bộ phân tích nhạc: "Gói nhạc" (model + thư viện ONNX Runtime) tải khi người dùng bấm (không bao giờ tự tải); đã có từ lần trước thì cắm luôn, ở luồng nền.
         val abi = OrtRuntime.deviceAbi()

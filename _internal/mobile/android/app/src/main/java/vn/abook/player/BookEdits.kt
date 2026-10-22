@@ -1002,11 +1002,11 @@ object BookEdits {
         return readObject(inside(folder, castName(book))) ?: JSONObject().put("characters", JSONArray()).put("extras", JSONArray())
     }
 
-    /** Dàn nhân vật như người nghe thấy (tên đã đổi, chương đầu theo tên chương mới). */
+    /** Dàn nhân vật như người nghe thấy (tên đã đổi, chương đầu theo tên chương mới, tên giọng máy khác - `packages.cast`). */
     fun cast(folder: File, book: JSONObject): JSONObject {
         val raw = rawCast(folder, book)
         val edits = load(folder)
-        return if (isEmpty(edits)) raw else applyCast(raw, edits, book)
+        return VoiceLabels.labelCast(if (isEmpty(edits)) raw else applyCast(raw, edits, book))
     }
 
     /** Chữ đọc theo của một chương đã qua lớp sửa; null khi chương hay file không có. */

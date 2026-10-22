@@ -1,0 +1,216 @@
+{
+ "volatile": [
+  "color",
+  "version",
+  "requestedAt"
+ ],
+ "steps": [
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI",
+    "preset": "baotrang"
+   },
+   "status": 200,
+   "response": {
+    "character": "HEIDI",
+    "preset": "baotrang",
+    "gender": "",
+    "avoid": "",
+    "requestedAt": 1792693055.4275205
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/cast",
+   "status": 200,
+   "response": {
+    "narrator": {
+     "voice": "Đức Trí",
+     "lines": 4,
+     "seconds": 7.0,
+     "profile": {
+      "key": "narrator",
+      "preset": "Đức Trí",
+      "tone": ""
+     }
+    },
+    "characters": [
+     {
+      "name": "HEIDI",
+      "displayName": "Hây-đi",
+      "originalName": "Heidi",
+      "gender": "Nữ",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 2.5,
+      "recorded": 0,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": null,
+      "firstChapter": "Chương 646",
+      "pendingVoice": {
+       "preset": "baotrang",
+       "gender": "",
+       "label": "Bảo Trang"
+      }
+     },
+     {
+      "name": "LUCIEN",
+      "displayName": "Lucien",
+      "gender": "Nam",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 4.0,
+      "recorded": 1,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": 3,
+      "firstChapter": "Chương 646",
+      "pendingVoice": null
+     }
+    ],
+    "extras": [],
+    "carried": []
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [
+     {
+      "kind": "voice",
+      "label": "Giọng của Hây-đi: Bảo Trang",
+      "lines": 0,
+      "section": "voices",
+      "key": "HEIDI",
+      "requestedAt": 1792693055.4275205
+     }
+    ],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  },
+  {
+   "method": "POST",
+   "path": "/voice",
+   "body": {
+    "character": "HEIDI",
+    "preset": "F1",
+    "seen": 0
+   },
+   "status": 200,
+   "response": {
+    "character": "HEIDI",
+    "preset": "F1",
+    "gender": "",
+    "avoid": "",
+    "requestedAt": 1792693055.462223,
+    "elsewhere": {
+     "voice": "Bảo Trang",
+     "gender": ""
+    }
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/cast",
+   "status": 200,
+   "response": {
+    "narrator": {
+     "voice": "Đức Trí",
+     "lines": 4,
+     "seconds": 7.0,
+     "profile": {
+      "key": "narrator",
+      "preset": "Đức Trí",
+      "tone": ""
+     }
+    },
+    "characters": [
+     {
+      "name": "HEIDI",
+      "displayName": "Hây-đi",
+      "originalName": "Heidi",
+      "gender": "Nữ",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 2.5,
+      "recorded": 0,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": null,
+      "firstChapter": "Chương 646",
+      "pendingVoice": {
+       "preset": "F1",
+       "gender": "",
+       "label": "Supertonic F1"
+      }
+     },
+     {
+      "name": "LUCIEN",
+      "displayName": "Lucien",
+      "gender": "Nam",
+      "age": "Thanh niên",
+      "lines": 1,
+      "seconds": 4.0,
+      "recorded": 1,
+      "voice": {
+       "key": "preset_thanh_binh_f087_p+00",
+       "preset": "Thanh Bình",
+       "tone": "trầm hẳn"
+      },
+      "sampleId": 3,
+      "firstChapter": "Chương 646",
+      "pendingVoice": null
+     }
+    ],
+    "extras": [],
+    "carried": []
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/pending-changes",
+   "status": 200,
+   "response": {
+    "items": [
+     {
+      "kind": "voice",
+      "label": "Giọng của Hây-đi: Supertonic F1",
+      "lines": 0,
+      "section": "voices",
+      "key": "HEIDI",
+      "requestedAt": 1792693055.462223
+     }
+    ],
+    "lines": 0,
+    "chapters": [],
+    "seconds": 0.0
+   }
+  },
+  {
+   "method": "GET",
+   "path": "/edits",
+   "status": 200,
+   "response": {
+    "applied": 0,
+    "waiting": 0,
+    "wishes": 1
+   }
+  }
+ ]
+}
