@@ -979,9 +979,9 @@ def exchange_state(manifest: dict[str, Any], state: dict[str, Any], *, timeout: 
     entry = _COMPUTERS.get(remote["computer"]) if remote and _COMPUTERS is not None else None
     if entry is None:
         return None
-    body = {key: value for key, value in state.items() if key not in ("night", "sessions")}
+    # Cả phiên nghe và đêm nghe, như điện thoại (Store.kt): máy kia gộp theo id, thống kê nghe hai máy khớp nhau.
     try:
-        reply = json.loads(_request(_base(entry), "POST", f"/sync/v1/books/{remote['book']}/state", entry["token"], body,
+        reply = json.loads(_request(_base(entry), "POST", f"/sync/v1/books/{remote['book']}/state", entry["token"], state,
                                     timeout=timeout).decode("utf-8"))
     except (RemoteError, ValueError):
         return None

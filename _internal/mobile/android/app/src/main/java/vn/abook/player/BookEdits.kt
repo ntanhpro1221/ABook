@@ -1092,7 +1092,7 @@ object BookEdits {
     /** Bỏ bìa: sách dùng bìa vẽ từ tên (kể cả khi lớp sách có ảnh bìa). */
     fun removeCover(folder: File) = synchronized(lock) {
         val edits = load(folder)
-        edits.put("cover", JSONObject.NULL)
+        if (File(folder, "cover.jpg").isFile) edits.put("cover", JSONObject.NULL) else edits.remove("cover")
         write(folder, edits)
         File(folder, EDITS_COVER).delete() // sau khi JSON mới đã ghi: ghi hỏng thì JSON cũ vẫn có ảnh nó trỏ tới
         Unit

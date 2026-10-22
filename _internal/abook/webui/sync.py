@@ -1137,7 +1137,11 @@ class SyncHandler(BaseHTTPRequestHandler):
             elif method == "POST" and match.group(2) == "state":
                 body = self._body()
                 record = body.get("record")
-                state = trusted_state({key: value for key, value in body.items() if key not in SYNC_KEYS}, self.app.chapter_lengths(project))
+                # "deleted" vừa là cờ trong lời đáp vừa là bia mộ dấu trang trong trạng thái: dạng dict là bia mộ, giữ lại
+                # (Store.kt cũng giữ như thế) - bỏ đi thì dấu trang xoá trên điện thoại sống lại ở đây.
+                state = trusted_state({key: value for key, value in body.items()
+                                       if key not in SYNC_KEYS or (key == "deleted" and isinstance(value, dict))},
+                                      self.app.chapter_lengths(project))
                 if isinstance(record, str) and RECORD_ID.fullmatch(record):
                     # điện thoại biết hồ sơ: gộp đúng hồ sơ ấy (webui/listening.py merge_record)
                     deleted = body.get("deletedRecords")

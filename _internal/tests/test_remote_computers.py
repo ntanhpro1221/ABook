@@ -87,6 +87,13 @@ def test_the_place_you_are_listening_travels_both_ways_between_computers(library
         other_listening.progress(remote_id, chapter, 7.0, 9.7)
         view = app.listen_book(book["id"])
         assert view["state"]["last"]["seconds"] == 7.0, "mở sách ở máy này thấy chỗ vừa nghe ở máy kia"
+
+        # Phiên nghe cũng đi hai chiều như với điện thoại: thống kê nghe hai máy khớp nhau.
+        app.listening.add_session(book["id"], {"id": "phien-nay", "device": "Máy này", "listened": 30})
+        other_listening.add_session(remote_id, {"id": "phien-kia", "device": "Máy kia", "listened": 40})
+        app.sync_remote_state(book["id"], wait=True)
+        assert {item["id"] for item in other_listening.sessions(remote_id)} == {"phien-nay", "phien-kia"}
+        assert {item["id"] for item in app.listening.sessions(book["id"])} == {"phien-nay", "phien-kia"}
     finally:
         other.stop()
 

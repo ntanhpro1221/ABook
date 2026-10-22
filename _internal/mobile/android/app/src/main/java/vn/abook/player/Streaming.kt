@@ -142,6 +142,7 @@ object Streaming {
         if (peer != null) manifest.put("id", id).put("source", peer).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, peer))
         // Gói đổi (thêm/thu lại chương, đổi bìa): bỏ văn bản và dàn nhân vật đã cất để lần đọc sau lấy bản mới.
         val previous = Store.streamManifest(id)
+        StreamRefresh.invalidateCover(Store.bookDir(id), previous, manifest)
         if (previous != null && previous.optString("version") != manifest.optString("version")) {
             File(Store.bookDir(id), "scripts").deleteRecursively()
             File(Store.bookDir(id), "cast.json").delete()

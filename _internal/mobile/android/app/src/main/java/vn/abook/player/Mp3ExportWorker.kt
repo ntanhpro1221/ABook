@@ -193,11 +193,11 @@ object Mp3Exports {
 class SafDestination(private val resolver: ContentResolver, private val tree: Uri, private val treeName: String) : Mp3Export.Destination {
     override fun folder(name: String): Mp3Export.Folder {
         val root = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
-        val existing = children(resolver, tree, root)[name]?.takeIf { it.second == DocumentsContract.Document.MIME_TYPE_DIR }
-        val dir = existing?.let { DocumentsContract.buildDocumentUriUsingTree(tree, it.first) }
-            ?: DocumentsContract.createDocument(resolver, root, DocumentsContract.Document.MIME_TYPE_DIR, name)
+        val existing = children(resolver, tree, root)
+        val fresh = Mp3Export.freshFolderName(name) { existing.containsKey(it) }
+        val dir = DocumentsContract.createDocument(resolver, root, DocumentsContract.Document.MIME_TYPE_DIR, fresh)
             ?: throw Mp3Export.Refused("Không tạo được thư mục trong chỗ đã chọn")
-        return SafFolder(resolver, tree, dir, "$treeName/$name")
+        return SafFolder(resolver, tree, dir, "$treeName/$fresh")
     }
 
     companion object {

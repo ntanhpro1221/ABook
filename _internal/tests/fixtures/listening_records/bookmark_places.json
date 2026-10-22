@@ -1,0 +1,10 @@
+[
+  {"name": "within_five_seconds", "old": {"seconds": 64}, "new": {"seconds": 67}, "same": true},
+  {"name": "edge_five_seconds", "old": {"seconds": 64}, "new": {"seconds": 69}, "same": true},
+  {"name": "outside_five_seconds", "old": {"seconds": 64}, "new": {"seconds": 69.1}, "same": false},
+  {"name": "player_after_sentence", "old": {"seconds": 64, "index": 7}, "new": {"seconds": 67}, "same": true},
+  {"name": "sentence_after_player", "old": {"seconds": 64}, "new": {"seconds": 64, "index": 7}, "same": false},
+  {"name": "same_sentence_other_time", "old": {"seconds": 64, "index": 7}, "new": {"seconds": 80, "index": 7}, "same": true},
+  {"name": "different_sentence_same_time", "old": {"seconds": 0, "index": 7}, "new": {"seconds": 0, "index": 8}, "same": false},
+  {"name": "other_chapter", "old": {"seconds": 64, "chapterId": 1}, "new": {"seconds": 64, "chapterId": 2}, "same": false}
+]
