@@ -235,8 +235,8 @@ def test_many_deletes_share_one_sweep_timer_and_the_earliest_deadline_wins() -> 
     swept.clear()
     done.clear()
     again = SweepTimer(sweep)
-    for root in (first, first, second):
-        again.schedule(root, 0.05)
+    for root in (first, first, second):  # hạn 0,5 s: hạn 0,05 s nổ giữa hai lần hẹn khi máy bận (bộ test đầy đủ) -> dọn `first` hai lần
+        again.schedule(root, 0.5)
     assert done.wait(2), "hai thư viện khác nhau, mỗi cái dọn một lần dù xoá nhiều lần"
     time.sleep(0.1)
     assert sorted(swept) == [first, second] and again.pending() == 0
