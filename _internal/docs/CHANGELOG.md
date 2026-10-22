@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Sách bạn đã tải trên điện thoại nhận được bản thu sửa, kể cả khi file mới cùng dung lượng; chỉ chương đổi cần tải lại. Nhập lại file `.abook` cập nhật bản thu và giữ chỉnh sửa, chỗ nghe của bạn; file cũ hơn sẽ hỏi trước khi thay.
+- Sau khi bạn sửa và thu lại, mục Xuất nhắc những bản MP3, M4B hay `.abook` đã cũ để bạn thay bản đã chép hoặc gửi. Bạn có thể chỉ xuất lại các chương MP3 đã đổi; M4B cần dựng lại cả file.
+
 ### Sửa lỗi
 
 - Câu mà máy nghe lại không kiểm được (quá ngắn, hay máy nghe ra một câu không thể có thật) giờ hiện ở nhóm “Chưa kiểm được” ngay trong “Cần nghe lại”, kèm lời nhờ bạn nghe bằng tai, và không còn hiện một đoạn “máy nghe được” bịa ra.

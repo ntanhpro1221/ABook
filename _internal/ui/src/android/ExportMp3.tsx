@@ -25,10 +25,23 @@ function showProgress(book: ListenBook, folder: string, progress: string, fracti
 }
 
 /** Bắt đầu xuất; `pick`: hỏi lại chỗ lưu (lượt đang chạy của cuốn này được thay bằng lượt mới). */
-async function exportMp3(book: ListenBook, pick = false) {
+export async function exportMp3(book: ListenBook, pick = false, chapterIds?: number[]) {
   try {
+    if (chapterIds === undefined) {
+      const history = await EbookLibrary.exportHistory({ bookId: book.id }).catch(() => ({ exports: [] }));
+      const changed = [...new Set(history.exports.filter((item) => item.kind === "mp3").flatMap((item) => item.changed))];
+      if (changed.length) {
+        toast("Bản MP3 bạn đã xuất có chương đã đổi", {
+          description: "Bạn muốn xuất riêng các chương đã đổi hay cả cuốn?", duration: Infinity,
+          action: { label: `Chỉ ${changed.length} chương đổi`, onClick: () => void exportMp3(book, pick, changed) },
+          cancel: { label: "Xuất cả cuốn", onClick: () => void exportMp3(book, pick, []) },
+        });
+        return;
+      }
+    }
     // Như máy tính: bìa tự vẽ chỉ dùng khi sách không có ảnh bìa thật.
-    const result = await EbookLibrary.exportMp3({ bookId: book.id, cover: book.cover ? undefined : coverArtwork(book.title), pick });
+    const result = await EbookLibrary.exportMp3({ bookId: book.id, cover: book.cover ? undefined : coverArtwork(book.title), pick,
+      ...(chapterIds?.length ? { chapterIds } : {}) });
     if (!result.started || !result.run) return;
     const folder = result.folder ?? "";
     runs.set(book.id, { run: result.run, folder, book });
@@ -39,10 +52,10 @@ async function exportMp3(book: ListenBook, pick = false) {
 }
 
 /** Lời của thông báo "xong": nói chỗ lưu (thư mục) trước, rồi mới tới lưu ý còn chương chưa làm xong. */
-export function finishedToast(event: Pick<Mp3ExportEvent, "files" | "chaptersTotal" | "folder" | "uri">): { title: string; description: string; uri?: string } {
+export function finishedToast(event: Pick<Mp3ExportEvent, "files" | "chaptersTotal" | "folder" | "uri" | "selection">): { title: string; description: string; uri?: string } {
   const files = event.files ?? 0;
   const where = event.folder ? `Lưu ở ${event.folder}.` : "";
-  const partial = files < (event.chaptersTotal ?? 0) ? "Các chương chưa làm xong sẽ không có trong bản xuất." : "";
+  const partial = !event.selection && files < (event.chaptersTotal ?? 0) ? "Các chương chưa làm xong sẽ không có trong bản xuất." : "";
   return { title: `Đã xuất ${files} chương`, description: [where, partial].filter(Boolean).join(" "), uri: event.uri || undefined };
 }
 
