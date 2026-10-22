@@ -864,6 +864,8 @@ class App:
             with self._queue_lock:
                 if not self.queue or self.queue[0] != head:
                     continue
+                if self.studio is not None and self.studio.running():
+                    continue
                 if path is None or self.runner.running(path):
                     self._dequeue(head)  # dự án đã mất, hay worker đã chạy bằng đường khác
                     continue
@@ -897,6 +899,8 @@ class App:
         self._mutating()
         path = self._book(value)
         with self._queue_lock:
+            if self.studio is not None and self.studio.running():
+                raise ApiError(HTTPStatus.CONFLICT, "Studio đang cập nhật. Bạn hãy chờ cập nhật xong rồi chạy sách.")
             if self.runner.running(path) or self.jobs.starting(path):
                 return self.summary(path)
             if not now and self._busy_elsewhere(path) is not None:
@@ -5991,6 +5995,13 @@ class Handler(BaseHTTPRequestHandler):
         allowed = {key: body[key] for key in ("theme", "libraryRoot") if key in body}
         if "libraryRoot" in allowed and not (isinstance(allowed["libraryRoot"], str) and allowed["libraryRoot"].strip()):
             raise ApiError(HTTPStatus.BAD_REQUEST, "Chọn một thư mục cho thư viện")
+        if "libraryRoot" in allowed:
+            from .install_paths import validate_library_folder
+
+            try:
+                validate_library_folder(Path(allowed["libraryRoot"]), getattr(self.app, "studio", None))
+            except ValueError as error:
+                raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
         # Tốc độ và âm lượng là SỐ trong khoảng giao diện đưa ra (player.SPEEDS 0,75-3; âm lượng 0-1): trình phát nạp lại
         # chúng lúc mở app, và một giá trị hỏng (chuỗi, 5) từng được lưu nguyên.
         for key, low, high in (("playbackRate", 0.5, 3.0), ("volume", 0.0, 1.0)):
@@ -6061,8 +6072,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_studio_setup(self, _query: dict[str, list[str]]) -> None:
         setup = self._studio_setup()
-        self.app.previews.shutdown()  # cập nhật thay Python của Studio: tiến trình nghe thử đang mở nó thì Windows không cho thay
-        self._send_json(HTTPStatus.OK, setup.start())
+        with self.app._queue_lock:
+            if self.app._busy_elsewhere() is not None:
+                raise ApiError(HTTPStatus.CONFLICT, "Bạn hãy chờ cuốn đang chạy, khởi động hoặc tạm dừng làm xong rồi cập nhật Studio.")
+            setup.busy = self.app._busy_elsewhere
+            self.app.previews.shutdown()
+            result = setup.start()
+        self._send_json(HTTPStatus.OK, result)
 
     def post_studio_setup_cancel(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self._studio_setup().cancel())

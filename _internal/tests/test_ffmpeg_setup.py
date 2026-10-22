@@ -45,7 +45,7 @@ def test_install_unpacks_the_exe_removes_the_wheel_and_registers_it(bare_machine
     exe = ffmpeg_setup.install(lambda done, total: seen.append((done, total)))
     assert exe == bare_machine / "ffmpeg.exe" and exe.read_bytes() == b"MZ fake ffmpeg"
     assert len(calls) == 1 and calls[0] is ffmpeg_setup.WHEEL and seen[-1] == (ffmpeg_setup.WHEEL.size, ffmpeg_setup.WHEEL.size)
-    assert sorted(path.name for path in bare_machine.iterdir()) == ["ffmpeg.exe"], "gói đã xoá, không còn file .part"
+    assert sorted(path.name for path in bare_machine.iterdir()) == ["ffmpeg.exe", "install.lock", "installed.sha256"], "gói đã xoá, chỉ còn exe, khoá và dấu phiên bản"
     assert io_utils.ffmpeg_executable() == str(exe) and ffmpeg_setup.ready() and ffmpeg_setup.downloaded()
 
 

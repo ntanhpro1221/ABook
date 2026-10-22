@@ -9,6 +9,21 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi bạn gỡ ABook, bộ gỡ đọc vị trí thư viện đã lưu và giữ cây chứa sách; app cũng ngăn bạn chọn thư viện trong các thư mục sẽ bị gỡ.
+- Khi bạn có cuốn đang chạy, khởi động hoặc tạm dừng, Studio yêu cầu chờ làm xong trước khi cập nhật để giữ nguyên lượt phân tích.
+- Khi bạn đổi tên bộ cài, lần nâng cấp giữa các bản có bộ gỡ mới vẫn nhận đúng chế độ nâng cấp và giữ Studio.
+- Nếu bạn bị ngắt khi tải thư viện dùng chung, app giữ bản cũ và chỉ kích hoạt bản mới sau khi giải nén đủ các gói.
+- Khi bạn tải giọng và công cụ âm thanh cùng lúc, các lượt tải dùng chung được xếp lần lượt để tránh tranh ghi file.
+- Khi bạn nâng app hoặc Studio mất thư viện Python, app nhận ra phần cần sửa và dùng lại môi trường cùng các model đã tải.
+- Khi bạn cài thư viện Studio, app kiểm hash từng gói theo bản khóa đi kèm và đối chiếu commit của thư viện Git trước khi cài.
+- Khi bạn cài Studio, các model giọng phụ và Faster Whisper được tải theo phiên bản cố định thay vì thay đổi theo nhánh mới nhất.
+- Khi máy chủ gửi file quá cỡ đã ghim, app dừng tải và dọn phần dở để tránh chiếm hết ổ đĩa của bạn.
+- Khi điện thoại hết chỗ trong lúc giải nén gói, app nhờ bạn giải phóng bộ nhớ và giữ gói nén hợp lệ để thử lại.
+- Khi bạn chưa tải xong giọng trên điện thoại, nút “Xoá phần đã tải” giúp lấy lại dung lượng và giữ runtime mà mô-đun khác còn dùng.
+- Khi bạn cài Studio, trạng thái đã cài chỉ xuất hiện sau khi kiểm tra cuối cùng và lưu checkpoint thành công.
+- Nếu không ghi được trạng thái cài Studio, app vẫn hiện lỗi và nhờ bạn kiểm tra chỗ trống, quyền ghi rồi bấm Cài tiếp.
+- Khi đường dẫn của bạn có dấu nháy đơn hay ký tự đặc biệt, bộ gỡ truyền nguyên đường dẫn cho PowerShell và báo lỗi nếu không dừng được tiến trình.
+
 - Một file sách bạn bè gửi mà thông tin bên trong sai kiểu (thời lượng, số chương, phần...) giờ bị từ chối ngay lúc mở, kèm lời nhờ xin người gửi gửi lại, thay vì làm cả thư viện nghe không hiện được; có một cuốn hỏng thì các cuốn còn lại vẫn hiện bình thường.
 - File sách bị nén bất thường (một mục nhỏ xíu giải ra hàng trăm MB) bị từ chối trước khi chép vào ổ đĩa của bạn, trên cả máy tính và điện thoại.
 - Khi bạn mở cùng một file sách hai lần liền, lượt sau báo cuốn đã có thay vì báo lỗi quyền ghi sai.

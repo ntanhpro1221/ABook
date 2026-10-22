@@ -15,6 +15,13 @@ danh sách yêu cầu tạm không đọc được thì báo "thử lại sau v�
 người nói cả nhóm; một sửa lời kể -> lời thoại là một mục. Phần cần file khoá (đọc-sửa-ghi overrides, rút yêu cầu ở dây chuyền) nằm ở
 `dev/locked100`. Toàn bộ (Lead chạy): pytest 8646 passed, 9 skipped, 0 F/E, exit 0; vitest 1311 passed, 1 skipped; tsc exit 0;
 JVM 1329 tests, 6 skipped, 0 F/E. Hash khoá c9176123 không đổi.
+Đợt `a85fix` trên `dev/uxfix97` (nền 3b87b35c): cập nhật app, cài/gỡ và gói tuỳ chọn - cập nhật Studio bị từ chối khi sách đang chạy/tạm dừng
+(kiểm lại ngay trước thay runtime); bộ gỡ Windows đọc vị trí thư viện trước mọi xoá đệ quy, không đọc được thì giữ; chế độ nâng cấp truyền bằng
+cờ rõ ràng (không đoán tên bộ cài); thư viện tuỳ chọn giải ở staging, khoá đích suốt tải-giải-commit; Studio cài theo hash của uv.lock đi kèm
+(--require-hashes, commit Git đủ 40 hex); dấu cài xong chỉ ghi sau kiểm; đầy ổ / không ghi được báo rõ; điện thoại xoá được phần tải dở.
+Lỗi 1 (ghim mã cho worker đang chạy) chỉ thiết kế, giữ test strict xfail. Toàn bộ (Lead chạy): pytest 8644 passed, 9 skipped, 1 xfailed,
+0 F/E (sau khi Lead sửa test hook cũ còn tìm `RMDir /r` trần); vitest 1308 passed, 1 skipped; tsc exit 0; JVM 1333 tests, 6 skipped,
+0 F/E. Hash khoá c9176123 không đổi.
 Đợt `a79fix` trên `dev/uxfix91` (nền cây phát hành dcbd33a0): "Nghe ngay" không gửi chữ khi chưa đồng ý - chuỗi giọng
 thay thế chỉ có Edge khi đã đồng ý "edge" (máy tính + điện thoại); menu Giọng đọc hỏi đồng ý trước khi đổi sang giọng trực tuyến;
 lõi Android giữ (held) chương chữ với giọng chưa đồng ý ở startAt/onPlay/voicesChanged và "Làm trước" (Android Auto, widget, tai nghe);

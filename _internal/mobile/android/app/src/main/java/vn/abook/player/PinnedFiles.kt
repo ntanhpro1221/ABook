@@ -21,7 +21,9 @@ import javax.net.ssl.SSLException
  * name in [dir] has always been checked. A stamp ([STAMP]: name -> pinned SHA-256 at download time) tells which files a newer app pins
  * differently, without hashing hundreds of MB at every start.
  */
-class PinnedFiles(private val dir: File, private val base: String, private val stampName: String = STAMP) {
+class PinnedFiles(private val dir: File, private val base: String, private val stampName: String = STAMP,
+                  private val freeBytes: (File) -> Long = { it.usableSpace },
+                  private val output: (File) -> java.io.OutputStream = { it.outputStream() }) {
     /** One file. [name] is its path inside [dir] (subfolders allowed); [remote] its path under the base URL, or a full `https://` URL.
      *  [packed]: the server holds a gzip of it, or a zip (a wheel) it is one [Packed.member] of - fetched, checked, unpacked, checked again. */
     class Part(
@@ -52,6 +54,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     }
 
     class ChecksumError : IOException("sai mã kiểm")
+    class SpaceError : IOException("Bạn giải phóng bộ nhớ trên điện thoại rồi bấm Thử lại.")
 
     /** The connection ended before the whole file came (a cut without an error): the network, not the file. */
     class ShortRead(message: String) : IOException(message)
@@ -66,6 +69,12 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     private val stampFile get() = File(dir, stampName)
 
     fun file(part: Part) = File(dir, part.name)
+
+    fun hasBytes(part: Part): Boolean = artifacts(part).any { it.isFile && it.length() > 0 }
+
+    private fun artifacts(part: Part): List<File> = listOf(file(part), wireFile(part)).distinct().flatMap {
+        listOf(it, File(it.path + ".part"), File(it.path + ".part.etag"))
+    }
 
     /** Present with the pinned size (usable even when a newer pin exists: the old file keeps working until the listener updates). */
     fun present(part: Part): Boolean = file(part).let { it.isFile && it.length() == part.size }
@@ -109,6 +118,8 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     /** Fetch every part of [parts] that is not current; the stamp is written after each file, so a stop keeps what is done. */
     fun download(parts: List<Part>, progress: Progress) {
         dir.mkdirs()
+        val needed = parts.filter { !isCurrent(it) }.sumOf { left(it) + if (it.packed != null) it.size else 0L }
+        if (needed > 0 && freeBytes(dir) < needed + DownloadSpace.MARGIN) throw SpaceError()
         val stamp = readStamp().toMutableMap()
         for (part in parts) {
             if (progress.cancelled()) throw Cancelled()
@@ -125,7 +136,7 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
     fun remove(parts: List<Part>) {
         val stamp = readStamp().toMutableMap()
         for (part in parts) {
-            file(part).delete()
+            artifacts(part).forEach { it.delete() }
             stamp.remove(part.name)
         }
         if (stamp.isEmpty()) stampFile.delete() else writeStamp(stamp)
@@ -146,43 +157,49 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
         val packed = part.packed
         val wire = wireFile(part)
         val partial = File(wire.path + ".part")
-        var attempts = 0
-        while (true) {
-            if (progress.cancelled()) throw Cancelled()
-            try {
-                transfer(part.remote, packed?.sha256 ?: part.sha256, part.wireSize, partial, progress)
-                break
-            } catch (failure: IOException) {
-                if (failure is ChecksumError || ++attempts >= RETRIES) throw failure
+        if (packed == null || !wire.isFile || wire.length() != part.wireSize || sha256(wire) != packed.sha256) {
+            var attempts = 0
+            while (true) {
+                if (progress.cancelled()) throw Cancelled()
+                try {
+                    transfer(part.remote, packed?.sha256 ?: part.sha256, part.wireSize, partial, progress)
+                    break
+                } catch (failure: IOException) {
+                    if (failure is ChecksumError || ++attempts >= RETRIES) throw failure
+                }
             }
+            promote(partial, wire, part.name)
+            PartResume.tagFile(partial).delete()
         }
-        promote(partial, wire, part.name)
-        PartResume.tagFile(partial).delete()
         if (packed != null) {
             val raw = File(target.path + ".part")
             try {
                 if (packed.member == null) {
-                    GZIPInputStream(wire.inputStream().buffered()).use { input -> raw.outputStream().use { input.copyTo(it, 1 shl 16) } }
+                    GZIPInputStream(wire.inputStream().buffered()).use { input -> output(raw).use { input.copyTo(it, 1 shl 16) } }
                 } else {
                     ZipInputStream(wire.inputStream().buffered()).use { zip ->
                         while (true) {
                             val entry = zip.nextEntry ?: throw IOException("thiếu ${packed.member}")
                             if (entry.name == packed.member) break
                         }
-                        raw.outputStream().use { zip.copyTo(it, 1 shl 16) }
+                        output(raw).use { zip.copyTo(it, 1 shl 16) }
                     }
                 }
             } catch (failure: IOException) {
                 raw.delete()
+                if (failure is java.util.zip.ZipException || failure is EOFException) {
+                    wire.delete()
+                    throw ChecksumError()
+                }
+                throw failure
+            }
+            if (raw.length() != part.size || sha256(raw) != part.sha256) {
+                raw.delete()
                 wire.delete()
                 throw ChecksumError()
             }
-            wire.delete()
-            if (raw.length() != part.size || sha256(raw) != part.sha256) {
-                raw.delete()
-                throw ChecksumError()
-            }
             promote(raw, target, part.name)
+            wire.delete()
         }
         // Dynamically loaded code (.so) is made read-only, as Android 14+ requires.
         if (part.name.endsWith(".so")) target.setReadOnly()
@@ -272,6 +289,9 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
          *  else -> a plain Vietnamese sentence, with the raw error kept for "Chi tiết" (a66: "Unable to resolve host …" was shown as is). Same rule as
          *  the desktop's `studio_setup.download_failure`. */
         fun failure(what: String, error: Throwable): Failure = when {
+            generateSequence(error) { it.cause }.take(5).any {
+                it is SpaceError || it.message.orEmpty().contains("ENOSPC", true) || it.message.orEmpty().contains("No space left", true)
+            } -> Failure("Bạn giải phóng bộ nhớ trên điện thoại rồi bấm Thử lại.", technical(error))
             error is ChecksumError -> Failure("Không tải được $what: file tải về bị hỏng (không khớp mã kiểm) - bấm Thử lại để tải lại.", "")
             isNetwork(error) -> Failure(NETWORK_FAILURE, technical(error))
             else -> Failure("Không tải được $what. Bấm Thử lại; nếu vẫn lỗi, mở Chi tiết để gửi cho người hỗ trợ.", technical(error))
