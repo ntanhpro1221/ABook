@@ -92,7 +92,8 @@ class MusicStudentSetupTest {
         } else {
             val from = range?.removePrefix("bytes=")?.removeSuffix("-")?.toIntOrNull()
             val status = if (from != null) "206 Partial Content" else "200 OK"
-            out.write("HTTP/1.1 $status\r\nContent-Length: ${body.size - (from ?: 0)}\r\nConnection: close\r\n\r\n".toByteArray())
+            val tail = if (from != null) "\r\nContent-Range: bytes $from-${body.size - 1}/${body.size}" else ""
+            out.write("HTTP/1.1 $status$tail\r\nETag: \"v1\"\r\nContent-Length: ${body.size - (from ?: 0)}\r\nConnection: close\r\n\r\n".toByteArray())
             if (stalled && name == "big.bin" && from == null) {
                 out.write(body, 0, 30_000)
                 out.flush()
@@ -311,6 +312,7 @@ class MusicStudentSetupTest {
     fun a_partial_download_resumes_with_a_range_request() {
         val dir = File(root, MusicStudentSetup.FOLDER).apply { mkdirs() }
         File(dir, "big.bin.part").writeBytes(big.copyOf(100_000))
+        PartResume.stamp(File(dir, "big.bin.part"), "\"v1\"")
         val setup = setup(store())
         setup.start()
         setup.join()

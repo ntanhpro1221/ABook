@@ -893,9 +893,8 @@ def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str,
     manifest["package"] = {"remote": {"computer": computer, "book": book}, "files": {}}
     new_cover = manifest.get("cover") if isinstance(manifest.get("cover"), dict) else None
     old_cover = previous.get("cover") if isinstance(previous.get("cover"), dict) else None
-    if manifest != previous:
-        _write_manifest(target, manifest)
-    # Bìa: nhỏ, cần ngay cho thư viện - tải luôn (khi đổi phiên bản), không đợi người mở.
+    # Bìa: nhỏ, cần ngay cho thư viện - tải luôn (khi đổi phiên bản), không đợi người mở. Tải TRƯỚC khi ghi sổ: sổ nói "bìa đang giữ là bìa này",
+    # nên lỗi mạng một lần không được làm lượt sau tưởng bìa đã có (bìa mới vĩnh viễn không về, máy hiện bìa cũ mãi).
     if new_cover and (new_cover != old_cover or not (target / "cover.jpg").is_file()):
         try:
             data = _request(_base(entry), "GET", f"/sync/v1/books/{book}/files/cover.jpg", entry["token"],
@@ -905,7 +904,11 @@ def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str,
             meta = {key: new_cover[key] for key in ("color", "width", "height") if new_cover.get(key)}
             atomic_write_json(target / "cover.json", meta)
         except RemoteError:
-            pass
+            manifest = {key: value for key, value in manifest.items() if key != "cover"}  # sổ vẫn nhận bìa của lần trước (nếu có)
+            if old_cover is not None:
+                manifest["cover"] = old_cover
+    if manifest != previous:
+        _write_manifest(target, manifest)
 
 
 def player(entry: dict[str, Any], *, timeout: float = 2.0) -> dict[str, Any]:
@@ -1021,7 +1024,7 @@ def fetch_soon(package: Path, relatives: list[str], manifest: dict[str, Any]) ->
 # ---- tải trọn cuốn về máy này ("Tải về máy", như điện thoại) ---------------------------------------------------------------
 
 DOWNLOAD_FILE = "download.json"  # file nào đã tải theo phiên bản nào của sách (file không có cỡ trong book.json), file máy kia không có
-CHUNK = 256 * 1024
+CHUNK = 64 * 1024  # nhỏ: mạng nhỏ giọt thì cờ huỷ vẫn được kiểm sau mỗi ngần ấy byte
 _SAFE_NAME = re.compile(r"[A-Za-z0-9_./ \-]+")
 _RECORD_LOCK = threading.Lock()
 _FILE_LOCKS: dict[str, threading.Lock] = {}
@@ -1058,13 +1061,30 @@ def _note(package: Path, relative: str, version: Any, *, absent: bool = False) -
         atomic_write_json(package / DOWNLOAD_FILE, data)
 
 
+def _etag_file(temporary: Path) -> Path:
+    """Nơi ghi phiên bản (ETag) của file nguồn mà phần `.part` đang giữ - `<tên>.part.etag`, cạnh nó."""
+    return temporary.with_name(temporary.name + ".etag")
+
+
+def _resume_point(temporary: Path, size: int | None) -> tuple[int, str]:
+    """(số byte, ETag) của phần `.part` dở có thể tải tiếp; (0, "") khi không: không biết `size`, phần dở rỗng / đã đủ, hoặc không rõ nó
+    thuộc phiên bản nào của file (không có ETag ghi cạnh - không ai bảo đảm đuôi tải sau khớp với đầu này)."""
+    try:
+        have = temporary.stat().st_size
+        tag = _etag_file(temporary).read_text(encoding="utf-8").strip()
+    except OSError:
+        return 0, ""
+    return (have, tag) if size is not None and tag and 0 < have < size else (0, "")
+
+
 def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | None = None,
           progress: Callable[[int], None] | None = None, cancelled: Callable[[], bool] | None = None) -> Path:
     """Tải một file của sách trên máy khác vào thư mục của cuốn: ghi ra `<tên>.part` từng khúc rồi mới đổi tên - đứt giữa chừng thì
     file cũ (nếu có) vẫn nguyên, không bao giờ có file dở mang tên thật. `size`: cỡ book.json ghi (khác thì không nhận). Biết `size` thì
-    phần `.part` dở (máy kia tắt giữa chừng, người dùng bấm dừng) được GIỮ và lần sau tải tiếp bằng `Range` - chương lớn trên Wi-Fi yếu
-    không phải tải lại từ đầu; máy kia không hiểu `Range` thì tải lại từ đầu. `progress(số byte vừa nhận)`, `cancelled()`: cho việc tải cả
-    cuốn. Lỗi: `RemoteError` (hay `Cancelled`); máy kia ngừng trả lời giữa chừng thì nói tên máy ấy (`_cut`)."""
+    phần `.part` dở (máy kia tắt giữa chừng, người dùng bấm dừng) được GIỮ và lần sau tải tiếp bằng `Range` + `If-Range` (ETag lưu cạnh
+    phần dở) - chương lớn trên Wi-Fi yếu không phải tải lại từ đầu, và file nguồn đã đổi (máy kia dựng lại chương) thì tải lại từ đầu thay
+    vì ghép đầu cũ với đuôi mới; máy kia không hiểu `Range` thì cũng tải lại từ đầu. `progress(số byte vừa nhận)` (âm: bỏ phần dở đã tính),
+    `cancelled()`: cho việc tải cả cuốn. Lỗi: `RemoteError` (hay `Cancelled`); máy kia ngừng trả lời giữa chừng thì nói tên máy ấy (`_cut`)."""
     if not _SAFE_NAME.fullmatch(relative) or ".." in relative:
         raise RemoteError("Tên file lạ trong sách")
     entry, book_key = _entry_of(book)
@@ -1079,39 +1099,67 @@ def _save(package: Path, relative: str, book: dict[str, Any], *, size: int | Non
         endpoint = _base(entry)
         keep = False
         try:
-            have = temporary.stat().st_size if size is not None and temporary.is_file() else 0
-            if size is not None and not 0 < have < size:
-                have = 0
-            with _open(endpoint, "GET", f"/sync/v1/books/{book_key}/files/{quote(relative)}", entry["token"], timeout=FILE_TIMEOUT,
-                       extra={"Range": f"bytes={have}-"} if have else None) as (response, _seen):
-                if have and not (response.status == 206 and re.match(rf"bytes {have}-", response.getheader("Content-Range") or "")):
-                    have = 0  # máy kia gửi cả file (không hiểu Range): bỏ phần dở, tải từ đầu
-                expected = response.length
-                received = 0
-                try:
-                    with temporary.open("ab" if have else "wb") as sink:
-                        while chunk := _read(response, CHUNK):
-                            if cancelled is not None and cancelled():
-                                keep = size is not None
-                                raise Cancelled
-                            sink.write(chunk)
-                            received += len(chunk)
+            have, tag = _resume_point(temporary, size)
+            for _attempt in range(2):
+                again = False
+                with _open(endpoint, "GET", f"/sync/v1/books/{book_key}/files/{quote(relative)}", entry["token"], timeout=FILE_TIMEOUT,
+                           extra={"Range": f"bytes={have}-", "If-Range": tag} if have else None, passthrough=bool(have)) as (response, _seen):
+                    if response.status >= 400:
+                        if response.status == 416:
+                            # Phần dở không còn là đầu của file nào bên máy kia (dài hơn file hiện có): bỏ, hỏi lại cả file.
                             if progress is not None:
-                                progress(len(chunk))
-                except RemoteError as problem:
-                    if problem.status is None:
-                        keep = size is not None
-                        raise RemoteError(_cut(endpoint)) from problem
-                    raise
-                if received < expected if expected is not None else size is not None and have + received < size:
-                    keep = size is not None  # đứt giữa chừng mà máy kia đóng êm (tắt máy): phần đã nhận giữ lại cho lần tải tiếp
-                    raise RemoteError(_cut(endpoint))
+                                progress(-have)
+                            have, tag = 0, ""
+                            continue
+                        try:
+                            message = json.loads(_read(response).decode("utf-8")).get("error")
+                        except (ValueError, AttributeError):
+                            message = ""
+                        raise RemoteError(message or f"Máy kia trả lỗi {response.status}", status=response.status)
+                    sent = (response.getheader("ETag") or "").strip()
+                    if have and not (response.status == 206 and re.match(rf"bytes {have}-", response.getheader("Content-Range") or "")
+                                     and sent == tag):
+                        # Máy kia gửi cả file (không hiểu Range, hay file đã đổi): bỏ phần dở, tải từ đầu. Nó trả đuôi 206 mà ETag
+                        # không khớp (bỏ qua If-Range) thì đuôi ấy là của file khác - bỏ luôn, hỏi lại không kèm Range.
+                        if progress is not None:
+                            progress(-have)
+                        again = response.status == 206
+                        have, tag = 0, ""
+                    if again:
+                        continue
+                    expected = response.length
+                    received = 0
+                    try:
+                        with temporary.open("ab" if have else "wb") as sink:
+                            if not have:
+                                if sent:  # ghi SAU khi cắt `.part`: dở dang rồi thì phần cũ không bao giờ mang ETag mới
+                                    _etag_file(temporary).write_bytes(sent.encode("utf-8"))
+                                else:
+                                    _etag_file(temporary).unlink(missing_ok=True)
+                            while chunk := _read(response, CHUNK):
+                                if cancelled is not None and cancelled():
+                                    keep = size is not None
+                                    raise Cancelled
+                                sink.write(chunk)
+                                received += len(chunk)
+                                if progress is not None:
+                                    progress(len(chunk))
+                    except RemoteError as problem:
+                        if problem.status is None:
+                            keep = size is not None
+                            raise RemoteError(_cut(endpoint)) from problem
+                        raise
+                    if received < expected if expected is not None else size is not None and have + received < size:
+                        keep = size is not None  # đứt giữa chừng mà máy kia đóng êm (tắt máy): phần đã nhận giữ lại cho lần tải tiếp
+                        raise RemoteError(_cut(endpoint))
+                break
             if size is not None and temporary.stat().st_size != size:
                 raise RemoteError("File tải về không đủ - thử lại")
             _replace_with_retry(temporary, target)
         finally:
             if not keep:
                 temporary.unlink(missing_ok=True)
+                _etag_file(temporary).unlink(missing_ok=True)
     _note(package, relative, book.get("version"))
     return target
 
@@ -1160,12 +1208,8 @@ def missing(package: Path, book: dict[str, Any]) -> list[tuple[str, int | None]]
 
 
 def _part_size(package: Path, relative: str, size: int | None) -> int:
-    """Phần `.part` dở của một file (lần tải trước đứt giữa chừng, `_save` giữ lại để tải tiếp bằng Range): số byte đã có, 0 khi không dùng được."""
-    try:
-        have = (package / (relative + ".part")).stat().st_size
-    except OSError:
-        return 0
-    return have if size is not None and 0 < have < size else 0
+    """Phần `.part` dở của một file (lần tải trước đứt giữa chừng, `_save` giữ lại để tải tiếp bằng Range; chỉ tính khi còn biết nó thuộc phiên bản nào): số byte đã có, 0 khi không dùng được."""
+    return _resume_point(package / (relative + ".part"), size)[0]
 
 
 def _bytes_done(package: Path, files: list[tuple[str, int | None]], left: list[tuple[str, int | None]]) -> int:
@@ -1392,28 +1436,34 @@ def send_edits(package: Path) -> dict[str, Any]:
             raise
         finally:
             outgoing.unlink(missing_ok=True)
-        _reload(package, entry, book)  # bản mới của máy kia đã mang các sửa: lấy về TRƯỚC khi gỡ lớp sửa để không chớp bản cũ
-        book_edits.subtract(package, edits, cover)
+        # Bản mới của máy kia đã mang các sửa: lấy về TRƯỚC khi gỡ lớp sửa để không chớp bản cũ. Không lấy được (mạng đứt ngay sau lúc gửi) thì
+        # lớp sửa ở LẠI - gỡ đi là sách quay về tên / bìa cũ, trông như phần sửa của người nghe biến mất; lần gửi kế (máy kia nhận lại thì
+        # chỉ bỏ qua những gì đã giống) lấy được bản mới rồi mới gỡ.
+        fetched = _reload(package, entry, book)
+        if fetched:
+            book_edits.subtract(package, edits, cover)
         _remember_send(package, {
-            "state": "sent", "at": time.time(), "kept": book_edits.sent_marks(edits, book_edits.forget_marks(marks, removed)),
+            "state": "sent", "at": time.time(), "fetched": fetched,
+            "kept": book_edits.sent_marks(edits, book_edits.forget_marks(marks, removed)),
             **{key: int(reply.get(key) or 0) for key in ("applied", "skipped", "requests", "waiting", "studio", "skippedWishes")},
             "conflicts": [sender_label(item, entry["name"]) for item in reply.get("conflicts") or [] if isinstance(item, dict) and item.get("label")],
         })
         return edits_state(package)
 
 
-def _reload(package: Path, entry: dict[str, Any], book: dict[str, Any]) -> None:
+def _reload(package: Path, entry: dict[str, Any], book: dict[str, Any]) -> bool:
     """Lấy lại book.json + bìa của cuốn từ máy kia, và chữ đọc theo / dàn nhân vật đã giữ trên máy này (tên nhân vật, tên chương
-    trong đó vừa đổi theo phần sửa). Không tới được máy kia thì thôi - lần làm mới thư viện sau lấy."""
+    trong đó vừa đổi theo phần sửa). Không tới được máy kia thì thôi (False) - lần làm mới thư viện sau lấy. True: lấy đủ."""
     remote = remote_of(book) or {}
     try:
         _refresh_book(entry, remote["computer"], package.parent, remote["book"], package)
         fresh = json.loads((package / MANIFEST).read_text(encoding="utf-8"))
     except (RemoteError, ValueError, KeyError, OSError):
-        return
+        return False
     for relative, size in wanted(fresh):
         if size is None and (package / relative).is_file():
             try:
                 _save(package, relative, fresh)
             except RemoteError:
-                return
+                return False
+    return True

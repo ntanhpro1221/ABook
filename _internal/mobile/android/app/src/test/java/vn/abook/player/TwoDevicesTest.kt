@@ -52,6 +52,7 @@ class TwoDevicesTest {
         assertEquals(0L, DownloadSpace.stillNeeded(10, whole))
         val half = File(dir, "b.mp3")
         File(dir, "b.mp3.part").writeBytes(ByteArray(4))
+        PartResume.stamp(File(dir, "b.mp3.part"), "\"v1\"") // a part only counts when its version is known (PartResume)
         assertEquals(6L, DownloadSpace.stillNeeded(10, half))
         assertEquals(0L, DownloadSpace.stillNeeded(0, half))
         val mb = 1L shl 20

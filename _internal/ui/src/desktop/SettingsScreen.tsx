@@ -26,6 +26,7 @@ import { scrollMotion } from "@/shared/motion";
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
 import { PhoneSync, Switch } from "./PhoneSync";
+import { checkLine, UPDATE_CHECKED_EVENT, UPDATE_CHECK_WAIT_MS, type CheckLine, type UpdateChecked } from "./updateCheck";
 
 const SOURCE_URL = "https://github.com/ntanhpro1221/ABook/";
 
@@ -182,6 +183,51 @@ function UpdateSection({ update, current }: { update: { version: string; notes: 
   );
 }
 
+/** Chưa có bản mới: nút kiểm lại (lần tự kiểm lúc mở app im lặng khi mất mạng) - bấm xong luôn có một lời, kể cả khi mạng đứt. */
+function UpdateCheck({ current }: { current: string }) {
+  const [checking, setChecking] = useState(false);
+  const [line, setLine] = useState<CheckLine | null>(null);
+  useEffect(() => {
+    if (!checking) return;
+    const done = (detail: UpdateChecked | null) => {
+      setChecking(false);
+      setLine(checkLine(detail, current));
+    };
+    const heard = (event: Event) => done((event as CustomEvent<UpdateChecked>).detail);
+    window.addEventListener(UPDATE_CHECKED_EVENT, heard);
+    const silent = window.setTimeout(() => done(null), UPDATE_CHECK_WAIT_MS);
+    return () => {
+      window.removeEventListener(UPDATE_CHECKED_EVENT, heard);
+      window.clearTimeout(silent);
+    };
+  }, [checking, current]);
+  const check = async () => {
+    setLine(null);
+    setChecking(true);
+    try {
+      await api("/api/app/check-update", { method: "POST", body: {} });
+    } catch (error) {
+      setChecking(false);
+      setLine({ tone: "error", text: (error as Error).message });
+    }
+  };
+  return (
+    <Section id="update" title="Cập nhật" description="Bản mới tải từ trang phát hành của ABook, có chữ ký kiểm được.">
+      <div className="max-w-xl">
+        <p className="text-sm">{current ? `Máy này đang dùng ABook ${current}.` : "Bạn có thể kiểm tra xem có bản mới không."}</p>
+        <Button className="mt-3" size="sm" variant="secondary" disabled={checking} onClick={() => void check()}>
+          {checking ? "Đang kiểm tra…" : "Kiểm tra bản mới"}
+        </Button>
+        {line && (
+          <p className={cn("mt-2 text-[0.8125rem]", line.tone === "error" ? "text-danger" : "text-fg-2")} role="status">
+            {line.text}
+          </p>
+        )}
+      </div>
+    </Section>
+  );
+}
+
 /** Danh sách thành phần bên thứ ba (docs/THIRD_PARTY.md, gói lúc build) trong một hộp - trang Cài đặt không dài thêm. */
 function ThirdPartyButton() {
   const [open, setOpen] = useState(false);
@@ -224,6 +270,7 @@ export function SettingsScreen() {
       <div className="max-w-[980px]">
         <SectionIndex root={page} />
         {!remote && info?.update && <UpdateSection update={info.update} current={info.version} />}
+        {!remote && !info?.update && info?.canCheckUpdate && <UpdateCheck current={info.version} />}
         {remote && (
           <Section id="remote" title="Điều khiển từ xa" description="Đang dùng ABook của máy tính qua mạng.">
             <p className="max-w-xl text-sm text-fg-2 text-pretty">

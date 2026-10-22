@@ -93,6 +93,11 @@ Toàn bộ (Lead chạy lại): pytest 8453 passed, 9 skipped, 0 F/E, exit 0; vi
 Thêm 26 lượt test nhạc Python/TS/JVM; sửa nhận thân tải rỗng trên Android và điểm vòng vượt cuối file thật trên cả ba nền tảng.
 Pytest các file nhạc: 544 pass, 2 skip, 0 F/E; Vitest 130 pass; JVM 203 pass; tsc --noEmit exit 0. Tất cả runner exit 0; hash quality implementation giữ nguyên.
 Toàn bộ (Lead chạy lại, kể cả stub android/os trong cây test JVM): pytest 8389 passed, 9 skipped, 0 F/E, exit 0; vitest 1252 passed; tsc exit 0; JVM 1222 tests, 0 F/E.
+Đợt `offfix` trên `dev/uxfix83`: tải tiếp có kiểm phiên bản (ETag + If-Range) ở cả máy tính lẫn điện thoại (PartResume.kt, PinnedFiles),
+206 lệch chỗ/ETag hay 416 thì bỏ phần dở và hỏi lại cả file; cỡ cuối khác cỡ sách thì không nhận; hạn kiểm/tải bản mới của vỏ Tauri (30 s kiểm,
+60 s đứng yên) và nút "Kiểm tra bản mới"; tìm bìa có hạn 12 s; bìa quá 40 triệu điểm ảnh bị từ chối hai nền. Test mới: PartResumeTest, CoverPixelsTest,
+PinnedFilesTest (đuôi lạ, 416), pytest 416 tải tiếp, cargo tải đứng yên. Toàn bộ (Lead chạy lại): pytest 8392 passed, 9 skipped, 0 F/E, exit 0;
+vitest 1245 passed; tsc exit 0; JVM 1210 tests, 0 F/E; cargo 4 passed. Hash khoá giữ nguyên.
 
 Đợt `dev/rvfix` (từ 0.4.120): giữ giới/tuổi khi lượt người nói đổi namespace của cùng vai local trong cùng chương;
 không checkpoint hoà giải khi thiếu model (request lỗi giữ nhãn cũ như trước); đóng luồng cả khi bù độ to/hoàn tất clip lỗi;

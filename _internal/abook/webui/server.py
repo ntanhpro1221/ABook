@@ -328,6 +328,9 @@ class App:
         music_valence.kick()
         self._music_catalog: music_catalog.MusicCatalog | None = None
         self._music_lock = threading.Lock()
+        # Thao tác bìa của từng cuốn xếp theo lúc BẮT ĐẦU (`cover_ticket`): ảnh mạng tải chậm về sau một ảnh khác đã đặt xong thì bị bỏ.
+        self._cover_lock = threading.Lock()
+        self._cover_turns: dict[str, int] = {}
         # Plan nhạc theo cảnh của sách chỉ có chữ (music_nnscene.py), đệm theo cuốn: {mã sách: (khoá, SceneBook)}.
         self._scene_books: dict[str, tuple[tuple[str, str, str], music_nnscene.SceneBook]] = {}
         self._scene_builder = music_nnscene.Builder()
@@ -569,6 +572,21 @@ class App:
             self._schedule_send_edits(value)
         return path
 
+    def cover_ticket(self, path: Path) -> int:
+        """Số thứ tự của thao tác bìa vừa bắt đầu trên cuốn `path` (đặt ảnh, đặt ảnh mạng, bỏ ảnh)."""
+        with self._cover_lock:
+            self._cover_turns[str(path)] = ticket = self._cover_turns.get(str(path), 0) + 1
+            return ticket
+
+    @contextlib.contextmanager
+    def cover_turn(self, path: Path, ticket: int) -> Iterator[None]:
+        """Chỗ ghi bìa: chỉ thao tác MỚI NHẤT của cuốn được ghi. Ảnh mạng chọn trước nhưng về sau (mạng chậm) một ảnh khác đã đặt xong
+        thì không được đè lên nó. Giữ khoá suốt lúc ghi nên hai lượt không ghi chồng nhau."""
+        with self._cover_lock:
+            if self._cover_turns.get(str(path)) != ticket:
+                raise ApiError(HTTPStatus.CONFLICT, "Bạn vừa đổi bìa khác nên ảnh này không được đặt")
+            yield
+
     def capabilities(self, path: Path | None = None) -> dict[str, bool]:
         """Máy này làm được gì với cuốn `path` (ui/src/shared/capabilities.ts): `toolchain` - Studio dùng được trên máy này
         (bản dev: luôn có; bản đóng gói: đã cài và không cũ); `workshop` - cuốn có dự án sản xuất ở đây; `link` - cuốn lấy từ
@@ -588,6 +606,14 @@ class App:
             raise ApiError(HTTPStatus.CONFLICT, "Không có bản mới để cài")
         self.shell({"install_update": True})
         return {"installing": str(self.update.get("version") or "")}
+
+    def check_for_update(self) -> dict[str, Any]:
+        """Người dùng bấm "Kiểm tra bản mới" (lần tự kiểm lúc mở app im lặng khi mất mạng): nhờ vỏ hỏi lại; kết quả về trang
+        qua sự kiện `abook-update-checked` của vỏ."""
+        if self.shell is None:
+            raise ApiError(HTTPStatus.CONFLICT, "Bản chạy từ mã nguồn không tự cập nhật")
+        self.shell({"check_update": True})
+        return {"checking": True}
 
     def open_book_file(self, path: str = "") -> dict[str, Any]:
         """Mở một file `.abook`: chọn bằng hộp thoại của cửa sổ app, hoặc đường dẫn có sẵn (bấm đúp file trong
@@ -3665,6 +3691,7 @@ class Handler(BaseHTTPRequestHandler):
             # App Windows đóng gói: bản mới vỏ tìm thấy ({version, notes}), hay None; Studio đã cài chưa (None: bản dev,
             # Studio chính là runtime cạnh mã nguồn).
             "update": self.app.update,
+            "canCheckUpdate": self.app.shell is not None,
             "studio": None if self.app.studio is None else {"installed": self.app.studio.installed(),
                                                              "outdated": bool(self.app.studio.outdated()),
                                                              "damaged": bool(self.app.studio.damaged())},
@@ -5038,21 +5065,28 @@ class Handler(BaseHTTPRequestHandler):
         path = self.app._editable(value)
         # Ảnh chụp điện thoại vài MB thành data URL còn to hơn 1/3: trần riêng cho đúng yêu cầu này.
         body = self._body(limit=covers.MAX_UPLOAD_BYTES * 4 // 3 + 4096)
+        ticket = self.app.cover_ticket(path)  # theo lúc bắt đầu: ảnh mạng về chậm không đè lên ảnh đặt sau nó
         if packages.is_package(path):
             # Cuốn nhập từ file: bìa người nghe đặt nằm ở lớp sửa (edits/cover.jpg), bìa của người làm sách giữ nguyên.
             try:
                 raw = (cover_search.download_image(str(body["url"])) if body.get("url")
                        else covers.decode_data_url(str(body.get("image", ""))))
+                with self.app.cover_turn(path, ticket):
+                    cover = book_edits.set_cover(path, raw, now=int(time.time()))
             except covers.CoverError as exc:
                 raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc
-            self._send_json(HTTPStatus.OK, {"cover": book_edits.set_cover(path, raw, now=int(time.time()))})
+            self._send_json(HTTPStatus.OK, {"cover": cover})
             return
         try:
             if body.get("url"):
                 # Ảnh chọn từ kết quả "Tìm bìa trên mạng": máy chủ tự tải, chỉ từ các nguồn đã cho phép.
-                covers.save_cover_bytes(path, cover_search.download_image(str(body["url"])))
+                raw = cover_search.download_image(str(body["url"]))
+                with self.app.cover_turn(path, ticket):
+                    covers.save_cover_bytes(path, raw)
             else:
-                covers.save_cover(path, str(body.get("image", "")))
+                data = covers.decode_data_url(str(body.get("image", "")))
+                with self.app.cover_turn(path, ticket):
+                    covers.save_cover_bytes(path, data)
         except covers.CoverError as exc:
             raise ApiError(HTTPStatus.BAD_REQUEST, str(exc)) from exc
         self._send_json(HTTPStatus.OK, {"cover": covers.cover_view(path, value)})
@@ -5064,10 +5098,11 @@ class Handler(BaseHTTPRequestHandler):
     def delete_cover(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._mutating()
         path = self.app._editable(value)
-        if packages.is_package(path):
-            book_edits.remove_cover(path)
-        else:
-            covers.remove_cover(path)
+        with self.app.cover_turn(path, self.app.cover_ticket(path)):
+            if packages.is_package(path):
+                book_edits.remove_cover(path)
+            else:
+                covers.remove_cover(path)
         self._send_json(HTTPStatus.OK, {"cover": None})
 
     def media_cover(self, _query: dict[str, list[str]], value: str) -> None:
@@ -5907,6 +5942,9 @@ class Handler(BaseHTTPRequestHandler):
     def post_app_update(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.install_update())
 
+    def post_app_check_update(self, _query: dict[str, list[str]]) -> None:
+        self._send_json(HTTPStatus.OK, self.app.check_for_update())
+
     def _studio_setup(self) -> Any:
         if self.app.studio is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Bản này không cài Studio từ trong app (Studio là runtime cạnh mã nguồn)")
@@ -5975,6 +6013,7 @@ BOOK_ROUTES = (BOOK, LISTEN, r"/media/books/")
 ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/app"), Handler.get_app),
     ("POST", re.compile(r"/api/app/update"), Handler.post_app_update),
+    ("POST", re.compile(r"/api/app/check-update"), Handler.post_app_check_update),
     ("GET", re.compile(r"/api/studio/setup"), Handler.get_studio_setup),
     ("POST", re.compile(r"/api/studio/setup"), Handler.post_studio_setup),
     ("POST", re.compile(r"/api/studio/setup/cancel"), Handler.post_studio_setup_cancel),

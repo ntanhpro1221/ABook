@@ -127,7 +127,8 @@ class VieneuModuleTest {
         if (body == null) out.write("HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".toByteArray())
         else {
             val from = range?.removePrefix("bytes=")?.removeSuffix("-")?.toIntOrNull() ?: 0
-            out.write("HTTP/1.1 ${if (range != null) "206 Partial Content" else "200 OK"}\r\nContent-Length: ${body.size - from}\r\nConnection: close\r\n\r\n".toByteArray())
+            val status = if (range != null) "206 Partial Content\r\nContent-Range: bytes $from-${body.size - 1}/${body.size}" else "200 OK"
+            out.write("HTTP/1.1 $status\r\nETag: \"v1\"\r\nContent-Length: ${body.size - from}\r\nConnection: close\r\n\r\n".toByteArray())
             val held = stall?.takeIf { it.name == name && from == it.from }
             if (held == null) out.write(body, from, body.size - from)
             else {

@@ -33,6 +33,18 @@ class PinnedFilesTest {
     private var cutAfter = 0
     private val cuts = AtomicInteger(0)
 
+    /** The file's version as the server reports it (ETag); a test changes it to play "the file was rebuilt". */
+    @Volatile
+    private var etag = "\"v1\""
+
+    /** A server that ignores If-Range and answers 206 with the tail of a DIFFERENT version. */
+    @Volatile
+    private var ignoreIfRange = false
+
+    /** A server that answers the next ranged request with 416 (the part is longer than the file it holds now). */
+    @Volatile
+    private var refuseRange = false
+
     private fun digest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
     private val part get() = PinnedFiles.Part("model.bin", digest(body), body.size.toLong())
@@ -65,15 +77,27 @@ class PinnedFilesTest {
         val input = client.getInputStream().bufferedReader(Charsets.ISO_8859_1)
         input.readLine() ?: return
         var range: String? = null
+        var ifRange: String? = null
         while (true) {
             val line = input.readLine() ?: return
             if (line.isEmpty()) break
             if (line.startsWith("Range:", ignoreCase = true)) range = line.substringAfter(':').trim()
+            if (line.startsWith("If-Range:", ignoreCase = true)) ifRange = line.substringAfter(':').trim()
         }
         ranges.add(range)
-        val from = range?.removePrefix("bytes=")?.removeSuffix("-")?.toIntOrNull() ?: 0
+        if (range != null && refuseRange) {
+            refuseRange = false
+            client.getOutputStream().apply {
+                write("HTTP/1.1 416 Range Not Satisfiable\r\nContent-Range: bytes */${body.size}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n".toByteArray())
+                flush()
+            }
+            return
+        }
+        val partial = range != null && (ignoreIfRange || ifRange == null || ifRange == etag)
+        val from = if (partial) range?.removePrefix("bytes=")?.removeSuffix("-")?.toIntOrNull() ?: 0 else 0
         val out = client.getOutputStream()
-        out.write("HTTP/1.1 ${if (range != null) "206 Partial Content" else "200 OK"}\r\nContent-Length: ${body.size - from}\r\nConnection: close\r\n\r\n".toByteArray())
+        val status = if (partial) "206 Partial Content\r\nContent-Range: bytes $from-${body.size - 1}/${body.size}" else "200 OK"
+        out.write("HTTP/1.1 $status\r\nETag: $etag\r\nContent-Length: ${body.size - from}\r\nConnection: close\r\n\r\n".toByteArray())
         out.write(body, from, if (cuts.getAndUpdate { maxOf(it - 1, 0) } > 0) minOf(cutAfter, body.size - from) else body.size - from)
         out.flush()
     }
@@ -101,6 +125,60 @@ class PinnedFilesTest {
         assertEquals(body.toList(), File(dir, "model.bin").readBytes().toList())
         assertFalse(partial.exists())
         assertEquals(listOf(null, "bytes=100000-"), ranges.toList())
+    }
+
+    /** A download stopped by Huỷ after about 100 000 bytes: the `.part` and its version note stay. */
+    private fun stopHalfWay(): Long {
+        try {
+            files().download(listOf(part), Watch(stopAt = 100_000))
+            fail("the cancel must stop the download")
+        } catch (_: PinnedFiles.Cancelled) {
+        }
+        assertTrue(partial.exists() && PartResume.tagFile(partial).exists())
+        return partial.length()
+    }
+
+    @Test
+    fun aFileRebuiltOnTheServerBetweenTwoTriesIsFetchedWholeNotStitched() {
+        val kept = stopHalfWay()
+        etag = "\"v2\"" // the server rebuilt the file: it answers If-Range with the whole new file
+        ranges.clear()
+        files().download(listOf(part), Watch())
+        assertEquals(listOf("bytes=$kept-"), ranges.toList())
+        assertEquals(body.toList(), File(dir, "model.bin").readBytes().toList())
+        assertFalse(partial.exists() || PartResume.tagFile(partial).exists())
+    }
+
+    @Test
+    fun aPartTheServerCannotContinue416IsDroppedAndTheWholeFileAskedAgain() {
+        val kept = stopHalfWay()
+        refuseRange = true
+        ranges.clear()
+        files().download(listOf(part), Watch())
+        assertEquals("Range first, the 416 drops the part, then the whole file", listOf("bytes=$kept-", null), ranges.toList())
+        assertEquals(body.toList(), File(dir, "model.bin").readBytes().toList())
+        assertFalse(partial.exists() || PartResume.tagFile(partial).exists())
+    }
+
+    @Test
+    fun aTailOfAnotherVersionIsDroppedAndTheWholeFileAskedAgain() {
+        val kept = stopHalfWay()
+        etag = "\"v2\""
+        ignoreIfRange = true
+        ranges.clear()
+        files().download(listOf(part), Watch())
+        assertEquals("Range first, the foreign 206 dropped, then the whole file", listOf("bytes=$kept-", null), ranges.toList())
+        assertEquals(body.toList(), File(dir, "model.bin").readBytes().toList())
+        assertFalse(partial.exists() || PartResume.tagFile(partial).exists())
+    }
+
+    @Test
+    fun aPartWithNoRecordedVersionIsNeverResumed() {
+        dir.mkdirs()
+        partial.writeBytes(ByteArray(1000) { 9 }) // some older download: nobody knows which version it came from
+        files().download(listOf(part), Watch())
+        assertEquals(listOf<String?>(null), ranges.toList())
+        assertEquals(body.toList(), File(dir, "model.bin").readBytes().toList())
     }
 
     @Test

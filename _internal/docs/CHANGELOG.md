@@ -39,6 +39,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Bài nhạc nền bạn ghim thay một bài cũ không còn thừa hưởng chỗ kết ("đuôi") của bài cũ nên không bị cắt hay dừng giữa chừng trên máy tính và điện thoại.
 - Nhạc nền trên điện thoại không còn vọt lên to giữa chừng khi bài tải chậm; nhạc chọn theo cảnh trên điện thoại cũng tính độ phân tán riêng của từng bài như máy tính, nên chọn bài giống nhau ở cả hai máy.
 - Khi bạn đóng sách trên điện thoại, nhạc nền được nhả hẳn thay vì giữ bài đang mở tới lần mở sách sau.
+- Khi bạn bấm Cập nhật mà mạng đứng yên, quá 60 giây không thêm byte nào thì ABook báo bằng một câu dễ hiểu và trả nút về để bạn bấm lại, không còn kẹt ở “Đang tải bản mới…”; lời báo không còn chép chuỗi lỗi kỹ thuật.
+- Cài đặt có nút “Kiểm tra bản mới” để bạn kiểm lại khi lần tự kiểm lúc mở app không có mạng; kiểm xong luôn có một lời (mới nhất, có bản mới, hay chưa hỏi được).
+- Khi bạn tải tiếp một chương sách (hoặc một gói giọng, model) sau khi bị ngắt giữa chừng, máy tính và điện thoại chỉ nối tiếp nếu file bên kia vẫn là file cũ; file được dựng lại thì tải lại từ đầu, không còn thành file hỏng mà không báo. Điện thoại còn kiểm cỡ cuối so với cỡ sách ghi trước khi nhận file, nên file thiếu hay sai cỡ không bị coi là đã tải xong.
+- Khi bạn tìm bìa trên mạng, lượt tìm có hạn 12 giây cho tất cả các nguồn, nguồn nào chậm thì được báo là chưa hỏi được; đóng hộp tìm là huỷ luôn lượt đang chờ.
+- Khi bạn chọn một ảnh bìa trên mạng rồi đặt (hay bỏ) bìa khác, ảnh mạng về chậm không còn đè lên bìa bạn đặt sau; lúc ảnh đang về, nút bìa tạm bận.
+- Khi tải ảnh bìa từ mạng không được, lời báo là “Chưa tải được ảnh này, bạn thử lại hoặc chọn ảnh khác” trên cả máy tính lẫn điện thoại, thay vì chuỗi lỗi kỹ thuật; ảnh xem trước lỗi thì không còn hiện ô trống bấm chọn được.
+- Khi bạn bấm Huỷ lúc ABook đang tải giọng, model hoặc sách từ máy khác trên mạng chậm, việc huỷ được nghe sau mỗi 64 KB thay vì mỗi 1 MB.
+- Khi sách lấy từ điện thoại có bìa mới mà lần tải bìa trước bị lỗi mạng, lần làm mới thư viện sau tải lại bìa, không giữ bìa cũ mãi.
+- Khi bạn gửi phần sửa về máy tính khác xong mà ngay lúc ấy mạng đứt không lấy được bản mới, sách vẫn hiện tên và bìa bạn vừa sửa thay vì quay về bản cũ.
+- Khi bạn chọn ảnh bìa có quá nhiều điểm ảnh (hơn 40 triệu, như PNG 8000×8000), ABook (máy tính và điện thoại) từ chối bằng lời nhắn thu nhỏ ảnh thay vì ngốn hàng trăm MB bộ nhớ; ảnh chụp bằng điện thoại cỡ lớn vẫn dùng được.
 
 ## [0.4.122] - 2026-10-22
 

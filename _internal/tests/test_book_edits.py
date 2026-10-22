@@ -893,3 +893,32 @@ def test_a_pin_replaces_the_old_tracks_tail_flag_and_loop_points_with_nothing() 
     [cue] = book_edits.apply_music(music, edits)["chapters"]["1"]
     assert cue["track"] == f"music/{shared.TRACK_SHA}.wav" and "gainDb" in cue
     assert not {"tail", "audibleStart", "audibleEnd", "loopStart", "loopEnd"} & set(cue), "đặc điểm của bài cũ không đi theo bài ghim"
+
+
+def test_a_slow_web_cover_chosen_earlier_never_overwrites_a_cover_set_after_it(imported, monkeypatch) -> None:
+    import threading
+
+    from abook.webui import cover_search
+
+    app, folder, identifier, call = imported
+    arrived, release = threading.Event(), threading.Event()
+
+    def slow_download(_url: str) -> bytes:
+        arrived.set()
+        release.wait(20)  # mạng chậm: ảnh về sau khi người dùng đã đặt ảnh khác
+        return shared.tiny_cover()
+
+    monkeypatch.setattr(cover_search, "download_image", slow_download)
+    late: list[tuple[int, Any]] = []
+    first = threading.Thread(target=lambda: late.append(call("PUT", "/api/books/{id}/cover", {"url": "https://covers.openlibrary.org/b/id/1-L.jpg"})))
+    first.start()
+    try:
+        assert arrived.wait(10)
+        assert call("DELETE", "/api/books/{id}/cover")[0] == 200, "người dùng đã bỏ ảnh bìa trong lúc ảnh mạng còn đang về"
+        assert not (folder / book_edits.EDITS_COVER).exists()
+    finally:
+        release.set()
+        first.join(20)
+    assert late and late[0][0] == 409 and "đổi bìa khác" in late[0][1]["error"]
+    assert not (folder / book_edits.EDITS_COVER).exists(), "ảnh về muộn không được hiện lại"
+    assert call("PUT", "/api/books/{id}/cover", {"image": shared.cover_data_url()})[0] == 200, "thao tác mới sau đó vẫn đặt được"

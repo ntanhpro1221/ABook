@@ -28,6 +28,9 @@ COVER_FILE = "cover.jpg"
 META_FILE = "cover.json"
 MAX_SIDE = 1400
 MAX_UPLOAD_BYTES = 16 * 1024 * 1024
+# Ảnh nén nhỏ nhưng nhiều điểm ảnh (PNG 8000x8000 chỉ vài MB) giải nén ra hàng trăm MB mỗi bản; vài lượt cùng lúc là chạm 1 GB.
+# JPEG được giải mã thẳng ở cỡ nhỏ (`draft`) nên ảnh chụp điện thoại 100 triệu điểm ảnh vẫn dùng được.
+MAX_PIXELS = 40_000_000
 DATA_URL = re.compile(r"data:image/(png|jpe?g|webp|gif|bmp);base64,([A-Za-z0-9+/=\s]+)", re.IGNORECASE)
 
 
@@ -115,16 +118,21 @@ def render_cover(raw: bytes) -> tuple[bytes, dict[str, Any]]:
     try:
         image = Image.open(io.BytesIO(raw))
         image.seek(0)
+        image.draft("RGB", (MAX_SIDE, MAX_SIDE))  # JPEG: giải mã ở 1/2, 1/4, 1/8 cỡ nếu vẫn đủ cho bìa; định dạng khác: không làm gì
+        if image.width * image.height > MAX_PIXELS:
+            raise CoverError(f"Ảnh có quá nhiều điểm ảnh (tối đa {MAX_PIXELS // 1_000_000} triệu) - bạn thu nhỏ ảnh rồi thử lại")
         image = ImageOps.exif_transpose(image)
-    except (UnidentifiedImageError, OSError) as exc:
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
         raise CoverError("Không đọc được ảnh này") from exc
     if min(image.size) < 64:
         raise CoverError("Ảnh quá nhỏ để làm bìa (cần ít nhất 64 điểm ảnh mỗi cạnh)")
     if image.mode in ("RGBA", "LA", "P"):
+        rgba = image.convert("RGBA")  # một bản thôi: cỡ nguyên ảnh lớn rất tốn RAM
         backdrop = Image.new("RGB", image.size, (255, 255, 255))
-        backdrop.paste(image.convert("RGBA"), mask=image.convert("RGBA").getchannel("A"))
+        backdrop.paste(rgba, mask=rgba.getchannel("A"))
         image = backdrop
-    image = image.convert("RGB")
+    if image.mode != "RGB":
+        image = image.convert("RGB")
     image.thumbnail((MAX_SIDE, MAX_SIDE), Image.Resampling.LANCZOS)
     out = io.BytesIO()
     image.save(out, "JPEG", quality=88, optimize=True, progressive=True)
