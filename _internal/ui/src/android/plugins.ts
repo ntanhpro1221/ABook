@@ -313,6 +313,15 @@ export interface Mp3ExportEvent {
   uri?: string;
   stopped?: boolean;
   error?: string;
+  /** "Kèm nhạc nền" (soát a99 V3): pha như `M4bExportEvent` (tải bài / trộn / kiểm đỉnh / mã hoá lại); `mixed`: chương ra file .m4a đã trộn nhạc; `musicMissing`: đoạn thiếu nhạc. */
+  phase?: "music-fetch" | "music" | "peaks" | "reencode";
+  chapter?: number;
+  chapters?: number;
+  peakRound?: number;
+  peakOver?: number;
+  percent?: number;
+  mixed?: boolean;
+  musicMissing?: number;
 }
 
 /** Tin của một lượt "Xuất M4B" (M4bExportWorker.kt): tiến độ (`done`/`total` chương, `percent` cả cuốn), xong (`finished`), dừng (`stopped`) hay lỗi. */
@@ -498,7 +507,7 @@ export interface EbookLibraryPlugin {
   /** "Xuất MP3 để nghe ở app khác" (Mp3Export.kt): thư mục MP3 như máy tính, chạy nền. Lần đầu (hay `pick`) hỏi chỗ lưu bằng bộ
    *  chọn thư mục của hệ thống rồi nhớ lại. `cover`: bìa tự vẽ (data URL PNG) khi sách không có bìa. Tiến độ / kết quả: sự kiện
    *  "mp3Export" mang cùng `run`. `started: false` khi không chọn thư mục. */
-  exportMp3(options: { bookId: string; cover?: string; pick?: boolean; chapterIds?: number[] }): Promise<{ started: boolean; run?: string; folder?: string; chapters?: number }>;
+  exportMp3(options: { bookId: string; cover?: string; pick?: boolean; chapterIds?: number[]; music?: boolean }): Promise<{ started: boolean; run?: string; folder?: string; chapters?: number }>;
   /** "Mở thư mục" ở thông báo xuất xong: mở thư mục bản xuất bằng app Tệp. `opened: false` khi máy không có app nào mở được. */
   openFolder(options: { uri: string }): Promise<{ opened: boolean }>;
   addListener(event: "mp3Export", handler: (event: Mp3ExportEvent) => void): Promise<PluginListenerHandle>;
