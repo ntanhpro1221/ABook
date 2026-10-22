@@ -27,7 +27,7 @@ import { androidSource } from "./androidSource";
 import { DevicesScreen } from "./DevicesScreen";
 import { AudiobookPhoneDialogHost, ExportAudiobookMenuItem, watchAudiobookExports } from "./ExportAudiobook";
 import { ExportM4bMenuItem, M4bMusicDialogHost, watchM4bExports } from "./ExportM4b";
-import { ExportMp3MenuItem, watchMp3Exports } from "./ExportMp3";
+import { ExportMp3MenuItem, Mp3MusicDialogHost, watchMp3Exports } from "./ExportMp3";
 import { ExportRevisionNotice } from "./ExportRevisions";
 import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
@@ -288,6 +288,7 @@ export function AndroidApp() {
               <RemoveFromPhoneHost />
               <AudiobookPhoneDialogHost />
               <M4bMusicDialogHost />
+              <Mp3MusicDialogHost />
               <MobileShell>
                 <Routes>
                   <Route path="/" element={<LibraryPage />} />

@@ -59,6 +59,9 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/vnd.ngdtuanh.abook+zip" />
                 <data android:mimeType="application/vnd.ngdtuanh.abookproj+zip" />
+                <!-- Zalo, Drive, email hay đặt kiểu chung cho file lạ: LibraryPlugin.openFrom kiểm tên / đầu file, không phải file sách thì báo rõ. -->
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="application/zip" />
             </intent-filter>
             <!-- EPUB / Word / PDF / TXT từ app khác ("Mở bằng", chia sẻ tới app): mở bước xem trước của "Thêm sách từ file…"
                  (LibraryPlugin.openFrom). Chỉ là một lựa chọn trong "Mở bằng" - không BROWSABLE, không nhận "*/*". -->
