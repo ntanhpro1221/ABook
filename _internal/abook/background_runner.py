@@ -60,6 +60,11 @@ class BackgroundIdentityError(RuntimeError):
     pass
 
 
+class BackgroundGone(BackgroundIdentityError):
+    """Sách không còn supervisor sống để nhận lệnh (đã xong, đã dừng, hay tiến trình đã chết): "Dừng" / "Tạm dừng" không còn
+    gì để tác động. Là con của BackgroundIdentityError nên CLI (`cli stop`) vẫn bắt như cũ; webui nói bằng câu cho người nghe."""
+
+
 @dataclass(frozen=True, slots=True)
 class BackgroundPaths:
     project_root: Path
@@ -116,6 +121,11 @@ class BackgroundStatus:
     # Supervisor biết tạm dừng: lượt chạy bắt đầu bằng mã có tính năng này (state có khoá pause_reason ngay từ lúc
     # khởi động). Lượt cũ vẫn chạy mã cũ tới hết - ghi yêu cầu cho nó là nói dối người dùng (soát QA 29-09).
     can_pause: bool = False
+    # Đã bấm "Dừng": supervisor đã chuyển yêu cầu cho worker, worker còn chạy tới checkpoint sạch kế (30 giây tới vài phút).
+    stopping: bool = False
+    # Supervisor ghi lượt chạy này là còn dở (đang chạy, đang dừng, hay đã chết giữa chừng - "lost"): nhịp tim worker trong sổ
+    # không được nói thay nó nữa. Không có supervisor nào (chạy bằng dòng lệnh) thì sổ là nguồn duy nhất.
+    supervised: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
@@ -326,8 +336,22 @@ def _status_from_state(paths: BackgroundPaths, state: Mapping[str, Any]) -> Back
         detail=detail,
         pause_reason=str(state["pause_reason"]) if running and state.get("pause_reason") else None,
         paused_at=str(state["paused_at"]) if running and state.get("paused_at") else None,
-        can_pause=running and "pause_reason" in state,
+        can_pause=running and "pause_reason" in state and recorded_state != "stopping",
+        stopping=running and recorded_state == "stopping",
+        supervised=active,
     )
+
+
+def lease_after_of(status: BackgroundStatus) -> float | None:
+    """Mốc (giây epoch) mà nhịp tim worker trong sổ phải MỚI HƠN mới được tính là "đang chạy": supervisor ghi lượt chạy còn dở
+    (kể cả đã chết) -> vô cực, nó là nguồn duy nhất; đã kết thúc -> lúc kết thúc; chưa từng có supervisor (chạy bằng dòng lệnh)
+    -> None, sổ là nguồn duy nhất. Nhịp tim cuối của worker vừa dừng không làm trang báo "đang chạy" thêm 120 giây (soát a88 V2)."""
+    if status.supervised:
+        return float("inf")
+    try:
+        return datetime.fromisoformat(status.finished_at).timestamp() if status.finished_at else None
+    except ValueError:
+        return None
 
 
 def get_status(project_root: Path | str) -> BackgroundStatus:
@@ -630,7 +654,7 @@ def request_stop(
         raise BackgroundIdentityError("Không thể đọc state để xác minh supervisor")
     identity_ok, detail = _validate_supervisor_identity(state, paths.project_root)
     if not identity_ok:
-        raise BackgroundIdentityError(f"Từ chối gửi stop: {detail}")
+        raise BackgroundGone(f"Từ chối gửi stop: {detail}")
 
     instance_id = str(state["instance_id"])
     original_pid = int(state["supervisor_pid"])
@@ -711,14 +735,16 @@ def request_stop(
 def request_pause(project_root: Path | str, paused: bool) -> BackgroundStatus:
     """Người dùng bấm "Tạm dừng" (paused=True) hay "Tiếp tục" (False) cho cuốn đang chạy. Chỉ ghi yêu cầu gắn với lần chạy
     đang sống (như stop); supervisor chuyển sang worker ở vòng kế. "Tiếp tục" lúc máy đang chạy pin cũng là đồng ý làm tiếp
-    trên pin - tới lần kế máy thấy sạc (`_pause_reason`)."""
+    trên pin - tới lần kế máy thấy sạc (`_pause_reason`); bấm "Tiếp tục" lần hai lúc sách đã chạy lại không làm mất sự đồng ý ấy."""
     paths = BackgroundPaths.for_project(project_root)
     state = _read_json(paths.state)
+    if state is not None and str(state.get("state")) == "stopping":
+        raise BackgroundIdentityError("Sách đang dừng - đợi dừng xong rồi mới làm tiếp được")
     if state is None or str(state.get("state")) not in {"running", "starting"}:
-        raise BackgroundIdentityError("Sách này không đang chạy")
+        raise BackgroundGone("Sách này không đang chạy")
     identity_ok, detail = _validate_supervisor_identity(state, paths.project_root)
     if not identity_ok:
-        raise BackgroundIdentityError(f"Từ chối tạm dừng: {detail}")
+        raise BackgroundGone(f"Từ chối tạm dừng: {detail}")
     if "pause_reason" not in state:
         raise BackgroundIdentityError("Lượt chạy này bắt đầu bằng bản cũ của app, chưa tạm dừng được")
     _write_pause_request(paths, state, paused)
@@ -728,6 +754,13 @@ def request_pause(project_root: Path | str, paused: bool) -> BackgroundStatus:
 def _write_pause_request(paths: BackgroundPaths, state: Mapping[str, Any], paused: bool) -> None:
     """Yêu cầu tạm dừng / làm tiếp gắn với lượt chạy `state`: nút "Tạm dừng" (request_pause) và lần giữ chờ duyệt của chính
     supervisor ("Chờ tôi duyệt trước khi thu", `_hold_for_review`) đi chung đường - "Thu âm" / "Tiếp tục" gỡ được cả hai."""
+    overrides = None if paused else _resume_overrides(state)
+    if not paused and overrides is None:
+        # Sách không đang dừng vì lý do nào (đã làm tiếp rồi, bấm "Tiếp tục" lần hai): yêu cầu trước còn hiệu lực thì giữ
+        # nguyên - ghi đè bằng "không vượt gì" là bắt sách đang chạy trên pin dừng lại (soát a88 V4).
+        existing = _pause_request(paths, str(state["instance_id"]))
+        if existing is not None and existing.get("paused") is False and existing.get("overrides"):
+            return
     atomic_write_json(
         paths.pause_request,
         {
@@ -738,10 +771,18 @@ def _write_pause_request(paths: BackgroundPaths, state: Mapping[str, Any], pause
             "requested_at_epoch": time.time(),
             "requester_pid": os.getpid(),
             "paused": bool(paused),
-            # "Tiếp tục" chỉ vượt đúng lần dừng người dùng đang thấy: bấm lúc dừng vì pin = làm tiếp trên pin.
-            "overrides": None if paused else state.get("pause_reason"),
+            "overrides": overrides,
         },
     )
+
+
+def _resume_overrides(state: Mapping[str, Any]) -> str | None:
+    """Lần dừng mà "Tiếp tục" vượt qua; chỉ "battery" có nghĩa với `_pause_reason`. Máy đang chạy pin đủ lâu để dừng (state
+    `battery_pause`) thì "Tiếp tục" là đồng ý làm tiếp trên pin dù sách đang dừng vì "listener" hay vì "Chờ tôi duyệt" - không
+    thì toast "Đang làm tiếp" nói sai, sách dừng lại ngay vì pin (soát a88 T1). Đang cắm sạc: giữ lý do hiện tại."""
+    if state.get("battery_pause") is True:
+        return "battery"
+    return str(state["pause_reason"]) if state.get("pause_reason") else None
 
 
 def _hold_for_review(paths: BackgroundPaths, state: Mapping[str, Any]) -> bool:
@@ -879,6 +920,7 @@ def run_supervisor(
             "detail": "supervisor đang khởi tạo worker",
             "pause_reason": None,
             "paused_at": None,
+            "battery_pause": False,
         }
         atomic_write_json(paths.state, state)
         _append_log(paths, f"SUPERVISOR_START pid={supervisor_pid} instance={instance_id}")
@@ -971,6 +1013,7 @@ def run_supervisor(
         battery_pause = False
         next_power_check = last_state_write
         pause_reason: str | None = None
+        awake = False
         while worker.is_alive():
             if not stop_requested and _stop_request_matches(paths, instance_id):
                 stop_requested = True
@@ -998,6 +1041,12 @@ def run_supervisor(
             wanted = None if stop_requested else _pause_reason(
                 _pause_request(paths, instance_id), battery_pause, battery.last_plugged_wall
             )
+            if state.get("battery_pause") is not battery_pause:
+                state["battery_pause"] = battery_pause  # ra đĩa ở lần ghi kế: "Tiếp tục" đọc nó (`_resume_overrides`)
+            # Máy chỉ được ngủ khi sách không làm gì: đang chạy thật thì giữ thức, tạm dừng / đang dừng thì nhả.
+            if awake is not (wanted is None and not stop_requested):
+                awake = wanted is None and not stop_requested
+                power_source.keep_awake(awake)
             if wanted != pause_reason:
                 pause_reason = wanted
                 if wanted:
@@ -1097,6 +1146,7 @@ def run_supervisor(
             pass
         return 1
     finally:
+        power_source.keep_awake(False)  # dù thoát đường nào, máy lại được ngủ
         if worker is not None and worker.is_alive():
             try:
                 terminate_process_tree(int(worker.pid), include_parent=True, grace_seconds=4.0)

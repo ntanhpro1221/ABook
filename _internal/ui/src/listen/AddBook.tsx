@@ -214,6 +214,7 @@ export function AddBookDialog({
       { preview: (...args) => session.wait(importer.preview(...args)) }, picked,
     ));
     setPreview(result);
+    setSkipped(new Set((result.suggestions ?? []).filter((row) => row.defaultOn).map((row) => row.line)));
     setPicked(defaultPicked(result.chapters));
     setTitle(result.title);
     setSplit(sure);
@@ -409,6 +410,7 @@ export function AddBookDialog({
   // Thêm cuốn đang xem đúng như người dùng thấy (tên, chương đã tích, gợi ý đã chọn).
   const addCurrent = async (separate: boolean): Promise<AddedBook> => {
     const added = await importer.add(choice!, title.trim(), separate, {
+      sourceFingerprint: preview!.sourceFingerprint,
       splitChapters: split,
       footnotes: footnotesToSend(footnotes),
       chapters: chapterPicks(preview!.chapters, picked, names),

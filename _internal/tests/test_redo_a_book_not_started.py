@@ -35,6 +35,7 @@ def recycled(monkeypatch: pytest.MonkeyPatch) -> list[Path]:
         shutil.rmtree(path)
 
     monkeypatch.setattr(actions, "move_to_recycle_bin", recycle)
+    monkeypatch.setattr(actions, "recycle_bin_available", lambda _path: None)
     return moved
 
 
@@ -141,8 +142,68 @@ def test_an_analysis_cut_short_is_flagged_and_can_be_restarted_from_scratch(stud
         "paths": plan["paths"], "title": plan["title"], "profile": plan["profile"], "narrator": plan["narrator"],
         "firstPerson": plan["firstPerson"], "replaces": old, "start": False})
     assert status == 201, created
-    assert recycled == [old_root.resolve()], "bản dở vào Thùng rác TRƯỚC, nên dự án mới không mở lại nó"
+    assert recycled == [], "nằm chờ \"Hoàn tác\" ít giây rồi mới vào Thùng rác (cho phép khôi phục nếu việc tạo hỏng)"
+    app.sweep_trash(everything=True)
+    # Cuốn mới đã chiếm tên cũ: bản dở vào Thùng rác dưới tên anh em, Windows khôi phục về tên ấy chứ không đè cuốn mới.
+    assert [path.name for path in recycled] == [f"{old_root.name} (đã xoá)"]
     status, again = _call(server, "GET", f"/api/books/{created['id']}")
     again = again["book"]
     assert again["analysisInterrupted"] is False and again["segments"]["analyzed"] == 0, "bắt đầu lại từ câu đầu"
     assert (app.library.resolve(created["id"]) / "cover.jpg").read_bytes() == b"\xff\xd8bia"
+
+
+def _cut_book(server, app, tmp_path: Path) -> tuple[str, Path, dict]:
+    """Một bản dở: phân tích bị ngắt giữa chừng (1/3 câu), kèm kế hoạch "Làm lại" của nó."""
+    import sqlite3
+    from contextlib import closing
+
+    old = _created(server, tmp_path)
+    old_root = app.library.resolve(old)
+    with closing(sqlite3.connect(old_root / "project.sqlite3")) as db:
+        chapter = db.execute("SELECT MIN(id) FROM chapters").fetchone()[0]
+        for seq, status in enumerate(("analyzed", "pending", "pending")):
+            db.execute("INSERT INTO segments(stable_id, chapter_id, seq, text, text_sha256, kind_hint, status, updated_at)"
+                       " VALUES (?, ?, ?, 'Câu.', 'x', 'narration', ?, 0)", (f"s{seq}", chapter, seq, status))
+        db.commit()
+    status, plan = _call(server, "GET", f"/api/books/{old}/redo")
+    assert status == 200 and plan["analysisInterrupted"] is True
+    return old, old_root, plan
+
+
+def _redo_body(plan: dict, old: str, **extra) -> dict:
+    return {"paths": plan["paths"], "title": plan["title"], "profile": plan["profile"], "narrator": plan["narrator"],
+            "firstPerson": plan["firstPerson"], "replaces": old, "start": False, **extra}
+
+
+def test_a_redo_that_cannot_be_created_leaves_the_draft_where_it_was(studio, tmp_path: Path,  # noqa: F811
+                                                                      recycled: list[Path]) -> None:
+    """Soát a88 V3: model phân tích không có trong Ollama -> 400, mà bản dở đã vào Thùng rác và biến khỏi Studio. Giờ mọi điều
+    kiện được kiểm TRƯỚC khi đụng tới bản dở."""
+    _paths, app, server, _runner = studio
+    old, old_root, plan = _cut_book(server, app, tmp_path)
+    status, data = _call(server, "POST", "/api/books", _redo_body(plan, old, analysisModel="model-khong-ton-tai:1b"))
+    assert status == 400 and "không có trong Ollama" in data["error"]
+    assert recycled == [] and old_root.joinpath("project.sqlite3").is_file(), "bản dở còn nguyên chỗ cũ"
+    status, listing = _call(server, "GET", "/api/library")
+    assert old in [book["id"] for book in listing["books"]]
+    assert not list(app.trash.held(app.library.root.resolve())), "không có gì nằm chờ trong Thùng rác"
+
+
+def test_a_redo_whose_creation_fails_midway_gets_the_draft_back(studio, tmp_path: Path,  # noqa: F811
+                                                                 recycled: list[Path], monkeypatch: pytest.MonkeyPatch) -> None:
+    """Lỗi sau bước kiểm (đĩa đầy, file nguồn mất...): bản dở đã ra chỗ chờ thì được khôi phục nguyên vẹn, không mất."""
+    from abook.webui import actions
+
+    _paths, app, server, _runner = studio
+    old, old_root, plan = _cut_book(server, app, tmp_path)
+
+    def broken(*_args, **_kwargs):
+        raise ValueError("Chưa có file TXT nào để làm sách")
+
+    monkeypatch.setattr(actions, "create_book", broken)
+    status, data = _call(server, "POST", "/api/books", _redo_body(plan, old))
+    assert status == 400 and "Chưa có file" in data["error"]
+    assert old_root.joinpath("project.sqlite3").is_file() and recycled == []
+    status, listing = _call(server, "GET", "/api/library")
+    assert old in [book["id"] for book in listing["books"]], "bản dở trở lại thư viện"
+    assert not list(app.trash.held(app.library.root.resolve()))

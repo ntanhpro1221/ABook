@@ -1,3 +1,3 @@
 {
- "error": "PDF này là ảnh chụp, chưa có chữ để đọc."
+ "error": "PDF này chưa trích được chữ để đọc (có thể là ảnh chụp). Bạn hãy nhận dạng chữ bằng OCR hoặc dùng bản TXT/DOCX có chữ."
 }

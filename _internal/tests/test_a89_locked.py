@@ -15,16 +15,16 @@ from tests.test_book_wishes import _producer, _line
 
 @pytest.mark.parametrize('reject_second', [False, True])
 def test_review_redo_writes_one_group(tmp_path: Path, monkeypatch, reject_second):
-    """Giữ cả nhóm, hoặc đúng phần đã nhận trước lỗi phán quyết."""
-    def review(_project, stable_id, *_args, **_kwargs):
-        if reject_second and stable_id == 's2':
+    """Phán quyết cả nhóm nguyên tử; retake ghi đúng một nhóm khi được nhận."""
+    def review(_project, stable_ids, *_args, **_kwargs):
+        if reject_second and 's2' in stable_ids:
             raise ValueError('Bản thu đã đổi')
 
     handler = object.__new__(server.Handler)
     handler.app = SimpleNamespace(
         _mutating=lambda: None, _book=lambda _value: tmp_path,
         _editable=lambda _value: tmp_path,
-        reviews=SimpleNamespace(get=lambda _project: {}, set=review))
+        reviews=SimpleNamespace(get=lambda _project: {}, set_many=review))
     handler._body = lambda: {'verdict': 'redo', 'lines': [
         {'stableId': 's1'}, {'stableId': 's2'}, {'stableId': 'missing'}]}
     handler._send_json = Mock()
@@ -36,12 +36,16 @@ def test_review_redo_writes_one_group(tmp_path: Path, monkeypatch, reject_second
     monkeypatch.setattr(lo, '_write', write)
     monkeypatch.setattr(lo, 'request_retakes', batch)
     if reject_second:
-        with pytest.raises(server.ApiError, match='1 câu trước đó'):
+        with pytest.raises(server.ApiError, match='Bản thu đã đổi'):
             handler.post_review({}, 'book')
     else:
         handler.post_review({}, 'book')
         assert handler._send_json.call_args.args[1]['lines'] == 2
-    expected = [('s1', 'sha1')] if reject_second else [('s1', 'sha1'), ('s2', 'sha2')]
+    if reject_second:
+        assert batch.call_count == write.call_count == 0
+        assert lo.read_overrides(tmp_path) == {}
+        return
+    expected = [('s1', 'sha1'), ('s2', 'sha2')]
     assert batch.call_count == 1
     assert batch.call_args.args == (tmp_path, expected)
     assert write.call_count == 1

@@ -10,6 +10,8 @@ ghi vào SQLite của sách (đó là của dây chuyền). Các chương có c�
 """
 from __future__ import annotations
 
+import bisect
+import hashlib
 import json
 import os
 import threading
@@ -19,7 +21,7 @@ from contextlib import closing
 from pathlib import Path
 from typing import Any
 
-from . import store
+from . import listing_cache, store
 
 LOW_SIMILARITY = 0.8
 KINDS = ("failed", "unverified", "name-low", "text-low", "name", "text")
@@ -160,10 +162,11 @@ class Reviews:
         return data if isinstance(data, dict) else {}
 
     def get(self, project_root: Path) -> dict[str, Any]:
+        # Chỉ đọc: phán quyết của bản thu đã đổi hiện ra như đã vào `history` (trong bộ nhớ); tệp chỉ được ghi khi có người chấm
+        # (`set`/`set_many`/`merge`) - mở trang hay xem sách ở chế độ chỉ đọc không được đụng tới đĩa (soát a89 T4).
         with self._lock:
             entry = self._read(project_root)
-            if self._archive_changed(project_root, entry):
-                self._write(project_root, entry)
+            self._archive_changed(project_root, entry)
             return entry
 
     @staticmethod
@@ -177,11 +180,11 @@ class Reviews:
             checksum = "COALESCE(wav_sha256, '')" if "wav_sha256" in columns else "''"
             return {str(row[0]): str(row[1]) for row in connection.execute(f"SELECT stable_id, {checksum} FROM segments")}
 
-    def _archive_changed(self, project_root: Path, entry: dict[str, Any]) -> bool:
+    def _archive_changed(self, project_root: Path, entry: dict[str, Any], audio: dict[str, str] | None = None) -> bool:
         changed = False
         if not entry:
             return False
-        audio = self._audio(project_root)
+        audio = self._audio(project_root) if audio is None else audio
         for stable_id, value in list(entry.items()):
             if value.get("verdict") and value.get("audioSha256") != audio.get(stable_id, ""):
                 history = list(value.get("history") or [])
@@ -192,27 +195,37 @@ class Reviews:
 
     def set(self, project_root: Path, stable_id: str, verdict: str | None, chapter_id: int,
             *, audio_sha256: str | None = None) -> None:
+        self.set_many(project_root, [stable_id], verdict, chapter_id, audio_sha256=audio_sha256)
+
+    def set_many(self, project_root: Path, stable_ids: list[str], verdict: str | None, chapter_id: int,
+                 *, audio_sha256: str | None = None) -> None:
+        """Chấm cả nhóm câu một lượt: đọc bảng bản thu MỘT lần (cả sách), ghi `reviews.json` MỘT lần (soát a89 V2: từng câu một là 2
+        lần quét sổ + một lần ghi tệp mỗi câu, giữ khoá dự án - 2.000 câu ~96 giây). Một câu đã có bản thu khác thì không ghi gì cả."""
         if verdict not in (None, "ok", "redo"):
             raise ValueError("verdict")
         with self._lock:
-            audio = self._audio(project_root).get(stable_id, "")
-            if audio_sha256 is not None and audio_sha256 != audio:
+            audio = self._audio(project_root)
+            if audio_sha256 is not None and any(audio_sha256 != audio.get(stable_id, "") for stable_id in stable_ids):
                 raise ValueError("Câu đã có bản thu khác; bạn hãy tải lại và nghe bản mới trước khi chấm.")
             entry = self._read(project_root)
-            self._archive_changed(project_root, entry)
-            history = (entry.get(stable_id) or {}).get("history") or []
-            if verdict is None:
-                if stable_id not in entry:
-                    return
-                if history:
-                    entry[stable_id] = {"history": history}
+            changed = self._archive_changed(project_root, entry, audio)
+            at = time.time()
+            for stable_id in stable_ids:
+                history = (entry.get(stable_id) or {}).get("history") or []
+                if verdict is None:
+                    if stable_id not in entry:
+                        continue
+                    if history:
+                        entry[stable_id] = {"history": history}
+                    else:
+                        entry.pop(stable_id)
                 else:
-                    entry.pop(stable_id)
-            else:
-                entry[stable_id] = {"verdict": verdict, "chapterId": int(chapter_id), "at": time.time(),
-                                    "audioSha256": audio,
-                                    **({"history": history} if history else {})}
-            self._write(project_root, entry)
+                    entry[stable_id] = {"verdict": verdict, "chapterId": int(chapter_id), "at": at,
+                                        "audioSha256": audio.get(stable_id, ""),
+                                        **({"history": history} if history else {})}
+                changed = True
+            if changed:
+                self._write(project_root, entry)
 
     def merge(self, project_root: Path, combine: Callable[[dict[str, Any]], tuple[dict[str, Any], int, int]]) -> tuple[int, int]:
         """Gộp phán quyết từ nơi khác (workshop_merge.merge_workshop) trong cùng khoá: `combine(của máy này)` -> (kết quả, lấy, giữ)."""
@@ -249,19 +262,7 @@ def _page_key(item: dict[str, Any]) -> tuple[int, float, int, int, str]:
             item["chapterId"], item["segmentId"], item["stableId"])
 
 
-def review_view(project_root: Path, verdicts: dict[str, Any], *, include_minor: bool,
-                filter: str = "all", cursor: str = "", limit: int = 600) -> dict[str, Any]:
-    if filter not in ("all", "todo", "done") or not 1 <= limit <= 600:
-        raise ValueError("Bộ lọc hoặc số câu mỗi trang không hợp lệ")
-    after = None
-    if cursor:
-        try:
-            parts = json.loads(cursor)
-            if not isinstance(parts, list) or len(parts) != 5:
-                raise ValueError
-            after = (int(parts[0]), float(parts[1]), int(parts[2]), int(parts[3]), str(parts[4]))
-        except (ValueError, TypeError, OverflowError) as error:
-            raise ValueError("Mốc tải tiếp không hợp lệ; bạn hãy tải lại danh sách") from error
+def _prepared(project_root: Path, verdicts: dict[str, Any], include_minor: bool, filter: str) -> dict[str, Any]:
     items = review_items(project_root)
     counts = {kind: 0 for kind in KINDS}
     pending = 0
@@ -275,9 +276,35 @@ def review_view(project_root: Path, verdicts: dict[str, Any], *, include_minor: 
     if filter != "all":
         shown = [item for item in shown if bool(item["verdict"] or item["pendingSpoken"] is not None) == (filter == "done")]
     shown.sort(key=_page_key)
-    if after is not None:
-        shown = [item for item in shown if _page_key(item) > after]
-    page = shown[:limit]
-    remaining = max(0, len(shown) - len(page))
-    return {"counts": counts, "pending": pending, "redoChapters": redo, "items": page,
+    return {"counts": counts, "pending": pending, "redoChapters": redo, "shown": shown, "keys": [_page_key(item) for item in shown]}
+
+
+def review_view(project_root: Path, verdicts: dict[str, Any], *, include_minor: bool,
+                filter: str = "all", cursor: str = "", limit: int = 600) -> dict[str, Any]:
+    if filter not in ("all", "todo", "done") or not 1 <= limit <= 600:
+        raise ValueError("Bộ lọc hoặc số câu mỗi trang không hợp lệ")
+    after = None
+    if cursor:
+        try:
+            parts = json.loads(cursor)
+            if not isinstance(parts, list) or len(parts) != 5:
+                raise ValueError
+            after = (int(parts[0]), float(parts[1]), int(parts[2]), int(parts[3]), str(parts[4]))
+        except (ValueError, TypeError, OverflowError) as error:
+            raise ValueError("Mốc tải tiếp không hợp lệ; bạn hãy tải lại danh sách") from error
+    # Nhớ theo chữ ký dự án + phán quyết như work_view (soát a89 T8: mỗi trang quét lại cả sổ - 0,5 giây cho 30k đoạn 10k cảnh báo,
+    # mà trang kế, nhãn lọc và hộp việc hỏi liên tục). Bản nhớ dùng chung: các mục không được sửa.
+    signature = store.project_signature(project_root)
+    if signature:
+        digest = hashlib.sha256(json.dumps(verdicts or {}, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:16]
+        prepared = listing_cache.cached(("review_view", str(project_root), include_minor, filter),
+                                        signature + ((f"verdicts:{digest}", 0, ()),),
+                                        lambda: _prepared(project_root, verdicts, include_minor, filter))
+    else:
+        prepared = _prepared(project_root, verdicts, include_minor, filter)
+    shown, keys = prepared["shown"], prepared["keys"]
+    start = bisect.bisect_right(keys, after) if after is not None else 0
+    page = shown[start:start + limit]
+    remaining = max(0, len(shown) - start - len(page))
+    return {"counts": prepared["counts"], "pending": prepared["pending"], "redoChapters": prepared["redoChapters"], "items": page,
             "nextCursor": json.dumps(_page_key(page[-1])) if remaining else None, "remaining": remaining}

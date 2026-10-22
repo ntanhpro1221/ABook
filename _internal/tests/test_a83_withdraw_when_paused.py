@@ -42,24 +42,14 @@ def _decide(post, paths) -> dict:
     return {"section": "speakers", "key": "c1s2", "requestedAt": made["requestedAt"]}
 
 
-def test_running_book_refuses_and_says_how_to_withdraw_truthfully(studio) -> None:
+def test_running_book_can_withdraw_a_change_that_is_not_applied_yet(studio) -> None:
+    # Soát a89 T2: dây chuyền chỉ chụp overrides.json một lần ở ranh giới chương, nên rút lúc đang chạy không làm hỏng gì.
     paths, _db, runner, post = studio
     body = _decide(post, paths)
     runner.start(paths.root)
     status, answer = post("pending-changes/withdraw", body)
-    assert status == 409
-    assert "Tạm dừng hẳn" not in answer["error"], "Tạm dừng không mở khoá nếu chưa tới checkpoint - lời hướng dẫn không được nói sai"
-    assert "Đã tạm dừng" in answer["error"] and "Bạn" in answer["error"]
-    assert "c1s2" in read_overrides(paths.root)["speakers"]
-
-
-def test_paused_but_not_yet_at_the_checkpoint_still_refuses(studio) -> None:
-    paths, _db, runner, post = studio
-    body = _decide(post, paths)
-    runner.start(paths.root)
-    runner.pause(paths.root, True)  # đã bấm, dây chuyền còn làm nốt việc dở: sổ chưa ghi "paused"
-    status, _answer = post("pending-changes/withdraw", body)
-    assert status == 409
+    assert status == 200, answer
+    assert "c1s2" not in read_overrides(paths.root).get("speakers", {})
 
 
 def test_paused_at_the_checkpoint_can_withdraw(studio) -> None:

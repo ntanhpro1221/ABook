@@ -98,6 +98,10 @@ def status_label(phase: str, stage: str, *, active: bool) -> str:
     return f"Đang {doing}" if active else f"Tạm ngưng lúc {doing}"
 
 
+# Đã bấm "Dừng": worker còn chạy tới checkpoint sạch kế, chưa dừng hẳn.
+STOPPING_LABEL = "Đang dừng…"
+
+
 def pause_label(reason: str, *, reached: bool) -> str:
     """Nhãn trạng thái khi cuốn đang tạm dừng (power_source). Chưa tới checkpoint thì dây chuyền còn làm nốt việc dở."""
     if not reached:
@@ -330,7 +334,62 @@ def _resumed(_message: str, _chapters: dict[int, str]) -> str:
     return "Bắt đầu chạy - đã kiểm tra lại dữ liệu cũ"
 
 
+# ---- yêu cầu của người nghe mà dây chuyền không áp được (pipeline._report_rejected_override): nói như người nghe nhận ra ------------------
+
+# Lý do sau khi đã bị từ chối, theo mã của listener_overrides (cùng mã giao diện nhận lúc gửi - server.*_PROBLEMS - nhưng ở đây là lời
+# báo về MỘT yêu cầu đã gửi, nên viết ở thì "đã gửi").
+REJECTED_REASON = {
+    "multi_word": "cách đọc chỉ đặt được cho một từ",
+    "not_vietnamese": "cách đọc phải là các âm tiết tiếng Việt nối bằng gạch nối",
+    "unknown_line": "câu này không còn trong sách",
+    "source_changed": "chữ của câu đã đổi sau khi bạn bấm",
+    "not_speech": "câu này là lời dẫn nên không có người nói để đổi",
+    "no_voice": "người này chưa có giọng trong sách (chưa nói câu nào)",
+    "unknown_character": "sách không có nhân vật này",
+    "not_a_character": "giọng người kể đã chọn lúc tạo sách",
+    "narrator_voice_only": "người kể chỉ đổi được giọng, không có giới để đổi",
+    "unknown_preset": "giọng này không dùng được ở đây",
+    "bad_gender": "giới phải là nam hoặc nữ",
+    "bad_kind": "loại đoạn phải là lời kể, lời thoại hay nội tâm",
+    "bad_emotion": "cảm xúc này không có trong bộ giọng",
+    "bad_text": "chữ đem đọc không dùng được",
+    "voice_taken": "giọng này đang là giọng của người khác",
+}
+
+
+def rejected_request(details: dict, quote: str = "") -> dict[str, str] | None:
+    """Một sự kiện LISTENER_OVERRIDE_REJECTED -> {section, key, title, reason}: yêu cầu nào (mục + khoá trong overrides.json), nói gì với
+    người nghe, và vì sao máy không áp được. `quote`: câu trích sẵn trong ngoặc (store.quote_line; cho yêu cầu theo câu); None khi sự kiện không
+    rõ là yêu cầu nào."""
+    from ..listener_overrides import character_key, surface_key
+
+    reason = REJECTED_REASON.get(str(details.get("problem") or ""), "máy không áp dụng được yêu cầu này")
+    sentence = f"câu {quote}" if quote else "một câu"
+    if "spoken_form" in details and details.get("surface"):
+        surface = str(details["surface"])
+        return {"section": "pronunciations", "key": surface_key(surface), "reason": reason,
+                "title": f"Chưa đổi được cách đọc “{surface}” thành “{details['spoken_form']}”"}
+    if details.get("character"):
+        character = str(details["character"])
+        return {"section": "voices", "key": character_key(character), "reason": reason,
+                "title": f"Chưa đổi được giọng của {person_name(character)}"}
+    stable_id = str(details.get("stable_id") or "")
+    if not stable_id:
+        return None
+    if "kind" in details or "emotion" in details:
+        return {"section": "lines", "key": stable_id, "reason": reason, "title": f"Chưa đổi được cách đọc {sentence}"}
+    if details.get("speaker"):
+        return {"section": "speakers", "key": stable_id, "reason": reason,
+                "title": f"Chưa gán được {sentence} cho {person_name(str(details['speaker']))}"}
+    return {"section": "retakes", "key": stable_id, "reason": reason, "title": f"Chưa thu lại được {sentence}"}
+
+
+def _rejected(_message: str, _chapters: dict[int, str]) -> str:
+    return "Máy chưa làm theo được một yêu cầu của bạn"
+
+
 EVENT_TEXT = {
+    "LISTENER_OVERRIDE_REJECTED": _rejected,
     "ASR_MISMATCH_UNRESOLVED": _mismatch,
     "NAME_PRONUNCIATION_FROM_DICTIONARY": _dictionary,
     "NAME_PRONUNCIATION_UNCERTAIN_SKIPPED": _uncertain,
@@ -345,6 +404,7 @@ EVENT_TEXT = {
 }
 
 _EVENT_LEVEL = {
+    "LISTENER_OVERRIDE_REJECTED": "warning",
     "ASR_MISMATCH_UNRESOLVED": "warning",
     "ANALYSIS_DIRECTOR_CRITIC_PROTESTED": "warning",
     "ASR_UNVERIFIABLE_SHORT_TEXT": "info",

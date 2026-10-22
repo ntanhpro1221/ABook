@@ -80,6 +80,32 @@ def _from_status(line: int, flag: int) -> bool | None:
     return {0: True, 1: False}.get(line)
 
 
+ES_CONTINUOUS = 0x80000000
+ES_SYSTEM_REQUIRED = 0x00000001
+_awake = False
+
+
+def keep_awake(on: bool) -> None:
+    """Windows: giữ máy không tự ngủ khi đang làm sách (`SetThreadExecutionState`, không giữ màn hình sáng). Máy ngủ giữa chừng
+    làm Ollama treo (docs/SURVIVING_AN_INTERRUPTION.md) - tạm dừng / dừng / thoát thì nhả để máy ngủ lại bình thường. Trạng thái
+    gắn với LUỒNG gọi, nên phải gọi từ cùng một luồng (vòng chính của supervisor); luồng chết là Windows tự nhả. Nơi khác Windows: không làm gì.
+    Gọi lặp cùng giá trị không đụng hệ thống."""
+    global _awake
+    if on == _awake:
+        return
+    if os.name != "nt":
+        _awake = on
+        return
+    import ctypes
+
+    flags = ES_CONTINUOUS | ES_SYSTEM_REQUIRED if on else ES_CONTINUOUS
+    try:
+        ctypes.windll.kernel32.SetThreadExecutionState(ctypes.c_uint(flags))
+        _awake = on
+    except (AttributeError, OSError):
+        pass  # không giữ được thì thôi: chỉ là tiện, không được làm hỏng việc tạo sách
+
+
 def _preferences_path() -> Path:
     # Cùng chỗ với webui.library.preferences_path (không nhập webui vào supervisor: chỉ cần đọc một khoá).
     override = os.environ.get("ABOOK_PREFERENCES")

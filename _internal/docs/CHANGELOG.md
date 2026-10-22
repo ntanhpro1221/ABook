@@ -9,8 +9,27 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi bạn bỏ một thay đổi đang chờ, máy kiểm lại ngay trước lúc áp để không làm theo hoặc báo “đã áp” một yêu cầu bạn vừa rút.
 - Khi bạn chọn nhiều câu cần thu lại hoặc nhận nhóm yêu cầu từ điện thoại, Studio lưu cả nhóm nhanh hơn và giữ đúng yêu cầu khi bạn thử lại sau lỗi.
 - Khi bạn thêm cách đọc bằng tên có dấu tổ hợp hoặc ký tự vô hình, Studio khớp đúng từ trong sách để thu lại các câu liên quan.
+- Chấm cả nhóm câu “Cần thu lại” nhanh hơn nhiều với sách lớn (trước đây mỗi câu đọc lại cả sổ), và mở danh sách “Cần nghe lại” không còn âm thầm ghi vào sổ chấm.
+- Mở file dự án của cùng một cuốn từ máy khác, hay áp từ điển cách đọc dùng chung, không còn có thể đè lên chỗ bạn đang sửa; việc bạn đã rút (đã huỷ “Thu lại”, đã hoàn tác một sửa) không sống lại khi gộp với bản của máy khác.
+- Bảng “Cách đọc câu này”: đổi lời kể thành lời thoại thì chọn người nói bằng đủ cách như “Ai nói câu này” (tìm, người của chương, người khác, “Người mới…”); sửa cách đọc một câu có nút “Hoàn tác” như các lựa chọn khác, trên máy tính lẫn điện thoại.
+- Yêu cầu máy không làm được (vd đổi người nói cho câu đang chờ thành lời kể) hiện thành thẻ “Yêu cầu bị từ chối” trong “Việc cần bạn” kèm lý do và nút bỏ; những yêu cầu chắc chắn bị từ chối giờ bị báo ngay lúc gửi.
+- Tên và cách đọc bạn gõ được kiểm kỹ hơn: bỏ ký tự vô hình, quá dài thì báo thay vì cắt lặng lẽ, từ chối tên trùng người khác hay tên máy dùng (“Người kể”), và báo khi chữ cần đổi cách đọc chưa có câu nào trong sách; máy tính và điện thoại kiểm giống nhau.
+- Bỏ một thay đổi đang chờ áp được bất cứ lúc nào, kể cả khi sách đang chạy (việc máy đã áp rồi thì được báo rõ), không còn bắt bấm Tạm dừng trước.
+- Hộp thư thay đổi từ điện thoại: “Bỏ qua tất cả” hỏi lại trước khi bỏ, việc đã bỏ nằm ở mục “Đã bỏ qua” để khôi phục, và “Áp dụng” nói rõ việc nào không áp được.
+- Tab Kịch bản tự làm mới khi máy vừa áp xong một yêu cầu của bạn, thẻ “đang chờ” không còn nằm lại; nút “Giữ của tôi” đổi thành “Giữ bản của bạn”.
+- Khi bạn bấm Dừng, sách hiện “Đang dừng…” và khoá nút Tạm dừng lẫn Dừng cho tới khi dừng hẳn; bấm Tạm dừng lúc ấy được báo đúng là sách đang dừng, không còn nói “không đang chạy”.
+- Khi tiến trình làm sách bị tắt đột ngột, trang sách hết báo “đang chạy” ngay (không đợi thêm hai phút), bấm Dừng trả lời “Sách đã không còn chạy” thay vì báo lỗi lạ, và nói rõ nguyên nhân khi máy sập; điện thoại phân biệt “bạn đã bấm Dừng” với “máy tính gặp sự cố”.
+- Khi bạn bấm “Làm lại phân tích từ đầu” mà cuốn mới không tạo được (vd model phân tích không còn trong Ollama), bản dở vẫn nằm nguyên trong Studio; chỉ khi cuốn mới đã tạo xong bản dở mới đi vào Thùng rác.
+- Khi máy chạy pin, bấm “Tiếp tục” hai lần hay bấm “Tiếp tục” lúc sách đang tạm dừng tay không còn làm sách dừng lại ngay; thông báo “Đang làm tiếp” luôn khớp với điều xảy ra, và nói rõ khi sách làm tiếp trên pin.
+- Nút Tạm dừng, Tiếp tục và Dừng đổi trạng thái ngay khi bấm, không còn trễ vài giây; nếu lệnh không thành, trang tự làm mới.
+- Điện thoại báo “Máy tính đang chạy pin, đã tạm dừng cuốn …” đúng lúc sách tạm dừng vì rút sạc, và máy tính cũng hiện thông báo trên màn hình Windows.
+- Hộp Dừng giữa lúc phân tích nói đúng: phần đã phân tích được giữ nguyên nhưng làm tiếp từ chỗ dừng có thể ra cuốn khác, và mời bạn bấm Tạm dừng; lời khuyên khi gặp lỗi chỉ đúng nút chính của trang (“Làm lại phân tích từ đầu” khi phân tích bị ngắt).
+- Cuốn xếp hàng sau một cuốn đang tạm dừng nói rõ vì sao chưa tới lượt và bạn cần làm gì.
+- Khi sách đang chạy, Windows không tự cho máy ngủ giữa chừng (làm Ollama treo); tạm dừng, dừng hay xong là máy được ngủ lại như thường.
+
 - Khi bạn gỡ ABook, bộ gỡ đọc vị trí thư viện đã lưu và giữ cây chứa sách; app cũng ngăn bạn chọn thư viện trong các thư mục sẽ bị gỡ.
 - Khi bạn có cuốn đang chạy, khởi động hoặc tạm dừng, Studio yêu cầu chờ làm xong trước khi cập nhật để giữ nguyên lượt phân tích.
 - Khi bạn đổi tên bộ cài, lần nâng cấp giữa các bản có bộ gỡ mới vẫn nhận đúng chế độ nâng cấp và giữ Studio.
@@ -36,6 +55,25 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Đường dẫn trong sách từ máy đã ghép không còn có thể ghi sang thư mục sách khác của bạn trên điện thoại.
 - Khi bạn mở sách từ máy đã ghép, đường dẫn lạ trong sách bị từ chối trước khi máy tính dò file hay truy cập thư mục mạng.
 - Khi bạn tải sách từ máy đã ghép, mã sách không hợp lệ bị từ chối trước khi ghi vào thư viện điện thoại.
+- Khi PDF không có lớp chữ hoặc có mật khẩu, app nói rõ bạn cần OCR, dùng bản đã mở khóa hoặc chọn TXT/DOCX để tiếp tục.
+- Khi bạn nhập thư mục TXT có tên Unicode như ß/SS hay các dạng sigma, điện thoại xếp chương cùng thứ tự với máy tính.
+- Khi PDF của bạn có ít trang chữ xen nhiều trang minh họa, app vẫn cho xem và nhập phần chữ, kèm số trang không trích được chữ.
+- Trên điện thoại, các TXT có tên rất dài vẫn giữ tên chương và thứ tự theo tên gốc của bạn, dù tên bản chép tạm phải rút ngắn.
+- Khi TXT của bạn bị cụt byte hoặc hỏng bảng mã, cả máy tính và điện thoại đều báo bạn lưu lại UTF-8 hoặc tải lại, không tự thay chữ bằng dấu �.
+- Khi bạn nhập DOCX dùng kiểu tiêu đề tự đặt tên, kế thừa kiểu hoặc cấp dàn ý, chương được chia theo cấu trúc của tài liệu.
+- Khi bạn nhập DOCX có một Heading 1 ở đầu, dòng ấy vẫn nằm trong sách, kể cả khi thông tin tài liệu ghi tên sách khác.
+- Khi bạn nhập DOCX có theo dõi thay đổi, câu đã di chuyển chỉ được đọc một lần ở vị trí cuối cùng.
+- Khi TXT của bạn có ký tự phân cách ẩn, các từ và tiêu đề chương vẫn được ngăn đúng, không còn dính chữ khi nhập.
+- Khi bạn nhập DOCX, ngắt trang, ngắt cột và xuống dòng cứng không còn làm dính hai từ vào nhau.
+- Khi bạn nhập light novel, tiêu đề ghép tập–chương, ngoại truyện, lời bạt, minh họa và phần có số được nhận riêng để bạn chọn chương trên cả hai nền.
+- Khi bạn nhập sách, câu kể như “Hồi hai đứa còn học…” hoặc “Chương 1 này hay thật.” không còn bị cắt thành chương mới.
+- Khi bạn chia TXT, dòng “Tập 2” sát tiêu đề chương đi cùng chương mở tập ấy ở cả Studio, máy tính và điện thoại.
+- Khi bạn chia TXT trong Studio, các dòng mục lục không còn thành hàng loạt chương rỗng; điểm chia giống màn Thêm sách.
+- Trên điện thoại, nếu một TXT trong thư mục không đọc được, bạn được báo đúng tên file và cách chọn lại; app không còn nhập thiếu chương âm thầm.
+- Khi nguồn TXT hay thư mục chương đổi sau bước xem trước, bạn được yêu cầu xem lại trước khi thêm, tránh nhập nhầm chương theo hàng cũ.
+- Khi bạn nhập PDF, dòng nghi là đầu/chân trang trở thành lựa chọn có thể tắt ở bước xem trước; câu lặp và câu khác nhau ở con số được giữ nguyên, bạn có thể xem lại cả số trang.
+- Khi bạn chia TXT thành chương, phần mở đầu luôn được giữ và chọn sẵn, kể cả chỉ có một dòng giống tên sách; bạn bỏ chọn nếu không muốn đọc phần ấy.
+- Khi bạn nhập DOCX, số gọi và lời chú cuối trang/cuối sách được giữ mặc định; bạn chỉ bỏ chúng khi chọn ở bước xem trước.
 - Một file sách bạn bè gửi mà thông tin bên trong sai kiểu (thời lượng, số chương, phần...) giờ bị từ chối ngay lúc mở, kèm lời nhờ xin người gửi gửi lại, thay vì làm cả thư viện nghe không hiện được; có một cuốn hỏng thì các cuốn còn lại vẫn hiện bình thường.
 - File sách bị nén bất thường (một mục nhỏ xíu giải ra hàng trăm MB) bị từ chối trước khi chép vào ổ đĩa của bạn, trên cả máy tính và điện thoại.
 - Khi bạn mở cùng một file sách hai lần liền, lượt sau báo cuốn đã có thay vì báo lỗi quyền ghi sai.

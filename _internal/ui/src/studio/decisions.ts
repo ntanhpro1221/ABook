@@ -109,6 +109,11 @@ export const UNDO_MS = 15_000;
 /** `message`: điều gì trở lại, nói cụ thể ("“Lucien” lại đọc là “Lu-si-en”") - soát UX 29-09: "Việc trở lại như trước khi
  *  bấm" quá chung. */
 export function undoAction(client: QueryClient, bookId: string, endpoint: string, decisions: Record<string, unknown>[], message?: string) {
+  return undoSteps(client, bookId, decisions.map((decision) => ({ endpoint, decision })), message);
+}
+
+/** `undoAction` cho lần bấm đã đi nhiều đường (sửa cách đọc câu kèm người mới: /line rồi /speaker): rút lần lượt từng bước, theo thứ tự đưa vào. */
+export function undoSteps(client: QueryClient, bookId: string, steps: { endpoint: string; decision: Record<string, unknown> }[], message?: string) {
   return {
     label: "Hoàn tác",
     onClick: () => {
@@ -116,7 +121,7 @@ export function undoAction(client: QueryClient, bookId: string, endpoint: string
         let done = 0;
         try {
           let restored = false;
-          for (const decision of decisions) {
+          for (const { endpoint, decision } of steps) {
             const answer = await api<{ undone: number; restored: boolean }>(`/api/books/${bookId}/${endpoint}`, {
               method: "POST",
               body: { ...decision, withdraw: true },
@@ -131,7 +136,7 @@ export function undoAction(client: QueryClient, bookId: string, endpoint: string
           });
         } catch (error) {
           // Nhiều quyết định gửi lần lượt: một cái lỗi giữa chừng thì những cái trước đã hoàn tác thật - nói đúng số.
-          toast.error(done > 0 ? `Mới hoàn tác được ${done}/${decisions.length} việc` : "Không hoàn tác được", { description: (error as Error).message });
+          toast.error(done > 0 ? `Mới hoàn tác được ${done}/${steps.length} việc` : "Không hoàn tác được", { description: (error as Error).message });
         } finally {
           refreshAfterDecision(client, bookId);
         }

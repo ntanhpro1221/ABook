@@ -13,7 +13,7 @@ export function elsewhereNote(count: number, was: string): { title: string; desc
   };
 }
 
-/** Báo và hỏi: "Lấy của máy kia" chạy `takeTheirs` (hoàn tác lần ghi này, hay ghi lại điều máy kia đã đặt); "Giữ của tôi" để nguyên.
+/** Báo và hỏi: "Lấy của máy kia" chạy `takeTheirs` (hoàn tác lần ghi này, hay ghi lại điều máy kia đã đặt); "Giữ bản của bạn" để nguyên.
  *  Không có đường lấy lại (gộp tên đã ghi cả ở cấp tên) thì chỉ báo. */
 export function warnElsewhere(count: number, was: string, takeTheirs?: () => void): void {
   const note = elsewhereNote(count, was);
@@ -22,7 +22,7 @@ export function warnElsewhere(count: number, was: string, takeTheirs?: () => voi
     duration: 20_000,
     description: note.description,
     ...(takeTheirs
-      ? { action: { label: "Lấy của máy kia", onClick: takeTheirs }, cancel: { label: "Giữ của tôi", onClick: () => undefined } }
+      ? { action: { label: "Lấy của máy kia", onClick: takeTheirs }, cancel: { label: "Giữ bản của bạn", onClick: () => undefined } }
       : {}),
   });
 }

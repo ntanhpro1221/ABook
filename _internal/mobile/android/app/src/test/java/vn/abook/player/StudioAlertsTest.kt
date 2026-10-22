@@ -48,4 +48,62 @@ class StudioAlertsTest {
             snapshot(running = true, paused = "", held = false), machineOnBattery = false)
         assertEquals(listOf("b1:stopped"), notes.map { it.key })
     }
+
+    // ---- Soát a88: V6 tin "tạm dừng vì pin" và T4 dừng khác sập ----
+
+    @Test
+    fun aBookPausedForTheBatteryIsReportedWhenTheMachineWasNotOnBatteryBefore() {
+        val notes = StudioAlerts.alerts(book(running = true, paused = "battery", held = false),
+            snapshot(running = true, paused = "", held = false), machineOnBattery = false)
+        assertEquals(listOf("b1:battery"), notes.map { it.key })
+        assertEquals("Máy tính đang chạy pin", notes[0].title)
+    }
+
+    @Test
+    fun aMachineAlreadyReportedOnBatteryDoesNotRepeatItPerBook() {
+        val notes = StudioAlerts.alerts(book(running = true, paused = "battery", held = false),
+            snapshot(running = true, paused = "", held = false), machineOnBattery = true)
+        assertEquals(emptyList<String>(), notes.map { it.key })
+    }
+
+    private fun reply(onBattery: Boolean, book: JSONObject): JSONObject = JSONObject()
+        .put("name", "Máy thử").put("onBattery", onBattery).put("books", org.json.JSONArray().put(book))
+
+    @Test
+    fun unplugAndPauseSeenInTheSamePollGiveBothAlertsOnceAndNoRepeatLater() {
+        // Lần hỏi trước: cắm sạc, sách đang chạy. Chuỗi này sai khi onBattery bị ghi trước rồi mới đọc lại (tin của cuốn không bao giờ tới).
+        val first = StudioAlerts.evaluate(reply(false, book(running = true, paused = null, held = false)), JSONObject(), seeded = false, wasOnBattery = false)
+        assertEquals(emptyList<String>(), first.alerts.map { it.key })
+        assertEquals(false, first.onBattery)
+
+        val second = StudioAlerts.evaluate(reply(true, book(running = true, paused = "battery", held = false)),
+            first.snapshot, seeded = true, wasOnBattery = first.onBattery)
+        assertEquals(listOf("machine:battery", "b1:battery"), second.alerts.map { it.key })
+        assertEquals(true, second.onBattery)
+
+        val third = StudioAlerts.evaluate(reply(true, book(running = true, paused = "battery", held = false)),
+            second.snapshot, seeded = true, wasOnBattery = second.onBattery)
+        assertEquals(emptyList<String>(), third.alerts.map { it.key })
+    }
+
+    private fun ended(end: String?, detail: String = ""): JSONObject = book(running = false, paused = null, held = false).apply {
+        if (end != null) put("end", end).put("endDetail", detail)
+    }
+
+    @Test
+    fun aStopYouPressedAndACrashAreToldApart() {
+        val old = snapshot(running = true, paused = "", held = false)
+        val stopped = StudioAlerts.alerts(ended("stopped"), old, machineOnBattery = false)
+        assertEquals(listOf("b1:stopped"), stopped.map { it.key })
+        assertEquals("Đã dừng theo yêu cầu: Sách thử", stopped[0].title)
+
+        val crashed = StudioAlerts.alerts(ended("failed", "worker thoát với exit code 3221225477"), old, machineOnBattery = false)
+        assertEquals(listOf("b1:crashed"), crashed.map { it.key })
+        assertEquals("Máy tính gặp sự cố: Sách thử", crashed[0].title)
+        assertEquals(true, crashed[0].text.contains("3221225477"))
+
+        val lost = StudioAlerts.alerts(ended("lost"), old, machineOnBattery = false)
+        assertEquals(listOf("b1:crashed"), lost.map { it.key })
+        assertEquals(true, lost[0].text.contains("bị tắt đột ngột"))
+    }
 }

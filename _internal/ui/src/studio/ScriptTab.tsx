@@ -1,5 +1,5 @@
 import * as Popover from "@radix-ui/react-popover";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { AlertTriangle, BookOpenText, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Pause, Play, RefreshCw, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { useSearchParams } from "react-router";
@@ -12,7 +12,7 @@ import { useMediaQuery } from "@/shared/media";
 import { Button, EmptyState, IconButton, Kbd, Segmented, Sheet, Skeleton } from "@/shared/ui";
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
-import { UNDO_MS, optimistic, undoAction, usePendingNote, useWhenApplied } from "./decisions";
+import { UNDO_MS, optimistic, undoAction, undoSteps, usePendingNote, useWhenApplied } from "./decisions";
 import { seenDelivery, seenFor, theirDelivery, verdictWord, warnElsewhere, type SeenDelivery } from "./elsewhere";
 import { scrollMotion } from "@/shared/motion";
 import { findRanges, splitByRanges, wrapIndex } from "./scriptFind";
@@ -85,7 +85,42 @@ export interface Delivery {
   emotion?: string;
   intensity?: number;
   speaker?: string;
+  /** Người nói là người MỚI (chưa có trong sách) với giới này: đi đường "Người mới…" của POST /speaker sau khi câu thành lời thoại. */
+  newGender?: "male" | "female" | "unknown";
   spoken?: string;
+}
+
+interface LineReply {
+  elsewhere?: { delivery: SeenDelivery | null };
+  requestedAt?: number;
+  /** Mốc của yêu cầu người mới (chỉ khi `newGender`): Hoàn tác rút nó trước, rồi mới rút cách đọc câu. */
+  speakerAt?: number;
+}
+
+/** Gửi cách đọc một câu (POST /line), dùng chung cho tab Kịch bản và trang đọc của cuốn mở từ file. Người nói MỚI cần hai bước - dây
+ *  chuyền áp cách đọc câu (lời kể thành lời thoại) trước, người mới sau (store.speaker_request_problem xét yêu cầu câu đang chờ); bước sau hỏng
+ *  (tên trùng...) thì rút luôn bước đầu, không để câu thành lời thoại mà chưa có người nói. */
+export async function postLineFix(bookId: string, ref: { stableId: string; textSha256: string }, change: Delivery, wish: SeenDelivery | null | undefined): Promise<LineReply> {
+  const { newGender, speaker, ...rest } = change;
+  const url = `/api/books/${bookId}`;
+  const seen = seenDelivery(wish);
+  if (!newGender) return api<LineReply>(`${url}/line`, { method: "POST", body: { ...ref, ...rest, ...(speaker ? { speaker } : {}), seen } });
+  const made = await api<LineReply>(`${url}/line`, { method: "POST", body: { ...ref, ...rest, seen } });
+  try {
+    const person = await api<{ requestedAt?: number }>(`${url}/speaker`, { method: "POST", body: { lines: [ref], speaker, newGender } });
+    return { ...made, speakerAt: person.requestedAt };
+  } catch (error) {
+    if (made.requestedAt) await api(`${url}/line`, { method: "POST", body: { stableId: ref.stableId, withdraw: true, requestedAt: made.requestedAt } }).catch(() => undefined);
+    throw error;
+  }
+}
+
+/** "Hoàn tác" của một lần sửa cách đọc câu (thông báo sau POST /line): rút đúng lần bấm ấy; `answer` là lời đáp của `postLineFix`. */
+export function undoLineFix(client: QueryClient, bookId: string, ref: { stableId: string; textSha256: string }, answer: LineReply) {
+  const steps: { endpoint: string; decision: Record<string, unknown> }[] = [];
+  if (answer.speakerAt) steps.push({ endpoint: "speaker", decision: { lines: [ref], requestedAt: answer.speakerAt } });
+  steps.push({ endpoint: "line", decision: { stableId: ref.stableId, requestedAt: answer.requestedAt } });
+  return undoSteps(client, bookId, steps, "Câu này trở lại như trước khi sửa cách đọc.");
 }
 
 export interface ChapterScript {
@@ -476,12 +511,8 @@ function useLineFix(bookId: string, chapterId: number) {
     void client.invalidateQueries({ queryKey: ["work", bookId] });
   };
   return useMutation({
-    mutationFn: ({ line, change }: { line: Line; change: Delivery }) =>
-      api<{ elsewhere?: { delivery: SeenDelivery | null } }>(`/api/books/${bookId}/line`, {
-        method: "POST",
-        // `seen`: cách đọc màn này đang thấy cho câu - máy/cửa sổ khác vừa đổi khác thì được hỏi (uxfix28 A).
-        body: { stableId: line.stableId, textSha256: line.textSha256, ...change, seen: seenDelivery(line.lineWish) },
-      }),
+    // `seen`: cách đọc màn này đang thấy cho câu - máy/cửa sổ khác vừa đổi khác thì được hỏi (uxfix28 A).
+    mutationFn: ({ line, change }: { line: Line; change: Delivery }) => postLineFix(bookId, line, change, line.lineWish),
     onMutate: ({ line, change }) =>
       optimistic<ChapterScript>(client, ["casting", bookId, chapterId], (data) => ({
         ...data,
@@ -500,7 +531,8 @@ function useLineFix(bookId: string, chapterId: number) {
             : item,
         ),
       })),
-    onSuccess: ({ elsewhere }, { line }) => {
+    onSuccess: (answer, { line }) => {
+      const { elsewhere } = answer;
       if (elsewhere) {
         // "Lấy của máy kia": ghi lại những gì máy kia đã đặt (cách đọc câu không có Hoàn tác riêng); máy kia đã bỏ hết thì chỉ báo.
         const theirs = theirDelivery(elsewhere.delivery);
@@ -510,8 +542,11 @@ function useLineFix(bookId: string, chapterId: number) {
             .finally(refresh);
         warnElsewhere(1, elsewhere.delivery ? deliveryWords(elsewhere.delivery) : "", theirs ? takeTheirs : undefined);
       }
+      // Hoàn tác như người nói / cách đọc tên / giọng: bấm nhầm một loại đoạn hay một chữ đem đọc thì rút được (soát a89 V7).
       toast.success("Đã ghi cách đọc câu này", {
         description: `${line.hasAudio ? "Câu đã thu sẽ được thu lại." : "Câu chưa thu nên không phải thu lại."} ${when}`,
+        action: answer.requestedAt ? undoLineFix(client, bookId, line, answer) : undefined,
+        duration: UNDO_MS,
       });
     },
     onError: (error: Error, _variables, context) => {
@@ -548,7 +583,9 @@ export function DeliveryMenu({
   const [kind, setKind] = useState(waiting?.kind || line.kind);
   const [emotion, setEmotion] = useState(waiting?.emotion || line.emotion || "neutral");
   const [level, setLevel] = useState(waiting?.intensity ?? line.intensity ?? 0);
-  const [speaker, setSpeaker] = useState<string>("");
+  // Lời kể thành lời thoại: chọn người nói bằng chính SpeakerMenu của "Ai nói câu này" (tìm, người của chương, người khác, “Người mới…”).
+  const [picked, setPicked] = useState<Person | null>(null);
+  const speaker = picked?.value ?? "";
   // Chữ đem đọc (STUDIO_REVIEW mục 7): sửa lỗi chữ / cách viết lạ của riêng câu này - sách giữ nguyên chữ của nó.
   const reading = line.spoken ?? line.text;
   const [words, setWords] = useState(waiting?.spoken || reading);
@@ -558,7 +595,10 @@ export function DeliveryMenu({
   if (kind !== line.kind) change.kind = kind;
   if (line.emotion !== null && emotion !== line.emotion) change.emotion = emotion;
   if (line.intensity !== null && level !== line.intensity) change.intensity = level;
-  if (needsSpeaker && speaker) change.speaker = speaker;
+  if (needsSpeaker && speaker) {
+    change.speaker = speaker;
+    if (picked?.newGender) change.newGender = picked.newGender;
+  }
   const cleaned = words.replace(/\s+/g, " ").trim();
   if (cleaned !== reading.replace(/\s+/g, " ").trim()) {
     if (!cleaned) {
@@ -571,7 +611,7 @@ export function DeliveryMenu({
     kind !== (waiting?.kind || line.kind) ||
     emotion !== (waiting?.emotion || line.emotion || "neutral") ||
     level !== (waiting?.intensity ?? line.intensity ?? 0) ||
-    Boolean(speaker) ||
+    Boolean(needsSpeaker && speaker) ||
     words !== (waiting?.spoken || reading);
   useEffect(() => {
     if (dirty) dirty.current = unsaved;
@@ -595,22 +635,21 @@ export function DeliveryMenu({
       {needsSpeaker && (
         <div>
           <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Ai nói câu này?</div>
-          <div className="flex flex-wrap gap-1.5">
-            {script.cast.slice(0, 8).map((person) => (
-              <button
-                key={person.value}
-                type="button"
-                aria-pressed={speaker === person.value}
-                onClick={() => setSpeaker(person.value)}
-                className={cn(
-                  "rounded-full border px-2.5 py-1 text-xs font-medium",
-                  speaker === person.value ? "border-accent bg-accent-soft text-accent-text" : "border-line text-fg-2 hover:bg-hover",
-                )}
-              >
-                {person.label}
+          {picked ? (
+            <div className="flex items-center gap-2 rounded-lg border border-accent bg-accent-soft px-2.5 py-1.5 text-sm text-accent-text">
+              <span className="min-w-0 flex-1 truncate font-medium">
+                {picked.label}
+                {picked.newGender ? " · người mới" : ""}
+              </span>
+              <button type="button" className="shrink-0 text-xs font-medium underline" onClick={() => setPicked(null)}>
+                Đổi
               </button>
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-line p-1">
+              <SpeakerMenu line={line} script={script} onPick={setPicked} embedded />
+            </div>
+          )}
         </div>
       )}
       {line.emotion !== null && (
@@ -779,8 +818,22 @@ export function LineQuote({ line }: { line: Line }) {
   return <p className="mx-1.5 mt-2 line-clamp-3 rounded-lg bg-hover px-3 py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
 }
 
-/** `phone`: trong tấm trượt - ô tìm không tự bật bàn phím (bàn phím che danh sách người của chương, lối chọn chính). */
-export function SpeakerMenu({ line, script, onPick, phone = false }: { line: Line; script: ChapterScript; onPick: (person: Person) => void; phone?: boolean }) {
+/** `phone`: trong tấm trượt - ô tìm không tự bật bàn phím (bàn phím che danh sách người của chương, lối chọn chính).
+ *  `embedded`: nằm trong bảng khác (chọn người nói cho lời kể thành lời thoại ở bảng cách đọc câu): không giành con trỏ, danh sách thấp hơn, và không mời
+ *  “Người kể” (một câu thoại phải có chủ). */
+export function SpeakerMenu({
+  line,
+  script,
+  onPick,
+  phone = false,
+  embedded = false,
+}: {
+  line: Line;
+  script: ChapterScript;
+  onPick: (person: Person) => void;
+  phone?: boolean;
+  embedded?: boolean;
+}) {
   const [query, setQuery] = useState("");
   const everyone = [...script.cast, ...script.others];
   const suggested = line.hint?.suggest ? everyone.find((person) => person.value === line.hint?.suggest) : undefined;
@@ -809,7 +862,7 @@ export function SpeakerMenu({ line, script, onPick, phone = false }: { line: Lin
       <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-panel-2 px-2.5 focus-within:border-focus">
         <Search className="size-4 shrink-0 text-fg-3" />
         <input
-          autoFocus={!phone}
+          autoFocus={!phone && !embedded}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
@@ -822,7 +875,7 @@ export function SpeakerMenu({ line, script, onPick, phone = false }: { line: Lin
           className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-3"
         />
       </label>
-      <div className={cn("mt-1.5 overflow-y-auto", phone ? "max-h-[60dvh]" : "max-h-[min(60vh,360px)]")}>
+      <div className={cn("mt-1.5 overflow-y-auto", embedded ? "max-h-56" : phone ? "max-h-[60dvh]" : "max-h-[min(60vh,360px)]")}>
         {query.trim() ? (
           found.length ? (
             found.map((person) => item(person))
@@ -866,7 +919,7 @@ export function SpeakerMenu({ line, script, onPick, phone = false }: { line: Lin
               </>
             )}
             <div className="px-2 pb-1 pt-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Khác</div>
-            {FIXED.map((person) => item(person))}
+            {FIXED.filter((person) => !embedded || person.value !== NARRATOR).map((person) => item(person))}
           </>
         )}
       </div>
