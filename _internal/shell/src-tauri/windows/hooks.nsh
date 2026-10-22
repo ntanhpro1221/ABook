@@ -9,6 +9,30 @@
 
 Var AbookAssociationBackup
 Var AbookProjAssociationBackup
+!define ABOOK_HOOK_DIR "${__FILEDIR__}"
+
+; Tauri calls the old uninstaller from PageReinstall, BEFORE PREINSTALL. MUI GUI init runs
+; before that page, including passive mode. A silent Tauri install skips PageReinstall;
+; updater invocations additionally carry Tauri's explicit /UPDATE flag.
+!define MUI_CUSTOMFUNCTION_GUIINIT AbookInstallerContext
+Function AbookInstallerContext
+  System::Call 'kernel32::SetEnvironmentVariableW(w "ABOOK_INSTALLER_UPGRADE", w "1") i .r0'
+FunctionEnd
+
+; Check the actual saved library before EVERY recursive removal. Unreadable settings preserve data.
+!macro ABOOK_REMOVE_SAFE FOLDER
+  System::Call 'kernel32::SetEnvironmentVariableW(w "ABOOK_DELETE_TARGET", w "${FOLDER}") i .r0'
+  ${If} $0 == 0
+    Abort
+  ${EndIf}
+  nsExec::Exec 'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\abook-uninstall-guard.ps1"'
+  Pop $0
+  ${If} $0 == 0
+    RMDir /r "${FOLDER}"
+  ${Else}
+    DetailPrint "Giu thu muc de bao ve thu vien cua ban: ${FOLDER}"
+  ${EndIf}
+!macroend
 
 !macro NSIS_HOOK_PREINSTALL
   ReadRegStr $AbookAssociationBackup SHCTX "Software\Classes\.abook" "ABook_backup"
@@ -25,6 +49,8 @@ Var AbookProjAssociationBackup
 !macroend
 
 !macro NSIS_HOOK_POSTINSTALL
+  ; Do not pass upgrade intent to the app launched by the finish page.
+  System::Call 'kernel32::SetEnvironmentVariableW(w "ABOOK_INSTALLER_UPGRADE", p 0) i .r0'
   WriteRegStr SHCTX "Software\Classes\.abook" "ABook_backup" $AbookAssociationBackup
   WriteRegStr SHCTX "Software\Classes\.abookproj" "ABook_backup" $AbookProjAssociationBackup
 !macroend
@@ -40,11 +66,32 @@ Var AbookProjAssociationBackup
 ; của PowerShell này): bộ cài bản mới gọi bộ gỡ chạy tại chỗ trong thư mục cài (`_?=`) - thử 28-09, không chừa thì bộ gỡ
 ; tự giết mình, trả -1, và nâng cấp kiểu "gỡ trước khi cài" hỏng.
 !macro ABOOK_STOP_PROCESSES_UNDER FOLDER
-  nsExec::Exec `powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$$root = '${FOLDER}' + '\'; $$uninstaller = (Get-CimInstance Win32_Process -Filter ('ProcessId=' + $$PID)).ParentProcessId; Get-CimInstance Win32_Process | Where-Object { $$_.ProcessId -ne $$uninstaller -and $$_.ExecutablePath -and $$_.ExecutablePath.StartsWith($$root, [StringComparison]::OrdinalIgnoreCase) } | ForEach-Object { Stop-Process -Id $$_.ProcessId -Force -ErrorAction SilentlyContinue }"`
+  System::Call 'kernel32::SetEnvironmentVariableW(w "ABOOK_STOP_ROOT", w "${FOLDER}") i .r0'
+  ${If} $0 == 0
+    MessageBox MB_OK|MB_ICONSTOP "Không đọc được đường dẫn cần gỡ. Bạn hãy chạy lại bộ gỡ."
+    Abort
+  ${EndIf}
+  nsExec::Exec 'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\abook-stop-processes.ps1"'
   Pop $0
+  ${If} $0 != 0
+    MessageBox MB_OK|MB_ICONSTOP "Không dừng được tiến trình ABook. Bạn hãy đóng app rồi chạy lại bộ gỡ."
+    Abort
+  ${EndIf}
 !macroend
 
 !macro NSIS_HOOK_PREUNINSTALL
+  InitPluginsDir
+  File /oname=$PLUGINSDIR\abook-stop-processes.ps1 "${ABOOK_HOOK_DIR}\stop_processes.ps1"
+  File /oname=$PLUGINSDIR\abook-uninstall-guard.ps1 "${ABOOK_HOOK_DIR}\uninstall_guard.ps1"
+  File /oname=$PLUGINSDIR\abook-upgrade-mode.ps1 "${ABOOK_HOOK_DIR}\upgrade_mode.ps1"
+  nsExec::Exec 'powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\abook-upgrade-mode.ps1"'
+  Pop $0
+  ${If} $0 == 3
+    StrCpy $UpdateMode 1
+  ${ElseIf} $0 != 0
+    MessageBox MB_OK|MB_ICONSTOP "Chưa xác định được chế độ gỡ. Bạn hãy đóng app rồi chạy lại bộ cài."
+    Abort
+  ${EndIf}
   ; Host Python nhúng của app (con của ABook.exe) - bộ cài của Tauri chỉ dừng ABook.exe. CHỈ thư mục resources: cài cho
   ; người dùng hiện tại thì $INSTDIR là %LOCALAPPDATA%\ABook, cũng là cha của Studio và dữ liệu người dùng. Dừng cả
   ; $INSTDIR là giết worker Studio đang làm sách (nó sống ngoài app) mỗi khi chạy tay bộ cài bản mới ("gỡ trước khi cài") -
@@ -68,22 +115,15 @@ Var AbookProjAssociationBackup
     DeleteRegValue SHCTX "Software\Classes\.abookproj" "ABook_backup"
     DeleteRegKey /ifempty SHCTX "Software\Classes\.abookproj"
 
-    ; Gỡ vì đang CÀI LẠI: bộ cài bản mới (tự tải về, không qua bộ cập nhật) mặc định chọn "gỡ trước khi cài" và gọi
-    ; thẳng bộ gỡ này - khi ấy tiến trình ÔNG của PowerShell dưới đây là "ABook_x.y.z_x64-setup.exe". Giữ Studio (20 GB,
-    ; người ta chỉ muốn nâng cấp). Gỡ thật (Cài đặt Windows, uninstall.exe) thì xoá. Mã thoát 3 = đang cài lại.
-    nsExec::Exec `powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "$$me = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $$PID); $$un = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $$me.ParentProcessId); $$gp = $$null; if ($$un) { $$gp = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $$un.ParentProcessId) }; if ($$gp -and $$gp.Name -match 'setup|abook') { exit 3 } else { exit 0 }"`
-    Pop $0
-    ${If} $0 != 3
-      SetShellVarContext current
-      !insertmacro ABOOK_STOP_PROCESSES_UNDER "$LOCALAPPDATA\ABook\Studio"
-      RMDir /r "$LOCALAPPDATA\ABook\Studio"
-      RMDir /r "$LOCALAPPDATA\${BUNDLEID}"
-      ${If} $DeleteAppDataCheckboxState = 1
-        !insertmacro ABOOK_STOP_PROCESSES_UNDER "$LOCALAPPDATA\ABook"
-        RMDir /r "$LOCALAPPDATA\ABook"
-        ; Kích thước, vị trí cửa sổ (tauri-plugin-window-state).
-        RMDir /r "$APPDATA\${BUNDLEID}"
-      ${EndIf}
+    SetShellVarContext current
+    !insertmacro ABOOK_STOP_PROCESSES_UNDER "$LOCALAPPDATA\ABook\Studio"
+    !insertmacro ABOOK_REMOVE_SAFE "$LOCALAPPDATA\ABook\Studio"
+    !insertmacro ABOOK_REMOVE_SAFE "$LOCALAPPDATA\${BUNDLEID}"
+    ${If} $DeleteAppDataCheckboxState = 1
+      !insertmacro ABOOK_STOP_PROCESSES_UNDER "$LOCALAPPDATA\ABook"
+      !insertmacro ABOOK_REMOVE_SAFE "$LOCALAPPDATA\ABook"
+      ; Kích thước, vị trí cửa sổ (tauri-plugin-window-state).
+      !insertmacro ABOOK_REMOVE_SAFE "$APPDATA\${BUNDLEID}"
     ${EndIf}
   ${EndIf}
 !macroend

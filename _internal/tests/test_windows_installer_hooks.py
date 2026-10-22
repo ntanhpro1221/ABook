@@ -31,5 +31,7 @@ def test_a_real_uninstall_still_stops_studio_before_removing_it() -> None:
     body = _macro("NSIS_HOOK_POSTUNINSTALL")
     folders = _stopped(body)
     assert "$LOCALAPPDATA\\ABook\\Studio" in folders and "$LOCALAPPDATA\\ABook" in folders
-    assert body.index('ABOOK_STOP_PROCESSES_UNDER "$LOCALAPPDATA\\ABook\\Studio"') < body.index('RMDir /r "$LOCALAPPDATA\\ABook\\Studio"')
-    assert body.index('ABOOK_STOP_PROCESSES_UNDER "$LOCALAPPDATA\\ABook"') < body.index('RMDir /r "$LOCALAPPDATA\\ABook"\n')
+    # Xoá qua ABOOK_REMOVE_SAFE (kiểm vị trí thư viện trước mỗi RMDir /r - soát a85 lỗi 4), không RMDir /r trần.
+    assert "RMDir /r" not in body
+    assert body.index('ABOOK_STOP_PROCESSES_UNDER "$LOCALAPPDATA\\ABook\\Studio"') < body.index('ABOOK_REMOVE_SAFE "$LOCALAPPDATA\\ABook\\Studio"')
+    assert body.index('ABOOK_STOP_PROCESSES_UNDER "$LOCALAPPDATA\\ABook"') < body.index('ABOOK_REMOVE_SAFE "$LOCALAPPDATA\\ABook"\n')
