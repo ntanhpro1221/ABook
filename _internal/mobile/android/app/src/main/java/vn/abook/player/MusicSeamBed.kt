@@ -24,6 +24,10 @@ class SeamPicker(
     /** Nối của một bài + vòng của nó; `state` đổi một chiều BUILDING -> READY | DEAD (DEAD cuối cùng, dựng muộn không làm nó sống lại). */
     class Built(val seam: LoopSeam.Seam, val bounds: MusicCues.Loop, val durationSeconds: Double, val key: String) {
         @Volatile var state = State.BUILDING
+
+        /** Thời gian dựng Nối (ms) và nguồn của nó: `built` = vừa giải mã (buildMs = thời gian render ở nền), `cache` = lấy từ cacheDir (buildMs = thời gian [LoopSeam.plan]). Chỉ có nghĩa khi READY (dòng `attach` của testEvents). */
+        @Volatile var buildMs = 0L
+        @Volatile var source = "cache"
     }
 
     sealed class Choice {
@@ -54,11 +58,15 @@ class SeamPicker(
         }
         synchronized(this) { entries[key] = built }
         if (built.seam.cached) {
+            built.buildMs = built.seam.buildMs
             built.state = State.READY
         } else {
             async(Runnable {
                 try {
+                    val began = System.nanoTime()
                     render(built)
+                    built.buildMs = (System.nanoTime() - began) / 1_000_000
+                    built.source = "built"
                     synchronized(this) { if (built.state == State.BUILDING) built.state = State.READY }
                 } catch (t: Throwable) {
                     reject(built, "dựng Nối lỗi (${t.message})")
@@ -66,6 +74,11 @@ class SeamPicker(
             })
         }
         return Choice.Use(built)
+    }
+
+    /** Quên các Nối đã chọn (đổi / dừng sách): lần chọn sau lập lại hình học, WAV trong bộ nhớ đệm trên đĩa vẫn dùng được. */
+    fun clear() {
+        synchronized(this) { entries.clear() }
     }
 
     /** Bỏ Nối này cho cả phiên (lỗi giữa chừng khi phát, dựng hỏng): lần chọn sau là [Choice.Legacy]. */
@@ -90,6 +103,35 @@ class SeamPicker(
         fun keyOf(file: File, cue: MusicCues.Cue): String =
             "${file.absolutePath}|${file.length()}|${file.lastModified()}|${cue.audibleStart}|${cue.audibleEnd}|${cue.loopStart}|${cue.loopEnd}"
     }
+}
+
+/** Lý do một từ của dòng `demote` (testEvents): late = Nối chưa dựng kịp, fail = dựng hỏng, seek = tua tới chỗ chưa có Nối, error = lỗi phát. */
+enum class DemoteReason(val word: String) { LATE("late"), FAIL("fail"), SEEK("seek"), ERROR("error") }
+
+/**
+ * Định dạng các dòng sự kiện đo của [MusicBed.testEvents] (SPEC_loop_p3w_bed.md §1); mọi dòng KHÔNG có `EV <ns>` đứng trước (bên đo tự thêm). Giây 6 chữ số thập phân như dòng SEAM của §41.
+ * - `open <k> p3|a87 <track>`; `plan <k> <sr> <ch> <audibleStart'> <loopStart'> <loopEnd'> <xFrames>` (ngay sau `open ... p3`)
+ * - `attach <k> <số mục sau khi thêm> <buildMs> <built|cache>`
+ * - `demote <k> late|fail|seek|error`
+ * - `seek <k> <sinceSeconds> <mụcIndex> <clip0|seam|clip> <expSample>` (expSample trên trục danh nghĩa của mục, như `EV seek` của MusicLoopSeamTest)
+ * - `pos <k> <trackSecondsP3> <alignedA87>`, `item <k> <index> <reason> <kind>`, `audiotrack <k> <sr> <ch>`
+ * - `vol <k> <v>`: MỖI lần MusicBed đặt volume của trình phát k (kể cả từng nhịp mờ; v 6 chữ số thập phân)
+ * Bên đo tự thêm `scenario <Sx>`, `scenario_end`, `sync <t> <nhảy 0|1>`, `FMT`, `PCM`.
+ */
+object SeamEvents {
+    private fun f(v: Double, digits: Int = 6) = String.format(java.util.Locale.ROOT, "%.${digits}f", v)
+
+    fun kindOf(index: Int) = if (index == 0) "clip0" else if (index % 2 == 1) "seam" else "clip"
+    fun open(k: Int, p3: Boolean, track: String) = "open $k ${if (p3) "p3" else "a87"} $track"
+    fun plan(k: Int, seam: LoopSeam.Seam) =
+        "plan $k ${seam.sampleRate} ${seam.channels} ${f(seam.audibleStart)} ${f(seam.loopStart)} ${f(seam.loopEnd)} ${seam.xFrames}"
+    fun attach(k: Int, items: Int, built: SeamPicker.Built) = "attach $k $items ${built.buildMs} ${built.source}"
+    fun demote(k: Int, reason: DemoteReason) = "demote $k ${reason.word}"
+    fun seek(k: Int, sinceSeconds: Double, target: SeamClock.Target) = "seek $k ${f(sinceSeconds, 3)} ${target.index} ${kindOf(target.index)} ${target.sample}"
+    fun pos(k: Int, trackSecondsP3: Double, alignedA87: Double) = "pos $k ${f(trackSecondsP3)} ${f(alignedA87)}"
+    fun item(k: Int, index: Int, reason: Int, kind: String) = "item $k $index $reason $kind"
+    fun audioTrack(k: Int, sampleRate: Int, channels: Int) = "audiotrack $k $sampleRate $channels"
+    fun volume(k: Int, v: Float) = "vol $k ${f(v.toDouble(), 6)}"
 }
 
 /** Đồng hồ nhạc và tua của đường P3: tính theo (mục, vị trí trong mục) của ExoPlayer; bảng mục: 0 = Clip đầu, lẻ = Nối, chẵn >= 2 = Clip lặp ([LoopSeam]). */
@@ -128,6 +170,9 @@ object SeamClock {
     fun stale(currentIndex: Int): IntRange? = if (currentIndex >= 4) 2..3 else null
 
     enum class Gate { WAIT, ATTACH, DEMOTE, DONE }
+
+    /** Lý do rơi về của [Gate.DEMOTE]: dựng hỏng -> fail, còn lại (hết hạn chót) -> late. */
+    fun demoteReason(state: SeamPicker.State): DemoteReason = if (state == SeamPicker.State.DEAD) DemoteReason.FAIL else DemoteReason.LATE
 
     /**
      * Việc cần làm ở mỗi nhịp đồng bộ với bài P3: `attached` = đã nối Nối / Clip lặp vào hàng; `remainingMs` = [clip0RemainingMs]. Dựng xong thì nối vào ngay (xa loopEnd bao nhiêu cũng được);
