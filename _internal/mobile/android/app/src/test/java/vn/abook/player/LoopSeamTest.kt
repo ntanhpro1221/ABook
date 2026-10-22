@@ -71,4 +71,61 @@ class LoopSeamTest {
         assertEquals(1152L * 140 * 1000 / 44100, s.loopClipStartMs)
         assertEquals(3657L, s.loopClipStartMs) // 3657,14...
     }
+
+    @Test
+    fun seekIntoClipLandsThreeFramesBeforeTheFrameBelowTheTarget() {
+        val s = seam(44100, 3)
+        val spf = 1152L
+        val start = 140 * spf // loopStart' + X' = mẫu 0 của trục danh nghĩa Clip lặp
+        // đích = 100 mẫu sau ranh khung 150
+        val plan = LoopSeam.seekPlan(s, 2, (150 - 140) * spf + 100)
+        val b0 = (150 - 3) * spf
+        assertEquals(s.ms(b0) - s.loopClipStartMs - 1, plan.positionMs)
+        assertEquals(start + (150 - 140) * spf + 100 - b0, plan.trimFrames) // 3 khung + 100 mẫu
+        assertEquals(3 * spf + 100, plan.trimFrames)
+    }
+
+    @Test
+    fun seekNearTheClipStartNeverLandsBeforeTheOpenFrame() {
+        val s = seam(44100, 3)
+        val plan = LoopSeam.seekPlan(s, 2, 5) // 5 mẫu sau mẫu đầu danh nghĩa: cửa sổ mở sớm 3 khung
+        assertEquals(0L, plan.positionMs)
+        assertEquals(3 * 1152L + 5, plan.trimFrames)
+        val first = LoopSeam.seekPlan(s, 0, 7) // Clip đầu không mở sớm
+        assertEquals(0L, first.positionMs)
+        assertEquals(7L, first.trimFrames)
+    }
+
+    @Test
+    fun seekIntoSeamLandsOnTheHundredMillisecondChunk() {
+        val s = seam(44100, 3)
+        val plan = LoopSeam.seekPlan(s, 3, 44321) // 1005 ms + 1 mẫu; khối = 4410 khung
+        assertEquals(1000L, plan.positionMs)
+        assertEquals(44321L - 44100, plan.trimFrames)
+        val exact = LoopSeam.seekPlan(s, 1, 4410)
+        assertEquals(100L, exact.positionMs)
+        assertEquals(0L, exact.trimFrames)
+    }
+
+    /** Khung mp3 MPEG-1 tầng 3, 128 kb/s, 44,1 kHz, stereo (FF FB 90 00) = 417 byte. */
+    private fun frame(info: Boolean = false): ByteArray {
+        val f = ByteArray(417)
+        f[0] = 0xFF.toByte(); f[1] = 0xFB.toByte(); f[2] = 0x90.toByte(); f[3] = 0
+        if (info) "Info".forEachIndexed { k, c -> f[36 + k] = c.code.toByte() }
+        return f
+    }
+
+    @Test
+    fun scanSkipsId3AndInfoFrameAndCountsAudioFrames() {
+        val id3 = ByteArray(10 + 20).also { "ID3".forEachIndexed { k, c -> it[k] = c.code.toByte() }; it[3] = 4; it[9] = 20 }
+        val data = id3 + frame(info = true) + (0 until 12).fold(ByteArray(0)) { a, _ -> a + frame() }
+        val frames = checkNotNull(LoopSeam.scanMp3(data, 100))
+        assertEquals(12, frames.count)
+        assertEquals(1152, frames.samplesPerFrame)
+        assertEquals(44100, frames.sampleRate)
+        assertEquals(2, frames.channels)
+        assertEquals(30 + 417, frames.offsets[0]) // sau thẻ ID3 và khung Info
+        assertEquals(30 + 417 * 13 - 417, frames.offsets[11])
+        assertEquals(5, checkNotNull(LoopSeam.scanMp3(data, 5)).count)
+    }
 }
