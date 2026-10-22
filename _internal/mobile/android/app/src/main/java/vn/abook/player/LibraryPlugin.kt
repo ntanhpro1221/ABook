@@ -781,6 +781,7 @@ class LibraryPlugin : Plugin() {
 
     /** Kết nối tới một file của sách bên máy kia (đã ghim chứng chỉ, mang mã thiết bị); `resumeFrom` > 0 thì xin tiếp từ byte ấy. */
     private fun fetchFile(id: String, relative: String, expectedSize: Long, link: Peers.Link, remote: String): Long {
+        val limit = PeerTransfer.budget(relative, expectedSize)
         val target = Store.file(id, relative)
         if (expectedSize > 0 && target.isFile && target.length() == expectedSize) return 0
         target.parentFile?.mkdirs()
@@ -811,19 +812,19 @@ class LibraryPlugin : Plugin() {
         }
         val append = answer == PartResume.Answer.RESUME
         try {
+            val initial = if (append) have else 0L
+            if (connection.getHeaderFieldLong("Content-Length", -1) > limit - initial) throw PeerTransfer.Limit()
             java.io.FileOutputStream(partial, append).use { output ->
                 // Ghi phiên bản SAU khi cắt `.part` (mở không nối): phần cũ không bao giờ mang ETag mới.
                 if (!append) PartResume.stamp(partial, connection.getHeaderField("ETag"))
                 connection.inputStream.use { input ->
-                    val buffer = ByteArray(64 * 1024)
-                    while (true) {
-                        checkCancelled(id)
-                        val read = input.read(buffer)
-                        if (read < 0) break
-                        output.write(buffer, 0, read)
-                    }
+                    PeerTransfer.copy(input, output, limit, target.parentFile!!, initial) { checkCancelled(id) }
                 }
+                output.fd.sync()
             }
+        } catch (error: Exception) {
+            if (error is PeerTransfer.Limit || expectedSize <= 0) PartResume.discard(partial)
+            throw error
         } finally {
             connection.disconnect()
         }
@@ -838,8 +839,7 @@ class LibraryPlugin : Plugin() {
             }
         }
         if (!partial.renameTo(target)) {
-            target.delete()
-            if (!partial.renameTo(target)) throw java.io.IOException("Không ghi được $relative")
+            throw java.io.IOException("Không ghi được file; bạn hãy thử tải lại.")
         }
         PartResume.tagFile(partial).delete()
         return target.length()
@@ -916,11 +916,15 @@ class LibraryPlugin : Plugin() {
      * không báo "Đã tải xong". `announce`: báo tiến độ cho giao diện qua sự kiện "download".
      */
     private fun downloadBook(id: String, source: String?, remoteId: String?, announce: Boolean) {
+        Store.bookDir(id) // xác minh đích trước mọi yêu cầu mạng hay ghi dữ liệu
+        Store.requireBookId(remoteId ?: id)
         val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException("Thiết bị này đã thôi ghép")
         else Peers.Link(base(), prefs.getString("token", "") ?: "")
         val remote = if (source != null) remoteId ?: throw IllegalArgumentException("thiếu remoteId") else id
         if (source == null) matchImported() // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
         val manifest = JSONObject(SyncLink.request(context, "GET", "/sync/v1/books/$remote/manifest", root = link.base, token = link.token))
+        require(manifest.getString("id") == remote) { "Mã sách máy gửi trả về không khớp; bạn hãy thử tải lại." }
+        PeerPaths.checkManifest(manifest)
         if (source != null) manifest.put("id", id).put("source", source).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, source))
         val chapters = manifest.getJSONArray("chapters")
         val files = mutableListOf<Pair<String, Long>>()
@@ -942,14 +946,15 @@ class LibraryPlugin : Plugin() {
         // Ảnh bìa thật (webui/covers.py): tải lại mỗi lần (vài trăm KB); máy tính đã bỏ bìa thì xoá bản cũ.
         val cover = manifest.optJSONObject("cover")
         if (cover != null) files += cover.optString("file", "cover.jpg") to 0L
-        else Store.file(id, "cover.jpg").delete()
         // Nhạc nền: đúng các bài mà một mốc đang dùng (BookMusic.tracks) - nghe được cả khi không có mạng, và chuyển tiếp được cho máy khác.
         val tracks = BookMusic.tracks(manifest.optJSONObject("music"))
+        PeerTransfer.checkJob(files + tracks.map { it.name to it.size })
         val total = files.sumOf { it.second } + tracks.sumOf { it.size }
         // Đủ chỗ trước khi tải (soát a68 lỗi 10): thiếu thì báo ngay, không tải dở rồi hỏng giữa chừng.
         val missing = files.sumOf { (relative, size) -> DownloadSpace.stillNeeded(size, runCatching { Store.file(id, relative) }.getOrNull()) } +
             tracks.sumOf { track -> DownloadSpace.stillNeeded(track.size, runCatching { Store.contained(Store.bookDir(id), track.name) }.getOrNull()) }
         DownloadSpace.shortage(missing, Store.root.usableSpace)?.let { throw IllegalStateException(it) }
+        if (cover == null) Store.file(id, "cover.jpg").delete()
         val filesTotal = files.size + tracks.size
         var done = 0L
         files.forEachIndexed { index, (relative, size) ->
