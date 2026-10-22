@@ -501,6 +501,7 @@ class App:
         """Đổi khoá dữ liệu nghe {mã cũ: mã mới}, sao lưu từng file trước (`<file><backup_suffix>`; `fresh_backup`: thay bản sao cũ)."""
         if not renamed:
             return
+        self.listening.compact()  # chỗ nghe còn trong nhật ký vào bản sao lưu
         for file in (self.listening.path, self.preferences.path):
             backup = file.with_name(file.name + backup_suffix)
             try:
@@ -2933,7 +2934,7 @@ class App:
                               after_edits=lambda value, _report: self._music_after_change(value), reviews=self.reviews)
                 # Danh tính TLS sinh một lần, nằm cạnh tuỳ chọn: đổi nó là mọi thiết bị đã ghép phải ghép lại.
                 identity = tls.load_or_create(self.preferences.path.with_name(tls.FILE_NAME))
-                self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port, identity=identity).start()
+                self.sync_server = SyncServer(app, host=self.sync_host, port=self.sync_port, identity=identity).start(warm=True)
                 self.sync_error = ""
                 if self.sync_host == "0.0.0.0":  # máy chủ thật (không phải bài thử chỉ nghe 127.0.0.1)
                     try:

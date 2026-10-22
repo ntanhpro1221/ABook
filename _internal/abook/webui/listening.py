@@ -30,8 +30,10 @@ bắt đầu nhỏ dần, lúc tự dừng - kèm vị trí. Sáng dậy, thẻ 
 from __future__ import annotations
 
 import contextlib
+import copy
 import hashlib
 import json
+import os
 import re
 import threading
 import time
@@ -110,6 +112,10 @@ def _well_formed(raw: Any) -> bool:
                for key in ("records", "links"))
 
 
+def _legacy_format(raw: Any) -> bool:
+    return isinstance(raw, dict) and bool(raw) and raw.get("version") != FORMAT_VERSION
+
+
 def _upgrade(raw: Any) -> dict[str, Any]:
     """Bản lưu nào cũng thành dạng hồ sơ + liên kết. Bản cũ {mã sách: state}: mỗi sách một hồ sơ "Mặc định"."""
     if isinstance(raw, dict) and raw.get("version") == FORMAT_VERSION:
@@ -129,23 +135,105 @@ def _upgrade(raw: Any) -> dict[str, Any]:
 
 
 PLAYBACK_SESSIONS_KEPT = 16  # số phiên phát (lần nạp trang) nhớ mỗi hồ sơ
+# Chỗ nghe (`progress`, mỗi ~10 giây) ghi nối vào file nhật ký cạnh hồ sơ chứ không ghi lại cả hồ sơ: hồ sơ của người nghe lâu năm 8-19 MB, mỗi
+# lần ghi lại 0,3-0,7 giây CPU + fsync, giữ khoá chung (soát a101 F4). Nhật ký gộp vào hồ sơ ở lần ghi đầy đủ kế tiếp (mọi thay đổi khác) hay khi
+# đủ JOURNAL_MAX_LINES dòng; mở lại thì phát lại nhật ký lên hồ sơ nên tắt ngang vẫn thấy chỗ nghe mới nhất.
+JOURNAL_SUFFIX = ".journal"
+JOURNAL_MAX_LINES = 90
+
+
+def _append_journal(path: Path, line: dict[str, Any]) -> None:
+    """Nối một dòng vào nhật ký và fsync. Mở đầu bằng xuống dòng: lần ghi trước bị cắt giữa chừng (tắt ngang) để lại nửa dòng, dòng này không dính vào nó."""
+    payload = ("\n" + json.dumps(line, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+    with open(path, "ab") as handle:
+        handle.write(payload)
+        handle.flush()
+        os.fsync(handle.fileno())
 
 
 class StalePlayback(ValueError):
     """Phiên phát đã bị cửa sổ khác thay thế, hoặc bản ghi đã cũ."""
 
 
+def _apply_progress(entry: dict[str, Any], chapter_id: Any, seconds: Any, duration: Any, now: float, anchor: dict[str, Any] | None) -> None:
+    """Một lần báo chỗ nghe vào state của hồ sơ (`Listening.progress`; phát lại từ nhật ký thì `anchor` đã qua `validated`)."""
+    entry["last"] = {"chapterId": int(chapter_id), "seconds": round(float(seconds), 1), "at": now}
+    if anchor is not None:
+        entry["last"]["anchor"] = anchor
+    chapter = entry["chapters"].setdefault(str(int(chapter_id)), {"heard": 0.0, "done": False})
+    chapter["heard"] = round(max(float(chapter.get("heard", 0.0)), float(seconds)), 1)
+    if float(duration) > 0 and float(duration) - float(seconds) <= DONE_TAIL_SECONDS:
+        chapter["done"] = True
+    chapter["duration"] = round(float(duration), 1) if float(duration) > 0 else chapter.get("duration", 0)
+    chapter["at"] = now
+    entry["updatedAt"] = now
+
+
 class Listening:
     def __init__(self, path: Path | None = None) -> None:
         self.path = path or listening_path()
+        self._journal = self.path.with_name(self.path.name + JOURNAL_SUFFIX)
+        self._journal_lines = 0
         self._lock = threading.Lock()
         # Có file mà không đọc được (chương trình khác giữ): hồ sơ trống trong bộ nhớ, KHÔNG ghi đè file thật; đọc lại ở lần sửa kế.
         self._unread = False
+        # Hồ sơ trên đĩa còn dạng cũ ({mã sách: state}): lần ghi kế phải ghi đầy đủ để chuyển nó (nhật ký chỉ áp lên dạng hiện hành).
+        self._legacy = False
         try:
-            self._data = _upgrade(self._read() or {})
+            raw = self._read() or {}
+            self._data, self._legacy = _upgrade(raw), _legacy_format(raw)
         except notices.Unreadable:
             self._data, self._unread = _upgrade({}), True
-        self._stamp = file_stamp(self.path)
+        if not self._unread:
+            self._replay()
+        self._stamp = self._stamps()
+
+    def _stamps(self) -> tuple[Any, Any]:
+        """Dấu của hồ sơ và của nhật ký: một trong hai đổi (kể cả do tiến trình khác) thì bản trong bộ nhớ đã cũ."""
+        return file_stamp(self.path), file_stamp(self._journal)
+
+    def _replay(self) -> None:
+        """Áp nhật ký chỗ nghe lên `self._data` (vừa đọc từ hồ sơ). Dòng cụt do tắt ngang, hay trỏ tới hồ sơ không còn: bỏ qua."""
+        self._journal_lines = 0
+        try:
+            raw = self._journal.read_bytes()
+        except OSError:
+            return
+        for text in raw.splitlines():
+            if not text.strip():
+                continue
+            try:
+                item = json.loads(text)
+                if not isinstance(item, dict):
+                    continue
+                self._journal_lines += 1
+                self._replay_progress(item)
+            except (ValueError, KeyError, TypeError):
+                continue
+
+    def _replay_progress(self, item: dict[str, Any]) -> None:
+        record = self._data["records"].get(item["record"])
+        if not isinstance(record, dict):
+            return
+        entry = record.setdefault("state", _empty_state())
+        entry.setdefault("chapters", {})
+        entry.setdefault("bookmarks", [])
+        last = entry.get("last")
+        if isinstance(last, dict) and float(last.get("at") or 0) > float(item["now"]):
+            return  # hồ sơ đã có chỗ nghe mới hơn dòng này (gộp từ máy khác, hay nhật ký chưa kịp xoá sau lần ghi đầy đủ)
+        _apply_progress(entry, item["chapter"], item["seconds"], item["duration"], item["now"], item.get("anchor"))
+        if item.get("session"):
+            playback = record.get("_playback")
+            if isinstance(playback, dict) and playback.get("id") == item["session"]:
+                playback["revision"] = max(int(playback.get("revision", 0)), int(item["revision"]))
+            else:
+                record["_playback"] = {"id": item["session"], "revision": int(item["revision"]), "generation": int(item["generation"])}
+
+    def compact(self) -> None:
+        """Gộp nhật ký vào hồ sơ ngay (trước khi sao lưu file hồ sơ)."""
+        if self._journal_lines or self._journal.exists():
+            with self._changing():
+                self._save()
 
     def _read(self) -> Any:
         """Bản lưu trên đĩa; chưa có: None. Hỏng (cắt nửa, rỗng, sai hình dạng - soát a28 lỗi 1): giữ bản hỏng + báo (notices), rồi None -
@@ -153,24 +241,26 @@ class Listening:
         return notices.read_json(self.path, "Hồ sơ nghe (chỗ nghe dở, dấu trang)", _well_formed)
 
     @contextlib.contextmanager
-    def _changing(self, *, require_commit: bool = False) -> Iterator[None]:
+    def _changing(self, *, require_commit: bool = False, snapshot: bool = True) -> Iterator[None]:
         """Sửa dữ liệu nghe: khoá luồng + khoá file; tiến trình khác cùng hồ sơ đã ghi từ lần mình đọc / ghi cuối thì đọc lại trước khi
         sửa (soát a28 lỗi 14: hai bên giữ cả bảng trong bộ nhớ, bên ghi sau đè mất chỗ nghe của bên kia). File mất / hỏng giữa chừng: giữ
-        bản trong bộ nhớ, lần ghi này đưa nó lại ra đĩa."""
+        bản trong bộ nhớ, lần ghi này đưa nó lại ra đĩa. `snapshot=False` (với `require_commit`): không chụp cả hồ sơ để hoàn lại khi lỗi - nơi gọi
+        tự hoàn phần nó sửa (`progress`: hồ sơ vài MB, chụp mỗi 10 giây là 0,3 giây)."""
         with self._lock, file_lock(self.path):
-            if self._unread or file_stamp(self.path) != self._stamp:
+            if self._unread or self._stamps() != self._stamp:
                 try:
                     raw = self._read()
                 except notices.Unreadable:
                     pass
                 else:
                     if raw is not None or self._unread:
-                        self._data = _upgrade(raw or {})
+                        self._data, self._legacy = _upgrade(raw or {}), _legacy_format(raw)
+                        self._replay()
                     self._unread = False
-                self._stamp = file_stamp(self.path)
+                self._stamp = self._stamps()
             if require_commit and self._unread:
                 raise OSError("Chưa đọc được hồ sơ nghe. Bạn hãy thử lại.")
-            before = json.loads(json.dumps(self._data)) if require_commit else None
+            before = json.loads(json.dumps(self._data)) if require_commit and snapshot else None
             try:
                 yield
             except BaseException:
@@ -401,8 +491,11 @@ class Listening:
         from .reading_anchor import validated
 
         now = time.time()
-        with self._changing(require_commit=True):
+        with self._changing(require_commit=True, snapshot=False):
+            shape = (len(self._data["records"]), len(self._data["links"]))
             entry = self._held(book, record)
+            owner: dict[str, Any] | None = None
+            playback: dict[str, Any] = {}
             if session_id is not None:
                 owner = self._playback_owner(entry) if entry is not None else {}
                 playback = owner.get("_playback") or {}
@@ -410,27 +503,55 @@ class Listening:
                 if generation is None or generation < playback.get("generation", 0):
                     raise StalePlayback("Chỗ nghe đã được cửa sổ khác cập nhật. Bạn hãy nạp lại sách để nghe tiếp.")
                 if playback.get("id") != session_id:
-                    playback = owner["_playback"] = {"id": session_id, "revision": 0, "generation": generation}
+                    playback = {"id": session_id, "revision": 0, "generation": generation}
                 if revision < playback.get("revision", 0) or revision <= 0:
                     raise StalePlayback("Chỗ nghe đã được cửa sổ khác cập nhật. Bạn hãy nạp lại sách để nghe tiếp.")
                 if revision == playback.get("revision"):
                     return json.loads(json.dumps(entry))  # ACK bị mất: thử lại đúng bản, không đổi dấu giờ.
-                playback["revision"] = revision
             if entry is None:
                 return json.loads(json.dumps(self._active(book, create=False) or _empty_state()))
-            entry["last"] = {"chapterId": int(chapter_id), "seconds": round(float(seconds), 1), "at": now}
             saved_anchor = validated(anchor)
-            if saved_anchor is not None:
-                entry["last"]["anchor"] = saved_anchor
-            chapter = entry["chapters"].setdefault(str(int(chapter_id)), {"heard": 0.0, "done": False})
-            chapter["heard"] = round(max(float(chapter.get("heard", 0.0)), float(seconds)), 1)
-            if duration > 0 and duration - float(seconds) <= DONE_TAIL_SECONDS:
-                chapter["done"] = True
-            chapter["duration"] = round(float(duration), 1) if duration > 0 else chapter.get("duration", 0)
-            chapter["at"] = now
-            entry["updatedAt"] = now
-            self._save()
+            # Phần sẽ sửa, để hoàn lại khi ghi không được (cả hồ sơ không chụp: xem `_changing`).
+            key = str(int(chapter_id))
+            undo = (copy.deepcopy(entry.get("last")), copy.deepcopy(entry["chapters"].get(key)), entry.get("updatedAt"),
+                    copy.deepcopy(owner.get("_playback")) if owner is not None else None)
+            try:
+                if session_id is not None and owner is not None:
+                    owner["_playback"] = playback = {**playback, "revision": revision}
+                _apply_progress(entry, chapter_id, seconds, duration, now, saved_anchor)
+                if (len(self._data["records"]), len(self._data["links"])) != shape or self._legacy or file_stamp(self.path) is None:
+                    self._save()  # hồ sơ / liên kết mới sinh, hay file còn dạng cũ: nhật ký không có chỗ để áp lên
+                else:
+                    _append_journal(self._journal, {"record": self._record_id(entry), "chapter": int(chapter_id), "seconds": float(seconds),
+                                                    "duration": float(duration), "now": now, "anchor": saved_anchor,
+                                                    "session": session_id if session_id is not None else "", "revision": revision,
+                                                    "generation": playback.get("generation", 0)})
+                    self._journal_lines += 1
+                    self._stamp = self._stamps()
+                    if self._journal_lines >= JOURNAL_MAX_LINES:
+                        with contextlib.suppress(OSError):  # dòng đã bền trong nhật ký; gộp không được thì lần sau gộp
+                            self._save()
+            except BaseException:
+                last, chapter_before, updated, playback_before = undo
+                for name, value in (("last", last), ("updatedAt", updated)):
+                    if value is None:
+                        entry.pop(name, None)
+                    else:
+                        entry[name] = value
+                if chapter_before is None:
+                    entry["chapters"].pop(key, None)
+                else:
+                    entry["chapters"][key] = chapter_before
+                if owner is not None:
+                    if playback_before is None:
+                        owner.pop("_playback", None)
+                    else:
+                        owner["_playback"] = playback_before
+                raise
             return json.loads(json.dumps(entry))
+
+    def _record_id(self, entry: dict[str, Any]) -> str:
+        return next(key for key, row in self._data["records"].items() if row.get("state") is entry)
 
     def set_chapter_done(self, book: str, chapter_id: int, done: bool) -> dict[str, Any]:
         with self._changing():
@@ -704,8 +825,16 @@ class Listening:
     def _save(self) -> None:
         if self._unread:
             return  # chưa đọc được bản trên đĩa: ghi bây giờ là đè mất chỗ nghe, dấu trang thật
-        atomic_write_json(self.path, self._data, compact=True)  # nguyên tử + fsync: mất điện không để lại file rỗng; gọn: ghi mỗi 10 giây
-        self._stamp = file_stamp(self.path)
+        atomic_write_json(self.path, self._data, compact=True)  # nguyên tử + fsync: mất điện không để lại file rỗng
+        self._legacy = False
+        # Nhật ký đã nằm trong bản vừa ghi. Chưa xoá được (tắt ngang giữa hai việc, file bị giữ): lần mở sau phát lại cũng được - dòng cũ hơn chỗ nghe
+        # đã có thì bị bỏ (`_replay_progress`).
+        try:
+            self._journal.unlink(missing_ok=True)
+            self._journal_lines = 0
+        except OSError:
+            pass
+        self._stamp = self._stamps()
 
 
 def book_progress(state: dict[str, Any], chapters: list[dict[str, Any]], *, complete: bool = True) -> dict[str, Any]:
