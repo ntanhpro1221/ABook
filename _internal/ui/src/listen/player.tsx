@@ -651,6 +651,8 @@ export function PlayerProvider({
   // không theo mốc của chương; hỏi lại khi đổi cuốn hay khi lựa chọn đổi (bedVersion), không hỏi lại mỗi chương.
   const [playlistBed, setPlaylistBed] = useState<PlaylistBedState | null>(null);
   const playlistAsked = useRef<{ key: string; queue: ReturnType<NonNullable<typeof source.musicPlaylist>> | null } | null>(null);
+  /** Lỗi của hàng bài (mất mạng, danh mục chưa tải được) đang báo trong trạng thái nhạc; rỗng khi ổn. Mốc của chương hỏi sau đó không được xoá nó. */
+  const playlistFault = useRef("");
   const cuesChapter = useRef("");
   /** Chương mà mốc đang nằm trong `bed` thuộc về: sang chương khác thì engine.load chạy trước lúc hiệu ứng bỏ mốc cũ, nhịp "time" đầu tiên không được mở bài đầu của chương CŨ. */
   const bedCuesFor = useRef("");
@@ -664,9 +666,12 @@ export function PlayerProvider({
     let cancelled = false;
     const book = track.bookId;
     const asked = `${book}#${bedVersion}`;
-    if (playlistAsked.current?.key !== asked) {
-      playlistAsked.current = { key: asked, queue: source.musicPlaylist?.(book) ?? null };
-    }
+    const askQueue = () => {
+      const queue = source.musicPlaylist?.(book) ?? null;
+      playlistAsked.current = { key: asked, queue };
+      return queue;
+    };
+    if (playlistAsked.current?.key !== asked) askQueue();
     // Sang chương khác: bỏ mốc chương cũ ngay, trước khi hỏi mốc mới - chương mới đã phát từ giây 0 thì không được mở lại bài
     // đầu hay chơi tiếp bài cuối của chương cũ trong lúc chờ (MIX_QA 3.3). Danh sách phát chạy theo đồng hồ của cuốn: không đụng.
     if (cuesChapter.current !== bedChapter) {
@@ -687,7 +692,7 @@ export function PlayerProvider({
         .then((result) => {
           if (cancelled) return;
           bedCredits.current = result.credits ?? {};
-          setMusicOffline(result.unavailable ?? ""); // danh mục chưa tải được: hộp "Nhạc nền" nói lý do (rỗng thì thôi)
+          setMusicOffline(result.unavailable || playlistFault.current); // danh mục chưa tải được: hộp "Nhạc nền" nói lý do (rỗng thì thôi)
           if (result.pending && attempt < SCENE_POLLS) {
             retry = setTimeout(() => void chapterCues(attempt + 1, misses), SCENE_POLL_MS);
             return;
@@ -708,17 +713,36 @@ export function PlayerProvider({
           bed.setCues([], -20);
           askAgain(misses);
         });
-    const queue = playlistAsked.current.queue;
-    if (!queue) {
-      setMusicLoading(false);
-      setPlaylistBed(null);
-      void chapterCues();
-    } else {
-      setMusicLoading(true);
+    // Hàng bài lỗi (mất mạng, danh mục chưa tải được - `error` của lời đáp, hay lời hỏi hỏng): báo trong trạng thái nhạc, KHÔNG giữ lời đáp lỗi (đổi chương hỏi lại) và hỏi lại
+    // có khoảng chờ lùi dần, ngay khi mạng về (như MusicBed.kt retryCatalogLater).
+    let again: ReturnType<typeof setTimeout> | undefined;
+    let detachOnline: (() => void) | undefined;
+    const settle = (queue: NonNullable<ReturnType<NonNullable<typeof source.musicPlaylist>>>, misses: number) => {
+      const fail = (message: string) => {
+        if (playlistAsked.current?.queue === queue) playlistAsked.current = null;
+        playlistFault.current = message;
+        setMusicOffline(message);
+        setPlaylistBed(null);
+        void chapterCues();
+        const delay = sceneRetryDelay(misses);
+        if (delay !== null) again = setTimeout(() => retryAsk(misses + 1), delay);
+        if (!detachOnline && typeof window.addEventListener === "function") {
+          const online = () => retryAsk(0);
+          window.addEventListener("online", online);
+          detachOnline = () => window.removeEventListener("online", online);
+        }
+      };
       void queue.then(
         (result) => {
           if (cancelled) return;
           setMusicLoading(false);
+          if (result.error && !result.tracks.length) return fail(result.error);
+          detachOnline?.();
+          detachOnline = undefined;
+          if (playlistFault.current) {
+            playlistFault.current = "";
+            setMusicOffline("");
+          }
           if (!result.playlist || !result.tracks.length) {
             setPlaylistBed(null);
             void chapterCues();
@@ -728,17 +752,35 @@ export function PlayerProvider({
           const key = `${book}:${result.playlist}`;
           setPlaylistBed((previous) => nextPlaylistBed(previous, key, result));
         },
-        () => {
+        (error: unknown) => {
           if (cancelled) return;
           setMusicLoading(false);
-          setPlaylistBed(null);
-          void chapterCues();
+          fail(error instanceof Error ? error.message : "");
         },
       );
+    };
+    const retryAsk = (misses: number) => {
+      if (cancelled) return;
+      clearTimeout(again);
+      detachOnline?.();
+      detachOnline = undefined;
+      const queue = askQueue();
+      if (queue) settle(queue, misses);
+    };
+    const queue = playlistAsked.current?.queue ?? null;
+    if (!queue) {
+      setMusicLoading(false);
+      setPlaylistBed(null);
+      void chapterCues();
+    } else {
+      setMusicLoading(true);
+      settle(queue, 0);
     }
     return () => {
       cancelled = true;
       clearTimeout(retry);
+      clearTimeout(again);
+      detachOnline?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bed, source, bedChapter, bedVersion]);
