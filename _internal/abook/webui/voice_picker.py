@@ -65,6 +65,42 @@ def engine_installed(engine: str) -> bool:
     return True
 
 
+def engine_use(projects: list[Path], engine: str) -> dict[str, Any]:
+    """Những cuốn (dự án trong thư viện máy này) đang dùng giọng của một máy đọc khác VieNeu - để hỏi trước khi gỡ mô-đun của nó
+    (soát a94, F2). Một cuốn "dùng" khi có nhân vật (kể cả người kể) được phân giọng ấy, hay người nghe đã chọn tay giọng ấy mà
+    chưa áp; `left` là số câu của những người đó CHƯA thu - gỡ mô-đun thì các câu ấy không đọc được tới khi tải lại hay đổi giọng
+    (tts.py ném "Thiếu máy đọc"); câu đã thu vẫn nghe được. Không chặn gỡ: người dùng quyết.
+
+    {"engine", "books": [{"title", "people": [tên], "left"}], "bookCount", "peopleCount", "left"}, cuốn xếp theo tên."""
+    from ..voice_catalog import engine_voice
+
+    if engine not in ("zerotts", "supertonic"):
+        raise ValueError(f"Không có máy đọc {engine!r}")
+    books: list[dict[str, Any]] = []
+    for project in projects:
+        try:
+            with closing(store.connect(project)) as connection:
+                shown = _shown_names(connection, project)
+                rows = connection.execute(
+                    "SELECT COALESCE(c.canonical_name, '') AS who, COUNT(*) AS lines,"
+                    " SUM(CASE WHEN COALESCE(s.wav_path, '') = '' THEN 1 ELSE 0 END) AS left"
+                    " FROM segments s JOIN voice_profiles v ON v.id = s.voice_profile_id"
+                    " LEFT JOIN characters c ON c.id = s.canonical_character_id WHERE v.engine = ? GROUP BY who", (engine,)).fetchall()
+                people = {shown(str(row["who"])) for row in rows if row["who"]}
+                left = sum(int(row["left"] or 0) for row in rows)
+                for preset, wishers in store.wished_presets(project).items():
+                    voice = engine_voice(preset)
+                    if voice is not None and voice["engine"] == engine:
+                        people.update(shown(who) for who in wishers)
+        except Exception:  # noqa: BLE001 - một sách hỏng không được làm mất lời cảnh báo của cả thư viện
+            continue
+        if people or left:
+            books.append({"title": store.display_title(project, project.name), "people": sorted(people, key=str.casefold), "left": left})
+    books.sort(key=lambda book: str(book["title"]).casefold())
+    return {"engine": engine, "books": books, "bookCount": len(books),
+            "peopleCount": sum(len(book["people"]) for book in books), "left": sum(int(book["left"]) for book in books)}
+
+
 def start_engine_module(engine: str) -> dict[str, Any]:
     """Người nghe bấm "Tải giọng" ở hộp "Đổi giọng": tải phần còn thiếu / đã cũ ở luồng nền."""
     from . import supertonic_module, zerotts_module
@@ -201,6 +237,8 @@ def voice_choices(project_root: Path, character: str) -> dict[str, Any] | None:
                 key=lambda item: (-item["chapters"], item["label"].casefold()),
             )
             entries.append({
+                # `key` là thứ giao diện gửi lại (POST /voice, /voice/preview, nghe thử mẫu); `name` chỉ để hiện.
+                "key": name,
                 "name": voice_label(name),
                 "engine": engine,
                 "engineLabel": ENGINE_LABELS.get(engine, engine),
@@ -285,7 +323,7 @@ def narrator_choices(project_root: Path) -> dict[str, Any] | None:
         name = str(preset["name"])
         gender = str(preset["gender"])
         entries.append({
-            "name": voice_label(name), "engine": ENGINE_VIENEU, "engineLabel": ENGINE_LABELS.get(ENGINE_VIENEU, ENGINE_VIENEU),
+            "key": name, "name": voice_label(name), "engine": ENGINE_VIENEU, "engineLabel": ENGINE_LABELS.get(ENGINE_VIENEU, ENGINE_VIENEU),
             "installed": True, "oneStep": False, "description": "",
             "gender": gender, "genderLabel": GENDER_LABELS.get(gender, ""), "region": str(preset["region"]),
             "style": STYLE_LABELS.get(str(preset["style"]), str(preset["style"])),

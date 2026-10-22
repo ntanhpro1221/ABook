@@ -881,7 +881,7 @@ def keeps_voice(entry: Any) -> bool:
 
 
 def label_voice(name: str, entry: dict[str, Any]) -> str:
-    change = entry.get("preset") or {"male": "giọng nam", "female": "giọng nữ"}.get(str(entry.get("gender")), "giọng khác")
+    change = humanize.voice_label(str(entry.get("preset") or "")) or {"male": "giọng nam", "female": "giọng nữ"}.get(str(entry.get("gender")), "giọng khác")
     return f"Giọng của {name}: {change}"
 
 
@@ -1080,6 +1080,7 @@ def pending_details(project_root: Path, since: float) -> dict[str, Any]:
             # Đủ để "Nghe thử" đúng giọng sẽ áp trên một câu của người ấy (POST …/voice/preview, reading_preview.py).
             wish = {"character": key, **{field: str(entry.get(field) or "") for field in ("preset", "gender", "avoid")}}
             items.append({"kind": "voice", "label": label_voice(name, entry), "lines": hit(ids), "voice": wish,
+                          "voiceLabel": humanize.voice_label(wish["preset"]),
                           **handle("voices", key, entry)})
         clicks: dict[float, list[str]] = {}
         for stable_id, entry in fresh["retakes"].items():
@@ -1311,8 +1312,8 @@ def summarize(project_root: Path, *, running: bool = False, lease_after: float |
             "profileLabel": humanize.PROFILE_LABELS.get(profile, profile),
             "narrator": narrator,
             # Giọng kể người nghe đã chọn mà chưa vào sách: đầu trang ghi giọng SẼ dùng + "chờ áp dụng", không phải giọng cũ (soát UX a24).
-            "narratorPending": pending_voices(project_root, changes_since(project_root, float(book["updated_at"] or 0)))
-            .get("NARRATOR", {}).get("preset", ""),
+            "narratorPending": humanize.voice_label(pending_voices(project_root, changes_since(project_root, float(book["updated_at"] or 0)))
+                                                    .get("NARRATOR", {}).get("preset", "")),
             # Model đã phân tích cuốn này (book_settings.json lúc tạo sách) - đổi model mặc định thì biết cuốn nào làm bằng
             # model cũ.
             "analyzer": str((settings.get("analysis") or {}).get("model") or "")
@@ -1721,11 +1722,11 @@ def _voice_view(profile: sqlite3.Row | None) -> dict[str, Any] | None:
         return None
     formant = float(profile["formant_ratio"] or 1.0)
     pitch = float(profile["pitch_semitones"] or 0.0)
-    return {
+    return humanize.labelled_voice({
         "key": str(profile["voice_key"]),
         "preset": str(profile["preset_name"]),
         "tone": humanize.voice_tone(formant, pitch),
-    }
+    })
 
 
 def pending_voices(project_root: Path, since: float) -> dict[str, dict[str, str]]:
@@ -1742,8 +1743,8 @@ def pending_voices(project_root: Path, since: float) -> dict[str, dict[str, str]
             continue
         preset, gender = str(entry.get("preset") or ""), str(entry.get("gender") or "")
         if waiting(entry, "voices", str(key), since, receipts) and (preset or gender):
-            pending[speaker_key(str(key))] = {"preset": preset,
-                                              "gender": humanize.GENDER_LABELS.get(gender, "")}
+            pending[speaker_key(str(key))] = humanize.labelled_voice(
+                {"preset": preset, "gender": humanize.GENDER_LABELS.get(gender, "")})
     return pending
 
 
