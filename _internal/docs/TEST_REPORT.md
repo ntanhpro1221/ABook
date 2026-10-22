@@ -2,6 +2,11 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `a90b` trên `dev/uxfix105` (nền 6aae011e): hàng "Cần nghe lại" tách mã cảnh báo ghép, cả họ "ASR không phán xử được" vào
+"Chưa kiểm được" và không hiện transcript ảo; một câu một thẻ (thẻ mang thêm lý do logprob); Hoàn tác sau khi điện thoại đã gửi:
+gói gửi mang lời nhờ rút (edits_removed wishes), máy giữ sách rút đúng thao tác theo mốc (cancelled.withdraw_folded), Python + Kotlin;
+"Việc cần bạn"/"Cần nghe lại" tự làm mới mỗi 15 s khi sách đang chạy. Toàn bộ: pytest exit 0 (9 skipped, 2 xfailed, 0 F/E);
+vitest 1361 passed, 1 skipped; tsc exit 0; JVM 1403 tests, 7 skipped, 0 F/E. Hash khoá c9176123 không đổi.
 Đợt `a88fix` trên `dev/uxfix102` (nền d787857c): Tạm dừng / Dừng / Tiếp tục / hồi phục sự cố trong Studio - trạng thái "Đang dừng…"
 khoá hai nút tới checkpoint kế; Dừng khi supervisor đã chết trả 409 tiếng Việt thay 500; "Làm lại phân tích từ đầu" kiểm trước, đưa bản dở
 vào chỗ chờ Hoàn tác và khôi phục nếu tạo cuốn mới hỏng; "Tiếp tục" lần hai giữ đồng ý chạy trên pin; UI dùng phản hồi máy chủ ngay, làm mới

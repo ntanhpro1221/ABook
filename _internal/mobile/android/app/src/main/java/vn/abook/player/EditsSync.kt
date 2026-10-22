@@ -90,11 +90,36 @@ object EditsSync {
         return JSONObject().put("pending", pending).put("last", last ?: JSONObject.NULL)
     }
 
-    private fun record(dir: File, state: JSONObject) {
+    /** Một người đọc-sửa-ghi sổ trạng thái một lúc: lần gửi (đang chờ mạng) và lần hoàn tác của người nghe không đè lên nhau. */
+    private val stateLock = Any()
+
+    private fun record(dir: File, state: JSONObject) = synchronized(stateLock) {
         // Lần gửi lỗi (hay làm mới số việc chờ duyệt) không làm quên cái đã gửi trước đó: lớp sửa vẫn giữ cách đọc ấy.
         if (!state.has(KEPT)) marks(dir)?.let { state.put(KEPT, it) }
         Store.writeAtomic(stateFile(dir), state.toString())
     }
+
+    /**
+     * Người nghe hoàn tác một thao tác ĐÃ GỬI (gửi xong là gỡ khỏi lớp sửa, nên không còn ý muốn nào ở đây để rút): đổi biên nhận của nó thành lời
+     * nhờ máy giữ sách rút đúng thao tác ấy ([BookEdits.retractSent]) - đi theo lần gửi kế. `requestedAt` null: lần bấm đang ghi trong biên nhận.
+     * Trả các khoá đã nhận; rỗng = không có biên nhận khớp (đã bị lần bấm sau thay, hay chưa từng gửi).
+     */
+    fun retract(dir: File, section: String, keys: List<String>, requestedAt: Double? = null): List<String> = synchronized(stateLock) {
+        var marks = marks(dir) ?: return@synchronized emptyList()
+        val done = ArrayList<String>()
+        val here = BookEdits.load(dir).optJSONObject("wishes")?.optJSONObject(section) // lần bấm sau của chính khoá này còn ở đây: nó mới là cái đang chờ, không rút nhầm
+        for ((key, at) in BookEdits.sentWishMarks(marks, section, keys.filter { here?.has(it) != true }, requestedAt)) {
+            val (next, took) = BookEdits.retractSent(marks, section, listOf(key), at)
+            marks = next
+            done.addAll(took)
+        }
+        if (done.isNotEmpty()) record(dir, (lastState(dir) ?: JSONObject()).put(KEPT, marks))
+        done
+    }
+
+    /** Biên nhận {khoá: lần bấm} của các thao tác đã gửi mà còn hoàn tác được bằng [retract]. */
+    fun sentWishes(dir: File, section: String, keys: List<String>, requestedAt: Double? = null): Map<String, Double> =
+        BookEdits.sentWishMarks(marks(dir), section, keys, requestedAt)
 
     // ---- đóng gói -----------------------------------------------------------------------------------------------------
 
@@ -200,13 +225,15 @@ object EditsSync {
                 throw failure(dir, id, "Máy tính trả lời không hiểu được", error)
             }
             refresh?.let { runCatching { it(id) } } // sách mới của máy tính đã mang sửa: tải lại TRƯỚC khi gỡ lớp phủ để không chớp bản cũ
-            val kept = BookEdits.sentMarks(snapshot.edits, BookEdits.forgetMarks(marks(dir), snapshot.removed)) // trước khi ghi trạng thái mới: `marks` còn là của các lần gửi trước
-            BookEdits.subtract(dir, snapshot.edits, snapshot.cover)
-            record(dir, JSONObject().put("state", SENT).put("at", clock()).put(KEPT, kept)
-                .put("applied", reply.optInt("applied")).put("skipped", reply.optInt("skipped"))
-                .put("requests", reply.optInt("requests")).put("waiting", reply.optInt("waiting")).put("studio", reply.optInt("studio"))
-                .put("skippedWishes", reply.optInt("skippedWishes"))
-                .put("conflicts", labels(reply.optJSONArray("conflicts"), host)))
+            synchronized(stateLock) { // đọc sổ MỚI NHẤT: người nghe có thể vừa hoàn tác một thao tác trong lúc chờ máy tính trả lời
+                val kept = BookEdits.sentMarks(snapshot.edits, BookEdits.forgetMarks(marks(dir), snapshot.removed)) // trước khi ghi trạng thái mới: `marks` còn là của các lần gửi trước
+                BookEdits.subtract(dir, snapshot.edits, snapshot.cover)
+                record(dir, JSONObject().put("state", SENT).put("at", clock()).put(KEPT, kept)
+                    .put("applied", reply.optInt("applied")).put("skipped", reply.optInt("skipped"))
+                    .put("requests", reply.optInt("requests")).put("waiting", reply.optInt("waiting")).put("studio", reply.optInt("studio"))
+                    .put("skippedWishes", reply.optInt("skippedWishes")).put("withdrawn", reply.optInt("withdrawn"))
+                    .put("conflicts", labels(reply.optJSONArray("conflicts"), host)))
+            }
             attempts.remove(id)
             changed?.invoke(id)
             return view(dir, pending(dir, BookEdits.load(dir)))

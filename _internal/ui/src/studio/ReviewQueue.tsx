@@ -9,6 +9,7 @@ import { Button, EmptyState, Kbd, Segmented, Vu } from "@/shared/ui";
 import { api, urls } from "./api";
 import { useCachedBook } from "./data";
 import { retryUnlessGone } from "./polling";
+import { useProducingRefetch } from "./liveRefresh";
 import { usePendingNote } from "./decisions";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
 import { verdictWord, warnElsewhere } from "./elsewhere";
@@ -85,10 +86,12 @@ const KIND_TONE: Record<Kind, string> = {
 };
 
 export function useReviewCount(bookId: string) {
+  const refetchInterval = useProducingRefetch(bookId);
   const { data } = useQuery({
     queryKey: ["review", bookId, false],
     queryFn: () => api<ReviewView>(`/api/books/${bookId}/review`),
     enabled: Boolean(bookId),
+    refetchInterval,
     staleTime: 30_000,
     retry: retryUnlessGone,
     retryOnMount: false,
@@ -382,6 +385,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     return () => window.removeEventListener("keydown", onKey);
   }, [continuous, clip]);
   const unrecorded = notRecordedYet(useCachedBook(bookId).data?.book.segments);
+  const refetchInterval = useProducingRefetch(bookId); // sách đang chạy: câu cần nghe lại mới hiện tự (soát a90 V4)
   const { data: pages, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ["review", bookId, showMinor, filter],
     initialPageParam: "",
@@ -390,6 +394,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       return api<ReviewView>(`/api/books/${bookId}/review?${query}`);
     },
     getNextPageParam: (last) => last.nextCursor ?? undefined,
+    refetchInterval,
   });
   const data = pages && { ...pages.pages[0], items: pages.pages.flatMap((page) => page.items) };
   const verdict = useMutation({

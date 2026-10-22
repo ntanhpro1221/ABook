@@ -355,6 +355,59 @@ class EditsSyncTest {
     }
 
     @Test
+    fun undoing_a_wish_after_it_was_sent_asks_the_computer_to_withdraw_exactly_that_operation() {
+        // a90 V2 (như Python test_a90_retract_sent_wish): gửi xong là gỡ khỏi lớp sửa, nên Hoàn tác không còn ý muốn nào để rút - ghi lời nhờ máy tính rút.
+        val made = call("POST", "/pronunciation", JSONObject().put("surface", "Hailkes").put("spokenForm", "Hên-khơ")).second as JSONObject
+        val at = made.getDouble("requestedAt")
+        EditsSync.push(id) { accepted() }
+        assertTrue(BookEdits.isEmpty(BookEdits.load(dir)))
+        val undone = call("POST", "/pronunciation", JSONObject().put("surface", "Hailkes").put("withdraw", true).put("requestedAt", at)).second as JSONObject
+        assertTrue(undone.toString(), undone.getBoolean("sent"))
+        assertEquals(1, undone.getInt("undone"))
+        assertEquals("lời nhờ rút là một thay đổi chưa tới máy tính", 1, Store.manifest(id)!!.getJSONObject("editsSync").getInt("pending"))
+        // bấm lần nữa: biên nhận đã dùng, nói thật là không còn gì để hoàn tác
+        val again = call("POST", "/pronunciation", JSONObject().put("surface", "Hailkes").put("withdraw", true).put("requestedAt", at))
+        assertEquals(409, again.first)
+        var removed = JSONObject()
+        var names = emptySet<String>()
+        val view = EditsSync.push(id) { file ->
+            ZipFile(file).use { zip ->
+                names = zip.entries().asSequence().map { it.name }.toSet()
+                removed = JSONObject(zip.getInputStream(zip.getEntry(BookEdits.REMOVED_FILE)).readBytes().toString(Charsets.UTF_8))
+            }
+            accepted().let { JSONObject(it).put("withdrawn", 1).toString() }
+        }
+        assertEquals(setOf(BookEdits.REMOVED_FILE), names)
+        assertEquals(at, removed.getJSONObject("wishes").getJSONObject("pronunciations").getDouble("hailkes"), 1e-6)
+        assertEquals(0, view.getInt("pending"))
+        assertEquals(1, view.getJSONObject("last").getInt("withdrawn"))
+        assertFalse("sổ đã gửi không còn nhắc tới thao tác đã rút", File(dir, EditsSync.STATE_FILE).readText().contains("pronunciations"))
+        EditsSync.push(id) { fail("đã rút xong, không còn gì để gửi"); "" }
+    }
+
+    @Test
+    fun a_newer_click_of_the_same_key_is_not_undone_by_the_receipt_of_the_older_one() {
+        val first = (call("POST", "/pronunciation", JSONObject().put("surface", "Hailkes").put("spokenForm", "Hên-khơ")).second as JSONObject).getDouble("requestedAt")
+        EditsSync.push(id) { accepted() }
+        LocalStudio.now = { 1_790_950_300.0 }
+        call("POST", "/pronunciation", JSONObject().put("surface", "Hailkes").put("spokenForm", "Hên-khớ"))
+        // Lần bấm cũ bị lần bấm mới thay: không còn gì để hoàn tác bằng mốc cũ (và lần bấm mới còn nằm ở đây, chưa gửi).
+        val old = call("POST", "/pronunciation", JSONObject().put("surface", "Hailkes").put("withdraw", true).put("requestedAt", first))
+        assertEquals(409, old.first)
+        assertEquals(1, Store.manifest(id)!!.getJSONObject("editsSync").getInt("pending"))
+    }
+
+    @Test
+    fun a_retake_asked_for_cancelled_after_it_was_sent_is_withdrawn_on_the_computer_too() {
+        val sha = "fa1fe25f1922819e9fd94d48eeef9fddcaeb06be1653b73d618873e572498ea5"
+        BookWishes.requestRetakes(dir, listOf("c1_s0002_c58b67" to sha), 1_790_950_100.0)
+        EditsSync.push(id) { accepted() }
+        assertEquals(listOf("c1_s0002_c58b67"), EditsSync.retract(dir, "retakes", listOf("c1_s0002_c58b67")))
+        assertEquals(1, Store.manifest(id)!!.getJSONObject("editsSync").getInt("pending"))
+        assertTrue("không nhờ rút hai lần", EditsSync.retract(dir, "retakes", listOf("c1_s0002_c58b67")).isEmpty())
+    }
+
+    @Test
     fun conflict_notes_are_worded_for_the_sending_phone() {
         val item = JSONObject().put("kind", "title").put("key", "").put("label", "Tên sách: máy tính đã có bản riêng")
             .put("what", "Tên sách").put("lost", "“Chủ máy đặt lại”").put("kept", "“Tên mới”")
