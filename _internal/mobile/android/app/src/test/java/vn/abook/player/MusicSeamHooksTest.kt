@@ -96,7 +96,7 @@ class MusicSeamHooksTest {
         assertEquals("item 0 2 1 clip", SeamEvents.item(0, 2, 1, SeamEvents.kindOf(2)))
         assertEquals("audiotrack 0 44100 2", SeamEvents.audioTrack(0, 44100, 2))
         assertEquals("vol 3 0.002500", SeamEvents.volume(3, 0.0025f))
-        assertEquals("promote 2 loop", SeamEvents.promote(2))
+        assertEquals("promote 2 loop 22.987500", SeamEvents.promote(2, 22.9875))
     }
 
     @Test fun demoteReasonFollowsTheGateOutcome() {
