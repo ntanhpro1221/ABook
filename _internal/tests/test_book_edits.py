@@ -107,7 +107,7 @@ def test_a_series_file_renames_its_parts_and_follows_the_series_wide_chapter_ids
     assert [chapter["fullTitle"] for chapter in shown["chapters"]] == ["Chương 1", "Chương Một · Mở đầu"]
 
 
-@pytest.mark.parametrize("name", sorted([*shared.INVALID, *shared.INVALID_RAW]))
+@pytest.mark.parametrize("name", sorted(path.stem for path in (shared.FIXTURES / "invalid").glob("*.json")))
 def test_a_bad_edits_file_is_refused_whole(name: str) -> None:
     with pytest.raises(book_edits.EditsError):
         book_edits.parse((shared.FIXTURES / "invalid" / f"{name}.json").read_bytes())

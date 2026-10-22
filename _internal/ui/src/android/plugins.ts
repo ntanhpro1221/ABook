@@ -520,6 +520,7 @@ export interface EbookLibraryPlugin {
   /** Giọng Nghe ngay riêng của cuốn ("" = giọng mặc định) - đi theo hồ sơ nghe sang máy kia (soát a68 lỗi 8). */
   setVoice(options: { id: string; voice: string }): Promise<void>;
   addBookmark(options: { id: string; chapterId: number; seconds: number; note: string; index?: number; quote?: string; createdAt?: number }): Promise<Bookmark>;
+  restoreBookmark(options: { id: string; mark: Bookmark }): Promise<Bookmark>;
   updateBookmark(options: { id: string; markId: string; note: string }): Promise<void>;
   deleteBookmark(options: { id: string; markId: string }): Promise<void>;
   syncState(options: { id: string }): Promise<ListeningState>;

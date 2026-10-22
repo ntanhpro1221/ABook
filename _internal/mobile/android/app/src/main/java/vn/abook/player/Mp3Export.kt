@@ -33,17 +33,34 @@ object Mp3Export {
         fun write(name: String, body: (OutputStream) -> Unit)
     }
 
-    /** Nơi lưu bản xuất: tạo (hay mở lại) thư mục con `name`. */
+    /** Nơi lưu bản xuất: tạo thư mục con mới, giữ mọi bản xuất đã có. */
     fun interface Destination {
         fun folder(name: String): Folder
+    }
+
+    /** Như export.free_path: lần xuất sau sang "(2)", "(3)"; cả file trùng tên cũng chiếm chỗ. */
+    fun freshFolderName(name: String, exists: (String) -> Boolean): String {
+        if (!exists(name)) return name
+        for (number in 2..999) {
+            val candidate = "$name ($number)"
+            if (!exists(candidate)) return candidate
+        }
+        throw Refused("Chỗ đã chọn có quá nhiều bản xuất cùng tên")
     }
 
     /** Nơi lưu là một thư mục thường (test JVM, bài thử trên máy): "<tên>.part" rồi đổi tên, như máy tính. */
     class FileDestination(private val root: File) : Destination {
         override fun folder(name: String): Folder {
-            val dir = File(root, name).apply { mkdirs() }
+            root.mkdirs()
+            var fresh = freshFolderName(name) { File(root, it).exists() }
+            var dir = File(root, fresh)
+            while (!dir.mkdir()) {
+                if (!dir.exists()) throw Refused("Không tạo được thư mục trong chỗ đã chọn")
+                fresh = freshFolderName(name) { File(root, it).exists() }
+                dir = File(root, fresh)
+            }
             return object : Folder {
-                override val label = "${root.name}/$name"
+                override val label = "${root.name}/$fresh"
                 override fun write(name: String, body: (OutputStream) -> Unit) {
                     val part = File(dir, "$name.part")
                     try {

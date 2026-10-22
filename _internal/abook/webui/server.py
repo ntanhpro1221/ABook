@@ -2946,7 +2946,7 @@ class App:
         def run() -> None:
             reply = remote_books.exchange_state(book, self.listening.get(value), timeout=1.5 if wait else 4)
             if reply is not None:
-                self.listening.merge(value, {key: item for key, item in reply.items() if key not in ("night", "sessions")})
+                self.listening.merge(value, reply)
         if wait:
             run()
         else:

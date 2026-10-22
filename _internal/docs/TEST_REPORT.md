@@ -2,6 +2,29 @@
 
 Ngày cập nhật: 2026-10-22
 
+Đợt `dev/uxfix87` (`a76fix`, worktree từ `dev/uxfix82`, HEAD `74caa860`): sửa lệch giữa máy tính và điện thoại theo findings a76.
+Mục tải file/Range để `dev/uxfix83` xử lý.
+
+- Lời đáp đồng bộ hợp với trạng thái hiện tại của đúng hồ sơ (kể cả `activeState` và máy giữ sách đời cũ), giữ bia mộ dấu trang;
+  hồ sơ bị xoá lúc đang chờ mạng không sống lại. Fixture `listening_records/inflight_reply.json` chung Python/JVM;
+  trước sửa JVM 3F, sau 4 test qua (cộng ca xoá hồ sơ xen giữa).
+- Xuất MP3 chọn thư mục mới `(2)`, `(3)` ở SAF và thư mục thường; test xuất ba lần so byte các bản bìa: đỏ rồi xanh.
+- Dấu trang trùng bổ sung ghi chú nếu ghi chú cũ trống, giữ `createdAt`; cửa sổ gộp ±5 giây và phân biệt dấu theo câu như Python.
+  Fixture `bookmark_places.json` chung 8 ca. Hai test JVM đỏ trước, xanh sau.
+- Hoàn tác dấu trang đi qua API riêng giữ ID và gỡ tombstone; fixture `restore_bookmark.json` chung kiểm gộp với edit/delete cũ.
+  Vitest kiểm cầu nối đỏ 1F rồi xanh 1 test.
+- Hẹn “Hết chương” chia thời lượng audio còn lại cho tốc độ (sàn 0,25 như web). JVM đỏ rồi xanh ở 2×/0,5× và trường hợp hết chương.
+- Bỏ bìa chỉ giữ `cover:null` khi có bìa gốc; nếu không gỡ khoá `cover`. Fixture `cover_removal.json` chung 4 ca,
+  Python qua; JVM đỏ trước, xanh sau.
+- Bìa nghe thẳng của thiết bị ghép: so màu/phiên bản từ danh sách, so toàn mô tả khi lấy manifest, gỡ ảnh cache cũ để tải lại;
+  không đụng ảnh người nghe sửa. Fixture `stream_covers.json` chung kiểm Python `_refresh_book` và policy JVM.
+  Thêm ca danh sách thiếu kích thước/tên file để không tải lại vô ích; test đỏ rồi xanh.
+- ID chương và mốc nhạc trong phần sửa chỉ nhận `[0-9]`; ba fixture invalid Unicode dùng chung, Python đỏ 3F trước rồi xanh.
+- Lead thêm: cổng đồng bộ giữ `deleted` dạng dict (bia mộ dấu trang) thay vì bỏ cùng cờ đồng bộ - test qua cổng thật đỏ khi bỏ sửa;
+  máy tính nghe sách của máy tính khác gửi/gộp cả `sessions`/`night` như điện thoại (`test_remote_computers` mở rộng).
+- Toàn bộ (Lead chạy lại): pytest 8399 passed, 9 skipped, 0 F/E, exit 0; vitest 1242 passed, 1 skipped; tsc exit 0;
+  JVM 1232 tests, 6 skipped, 0 F/E. Hash khoá 67286434 không đổi.
+
 Đợt `dev/uxfix82` (`a74fix`, từ `c9a9baf1`): đã đối chiếu từng khẳng định với mã trong cây này, sửa #1, #2, #5, #6,
 #7, #10, #11, #8 theo thứ tự. #3 xác nhận là lỗi nhưng hoãn: cần receipt sau từng commit trong `pipeline.py` (khoá),
 không thể suy “đã áp” từ READY/run marker. #4 và #9 bỏ qua theo phạm vi được giao.
