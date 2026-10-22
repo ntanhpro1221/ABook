@@ -101,6 +101,13 @@ class Runner(Protocol):
     def pause(self, project_root: Path, paused: bool) -> None: ...
     def pause_reason(self, project_root: Path) -> str | None: ...
     def can_pause(self, project_root: Path) -> bool: ...
+    def stopping(self, project_root: Path) -> bool: ...
+    def lease_after(self, project_root: Path) -> float | None: ...
+    def last_end(self, project_root: Path) -> dict[str, Any] | None: ...
+
+
+class RunnerGone(RuntimeError):
+    """Sách không còn tiến trình nào để nhận lệnh "Dừng" / "Tạm dừng" (đã xong, đã dừng hay tiến trình đã chết)."""
 
 
 class BackgroundRunner:
@@ -112,22 +119,61 @@ class BackgroundRunner:
         start_background(project_root)
 
     def stop(self, project_root: Path) -> None:
-        from ..background_runner import request_stop
+        from ..background_runner import BackgroundGone, request_stop
 
-        request_stop(project_root, wait=False)
+        try:
+            request_stop(project_root, wait=False)
+        except BackgroundGone as error:
+            raise RunnerGone("Sách đã không còn chạy") from error
 
     def running(self, project_root: Path) -> bool:
         from ..background_runner import get_status
 
         try:
             return bool(get_status(project_root).running)
-        except Exception:  # noqa: BLE001 - state hỏng thì coi như không chạy; summary vẫn đọc lease
+        except Exception:  # noqa: BLE001 - state hỏng thì coi như không chạy
             return False
 
     def pause(self, project_root: Path, paused: bool) -> None:
-        from ..background_runner import request_pause
+        from ..background_runner import BackgroundGone, request_pause
 
-        request_pause(project_root, paused)
+        try:
+            request_pause(project_root, paused)
+        except BackgroundGone as error:
+            raise RunnerGone("Sách đã không còn chạy") from error
+
+    def stopping(self, project_root: Path) -> bool:
+        """Đã bấm "Dừng", worker còn đang chạy tới checkpoint sạch kế."""
+        from ..background_runner import get_status
+
+        try:
+            return get_status(project_root).stopping
+        except Exception:  # noqa: BLE001
+            return False
+
+    def lease_after(self, project_root: Path) -> float | None:
+        """Nhịp tim worker trong sổ chỉ tính nếu mới hơn mốc này: supervisor ghi lượt chạy còn dở (kể cả đã chết) -> vô cực (nó là
+        nguồn duy nhất); đã kết thúc -> lúc kết thúc; chưa có supervisor nào (chạy bằng dòng lệnh) -> None, sổ là nguồn duy nhất."""
+        from ..background_runner import get_status, lease_after_of
+
+        try:
+            return lease_after_of(get_status(project_root))
+        except Exception:  # noqa: BLE001
+            return None
+
+    def last_end(self, project_root: Path) -> dict[str, Any] | None:
+        """Lượt chạy gần nhất của supervisor kết thúc vì sự cố (`failed`: worker lỗi / thoát bất thường; `lost`: tiến trình chết
+        không kịp ghi gì) - `detail` và mã thoát để trang sách nói nguyên nhân thay vì im lặng. None: chưa chạy, đang chạy, hay
+        kết thúc bình thường (xong / bạn bấm Dừng)."""
+        from ..background_runner import get_status
+
+        try:
+            status = get_status(project_root)
+        except Exception:  # noqa: BLE001
+            return None
+        if status.state not in ("failed", "lost"):
+            return None
+        return {"state": status.state, "detail": status.detail or "", "exitCode": status.exit_code}
 
     def pause_reason(self, project_root: Path) -> str | None:
         """"battery" (máy đang chạy pin), "listener" (người dùng bấm Tạm dừng) hay None - power_source."""
@@ -208,6 +254,15 @@ class FakeRunner:
 
     def can_pause(self, project_root: Path) -> bool:
         return str(project_root) in self._running
+
+    def stopping(self, project_root: Path) -> bool:
+        return False  # giả dừng tức thì
+
+    def lease_after(self, project_root: Path) -> float | None:
+        return float("inf") if str(project_root) in self._running else None
+
+    def last_end(self, project_root: Path) -> dict[str, Any] | None:
+        return None
 
 
 _TAIL_BYTES = 8192

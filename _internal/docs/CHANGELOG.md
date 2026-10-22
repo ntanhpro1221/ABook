@@ -9,6 +9,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Khi bạn bấm Dừng, sách hiện “Đang dừng…” và khoá nút Tạm dừng lẫn Dừng cho tới khi dừng hẳn; bấm Tạm dừng lúc ấy được báo đúng là sách đang dừng, không còn nói “không đang chạy”.
+- Khi tiến trình làm sách bị tắt đột ngột, trang sách hết báo “đang chạy” ngay (không đợi thêm hai phút), bấm Dừng trả lời “Sách đã không còn chạy” thay vì báo lỗi lạ, và nói rõ nguyên nhân khi máy sập; điện thoại phân biệt “bạn đã bấm Dừng” với “máy tính gặp sự cố”.
+- Khi bạn bấm “Làm lại phân tích từ đầu” mà cuốn mới không tạo được (vd model phân tích không còn trong Ollama), bản dở vẫn nằm nguyên trong Studio; chỉ khi cuốn mới đã tạo xong bản dở mới đi vào Thùng rác.
+- Khi máy chạy pin, bấm “Tiếp tục” hai lần hay bấm “Tiếp tục” lúc sách đang tạm dừng tay không còn làm sách dừng lại ngay; thông báo “Đang làm tiếp” luôn khớp với điều xảy ra, và nói rõ khi sách làm tiếp trên pin.
+- Nút Tạm dừng, Tiếp tục và Dừng đổi trạng thái ngay khi bấm, không còn trễ vài giây; nếu lệnh không thành, trang tự làm mới.
+- Điện thoại báo “Máy tính đang chạy pin, đã tạm dừng cuốn …” đúng lúc sách tạm dừng vì rút sạc, và máy tính cũng hiện thông báo trên màn hình Windows.
+- Hộp Dừng giữa lúc phân tích nói đúng: phần đã phân tích được giữ nguyên nhưng làm tiếp từ chỗ dừng có thể ra cuốn khác, và mời bạn bấm Tạm dừng; lời khuyên khi gặp lỗi chỉ đúng nút chính của trang (“Làm lại phân tích từ đầu” khi phân tích bị ngắt).
+- Cuốn xếp hàng sau một cuốn đang tạm dừng nói rõ vì sao chưa tới lượt và bạn cần làm gì.
+- Khi sách đang chạy, Windows không tự cho máy ngủ giữa chừng (làm Ollama treo); tạm dừng, dừng hay xong là máy được ngủ lại như thường.
 - Khi bạn gỡ ABook, bộ gỡ đọc vị trí thư viện đã lưu và giữ cây chứa sách; app cũng ngăn bạn chọn thư viện trong các thư mục sẽ bị gỡ.
 - Khi bạn có cuốn đang chạy, khởi động hoặc tạm dừng, Studio yêu cầu chờ làm xong trước khi cập nhật để giữ nguyên lượt phân tích.
 - Khi bạn đổi tên bộ cài, lần nâng cấp giữa các bản có bộ gỡ mới vẫn nhận đúng chế độ nâng cấp và giữ Studio.
