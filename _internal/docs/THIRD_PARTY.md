@@ -32,7 +32,7 @@ phần ấy.
 
 Bộ cài mang theo:
 
-- Tauri 2 và các plugin single-instance, dialog, updater (MIT hoặc Apache-2.0); WebView2 là của Windows (Microsoft) -
+- Tauri 2 và các plugin single-instance, dialog, updater, window-state (MIT hoặc Apache-2.0); WebView2 là của Windows (Microsoft) -
   bộ cài chỉ tải trình cài WebView2 khi máy thiếu, không phân phối lại.
 - NSIS (giấy phép zlib/libpng) và `nsis_tauri_utils` (MIT hoặc Apache-2.0) - trình cài/gỡ.
 - Python 3.14 embeddable (Python Software Foundation License).

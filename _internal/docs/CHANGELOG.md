@@ -9,6 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Trên máy tính, cửa sổ ABook nhớ kích thước, vị trí và trạng thái phóng to của lần trước; nếu màn hình phụ cũ đã rút ra thì cửa sổ mở trên màn hình còn lại, không nằm ngoài màn.
 - Trên điện thoại màn nhỏ, menu "…" của trang sách không còn bị cắt mất các mục cuối ("Xuất sách nói (M4B)…", "Xoá khỏi điện thoại…"): menu nào dài hơn chỗ còn trên màn thì cuộn được, trên cả điện thoại lẫn máy tính.
 - Khi bạn đóng app lúc có sách đang xếp hàng chờ làm (kể cả các tập sau của "Tạo nhiều tập"), hàng chờ vẫn còn khi bạn mở lại, kể cả khi app bị tắt ngang lúc chuẩn bị chạy cuốn kế; các cuốn tự bắt đầu lần lượt khi cuốn đang chạy xong. Bạn bấm chạy cuốn khác hay bỏ cuốn khỏi hàng đúng lúc chuyển lượt cũng không làm hai cuốn tự chạy cùng lúc hoặc chạy cuốn vừa bỏ; cuốn bạn đã xoá thì tự ra khỏi hàng.
 - Khi bạn nghe tiếp chương đọc to sau khi app bị đóng hoặc bộ đệm bị dọn, app nhớ đúng đoạn và chữ đang nghe nếu văn bản chương còn khớp.
