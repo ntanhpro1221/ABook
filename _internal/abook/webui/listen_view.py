@@ -106,13 +106,13 @@ def book(project_root: Path, book_id: str, summary: dict[str, Any], state: dict[
     }
     # Phần nối tiếp của "Làm tiếp cuốn này": phần đầu + thứ tự phần theo continues.json - thư viện gom các phần theo chuỗi,
     # không theo tên (soát UX 29-09, N10). Phần đầu không mang gì: giao diện nhận ra nó là sách mà các phần khác trỏ về.
-    result["series"] = _series(project_root)
+    result["series"] = series(project_root)
     if with_chapters:
         result["chapters"] = items
     return result
 
 
-def _series(project_root: Path) -> dict[str, Any] | None:
+def series(project_root: Path) -> dict[str, Any] | None:
     from .. import continuation
     from .library import book_id
 

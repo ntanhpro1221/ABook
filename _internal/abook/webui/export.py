@@ -754,6 +754,17 @@ def packed_extras_bytes(project: Path, chapter_ids: Iterable[int]) -> int:
     return total
 
 
+def music_links(project: Path, music_track: Callable[[str], Path | None] | None,
+                listed: list[dict[str, Any]] | None = None) -> set[str]:
+    """Các bài nhạc nền (liên kết) mà đoạn nhạc của những chương nghe được `listed` (mặc định: mọi chương nghe được) trong rãnh nhạc đang bật của
+    cuốn dùng - mỗi bài một lần. Không có `music_track` (máy không giữ nhạc) hay rãnh nhạc tắt: rỗng."""
+    plan = music_plan.read_plan(project) if music_track is not None else None
+    if plan is None:
+        return set()
+    return {cue["link"] for chapter in (_listenable(project) if listed is None else listed)
+            for cue in music_plan.chapter_cues(plan, chapter["id"])}
+
+
 def audio_bytes(projects: list[Path], music_track: Callable[[str], Path | None] | None = None) -> tuple[int, int]:
     """(cỡ, số bài nhạc chưa tải) ước lượng của file `.abook` trước khi xuất: audio các chương nghe được + câu mẫu, bìa, kịch bản, dàn nhân vật
     (`packed_extras_bytes`) + các bài nhạc nền sẽ đóng kèm (đoạn nhạc của các chương ấy trong rãnh nhạc đang bật; mỗi bài một lần dù nhiều đoạn, nhiều phần). Không tải gì:
@@ -761,7 +772,6 @@ def audio_bytes(projects: list[Path], music_track: Callable[[str], Path | None] 
     total = 0
     links: set[str] = set()
     for project in projects:
-        plan = music_plan.read_plan(project) if music_track is not None else None
         audio = store.chapter_audio_paths(project)
         listed = _listenable(project)
         total += packed_extras_bytes(project, [chapter["id"] for chapter in listed])
@@ -769,8 +779,7 @@ def audio_bytes(projects: list[Path], music_track: Callable[[str], Path | None] 
             path = audio.get(chapter["id"])
             if path is not None:
                 total += path.stat().st_size
-            if plan is not None:
-                links.update(cue["link"] for cue in music_plan.chapter_cues(plan, chapter["id"]))
+        links |= music_links(project, music_track, listed)
     pending = 0
     for link in links:
         path = music_track(link) if music_track is not None else None

@@ -43,6 +43,8 @@ private const val HEAD_BYTES = 512 // đầu file đủ để thấy mục `mime
 
 /** Số file tối đa trong một lượt nhập "Nhạc của tôi" (server.MY_MUSIC_IMPORT_LIMIT). */
 private const val MY_MUSIC_IMPORT_LIMIT = 500
+private const val STREAM_PARALLEL = 4 // số gói sách nghe thẳng lấy cùng lúc (streamableBooks)
+private const val STREAM_BUDGET_MS = 12_000L // hết chừng này thì cuốn còn lại dùng gói đã cất, lượt hỏi sau lấy tiếp
 
 /**
  * Thư viện trên điện thoại + đồng bộ với máy tính qua Wi-Fi (abook/webui/sync.py).
@@ -62,6 +64,9 @@ class LibraryPlugin : Plugin() {
     // Trình phát máy khác (mạng trạm bước 4): hỏi mạng tới vài giây, không được chặn hàng `io` của thư viện.
     private val remotes = Executors.newCachedThreadPool()
     private val downloads = Executors.newSingleThreadExecutor()
+    // Danh sách sách nghe thẳng hỏi máy tính và thiết bị ghép, chậm tới hàng chục giây khi mạng chập chờn: không được chặn hàng `io` (thư viện đã tải,
+    // trang sách, chỗ nghe xếp hàng sau nó - soát a101 F2).
+    private val streams = Executors.newSingleThreadExecutor()
     // Nhập nhạc của tôi: giải mã từng bản để đo độ to nên lâu - không được chặn hàng `io` của thư viện.
     private val musicImports = Executors.newSingleThreadExecutor()
     // Nhập file sách (.abook / .abookproj): chép + băm + giải nén vài GB mất phút - không được chặn hàng `io` (tiến độ nghe, thư viện, dấu trang
@@ -101,6 +106,14 @@ class LibraryPlugin : Plugin() {
     }
 
     private fun background(call: PluginCall, block: () -> Unit) = io.execute {
+        try {
+            block()
+        } catch (error: Exception) {
+            fail(call, error)
+        }
+    }
+
+    private fun streaming(call: PluginCall, block: () -> Unit) = streams.execute {
         try {
             block()
         } catch (error: Exception) {
@@ -1055,10 +1068,11 @@ class LibraryPlugin : Plugin() {
         Store.books().forEach { manifest ->
             val id = manifest.getString("id")
             books.put(JSObject.fromJSONObject(manifest).put("state", JSObject.fromJSONObject(Store.state(id)))
-                .put("bytes", Store.sizeOf(Store.bookDir(id)))
+                .put("bytes", Store.bookBytes(Store.bookDir(id)))
                 // Lúc sách về điện thoại (cho "Mới thêm" ở thư viện): book.json ghi một lần lúc tải / mở file.
                 .put("addedAt", File(Store.bookDir(id), "book.json").lastModified() / 1000.0))
         }
+        Store.saveSizes()
         call.resolve(JSObject().put("books", books))
     }
 
@@ -1070,9 +1084,12 @@ class LibraryPlugin : Plugin() {
      * (đã thôi ghép điện thoại này) cuốn mới thật sự rời đi.
      */
     @PluginMethod
-    fun streamableBooks(call: PluginCall) = background(call) {
+    fun streamableBooks(call: PluginCall) = streaming(call) {
         val books = JSArray()
         var computerAnswered = true
+        // Thiết bị ghép khác trả lời độc lập với máy tính: hỏi cùng lúc, không nối đuôi (mỗi bên đã có hạn chờ riêng).
+        val peersAsk = FutureTask { Peers.libraries(context) }
+        Thread(peersAsk, "abook-peer-libraries").apply { isDaemon = true }.start()
         val reply = if (SyncLink.paired(context)) {
             try {
                 JSONObject(SyncLink.request(context, "GET", "/sync/v1/library", readTimeoutMs = 10_000, connectTimeoutMs = 1500))
@@ -1086,54 +1103,59 @@ class LibraryPlugin : Plugin() {
             SyncLink.refreshRoutes(context, reply)
             matchImported(listed(remote))
             StateSync.flushPending(context) // chỗ nghe ghi trong lúc mất kết nối về máy tính ngay khi nối lại (soát a68 lỗi 9)
-        } else if (!computerAnswered) {
-            keepPlaying(books) { it.optString("source").isEmpty() }
         }
-        for (index in 0 until remote.length()) {
-            val entry = remote.getJSONObject(index)
-            val id = entry.getString("id")
-            if (Store.rawManifest(id) != null) {
-                runCatching { refreshMetadata(id, entry) }
-                runCatching { syncHolderEdits(id, entry) }
-                continue
-            }
-            val cached = Store.streamManifest(id)
-            val stale = StreamRefresh.stale(cached, entry)
-            val manifest = (if (stale) runCatching { Streaming.fetchManifest(context, id) }.getOrNull() else null) ?: cached ?: continue
-            if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
-                Streaming.fetchSmall(context, id, "cover.jpg")
-            }
-            runCatching { syncHolderEdits(id, entry) }
-            books.put(JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true))
+        val peers = try {
+            peersAsk.get()
+        } catch (error: ExecutionException) {
+            throw error.cause as? Exception ?: error
         }
-        // Thiết bị ghép (điện thoại khác, máy tính khác): cùng cách, gói ghi nguồn - thiết bị không trả lời thì bỏ qua (trừ cuốn đang phát, như trên).
-        val peers = Peers.libraries(context)
-        for (index in 0 until peers.length()) {
-            val peer = peers.getJSONObject(index)
-            if (peer.has("error") && !peer.optBoolean("unpaired")) keepPlaying(books) { it.optString("source") == peer.optString("key") }
+        // Mọi cuốn của máy tính rồi của từng thiết bị ghép xếp thành MỘT danh sách việc: gói sách lấy song song có giới hạn, chung một trần
+        // thời gian (STREAM_BUDGET_MS). Hết trần thì cuốn còn lại dùng gói đã cất, lượt hỏi sau lấy tiếp.
+        class Job(val entry: JSONObject, val source: String?, val sourceName: String?)
+        val jobs = ArrayList<Job>()
+        for (index in 0 until remote.length()) jobs.add(Job(remote.getJSONObject(index), null, null))
+        val peerLists = (0 until peers.length()).map { peers.getJSONObject(it) }
+        for (peer in peerLists) {
             val list = peer.optJSONArray("books") ?: continue
-            for (item in 0 until list.length()) {
-                val entry = list.getJSONObject(item)
-                val id = entry.getString("id")
-                if (Store.rawManifest(id) != null) {
-                    runCatching { refreshMetadata(id, entry, peer.getString("key"), entry.getString("remoteId")) }
-                    runCatching { syncHolderEdits(id, entry) }
-                    continue
-                }
-                val cached = Store.streamManifest(id)
-                val stale = StreamRefresh.stale(cached, entry)
-                val manifest = (if (stale) runCatching {
-                    Streaming.fetchManifest(context, id, peer.getString("key"), entry.getString("remoteId"))
-                }.getOrNull() else null) ?: cached ?: continue
-                if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile)) {
-                    Streaming.fetchSmall(context, id, "cover.jpg")
-                }
-                runCatching { syncHolderEdits(id, entry) }
-                books.put(JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
-                    .put("sourceName", peer.optString("name")))
-            }
+            for (item in 0 until list.length()) jobs.add(Job(list.getJSONObject(item), peer.getString("key"), peer.optString("name")))
+        }
+        val rows = Bounded.map(jobs, STREAM_PARALLEL, STREAM_BUDGET_MS) { job, expired ->
+            streamedRow(job.entry, job.source, job.sourceName) { !expired() }
+        }
+        var next = 0
+        if (reply == null && !computerAnswered) keepPlaying(books) { it.optString("source").isEmpty() }
+        repeat(remote.length()) { rows[next++]?.let(books::put) }
+        // Thiết bị ghép (điện thoại khác, máy tính khác): cùng cách, gói ghi nguồn - thiết bị không trả lời thì bỏ qua (trừ cuốn đang phát, như trên).
+        for (peer in peerLists) {
+            if (peer.has("error") && !peer.optBoolean("unpaired")) keepPlaying(books) { it.optString("source") == peer.optString("key") }
+            repeat(peer.optJSONArray("books")?.length() ?: 0) { rows[next++]?.let(books::put) }
         }
         call.resolve(JSObject().put("books", books))
+    }
+
+    /**
+     * Dòng của một cuốn nghe thẳng trong thư viện, hay null khi không có gì để hiện: cuốn đã tải về thì chỉ làm mới mô tả / phần sửa của nó; cuốn chưa
+     * tải mà chưa có gói sách (cũng không lấy được) thì bỏ. `source` / `sourceName`: thiết bị ghép giữ cuốn (null = máy tính chính). `network` sai (hết
+     * trần thời gian của lượt) thì không hỏi mạng: dùng gói đã cất.
+     */
+    private fun streamedRow(entry: JSONObject, source: String?, sourceName: String?, network: () -> Boolean): JSObject? {
+        val id = entry.getString("id")
+        val remoteId = if (source != null) entry.getString("remoteId") else null
+        if (Store.rawManifest(id) != null) {
+            if (network()) runCatching { refreshMetadata(id, entry, source, remoteId) }
+            if (network()) runCatching { syncHolderEdits(id, entry) }
+            return null
+        }
+        val cached = Store.streamManifest(id)
+        val stale = StreamRefresh.stale(cached, entry)
+        val manifest = (if (stale && network()) runCatching { Streaming.fetchManifest(context, id, source, remoteId) }.getOrNull() else null) ?: cached ?: return null
+        if (manifest.optJSONObject("cover") != null && (stale || !Store.file(id, "cover.jpg").isFile) && network()) {
+            runCatching { Streaming.fetchSmall(context, id, "cover.jpg") }
+        }
+        if (network()) runCatching { syncHolderEdits(id, entry) }
+        val row = JSObject.fromJSONObject(Store.streamed(id, manifest)).put("state", JSObject.fromJSONObject(Store.state(id))).put("streamed", true)
+        if (sourceName != null) row.put("sourceName", sourceName)
+        return row
     }
 
     /** Cuốn nghe thẳng đang nằm trong trình phát mà máy giữ nó không trả lời: vẫn ở danh sách (gói đã cất), đánh dấu `offline`. */
@@ -1746,15 +1768,28 @@ class LibraryPlugin : Plugin() {
     /** Văn bản trong gói (chương để đọc theo, dàn nhân vật). Sách nghe thẳng thì lấy từ máy tính lần đầu rồi cất lại. */
     @PluginMethod
     fun readText(call: PluginCall) = background(call) {
+        call.resolve(JSObject().put("text", bookText(call.getString("id") ?: "", call.getString("path") ?: "") ?: ""))
+    }
+
+    /**
+     * Văn bản của NHIỀU file trong gói một lần (ô "Tìm trong sách": mỗi chương một file, sách 2000 chương đi qua cầu hàng trăm lượt nếu hỏi từng file):
+     * `texts` theo thứ tự `paths`, null cho file không có. Chữ quá nhiều thì trả phần đầu (TextBatch) - bên hỏi xin lại phần còn lại.
+     */
+    @PluginMethod
+    fun readTexts(call: PluginCall) = background(call) {
         val id = call.getString("id") ?: ""
-        val path = call.getString("path") ?: ""
-        var file = Store.file(id, path)
+        val paths = call.getArray("paths")?.toList<String>() ?: emptyList()
+        val texts = JSArray()
+        TextBatch.read(paths) { path -> bookText(id, path) }.forEach { texts.put(it ?: JSONObject.NULL) }
+        call.resolve(JSObject().put("texts", texts))
+    }
+
+    /** Một file văn bản của gói như người nghe thấy (lớp sửa phủ lên); sách nghe thẳng chưa có file thì lấy từ máy tính. null khi không có. */
+    private fun bookText(id: String, path: String): String? {
+        val file = Store.file(id, path)
         val fromPeer = !Store.streamManifest(id)?.optString("source").isNullOrEmpty()
-        if (!file.isFile && Store.rawManifest(id) == null && (fromPeer || SyncLink.paired(context))) {
-            file = Streaming.fetchSmall(context, id, path) ?: file
-        }
-        // Dàn nhân vật, chữ đọc theo: bản người nghe thấy (lớp sửa phủ lên), không phải file nguyên văn của người làm sách.
-        call.resolve(JSObject().put("text", if (file.isFile) Store.overlaidText(id, path) ?: file.readText() else ""))
+        if (!file.isFile && Store.rawManifest(id) == null && (fromPeer || SyncLink.paired(context))) Streaming.fetchSmall(context, id, path)
+        return Store.readText(id, path)
     }
 
     /**

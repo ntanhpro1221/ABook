@@ -10,17 +10,20 @@ cho "đã thu", `chapters.completed_at` cho mốc chương xong. Nhãn tiếng V
 """
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import os
 import re
 import sqlite3
 import stat
+import threading
 import time
 import unicodedata
-from collections import Counter, defaultdict
+from collections import Counter, OrderedDict, defaultdict
 from contextlib import closing, contextmanager
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any, ClassVar, Iterable, Iterator
 
 from . import humanize, listing_cache, word_timing
@@ -301,8 +304,50 @@ def chapter_mp3(project_root: Path, recorded_path: str | None) -> Path | None:
     if not recorded_path:
         return None
     name = Path(str(recorded_path).replace("\\", "/")).name
-    candidate = project_root / "output" / "chapters" / name
+    candidate = project_root / CHAPTERS_DIR / name
     return candidate if candidate.is_file() else None
+
+
+CHAPTERS_DIR = Path("output") / "chapters"  # MP3 các chương, trong thư mục sách
+
+
+def audio_signature(project_root: Path) -> tuple:
+    """Chữ ký các file audio chương (tên kèm cỡ, mốc sửa - dạng `listing_cache.files_signature`) bằng MỘT lần liệt kê thư mục: chương mất file,
+    được thu lại hay thêm đều đổi nó. Cho nơi nhớ kết quả cả thư viện (sync.SyncApp.library_view) mà không mở sổ từng cuốn."""
+    try:
+        with os.scandir(Path(project_root) / CHAPTERS_DIR) as entries:
+            return tuple(sorted((f"{entry.name}:{info.st_size}", info.st_mtime_ns, ())
+                                for entry in entries if entry.is_file() for info in (entry.stat(),)))
+    except OSError:
+        return ()
+
+
+_MEMO_MAX = 64  # số (loại, cuốn, tham số) được nhớ - trang mở một cuốn hỏi vài loại; vài chục cuốn gần nhất là đủ
+_MEMO_MAX_AGE = 30.0  # lưới an toàn cho thứ kết quả đọc mà chữ ký không thấy
+_MEMO: OrderedDict[tuple, tuple[tuple, float, Any]] = OrderedDict()
+_MEMO_LOCK = threading.Lock()
+
+
+def _remembered(kind: str, project_root: Path, params: tuple, build: Callable[[], Any], keep: Callable[[Any], bool] = lambda _value: True) -> Any:
+    """`build()` nhớ theo chữ ký cuốn: sổ + mọi file ngay trong thư mục sách + audio chương (`project_signature`, `audio_signature`) - trang sách tải lại
+    tóm tắt / danh sách chương / dàn nhân vật mỗi vài giây, sách 2000 chương mỗi lần 0,2-0,5 giây CPU (soát a101 F5). Sổ vừa ghi trong vài
+    giây không nhớ (`listing_cache.quiet`); `keep(kết quả)` sai cũng không nhớ (kết quả đổi theo đồng hồ chứ không theo file). Mỗi lần trả
+    bản sao riêng: người gọi sửa được kết quả."""
+    signature = project_signature(project_root) + audio_signature(project_root)
+    key = (kind, str(project_root), params)
+    with _MEMO_LOCK:
+        hit = _MEMO.get(key)
+        if hit is not None and hit[0] == signature and time.monotonic() - hit[1] < _MEMO_MAX_AGE:
+            _MEMO.move_to_end(key)
+            return copy.deepcopy(hit[2])
+    value = build()
+    if keep(value) and listing_cache.quiet(signature):
+        with _MEMO_LOCK:
+            _MEMO[key] = (signature, time.monotonic(), copy.deepcopy(value))
+            _MEMO.move_to_end(key)
+            while len(_MEMO) > _MEMO_MAX:
+                _MEMO.popitem(last=False)
+    return value
 
 
 class AudioLocator:
@@ -1208,6 +1253,16 @@ def _kept_as_is(project_root: Path, fresh: dict[str, dict[str, Any]]) -> set[tup
 
 
 def summarize(project_root: Path, *, running: bool = False, lease_after: float | None = None, now: float | None = None) -> dict[str, Any]:
+    """`_summarize`, nhớ theo chữ ký cuốn khi hỏi bằng đồng hồ thật. Kết quả "đang chạy" không nhớ: nhịp tim hết hạn theo đồng hồ chứ không theo file;
+    đã không chạy thì không tự chạy lại nếu sổ không ghi gì."""
+    if now is not None:
+        return _summarize(project_root, running=running, lease_after=lease_after, now=now)
+    return _remembered("summarize", project_root, (running, lease_after),
+                       lambda: _summarize(project_root, running=running, lease_after=lease_after),
+                       lambda summary: not summary["running"])
+
+
+def _summarize(project_root: Path, *, running: bool = False, lease_after: float | None = None, now: float | None = None) -> dict[str, Any]:
     """Tóm tắt một cuốn cho thư viện và phần đầu trang sách. `lease_after`: chỉ nhịp tim worker trong sổ MỚI HƠN mốc này (giây
     epoch) mới tính là "đang chạy" - supervisor là nguồn của việc ấy: lượt chạy của nó còn dở (kể cả đã chết) thì mốc là vô cực,
     đã kết thúc thì mốc là lúc kết thúc (nhịp tim cuối của worker vừa dừng không làm trang báo "đang chạy" thêm 120 giây); chưa từng
@@ -1349,6 +1404,10 @@ def summarize(project_root: Path, *, running: bool = False, lease_after: float |
 
 
 def chapters(project_root: Path) -> list[dict[str, Any]]:
+    return _remembered("chapters", project_root, (), lambda: _chapters(project_root))
+
+
+def _chapters(project_root: Path) -> list[dict[str, Any]]:
     with closing(connect(project_root)) as connection:
         per_chapter = {
             int(row["chapter_id"]): row
@@ -1754,6 +1813,10 @@ def speaker_key(name: str) -> str:
 
 
 def cast(project_root: Path) -> dict[str, Any]:
+    return _remembered("cast", project_root, (), lambda: _cast(project_root))
+
+
+def _cast(project_root: Path) -> dict[str, Any]:
     """Ai nói trong CUỐN NÀY, bằng giọng nào. Sổ nhân vật của một lô là sổ cộng dồn cả sách (636 người ở lô 16,
     88 người thật sự lên tiếng), nên chỉ lấy những ai có câu trong bảng `segments` của project này."""
     from ..database import LISTENER_REDO

@@ -75,6 +75,11 @@ def _newest(current: tuple) -> int:
     return max((max(int(entry[1]), _newest(entry[2])) for entry in current), default=0)
 
 
+def quiet(current: tuple) -> bool:
+    """Chữ ký `current` không có mục nào mới sửa trong RACY_SECONDS giây: kết quả tính từ nó nhớ được (xem `cached`)."""
+    return _newest(current) <= time.time_ns() - int(RACY_SECONDS * 1e9)
+
+
 def cached(key: Any, current: tuple, build: Callable[[], Any]) -> Any:
     """`build()` được nhớ dưới `key` tới khi chữ ký `current` đổi hay hết tuổi. Kết quả trả về là bản dùng chung: người gọi không được sửa nó.
     Thư mục mới sửa trong RACY_SECONDS giây thì không nhớ: mốc sửa chỉ nhích theo nhịp đồng hồ hệ thống (vài chục mili giây, ổ thô 2 giây), nên
@@ -92,7 +97,7 @@ def cached(key: Any, current: tuple, build: Callable[[], Any]) -> Any:
             return entry[2]
         now = time.monotonic()
         value = build()
-        if _newest(current) > time.time_ns() - int(RACY_SECONDS * 1e9):
+        if not quiet(current):
             return value
         with _LOCK:
             if len(_ENTRIES) > 256:

@@ -1,7 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import type { Cast, ListenBook, ListeningSession, ListeningState, Script } from "@/listen/model";
 import { bookProgress, textBookProgress } from "./progress";
-import type { ListenSource } from "@/listen/source";
+import type { ListenSource, SearchText } from "@/listen/source";
 import type { VieneuBackend } from "@/listen/VieneuModuleCard";
 import { EbookLibrary, EbookPlayer, ReadAloud, type LocalBook } from "./plugins";
 import { phonePrepare } from "./readAloud";
@@ -75,6 +75,29 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
   };
 }
 
+// Sách trên máy tính / thiết bị ghép nghe thẳng được: hỏi máy kia có thể chậm tới hàng chục giây (mạng chập chờn, nhiều gói sách đã đổi), nên danh sách sách
+// đã tải không chờ nó - `library()` trả sách trên máy ngay (cộng lần trả lời trước của máy kia), hỏi máy kia chạy song song và, khi về mà có gì khác, báo
+// `libraryChanged` để màn Thư viện lấy lại danh sách (soát a101 F2).
+let streamedBooks: LocalBook[] = [];
+let streamedAsk: Promise<void> | null = null;
+const libraryListeners = new Set<() => void>();
+/** Chờ thêm chừng này (ms) cho lần trả lời của máy kia: máy kia nhanh thì sách nghe thẳng vào danh sách ngay lần đầu, chậm thì thôi. */
+export const STREAMED_GRACE_MS = 250;
+
+function refreshStreamed(): Promise<void> {
+  streamedAsk ??= EbookLibrary.streamableBooks()
+    .then((reply) => reply.books, () => [] as LocalBook[]) // máy kia không trả lời thì sách của nó không hiện: bấm vào mà không nghe được chỉ làm người nghe bối rối
+    .then((books) => {
+      if (JSON.stringify(books) === JSON.stringify(streamedBooks)) return;
+      streamedBooks = books;
+      libraryListeners.forEach((listener) => listener());
+    })
+    .finally(() => {
+      streamedAsk = null;
+    });
+  return streamedAsk;
+}
+
 /** Tên file của chương trong gói - lõi phát native cần nó. */
 export const chapterFiles = new Map<string, Map<number, string>>();
 /** Tên mục chữ của chương chỉ-có-chữ (`texts/<mã>.txt`). */
@@ -99,12 +122,18 @@ export const androidSource: ListenSource = {
   kind: "android",
   vieneu: phoneVieneu,
   async library() {
+    // Sách trên máy tính chưa tải cũng là sách của thư viện này (nghe thẳng - Streaming.kt). Hỏi máy tính chạy song song, không chặn sách đã tải.
+    const asking = refreshStreamed();
     const { books } = await EbookLibrary.localBooks();
-    // Sách trên máy tính chưa tải cũng là sách của thư viện này (nghe thẳng - Streaming.kt). Máy tính không trả lời
-    // thì chúng không hiện: bấm vào mà không nghe được chỉ làm người nghe bối rối.
-    const streamed = await EbookLibrary.streamableBooks().then((reply) => reply.books).catch(() => []);
+    await Promise.race([asking, new Promise<void>((resolve) => setTimeout(resolve, STREAMED_GRACE_MS))]);
     // Hai nguồn nối nhau không phải thứ tự "nghe gần đây": xếp theo lần nghe cuối (cùng khoá với máy tính) - soát a97 T1.
-    return recentFirst([...books, ...streamed].map((book) => toListenBook(book, false)));
+    return recentFirst([...books, ...streamedBooks].map((book) => toListenBook(book, false)));
+  },
+  libraryChanged(listener) {
+    libraryListeners.add(listener);
+    return () => {
+      libraryListeners.delete(listener);
+    };
   },
   async book(id) {
     const book = await EbookLibrary.book({ id });
@@ -114,6 +143,27 @@ export const androidSource: ListenSource = {
   },
   async chapterText(bookId, chapterId) {
     return (await EbookLibrary.readText({ id: bookId, path: chapterTextEntry(bookId, chapterId) })).text;
+  },
+  // Ô "Tìm trong sách": một lượt qua cầu cho cả lô chương (như `search-texts` của máy tính) - sách 2000 chương không phải đi hàng trăm lượt.
+  searchTexts: async (bookId, chapters) => {
+    const { texts } = await EbookLibrary.readTexts({
+      id: bookId,
+      paths: chapters.map((chapter) => (chapter.text ? chapterTextEntry(bookId, chapter.id) : `scripts/${chapter.id}.json`)),
+    });
+    const found: SearchText[] = [];
+    // Lõi trả phần đầu khi chữ quá nhiều: chương nào không có trong `texts` thì bên hỏi xin lại (bookSearch.ts).
+    texts.forEach((raw, index) => {
+      const chapter = chapters[index];
+      if (raw === null || raw === "") return void found.push({ id: chapter.id, failed: true });
+      if (chapter.text) return void found.push({ id: chapter.id, text: raw });
+      try {
+        const script = JSON.parse(raw) as Script;
+        found.push({ id: chapter.id, segments: script.segments.map((segment) => ({ text: segment.text, ...(segment.sceneBreak ? { sceneBreak: true } : {}) })) });
+      } catch {
+        found.push({ id: chapter.id, failed: true });
+      }
+    });
+    return found;
   },
   // "Nghe ngay": lõi native tự đọc chương chữ bằng giọng của máy (TextToSpeech); JS chỉ hỏi giọng và mốc (android/readAloud.ts).
   readAloudVoices: async () => (await ReadAloud.voices()).voices,
