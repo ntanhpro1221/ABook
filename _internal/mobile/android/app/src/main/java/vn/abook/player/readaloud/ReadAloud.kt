@@ -751,7 +751,8 @@ object ReadAloud {
             exo.playWhenReady = play
             val place = Place(index, offsetMs, segment, word, within)
             waiting = Target(index, 0, 0, -1, play, place)
-            if (fetchText(index) { startAt(index, offsetMs, play, segment, word, within, hold, anchor) }) {
+            // Chữ về muộn (qua mạng chậm): ý phát LÚC ĐÓ, không phải `play` của lúc xin - người nghe bấm dừng trong lúc chờ thì `waiting.play` đã false (soát a77 #2).
+            if (fetchText(index) { startAt(index, offsetMs, wantsPlay(), segment, word, within, hold, anchor) }) {
                 syncWants()
                 Playback.emit("state")
                 return
@@ -1134,6 +1135,20 @@ object ReadAloud {
 
     /** [wantsPlay] cho luồng nền (ExoPlayer chỉ hỏi được ở luồng chính): cập nhật ở mọi chỗ người nghe đổi ý hay chỗ chờ đổi ([syncWants]). */
     @Volatile private var listenerWants = false
+
+    /**
+     * ExoPlayer đổi `playWhenReady`. Hệ thống đổi (rút tai nghe, mất focus hẳn, controller ngoài - `userRequested` false) lúc đang chờ đoạn đầu thì chỗ chờ ([Target.play]) theo, không thì
+     * [deliver] đặt lại `playWhenReady` theo ý cũ và đoạn tới là tự đọc dù người nghe đã bị ngắt (soát a77 #2). Bấm phát / dừng của người nghe đã đi qua [onPlay] / [onPause].
+     * Mất focus TẠM THỜI không đổi playWhenReady (Media3 chỉ chặn phát) nên ý phát còn nguyên và tự tiếp khi focus về.
+     */
+    fun onPlayWhenReadyChanged(playWhenReady: Boolean, userRequested: Boolean) {
+        val target = waiting
+        if (!userRequested && target != null && target.play != playWhenReady) {
+            target.play = playWhenReady
+            if (!playWhenReady) errorPause.listenerActed() // hệ thống dừng thay người nghe: không tự phát tiếp khi dịch vụ đọc khoẻ lại
+        }
+        syncWants()
+    }
 
     /** Gọi ở luồng chính mỗi khi `waiting` hay `playWhenReady` đổi. */
     fun syncWants() {
@@ -1571,7 +1586,10 @@ object ReadAloud {
     }
 
     /** Chưa biết đang ở đâu trong chương (chương chữ không đọc được chữ): đừng lưu vị trí 0 đè chỗ nghe dở. */
-    fun unknownPlace(): Boolean = active && Playback.player?.currentMediaItem == null && positionMs() == null
+    fun unknownPlace(): Boolean = active && (Playback.player?.currentMediaItem == null && positionMs() == null || textPending())
+
+    /** Đang chờ chữ chương về từ máy giữ sách ([fetchText]): `waiting` chỉ là chỗ tạm (đầu chương), không phải chỗ người nghe đang ở - lưu nó là đè chỗ nghe dở bằng đầu chương. */
+    private fun textPending(): Boolean = waiting?.let { chaps[it.chapterIndex] == null && chapters().getOrNull(it.chapterIndex)?.isText == true } == true
 
     /**
      * Người nghe bấm phát. True = đã xử lý hết (lỗi đọc: thử lại đúng đoạn hỏng; hàng đợi đã chạy hết: đọc lại từ chỗ đang đứng); false = để Playback phát như thường
