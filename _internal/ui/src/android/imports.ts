@@ -24,6 +24,15 @@ export function watchImports(client: QueryClient, open: (bookId: string) => void
       return;
     }
     const bookId = event.bookId;
+    if (event.how === "older" || event.how === "conflict") {
+      toast.warning(event.how === "older" ? "File này cũ hơn bản bạn đang có" : "File này có bản thu khác", {
+        description: "Bạn muốn thay bản đang có bằng file này? Chỉnh sửa và chỗ nghe của bạn vẫn được giữ.", duration: Infinity,
+        action: { label: "Thay bằng file này", onClick: () => {
+          void EbookLibrary.confirmOlderImport({ source: event.source! }).catch((error: Error) => toast.error("Chưa thay được sách", { description: error.message }));
+        } }, cancel: { label: "Giữ bản đang có", onClick: () => undefined },
+      });
+      return;
+    }
     void client.invalidateQueries({ queryKey: ["listen"] });
     void client.invalidateQueries({ queryKey: ["storage"] });
     toast.success(keptEditsTitle(event.keptEdits) ?? "Đã thêm sách vào Thư viện", {
