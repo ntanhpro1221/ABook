@@ -179,6 +179,17 @@ object MusicCues {
     fun offsetMs(cue: Cue, seconds: Double, durationMs: Long): Long? =
         if (durationMs > 0) (alignedPosition(cue, seconds, loopBounds(cue, durationMs / 1000.0)) * 1000).toLong() else null
 
+    /** Chỗ vào `target` (giây trong bài) của trình phát mới: bài mp3 (`mp3SampleRate` khác null) vào ở ranh khung gần nhất ([ExactSeekMp3Extractor.frameBoundarySeconds]), bài khác giữ nguyên. */
+    fun frameAligned(target: Double, mp3SampleRate: Int?): Double =
+        if (mp3SampleRate != null) ExactSeekMp3Extractor.frameBoundarySeconds(target, mp3SampleRate) else target
+
+    /**
+     * Trình phát a87 vừa STATE_READY: tua tới đâu (ms), null = không tua. Mở với `startAt` (bản lặp, a87 khi P3 rơi về) thì đã đứng đúng chỗ từ `setMediaItem` - tua lúc này là xả
+     * và tạo lại AudioTrack, phí vài chục ms. Chưa biết độ dài thì không tua. Còn lại: chỗ theo giây mới nhất của chương (`latestMs`, [offsetMs]) hay chỗ vào lúc mở (`entryMs`) gấp theo độ dài.
+     */
+    fun readySeekMs(startAt: Double?, durationMs: Long, latestMs: Long?, entryMs: Long): Long? =
+        if (startAt != null || durationMs <= 0) null else latestMs ?: (entryMs % durationMs)
+
     /** Phần tử đang kêu ở `currentTime` (giây trong bài) đã tới loopEnd - X: lúc mở phần tử lặp mới từ loopStart. */
     fun loopDue(bounds: Loop, currentTime: Double): Boolean =
         bounds.crossfade && currentTime >= bounds.loopEnd - mix.loopCrossfadeSeconds

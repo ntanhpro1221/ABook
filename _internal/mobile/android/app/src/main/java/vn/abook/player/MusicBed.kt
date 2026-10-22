@@ -436,8 +436,9 @@ object MusicBed {
         applyPlaying()
     }
 
-    /** Mở bài của mốc `cue` (bắt đầu `offsetSeconds` giây trong mốc), chọn đường P3 hay a87 ([seamPicker]); false khi chưa mở được (chưa có file: bài trước mờ đi, lần `sync` sau thử lại). */
-    private fun startCue(appContext: Context, cue: MusicCues.Cue, seconds: Double, offsetSeconds: Double, allowSeam: Boolean = true): Boolean {
+    /** Mở bài của mốc `cue` (bắt đầu `offsetSeconds` giây trong mốc), chọn đường P3 hay a87 ([seamPicker]); false khi chưa mở được (chưa có file: bài trước mờ đi, lần `sync` sau thử lại).
+     *  `startAt`: trình phát a87 vào thẳng chỗ ấy (giây trong bài, [open]) - chỉ [demote] truyền. */
+    private fun startCue(appContext: Context, cue: MusicCues.Cue, seconds: Double, offsetSeconds: Double, allowSeam: Boolean = true, startAt: Double? = null): Boolean {
         val uri = uriFor(appContext, cue.track) ?: return false
         var built: SeamPicker.Built? = null
         var later: SeamPicker.Built? = null
@@ -450,7 +451,7 @@ object MusicBed {
                 built = null
             }
         }
-        switchTo(cue.track to uri, MusicCues.targetGain(cue, seconds, gain), offsetSeconds, cue, built)
+        switchTo(cue.track to uri, MusicCues.targetGain(cue, seconds, gain), offsetSeconds, cue, built, startAt)
         later?.let { current?.pending = it }
         return true
     }
@@ -510,7 +511,11 @@ object MusicBed {
     /** Vị trí nhạc của bài đang kêu (giây trong bài), null khi im lặng - cho kiểm thử trên máy. */
     val trackPosition: Double? get() = current?.let(::positionOf)
 
-    /** Bài P3 `bed` rơi về a87 (Nối chưa kịp / hỏng / tua tới chỗ chưa có Nối): bài ấy mờ ra, trình phát a87 vào ở chỗ giọng đang tới ([startCue] không chọn P3 lần này). `reject`: Nối hỏng thật, bỏ cả phiên. */
+    /**
+     * Bài P3 `bed` rơi về a87 (Nối chưa kịp / hỏng / tua tới chỗ chưa có Nối): bài ấy mờ ra, trình phát a87 vào ở chỗ giọng đang tới ([startCue] không chọn P3 lần này). `reject`: Nối hỏng thật, bỏ cả phiên.
+     * Mọi lý do đi cùng đường: a87 mở thẳng ở chỗ ấy ([SeamClock.legacyStart], `startAt` của [open]) chứ không từ giây 0 rồi mới tua lúc READY - lần tua ấy tạo AudioTrack thứ hai, trễ thêm
+     * 50-86 ms (PLAN_loop §44.2). Chỗ tính lúc rơi về, không theo giây chương lúc READY: nhạc chậm hơn giọng đúng phần trễ mở trình phát.
+     */
     private fun demote(appContext: Context, bed: Bed, reason: DemoteReason, reject: Boolean) {
         val built = bed.built ?: return
         val why = when (reason) {
@@ -524,7 +529,7 @@ object MusicBed {
         if (reject) seamPicker.reject(built, why)
         val cue = bed.cue
         if (current === bed && cue != null) {
-            if (!startCue(appContext, cue, lastSeconds, lastSeconds - cue.start, allowSeam = false)) switchTo(null, gain, 0.0)
+            if (!startCue(appContext, cue, lastSeconds, lastSeconds - cue.start, allowSeam = false, startAt = SeamClock.legacyStart(built, cue, lastSeconds))) switchTo(null, gain, 0.0)
             // Chưa kịp / tua sớm (không phải hỏng): Nối vẫn dựng tiếp, xong thì P3 nhận lại ở ranh lặp kế.
             else if (!reject && built.state != SeamPicker.State.DEAD) current?.pending = built
         } else if (current === bed) {
@@ -571,7 +576,7 @@ object MusicBed {
     @OptIn(UnstableApi::class)
     private fun frameAligned(player: ExoPlayer, target: Double): Double {
         val format = player.audioFormat
-        return if (format?.sampleMimeType == MimeTypes.AUDIO_MPEG) ExactSeekMp3Extractor.frameBoundarySeconds(target, format.sampleRate) else target
+        return MusicCues.frameAligned(target, format?.takeIf { it.sampleMimeType == MimeTypes.AUDIO_MPEG }?.sampleRate)
     }
 
     /** Bước 0: tạo SẴN bản lặp của vòng hiện tại - ExoPlayer đã `prepare()` và đứng ở loopStart, câm, `playWhenReady` false (đo thật máy tính: trình phát mới
@@ -1150,7 +1155,7 @@ object MusicBed {
     /** Bài đang kêu mờ đi; `next` = (tên bài, file) thì bài ấy vào, bắt đầu ở giây `offsetSeconds` của nó, lên tới `targetGain`.
      *  `cue`: mốc của sách (bước âm lượng; mốc `sibling` = nối bài anh em ở điểm kết bài: mờ chéo dài hơn, bài cũ chơi nốt rồi thôi,
      *  không quay lại đầu bài, mờ trong phần còn lại tới E nếu ngắn hơn - [MusicCues.siblingFadeSeconds]). */
-    private fun switchTo(next: Pair<String, Uri>?, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue? = null, built: SeamPicker.Built? = null) {
+    private fun switchTo(next: Pair<String, Uri>?, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue? = null, built: SeamPicker.Built? = null, startAt: Double? = null) {
         resetLoop()
         val mix = MusicCues.mix
         val fadeMs = if (cue?.sibling == true) mix.siblingFadeMs else mix.fadeMs
@@ -1168,12 +1173,13 @@ object MusicBed {
         }
         current = null
         val appContext = context ?: return
-        if (next != null) current = open(appContext, next, targetGain, offsetSeconds, cue, fadeMs, built = built)
+        if (next != null) current = open(appContext, next, targetGain, offsetSeconds, cue, fadeMs, startAt = startAt, built = built)
         startFade()
     }
 
-    /** Một ExoPlayer mới cho bài `next`, mờ vào tới `targetGain` trong `fadeMs`. `startAt` (phần tử lặp, giây trong bài): vào đúng
-     *  chỗ ấy (A), không căn theo giây chương - đồng hồ bài lệch giọng vài phần giây thì căn lại có khi rơi về cuối vòng. */
+    /** Một ExoPlayer mới cho bài `next`, mờ vào tới `targetGain` trong `fadeMs`. `startAt` (giây trong bài): vào đúng chỗ ấy từ `setMediaItem`, lúc READY không tua lại.
+     *  Dùng cho phần tử lặp (A: không căn theo giây chương - đồng hồ bài lệch giọng vài phần giây thì căn lại có khi rơi về cuối vòng) và cho a87 khi bài P3 rơi về
+     *  ([demote]: chỗ giọng đang tới theo bản đồ khai báo, đỡ một lần tua = một AudioTrack). */
     @OptIn(UnstableApi::class)
     private fun open(appContext: Context, next: Pair<String, Uri>, targetGain: Float, offsetSeconds: Double, cue: MusicCues.Cue?,
                      fadeMs: Long, startAt: Double? = null, handoff: Handoff? = null, standby: Boolean = false, built: SeamPicker.Built? = null, forced: SeamClock.Target? = null): Bed {
@@ -1240,14 +1246,14 @@ object MusicBed {
                     }
                     val duration = player.duration
                     player.repeatMode = repeatFor(bed.cue, player, bed.final)
-                    if (startAt != null || duration <= 0) return
-                    // Nhạc của sách tải xong sau khi giọng đã chạy tiếp (hay vừa tua): theo giây mới nhất của chương (soát a26 L8).
+                    // Nhạc của sách tải xong sau khi giọng đã chạy tiếp (hay vừa tua): theo giây mới nhất của chương (soát a26 L8). Mở với `startAt` thì đã đứng đúng chỗ: không tua.
                     val mine = bed.cue
                     val latest = if (mine != null && current === bed) MusicCues.offsetMs(mine, lastSeconds, duration) else null
-                    player.seekTo(latest ?: (offsetMs % duration))
+                    MusicCues.readySeekMs(startAt, duration, latest, offsetMs)?.let(player::seekTo)
                 }
             }
         })
+        watchPlaying(bed)
         if (handoff != null && LOOP_SETTLE) listen(object : Player.Listener {
             // Bản lặp mới vừa có tiếng (STATE_READY + playWhenReady): bù độ trễ mở trình phát, một lần. Nó gần như câm nên cú dời không nghe thấy.
             override fun onIsPlayingChanged(isPlaying: Boolean) {
@@ -1340,32 +1346,59 @@ object MusicBed {
         emit { SeamEvents.volume(bed.testK, volume) }
     }
 
+    /** Một nhịp mờ ([STEP_MS]) của bài đang kêu (mờ vào / trượt bước âm lượng) và các bài đang mờ đi; còn việc thì hẹn nhịp kế. */
+    private val fadeTick: Runnable = object : Runnable {
+        override fun run() {
+            var busy = false
+            current?.let { bed ->
+                val player = bed.player
+                // Bài còn tải / đệm thì chưa mờ vào: để lúc có tiếng mới nhích từ 0 lên, không nhảy thẳng tới mức (soát B3).
+                val ready = player.playbackState.let { it == Player.STATE_READY || it == Player.STATE_ENDED }
+                setVolume(bed, MusicCues.towardWhenReady(player.volume, bed.goal, bed.perTick, ready))
+                if (ready && abs(player.volume - bed.goal) < 1e-4f) bed.entering = false else busy = true
+            }
+            val iterator = fading.iterator()
+            while (iterator.hasNext()) {
+                val bed = iterator.next()
+                setVolume(bed, maxOf(0f, bed.player.volume - bed.fadeStep))
+                if (bed.player.volume <= 0.001f) {
+                    release(bed)
+                    iterator.remove()
+                } else {
+                    busy = true
+                }
+            }
+            if (busy) main.postDelayed(this, STEP_MS) else fadingTicker = false
+        }
+    }
+
     private fun startFade() {
         if (fadingTicker) return
         fadingTicker = true
-        main.post(object : Runnable {
-            override fun run() {
-                var busy = false
-                current?.let { bed ->
-                    val player = bed.player
-                    // Bài còn tải / đệm thì chưa mờ vào: để lúc có tiếng mới nhích từ 0 lên, không nhảy thẳng tới mức (soát B3).
-                    val ready = player.playbackState.let { it == Player.STATE_READY || it == Player.STATE_ENDED }
-                    setVolume(bed, MusicCues.towardWhenReady(player.volume, bed.goal, bed.perTick, ready))
-                    if (ready && abs(player.volume - bed.goal) < 1e-4f) bed.entering = false else busy = true
-                }
-                val iterator = fading.iterator()
-                while (iterator.hasNext()) {
-                    val bed = iterator.next()
-                    setVolume(bed, maxOf(0f, bed.player.volume - bed.fadeStep))
-                    if (bed.player.volume <= 0.001f) {
-                        release(bed)
-                        iterator.remove()
-                    } else {
-                        busy = true
-                    }
-                }
-                if (busy) main.postDelayed(this, STEP_MS) else fadingTicker = false
+        main.post(fadeTick)
+    }
+
+    /**
+     * Chạy NGAY một nhịp mờ và đặt lại pha của ticker từ lúc này (bỏ nhịp đang hẹn): bài đang mờ vào vừa thật sự chạy ([watchPlaying]) thì nhích khỏi 0 luôn, không chờ tới nhịp
+     * [STEP_MS] kế (trễ thêm 0-50 ms, đo 24-76 ms ở PLAN_loop §44.2). Bước mờ không đổi, chỉ đổi lúc bắt đầu. Các bài đang mờ đi đi cùng ticker nên nhịp ấy của chúng có thể sớm vài ms.
+     */
+    private fun kickFade() {
+        main.removeCallbacks(fadeTick)
+        fadingTicker = true
+        main.post(fadeTick)
+    }
+
+    /**
+     * Bài `bed` đang là bài kêu và còn mờ vào mà trình phát báo bắt đầu chạy ([Player.Listener.onIsPlayingChanged]): [kickFade]. Mọi bài mờ vào (a87, P3) đều nghe; bản P3 khởi động câm lúc chuyển
+     * a87 -> P3 chưa phải bài kêu nên không ảnh hưởng. Dùng isPlaying (có cả khi cờ P3 tắt, renderers mặc định) thay vì AudioTrack ([TrackRef] chỉ có khi cờ P3 bật / đang đo).
+     */
+    private fun watchPlaying(bed: Bed) {
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (isPlaying && current === bed && bed.entering && !bed.released) kickFade()
             }
-        })
+        }
+        bed.listeners += listener
+        bed.player.addListener(listener)
     }
 }

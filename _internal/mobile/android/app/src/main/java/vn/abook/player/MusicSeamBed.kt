@@ -95,7 +95,10 @@ class SeamPicker(
     }
 
     companion object {
-        fun eligible(file: File, cue: MusicCues.Cue): Boolean = !cue.tail && file.name.endsWith(".mp3", ignoreCase = true)
+        fun eligible(file: File, cue: MusicCues.Cue): Boolean = !cue.tail && isMp3(file)
+
+        /** Nối chỉ dựng cho bài mp3 ([eligible]); [SeamClock.legacyStart] dùng cùng phép thử để biết có căn khung không. */
+        fun isMp3(file: File): Boolean = file.name.endsWith(".mp3", ignoreCase = true)
 
         /** Hai mốc cùng bài dùng chung một Nối khi vòng của chúng như nhau và mốc mới không phải `tail` (vòng cuối chơi qua loopEnd tới E: đường cũ lo). */
         fun compatible(built: Built, cue: MusicCues.Cue): Boolean = !cue.tail && MusicCues.loopBounds(cue, built.durationSeconds) == built.bounds
@@ -227,6 +230,14 @@ object SeamClock {
     /** Mẫu của Nối (từ đầu Nối) ứng với bài a87 ở `legacySeconds` (giây trong bài, trong [loopEnd' - X', loopEnd']): Nối bắt đầu ở loopEnd' - X' của a87. Có thể âm / vượt X' (chưa kẹp). */
     fun legacySample(seam: LoopSeam.Seam, legacySeconds: Double): Long =
         Math.round(legacySeconds * seam.sampleRate) - (seam.loopEndSamples - seam.xFrames)
+
+    /**
+     * Chỗ vào (giây trong bài) của trình phát a87 khi bài P3 `built` của mốc `cue` rơi về lúc giọng ở giây `seconds` của chương: bản đồ khai báo [MusicCues.alignedPosition] trên `built.bounds`
+     * (= [MusicCues.loopBounds] của `cue` với `built.durationSeconds`, cùng bản đồ READY của a87 dùng qua [MusicCues.offsetMs]), căn ranh khung như bản lặp ([MusicCues.frameAligned]) với tần số
+     * của Nối - trình phát mới chưa có `audioFormat`. Bài không phải mp3 thì không căn.
+     */
+    fun legacyStart(built: SeamPicker.Built, cue: MusicCues.Cue, seconds: Double): Double =
+        MusicCues.frameAligned(MusicCues.alignedPosition(cue, seconds, built.bounds), built.seam.sampleRate.takeIf { SeamPicker.isMp3(built.seam.file) })
 }
 
 /**
