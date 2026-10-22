@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.124] - 2026-10-22
+
 ### Sửa lỗi
 
 - Khi bạn gỡ ABook, bộ gỡ đọc vị trí thư viện đã lưu và giữ cây chứa sách; app cũng ngăn bạn chọn thư viện trong các thư mục sẽ bị gỡ.
