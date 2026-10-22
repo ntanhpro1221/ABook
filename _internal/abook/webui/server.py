@@ -651,6 +651,8 @@ class App:
             result["merge"] = report["merge"]
         if report.get("brokenMusic"):  # bài nhạc nền hỏng đã bỏ - sách vẫn mở, đoạn ấy im lặng; giao diện nói một câu
             result["brokenMusic"] = report["brokenMusic"]
+        if report.get("otherTitle"):  # cuốn đã có mang tên khác: tên trong file không được lấy - giao diện nói một câu
+            result["otherTitle"] = report["otherTitle"]
         return result
 
     def _book_source(self, path: str) -> Path:
@@ -729,6 +731,8 @@ class App:
             result["edits"] = report["edits"]
         if report.get("merge"):
             result["merge"] = report["merge"]
+        if report.get("otherTitle"):
+            result["otherTitle"] = report["otherTitle"]
         return result
 
     def _open_workshop(self, opened: projectfile.ProjectFile) -> dict[str, Any]:
@@ -3183,12 +3187,13 @@ class App:
             value = book_id(path)
             try:
                 view = packages.listen(path, value, self.listening.get(value, omit=HEAVY_KEYS), with_chapters=False)
-            except (OSError, ValueError):  # gói hỏng: bỏ qua, như sách hỏng
+                self._built_workshop(view, path)
+                view["capabilities"] = capabilities_of(path)
+                if view["capabilities"].get("sync"):  # cuốn của máy tính khác: phần sửa chưa gửi về máy ấy, kết quả lần gửi trước
+                    view["editsSync"] = remote_books.edits_state(path)
+            except Exception:  # noqa: BLE001 - MỘT cuốn hỏng (book.json sai kiểu, file mất...) không được kéo sập cả thư viện
+                log.warning("Bỏ qua cuốn không đọc được trong thư viện: %s", path, exc_info=True)
                 continue
-            self._built_workshop(view, path)
-            view["capabilities"] = capabilities_of(path)
-            if view["capabilities"].get("sync"):  # cuốn của máy tính khác: phần sửa chưa gửi về máy ấy, kết quả lần gửi trước
-                view["editsSync"] = remote_books.edits_state(path)
             books.append(view)
         books.sort(key=lambda item: ((item["state"].get("last") or {}).get("at") or 0, item.get("updatedAt") or 0),
                    reverse=True)

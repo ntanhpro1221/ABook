@@ -21,7 +21,7 @@ import { SourceProvider, useSource } from "@/listen/source";
 import { Button, Dialog, EmptyState, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
 import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
-import { brokenMusicNote, keptEditsTitle, workshopMergeNote } from "@/shared/editsKept";
+import { brokenMusicNote, keptEditsTitle, otherTitleNote, workshopMergeNote } from "@/shared/editsKept";
 import { MissingLibrary } from "@/shared/MissingLibrary";
 import { setLetterShortcuts } from "@/shared/letterShortcuts";
 import { setExternalOpener } from "@/shared/openExternal";
@@ -210,6 +210,8 @@ interface OpenedBook {
   workshop?: { merged: number; kept: number };
   /** File `.abook` có bài nhạc nền hỏng: đã bỏ bài ấy (đoạn ấy im lặng), sách vẫn mở. */
   brokenMusic?: number;
+  /** Cuốn đã có (`how` "existing") mang tên khác tên trong file: tên trong file không được lấy. */
+  otherTitle?: string;
   error?: string;
   file?: string;
 }
@@ -251,7 +253,7 @@ function useOpenedBook() {
       void client.invalidateQueries(openedLibrary(result));
       navigate(`/book/${result.id}`);
       const [said, description] = OPENED_SAID[result.how ?? "new"];
-      const note = workshopMergeNote(result.workshop) ?? mergeNote(result) ?? description;
+      const note = workshopMergeNote(result.workshop) ?? mergeNote(result) ?? otherTitleNote(result.otherTitle) ?? description;
       toast.success(keptEditsTitle(result.merge?.kept) ?? said, { description: [note, brokenMusicNote(result.brokenMusic)].filter(Boolean).join(" ") || undefined });
       if (result.how === "project" && result.edits) offerFold(client, result.id, result.edits);
       return true;

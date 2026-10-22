@@ -63,6 +63,9 @@ class LibraryPlugin : Plugin() {
     private val downloads = Executors.newSingleThreadExecutor()
     // Nhập nhạc của tôi: giải mã từng bản để đo độ to nên lâu - không được chặn hàng `io` của thư viện.
     private val musicImports = Executors.newSingleThreadExecutor()
+    // Nhập file sách (.abook / .abookproj): chép + băm + giải nén vài GB mất phút - không được chặn hàng `io` (tiến độ nghe, thư viện, dấu trang
+    // xếp hàng sau nó; app bị giết giữa chừng thì mất chỗ nghe). Một luồng riêng: hai lần nhập không giải nén chồng nhau.
+    private val bookImports = Executors.newSingleThreadExecutor()
     private val prefs by lazy { SyncLink.prefs(context) }
 
     override fun load() {
@@ -87,6 +90,7 @@ class LibraryPlugin : Plugin() {
         PhoneCast.init(context)
         TextImports.codec = AndroidCoverCodec
         TextImports.sweep() // thư mục tạm của lần "Thêm sách từ file…" bị bỏ dở lần trước
+        bookImports.execute { runCatching { BookFileImport.sweepCache(context.cacheDir) } } // bản chép tạm `import-*.abook` của lần nhập bị giết giữa chừng
         io.execute { BookShare.sweep(context.cacheDir) } // file đã gửi qua "Chia sẻ…" lần trước: app nhận đã đọc xong từ lâu
         io.execute { runCatching { Store.sweepTrash(everything = true) } } // cuốn "Xoá khỏi điện thoại" còn nằm chờ Hoàn tác từ lần trước: nút ấy đã mất, xoá hẳn
         io.execute { runCatching { ListenExports.sweep(context) } } // chương tạm của "Xuất sách nói" cho cuốn đã xoá, hay bỏ dở quá 7 ngày
@@ -147,7 +151,7 @@ class LibraryPlugin : Plugin() {
      * Drive (MainActivity) hay nút "Nhập sách". Sự kiện được GIỮ tới khi giao diện nghe: mở app lạnh bằng file thì
      * việc nhập có thể xong trước khi trang web kịp gắn listener.
      */
-    fun importFrom(uri: Uri) = io.execute {
+    fun importFrom(uri: Uri) = bookImports.execute {
         val event = try {
             val imported = BookFileImport.import(context, uri)
             JSObject().put("bookId", imported.id).put("title", imported.title).put("keptEdits", imported.keptEdits)
