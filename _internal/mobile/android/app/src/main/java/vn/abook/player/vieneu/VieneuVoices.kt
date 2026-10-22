@@ -22,24 +22,28 @@ import java.util.zip.ZipFile
  * and the engines, loaded on first use and let go after a few idle minutes ([IdleEngine]) - one tier at a time (an engine holds hundreds of MB
  * while it runs).
  * Synthesis is serialised: one paragraph at a time, on the caller's (background) thread.
+ * Two locks (review a77 #12): the object's own monitor is held for a whole synthesis (and the engine load), so everything the main thread asks while changing
+ * book or voice - the module, the voice lists - lives behind [meta], which a running synthesis never takes for long. Order: engine monitor, then [meta].
  */
 object VieneuVoices {
     const val PREFIX = "vieneu"
     /** The paragraph the self-benchmark reads (same as the desktop's `vieneu.BENCH_TEXT`). */
     const val BENCH_TEXT = "Chiếc thuyền nhỏ trôi chậm giữa dòng sông, mang theo những mùa hè đã xa. Trời hôm nay đẹp quá."
 
-    private var context: Context? = null
-    private var module: VieneuModule? = null
+    @Volatile private var context: Context? = null
+    @Volatile private var module: VieneuModule? = null
+    private val meta = Any()
     private var presetsOf: Pair<String, Map<String, List<VieneuPreset>>>? = null
     private var engine: Pair<String, VieneuTier>? = null
     private val idle = IdleEngine(this, ::dropEngine)
 
-    @Synchronized
-    fun module(appContext: Context): VieneuModule = module ?: run {
-        val ctx = appContext.applicationContext
-        context = ctx
-        VieneuModule(File(ctx.filesDir, VieneuModule.FOLDER), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), facts(ctx),
-            benchmark = ::benchmark, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) }).also { module = it }
+    fun module(appContext: Context): VieneuModule = module ?: synchronized(meta) {
+        module ?: run {
+            val ctx = appContext.applicationContext
+            context = ctx
+            VieneuModule(File(ctx.filesDir, VieneuModule.FOLDER), SharedRuntime.of(ctx), OrtRuntime.deviceAbi(), facts(ctx),
+                benchmark = ::benchmark, forget = ::forget, metered = { AndroidMusicStudent.metered(ctx) }).also { module = it }
+        }
     }
 
     /** Cores and memory of this phone, for a voice module's "Khuyên dùng" and its card. */
@@ -53,7 +57,7 @@ object VieneuVoices {
     fun forget() {
         dropEngine()
         idle.dropped()
-        presetsOf = null
+        synchronized(meta) { presetsOf = null }
     }
 
     /** Close the loaded engine (Turbo or Nano: one at a time); the next read loads it again. */
@@ -63,10 +67,9 @@ object VieneuVoices {
         engine = null
     }
 
-    @Synchronized
-    private fun presets(installed: VieneuInstalled): Map<String, List<VieneuPreset>> {
+    private fun presets(installed: VieneuInstalled): Map<String, List<VieneuPreset>> = synchronized(meta) {
         val key = installed.voices.absolutePath + installed.voices.lastModified() + (installed.turbo != null) + (installed.nano != null)
-        presetsOf?.takeIf { it.first == key }?.let { return it.second }
+        presetsOf?.takeIf { it.first == key }?.let { return@synchronized it.second }
         val found = ZipFile(installed.voices).use { wheel ->
             VieneuPresets.TIERS.filter { (it == "turbo" && installed.turbo != null) || (it == "nano" && installed.nano != null) }.associateWith { tier ->
                 val entry = wheel.getEntry(VieneuModule.VOICE_MEMBERS.getValue(tier)) ?: throw IllegalStateException("thiếu danh sách giọng $tier")
@@ -74,7 +77,7 @@ object VieneuVoices {
             }
         }
         presetsOf = key to found
-        return found
+        found
     }
 
     /** Voices for the list ("Adam (VieNeu Nano)"); empty when the module is not on this phone. Never loads an engine. */

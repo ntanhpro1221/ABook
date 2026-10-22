@@ -18,6 +18,8 @@ class MusicBedIntegrationTest {
         var state = Player.STATE_IDLE
         var volume = 0f
         var playing = true
+        /** Ý định phát tách khỏi `isPlaying`: bài đang đệm có playWhenReady = true mà isPlaying = false (ExoPlayer thật). */
+        var playWhenReady = false
         var released = 0
         var buffered = ByteArray(8192)
         var position = 10_000L
@@ -35,8 +37,9 @@ class MusicBedIntegrationTest {
                 "getCurrentMediaItem" -> item
                 "seekTo" -> { seeks++; position = args!!.last() as Long; null }
                 "isPlaying" -> playing
-                "play" -> { playing = true; null }
-                "pause" -> { playing = false; null }
+                "getPlayWhenReady" -> playWhenReady
+                "play" -> { playWhenReady = true; playing = state == Player.STATE_READY; null }
+                "pause" -> { playWhenReady = false; playing = false; null }
                 "addListener" -> { listeners.add(args!![0] as Player.Listener); null }
                 "removeListener" -> { listeners.remove(args!![0] as Player.Listener); null }
                 "release" -> { check(listeners.isEmpty()) { "listeners must be removed before release" }; released++; buffered = byteArrayOf(); null }
@@ -112,6 +115,66 @@ class MusicBedIntegrationTest {
         Handler.advance(10_000) // queued fade must not revive or release the players twice
         assertEquals(listOf(1, 1), players.map { it.released })
         assertTrue((field("fading").get(MusicBed) as List<*>).isEmpty())
+    }
+
+    /** Context chỉ là phép kiểm "có"; SharedPreferences của đồng hồ nhạc ([MusicBed.saveClock]) là bản giả nuốt mọi ghi. */
+    private class PrefsContext : android.content.ContextWrapper(null) {
+        private val prefs = Proxy.newProxyInstance(javaClass.classLoader, arrayOf(android.content.SharedPreferences::class.java, android.content.SharedPreferences.Editor::class.java)) { proxy, method, _ ->
+            when (method.name) { "edit", "putFloat", "putBoolean" -> proxy; else -> null }
+        } as android.content.SharedPreferences
+        override fun getSharedPreferences(name: String?, mode: Int) = prefs
+    }
+
+    private fun installContext() {
+        field("context").set(MusicBed, PrefsContext())
+    }
+
+    @Test fun pausingTheVoiceAlsoPausesMusicThatIsStillBufferingWithPlayWhenReady() {
+        val music = FakePlayer().also { it.state = Player.STATE_BUFFERING; it.playing = false; it.playWhenReady = true }
+        val current = bed(music)
+        field("current").set(MusicBed, current)
+        field("playing").setBoolean(MusicBed, false) // giọng đã dừng
+        invoke("applyPlaying")
+        assertFalse("nhạc đang đệm không được tự phát khi đệm xong", music.playWhenReady)
+        // Đối chứng: giọng đang chạy thì nhạc chưa phát (đang đệm) vẫn được phép phát.
+        field("playing").setBoolean(MusicBed, true)
+        invoke("applyPlaying")
+        assertTrue(music.playWhenReady)
+    }
+
+    @Test fun listenerStopPausesPlaylistMusicAtOnceButAGapBetweenSegmentsWaitsForTheGrace() {
+        installContext()
+        val syncPlaylist = MusicBed::class.java.getDeclaredMethod("syncPlaylist", Boolean::class.javaPrimitiveType, Boolean::class.javaPrimitiveType)
+            .also { it.isAccessible = true }
+        field("playing").setBoolean(MusicBed, true)
+        syncPlaylist.invoke(MusicBed, false, false) // khoảng nối đoạn: chờ
+        assertTrue(field("playing").getBoolean(MusicBed))
+        Handler.advance(2_000)
+        assertTrue(field("playing").getBoolean(MusicBed))
+        Handler.advance(600)
+        assertFalse("hết 2,5 giây thì dừng", field("playing").getBoolean(MusicBed))
+        field("playing").setBoolean(MusicBed, true)
+        syncPlaylist.invoke(MusicBed, false, true) // người nghe / focus / rút tai nghe / cuộc gọi: dừng ngay
+        assertFalse(field("playing").getBoolean(MusicBed))
+    }
+
+    @Test fun playbackTellsTheMusicWhetherTheListenerStoppedTheVoice() {
+        installContext()
+        val voice = FakePlayer().also { it.state = Player.STATE_READY; it.playing = false }
+        Playback.player = voice.player
+        Playback::class.java.getDeclaredField("bookId").also { it.isAccessible = true }.set(Playback, "stop-book")
+        field("book").set(MusicBed, "stop-book")
+        field("closedBook").set(MusicBed, "")
+        field("playlist").set(MusicBed, "p")
+        val sync = Playback::class.java.getDeclaredMethod("syncMusic", Boolean::class.javaPrimitiveType).also { it.isAccessible = true }
+        field("playing").setBoolean(MusicBed, true)
+        voice.playWhenReady = true // giọng đang đệm / chờ đoạn kế: chỉ là khe nối
+        sync.invoke(Playback, false)
+        assertTrue(field("playing").getBoolean(MusicBed))
+        voice.playWhenReady = false // người nghe (hay hệ thống thay họ) đã dừng
+        sync.invoke(Playback, false)
+        assertFalse(field("playing").getBoolean(MusicBed))
+        Playback::class.java.getDeclaredField("bookId").also { it.isAccessible = true }.set(Playback, "")
     }
 
     @Test fun smallSeeksThroughPlaybackDoNotSeekTheMusicOrRestartItsFade() {
