@@ -120,6 +120,7 @@ object LocalStudio {
             method == "GET" && digest == null && !analyze -> 200 to musicView()
             method == "DELETE" && digest != null -> {
                 if (!store.remove(digest)) throw Api(404, "Bài này không còn trong Nhạc của tôi")
+                Playback.onMain { MusicBed.refreshMine() }
                 200 to musicView()
             }
             method == "POST" && analyze -> {

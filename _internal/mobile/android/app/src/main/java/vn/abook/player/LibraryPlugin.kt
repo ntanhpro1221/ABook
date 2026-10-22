@@ -388,6 +388,7 @@ class LibraryPlugin : Plugin() {
             }
             notifyListeners("musicImport", JSObject().put("done", index + 1).put("total", uris.size))
         }
+        if (added.isNotEmpty()) Playback.onMain { MusicBed.refreshMine() }
         return JSObject.fromJSONObject(LocalStudio.importAnswer(added, existing, failed)).put("picked", true)
     }
 
@@ -1776,6 +1777,16 @@ class LibraryPlugin : Plugin() {
         // Chỗ vượt độ dài chương là của thứ khác: không lưu (PlacePolicy, soát a68 lỗi 2).
         if (!PlacePolicy.fits(seconds, duration)) return@background call.resolve(JSObject.fromJSONObject(Store.state(id)))
         resolveState(call, Store.progress(id, call.getInt("chapterId")!!, seconds, duration, call.getObject("anchor")))
+    }
+
+    @PluginMethod
+    fun saveReading(call: PluginCall) = background(call) {
+        val id = call.getString("id")!!
+        val record = call.getString("record") ?: Store.activeRecord(id)
+        val state = Store.saveReading(id, call.getInt("chapterId")!!, call.getInt("index")!!,
+            call.getDouble("at") ?: System.currentTimeMillis() / 1000.0, call.getObject("anchor"), record)
+        call.resolve(JSObject.fromJSONObject(state))
+        runCatching { StateSync.pushNow(context, id, record) }
     }
 
     @PluginMethod

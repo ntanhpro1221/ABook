@@ -28,6 +28,8 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     fullTitle: chapter.fullTitle,
     duration: chapter.duration,
     available: chapter.available && Boolean(chapter.file),
+    audioVersion: chapter.sha256,
+    wordsVersion: chapter.wordsVersion ?? book.wordsVersion,
     part: chapter.part ?? null,
     state: chapter.text && !chapter.file ? ("text" as const) : null,
     ...(chapter.skip?.length ? { skip: chapter.skip } : {}),
@@ -132,6 +134,9 @@ export const androidSource: ListenSource = {
   sampleUrl: (bookId, sampleId) => fileUrl(bookId, `samples/${sampleId}.wav`),
   voiceUrl: () => "",
   saveProgress: (id, chapterId, seconds, duration, _record, anchor) => EbookLibrary.progress({ id, chapterId, seconds, duration, anchor }),
+  saveReading: async (id, chapterId, index, position, record) => {
+    await EbookLibrary.saveReading({ id, ...position, chapterId, index, record });
+  },
   setChapterDone: (id, chapterId, done) => EbookLibrary.setChapterDone({ id, chapterId, done }),
   setFinished: (id, finished) => EbookLibrary.setFinished({ id, finished }),
   setRate: (id, rate) => EbookLibrary.setRate({ id, rate }),
