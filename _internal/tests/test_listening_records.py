@@ -204,6 +204,30 @@ def test_a_phone_move_reaches_the_computer_through_sync(library, tmp_path: Path)
         server.stop()
 
 
+def test_a_bookmark_deleted_on_the_phone_is_deleted_here_through_sync(library, tmp_path: Path) -> None:  # noqa: F811 - fixture
+    """`deleted` trong thân yêu cầu là bia mộ dấu trang (dict), không phải cờ đồng bộ: cổng thật phải chuyển nó tới merge."""
+    lib, project, listening = library
+    book = book_id(project)
+    mark = listening.add_bookmark(book, 1, 12.0, note="chỗ hay")
+    record = listening.records(book)[0]["id"]
+    devices = Devices(tmp_path / "devices.json")
+    server = SyncServer(SyncApp(lib, listening, devices, "Máy thử"), host="127.0.0.1", port=0).start()
+    try:
+        code = devices.start_pairing()["code"]
+        _status, data, _ = _sync_request(server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
+        token = json.loads(data)["token"]
+        body = {"record": record, "recordName": DEFAULT_RECORD_NAME, "nameAt": 0.0, "activeAt": 0.0, "movedAt": 0.0,
+                "deletedRecords": {}, "chapters": {}, "bookmarks": [], "deleted": {mark["id"]: time.time() + 5}}
+
+        status, _data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{book}/state", token, body=body)
+
+        assert status == 200
+        assert listening.get(book)["bookmarks"] == [], "dấu trang điện thoại đã xoá không được sống lại ở máy tính"
+        assert mark["id"] in listening.get(book)["deleted"]
+    finally:
+        server.stop()
+
+
 def test_a_record_moved_here_tells_the_phone_its_new_book(tmp_path: Path) -> None:
     listening = Listening(tmp_path / "listening.json")
     record = "r-" + "c" * 16
