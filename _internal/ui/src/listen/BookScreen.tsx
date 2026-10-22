@@ -30,6 +30,7 @@ import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFi
 import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
 import { useBookVoice, useCast, useListenBook, useListenLibrary, useListenMutations, useSource, useWarmVoice } from "./source";
+import { latestReading } from "./readingPosition";
 import { moreMenuHasItems } from "./bookMenu";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
@@ -995,9 +996,9 @@ export function BookScreen({
                 size="lg"
                 icon={BookOpen}
                 // Đang nghe cuốn này: mở đúng chương đang phát (màn đọc tự tới câu đang nghe) - sửa câu vừa nghe không phải tìm lại (soát a70).
-                onClick={() => navigate(`/book/${book.id}/read/${(listening ? player.track?.chapterId : null) ?? book.state.reading?.chapterId ?? point?.chapter.id ?? chapters[0]?.id ?? ""}`)}
+                onClick={() => navigate(`/book/${book.id}/read${listening && player.track ? `/${player.track.chapterId}` : ""}`)}
               >
-                {listening ? "Đọc" : book.state.reading ? "Đọc tiếp" : "Đọc"}
+                {listening ? "Đọc" : latestReading(book) ? "Đọc tiếp" : "Đọc"}
               </Button>
             </Tooltip>
             {chapters.length > 0 && (

@@ -303,6 +303,23 @@ object MusicBed {
         if (bookId == book) book = ""
     }
 
+    /** Nhập/xoá kho riêng: thay hàng bài, giữ bài đang kêu và đồng hồ nhạc. */
+    fun refreshMine() {
+        val appContext = context ?: return
+        if (playlist != Playlists.MINE) return
+        val ticket = generation
+        worker.execute {
+            val resolved = runCatching { resolve(appContext, Playlists.MINE, 20 * kotlin.math.log10(gain.toDouble())) }.getOrNull()
+            main.post {
+                if (ticket != generation || playlist != Playlists.MINE || resolved == null) return@post
+                advanceClock()
+                infos = resolved.infos
+                queue.replace(resolved.tracks, current?.track, clockSeconds)
+                syncPlaylist(playing)
+            }
+        }
+    }
+
     /** Bài đang kêu (tên trong gói, hay link với danh sách phát) hay null khi im lặng - cho kiểm thử trên máy. */
     val activeTrack: String? get() = current?.track
 

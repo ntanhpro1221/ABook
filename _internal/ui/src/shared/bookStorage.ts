@@ -5,7 +5,7 @@ export const BOOK_STORAGE = {
   readAloudVoice: "abook-readaloud-voice-",
   /** Lúc chọn giọng ấy, để so với lựa chọn đến từ máy kia. */
   readAloudVoiceAt: "abook-readaloud-voice-at-",
-  /** Chỗ đang đọc ở màn đọc chữ (listen/ReaderScreen.tsx). */
+  /** Chỗ đang đọc theo hồ sơ: `<mã sách>#<mã hồ sơ>` (listen/readingPosition.ts). */
   reading: "abook-reading-",
   /** Gợi ý bỏ qua (listen/ReadingSuggestions.tsx). */
   suggestionsDismissed: "abook.suggestionsDismissed.",
@@ -18,10 +18,19 @@ export function moveBookStorage(oldId: string, newId: string): void {
   if (!oldId || !newId || oldId === newId) return;
   try {
     for (const prefix of Object.values(BOOK_STORAGE)) {
-      const value = localStorage.getItem(prefix + oldId);
-      if (value === null) continue;
-      localStorage.setItem(prefix + newId, value);
-      localStorage.removeItem(prefix + oldId);
+      const keys = [prefix + oldId];
+      if (prefix === BOOK_STORAGE.reading) {
+        for (let index = 0; index < localStorage.length; index += 1) {
+          const key = localStorage.key(index);
+          if (key?.startsWith(`${prefix}${oldId}#`)) keys.push(key);
+        }
+      }
+      for (const key of keys) {
+        const value = localStorage.getItem(key);
+        if (value === null) continue;
+        localStorage.setItem(prefix + newId + key.slice((prefix + oldId).length), value);
+        localStorage.removeItem(key);
+      }
     }
   } catch {
     /* bộ nhớ bị chặn / đầy */

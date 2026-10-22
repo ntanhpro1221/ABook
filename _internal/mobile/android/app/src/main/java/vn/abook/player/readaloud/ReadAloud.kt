@@ -47,9 +47,11 @@ object ReadAloud {
     /** Gắn vào MediaItem của một đoạn: chương (vị trí trong danh sách chương), đoạn, độ to của giọng đã đọc, và đoạn ấy có DÀI không (từ [EdgePieces.WHOLE_CHARS] ký tự - chỉ đoạn dài tính vào rank
      *  của đoạn sau nó, [StalledClips.listenerRank]). `segment` -1 = không dùng. `baseMs` > 0 (uxfix58): mục này là phần nối sau phần đã về của một clip phát luồng đứt giữa chừng, nằm ở mục ExoPlayer
      *  trước nó - vị trí trong mục này cộng `baseMs` mới là chỗ trong đoạn ([Clip.baseMs]). */
-    class Slot(val chapterIndex: Int, val segment: Int, val gainDb: Double, val long: Boolean = false, val baseMs: Long = 0)
+    class Slot(private val initialIndex: Int, val segment: Int, val gainDb: Double, val long: Boolean = false, val baseMs: Long = 0, private val indexOf: (() -> Int)? = null) {
+        val chapterIndex: Int get() = indexOf?.invoke() ?: initialIndex
+    }
 
-    private class Chap(val index: Int, val parsed: List<Paragraphs.Paragraph>) {
+    private class Chap(var index: Int, val parsed: List<Paragraphs.Paragraph>) {
         val paragraphs: List<String> = parsed.map { it.text }
         /** Quãng lặng (ms) của từng dòng ngăn cảnh ([Paragraphs.sceneBreakGaps]); đoạn thường 0. */
         val gaps: IntArray = Paragraphs.sceneBreakGaps(parsed)
@@ -153,9 +155,10 @@ object ReadAloud {
     }
 
     /** Chỗ cần phát mà chưa có đoạn âm thanh để đặt vào ExoPlayer: đang chờ đọc. `word` >= 0 thắng `offsetMs` (bắt đầu đúng chữ ấy). */
-    internal class Target(val chapterIndex: Int, val segment: Int, val offsetMs: Long, val word: Int, var play: Boolean, private val origin: Place? = null) {
+    internal class Target(var chapterIndex: Int, val segment: Int, val offsetMs: Long, val word: Int, var play: Boolean, private var origin: Place? = null) {
         /** Chỗ để đọc lại (đổi giọng, "Thử lại"). Chỗ tạm lúc chữ chương chưa về (đầu chương) mang [origin] = chỗ người nghe đã chọn - đọc lại từ chỗ tạm là về đầu chương. */
         fun place(): Place = origin ?: Place(chapterIndex, 0, segment, word, offsetMs)
+        fun remap(index: (Int) -> Int) { chapterIndex = index(chapterIndex); origin = origin?.let { it.copy(chapterIndex = index(it.chapterIndex)) } }
     }
 
     /** Đối số của [startAt]: `segment` >= 0 thì đoạn ấy (`word`, `within` trong đoạn), không thì mốc `offsetMs` của chương. */
@@ -588,6 +591,16 @@ object ReadAloud {
     fun inText(): Boolean = active && (currentSlot()?.segment?.let { it >= 0 } == true || waiting?.let { chapters().getOrNull(it.chapterIndex)?.isText } == true)
 
     private fun chapters() = Playback.chapters
+
+    /** Các clip đang phát giữ nguyên; chỉ đổi chỉ số của chương khi danh sách mới thêm/sắp lại chương. */
+    fun remapChapters(old: List<Playback.Chapter>, fresh: List<Playback.Chapter>) {
+        fun next(index: Int): Int = old.getOrNull(index)?.let { chapter -> fresh.indexOfFirst { it.id == chapter.id }.takeIf { it >= 0 } } ?: fresh.size
+        feedChapter = next(feedChapter)
+        waiting?.remap(::next)
+        val loaded = chaps.values.toList()
+        chaps.clear()
+        loaded.forEach { chap -> chap.index = next(chap.index); chaps[chap.index] = chap }
+    }
 
     private fun chapterIndexNow(): Int? = currentSlot()?.takeIf { it.segment >= 0 }?.chapterIndex ?: waiting?.chapterIndex
 
@@ -1540,7 +1553,7 @@ object ReadAloud {
         return MediaItem.Builder()
             .setMediaId(chapter.id.toString())
             .setUri(uri)
-            .setTag(Slot(chap.index, segment, gainDb, StalledClips.isLong(chap.paragraphs[segment]), baseMs))
+            .setTag(Slot(chap.index, segment, gainDb, StalledClips.isLong(chap.paragraphs[segment]), baseMs) { chap.index })
             .setMediaMetadata(metadata.build())
             .build()
     }
@@ -1765,7 +1778,11 @@ object ReadAloud {
                     .put("timed", chap.clips[i] != null))
             }
         }
-        return JSONObject().put("segments", segments)
+        return JSONObject().put("segments", segments).also { result ->
+            if (chap != null) result.put("textHash", ReadingAnchor.fingerprint(chap.paragraphs))
+                .put("paragraphs", JSONArray(chap.paragraphs))
+                .put("active", bookId == Playback.bookId && active && Playback.currentChapter?.id == chapterId)
+        }
     }
 
     /**
