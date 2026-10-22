@@ -9,6 +9,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 
+- Chấm cả nhóm câu “Cần thu lại” nhanh hơn nhiều với sách lớn (trước đây mỗi câu đọc lại cả sổ), và mở danh sách “Cần nghe lại” không còn âm thầm ghi vào sổ chấm.
+- Mở file dự án của cùng một cuốn từ máy khác, hay áp từ điển cách đọc dùng chung, không còn có thể đè lên chỗ bạn đang sửa; việc bạn đã rút (đã huỷ “Thu lại”, đã hoàn tác một sửa) không sống lại khi gộp với bản của máy khác.
+- Bảng “Cách đọc câu này”: đổi lời kể thành lời thoại thì chọn người nói bằng đủ cách như “Ai nói câu này” (tìm, người của chương, người khác, “Người mới…”); sửa cách đọc một câu có nút “Hoàn tác” như các lựa chọn khác, trên máy tính lẫn điện thoại.
+- Yêu cầu máy không làm được (vd đổi người nói cho câu đang chờ thành lời kể) hiện thành thẻ “Yêu cầu bị từ chối” trong “Việc cần bạn” kèm lý do và nút bỏ; những yêu cầu chắc chắn bị từ chối giờ bị báo ngay lúc gửi.
+- Tên và cách đọc bạn gõ được kiểm kỹ hơn: bỏ ký tự vô hình, quá dài thì báo thay vì cắt lặng lẽ, từ chối tên trùng người khác hay tên máy dùng (“Người kể”), và báo khi chữ cần đổi cách đọc chưa có câu nào trong sách; máy tính và điện thoại kiểm giống nhau.
+- Bỏ một thay đổi đang chờ áp được bất cứ lúc nào, kể cả khi sách đang chạy (việc máy đã áp rồi thì được báo rõ), không còn bắt bấm Tạm dừng trước.
+- Hộp thư thay đổi từ điện thoại: “Bỏ qua tất cả” hỏi lại trước khi bỏ, việc đã bỏ nằm ở mục “Đã bỏ qua” để khôi phục, và “Áp dụng” nói rõ việc nào không áp được.
+- Tab Kịch bản tự làm mới khi máy vừa áp xong một yêu cầu của bạn, thẻ “đang chờ” không còn nằm lại; nút “Giữ của tôi” đổi thành “Giữ bản của bạn”.
 - Khi bạn bấm Dừng, sách hiện “Đang dừng…” và khoá nút Tạm dừng lẫn Dừng cho tới khi dừng hẳn; bấm Tạm dừng lúc ấy được báo đúng là sách đang dừng, không còn nói “không đang chạy”.
 - Khi tiến trình làm sách bị tắt đột ngột, trang sách hết báo “đang chạy” ngay (không đợi thêm hai phút), bấm Dừng trả lời “Sách đã không còn chạy” thay vì báo lỗi lạ, và nói rõ nguyên nhân khi máy sập; điện thoại phân biệt “bạn đã bấm Dừng” với “máy tính gặp sự cố”.
 - Khi bạn bấm “Làm lại phân tích từ đầu” mà cuốn mới không tạo được (vd model phân tích không còn trong Ollama), bản dở vẫn nằm nguyên trong Studio; chỉ khi cuốn mới đã tạo xong bản dở mới đi vào Thùng rác.

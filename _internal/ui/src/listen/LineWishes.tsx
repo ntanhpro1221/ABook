@@ -8,10 +8,10 @@ import { holderName } from "@/shared/editsSync";
 import { Button, Dialog } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { refreshAfterDecision, retakeWhen, UNDO_MS, undoAction, waitingStudio } from "@/studio/decisions";
-import { seenDelivery, theirDelivery, verdictWord, warnElsewhere, type SeenDelivery } from "@/studio/elsewhere";
+import { theirDelivery, verdictWord, warnElsewhere } from "@/studio/elsewhere";
 import { EditReading } from "@/studio/NameReadings";
 import { reachSummary, useReach } from "@/studio/readingReach";
-import { DeliveryMenu, deliveryWords, LineQuote, NARRATOR, SpeakerMenu, type ChapterScript, type Delivery, type Line, type Person } from "@/studio/ScriptTab";
+import { DeliveryMenu, deliveryWords, LineQuote, NARRATOR, postLineFix, SpeakerMenu, undoLineFix, type ChapterScript, type Delivery, type Line, type Person } from "@/studio/ScriptTab";
 import { cleanName } from "./BookScreen";
 import { refreshAfterEdit } from "./EditBook";
 import type { Cast, CastMember, ListenBook, Script, ScriptSegment } from "./model";
@@ -337,12 +337,9 @@ export function LineWishDialog({
   });
   const delivery = useMutation({
     // `seen`: cách đọc câu này đang chờ mà hộp thấy - cửa sổ/máy khác vừa ghi khác thì được hỏi (uxfix28 A).
-    mutationFn: (change: Delivery) =>
-      api<{ elsewhere?: { delivery: SeenDelivery | null } }>(`/api/books/${book.id}/line`, {
-        method: "POST",
-        body: { ...ref, ...change, seen: seenDelivery(wish?.delivery) },
-      }),
-    onSuccess: ({ elsewhere }) => {
+    mutationFn: (change: Delivery) => postLineFix(book.id, ref, change, wish?.delivery),
+    onSuccess: (answer) => {
+      const { elsewhere } = answer;
       done();
       if (elsewhere) {
         const theirs = theirDelivery(elsewhere.delivery);
@@ -352,7 +349,11 @@ export function LineWishDialog({
             .catch((error: Error) => toast.error("Chưa lấy lại được", { description: error.message }));
         warnElsewhere(1, elsewhere.delivery ? deliveryWords(elsewhere.delivery) : "", theirs ? takeTheirs : undefined);
       }
-      toast.success("Đã ghi cách đọc câu này", { description: promise });
+      toast.success("Đã ghi cách đọc câu này", {
+        description: promise,
+        action: answer.requestedAt ? undoLineFix(client, book.id, ref, answer) : undefined,
+        duration: UNDO_MS,
+      });
       close();
     },
     onError: (error: Error) => toast.error("Chưa ghi được", { description: error.message }),

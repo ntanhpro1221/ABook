@@ -28,6 +28,8 @@ import copy
 import json
 import re
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Callable
 
@@ -382,6 +384,12 @@ def speaker_problem(lines: Lines, cast: list[dict[str, Any]], stable_id: str, te
             return overrides.NO_VOICE
         return None
     return overrides.NO_VOICE
+
+
+def pending_line_kind(wishes: dict[str, Any] | None, stable_id: str, text_sha256: str) -> str:
+    """Loại đoạn mà ý muốn sửa cách đọc đang chờ của câu này muốn đặt ("" = không có hay không đổi loại) - `store.pending_line_kind` cho cuốn không có xưởng."""
+    entry = ((wishes or {}).get("lines") or {}).get(stable_id)
+    return str(entry.get("kind") or "") if isinstance(entry, dict) and entry.get("text_sha256") == text_sha256 else ""
 
 
 def line_problem(lines: Lines, cast: list[dict[str, Any]], stable_id: str, text_sha256: str, *, kind: str = "",
@@ -739,21 +747,32 @@ def guard_overrides(project: Path) -> None:
     notices.read_json(overrides.overrides_path(project), "Danh sách yêu cầu của cuốn này", lambda data: isinstance(data, dict))
 
 
-def fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int]:
+@contextmanager
+def overrides_turn(project: Path) -> Iterator[None]:
+    """Lượt đọc-sửa-ghi overrides.json: khoá ghi của dự án (cùng khoá các nút Studio, `_serialized_per_book`) + `guard_overrides`. Mọi đường
+    ghi yêu cầu NGOÀI nút Studio (cách đọc dùng chung, gộp xưởng từ file dự án) phải đi qua đây: không thì lần ghi của nó nuốt lần ghi của
+    nút vừa bấm, hoặc - file đang bị chương trình khác giữ - đè sạch yêu cầu cũ (soát a89 V5). `notices.Unreadable` nếu file không đọc được."""
+    with project_write_lock(project):
+        guard_overrides(project)
+        yield
+
+
+def fold(project: Path, wishes: dict[str, Any], *, now: float, dropped: list[tuple[str, str]] | None = None) -> dict[str, int]:
     # Giữ chỗ biên nhận và ghi overrides dưới cùng khoá với các đường sửa sách VÀ với các nút Studio (khoá ghi của dự án, ngoài cùng:
     # `request_*` đọc-sửa-ghi cả overrides.json, hai khoá khác nhau thì lần ghi sau nuốt lần ghi trước - soát a83 B3).
     with project_write_lock(project), book_edits._LOCK:
         guard_overrides(project)
-        return _fold(project, wishes, now=now)
+        return _fold(project, wishes, now=now, dropped=dropped)
 
 
-def _fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int]:
+def _fold(project: Path, wishes: dict[str, Any], *, now: float, dropped: list[tuple[str, str]] | None = None) -> dict[str, int]:
     """Đọc lại ý muốn của một file `.abook` thành YÊU CẦU của dự án bằng chính các hàm Studio dùng
     (`listener_overrides.request_*`, `aliases.add`) - ghi vào overrides.json như thể người dùng vừa bấm trong Studio, KHÔNG áp:
     chúng vào danh sách "Áp dụng N thay đổi" như mọi yêu cầu. `requested_at` được đóng dấu lại (đồng hồ điện thoại có thể lệch;
     yêu cầu phải mới hơn lần ghi sổ cuối thì mới "chờ áp"): mỗi lần bấm cũ một dấu mới riêng, giữ thứ tự và giữ cái gì từng
     là MỘT lần bấm. Ý muốn mà Studio sẽ từ chối ngay (câu đã đổi chữ, người chưa có giọng...) thì bỏ qua và đếm.
-    Trả {"requests": số ý muốn đã ghi thành yêu cầu, "skipped": số bị bỏ qua}."""
+    Trả {"requests": số ý muốn đã ghi thành yêu cầu, "skipped": số bị bỏ qua}. `dropped` (nếu có) được nối thêm (phần, khoá) của từng ý muốn bị bỏ qua - hộp
+    thư điện thoại (edits_inbox.apply) nói rõ việc nào không áp được thay vì chỉ một con số (soát a89 T3)."""
     stamps = {at: now + index * 1e-3 for index, at in enumerate(sorted(
         {entry["requested_at"] for section in SECTIONS for entry in (wishes.get(section) or {}).values()}
         | {item["at"] for item in wishes.get(ALIASES) or []}))}
@@ -763,8 +782,22 @@ def _fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int
         entry = wishes["pronunciations"][key]
         if overrides.pronunciation_problem(entry["surface"], entry["spoken_form"]) is not None:
             skipped += 1
+            if dropped is not None:
+                dropped.append(("pronunciations", key))
             continue
         overrides.request_pronunciation(project, entry["surface"], entry["spoken_form"], now=stamps[entry["requested_at"]])
+        requests += 1
+    # Cách đọc câu TRƯỚC người nói (như dây chuyền): câu máy kia vừa đổi từ lời kể thành lời thoại mới nhận được người nói đi kèm (store.speaker_request_problem).
+    for stable_id in sorted(wishes.get("lines") or {}):
+        entry = wishes["lines"][stable_id]
+        if store.line_request_problem(project, stable_id, entry["text_sha256"], kind=entry["kind"], emotion=entry["emotion"],
+                                      intensity=entry["intensity"], spoken=entry.get("spoken")) is not None:
+            skipped += 1
+            if dropped is not None:
+                dropped.append(("lines", stable_id))
+            continue
+        overrides.request_line(project, stable_id, entry["text_sha256"], kind=entry["kind"], emotion=entry["emotion"],
+                               intensity=entry["intensity"], spoken=entry.get("spoken"), now=stamps[entry["requested_at"]])
         requests += 1
     groups: dict[tuple[float, str, str], list[tuple[str, str]]] = {}
     for stable_id in sorted(wishes.get("speakers") or {}):
@@ -772,57 +805,77 @@ def _fold(project: Path, wishes: dict[str, Any], *, now: float) -> dict[str, int
         new_gender = (entry.get("new") or {}).get("gender", "")
         if store.speaker_request_problem(project, stable_id, entry["text_sha256"], entry["speaker"], new_gender) is not None:
             skipped += 1
+            if dropped is not None:
+                dropped.append(("speakers", stable_id))
             continue
         groups.setdefault((entry["requested_at"], entry["speaker"], new_gender), []).append((stable_id, entry["text_sha256"]))
         requests += 1
     for (at, speaker, new_gender), members in groups.items():
         overrides.request_speakers(project, members, speaker, now=stamps[at], new_gender=new_gender)
-    for stable_id in sorted(wishes.get("lines") or {}):
-        entry = wishes["lines"][stable_id]
-        if store.line_request_problem(project, stable_id, entry["text_sha256"], kind=entry["kind"], emotion=entry["emotion"],
-                                      intensity=entry["intensity"], spoken=entry.get("spoken")) is not None:
-            skipped += 1
-            continue
-        overrides.request_line(project, stable_id, entry["text_sha256"], kind=entry["kind"], emotion=entry["emotion"],
-                               intensity=entry["intensity"], spoken=entry.get("spoken"), now=stamps[entry["requested_at"]])
-        requests += 1
     for key in sorted(wishes.get("voices") or {}):
         entry = wishes["voices"][key]
         if store.voice_request_problem(project, key, preset=entry["preset"], gender=entry["gender"], avoid=entry["avoid"]) is not None:
             skipped += 1
+            if dropped is not None:
+                dropped.append(("voices", key))
             continue
         overrides.request_voice(project, key, preset=entry["preset"], gender=entry["gender"], avoid=entry["avoid"],
                                 now=stamps[entry["requested_at"]])
         requests += 1
-    for stable_id in sorted(wishes.get("retakes") or {}):
-        entry = wishes["retakes"][stable_id]
+    asked, missed = _fold_retakes(project, wishes.get("retakes") or {}, stamps, dropped)
+    requests += asked
+    skipped += missed
+    for item in sorted(wishes.get(ALIASES) or [], key=lambda item: item["at"]):
+        alias_book.add(project, item["alias"], item["person"], now=stamps[item["at"]])
+    return {"requests": requests, "skipped": skipped}
+
+
+def _fold_retakes(project: Path, retakes: dict[str, Any], stamps: dict[float, float],
+                  dropped: list[tuple[str, str]] | None = None) -> tuple[int, int]:
+    """Nhánh "thu lại" của `_fold` -> (số yêu cầu đã ghi, số bị bỏ qua). Ý muốn có `operation_id` đi qua biên nhận (retake_receipts.json: quên
+    nó là có thể thu lại một câu hai lần, đổi seed thêm lần nữa) - biên nhận ghi MỘT lần TRƯỚC cả nhóm (mọi câu "chưa xong", giữ dấu giờ cố
+    định) và MỘT lần SAU (mọi câu "xong"), không hai lần mỗi câu (soát a89 V4: 800 câu 26 giây giữ khoá dự án). Chết giữa chừng thì biên nhận
+    còn "chưa xong" và `request_retake` bỏ qua câu đã có yêu cầu mới hơn dấu giờ, nên lần gấp sau không ghi lặp. Phần còn lại mỗi câu một lần ghi
+    overrides.json (`request_retake`; gộp cần `request_retakes` ở listener_overrides - nhánh khoá)."""
+    requests = skipped = 0
+    receipt_path = Path(project) / "retake_receipts.json"
+    receipts: dict[str, Any] | None = None  # đọc khi cần; biên nhận hỏng thì ném lỗi (không nuốt)
+    marked: list[tuple[str, dict[str, Any], dict[str, Any]]] = []  # (câu, ý muốn, biên nhận của lượt)
+    plain: list[tuple[str, dict[str, Any]]] = []
+    for stable_id in sorted(retakes):
+        entry = retakes[stable_id]
         if store.segment_text_sha256(project, stable_id) != entry["text_sha256"]:
             skipped += 1
+            if dropped is not None:
+                dropped.append(("retakes", stable_id))
             continue
         operation = entry.get("operation_id")
-        if operation:
-            receipt_path = Path(project) / "retake_receipts.json"
-            # Biên nhận hỏng thì dừng hẳn (ném lỗi): quên nó là có thể đọc lại câu lần hai, đổi seed thêm lần nữa.
+        if not operation:
+            plain.append((stable_id, entry))
+            continue
+        if receipts is None:
             receipts = json.loads(receipt_path.read_text(encoding="utf-8")) if receipt_path.exists() else {}
-            receipt = receipts.get(operation)
-            if receipt is None:
-                receipt = {"at": stamps[entry["requested_at"]], "lines": {}}
-                receipts[operation] = receipt
-            line = receipt["lines"].get(stable_id)
-            if line is not None and line["sha"] != entry["text_sha256"]:
-                raise EditsError(BAD_WISHES)
-            if line is not None and line.get("done"):
-                continue
-            receipt["lines"][stable_id] = {"sha": entry["text_sha256"], "done": False}
-            atomic_write_json(receipt_path, receipts)  # giữ dấu giờ cố định TRƯỚC khi yêu cầu
+        receipt = receipts.get(operation)
+        if receipt is None:
+            receipt = {"at": stamps[entry["requested_at"]], "lines": {}}
+            receipts[operation] = receipt
+        line = receipt["lines"].get(stable_id)
+        if line is not None and line["sha"] != entry["text_sha256"]:
+            raise EditsError(BAD_WISHES)
+        if line is not None and line.get("done"):
+            continue
+        receipt["lines"][stable_id] = {"sha": entry["text_sha256"], "done": False}
+        marked.append((stable_id, entry, receipt))
+    if marked:
+        atomic_write_json(receipt_path, receipts)  # giữ dấu giờ cố định TRƯỚC khi yêu cầu
+        for stable_id, entry, receipt in marked:
             here = (overrides.read_overrides(project).get("retakes") or {}).get(stable_id) or {}
             if float(here.get("requested_at") or 0) < receipt["at"]:
                 overrides.request_retake(project, stable_id, entry["text_sha256"], now=receipt["at"])
             receipt["lines"][stable_id]["done"] = True
-            atomic_write_json(receipt_path, receipts)
-        else:
-            overrides.request_retake(project, stable_id, entry["text_sha256"], now=stamps[entry["requested_at"]])
+            requests += 1
+        atomic_write_json(receipt_path, receipts)
+    for stable_id, entry in plain:
+        overrides.request_retake(project, stable_id, entry["text_sha256"], now=stamps[entry["requested_at"]])
         requests += 1
-    for item in sorted(wishes.get(ALIASES) or [], key=lambda item: item["at"]):
-        alias_book.add(project, item["alias"], item["person"], now=stamps[item["at"]])
-    return {"requests": requests, "skipped": skipped}
+    return requests, skipped
