@@ -695,7 +695,7 @@ object BookWishes {
 
     private fun labelVoice(name: String, entry: JSONObject): String {
         val preset = BookEdits.pyText(entry.opt("preset"))
-        val change = preset.ifEmpty { mapOf("male" to "giọng nam", "female" to "giọng nữ")[BookEdits.pyText(entry.opt("gender"))] ?: "giọng khác" }
+        val change = VoiceLabels.label(preset).ifEmpty { mapOf("male" to "giọng nam", "female" to "giọng nữ")[BookEdits.pyText(entry.opt("gender"))] ?: "giọng khác" }
         return "Giọng của $name: $change"
     }
 
