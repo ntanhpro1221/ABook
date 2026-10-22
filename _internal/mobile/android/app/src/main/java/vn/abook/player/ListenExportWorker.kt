@@ -3,14 +3,10 @@ package vn.abook.player
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import androidx.work.Data
-import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import org.json.JSONObject
@@ -84,12 +80,12 @@ object ListenExports {
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setInputData(data.build())
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork("$TAG:$bookId", ExistingWorkPolicy.REPLACE, request)
+        ExportCancellation.enqueue(context, "$TAG:$bookId", request)
         return request.id.toString()
     }
 
     fun cancel(context: Context, bookId: String) {
-        WorkManager.getInstance(context).cancelUniqueWork("$TAG:$bookId")
+        ExportCancellation.cancel(context, "$TAG:$bookId")
     }
 
     internal fun foreground(context: Context, work: java.util.UUID, bookId: String, title: String, done: Int, total: Int, fraction: Double?): ForegroundInfo =
@@ -125,9 +121,6 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
 
     override fun getForegroundInfo(): ForegroundInfo =
         ListenExports.foreground(applicationContext, id, ListenExports.inputs(inputData).bookId.orEmpty(), title, 0, 0, null)
-
-    /** Người dùng bấm "Dừng" (hay xuất lại cuốn này) khác hệ thống dừng việc (hết giờ chạy nền...): hệ thống dừng thì WorkManager tự chạy lại, file đích phải còn. */
-    private fun systemStop(): Boolean = Build.VERSION.SDK_INT >= 31 && stopReason != WorkInfo.STOP_REASON_CANCELLED_BY_APP && stopReason != WorkInfo.STOP_REASON_UNKNOWN
 
     override fun doWork(): Result {
         val context = applicationContext
@@ -219,7 +212,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
             // Hệ thống dừng việc (không phải người dùng): WorkManager chạy lại, file đích, quyền ghi và phần đã làm đều còn.
-            if (systemStop()) {
+            if (Mp3Exports.stoppedBySystem(this)) {
                 retrying = true
                 return Result.retry()
             }
@@ -228,6 +221,10 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             ListenExports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Throwable) {
+            if (isStopped && Mp3Exports.stoppedBySystem(this)) {
+                retrying = true
+                return Result.retry()
+            }
             M4bExports.discard(context, file)
             val message = M4bExports.describe(error, lowSpace = context.filesDir.usableSpace < (32L shl 20))
             ListenExports.finished(context, bookId, "Không xuất được sách nói", "$title · $message")
@@ -236,7 +233,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
         } finally {
             ListenExports.active -= bookId
             music?.close()
-            if (!retrying) {
+            if (!retrying && (!isStopped || !Mp3Exports.stoppedBySystem(this))) {
                 input.cover?.delete()
                 M4bExports.release(context, file)
             }

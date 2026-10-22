@@ -134,7 +134,7 @@ function ChapterRow({
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
-              <DropdownMenu.Content align="end" sideOffset={4} className="z-50 min-w-52 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+              <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-xl border border-line bg-panel p-1.5 shadow-float">
                 {canPlay(chapter) && (
                   <DropdownMenu.Item onSelect={() => void playBook(book, chapter.id, 0)} className={MENU_ITEM}>
                     <Play className="size-4" /> Nghe từ đầu chương
@@ -327,7 +327,7 @@ export function PersonRow({
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
-              <DropdownMenu.Content align="end" sideOffset={4} className="z-50 min-w-48 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+              <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-48 rounded-xl border border-line bg-panel p-1.5 shadow-float">
                 {canMerge && (
                   <DropdownMenu.Item onSelect={() => onMerge?.(person)} className={MENU_ITEM}>
                     <GitMerge className="size-4" /> Gộp vào người khác…
@@ -632,7 +632,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
-          <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 w-72 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain w-72 rounded-xl border border-line bg-panel p-1.5 shadow-float">
             <p className="px-2 pb-1.5 pt-1 text-xs text-fg-2">
               Mỗi hồ sơ giữ chỗ nghe, dấu trang và lịch sử riêng - để nghe lại từ đầu mà giữ lần trước, hay mỗi người một hồ sơ.
             </p>
@@ -1018,7 +1018,7 @@ export function BookScreen({
                 <IconButton label="Tuỳ chọn khác" icon={MoreHorizontal} size="lg" />
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
-                <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 min-w-56 max-w-[min(20rem,calc(100vw-24px))] rounded-xl border border-line bg-panel p-1.5 shadow-float">
+                <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-[min(20rem,calc(100vw-24px))] rounded-xl border border-line bg-panel p-1.5 shadow-float">
                   {source.records && book.records?.length === 1 && (
                     <DropdownMenu.Item onSelect={() => setRecordDialog(newRecordDialog(book))} className={MENU_ITEM}>
                       <Plus className="size-4" /> Nghe lại từ đầu (hồ sơ mới)…

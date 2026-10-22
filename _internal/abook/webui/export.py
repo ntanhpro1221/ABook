@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any
 
 from .. import continuation
-from ..io_utils import ffmpeg_available, ffmpeg_executable, run_hidden
+from ..io_utils import atomic_write_text, ffmpeg_available, ffmpeg_executable, run_hidden
 from ..readaloud import mp3
 from . import covers, listen_view, music_plan, store
 from .export_jobs import Cancelled
@@ -159,7 +159,7 @@ def write_mp3_folder(ffmpeg: str, folder: Path, chapters: Iterable[tuple[str, Pa
         write_chapter(ffmpeg, source, folder / name, cover_path, title=full_title, album=title,
                       narrator=narrator, number=number, total=total)
         entries.append((mp3.duration_ms((folder / name).read_bytes()) / 1000, full_title, name))
-    (folder / f"{safe_name(title)}.m3u8").write_text(playlist_text(title, entries), encoding="utf-8")
+    atomic_write_text(folder / f"{safe_name(title)}.m3u8", playlist_text(title, entries))  # tắt ngang không để lại danh sách phát cụt
     return len(entries)
 
 
