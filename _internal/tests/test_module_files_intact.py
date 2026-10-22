@@ -36,8 +36,8 @@ def test_the_hash_is_not_recomputed_while_the_file_stays_the_same(tmp_path: Path
     (tmp_path / "m.bin").write_bytes(data)
     assert studio_setup.intact(tmp_path, [item])
     hashed: list[Path] = []
-    real = studio_setup._sha256
-    monkeypatch.setattr(studio_setup, "_sha256", lambda path: hashed.append(path) or real(path))
+    real = studio_setup._digest
+    monkeypatch.setattr(studio_setup, "_digest", lambda path: hashed.append(path) or real(path))
     for _ in range(5):  # trang hỏi trạng thái liên tục
         assert studio_setup.intact(tmp_path, [item])
     assert hashed == []
@@ -96,3 +96,36 @@ def test_damaged_part_needs_a_pin_from_an_earlier_download() -> None:
     assert voice_module.has_damaged_part([gone], {"model": "pin"})
     assert not voice_module.has_damaged_part([gone], {}), "chưa từng tải: là tải lần đầu, không phải sửa"
     assert not voice_module.has_damaged_part([Component("model", "Model", "pin", 10, True)], {"model": "pin"})
+
+
+def test_reopening_the_app_does_not_rehash_a_model_that_did_not_change(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Lượt hỏi trạng thái đầu tiên sau khi mở lại app từng băm lại cả ~0,9 GB model ZeroTTS ngay trên luồng trả lời."""
+    import os
+    from abook.webui import audio_revision
+    data = b"weights " * 512
+    item = _item("model.onnx", data)
+    folder = tmp_path / "module"
+    folder.mkdir()
+    (folder / "model.onnx").write_bytes(data)
+    os.utime(folder / "model.onnx", ns=(1_000_000_000, 1_000_000_000))  # file đã nằm yên từ lâu
+    store = tmp_path / "audio_digests.json"
+    audio_revision.configure(store)
+    try:
+        assert studio_setup.intact(folder, [item])
+        audio_revision._flush()
+        assert store.is_file()
+        # Mở lại app: bảng trong bộ nhớ của cả hai mô-đun mất, chỉ còn file trên đĩa.
+        monkeypatch.setattr(studio_setup, "_hashed", {})
+        audio_revision.configure(None)
+        audio_revision.configure(store)
+
+        class NoHashing:
+            @staticmethod
+            def sha256(*_: object) -> None:
+                raise AssertionError("băm lại model không đổi")
+
+        monkeypatch.setattr(audio_revision, "hashlib", NoHashing)
+        monkeypatch.setattr(studio_setup, "_sha256", NoHashing.sha256)
+        assert studio_setup.intact(folder, [item])
+    finally:
+        audio_revision.configure(None)
