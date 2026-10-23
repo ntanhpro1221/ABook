@@ -120,7 +120,8 @@ enum class DemoteReason(val word: String) { LATE("late"), FAIL("fail"), SEEK("se
  *   giây bài của đích (plan + kind + expSample) trùng `alignedA87` (vòng khai báo) của cùng `sinceSeconds`, gấp chu kỳ P', tới 1 mẫu (trước audibleStart' thì kẹp ở mẫu 0, < 1 khung)
  * - `pos <k> <trackSecondsP3> <alignedA87>`, `item <k> <index> <reason> <kind>`, `audiotrack <k> <sr> <ch>`
  * - `vol <k> <v>`: MỖI lần MusicBed đặt volume của trình phát k (kể cả từng nhịp mờ; v 6 chữ số thập phân)
- * - `promote <k> loop <viTriA87Giay>`: viTriA87Giay = vị trí của trình phát a87 (giây trong bài, 6 chữ số) mà promoteTo dùng để tính đích Nối. Bài a87 (mở vào giữa vòng khi chưa có Nối) chuyển sang P3 ở ranh lặp; k = trình phát P3 mới (dòng `open <k> p3` + `plan` + `attach` của nó đứng TRƯỚC, lúc tạo sẵn ~3 s trước ranh).
+ * - `promote <k> loop <viTriA87Giay> <leadMs>`: viTriA87Giay = vị trí của trình phát a87 (giây trong bài, 6 chữ số) mà promoteTo dùng để tính đích Nối, ở mốc TRỘN ([MusicBed.lookLoop]: bài có Nối chờ thì
+ *   vị trí theo timestamp ở mốc nay + lead, cùng mốc với `hread` / `handover`); leadMs = lead ([SeamHandover.leadNs]) của lần đọc ấy, 1 chữ số thập phân, 0.0 khi dùng currentPosition (máy ảo / máy thường). Bài a87 (mở vào giữa vòng khi chưa có Nối) chuyển sang P3 ở ranh lặp; k = trình phát P3 mới (dòng `open <k> p3` + `plan` + `attach` của nó đứng TRƯỚC, lúc tạo sẵn ~3 s trước ranh).
  *   Dòng này chỉ báo QUYẾT ĐỊNH chuyển, chưa đổi tiếng: a87 vẫn kêu ở âm lượng cũ, P3 khởi động CÂM ([SeamHandover]). Sau nó: `seek <k> ...` (mục 1 = Nối, mẫu = chỗ a87 sẽ ở khi P3 ra loa, [SeamHandover.target]) và `vol <k> 0`;
  *   P3 có thể được tua lại (thêm `seek <k> ...`) hay dịch pha trong dòng (`shift <k> ...`) cho tới khi pha khớp. Rồi MỘT trong hai: `handover` (êm) hay `demote <k> late|error`
  *   (a87 lặp mờ chéo như khi không có Nối).
@@ -158,7 +159,8 @@ object SeamEvents {
     fun item(k: Int, index: Int, reason: Int, kind: String) = "item $k $index $reason $kind"
     fun audioTrack(k: Int, sampleRate: Int, channels: Int) = "audiotrack $k $sampleRate $channels"
     fun volume(k: Int, v: Float) = "vol $k ${f(v.toDouble(), 6)}"
-    fun promote(k: Int, legacyPositionSeconds: Double) = "promote $k loop ${f(legacyPositionSeconds)}"
+    fun promote(k: Int, legacyPositionSeconds: Double, leadMs: Double? = null) =
+        "promote $k loop ${f(legacyPositionSeconds)}" + (if (leadMs == null) "" else " ${f(leadMs, 1)}")
     fun handover(k: Int, legacySeconds: Double, p3Seconds: Double) = "handover $k ${f(legacySeconds)} ${f(p3Seconds)}"
     fun handoverReading(k: Int, deltaMs: Double, playedMs: Double, leadMs: Double? = null) =
         "hread $k ${f(deltaMs, 3)} ${f(playedMs, 3)}" + (if (leadMs == null) "" else " ${f(leadMs, 1)}")
@@ -349,6 +351,9 @@ object SeamHandover {
      */
     fun leadNs(stamp: Stamp?, nowNano: Long): Long =
         if (stamp == null || !fresh(0L, stamp.flushedNano, stamp.nanoTime, stamp.framePosition)) 0L else maxOf(0L, stamp.nanoTime - nowNano)
+
+    /** Vị trí a87 (giây) cho ảnh chụp của [LoopHandoff]: bài có Nối chờ chuyển (`pending`) thì mốc TRỘN `legacy` (null = máy không cho timestamp: currentPosition), không thì currentPosition. */
+    fun snapshotSeconds(currentSeconds: Double, legacy: Double?, pending: Boolean): Double = if (pending && legacy != null) legacy else currentSeconds
 
     /** Vị trí a87 theo AudioTrack của nó ([legacySeconds]); null khi timestamp không tin được (người gọi dùng currentPosition). */
     fun legacySeconds(startUs: Long, stamp: Stamp, nowNano: Long): Double? =

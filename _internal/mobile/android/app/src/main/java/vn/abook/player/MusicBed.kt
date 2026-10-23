@@ -617,8 +617,16 @@ object MusicBed {
         if (bed.built != null) return null // bài P3 tự lặp trong hàng phát của nó
         if (handover != null) return null // đang chuyển sang P3 ([stepHandover]): ranh lặp này đã có người lo
         if (bed.final || lastSeconds >= cue.end || player.duration <= 0) return null
-        return LoopHandoff.Snapshot(bed, boundsOf(cue, player), player.currentPosition / 1000.0, player.isPlaying)
+        // Bài có Nối chờ chuyển: vị trí ở mốc TRỘN (như mọi phép đo của [beginHandover] / [issueHandover]), không phải mốc nghe; không thì currentPosition như cũ.
+        val pending = p3Pending(bed, cue) != null
+        val legacy = if (pending) legacyPosition(bed, System.nanoTime()) else null
+        val position = SeamHandover.snapshotSeconds(player.currentPosition / 1000.0, legacy?.seconds, pending)
+        return LoopHandoff.Snapshot(bed, boundsOf(cue, player), position, player.isPlaying, if (legacy != null) legacy.leadNs / 1e6 else 0.0)
     }
+
+    /** Nối đã dựng xong của bài a87 `owner` (mở vào giữa vòng) và hợp với mốc `cue`: nhận ở ranh lặp này ([promoteTo]); null = không có. */
+    private fun p3Pending(owner: Bed, cue: MusicCues.Cue): SeamPicker.Built? =
+        owner.pending?.takeIf { SeamPicker.compatible(it, cue) && SeamClock.promote(it.state) == SeamClock.Promote.NOW }
 
     /** Chỗ vào bản lặp `target` (giây trong bài): bài mp3 vào ở ranh khung gần chỗ ấy nhất ([ExactSeekMp3Extractor.frameBoundarySeconds]). */
     @OptIn(UnstableApi::class)
@@ -636,7 +644,7 @@ object MusicBed {
         val uri = uriFor(appContext, owner.track) ?: return null
         val fadeMs = Math.round(MusicCues.mix.loopCrossfadeSeconds * 1000)
         // Bài a87 mở vào giữa vòng mà Nối giờ đã dựng xong: bản tạo sẵn là trình phát P3 đứng ở đầu Nối (đón ranh lặp này, [promoteTo]).
-        val later = owner.pending?.takeIf { SeamPicker.compatible(it, cue) && SeamClock.promote(it.state) == SeamClock.Promote.NOW }
+        val later = p3Pending(owner, cue)
         if (later != null) {
             return timed("lặp mờ chéo: tạo sẵn trình phát P3") {
                 open(appContext, owner.track to uri, owner.goal, 0.0, cue, fadeMs, standby = true, built = later, forced = SeamClock.Target(1, 0))
@@ -725,7 +733,7 @@ object MusicBed {
             return false
         }
         handover = Handover(ready, old, SystemClock.elapsedRealtime(), p3LagMs)
-        emit { SeamEvents.promote(ready.testK, snap.position) }
+        emit { SeamEvents.promote(ready.testK, snap.position, snap.leadMs) }
         main.post(handoverTick)
         return true
     }

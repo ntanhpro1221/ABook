@@ -861,6 +861,26 @@ class MusicSeamBedTest {
         assertEquals(0L, SeamHandover.leadNs(SeamHandover.Stamp(40_000, now + 1_400_000_000L, sr, now + 2_000_000_000L), now)) // timestamp trước lần xả: không tin
     }
 
+    @Test fun snapshotPositionIsTheMixPointOnlyWhenASeamIsPending() {
+        assertEquals(20.0, SeamHandover.snapshotSeconds(20.0, 21.5, pending = false), 0.0) // không Nối chờ: mốc nghe, đường lặp mờ chéo a87 thuần không đổi
+        assertEquals(20.0, SeamHandover.snapshotSeconds(20.0, null, pending = true), 0.0) // Nối chờ nhưng máy không cho timestamp: currentPosition
+        assertEquals(21.5, SeamHandover.snapshotSeconds(20.0, 21.5, pending = true), 0.0) // Nối chờ: mốc trộn
+        assertEquals(20.0, SeamHandover.snapshotSeconds(20.0, null, pending = false), 0.0)
+    }
+
+    @Test fun loopIsDueEarlierByTheLeadWhenTheSnapshotIsTheMixPoint() {
+        val b = MusicCues.Loop(0.24, 24.0, 20.0, true, 2.4, 24.0)
+        val x = MusicCues.mix.loopCrossfadeSeconds
+        val presented = b.loopEnd - x - 1.5 // đang nghe còn 1,5 s nữa mới tới hạn
+        val lead = 1.5
+        assertFalse(MusicCues.loopDue(b, presented))
+        assertTrue(MusicCues.loopDue(b, SeamHandover.snapshotSeconds(presented, presented + lead, pending = true)))
+        // sớm hơn đúng lead: đúng lúc mốc nghe còn `lead` giây, và chưa tới hạn nếu mốc trộn kém lead
+        assertFalse(MusicCues.loopDue(b, SeamHandover.snapshotSeconds(presented, presented + lead - 0.01, pending = true)))
+        assertEquals(lead, MusicCues.loopHandoffDelay(b, presented, 2.0)!!, 1e-9) // vé hẹn theo mốc nghe: còn đúng lead
+        assertEquals(0.0, MusicCues.loopHandoffDelay(b, presented + lead, 2.0)!!, 1e-9) // theo mốc trộn: tới ngay
+    }
+
     @Test fun phaseOfTwoTracksOnAClockRunningAheadIsReadAtNowPlusLead() {
         val s = ls06
         val sr = s.sampleRate
