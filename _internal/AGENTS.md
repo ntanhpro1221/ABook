@@ -76,6 +76,10 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Chỗ nghe ReadAloud giữ `last.anchor` (đoạn, offset code point, vân tay chữ chương), ưu tiên khi văn bản còn khớp; Kotlin/TypeScript/Python cùng hợp đồng.
   Retake từ điện thoại có operation_id bền trước gửi; `book_wishes` giữ receipt và dấu giờ cũ khi retry, không đổi seed thêm lần nữa.
 - Dữ liệu peer: kiểm mã sách Android tại native trước I/O và trước thêm tiền tố peer; `bookDir` phải là con trực tiếp của `books/`.
+  Máy đã ghép lưu `addresses` tối đa 8 mục `{address,lastSuccess}`; host/cổng cũ chỉ là chi tiết lần ghép, nâng một lần sang danh sách.
+  Chỉ học địa chỉ từ TLS khớp vân tay đã ghim (discovery chỉ là gợi ý); thử đường trước HTTP, không replay POST khi chưa biết kết quả.
+  Chọn TLS gộp theo identity, cache lỗi 2 giây (xoá khi đổi mạng/discover đã xác thực), tối đa 2 tác vụ I/O mỗi peer và 32 peer giữ trong bộ chọn;
+  DNS kẹt giữ slot của chính peer đó, không xếp hàng vô hạn hay chặn peer khác. Đường ưu tiên đi trước 150 ms; đủ ngân sách hai lane cho cả 8 địa chỉ (tối đa 6,15 giây).
   Đường file gói qua kiểm tra từ vựng chung hai nền trước canonical/resolve/stat (cấm UNC, drive/ADS, backslash, tầng rỗng/dot,
   tên thiết bị Windows, hậu tố chấm/khoảng trắng), rồi kiểm containment theo thành phần. Manifest mạng phải qua cùng gate trước ghi.
 - Cổng sync: desktop tối đa 32 kết nối/8 mỗi nguồn, keep-alive rỗi 30 giây; Android 8 worker/6 mỗi nguồn,

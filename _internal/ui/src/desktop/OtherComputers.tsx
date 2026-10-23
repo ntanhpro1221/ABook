@@ -26,6 +26,7 @@ interface Computer {
   name: string;
   host: string;
   port: number;
+  connectedVia?: string;
   lastSeen?: number;
   error?: string;
   /** Vân tay chứng chỉ TLS máy kia đưa ra lúc ghép (hex) - hiện để đối chiếu với dòng "Vân tay" bên máy kia. */

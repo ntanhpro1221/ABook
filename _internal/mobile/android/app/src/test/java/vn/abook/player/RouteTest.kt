@@ -38,12 +38,43 @@ class RouteTest {
     /** Danh sách thư viện báo lại các đường (SyncLink.refreshRoutes): địa chỉ Tailscale có sau lúc ghép được học. */
     @Test
     fun theLibraryListingTeachesAddressesAddedAfterPairing() {
-        val reply = JSONObject().put("routes", JSONObject()
-            .put("lan", JSONArray().put("192.168.0.230").put("100.73.36.27")).put("port", 47630).put("bluetooth", ""))
-        val (lan, port, bluetooth) = SyncLink.refreshed(reply, "AA:BB:CC:DD:EE:FF")!!
-        assertEquals(listOf("192.168.0.230", "100.73.36.27"), JSONArray(lan).let { array -> List(array.length()) { array.getString(it) } })
-        assertEquals(47630, port)
-        assertEquals("AA:BB:CC:DD:EE:FF", bluetooth) // máy tính đang tắt Bluetooth: giữ địa chỉ đã biết
-        assertEquals(null, SyncLink.refreshed(JSONObject().put("books", JSONArray()), "")) // máy tính bản cũ: không đổi gì
+        val pin = "ab".repeat(32)
+        val peer = JSONObject().put("fingerprint", pin).put("addresses", JSONArray()).put("bt", "AA:BB:CC:DD:EE:FF")
+        val reply = JSONObject().put("addresses", JSONArray().put("192.168.0.230:47630").put("100.73.36.27:47630"))
+        PeerAddresses.learn(peer, reply.getJSONArray("addresses"), pin)
+        assertEquals(listOf("192.168.0.230:47630", "100.73.36.27:47630"), PeerAddresses.ordered(peer))
+        assertEquals("AA:BB:CC:DD:EE:FF", peer.getString("bt"))
     }
+
+    @Test fun tcpHintAdmissionDropsSurplusWithoutQueueing() {
+        val release = java.util.concurrent.CountDownLatch(1)
+        val started = java.util.concurrent.CountDownLatch(2)
+        val attempts = java.util.concurrent.atomic.AtomicInteger()
+        val probe: (String) -> Boolean = {
+            attempts.incrementAndGet()
+            started.countDown()
+            release.await(2, java.util.concurrent.TimeUnit.SECONDS)
+            false
+        }
+        try {
+            Route.pick(listOf("10.77.0.1:1", "10.77.0.2:1"), null, probe = probe)
+            org.junit.Assert.assertTrue(started.await(1, java.util.concurrent.TimeUnit.SECONDS))
+            repeat(20) { i -> Route.pick((1..8).map { "peer-$i-$it:1" }, null, probe = probe) }
+            assertEquals(2, Route.pendingProbes())
+            assertEquals(2, attempts.get())
+        } finally {
+            release.countDown()
+            repeat(100) { if (Route.pendingProbes() > 0) Thread.sleep(5) }
+        }
+        assertEquals(0, Route.pendingProbes())
+    }
+
+    @Test fun manualHostnameRecoversAfterStaleFailureWithoutDnsHintJobs() {
+        val target = "recovery-phone.local:47630"
+        assertEquals(target, Route.pick(listOf(target), "bt").lan)
+        Route.markDown(target)
+        assertEquals("bt", Route.pick(listOf(target), "bt").bluetooth)
+        assertEquals(target, Route.pick(listOf(target), "bt", now = System.currentTimeMillis() + Route.FRESH_MS + 1).lan)
+    }
+
 }

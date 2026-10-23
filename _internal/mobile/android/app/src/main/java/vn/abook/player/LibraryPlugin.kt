@@ -437,19 +437,24 @@ class LibraryPlugin : Plugin() {
                     runCatching { socket.send(DatagramPacket(probe, probe.size, InetAddress.getByName("255.255.255.255"), 47631)) }
                     sent += 1
                 }
-                val buffer = ByteArray(512)
+                val buffer = ByteArray(4096)
                 val packet = DatagramPacket(buffer, buffer.size)
                 try {
                     socket.receive(packet)
                     val reply = JSONObject(String(packet.data, 0, packet.length))
                     val host = packet.address.hostAddress ?: continue
                     // Chính điện thoại này (đang cho máy khác nghe thư viện - LibraryServer) cũng trả lời: bỏ.
-                    if (host in own) continue
-                    if (reply.optString("app") == "abook" && seen.add(host)) {
-                        found.put(JSObject().put("host", host).put("port", reply.optInt("port", 47630)).put("name", reply.optString("name"))
+                    if (host in own && reply.optInt("port") == LibraryServer.PORT) continue
+                    val address = PeerAddresses.discoveryEndpoint(host, reply.opt("port")) ?: continue
+                    val port = PeerAddresses.split(address).second
+                    if (reply.optString("app") == "abook" && seen.add(address)) {
+                        PeerRouting.discovered(context, host, port, reply.optString("fingerprint"))
+                        found.put(JSObject().put("host", host).put("port", port).put("name", reply.optString("name"))
                             .put("kind", reply.optString("kind", "computer")))
                     }
                 } catch (_: SocketTimeoutException) {
+                } catch (_: org.json.JSONException) {
+                    // A malformed UDP responder must not discard the remaining discoveries.
                 }
             }
         }
@@ -463,9 +468,10 @@ class LibraryPlugin : Plugin() {
         SyncLink.refuseSelf(host, port)
         val device = call.getString("device") ?: DeviceName.of(context)
         val body = JSONObject().put("code", call.getString("code") ?: "").put("device", device)
-        val (reply, fingerprint) = SyncLink.pair(context, "https://$host:$port", body)
+        val (reply, fingerprint) = SyncLink.pair(context, "https://${PeerAddresses.endpoint(host, port)}", body)
         SyncLink.saveRoutes(prefs.edit().putString("host", host).putInt("port", port).putString("token", reply.getString("token"))
-            .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply).commit()
+            .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply, host, port, fingerprint,
+            PeerRouting.main(context).takeIf { it.optString("fingerprint").equals(fingerprint, true) }).commit()
         // Ô địa chỉ nhớ máy đã ghép lần trước (soát a68 lỗi 20): ngoài "sync" vì thôi ghép xoá sạch "sync" - ghép lại là lúc cần nó nhất.
         context.getSharedPreferences("abook_self", Context.MODE_PRIVATE).edit().putString("lastAddress", "$host:$port").apply()
         Remote.ensure()
@@ -525,7 +531,8 @@ class LibraryPlugin : Plugin() {
             throw IllegalStateException(reason.ifBlank { error.message ?: "không kết nối được qua Bluetooth" })
         }
         SyncLink.saveRoutes(prefs.edit().putString("host", "bt:$address").putInt("port", 0).putString("token", reply.getString("token"))
-            .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply).commit()
+            .putString("fingerprint", fingerprint).putString("name", reply.optString("name")), reply, "bt:$address", 0, fingerprint,
+            PeerRouting.main(context).takeIf { it.optString("fingerprint").equals(fingerprint, true) }).commit()
         Remote.ensure()
         call.resolve(JSObject().put("name", reply.optString("name")))
     }
@@ -654,6 +661,7 @@ class LibraryPlugin : Plugin() {
         call.resolve(
             JSObject().put("paired", paired).put("host", prefs.getString("host", "")).put("port", prefs.getInt("port", 47630))
                 .put("name", prefs.getString("name", "")).put("fingerprint", prefs.getString("fingerprint", "") ?: "")
+                .put("connectedVia", prefs.getString("connectedVia", ""))
                 .put("lastAddress", context.getSharedPreferences("abook_self", Context.MODE_PRIVATE).getString("lastAddress", "") ?: "")
                 .put("deviceName", DeviceName.of(context)),
         )
@@ -753,7 +761,6 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun remoteLibrary(call: PluginCall) = background(call) {
         val reply = JSONObject(request("GET", "/sync/v1/library"))
-        SyncLink.refreshRoutes(context, reply)
         val books = reply.getJSONArray("books")
         matchImported(listed(books))
         for (index in 0 until books.length()) {
@@ -897,7 +904,6 @@ class LibraryPlugin : Plugin() {
         } else null
         val remote = reply?.optJSONArray("books") ?: JSONArray()
         if (reply != null) {
-            SyncLink.refreshRoutes(context, reply)
             matchImported(listed(remote))
             StateSync.flushPending(context) // chỗ nghe ghi trong lúc mất kết nối về máy tính ngay khi nối lại (soát a68 lỗi 9)
         }

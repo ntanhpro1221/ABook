@@ -54,6 +54,7 @@ def test_cast_capability_from_real_share_is_hidden_without_opening_server(tmp_pa
 
 
 def test_phone_progress_survives_desktop_diagnostics_boundary(monkeypatch):
-    monkeypatch.setattr(remote_books, "_COMPUTERS", SimpleNamespace(get=lambda _: {"host": "127.0.0.1", "port": 1, "token": "test"}))
+    monkeypatch.setattr(remote_books, "_COMPUTERS", SimpleNamespace(get=lambda _: {"host": "127.0.0.1", "port": 1, "token": "test",
+        "addresses": [{"address": "127.0.0.1:1", "lastSuccess": 0}]}))
     monkeypatch.setattr(remote_books, "_request", lambda *args, **kwargs: json.dumps({"work": [{"progress": {"done": "3", "total": "10", "phase": "download"}}]}).encode())
     assert remote_books.diagnostics("test")["work"][0]["progress"] == {"done": "3", "total": "10", "phase": "download"}

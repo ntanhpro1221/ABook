@@ -10,9 +10,13 @@ nối thì `mark_down` ngay (remote_books._connect): yêu cầu ấy thử lại
 from __future__ import annotations
 
 import socket
+import ipaddress
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, NamedTuple
+
+from . import peer_addresses
 
 FRESH_SECONDS = 60.0
 PROBE_SECONDS = 1.5
@@ -20,6 +24,7 @@ PROBE_SECONDS = 1.5
 _seen: dict[str, tuple[bool, float]] = {}  # "host:cổng" -> (thông không, lúc thử)
 _probing: set[str] = set()
 _lock = threading.Lock()
+_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="route-probe")
 
 
 class Choice(NamedTuple):
@@ -51,18 +56,27 @@ def pick(lan: list[str], bluetooth: str | None, *, now: float | None = None,
          probe: Callable[[str], bool] | None = None) -> Choice:
     """Chọn đường cho các địa chỉ ấy, và thử lại nền những địa chỉ chưa biết hay đã cũ."""
     now = time.time() if now is None else now
+    lan = list(peer_addresses.candidates(lan))
     for target in lan:
+        # DNS names remain optimistic until the identity-isolated TLS selector checks them.
+        # A numeric-only hint must not label a hostname permanently offline.
+        if probe is None and not _numeric(target):
+            continue
         with _lock:
             last = _seen.get(target)
-            stale = (last is None or now - last[1] > FRESH_SECONDS) and target not in _probing
+            stale = (last is None or now - last[1] > FRESH_SECONDS) and target not in _probing and len(_probing) < 2
             if stale:
                 _probing.add(target)
         if stale:
-            threading.Thread(target=_probe_in_background, args=(target, probe or _reachable),
-                             name="route-probe", daemon=True).start()
+            try:
+                _pool.submit(_probe_in_background, target, probe or _reachable)
+            except RuntimeError:
+                with _lock:
+                    _probing.discard(target)
     with _lock:
         snapshot = dict(_seen)
-    return choose(lan, bluetooth, lambda target: snapshot[target][0] if target in snapshot else None)
+    return choose(lan, bluetooth, lambda target: snapshot[target][0]
+                  if target in snapshot and now - snapshot[target][1] <= FRESH_SECONDS else None)
 
 
 def mark_down(target: str) -> None:
@@ -92,10 +106,22 @@ def _probe_in_background(target: str, probe: Callable[[str], bool]) -> None:
             _probing.discard(target)
 
 
+def _numeric(target: str) -> bool:
+    try:
+        ipaddress.ip_address(peer_addresses.split(target)[0])
+        return True
+    except ValueError:
+        return False
+
+
 def _reachable(target: str) -> bool:
     host, _, port = target.rpartition(":")
     try:
-        with socket.create_connection((host, int(port)), timeout=PROBE_SECONDS):
+        # Background hints never resolve DNS. Hostnames are checked by the identity-isolated TLS selector.
+        ip = ipaddress.ip_address(host.strip("[]"))
+        with socket.socket(socket.AF_INET6 if ip.version == 6 else socket.AF_INET, socket.SOCK_STREAM) as connection:
+            connection.settimeout(PROBE_SECONDS)
+            connection.connect((str(ip), int(port)))
             return True
     except (OSError, ValueError):
         return False

@@ -1,0 +1,66 @@
+[
+  {
+    "message": "\"address\":\"private-phone:47630\"",
+    "hidden": "private-phone"
+  },
+  {
+    "message": "java.net.UnknownHostException: Unable to resolve host \"private-phone.local\": No address associated with hostname",
+    "hidden": "private-phone"
+  },
+  {
+    "message": "java.net.UnknownHostException: private-phone.local.",
+    "hidden": "private-phone"
+  },
+  {
+    "message": "\"address\":\"private-phone.local.:47630\"",
+    "hidden": "private-phone"
+  },
+  {
+    "message": "tail private-phone:47630 complete",
+    "hidden": "private-phone"
+  },
+  {
+    "message": "host=\"private-phone\" complete",
+    "hidden": "private-phone"
+  },
+  {
+    "message": "hostname=private-phone.local. complete",
+    "hidden": "private-phone"
+  },
+  {
+    "message": "at vn.abook.Playback.run(Playback.kt:306)",
+    "kept": "(Playback.kt:306)"
+  },
+  {
+    "message": "at 12:34:56 elapsed 00:05",
+    "kept": "12:34:56 elapsed 00:05"
+  },
+  {
+    "message": "2026-10-23T23:02:24.995+0700 I Share 123/main: connect private-phone.local:47630",
+    "hidden": "private-phone",
+    "kept": "2026-10-23T23:02:24.995+0700 I Share 123/main:"
+  },
+  {
+    "message": "2026-10-23T16:02:24.995Z I Share 123/main: connect private-phone.local:47630",
+    "hidden": "private-phone",
+    "kept": "2026-10-23T16:02:24.995Z I Share 123/main:"
+  },
+  {
+    "message": "2026-10-23T12:02:24-04:00 I Share 123/main: connect private-phone.local:47630",
+    "hidden": "private-phone",
+    "kept": "2026-10-23T12:02:24-04:00 I Share 123/main:"
+  },
+  {
+    "message": "2026-10-23T16:02:24 I Share 123/main: connect private-phone.local:47630",
+    "hidden": "private-phone",
+    "kept": "2026-10-23T16:02:24 I Share 123/main:"
+  },
+  {
+    "message": "connect 2026-10-23T23:47630 failed",
+    "hidden": "2026-10-23T23"
+  },
+  {
+    "message": "connect 2026-10-23T23.local:47630 failed",
+    "hidden": "2026-10-23T23.local"
+  }
+]

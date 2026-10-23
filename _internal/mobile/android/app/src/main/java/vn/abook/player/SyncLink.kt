@@ -32,68 +32,32 @@ object SyncLink {
     /** Báo máy kia thu hồi mã của máy này ở đó (`POST /sync/v1/unpair`, sync.py) - lúc thôi ghép; máy kia tắt thì thôi (chỉ thử một lần). */
     fun tellUnpaired(context: Context, root: String, token: String) {
         if (token.isBlank()) return
-        runCatching { send(context, "POST", "/sync/v1/unpair", JSONObject(), false, root, 3000, 1500, token) }
+        runCatching { request(context, "POST", "/sync/v1/unpair", JSONObject(), false, root, 3000, 1500, token) }
     }
 
     fun paired(context: Context): Boolean = !prefs(context).getString("token", "").isNullOrBlank()
 
     fun token(context: Context): String = prefs(context).getString("token", "") ?: ""
 
-    /**
-     * Các đường tới máy tính chính: LAN "host:port" (địa chỉ đã ghép qua Wi-Fi, cộng địa chỉ LAN máy tính báo lúc ghép -
-     * `lan`, `lanPort`) và địa chỉ Bluetooth (ghép qua Bluetooth: "bt:<địa chỉ>", hay `bt` máy tính báo lúc ghép Wi-Fi).
-     */
     fun routes(prefs: SharedPreferences): Pair<List<String>, String?> {
-        val host = prefs.getString("host", "") ?: ""
-        val lan = mutableListOf<String>()
-        if (host.isNotBlank() && !host.startsWith("bt:")) lan += "$host:${prefs.getInt("port", 47630)}"
-        val lanPort = prefs.getInt("lanPort", 0).takeIf { it > 0 } ?: 47630
-        runCatching { JSONArray(prefs.getString("lan", "[]") ?: "[]") }.getOrNull()?.let { array ->
-            for (index in 0 until array.length()) array.optString(index).takeIf { it.isNotBlank() }?.let { lan += "$it:$lanPort" }
-        }
-        val bluetooth = if (host.startsWith("bt:")) host.removePrefix("bt:") else prefs.getString("bt", "")?.takeIf { it.isNotBlank() }
-        return lan.distinct() to bluetooth
+        val peer = PeerRouting.mainPrefs(prefs)
+        return PeerAddresses.ordered(peer) to PeerRouting.bluetooth(peer).takeIf { it.isNotBlank() }
     }
 
-    /** Lưu các đường máy tính báo trong lời đáp ghép (sync.py `routes`) - để dùng Wi-Fi khi được, Bluetooth khi không. */
-    fun saveRoutes(editor: SharedPreferences.Editor, reply: JSONObject): SharedPreferences.Editor {
-        val routes = reply.optJSONObject("routes") ?: return editor
-        return editor.putString("lan", (routes.optJSONArray("lan") ?: JSONArray()).toString())
-            .putInt("lanPort", routes.optInt("port", 0)).putString("bt", routes.optString("bluetooth"))
+    /** Called only after pair() verified TLS and the claimed fingerprint. */
+    fun saveRoutes(editor: SharedPreferences.Editor, reply: JSONObject, host: String, port: Int, fingerprint: String,
+                   previous: JSONObject? = null): SharedPreferences.Editor {
+        val peer = JSONObject().put("host", host).put("port", port).put("fingerprint", fingerprint)
+            .put("addresses", previous?.optJSONArray("addresses") ?: JSONArray())
+        PeerAddresses.learn(peer, reply.optJSONArray("addresses"), fingerprint,
+            if (host.startsWith("bt:")) "" else PeerAddresses.endpoint(host, port))
+        return editor.putString("addresses", peer.getJSONArray("addresses").toString()).remove("lan").remove("lanPort")
+            .putString("bt", reply.optJSONObject("routes")?.optString("bluetooth").orEmpty().ifBlank { previous?.optString("bt").orEmpty() })
     }
 
-    /**
-     * Máy tính báo lại các đường của nó mỗi lần điện thoại liệt kê thư viện (sync.py `/sync/v1/library`): địa chỉ có sau
-     * lúc ghép (cài Tailscale/ZeroTier sau khi ghép) tới được điện thoại trước khi nó ra khỏi nhà. Trước đây đường chỉ lưu
-     * lúc ghép.
-     */
-    fun refreshRoutes(context: Context, reply: JSONObject) {
-        val prefs = prefs(context)
-        val (lan, port, bluetooth) = refreshed(reply, prefs.getString("bt", "") ?: "") ?: return
-        prefs.edit().putString("lan", lan).putInt("lanPort", port).putString("bt", bluetooth).apply()
-    }
-
-    /**
-     * Phần thuần của refreshRoutes: (địa chỉ LAN dạng JSON, cổng, Bluetooth) hay null khi lời đáp không mang đường (máy
-     * tính bản cũ). Máy tính đang tắt Bluetooth thì GIỮ địa chỉ Bluetooth đã biết - lúc cần nó nhất là lúc không có Wi-Fi
-     * để hỏi lại.
-     */
-    internal fun refreshed(reply: JSONObject, knownBluetooth: String): Triple<String, Int, String>? {
-        val routes = reply.optJSONObject("routes") ?: return null
-        val bluetooth = routes.optString("bluetooth").takeIf { it.isNotBlank() } ?: knownBluetooth
-        return Triple((routes.optJSONArray("lan") ?: JSONArray()).toString(), routes.optInt("port", 0), bluetooth)
-    }
-
-    /** Gốc https tới máy tính chính theo đường đang thông (Route - không bao giờ chặn luồng gọi). */
     fun base(context: Context): String {
         Pin.install(context)
-        val prefs = prefs(context)
-        val (lan, bluetooth) = routes(prefs)
-        val choice = Route.pick(lan, bluetooth)
-        choice.lan?.let { return "https://$it" }
-        // Bluetooth: "bt:<địa chỉ>" - đi qua đường hầm (BluetoothLink), cùng giao thức.
-        choice.bluetooth?.let { return BluetoothLink.base(context, it) }
-        return "https://${prefs.getString("host", "")}:${prefs.getInt("port", 47630)}"
+        return PeerRouting.base(context, PeerRouting.main(context))
     }
 
     /**
@@ -122,7 +86,9 @@ object SyncLink {
     fun bookFile(context: Context, link: Peers.Link, remote: String, relative: String, resumeFrom: Long = 0, ifRange: String = ""): HttpURLConnection {
         Pin.install(context)
         return PeerTransfer.openGet {
-            val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
+            val selected = PeerRouting.resolve(context, link.base, link.token)
+            val connection = URL("$selected/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
+            PeerRouting.expected(context, link.token)?.let { expected -> if (connection is HttpsURLConnection) Pin.pin(connection, expected) }
             connection.connectTimeout = 5000
             connection.readTimeout = 30000
             connection.setRequestProperty("Authorization", "Bearer ${link.token}")
@@ -146,7 +112,12 @@ object SyncLink {
     }
 
     /** Mã thiết bị cho một địa chỉ (trình phát nghe thẳng): thiết bị ghép có địa chỉ ấy, không thì máy tính chính. */
-    fun tokenFor(context: Context, uri: android.net.Uri): String = Peers.tokenFor(context, uri) ?: token(context)
+    fun tokenFor(context: Context, uri: android.net.Uri): String {
+        uri.fragment?.takeIf { it.startsWith("abook-book:") }?.removePrefix("abook-book:")?.let { book ->
+            return linkFor(context, Store.requireBookId(book)).first.token
+        }
+        return Peers.tokenFor(context, uri) ?: token(context)
+    }
 
     fun request(
         context: Context,
@@ -160,16 +131,14 @@ object SyncLink {
         token: String? = null,
         upload: File? = null,
     ): String {
+        // Choose before HTTP: never replay a POST/upload after an uncertain result.
+        val credential = token ?: if (auth) SyncLink.token(context) else ""
+        val selected = PeerRouting.resolve(context, root, credential)
         try {
-            return send(context, method, path, body, auth, root, readTimeoutMs, connectTimeoutMs, token, upload = upload)
+            return send(context, method, path, body, auth, selected, readTimeoutMs, connectTimeoutMs, token, upload = upload)
         } catch (error: IOException) {
-            // Nối LAN của máy tính chính hỏng (ra khỏi Wi-Fi nhà): đánh dấu hỏng và thử lại ngay một lần qua Bluetooth.
-            val (lan, bluetooth) = routes(prefs(context))
-            val target = lan.firstOrNull { root == "https://$it" }
-            if (target == null || bluetooth == null) throw error
-            Route.markDown(target)
-            return send(context, method, path, body, auth, BluetoothLink.base(context, bluetooth), readTimeoutMs,
-                connectTimeoutMs, token, upload = upload)
+            Route.markDown(selected.removePrefix("https://"))
+            throw error
         }
     }
 
@@ -257,6 +226,10 @@ object SyncLink {
             val connection = URL(root + path).openConnection() as HttpURLConnection
             // `firstUse` != null: yêu cầu ghép - nhận chứng chỉ lạ một lần và đọc vân tay ra mảng này.
             if (firstUse != null && connection is HttpsURLConnection) Pin.firstUse(connection)
+            else if (connection is HttpsURLConnection) {
+                val credential = token ?: if (auth) SyncLink.token(context) else ""
+                PeerRouting.expected(context, credential)?.let { Pin.pin(connection, it) }
+            }
             connection.requestMethod = method
             connection.connectTimeout = connectTimeoutMs
             connection.readTimeout = readTimeoutMs
@@ -284,6 +257,15 @@ object SyncLink {
                 val message = runCatching { JSONObject(text).optString("error") }.getOrNull()
                 // Mang mã HTTP (NetErrors.Refused): 401 = máy kia đã thôi ghép máy này, giao diện nói đúng thế thay vì "không kết nối được".
                 throw NetErrors.Refused(code, message?.ifBlank { null } ?: "Máy tính trả lỗi $code")
+            }
+            if (firstUse == null && connection is HttpsURLConnection) {
+                val credential = token ?: if (auth) SyncLink.token(context) else ""
+                val seen = Pin.peerFingerprint(connection)
+                PeerRouting.remember(context, credential, runCatching { JSONObject(text) }.getOrNull(), seen,
+                    if (URL(root).host == "127.0.0.1" && BluetoothLink.addressOfPort(URL(root).port) != null) "bluetooth" else URL(root).authority)
+            }
+            if (firstUse == null && path.substringBefore('?').endsWith("/state")) {
+                return JSONObject(text).apply { remove("addresses") }.toString()
             }
             return text
         } finally {

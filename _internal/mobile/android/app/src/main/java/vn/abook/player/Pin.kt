@@ -2,6 +2,7 @@ package vn.abook.player
 
 import android.content.Context
 import java.net.Socket
+import java.net.InetSocketAddress
 import java.security.MessageDigest
 import java.security.KeyStore
 import java.security.cert.CertificateException
@@ -67,26 +68,38 @@ object Pin {
 
     @Volatile private var appContext: Context? = null
     private var installed = false
+    private val requestPin = ThreadLocal<String>()
+
+    /** Scope Media3's default socket factory to the selected peer, even when peers have overlapping/stale addresses. */
+    internal fun <T> forPeer(expected: String, block: () -> T): T {
+        val previous = requestPin.get()
+        requestPin.set(expected)
+        try { return block() }
+        finally { if (previous == null) requestPin.remove() else requestPin.set(previous) }
+    }
 
     /**
      * Vân tay phải gặp ở `host:port`, hay null khi đó không phải thiết bị đã ghép (đi đường kiểm của hệ thống). Chuỗi rỗng =
      * thiết bị đã ghép mà không có vân tay - không chứng chỉ nào khớp.
      */
     fun expected(host: String?, port: Int): String? {
+        requestPin.get()?.let { return it }
         val context = appContext ?: return null
         if (host == null) return null
         val main = SyncLink.prefs(context)
-        val (lan, bluetooth) = SyncLink.routes(main)
+        val mainPeer = PeerRouting.mainPrefs(main)
+        val lan = PeerAddresses.ordered(mainPeer)
+        val bluetooth = PeerRouting.bluetooth(mainPeer)
         val mainPrint = main.getString("fingerprint", "").orEmpty()
-        if ("$host:$port" in lan) return mainPrint
+        if (PeerAddresses.endpoint(host.trim('[', ']'), port) in lan) return mainPrint
         // Đường hầm Bluetooth: kết nối vào cổng cục bộ 127.0.0.1:<cổng> của máy nào thì đúng chứng chỉ của máy ấy.
         val tunnel = if (host == "127.0.0.1") BluetoothLink.addressOfPort(port) else null
         if (tunnel != null && tunnel == bluetooth) return mainPrint
         val peers = Peers.all(context)
         for (key in peers.keys()) {
             val peer = peers.getJSONObject(key)
-            val at = peer.optString("host")
-            val here = if (tunnel != null) at == "bt:$tunnel" else at == host && peer.optInt("port", 47630) == port
+            val here = if (tunnel != null) PeerRouting.bluetooth(peer) == tunnel
+                else PeerAddresses.endpoint(host.trim('[', ']'), port) in PeerAddresses.ordered(peer)
             if (here) return peer.optString("fingerprint")
         }
         return null
@@ -164,4 +177,45 @@ object Pin {
     /** Vân tay chứng chỉ máy kia đã đưa ra trong kết nối này (sau khi đã nhận trả lời). */
     fun peerFingerprint(connection: HttpsURLConnection): String =
         (connection.serverCertificates.firstOrNull() as? X509Certificate)?.let { fingerprint(it.encoded) } ?: ""
+
+    /** Explicit identity for requests and discovery, including an address not in the store yet. */
+    private fun contextFor(expected: String): SSLContext {
+        val trust = object : X509TrustManager {
+            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) = Pin.check(chain, expected)
+            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) { throw CertificateException("client") }
+            override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
+        }
+        return SSLContext.getInstance("TLS").apply { init(null, arrayOf<TrustManager>(trust), null) }
+    }
+
+    internal fun pin(connection: HttpsURLConnection, expected: String) {
+        connection.sslSocketFactory = contextFor(expected).socketFactory
+        connection.hostnameVerifier = javax.net.ssl.HostnameVerifier { _, _ -> true }
+    }
+
+    internal fun probeSocket(socket: SSLSocket, address: () -> InetSocketAddress,
+                             timeoutMs: Int = 1500, nanoTime: () -> Long = System::nanoTime) {
+        val deadline = nanoTime() + timeoutMs * 1_000_000L
+        fun left(): Int {
+            val nanos = deadline - nanoTime()
+            if (nanos <= 0) throw java.net.SocketTimeoutException("Hết thời gian nối TLS")
+            return ((nanos + 999_999L) / 1_000_000L).toInt()
+        }
+        socket.use {
+            val resolved = address() // DNS time is part of the same deadline.
+            it.connect(resolved, left())
+            it.soTimeout = left()
+            it.startHandshake()
+            left()
+        }
+    }
+
+    internal fun probe(target: String, expected: String, onMismatch: ((Throwable) -> Unit)? = null): Boolean {
+        if (expected.isBlank()) return false
+        return runCatching {
+            val (host, port) = PeerAddresses.split(target)
+            probeSocket(contextFor(expected).socketFactory.createSocket() as SSLSocket, { InetSocketAddress(host, port) })
+        }.onFailure { if (isCertificateProblem(it)) onMismatch?.invoke(it) }.isSuccess
+    }
+
 }
