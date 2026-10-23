@@ -28,6 +28,24 @@ from ..io_utils import atomic_write_bytes
 
 COVER_FILE = "cover.jpg"
 META_FILE = "cover.json"
+# Màu bìa chỉ là #rrggbb (đúng dạng `dominant_color` ghi và lớp sửa bìa nhận). Trường này đi theo file sách / manifest của người khác rồi thành
+# CSS ở giao diện: để nguyên chuỗi thì `url(https://…)` làm trình duyệt tự gọi máy lạ mỗi lần hiện bìa (soát a109 F1).
+COLOR = re.compile(r"#[0-9a-f]{6}")
+
+
+def clean_color(value: Any) -> str:
+    """`value` nếu là màu #rrggbb (chữ thường, bỏ khoảng trắng hai đầu), không thì ''."""
+    text = value.strip().lower() if isinstance(value, str) else ""
+    return text if COLOR.fullmatch(text) else ""
+
+
+def stored_meta(cover: dict[str, Any]) -> dict[str, Any]:
+    """Phần `cover` của một book.json / manifest từ nơi khác -> nội dung `cover.json` (màu chỉ khi hợp lệ; cỡ khi có)."""
+    meta = {key: cover[key] for key in ("width", "height") if cover.get(key)}
+    color = clean_color(cover.get("color"))
+    if color:
+        meta["color"] = color
+    return meta
 MAX_SIDE = 1400
 MAX_UPLOAD_BYTES = 16 * 1024 * 1024
 # Ảnh nén nhỏ nhưng nhiều điểm ảnh (PNG 8000x8000 chỉ vài MB) giải nén ra hàng trăm MB mỗi bản; vài lượt cùng lúc là chạm 1 GB.
@@ -85,7 +103,7 @@ def cover_meta(project_root: Path) -> dict[str, Any] | None:
         meta = {}
     return {
         "version": file_version(path),
-        "color": str(meta.get("color") or ""),
+        "color": clean_color(meta.get("color")),
         "width": int(meta.get("width") or 0),
         "height": int(meta.get("height") or 0),
     }

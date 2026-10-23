@@ -130,3 +130,12 @@ export interface CoverImage {
   height?: number;
   version?: number;
 }
+
+/**
+ * Màu bìa nhận từ file sách / máy khác: chỉ #rrggbb (như webui/covers.py). Chuỗi khác - nhất là `url(https://…)` - sẽ thành CSS
+ * làm WebView tự gọi máy lạ mỗi lần hiện bìa, nên bỏ và dùng màu mặc định.
+ */
+export function coverColor(value: unknown): string {
+  const text = typeof value === "string" ? value.trim().toLowerCase() : "";
+  return /^#[0-9a-f]{6}$/.test(text) ? text : "";
+}

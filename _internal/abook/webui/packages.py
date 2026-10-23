@@ -516,7 +516,7 @@ def _write_cover_meta(target: Path, book: dict[str, Any]) -> None:
     """Màu và cỡ bìa đi trong `book.json`; `covers.cover_meta` đọc chúng từ `cover.json` như ở dự án."""
     cover = book.get("cover")
     if isinstance(cover, dict) and (target / covers.COVER_FILE).is_file():
-        meta = {key: cover[key] for key in ("color", "width", "height") if cover.get(key)}
+        meta = covers.stored_meta(cover)  # màu trong file của người khác chỉ nhận dạng #rrggbb, không thành CSS tuỳ ý
         atomic_write_bytes(target / covers.META_FILE, json.dumps(meta).encode("utf-8"))
 
 

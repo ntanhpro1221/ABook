@@ -284,6 +284,7 @@ object BookFileImport {
             if (version < 1) throw Refused("File sách có phiên bản định dạng không hợp lệ.")
             if (version > FORMAT_VERSION) throw Refused("Sách này được làm bằng bản app mới hơn. Hãy cập nhật app để mở.")
             checkShape(book)
+            BookEdits.scrubCoverColor(book) // màu bìa chỉ #rrggbb: `url(...)` trong file của người khác sẽ thành CSS gọi máy lạ
             // Thư mục phần chỉ có từ phiên bản 3, lớp sửa của người nghe từ phiên bản 4.
             if (!project) for (name in names - DESCRIPTIONS) if (!contentPattern(version).matches(name)) throw Refused("Gói có mục lạ: $name")
             val files = pack.optJSONObject("files") ?: throw Refused("Danh sách file trong sách không khớp nội dung gói.")

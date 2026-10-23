@@ -3743,7 +3743,7 @@ class Handler(BaseHTTPRequestHandler):
                 continue
             kind, book, number, name = found
             if kind == remote_sources.UPLOAD:
-                out[str(item)] = str(remote_sources.upload_path(name, self._uploads()))
+                out[str(item)] = str(self._upload_source(name))
                 continue
             files = listed.get((kind, book))
             if files is None:
@@ -3752,6 +3752,24 @@ class Handler(BaseHTTPRequestHandler):
                 raise ApiError(HTTPStatus.CONFLICT, "Các chương của sách ấy đã đổi từ lúc bạn mở trang này - mở lại trang rồi làm lại.")
             out[str(item)] = str(files[number])
         return out
+
+    def _upload_source(self, relative: str) -> Path:
+        """Đường thật của `up:<relative>`, đã kiểm nằm trong "Nguồn tải lên" của thư viện sau khi phân giải liên kết / junction (đích là thư mục thì
+        cả các liên kết con trực tiếp của nó): 403 kèm lý do, trước khi chạm vào file."""
+        try:
+            path = remote_sources.upload_path(relative, self._uploads())
+            if path.is_dir():
+                actions.check_upload_folder(self._uploads(), path)
+            return path
+        except actions.UploadEscape as error:
+            raise ApiError(HTTPStatus.FORBIDDEN, str(error)) from error
+
+    def _upload_root(self, *folders: str) -> Path:
+        """Thư mục ghi của nguồn tải lên (`folders` dưới "Nguồn tải lên"), đã phân giải và kiểm không ra ngoài thư viện."""
+        try:
+            return actions.contained_upload(self._uploads(), self._uploads().joinpath(*folders))
+        except actions.UploadEscape as error:
+            raise ApiError(HTTPStatus.FORBIDDEN, str(error)) from error
 
     def _uploads(self) -> Path:
         """Thư mục các chương thiết bị ở xa gửi lên / tách ra (actions.UPLOAD_FOLDER trong thư viện)."""
@@ -5919,7 +5937,7 @@ class Handler(BaseHTTPRequestHandler):
         body = self._body()
         # EPUB tách vào thư viện (như "Nguồn tải lên"), không ghi cạnh file của người dùng. Từ xa: tách NGAY trong thư mục tải lên, để
         # chương của nó cũng có tham chiếu `up:...` mà thiết bị gửi lại khi tạo sách.
-        epub_root = self._uploads() / actions.UPLOAD_EPUB_FOLDER if self._remote() else self.app.library.root / "Nguồn EPUB"
+        epub_root = self._upload_root(actions.UPLOAD_EPUB_FOLDER) if self._remote() else self.app.library.root / "Nguồn EPUB"
         result = actions.scan_inputs(self._source_paths(body.get("paths")), epub_root=epub_root)
         result["existing"] = self.app.existing_projects([str(row.get("sha256") or "") for row in result["files"]])
         self._send_json(HTTPStatus.OK, self._hide_sources(result, body.get("paths")) if self._remote() else result)
@@ -5937,7 +5955,7 @@ class Handler(BaseHTTPRequestHandler):
         if not source.is_file() or source.suffix.casefold() != ".txt":
             raise ApiError(HTTPStatus.BAD_REQUEST, "Chỉ tách được một file .txt có sẵn trên máy này")
         library = Path(self.app.preferences.get()["libraryRoot"])
-        root = library / (actions.UPLOAD_FOLDER if self._remote() else actions.SPLIT_FOLDER)
+        root = self._upload_root() if self._remote() else library / actions.SPLIT_FOLDER
         try:
             folder = txt_split.split(source, root, str(body.get("title") or ""))
         except (OSError, ValueError) as error:
@@ -5953,8 +5971,11 @@ class Handler(BaseHTTPRequestHandler):
             data = base64.b64decode(str(body.get("data", "")), validate=True)
         except (ValueError, binascii.Error) as error:
             raise ApiError(HTTPStatus.BAD_REQUEST, "Dữ liệu file không hợp lệ") from error
-        target = actions.upload_source(Path(self.app.preferences.get()["libraryRoot"]), str(body.get("folder", "")),
-                                       str(body.get("name", "")), data)
+        try:
+            target = actions.upload_source(Path(self.app.preferences.get()["libraryRoot"]), str(body.get("folder", "")),
+                                           str(body.get("name", "")), data)
+        except actions.UploadEscape as error:
+            raise ApiError(HTTPStatus.FORBIDDEN, str(error)) from error
         # `path`: file lẻ được quét như khi chọn từng file (tách một file cả truyện thì thư mục chương thay chỗ nó).
         self._send_json(HTTPStatus.OK, {"folder": self._source_ref(target.parent), "path": self._source_ref(target)})
 

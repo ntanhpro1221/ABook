@@ -804,7 +804,7 @@ class LibraryPlugin : Plugin() {
      * thì để lượt tải ghi book.json mới (soát a97 V1).
      */
     private fun refreshMetadata(id: String, entry: JSONObject, source: String? = null, remoteId: String? = null) {
-        if (id in BookDownloads.active) return
+        if (BookDownloads.isActive(context, id)) return
         val local = Store.rawManifest(id) ?: return
         if (!StreamRefresh.metadataStale(local, entry)) return
         val remote = remoteId ?: id
@@ -1677,7 +1677,7 @@ class LibraryPlugin : Plugin() {
     fun deleteBook(call: PluginCall) = background(call) {
         // Thiếu mã thì từ chối (Store.deletableBookDir) - trước đây `?: ""` biến thành xoá CẢ thư mục sách.
         // Cuốn đang có lượt tải chạy thì không dời thư mục dưới chân nó (màn Tải sách tắt nút Xoá; đây là lớp chặn cuối, soát a97 V6).
-        require(call.getString("id").orEmpty() !in BookDownloads.active) { "Đang tải cuốn này - huỷ tải rồi mới xoá được." }
+        require(!BookDownloads.isActive(context, call.getString("id").orEmpty())) { "Đang tải cuốn này - huỷ tải rồi mới xoá được." }
         // Cuốn nằm chờ UNDO_SECONDS giây (TrashPending) rồi mới xoá hẳn; `undo` là mã để "Hoàn tác" (không có khi xoá thẳng).
         val undo = Store.holdBook(call.getString("id").orEmpty())
         // Chương tạm của "Xuất sách nói" bỏ dở đi theo sách khi sách bị xoá hẳn (ListenExports.sweep - cuốn đang xuất không bị đụng).

@@ -20,6 +20,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: đang xuất MP3, M4B hay sách nói mà app bị đóng hoặc nạp lại, mở lại thì thanh tiến độ và nút "Dừng" vẫn còn, không phải đoán việc xuất đã chạy tới đâu.
 - Điện thoại: xuất MP3 bị hệ thống dừng giữa chừng rồi làm tiếp thì ghi tiếp vào đúng thư mục đang dở, không tạo thêm "Tên (2)" bên cạnh.
 - Điện thoại: bạn dừng việc xuất ở trình quản lý tác vụ của Android thì việc dừng hẳn, không tự chạy lại; Android 15 dừng việc xuất sau 6 giờ thì app báo rõ để bạn bấm "Xuất lại" làm tiếp.
+- Điện thoại: Android dừng việc xuất hay việc tải sách sau 6 giờ thì việc đó kết thúc hẳn, không tự chạy lại ngay sau khi app đã dọn file dở; bạn chỉ cần bấm Xuất lại hay Tải để làm tiếp.
+- Điện thoại: tải sách đã xong hay bị lỗi thì cuốn đó không còn bị coi là "đang tải" - bạn xoá được cuốn ấy và thông tin của nó vẫn được làm mới.
+- Điện thoại: mở lại app đúng lúc việc xuất MP3, M4B hay sách nói vừa xong thì không còn hiện lại thanh tiến độ hay nút Dừng cho việc đã xong.
 - Điện thoại: tải sách về máy chạy nền như việc xuất sách - có thông báo tiến độ, nút "Dừng", tắt màn hình hay đóng app vẫn tải tiếp và mở lại thấy đúng tiến độ.
 - Điện thoại: đổi cỡ chữ, chế độ tối hay xoay màn hình ở màn Studio không còn làm màn hình mở lại từ đầu.
 - Điện thoại: chuyển sang máy mới hay khôi phục từ bản sao lưu không mang theo mã ghép nối và danh sách máy được chia sẻ; sách và chỗ nghe dở vẫn đi theo.
@@ -32,6 +35,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: “Nghe từ đây” và “Nghe từ câu này” vào đúng câu bạn chọn, kể cả khi cuốn sách dùng giọng khác.
 - Điện thoại: dấu trang sách chữ giữ câu đang nghe cả khi bạn chưa mở văn bản hoặc đặt dấu từ màn hình khoá; vị trí chữ được giữ khi đồng bộ và hoàn tác xoá.
 - Điện thoại: widget cỡ vừa có đủ nút lùi, phát/dừng, tới và hẹn giờ, kèm tên sách/chương; thu nhỏ vẫn giữ nút phát/dừng trọn vẹn, nới rộng có thêm bìa lớn.
+
+### Bảo mật
+- Máy tính và điện thoại: sách do người khác gửi không còn làm máy bạn tự gọi một địa chỉ lạ chỉ vì hiện bìa trong thư viện; bìa của sách ấy dùng màu mặc định.
+- Máy tính: thư mục trong "Nguồn tải lên" là một liên kết trỏ ra ngoài thư viện thì thiết bị gửi sách từ xa không còn đọc hay ghi qua nó được; app báo "Thư mục nguồn trỏ ra ngoài thư viện của bạn" và bạn chép file vào thư viện rồi gửi lại.
+- Máy tính và điện thoại: khi bạn phát lên loa hay TV, máy lạ trong cùng mạng không thể mở thật nhiều kết nối treo để làm nghẽn cổng phát; kết nối chờ quá lâu bị đóng, chương dài đang phát vẫn không bị cắt.
 
 ## [0.4.131] - 2026-10-23
 

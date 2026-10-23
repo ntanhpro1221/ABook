@@ -24,6 +24,44 @@ import java.util.concurrent.locks.ReentrantLock
  * hệ thống giết tiến trình vẫn tải tiếp (phần dở `.part` nối lại bằng Range, [PartResume]). Thông báo có tiến độ và nút "Huỷ". Giao diện nghe tiến độ qua sự kiện
  * "download" của EbookLibrary (app-level, downloads.ts), không giữ lời gọi nào chờ.
  */
+/**
+ * Cuốn -> mã việc tải đang giữ nó. Đăng ký và kết thúc nằm chung một khoá và mã việc đã kết thúc được nhớ: `start` / `restore` chụp danh sách việc
+ * rồi mới ghi, nên việc kết thúc xen vào giữa không thể bị ghi lại thành "đang tải" (soát a111 R2).
+ */
+internal class ActiveRuns {
+    val map: MutableMap<String, String> = ConcurrentHashMap()
+    private val ended = LinkedHashSet<String>()
+
+    @Synchronized
+    fun add(id: String, run: String): Boolean {
+        if (run in ended) return false
+        map[id] = run
+        return true
+    }
+
+    @Synchronized
+    fun addIfAbsent(id: String, run: String): Boolean {
+        if (run in ended) return false
+        map.putIfAbsent(id, run)
+        return true
+    }
+
+    /** Việc `run` đã kết thúc: gỡ khỏi cuốn `id` (true nếu nó đang là việc hiện tại của cuốn) và nhớ để không ai ghi lại. */
+    @Synchronized
+    fun end(id: String, run: String): Boolean {
+        ended.add(run)
+        if (ended.size > MAX_ENDED) ended.remove(ended.first())
+        return map.remove(id, run)
+    }
+
+    companion object {
+        private const val MAX_ENDED = 256
+
+        /** Trạng thái WorkManager của việc: còn sống (xếp hàng, đang chạy, chờ) thì true; không còn bản ghi hay đã kết thúc thì false. */
+        fun alive(state: WorkInfo.State?): Boolean = state != null && !state.isFinished
+    }
+}
+
 object BookDownloads {
     private const val TAG = "book-download"
     private const val KEY_BOOK = "bookId"
@@ -37,7 +75,21 @@ object BookDownloads {
     @Volatile var events: ((JSONObject) -> Unit)? = null
 
     /** Cuốn có lượt tải (đang xếp hàng hay đang chạy) -> mã việc: không xoá thư mục của nó, không sửa book.json của nó từ chỗ khác. */
-    val active: MutableMap<String, String> = ConcurrentHashMap()
+    internal val runs = ActiveRuns()
+    val active: MutableMap<String, String> get() = runs.map
+
+    /**
+     * Cuốn có lượt tải THẬT SỰ còn sống: mục `active` mà không phải việc đang chạy ở đây thì đối chiếu với WorkManager và bỏ nếu việc đã kết thúc
+     * (mục sống lại sau khi tải xong sẽ chặn xoá cuốn và làm mới mô tả suốt phiên - soát a111 R2). Gọi từ luồng I/O.
+     */
+    fun isActive(context: Context, id: String): Boolean {
+        val run = runs.map[id] ?: return false
+        if (run in running) return true
+        val state = runCatching { WorkManager.getInstance(context).getWorkInfoById(UUID.fromString(run)).get()?.state }.getOrNull()
+        if (ActiveRuns.alive(state)) return true
+        runs.end(id, run)
+        return false
+    }
 
     /** Mã việc người nghe bấm Huỷ: việc dừng ở khối kế, giữ phần đã về (`.part`, file đã đủ) để lần bấm Tải sau tải tiếp. */
     private val cancelledRuns: MutableSet<String> = ConcurrentHashMap.newKeySet()
@@ -105,8 +157,9 @@ object BookDownloads {
         // Đã có việc tải cuốn này (xếp hàng hay đang chạy) thì giữ nó; việc đã huỷ / xong thì là việc mới.
         val queued = WorkManager.getInstance(context).enqueueUniqueWork(work(id), ExistingWorkPolicy.KEEP, request)
         runCatching { queued.result.get() }
-        val current = WorkManager.getInstance(context).getWorkInfosForUniqueWork(work(id)).get().firstOrNull { !it.state.isFinished }?.id ?: request.id
-        active[id] = current.toString()
+        // Không còn việc chưa kết thúc (tải xong ngay, hay lỗi) thì không có gì để ghi; ghi một run đã chết là chặn cuốn ấy suốt phiên (soát a111 R2).
+        val current = WorkManager.getInstance(context).getWorkInfosForUniqueWork(work(id)).get().firstOrNull { !it.state.isFinished }?.id ?: return
+        runs.add(id, current.toString())
     }
 
     /** Nút Huỷ khi đang tải một cuốn (soát a68 lỗi 7). Gọi từ luồng I/O. */
@@ -115,7 +168,7 @@ object BookDownloads {
         cancelledRuns.add(run)
         runCatching { ExportCancellation.cancel(context, UUID.fromString(run)) }
         // Việc còn xếp hàng chưa chạy: WorkManager bỏ nó, không có doWork nào báo lại.
-        if (run !in running && active.remove(id, run)) {
+        if (run !in running && runs.end(id, run)) {
             cancelledRuns.remove(run)
             emit(JSONObject().put("bookId", id).put("cancelled", true))
         }
@@ -127,14 +180,14 @@ object BookDownloads {
         val works = runCatching { WorkManager.getInstance(context).getWorkInfos(query).get() }.getOrDefault(emptyList())
         for (info in works) {
             val book = info.tags.firstOrNull { it.startsWith("book:") }?.removePrefix("book:") ?: continue
-            active.putIfAbsent(book, info.id.toString())
+            runs.addIfAbsent(book, info.id.toString()) // việc đã kết thúc sau lúc chụp danh sách thì ActiveRuns từ chối
         }
     }
 
     internal fun inputs(data: Data) = Triple(data.getString(KEY_BOOK), data.getString(KEY_SOURCE), data.getString(KEY_REMOTE))
 
     internal fun enter(id: String, run: String) {
-        active[id] = run
+        runs.add(id, run)
         running += run
     }
 
@@ -143,7 +196,7 @@ object BookDownloads {
         running -= run
         if (keep) return false
         cancelledRuns -= run
-        return active.remove(id, run)
+        return runs.end(id, run)
     }
 
     internal fun foreground(context: Context, work: UUID, bookId: String, title: String, fraction: Double): ForegroundInfo =
@@ -343,6 +396,7 @@ class BookDownloadWorker(context: Context, params: WorkerParameters) : Worker(co
     override fun doWork(): Result {
         val context = applicationContext
         Store.init(context)
+        if (ExportCancellation.cancelled(context, id)) return Result.failure() // việc đã kết thúc hẳn (huỷ / hết 6 giờ): không I/O nào
         val (bookId, source, remote) = BookDownloads.inputs(inputData)
         if (bookId == null) return Result.failure()
         val run = id.toString()
@@ -382,6 +436,7 @@ class BookDownloadWorker(context: Context, params: WorkerParameters) : Worker(co
         } catch (stopped: BookDownloads.DownloadCancelled) {
             return cancelled()
         } catch (stopped: BookDownloads.Interrupted) {
+            Mp3Exports.endIfTimedOut(this) // hết 6 giờ: kết thúc HẲN việc (WorkManager không chạy lại) TRƯỚC khi dọn gì
             // Hệ thống dừng việc (không phải người nghe): WorkManager chạy lại, phần đã về nối tiếp bằng Range.
             if (Mp3Exports.stoppedBySystem(this)) {
                 retrying = true
@@ -390,6 +445,7 @@ class BookDownloadWorker(context: Context, params: WorkerParameters) : Worker(co
             if (Mp3Exports.timedOut(this)) return report(BookDownloads.TIMEOUT_NOTE, null)
             return cancelled()
         } catch (error: Exception) {
+            Mp3Exports.endIfTimedOut(this) // hết 6 giờ: kết thúc HẲN việc (WorkManager không chạy lại) TRƯỚC khi dọn gì
             if (isStopped && Mp3Exports.stoppedBySystem(this)) {
                 retrying = true
                 return Result.retry()

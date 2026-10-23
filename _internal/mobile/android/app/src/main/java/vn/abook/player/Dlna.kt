@@ -24,7 +24,11 @@ import java.net.URL
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
@@ -364,7 +368,12 @@ object Dlna {
     class Media(private val bind: String = "0.0.0.0") {
         private val files = ConcurrentHashMap<String, Pair<File, Long>>()
         private val random = SecureRandom()
-        private val workers = Executors.newCachedThreadPool()
+        // Có trần (soát a109 F3): hàng đợi đầy hay một IP mở quá nhiều thì đóng socket ngay, không cấp thêm thread.
+        private val workers = ThreadPoolExecutor(
+            ConnectionBudget.WORKERS, ConnectionBudget.WORKERS, 30, TimeUnit.SECONDS, ArrayBlockingQueue<Runnable>(ConnectionBudget.QUEUE),
+            { task -> Thread(task, "dlna-media-worker").apply { isDaemon = true } }, ThreadPoolExecutor.AbortPolicy(),
+        ).apply { allowCoreThreadTimeOut(true) }
+        private val budget = ConnectionBudget()
         private var server: ServerSocket? = null
 
         @Synchronized
@@ -398,15 +407,35 @@ object Dlna {
         private fun accept(socket: ServerSocket) {
             while (!socket.isClosed) {
                 val client = runCatching { socket.accept() }.getOrNull() ?: break
-                workers.execute { runCatching { client.use(::serve) } }
+                val who = client.inetAddress?.hostAddress.orEmpty()
+                val arrived = System.currentTimeMillis()
+                if (!budget.take(who)) {
+                    runCatching { client.close() }
+                    continue
+                }
+                try {
+                    workers.execute {
+                        try {
+                            runCatching { client.use { serve(it, arrived) } }
+                        } finally {
+                            budget.release(who)
+                        }
+                    }
+                } catch (rejected: RejectedExecutionException) {
+                    budget.release(who)
+                    runCatching { client.close() }
+                }
             }
         }
 
-        private fun serve(client: Socket) {
-            client.soTimeout = 15_000
+        private fun serve(client: Socket, arrived: Long) {
             val input = client.getInputStream().buffered()
             val head = StringBuilder()
             while (!head.endsWith("\r\n\r\n")) {
+                // Deadline TỔNG của header, tính từ lúc nhận kết nối (kể cả thời gian chờ trong hàng đợi): đọc từng byte chậm vẫn bị cắt đúng hạn.
+                val left = ConnectionBudget.headerRemainingMs(arrived, System.currentTimeMillis())
+                if (left <= 0) return
+                client.soTimeout = left.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
                 val byte = input.read()
                 if (byte < 0 || head.length > 16 * 1024) return
                 head.append(byte.toChar())
@@ -422,6 +451,7 @@ object Dlna {
             val entry = token?.let { files[it] }
             val output = client.getOutputStream()
             if (entry == null || entry.second < System.currentTimeMillis() || !entry.first.isFile) return status(output, 404)
+            client.soTimeout = STREAM_TIMEOUT_MS // mã đúng: từ đây chỉ còn timeout của từng lần gửi, chương dài không bị cắt
             send(output, entry.first, headers["range"], parts[0] == "HEAD")
         }
 
@@ -487,6 +517,8 @@ object Dlna {
 
         companion object {
             const val TTL_MS = 12 * 3600 * 1000L
+            /** Mỗi lần gửi một khúc sau khi mã đã đúng; chương dài không bị cắt, thiết bị đứng hình thì thôi. */
+            const val STREAM_TIMEOUT_MS = 120_000
         }
     }
 }
