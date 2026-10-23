@@ -11,12 +11,13 @@ vi.mock("@/studio/data", async (original) => ({
   useVoices: () => ({ data: [] }),
 }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
-vi.mock("@/listen/VoiceSettings", () => ({ VoiceSettings: () => null }));
+vi.mock("@/listen/VoiceSettings", () => ({ VoiceSettings: () => null, useDefaultVoiceName: () => "" }));
 vi.mock("@/studio/musicImport", () => ({ hasNativeMusicImport: () => true, importMusic: vi.fn() }));
 vi.mock("@/android/plugins", () => ({ EbookPlayer: { configure: vi.fn(), listenPrefs: vi.fn() }, EbookLibrary: { systemBars: vi.fn() }, ReadAloud: {} }));
 vi.mock("@/android/updates", async (original) => ({ ...(await original<typeof import("@/android/updates")>()), useAppUpdate: () => ({ current: null, update: null }) }));
 import { SettingsScreen as DesktopSettings } from "@/desktop/SettingsScreen";
-import { AboutGroup } from "@/android/SettingsScreen";
+import { AboutBlock } from "@/android/SettingsScreen";
+import { SettingsAt } from "./settingsAt";
 import { MyMusicSection } from "@/listen/MyMusic";
 
 // Trang Cài đặt ở 320 px, chữ 32 px không tràn ngang (soát a102, tiếp V5 của a100): nút và liên kết dài xuống dòng, chữ không bị cắt.
@@ -35,7 +36,7 @@ const render = (node: React.ReactElement) => renderToStaticMarkup(<QueryClientPr
 /** Thẻ mở của phần tử `tag` mà chữ (sau các thẻ mở / biểu tượng lồng đầu) bắt đầu bằng `text`. */
 function opening(html: string, tag: string, text: string): string {
   for (const match of html.matchAll(new RegExp(`<${tag}(?=[\\s>])[^>]*>`, "g"))) {
-    const rest = html.slice(match.index + match[0].length).replace(/^(?:<svg[^>]*>.*?<\/svg>|<[^/][^>]*>)*/s, "");
+    const rest = html.slice(match.index + match[0].length).split(`</${tag}>`)[0].replace(/<[^>]+>/g, "").trim();
     if (rest.startsWith(text)) return match[0];
   }
   throw new Error(`không thấy <${tag}> "${text}": ${html.slice(html.indexOf(text) - 300, html.indexOf(text) + 40)}`);
@@ -50,7 +51,7 @@ function expectWraps(tag: string) {
 }
 
 describe("Cài đặt trên máy tính: không tràn ngang ở 320 px / chữ 32 px", () => {
-  const html = render(<DesktopSettings />);
+  const html = render(<SettingsAt group="advanced" screen={<DesktopSettings />} />);
 
   it("nút Đổi thư mục xuống dòng và hàng thư mục được xuống hàng", () => {
     const button = opening(html, "button", "Đổi thư mục");
@@ -71,14 +72,14 @@ describe("Cài đặt trên máy tính: không tràn ngang ở 320 px / chữ 32
 
 describe("Cài đặt trên điện thoại: không tràn ngang", () => {
   it("dòng Mã nguồn mở bẻ được địa chỉ github trong lời giải thích", () => {
-    const html = render(<AboutGroup version="0.0.0" />);
+    const html = render(<AboutBlock version="0.0.0" />);
     const hint = /<div class="([^"]*)">Giấy phép MIT - github\.com\/ntanhpro1221\/ABook<\/div>/.exec(html);
     expect(hint, "không thấy lời giải thích").not.toBeNull();
     expect(hint![1]).toMatch(/\[overflow-wrap:anywhere\]/);
   });
 
   it("hàng Thành phần bên thứ ba có chữ co lại được", () => {
-    const html = render(<AboutGroup version="0.0.0" />);
+    const html = render(<AboutBlock version="0.0.0" />);
     expect(opening(html, "button", "Thành phần bên thứ ba")).toMatch(/\bmin-w-0\b|\bflex\b/);
     expect(html).toMatch(/<span class="[^"]*\bmin-w-0\b[^"]*"><span class="[^"]*\[overflow-wrap:anywhere\][^"]*">Thành phần bên thứ ba/);
   });

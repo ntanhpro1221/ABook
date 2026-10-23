@@ -1,7 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { LoadingCrossfade } from "@/shared/MotionPresence";
 import * as Popover from "@radix-ui/react-popover";
 import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
@@ -239,15 +241,16 @@ export function ReaderScreen(edit: SentenceEditing) {
     };
   }, [book, isLoading]);
 
-  if (!book || isLoading) {
-    return (
+  const placeholder = (
       <div className="mx-auto max-w-[68ch] space-y-4 px-6 pt-10">
         <Skeleton className="h-8 w-2/3" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-11/12" />
       </div>
-    );
-  }
+  );
+  const content = () => {
+    if (!book) return null;
+
   if (!chapter || !script) {
     return (
       <EmptyState icon={BookOpenText} title="Không mở được chương này" className="mt-20" action={<Button onClick={() => navigate(`/book/${id}`)}>Về trang sách</Button>}>
@@ -298,7 +301,7 @@ export function ReaderScreen(edit: SentenceEditing) {
   const name = chapter.subtitle || chapter.title;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="motion-reveal flex h-full flex-col">
       <header ref={header} className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg/95 px-3 backdrop-blur max-sm:h-auto max-sm:flex-wrap max-sm:gap-y-0 sm:px-6">
         <IconButton label="Về trang sách" icon={ArrowLeft} onClick={() => navigate(`/book/${id}`)} className={TOUCH} />
         {/* Điện thoại: sáu nút đã chiếm gần hết bề ngang, tên chương bị cụt còn vài chữ - tên xuống hàng riêng dưới các nút (soát UX a11). */}
@@ -419,4 +422,6 @@ export function ReaderScreen(edit: SentenceEditing) {
       {menu.dialogs}
     </div>
   );
+  };
+  return <LoadingCrossfade loading={!book || isLoading} placeholder={placeholder} className="h-full"><MotionRegion>{content()}</MotionRegion></LoadingCrossfade>;
 }

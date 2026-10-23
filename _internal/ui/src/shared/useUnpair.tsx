@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { UnpairDialog } from "./UnpairDialog";
 import { unpairCopy, unpairDone, type UnpairChoice, type UnsentEdits } from "./unpair";
 

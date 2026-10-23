@@ -1,9 +1,11 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { LoadingCrossfade } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { holderName } from "@/shared/editsSync";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
@@ -118,7 +120,7 @@ function ChapterRow({
         </div>
         {heard > 0 && heard < 1 && (
           <div {...heardBarProps(heard)} className="mt-1.5 h-[3px] w-24 overflow-hidden rounded-full bg-line-strong">
-            <div className="h-full bg-accent" style={{ width: `${heard * 100}%` }} />
+            <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${heard * 100 / 100})` }} />
           </div>
         )}
       </button>
@@ -129,7 +131,7 @@ function ChapterRow({
               <button
                 type="button"
                 aria-label={`Tuỳ chọn ${chapter.fullTitle}`}
-                className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px]"
+                className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px]"
               >
                 <MoreHorizontal className="size-4" />
               </button>
@@ -167,16 +169,15 @@ function ChapterRow({
 function BookmarksTab({ book }: { book: ListenBook }) {
   const playBook = usePlayListenBook();
   const navigate = useNavigate();
-  if (!book.state.bookmarks.length) {
-    return (
+  const empty = !book.state.bookmarks.length ? (
       <EmptyState icon={BookOpenText} title="Chưa có dấu trang" className="mt-2">
-        Khi đang nghe, bấm biểu tượng dấu trang (hoặc phím B) để đánh dấu đoạn muốn quay lại. Khi đang đọc, chọn một câu rồi bấm “Đặt dấu trang ở câu này”.
+        Bấm biểu tượng dấu trang (phím B) khi nghe, hay chọn một câu khi đọc.
       </EmptyState>
-    );
-  }
+  ) : null;
   return (
-    <div className="mt-3 -mx-3">
+    <MotionRegion as="div" className="mt-3 -mx-3">
       <BookmarkList
+        empty={empty}
         bookId={book.id}
         chapters={book.chapters ?? []}
         marks={book.state.bookmarks}
@@ -187,7 +188,7 @@ function BookmarksTab({ book }: { book: ListenBook }) {
           else void playBook(book, mark.chapterId, mark.seconds);
         }}
       />
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -262,7 +263,7 @@ export function PersonRow({
     .toUpperCase();
   return (
     // min-w-0: ô lưới mặc định không co dưới chiều rộng nội dung - tên dài từng đẩy "Đổi giọng" ra ngoài màn 375px.
-    <div className="flex min-w-0 items-center gap-3 rounded-xl border border-line bg-panel p-3">
+    <MotionRegion as="div" className="flex min-w-0 items-center gap-3 rounded-xl border border-line bg-panel p-3">
       <div
         className="avatar grid size-10 shrink-0 place-items-center rounded-full text-sm font-bold"
         style={{ ["--hue" as string]: hueOf(person.voice?.preset ?? person.name) }}
@@ -349,7 +350,7 @@ export function PersonRow({
           </DropdownMenu.Root>
         ) : null}
       </div>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -392,16 +393,16 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   const [later, setLater] = useState(false);
   const [carried, setCarried] = useState(false);
   const carriedPeople = onPickVoice ? (cast?.carried ?? []) : [];
-  if (isLoading) return <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[84px] rounded-xl" />)}</div>;
+  if (isLoading) return <MotionRegion as="div" className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[84px] rounded-xl" />)}</MotionRegion>;
   if (!cast || (!cast.characters.length && !cast.extras.length && !carriedPeople.length)) {
     return (
-      <EmptyState icon={AudioLines} title="Chưa có dàn nhân vật" className="mt-2">
+      <MotionRegion><EmptyState icon={AudioLines} title="Chưa có dàn nhân vật" className="mt-2">
         Dàn nhân vật hiện ra khi truyện đã được phân vai.
-      </EmptyState>
+      </EmptyState></MotionRegion>
     );
   }
   return (
-    <div className="mt-4">
+    <MotionRegion as="div" className="motion-reveal mt-4">
       <div className="flex items-center gap-3 rounded-2xl border border-line bg-panel p-4">
         <div className="grid size-11 place-items-center rounded-full bg-accent-soft text-accent-text">
           <BookOpenText className="size-5" />
@@ -461,7 +462,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
           )}
         </div>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -647,7 +648,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         <DropdownMenu.Portal>
           <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain w-72 rounded-xl border border-line bg-panel p-1.5 shadow-float">
             <p className="px-2 pb-1.5 pt-1 text-xs text-fg-2">
-              Mỗi hồ sơ giữ chỗ nghe, dấu trang và lịch sử riêng - để nghe lại từ đầu mà giữ lần trước, hay mỗi người một hồ sơ.
+              Mỗi hồ sơ giữ chỗ nghe, dấu trang, lịch sử riêng.
             </p>
             {records.map((record) => (
               <DropdownMenu.Item
@@ -700,13 +701,13 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         }
         description={
           dialog?.kind === "create"
-            ? "Hồ sơ mới bắt đầu từ chương đầu; hồ sơ đang dùng giữ nguyên chỗ nghe, dấu trang, lịch sử - quay lại lúc nào cũng được."
+            ? "Hồ sơ mới nghe từ đầu; hồ sơ cũ vẫn giữ nguyên."
             : dialog?.kind === "move"
-              ? `Chỗ nghe, dấu trang và lịch sử đi theo hồ sơ, thành hồ sơ đang dùng ở cuốn kia - vd khi có bản làm lại của cùng truyện.${
+              ? `Chỗ nghe, dấu trang, lịch sử đi theo hồ sơ sang cuốn kia.${
                   records.length > 1 ? " Cuốn này chuyển sang hồ sơ nghe gần nhất còn lại." : " Cuốn này sẽ như chưa nghe lần nào."
                 }`
             : dialog?.kind === "delete"
-              ? `Chỗ nghe, dấu trang và lịch sử của hồ sơ này mất hẳn, trên mọi máy đã ghép nối. Sách không bị ảnh hưởng${
+              ? `Chỗ nghe, dấu trang, lịch sử của hồ sơ này mất hẳn trên mọi máy. Sách giữ nguyên${
                   records.length > 1 ? " - cuốn chuyển sang hồ sơ nghe gần nhất còn lại." : "; đây là hồ sơ duy nhất nên cuốn sẽ như chưa nghe lần nào."
                 }`
               : undefined
@@ -833,14 +834,14 @@ export function BookScreen({
     if (row) reveal(scroller, row);
   });
 
-  if (isLoading) {
-    return (
+  const placeholder = (
       <div className="mx-auto max-w-[1180px] px-4 pt-6 sm:px-10">
         <Skeleton className="h-5 w-24" />
         <div className="mt-6 flex gap-6"><Skeleton className="size-36 rounded-lg" /><div className="flex-1 space-y-3 pt-3"><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-1/3" /></div></div>
       </div>
-    );
-  }
+  );
+  const content = () => {
+
   if (error || !book) {
     return (
       <EmptyState icon={BookOpenText} title="Không tìm thấy sách này" className="mt-20" action={<Button onClick={() => navigate("/")}>Về thư viện</Button>}>
@@ -911,7 +912,7 @@ export function BookScreen({
   };
 
   return (
-    <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-5 sm:px-10 sm:pt-7">
+    <div className="motion-reveal mx-auto max-w-[1180px] px-4 pb-16 pt-5 sm:px-10 sm:pt-7">
       <button type="button" onClick={() => navigate("/")} className="touch-hit touch-row inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Thư viện
       </button>
@@ -1002,7 +1003,7 @@ export function BookScreen({
             {caughtUp && (
               <p className="rounded-xl bg-hover px-4 py-2.5 text-sm text-fg-2">Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong.</p>
             )}
-            <Tooltip label="Đọc bằng mắt - đọc được cả chương chưa thu âm; “Nghe từ đây” chuyển sang nghe đúng câu đang đọc">
+            <Tooltip label="Đọc chữ, cả chương chưa thu âm">
               <Button
                 variant={textOnly && !point ? "primary" : "outline"}
                 size="lg"
@@ -1174,4 +1175,6 @@ export function BookScreen({
       )}
     </div>
   );
+  };
+  return <LoadingCrossfade loading={isLoading} placeholder={placeholder}><MotionRegion>{content()}</MotionRegion></LoadingCrossfade>;
 }

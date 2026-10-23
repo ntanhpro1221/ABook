@@ -1,6 +1,7 @@
+import { MotionPresence } from "@/shared/MotionPresence";
 import { BookPlus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { AddBookDialog } from "./AddBook";
 import { useSource } from "./source";
 import type { PickedItem } from "./textImport";
@@ -29,15 +30,13 @@ export function DropToAdd({ onBookFile }: { onBookFile?: (path: string, session?
   if (!watch) return null;
   return (
     <>
-      {hovering && (
-        <div className="pointer-events-none fixed inset-0 z-[60] grid place-items-center bg-bg/80 p-6 backdrop-blur-sm">
+      <MotionPresence open={hovering} className="pointer-events-none fixed inset-0 z-[60] grid place-items-center bg-bg/80 p-6">
           <div className="flex max-w-md flex-col items-center gap-3 rounded-2xl border-2 border-dashed border-accent bg-accent-soft px-10 py-12 text-center">
             <BookPlus className="size-10 text-accent-text" strokeWidth={1.75} />
             <p className="text-lg font-semibold">Thả để thêm sách</p>
             <p className="text-sm text-fg-2">EPUB, Word (DOCX), PDF có chữ, TXT hay file sách .abook. Thả nhiều file một lúc cũng được.</p>
           </div>
-        </div>
-      )}
+        </MotionPresence>
       <AddBookDialog open={dropped !== null} onOpenChange={(open) => !open && setDropped(null)} onBookFile={onBookFile} initial={dropped} />
     </>
   );

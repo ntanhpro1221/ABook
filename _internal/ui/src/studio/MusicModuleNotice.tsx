@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ErrorDetails } from "@/shared/ErrorDetails";
+import { MoreInfo } from "@/shared/SettingsNav";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { Button, LiveText, Progress } from "@/shared/ui";
 import { api } from "./api";
@@ -62,6 +63,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
             {downloadingModule ? <LiveText shown={label} spoken={spokenProgress("Đang tải Phân tích nhạc", modulePercent(module) / 100)} /> : label}
           </p>
           {failed && <ErrorDetails technical={module.errorDetail} className="text-danger" />}
+          {module.state === "missing" && <MoreInfo label="Phân tích nhạc">Tải một lần, phân tích trên máy rồi dùng không cần mạng. Chưa tải vẫn nhập, nghe và ghim nhạc bằng tay.</MoreInfo>}
           {downloadingModule && (
             <div className="flex items-center gap-3">
               <Progress value={modulePercent(module) / 100} size="sm" running label="Đang tải Phân tích nhạc" className="flex-1" />

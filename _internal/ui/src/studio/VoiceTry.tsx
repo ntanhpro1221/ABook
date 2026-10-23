@@ -1,5 +1,7 @@
 import { BookOpenText, Loader2, Pause } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { Button, Vu } from "@/shared/ui";
@@ -87,7 +89,7 @@ export function useVoiceTry(bookId: string): {
             playing ? "border-accent bg-accent text-accent-ink" : "border-line text-fg-2 hover:border-line-strong hover:text-fg",
           )}
         >
-          {loading ? <Loader2 className="size-4 animate-spin" /> : playing ? <Vu className="h-3" /> : <BookOpenText className="size-4" />}
+          <MotionRegion as="span" className="inline-grid size-4 place-items-center">{loading ? <Loader2 className="size-4 animate-spin" /> : playing ? <Vu className="h-3" /> : <BookOpenText className="size-4" />}</MotionRegion>
         </button>
       );
     return (
@@ -105,10 +107,10 @@ export function useVoiceTry(bookId: string): {
       </Button>
     );
   };
-  const note = said ? (
-    <p role={said.status ? "status" : undefined} className={cn("text-xs", said.status ? "text-fg-2" : "text-fg-3")}>
+  const note = <MotionPresence open={Boolean(said)}>{said && (
+    <MotionRegion as="p" role={said.status ? "status" : undefined} className={cn("mt-1.5 text-xs", said.status ? "text-fg-2" : "text-fg-3")}>
       {said.text}
-    </p>
-  ) : null;
+    </MotionRegion>
+  )}</MotionPresence>;
   return { button, note };
 }

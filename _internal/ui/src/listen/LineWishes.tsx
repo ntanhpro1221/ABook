@@ -1,7 +1,9 @@
+import { withViewTransition } from "@/shared/motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Clock, MessageSquareQuote, RefreshCw, Type, UserRound, X } from "lucide-react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { toast } from "@/shared/toast";
+import { useBackLayer } from "@/shared/backStack";
 import { cn } from "@/shared/cn";
 import { studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { holderName } from "@/shared/editsSync";
@@ -276,10 +278,22 @@ export function LineWishDialog({
   const [view, setView] = useState<View>(heldWord ? "word" : "menu");
   // Từ mở ở bước sửa cách đọc: chữ vừa giữ, hay từ bấm "Sửa" trong danh sách cách đọc của câu.
   const [pickedWord, setPickedWord] = useState<string | null>(null);
+  // Hộp vừa mở (câu khác) thì bước đầu hiện cùng hộp; chỉ bước người dùng tự chuyển mới trượt (.motion-step).
+  const [moved, setMoved] = useState(false);
+  const goView = (next: View) => {
+    withViewTransition(() => { setMoved(true); setView(next); });
+  };
   useEffect(() => {
     setView(heldWord ? "word" : "menu");
+    setMoved(false);
     setPickedWord(null);
   }, [segmentIndex, heldWord]);
+  // Bước con (Ai nói / Cách đọc / Sửa một từ) mở từ menu câu: Back của điện thoại về menu câu trước, chưa đóng cả hộp.
+  const body = useRef<HTMLDivElement | null>(null);
+  useBackLayer(view !== "menu" && !heldWord, () => {
+    setPickedWord(null);
+    goView("menu");
+  }, body);
   const segment = segmentIndex === null ? undefined : script.segments[segmentIndex];
   const wish = segment?.stableId ? wishes?.lines[segment.stableId] : undefined;
   const people = useMemo(() => peopleOf(cast, script, wishes), [cast, script, wishes]);
@@ -304,7 +318,7 @@ export function LineWishDialog({
   const speech = line?.kind === "dialogue" || line?.kind === "thought";
   const hasAudio = script.timed;
   const close = () => {
-    setView("menu");
+    goView("menu");
     onClose();
   };
   const done = () => {
@@ -417,7 +431,7 @@ export function LineWishDialog({
   return (
     <Dialog open={segment !== undefined} onOpenChange={(open) => !open && close()} width="max-w-md" title={title}>
       {line && (
-        <div className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-0.5">
+        <div ref={body} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-0.5">
           <LineQuote line={line} />
           {!identified && (
             <p className="rounded-lg bg-hover px-3 py-2 text-sm text-fg-2">
@@ -425,6 +439,8 @@ export function LineWishDialog({
               được; muốn sửa từng câu, làm lại file bằng ABook mới.
             </p>
           )}
+          {/* Đổi bước (menu câu <-> Ai nói / Cách đọc / Sửa một từ): bước mới trượt vào như đổi trang - từ phải khi đi sâu, từ trái khi về menu. */}
+          <div key={view} className={cn("space-y-3", moved && "motion-step")} data-direction={view === "menu" ? "back" : undefined}>
           {view === "menu" && (
             <>
               {items.length > 0 && (
@@ -441,7 +457,7 @@ export function LineWishDialog({
                             type="button"
                             onClick={() => {
                               setPickedWord(item.name!.surface);
-                              setView("word");
+                              goView("word");
                             }}
                             aria-label={`Sửa cách đọc “${item.name.surface}”`}
                             className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
@@ -485,16 +501,16 @@ export function LineWishDialog({
                           : `Hiện là ${line.label}`
                   }
                   disabled={!identified || !speech}
-                  onClick={() => setView("speaker")}
+                  onClick={() => goView("speaker")}
                 />
                 <MenuRow
                   icon={MessageSquareQuote}
                   title="Cách đọc câu"
                   note="Loại câu, cảm xúc, chữ đem đọc"
                   disabled={!identified}
-                  onClick={() => setView("delivery")}
+                  onClick={() => goView("delivery")}
                 />
-                <MenuRow icon={Type} title="Sửa cách đọc một từ" note="Chọn từ máy đọc sai, gõ cách đọc đúng" onClick={() => setView("word")} />
+                <MenuRow icon={Type} title="Sửa cách đọc một từ" note="Chọn từ máy đọc sai, gõ cách đọc đúng" onClick={() => goView("word")} />
                 <MenuRow
                   icon={RefreshCw}
                   title="Thu lại câu này"
@@ -509,7 +525,7 @@ export function LineWishDialog({
           {view === "speaker" && (
             <>
               <SpeakerMenu line={line} script={chapterScript} onPick={(person) => speaker.mutate(person)} phone />
-              <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={() => setView("menu")}>
+              <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={() => goView("menu")}>
                 Quay lại
               </Button>
             </>
@@ -517,7 +533,7 @@ export function LineWishDialog({
           {view === "delivery" && (
             <>
               <DeliveryMenu bookId={book.id} line={line} script={chapterScript} onSave={(change) => delivery.mutate(change)} wide noWorkshop />
-              <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={() => setView("menu")}>
+              <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={() => goView("menu")}>
                 Quay lại
               </Button>
             </>
@@ -535,10 +551,11 @@ export function LineWishDialog({
               onWithdraw={withdrawName}
               onBack={() => {
                 setPickedWord(null);
-                setView("menu");
+                goView("menu");
               }}
             />
           )}
+          </div>
         </div>
       )}
     </Dialog>

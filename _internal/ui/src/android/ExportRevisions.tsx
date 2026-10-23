@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery } from "@tanstack/react-query";
 import type { ListenBook } from "@/listen/model";
 import { Button } from "@/shared/ui";
@@ -9,8 +10,8 @@ export function ExportRevisionNotice({ book }: { book: ListenBook }) {
   const history = useQuery({ queryKey: ["phone-export-history", book.id],
     queryFn: () => EbookLibrary.exportHistory({ bookId: book.id }), refetchInterval: 5000 });
   const stale = (history.data?.exports ?? []).filter((item) => item.changed.length);
-  if (!stale.length) return null;
-  return <div className="my-3 space-y-2 rounded-xl bg-warning-soft p-3 text-sm">
+  if (!stale.length) return <MotionRegion />;
+  return <MotionRegion as="div" className="my-3 space-y-2 rounded-xl bg-warning-soft p-3 text-sm">
     <p className="font-semibold">Bạn có bản xuất đã cũ sau khi sửa và thu lại.</p>
     {stale.map((item) => <div key={item.target}>
       <p className="break-all">{item.target} · {item.changed.length} chương đã đổi</p>
@@ -18,5 +19,5 @@ export function ExportRevisionNotice({ book }: { book: ListenBook }) {
         : item.kind === "m4b" ? <><p>M4B gộp cả cuốn: bạn cần dựng lại cả file và thay bản đã chép hoặc gửi.</p><Button size="sm" variant="secondary" onClick={() => void chooseM4b(book)}>Xuất lại cả file M4B</Button></>
         : <p>Bạn hãy dùng “Lưu thành…” trong menu sách để xuất lại file và thay bản đã chép hoặc gửi.</p>}
     </div>)}
-  </div>;
+  </MotionRegion>;
 }

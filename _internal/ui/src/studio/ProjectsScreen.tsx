@@ -1,8 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { FolderOpen, History, Plus, RotateCw, Wand2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
@@ -81,7 +82,7 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
         open={asking}
         onOpenChange={setAsking}
         title={`Khôi phục “${book.title}” từ bản sao cũ?`}
-        description="Bản sao được chụp lúc app nâng cấp sổ làm việc của sách này. Những gì làm sau lúc ấy (phân tích, sửa, chương thu sau đó) sẽ phải làm lại; chương đã thu vẫn nằm trong thư mục sách. Bản hỏng được giữ lại cạnh đó."
+        description="Việc làm sau lần nâng cấp phải làm lại; chương đã thu và bản hỏng vẫn được giữ."
       >
         <div className="mt-5 dialog-actions">
           <Button variant="ghost" onClick={() => setAsking(false)}>
@@ -214,7 +215,7 @@ export function ProjectsScreen() {
   };
 
   return (
-    <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-9 md:px-10">
+    <MotionRegion as="div" className="mx-auto max-w-[1180px] px-4 pb-16 pt-9 md:px-10">
       <header className="flex flex-wrap items-end justify-between gap-4 md:gap-6">
         <div className="min-w-0">
           <div className="text-xs font-semibold uppercase tracking-wider text-accent-text">Studio</div>
@@ -258,8 +259,7 @@ export function ProjectsScreen() {
             </Button>
           }
         >
-          Chọn một file EPUB, Word (DOCX), PDF hay thư mục các chương TXT. ABook đọc cả truyện, nhận ra từng nhân vật, trao cho mỗi
-          người một giọng riêng rồi thu thành sách nói - nghe ngay trong Thư viện, xuất được MP3 hay M4B.
+          Chọn EPUB, DOCX, PDF hay thư mục TXT. Mỗi nhân vật sẽ có giọng riêng.
         </EmptyState>
       ) : (
         <>
@@ -294,6 +294,6 @@ export function ProjectsScreen() {
           </section>
         </>
       )}
-    </div>
+    </MotionRegion>
   );
 }

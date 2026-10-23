@@ -23,8 +23,8 @@ it("a Studio project's chapter with audio and a music plan has the music control
 });
 
 it("a project without any music scene shows no control, like a packaged book without music", () => {
-  expect(menu({ ...project, plan: { enabled: true, levelDb: -20, scenes: [] } })).toBe("");
-  expect(menu({ ...project, plan: null })).toBe("");
+  expect(menu({ ...project, plan: { enabled: true, levelDb: -20, scenes: [] } })).not.toMatch(/<button|Nhạc nền/);
+  expect(menu({ ...project, plan: null })).not.toMatch(/<button|Nhạc nền/);
 });
 
 it("packaged audio with the same music keeps its control", () => {

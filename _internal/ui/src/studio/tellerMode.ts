@@ -1,7 +1,7 @@
 import { formatNumber } from "@/shared/format";
 import { estimateText } from "./voiceTryText";
 
-// Công tắc B "Người kể xưng “tôi” tự kể chuyện" (webui/teller_mode.py, abook/teller_voice.py): chữ và phép tính cái giá dùng chung cho
+// Công tắc B "Ngôi tôi tự kể" (webui/teller_mode.py, abook/teller_voice.py): chữ và phép tính cái giá dùng chung cho
 // trình tạo sách và trang dự án.
 
 export interface TellerPlan {
@@ -26,15 +26,15 @@ export interface TellerModeView {
   editableHere?: boolean;
 }
 
-export const TELLER_TITLE = "Người kể xưng “tôi” tự kể chuyện";
+export const TELLER_TITLE = "Ngôi tôi tự kể";
 
 /** Câu thay cho nút đổi ở nơi không đổi được (điện thoại mở file dự án). */
 export const TELLER_ELSEWHERE = "Đổi ở máy tính có Studio (cần thu lại).";
 
 export function tellerHint(on: boolean): string {
   return on
-    ? "Cả lời dẫn của những đoạn do “tôi” kể cũng đọc bằng giọng của họ, nên đoạn nghe như một người đang kể lại. Đoạn do người khác kể và đoạn ngôi ba vẫn dùng giọng dẫn."
-    : "Mặc định: lời dẫn do giọng kể chuyện của sách đọc, còn lời “tôi” nói ra vẫn là giọng của họ.";
+    ? "Lời kể ngôi tôi đọc bằng giọng của họ."
+    : "Mặc định: giọng dẫn kể, nhân vật đọc lời thoại.";
 }
 
 /** Có cần hỏi lại trước khi đổi không: chỉ khi đã có câu thu sẽ bị bỏ. */

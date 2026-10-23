@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Hand, Moon, Play, Smartphone, TimerReset, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -114,8 +115,8 @@ export function MorningRecap({ className }: { className?: string }) {
   });
   // Sách của đêm ấy đã bị xoá khỏi thư viện: không còn chỗ để nghe tiếp, ẩn thẻ. Đã nghe tiếp sau lúc tự dừng: thẻ không còn đúng,
   // cũng ẩn - chờ biết chỗ nghe của cuốn rồi mới hiện, đừng hiện rồi biến mất.
-  if (!fresh || !session || !markers.length || isMissing(bookError)) return null;
-  if (!book ? !bookError : heardSinceNight(session.endedAt ?? 0, book.state.last?.at)) return null;
+  if (!fresh || !session || !markers.length || isMissing(bookError)) return <MotionRegion />;
+  if (!book ? !bookError : heardSinceNight(session.endedAt ?? 0, book.state.last?.at)) return <MotionRegion />;
 
   const dismiss = async () => {
     await source.dismissNight(bookId, session.id);
@@ -146,7 +147,7 @@ export function MorningRecap({ className }: { className?: string }) {
   });
 
   return (
-    <section className={cn("relative overflow-hidden rounded-2xl border border-line bg-panel p-4 shadow-card sm:p-5", className)} aria-label={sessionLabel(session.endedAt)}>
+    <MotionRegion as="section" className={cn("relative overflow-hidden rounded-2xl border border-line bg-panel p-4 shadow-card sm:p-5", className)} aria-label={sessionLabel(session.endedAt)}>
       <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="absolute right-2 top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
         <X className="size-4" />
       </button>
@@ -219,6 +220,6 @@ export function MorningRecap({ className }: { className?: string }) {
           </section>)}
         </div>
       )}
-    </section>
+    </MotionRegion>
   );
 }

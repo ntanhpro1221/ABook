@@ -1,8 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cast, Laptop, Loader2, MonitorSpeaker, Pause, Play, RefreshCw, Smartphone, Speaker, Tv, X } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { noteCastHasNoMusic } from "@/listen/castMusic";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
@@ -140,8 +141,8 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
   };
 
   return (
-    <section aria-label={`Đang phát trên ${remote.name}`} className="relative shrink-0 border-t border-line bg-accent-soft/60">
-      <div className="absolute inset-x-0 top-0 h-[2px] bg-accent transition-[width] duration-500 ease-linear" style={{ width: `${share}%` }} aria-hidden />
+    <MotionRegion as="section" aria-label={`Đang phát trên ${remote.name}`} className="relative shrink-0 border-t border-line bg-accent-soft/60">
+      <div className="absolute inset-x-0 top-0 h-[2px] bg-accent motion-progress" style={{ transform: `scaleX(${share / 100})` }} aria-hidden />
       <div className="flex items-center gap-1 px-3 py-1">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
@@ -194,7 +195,7 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
           <X className="size-4" />
         </button>
       </div>
-    </section>
+    </MotionRegion>
   );
 }
 
@@ -228,9 +229,9 @@ export function RemotePlayerBars({ localBar }: { localBar?: ReactNode }) {
   const here = player.track?.bookId ?? "";
   const shown = visible.filter((remote) => !(here && player.playing && remote.localBookId === here));
   const hideLocal = Boolean(here && !player.playing && shown.some((remote) => remote.localBookId === here));
-  if (!data || !shown.length) return <>{localBar}</>;
+  if (!data || !shown.length) return <MotionRegion>{localBar}</MotionRegion>;
   return (
-    <>
+    <MotionRegion>
       {shown.map((remote) => (
         <RemotePlayerBar
           key={remote.device}
@@ -242,7 +243,7 @@ export function RemotePlayerBars({ localBar }: { localBar?: ReactNode }) {
         />
       ))}
       {!hideLocal && localBar}
-    </>
+    </MotionRegion>
   );
 }
 
@@ -258,8 +259,9 @@ export function PhoneHandOffButton() {
   const readClock = useClockReader();
   const client = useQueryClient();
   const [searching, setSearching] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const track = player.track;
-  if (!track || !data) return null;
+  if (!track || !data) return <MotionRegion />;
   // Tìm lại loa / TV ngay, không đợi nhịp 30 giây (DlnaPlayers.scan); hỏi lại danh sách khi lượt tìm (~2 giây) xong.
   const rescan = () => {
     setSearching(true);
@@ -293,16 +295,18 @@ export function PhoneHandOffButton() {
       if (waiting !== undefined) toast.dismiss(waiting);
     }
   };
-  if (targets.length === 1) {
+  if (targets.length === 1 && !menuOpen) {
     const [only] = targets;
     return (
-      <IconButton label={`Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`} icon={only.via === "cast" ? Cast : KIND_ICONS[only.kind] ?? Smartphone}
-        size="sm" onClick={() => void handOff(only)} />
+      <MotionRegion><IconButton label={`Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`} icon={only.via === "cast" ? Cast : KIND_ICONS[only.kind] ?? Smartphone}
+        size="sm" onClick={() => void handOff(only)} /></MotionRegion>
     );
   }
   return (
     <DropdownMenu.Root
+      open={menuOpen}
       onOpenChange={(open) => {
+        setMenuOpen(open);
         if (open && !searching) rescan();
       }}
     >
@@ -313,7 +317,7 @@ export function PhoneHandOffButton() {
         <Cast className="glyph" strokeWidth={2} />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-[calc(100vw-24px)] rounded-xl border border-line bg-panel p-1.5 shadow-float">
+        <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-[calc(100vw-24px)] rounded-xl border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
           <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Phát trên</DropdownMenu.Label>
           {/* Không có máy nào: nói rõ thay vì để nút biến mất (TV tắt, khác mạng Wi-Fi). */}
           {!targets.length && (
@@ -346,7 +350,7 @@ export function PhoneHandOffButton() {
               {target.state?.bookId && target.state.playing && <span className="shrink-0 text-xs text-fg-3">đang phát</span>}
             </DropdownMenu.Item>
           ))}
-        </DropdownMenu.Content>
+        </MotionRegion></DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
   );

@@ -65,7 +65,7 @@ export function useOldSaveNotice(): void {
     const fresh = newOldSaves(data, loadSeen());
     saveSeen(data.map((file) => file.name));
     if (!fresh.length) return;
-    toast(oldSaveNotice(fresh), { id: "old-saves", duration: 12_000, action: { label: "Mở Cài đặt", onClick: () => navigate("/settings") } });
+    toast(oldSaveNotice(fresh), { id: "old-saves", duration: 12_000, action: { label: "Mở Cài đặt", onClick: () => navigate("/settings/advanced") } });
   }, [data, navigate]);
 }
 

@@ -24,14 +24,13 @@ export function MissingLibrary({ root, className }: { root: string; className?: 
         remote ? (
           <OnComputerOnly verb="Chọn lại thư mục thư viện" />
         ) : (
-          <Button variant="primary" icon={Settings} onClick={() => navigate("/settings")}>
-            Chọn thư mục trong Cài đặt
+          <Button variant="primary" icon={Settings} onClick={() => navigate("/settings/advanced")}>
+            Chọn thư mục
           </Button>
         )
       }
     >
-      Có thể ổ chứa nó chưa được cắm, hoặc thư mục đã bị đổi tên hay chuyển đi. Cắm lại ổ, hoặc chọn chỗ mới của thư mục ấy - chỗ đang nghe và
-      dấu trang vẫn được giữ.
+      Ổ chưa cắm, hay thư mục đã đổi tên. Cắm lại ổ hoặc chọn chỗ mới; chỗ đang nghe vẫn giữ.
     </EmptyState>
   );
 }

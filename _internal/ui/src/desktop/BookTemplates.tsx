@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { toast } from "sonner";
+import { MotionRegion } from "@/shared/MotionRegion";
+import { useBackLayer } from "@/shared/backStack";
+import { useRef, useState } from "react";
+import { toast } from "@/shared/toast";
 import { Button } from "@/shared/ui";
 import { useBookTemplateOp, usePreferences } from "@/studio/data";
 import { NAME_MAX, PROFILE_LABEL, nameProblem, staleTemplateError, templateIndex, templatesOf, type BookTemplate } from "@/studio/bookTemplates";
@@ -13,6 +15,8 @@ export function BookTemplates() {
   const [renaming, setRenaming] = useState<string | null>(null);
   const [typed, setTyped] = useState("");
   const [problem, setProblem] = useState("");
+  const renameBox = useRef<HTMLFormElement>(null);
+  useBackLayer(renaming !== null, () => setRenaming(null), renameBox);
   // Mẫu vừa bị thiết bị khác xoá / đặt trùng tên: nói đúng lời máy tính báo (danh sách đã tự tải lại); việc khác hỏng thì nói không lưu được.
   const fail = (error: Error) =>
     staleTemplateError(error) ? toast.error(error.message) : toast.error("Không lưu được mẫu", { description: error.message });
@@ -49,11 +53,10 @@ export function BookTemplates() {
     );
   };
   return (
-    <div className="mb-4 max-w-xl">
-      <div className="text-sm font-medium">Mẫu thiết lập cho sách mới</div>
+    <MotionRegion as="div" className="mb-4 max-w-xl">
+      <div className="text-sm font-medium">Mẫu sách mới</div>
       <p className="mt-0.5 text-[0.8125rem] text-fg-2 text-pretty">
-        Bộ lựa chọn đặt tên sẵn (giọng kể, chất lượng...) để chọn lại ở trình tạo sách; “Mặc định” ở đó là giọng kể và chất lượng đặt
-        ngay phía trên. Muốn lưu mẫu mới: chọn xong ở trình tạo sách rồi bấm “Lưu thành mẫu…”.
+        Ở Tạo sách, chọn “Lưu thành mẫu…” để dùng lại.
       </p>
       {!templates.length ? (
         <p className="mt-2 text-[0.8125rem] text-fg-3">Chưa có mẫu nào.</p>
@@ -63,6 +66,7 @@ export function BookTemplates() {
             <li key={template.name} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2">
               {renaming === template.name ? (
                 <form
+                  ref={renameBox}
                   className="flex min-w-0 flex-1 flex-wrap items-center gap-2"
                   onSubmit={(event) => {
                     event.preventDefault();
@@ -120,6 +124,6 @@ export function BookTemplates() {
           ))}
         </ul>
       )}
-    </div>
+    </MotionRegion>
   );
 }
