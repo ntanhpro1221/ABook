@@ -181,7 +181,7 @@ function BookmarksTab({ book }: { book: ListenBook }) {
         chapters={book.chapters ?? []}
         marks={book.state.bookmarks}
         onJump={(mark) => {
-          // Dấu đặt ở màn đọc trỏ tới câu: mở màn đọc đúng câu ấy; dấu đặt khi nghe thì nghe tiếp từ chỗ đó.
+          // Dấu có câu/anchor mở vị trí chữ; dấu cũ chỉ có giây dùng đường nghe dự phòng.
           const path = bookmarkReadPath(book.id, mark);
           if (path) navigate(path);
           else void playBook(book, mark.chapterId, mark.seconds);

@@ -945,7 +945,7 @@ object Store {
      *  máy tính (listening.py `add_bookmark`); dấu đặt từ trình phát chỉ có hai trường này khi đang đọc to chương chữ. */
     @Synchronized
     fun addBookmark(id: String, chapterId: Int, seconds: Double, note: String, index: Int? = null, quote: String = "", createdAt: Double? = null,
-                    recordId: String? = null): JSONObject {
+                    recordId: String? = null, anchor: JSONObject? = null): JSONObject {
         val target = named(id, recordId)
         val state = recordState(target)
         val marks = state.getJSONArray("bookmarks")
@@ -974,6 +974,7 @@ object Store {
             .put("chapterId", chapterId).put("seconds", seconds).put("note", cleanNote).put("at", at)
             .put("createdAt", createdAt?.takeIf { it > 0 && it <= at } ?: at)
         if (index != null && index >= 0) mark.put("index", index).put("quote", bookmarkQuote(quote))
+        vn.abook.player.readaloud.ReadingAnchor.validated(anchor)?.let { mark.put("anchor", it) }
         marks.put(mark)
         state.put("updatedAt", now())
         writeAtomic(recordFile(target), state.toString())
@@ -1024,6 +1025,7 @@ object Store {
             .put("createdAt", created.takeIf { it > 0 && it <= at } ?: at)
         val index = mark.opt("index")
         if (index is Int && index >= 0) restored.put("index", index).put("quote", bookmarkQuote(mark.optString("quote")))
+        vn.abook.player.readaloud.ReadingAnchor.validated(mark.optJSONObject("anchor"))?.let { restored.put("anchor", it) }
         val marks = state.getJSONArray("bookmarks")
         val kept = JSONArray()
         for (i in 0 until marks.length()) {

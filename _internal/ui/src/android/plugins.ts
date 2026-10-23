@@ -20,6 +20,7 @@ import type { VoiceSpeedChoice, VoiceSpeedStatus } from "@/listen/voiceSpeed";
 
 export interface NativeSleep {
   mode: "off" | "minutes" | "chapter";
+  counting?: boolean;
   remaining?: number;
   minutes?: number;
   stoppedAt?: number;
@@ -83,7 +84,7 @@ export interface EbookPlayerPlugin {
   /** `segment` + `word` (chương đọc to): native vào đúng mốc chữ ấy, kể cả đoạn chưa tạo tiếng - thắng `seconds`. */
   jumpTo(options: { chapterId: number; seconds: number; segment?: number; word?: number }): Promise<NativeState>;
   getState(): Promise<NativeState>;
-  addBookmark(options: { note: string; index?: number; quote?: string }): Promise<Bookmark>;
+  addBookmark(options: { note: string; index?: number; quote?: string; anchor?: import("@/listen/readingAnchor").ReadingAnchor }): Promise<Bookmark>;
   setSleep(options: { mode: "off" | "minutes" | "chapter"; minutes?: number }): Promise<NativeState>;
   extendSleep(options: { minutes?: number }): Promise<NativeState>;
   configure(options: {
@@ -572,7 +573,7 @@ export interface EbookLibraryPlugin {
   setRate(options: { id: string; rate: number; record?: string }): Promise<void>;
   /** Giọng Nghe ngay riêng của cuốn ("" = giọng mặc định) - đi theo hồ sơ nghe sang máy kia (soát a68 lỗi 8). */
   setVoice(options: { id: string; voice: string; record?: string }): Promise<void>;
-  addBookmark(options: { id: string; chapterId: number; seconds: number; note: string; index?: number; quote?: string; createdAt?: number; record?: string }): Promise<Bookmark>;
+  addBookmark(options: { id: string; chapterId: number; seconds: number; note: string; index?: number; quote?: string; anchor?: import("@/listen/readingAnchor").ReadingAnchor; createdAt?: number; record?: string }): Promise<Bookmark>;
   restoreBookmark(options: { id: string; mark: Bookmark }): Promise<Bookmark>;
   updateBookmark(options: { id: string; markId: string; note: string; record?: string }): Promise<void>;
   deleteBookmark(options: { id: string; markId: string; record?: string }): Promise<void>;

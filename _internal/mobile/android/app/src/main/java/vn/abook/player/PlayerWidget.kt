@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.Build
+import android.os.Bundle
 import android.util.SizeF
 import android.widget.RemoteViews
 import androidx.media3.session.MediaController
@@ -17,7 +18,8 @@ import org.json.JSONObject
 
 /**
  * Widget màn hình chính - trình phát thu nhỏ. Cỡ lớn: bìa, tên chương, tiến độ, lùi/phát/tới, hẹn giờ ngủ;
- * cỡ nhỏ: bìa + phát/dừng (Android 12+ tự chọn bố cục theo kích thước).
+ * cỡ vừa: bìa nhỏ, tên sách/chương và đủ điều khiển; cỡ nhỏ: bìa + phát/dừng.
+ * Android 12+ tự chọn một trong ba bố cục theo kích thước.
  *
  * Bấm phát khi app không chạy: dịch vụ phát được khởi động, cuốn nghe gần nhất được nạp đúng chỗ đang dở.
  */
@@ -107,7 +109,7 @@ class PlayerWidget : AppWidgetProvider() {
                 PendingIntent.FLAG_IMMUTABLE,
             )
             views.setOnClickPendingIntent(R.id.widget_cover, open)
-            if (layout == R.layout.widget_player) {
+            if (layout == R.layout.widget_player || layout == R.layout.widget_player_medium) {
                 views.setTextViewText(R.id.widget_book, view.book)
                 views.setProgressBar(R.id.widget_progress, 1000, (view.progress * 1000).toInt().coerceIn(0, 1000), false)
                 views.setOnClickPendingIntent(R.id.widget_back, intent(context, ACTION_BACK, 2))
@@ -126,18 +128,29 @@ class PlayerWidget : AppWidgetProvider() {
             val views = if (Build.VERSION.SDK_INT >= 31) {
                 RemoteViews(
                     mapOf(
-                        SizeF(110f, 40f) to build(context, R.layout.widget_player_small, view),
-                        SizeF(220f, 96f) to build(context, R.layout.widget_player, view),
+                        SizeF(WidgetLayout.SMALL_WIDTH_DP.toFloat(), WidgetLayout.SMALL_HEIGHT_DP.toFloat()) to build(context, R.layout.widget_player_small, view),
+                        SizeF(WidgetLayout.MEDIUM_WIDTH_DP.toFloat(), WidgetLayout.MEDIUM_HEIGHT_DP.toFloat()) to build(context, R.layout.widget_player_medium, view),
+                        SizeF(WidgetLayout.LARGE_WIDTH_DP.toFloat(), WidgetLayout.LARGE_HEIGHT_DP.toFloat()) to build(context, R.layout.widget_player, view),
                     ),
                 )
-            } else {
-                build(context, R.layout.widget_player, view)
+            } else null
+            ids.forEach { id ->
+                val options = manager.getAppWidgetOptions(id)
+                val layout = when (WidgetLayout.select(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                        options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT))) {
+                    WidgetLayout.Size.SMALL -> R.layout.widget_player_small
+                    WidgetLayout.Size.MEDIUM -> R.layout.widget_player_medium
+                    WidgetLayout.Size.LARGE -> R.layout.widget_player
+                }
+                manager.updateAppWidget(id, views ?: build(context, layout, view))
             }
-            ids.forEach { manager.updateAppWidget(it, views) }
         }
     }
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) = render(context, manager, ids)
+
+    override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, id: Int, options: Bundle) =
+        render(context, manager, intArrayOf(id))
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)

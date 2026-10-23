@@ -173,7 +173,7 @@ export class NativeAudioEngine implements NativeEngine {
   }
 
   addBookmark(note: string, sentence?: BookmarkSentence): Promise<Bookmark> {
-    return EbookPlayer.addBookmark({ note, index: sentence?.index, quote: sentence?.quote });
+    return EbookPlayer.addBookmark({ note, ...(sentence ?? {}) });
   }
 
   get sleep(): SleepMode {
@@ -184,7 +184,7 @@ export class NativeAudioEngine implements NativeEngine {
       kind: "minutes",
       minutes: sleep.minutes ?? 0,
       leftMs: (sleep.remaining ?? 0) * 1000,
-      since: this.current?.playing ? this.receivedAt : null,
+      since: sleep.counting === true ? this.receivedAt : null,
     };
   }
 
@@ -207,7 +207,7 @@ export class NativeAudioEngine implements NativeEngine {
   get time(): number {
     const state = this.current;
     if (!state) return 0;
-    if (!state.playing) return state.position;
+    if (!state.playing || state.buffering) return state.position;
     const elapsed = ((Date.now() - this.receivedAt) / 1000) * (state.rate || 1);
     return Math.min(state.duration || Infinity, state.position + Math.min(elapsed, 2));
   }

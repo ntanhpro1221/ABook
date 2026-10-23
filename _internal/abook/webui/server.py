@@ -5786,7 +5786,7 @@ class Handler(BaseHTTPRequestHandler):
         mark = self.app.listening.add_bookmark(
             value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), str(body.get("note", "")),
             record=_held_record(body), index=body["index"] if isinstance(body.get("index"), int) else None,
-            quote=str(body.get("quote") or ""),
+            quote=str(body.get("quote") or ""), anchor=body.get("anchor"),
         )
         self._send_json(HTTPStatus.CREATED, mark)
 
