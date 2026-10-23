@@ -167,7 +167,7 @@ def render_cover(raw: bytes) -> tuple[bytes, dict[str, Any]]:
     if len(raw) > MAX_UPLOAD_BYTES:
         raise CoverError(f"Ảnh quá lớn (tối đa {MAX_UPLOAD_BYTES // 2**20} MB)")
     try:
-        image = Image.open(io.BytesIO(raw))
+        image = Image.open(io.BytesIO(raw), formats=("JPEG", "PNG", "WEBP", "GIF", "BMP"))
         image.seek(0)
         image.draft("RGB", (MAX_SIDE, MAX_SIDE))  # JPEG: giải mã ở 1/2, 1/4, 1/8 cỡ nếu vẫn đủ cho bìa; định dạng khác: không làm gì
         if image.width * image.height > MAX_PIXELS:
