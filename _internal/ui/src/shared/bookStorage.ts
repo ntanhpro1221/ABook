@@ -19,7 +19,8 @@ export function moveBookStorage(oldId: string, newId: string): void {
   try {
     for (const prefix of Object.values(BOOK_STORAGE)) {
       const keys = [prefix + oldId];
-      if (prefix === BOOK_STORAGE.reading) {
+      // Chỗ đọc và giọng riêng nhớ theo hồ sơ: `<tiền tố><mã sách>#<mã hồ sơ>`.
+      if (prefix === BOOK_STORAGE.reading || prefix === BOOK_STORAGE.readAloudVoice || prefix === BOOK_STORAGE.readAloudVoiceAt) {
         for (let index = 0; index < localStorage.length; index += 1) {
           const key = localStorage.key(index);
           if (key?.startsWith(`${prefix}${oldId}#`)) keys.push(key);

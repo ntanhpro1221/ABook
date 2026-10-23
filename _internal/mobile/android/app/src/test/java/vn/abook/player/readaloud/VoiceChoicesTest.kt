@@ -88,4 +88,18 @@ class VoiceChoicesTest {
         choices.remember("sach-a", "device:vi-vn-x-gft")
         assertEquals("device:vi-vn-x-gft", VoiceChoices(file).voiceFor("sach-a"))
     }
+
+    @Test
+    fun twoProfilesOfTheSameBookKeepTheirOwnVoiceAndANewProfileUsesTheDefault() {
+        val choices = VoiceChoices(file)
+        choices.rememberDefault("edge:vi-VN-HoaiMyNeural")
+        choices.remember("sach-a", "device:vi-vn-x-gft", "r-a")
+        choices.remember("sach-a", "edge:vi-VN-NamMinhNeural", "r-b")
+        val reopened = VoiceChoices(file)
+        assertEquals("device:vi-vn-x-gft", reopened.voiceFor("sach-a", "r-a"))
+        assertEquals("edge:vi-VN-NamMinhNeural", reopened.voiceFor("sach-a", "r-b"))
+        // hồ sơ mới chưa chọn gì: giọng mặc định, không kế thừa giọng hồ sơ trước
+        assertEquals("edge:vi-VN-HoaiMyNeural", reopened.voiceFor("sach-a", "r-moi"))
+        assertEquals("edge:vi-VN-HoaiMyNeural", reopened.voiceFor("sach-khac", "r-a"))
+    }
 }

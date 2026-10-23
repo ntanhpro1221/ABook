@@ -91,14 +91,33 @@ function write(key: string, value: string) {
   }
 }
 
-const stampKey = (bookId: string) => BOOK_STORAGE.readAloudVoiceAt + bookId;
-const voiceKey = (bookId: string) => BOOK_STORAGE.readAloudVoice + bookId;
+// Giọng riêng thuộc về HỒ SƠ nghe (backend: `voice`/`voiceAt` trong state của hồ sơ), nên cache ở đây khoá bằng (cuốn, hồ sơ) - hai người nghe cùng một
+// cuốn không giẫm lên lựa chọn của nhau, hồ sơ chưa chọn gì thì theo giọng mặc định chứ không kế thừa của hồ sơ trước.
+const recordOfBook = new Map<string, string>();
+
+/** Trình phát / màn sách báo hồ sơ nghe đang dùng của một cuốn: những nơi không biết hồ sơ (vẽ tên giọng, xuất file, bộ đọc to) hỏi giọng của đúng hồ sơ này.
+ *  Không có hồ sơ (nguồn không có hồ sơ nghe): giọng theo cuốn. */
+export function rememberRecordOf(bookId: string, recordId?: string | null): void {
+  if (recordId) recordOfBook.set(bookId, recordId);
+  else recordOfBook.delete(bookId);
+}
+
+/** Hồ sơ nghe đang dùng của một cuốn (xem [rememberRecordOf]); "" khi nguồn không có hồ sơ. Gửi xuống lõi native để nó nhớ giọng theo (cuốn, hồ sơ). */
+export const recordOf = (bookId: string): string => recordOfBook.get(bookId) ?? "";
+
+/** Khoá bộ nhớ của lựa chọn giọng: `recordId` nói rõ thì dùng, không thì hồ sơ đang dùng của cuốn (xem [rememberRecordOf]). */
+const slot = (bookId: string, recordId?: string | null) => {
+  const record = recordId === undefined ? recordOfBook.get(bookId) : recordId;
+  return record ? `${bookId}#${record}` : bookId;
+};
+const stampKey = (bookId: string, recordId?: string | null) => BOOK_STORAGE.readAloudVoiceAt + slot(bookId, recordId);
+const voiceKey = (bookId: string, recordId?: string | null) => BOOK_STORAGE.readAloudVoice + slot(bookId, recordId);
 
 // Nơi nhận lựa chọn giọng riêng của cuốn để ghi vào hồ sơ nghe (trình phát đăng ký - source.setVoice): máy kia đọc tiếp bằng đúng giọng ấy.
-let voiceSink: ((bookId: string, voice: string) => void) | null = null;
+let voiceSink: ((bookId: string, voice: string, recordId?: string) => void) | null = null;
 
 /** Đăng ký nơi nhận lựa chọn giọng (một nơi một lúc); trả hàm gỡ. */
-export function onVoiceChosen(sink: (bookId: string, voice: string) => void): () => void {
+export function onVoiceChosen(sink: (bookId: string, voice: string, recordId?: string) => void): () => void {
   voiceSink = sink;
   return () => {
     if (voiceSink === sink) voiceSink = null;
@@ -107,29 +126,31 @@ export function onVoiceChosen(sink: (bookId: string, voice: string) => void): ()
 
 /** Giọng riêng của cuốn đến từ máy kia qua hồ sơ nghe (`voice`/`voiceAt`, soát a68 lỗi 8): chọn sau lựa chọn ở máy này thì nhận - trừ khi máy này
  *  không có giọng ấy (giọng trên máy chưa tải, khoá nhà cung cấp chưa nhập): giữ giọng của máy này, không báo lỗi. True khi đã nhận. */
-export function adoptSyncedVoice(bookId: string, state: { voice?: string; voiceAt?: number } | undefined, available: readonly { id: string }[] | null | undefined): boolean {
+export function adoptSyncedVoice(bookId: string, state: { voice?: string; voiceAt?: number } | undefined, available: readonly { id: string }[] | null | undefined,
+  recordId?: string | null): boolean {
   const voice = state?.voice;
   const at = state?.voiceAt ?? 0;
-  if (typeof voice !== "string" || !at || at <= Number(read(stampKey(bookId)) || 0)) return false;
+  if (typeof voice !== "string" || !at || at <= Number(read(stampKey(bookId, recordId)) || 0)) return false;
   if (voice && !available?.some((item) => item.id === voice)) return false;
-  write(voiceKey(bookId), voice);
-  write(stampKey(bookId), String(at));
+  write(voiceKey(bookId, recordId), voice);
+  write(stampKey(bookId, recordId), String(at));
   troubled.clear();
   if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(VOICE_CHANGED_EVENT, { detail: bookId }));
   return true;
 }
 
-/** Giọng đã chọn cho cuốn này; chưa chọn thì giọng chung; chưa có gì thì "" (= mặc định của máy). */
-export function chosenVoice(bookId: string): string {
-  return read(voiceKey(bookId)) || read(GLOBAL_KEY);
+/** Giọng đã chọn cho cuốn này (của hồ sơ đang nghe, hay `recordId` nói rõ); chưa chọn thì giọng chung; chưa có gì thì "" (= mặc định của máy). */
+export function chosenVoice(bookId: string, recordId?: string | null): string {
+  return read(voiceKey(bookId, recordId)) || read(GLOBAL_KEY);
 }
 
 /** Chọn giọng cho RIÊNG cuốn này (menu Giọng đọc của trình phát, lời báo, hộp hỏi đồng ý); chương đang đọc đổi giọng từ đoạn kế. Giọng mặc định
  *  của các cuốn khác giữ nguyên - chỉ Cài đặt đổi nó (soát a67: đổi giọng một cuốn lặng lẽ đổi luôn giọng mặc định). */
-export function chooseVoice(bookId: string, voice: string): void {
-  write(voiceKey(bookId), voice);
-  write(stampKey(bookId), String(Date.now() / 1000));
-  voiceSink?.(bookId, voice);
+export function chooseVoice(bookId: string, voice: string, recordId?: string | null): void {
+  const record = (recordId === undefined ? recordOfBook.get(bookId) : recordId) || undefined;
+  write(voiceKey(bookId, record ?? null), voice);
+  write(stampKey(bookId, record ?? null), String(Date.now() / 1000));
+  voiceSink?.(bookId, voice, record);
   troubled.clear();
   // Lần chọn đầu tiên (chưa có giọng mặc định): cũng làm giọng mặc định, để cuốn thứ hai không bắt người mới chọn lại từ đầu.
   const first = !read(GLOBAL_KEY);
