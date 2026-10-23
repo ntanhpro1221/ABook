@@ -537,6 +537,7 @@ export class ReadAloudEngine implements AudioEngine {
   seek(seconds: number): void {
     if (!this.ready) {
       this.loadingTime = Math.max(0, seconds);
+      this.pendingWord = null; // tua sau cùng thắng: bấm chữ trước đó không kéo về
       return;
     }
     const total = this.duration;
@@ -647,12 +648,16 @@ export class ReadAloudEngine implements AudioEngine {
       this.target.fraction = (startAt - slot.start) / slot.duration;
     }
     this.ready = true;
-    const word = this.pendingWord ?? restored;
+    // Tua trong lúc chương còn đang nạp ([seek] chỉ nhớ `loadingTime`): nạp xong thì đứng đúng chỗ ấy, chỉ một lần. Chữ vừa bấm ([seekWord]) đi trước; chỗ khôi phục từ
+    // lần nghe trước thì nhường người nghe vừa tua.
+    const moved = this.loadingTime !== startAt;
+    const word = this.pendingWord ?? (moved ? null : restored);
     this.pendingWord = null;
     this.publish();
     this.fire("duration");
     this.fire("time");
     if (word) this.seekWord(word.segment, word.word);
+    else if (moved) this.seek(this.loadingTime);
     if (this.wanted) this.playCurrent();
   }
 
@@ -1922,14 +1927,10 @@ export class ReadAloudEngine implements AudioEngine {
     const current = this.slots[this.target.index];
     const start = current && !current.clip ? this.target.index : this.target.index + 1;
     for (let i = start; i < this.slots.length; i += 1) {
+      // Như cách đọc đổi ([readingsChanged]): epoch tăng để clip giọng cũ còn đang về bị bỏ, `fetching` hạ để đoạn xin lại bằng giọng mới.
       const slot = this.slots[i];
-      this.releaseSlot(slot);
-      slot.unlive?.();
-      slot.unlive = null;
-      this.clearRest(slot);
-      slot.clip = null;
-      slot.words = null;
-      slot.duration = slot.estimate;
+      this.dropClip(slot);
+      slot.fetching = false;
     }
     this.abortUnneeded(); // giọng cũ đang đọc trên máy cho đoạn sau: thôi
     this.layout();
