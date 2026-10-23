@@ -1308,6 +1308,66 @@ class LibraryPlugin : Plugin() {
         }
     }
 
+    // ---- Chẩn đoán (Diagnostics, AppLog): xem / gửi / xoá nhật ký ----------------------------------------------------------------
+
+    /** "Xem nhật ký": cả bản chẩn đoán (`lines` dòng nhật ký cuối, mặc định 500) cho màn Cài đặt → Chẩn đoán. */
+    @PluginMethod
+    fun diagnostics(call: PluginCall) {
+        val lines = Diagnostics.clampLines(call.getInt("lines") ?: 500)
+        remotes.execute {
+            try {
+                call.resolve(JSObject(Diagnostics.collect(context, lines).toString()))
+            } catch (error: Exception) {
+                fail(call, error, "không đọc được nhật ký")
+            }
+        }
+    }
+
+    /**
+     * "Gửi nhật ký": ghi gói .zip (`chan-doan.json` + `nhat-ky.txt`) vào `cacheDir/share` rồi mở bảng chia sẻ của hệ thống - NGƯỜI DÙNG tự chọn gửi
+     * cho ai, app không gửi đi đâu. Trong gói có tên cuốn đang nghe, không có mã thiết bị, mật khẩu hay chữ truyện. Trả {shared: true, name}.
+     */
+    @PluginMethod
+    fun shareDiagnostics(call: PluginCall) {
+        remotes.execute {
+            var file: File? = null
+            try {
+                val report = Diagnostics.collect(context, Diagnostics.DEFAULT_LINES)
+                val target = File(File(BookShare.dir(context.cacheDir), java.lang.Long.toHexString(System.nanoTime())), Diagnostics.bundleName(System.currentTimeMillis()))
+                file = target
+                target.parentFile?.mkdirs()
+                target.writeBytes(Diagnostics.bundle(report))
+                val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", target)
+                val send = Intent(Intent.ACTION_SEND).setType("application/zip")
+                    .putExtra(Intent.EXTRA_STREAM, uri)
+                    .putExtra(Intent.EXTRA_TITLE, target.name)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                send.clipData = android.content.ClipData.newUri(context.contentResolver, target.name, uri)
+                val chooser = Intent.createChooser(send, "Gửi nhật ký của ABook").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                activity.runOnUiThread {
+                    try {
+                        activity.startActivity(chooser)
+                        AppLog.i("Diagnostics", "mở bảng chia sẻ nhật ký (${target.length()} byte)")
+                        call.resolve(JSObject().put("shared", true).put("name", target.name))
+                    } catch (error: Exception) {
+                        fail(call, error, "không mở được bảng chia sẻ")
+                    }
+                }
+            } catch (error: Exception) {
+                file?.parentFile?.deleteRecursively()
+                fail(call, error, "không gom được nhật ký để gửi")
+            }
+        }
+    }
+
+    /** "Xoá nhật ký": bỏ nhật ký của app và các file văng (lý do tiến trình chết do hệ thống giữ, không xoá được). */
+    @PluginMethod
+    fun clearDiagnostics(call: PluginCall) {
+        AppLog.clear()
+        AppLog.i("Diagnostics", "người dùng xoá nhật ký")
+        call.resolve(JSObject().put("cleared", true))
+    }
+
     // ---- "Xuất MP3 để nghe ở app khác" (Mp3Export, Mp3ExportWorker) ------------------------------------------------
 
     /**

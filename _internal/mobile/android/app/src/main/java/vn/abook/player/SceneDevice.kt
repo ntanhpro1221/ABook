@@ -1,7 +1,6 @@
 package vn.abook.player
 
 import android.content.Context
-import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import vn.abook.player.readaloud.Paragraphs
@@ -41,7 +40,7 @@ object DeviceScenes {
                 val raw = context.applicationContext.assets.open(NNLITE_ASSET).use { it.readBytes() }
                 NnLite.parse(raw) to SceneBook.sha1(raw).take(12)
             } catch (error: Exception) {
-                Log.w("SceneMusic", "NN-lite không nạp được (${error.message}): nhạc theo cảnh chạy đường N0")
+                AppLog.w("SceneMusic", "NN-lite không nạp được (${error.message}): nhạc theo cảnh chạy đường N0")
                 null
             }
         }

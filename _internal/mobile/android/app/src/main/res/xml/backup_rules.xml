@@ -12,4 +12,5 @@
     <exclude domain="sharedpref" path="book_saves.xml" />
     <exclude domain="file" path="share.json" />
     <exclude domain="file" path="library/listening-node.json" />
+    <exclude domain="file" path="diag" />
 </full-backup-content>
