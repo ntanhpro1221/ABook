@@ -23,9 +23,9 @@ const SHORTCUTS: [ReactNode, string, boolean][] = [
   [<Kbd key="help">?</Kbd>, "Xem các phím tắt này", true],
 ];
 
-/** Dòng mô tả công tắc "Phím tắt một chữ cái" (Cài đặt › Phím tắt). */
+/** Dòng mô tả công tắc "Phím tắt một chữ cái" (Cài đặt › Giao diện). */
 export const LETTER_SHORTCUTS_HINT =
-  "B, M, [ ], ? khi nghe; J, K, 1–9 ở Việc cần duyệt; O, R khi nghe lại liền. Tắt nếu bạn nhập bằng giọng nói hay lỡ chạm phím - Space, mũi tên và Esc vẫn dùng được.";
+  "Tắt nếu hay lỡ chạm phím hay nhập bằng giọng nói.";
 
 /** `remote`: thiết bị ở xa (Studio từ xa) không đổi được cài đặt của máy tính - câu cuối không chỉ nó tới một công tắc nó không có. */
 export function ShortcutList({ remote = false }: { remote?: boolean }) {
@@ -47,8 +47,8 @@ export function ShortcutList({ remote = false }: { remote?: boolean }) {
         {letters
           ? remote
             ? "Phím một chữ cái: B, M, [ ], ?, và J, K, 1–9, O, R ở Studio."
-            : "Phím một chữ cái (B, M, [ ], ?, và J, K, 1–9, O, R ở Studio) tắt được ở Cài đặt › Phím tắt."
-          : `Phím một chữ cái đang tắt${remote ? "" : " - bật lại ở Cài đặt › Phím tắt"}. Space, mũi tên và Esc vẫn dùng được; nút “Phím tắt” ở màn Đang nghe mở hộp này.`}
+            : "Tắt phím một chữ cái ở Cài đặt › Giao diện."
+          : `Phím một chữ cái đang tắt${remote ? "" : " (bật ở Cài đặt › Giao diện)"}. Space, mũi tên, Esc vẫn chạy.`}
       </p>
     </>
   );

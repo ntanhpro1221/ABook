@@ -1,8 +1,9 @@
+import { useMotionState } from "@/shared/motion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { Headphones } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { jobView, type ExportJob } from "@/desktop/bookFileExport";
 import { AUDIOBOOK_COPY, planText, resumeText, wholeBookNotice } from "@/desktop/listenExport";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
@@ -186,7 +187,7 @@ export function AudiobookPhoneForm({ voice, plan, planError, music = false, onMu
         </p>
       )}
       <p className="text-xs text-fg-3">
-        Việc chạy nền, bạn cứ dùng điện thoại như thường - lúc bạn đang nghe sách, việc xuất nhường chỗ. Dừng bất cứ lúc nào: phần đã làm được giữ, xuất lại là làm tiếp.
+        Xuất chạy nền, nhường lúc nghe; dừng rồi làm tiếp được.
       </p>
       <BackgroundNote />
     </div>
@@ -198,7 +199,7 @@ export function AudiobookPhoneDialogHost() {
   const [book, setBook] = useState<ListenBook | null>(null);
   const [busy, setBusy] = useState(false);
   // Ô "Kèm nhạc nền" theo lượt ước đầu (mặc định của cuốn); người dùng đổi ô thì ước lại (chương làm sẵn, đoạn phải đọc lại theo lựa chọn nhạc).
-  const [state, setState] = useState<AudiobookPhonePlan["music"]>(undefined);
+  const [state, setState] = useMotionState<AudiobookPhonePlan["music"]>(undefined);
   const { data: voices } = useReadAloudVoices();
   useEffect(() => {
     const listener = (event: Event) => {

@@ -1,14 +1,18 @@
-import { Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { SleepSchedule } from "./SleepSchedule";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronRight, Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router";
+import { toast } from "@/shared/toast";
 import { useMediaQuery } from "@/shared/media";
-import { Button, Dialog, Segmented, TimeSelect, WRAP_LABEL, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { Button, Dialog, Segmented, WRAP_LABEL, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { GroupHeader, isSettingsGroup, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
+import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { cn } from "@/shared/cn";
 import { openExternal } from "@/shared/openExternal";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
-import { api } from "@/studio/api";
+import { api, type AppInfo } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences, useVoices } from "@/studio/data";
 import { StudioSettings } from "@/studio/StudioSetup";
 import { PROFILE_LABEL } from "@/studio/bookTemplates";
@@ -21,15 +25,40 @@ import { LETTER_SHORTCUTS_HINT, ShortcutList } from "@/listen/Shortcuts";
 import { MyMusicSection } from "@/listen/MyMusic";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
-import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettingsApi } from "@/listen/VoiceSettings";
-import { scrollMotion } from "@/shared/motion";
+import { ReadAloudStorage } from "@/listen/ReadAloudStorage";
+import { useDefaultVoiceName, VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
 import { OwnDiagnostics } from "./OwnDiagnostics";
-import { PhoneSync, Switch } from "./PhoneSync";
+import { PhoneSync, Switch, type SyncView } from "./PhoneSync";
 import { checkLine, UPDATE_CHECKED_EVENT, UPDATE_CHECK_WAIT_MS, type CheckLine, type UpdateChecked } from "./updateCheck";
 
+// Cài đặt của máy tính (chủ app 23-10: "như lạc vào ma trận"): cùng cây nhóm với điện thoại (shared/SettingsNav.tsx). Cửa sổ rộng: danh sách nhóm
+// bên trái, nội dung bên phải; hẹp (trình duyệt điện thoại điều khiển từ xa): trang gốc là danh sách, mỗi nhóm một màn con như điện thoại.
+
 const SOURCE_URL = "https://github.com/ntanhpro1221/ABook/";
+
+/** Giọng đọc của "Nghe ngay" trên máy tính: máy chủ cục bộ (abook/readaloud) đọc, khóa của người dùng gửi trong thân yêu cầu, chỉ nhận lại bản che. */
+const desktopVoices: VoiceSettingsApi = {
+  voices: () => httpSource.readAloudVoices!(),
+  sample: (voice, text) => httpSource.readAloudSample!(voice, text),
+  online: () => api<OnlineProviderInfo[]>("/api/readaloud/online"),
+  saveKey: (provider, key, region) => api<OnlineProviderInfo>(`/api/readaloud/online/${provider}`, { method: "PUT", body: { key, region } }),
+  removeKey: (provider) => api<OnlineProviderInfo>(`/api/readaloud/online/${provider}`, { method: "DELETE" }),
+  checkKey: (provider) => api<KeyCheck>(`/api/readaloud/online/${provider}/check`, { method: "POST", body: {} }),
+};
+
+/** Nhóm có mặt trên máy này: từ xa chỉ còn những gì đổi được từ xa; Studio khi app có Studio (đã cài hay chưa). */
+export function desktopGroups(info: AppInfo | undefined, touchOnly: boolean): SettingsGroupId[] {
+  const remote = Boolean(info?.remote);
+  const groups: SettingsGroupId[] = [];
+  if (!remote) groups.push("voice", "listen", "sleep");
+  if (!remote || !touchOnly) groups.push("look");
+  if (!remote) groups.push("devices");
+  if ((!remote && info?.studio) || (remote && !info?.listenOnly)) groups.push("studio");
+  groups.push("advanced");
+  return groups;
+}
 
 // Mặc định cho sách MỚI (soát UX a5 01-10: mỗi lần tạo sách lại chọn giọng kể và chất lượng như lần trước). "Làm tiếp cuốn
 // này" vẫn theo phần trước.
@@ -38,16 +67,16 @@ function NewBookDefaults() {
   const { data: voices } = useVoices();
   const selectClass = "h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus";
   return (
-    <div className="mb-4 grid max-w-xl gap-3 sm:grid-cols-2">
+    <div className="grid gap-3 px-4 py-3 sm:grid-cols-2">
       <label htmlFor="new-book-narrator" className="block">
-        <span className="block text-sm font-medium">Giọng kể cho sách mới</span>
+        <span className="block text-sm font-medium">Giọng kể</span>
         <select
           id="new-book-narrator"
           className={cn(selectClass, "mt-1")}
           value={preferences?.newBookNarrator ?? ""}
           onChange={(event) => update({ newBookNarrator: event.target.value })}
         >
-          <option value="">Giọng máy đề xuất</option>
+          <option value="">Máy đề xuất</option>
           {(voices ?? []).map((voice) => (
             <option key={voice.name} value={voice.name}>
               {voice.name} · {voice.gender}, miền {voice.region}
@@ -56,7 +85,7 @@ function NewBookDefaults() {
         </select>
       </label>
       <label htmlFor="new-book-profile" className="block">
-        <span className="block text-sm font-medium">Chất lượng cho sách mới</span>
+        <span className="block text-sm font-medium">Chất lượng</span>
         <select
           id="new-book-profile"
           className={cn(selectClass, "mt-1")}
@@ -74,72 +103,6 @@ function NewBookDefaults() {
   );
 }
 
-/** Giọng đọc của "Nghe ngay" trên máy tính: máy chủ cục bộ (abook/readaloud) đọc, khóa của người dùng gửi trong thân yêu cầu, chỉ nhận lại bản che. */
-const desktopVoices: VoiceSettingsApi = {
-  voices: () => httpSource.readAloudVoices!(),
-  sample: (voice, text) => httpSource.readAloudSample!(voice, text),
-  online: () => api<OnlineProviderInfo[]>("/api/readaloud/online"),
-  saveKey: (provider, key, region) => api<OnlineProviderInfo>(`/api/readaloud/online/${provider}`, { method: "PUT", body: { key, region } }),
-  removeKey: (provider) => api<OnlineProviderInfo>(`/api/readaloud/online/${provider}`, { method: "DELETE" }),
-  checkKey: (provider) => api<KeyCheck>(`/api/readaloud/online/${provider}/check`, { method: "POST", body: {} }),
-};
-
-function Section({ id, title, description, children }: { id?: string; title: string; description?: string; children: ReactNode }) {
-  return (
-    <section id={id} className="grid scroll-mt-4 gap-4 border-b border-line py-7 last:border-b-0 lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-8">
-      <div>
-        <h2 className="text-base font-semibold">{title}</h2>
-        {description && <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{description}</p>}
-      </div>
-      <div className="min-w-0">{children}</div>
-    </section>
-  );
-}
-
-/** Mục lục của trang: đọc thẳng các mục (`<section id>` + tiêu đề) đang có trên trang, nên mục nào ẩn theo máy / chế độ thì tự không có
- *  trong mục lục - không phải giữ một danh sách thứ hai khớp với các điều kiện bên dưới. */
-function SectionIndex({ root }: { root: { current: HTMLElement | null } }) {
-  const [items, setItems] = useState<{ id: string; title: string }[]>([]);
-  useEffect(() => {
-    // Chạy sau mỗi lần dựng: thông tin máy / tuỳ chọn tới muộn làm mục xuất hiện hay biến mất; chỉ đặt lại khi danh sách thật sự đổi.
-    const found = [...(root.current?.querySelectorAll<HTMLElement>("section[id]") ?? [])].map((section) => ({
-      id: section.id,
-      title: section.querySelector("h2")?.textContent ?? "",
-    }));
-    setItems((now) => (now.length === found.length && now.every((item, index) => item.id === found[index].id && item.title === found[index].title) ? now : found));
-  });
-  if (items.length < 4) return null;
-  const jump = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: scrollMotion(), block: "start" });
-  };
-  return (
-    <nav aria-label="Các mục của Cài đặt" className="mt-4 flex flex-wrap gap-1.5">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          type="button"
-          onClick={() => jump(item.id)}
-          className="touch-row h-8 rounded-full border border-line bg-panel px-3 text-[0.8125rem] font-medium text-fg-2 transition-colors hover:border-line-strong hover:text-fg"
-        >
-          {item.title}
-        </button>
-      ))}
-    </nav>
-  );
-}
-
-function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-2">
-      <div className="min-w-0">
-        <div className="text-sm font-medium">{label}</div>
-        {hint && <div className="mt-0.5 text-[0.8125rem] text-fg-2">{hint}</div>}
-      </div>
-      {children}
-    </div>
-  );
-}
-
 const THEMES = [
   { value: "system", label: "Theo Windows", icon: Monitor },
   { value: "light", label: "Sáng", icon: Sun },
@@ -148,7 +111,7 @@ const THEMES = [
 const THEME_VALUES = THEMES.map((theme) => theme.value);
 
 /** App Windows đóng gói: vỏ đã tìm thấy bản mới (đã ký) - cài chỉ khi người dùng bấm, vì app phải đóng rồi mở lại. */
-function UpdateSection({ update, current }: { update: { version: string; notes: string }; current: string }) {
+function UpdateRow({ update, current }: { update: { version: string; notes: string }; current: string }) {
   const [busy, setBusy] = useState(false);
   useEffect(() => {
     // Vỏ tải hỏng (desktop/App.tsx báo lỗi): nút bấm lại được.
@@ -160,27 +123,22 @@ function UpdateSection({ update, current }: { update: { version: string; notes: 
     setBusy(true);
     try {
       await api("/api/app/update", { method: "POST", body: {} });
-      toast.success(`Đang tải ABook ${update.version}`, {
-        description: "App tự đóng, cài bản mới rồi mở lại. Chỗ đang nghe, dấu trang và sách giữ nguyên.",
-        duration: 60_000,
-      });
+      toast.success(`Đang tải ABook ${update.version}`, { description: "App tự mở lại; sách và chỗ đang nghe giữ nguyên.", duration: 60_000 });
     } catch (error) {
       setBusy(false);
       toast.error("Chưa cập nhật được", { description: (error as Error).message });
     }
   };
   return (
-    <Section id="update" title="Cập nhật" description="Bản mới tải từ trang phát hành của ABook, có chữ ký kiểm được.">
-      <div className="max-w-xl">
-        <p className="text-sm">
-          <span className="font-semibold">ABook {update.version}</span> đã có{current ? ` - máy này đang dùng ${current}` : ""}.
-        </p>
-        {update.notes && <p className="mt-2 whitespace-pre-line text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
-        <Button className="mt-3" icon={Download} disabled={busy} onClick={() => void install()}>
-          {busy ? "Đang tải bản mới…" : "Cập nhật và mở lại"}
-        </Button>
-      </div>
-    </Section>
+    <div className="px-4 py-3">
+      <p className="text-sm">
+        <span className="font-semibold">ABook {update.version}</span> đã có{current ? ` · đang dùng ${current}` : ""}
+      </p>
+      {update.notes && <p className="mt-2 whitespace-pre-line text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
+      <Button className="mt-3" icon={Download} disabled={busy} onClick={() => void install()}>
+        {busy ? "Đang tải bản mới…" : "Cập nhật và mở lại"}
+      </Button>
+    </div>
   );
 }
 
@@ -213,19 +171,14 @@ function UpdateCheck({ current }: { current: string }) {
     }
   };
   return (
-    <Section id="update" title="Cập nhật" description="Bản mới tải từ trang phát hành của ABook, có chữ ký kiểm được.">
-      <div className="max-w-xl">
-        <p className="text-sm">{current ? `Máy này đang dùng ABook ${current}.` : "Bạn có thể kiểm tra xem có bản mới không."}</p>
-        <Button className="mt-3" size="sm" variant="secondary" disabled={checking} onClick={() => void check()}>
-          {checking ? "Đang kiểm tra…" : "Kiểm tra bản mới"}
-        </Button>
-        {line && (
-          <p className={cn("mt-2 text-[0.8125rem]", line.tone === "error" ? "text-danger" : "text-fg-2")} role="status">
-            {line.text}
-          </p>
-        )}
-      </div>
-    </Section>
+    <SettingsRow
+      label={current ? `ABook ${current}` : "Bản mới"}
+      hint={line && <span className={cn(line.tone === "error" && "text-danger")} role="status">{line.text}</span>}
+    >
+      <Button size="sm" variant="secondary" disabled={checking} onClick={() => void check()}>
+        {checking ? "Đang kiểm tra…" : "Kiểm tra bản mới"}
+      </Button>
+    </SettingsRow>
   );
 }
 
@@ -234,7 +187,7 @@ function ThirdPartyButton() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button className={cn("mt-3", WRAP_LABEL)} size="sm" variant="secondary" onClick={() => setOpen(true)}>
+      <Button className={WRAP_LABEL} size="sm" variant="secondary" onClick={() => setOpen(true)}>
         Thành phần bên thứ ba
       </Button>
       <Dialog open={open} onOpenChange={setOpen} title="Thành phần bên thứ ba" width="max-w-2xl">
@@ -244,70 +197,124 @@ function ThirdPartyButton() {
   );
 }
 
-export function SettingsScreen() {
-  const { data: info } = useAppInfo();
+function VoiceGroup() {
+  return (
+    <SettingsBlock>
+      <div className="px-4 py-3.5">
+        <VoiceSettings
+          api={desktopVoices}
+          deviceHint="Windows chưa có giọng tiếng Việt. Cài ở Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."
+          modules={(reload) => (
+            <>
+              <LocalVoiceModules onChanged={reload} />
+              <VoiceSpeedSetting />
+            </>
+          )}
+        />
+      </div>
+    </SettingsBlock>
+  );
+}
+
+function ListenGroup() {
   const { data: preferences, update } = usePreferences();
   const client = useQueryClient();
-  const changeLibrary = async () => {
-    try {
-      const path = await pickFolder("Chọn thư mục thư viện", preferences?.libraryRoot ?? "");
-      // Báo "đã đổi" chỉ khi máy chủ đã nhận; bị từ chối thì usePreferences báo lý do (soát a100 V3).
-      if (path) update({ libraryRoot: path }, { onSuccess: () => toast.success("Đã đổi thư mục thư viện") });
-    } catch (error) {
-      toast.error((error as Error).message);
-    }
-  };
-  const remote = Boolean(info?.remote);
-  const page = useRef<HTMLDivElement | null>(null);
-  // Phím tắt vô nghĩa trên màn chỉ có cảm ứng (điện thoại, máy tính bảng không bàn phím): ẩn cả mục.
-  const touchOnly = useMediaQuery("(hover: none) and (pointer: coarse)");
+  return (
+    <>
+      <SettingsBlock>
+        <SettingsRow label="Tự lùi khi nghe lại" hint="Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây).">
+          <Switch id="auto-rewind" label="Tự lùi khi nghe lại" checked={preferences?.autoRewind !== false} onCheckedChange={(value) => update({ autoRewind: value })} />
+        </SettingsRow>
+      </SettingsBlock>
+      {/* "Nhạc của tôi" là kho chung mọi cuốn: ở đây, không chỉ trong hộp "Sửa sách" của từng cuốn. */}
+      <SettingsBlock title="Nhạc nền" id="music">
+        <SettingsRow label={<span id="auto-music-name">{AUTO_MUSIC_LABEL}</span>} hint={<span id="auto-music-hint">{AUTO_MUSIC_HINT}</span>}>
+          <Switch
+            id="auto-music"
+            labelledBy="auto-music-name"
+            describedBy="auto-music-hint"
+            checked={preferences?.autoMusic !== false}
+            onCheckedChange={(value) =>
+              update(
+                { autoMusic: value },
+                {
+                  onSuccess: () => {
+                    void client.invalidateQueries({ queryKey: ["listen"] });
+                    window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: MUSIC_CHANGED_ALL })); // cuốn đang nghe đổi nhạc ngay, không đợi chương sau
+                    toast.success(value ? "Đã bật tự chọn nhạc nền" : "Đã tắt tự chọn nhạc nền");
+                  },
+                },
+              )
+            }
+          />
+        </SettingsRow>
+        <div className="px-4 py-3.5">
+          <MyMusicSection />
+        </div>
+      </SettingsBlock>
+    </>
+  );
+}
+
+function SleepGroup() {
+  const { data: preferences, update } = usePreferences();
   const fade = String(preferences?.sleepFadeSeconds ?? 30) as "10" | "30" | "60";
   const extend = String(preferences?.sleepExtendMinutes ?? 10) as "5" | "10" | "15";
   return (
-    <div ref={page} className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">Cài đặt</h1>
-      <div className="max-w-[980px]">
-        <SectionIndex root={page} />
-        {!remote && info?.update && <UpdateSection update={info.update} current={info.version} />}
-        {!remote && !info?.update && info?.canCheckUpdate && <UpdateCheck current={info.version} />}
-        {remote && (
-          <Section id="remote" title="Điều khiển từ xa" description="Đang dùng ABook của máy tính qua mạng.">
-            <p className="max-w-xl text-sm text-fg-2 text-pretty">
-              {info?.listenOnly
-                ? "Thiết bị này nghe được mọi sách của máy tính. Muốn làm sách từ đây: trên máy tính, Cài đặt → Điện thoại và thiết bị → bật “Cho phép điều khiển sản xuất từ thiết bị đã ghép” và “Điều khiển sản xuất” ở dòng của thiết bị này."
-                : "Sách, dự án và việc sản xuất ở đây là của máy tính."}{" "}
-              Cài đặt của máy tính - thư mục thư viện, giao diện, hẹn giờ ngủ, thiết bị đã ghép - chỉ đổi được trên chính máy tính.
-            </p>
-          </Section>
-        )}
-        {remote && !info?.listenOnly && (
-          <Section id="templates" title="Mẫu thiết lập" description="Bộ lựa chọn đặt tên sẵn cho sách mới - đổi tên, xoá được ngay từ đây.">
-            <BookTemplates />
-          </Section>
-        )}
-        {!info?.listenOnly && (
-        <Section id="library" title="Thư viện" description="Thư mục chứa sách của bạn. Sách thêm vào hay mới làm đều nằm ở đây.">
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="flex h-10 min-w-0 flex-1 basis-48 items-center gap-2 rounded-lg bg-sunken px-3 text-sm text-fg-2">
-              <FolderOpen className="size-4 shrink-0" />
-              <span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
-            </div>
-            {info?.dialogs && (
-              <Button icon={FolderOpen} className={cn("touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>
-                Đổi thư mục
-              </Button>
-            )}
-          </div>
-        </Section>
-        )}
-        {!remote && (
-        <>
-        <Section id="theme" title="Giao diện" description="Màu sáng hay tối. Theo Windows sẽ tự đổi cùng hệ thống.">
+    <SettingsBlock>
+      <SettingsRow label="Tự tắt" hint="Không ai chạm máy chừng này thì nhỏ dần rồi dừng.">
+        <Segmented<"0" | "1" | "2" | "3">
+          label="Tự tắt"
+          value={String(preferences?.safetyStopHours ?? 2) as "0" | "1" | "2" | "3"}
+          onChange={(value) => update({ safetyStopHours: Number(value) })}
+          options={[
+            { value: "0", label: "Không" },
+            { value: "1", label: "1 giờ" },
+            { value: "2", label: "2 giờ" },
+            { value: "3", label: "3 giờ" },
+          ]}
+        />
+      </SettingsRow>
+      <SleepSchedule />
+      <SettingsRow label="Mỗi lần nghe thêm" hint={`Lúc đang nhỏ dần: ${EXTEND_GESTURE}.`}>
+        <Segmented<"5" | "10" | "15">
+          label="Số phút nghe thêm"
+          value={extend}
+          onChange={(value) => update({ sleepExtendMinutes: Number(value) })}
+          options={[
+            { value: "5", label: "5 phút" },
+            { value: "10", label: "10 phút" },
+            { value: "15", label: "15 phút" },
+          ]}
+        />
+      </SettingsRow>
+      <SettingsRow label="Nhỏ dần">
+        <Segmented<"10" | "30" | "60">
+          label="Độ dài nhỏ dần"
+          value={fade}
+          onChange={(value) => update({ sleepFadeSeconds: Number(value) })}
+          options={[
+            { value: "10", label: "10 giây" },
+            { value: "30", label: "30 giây" },
+            { value: "60", label: "1 phút" },
+          ]}
+        />
+      </SettingsRow>
+    </SettingsBlock>
+  );
+}
+
+function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean }) {
+  const { data: preferences, update } = usePreferences();
+  return (
+    <>
+      {!remote && (
+        <SettingsBlock>
           <div
             role="radiogroup"
             aria-label="Giao diện"
             onKeyDown={radioGroupKeys(THEME_VALUES, preferences?.theme ?? "system", (theme) => update({ theme }))}
-            className="grid max-w-md grid-cols-3 gap-2"
+            className="grid max-w-md grid-cols-3 gap-2 p-3"
           >
             {THEMES.map((theme, index) => {
               const selected = (preferences?.theme ?? "system") === theme.value;
@@ -331,232 +338,12 @@ export function SettingsScreen() {
               );
             })}
           </div>
-        </Section>
-        <Section
-          id="listen"
-          title="Nghe"
-          description="Trình phát nhớ vị trí và tốc độ của từng cuốn. Hết một chương tự sang chương kế tiếp (nếu đã có audio)."
-        >
-          <div className="divide-y divide-line">
-            <Field label="Nhỏ dần trước khi hẹn giờ tắt" hint="Tiếng giảm êm để không giật mình tỉnh giấc.">
-              <Segmented<"10" | "30" | "60">
-                label="Độ dài nhỏ dần"
-                value={fade}
-                onChange={(value) => update({ sleepFadeSeconds: Number(value) })}
-                options={[
-                  { value: "10", label: "10 giây" },
-                  { value: "30", label: "30 giây" },
-                  { value: "60", label: "1 phút" },
-                ]}
-              />
-            </Field>
-            <Field label="Mỗi lần nghe thêm" hint={`Lúc đang nhỏ dần, ${EXTEND_GESTURE} là được nghe thêm chừng này.`}>
-              <Segmented<"5" | "10" | "15">
-                label="Số phút nghe thêm"
-                value={extend}
-                onChange={(value) => update({ sleepExtendMinutes: Number(value) })}
-                options={[
-                  { value: "5", label: "5 phút" },
-                  { value: "10", label: "10 phút" },
-                  { value: "15", label: "15 phút" },
-                ]}
-              />
-            </Field>
-            <Field
-              label="Tự tắt khi ngủ quên"
-              hint="Phát liên tục mà không ai chạm máy chừng này thì nhỏ dần rồi dừng, và ghi lại chỗ đang nghe cho thẻ “Tối qua”."
-            >
-              <Segmented<"0" | "1" | "2" | "3">
-                label="Tự tắt khi ngủ quên"
-                value={String(preferences?.safetyStopHours ?? 2) as "0" | "1" | "2" | "3"}
-                onChange={(value) => update({ safetyStopHours: Number(value) })}
-                options={[
-                  { value: "0", label: "Không" },
-                  { value: "1", label: "1 giờ" },
-                  { value: "2", label: "2 giờ" },
-                  { value: "3", label: "3 giờ" },
-                ]}
-              />
-            </Field>
-            <Field
-              label="Lịch đêm"
-              hint="Bấm nghe trong khung giờ này thì tự hẹn giờ ngủ - khỏi phải nhớ bấm lúc buồn ngủ."
-            >
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                <Switch
-                  id="sleep-schedule"
-                  label="Lịch đêm"
-                  checked={Boolean(preferences?.sleepSchedule)}
-                  onCheckedChange={(on) => update({ sleepSchedule: on ? { from: "22:00", to: "06:00", minutes: 30 } : null })}
-                />
-                {preferences?.sleepSchedule && (
-                  <>
-                    <TimeSelect
-                      label="Từ"
-                      value={preferences.sleepSchedule.from}
-                      onChange={(value) => update({ sleepSchedule: { ...preferences.sleepSchedule!, from: value } })}
-                      className="h-9 rounded-lg border border-line bg-panel px-2"
-                    />
-                    <span className="text-fg-2">đến</span>
-                    <TimeSelect
-                      label="Đến"
-                      value={preferences.sleepSchedule.to}
-                      onChange={(value) => update({ sleepSchedule: { ...preferences.sleepSchedule!, to: value } })}
-                      className="h-9 rounded-lg border border-line bg-panel px-2"
-                    />
-                    <span className="text-fg-2">hẹn</span>
-                    <select
-                      aria-label="Số phút hẹn"
-                      value={preferences.sleepSchedule.minutes}
-                      onChange={(event) => update({ sleepSchedule: { ...preferences.sleepSchedule!, minutes: Number(event.target.value) } })}
-                      className="h-9 rounded-lg border border-line bg-panel px-2"
-                    >
-                      {[15, 30, 45, 60].map((minutes) => (
-                        <option key={minutes} value={minutes}>
-                          {minutes} phút
-                        </option>
-                      ))}
-                    </select>
-                  </>
-                )}
-              </div>
-            </Field>
-            <Field
-              label="Tự lùi khi nghe lại"
-              hint="Tạm dừng quá nửa phút rồi nghe tiếp thì lùi 5 giây (quá 10 phút: lùi 10 giây) để bạn bắt lại mạch truyện. Chỉ áp cho máy này."
-            >
-              <Switch
-                id="auto-rewind"
-                label="Tự lùi khi nghe lại"
-                checked={preferences?.autoRewind !== false}
-                onCheckedChange={(value) => update({ autoRewind: value })}
-              />
-            </Field>
-          </div>
-        </Section>
-        {!remote && (
-          <Section
-            id="voices"
-            title="Giọng đọc"
-            description="Giọng mặc định khi nghe sách chưa có audio (“Nghe ngay”). Mỗi cuốn vẫn đổi được giọng riêng ở nút “Giọng đọc” trong trình phát."
-          >
-            <VoiceSettings
-              api={desktopVoices}
-              storage={{ usage: () => httpSource.readAloudCacheTotal!(), clear: () => httpSource.readAloudCacheClearAll!() }}
-              deviceHint="Giọng có sẵn của Windows: máy này chưa có giọng tiếng Việt - cài trong Cài đặt của Windows → Thời gian và ngôn ngữ → Giọng nói → Thêm giọng nói → Tiếng Việt."
-              modules={(reload) => (
-                <>
-                  <LocalVoiceModules onChanged={reload} />
-                  <VoiceSpeedSetting />
-                </>
-              )}
-            />
-          </Section>
-        )}
-        {/* "Nhạc của tôi" trước chỉ mở được từ hộp "Sửa sách" của từng cuốn, dù kho nhạc là chung cho mọi cuốn. */}
-        <Section
-          id="music"
-          title="Nhạc nền"
-          description={
-            "Máy tự chọn nhạc nền cho sách chỉ có chữ (công tắc ngay dưới), và bạn có thể thêm nhạc của riêng mình, dùng chung cho mọi cuốn. Đổi nhạc của một " +
-            "cuốn khi nghe ở mục “Nhạc nền” trong menu của sách hay nút nhạc nền ở trình phát." +
-            // Người chưa cài Studio không có "dự án" nào để mở - chỉ nhắc tab của dự án khi đã có Studio (soát a64).
-            (info?.studio?.installed ? " Sách nói làm trong Studio thì chọn bài cho từng đoạn ở tab “Nhạc nền” của dự án." : "")
-          }
-        >
-          <div className="mb-5 flex max-w-2xl items-start justify-between gap-6">
-            <label htmlFor="auto-music" className="min-w-0 cursor-pointer">
-              <span id="auto-music-name" className="block text-sm font-medium">{AUTO_MUSIC_LABEL}</span>
-              <span id="auto-music-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{AUTO_MUSIC_HINT}</span>
-            </label>
-            <Switch
-              id="auto-music"
-              labelledBy="auto-music-name"
-              describedBy="auto-music-hint"
-              checked={preferences?.autoMusic !== false}
-              onCheckedChange={(value) =>
-                update(
-                  { autoMusic: value },
-                  {
-                    onSuccess: () => {
-                      void client.invalidateQueries({ queryKey: ["listen"] });
-                      window.dispatchEvent(new CustomEvent(MUSIC_CHANGED_EVENT, { detail: MUSIC_CHANGED_ALL })); // cuốn đang nghe đổi nhạc ngay, không đợi chương sau
-                      toast.success(value ? "Đã bật tự chọn nhạc nền" : "Đã tắt tự chọn nhạc nền", {
-                        description: value ? "Sách chỉ có chữ chưa chọn nhạc sẽ có nhạc nhè nhẹ." : "Sách chưa chọn nhạc sẽ im lặng; cuốn đã chọn nhạc vẫn giữ.",
-                      });
-                    },
-                  },
-                )
-              }
-            />
-          </div>
-          <div className="max-w-2xl">
-            <MyMusicSection />
-          </div>
-        </Section>
-        <Section
-          id="phone"
-          title="Điện thoại và thiết bị"
-          description="Nghe tiếp trên điện thoại Android: tải sách về để nghe không cần mạng, chỗ đang nghe và dấu trang tự đồng bộ hai chiều. Nếu cho phép, thiết bị đã ghép còn điều khiển được việc sản xuất của máy này qua trình duyệt."
-        >
-          <PhoneSync />
-        </Section>
-        {info?.studio && (
-          <Section
-            id="studio"
-            title="Studio"
-            description="Phần làm sách nói (thư viện, model đọc hiểu truyện, giọng đọc) - tải thêm khi cần, nằm riêng một thư mục."
-          >
-            {/* Trạng thái Studio (đã cài / chưa cài + Gỡ hay Cài) ở đầu mục; chưa cài thì các tuỳ chọn bên dưới chỉ có tác dụng khi đã có Studio: vẫn xem và
-                chỉnh được, đánh dấu bằng vạch bên trái - không làm mờ chữ (mờ 60 % chỉ còn 2,3-2,7:1, soát a67). */}
-            <StudioSettings />
-            {!info.studio.installed && <p className="mb-3 text-[0.8125rem] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p>}
-            <div className={cn(!info.studio.installed && "border-l-2 border-dashed border-line-strong pl-4")}>
-              <div className="mb-4 flex max-w-xl items-start justify-between gap-6">
-                <label htmlFor="pause-on-battery" className="min-w-0 cursor-pointer">
-                  <span id="pause-on-battery-name" className="block text-sm font-medium">Tạm dừng khi rút sạc</span>
-                  <span id="pause-on-battery-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">
-                    Máy tính xách tay chạy pin thì làm sách rất chậm mà hao pin. Sách đứng yên và tự làm tiếp đúng chỗ khi cắm sạc
-                    lại - kể cả giữa lúc phân tích truyện.
-                  </span>
-                </label>
-                <Switch
-                  id="pause-on-battery"
-                  labelledBy="pause-on-battery-name"
-                  describedBy="pause-on-battery-hint"
-                  checked={preferences?.pauseOnBattery !== false}
-                  onCheckedChange={(value) => update({ pauseOnBattery: value })}
-                />
-              </div>
-              <NewBookDefaults />
-              <BookTemplates />
-              <SharedReadingsSettings />
-            </div>
-          </Section>
-        )}
-        <Section
-          id="computers"
-          title="Máy tính khác"
-          description="Nghe sách trên máy tính khác cùng mạng (hay cùng mạng riêng ảo) mà không phải chép sang: sách của máy ấy hiện trong Thư viện, chương tải về lần đầu nghe tới."
-        >
-          <OtherComputers />
-        </Section>
-        <Section
-          id="diagnostics"
-          title="Chẩn đoán"
-          description="Khi có chuyện lạ, lưu nhật ký thành file để gửi cho người sửa lỗi. Điện thoại đã ghép có nút “Chẩn đoán” ở mục Máy tính khác."
-        >
-          <OwnDiagnostics />
-        </Section>
-        </>
-        )}
-        {!touchOnly && (
-        <Section id="shortcuts" title="Phím tắt" description="Dùng được ở mọi màn hình, trừ khi đang gõ chữ.">
-          <div className="mb-5 flex max-w-2xl items-start justify-between gap-6">
-            <label htmlFor="letter-shortcuts" className="min-w-0 cursor-pointer">
-              <span id="letter-shortcuts-name" className="block text-sm font-medium">Phím tắt một chữ cái</span>
-              <span id="letter-shortcuts-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{LETTER_SHORTCUTS_HINT}</span>
-            </label>
+        </SettingsBlock>
+      )}
+      {/* Phím tắt vô nghĩa trên màn chỉ có cảm ứng (điện thoại, máy tính bảng không bàn phím): ẩn cả khối. */}
+      {!touchOnly && (
+        <SettingsBlock title="Phím tắt" id="shortcuts">
+          <SettingsRow label={<span id="letter-shortcuts-name">Phím tắt chữ</span>} hint={<span id="letter-shortcuts-hint">{LETTER_SHORTCUTS_HINT}</span>}>
             {/* Công tắc này lưu ở máy tính (PUT /api/preferences không qua Studio từ xa): ở xa thì nói đổi ở đâu thay vì để nó bấm ra 403 im lặng. */}
             {remote ? (
               <OnComputerOnly verb="Đổi" className="shrink-0" />
@@ -569,28 +356,239 @@ export function SettingsScreen() {
                 onCheckedChange={(value) => update({ letterShortcuts: value })}
               />
             )}
+          </SettingsRow>
+          <div className="px-4 py-3">
+            <ShortcutList remote={remote} />
           </div>
-          <ShortcutList remote={remote} />
-        </Section>
-        )}
-        <Section id="about" title="Giới thiệu">
-          <p className="text-sm text-fg-2 text-pretty">
-            ABook {info?.version} - nghe sách tiếng Việt và làm sách nói. Nghe ngay đọc bằng giọng trực tuyến (cần mạng, chữ được gửi tới
-            Microsoft) hay giọng tải về chạy trên máy này. Studio làm sách nói chạy trên máy này: phân tích truyện, phân vai, thu âm và
-            kiểm tra từng câu.
-          </p>
-          {/* Liên kết mở ở cửa sổ mới (target="_blank", như ghi công nhạc ở trình phát), không điều hướng chính cửa sổ app; cửa sổ app Windows nuốt target nên openExternal nhờ máy chủ mở; Android: SOURCE_URL. */}
-          <p className="mt-2 select-text text-sm text-fg-2">
-            Mã nguồn mở, giấy phép MIT:{" "}
+        </SettingsBlock>
+      )}
+    </>
+  );
+}
+
+function DevicesGroup() {
+  return (
+    <>
+      <SettingsBlock title="Điện thoại và thiết bị" id="phone">
+        <div className="px-4 py-3.5">
+          <PhoneSync />
+        </div>
+      </SettingsBlock>
+      <SettingsBlock title="Máy tính khác" id="computers">
+        <div className="px-4 py-3.5">
+          <OtherComputers />
+        </div>
+      </SettingsBlock>
+    </>
+  );
+}
+
+function StudioGroup({ info }: { info: AppInfo | undefined }) {
+  const { data: preferences, update } = usePreferences();
+  if (info?.remote) {
+    return (
+      <SettingsBlock title="Mẫu thiết lập" id="templates">
+        <div className="px-4 py-3.5">
+          <BookTemplates />
+        </div>
+      </SettingsBlock>
+    );
+  }
+  const installed = Boolean(info?.studio?.installed);
+  return (
+    <>
+      <SettingsBlock>
+        {/* Trạng thái Studio (đã cài / chưa cài + Gỡ hay Cài) ở đầu nhóm; chưa cài thì các tuỳ chọn dưới vẫn xem và chỉnh được, có một dòng nói rõ. */}
+        <div className="px-4 py-3.5">
+          <StudioSettings />
+        </div>
+      </SettingsBlock>
+      {!installed && <p className="mt-4 px-1 text-[0.8125rem] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p>}
+      <SettingsBlock>
+        <SettingsRow label={<span id="pause-on-battery-name">Dừng khi dùng pin</span>} hint={<span id="pause-on-battery-hint">Cắm sạc lại thì tự làm tiếp đúng chỗ.</span>}>
+          <Switch
+            id="pause-on-battery"
+            labelledBy="pause-on-battery-name"
+            describedBy="pause-on-battery-hint"
+            checked={preferences?.pauseOnBattery !== false}
+            onCheckedChange={(value) => update({ pauseOnBattery: value })}
+          />
+        </SettingsRow>
+      </SettingsBlock>
+      <SettingsBlock title="Sách mới" fold="studio.new-book">
+        <NewBookDefaults />
+        <div className="px-4 py-3.5">
+          <BookTemplates />
+        </div>
+      </SettingsBlock>
+      <SharedReadingsBlock />
+    </>
+  );
+}
+
+function SharedReadingsBlock() {
+  return (
+    <SettingsBlock>
+      <div className="px-4 py-3.5">
+        <SharedReadingsSettings />
+      </div>
+    </SettingsBlock>
+  );
+}
+
+export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
+  const { data: preferences, update } = usePreferences();
+  const remote = Boolean(info?.remote);
+  const changeLibrary = async () => {
+    try {
+      const path = await pickFolder("Chọn thư mục thư viện", preferences?.libraryRoot ?? "");
+      // Báo "đã đổi" chỉ khi máy chủ đã nhận; bị từ chối thì usePreferences báo lý do (soát a100 V3).
+      if (path) update({ libraryRoot: path }, { onSuccess: () => toast.success("Đã đổi thư mục thư viện") });
+    } catch (error) {
+      toast.error((error as Error).message);
+    }
+  };
+  return (
+    <>
+      {!info?.listenOnly && (
+        <SettingsBlock title="Thư viện" id="library">
+          <div className="flex flex-wrap items-center gap-2 px-4 py-3">
+            <div className="flex h-10 min-w-0 flex-1 basis-48 items-center gap-2 rounded-lg bg-sunken px-3 text-sm text-fg-2">
+              <FolderOpen className="size-4 shrink-0" />
+              <span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
+            </div>
+            {info?.dialogs && (
+              <Button icon={FolderOpen} className={cn("touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>
+                Đổi thư mục
+              </Button>
+            )}
+          </div>
+        </SettingsBlock>
+      )}
+      {!remote && (info?.update || info?.canCheckUpdate) && (
+        <SettingsBlock title="Cập nhật" id="update">
+          {info.update ? <UpdateRow update={info.update} current={info.version} /> : <UpdateCheck current={info.version} />}
+        </SettingsBlock>
+      )}
+      {!remote && (
+        <SettingsBlock title="Bộ nhớ">
+          <div className="px-4 py-3.5">
+            <ReadAloudStorage api={{ usage: () => httpSource.readAloudCacheTotal!(), clear: () => httpSource.readAloudCacheClearAll!() }} />
+          </div>
+        </SettingsBlock>
+      )}
+      {!remote && (
+        <SettingsBlock title="Chẩn đoán" id="diagnostics" fold="advanced.diagnostics">
+          <div className="px-4 py-3.5">
+            <OwnDiagnostics />
+          </div>
+        </SettingsBlock>
+      )}
+      <SettingsBlock title="Giới thiệu" id="about" fold="advanced.about">
+        <div className="space-y-3 px-4 py-3.5">
+          <p className="text-sm text-fg-2">ABook {info?.version} - nghe sách tiếng Việt và làm sách nói.</p>
+          {/* Liên kết mở ở cửa sổ mới (target="_blank"), không điều hướng chính cửa sổ app; cửa sổ app Windows nuốt target nên openExternal nhờ máy chủ mở. */}
+          <p className="select-text text-sm text-fg-2">
+            Mã nguồn mở (MIT):{" "}
             <a href={SOURCE_URL} target="_blank" rel="noopener noreferrer" onClick={(event) => openExternal(SOURCE_URL, event)} className="font-medium text-accent-text underline underline-offset-2 [overflow-wrap:anywhere]">
               github.com/ntanhpro1221/ABook
-            </a>{" "}
-            - bản mới,
-            ứng dụng Android và ghi chú từng bản ở mục Releases.
+            </a>
           </p>
           <ThirdPartyButton />
-        </Section>
+        </div>
+      </SettingsBlock>
+    </>
+  );
+}
+
+function GroupBody({ id, info, touchOnly }: { id: SettingsGroupId; info: AppInfo | undefined; touchOnly: boolean }) {
+  const remote = Boolean(info?.remote);
+  if (id === "voice") return <VoiceGroup />;
+  if (id === "listen") return <ListenGroup />;
+  if (id === "sleep") return <SleepGroup />;
+  if (id === "look") return <LookGroup remote={remote} touchOnly={touchOnly} />;
+  if (id === "devices") return <DevicesGroup />;
+  if (id === "studio") return <StudioGroup info={info} />;
+  return <AdvancedGroup info={info} />;
+}
+
+/** Ghi chú khi dùng ABook của máy tính qua mạng: không phải tuỳ chọn, chỉ nói cài đặt nào đổi được ở đây. */
+function RemoteNote({ listenOnly }: { listenOnly: boolean }) {
+  return (
+    <p className="mt-3 text-[0.8125rem] text-fg-2 text-pretty">
+      Đang dùng ABook của máy tính qua mạng; phần lớn cài đặt đổi trên máy ấy.
+      {listenOnly && " Muốn làm sách từ đây: bật “Điều khiển sản xuất” trên máy tính."}
+    </p>
+  );
+}
+
+function useRows(groups: readonly SettingsGroupId[], info: AppInfo | undefined): GroupRow[] {
+  const { data: preferences } = usePreferences();
+  const voiceName = useDefaultVoiceName(desktopVoices.voices);
+  const { data: sync } = useQuery({ queryKey: ["sync"], queryFn: () => api<SyncView>("/api/sync"), enabled: groups.includes("devices") });
+  const summary: Record<SettingsGroupId, string | undefined> = {
+    voice: voiceName,
+    listen: `${preferences?.autoRewind !== false ? "Tự lùi" : "Không tự lùi"} · ${preferences?.autoMusic !== false ? "nhạc tự chọn" : "không nhạc nền"}`,
+    sleep: sleepSummary(preferences?.sleepSchedule, preferences?.safetyStopHours ?? 2),
+    look: info?.remote ? "Phím tắt" : themeSummary(preferences?.theme, "Theo Windows"),
+    devices: sync ? (sync.enabled ? `${sync.devices.length} thiết bị đã ghép` : "Đang tắt") : undefined,
+    studio: info?.remote ? "Mẫu thiết lập" : info?.studio?.installed ? "Đã cài" : "Chưa cài",
+    advanced: info?.update && !info.remote ? `Có bản mới ${info.update.version}` : info?.version ? `Phiên bản ${info.version}` : undefined,
+  };
+  return groups.map((id) => ({ id, summary: summary[id] }));
+}
+
+export function SettingsScreen() {
+  const { group } = useParams();
+  const { data: info } = useAppInfo();
+  // Phím tắt vô nghĩa trên màn chỉ có cảm ứng (điện thoại, máy tính bảng không bàn phím): ẩn cả mục.
+  const touchOnly = useMediaQuery("(hover: none) and (pointer: coarse)");
+  const wide = useMediaQuery("(min-width: 1024px)");
+  const groups = desktopGroups(info, touchOnly);
+  const rows = useRows(groups, info);
+  const active = isSettingsGroup(group) && groups.includes(group) ? group : null;
+  const notices = (
+    <>
+      {info?.remote && <RemoteNote listenOnly={Boolean(info.listenOnly)} />}
+      {info?.update && !info.remote && !wide && (
+        <Link to={settingsPath("advanced")} className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-sm font-medium hover:bg-hover">
+          <Download className="size-5 shrink-0 text-accent-text" />
+          <span className="min-w-0 flex-1">Có ABook {info.update.version}</span>
+          <ChevronRight className="size-4 shrink-0 text-fg-3" />
+        </Link>
+      )}
+    </>
+  );
+  if (wide) {
+    // Hai cột: /settings mở sẵn nhóm đầu; đổi nhóm thay chỗ trong lịch sử như đổi tab.
+    const shown = active ?? groups[0];
+    return (
+      <div className="mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-8 px-10 pb-16 pt-9">
+        <div>
+          <h1 className="text-[1.75rem] font-bold tracking-tight">Cài đặt</h1>
+          {notices}
+          <SettingsList rows={rows} current={shown} className="mt-5" />
+        </div>
+        <div className="min-w-0 max-w-[760px] pt-1">
+          <GroupHeader id={shown} back={false} />
+          <GroupBody id={shown} info={info} touchOnly={touchOnly} />
+        </div>
       </div>
+    );
+  }
+  if (active) {
+    return (
+      <div className="mx-auto max-w-[760px] px-4 pb-16 pt-4 sm:px-10 sm:pt-7">
+        <GroupHeader id={active} />
+        <GroupBody id={active} info={info} touchOnly={touchOnly} />
+      </div>
+    );
+  }
+  return (
+    <div className="mx-auto max-w-[760px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
+      <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">Cài đặt</h1>
+      {notices}
+      <SettingsList rows={rows} className="mt-5" />
     </div>
   );
 }

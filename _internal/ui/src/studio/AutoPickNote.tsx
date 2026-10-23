@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Button } from "@/shared/ui";
 import { api } from "./api";
 import { autoLabel, autoSwitch, localDigest, type LocalMusicView, type LocalTrack } from "./musicLocal";

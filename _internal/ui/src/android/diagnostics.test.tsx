@@ -18,8 +18,9 @@ vi.mock("./plugins", () => ({
 }));
 vi.mock("sonner", () => ({ toast: { error: h.error, success: h.success } }));
 
-import { CLEAR_HINT, DIAGNOSTICS_HINT, DiagnosticsPanel, SEND_HINT, VIEW_LINES, useDiagnostics } from "./Diagnostics";
+import { CLEAR_HINT, DIAGNOSTICS_HINT, DIAGNOSTICS_MORE, DiagnosticsPanel, SEND_HINT, VIEW_LINES, useDiagnostics } from "./Diagnostics";
 import { SettingsScreen } from "./SettingsScreen";
+import { SettingsAt } from "@/shared/settingsAt";
 
 function probe() {
   function Probe() {
@@ -48,17 +49,19 @@ describe("mục Chẩn đoán của Cài đặt", () => {
   it("có ba việc: xem, gửi, xoá nhật ký; lời giải thích nói app che dữ liệu nhận diện được và bạn tự chọn nơi gửi", () => {
     const html = renderToString(
       <QueryClientProvider client={new QueryClient()}>
-        <SettingsScreen />
+        <SettingsAt group="advanced" screen={<SettingsScreen />} />
       </QueryClientProvider>,
     );
-    for (const text of ["Chẩn đoán", "Xem nhật ký", "Gửi nhật ký", "Xoá nhật ký"]) expect(html).toContain(text);
+    for (const text of ["Chẩn đoán", "Nhật ký", "Gửi nhật ký", "Xoá nhật ký"]) expect(html).toContain(text);
     expect(h.diagnostics).not.toHaveBeenCalled();
-    expect(DIAGNOSTICS_HINT).toContain("nhận diện được");
-    expect(DIAGNOSTICS_HINT).toContain("Bạn nên xem lại trước khi gửi");
-    expect(DIAGNOSTICS_HINT).not.toContain("không có mật khẩu");
-    expect(DIAGNOSTICS_HINT).toContain("Cho máy khác nghe thư viện này");
-    expect(SEND_HINT).toContain("bạn chọn gửi cho ai");
-    expect(CLEAR_HINT).toContain("Xoá nhật ký");
+    // Dòng ngắn nói việc cần làm; chi tiết quyền riêng tư gập sau "Tìm hiểu thêm" nhưng vẫn đủ (chủ app 23-10: chữ dài khắp nơi).
+    expect(DIAGNOSTICS_HINT).toContain("Xem lại trước khi gửi");
+    expect(DIAGNOSTICS_HINT.length).toBeLessThanOrEqual(60);
+    expect(DIAGNOSTICS_MORE).toContain("nhận ra được");
+    expect(DIAGNOSTICS_MORE).not.toContain("không có mật khẩu");
+    expect(DIAGNOSTICS_MORE).toContain("Cho máy khác nghe thư viện này");
+    expect(SEND_HINT).toContain("Bạn chọn gửi cho ai");
+    expect(CLEAR_HINT).toContain("văng");
   });
 
   it("xem: hỏi plugin với số dòng của màn xem", async () => {

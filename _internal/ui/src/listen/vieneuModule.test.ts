@@ -85,7 +85,7 @@ describe("mô-đun Giọng VieNeu", () => {
   it("nói kết quả tự đo bằng tốc độ nghe", () => {
     expect(benchmarkLabel("turbo", { rtf: 0.25, firstAudioMs: 1500 })).toContain("nhanh gấp 4,0 lần");
     expect(benchmarkLabel("nano", { rtf: 1.25, firstAudioMs: 5000 })).toContain("không kịp đọc trực tiếp (1,3 giây");
-    expect(benchmarkLabel("turbo", { rtf: 0.85, firstAudioMs: 5000 })).toContain("khoảng 51 phút");
+    expect(benchmarkLabel("turbo", { rtf: 0.85, firstAudioMs: 5000 })).toContain("~51 phút");
   });
 
   it("đề nghị đổi giọng, không tự đổi", () => {
@@ -140,10 +140,10 @@ describe("mô-đun Giọng VieNeu", () => {
     expect(vieneuLabel({ ...one, state: "downloading", done: 62, total: 100, retrying: true }, SUPERTONIC_COPY)).toBe("Mạng chập chờn - đang thử lại… (giọng Supertonic, 62%)");
     expect(benchmarkLabel("supertonic", { rtf: 0.2, firstAudioMs: 1400 })).toContain("nhanh gấp 5,0 lần");
     expect(benchmarkLabel("supertonic", { rtf: 1.9, firstAudioMs: 9000 })).toBe(
-      "Giọng Supertonic: máy này không kịp đọc trực tiếp (1,9 giây cho mỗi giây nghe). Vẫn nghe được bằng “Làm trước” trong nút Giọng đọc: mỗi giờ nghe máy cần làm trước khoảng 114 phút.",
+      "Giọng Supertonic: máy này không kịp đọc trực tiếp (1,9 giây cho mỗi giây nghe). Dùng “Làm trước”: mỗi giờ nghe cần ~114 phút.",
     );
     const slow = suggestionText({ tier: "supertonic", rtf: 1.1, switchTo: "online", installed: true });
-    expect(slow.message).toContain("Giọng Supertonic không theo kịp");
+    expect(slow.message).toContain("Giọng Supertonic đọc chậm");
     expect(slow.message).toContain("Giữ giọng này thì dùng “Làm trước”.");
     expect(tierVoicePrefix("supertonic")).toBe("supertonic:");
     expect(tierVoicePrefix("nano")).toBe("vieneu:nano/");
@@ -205,10 +205,10 @@ describe("Cài đặt: hai mô-đun giọng trên máy, khuyên tải một (so�
 
   it("máy chưa có giọng nào: khuyên bản VieNeu của máy, Supertonic không đánh dấu sẵn", () => {
     const advice = moduleAdvice(status({ recommended: "nano" }), supertonic);
-    expect(advice.advice).toContain("Nên chọn giọng VieNeu Nano (đã đánh dấu sẵn)");
+    expect(advice.advice).toContain("Nên dùng giọng VieNeu Nano");
     expect(advice.preselectSupertonic).toBe(false);
     expect(initialChoices(supertonic, advice.preselectSupertonic)).toEqual([]);
-    expect(moduleAdvice(status({ recommended: "turbo" }), supertonic).advice).toContain("Nên chọn giọng VieNeu (đã đánh dấu sẵn)");
+    expect(moduleAdvice(status({ recommended: "turbo" }), supertonic).advice).toContain("Nên dùng giọng VieNeu");
   });
 
   it("đã có một bộ giọng thì thôi khuyên; máy không chạy được VieNeu thì Supertonic đánh dấu sẵn như cũ", () => {

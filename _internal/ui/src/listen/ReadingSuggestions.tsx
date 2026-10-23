@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lightbulb } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { Button, Dialog, IconButton } from "@/shared/ui";
@@ -142,8 +142,7 @@ function SuggestionsBody({ bookId, suggestions }: { bookId: string; suggestions:
   return (
     <>
       <p className="mt-0.5 text-xs text-fg-2 text-pretty">
-        Dòng ghi công của người dịch, lời xin ủng hộ hay nguồn truyện ở đầu hoặc cuối chương. Bỏ dòng này chỉ khiến màn đọc và giọng đọc bỏ qua nó - chữ của sách vẫn giữ
-        nguyên, bỏ chọn là đọc lại.
+        Bỏ khỏi phần đọc, giữ chữ gốc; bỏ chọn để đọc lại.
         {track?.bookId === bookId && " Chương đang nghe sẽ đổi từ lần nghe sau; các chương khác đổi ngay."}
       </p>
       <div className="mt-2">

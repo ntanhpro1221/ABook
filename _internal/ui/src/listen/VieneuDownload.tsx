@@ -1,6 +1,7 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { busyClick, Progress, useFocusFollows } from "@/shared/ui";
@@ -21,7 +22,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
   // Nút Tải và Huỷ thay chỗ nhau: tiêu điểm theo sang nút vừa hiện; nút đang chạy việc không `disabled` (mất tiêu điểm) - soát a67.
   const follow = useFocusFollows(status?.state);
   const waiting = { "aria-disabled": busy || undefined, "aria-busy": busy || undefined };
-  if (!status) return null;
+  if (!status) return <MotionRegion />;
   const { light, full } = offlineChoices(status);
   const missing = light.length ? light : full;
   const bytes = selectionBytes(status, missing);
@@ -53,7 +54,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
   // Chưa có gì để nói (không tải, không ghi chú): hai nút đứng cùng hàng với "Thử lại" của khối lỗi, không tốn thêm hàng ở màn hẹp.
   const idle = !downloading && !note && !metered;
   return (
-    <div {...follow} className={idle ? "contents" : "flex basis-full flex-col gap-2"}>
+    <MotionRegion as="div" {...follow} elementRef={follow.ref} ref={undefined} className={idle ? "flex flex-wrap items-center gap-2" : "flex basis-full flex-col gap-2"}>
       {downloading && (
         <div className="flex items-center gap-3">
           <Progress value={vieneuPercent(status) / 100} size="sm" running label="Đang tải giọng VieNeu" className="flex-1" />
@@ -108,6 +109,6 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
           Xem trong Cài đặt
         </button>
       </div>
-    </div>
+    </MotionRegion>
   );
 }

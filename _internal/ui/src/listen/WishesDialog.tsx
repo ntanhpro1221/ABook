@@ -1,6 +1,8 @@
+import { MoreInfo } from "@/shared/SettingsNav";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Button, Dialog } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { PendingList, type PendingDetails, type PendingItem } from "@/studio/ApplyChanges";
@@ -51,13 +53,14 @@ export function WishesDialog({
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-xl"
-      title={syncs ? "Việc chờ gửi về máy tính" : "Việc đang chờ máy làm sách"}
+      title={syncs ? "Việc chờ gửi" : "Việc chờ Studio"}
       description={
         syncs
-          ? "Bạn đã ghi những thay đổi này; chúng được gửi về máy tính (tự động khi tới được máy tính). Giọng đọc chỉ đổi khi Studio trên máy ấy thu lại - sách làm bằng Studio thì chủ máy chọn Áp dụng hay Bỏ qua từng việc trước."
-          : `${data?.items.some((item) => item.from) ? "Thay đổi bạn ghi ở đây hay ở máy đã ghép (ghi “từ …”)" : "Bạn đã ghi những thay đổi này"}; giọng đọc chỉ đổi khi một máy làm sách (ABook Studio trên máy tính) làm lại. Chúng đi cùng file sách khi bạn lưu; mở file ở máy ấy, ABook sẽ hỏi có áp vào dự án không.`
+          ? "Chờ máy tính nhận và Studio thu lại."
+          : "Chờ Studio thu lại; thay đổi đi cùng file sách."
       }
-    >
+    ><MotionRegion>
+      <MoreInfo>{syncs ? "Tự gửi khi kết nối lại máy tính. Chủ máy duyệt Áp dụng hoặc Bỏ qua trước khi Studio thu lại." : "Lưu file sách sẽ mang theo các thay đổi của bạn và thiết bị đã ghép. Mở bằng Studio trên máy tính để áp vào dự án và thu lại."}</MoreInfo>
       {!data ? (
         <p className="text-sm text-fg-2">Đang xem các thay đổi…</p>
       ) : data.items.length ? (
@@ -70,6 +73,6 @@ export function WishesDialog({
           Đóng
         </Button>
       </div>
-    </Dialog>
+    </MotionRegion></Dialog>
   );
 }

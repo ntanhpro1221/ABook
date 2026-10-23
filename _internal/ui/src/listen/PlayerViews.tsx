@@ -1,3 +1,6 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { MotionPresence } from "@/shared/MotionPresence";
+import { Collapse } from "@/shared/Collapse";
 import { Capacitor } from "@capacitor/core";
 import * as Popover from "@radix-ui/react-popover";
 import { coverColor, coverStyle } from "@/shared/cover";
@@ -36,7 +39,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { Windowed } from "@/shared/Windowed";
 import { reveal } from "@/shared/scrollMemory";
@@ -62,6 +65,8 @@ import { VieneuDownload } from "./VieneuDownload";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, unusableVoiceMessage, voiceCaption } from "./readAloudVoice";
 import { bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, textChapterLine, toggleLabel, unquoted } from "./labels";
 import { useAfter } from "@/shared/useAfter";
+import { useBackLayer } from "@/shared/backStack";
+import { MOTION, usePresence, useListPresence, withViewTransition } from "@/shared/motion";
 import { useRetryWhenOnline } from "./onlineRetry";
 import { askOnlineConsent, onlineConsentGiven, pickVoiceWithConsent, spokenVoiceName } from "./onlineConsent";
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
@@ -226,7 +231,7 @@ function Transport({ large = false }: { large?: boolean }) {
   const size = large ? "lg" : "sm";
   const waiting = buffering && playing;
   return (
-    <div className={cn("flex items-center", large ? "gap-4 sm:gap-6" : "gap-1")}>
+    <MotionRegion as="div" className={cn("flex items-center", large ? "gap-4 sm:gap-6" : "gap-1")}>
       <IconButton label={withShortcut("Chương trước", "Shift+←")} icon={SkipBack} size={size} className="touch-box" onClick={previous} {...keepFocus} />
       <IconButton label={withShortcut(`Lùi ${SKIP_SECONDS} giây`, "←")} icon={Back15} size={size} className="touch-box" onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
       <button
@@ -266,7 +271,7 @@ function Transport({ large = false }: { large?: boolean }) {
         disabled={!hasLater}
         {...keepFocus}
       />
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -421,7 +426,7 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
   const { view, change } = useBookMusic(bookId);
   const { musicBroken: broken } = usePlayer();
   const music = view.data;
-  if (!music?.hasMusic) return null;
+  if (!music?.hasMusic) return <MotionRegion />;
   const id = `player-music-${bookId}`;
   return (
     <MenuShell
@@ -435,7 +440,7 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
           {!music.enabled && <span aria-hidden="true" className="absolute left-1/2 top-1/2 h-0.5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-current" />}
         </span>
       }
-    >
+    ><MotionRegion>
       <div className="flex items-center justify-between gap-3 px-2 py-2">
         <label htmlFor={id} className="text-sm font-medium">
           Nhạc nền: <span className="font-semibold">{music.enabled ? "Bật" : "Tắt"}</span>
@@ -448,7 +453,7 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
         <LevelButtons level={music.levelDb} disabled={!music.enabled || change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} />
       </div>
       <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{music.project ? "Nhạc của cuốn này. Đổi ở đây là đổi luôn trong Studio." : "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."}</p>
-    </MenuShell>
+    </MotionRegion></MenuShell>
   );
 }
 
@@ -463,7 +468,7 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
       active={playing || waiting}
       trigger={<>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Music2 className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
-    >
+    ><MotionRegion>
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>
       <div role="group" aria-label="Danh sách nhạc nền" className="flex min-h-0 flex-col gap-0.5 overflow-y-auto p-1">
         {options.map((option) => (
@@ -496,7 +501,7 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
       {playing && <LevelButtons level={levelDb} disabled={levelBusy} onChange={setLevel} />}
       {playing && scene && musicBroken && <p className="px-2 pb-1 text-xs text-warning">Có bài nhạc chưa phát được, máy sẽ thử lại sau.</p>}
       <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error || musicOffline, scene)}</p>
-    </MenuShell>
+    </MotionRegion></MenuShell>
   );
 }
 
@@ -509,7 +514,7 @@ function useOpenVoiceSettings() {
   const { setExpanded } = useNowPlaying();
   return useCallback((anchor = "voices") => {
     setExpanded(false);
-    navigate("/settings");
+    navigate("/settings/voice");
     revealVoiceSettings(anchor);
   }, [navigate, setExpanded]);
 }
@@ -576,7 +581,7 @@ export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
   const speaking = queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
   const sample = useVoiceSample((voiceId, text) => source.readAloudSample!(voiceId, text));
   const openVoiceSettings = useOpenVoiceSettings();
-  if (!track || !speaking || !voices?.length) return null;
+  if (!track || !speaking || !voices?.length) return <MotionRegion />;
   const current = resolveVoice(voices, chosen);
   return (
     <MenuShell
@@ -592,7 +597,7 @@ export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
       // Tên giọng hiện cả trên điện thoại: người nghe thấy ngay giọng nào đang đọc, không chỉ một biểu tượng.
       trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[75rem]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
       width="w-80 max-w-[calc(100vw-1.5rem)]"
-    >
+    ><MotionRegion>
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Giọng đọc · nhớ riêng cho cuốn này</div>
       {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; "Thử" dùng cùng cách nghe thử. */}
       <ScrollHint className="min-h-0 flex-1 overflow-y-auto p-1">
@@ -665,7 +670,7 @@ export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
         <PrepareAhead voice={current} bookId={track.bookId} chapterId={track.chapterId} />
       )}
       {source.readAloudCache && <ReadAloudCache bookId={track.bookId} />}
-    </MenuShell>
+    </MotionRegion></MenuShell>
   );
 }
 
@@ -714,7 +719,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
   });
   // "Làm trước" <-> "Dừng làm trước" thay chỗ nhau: tiêu điểm theo sang nút mới (soát a67).
   const follow = useFocusFollows(mine && running);
-  if (!source.readAloudPrepare) return null;
+  if (!source.readAloudPrepare) return <MotionRegion />;
   const chargingOnly = status?.chargingOnly ?? true;
   const settle = (next: PrepareStatus) => client.setQueryData(PREPARE_STATUS_KEY, next);
   const start = async () => {
@@ -738,9 +743,9 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
   };
   const label = mine && status ? prepareLabel(status) : running ? "Đang làm trước cho một cuốn hay giọng khác - làm ở đây thì việc ấy dừng." : "";
   // Chương cuối: không còn chương nào để làm trước thì không mời (câu mời không có nút nào theo sau chỉ làm người nghe tìm nút).
-  if (!label && upcoming.length === 0) return null;
+  if (!label && upcoming.length === 0) return <MotionRegion />;
   return (
-    <div {...follow} className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
+    <MotionRegion as="div" {...follow} elementRef={follow.ref} ref={undefined} className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
       <p className="text-pretty">{label || prepareIntro(voice)}</p>
       {!(mine && running) && plan && <p className="mt-1 text-pretty">{planLabel(plan)}</p>}
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
@@ -767,7 +772,7 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
           </label>
         )}
       </div>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -777,12 +782,14 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
   const source = useSource();
   const client = useQueryClient();
   const [asking, setAsking] = useState(false);
+  const askBox = useRef<HTMLDivElement>(null);
+  useBackLayer(asking, () => setAsking(false), askBox);
   const [busy, setBusy] = useState(false);
   const key = ["readaloud", "cache", bookId];
   const { data: usage } = useQuery({ queryKey: key, queryFn: () => source.readAloudCache!(bookId), refetchInterval: 15000 });
   // Hỏi lại / xoá xong: nút đang giữ tiêu điểm biến mất - tiêu điểm theo sang nút vừa hiện, xoá xong thì về dòng dung lượng (soát a67).
   const follow = useFocusFollows(`${asking}:${(usage?.book ?? 0) > 0}`);
-  if (!usage) return null;
+  if (!usage) return <MotionRegion />;
   const clear = async () => {
     setBusy(true);
     try {
@@ -797,11 +804,11 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
     }
   };
   return (
-    <div {...follow} className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
+    <MotionRegion as="div" {...follow} elementRef={follow.ref} ref={undefined} className="border-t border-line px-2 pb-1 pt-2 text-xs text-fg-2">
       <p tabIndex={-1} data-focus-fallback className="text-pretty">{cacheLabel(usage)}</p>
       {usage.book > 0 &&
         (asking ? (
-          <div role="alertdialog" aria-label="Xoá bản đọc đã làm" className="mt-1.5">
+          <div ref={askBox} role="alertdialog" aria-label="Xoá bản đọc" className="mt-1.5">
             <p className="text-pretty text-fg">{clearCacheQuestion(usage)}</p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
               <button type="button" aria-disabled={busy || undefined} aria-busy={busy || undefined} className="rounded-lg px-2 py-1 font-medium text-danger hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void clear())}>
@@ -814,10 +821,10 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
           </div>
         ) : (
           <button type="button" data-focus-next className="mt-1.5 rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => setAsking(true)}>
-            Xoá bản đọc đã làm
+            Xoá bản đọc
           </button>
         ))}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -828,7 +835,7 @@ export function SleepMenu() {
   const now = useTicker(sleep.kind === "minutes" && sleep.since !== null);
   const recentlyStopped = sleep.kind === "off" && sleepStoppedAt !== null && now - sleepStoppedAt < 30 * 60_000;
   return (
-    <SleepPicker
+    <MotionRegion><SleepPicker
       sleep={sleep}
       now={now}
       disabled={!track}
@@ -861,7 +868,7 @@ export function SleepMenu() {
           {hadNight && " Sáng hôm sau, thẻ “Tối qua” giúp tìm lại đoạn còn nhớ."}
         </>
       }
-    />
+    /></MotionRegion>
   );
 }
 
@@ -934,7 +941,7 @@ function SleepPicker({
           {active && <span className="tabular">{sleepButtonLabel(sleep, now)}</span>}
         </>
       }
-    >
+    ><MotionRegion>
       {active ? (
         <div className="px-2 pb-2 pt-1.5">
           <div className="text-xs font-medium text-fg-2">{sleep.kind === "chapter" ? "Dừng khi" : "Tắt sau"}</div>
@@ -1029,7 +1036,7 @@ function SleepPicker({
         </Popover.Close>
       </div>
       <p className="px-2 pb-1 pt-2 text-xs leading-snug text-fg-2">{note}</p>
-    </MenuShell>
+    </MotionRegion></MenuShell>
   );
 }
 
@@ -1069,7 +1076,7 @@ function VolumeControl() {
   );
   if (!wide) {
     return (
-      <Popover.Root>
+      <Popover.Root><MotionRegion>
         <Popover.Trigger asChild>
           <button
             type="button"
@@ -1086,14 +1093,14 @@ function VolumeControl() {
             <span className="tabular w-9 text-right text-xs text-fg-2">{Math.round(volume * 100)}%</span>
           </Popover.Content>
         </Popover.Portal>
-      </Popover.Root>
+      </MotionRegion></Popover.Root>
     );
   }
   return (
-    <div className="flex items-center gap-1">
+    <MotionRegion as="div" className="flex items-center gap-1">
       <IconButton label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} icon={Icon} size="sm" {...keepFocus} onClick={toggleMute} />
       {slider("flex w-20")}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -1196,9 +1203,10 @@ function SleepRing({ fraction, children }: { fraction: number | null; children: 
 /** Đang nhỏ dần trước khi tắt: nói rõ và cho nghe thêm bằng một chạm. */
 function FadingNotice({ className }: { className?: string }) {
   const { fading, extendSleep, options } = usePlayer();
+  const content = () => {
   if (!fading) return null;
   return (
-    <div className={cn("flex items-center gap-3 rounded-xl bg-accent-soft px-3 py-2 text-sm text-accent-text", className)} role="status">
+    <div className={cn("motion-appear flex items-center gap-3 rounded-xl bg-accent-soft px-3 py-2 text-sm text-accent-text", className)} role="status">
       <Moon className="size-4 shrink-0" />
       <span className="min-w-0 flex-1">Sắp tắt · {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút</span>
       <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-accent-ink">
@@ -1206,6 +1214,8 @@ function FadingNotice({ className }: { className?: string }) {
       </button>
     </div>
   );
+  };
+  return <MotionPresence open={Boolean(fading)}><MotionRegion>{content()}</MotionRegion></MotionPresence>;
 }
 
 /** Ghi công nhạc nền đang nghe (CC BY đòi nêu tác giả ở nơi nhạc phát): một dòng nhỏ, mờ, chỉ hiện khi đang phát; không
@@ -1216,9 +1226,10 @@ function MusicCreditLine() {
   const [open, setOpen] = useState(false);
   const label = [musicCredit?.title, musicCredit?.creator].filter(Boolean).join(" · ");
   useEffect(() => setOpen(false), [musicCredit]);
+  const content = () => {
   if (!playing || !musicCredit || !label) return null;
   return (
-    <div className="mt-0.5 text-xs text-fg-2">
+    <div className="motion-appear mt-0.5 text-xs text-fg-2">
       <button
         type="button"
         aria-expanded={open}
@@ -1228,8 +1239,7 @@ function MusicCreditLine() {
       >
         Nhạc nền: {label}
       </button>
-      {open && (
-        <div className="mx-auto mt-1 max-w-sm break-words text-left">
+      <Collapse open={open} className="mx-auto mt-1 max-w-sm break-words text-left">
           <p>{musicCreditText(musicCredit)}</p>
           {musicCredit.license && (
             <p>
@@ -1251,10 +1261,11 @@ function MusicCreditLine() {
               </a>
             </p>
           )}
-        </div>
-      )}
+        </Collapse>
     </div>
   );
+  };
+  return <MotionPresence open={Boolean(playing && musicCredit && label)}><MotionRegion>{content()}</MotionRegion></MotionPresence>;
 }
 
 /** Dòng dưới tên chương: tên sách - hay đang chờ giọng máy đọc đoạn đầu. Lỗi KHÔNG nằm ở đây (PlayerAlert). */
@@ -1263,14 +1274,14 @@ function TrackSubtitle() {
   const speaking = useSpeaking();
   // Đệm một nhịp giữa câu (~1 giây) không được làm dòng này nháy "Đang chuẩn bị giọng đọc…" rồi mất: chỉ nói khi chờ thật sự lâu (soát UX a9).
   const preparing = useAfter(speaking && playing && buffering, PREPARING_VOICE_AFTER_MS);
-  if (!track) return null;
+  if (!track) return <MotionRegion />;
   return (
-    <>
+    <MotionRegion>
       {purpose === "review" && (
         <span className="mr-1.5 inline-block rounded bg-info-soft px-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-info">Nghe kiểm</span>
       )}
       {preparing ? PREPARING_VOICE : atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : track.bookTitle}
-    </>
+    </MotionRegion>
   );
 }
 
@@ -1290,12 +1301,13 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
   // Mất mạng, hay giọng có mạng mà hỏng (dịch vụ từ chối, lỗi, không phản hồi) và máy không có giọng nào khác: cùng một câu ngắn + cùng đường ra.
   const stuck = Boolean(error) && isVoiceStuck(error);
   useRetryWhenOnline(offline, retry, dismissError, wantsPlay);
+  const content = () => {
   if (error) {
     const current = voices && track ? resolveVoice(voices, chosenVoice(track.bookId, track.recordId)) : undefined;
     const local = stuck && voices ? localVoiceFor(voices, current) : undefined;
     const button = "min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[48px]";
     return (
-      <div key={errorRepeat} role="alert" className={cn("flex items-start gap-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
+      <div key={errorRepeat} role="alert" className={cn("motion-appear flex items-start gap-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
         <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
         {/* Lời báo + cụm nút xuống hàng khi hẹp; nút ✕ đứng riêng ở góc trên phải nên không thêm hàng nào và không bao giờ trôi xuống dưới cụm nút. */}
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
@@ -1357,13 +1369,15 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
       <span className="min-w-0 flex-1">{notice}</span>
     </div>
   );
+  };
+  return <MotionPresence open={Boolean(error || notice)}>{content()}</MotionPresence>;
 }
 
 function CompactProgress() {
   const fraction = useClock((time, duration) => (duration > 0 ? Math.min(1, Math.round((time / duration) * 400) / 400) : 0));
   return (
     <div {...heardBarProps(fraction)} aria-label="Đã nghe chương này" aria-valuetext={`đã nghe ${Math.round(fraction * 100)}% chương`} className="absolute inset-x-0 top-0 h-[2px] bg-line">
-      <div className="h-full bg-accent" style={{ width: `${fraction * 100}%` }} />
+      <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${fraction * 100 / 100})` }} />
     </div>
   );
 }
@@ -1445,6 +1459,7 @@ export function PlayerBar({
   const speaking = useSpeaking();
   useContinueIntoNextPart();
   useWarmVoice(track?.bookId); // trình phát mở lại với cuốn đang dở: nạp sẵn model giọng trên máy
+  const content = () => {
   if (!track) return null;
   if (compact) {
     return (
@@ -1483,13 +1498,13 @@ export function PlayerBar({
             aria-busy={(playing && buffering) || undefined}
             className="touch-hit grid size-11 shrink-0 place-items-center rounded-full bg-fg text-bg"
           >
-            {playing && buffering ? (
+            <MotionRegion as="span" className="inline-grid size-5 place-items-center">{playing && buffering ? (
               <Loader2 className="size-5 animate-spin" />
             ) : playing ? (
               <Pause className="size-5" fill="currentColor" strokeWidth={0} />
             ) : (
               <Play className="size-5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
-            )}
+            )}</MotionRegion>
           </button>
         </div>
       </section>
@@ -1543,6 +1558,8 @@ export function PlayerBar({
       </div>
     </section>
   );
+  };
+  return <MotionPresence open={Boolean(track)} className="shrink-0">{content()}</MotionPresence>;
 }
 
 // ---- Bảng bên của màn hình đang nghe ---------------------------------------------------------------------
@@ -1578,10 +1595,10 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
     if (upcoming) void client.prefetchQuery(chapterScriptQuery(source, track.bookId, upcoming));
   }, [client, nearEnd, queue, source, track]);
 
-  if (isLoading) return <div className="animate-[fade-in_0.2s_0.3s_both] p-10 text-fg-2">Đang mở văn bản chương…</div>;
-  if (!script) return null;
+  if (isLoading) return <MotionRegion as="div" className="animate-[fade-in_0.2s_0.3s_both] p-10 text-fg-2">Đang mở văn bản chương…</MotionRegion>;
+  if (!script) return <MotionRegion />;
   return (
-    <div className="relative h-full">
+    <MotionRegion as="div" className="relative h-full">
       <div ref={container} onScroll={follow.onScroll} {...follow.input} className="h-full overflow-y-auto px-6 py-8 sm:px-10">
         <div className="mx-auto max-w-[62ch] text-[1.0625rem] leading-[1.75]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải "chưa có audio". */}
@@ -1617,7 +1634,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
         )
       )}
       {menu.dialogs}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -1653,13 +1670,13 @@ export function ChapterPanel() {
               current ? "bg-accent-soft" : canPlay(chapter) && "hover:bg-hover",
             )}
           >
-            <span className="grid w-5 shrink-0 place-items-center">
+            <MotionRegion as="span" className="inline-grid h-4 w-5 shrink-0 place-items-center">
               {current && playing ? (
                 <Vu className="h-3 text-accent" />
               ) : done ? (
                 <Check className="size-4 text-success" aria-label="Đã nghe" />
-              ) : null}
-            </span>
+              ) : <span aria-hidden />}
+            </MotionRegion>
             <span className="min-w-0 flex-1">
               <span className={cn("block truncate text-sm font-medium", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
                 {chapter.subtitle || chapter.title}
@@ -1702,6 +1719,11 @@ function BookmarkRow({
   const mutations = useListenMutations(bookId);
   const [note, setNote] = useState(mark.note);
   useEffect(() => setNote(mark.note), [mark.note]);
+  const editBox = useRef<HTMLFormElement>(null);
+  const editButton = useRef<HTMLButtonElement>(null);
+  const cancelEdit = () => { setNote(mark.note); onEdit(false); };
+  useBackLayer(editing, cancelEdit, editBox, editButton);
+  useEffect(() => { if (!editing) setNote(mark.note); }, [editing, mark.note]);
   const remove = () => {
     mutations.deleteBookmark.mutate(mark.id, {
       onSuccess: () =>
@@ -1713,7 +1735,7 @@ function BookmarkRow({
     });
   };
   return (
-    <li className="group rounded-lg px-3 py-2.5 hover:bg-hover">
+    <MotionRegion as="div" className="group rounded-lg px-3 py-2.5 hover:bg-hover">
       <div className="flex items-start gap-2">
         <button type="button" onClick={() => onJump(mark)} className="min-w-0 flex-1 text-left">
           <span className="block truncate text-sm font-medium">{chapter ? chapter.subtitle || chapter.title : "Chương đã bị gỡ"}</span>
@@ -1725,11 +1747,12 @@ function BookmarkRow({
           </span>
           {quote && <span className="mt-1 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(quote)}”</span>}
         </button>
-        <IconButton label="Sửa ghi chú" icon={Pencil} size="sm" onClick={() => onEdit(!editing)} />
+        <IconButton ref={editButton} label="Sửa ghi chú" icon={Pencil} size="sm" onClick={() => editing ? cancelEdit() : onEdit(true)} />
         <IconButton label="Xoá dấu trang" icon={Trash2} size="sm" onClick={remove} />
       </div>
       {editing ? (
         <form
+          ref={editBox}
           className="mt-2 space-y-1"
           onSubmit={(event) => {
             event.preventDefault();
@@ -1747,8 +1770,7 @@ function BookmarkRow({
                 if (event.key === "Escape") {
                   event.preventDefault();
                   event.stopPropagation();
-                  setNote(mark.note);
-                  onEdit(false);
+                  cancelEdit();
                 }
               }}
               placeholder="Ghi chú cho dấu trang này"
@@ -1758,17 +1780,20 @@ function BookmarkRow({
             <button type="submit" className="rounded-md bg-accent px-3 text-sm font-medium text-accent-ink">
               Lưu
             </button>
+            <button type="button" className="rounded-md px-3 text-sm text-fg-2 hover:bg-hover" onClick={cancelEdit}>Huỷ</button>
           </div>
           <div className="tabular text-right text-[0.6875rem] text-fg-2">{note.length}/500</div>
         </form>
       ) : mark.note ? (
         <p className="mt-1.5 whitespace-pre-wrap rounded-md bg-sunken px-2.5 py-1.5 text-sm text-fg-2">{mark.note}</p>
       ) : null}
-    </li>
+    </MotionRegion>
   );
 }
 
 /** Danh sách dấu trang - mới nhất lên đầu, mỗi dấu kèm câu văn ở chỗ đó để nhận ra mà không cần nhớ giây. */
+const bookmarkKey = (mark: Bookmark) => mark.id;
+
 export function BookmarkList({
   bookId,
   chapters,
@@ -1776,6 +1801,7 @@ export function BookmarkList({
   onJump,
   editingId,
   setEditingId,
+  empty,
 }: {
   bookId: string;
   chapters: ListenChapter[];
@@ -1783,6 +1809,7 @@ export function BookmarkList({
   onJump: (mark: Bookmark) => void;
   editingId?: string | null;
   setEditingId?: (id: string | null) => void;
+  empty?: ReactNode;
 }) {
   const source = useSource();
   const [localEditing, setLocalEditing] = useState<string | null>(null);
@@ -1799,21 +1826,24 @@ export function BookmarkList({
     })),
   });
   const scriptOf = (chapterId: number) => scripts[chapterIds.indexOf(chapterId)]?.data as Script | undefined;
+  // Thêm / xoá dấu trang: hàng mở ra hay khép lại tại chỗ (shared/motion.ts useListPresence), không nhảy cả danh sách.
+  const rows = useListPresence(sorted, bookmarkKey);
   return (
-    <ul className="space-y-1">
-      {sorted.map((mark) => (
-        <BookmarkRow
-          key={mark.id}
-          bookId={bookId}
-          mark={mark}
-          chapter={chapters.find((chapter) => chapter.id === mark.chapterId)}
-          quote={mark.quote || sentenceAt(scriptOf(mark.chapterId), mark.seconds)}
-          editing={editing === mark.id}
-          onEdit={(value) => setEditing(value ? mark.id : null)}
-          onJump={onJump}
-        />
+    <>{!rows.length && empty}<ul className="space-y-1">
+      {rows.map(({ key, item: mark, state, ref }) => (
+        <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
+          <BookmarkRow
+            bookId={bookId}
+            mark={mark}
+            chapter={chapters.find((chapter) => chapter.id === mark.chapterId)}
+            quote={mark.quote || sentenceAt(scriptOf(mark.chapterId), mark.seconds)}
+            editing={state !== "exit" && editing === mark.id}
+            onEdit={(value) => setEditing(value ? mark.id : null)}
+            onJump={onJump}
+          />
+        </li>
       ))}
-    </ul>
+    </ul></>
   );
 }
 
@@ -1823,18 +1853,18 @@ function BookmarkPanel({ editingId, setEditingId }: { editingId: string | null; 
   const navigate = useNavigate();
   const { data: book } = useListenBook(track?.bookId);
   const marks = book?.state.bookmarks ?? [];
-  if (!track || !marks.length) {
-    return (
+  if (!track) return <MotionRegion />;
+  const empty = !marks.length ? (
       <div className="flex h-full flex-col items-center justify-center px-8 text-center">
         <BookmarkIcon className="size-8 text-fg-3" />
         <p className="mt-3 font-medium">Chưa có dấu trang</p>
         <p className="mt-1 text-sm text-fg-2">Bấm biểu tượng dấu trang (hoặc phím B) khi nghe tới đoạn muốn quay lại.</p>
       </div>
-    );
-  }
+  ) : null;
   return (
-    <div className="h-full overflow-y-auto px-3 py-4 sm:px-6">
+    <MotionRegion as="div" className="h-full overflow-y-auto px-3 py-4 sm:px-6">
       <BookmarkList
+        empty={empty}
         bookId={track.bookId}
         chapters={queue}
         marks={marks}
@@ -1848,7 +1878,7 @@ function BookmarkPanel({ editingId, setEditingId }: { editingId: string | null; 
         editingId={editingId}
         setEditingId={setEditingId}
       />
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -1983,9 +2013,10 @@ function CaughtUpNotice() {
   const { atEnd, track, restart } = usePlayer();
   const next = useNextVolume(track?.bookId, track?.bookTitle);
   const playBook = usePlayListenBook();
+  const content = () => {
   if (atEnd === "finished" && next) {
     return (
-      <div className="mt-3 rounded-xl bg-accent-soft px-3 py-2.5 text-center text-sm">
+      <div className="motion-appear mt-3 rounded-xl bg-accent-soft px-3 py-2.5 text-center text-sm">
         <div className="text-fg">Đã nghe hết cuốn này.</div>
         <button type="button" onClick={() => void playBook(next)} className="mt-1.5 font-semibold text-accent-text underline underline-offset-2">
           Nghe tiếp {nextLabel(next.title)}
@@ -1996,7 +2027,7 @@ function CaughtUpNotice() {
   }
   if (atEnd === "finished") {
     return (
-      <div className="mt-3 rounded-xl bg-accent-soft px-3 py-2.5 text-center text-sm">
+      <div className="motion-appear mt-3 rounded-xl bg-accent-soft px-3 py-2.5 text-center text-sm">
         <div className="text-fg">Đã nghe hết sách.</div>
         <button type="button" onClick={restart} className="mt-1.5 min-h-[48px] font-semibold text-accent-text underline underline-offset-2">
           Nghe lại từ đầu
@@ -2011,6 +2042,8 @@ function CaughtUpNotice() {
       Đã nghe hết phần đã có. {caughtUpDetail()}
     </p>
   );
+  };
+  return <MotionPresence open={atEnd === "finished" || atEnd === "caughtUp"}>{content()}</MotionPresence>;
 }
 
 // ---- Màn hình đang nghe ------------------------------------------------------------------------------------
@@ -2022,11 +2055,17 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   const speaking = useSpeaking();
   const { expanded, setExpanded } = useNowPlaying();
   const [panel, setPanelState] = useState<Panel>(initialPanel);
-  const [showPanel, setShowPanel] = useState(!mobile);
+  const [showPanel, setShowPanelNow] = useState(!mobile);
+  // Bìa <-> bảng (Đọc theo / Chương / Dấu trang) và đổi bảng: mờ chéo qua một View Transition (a120), không thay chỗ tức thì.
+  const setShowPanel = (value: boolean) => withViewTransition(() => setShowPanelNow(value));
   const [editingId, setEditingId] = useState<string | null>(null);
   const section = useRef<HTMLElement | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const open = expanded && Boolean(track);
+  const presence = usePresence(open, MOTION.slowOut);
+  // Nút Back của điện thoại (android/backLayers.ts): panel (Chương, Dấu trang…) đóng trước, rồi tới màn Đang nghe, rồi mới tới trang.
+  useBackLayer(mobile && open, () => setExpanded(false));
+  useBackLayer(mobile && open && showPanel, () => setShowPanel(false));
 
   const setPanel = (value: Panel) => {
     setPanelState(value);
@@ -2092,8 +2131,11 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
 
   // Tab theo mẫu WAI-ARIA: Tab vào đúng MỘT tab (tab đang chọn), ←/→ (Home/End) đổi sang tab bên cạnh; mỗi tab trỏ tới tabpanel của nó.
   const selectPanel = (value: Panel) => {
-    setPanel(value);
-    setShowPanel(true);
+    if (value === panel && showPanel) return;
+    withViewTransition(() => {
+      setPanel(value);
+      setShowPanelNow(true);
+    });
   };
   const onTabKeys = (event: ReactKeyboardEvent<HTMLElement>) => {
     const index = PANELS.findIndex((item) => item.value === panel);
@@ -2137,16 +2179,20 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   );
 
   const panelBody = (
-    <div role="tabpanel" id={`now-panel-${panel}`} aria-labelledby={`now-tab-${panel}`} className="h-full">
+    <div role="tabpanel" id={`now-panel-${panel}`} aria-labelledby={`now-tab-${panel}`} key={panel} data-motion-content className="motion-reveal h-full">
       {panel === "text" ? <ReadAlong edit={edit} /> : panel === "chapters" ? <ChapterPanel /> : <BookmarkPanel editingId={editingId} setEditingId={setEditingId} />}
     </div>
   );
 
-  if (!open || !track) return null;
+  if ((!open && !presence.mounted) || !track) return <MotionRegion />;
   return (
-    <section
-      ref={section}
-      className={cn("now-playing absolute inset-0 z-30 flex bg-bg", mobile && "flex-col")}
+    <MotionRegion as="section"
+      elementRef={section}
+      data-state={presence.state}
+      inert={!open}
+      aria-hidden={!open || undefined}
+      onAnimationEnd={presence.onAnimationEnd}
+      className={cn("now-playing now-playing-vt absolute inset-0 z-30 flex bg-bg", mobile && "flex-col")}
       // Mở ra thì đây là nội dung chính: <main> của trang nằm dưới đã khoá (inert) và ra khỏi cây trợ năng - phím "tới vùng chính" của
       // trình đọc màn hình phải tới đây (soát a31 A3). role thay vì thẻ <main>: tài liệu chỉ được có một thẻ <main>.
       role="main"
@@ -2176,11 +2222,11 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
           </div>
         </div>
         {mobile && showPanel ? (
-          <div className="-mx-6 mt-2 min-h-56 flex-1 border-y border-line">{panelBody}</div>
+          <div key="panel" data-motion-content className="motion-reveal -mx-6 mt-2 min-h-56 flex-1 border-y border-line">{panelBody}</div>
         ) : (
           // Bìa vuông, to nhất 300px nhưng co theo chỗ còn lại của khung (cả chiều cao): cqw/cqh là cỡ của chính khung này (container-type:size) - nút bìa
           // w-full max-w-[300px] cũ không co theo chiều cao nên đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10).
-          <div className="mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
+          <div key="cover" data-motion-content className="motion-reveal mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
             {/* Chạm bìa để phát/dừng (SABP): mục tiêu lớn nhất màn hình, dễ trúng khi đang nằm và mắt nhắm mắt mở. */}
             <button
               type="button"
@@ -2235,6 +2281,6 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
           <div className="min-h-0 flex-1">{panelBody}</div>
         </div>
       )}
-    </section>
+    </MotionRegion>
   );
 }

@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { GitMerge, Search } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { cleanName } from "@/listen/BookScreen";
 import { voiceName, type CastMember } from "@/listen/model";
 import { cn } from "@/shared/cn";

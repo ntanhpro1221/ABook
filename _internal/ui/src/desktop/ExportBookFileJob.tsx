@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookAudio, FileAudio, FolderDown, Headphones, type LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import { useMatch } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { LiveText, Progress } from "@/shared/ui";

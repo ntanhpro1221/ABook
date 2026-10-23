@@ -12,6 +12,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Giao diện
 - Máy tính và điện thoại: thông báo ngắn hơn, giữ cùng lời cho cùng lỗi.
+- Phán quyết nghe gắn đúng câu khi duyệt nhanh; Back đóng từng bước đang mở. Nhóm giọng, màn tạo sách và thư viện gọn hơn, cập nhật trạng thái có chuyển cảnh mượt.
+- Cài đặt gọn lại thành 7 nhóm (Giọng đọc, Nghe, Hẹn giờ ngủ, Giao diện, Thiết bị, Studio, Nâng cao), mỗi nhóm một màn riêng có dòng tóm tắt giá trị hiện tại; điện thoại có 5 nhóm, máy tính màn rộng hiện hai cột. Mục hiếm dùng và kỹ thuật chuyển vào Nâng cao.
+- Điện thoại: nút Back đóng hộp, bảng hay màn đang mở trước, rồi về màn cha; chỉ thu nhỏ app khi đang ở Thư viện.
+- Chữ trên các màn ngắn lại (khoảng 130 chỗ); giải thích dài về quyền riêng tư và an toàn dữ liệu gập sau nút “Tìm hiểu thêm”.
+- Chuyển màn, mở/đóng hộp, bảng và mục gấp mượt hơn trên máy tính và điện thoại.
 
 ### Bảo mật
 - Máy tính và điện thoại: cập nhật Tauri và thư viện Rust của bộ chuyển chữ thành âm vị để vá lỗi bảo mật.

@@ -1,9 +1,11 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
 import * as Popover from "@radix-ui/react-popover";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { AlertTriangle, BookOpenText, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Pause, Play, RefreshCw, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { useSearchParams } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { hueOf } from "@/listen/BookScreen";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
@@ -14,7 +16,6 @@ import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
 import { UNDO_MS, optimistic, undoAction, undoSteps, usePendingNote, useWhenApplied } from "./decisions";
 import { seenDelivery, seenFor, theirDelivery, verdictWord, warnElsewhere, type SeenDelivery } from "./elsewhere";
-import { scrollMotion } from "@/shared/motion";
 import { findRanges, splitByRanges, wrapIndex } from "./scriptFind";
 
 // Tab "Kịch bản" (webui/casting_review.py, docs/STUDIO_REVIEW.md mục 3): đọc cả chương như kịch bản - câu nào của ai - và
@@ -617,17 +618,8 @@ export function DeliveryMenu({
     if (dirty) dirty.current = unsaved;
   }, [dirty, unsaved]);
   return (
-    <div className={cn("space-y-3 p-1.5", wide ? "w-full" : "w-[min(88vw,340px)]")} data-delivery-menu>
+    <MotionRegion as="div" className={cn("space-y-3 p-1.5", wide ? "w-full" : "w-[min(88vw,340px)]")} data-delivery-menu>
       {/* Mục tên nằm cuối bảng, dưới nếp cuộn - chỉ lối xuống đó ngay đầu bảng (soát UX 29-09). */}
-      {names.length > 0 && (
-        <button
-          type="button"
-          onClick={(event) => event.currentTarget.closest("[data-delivery-menu]")?.querySelector("[data-names-section]")?.scrollIntoView({ block: "nearest", behavior: scrollMotion() })}
-          className="text-xs font-medium text-accent-text hover:underline"
-        >
-          Sửa cách đọc {names.length} tên trong câu ↓
-        </button>
-      )}
       <div>
         <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Loại đoạn</div>
         <Segmented label="Loại đoạn" value={kind} onChange={setKind} options={KINDS} />
@@ -652,6 +644,7 @@ export function DeliveryMenu({
           )}
         </div>
       )}
+      <Fold storageKey="delivery.emotion" title="Cảm xúc" summary={`${emotion} · ${level}`} bodyClassName="space-y-3 px-3 pb-3">
       {line.emotion !== null && (
         <div>
           <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Cảm xúc</div>
@@ -685,6 +678,7 @@ export function DeliveryMenu({
           <p className="mt-1.5 text-[0.6875rem] leading-snug text-fg-3">Máy giữ mức trong tầm giọng đọc được: thì thầm, dịu dàng tối đa "Vừa".</p>
         </div>
       )}
+      </Fold>
       <label className="block">
         <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Chữ đem đọc</span>
         <textarea
@@ -712,16 +706,16 @@ export function DeliveryMenu({
       {/* Tên riêng trong câu đọc sai là sai ở MỌI câu có tên ấy: sửa ngay tại đây, cho cả cuốn (mục "Cách đọc tên" ở tab
           Nhân vật) - tách khỏi nút "Lưu cách đọc" vốn chỉ cho riêng câu này. */}
       {names.length > 0 && (
-        <div className="border-t border-line pt-3" data-names-section>
+        <Fold storageKey="delivery.names" title="Tên trong câu" summary={`${names.length} tên`} bodyClassName="px-3 pb-3"><div data-names-section>
           <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Tên trong câu · sửa cho cả cuốn</div>
           <div className="space-y-2">
             {names.map((item) => (
               <NameInLine key={item.surface} bookId={bookId} item={item} />
             ))}
           </div>
-        </div>
+        </div></Fold>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -858,7 +852,7 @@ export function SpeakerMenu({
     );
   };
   return (
-    <div>
+    <MotionRegion as="div">
       <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-panel-2 px-2.5 focus-within:border-focus">
         <Search className="size-4 shrink-0 text-fg-3" />
         <input
@@ -923,7 +917,7 @@ export function SpeakerMenu({
           </>
         )}
       </div>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -1041,8 +1035,8 @@ function ScriptRow({
   const speech = isSpeech(line);
   const suggested = line.hint?.suggest ? [...script.cast, ...script.others].find((person) => person.value === line.hint?.suggest) : undefined;
   return (
-    <li
-      ref={rowRef}
+    <MotionRegion as="li"
+      elementRef={rowRef}
       data-line={line.stableId}
       tabIndex={speech ? (active ? 0 : -1) : undefined}
       aria-selected={speech ? selected : undefined}
@@ -1187,7 +1181,7 @@ function ScriptRow({
           </button>
         )}
       </div>
-    </li>
+    </MotionRegion>
   );
 }
 
@@ -1408,17 +1402,17 @@ function ChapterScriptView({
   if (!shown.length) {
     const label = people.find((person) => person.value === who)?.label ?? (who === UNNAMED ? "Chưa rõ" : "");
     return (
-      <EmptyState
+      <MotionRegion><EmptyState
         icon={BookOpenText}
         title={who ? `Không có câu nào của ${label} ở mục này` : filter === "doubt" ? "Máy không nghi câu nào trong chương này" : "Chương này chỉ có lời kể"}
         className="py-10"
       >
         {who ? "Bấm lại tên ở trên để xem mọi người nói." : filter === "doubt" ? "Chọn “Cả chương” để đọc lại toàn bộ." : "Không có câu nói nào để gán người."}
-      </EmptyState>
+      </EmptyState></MotionRegion>
     );
   }
   return (
-    <>
+    <MotionRegion>
       {selected.length > 1 && (
         <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-accent-soft px-3 py-1.5 text-[0.8125rem]" role="status">
           <span className="font-semibold">Đang chọn {selected.length} câu</span>
@@ -1497,7 +1491,7 @@ function ChapterScriptView({
         );
       })}
       </ol>
-    </>
+    </MotionRegion>
   );
 }
 
@@ -1618,12 +1612,12 @@ export function ScriptTab({ bookId }: { bookId: string }) {
     );
   };
 
-  if (contents.isLoading) return <Skeleton className="mt-6 h-40 rounded-xl" />;
+  if (contents.isLoading) return <MotionRegion><Skeleton className="mt-6 h-40 rounded-xl" /></MotionRegion>;
   if (!chapters.length) {
     return (
-      <EmptyState icon={BookOpenText} title="Chưa có kịch bản" className="py-10">
+      <MotionRegion><EmptyState icon={BookOpenText} title="Chưa có kịch bản" className="py-10">
         Kịch bản hiện ra khi máy đã phân tích xong chương đầu tiên: câu nào là lời kể, câu nào của ai.
-      </EmptyState>
+      </EmptyState></MotionRegion>
     );
   }
   const data = script.data?.chapterId === chapterId ? script.data : undefined;
@@ -1641,10 +1635,9 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       ]
     : [];
   return (
-    <div className="mt-5">
+    <MotionRegion as="div" className="mt-5">
       <p className="max-w-3xl text-sm text-fg-2">
-        Đọc từng chương như kịch bản và sửa người nói của bất kỳ câu nào - bấm tên ở đầu câu. Sửa không dừng sách: sửa được áp
-        khi sách chạy tiếp (sách đã xong: nút “Áp dụng thay đổi”), câu đã thu thì thu lại bằng giọng của người mới. Câu máy nghi có dấu vàng.
+        Bấm tên ở đầu câu để đổi người nói. Câu máy nghi có dấu vàng.
       </p>
       {data && data.lines.length > 0 && !data.lines.some((line) => line.hasAudio) && (
         <p className="mt-1 max-w-3xl text-sm text-fg-2">
@@ -1764,8 +1757,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           {!data.castReady && (
             <p className="mt-4 flex items-start gap-2 rounded-xl bg-info-soft p-3 text-sm text-fg">
               <Clock className="mt-0.5 size-4 shrink-0 text-info" />
-              Người nói sửa được sau bước phân vai - lúc ấy mỗi nhân vật mới có giọng để gán. Trong lúc chờ, vẫn đọc được kịch
-              bản máy đang hiểu.
+              Sửa người nói được sau bước phân vai.
             </p>
           )}
           {/* Chương kể ngôi thứ nhất: máy gán nhầm câu của người khác cho "tôi" nhiều nhất (8B-v5 trên bộ LN: 97/276 câu gán cho
@@ -1803,6 +1795,6 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           <ChapterFooter bookId={bookId} script={data} onNext={() => go(data.next)} onUndoable={undo.push} />
         </>
       )}
-    </div>
+    </MotionRegion>
   );
 }

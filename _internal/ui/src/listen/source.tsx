@@ -2,7 +2,7 @@ import type { MusicCues } from "./musicBed";
 import type { PlaylistQueue } from "./playlistBed";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { isRecordGone, RECORD_GONE_MESSAGE, shownRecord } from "./recordWrites";
 import type { Bookmark, BookmarkSentence, Cast, ListenBook, ListenChapter, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
 import type { EditsSyncState } from "@/shared/editsSync";

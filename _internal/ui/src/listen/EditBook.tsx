@@ -1,10 +1,14 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { useBackLayer } from "@/shared/backStack";
+import { useMotionState } from "@/shared/motion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { FileDown, Globe, ImagePlus, Loader2, Music2, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { ChevronDown, FileDown, Globe, ImagePlus, Loader2, Music2, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { Collapse, useFold } from "@/shared/Collapse";
 import { CoverSearchDialog } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { holderName } from "@/shared/editsSync";
@@ -159,16 +163,19 @@ export function useBookMusic(bookId: string, onChanged?: () => void) {
 /** Nhạc nền của cuốn nhập từ file: người làm sách đã gắn sẵn - người nghe bật/tắt, chỉnh mức, cho im lặng từng đoạn, và đổi một đoạn
  *  sang bài trong "Nhạc của tôi" (bài ấy đi cùng file sách khi lưu). */
 export function MusicSection({ book }: { book: ListenBook }) {
-  const [swapping, setSwapping] = useState<string | null>(null); // khoá đoạn đang mở "Đổi bài"
+  const [swapping, setSwapping] = useMotionState<string | null>(null); // khoá đoạn đang mở "Đổi bài"
+  const swapBox = useRef<HTMLDivElement>(null);
+  const swapButton = useRef<HTMLButtonElement>(null);
+  useBackLayer(swapping !== null, () => setSwapping(null), swapBox, swapButton);
   const { view, change } = useBookMusic(book.id, () => setSwapping(null));
   const { data, isLoading } = view;
-  if (isLoading || !data) return <p className="text-sm text-fg-2">Đang đọc nhạc nền…</p>;
+  if (isLoading || !data) return <MotionRegion as="p" className="text-sm text-fg-2">Đang đọc nhạc nền…</MotionRegion>;
   if (!data.hasMusic) {
-    return <p className="text-sm text-fg-2">Người làm sách không gắn nhạc nền cho cuốn này.</p>;
+    return <MotionRegion as="p" className="text-sm text-fg-2">Người làm sách không gắn nhạc nền cho cuốn này.</MotionRegion>;
   }
   const choosing = change.isPending ? (Object.values(change.variables?.pins ?? {}).find((link): link is string => !!link) ?? null) : null;
   return (
-    <div className="space-y-3">
+    <MotionRegion as="div" elementRef={swapBox} className="space-y-3">
       <div className="flex flex-wrap items-end gap-3">
         {/* Công tắc có nhãn hành động rõ ("Nhạc nền: Bật") - nút đổi chữ theo trạng thái khiến không biết chữ là hiện tại hay việc sẽ làm. */}
         <div className="flex h-9 items-center gap-2.5 text-sm">
@@ -216,7 +223,7 @@ export function MusicSection({ book }: { book: ListenBook }) {
                   icon={Shuffle}
                   aria-expanded={swapping === cue.key}
                   disabled={change.isPending}
-                  onClick={() => setSwapping(swapping === cue.key ? null : cue.key)}
+                  onClick={(event) => { swapButton.current = event.currentTarget; setSwapping(swapping === cue.key ? null : cue.key); }}
                 >
                   Đổi bài
                 </Button>
@@ -238,16 +245,37 @@ export function MusicSection({ book }: { book: ListenBook }) {
         ))}
       </ul>
       <MyMusicSection />
-    </div>
+    </MotionRegion>
   );
 }
 
-function Section({ title, hint, children }: { title: string; hint?: string; children?: ReactNode }) {
+/** `fold`: mục ít dùng gập lại (khoá nhớ gấp / mở) - hộp năm mục dài hơn một màn điện thoại (a120). */
+function Section({ title, hint, children, fold }: { title: string; hint?: string; children?: ReactNode; fold?: string }) {
+  if (fold) return <FoldedSection title={title} hint={hint} storageKey={fold}>{children}</FoldedSection>;
   return (
     <section className="border-t border-line pt-4 first:border-t-0 first:pt-0">
       <h3 className="text-sm font-semibold">{title}</h3>
       {hint && <p className="mb-2 text-xs text-fg-2">{hint}</p>}
       {children && <div className={hint ? undefined : "mt-2"}>{children}</div>}
+    </section>
+  );
+}
+
+function FoldedSection({ title, hint, children, storageKey }: { title: string; hint?: string; children?: ReactNode; storageKey: string }) {
+  const [open, setOpen] = useFold(storageKey);
+  const id = useId();
+  return (
+    <section className="border-t border-line pt-2 first:border-t-0 first:pt-0">
+      <h3 className="m-0 text-sm font-semibold">
+        <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)} className="touch-row -mx-1 flex w-[calc(100%+0.5rem)] items-center justify-between gap-2 rounded-lg px-1 py-1.5 text-left hover:bg-hover">
+          {title}
+          <ChevronDown className="fold-chevron size-4 shrink-0 text-fg-3" aria-hidden />
+        </button>
+      </h3>
+      <Collapse open={open} id={id}>
+        {hint && <p className="mb-2 text-xs text-fg-2">{hint}</p>}
+        {children && <div className={hint ? undefined : "mt-2"}>{children}</div>}
+      </Collapse>
     </section>
   );
 }
@@ -273,6 +301,9 @@ export function EditBookDialog({
   const [author, setAuthor] = useState(book.author ?? "");
   const file = useRef<HTMLInputElement | null>(null);
   const [confirmRevert, setConfirmRevert] = useState(false);
+  const revertBox = useRef<HTMLDivElement>(null);
+  const revertButton = useRef<HTMLButtonElement>(null);
+  useBackLayer(open && confirmRevert, () => setConfirmRevert(false), revertBox, revertButton);
   const [searching, setSearching] = useState(false);
   // Mở hộp: nạp lại cả hai ô. Lưu một ô (hộp ở nguyên) chỉ nạp ô ấy - chữ gõ dở ở ô kia không mất (soát UX a17).
   useEffect(() => {
@@ -335,7 +366,7 @@ export function EditBookDialog({
             ? `Đổi có hiệu lực ngay trên máy này và được gửi về ${holderName(book.remote)} khi kết nối - audio và chữ của người làm sách giữ nguyên.`
             : "Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
       }
-    >
+    ><MotionRegion>
       <div className="max-h-[68vh] space-y-4 overflow-y-auto pr-1">
         <Section title="Tên sách">
           <form
@@ -391,7 +422,7 @@ export function EditBookDialog({
                 {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
               </Button>
               <Button variant="outline" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
-                Tìm ảnh bìa trên mạng…
+                Tìm bìa…
               </Button>
               {book.cover && (
                 <Button variant="ghost" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>
@@ -426,7 +457,7 @@ export function EditBookDialog({
           onBusy={setChoosingCover}
         />
         {book.stage !== "text" && (
-        <Section title="Nhạc nền">
+        <Section title="Nhạc nền" fold="edit-book.music">
           {workshop ? (
             <div className="flex flex-wrap items-center gap-3 text-sm text-fg-2">
               <span>Cuốn này có xưởng - nhạc nền chỉnh đầy đủ (chọn bài, im lặng từng đoạn) ở Studio.</span>
@@ -442,18 +473,18 @@ export function EditBookDialog({
         </Section>
         )}
         <Section
-          title={book.stage === "text" ? "Tên chương" : "Tên chương và tên nhân vật"}
+          title={book.stage === "text" ? "Tên chương" : "Tên riêng"}
           hint={book.stage === "text" ? "Bấm “…” ở dòng chương để đổi tên chương." : "Bấm “…” ở dòng chương để đổi tên chương, “…” ở tab Nhân vật để đổi tên người."}
         />
         {book.stage === "text" && !workshop && (
-          <Section title="Cách đọc tên" hint="Từ giọng đọc đọc sai (thường là tên riêng) và cách bạn dạy nó đọc - áp cho cả cuốn, chữ trong sách giữ nguyên.">
+          <Section title="Cách đọc tên" hint="Dạy cách đọc từ (thường là tên riêng). Chữ giữ nguyên." fold="edit-book.readings">
             <BookReadingsSection bookId={book.id} />
           </Section>
         )}
         {!workshop && (book.edits ?? 0) > 0 && (
           <Section title={`Bỏ mọi thay đổi (${book.edits})`} hint="Sách trở về đúng như người làm sách đã đóng gói.">
             {confirmRevert ? (
-              <div className="flex gap-2">
+              <div ref={revertBox} className="flex gap-2">
                 <Button variant="danger" loading={revert.isPending} onClick={() => revert.mutate()}>
                   Bỏ hết thay đổi
                 </Button>
@@ -462,14 +493,14 @@ export function EditBookDialog({
                 </Button>
               </div>
             ) : (
-              <Button variant="outline" onClick={() => setConfirmRevert(true)}>
+              <Button ref={revertButton} variant="outline" onClick={() => setConfirmRevert(true)}>
                 Bỏ mọi thay đổi…
               </Button>
             )}
           </Section>
         )}
       </div>
-    </Dialog>
+    </MotionRegion></Dialog>
   );
 }
 
@@ -616,7 +647,7 @@ export function SaveAsDialog({
   pickFolder?: () => Promise<string | null>;
 }) {
   const { save, busy } = useSaveBook(book);
-  const [kind, setKind] = useState<SaveKind>(book.projectFile ? "abookproj" : "abook");
+  const [kind, setKind] = useMotionState<SaveKind>(book.projectFile ? "abookproj" : "abook");
   const [folder, setFolder] = useState<string | null>(null);
   return (
     <Dialog
@@ -638,8 +669,8 @@ export function SaveAsDialog({
       {kind === "abookproj" ? (
         <p className="mt-3 text-sm text-fg-2">
           {book.projectFile?.workshop === "present"
-            ? "Dự án (.abookproj) giữ nguyên cả xưởng làm sách của cuốn này, kèm những thay đổi của bạn. Mở bằng Studio, ABook hỏi có áp thay đổi vào dự án không."
-            : "Cuốn này chưa có xưởng: file chỉ mang phần nghe và thay đổi của bạn. Máy có Studio mở file sẽ mời “Dựng xưởng” - tạo dự án mới từ chữ và giọng trong sách, làm lại toàn bộ audio."}
+            ? "Cả dự án kèm thay đổi của bạn; mở bằng Studio để áp."
+            : "Chỉ có phần nghe và thay đổi của bạn. Studio dựng lại được dự án từ file này."}
         </p>
       ) : (
         <p className="mt-3 text-sm text-fg-2">

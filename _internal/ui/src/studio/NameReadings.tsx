@@ -1,8 +1,10 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { useBackLayer } from "@/shared/backStack";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCachedBook } from "./data";
 import { Pause, Play, Plus, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import type { ReadAloudTry } from "@/listen/readings";
 import { useCast } from "@/listen/source";
@@ -95,7 +97,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
   useEffect(() => {
     if (name) setQuery(name);
   }, [name]);
-  if (!data || (!data.items.length && !data.unseen)) return null;
+  if (!data || (!data.items.length && !data.unseen)) return <MotionRegion />;
   const typed = query.trim();
   const needle = fold(typed);
   const found = needle
@@ -108,7 +110,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
   const addable = !found.length && /^\S{1,80}$/u.test(typed);
   const counted = data.items.filter((item) => item.lines > 0).length;
   return (
-    <section className="mt-8" aria-labelledby="name-readings-title">
+    <MotionRegion as="section" className="mt-8" aria-labelledby="name-readings-title">
       <h3 id="name-readings-title" className="scroll-mt-16 text-sm font-semibold">
         Cách đọc tên{" "}
         <span className="font-normal text-fg-2">
@@ -168,7 +170,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
       {data.unseen > 0 && !typed && (
         <p className="mt-2 text-xs text-fg-3">{formatNumber(data.unseen)} tên khác của cuốn không có câu nào trong phần này.</p>
       )}
-    </section>
+    </MotionRegion>
   );
 }
 
@@ -250,7 +252,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
   // Chữ người nghe vừa gõ để thêm: nói nó chạm tới bao nhiêu câu, bao nhiêu câu đã thu phải thu lại (webui/name_readings.reading_reach).
   const reach = useReach(bookId, item.surface, fresh).data;
   return (
-    <li className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5">
+    <MotionRegion as="li" className="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2.5">
       {example?.hasAudio ? (
         <button
           type="button"
@@ -298,7 +300,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
           {fresh ? `Thêm cách đọc cho “${item.surface}”` : "Sửa"}
         </Button>
       )}
-    </li>
+    </MotionRegion>
   );
 }
 
@@ -324,7 +326,7 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
   const editButton = useReturnFocus(editing);
   // Trình bày như mục "Cách đọc tên" ở tab Nhân vật: đang đọc gì, và (nếu có) cách đọc đang chờ áp dụng.
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5" data-name-editor>
+    <MotionRegion as="div" className="flex flex-wrap items-center gap-x-2 gap-y-1.5" data-name-editor>
       <span className="min-w-0 flex-1 text-sm">
         <span className="font-semibold">{item.surface}</span>
         {item.spoken && <span className="text-fg-2"> đọc là </span>}
@@ -346,7 +348,7 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
           Sửa
         </Button>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -365,6 +367,8 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, waitingNote 
   waitingNote?: string;
   aloud?: ReadAloudTry;
 }) {
+  const editBox = useRef<HTMLDivElement>(null);
+  useBackLayer(true, onDone, editBox);
   const client = useQueryClient();
   const when = useWhenApplied(bookId);
   // Ô sửa hiện như dòng bên cạnh (“Rên-ta-rô”, chữ đầu mỗi từ viết hoa - soát UX 30-09); lưu mà chỉ khác hoa thường thì
@@ -478,7 +482,7 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, waitingNote 
   });
   // Lỗi nằm DƯỚI cụm ô nhập, cùng bề rộng với cụm - trước đây dòng lỗi rộng hết dòng kéo cả cụm từ mép phải vào giữa.
   return (
-    <div className="flex w-full flex-col gap-1 sm:w-auto sm:max-w-sm">
+    <MotionRegion as="div" elementRef={editBox} className="flex w-full flex-col gap-1 sm:w-auto sm:max-w-sm">
     <form
       className="flex w-full flex-wrap items-center gap-2"
       onSubmit={(event) => {
@@ -542,6 +546,6 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, waitingNote 
         </p>
       )}
       <ReadingProblem id={`${inputId}-problem`} problem={problem} suggestion={suggestion} onUse={use} className="" />
-    </div>
+    </MotionRegion>
   );
 }

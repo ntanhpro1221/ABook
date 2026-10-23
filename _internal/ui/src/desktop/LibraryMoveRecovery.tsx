@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { api } from "@/studio/api";
 import { pickFolder } from "@/studio/data";
 import { Button } from "@/shared/ui";

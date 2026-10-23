@@ -1,3 +1,6 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { MoreInfo } from "@/shared/SettingsNav";
+import { LoadingCrossfade } from "@/shared/MotionPresence";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -26,7 +29,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import {
   Button,
   Dialog,
@@ -144,7 +147,7 @@ function Step({
   icon: typeof Wand2;
 }) {
   return (
-    <div className={cn("relative flex-1 rounded-xl border p-4", state === "active" ? "border-accent/40 bg-accent-soft" : "border-line bg-panel")}>
+    <MotionRegion as="div" className={cn("relative flex-1 rounded-xl border p-4", state === "active" ? "border-accent/40 bg-accent-soft" : "border-line bg-panel")}>
       <div className="flex items-center gap-2.5">
         <div
           className={cn(
@@ -168,7 +171,7 @@ function Step({
           <span className="tabular w-9 text-right text-xs font-semibold">{formatPercent(progress)}</span>
         </div>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -225,7 +228,7 @@ export function RunEnd({ end, redo }: { end: NonNullable<BookSummary["runEnd"]>;
         ? "Lần chạy trước dừng vì sự cố."
         : shown.summary;
   return (
-    <div role="alert" className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
+    <MotionRegion as="div" role="alert" className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
       <CircleAlert className="mt-0.5 size-4 shrink-0" />
       <div className="min-w-0">
         <p>
@@ -238,7 +241,7 @@ export function RunEnd({ end, redo }: { end: NonNullable<BookSummary["runEnd"]>;
           </details>
         )}
       </div>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -267,7 +270,7 @@ function ProductionPanel({ book }: { book: BookSummary }) {
   // đứng yên không nói vì sao).
   const eta = book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "đang tạm dừng") : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
   return (
-    <section className="mt-8">
+    <MotionRegion as="section" className="mt-8">
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-base font-semibold">Tiến trình sản xuất</h2>
         <div className="tabular text-sm text-fg-2">
@@ -320,7 +323,7 @@ function ProductionPanel({ book }: { book: BookSummary }) {
       {book.runEnd && !book.running && !book.starting && !(book.lastError && book.phase === "error") && (
         <RunEnd end={book.runEnd} redo={asksBeforeResume(book)} />
       )}
-    </section>
+    </MotionRegion>
   );
 }
 
@@ -344,7 +347,7 @@ function ResumeAnalysisDialog({ book, open, onOpenChange, onRedo, onResume }: {
             <span className="font-semibold">Phân tích của “{book.title}” đã dừng giữa chừng.</span> Làm tiếp từ chỗ ấy {ANALYSIS_CUT_COST} - khác
             với khi phân tích liền một mạch.
           </p>
-          <p className="mt-2 text-fg-2">Muốn kết quả như chạy liền một mạch thì làm lại phân tích từ đầu: bản dở được cất đi, thiết lập giữ nguyên.</p>
+          <p className="mt-2 text-fg-2">Muốn chắc như chạy liền mạch: làm lại phân tích từ đầu.</p>
         </div>
       </div>
       <div className="flex flex-wrap justify-end gap-2">
@@ -393,7 +396,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
         inAnalysis
           ? undefined
           : book.paused
-            ? "Sách đang tạm dừng và vẫn giữ bộ nhớ card đồ hoạ. Dừng hẳn thì nhả bộ nhớ ấy cho việc khác; mọi chương và câu đã xong vẫn giữ nguyên, làm tiếp lúc nào cũng được."
+            ? "Tạm dừng vẫn giữ bộ nhớ card đồ hoạ. Dừng hẳn thì nhả ra; việc đã xong giữ nguyên."
             : "Mọi chương và câu đã xong được giữ nguyên - làm tiếp lúc nào cũng được, từ đúng chỗ dừng."
       }
     >
@@ -464,7 +467,7 @@ function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
       open={open}
       onOpenChange={onOpenChange}
       title="Đổi tên sách"
-      description="Tên mới hiện trong thư viện, trên điện thoại (lần đồng bộ tới) và trong file xuất. Thư mục dự án giữ nguyên."
+      description="Tên mới hiện ở thư viện, điện thoại và file xuất."
     >
       <form
         onSubmit={(event) => {
@@ -530,7 +533,7 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
       open={open}
       onOpenChange={onOpenChange}
       title={`Xoá dự án “${book.title}”?`}
-      description="Cả thư mục dự án - bản thu, phân tích, phân vai và mọi chỗ đã sửa - chuyển vào Thùng rác của Windows, khôi phục được từ đó. File truyện gốc và sách đã xuất ra thư mục khác không bị đụng tới. Vừa xoá xong có 30 giây để bấm “Hoàn tác”."
+      description="Cả thư mục dự án vào Thùng rác của Windows, khôi phục được. File truyện gốc và sách đã xuất giữ nguyên."
     >
       {/* Studio từ xa không nhận đường dẫn trên máy tính (soát a27 lỗi 10). */}
       {book.path && <p className="break-all rounded-lg bg-panel-2 px-3 py-2 text-xs text-fg-2">{book.path}</p>}
@@ -650,7 +653,7 @@ export function Actions({ book }: { book: BookSummary }) {
   const next = useContinuation(book.id, analyzed).data?.paths.length ?? 0;
   const redoWaiting = book.phase === "done" ? (book.chapters.redo ?? 0) : 0;
   return (
-    <div className="flex flex-wrap items-center gap-2 sm:mt-5">
+    <MotionRegion as="div" className="flex flex-wrap items-center gap-2 sm:mt-5">
       {book.chapters.completed > 0 && (
         // Một nút chính mỗi lúc: sách xong mà còn thay đổi chờ áp thì "Áp dụng" là việc chính, không phải hai nút cam cạnh nhau
         // (soát UX 29-09).
@@ -700,7 +703,7 @@ export function Actions({ book }: { book: BookSummary }) {
                 Đang dừng…
               </Button>
               <p className="basis-full text-pretty text-sm text-fg-2">
-                Sách sẽ dừng ở chỗ an toàn kế tiếp - lúc phân tích có thể mất vài phút. Mọi thứ đã xong được giữ nguyên.
+                Dừng ở chỗ an toàn kế (có thể vài phút). Việc đã xong giữ nguyên.
               </p>
             </>
           ) : book.paused ? (
@@ -828,12 +831,12 @@ export function Actions({ book }: { book: BookSummary }) {
         </p>
       )}
       {live && book.paused === "battery" && (
-        <p className="basis-full text-pretty text-sm text-fg-2">
-          Máy tính đang chạy pin: tạo sách trên pin chậm hơn nhiều mà hao pin, nên Studio tạm dừng và tự làm tiếp khi cắm sạc.
-          Bấm “Tiếp tục” để làm tiếp ngay trên pin{remote ? "" : ", hay tắt hẳn ở Cài đặt → Studio"}.
-        </p>
+        <div className="basis-full text-pretty text-sm text-fg-2">
+          <p>Studio tạm dừng; cắm sạc để tiếp tục.</p>
+          <MoreInfo label="Dùng pin">Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin{remote ? "." : ", hoặc đổi ở Cài đặt › Studio."}</MoreInfo>
+        </div>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -888,7 +891,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
     onSuccess: ({ lines }) => {
       toast.success(`Đã ghi: thu lại ${lines} câu của ${chapter.displayTitle}`, {
         description: book.running
-          ? "Máy thu lại từ chương sau. Muốn bỏ, mở “Thay đổi chờ áp” ở trang sách - bỏ được bất cứ lúc nào, miễn là máy chưa thu."
+          ? "Thu lại từ chương sau. Bỏ được ở “Thay đổi chờ áp”."
           : "Bấm “Áp dụng thay đổi” ở đầu trang để thu. Bỏ được trong hộp ấy.",
       });
       void client.invalidateQueries({ queryKey: ["book", book.id] });
@@ -903,7 +906,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
           <button
             type="button"
             aria-label={`Tuỳ chọn ${chapter.displayTitle}`}
-            className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 opacity-0 transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
+            className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
           >
             <MoreHorizontal className="glyph" />
           </button>
@@ -936,8 +939,10 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
         open={confirm}
         onOpenChange={setConfirm}
         title={`Thu lại cả ${chapter.displayTitle}?`}
-        description={`${recorded} câu đã thu được thu lại bằng hạt giống mới - giọng như cũ, cách nói mỗi câu khác đi một chút. Hợp khi cả chương nghe không ổn; sai người nói hay sai chữ thì sửa ở Kịch bản, thu lại y chữ không chữa được.`}
+        description={`Thu lại ${recorded} câu; giọng giữ nguyên, cách nói đổi.`}
       >
+        <Button variant="ghost" onClick={() => { setConfirm(false); setParams({ tab: "script", chapter: String(chapter.id) }); }}>Sửa chữ</Button>
+        <MoreInfo label="Thu lại chương">Dùng hạt giống mới cho cả chương. Sai người nói hoặc chữ thì sửa Kịch bản trước; thu lại cùng chữ không chữa được.</MoreInfo>
         <div className="mt-5 dialog-actions">
           <Button variant="ghost" onClick={() => setConfirm(false)}>
             Thôi
@@ -972,7 +977,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
     else void playChapter(book.id, chapter.id);
   };
   return (
-    <div
+    <MotionRegion as="div"
       role="row"
       aria-rowindex={rowIndex}
       onDoubleClick={onPlay}
@@ -987,17 +992,17 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
             type="button"
             onClick={onPlay}
             aria-label={current && player.playing ? `Tạm dừng ${chapter.displayTitle}` : `Nghe ${chapter.displayTitle}`}
-            className="grid size-8 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg"
+            className="relative grid size-8 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg"
           >
             {current && player.playing ? (
               <>
-                <Vu className="h-3 text-accent group-hover:hidden" />
-                <Pause className="hidden size-4 group-hover:block" fill="currentColor" strokeWidth={0} />
+                <Vu className="h-3 text-accent transition-opacity duration-motion-fast group-hover:opacity-0" />
+                <Pause className="absolute size-4 opacity-0 transition-opacity duration-motion-fast group-hover:opacity-100" fill="currentColor" strokeWidth={0} />
               </>
             ) : (
               <>
-                <span className="tabular text-xs text-fg-3 group-hover:hidden">{chapter.index}</span>
-                <Play className="hidden size-4 translate-x-[1px] group-hover:block" fill="currentColor" strokeWidth={0} />
+                <span className="tabular text-xs text-fg-3 transition-opacity duration-motion-fast group-hover:opacity-0">{chapter.index}</span>
+                <Play className="absolute size-4 translate-x-[1px] opacity-0 transition-opacity duration-motion-fast group-hover:opacity-100" fill="currentColor" strokeWidth={0} />
               </>
             )}
           </button>
@@ -1035,7 +1040,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       <div role="cell" className="flex">
         <ChapterMenu book={book} chapter={chapter} onPlay={onPlay} />
       </div>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -1102,7 +1107,7 @@ function ActivityView({ book }: { book: BookSummary }) {
     return result;
   }, [data]);
   return (
-    <div className="mt-5">
+    <MotionRegion as="div" className="mt-5">
       <div className="flex items-center justify-between">
         <Segmented
           label="Kiểu nhật ký"
@@ -1155,7 +1160,7 @@ function ActivityView({ book }: { book: BookSummary }) {
           ))}
         </div>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -1212,8 +1217,7 @@ export function ProjectScreen() {
     else setParams({ tab: from ?? "chapters" }, { replace: true });
   };
 
-  if (isLoading) {
-    return (
+  const placeholder = (
       <div className="mx-auto max-w-[1180px] px-10 pt-9">
         <Skeleton className="h-5 w-24" />
         <div className="mt-6 flex gap-7">
@@ -1224,8 +1228,9 @@ export function ProjectScreen() {
           </div>
         </div>
       </div>
-    );
-  }
+  );
+  const content = () => {
+
   if (failure === "gone") {
     // Sách đã bị xoá hay chuyển đi (tab mở từ trước): thôi hỏi máy chủ, nói thẳng và cho đường về.
     return (
@@ -1272,7 +1277,7 @@ export function ProjectScreen() {
   ].filter(Boolean);
 
   return (
-    <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-7 sm:px-10">
+    <div className="motion-reveal mx-auto max-w-[1180px] px-4 pb-16 pt-7 sm:px-10">
       <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
@@ -1478,4 +1483,6 @@ export function ProjectScreen() {
       <VoicePicker bookId={book.id} person={picking} onClose={() => setPicking(null)} />
     </div>
   );
+  };
+  return <LoadingCrossfade loading={isLoading} placeholder={placeholder}><MotionRegion>{content()}</MotionRegion></LoadingCrossfade>;
 }

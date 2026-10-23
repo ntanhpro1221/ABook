@@ -1,6 +1,9 @@
+import { MoreInfo } from "@/shared/SettingsNav";
+import { useBackLayer } from "@/shared/backStack";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { BookmarkPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Button, Segmented } from "@/shared/ui";
 import { useAvailableModelNames } from "@/studio/AnalysisModelPicker";
 import { useBookTemplateOp, usePreferences, useVoices } from "@/studio/data";
@@ -59,6 +62,8 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
     setConfirming(false);
     setProblem("");
   };
+  const formBox = useRef<HTMLFormElement>(null);
+  useBackLayer(saving, () => confirming ? setConfirming(false) : close(), formBox, saveButton);
   const submit = () => {
     const existing = findTemplate(templates, name);
     const wrong = nameProblem(templates, name, existing?.name) || (!existing && isFull(templates) ? "Đã có đủ 20 mẫu - xoá bớt một mẫu trong Cài đặt trước" : "");
@@ -86,7 +91,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
   };
 
   return (
-    <div className="mb-6 rounded-xl border border-line bg-panel px-4 py-3">
+    <MotionRegion as="div" className="mb-6 rounded-xl border border-line bg-panel px-4 py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="text-sm font-medium">Mẫu thiết lập</span>
         {templates.length > 0 && (
@@ -127,6 +132,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
       )}
       {saving && (
         <form
+          ref={formBox}
           className="mt-3"
           onSubmit={(event) => {
             event.preventDefault();
@@ -173,9 +179,10 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
           </div>
           {confirming && <p className="mt-2 text-[0.8125rem] text-fg-2">Đã có mẫu “{findTemplate(templates, name)?.name}”. Ghi đè bằng các lựa chọn hiện tại?</p>}
           {problem && <p role="alert" className="mt-2 text-[0.8125rem] text-danger">{problem}</p>}
-          <p className="mt-2 text-[0.8125rem] text-fg-3">Mẫu nhớ giọng kể, chất lượng, bộ phân tích truyện, chuyện có bắt đầu ngay không và có chờ bạn duyệt trước khi thu không. Không nhớ truyện, tên sách hay dòng ghi công.</p>
+          <p className="mt-2 text-[0.8125rem] text-fg-3">Mẫu lưu giọng, chất lượng và cách tạo sách.</p>
+          <MoreInfo>Gồm bộ phân tích, bắt đầu ngay và duyệt trước khi thu. Không lưu truyện, tên sách hay dòng ghi công.</MoreInfo>
         </form>
       )}
-    </div>
+    </MotionRegion>
   );
 }

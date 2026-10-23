@@ -1,4 +1,6 @@
 import { Button, Dialog } from "./ui";
+import { MotionPresence } from "./MotionPresence";
+import { MotionRegion } from "./MotionRegion";
 import type { UnpairChoice, UnpairCopy } from "./unpair";
 
 /** Hộp hỏi khi gỡ ghép một máy còn sửa chưa gửi (copy từ `unpairCopy`): gửi trước rồi gỡ / vẫn gỡ, bỏ thay đổi / huỷ. Lỗi lần gửi trước
@@ -22,11 +24,11 @@ export function UnpairDialog({
         {copy?.lines.map((line) => (
           <p key={line}>{line}</p>
         ))}
-        {error && (
-          <p role="alert" className="text-danger">
+        <MotionPresence open={Boolean(error)}>{error && (
+          <MotionRegion as="p" role="alert" className="text-danger">
             {error}
-          </p>
-        )}
+          </MotionRegion>
+        )}</MotionPresence>
       </div>
       <div className="mt-5 flex flex-col gap-2">
         {copy?.send && (

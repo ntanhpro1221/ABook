@@ -76,7 +76,7 @@ export function cacheLabel(usage: ReadAloudCacheUsage): string {
 
 /** Câu hỏi lại trước khi xoá bản đọc của cuốn: nói điều người nghe sẽ thấy sau đó. */
 export function clearCacheQuestion(usage: ReadAloudCacheUsage): string {
-  return `Xoá ${formatSize(usage.book)} bản đọc đã làm của cuốn này? Nghe tới đâu máy đọc lại tới đó (giọng trực tuyến cần có mạng).`;
+  return `Xoá ${formatSize(usage.book)} bản đọc của cuốn này? Nghe tới đâu máy đọc lại tới đó.`;
 }
 
 /** Cài đặt > Giọng đọc: bản đọc đã làm của cả máy nặng bao nhiêu ("Bản đọc đã làm chiếm 148 MB trên máy này."). */
@@ -86,7 +86,7 @@ export function storageLabel(usage: Pick<ReadAloudCacheUsage, "total">): string 
 
 /** Câu hỏi lại trước khi dọn bản đọc của cả máy. */
 export function clearStorageQuestion(usage: Pick<ReadAloudCacheUsage, "total">): string {
-  return `Dọn ${formatSize(usage.total)} bản đọc đã làm của mọi cuốn? Nghe tới đâu máy đọc lại tới đó (giọng trực tuyến cần có mạng); chương đã "Làm trước" cũng phải làm lại. Sách và chỗ đang nghe không đổi.`;
+  return `Dọn ${formatSize(usage.total)} bản đọc đã làm của mọi cuốn? Máy sẽ đọc lại khi nghe. Sách và chỗ đang nghe giữ nguyên.`;
 }
 
 /** Các chương chỉ-có-chữ ngay sau chương đang nghe (tối đa `limit`). */
@@ -117,8 +117,8 @@ export function canPrepare(voice: Pick<ReadAloudVoice, "provider" | "online">, o
 export function prepareIntro(voice: Pick<ReadAloudVoice, "online"> & Partial<Pick<ReadAloudVoice, "provider">>): string {
   // Giọng trực tuyến: làm trước là gửi chữ các chương ấy đi - nói thẳng chữ đi đâu (soát a79 lỗi 6), không chỉ nói cái lợi.
   return voice.online
-    ? `Sắp không có mạng (tàu điện, máy bay)? Làm trước các chương tới để nghe được cả khi không có mạng${voice.provider ? ` - chữ các chương này sẽ được gửi tới ${onlineDestination(voice.provider)} để đọc` : ""}.`
-    : "Máy đọc chậm? Làm trước các chương tới ở nền để nghe liền mạch, không phải chờ giữa các đoạn.";
+    ? `Làm trước để nghe khi không có mạng${voice.provider ? `; chữ sẽ được gửi tới ${onlineDestination(voice.provider)}` : ""}.`
+    : "Máy đọc chậm? Làm trước để nghe liền mạch.";
 }
 
 /** "khoảng 1 giờ 20 phút", "khoảng 12 phút", "dưới 1 phút". */

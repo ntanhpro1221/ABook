@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Globe, ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { seriesOf } from "@/listen/model";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";

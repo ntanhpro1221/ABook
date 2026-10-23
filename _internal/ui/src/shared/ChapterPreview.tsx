@@ -1,3 +1,5 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { useBackLayer } from "./backStack";
 import { Pencil } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "./cn";
@@ -43,13 +45,19 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
   // Enter / Esc xong: tiêu điểm về đúng dòng vừa sửa (nút tên chương), không rơi về khung hộp rồi Tab nhảy lên "Đóng" (soát a67).
   const box = useRef<HTMLDivElement | null>(null);
   const returnTo = useRef<number | null>(null);
+  useBackLayer(editing !== null, () => {
+    cancelled.current = true;
+    returnTo.current = editing;
+    box.current?.querySelector<HTMLInputElement>("input[data-escape-local]")?.blur();
+    setEditing(null);
+  }, box);
   useEffect(() => {
     if (editing !== null || returnTo.current === null) return;
     box.current?.querySelector<HTMLElement>(`[data-rename="${returnTo.current}"]`)?.focus();
     returnTo.current = null;
   }, [editing]);
   return (
-    <div ref={box} className={cn("max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel", className)}>
+    <MotionRegion as="div" elementRef={box} className={cn("max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel", className)}>
       {chapters.map((chapter, position) => {
         const index = chapter.index ?? position + 1;
         const on = choice ? choice.picked.has(index) : true;
@@ -137,6 +145,6 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
           </div>
         );
       })}
-    </div>
+    </MotionRegion>
   );
 }

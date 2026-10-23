@@ -1,7 +1,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronRight, Music2, Plus } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { LiveText } from "@/shared/ui";

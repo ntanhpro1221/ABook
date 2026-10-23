@@ -395,9 +395,8 @@ export function shortPlaylistLabel(label: string): string {
 }
 
 /** Công tắc "Tự chọn nhạc nền" ở Cài đặt > Nhạc nền (máy tính và điện thoại dùng chung lời). */
-export const AUTO_MUSIC_LABEL = "Tự chọn nhạc nền cho sách chỉ có chữ";
-export const AUTO_MUSIC_HINT =
-  "Máy đọc truyện rồi cho nhạc đổi theo từng cảnh, phát nhè nhẹ dưới giọng đọc. Tắt thì sách chưa chọn nhạc sẽ im lặng; cuốn nào bạn đã chọn nhạc ở menu “Nhạc nền” của sách vẫn có nhạc.";
+export const AUTO_MUSIC_LABEL = "Tự chọn nhạc nền";
+export const AUTO_MUSIC_HINT = "Sách chỉ có chữ: nhạc nhẹ đổi theo cảnh.";
 
 /** Nhạc đang chạy cho cuốn này hay không (máy theo cảnh, hay người nghe chọn một danh sách) - để nút "Nhạc nền" sáng lên. */
 export function playlistPlaying(view: PlaylistView | undefined): boolean {

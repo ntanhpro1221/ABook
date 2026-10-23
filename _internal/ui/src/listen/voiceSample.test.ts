@@ -15,7 +15,8 @@ vi.mock("react", async (original) => ({
 }));
 vi.mock("@/shared/ui", () => ({ Button: () => null, StatusPill: () => null, radioGroupKeys: () => null, radioTabIndex: () => 0 }));
 vi.mock("lucide-react", () => ({ Check: () => null, ChevronDown: () => null, KeyRound: () => null, Play: () => null, Square: () => null, Trash2: () => null }));
-vi.mock("@tanstack/react-query", () => ({ useQueryClient: () => ({}) }));
+vi.mock("@/shared/SettingsNav", () => ({ MoreInfo: () => null }));
+vi.mock("@tanstack/react-query", () => ({ useQueryClient: () => ({}), useQuery: () => ({}) }));
 vi.mock("@/listen/ReadAloudStorage", () => ({ ReadAloudStorage: () => null }));
 
 class FakeAudio {
