@@ -30,12 +30,33 @@ object Mp3Export {
 
         /** Địa chỉ để mở thư mục này bằng app Tệp của hệ thống (thư mục SAF); null khi nơi ghi không có (test, thư mục thường). */
         val uri: String? get() = null
+
+        /** Tên thư mục con thật (đã thêm "(2)" nếu trùng), khác [label] ở chỗ không kèm thư mục cha. */
+        val name: String get() = label.substringAfterLast('/')
         fun write(name: String, body: (OutputStream) -> Unit)
     }
 
     /** Nơi lưu bản xuất: tạo thư mục con mới, giữ mọi bản xuất đã có. */
     fun interface Destination {
         fun folder(name: String): Folder
+
+        /** Mở lại thư mục con `name` do chính lượt này tạo ở lần chạy trước; null khi không còn (người dùng đã xoá / đổi tên). */
+        fun existing(name: String): Folder? = null
+    }
+
+    /** Nhớ thư mục một lượt đã tạo, qua các lần WorkManager chạy lại đúng lượt ấy (hệ thống dừng giữa chừng). */
+    interface FolderMemory {
+        fun recall(): String?
+        fun remember(name: String)
+    }
+
+    /**
+     * Thư mục của lượt: chạy lại sau khi bị hệ thống dừng thì mở lại thư mục lượt trước đã tạo (ghi đè file cùng tên) thay vì tạo "Tên (2)"
+     * bên cạnh một thư mục dở.
+     */
+    fun openFolder(destination: Destination, name: String, memory: FolderMemory?): Folder {
+        memory?.recall()?.let { destination.existing(it) }?.let { return it }
+        return destination.folder(name).also { memory?.remember(it.name) }
     }
 
     /** Như export.free_path: lần xuất sau sang "(2)", "(3)"; cả file trùng tên cũng chiếm chỗ. */
@@ -59,21 +80,25 @@ object Mp3Export {
                 fresh = freshFolderName(name) { File(root, it).exists() }
                 dir = File(root, fresh)
             }
-            return object : Folder {
-                override val label = "${root.name}/$fresh"
-                override fun write(name: String, body: (OutputStream) -> Unit) {
-                    val part = File(dir, "$name.part")
-                    try {
-                        part.outputStream().buffered().use(body)
-                    } catch (error: Throwable) {
-                        part.delete()
-                        throw error
-                    }
-                    val final = File(dir, name)
-                    if (!part.renameTo(final)) {
-                        final.delete()
-                        if (!part.renameTo(final)) throw Refused("Không ghi được $name")
-                    }
+            return open(dir)
+        }
+
+        override fun existing(name: String): Folder? = File(root, name).takeIf { it.isDirectory }?.let(::open)
+
+        private fun open(dir: File) = object : Folder {
+            override val label = "${root.name}/${dir.name}"
+            override fun write(name: String, body: (OutputStream) -> Unit) {
+                val part = File(dir, "$name.part")
+                try {
+                    part.outputStream().buffered().use(body)
+                } catch (error: Throwable) {
+                    part.delete()
+                    throw error
+                }
+                val final = File(dir, name)
+                if (!part.renameTo(final)) {
+                    final.delete()
+                    if (!part.renameTo(final)) throw Refused("Không ghi được $name")
                 }
             }
         }
@@ -199,8 +224,8 @@ object Mp3Export {
      * `step(chương đã xong, tổng, phần đã làm 0..1 của chương đang làm)` cho thanh tiến độ trong chương.
      */
     fun runMixed(plan: Plan, destination: Destination, work: File, encoder: M4bExport.AudioEncoder, progress: (Int, Int) -> Unit = { _, _ -> },
-                 stopped: () -> Boolean = { false }, step: (Int, Int, Double) -> Unit = { _, _, _ -> }): Result {
-        val folder = destination.folder(folderName(plan.title))
+                 stopped: () -> Boolean = { false }, step: (Int, Int, Double) -> Unit = { _, _, _ -> }, memory: FolderMemory? = null): Result {
+        val folder = openFolder(destination, folderName(plan.title), memory)
         plan.cover?.let { cover -> folder.write(plan.coverName) { it.write(cover.bytes) } }
         val listed = plan.chapters.size
         val entries = ArrayList<Triple<Double, String, String>>()
@@ -225,8 +250,8 @@ object Mp3Export {
      * Ghi bản xuất vào `destination`: bìa, từng chương, danh sách phát. `progress(đã xong, tổng)` sau mỗi chương; `stopped` được hỏi
      * suốt lúc chép - true thì dừng ngay (ném [Stopped]), chương đang chép dở không để lại file, các chương đã xong vẫn còn.
      */
-    fun run(plan: Plan, destination: Destination, progress: (Int, Int) -> Unit = { _, _ -> }, stopped: () -> Boolean = { false }): Result {
-        val folder = destination.folder(folderName(plan.title))
+    fun run(plan: Plan, destination: Destination, progress: (Int, Int) -> Unit = { _, _ -> }, stopped: () -> Boolean = { false }, memory: FolderMemory? = null): Result {
+        val folder = openFolder(destination, folderName(plan.title), memory)
         plan.cover?.let { cover -> folder.write(plan.coverName) { it.write(cover.bytes) } }
         val listed = plan.chapters.size
         val entries = ArrayList<Triple<Double, String, String>>()

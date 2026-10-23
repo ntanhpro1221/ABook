@@ -243,7 +243,7 @@ class CastService : Service() {
         val where = computer?.device ?: names.joinToString(", ")
         val toggle = if (playing) ACTION_PAUSE else ACTION_PLAY
         val builder = NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(applicationInfo.icon)
+            .setSmallIcon(R.mipmap.ic_launcher_monochrome)
             .setContentTitle("${if (playing) "Đang phát" else "Đang dừng"} trên ${where.ifEmpty { "loa / TV" }}")
             .setContentText(if (computer != null) "Máy tính đang phát cuốn này" else "Điện thoại đang phục vụ audio - giữ Wi-Fi bật")
             .setContentIntent(openApp())

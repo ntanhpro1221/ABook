@@ -39,17 +39,34 @@ object Mp3Exports {
     /**
      * Người dùng bấm "Dừng" (hay xuất lại cuốn này) khác hệ thống dừng việc (hết giờ chạy nền, máy thiếu bộ nhớ...): hệ thống dừng
      * thì việc trả `Result.retry()` và WorkManager tự chạy lại - file đích, quyền ghi và ảnh bìa vẽ sẵn phải còn. Dùng chung cho
-     * ba kiểu xuất (MP3, M4B, sách nói). Không có dấu huỷ rõ ràng thì giữ tài nguyên, kể cả Android cũ không báo lý do.
+     * ba kiểu xuất (MP3, M4B, sách nói). Không có dấu huỷ rõ ràng thì giữ tài nguyên, kể cả Android cũ không báo lý do. Hai lý do không
+     * chạy lại: người dùng dừng ở trình quản lý tác vụ của hệ thống (STOP_REASON_USER, Android 14+) và dịch vụ nền hết giờ ([timedOut]).
      */
-    @Suppress("UNUSED_PARAMETER")
-    fun stoppedBySystem(sdk: Int, reason: Int, explicitlyCancelled: Boolean = false): Boolean = !explicitlyCancelled
+    fun stoppedBySystem(sdk: Int, reason: Int, explicitlyCancelled: Boolean = false): Boolean =
+        !explicitlyCancelled && !(sdk >= 31 && (reason == WorkInfo.STOP_REASON_USER || reason == WorkInfo.STOP_REASON_FOREGROUND_SERVICE_TIMEOUT))
+
+    /**
+     * Android 15 giới hạn dịch vụ nền loại dataSync 6 giờ mỗi ngày rồi gọi onTimeout: WorkManager dừng việc với lý do này. Chạy lại ngay chỉ
+     * thất bại tiếp (không còn được mở dịch vụ nền) nên việc kết thúc, báo người nghe bấm "Xuất lại" - phần đã làm vẫn còn như khi bấm "Dừng".
+     */
+    fun timedOut(sdk: Int, reason: Int): Boolean = sdk >= 31 && reason == WorkInfo.STOP_REASON_FOREGROUND_SERVICE_TIMEOUT
+
+    internal fun stopReason(worker: ListenableWorker): Int =
+        if (Build.VERSION.SDK_INT >= 31) worker.stopReason else WorkInfo.STOP_REASON_UNKNOWN
 
     internal fun stoppedBySystem(worker: ListenableWorker): Boolean = stoppedBySystem(
-        Build.VERSION.SDK_INT, if (Build.VERSION.SDK_INT >= 31) worker.stopReason else WorkInfo.STOP_REASON_UNKNOWN,
-        ExportCancellation.cancelled(worker.applicationContext, worker.id),
+        Build.VERSION.SDK_INT, stopReason(worker), ExportCancellation.cancelled(worker.applicationContext, worker.id),
     )
 
+    internal fun timedOut(worker: ListenableWorker): Boolean = timedOut(Build.VERSION.SDK_INT, stopReason(worker))
+
+    /** Lời cho người nghe khi hệ thống dừng việc xuất vì dịch vụ nền hết 6 giờ. */
+    const val TIMEOUT_NOTE = "Hệ thống Android đã dừng việc xuất sau 6 giờ - bạn bấm Xuất lại để làm tiếp"
+
     private const val CHANNEL = "export"
+
+    /** Kênh thông báo của "Tải sách" ([BookDownloads]) - dùng chung thông báo tiến độ / kết quả với xuất sách, khác tên kênh trong cài đặt của máy. */
+    internal const val DOWNLOAD_CHANNEL = "download"
     private const val KEY_BOOK = "bookId"
     private const val KEY_TREE = "tree"
     private const val KEY_COVER = "cover"
@@ -58,6 +75,9 @@ object Mp3Exports {
 
     /** Giao diện đang mở thì nghe tin của việc nền ("mp3Export" của EbookLibrary): tiến độ, xong, dừng, lỗi. */
     @Volatile var events: ((JSONObject) -> Unit)? = null
+
+    /** Tin cuối của các lượt đang chạy: giao diện mở lại giữa chừng hỏi [ExportJobs.running]. */
+    val live = ExportLive("mp3")
 
     // ---- chỗ lưu ------------------------------------------------------------------------------------------------
 
@@ -117,23 +137,39 @@ object Mp3Exports {
         val request = OneTimeWorkRequestBuilder<Mp3ExportWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setInputData(data.build())
+            .apply { ExportJobs.tags("mp3", bookId).forEach { addTag(it) } }
             .build()
         ExportCancellation.enqueue(context, "mp3-export:$bookId", request)
         return request.id.toString()
     }
 
     internal fun emit(event: JSONObject) {
+        live.emit(event)
         runCatching { events?.invoke(event) }
     }
 
-    private fun channel(context: Context) {
+    /**
+     * Thư mục lượt này đã tạo, nhớ theo mã việc: WorkManager chạy lại đúng việc ấy (hệ thống dừng giữa chừng) thì ghi đè vào thư mục dở thay vì
+     * tạo "Tên (2)" bên cạnh nó. Xoá khi việc kết thúc hẳn ([forget]).
+     */
+    internal fun folderMemory(context: Context, work: java.util.UUID): Mp3Export.FolderMemory = object : Mp3Export.FolderMemory {
+        private val key = "folder:$work"
+        override fun recall(): String? = prefs(context).getString(key, null)
+        override fun remember(name: String) {
+            prefs(context).edit().putString(key, name).commit()
+        }
+    }
+
+    internal fun forget(context: Context, work: java.util.UUID) {
+        prefs(context).edit().remove("folder:$work").apply()
+    }
+
+    private fun channel(context: Context, id: String = CHANNEL) {
         val manager = context.getSystemService(NotificationManager::class.java)
-        if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(CHANNEL) == null) {
-            manager.createNotificationChannel(
-                NotificationChannel(CHANNEL, "Xuất sách", NotificationManager.IMPORTANCE_LOW).apply {
-                    description = "Tiến độ khi xuất MP3 / M4B để nghe ở app khác"
-                },
-            )
+        if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(id) == null) {
+            val (name, text) = if (id == DOWNLOAD_CHANNEL) "Tải sách" to "Tiến độ khi tải sách về điện thoại"
+            else "Xuất sách" to "Tiến độ khi xuất MP3 / M4B để nghe ở app khác"
+            manager.createNotificationChannel(NotificationChannel(id, name, NotificationManager.IMPORTANCE_LOW).apply { description = text })
         }
     }
 
@@ -147,22 +183,23 @@ object Mp3Exports {
 
     /**
      * Thông báo đang chạy: tên sách, "3/10 chương", thanh tiến độ, nút "Dừng". `fraction` (0..1): thanh chạy theo phần cả cuốn đã làm
-     * (xuất M4B - một chương có thể mất vài phút), không thì theo số chương.
+     * (xuất M4B - một chương có thể mất vài phút), không thì theo số chương. `heading`, `stopLabel`, `channelId`: lời và kênh khác cho việc tải sách.
      */
     internal fun foreground(context: Context, work: java.util.UUID, bookId: String, title: String, done: Int, total: Int,
-                            tag: String = "mp3-export", fraction: Double? = null): ForegroundInfo {
-        channel(context)
+                            tag: String = "mp3-export", fraction: Double? = null, heading: String = "Đang xuất sách…",
+                            stopLabel: String = "Dừng", channelId: String = CHANNEL): ForegroundInfo {
+        channel(context, channelId)
         val stop = ExportCancellation.stopIntent(context, work)
-        val notification = NotificationCompat.Builder(context, CHANNEL)
+        val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.mipmap.ic_launcher_monochrome)
-            .setContentTitle("Đang xuất sách…")
+            .setContentTitle(heading)
             .setContentText(if (total > 0) "$title · $done/$total chương" else title)
             .apply { if (fraction != null) setProgress(1000, (fraction * 1000).toInt(), false) else setProgress(total, done, total == 0) }
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setSilent(true)
             .setContentIntent(openApp(context))
-            .addAction(0, "Dừng", stop)
+            .addAction(0, stopLabel, stop)
             .build()
         val id = notificationId(bookId, tag)
         return if (Build.VERSION.SDK_INT >= 29) ForegroundInfo(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
@@ -170,10 +207,10 @@ object Mp3Exports {
     }
 
     /** Thông báo kết quả (xong / dừng / lỗi): nằm lại sau khi việc nền đã tắt, bấm vào mở app. */
-    internal fun finished(context: Context, bookId: String, title: String, text: String, tag: String = "mp3-export") {
+    internal fun finished(context: Context, bookId: String, title: String, text: String, tag: String = "mp3-export", channelId: String = CHANNEL) {
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
-        channel(context)
-        val notification = NotificationCompat.Builder(context, CHANNEL)
+        channel(context, channelId)
+        val notification = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.mipmap.ic_launcher_monochrome)
             .setContentTitle(title)
             .setContentText(text)
@@ -203,6 +240,14 @@ class SafDestination(private val resolver: ContentResolver, private val tree: Ur
         val dir = DocumentsContract.createDocument(resolver, root, DocumentsContract.Document.MIME_TYPE_DIR, fresh)
             ?: throw Mp3Export.Refused("Không tạo được thư mục trong chỗ đã chọn")
         return SafFolder(resolver, tree, dir, "$treeName/$fresh")
+    }
+
+    /** Thư mục con `name` còn ở đó (lần chạy trước của chính lượt này tạo); người dùng đã xoá nó hay có file trùng tên thì null. */
+    override fun existing(name: String): Mp3Export.Folder? {
+        val root = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
+        val (id, mime) = children(resolver, tree, root)[name] ?: return null
+        if (mime != DocumentsContract.Document.MIME_TYPE_DIR) return null
+        return SafFolder(resolver, tree, DocumentsContract.buildDocumentUriUsingTree(tree, id), "$treeName/$name")
     }
 
     companion object {
@@ -290,6 +335,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             runCatching { setForegroundAsync(Mp3Exports.foreground(context, id, bookId, title, 0, base.chapters.size)).get() }
             val treeName = Mp3Exports.treeName(context, tree) ?: throw Mp3Export.Refused("Không mở được thư mục đã chọn - chọn lại nơi lưu")
             val ids = base.chapters.map { it.id }
+            Mp3Exports.live.note(bookId, run, JSONObject().put("folder", "$treeName/${Mp3Export.folderName(title)}").put("music", Mp3Exports.music(inputData)))
             // "Kèm nhạc nền" (soát a99 V3): cùng bộ trộn, mức âm và ghi công với M4B; sách không có nhạc thì mỗi chương vẫn là MP3 như cũ.
             music = ExportMusic.open(context, bookId, run, ids, Mp3Exports.music(inputData), { isStopped }) { index, count ->
                 Mp3Exports.emit(event().put("phase", "music-fetch").put("done", index).put("total", count))
@@ -304,12 +350,13 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 }
             }
             val destination = Mp3Exports.destination(context, tree, treeName)
+            val folders = Mp3Exports.folderMemory(context, id)
             val result = if (plan.music == null) {
                 Mp3Export.run(plan, destination, progress = { written, total ->
                     done = written
                     Mp3Exports.emit(event().put("done", written).put("total", total))
                     report(written, total, 0.0)
-                }, stopped = { isStopped })
+                }, stopped = { isStopped }, memory = folders)
             } else {
                 val work = File(context.cacheDir, "mp3-export").apply { mkdirs() }.let { File(it, "$run.m4a") }
                 // Chỗ trống cho chương dài nhất: các chương làm lần lượt, file trung gian dùng lại.
@@ -333,7 +380,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                         done = written
                         Mp3Exports.emit(phase(event().put("done", written).put("total", total)))
                         report(written, total, written.toDouble() / total)
-                    }, stopped = { isStopped }, step = { finished, total, fraction ->
+                    }, stopped = { isStopped }, memory = folders, step = { finished, total, fraction ->
                         offset = finished
                         report(finished, total, (finished + fraction) / total)
                     })
@@ -361,6 +408,12 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 retrying = true
                 return Result.retry()
             }
+            if (Mp3Exports.timedOut(this)) {
+                // Dịch vụ nền hết 6 giờ (Android 15): các chương đã xuất còn nguyên; không chạy lại vô hạn.
+                Mp3Exports.finished(context, bookId, "Hệ thống đã dừng việc xuất", "$title · đã xuất $done chương. ${Mp3Exports.TIMEOUT_NOTE}.")
+                Mp3Exports.emit(event().put("error", Mp3Exports.TIMEOUT_NOTE))
+                return Result.failure()
+            }
             Mp3Exports.finished(context, bookId, "Đã dừng xuất", "$title · đã xuất $done chương")
             Mp3Exports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
@@ -369,13 +422,20 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 retrying = true
                 return Result.retry()
             }
-            val message = if (error is Mp3Export.Refused) error.message.orEmpty() else "Lỗi khi ghi: ${error.message ?: error.javaClass.simpleName}"
+            val message = when {
+                isStopped && Mp3Exports.timedOut(this) -> Mp3Exports.TIMEOUT_NOTE
+                error is Mp3Export.Refused -> error.message.orEmpty()
+                else -> "Lỗi khi ghi: ${error.message ?: error.javaClass.simpleName}"
+            }
             Mp3Exports.finished(context, bookId, "Không xuất được", "$title · $message")
             Mp3Exports.emit(event().put("error", message))
             return Result.failure()
         } finally {
             music?.close()
-            if (!retrying && (!isStopped || !Mp3Exports.stoppedBySystem(this))) cover?.delete()
+            if (!retrying && (!isStopped || !Mp3Exports.stoppedBySystem(this))) {
+                cover?.delete()
+                Mp3Exports.forget(context, id)
+            }
         }
     }
 }

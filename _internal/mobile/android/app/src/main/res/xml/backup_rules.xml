@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sao lưu tự động của Android 11 trở xuống (android:fullBackupContent); từ Android 12 là data_extraction_rules.xml - hai danh sách phải giống nhau.
+     Sách và chỗ nghe vẫn đi theo; mã ghép nối, vân tay TLS và danh sách máy được chia sẻ thì không (khoá Keystore của chúng không đi theo máy). -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="sync.xml" />
+    <exclude domain="sharedpref" path="peers.xml" />
+    <exclude domain="sharedpref" path="abook_self.xml" />
+    <exclude domain="sharedpref" path="readaloud-online-keys.xml" />
+    <exclude domain="sharedpref" path="studio_alerts.xml" />
+    <exclude domain="sharedpref" path="export_cancellation.xml" />
+    <exclude domain="sharedpref" path="mp3_export.xml" />
+    <exclude domain="sharedpref" path="book_saves.xml" />
+    <exclude domain="file" path="share.json" />
+</full-backup-content>
