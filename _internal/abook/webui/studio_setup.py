@@ -71,12 +71,12 @@ class Download:
 
 
 # Nâng: đổi URL + băm (GitHub cho sẵn `digest` của từng tệp: gh api repos/<repo>/releases/latest), thử cài lại.
-UV = Download("uv", "https://github.com/astral-sh/uv/releases/download/0.12.19/uv-x86_64-pc-windows-msvc.zip",
-              "6dbb02d79e419522f1c500f0adb1cddcff0cda7d59b0d66ea7f5e3b4a1b2f5f0", 17_955_780)
+UV = Download("uv", "https://github.com/astral-sh/uv/releases/download/0.13.5/uv-x86_64-pc-windows-msvc.zip",
+              "a38b8d1902b7cfbc76b423ba1bb456f623f42064cdc72628b6075b89afd1019a", 15_264_056)
 # runtime_contract đòi UTMOSv2 cài từ git (vcs_info.commit_id) - MinGit là bản Git nhúng chính thức của Git for Windows.
-MINGIT = Download("git", "https://github.com/git-for-windows/git/releases/download/v2.55.0.windows.5/"
-                  "MinGit-2.55.0.5-64-bit.zip",
-                  "56d7b226b7693196cfc71fef26568f536c4a021ab6c37ff2db4287bed908e96e", 38_989_688)
+MINGIT = Download("git", "https://github.com/git-for-windows/git/releases/download/v2.56.0.windows.3/"
+                  "MinGit-2.56.0.3-64-bit.zip",
+                  "2e5619966e588fde5f8122c5557cad50c0fbafcaed736689f40ec1dfb1d78ea7", 39_854_943)
 # Ollama: ĐÚNG bản dây chuyền đã được đo và kiểm (máy dev 0.33.2 - mọi lượt đo model, mọi cuốn đã làm), không phải bản
 # mới nhất. Thử thật 28-09 với 0.34.4: cùng prompt, qwen3:8b sinh 360 token thay vì 61 (bản mới cho model "suy nghĩ" trước
 # khi trả JSON) -> hết ngân sách đầu ra, cuốn thử hỏng ở khâu phân tích. Nâng Ollama là một phiên bản dây chuyền: đo lại
@@ -222,6 +222,10 @@ class SetupError(Exception):
     """Lỗi đọc được cho người dùng: vì sao dừng, làm gì tiếp."""
 
 
+class RangeUnavailable(SetupError):
+    """Máy chủ/proxy không trả đúng phần yêu cầu; giữ phần tải dở để thử lại."""
+
+
 class Cancelled(Exception):
     pass
 
@@ -267,6 +271,8 @@ def download_failure(noun: str, error: BaseException, retry: str = "Thử lại"
     """(câu cho người dùng - đặt cạnh nút `retry`, chi tiết kỹ thuật cho "Chi tiết" - rỗng khi câu đã đủ) của một lần tải `noun` ("giọng VieNeu")
     hỏng. Lỗi mạng -> NETWORK_FAILURE; file hỏng / ổ đầy -> nói thẳng; lỗi khác -> câu chung, nguyên văn thu vào chi tiết (soát a66: lời lỗi
     tiếng Anh thô). Cùng luật với điện thoại (PinnedFiles.failure)."""
+    if isinstance(error, RangeUnavailable):
+        return str(error), ""
     if isinstance(error, NoSpace):
         return f"Không tải được {noun}: ổ đĩa không đủ chỗ trống - cần khoảng {_megabytes(error.need)}, còn {_megabytes(error.free)}. Giải phóng bớt chỗ rồi bấm {retry}.", ""
     wrapped = isinstance(error, SetupError) and error.__cause__ is not None  # download() bọc lỗi đường truyền sau 5 lần thử
@@ -388,8 +394,9 @@ def remote_size(url: str) -> int:
     return size
 
 
-def download(item: Download, target: Path, progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> Path:
-    """Tải về `target` (ghi `.part`, tải tiếp bằng Range), kiểm SHA-256 rồi mới đổi tên. Sai băm: xoá, báo lỗi."""
+def download(item: Download, target: Path, progress: Callable[[int, int], None], cancelled: Callable[[], bool],
+             *, byte_range: tuple[int, int] | None = None) -> Path:
+    """Tải `.part`, nối tiếp, kiểm SHA-256 rồi đổi tên. `byte_range=(offset, cỡ ZIP)` chỉ lấy phần đã ghim, bắt buộc 206."""
     if matches(target, item):
         progress(item.size, item.size)  # đã có sẵn: tính vào "đã tải" ngay, thanh tổng không tụt rồi nhảy
         return target
@@ -412,9 +419,18 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
             have = part.stat().st_size if part.is_file() else 0
             if have >= item.size:
                 break  # đủ cỡ (hay thừa): để băm quyết
-            request = urllib.request.Request(item.url, headers={"Range": f"bytes={have}-"} if have else {})
+            headers = {"Range": f"bytes={have}-"} if have else {}
+            if byte_range is not None:
+                start, whole = byte_range
+                headers = {"Range": f"bytes={start + have}-{start + item.size - 1}"}
+            request = urllib.request.Request(item.url, headers=headers)
             try:
                 with urllib.request.urlopen(request, timeout=60) as response:
+                    if byte_range is not None and (
+                        response.status != 206
+                        or response.headers.get("Content-Range") != f"bytes {start + have}-{start + item.size - 1}/{whole}"
+                    ):
+                        raise RangeUnavailable("Máy chủ không hỗ trợ tải riêng FFmpeg (HTTP Range). Thử lại sau.")
                     if have and response.status != 206:
                         have = 0  # máy chủ không nhận Range: tải lại từ đầu
                     with part.open("ab" if have else "wb") as handle:

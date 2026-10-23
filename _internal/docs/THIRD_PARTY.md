@@ -19,8 +19,11 @@ phần ấy.
   dùng thư viện chuẩn của Python (zipfile, xml, html.parser).
 - PySide6 / Qt (LGPLv3) - cửa sổ app máy tính.
 - FFmpeg / imageio-ffmpeg (LGPL hoặc GPL tuỳ bản build). Bản app chỉ-nghe KHÔNG mang ffmpeg trong bộ cài: mô-đun "Phân tích nhạc" và việc "Xuất sách nói" (MP3 / M4B)
-  đều do người dùng bấm mới tải (`webui/music_module.py`, hộp xuất sách nói), cùng tải bánh xe `imageio-ffmpeg` 0.6.0 (PyPI, ghim URL + SHA-256, `webui/ffmpeg_setup.py`) và lấy ra đúng một file, FFmpeg 7.1
-  bản "essentials" của gyan.dev (cấu hình GPL-3.0, mã nguồn: https://www.gyan.dev/ffmpeg/builds/); phần bọc imageio-ffmpeg là BSD-2-Clause.
+  đều do người dùng bấm mới tải (`webui/music_module.py`, hộp xuất sách nói), cùng lấy riêng `bin/ffmpeg.exe` trong ZIP [GyanD/codexffmpeg 8.1.2 essentials](https://github.com/GyanD/codexffmpeg/releases/tag/8.1.2)
+  bằng HTTP Range (~36 MB thay vì cả ZIP 110 MB; Windows x64 tĩnh, GPL-3.0-or-later).
+  `webui/ffmpeg_setup.py` ghim URL có tag, cỡ ZIP, SHA-256/cỡ phần nén và exe; kiểm thêm CRC trước khi thay exe.
+  [Mã nguồn FFmpeg n8.1.2](https://github.com/FFmpeg/FFmpeg/commit/38b88335f9), [thông tin build và thư viện của Gyan](https://www.gyan.dev/ffmpeg/builds/#libraries).
+  Studio hoặc máy có sẵn `imageio-ffmpeg` vẫn có thể dùng binary của gói đó; phần bọc imageio-ffmpeg là BSD-2-Clause.
   Tải về thư mục dữ liệu của app (`tools/ffmpeg`), gỡ app là gỡ nó.
 - CMU Pronouncing Dictionary (`cmudict.dict`, dữ liệu từ CMU Sphinx; sử dụng và phân phối không hạn chế, yêu cầu ghi nhận
   nguồn). Bản giấy phép của từ điển đi kèm nguyên vẹn (`abook/assets/CMUDICT_LICENSE.txt`). `abook/assets/english_phones.txt.gz` (Việt hoá từ tiếng Anh,
@@ -53,7 +56,7 @@ Studio tải thêm khi người dùng bấm "Cài Studio" (không nằm trong b�
 băm trong `webui/studio_setup.py`):
 
 - uv (MIT hoặc Apache-2.0); Python 3.11 bản python-build-standalone (PSF License cùng giấy phép của từng thành phần).
-- MinGit / Git for Windows (GPL-2.0) - chỉ để cài UTMOSv2 từ đúng commit; ABook không sửa hay phân phối lại.
+- MinGit / Git for Windows 2.56.0.windows.3 (GPL-2.0) - chỉ để cài UTMOSv2 từ đúng commit; ABook không sửa hay phân phối lại.
 - Ollama (MIT) - bản riêng của Studio, đúng bản dây chuyền đã kiểm, kể cả khi máy đã có Ollama; các thư viện của dây
   chuyền theo `shell/python/studio-requirements.txt` (giấy phép như mục
   "App máy tính - làm sách (Studio)" ở trên); model tải từ Hugging Face / Ollama theo giấy phép của từng model,
