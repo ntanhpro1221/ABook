@@ -71,8 +71,8 @@ class Download:
 
 
 # Nâng: đổi URL + băm (GitHub cho sẵn `digest` của từng tệp: gh api repos/<repo>/releases/latest), thử cài lại.
-UV = Download("uv", "https://github.com/astral-sh/uv/releases/download/0.12.19/uv-x86_64-pc-windows-msvc.zip",
-              "6dbb02d79e419522f1c500f0adb1cddcff0cda7d59b0d66ea7f5e3b4a1b2f5f0", 17_955_780)
+UV = Download("uv", "https://github.com/astral-sh/uv/releases/download/0.13.5/uv-x86_64-pc-windows-msvc.zip",
+              "a38b8d1902b7cfbc76b423ba1bb456f623f42064cdc72628b6075b89afd1019a", 15_264_056)
 # runtime_contract đòi UTMOSv2 cài từ git (vcs_info.commit_id) - MinGit là bản Git nhúng chính thức của Git for Windows.
 MINGIT = Download("git", "https://github.com/git-for-windows/git/releases/download/v2.55.0.windows.5/"
                   "MinGit-2.55.0.5-64-bit.zip",

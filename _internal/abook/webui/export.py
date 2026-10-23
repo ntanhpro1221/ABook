@@ -81,7 +81,7 @@ def usable_cover(source: Path | None) -> Path | None:
     except ImportError:
         return source
     try:
-        with Image.open(source) as image:
+        with Image.open(source, formats=("JPEG", "PNG", "WEBP", "GIF", "BMP")) as image:
             image.verify()
     except Exception:  # PIL ném đủ kiểu cho ảnh hỏng (UnidentifiedImageError, SyntaxError, OSError...)
         log.warning("Bìa hỏng, xuất bằng bìa vẽ từ tên: %s", source, exc_info=True)
