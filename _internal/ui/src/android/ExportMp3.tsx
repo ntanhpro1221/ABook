@@ -11,7 +11,7 @@ import { Button, Dialog } from "@/shared/ui";
 import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
 import { chargerHint } from "./ExportAudiobook";
 import { progressText } from "./ExportM4b";
-import { rejoinExports } from "./exportJobs";
+import { isEnded, noteEnded, rejoinExports } from "./exportJobs";
 import { EbookLibrary, type Mp3ExportEvent } from "./plugins";
 
 // "Xuất MP3 để nghe ở app khác" trên điện thoại: cùng chữ, cùng bản xuất với máy tính (desktop/App.tsx ExportMenuItem). Việc chạy nền
@@ -88,6 +88,8 @@ async function openFolder(uri: string, folder: string) {
 /** Theo dõi các lượt xuất từ lúc app mở (App.tsx): tiến độ, xong, dừng, lỗi - kể cả lượt đã chạy từ trước lúc giao diện mở lại (exportJobs). */
 export function watchMp3Exports(): () => void {
   const handle = EbookLibrary.addListener("mp3Export", (event) => {
+    if (event.finished || event.stopped || event.error) noteEnded(event.run);
+    else if (isEnded(event.run)) return; // tin muộn của lượt đã kết thúc
     // Chưa theo dõi lượt nào của cuốn này (giao diện vừa mở lại giữa lúc việc nền chạy): nhận lượt ấy thay vì bỏ tin.
     const current = runs.get(event.bookId) ?? { run: event.run, folder: event.folder ?? "", book: undefined, music: false };
     if (current.run !== event.run) return;
