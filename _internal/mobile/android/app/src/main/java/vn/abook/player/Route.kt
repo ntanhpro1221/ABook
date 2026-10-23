@@ -1,5 +1,6 @@
 package vn.abook.player
 
+import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
@@ -12,7 +13,7 @@ import java.util.concurrent.Executors
  *
  * KHÔNG BAO GIỜ CHẶN người gọi (có chỗ gọi từ luồng giao diện): chọn theo kết quả thử đã biết; kết quả cũ hơn FRESH_MS
  * hay chưa có thì thử lại ở luồng nền (nối TCP 1,5 giây) - lần gọi sau thấy kết quả mới. Yêu cầu qua LAN hỏng lúc nối
- * thì `markDown` ngay: SyncLink thử lại một lần qua Bluetooth.
+ * thì `markDown` ngay. Network workers use [resolve] to verify IP candidates before HTTP; Bluetooth remains the fallback.
  */
 object Route {
     const val FRESH_MS = 60_000L
@@ -22,7 +23,36 @@ object Route {
 
     private val seen = ConcurrentHashMap<String, Seen>()
     private val probing = ConcurrentHashMap.newKeySet<String>()
-    private val pool = Executors.newCachedThreadPool()
+    private val admission = Any()
+    private val pool = Executors.newFixedThreadPool(2) { task -> Thread(task, "route-probe").apply { isDaemon = true } }
+    private val resolver = TlsRouteResolver()
+    private val verified = ConcurrentHashMap<String, Long>()
+
+    /** TLS only. TCP success prioritizes a candidate; it never bypasses the pin check. */
+    internal fun resolve(lan: List<String>, identity: String = "", probe: (String) -> Boolean): String? {
+        val targets = PeerAddresses.candidates(lan)
+            .sortedByDescending { seen[it]?.up == true }
+        targets.firstOrNull { System.currentTimeMillis() - (verified["$identity|$it"] ?: 0L) < 5000 }?.let { return it }
+        return resolver.resolve(identity, targets) { target ->
+            if (!probe(target)) { markDown(target); false }
+            else {
+                markUp(target)
+                verified["$identity|$target"] = System.currentTimeMillis()
+                true
+            }
+        }
+    }
+
+    internal fun invalidate(identity: String) = resolver.invalidate(identity)
+    private var network = ""
+    @Synchronized internal fun noteNetwork(value: String) {
+        if (network != value) {
+            network = value
+            seen.clear()
+            verified.clear()
+            resolver.invalidateAll()
+        }
+    }
 
     /** Kết quả chọn: `lan` = "host:port" đi Wi-Fi, hay `bluetooth` = địa chỉ Bluetooth. */
     data class Choice(val lan: String?, val bluetooth: String?)
@@ -46,23 +76,30 @@ object Route {
     }
 
     /** Chọn đường cho các địa chỉ ấy, và thử lại nền những địa chỉ chưa biết hay đã cũ. */
-    fun pick(lan: List<String>, bluetooth: String?, now: Long = System.currentTimeMillis()): Choice {
-        for (target in lan) {
-            val last = seen[target]
-            if ((last == null || now - last.at > FRESH_MS) && probing.add(target)) {
+    fun pick(lan: List<String>, bluetooth: String?, now: Long = System.currentTimeMillis(),
+             probe: ((String) -> Boolean)? = null): Choice {
+        val targets = PeerAddresses.candidates(lan)
+        for (target in targets) {
+            if (probe == null && !numeric(target)) continue
+            val accepted = synchronized(admission) {
+                val last = seen[target]
+                (last == null || now - last.at > FRESH_MS) && probing.size < 2 && probing.add(target)
+            }
+            if (accepted) {
                 pool.execute {
                     try {
-                        seen[target] = Seen(probe(target), System.currentTimeMillis())
+                        seen[target] = Seen((probe ?: ::probe)(target), System.currentTimeMillis())
                     } finally {
                         probing.remove(target)
                     }
                 }
             }
         }
-        return choose(lan, bluetooth) { target -> seen[target]?.up }
+        return choose(targets, bluetooth) { target -> seen[target]?.takeIf { now - it.at <= FRESH_MS }?.up }
     }
 
     fun markDown(target: String) {
+        verified.keys.filter { it.endsWith("|$target") }.forEach { verified.remove(it) }
         seen[target] = Seen(false, System.currentTimeMillis())
     }
 
@@ -70,9 +107,18 @@ object Route {
         seen[target] = Seen(true, System.currentTimeMillis())
     }
 
+    internal fun pendingProbes(): Int = probing.size
+
+    private fun numeric(target: String): Boolean {
+        val host = target.substringBeforeLast(":").trim('[', ']')
+        return ':' in host || host.matches(Regex("(?:[0-9]{1,3}\\.){3}[0-9]{1,3}"))
+    }
+
     private fun probe(target: String): Boolean {
-        val host = target.substringBeforeLast(":")
+        val host = target.substringBeforeLast(":").trim('[', ']')
         val port = target.substringAfterLast(":").toIntOrNull() ?: return false
-        return runCatching { Socket().use { it.connect(InetSocketAddress(host, port), PROBE_MS) } }.isSuccess
+        // Only numeric literals: no hostname may block the global TCP hint workers in DNS.
+        if (!numeric(target)) return false
+        return runCatching { Socket().use { it.connect(InetSocketAddress(InetAddress.getByName(host), port), PROBE_MS) } }.isSuccess
     }
 }

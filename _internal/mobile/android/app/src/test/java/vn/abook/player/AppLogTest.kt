@@ -37,6 +37,20 @@ class AppLogTest {
         assertEquals(listOf("W Playback", "E Crash"), levels)
     }
 
+    @Test fun prettyAndTruncatedListsAreScrubbedBeforeStackSplittingAndFileWrite() {
+        val payload = org.json.JSONObject().put("addresses", org.json.JSONArray().put(org.json.JSONObject()
+            .put("address", "private-phone.local:47630").put("note", "brackets ] [ and escaped \" quote"))).toString(2)
+        for (text in listOf(payload + "\nfinished", payload.dropLast(8), payload.substringAfter('['))) {
+            assertFalse(AppLog.scrub(text).contains("private-phone"))
+        }
+        val error = IllegalStateException(payload)
+        assertFalse(AppLog.logcatText("failure", error).contains("private-phone"))
+        assertFalse(AppLog.format(0, 'E', "Route", "failure", error, 0, "test").joinToString().contains("private-phone"))
+        AppLog.e("Route", payload, error)
+        assertFalse(AppLog.tail(100).joinToString().contains("private-phone"))
+        assertTrue(AppLog.scrub(payload + "\nfinished").contains("finished"))
+    }
+
     @Test
     fun the_file_rotates_at_the_cap_and_keeps_only_two_files() {
         repeat(200) { AppLog.i("T", "dòng số $it " + "x".repeat(40)) }
@@ -100,4 +114,15 @@ class AppLogTest {
         AppLog.i("T", "sau khi xoá")
         assertEquals(1, AppLog.tail(10).size)
     }
+
+    @Test fun tailHostsAndDnsExceptionsUseSharedPrivacyFixture() {
+        val rows = org.json.JSONArray(java.io.File("../../../tests/fixtures/peer_diagnostics.json").readText())
+        for (i in 0 until rows.length()) {
+            val row = rows.getJSONObject(i)
+            val safe = AppLog.scrub(row.getString("message"))
+            if (row.has("hidden")) org.junit.Assert.assertFalse(safe, safe.contains(row.getString("hidden")))
+            if (row.has("kept")) org.junit.Assert.assertTrue(safe, safe.contains(row.getString("kept")))
+        }
+    }
+
 }

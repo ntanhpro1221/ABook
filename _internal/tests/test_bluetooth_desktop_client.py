@@ -493,6 +493,7 @@ def test_a_wifi_that_fails_to_connect_falls_back_to_bluetooth_and_is_remembered(
         paired = computers.pair(f"bt:{PHONE}", devices.start_pairing()["code"], "Máy tính thử")
         # Cùng máy, ghép tiếp theo đường Wi-Fi giờ đã hỏng: cổng LAN chết, `bt` còn đó.
         entry = {**computers.get(paired["id"]), "host": "127.0.0.1", "port": _free_port(), "bt": PHONE}
+        entry["addresses"] = [{"address": f"127.0.0.1:{entry['port']}", "lastSuccess": 0}]
         first = remote_books._base(entry)
         assert first.target and first.fallback == PHONE and first.host == "127.0.0.1", "Wi-Fi trước"
         books = json.loads(remote_books._request(first, "GET", "/sync/v1/library", entry["token"]))["books"]
@@ -507,6 +508,7 @@ def test_a_wifi_that_fails_to_connect_falls_back_to_bluetooth_and_is_remembered(
 
 def test_a_wifi_only_computer_is_untouched_by_all_this(library, tmp_path: Path) -> None:  # noqa: F811
     entry = {"host": "192.168.1.20", "port": 47630, "fingerprint": "ab" * 32, "token": "t"}
+    remote_books.peer_addresses.migrate(entry)
     assert remote_books._base(entry) == remote_books.Endpoint("192.168.1.20", 47630, "ab" * 32, target="192.168.1.20:47630")
     assert not bluetooth._gateways and not route._seen, "không Bluetooth, không cổng cục bộ, không luồng thử"
 

@@ -54,6 +54,7 @@ def _restart(app: App, sync: SyncApp, computer: str) -> SyncServer:
     """Máy kia bật lại (cổng khác, cùng chứng chỉ của tiến trình): máy này tìm thấy nó ở địa chỉ mới."""
     server = SyncServer(sync, host="127.0.0.1", port=0).start()
     app.computers.note(computer, port=server.port)
+    remote_books._remember_discovered(app.computers, {"host": "127.0.0.1", "port": server.port}, app.computers.get(computer))
     return server
 
 
@@ -141,7 +142,7 @@ def test_an_interrupted_download_keeps_what_is_done_and_resumes_only_the_rest(li
     monkeypatch.setattr(remote_books, "_save", save_then_vanish)
     sync.asked.clear()
     failed = app.remote_downloads.start(path, wait=True)
-    assert failed["state"] == "failed" and "Chưa nối" in failed["error"], "máy còn đó, ABook bên kia đã đóng"
+    assert failed["state"] == "failed" and failed["error"] in (remote_books.REFUSED, remote_books.UNREACHABLE), "đường nối hết hạn ngắn hoặc cổng từ chối"
     assert failed["filesDone"] == 2 and all((path / name).is_file() for name in saved)
     assert not list(path.rglob("*.part"))
     assert app.remote_download(value, "status")["state"] == "failed", "nói rõ lần trước hỏng, phần đã xong vẫn đếm"
@@ -228,8 +229,9 @@ def test_edits_made_on_this_computer_reach_the_other_computer_like_a_phones(libr
         other.stop()
 
     app.rename(value, "Sửa lúc máy kia tắt")
-    with pytest.raises(ApiError, match="^Chưa nối được máy kia — bạn mở ABook, bật “Cho phép thiết bị khác kết nối qua Wi-Fi” và chép lại địa chỉ ghép.$"):
+    with pytest.raises(ApiError, match="^Chưa nối được máy kia —") as caught:
         app.send_remote_edits(value)
+    assert str(caught.value) in (remote_books.REFUSED, remote_books.UNREACHABLE)
     state = app.listen_book(value)["editsSync"]
     assert state["pending"] == 1 and state["last"]["state"] == "error", "lớp sửa giữ nguyên, lần sau gửi lại"
     assert app.listen_book(value)["title"] == "Sửa lúc máy kia tắt"
@@ -425,7 +427,7 @@ def test_a_cut_download_names_the_machine_keeps_the_part_and_resumes_with_a_rang
 
     class Known:
         def get(self, _computer: str) -> dict[str, Any]:
-            return {"id": "c1", "name": "Phòng khách", "token": "t", "host": "x", "port": 1, "fingerprint": "ab"}
+            return {"id": "c1", "name": "Phòng khách", "token": "t", "host": "x", "port": 1, "fingerprint": "ab", "addresses": [{"address": "x:1", "lastSuccess": 0}]}
 
     @contextmanager
     def fake_open(_endpoint, _method, _path, _token, *_args, extra=None, **_kwargs):
@@ -460,7 +462,7 @@ def _cut_then(tmp_path: Path, monkeypatch, data: bytes, *replies):
 
     class Known:
         def get(self, _computer: str) -> dict[str, Any]:
-            return {"id": "c1", "name": "Phòng khách", "token": "t", "host": "x", "port": 1, "fingerprint": "ab"}
+            return {"id": "c1", "name": "Phòng khách", "token": "t", "host": "x", "port": 1, "fingerprint": "ab", "addresses": [{"address": "x:1", "lastSuccess": 0}]}
 
     @contextmanager
     def fake_open(_endpoint, _method, _path, _token, *_args, extra=None, **_kwargs):
@@ -518,7 +520,7 @@ def test_a_part_with_no_recorded_version_is_not_resumed(tmp_path: Path, monkeypa
 
     class Known:
         def get(self, _computer: str) -> dict[str, Any]:
-            return {"id": "c1", "name": "Phòng khách", "token": "t", "host": "x", "port": 1, "fingerprint": "ab"}
+            return {"id": "c1", "name": "Phòng khách", "token": "t", "host": "x", "port": 1, "fingerprint": "ab", "addresses": [{"address": "x:1", "lastSuccess": 0}]}
 
     @contextmanager
     def fake_open(_endpoint, _method, _path, _token, *_args, extra=None, **_kwargs):

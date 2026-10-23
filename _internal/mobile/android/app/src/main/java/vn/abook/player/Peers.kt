@@ -21,10 +21,24 @@ object Peers {
 
     private fun prefs(context: Context) = context.getSharedPreferences("peers", Context.MODE_PRIVATE)
 
-    /** key -> {name, host, port, token, fingerprint, kind, pairedAt}. */
+    /** key -> {name, addresses: [{address,lastSuccess}], host/port (pairing details), token, fingerprint, kind, pairedAt}. */
     @Synchronized
-    fun all(context: Context): JSONObject =
-        runCatching { JSONObject(prefs(context).getString("peers", "{}") ?: "{}") }.getOrDefault(JSONObject())
+    fun all(context: Context): JSONObject {
+        val peers = runCatching { JSONObject(prefs(context).getString("peers", "{}") ?: "{}") }.getOrDefault(JSONObject())
+        var changed = false
+        for (key in peers.keys()) if (PeerAddresses.migrate(peers.getJSONObject(key))) changed = true
+        if (changed) save(context, peers)
+        return peers
+    }
+
+    @Synchronized internal fun updateRoutes(context: Context, key: String, updated: JSONObject) {
+        val peers = all(context)
+        val peer = peers.optJSONObject(key) ?: return
+        peer.put("addresses", updated.getJSONArray("addresses"))
+        if (updated.has("bt")) peer.put("bt", updated.getString("bt"))
+        if (updated.has("connectedVia")) peer.put("connectedVia", updated.getString("connectedVia"))
+        save(context, peers)
+    }
 
     @Synchronized
     private fun save(context: Context, peers: JSONObject) {
@@ -34,9 +48,7 @@ object Peers {
     fun link(context: Context, key: String): Link? {
         Pin.install(context)
         val peer = all(context).optJSONObject(key) ?: return null
-        val host = peer.optString("host")
-        if (host.startsWith("bt:")) return Link(BluetoothLink.base(context, host.removePrefix("bt:")), peer.optString("token"))
-        return Link("https://$host:${peer.optInt("port", 47630)}", peer.optString("token"))
+        return Link(PeerRouting.base(context, peer), peer.optString("token"))
     }
 
     /** Ghép thiết bị đã ghép Bluetooth với điện thoại này (không chung Wi-Fi): cùng mã 6 số, đi qua đường hầm. */
@@ -53,9 +65,11 @@ object Peers {
         val peers = all(context)
         val key = existingKey(peers, host, 0, fingerprint)
             ?: takeFormer(context, fingerprint) ?: UUID.randomUUID().toString().replace("-", "").take(8)
+        val known = peers.optJSONObject(key)?.takeIf { it.optString("fingerprint").equals(fingerprint, true) }?.optJSONArray("addresses") ?: JSONArray()
         peers.put(key, JSONObject().put("name", reply.optString("name", address)).put("host", host).put("port", 0)
             .put("token", reply.getString("token")).put("fingerprint", fingerprint)
-            .put("pairedAt", System.currentTimeMillis() / 1000.0))
+            .put("pairedAt", System.currentTimeMillis() / 1000.0).put("addresses", known))
+        PeerAddresses.learn(peers.getJSONObject(key), reply.optJSONArray("addresses"), fingerprint)
         save(context, peers)
         return JSONObject().put("key", key).put("name", reply.optString("name", address))
     }
@@ -119,13 +133,18 @@ object Peers {
         SyncLink.refuseSelf(host, port)
         val device = DeviceName.of(context)
         val body = JSONObject().put("code", code.filter { it.isDigit() }).put("device", device)
-        val (reply, fingerprint) = SyncLink.pair(context, "https://$host:$port", body)
+        val (reply, fingerprint) = SyncLink.pair(context, "https://${PeerAddresses.endpoint(host, port)}", body)
         val peers = all(context)
         val key = existingKey(peers, host, port, fingerprint)
             ?: takeFormer(context, fingerprint) ?: UUID.randomUUID().toString().replace("-", "").take(8)
+        val previous = peers.optJSONObject(key)?.takeIf { it.optString("fingerprint").equals(fingerprint, true) }
+        val known = previous?.optJSONArray("addresses") ?: JSONArray()
         peers.put(key, JSONObject().put("name", reply.optString("name", host)).put("host", host).put("port", port)
             .put("token", reply.getString("token")).put("fingerprint", fingerprint)
-            .put("pairedAt", System.currentTimeMillis() / 1000.0))
+            .put("pairedAt", System.currentTimeMillis() / 1000.0).put("addresses", known))
+        PeerAddresses.learn(peers.getJSONObject(key), reply.optJSONArray("addresses"), fingerprint, PeerAddresses.endpoint(host, port))
+        previous?.optString("bt")?.takeIf { it.isNotBlank() }?.let { peers.getJSONObject(key).put("bt", it) }
+        reply.optJSONObject("routes")?.optString("bluetooth")?.takeIf { it.isNotBlank() }?.let { peers.getJSONObject(key).put("bt", it) }
         save(context, peers)
         return JSONObject().put("key", key).put("name", reply.optString("name", host))
     }
@@ -240,6 +259,7 @@ object Peers {
                         .put("localMetaVersion", downloaded?.optString("metaVersion") ?: "")
                 }
                 entry.put("name", reply.optString("name", peer.optString("name"))).put("books", books)
+                entry.put("connectedVia", all(context).getJSONObject(key).optString("connectedVia"))
             } catch (error: Exception) {
                 entry.put("books", JSONArray()).put("error", error.message ?: "không kết nối được")
                 if (error is Pin.ChangedException) entry.put("pinChanged", true)
@@ -259,9 +279,9 @@ object Peers {
             val host = peer.optString("host")
             if (host.startsWith("bt:")) {
                 if (uri.toString().startsWith(BluetoothLink.base(context, host.removePrefix("bt:")))) return peer.optString("token")
-                continue
             }
-            if (peer.optString("host") == uri.host && peer.optInt("port", 47630) == uri.port) return peer.optString("token")
+            if (uri.host == "127.0.0.1" && BluetoothLink.addressOfPort(uri.port) == PeerRouting.bluetooth(peer)) return peer.optString("token")
+            if (PeerAddresses.endpoint(uri.host.orEmpty().trim('[', ']'), uri.port) in PeerAddresses.ordered(peer)) return peer.optString("token")
         }
         return null
     }
