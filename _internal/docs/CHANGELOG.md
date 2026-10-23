@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.130] - 2026-10-23
+
 ### Hiệu năng
 
 - Điện thoại ghép với máy tính có hàng trăm cuốn: danh sách thư viện từ máy tính mất chừng 10 giây mỗi lần (quá hạn chờ của điện thoại nên sách biến mất khỏi Thư viện) nay chỉ tính lại cuốn nào vừa đổi, lần hỏi sau gần như tức thì; máy tính dựng sẵn danh sách khi mở app nếu đã ghép điện thoại.
