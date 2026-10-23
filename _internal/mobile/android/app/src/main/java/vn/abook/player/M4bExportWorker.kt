@@ -151,6 +151,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
     private fun execute(): Result {
         val context = applicationContext
         Store.init(context)
+        if (ExportCancellation.cancelled(context, id)) return Result.failure() // việc đã kết thúc hẳn (huỷ / hết 6 giờ): không I/O nào
         val (bookId, file, cover) = M4bExports.inputs(inputData)
         if (bookId == null || file == null) return Result.failure()
         val run = id.toString()
@@ -212,8 +213,10 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 finished.put("overCeiling", org.json.JSONArray(over.map { (chapter, dbtp) -> JSONObject().put("chapter", chapter).put("dbtp", dbtp) }))
             }
             M4bExports.emit(finished)
+            Mp3Exports.endIfTimedOut(this)
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
+            Mp3Exports.endIfTimedOut(this) // hết 6 giờ: kết thúc HẲN việc (WorkManager không chạy lại) TRƯỚC khi dọn gì
             // Hệ thống dừng việc (không phải người dùng): WorkManager chạy lại, file đích, quyền ghi và bìa đều còn.
             if (Mp3Exports.stoppedBySystem(this)) {
                 retrying = true
@@ -230,6 +233,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             M4bExports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Throwable) {
+            Mp3Exports.endIfTimedOut(this) // hết 6 giờ: kết thúc HẲN việc (WorkManager không chạy lại) TRƯỚC khi dọn gì
             if (isStopped && Mp3Exports.stoppedBySystem(this)) {
                 retrying = true
                 return Result.retry()

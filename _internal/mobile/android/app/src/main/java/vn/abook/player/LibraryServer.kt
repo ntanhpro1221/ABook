@@ -634,7 +634,7 @@ object LibraryServer {
                 .put("updatedAt", maxOf(File(Store.bookDir(id), "book.json").lastModified(), File(Store.bookDir(id), BookEdits.EDITS_FILE).lastModified()) / 1000.0)
             val cover = manifest.optJSONObject("cover")
             entry.put("cover", if (cover == null) JSONObject.NULL
-            else JSONObject().put("color", cover.opt("color") ?: JSONObject.NULL).put("version", cover.opt("version") ?: 0))
+            else JSONObject().put("color", BookEdits.cleanColor(cover.opt("color")).ifEmpty { JSONObject.NULL }).put("version", cover.opt("version") ?: 0))
             books.put(entry)
         }
         return books

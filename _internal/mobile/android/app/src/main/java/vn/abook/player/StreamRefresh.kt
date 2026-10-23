@@ -47,7 +47,7 @@ internal object StreamRefresh {
 
     // /library chỉ có màu và phiên bản; manifest có thêm kích thước/tên file, không đem các trường ấy so với danh sách.
     private fun listedCover(value: JSONObject): JSONObject? = value.optJSONObject("cover")?.let {
-        JSONObject().put("version", it.optLong("version")).put("color", it.opt("color") ?: JSONObject.NULL)
+        JSONObject().put("version", it.optLong("version")).put("color", BookEdits.cleanColor(it.opt("color")).ifEmpty { JSONObject.NULL })
     }
 
     fun coverChanged(previous: JSONObject?, manifest: JSONObject): Boolean =

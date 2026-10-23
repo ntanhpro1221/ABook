@@ -17,6 +17,13 @@ class ExportLive(val kind: String) {
     private val last = ConcurrentHashMap<String, JSONObject>()
     private val notes = ConcurrentHashMap<String, JSONObject>()
 
+    /** Mã các lượt đã báo xong / dừng / lỗi (giữ vài chục lượt gần nhất): snapshot WorkManager chụp trước đó không được hồi sinh chúng (soát a111 R3). */
+    private val ended: MutableSet<String> = java.util.Collections.synchronizedSet(object : LinkedHashSet<String>() {
+        override fun add(element: String): Boolean = super.add(element).also { if (size > 64) remove(first()) }
+    })
+
+    fun isEnded(run: String): Boolean = run in ended
+
     /**
      * Việc nền vừa bắt đầu: ghi chỗ lưu, ô "Kèm nhạc nền"... của lượt (`fields`) để giao diện mới mở dựng lại thông báo; lượt cũ của cuốn ấy (bị
      * thay) không còn được tính.
@@ -30,6 +37,7 @@ class ExportLive(val kind: String) {
         val book = event.optString("bookId")
         val run = event.optString("run")
         if (event.optBoolean("finished") || event.optBoolean("stopped") || event.has("error")) {
+            if (run.isNotEmpty()) ended.add(run)
             // Lượt cũ bị thay bằng lượt mới báo "dừng" muộn: không được xoá trạng thái của lượt mới.
             if (last[book]?.optString("run").let { it == null || it == run }) last.remove(book)
             if (notes[book]?.optString("run") == run) notes.remove(book)
@@ -69,20 +77,23 @@ object ExportJobs {
     }
 
     /** Việc WorkManager còn giữ mà tiến trình này chưa có tin nào của kiểu + cuốn ấy thì thêm một dòng tối thiểu (mã lượt, chưa có tiến độ). */
-    internal fun merge(live: List<JSONObject>, works: List<Work>): List<JSONObject> {
+    internal fun merge(live: List<JSONObject>, works: List<Work>, ended: (Work) -> Boolean = { false }): List<JSONObject> {
         val known = live.map { it.optString("kind") to it.optString("bookId") }.toSet()
-        val extra = works.filter { (it.kind to it.bookId) !in known }.distinctBy { it.kind to it.bookId }
+        val extra = works.filter { (it.kind to it.bookId) !in known && !ended(it) }.distinctBy { it.kind to it.bookId }
             .map { JSONObject().put("kind", it.kind).put("bookId", it.bookId).put("run", it.run) }
         return live + extra
     }
 
     fun running(context: Context): List<JSONObject> {
-        val live = Mp3Exports.live.running() + M4bExports.live.running() + ListenExports.live.running()
         val query = WorkQuery.Builder.fromTags(listOf(TAG))
             .addStates(listOf(WorkInfo.State.ENQUEUED, WorkInfo.State.RUNNING, WorkInfo.State.BLOCKED)).build()
         // Gọi từ luồng I/O (get() chờ cơ sở dữ liệu của WorkManager).
         val works = runCatching { WorkManager.getInstance(context).getWorkInfos(query).get() }.getOrDefault(emptyList())
             .mapNotNull { work(it.tags, it.id) }
-        return merge(live, works)
+        // Tin của tiến trình này chụp SAU truy vấn WorkManager: lượt xong trong lúc chờ truy vấn đã biến khỏi `live` và nằm trong `ended`, nên bản chụp
+        // WorkManager cũ không hồi sinh nó thành "đang chạy" (soát a111 R3).
+        val lives = listOf(Mp3Exports.live, M4bExports.live, ListenExports.live)
+        val live = lives.flatMap { it.running() }
+        return merge(live, works) { work -> lives.any { it.isEnded(work.run) } }
     }
 }

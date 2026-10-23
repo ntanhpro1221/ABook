@@ -19,11 +19,13 @@ SOAP tới địa chỉ ấy (một máy lạ không khiến được máy này 
 from __future__ import annotations
 
 import hashlib
+import io
 import ipaddress
 import re
 import secrets
 import select
 import socket
+import sys
 import threading
 import time
 import urllib.error
@@ -533,8 +535,7 @@ class CastMedia:
     def _start(self) -> ThreadingHTTPServer:
         with self._lock:
             if self._server is None:
-                server = ThreadingHTTPServer((self.host, 0), _media_handler(self))
-                server.daemon_threads = True
+                server = _MediaServer((self.host, 0), _media_handler(self))
                 threading.Thread(target=server.serve_forever, name="cast-media", daemon=True).start()
                 self._server = server
             return self._server
@@ -547,11 +548,148 @@ class CastMedia:
             server.server_close()
 
 
+# Cổng này nghe mọi card mạng và mã chỉ kiểm được SAU khi đọc xong header: máy lạ cùng LAN mở socket rồi im lặng (hay gửi từng byte) là
+# giữ một thread không hạn (soát a109 F3). Nên có trần kết nối cả cổng và mỗi IP, deadline TỔNG cho phần header; vượt trần thì đóng ngay.
+MAX_CONNECTIONS = 16
+MAX_PER_IP = 6  # một TV hay mở vài kết nối song song (HEAD + GET Range + bìa), nên không chặt như 1-2
+HEADER_DEADLINE = 10.0  # giây cho cả request line + header, không phải cho từng lần đọc
+STREAM_TIMEOUT = 300.0  # tối đa 5 phút KHÔNG gửi thêm byte nào: TV tạm dừng đầy buffer có thời gian làm tiếp
+
+
+class ConnectionBudget:
+    """Đếm kết nối đang giữ worker: tối đa `total` cả cổng, `per_ip` cho một địa chỉ."""
+
+    def __init__(self, total: int = MAX_CONNECTIONS, per_ip: int = MAX_PER_IP) -> None:
+        self.total, self.per_ip = total, per_ip
+        self._held: dict[str, int] = {}
+        self._lock = threading.Lock()
+
+    def take(self, who: str) -> bool:
+        with self._lock:
+            if sum(self._held.values()) >= self.total or self._held.get(who, 0) >= self.per_ip:
+                return False
+            self._held[who] = self._held.get(who, 0) + 1
+            return True
+
+    def release(self, who: str) -> None:
+        with self._lock:
+            left = self._held.get(who, 0) - 1
+            if left > 0:
+                self._held[who] = left
+            else:
+                self._held.pop(who, None)
+
+
+class _MediaServer(ThreadingHTTPServer):
+    daemon_threads = True
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.budget = ConnectionBudget()
+        self.header_deadline = HEADER_DEADLINE
+
+    def process_request(self, request: Any, client_address: Any) -> None:
+        who = str(client_address[0])
+        if not self.budget.take(who):
+            self.shutdown_request(request)  # quá trần: không cấp worker
+            return
+        try:
+            super().process_request(request, client_address)
+        except BaseException:
+            self.budget.release(who)
+            raise
+
+    def process_request_thread(self, request: Any, client_address: Any) -> None:
+        try:
+            super().process_request_thread(request, client_address)
+        finally:
+            self.budget.release(str(client_address[0]))
+
+    def handle_error(self, request: Any, client_address: Any) -> None:
+        if not isinstance(sys.exc_info()[1], OSError):  # máy lạ bỏ ngang / bị ngắt vì quá hạn không đáng một bản ghi lỗi
+            super().handle_error(request, client_address)
+
+
+class _DeadlineReader:
+    """`rfile` của cổng Cast: đọc thẳng từ socket và mỗi lần đọc chỉ được chờ tới mốc đã đặt (`arm`), nên request line + header gửi từng
+    byte chậm bị cắt ở đúng deadline (timeout của socket chỉ tính từng lần đọc, và Windows không đánh thức được recv đang chờ từ thread khác)."""
+
+    def __init__(self, connection: socket.socket) -> None:
+        self._connection = connection
+        self._buffer = b""
+        self._until: float | None = None
+        self.closed = False
+
+    def arm(self, seconds: float) -> None:
+        self._until = time.monotonic() + seconds
+
+    def disarm(self) -> None:
+        self._until = None
+
+    def _more(self) -> bool:
+        if self._until is not None:
+            left = self._until - time.monotonic()
+            if left <= 0:
+                raise TimeoutError("header chậm quá")
+            self._connection.settimeout(left)
+        chunk = self._connection.recv(65536)
+        self._buffer += chunk
+        return bool(chunk)
+
+    def readline(self, limit: int = -1) -> bytes:
+        while b"\n" not in self._buffer and not 0 <= limit <= len(self._buffer):
+            if not self._more():
+                break
+        end = self._buffer.find(b"\n") + 1 or len(self._buffer)
+        if limit >= 0:
+            end = min(end, limit)
+        line, self._buffer = self._buffer[:end], self._buffer[end:]
+        return line
+
+    def read(self, size: int = -1) -> bytes:
+        while (size < 0 or len(self._buffer) < size) and self._more():
+            pass
+        end = len(self._buffer) if size < 0 else size
+        data, self._buffer = self._buffer[:end], self._buffer[end:]
+        return data
+
+    def close(self) -> None:
+        self.closed = True
+
+
+class _ProgressWriter(io.BufferedIOBase):
+    """Mỗi lần socket gửi được byte lại có đủ thời gian chờ; sendall tính timeout cho cả khúc, kể cả khi còn tiến độ."""
+
+    def __init__(self, connection: socket.socket, idle_timeout: float) -> None:
+        self._connection = connection
+        self._idle_timeout = idle_timeout
+
+    def write(self, data: bytes) -> int:
+        remaining = memoryview(data)
+        while remaining:
+            self._connection.settimeout(self._idle_timeout)
+            sent = self._connection.send(remaining)
+            if sent <= 0:
+                raise ConnectionError("thiết bị đã đóng kết nối")
+            remaining = remaining[sent:]
+        return len(data)
+
+
 def _media_handler(media: CastMedia) -> type[BaseHTTPRequestHandler]:
     class MediaHandler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
         server_version = "ABook"
         sys_version = ""
+
+        def setup(self) -> None:
+            super().setup()
+            self.rfile = _DeadlineReader(self.connection)
+
+        def handle_one_request(self) -> None:
+            # Deadline TỔNG cho request line + header của MỖI request (kể cả request kế trên kết nối giữ sống): timeout của socket chỉ tính
+            # từng lần đọc, nên gửi từng byte chậm sẽ giữ mãi.
+            self.rfile.arm(getattr(self.server, "header_deadline", HEADER_DEADLINE))
+            super().handle_one_request()
 
         def log_message(self, format: str, *args: Any) -> None:
             return
@@ -569,6 +707,8 @@ def _media_handler(media: CastMedia) -> type[BaseHTTPRequestHandler]:
                 self.send_error(HTTPStatus.NOT_FOUND)
                 return
             path, mime = found
+            self.rfile.disarm()
+            self.wfile = _ProgressWriter(self.connection, STREAM_TIMEOUT)
             size = path.stat().st_size
             start, end, status = 0, size - 1, HTTPStatus.OK
             ranged = re.fullmatch(r"bytes=(\d*)-(\d*)", (self.headers.get("Range") or "").strip())

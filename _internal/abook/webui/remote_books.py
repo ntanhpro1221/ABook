@@ -37,7 +37,7 @@ from typing import Any, Callable, Iterator, NamedTuple
 from urllib.parse import quote
 
 from ..io_utils import _replace_with_retry, atomic_write_bytes, atomic_write_json
-from . import bluetooth, book_edits, route, tls
+from . import bluetooth, book_edits, covers, route, tls
 
 REMOTE_FOLDER = "Trên máy khác"
 MANIFEST = "book.json"
@@ -967,7 +967,7 @@ def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str,
                             timeout=FILE_TIMEOUT)
             # Ghi tạm rồi đổi tên: bìa ghi dở (tắt máy giữa chừng) không bao giờ bị coi là đã có.
             atomic_write_bytes(target / "cover.jpg", data)
-            meta = {key: new_cover[key] for key in ("color", "width", "height") if new_cover.get(key)}
+            meta = covers.stored_meta(new_cover)
             atomic_write_json(target / "cover.json", meta)
         except RemoteError:
             manifest = {key: value for key, value in manifest.items() if key != "cover"}  # sổ vẫn nhận bìa của lần trước (nếu có)

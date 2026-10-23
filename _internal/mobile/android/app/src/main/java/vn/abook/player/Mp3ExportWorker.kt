@@ -60,6 +60,23 @@ object Mp3Exports {
 
     internal fun timedOut(worker: ListenableWorker): Boolean = timedOut(Build.VERSION.SDK_INT, stopReason(worker))
 
+    /**
+     * Việc vừa bị dừng vì dịch vụ nền hết 6 giờ và chưa có dấu kết thúc bền? WorkManager 2.12 coi kết quả trả sau khi việc đã bị dừng là vô nghĩa và đưa việc
+     * về ENQUEUED (resetWorkerStatus), nên chỉ trả `Result.failure()` không ngăn được lượt chạy lại với tài nguyên đã dọn (soát a111 R1).
+     */
+    fun mustEnd(sdk: Int, reason: Int, stopped: Boolean, alreadyEnded: Boolean): Boolean = stopped && !alreadyEnded && timedOut(sdk, reason)
+
+    /**
+     * Hết 6 giờ thì kết thúc HẲN việc, TRƯỚC khi worker dọn tài nguyên: ghi dấu bền theo mã việc rồi huỷ việc ở WorkManager (CANCELLED thật, không
+     * về ENQUEUED); worker chạy lại vì lý do nào đó đọc dấu ấy ở đầu doWork và thoát không I/O. Trả true khi vừa kết thúc việc.
+     */
+    internal fun endIfTimedOut(worker: ListenableWorker): Boolean {
+        val context = worker.applicationContext
+        if (!mustEnd(Build.VERSION.SDK_INT, stopReason(worker), worker.isStopped, ExportCancellation.cancelled(context, worker.id))) return false
+        runCatching { ExportCancellation.cancel(context, worker.id) }
+        return true
+    }
+
     /** Lời cho người nghe khi hệ thống dừng việc xuất vì dịch vụ nền hết 6 giờ. */
     const val TIMEOUT_NOTE = "Hệ thống Android đã dừng việc xuất sau 6 giờ - bạn bấm Xuất lại để làm tiếp"
 
@@ -322,6 +339,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
     private fun execute(): Result {
         val context = applicationContext
         Store.init(context)
+        if (ExportCancellation.cancelled(context, id)) return Result.failure() // việc đã kết thúc hẳn (huỷ / hết 6 giờ): không I/O nào
         val (bookId, tree, cover) = Mp3Exports.inputs(inputData)
         if (bookId == null || tree == null) return Result.failure()
         val run = id.toString()
@@ -403,8 +421,10 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             if (plan.music != null) finished.put("mixed", true)
             if (missing > 0) finished.put("musicMissing", missing)
             Mp3Exports.emit(finished)
+            Mp3Exports.endIfTimedOut(this)
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
+            Mp3Exports.endIfTimedOut(this) // hết 6 giờ: kết thúc HẲN việc (WorkManager không chạy lại) TRƯỚC khi dọn gì
             // Hệ thống dừng việc (không phải người dùng): WorkManager chạy lại, ghi đè các chương đã xuất.
             if (Mp3Exports.stoppedBySystem(this)) {
                 retrying = true
@@ -420,6 +440,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             Mp3Exports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Exception) {
+            Mp3Exports.endIfTimedOut(this) // hết 6 giờ: kết thúc HẲN việc (WorkManager không chạy lại) TRƯỚC khi dọn gì
             if (isStopped && Mp3Exports.stoppedBySystem(this)) {
                 retrying = true
                 return Result.retry()
