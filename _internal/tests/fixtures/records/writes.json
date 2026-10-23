@@ -1,0 +1,32 @@
+{
+  "about": "Bốn việc ghi còn lại của người nghe (đánh dấu chương đã nghe, đánh dấu cả cuốn, sửa ghi chú, xoá dấu trang) ghi vào HỒ SƠ ĐÃ CHỐT (`record`) lúc việc bắt đầu, không phải hồ sơ đang dùng lúc ghi tới. Dùng chung cho pytest (tests/test_a106_record_writes.py, webui/listening.py) và test JVM (A106RecordWritesTest.kt, Store.kt). `setup`: sổ hồ sơ trước lần ghi (hồ sơ `c` thuộc cuốn khác, `d` không có trong sổ); `op.record` bỏ trống = hồ sơ đang dùng; `applied`: hồ sơ phải nhận lần ghi (null = từ chối, không hồ sơ nào đổi).",
+  "ids": {"a": "r-000000000000000a", "b": "r-000000000000000b", "c": "r-000000000000000c", "d": "r-000000000000000d"},
+  "book": "sach",
+  "setup": {
+    "records": {
+      "a": {"book": "sach", "state": {"chapters": {"3": {"heard": 50.0, "done": false, "at": 100.0}},
+                                        "bookmarks": [{"id": "aaaaaaaaaaaa", "chapterId": 1, "seconds": 10.0, "note": "của A", "at": 100.0, "createdAt": 100.0}]}},
+      "b": {"book": "sach", "state": {"chapters": {"3": {"heard": 70.0, "done": false, "at": 100.0}},
+                                        "bookmarks": [{"id": "bbbbbbbbbbbb", "chapterId": 1, "seconds": 20.0, "note": "của B", "at": 100.0, "createdAt": 100.0}]}},
+      "c": {"book": "sach-khac", "state": {"chapters": {"3": {"heard": 90.0, "done": false, "at": 100.0}},
+                                            "bookmarks": [{"id": "cccccccccccc", "chapterId": 1, "seconds": 30.0, "note": "của C", "at": 100.0, "createdAt": 100.0}]}}
+    },
+    "active": "b"
+  },
+  "cases": {
+    "chapter_done_goes_to_the_held_record": {"op": {"kind": "chapterDone", "chapterId": 3, "done": true, "record": "a"}, "applied": "a"},
+    "chapter_done_without_record_uses_the_active_one": {"op": {"kind": "chapterDone", "chapterId": 3, "done": true}, "applied": "b"},
+    "chapter_undone_resets_heard_of_the_held_record": {"op": {"kind": "chapterDone", "chapterId": 3, "done": false, "record": "a"}, "applied": "a"},
+    "chapter_done_for_another_books_record_is_refused": {"op": {"kind": "chapterDone", "chapterId": 3, "done": true, "record": "c"}, "applied": null},
+    "chapter_done_for_a_deleted_record_is_refused": {"op": {"kind": "chapterDone", "chapterId": 3, "done": true, "record": "d"}, "applied": null},
+    "finished_goes_to_the_held_record": {"op": {"kind": "finished", "finished": true, "record": "a"}, "applied": "a"},
+    "finished_without_record_uses_the_active_one": {"op": {"kind": "finished", "finished": true}, "applied": "b"},
+    "finished_for_a_deleted_record_is_refused": {"op": {"kind": "finished", "finished": true, "record": "d"}, "applied": null},
+    "bookmark_note_goes_to_the_held_record": {"op": {"kind": "updateBookmark", "markId": "aaaaaaaaaaaa", "note": "đã sửa", "record": "a"}, "applied": "a"},
+    "bookmark_note_of_a_mark_the_held_record_lacks_changes_nothing": {"op": {"kind": "updateBookmark", "markId": "bbbbbbbbbbbb", "note": "đã sửa", "record": "a"}, "applied": "a"},
+    "bookmark_note_for_another_books_record_is_refused": {"op": {"kind": "updateBookmark", "markId": "cccccccccccc", "note": "đã sửa", "record": "c"}, "applied": null},
+    "bookmark_delete_goes_to_the_held_record": {"op": {"kind": "deleteBookmark", "markId": "aaaaaaaaaaaa", "record": "a"}, "applied": "a"},
+    "bookmark_delete_without_record_uses_the_active_one": {"op": {"kind": "deleteBookmark", "markId": "bbbbbbbbbbbb"}, "applied": "b"},
+    "bookmark_delete_for_a_deleted_record_is_refused": {"op": {"kind": "deleteBookmark", "markId": "aaaaaaaaaaaa", "record": "d"}, "applied": null}
+  }
+}

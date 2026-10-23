@@ -33,6 +33,7 @@ import { PhoneHandOffButton, RemotePlayerBars } from "./RemotePlayers";
 import { MorningRecap } from "@/listen/MorningRecap";
 import { NativeAudioEngine } from "./nativeEngine";
 import { SettingsScreen } from "./SettingsScreen";
+import { useOldSaveNotice } from "./oldSaveList";
 import { StudioChipHost } from "./StudioOpen";
 import { UpdateNotice } from "./UpdateNotice";
 import { applyTheme, loadSettings, syncSettings } from "./settings";
@@ -157,6 +158,7 @@ function EmptyLibrary() {
 }
 
 function LibraryPage() {
+  useOldSaveNotice();
   return <LibraryScreen empty={<EmptyLibrary />} header={<AddBookButton />} recap={<MorningRecap className="mt-5" />} />;
 }
 
