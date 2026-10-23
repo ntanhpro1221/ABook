@@ -127,6 +127,7 @@ class CastService : Service() {
     override fun onCreate() {
         super.onCreate()
         live = this
+        AppLog.i("CastService", "dịch vụ phát trên loa / TV bật")
         val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (Build.VERSION.SDK_INT >= 26 && manager.getNotificationChannel(CHANNEL) == null) {
             manager.createNotificationChannel(NotificationChannel(CHANNEL, "Phát trên loa / TV", NotificationManager.IMPORTANCE_LOW))
@@ -220,6 +221,7 @@ class CastService : Service() {
     }
 
     override fun onDestroy() {
+        AppLog.i("CastService", "dịch vụ phát trên loa / TV tắt")
         if (live === this) live = null
         handler.removeCallbacks(check)
         handler.removeCallbacks(tick)

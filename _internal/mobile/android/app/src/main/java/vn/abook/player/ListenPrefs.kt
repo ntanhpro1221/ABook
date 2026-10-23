@@ -1,6 +1,5 @@
 package vn.abook.player
 
-import android.util.Log
 import org.json.JSONObject
 import java.io.File
 
@@ -125,7 +124,7 @@ object ListenPrefs {
             change(stored)
             Store.writeAtomic(file(), stored.toString())
         } catch (error: Exception) {
-            Log.w("ABookPrefs", "không ghi được tuỳ chọn nghe", error)
+            AppLog.w("ABookPrefs", "không ghi được tuỳ chọn nghe", error)
         }
     }
 

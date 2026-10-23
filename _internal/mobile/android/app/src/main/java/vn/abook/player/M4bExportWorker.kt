@@ -146,7 +146,9 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
     override fun getForegroundInfo(): ForegroundInfo =
         M4bExports.foreground(applicationContext, id, M4bExports.inputs(inputData).first.orEmpty(), title, 0, 0, null)
 
-    override fun doWork(): Result {
+    override fun doWork(): Result = AppLog.worker("M4bExport", this) { execute() }
+
+    private fun execute(): Result {
         val context = applicationContext
         Store.init(context)
         val (bookId, file, cover) = M4bExports.inputs(inputData)
@@ -199,7 +201,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             ExportHistory.remember(Store.bookDir(bookId), "m4b", file.toString(), snapshot)
             val missing = music.mixer?.missing(ids) ?: 0
             val over = encoded?.peakOver.orEmpty()
-            if (over.isNotEmpty()) android.util.Log.w("M4bExport", "sau ${AacJoin.RETRIES} lượt mã hoá lại vẫn vượt trần: $over")
+            if (over.isNotEmpty()) AppLog.w("M4bExport", "sau ${AacJoin.RETRIES} lượt mã hoá lại vẫn vượt trần: $over")
             val partial = if (result.chapters < result.chaptersTotal) " Các chương chưa làm xong sẽ không có trong file." else ""
             val lost = if (missing > 0) " $missing đoạn thiếu nhạc vì chưa tải được bài." else ""
             M4bExports.finished(context, bookId, "Đã xuất M4B", "$title · ${result.chapters} chương, ${megabytes(result.size)} MB.$partial$lost")
