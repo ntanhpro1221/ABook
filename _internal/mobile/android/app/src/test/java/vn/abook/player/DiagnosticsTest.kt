@@ -98,4 +98,15 @@ class DiagnosticsTest {
         assertEquals("Mp3ExportWorker", work.getJSONArray("tags").getString(0))
         assertEquals("3", work.getJSONObject("progress").getString("done"))
     }
+
+    @Test fun nestedHostFieldsArePrivateWithoutAColonOrPort() {
+        val data = JSONObject().put("nested", JSONArray().put(JSONObject()
+            .put("host", "private-phone").put("hostname", "private-phone.local.")
+            .put("address", "private-phone:47630").put("addresses", JSONArray().put("private-phone"))))
+        val safe = Diagnostics.sanitize(data)
+        assertFalse(safe.toString().contains("private-phone"))
+        val fields = safe.getJSONArray("nested").getJSONObject(0)
+        for (key in listOf("host", "hostname", "address", "addresses")) assertEquals("***", fields.getString(key))
+    }
+
 }

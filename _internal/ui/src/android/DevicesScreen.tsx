@@ -11,6 +11,7 @@ import { Button, Dialog, EmptyState, Progress } from "@/shared/ui";
 import { useUnpair } from "@/shared/useUnpair";
 import { BackgroundNote } from "./BackgroundNote";
 import { BLUETOOTH_DENIED, BLUETOOTH_REASON, bluetoothStep } from "./bluetoothPermission";
+import { connectionRoute } from "@/shared/connectionRoute";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
 import { hasNewAudio, hasNewMeta, hasNewWords } from "./bookUpdates";
@@ -577,7 +578,7 @@ function PeersPanel() {
                     ? peer.error
                     : peer.error
                       ? "Không kết nối được - máy tắt, khác mạng hay chưa bật cho nghe"
-                      : `${peer.books.length} cuốn nghe được`}
+                      : `${peer.books.length} cuốn nghe được · ${connectionRoute(peer.connectedVia)}`}
               </div>
               {peer.error && !peer.pinChanged && <ErrorDetails technical={peer.technical} className="text-fg-2" />}
               {peer.unpaired && (
@@ -916,6 +917,9 @@ export function DevicesScreen() {
     queryFn: () => EbookLibrary.remoteLibrary(),
     retry: 0,
   });
+  useEffect(() => {
+    if (remote.dataUpdatedAt) void client.invalidateQueries({ queryKey: ["connection"] });
+  }, [client, remote.dataUpdatedAt]);
   const storage = useStorage();
   const progress = useDownloadProgress();
   const studioComputers = useStudioComputers();
@@ -957,7 +961,6 @@ export function DevicesScreen() {
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold">
                   {connection.data.name || connection.data.host}
-                  {connection.data.host.startsWith("bt:") && <span className="ml-1.5 text-xs font-normal text-fg-2">· qua Bluetooth</span>}
                 </div>
                 <div className={cn("text-xs", remote.isError ? "text-danger" : "text-fg-2")}>
                   {unpairedHere
@@ -966,7 +969,7 @@ export function DevicesScreen() {
                       ? pinChanged(remote.error)
                         ? remote.error.message
                         : "Không kết nối được - máy tính đang tắt hoặc khác mạng Wi-Fi"
-                      : "Đã kết nối"}
+                      : connectionRoute(connection.data.connectedVia)}
                 </div>
                 {remote.isError && !unpairedHere && !pinChanged(remote.error) && <ErrorDetails technical={failure?.technical} className="text-fg-2" />}
                 {unpairedHere && (

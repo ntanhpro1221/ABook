@@ -1,0 +1,50 @@
+[
+  {
+    "port": 0,
+    "valid": false
+  },
+  {
+    "port": 1,
+    "valid": true
+  },
+  {
+    "port": 65535,
+    "valid": true
+  },
+  {
+    "port": 65536,
+    "valid": false
+  },
+  {
+    "port": 12.5,
+    "valid": false
+  },
+  {
+    "port": true,
+    "valid": false
+  },
+  {
+    "port": null,
+    "valid": false
+  },
+  {
+    "port": "47630",
+    "valid": true
+  },
+  {
+    "port": "+47630",
+    "valid": true
+  },
+  {
+    "port": " 12",
+    "valid": false
+  },
+  {
+    "port": "12 ",
+    "valid": false
+  },
+  {
+    "port": "12.0",
+    "valid": false
+  }
+]

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from abook.webui import packages
+from abook.webui import packages, remote_books
 from abook.webui.library import Preferences, book_id
 from abook.webui.listening import Listening
 from abook.webui.remote_books import REMOTE_FOLDER
@@ -244,8 +244,9 @@ def test_this_computer_sees_and_controls_the_player_of_another_computer(library,
             app.remote_send(peer["device"], {"action": "load", "bookId": "khongcosach", "chapterId": 1, "seconds": 0})
     finally:
         other.stop()
-    with pytest.raises(ApiError, match="^Chưa nối được máy kia — bạn mở ABook, bật “Cho phép thiết bị khác kết nối qua Wi-Fi” và chép lại địa chỉ ghép.$"):  # cổng đã đóng: máy còn đó, ABook thì không (soát a27 lỗi 9)
+    with pytest.raises(ApiError, match="^Chưa nối được máy kia —") as caught:  # route deadline or connection refused
         app.remote_send(peer["device"], {"action": "play"})
+    assert str(caught.value) in (remote_books.REFUSED, remote_books.UNREACHABLE)
 
 
 def test_two_phones_of_the_same_model_each_get_a_bar(library, monkeypatch) -> None:  # noqa: F811
