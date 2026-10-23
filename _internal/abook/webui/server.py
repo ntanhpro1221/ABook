@@ -6136,6 +6136,16 @@ class Handler(BaseHTTPRequestHandler):
         vieneu_module.cancel()
         self._send_json(HTTPStatus.OK, vieneu_module.status())
 
+    def post_readaloud_vieneu_remove(self, _query: dict[str, list[str]]) -> None:
+        # "Gỡ": lấy lại chỗ của giọng VieNeu đã tải (Turbo / Nano / bản tăng tốc); bộ đọc chữ, bộ căn chữ và thư viện dùng chung nên ở lại.
+        self.app._mutating()
+        choice = self._body().get("choice")
+        try:
+            vieneu_module.remove(choice if isinstance(choice, str) else "")
+        except ValueError as error:
+            raise ApiError(HTTPStatus.BAD_REQUEST, str(error)) from error
+        self._send_json(HTTPStatus.OK, vieneu_module.status())
+
     def post_readaloud_supertonic_cancel(self, _query: dict[str, list[str]]) -> None:
         self.app._mutating()
         supertonic_module.cancel()
@@ -6457,6 +6467,7 @@ ROUTES: list[Route] = [
     ("POST", re.compile(r"/api/readaloud/vieneu"), Handler.post_readaloud_vieneu),
     ("POST", re.compile(r"/api/readaloud/vieneu/measure"), Handler.post_readaloud_vieneu_measure),
     ("POST", re.compile(r"/api/readaloud/vieneu/cancel"), Handler.post_readaloud_vieneu_cancel),
+    ("POST", re.compile(r"/api/readaloud/vieneu/remove"), Handler.post_readaloud_vieneu_remove),
     ("POST", re.compile(r"/api/readaloud/vieneu/accelerate"), Handler.post_readaloud_vieneu_accelerate),
     ("GET", re.compile(r"/api/readaloud/supertonic"), Handler.get_readaloud_supertonic),
     ("GET", re.compile(r"/api/readaloud/voice-speed"), Handler.get_readaloud_voice_speed),
