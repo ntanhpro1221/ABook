@@ -124,11 +124,15 @@ enum class DemoteReason(val word: String) { LATE("late"), FAIL("fail"), SEEK("se
  *   Dòng này chỉ báo QUYẾT ĐỊNH chuyển, chưa đổi tiếng: a87 vẫn kêu ở âm lượng cũ, P3 khởi động CÂM ([SeamHandover]). Sau nó: `seek <k> ...` (mục 1 = Nối, mẫu = chỗ a87 sẽ ở khi P3 ra loa, [SeamHandover.target]) và `vol <k> 0`;
  *   P3 có thể được tua lại (thêm `seek <k> ...`) cho tới khi pha khớp. Rồi MỘT trong hai: `handover` (êm) hay `demote <k> late|error` (a87 lặp mờ chéo như khi không có Nối).
  * - `handover <k> <viTriA87Giay> <viTriP3Giay>`: lúc thực sự chuyển tiếng sang P3 (|P3 - a87| <= [SeamHandover.TOLERANCE_MS] = 5 ms). Cả hai vị trí tính trên TRỤC a87 (giây trong bài, 6 chữ số), cùng một cách đo:
- *   a87 = giây bài của khung đầu AudioTrack hiện tại của a87 + framePosition của nó / sr ([SeamHandover.legacySeconds]; máy không cho timestamp thì currentPosition như trước), P3 = (loopEnd' - X' + mẫu đích của lần tua cuối + framePosition của AudioTrack P3) / sr,
- *   nên hiệu hai số là pha lệch lúc chuyển (chỉ để đối chiếu). Ngay sau: `vol <k> <âm lượng của a87>` (> 0) rồi `vol <k cũ> 0` (lần đầu a87 về 0 nằm SAU lúc P3 ra loa); không có `demote`.
- * - `hread <k> <deltaMs> <playedMs>`: MỖI lần đọc pha được tính vào quyết định ([SeamHandover.reading] khác null), giữa `promote` và `handover` / `demote`: deltaMs = P3 - a87 (ms, cùng cách đo
- *   như `handover`), playedMs = P3 đã phát bao lâu kể từ lần xả sau lần tua cuối ([SeamHandover.played]); 3 chữ số thập phân. Danh sách lần đọc bắt đầu lại sau mỗi `seek <k>`.
- *   Thước so pha theo dòng `ts` thì chỉ lấy timestamp có nanoTime sau dòng `audiotrack <k>` đầu tiên sau lần tua cuối (như [SeamHandover.fresh]).
+ *   a87 = giây bài của khung đầu AudioTrack hiện tại của a87 + framePosition của nó / sr ([SeamHandover.legacySeconds]; máy không cho timestamp thì currentPosition như trước), P3 = (loopEnd' - X' + MẪU ĐÁP
+ *   của lần tua cuối (dòng `land`, không phải mẫu đích) + framePosition của AudioTrack P3) / sr, nên hiệu hai số là pha lệch lúc chuyển (chỉ để đối chiếu). Ngay sau: `vol <k> <âm lượng của a87>` (> 0)
+ *   rồi `vol <k cũ> 0` (lần đầu a87 về 0 nằm SAU lúc P3 ra loa); không có `demote`.
+ * - `hread <k> <deltaMs> <playedMs>`: MỖI lần đọc pha được tính vào quyết định ([SeamHandover.landedReading] khác null), giữa `promote` và `handover` / `demote`: deltaMs = P3 - a87 (ms, cùng cách đo
+ *   như `handover`, theo MẪU ĐÁP), playedMs = P3 đã phát bao lâu kể từ lần xả sau lần tua cuối ([SeamHandover.played]); 3 chữ số thập phân. Danh sách lần đọc bắt đầu lại sau mỗi `seek <k>`;
+ *   chưa có `land` của lần tua cuối thì không có `hread`. Thước so pha theo dòng `ts` thì chỉ lấy timestamp có nanoTime sau dòng `audiotrack <k>` đầu tiên sau lần tua cuối (như [SeamHandover.fresh]).
+ * - `land <k> <expSample> <landedSample|none>`: lưới an toàn của một lần tua vào Nối ([LoopSeam.seekToSample] `onLand`, ghi lúc kết quả về luồng chính, sau `seek <k> ... seam <expSample>` của nó):
+ *   landedSample = vị trí trong WAV Nối của [LoopSeam.LAND_FRAMES] khung đầu sau khi cắt (khớp từng bit, gần đích nhất trong ±1 s), `none` = không thấy. Mọi lần tua vào Nối trong lúc chuyển a87 -> P3;
+ *   ngoài lúc ấy chỉ khi đang đo ([MusicBed.testEvents] đặt), và không đổi quyết định nào.
  * Bên đo tự thêm `scenario <Sx>`, `scenario_end`, `sync <t> <nhảy 0|1>`, `FMT`, `PCM`.
  */
 object SeamEvents {
@@ -148,6 +152,7 @@ object SeamEvents {
     fun promote(k: Int, legacyPositionSeconds: Double) = "promote $k loop ${f(legacyPositionSeconds)}"
     fun handover(k: Int, legacySeconds: Double, p3Seconds: Double) = "handover $k ${f(legacySeconds)} ${f(p3Seconds)}"
     fun handoverReading(k: Int, deltaMs: Double, playedMs: Double) = "hread $k ${f(deltaMs, 3)} ${f(playedMs, 3)}"
+    fun land(k: Int, expSample: Long, landedSample: Long?) = "land $k $expSample ${landedSample ?: "none"}"
 }
 
 /** Đồng hồ nhạc và tua của đường P3: tính theo (mục, vị trí trong mục) của ExoPlayer; bảng mục: 0 = Clip đầu, lẻ = Nối, chẵn >= 2 = Clip lặp ([LoopSeam]). */
@@ -243,7 +248,7 @@ object SeamClock {
 /**
  * a87 -> P3 không để quãng im, ở ranh lặp của bài a87 mở vào giữa vòng (trình phát P3 đã dựng sẵn, đứng ở đầu Nối). P3 khởi động mất 70-450 ms mới ra loa nên KHÔNG đổi tiếng ngay:
  * a87 cứ kêu ở âm lượng cũ, P3 tua tới chỗ a87 SẼ ở khi P3 ra loa (vị trí a87 + trễ khởi động ước lượng) rồi phát CÂM; khi AudioTrack của P3 thật sự chạy (timestamp phần cứng, không hẹn giờ)
- * thì đo pha: vị trí P3 trên trục a87 (mẫu đích của lần tua cuối + framePosition / sr) trừ vị trí a87, đo ĐỐI XỨNG ([legacySeconds]: mốc đầu AudioTrack a87 + framePosition của nó / sr; không có timestamp
+ * thì đo pha: vị trí P3 trên trục a87 (MẪU ĐÁP thật của lần tua cuối theo lưới an toàn [Landing] + framePosition / sr) trừ vị trí a87, đo ĐỐI XỨNG ([legacySeconds]: mốc đầu AudioTrack a87 + framePosition của nó / sr; không có timestamp
  * thì currentPosition). Lệch <= [TOLERANCE_MS] ([STEADY_READINGS] lần đọc liền) thì mới đổi tiếng; [STEADY_READINGS] lần đọc ỔN ĐỊNH mà lệch hơn thì tua lại P3 (vẫn câm, a87 vẫn kêu)
  * với trễ đã sửa theo pha trung bình (trễ mới = trễ cũ - lệch), tối đa [MAX_RETUNES] lần. Chỉ đọc timestamp của AudioTrack sinh ra SAU lần tua cuối ([fresh]).
  * Quá [DEADLINE_MS] hay a87 gần hết Nối ([GUARD_MS]) thì bỏ: a87 lặp mờ chéo như khi không có Nối. Thuần số học, [MusicBed] lo trình phát.
@@ -323,6 +328,48 @@ object SeamHandover {
         val played = played(seam, stamp, nowNano)
         if (played * 1000.0 / seam.sampleRate < SETTLE_MS) return null
         return (p3Seconds(seam, targetSample, played) - legacySeconds) * 1000.0
+    }
+
+    /**
+     * Kết quả lưới an toàn của lần tua cuối của P3 ([LoopSeam.seekToSample] `onLand`): K khung đầu sau khi cắt nằm ở đâu trong WAV Nối. Lần tua vào Nối có thể đáp lệch đích mà số cắt
+     * vẫn đúng (khối WAV bị bỏ nguyên, +99 ms, PLAN_loop §44.7); chỉ nội dung nói thật.
+     */
+    sealed class Landing {
+        /** Chưa có kết quả: chưa lần đọc nào của lần tua này được tính (như AudioTrack chưa [fresh]). */
+        object Pending : Landing()
+
+        /** Không tìm thấy: lần tua hỏng, tua lại ngay ([decide]). */
+        object None : Landing()
+
+        /** Mẫu đáp thật (khung trong WAV Nối). */
+        class At(val sample: Long) : Landing()
+
+        companion object {
+            fun of(landed: Long?): Landing = if (landed == null) None else At(landed)
+        }
+    }
+
+    /** Như [reading] nhưng P3 tính từ MẪU ĐÁP thật: null khi lưới an toàn chưa có kết quả hay không tìm thấy (lần đọc không tính). */
+    fun landedReading(seam: LoopSeam.Seam, landing: Landing, issuedNano: Long, stamp: Stamp, nowNano: Long, legacySeconds: Double): Double? =
+        (landing as? Landing.At)?.let { reading(seam, it.sample, issuedNano, stamp, nowNano, legacySeconds) }
+
+    /**
+     * Phần của pha `phaseMs` (theo mẫu đáp) do trễ khởi động, để học trễ ([nextLag]): bỏ chỗ đáp lệch đích (ms). Lệch đích là lỗi của chính lần tua ấy (lần tua sau thường đáp đúng),
+     * không phải của trễ; tính cả vào trễ thì lần tua lại sẽ lệch ngược chừng ấy.
+     */
+    fun lagPhase(seam: LoopSeam.Seam, targetSample: Long, landing: Landing, phaseMs: Double): Double =
+        if (landing is Landing.At) phaseMs - (landing.sample - targetSample) * 1000.0 / seam.sampleRate else phaseMs
+
+    /**
+     * [decide] có lưới an toàn: chưa có kết quả thì không lần đọc nào tính (chỉ hạn chót); không tìm thấy (lần tua hỏng) thì tua lại NGAY, tính vào [MAX_RETUNES], hết lượt thì bỏ như cũ.
+     * Có mẫu đáp thì như [decide] với các lần đọc theo mẫu đáp ([landedReading]): đáp lệch hiện ra ở pha và được tua lại theo luật sẵn có.
+     */
+    fun decide(elapsedMs: Long, remainingMs: Double, retunes: Int, readings: List<Double>, landing: Landing): Act {
+        if (landing is Landing.None) {
+            if (elapsedMs >= DEADLINE_MS || remainingMs <= GUARD_MS) return Act.FALLBACK
+            return if (retunes >= MAX_RETUNES) Act.FALLBACK else Act.RETUNE
+        }
+        return decide(elapsedMs, remainingMs, retunes, if (landing is Landing.At) readings else emptyList())
     }
 
     /** Số khung AudioTrack P3 đã phát tới `nowNano` (ngoại suy từ `stamp`), quy về tần số của Nối: cái [reading] cộng vào mẫu đích; dòng `hread` ghi nó theo ms. */
