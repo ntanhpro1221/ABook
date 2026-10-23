@@ -1,7 +1,8 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { latestRequest, wasAborted } from "@/shared/latestRequest";
 import { Button, Dialog } from "@/shared/ui";
 import { api, ApiError } from "@/studio/api";
@@ -109,7 +110,7 @@ export function CoverSearchDialog({
       title="Tìm ảnh bìa trên mạng"
       description="Từ iTunes, Open Library và Google Books. Truyện mạng dịch thường không có ở đó - khi ấy dùng ảnh có sẵn trên máy."
       width="max-w-3xl"
-    >
+    ><MotionRegion>
       <form
         className="flex gap-2"
         onSubmit={(event) => {
@@ -167,6 +168,6 @@ export function CoverSearchDialog({
         ) : null}
         {failed.length > 0 && <p className="mt-3 text-xs text-fg-3">{failedSourcesNote(failed)}</p>}
       </div>
-    </Dialog>
+    </MotionRegion></Dialog>
   );
 }

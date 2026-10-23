@@ -9,7 +9,9 @@ import { ShortcutsHost } from "@/listen/Shortcuts";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
-import { pageFocusKey, usePageEnter, usePageFocus } from "@/shared/motion";
+import { pageFocusKey, useLayoutChangeFade, usePageEnter, usePageFocus } from "@/shared/motion";
+import { AnimatedRows } from "@/shared/MotionPresence";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
 import { Progress, Vu } from "@/shared/ui";
@@ -45,7 +47,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-const NAV = "flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors";
+const NAV = "flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm transition-[background-color,color,box-shadow] duration-(--motion-medium) ease-standard";
 const NAV_ACTIVE = "bg-nav-active font-semibold text-fg shadow-[0_0_0_1px_var(--nav-active-ring)] [&>svg]:text-accent-text";
 const NAV_IDLE = "font-medium text-fg-2 hover:bg-hover hover:text-fg";
 
@@ -78,11 +80,12 @@ function TabItem({ to, icon: Icon, match, children }: { to: string; icon: typeof
       onClick={() => setExpanded(false)}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-[0.6875rem] font-medium",
+        "flex min-w-0 flex-1 flex-col items-center gap-1 py-2 text-[0.6875rem] font-medium transition-colors duration-(--motion-medium) ease-standard",
         active ? "text-accent-text" : "text-fg-2",
       )}
     >
-      <Icon className="size-5" />
+      {/* Tab vừa chọn: biểu tượng nhún nhẹ lên (transform), màu chuyển dần - không đổi màu tức thì. */}
+      <Icon className={cn("motion-tab-icon size-5 transition-transform duration-(--motion-medium) ease-decelerate", active && "-translate-y-px scale-110")} />
       <span className="truncate">{children}</span>
     </NavLink>
   );
@@ -94,10 +97,9 @@ function Producing() {
   const navigate = useNavigate();
   usePrecastInvites(data?.books);
   const live = (data?.books ?? []).filter((book) => book.running || book.starting);
-  if (!live.length) return null;
   return (
-    <div className="mt-2 space-y-1">
-      {live.map((book) => (
+    <MotionRegion className="mt-2 space-y-1">
+      <AnimatedRows items={live} keyOf={(book) => book.id}>{(book) => (
         <button
           key={book.id}
           type="button"
@@ -120,8 +122,8 @@ function Producing() {
             </div>
           </div>
         </button>
-      ))}
-    </div>
+      )}</AnimatedRows>
+    </MotionRegion>
   );
 }
 
@@ -136,7 +138,7 @@ function UpdateNotice() {
       type="button"
       onClick={() => {
         setExpanded(false);
-        navigate("/settings");
+        navigate("/settings/advanced");
       }}
       className="mb-2 flex w-full items-center gap-2.5 rounded-lg border border-line bg-panel p-2.5 text-left hover:bg-hover"
     >
@@ -181,6 +183,9 @@ export function Shell({ children }: { children: ReactNode }) {
   const compactBar = useMediaQuery("(max-width: 1023px)");
   usePageEnter(main, pathname);
   usePageFocus(main, pageFocusKey(pathname));
+  // Kéo cửa sổ qua mốc bố cục (thanh bên <-> tab dưới, thanh phát đầy đủ <-> gọn): bố cục mới hiện dần thay vì nhảy một cú.
+  const shell = useRef<HTMLDivElement | null>(null);
+  useLayoutChangeFade(shell, `${phoneWidth}:${compactBar}`);
 
   // Tên chung theo đường dẫn; màn nào biết tên cụ thể (sách, chương, dự án) thì `usePageTitle` ghi đè sau đó.
   useLayoutEffect(() => {
@@ -189,7 +194,7 @@ export function Shell({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   return (
-    <div className="flex h-full">
+    <div ref={shell} className="flex h-full">
       {/* Người dùng bàn phím: Tab đầu tiên tới đây, bỏ qua thanh bên để vào thẳng nội dung. Màn "Đang nghe" mở thì nội dung bên dưới bị khoá (inert) - không hiện. */}
       {!expanded && (
         <button
@@ -230,7 +235,7 @@ export function Shell({ children }: { children: ReactNode }) {
       </aside>
       <div className="relative flex min-w-0 flex-1 flex-col">
         <PeerBar />
-        <main ref={main} tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto outline-none" inert={expanded}>
+        <main ref={main} tabIndex={-1} className="page-motion min-h-0 flex-1 overflow-y-auto outline-none" inert={expanded}>
           {children}
         </main>
         {/* Màn "Đang nghe" phủ kín cột này: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}

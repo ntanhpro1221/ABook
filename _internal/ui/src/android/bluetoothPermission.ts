@@ -11,7 +11,7 @@ export function bluetoothStep(state: BluetoothPermission): "go" | "explain" | "s
 }
 
 export const BLUETOOTH_REASON =
-  "Để thấy máy tính đã ghép Bluetooth với điện thoại này và nhận sách qua đó, ABook cần quyền “Thiết bị ở gần”. ABook không dò hay kết nối thiết bị nào khác.";
+  "Cho phép “Thiết bị ở gần” để tìm máy đã ghép.";
 
 export const BLUETOOTH_DENIED =
   "Quyền “Thiết bị ở gần” của ABook đang tắt. Mở Cài đặt → Quyền → Thiết bị ở gần → Cho phép, rồi quay lại bấm Kết nối qua Bluetooth.";

@@ -71,13 +71,13 @@ export function decidedTitle(item: DecidedLike): string | null {
 export function inboxLead(book: { running: boolean; paused?: unknown; phase: string }): string {
   const first =
     book.running && book.paused
-      ? "Sách đang tạm dừng - sửa bây giờ, máy áp khi làm tiếp."
+      ? "Sách đang tạm dừng; sửa áp khi làm tiếp."
       : book.running
-        ? "Máy đã tự quyết và đang chạy tiếp - không có gì phải chờ."
+        ? "Máy đang chạy tiếp; sửa áp ở chương sau."
         : book.phase === "done"
-          ? "Sách đã xong - sửa xong thì bấm “Áp dụng thay đổi” ở trên để thu lại đúng các câu bị ảnh hưởng."
-          : "Sách đang dừng - sửa bây giờ, máy áp khi làm tiếp.";
-  return `${first} Đây là những chỗ máy không chắc, xếp theo lợi: việc ở trên sửa một lần được nhiều câu nhất. Cách đọc tên, người nói, giới và giọng nhân vật đều sửa ngay tại đây.`;
+          ? "Sửa xong, bấm “Áp dụng thay đổi”."
+          : "Sách đang dừng; sửa áp khi làm tiếp.";
+  return `Ưu tiên việc trên. ${first}`;
 }
 
 /** Câu lời kể chia thành mảnh thường / mảnh tô (`mark`) ở mỗi chỗ có một trong `names` (dạng tên đã hạ chữ, work_items gửi kèm

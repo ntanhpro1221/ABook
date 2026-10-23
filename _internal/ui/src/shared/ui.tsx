@@ -7,6 +7,7 @@ import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, Re
 import { cn } from "@/shared/cn";
 import { scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
+import { MotionRegion } from "./MotionRegion";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
@@ -69,7 +70,7 @@ export function Button({
       aria-busy={loading || undefined}
       onClick={busyClick(loading, onClick)}
       className={cn(
-        "inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:active:scale-100",
+        "inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] transition-[background-color,color,border-color,transform,opacity] duration-motion-fast active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:active:scale-100",
         VARIANTS[variant],
         SIZES[size],
         // Màn hẹp / cảm ứng: nút 28-38 px nới vùng chạm theo chiều dọc lên 40 px (touch-reach trong styles.css; soát UX 29-09 và a14: "Sửa",
@@ -79,11 +80,11 @@ export function Button({
       )}
       {...rest}
     >
-      {loading ? (
+      <MotionRegion as="span" aria-hidden className={cn("inline-grid shrink-0 place-items-center", (Icon || loading !== undefined) && (size === "lg" ? "glyph" : "size-4"))}>{loading ? (
         <Loader2 className="size-4 animate-spin" />
       ) : Icon ? (
         <Icon className={size === "lg" ? "glyph" : "size-4"} strokeWidth={2} />
-      ) : null}
+      ) : loading !== undefined ? <span /> : null}</MotionRegion>
       {children}
     </button>
   );
@@ -123,6 +124,7 @@ export function IconButton({
   tone = "ghost",
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
+  ref?: Ref<HTMLButtonElement>;
   label: string;
   icon: IconType;
   size?: "sm" | "md" | "lg";
@@ -139,7 +141,7 @@ export function IconButton({
         type="button"
         aria-label={label}
         className={cn(
-          "inline-flex shrink-0 items-center justify-center rounded-lg transition-colors disabled:pointer-events-none disabled:opacity-40",
+          "inline-flex shrink-0 items-center justify-center rounded-lg transition-[color,background-color,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-40",
           tone === "ghost" ? "text-fg-2 hover:bg-hover hover:text-fg" : "bg-panel-2 text-fg hover:bg-hover",
           box,
           reach,
@@ -147,7 +149,7 @@ export function IconButton({
         )}
         {...rest}
       >
-        <Icon className={glyph} strokeWidth={2} />
+        <MotionRegion as="span" className="inline-grid shrink-0 place-items-center"><Icon className={glyph} strokeWidth={2} /></MotionRegion>
       </button>
     </Tooltip>
   );
@@ -178,7 +180,7 @@ export function Tooltip({ label, children, side = "top" }: { label: ReactNode; c
         <TooltipPrimitive.Content
           side={side}
           sideOffset={6}
-          className="z-50 max-w-72 rounded-md bg-fg px-2.5 py-1.5 text-xs font-medium text-bg shadow-float data-[state=delayed-open]:animate-in"
+          className="motion-tooltip z-50 max-w-72 rounded-md bg-fg px-2.5 py-1.5 text-xs font-medium text-bg shadow-float"
         >
           {label}
         </TooltipPrimitive.Content>
@@ -237,8 +239,8 @@ export function Progress({
         <div className={cn("indeterminate-bar h-full w-2/5 rounded-full", BAR[tone])} />
       ) : (
         <div
-          className={cn("relative h-full overflow-hidden rounded-full transition-[width] duration-700 ease-out", BAR[tone], running && "sheen")}
-          style={{ width: `${clamped * 100}%` }}
+          className={cn("motion-progress relative h-full overflow-hidden rounded-full", BAR[tone], running && "sheen")}
+          style={{ transform: `scaleX(${clamped})` }}
         />
       )}
     </div>
@@ -526,6 +528,12 @@ export function focusReturnTarget(opener: Element | null, body: Element | null):
   return opener as HTMLElement;
 }
 
+function keepNewLayerFocus(event: Event): boolean {
+  if (!document.activeElement?.closest('[data-state="open"]:is([role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"])')) return false;
+  event.preventDefault();
+  return true;
+}
+
 export function Dialog({
   open,
   onOpenChange,
@@ -543,20 +551,28 @@ export function Dialog({
 }) {
   // Nhớ phần tử đang giữ con trỏ lúc hộp mở (trước khi Radix chuyển con trỏ vào hộp) để trả về khi đóng.
   const opener = useRef<Element | null>(null);
+  const lastContent = useRef({ title, description, children });
+  if (open) lastContent.current = { title, description, children };
+  const shown = open ? { title, description, children } : lastContent.current;
   useLayoutEffect(() => {
     if (open) opener.current = lastFocus;
   }, [open]);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-scrim backdrop-blur-[2px]" />
+        {/* Mở / đóng đều có chuyển động (styles.css .motion-scrim / .motion-dialog): Radix giữ hộp lại tới khi hiệu ứng đóng xong. Làm mờ nền chỉ
+            khi có chuột - trên điện thoại tầm trung, mờ nền mỗi khung hình làm hiệu ứng mở giật. */}
+        <DialogPrimitive.Overlay inert={!open} style={{ pointerEvents: open ? undefined : "none" }} className="motion-scrim fixed inset-0 z-40 bg-scrim pointer-fine:backdrop-blur-[2px]" />
         <DialogPrimitive.Content
+          inert={!open}
+          style={{ pointerEvents: open ? undefined : "none" }}
           className={cn(
-            "fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex max-h-[90dvh] flex-col rounded-2xl border border-line bg-panel p-6 shadow-float focus:outline-none",
+            "motion-dialog fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex max-h-[90dvh] flex-col rounded-2xl border border-line bg-panel p-6 shadow-float focus:outline-none",
             width,
           )}
           onInteractOutside={keepOpenForToasts}
           onCloseAutoFocus={(event) => {
+            if (keepNewLayerFocus(event)) return;
             const target = focusReturnTarget(opener.current, document.body);
             opener.current = null;
             if (!target) return;
@@ -579,9 +595,9 @@ export function Dialog({
         >
           <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
             <div>
-              <DialogPrimitive.Title className="text-lg font-semibold">{title}</DialogPrimitive.Title>
-              {description && (
-                <DialogPrimitive.Description className="mt-1 text-sm text-fg-2">{description}</DialogPrimitive.Description>
+              <DialogPrimitive.Title className="text-lg font-semibold">{shown.title}</DialogPrimitive.Title>
+              {shown.description && (
+                <DialogPrimitive.Description className="mt-1 text-sm text-fg-2">{shown.description}</DialogPrimitive.Description>
               )}
             </div>
             <DialogPrimitive.Close asChild>
@@ -591,7 +607,7 @@ export function Dialog({
             </DialogPrimitive.Close>
           </div>
           {/* Hộp cao hơn màn (điện thoại, cửa sổ thấp) thì nội dung cuộn trong hộp, nút Đóng ở đầu luôn thấy được (soát UX a15). */}
-          <div className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">{children}</div>
+          <div className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">{shown.children}</div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
@@ -615,28 +631,34 @@ export function Sheet({
   children: ReactNode;
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
 }) {
+  const lastContent = useRef({ title, children });
+  if (open) lastContent.current = { title, children };
+  const shown = open ? { title, children } : lastContent.current;
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-scrim" />
+        <DialogPrimitive.Overlay inert={!open} style={{ pointerEvents: open ? undefined : "none" }} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
+          inert={!open}
+          style={{ pointerEvents: open ? undefined : "none" }}
+          onCloseAutoFocus={keepNewLayerFocus}
           // Đóng (Esc, nút Đóng, chạm nền): Radix tự trả tiêu điểm về nút mở (Trigger) - trước đây chặn việc ấy nên tiêu điểm rơi về BODY (soát a31 K1).
           onEscapeKeyDown={onEscapeKeyDown}
           onInteractOutside={keepOpenForToasts}
-          className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-line bg-panel px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2 shadow-float focus:outline-none"
+          className="motion-sheet fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-line bg-panel px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2 shadow-float focus:outline-none"
         >
           <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-line-strong" aria-hidden />
           <div className="flex items-center justify-between gap-3 px-1.5">
-            <DialogPrimitive.Title className="text-sm font-semibold">{title}</DialogPrimitive.Title>
+            <DialogPrimitive.Title className="text-sm font-semibold">{shown.title}</DialogPrimitive.Title>
             <DialogPrimitive.Close asChild>
               <button aria-label="Đóng" className={CLOSE_BUTTON}>
                 <X className="size-5" />
               </button>
             </DialogPrimitive.Close>
           </div>
-          {children}
+          {shown.children}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
@@ -646,7 +668,7 @@ export function Sheet({
 // ---- Khác -------------------------------------------------------------------------------------------------
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-md bg-hover", className)} />;
+  return <div className={cn("motion-skeleton rounded-md bg-hover", className)} />;
 }
 
 export function EmptyState({
@@ -663,7 +685,7 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-center px-6 py-14 text-center", className)}>
+    <div className={cn("motion-reveal flex flex-col items-center px-6 py-14 text-center", className)}>
       <div className="mb-4 grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent-text">
         <Icon className="size-7" strokeWidth={1.75} />
       </div>
@@ -781,15 +803,17 @@ export function TimeSelect({
   onChange,
   label,
   className,
+  disabled,
 }: {
   value: string;
   onChange: (value: string) => void;
   label: string;
   className?: string;
+  disabled?: boolean;
 }) {
   const options = QUARTERS.includes(value) ? QUARTERS : [...QUARTERS, value].sort();
   return (
-    <select aria-label={label} value={value} onChange={(event) => onChange(event.target.value)} className={cn("tabular", className)}>
+    <select aria-label={label} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} className={cn("tabular", className)}>
       {options.map((time) => (
         <option key={time} value={time}>
           {time}

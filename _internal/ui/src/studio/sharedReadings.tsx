@@ -1,7 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpenCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { shownReading } from "@/shared/format";
 import { Button, IconButton } from "@/shared/ui";
 import { api } from "./api";
@@ -45,6 +47,8 @@ export function SharedReadingsSettings() {
   const [surface, setSurface] = useState("");
   const [spoken, setSpoken] = useState("");
   const [problem, setProblem] = useState("");
+  const [filter, setFilter] = useState("");
+  const [shown, setShown] = useState(12);
   const save = useMutation({
     mutationFn: (body: { surface: string; spokenForm?: string; remove?: boolean }) =>
       api<SharedReading | { removed: boolean }>("/api/readings", { method: "POST", body }),
@@ -57,22 +61,20 @@ export function SharedReadingsSettings() {
       setSurface("");
       setSpoken("");
       toast.success(`“${body.surface}” đọc là “${shownReading(body.spokenForm ?? "")}” cho mọi sách`, {
-        description: "Sách mới có từ này tự dùng; sách có sẵn: tab Nhân vật → Cách đọc tên.",
+        description: "Sách có sẵn: tab Nhân vật › Cách đọc tên.",
       });
     },
     onError: (error: Error) => setProblem(error.message),
   });
   const entries = data?.entries ?? [];
+  const filtered = entries.filter((entry) => `${entry.surface} ${entry.spokenForm}`.toLocaleLowerCase("vi").includes(filter.toLocaleLowerCase("vi")));
   return (
-    <div className="mb-5 max-w-xl">
-      <div className="text-sm font-medium">Cách đọc chung</div>
-      <p className="mt-0.5 text-[0.8125rem] text-fg-2 text-pretty">
-        Sửa một tên một lần cho mọi sách: sách mới có từ ấy tự dùng cách đọc này. Thêm ở đây, hay tích “Dùng cho mọi sách” khi
-        sửa cách đọc trong một cuốn.
-      </p>
+    <MotionRegion><Fold storageKey="studio.shared-readings" title="Cách đọc chung" summary={`${entries.length} tên`} bodyClassName="px-3 pb-3">
+      <input aria-label="Tìm cách đọc" value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm" placeholder="Tìm tên…" />
+      <p className="mt-0.5 text-[0.8125rem] text-fg-2 text-pretty">Sửa cách đọc một tên một lần, sách mới tự dùng.</p>
       {entries.length > 0 && (
         <ul className="mt-2 divide-y divide-line rounded-xl border border-line">
-          {entries.map((entry) => (
+          {filtered.slice(0, shown).map((entry) => (
             <li key={entry.surface} className="flex items-center gap-3 px-3 py-1.5 text-sm">
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium">{entry.surface}</span> <span className="text-fg-3">→</span> “{shownReading(entry.spokenForm)}”
@@ -87,6 +89,7 @@ export function SharedReadingsSettings() {
           ))}
         </ul>
       )}
+      {filtered.length > shown && <Button size="sm" variant="ghost" onClick={() => setShown(shown + 12)}>Xem thêm</Button>}
       <form
         className="mt-2 flex flex-wrap items-center gap-2"
         onSubmit={(event) => {
@@ -120,7 +123,7 @@ export function SharedReadingsSettings() {
         </Button>
       </form>
       {problem && <p className="mt-1 text-[0.8125rem] text-danger">{problem}</p>}
-    </div>
+    </Fold></MotionRegion>
   );
 }
 

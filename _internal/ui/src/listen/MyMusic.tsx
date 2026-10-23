@@ -1,12 +1,18 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
+import { useListPresence } from "@/shared/motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Music2, Pin, Trash2, Upload } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useRef, useState } from "react";
+import { useBackLayer } from "@/shared/backStack";
+import { MoreInfo } from "@/shared/SettingsNav";
+import { MY_MUSIC_HELP } from "@/studio/musicLocal";
+import { toast } from "@/shared/toast";
 import { formatClock } from "@/shared/format";
 import { Button, WRAP_LABEL } from "@/shared/ui";
 import { api, type AppInfo } from "@/studio/api";
 import { hasNativeMusicImport, importMusic } from "@/studio/musicImport";
-import { analysisLabel, importSummary, LOCAL_PREFIX, MY_MUSIC_INTRO, mineNote, type LocalMusicView, type LocalTrack } from "@/studio/musicLocal";
+import { analysisLabel, importSummary, LOCAL_PREFIX, MY_MUSIC_INTRO, mineNote, type LocalMusicView } from "@/studio/musicLocal";
 import { AutoPickNote } from "@/studio/AutoPickNote";
 import { MusicModuleNotice } from "@/studio/MusicModuleNotice";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT } from "./musicBed";
@@ -61,14 +67,14 @@ export function SwapTrack({
     staleTime: 0,
     gcTime: 0,
   });
-  if (isLoading) return <p className="px-3 py-2 text-xs text-fg-2">Đang tìm bài của bạn…</p>;
-  if (error) return <p className="px-3 py-2 text-xs text-warning">{(error as Error).message}</p>;
+  if (isLoading) return <MotionRegion as="p" className="px-3 py-2 text-xs text-fg-2">Đang tìm bài của bạn…</MotionRegion>;
+  if (error) return <MotionRegion as="p" className="px-3 py-2 text-xs text-warning">{(error as Error).message}</MotionRegion>;
   const mine = data?.mine ?? [];
   if (!mine.length) {
-    return <p className="px-3 py-2 text-xs text-fg-2">Chưa có bài nào khác trong Nhạc của tôi - nhập nhạc của bạn ở mục “Nhạc của tôi” bên dưới.</p>;
+    return <MotionRegion as="p" className="px-3 py-2 text-xs text-fg-2">Chưa có bài nào khác trong Nhạc của tôi - nhập nhạc của bạn ở mục “Nhạc của tôi” bên dưới.</MotionRegion>;
   }
   return (
-    <ul className="divide-y divide-line border-t border-line bg-bg/40">
+    <MotionRegion as="ul" className="divide-y divide-line border-t border-line bg-bg/40">
       {mine.map((item) => (
         <li key={item.link} className="flex items-center gap-3 px-3 py-2">
           <div className="min-w-0 flex-1">
@@ -83,7 +89,7 @@ export function SwapTrack({
           </Button>
         </li>
       ))}
-    </ul>
+    </MotionRegion>
   );
 }
 
@@ -94,6 +100,10 @@ export function MyMusicSection() {
   const { data } = useMyMusic();
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  const removeBox = useRef<HTMLElement>(null);
+  const removeButton = useRef<HTMLButtonElement>(null);
+  const removeLink = useRef<string | null>(null);
+  useBackLayer(removing !== null, () => setRemoving(null), removeBox, removeButton);
   const refresh = (view: LocalMusicView) => {
     client.setQueryData(MY_MUSIC_KEY, view);
     void client.invalidateQueries({ queryKey: ["music-alternatives"] });
@@ -127,8 +137,9 @@ export function MyMusicSection() {
     onError: (error: Error) => toast.error("Không xoá được bài này", { description: error.message }),
   });
   const tracks = data?.tracks ?? [];
+  const rows = useListPresence(tracks, (track) => track.link);
   return (
-    <div className="space-y-2">
+    <MotionRegion><Fold storageKey="my-music.library" title="Nhạc của tôi" summary={`${tracks.length} bài`} bodyClassName="space-y-2">
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="text-sm font-medium">Nhạc của tôi{tracks.length ? ` (${tracks.length})` : ""}</h3>
         {canImport && (
@@ -139,12 +150,13 @@ export function MyMusicSection() {
       </div>
       {!!tracks.length && <MusicModuleNotice view={data} queryKey={MY_MUSIC_KEY} />}
       <p className="text-xs text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
+      <MoreInfo label="Nhạc riêng">{MY_MUSIC_HELP}</MoreInfo>
       {!canImport && <p className="text-xs text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách.</p>}
       {canImport && !tracks.length && <p className="text-xs text-fg-2">Chưa có bài nào.</p>}
-      {!!tracks.length && (
+      {!!rows.length && (
         <ul className="divide-y divide-line rounded-lg border border-line">
-          {tracks.map((track: LocalTrack) => (
-            <li key={track.link} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+          {rows.map(({ item: track, key, state, ref }) => (
+            <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
               <span className="min-w-0 flex-1 break-words">
                 <Music2 className="mr-1.5 inline size-4 text-accent-text" />
                 {track.title}
@@ -160,7 +172,7 @@ export function MyMusicSection() {
               </span>
               {canImport &&
                 (removing === track.link ? (
-                  <span className="flex shrink-0 gap-1">
+                  <span ref={removeBox} className="flex shrink-0 gap-1">
                     <Button size="sm" variant="secondary" icon={Trash2} aria-label={`Xoá khỏi kho: ${track.title}`} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
                       Xoá khỏi kho
                     </Button>
@@ -169,14 +181,14 @@ export function MyMusicSection() {
                     </Button>
                   </span>
                 ) : (
-                  <Button size="sm" variant="ghost" icon={Trash2} aria-label={`Xoá: ${track.title}`} onClick={() => setRemoving(track.link)}>
+                  <Button ref={(el) => { if (removeLink.current === track.link) removeButton.current = el; }} size="sm" variant="ghost" icon={Trash2} aria-label={`Xoá: ${track.title}`} onClick={() => { removeLink.current = track.link; setRemoving(track.link); }}>
                     Xoá
                   </Button>
                 ))}
-            </li>
+            </div></li>
           ))}
         </ul>
       )}
-    </div>
+    </Fold></MotionRegion>
   );
 }

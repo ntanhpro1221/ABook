@@ -1,14 +1,17 @@
 import { Save } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Button } from "@/shared/ui";
+import { MoreInfo } from "@/shared/SettingsNav";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo } from "@/studio/data";
 
 /** Cài đặt → Chẩn đoán: "Gửi nhật ký" của chính máy tính - gói .zip (thông tin máy, phiên bản, đuôi nhật ký của app) ghi vào thư mục bạn chọn để bạn
  *  tự gửi cho người sửa lỗi. App không gửi gì đi (webui/diagnostics.py). */
-export const OWN_DIAGNOSTICS_HINT =
-  "Gói nhật ký của app trên máy tính này (phiên bản, hệ điều hành, các dòng nhật ký gần nhất). Có tên máy bạn đã ghép; app che các dạng khóa, mã ghép, đường dẫn riêng, địa chỉ IP nhận diện được. Bạn nên xem lại trước khi gửi. App chỉ lưu thành file - bạn tự gửi đi.";
+export const OWN_DIAGNOSTICS_HINT = "Lưu nhật ký thành file; bạn tự gửi đi. Xem lại trước khi gửi.";
+/** Quyền riêng tư của gói nhật ký: gập sau "Tìm hiểu thêm". */
+export const OWN_DIAGNOSTICS_MORE =
+  "Gồm phiên bản, hệ điều hành, các dòng nhật ký gần nhất và tên máy bạn đã ghép. App che các dạng khoá, mã ghép, đường dẫn riêng, địa chỉ IP nhận ra được.";
 
 export function OwnDiagnostics() {
   const { data: info } = useAppInfo();
@@ -32,7 +35,10 @@ export function OwnDiagnostics() {
   };
   return (
     <div className="flex max-w-2xl items-start justify-between gap-6">
-      <p className="min-w-0 text-[0.8125rem] text-fg-2 text-pretty">{OWN_DIAGNOSTICS_HINT}</p>
+      <div className="min-w-0 text-[0.8125rem] text-fg-2 text-pretty">
+        {OWN_DIAGNOSTICS_HINT}
+        <MoreInfo className="mt-1">{OWN_DIAGNOSTICS_MORE}</MoreInfo>
+      </div>
       <Button size="sm" variant="secondary" icon={Save} loading={busy} onClick={() => void send()} className="shrink-0">
         Gửi nhật ký
       </Button>

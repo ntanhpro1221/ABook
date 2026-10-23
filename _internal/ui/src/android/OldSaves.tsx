@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Download, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { formatSize, formatWhen } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
 import { oldSaveTitle, refreshOldSaves, type OldSave } from "./oldSaveList";
@@ -9,8 +9,7 @@ import { EbookLibrary } from "./plugins";
 
 // Danh sách "Bản lưu cũ" trong Cài đặt (nhóm do SettingsScreen vẽ, chỉ khi có file): mỗi dòng "Lưu ra…" và "Xoá…".
 
-export const OLD_SAVES_HINT =
-  "Lúc lưu sách bị hỏng giữa chừng mà bản lưu trước chưa trả lại được vào file, app giữ bản trước ở đây. Lưu ra chỗ bạn chọn để không mất.";
+export const OLD_SAVES_HINT = "Bản trước của một lần lưu hỏng. Lưu ra để không mất.";
 
 /** Hộp xác nhận xoá - nói rõ không lấy lại được. Không có trạng thái riêng: nơi gọi giữ `busy`. */
 export function OldSaveDeleteDialog({ file, busy, onConfirm, onCancel }: { file: OldSave | null; busy: boolean; onConfirm: () => void; onCancel: () => void }) {

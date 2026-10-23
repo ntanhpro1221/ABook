@@ -1,7 +1,11 @@
+import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionRegion } from "@/shared/MotionRegion";
+import { LoadingCrossfade } from "@/shared/MotionPresence";
+import { useListPresence } from "@/shared/motion";
 import { BookOpen, Headphones, Laptop, Pause, Play, Search, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { ShortName } from "@/shared/ShortName";
 import { Windowed } from "@/shared/Windowed";
@@ -162,7 +166,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
         </button>
         {book.progress.fraction > 0 && !book.progress.finished && (
           <div {...heardBarProps(book.progress.fraction)} className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-black/40">
-            <div className="h-full bg-accent" style={{ width: `${book.progress.fraction * 100}%` }} />
+            <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${book.progress.fraction * 100 / 100})` }} />
           </div>
         )}
         {book.remote && (
@@ -303,28 +307,24 @@ const SHELF_GRID = "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-[repeat(auto-f
 const SHELF_BLOCK = 60;
 
 function Shelf({ books, badges, twins, memory }: { books: ListenBook[]; badges?: Map<string, string>; twins?: Set<string>; memory?: string }) {
+  const rows = useListPresence(books, (book) => book.id);
   const tile = (book: ListenBook, index: number) => (
     // Hiện dần chỉ cho khối đầu: khối sau dựng khi cuộn tới, không nhún lại mỗi lần.
     <div key={book.id} className={index < SHELF_BLOCK ? "rise-in" : undefined} style={{ "--i": index } as CSSProperties}>
       <BookTile book={book} badge={badges?.get(book.id)} twin={twins?.has(book.id)} />
     </div>
   );
-  if (books.length <= SHELF_BLOCK * 2) return <div className={SHELF_GRID}>{books.map(tile)}</div>;
   return (
-    <div role="list" aria-label="Sách" className="space-y-7">
+    <MotionRegion as="div" role="list" aria-label="Sách" className="space-y-7" motionKey={books.map((book) => book.id)}>
       <Windowed
-        memory={memory}
-        items={books}
-        block={SHELF_BLOCK}
-        estimate={90}
-        className={SHELF_GRID}
-        row={(book, index) => (
-          <div key={book.id} role="listitem" aria-posinset={index + 1} aria-setsize={books.length}>
-            {tile(book, index)}
+        memory={memory} items={rows} block={SHELF_BLOCK} estimate={90} className={SHELF_GRID} alwaysBlocks
+        row={({ key, item, state, ref }, index) => (
+          <div key={key} ref={ref} role="listitem" aria-posinset={books.findIndex((book) => book.id === key) + 1 || undefined} aria-setsize={books.length} className="motion-row" data-state={state} inert={state === "exit"}>
+            {tile(item, index)}
           </div>
         )}
       />
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -338,7 +338,7 @@ function badgesOf(items: { book: ListenBook; volume: number | null; unit: string
 }
 
 /** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
-function SeriesShelves({ books, twins, memory }: { books: ListenBook[]; twins: Set<string>; memory?: string }) {
+function SeriesShelves({ books, twins, memory, grouped = true }: { books: ListenBook[]; twins: Set<string>; memory?: string; grouped?: boolean }) {
   const places = seriesIndex(books);
   const groups = new Map<string, { book: ListenBook; volume: number | null; unit: string; name: string }[]>();
   for (const book of books) {
@@ -347,27 +347,20 @@ function SeriesShelves({ books, twins, memory }: { books: ListenBook[]; twins: S
     groups.set(key, [...(groups.get(key) ?? []), { book, volume, unit, name }]);
   }
   const series = [...groups.entries()]
-    .filter(([key, items]) => !key.startsWith("\u0000") && items.length > 1)
+    .filter(([key, items]) => grouped && !key.startsWith("\u0000") && items.length > 1)
     .map(([key, items]) => [key, [...items].sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0))] as const);
   const singles = books.filter((book) => !series.some(([, items]) => items.some((item) => item.book.id === book.id)));
-  return (
-    <div className="mt-6 space-y-10">
-      {series.map(([key, items]) => (
-        <section key={key} aria-label={items[0].name}>
-          <h2 className="mb-3 flex items-baseline gap-2 text-base font-semibold">
-            {items[0].name} <span className="text-sm font-normal text-fg-2">· {items.length} {items[0].unit}</span>
-          </h2>
-          <Shelf books={items.map((item) => item.book)} badges={badgesOf(items)} twins={twins} memory={memory && `${memory}.series.${key}`} />
-        </section>
-      ))}
-      {singles.length > 0 && (
-        <section aria-label="Sách lẻ">
-          {series.length > 0 && <h2 className="mb-3 text-base font-semibold">Sách khác</h2>}
-          <Shelf books={singles} twins={twins} memory={memory && `${memory}.singles`} />
-        </section>
-      )}
-    </div>
-  );
+  const sections = [
+    ...series.map(([key, items]) => ({ key, label: items[0].name, items: items.map((item) => item.book), badges: badgesOf(items) })),
+    ...(singles.length ? [{ key: "singles", label: series.length ? "Sách khác" : "", items: singles, badges: undefined }] : []),
+  ];
+  const rows = useListPresence(sections, (section) => section.key);
+  return <div className="mt-6 space-y-10">{rows.map(({ key, item, state, ref }) => (
+    <section key={key} ref={ref} aria-label={item.label || "Sách lẻ"} className="motion-row" data-state={state} inert={state === "exit"}><div>
+      {item.label && <h2 className="mb-3 text-base font-semibold">{item.label} · {item.items.length}</h2>}
+      <Shelf books={item.items} badges={item.badges} twins={twins} memory={memory && `${memory}.${key}`} />
+    </div></section>
+  ))}</div>;
 }
 
 const EMPTY_TEXT: Record<Filter, string> = {
@@ -417,8 +410,10 @@ export function LibraryScreen({
       ),
     [books, filter, folded, sort],
   );
+  const libraryRows = useListPresence(books ?? [], (book) => book.id);
+  const upcomingRows = useListPresence(upcoming, (book) => book.id);
   return (
-    <div ref={container} className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
+    <MotionRegion as="div" elementRef={container} className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
       {/* Hai nút cạnh tiêu đề không được bóp tiêu đề thành "Thư / viện" ở 390 px (soát UX 05-10): tiêu đề giữ một dòng, nút xuống dưới. */}
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="shrink-0">
@@ -429,14 +424,14 @@ export function LibraryScreen({
         {(books?.length || upcoming.length > 0) && header}
       </header>
       {recap}
-      {upcoming.length > 0 && (
+      {upcomingRows.length > 0 && (
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {upcoming.map((book) => (
-            <UpcomingCard key={book.id} book={book} onOpen={onOpenUpcoming} />
+          {upcomingRows.map(({ key, item, state, ref }) => (
+            <div key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div><UpcomingCard book={item} onOpen={onOpenUpcoming} /></div></div>
           ))}
         </div>
       )}
-      {isLoading ? (
+      <LoadingCrossfade loading={isLoading} placeholder={
         <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-6">
           {Array.from({ length: 6 }, (_, index) => (
             <div key={index}>
@@ -445,9 +440,10 @@ export function LibraryScreen({
             </div>
           ))}
         </div>
-      ) : failedEmpty(libraryQuery) ? (
+      }>
+      {failedEmpty(libraryQuery) ? (
         <LoadError what="thư viện" error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
-      ) : !books?.length ? (
+      ) : !libraryRows.length ? (
         upcoming.length ? null : empty ?? (
           <EmptyState icon={Headphones} title="Chưa có sách nào" className="mt-12">
             Sách nghe được sẽ hiện ở đây.
@@ -455,11 +451,11 @@ export function LibraryScreen({
         )
       ) : (
         <>
-          {listening && (
-            <div className="mt-6">
+          <MotionPresence open={Boolean(listening)}>{listening && (
+            <MotionRegion motionKey={listening.id} className="mt-6">
               <ContinueCard book={listening} />
-            </div>
-          )}
+            </MotionRegion>
+          )}</MotionPresence>
           <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
             <Segmented<Filter>
               label="Lọc sách"
@@ -505,33 +501,28 @@ export function LibraryScreen({
                 title="Tên sách hay giọng kể - gõ không dấu cũng được"
                 className="touch-row h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-9 text-sm outline-none placeholder:text-fg-3 focus:border-focus sm:w-80 [&::-webkit-search-cancel-button]:hidden"
               />
-              {query && (
                 <button
                   type="button"
                   onClick={() => setQuery("")}
                   aria-label="Xoá ô tìm"
-                  className="absolute right-1 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-fg-3 hover:bg-hover hover:text-fg"
+                  inert={!query}
+                  aria-hidden={!query}
+                  style={{ opacity: query ? 1 : 0, pointerEvents: query ? undefined : "none" }}
+                  className="absolute right-1 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-fg-3 transition-opacity duration-motion-fast hover:bg-hover hover:text-fg"
                 >
                   <X className="size-4" />
                 </button>
-              )}
             </label>
           </div>
-          {shown.length ? (
-            filter === "all" && !folded ? (
-              <SeriesShelves books={shown} twins={twins} memory={memory} />
-            ) : (
-              <div className="mt-6">
-                <Shelf books={shown} twins={twins} memory={memory} />
-              </div>
-            )
-          ) : (
-            <EmptyState icon={Search} title={query ? `Không tìm thấy sách nào khớp “${query}”` : "Không có sách ở đây"} className="mt-4">
-              {query ? "Thử gõ một phần tên sách hoặc tên tác giả khác." : EMPTY_TEXT[filter]}
-            </EmptyState>
-          )}
+          <SeriesShelves books={shown} twins={twins} memory={memory} grouped={filter === "all" && !folded} />
+          <MotionPresence open={!shown.length}>
+            {!shown.length && <EmptyState icon={Search} title={query ? `Không tìm thấy sách nào khớp “${query}”` : "Không có sách ở đây"} className="mt-4">
+              {query ? "Thử tên sách hoặc tác giả khác." : EMPTY_TEXT[filter]}
+            </EmptyState>}
+          </MotionPresence>
         </>
       )}
-    </div>
+      </LoadingCrossfade>
+    </MotionRegion>
   );
 }

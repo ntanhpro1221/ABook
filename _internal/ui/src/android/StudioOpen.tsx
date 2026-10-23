@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Clapperboard, Laptop } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import type { ListenBook } from "@/listen/model";
 import { Button, Dialog } from "@/shared/ui";
 import { EbookLibrary, type StudioComputer } from "./plugins";
@@ -19,7 +19,7 @@ export function studioListenOnlyLine(names: string | string[]): string {
 }
 
 /** Đường tới công tắc trên máy tính, đúng tên mục và tên công tắc hiện có (desktop/PhoneSync.tsx - soát a68 lỗi 12: "Cài đặt > Thiết bị" không có). */
-const STUDIO_SWITCH_PATH = "Cài đặt → Điện thoại và thiết bị → “Cho phép điều khiển sản xuất từ thiết bị đã ghép”";
+const STUDIO_SWITCH_PATH = "Cài đặt › Thiết bị › “Điều khiển từ xa”";
 
 /** Máy tính còn mở Studio được (không phải máy chỉ cho nghe). */
 function openable(computers: StudioComputer[]): StudioComputer[] {

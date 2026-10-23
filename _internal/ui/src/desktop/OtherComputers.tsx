@@ -1,10 +1,13 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bluetooth, Check, Clapperboard, Laptop, Moon, Radar, RefreshCw, Smartphone, Stethoscope, Unplug } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { api } from "@/studio/api";
 import { cn } from "@/shared/cn";
+import { MoreInfo } from "@/shared/SettingsNav";
 import { formatFingerprint, formatRelative } from "@/shared/format";
 import { peerPage } from "@/shared/peerStudio";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
@@ -92,7 +95,7 @@ export function OtherComputers() {
       done(view);
       setAddress("");
       setCode("");
-      toast.success("Đã ghép", { description: name ? `Sách của ${name} hiện trong Thư viện với nhãn “Trên ${name}”.` : "Sách của máy ấy hiện trong Thư viện với nhãn “Trên” và tên máy ấy." });
+      toast.success(name ? `Đã ghép ${name}` : "Đã ghép", { description: "Sách của máy ấy đã có trong Thư viện." });
     },
     onError: (error: Error) => toast.error("Chưa ghép được", { description: error.message }),
   });
@@ -134,6 +137,8 @@ export function OtherComputers() {
   const codeInput = useRef<HTMLInputElement>(null);
   // Hộp "Chẩn đoán" của một điện thoại đã ghép (nhật ký + tình trạng, lấy qua kết nối đã ghép).
   const [diagnosing, setDiagnosing] = useState<Computer | null>(null);
+  const lastDiagnosing = useRef(diagnosing);
+  if (diagnosing) lastDiagnosing.current = diagnosing;
   const choose = (found: FoundComputer) => {
     setAddress(`${found.host}:${found.port}`);
     codeInput.current?.focus();
@@ -142,12 +147,12 @@ export function OtherComputers() {
     setAddress(device.address);
     codeInput.current?.focus();
   };
-  if (isLoading || !data) return <Skeleton className="h-20" />;
+  if (isLoading || !data) return <MotionRegion><Skeleton className="h-20" /></MotionRegion>;
   // Đã ghép rồi thì không mời ghép lại.
   const pairedAddresses = new Set(data.computers.filter((computer) => isBluetoothHost(computer.host)).map((computer) => bluetoothAddress(computer)));
   const unpaired = devices.filter((device) => !pairedAddresses.has(device.address));
   return (
-    <div className="space-y-4">
+    <MotionRegion as="div" className="motion-reveal space-y-4">
       {data.broken && (
         <p className="text-sm text-warning" role="status">
           {data.broken}
@@ -156,10 +161,10 @@ export function OtherComputers() {
       {data.computers.length > 0 && (
         <ul className="divide-y divide-line rounded-xl border border-line">
           {data.computers.map((computer) => (
-            <li key={computer.id} className="flex items-center gap-3 px-3 py-2.5 max-sm:flex-wrap">
+            <li key={computer.id}>
+              <Fold storageKey={`other-computers.${computer.id}`} title={computer.name} heading="h3" summary={computer.waking ? "Đang chờ" : computer.error ? "Cần kiểm tra" : "Đã ghép"} bodyClassName="flex flex-wrap items-center gap-3 px-3 pb-3">
               <Laptop className="size-5 shrink-0 text-fg-2" />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium">{computer.name}</div>
                 {computer.waking ? (
                   <div className="text-xs text-fg-2" role="status">
                     <Moon className="mr-1.5 -mt-0.5 inline size-3.5 align-middle" aria-hidden />
@@ -224,10 +229,12 @@ export function OtherComputers() {
                 Thôi ghép
               </Button>
               </div>
+              </Fold>
             </li>
           ))}
         </ul>
       )}
+      <Fold storageKey="other-computers.pair" title="Ghép máy" bodyClassName="space-y-3 px-3 pb-3">
       <div className="space-y-2">
         <Button variant="secondary" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>
           Tìm máy trong mạng
@@ -259,7 +266,7 @@ export function OtherComputers() {
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-fg-2">Không thấy máy nào trong mạng này - xem cách ghép bên dưới.</p>
+            <p className="text-xs text-fg-2">Không thấy máy nào trong mạng này.</p>
           ))}
       </div>
       <form
@@ -307,7 +314,7 @@ export function OtherComputers() {
       )}
       {unpaired.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs text-fg-2">Không chung Wi-Fi? Chọn thiết bị đã ghép Bluetooth với máy tính này:</p>
+          <p className="text-xs text-fg-2">Khác Wi-Fi? Chọn máy đã ghép Bluetooth:</p>
           <ul className="flex flex-wrap gap-2">
             {unpaired.map((device) => (
               <li key={device.address}>
@@ -319,30 +326,23 @@ export function OtherComputers() {
           </ul>
         </div>
       )}
-      <div className="space-y-2 text-xs leading-relaxed text-fg-3">
-        <p>
-          Cùng Wi-Fi: hai máy phải cùng mạng (ở khác nơi thì vào cùng một mạng riêng ảo rồi gõ địa chỉ của máy kia trong mạng
-          ấy). Trên máy kia: Cài đặt → Điện thoại và thiết bị → bật “{SYNC_SWITCH_LABEL}” → “Ghép thiết bị
-          mới” để lấy mã 6 số; địa chỉ máy ấy ghi ở dòng “Địa chỉ máy này” ngay cạnh mã. Điện thoại Android: màn Tải sách → bật “Cho
-          máy khác nghe thư viện này” → “Ghép máy mới”. Máy này tên “{data.name}” trong danh sách thiết bị đã ghép của máy kia.
-        </p>
-        <p>
-          Ghép một chiều: máy này nghe được sách của máy kia. Muốn máy kia nghe sách của máy này thì ghép từ máy kia, với mã tạo ở
-          Cài đặt → Điện thoại và thiết bị của máy này.
-        </p>
-        <p>
-          Không chung Wi-Fi: ghép điện thoại với máy tính này qua Bluetooth trong Cài đặt Windows trước, mở ABook trên điện
-          thoại, bật “Cho máy khác nghe thư viện này”, rồi chọn điện thoại ở trên và gõ mã 6 số.
-        </p>
-      </div>
+      <MoreInfo label="Cách ghép">
+        <ul className="list-disc space-y-1 pl-4">
+          <li>Máy tính kia: Cài đặt › Thiết bị › bật “{SYNC_SWITCH_LABEL}” › “Ghép thiết bị mới” để lấy mã 6 số và địa chỉ.</li>
+          <li>Điện thoại: Tải sách › bật “Cho máy khác nghe thư viện này” › “Ghép máy mới”.</li>
+          <li>Khác Wi-Fi: ghép Bluetooth trong Cài đặt Windows trước, hay dùng mạng riêng ảo.</li>
+          <li>Ghép một chiều: máy này nghe sách của máy kia. Máy kia thấy máy này là “{data.name}”.</li>
+        </ul>
+      </MoreInfo>
+      </Fold>
       {unpair.dialog}
-      {diagnosing && <PhoneDiagnostics computer={diagnosing} open onOpenChange={(open) => !open && setDiagnosing(null)} />}
-    </div>
+      {lastDiagnosing.current && <PhoneDiagnostics computer={lastDiagnosing.current} open={diagnosing !== null} onOpenChange={(open) => !open && setDiagnosing(null)} />}
+    </MotionRegion>
   );
 }
 
 /** Máy ghép qua Wi-Fi: menu chọn thiết bị Bluetooth đã ghép làm đường dự phòng khi Wi-Fi hỏng (Wi-Fi vẫn đi trước). */
-function BluetoothFallback({
+export function BluetoothFallback({
   computer,
   devices,
   busy,
@@ -370,11 +370,11 @@ function BluetoothFallback({
         </DropdownMenu.Trigger>
       </Tooltip>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+        <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
           <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Khi Wi-Fi không tới được, đi Bluetooth qua</DropdownMenu.Label>
           {!devices.length && (
             <p className="px-2 py-1.5 text-xs text-fg-3">
-              Chưa thấy thiết bị Bluetooth nào đã ghép với máy tính này - ghép điện thoại trong Cài đặt Windows trước.
+              Chưa có thiết bị Bluetooth nào. Ghép trong Cài đặt Windows trước.
             </p>
           )}
           {devices.map((device) => (
@@ -388,7 +388,7 @@ function BluetoothFallback({
           <DropdownMenu.Item disabled={!current} onSelect={() => onChoose("")} className={cn(MENU_ITEM, "text-fg-2")}>
             Không dùng
           </DropdownMenu.Item>
-        </DropdownMenu.Content>
+        </MotionRegion></DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
   );

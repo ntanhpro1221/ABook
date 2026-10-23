@@ -1,8 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Clapperboard, Cpu, Download, LoaderCircle, Square, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { peerPage } from "@/shared/peerStudio";
 import { Button, Progress } from "@/shared/ui";
@@ -70,11 +71,10 @@ export function usePairedComputers(enabled: boolean): { id: string; name: string
 }
 
 /** Studio là gì và máy cần gì để cài - MỘT chỗ viết, thẻ "Cài Studio" ở màn Dự án và khối nhắc ở trình tạo sách nói dùng chung để hai nơi không lệch nhau. */
-export const STUDIO_WHAT = "Studio là phần biến truyện chữ thành sách nói: model đọc hiểu truyện, giọng đọc, nghe lại để kiểm từng câu.";
+export const STUDIO_WHAT = "Studio biến truyện chữ thành sách nói.";
 // Thời gian một chương: số đo của dây chuyền trên card 8 GB của máy thử, phân tích + thu (docs/ANALYSIS_RESEARCH.md, mục máy Mac mini).
 export const STUDIO_NEEDS =
-  "Cần card đồ hoạ NVIDIA từ 8 GB bộ nhớ (card 6-8 GB có thể chạy nhưng chưa thử), tải khoảng 25 GB, ổ đĩa trống 35 GB. Trên card 8 GB mỗi chương " +
-  "mất khoảng 7-10 phút (đọc hiểu truyện + thu giọng). Cài một lần; nghe sách không cần Studio.";
+  "Cần card NVIDIA từ 8 GB, tải ~25 GB, trống 35 GB. Mỗi chương ~7-10 phút.";
 
 /** Máy này không làm sách nói được: nói thật, và nếu đã ghép máy tính khác thì mời tạo ở đó (Studio của máy ấy mở ngay trong app này -
  *  webui/peer_studio.py). Không mời "tạo rồi chờ cài xong": dự án ấy sẽ không bao giờ chạy trên máy này (soát a64). */
@@ -88,8 +88,8 @@ export function NoStudioHere({ fit, className }: { fit: StudioFit; className?: s
         <p className="font-semibold text-pretty">{noStudioLine(fit.reason ?? "")}</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
           {peers.length
-            ? "Máy tính đã ghép với máy này mà có Studio thì tạo sách nói ở đó: sách xong nghe được ở cả hai máy."
-            : "Có máy tính khác có card NVIDIA thì cài ABook và Studio ở đó, ghép với máy này (Cài đặt › Thiết bị) rồi tạo sách nói từ đây."}
+            ? "Tạo trên máy tính đã ghép có Studio; sách xong nghe ở cả hai máy."
+            : "Có máy khác có card NVIDIA? Cài Studio ở đó rồi ghép (Cài đặt › Thiết bị)."}
         </p>
       </div>
       {peers.length > 0 && (
@@ -160,7 +160,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
     }
     wasRunning.current = status.running;
   }, [status, client]);
-  if (!needed || !status) return null;
+  if (!needed || !status) return <MotionRegion />;
 
   const call = async (path: string) => {
     try {
@@ -180,7 +180,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
   const fit = !status.installed ? studioFit(status.gpu) : null;
   const unfit = fit?.level === "no" && !status.running;
   return (
-    <section className={cn("rounded-2xl border border-line bg-panel p-5 sm:p-6", className)} aria-labelledby="studio-setup-title">
+    <MotionRegion as="section" className={cn("rounded-2xl border border-line bg-panel p-5 sm:p-6", className)} aria-labelledby="studio-setup-title">
       {/* Màn hẹp: chữ chiếm cả hàng, nút xuống dưới - không ép chữ thành cột hẹp cạnh nút (soát a64, 390 px). */}
       <div className="flex flex-wrap items-start gap-4">
         <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text">
@@ -188,17 +188,16 @@ export function StudioSetupCard({ className }: { className?: string }) {
         </div>
         <div className="min-w-0 flex-1 basis-[16rem]">
           <h2 id="studio-setup-title" className="text-base font-semibold">
-            {repair ? "Sửa Studio" : update ? "Cập nhật Studio" : "Cài Studio để làm sách nói trên máy này"}
+            {repair ? "Sửa Studio" : update ? "Cập nhật Studio" : "Cài Studio"}
           </h2>
           <p className="mt-1 max-w-2xl text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
             {repair
-              ? `Studio trên máy này mất ${damaged.join(", ")} (file đã bị xoá hay hỏng) nên chưa làm sách được.${
-                  stale.length > 0 ? ` Cũng cần cập nhật ${stale.join(", ")}.` : ""
-                } Bấm Sửa Studio để tải lại đúng phần ấy; sách đã làm và chỗ đang nghe giữ nguyên.`
+              ? `Studio thiếu ${damaged.join(", ")} (file bị xoá hay hỏng).${
+                  stale.length > 0 ? ` Cần cập nhật ${stale.join(", ")}.` : ""
+                } Sửa chỉ tải lại phần ấy; sách giữ nguyên.`
               : update
-              ? `Bản ABook này làm sách bằng ${status.outdated.join(", ")} khác với bản Studio đang có - cập nhật rồi làm sách
-                tiếp. Chỉ tải lại đúng phần ấy; sách đã làm và chỗ đang nghe giữ nguyên.`
-              : `${STUDIO_WHAT} ${STUDIO_NEEDS} Mất mạng hay tắt máy giữa chừng thì bấm lại là làm tiếp.`}
+              ? `Cần bản mới của ${status.outdated.join(", ")}. Chỉ tải lại phần ấy; sách giữ nguyên.`
+              : `${STUDIO_WHAT} ${STUDIO_NEEDS} Đứt giữa chừng thì bấm lại là làm tiếp.`}
           </p>
           {fit && (
             <p className={cn("mt-2 max-w-2xl text-[0.8125rem] leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>
@@ -285,7 +284,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
           </div>
         </div>
       )}
-    </section>
+    </MotionRegion>
   );
 }
 
@@ -303,7 +302,7 @@ export function StudioSettings() {
     const timer = window.setTimeout(() => setArmed(false), 6000);
     return () => window.clearTimeout(timer);
   }, [armed]);
-  if (!info?.studio || !status) return null;
+  if (!info?.studio || !status) return <MotionRegion />;
   if (!status.installed) {
     const fit = studioFit(status.gpu);
     // Bấm là cài luôn rồi sang màn Dự án xem tiến độ - không phải bấm "Cài Studio" lần hai ở đó (soát a64).
@@ -319,7 +318,7 @@ export function StudioSettings() {
       }
     };
     return (
-      <div className="mb-6 max-w-xl">
+      <MotionRegion as="div" className="mb-6 max-w-xl">
         <h3 className="text-sm font-semibold">Studio trên máy này</h3>
         <p className="mt-1 text-sm">{status.running ? "Đang cài." : "Chưa cài."}</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{STUDIO_NEEDS}</p>
@@ -339,7 +338,7 @@ export function StudioSettings() {
             Cài Studio
           </Button>
         )}
-      </div>
+      </MotionRegion>
     );
   }
   const remove = async () => {
@@ -360,7 +359,7 @@ export function StudioSettings() {
     }
   };
   return (
-    <div className="mb-6 max-w-xl">
+    <MotionRegion as="div" className="mb-6 max-w-xl">
       <h3 className="text-sm font-semibold">Studio trên máy này</h3>
       <p className="mt-1 text-sm">Studio đã cài{status.gpu ? `, chạy trên ${status.gpu.name}` : ""}.</p>
       {status.outdated.length > 0 && (
@@ -380,6 +379,6 @@ export function StudioSettings() {
         Gỡ là xoá thư viện và model (15-20 GB). Sách đã làm, chỗ đang nghe và dữ liệu app giữ nguyên; cuốn đang làm dở
         phải làm lại từ đầu sau khi cài lại.
       </p>
-    </div>
+    </MotionRegion>
   );
 }
