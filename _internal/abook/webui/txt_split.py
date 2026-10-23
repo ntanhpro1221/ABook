@@ -73,6 +73,9 @@ def split(path: Path, root: Path, title: str = "") -> Path:
     tên thư mục chương vẫn là tên truyện (trình tạo sách gợi ý tên sách theo nó). Chữ giữ nguyên từng dòng - chỉ cắt ở
     đầu các dòng tiêu đề. Chữ dẫn chỉ là MỘT dòng tên truyện và dòng ấy trùng `title` (Tên sách đang điền): nó là tên sách, không thành
     chương "Mở đầu" 4 chữ; khác `title` thì vẫn là chương "Mở đầu" (không bỏ chữ của truyện)."""
+    from .actions import check_upload_folder, contained_upload
+
+    root = contained_upload(root, root)
     raw = path.read_bytes()
     lines = _lines(path)
     found = headings(lines)
@@ -82,7 +85,9 @@ def split(path: Path, root: Path, title: str = "") -> Path:
     lead = _title_line(lines, found)
     drop = False  # metadata tên sách không phải sự đồng ý bỏ dòng chữ
     # Bỏ hay giữ dòng tên truyện ra hai bộ chương khác nhau: hai thư mục khác nhau.
-    folder = root / hashlib.sha256(raw + b"+keep-preamble-v2").hexdigest()[:8] / stem
+    folder = contained_upload(root, root / hashlib.sha256(raw + b"+keep-preamble-v2").hexdigest()[:8] / stem)
+    if folder.is_dir():
+        check_upload_folder(root, folder)
     if folder.is_dir() and any(folder.glob("*.txt")):
         return folder
     width = max(4, len(str(len(found))))
@@ -94,9 +99,11 @@ def split(path: Path, root: Path, title: str = "") -> Path:
         end = cuts[position + 1] if position + 1 < len(found) else len(lines)
         parts.append((lines[heading].strip(), lines[cuts[position]:end]))
     folder.mkdir(parents=True, exist_ok=True)
+    folder = contained_upload(root, folder)
     first = 0 if parts[0][0] == PREAMBLE else 1
     for index, (title, body) in enumerate(parts, start=first):
         label = clip_title(" ".join(_UNSAFE_NAME.sub(" ", title).split()), 50).strip(" .")
         text = "\n".join(body).strip("\n") + "\n"
-        (folder / f"{index:0{width}d}{' ' + label if label else ''}.txt").write_bytes(text.encode("utf-8"))
+        target = contained_upload(root, folder / f"{index:0{width}d}{' ' + label if label else ''}.txt")
+        target.write_bytes(text.encode("utf-8"))
     return folder

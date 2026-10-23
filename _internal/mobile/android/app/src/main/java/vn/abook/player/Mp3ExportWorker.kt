@@ -419,6 +419,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             if (plan.music != null) finished.put("mixed", true)
             if (missing > 0) finished.put("musicMissing", missing)
             Mp3Exports.emit(finished)
+            Mp3Exports.endIfTimedOut(this)
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
             Mp3Exports.endIfTimedOut(this) // hết 6 giờ: kết thúc HẲN việc (WorkManager không chạy lại) TRƯỚC khi dọn gì

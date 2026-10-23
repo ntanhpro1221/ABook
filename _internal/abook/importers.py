@@ -1998,13 +1998,17 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
     chắc chắn (`default_skips`) không vào file chương, như Nghe ngay tích sẵn bỏ chúng. Chương ghi vào thư mục tạm rồi mới đổi tên: hết chỗ giữa
     chừng thì không để lại nửa cuốn."""
     from .webui import humanize
+    from .webui.actions import check_upload_folder, contained_upload
 
+    folder_root = contained_upload(folder_root, folder_root)
     try:
         digest = hashlib.sha256(path.read_bytes()).hexdigest()[:8]
     except OSError as error:
         raise ImportFailed(f"Không đọc được file này ({error.strerror or 'lỗi đọc đĩa'}) - kiểm tra file còn đó và không bị chương trình khác khoá.") from error
     stem = UNSAFE_NAME.sub(" ", path.stem).strip() or path.suffix.lstrip(".") or "sach"
-    folder = folder_root / f"{stem[:80]} - {digest}"
+    folder = contained_upload(folder_root, folder_root / f"{stem[:80]} - {digest}")
+    if folder.is_dir():
+        check_upload_folder(folder_root, folder)
     sidecar = folder / SIDECAR
     if sidecar.is_file() and any(folder.glob("*.txt")):
         try:
@@ -2038,6 +2042,7 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
         info = {"title": book.title, "author": book.author, "language": book.language, "notes": _studio_notes(book), "cover": cover, "matter": matter}
         # Ghi SAU CÙNG và nguyên tử: có sidecar nghĩa là các chương đã ghi đủ.
         atomic_write_bytes(staging / SIDECAR, json.dumps(info, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
+        folder = contained_upload(folder_root, folder)
         _publish_folder(staging, folder)
     except OSError as error:
         shutil.rmtree(staging, ignore_errors=True)

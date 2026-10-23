@@ -41,7 +41,8 @@ def clean_color(value: Any) -> str:
 
 def stored_meta(cover: dict[str, Any]) -> dict[str, Any]:
     """Phần `cover` của một book.json / manifest từ nơi khác -> nội dung `cover.json` (màu chỉ khi hợp lệ; cỡ khi có)."""
-    meta = {key: cover[key] for key in ("width", "height") if cover.get(key)}
+    meta = {key: cover[key] for key in ("width", "height")
+            if type(cover.get(key)) is int and 0 < cover[key] <= 20_000}
     color = clean_color(cover.get("color"))
     if color:
         meta["color"] = color
@@ -101,11 +102,12 @@ def cover_meta(project_root: Path) -> dict[str, Any] | None:
         meta = json.loads((project_root / META_FILE).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         meta = {}
+    meta = stored_meta(meta) if isinstance(meta, dict) else {}
     return {
         "version": file_version(path),
         "color": clean_color(meta.get("color")),
-        "width": int(meta.get("width") or 0),
-        "height": int(meta.get("height") or 0),
+        "width": meta.get("width", 0),
+        "height": meta.get("height", 0),
     }
 
 

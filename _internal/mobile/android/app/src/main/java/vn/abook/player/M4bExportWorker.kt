@@ -211,6 +211,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 finished.put("overCeiling", org.json.JSONArray(over.map { (chapter, dbtp) -> JSONObject().put("chapter", chapter).put("dbtp", dbtp) }))
             }
             M4bExports.emit(finished)
+            Mp3Exports.endIfTimedOut(this)
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
             Mp3Exports.endIfTimedOut(this) // hết 6 giờ: kết thúc HẲN việc (WorkManager không chạy lại) TRƯỚC khi dọn gì

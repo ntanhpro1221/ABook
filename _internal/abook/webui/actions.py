@@ -53,7 +53,7 @@ def inside_folder(path: str, root: Path) -> bool:
 
 
 OUTSIDE_UPLOADS = ("Thư mục nguồn trỏ ra ngoài thư viện của bạn (một liên kết hay junction) nên ABook không đọc hay ghi vào đó. "
-                   "Hãy chép các file vào thư viện rồi gửi lại.")
+                   "Bạn hãy chép các file vào thư viện trên máy tính rồi gửi lại.")
 
 
 class UploadEscape(ValueError):
@@ -91,8 +91,8 @@ def check_upload_folder(uploads: Path, folder: Path) -> None:
             for entry in entries:
                 if _is_link(entry):
                     contained_upload(uploads, Path(entry.path))
-    except OSError:
-        return  # không liệt kê được: lần quét sau cũng không đọc được gì
+    except OSError as error:
+        raise UploadEscape from error  # không xác minh được MỘT mục cũng không được cho phép quét phần còn lại
 
 
 def is_upload_part(part: str) -> bool:
@@ -135,10 +135,12 @@ def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Pa
     target_dir.mkdir(parents=True, exist_ok=True)
     target_dir = contained_upload(uploads, target_dir)  # kiểm lại sau khi tạo: liên kết đổi giữa chừng cũng bị chặn trước khi ghi byte nào
     target = target_dir / file_name
-    if target.exists():
+    if os.path.lexists(target):
         raise ValueError(f"Đã có chương {file_name} trong lần gửi này - hai file trùng tên")
     temporary = target_dir / f".{file_name}.part"
-    temporary.write_bytes(data)
+    # O_EXCL (xb) từ chối cả symlink có đích chưa tồn tại, không mở rồi ghi theo liên kết .part có sẵn.
+    with temporary.open("xb") as output:
+        output.write(data)
     os.replace(temporary, target)
     return target
 
