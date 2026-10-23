@@ -29,7 +29,7 @@ def test_a_recorded_book_gets_both_cards_with_the_existing_wishes_as_the_choices
 
     (choice,) = voice["voiceChoices"]
     assert choice["character"] == "NARRATOR" and choice["preset"] == "Ngọc Linh" and voice["keepCharacters"] == ["NARRATOR"]
-    assert "Lời dẫn" in voice["title"] and "nữ" in voice["title"]
+    assert voice["title"] == "Giọng lời dẫn" and "nữ" in voice["problem"]
     assert thought["key"] == "teller-thought:MAI" and thought["affected"] == 2
     assert [option["value"] for option in thought["choices"]] == ["NARRATOR"]
     assert read_overrides(root).get("voices") in (None, {}), "mặc định không áp: chưa có ý muốn nào được ghi"

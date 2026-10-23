@@ -371,7 +371,7 @@ def _validate_music(music: Any) -> dict[str, Any]:
     if "tracks" in music or wanted:
         tracks = music.get("tracks")
         if not isinstance(tracks, dict) or set(tracks) != wanted:
-            raise EditsError("Nhạc đã chọn trong phần sửa không khớp với các đoạn đổi bài và danh sách đã chọn.")
+            raise EditsError("Nhạc trong phần sửa không khớp các đoạn đổi bài và danh sách đã chọn.")
         out["tracks"] = {sha: _validate_track(tracks[sha]) for sha in sorted(tracks)}
     return out
 
@@ -883,7 +883,7 @@ def _base_cast(folder: Path) -> dict[str, Any]:
     return packages.raw_cast(folder)
 
 
-TOO_BIG = "Quá nhiều thay đổi đang chờ trong cuốn này - hãy lưu, áp bớt vào dự án rồi làm tiếp."
+TOO_BIG = "Quá nhiều sửa đổi đang chờ — bạn lưu và áp bớt vào dự án rồi làm tiếp."
 
 
 def _write(folder: Path, edits: dict[str, Any]) -> dict[str, Any]:
@@ -1029,7 +1029,7 @@ def clean_reading(shown: Any, spoken: Any) -> tuple[str, str]:
         start, end = book_readings.core_span(word)
         word = word[start:end]  # người chạm vào "Haruto," hay “Hạ Vy,” - cách đọc đặt cho chính chữ ấy, không dính dấu câu hai đầu
     if not word or not book_readings.is_key(word):
-        raise EditsError("Chỉ đặt được cách đọc cho một từ hay tối đa 6 từ liền nhau, không có dấu câu ở giữa.")
+        raise EditsError("Bạn chọn tối đa 6 từ liền nhau, không có dấu câu, để đặt cách đọc.")
     return word, clean_text(spoken, READING_SPOKEN_MAX)
 
 

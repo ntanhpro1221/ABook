@@ -57,7 +57,7 @@ object OrtRuntime {
         try {
             ai.onnxruntime.OrtEnvironment.getEnvironment()
         } catch (failure: Throwable) { // UnsatisfiedLinkError là Error, không phải Exception
-            throw IllegalStateException("không nạp được thư viện ONNX Runtime (${failure.message ?: failure.javaClass.simpleName})", failure)
+            throw IllegalStateException("Chưa mở được bộ đọc — bạn thử lại hoặc tải lại trong Cài đặt.", failure)
         }
     }
 }

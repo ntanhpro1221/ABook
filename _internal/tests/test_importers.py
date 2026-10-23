@@ -388,9 +388,9 @@ def test_the_pdf_rules_layer_replays_the_raw_pages() -> None:
 
 
 def test_a_pdf_without_a_text_layer_says_it_needs_ocr() -> None:
-    with pytest.raises(importers.ImportFailed, match="ảnh chụp"):
+    with pytest.raises(importers.ImportFailed, match="OCR"):
         importers.import_text(FIXTURES / "scan.pdf")
-    assert "Bạn" in expected("scan")["error"] and "OCR" in expected("scan")["error"]
+    assert "bạn" in expected("scan")["error"] and "OCR" in expected("scan")["error"]
 
 
 def test_running_lines_only_go_when_they_repeat_and_chapter_headings_never_do() -> None:
@@ -426,7 +426,7 @@ def test_hostile_or_broken_files_say_why(tmp_path: Path) -> None:
         importers.import_text(odd)
     (tmp_path / "trong").mkdir()
     (tmp_path / "trong" / "1.txt").write_bytes(b"  \n")
-    with pytest.raises(importers.ImportFailed, match="Không có chương nào"):
+    with pytest.raises(importers.ImportFailed, match="^Không lấy được chữ từ “trong” — bạn thử bản khác; với TXT, lưu UTF-8 rồi nhập lại.$"):
         importers.import_text(tmp_path / "trong")
 
 
@@ -451,7 +451,7 @@ def test_studio_scan_takes_docx_and_pdf_like_epub(tmp_path: Path) -> None:
     assert all(row["chars"] > 0 for row in scan["files"])
     assert any("headings.docx" in note for note in scan["notes"])
     scanned = actions.scan_inputs([str(FIXTURES / "scan.pdf")], epub_root=library)
-    assert scanned["files"] == [] and "ảnh chụp" in scanned["errors"][0] and scanned["errors"][0].startswith("scan.pdf: ")
+    assert scanned["files"] == [] and "OCR" in scanned["errors"][0] and scanned["errors"][0].startswith("scan.pdf: ")
 
 
 def test_studio_scan_of_a_folder_of_books_unpacks_each_in_name_order(tmp_path: Path) -> None:
@@ -468,7 +468,7 @@ def test_remote_upload_accepts_the_new_book_types(tmp_path: Path) -> None:
     library.mkdir()
     for name in ("sach.docx", "sach.pdf", "sach.epub", "1.txt"):
         assert actions.upload_source(library, "Tải", name, b"x").is_file()
-    with pytest.raises(ValueError, match=r"\.docx"):
+    with pytest.raises(ValueError, match=r"DOCX"):
         actions.upload_source(library, "Tải", "sach.mobi", b"x")
 
 
@@ -512,7 +512,7 @@ def test_a_book_named_from_its_file_reads_underscores_and_double_dashes_as_space
 def test_an_empty_text_file_is_named_in_the_error_with_a_way_out(tmp_path: Path) -> None:
     empty = tmp_path / "trong.txt"
     empty.write_bytes(b"  \n")
-    with pytest.raises(importers.ImportFailed, match="trong “trong.txt”.*Notepad.*UTF-8"):
+    with pytest.raises(importers.ImportFailed, match="^Không lấy được chữ từ “trong.txt” — bạn thử bản khác; với TXT, lưu UTF-8 rồi nhập lại.$"):
         importers.import_text(empty)
 
 

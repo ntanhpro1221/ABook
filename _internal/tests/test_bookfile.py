@@ -362,9 +362,9 @@ def test_a_book_that_does_not_fit_the_disk_is_refused_before_anything_is_copied(
     _project, path = _pack(tmp_path)
     usage = namedtuple("usage", "total used free")
     monkeypatch.setattr(shutil, "disk_usage", lambda _path: usage(10**9, 10**9 - 1000, 1000))
-    with BookFile(path) as book, pytest.raises(BookFileError, match="không đủ chỗ") as refused:
+    with BookFile(path) as book, pytest.raises(BookFileError, match="Thiếu chỗ") as refused:
         book.extract(tmp_path / "thu_vien")
-    assert "cần khoảng" in str(refused.value) and "còn" in str(refused.value)
+    assert "cần " in str(refused.value) and "còn" in str(refused.value)
     assert not any((tmp_path / "thu_vien").iterdir()), "chưa chép gì vào thư viện"
 
 

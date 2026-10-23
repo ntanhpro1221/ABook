@@ -648,7 +648,7 @@ class BluetoothServer:
             self._close_quietly(server)
             return None
         except OSError as error:
-            self.error = ("Bluetooth của máy tính đang tắt - bật trong Cài đặt Windows để điện thoại kết nối qua Bluetooth"
+            self.error = ("Bluetooth đang tắt — bạn bật trong Cài đặt Windows để kết nối điện thoại."
                           if getattr(error, "winerror", None) in (10050, 10047) else f"Không mở được Bluetooth: {error}")
             self._close_quietly(server)
             return None
@@ -858,8 +858,7 @@ def find_channel(address: str, *, ws2: _Ws2 | None = None) -> int:
     except OSError as error:
         if error.errno not in (WSASERVICE_NOT_FOUND, WSANO_DATA):
             raise
-    raise ServiceNotFound("Không thấy ABook trên máy kia qua Bluetooth - máy kia đã bật ABook, Bluetooth và "
-                          "“Cho máy khác nghe thư viện này” chưa, và có trong tầm sóng không?")
+    raise ServiceNotFound("Không thấy ABook — bạn mở app, bật Bluetooth và chia sẻ ở máy gần đó.")
 
 
 def connect_rfcomm(address: str, *, ws2: _Ws2 | None = None) -> socket.socket:

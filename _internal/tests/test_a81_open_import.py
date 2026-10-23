@@ -106,7 +106,7 @@ def test_an_audio_entry_that_compresses_a_thousand_to_one_is_refused(tmp_path: P
     with pytest.raises(BookFileError) as refused:
         _import(tmp_path, file)
 
-    assert "bạn" in str(refused.value).lower() and "chapters/001.mp3" in str(refused.value)
+    assert "bạn" in str(refused.value).lower() and "gây hại hoặc bị hỏng" in str(refused.value)
     assert not list((tmp_path / "lib").glob("*/*")), "chưa ghi gì vào thư viện"
 
 
@@ -192,7 +192,7 @@ def test_updating_a_book_whose_chapter_is_playing_says_so_and_keeps_the_old_copy
         with pytest.raises(BookFileError) as refused:
             packages.import_file(build(tmp_path / "b.abook", newer, newer_book), library, [], prints, {})
 
-    assert "đang phát" in str(refused.value) and "bạn" in str(refused.value).lower()
+    assert "đang mở hoặc phát" in str(refused.value) and "bạn" in str(refused.value).lower()
     assert "chỉ đọc" not in str(refused.value)
     assert sorted(p.name for p in folder.glob("chapters/*.mp3")) == ["001.mp3"], "bản cũ còn nguyên"
     assert not [p for p in (library / "Sách đã nhập").iterdir() if p.name.startswith(".")], "không để thư mục tạm"
@@ -362,4 +362,4 @@ def test_a_book_that_does_not_fit_the_disk_says_how_much_room_the_listener_needs
     with pytest.raises(BookFileError) as refused:
         _import(tmp_path, build(tmp_path / "x.abook", entries, book))
 
-    assert "cần khoảng" in str(refused.value) and "còn" in str(refused.value) and "Bạn hãy" in str(refused.value)
+    assert "cần " in str(refused.value) and "còn" in str(refused.value) and "bạn dọn ổ" in str(refused.value)

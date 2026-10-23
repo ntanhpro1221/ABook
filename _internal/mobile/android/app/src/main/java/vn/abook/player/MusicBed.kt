@@ -71,7 +71,7 @@ object MusicBed {
     private const val LOOP_SETTLE = false
     private const val PREFS = "music_bed"
     /** Giọng của người nghe, không phải lỗi: nhạc nền chờ Wi-Fi (không tự tải bài nhạc lớn bằng dữ liệu di động). */
-    private const val METERED_NOTICE = "Đang dùng dữ liệu di động nên nhạc nền tự chọn chờ có Wi-Fi mới tải. Muốn nghe ngay, bạn chọn nhạc ở nút Nhạc nền."
+    private const val METERED_NOTICE = "Nhạc chờ Wi-Fi — bạn chọn bài ở nút Nhạc nền để tải ngay qua mạng di động."
     private const val AUTO_KEY = "auto-scene-music"
     private const val SEAM_P3_KEY = "music-seam-p3"
     private const val SCENE_POLL_MS = 1500L // nhạc theo cảnh dựng nền: chương chưa xong thì hỏi lại mỗi chừng này, tối đa SCENE_POLLS lần (ui/src/listen/player.tsx)

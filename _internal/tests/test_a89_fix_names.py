@@ -71,7 +71,7 @@ def test_machine_names_are_reserved(typed: str) -> None:
 
 
 def test_a_duplicate_of_another_person_is_refused_but_a_near_name_is_not() -> None:
-    with pytest.raises(name_rules.NameProblem, match="đã có người tên"):
+    with pytest.raises(name_rules.NameProblem, match="Đã có “Natasha” trong sách — bạn đặt tên khác để tránh nhầm người."):
         name_rules.person("natasha ", ["Lucien", "Natasha"])
     assert name_rules.person("Natasa", ["Natasha"]) == "Natasa"
     assert name_rules.person("Hạ", ["Hà"]) == "Hạ"
@@ -79,7 +79,7 @@ def test_a_duplicate_of_another_person_is_refused_but_a_near_name_is_not() -> No
 
 def test_rename_refuses_invisible_long_reserved_and_duplicate(studio) -> None:
     paths, post = studio
-    for bad, part in (("​", "không nhìn thấy"), ("x" * 120, "tối đa 80"), ("Người kể", "tên máy dùng"), ("natasha", "đã có người")):
+    for bad, part in (("​", "không nhìn thấy"), ("x" * 120, "tối đa 80"), ("Người kể", "tên máy dùng"), ("natasha", "Đã có “Natasha” trong sách")):
         status, answer = post("characters/rename", {"character": "LUCIEN", "name": bad})
         assert status == 400 and part in answer["error"], (bad, answer)
     assert names.shown(paths.root, "LUCIEN") in (None, "")
@@ -102,7 +102,7 @@ def test_rename_to_its_own_name_or_empty_is_not_a_duplicate(studio) -> None:
 
 def test_a_new_person_goes_through_the_same_rules(studio) -> None:
     paths, post = studio
-    for bad, part in (("​", "không nhìn thấy"), ("Lucien", "đã có người"), ("Vai phụ không tên", "tên máy dùng"), ("y" * 90, "tối đa 80")):
+    for bad, part in (("​", "không nhìn thấy"), ("Lucien", "Đã có “Lucien” trong sách"), ("Vai phụ không tên", "tên máy dùng"), ("y" * 90, "tối đa 80")):
         status, answer = post("speaker", {**_line(paths), "speaker": bad, "newGender": "male"})
         assert status == 400 and part in answer["error"], (bad, answer)
     assert not lo.read_overrides(paths.root).get("speakers")
@@ -135,7 +135,7 @@ def test_a_surface_that_never_occurs_is_saved_with_a_warning(studio) -> None:
     paths, post = studio
     status, answer = post("pronunciation", {"surface": "Zxqvw", "spokenForm": "da cờ"})
     assert status == 200, answer
-    assert "chưa có câu nào" in answer["warning"]
+    assert answer["warning"] == "Đã ghi nhưng chưa có câu chứa “Zxqvw” để đổi — bạn kiểm tra chữ đã gõ."
     status, answer = post("pronunciation", {"surface": "Natasha", "spokenForm": "na ta sa"})
     assert status == 200 and "warning" not in answer
 

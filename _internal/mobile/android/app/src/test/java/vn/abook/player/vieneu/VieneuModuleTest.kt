@@ -253,7 +253,7 @@ class VieneuModuleTest {
         module.join()
         val status = module.status()
         assertEquals("nano", status.getString("recommended"))
-        assertTrue(choice(status, "turbo").getString("detail").contains("4 GB RAM"))
+        assertEquals("25 giọng, âm thanh 48 kHz - hay nhất, cần điện thoại mạnh. Cần 1,3 GB RAM, dễ bị Android tắt — bạn nên chọn Nano.", choice(status, "turbo").getString("detail"))
         assertFalse(choice(status, "nano").getString("detail").contains("RAM"))
     }
 
@@ -446,7 +446,7 @@ class VieneuModuleTest {
         module.join()
         val status = module.status()
         assertEquals("error", status.getString("state"))
-        assertTrue(status.getString("error"), status.getString("error").startsWith("Không tải được giọng VieNeu"))
+        assertTrue(status.getString("error"), status.getString("error").startsWith("Chưa tải được giọng VieNeu"))
         assertTrue("finished parts are kept", File(root, "runtime/g2p/sea_g2p.bin").isFile)
     }
 

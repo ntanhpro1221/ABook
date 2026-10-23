@@ -73,7 +73,7 @@ UPNP_ERRORS = {
     710: "thiết bị không tua được",
     711: "vị trí tua nằm ngoài chương",
     714: "thiết bị không phát được loại audio này",
-    716: "thiết bị không tải được audio từ máy này - kiểm tường lửa Windows (cho ABook dùng mạng riêng)",
+    716: "thiết bị chưa tải được âm thanh — bạn cho ABook dùng mạng riêng qua tường lửa",
     717: "thiết bị không đổi được tốc độ",
 }
 TV_WORDS = re.compile(r"\b(tv|television|bravia|webos|tizen|roku|fire ?tv|google ?tv|android ?tv|smart ?tv)\b", re.IGNORECASE)

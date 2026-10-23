@@ -196,6 +196,7 @@ def test_the_inbox_asks_once_for_the_whole_odd_group(tmp_path: Path) -> None:
     assert [line["stableId"] for line in card["lines"]] == [f"s{seq}" for seq in range(7, 11)]
     assert card["choices"][0]["value"] == "UNNAMED", "người lạ trước tiên là vai phụ không tên"
     assert card["affected"] == 4 and "“cậu”" in card["problem"] and "Lucia" in card["title"]
+    assert "thường xưng" in card["problem"] and "“anh”" in card["problem"]
 
 
 def test_the_narrators_own_label_is_left_to_the_line_by_line_card() -> None:

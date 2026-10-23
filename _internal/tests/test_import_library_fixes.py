@@ -69,7 +69,7 @@ def test_missing_text_endpoint_explains_repair_but_unknown_chapter_is_still_abse
     finally:
         server.stop()
     assert missing[0] == absent[0] == 404
-    assert json.loads(missing[1])["error"] == "Mất file chữ của chương này trên máy. Bạn hãy thêm lại đúng file sách gốc để chép bù."
+    assert json.loads(missing[1])["error"] == "Mất chữ chương — bạn thêm lại đúng file sách gốc để chép bù."
     assert json.loads(absent[1])["error"] == "Chương này không có chữ riêng"
 
 

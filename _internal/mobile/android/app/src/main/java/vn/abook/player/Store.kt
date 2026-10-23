@@ -293,7 +293,7 @@ object Store {
     fun preserveCorrupt(file: File, copyOnly: Boolean = false) {
         val copy = keepCorruptBytes(file, copyOnly)
         // A failed notice must not claim that the already-synced original is unpreserved.
-        addDataNotice("Một phần dữ liệu của bạn trong ${file.name} bị hỏng. Bản gốc được giữ ở ${copy.name}; phần còn đọc được vẫn dùng được.")
+        addDataNotice("${file.name} hỏng một phần; giữ gốc ở ${copy.name} và dùng phần còn đọc được.")
     }
 
     private fun noticeRows(): JSONArray {
@@ -306,7 +306,7 @@ object Store {
         } catch (error: Exception) {
             // Keep the original independently; never recurse through preserveCorrupt/addDataNotice.
             val copy = keepCorruptBytes(file, copyOnly = true)
-            val text = "Danh sách thông báo của bạn bị hỏng. Bản gốc được giữ ở ${copy.name}; app bắt đầu danh sách mới."
+            val text = "Thông báo bị hỏng; giữ gốc ở ${copy.name} và tạo danh sách mới."
             pendingDataNotices.add(text)
             val rows = JSONArray().put(text)
             writeAtomic(file, JSONObject().put("notices", rows).toString())
@@ -328,18 +328,18 @@ object Store {
             pendingDataNotices.clear()
             pendingDataNoticeTimes.clear()
         } catch (_: Exception) {
-            pendingDataNotices.add("Chưa lưu được danh sách thông báo của bạn. Dữ liệu đã giữ an toàn vẫn dùng được; bạn hãy thử lại.")
+            pendingDataNotices.add("Chưa lưu được thông báo; dữ liệu đã giữ vẫn dùng được — bạn thử lại.")
         }
     }
 
     @Synchronized
     fun dataNotices(): JSONArray {
         val rows = try { noticeRows() } catch (_: Exception) {
-            pendingDataNotices.add("Chưa đọc được danh sách thông báo của bạn. App giữ nguyên file này và vẫn mở thư viện.")
+            pendingDataNotices.add("Chưa đọc được thông báo; giữ nguyên file và vẫn mở thư viện.")
             JSONArray()
         }
         for (text in pendingDataNotices) if ((0 until rows.length()).none { rows.optString(it) == text }) rows.put(text)
-        if (unpreservedData.isNotEmpty()) rows.put("Chưa giữ được bản dữ liệu cũ của bạn. Bạn vẫn đọc được phần hợp lệ; app chưa ghi đè bản gốc. Bạn hãy thử lưu lại.")
+        if (unpreservedData.isNotEmpty()) rows.put("Chưa giữ được bản cũ; đọc phần hợp lệ, chưa ghi đè gốc — bạn thử lưu lại.")
         return rows
     }
 
@@ -380,7 +380,7 @@ object Store {
             }
             unpreservedData.remove(file.absolutePath)
             try { writeAtomic(file, clean.toString()) }
-            catch (_: Exception) { addDataNotice("Chưa lưu được phần dữ liệu đã đọc lại của bạn. Bản gốc đã giữ an toàn; bạn hãy thử lại.") }
+            catch (_: Exception) { addDataNotice("Chưa lưu được phần dữ liệu đọc lại; bản gốc vẫn còn — bạn thử lại.") }
         }
         return clean
     }

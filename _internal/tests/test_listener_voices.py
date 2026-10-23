@@ -246,7 +246,7 @@ def test_the_inbox_offers_one_click_gender_and_voice_fixes_and_the_studio_record
     save_settings(paths.settings, SETTINGS)  # thư viện nhận ra sách nhờ file này
     cards = {item["kind"]: item for item in work_items(paths.root)["items"]}
     gender = cards["gender"]
-    assert gender["title"] == "Noah là nam hay nữ?" and gender["problem"].endswith("giọng nam.")
+    assert gender["title"] == "Giới Noah" and gender["problem"].endswith("giọng nam.")
     assert [(choice["label"], choice["note"]) for choice in gender["voiceChoices"]] == [
         ("Nam", "giữ giọng đang đọc"), ("Nữ", "đổi giọng, thu lại 2 câu")]
     shared = cards["shared-voice"]

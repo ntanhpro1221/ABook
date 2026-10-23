@@ -102,7 +102,7 @@
    },
    "status": 400,
    "response": {
-    "error": "Chỉ đặt được cách đọc cho một từ hay tối đa 6 từ liền nhau, không có dấu câu ở giữa."
+    "error": "Bạn chọn tối đa 6 từ liền nhau, không có dấu câu, để đặt cách đọc."
    }
   },
   {
@@ -114,7 +114,7 @@
    },
    "status": 400,
    "response": {
-    "error": "Chỉ đặt được cách đọc cho một từ hay tối đa 6 từ liền nhau, không có dấu câu ở giữa."
+    "error": "Bạn chọn tối đa 6 từ liền nhau, không có dấu câu, để đặt cách đọc."
    }
   },
   {
@@ -126,7 +126,7 @@
    },
    "status": 400,
    "response": {
-    "error": "Chỉ đặt được cách đọc cho một từ hay tối đa 6 từ liền nhau, không có dấu câu ở giữa."
+    "error": "Bạn chọn tối đa 6 từ liền nhau, không có dấu câu, để đặt cách đọc."
    }
   },
   {

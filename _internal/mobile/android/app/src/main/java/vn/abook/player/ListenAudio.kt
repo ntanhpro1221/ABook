@@ -73,7 +73,7 @@ object ListenAudio : M4bExport.AudioEncoder {
                 try {
                     extractor.setDataSource(chapter.file.absolutePath)
                     val source = (0 until extractor.trackCount).firstOrNull { extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME) == MediaFormat.MIMETYPE_AUDIO_AAC }
-                        ?: throw Mp3Export.Refused("Không đọc được file tạm của “${chapter.fullTitle}” - xuất lại để làm lại chương này")
+                        ?: throw Mp3Export.Refused("File tạm của “${chapter.fullTitle}” không đọc được — bạn xuất lại chương này.")
                     val format = extractor.getTrackFormat(source)
                     val chapterRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
                     val chapterChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)

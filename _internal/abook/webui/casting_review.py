@@ -88,7 +88,7 @@ def _hints(connection: Any, rows: list[Any], chapter_id: int | None,
         name = label(str(second["speaker"]), display)
         hint: dict[str, Any] = {
             "kind": "turn",
-            "note": f"Câu liền trước cũng của {name}, đoạn này không có lời dẫn - thường là người kia đáp lại.",
+            "note": f"Câu trước cũng của {name}; thiếu lời dẫn nên có thể là người kia đáp.",
         }
         # Đối đáp đi xen kẽ: người khác gần nhất vừa nói trước cặp này là ứng viên tự nhiên nhất.
         start = order.get(str(first["stable_id"]))

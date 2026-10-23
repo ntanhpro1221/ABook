@@ -171,7 +171,7 @@ def render_cover(raw: bytes) -> tuple[bytes, dict[str, Any]]:
         image.seek(0)
         image.draft("RGB", (MAX_SIDE, MAX_SIDE))  # JPEG: giải mã ở 1/2, 1/4, 1/8 cỡ nếu vẫn đủ cho bìa; định dạng khác: không làm gì
         if image.width * image.height > MAX_PIXELS:
-            raise CoverError(f"Ảnh có quá nhiều điểm ảnh (tối đa {MAX_PIXELS // 1_000_000} triệu) - bạn thu nhỏ ảnh rồi thử lại")
+            raise CoverError(f"Ảnh vượt {MAX_PIXELS // 1_000_000} triệu điểm ảnh — bạn thu nhỏ rồi thử lại.")
         image = ImageOps.exif_transpose(image)
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
         raise CoverError("Không đọc được ảnh này") from exc

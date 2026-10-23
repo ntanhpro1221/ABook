@@ -58,7 +58,7 @@ class TrashPending(private val root: File, private val clock: () -> Long = Syste
         val item = File(folder, meta.getString("name"))
         val original = File(meta.getString("original"))
         if (!item.isDirectory) throw NotPending("Cuốn này không còn để hoàn tác (đã xoá hẳn khỏi điện thoại).")
-        if (original.exists()) throw Occupied("Đã có một cuốn cùng mã ở chỗ cũ (có thể vừa được tải lại), nên chưa hoàn tác được.")
+        if (original.exists()) throw Occupied("Chỗ cũ đã có sách cùng mã nên chưa hoàn tác được.")
         original.parentFile?.mkdirs()
         if (!item.renameTo(original)) throw java.io.IOException("Chưa đưa cuốn về chỗ cũ được.")
         folder.deleteRecursively()

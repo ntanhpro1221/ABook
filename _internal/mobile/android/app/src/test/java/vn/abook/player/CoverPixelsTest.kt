@@ -23,6 +23,6 @@ class CoverPixelsTest {
 
     @Test
     fun the_refusal_says_the_same_words_as_the_computer() {
-        assertEquals("Ảnh có quá nhiều điểm ảnh (tối đa 40 triệu) - bạn thu nhỏ ảnh rồi thử lại", Covers.tooManyPixels().message)
+        assertEquals("Ảnh vượt 40 triệu điểm ảnh — bạn thu nhỏ rồi thử lại.", Covers.tooManyPixels().message)
     }
 }

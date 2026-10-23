@@ -208,8 +208,8 @@ def write_chapter(ffmpeg: str, source: Path, final: Path, cover_path: Path | Non
         # Không để file `.part` nằm lại, không dán lệnh / lời ffmpeg cho người dùng (soát a28 lỗi 8) - lời ffmpeg vào nhật ký.
         partial.unlink(missing_ok=True)
         log.warning("ffmpeg không ghi được %s: %s", final.name, (error.stderr or "").strip()[-600:])
-        raise ffmpeg_failure(error, final, f"Không ghi được chương “{title}” - file âm thanh của chương hay ảnh bìa không đọc được.",
-                             f"Không ghi được chương “{title}” - ffmpeg dừng giữa chừng, chưa rõ nguyên nhân (xem Chi tiết).") from error
+        raise ffmpeg_failure(error, final, f"Chưa ghi được “{title}”: không đọc được âm thanh hoặc bìa.",
+                             f"Ghép chương “{title}” bị ngắt — bạn xem Chi tiết.") from error
     os.replace(partial, final)
 
 
@@ -653,7 +653,7 @@ def m4b_from_files(ffmpeg: str, chapters: list[tuple[str, Path]], target_root: P
         except subprocess.CalledProcessError as error:
             log.warning("ffmpeg không ghép được M4B: %s", (error.stderr or "").strip()[-600:])
             raise ffmpeg_failure(error, final, "Không ghép được file M4B - ảnh bìa hay một chương không đọc được.",
-                                 "Không ghép được file M4B - ffmpeg dừng giữa chừng, chưa rõ nguyên nhân (xem Chi tiết).") from error
+                                 "Ghép M4B bị ngắt — bạn xem Chi tiết.") from error
         finally:
             partial.unlink(missing_ok=True)
         if credits:
@@ -677,7 +677,7 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
     if not chapters:
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
     if not ffmpeg_available():
-        raise ValueError("Cần tải thêm công cụ ghép âm thanh (khoảng 36 MB) để làm file M4B - mở Xuất, chọn Sách nói M4B rồi bấm Tải công cụ.")
+        raise ValueError("Thiếu công cụ M4B (36 MB) — bạn mở Xuất → Sách nói M4B → Tải công cụ.")
     ffmpeg = ffmpeg_executable()
     ids = [chapter_id for chapter_id, _title, _path in listed]
     mixer: Any = None

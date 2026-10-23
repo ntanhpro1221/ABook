@@ -374,7 +374,7 @@ object SupertonicVoices {
             return loaded to SupertonicSpeaker(ClipLift.params(ctx), normalize)
         } catch (failure: Throwable) {
             if (failure is VoiceException) throw failure
-            throw VoiceException("Giọng Supertonic chưa sẵn sàng (${failure.message ?: failure.javaClass.simpleName}) - hãy tải lại Giọng Supertonic trong Cài đặt.",
+            throw VoiceException("Giọng Supertonic chưa sẵn sàng — bạn tải lại trong Cài đặt.",
                 cause = failure, reason = "voice")
         }
     }

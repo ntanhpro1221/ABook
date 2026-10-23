@@ -406,11 +406,11 @@ class Devices:
         """Lời báo mã sai, nói rõ còn mấy lần thử (sai `PAIRING_ATTEMPTS` lần thì mã bị huỷ) hay phải tạo mã mới."""
         with self._lock:
             if self.blocked:
-                return f"Nhập sai {PAIRING_ATTEMPTS} lần nên mã đã bị huỷ - tạo mã mới ở máy kia rồi nhập lại"
+                return f"Mã đã huỷ sau {PAIRING_ATTEMPTS} lần nhập sai — bạn tạo mã mới trên máy kia."
             if self._pairing and self._pairing[1] > time.time():
                 left = PAIRING_ATTEMPTS - self._failures
-                return f"Mã ghép nối sai - còn {left} lần thử (sai {PAIRING_ATTEMPTS} lần mã sẽ bị huỷ)"
-        return "Mã ghép nối sai hoặc đã hết hạn - tạo mã mới ở máy kia"
+                return f"Mã sai; còn {left} lần thử trước khi mã bị huỷ."
+        return "Mã sai hoặc hết hạn — bạn tạo mã mới trên máy kia."
 
     def check(self, token: str) -> bool:
         return self.identify(token) is not None
