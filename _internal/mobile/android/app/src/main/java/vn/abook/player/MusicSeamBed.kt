@@ -219,13 +219,13 @@ object SeamClock {
 
     /**
      * Việc cần làm ở mỗi nhịp đồng bộ với bài P3: `attached` = đã nối Nối / Clip lặp vào hàng; `remainingMs` = [clip0RemainingMs]. Dựng xong thì nối vào ngay (xa loopEnd bao nhiêu cũng được);
-     * dựng hỏng thì rơi về đường cũ ngay; chưa xong mà còn dưới [DEADLINE_MS] tới hết Clip đầu thì rơi về đường cũ cho chỗ lặp này.
+     * dựng hỏng thì rơi về đường cũ ngay; chưa xong mà tới nhịp kế (sau `gapMs`) còn không quá [DEADLINE_MS] tới hết Clip đầu thì rơi về ngay nhịp này.
      */
-    fun gate(state: SeamPicker.State, attached: Boolean, remainingMs: Long?): Gate = when {
+    fun gate(state: SeamPicker.State, attached: Boolean, remainingMs: Long?, gapMs: Long = 0): Gate = when {
         attached -> Gate.DONE
         state == SeamPicker.State.READY -> Gate.ATTACH
         state == SeamPicker.State.DEAD -> Gate.DEMOTE
-        remainingMs != null && remainingMs <= DEADLINE_MS -> Gate.DEMOTE
+        remainingMs != null && remainingMs - gapMs <= DEADLINE_MS -> Gate.DEMOTE
         else -> Gate.WAIT
     }
 
