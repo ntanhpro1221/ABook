@@ -91,7 +91,7 @@ class PlayerPlugin : Plugin() {
             Playback.Chapter(it.getInt("id"), it.getString("title"), it.optString("file"), it.optDouble("duration", 0.0), LibraryTree.textEntry(it))
         } ?: return call.reject("thiếu chapters")
         withService {
-            call.getString("readAloudVoice")?.let { ReadAloud.rememberFor(book, it) } // Playback.load đặt giọng của cuốn (useVoiceOf)
+            call.getString("readAloudVoice")?.let { ReadAloud.rememberFor(book, it, call.getString("readAloudRecord") ?: "") } // Playback.load đặt giọng của cuốn (useVoiceOf)
             Playback.load(
                 book, call.getString("bookTitle") ?: "", call.getString("narrator") ?: "", chapters,
                 call.getInt("chapterId") ?: chapters.first().id, call.getDouble("seconds") ?: 0.0, call.getDouble("rate") ?: 1.0,
@@ -185,8 +185,8 @@ class PlayerPlugin : Plugin() {
     fun configure(call: PluginCall) = act(call) {
         // Tuỳ chọn nghe mà Kotlin cần cả khi không có WebView (nút tai nghe, tự lùi, lắc / úp, lịch ngủ, số phút thêm, dừng an toàn): áp VÀ nhớ ở kho native.
         ListenPrefs.apply(call.data)
-        // `readAloudBook`: cuốn mà người nghe vừa đổi giọng (nhớ cho cuốn ấy); không có thì cuốn đang nạp.
-        call.getString("readAloudVoice")?.let { ReadAloud.chooseFor(call.getString("readAloudBook") ?: Playback.bookId, it) }
+        // `readAloudBook`: cuốn mà người nghe vừa đổi giọng (nhớ cho cuốn ấy); không có thì cuốn đang nạp. `readAloudRecord`: hồ sơ nghe của giọng ấy (giọng riêng theo từng hồ sơ).
+        call.getString("readAloudVoice")?.let { ReadAloud.chooseFor(call.getString("readAloudBook") ?: Playback.bookId, it, call.getString("readAloudRecord") ?: "") }
         call.getString("readAloudDefault")?.let { ReadAloud.chooseDefault(it) }
         // Nhà cung cấp giọng trực tuyến người nghe đã đồng ý gửi chữ tới: lõi tự sang chương chữ chỉ khi giọng đang chọn đã được đồng ý.
         call.getArray("readAloudOnlineOk")?.let { list -> ReadAloud.allowOnline((0 until list.length()).map { list.optString(it) }) }

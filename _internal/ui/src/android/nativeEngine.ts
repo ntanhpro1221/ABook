@@ -99,6 +99,7 @@ export class NativeAudioEngine implements NativeEngine {
       rate: queue.rate,
       autoplay: queue.autoplay,
       readAloudVoice: queue.readAloudVoice,
+      readAloudRecord: queue.readAloudRecord,
     }).then((state) => this.receive(state));
   }
 

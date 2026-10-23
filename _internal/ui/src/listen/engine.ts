@@ -75,6 +75,8 @@ export interface NativeQueue {
   autoplay: boolean;
   /** Giọng đọc đã chọn cho cuốn chỉ-có-chữ (mã giọng của plugin ReadAloud); lõi native tự đọc chương chữ bằng giọng này. */
   readAloudVoice?: string;
+  /** Hồ sơ nghe của `readAloudVoice`: giọng riêng nhớ theo (cuốn, hồ sơ). */
+  readAloudRecord?: string;
 }
 
 export interface NativeEngine extends AudioEngine {

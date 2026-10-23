@@ -155,6 +155,10 @@ class StalePlayback(ValueError):
     """Phiên phát đã bị cửa sổ khác thay thế, hoặc bản ghi đã cũ."""
 
 
+class RecordGone(ValueError):
+    """Việc ghi nhắm một hồ sơ đã bị xoá hay đã sang sách khác: từ chối rõ ràng, không rơi sang hồ sơ khác."""
+
+
 def _apply_progress(entry: dict[str, Any], chapter_id: Any, seconds: Any, duration: Any, now: float, anchor: dict[str, Any] | None) -> None:
     """Một lần báo chỗ nghe vào state của hồ sơ (`Listening.progress`; phát lại từ nhật ký thì `anchor` đã qua `validated`)."""
     entry["last"] = {"chapterId": int(chapter_id), "seconds": round(float(seconds), 1), "at": now}
@@ -270,14 +274,16 @@ class Listening:
 
     # ---- liên kết sách - hồ sơ ---------------------------------------------------------------------------------
 
-    def _active(self, book: str, *, create: bool = True) -> dict[str, Any] | None:
-        """State của hồ sơ đang dùng cho `book`; chưa có thì (create) tạo hồ sơ "Mặc định" và gắn vào."""
+    def _active(self, book: str, *, create: bool = True, default_for: str | None = None) -> dict[str, Any] | None:
+        """State của hồ sơ đang dùng cho `book`; chưa có thì (create) tạo hồ sơ "Mặc định" và gắn vào. `default_for`: mã sách bên máy
+        giữ sách (cuốn ảo của máy khác có mã cục bộ khác) - hồ sơ Mặc định mang mã suy từ nó, nên hai máy cùng ghép một cuốn
+        không đẻ hai hồ sơ Mặc định."""
         link = self._data["links"].get(book)
         record = self._data["records"].get(link.get("active")) if link and link.get("active") else None
         if record is None:
             if not create:
                 return None
-            record_id = default_record_id(book)
+            record_id = default_record_id(default_for or book)
             # hồ sơ mặc định đã bị chuyển sang sách khác, hay đã bị xoá (bia mộ còn đồng bộ): mã mới
             if record_id in self._data["records"] or record_id in self._data["deleted"]:
                 record_id = _new_record_id()
@@ -310,6 +316,17 @@ class Listening:
             return None
         if owner != book:
             return self._book(book)
+        state = self._data["records"][record].setdefault("state", _empty_state())
+        state.setdefault("chapters", {})
+        state.setdefault("bookmarks", [])
+        return state
+
+    def _named(self, book: str, record: str | None) -> dict[str, Any]:
+        """State để ghi cho một việc đã chốt hồ sơ lúc bắt đầu (`record`; không nói: hồ sơ đang dùng). Hồ sơ đã xoá / chuyển sách: RecordGone."""
+        if record is None:
+            return self._book(book)
+        if self._owner(record) != book or record not in self._data["records"]:
+            raise RecordGone("Hồ sơ nghe này đã bị xoá hoặc chuyển sang cuốn khác. Bạn hãy nạp lại sách.")
         state = self._data["records"][record].setdefault("state", _empty_state())
         state.setdefault("chapters", {})
         state.setdefault("bookmarks", [])
@@ -578,18 +595,18 @@ class Listening:
             self._save()
             return json.loads(json.dumps(entry))
 
-    def set_rate(self, book: str, rate: float) -> None:
+    def set_rate(self, book: str, rate: float, record: str | None = None) -> None:
         with self._changing():
-            entry = self._book(book)
+            entry = self._named(book, record)
             entry["rate"] = float(rate)
             entry["rateAt"] = entry["updatedAt"] = time.time()
             self._save()
 
-    def set_voice(self, book: str, voice: str) -> None:
+    def set_voice(self, book: str, voice: str, record: str | None = None) -> None:
         """Giọng Nghe ngay người nghe chọn RIÊNG cho cuốn (mã giọng như "edge:..."; rỗng = theo giọng mặc định). Mang mốc giờ như tốc độ: máy nghe
         sau thắng; máy nhận không có giọng ấy (giọng trên máy chưa tải) thì giữ giọng của nó (listen/readAloudVoice.ts `syncedVoice`)."""
         with self._changing():
-            entry = self._book(book)
+            entry = self._named(book, record)
             entry["voice"] = str(voice)[:200]
             entry["voiceAt"] = entry["updatedAt"] = time.time()
             self._save()
@@ -716,10 +733,11 @@ class Listening:
             entry["updatedAt"] = max(entry.get("updatedAt", 0), when)
             self._save()
 
-    def save_night(self, book: str, night: dict[str, Any]) -> None:
-        """Nhật ký đêm của trình phát trên máy này (điện thoại gửi của nó qua `merge`)."""
+    def save_night(self, book: str, night: dict[str, Any], record: str | None = None) -> None:
+        """Nhật ký đêm của trình phát trên máy này (điện thoại gửi của nó qua `merge`). `record`: hồ sơ của phiên đêm (chốt lúc hẹn giờ) - lượt lưu
+        đến muộn sau khi người nghe đã đổi hồ sơ vẫn về đúng hồ sơ ấy; đã xoá / chuyển sách: RecordGone."""
         with self._changing():
-            entry = self._book(book)
+            entry = self._named(book, record)
             entry["night"] = merge_nights(entry.get("night"), _clean_night(night))
             entry["updatedAt"] = time.time()
             self._save()
@@ -827,6 +845,108 @@ class Listening:
                 active = self._data["records"].get(link["active"]) or {}
                 reply["activeState"] = json.loads(json.dumps(active.get("state") or _empty_state()))
             return reply
+
+    def sync_request(self, book: str, remote_book: str = "", record: str | None = None) -> dict[str, Any] | None:
+        """Thân yêu cầu máy này gửi máy giữ sách (POST .../state; cùng khoá với Store.syncBody của điện thoại): state của MỘT
+        hồ sơ kèm mã, tên + lúc đặt tên, lúc chọn (chỉ khi nó đang được chọn), lúc chuyển và bia mộ. `record`: hồ sơ nơi gọi đã
+        chốt (trình phát đang phát nó); không nói thì hồ sơ đang dùng NGAY BÂY GIỜ - chốt ở đây, lời đáp về gộp đúng mã ấy
+        (`merge_reply`) dù lúc đó người dùng đã đổi hồ sơ. Chưa có hồ sơ nào thì tạo "Mặc định" mang mã suy từ `remote_book`.
+        Hồ sơ đã xoá / đã sang sách khác: None (không gửi)."""
+        with self._changing():
+            if record is None:
+                link = self._data["links"].get(book) or {}
+                if link.get("active") not in self._data["records"]:
+                    self._active(book, default_for=remote_book or None)
+                    self._save()
+                record = self._data["links"][book]["active"]
+            elif self._owner(record) != book or record not in self._data["records"]:
+                return None
+            link = self._data["links"][book]
+            meta = self._data["records"][record]
+            body = json.loads(json.dumps(meta.get("state") or _empty_state()))
+            body.update({"record": record, "recordName": meta.get("name") or DEFAULT_RECORD_NAME,
+                         "nameAt": float(meta.get("nameAt") or 0),
+                         "activeAt": float(link.get("activeAt") or 0) if link.get("active") == record else 0.0,
+                         "movedAt": float(meta.get("movedAt") or 0), "deletedRecords": dict(self._data["deleted"])})
+            return body
+
+    def merge_reply(self, book: str, record: str, reply: dict[str, Any], *, remote_book: str = "",
+                    resolve: Callable[[str], str | None] | None = None) -> bool:
+        """Gộp lời đáp của máy giữ sách vào ĐÚNG hồ sơ `record` đã gửi (hợp đồng như Store.applySync của điện thoại), không phải hồ
+        sơ đang dùng lúc lời đáp về: state, tên (đổi sau thắng), bia mộ (xoá theo), hồ sơ lạ của cuốn (nhận, state trống - lần
+        gửi khi chọn nó mới tải về), hồ sơ đang chọn (bên chọn sau thắng, kèm `activeState`) và lần chuyển sách (`resolve` đổi mã sách
+        của máy kia ra mã cuốn ảo ở đây; không đổi được thì hồ sơ ở nguyên chỗ). Hồ sơ đã bị xoá (ở đây hay ở máy kia): bỏ lời đáp,
+        không rơi sang hồ sơ khác, không tạo hồ sơ mới. True: lời đáp đã được gộp."""
+        named = reply.get("record")
+        if isinstance(named, str) and named != record:
+            return False  # lời đáp của hồ sơ khác: không phải của lần gửi này
+        with self._changing():
+            tombstones = dict(reply["deletedRecords"]) if isinstance(reply.get("deletedRecords"), dict) else {}
+            if reply.get("deleted") is True:
+                tombstones[record] = max(float(tombstones.get(record) or 0), time.time())
+            for gone, at in tombstones.items():
+                if isinstance(gone, str) and RECORD_ID.fullmatch(gone):
+                    if gone in self._data["records"]:
+                        self._unlink(gone)
+                        del self._data["records"][gone]
+                    self._data["deleted"][gone] = max(float(self._data["deleted"].get(gone) or 0), float(at or 0))
+            if record in self._data["deleted"] or record not in self._data["records"]:
+                self._save()
+                return False
+            entry = self._data["records"][record]
+            incoming = {key: value for key, value in reply.items() if key not in SYNC_KEYS or (key == "deleted" and isinstance(value, dict))}
+            state = entry.setdefault("state", _empty_state())
+            merged = merge_states(state, incoming)
+            state.clear()
+            state.update(merged)
+            # sách hồ sơ gắn ở máy kia: lần chuyển sau thắng
+            target = book if self._owner(record) == book else None
+            remote_moved = float(reply.get("movedAt") or 0)
+            there = reply.get("book")
+            if target is not None and isinstance(there, str) and there and there != remote_book and remote_moved > float(entry.get("movedAt") or 0):
+                destination = resolve(there) if resolve is not None else None
+                if destination and destination != book:
+                    self._unlink(record)
+                    dest_link = self._data["links"].setdefault(destination, {"records": []})
+                    dest_link["records"] = [*dest_link.get("records", []), record]
+                    target = destination
+                else:
+                    target = None  # chuyển sang cuốn ta không có: giữ chỗ gắn ở đây, không trộn danh sách hồ sơ của hai cuốn
+            if target is not None:
+                entry["movedAt"] = max(float(entry.get("movedAt") or 0), remote_moved)
+            link = self._data["links"].get(target) if target is not None else None
+            for item in reply.get("records") or []:
+                if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not RECORD_ID.fullmatch(item["id"]):
+                    continue
+                if item["id"] in self._data["deleted"]:
+                    continue
+                known = self._data["records"].get(item["id"])
+                if known is None:
+                    if link is None:
+                        continue
+                    known = self._data["records"][item["id"]] = {"name": str(item.get("name") or DEFAULT_RECORD_NAME)[:MAX_RECORD_NAME],
+                                                                  "createdAt": time.time(), "nameAt": 0.0, "state": _empty_state()}
+                    link["records"] = [*link.get("records", []), item["id"]]
+                at = float(item.get("nameAt") or 0)
+                if str(item.get("name") or "").strip() and at > float(known.get("nameAt") or 0):
+                    known["name"] = str(item["name"]).strip()[:MAX_RECORD_NAME]
+                    known["nameAt"] = at
+                if link is not None and item["id"] in link.get("records", []):
+                    known["movedAt"] = max(float(known.get("movedAt") or 0), float(item.get("movedAt") or 0))
+            active = reply.get("active")
+            chosen = active.get("record") if isinstance(active, dict) else None
+            if (link is not None and isinstance(chosen, str) and chosen in link.get("records", [])
+                    and float(active.get("at") or 0) > float(link.get("activeAt") or 0)):
+                link["active"] = chosen
+                link["activeAt"] = float(active["at"])
+                if chosen != record and isinstance(reply.get("activeState"), dict):
+                    other = self._data["records"][chosen].setdefault("state", _empty_state())
+                    merged_other = merge_states(other, {key: value for key, value in reply["activeState"].items()
+                                                         if key not in SYNC_KEYS or (key == "deleted" and isinstance(value, dict))})
+                    other.clear()
+                    other.update(merged_other)
+            self._save()
+            return True
 
     def _save(self) -> None:
         if self._unread:

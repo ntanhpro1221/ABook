@@ -4,7 +4,8 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Giọng "Nghe ngay" người nghe đã chọn, nhớ TRONG LÕI theo từng cuốn, cộng giọng mặc định (Cài đặt) cho cuốn chưa chọn - cùng luật với
+ * Giọng "Nghe ngay" người nghe đã chọn, nhớ TRONG LÕI theo từng cuốn VÀ từng hồ sơ nghe (khoá `<mã cuốn>#<mã hồ sơ>`; hồ sơ chưa chọn giọng riêng thì theo giọng mặc định,
+ * không kế thừa giọng của hồ sơ trước - soát a105 F4), cộng giọng mặc định (Cài đặt) cho cuốn chưa chọn - cùng luật với
  * `chosenVoice` / `chooseVoice` / `chooseDefaultVoice` của giao diện (listen/readAloudVoice.ts). Giao diện gửi giọng mỗi lần nạp / đổi, nhưng phát tiếp từ widget, xe hơi,
  * tai nghe hay máy tính điều khiển sau khi app khởi động lại thì không qua giao diện - trước đây những đường ấy đọc bằng giọng mặc định.
  *
@@ -20,18 +21,21 @@ class VoiceChoices(private val file: File) {
     }
 
     /** Giọng của cuốn này; chưa chọn thì giọng chung; chưa có gì thì "" (= giọng mặc định). */
-    fun voiceFor(bookId: String): String =
-        data.optJSONObject("books")?.optString(bookId, "")?.takeIf { it.isNotBlank() } ?: data.optString("global", "")
+    fun voiceFor(bookId: String, recordId: String = ""): String =
+        data.optJSONObject("books")?.optString(slot(bookId, recordId), "")?.takeIf { it.isNotBlank() } ?: data.optString("global", "")
+
+    /** Khoá lưu: cuốn + hồ sơ (không biết hồ sơ thì khoá theo cuốn). */
+    private fun slot(bookId: String, recordId: String) = if (recordId.isBlank()) bookId else "$bookId#$recordId"
 
     /** Chọn giọng cho RIÊNG cuốn này - giọng chung giữ nguyên (soát a67); không có cuốn ("") thì là giọng chung. "" (người nghe chưa chọn gì) không
      *  ghi đè lựa chọn đã có. */
-    fun remember(bookId: String, voice: String) {
+    fun remember(bookId: String, voice: String, recordId: String = "") {
         if (voice.isBlank()) return
         if (bookId.isBlank()) {
             data.put("global", voice)
         } else {
             val books = data.optJSONObject("books") ?: JSONObject().also { data.put("books", it) }
-            books.put(bookId, voice)
+            books.put(slot(bookId, recordId), voice)
             // The very first choice also becomes the default, like chooseVoice in the UI.
             if (data.optString("global", "").isBlank()) data.put("global", voice)
         }

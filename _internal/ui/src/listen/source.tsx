@@ -90,9 +90,10 @@ export interface ListenSource {
     delivery?: { sessionId?: string; revision?: number; keepalive?: boolean }): Promise<ListeningState | void>;
   setChapterDone(bookId: string, chapterId: number, done: boolean): Promise<ListeningState>;
   setFinished(bookId: string, finished: boolean): Promise<ListeningState>;
-  setRate(bookId: string, rate: number): Promise<void>;
+  /** `record`: hồ sơ nghe của phiên phát (chốt lúc mở phiên) - ghi đúng nó dù hồ sơ đang dùng đã đổi; máy chủ từ chối rõ nếu nó đã xoá / chuyển sách. */
+  setRate(bookId: string, rate: number, record?: string): Promise<void>;
   /** Giọng Nghe ngay riêng của cuốn vào hồ sơ nghe - đi sang máy kia như tốc độ (soát a68 lỗi 8). */
-  setVoice?(bookId: string, voice: string): Promise<void>;
+  setVoice?(bookId: string, voice: string, record?: string): Promise<void>;
   addBookmark(bookId: string, chapterId: number, seconds: number, note: string, record?: string, sentence?: BookmarkSentence): Promise<Bookmark>;
   /** Hỏi thiết bị kia bản mới nhất của hồ sơ nghe đang dùng (điện thoại hỏi máy tính đã ghép); máy tính là nơi giữ. */
   refreshListening?(bookId: string): Promise<void>;
@@ -104,7 +105,8 @@ export interface ListenSource {
   lastNight(): Promise<{ bookId: string; night: NightSession } | null>;
   dismissNight(bookId: string, nightId: string | undefined): Promise<void>;
   /** Chỉ bộ máy phát web cần: lõi native tự ghi nhật ký đêm. */
-  saveNight?(bookId: string, night: NightSession): Promise<void>;
+  /** `record`: hồ sơ nghe của phiên đêm (chốt lúc hẹn giờ). */
+  saveNight?(bookId: string, night: NightSession, record?: string): Promise<void>;
   /** Lịch sử phiên nghe (nguồn nào chưa có thì tab Lịch sử ẩn đi). */
   sessions?(bookId: string): Promise<ListeningSession[]>;
   addSession?(bookId: string, session: ListeningSession, record?: string): Promise<void>;

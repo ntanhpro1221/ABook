@@ -542,11 +542,12 @@ object LibraryServer {
                 else if (target == null || !target.isFile) json(output, 404, JSONObject().put("error", "Không có file này"))
                 else sendFile(output, target, request.headers["range"], request.method == "HEAD", request.headers["if-range"])
             }
-            // Chỗ nghe hai chiều: máy kia gửi bản của nó, điện thoại gộp vào hồ sơ đang dùng của cuốn này (Store.mergeRemote,
-            // cùng phép gộp của máy tính) và trả bản đã gộp.
+            // Chỗ nghe hai chiều: máy kia gửi bản của nó. Có mã hồ sơ: gộp đúng hồ sơ ấy (tên, chọn, chuyển, bia mộ - Store.mergeRecord,
+            // như máy tính giữ sách); máy đời trước không có mã: hồ sơ đang dùng của cuốn này (Store.mergeRemote). Trả bản đã gộp.
             request.method == "POST" && match.groupValues[2] == "state" -> {
                 val body = runCatching { JSONObject(String(request.body)) }.getOrNull()
                 if (body == null) json(output, 400, JSONObject().put("error", "Thân yêu cầu không phải JSON"))
+                else if (Store.isRecordId(body.optString("record"))) json(output, 200, Store.mergeRecord(book, body))
                 else json(output, 200, Store.mergeRemote(book, body))
             }
             else -> json(output, 405, JSONObject().put("error", "Không hỗ trợ"))
