@@ -711,4 +711,131 @@ class MusicSeamBedTest {
         assertEquals("land 2 21703 26068", SeamEvents.land(2, 21703, 26068))
         assertEquals("land 2 21703 none", SeamEvents.land(2, 21703, null))
     }
+
+    // ---- dịch pha trong dòng (PLAN_loop §44.9): P3 câm, đáp đúng, lệch ổn định <= MAX_SHIFT_MS -> SHIFT thay cho RETUNE (không AudioTrack mới) ----
+
+    /** Kết quả [shiftRun]: các việc khác WAIT theo thứ tự, K của lần dịch (0 = không dịch), các lần đọc sau khi ra lệnh dịch (null = không tính), các dịch đã áp. */
+    private class ShiftRun(val acts: List<SeamHandover.Act>, val frames: Long, val afterShift: List<Double?>, val shifts: List<LoopSeam.Shift>)
+
+    /**
+     * Chuỗi nhịp của MusicBed.stepHandover sau một lần tua tới [lsTarget] (đáp đúng) mà lúc P3 ra loa nó lệch a87 `phaseMs` (> 0 = P3 đi trước): AudioTrack chạy từ +80 ms, đọc mỗi
+     * POLL_MS. Tới SHIFT thì giả lập LoopSink: dịch áp ở chỗ đã GHI = chỗ đang phát + `bufferedMs` (bộ đệm AudioTrack), sink báo về sau `reportMs`; AudioTrack chạy liền (khung lặng
+     * cũng tính vào framePosition, giả lập framePosition qua writtenAt).
+     */
+    private fun shiftRun(phaseMs: Double, muted: Boolean = true, bufferedMs: Long = 300, reportMs: Long = 5): ShiftRun {
+        val s = ls06
+        val sr = s.sampleRate
+        val ms = 1_000_000L
+        val issued = 10_000 * ms
+        val flushed = issued + 4 * ms
+        val startAt = issued + 80 * ms
+        val landing = SeamHandover.Landing.At(lsTarget)
+        val readings = ArrayList<Double>()
+        val shifts = ArrayList<LoopSeam.Shift>()
+        var reportAt = 0L
+        var pending: LoopSeam.Shift? = null
+        var frames = 0L
+        val acts = ArrayList<SeamHandover.Act>()
+        val after = ArrayList<Double?>()
+        var now = startAt + 60 * ms
+        repeat(100) {
+            if (pending != null && now >= reportAt) {
+                shifts += pending!!
+                pending = null
+            }
+            val stamp = SeamHandover.Stamp((now - 2 * ms - startAt) * sr / 1_000_000_000L, now - 2 * ms, sr, flushed)
+            val a87 = (s.loopEndSamples - s.xFrames + lsTarget).toDouble() / sr + (now - startAt) / 1e9 - phaseMs / 1000.0
+            val delta = if (pending != null) null else SeamHandover.landedReading(s, landing, issued, stamp, now, a87, shifts) // chờ sink báo đã áp: không đọc
+            if (frames != 0L) after += delta
+            if (delta != null) readings += delta
+            val settled = SeamHandover.settled(readings)
+            val shiftsSoFar = acts.count { it == SeamHandover.Act.SHIFT }
+            when (val act = SeamHandover.decide(400, 800.0, 0, if (delta != null) readings else emptyList(), landing, muted, shiftsSoFar)) {
+                SeamHandover.Act.WAIT -> {}
+                SeamHandover.Act.SHIFT -> {
+                    acts += act
+                    frames = SeamHandover.shiftFrames(s, settled!!)
+                    readings.clear()
+                    reportAt = now + reportMs * ms
+                    pending = LoopSeam.Shift(stamp.framesAt(now) + bufferedMs * sr / 1000, frames)
+                }
+                else -> {
+                    acts += act
+                    return ShiftRun(acts, frames, after, shifts)
+                }
+            }
+            now += SeamHandover.POLL_MS * ms
+        }
+        return ShiftRun(acts, frames, after, shifts)
+    }
+
+    @Test fun p3AheadWhileMutedIsShiftedInStreamBySilenceThenSwitches() {
+        // ls_00 trên máy ảo: hread 146 rồi mỗi lần tua lại một trễ mới (13, -23, +21...). Nay: chèn 146 ms lặng vào chính AudioTrack đang chạy.
+        val run = shiftRun(146.0)
+        assertEquals(listOf(SeamHandover.Act.SHIFT, SeamHandover.Act.SWITCH), run.acts)
+        assertEquals(6439.0, run.frames.toDouble(), 1.0) // ~round(146 x 44,1) > 0 = chèn (pha đo ra 145,98: khung đã phát ngoại suy làm tròn xuống)
+        assertEquals(run.frames, run.shifts.single().frames)
+        val counted = run.afterShift.filterNotNull()
+        assertEquals(SeamHandover.STEADY_READINGS, counted.size)
+        for (r in counted) assertEquals(0.0, r, 0.05) // pha sau dịch ~0
+        assertNull(run.afterShift.first()) // chưa ra loa thì không tính
+    }
+
+    @Test fun p3BehindWhileMutedDropsFramesThenSwitches() {
+        val run = shiftRun(-23.0)
+        assertEquals(listOf(SeamHandover.Act.SHIFT, SeamHandover.Act.SWITCH), run.acts)
+        assertEquals(-1014.0, run.frames.toDouble(), 1.0) // ~round(-23 x 44,1) < 0 = bỏ
+        for (r in run.afterShift.filterNotNull()) assertEquals(0.0, r, 0.05)
+    }
+
+    @Test fun tooFarOrAudibleOrUnlandedIsNotShifted() {
+        assertEquals(listOf(SeamHandover.Act.RETUNE), shiftRun(300.0).acts) // |δ| > MAX_SHIFT_MS: tua lại như cũ
+        assertEquals(SeamHandover.Act.SHIFT, shiftRun(SeamHandover.MAX_SHIFT_MS - 1).acts.first())
+        assertEquals(listOf(SeamHandover.Act.RETUNE), shiftRun(146.0, muted = false).acts) // không câm: không dịch
+        val steady = listOf(146.0, 146.0, 146.0)
+        assertEquals(SeamHandover.Act.WAIT, SeamHandover.decide(400, 800.0, 0, steady, SeamHandover.Landing.Pending, muted = true)) // chưa biết chỗ đáp: chờ
+        assertEquals(SeamHandover.Act.RETUNE, SeamHandover.decide(400, 800.0, 0, emptyList(), SeamHandover.Landing.None, muted = true)) // không thấy: tua lại
+        assertEquals(SeamHandover.Act.SWITCH, SeamHandover.decide(400, 800.0, 0, listOf(1.0, 2.0, 3.0), SeamHandover.Landing.At(lsTarget), muted = true))
+    }
+
+    @Test fun shiftsHaveTheirOwnBudgetAndShareTheDeadline() {
+        val at = SeamHandover.Landing.At(lsTarget)
+        val steady = listOf(146.0, 146.0, 146.0)
+        assertEquals(SeamHandover.Act.SHIFT, SeamHandover.decide(400, 800.0, 0, steady, at, muted = true, shifts = SeamHandover.MAX_SHIFTS - 1))
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(400, 800.0, 0, steady, at, muted = true, shifts = SeamHandover.MAX_SHIFTS)) // hết lượt dịch
+        assertEquals(SeamHandover.Act.SHIFT, SeamHandover.decide(400, 800.0, SeamHandover.MAX_RETUNES, steady, at, muted = true)) // hết lượt TUA vẫn dịch được
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(SeamHandover.DEADLINE_MS, 800.0, 0, steady, at, muted = true)) // hạn chót chung
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(400, SeamHandover.GUARD_MS.toDouble(), 0, steady, at, muted = true))
+        assertEquals(SeamHandover.Act.WAIT, SeamHandover.decide(400, 800.0, 0, listOf(146.0, 120.0, 146.0), at, muted = true)) // chưa ổn định
+    }
+
+    @Test fun aReadingBeforeTheShiftIsOutDoesNotCount() {
+        val s = ls06
+        val sr = s.sampleRate
+        val issued = 1_000_000_000L
+        val flushed = issued + 4_000_000L
+        val now = issued + 2_000_000_000L
+        val settle = (SeamHandover.SETTLE_MS * sr / 1000).toLong() // 2646 khung
+        val landed = SeamHandover.Landing.At(lsTarget)
+        fun read(played: Long, shifts: List<LoopSeam.Shift>, a87: Double) =
+            SeamHandover.landedReading(s, landed, issued, SeamHandover.Stamp(played, now, sr, flushed), now, a87, shifts)
+        fun a87(content: Long) = (s.loopEndSamples - s.xFrames + lsTarget + content).toDouble() / sr // a87 ở đúng nội dung P3
+        val insert = listOf(LoopSeam.Shift(20_000, 6439))
+        assertNull(read(15_000, insert, a87(15_000))) // chưa tới chỗ dịch
+        assertNull(read(20_000 + 3000, insert, a87(20_000))) // đang phát lặng
+        assertNull(read(20_000 + 6439 + settle - 1, insert, a87(20_000 + settle - 1))) // qua lặng chưa đủ SETTLE_MS
+        assertEquals(0.0, read(20_000 + 6439 + settle, insert, a87(20_000 + settle))!!, 1e-6) // vị trí = mẫu đáp + framePosition - khung chèn
+        val drop = listOf(LoopSeam.Shift(20_000, -1014))
+        assertNull(read(20_000 + settle - 1, drop, a87(20_000 + 1014 + settle - 1)))
+        assertEquals(0.0, read(20_000 + settle, drop, a87(20_000 + 1014 + settle))!!, 1e-6) // + khung bỏ
+        // không có dịch: như trước (đã phát >= SETTLE_MS kể từ lần xả)
+        assertEquals(0.0, read(settle, emptyList(), a87(settle))!!, 1e-6)
+    }
+
+    @Test fun shiftLineNamesTheFramesAndThePhaseBefore() {
+        assertEquals("shift 2 6439 146.000", SeamEvents.shift(2, 6439, 146.0))
+        assertEquals("shift 2 -1014 -23.000", SeamEvents.shift(2, -1014, -23.0))
+        assertEquals(6439L, SeamHandover.shiftFrames(ls06, 146.0))
+        assertEquals(-1014L, SeamHandover.shiftFrames(ls06, -23.0))
+    }
 }

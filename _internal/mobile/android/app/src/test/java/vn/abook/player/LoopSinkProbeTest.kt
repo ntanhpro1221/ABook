@@ -54,8 +54,8 @@ class LoopSinkProbeTest {
         val events = mutableListOf<String>()
         val sink = LoopSeam.LoopSink(recordingSink(probed))
         sink.probe = object : LoopSeam.LoopSink.Probe {
-            override fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean) {
-                events += "flush $armed $toDrop $seekPending"
+            override fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean, flushesLeft: Int) {
+                events += "flush $armed $toDrop $seekPending $flushesLeft"
             }
 
             override fun onFirstBuffer(presentationTimeUs: Long, frames: Long, toDrop: Long, seekPending: Boolean) {
@@ -68,7 +68,7 @@ class LoopSinkProbeTest {
         assertEquals(listOf(400_000L + 4063L * 1_000_000 / 44100 to 347, 500_000L to 4410, 900_000L to 100), plain)
         assertEquals(plain, probed)
         assertEquals(
-            listOf("flush true 4063 true", "first 400000 4410 4063 true", "flush false 0 false", "first 900000 100 0 false"),
+            listOf("flush true 4063 true 0", "first 400000 4410 4063 true", "flush false 0 false 0", "first 900000 100 0 false"),
             events,
         )
     }

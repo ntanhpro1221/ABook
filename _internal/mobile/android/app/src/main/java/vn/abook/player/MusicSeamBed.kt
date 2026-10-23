@@ -122,17 +122,25 @@ enum class DemoteReason(val word: String) { LATE("late"), FAIL("fail"), SEEK("se
  * - `vol <k> <v>`: MỖI lần MusicBed đặt volume của trình phát k (kể cả từng nhịp mờ; v 6 chữ số thập phân)
  * - `promote <k> loop <viTriA87Giay>`: viTriA87Giay = vị trí của trình phát a87 (giây trong bài, 6 chữ số) mà promoteTo dùng để tính đích Nối. Bài a87 (mở vào giữa vòng khi chưa có Nối) chuyển sang P3 ở ranh lặp; k = trình phát P3 mới (dòng `open <k> p3` + `plan` + `attach` của nó đứng TRƯỚC, lúc tạo sẵn ~3 s trước ranh).
  *   Dòng này chỉ báo QUYẾT ĐỊNH chuyển, chưa đổi tiếng: a87 vẫn kêu ở âm lượng cũ, P3 khởi động CÂM ([SeamHandover]). Sau nó: `seek <k> ...` (mục 1 = Nối, mẫu = chỗ a87 sẽ ở khi P3 ra loa, [SeamHandover.target]) và `vol <k> 0`;
- *   P3 có thể được tua lại (thêm `seek <k> ...`) cho tới khi pha khớp. Rồi MỘT trong hai: `handover` (êm) hay `demote <k> late|error` (a87 lặp mờ chéo như khi không có Nối).
+ *   P3 có thể được tua lại (thêm `seek <k> ...`) hay dịch pha trong dòng (`shift <k> ...`) cho tới khi pha khớp. Rồi MỘT trong hai: `handover` (êm) hay `demote <k> late|error`
+ *   (a87 lặp mờ chéo như khi không có Nối).
  * - `handover <k> <viTriA87Giay> <viTriP3Giay>`: lúc thực sự chuyển tiếng sang P3 (|P3 - a87| <= [SeamHandover.TOLERANCE_MS] = 5 ms). Cả hai vị trí tính trên TRỤC a87 (giây trong bài, 6 chữ số), cùng một cách đo:
  *   a87 = giây bài của khung đầu AudioTrack hiện tại của a87 + framePosition của nó / sr ([SeamHandover.legacySeconds]; máy không cho timestamp thì currentPosition như trước), P3 = (loopEnd' - X' + MẪU ĐÁP
- *   của lần tua cuối (dòng `land`, không phải mẫu đích) + framePosition của AudioTrack P3) / sr, nên hiệu hai số là pha lệch lúc chuyển (chỉ để đối chiếu). Ngay sau: `vol <k> <âm lượng của a87>` (> 0)
+ *   của lần tua cuối (dòng `land`, không phải mẫu đích) + framePosition của AudioTrack P3 - khung lặng đã chèn + khung đã bỏ (các dòng `shift` sau lần tua cuối đã ra loa, [LoopSeam.contentFrames])) / sr,
+ *   nên hiệu hai số là pha lệch lúc chuyển (chỉ để đối chiếu). Ngay sau: `vol <k> <âm lượng của a87>` (> 0)
  *   rồi `vol <k cũ> 0` (lần đầu a87 về 0 nằm SAU lúc P3 ra loa); không có `demote`.
  * - `hread <k> <deltaMs> <playedMs>`: MỖI lần đọc pha được tính vào quyết định ([SeamHandover.landedReading] khác null), giữa `promote` và `handover` / `demote`: deltaMs = P3 - a87 (ms, cùng cách đo
- *   như `handover`, theo MẪU ĐÁP), playedMs = P3 đã phát bao lâu kể từ lần xả sau lần tua cuối ([SeamHandover.played]); 3 chữ số thập phân. Danh sách lần đọc bắt đầu lại sau mỗi `seek <k>`;
- *   chưa có `land` của lần tua cuối thì không có `hread`. Thước so pha theo dòng `ts` thì chỉ lấy timestamp có nanoTime sau dòng `audiotrack <k>` đầu tiên sau lần tua cuối (như [SeamHandover.fresh]).
+ *   như `handover`, theo MẪU ĐÁP), playedMs = P3 đã phát bao lâu kể từ lần xả sau lần tua cuối ([SeamHandover.played], gồm cả khung lặng đã chèn); 3 chữ số thập phân.
+ *   Danh sách lần đọc bắt đầu lại sau mỗi `seek <k>` và mỗi `shift <k>`; chưa có `land` của lần tua cuối thì không có `hread`; sau `shift` thì deltaMs là pha SAU dịch
+ *   và chỉ có `hread` khi AudioTrack đã phát qua chỗ dịch + khung chèn + [SeamHandover.SETTLE_MS]. Thước so pha theo dòng `ts` thì chỉ lấy timestamp có nanoTime sau dòng `audiotrack <k>`
+ *   đầu tiên sau lần tua cuối (như [SeamHandover.fresh]).
  * - `land <k> <expSample> <landedSample|none>`: lưới an toàn của một lần tua vào Nối ([LoopSeam.seekToSample] `onLand`, ghi lúc kết quả về luồng chính, sau `seek <k> ... seam <expSample>` của nó):
  *   landedSample = vị trí trong WAV Nối của [LoopSeam.LAND_FRAMES] khung đầu sau khi cắt (khớp từng bit, gần đích nhất trong ±1 s), `none` = không thấy. Mọi lần tua vào Nối trong lúc chuyển a87 -> P3;
  *   ngoài lúc ấy chỉ khi đang đo ([MusicBed.testEvents] đặt), và không đổi quyết định nào.
+ * - `shift <k> <frames> <deltaBeforeMs>`: lúc chuyển a87 -> P3, P3 câm đã đáp đúng (`land`) mà pha ổn định lệch <= [SeamHandover.MAX_SHIFT_MS]: dịch pha TRONG DÒNG thay vì tua lại
+ *   ([LoopSeam.LoopSink.shift], không AudioTrack mới). frames = K = round(deltaBeforeMs x sr / 1000): > 0 = chèn K khung lặng (P3 đi trước), < 0 = bỏ |K| khung (P3 đi sau);
+ *   deltaBeforeMs = pha ổn định ([SeamHandover.settled]) trước dịch, 3 chữ số. AudioTrack P3 (dòng `ts`, testTracks) từ đó lệch nội dung đúng K khung kể từ chỗ dịch; vị trí trình phát
+ *   (`pos`, currentPosition) thì đã bù ([LoopSeam.LoopSink.getCurrentPositionUs]).
  * Bên đo tự thêm `scenario <Sx>`, `scenario_end`, `sync <t> <nhảy 0|1>`, `FMT`, `PCM`.
  */
 object SeamEvents {
@@ -153,6 +161,7 @@ object SeamEvents {
     fun handover(k: Int, legacySeconds: Double, p3Seconds: Double) = "handover $k ${f(legacySeconds)} ${f(p3Seconds)}"
     fun handoverReading(k: Int, deltaMs: Double, playedMs: Double) = "hread $k ${f(deltaMs, 3)} ${f(playedMs, 3)}"
     fun land(k: Int, expSample: Long, landedSample: Long?) = "land $k $expSample ${landedSample ?: "none"}"
+    fun shift(k: Int, frames: Long, deltaBeforeMs: Double) = "shift $k $frames ${f(deltaBeforeMs, 3)}"
 }
 
 /** Đồng hồ nhạc và tua của đường P3: tính theo (mục, vị trí trong mục) của ExoPlayer; bảng mục: 0 = Clip đầu, lẻ = Nối, chẵn >= 2 = Clip lặp ([LoopSeam]). */
@@ -251,6 +260,12 @@ object SeamClock {
  * thì đo pha: vị trí P3 trên trục a87 (MẪU ĐÁP thật của lần tua cuối theo lưới an toàn [Landing] + framePosition / sr) trừ vị trí a87, đo ĐỐI XỨNG ([legacySeconds]: mốc đầu AudioTrack a87 + framePosition của nó / sr; không có timestamp
  * thì currentPosition). Lệch <= [TOLERANCE_MS] ([STEADY_READINGS] lần đọc liền) thì mới đổi tiếng; [STEADY_READINGS] lần đọc ỔN ĐỊNH mà lệch hơn thì tua lại P3 (vẫn câm, a87 vẫn kêu)
  * với trễ đã sửa theo pha trung bình (trễ mới = trễ cũ - lệch), tối đa [MAX_RETUNES] lần. Chỉ đọc timestamp của AudioTrack sinh ra SAU lần tua cuối ([fresh]).
+ * P3 còn câm, đã đáp đúng chỗ ([Landing.At]) và lệch ổn định <= [MAX_SHIFT_MS] thì KHÔNG tua lại mà dịch pha trong dòng ([Act.SHIFT], [LoopSeam.LoopSink.shift]): mỗi lần tua lại là một
+ * AudioTrack mới với trễ khởi động ngẫu nhiên mới (máy ảo dao động ±20-44 ms giữa hai lần tua, PLAN_loop §44.9), còn dịch trong dòng giữ nguyên AudioTrack đang chạy nên sửa đúng chừng ấy.
+ * Tối đa [MAX_SHIFTS] lần, riêng với [MAX_RETUNES]; chung [DEADLINE_MS] / [GUARD_MS].
+ *
+ * Học trễ (`p3LagMs` của [MusicBed], [nextLag], [lagPhase]): lần chuyển kế dùng trễ đo ở pha ổn định ĐẦU TIÊN của lần tua đầu (trước mọi dịch, đã bỏ phần đáp lệch). Dịch trong dòng
+ * không cộng vào trễ: nó sửa pha của AudioTrack đang chạy, không nói gì về trễ khởi động; lần tua lại sau các dịch (hiếm) cũng sửa trễ theo pha trước dịch của lần tua ấy.
  * Quá [DEADLINE_MS] hay a87 gần hết Nối ([GUARD_MS]) thì bỏ: a87 lặp mờ chéo như khi không có Nối. Thuần số học, [MusicBed] lo trình phát.
  *
  * Nhịp một lần tua: xả + AudioTrack mới ra loa (máy ảo 70-200 ms, máy thật 160-450 ms) + [SETTLE_MS] + [STEADY_READINGS] x [POLL_MS] = ~150-300 ms trên máy ảo, tới ~550 ms máy thật nguội.
@@ -274,6 +289,12 @@ object SeamHandover {
     /** Còn chừng này (ms) tới hết Nối (a87 tới loopEnd') thì không chuyển nữa. */
     const val GUARD_MS = 150L
     const val MAX_RETUNES = 3
+
+    /** Pha ổn định lệch tối đa chừng này (ms) thì dịch trong dòng ([Act.SHIFT]) thay vì tua lại. */
+    const val MAX_SHIFT_MS = 250.0
+
+    /** Số lần dịch trong dòng tối đa của một lần chuyển (riêng với [MAX_RETUNES]). */
+    const val MAX_SHIFTS = 3
     const val POLL_MS = 10L
 
     /** Trễ khởi động P3 ước lượng lúc chưa đo (ms, từ lệnh tua / phát tới khi ra loa); máy thật 160-450 ms, máy ảo ~100 ms. [MusicBed] giữ số đã đo. */
@@ -281,7 +302,11 @@ object SeamHandover {
     private const val MIN_LAG_MS = 20L
     private const val MAX_LAG_MS = 900L
 
-    enum class Act { WAIT, SWITCH, RETUNE, FALLBACK }
+    /** SHIFT = dịch pha trong dòng của P3 ([shiftFrames], [LoopSeam.LoopSink.shift]) thay cho RETUNE khi được ([decide]). */
+    enum class Act { WAIT, SWITCH, RETUNE, SHIFT, FALLBACK }
+
+    /** Số khung dịch cho pha `deltaMs` = P3 - a87: K = round(δ x sr / 1000); δ > 0 (P3 đi trước) -> K > 0 = chèn K khung lặng; δ < 0 (P3 đi sau) -> bỏ |K| khung. */
+    fun shiftFrames(seam: LoopSeam.Seam, deltaMs: Double): Long = Math.round(deltaMs * seam.sampleRate / 1000.0)
 
     /** Trễ khởi động sau khi đo: P3 ở trước a87 `deltaMs` (dương) nghĩa là trễ ước lượng quá lớn chừng ấy. */
     fun nextLag(lagMs: Long, deltaMs: Double): Long = Math.round(lagMs - deltaMs).coerceIn(MIN_LAG_MS, MAX_LAG_MS)
@@ -321,13 +346,18 @@ object SeamHandover {
 
     /**
      * Một lần đọc pha P3 - a87 (ms) ở nhịp `nowNano`: P3 đã tua tới `targetSample` lúc `issuedNano`, `stamp` là AudioTrack hiện tại của P3, a87 ở `legacySeconds`.
-     * Null (không tính vào [decide]) khi timestamp không [fresh] - kể cả AudioTrack CŨ còn chạy ngay sau lần tua - hay P3 mới phát < [SETTLE_MS] kể từ lần xả sau lần tua.
+     * `shifts` = các dịch trong dòng đã áp sau lần tua ấy (cũ trước): vị trí P3 = mẫu đích + [LoopSeam.contentFrames] (framePosition - khung lặng đã chèn + khung đã bỏ, chỉ các dịch
+     * đã ra loa).
+     * Null (không tính vào [decide]) khi timestamp không [fresh] - kể cả AudioTrack CŨ còn chạy ngay sau lần tua - hay P3 mới phát < [SETTLE_MS] kể từ lần xả sau lần tua, hay
+     * (có dịch) chưa phát qua chỗ dịch cuối + khung chèn của nó + [SETTLE_MS].
      */
-    fun reading(seam: LoopSeam.Seam, targetSample: Long, issuedNano: Long, stamp: Stamp, nowNano: Long, legacySeconds: Double): Double? {
+    fun reading(seam: LoopSeam.Seam, targetSample: Long, issuedNano: Long, stamp: Stamp, nowNano: Long, legacySeconds: Double, shifts: List<LoopSeam.Shift> = emptyList()): Double? {
         if (!fresh(issuedNano, stamp.flushedNano, stamp.nanoTime, stamp.framePosition)) return null
         val played = played(seam, stamp, nowNano)
-        if (played * 1000.0 / seam.sampleRate < SETTLE_MS) return null
-        return (p3Seconds(seam, targetSample, played) - legacySeconds) * 1000.0
+        val last = shifts.lastOrNull()
+        val from = if (last == null) 0L else last.writtenAt + maxOf(0L, last.frames)
+        if ((played - from) * 1000.0 / seam.sampleRate < SETTLE_MS) return null
+        return (p3Seconds(seam, targetSample, LoopSeam.contentFrames(played, shifts)) - legacySeconds) * 1000.0
     }
 
     /**
@@ -350,8 +380,8 @@ object SeamHandover {
     }
 
     /** Như [reading] nhưng P3 tính từ MẪU ĐÁP thật: null khi lưới an toàn chưa có kết quả hay không tìm thấy (lần đọc không tính). */
-    fun landedReading(seam: LoopSeam.Seam, landing: Landing, issuedNano: Long, stamp: Stamp, nowNano: Long, legacySeconds: Double): Double? =
-        (landing as? Landing.At)?.let { reading(seam, it.sample, issuedNano, stamp, nowNano, legacySeconds) }
+    fun landedReading(seam: LoopSeam.Seam, landing: Landing, issuedNano: Long, stamp: Stamp, nowNano: Long, legacySeconds: Double, shifts: List<LoopSeam.Shift> = emptyList()): Double? =
+        (landing as? Landing.At)?.let { reading(seam, it.sample, issuedNano, stamp, nowNano, legacySeconds, shifts) }
 
     /**
      * Phần của pha `phaseMs` (theo mẫu đáp) do trễ khởi động, để học trễ ([nextLag]): bỏ chỗ đáp lệch đích (ms). Lệch đích là lỗi của chính lần tua ấy (lần tua sau thường đáp đúng),
@@ -362,14 +392,22 @@ object SeamHandover {
 
     /**
      * [decide] có lưới an toàn: chưa có kết quả thì không lần đọc nào tính (chỉ hạn chót); không tìm thấy (lần tua hỏng) thì tua lại NGAY, tính vào [MAX_RETUNES], hết lượt thì bỏ như cũ.
-     * Có mẫu đáp thì như [decide] với các lần đọc theo mẫu đáp ([landedReading]): đáp lệch hiện ra ở pha và được tua lại theo luật sẵn có.
+     * Có mẫu đáp thì như [decide] với các lần đọc theo mẫu đáp ([landedReading]): đáp lệch hiện ra ở pha và được sửa theo luật sẵn có. Chỗ lẽ ra tua lại (RETUNE, hay bỏ vì hết lượt
+     * tua) mà P3 còn câm (`muted`, mức logic 0), đã đáp đúng ([Landing.At]) và pha ổn định lệch <= [MAX_SHIFT_MS] thì dịch trong dòng (SHIFT); `shifts` = số lần đã dịch, hết
+     * [MAX_SHIFTS] thì bỏ (FALLBACK). Hạn chót / sát hết Nối vẫn bỏ trước mọi thứ.
      */
-    fun decide(elapsedMs: Long, remainingMs: Double, retunes: Int, readings: List<Double>, landing: Landing): Act {
+    fun decide(elapsedMs: Long, remainingMs: Double, retunes: Int, readings: List<Double>, landing: Landing, muted: Boolean = false, shifts: Int = 0): Act {
         if (landing is Landing.None) {
             if (elapsedMs >= DEADLINE_MS || remainingMs <= GUARD_MS) return Act.FALLBACK
             return if (retunes >= MAX_RETUNES) Act.FALLBACK else Act.RETUNE
         }
-        return decide(elapsedMs, remainingMs, retunes, if (landing is Landing.At) readings else emptyList())
+        val counted = if (landing is Landing.At) readings else emptyList()
+        val act = decide(elapsedMs, remainingMs, retunes, counted)
+        if (act != Act.RETUNE && act != Act.FALLBACK) return act
+        if (elapsedMs >= DEADLINE_MS || remainingMs <= GUARD_MS) return act
+        val settled = settled(counted)
+        if (!muted || landing !is Landing.At || settled == null || Math.abs(settled) > MAX_SHIFT_MS) return act
+        return if (shifts >= MAX_SHIFTS) Act.FALLBACK else Act.SHIFT
     }
 
     /** Số khung AudioTrack P3 đã phát tới `nowNano` (ngoại suy từ `stamp`), quy về tần số của Nối: cái [reading] cộng vào mẫu đích; dòng `hread` ghi nó theo ms. */
