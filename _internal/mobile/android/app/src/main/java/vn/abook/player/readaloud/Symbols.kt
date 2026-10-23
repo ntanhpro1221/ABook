@@ -35,7 +35,9 @@ object Symbols {
     private val UNIT_BEFORE = Regex("""(?<!\p{L})(?:km|cm|dm|mm|m|kg|mg|g|ml|mL|l|L)$""")
     private val UNIT_AFTER = Regex("""^(?:h|ms|s|giờ|phút|giây|(?:km|cm|dm|mm|m)[23²³]?|kg|mg|g|ml|mL|l|L)(?![\p{L}\p{N}])""")
     private val PER_NOUNS = "ngày tuần tháng năm máy người lần cái chương tập".split(" ").toSet()
-    private val RATIO_WORDS = "tỉ tỷ lệ chia cược kèo".split(" ").toSet()
+    private val RATIO_WORDS = "tỉ tỷ chia cược kèo".split(" ").toSet()
+    private val RATIO_AFTER_TI = "lệ số".split(" ").toSet()
+    private val NOT_RATIO_AFTER_CHIA = "tay ly lìa buồn vui sẻ".split(" ").toSet()
     val DUEL_WORDS = "đấu đối trận đơn song solo đánh".split(" ").toSet()
     private val RATIO_SLASH = "tỉ tỷ lệ xác suất chia".split(" ").toSet()
     private val DIRECTION_WORDS = "tăng giảm lên xuống cao thấp up down".split(" ").toSet()
@@ -500,13 +502,22 @@ object Symbols {
 
     private class Ratio(val said: String?, val back: Int)
 
+    /** The two words right before the number left of ":" (`near` touches it) mark a ratio / score; words AFTER do not count: "12:30 chia tay" is a time - `_ratio_before`. */
+    private fun ratioBefore(nearWord: String, farWord: String): Boolean {
+        val near = nearWord.lowercase()
+        val far = farWord.lowercase()
+        if (near in RATIO_WORDS - "chia" || far in RATIO_WORDS - "chia") return true
+        if (near in RATIO_AFTER_TI && far in setOf("tỉ", "tỷ")) return true
+        return near == "chia" || (far == "chia" && near !in NOT_RATIO_AFTER_CHIA)
+    }
+
     /** ":" between two glued numbers: "tỉ lệ 7:3" two numbers in a row, "đấu 1:1" is "một chọi một", "3.17:1" (betting) is "ba phẩy mười bảy ăn một", clock times stay - `_ratio`. */
     private fun ratio(c: Spot): Ratio {
         val number = search("""\d+(?:[.,]\d+)?$""", c.left)!!.value
         val right = match("""\d+""", c.right)!!.value
         val words = c.left3 + c.right3
         if (('.' in number || ',' in number) && right == "1") return Ratio(decimal(number) + " ăn", number.length)
-        if (words hit RATIO_WORDS) return Ratio("", 0)
+        if (ratioBefore(c.l2, c.l3)) return Ratio("", 0)
         if (number == "1" && right == "1" && (words hit DUEL_WORDS)) return Ratio("chọi", 0)
         return Ratio(null, 0)
     }

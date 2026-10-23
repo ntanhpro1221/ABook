@@ -37,7 +37,9 @@ PER_PHYSICAL = frozenset("h s giờ phút giây min hr sec ms".split())  # "km/h
 UNIT_BEFORE = re.compile(r"(?<![^\W\d_])(?:km|cm|dm|mm|m|kg|mg|g|ml|mL|l|L)$")
 UNIT_AFTER = re.compile(r"(?:h|ms|s|giờ|phút|giây|(?:km|cm|dm|mm|m)[23²³]?|kg|mg|g|ml|mL|l|L)(?![^\W_])")
 PER_NOUNS = frozenset("ngày tuần tháng năm máy người lần cái chương tập".split())
-RATIO_WORDS = frozenset("tỉ tỷ lệ chia cược kèo".split())  # "tỉ lệ 7:3", "chia 8:2": hai số liền
+RATIO_WORDS = frozenset("tỉ tỷ chia cược kèo".split())  # "tỉ lệ 7:3", "chia 8:2", "chia tiền 7:3": hai số liền - chỉ chữ ĐỨNG TRƯỚC số
+RATIO_AFTER_TI = frozenset("lệ số".split())  # "lệ" / "số" chỉ là tỉ lệ / tỉ số khi theo sau "tỉ": "6:00 lệ phí" là giờ
+NOT_RATIO_AFTER_CHIA = frozenset("tay ly lìa buồn vui sẻ".split())  # "chia tay 9:05" là giờ
 DUEL_WORDS = frozenset("đấu đối trận đơn song solo đánh".split())  # "đấu 1:1": một chọi một
 RATIO_SLASH = frozenset("tỉ tỷ lệ xác suất chia".split())  # "tỉ lệ 1/100": một phần trăm
 DIRECTION_WORDS = frozenset("tăng giảm lên xuống cao thấp up down".split())
@@ -614,6 +616,16 @@ def _word_char(char: str) -> bool:
     return char.isalnum() or char == "_"
 
 
+def _ratio_before(near: str, far: str) -> bool:
+    """Hai chữ đứng ngay trước số bên trái dấu ":" (`near` sát số) báo tỉ lệ / tỉ số. Chữ SAU giờ không tính: "12:30 chia tay" là giờ."""
+    near, far = near.lower(), far.lower()
+    if near in RATIO_WORDS - {"chia"} or far in RATIO_WORDS - {"chia"}:
+        return True
+    if near in RATIO_AFTER_TI and far in {"tỉ", "tỷ"}:
+        return True
+    return near == "chia" or (far == "chia" and near not in NOT_RATIO_AFTER_CHIA)
+
+
 def _ratio(c: Spot) -> tuple:
     """":" giữa hai số dính liền: "tỉ lệ 7:3" / "chia 8:2" hai số liền, "đấu 1:1" là một chọi một, "3.17:1" (cược) là "ba phẩy mười bảy ăn một", còn lại (giờ "12:30") để sea-g2p. Trả (lời, ngắt, số chữ đứng trước được gộp)."""
     number = re.search(r"\d+(?:[.,]\d+)?$", c.left).group()
@@ -621,7 +633,7 @@ def _ratio(c: Spot) -> tuple:
     words = c.left3 | c.right3
     if ("." in number or "," in number) and right == "1":
         return (_decimal(number) + " ăn", False, len(number))  # "kèo cược 3.17:1"
-    if words & RATIO_WORDS:
+    if _ratio_before(c.l2, c.l3):
         return ("", False, 0)
     if number == "1" and right == "1" and words & DUEL_WORDS:
         return ("chọi", False, 0)

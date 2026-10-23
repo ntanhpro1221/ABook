@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nghe ngay
+
+- Giờ như “12:30 chia tay”, “9:05 chia tay”, “6:00 lệ phí” được đọc là giờ (“mười hai giờ ba mươi phút”), không còn thành hai số liền; “tỉ lệ 7:3”, “tỉ số 2:1”, “chia 8:2” vẫn đọc là tỉ lệ (máy tính và điện thoại).
+
 ### Hiệu năng
 
 - Điện thoại ghép với máy tính có hàng trăm cuốn: danh sách thư viện từ máy tính mất chừng 10 giây mỗi lần (quá hạn chờ của điện thoại nên sách biến mất khỏi Thư viện) nay chỉ tính lại cuốn nào vừa đổi, lần hỏi sau gần như tức thì; máy tính dựng sẵn danh sách khi mở app nếu đã ghép điện thoại.
