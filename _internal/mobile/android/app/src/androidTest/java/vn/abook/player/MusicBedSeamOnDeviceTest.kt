@@ -29,7 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Không phát gì khác: nhạc ở âm lượng của MusicBed (levelDb -6), tee PCM nằm TRƯỚC âm lượng nên bộ chấm đọc dòng `vol` để tính mức thật.
  *
  * Tham số (`am instrument -e ...`): `id` (tên bản ghi, mặc định `bed`), `file` / `file2` (mp3 của mốc A / B; S4 cần file2), `audibleStart` / `loopStart` / `loopEnd` (giây của bài A; `audibleEnd` tuỳ chọn;
- * hậu tố `2` cho bài B), `sc` (danh sách kịch bản, mặc định `S1,S2,S3,S4,S5,S6`), `seconds` (không dùng, giữ cho tương thích với MusicLoopSeamTest).
+ * hậu tố `2` cho bài B), `sc` (danh sách kịch bản, mặc định `S1,S2,S3,S4,S5,S6`), `seconds` (không dùng, giữ cho tương thích với MusicLoopSeamTest),
+ * `seamDeadlineMs` (ms, tuỳ chọn: hạn chót lần chuyển a87 -> P3 thay 1500); thiếu thì không đặt móc.
  *
  * Sách giả: ghi `book.json` + file nhạc thẳng vào `Store.bookDir(bookId)` (thư mục sách thật của app, nơi `Store.playableManifest` đọc - đúng đường MusicBed.sync dùng, cùng đường
  * `Streaming.chapterUri` lấy file bài `music/<sha1>.mp3`), thay vì giả `Store`/`MusicBed` - nên mốc, tên bài, `levelDb` và URI đều đi qua mã thật. `book.json` viết lại mỗi kịch bản
@@ -41,7 +42,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * `SEAM ...` / `SEAM2 ...` như MusicLoopSeamTest, `RFMT`, `RFMT2`, `RINFO`, `RINFO2`, `GAIN <g>`,
  * `EV <ns> scenario <Sx>` / `EV <ns> scenario_end` (số trình phát k đánh lại từ 0 mỗi kịch bản), `EV <ns> sync <t> <nhảy 0|1>`,
  * và các sự kiện của MusicBed (xem [SeamEvents]): `open`, `plan`, `attach`, `demote`, `promote` (`promote <k> loop <viTriA87Giay>`), `seek`, `pos`, `item`, `audiotrack`, `vol`, mỗi dòng sau `EV <ns> `;
- * `EV <ns> ts <k> <framePosition> <tsNanoTime>` (luồng phụ 10 ms, AudioTrack mới nhất của từng k, chỉ ghi khi getTimestamp true và framePosition đổi), `EV <ns> underrun <k> <count>` (đầu kịch bản và mỗi khi đổi); luồng dừng ở scenario_end;
+ * `EV <ns> ts <k> <framePosition> <tsNanoTime>` (luồng phụ 10 ms, AudioTrack mới nhất của từng k, chỉ ghi khi getTimestamp true và framePosition đổi), `EV <ns> underrun <k> <count>` (đầu kịch bản và mỗi khi đổi),
+ * `EV <ns> head <k> <playbackHeadPosition>` (lần đọc đầu của mỗi AudioTrack và mỗi khi đổi: đầu phát có chạy không), `EV <ns> tsok <k> 0|1` (kết quả boolean của getTimestamp, lần đọc đầu của mỗi AudioTrack và mỗi khi đổi:
+ * tách "getTimestamp trả false" khỏi "framePosition đứng yên"); luồng dừng ở scenario_end;
+ * `EV <ns> hook <tên> <giá trị>` ngay sau `scenario` (chỉ khi đặt móc đo): `seamDeadlineMs` = [MusicBed.testHandoverDeadlineMs];
  * cùng `FMT <ns> <k> <seg> <sr> <ch> <enc>` và `PCM <k> <seg> <f0> <n> <off> <ns>` (off = byte trong file `<id>_<sc>_p<k>.pcm` / `<id>_<sc>#<n>_p<k>.pcm` của chính lần ấy).
  */
 @OptIn(UnstableApi::class)
@@ -134,7 +138,7 @@ class MusicBedSeamOnDeviceTest {
      */
     private fun startTrackPoller(): () -> Unit {
         val stop = AtomicBoolean(false)
-        class State(var track: AudioTrack? = null, var frame: Long = -1L, var underrun: Int = -1)
+        class State(var track: AudioTrack? = null, var frame: Long = -1L, var underrun: Int = -1, var head: Int? = null, var tsok: Int = -1)
         val states = HashMap<Int, State>()
         val thread = Thread {
             val stamp = AudioTimestamp()
@@ -146,16 +150,31 @@ class MusicBedSeamOnDeviceTest {
                             s.track = track
                             s.frame = -1L
                             s.underrun = -1
+                            s.head = null
+                            s.tsok = -1
                         }
                         val underrun = track.underrunCount
                         if (underrun != s.underrun) {
                             s.underrun = underrun
                             log("EV ${System.nanoTime()} underrun $k $underrun")
                         }
+                        val head = track.playbackHeadPosition
+                        if (head != s.head) {
+                            s.head = head
+                            log("EV ${System.nanoTime()} head $k $head")
+                        }
+                        val ok = track.getTimestamp(stamp)
                         // còn là AudioTrack hiện tại sau khi đọc: lần xả (tua) chen giữa thì timestamp nói về AudioTrack cũ, bỏ
-                        if (track.getTimestamp(stamp) && MusicBed.testTracks[k] === track && stamp.framePosition != s.frame) {
-                            s.frame = stamp.framePosition
-                            log("EV ${System.nanoTime()} ts $k ${stamp.framePosition} ${stamp.nanoTime}")
+                        if (MusicBed.testTracks[k] === track) {
+                            val okInt = if (ok) 1 else 0
+                            if (okInt != s.tsok) {
+                                s.tsok = okInt
+                                log("EV ${System.nanoTime()} tsok $k $okInt")
+                            }
+                            if (ok && stamp.framePosition != s.frame) {
+                                s.frame = stamp.framePosition
+                                log("EV ${System.nanoTime()} ts $k ${stamp.framePosition} ${stamp.nanoTime}")
+                            }
                         }
                     } catch (_: IllegalStateException) {
                         // AudioTrack vừa bị nhả giữa hai lần đọc: lần sau đọc cái mới
@@ -193,6 +212,7 @@ class MusicBedSeamOnDeviceTest {
         val aLoopStart = number("loopStart") ?: error("thiếu loopStart")
         val aLoopEnd = number("loopEnd") ?: error("thiếu loopEnd")
         val aAudibleEnd = number("audibleEnd")
+        val seamDeadlineMs = number("seamDeadlineMs")?.toLong()?.takeIf { it > 0 }
         val bStart = number("audibleStart2") ?: 0.0
         val bLoopStart = number("loopStart2")
         val bLoopEnd = number("loopEnd2")
@@ -303,6 +323,7 @@ class MusicBedSeamOnDeviceTest {
                 }
                 MusicBed.testPlayerSeq = 0
                 MusicBed.testTracks.clear()
+                MusicBed.testHandoverDeadlineMs = seamDeadlineMs
                 attached.set(false)
                 promoted.set(false)
                 MusicBed.testAudioProcessor = {
@@ -314,6 +335,7 @@ class MusicBedSeamOnDeviceTest {
 
                 // 3. Kịch bản
                 log("EV ${System.nanoTime()} scenario $sc")
+                seamDeadlineMs?.let { log("EV ${System.nanoTime()} hook seamDeadlineMs $it") }
                 val voice = Voice(bookId)
                 val stopPoller = startTrackPoller()
                 try {
@@ -370,6 +392,7 @@ class MusicBedSeamOnDeviceTest {
                         MusicBed.release() // lần sync kế (kịch bản sau) đọc lại sách
                     }
                     MusicBed.testAudioProcessor = null
+                    MusicBed.testHandoverDeadlineMs = null
                     Thread.sleep(300) // trình phát vừa nhả: tee ngừng ghi
                     tees.forEach { runCatching { it.close() } }
                     tees.clear()
@@ -379,6 +402,7 @@ class MusicBedSeamOnDeviceTest {
             MusicBed.testAudioProcessor = null
             MusicBed.testEvents = null
             MusicBed.testRenderDelayMs = 0L
+            MusicBed.testHandoverDeadlineMs = null
             onMain {
                 MusicBed.stop()
                 MusicBed.release()
