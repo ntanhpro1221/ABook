@@ -56,6 +56,9 @@ def test_a_symbol_with_a_number_is_read_by_its_neighbours(text: str, said: str) 
     ("Chia tiền 7:3 nhé.", "Chia tiền 7 3 nhé."),
     ("Hai người đấu 1:1 ở sân sau, rồi đấu 1-1 tiếp.", "Hai người đấu 1 chọi 1 ở sân sau, rồi đấu 1 chọi 1 tiếp."),
     ("Kèo cược 3.17:1 là cao.", "Kèo cược 3 phẩy mười bảy ăn 1 là cao."),
+    ("Hẹn 12:30 chia tay ở cổng.", "Hẹn 12:30 chia tay ở cổng."),
+    ("Họ chia tay 9:05 sáng, đóng 6:00 lệ phí.", "Họ chia tay 9:05 sáng, đóng 6:00 lệ phí."),
+    ("Tỉ lệ 7:3, tỉ số 2:1, chia 8:2.", "Tỉ lệ 7 3, tỉ số 2 1, chia 8 2."),
     # 3. chỉ số sau dấu hai chấm là âm, lượng đổi là trừ
     ("Độ thiện cảm: -20, rồi -50% Nhanh nhẹn, [Sức mạnh -5], Mất thêm -15%.", "Độ thiện cảm: âm 20, rồi trừ 50% Nhanh nhẹn, [Sức mạnh trừ 5], Mất thêm trừ 15%."),
     ("Điểm Lv.-1 hiện ra.", "Điểm lờ vê.âm 1 hiện ra."),
