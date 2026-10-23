@@ -1,0 +1,11 @@
+{
+  "id": "text-mark",
+  "chapterId": 1,
+  "seconds": 6.0,
+  "index": 2,
+  "quote": "Câu cần nghe lại.",
+  "anchor": {"segment": 2, "charOffset": 4, "textHash": "fnv1a64:0000000000000000", "paragraphHash": "fnv1a64:1111111111111111"},
+  "note": "",
+  "at": 10.0,
+  "createdAt": 10.0
+}

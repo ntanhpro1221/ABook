@@ -1971,7 +1971,7 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun addBookmark(call: PluginCall) = background(call) {
         val mark = Store.addBookmark(call.getString("id")!!, call.getInt("chapterId")!!, call.getDouble("seconds") ?: 0.0, call.getString("note") ?: "",
-            call.getInt("index"), call.getString("quote") ?: "", call.getDouble("createdAt"), call.getString("record"))
+            call.getInt("index"), call.getString("quote") ?: "", call.getDouble("createdAt"), call.getString("record"), call.getObject("anchor"))
         call.resolve(JSObject.fromJSONObject(mark))
         // Bookmarks reach the computer like the listening position does (a70: a bookmark set in the reader never left the phone).
         runCatching { StateSync.pushNow(context, call.getString("id")!!, call.getString("record")) }

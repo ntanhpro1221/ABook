@@ -447,8 +447,11 @@ object ReadAloud {
     fun useVoiceOf(bookId: String, recordId: String = "") {
         voiceBook = bookId
         voiceRecord = recordId
-        voiceId = usableOrDefault(choices?.voiceFor(bookId, recordId).orEmpty())
+        voiceId = voiceForBook(bookId, recordId)
     }
+
+    internal fun voiceForBook(bookId: String, recordId: String): String =
+        usableOrDefault(choices?.voiceFor(bookId, recordId).orEmpty())
 
     /** Cuốn mà [voiceId] đang đọc (lần [useVoiceOf] gần nhất). */
     private var voiceBook = ""
@@ -641,6 +644,12 @@ object ReadAloud {
             words?.indexOfLast { it.start <= ms && it.end > it.start }?.coerceAtLeast(chap.clips[segment]?.fromWord ?: 0)
                 ?: 0
         return ReadingAnchor.make(chap.paragraphs, segment, word.coerceAtMost((WordTokens.count(text) - 1).coerceAtLeast(0)))
+    }
+
+    fun bookmark(): JSONObject? {
+        if (!active) return null
+        val chap = chapterIndexNow()?.let { chaps[it] } ?: return null
+        return TextBookmark.from(chap.paragraphs, anchor())
     }
 
     /**
@@ -1801,17 +1810,19 @@ object ReadAloud {
      * Đoạn nào đã đọc bằng giọng đang chọn (còn trong bộ nhớ đệm) thì đồng hồ ảo dùng độ dài thật ngay từ lúc nạp chương: nghe tiếp từ giây đã lưu (widget, xe
      * hơi, mở lại app) rơi đúng đoạn đã nghe, không lệch theo ước lượng 14 ký tự/giây.
      */
-    private fun fromCache(chap: Chap, origin: String?, readings: Map<String, String>) {
+    private fun fromCache(chap: Chap, origin: String?, readings: Map<String, String>, voice: String = voiceId) {
         val cache = runCatching { cache() }.getOrNull() ?: return
-        for (i in chap.paragraphs.indices) if (!chap.isBreak(i)) cache.get(voiceId, chap.paragraphs[i], origin, readings)?.let {
+        for (i in chap.paragraphs.indices) if (!chap.isBreak(i)) cache.get(voice, chap.paragraphs[i], origin, readings)?.let {
             chap.clips[i] = it
             chap.timeline.setDuration(i, it.durationMs)
         }
     }
 
-    /** Chương của một cuốn không đang nạp: chữ từ gói sách, mốc từ bộ nhớ đệm (nếu đoạn đã từng được đọc bằng giọng đang chọn). */
+    /** Chương của một cuốn không đang nạp: dùng giọng của chính cuốn và hồ sơ sẽ được Playback.load nạp. */
     private fun peek(bookId: String, chapterId: Int): Chap? =
-        parsedChapters(bookId, listOf(chapterId))[chapterId]?.let { Chap(-1, it.second).also { chap -> fromCache(chap, originOf(bookId), readingsOf(bookId)) } }
+        parsedChapters(bookId, listOf(chapterId))[chapterId]?.let { Chap(-1, it.second).also { chap ->
+            fromCache(chap, originOf(bookId), readingsOf(bookId), voiceForBook(bookId, Store.activeRecord(bookId)))
+        } }
 
     /**
      * Các chương chỉ-có-chữ `ids` của một cuốn trên máy: mã -> (tên chương người nghe thấy, các đoạn đúng như lúc nghe). Chương không có chữ hay không đọc được

@@ -13,6 +13,7 @@ import { canTeachWords, wordOf } from "./readings";
 import type { ListenBook, ListenChapter, Script, ScriptSegment } from "./model";
 import { useListenMutations } from "./source";
 import { reportWriteFailure } from "./recordWrites";
+import { makeAnchor } from "./readingAnchor";
 import { WordReadingDialog } from "./WordReadings";
 
 // Chọn một câu của văn bản đọc theo rồi làm gì với nó - MỘT chỗ cho màn Đọc (ReaderScreen) và tab "Đọc theo" của màn "Đang nghe" (PlayerViews):
@@ -161,7 +162,8 @@ export function useSentenceMenu({
     const segment = script?.segments[sentence];
     if (!segment) return;
     mutations.addBookmark.mutate(
-      { chapterId, seconds: segment.start ?? 0, note: "", sentence: { index: sentence, quote: segment.text } },
+      { chapterId, seconds: segment.start ?? 0, note: "", sentence: { index: sentence, quote: segment.text,
+        anchor: makeAnchor(script!.segments.map((part) => part.text), sentence, 0) } },
       {
         onSuccess: (mark) => {
           select(null);

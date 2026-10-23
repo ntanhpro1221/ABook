@@ -142,8 +142,10 @@ export function ReaderScreen(edit: SentenceEditing) {
     if (restored.current.startsWith(`${owner}:${location.key}:${textHash}:`) && touched.current === owner) return;
     restored.current = key;
     const requested = params.get("at");
+    let anchor: ReadingPosition["anchor"];
+    try { anchor = JSON.parse(params.get("anchor") ?? "null") ?? undefined; } catch { /* Liên kết cũ: dùng câu trích và chỉ số. */ }
     const saved = reading?.chapterId === chapterId ? reading : undefined;
-    const target = readingIndex(script, requested !== null ? { index: Number(requested), quote: params.get("quote") ?? undefined }
+    const target = readingIndex(script, requested !== null ? { index: Number(requested), quote: params.get("quote") ?? undefined, anchor }
       : playingIndex >= 0 ? { index: playingIndex } : saved ?? { index: 0 });
     window.requestAnimationFrame(() => {
       // Đầu chương: về đầu trang, không cuộn tới câu đầu - dòng nhắc đứng TRƯỚC câu ấy và từng bị cuộn khuất ngay lúc mở (soát UX 29-09).
