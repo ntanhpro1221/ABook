@@ -14,7 +14,7 @@ import { coverArtwork } from "@/shared/cover";
 import { formatSize } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
 import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
-import { rejoinExports } from "./exportJobs";
+import { isEnded, noteEnded, rejoinExports } from "./exportJobs";
 import { EbookLibrary, type AudiobookExportEvent, type AudiobookPhonePlan } from "./plugins";
 
 // "Xuất sách nói" của sách Nghe ngay (chỉ có chữ) trên điện thoại: cùng việc với máy tính (desktop/AudiobookDialog.tsx) - điện thoại đọc cả cuốn bằng giọng đã chọn cho cuốn
@@ -91,6 +91,8 @@ function showProgress(event: ProgressFields & Pick<AudiobookExportEvent, "bookId
 /** Theo dõi các lượt xuất sách nói từ lúc app mở (App.tsx): tiến độ, xong, dừng, lỗi - và lượt đang chạy từ trước (mở lại app giữa chừng). */
 export function watchAudiobookExports(): () => void {
   const handle = EbookLibrary.addListener("audiobookExport", (event) => {
+    if (event.finished || event.stopped || event.error) noteEnded(event.run);
+    else if (isEnded(event.run)) return; // tin muộn của lượt đã kết thúc
     const current = runs.get(event.bookId);
     if (current !== undefined && current !== event.run) return;
     const id = toastId(event.bookId);

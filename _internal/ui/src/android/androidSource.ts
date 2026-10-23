@@ -7,6 +7,7 @@ import { EbookLibrary, EbookPlayer, ReadAloud, type LocalBook } from "./plugins"
 import { phonePrepare } from "./readAloud";
 import { phoneTextImport } from "./textImport";
 import { recentFirst } from "@/listen/librarySort";
+import { coverColor } from "@/shared/cover";
 
 // Phía Nghe trên Android: đọc sách đã tải về máy, và sách trên máy tính nghe thẳng qua mạng (EbookLibrary). Audio chương do lõi phát native mở thẳng từ
 // file, nên audioUrl không dùng tới; câu mẫu nhân vật phát trong WebView qua đường dẫn file đã chuyển đổi.
@@ -57,7 +58,7 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     progress: textOnly ? textBookProgress(state, chapters) : bookProgress(state, chapters.filter((chapter) => chapter.available), book.complete),
     lastChapterTitle: chapters.find((chapter) => chapter.id === state.last?.chapterId)?.fullTitle ?? "",
     cover: book.cover
-      ? { url: `${fileUrl(book.id, book.cover.file)}?v=${book.cover.version}`, color: book.cover.color, width: book.cover.width, height: book.cover.height }
+      ? { url: `${fileUrl(book.id, book.cover.file)}?v=${book.cover.version}`, color: coverColor(book.cover.color), width: book.cover.width, height: book.cover.height }
       : null,
     chapters: withChapters ? chapters : undefined,
     parts: book.parts ?? [],
