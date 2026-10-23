@@ -27,7 +27,9 @@
         <TextView
             android:id="@+id/widget_book"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="16dp"
+            android:includeFontPadding="false"
+            android:gravity="center_vertical"
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="#A3ACB7"
@@ -36,7 +38,9 @@
         <TextView
             android:id="@+id/widget_chapter"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="20dp"
+            android:includeFontPadding="false"
+            android:gravity="center_vertical"
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="#E9ECF0"
@@ -110,9 +114,13 @@
 
                 <TextView
                     android:id="@+id/widget_sleep_text"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="64dp"
+                    android:layout_height="20dp"
+                    android:includeFontPadding="false"
+                    android:gravity="center_vertical"
                     android:layout_marginStart="4dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
                     android:textColor="#F2A93F"
                     android:textSize="12sp"
                     android:textStyle="bold" />

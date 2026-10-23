@@ -52,22 +52,27 @@ export interface Bookmark {
   at: number;
   /** Lúc đặt dấu - điều dòng dấu trang hiện (dấu cũ không có thì dùng `at`). */
   createdAt?: number;
-  /** Dấu đặt ở màn đọc trỏ tới CÂU: thứ tự câu trong chương (như `?at=`) và ~60 chữ đầu câu. Dấu đặt từ trình phát không có hai trường này. */
+  /** Vị trí câu của dấu sách chữ, đặt từ màn đọc hoặc trình phát. */
   index?: number;
   quote?: string;
+  anchor?: import("./readingAnchor").ReadingAnchor;
   /** Máy chủ trả về dấu đã có ngay chỗ ấy (±5 giây, hay cùng câu) thay vì tạo dấu trùng. */
   existing?: boolean;
 }
 
-/** Màn đọc mở đúng câu của một dấu trang đặt ở màn đọc (`?at=` - ReaderScreen); dấu đặt từ trình phát (không có câu) thì null. */
+/** Mở dấu có vị trí chữ trong màn đọc; dấu cũ chỉ có giây dùng đường nghe dự phòng. */
 export function bookmarkReadPath(bookId: string, mark: Bookmark): string | null {
-  return typeof mark.index === "number" ? `/book/${bookId}/read/${mark.chapterId}?${new URLSearchParams({ at: String(mark.index), ...(mark.quote ? { quote: mark.quote } : {}) })}` : null;
+  const index = mark.anchor?.segment ?? mark.index;
+  return typeof index === "number" && Number.isInteger(index) && index >= 0
+    ? `/book/${bookId}/read/${mark.chapterId}?${new URLSearchParams({ at: String(index), ...(mark.quote ? { quote: mark.quote } : {}),
+        ...(mark.anchor ? { anchor: JSON.stringify(mark.anchor) } : {}) })}` : null;
 }
 
 /** Câu mà dấu trang đặt ở màn đọc trỏ tới. */
 export interface BookmarkSentence {
   index: number;
   quote: string;
+  anchor?: import("./readingAnchor").ReadingAnchor;
 }
 
 export interface ChapterState {
