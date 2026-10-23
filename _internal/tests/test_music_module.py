@@ -3,6 +3,8 @@ sau khi app lên bản mới và chỉ tải phần ấy; nhập nhạc chạy k
 from __future__ import annotations
 
 import json
+import hashlib
+import zlib
 import sys
 import zipfile
 from pathlib import Path
@@ -27,10 +29,12 @@ class Machine:
         self.calls: list[str] = []
         self.monkeypatch = monkeypatch
 
-    def download(self, item, target: Path, progress, cancelled) -> Path:
+    def download(self, item, target: Path, progress, cancelled, **kwargs) -> Path:
         self.calls.append(item.name)
         target.parent.mkdir(parents=True, exist_ok=True)
-        if str(target).endswith(".whl"):
+        if "ffmpeg" in item.name:
+            target.write_bytes(zlib.compress(b"MZ fake ffmpeg")[2:-4])
+        elif target.suffix in (".whl", ".zip"):
             with zipfile.ZipFile(target, "w") as bundle:
                 if item.name == "ffmpeg" or "ffmpeg" in item.name:
                     bundle.writestr(ffmpeg_setup.MEMBER, b"MZ fake ffmpeg")
@@ -58,6 +62,10 @@ def machine(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(music_module, "_libs_external", lambda: False)
     monkeypatch.setenv(music_student.ENV_BACKEND, "onnx")
     monkeypatch.setattr(music_student.importlib.util, "find_spec", lambda module: object())
+    monkeypatch.setattr(ffmpeg_setup.zip_range, "member_offset", lambda *args: 0)
+    monkeypatch.setattr(ffmpeg_setup, "EXE_SIZE", len(b"MZ fake ffmpeg"))
+    monkeypatch.setattr(ffmpeg_setup, "EXE_SHA256", hashlib.sha256(b"MZ fake ffmpeg").hexdigest())
+    monkeypatch.setattr(ffmpeg_setup, "EXE_CRC", zlib.crc32(b"MZ fake ffmpeg"))
     fake = Machine(tmp_path, monkeypatch)
     monkeypatch.setattr(studio_setup, "download", fake.download)
     before = list(sys.path)
@@ -244,10 +252,10 @@ def test_the_torch_path_needs_no_libraries(machine: Machine, monkeypatch) -> Non
 def test_a_failed_download_says_why_and_a_retry_resumes_with_the_parts_still_missing(machine: Machine, monkeypatch) -> None:
     real = machine.download
 
-    def flaky(item, target, progress, cancelled):
+    def flaky(item, target, progress, cancelled, **kwargs):
         if item.name == "onnxruntime":
             raise studio_setup.SetupError("Không tải được") from OSError("không có mạng")
-        return real(item, target, progress, cancelled)
+        return real(item, target, progress, cancelled, **kwargs)
 
     monkeypatch.setattr(studio_setup, "download", flaky)
     music_module.start()
@@ -267,12 +275,12 @@ def test_cancel_stops_the_download_keeps_finished_parts_and_a_retry_resumes(mach
     real = machine.download
     seen: list[bool] = []
 
-    def cancelling(item, target, progress, cancelled):
+    def cancelling(item, target, progress, cancelled, **kwargs):
         if item.name == "onnxruntime":
             music_module.cancel()
             seen.append(cancelled())
             raise studio_setup.Cancelled()
-        return real(item, target, progress, cancelled)
+        return real(item, target, progress, cancelled, **kwargs)
 
     monkeypatch.setattr(studio_setup, "download", cancelling)
     music_module.start()
