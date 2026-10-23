@@ -54,12 +54,16 @@ class LoopSinkProbeTest {
         val events = mutableListOf<String>()
         val sink = LoopSeam.LoopSink(recordingSink(probed))
         sink.probe = object : LoopSeam.LoopSink.Probe {
-            override fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean, flushesLeft: Int) {
-                events += "flush $armed $toDrop $seekPending $flushesLeft"
+            override fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean, expectedUs: Long) {
+                events += "flush $armed $toDrop $seekPending $expectedUs"
             }
 
-            override fun onFirstBuffer(presentationTimeUs: Long, frames: Long, toDrop: Long, seekPending: Boolean) {
-                events += "first $presentationTimeUs $frames $toDrop $seekPending"
+            override fun onFirstBuffer(presentationTimeUs: Long, frames: Long, toDrop: Long, seekPending: Boolean, match: Int) {
+                events += "first $presentationTimeUs $frames $toDrop $seekPending $match"
+            }
+
+            override fun onSkip(presentationTimeUs: Long, expectedUs: Long) {
+                events += "skip $presentationTimeUs $expectedUs"
             }
         }
         drive(sink)
@@ -68,7 +72,41 @@ class LoopSinkProbeTest {
         assertEquals(listOf(400_000L + 4063L * 1_000_000 / 44100 to 347, 500_000L to 4410, 900_000L to 100), plain)
         assertEquals(plain, probed)
         assertEquals(
-            listOf("flush true 4063 true 0", "first 400000 4410 4063 true", "flush false 0 false 0", "first 900000 100 0 false"),
+            // lệnh không có vị trí đích: không kiểm nhãn (đường đếm lần xả), khớp -1
+            listOf("flush true 4063 true -1", "first 400000 4410 4063 true -1", "flush false 0 false -1", "first 900000 100 0 false -1"),
+            events,
+        )
+    }
+
+    @Test
+    fun probeReportsTheExpectedPtsAndASkippedStaleBuffer() {
+        val sink = LoopSeam.LoopSink(recordingSink(mutableListOf()))
+        val events = mutableListOf<String>()
+        sink.probe = object : LoopSeam.LoopSink.Probe {
+            override fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean, expectedUs: Long) {
+                events += "flush $armed $toDrop $seekPending $expectedUs"
+            }
+
+            override fun onFirstBuffer(presentationTimeUs: Long, frames: Long, toDrop: Long, seekPending: Boolean, match: Int) {
+                events += "first $presentationTimeUs $match"
+            }
+
+            override fun onSkip(presentationTimeUs: Long, expectedUs: Long) {
+                events += "skip $presentationTimeUs $expectedUs"
+            }
+        }
+        sink.configure(AudioSink.AudioSinkConfig.Builder(pcm).build())
+        sink.setOutputStreamOffsetUs(1_000_000_000_000L)
+        sink.armSeek(4063, positionUs = 400_000)
+        sink.flush()
+        sink.handleBuffer(ByteBuffer.allocate(4410 * 4), 1_000_000_200_000L, 1) // buffer cũ
+        sink.flush()
+        sink.handleBuffer(ByteBuffer.allocate(4410 * 4), 1_000_000_400_000L, 1)
+        assertEquals(
+            listOf(
+                "flush true 4063 true 1000000400000", "first 1000000200000 0", "skip 1000000200000 1000000400000",
+                "flush true 4063 true 1000000400000", "first 1000000400000 1",
+            ),
             events,
         )
     }

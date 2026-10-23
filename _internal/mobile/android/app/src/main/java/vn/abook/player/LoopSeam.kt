@@ -436,16 +436,23 @@ object LoopSeam {
      * (mục Clip lặp có encoderDelay = preroll bị cắt cả khi tua thẳng vào, tiếng đi trước ~78 ms; còn đọc trước mục kế làm TrimmingAudioProcessor mang số cắt của mục KHÁC).
      * Format chuyển xuống sink trong có `encoderDelay` = 0 (encoderPadding giữ cho TrimmingAudioProcessor cắt cuối mục). Số cắt đầu:
      * - chuyển mục liền / mở mục: `encoderDelay` do [mediaSourceFactory] ghi (preroll của Clip lặp), áp ở lần `configure` kế;
-     * - tua: [seekToSample] gọi [armSeek]; MỖI lần `flush` của lệnh tua ấy (1, hay 2 khi có lệnh tua đệm) đặt lại số cắt = số mẫu từ khung đáp tới mốc tua, và lần `configure` theo sau
-     * (nếu mục đổi) KHÔNG ghi đè nó; chỉ buffer sau lần xả CUỐI quyết định (buffer của lệnh tua đệm có thể tới sink giữa hai lần xả, máy thật: PLAN_loop §47.1);
+     * - tua: [seekToSample] gọi [armSeek]; MỖI lần `flush` khi còn lệnh đặt lại số cắt = số mẫu từ khung đáp tới mốc tua, và lần `configure` theo sau (nếu mục đổi) KHÔNG ghi đè nó.
+     *   Số lần xả của sink KHÔNG ứng 1-1 với số lệnh `seekTo` (máy thật OPPO, PLAN_loop §46.3 / §47.1: buffer của lệnh tua trước tới sau lần xả của lệnh tua sau). Hai đường:
+     *   (a) lệnh CÓ vị trí đích và đã biết offset dòng ra ([setOutputStreamOffsetUs]; Nối WAV): lệnh gắn với NHÃN THỜI GIAN của buffer đích: chỉ buffer ĐẦU TIÊN sau một lần xả, có nhãn
+     *   đúng vị trí đích, mới tiêu lệnh (cắt + chụp); buffer đầu có nhãn khác là của dòng CŨ, đi qua nguyên vẹn, lệnh chờ lần xả kế;
+     *   (b) lệnh KHÔNG kiểm được nhãn (Clip mp3: lần tua đệm chỉ lệch 1 ms và chưa có số máy về offset; hay chưa biết offset): đếm lần xả (`flushes`: 2 khi có lệnh tua đệm), mỗi lần xả
+     *   đặt lại số cắt, chỉ lần xả CUỐI bắt đầu chụp và bỏ lệnh;
      * mẫu bị cắt khỏi các buffer đầu dòng ngay trước khi đưa xuống sink trong, nên không phụ thuộc trạng thái nào của media3 ngoài thứ tự gọi flush -> configure -> handleBuffer.
      * Lần tua vào Nối có lưới an toàn ([Capture]) thì sau khi cắt còn chép K khung đầu ra mảng riêng cho [seekToSample]; không có thì không chép gì.
      * Dịch pha TRONG DÒNG ([shift], không tua, không AudioTrack mới): chèn khung lặng / bỏ khung nội dung ngay trước buffer kế; vị trí báo lên ExoPlayer được bù ([getCurrentPositionUs]).
      * Phải đặt vào ExoPlayer qua `DefaultRenderersFactory.buildAudioSink`; app thật bọc sink MusicBed bằng cái này.
      */
     class LoopSink(inner: AudioSink) : ForwardingAudioSink(inner) {
-        /** Lệnh tua đang chờ: số cắt, lúc nạp, lệnh chép (lưới an toàn), số lần xả còn chờ (chỉ luồng phát đổi). */
-        private class Arm(val frames: Long, val ns: Long, val capture: Capture?, var flushesLeft: Int)
+        /**
+         * Lệnh tua đang chờ: số cắt, lúc nạp, lệnh chép (lưới an toàn), vị trí đích trên trục dòng ra (µs, chưa cộng offset; [C.TIME_UNSET] = không kiểm nhãn) và độ lệch nhãn cho phép.
+         * Giữ vị trí chứ không giữ nhãn đã cộng offset vì offset có thể đổi giữa lúc nạp và lúc buffer tới (tua sang mục khác đặt offset mới).
+         */
+        private class Arm(val frames: Long, val ns: Long, val capture: Capture?, val positionUs: Long, val toleranceUs: Long, var flushesLeft: Int)
 
         /** Lệnh [shift] chờ áp; `onApplied` gọi ở luồng phát khi đã chèn / bỏ xong. */
         private class ShiftOrder(val frames: Long, val onApplied: ((Shift) -> Unit)?)
@@ -458,11 +465,17 @@ object LoopSeam {
 
         /** MÓC ĐO chỉ cho bài thử (MusicLoopSeamTest, ca RS): chỉ đọc trạng thái, không đổi gì. Gọi ở luồng phát. */
         internal interface Probe {
-            /** Sau quyết định số cắt của mỗi lần flush: có số cắt của lệnh tua nạp không (`armed`), số cắt đầu dòng, cờ seekPending, số lần xả lệnh tua ấy còn chờ sau lần này. */
-            fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean, flushesLeft: Int)
+            /** Sau quyết định số cắt của mỗi lần flush: có số cắt của lệnh tua nạp không (`armed`), số cắt đầu dòng, cờ seekPending, nhãn thời gian lệnh tua ấy mong đợi (µs, -1 khi không có lệnh / không kiểm nhãn / chưa biết offset). */
+            fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean, expectedUs: Long)
 
-            /** Buffer ĐẦU TIÊN sau flush, TRƯỚC khi cắt: nhãn thời gian (µs), số khung (-1 khi chưa biết cỡ khung), số cắt còn lại, cờ seekPending. */
-            fun onFirstBuffer(presentationTimeUs: Long, frames: Long, toDrop: Long, seekPending: Boolean)
+            /**
+             * Buffer ĐẦU TIÊN sau flush, TRƯỚC khi cắt: nhãn thời gian (µs), số khung (-1 khi chưa biết cỡ khung), số cắt còn lại, cờ seekPending,
+             * khớp: 1 = nhãn khớp lệnh tua nên lệnh bị tiêu, 0 = nhãn khác (buffer dòng cũ, lệnh chờ tiếp), -1 = không có lệnh hay lệnh không kiểm nhãn (đường đếm lần xả, đã xử lý ở [flush]).
+             */
+            fun onFirstBuffer(presentationTimeUs: Long, frames: Long, toDrop: Long, seekPending: Boolean, match: Int)
+
+            /** Buffer đầu sau flush bị bỏ qua lệnh vì nhãn khác lệnh có kiểm nhãn mong đợi (nhãn, nhãn mong đợi µs): buffer của dòng cũ. */
+            fun onSkip(presentationTimeUs: Long, expectedUs: Long)
         }
 
         /** null (mặc định, app thật) = không gọi gì: đường cắt mẫu y nguyên. */
@@ -471,6 +484,10 @@ object LoopSeam {
         private val armed = AtomicReference<Arm?>(null)
         private var toDrop = 0L
         private var seekPending = false
+        private var streamOffsetUs = 0L
+        private var offsetKnown = false
+        /** Buffer đầu sau lần xả gần nhất là của dòng cũ (nhãn không khớp lệnh tua): chưa bắt đầu dịch pha ([shift]) cho tới lần xả kế. */
+        private var staleLine = false
         private var frameBytes = 0
         private var pcm16 = false
         /** PCM tuyến tính có dấu (mọi PCM trừ 8 bit không dấu): buffer số 0 là lặng, [shift] chèn được. */
@@ -498,11 +515,29 @@ object LoopSeam {
         private var shifts: ArrayList<Shift>? = null
 
         /**
-         * Gọi trước `player.seekTo`: `flushes` lần flush kế (= số lệnh `seekTo` sắp gọi: 2 khi có lệnh tua đệm, [seekToSample]; trong 2 s) mỗi lần đặt lại số cắt `frames` khung đầu dòng;
-         * lệnh chép [Capture] các khung đầu sau khi cắt chỉ bắt đầu ở lần xả CUỐI, nên `onCaptured` chỉ thấy tiếng của lệnh tua thật (buffer của lệnh tua đệm tới giữa hai lần xả thì vẫn bị
-         * cắt, rồi lần xả sau đặt lại hết). Lệnh cũ chưa dùng hết bị thay. Không có `capture` thì đường cắt mẫu không chép gì thêm.
+         * Gọi trước `player.seekTo` (trong 2 s). CÓ kiểm nhãn (`positionUs` != [C.TIME_UNSET] và đã biết offset): lần flush kế đặt số cắt `frames` khung đầu dòng, và buffer ĐẦU TIÊN sau
+         * một lần xả có nhãn đúng `positionUs` (vị trí đích trên trục dòng ra, tức `plan.positionMs * 1000`; sink cộng offset dòng ra lúc buffer tới, xem [setOutputStreamOffsetUs]) tiêu
+         * lệnh: cắt `frames`, bắt đầu chép [Capture]. Buffer đầu sau xả có nhãn khác (lệnh tua trước / lệnh tua đệm còn trong ống: máy thật §46.3, §47.1) đi qua nguyên vẹn và lệnh chờ lần xả
+         * sau; buffer không phải đầu tiên sau xả không bao giờ tiêu lệnh; `flushes` bị bỏ qua. `toleranceUs` là độ lệch nhãn chấp nhận.
+         * KHÔNG kiểm nhãn (không có `positionUs`, hay chưa biết offset): `flushes` lần flush kế (= số lệnh `seekTo` sắp gọi: 2 khi có lệnh tua đệm) mỗi lần đặt lại số cắt; lệnh chép [Capture]
+         * chỉ bắt đầu ở lần xả CUỐI, rồi lệnh bị bỏ (buffer của lệnh tua đệm tới giữa hai lần xả thì vẫn bị cắt, lần xả sau đặt lại hết). Lệnh cũ chưa dùng bị thay;
+         * không có `capture` thì đường cắt mẫu không chép gì thêm.
          */
-        internal fun armSeek(frames: Long, capture: Capture? = null, flushes: Int = 1) = armed.set(Arm(frames, clock(), capture, maxOf(1, flushes)))
+        internal fun armSeek(frames: Long, capture: Capture? = null, positionUs: Long = C.TIME_UNSET, toleranceUs: Long = PTS_TOLERANCE_US, flushes: Int = 1) =
+            armed.set(Arm(frames, clock(), capture, positionUs, toleranceUs, maxOf(1, flushes)))
+
+        /** Lệnh kiểm được nhãn buffer đích: có vị trí đích và đã biết offset dòng ra. */
+        private fun checks(arm: Arm) = arm.positionUs != C.TIME_UNSET && offsetKnown
+
+        /**
+         * Offset dòng ra mới nhất mà renderer báo (nhãn buffer = vị trí trong dòng + offset; mục WAV Nối của MusicBed là 1e12 + vị trí, nhưng chuyển mục tự nhiên đổi nó). MediaCodecAudioRenderer
+         * gọi hàm này (qua onOutputStreamOffsetUsChanged) mỗi khi dòng ra đổi, KHÔNG gọi lại khi tua trong mục đang phát; media3 1.11.1: MediaCodecRenderer.setOutputStreamInfo.
+         */
+        override fun setOutputStreamOffsetUs(outputStreamOffsetUs: Long) {
+            streamOffsetUs = outputStreamOffsetUs
+            offsetKnown = true
+            super.setOutputStreamOffsetUs(outputStreamOffsetUs)
+        }
 
         /** Đồng hồ của hạn 2 s của [armSeek] (test JVM thay). */
         internal var clock: () -> Long = System::nanoTime
@@ -547,18 +582,24 @@ object LoopSeam {
             val arm = waiting?.takeIf { clock() - it.ns < 2_000_000_000L }
             if (waiting != null && arm == null) armed.compareAndSet(waiting, null) // quá hạn: lệnh tua ấy không sinh đủ lần xả, đừng áp cho lần xả lạ
             if (arm != null) {
-                // Mỗi lần xả của lệnh tua đặt lại số cắt (buffer giữa hai lần xả có thể đã tiêu nó); chỉ lần CUỐI bắt đầu chép, lượt chép của lần xả trước (dở hay xong) bị bỏ.
+                // Còn lệnh tua: mỗi lần xả đặt lại số cắt (buffer giữa hai lần xả có thể đã tiêu nó), lượt chép của lần xả trước (dở hay xong) bị bỏ.
                 toDrop = arm.frames
                 seekPending = true
-                arm.flushesLeft--
-                val last = arm.flushesLeft <= 0
-                if (last) armed.compareAndSet(arm, null)
-                startCapture(if (last) arm.capture else null)
+                if (checks(arm)) {
+                    startCapture(null) // có kiểm nhãn: lệnh KHÔNG bị bỏ và chưa chụp, chỉ buffer đầu sau xả có nhãn đúng đích mới tiêu nó ([handleBuffer])
+                } else {
+                    // không kiểm nhãn: đếm lần xả, chỉ lần CUỐI bắt đầu chép và bỏ lệnh
+                    arm.flushesLeft--
+                    val last = arm.flushesLeft <= 0
+                    if (last) armed.compareAndSet(arm, null)
+                    startCapture(if (last) arm.capture else null)
+                }
             } else if (!seekPending) {
                 toDrop = 0
-                startCapture(null) // lần xả không phải của lệnh tua đang chờ (lệnh tua đệm giữ nguyên, như số cắt): bỏ lệnh chép dở
+                startCapture(null) // lần xả không phải của lệnh tua đang chờ: bỏ lệnh chép dở
             }
             freshAfterFlush = true
+            staleLine = false
             // Dịch pha nói về dòng của AudioTrack cũ: bỏ hết, kể cả lệnh chưa áp.
             shiftOrder.set(null)
             writtenBytes = 0
@@ -569,7 +610,7 @@ object LoopSeam {
             dropLeft = 0
             shifting = null
             shifts = null
-            probe?.onFlush(arm != null, toDrop, seekPending, arm?.flushesLeft?.coerceAtLeast(0) ?: 0)
+            probe?.onFlush(arm != null, toDrop, seekPending, if (arm != null && checks(arm)) streamOffsetUs + arm.positionUs else -1L)
             super.flush()
         }
 
@@ -643,7 +684,27 @@ object LoopSeam {
         override fun handleBuffer(buffer: ByteBuffer, presentationTimeUs: Long, encodedAccessUnitCount: Int): Boolean {
             if (freshAfterFlush) {
                 freshAfterFlush = false
-                probe?.onFirstBuffer(presentationTimeUs, if (frameBytes > 0) (buffer.remaining() / frameBytes).toLong() else -1L, toDrop, seekPending)
+                val arm = armed.get()
+                // Chỉ lệnh CÓ kiểm nhãn xét ở đây; lệnh không kiểm nhãn đã được [flush] đếm lần xả (match -1).
+                val checked = arm != null && checks(arm)
+                val expected = if (checked) streamOffsetUs + arm!!.positionUs else -1L
+                val match = when {
+                    !checked -> -1
+                    Math.abs(presentationTimeUs - expected) <= arm!!.toleranceUs -> 1
+                    else -> 0
+                }
+                probe?.onFirstBuffer(presentationTimeUs, if (frameBytes > 0) (buffer.remaining() / frameBytes).toLong() else -1L, toDrop, seekPending, match)
+                if (match == 1) {
+                    // Buffer đích của lệnh tua: tiêu lệnh.
+                    armed.compareAndSet(arm, null)
+                    toDrop = arm!!.frames
+                    startCapture(arm.capture)
+                } else if (match == 0) {
+                    // Buffer của dòng CŨ (lệnh tua trước / tua đệm còn trong ống): không cắt, không chụp, đi xuống nguyên vẹn; lệnh chờ lần xả kế.
+                    toDrop = 0
+                    staleLine = true
+                    probe?.onSkip(presentationTimeUs, expected)
+                }
             }
             seekPending = false
             var pts = presentationTimeUs
@@ -655,7 +716,7 @@ object LoopSeam {
                 if (!buffer.hasRemaining()) return true
             }
             // Dịch pha ([shift]): chỉ bắt đầu khi sink trong không giữ dở buffer nào (không thì phải đưa lại đúng buffer ấy) và số cắt của lần tua đã xong.
-            if (shifting == null && !innerBusy && toDrop == 0L && zeroIsSilence && rate > 0) shiftOrder.getAndSet(null)?.let(::beginShift)
+            if (shifting == null && !innerBusy && toDrop == 0L && !staleLine && zeroIsSilence && rate > 0) shiftOrder.getAndSet(null)?.let(::beginShift)
             var dropped = 0L
             if (dropLeft > 0) {
                 dropped = minOf(dropLeft, (buffer.remaining() / frameBytes).toLong())
@@ -742,10 +803,12 @@ object LoopSeam {
         val plan = seekPlan(seam, index, sample)
         val capture = if (onLand != null && index % 2 == 1) LoopSink.Capture(LAND_FRAMES) { pcm -> land(seam, sample, pcm, onLand) } else null
         // ExoPlayer BỎ QUA lệnh tua tới đúng mục + vị trí nó đang đứng (đo: P3 đứng chờ ở đầu Nối, tua tới mẫu 170 cũng là mili giây 0 -> không xả bộ đệm, số cắt không áp, P3 phát tiếp từ mẫu 0).
-        // Nên lệch sang bên một bước trước: tua đó thật, rồi tua tới mốc cũng thật. Hai lệnh tua = hai lần xả: số cắt + lệnh chép sống tới lần xả thứ hai ([LoopSink.armSeek] `flushes`),
-        // vì buffer của lệnh tua đệm có thể tới sink giữa hai lần xả và tiêu mất số cắt (máy thật OPPO: đáp lệch -4063, PLAN_loop §47.1).
+        // Nên lệch sang bên một bước trước: tua đó thật, rồi tua tới mốc cũng thật. Số lần xả của sink không ứng 1-1 với số lệnh tua (máy thật OPPO: đáp lệch -4063, PLAN_loop §46.3 / §47.1:
+        // buffer của lệnh tua trước tới sau lần xả của lệnh tua sau). Nối WAV: số cắt + lệnh chép gắn với NHÃN THỜI GIAN của buffer đích ([LoopSink.armSeek] `positionUs`: offset dòng ra + vị trí
+        // tua tới từng ms, lưới khối [seamGridExact]); buffer của lần tua đệm có nhãn khác nên tự bị bỏ qua, `flushes` không dùng. Clip mp3 không kiểm nhãn (lần tua đệm chỉ lệch 1 ms, mp3 đáp ở
+        // khung dưới mốc, chưa có số máy về offset của mục Clip): đếm lần xả (`flushes` = 2 khi có lần tua đệm), chỉ lần xả cuối cắt + chụp. Nối WAV chưa biết offset cũng rơi về đường đếm.
         val noop = seekIsNoop(player.currentMediaItemIndex, player.currentPosition, index, plan.positionMs)
-        sink.armSeek(plan.trimFrames, capture, if (noop) 2 else 1)
+        sink.armSeek(plan.trimFrames, capture, if (index % 2 == 1) plan.positionMs * 1000 else C.TIME_UNSET, flushes = if (noop) 2 else 1)
         if (noop) player.seekTo(index, stepAside(index, plan.positionMs))
         player.seekTo(index, plan.positionMs)
     }
@@ -778,6 +841,9 @@ object LoopSeam {
 
     /** Số khung đầu sau một lần tua vào Nối mà lưới an toàn đem đi tìm trong WAV ([seekToSample] `onLand`): 5,8 ms ở 44,1 kHz, PCM16 khớp từng bit. */
     const val LAND_FRAMES = 256
+
+    /** Độ lệch nhãn (µs) giữa nhãn buffer đầu và vị trí đích của lệnh tua mà [LoopSink] còn coi là buffer đích. Buffer dòng cũ cách ít nhất một khối (100 ms). */
+    const val PTS_TOLERANCE_US = 1000L
 
     /** Lưới an toàn tìm mẫu đáp trong ±chừng này giây quanh đích (kẹp trong WAV). */
     const val LAND_RADIUS_SECONDS = 1

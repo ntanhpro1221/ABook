@@ -44,6 +44,9 @@ class LoopSinkCaptureTest {
         } as AudioSink
     }
 
+    /** Offset dòng ra của MusicBed (nhãn buffer = OFFSET + vị trí trong mục). */
+    private val OFFSET = 1_000_000_000_000L
+
     private fun format(encoding: Int) = Format.Builder().setSampleMimeType(MimeTypes.AUDIO_RAW).setPcmEncoding(encoding).setChannelCount(2).setSampleRate(44100).build()
 
     /** Khối WAV giả: khung n của Nối có kênh 0 = n (cắt 15 bit), kênh 1 = -n. */
@@ -78,7 +81,7 @@ class LoopSinkCaptureTest {
         val s = sink(inner)
         val calls = mutableListOf<ShortArray>()
         s.armSeek(4063, LoopSeam.LoopSink.Capture(256) { calls += it })
-        assertFalse(s.capturing) // lệnh chép chỉ bắt đầu ở lần xả của lệnh tua
+        assertFalse(s.capturing) // lệnh chép chỉ bắt đầu ở lần xả của lệnh tua (không kiểm nhãn: lần xả cuối)
         s.flush()
         assertTrue(s.capturing)
         s.handleBuffer(chunk(17640, 4410), 400_000, 1) // còn 347 khung sau cắt: đủ 256
@@ -98,9 +101,10 @@ class LoopSinkCaptureTest {
         val calls = mutableListOf<ShortArray>()
         s.armSeek(4300, LoopSeam.LoopSink.Capture(256) { calls += it })
         s.flush() // lệnh tua đệm
-        s.flush() // lệnh tua thật: không nạp lại, số cắt + lệnh chép giữ nguyên (seekPending)
+        s.flush() // lệnh tua thật: lệnh đã dùng ở lần xả trước, số cắt giữ nguyên (seekPending)
         assertTrue(s.capturing)
         s.handleBuffer(chunk(17640, 4410), 400_000, 1) // 110 khung sau cắt
+        assertTrue(s.capturing)
         assertTrue(calls.isEmpty())
         s.handleBuffer(chunk(22050, 4410), 500_000, 1) // 146 khung còn thiếu
         assertEquals(1, calls.size)
@@ -138,7 +142,154 @@ class LoopSinkCaptureTest {
     }
 
     @Test
-    fun theStepAsideBufferBetweenTwoFlushesNeitherUsesUpTheTrimNorFeedsTheLanding() {
+    fun anOldLineBufferNeitherUsesUpTheTrimNorFeedsTheLanding() {
+        // Máy thật OPPO (rs47p, PLAN_loop §46.3): lệnh tua A (200 ms) rồi lệnh tua B (400 ms) 51 ms sau, khi A còn đang nạp. Số lần xả của sink không ứng 1-1 với số lệnh tua: buffer CŨ
+        // của A (200 ms, rồi cả 300, 400, 500 ms của dòng cũ) tới sau lần xả đầu của B, trước lần xả THẬT. Trước đây buffer cũ tiêu số cắt + lượt chụp, buffer đúng ra loa không cắt (đáp -4063).
+        val inner = Inner()
+        val s = sink(inner)
+        val calls = mutableListOf<ShortArray>()
+        s.setOutputStreamOffsetUs(OFFSET)
+        s.armSeek(3426, LoopSeam.LoopSink.Capture(256) { calls += it }, positionUs = 200_000)
+        s.flush() // lần xả của A
+        s.armSeek(4063, LoopSeam.LoopSink.Capture(256) { calls += it }, positionUs = 400_000)
+        s.flush() // lần xả đầu của B
+        assertFalse(s.capturing)
+        s.handleBuffer(chunk(0, 4410), OFFSET + 200_000, 1) // buffer cũ của A: nhãn khác đích của B
+        s.handleBuffer(chunk(4410, 4410), OFFSET + 300_000, 1)
+        s.handleBuffer(chunk(8820, 4410), OFFSET + 400_000, 1) // cùng nhãn với đích, nhưng KHÔNG phải buffer đầu sau xả: không bao giờ tiêu lệnh
+        s.handleBuffer(chunk(13230, 4410), OFFSET + 500_000, 1)
+        assertTrue(calls.isEmpty())
+        assertFalse(s.capturing)
+        s.flush() // lần xả THẬT của B
+        s.handleBuffer(chunk(17640, 4410), OFFSET + 400_000, 1)
+        assertEquals(1, calls.size)
+        assertArrayEquals(expected(17640 + 4063, 256), calls[0]) // chỉ khung của buffer sau lần xả thật
+        assertEquals(
+            listOf(
+                OFFSET + 200_000 to 0, OFFSET + 300_000 to 4410, OFFSET + 400_000 to 8820, OFFSET + 500_000 to 13230, // dòng cũ nguyên vẹn
+                OFFSET + 400_000 + 4063L * 1_000_000 / 44100 to 17640 + 4063,
+            ),
+            inner.got,
+        )
+    }
+
+    @Test
+    fun theNoopSeekStepAsideBufferIsLeftAlone() {
+        // §47.1: lệnh tua noop có thêm lệnh tua đệm (100 ms) trước lệnh tua thật (200 ms): buffer đệm tới giữa hai lần xả.
+        val inner = Inner()
+        val s = sink(inner)
+        val calls = mutableListOf<ShortArray>()
+        s.setOutputStreamOffsetUs(OFFSET)
+        s.armSeek(4063, LoopSeam.LoopSink.Capture(256) { calls += it }, positionUs = 200_000)
+        s.flush() // lần xả của lệnh tua đệm
+        s.handleBuffer(chunk(4410, 4410), OFFSET + 100_000, 1)
+        assertTrue(calls.isEmpty())
+        s.flush() // lần xả của lệnh tua thật
+        s.handleBuffer(chunk(8820, 4410), OFFSET + 200_000, 1)
+        assertArrayEquals(expected(8820 + 4063, 256), calls.single())
+        assertEquals(listOf(OFFSET + 100_000 to 4410, OFFSET + 200_000 + 4063L * 1_000_000 / 44100 to 8820 + 4063), inner.got)
+        // dùng hết: lần xả không kèm lệnh tua thì không cắt như cũ
+        s.handleBuffer(chunk(13230, 4410), OFFSET + 300_000, 1)
+        s.flush()
+        s.handleBuffer(chunk(0, 4410), 0, 1)
+        assertEquals(0L to 0, inner.got.last())
+    }
+
+    @Test
+    fun theUsualSeekFirstBufferAfterTheFlushWithTheRightPtsIsTrimmed() {
+        val inner = Inner()
+        val s = sink(inner)
+        val calls = mutableListOf<ShortArray>()
+        s.setOutputStreamOffsetUs(OFFSET)
+        s.armSeek(4063, LoopSeam.LoopSink.Capture(256) { calls += it }, positionUs = 400_000)
+        s.flush()
+        s.handleBuffer(chunk(17640, 4410), OFFSET + 400_500, 1) // lệch 0,5 ms: còn trong độ lệch cho phép
+        assertArrayEquals(expected(21703, 256), calls.single())
+        s.handleBuffer(chunk(22050, 4410), OFFSET + 500_500, 1)
+        s.flush() // lệnh đã dùng hết: không cắt nữa
+        s.handleBuffer(chunk(0, 4410), 0, 1)
+        assertEquals(listOf(OFFSET + 400_500 + 4063L * 1_000_000 / 44100 to 21703, OFFSET + 500_500 to 22050, 0L to 0), inner.got)
+    }
+
+    @Test
+    fun aPtsOutsideTheToleranceIsAnOldLineBuffer() {
+        val inner = Inner()
+        val s = sink(inner)
+        s.setOutputStreamOffsetUs(OFFSET)
+        s.armSeek(4063, positionUs = 400_000, toleranceUs = 3000)
+        s.flush()
+        s.handleBuffer(chunk(0, 4410), OFFSET + 403_500, 1) // quá 3 ms
+        s.flush()
+        s.handleBuffer(chunk(17640, 4410), OFFSET + 402_500, 1) // trong 3 ms
+        assertEquals(listOf(OFFSET + 403_500 to 0, OFFSET + 402_500 + 4063L * 1_000_000 / 44100 to 21703), inner.got)
+    }
+
+    @Test
+    fun theStreamOffsetIsReadWhenTheBufferArrives() {
+        // Tua sang mục khác: renderer đặt offset mới giữa lúc nạp lệnh và lúc buffer tới (offset khác 1e12 sau chuyển mục tự nhiên).
+        val inner = Inner()
+        val s = sink(inner)
+        val next = 3_000_000_123_456L
+        s.setOutputStreamOffsetUs(OFFSET)
+        s.armSeek(4063, positionUs = 400_000)
+        s.setOutputStreamOffsetUs(next)
+        s.flush()
+        s.handleBuffer(chunk(4410, 4410), OFFSET + 400_000, 1) // nhãn theo offset cũ: dòng cũ
+        s.flush()
+        s.handleBuffer(chunk(17640, 4410), next + 400_000, 1)
+        assertEquals(listOf(OFFSET + 400_000 to 4410, next + 400_000 + 4063L * 1_000_000 / 44100 to 21703), inner.got)
+    }
+
+    @Test
+    fun withoutAKnownOffsetTheFirstBufferAfterTheFlushUsesTheArm() {
+        // Thiết bị / phiên bản media3 không gọi setOutputStreamOffsetUs: không kiểm nhãn, đường đếm lần xả (1 lần xả).
+        val inner = Inner()
+        val s = sink(inner)
+        val calls = mutableListOf<ShortArray>()
+        s.armSeek(4063, LoopSeam.LoopSink.Capture(256) { calls += it }, positionUs = 400_000)
+        s.flush()
+        s.handleBuffer(chunk(17640, 4410), 123_456, 1)
+        assertArrayEquals(expected(21703, 256), calls.single())
+        assertEquals(listOf(123_456L + 4063L * 1_000_000 / 44100 to 21703), inner.got)
+    }
+
+    @Test
+    fun aCheckedArmIgnoresTheFlushCount() {
+        // Có kiểm nhãn thì `flushes` vô nghĩa: lần xả đầu không bỏ lệnh, buffer dòng cũ không tiêu nó.
+        val inner = Inner()
+        val s = sink(inner)
+        val calls = mutableListOf<ShortArray>()
+        s.setOutputStreamOffsetUs(OFFSET)
+        s.armSeek(4063, LoopSeam.LoopSink.Capture(256) { calls += it }, positionUs = 200_000, flushes = 1)
+        s.flush()
+        s.handleBuffer(chunk(0, 4410), OFFSET + 100_000, 1)
+        assertTrue(calls.isEmpty())
+        s.flush()
+        s.handleBuffer(chunk(8820, 4410), OFFSET + 200_000, 1)
+        assertArrayEquals(expected(8820 + 4063, 256), calls.single())
+    }
+
+    @Test
+    fun anArmOlderThanTwoSecondsIsDropped() {
+        val inner = Inner()
+        val s = sink(inner)
+        var now = 5_000_000_000L
+        s.clock = { now }
+        val calls = mutableListOf<ShortArray>()
+        s.setOutputStreamOffsetUs(OFFSET)
+        s.armSeek(4063, LoopSeam.LoopSink.Capture(256) { calls += it }, positionUs = 400_000)
+        now += 2_100_000_000L // lệnh tua không sinh lần xả nào trong hạn
+        s.flush() // lần xả lạ: không áp
+        assertFalse(s.capturing)
+        s.handleBuffer(chunk(17640, 4410), OFFSET + 400_000, 1) // nhãn đúng đích cũng không bị cắt
+        s.flush()
+        s.handleBuffer(chunk(8820, 4410), OFFSET + 200_000, 1)
+        assertEquals(listOf(OFFSET + 400_000 to 17640, OFFSET + 200_000 to 8820), inner.got)
+        assertTrue(calls.isEmpty())
+    }
+
+    @Test
+    fun anUncheckedTwoFlushArmNeitherLosesTheTrimNorFeedsTheLandingFromTheStepAsideBuffer() {
         // Máy thật OPPO (rs46p, PLAN_loop §47.1): lệnh tua đệm (100 ms) xả, buffer của nó tới sink TRƯỚC lần xả của lệnh tua thật (200 ms). Trước đây: buffer đệm tiêu số cắt
         // + lượt chụp, buffer đúng ra loa không cắt (đáp -4063) và land báo khung của buffer đã bị xả.
         val inner = Inner()
@@ -164,7 +315,7 @@ class LoopSinkCaptureTest {
     }
 
     @Test
-    fun oneFlushArmBehavesAsBefore() {
+    fun anUncheckedOneFlushArmBehavesAsBefore() {
         val inner = Inner()
         val s = sink(inner)
         val calls = mutableListOf<ShortArray>()
@@ -179,7 +330,7 @@ class LoopSinkCaptureTest {
     }
 
     @Test
-    fun anArmOlderThanTwoSecondsIsDropped() {
+    fun anUncheckedArmOlderThanTwoSecondsIsDropped() {
         val inner = Inner()
         val s = sink(inner)
         var now = 5_000_000_000L
