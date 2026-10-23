@@ -167,6 +167,59 @@ class MusicSeamBedTest {
         assertEquals(SeamClock.Gate.DEMOTE, SeamClock.gate(SeamPicker.State.DEAD, false, 60_000))
     }
 
+    @Test fun zeroGapKeepsTheOriginalGate() {
+        for (state in SeamPicker.State.values()) for (attached in listOf(false, true)) {
+            for (remaining in listOf(null, 0L, 100L, 2500L, 2501L, 60_000L)) {
+                val expected = when {
+                    attached -> SeamClock.Gate.DONE
+                    state == SeamPicker.State.READY -> SeamClock.Gate.ATTACH
+                    state == SeamPicker.State.DEAD -> SeamClock.Gate.DEMOTE
+                    remaining != null && remaining <= 2500L -> SeamClock.Gate.DEMOTE
+                    else -> SeamClock.Gate.WAIT
+                }
+                assertEquals(expected, SeamClock.gate(state, attached, remaining))
+                assertEquals(expected, SeamClock.gate(state, attached, remaining, 0L))
+            }
+        }
+    }
+
+    @Test fun buildingDemotesWhenTheNextTickWouldReachTheDeadline() {
+        assertEquals(SeamClock.Gate.DEMOTE, SeamClock.gate(SeamPicker.State.BUILDING, false, 2900, 500))
+        assertEquals(SeamClock.Gate.WAIT, SeamClock.gate(SeamPicker.State.BUILDING, false, 3100, 500))
+        assertEquals(SeamClock.Gate.DEMOTE, SeamClock.gate(SeamPicker.State.BUILDING, false, 3000, 500))
+        assertEquals(SeamClock.Gate.WAIT, SeamClock.gate(SeamPicker.State.BUILDING, false, 3001, 500))
+        assertEquals(SeamClock.Gate.WAIT, SeamClock.gate(SeamPicker.State.BUILDING, false, null, 500))
+    }
+
+    @Test fun gapDoesNotChangeReadyDeadOrAttachedDecisions() {
+        for (gap in listOf(0L, 500L, 1000L)) for (remaining in listOf(null, 0L, 2900L, 60_000L)) {
+            assertEquals(SeamClock.Gate.ATTACH, SeamClock.gate(SeamPicker.State.READY, false, remaining, gap))
+            assertEquals(SeamClock.Gate.DEMOTE, SeamClock.gate(SeamPicker.State.DEAD, false, remaining, gap))
+            for (state in SeamPicker.State.values()) {
+                assertEquals(SeamClock.Gate.DONE, SeamClock.gate(state, true, remaining, gap))
+            }
+        }
+    }
+
+    @Test fun everyHalfSecondTickPhaseDemotesWithAtLeastTheDeadlineRemaining() {
+        val s = seam()
+        for (phase in 0L..499L) {
+            var pos = phase
+            var previous: Long? = null
+            var gate = SeamClock.Gate.WAIT
+            while (gate == SeamClock.Gate.WAIT && pos < s.clip0Ms) {
+                val gap = previous?.let { pos - it } ?: 0L
+                gate = SeamClock.gate(SeamPicker.State.BUILDING, false, SeamClock.clip0RemainingMs(s, 0, pos), gap)
+                previous = pos
+                if (gate == SeamClock.Gate.WAIT) pos += 500L
+            }
+            assertEquals("phase=$phase", SeamClock.Gate.DEMOTE, gate)
+            val remaining = s.clip0Ms - pos
+            assertTrue("phase=$phase remaining=$remaining", remaining >= 2500L)
+            assertTrue("phase=$phase remaining=$remaining", remaining <= 3000L)
+        }
+    }
+
     @Test fun lateBuildEndToEndOnTheClip0Timeline() {
         val s = seam()
         val rig = Rig()
