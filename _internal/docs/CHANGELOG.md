@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.132] - 2026-10-23
+
 ### Nghe ngay
 - Máy tính: đổi giọng đọc khi các đoạn sau còn đang được đọc sẵn bằng giọng cũ thì đoạn nào về muộn bằng giọng cũ cũng bị bỏ, không còn nghe lẫn giọng cũ giữa lúc đã chọn giọng mới.
 - Máy tính: "Làm trước" giữ chắc những đoạn đã làm sẵn cho đến khi bạn nghe tới chúng - nghe trực tiếp nhiều không đẩy chúng ra khỏi bộ nhớ đệm như trước; đoạn nào bạn đã nghe tới thì trở lại như đoạn thường, và phần giữ sẵn có trần để không chiếm hết chỗ.
