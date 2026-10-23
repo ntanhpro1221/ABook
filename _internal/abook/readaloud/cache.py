@@ -3,6 +3,10 @@
 Clip ở tốc độ 1,0 (đổi tốc độ là việc của trình phát), nên mọi tốc độ dùng chung một clip. Đầy quá `limit` thì bỏ clip lâu không dùng nhất
 (LRU theo thời gian truy cập: mỗi lần trúng đệm ghi lại mtime của file JSON) xuống còn TRIM_TO trần, nên các lần ghi sau không quét lại cả thư mục.
 Trần theo chỗ trống của ổ ([default_limit]). Ghi qua file tạm rồi đổi tên: máy chủ đọc không bao giờ thấy file dở.
+
+Clip "Làm trước" (prepare.py) được GHIM (danh sách khoá ở `pin_file`, ngoài thư mục đệm - như điện thoại, ClipCache.kt): khi tỉa, clip không ghim đi trước hết,
+clip ghim chỉ đi khi chỉ còn chúng - nghe trực tiếp không đẩy được clip đã làm trước ra trước khi người nghe tới. Nghe tới clip nào thì bỏ ghim clip ấy ([unpin]);
+phần dành cho clip ghim có trần (prepare.SHARE: việc làm trước dừng khi [pinned_bytes] chạm trần ấy) nên chúng không chiếm hết chỗ.
 """
 from __future__ import annotations
 
@@ -66,12 +70,19 @@ class Cached:
 
 
 class ClipCache:
-    def __init__(self, folder: Path | str, limit: int | None = None) -> None:
-        """`limit`: trần byte; None = theo chỗ trống của ổ ([default_limit])."""
+    def __init__(self, folder: Path | str, limit: int | None = None, pin_file: Path | str | None = None) -> None:
+        """`limit`: trần byte; None = theo chỗ trống của ổ ([default_limit]). `pin_file`: nơi nhớ các khoá đã ghim (mỗi dòng một khoá); None = chỉ nhớ trong lần chạy này."""
         self.folder = Path(folder)
         self.limit = default_limit(self.folder) if limit is None else limit
         self._lock = threading.RLock()
         self._size: int | None = None
+        self._pin_file = Path(pin_file) if pin_file is not None else None
+        self._pinned: set[str] = set()
+        if self._pin_file is not None:
+            try:
+                self._pinned = {line.strip() for line in self._pin_file.read_bytes().decode("utf-8").splitlines() if line.strip()}
+            except (OSError, ValueError):
+                pass
         self._sweep_parts()  # tắt máy giữa lúc ghi để lại `.part` mồ côi: không được tính vào tổng nên `trim` không bao giờ thấy (soát a79 lỗi 9)
 
     def get(self, key: str) -> Cached | None:
@@ -97,6 +108,41 @@ class ClipCache:
                 self._size += len(audio) + len(meta)
             self.trim()
         return Cached(key, file, duration_ms, words)
+
+    def _save_pins(self) -> None:
+        if self._pin_file is None:
+            return
+        try:
+            self._pin_file.parent.mkdir(parents=True, exist_ok=True)
+            temp = self._pin_file.with_name(self._pin_file.name + ".part")
+            temp.write_bytes("\n".join(sorted(self._pinned)).encode("utf-8"))
+            os.replace(temp, self._pin_file)
+        except OSError:
+            pass  # chỉ là sổ ghim: mất thì clip chỉ thành clip thường
+
+    def pin(self, key: str) -> None:
+        """Ghim clip (đã có hay sắp ghi): tỉa chỉ đụng tới nó khi không còn clip không ghim nào."""
+        with self._lock:
+            if key not in self._pinned:
+                self._pinned.add(key)
+                self._save_pins()
+
+    def unpin(self, key: str) -> None:
+        """Người nghe đã tới clip này: nó lại là clip thường."""
+        with self._lock:
+            if key in self._pinned:
+                self._pinned.discard(key)
+                self._save_pins()
+
+    def is_pinned(self, key: str) -> bool:
+        with self._lock:
+            return key in self._pinned
+
+    def pinned_bytes(self) -> int:
+        """Byte các clip ghim đang chiếm trong bộ đệm."""
+        with self._lock:
+            keys = set(self._pinned)
+        return sum(self._size_of(entry) for entry in self._entries() if CLIP_FILE.fullmatch(entry.name) and entry.name.split(".", 1)[0] in keys)
 
     def path(self, file: str) -> Path | None:
         """Đường dẫn file audio theo tên (chỉ tên đúng dạng `<64 hex>.mp3|wav`)."""
@@ -136,12 +182,20 @@ class ClipCache:
                     freed += size
             if self._size is not None:
                 self._size = max(0, self._size - freed)
+            if self._pinned.intersection(keys):
+                self._pinned.difference_update(keys)
+                self._save_pins()
         return freed
 
     def clear(self) -> int:
         """Xoá mọi clip khỏi bộ đệm ("Dọn bản đọc đã làm" ở Cài đặt); trả số byte giải phóng. Chỉ file đúng dạng clip - không đụng thứ khác nằm cạnh."""
         keys = {entry.name.split(".", 1)[0] for entry in self._entries() if CLIP_FILE.fullmatch(entry.name)}
-        return self.remove(keys)
+        freed = self.remove(keys)
+        with self._lock:  # và bỏ mọi ghim, kể cả khoá của clip đã không còn trên đĩa
+            if self._pinned:
+                self._pinned.clear()
+                self._save_pins()
+        return freed
 
     @staticmethod
     def _size_of(path: Path) -> int:
@@ -198,7 +252,8 @@ class ClipCache:
                 except OSError:
                     continue
                 clips.setdefault(entry.name.split(".", 1)[0], []).append((stat.st_mtime if entry.suffix == ".json" else 0.0, entry, stat.st_size))
-            order = sorted(clips.values(), key=lambda files: max(stamp for stamp, _, _ in files))  # clip thiếu JSON (mtime 0) đi trước
+            # clip không ghim đi trước; trong mỗi nhóm, lâu không dùng nhất đi trước (clip thiếu JSON, mtime 0, đi đầu)
+            order = [files for _, files in sorted(clips.items(), key=lambda item: (item[0] in self._pinned, max(stamp for stamp, _, _ in item[1])))]
             for files in order:
                 if self._size is not None and self._size <= target:
                     break

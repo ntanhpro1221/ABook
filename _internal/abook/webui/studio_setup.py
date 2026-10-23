@@ -18,6 +18,7 @@ import json
 import os
 import re
 import shutil
+import ssl
 import subprocess
 import sys
 import threading
@@ -225,15 +226,36 @@ class Cancelled(Exception):
     pass
 
 
+# Chừa chỗ cho Windows và chính app khi tải một file (như điện thoại, DownloadSpace.MARGIN).
+SPACE_MARGIN = 100 * 1024 * 1024
+
+
+class NoSpace(SetupError):
+    """Ổ đĩa không đủ chỗ cho phần còn phải tải: báo TRƯỚC khi tải byte nào (`need` = phần còn thiếu + SPACE_MARGIN, `free` = chỗ trống), không để tải nửa chừng rồi hỏng khi ghi."""
+
+    def __init__(self, name: str, need: int, free: int) -> None:
+        super().__init__(f"Ổ đĩa không đủ chỗ trống để tải {name}: cần khoảng {_megabytes(need)}, còn {_megabytes(free)}. Giải phóng bớt chỗ rồi bấm Cài tiếp.")
+        self.need, self.free = need, free
+
+
+def _megabytes(size: int) -> str:
+    return f"{(max(size, 0) + (1 << 20) - 1) >> 20} MB"
+
+
 # Lần tải không tới được máy chủ (không phân giải tên máy, hết giờ, kết nối bị ngắt) - cùng câu với điện thoại (PinnedFiles.NETWORK_FAILURE).
 NETWORK_FAILURE = "Không kết nối được tới máy chủ tải. Kiểm tra mạng rồi bấm {retry}."
+
+
+# Lỗi đường truyền đáng thử lại. `ssl.SSLError` là OSError chứ không phải ConnectionError: TLS đứt giữa chừng (UNEXPECTED_EOF_WHILE_READING) trước đây
+# lọt khỏi vòng thử lại và hiện thành "không ghi được vào ổ đĩa".
+TRANSPORT_ERRORS = (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError, ssl.SSLError)
 
 
 def _network(error: BaseException) -> bool:
     """Lỗi của đường mạng, không phải của file hay của máy (HTTPError: máy chủ có trả lời - không tính)."""
     if isinstance(error, urllib.error.HTTPError):
         return False
-    return isinstance(error, (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError))
+    return isinstance(error, TRANSPORT_ERRORS)
 
 
 def technical(error: BaseException) -> str:
@@ -245,6 +267,8 @@ def download_failure(noun: str, error: BaseException, retry: str = "Thử lại"
     """(câu cho người dùng - đặt cạnh nút `retry`, chi tiết kỹ thuật cho "Chi tiết" - rỗng khi câu đã đủ) của một lần tải `noun` ("giọng VieNeu")
     hỏng. Lỗi mạng -> NETWORK_FAILURE; file hỏng / ổ đầy -> nói thẳng; lỗi khác -> câu chung, nguyên văn thu vào chi tiết (soát a66: lời lỗi
     tiếng Anh thô). Cùng luật với điện thoại (PinnedFiles.failure)."""
+    if isinstance(error, NoSpace):
+        return f"Không tải được {noun}: ổ đĩa không đủ chỗ trống - cần khoảng {_megabytes(error.need)}, còn {_megabytes(error.free)}. Giải phóng bớt chỗ rồi bấm {retry}.", ""
     wrapped = isinstance(error, SetupError) and error.__cause__ is not None  # download() bọc lỗi đường truyền sau 5 lần thử
     cause = error.__cause__ if wrapped else error
     if _network(cause) or (wrapped and not isinstance(cause, urllib.error.HTTPError)):
@@ -356,7 +380,7 @@ def remote_size(url: str) -> int:
     try:
         with urllib.request.urlopen(urllib.request.Request(url, method="HEAD"), timeout=60) as response:
             size = int(response.headers.get("Content-Length") or 0)
-    except (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError, ValueError) as error:
+    except (*TRANSPORT_ERRORS, ValueError) as error:
         message = NETWORK_FAILURE.format(retry="Cài tiếp") if _network(error) else f"Không hỏi được cỡ file ({error}) - bấm Cài tiếp để thử lại."
         raise SetupError(message) from error
     if size <= 0:
@@ -371,8 +395,16 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
         return target
     target.parent.mkdir(parents=True, exist_ok=True)
     part = target.with_name(target.name + ".part")
-    if part.is_file():
-        progress(min(part.stat().st_size, item.size), item.size)  # tải tiếp sau Huỷ / mất mạng: phần .part đã có tính ngay từ đầu (trước đây thanh về 0 rồi mới nhảy)
+    have = part.stat().st_size if part.is_file() else 0
+    if have:
+        progress(min(have, item.size), item.size)  # tải tiếp sau Huỷ / mất mạng: phần .part đã có tính ngay từ đầu (trước đây thanh về 0 rồi mới nhảy)
+    need = item.size - min(have, item.size) + SPACE_MARGIN
+    try:
+        free = shutil.disk_usage(target.parent).free
+    except OSError:
+        free = None  # không hỏi được ổ: cứ tải, lỗi ghi sẽ nói sau
+    if free is not None and free < need:
+        raise NoSpace(item.name, need, free)
     try:
         for attempt in range(5):
             if cancelled():
@@ -400,7 +432,7 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
                     # Kết nối đứt giữa chừng mà không báo lỗi: giữ .part, tải tiếp bằng Range ở lượt sau.
                     raise ConnectionError(f"mạng ngắt khi mới tải {done * 100 // item.size}%")
                 break
-            except (urllib.error.URLError, http.client.HTTPException, TimeoutError, ConnectionError) as error:
+            except TRANSPORT_ERRORS as error:
                 if attempt == 4:
                     message = NETWORK_FAILURE.format(retry="Cài tiếp") if _network(error) else f"Không tải được {item.name} ({error}) - bấm Cài tiếp để thử lại."
                     raise SetupError(message) from error
