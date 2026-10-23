@@ -201,6 +201,7 @@ export type RemotePlayerCommand =
   | RemoteSleepCommand;
 
 export interface PeerLibrary {
+  connectedVia?: string;
   key: string;
   name: string;
   host: string;
@@ -465,7 +466,7 @@ export interface EbookLibraryPlugin {
   /** Ghép máy tính chính qua Bluetooth - cùng mã 6 số, đi qua đường hầm; sau đó `connection().host` là "bt:<địa chỉ>". */
   pairBluetooth(options: { address: string; code: string; device?: string }): Promise<{ name: string }>;
   /** `fingerprint`: vân tay chứng chỉ TLS máy tính đã ghi lúc ghép (hex; Pin.kt) - để đối chiếu, "" nếu chưa có. */
-  connection(): Promise<{ paired: boolean; host: string; port: number; name: string; fingerprint?: string; lastAddress?: string; deviceName?: string }>;
+  connection(): Promise<{ paired: boolean; host: string; port: number; name: string; fingerprint?: string; lastAddress?: string; deviceName?: string; connectedVia?: string }>;
   /** Tên điện thoại này máy khác thấy (DeviceName.kt) - báo luôn cho các máy đã ghép. */
   setDeviceName(options: { name: string }): Promise<{ name: string }>;
   unpair(): Promise<void>;

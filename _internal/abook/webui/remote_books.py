@@ -32,12 +32,13 @@ import threading
 import time
 import zipfile
 from contextlib import contextmanager
+from concurrent.futures import ThreadPoolExecutor, as_completed, TimeoutError as FuturesTimeout
 from pathlib import Path
 from typing import Any, Callable, Iterator, NamedTuple
 from urllib.parse import quote
 
 from ..io_utils import _replace_with_retry, atomic_write_bytes, atomic_write_json
-from . import bluetooth, book_edits, covers, route, tls
+from . import bluetooth, book_edits, covers, route, tls, peer_addresses, peer_routing
 
 REMOTE_FOLDER = "Trên máy khác"
 MANIFEST = "book.json"
@@ -47,6 +48,8 @@ PAIR_BLUETOOTH_TIMEOUT = 45  # ghép qua Bluetooth: tra SDP + nối RFCOMM + b�
 REVOKE_TIMEOUT = 3  # báo thôi ghép ở nền: máy kia tắt thì thôi, lần hỏi thư viện sau báo lại
 LIBRARY_PORT = 47630  # cổng đồng bộ mặc định (điện thoại: LibraryServer.PORT); máy ghép bằng Bluetooth không dùng nhưng entry có cổng
 _COMPUTERS: "Computers | None" = None
+_ROUTE_POOL = ThreadPoolExecutor(max_workers=2, thread_name_prefix="peer-discovery")
+_ROUTES = peer_routing.Resolver()
 
 
 class RemoteError(Exception):
@@ -107,6 +110,12 @@ class Computers:
         except ValueError:
             data = None
         if isinstance(data, dict) and isinstance(data.get("computers"), dict):
+            changed = False
+            for entry in data["computers"].values():
+                if isinstance(entry, dict):
+                    changed = peer_addresses.migrate(entry) or changed
+            if changed:
+                self._write(data)
             return data
         kept = self.path.with_name(f"{self.path.name}.hong-{time.strftime('%Y%m%d-%H%M%S')}")
         _replace_with_retry(self.path, kept)
@@ -144,6 +153,14 @@ class Computers:
             if computer in data["computers"]:
                 data["computers"][computer].update(fields)
                 self._write(data)
+
+    def learn(self, computer: str, values: Any, seen: str, *, success: str = "") -> None:
+        with self._lock:
+            data = self._read()
+            entry = data["computers"].get(computer)
+            if entry is not None and peer_addresses.learn(entry, values, seen, success=success, at=time.time()):
+                self._write(data)
+                _ROUTES.invalidate((str(entry.get("fingerprint") or ""), computer))
 
     def pair(self, address: str, code: str, device_name: str, *, own_port: int | None = None) -> dict[str, Any]:
         """Ghép với máy ở `address` ("192.168.1.20" hay "192.168.1.20:47630"; "AA:BB:CC:DD:EE:FF" hay "bt:AA:BB:..." là địa chỉ
@@ -185,11 +202,17 @@ class Computers:
                    or former or secrets.token_hex(6))
             entry = {"name": name, "host": host, "port": port, "token": token, "fingerprint": seen,
                      "pairedAt": time.time(), "lastSeen": time.time(), "error": ""}
+            previous = data["computers"].get(key, {})
+            if str(previous.get("fingerprint") or "").lower() != seen:
+                previous = {}
+            entry["addresses"] = previous.get("addresses", [])
+            peer_addresses.learn(entry, reply_data.get("addresses"), seen,
+                                 success="" if by_bluetooth else peer_addresses.endpoint(host, port), at=time.time())
             # Đường Bluetooth dự phòng: máy kia báo trong lời đáp ghép (sync.py `routes`); không báo thì giữ cái đã biết.
-            if known := (_routes_bluetooth(reply_data) or data["computers"].get(key, {}).get("bt") or ""):
+            if known := (_routes_bluetooth(reply_data) or previous.get("bt") or ""):
                 entry["bt"] = known
             # Tên Bluetooth điện thoại báo (khác tên máy ở Wi-Fi): để tự khớp với thiết bị đã ghép ở Windows.
-            if known_name := (_bluetooth_name(reply_data) or data["computers"].get(key, {}).get("btName") or ""):
+            if known_name := (_bluetooth_name(reply_data) or previous.get("btName") or ""):
                 entry["btName"] = known_name
             data["computers"][key] = entry
             self._write(data)
@@ -230,7 +253,7 @@ class Computers:
             # Máy kia thu hồi mã của máy này ở đó (`POST /sync/v1/unpair`): ghi lại trước, báo ở nền - máy kia đang tắt thì lần hỏi thư
             # viện sau (`refresh`) báo lại, tới khi nó nghe. Chỉ qua mạng: đường hầm Bluetooth của máy ấy đóng ngay dưới đây.
             if gone.get("token") and gone.get("fingerprint") and not str(gone.get("host") or "").startswith("bt:"):
-                data.setdefault("revoke", []).append({key: gone[key] for key in ("host", "port", "fingerprint", "token")})
+                data.setdefault("revoke", []).append({key: gone[key] for key in ("host", "port", "fingerprint", "token", "addresses")})
             self._write(data)
         _release_bluetooth(gone, data["computers"].values())
         threading.Thread(target=self.revoke_pending, name="remote-unpair", daemon=True).start()
@@ -248,7 +271,8 @@ class Computers:
                 pending = list(self._read().get("revoke") or [])
             done = []
             for item in pending:
-                endpoint = Endpoint(str(item["host"]), int(item["port"]), str(item["fingerprint"]), target=f"{item['host']}:{item['port']}")
+                peer_addresses.migrate(item)
+                endpoint = _base(item)
                 try:
                     _request(endpoint, "POST", "/sync/v1/unpair", str(item["token"]), {}, timeout=REVOKE_TIMEOUT)
                 except RemoteError as error:
@@ -387,25 +411,70 @@ def discover(*, timeout: float = 1.5, exclude_port: int | None = None, targets: 
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             try:
-                data, (host, _source_port) = probe.recvfrom(1024)
+                data, (host, _source_port) = probe.recvfrom(4096)
             except (TimeoutError, OSError):
                 continue
             try:
                 reply = json.loads(data.decode("utf-8"))
-                sync_port = int(reply["port"])
-            except (ValueError, KeyError, TypeError):
+                raw_port = reply["port"]
+            except (ValueError, KeyError, TypeError, OverflowError):
                 continue
             if not isinstance(reply, dict) or reply.get("app") != "abook":
                 continue
+            # Broadcast discovery accepts the same numeric scopes as Android. Explicit
+            # local targets remain available for loopback diagnostics/tests.
+            address = peer_addresses.discovery_endpoint(host, raw_port, advertised=host not in targets)
+            if address is None:
+                continue
+            _, sync_port = peer_addresses.split(address)
             if host in own and exclude_port is not None and sync_port == exclude_port:
                 continue  # chính máy này trả lời
             # Điện thoại cũng trả lời khi bật "Cho máy khác nghe thư viện này" (LibraryServer.kt, cùng giao thức).
             found[(host, sync_port)] = {"name": str(reply.get("name") or host), "host": host, "port": sync_port,
+                                        "fingerprint": str(reply.get("fingerprint") or "").lower(),
                                         "kind": "phone" if reply.get("kind") == "phone" else "computer",
                                         **({"btName": name} if (name := _bluetooth_name(reply)) else {})}
     finally:
         probe.close()
+    if _COMPUTERS is not None:
+        pending = []
+        paired = _COMPUTERS.list()
+        for candidate in list(found.values())[:peer_addresses.LIMIT]:
+            for entry in paired:
+                if not entry.get("fingerprint") or candidate["fingerprint"] != entry["fingerprint"].lower():
+                    continue
+                pending.append(_ROUTE_POOL.submit(_remember_discovered, _COMPUTERS, candidate, entry))
+                break
+        try:
+            for done in as_completed(pending, timeout=3):
+                try:
+                    done.result()
+                except Exception:
+                    continue  # one malformed/unreachable responder cannot discard other peers
+        except FuturesTimeout:
+            pass
+        finally:
+            for job in pending:
+                job.cancel()
+    for candidate in found.values():
+        candidate.pop("fingerprint", None)  # discovery claims are never shown as a pinned identity
     return sorted(found.values(), key=lambda item: (item["name"].casefold(), item["host"]))
+
+
+def _remember_discovered(computers: Computers, candidate: dict[str, Any], entry: dict[str, Any]) -> None:
+    """An unauthenticated discovery claim never authorizes a route; verify the actual certificate before storing it."""
+    address = peer_addresses.valid(peer_addresses.endpoint(candidate["host"], candidate["port"]))
+    if address is None:
+        return
+    try:
+        connection = _dial(Endpoint(candidate["host"], candidate["port"], entry.get("fingerprint") or ""), route.PROBE_SECONDS)
+    except (OSError, tls.PinError, ValueError, OverflowError):
+        return
+    try:
+        address = peer_addresses.endpoint(candidate["host"], candidate["port"])
+        computers.learn(entry["id"], [address], connection.peer_fingerprint, success=address)
+    finally:
+        connection.close()
 
 
 class Endpoint(NamedTuple):
@@ -420,6 +489,7 @@ class Endpoint(NamedTuple):
     fallback: str = ""
     bluetooth: str = ""
     computer: str = ""  # mã máy trong computers.json: Wi-Fi hỏng mà chưa biết địa chỉ Bluetooth thì tìm theo tên (`_look_for_bluetooth`)
+    alternatives: tuple[str, ...] = ()
 
 
 # Tên công tắc ở Cài đặt của máy kia - đúng chuỗi của ui/src/shared/syncSwitch.ts (tests/test_sync_switch_label.py giữ hai bên không lệch).
@@ -604,38 +674,85 @@ def _quiet_now(computer: str) -> bool:
 
 def _dial(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.PinnedHTTPSConnection:
     """Nối + bắt tay + kiểm vân tay, CHƯA gửi byte nào. `wake`: máy kia có thể đang ngủ - xem `_Wait`."""
+    if endpoint.fingerprint == "":
+        raise tls.PinError("Máy đã ghép chưa có vân tay chứng chỉ")
     connection = tls.PinnedHTTPSConnection(endpoint.host, endpoint.port, expected=endpoint.fingerprint, timeout=timeout)
     wait = _Wait(endpoint) if wake and endpoint.computer else None
     if wait is not None:
+        connection.handshake_budget = wait.limit
         connection._context = _WakingContext(connection._context, wait)  # type: ignore[attr-defined] - SSLContext của http.client
     try:
         connection.connect()
+        if endpoint.target:
+            route.mark_up(endpoint.target)
+            if endpoint.computer and _COMPUTERS is not None:
+                _COMPUTERS.learn(endpoint.computer, [], connection.peer_fingerprint, success=endpoint.target)
     except BaseException as error:
         connection.close()
         if wait is not None and (reason := wait.reason(error)):
             raise RemoteError(reason) from error
         raise
-    if endpoint.target:
-        route.mark_up(endpoint.target)
     return connection
 
 
 def _connect(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.PinnedHTTPSConnection:
-    """Nối tới máy kia. Đường Wi-Fi hỏng lúc nối (không phải lệch vân tay - lệch vân tay là lỗi, không lùi) mà máy kia có đường
-    Bluetooth thì đánh dấu Wi-Fi hỏng (các yêu cầu sau đi thẳng Bluetooth) và nối lại qua đường hầm. Chỉ lùi khi CHƯA gửi byte
-    nào: yêu cầu ghi không bao giờ chạy hai lần. Máy đang ngủ (`_Wait`) không phải Wi-Fi hỏng: không lùi."""
+    """Select pinned TLS before HTTP; share failures/selection, never requests or sockets."""
+    def dial(target: str) -> tls.PinnedHTTPSConnection:
+        host, port = peer_addresses.split(target)
+        candidate = endpoint._replace(host=host, port=port, target=target, alternatives=())
+        try:
+            connection = _dial(candidate, min(timeout, route.PROBE_SECONDS), wake=False)
+        except (OSError, tls.PinError):
+            route.mark_down(target)
+            raise
+        try:
+            connection.timeout = timeout
+            if connection.sock is not None:
+                connection.sock.settimeout(timeout)
+            return connection
+        except BaseException:
+            connection.close()
+            raise
+
+    def selected(connection, target):
+        try:
+            if endpoint.computer and _COMPUTERS is not None:
+                _COMPUTERS.note(endpoint.computer, connectedVia=target)
+            return connection
+        except BaseException:
+            connection.close()
+            raise
+
+    # Keep the existing Bluetooth and explicit sleeping-device wake behavior.
+    if not endpoint.target or (wake and not endpoint.alternatives):
+        try:
+            return selected(_dial(endpoint, timeout, wake=wake), endpoint.target or "bluetooth")
+        except tls.PinError:
+            raise
+        except OSError:
+            if endpoint.target:
+                route.mark_down(endpoint.target)
+            if not endpoint.fallback:
+                raise
+            return selected(_dial(_tunnel(endpoint.fallback, endpoint.fingerprint, endpoint.computer), timeout, wake=wake), "bluetooth")
+
+    targets = (endpoint.target, *endpoint.alternatives)
+    identity = (endpoint.fingerprint or "", endpoint.computer or endpoint.fingerprint or endpoint.target)
     try:
-        return _dial(endpoint, timeout, wake=wake)
+        # Interface enumeration is local only; changing Wi-Fi/VPN invalidates the short failure cache.
+        import psutil
+        network = tuple(sorted((name, str(value.family), value.address)
+                               for name, values in psutil.net_if_addrs().items() for value in values))
+        connection, target = _ROUTES.connect(identity, targets, dial, route.PROBE_SECONDS, network=network)
+        return selected(connection, target)
     except tls.PinError:
         raise
     except OSError:
-        if endpoint.target:
-            route.mark_down(endpoint.target)
         if not endpoint.fallback:
-            if endpoint.computer and endpoint.target:
-                _look_for_bluetooth(endpoint.computer)  # lần sau (nếu tìm ra) đi Bluetooth
+            if endpoint.computer:
+                _look_for_bluetooth(endpoint.computer)
             raise
-        return _dial(_tunnel(endpoint.fallback, endpoint.fingerprint, endpoint.computer), timeout, wake=wake)
+        return selected(_dial(_tunnel(endpoint.fallback, endpoint.fingerprint, endpoint.computer), timeout, wake=wake), "bluetooth")
 
 
 LOOK_SECONDS = 120  # tìm địa chỉ Bluetooth theo tên: mỗi máy không quá hai phút một lần
@@ -773,6 +890,18 @@ def _exchange(endpoint: Endpoint, method: str, path: str, token: str, body: dict
                 check_json(data)
             except ValueError as error:
                 raise RemoteError(str(error)) from error
+            if endpoint.computer and _COMPUTERS is not None:
+                try:
+                    reply = json.loads(data)
+                    if isinstance(reply, dict) and str(reply.get("fingerprint", seen)).lower() == seen.lower():
+                        _COMPUTERS.learn(endpoint.computer, reply.get("addresses"), seen)
+                except (ValueError, UnicodeDecodeError):
+                    pass
+            if path.split("?", 1)[0].endswith("/state"):
+                reply = json.loads(data)
+                if isinstance(reply, dict):
+                    reply.pop("addresses", None)  # transport metadata must never enter listening records
+                    data = json.dumps(reply, ensure_ascii=False).encode("utf-8")
         return data, seen
 
 
@@ -810,19 +939,26 @@ def _release_bluetooth(gone: dict[str, Any], rest: Any) -> None:
 
 
 def _base(entry: dict[str, Any]) -> Endpoint:
-    """Gốc để hỏi máy đã ghép, chọn đường như điện thoại (route.py): chỉ có Wi-Fi -> Wi-Fi; chỉ có Bluetooth (ghép bằng địa chỉ
-    Bluetooth) -> đường hầm; cả hai -> Wi-Fi khi thông, hỏng thì Bluetooth (và nhớ, thử lại Wi-Fi mỗi phút ở nền). Không bao giờ
-    chờ mạng."""
-    host, port, fingerprint = str(entry["host"]), int(entry["port"]), str(entry.get("fingerprint") or "")
+    """Non-blocking cached choice; _connect verifies all candidate IP routes before falling back to Bluetooth.
+
+    Read fresh routing history even when a download retained its original peer snapshot.
+    """
+    if entry.get("id") and _COMPUTERS is not None:
+        current = _COMPUTERS.get(entry["id"])
+        if current is not None and current.get("fingerprint") == entry.get("fingerprint") and current.get("token") == entry.get("token"):
+            entry = current
+    fingerprint = str(entry.get("fingerprint") or "")
     computer = str(entry.get("id") or "")
     address = _bluetooth_of(entry)
-    if not address:
-        return Endpoint(host, port, fingerprint, target=f"{host}:{port}", computer=computer)
-    lan = [] if host.startswith("bt:") else [f"{host}:{port}"]
-    choice = route.pick(lan, address)
+    lan = peer_addresses.ordered(entry)
+    choice = route.pick(lan, address) if address or len(lan) > 1 else route.choose(lan, None, lambda _: None)
     if choice.lan is None:
+        if not address:
+            raise RemoteError("Máy đã ghép chưa có địa chỉ; bạn hãy ghép lại")
         return _tunnel(address, fingerprint, computer)
-    return Endpoint(host, port, fingerprint, target=choice.lan, fallback=address, computer=computer)
+    host, port = peer_addresses.split(choice.lan)
+    return Endpoint(host, port, fingerprint, target=choice.lan, fallback=address, computer=computer,
+                    alternatives=tuple(target for target in lan if target != choice.lan))
 
 
 def refresh(library_root: Path, computers: Computers, *, asked: bool = False) -> dict[str, Any]:
