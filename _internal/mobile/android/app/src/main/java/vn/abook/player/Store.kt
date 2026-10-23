@@ -1505,7 +1505,7 @@ object Store {
                     writeAtomic(rekeyJournal, journal.toString())
                 }
             } catch (error: Exception) {
-                runCatching { android.util.Log.w("Store", "đổi mã sách $oldId chưa xong, thử lại lần sau", error) } // Log không chạy trong test JVM
+                runCatching { AppLog.w("Store", "đổi mã sách $oldId chưa xong, thử lại lần sau", error) } // Log không chạy trong test JVM
             }
         }
     }

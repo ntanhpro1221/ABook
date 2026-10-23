@@ -16,6 +16,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính: chuyển thư viện bị ngắt giữa chừng sẽ được hoàn tất khi mở lại, để hồ sơ và dấu trang đi theo sách. Nhật ký chuyển hỏng không chặn mở app: bạn có thể chọn hoàn tất, quay lui hoặc bỏ qua sau khi kiểm tra thư mục; nhật ký gốc vẫn được giữ lại.
 - Điện thoại: trước khi ghi đè file sách, app giữ bền bản trước; nếu lần lưu bị hệ thống dừng, mở lại bạn tìm thấy bản trước trong Cài đặt → Bản lưu cũ. Chỗ lưu đã mất truy cập sẽ mời bạn chọn nơi khác, trước khi ghi vào URI cũ.
 
+### Chẩn đoán
+- Điện thoại: app ghi lại nhật ký những gì nó đã làm (phát, tải, xuất, chia sẻ, lỗi) vào một file bền, không mất khi app bị tắt hay điện thoại khởi động lại; lần app bị văng và lý do hệ thống tắt app gần nhất cũng được giữ lại.
+- Điện thoại: Cài đặt có mục “Chẩn đoán” với “Xem nhật ký”, “Gửi nhật ký” (mở bảng chia sẻ để bạn chọn gửi cho ai, app không tự gửi đi đâu) và “Xoá nhật ký”. Nhật ký có tên cuốn đang nghe; app che các dạng khóa, mã ghép, đường dẫn riêng và địa chỉ IP nhận diện được. Bạn nên xem lại trước khi gửi.
+- Máy tính: trang Máy tính khác có nút “Chẩn đoán” cho từng điện thoại đã ghép, hiện tình trạng (bản app, pin, mạng, việc nền, lần tắt gần nhất) và nhật ký, có nút “Lưu nhật ký”; đi được cả khi điện thoại ở mạng khác. Điện thoại bản cũ chưa gửi được nhật ký thì app nói cần cập nhật ABook trên điện thoại.
+- Máy tính: Cài đặt có “Gửi nhật ký” - gói .zip nhật ký và thông tin máy tính để bạn tự gửi cho người sửa lỗi; bộ che áp dụng cả thông tin lỗi và thông tin máy.
+- Điện thoại: nhật ký hệ thống chỉ giữ các nguồn media/hệ thống được chọn; bỏ log plugin và WebView. Báo cáo kẹp độ dài từng trường, số mục và tổng kích thước, kể cả khi thông tin sách bị hỏng.
+- Điện thoại: chẩn đoán hiện tiến độ tải/xuất từ sự kiện việc nền đang chạy, giữ cả số mức quan trọng lúc bị tắt và dịch đúng TOP_SLEEPING/CANT_SAVE_STATE. Ghi nhật ký thường dùng luồng riêng, xoay file trong trần; báo cáo văng vẫn ghi ngay trước khi chuyển cho hệ thống.
+
 ## [0.4.132] - 2026-10-23
 
 ### Nghe ngay
