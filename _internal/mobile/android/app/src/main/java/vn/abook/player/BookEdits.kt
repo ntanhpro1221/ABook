@@ -102,6 +102,18 @@ object BookEdits {
         else -> value.toString()
     }
 
+    /** covers.clean_color: màu bìa chỉ là #rrggbb (chữ thường, bỏ khoảng trắng hai đầu), không thì "". Màu trong file sách / manifest của máy khác
+     *  thành CSS ở giao diện: `url(https://…)` làm WebView tự gọi máy lạ mỗi lần hiện bìa. */
+    internal fun cleanColor(value: Any?): String = (value as? String)?.trim()?.lowercase(java.util.Locale.ROOT)?.takeIf { COLOR.matches(it) } ?: ""
+
+    /** Gói sách/manifest từ nơi khác: màu bìa không hợp lệ bị bỏ (cũng bỏ khoá nếu cuốn không có bìa kiểu đối tượng). */
+    internal fun scrubCoverColor(book: JSONObject) {
+        val cover = book.optJSONObject("cover") ?: return
+        if (!cover.has("color") || cover.isNull("color")) return
+        val clean = cleanColor(cover.opt("color"))
+        if (clean.isEmpty()) cover.remove("color") else cover.put("color", clean)
+    }
+
     internal fun truthy(value: Any?): Boolean = when {
         value == null || value === JSONObject.NULL -> false
         value is Boolean -> value

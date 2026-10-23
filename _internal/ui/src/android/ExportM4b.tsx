@@ -11,7 +11,7 @@ import { spokenProgress } from "@/shared/progressSpeech";
 import { Button, Dialog } from "@/shared/ui";
 import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
 import { chargerHint } from "./ExportAudiobook";
-import { rejoinExports } from "./exportJobs";
+import { isEnded, noteEnded, rejoinExports } from "./exportJobs";
 import { EbookLibrary, type M4bExportEvent } from "./plugins";
 
 // "Xuất M4B cho app sách nói" trên điện thoại: cùng chữ, cùng file với máy tính (desktop/ExportBookFileJob.tsx M4bMenuItem). Việc chạy
@@ -91,6 +91,8 @@ export async function chooseM4b(book: ListenBook) {
 /** Theo dõi các lượt xuất từ lúc app mở (App.tsx): tiến độ, xong, dừng, lỗi - kể cả lượt đã chạy từ trước lúc giao diện mở lại (exportJobs). */
 export function watchM4bExports(): () => void {
   const handle = EbookLibrary.addListener("m4bExport", (event) => {
+    if (event.finished || event.stopped || event.error) noteEnded(event.run);
+    else if (isEnded(event.run)) return; // tin muộn của lượt đã kết thúc
     // Chưa theo dõi lượt nào của cuốn này (giao diện vừa mở lại giữa lúc việc nền chạy): nhận lượt ấy thay vì bỏ tin.
     const current = runs.get(event.bookId) ?? { run: event.run, book: undefined };
     if (current.run !== event.run) return;

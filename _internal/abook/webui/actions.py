@@ -13,6 +13,7 @@ import hashlib
 import io
 import os
 import re
+import stat
 import subprocess
 import threading
 import time
@@ -51,6 +52,49 @@ def inside_folder(path: str, root: Path) -> bool:
         return False
 
 
+OUTSIDE_UPLOADS = ("Thư mục nguồn trỏ ra ngoài thư viện của bạn (một liên kết hay junction) nên ABook không đọc hay ghi vào đó. "
+                   "Bạn hãy chép các file vào thư viện trên máy tính rồi gửi lại.")
+
+
+class UploadEscape(ValueError):
+    """Đường trong "Nguồn tải lên" sau khi phân giải liên kết/junction nằm ngoài thư mục ấy (hay ngoài thư viện)."""
+
+    def __init__(self) -> None:
+        super().__init__(OUTSIDE_UPLOADS)
+
+
+def contained_upload(uploads: Path, path: Path) -> Path:
+    """Đường THẬT của `path` (đã phân giải mọi liên kết, junction), chỉ khi nó nằm trong `uploads` và chính `uploads` nằm trong thư viện;
+    không thì `UploadEscape`. So theo từng thành phần (`Nguồn tải lên 2` không nằm trong `Nguồn tải lên`), kiểm TRƯỚC mọi I/O; nơi gọi
+    nên dùng đường trả về (không còn liên kết để đổi giữa lúc kiểm và lúc mở)."""
+    try:
+        root = uploads.resolve(strict=False)
+        real = path.resolve(strict=False)
+        if not root.is_relative_to(uploads.parent.resolve(strict=False)) or not real.is_relative_to(root):
+            raise UploadEscape
+    except (OSError, ValueError, RuntimeError) as error:
+        raise UploadEscape from error
+    return real
+
+
+def _is_link(entry: os.DirEntry[str]) -> bool:
+    """Symlink hay reparse point (junction, mount point) của Windows - `DirEntry.is_symlink` bỏ sót junction."""
+    if entry.is_symlink():
+        return True
+    return bool(getattr(entry.stat(follow_symlinks=False), "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
+
+
+def check_upload_folder(uploads: Path, folder: Path) -> None:
+    """Thư mục tải lên đem quét: mục con trực tiếp là liên kết/junction trỏ ra ngoài cũng bị từ chối (quét đọc cả chúng)."""
+    try:
+        with os.scandir(folder) as entries:
+            for entry in entries:
+                if _is_link(entry):
+                    contained_upload(uploads, Path(entry.path))
+    except OSError as error:
+        raise UploadEscape from error  # không xác minh được MỘT mục cũng không được cho phép quét phần còn lại
+
+
 def is_upload_part(part: str) -> bool:
     """`part` là MỘT tầng đường dẫn hợp lệ trong "Nguồn tải lên"? Đúng dạng `upload_source` / `txt_split.split` ghi ra: không rỗng, không "."
     / "..", không ký tự Windows không nhận (cả "/" "\\" ":"), không kết bằng dấu chấm / cách, không phải tên thiết bị (CON, NUL...)."""
@@ -83,15 +127,20 @@ def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Pa
         raise ValueError("Chỉ nhận file .txt (mỗi file là một chương) hay một file .epub / .docx / .pdf")
     if any(_DEVICE_NAME.match(part) for part in parts) or _DEVICE_NAME.match(file_name):
         raise ValueError("Tên này là tên thiết bị của Windows - đổi tên file rồi gửi lại")
-    target_dir = library_root / UPLOAD_FOLDER
+    uploads = library_root / UPLOAD_FOLDER
+    target_dir = uploads
     for part in parts:
         target_dir /= part
+    target_dir = contained_upload(uploads, target_dir)  # junction trong "Nguồn tải lên" không đưa việc ghi ra ngoài thư viện
     target_dir.mkdir(parents=True, exist_ok=True)
+    target_dir = contained_upload(uploads, target_dir)  # kiểm lại sau khi tạo: liên kết đổi giữa chừng cũng bị chặn trước khi ghi byte nào
     target = target_dir / file_name
-    if target.exists():
+    if os.path.lexists(target):
         raise ValueError(f"Đã có chương {file_name} trong lần gửi này - hai file trùng tên")
     temporary = target_dir / f".{file_name}.part"
-    temporary.write_bytes(data)
+    # O_EXCL (xb) từ chối cả symlink có đích chưa tồn tại, không mở rồi ghi theo liên kết .part có sẵn.
+    with temporary.open("xb") as output:
+        output.write(data)
     os.replace(temporary, target)
     return target
 
