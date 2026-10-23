@@ -12,7 +12,7 @@ const library = vi.hoisted(() => {
       handlers.push(handler);
       return { remove: vi.fn() };
     }),
-    audiobookJobs: vi.fn(async () => ({ jobs: [] as unknown[] })),
+    exportJobs: vi.fn(async () => ({ jobs: [] as unknown[] })),
     cancelAudiobookExport: vi.fn(async () => undefined),
     openFile: vi.fn(async () => ({ opened: true })),
   };
@@ -166,7 +166,7 @@ describe("theo dõi việc nền", () => {
   beforeEach(() => {
     library.handlers.length = 0;
     vi.clearAllMocks();
-    library.audiobookJobs.mockResolvedValue({ jobs: [] });
+    library.exportJobs.mockResolvedValue({ jobs: [] });
   });
 
   const emit = (event: Record<string, unknown>) => library.handlers.forEach((handler) => handler(event));
@@ -217,9 +217,9 @@ describe("theo dõi việc nền", () => {
   });
 
   it("mở lại app giữa chừng: hiện lại tiến độ của lượt đang chạy", async () => {
-    library.audiobookJobs.mockResolvedValue({ jobs: [{ bookId: "b7", run: "r7", phase: "voice", chapter: 6, chapters: 9, percent: 61, secondsLeft: 600, waiting: null }] });
+    library.exportJobs.mockResolvedValue({ jobs: [{ kind: "audiobook", bookId: "b7", run: "r7", phase: "voice", chapter: 6, chapters: 9, percent: 61, secondsLeft: 600, waiting: null }] });
     await watch();
-    await Promise.resolve();
+    await vi.waitFor(() => expect(toasts.loading).toHaveBeenCalled());
     expect(toasts.loading).toHaveBeenCalledWith("Đang làm sách nói…", expect.objectContaining({
         id: "audiobook-export-b7",
         description: expect.objectContaining({ props: { shown: "Chương 6/9 · 61% · còn khoảng 10 phút", spoken: "Đang xuất 9 chương · 50%" } }),

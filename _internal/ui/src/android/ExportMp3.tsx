@@ -11,6 +11,7 @@ import { Button, Dialog } from "@/shared/ui";
 import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
 import { chargerHint } from "./ExportAudiobook";
 import { progressText } from "./ExportM4b";
+import { rejoinExports } from "./exportJobs";
 import { EbookLibrary, type Mp3ExportEvent } from "./plugins";
 
 // "Xuất MP3 để nghe ở app khác" trên điện thoại: cùng chữ, cùng bản xuất với máy tính (desktop/App.tsx ExportMenuItem). Việc chạy nền
@@ -21,17 +22,24 @@ import { EbookLibrary, type Mp3ExportEvent } from "./plugins";
 /** Hộp nhỏ "Kèm nhạc nền" được mở từ menu của trang sách. */
 export const OPEN_MP3_EVENT = "abook-phone-mp3-dialog";
 
-/** Lượt đang theo dõi của mỗi cuốn: tin của lượt cũ (bị thay khi đổi thư mục) không được đè lên lượt mới. */
-const runs = new Map<string, { run: string; folder: string; book: ListenBook; music: boolean }>();
+/**
+ * Lượt đang theo dõi của mỗi cuốn: tin của lượt cũ (bị thay khi đổi thư mục) không được đè lên lượt mới. `book` không có khi lượt được nối lại sau
+ * lúc giao diện mở lại giữa chừng (exportJobs chỉ biết mã cuốn) - khi ấy thông báo không có nút "Đổi thư mục".
+ */
+const runs = new Map<string, { run: string; folder: string; book?: ListenBook; music: boolean }>();
 
 const toastId = (bookId: string) => `mp3-export-${bookId}`;
 
 /** `fraction`: phần đã xong (0-1) - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */
-function showProgress(book: ListenBook, folder: string, progress: string, fraction?: number, music = false) {
+function showProgress(bookId: string, book: ListenBook | undefined, folder: string, progress: string, fraction?: number, music = false) {
   toast.loading("Đang xuất sách…", {
-    id: toastId(book.id),
-    description: <ExportProgressText shown={`${progress} · vào ${folder}`} spoken={`${spokenProgress("Đang xuất sách", fraction)} vào ${folder}`} />,
-    action: { label: "Đổi thư mục", onClick: () => void exportMp3(book, true, undefined, music) },
+    id: toastId(bookId),
+    description: folder ? (
+      <ExportProgressText shown={`${progress} · vào ${folder}`} spoken={`${spokenProgress("Đang xuất sách", fraction)} vào ${folder}`} />
+    ) : (
+      <ExportProgressText shown={progress} spoken={spokenProgress("Đang xuất sách", fraction)} />
+    ),
+    action: book ? { label: "Đổi thư mục", onClick: () => void exportMp3(book, true, undefined, music) } : undefined,
   });
 }
 
@@ -56,7 +64,7 @@ export async function exportMp3(book: ListenBook, pick = false, chapterIds?: num
     if (!result.started || !result.run) return;
     const folder = result.folder ?? "";
     runs.set(book.id, { run: result.run, folder, book, music });
-    showProgress(book, folder, `${result.chapters ?? book.chaptersAvailable} chương`, undefined, music);
+    showProgress(book.id, book, folder, `${result.chapters ?? book.chaptersAvailable} chương`, undefined, music);
   } catch (error) {
     toast.error("Không xuất được", { id: toastId(book.id), description: (error as Error).message });
   }
@@ -77,11 +85,12 @@ async function openFolder(uri: string, folder: string) {
   if (!opened) toast("Máy không mở được thư mục", { description: folder ? `Mở app Tệp rồi vào ${folder}.` : "Mở app Tệp rồi vào thư mục đã chọn." });
 }
 
-/** Theo dõi các lượt xuất từ lúc app mở (App.tsx): tiến độ, xong, dừng, lỗi. */
+/** Theo dõi các lượt xuất từ lúc app mở (App.tsx): tiến độ, xong, dừng, lỗi - kể cả lượt đã chạy từ trước lúc giao diện mở lại (exportJobs). */
 export function watchMp3Exports(): () => void {
   const handle = EbookLibrary.addListener("mp3Export", (event) => {
-    const current = runs.get(event.bookId);
-    if (!current || current.run !== event.run) return;
+    // Chưa theo dõi lượt nào của cuốn này (giao diện vừa mở lại giữa lúc việc nền chạy): nhận lượt ấy thay vì bỏ tin.
+    const current = runs.get(event.bookId) ?? { run: event.run, folder: event.folder ?? "", book: undefined, music: false };
+    if (current.run !== event.run) return;
     const id = toastId(event.bookId);
     if (event.finished) {
       runs.delete(event.bookId);
@@ -94,14 +103,20 @@ export function watchMp3Exports(): () => void {
       });
     } else if (event.stopped) {
       runs.delete(event.bookId);
-      toast("Đã dừng xuất", { id, description: `Đã xuất ${event.files ?? 0} chương · ${current.folder}`, action: undefined });
+      toast("Đã dừng xuất", { id, description: `Đã xuất ${event.files ?? 0} chương${current.folder ? ` · ${current.folder}` : ""}`, action: undefined });
     } else if (event.error) {
       runs.delete(event.bookId);
       toast.error("Không xuất được", { id, description: event.error, action: undefined });
     } else if (event.total || event.phase) {
-      showProgress(current.book, current.folder, progressText(event, current.book.chaptersAvailable),
+      runs.set(event.bookId, current);
+      showProgress(event.bookId, current.book, current.folder, progressText(event, current.book?.chaptersAvailable ?? 0),
         event.total ? (event.done ?? 0) / event.total : undefined, current.music);
     }
+  });
+  rejoinExports("mp3", (job) => {
+    if (runs.has(job.bookId)) return;
+    runs.set(job.bookId, { run: job.run, folder: job.folder ?? "", book: undefined, music: job.music ?? false });
+    showProgress(job.bookId, undefined, job.folder ?? "", progressText(job, 0), job.total ? (job.done ?? 0) / job.total : undefined, job.music ?? false);
   });
   return () => void handle.then((listener) => listener.remove());
 }

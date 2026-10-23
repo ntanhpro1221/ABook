@@ -106,3 +106,15 @@ describe("đọc lại khi app trở lại màn hình", () => {
     expect(library.backgroundStatus).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("ghi chú nói việc của chỗ khác (chia sẻ thư viện)", () => {
+  it("lời và nút do chỗ gọi đặt, phần còn lại giữ nguyên", () => {
+    const html = renderToString(
+      <BackgroundNoteView status={{ manufacturer: "OPPO", backgroundAllowed: false }} note="Khi tắt màn hình, máy có thể tạm dừng chia sẻ." action="Để máy tính khỏi phải chờ" />,
+    );
+    expect(html).toContain("tạm dừng chia sẻ");
+    expect(html).toContain("Để máy tính khỏi phải chờ");
+    expect(html).not.toContain("Xuất sách dài");
+    expect(html).toContain("Cho phép hoạt động dưới nền");
+  });
+});
