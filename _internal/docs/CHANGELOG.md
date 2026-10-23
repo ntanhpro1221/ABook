@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.133] - 2026-10-23
+
 ### Dữ liệu của bạn
 - Khi nâng cấp từ 0.4.132, hồ sơ nghe được tự chuyển đổi một lần để hai máy tiếp tục đồng bộ chỗ nghe, chương và dấu trang của bạn.
 - Hồ sơ nghe hỏng một phần trên máy tính hoặc điện thoại: app giữ nguyên bản gốc, báo rõ nơi giữ và tiếp tục dùng phần còn đọc được; sách không biến mất chỉ vì hồ sơ sai định dạng. File thông báo hỏng trên điện thoại cũng được giữ riêng, không chặn thư viện hay việc lưu dữ liệu đã giữ an toàn; máy tính sửa hồ sơ dưới cùng khoá với các lượt lưu khác.
