@@ -30,6 +30,7 @@ import { homePage, LISTEN_ONLY_EVENT, listenOnlyLine, listenOnlyOwner, peerPage 
 import { watchUntilBack } from "@/listen/peerBack";
 import { api, ApiError, currentPeer, type AppInfo } from "@/studio/api";
 import { pickFolder, useAppInfo, useLibrary, usePreferences } from "@/studio/data";
+import { LibraryMoveRecovery } from "./LibraryMoveRecovery";
 import { NewProjectScreen } from "@/studio/NewProjectScreen";
 import { ProjectScreen } from "@/studio/ProjectScreen";
 import { ProjectsScreen } from "@/studio/ProjectsScreen";
@@ -598,6 +599,7 @@ export function App() {
               {!info.remote && <ExportJobHost kind="projectfile" />}
               {!info.remote && <AudiobookDialogHost />}
               <Shell>
+                {!info.remote && info.libraryMoveRecovery && <LibraryMoveRecovery recovery={info.libraryMoveRecovery} />}
                 <Routes>
                   <Route path="/" element={<LibraryRoute />} />
                   <Route

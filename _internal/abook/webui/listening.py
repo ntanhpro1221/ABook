@@ -45,6 +45,7 @@ from typing import Any
 from ..io_utils import atomic_write_json, file_lock, file_stamp
 from . import notices
 from .library import preferences_path
+from .listening_revision import advance, clock, epoch, observe, checked_peer, require_peer_revisions, newer, revision as place_revision
 
 # Nghe tới cách cuối chương dưới 20 giây là coi như nghe xong chương (đoạn cuối thường là khoảng lặng + lời
 # chuyển chương, người nghe hay bấm sang chương kế trước khi nó hết).
@@ -103,13 +104,8 @@ def default_record_id(book: str) -> str:
 
 
 def _well_formed(raw: Any) -> bool:
-    """Bản lưu đọc được: dict; dạng hồ sơ (version 2) thì hồ sơ và liên kết đều là dict."""
-    if not isinstance(raw, dict):
-        return False
-    if raw.get("version") != FORMAT_VERSION:
-        return True
-    return all(isinstance(raw.get(key, {}), dict) and all(isinstance(item, dict) for item in raw.get(key, {}).values())
-               for key in ("records", "links"))
+    from .listening_schema import clean_profiles
+    return isinstance(raw, dict) and clean_profiles(raw) == raw
 
 
 def _legacy_format(raw: Any) -> bool:
@@ -159,7 +155,16 @@ class RecordGone(ValueError):
     """Việc ghi nhắm một hồ sơ đã bị xoá hay đã sang sách khác: từ chối rõ ràng, không rơi sang hồ sơ khác."""
 
 
-def _apply_progress(entry: dict[str, Any], chapter_id: Any, seconds: Any, duration: Any, now: float, anchor: dict[str, Any] | None) -> None:
+class UnpreservedProfile(notices.Unreadable):
+    """Readable subset is safe to display, but no writer may replace the original yet."""
+
+    def __init__(self, readable: dict[str, Any]) -> None:
+        super().__init__("Chưa giữ được hồ sơ cũ của bạn. Bạn hãy thử lại.")
+        self.readable = readable
+
+
+def _apply_progress(entry: dict[str, Any], chapter_id: Any, seconds: Any, duration: Any, now: float, anchor: dict[str, Any] | None,
+                    rev: dict[str, Any] | None = None) -> None:
     """Một lần báo chỗ nghe vào state của hồ sơ (`Listening.progress`; phát lại từ nhật ký thì `anchor` đã qua `validated`)."""
     entry["last"] = {"chapterId": int(chapter_id), "seconds": round(float(seconds), 1), "at": now}
     if anchor is not None:
@@ -170,6 +175,10 @@ def _apply_progress(entry: dict[str, Any], chapter_id: Any, seconds: Any, durati
         chapter["done"] = True
     chapter["duration"] = round(float(duration), 1) if float(duration) > 0 else chapter.get("duration", 0)
     chapter["at"] = now
+    if rev is not None:
+        entry["last"]["rev"] = rev
+        chapter["rev"] = rev
+        observe(entry, rev)
     entry["updatedAt"] = now
 
 
@@ -181,16 +190,18 @@ class Listening:
         self._lock = threading.Lock()
         # Có file mà không đọc được (chương trình khác giữ): hồ sơ trống trong bộ nhớ, KHÔNG ghi đè file thật; đọc lại ở lần sửa kế.
         self._unread = False
+        self._journal_unread = False
         # Hồ sơ trên đĩa còn dạng cũ ({mã sách: state}): lần ghi kế phải ghi đầy đủ để chuyển nó (nhật ký chỉ áp lên dạng hiện hành).
         self._legacy = False
         try:
-            raw = self._read() or {}
-            self._data, self._legacy = _upgrade(raw), _legacy_format(raw)
-        except notices.Unreadable:
-            self._data, self._unread = _upgrade({}), True
-        if not self._unread:
-            self._replay()
-        self._stamp = self._stamps()
+            with file_lock(self.path):
+                raw = self._read() or {}
+                self._data, self._legacy = _upgrade(raw), _legacy_format(raw)
+                self._replay()
+                self._stamp = self._stamps()
+        except notices.Unreadable as error:
+            self._data, self._unread = _upgrade(error.readable if isinstance(error, UnpreservedProfile) else {}), True
+            self._stamp = self._stamps()
 
     def _stamps(self) -> tuple[Any, Any]:
         """Dấu của hồ sơ và của nhật ký: một trong hai đổi (kể cả do tiến trình khác) thì bản trong bộ nhớ đã cũ."""
@@ -201,8 +212,14 @@ class Listening:
         self._journal_lines = 0
         try:
             raw = self._journal.read_bytes()
-        except OSError:
+        except FileNotFoundError:
+            self._journal_unread = False
             return
+        except OSError:
+            self._journal_unread = True
+            notices.NOTICES.add("Chưa đọc được nhật ký chỗ nghe của bạn. App giữ nguyên nhật ký và sẽ thử lại trước khi lưu.")
+            return
+        self._journal_unread = False
         for text in raw.splitlines():
             if not text.strip():
                 continue
@@ -223,9 +240,10 @@ class Listening:
         entry.setdefault("chapters", {})
         entry.setdefault("bookmarks", [])
         last = entry.get("last")
-        if isinstance(last, dict) and float(last.get("at") or 0) > float(item["now"]):
+        candidate = {"at": item["now"], "rev": item.get("rev")}
+        if isinstance(last, dict) and not newer(candidate, last):
             return  # hồ sơ đã có chỗ nghe mới hơn dòng này (gộp từ máy khác, hay nhật ký chưa kịp xoá sau lần ghi đầy đủ)
-        _apply_progress(entry, item["chapter"], item["seconds"], item["duration"], item["now"], item.get("anchor"))
+        _apply_progress(entry, item["chapter"], item["seconds"], item["duration"], item["now"], item.get("anchor"), item.get("rev"))
         if item.get("session"):
             playback = record.get("_playback")
             if isinstance(playback, dict) and playback.get("id") == item["session"]:
@@ -242,7 +260,21 @@ class Listening:
     def _read(self) -> Any:
         """Bản lưu trên đĩa; chưa có: None. Hỏng (cắt nửa, rỗng, sai hình dạng - soát a28 lỗi 1): giữ bản hỏng + báo (notices), rồi None -
         trước đây app im lặng coi như chưa nghe gì và lần ghi kế ĐÈ mất hết chỗ nghe, dấu trang."""
-        return notices.read_json(self.path, "Hồ sơ nghe (chỗ nghe dở, dấu trang)", _well_formed)
+        from .listening_schema import clean_profiles
+        what = "Hồ sơ nghe (chỗ nghe dở, dấu trang)"
+        raw = notices.read_json(self.path, what, lambda value: isinstance(value, dict))
+        if raw is None:
+            return None
+        clean = clean_profiles(raw)
+        if clean != raw:
+            if notices.keep_broken(self.path, what, then="app giữ phần còn đọc được", copy_only=True) is None:
+                raise UnpreservedProfile(clean)
+            try:
+                atomic_write_json(self.path, clean, compact=True)
+            except OSError as error:
+                notices.NOTICES.add("Chưa lưu được phần hồ sơ đã đọc lại của bạn. Bản gốc vẫn được giữ; bạn hãy thử lại.")
+                raise UnpreservedProfile(clean) from error
+        return clean
 
     @contextlib.contextmanager
     def _changing(self, *, require_commit: bool = False, snapshot: bool = True) -> Iterator[None]:
@@ -251,20 +283,20 @@ class Listening:
         bản trong bộ nhớ, lần ghi này đưa nó lại ra đĩa. `snapshot=False` (với `require_commit`): không chụp cả hồ sơ để hoàn lại khi lỗi - nơi gọi
         tự hoàn phần nó sửa (`progress`: hồ sơ vài MB, chụp mỗi 10 giây là 0,3 giây)."""
         with self._lock, file_lock(self.path):
-            if self._unread or self._stamps() != self._stamp:
+            if self._unread or self._journal_unread or self._stamps() != self._stamp:
                 try:
                     raw = self._read()
                 except notices.Unreadable:
-                    pass
+                    self._unread = True
                 else:
                     if raw is not None or self._unread:
                         self._data, self._legacy = _upgrade(raw or {}), _legacy_format(raw)
-                        self._replay()
+                    self._replay()
                     self._unread = False
                 self._stamp = self._stamps()
-            if require_commit and self._unread:
-                raise OSError("Chưa đọc được hồ sơ nghe. Bạn hãy thử lại.")
-            before = json.loads(json.dumps(self._data)) if require_commit and snapshot else None
+            if self._unread or self._journal_unread:
+                raise notices.Unreadable("Chưa đọc được hồ sơ nghe. Bạn hãy thử lại.")
+            before = json.loads(json.dumps(self._data)) if snapshot else None
             try:
                 yield
             except BaseException:
@@ -537,26 +569,27 @@ class Listening:
             # Phần sẽ sửa, để hoàn lại khi ghi không được (cả hồ sơ không chụp: xem `_changing`).
             key = str(int(chapter_id))
             undo = (copy.deepcopy(entry.get("last")), copy.deepcopy(entry["chapters"].get(key)), entry.get("updatedAt"),
-                    copy.deepcopy(owner.get("_playback")) if owner is not None else None)
+                    copy.deepcopy(owner.get("_playback")) if owner is not None else None, entry.get("_clock"), entry.get("_epoch"))
             try:
                 if session_id is not None and owner is not None:
                     owner["_playback"] = playback = {**playback, "revision": revision}
-                _apply_progress(entry, chapter_id, seconds, duration, now, saved_anchor)
+                rev = advance(entry, self._node())
+                _apply_progress(entry, chapter_id, seconds, duration, now, saved_anchor, rev)
                 if (len(self._data["records"]), len(self._data["links"])) != shape or self._legacy or file_stamp(self.path) is None:
                     self._save()  # hồ sơ / liên kết mới sinh, hay file còn dạng cũ: nhật ký không có chỗ để áp lên
                 else:
                     _append_journal(self._journal, {"record": self._record_id(entry), "chapter": int(chapter_id), "seconds": float(seconds),
                                                     "duration": float(duration), "now": now, "anchor": saved_anchor,
                                                     "session": session_id if session_id is not None else "", "revision": revision,
-                                                    "generation": playback.get("generation", 0)})
+                                                    "generation": playback.get("generation", 0), "rev": rev})
                     self._journal_lines += 1
                     self._stamp = self._stamps()
                     if self._journal_lines >= JOURNAL_MAX_LINES:
                         with contextlib.suppress(OSError):  # dòng đã bền trong nhật ký; gộp không được thì lần sau gộp
                             self._save()
             except BaseException:
-                last, chapter_before, updated, playback_before = undo
-                for name, value in (("last", last), ("updatedAt", updated)):
+                last, chapter_before, updated, playback_before, clock_before, epoch_before = undo
+                for name, value in (("last", last), ("updatedAt", updated), ("_clock", clock_before), ("_epoch", epoch_before)):
                     if value is None:
                         entry.pop(name, None)
                     else:
@@ -576,6 +609,20 @@ class Listening:
     def _record_id(self, entry: dict[str, Any]) -> str:
         return next(key for key, row in self._data["records"].items() if row.get("state") is entry)
 
+    def _node(self) -> str:
+        if cached := getattr(self, "_node_id", None):
+            return cached
+        # Installation identity lives beside machine preferences, outside every library/profile.
+        path = preferences_path().with_name("listening-node.json")
+        with file_lock(path):
+            node = notices.read_json(path, "Mã phiên bản hồ sơ", lambda v: isinstance(v, dict)
+                                     and bool(place_revision({"rev": {"counter": 1, "node": v.get("node")}})[0]))
+            if node is None:
+                node = {"node": uuid.uuid4().hex}
+                atomic_write_json(path, node)
+        self._node_id = node["node"]
+        return self._node_id
+
     def set_chapter_done(self, book: str, chapter_id: int, done: bool, record: str | None = None) -> dict[str, Any]:
         """Đánh dấu chương đã nghe / chưa nghe vào hồ sơ màn đang hiện (`record`; không nói: hồ sơ đang dùng). Đã xoá / chuyển sách: RecordGone."""
         with self._changing():
@@ -585,6 +632,7 @@ class Listening:
             if not done:
                 chapter["heard"] = 0.0
             chapter["at"] = entry["updatedAt"] = time.time()
+            chapter["rev"] = advance(entry, self._node())
             self._save()
             return json.loads(json.dumps(entry))
 
@@ -593,6 +641,7 @@ class Listening:
             entry = self._named(book, record)
             entry["finished"] = bool(finished)
             entry["finishedAt"] = entry["updatedAt"] = time.time()
+            entry.setdefault("_fieldRevs", {})["finished"] = advance(entry, self._node())
             self._save()
             return json.loads(json.dumps(entry))
 
@@ -601,6 +650,7 @@ class Listening:
             entry = self._named(book, record)
             entry["rate"] = float(rate)
             entry["rateAt"] = entry["updatedAt"] = time.time()
+            entry.setdefault("_fieldRevs", {})["rate"] = advance(entry, self._node())
             self._save()
 
     def set_voice(self, book: str, voice: str, record: str | None = None) -> None:
@@ -610,6 +660,7 @@ class Listening:
             entry = self._named(book, record)
             entry["voice"] = str(voice)[:200]
             entry["voiceAt"] = entry["updatedAt"] = time.time()
+            entry.setdefault("_fieldRevs", {})["voice"] = advance(entry, self._node())
             self._save()
 
     def add_bookmark(self, book: str, chapter_id: int, seconds: float, note: str = "",
@@ -640,8 +691,10 @@ class Listening:
                         current["note"] = mark["note"]
                         current.setdefault("createdAt", current.get("at") or mark["at"])
                         current["at"] = entry["updatedAt"] = mark["at"]
+                        current["rev"] = advance(entry, self._node())
                         self._save()
                     return {**current, "existing": True}
+            mark["rev"] = advance(entry, self._node())
             entry["bookmarks"].append(mark)
             entry["updatedAt"] = mark["at"]
             self._save()
@@ -658,6 +711,7 @@ class Listening:
                     mark["note"] = note.strip()[:500]
                     mark.setdefault("createdAt", mark.get("at") or now)
                     mark["at"] = now
+                    mark["rev"] = advance(entry, self._node())
             entry["updatedAt"] = now
             self._save()
 
@@ -666,6 +720,7 @@ class Listening:
             entry = self._named(book, record)
             entry["bookmarks"] = [mark for mark in entry["bookmarks"] if mark["id"] != mark_id]
             entry.setdefault("deleted", {})[mark_id] = time.time()
+            entry.setdefault("_deletedRevs", {})[mark_id] = advance(entry, self._node())
             entry["updatedAt"] = time.time()
             self._save()
 
@@ -685,6 +740,7 @@ class Listening:
             from .reading_anchor import validated
             if clean := validated(mark.get("anchor")):
                 restored["anchor"] = clean
+            restored["rev"] = advance(entry, self._node())
             entry["bookmarks"] = [item for item in entry["bookmarks"] if item["id"] != restored["id"]] + [restored]
             (entry.get("deleted") or {}).pop(restored["id"], None)
             entry["updatedAt"] = restored["at"]
@@ -720,7 +776,7 @@ class Listening:
             return json.loads(json.dumps((self._active(book, create=False) or {}).get("sessions", [])))
 
     def set_reading(self, book: str, chapter_id: int, index: int, *, at: float | None = None,
-                    anchor: dict[str, Any] | None = None, record: str | None = None) -> None:
+                    anchor: dict[str, Any] | None = None, record: str | None = None, rev: dict[str, Any] | None = None) -> None:
         """Chỗ đọc theo nội dung và hồ sơ; lượt lưu đến muộn không đè bản mới hơn."""
         import math
         from .reading_anchor import validated
@@ -732,9 +788,21 @@ class Listening:
             if record is not None and self._owner(record) != book:
                 return
             entry = self._held(book, record)
-            if entry is None or (entry.get("reading") or {}).get("at", 0) >= when:
+            if entry is None:
                 return
             place = {"chapterId": int(chapter_id), "index": max(0, int(index)), "at": when}
+            if rev is not None:
+                if not place_revision({"rev": rev})[0]:
+                    raise ValueError("Phiên bản chỗ đọc không hợp lệ")
+                place["rev"] = rev
+                current = entry.get("reading")
+                if current and not newer(place, current):
+                    if place.get("rev") == current.get("rev") and all(place[k] == current.get(k) for k in ("chapterId", "index")):
+                        return  # same durable edit retried after an ACK was lost
+                    raise StalePlayback("Chỗ đọc đã được cập nhật. Bạn hãy nạp lại sách.")
+                observe(entry, rev)
+            else:
+                place["rev"] = advance(entry, self._node())
             if clean := validated(anchor):
                 place["anchor"] = clean
             entry["reading"] = place
@@ -779,6 +847,7 @@ class Listening:
     def merge(self, book: str, incoming: dict[str, Any]) -> dict[str, Any]:
         """Gộp trạng thái từ thiết bị khác (điện thoại) vào hồ sơ đang dùng của `book`. Mỗi phần mang mốc thời gian
         riêng, bên mới hơn thắng; dấu trang hợp theo id, dấu trang đã xoá ở một bên (tombstone) thì xoá ở cả hai."""
+        require_peer_revisions(incoming)
         with self._changing():
             entry = self._book(book)
             merged = merge_states(entry, incoming)
@@ -800,6 +869,7 @@ class Listening:
         Trả trạng thái đã gộp, kèm `record`, `book` (sách hồ sơ gắn ở đây - có thể đã được chuyển), `movedAt` của hồ sơ,
         danh sách hồ sơ của sách (tên + lúc đặt tên + lúc chuyển), `active` {record, at}, mọi bia mộ đã biết (`deletedRecords`); hồ sơ đang dùng ở đây
         khác hồ sơ vừa gộp thì kèm luôn `activeState` của nó."""
+        require_peer_revisions(incoming)
         with self._changing():
             for gone, at in (deleted or {}).items():
                 if isinstance(gone, str) and RECORD_ID.fullmatch(gone):
@@ -885,6 +955,7 @@ class Listening:
         gửi khi chọn nó mới tải về), hồ sơ đang chọn (bên chọn sau thắng, kèm `activeState`) và lần chuyển sách (`resolve` đổi mã sách
         của máy kia ra mã cuốn ảo ở đây; không đổi được thì hồ sơ ở nguyên chỗ). Hồ sơ đã bị xoá (ở đây hay ở máy kia): bỏ lời đáp,
         không rơi sang hồ sơ khác, không tạo hồ sơ mới. True: lời đáp đã được gộp."""
+        require_peer_revisions(reply)
         named = reply.get("record")
         if isinstance(named, str) and named != record:
             return False  # lời đáp của hồ sơ khác: không phải của lần gửi này
@@ -957,8 +1028,8 @@ class Listening:
             return True
 
     def _save(self) -> None:
-        if self._unread:
-            return  # chưa đọc được bản trên đĩa: ghi bây giờ là đè mất chỗ nghe, dấu trang thật
+        if self._unread or self._journal_unread:
+            raise notices.Unreadable("Chưa đọc được hồ sơ nghe. Bạn hãy thử lại.")
         atomic_write_json(self.path, self._data, compact=True)  # nguyên tử + fsync: mất điện không để lại file rỗng
         self._legacy = False
         # Nhật ký đã nằm trong bản vừa ghi. Chưa xoá được (tắt ngang giữa hai việc, file bị giữ): lần mở sau phát lại cũng được - dòng cũ hơn chỗ nghe
@@ -1045,7 +1116,8 @@ def _rewound(state: dict[str, Any], chapters: list[dict[str, Any]]) -> bool:
     last = state.get("last") or {}
     if not chapters or "chapterId" not in last:
         return False
-    if state.get("finished") and float(state.get("finishedAt") or 0.0) >= float(last.get("at") or 0.0):
+    finished = {"at": state.get("finishedAt", 0), "rev": state.get("_fieldRevs", {}).get("finished")}
+    if state.get("finished") and not newer(last, finished):
         return False
     final = chapters[-1]
     if int(last["chapterId"]) != int(final["id"]):
@@ -1094,34 +1166,46 @@ def merge_nights(ours: dict[str, Any] | None, theirs: dict[str, Any] | None) -> 
 
 
 def merge_states(ours: dict[str, Any], theirs: dict[str, Any]) -> dict[str, Any]:
+    theirs = checked_peer(ours, theirs, notices.NOTICES.add)
     result = json.loads(json.dumps(ours))
     result.setdefault("chapters", {})
     result.setdefault("bookmarks", [])
-    if (theirs.get("last") or {}).get("at", 0) > (result.get("last") or {}).get("at", 0):
+    if theirs.get("last") and newer(theirs["last"], result.get("last")):
         result["last"] = theirs["last"]
-    if (theirs.get("reading") or {}).get("at", 0) > (result.get("reading") or {}).get("at", 0):
+    if theirs.get("reading") and newer(theirs["reading"], result.get("reading")):
         result["reading"] = theirs["reading"]
     for key, record in (theirs.get("chapters") or {}).items():
         mine = result["chapters"].get(key)
-        if not mine or float(record.get("at") or 0) > float(mine.get("at") or 0):
+        if newer(record, mine):
             result["chapters"][key] = record
     for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
-        if field in theirs and float(theirs.get(stamp) or 0) > float(result.get(stamp) or 0):
+        their_stamp = {"at": theirs.get(stamp, 0), "rev": theirs.get("_fieldRevs", {}).get(field)}
+        my_stamp = {"at": result.get(stamp, 0), "rev": result.get("_fieldRevs", {}).get(field)}
+        if field in theirs and newer(their_stamp, my_stamp):
             result[field] = theirs[field]
             result[stamp] = theirs[stamp]
+            if their_stamp["rev"]:
+                result.setdefault("_fieldRevs", {})[field] = their_stamp["rev"]
     # Dấu trang: hợp theo id, bản sửa sau thắng (bằng nhau thì giữ bản ở đây); bia mộ chỉ xoá dấu không đổi gì sau lúc xoá - dấu được
     # Hoàn tác (mốc mới hơn) sống lại ở cả hai máy (soát a70). Hai bên cùng xoá một dấu: giữ lúc xoá sau.
     deleted = dict(result.get("deleted") or {})
+    deleted_revs = dict(result.get("_deletedRevs") or {})
     for key, stamp in (theirs.get("deleted") or {}).items():
-        deleted[key] = max(float(stamp or 0), float(deleted.get(key) or 0))
+        rev = theirs.get("_deletedRevs", {}).get(key)
+        if newer({"at": stamp, "rev": rev}, {"at": deleted.get(key, 0), "rev": deleted_revs.get(key)}):
+            deleted[key] = stamp
+            if rev:
+                deleted_revs[key] = rev
     marks = {mark["id"]: mark for mark in result["bookmarks"]}
     for mark in theirs.get("bookmarks") or []:
         current = marks.get(mark["id"])
-        if not current or float(mark.get("at") or 0) > float(current.get("at") or 0):
+        if newer(mark, current):
             marks[mark["id"]] = mark
-    alive = [mark for mark in marks.values() if float(mark.get("at") or 0) > float(deleted.get(mark["id"]) or 0)]
+    alive = [mark for mark in marks.values() if newer(mark, {"at": deleted.get(mark["id"], 0), "rev": deleted_revs.get(mark["id"])})]
     result["bookmarks"] = sorted(alive, key=lambda mark: mark.get("createdAt") or mark.get("at") or 0)
     result["deleted"] = deleted
+    if deleted_revs:
+        result["_deletedRevs"] = deleted_revs
     sessions = {item["id"]: item for item in result.get("sessions") or [] if isinstance(item, dict) and item.get("id")}
     for item in theirs.get("sessions") or []:
         if isinstance(item, dict) and item.get("id"):
@@ -1132,4 +1216,7 @@ def merge_states(ours: dict[str, Any], theirs: dict[str, Any]) -> dict[str, Any]
     if night:
         result["night"] = night
     result["updatedAt"] = max(float(result.get("updatedAt") or 0), float(theirs.get("updatedAt") or 0))
+    result["_clock"] = clock(result)
+    if era := epoch(result):
+        result["_epoch"] = era
     return result

@@ -28,6 +28,7 @@ import sqlite3
 import tempfile
 import threading
 import time
+import uuid
 import urllib.error
 import urllib.request
 from contextlib import closing
@@ -38,7 +39,7 @@ from typing import Any, Callable, Iterable, Iterator, Protocol
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .. import aliases, bracket_rule, continuation, importers, listener_overrides, power_source
-from ..io_utils import atomic_write_bytes, atomic_write_json, project_write_lock
+from ..io_utils import FileLockUnavailable, atomic_write_bytes, atomic_write_json, file_lock, project_write_lock
 from ..readaloud import azure as readaloud_azure
 from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
@@ -382,9 +383,19 @@ class App:
         self._music_uncredited: set[str] = set()  # bài danh mục phải ghi công mà thiếu tác giả (`music_catalog.lacks_credit`): không chọn, không ghim
         # Nguồn nhạc (host) nào vừa hỏng / vừa tải được: {host: (hỏng?, giờ)}. Một nguồn chết không chặn nguồn khác.
         self._music_hosts: dict[str, tuple[bool, float]] = {}
+        self.library_move_recovery: dict[str, Any] | None = None
         if not read_only:
-            self._adopt_new_book_ids()
-            self._sweep_trash_at_start()
+            try:
+                self._adopt_new_book_ids()
+            except OSError as error:
+                self.library_move_recovery = {
+                    "message": "Lần chuyển thư viện trước chưa hoàn tất. Bạn hãy vào Cài đặt → Thư viện để chọn hoàn tất, quay lui hoặc bỏ qua. App giữ nguyên nhật ký và hồ sơ của bạn.",
+                    "currentRoot": str(self.library.root),
+                }
+                notices.NOTICES.add(self.library_move_recovery["message"])
+                log.warning("Library move needs recovery: %s", error)
+            if not self.library_move_recovery:
+                self._sweep_trash_at_start()
         # Thư mục đã xuất trong phiên này - chỉ những thư mục này được mở bằng "Mở thư mục" sau khi xuất.
         self.exports: set[str] = set()
         # Xuất .abook / .abookproj có nhạc nền chưa tải thì tải ngầm vài phút: tiến độ + Huỷ theo từng cuốn (`music_exporting`).
@@ -492,7 +503,95 @@ class App:
         """Dữ liệu lưu theo mã sách kiểu cũ (đường dẫn base64 - docs/BOOK_IDS.md): đổi khoá sang mã mới, một
         lần. Hồ sơ nghe giữ nguyên mã (điện thoại gộp theo mã hồ sơ). Sao lưu từng file trước lần ghi đầu
         (`*.pre-ids.bak`)."""
+        with file_lock(self._library_move_path()):
+            self._finish_library_move()
         self._rename_book_ids(legacy_ids(self._listened_ids()), ".pre-ids.bak")
+
+    def _library_move_path(self) -> Path:
+        return self.preferences.path.with_name("library-move.json")
+
+    def _finish_library_move(self) -> None:
+        """Idempotent replay: keep the durable intent until root, links and positions all commit."""
+        path = self._library_move_path()
+        try:
+            raw = path.read_bytes()
+        except FileNotFoundError:
+            return
+        except OSError as error:
+            notices.unreadable("Nhật ký chuyển thư viện")
+            raise notices.Unreadable("Chưa đọc được lần chuyển thư viện. Bạn hãy thử lại.") from error
+        try:
+            intent = json.loads(raw.decode("utf-8"))
+            valid = (isinstance(intent, dict) and isinstance(intent.get("oldRoot"), str)
+                     and isinstance(intent.get("newRoot"), str) and isinstance(intent.get("renamed"), dict)
+                     and all(isinstance(k, str) and isinstance(v, str) for k, v in intent["renamed"].items())
+                     and re.fullmatch(r"\.pre-move(?:-[0-9a-f]{32})?\.bak", intent.get("backupSuffix", ".pre-move.bak")))
+        except (ValueError, TypeError):
+            valid = False
+        if not valid:
+            notices.keep_broken(path, "Nhật ký chuyển thư viện", then="app giữ nguyên lần chuyển để bạn có thể khôi phục", copy_only=True)
+            raise notices.Unreadable("Chưa hiểu được nhật ký chuyển thư viện. Bạn hãy giữ bản cũ để khôi phục hồ sơ.")
+        current = str(self.library.root)
+        if current not in (intent["oldRoot"], intent["newRoot"]):
+            raise OSError("Lần chuyển thư viện trước chưa xong. Bạn hãy mở lại thư viện trước khi chọn nơi khác.")
+        self.preferences.update({"libraryRoot": intent["newRoot"]})
+        self._rename_book_ids(intent["renamed"], intent.get("backupSuffix", ".pre-move.bak"))
+        os.remove(str(path.resolve()))
+
+    def change_library_preferences(self, changes: dict[str, Any]) -> dict[str, Any]:
+        path = self._library_move_path()
+        with file_lock(path):
+            if getattr(self, "library_move_recovery", None):
+                raise notices.Unreadable("Bạn hãy xử lý lần chuyển thư viện trước trong Cài đặt → Thư viện trước khi chọn nơi khác.")
+            self._finish_library_move()
+            old_root = self.library.root
+            new_root = Path(changes["libraryRoot"]).expanduser()
+            renamed = self._moved_library_ids(old_root, new_root)
+            intent = {"oldRoot": str(old_root), "newRoot": str(new_root), "renamed": renamed,
+                      "backupSuffix": ".pre-move-" + uuid.uuid4().hex + ".bak"}
+            # Intent and mapping are durable BEFORE publishing the new root in preferences.
+            atomic_write_json(path, intent)
+            self.preferences.update(changes)
+            self._finish_library_move()
+            return self.preferences.get()
+
+    def resolve_library_move(self, action: str, old_root: str, new_root: str) -> dict[str, Any]:
+        """An explicit choice replaces an unreadable intent only after preserving its bytes.
+
+        The replacement is itself replayable if any root/profile write fails. An ignore
+        choice leaves profiles alone; finish/rollback rekey only books at the chosen root.
+        """
+        if action not in ("finish", "rollback", "ignore"):
+            raise ValueError("Cách phục hồi thư viện không hợp lệ")
+        old, new = Path(old_root).expanduser(), Path(new_root).expanduser()
+        target = new if action == "finish" else old if action == "rollback" else self.library.root
+        if not old_root.strip() or not new_root.strip() or not target.is_dir():
+            raise ValueError("Bạn hãy chọn thư mục thư viện còn tồn tại trước khi phục hồi.")
+        path = self._library_move_path()
+        with file_lock(path):
+            if not path.is_file():
+                raise ValueError("Không còn lần chuyển thư viện cần phục hồi")
+            kept = notices.keep_broken(path, "Nhật ký chuyển thư viện", then="bạn đã chọn cách phục hồi", copy_only=True)
+            if kept is None:
+                raise notices.Unreadable("Chưa giữ được nhật ký gốc. Bạn hãy thử lại.")
+            renamed: dict[str, str] = {}
+            if action != "ignore":
+                from . import packages
+                source = old if action == "finish" else new
+                known = self._listened_ids()
+                base = target.resolve()
+                projects = [p for p in target.iterdir() if p.is_dir() and store.is_project(p)]
+                for book in [*projects, *packages.folders(target)]:
+                    relative = book.resolve().relative_to(base)
+                    before, after = book_id(source / relative), book_id(book)
+                    if before != after and before in known:
+                        renamed[before] = after
+            # Do not destroy the unknown original; the kept copy remains even after success.
+            atomic_write_json(path, {"oldRoot": str(self.library.root), "newRoot": str(target), "renamed": renamed,
+                                     "backupSuffix": ".pre-move-" + uuid.uuid4().hex + ".bak"})
+            self._finish_library_move()
+            self.library_move_recovery = None
+            return self.preferences.get()
 
     def _listened_ids(self) -> set[str]:
         """Mã sách có dữ liệu nghe (hồ sơ nghe, chỗ nghe dở)."""
@@ -508,9 +607,10 @@ class App:
             backup = file.with_name(file.name + backup_suffix)
             try:
                 if file.is_file() and (fresh_backup or not backup.exists()):
-                    shutil.copy2(file, backup)
-            except OSError:
-                pass  # không sao lưu được vẫn đổi: mỗi file ghi nguyên tử, mã cũ vẫn được nhận
+                    # Do not publish a partially copied backup, even if space runs out.
+                    atomic_write_bytes(backup, file.read_bytes())
+            except OSError as error:
+                raise OSError("Chưa giữ được bản hồ sơ trước khi chuyển thư viện. Bạn hãy thử lại.") from error
         self.listening.rename_books(renamed)
         self.preferences.rename_positions(renamed)
 
@@ -520,13 +620,19 @@ class App:
         liệu nghe theo mã cũ: đổi khoá sang mã mới (như `_adopt_new_book_ids`). Chỉ khi chỗ cũ ĐÃ TRỐNG (thư viện thật sự dời đi): cuốn cũ
         còn nằm nguyên chỗ cũ nghĩa là thư viện kia vẫn đó (đổi sang thư viện khác, hay bản sao) - tên thư mục trùng không chứng minh cùng
         nội dung, hồ sơ nghe ở lại mã cũ (soát a97 C1). Trả {mã cũ: mã mới}."""
-        new_root = self.library.root
+        renamed = self._moved_library_ids(old_root, self.library.root)
+        self._rename_book_ids(renamed, ".pre-move.bak", fresh_backup=True)
+        return renamed
+
+    def _moved_library_ids(self, old_root: Path, new_root: Path) -> dict[str, str]:
         if os.path.normcase(os.path.normpath(str(old_root))) == os.path.normcase(os.path.normpath(str(new_root))):
             return {}
         known = self._listened_ids()
         base = new_root.resolve()
         renamed: dict[str, str] = {}
-        for path in [*self.library.projects(), *self.library.packages()]:
+        from . import packages
+        projects = [p for p in new_root.iterdir() if p.is_dir() and store.is_project(p)] if new_root.is_dir() else []
+        for path in [*projects, *packages.folders(new_root)]:
             try:
                 relative = path.resolve().relative_to(base)
             except ValueError:
@@ -534,7 +640,6 @@ class App:
             old, new = book_id(old_root / relative), book_id(path)
             if old != new and old in known and not (old_root / relative).exists():
                 renamed[old] = new
-        self._rename_book_ids(renamed, ".pre-move.bak", fresh_backup=True)
         return renamed
 
     def restore_project_backup(self, value: str) -> dict[str, Any]:
@@ -3911,6 +4016,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
         except sqlite3.DatabaseError as error:
             self._send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": broken_reason(error)})
+        except (FileLockUnavailable, notices.Unreadable) as error:
+            self._send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": str(error), "retryable": True})
         except OSError as error:
             # Thư viện / thư mục xuất chỉ đọc, ổ đầy (soát a28 lỗi 10): nói tên thư mục và việc nên làm, không dán lỗi Python.
             if not humanize.is_write_problem(error):
@@ -3966,6 +4073,7 @@ class Handler(BaseHTTPRequestHandler):
             "sleepSchedule": prefs.get("sleepSchedule"),
             # File trạng thái hỏng đã được giữ lại lúc mở app (notices.keep_broken): giao diện báo một lần.
             "notices": notices.NOTICES.all(),
+            "libraryMoveRecovery": getattr(self.app, "library_move_recovery", None),
         })
 
     def get_library(self, _query: dict[str, list[str]]) -> None:
@@ -5872,8 +5980,11 @@ class Handler(BaseHTTPRequestHandler):
     def post_reading(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
         body = self._body()
-        self.app.listening.set_reading(value, int(body.get("chapterId", 0)), int(body.get("index", 0)),
-                                       at=body.get("at"), anchor=body.get("anchor"), record=_held_record(body))
+        try:
+            self.app.listening.set_reading(value, int(body.get("chapterId", 0)), int(body.get("index", 0)),
+                                           at=body.get("at"), anchor=body.get("anchor"), record=_held_record(body), rev=body.get("rev"))
+        except StalePlayback as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_night(self, _query: dict[str, list[str]], value: str) -> None:
@@ -5974,6 +6085,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def get_preferences(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.preferences.get())
+
+    def post_library_move_recovery(self, _query: dict[str, list[str]]) -> None:
+        self.app._mutating()
+        body = self._body()
+        self._send_json(HTTPStatus.OK, self.app.resolve_library_move(
+            str(body.get("action") or ""), str(body.get("oldRoot") or ""), str(body.get("newRoot") or "")))
 
     def get_readaloud_voices(self, _query: dict[str, list[str]]) -> None:
         self._send_json(HTTPStatus.OK, self.app.readaloud.voices())
@@ -6345,11 +6462,10 @@ class Handler(BaseHTTPRequestHandler):
                 allowed["sleepSchedule"] = None
             elif clean_sleep_schedule(schedule) is not None:
                 allowed["sleepSchedule"] = clean_sleep_schedule(schedule)
-        old_root = self.app.library.root
-        updated = self.app.preferences.update(allowed)
         if "libraryRoot" in allowed:
-            self.app.adopt_moved_library(old_root)  # thư viện chuyển chỗ: chỗ nghe, dấu trang đi theo sách (soát a28 lỗi 2)
-            updated = self.app.preferences.get()
+            updated = self.app.change_library_preferences(allowed)
+        else:
+            updated = self.app.preferences.update(allowed)
         self._send_json(HTTPStatus.OK, updated)
 
     def post_book_templates(self, _query: dict[str, list[str]]) -> None:
@@ -6481,6 +6597,7 @@ ROUTES: list[Route] = [
     ("DELETE", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)"), Handler.delete_readaloud_online),
     ("POST", re.compile(r"/api/readaloud/online/(azure|google|fpt|viettel)/check"), Handler.post_readaloud_online_check),
     ("GET", re.compile(r"/api/preferences"), Handler.get_preferences),
+    ("POST", re.compile(r"/api/library-move/recovery"), Handler.post_library_move_recovery),
     ("GET", re.compile(r"/api/host/opened"), Handler.get_opened_events),
     ("POST", re.compile(r"/api/host/opened/ack"), Handler.post_opened_ack),
     ("PUT", re.compile(r"/api/preferences"), Handler.put_preferences),

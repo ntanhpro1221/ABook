@@ -1,0 +1,243 @@
+[
+  {
+    "name": "cap accepted within one step",
+    "ours": {
+      "reading": {
+        "chapterId": 1,
+        "index": 100,
+        "at": 100,
+        "rev": {
+          "counter": 1099511627775,
+          "node": "local"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1099511627775
+    },
+    "theirs": {
+      "reading": {
+        "chapterId": 1,
+        "index": 200,
+        "at": 100,
+        "rev": {
+          "counter": 1099511627776,
+          "node": "peer"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1099511627776
+    },
+    "expected": {
+      "chapterId": 1,
+      "index": 200,
+      "at": 100,
+      "rev": {
+        "counter": 1099511627776,
+        "node": "peer"
+      }
+    },
+    "clock": 1099511627776
+  },
+  {
+    "name": "epoch rollover beats old ceiling",
+    "ours": {
+      "reading": {
+        "chapterId": 1,
+        "index": 100,
+        "at": 100,
+        "rev": {
+          "counter": 1099511627776,
+          "node": "local"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1099511627776
+    },
+    "theirs": {
+      "reading": {
+        "chapterId": 1,
+        "index": 200,
+        "at": 100,
+        "rev": {
+          "counter": 1,
+          "node": "peer",
+          "epoch": "1"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1,
+      "_epoch": "1"
+    },
+    "expected": {
+      "chapterId": 1,
+      "index": 200,
+      "at": 100,
+      "rev": {
+        "counter": 1,
+        "node": "peer",
+        "epoch": "1"
+      }
+    },
+    "clock": 1
+  },
+  {
+    "name": "jump limit accepted",
+    "ours": {
+      "reading": {
+        "chapterId": 1,
+        "index": 100,
+        "at": 100,
+        "rev": {
+          "counter": 1,
+          "node": "local"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1
+    },
+    "theirs": {
+      "reading": {
+        "chapterId": 1,
+        "index": 200,
+        "at": 100,
+        "rev": {
+          "counter": 1000001,
+          "node": "peer"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1000001
+    },
+    "expected": {
+      "chapterId": 1,
+      "index": 200,
+      "at": 100,
+      "rev": {
+        "counter": 1000001,
+        "node": "peer"
+      }
+    },
+    "clock": 1000001
+  },
+  {
+    "name": "jump over limit ignored",
+    "ours": {
+      "reading": {
+        "chapterId": 1,
+        "index": 100,
+        "at": 100,
+        "rev": {
+          "counter": 1,
+          "node": "local"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1
+    },
+    "theirs": {
+      "reading": {
+        "chapterId": 1,
+        "index": 200,
+        "at": 100,
+        "rev": {
+          "counter": 1000002,
+          "node": "peer"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1000002
+    },
+    "expected": {
+      "chapterId": 1,
+      "index": 100,
+      "at": 100,
+      "rev": {
+        "counter": 1,
+        "node": "local"
+      }
+    },
+    "clock": 1
+  },
+  {
+    "name": "epoch leap ignored",
+    "ours": {
+      "reading": {
+        "chapterId": 1,
+        "index": 100,
+        "at": 100,
+        "rev": {
+          "counter": 1,
+          "node": "local"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1
+    },
+    "theirs": {
+      "reading": {
+        "chapterId": 1,
+        "index": 200,
+        "at": 100,
+        "rev": {
+          "counter": 1,
+          "node": "peer",
+          "epoch": "11"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1,
+      "_epoch": "11"
+    },
+    "expected": {
+      "chapterId": 1,
+      "index": 100,
+      "at": 100,
+      "rev": {
+        "counter": 1,
+        "node": "local"
+      }
+    },
+    "clock": 1
+  },
+  {
+    "name": "raw clock is not an edit",
+    "ours": {
+      "reading": {
+        "chapterId": 1,
+        "index": 100,
+        "at": 100,
+        "rev": {
+          "counter": 1,
+          "node": "local"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1
+    },
+    "theirs": {
+      "_clock": 1099511627776,
+      "_epoch": "111"
+    },
+    "expected": {
+      "chapterId": 1,
+      "index": 100,
+      "at": 100,
+      "rev": {
+        "counter": 1,
+        "node": "local"
+      }
+    },
+    "clock": 1
+  }
+]

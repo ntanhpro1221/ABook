@@ -475,6 +475,8 @@ object LibraryServer {
         } finally { cancel() }
         try {
             route(request, output)
+        } catch (error: IllegalArgumentException) {
+            json(output, 400, JSONObject().put("error", error.message))
         } catch (error: Exception) {
             json(output, 500, JSONObject().put("error", "${error.javaClass.simpleName}: ${error.message}"))
         }

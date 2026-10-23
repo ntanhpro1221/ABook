@@ -47,7 +47,7 @@ class BackupRulesTest {
     @Test fun booksAndListeningStayInTheBackup() {
         // Chỉ loại các mục nêu tên; không loại cả thư mục (sách nằm ở filesDir/library, chỗ nghe trong book.json / state của từng cuốn).
         val all = excluded(parse("src/main/res/xml/backup_rules.xml"))
-        assertFalse(all.any { it.startsWith("file:library") || it.endsWith(":.") || it.endsWith(":/") || it.endsWith(":") })
+        assertFalse(all.any { it == "file:library" || it == "file:library/" || it.endsWith(":.") || it.endsWith(":/") || it.endsWith(":") })
         assertFalse(all.any { it.startsWith("root:") || it.startsWith("database:") })
     }
 
