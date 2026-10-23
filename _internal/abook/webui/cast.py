@@ -19,6 +19,7 @@ SOAP tới địa chỉ ấy (một máy lạ không khiến được máy này 
 from __future__ import annotations
 
 import hashlib
+import io
 import ipaddress
 import re
 import secrets
@@ -552,7 +553,7 @@ class CastMedia:
 MAX_CONNECTIONS = 16
 MAX_PER_IP = 6  # một TV hay mở vài kết nối song song (HEAD + GET Range + bìa), nên không chặt như 1-2
 HEADER_DEADLINE = 10.0  # giây cho cả request line + header, không phải cho từng lần đọc
-STREAM_TIMEOUT = 120.0  # giây cho MỖI lần gửi một khúc sau khi mã đã đúng: chương dài không bị cắt, thiết bị đứng hình thì thôi
+STREAM_TIMEOUT = 300.0  # tối đa 5 phút KHÔNG gửi thêm byte nào: TV tạm dừng đầy buffer có thời gian làm tiếp
 
 
 class ConnectionBudget:
@@ -656,6 +657,24 @@ class _DeadlineReader:
         self.closed = True
 
 
+class _ProgressWriter(io.BufferedIOBase):
+    """Mỗi lần socket gửi được byte lại có đủ thời gian chờ; sendall tính timeout cho cả khúc, kể cả khi còn tiến độ."""
+
+    def __init__(self, connection: socket.socket, idle_timeout: float) -> None:
+        self._connection = connection
+        self._idle_timeout = idle_timeout
+
+    def write(self, data: bytes) -> int:
+        remaining = memoryview(data)
+        while remaining:
+            self._connection.settimeout(self._idle_timeout)
+            sent = self._connection.send(remaining)
+            if sent <= 0:
+                raise ConnectionError("thiết bị đã đóng kết nối")
+            remaining = remaining[sent:]
+        return len(data)
+
+
 def _media_handler(media: CastMedia) -> type[BaseHTTPRequestHandler]:
     class MediaHandler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -688,8 +707,8 @@ def _media_handler(media: CastMedia) -> type[BaseHTTPRequestHandler]:
                 self.send_error(HTTPStatus.NOT_FOUND)
                 return
             path, mime = found
-            self.rfile.disarm()  # mã đúng: từ đây chỉ còn timeout của từng lần gửi, chương dài không bị cắt
-            self.connection.settimeout(STREAM_TIMEOUT)
+            self.rfile.disarm()
+            self.wfile = _ProgressWriter(self.connection, STREAM_TIMEOUT)
             size = path.stat().st_size
             start, end, status = 0, size - 1, HTTPStatus.OK
             ranged = re.fullmatch(r"bytes=(\d*)-(\d*)", (self.headers.get("Range") or "").strip())

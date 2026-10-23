@@ -37,9 +37,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: widget cỡ vừa có đủ nút lùi, phát/dừng, tới và hẹn giờ, kèm tên sách/chương; thu nhỏ vẫn giữ nút phát/dừng trọn vẹn, nới rộng có thêm bìa lớn.
 
 ### Bảo mật
-- Máy tính và điện thoại: sách do người khác gửi không còn làm máy bạn tự gọi một địa chỉ lạ chỉ vì hiện bìa trong thư viện; bìa của sách ấy dùng màu mặc định.
-- Máy tính: thư mục trong "Nguồn tải lên" là một liên kết trỏ ra ngoài thư viện thì thiết bị gửi sách từ xa không còn đọc hay ghi qua nó được; app báo "Thư mục nguồn trỏ ra ngoài thư viện của bạn" và bạn chép file vào thư viện rồi gửi lại.
-- Máy tính và điện thoại: khi bạn phát lên loa hay TV, máy lạ trong cùng mạng không thể mở thật nhiều kết nối treo để làm nghẽn cổng phát; kết nối chờ quá lâu bị đóng, chương dài đang phát vẫn không bị cắt.
+- Máy tính và điện thoại: sách do người khác gửi không còn làm máy bạn tự gọi một địa chỉ lạ chỉ vì hiện bìa trong thư viện; màu bìa không hợp lệ được thay bằng màu nền mặc định, ảnh bìa vẫn hiển thị.
+- Máy tính: thư mục trong "Nguồn tải lên" là một liên kết trỏ ra ngoài thư viện thì thiết bị gửi sách từ xa không còn đọc hay ghi qua nó được, kể cả khi tách chương; app báo "Thư mục nguồn trỏ ra ngoài thư viện của bạn" và bạn chép file vào thư viện trên máy tính rồi gửi lại.
+- Máy tính và điện thoại: khi bạn phát lên loa hay TV, cổng phát giới hạn số kết nối cả cổng và mỗi địa chỉ; kết nối gửi phần đầu quá chậm bị đóng. Sau khi mã truy cập hợp lệ, kết nối không ghi thêm được dữ liệu trong khoảng 5 phút trên máy tính hoặc 2 phút trên điện thoại sẽ bị đóng; chương dài vẫn tiếp tục khi thiết bị còn nhận dữ liệu.
 
 ## [0.4.131] - 2026-10-23
 

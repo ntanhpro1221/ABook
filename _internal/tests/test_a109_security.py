@@ -38,12 +38,12 @@ def test_cover_colour_accepts_what_the_cover_editor_accepts() -> None:
     assert covers.clean_color("#a1b2c3") == "#a1b2c3" and covers.clean_color(" #A1B2C3 ") == "#a1b2c3"
 
 
-def _book_with_cover_colour(tmp_path: Path, colour: str) -> Path:
+def _book_with_cover_colour(tmp_path: Path, colour: str, **dimensions) -> Path:
     from PIL import Image
 
     book = {"title": "Sách giả kiểm riêng tư", "chaptersTotal": 1, "chaptersAvailable": 0, "duration": 0, "complete": True,
             "chapters": [{"id": 1, "index": 1, "title": "Một", "file": None, "text": "texts/1.txt", "duration": 0, "available": True}],
-            "cover": {"file": "cover.jpg", "color": colour, "width": 1, "height": 1}, "samples": []}
+            "cover": {"file": "cover.jpg", "color": colour, "width": 1, "height": 1, **dimensions}, "samples": []}
     jpeg = io.BytesIO()
     Image.new("RGB", (1, 1), (10, 20, 30)).save(jpeg, format="JPEG")
     archive = bookfile.seal(book, {"texts/1.txt": "Truyện kiểm thử.".encode(), "cover.jpg": jpeg.getvalue()}, tmp_path / "tracking.abook",
@@ -221,6 +221,7 @@ def test_cast_port_closes_hanging_sockets_over_the_cap_and_still_serves(tmp_path
     try:
         url = media.share(audio, "127.0.0.1")
         port = media._server.server_port
+        media._server.header_deadline = 1.5
         cap = media._server.budget.per_ip
         for _ in range(cap):
             held.append(_hang(port))
@@ -300,6 +301,7 @@ def test_threads_do_not_pile_up_for_hanging_sockets(tmp_path: Path) -> None:
     try:
         media.share(audio, "127.0.0.1")
         port = media._server.server_port
+        media._server.header_deadline = 1.5
         before = threading.active_count()
         held = [_hang(port) for _ in range(40)]
         time.sleep(0.5)
