@@ -1,0 +1,146 @@
+[
+  {
+    "name": "both versioned: later edit wins over a slow wall clock",
+    "data": {
+      "_clock": 5
+    },
+    "theirs": {
+      "rev": {
+        "counter": 6,
+        "node": "c"
+      },
+      "at": 100
+    },
+    "ours": {
+      "rev": {
+        "counter": 5,
+        "node": "h"
+      },
+      "at": 200
+    },
+    "newer": true
+  },
+  {
+    "name": "both versioned: earlier edit loses despite a fast wall clock",
+    "data": {
+      "_clock": 5
+    },
+    "theirs": {
+      "rev": {
+        "counter": 4,
+        "node": "c"
+      },
+      "at": 300
+    },
+    "ours": {
+      "rev": {
+        "counter": 5,
+        "node": "h"
+      },
+      "at": 200
+    },
+    "newer": false
+  },
+  {
+    "name": "same counter: node decides",
+    "data": {
+      "_clock": 5
+    },
+    "theirs": {
+      "rev": {
+        "counter": 5,
+        "node": "z"
+      },
+      "at": 1
+    },
+    "ours": {
+      "rev": {
+        "counter": 5,
+        "node": "a"
+      },
+      "at": 2
+    },
+    "newer": true
+  },
+  {
+    "name": "peer without metadata revisions (0.4.133): wall clock decides",
+    "data": {
+      "_clock": 5
+    },
+    "theirs": {
+      "at": 300
+    },
+    "ours": {
+      "rev": {
+        "counter": 5,
+        "node": "h"
+      },
+      "at": 200
+    },
+    "newer": true
+  },
+  {
+    "name": "local value without revision: wall clock decides",
+    "data": {},
+    "theirs": {
+      "rev": {
+        "counter": 1,
+        "node": "c"
+      },
+      "at": 100
+    },
+    "ours": {
+      "at": 200
+    },
+    "newer": false
+  },
+  {
+    "name": "lower half: a long-lived table is taken by an empty one",
+    "data": {},
+    "theirs": {
+      "rev": {
+        "counter": 1200000,
+        "node": "c"
+      },
+      "at": 1
+    },
+    "ours": {
+      "at": 0
+    },
+    "newer": true
+  },
+  {
+    "name": "upper half: a leap is ignored with a notice",
+    "data": {
+      "_clock": 549755813893
+    },
+    "theirs": {
+      "rev": {
+        "counter": 549756813894,
+        "node": "c"
+      },
+      "at": 999
+    },
+    "ours": {
+      "at": 0
+    },
+    "newer": false,
+    "notice": true
+  },
+  {
+    "name": "invalid revision is ignored with a notice",
+    "data": {},
+    "theirs": {
+      "rev": {
+        "counter": "1",
+        "node": "c"
+      },
+      "at": 999
+    },
+    "ours": {
+      "at": 0
+    },
+    "newer": false,
+    "notice": true
+  }
+]

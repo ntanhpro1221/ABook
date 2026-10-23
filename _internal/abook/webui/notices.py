@@ -27,11 +27,13 @@ class Notices:
         self._lock = threading.Lock()
         self._items: list[dict[str, Any]] = []
 
-    def add(self, text: str) -> None:
+    def add(self, text: str, *, kind: str = "warning", preserved_file: str | None = None) -> None:
         with self._lock:
             if any(item["text"] == text for item in self._items):
                 return
-            self._items.append({"id": f"n{len(self._items) + 1}-{int(time.time())}", "text": text})
+            self._items.append({"id": f"n{len(self._items) + 1}-{int(time.time())}", "text": text,
+                                "kind": kind, "at": int(time.time() * 1000),
+                                **({"preservedFile": preserved_file} if preserved_file else {})})
         log.warning("%s", text)
 
     def all(self) -> list[dict[str, Any]]:
@@ -41,6 +43,13 @@ class Notices:
     def clear(self) -> None:
         with self._lock:
             self._items.clear()
+
+    def diagnostics(self) -> dict[str, Any]:
+        """Recovery metadata only: never include the original notice/profile text."""
+        rows = self.all()
+        return {"savingBlocked": any(row["kind"] == "saving-blocked" for row in rows),
+                "notices": [{key: row[key] for key in ("kind", "at", "preservedFile") if key in row}
+                            for row in rows[-200:]]}
 
 
 NOTICES = Notices()
@@ -60,9 +69,10 @@ def keep_broken(path: Path, what: str, *, then: str = "app dùng mặc định",
             os.replace(path, kept)
     except OSError:
         log.warning("Không giữ được bản hỏng của %s", path, exc_info=True)
-        NOTICES.add(f"{what} bị hỏng nên {then}. Chưa giữ được bản cũ ({path.name}) - đừng xoá nó nếu cần lấy lại.")
+        NOTICES.add(f"{what} bị hỏng nên {then}. Chưa giữ được bản cũ ({path.name}) - đừng xoá nó nếu cần lấy lại.", kind="saving-blocked")
         return None
-    NOTICES.add(f"{what} bị hỏng nên {then}. Bản cũ được giữ lại ở {kept.name}, cùng thư mục với {path.name}.")
+    NOTICES.add(f"{what} bị hỏng nên {then}. Bản cũ được giữ lại ở {kept.name}, cùng thư mục với {path.name}.",
+                kind="recovered", preserved_file=kept.name)
     return kept
 
 
@@ -77,7 +87,7 @@ READ_PAUSE_SECONDS = 0.2
 
 def unreadable(what: str) -> None:
     NOTICES.add(f"{what} đang bị một chương trình khác giữ nên chưa đọc được - app tạm dùng mặc định và chưa lưu thay đổi vào đó cho tới "
-                "khi đọc được (thường chỉ vài giây).")
+                "khi đọc được (thường chỉ vài giây).", kind="saving-blocked")
 
 
 def read_json(path: Path, what: str, valid: Callable[[Any], bool] = lambda _data: True) -> Any:

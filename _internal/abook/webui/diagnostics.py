@@ -26,13 +26,15 @@ FILE_PREFIX = "abook-nhat-ky-may-tinh"
 
 # Chuỗi trông như bí mật: "Authorization: Bearer ...", `token=...`, mã 64 hex (băm mã thiết bị, vân tay chứng chỉ), khoá API kiểu sk-.
 _SECRETS = (
+    (re.compile(r"(/c/)(?:[A-Za-z0-9_-]{22}|[0-9a-fA-F]{32})(?=\.[A-Za-z0-9]{1,5}\b|[^A-Za-z0-9_-]|$)"), r"\1***"),
     (re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]+"), "Bearer ***"),
     (re.compile(r'''(?i)\b((?:key|api[_-]?key|token|secret|password|code|mật khẩu|mã ghép)["']?\s*[:=]\s*)(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s"',;&}\]]+)'''), r"\1***"),
     (re.compile(r"(?i)(\b(?:pair(?:ing)?|code|mã ghép)\b[^\r\n\d]{0,32})\d{6}\b"), r"\1***"),
     (re.compile(r"\b[0-9a-fA-F]{24,}\b"), "***"),
     (re.compile(r"\bsk-[A-Za-z0-9_-]{16,}"), "sk-***"),
-    (re.compile(r'''(?i)(?:[a-z]:[\\/]+Users[\\/]+|/storage/emulated/0/|/data/user/0/|content://)[^\r\n"'<>|]*'''), "<đường>"),
 )
+_PATHS = re.compile(r'''(?i)(?:\b[a-z]:[\\/]+|\\\\[^\\/\r\n"'<>|]+[\\/]+|(?<!:)//[^/\r\n"'<>|]+/|/(?:home|Users|storage|sdcard|data)/|content://)[^\r\n"'<>|]*''')
+_SOURCE_FILE = re.compile(r'''(?i)[\\/]([^\\/\r\n"'<>|]*?\.(?:py|kt))(:\d+(?::\d+)?)?(?=$|[,\s:)])''')
 _IPV6 = re.compile(r"(?<![\w:])(?:[0-9a-fA-F]{0,4}:){2,}[0-9a-fA-F:.]*(?:%[\w.-]+)?(?![\w:])")
 _IPV4 = re.compile(r"(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?!\w|\.\d)")
 _SECRET_FIELD = re.compile(r"(?i)^(?:key|api[_-]?key|token|secret|password|code|mật khẩu|mã ghép)$")
@@ -42,6 +44,13 @@ def redact(text: str) -> str:
     """Che những chuỗi trông như mã / khoá trong một đoạn nhật ký (phòng khi một dòng log lỡ in ra)."""
     for pattern, replacement in _SECRETS:
         text = pattern.sub(replacement, text)
+    def hide_path(match: re.Match) -> str:
+        source = _SOURCE_FILE.search(match.group())
+        if source:
+            closing = re.match(r"\)*", match.group()[source.end():]).group()
+            return "<đường>/" + source[1] + (source[2] or "") + closing
+        return "<đường>"
+    text = _PATHS.sub(hide_path, text)
     def hide_ip(match: re.Match) -> str:
         address = match.group().rstrip('.')
         try:
@@ -93,6 +102,7 @@ def log_files(log_dir: Path | None) -> list[Path]:
 
 def machine_info(version: str, library_root: Path | None, extra: dict[str, Any] | None = None) -> dict[str, Any]:
     """Thông tin máy cho `thong-tin.json`: không có tên người dùng Windows, đường dẫn, địa chỉ mạng."""
+    from .notices import NOTICES
     disk: dict[str, Any] = {}
     if library_root is not None:
         try:
@@ -108,6 +118,7 @@ def machine_info(version: str, library_root: Path | None, extra: dict[str, Any] 
         "timezone": time.tzname[1 if time.localtime(now).tm_isdst > 0 else 0],
         "system": {"platform": platform.platform(), "machine": platform.machine(), "python": platform.python_version()},
         "disk": disk,
+        "dataRecovery": NOTICES.diagnostics(),
         **(extra or {}),
     }
 

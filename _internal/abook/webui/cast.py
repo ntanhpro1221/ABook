@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import hashlib
 import io
+import logging
 import ipaddress
 import re
 import secrets
@@ -555,6 +556,20 @@ MAX_PER_IP = 6  # một TV hay mở vài kết nối song song (HEAD + GET Range
 HEADER_DEADLINE = 10.0  # giây cho cả request line + header, không phải cho từng lần đọc
 STREAM_TIMEOUT = 300.0  # tối đa 5 phút KHÔNG gửi thêm byte nào: TV tạm dừng đầy buffer có thời gian làm tiếp
 
+_stream_log_lock = threading.Lock()
+_stream_log_times: dict[str, float] = {}
+
+
+def _stream_failure(error: OSError, sent: int) -> None:
+    """Authenticated transfers only; fixed categories, no exception message/peer data."""
+    kind = "idle-timeout" if isinstance(error, TimeoutError) else "write-error"
+    now = time.monotonic()
+    with _stream_log_lock:
+        if now - _stream_log_times.get(kind, float("-inf")) < 30:
+            return
+        _stream_log_times[kind] = now
+    logging.getLogger(__name__).warning("Cast transfer %s bytes_sent=%d", kind, sent)
+
 
 class ConnectionBudget:
     """Đếm kết nối đang giữ worker: tối đa `total` cả cổng, `per_ip` cho một địa chỉ."""
@@ -663,15 +678,21 @@ class _ProgressWriter(io.BufferedIOBase):
     def __init__(self, connection: socket.socket, idle_timeout: float) -> None:
         self._connection = connection
         self._idle_timeout = idle_timeout
+        self.bytes_sent = 0
 
     def write(self, data: bytes) -> int:
         remaining = memoryview(data)
-        while remaining:
-            self._connection.settimeout(self._idle_timeout)
-            sent = self._connection.send(remaining)
-            if sent <= 0:
-                raise ConnectionError("thiết bị đã đóng kết nối")
-            remaining = remaining[sent:]
+        try:
+            while remaining:
+                self._connection.settimeout(self._idle_timeout)
+                sent = self._connection.send(remaining)
+                if sent <= 0:
+                    raise ConnectionError("thiết bị đã đóng kết nối")
+                self.bytes_sent += sent
+                remaining = remaining[sent:]
+        except OSError as error:
+            _stream_failure(error, self.bytes_sent)
+            raise
         return len(data)
 
 

@@ -6,10 +6,16 @@ revisions remain comparable. Peer metadata never advances the clock by itself.
 from typing import Any
 import copy
 import re
+from collections.abc import Callable
 
 MAX_COUNTER = 2**40
 MAX_JUMP = 1_000_000
+# Below half the range a counter is accepted whatever the receiver's clock: a new device or an empty profile must take a
+# profile with millions of saves. Even a forged peer can only push a profile here, still 2^39 edits from the ceiling.
+# Above it, a peer may lead the receiver by at most MAX_JUMP per exchange.
+SAFE_COUNTER = MAX_COUNTER // 2
 OLD_PEER = "Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"
+MISSING_REVISION = "Dữ liệu đồng bộ thiếu phiên bản. Bạn hãy mở lại hồ sơ trên máy gửi rồi thử lại."
 JUMP_NOTICE = "Một phần dữ liệu từ máy kia có bước nhảy phiên bản bất thường. App giữ bản của bạn; bạn hãy kiểm tra và đồng bộ lại từ máy có dữ liệu đúng."
 
 
@@ -56,47 +62,112 @@ def items(state: dict):
         yield from ({"rev": value} for value in state.get(key, {}).values())
 
 
-def epoch(state: dict) -> str:
+META_REVS = (("records", ("nameRev", "movedRev")), ("links", ("activeRev",)))
+
+
+def meta_items(data: dict):
+    """Record names, moves and active choices share one clock: `_clock`/`_epoch` at the top of the link table."""
+    for table, keys in META_REVS:
+        for row in (data.get(table) or {}).values():
+            if isinstance(row, dict):
+                yield from ({"rev": row[key]} for key in keys if key in row)
+
+
+def epoch(state: dict, source: Callable[[dict], Any] = items) -> str:
     marker = state.get("_epoch", "")
-    return max(marker if valid_epoch(marker) else "", *(order(item)[0] for item in items(state)), "")
+    return max(marker if valid_epoch(marker) else "", *(order(item)[0] for item in source(state)), "")
 
 
-def clock(state: dict) -> int:
-    era = epoch(state)
+def clock(state: dict, source: Callable[[dict], Any] = items) -> int:
+    era = epoch(state, source)
     marker = state.get("_clock", 0)
     return max(marker if valid_number(marker) and state.get("_epoch", "") == era else 0,
-               *(order(item)[1] for item in items(state) if order(item)[0] == era), 0)
+               *(order(item)[1] for item in source(state) if order(item)[0] == era), 0)
 
 
-def observe(state: dict, rev: dict) -> None:
+def observe(state: dict, rev: dict, source: Callable[[dict], Any] = items) -> None:
     era, counter, _ = order({"rev": rev})
-    current, tick = epoch(state), clock(state)
+    current, tick = epoch(state, source), clock(state, source)
     if era >= current:
         if era:
             state["_epoch"] = era
         state["_clock"] = max(tick if era == current else 0, counter)
 
 
-def advance(state: dict, node: str) -> dict:
-    era, counter = epoch(state), clock(state) + 1
+def advance(state: dict, node: str, source: Callable[[dict], Any] = items) -> dict:
+    era, counter = epoch(state, source), clock(state, source) + 1
     if counter > MAX_COUNTER:
         era, counter = era + "1", 1
     rev = {"counter": counter, "node": node, **({"epoch": era} if era else {})}
-    observe(state, rev)
+    observe(state, rev, source)
     return rev
 
 
+def implausible(era: str, tick: int, item: Any) -> bool:
+    """A peer revision this receiver must not adopt: invalid, more than one epoch ahead, or a leap in the upper half."""
+    e, c, _ = order(item)
+    return (not c or e > era + "1" or (e == era and c > SAFE_COUNTER and c > tick + MAX_JUMP)
+            or (e == era + "1" and c > MAX_JUMP))
+
+
+def meta_newer(data: dict, theirs: Any, their_at: Any, ours: Any, our_at: Any, notify) -> bool:
+    """Name, move or active choice from a peer. Both sides versioned: the revision decides, so a slow wall clock never
+    reverts a later edit. A peer without metadata revisions (0.4.133) still compares wall-clock stamps."""
+    if theirs is not None and implausible(epoch(data, meta_items), clock(data, meta_items), {"rev": theirs}):
+        notify(JUMP_NOTICE)
+        return False
+    a, b = order({"rev": theirs}), order({"rev": ours})
+    if a[1] and b[1]:
+        return a > b
+    return float(their_at or 0) > float(our_at or 0)
+
+
+def adopt_meta(data: dict, row: dict, key: str, rev: Any) -> None:
+    """Store a peer's metadata revision beside the value it won with; a stamp-only value (or an implausible revision) drops ours."""
+    if revision({"rev": rev})[0] and not implausible(epoch(data, meta_items), clock(data, meta_items), {"rev": rev}):
+        row[key] = rev
+        observe(data, rev, meta_items)
+    else:
+        row.pop(key, None)
+
+
+def upgrade_local(state: dict, node: str | Callable[[], str]) -> bool:
+    """Stamp schema-checked local legacy data once. Caller locks and commits it.
+
+    Never apply this migration to incoming peer data.
+    """
+    pending = []
+    for key in ("last", "reading"):
+        if isinstance(state.get(key), dict):
+            pending.append((state[key].get("at", 0), key, state[key], "rev"))
+    for key, item in state.get("chapters", {}).items():
+        pending.append((item.get("at", 0), "chapters/" + key, item, "rev"))
+    for item in state.get("bookmarks", []):
+        pending.append((item.get("at", item.get("createdAt", 0)), "bookmarks/" + item["id"], item, "rev"))
+    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
+        if field in state:
+            pending.append((state.get(stamp, 0), "fields/" + field, state.setdefault("_fieldRevs", {}), field))
+    for key, stamp in state.get("deleted", {}).items():
+        pending.append((stamp, "deleted/" + key, state.setdefault("_deletedRevs", {}), key))
+    changed = False
+    for _, _, target, key in sorted(pending, key=lambda row: (row[0], row[1])):
+        if not revision({"rev": target.get(key)})[0]:
+            target[key] = advance(state, node() if callable(node) else node)
+            changed = True
+    return changed
+
+
 def checked_peer(ours: dict, incoming: dict, notify) -> dict:
-    """Reject old peers atomically; discard suspicious fields with a visible notice."""
+    """Require versioned peer data; only an explicit capability can identify an old peer."""
+    if incoming.get("listeningRevision") == 0:
+        raise ValueError(OLD_PEER)
     state = copy.deepcopy(incoming)
     era, tick = epoch(ours), clock(ours)
 
     def accept(item):
         if not isinstance(item, dict) or "rev" not in item or item["rev"] is None:
-            raise ValueError(OLD_PEER)
-        e, c, _ = order(item)
-        if (not c or e > era + "1" or (e == era and c > tick + MAX_JUMP)
-                or (e == era + "1" and c > MAX_JUMP)):
+            raise ValueError(MISSING_REVISION)
+        if implausible(era, tick, item):
             notify(JUMP_NOTICE)
             return False
         return True
@@ -124,7 +195,7 @@ def checked_peer(ours: dict, incoming: dict, notify) -> dict:
 
 def require_peer_revisions(payload: dict) -> None:
     """Preflight the entire exchange before record deletions or other side effects."""
-    fields = {key: payload[key] for key in ("last", "reading", "chapters", "bookmarks", "rate", "finished", "voice", "_fieldRevs", "_deletedRevs") if key in payload}
+    fields = {key: payload[key] for key in ("listeningRevision", "last", "reading", "chapters", "bookmarks", "rate", "finished", "voice", "_fieldRevs", "_deletedRevs") if key in payload}
     if isinstance(payload.get("deleted"), dict):
         fields["deleted"] = payload["deleted"]
     try:

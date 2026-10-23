@@ -23,6 +23,7 @@ export interface DiagnosticsReport {
   share?: Part<{ running?: boolean; pairedDevices?: number; lastError?: string }>;
   exitReasons?: DiagnosticsFailure | { reason: string; code: number; description: string; timestamp: number; importance: string; importanceCode?: number; pssKb: number; rssKb: number; trace?: string }[];
   crashes?: DiagnosticsFailure | { name: string; text: string }[];
+  dataRecovery?: Part<{ savingBlocked?: boolean; notices?: { kind?: string; at?: number; preservedFile?: string; pending?: boolean }[] }>;
   log?: DiagnosticsFailure | string[];
   logcat?: DiagnosticsFailure | string[];
   truncated?: boolean;
@@ -33,6 +34,31 @@ export interface DiagnosticsReport {
 export interface DiagnosticsRow {
   label: string;
   value: string;
+}
+
+/** Per-job details supplement the counts without exposing worker IDs. */
+export function workProgressRows(report: DiagnosticsReport): DiagnosticsRow[] {
+  if (!Array.isArray(report.work)) return [];
+  const phases: Record<string, string> = {
+    download: "đang tải", downloading: "đang tải", fetch: "đang tải", voice: "đang tạo giọng đọc",
+    encode: "đang ghép âm thanh", music: "đang trộn nhạc", "music-fetch": "đang tải nhạc nền",
+    peaks: "đang kiểm đỉnh âm", reencode: "đang mã hoá lại", verify: "đang kiểm tra", done: "đã xong",
+    prepare: "đang chuẩn bị", package: "đang đóng gói", export: "đang xuất",
+  };
+  const states: Record<string, string> = { RUNNING: "đang chạy", ENQUEUED: "đang chờ", FAILED: "hỏng", CANCELLED: "đã dừng", SUCCEEDED: "đã xong", BLOCKED: "đang chờ điều kiện" };
+  const kinds: Record<string, string> = { BookDownloadWorker: "Tải sách", Mp3ExportWorker: "Xuất MP3", M4bExportWorker: "Xuất M4B", ListenExportWorker: "Xuất sách nói" };
+  const count = (value: string | undefined) => value !== undefined && value.trim() !== "" && Number.isFinite(Number(value)) && Number(value) >= 0 ? value : undefined;
+  return report.work.flatMap((job, index) => {
+    const progress = job.progress ?? {};
+    const done = count(progress.done);
+    const total = count(progress.total);
+    const phase = progress.phase?.trim();
+    if (done === undefined && total === undefined && !phase) return [];
+    const title = job.tags.map((tag) => kinds[tag]).find(Boolean) ?? "Việc nền";
+    return [{ label: `Việc ${index + 1}`, value: [title, states[job.state] ?? "chưa rõ trạng thái",
+      done !== undefined && total !== undefined ? `${done}/${total}` : done !== undefined ? `đã làm ${done}` : total !== undefined ? `tổng ${total}` : "",
+      phase ? `Pha: ${phases[phase] ?? phase}` : ""].filter(Boolean).join(" · ") }];
+  });
 }
 
 function failed(part: unknown): string | null {
@@ -113,6 +139,12 @@ export function summaryRows(report: DiagnosticsReport): DiagnosticsRow[] {
     return last ? `${last.reason}${last.timestamp ? ` · ${when(last.timestamp)}` : ""}` : null;
   });
   add("Lần văng", report.crashes, () => (Array.isArray(report.crashes) && report.crashes.length ? `${report.crashes.length} lần được ghi lại` : null));
+  add("Phục hồi dữ liệu", report.dataRecovery, () => {
+    const recovery = report.dataRecovery as { savingBlocked?: boolean; notices?: { kind?: string; at?: number; preservedFile?: string; pending?: boolean }[] };
+    const kinds: Record<string, string> = { recovered: "đã giữ bản cũ", "saving-blocked": "đang chặn lưu", "notice-read-error": "chưa đọc được cảnh báo", warning: "cảnh báo" };
+    return [recovery.savingBlocked ? "App đang chặn lưu để giữ dữ liệu của bạn" : "", ...(recovery.notices ?? []).map((notice) =>
+      [kinds[notice.kind ?? ""] ?? "cảnh báo", notice.at ? when(notice.at) : "", notice.preservedFile, notice.pending ? "chưa lưu cảnh báo" : ""].filter(Boolean).join(" · "))].filter(Boolean).join("; ") || "chưa có cảnh báo";
+  });
   return rows;
 }
 

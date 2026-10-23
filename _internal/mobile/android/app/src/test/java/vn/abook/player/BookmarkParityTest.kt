@@ -19,7 +19,7 @@ class BookmarkParityTest {
         val expected = JSONObject(mark.toString()).put("at", restored.getDouble("at")).put("rev", restored.getJSONObject("rev"))
         assertTrue(StrictJson.equal(expected, restored))
         assertTrue(restored.getDouble("at") > spec.getDouble("deletedAt"))
-        assertFalse(Store.state("b").getJSONObject("deleted").has(mark.getString("id")))
+        assertTrue("undo keeps the tombstone (a118 bug 6)", Store.state("b").getJSONObject("deleted").has(mark.getString("id")))
         Store.mergeRemote("b", JSONObject().put("deleted", gone).put("_deletedRevs", goneRevs).put("bookmarks", JSONArray().put(spec.getJSONObject("remoteEdit"))))
         assertTrue(StrictJson.equal(JSONArray().put(restored), Store.state("b").getJSONArray("bookmarks")))
         Store.restoreBookmark("b", mark)
