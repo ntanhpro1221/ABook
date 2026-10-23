@@ -860,9 +860,18 @@ object Store {
         return state
     }
 
+    /** Lời báo khi một việc ghi mang hồ sơ đã xoá / chuyển sang sách khác (cùng câu với 409 của máy tính, webui/listening.py `RecordGone`). */
+    const val RECORD_GONE = "Hồ sơ nghe này đã bị xoá hoặc chuyển sang cuốn khác. Bạn hãy nạp lại sách."
+
+    /** Hồ sơ cho một việc ghi của người nghe: [recordId] là hồ sơ màn đang hiện đã chốt lúc bắt đầu (không nói: hồ sơ đang dùng);
+     *  đã xoá / chuyển sách thì ném [IllegalStateException] - không ghi sang hồ sơ khác (đúng `Listening._named`). */
+    private fun named(id: String, recordId: String?): String =
+        target(id, recordId) ?: throw IllegalStateException(RECORD_GONE)
+
     @Synchronized
-    fun setChapterDone(id: String, chapterId: Int, done: Boolean): JSONObject {
-        val state = state(id)
+    fun setChapterDone(id: String, chapterId: Int, done: Boolean, recordId: String? = null): JSONObject {
+        val target = named(id, recordId)
+        val state = recordState(target)
         val chapters = state.getJSONObject("chapters")
         val record = chapters.optJSONObject(chapterId.toString()) ?: JSONObject().put("heard", 0.0)
         record.put("done", done)
@@ -870,15 +879,16 @@ object Store {
         record.put("at", now())
         chapters.put(chapterId.toString(), record)
         state.put("updatedAt", now())
-        save(id, state)
+        writeAtomic(recordFile(target), state.toString())
         return state
     }
 
     @Synchronized
-    fun setFinished(id: String, finished: Boolean): JSONObject {
-        val state = state(id)
+    fun setFinished(id: String, finished: Boolean, recordId: String? = null): JSONObject {
+        val target = named(id, recordId)
+        val state = recordState(target)
         state.put("finished", finished).put("finishedAt", now()).put("updatedAt", now())
-        save(id, state)
+        writeAtomic(recordFile(target), state.toString())
         return state
     }
 
@@ -936,7 +946,7 @@ object Store {
     @Synchronized
     fun addBookmark(id: String, chapterId: Int, seconds: Double, note: String, index: Int? = null, quote: String = "", createdAt: Double? = null,
                     recordId: String? = null): JSONObject {
-        val target = target(id, recordId) ?: throw IllegalStateException("Hồ sơ nghe này không còn ở cuốn này")
+        val target = named(id, recordId)
         val state = recordState(target)
         val marks = state.getJSONArray("bookmarks")
         val cleanNote = note.trim().take(500)
@@ -971,8 +981,9 @@ object Store {
     }
 
     @Synchronized
-    fun updateBookmark(id: String, markId: String, note: String) {
-        val state = state(id)
+    fun updateBookmark(id: String, markId: String, note: String, recordId: String? = null) {
+        val target = named(id, recordId)
+        val state = recordState(target)
         val marks = state.getJSONArray("bookmarks")
         for (index in 0 until marks.length()) {
             val mark = marks.getJSONObject(index)
@@ -981,12 +992,13 @@ object Store {
             mark.put("note", note.take(500)).put("at", now())
         }
         state.put("updatedAt", now())
-        save(id, state)
+        writeAtomic(recordFile(target), state.toString())
     }
 
     @Synchronized
-    fun deleteBookmark(id: String, markId: String) {
-        val state = state(id)
+    fun deleteBookmark(id: String, markId: String, recordId: String? = null) {
+        val target = named(id, recordId)
+        val state = recordState(target)
         val marks = state.getJSONArray("bookmarks")
         val kept = JSONArray()
         for (index in 0 until marks.length()) {
@@ -997,7 +1009,7 @@ object Store {
         val deleted = state.optJSONObject("deleted") ?: JSONObject()
         deleted.put(markId, now())
         state.put("deleted", deleted).put("updatedAt", now())
-        save(id, state)
+        writeAtomic(recordFile(target), state.toString())
     }
 
     /** Hoàn tác đúng dấu cũ như listening.restore_bookmark: giữ ID/lúc đặt, đổi mốc sửa và gỡ bia mộ ở đây. */

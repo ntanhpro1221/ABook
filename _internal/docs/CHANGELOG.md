@@ -41,6 +41,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Giọng đọc riêng của mỗi hồ sơ nhớ riêng trên cả máy tính lẫn điện thoại: hai người cùng nghe một cuốn không đè giọng của nhau, hồ sơ mới chưa chọn giọng đọc bằng giọng mặc định chứ không kế thừa giọng hồ sơ trước.
 - Nhật ký đêm ("Tối qua bạn nghe tới đâu?") thuộc về từng hồ sơ: hẹn giờ ngủ của người khác trong cùng cuốn là một đêm mới, thẻ buổi sáng chỉ hiện đêm của hồ sơ bạn đang dùng, và lần lưu muộn không rơi vào hồ sơ khác (máy tính và điện thoại).
 - Cuốn chỉ có một hồ sơ nghe: menu "Tuỳ chọn khác" có thêm "Đổi tên hồ sơ…" và "Xoá hồ sơ…" (trước đây phải tạo hồ sơ thứ hai mới đổi tên hay xoá được).
+- Đánh dấu chương đã nghe, đánh dấu cả cuốn, thêm / sửa ghi chú / xoá dấu trang: ghi vào đúng hồ sơ đang hiện trên màn bạn bấm, kể cả khi cửa sổ khác hay máy kia vừa đổi hồ sơ; hồ sơ đã xoá hay chuyển sang cuốn khác thì báo “Hồ sơ nghe này đã bị xoá hoặc chuyển sang cuốn khác. Bạn hãy nạp lại sách.” thay vì ghi nhầm vào người khác (máy tính và điện thoại).
+- Điện thoại: Cài đặt có mục “Bản lưu cũ” khi lần lưu sách bị hỏng giữa chừng và app phải giữ bản lưu trước hộ bạn; mỗi bản có “Lưu ra…” (chọn chỗ lưu) và “Xoá…” (hỏi lại, nói rõ không lấy lại được), Thư viện báo một lần khi có bản mới. Không có bản nào thì không hiện mục.
 
 ### Cài đặt và trợ năng
 
