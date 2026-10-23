@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList, Hammer, Wrench } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
@@ -21,7 +21,7 @@ const MENU_ITEM =
 /** Chữ nói rõ cái giá của “Dựng xưởng” - người nghe nhận ra cái họ mất, không phải cách nó chạy. */
 export const WORKSHOP_COST =
   "Studio sẽ tạo một dự án mới từ chữ và giọng của cuốn này, mang theo tên bạn đặt và những việc bạn ghi cho Studio. " +
-  "Không còn nguồn chương gốc, lịch sử phân tích, từng câu đã thu - toàn bộ audio sẽ được làm lại khi chạy. Cuốn đang nghe vẫn giữ nguyên.";
+  "Không còn dự án gốc: audio sẽ làm lại hết. Cuốn đang nghe giữ nguyên.";
 
 /** “Dựng xưởng” / “Làm sách nói từ cuốn này”: một dự án Studio mới từ cuốn đang nghe / đọc (`POST /api/books/<mã>/workshop`, workshop.py).
  *  `done` nói điều đã mang sang, theo loại cuốn. */
@@ -89,7 +89,7 @@ function DesktopNeedStudioItem({ title, note }: { title: string; note: string })
 
 /** Chữ nói rõ “Làm sách nói từ cuốn này” mang gì sang Studio. */
 export const TEXT_BOOK_COST =
-  "Studio sẽ tạo một dự án mới từ chữ các chương của cuốn này, mang theo tên sách và bìa bạn đặt. Chưa chạy gì - chọn giọng kể rồi bắt đầu làm audio ở Studio. Cuốn đang đọc vẫn giữ nguyên.";
+  "Tạo dự án Studio từ chữ cuốn này. Chưa chạy gì; cuốn đang đọc giữ nguyên.";
 
 /** Mục menu của sách chỉ có chữ (nhập từ EPUB / DOCX / PDF / TXT): “Làm sách nói từ cuốn này” (máy có Studio) hay mở dự án đã làm. */
 export function TextBookItems({ book }: { book: ListenBook }) {

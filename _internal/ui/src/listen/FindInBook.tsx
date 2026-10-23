@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -101,7 +102,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
   const status = findStatus(query, progress, hits.length);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} width="max-w-xl" title="Tìm trong sách" description={book.title}>
+    <Dialog open={open} onOpenChange={onOpenChange} width="max-w-xl" title="Tìm trong sách" description={book.title}><MotionRegion>
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-3" />
         <input
@@ -153,6 +154,6 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           ))}
         </ul>
       )}
-    </Dialog>
+    </MotionRegion></Dialog>
   );
 }

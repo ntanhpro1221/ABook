@@ -6,6 +6,7 @@ vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
   useState: (initial: unknown) => [typeof initial === "function" ? initial() : initial, vi.fn()],
   useRef: (value: unknown) => ({ current: value }),
+  useCallback: (callback: unknown) => callback,
   useEffect: () => undefined,
 }));
 vi.mock("@/listen/player", async (original) => ({

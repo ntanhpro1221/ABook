@@ -3,7 +3,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { api, type BookSummary } from "./api";
 import { ReviewQueue } from "./ReviewQueue";
 import { WorkCards, type WorkItem } from "./WorkInbox";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 
 const captured = vi.hoisted(() => ({
   mutations: [] as { onSuccess?: (answer: Record<string, unknown>) => void }[],

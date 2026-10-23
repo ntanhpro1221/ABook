@@ -13,6 +13,7 @@ vi.mock("react", async (original) => ({
   ...await original<typeof import("react")>(),
   useState: (value: unknown) => [value, (next: unknown) => mocks.changes.push(next)],
   useRef: (value: unknown) => ({ current: value }),
+  useCallback: (callback: unknown) => callback,
   useEffect: (effect: () => void | (() => void)) => { mocks.effects.push(effect); },
 }));
 vi.mock("@tanstack/react-query", () => ({ useQueryClient: () => ({ invalidateQueries: vi.fn() }) }));

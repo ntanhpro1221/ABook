@@ -141,6 +141,7 @@ export function Windowed<T>({
   block = WINDOW_BLOCK,
   className,
   memory,
+  alwaysBlocks = false,
 }: {
   items: readonly T[];
   /** Một hàng; `index` là vị trí trong cả danh sách (cho aria-rowindex / aria-posinset). */
@@ -154,6 +155,8 @@ export function Windowed<T>({
   className?: string;
   /** Khoá nhớ số đo trong phiên (vd theo sách): quay lại trang thì danh sách cao y như lúc rời - chỗ cuộn nhớ được (useScrollMemory) mới đúng. */
   memory?: string;
+  /** Giữ cùng các khối DOM khi danh sách đi qua ngưỡng ảo hoá. */
+  alwaysBlocks?: boolean;
 }) {
   const total = items.length;
   const count = Math.ceil(total / block);
@@ -267,12 +270,12 @@ export function Windowed<T>({
     if (shift) at.scroller.scrollTop += shift;
   });
 
-  if (!windowed) return <>{items.map(row)}</>;
+  if (!windowed && !alwaysBlocks) return <>{items.map(row)}</>;
   return (
     <>
       {Array.from({ length: count }, (_, index) => {
         const start = index * block;
-        const visible = blockVisible(index, shown, kept, focused);
+        const visible = !windowed || blockVisible(index, shown, kept, focused);
         return (
           <div
             key={index}

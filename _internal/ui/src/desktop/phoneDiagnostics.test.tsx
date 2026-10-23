@@ -7,7 +7,7 @@ vi.mock("@/studio/data", () => ({ pickFolder: vi.fn(), useAppInfo: () => ({ data
 
 import type { DiagnosticsReport } from "@/shared/diagnostics";
 import { ApiError } from "@/studio/api";
-import { OWN_DIAGNOSTICS_HINT, OwnDiagnostics } from "./OwnDiagnostics";
+import { OWN_DIAGNOSTICS_HINT, OWN_DIAGNOSTICS_MORE, OwnDiagnostics } from "./OwnDiagnostics";
 import { DiagnosticsBody, NEEDS_NEWER_TITLE, failureView } from "./PhoneDiagnostics";
 
 const report: DiagnosticsReport = {
@@ -51,7 +51,7 @@ describe("hộp Chẩn đoán điện thoại", () => {
 
   it("đang tải: khung chờ; chưa có gì thì không hiện gì", () => {
     expect(renderToStaticMarkup(<DiagnosticsBody loading />)).not.toBe("");
-    expect(renderToStaticMarkup(<DiagnosticsBody />)).toBe("");
+    expect(renderToStaticMarkup(<DiagnosticsBody />).replace(/<[^>]+>/g, "")).toBe("");
   });
 });
 
@@ -59,9 +59,10 @@ describe("Gửi nhật ký của máy tính", () => {
   it("nói rõ gói có gì, không có gì và app không tự gửi đi", () => {
     const html = renderToStaticMarkup(<OwnDiagnostics />);
     expect(html).toContain("Gửi nhật ký");
-    expect(OWN_DIAGNOSTICS_HINT).toContain("nhận diện được");
-    expect(OWN_DIAGNOSTICS_HINT).toContain("Bạn nên xem lại trước khi gửi");
-    expect(OWN_DIAGNOSTICS_HINT).not.toContain("không có mật khẩu");
+    expect(OWN_DIAGNOSTICS_MORE).toContain("nhận ra được");
+    expect(OWN_DIAGNOSTICS_HINT).toContain("Xem lại trước khi gửi");
+    expect(OWN_DIAGNOSTICS_MORE).not.toContain("không có mật khẩu");
     expect(OWN_DIAGNOSTICS_HINT).toContain("bạn tự gửi đi");
+    expect(html).toContain("Tìm hiểu thêm");
   });
 });

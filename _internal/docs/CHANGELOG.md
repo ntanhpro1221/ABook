@@ -7,6 +7,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+- Phán quyết nghe gắn đúng câu khi duyệt nhanh; Back đóng từng bước đang mở. Nhóm giọng, màn tạo sách và thư viện gọn hơn, cập nhật trạng thái có chuyển cảnh mượt.
+- Cài đặt gọn lại thành 7 nhóm (Giọng đọc, Nghe, Hẹn giờ ngủ, Giao diện, Thiết bị, Studio, Nâng cao), mỗi nhóm một màn riêng có dòng tóm tắt giá trị hiện tại; điện thoại có 5 nhóm, máy tính màn rộng hiện hai cột. Mục hiếm dùng và kỹ thuật chuyển vào Nâng cao.
+- Điện thoại: nút Back đóng hộp, bảng hay màn đang mở trước, rồi về màn cha; chỉ thu nhỏ app khi đang ở Thư viện.
+- Chữ trên các màn ngắn lại (khoảng 130 chỗ); giải thích dài về quyền riêng tư và an toàn dữ liệu gập sau nút “Tìm hiểu thêm”.
+- Chuyển màn, mở/đóng hộp, bảng và mục gấp mượt hơn trên máy tính và điện thoại.
+
 ### Dữ liệu của bạn
 - Hồ sơ nghe hỏng một phần trên máy tính hoặc điện thoại: app giữ nguyên bản gốc, báo rõ nơi giữ và tiếp tục dùng phần còn đọc được; sách không biến mất chỉ vì hồ sơ sai định dạng. File thông báo hỏng trên điện thoại cũng được giữ riêng, không chặn thư viện hay việc lưu dữ liệu đã giữ an toàn; máy tính sửa hồ sơ dưới cùng khoá với các lượt lưu khác.
 - Máy tính: nhật ký chỗ nghe tạm bị chương trình khác giữ sẽ được đọc lại trước khi lưu, tránh mất chỗ nghe mới nhất khi bạn đặt dấu trang.

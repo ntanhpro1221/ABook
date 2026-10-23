@@ -1,7 +1,8 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { BookAudio } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { jobView, M4B_COPY, type ExportJob } from "@/desktop/bookFileExport";
 import type { MusicExportState } from "@/desktop/listenExport";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
@@ -129,12 +130,12 @@ export interface M4bDialogDetail {
 export function M4bMusicForm({ music, onMusic, chapters }: { music: boolean; onMusic: (on: boolean) => void; chapters: number }) {
   const hint = chargerHint(music, chapters);
   return (
-    <div className="flex flex-col gap-3">
+    <MotionRegion as="div" className="flex flex-col gap-3">
       <p className="text-sm text-fg-2">Một file có mục lục chương: app nghe sách nói nào cũng mở được, nhớ chỗ nghe dở.</p>
       <MusicMixOption checked={music} onChange={onMusic} />
       {hint && <p className="text-xs text-fg-3">{hint}</p>}
       <BackgroundNote />
-    </div>
+    </MotionRegion>
   );
 }
 

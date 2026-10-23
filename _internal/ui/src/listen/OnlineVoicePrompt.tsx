@@ -1,3 +1,5 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { useBackLayer } from "@/shared/backStack";
 import { Play, Square } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { cn } from "@/shared/cn";
@@ -19,19 +21,24 @@ export function OnlineVoicePrompt() {
   useEffect(() => setChoosing(false), [request]);
   // "Chọn giọng khác": nút vừa bấm biến mất cùng phần đồng ý - tiêu điểm vào giọng đang dùng trong danh sách, không về khung hộp (soát a67).
   const list = useRef<HTMLDivElement | null>(null);
+  const chooseButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (choosing) list.current?.querySelector<HTMLElement>("[aria-current]")?.focus();
   }, [choosing]);
-  if (!request) return null;
-  const { voice, voices, answer } = request;
+  useBackLayer(Boolean(request && choosing), () => setChoosing(false), list, chooseButton);
+  const last = useRef(request);
+  if (request) last.current = request;
+  const shown = request ?? last.current;
+  if (!shown) return <MotionRegion />;
+  const { voice, voices, answer } = shown;
   return (
     <Dialog
-      open
-      onOpenChange={(open) => !open && answer(null)}
+      open={Boolean(request)}
+      onOpenChange={(open) => !open && request?.answer(null)}
       title={choosing ? "Chọn giọng đọc" : "Giọng đọc trực tuyến"}
       description={choosing ? chooseVoiceText(voices, voice) : onlinePromptText(voice)}
       width="max-w-md"
-    >
+    ><MotionRegion>
       {choosing ? (
         <div ref={list} className="flex max-h-[50vh] flex-col gap-0.5 overflow-y-auto">
           {voices.map((item) => {
@@ -77,10 +84,10 @@ export function OnlineVoicePrompt() {
           <button
             type="button"
             onClick={() => {
-              request.answer(null);
+              shown.answer(null);
               setExpanded(false);
               // Hộp nằm ngoài Router (PlayerProvider bao ngoài HashRouter): đổi trang bằng địa chỉ, Router tự theo.
-              window.location.hash = "#/settings";
+              window.location.hash = "#/settings/voice";
               revealVoiceSettings("vieneu-module");
             }}
             className="mt-1 flex min-h-[48px] flex-col items-start justify-center rounded-lg border-t border-line px-3 py-2 text-left text-sm text-accent-text hover:bg-hover"
@@ -91,7 +98,7 @@ export function OnlineVoicePrompt() {
         </div>
       ) : (
         <div className="flex flex-wrap justify-end gap-2">
-          <Button variant="ghost" onClick={() => setChoosing(true)}>
+          <Button ref={chooseButton} variant="ghost" onClick={() => setChoosing(true)}>
             Chọn giọng khác
           </Button>
           <Button variant="primary" data-autofocus onClick={() => answer(voice.id)}>
@@ -99,6 +106,6 @@ export function OnlineVoicePrompt() {
           </Button>
         </div>
       )}
-    </Dialog>
+    </MotionRegion></Dialog>
   );
 }

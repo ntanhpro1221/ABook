@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { flushSync } from "react-dom";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { api } from "@/studio/api";
 import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
@@ -38,7 +37,7 @@ import { caughtUpDetail } from "./labels";
 import { reportSaveFailure } from "./saveFailure";
 import { ProgressOutbox } from "./progressOutbox";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
-import { prefersReducedMotion } from "@/shared/motion";
+import { withViewTransition } from "@/shared/motion";
 
 export type { SleepMode, SleepRequest } from "./sleep";
 
@@ -1883,26 +1882,16 @@ export function PlayerProvider({
     canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues]);
 
-  // Mở/đóng "Đang nghe" qua View Transitions: bìa ở thanh phát bay lên thành bìa lớn (và bay về), phần còn lại mờ
-  // chéo - xem .cover-morph trong styles.css. Không có API (trình duyệt cũ) hay người dùng xin giảm chuyển động thì
-  // đổi thẳng, không hoạt ảnh.
+  // Mở/đóng "Đang nghe" qua View Transitions: màn trượt lên từ đáy (đóng thì trượt xuống), bìa ở thanh phát bay lên thành bìa lớn
+  // (và bay về) - xem .now-playing-vt / .cover-morph trong styles.css. Xin giảm chuyển động: chỉ còn hiện / mờ (CSS). Không có API
+  // (trình duyệt cũ) thì đổi thẳng, màn mở vẫn trượt lên bằng hoạt ảnh CSS .now-playing.
   const expandedNow = useRef(expanded);
   expandedNow.current = expanded;
   const setExpandedAnimated = useCallback((value: boolean) => {
     // Không đổi gì thì không chạy View Transition rỗng: mục thanh bên gọi setExpanded(false) mỗi lần bấm, và một chuyển
     // cảnh rỗng khi cửa sổ không được vẽ (thu nhỏ, ẩn) bị trình duyệt huỷ thành lỗi console (soát UX 29-09).
     if (expandedNow.current === value) return;
-    const start = (document as Document & { startViewTransition?: (update: () => void) => unknown }).startViewTransition;
-    if (!start || prefersReducedMotion()) {
-      setExpanded(value);
-      return;
-    }
-    const transition = start.call(document, () => flushSync(() => setExpanded(value))) as
-      | { ready?: Promise<unknown>; finished?: Promise<unknown> }
-      | undefined;
-    // Chuyển cảnh bị huỷ (TimeoutError) thì trạng thái vẫn đã đổi trong flushSync - chỉ là không có hoạt ảnh.
-    transition?.ready?.catch(() => undefined);
-    transition?.finished?.catch(() => undefined);
+    withViewTransition(() => setExpanded(value));
   }, []);
   const nowPlaying = useMemo(() => ({ expanded, setExpanded: setExpandedAnimated }), [expanded, setExpandedAnimated]);
 

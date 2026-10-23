@@ -1,8 +1,13 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
+import { useBackLayer } from "@/shared/backStack";
+import { useMotionState } from "@/shared/motion";
+import { useListPresence } from "@/shared/motion";
 import { useQueryClient } from "@tanstack/react-query";
 import { BookOpen, BookPlus, Check, CircleAlert, Copy, FileText, Folder, Loader2, Minus } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { ChapterPreview } from "@/shared/ChapterPreview";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
@@ -104,7 +109,7 @@ export function AddBookDialog({
   const client = useQueryClient();
   const navigate = useNavigate();
   const [choice, setChoice] = useState<ImportChoice | null>(null);
-  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [preview, setPreview] = useMotionState<ImportPreview | null>(null);
   const [title, setTitle] = useState("");
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState<"reading" | "adding" | null>(null);
@@ -115,13 +120,13 @@ export function AddBookDialog({
     setTechnical(technicalOf(error));
   };
   // Chọn / kéo thả nhiều file: hàng xem trước (importQueue.ts), mỗi cuốn qua đúng bước xem trước của một file. `null` = một file như trước. `queueRef` giữ
-  // bản mới nhất cho các vòng async ("Thêm tất cả phần còn lại" đi qua nhiều cuốn trong một lần bấm).
+  // bản mới nhất cho các vòng async ("Thêm phần còn lại" đi qua nhiều cuốn trong một lần bấm).
   const [queue, setQueueState] = useState<QueueItem[] | null>(null);
   const queueRef = useRef<QueueItem[] | null>(null);
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [working, setWorking] = useState("");
   // Hộp hỏi trong hộp thoại khi hàng còn sách chưa thêm: "close" = Esc / bấm ra ngoài, "again" = nút "Chọn lại" (cả hai bỏ cả hàng).
-  const [confirmLeave, setConfirmLeave] = useState<"close" | "again" | null>(null);
+  const [confirmLeave, setConfirmLeave] = useMotionState<"close" | "again" | null>(null);
   const setQueue = (next: QueueItem[] | null) => {
     queueRef.current = next;
     setQueueState(next);
@@ -164,7 +169,7 @@ export function AddBookDialog({
     reads.current.cancel();
     initialRead.current = null;
   }, []);
-  if (!importer) return null;
+  if (!importer) return <MotionRegion />;
 
   const clearPreview = () => {
     setChoice(null);
@@ -196,9 +201,14 @@ export function AddBookDialog({
   };
   // Esc / bấm ra ngoài khi hàng còn sách chưa thêm: hỏi ngay trong hộp, không bỏ cả hàng im lặng (soát UX a10).
   const unfinished = queue?.filter((item) => item.state === "waiting" && item.choice && !isBookFile(item.choice.ref)).length ?? 0;
+  const confirmBox = useRef<HTMLDivElement>(null);
+  const confirmButton = useRef<HTMLElement | null>(null);
+  useBackLayer(open && confirmLeave !== null, () => setConfirmLeave(null), confirmBox, confirmButton);
   const close = (next: boolean) => {
+    if (!next && confirmLeave !== null) { setConfirmLeave(null); return; }
     if (busy === "adding") return;
     if (!next && unfinished > 1) {
+      confirmButton.current = document.activeElement as HTMLElement;
       setConfirmLeave((asked) => (asked === "close" ? null : "close")); // lần Esc thứ hai là "Quay lại"
       return;
     }
@@ -396,6 +406,7 @@ export function AddBookDialog({
   const chooseAgain = () => {
     // Còn các cuốn khác trong hàng: "Chọn lại" bỏ cả hàng - hỏi như Esc, không bỏ im lặng (soát UX a10).
     if (unfinished > 1 && confirmLeave !== "again") {
+      confirmButton.current = document.activeElement as HTMLElement;
       setConfirmLeave("again");
       return;
     }
@@ -451,7 +462,7 @@ export function AddBookDialog({
       setBusy(null);
     }
   };
-  // "Thêm tất cả phần còn lại" (addRest): cuốn đang xem thêm đúng như đang hiện, các cuốn sau dùng mặc định của bước xem trước. Cuốn nào lỗi thì ghi vào hàng
+  // "Thêm phần còn lại" (addRest): cuốn đang xem thêm đúng như đang hiện, các cuốn sau dùng mặc định của bước xem trước. Cuốn nào lỗi thì ghi vào hàng
   // và đi tiếp.
   const addAll = async () => {
     const start = queueRef.current;
@@ -515,12 +526,13 @@ export function AddBookDialog({
         queue && !preview
           ? summaryText(summarize(queue))
           : preview
-          ? "Xem danh sách chương trước khi thêm. Chữ của truyện được giữ nguyên - ABook chỉ đổi định dạng."
-          : "EPUB, Word (DOCX), PDF có chữ, một file TXT cả truyện, hay một thư mục mà mỗi file TXT là một chương. Sách vào Thư viện để đọc ngay. Chọn được nhiều file một lúc - từng cuốn hiện ra để xem lại trước khi thêm. Có file sách .abook (bạn bè gửi, tải về) thì chọn luôn ở đây."
+          ? "Xem lại chương trước khi thêm. Chữ của truyện giữ nguyên."
+          : "EPUB, DOCX, PDF có chữ, TXT, thư mục TXT hay file .abook. Chọn được nhiều file."
       }
-    >
+    ><MotionRegion>
       {confirmLeave && (
         <div
+          ref={confirmBox}
           role="alertdialog"
           aria-label={confirmLeave === "again" ? "Chọn lại khi còn sách chưa thêm" : "Đóng khi còn sách chưa thêm"}
           className="mb-4 rounded-xl border border-warning/40 bg-warning-soft p-3.5"
@@ -542,7 +554,7 @@ export function AddBookDialog({
                 onOpenChange(false);
               }}
             >
-              {confirmLeave === "again" ? "Bỏ các cuốn còn lại và chọn lại" : "Bỏ các cuốn còn lại"}
+              {confirmLeave === "again" ? "Bỏ và chọn lại" : "Bỏ phần còn lại"}
             </Button>
             <Button variant="primary" onClick={() => setConfirmLeave(null)}>
               Quay lại thêm sách
@@ -673,7 +685,7 @@ export function AddBookDialog({
                 <span className="block text-xs text-fg-2">
                   {split
                     ? "Mỗi dòng “Chương N” mở một chương mới; chữ của truyện giữ nguyên."
-                    : "Cả truyện đang nằm trong một chương. Tích để có từng chương riêng - ABook chỉ cắt ở đầu các dòng ấy, không sửa chữ."}
+                    : "Cả truyện đang là một chương. Tích để tách theo các dòng ấy; chữ giữ nguyên."}
                 </span>
               </span>
             </label>
@@ -704,7 +716,7 @@ export function AddBookDialog({
             </p>
           )}
           {notes.length > 0 && (
-            <div className="mt-3 rounded-xl border border-line bg-hover p-3 text-xs text-fg-2">
+            <Fold storageKey="add-book.format" title="Định dạng" summary={`${notes.length} ghi chú`} className="mt-3" bodyClassName="px-3 pb-3 text-xs text-fg-2">
               <p className="font-medium text-fg">Máy đã đổi định dạng - chữ của truyện giữ nguyên</p>
               <ul className="mt-1 space-y-1">
                 {notes.slice(0, 6).map((note) => (
@@ -712,13 +724,12 @@ export function AddBookDialog({
                 ))}
               </ul>
               {notes.length > 6 && <p className="mt-1">…và {notes.length - 6} ghi chú nữa.</p>}
-            </div>
+            </Fold>
           )}
-          {preview.footnotes && <FootnoteChoices offer={preview.footnotes} value={footnotes} disabled={busy !== null} onChange={(next) => void changeFootnotes(next)} />}
+          {preview.footnotes && <Fold storageKey="add-book.footnotes" title="Chú thích" className="mt-3" bodyClassName="px-3 pb-3"><FootnoteChoices offer={preview.footnotes} value={footnotes} disabled={busy !== null} onChange={(next) => void changeFootnotes(next)} /></Fold>}
           {groups.length > 0 && (
-            <div className="mt-3 rounded-xl border border-line bg-hover p-3">
-              <p className="text-xs font-medium">Gợi ý cho phần đọc - ABook không tự sửa chữ của truyện</p>
-              <p className="mt-0.5 text-xs text-fg-2">Bỏ dòng này chỉ khiến màn đọc và giọng đọc bỏ qua nó - chữ của sách vẫn giữ nguyên. Đổi ý được ở trang sách.</p>
+            <Fold storageKey="add-book.suggestions" title="Gợi ý phần đọc" summary={`${groups.length} nhóm`} className="mt-3" bodyClassName="px-3 pb-3">
+              <p className="mt-0.5 text-xs text-fg-2">Dòng bỏ chỉ bị bỏ qua khi đọc; chữ của sách giữ nguyên.</p>
               <div className="mt-2 max-h-40 overflow-y-auto">
                 <SuggestionChoices
                   groups={groups}
@@ -734,7 +745,7 @@ export function AddBookDialog({
                   }
                 />
               </div>
-            </div>
+            </Fold>
           )}
           {known && (
             <p role="status" className="mt-3 rounded-xl border border-line bg-accent-soft p-3 text-sm text-accent-text">
@@ -759,7 +770,7 @@ export function AddBookDialog({
             )}
             {rest > 0 && (
               <Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => void addAll()}>
-                Thêm tất cả phần còn lại
+                Thêm phần còn lại
               </Button>
             )}
             {known ? (
@@ -782,7 +793,7 @@ export function AddBookDialog({
           </div>
         </div>
       )}
-    </Dialog>
+    </MotionRegion></Dialog>
   );
 }
 
@@ -796,10 +807,11 @@ const STATE_TEXT: Record<Exclude<QueueItem["state"], "waiting">, string> = {
 
 /** Danh sách các file đã chọn kèm tình trạng từng cái: cuốn đang xem, cuốn đã thêm / bỏ, cuốn không đọc được (kèm lý do). */
 function QueueList({ items, currentId, working = "", tall }: { items: QueueItem[]; currentId: number | null; working?: string; tall?: boolean }) {
+  const rows = useListPresence(items, (item) => String(item.id));
   const focus = queueFocus(items, currentId, working);
   return (
     <ul aria-label="Các file đã chọn" className={cn("mt-3 space-y-1.5 overflow-y-auto rounded-xl border border-line bg-hover p-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
-      {items.map((item) => {
+      {rows.map(({ item, key, state, ref }) => {
         const current = item.state === "waiting" && item.id === focus.id;
         let mark: ReactNode = <span className="block size-3 rounded-full border border-line-strong" />;
         if (item.state === "added" || item.state === "existing" || item.state === "opened") mark = <Check className="size-3.5 text-success" strokeWidth={3} />;
@@ -808,13 +820,13 @@ function QueueList({ items, currentId, working = "", tall }: { items: QueueItem[
         else if (current) mark = <span className="block size-3 rounded-full bg-accent" />;
         const said = item.state === "waiting" ? (current ? (focus.adding ? "Đang thêm" : "Đang xem") : "Chờ") : item.note ?? STATE_TEXT[item.state];
         return (
-          <li key={item.id} aria-current={current ? "true" : undefined} className="flex items-start gap-2">
-            <span className="mt-0.5 grid size-3.5 shrink-0 place-items-center">{mark}</span>
+          <li key={key} ref={ref} aria-current={current ? "true" : undefined} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex items-start gap-2">
+            <span key={item.state} className="icon-pop mt-0.5 grid size-3.5 shrink-0 place-items-center">{mark}</span>
             <span className="min-w-0 flex-1">
               <span className={cn("block truncate", current ? "font-semibold text-fg" : "text-fg-2")}>{item.name}</span>
               <span className={cn("block text-pretty", item.state === "error" ? "text-danger" : "text-fg-3")}>{said}</span>
             </span>
-          </li>
+          </div></li>
         );
       })}
     </ul>

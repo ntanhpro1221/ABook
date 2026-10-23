@@ -100,7 +100,7 @@ describe("mô-đun Phân tích nhạc", () => {
   });
   it("nói MỘT tổng dung lượng trước khi bấm và phần trăm khi tải", () => {
     expect(moduleLabel(status())).toContain(formatSize(92_000_000));
-    expect(moduleLabel(status())).toContain("vẫn nhập, nghe và ghim tay được");
+    expect(moduleLabel(status())).toContain("tự chọn nhạc phù hợp trên máy"); // Quyền ghim tay nằm ở trợ giúp của thẻ.
     expect(moduleLabel(status({ state: "downloading", done: 30, total: 60 }))).toContain("50%");
     expect(moduleLabel(status({ state: "downloading", done: 30, total: 60, retrying: true }))).toBe("Mạng chập chờn - đang thử lại… (Phân tích nhạc, 50%)");
     expect(modulePercent(status({ done: 5, total: 0 }))).toBe(0);
@@ -191,7 +191,7 @@ describe("note of a track in the swap list", () => {
     expect(mineNote({ analysed: true, fits: true })).toBe("Hợp không khí đoạn này");
   });
   it("tells one story about pinned tracks travelling with the book file", () => {
-    expect(MY_MUSIC_INTRO).toContain(".abook / .abookproj");
+    expect(MY_MUSIC_INTRO).toContain("đi cùng file sách");
     expect(MY_MUSIC_INTRO).not.toContain("Sửa sách");
   });
 });

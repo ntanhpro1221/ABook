@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { cleanName } from "@/listen/BookScreen";
 import type { CastMember } from "@/listen/model";
 import { formatNumber } from "@/shared/format";
@@ -40,7 +40,7 @@ export function RenamePersonDialog({
       refreshAfterDecision(client, bookId);
       onSaved?.();
       toast.success(answer.renamed ? `Đã đổi tên thành ${cleanName(answer.name)}` : `Đã trở về tên gốc: ${cleanName(answer.name)}`, {
-        description: "Chỉ đổi cái tên hiện trên màn hình - giọng đọc và audio giữ nguyên. Các phần sau của truyện cũng dùng tên này.",
+        description: "Chỉ đổi tên hiện ra; giọng và audio giữ nguyên.",
       });
       onClose();
     } catch (error) {

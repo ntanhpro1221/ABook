@@ -1,8 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleAlert, Laptop, Loader2, Send, Smartphone, Undo2, X } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { localEditsNote } from "@/shared/capabilities";
 import { cn } from "@/shared/cn";
@@ -65,14 +66,14 @@ export function SendEditsItem({ book }: { book: ListenBook }) {
 /** Cuốn của điện thoại khác: sửa xong, nói rõ phần sửa chỉ có trên máy này (không có chỗ gửi). Chưa sửa gì thì không hiện. */
 export function LocalEditsBanner({ book }: { book: ListenBook }) {
   const note = localEditsNote(book.capabilities);
-  if (!note || !book.edits) return null;
+  if (!note || !book.edits) return <MotionRegion />;
   return (
-    <div role="status" className="mt-2 max-w-md rounded-xl bg-info-soft px-3 py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
+    <MotionRegion as="div" role="status" className="mt-2 max-w-md rounded-xl bg-info-soft px-3 py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
       <p className="inline-flex items-center gap-1.5 font-medium">
         <Smartphone className="size-3.5 shrink-0" /> {book.edits} thay đổi chỉ có trên điện thoại này
       </p>
       <p className="mt-0.5 text-pretty">{note}</p>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -90,9 +91,9 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
     onError: (error: Error) => toast.error("Chưa làm được", { description: error.message }),
   });
   const items = book.editsNotices ?? [];
-  if (!items.length) return null;
+  if (!items.length) return <MotionRegion />;
   return (
-    <div role="status" className="mt-2 max-w-md rounded-xl bg-info-soft px-3 py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
+    <MotionRegion as="div" role="status" className="mt-2 max-w-md rounded-xl bg-info-soft px-3 py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
       <p className="inline-flex items-center gap-1.5 font-medium">
         <Smartphone className="size-3.5 shrink-0" /> Máy đã ghép vừa đổi phần bạn đã đặt
       </p>
@@ -109,7 +110,7 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
       <Button size="sm" variant="secondary" className="mt-2" icon={X} disabled={act.isPending} onClick={() => act.mutate({ verb: "dismiss" })}>
         Đã hiểu
       </Button>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -137,9 +138,9 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
     found && found.tone === "error" && unreachable && download.data?.state === "failed" && download.data.retry
       ? { ...found, lines: [`Tự gửi khi ${where} trả lời lại; bấm “Gửi về ${where}” để gửi ngay.`] }
       : found;
-  if (!note) return null;
+  if (!note) return <MotionRegion />;
   const at = book.editsSync?.last?.at ?? 0;
-  if (note.tone === "sent" && (note.lines.length === 0 || seen >= at)) return null;
+  if (note.tone === "sent" && (note.lines.length === 0 || seen >= at)) return <MotionRegion />;
   const dismiss = () => {
     setSeen(at);
     try {
@@ -150,7 +151,7 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
   };
   const Icon = note.tone === "error" ? CircleAlert : note.tone === "sent" ? Laptop : Send;
   return (
-    <div
+    <MotionRegion as="div"
       role="status"
       className={cn(
         "mt-2 max-w-md rounded-xl px-3 py-2 text-xs max-sm:mx-auto max-sm:text-left",
@@ -175,6 +176,6 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
           Đã hiểu
         </Button>
       )}
-    </div>
+    </MotionRegion>
   );
 }

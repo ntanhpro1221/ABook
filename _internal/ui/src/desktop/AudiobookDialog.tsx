@@ -1,7 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { useMotionState } from "@/shared/motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Headphones } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import type { ReadAloudVoice } from "@/listen/readAloud";
 import { chosenVoice, resolveVoice, voiceCaption } from "@/listen/readAloudVoice";
 import type { ListenBook } from "@/listen/model";
@@ -39,9 +41,9 @@ const FORMATS = FORMAT_CHOICES.map((choice) => choice.id);
 
 /** Khối "máy chưa có ffmpeg": mời tải, hiện tiến độ tải, báo lỗi. `remote`: đang ở máy khác điều khiển máy tính - công cụ nằm ở máy tính, tải ở đó. */
 export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { status: FfmpegStatus; onDownload: () => void; onStop: () => void; remote?: boolean }) {
-  if (status.ready) return null;
+  if (status.ready) return <MotionRegion />;
   return (
-    <div className="rounded-lg border border-line bg-panel-2 p-3 text-sm" role="group" aria-label="Công cụ ghép âm thanh">
+    <MotionRegion as="div" className="rounded-lg border border-line bg-panel-2 p-3 text-sm" role="group" aria-label="Công cụ ghép âm thanh">
       <p className="font-medium">{remote ? "Máy tính chưa có công cụ ghép âm thanh" : "Máy chưa có công cụ ghép âm thanh"}</p>
       <p className="mt-0.5 text-fg-2">Cần nó để ghép lời đọc thành file MP3 / M4B. Tải một lần, dùng mãi (khoảng {formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
       {status.downloading ? (
@@ -72,7 +74,7 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
           )}
         </div>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -141,7 +143,7 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
       {ffmpeg && <FfmpegNeeded status={ffmpeg} onDownload={onDownload} onStop={onStopDownload} />}
 
       <p className="text-xs text-fg-3">
-        Việc chạy nền, bạn cứ nghe sách như thường - lúc bạn đang nghe, việc xuất nhường chỗ. Huỷ bất cứ lúc nào: phần đã làm được giữ, xuất lại là làm tiếp.
+        Chạy nền, bạn cứ nghe. Huỷ thì phần đã làm được giữ.
       </p>
     </div>
   );
@@ -150,7 +152,7 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
 /** Nghe hộp mở từ menu của sách (OPEN_AUDIOBOOK_EVENT) và dựng hộp; "Bắt đầu" chọn nơi lưu rồi giao cho ExportJobHost. */
 export function AudiobookDialogHost() {
   const [book, setBook] = useState<ListenBook | null>(null);
-  const [format, setFormat] = useState<AudiobookFormat>("mp3");
+  const [format, setFormat] = useMotionState<AudiobookFormat>("mp3");
   const [busy, setBusy] = useState(false);
   const { data: info } = useAppInfo();
   const { data: voices } = useReadAloudVoices();
@@ -209,7 +211,7 @@ export function AudiobookDialogHost() {
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
       title={`Xuất sách nói “${book?.title ?? ""}”`}
-      description="Máy đọc cả cuốn bằng giọng bên dưới rồi ghép thành file âm thanh, để nghe ở điện thoại, xe hơi hay trình phát khác."
+      description="Đọc cả cuốn thành file âm thanh, nghe ở máy khác."
       width="max-w-xl"
     >
       <AudiobookForm

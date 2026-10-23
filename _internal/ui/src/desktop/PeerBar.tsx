@@ -1,3 +1,4 @@
+import { MotionPresence } from "@/shared/MotionPresence";
 import { useQueryClient } from "@tanstack/react-query";
 import { Laptop } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -38,6 +39,7 @@ export function usePeerSilent(onBack?: () => void): string {
 export function PeerBar() {
   const info = useAppInfo().data;
   const silent = usePeerSilent();
+  const content = () => {
   if (!currentPeer() || !info?.peer) return null;
   return (
     <div
@@ -54,4 +56,6 @@ export function PeerBar() {
       </Button>
     </div>
   );
+  };
+  return <MotionPresence open={Boolean(currentPeer() && info?.peer)} className="shrink-0">{content()}</MotionPresence>;
 }
