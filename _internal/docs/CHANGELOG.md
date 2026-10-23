@@ -16,6 +16,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính: tải giọng trên máy báo ngay nếu ổ đĩa không đủ chỗ cho phần còn phải tải (chừa lại một ít cho Windows), thay vì tải gần xong rồi mới hỏng.
 - Máy tính: giọng VieNeu trong Cài đặt có nút "Gỡ" cho từng giọng (VieNeu, VieNeu Nano, bản tăng tốc) để lấy lại chỗ; bộ căn chữ dùng chung với phần tô chữ nên ở lại.
 
+### Điện thoại và hệ thống
+- Điện thoại: đang xuất MP3, M4B hay sách nói mà app bị đóng hoặc nạp lại, mở lại thì thanh tiến độ và nút "Dừng" vẫn còn, không phải đoán việc xuất đã chạy tới đâu.
+- Điện thoại: xuất MP3 bị hệ thống dừng giữa chừng rồi làm tiếp thì ghi tiếp vào đúng thư mục đang dở, không tạo thêm "Tên (2)" bên cạnh.
+- Điện thoại: bạn dừng việc xuất ở trình quản lý tác vụ của Android thì việc dừng hẳn, không tự chạy lại; Android 15 dừng việc xuất sau 6 giờ thì app báo rõ để bạn bấm "Xuất lại" làm tiếp.
+- Điện thoại: tải sách về máy chạy nền như việc xuất sách - có thông báo tiến độ, nút "Dừng", tắt màn hình hay đóng app vẫn tải tiếp và mở lại thấy đúng tiến độ.
+- Điện thoại: đổi cỡ chữ, chế độ tối hay xoay màn hình ở màn Studio không còn làm màn hình mở lại từ đầu.
+- Điện thoại: chuyển sang máy mới hay khôi phục từ bản sao lưu không mang theo mã ghép nối và danh sách máy được chia sẻ; sách và chỗ nghe dở vẫn đi theo.
+- Điện thoại: gói cài chỉ giữ tiếng Việt cho các chuỗi của hệ thống, nhẹ hơn.
+- Điện thoại: trang chia sẻ thư viện chỉ nhắc cho ABook chạy nền khi máy thật sự chưa cho, và nói rõ vì sao.
+- Điện thoại: biểu tượng thông báo của chia sẻ và phát lên loa dùng biểu tượng đơn sắc của ABook, và thông báo "Làm trước" bị kẹt lại sau khi app bị tắt giữa chừng được dọn đi, vuốt bỏ được.
+
 ## [0.4.131] - 2026-10-23
 
 ### Hồ sơ người nghe

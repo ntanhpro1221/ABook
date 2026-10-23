@@ -11,6 +11,7 @@ import { spokenProgress } from "@/shared/progressSpeech";
 import { Button, Dialog } from "@/shared/ui";
 import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
 import { chargerHint } from "./ExportAudiobook";
+import { rejoinExports } from "./exportJobs";
 import { EbookLibrary, type M4bExportEvent } from "./plugins";
 
 // "Xuất M4B cho app sách nói" trên điện thoại: cùng chữ, cùng file với máy tính (desktop/ExportBookFileJob.tsx M4bMenuItem). Việc chạy
@@ -22,7 +23,7 @@ import { EbookLibrary, type M4bExportEvent } from "./plugins";
 export const OPEN_M4B_EVENT = "abook-phone-m4b-dialog";
 
 /** Lượt đang theo dõi của mỗi cuốn: tin của lượt cũ (bị thay bằng lượt mới) không được đè lên lượt mới. */
-const runs = new Map<string, { run: string; book: ListenBook }>();
+const runs = new Map<string, { run: string; book?: ListenBook }>();
 
 const toastId = (bookId: string) => `m4b-export-${bookId}`;
 
@@ -38,7 +39,7 @@ export function progressText(event: ProgressFields, chapters: number): string {
     const view = jobView(job, 0, false, M4B_COPY);
     if (view.kind === "loading") return view.description;
   }
-  if (!event.total) return `${chapters} chương`;
+  if (!event.total) return chapters ? `${chapters} chương` : "Đang chuẩn bị…";
   const percent = event.percent === undefined ? "" : ` · ${Math.max(0, Math.min(99, event.percent))}%`;
   return `${event.done ?? 0}/${event.total} chương${percent}`;
 }
@@ -53,12 +54,12 @@ export function finishedView(event: Pick<M4bExportEvent, "name" | "size" | "chap
 }
 
 /** `fraction`: phần đã xong (0-1) - trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */
-function showProgress(book: ListenBook, progress: string, fraction?: number) {
+function showProgress(bookId: string, progress: string, fraction?: number) {
   toast.loading(M4B_COPY.busy, {
-    id: toastId(book.id),
+    id: toastId(bookId),
     description: <ExportProgressText shown={progress} spoken={spokenProgress(M4B_COPY.busy, fraction)} />,
     duration: Infinity,
-    action: { label: "Dừng", onClick: () => void EbookLibrary.cancelM4bExport({ bookId: book.id }) },
+    action: { label: "Dừng", onClick: () => void EbookLibrary.cancelM4bExport({ bookId }) },
   });
 }
 
@@ -69,7 +70,7 @@ export async function exportM4b(book: ListenBook, music = false) {
     const result = await EbookLibrary.exportM4b({ bookId: book.id, cover: book.cover ? undefined : coverArtwork(book.title), music });
     if (!result.started || !result.run) return;
     runs.set(book.id, { run: result.run, book });
-    showProgress(book, progressText({}, result.chapters ?? book.chaptersAvailable));
+    showProgress(book.id, progressText({}, result.chapters ?? book.chaptersAvailable));
   } catch (error) {
     toast.error(M4B_COPY.failed, { id: toastId(book.id), description: (error as Error).message });
   }
@@ -87,11 +88,12 @@ export async function chooseM4b(book: ListenBook) {
   else void exportM4b(book);
 }
 
-/** Theo dõi các lượt xuất từ lúc app mở (App.tsx): tiến độ, xong, dừng, lỗi. */
+/** Theo dõi các lượt xuất từ lúc app mở (App.tsx): tiến độ, xong, dừng, lỗi - kể cả lượt đã chạy từ trước lúc giao diện mở lại (exportJobs). */
 export function watchM4bExports(): () => void {
   const handle = EbookLibrary.addListener("m4bExport", (event) => {
-    const current = runs.get(event.bookId);
-    if (!current || current.run !== event.run) return;
+    // Chưa theo dõi lượt nào của cuốn này (giao diện vừa mở lại giữa lúc việc nền chạy): nhận lượt ấy thay vì bỏ tin.
+    const current = runs.get(event.bookId) ?? { run: event.run, book: undefined };
+    if (current.run !== event.run) return;
     const id = toastId(event.bookId);
     if (event.finished) {
       runs.delete(event.bookId);
@@ -104,9 +106,14 @@ export function watchM4bExports(): () => void {
       runs.delete(event.bookId);
       toast.error(M4B_COPY.failed, { id, description: event.error, action: undefined });
     } else if (event.total || event.phase) {
-      showProgress(current.book, progressText(event, current.book.chaptersAvailable),
-        event.total ? (event.done ?? 0) / event.total : undefined);
+      runs.set(event.bookId, current);
+      showProgress(event.bookId, progressText(event, current.book?.chaptersAvailable ?? 0), event.total ? (event.done ?? 0) / event.total : undefined);
     }
+  });
+  rejoinExports("m4b", (job) => {
+    if (runs.has(job.bookId)) return;
+    runs.set(job.bookId, { run: job.run });
+    showProgress(job.bookId, progressText(job, 0), job.total ? (job.done ?? 0) / job.total : undefined);
   });
   return () => void handle.then((listener) => listener.remove());
 }
