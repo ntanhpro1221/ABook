@@ -1,4 +1,5 @@
 import type { BookProgress, ListenChapter, ListeningState } from "@/listen/model";
+import { newerReading } from "@/listen/readingPosition";
 
 /** Đã nghe bao nhiêu phần của cuốn - cùng phép tính với máy tính (abook/webui/listening.py): sách chưa đủ
  *  chương mà nghe hết phần đã có thì "đã theo kịp", chưa phải "nghe xong". */
@@ -38,7 +39,8 @@ const DONE_TAIL_SECONDS = 20;
 function isRewound(state: ListeningState, chapters: ListenChapter[]): boolean {
   const last = state.last;
   if (!last || !chapters.length) return false;
-  if (state.finished && (state.finishedAt ?? 0) >= (last.at ?? 0)) return false;
+  if (state.finished && !newerReading({ chapterId: last.chapterId, index: 0, at: last.at, rev: last.rev },
+    { chapterId: 0, index: 0, at: state.finishedAt ?? 0, rev: state._fieldRevs?.finished })) return false;
   const final = chapters[chapters.length - 1];
   if (last.chapterId !== final.id) return chapters.some((chapter) => chapter.id === last.chapterId);
   return final.duration > 0 && final.duration - last.seconds > DONE_TAIL_SECONDS;

@@ -15,7 +15,7 @@ import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlaying
 import { useSentenceMenu, type SentenceEditing } from "./SentenceMenu";
 import { useChapterScript, useListenBook, useSource } from "./source";
 import { makeAnchor, textFingerprint } from "./readingAnchor";
-import { latestReading, localReading, readingIndex, readingKey, readingRecord, type ReadingPosition } from "./readingPosition";
+import { latestReading, localReading, nextReadingRevision, validReadingRevision, readingIndex, readingKey, readingRecord, type ReadingPosition } from "./readingPosition";
 
 // Chế độ ĐỌC: văn bản chương như một cuốn ebook, đi cùng chỗ đang nghe.
 //
@@ -69,6 +69,8 @@ export function ReaderScreen(edit: SentenceEditing) {
   const source = useSource();
   const player = usePlayer();
   const { data: book } = useListenBook(id);
+  const revisionBook = useRef(book);
+  revisionBook.current = book;
   const chapters = book?.chapters ?? [];
   const reading = latestReading(book);
   const record = readingRecord(book);
@@ -165,16 +167,22 @@ export function ReaderScreen(edit: SentenceEditing) {
   const flushReading = useCallback(async () => {
     const place = pending.current;
     if (!place || saving.current || !source.saveReading) return;
+    if (!validReadingRevision(place.rev)) {
+      place.rev = nextReadingRevision(revisionBook.current, place);
+      try { localStorage.setItem(readingKey(id, record), JSON.stringify(place)); }
+      catch { toast.error("Chưa lưu được bản dự phòng chỗ đọc", { id: "reading-local" }); }
+    }
     saving.current = true;
     try {
       await source.saveReading(id, place.chapterId, place.index, place, record === "default" ? undefined : record);
       if (pending.current === place) pending.current = undefined;
       const local = localReading(id, record);
-      if (local?.at === place.at) {
+      if (local && (place.rev ? local.rev?.counter === place.rev.counter && local.rev.node === place.rev.node
+        && (local.rev.epoch ?? "") === (place.rev.epoch ?? "") : local.at === place.at)) {
         try { localStorage.setItem(readingKey(id, record), JSON.stringify({ ...place, pending: false })); } catch { /* nguồn đã lưu */ }
       }
     } catch (error) {
-      const backup = localReading(id, record)?.at === place.at;
+      const backup = Boolean(localReading(id, record));
       toast.error("Chưa lưu được chỗ đọc vào hồ sơ", { id: "reading-save", description: `${backup ? "Bạn vẫn có bản lưu trên máy này." : "App sẽ thử lưu lại chỗ đọc của bạn."} ${(error as Error).message}` });
     } finally {
       saving.current = false;
@@ -188,13 +196,13 @@ export function ReaderScreen(edit: SentenceEditing) {
     const found = visibleSentence(container.current);
     touched.current = owner;
     setCurrent(found);
-    const place: ReadingPosition = { chapterId, index: found, at: Date.now() / 1000, anchor: makeAnchor(paragraphs, found, 0, textHash), quote: paragraphs[found]?.slice(0, 200), pending: true };
+    const place: ReadingPosition = { chapterId, index: found, at: Date.now() / 1000, rev: nextReadingRevision(book, pending.current ?? localReading(id, record)), anchor: makeAnchor(paragraphs, found, 0, textHash), quote: paragraphs[found]?.slice(0, 200), pending: true };
     pending.current = place;
     try { localStorage.setItem(readingKey(id, record), JSON.stringify(place)); }
     catch { toast.error("Chưa lưu được bản dự phòng chỗ đọc", { id: "reading-local" }); }
     window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => void flushReading(), 2000);
-  }, [chapterId, follow, id, script, record, owner, paragraphs, textHash, flushReading]);
+  }, [book, chapterId, follow, id, script, record, owner, paragraphs, textHash, flushReading, pending]);
 
   useEffect(() => {
     const saved = localReading(id, record);

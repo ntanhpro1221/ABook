@@ -103,12 +103,12 @@ def test_sync_merges_into_the_named_record_not_whichever_is_active(tmp_path: Pat
     """Điện thoại gửi hồ sơ R đúng lúc máy tính vừa đổi sang hồ sơ khác: R vẫn nhận đúng phần của R."""
     listening = Listening(tmp_path / "listening.json")
     phone_record = "r-" + "a" * 16
-    first = listening.merge_record("sach", phone_record, {"last": {"chapterId": 2, "seconds": 30.0, "at": 5.0}},
+    first = listening.merge_record("sach", phone_record, {"last": {"chapterId": 2, "seconds": 30.0, "at": 5.0, "rev": {"counter": 1, "node": "phone"}}},
                                    name="Điện thoại", active_at=5.0)
     assert first["record"] == phone_record and first["book"] == "sach" and first["active"]["record"] == phone_record
     desk = listening.create_record("sach", "Máy tính")["id"]
 
-    reply = listening.merge_record("sach", phone_record, {"last": {"chapterId": 3, "seconds": 12.0, "at": 9.0}},
+    reply = listening.merge_record("sach", phone_record, {"last": {"chapterId": 3, "seconds": 12.0, "at": 9.0, "rev": {"counter": 2, "node": "phone"}}},
                                    active_at=5.0)
 
     assert reply["last"]["chapterId"] == 3, "phần của điện thoại vào đúng hồ sơ của nó"
@@ -129,10 +129,11 @@ def test_the_later_choice_of_record_wins_across_devices(tmp_path: Path) -> None:
         ("Máy tính", False), ("Con", True)]
 
 
-def test_old_phones_still_sync_into_the_active_record(tmp_path: Path) -> None:
+def test_old_phones_are_rejected_without_creating_a_record(tmp_path: Path) -> None:
     listening = Listening(tmp_path / "listening.json")
-    listening.merge("sach", {"last": {"chapterId": 1, "seconds": 9.0, "at": 3.0}})
-    assert listening.get("sach")["last"]["seconds"] == 9.0 and len(listening.records("sach")) == 1
+    with pytest.raises(ValueError, match="Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"):
+        listening.merge("sach", {"last": {"chapterId": 1, "seconds": 9.0, "at": 3.0}})
+    assert listening.records("sach") == []
 
 
 def _listening_from(path: Path, side: dict) -> Listening:
@@ -217,7 +218,9 @@ def test_a_bookmark_deleted_on_the_phone_is_deleted_here_through_sync(library, t
         _status, data, _ = _sync_request(server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
         token = json.loads(data)["token"]
         body = {"record": record, "recordName": DEFAULT_RECORD_NAME, "nameAt": 0.0, "activeAt": 0.0, "movedAt": 0.0,
-                "deletedRecords": {}, "chapters": {}, "bookmarks": [], "deleted": {mark["id"]: time.time() + 5}}
+                "deletedRecords": {}, "chapters": {}, "bookmarks": [], "deleted": {mark["id"]: time.time() + 5},
+                "_clock": mark["rev"]["counter"] + 1,
+                "_deletedRevs": {mark["id"]: {"counter": mark["rev"]["counter"] + 1, "node": "phone"}}}
 
         status, _data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{book}/state", token, body=body)
 
@@ -234,7 +237,7 @@ def test_a_record_moved_here_tells_the_phone_its_new_book(tmp_path: Path) -> Non
     listening.merge_record("ban-cu", record, {}, name="Mặc định")
     listening.move_record(record, "ban-moi")
 
-    reply = listening.merge_record("ban-cu", record, {"last": {"chapterId": 4, "seconds": 1.0, "at": 7.0}})
+    reply = listening.merge_record("ban-cu", record, {"last": {"chapterId": 4, "seconds": 1.0, "at": 7.0, "rev": {"counter": 1, "node": "phone"}}})
 
     assert reply["book"] == "ban-moi" and listening.get("ban-moi")["last"]["chapterId"] == 4
     assert listening.records("ban-cu") == []
@@ -317,7 +320,8 @@ def test_both_devices_share_one_default_record_per_book(tmp_path: Path) -> None:
     [record] = desktop.records("sach")
     assert record["id"] == default_record_id("sach")
 
-    phone_state = {"bookmarks": [{"id": "m-dien-thoai", "chapterId": 2, "seconds": 9.0, "note": "", "at": 2.0}],
+    phone_state = {"bookmarks": [{"id": "m-dien-thoai", "chapterId": 2, "seconds": 9.0, "note": "", "at": 2.0,
+                                  "rev": {"counter": 2, "node": "phone"}}],
                    "chapters": {}}
     reply = desktop.merge_record("sach", default_record_id("sach"), phone_state)
 
@@ -345,11 +349,11 @@ def test_a_deleted_record_stays_deleted_on_every_device(tmp_path: Path) -> None:
     """Bia mộ: xoá ở một máy, máy kia gửi lại cũng không sống lại; xoá ở điện thoại thì máy tính xoá theo."""
     listening = Listening(tmp_path / "listening.json")
     kept, gone = "r-" + "1" * 16, "r-" + "2" * 16
-    listening.merge_record("sach", kept, {"last": {"chapterId": 1, "seconds": 1.0, "at": 1.0}}, name="Giữ")
+    listening.merge_record("sach", kept, {"last": {"chapterId": 1, "seconds": 1.0, "at": 1.0, "rev": {"counter": 1, "node": "phone"}}}, name="Giữ")
     listening.merge_record("sach", gone, {}, name="Bỏ")
     assert listening.delete_record(gone)
 
-    back = listening.merge_record("sach", gone, {"last": {"chapterId": 9, "seconds": 9.0, "at": 9.0}})
+    back = listening.merge_record("sach", gone, {"last": {"chapterId": 9, "seconds": 9.0, "at": 9.0, "rev": {"counter": 1, "node": "phone"}}})
     assert back["deleted"] is True and gone in back["deletedRecords"]
     assert [record["id"] for record in listening.records("sach")] == [kept]
 
@@ -408,7 +412,9 @@ def test_a_record_that_moved_to_another_book_does_not_swallow_the_players_saves(
     assert listening.get("x")["last"]["seconds"] == 160.0 and [item["id"] for item in listening.get("x")["sessions"]] == ["phien"]
     [own] = listening.records("x")
     assert own["id"] != playing, "sách đang phát có hồ sơ riêng"
-    assert listening.get("x-2")["last"] == {"chapterId": 2, "seconds": 50.0, "at": listening.get("x-2")["last"]["at"]}
+    kept = listening.get("x-2")["last"]
+    assert kept["chapterId"] == 2 and kept["seconds"] == 50.0
+    assert kept["rev"]["counter"] == 1
     assert not listening.get("x-2").get("sessions"), "hồ sơ đã sang cuốn kia không nhận lần lưu của cuốn này"
 
 

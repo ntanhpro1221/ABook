@@ -1,0 +1,131 @@
+[
+  {
+    "name": "valid-min",
+    "rev": {
+      "counter": 1,
+      "node": "n"
+    },
+    "valid": true
+  },
+  {
+    "name": "valid-cap",
+    "rev": {
+      "counter": 1099511627776,
+      "node": "N_-9"
+    },
+    "valid": true
+  },
+  {
+    "name": "valid-epoch",
+    "rev": {
+      "epoch": "1",
+      "counter": 1,
+      "node": "n"
+    },
+    "valid": true
+  },
+  {
+    "name": "huge",
+    "rev": {
+      "counter": 1e+100,
+      "node": "n"
+    },
+    "valid": false
+  },
+  {
+    "name": "above-cap",
+    "rev": {
+      "counter": 1099511627777,
+      "node": "n"
+    },
+    "valid": false
+  },
+  {
+    "name": "zero",
+    "rev": {
+      "counter": 0,
+      "node": "n"
+    },
+    "valid": false
+  },
+  {
+    "name": "fraction",
+    "rev": {
+      "counter": 1.5,
+      "node": "n"
+    },
+    "valid": false
+  },
+  {
+    "name": "empty-node",
+    "rev": {
+      "counter": 1,
+      "node": ""
+    },
+    "valid": false
+  },
+  {
+    "name": "bad-node",
+    "rev": {
+      "counter": 1,
+      "node": "n / x"
+    },
+    "valid": false
+  },
+  {
+    "name": "long-node",
+    "rev": {
+      "counter": 1,
+      "node": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    "valid": false
+  },
+  {
+    "name": "bad-epoch",
+    "rev": {
+      "epoch": -1,
+      "counter": 1,
+      "node": "n"
+    },
+    "valid": false
+  },
+  {
+    "name": "bool",
+    "rev": {
+      "counter": true,
+      "node": "n"
+    },
+    "valid": false
+  },
+  {
+    "name": "missing",
+    "rev": null,
+    "valid": false
+  },
+  {
+    "name": "node-final-newline",
+    "rev": {
+      "counter": 1,
+      "node": "n\n"
+    },
+    "valid": false
+  },
+  {
+    "name": "epoch-final-newline",
+    "rev": {
+      "counter": 1,
+      "node": "n",
+      "epoch": "1\n"
+    },
+    "valid": false
+  },
+  {
+    "name": "epoch-bad-character",
+    "rev": {
+      "counter": 1,
+      "node": "n",
+      "epoch": "2"
+    },
+    "valid": false
+  }
+]

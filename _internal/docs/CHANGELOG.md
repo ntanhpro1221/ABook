@@ -7,6 +7,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Dữ liệu của bạn
+
+- Hồ sơ nghe hỏng một phần trên máy tính hoặc điện thoại: app giữ nguyên bản gốc, báo rõ nơi giữ và tiếp tục dùng phần còn đọc được; sách không biến mất chỉ vì hồ sơ sai định dạng. File thông báo hỏng trên điện thoại cũng được giữ riêng, không chặn thư viện hay việc lưu dữ liệu đã giữ an toàn; máy tính sửa hồ sơ dưới cùng khoá với các lượt lưu khác.
+- Máy tính: nhật ký chỗ nghe tạm bị chương trình khác giữ sẽ được đọc lại trước khi lưu, tránh mất chỗ nghe mới nhất khi bạn đặt dấu trang.
+- Máy tính: nếu cửa sổ khác đang lưu dữ liệu quá lâu, app báo bạn thử lại thay vì ghi đè thay đổi của nhau.
+- Chỗ đọc, chỗ nghe, chương đã nghe, tốc độ, giọng và dấu trang được gộp theo thứ tự thay đổi, tránh quay về bản cũ khi bạn chỉnh đồng hồ lùi; lượt lưu chỗ đọc đến muộn được báo rõ. Bản đồng bộ có phiên bản nhảy bất thường không đẩy hồ sơ của bạn tới mức kẹt lưu; danh tính máy không đi theo bản sao thư viện, và chỗ đọc lưu tạm có phiên bản hỏng vẫn giữ được vị trí hợp lệ. Máy kia thiếu phiên bản thay đổi sẽ bị từ chối đồng bộ với lời nhắc cập nhật cả hai máy.
+- Máy tính: chuyển thư viện bị ngắt giữa chừng sẽ được hoàn tất khi mở lại, để hồ sơ và dấu trang đi theo sách. Nhật ký chuyển hỏng không chặn mở app: bạn có thể chọn hoàn tất, quay lui hoặc bỏ qua sau khi kiểm tra thư mục; nhật ký gốc vẫn được giữ lại.
+- Điện thoại: trước khi ghi đè file sách, app giữ bền bản trước; nếu lần lưu bị hệ thống dừng, mở lại bạn tìm thấy bản trước trong Cài đặt → Bản lưu cũ. Chỗ lưu đã mất truy cập sẽ mời bạn chọn nơi khác, trước khi ghi vào URI cũ.
+
 ## [0.4.132] - 2026-10-23
 
 ### Nghe ngay

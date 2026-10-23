@@ -870,7 +870,7 @@ class LibraryPlugin : Plugin() {
                 .put("addedAt", File(Store.bookDir(id), "book.json").lastModified() / 1000.0))
         }
         Store.saveSizes()
-        call.resolve(JSObject().put("books", books))
+        call.resolve(JSObject().put("books", books).put("notices", Store.dataNotices()))
     }
 
     /**
@@ -1186,10 +1186,10 @@ class LibraryPlugin : Plugin() {
             // Gói dựng và kiểm trong file tạm trước, đích chỉ bị mở (và cắt) sau đó; chép hỏng giữa chừng thì bản lưu trước được trả lại (BookSave, soát a99 C2).
             // Bản cũ không giữ được thì dừng trước khi ghi đè; trả lại cũng hỏng thì bản cũ nằm ở filesDir/ban-luu-cu (bền, không như cache); thiếu chỗ thì báo sớm.
             val written = BookSave.save(Store.bookDir(id), File(context.cacheDir, "save"), project,
-                previous = { try { context.contentResolver.openInputStream(uri) } catch (_: java.io.FileNotFoundException) { null } },
-                open = { context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn") },
+                previous = { context.contentResolver.openInputStream(uri) ?: throw BookSave.DestinationUnavailable() },
+                open = { context.contentResolver.openOutputStream(uri, "wt") ?: throw BookSave.DestinationUnavailable() },
                 keepDir = OldSaves.dir(context.filesDir), keepName = Store.manifest(id)?.optString("title").orEmpty(),
-                previousSize = savedSize(uri))
+                previousSize = savedSize(uri), destination = uri.toString())
             ExportHistory.remember(Store.bookDir(id), if (project) "abookproj" else "abook", uri.toString(), snapshot)
             BookEdits.markSaved(Store.bookDir(id)) // "Save (N changes)" counts again from here
             if (!direct) rememberSave(id, project, uri)
@@ -1201,7 +1201,7 @@ class LibraryPlugin : Plugin() {
             call.resolve(JSObject().put("saved", true).put("name", name).put("size", written.size).put("edits", written.edits))
         } catch (error: Exception) {
             // Gói dựng hỏng (thiếu file nguồn...) thì chỗ lưu không có lỗi: giữ chỗ nhớ, báo đúng lý do thay vì hỏi chỗ khác rồi hỏng y hệt.
-            if (direct && id != null && error !is BookDocumentWriter.Refused && error !is BookSave.Failed) {
+            if (id != null && BookSave.shouldChooseAnotherLocation(direct, error)) {
                 savePlaces().edit().remove(id).apply()
                 activity.runOnUiThread { askSaveLocation(call, id, savesAsProject(call, id)) }
             } else fail(call, error, "không lưu được file")
@@ -1218,6 +1218,7 @@ class LibraryPlugin : Plugin() {
     /** Bản lưu cũ [BookSave] giữ lại khi lần lưu hỏng giữa chừng mà bản trước chưa trả lại được: tên, cỡ, lúc giữ (giây) - mới nhất đứng đầu. */
     @PluginMethod
     fun listOldSaves(call: PluginCall) = background(call) {
+        BookSave.recover(OldSaves.dir(context.filesDir))
         val files = JSONArray()
         OldSaves.list(OldSaves.dir(context.filesDir)).forEach { files.put(JSONObject().put("name", it.name).put("size", it.size).put("modified", it.modified / 1000.0)) }
         call.resolve(JSObject().put("files", files))
@@ -1733,7 +1734,7 @@ class LibraryPlugin : Plugin() {
         val id = call.getString("id")!!
         val record = call.getString("record") ?: Store.activeRecord(id)
         val state = Store.saveReading(id, call.getInt("chapterId")!!, call.getInt("index")!!,
-            call.getDouble("at") ?: System.currentTimeMillis() / 1000.0, call.getObject("anchor"), record)
+            call.getDouble("at") ?: System.currentTimeMillis() / 1000.0, call.getObject("anchor"), record, call.getObject("rev"))
         call.resolve(JSObject.fromJSONObject(state))
         runCatching { StateSync.pushNow(context, id, record) }
     }
