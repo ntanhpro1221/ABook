@@ -7,6 +7,17 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Hồ sơ người nghe
+- Hai máy tính ghép với nhau: chỗ nghe, dấu trang và ghi chú của bạn đi đúng hồ sơ của bạn ở máy giữ sách, không đè lên hồ sơ của người khác đang chọn ở đó; đổi tên hay xoá hồ sơ ở một máy cũng sang máy kia.
+- Điện thoại làm máy giữ sách: máy khác đã ghép (máy tính hay điện thoại) đẩy chỗ nghe, dấu trang, tên và việc xoá hồ sơ của bạn lên đúng hồ sơ của bạn, không còn trộn vào hồ sơ người khác đang chọn trên điện thoại.
+- Điện thoại ghép thêm máy tính (hay điện thoại khác) từ danh sách thiết bị: sau mỗi lần đẩy chỗ nghe, hồ sơ nghe vẫn ở đúng cuốn bạn đang mở, không còn tách sang một cuốn trùng mã hay sinh hồ sơ Mặc định mới.
+- Điện thoại đang phát một hồ sơ mà máy khác xoá hồ sơ ấy: phát dừng và nạp lại ở hồ sơ còn lại, chỗ nghe cuối của hồ sơ đã xoá không bị ghi sang người còn lại hay đẻ hồ sơ mới; chỗ nghe, tốc độ, dấu trang, phiên nghe luôn ghi vào hồ sơ bạn đã mở lúc bắt đầu phát, kể cả khi bạn đổi hồ sơ ở màn khác.
+- Điện thoại thấy đủ mọi hồ sơ nghe của cuốn mà máy tính đã tạo (không chỉ hồ sơ vừa đồng bộ và hồ sơ đang chọn); chọn một hồ sơ chưa từng tải thì điện thoại lấy chỗ nghe của hồ sơ ấy từ máy tính rồi mới nghe.
+- Đổi tốc độ hay giọng đọc riêng khi đang nghe một hồ sơ: lưu đúng vào hồ sơ đang nghe (máy tính và điện thoại), không rơi sang hồ sơ người khác vừa chọn; hồ sơ đã xoá hay chuyển sang sách khác báo rõ thay vì ghi nhầm.
+- Giọng đọc riêng của mỗi hồ sơ nhớ riêng trên cả máy tính lẫn điện thoại: hai người cùng nghe một cuốn không đè giọng của nhau, hồ sơ mới chưa chọn giọng đọc bằng giọng mặc định chứ không kế thừa giọng hồ sơ trước.
+- Nhật ký đêm ("Tối qua bạn nghe tới đâu?") thuộc về từng hồ sơ: hẹn giờ ngủ của người khác trong cùng cuốn là một đêm mới, thẻ buổi sáng chỉ hiện đêm của hồ sơ bạn đang dùng, và lần lưu muộn không rơi vào hồ sơ khác (máy tính và điện thoại).
+- Cuốn chỉ có một hồ sơ nghe: menu "Tuỳ chọn khác" có thêm "Đổi tên hồ sơ…" và "Xoá hồ sơ…" (trước đây phải tạo hồ sơ thứ hai mới đổi tên hay xoá được).
+
 ## [0.4.130] - 2026-10-23
 
 ### Hiệu năng
@@ -34,15 +45,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - “Nghe trên máy này” / “Nghe ở đây” chờ loa, TV dừng xong mới phát tiếng ở máy bạn (nút quay tròn trong lúc chờ); loa, TV không dừng được thì báo và giữ nguyên chỗ đang phát, không để hai nơi cùng ra tiếng.
 - Cuốn có nhạc nền riêng đang bật: trước khi phát ra loa, TV có dòng báo “Loa, TV chỉ phát giọng đọc”, vì nhạc nền chưa phát được ở đó.
 - Điện thoại phát ra loa, TV: bìa của cuốn hiện trên TV và trên khung điều khiển ở màn hình khoá; Tạm dừng một loa không làm khung điều khiển nhảy sang loa khác đang phát.
-- Hai máy tính ghép với nhau: chỗ nghe, dấu trang và ghi chú của bạn đi đúng hồ sơ của bạn ở máy giữ sách, không đè lên hồ sơ của người khác đang chọn ở đó; đổi tên hay xoá hồ sơ ở một máy cũng sang máy kia.
-- Điện thoại làm máy giữ sách: máy khác đã ghép (máy tính hay điện thoại) đẩy chỗ nghe, dấu trang, tên và việc xoá hồ sơ của bạn lên đúng hồ sơ của bạn, không còn trộn vào hồ sơ người khác đang chọn trên điện thoại.
-- Điện thoại ghép thêm máy tính (hay điện thoại khác) từ danh sách thiết bị: sau mỗi lần đẩy chỗ nghe, hồ sơ nghe vẫn ở đúng cuốn bạn đang mở, không còn tách sang một cuốn trùng mã hay sinh hồ sơ Mặc định mới.
-- Điện thoại đang phát một hồ sơ mà máy khác xoá hồ sơ ấy: phát dừng và nạp lại ở hồ sơ còn lại, chỗ nghe cuối của hồ sơ đã xoá không bị ghi sang người còn lại hay đẻ hồ sơ mới; chỗ nghe, tốc độ, dấu trang, phiên nghe luôn ghi vào hồ sơ bạn đã mở lúc bắt đầu phát, kể cả khi bạn đổi hồ sơ ở màn khác.
-- Điện thoại thấy đủ mọi hồ sơ nghe của cuốn mà máy tính đã tạo (không chỉ hồ sơ vừa đồng bộ và hồ sơ đang chọn); chọn một hồ sơ chưa từng tải thì điện thoại lấy chỗ nghe của hồ sơ ấy từ máy tính rồi mới nghe.
-- Đổi tốc độ hay giọng đọc riêng khi đang nghe một hồ sơ: lưu đúng vào hồ sơ đang nghe (máy tính và điện thoại), không rơi sang hồ sơ người khác vừa chọn; hồ sơ đã xoá hay chuyển sang sách khác báo rõ thay vì ghi nhầm.
-- Giọng đọc riêng của mỗi hồ sơ nhớ riêng trên cả máy tính lẫn điện thoại: hai người cùng nghe một cuốn không đè giọng của nhau, hồ sơ mới chưa chọn giọng đọc bằng giọng mặc định chứ không kế thừa giọng hồ sơ trước.
-- Nhật ký đêm ("Tối qua bạn nghe tới đâu?") thuộc về từng hồ sơ: hẹn giờ ngủ của người khác trong cùng cuốn là một đêm mới, thẻ buổi sáng chỉ hiện đêm của hồ sơ bạn đang dùng, và lần lưu muộn không rơi vào hồ sơ khác (máy tính và điện thoại).
-- Cuốn chỉ có một hồ sơ nghe: menu "Tuỳ chọn khác" có thêm "Đổi tên hồ sơ…" và "Xoá hồ sơ…" (trước đây phải tạo hồ sơ thứ hai mới đổi tên hay xoá được).
 
 ### Cài đặt và trợ năng
 
