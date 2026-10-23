@@ -2,9 +2,10 @@ import { App as CapacitorApp } from "@capacitor/app";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Download, Library, Settings, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { HashRouter, NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
+import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
-import { Toaster, toast } from "sonner";
+import { Toaster } from "sonner";
+import { toast } from "@/shared/toast";
 import type { ListenBook } from "@/listen/model";
 import { EbookLibrary } from "./plugins";
 import { BookScreen } from "@/listen/BookScreen";
@@ -37,9 +38,10 @@ import { useOldSaveNotice } from "./oldSaveList";
 import { StudioChipHost } from "./StudioOpen";
 import { UpdateNotice } from "./UpdateNotice";
 import { applyTheme, loadSettings, syncSettings } from "./settings";
-import { dismissTopLayer } from "./backLayers";
+import { backStep, dismissTopLayer, historyIndex } from "./backLayers";
 import { useBookBytes, type RemovableFromPhone } from "./storage";
 import { formatSize } from "@/shared/format";
+import { MotionHashRouter } from "@/shared/MotionRouter";
 
 // Vỏ Android: cùng các màn hình Nghe với máy tính, bố cục một tay - điều hướng dưới đáy, trình phát thu nhỏ ngay
 // trên thanh điều hướng, nút Back của máy đóng menu / hộp thoại đang mở, rồi màn hình đang nghe, rồi mới lùi trang.
@@ -70,17 +72,20 @@ function ImportWatcher() {
 function BackButton() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { expanded, setExpanded } = useNowPlaying();
+  // Đăng ký MỘT lần, đọc trang hiện tại qua ref: trước đây mỗi lần đổi trang lại gỡ / gắn listener (bất đồng bộ), Back bấm đúng lúc ấy rơi vào khoảng trống.
+  const now = useRef({ navigate, pathname: location.pathname });
+  now.current = { navigate, pathname: location.pathname };
   useEffect(() => {
     const handle = CapacitorApp.addListener("backButton", () => {
-      // Menu / hộp thoại / tấm trượt đang mở: đóng lớp ấy trước (android/backLayers.ts), chưa đụng tới màn Đang nghe hay trang.
-      if (dismissTopLayer()) return;
-      if (expanded) setExpanded(false);
-      else if (location.pathname !== "/") navigate(-1);
+      // Lớp trên cùng trước (android/backLayers.ts): hộp / menu Radix, lớp tự đăng ký (màn Đang nghe, panel, bước con…), thông báo có nút.
+    if (dismissTopLayer()) return;
+      const step = backStep(now.current.pathname, historyIndex());
+      if (step.kind === "history") now.current.navigate(-1);
+      else if (step.kind === "replace") now.current.navigate(step.to, { replace: true });
       else void CapacitorApp.minimizeApp();
     });
     return () => void handle.then((listener) => listener.remove());
-  }, [navigate, location.pathname, expanded, setExpanded]);
+  }, []);
   return null;
 }
 
@@ -90,11 +95,19 @@ function Tab({ to, icon: Icon, label }: { to: string; icon: typeof Library; labe
       to={to}
       end={to === "/"}
       className={({ isActive }) =>
-        cn("flex flex-1 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium", isActive ? "text-accent-text" : "text-fg-3")
+        cn(
+          "flex flex-1 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium transition-colors duration-(--motion-medium) ease-standard",
+          isActive ? "text-accent-text" : "text-fg-3",
+        )
       }
     >
-      <Icon className="glyph-22" strokeWidth={1.9} />
-      {label}
+      {({ isActive }) => (
+        <>
+          {/* Tab vừa chọn: biểu tượng nhún nhẹ lên, màu chuyển dần (trang đổi bằng "fade through" - MotionHashRouter). */}
+          <Icon className={cn("motion-tab-icon glyph-22 transition-transform duration-(--motion-medium) ease-decelerate", isActive && "-translate-y-px scale-110")} strokeWidth={1.9} />
+          {label}
+        </>
+      )}
     </NavLink>
   );
 }
@@ -115,7 +128,7 @@ function MobileShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex h-full flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       {/* Màn "Đang nghe" phủ kín: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}
-      <main ref={main} inert={expanded} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
+      <main ref={main} inert={expanded} className="page-motion min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
       <div className="contents" inert={expanded}>
         <RemotePlayerBars localBar={<PlayerBar compact />} />
       </div>
@@ -146,13 +159,12 @@ function EmptyLibrary() {
           {/* Người mới thường có sẵn một file truyện mà chưa có ABook trên máy tính: nghe ngay là việc chính (soát UX a7, như máy tính). */}
           <AddBookButton variant="primary" size="lg" />
           <Button variant="secondary" icon={Download} onClick={() => navigate("/devices")}>
-            Tải sách từ máy tính
+            Tải từ máy tính
           </Button>
         </div>
       }
     >
-      Có file EPUB, Word, PDF hay TXT thì thêm thẳng - nghe ngay bằng giọng đọc; file sách .abook (bạn bè gửi, tải về) cũng chọn ở cùng nút
-      này. Có ABook trên máy tính thì kết nối qua Wi-Fi rồi tải sách nói về, nghe được cả khi không có mạng.
+      Thêm truyện hoặc tải từ máy tính.
     </EmptyState>
   );
 }
@@ -238,8 +250,8 @@ function RemoveFromPhoneHost() {
       title={book?.partial ? `Xoá phần đã tải của “${book.title}”?` : `Xoá “${book?.title ?? ""}” khỏi điện thoại?`}
       description={
         book?.partial
-          ? `${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Đây là phần đã tải dở hay đã nhớ để nghe thẳng, chưa thành sách trên điện thoại. Xoá thì lần tải sau bắt đầu lại từ đầu; sách vẫn ở máy tính. Lỡ tay thì bấm Hoàn tác trong ${UNDO_SECONDS} giây.`
-          : `${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Bản trên điện thoại bị xoá hẳn để lấy lại chỗ trống; lỡ tay thì bấm Hoàn tác trong ${UNDO_SECONDS} giây. Sách của máy tính hay thiết bị đã ghép thì tải lại được, chỗ nghe đồng bộ lại từ máy ấy; sách mở từ file .abook thì mở lại file ấy.`
+          ? `${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Phần tải dở; lần sau tải lại từ đầu, sách vẫn ở máy tính. Hoàn tác được trong ${UNDO_SECONDS} giây.`
+          : `${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Xoá hẳn khỏi điện thoại; Hoàn tác được trong ${UNDO_SECONDS} giây. Sách từ máy đã ghép thì tải lại được.`
       }
     >
       <div className="dialog-actions">
@@ -276,7 +288,7 @@ export function AndroidApp() {
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const follow = () => {
-      if (loadSettings().theme === "system") applyTheme("system");
+      if (loadSettings().theme === "system") applyTheme("system", true);
     };
     media.addEventListener("change", follow);
     return () => media.removeEventListener("change", follow);
@@ -286,7 +298,7 @@ export function AndroidApp() {
       <SourceProvider source={androidSource}>
         <PlayerProvider engine={engine} keyboard={false} fadeSeconds={loadSettings().sleepFadeSeconds} extendMinutes={loadSettings().sleepExtendMinutes}>
           <ClipBridge>
-            <HashRouter>
+            <MotionHashRouter>
               <BackButton />
               <DownloadWatcher />
               <UpdateNotice />
@@ -321,10 +333,10 @@ export function AndroidApp() {
                   />
                   <Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} />
                   <Route path="/devices" element={<DevicesScreen />} />
-                  <Route path="/settings" element={<SettingsScreen key={synced} />} />
+                  <Route path="/settings/:group?" element={<SettingsScreen key={synced} />} />
                 </Routes>
               </MobileShell>
-            </HashRouter>
+            </MotionHashRouter>
           </ClipBridge>
         </PlayerProvider>
       </SourceProvider>

@@ -1,6 +1,7 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { BatteryCharging } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Button, LiveText } from "@/shared/ui";
 import { backgroundHelp } from "./backgroundHelp";
 import { EbookLibrary } from "./plugins";
@@ -65,15 +66,15 @@ interface NoteWords {
 
 /** Thuần hiển thị: chỉ hiện khi biết chắc ABook CHƯA được chạy nền. */
 export function BackgroundNoteView({ status, onOpen = () => void openBackgroundSettings(), note = EXPORT_NOTE, action = EXPORT_ACTION }: { status: BackgroundStatus | undefined; onOpen?: () => void } & NoteWords) {
-  if (!status || status.backgroundAllowed) return null;
+  if (!status || status.backgroundAllowed) return <MotionRegion />;
   return (
-    <div role="note" className="mt-2 rounded-lg border border-line bg-hover/40 p-2.5">
+    <MotionRegion as="div" role="note" className="mt-2 rounded-lg border border-line bg-hover/40 p-2.5">
       <p className="text-xs leading-snug text-fg-2">{note}</p>
       <Button size="sm" variant="ghost" icon={BatteryCharging} className="mt-1 h-auto min-h-8 justify-start whitespace-normal py-1.5 text-left" onClick={onOpen}>
         {action}
       </Button>
       <p className="px-1 text-xs leading-snug text-fg-2">{backgroundHelp(status.manufacturer)}</p>
-    </div>
+    </MotionRegion>
   );
 }
 

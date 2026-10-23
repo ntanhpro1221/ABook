@@ -33,11 +33,10 @@ export async function notificationState(api: Pick<NotificationApi, "notification
   }
 }
 
-export const NOTIFICATION_WHY = "Để ABook báo khi sách xong, có việc cần duyệt hay xuất MP3 xong, cho phép ABook hiện thông báo.";
+export const NOTIFICATION_WHY = "Cho phép thông báo để biết khi sách xong hay xuất xong.";
 
 /** Dòng ở Cài đặt › Nghe khi chưa có quyền: nói điều thật sự mất (thông báo khác), và rằng nút nghe vẫn dùng được. */
-export const NOTIFICATION_ROW_HINT =
-  "ABook chưa được phép hiện thông báo nên sẽ không báo khi sách xong, có việc cần duyệt hay xuất MP3 xong. Nút tạm dừng, tua ở màn khoá vẫn dùng được.";
+export const NOTIFICATION_ROW_HINT = "Đang tắt: không báo khi sách xong. Nút tạm dừng vẫn chạy.";
 
 /** Nói vì sao rồi mời xin quyền, tối đa MỘT lần (mã thông báo "notification-access" nằm trong PRIORITY_TOASTS của listen/musicHint.ts: nhắc nhạc chờ nó) (nhớ lại, kể cả khi người nghe bỏ qua câu này). `notify` hiện câu + nút "Cho phép" (gọi `allow`).
  *  Trả true nếu đã mời. */

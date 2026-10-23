@@ -1,10 +1,14 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { MotionRegion } from "@/shared/MotionRegion";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, KeyRound, Play, Square, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Button, StatusPill, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { MoreInfo } from "@/shared/SettingsNav";
+import { Collapse, Fold, useFold } from "@/shared/Collapse";
 import { cn } from "@/shared/cn";
 import type { ReadAloudVoice } from "./readAloud";
 import {
+  DEFAULT_VOICE_EVENT,
   ONLINE_KEYS_CHANGED_EVENT,
   ONLINE_NOTICE,
   SAMPLE_TEXT,
@@ -14,11 +18,11 @@ import {
   resolveVoice,
 } from "./readAloudVoice";
 import { genderLabel, VOICE_GROUPS, voiceSections } from "./voiceGroups";
-import { ReadAloudStorage, type ReadAloudStorageApi } from "./ReadAloudStorage";
+import { spokenVoiceName } from "./onlineConsent";
 
-// Cài đặt → "Giọng đọc" (máy tính và điện thoại dùng chung): giọng mặc định của "Nghe ngay", nghe thử từng giọng, gợi ý giọng nam / nữ, câu nói
-// rõ chữ của sách đi đâu với từng nhóm giọng trực tuyến, và mục "Giọng trực tuyến dùng khóa của bạn" (nhập khóa, Kiểm tra, Xóa). Mỗi nền tảng
-// đưa vào một `VoiceSettingsApi` (máy tính: máy chủ cục bộ abook/readaloud; điện thoại: plugin ReadAloud).
+// Cài đặt › Giọng đọc (máy tính và điện thoại dùng chung): giọng mặc định của "Nghe ngay", nghe thử từng giọng, gợi ý giọng nam / nữ, câu nói
+// rõ chữ của sách đi đâu với từng nhóm giọng trực tuyến, và phần gập "Khoá riêng" (nhập khóa, Kiểm tra, Xóa) ở cuối. Mỗi nền tảng
+// đưa vào một `VoiceSettingsApi` (máy tính: máy chủ cục bộ abook/readaloud; điện thoại: plugin ReadAloud). Bộ nhớ bản đọc nằm ở Cài đặt › Nâng cao.
 
 /** Một nhà cung cấp giọng dùng khoá riêng như máy chủ / lõi điện thoại mô tả (abook/readaloud/byok.py `describe`, OnlineVoices.kt). */
 export interface OnlineProviderInfo {
@@ -53,8 +57,8 @@ export interface VoiceSettingsApi {
 
 /** Lấy khóa ở đâu - nói theo những gì người dùng thấy trên trang của nhà cung cấp. */
 const KEY_HELP: Record<string, string> = {
-  azure: "Trên Azure: tạo tài nguyên Speech (bậc F0 miễn phí), mở mục “Keys and Endpoint” (Khoá và địa chỉ), chép “Key 1” (Khoá 1) và “Location/Region” (Vùng, ví dụ southeastasia).",
-  google: "Trên Google Cloud: bật “Cloud Text-to-Speech API” (dịch vụ đọc văn bản), rồi vào “APIs & Services” (API và dịch vụ) › “Credentials” (Thông tin xác thực) › “Create credentials” (Tạo thông tin xác thực) › “API key” (Khoá API).",
+  azure: "Azure: tạo Speech (F0 miễn phí) › Keys and Endpoint. Chép Key 1 và Location/Region (ví dụ southeastasia).",
+  google: "Google Cloud: bật Cloud Text-to-Speech API. Vào APIs & Services › Credentials › Create credentials › API key.",
   fpt: "Trên console.fpt.ai: đăng nhập, mở mục “Text to Speech” (Chuyển văn bản thành giọng nói), chép “API key” (khoá API).",
   viettel: "Trên viettelai.vn: đăng nhập, mở Tài khoản › Token, chép token.",
 };
@@ -126,7 +130,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       if (!key.trim() && !info.hasKey) throw new Error("Dán khóa trước đã.");
       await api.saveKey(info.id, key.trim(), region.trim());
       setKey("");
-      setResult({ ok: true, text: "Đã lưu khóa trên máy này. Chưa kiểm tra - bấm “Kiểm tra” khi muốn biết dùng được chưa." });
+      setResult({ ok: true, text: "Đã lưu khoá. Bấm “Kiểm tra” để thử." });
     } catch (error) {
       setResult({ ok: false, text: errorText(error) });
     } finally {
@@ -145,7 +149,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       const checked = await api.checkKey(info.id);
       setKey("");
       setResult(checked.ok
-        ? { ok: true, text: `Dùng được - ${checked.voices ?? checked.provider.voices} giọng tiếng Việt đã hiện trong danh sách giọng.` }
+        ? { ok: true, text: `Dùng được · ${checked.voices ?? checked.provider.voices} giọng tiếng Việt` }
         : { ok: false, text: checked.message || "Khóa chưa dùng được." });
     } catch (error) {
       setResult({ ok: false, text: errorText(error) });
@@ -169,7 +173,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
   };
   const status = info.valid ? <StatusPill tone="success" label={`Dùng được · ${info.voices} giọng`} /> : info.hasKey ? <StatusPill tone="warning" label="Chưa dùng được" /> : null;
   return (
-    <div className="rounded-xl border border-line p-3.5" data-provider={info.id}>
+    <MotionRegion as="div" className="rounded-xl border border-line p-3.5" data-provider={info.id}>
       <button
         type="button"
         aria-expanded={open}
@@ -177,7 +181,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
         className="touch-hit flex w-full flex-wrap items-center justify-between gap-2 text-left"
       >
         <span className="flex items-center gap-1.5 text-sm font-semibold">
-          <ChevronDown className={cn("size-4 shrink-0 text-fg-3 transition-transform", !open && "-rotate-90")} aria-hidden />
+          <ChevronDown className={cn("fold-chevron size-4 shrink-0 text-fg-3 transition-transform", !open && "-rotate-90")} aria-hidden />
           {info.name}
         </span>
         {status}
@@ -186,7 +190,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">
         {info.limits.free}. {info.limits.timings === "exact" ? "Tô đúng từng chữ đang đọc." : "Tô từng chữ đang đọc theo ước lượng."}
       </p>
-      <p className="mt-1 text-xs text-fg-3 text-pretty">{KEY_HELP[info.id]}</p>
+      <MoreInfo label="Lấy khoá ở đâu?" className="mt-1">{KEY_HELP[info.id]}</MoreInfo>
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         <label className="min-w-0 flex-1 basis-56">
           <span className="sr-only">Khóa {info.name}</span>
@@ -226,20 +230,34 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       </div>
       {result && <p className={cn("mt-2 text-[0.8125rem] text-pretty", result.ok ? "text-success" : "text-danger")} role="status">{result.text}</p>}
       </div>}
-    </div>
+    </MotionRegion>
   );
+}
+
+/** Tên giọng mặc định cho dòng tóm tắt ở trang gốc Cài đặt ("Hoài My"); "" khi máy chưa báo giọng nào. */
+export function useDefaultVoiceName(list: () => Promise<ReadAloudVoice[]>): string {
+  const { data } = useQuery({ queryKey: ["readaloud", "voices"], queryFn: list, staleTime: 60_000 });
+  const [chosen, setChosen] = useState(defaultVoice);
+  useEffect(() => {
+    const changed = () => setChosen(defaultVoice());
+    window.addEventListener(DEFAULT_VOICE_EVENT, changed);
+    return () => window.removeEventListener(DEFAULT_VOICE_EVENT, changed);
+  }, []);
+  const voice = data?.length ? resolveVoice(data, chosen) : undefined;
+  return voice ? spokenVoiceName(voice.name) : "";
 }
 
 /** Mục "Giọng đọc" của Cài đặt. `deviceHint`: câu cho khi máy chưa có giọng tiếng Việt của hệ điều hành (mỗi nền tảng cài theo cách riêng) - dòng
  *  phụ dưới các giọng tải được trong app. */
 /** `modules`: phần tải thêm giọng của nền tảng (máy tính: thẻ "Giọng VieNeu" và "Giọng Supertonic" - VieneuModuleCard), nhận `reload` để danh sách giọng hỏi lại khi
  *  giọng mới vừa tải xong. */
-export function VoiceSettings({ api, deviceHint, modules, storage }: { api: VoiceSettingsApi; deviceHint: string; modules?: (reload: () => void) => ReactNode; storage?: ReadAloudStorageApi }) {
+export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettingsApi; deviceHint: string; modules?: (reload: () => void) => ReactNode }) {
   const client = useQueryClient();
   const [voices, setVoices] = useState<ReadAloudVoice[] | null>(null);
   const [providers, setProviders] = useState<OnlineProviderInfo[]>([]);
   const [chosen, setChosen] = useState(defaultVoice);
   const [loadError, setLoadError] = useState("");
+  const [keysOpen, setKeysOpen] = useFold("voice.keys");
   const sample = useVoiceSample(api.sample);
   const load = useCallback(async () => {
     try {
@@ -262,10 +280,12 @@ export function VoiceSettings({ api, deviceHint, modules, storage }: { api: Voic
   const current = voices?.length ? resolveVoice(voices, chosen) : undefined;
   // Máy chưa có giọng tiếng Việt của hệ điều hành: nhóm "Giọng của máy" mở đầu bằng các giọng tải được ngay trong app (thẻ `modules`), câu cài
   // giọng của Windows / điện thoại thành dòng phụ - không còn là đường duy nhất để nghe không cần mạng (soát a64).
-  const modulesInDevice = Boolean(modules && voices && !voices.some((voice) => voice.provider === "device"));
+  const keysShown = keysOpen;
+
   return (
-    <div className="grid gap-5">
-      {loadError && <p className="text-[0.8125rem] text-danger">{loadError}</p>}
+    <MotionRegion as="div" className="grid grid-cols-[minmax(0,1fr)] gap-5">
+      {loadError && <p role="alert" className="text-[0.8125rem] text-danger">{loadError}</p>}
+      {current && <p className="text-sm font-medium">Đang dùng: {current.name}</p>}
       {voices === null && <p className="text-[0.8125rem] text-fg-2">Đang tìm các giọng…</p>}
       {voices &&
         VOICE_GROUPS.map(({ provider, title }) => {
@@ -276,11 +296,9 @@ export function VoiceSettings({ api, deviceHint, modules, storage }: { api: Voic
           // giọng mặc định nằm ở nhóm khác). Nút "Thử giọng" chỉ vào vòng Tab ở đúng giọng ấy - 27 giọng không thành 27 điểm Tab.
           const ids = voiceSections(list).flatMap((section) => section.voices.map(({ voice }) => voice.id));
           return (
-            <div key={provider}>
-              <div className="mb-1 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</div>
+            <Fold key={provider} storageKey={`voice.provider.${provider}`} title={title} summary={`${list.length} giọng${current?.provider === provider ? " · đang dùng" : ""}`} bodyClassName="px-3 pb-3">
               {/* Thẻ tải giọng và dòng gợi ý đứng NGOÀI nhóm radio: nhóm giọng rỗng không được nhận phím của thẻ tốc độ nằm trong nó (soát a100 V1). */}
-              {!list.length && modulesInDevice && <div className="mt-2 grid gap-5">{modules?.(() => void load())}</div>}
-              {!list.length && <p className={cn("text-pretty", modulesInDevice ? "mt-3 text-xs text-fg-3" : "py-1 text-[0.8125rem] text-fg-2")}>{deviceHint}</p>}
+              {!list.length && <p className={cn("text-pretty", "py-1 text-[0.8125rem] text-fg-2")}>{deviceHint}</p>}
               {list.length > 0 && (
               <div
                 role="radiogroup"
@@ -344,26 +362,36 @@ export function VoiceSettings({ api, deviceHint, modules, storage }: { api: Voic
               </div>
               )}
               {notice && list.length > 0 && <p className="mt-1 text-xs text-fg-2 text-pretty">{notice}</p>}
-            </div>
+            </Fold>
           );
         })}
-      {!modulesInDevice && modules?.(() => void load())}
-      {storage && <ReadAloudStorage api={storage} />}
+      {modules && modules(() => void load())}
       {providers.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold">Giọng trực tuyến dùng khóa của bạn</h3>
-          <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">
-            Có tài khoản ở một trong các dịch vụ dưới đây thì dán khóa vào để dùng giọng của họ. Khi đọc, chữ của sách được gửi tới dịch vụ đó, và
-            dịch vụ có thể tính tiền vào tài khoản của bạn khi vượt phần miễn phí. Khóa chỉ lưu trên máy này. Khóa hết hạn mức hay bị từ chối thì
-            đoạn ấy tạm đọc bằng giọng Edge hoặc giọng của máy, không dừng.
-          </p>
-          <div className="mt-3 grid gap-3">
-            {providers.map((info) => (
-              <KeyCard key={info.id} info={info} api={api} onChanged={keysChanged} />
-            ))}
-          </div>
+          {/* Hiếm dùng: gấp sẵn, nhớ lựa chọn; số khoá luôn thấy ở đầu mục. */}
+          <button
+            type="button"
+            aria-expanded={keysShown}
+            onClick={() => setKeysOpen(!keysOpen)}
+            className="touch-hit flex w-full items-center justify-between gap-2 text-left"
+          >
+            <h3 className="text-sm font-semibold">Khoá giọng trực tuyến</h3>
+            {providers.some((info) => info.hasKey) && <span className="ml-auto text-xs text-fg-2">{providers.filter((info) => info.hasKey).length} khoá</span>}
+            <ChevronDown className={cn("size-4 shrink-0 text-fg-3 transition-transform", !keysShown && "-rotate-90")} aria-hidden />
+          </button>
+          <Collapse open={keysShown}>
+              <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">Chữ của sách gửi tới dịch vụ ấy; có thể bị tính tiền.</p>
+              <MoreInfo className="mt-1">
+                Khoá chỉ lưu trên máy. Dịch vụ có thể tính phí; lỗi khoá thì tạm dùng Edge hoặc giọng máy.
+              </MoreInfo>
+              <div className="mt-3 grid gap-3">
+                {providers.map((info) => (
+                  <KeyCard key={info.id} info={info} api={api} onChanged={keysChanged} />
+                ))}
+              </div>
+          </Collapse>
         </div>
       )}
-    </div>
+    </MotionRegion>
   );
 }

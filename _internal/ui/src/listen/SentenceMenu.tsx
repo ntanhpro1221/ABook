@@ -1,6 +1,7 @@
+import { useBackLayer } from "@/shared/backStack";
 import { BookmarkPlus, Copy, Pencil, Play, X } from "lucide-react";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { lineEditing } from "@/shared/capabilities";
 import { excerpt } from "@/shared/format";
@@ -194,9 +195,11 @@ export function useSentenceMenu({
     );
   };
 
+  const barBox = useRef<HTMLDivElement>(null);
+  useBackLayer(selected !== null, () => select(null), barBox);
   const bar: ReactNode =
     selected !== null && script ? (
-      <div className="flex flex-col items-center gap-2">
+      <div ref={barBox} className="flex flex-col items-center gap-2">
         <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2">
           {canListen && (
             <button
@@ -210,7 +213,7 @@ export function useSentenceMenu({
             </button>
           )}
           <button type="button" onClick={() => bookmarkSentence(selected)} {...keepFocus} className={BAR_BUTTON}>
-            <BookmarkPlus className="size-4" /> <span className={BAR_LABEL}>Đặt dấu trang ở câu này</span>
+            <BookmarkPlus className="size-4" /> <span className={BAR_LABEL}>Đặt dấu trang</span>
           </button>
           {readingEdit && (
             <button

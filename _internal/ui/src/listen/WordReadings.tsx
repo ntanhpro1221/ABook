@@ -1,6 +1,8 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { useBackLayer } from "@/shared/backStack";
 import { Pause, Pencil, Trash2, Volume2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "@/shared/toast";
 import { Button, Dialog, IconButton } from "@/shared/ui";
 import {
   cleanSpoken,
@@ -131,6 +133,9 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
   const [picked, setPicked] = useState<PhraseSelection | null>(null);
   // "Nối thành cụm": chữ bấm kế tiếp mở rộng cụm tới chữ ấy (không thì bấm chữ nào cũng chỉ chọn riêng chữ đó - bấm nhầm không làm thành cụm, bố cục không nhảy).
   const [joining, setJoining] = useState(false);
+  const joinBox = useRef<HTMLDivElement>(null);
+  const joinButton = useRef<HTMLButtonElement>(null);
+  useBackLayer(word !== null && joining, () => setJoining(false), joinBox, joinButton);
   useEffect(() => {
     setJoining(false);
     const held = word ? wordCore(word) : "";
@@ -157,9 +162,9 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
           "Chọn từ máy đọc sai (thường là tên riêng), rồi gõ cách đọc đúng. Áp cho cả cuốn; chữ trong sách giữ nguyên."
         )
       }
-    >
+    ><MotionRegion>
       {chips > 1 && (
-        <div className="mb-3">
+        <div ref={joinBox} className="mb-3">
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Các từ trong câu">
             {tokens.map((token, at) =>
               token.core ? (
@@ -186,7 +191,7 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
             {single && !joining ? (
               <>
                 <span>Tên có nhiều chữ (vd “Hạ Vy”)?</span>
-                <Button size="sm" variant="ghost" type="button" onClick={() => setJoining(true)}>
+                <Button ref={joinButton} size="sm" variant="ghost" type="button" onClick={() => setJoining(true)}>
                   Nối thành cụm
                 </Button>
               </>
@@ -204,7 +209,7 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
         </div>
       )}
       {surface && <ReadingForm key={surface} bookId={bookId} surface={surface} current={readingFor(readings.data, surface)} aloud={aloud} onDone={onClose} />}
-    </Dialog>
+    </MotionRegion></Dialog>
   );
 }
 
@@ -214,19 +219,21 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
   const aloud = useReadAloudTry(bookId);
   const save = useSaveReading(bookId);
   const [editing, setEditing] = useState<string | null>(null);
+  const editBox = useRef<HTMLUListElement>(null);
+  useBackLayer(editing !== null, () => setEditing(null), editBox);
   const list: BookReading[] = readings.data ?? [];
   // Thiết bị chỉ được nghe: xem danh sách được, sửa / bỏ thì làm ở máy tính (nút bấm vào chỉ ra 403).
   const { data: info } = useAppInfo();
   const listenOnly = Boolean(info?.listenOnly);
   // Không đọc được danh sách thì nói thẳng - đừng bảo "chưa có từ nào" khi chỉ là chưa lấy được.
-  if (readings.isError) return <p className="text-xs text-danger">Chưa đọc được danh sách cách đọc: {(readings.error as Error).message}</p>;
-  if (readings.isPending) return <p className="text-xs text-fg-2">Đang đọc danh sách…</p>;
-  if (!list.length && listenOnly) return <p className="text-xs text-fg-2">Chưa có từ nào.</p>;
+  if (readings.isError) return <MotionRegion as="p" className="text-xs text-danger">Chưa đọc được danh sách cách đọc: {(readings.error as Error).message}</MotionRegion>;
+  if (readings.isPending) return <MotionRegion as="p" className="text-xs text-fg-2">Đang đọc danh sách…</MotionRegion>;
+  if (!list.length && listenOnly) return <MotionRegion as="p" className="text-xs text-fg-2">Chưa có từ nào.</MotionRegion>;
   if (!list.length) {
-    return <p className="text-xs text-fg-2">Chưa có từ nào. Ở màn đọc, giữ (hay bấm chuột phải) vào một từ đọc sai rồi chọn cách đọc.</p>;
+    return <MotionRegion as="p" className="text-xs text-fg-2">Chưa có từ nào. Ở màn đọc, giữ (hay bấm chuột phải) vào một từ đọc sai rồi chọn cách đọc.</MotionRegion>;
   }
   return (
-    <ul className="divide-y divide-line rounded-lg border border-line">
+    <MotionRegion as="ul" elementRef={editBox} className="divide-y divide-line rounded-lg border border-line">
       {list.map((item) => (
         <li key={item.surface} className="px-3 py-2">
           <div className="flex items-center gap-2">
@@ -272,6 +279,6 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
           <OnComputerOnly verb="Sửa cách đọc" />
         </li>
       )}
-    </ul>
+    </MotionRegion>
   );
 }

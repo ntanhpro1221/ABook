@@ -1,4 +1,5 @@
 import { DEFAULT_EXTEND_MINUTES, DEFAULT_FADE_SECONDS, EXTEND_CHOICES, FADE_CHOICES, SAFETY_STOP_CHOICES, choiceOr, cleanSleepSchedule } from "@/listen/sleep";
+import { withViewTransition } from "@/shared/motion";
 import { EbookLibrary, EbookPlayer } from "./plugins";
 
 // Tuỳ chọn của trình phát trên điện thoại. Lưu trong WebView (localStorage) và đẩy phần native cần biết xuống
@@ -132,11 +133,18 @@ export async function pushSettings(settings: PlayerSettings): Promise<void> {
   }).catch(() => undefined);
 }
 
-export function applyTheme(theme: PlayerSettings["theme"]): void {
+/** `animate`: người dùng vừa đổi (hay hệ thống tự chuyển sáng/tối khi app đang mở) - cả màn mờ chéo sang giao diện mới thay vì đổi màu
+ *  tức thì (shared/motion.ts withViewTransition). Lần dựng đầu thì không. */
+export function applyTheme(theme: PlayerSettings["theme"], animate = false): void {
   const dark = theme === "dark" || (theme !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  document.documentElement.dataset.theme = dark ? "dark" : "light";
-  // Thanh trạng thái theo giao diện vừa đặt (soát a66: đổi sang tối khi app đang mở, biểu tượng vẫn màu tối, dải trên cùng #303030 lệch thân app).
-  void EbookLibrary.systemBars({ dark, color: hexColor(getComputedStyle(document.body).backgroundColor) }).catch(() => undefined);
+  const next = dark ? "dark" : "light";
+  const set = () => {
+    document.documentElement.dataset.theme = next;
+    // Thanh trạng thái theo giao diện vừa đặt (soát a66: đổi sang tối khi app đang mở, biểu tượng vẫn màu tối, dải trên cùng #303030 lệch thân app).
+    void EbookLibrary.systemBars({ dark, color: hexColor(getComputedStyle(document.body).backgroundColor) }).catch(() => undefined);
+  };
+  if (animate && document.documentElement.dataset.theme !== next) withViewTransition(set, "none", undefined, (run) => run());
+  else set();
 }
 
 /** "rgb(14, 17, 21)" -> "#0e1115" (Android chỉ đọc dạng #rrggbb). */

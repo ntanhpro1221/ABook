@@ -19,8 +19,8 @@ vi.mock("@/studio/data", async (original) => ({
   useVoices: () => ({ data: [] }),
 }));
 vi.mock("sonner", () => ({ toast: { success: h.success, error: h.error, warning: vi.fn() } }));
-vi.mock("@/listen/VoiceSettings", () => ({ VoiceSettings: () => null }));
-import { SettingsScreen } from "./SettingsScreen";
+vi.mock("@/listen/VoiceSettings", () => ({ VoiceSettings: () => null, useDefaultVoiceName: () => "" }));
+import { AdvancedGroup } from "./SettingsScreen";
 
 // Đổi thư mục thư viện (soát a100 V3): "Đã đổi thư mục" chỉ hiện khi máy chủ đã nhận; bị từ chối thì không có lời báo thành công.
 type Node = { props?: Record<string, unknown> };
@@ -32,7 +32,8 @@ function walk(node: unknown, found: (node: Node) => boolean): Node[] {
 }
 function mount() {
   function Probe() {
-    h.tree = SettingsScreen();
+    // Thư mục thư viện ở Cài đặt › Nâng cao (a119).
+    h.tree = AdvancedGroup({ info: { dialogs: true, remote: false } as never });
     return null;
   }
   renderToString(

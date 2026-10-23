@@ -1,7 +1,8 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, Save } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { DiagnosticsView } from "@/shared/DiagnosticsView";
 import { downloadText, reportFileName, type DiagnosticsReport } from "@/shared/diagnostics";
 import { Button, Dialog, Skeleton } from "@/shared/ui";
@@ -16,8 +17,8 @@ export const VIEW_LINES = 400;
 export const SAVE_LINES = 2000;
 
 export const NEEDS_NEWER_TITLE = "Điện thoại cần bản ABook mới hơn";
-const NEEDS_NEWER_HELP = "Bản ABook trên điện thoại này chưa biết gửi nhật ký chẩn đoán. Cập nhật ABook trên điện thoại rồi bấm Làm mới.";
-const UNREACHABLE_HELP = "Trên điện thoại: mở ABook, vào Tải sách và bật “Cho máy khác nghe thư viện này”. Điện thoại và máy tính phải cùng mạng (Wi-Fi, hay mạng riêng ảo như Tailscale).";
+const NEEDS_NEWER_HELP = "Cập nhật ABook trên điện thoại rồi bấm Làm mới.";
+const UNREACHABLE_HELP = "Trên điện thoại: Tải sách › bật “Cho máy khác nghe thư viện này”. Cùng Wi-Fi hay Tailscale.";
 
 /** Lời báo cho một lần hỏi hỏng: câu của máy chủ (đã nói tên máy và lý do) và, nếu đáng, điều bạn có thể làm. */
 export function failureView(error: unknown): { title: string; help: string } {
@@ -28,17 +29,17 @@ export function failureView(error: unknown): { title: string; help: string } {
 }
 
 export function DiagnosticsBody({ report, error, loading }: { report?: DiagnosticsReport; error?: unknown; loading?: boolean }) {
-  if (loading && !report) return <Skeleton className="h-40" />;
+  if (loading && !report) return <MotionRegion><Skeleton className="h-40" /></MotionRegion>;
   if (error) {
     const { title, help } = failureView(error);
     return (
-      <div role="alert" className="space-y-2 rounded-xl border border-line p-3 text-sm">
+      <MotionRegion as="div" role="alert" className="space-y-2 rounded-xl border border-line p-3 text-sm">
         <p className="font-medium text-danger [overflow-wrap:anywhere]">{title}</p>
         {help && <p className="text-xs text-fg-2 text-pretty">{help}</p>}
-      </div>
+      </MotionRegion>
     );
   }
-  return report ? <DiagnosticsView report={report} /> : null;
+  return <MotionRegion>{report ? <DiagnosticsView report={report} /> : null}</MotionRegion>;
 }
 
 export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: { id: string; name: string }; open: boolean; onOpenChange: (open: boolean) => void }) {
@@ -77,7 +78,7 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
       open={open}
       onOpenChange={onOpenChange}
       title={`Chẩn đoán ${computer.name}`}
-      description="Nhật ký và tình trạng của điện thoại, lấy qua kết nối đã ghép. Có tên cuốn đang nghe; app lọc nhật ký hệ thống và che các dạng khóa, mã ghép, đường dẫn riêng, địa chỉ IP nhận diện được. Bạn nên xem lại trước khi gửi."
+      description="Nhật ký của điện thoại, có tên cuốn đang nghe; khoá, mã ghép, đường dẫn, IP đã được che. Xem lại trước khi gửi."
       width="max-w-2xl"
     >
       <div className="space-y-4">

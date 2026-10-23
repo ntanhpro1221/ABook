@@ -1,7 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { AnimatedRows } from "@/shared/MotionPresence";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioLines, Check, Pause, Play, RotateCcw, Search, UserPlus } from "lucide-react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
@@ -16,9 +18,9 @@ import { seenFor, warnElsewhere } from "./elsewhere";
 import { examplesPage, keepRequests, moreText, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
 import { decidedTitle, inboxLead, markNames, midSentence, narratorButtons, rerecordSentence, sentence } from "./workText";
 import { useProducingRefetch } from "./liveRefresh";
-import { focusCard, useCardFocus, type CardFocusEnds } from "./useCardFocus";
+import { useCardFocus, type CardFocusEnds } from "./useCardFocus";
 import type { WorkLists } from "./workFocus";
-import { letterShortcutsOn } from "@/shared/letterShortcuts";
+import { workKeyHandler } from "./workKeys";
 
 // "Việc cần duyệt" (docs/STUDIO_REVIEW.md, webui/work_items.py): chỗ máy nghi ngờ, xếp theo lợi trên mỗi lần bấm. Máy đã tự
 // quyết và dây chuyền KHÔNG chờ ai - đây là nơi người sửa ít nhất mà được nhiều nhất. Cách đọc tên sửa được ngay trên thẻ
@@ -394,7 +396,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           </Button>
         )}
       </form>
-      {tryIt.note && <div className="mt-1.5">{tryIt.note}</div>}
+      {tryIt.note}
       <ReadingProblem id={`${inputId}-problem`} problem={problem} suggestion={suggestion} onUse={use} />
     </div>
   );
@@ -866,6 +868,8 @@ type PickVoice = (person: { name: string; displayName: string }) => void;
 function UndoDecision({ bookId, item }: { bookId: string; item: WorkItem }) {
   const client = useQueryClient();
   const [asked, setAsked] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof window.setTimeout> | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(resetTimer.current), []);
   const undo = item.undo!;
   return (
     <Button
@@ -879,7 +883,8 @@ function UndoDecision({ bookId, item }: { bookId: string; item: WorkItem }) {
         setAsked(true);
         undoAction(client, bookId, undo.endpoint, undo.decisions, "Việc này trở lại chờ bạn duyệt.").onClick();
         // Không hoàn tác được (đã vào sách) thì thẻ còn đó - mở nút lại để thử khi đổi ý.
-        window.setTimeout(() => setAsked(false), 2500);
+        window.clearTimeout(resetTimer.current);
+        resetTimer.current = window.setTimeout(() => setAsked(false), 2500);
       }}
     >
       Hoàn tác
@@ -887,7 +892,7 @@ function UndoDecision({ bookId, item }: { bookId: string; item: WorkItem }) {
   );
 }
 
-function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoice, active = false }: { bookId: string; item: WorkItem; onOpenReview: OpenReview; onOpenScript?: OpenScript; onOpenNames?: OpenNames; onPickVoice?: PickVoice; active?: boolean }) {
+function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoice, active = false, exiting = false, as: Tag = "li" }: { as?: "li" | "div"; bookId: string; item: WorkItem; onOpenReview: OpenReview; onOpenScript?: OpenScript; onOpenNames?: OpenNames; onPickVoice?: PickVoice; active?: boolean; exiting?: boolean }) {
   // Thẻ chuỗi lượt đối đáp: đổi các câu xen kẽ (mặc định) hay cả chuỗi - câu "sẽ đổi" theo phạm vi đang chọn.
   const [scope, setScope] = useState<Scope>("alternate");
   // Thẻ vai phụ cả cuốn: câu người nghe bỏ chọn (mã câu), và mở cả danh sách hay chỉ vài câu đầu.
@@ -918,17 +923,17 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
   const openNames: OpenNames | undefined = onOpenNames && ((name) => onOpenNames(name, item.key));
   return (
     // tabIndex -1: J / K và "quyết xong thì sang thẻ kế" đặt tiêu điểm thật vào thẻ - trình đọc màn hình đọc thẻ đang chọn (soát a31 K4/K5).
-    <li
-      id={`work-${item.key}`}
-      data-work-key={item.key}
+    <Tag
+      id={exiting ? undefined : `work-${item.key}`}
+      data-work-key={exiting ? undefined : item.key}
       tabIndex={-1}
-      aria-labelledby={`work-${item.key}-title`}
+      aria-labelledby={exiting ? undefined : `work-${item.key}-title`}
       aria-current={active ? "true" : undefined}
       className={cn("scroll-mt-24 rounded-xl border bg-panel p-4", active ? "border-focus ring-1 ring-focus" : "border-line")}
     >
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="rounded-full bg-hover px-2 py-0.5 text-[0.6875rem] font-medium text-fg-2">{KIND_LABEL[item.kind]}</span>
-        <h3 id={`work-${item.key}-title`} className="text-[0.9375rem] font-semibold">{decidedTitle(item) ?? item.title}</h3>
+        <h3 id={exiting ? undefined : `work-${item.key}-title`} className="text-[0.9375rem] font-semibold">{decidedTitle(item) ?? item.title}</h3>
         {item.requested && item.undo && <UndoDecision bookId={bookId} item={item} />}
       </div>
       <p className="mt-1.5 text-sm text-fg-2">{item.problem}</p>
@@ -1010,7 +1015,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
           )}
         </div>
       )}
-    </li>
+    </Tag>
   );
 }
 
@@ -1087,8 +1092,8 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
         title={`Giữ cả ${keepable.length} thẻ “${KIND_LABEL[kind]}”?`}
         description={
           pronunciation
-            ? "Mọi tên trong các thẻ này giữ đúng cách máy đang đọc. Không câu nào phải thu lại; máy thôi hỏi. Hoàn tác được ngay sau đó."
-            : "Mọi câu trong các thẻ này giữ đúng người máy đang gán. Không câu nào phải thu lại; máy thôi hỏi. Hoàn tác được ngay sau đó."
+            ? "Giữ cách đọc tên như máy; không phải thu lại. Hoàn tác được."
+            : "Giữ người nói như máy gán; không phải thu lại. Hoàn tác được."
         }
       >
         <div className="mt-5 dialog-actions">
@@ -1185,30 +1190,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
   };
   const keys = useRef<{ items: WorkItem[] }>({ items: [] });
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.ctrlKey || event.metaKey || event.altKey) return;
-      // J / K / 1-9 tắt cùng các phím một chữ cái khác (Cài đặt › Phím tắt); Esc vẫn bỏ chọn. Menu / danh sách đang mở dùng phím của nó.
-      if (event.key !== "Escape" && !letterShortcutsOn()) return;
-      if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable=true], [role=dialog], [role=menu], [role=listbox]")) return;
-      const list = keys.current.items;
-      if (!list.length) return;
-      const current = cursorRef.current === null ? null : Math.min(cursorRef.current, list.length - 1);
-      if (event.key === "j" || event.key === "k") {
-        event.preventDefault();
-        const next = current === null ? 0 : Math.min(Math.max(current + (event.key === "j" ? 1 : -1), 0), list.length - 1);
-        setCursor(next);
-        window.setTimeout(() => focusCard(`work-${list[next].key}`, INBOX_ENDS), 0);
-      } else if (/^[1-9]$/.test(event.key) && current !== null) {
-        const choices = document.querySelectorAll<HTMLButtonElement>(`#work-${CSS.escape(list[current].key)} [data-choice]:not(:disabled)`);
-        const choice = choices[Number(event.key) - 1];
-        if (choice) {
-          event.preventDefault();
-          choice.click();
-        }
-      } else if (event.key === "Escape" && current !== null) {
-        setCursor(null);
-      }
-    };
+    const onKey = workKeyHandler(() => keys.current.items, () => cursorRef.current, setCursor, INBOX_ENDS);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // setCursor chỉ ghi ref + state - không cần gắn lại.
@@ -1239,12 +1221,12 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
     // setKind chỉ ghi state + gọi onKind - không cần gắn lại.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, kind, inPrecast]);
-  if (isLoading || !data) return <div className="mt-6 text-sm text-fg-2">Đang tìm những chỗ máy chưa chắc…</div>;
+  if (isLoading || !data) return <MotionRegion as="div" className="mt-6 text-sm text-fg-2">Đang tìm những chỗ máy chưa chắc…</MotionRegion>;
   if (!data.items.length) {
     return (
-      <EmptyState icon={AudioLines} title="Không có việc nào cần duyệt" className="py-10">
+      <MotionRegion><EmptyState icon={AudioLines} title="Không có việc nào cần duyệt" className="py-10">
         Máy chắc chắn về mọi thứ đã làm tới giờ.
-      </EmptyState>
+      </EmptyState></MotionRegion>
     );
   }
   // Việc đã quyết (chờ áp dụng) xuống mục thu gọn cuối trang và không tính vào số đếm.
@@ -1269,7 +1251,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
   lists.current = { open: keys.current.items.map((item) => item.key), decided: decided.map((item) => item.key) };
   const at = cursor === null ? null : Math.min(cursor, Math.max(items.slice(0, shown).length - 1, 0));
   return (
-    <div className="mt-5">
+    <MotionRegion as="div" className="motion-reveal mt-5">
       {/* Lời mở đầu theo trạng thái sách - soát UX 29-09: "đang chạy tiếp" hiện cả khi sách đã xong hay đang dừng. */}
       <p id="work-lead" tabIndex={-1} className="max-w-3xl text-sm text-fg-2">
         {inboxLead(book)}
@@ -1306,11 +1288,11 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
         Bàn phím: <Kbd>J</Kbd> <Kbd>K</Kbd> chọn thẻ · <Kbd>1</Kbd>–<Kbd>9</Kbd> bấm lựa chọn thứ N của thẻ (đếm từ trái sang) ·{" "}
         <Kbd>Esc</Kbd> bỏ chọn
       </p>
-      <ol className={cn("mt-3 space-y-3")}>
-        {items.slice(0, shown).map((item, index) => (
-          <Card key={item.key} bookId={bookId} item={item} active={index === at} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
-        ))}
-      </ol>
+      <AnimatedRows as="ol" className="mt-3 space-y-3" items={items.slice(0, shown)} keyOf={(item) => item.key}>
+        {(item, _index, state) => (
+          <Card as="div" key={item.key} bookId={bookId} item={item} exiting={state === "exit"} active={state !== "exit" && item.key === keys.current.items[at ?? -1]?.key} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
+        )}
+      </AnimatedRows>
       {items.length > shown && (
         <Button variant="secondary" size="sm" className="mt-4" onClick={() => setShown(shown + PAGE)}>
           Xem thêm {Math.min(PAGE, items.length - shown)} việc
@@ -1339,8 +1321,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
         <details className="mt-4 rounded-xl border border-line px-4 py-3">
           <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Chỉ áp khi làm lại phân tích · {later.length}</summary>
           <p className="mt-2 max-w-3xl text-pretty text-xs text-fg-2">
-            Những đoạn này đã phân tích xong: chọn bây giờ thì máy ghi lại, nhưng chỉ có tác dụng khi làm lại phân tích từ đầu (tạo lại
-            cuốn từ file truyện). Không cần quyết để sách chạy tiếp.
+            Chỉ có tác dụng khi làm lại phân tích từ đầu. Không cần quyết để sách chạy tiếp.
           </p>
           <ol className="mt-3 space-y-3">
             {later.map((item) => (
@@ -1359,6 +1340,6 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
           </ol>
         </details>
       )}
-    </div>
+    </MotionRegion>
   );
 }

@@ -40,14 +40,14 @@ export const VOICE_SPEED_OPTIONS: { value: VoiceSpeedChoice; label: string }[] =
 ];
 
 const DESCRIPTION: Record<VoiceSpeedChoice, string> = {
-  auto: "Máy tự chọn: đủ nhanh để vừa đọc vừa nghe thì giữ chất lượng cao nhất.",
-  quality: "Luôn đọc bằng bản hay nhất. Máy chậm thì có thể phải chờ giữa các đoạn - dùng “Làm trước” để nghe liền mạch.",
-  fast: "Đọc nhanh hơn, tiếng kém hơn một chút - hợp máy yếu.",
+  auto: "Máy kịp thì đọc bản hay nhất.",
+  quality: "Luôn đọc bản hay nhất; máy chậm có thể phải chờ.",
+  fast: "Nhanh hơn, tiếng kém hơn chút - hợp máy yếu.",
 };
 
 /** Câu dưới các nút chọn: lựa chọn ấy làm gì, và rằng sách bạn xuất ra luôn dùng bản hay nhất. */
 export function voiceSpeedDescription(choice: VoiceSpeedChoice): string {
-  return `${DESCRIPTION[choice]} Áp cho giọng Supertonic khi bạn nghe trực tiếp. Giọng VieNeu chỉ có một mức. Sách bạn xuất ra luôn dùng chất lượng cao nhất.`;
+  return `${DESCRIPTION[choice]} Chỉ áp cho giọng Supertonic; sách xuất ra luôn dùng bản hay nhất.`;
 }
 
 const TIER_LABEL: Record<VoiceSpeedTier, string> = { quality: "Chất lượng cao nhất", fast: "Nhanh hơn" };

@@ -58,7 +58,9 @@ describe("nút điều khiển khi đang dừng", () => {
     expect(out).toContain("Tạm dừng");
     expect(out).not.toContain("Đang dừng…");
     expect(out).not.toContain('disabled=""');
-    expect(out).toContain("</svg>Dừng</button>");
+    const stop = [...out.matchAll(/<button[^>]*>[\s\S]*?<\/button>/g)].map(([button]) => button).find((button) => button.replace(/<[^>]+>/g, "") === "Dừng");
+    expect(stop).toBeDefined();
+    expect(stop).not.toMatch(/disabled=""|aria-disabled="true"/);
   });
 
   it("đã bấm Dừng: nhãn 'Đang dừng…' và hai nút bị khoá, không còn nút Dừng nào bấm được (V1)", async () => {
@@ -70,7 +72,7 @@ describe("nút điều khiển khi đang dừng", () => {
     const stopping = buttons.find((button) => button.includes("Đang dừng…"));
     expect(pause).toContain('disabled=""');
     expect(stopping).toContain('aria-disabled="true"');
-    expect(out).not.toContain("</svg>Dừng</button>");
+    expect(buttons.some((button) => button.replace(/<[^>]+>/g, "") === "Dừng")).toBe(false);
   });
 });
 

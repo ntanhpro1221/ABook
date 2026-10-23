@@ -129,7 +129,7 @@ export function fastUnsupportedNote(status: Pick<VieneuStatus, "fastUnsupported"
 /** Câu dưới công tắc bản tăng tốc: nói điều người nghe thấy (đọc nhanh hơn hay đang đọc bằng bản thường), không nói cách làm. */
 export function acceleratedNote(state: VieneuAccelerated): string {
   if (!state.on) return "Đang đọc bằng bản thường.";
-  if (state.problem) return "Máy này chưa chạy được bản tăng tốc nên đang đọc bằng bản thường. Bấm “Thử lại tốc độ” để thử lại.";
+  if (state.problem) return "Máy này chưa chạy được bản tăng tốc, đang đọc bản thường.";
   return state.active ? "Đang đọc bằng bản tăng tốc." : "Bản tăng tốc sẽ dùng từ lần đọc kế.";
 }
 
@@ -146,16 +146,16 @@ export interface ModuleCopy {
 export const VIENEU_COPY: ModuleCopy = {
   key: "vieneu",
   name: "Giọng VieNeu",
-  title: "Giọng VieNeu · tải thêm, đọc ngay trên máy",
-  invite: "Đọc sách chỉ có chữ bằng giọng hay, ngay trên máy này - không cần mạng, chữ của sách không rời khỏi máy (app chỉ hỏi mạng lấy cấu hình và danh mục nhạc, không gửi chữ của sách). Tải một lần; tải xong máy tự thử vài giây xem có kịp đọc trực tiếp không.",
+  title: "Giọng VieNeu",
+  invite: "Giọng hay, đọc ngay trên máy, không cần mạng. Chữ của sách không rời máy.",
   tiers: ["turbo", "nano"],
 };
 
 export const SUPERTONIC_COPY: ModuleCopy = {
   key: "supertonic",
   name: "Giọng Supertonic",
-  title: "Giọng Supertonic · tải thêm, đọc ngay trên máy",
-  invite: "Mười giọng nam nữ đọc sách chỉ có chữ ngay trên máy này - nhẹ máy, không cần mạng, chữ của sách không rời khỏi máy (app chỉ hỏi mạng lấy cấu hình và danh mục nhạc, không gửi chữ của sách). Tải một lần; tải xong máy tự thử vài giây xem có kịp đọc trực tiếp không.",
+  title: "Giọng Supertonic",
+  invite: "Mười giọng nam nữ, nhẹ máy, không cần mạng. Chữ của sách không rời máy.",
   tiers: ["supertonic"],
 };
 
@@ -199,13 +199,13 @@ export interface VoiceUse {
  *  (máy này không có sách dùng giọng ấy, hay chưa hỏi được) - vẫn hỏi một câu ngắn. */
 export function removeAsk(use: VoiceUse | null): string {
   if (!use) return "Giọng sẽ không còn trên máy này cho tới khi bạn tải lại.";
-  if (!use.bookCount) return "Chưa cuốn nào trong thư viện này dùng giọng ấy. Gỡ xong, bạn tải lại được bất cứ lúc nào.";
+  if (!use.bookCount) return "Chưa cuốn nào dùng giọng này. Bạn tải lại được bất cứ lúc nào.";
   const titles = use.books.slice(0, 3).map((book) => `“${book.title}”`).join(", ");
   const more = use.bookCount > 3 ? ` và ${use.bookCount - 3} cuốn khác` : "";
   const who = `${use.bookCount} cuốn đang dùng giọng này (${titles}${more}), ${use.peopleCount} nhân vật.`;
   const rest = use.left
-    ? `${use.left} câu chưa thu của họ sẽ không đọc được tới khi bạn tải lại giọng hay đổi giọng khác; câu đã thu vẫn nghe được.`
-    : "Các câu đã thu vẫn nghe được; khi cần thu lại thì bạn phải tải lại giọng hay đổi giọng khác.";
+    ? `${use.left} câu chưa thu sẽ im tới khi bạn tải lại giọng hay đổi giọng khác; câu đã thu vẫn nghe được.`
+    : "Các câu đã thu vẫn nghe được.";
   return `${who} ${rest}`;
 }
 
@@ -229,7 +229,7 @@ export function moduleAdvice(vieneu: Pick<VieneuStatus, "state" | "choices" | "r
   if (has(vieneu) || has(supertonic)) return { advice: "", preselectSupertonic: false };
   const name = lowerFirst(tierName(vieneu.recommended === "nano" ? "nano" : "turbo"));
   return {
-    advice: `Chỉ cần tải một bộ giọng. Nên chọn ${name} (đã đánh dấu sẵn) - ABook dùng nó làm giọng mặc định khi đọc sách chỉ có chữ. Giọng Supertonic là lựa chọn thêm nếu bạn muốn nghe giọng khác.`,
+    advice: `Nên dùng ${name}; chỉ cần tải một bộ giọng.`,
     preselectSupertonic: false,
   };
 }
@@ -260,7 +260,7 @@ export function benchmarkLabel(tier: ModuleTier, result: VieneuBenchmark, live =
   const name = tierName(tier);
   if (result.rtf >= live) {
     const hour = Math.max(1, Math.round(result.rtf * 60));
-    return `${name}: máy này không kịp đọc trực tiếp (${seconds(result.rtf)} giây cho mỗi giây nghe). Vẫn nghe được bằng “Làm trước” trong nút Giọng đọc: mỗi giờ nghe máy cần làm trước khoảng ${hour} phút.`;
+    return `${name}: máy này không kịp đọc trực tiếp (${seconds(result.rtf)} giây cho mỗi giây nghe). Dùng “Làm trước”: mỗi giờ nghe cần ~${hour} phút.`;
   }
   const speed = result.rtf > 0 ? 1 / result.rtf : 0;
   return `${name}: đọc trực tiếp được - máy này đọc nhanh gấp ${seconds(speed)} lần tốc độ nghe; đoạn đầu chương có tiếng sau khoảng ${seconds(result.firstAudioMs / 1000)} giây.`;
@@ -269,13 +269,13 @@ export function benchmarkLabel(tier: ModuleTier, result: VieneuBenchmark, live =
 /** Lời đề nghị đổi giọng (không bao giờ tự đổi) và chữ trên nút. */
 export function suggestionText(suggestion: VieneuSuggestion): { message: string; action: string } {
   const slow = tierName(suggestion.tier);
-  const lead = `${slow} không theo kịp người nghe trên máy này (${seconds(suggestion.rtf)} giây cho mỗi giây nghe) - nghe trực tiếp có thể phải chờ giữa các đoạn. Giữ giọng này thì dùng “Làm trước”.`;
+  const lead = `${slow} đọc chậm trên máy này (${seconds(suggestion.rtf)} giây cho mỗi giây nghe). Giữ giọng này thì dùng “Làm trước”.`;
   if (suggestion.switchTo === "nano") {
     return suggestion.installed
-      ? { message: `${lead} Giọng VieNeu Nano đọc nhẹ máy hơn và đã có trên máy.`, action: "Dùng giọng VieNeu Nano" }
-      : { message: `${lead} Giọng VieNeu Nano đọc nhẹ máy hơn, hợp với máy này hơn.`, action: "Tải giọng VieNeu Nano" };
+      ? { message: `${lead} Giọng VieNeu Nano nhẹ hơn, đã có sẵn.`, action: "Dùng giọng VieNeu Nano" }
+      : { message: `${lead} Giọng VieNeu Nano nhẹ hơn, hợp máy này.`, action: "Tải giọng VieNeu Nano" };
   }
-  return { message: `${lead} Giọng trực tuyến không bắt máy làm việc này (cần mạng).`, action: "Dùng giọng trực tuyến" };
+  return { message: `${lead} Giọng trực tuyến nhẹ máy (cần mạng).`, action: "Dùng giọng trực tuyến" };
 }
 
 /** Câu chính của thẻ theo trạng thái. */

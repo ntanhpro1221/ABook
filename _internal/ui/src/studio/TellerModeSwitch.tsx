@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mic2 } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Switch } from "@/desktop/PhoneSync";
 import { cn } from "@/shared/cn";
 import { Button, Dialog } from "@/shared/ui";

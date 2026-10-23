@@ -1,9 +1,11 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bluetooth, CheckCircle2, ChevronRight, Copy, Download, FileAudio, Laptop, Link2, Loader2, Pencil, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi, X } from "lucide-react";
+import { Bluetooth, CheckCircle2, ChevronRight, Copy, Download, FileAudio, HardDrive, Laptop, Link2, Loader2, Pencil, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
+import { useBackLayer } from "@/shared/backStack";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
@@ -20,6 +22,9 @@ import { isDownloading, storedEntries, useStorage, type RemovableFromPhone, type
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { isUnpaired, nativeError, toastNativeError } from "./nativeError";
 import { useListenLibrary } from "@/listen/source";
+import { Collapse, Fold } from "@/shared/Collapse";
+import { useListPresence, withViewTransition } from "@/shared/motion";
+import { MoreInfo } from "@/shared/SettingsNav";
 import { EbookLibrary, type DownloadEvent, type RemoteBook, type ShareStatus } from "./plugins";
 
 // "Tải sách": lấy sách từ máy tính qua Wi-Fi. Ghép nối một lần bằng mã 6 số hiện trong Cài đặt của máy tính;
@@ -43,8 +48,7 @@ function ComputerIntro() {
         <h2 className="font-semibold">Có thêm máy tính thì sao?</h2>
       </div>
       <p className="mt-3 text-pretty text-fg-2">
-        Điện thoại đã tự đọc được mọi sách bằng Nghe ngay. ABook trên máy tính còn làm được sách nói nhiều giọng bằng Studio (cần card đồ hoạ
-        NVIDIA) - mỗi nhân vật một giọng - rồi gửi sang đây để bạn nghe tiếp trên điện thoại.
+        Máy tính có Studio làm sách nói nhiều giọng, rồi gửi sang đây để nghe.
       </p>
       <p className="mt-2 text-fg-2">Tải ABook cho máy tính (Windows) ở:</p>
       <p className="mt-1 select-text break-all font-medium text-fg">{DESKTOP_RELEASES.replace("https://", "")}</p>
@@ -65,7 +69,11 @@ function PairPanel() {
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
   const [computers, setComputers] = useState<{ host: string; port: number; name: string }[] | null>(null);
   const [target, setTarget] = useState<{ host: string; port: number; name: string } | null>(null);
-  const [manual, setManual] = useState(false);
+  const [manual, setManualNow] = useState(false);
+  // Tự tìm <-> nhập địa chỉ: mờ chéo cả khung (View Transition), không thay chỗ tức thì.
+  const setManual = (value: boolean) => withViewTransition(() => setManualNow(value));
+  // Khung "Nhập địa chỉ máy tính": Back của điện thoại quay về tự tìm máy, chưa rời trang.
+  useBackLayer(manual, () => setManual(false));
   const [address, setAddress] = useState("");
   const [code, setCode] = useState("");
   const [paired, setPaired] = useState<{ address: string; name: string; abook: boolean }[] | null>(null);
@@ -73,6 +81,8 @@ function PairPanel() {
   const [btAsk, setBtAsk] = useState<"explain" | "settings" | null>(null);
   // Lời giải thích hiện ở chỗ nút vừa bấm, thường sát mép dưới màn: cuộn cho thấy cả câu lẫn nút "Cho phép".
   const btBox = useRef<HTMLDivElement | null>(null);
+  const btButton = useRef<HTMLButtonElement>(null);
+  useBackLayer(btAsk !== null, () => setBtAsk(null), btBox, btButton);
   useEffect(() => {
     if (btAsk) btBox.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [btAsk]);
@@ -149,7 +159,7 @@ function PairPanel() {
   }, [lastAddress]);
   const ready = (target || address.includes(".")) && code.replace(/\D/g, "").length === 6;
   return (
-    <div className="space-y-5">
+    <MotionRegion as="div" className="space-y-5">
       <div className="rounded-2xl border border-line bg-panel p-5">
         <div className="flex items-center gap-3">
           <div className="grid size-11 place-items-center rounded-xl bg-accent-soft text-accent-text">
@@ -161,8 +171,8 @@ function PairPanel() {
           </div>
         </div>
         <ol className="mt-4 space-y-1.5 text-sm text-fg-2">
-          <li>1. Trên máy tính: mở ABook → Cài đặt → bật “{SYNC_SWITCH_LABEL}” → bấm “Ghép thiết bị mới”.</li>
-          <li>2. Chọn máy tính bên dưới và nhập mã 6 số vừa hiện trên máy tính.</li>
+          <li>1. Máy tính: Cài đặt › Thiết bị › bật “{SYNC_SWITCH_LABEL}” › “Ghép thiết bị mới”.</li>
+          <li>2. Chọn máy tính dưới đây, nhập mã 6 số.</li>
         </ol>
       </div>
 
@@ -208,6 +218,7 @@ function PairPanel() {
           {paired === null && btAsk ? (
             <div ref={btBox} className="space-y-3 rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
               <p className="text-pretty">{btAsk === "explain" ? BLUETOOTH_REASON : BLUETOOTH_DENIED}</p>
+              {btAsk === "explain" && <MoreInfo label="Quyền Bluetooth">Chỉ tìm máy đã ghép Bluetooth để nhận sách; ABook không dò hay kết nối thiết bị khác.</MoreInfo>}
               <div className="flex flex-wrap gap-2">
                 {btAsk === "explain" ? (
                   <Button size="sm" variant="primary" loading={bluetooth.isPending} onClick={() => { setBtAsk(null); bluetooth.mutate(); }}>
@@ -224,8 +235,8 @@ function PairPanel() {
               </div>
             </div>
           ) : paired === null ? (
-            <button type="button" onClick={() => void startBluetooth()} className="flex items-center gap-1.5 text-sm font-medium text-accent-text">
-              {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Không chung Wi-Fi? Kết nối qua Bluetooth
+            <button ref={btButton} type="button" onClick={() => void startBluetooth()} className="flex items-center gap-1.5 text-sm font-medium text-accent-text">
+              {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Dùng Bluetooth
             </button>
           ) : paired.length ? (
             <div className="space-y-2">
@@ -251,14 +262,13 @@ function PairPanel() {
             </div>
           ) : (
             <p className="rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
-              Chưa có máy tính nào ghép Bluetooth với điện thoại. Ghép trong Cài đặt Android → Bluetooth (máy tính bật
-              Bluetooth và ABook), rồi thử lại.
+              Chưa có máy tính ghép Bluetooth. Ghép ở Cài đặt Android › Bluetooth rồi thử lại.
             </p>
           )}
         </div>
       )}
 
-      <button type="button" onClick={() => { setManual((value) => !value); setTarget(null); }} className="text-sm font-medium text-fg-2 underline underline-offset-4">
+      <button type="button" onClick={() => withViewTransition(() => { setManualNow((value) => !value); setTarget(null); })} className="text-sm font-medium text-fg-2 underline underline-offset-4">
         {manual ? "Tự tìm máy tính" : "Nhập địa chỉ máy tính"}
       </button>
       {manual && (
@@ -285,7 +295,7 @@ function PairPanel() {
       <Button variant="primary" size="lg" className="w-full" disabled={!ready} loading={pair.isPending} onClick={() => pair.mutate()}>
         Kết nối
       </Button>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -301,7 +311,7 @@ export function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; pr
   // Huỷ dừng thật ở khối kế (LibraryPlugin.cancelDownload); phần đã về giữ lại, bấm Tải lần sau là tải tiếp.
   const cancel = () => void EbookLibrary.cancelDownload({ bookId: book.id }).catch((error) => toastNativeError("Chưa huỷ được", error));
   return (
-    <div className="flex items-center gap-3 py-3">
+    <MotionRegion as="div" className="flex items-center gap-3 py-3">
       <BookCover title={book.title} size="sm" className="size-14" />
       <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{book.title}</div>
@@ -344,7 +354,7 @@ export function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; pr
           {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : newAudio ? "Cập nhật bản thu" : newCover ? "Cập nhật bìa" : newMeta ? "Cập nhật tên" : "Cập nhật chữ"}
         </Button>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -358,7 +368,7 @@ function StudioAlertsRow() {
     onSuccess: (data) => {
       client.setQueryData(["studio-alerts"], data);
       if (data.enabled && !data.permitted) toast.error("Android chưa cho ABook đăng thông báo", { description: "Bật lại trong Cài đặt của máy > Ứng dụng > ABook > Thông báo." });
-      else if (data.enabled) toast.success("Sẽ báo khi sách xong hay có việc cần duyệt", { description: "Máy tính cần bật \"Cho phép điều khiển sản xuất\"." });
+      else if (data.enabled) toast.success("Sẽ báo khi sách xong hay có việc cần duyệt", { description: "Máy tính cần bật “Điều khiển từ xa”." });
     },
     onError: (error: Error) => toast.error("Chưa đổi được", { description: error.message }),
   });
@@ -419,6 +429,8 @@ function PeersPanel() {
   const [address, setAddress] = useState("");
   const [code, setCode] = useState("");
   const [bonded, setBonded] = useState<{ address: string; name: string; kind: string }[] | null>(null);
+  // Khung "Ghép thiết bị" mở ngay trong trang: Back của điện thoại gập nó lại trước khi rời trang.
+  useBackLayer(open, () => setOpen(false));
   const discover = useMutation({
     mutationFn: () => EbookLibrary.discover({ timeoutMs: 2500 }),
     onSuccess: ({ computers }) => {
@@ -477,7 +489,7 @@ function PeersPanel() {
   });
   const ready = (address.includes(".") || address.startsWith("bt:")) && code.replace(/\D/g, "").length === 6;
   return (
-    <section className="mt-8" aria-labelledby="peers-title">
+    <MotionRegion as="section" className="mt-8" aria-labelledby="peers-title">
       <div className="flex items-center justify-between gap-3">
         <h2 id="peers-title" className="text-lg font-semibold">
           Thiết bị khác
@@ -487,14 +499,14 @@ function PeersPanel() {
         </Button>
       </div>
       <p className="mt-1 text-xs leading-snug text-fg-2">
-        Điện thoại khác (bật “Cho máy khác nghe thư viện này” ở màn Tải sách của nó) hay một máy tính nữa. Sách của chúng nghe
-        thẳng được trong Thư viện.
+        Điện thoại hay máy tính khác; sách của chúng hiện trong Thư viện.
       </p>
-      {open && (
-        <div className="mt-3 space-y-3 rounded-2xl border border-line bg-panel p-4">
+      {/* Khung ghép mở / khép có chuyển động (shared/Collapse) thay vì bật tắt. */}
+      <Collapse open={open} className="pt-3">
+        <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
           {bonded === null ? (
             <button type="button" onClick={() => bluetooth.mutate()} className="flex items-center gap-1.5 text-sm font-medium text-accent-text">
-              {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Không chung Wi-Fi? Ghép qua Bluetooth
+              {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Ghép Bluetooth
             </button>
           ) : bonded.length ? (
             <div className="space-y-2">
@@ -563,7 +575,7 @@ function PeersPanel() {
             Ghép
           </Button>
         </div>
-      )}
+      </Collapse>
       {peers.map((peer) => (
         <div key={peer.key} className="mt-4 rounded-2xl border border-line bg-panel p-4">
           <div className="flex items-center gap-3">
@@ -606,14 +618,14 @@ function PeersPanel() {
         </div>
       ))}
       {unpair.dialog}
-    </section>
+    </MotionRegion>
   );
 }
 
 // Mạng trạm bước 2 (LibraryServer.kt): điện thoại PHỤC VỤ sách mở từ file cho máy đã ghép - máy tính nghe thẳng những cuốn chỉ
 // có trên điện thoại (không phải bản soi sách của máy khác). Cùng giao thức cổng đồng bộ của máy tính, nên máy tính ghép như ghép một máy tính khác: Cài đặt →
 // Máy tính khác → địa chỉ + mã 6 số hiện ở đây.
-export function SharePanel() {
+export function SharePanel({ bare = false }: { bare?: boolean }) {
   const client = useQueryClient();
   const status = useQuery({
     queryKey: ["share"],
@@ -651,32 +663,33 @@ export function SharePanel() {
   const data = status.data;
   const enabled = data?.running ?? false;
   const left = pairing ? Math.max(0, Math.round(pairing.expiresAt - now)) : 0;
+  const explainBox = useRef<HTMLDivElement>(null);
+  const explainButton = useRef<HTMLButtonElement>(null);
+  useBackLayer(explain && !enabled, () => setExplain(false), explainBox, explainButton);
   return (
-    <section className="mt-8 rounded-2xl border border-line bg-panel p-4" aria-labelledby="share-title">
+    <MotionRegion as="section" className={bare ? "pt-4" : "mt-8 rounded-2xl border border-line bg-panel p-4"} aria-labelledby="share-title">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <h2 id="share-title" className="text-[0.9375rem] font-medium">Cho máy khác nghe thư viện này</h2>
           <p className="mt-0.5 text-xs leading-snug text-fg-2">
-            Máy đã ghép nghe thẳng những cuốn bạn tự thêm từ file vào điện thoại này, không phải chép sang. Chia sẻ chạy cả khi ABook ở nền, cho
-            tới khi tắt ở đây hay ở thông báo. Máy OPPO, Xiaomi… có thể cho ABook "ngủ" khi ở nền: máy tính sẽ chờ lâu hơn - mở ABook
-            lên là trả lời ngay.
+            Máy đã ghép nghe được sách bạn thêm từ file, không cần chép sang.
           </p>
         </div>
         <Switch.Root
+          ref={explainButton}
           checked={enabled}
           disabled={run.isPending || status.isLoading}
           onCheckedChange={(value) => (value ? void turnOn() : run.mutate(() => EbookLibrary.setShare({ enabled: false })))}
           aria-label="Cho máy khác nghe thư viện này"
           className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
         >
-          <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+          <Switch.Thumb className="motion-switch-thumb block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
         </Switch.Root>
       </div>
       {explain && !enabled && (
-        <div className="mt-3 space-y-3 rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
+        <div ref={explainBox} className="mt-3 space-y-3 rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
           <p className="text-pretty">
-            Trong lúc chia sẻ, ABook giữ một thông báo nhỏ để Android không tắt nó khi bạn tắt màn hình. Android sẽ hỏi bạn có cho ABook hiện
-            thông báo không - từ chối thì chia sẻ vẫn chạy.
+            Khi chia sẻ, ABook giữ một thông báo nhỏ để chạy tiếp lúc tắt màn hình.
           </p>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -786,7 +799,7 @@ export function SharePanel() {
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
         title={`Thôi ghép ${removing?.name ?? "máy này"}?`}
-        description="Máy này sẽ không nghe được thư viện của điện thoại nữa cho tới khi ghép lại. Sách nó đã tải về vẫn nghe được."
+        description="Máy ấy không nghe được thư viện này nữa; sách đã tải vẫn còn."
       >
         <div className="dialog-actions">
           <Button variant="ghost" onClick={() => setRemoving(null)}>
@@ -803,12 +816,12 @@ export function SharePanel() {
           </Button>
         </div>
       </Dialog>
-    </section>
+    </MotionRegion>
   );
 }
 
 /** Tên điện thoại này mà máy tính và các máy đã ghép thấy (soát a68 lỗi 16: "Google sdk_gphone64_x86_64"): đổi được, báo luôn cho các máy đã ghép. */
-function DeviceNameRow() {
+function DeviceNameRow({ bare = false }: { bare?: boolean }) {
   const client = useQueryClient();
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
   const [draft, setDraft] = useState<string | null>(null);
@@ -825,7 +838,7 @@ function DeviceNameRow() {
   const name = connection.data?.deviceName ?? "";
   if (!name) return null;
   return (
-    <section className="mt-8 rounded-2xl border border-line bg-panel px-4 py-3.5" aria-labelledby="device-name-title">
+    <section className={bare ? "" : "mt-8 rounded-2xl border border-line bg-panel px-4 py-3.5"} aria-labelledby="device-name-title">
       <div className="flex items-center gap-3">
         <Smartphone className="size-5 shrink-0 text-fg-2" />
         <div className="min-w-0 flex-1">
@@ -869,21 +882,26 @@ function DeviceNameRow() {
 
 /** Sách trên máy: tổng, rồi từng thứ đang chiếm chỗ (nhiều nhất trước) để chọn cái xoá cho nhẹ máy - cuốn đã tải, và cả phần tải dở / gói nghe thẳng đã nhớ
  *  ("Xoá phần đã tải"; cuốn vẫn ở máy tính). Cuốn đang có lượt tải chạy thì chưa xoá được. */
-export function StoragePanel({ storage, names }: { storage: { bytes: number; free: number; books: StoredFolder[] }; names?: ReadonlyMap<string, string> }) {
+export function StoragePanel({ storage, names, bare = false }: { storage: { bytes: number; free: number; books: StoredFolder[] }; names?: ReadonlyMap<string, string>; bare?: boolean }) {
   const { data: library } = useListenLibrary();
   const progress = useDownloadProgress();
   const entries = storedEntries(storage.books, library ?? [], names);
+  // Xoá một cuốn: hàng khép lại tại chỗ (shared/motion.ts useListPresence).
+  const rows = useListPresence(entries, (entry) => entry.id);
   return (
-    <section className="mt-8" aria-label="Dung lượng sách trên máy">
-      <p className="text-center text-xs text-fg-3">
-        Sách trên máy: {formatSize(storage.bytes)} · còn trống {formatSize(storage.free)}
-      </p>
-      {entries.length > 0 && (
+    <section className={bare ? "" : "mt-8"} aria-label="Dung lượng sách trên máy">
+      {!bare && (
+        <p className="text-center text-xs text-fg-3">
+          Sách trên máy: {formatSize(storage.bytes)} · còn trống {formatSize(storage.free)}
+        </p>
+      )}
+      {rows.length > 0 && (
         <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-panel">
-          {entries.map(({ id, title, bytes, kind }) => {
+          {rows.map(({ key, state, ref, item: { id, title, bytes, kind } }) => {
             const busy = isDownloading(progress[id]);
             return (
-              <li key={id} className="flex items-center gap-3 px-4 py-2.5">
+              <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
+              <div className="flex items-center gap-3 px-4 py-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm">{title}</div>
                   {kind === "partial" && <div className="text-xs text-fg-3">{busy ? "Đang tải" : "Phần đã tải, chưa thành sách trên máy"}</div>}
@@ -898,6 +916,7 @@ export function StoragePanel({ storage, names }: { storage: { bytes: number; fre
                 >
                   <Trash2 className="size-4" />
                 </button>
+              </div>
               </li>
             );
           })}
@@ -919,6 +938,8 @@ export function DevicesScreen() {
   const storage = useStorage();
   const progress = useDownloadProgress();
   const studioComputers = useStudioComputers();
+  // Cùng khoá với SharePanel: chỉ để ghi dòng tóm tắt của khối gập "Điện thoại này".
+  const share = useQuery({ queryKey: ["share"], queryFn: () => EbookLibrary.shareStatus() });
 
   const [confirmUnpair, setConfirmUnpair] = useState(false);
   const computerName = connection.data?.name || connection.data?.host || "máy tính";
@@ -933,7 +954,7 @@ export function DevicesScreen() {
   const failure = remote.isError ? nativeError(remote.error) : null;
 
   return (
-    <div className="px-4 pb-8 pt-4">
+    <MotionRegion as="div" className="px-4 pb-8 pt-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold tracking-tight">Tải sách</h1>
         <Button size="sm" variant="secondary" icon={FileAudio} onClick={() => void pickBookFile()}>
@@ -983,11 +1004,12 @@ export function DevicesScreen() {
             {/* Như Cài đặt → Điện thoại và thiết bị của máy tính (chủ sách 29-09: khác mạng có dùng được không): app không cần gì
                 riêng - mạng riêng ảo cho máy tính một địa chỉ tới được, và điện thoại học địa chỉ ấy mỗi lần liệt kê sách. */}
             {remote.isError && !pinChanged(remote.error) && !unpairedHere && (
-              <p className="mt-2 px-1 text-xs leading-snug text-fg-2">
-                Ra khỏi nhà: sách đã tải về điện thoại vẫn nghe bình thường. Muốn nghe thẳng hay tải thêm từ máy tính khi ở ngoài,
-                cho điện thoại và máy tính vào cùng một mạng riêng ảo (VPN - ví dụ Tailscale, ZeroTier, NetBird, WireGuard), rồi mở mục này
-                một lần khi còn ở nhà - điện thoại tự nhớ đường.
-              </p>
+              <div className="mt-2 px-1 text-xs leading-snug text-fg-2">
+                Sách đã tải vẫn nghe được khi ra ngoài.
+                <MoreInfo label="Nghe từ máy tính khi ở ngoài?">
+                  Cho hai máy vào cùng một mạng riêng ảo (Tailscale, ZeroTier, NetBird, WireGuard), rồi mở mục này một lần khi còn ở nhà.
+                </MoreInfo>
+              </div>
             )}
             {/* Studio từ xa: điện thoại không sản xuất, nhưng điều khiển được việc sản xuất của máy tính - hỏi máy nào khi ghép nhiều máy tính. */}
             <OpenStudioButton computers={studioComputers} className="mt-3 w-full" />
@@ -1018,7 +1040,7 @@ export function DevicesScreen() {
               open={confirmUnpair}
               onOpenChange={setConfirmUnpair}
               title={`Ngắt kết nối với ${computerName}?`}
-              description="Sách đã tải về vẫn ở điện thoại và nghe được. Muốn tải thêm hay nghe thẳng sách của máy tính này thì ghép lại bằng mã mới."
+              description="Sách đã tải vẫn nghe được. Muốn tải thêm thì ghép lại bằng mã mới."
             >
               <div className="dialog-actions">
                 <Button variant="ghost" onClick={() => setConfirmUnpair(false)}>
@@ -1038,10 +1060,29 @@ export function DevicesScreen() {
           </>
         )}
       </div>
-      <DeviceNameRow />
       <PeersPanel />
-      <SharePanel />
-      {storage.data && <StoragePanel storage={storage.data} names={new Map((remote.data?.books ?? []).map((book) => [book.id, book.title]))} />}
-    </div>
+      {/* Phần ít dùng gập lại, nhớ gấp / mở trên máy này (a120 - chủ app: "foldout chúng lại… chứ để hết một trang dài ơi là dài"). */}
+      <Fold
+        storageKey="devices.this"
+        title="Điện thoại này"
+        summary={[connection.data?.deviceName, share.data?.running ? "đang cho máy khác nghe" : "không chia sẻ"].filter(Boolean).join(" · ")}
+        icon={<Smartphone className="size-5" />}
+        className="mt-8"
+      >
+        <DeviceNameRow bare />
+        <SharePanel bare />
+      </Fold>
+      {storage.data && (
+        <Fold
+          storageKey="devices.storage"
+          title="Dung lượng trên máy"
+          summary={`Sách ${formatSize(storage.data.bytes)} · còn trống ${formatSize(storage.data.free)}`}
+          icon={<HardDrive className="size-5" />}
+          className="mt-3"
+        >
+          <StoragePanel storage={storage.data} names={new Map((remote.data?.books ?? []).map((book) => [book.id, book.title]))} bare />
+        </Fold>
+      )}
+    </MotionRegion>
   );
 }

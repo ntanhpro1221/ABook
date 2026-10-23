@@ -1,7 +1,8 @@
+import { useMotionState } from "@/shared/motion";
 import { AlertTriangle, BookAudio, CheckCircle2, FileAudio, FolderArchive, FolderDown, FolderOpen, RefreshCw } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { listenOnlyOwner } from "@/shared/peerStudio";
@@ -52,14 +53,14 @@ const KINDS: { value: Kind; title: string; detail: string; icon: typeof FolderDo
     // Cùng đường với mục "Xuất M4B cho app sách nói" ở menu Thư viện (desktop/ExportBookFileJob.tsx): việc nền, báo tiến độ ngoài hộp.
     value: "m4b",
     title: "Sách nói M4B",
-    detail: "Cả cuốn trong một file có mục lục chương - app sách nói (Apple Books, Smart AudioBook Player...) mở là thấy đủ chương.",
+    detail: "Một file có mục lục chương, cho app sách nói.",
     icon: BookAudio,
   },
   {
     value: "abookproj",
     title: "Cả dự án (.abookproj)",
     detail:
-      "Sổ dự án, audio đã thu, nguồn chương, nhạc nền - để sao lưu hay làm tiếp ở máy khác. Mở file là có lại dự án trong Studio; điện thoại mở file này cũng nghe được các chương đã xong.",
+      "Cả dự án và audio, để sao lưu hay làm tiếp ở máy khác.",
     icon: FolderArchive,
   },
 ];
@@ -92,10 +93,10 @@ export function ExportDialog({
   onApplyFirst: () => void;
 }) {
   const { data: info } = useAppInfo();
-  const [kind, setKind] = useState<Kind>("mp3");
+  const [kind, setKind] = useMotionState<Kind>("mp3");
   const [busy, setBusy] = useState(false);
-  const [scope, setScope] = useState<Scope>("part");
-  const [layout, setLayout] = useState<Layout>("single");
+  const [scope, setScope] = useMotionState<Scope>("part");
+  const [layout, setLayout] = useMotionState<Layout>("single");
   const [changedOnly, setChangedOnly] = useState(false);
   const history = useQuery({
     queryKey: ["export-history", book.id], enabled: open,
@@ -334,7 +335,7 @@ export function ExportDialog({
     whole
       ? [book.running && "Dự án đang chạy - gói khi nó đã chạy xong hoặc đã dừng."]
       : [
-          textOnly && `Chưa chương nào có audio: file .abook chỉ mang chữ của ${formatNumber(total)} chương (đọc được, chưa nghe được). Có audio rồi, bạn xuất lại để file mang cả giọng đọc.`,
+          textOnly && `Chưa chương nào có audio: file .abook chỉ mang chữ của ${formatNumber(total)} chương (đọc được, chưa nghe được). Có audio rồi thì xuất lại.`,
           !wholeSeries && !textOnly && ready < total && `${formatNumber(total - ready)}/${formatNumber(total)} chương chưa có audio${missing ? ` (${missing} chương mất file)` : ""} - không có trong bản xuất.`,
           wholeSeries && "Phần nào chưa có chương xong sẽ bị bỏ qua; phần đang chạy chỉ có các chương đã xong tới lúc này.",
           !wholeSeries && book.running && "Sách đang chạy - bản xuất chỉ gồm các chương đã xong tới lúc này.",

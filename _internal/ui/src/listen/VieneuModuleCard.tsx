@@ -1,6 +1,8 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Button, Dialog, LiveText, Progress, useFocusFollows } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
@@ -84,14 +86,19 @@ export function LocalVoiceModules({
   const { data: supertonicStatus } = useQuery({ queryKey: ["readaloud", SUPERTONIC_COPY.key], queryFn: () => supertonic.status() });
   const { advice, preselectSupertonic } = moduleAdvice(vieneuStatus, supertonicStatus);
   return (
-    <>
+    <Fold storageKey="voice.modules" title="Bộ giọng" summary={moduleActivity(vieneuStatus, supertonicStatus)} bodyClassName="space-y-5 px-3 pb-3">
       {advice && <p className="max-w-xl text-[0.8125rem] text-fg-2 text-pretty">{advice}</p>}
       <div id="vieneu-module" className="scroll-mt-4">
         <VieneuModuleCard backend={vieneu} onChanged={onChanged} />
       </div>
       <VieneuModuleCard backend={supertonic} copy={SUPERTONIC_COPY} onChanged={onChanged} preselect={preselectSupertonic} />
-    </>
+    </Fold>
   );
+}
+
+export function moduleActivity(vieneu?: VieneuStatus, supertonic?: VieneuStatus): string {
+  const active = [["VieNeu", vieneu], ["Supertonic", supertonic]] as const;
+  return active.flatMap(([name, status]) => status?.state === "downloading" ? [`${name} · ${vieneuPercent(status)}%`] : status?.benchmarking ? [`${name} · đang đo`] : []).join(" · ") || "Tải, đo và quản lý";
 }
 
 /** Trạng thái mô-đun giọng + nhịp hỏi lại khi đang tải / đo (mỗi giây); tải / đo xong thì danh sách giọng của trình phát hỏi lại để giọng mới hiện ngay.
@@ -157,8 +164,8 @@ export function VieneuModuleCard({
   // Ô chọn giọng: tên = tên giọng + cỡ tải; đoạn giới thiệu dài đọc riêng là mô tả (soát a31: tên ô 300+ chữ).
   const ids = useId();
   // Tải <-> Huỷ thay chỗ nhau: tiêu điểm theo sang nút vừa hiện (soát a67).
-  const follow = useFocusFollows(status?.state);
-  if (!status) return null;
+  const { ref: followRef, ...follow } = useFocusFollows(status?.state);
+  if (!status) return <MotionRegion />;
   const downloading = status.state === "downloading";
   peak.current = downloading ? Math.max(peak.current, status.done) : 0;
   if (!downloading) sizes.current = Object.fromEntries(status.choices.map((choice) => [choice.id, choice.bytes]));
@@ -214,7 +221,7 @@ export function VieneuModuleCard({
   const metered = canPick && missing.length > 0 ? meteredNotice(status, bytes) : null;
   const spoken = vieneuSpoken(shown, copy);
   return (
-    <div {...follow} className="max-w-xl space-y-3">
+    <MotionRegion as="div" {...follow} elementRef={followRef} className="max-w-xl space-y-3">
       <h3 tabIndex={-1} data-focus-fallback className="text-sm font-semibold">{copy.title}</h3>
       {/* Lỗi tải: không ở đầu thẻ mà ngay trên nút Thử lại, nơi người dùng đang nhìn (soát a66) - xem dưới cùng. */}
       {!failed && (
@@ -352,6 +359,6 @@ export function VieneuModuleCard({
           </Button>
         </div>
       </Dialog>
-    </div>
+    </MotionRegion>
   );
 }

@@ -52,8 +52,8 @@ describe("ghi chú cho ABook chạy nền", () => {
   });
 
   it("đã cho phép hay không đọc được: không hiện gì", () => {
-    expect(renderToString(<BackgroundNoteView status={{ manufacturer: "OPPO", backgroundAllowed: true }} />)).toBe("");
-    expect(renderToString(<BackgroundNoteView status={undefined} />)).toBe("");
+    expect(renderToString(<BackgroundNoteView status={{ manufacturer: "OPPO", backgroundAllowed: true }} />).replace(/<[^>]+>/g, "")).toBe("");
+    expect(renderToString(<BackgroundNoteView status={undefined} />).replace(/<[^>]+>/g, "")).toBe("");
   });
 
   it("thông báo đang xuất vẫn là chữ tiến độ, chưa có ghi chú khi chưa đọc xong", () => {

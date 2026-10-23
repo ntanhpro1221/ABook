@@ -1,6 +1,8 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Button, Segmented } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { formatSize } from "@/studio/musicLocal";
@@ -49,7 +51,7 @@ export function VoiceSpeedSetting({
     if (wasWorking.current && !working) void client.invalidateQueries({ queryKey: KEY });
     wasWorking.current = working;
   }, [working, client]);
-  if (!status) return null;
+  if (!status) return <MotionRegion />;
   const choose = async (choice: VoiceSpeedChoice) => {
     setBusy(true);
     try {
@@ -70,7 +72,7 @@ export function VoiceSpeedSetting({
     }
   };
   return (
-    <div className="max-w-xl space-y-2">
+    <MotionRegion><Fold storageKey="voice.performance" title="Hiệu năng" summary={voiceSpeedDescription(status.choice)} bodyClassName="space-y-2 px-3 pb-3">
       <h3 id={`${id}-title`} className="text-sm font-semibold">{VOICE_SPEED_TITLE}</h3>
       <Segmented
         value={status.choice}
@@ -95,6 +97,6 @@ export function VoiceSpeedSetting({
           );
         })}
       </ul>
-    </div>
+    </Fold></MotionRegion>
   );
 }

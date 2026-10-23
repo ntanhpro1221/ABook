@@ -1,17 +1,21 @@
+import { MotionPresence } from "@/shared/MotionPresence";
 import * as Switch from "@radix-ui/react-switch";
-import { ChevronDown, ChevronRight, Download } from "lucide-react";
-import { toast } from "sonner";
-import { useEffect, useState, type ReactNode } from "react";
-import { cn } from "@/shared/cn";
+import { ChevronRight, Download, TriangleAlert } from "lucide-react";
+import { toast } from "@/shared/toast";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router";
 import { Button, Segmented, Sheet, TimeSelect } from "@/shared/ui";
+import { GroupHeader, isSettingsGroup, MoreInfo, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
+import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { MyMusicSection } from "@/listen/MyMusic";
 import { AUTO_MUSIC_HINT, AUTO_MUSIC_LABEL } from "@/listen/playlistBed";
+import { ReadAloudStorage } from "@/listen/ReadAloudStorage";
 import { LocalVoiceModules, type VieneuBackend } from "@/listen/VieneuModuleCard";
 import { VoiceSpeedSetting, type VoiceSpeedBackend } from "@/listen/VoiceSpeedSetting";
-import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
+import { useDefaultVoiceName, VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { androidSource, phoneVieneu } from "./androidSource";
-import { CLEAR_HINT, DIAGNOSTICS_HINT, DiagnosticsPanel, SEND_HINT, useDiagnostics } from "./Diagnostics";
+import { CLEAR_HINT, DIAGNOSTICS_HINT, DIAGNOSTICS_MORE, DiagnosticsPanel, SEND_HINT, useDiagnostics } from "./Diagnostics";
 import { NOTIFICATION_ROW_HINT, notificationState, openNotificationSettings, type NotificationState } from "./notifications";
 import { ReadAloud } from "./plugins";
 import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
@@ -20,25 +24,8 @@ import { useOldSaves } from "./oldSaveList";
 import { openRelease } from "./UpdateNotice";
 import { useAppUpdate } from "./updates";
 
-function Group({ title, id, children }: { title: string; id?: string; children: ReactNode }) {
-  return (
-    <section id={id} className="mt-7">
-      <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</h2>
-      <div className="divide-y divide-line rounded-2xl border border-line bg-panel">{children}</div>
-    </section>
-  );
-}
-
-/** Bản lưu cũ app đang giữ hộ (lần lưu hỏng giữa chừng): chỉ hiện khi có file, đứng đầu trang vì là thứ có thể mất nếu không để ý. */
-function OldSavesGroup() {
-  const { data } = useOldSaves();
-  if (!data?.length) return null;
-  return (
-    <Group title={`Bản lưu cũ (${data.length})`} id="old-saves">
-      <OldSavesList files={data} />
-    </Group>
-  );
-}
+// Cài đặt của điện thoại (chủ app 23-10: "như lạc vào ma trận"): trang gốc là danh sách 5 nhóm, mỗi nhóm một màn con /settings/<nhóm>
+// (shared/SettingsNav.tsx). Cùng cây nhóm với máy tính; điện thoại không có nhóm Thiết bị (tab "Tải sách") và Studio.
 
 /** Giọng đọc của "Nghe ngay" trên điện thoại: lõi native đọc (plugin ReadAloud); khóa lưu mã hoá bằng Android Keystore (OnlineKeys.kt). */
 const phoneVoices: VoiceSettingsApi = {
@@ -66,56 +53,44 @@ const phoneVoiceSpeed: VoiceSpeedBackend = {
   set: (choice) => ReadAloud.setVoiceSpeed({ choice }),
 };
 
-function Row({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
+/** Nhóm có mặt trên điện thoại, theo thứ tự của SETTINGS_GROUPS. */
+export const PHONE_GROUPS: readonly SettingsGroupId[] = ["voice", "listen", "sleep", "look", "advanced"];
+
+type Change = (patch: Partial<PlayerSettings>) => void;
+
+function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
   return (
-    // Chữ giữ tối thiểu ~12rem; nút chọn rộng (Không / 1 giờ / 2 giờ / 3 giờ) không đủ chỗ thì xuống hàng dưới, sát phải - chữ hệ thống to
-    // từng bóp lời giải thích còn một chữ mỗi dòng (soát UX a9).
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3.5">
-      <div className="min-w-0 flex-[1_1_12rem]">
-        <div className="text-[0.9375rem] font-medium">{label}</div>
-        {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
+    <Switch.Root
+      checked={checked}
+      onCheckedChange={onChange}
+      aria-label={label}
+      className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
+    >
+      <Switch.Thumb className="motion-switch-thumb block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+    </Switch.Root>
+  );
+}
+
+function VoiceGroup() {
+  return (
+    <SettingsBlock>
+      <div className="px-4 py-3.5">
+        <VoiceSettings
+          api={phoneVoices}
+          deviceHint="Điện thoại chưa có giọng tiếng Việt. Cài ở Cài đặt điện thoại › Chuyển văn bản thành giọng nói."
+          modules={(reload) => (
+            <>
+              <LocalVoiceModules vieneu={phoneVieneu} supertonic={phoneSupertonic} onChanged={reload} />
+              <VoiceSpeedSetting backend={phoneVoiceSpeed} supertonic={phoneSupertonic} />
+            </>
+          )}
+        />
       </div>
-      <div className="ml-auto max-w-full">{children}</div>
-    </div>
+    </SettingsBlock>
   );
 }
 
-/** "Chẩn đoán": xem / gửi / xoá nhật ký của app (Diagnostics.kt). Gửi = bảng chia sẻ của hệ thống, bạn tự chọn gửi cho ai. */
-function DiagnosticsGroup() {
-  const diagnostics = useDiagnostics();
-  return (
-    <Group title="Chẩn đoán" id="diagnostics">
-      <Row label="Xem nhật ký" hint={DIAGNOSTICS_HINT}>
-        <Sheet
-          open={diagnostics.open}
-          onOpenChange={diagnostics.changeOpen}
-          title="Nhật ký của ABook"
-          trigger={<Button size="sm">Xem</Button>}
-        >
-          <div className="space-y-3 px-1.5 pb-3 pt-3">
-            <Button size="sm" variant="secondary" loading={diagnostics.loading} onClick={() => void diagnostics.load()}>
-              Làm mới
-            </Button>
-            <DiagnosticsPanel report={diagnostics.report} error={diagnostics.error} loading={diagnostics.loading} />
-          </div>
-        </Sheet>
-      </Row>
-      <Row label="Gửi nhật ký" hint={SEND_HINT}>
-        <Button size="sm" loading={diagnostics.sending} onClick={() => void diagnostics.send()}>
-          Gửi
-        </Button>
-      </Row>
-      <Row label="Xoá nhật ký" hint={CLEAR_HINT}>
-        <Button size="sm" onClick={() => void diagnostics.clear()}>
-          Xoá
-        </Button>
-      </Row>
-    </Group>
-  );
-}
-
-/** Chỉ hiện khi ABook chưa được phép hiện thông báo (người nghe từ chối hay bỏ qua lời mời lúc nghe lần đầu): nói thẳng hậu quả và mở đúng trang cài đặt.
- *  Quay lại từ Cài đặt Android thì hỏi lại - cho phép xong là dòng này biến mất. */
+/** Chỉ hiện khi ABook chưa được phép hiện thông báo: nói hậu quả và mở đúng trang cài đặt. Quay lại từ Cài đặt Android thì hỏi lại. */
 function NotificationRow() {
   const [state, setState] = useState<NotificationState>("granted");
   useEffect(() => {
@@ -126,121 +101,65 @@ function NotificationRow() {
   }, []);
   if (state === "granted") return null;
   return (
-    <Row label="Thông báo" hint={NOTIFICATION_ROW_HINT}>
+    <SettingsRow label="Thông báo" hint={NOTIFICATION_ROW_HINT}>
       <Button size="sm" onClick={() => void openNotificationSettings().catch(() => undefined)}>
-        Mở cài đặt
+        Cho phép
       </Button>
-    </Row>
+    </SettingsRow>
   );
 }
 
-// Dấu "/" cuối: lõi native chỉ mở địa chỉ bắt đầu bằng "https://github.com/ntanhpro1221/ABook/" (LibraryPlugin.openRelease).
-const SOURCE_URL = "https://github.com/ntanhpro1221/ABook/";
-
-/** "Giới thiệu": bản đang cài, mã nguồn (MIT), thành phần bên thứ ba (docs/THIRD_PARTY.md gói lúc build) trong tấm trượt. */
-export function AboutGroup({ version }: { version: string | null }) {
-  const [open, setOpen] = useState(false);
+function ListenGroup({ settings, change }: { settings: PlayerSettings; change: Change }) {
   return (
-    <Group title="Giới thiệu" id="about">
-      <Row label="Phiên bản">
-        <span className="tabular text-sm text-fg-2">{version ?? "…"}</span>
-      </Row>
-      <Row label="Mã nguồn mở" hint="Giấy phép MIT - github.com/ntanhpro1221/ABook">
-        <Button size="sm" onClick={() => void openRelease(SOURCE_URL)}>
-          Mở
-        </Button>
-      </Row>
-      <Sheet
-        open={open}
-        onOpenChange={setOpen}
-        title="Thành phần bên thứ ba"
-        trigger={
-          <button type="button" className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left">
-            <span className="min-w-0">
-              <span className="block text-[0.9375rem] font-medium [overflow-wrap:anywhere]">Thành phần bên thứ ba</span>
-              <span className="mt-0.5 block text-xs leading-snug text-fg-2">Thư viện, giọng đọc và nhạc ABook dùng, cùng giấy phép của từng thứ.</span>
-            </span>
-            <ChevronRight className="size-5 shrink-0 text-fg-3" />
-          </button>
-        }
-      >
-        <div className="px-1.5 pt-3">{open && <ThirdPartyList />}</div>
-      </Sheet>
-    </Group>
-  );
-}
-
-/** Bộ nhớ của WebView không ghi được (đầy, bị chặn): thay đổi vẫn dùng ngay và lõi nghe vẫn nhớ, nhưng báo để bạn kiểm lại lần mở sau. */
-export const SAVE_FAILED = "Chưa lưu được thay đổi này vào bộ nhớ của app. Bây giờ vẫn nghe theo lựa chọn mới, nhưng lần mở lại bạn nên xem lại cài đặt.";
-
-export function SettingsScreen() {
-  const [settings, setSettings] = useState<PlayerSettings>(loadSettings);
-  const { current, update } = useAppUpdate();
-  const [sleepMore, setSleepMore] = useState(false);
-  const change = (patch: Partial<PlayerSettings>) => {
-    const next = { ...settings, ...patch };
-    setSettings(next);
-    if (!saveSettings(next)) toast.error(SAVE_FAILED, { id: "settings-not-saved" });
-    if (patch.theme) applyTheme(patch.theme);
-  };
-  return (
-    <div className="px-4 pb-10 pt-4">
-      <h1 className="text-2xl font-bold tracking-tight">Cài đặt</h1>
-
-      <OldSavesGroup />
-
-      {/* Giọng đọc là việc người mới cần trước hết; hẹn giờ ngủ là tuỳ chọn nên xuống sau (soát UX a9). */}
-      <Group title="Giọng đọc" id="voices">
+    <>
+      <SettingsBlock>
+        <NotificationRow />
+        <SettingsRow label="Tự lùi khi nghe lại" hint="Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây).">
+          <Toggle label="Tự lùi khi nghe lại" checked={settings.autoRewind !== false} onChange={(value) => change({ autoRewind: value })} />
+        </SettingsRow>
+        <SettingsRow label="Nút tai nghe lùi/tới" hint="Tắt thì nút Trước/Sau chuyển chương.">
+          <Toggle label="Nút tai nghe lùi/tới" checked={settings.headsetSkips !== false} onChange={(value) => change({ headsetSkips: value })} />
+        </SettingsRow>
+      </SettingsBlock>
+      {/* "Nhạc của tôi" là kho chung mọi cuốn: ở đây, không chỉ trong hộp "Sửa sách" của từng cuốn. */}
+      <SettingsBlock title="Nhạc nền" id="music">
+        <SettingsRow label={AUTO_MUSIC_LABEL} hint={AUTO_MUSIC_HINT}>
+          <Toggle label={AUTO_MUSIC_LABEL} checked={settings.autoMusic !== false} onChange={(value) => change({ autoMusic: value })} />
+        </SettingsRow>
         <div className="px-4 py-3.5">
-          <p className="mb-3 text-xs leading-snug text-fg-2">
-            Giọng mặc định khi nghe sách chưa có audio (“Nghe ngay”). Mỗi cuốn vẫn đổi được giọng riêng ở nút “Giọng đọc” trong trình phát.
-          </p>
-          <VoiceSettings
-            api={phoneVoices}
-            storage={{ usage: () => ReadAloud.cacheUsage(), clear: () => ReadAloud.cacheClear() }}
-            deviceHint="Giọng có sẵn của điện thoại: chưa có giọng tiếng Việt - cài trong Cài đặt của điện thoại → Chuyển văn bản thành giọng nói → tải dữ liệu giọng Tiếng Việt."
-            modules={(reload) => (
-              <>
-                <LocalVoiceModules vieneu={phoneVieneu} supertonic={phoneSupertonic} onChanged={reload} />
-                <VoiceSpeedSetting backend={phoneVoiceSpeed} supertonic={phoneSupertonic} />
-              </>
-            )}
-          />
+          <MyMusicSection />
         </div>
-      </Group>
+      </SettingsBlock>
+    </>
+  );
+}
 
-      <Group title="Hẹn giờ ngủ">
-        <Row label="Lắc máy để nghe thêm" hint="Khi đang hẹn giờ, lắc nhẹ điện thoại hai lần - máy rung báo đã thêm giờ.">
-          <Switch.Root
-            checked={settings.shakeToExtend}
-            onCheckedChange={(value) => change({ shakeToExtend: value })}
-            aria-label="Lắc máy để nghe thêm"
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
-          >
-            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-        </Row>
-        <Row label="Úp máy để tạm dừng" hint="Úp màn hình xuống (lên bàn, lên nệm) là dừng; lật lên trong 10 phút là nghe tiếp. Cầm máy trên tay thì không tính.">
-          <Switch.Root
-            checked={settings.flipToPause ?? false}
-            onCheckedChange={(value) => change({ flipToPause: value })}
-            aria-label="Úp máy để tạm dừng"
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
-          >
-            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-        </Row>
-        <Row label="Lịch đêm" hint="Bấm nghe trong khung giờ này thì tự hẹn giờ ngủ - khỏi nhớ bấm lúc buồn ngủ.">
-          <Switch.Root
+function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Change }) {
+  return (
+    <>
+      <SettingsBlock>
+        <SettingsRow label="Tự tắt" hint="Không chạm máy chừng này thì nhỏ dần rồi dừng.">
+          <Segmented
+            label="Tự tắt"
+            value={String(settings.safetyStopHours)}
+            onChange={(value) => change({ safetyStopHours: Number(value) })}
+            options={[
+              { value: "0", label: "Không" },
+              { value: "1", label: "1 giờ" },
+              { value: "2", label: "2 giờ" },
+              { value: "3", label: "3 giờ" },
+            ]}
+          />
+        </SettingsRow>
+        <SettingsRow label="Lịch đêm" hint="Nghe trong khung giờ này thì tự hẹn giờ.">
+          <Toggle
+            label="Lịch đêm"
             checked={Boolean(settings.sleepSchedule)}
-            onCheckedChange={(value) => change({ sleepSchedule: value ? { from: "22:00", to: "06:00", minutes: 30 } : null })}
-            aria-label="Lịch đêm"
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
-          >
-            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-        </Row>
+            onChange={(value) => change({ sleepSchedule: value ? { from: "22:00", to: "06:00", minutes: 30 } : null })}
+          />
+        </SettingsRow>
         {/* Ba ô chọn giờ / số phút cao tối thiểu 48 dp như mọi đích chạm khác của Android (soát a100 T2). */}
+        <MotionPresence open={Boolean(settings.sleepSchedule)}>
         {settings.sleepSchedule && (
           <div className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm">
             <TimeSelect
@@ -271,148 +190,241 @@ export function SettingsScreen() {
             </select>
           </div>
         )}
-        <Row label="Tự tắt khi ngủ quên" hint="Phát liên tục mà không chạm máy chừng này thì nhỏ dần rồi dừng, và ghi lại chỗ đang nghe cho thẻ “Tối qua”.">
-          <Segmented
-            label="Tự tắt khi ngủ quên"
-            value={String(settings.safetyStopHours)}
-            onChange={(value) => change({ safetyStopHours: Number(value) })}
-            options={[
-              { value: "0", label: "Không" },
-              { value: "1", label: "1 giờ" },
-              { value: "2", label: "2 giờ" },
-              { value: "3", label: "3 giờ" },
-            ]}
-          />
-        </Row>
-        {/* Bảy dòng liền một khối khiến nhóm này dài hơn cả phần còn lại của Cài đặt: phần chỉnh tinh (cách lắc, mỗi lần thêm, nhỏ dần) gập lại (soát UX a9). */}
-        <button
-          type="button"
-          aria-expanded={sleepMore}
-          onClick={() => setSleepMore((value) => !value)}
-          className="flex w-full items-center justify-between gap-4 px-4 py-3.5 text-left"
-        >
-          <span className="text-[0.9375rem] font-medium">Tuỳ chỉnh thêm</span>
-          <ChevronDown className={cn("size-5 shrink-0 text-fg-3 transition-transform", sleepMore && "rotate-180")} />
-        </button>
-        {sleepMore && (
+        </MotionPresence>
+      </SettingsBlock>
+      <SettingsBlock title="Cử chỉ" fold="sleep.gestures">
+        <SettingsRow label="Lắc để nghe thêm" hint="Đang hẹn giờ, lắc nhẹ hai lần để thêm giờ.">
+          <Toggle label="Lắc để nghe thêm" checked={settings.shakeToExtend} onChange={(value) => change({ shakeToExtend: value })} />
+        </SettingsRow>
+        <MotionPresence open={settings.shakeToExtend}>
+        {settings.shakeToExtend && (
           <>
-            {settings.shakeToExtend && (
-              <>
-                <Row label="Khi lắc" hint="Cộng thêm: mỗi cú lắc thêm vài phút. Đặt lại: hẹn giờ quay về từ đầu (vd lại đủ 30 phút).">
-                  <Segmented
-                    label="Khi lắc"
-                    value={settings.shakeAction ?? "extend"}
-                    onChange={(value) => change({ shakeAction: value })}
-                    options={[
-                      { value: "extend", label: "Cộng thêm" },
-                      { value: "reset", label: "Đặt lại" },
-                    ]}
-                  />
-                </Row>
-                <Row label="Độ nhạy" hint="Hay bị tính nhầm khi trở mình thì chọn Mạnh tay; lắc mãi không ăn thì chọn Nhẹ tay.">
-                  <Segmented
-                    label="Độ nhạy lắc"
-                    value={settings.shakeSensitivity ?? "normal"}
-                    onChange={(value) => change({ shakeSensitivity: value })}
-                    options={[
-                      { value: "gentle", label: "Nhẹ tay" },
-                      { value: "normal", label: "Vừa" },
-                      { value: "firm", label: "Mạnh tay" },
-                    ]}
-                  />
-                </Row>
-              </>
-            )}
-            <Row label="Mỗi lần thêm">
+            <SettingsRow label="Khi lắc" hint="Đặt lại: hẹn giờ quay về từ đầu.">
               <Segmented
-                label="Mỗi lần thêm"
-                value={String(settings.sleepExtendMinutes)}
-                onChange={(value) => change({ sleepExtendMinutes: Number(value) })}
-                options={[5, 10, 15].map((value) => ({ value: String(value), label: `${value}′` }))}
+                label="Khi lắc"
+                value={settings.shakeAction ?? "extend"}
+                onChange={(value) => change({ shakeAction: value })}
+                options={[
+                  { value: "extend", label: "Cộng thêm" },
+                  { value: "reset", label: "Đặt lại" },
+                ]}
               />
-            </Row>
-            <Row label="Nhỏ dần trước khi tắt">
+            </SettingsRow>
+            <SettingsRow label="Độ nhạy">
               <Segmented
-                label="Nhỏ dần trước khi tắt"
-                value={String(settings.sleepFadeSeconds)}
-                onChange={(value) => change({ sleepFadeSeconds: Number(value) })}
-                options={[10, 30, 60].map((value) => ({ value: String(value), label: `${value}s` }))}
+                label="Độ nhạy lắc"
+                value={settings.shakeSensitivity ?? "normal"}
+                onChange={(value) => change({ shakeSensitivity: value })}
+                options={[
+                  { value: "gentle", label: "Nhẹ tay" },
+                  { value: "normal", label: "Vừa" },
+                  { value: "firm", label: "Mạnh tay" },
+                ]}
               />
-            </Row>
+            </SettingsRow>
           </>
         )}
-      </Group>
-
-      <Group title="Nghe">
-        <NotificationRow />
-        <Row label="Nút tai nghe lùi/tới" hint="Nút Trước/Sau trên tai nghe Bluetooth, đồng hồ, xe hơi lùi/tới 15 giây, bấm nhầm không mất cả chương. Tắt thì chúng chuyển chương.">
-          <Switch.Root
-            checked={settings.headsetSkips !== false}
-            onCheckedChange={(value) => change({ headsetSkips: value })}
-            aria-label="Nút tai nghe lùi/tới"
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
-          >
-            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-        </Row>
-        <Row label="Tự lùi khi nghe lại" hint="Tạm dừng quá nửa phút rồi nghe tiếp thì lùi 5 giây (quá 10 phút: lùi 10 giây) để bạn bắt lại mạch truyện.">
-          <Switch.Root
-            checked={settings.autoRewind !== false}
-            onCheckedChange={(value) => change({ autoRewind: value })}
-            aria-label="Tự lùi khi nghe lại"
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
-          >
-            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-        </Row>
-      </Group>
-
-      {/* "Nhạc của tôi" trước chỉ mở được từ hộp "Sửa sách" của từng cuốn, dù kho nhạc là chung cho mọi cuốn. */}
-      <Group title="Nhạc nền" id="music">
-        <Row label={AUTO_MUSIC_LABEL} hint={AUTO_MUSIC_HINT}>
-          <Switch.Root
-            checked={settings.autoMusic !== false}
-            onCheckedChange={(value) => change({ autoMusic: value })}
-            aria-label={AUTO_MUSIC_LABEL}
-            className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
-          >
-            <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
-          </Switch.Root>
-        </Row>
-        <div className="px-4 py-3.5">
-          <MyMusicSection />
-        </div>
-      </Group>
-
-      <Group title="Giao diện">
-        <Row label="Màu">
+        </MotionPresence>
+        <SettingsRow label="Úp máy để dừng" hint="Lật lên trong 10 phút là nghe tiếp.">
+          <Toggle label="Úp máy để dừng" checked={settings.flipToPause ?? false} onChange={(value) => change({ flipToPause: value })} />
+        </SettingsRow>
+      </SettingsBlock>
+      <SettingsBlock title="Khi sắp tắt" fold="sleep.ending">
+        <SettingsRow label="Mỗi lần thêm">
           <Segmented
-            label="Màu"
-            value={settings.theme}
-            onChange={(value) => change({ theme: value })}
-            options={[
-              { value: "system", label: "Tự động" },
-              { value: "light", label: "Sáng" },
-              { value: "dark", label: "Tối" },
-            ]}
+            label="Mỗi lần thêm"
+            value={String(settings.sleepExtendMinutes)}
+            onChange={(value) => change({ sleepExtendMinutes: Number(value) })}
+            options={[5, 10, 15].map((value) => ({ value: String(value), label: `${value}′` }))}
           />
-        </Row>
-      </Group>
+        </SettingsRow>
+        <SettingsRow label="Nhỏ dần">
+          <Segmented
+            label="Nhỏ dần"
+            value={String(settings.sleepFadeSeconds)}
+            onChange={(value) => change({ sleepFadeSeconds: Number(value) })}
+            options={[10, 30, 60].map((value) => ({ value: String(value), label: `${value}s` }))}
+          />
+        </SettingsRow>
+      </SettingsBlock>
+    </>
+  );
+}
 
+function LookGroup({ settings, change }: { settings: PlayerSettings; change: Change }) {
+  return (
+    <SettingsBlock>
+      <SettingsRow label="Màu">
+        <Segmented
+          label="Màu"
+          value={settings.theme}
+          onChange={(value) => change({ theme: value })}
+          options={[
+            { value: "system", label: "Tự động" },
+            { value: "light", label: "Sáng" },
+            { value: "dark", label: "Tối" },
+          ]}
+        />
+      </SettingsRow>
+    </SettingsBlock>
+  );
+}
+
+/** Bản lưu cũ app đang giữ hộ (lần lưu hỏng giữa chừng): chỉ hiện khi có file, đứng đầu Nâng cao vì là thứ có thể mất nếu không để ý. */
+function OldSavesBlock() {
+  const { data } = useOldSaves();
+  if (!data?.length) return null;
+  return (
+    <SettingsBlock title={`Bản lưu cũ (${data.length})`} id="old-saves">
+      <OldSavesList files={data} />
+    </SettingsBlock>
+  );
+}
+
+/** "Chẩn đoán": xem / gửi / xoá nhật ký của app (Diagnostics.kt). Gửi = bảng chia sẻ của hệ thống, bạn tự chọn gửi cho ai. */
+function DiagnosticsBlock() {
+  const diagnostics = useDiagnostics();
+  return (
+    <SettingsBlock title="Chẩn đoán" id="diagnostics" fold="advanced.diagnostics">
+      <SettingsRow label="Nhật ký" hint={<>{DIAGNOSTICS_HINT}<MoreInfo className="mt-1">{DIAGNOSTICS_MORE}</MoreInfo></>}>
+        <Sheet open={diagnostics.open} onOpenChange={diagnostics.changeOpen} title="Nhật ký của ABook" trigger={<Button size="sm">Xem</Button>}>
+          <div className="space-y-3 px-1.5 pb-3 pt-3">
+            <Button size="sm" variant="secondary" loading={diagnostics.loading} onClick={() => void diagnostics.load()}>
+              Làm mới
+            </Button>
+            <DiagnosticsPanel report={diagnostics.report} error={diagnostics.error} loading={diagnostics.loading} />
+          </div>
+        </Sheet>
+      </SettingsRow>
+      <SettingsRow label="Gửi nhật ký" hint={SEND_HINT}>
+        <Button size="sm" loading={diagnostics.sending} onClick={() => void diagnostics.send()}>
+          Gửi
+        </Button>
+      </SettingsRow>
+      <SettingsRow label="Xoá nhật ký" hint={CLEAR_HINT}>
+        <Button size="sm" onClick={() => void diagnostics.clear()}>
+          Xoá
+        </Button>
+      </SettingsRow>
+    </SettingsBlock>
+  );
+}
+
+// Dấu "/" cuối: lõi native chỉ mở địa chỉ bắt đầu bằng "https://github.com/ntanhpro1221/ABook/" (LibraryPlugin.openRelease).
+const SOURCE_URL = "https://github.com/ntanhpro1221/ABook/";
+
+/** "Giới thiệu": bản đang cài, mã nguồn (MIT), thành phần bên thứ ba (docs/THIRD_PARTY.md gói lúc build) trong tấm trượt. */
+export function AboutBlock({ version }: { version: string | null }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <SettingsBlock title="Giới thiệu" id="about" fold="advanced.about">
+      <SettingsRow label="Phiên bản">
+        <span className="tabular text-sm text-fg-2">{version ?? "…"}</span>
+      </SettingsRow>
+      <SettingsRow label="Mã nguồn mở" hint="Giấy phép MIT - github.com/ntanhpro1221/ABook">
+        <Button size="sm" onClick={() => void openRelease(SOURCE_URL)}>
+          Mở
+        </Button>
+      </SettingsRow>
+      <Sheet
+        open={open}
+        onOpenChange={setOpen}
+        title="Thành phần bên thứ ba"
+        trigger={
+          <button type="button" className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left">
+            <span className="min-w-0">
+              <span className="block text-[0.9375rem] font-medium [overflow-wrap:anywhere]">Thành phần bên thứ ba</span>
+            </span>
+            <ChevronRight className="size-5 shrink-0 text-fg-3" />
+          </button>
+        }
+      >
+        <div className="px-1.5 pt-3">{open && <ThirdPartyList />}</div>
+      </Sheet>
+    </SettingsBlock>
+  );
+}
+
+function AdvancedGroup({ version, update }: { version: string | null; update: ReturnType<typeof useAppUpdate>["update"] }) {
+  return (
+    <>
+      <OldSavesBlock />
       {/* Điện thoại không tự cập nhật như app Windows: báo bản mới trên GitHub, mời tải APK (updates.ts). */}
       {update && (
-        <Group title="Cập nhật">
-          <Row label={`Có bản mới ${update.version}`} hint="Tải file APK rồi mở để cài đè - sách và chỗ đang nghe giữ nguyên.">
+        <SettingsBlock title="Cập nhật">
+          <SettingsRow label={`Có bản mới ${update.version}`} hint="Cài đè; sách và chỗ đang nghe giữ nguyên.">
             <Button size="sm" variant="primary" icon={Download} onClick={() => void openRelease(update.apk ?? update.page)}>
               Tải
             </Button>
-          </Row>
-        </Group>
+          </SettingsRow>
+        </SettingsBlock>
       )}
+      <SettingsBlock title="Bộ nhớ">
+        <div className="px-4 py-3.5">
+          <ReadAloudStorage api={{ usage: () => ReadAloud.cacheUsage(), clear: () => ReadAloud.cacheClear() }} />
+        </div>
+      </SettingsBlock>
+      <DiagnosticsBlock />
+      <AboutBlock version={version} />
+    </>
+  );
+}
 
-      <DiagnosticsGroup />
+/** Bộ nhớ của WebView không ghi được (đầy, bị chặn): thay đổi vẫn dùng ngay và lõi nghe vẫn nhớ, nhưng báo để bạn kiểm lại lần mở sau. */
+export const SAVE_FAILED = "Chưa lưu được thay đổi. Lần mở sau bạn xem lại Cài đặt.";
 
-      <AboutGroup version={current} />
+/** Dòng cảnh báo trên trang gốc (bản lưu cũ, bản mới): chỉ là lối tắt vào Nâng cao, không phải mục thứ hai. */
+function RootNotice({ text, tone }: { text: string; tone: "warning" | "accent" }) {
+  return (
+    <Link
+      to={settingsPath("advanced")}
+      className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-sm font-medium hover:bg-hover"
+    >
+      {tone === "warning" ? <TriangleAlert className="size-5 shrink-0 text-warning" /> : <Download className="size-5 shrink-0 text-accent-text" />}
+      <span className="min-w-0 flex-1">{text}</span>
+      <ChevronRight className="size-4 shrink-0 text-fg-3" />
+    </Link>
+  );
+}
+
+export function SettingsScreen() {
+  const { group } = useParams();
+  const [settings, setSettings] = useState<PlayerSettings>(loadSettings);
+  const { current, update } = useAppUpdate();
+  const { data: oldSaves } = useOldSaves();
+  const voiceName = useDefaultVoiceName(phoneVoices.voices);
+  const change: Change = (patch) => {
+    const next = { ...settings, ...patch };
+    setSettings(next);
+    if (!saveSettings(next)) toast.error(SAVE_FAILED, { id: "settings-not-saved" });
+    if (patch.theme) applyTheme(patch.theme, true);
+  };
+  const active = isSettingsGroup(group) && PHONE_GROUPS.includes(group) ? group : null;
+  if (active) {
+    return (
+      <div className="px-4 pb-10 pt-3">
+        <GroupHeader id={active} />
+        {active === "voice" && <VoiceGroup />}
+        {active === "listen" && <ListenGroup settings={settings} change={change} />}
+        {active === "sleep" && <SleepGroup settings={settings} change={change} />}
+        {active === "look" && <LookGroup settings={settings} change={change} />}
+        {active === "advanced" && <AdvancedGroup version={current} update={update} />}
+      </div>
+    );
+  }
+  const rows: GroupRow[] = [
+    { id: "voice", summary: voiceName },
+    { id: "listen", summary: `${settings.autoRewind !== false ? "Tự lùi" : "Không tự lùi"} · ${settings.autoMusic !== false ? "nhạc tự chọn" : "không nhạc nền"}` },
+    { id: "sleep", summary: sleepSummary(settings.sleepSchedule, settings.safetyStopHours) },
+    { id: "look", summary: themeSummary(settings.theme, "Tự động") },
+    { id: "advanced", summary: current ? `Phiên bản ${current}` : undefined },
+  ];
+  return (
+    <div className="px-4 pb-10 pt-4">
+      <h1 className="text-2xl font-bold tracking-tight">Cài đặt</h1>
+      {oldSaves && oldSaves.length > 0 && <RootNotice tone="warning" text={`Bản lưu cũ (${oldSaves.length}) - cần lưu ra`} />}
+      {update && <RootNotice tone="accent" text={`Có bản mới ${update.version}`} />}
+      <SettingsList rows={rows} className="mt-5" />
     </div>
   );
 }

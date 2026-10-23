@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { EbookLibrary } from "./plugins";
 import { markTold, toldAbout, useAppUpdate } from "./updates";
 

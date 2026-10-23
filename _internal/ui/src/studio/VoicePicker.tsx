@@ -1,7 +1,11 @@
+import { MoreInfo } from "@/shared/SettingsNav";
+import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Play } from "lucide-react";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useEffect, useRef, useState } from "react";
+import { useBackLayer } from "@/shared/backStack";
+import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { excerpt, formatNumber } from "@/shared/format";
@@ -98,7 +102,7 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
   });
   const note = moduleNote(current);
   return (
-    <div className="sticky top-0 z-10 bg-panel pb-1 pt-2">
+    <MotionRegion as="div" className="sticky top-0 z-10 bg-panel pb-1 pt-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs font-semibold tracking-wide text-fg-3">{label}</span>
         {current && ["missing", "error", "outdated"].includes(current.state) &&
@@ -121,7 +125,7 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
           )}
         </div>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -176,6 +180,9 @@ export function VoicePicker({
   const narrator = data?.character.value === "NARRATOR";
   // Giọng khác giới với nhân vật: hỏi ngay trong hộp trước khi ghi (soát UX a13 #4) - đổi giọng khác giới là đổi luôn giới của người ấy.
   const [crossing, setCrossing] = useState<VoiceOption | null>(null);
+  const crossingBox = useRef<HTMLDivElement>(null);
+  const crossingButton = useRef<HTMLElement | null>(null);
+  useBackLayer(person !== null && crossing !== null, () => setCrossing(null), crossingBox, crossingButton);
   useEffect(() => setCrossing(null), [person?.name]);
   const save = useMutation({
     mutationFn: ({ voice, withGender }: { voice: VoiceOption; withGender: boolean }) =>
@@ -229,7 +236,10 @@ export function VoicePicker({
   // Chọn một giọng: cùng giới (hay chưa biết giới) ghi luôn; khác giới thì hỏi trước. Người kể không có giới để đổi.
   const choose = (voice: VoiceOption) => {
     const known = data?.character.gender;
-    if (!narrator && (known === "male" || known === "female") && known !== voice.gender) setCrossing(voice);
+    if (!narrator && (known === "male" || known === "female") && known !== voice.gender) {
+      crossingButton.current = document.activeElement as HTMLElement;
+      setCrossing(voice);
+    }
     else save.mutate({ voice, withGender: false });
   };
   const voices = byGender(data?.voices ?? [], shown);
@@ -249,7 +259,7 @@ export function VoicePicker({
           : undefined
       }
       width="max-w-xl"
-    >
+    ><MotionRegion>
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }, (_, index) => (
@@ -272,7 +282,7 @@ export function VoicePicker({
           )}
           {data.rerecord && <p className="mb-2 text-sm text-pretty text-fg-2">{rerecordText(name, data.rerecord)}</p>}
           {crossing && (
-            <div role="alert" className="mb-3 rounded-xl bg-warning-soft px-3 py-2 text-sm">
+            <div ref={crossingBox} role="alert" className="mb-3 rounded-xl bg-warning-soft px-3 py-2 text-sm">
               <p className="text-pretty">
                 {name} đang là {GENDER_WORD[data.character.gender as Gender]} - giọng {crossing.name} là giọng {GENDER_WORD[crossing.gender]}. Đổi cả giới của {name} thành {GENDER_WORD[crossing.gender]}?
               </p>
@@ -281,7 +291,7 @@ export function VoicePicker({
                   Đổi giọng và giới
                 </Button>
                 <Button size="sm" variant="ghost" disabled={save.isPending} onClick={() => setCrossing(null)}>
-                  Thôi, giữ như cũ
+                  Giữ như cũ
                 </Button>
               </div>
             </div>
@@ -306,7 +316,7 @@ export function VoicePicker({
           </div>
           <div className="mt-3 max-h-[min(60vh,460px)] overflow-y-auto pr-1">
             {groups.map((group, index) => (
-              <section key={group.engine} aria-label={groupLabels[index]}>
+              <Fold key={group.engine} storageKey={`voice-picker.${group.engine}`} title={groupLabels[index]} summary={`${group.voices.length} giọng`} defaultOpen={groups.length === 1} bodyClassName="px-2 pb-2">
                 {groups.length > 1 || group.engine !== "vieneu" ? (
                   <EngineHeader engine={group.engine} label={groupLabels[index]} status={data.modules?.[group.engine]} onReady={reload} />
                 ) : null}
@@ -353,23 +363,22 @@ export function VoicePicker({
               </li>
             ))}
                 </ul>
-              </section>
+              </Fold>
             ))}
           </div>
           {narrator ? (
-            <p className="mt-3 text-xs leading-relaxed text-fg-3">
-              Người kể cần giọng riêng nên giọng nhân vật đang dùng không chọn được. Câu kể đã thu được thu lại bằng giọng mới; câu
-              chưa thu đọc luôn bằng giọng mới. Không phải tạo lại sách.
-            </p>
+            <div className="mt-3 text-xs text-fg-3">
+              <p>Đổi giọng sẽ thu lại lời kể.</p>
+              <MoreInfo>Người kể cần giọng riêng, nên không chọn giọng nhân vật đang dùng. Câu chưa thu dùng giọng mới ngay; bạn không cần tạo lại sách.</MoreInfo>
+            </div>
           ) : (
-            <p className="mt-3 text-xs leading-relaxed text-fg-3">
-              Giọng đang có người dùng vẫn chọn được: máy lấy bậc âm sắc khác để hai người không nghe giống nhau trong cùng
-              chương. Chọn giọng khác giới thì hộp hỏi trước, vì đó là đổi luôn giới của nhân vật. Các giọng thêm chỉ có một âm sắc: hai người cùng chương
-              chung giọng ấy sẽ nghe giống hệt nhau.
-            </p>
+            <div className="mt-3 text-xs text-fg-3">
+              <p>Nghe thử trước khi đổi giọng.</p>
+              <MoreInfo label="Dùng chung giọng">Giọng thêm có thể khiến hai nhân vật nghe giống nhau.</MoreInfo>
+            </div>
           )}
         </>
       )}
-    </Dialog>
+    </MotionRegion></Dialog>
   );
 }

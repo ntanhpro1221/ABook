@@ -1,8 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ClipboardCheck, MessageSquareQuote, SpellCheck, Users } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Switch } from "@/desktop/PhoneSync";
 import { PersonRow } from "@/listen/BookScreen";
 import type { CastMember } from "@/listen/model";
@@ -35,7 +36,7 @@ import type { WorkLists } from "./workFocus";
 // "Duyệt trước khi thu" (webui/precast.py, docs/STUDIO_REVIEW.md): ngay khi phân tích xong và trước khi thu tới những chương đầu,
 // dẫn qua đúng thứ tự người duyệt cần - người nói nhiều nhất và giọng, cách đọc tên lạ, rồi "ai nói câu này" ở chương sắp thu.
 // Mỗi bước là thẻ / dòng sẵn có của hộp việc và tab Nhân vật; bước nào cũng bỏ qua được. Không bước nào chặn dây chuyền: chỉ khi
-// người dùng bật "Chờ tôi duyệt trước khi thu" thì sách đứng lại (tạm dừng) và chờ nút "Thu âm".
+// người dùng bật "Duyệt trước khi thu" thì sách đứng lại (tạm dừng) và chờ nút "Thu âm".
 
 export function usePrecast(bookId: string, enabled = true) {
   return useQuery({
@@ -58,7 +59,7 @@ export function usePrecastKeys(bookId: string, enabled: boolean): Set<string> | 
   }, [enabled, view, work]);
 }
 
-/** Công tắc "Chờ tôi duyệt trước khi thu" của một cuốn - ở trang dự án (trước mốc) và trên màn duyệt. */
+/** Công tắc "Duyệt trước khi thu" của một cuốn - ở trang dự án (trước mốc) và trên màn duyệt. */
 export function PrecastWaitSwitch({ book, className }: { book: BookSummary; className?: string }) {
   const client = useQueryClient();
   const wait = Boolean(book.precast?.wait);
@@ -74,19 +75,19 @@ export function PrecastWaitSwitch({ book, className }: { book: BookSummary; clas
   const passed = Boolean(book.precast?.announcedAt);
   const id = `precast-wait-${book.id}`;
   return (
-    <label htmlFor={id} className={cn("flex items-start gap-3 rounded-xl border border-line bg-panel p-4", className)}>
+    <MotionRegion as="label" htmlFor={id} className={cn("flex items-start gap-3 rounded-xl border border-line bg-panel p-4", className)}>
       <Switch id={id} labelledBy={`${id}-name`} describedBy={`${id}-hint`} checked={wait} disabled={save.isPending} onCheckedChange={(value) => save.mutate(value)} />
       <span>
-        <span id={`${id}-name`} className="block text-sm font-medium">Chờ tôi duyệt trước khi thu</span>
+        <span id={`${id}-name`} className="block text-sm font-medium">Duyệt trước khi thu</span>
         <span id={`${id}-hint`} className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
           {passed
-            ? "Áp dụng cho lần phân tích xong của cuốn này - đã qua rồi. Muốn sách đứng lại lúc này thì bấm “Tạm dừng”."
+            ? "Phân tích đã xong. Muốn dừng thì bấm “Tạm dừng”."
             : wait
-              ? "Phân tích xong, sách tạm dừng để bạn xem giọng, cách đọc tên và người nói - bấm “Thu âm” để thu tiếp."
-              : "Phân tích xong thì thu luôn. Vẫn duyệt được bất cứ lúc nào; sửa ở chương chưa thu thì không phải thu lại."}
+              ? "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”."
+              : "Phân tích xong thì thu luôn; duyệt lúc nào cũng được."}
         </span>
       </span>
-    </label>
+    </MotionRegion>
   );
 }
 
@@ -143,7 +144,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
   // Quyết xong một thẻ thì thẻ rời danh sách: tiêu điểm sang thẻ kế (hết thẻ thì về đầu vùng bước), không rơi về BODY (useCardFocus.ts).
   const lists = useRef<WorkLists | null>(null);
   useCardFocus(lists, PRECAST_ENDS);
-  if (!view || isLoading || !work) return <div className="mt-6 text-sm text-fg-2">Đang gom những gì cần duyệt…</div>;
+  if (!view || isLoading || !work) return <MotionRegion as="div" className="mt-6 text-sm text-fg-2">Đang gom những gì cần duyệt…</MotionRegion>;
 
   const people = (cast?.characters ?? []).slice(0, TOP_PEOPLE);
   // Nhiều dòng cùng tên ("Lính gác" ba lần) hầu như là một người máy tách ra theo từng chương - hỏi, và cho đường tắt tới chỗ gộp.
@@ -164,7 +165,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
   const cards = { book, onOpenReview: open.onOpenReview, onOpenScript: open.onOpenScript, onOpenNames: open.onOpenNames };
 
   return (
-    <div className="mt-5">
+    <MotionRegion as="div" className="mt-5">
       <div className="rounded-2xl border border-line bg-panel p-4 sm:p-5">
         <div className="min-w-0 max-w-2xl">
           <h2 className="text-base font-semibold">Duyệt trước khi thu</h2>
@@ -291,7 +292,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
             </div>
           }>
             {book.precast?.held
-              ? "Sửa nào cũng đã ghi lại. Bấm “Thu âm” ở đầu trang để sách làm tiếp - máy áp các sửa ấy trước khi thu chương đầu tiên."
+              ? "Đã ghi lại. Bấm “Thu âm” để làm tiếp."
               : book.running
                 ? "Sửa nào cũng đã ghi lại; máy áp ở chương kế tiếp. Những chỗ khác máy chưa chắc vẫn ở “Việc cần duyệt”."
                 : "Sửa nào cũng đã ghi lại; máy áp khi sách chạy tiếp. Những chỗ khác máy chưa chắc vẫn ở “Việc cần duyệt”."}
@@ -309,7 +310,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
           </Button>
         </div>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 

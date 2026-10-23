@@ -20,10 +20,10 @@ describe("tốc độ giọng trên máy", () => {
 
   it("Tự động nói máy tự chọn thế nào, và sách xuất ra luôn dùng chất lượng cao nhất", () => {
     const text = voiceSpeedDescription("auto");
-    expect(text).toContain("Máy tự chọn: đủ nhanh để vừa đọc vừa nghe thì giữ chất lượng cao nhất.");
-    expect(text).toContain("Sách bạn xuất ra luôn dùng chất lượng cao nhất");
+    expect(text).toContain("Máy kịp thì đọc bản hay nhất.");
+    expect(text).toContain("sách xuất ra luôn dùng bản hay nhất");
     for (const choice of ["auto", "quality", "fast"] as const) {
-      expect(voiceSpeedDescription(choice)).toContain("Áp cho giọng Supertonic khi bạn nghe trực tiếp. Giọng VieNeu chỉ có một mức.");
+      expect(voiceSpeedDescription(choice)).toContain("Chỉ áp cho giọng Supertonic");
     }
   });
 

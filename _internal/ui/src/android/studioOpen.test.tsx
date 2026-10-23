@@ -75,14 +75,14 @@ describe("máy tính chỉ cho điện thoại nghe", () => {
   it("máy chỉ cho nghe không nằm trong lựa chọn; còn mỗi máy ấy thì nói vì sao", () => {
     expect(studioChoice([listenOnlyHome, office])).toEqual({ open: office });
     expect(studioChoice([listenOnlyHome])).toEqual({
-      none: "Máy tính NGDtuanh-Lecoo chỉ cho nghe - trên máy tính ấy, bật Cài đặt → Điện thoại và thiết bị → “Cho phép điều khiển sản xuất từ thiết bị đã ghép”",
+      none: "Máy tính NGDtuanh-Lecoo chỉ cho nghe - trên máy tính ấy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”",
     });
   });
 
   it("nút mờ kèm lý do khi mọi máy tính chỉ cho nghe, không mở trang Studio đóng", async () => {
     const html = renderToString(<OpenStudioButton computers={[listenOnlyHome]} />);
     expect(html).toContain("disabled");
-    expect(html).toContain("chỉ cho nghe - trên máy tính ấy, bật Cài đặt → Điện thoại và thiết bị");
+    expect(html).toContain("chỉ cho nghe - trên máy tính ấy, bật Cài đặt › Thiết bị");
     library.studioComputers.mockResolvedValue({ computers: [listenOnlyHome] });
     await startStudio(vi.fn());
     expect(library.openStudio).not.toHaveBeenCalled();
@@ -112,7 +112,7 @@ describe("máy tính chỉ cho điện thoại nghe", () => {
   it("nhiều máy cùng chỉ cho nghe: lý do nêu tên cả hai, hơn hai máy thì nói chung", () => {
     const second = { ...office, listenOnly: true };
     expect(studioChoice([listenOnlyHome, second])).toEqual({
-      none: "Máy tính NGDtuanh-Lecoo và Máy văn phòng đều chỉ cho nghe - trên từng máy, bật Cài đặt → Điện thoại và thiết bị → “Cho phép điều khiển sản xuất từ thiết bị đã ghép”",
+      none: "Máy tính NGDtuanh-Lecoo và Máy văn phòng đều chỉ cho nghe - trên từng máy, bật Cài đặt › Thiết bị › “Điều khiển từ xa”",
     });
     const third = { key: "c3", name: "Máy ba", listenOnly: true };
     const html = renderToString(<OpenStudioButton computers={[listenOnlyHome, second, third]} />);

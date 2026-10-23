@@ -16,6 +16,7 @@ vi.mock("sonner", () => ({ toast: h.toast }));
 import { deleteOldSave, exportOldSave, OldSaveDeleteDialog } from "./OldSaves";
 import { newOldSaves, oldSaveNotice, oldSaveTitle, OLD_SAVES_KEY, type OldSave } from "./oldSaveList";
 import { SettingsScreen } from "./SettingsScreen";
+import { SettingsAt } from "@/shared/settingsAt";
 
 // Màn "Bản lưu cũ" (soát a106 G3): hiện / ẩn mục trong Cài đặt, xác nhận trước khi xoá, câu báo một lần ở Thư viện.
 
@@ -36,7 +37,7 @@ function settingsHtml(files: OldSave[] | undefined): string {
   if (files) client.setQueryData(OLD_SAVES_KEY, files);
   return renderToString(
     <QueryClientProvider client={client}>
-      <SettingsScreen />
+      <SettingsAt group="advanced" screen={<SettingsScreen />} />
     </QueryClientProvider>,
   );
 }

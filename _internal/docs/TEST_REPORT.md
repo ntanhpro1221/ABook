@@ -832,3 +832,12 @@ Bắt buộc smoke test một chapter 2.000–5.000 từ trước khi chạy boo
 
 - 22-10 dev/uxfix82 (a74fix: dữ liệu điện thoại bền khi app bị giết - migration/rekey journal/fsync/.corrupt, retake có operation_id, chỗ nghe ReadAloud có anchor, bìa xoá sau khi JSON đã ghi): pytest 8391 passed / 9 skipped / 0 F/E; vitest 1241 passed; tsc 0; gradle 1219 / 0 F/E / 6 skip; hash 67286434.
 - 22-10 dev/uxfix84 (musfix: ghi công nhạc trong bản xuất, bỏ bài thiếu tác giả, kiểm bytes/sha1 bài tải, mờ vào khi sẵn sàng, nhả nhạc khi đóng sách): pytest 8381 passed / 9 skipped / 0 F/E; vitest 1243 passed; tsc 0; gradle 1213 / 0 F/E / 6 skip; hash 67286434.
+
+## 24-10-2026 — Back và chuyển động giao diện
+
+- Vitest toàn bộ UI: 1770 pass, 0 fail, 1 skip; thêm 20 test DOM hồi quy cho Switch, Toaster, Dialog/Sheet/Menu, details, ghi chú và vùng rỗng.
+- V1–V7 có log test đỏ trước sửa và xanh sau sửa. Timer ngắn được thu hồi khi unmount; các bước Back trả focus về thao tác mở.
+- `tsc -p tsconfig.json`: 0 lỗi. `npm run build` và `npm run build:android`: exit 0; không chạy Gradle/GPU.
+- Tổng JS web: 1517520 → 1521575 byte; Android: 1620853 → 1624602 byte, so với build source trước sửa trong scratch.
+- Hash implementation trước/sau: c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886.
+- Test dùng happy-dom, geometry/WAAPI có stub; chưa xác nhận FPS/pixel, Tab/focus và Back trên WebView/TalkBack thật.

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 
 // Trình phát clip ngắn: nghe thử giọng kể, nghe câu mẫu của một nhân vật. Tách khỏi trình phát chương để
 // không làm mất vị trí đang nghe; bấm clip thì tạm dừng chương, clip hết thì thôi (không tự phát lại chương -

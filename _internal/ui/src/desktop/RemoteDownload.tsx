@@ -1,8 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleAlert, CircleCheck, Download, Square } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import type { ListenBook } from "@/listen/model";
 import { cn } from "@/shared/cn";
 import { endSentence } from "@/shared/format";
@@ -76,10 +77,10 @@ export function RemoteDownloadMenuItem({ book }: { book: ListenBook }) {
 export function RemoteDownloadStatus({ book }: { book: ListenBook }) {
   const { status, start, cancel, busy } = useRemoteDownload(book);
   const note = downloadNote(status, computerOf(book));
-  if (!status || !note) return null;
+  if (!status || !note) return <MotionRegion />;
   const Icon = note.tone === "error" ? CircleAlert : note.tone === "done" ? CircleCheck : Download;
   return (
-    <div
+    <MotionRegion as="div"
       role="status"
       className={cn(
         "mt-2 max-w-md rounded-xl px-3 py-2 text-xs max-sm:mx-auto max-sm:text-left",
@@ -104,6 +105,6 @@ export function RemoteDownloadStatus({ book }: { book: ListenBook }) {
           {note.action === "cancel" ? "Dừng tải" : "Tải tiếp"}
         </Button>
       )}
-    </div>
+    </MotionRegion>
   );
 }

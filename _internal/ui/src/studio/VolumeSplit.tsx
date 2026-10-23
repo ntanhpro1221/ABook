@@ -1,3 +1,5 @@
+import { MoreInfo } from "@/shared/SettingsNav";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { Layers, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/shared/cn";
@@ -78,37 +80,37 @@ export function VolumeSplit({
   onChange: (value: string[] | null) => void;
 }) {
   const total = files.length;
-  if (total < 2) return null;
+  if (total < 2) return <MotionRegion />;
   if (value === null) {
     if (!proposal) {
       return (
-        <div className="mt-4">
+        <MotionRegion as="div" className="mt-4">
           <Button size="sm" variant="ghost" icon={Layers} onClick={() => onChange([files[0].path])}>
             Chia thành nhiều phần
           </Button>
-        </div>
+        </MotionRegion>
       );
     }
     const shown = proposal.volumes.slice(0, 4);
     return (
-      <div className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
+      <MotionRegion as="div" className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
         <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">Gợi ý: truyện này có vẻ gồm {proposal.volumes.length} tập, làm thành {proposal.volumes.length} phần</p>
-          <p className="mt-1 break-words text-fg-2">
+          <p className="font-semibold">Chia {proposal.volumes.length} phần?</p>
+          <p className="mt-1 text-fg-2">Nối các phần, giữ giọng và cách đọc tên.</p>
+          <MoreInfo>
             Máy thấy {SOURCE_TEXT[proposal.source]}:{" "}
             {shown.map((volume) => `${volume.label} (${formatNumber(volume.chapters)} chương)`).join(", ")}
-            {proposal.volumes.length > shown.length ? ", …" : ""}. Hiện cả truyện được làm thành MỘT sách. Chia ra thì mỗi tập của
-            truyện thành một phần, nối nhau như Làm tiếp: phần sau tự bắt đầu khi phần trước xong và mang giọng nhân vật, cách đọc tên
-            sang. Chỗ cắt sửa được theo số chương.
-          </p>
+            {proposal.volumes.length > shown.length ? ", …" : ""}.
+            {" "}Chưa chia thì cả truyện là một sách. Mỗi phần tự bắt đầu sau phần trước; bạn sửa chỗ cắt bằng số chương.
+          </MoreInfo>
           <div className="mt-2.5 flex gap-2">
             <Button size="sm" variant="secondary" icon={Layers} onClick={() => onChange(proposal.volumes.map((volume) => volume.startPath))}>
               Chia thành nhiều phần
             </Button>
           </div>
         </div>
-      </div>
+      </MotionRegion>
     );
   }
 
@@ -122,7 +124,7 @@ export function VolumeSplit({
     return true;
   };
   return (
-    <section aria-labelledby="volumes-title" className="mt-4 rounded-xl border border-accent/40 bg-panel p-4 text-sm">
+    <MotionRegion as="section" aria-labelledby="volumes-title" className="mt-4 rounded-xl border border-accent/40 bg-panel p-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="volumes-title" className="flex items-center gap-2 font-semibold">
           <Layers className="size-4 text-accent-text" /> {parts.length > 1 ? `Chia thành ${parts.length} phần` : "Chia thành mấy phần?"}
@@ -184,7 +186,7 @@ export function VolumeSplit({
         ))}
       </ol>
       <AddCut starts={starts} total={total} onAdd={(number) => commit(addStart(starts, number, total))} />
-    </section>
+    </MotionRegion>
   );
 }
 

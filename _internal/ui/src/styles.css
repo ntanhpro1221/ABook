@@ -420,11 +420,11 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   background: var(--read-along-word);
   color: var(--text);
   border-radius: 3px;
-  transition: background-color 90ms linear;
+  transition: background-color var(--motion-fast-out) linear;
 }
 @media (prefers-reduced-motion: reduce) {
   .read-along-word {
-    transition: none;
+    transition: background-color var(--motion-fast-out) linear;
   }
 }
 
@@ -434,26 +434,215 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   color: oklch(var(--avatar-fg-l) 0.13 var(--hue, 250));
 }
 
+/* =========================================================================================================
+   CHUYỂN ĐỘNG (a120 - chủ app 23-10: "luôn luôn dùng chuyển động hoặc fade, app luôn phải chuyển mượt mà ở bất cứ đâu").
+   Một chỗ cho mọi thời lượng / đường cong; shared/motion.ts giữ bản số (MOTION) cho chỗ phải đặt bằng JS (Web Animations, hẹn giờ gỡ).
+   Quy tắc: vào = hiện dần + dịch/phóng nhẹ từ nơi khởi phát; ra nhanh hơn vào; tấm trượt trượt từ cạnh; chỉ transform/opacity
+   (chiều cao chỉ ở mục gấp/mở và hàng danh sách thêm/xoá). Xin giảm chuyển động: --motion-amount = 0 - còn lại hiện/mờ ngắn, không bật tắt cứng.
+   ========================================================================================================= */
+:root {
+  /* Nút, tooltip, đổi biểu tượng */
+  --motion-fast: 120ms;
+  --motion-fast-out: 90ms;
+  /* Lớp phủ, hộp thoại, menu, bảng nổi, mục gấp/mở */
+  --motion-medium: 220ms;
+  --motion-medium-out: 150ms;
+  /* Đổi trang, tấm trượt, màn Đang nghe */
+  --motion-slow: 300ms;
+  --motion-slow-out: 200ms;
+  /* Material 3: standard (chuyển trong màn), emphasized decelerate (vào), emphasized accelerate (ra) */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+  /* 1 = đầy đủ; 0 = chỉ hiện/mờ (prefers-reduced-motion) */
+  --motion-amount: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-amount: 0;
+    --motion-medium: 140ms;
+    --motion-medium-out: 100ms;
+    --motion-slow: 160ms;
+    --motion-slow-out: 110ms;
+  }
+}
+
+@theme inline {
+  --default-transition-duration: var(--motion-fast);
+  --default-transition-timing-function: var(--ease-standard);
+}
+
+/* Hai keyframe chung: điểm còn lại là trạng thái đứng yên của phần tử. Vào dùng `backwards` (xong là thôi tác động - không để lại lớp xếp chồng
+   hay độ mờ treo trên trang), ra dùng `both` (giữ trạng thái cuối tới khi Radix / usePresence gỡ phần tử). Mỗi lớp đặt hướng/độ phóng qua --enter-x / --enter-y / --enter-scale.
+   Vào và ra PHẢI khác tên keyframe: Radix (Presence) chỉ giữ phần tử lại chờ hiệu ứng đóng khi tên hoạt ảnh đổi. */
+@keyframes motion-enter {
+  from {
+    opacity: 0;
+    transform: translate(var(--enter-x, 0px), var(--enter-y, 0px)) scale(var(--enter-scale, 1));
+  }
+}
+@keyframes motion-exit {
+  to {
+    opacity: 0;
+    transform: translate(var(--enter-x, 0px), var(--enter-y, 0px)) scale(var(--enter-scale, 1));
+  }
+}
 @keyframes fade-in {
   from {
     opacity: 0;
   }
-  to {
-    opacity: 1;
-  }
 }
-@keyframes now-playing-in {
-  from {
+@keyframes fade-out {
+  to {
     opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
+
+/* Nền tối sau hộp thoại / tấm trượt */
+.motion-scrim[data-state="open"] {
+  animation: fade-in var(--motion-medium) linear backwards;
+}
+.motion-scrim[data-state="closed"] {
+  animation: fade-out var(--motion-medium-out) linear both;
+}
+
+/* Hộp thoại: nổi lên từ dưới một chút và phóng từ 96 %. Vị trí giữa màn đặt bằng thuộc tính `translate` của Tailwind - không đụng `transform`. */
+.motion-dialog {
+  --enter-y: calc(10px * var(--motion-amount));
+  --enter-scale: calc(1 - 0.04 * var(--motion-amount));
+}
+.motion-dialog[data-state="open"] {
+  animation: motion-enter var(--motion-medium) var(--ease-decelerate) backwards;
+}
+.motion-dialog[data-state="closed"] {
+  animation: motion-exit var(--motion-medium-out) var(--ease-accelerate) both;
+}
+
+/* Tấm trượt từ đáy */
+.motion-sheet {
+  --enter-y: calc(100% * var(--motion-amount));
+}
+.motion-sheet[data-state="open"] {
+  animation: motion-enter var(--motion-slow) var(--ease-decelerate) backwards;
+}
+.motion-sheet[data-state="closed"] {
+  animation: motion-exit var(--motion-slow-out) var(--ease-accelerate) both;
+}
+
+/* Menu, bảng nổi, danh sách chọn, tooltip của Radix (mọi chỗ, không phải sửa từng nơi): mọc ra từ phía nút mở (gốc biến đổi Radix tính sẵn). */
+[data-radix-popper-content-wrapper] > [data-state] {
+  transform-origin: var(--radix-popper-transform-origin);
+  --enter-scale: calc(1 - 0.05 * var(--motion-amount));
+}
+[data-radix-popper-content-wrapper] > [data-side="bottom"] {
+  --enter-y: calc(-4px * var(--motion-amount));
+}
+[data-radix-popper-content-wrapper] > [data-side="top"] {
+  --enter-y: calc(4px * var(--motion-amount));
+}
+[data-radix-popper-content-wrapper] > [data-side="left"] {
+  --enter-x: calc(4px * var(--motion-amount));
+}
+[data-radix-popper-content-wrapper] > [data-side="right"] {
+  --enter-x: calc(-4px * var(--motion-amount));
+}
+[data-radix-popper-content-wrapper] > :is([data-state="open"], [data-state="delayed-open"], [data-state="instant-open"]) {
+  animation: motion-enter var(--motion-medium) var(--ease-decelerate) backwards;
+}
+[data-radix-popper-content-wrapper] > [data-state="closed"] {
+  animation: motion-exit var(--motion-medium-out) var(--ease-accelerate) both;
+}
+[data-radix-popper-content-wrapper] > .motion-tooltip:is([data-state="delayed-open"], [data-state="instant-open"]) {
+  animation-duration: var(--motion-fast);
+}
+[data-radix-popper-content-wrapper] > .motion-tooltip[data-state="closed"] {
+  animation-duration: var(--motion-fast-out);
+}
+
+/* Lớp tự dựng hiện/ẩn bằng state (shared/motion.ts usePresence): panel trong màn Đang nghe, bước con trong hộp, khung ghép, thông báo trong trang. */
+.motion-panel {
+  --enter-y: calc(8px * var(--motion-amount));
+}
+.motion-panel[data-state="open"] {
+  animation: motion-enter var(--motion-medium) var(--ease-decelerate) backwards;
+}
+.motion-panel[data-state="closed"] {
+  animation: motion-exit var(--motion-medium-out) var(--ease-accelerate) both;
+}
+/* Bước con thay chỗ nội dung (hộp "Câu này" -> "Ai nói", màn con): trượt ngang như đổi trang - vào từ phải, về thì từ trái. */
+.motion-step {
+  --enter-x: calc(24px * var(--motion-amount));
+  animation: motion-enter var(--motion-medium) var(--ease-decelerate) backwards;
+}
+.motion-step[data-direction="back"] {
+  --enter-x: calc(-24px * var(--motion-amount));
+}
+
+/* Nội dung thay khung chờ (Skeleton) hay chữ "Đang tải…": hiện dần đè lên chỗ khung chờ vừa rời - mắt thấy một lần chuyển, không phải một cú nháy. */
+.motion-reveal {
+  animation: fade-in var(--motion-medium) var(--ease-standard) backwards;
+}
+/* Dải thông báo trong trang (lỗi phát, sắp tắt, hết chương, nhạc đang phát) xuất hiện giữa chừng: nhô lên và hiện dần. */
+.motion-appear {
+  --enter-y: calc(4px * var(--motion-amount));
+  animation: motion-enter var(--motion-medium) var(--ease-decelerate) backwards;
+}
+/* Khung chờ tự nó cũng hiện dần (sau 120 ms: dữ liệu về nhanh thì không nháy khung chờ chút nào). */
+.motion-skeleton {
+  animation:
+    fade-in var(--motion-medium) linear var(--motion-fast) backwards,
+    skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) calc(var(--motion-fast) + var(--motion-medium)) infinite;
+}
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Mục gấp/mở: Collapse đo chiều cao trước đổi trạng thái và tween height bằng WAAPI; không phụ thuộc grid interpolation của WebView.
+   Đóng xong thì ẩn hẳn (visibility, đổi ở CUỐI hiệu ứng): ra khỏi Tab và trình đọc màn hình. */
+.motion-collapse {
+  height: auto;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity var(--motion-medium) var(--ease-standard), visibility 0s;
+}
+.motion-collapse[data-state="closed"] {
+  height: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--motion-fast-out) linear, visibility 0s linear var(--motion-medium-out);
+}
+.motion-flow { min-height: 0; }
+/* Mũi tên của mục gấp/mở (<details> và Collapse) xoay theo, không nhảy. */
+.fold-chevron {
+  transition: transform var(--motion-medium) var(--ease-standard);
+}
+[aria-expanded="true"] .fold-chevron,
+details[open]:not([data-motion="closing"]) > summary .fold-chevron {
+  transform: rotate(180deg);
+}
+
+/* Hàng danh sách thêm / xoá (shared/motion.ts useListPresence): mở chiều cao + hiện dần; xoá thì ngược lại rồi mới gỡ. */
+@keyframes row-in {
+  from { height: 0; opacity: 0; }
+  to { height: var(--row-height); opacity: 1; }
+}
+@keyframes row-out {
+  from { height: var(--row-height); opacity: 1; }
+  to { height: 0; opacity: 0; }
+}
+.motion-row[data-state="enter"], .motion-row[data-state="exit"] { overflow: hidden; }
+.motion-row[data-state="enter"] { animation: row-in var(--motion-medium) var(--ease-standard) backwards; }
+.motion-row[data-state="exit"] {
+  animation: row-out var(--motion-medium-out) var(--ease-accelerate) both;
+  pointer-events: none;
+}
+
+/* Màn "Đang nghe" khi không có View Transitions (đường dự phòng): trượt lên từ đáy. */
 .now-playing {
-  animation: now-playing-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --enter-y: calc(24px * var(--motion-amount));
+  animation: motion-enter var(--motion-slow) var(--ease-decelerate) backwards;
 }
 
 /* Thanh đang chạy: vạch sáng trượt qua, như băng đang quay. Tắt khi người dùng xin giảm chuyển động. */
@@ -511,79 +700,193 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   animation-delay: -0.2s;
 }
 
-/* Mở/đóng "Đang nghe": bìa bay giữa thanh phát và màn hình lớn (View Transitions, player.tsx setExpandedAnimated).
-   Chỉ MỘT phần tử mang tên này ở mỗi trạng thái: bìa nhỏ bỏ tên khi màn lớn đang mở. */
+/* ---- View Transitions (shared/motion.ts withViewTransition; MotionHashRouter đổi trang; player.tsx mở/đóng Đang nghe; đổi giao diện) ----
+   Lớp ảnh chụp KHÔNG nhận chạm: chạm trong lúc chuyển rơi thẳng xuống trang mới - chuyển cảnh không bao giờ nuốt thao tác. */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--motion-medium);
+  animation-timing-function: var(--ease-standard);
+}
+/* Vùng nội dung trang (main của Shell / MobileShell): đổi trang chỉ vùng này chuyển, thanh bên / thanh tab / thanh phát đứng yên. */
+.page-motion {
+  view-transition-name: page;
+}
+@keyframes vt-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes vt-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes vt-axis-out {
+  to {
+    transform: translateX(calc(var(--axis-dir, 1) * -32px * var(--motion-amount)));
+  }
+}
+@keyframes vt-axis-in {
+  from {
+    transform: translateX(calc(var(--axis-dir, 1) * 32px * var(--motion-amount)));
+  }
+}
+@keyframes vt-through-in {
+  from {
+    transform: scale(calc(1 - 0.03 * var(--motion-amount)));
+  }
+}
+/* Đi sâu vào (mở sách, mở nhóm cài đặt) / lùi ra: "shared axis X" của Material - trang cũ lùi về một phía và mờ nhanh, trang mới tới từ phía kia. */
+html[data-nav="back"] {
+  --axis-dir: -1;
+}
+html:is([data-nav="forward"], [data-nav="back"])::view-transition-old(page) {
+  animation:
+    vt-axis-out var(--motion-slow) var(--ease-standard) both,
+    vt-fade-out var(--motion-fast-out) linear both;
+}
+html:is([data-nav="forward"], [data-nav="back"])::view-transition-new(page) {
+  animation:
+    vt-axis-in var(--motion-slow) var(--ease-standard) both,
+    vt-fade-in calc(var(--motion-slow) - var(--motion-fast-out)) linear var(--motion-fast-out) both;
+}
+/* Ngang hàng (tab dưới, tab trong trang, đổi nhóm ở hai cột): "fade through" - cũ mờ đi, mới hiện dần và phóng nhẹ. */
+html[data-nav="through"]::view-transition-old(page) {
+  animation: vt-fade-out var(--motion-fast-out) linear both;
+}
+html[data-nav="through"]::view-transition-new(page) {
+  animation:
+    vt-through-in var(--motion-medium) var(--ease-decelerate) var(--motion-fast-out) both,
+    vt-fade-in var(--motion-medium) linear var(--motion-fast-out) both;
+}
+
+/* Mở/đóng "Đang nghe": màn trượt lên từ đáy và hiện dần (nền phía dưới mờ khuất theo), đóng thì trượt xuống; bìa bay giữa thanh phát và màn lớn.
+   Chỉ MỘT phần tử mang mỗi tên ở mỗi trạng thái: bìa nhỏ bỏ tên khi màn lớn đang mở. */
+.now-playing-vt {
+  view-transition-name: now-playing;
+}
 .cover-morph {
   view-transition-name: now-playing-cover;
 }
 ::view-transition-group(now-playing-cover) {
-  animation-duration: 0.34s;
-  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  animation-duration: var(--motion-slow);
+  animation-timing-function: var(--ease-standard);
+  /* Bìa bay trên mọi lớp khác */
+  z-index: 2;
 }
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 0.24s;
-  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+::view-transition-new(now-playing):only-child {
+  --enter-y: calc(16% * var(--motion-amount));
+  animation: motion-enter var(--motion-slow) var(--ease-decelerate) backwards;
 }
-/* Có View Transitions thì nó lo cả lúc mở lẫn lúc đóng; hoạt ảnh trượt lên cũ chỉ còn là đường dự phòng. */
-@supports (view-transition-name: none) {
-  .now-playing {
-    animation: none;
-  }
+::view-transition-old(now-playing):only-child {
+  --enter-y: calc(16% * var(--motion-amount));
+  animation: motion-exit var(--motion-slow-out) var(--ease-accelerate) both;
+}
+/* Có View Transitions thì nó lo cả lúc mở lẫn lúc đóng; hoạt ảnh trượt lên chỉ còn là đường dự phòng. */
+html[data-vt] .now-playing { animation: none; }
+.now-playing[data-state="closed"] {
+  animation: motion-exit var(--motion-slow-out) var(--ease-accelerate) both;
+  pointer-events: none;
+}
+.motion-snapshot { animation: fade-out var(--motion-fast-out) linear both !important; }
+[data-motion-region]:empty:not([data-motion-exit]) { display: none; }
+details[data-motion-fallback="1"][data-motion="opening"] > :not(summary) { animation: fade-in var(--motion-fast) linear; }
+details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { animation: fade-out var(--motion-fast) linear both; }
+.motion-snapshot * { animation: none !important; transition: none !important; }
+.motion-loading { display: grid; }
+.motion-loading > * { grid-area: 1 / 1; min-width: 0; }
+.motion-loading-placeholder[data-state="closed"] { pointer-events: none; }
+.motion-progress {
+  width: 100%;
+  transform-origin: left;
+  transition: transform var(--motion-medium) var(--ease-standard);
 }
 
-/* Chuyển trang: nội dung trang mới hiện dần và nhích lên (Shell/App gọi animatePage khi đường dẫn đổi). */
-@keyframes page-in {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+/* Tab trong trang (Radix Tabs) đổi bằng state, không qua đường dẫn: nội dung tab mới hiện dần. */
+[role="tabpanel"][data-state="active"] {
+  --enter-y: calc(4px * var(--motion-amount));
+  animation: motion-enter var(--motion-medium) var(--ease-decelerate) backwards;
 }
+
 /* Danh sách/lưới sách: các thẻ hiện lần lượt khi mở màn (tối đa ~10 thẻ đầu, phần sau hiện ngay). */
 .rise-in {
-  animation: page-in 0.32s cubic-bezier(0.2, 0, 0, 1) both;
+  --enter-y: calc(6px * var(--motion-amount));
+  animation: motion-enter var(--motion-slow) var(--ease-standard) backwards;
   animation-delay: calc(min(var(--i, 0), 10) * 28ms);
 }
 /* Biểu tượng đổi trạng thái (phát <-> dừng): nhún nhẹ khi hiện. */
 @keyframes icon-pop {
   from {
     opacity: 0;
-    transform: scale(0.6) rotate(-12deg);
-  }
-  to {
-    opacity: 1;
-    transform: none;
+    transform: scale(calc(1 - 0.4 * var(--motion-amount))) rotate(calc(-12deg * var(--motion-amount)));
   }
 }
 .icon-pop {
   display: inline-grid;
-  animation: icon-pop 0.2s cubic-bezier(0.2, 0, 0, 1.3);
+  animation: icon-pop var(--motion-medium) cubic-bezier(0.2, 0, 0, 1.3);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .rise-in,
-  .icon-pop,
-  ::view-transition-group(*),
-  ::view-transition-old(*),
-  ::view-transition-new(*) {
-    animation: none !important;
+  /* Bìa bay: chỉ còn hiện/mờ chéo (ảnh chụp không dịch chỗ). */
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
   }
   /* Vòng quay và nhấp nháy "đang làm" (soát a31 M1): đứng yên - chữ cạnh nó đã nói đang làm gì. */
   .animate-spin,
-  .animate-pulse {
+  .animate-pulse,
+  .motion-skeleton {
     animation: none !important;
   }
   .sheen::after,
   .indeterminate-bar,
-  .vu > span,
-  .now-playing {
+  .vu > span {
     animation: none;
   }
+  /* Chuyển tiếp CSS (màu, độ mờ, mục gấp/mở): ngắn lại nhưng vẫn còn - không bật tắt cứng. */
   * {
-    transition-duration: 0ms !important;
+    transition-duration: var(--motion-fast) !important;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-row[data-state="enter"] { animation-name: fade-in; }
+  .motion-row[data-state="exit"] { animation-name: fade-out; }
+  .motion-skeleton { animation: fade-in var(--motion-fast) linear backwards !important; }
+  .fold-chevron, [aria-expanded="true"] .fold-chevron,
+  details[open] > summary .fold-chevron { transform: none; rotate: none; translate: none; scale: none; transition-property: opacity; }
+  details[data-motion="opening"] > :not(summary) { animation: fade-in var(--motion-fast) linear; }
+  details[data-motion="closing"] > :not(summary) { animation: fade-out var(--motion-fast) linear both; }
+  .motion-tab-icon { transform: none; translate: none !important; scale: none !important; transition-property: opacity; }
+  .motion-switch-thumb { transform: none; translate: none !important; scale: none !important; position: relative; left: 2px; transition-property: opacity; animation: fade-in-off var(--motion-fast) linear; }
+  .motion-switch-thumb[data-state="checked"] { left: 22px; animation: fade-in var(--motion-fast) linear; }
+}
+
+@keyframes fade-in-off { from { opacity: 0; } to { opacity: 1; } }
+
+@utility duration-motion-fast { transition-duration: var(--motion-fast); }
+@utility duration-motion-medium { transition-duration: var(--motion-medium); }
+@utility duration-motion-slow { transition-duration: var(--motion-slow); }
+
+/* Sonner vẫn quản lý swipe/stack; thời lượng vào/ra dùng token chung. Không tween shadow. */
+[data-sonner-toast]:not([data-swiping="true"]) {
+  transition-property: transform, opacity, height;
+  transition-duration: var(--motion-medium);
+  transition-timing-function: var(--ease-standard);
+}
+[data-sonner-toast][data-removed="true"] { transition-duration: var(--motion-medium-out); }
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast]:not([data-swiping="true"]) {
+    transition: opacity var(--motion-fast) linear !important;
+    animation: fade-in var(--motion-fast) linear backwards !important;
+  }
+  [data-sonner-toast][data-removed="true"] {
+    animation: fade-out var(--motion-fast-out) linear both !important;
+  }
+}
+
+@utility ease-standard { --tw-ease: var(--ease-standard); transition-timing-function: var(--ease-standard); }
+@utility ease-decelerate { --tw-ease: var(--ease-decelerate); transition-timing-function: var(--ease-decelerate); }
+@utility ease-accelerate { --tw-ease: var(--ease-accelerate); transition-timing-function: var(--ease-accelerate); }

@@ -1,8 +1,14 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { useBackLayer } from "@/shared/backStack";
+import { MoreInfo } from "@/shared/SettingsNav";
+import { MY_MUSIC_HELP } from "./musicLocal";
+import { MotionPresence } from "@/shared/MotionPresence";
+import { Fold, Collapse } from "@/shared/Collapse";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Ban, Download, Music2, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX, Volume2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
 import { MUSIC_MODIFIED_NOTE, formatClock, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
@@ -112,7 +118,7 @@ interface MineAlternative {
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
 /** "Chọn lại nhạc" (và đổi thể loại) dựng lại nhạc cả cuốn - sách 43 chương mất cỡ nửa phút: nói ra để các nút mờ không có vẻ như bị treo. */
-const REBUILDING = "Đang chọn lại nhạc cho cả cuốn - cỡ nửa phút với sách dài. Bạn cứ chờ ở đây, xong là tự cập nhật.";
+const REBUILDING = "Đang chọn lại nhạc, cỡ nửa phút.";
 /** Sửa một đoạn (chọn bài, ghim, im lặng, bỏ bài) chỉ mất chốc lát: chỉ báo bận nhẹ, không hứa nửa phút. */
 const SAVING = "Đang lưu lựa chọn…";
 
@@ -258,14 +264,14 @@ function Alternatives({
     staleTime: 0,
     gcTime: 0,
   });
-  if (isLoading) return <p className="text-fg-2">Đang tìm bài khác…</p>;
-  if (error) return <p className="text-warning">{(error as Error).message}</p>;
+  if (isLoading) return <MotionRegion as="p" className="text-fg-2">Đang tìm bài khác…</MotionRegion>;
+  if (error) return <MotionRegion as="p" className="text-warning">{(error as Error).message}</MotionRegion>;
   const mine = data?.mine ?? [];
   // Nhạc của tôi nằm trên máy tính chủ sách: nghe thử từ máy khác (Studio từ xa) không đi qua đường theo sách.
   const canPreviewMine = !info?.remote;
   const row = { busy, choosing, previewing, onPreview, onChoose };
   return (
-    <div className="space-y-3">
+    <MotionRegion as="div" className="space-y-3">
       {busy && (
         <p role="status" className="text-fg-2">
           {SAVING}
@@ -302,12 +308,12 @@ function Alternatives({
           </p>
         )}
       </div>
-    </div>
+    </MotionRegion>
   );
 }
 
 /** "Nhạc của tôi": nhạc bạn tự có, làm nhạc nền ngoài danh mục. Nhập, xem, xoá, nghe thử ở đây; ghim cho từng đoạn ở "Đổi bài". */
-function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing: string | null; onPreview: (link: string) => void }) {
+export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing: string | null; onPreview: (link: string) => void }) {
   const client = useQueryClient();
   const { data: info } = useAppInfo();
   const canImport = Boolean(info?.dialogs); // hộp chọn file là của máy tính chủ sách, không có ở Studio từ xa
@@ -315,6 +321,10 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
   const { data } = useQuery({ queryKey: key, queryFn: () => api<LocalMusicView>("/api/music/local"), enabled: canImport });
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
+  const removeBox = useRef<HTMLElement>(null);
+  const removeButton = useRef<HTMLButtonElement>(null);
+  const removeLink = useRef<string | null>(null);
+  useBackLayer(removing !== null, () => setRemoving(null), removeBox, removeButton);
   const refresh = (view: LocalMusicView) => {
     client.setQueryData(key, view);
     void client.invalidateQueries({ queryKey: ["music-alternatives", bookId] });
@@ -348,7 +358,7 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
   });
   const tracks = data?.tracks ?? [];
   return (
-    <section className="space-y-3 rounded-xl border border-line bg-panel p-4">
+    <MotionRegion as="section" elementRef={removeBox} className="space-y-3 rounded-xl border border-line bg-panel p-4">
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="text-sm font-semibold">Nhạc của tôi{canImport && tracks.length ? ` (${tracks.length})` : ""}</h3>
         {canImport && (
@@ -358,6 +368,7 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
         )}
       </div>
       <p className="text-sm text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
+      <MoreInfo label="Nhạc riêng">{MY_MUSIC_HELP}</MoreInfo>
       {!canImport && (
         <p className="text-sm text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách. Ở đây bạn vẫn ghim được bài đã nhập qua “Đổi bài”.</p>
       )}
@@ -389,7 +400,7 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
                     </Button>
                   </>
                 ) : (
-                  <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setRemoving(track.link)}>
+                  <Button ref={(el) => { if (removeLink.current === track.link) removeButton.current = el; }} size="sm" variant="ghost" icon={Trash2} onClick={() => { removeLink.current = track.link; setRemoving(track.link); }}>
                     Xoá
                   </Button>
                 )}
@@ -398,7 +409,7 @@ function MyMusic({ bookId, previewing, onPreview }: { bookId: string; previewing
           ))}
         </ul>
       )}
-    </section>
+    </MotionRegion>
   );
 }
 
@@ -423,15 +434,14 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
     onSuccess: onCompute,
     onError: (error: Error) => toast.error("Không đọc lại được không khí các đoạn", { description: error.message }),
   });
-  if (!data) return null;
+  if (!data) return <MotionRegion />;
   const running = Boolean(moods?.running) || compute.isPending;
   const percent = data.progress && data.progress.total > 0 ? Math.round((data.progress.done * 100) / data.progress.total) : null;
   return (
-    <section className="space-y-2 rounded-xl border border-line bg-panel p-4">
+    <MotionRegion as="section" className="space-y-2 rounded-xl border border-line bg-panel p-4">
       <h3 className="text-sm font-semibold">Chọn nhạc sát không khí hơn</h3>
       <p className="text-sm text-fg-2 text-pretty">
-        Máy đọc kỹ cả đoạn truyện để hiểu không khí (buồn, căng thẳng, êm…) thay vì cộng cảm xúc từng câu, nên nhạc hợp đoạn hơn. Chạy
-        sau khi phân tích xong - cỡ 1 phút cho mỗi giờ sách nếu máy có card đồ hoạ.
+        Máy đọc cả đoạn để hiểu không khí, nhạc hợp hơn. ~1 phút mỗi giờ sách.
       </p>
       {data.installed ? (
         <div className="flex flex-wrap items-center gap-3">
@@ -454,7 +464,7 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
           {data.downloadable ? "Tải phần đọc không khí trên máy tính chủ sách." : "Máy này chưa có phần đọc không khí (cài qua Ollama)."}
         </p>
       )}
-    </section>
+    </MotionRegion>
   );
 }
 
@@ -503,7 +513,10 @@ function SceneMenu({
 
 export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitle: (id: number) => string }) {
   const client = useQueryClient();
-  const [swapping, setSwapping] = useState<string | null>(null); // khoá đoạn đang mở "Đổi bài"
+  const [swapping, setSwapping] = useState<string | null>(null);
+  const swapBox = useRef<HTMLDivElement>(null);
+  const swapTrigger = useRef<HTMLButtonElement>(null);
+  useBackLayer(swapping !== null, () => setSwapping(null), swapBox, swapTrigger); // khoá đoạn đang mở "Đổi bài"
   const preview = usePreview();
   const key = ["music", bookId];
   const { data, isLoading } = useQuery({
@@ -581,7 +594,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
 
   // Lần đầu (danh mục chưa có trên máy) mất cỡ 10 giây - bài nhạc tải sau ở nền, không chờ ở đây (soát UX a60: từng mất 2,7 phút).
   if (isLoading || !data)
-    return <p className="mt-6 text-sm text-fg-2">Đang chọn nhạc nền cho các đoạn… Lần đầu cần tải danh mục nhạc, thường chừng mười giây.</p>;
+    return <MotionRegion as="p" className="mt-6 text-sm text-fg-2">Đang chọn nhạc nền cho các đoạn… Lần đầu cần tải danh mục nhạc, thường chừng mười giây.</MotionRegion>;
   const { plan, overrides, taxonomy } = data;
   const genres = Object.entries(taxonomy.genres ?? {});
   // Màn hẹp: ô chọn không đủ rộng cho tên thể loại dài ("Dị giới / kỳ ảo phương Tây (…)") nên chữ bị cắt - ghi đủ tên bên dưới.
@@ -593,7 +606,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
   const choosing = Object.values(pending ?? {}).find((link): link is string => !!link) ?? null;
 
   return (
-    <div className="mt-6 space-y-6">
+    <MotionRegion as="div" className="mt-6 space-y-6">
       <section className="flex flex-wrap items-end gap-4 rounded-xl border border-line bg-panel p-4">
         <Button
           variant={overrides.enabled ? "primary" : "secondary"}
@@ -677,9 +690,13 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         )}
       </section>
 
-      <MoodsPanel bookId={bookId} moods={data.moods} onCompute={(view) => client.setQueryData(key, view)} />
+      <Fold storageKey="studio.music.moods" title="Chọn nhạc sát không khí hơn" heading="h3">
+        <MoodsPanel bookId={bookId} moods={data.moods} onCompute={(view) => client.setQueryData(key, view)} />
+      </Fold>
 
-      <MyMusic bookId={bookId} previewing={preview.playing} onPreview={preview.toggle} />
+      <Fold storageKey="studio.music.local" title="Nhạc của tôi" heading="h3">
+        <MyMusic bookId={bookId} previewing={preview.playing} onPreview={preview.toggle} />
+      </Fold>
 
       {data.error && <p className="text-sm text-warning">{data.error}</p>}
       {!overrides.enabled && !!plan?.scenes.length && (
@@ -689,8 +706,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         <p className="text-sm text-fg-2">Chưa có đoạn nào - nhạc nền dựng sau khi sách đã phân tích.</p>
       ) : (
         [...byChapter.entries()].map(([chapterId, scenes]) => (
-          <section key={chapterId} className={overrides.enabled ? undefined : "opacity-50"}>
-            <h3 className="mb-2 text-sm font-semibold">{chapterTitle(chapterId)}</h3>
+          <Fold key={chapterId} storageKey={`studio.music.${bookId}.${chapterId}`} title={chapterTitle(chapterId)} summary={`${scenes.length}`} heading="h3" className={overrides.enabled ? undefined : "opacity-50"}>
             <ul className="divide-y divide-line rounded-xl border border-line">
               {scenes.map((scene, index) => {
                 const track = scene.link ? plan.tracks[scene.link] : undefined;
@@ -742,7 +758,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                     {/* Một nút chính + "…": cột nút thẳng hàng ở mọi dòng (trước đây bốn nút, dòng có "Bỏ ghim" lệch cột). */}
                     <span className="flex basis-full items-center gap-1 sm:w-32 sm:shrink-0 sm:basis-auto sm:justify-end">
                       <Button size="sm" variant="ghost" icon={Shuffle} aria-expanded={swapping === scene.key} title={swap.title}
-                        onClick={() => setSwapping(swapping === scene.key ? null : scene.key)}>
+                        onClick={(event) => { swapTrigger.current = event.currentTarget; setSwapping(swapping === scene.key ? null : scene.key); }}>
                         {swap.text}
                       </Button>
                       {follows && <span aria-hidden className="size-8 shrink-0 max-sm:hidden" />}
@@ -754,8 +770,8 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         onBan={scene.link ? () => ban(scene.link!, trackLabel(scene.link!, track)) : undefined}
                       />}
                     </span>
-                    {swapping === scene.key && (
-                      <div className="basis-full rounded-lg bg-sunken p-2.5 text-sm">
+                    <div ref={swapping === scene.key ? swapBox : undefined} className="basis-full"><Collapse open={swapping === scene.key} className="rounded-lg bg-sunken p-2.5 text-sm">
+                      <MotionPresence open={swapping === scene.key}>
                         <Alternatives
                           bookId={bookId}
                           sceneKey={scene.key}
@@ -769,13 +785,13 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                             change.mutate({ pins: { [scene.key]: link }, ...(scene.silenced ? { silence: { [scene.key]: false } } : {}) })
                           }
                         />
-                      </div>
-                    )}
+                      </MotionPresence>
+                    </Collapse></div>
                   </li>
                 );
               })}
             </ul>
-          </section>
+          </Fold>
         ))
       )}
       {plan && Object.keys(plan.tracks).length > 0 && (
@@ -793,6 +809,6 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
           {Object.values(plan.tracks).some((track) => musicNeedsModifiedNote(track.license)) && <p className="mt-2">{MUSIC_MODIFIED_NOTE}</p>}
         </details>
       )}
-    </div>
+    </MotionRegion>
   );
 }
