@@ -38,12 +38,15 @@ export function useCardFocus(lists: MutableRefObject<WorkLists | null>, ends: Ca
     const active = document.activeElement;
     // Nút Hoàn tác nằm trong thông báo sắp tắt: thẻ vừa quay lại nhận tiêu điểm luôn, không chờ thông báo tắt rồi rơi về BODY.
     const inToast = Boolean(active?.closest("[data-sonner-toast]"));
-    if (active && active !== document.body && active.isConnected && !inToast) return;
+    if (active && active !== document.body && active.isConnected && !inToast && !active.closest("[inert]")) return;
     const target = focusAfterChange(before, now, lastCard.current === "toast" ? null : lastCard.current);
     if (target === null) return;
     const id = target === "end" ? ends.end : `work-${target}`;
     focusCard(id, ends);
     // Rời vùng thông báo thì sonner trả tiêu điểm về chỗ đứng TRƯỚC khi vào thông báo (thẻ cũ) - đặt lại một lần nữa sau đó.
-    if (inToast) window.setTimeout(() => focusCard(id, ends), 0);
+    if (inToast) {
+      const timer = window.setTimeout(() => focusCard(id, ends), 0);
+      return () => window.clearTimeout(timer);
+    }
   });
 }

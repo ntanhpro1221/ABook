@@ -2,8 +2,9 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { Clapperboard, Compass, FileAudio, Headphones, Laptop, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { HashRouter, Route, Routes, useNavigate } from "react-router";
-import { Toaster, toast } from "sonner";
+import { Route, Routes, useNavigate } from "react-router";
+import { Toaster } from "sonner";
+import { toast } from "@/shared/toast";
 import { BookScreen } from "@/listen/BookScreen";
 import { ClipProvider } from "@/listen/clip";
 import { WebAudioEngine } from "@/listen/engine";
@@ -23,6 +24,8 @@ import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
 import { brokenMusicNote, keptEditsTitle, otherTitleNote, workshopMergeNote } from "@/shared/editsKept";
 import { MissingLibrary } from "@/shared/MissingLibrary";
+import { MotionHashRouter } from "@/shared/MotionRouter";
+import { withViewTransition } from "@/shared/motion";
 import { setLetterShortcuts } from "@/shared/letterShortcuts";
 import { setExternalOpener } from "@/shared/openExternal";
 import { toastRemoved } from "@/shared/trashUndo";
@@ -43,11 +46,16 @@ import { OpenedInbox } from "./openedInbox";
 import { Shell } from "./Shell";
 
 function useTheme(theme: string | undefined) {
+  // Lần đầu đặt thẳng; đổi sau đó (người dùng chọn, Windows tự chuyển sáng/tối) thì cả cửa sổ mờ chéo sang giao diện mới.
+  const applied = useRef(false);
   useEffect(() => {
     const root = document.documentElement;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
-      root.dataset.theme = theme === "dark" || (theme !== "light" && media.matches) ? "dark" : "light";
+      const next = theme === "dark" || (theme !== "light" && media.matches) ? "dark" : "light";
+      if (!applied.current || root.dataset.theme === next) root.dataset.theme = next;
+      else withViewTransition(() => (root.dataset.theme = next), "none", undefined, (run) => run());
+      applied.current = theme !== undefined;
     };
     apply();
     media.addEventListener("change", apply);
@@ -98,9 +106,7 @@ function EmptyLibrary() {
         </div>
       }
     >
-      Có file EPUB, Word, PDF hay thư mục TXT thì thêm thẳng - nghe ngay bằng giọng đọc trực tuyến (cần mạng, chữ được gửi tới Microsoft
-      để đọc) hay giọng tải về chạy trên máy này; có file sách (.abook) từ máy khác thì mở. Muốn truyện thành sách nói có giọng riêng cho từng nhân vật thì tạo sách nói: sách hiện ở đây ngay khi chương đầu tiên
-      thu xong, không cần chờ cả cuốn.
+      Thêm truyện hoặc tạo sách nói.
     </EmptyState>
   );
 }
@@ -137,8 +143,8 @@ function removedNote(book: ListenBook): string {
 
 function removeAsk(book: ListenBook): string {
   return book.stage === "text"
-    ? "Bản trong thư viện chuyển vào Thùng rác, khôi phục được từ đó. File gốc của bạn không bị đụng - thêm lại nó là có sách lại. Vừa xoá xong có 30 giây để bấm “Hoàn tác”."
-    : "Bản đã nhập trên máy này chuyển vào Thùng rác, khôi phục được từ đó. File .abook gốc không bị đụng - mở lại nó là nhập lại. Vừa xoá xong có 30 giây để bấm “Hoàn tác”.";
+    ? "Sách vào Thùng rác, khôi phục được. File gốc giữ nguyên."
+    : "Sách vào Thùng rác, khôi phục được. File .abook gốc giữ nguyên.";
 }
 
 function RemoveImportedHost() {
@@ -295,7 +301,7 @@ function offerFold(client: QueryClient, id: string, edits: number) {
     void client.invalidateQueries({ queryKey: ["listen"] });
   };
   toast(`${edits} thay đổi trong file - áp vào dự án?`, {
-    description: "Tên sách, bìa, tên nhân vật, tên chương, nhạc nền người nghe đã sửa, và những việc họ ghi cho Studio (giọng, giới tính, gộp người, cách đọc, thu lại). Chưa áp gì cho tới khi bạn đồng ý.",
+    description: "Sửa tên, bìa, nhạc nền và việc ghi cho Studio. Chưa áp gì khi bạn chưa đồng ý.",
     duration: 30000,
     action: {
       label: "Áp vào dự án",
@@ -585,7 +591,7 @@ export function App() {
           autoRewind={preferences?.autoRewind !== false}
         >
           <ClipBridge>
-            <HashRouter>
+            <MotionHashRouter>
               <OpenedBookListener local={!info.remote} />
               <UpdateListener />
               <ListenOnlyListener />
@@ -666,11 +672,11 @@ export function App() {
                   <Route path="/studio" element={<StudioClosed><ProjectsScreen /></StudioClosed>} />
                   <Route path="/studio/new" element={<StudioClosed><NewProjectScreen /></StudioClosed>} />
                   <Route path="/studio/:id" element={<StudioClosed><ProjectScreen /></StudioClosed>} />
-                  <Route path="/settings" element={<SettingsScreen />} />
+                  <Route path="/settings/:group?" element={<SettingsScreen />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Shell>
-            </HashRouter>
+            </MotionHashRouter>
           </ClipBridge>
         </PlayerProvider>
       </SourceProvider>

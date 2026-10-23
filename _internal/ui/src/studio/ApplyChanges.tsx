@@ -1,7 +1,9 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { useListPresence } from "@/shared/motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioLines, BookOpenCheck, Mic2, RefreshCw, UserRound, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { formatNumber } from "@/shared/format";
 import { Button, Dialog, IconButton } from "@/shared/ui";
 import { api } from "./api";
@@ -71,12 +73,13 @@ export function PendingList({
   showLines?: boolean;
   extra?: (item: PendingItem) => ReactNode;
 }) {
+  const rows = useListPresence(items, (item) => `${item.section}:${item.key}`);
   return (
     <ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line">
-      {items.map((item) => {
+      {rows.map(({ item, key, state, ref }) => {
         const Icon = KIND_ICON[item.kind] ?? RefreshCw;
         return (
-          <li key={`${item.section}:${item.key}`} className="flex items-start gap-3 px-3 py-2 text-sm">
+          <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex items-start gap-3 px-3 py-2 text-sm">
             <Icon className="mt-0.5 size-4 shrink-0 text-fg-3" />
             <span className="min-w-0 flex-1 text-pretty">
               {item.label}
@@ -97,7 +100,7 @@ export function PendingList({
               disabled={dropping !== null}
               onClick={() => onDrop(item)}
             />
-          </li>
+          </div></li>
         );
       })}
     </ul>
@@ -159,7 +162,7 @@ export function ApplyChangesDialog({
           ? "Máy tự áp chúng ở chương kế tiếp. Bạn bỏ được một việc ở đây bất cứ lúc nào, miễn là máy chưa áp nó - việc đã áp rồi thì máy báo và giữ nguyên."
           : "Máy chỉ thu lại những câu bị ảnh hưởng, rồi dựng lại các chương có câu ấy - không làm lại cả cuốn."
       }
-    >
+    ><MotionRegion>
       {!data ? (
         <p className="text-sm text-fg-2">Đang xem các thay đổi…</p>
       ) : (
@@ -170,7 +173,7 @@ export function ApplyChangesDialog({
             onDrop={(item) => void drop(item)}
             extra={(item) => (item.voice ? tryVoice.button(item.voice, item.voiceLabel || "mới") : null)}
           />
-          {tryVoice.note && <div className="mt-2">{tryVoice.note}</div>}
+          {tryVoice.note}
           <p className="mt-3 text-sm text-pretty">
             {data.lines ? (
               <>
@@ -201,6 +204,6 @@ export function ApplyChangesDialog({
           </Button>
         )}
       </div>
-    </Dialog>
+    </MotionRegion></Dialog>
   );
 }

@@ -1,7 +1,8 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { FolderDown } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import type { MusicExportState } from "@/desktop/listenExport";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
 import type { ListenBook } from "@/listen/model";
@@ -144,13 +145,13 @@ export interface Mp3DialogDetail {
 export function Mp3MusicForm({ music, onMusic, chapters }: { music: boolean; onMusic: (on: boolean) => void; chapters: number }) {
   const hint = chargerHint(music, chapters);
   return (
-    <div className="flex flex-col gap-3">
+    <MotionRegion as="div" className="flex flex-col gap-3">
       <p className="text-sm text-fg-2">Mỗi chương một file, kèm bìa và danh sách phát: app nghe nhạc nào cũng mở được.</p>
       <MusicMixOption checked={music} onChange={onMusic} />
       {music && <p className="text-xs text-fg-3">Có nhạc nền thì mỗi chương là file .m4a thay vì .mp3 (điện thoại không ghi được MP3 có trộn nhạc). Âm thanh y như bản M4B.</p>}
       {hint && <p className="text-xs text-fg-3">{hint}</p>}
       <BackgroundNote />
-    </div>
+    </MotionRegion>
   );
 }
 

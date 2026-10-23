@@ -1,7 +1,9 @@
+import { MoreInfo } from "@/shared/SettingsNav";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Link2, RotateCcw, Smartphone, X } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { formatWhen } from "@/shared/format";
 import { Button, Dialog, IconButton } from "@/shared/ui";
 import { KIND_ICON } from "./ApplyChanges";
@@ -106,7 +108,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
   const { data } = useInbox(bookId);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmSkipAll, setConfirmSkipAll] = useState<InboxDevice | null>(null);
-  if (!data || (!data.devices.length && !data.recent.length && !data.skipped?.length)) return null;
+  if (!data || (!data.devices.length && !data.recent.length && !data.skipped?.length)) return <MotionRegion />;
 
   const decide = async (verb: Verb, device: InboxDevice, item?: InboxItem) => {
     setBusy(`${device.id}:${item?.id ?? "all"}`);
@@ -141,16 +143,15 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
   };
 
   return (
-    <section aria-label="Thay đổi từ máy khác" className="mb-5 rounded-2xl border border-line bg-panel p-4">
+    <MotionRegion as="section" aria-label="Yêu cầu thiết bị" className="mb-5 rounded-2xl border border-line bg-panel p-4">
       <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
-        <Smartphone className="size-4 text-fg-3" /> Thay đổi từ máy khác{data.waiting ? ` (${data.waiting} việc chờ duyệt)` : ""}
+        <Smartphone className="size-4 text-fg-3" /> Yêu cầu thiết bị{data.waiting ? ` (${data.waiting} việc chờ duyệt)` : ""}
       </h2>
       {data.devices.length > 0 && (
-        <p className="mt-1 text-pretty text-sm text-fg-2">
-          Điện thoại hay máy tính đã ghép chưa được điều khiển sản xuất nên những việc dưới đây chờ bạn quyết - chưa có gì được làm. “Áp dụng” biến việc thành yêu
-          cầu trong “Áp dụng thay đổi” (chưa thu lại gì); “Bỏ qua” cất việc sang mục “Đã bỏ qua” để bạn khôi phục khi cần. Tên sách, bìa, tên nhân vật, tên chương và nhạc nền máy ấy gửi
-          thì đã áp ngay.
-        </p>
+        <div className="mt-1 text-sm text-fg-2">
+          <p>Áp dụng để đưa vào hàng chờ; bỏ qua vẫn khôi phục được.</p>
+          <MoreInfo label="Đã áp dụng">Tên sách, bìa, tên nhân vật, tên chương và nhạc nền đã áp ngay. Yêu cầu trong hàng chờ chưa thu lại; khôi phục việc bỏ qua ở “Đã bỏ qua”.</MoreInfo>
+        </div>
       )}
       {data.devices.map((device) => (
         <div key={device.id} className="mt-3">
@@ -250,6 +251,6 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
           </Button>
         </div>
       </Dialog>
-    </section>
+    </MotionRegion>
   );
 }

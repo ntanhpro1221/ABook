@@ -1,3 +1,6 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
+import { MoreInfo } from "@/shared/SettingsNav";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -21,7 +24,7 @@ import {
 } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Switch } from "@/desktop/PhoneSync";
 import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
@@ -139,7 +142,7 @@ interface Draft {
   povKept?: Record<string, string>;
   profile: Profile;
   startNow: boolean;
-  /** "Chờ tôi duyệt trước khi thu" (webui/precast.py): phân tích xong thì sách tạm dừng chờ người duyệt. Mặc định tắt. */
+  /** "Duyệt trước khi thu" (webui/precast.py): phân tích xong thì sách tạm dừng chờ người duyệt. Mặc định tắt. */
   precastWait?: boolean;
   /** "Làm tiếp cuốn này": phần trước để gieo từ (continuation.py), hay không có khi là sách mới. */
   seed?: Seed;
@@ -339,7 +342,7 @@ function SourceStep({
     const notice = planNotice(plan);
     if (!plan.groups.length) {
       toast.error("Không có file truyện nào để gửi", {
-        description: notice ?? "Chọn các file .txt (mỗi file là một chương) hay một file .epub / .docx / .pdf. Trong thư mục chỉ lấy file nằm ngay bên trong.",
+        description: notice ?? "Chọn các file .txt (mỗi file một chương) hay một file .epub / .docx / .pdf.",
       });
       return;
     }
@@ -397,7 +400,7 @@ function SourceStep({
     event.target.value = "";
   };
   return (
-    <div>
+    <MotionRegion as="div">
       {browser && (
         <>
           <input
@@ -428,7 +431,7 @@ function SourceStep({
       <h2 className="text-xl font-semibold">Chọn các chương của truyện</h2>
       <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg-2">
         <li>Mỗi file TXT là một chương, xếp theo tên file (2 đứng trước 10).</li>
-        <li>Có file EPUB, Word hay PDF thì chọn thẳng nó - máy tách chương, bạn xem lại danh sách trước khi tạo. PDF phải có chữ.</li>
+        <li>EPUB, Word, PDF (có chữ): chọn thẳng, máy tự tách chương.</li>
         <li>Cả truyện nằm trong một file TXT thì máy gợi ý tách theo các dòng “Chương N”.</li>
       </ul>
       {!files.length ? (
@@ -471,7 +474,7 @@ function SourceStep({
           </p>
           <p className="mt-1 text-sm text-fg-2 text-pretty">
             {browser
-              ? `Mọi file .txt của truyện (chọn cùng lúc${folderPick ? ", hay cả thư mục truyện" : ""}), hay một file .epub / .docx / .pdf - mỗi file tới ${UPLOAD_LIMIT / 2 ** 20} MB; file lớn hơn thì chép vào máy tính rồi mở ở đó. Máy tính giữ chúng trong mục “Nguồn tải lên” của thư viện.`
+              ? `Các file .txt${folderPick ? " hay cả thư mục" : ""}, hoặc một file .epub / .docx / .pdf, tới ${UPLOAD_LIMIT / 2 ** 20} MB mỗi file.`
               : "Chỉ lấy file nằm ngay trong thư mục, không quét thư mục con."}
           </p>
           {browser && (
@@ -496,7 +499,7 @@ function SourceStep({
                 aria-valuenow={percent}
                 className="h-1.5 overflow-hidden rounded-full bg-hover"
               >
-                <div className="h-full rounded-full bg-accent transition-[width]" style={{ width: `${percent}%` }} />
+                <div className="motion-progress h-full rounded-full bg-accent" style={{ transform: `scaleX(${percent / 100})` }} />
               </div>
               <p className="tabular mt-1.5 text-xs text-fg-2">
                 <LiveText shown={progressLabel(uploading)} spoken={spokenProgress("Đang gửi các chương", uploading.totalBytes ? uploading.bytes / uploading.totalBytes : null)} />
@@ -622,8 +625,7 @@ function SourceStep({
               <Info className="mt-0.5 size-4 shrink-0 text-info" />
               <p className="min-w-0 text-pretty">
                 {replaces.restart ? "Đang làm lại phân tích của " : "Đang sửa thiết lập của "}
-                <span className="font-semibold">“{replaces.title}”</span>: mọi lựa chọn cũ đã điền sẵn, đổi gì cũng được. Tạo xong,
-                bản cũ vào Thùng rác (bìa đi theo).
+                <span className="font-semibold">“{replaces.title}”</span>: lựa chọn cũ đã điền sẵn. Tạo xong, bản cũ vào Thùng rác.
               </p>
             </div>
           )}
@@ -746,7 +748,7 @@ function SourceStep({
                       aria-label={`Bỏ chương ${file.name}`}
                       title="Bỏ chương này"
                       onClick={() => onRemove(file.path)}
-                      className="touch-hit grid size-8 place-items-center rounded-md text-fg-2 opacity-0 hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
+                      className="touch-hit grid size-8 place-items-center rounded-md text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-hover hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100"
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -764,7 +766,7 @@ function SourceStep({
           ))}
         </>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -796,12 +798,12 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
   // Soát UX a24, A9: xem hết mọi dòng (theo chương) trước khi bỏ, và bỏ riêng dòng đầu chương / cuối chương - hai cài đặt riêng của sách.
   const [all, setAll] = useState(false);
   const credits = creditSummary(files);
-  if (!credits.lines) return null;
+  if (!credits.lines) return <MotionRegion />;
   const quoted = credits.examples.join(", ");
   const dropped = droppedLines(credits, drop);
   const both = credits.head > 0 && credits.tail > 0;
   return (
-    <div className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
+    <MotionRegion as="div" className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
       <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         {dropped ? (
@@ -864,7 +866,7 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
           </Button>
         </div>
       </div>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -885,7 +887,7 @@ function ChapterNumberWarning({ issues, suggestsSplit }: { issues: string[]; sug
         </ul>
         <p className="mt-1 text-fg-2">
           {suggestsSplit
-            ? "Nếu đây là nhiều tập (mỗi tập đánh số chương lại từ 1) thì chia thành nhiều phần ở trên - mỗi phần được soát số chương riêng. "
+            ? "Nhiều tập đánh số lại từ 1? Chia thành nhiều phần ở trên. "
             : ""}
           Vẫn tạo được như thế - máy chỉ nhắc, không bỏ file nào.
         </p>
@@ -909,7 +911,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
           Máy thấy các tiêu đề {quoted}
           {plan.chapters > plan.titles.length + (plan.preamble ? 1 : 0) ? " và các tiêu đề sau" : ""}. Hiện cả file được làm thành MỘT chương - một file
           audio dài, không chuyển chương được. Tách theo các tiêu đề ấy?
-          {plan.preamble ? " Phần chữ trước tiêu đề đầu tiên được giữ trong chương “Mở đầu”, kể cả dòng trùng tên sách. Bạn có thể bỏ chọn phần ấy ở danh sách chương sau khi tách." : ""}{" "}
+          {plan.preamble ? " Chữ trước tiêu đề đầu vào chương “Mở đầu” (bỏ chọn được sau)." : ""}{" "}
           File gốc giữ nguyên.
         </p>
         <div className="mt-2.5">
@@ -934,7 +936,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
 function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean; onDrop: () => void }) {
   return (
     // Điện thoại: nút bỏ nối tiếp xuống dưới đoạn chữ - đứng bên phải thì ép chữ thành cột ~180 px, dài 11 dòng (soát UX 29-09).
-    <div className="mt-5 flex flex-wrap gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 text-sm sm:flex-nowrap">
+    <MotionRegion as="div" className="mt-5 flex flex-wrap gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 text-sm sm:flex-nowrap">
       <Layers className="mt-0.5 size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">
@@ -959,14 +961,13 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
                 chọn các file chương mới ở dưới.
               </>
             ) : (
-              "Thư mục truyện chưa có chương nào sau chương cuối của phần trước - thêm file chương mới vào đó, hoặc chọn các file chương mới ở dưới."
+              "Chưa có chương mới sau phần trước. Thêm file vào thư mục, hay chọn file ở dưới."
             )}
           </p>
         )}
         {seed.analysisModelMissing && (
           <p className="mt-1 text-warning">
-            Phần trước được phân tích bằng bản “{modelLabel(seed.analysisModelMissing)}”, máy này lúc này không thấy bản ấy - phần mới
-            sẽ dùng bản mặc định (đổi được ở bước Chất lượng). Đổi bản giữa hai phần có thể làm vài người nói được gán khác đi.
+            Thiếu bộ phân tích “{modelLabel(seed.analysisModelMissing)}”; đổi bộ có thể đổi phân vai. Chọn lại ở Chất lượng.
           </p>
         )}
         {!seed.analyzed && (
@@ -980,7 +981,7 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
       >
         Bỏ nối tiếp
       </button>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -1083,8 +1084,7 @@ function PovChapters({ hint, narrator, off, onOffChange }: {
       <legend className="sr-only">Chương đổi người kể</legend>
       <p className="text-sm font-semibold">Chương đổi người kể</p>
       <p className="mt-0.5 text-sm text-fg-2 text-pretty">
-        Tên các chương này là tên một nhân vật và chương kể bằng “tôi” - thường là “tôi” của chính người ấy. Bỏ chọn nếu không
-        phải.
+        Chương mang tên nhân vật và kể bằng “tôi” - thường là người ấy kể. Bỏ chọn nếu không phải.
       </p>
       <ul className="mt-2 space-y-1.5">
         {chapters.map((chapter) => {
@@ -1127,18 +1127,18 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
   const [opened, setOpened] = useState(false);
   if (!hint?.firstPerson && !value && !opened && !hint?.chapters?.length) {
     return (
-      <button
+      <MotionRegion as="button"
         type="button"
         onClick={() => setOpened(true)}
         className="mt-3 text-sm font-medium text-accent-text underline underline-offset-2 disabled:opacity-60"
         disabled={isLoading}
       >
         Truyện kể ở ngôi thứ nhất (người kể xưng “tôi”)?
-      </button>
+      </MotionRegion>
     );
   }
   return (
-    <section aria-labelledby="first-person-title" className="mt-5 max-w-2xl rounded-2xl border border-line bg-panel p-4 sm:p-5">
+    <MotionRegion as="section" aria-labelledby="first-person-title" className="mt-5 max-w-2xl rounded-2xl border border-line bg-panel p-4 sm:p-5">
       <h3 id="first-person-title" className="font-semibold">“Tôi” là ai?</h3>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
         {hint?.firstPerson
@@ -1190,7 +1190,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
             ]}
           />
           <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">
-            Chưa rõ thì máy đoán sau khi đọc truyện. Lời dẫn dùng giọng cùng giới với người kể, trừ khi bạn chọn giọng kể ở dưới.
+            Chưa rõ thì máy đoán. Lời dẫn dùng giọng cùng giới người kể.
           </p>
           <label className="mt-3 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="teller-mode">
             <Switch id="teller-mode" labelledBy="teller-mode-name" describedBy="teller-mode-hint" checked={Boolean(tellerMode)} onCheckedChange={onTellerMode} />
@@ -1202,7 +1202,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
         </div>
       )}
       <PovChapters hint={hint} narrator={value} off={povOff} onOffChange={setPovOff} />
-    </section>
+    </MotionRegion>
   );
 }
 
@@ -1261,11 +1261,10 @@ function VoiceStep({
     window.requestAnimationFrame(() => group.current?.querySelector<HTMLElement>(`[data-voice="${CSS.escape(next.name)}"]`)?.focus());
   };
   return (
-    <div>
+    <MotionRegion as="div">
       <h2 className="text-xl font-semibold">Chọn giọng kể chuyện</h2>
       <p className="mt-1 max-w-2xl text-sm text-fg-2 text-pretty">
-        Giọng này đọc toàn bộ lời dẫn truyện. Mỗi nhân vật sẽ được tự động trao một giọng riêng sau bước phân tích - không cần
-        chọn trước.
+        Giọng đọc lời dẫn. Nhân vật được trao giọng riêng sau.
       </p>
       <FirstPersonQuestion
         paths={paths}
@@ -1281,7 +1280,7 @@ function VoiceStep({
       />
       {narratorAuto && (
         <p className="mt-4 max-w-2xl text-sm text-fg-2 text-pretty">
-          Giọng kể đang để máy chọn: lời dẫn dùng giọng cùng giới với người kể “tôi”. Bấm một giọng bên dưới nếu bạn muốn giọng khác.
+          Máy chọn giọng cùng giới người kể “tôi”. Bấm một giọng để đổi.
         </p>
       )}
       <div className="mt-5 flex flex-wrap items-center gap-3">
@@ -1329,7 +1328,7 @@ function VoiceStep({
           />
         ))}
       </div>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -1360,7 +1359,7 @@ function QualityStep({
     <div>
       <h2 className="text-xl font-semibold">Chọn mức chất lượng</h2>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
-        Mức này đi cùng sách tới chương cuối, để mọi chương đọc giống nhau - không đổi được sau khi tạo.
+        Không đổi được sau khi tạo, để mọi chương đọc giống nhau.
       </p>
       <div
         role="radiogroup"
@@ -1497,7 +1496,7 @@ function ConfirmStep({
     ...(volumes
       ? ([
           ["Chia thành", `${volumes.length} phần: ${volumeTitles(title, volumes.length).map((name, index) => `“${name}” (${formatNumber(volumes[index].chapters)} chương)`).join(", ")}`],
-          ["Các phần sau", startNow ? "Xếp hàng sau phần trước, tự bắt đầu khi phần trước xong; mang giọng nhân vật và cách đọc tên từ phần trước" : "Bấm bắt đầu phần 1 thì các phần sau tự xếp hàng; mang giọng nhân vật và cách đọc tên từ phần trước"],
+          ["Các phần sau", startNow ? "Tự chạy sau phần trước, giữ giọng và cách đọc tên" : "Xếp hàng sau phần 1, giữ giọng và cách đọc tên"],
         ] as [string, string][])
       : []),
     ...(droppedLines(credits, dropCredits)
@@ -1552,7 +1551,7 @@ function ConfirmStep({
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-semibold text-balance">{title}</h3>
           <dl className="mt-3 divide-y divide-line text-sm">
-            {rows.map(([label, value]) => (
+            {rows.filter(([label]) => /Giọng|Chất lượng|Thời gian làm/.test(label)).slice(0, 3).map(([label, value]) => (
               // Điện thoại: nhãn trên, giá trị dưới - cột nhãn 170 px cố định từng ép giá trị thành 5-6 dòng ở 390 px.
               <div key={label} className="grid gap-0.5 py-2 sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-4">
                 <dt className="text-fg-2">{label}</dt>
@@ -1562,16 +1561,14 @@ function ConfirmStep({
           </dl>
         </div>
       </div>
+      <Fold storageKey="new-project.review.details" title="Chi tiết" className="mt-4" bodyClassName="px-4 pb-4"><dl className="divide-y divide-line text-sm">{rows.map(([label, value]) => <div key={label} className="py-2"><dt className="text-fg-2">{label}</dt><dd>{value}</dd></div>)}</dl></Fold>
       <div className="mt-5 flex gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm">
         <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
-        <p className="text-pretty">
-          <span className="font-semibold">Giai đoạn đầu là phân tích cả truyện</span>
-          {noStudio ? "" : measured ? ` (tham khảo: ${exact ? `khoảng ${formatLength(guess.analysis)}` : lengthRange(guess.analysisLow, guess.analysisHigh)})` : " (truyện dài có thể mất nhiều giờ)"}: trong lúc đó đừng tắt máy, đừng cho máy ngủ và đừng bấm
-          Dừng. Dừng giữa chừng rồi chạy tiếp sẽ ra cách phân vai khác với chạy liền một mạch - cần máy rảnh một lúc thì bấm{" "}
-          <span className="font-semibold">Tạm dừng</span>, an toàn mọi lúc. Qua giai đoạn này thì dừng lúc nào cũng được.
-        </p>
-      </div>
-      {restart && (
+        <div className="text-pretty"><p className="font-semibold">Phân tích</p><p>Cần nghỉ, hãy dùng Tạm dừng.</p>
+          <MoreInfo label="Vì sao?">
+            Đừng tắt máy, cho máy ngủ hoặc bấm Dừng trong lúc phân tích. Dừng hoặc nạp lại model có thể đổi phân vai và audio; bản cũ cần tạo dự án mới nếu bị ngắt. Tạm dừng quá 30 phút cũng có thể dỡ model. Sau phân tích, bạn có thể dừng và tiếp tục.
+            {!noStudio && measured && ` Thời gian tham khảo: ${exact ? formatLength(guess.analysis) : lengthRange(guess.analysisLow, guess.analysisHigh)}.`}
+          </MoreInfo> </div> </div> {restart && (
         <div className="mt-3 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-info" />
           <p className="text-pretty">
@@ -1607,21 +1604,21 @@ function ConfirmStep({
             {unfit
               ? "Tắt vì máy này không làm sách nói được (lý do ở đầu trang)."
               : noStudio
-              ? "Chưa có Studio nên sách chưa chạy được. Sách được tạo và chờ; cài Studio xong thì bấm “Bắt đầu tạo sách nói” ở trang dự án."
+              ? "Chưa có Studio: sách được tạo và chờ cài xong."
               : startNow
-              ? "Sách chạy nền: đóng cửa sổ vẫn tiếp tục, Windows báo khi xong. Chương nào xong là nghe được chương đó, không phải chờ cả cuốn."
-              : "Sách được tạo nhưng chưa chạy - bấm “Bắt đầu tạo sách nói” ở trang dự án khi sẵn sàng (vd sửa trước cách đọc tên)."}
+              ? "Chạy nền, đóng cửa sổ vẫn tiếp. Chương nào xong nghe được ngay."
+              : "Tạo nhưng chưa chạy; bắt đầu ở trang dự án khi sẵn sàng."}
           </span>
         </span>
       </label>
       <label className="mt-3 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="precast-wait">
         <Switch id="precast-wait" labelledBy="precast-wait-name" describedBy="precast-wait-hint" checked={precastWait} onCheckedChange={setPrecastWait} />
         <span>
-          <span id="precast-wait-name" className="block text-sm font-medium">Chờ tôi duyệt trước khi thu</span>
+          <span id="precast-wait-name" className="block text-sm font-medium">Duyệt trước khi thu</span>
           <span id="precast-wait-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
             {precastWait
-              ? "Phân tích xong, sách tạm dừng để bạn xem giọng, cách đọc tên và người nói - bấm “Thu âm” để thu tiếp."
-              : "Phân tích xong thì thu luôn. Vẫn duyệt được bất cứ lúc nào; sửa ở chương chưa thu thì không phải thu lại."}
+              ? "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”."
+              : "Phân tích xong thì thu luôn; duyệt lúc nào cũng được."}
           </span>
         </span>
       </label>
@@ -1940,7 +1937,7 @@ export function NewProjectScreen() {
                   result.unchanged ? "Giữ nguyên sách cũ." : "",
                   starting,
                   volumes > 1 && draft.startNow && !noStudio ? "Phần sau tự bắt đầu khi phần trước xong, mang giọng và cách đọc tên sang." : "",
-                  volumes > 1 && (!draft.startNow || noStudio) ? "Bấm bắt đầu phần 1 thì các phần sau tự xếp hàng; mỗi phần chạy được khi phần trước đã phân tích xong." : "",
+                  volumes > 1 && (!draft.startNow || noStudio) ? "Bắt đầu phần 1 thì các phần sau tự xếp hàng." : "",
                   readings,
                   draft.replaces && !result.unchanged && !result.replaceError ? "Bản cũ đã vào Thùng rác." : "",
                 ]

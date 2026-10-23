@@ -135,7 +135,7 @@ export function moduleLabel(module: MusicModuleStatus): string {
     if ((module.stale ?? 0) > 0) return `${module.stale} bài được phân tích bằng bản cũ - vẫn dùng được, bạn có thể phân tích lại bằng bản mới.`;
     return "";
   }
-  return `${module.cancelled ? `${CANCELLED_NOTE} ` : ""}Máy chưa nghe được nhạc của bạn để hiểu không khí của nó. Tải Phân tích nhạc một lần (${formatSize(module.total)}) để các bài nhập vào được phân tích ngay trên máy này; sau đó không cần mạng. Chưa tải thì bài của bạn vẫn nhập, nghe và ghim tay được.`;
+  return `${module.cancelled ? `${CANCELLED_NOTE} ` : ""}Tải ${formatSize(module.total)} để tự chọn nhạc phù hợp trên máy.`;
 }
 
 /** Có mời người dùng bật "Đo cảm xúc nhạc chính xác hơn" không: máy đủ sức, và đã có bộ phân tích nhạc (nó dùng lại phần nghe của bộ ấy). */
@@ -220,9 +220,8 @@ export function analysisLabel(track: Pick<LocalTrack, "analysed">): string {
 /** Lời giới thiệu "Nhạc của tôi" - MỘT câu cho mọi nơi nói về nó (tab Nhạc nền của dự án, Cài đặt, Sửa sách), kể cả chuyện bài ghim đi cùng file
  *  sách: người dùng không phải đoán chỗ này khác chỗ kia ra sao (soát UX a8 02-10). */
 export const MY_MUSIC_INTRO =
-  "Thêm nhạc của riêng bạn (mp3, m4a, ogg, opus, flac, wav) làm nhạc nền. File được chép vào kho nhạc của máy này. Bài nào bạn chọn cho một đoạn " +
-  "(ở nút “Đổi bài”) đi cùng file sách (.abook / .abookproj), nên mở trên máy khác hay sang điện thoại vẫn nghe được - không ai khác tải được bài ấy. " +
-  "ABook chỉ ghi tên bài và nghệ sĩ có sẵn trong file, không nói gì về giấy phép.";
+  "Nhập nhạc làm nền; bài đã chọn đi cùng file sách.";
+export const MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép.";
 
 /** Dòng chú thích của một bài trong danh sách "Đổi bài" của một đoạn: nhãn tự chọn (có vẻ có lời / bạn đã tắt), hợp không khí đoạn này, hay chưa phân tích
  *  - cùng nhãn với Cài đặt và tab Nhạc của dự án. Không có gì đáng nói thì undefined. */

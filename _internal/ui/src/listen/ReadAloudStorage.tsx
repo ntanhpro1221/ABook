@@ -1,6 +1,7 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { Button, Dialog } from "@/shared/ui";
 import { PREPARE_STATUS_KEY, clearStorageQuestion, storageLabel, type ReadAloudCacheUsage } from "./prepareAhead";
 import { READINGS_CHANGED_EVENT, type ReadingsChanged } from "./readAloud";
@@ -38,7 +39,7 @@ export function ReadAloudStorage({ api }: { api: ReadAloudStorageApi }) {
   const [busy, setBusy] = useState(false);
   const region = useRef<HTMLDivElement | null>(null);
   const { data: usage } = useQuery({ queryKey: STORAGE_KEY, queryFn: () => api.usage(), refetchInterval: 15000 });
-  if (!usage) return null;
+  if (!usage) return <MotionRegion />;
   const clear = async () => {
     setBusy(true);
     try {
@@ -58,7 +59,7 @@ export function ReadAloudStorage({ api }: { api: ReadAloudStorageApi }) {
     }
   };
   return (
-    <div data-readaloud-storage ref={region} tabIndex={-1} className="outline-none">
+    <MotionRegion as="div" data-readaloud-storage elementRef={region} tabIndex={-1} className="outline-none">
       <h3 className="text-sm font-semibold">Bản đọc đã làm</h3>
       <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">
         {storageLabel(usage)} Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống.
@@ -69,6 +70,6 @@ export function ReadAloudStorage({ api }: { api: ReadAloudStorageApi }) {
         </Button>
       )}
       <ClearDialog open={asking && usage.total > 0} onOpenChange={setAsking} usage={usage} busy={busy} onClear={() => void clear()} />
-    </div>
+    </MotionRegion>
   );
 }

@@ -1,7 +1,10 @@
+import { MoreInfo } from "@/shared/SettingsNav";
+import { MotionRegion } from "@/shared/MotionRegion";
+import { AnimatedRows } from "@/shared/MotionPresence";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { AlertTriangle, Check, Clock, Ear, FileText, ListMusic, Loader2, PenLine, Play, RotateCcw, ShieldCheck, Square, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { useClip, type ClipSource } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatPercent } from "@/shared/format";
@@ -176,6 +179,7 @@ function SpokenEditor({
 }
 
 function Row({
+  as: Tag = "li",
   bookId,
   item,
   twins,
@@ -183,6 +187,7 @@ function Row({
   onOpenScript,
   onSpoken,
 }: {
+  as?: "li" | "div";
   bookId: string;
   item: ReviewItem;
   twins: ReviewItem[];
@@ -199,7 +204,7 @@ function Row({
   // Câu hỏng chưa từng có bản thu; câu khác có thể đã mất WAV riêng khi dọn dẹp. Nút tắt thì phải nói vì sao.
   const unplayable = item.kind === "failed" ? "Câu này chưa thu được, chưa có gì để nghe" : "Bản thu riêng của câu này đã được dọn sau khi ghép chương - nghe câu này trong chương";
   return (
-    <li
+    <Tag
       data-review-row={item.stableId}
       className={cn("grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-3 rounded-xl px-3 py-3", handled(item) && !editing ? "opacity-70" : "hover:bg-hover")}
     >
@@ -318,7 +323,7 @@ function Row({
           <RotateCcw className="size-4" /> {source ? "Cần thu lại" : "Thu lại câu này"}
         </button>
       </div>
-    </li>
+    </Tag>
   );
 }
 
@@ -337,7 +342,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
   // nghe rồi bấm phán từng câu. Câu vừa phán rời danh sách và câu kế phát luôn.
   const clip = useClip();
   const [continuous, setContinuous] = useState(false);
-  const live = useRef<{ items: ReviewItem[]; judge: (index: number, value: ReviewItem["verdict"]) => void }>({
+  const live = useRef<{ items: ReviewItem[]; judge: (item: ReviewItem, value: ReviewItem["verdict"]) => void }>({
     items: [],
     judge: () => undefined,
   });
@@ -378,7 +383,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       const index = live.current.items.findIndex((item) => `review-${item.segmentId}` === playing.current.id);
       if (index < 0) return;
       event.preventDefault();
-      live.current.judge(index, key === "o" ? "ok" : "redo");
+      live.current.judge(live.current.items[index], key === "o" ? "ok" : "redo");
       clip.stop(); // sang câu kế ngay (hiệu ứng ở trên bắt lúc clip dừng)
     };
     window.addEventListener("keydown", onKey);
@@ -443,10 +448,11 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     void client.invalidateQueries({ queryKey: ["library"] });
     void client.invalidateQueries({ queryKey: ["casting", bookId] });
   };
-  if (isLoading || !data) return <div className="mt-6 text-sm text-fg-2">Đang tìm các câu cần nghe lại…</div>;
+  if (isLoading || !data) return <MotionRegion as="div" className="mt-6 text-sm text-fg-2">Đang tìm các câu cần nghe lại…</MotionRegion>;
   const items = data.items.filter((item) => (filter === "todo" ? !handled(item) : handled(item)));
-  const judge = (index: number, value: ReviewItem["verdict"]) => {
-    const item = items[index];
+  const judge = (item: ReviewItem, value: ReviewItem["verdict"]) => {
+    const index = items.findIndex((current) => current.stableId === item.stableId);
+    if (index < 0) return; // Hàng đang ra chỉ giữ hình, không được gửi thêm phán quyết.
     // Câu vừa phán rời danh sách đang lọc: đưa tiêu điểm sang câu kế (hay câu trước), đừng để nó rơi về đầu trang.
     const leaves = filter === "todo" ? value !== null : value === null;
     if (leaves) setFocusAfter((items[index + 1] ?? items[index - 1])?.stableId ?? EMPTY);
@@ -456,13 +462,12 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
   live.current = { items, judge };
   const playableCount = items.filter((item) => clipOf(bookId, item)).length;
   return (
-    <div className="mt-4">
+    <MotionRegion as="div" className="motion-reveal mt-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-fg-2 text-pretty">
           {data.pending ? (
             <>
-              Còn <span className="font-semibold text-fg">{data.pending} câu</span> máy tự kiểm không chắc - nghe bằng tai rồi bấm Ổn hoặc
-              Cần thu lại. Câu hỏng (chưa thu được) không có gì để nghe: sửa cách máy đọc câu ấy - tiếng động, chữ lạ - hay thu lại.
+              <span className="font-semibold text-fg">{data.pending} câu</span>: nghe rồi chọn Ổn hoặc Cần thu lại.
             </>
           ) : unrecorded ? (
             "Chưa có câu nào để kiểm - sẽ có sau khi thu âm."
@@ -499,29 +504,29 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         </div>
       )}
       {data.redoChapters.length > 0 && (
-        <p className="mt-3 rounded-xl bg-danger-soft px-4 py-2.5 text-sm text-danger text-pretty">
-          {data.redoChapters.length} chương có câu cần thu lại - các câu ấy được thu lại thành bản mới khi sách chạy tiếp (sách
-          đã xong: nút “Áp dụng thay đổi” ở trang dự án). Câu đọc sai chữ hay sai tên thì sửa ở tab Kịch bản.
-        </p>
+        <div className="mt-3 rounded-xl bg-danger-soft px-4 py-2.5 text-sm text-danger">
+          <p>{data.redoChapters.length} chương chờ thu lại. Sửa chữ ở Kịch bản.</p>
+          <MoreInfo>Máy thu lại khi sách chạy tiếp. Sách đã xong: chọn “Áp dụng thay đổi” ở trang dự án.</MoreInfo>
+        </div>
       )}
-      {items.length ? (
-        <ul className="mt-3 space-y-1">
-          {items.map((item, index) => (
-            <Row
+        <AnimatedRows className="mt-3 space-y-1" items={items} keyOf={(item) => item.stableId}>
+          {(item) => (
+            <Row as="div"
               key={item.stableId}
               bookId={bookId}
               item={item}
               twins={items.filter((other) => other.stableId !== item.stableId && other.textSha256 && sameText(other.text, item.text))}
-              onVerdict={(value) => judge(index, value)}
+              onVerdict={(value) => judge(item, value)}
               onOpenScript={onOpenScript}
               onSpoken={() => {
+                const index = items.findIndex((current) => current.stableId === item.stableId);
                 setFocusAfter((items[index + 1] ?? items[index - 1])?.stableId ?? EMPTY);
                 refresh();
               }}
             />
-          ))}
-        </ul>
-      ) : (
+          )}
+        </AnimatedRows>
+      {!items.length && (
         <div data-review-row={EMPTY} tabIndex={-1} className="rounded-xl outline-none">
           <EmptyState icon={ShieldCheck} title={filter === "todo" ? (unrecorded ? "Chưa có câu nào để kiểm" : "Không còn câu nào cần xem") : "Chưa đánh dấu câu nào"} className="mt-4">
             {filter === "todo"
@@ -542,6 +547,6 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
           {showMinor ? "Ẩn" : "Hiện"} {minor} câu lệch ít (thường vẫn ổn)
         </button>
       )}
-    </div>
+    </MotionRegion>
   );
 }

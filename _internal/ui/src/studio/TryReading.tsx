@@ -1,4 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
+import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { Download, Pause, Volume2 } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
@@ -140,17 +142,17 @@ export function useTryReading({
     caption: same ? previewCaption(heard.preview.text, heard.preview.speaker) : null,
     bookBusy,
   });
-  const note = unavailable ? (
-    <p className="text-xs text-fg-3">Chưa nghe thử được: {unavailable}</p>
+  const note = <MotionPresence open={Boolean(unavailable || status)}>{unavailable ? (
+    <MotionRegion as="p" className="mt-1.5 text-xs text-fg-3">Chưa nghe thử được: {unavailable}</MotionRegion>
   ) : status ? (
-    <p role="status" className={cn("text-xs", refusal && !ask.isPending ? "text-warning" : "text-fg-3")}>
+    <MotionRegion as="p" role="status" className={cn("mt-1.5 text-xs", refusal && !ask.isPending ? "text-warning" : "text-fg-3")}>
       {status}
       {needsStudio && refusal && !remote && studio.missing && (
         <Button size="sm" variant="secondary" type="button" icon={Download} className="ml-2 align-middle" onClick={() => navigate("/studio")}>
           {studio.action}
         </Button>
       )}
-    </p>
-  ) : null;
+    </MotionRegion>
+  ) : null}</MotionPresence>;
   return { button, note };
 }
