@@ -8,7 +8,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 ### Dữ liệu của bạn
-
 - Hồ sơ nghe hỏng một phần trên máy tính hoặc điện thoại: app giữ nguyên bản gốc, báo rõ nơi giữ và tiếp tục dùng phần còn đọc được; sách không biến mất chỉ vì hồ sơ sai định dạng. File thông báo hỏng trên điện thoại cũng được giữ riêng, không chặn thư viện hay việc lưu dữ liệu đã giữ an toàn; máy tính sửa hồ sơ dưới cùng khoá với các lượt lưu khác.
 - Máy tính: nhật ký chỗ nghe tạm bị chương trình khác giữ sẽ được đọc lại trước khi lưu, tránh mất chỗ nghe mới nhất khi bạn đặt dấu trang.
 - Máy tính: nếu cửa sổ khác đang lưu dữ liệu quá lâu, app báo bạn thử lại thay vì ghi đè thay đổi của nhau.
@@ -23,6 +22,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính: Cài đặt có “Gửi nhật ký” - gói .zip nhật ký và thông tin máy tính để bạn tự gửi cho người sửa lỗi; bộ che áp dụng cả thông tin lỗi và thông tin máy.
 - Điện thoại: nhật ký hệ thống chỉ giữ các nguồn media/hệ thống được chọn; bỏ log plugin và WebView. Báo cáo kẹp độ dài từng trường, số mục và tổng kích thước, kể cả khi thông tin sách bị hỏng.
 - Điện thoại: chẩn đoán hiện tiến độ tải/xuất từ sự kiện việc nền đang chạy, giữ cả số mức quan trọng lúc bị tắt và dịch đúng TOP_SLEEPING/CANT_SAVE_STATE. Ghi nhật ký thường dùng luồng riêng, xoay file trong trần; báo cáo văng vẫn ghi ngay trước khi chuyển cho hệ thống.
+
+### Điện thoại và hệ thống
+- Điện thoại: Android dừng việc xuất hay việc tải sách sau 6 giờ thì việc đó kết thúc hẳn, không tự chạy lại ngay sau khi app đã dọn file dở; bạn chỉ cần bấm Xuất lại hay Tải để làm tiếp.
+- Điện thoại: tải sách đã xong hay bị lỗi thì cuốn đó không còn bị coi là "đang tải" - bạn xoá được cuốn ấy và thông tin của nó vẫn được làm mới.
+- Điện thoại: mở lại app đúng lúc việc xuất MP3, M4B hay sách nói vừa xong thì không còn hiện lại thanh tiến độ hay nút Dừng cho việc đã xong.
+
+### Bảo mật
+- Máy tính và điện thoại: sách do người khác gửi không còn làm máy bạn tự gọi một địa chỉ lạ chỉ vì hiện bìa trong thư viện; màu bìa không hợp lệ được thay bằng màu nền mặc định, ảnh bìa vẫn hiển thị.
+- Máy tính: thư mục trong "Nguồn tải lên" là một liên kết trỏ ra ngoài thư viện thì thiết bị gửi sách từ xa không còn đọc hay ghi qua nó được, kể cả khi tách chương; app báo "Thư mục nguồn trỏ ra ngoài thư viện của bạn" và bạn chép file vào thư viện trên máy tính rồi gửi lại.
+- Máy tính và điện thoại: khi bạn phát lên loa hay TV, cổng phát giới hạn số kết nối cả cổng và mỗi địa chỉ; kết nối gửi phần đầu quá chậm bị đóng. Sau khi mã truy cập hợp lệ, kết nối không ghi thêm được dữ liệu trong khoảng 5 phút trên máy tính hoặc 2 phút trên điện thoại sẽ bị đóng; chương dài vẫn tiếp tục khi thiết bị còn nhận dữ liệu.
 
 ## [0.4.132] - 2026-10-23
 
@@ -39,9 +48,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: đang xuất MP3, M4B hay sách nói mà app bị đóng hoặc nạp lại, mở lại thì thanh tiến độ và nút "Dừng" vẫn còn, không phải đoán việc xuất đã chạy tới đâu.
 - Điện thoại: xuất MP3 bị hệ thống dừng giữa chừng rồi làm tiếp thì ghi tiếp vào đúng thư mục đang dở, không tạo thêm "Tên (2)" bên cạnh.
 - Điện thoại: bạn dừng việc xuất ở trình quản lý tác vụ của Android thì việc dừng hẳn, không tự chạy lại; Android 15 dừng việc xuất sau 6 giờ thì app báo rõ để bạn bấm "Xuất lại" làm tiếp.
-- Điện thoại: Android dừng việc xuất hay việc tải sách sau 6 giờ thì việc đó kết thúc hẳn, không tự chạy lại ngay sau khi app đã dọn file dở; bạn chỉ cần bấm Xuất lại hay Tải để làm tiếp.
-- Điện thoại: tải sách đã xong hay bị lỗi thì cuốn đó không còn bị coi là "đang tải" - bạn xoá được cuốn ấy và thông tin của nó vẫn được làm mới.
-- Điện thoại: mở lại app đúng lúc việc xuất MP3, M4B hay sách nói vừa xong thì không còn hiện lại thanh tiến độ hay nút Dừng cho việc đã xong.
 - Điện thoại: tải sách về máy chạy nền như việc xuất sách - có thông báo tiến độ, nút "Dừng", tắt màn hình hay đóng app vẫn tải tiếp và mở lại thấy đúng tiến độ.
 - Điện thoại: đổi cỡ chữ, chế độ tối hay xoay màn hình ở màn Studio không còn làm màn hình mở lại từ đầu.
 - Điện thoại: chuyển sang máy mới hay khôi phục từ bản sao lưu không mang theo mã ghép nối và danh sách máy được chia sẻ; sách và chỗ nghe dở vẫn đi theo.
@@ -54,11 +60,6 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: “Nghe từ đây” và “Nghe từ câu này” vào đúng câu bạn chọn, kể cả khi cuốn sách dùng giọng khác.
 - Điện thoại: dấu trang sách chữ giữ câu đang nghe cả khi bạn chưa mở văn bản hoặc đặt dấu từ màn hình khoá; vị trí chữ được giữ khi đồng bộ và hoàn tác xoá.
 - Điện thoại: widget cỡ vừa có đủ nút lùi, phát/dừng, tới và hẹn giờ, kèm tên sách/chương; thu nhỏ vẫn giữ nút phát/dừng trọn vẹn, nới rộng có thêm bìa lớn.
-
-### Bảo mật
-- Máy tính và điện thoại: sách do người khác gửi không còn làm máy bạn tự gọi một địa chỉ lạ chỉ vì hiện bìa trong thư viện; màu bìa không hợp lệ được thay bằng màu nền mặc định, ảnh bìa vẫn hiển thị.
-- Máy tính: thư mục trong "Nguồn tải lên" là một liên kết trỏ ra ngoài thư viện thì thiết bị gửi sách từ xa không còn đọc hay ghi qua nó được, kể cả khi tách chương; app báo "Thư mục nguồn trỏ ra ngoài thư viện của bạn" và bạn chép file vào thư viện trên máy tính rồi gửi lại.
-- Máy tính và điện thoại: khi bạn phát lên loa hay TV, cổng phát giới hạn số kết nối cả cổng và mỗi địa chỉ; kết nối gửi phần đầu quá chậm bị đóng. Sau khi mã truy cập hợp lệ, kết nối không ghi thêm được dữ liệu trong khoảng 5 phút trên máy tính hoặc 2 phút trên điện thoại sẽ bị đóng; chương dài vẫn tiếp tục khi thiết bị còn nhận dữ liệu.
 
 ## [0.4.131] - 2026-10-23
 
