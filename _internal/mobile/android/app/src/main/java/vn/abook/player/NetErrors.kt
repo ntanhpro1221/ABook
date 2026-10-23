@@ -55,9 +55,9 @@ object NetErrors {
     fun message(kind: Kind, who: String = ""): String {
         val other = who.ifBlank { "máy kia" }
         return when (kind) {
-            Kind.UNREACHABLE -> "Không tới được $other - kiểm tra máy ấy đang mở ABook, cùng mạng Wi-Fi với điện thoại, và địa chỉ (cả số cổng sau dấu hai chấm)"
+            Kind.UNREACHABLE -> "Chưa nối được $other — bạn mở ABook, kiểm tra cùng Wi-Fi và bật “Cho phép thiết bị khác kết nối qua Wi-Fi”."
             Kind.DROPPED -> "Kết nối với $other bị ngắt giữa chừng - thử lại"
-            Kind.SECURITY -> "Lỗi bảo mật kết nối với $other - địa chỉ này có thể không phải cổng ghép của ABook (xem lại số cổng)"
+            Kind.SECURITY -> "Địa chỉ của $other chưa đúng — bạn chép lại “Địa chỉ máy này” cạnh mã ghép trên máy kia."
             Kind.TIMEOUT -> "Hết giờ chờ $other trả lời - mạng chậm hay máy ấy đang bận, thử lại"
         }
     }

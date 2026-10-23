@@ -292,9 +292,9 @@ class PinnedFiles(private val dir: File, private val base: String, private val s
             generateSequence(error) { it.cause }.take(5).any {
                 it is SpaceError || it.message.orEmpty().contains("ENOSPC", true) || it.message.orEmpty().contains("No space left", true)
             } -> Failure("Bạn giải phóng bộ nhớ trên điện thoại rồi bấm Thử lại.", technical(error))
-            error is ChecksumError -> Failure("Không tải được $what: file tải về bị hỏng (không khớp mã kiểm) - bấm Thử lại để tải lại.", "")
+            error is ChecksumError -> Failure("$what tải về bị hỏng — bạn bấm Thử lại để tải lại.", "")
             isNetwork(error) -> Failure(NETWORK_FAILURE, technical(error))
-            else -> Failure("Không tải được $what. Bấm Thử lại; nếu vẫn lỗi, mở Chi tiết để gửi cho người hỗ trợ.", technical(error))
+            else -> Failure("Chưa tải được $what — bạn bấm Thử lại hoặc xem Chi tiết để nhờ hỗ trợ.", technical(error))
         }
 
         /** The raw error, short enough for a folded "Chi tiết". */

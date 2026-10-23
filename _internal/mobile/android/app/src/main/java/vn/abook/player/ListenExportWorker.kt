@@ -149,7 +149,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             val extra = music.music?.let { ExportMusic.listenBytes(Store.bookDir(bookId), it, chapters) } ?: 0L
             val need = ListenExport.plan(chapters, reading, work, null, music = { mixer?.chapter(it) }, extra = extra).bytes
             if (work.usableSpace < need) {
-                throw Mp3Export.Refused("Điện thoại không đủ chỗ trống để làm sách nói (cần khoảng ${need shr 20} MB) - dọn bớt rồi xuất lại")
+                throw Mp3Export.Refused("Thiếu chỗ làm sách nói (cần ${need shr 20} MB) — bạn dọn bớt rồi xuất lại.")
             }
             var shown = 0L
             fun show(progress: ListenExport.Progress) {
@@ -190,7 +190,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             }
             work.deleteRecursively()
             val missing = mixer?.missing(chapters.map { it.id }) ?: 0
-            val lost = if (missing > 0) " $missing đoạn thiếu nhạc vì chưa tải được bài." else ""
+            val lost = if (missing > 0) " $missing đoạn chưa tải được nhạc — bạn tải lại nếu muốn xuất đủ nhạc." else ""
             ListenExports.finished(context, bookId, "Đã xuất sách nói", "$title · ${result.chapters} chương, ${megabytes(result.size)} MB.$lost")
             val finished = event().put("finished", true).put("name", result.name).put("size", result.size).put("chapters", result.chapters)
                 .put("chaptersTotal", result.chaptersTotal).put("uri", file.toString())
@@ -216,11 +216,11 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             M4bExports.discard(context, file)
             if (Mp3Exports.timedOut(this)) {
                 // Dịch vụ nền hết 6 giờ (Android 15): phần đã đọc xong được giữ, xuất lại là làm tiếp từ đó.
-                ListenExports.finished(context, bookId, "Hệ thống đã dừng việc xuất", "$title · ${Mp3Exports.TIMEOUT_NOTE}; phần đã đọc xong được giữ.")
+                ListenExports.finished(context, bookId, "Xuất đã dừng: $title", "Hết 6 giờ; giữ phần đã đọc — bạn bấm Xuất lại.")
                 ListenExports.emit(event().put("error", Mp3Exports.TIMEOUT_NOTE))
                 return Result.failure()
             }
-            ListenExports.finished(context, bookId, "Đã dừng xuất sách nói", "$title · phần đã đọc xong được giữ, xuất lại để làm tiếp")
+            ListenExports.finished(context, bookId, "Đã dừng xuất", "$title · giữ phần đã đọc — bạn xuất lại để làm tiếp")
             ListenExports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Throwable) {
@@ -232,7 +232,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             M4bExports.discard(context, file)
             val message = if (isStopped && Mp3Exports.timedOut(this)) Mp3Exports.TIMEOUT_NOTE
                 else M4bExports.describe(error, lowSpace = context.filesDir.usableSpace < (32L shl 20))
-            ListenExports.finished(context, bookId, "Không xuất được sách nói", "$title · $message")
+            ListenExports.finished(context, bookId, "Chưa xuất được", "$title · $message")
             ListenExports.emit(event().put("error", message))
             return Result.failure()
         } finally {

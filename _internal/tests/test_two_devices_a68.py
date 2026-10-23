@@ -25,19 +25,23 @@ def test_a_place_beyond_the_chapter_is_dropped_but_text_chapters_are_not_judged(
 
 def test_the_book_voice_travels_with_the_listening_record_and_the_later_choice_wins(tmp_path: Path) -> None:
     listening = Listening(tmp_path / "listening.json")
+    listening.set_voice("b", "vieneu:Ái Hân")
     listening.set_voice("b", "edge:vi-VN-NamMinhNeural")
     computer = listening.get("b")
     assert computer["voice"] == "edge:vi-VN-NamMinhNeural" and computer["voiceAt"] > 0
-    older = {"chapters": {}, "bookmarks": [], "voice": "vieneu:Ái Hân", "voiceAt": computer["voiceAt"] - 60}
-    newer = {**older, "voiceAt": computer["voiceAt"] + 60}
+    revision = computer["_fieldRevs"]["voice"]
+    older = {"chapters": {}, "bookmarks": [], "voice": "vieneu:Ái Hân", "voiceAt": computer["voiceAt"] - 60,
+             "_fieldRevs": {"voice": {**revision, "counter": revision["counter"] - 1}}}
+    newer = {**older, "voiceAt": computer["voiceAt"] + 60,
+             "_fieldRevs": {"voice": {**revision, "counter": revision["counter"] + 1}}}
     assert merge_states(computer, older)["voice"] == "edge:vi-VN-NamMinhNeural"
     assert merge_states(computer, newer)["voice"] == "vieneu:Ái Hân"
 
 
 def test_a_place_heard_offline_wins_when_the_phone_comes_back(tmp_path: Path) -> None:
     now = time.time()
-    computer = {"last": {"chapterId": 726, "seconds": 691.0, "at": now - 600}, "chapters": {}, "bookmarks": []}
-    phone = {"last": {"chapterId": 727, "seconds": 17.0, "at": now - 60}, "chapters": {}, "bookmarks": []}
+    computer = {"last": {"chapterId": 726, "seconds": 691.0, "at": now - 600, "rev": {"counter": 1, "node": "computer"}}, "chapters": {}, "bookmarks": []}
+    phone = {"last": {"chapterId": 727, "seconds": 17.0, "at": now - 60, "rev": {"counter": 2, "node": "phone"}}, "chapters": {}, "bookmarks": []}
     assert merge_states(computer, phone)["last"]["chapterId"] == 727
     assert merge_states(phone, computer)["last"]["chapterId"] == 727, "máy tính không kéo điện thoại về chỗ cũ"
 
@@ -82,10 +86,10 @@ def test_over_the_wire_the_phone_renames_itself_and_a_foreign_place_is_refused(l
         assert book["producing"] is False, "không chạy Studio thì không phải đang làm, dù cuốn chưa xong"
 
         identifier = book["id"]
-        foreign = {"last": {"chapterId": 1, "seconds": 812.4, "at": time.time()}, "chapters": {}, "bookmarks": []}
+        foreign = {"last": {"chapterId": 1, "seconds": 812.4, "at": time.time(), "rev": {"counter": 1, "node": "phone"}}, "chapters": {}, "bookmarks": []}
         status, _data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=foreign)
         assert status == 200 and "last" not in listening.get(identifier), "chỗ nghe vượt độ dài chương không vào hồ sơ"
-        good = {"last": {"chapterId": 1, "seconds": 5.0, "at": time.time()}, "chapters": {}, "bookmarks": []}
+        good = {"last": {"chapterId": 1, "seconds": 5.0, "at": time.time(), "rev": {"counter": 2, "node": "phone"}}, "chapters": {}, "bookmarks": []}
         _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=good)
         assert listening.get(identifier)["last"]["seconds"] == 5.0
     finally:

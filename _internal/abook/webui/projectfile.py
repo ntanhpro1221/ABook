@@ -576,7 +576,7 @@ class ProjectFile:
         """Kiểm, giải nén vào một thư mục MỚI trong `library` (không bao giờ đè dự án đang có), viết lại đường dẫn
         trong sổ dự án. Thư mục tạm rồi đổi tên: hỏng giữa chừng không để lại nửa dự án. Trả (thư mục, báo cáo)."""
         if self.workshop != PRESENT:
-            raise ProjectFileError("File này chưa có xưởng - chỉ có phần nghe của sách. Hãy “Dựng xưởng” từ sách đã mở.")
+            raise ProjectFileError("File chỉ có phần nghe — bạn chọn “Dựng xưởng” từ sách đã mở.")
         library = Path(library)
         library.mkdir(parents=True, exist_ok=True)
         if shutil.disk_usage(library).free < self.size * 1.05 + 64 * 1024**2:
@@ -689,8 +689,7 @@ class ProjectFile:
         if version > FORMAT_VERSION:
             raise ProjectFileError("Dự án này được gói bằng bản app mới hơn. Hãy cập nhật app để mở.")
         if version < FORMAT_VERSION:
-            raise ProjectFileError("Dự án này được gói bằng bản app cũ hơn, định dạng không còn được đọc. "
-                                   "Hãy mở nó bằng bản app đã gói nó rồi gói lại.")
+            raise ProjectFileError("Dự án dùng định dạng cũ — bạn mở bằng bản app đã gói rồi gói lại.")
         content = names - {"mimetype", MANIFEST}
         aliases = manifest.get("aliases")
         files = manifest.get("files")

@@ -247,7 +247,7 @@ class CastService : Service() {
         val builder = NotificationCompat.Builder(this, CHANNEL)
             .setSmallIcon(R.mipmap.ic_launcher_monochrome)
             .setContentTitle("${if (playing) "Đang phát" else "Đang dừng"} trên ${where.ifEmpty { "loa / TV" }}")
-            .setContentText(if (computer != null) "Máy tính đang phát cuốn này" else "Điện thoại đang phục vụ audio - giữ Wi-Fi bật")
+            .setContentText(if (computer != null) "Máy tính đang phát cuốn này" else "Điện thoại đang truyền âm thanh — bạn giữ Wi-Fi bật")
             .setContentIntent(openApp())
             .addAction(0, if (playing) "Tạm dừng" else "Phát tiếp", command(toggle))
             .addAction(0, "Dừng", command(ACTION_STOP))

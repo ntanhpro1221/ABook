@@ -218,7 +218,7 @@ object EditsSync {
             val reply = try {
                 JSONObject(send(file))
             } catch (error: IOException) {
-                throw failure(dir, id, "Chưa tới được máy tính - phần sửa vẫn nằm trên máy này, sẽ gửi lại khi có kết nối", error)
+                throw failure(dir, id, "Chưa nối được máy tính; giữ phần sửa ở máy này và gửi lại khi có mạng.", error)
             } catch (error: IllegalStateException) {
                 throw failure(dir, id, error.message ?: "Máy tính không nhận phần sửa", error)
             } catch (error: JSONException) {

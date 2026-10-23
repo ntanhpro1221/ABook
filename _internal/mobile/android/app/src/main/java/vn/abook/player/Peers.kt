@@ -177,7 +177,7 @@ object Peers {
         if (discard) return
         val left = unsent(key)
         if (left.books.isNotEmpty()) {
-            throw IllegalStateException("${left.books.size} cuốn còn ${left.changes} thay đổi chưa gửi - gửi trước hay chọn bỏ rồi thôi ghép")
+            throw IllegalStateException("Còn ${left.changes} sửa đổi chưa gửi — bạn gửi hoặc chọn bỏ trước khi thôi ghép.")
         }
     }
 

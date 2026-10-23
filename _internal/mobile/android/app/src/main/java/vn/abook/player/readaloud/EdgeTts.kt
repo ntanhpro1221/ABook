@@ -590,7 +590,7 @@ class EdgeTts(
         const val RETRIES = 3
         val BACKOFF_MS = longArrayOf(0L, 1_500L, 4_000L) // lần thử lại đầu nối lại ngay (kết nối mới); chỉ lần sau mới nghỉ
         /** Hết cách thử lại vì MẤT MẠNG thật: câu nói thẳng cho người nghe (thay cho "Mất kết nối với giọng Edge giữa chừng"). */
-        const val LOST_NETWORK = "Mất mạng - giọng trực tuyến tạm dừng. Bấm phát để thử lại, hoặc chọn giọng trên máy."
+        const val LOST_NETWORK = "Mất mạng, giọng tạm dừng — bạn bấm Phát để thử lại hoặc chọn giọng trên máy."
         /** Hết cách thử lại mà mạng vẫn còn (dịch vụ cắt lượt / bận): không nói "mất mạng". */
         const val NOT_ANSWERING = "Giọng Edge đang không trả lời - bấm phát để thử lại, hoặc chọn giọng trên máy."
         /** Lệch giữa đồng hồ máy và máy chủ (giây), học từ header `Date` của lần bị từ chối 403; dùng chung cho mọi lần gọi. */

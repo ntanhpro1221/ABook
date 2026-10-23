@@ -338,9 +338,9 @@ class PrepareRunner(
     /** Câu cho người nghe: không rơi sang giọng khác (âm thanh làm sẵn phải cùng một giọng), nên nói rõ dừng ở đâu và làm sao làm tiếp. */
     private fun errorText(job: PrepareJob, chapter: PrepareChapter, error: VoiceException): String {
         val ready = job.chapters.count { it.ready }
-        val kept = if (ready > 0) " Đã sẵn sàng $ready/${job.chapters.size} chương - phần đã xong vẫn giữ." else ""
+        val kept = if (ready > 0) " (giữ $ready/${job.chapters.size} chương đã xong)" else ""
         return if (job.online && error.offline) {
-            "Mất mạng nên đã dừng làm trước ở “${chapter.title}”.$kept Có Wi-Fi thì bấm làm trước lại để làm tiếp."
+            "Mất mạng ở “${chapter.title}”$kept — bạn nối Wi-Fi rồi làm trước lại."
         } else {
             "Không làm trước được “${chapter.title}”: ${error.message?.trimEnd('.')}.$kept"
         }

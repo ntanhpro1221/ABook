@@ -70,7 +70,7 @@ object BookFileImport {
         val media = MEDIA_SUFFIXES.any { name.lowercase().endsWith(it) }
         val room = maxOf(packed, 1L)
         if ((media && size >= MEDIA_FLOOR && size > room * MEDIA_RATIO) || (text && !media && size >= TEXT_FLOOR && size > room * TEXT_RATIO)) {
-            throw Refused("File này có mục nén bất thường ($name) - có thể là file độc hoặc hỏng. Bạn hãy xin người gửi gửi lại.")
+            throw Refused("Gói nén có thể gây hại hoặc bị hỏng — bạn xin người gửi gửi lại.")
         }
     }
 
@@ -137,7 +137,7 @@ object BookFileImport {
         for (name in names.sorted()) {
             val key = name.split("/").joinToString("/") { it.trimEnd('.', ' ').lowercase(java.util.Locale.ROOT) }
             val first = seen.getOrPut(key) { name }
-            if (first != name) throw Refused("File này có hai mục trùng tên khi chép vào máy ($first và $name). Bạn hãy xin người gửi gửi lại.")
+            if (first != name) throw Refused("Gói có mục trùng tên — bạn xin người gửi gửi lại.")
         }
     }
 
@@ -163,9 +163,9 @@ object BookFileImport {
 
     internal fun checkShape(book: JSONObject) {
         fun check(item: Any?, fields: Map<String, Kind>) {
-            if (item !is JSONObject) throw Refused("File sách này hỏng hoặc không đọc được. Bạn hãy xin người gửi gửi lại (mô tả sai dạng).")
+            if (item !is JSONObject) throw Refused("File sách hỏng hoặc không đọc được — bạn xin người gửi gửi lại.")
             for ((key, kind) in fields) {
-                if (!fits(item.opt(key), kind)) throw Refused("File sách này hỏng hoặc không đọc được. Bạn hãy xin người gửi gửi lại (\u00ab$key\u00bb sai kiểu).")
+                if (!fits(item.opt(key), kind)) throw Refused("File sách hỏng hoặc không đọc được — bạn xin người gửi gửi lại.")
             }
         }
         check(book, BOOK_FIELDS)
@@ -234,8 +234,7 @@ object BookFileImport {
     private fun requireRoom(dir: File, need: Long, freeSpace: (File) -> Long = { it.usableSpace }) {
         val free = freeSpace(dir)
         if (free < need) {
-            throw Refused("Bộ nhớ máy không đủ chỗ để mở sách này: cần khoảng ${gigabytes(need)}, còn ${gigabytes(free)}. " +
-                "Bạn hãy xoá bớt rồi mở lại file.")
+            throw Refused("Thiếu chỗ mở sách (cần ${gigabytes(need)}, còn ${gigabytes(free)}) — bạn dọn ổ rồi thử lại.")
         }
     }
 
@@ -268,7 +267,7 @@ object BookFileImport {
             checkDistinct(names)
             val layout = if (project) projectLayout(zip, names) else null
             val bookEntry = zip.getEntry("book.json") ?: throw Refused(
-                if (project) "Dự án này chưa có chương nào nghe được - hãy mở nó bằng ABook trên máy tính."
+                if (project) "Dự án chưa có chương nghe được — bạn mở bằng ABook Studio."
                 else "File sách thiếu phần mô tả (book.json).")
             if (bookEntry.size > MAX_JSON_BYTES) throw Refused("book.json quá lớn.")
             val book = try {
@@ -588,7 +587,7 @@ object BookFileImport {
         if (version < 1) throw Refused("File dự án có phiên bản định dạng không hợp lệ.")
         if (version > ProjectDocument.VERSION) throw Refused("Dự án này được gói bằng bản app mới hơn. Hãy cập nhật app để mở.")
         if (version < ProjectDocument.VERSION) {
-            throw Refused("Dự án này được gói bằng bản app cũ hơn, định dạng không còn được đọc. Hãy mở nó bằng bản app đã gói nó rồi gói lại.")
+            throw Refused("Dự án dùng định dạng cũ — bạn mở bằng bản app đã gói rồi gói lại.")
         }
         val workshop = manifest.optString("workshop")
         if (workshop != ProjectDocument.PRESENT && workshop != ProjectDocument.PENDING) throw Refused("File dự án không nói rõ có xưởng hay chưa.")

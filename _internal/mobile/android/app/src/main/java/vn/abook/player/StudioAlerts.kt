@@ -91,8 +91,8 @@ object StudioAlerts {
         // Máy tính tuột sạc (cấp máy, kể cả khi không có sách nào chạy): báo một lần mỗi lần rút; máy bàn gửi false/null.
         val unplugged = !reply.isNull("onBattery") && reply.optBoolean("onBattery")
         if (seeded && unplugged && !wasOnBattery) {
-            out += Alert("machine:battery", "Máy tính đang chạy pin",
-                "${reply.optString("name").ifBlank { "Máy tính" }} đang chạy bằng pin - cắm sạc lại nếu không định rút.", "/#/studio")
+            out += Alert("machine:battery", "Máy tính dùng pin",
+                "${reply.optString("name").ifBlank { "Máy tính" }} đang dùng pin — bạn kiểm tra sạc.", "/#/studio")
         }
         val books = reply.optJSONArray("books")
         val after = JSONObject()
@@ -129,39 +129,39 @@ object StudioAlerts {
         val wasPhase = old.optString("phase")
         when {
             phase == "done" && wasPhase != "done" ->
-                out += Alert("$id:done", "Đã xong: $title", "$progress nghe được. Bấm để mở Studio.", "/#/studio/$id")
+                out += Alert("$id:done", "Đã xong: $title", "$progress nghe được — bạn mở Studio để nghe.", "/#/studio/$id")
             phase == "error" && wasPhase != "error" ->
                 out += Alert("$id:error", "Dừng vì lỗi: $title",
-                    book.optString("lastError").ifBlank { book.optString("statusLabel") }.take(160), "/#/studio/$id?tab=activity")
+                    "Làm sách gặp lỗi — bạn mở Studio để xem.", "/#/studio/$id?tab=activity")
             // Phân tích xong, máy giữ cuốn chờ duyệt trước khi thu (webui/precast.py). Đứng trước "Đã dừng": cuốn đứng chờ
             // người duyệt không phải là dừng.
             heldOf(book) && !old.optBoolean("held") ->
                 out += Alert("$id:precast", "Sẵn sàng duyệt: $title",
-                    "Phân tích xong - duyệt giọng, tên lạ, câu chưa chắc trước khi thu.", "/#/studio/$id?tab=precast")
+                    "Bạn duyệt giọng, tên và câu chưa chắc trước khi thu.", "/#/studio/$id?tab=precast")
             old.optBoolean("running") && !book.optBoolean("running") && phase != "done" && phase != "error" &&
                 !heldOf(book) ->
                 // Máy tính nói lượt chạy kết thúc ra sao (`end`): bạn bấm Dừng khác với máy sập - tin sau cần mở Studio xem nguyên nhân
                 // (soát a88 T4). Máy tính đời cũ không gửi `end` thì giữ tin cũ.
                 out += when (book.optString("end")) {
-                    "failed", "lost" -> Alert("$id:crashed", "Máy tính gặp sự cố: $title",
-                        (if (book.optString("end") == "lost") "Tiến trình làm sách bị tắt đột ngột (máy khởi động lại, hết điện hay bị đóng)."
-                        else book.optString("endDetail").ifBlank { "Dây chuyền thoát bất thường." }.take(160)) +
-                            " · $progress. Mở Studio để xem và làm tiếp.", "/#/studio/$id")
-                    "stopped" -> Alert("$id:stopped", "Đã dừng theo yêu cầu: $title", "Bạn đã bấm Dừng · $progress", "/#/studio/$id")
+                    "failed", "lost" -> Alert("$id:crashed", "Sự cố: $title",
+                        (if (book.optString("end") == "lost") "Làm sách bị ngắt đột ngột"
+                        else "Làm sách gặp sự cố") +
+                            " · $progress — bạn mở Studio.", "/#/studio/$id")
+                    "stopped" -> Alert("$id:stopped", "Đã dừng: $title", "Bạn đã bấm Dừng · $progress", "/#/studio/$id")
                     else -> Alert("$id:stopped", "Đã dừng: $title", "${book.optString("statusLabel")} · $progress", "/#/studio/$id")
                 }
             // Máy tính rút sạc nên Studio tự tạm dừng (power_source.py): báo để người ta biết máy tuột sạc - 24-09 sạc tuột
             // 22:50 mà 00:07 mới có người thấy.
             pausedOf(book) == "battery" && pausedOf(old) != "battery" && !machineOnBattery ->
-                out += Alert("$id:battery", "Máy tính đang chạy pin",
-                    "Đã tạm dừng $title · $progress. Cắm sạc là tự làm tiếp.", "/#/studio/$id")
+                out += Alert("$id:battery", "Chạy pin: $title",
+                    "Tạm dừng · $progress; cắm sạc để tự làm tiếp.", "/#/studio/$id")
         }
         if (!book.isNull("work") && !old.isNull("work")) {
             val now = book.optInt("work")
             val was = old.optInt("work")
             if (now > was) {
                 out += Alert("$id:work", "$title: $now việc cần duyệt",
-                    "Thêm ${now - was} chỗ máy chưa chắc. Sửa không phải dừng sách.", "/#/studio/$id?tab=work")
+                    "Thêm ${now - was} chỗ chưa chắc — bạn sửa khi sách vẫn chạy.", "/#/studio/$id?tab=work")
             }
         }
         return out

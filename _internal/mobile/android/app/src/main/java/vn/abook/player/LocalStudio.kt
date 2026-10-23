@@ -331,7 +331,7 @@ object LocalStudio {
     /** PUT /music {enabled?, levelDb?, silence?, pins?, playlist?}: sách đã đóng gói chỉ chỉnh được năm thứ ấy (playlist: mã, "mine", "off" = tắt, null = để máy chọn). */
     private fun music(dir: java.io.File, body: JSONObject): Any? {
         if (body.keys().asSequence().any { it !in EDITS_ONLY_KEYS }) {
-            throw BookEdits.EditsError("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền")
+            throw BookEdits.EditsError("Sách đóng gói chỉ đổi được bật/tắt, mức nhạc, đoạn im, bài và danh sách nhạc.")
         }
         return withAutoPlaylist(dir, BookEdits.setMusic(dir, body, musicStore?.let { store -> { link: String -> store.track(link) } },
             musicStore?.let { store -> { store.entries().reversed().mapNotNull { info -> store.file(info.getString("link"))?.let { info to it } } } }))
@@ -468,9 +468,9 @@ object LocalStudio {
         fun unmarked(text: String) = java.text.Normalizer.normalize(text.lowercase().replace("đ", "d"), java.text.Normalizer.Form.NFD)
             .filter { Character.getType(it) != Character.NON_SPACING_MARK.toInt() }
         return if (unmarked(BookWishes.collapse(spoken)) == unmarked(surface)) {
-            "ABook chưa nhận “$spoken” làm cách đọc cho “$surface”: hai chữ chỉ khác nhau ở dấu. Thử viết khác, hay để máy đọc như chữ trong sách."
+            "“$spoken” chỉ khác dấu với “$surface” — bạn viết khác hoặc giữ cách đọc gốc."
         } else {
-            "ABook chưa nhận “$spoken” là cách đọc tiếng Việt - thử viết khác: mỗi âm tiết viết như tiếng Việt, nối bằng gạch nối (vd Hên-khơ)."
+            "Chưa nhận được “$spoken” — bạn viết từng âm tiếng Việt, nối bằng gạch nối."
         }
     }
 
@@ -498,8 +498,7 @@ object LocalStudio {
 
     /** Vì sao không lưu được cách đọc cho chữ có ký hiệu bị xé đôi - cùng lời với giao diện (`neverText` của readingReach.ts). */
     private fun neverText(surface: String): String =
-        "Máy đọc ký hiệu trong “$surface” thành một chỗ ngừng trước khi tra cách đọc, nên cách đọc cho chữ này không bao giờ được dùng." +
-            " Muốn đọc khác, sửa “Chữ đem đọc” của từng câu có chữ ấy."
+        "Ký hiệu trong “$surface” ngăn áp cách đọc — bạn sửa “Chữ đem đọc” của câu."
 
     private const val CHAPTERS_SHOWN = 6
     private const val NOT_RECORDED = "chưa thu nên không phải thu lại"

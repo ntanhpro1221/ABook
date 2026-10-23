@@ -108,10 +108,10 @@ class SupertonicModule(
         val NEEDS = listOf("ort", "g2p", CHOICE)
         private const val MODEL = "model"
         private const val LABEL = "Giọng Supertonic"
-        private const val DETAIL = "10 giọng nam nữ, âm thanh 44 kHz; số và ngày giờ được đổi thành chữ trước khi đọc"
+        private const val DETAIL = "10 giọng nam nữ, 44 kHz; tự đổi số và ngày giờ thành chữ."
         private const val FAST_LABEL = "Bản nhanh hơn"
-        private const val FAST_DETAIL = "Giọng Supertonic đọc nhanh hơn khi bạn nghe trực tiếp, tiếng kém hơn một chút. Sách bạn xuất ra vẫn dùng bản chất lượng cao nhất"
-        val PART_LABEL = mapOf("ort" to "Thư viện chạy model", "g2p" to "Bộ đọc chữ tiếng Việt", CHOICE to "Giọng Supertonic", FAST_CHOICE to FAST_LABEL)
+        private const val FAST_DETAIL = "Tạo giọng nhanh hơn, tiếng kém chút; xuất sách vẫn dùng bản tốt nhất."
+        val PART_LABEL = mapOf("ort" to "Bộ chạy giọng", "g2p" to "Bộ đọc tiếng Việt", CHOICE to "Giọng Supertonic", FAST_CHOICE to FAST_LABEL)
 
         private fun defaultGroups(abi: String?): Map<String, List<Part>> = linkedMapOf(
             "ort" to SharedRuntime.ortParts(abi),

@@ -123,7 +123,7 @@ def packaged_state(path: Path) -> dict[str, bool]:
 # ---- Ghi công nhạc nền trong file xuất -------------------------------------------------------------------------------
 # Nhạc CC BY đã trộn vào file thì người nhận file phải thấy tên bài, tác giả, giấy phép (và lời "đã chỉnh sửa" - app cắt vòng, trộn dưới giọng,
 # đổi âm lượng): mỗi MP3 mang ghi công các bài của chính chương ấy trong thẻ comment, M4B mang cả cuốn, và một file `.txt` đi kèm (export.CREDITS_FILE) có cả cuốn.
-MODIFIED_NOTE = "Đã chỉnh sửa: các bài nhạc được cắt vòng, trộn nhỏ dưới giọng đọc và chỉnh âm lượng cho vừa sách."
+MODIFIED_NOTE = "Nhạc đã cắt vòng, trộn nhỏ dưới giọng đọc và cân âm lượng cho sách."
 _CC_KINDS = re.compile(r"^by(-(nc|nd|sa))*$")
 
 
@@ -199,7 +199,7 @@ def need_numpy() -> None:
     try:
         import numpy  # noqa: F401
     except ImportError as error:
-        raise ValueError("Không trộn được nhạc nền: chưa lấy được thư viện numpy (tải lại ở mục Phân tích nhạc)") from error
+        raise ValueError("Thiếu thư viện trộn nhạc — bạn tải lại ở Phân tích nhạc.") from error
 
 
 class _Pcm:

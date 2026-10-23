@@ -2,6 +2,8 @@
 
 Ngày cập nhật: 2026-10-23
 
+Đợt a121g trên `ABook_a121`, nhánh `dev/copy131`: đồng bộ chữ Python/Kotlin/fixture, sửa 16 lỗi JUnit chữ cũ và 6 CAO + 19 VỪA của rà a121r. Pytest 170 file: 4571 passed, 5 skipped, 0 failed; Gradle testDebugUnitTest: 1684 tests, 0 failures, 0 errors, 7 skipped. Bốn lỗi fixture đồng bộ có sẵn được bổ sung revision theo hợp đồng hiện hành. Hash khoá `c9176123` giữ nguyên; CPU tối đa 4, không GPU.
+
 Đợt `0.4.132` trên `ABook_rel437` (a002af08 = 0.4.131 + a106r fix `dev/uxfix123` + a107fix `dev/uxfix124` + a108fix `dev/uxfix125`): Nghe ngay (đổi giọng giữa chừng, ghim Làm trước, tải giọng chịu lỗi SSL/ổ đầy, gỡ VieNeu); điện thoại sống cùng Android (tải sách và xuất chạy nền nối lại sau khi app bị đóng, hệ thống dừng xuất không tạo thư mục trùng, sao lưu không mang mã ghép); đọc + nghe trên điện thoại (đồng hồ chữ khi đệm, nghe từ câu đúng giọng cuốn đích, dấu trang sách chữ giữ câu, widget ba cỡ). Bộ đầy đủ t118: pytest 9155 passed, 9 skipped, 0 failed; Vitest 1603 passed, 1 skipped; tsc --noEmit exit 0; Gradle testDebugUnitTest XML 1613 tests, 0 failures, 0 errors, 7 skipped. Hash khoá `c9176123`.
 
 Đợt `0.4.131` trên `ABook_rel437` (00ed7325 = 0.4.130 + a105fix `dev/uxfix121` + a106fix `dev/uxfix122`): hồ sơ người nghe (hai máy tính ghép và điện thoại làm máy giữ sách gộp theo mã hồ sơ, phát giữ hồ sơ đã chốt, tốc độ/giọng/đêm/dấu trang/đánh dấu chương ghi đúng hồ sơ, giọng riêng theo hồ sơ, đổi tên/xoá hồ sơ cuốn một hồ sơ); màn Bản lưu cũ trên điện thoại. Bộ đầy đủ t117: pytest 9135 passed, 9 skipped, 0 failed; Vitest 1574 passed, 1 skipped; tsc --noEmit exit 0; Gradle testDebugUnitTest XML 1586 tests, 0 failures, 0 errors, 7 skipped. Hash khoá `c9176123`.

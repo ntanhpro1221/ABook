@@ -109,7 +109,7 @@ def test_reading_along_a_heard_chapter_works_with_the_other_computer_off(library
         (path / "scripts" / "1.json").unlink()
         status, data, _ = _request(ui.port, "GET", f"/api/books/{value}/chapters/1/script", headers=headers)
         message = json.loads(data)["error"]
-        assert status == 503 and "máy kia" in message and "chưa có trên máy này" in message, message
+        assert status == 503 and "Chưa nối" in message and "chưa có trên máy này" in message, message
     finally:
         ui.stop()
         other.stop()
@@ -141,7 +141,7 @@ def test_an_interrupted_download_keeps_what_is_done_and_resumes_only_the_rest(li
     monkeypatch.setattr(remote_books, "_save", save_then_vanish)
     sync.asked.clear()
     failed = app.remote_downloads.start(path, wait=True)
-    assert failed["state"] == "failed" and "ABook trên máy kia chưa mở" in failed["error"], "máy còn đó, ABook bên kia đã đóng"
+    assert failed["state"] == "failed" and "Chưa nối" in failed["error"], "máy còn đó, ABook bên kia đã đóng"
     assert failed["filesDone"] == 2 and all((path / name).is_file() for name in saved)
     assert not list(path.rglob("*.part"))
     assert app.remote_download(value, "status")["state"] == "failed", "nói rõ lần trước hỏng, phần đã xong vẫn đếm"
@@ -228,7 +228,7 @@ def test_edits_made_on_this_computer_reach_the_other_computer_like_a_phones(libr
         other.stop()
 
     app.rename(value, "Sửa lúc máy kia tắt")
-    with pytest.raises(ApiError, match="ABook trên máy kia chưa mở"):
+    with pytest.raises(ApiError, match="^Chưa nối được máy kia — bạn mở ABook, bật “Cho phép thiết bị khác kết nối qua Wi-Fi” và chép lại địa chỉ ghép.$"):
         app.send_remote_edits(value)
     state = app.listen_book(value)["editsSync"]
     assert state["pending"] == 1 and state["last"]["state"] == "error", "lớp sửa giữ nguyên, lần sau gửi lại"
@@ -278,7 +278,7 @@ def test_forgetting_a_computer_is_refused_while_edits_are_unsent_and_changes_not
         assert [item["changes"] for item in view["books"]] == [2]
         assert [item["title"] for item in view["books"]] == ["Tên đặt ở máy B"], "hộp gỡ ghép nói tên đã sửa, không phải tên gốc"
 
-        with pytest.raises(ApiError, match="1 cuốn còn 2 thay đổi chưa gửi") as refused:
+        with pytest.raises(ApiError, match="Còn 2 sửa đổi chưa gửi") as refused:
             app.forget_computer(computer)
         assert refused.value.status == 409
         assert path.exists() and len(app.computers_view()["computers"]) == 1, "từ chối thì không đụng gì"

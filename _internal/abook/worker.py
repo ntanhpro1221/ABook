@@ -161,9 +161,7 @@ def _finalize_gpu_context_loss(
     if db is None:
         return
     detail = (
-        f"Ngữ cảnh GPU bị huỷ giữa chừng (thường do máy ngủ/ngủ đông): {error}. "
-        f"Lần thử {record['attempt']}/{record['max_attempts']}; "
-        f"{record['segments_done']} segment đã có audio được giữ nguyên."
+        f"GPU bị ngắt; giữ {record['segments_done']} đoạn đã thu — thử lại {record['attempt']}/{record['max_attempts']}."
     )
     try:
         db.update_book(status=BookStatus.STOPPED.value, stage="stopped", error=detail)
@@ -309,7 +307,7 @@ def _load_locked_settings(paths: ProjectPaths, db: ProjectDB) -> dict[str, Any]:
         raise RuntimeError("Settings trong SQLite không khớp settings_hash đã khóa")
     if settings_hash(external) != locked_hash:
         raise RuntimeError(
-            "book_settings.json khác settings đã khóa trong SQLite; từ chối resume để tránh đổi giọng/model"
+            "Cài đặt không khớp bản đã khoá — từ chối làm tiếp để giữ giọng và model."
         )
     legacy_director_settings = is_legacy_director_settings(locked)
     effective = normalize_legacy_locked_settings(locked)
@@ -320,14 +318,13 @@ def _load_locked_settings(paths: ProjectPaths, db: ProjectDB) -> dict[str, Any]:
     if effective.get("quality_profile") == "high_quality" and analysis_started:
         if legacy_director_settings:
             raise RuntimeError(
-                "Project high_quality cũ đã có checkpoint phân tích nhưng chưa có "
-                "director critic; hãy tạo project sạch để không trộn metadata cũ với policy mới"
+                "Dự án cũ thiếu bước duyệt phân tích — bạn tạo dự án mới để tránh trộn dữ liệu."
             )
         model_lock = db.analysis_model_lock()
         expected_model = str(effective.get("analysis", {}).get("model", ""))
         if model_lock is None or str(model_lock["model_name"]) != expected_model:
             raise RuntimeError(
-                "Project high_quality đã có checkpoint phân tích nhưng thiếu khóa model/digest hợp lệ"
+                "Dự án đã phân tích nhưng thiếu khoá model hợp lệ — bạn tạo dự án mới."
             )
     return effective
 
@@ -736,8 +733,7 @@ def run_worker(
                         "gpu_context_lost": True,
                         "attempt": record["attempt"],
                         "text": (
-                            "Mất ngữ cảnh GPU (máy ngủ?); đã dừng sạch để tiến trình mới "
-                            f"chạy tiếp (lần {record['attempt']}/{record['max_attempts']})."
+                            f"GPU bị ngắt; giữ đoạn đã thu — sẽ tự thử lại ({record['attempt']}/{record['max_attempts']})."
                         ),
                     },
                 )

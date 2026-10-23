@@ -575,7 +575,7 @@ def test_a_python_error_from_the_preview_process_becomes_plain_words_and_stays_i
     """Soát UX a13 #7: "Không nghe thử được: KeyError: 'tts'" không nói gì với người nghe."""
     with caplog.at_level("WARNING"):
         raw = reading_preview._plain_error("KeyError: 'tts'")
-    assert "KeyError" not in raw and "'tts'" not in raw and "nhật ký" in raw
+    assert "KeyError" not in raw and "'tts'" not in raw and "thử lại" in raw
     assert "KeyError: 'tts'" in caplog.text, "chi tiết nằm trong nhật ký"
     assert reading_preview._plain_error("Không đọc được câu này trong sách.") == "Không đọc được câu này trong sách."
     assert reading_preview._plain_error("ValueError: Giọng này chưa tải") == "Giọng này chưa tải"

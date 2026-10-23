@@ -1,0 +1,5 @@
+{
+ "wrong": "Mã sai; còn {left} lần thử trước khi mã bị huỷ.",
+ "blocked": "Mã đã huỷ sau 5 lần nhập sai — bạn tạo mã mới trên máy kia.",
+ "expired": "Mã sai hoặc hết hạn — bạn tạo mã mới trên máy kia."
+}

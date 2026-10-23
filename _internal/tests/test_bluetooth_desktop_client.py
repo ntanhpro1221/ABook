@@ -424,7 +424,7 @@ def test_the_pinned_fingerprint_is_still_enforced_through_the_tunnel(library, tm
         bluetooth.forget(PHONE)
         fake_phone = FakePhone(impostor.port)
         bluetooth.gateway(PHONE, connect=fake_phone.connect)
-        with pytest.raises(RemoteError, match="khác lúc ghép"):
+        with pytest.raises(RemoteError, match="Chứng chỉ đổi"):
             remote_books._request(remote_books._base(entry), "GET", "/sync/v1/library", entry["token"])
         impostor.stop()
         fake_phone.drop()

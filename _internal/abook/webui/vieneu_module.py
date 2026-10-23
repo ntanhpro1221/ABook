@@ -105,11 +105,11 @@ NEEDS = {"turbo": ("libs", "g2p", "voices", "turbo"), "nano": ("libs", "g2p", "v
          FAST: ("libs", "g2p", "voices", "turbo", "gguf")}
 CHOICE_TEXT = {
     "turbo": ("Giọng VieNeu", "25 giọng, âm thanh 48 kHz - hay nhất"),
-    "nano": ("Giọng VieNeu Nano", "11 giọng, âm thanh 24 kHz - lúc đọc tốn ít bộ nhớ và hợp máy ít lõi hơn Giọng VieNeu; file tải nặng hơn"),
-    "aligner": ("Tô đúng từng chữ đang đọc", "Biết chính xác chữ nào đang được đọc. Không tải thì máy ước theo âm tiết, đôi khi lệch một nhịp"),
-    FAST: ("Bản tăng tốc", "Giọng VieNeu đọc nhanh gấp hai lần trở lên và tốn ít bộ nhớ hơn - giọng vẫn như cũ. Dùng kèm Giọng VieNeu; cần Windows 64-bit, CPU có AVX2 (hầu hết máy từ 2015)"),
+    "nano": ("Giọng VieNeu Nano", "11 giọng, 24 kHz; ít tốn bộ nhớ, hợp máy ít lõi hơn VieNeu; tải nặng hơn."),
+    "aligner": ("Tô từng chữ", "Chỉ đúng chữ đang đọc; chưa tải thì ước theo âm tiết, đôi khi lệch nhịp."),
+    FAST: ("Bản tăng tốc", "Tạo giọng nhanh hơn, dùng ít bộ nhớ; cần VieNeu và máy Windows tương thích."),
 }
-PART_LABEL = {"g2p": "Bộ đọc chữ tiếng Việt", "voices": "Danh sách giọng", "turbo": "Giọng VieNeu", "nano": "Giọng VieNeu Nano",
+PART_LABEL = {"g2p": "Bộ đọc tiếng Việt", "voices": "Danh sách giọng", "turbo": "Giọng VieNeu", "nano": "Giọng VieNeu Nano",
               "aligner": "Bộ căn chữ", "gguf": "Bản tăng tốc"}
 GGUF_FOLDER = "gguf"
 SERVER_FOLDER = "server"  # giải gói server vào đây (đổi cả thư mục một lần, file chạy không bao giờ nằm dở)

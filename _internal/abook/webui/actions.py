@@ -52,8 +52,7 @@ def inside_folder(path: str, root: Path) -> bool:
         return False
 
 
-OUTSIDE_UPLOADS = ("Thư mục nguồn trỏ ra ngoài thư viện của bạn (một liên kết hay junction) nên ABook không đọc hay ghi vào đó. "
-                   "Bạn hãy chép các file vào thư viện trên máy tính rồi gửi lại.")
+OUTSIDE_UPLOADS = ("Nguồn nằm ngoài thư viện — bạn chép file vào thư viện rồi gửi lại.")
 
 
 class UploadEscape(ValueError):
@@ -118,13 +117,12 @@ def upload_source(library_root: Path, folder: str, name: str, data: bytes) -> Pa
     if str(library_root) in ("", ".") or not library_root.is_dir():
         raise ValueError("Máy tính chưa có thư mục thư viện")
     if len(data) > MAX_SOURCE_UPLOAD:
-        raise ValueError(f"File này lớn hơn {MAX_SOURCE_UPLOAD // 2**20} MB nên không gửi qua mạng được. Bạn hãy tách nó thành vài file nhỏ hơn rồi gửi lại, "
-                         "hoặc chép file vào máy tính rồi mở nó ngay trên máy tính.")
+        raise ValueError(f"File vượt {MAX_SOURCE_UPLOAD // 2 ** 20} MB — bạn tách nhỏ để gửi hoặc mở ngay trên máy tính.")
     parts = [part for part in (_upload_name(piece, 60) for piece in folder.replace("\\", "/").split("/")) if part]
     parts = parts[:3] or ["Tải lên"]
     file_name = _upload_name(name.replace("\\", "/").rsplit("/", 1)[-1], 120)
     if not file_name.lower().endswith((".txt", *importers.IMPORT_SUFFIXES)):
-        raise ValueError("Chỉ nhận file .txt (mỗi file là một chương) hay một file .epub / .docx / .pdf")
+        raise ValueError("Bạn gửi TXT (mỗi file một chương) hoặc một file EPUB, DOCX, PDF.")
     if any(_DEVICE_NAME.match(part) for part in parts) or _DEVICE_NAME.match(file_name):
         raise ValueError("Tên này là tên thiết bị của Windows - đổi tên file rồi gửi lại")
     uploads = library_root / UPLOAD_FOLDER
@@ -266,8 +264,7 @@ class StudioRunner(BackgroundRunner):
             raise RuntimeError("Máy này chưa cài Studio - vào Dự án, bấm \"Cài Studio\" (một lần, khoảng 25 GB).")
         status = self.setup.status()
         if status["damaged"]:
-            raise RuntimeError(f"Studio mất {', '.join(status['damaged'])} (file đã bị xoá hay hỏng) - vào Dự án, bấm "
-                               "\"Sửa Studio\" để tải lại đúng phần ấy.")
+            raise RuntimeError(f"Studio thiếu {', '.join(status['damaged'])} — bạn bấm “Sửa Studio” ở Dự án.")
         outdated = status["outdated"]
         if outdated:
             # Bản ghim đổi vì bản cũ làm hỏng sách (vd Ollama 0.34.4 - studio_setup.OLLAMA): không chạy bằng bản cũ.
@@ -535,7 +532,7 @@ def _gather_inputs(paths: list[str], epub_root: Path | None = None) -> tuple[lis
                 candidates += unpack(book, epub_root or path)
         elif books:
             names = ", ".join(book.name for book in books[:2]) + (" …" if len(books) > 2 else "")
-            notes.append(f"Thư mục có cả file sách ({names}) - chỉ lấy các file TXT; muốn dùng file sách thì chọn riêng file ấy.")
+            notes.append(f"Chỉ lấy TXT trong thư mục; bạn chọn riêng {names} nếu muốn dùng file sách.")
         if path.is_dir() and not candidates:
             # Chọn nhầm thư mục cha: gợi ý các thư mục con có TXT ngay bên trong.
             try:
@@ -591,7 +588,7 @@ def scan_inputs(paths: list[str], epub_root: Path | None = None) -> dict[str, An
             text, encoding = _decode_head(head, truncated)
         except UnicodeDecodeError:
             # Một file hỏng không chặn cả lô: nói tên nó và cách sửa, các file khác quét tiếp (dây chuyền cũng không đọc được file này).
-            errors.append(f"{path.name}: có byte chữ bị hỏng (file tải dở hay lưu sai bảng mã). Bạn hãy tải lại file, hoặc mở bản gốc rồi lưu lại dạng UTF-8.")
+            errors.append(f"{path.name} hỏng chữ — bạn tải lại hoặc lưu bản gốc dạng UTF-8.")
             continue
         except OSError as error:
             errors.append(f"{path.name}: {humanize.write_error(error) if humanize.is_write_problem(error) else 'không đọc được file (đang bị chương trình khác khoá?)'}")
@@ -695,12 +692,12 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
         raise ValueError("Chưa có file TXT nào để làm sách")
     first_person = first_person.strip()
     if first_person and normalize_name(first_person) in PRONOUNS:
-        raise ValueError(f'"{first_person}" là một đại từ, không phải một nhân vật - điền tên của người xưng "tôi"')
+        raise ValueError(f"“{first_person}” là đại từ — bạn điền tên người xưng “tôi”.")
     voices: dict[str, Any] = {}
     if teller_mode and not (first_person or any(str(name).strip() for name in (first_person_chapters or {}).values())):
-        raise ValueError("Chế độ người kể “tôi” tự kể chuyện chỉ có nghĩa khi đã điền tên người kể")
+        raise ValueError("Bạn điền tên người kể “tôi” để bật tự kể chuyện.")
     if first_person_gender and (first_person_gender not in teller_voice.GENDERS or not first_person):
-        raise ValueError("Giới của người kể “tôi” phải là nam hoặc nữ, và chỉ có nghĩa khi đã điền tên người kể")
+        raise ValueError("Bạn điền tên người kể “tôi” rồi chọn giới nam hoặc nữ.")
     if narrator:
         voices["narrator_voice"] = narrator
     elif first_person_gender:
@@ -715,7 +712,7 @@ def create_book(library_root: Path, paths: list[str], title: str, profile: str, 
         if not str(key).strip().isdigit():
             raise ValueError(f"Chương {key!r} không phải một số chương")
         if name and normalize_name(name) in PRONOUNS:
-            raise ValueError(f'"{name}" là một đại từ, không phải một nhân vật - điền tên người xưng "tôi" của chương ấy')
+            raise ValueError(f"“{name}” là đại từ — bạn điền tên người xưng “tôi” trong chương.")
         chapters[str(int(key))] = name
     if chapters:
         # Người kể theo chương (`cli create --first-person-chapter`): chương đổi góc kể dùng "tôi" của người khác.
