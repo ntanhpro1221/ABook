@@ -99,6 +99,11 @@ object LibraryServer {
     /** Tên Bluetooth của điện thoại (BluetoothLink.adapterName); test JVM thay bằng giá trị giả. */
     internal var bluetoothNameSource: () -> String = { appContext?.let(BluetoothLink::adapterName).orEmpty() }
 
+    /** Bản chẩn đoán cho `GET /sync/v1/diagnostics` (số dòng nhật ký đã kẹp); test JVM thay bằng giá trị giả (không có Context). */
+    internal var diagnosticsSource: (Int) -> JSONObject = { lines ->
+        Diagnostics.collect(appContext ?: throw IllegalStateException("Chưa khởi động"), lines)
+    }
+
     fun init(context: Context) {
         Store.init(context)
         Remote.init(context.applicationContext)
@@ -135,6 +140,7 @@ object LibraryServer {
             ShareTls.identity()
         } catch (error: Exception) {
             lastError = "Không tạo được chứng chỉ bảo mật cho kết nối - ${error.message ?: error.javaClass.simpleName}"
+            AppLog.e("Share", "cổng đồng bộ không bật được: $lastError", error)
             throw IllegalStateException(lastError)
         }
         fingerprint = identity.fingerprint
@@ -146,9 +152,11 @@ object LibraryServer {
             }
         } catch (error: Exception) {
             lastError = "Cổng $PORT đang bận - ${error.message ?: "không mở được"}"
+            AppLog.e("Share", "cổng đồng bộ không bật được: $lastError", error)
             throw IllegalStateException(lastError)
         }
         server = socket
+        AppLog.i("Share", "cổng đồng bộ đã bật ở cổng $PORT")
         Thread({ accept(socket) }, "library-server").apply { isDaemon = true }.start()
         discovery = runCatching {
             DatagramSocket(null).apply {
@@ -160,6 +168,7 @@ object LibraryServer {
 
     @Synchronized
     fun stop() {
+        if (server != null) AppLog.i("Share", "cổng đồng bộ đã tắt")
         runCatching { BluetoothShare.stop() }
         runCatching { server?.close() }
         runCatching { discovery?.close() }
@@ -211,10 +220,14 @@ object LibraryServer {
     @Synchronized
     private fun pair(code: String, device: String, ident: String = ""): String? {
         val digits = code.filter { it.isDigit() }.take(12)
-        val current = pairing ?: return null
-        if (current.second <= System.currentTimeMillis()) return null
+        val current = pairing ?: run { AppLog.w("Share", "ghép nối bị từ chối: chưa tạo mã ghép"); return null }
+        if (current.second <= System.currentTimeMillis()) {
+            AppLog.w("Share", "ghép nối bị từ chối: mã ghép đã hết hạn")
+            return null
+        }
         if (!MessageDigest.isEqual(digits.toByteArray(), current.first.toByteArray())) {
             failures += 1
+            AppLog.w("Share", "ghép nối bị từ chối: mã sai (lần $failures/$PAIRING_ATTEMPTS)")
             if (failures >= PAIRING_ATTEMPTS) {
                 pairing = null
                 blocked = true
@@ -234,6 +247,7 @@ object LibraryServer {
             .apply { if (same.isNotEmpty()) put("ident", same) })
         Store.writeAtomic(devicesFile, data.toString())
         pairing = null // chỉ tiêu thụ mã sau khi ghi danh sách thành công
+        AppLog.i("Share", "đã ghép với máy ${device.trim().take(40)}")
         return token
     }
 
@@ -416,7 +430,7 @@ object LibraryServer {
         }
     }
 
-    internal class Request(val method: String, val path: String, val headers: Map<String, String>, val body: ByteArray)
+    internal class Request(val method: String, val path: String, val headers: Map<String, String>, val body: ByteArray, val query: String = "")
 
     private fun read(input: InputStream, onBody: (Map<String, String>, Int) -> Unit): Request? {
         val header = StringBuilder() // dòng đầu + header là ASCII (đường dẫn đã mã hoá %)
@@ -443,7 +457,7 @@ object LibraryServer {
             if (count < 0) return null
             read += count
         }
-        return Request(parts[0].uppercase(), parts[1].substringBefore('?'), headers, body)
+        return Request(parts[0].uppercase(), parts[1].substringBefore('?'), headers, body, parts[1].substringAfter('?', ""))
     }
 
     private fun handle(connection: Socket) {
@@ -492,8 +506,17 @@ object LibraryServer {
             return
         }
         val token = request.headers["authorization"]?.removePrefix("Bearer ")?.trim().orEmpty()
-        if (identify(token) == null) {
+        val caller = identify(token)
+        if (caller == null) {
             json(output, 401, JSONObject().put("error", "Thiết bị chưa ghép nối"))
+            return
+        }
+        // Chẩn đoán từ xa (a114): máy ĐÃ GHÉP đọc nhật ký + trạng thái của điện thoại này (Diagnostics) - không cần adb, đi được qua LAN,
+        // Tailscale hay 4G. Cùng kiểm mã như mọi đường khác (sai mã ở trên đã 401); chỉ chạy khi người dùng bật "Cho máy khác nghe thư viện này".
+        if (request.method == "GET" && path == "/sync/v1/diagnostics") {
+            val lines = Diagnostics.clampLines(Diagnostics.linesOf(request.query))
+            AppLog.i("Share", "máy ${caller.optString("name", "?").take(40)} đọc chẩn đoán ($lines dòng)")
+            json(output, 200, diagnosticsSource(lines))
             return
         }
         if (request.method == "GET" && path == "/sync/v1/library") {
@@ -503,6 +526,7 @@ object LibraryServer {
         // Máy bên kia thôi ghép điện thoại này: thu hồi mã của nó ở đây luôn (như máy tính, sync.py - soát a27 lỗi 5).
         if (request.method == "POST" && path == "/sync/v1/unpair") {
             revoke(hash(token).take(12))
+            AppLog.i("Share", "máy ${caller.optString("name", "?").take(40)} thôi ghép")
             json(output, 200, JSONObject().put("ok", true))
             return
         }

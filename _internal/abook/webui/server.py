@@ -45,7 +45,7 @@ from ..readaloud import keys as readaloud_keys
 from ..readaloud import service as readaloud
 from ..readaloud.model import VoiceError
 from ..voice_catalog import engine_voice
-from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
+from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers, diagnostics, edits_inbox, export_jobs, export_leftovers, ffmpeg_setup, humanize, listen_view,
                listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, package_share, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
@@ -3237,6 +3237,64 @@ class App:
             raise ApiError(HTTPStatus.CONFLICT, f"{entry['name']}: {reply.get('message') or 'không làm được lệnh này'}")
         return {"id": str(reply.get("id") or "")}
 
+    # ---- chẩn đoán (webui/diagnostics.py): đọc nhật ký điện thoại đã ghép, và gói nhật ký của chính máy này ----------------------
+
+    def phone_diagnostics(self, device: str, lines: Any = None) -> dict[str, Any]:
+        """Bản chẩn đoán của điện thoại đã ghép `device` (remote_books.diagnostics). Điện thoại cũ chưa có đường này: `reason` "needs-newer"."""
+        if self.computers.get(device) is None:
+            raise ApiError(HTTPStatus.NOT_FOUND, "Máy này không ghép với máy ấy")
+        try:
+            count = int(lines) if lines not in (None, "") else remote_books.DIAGNOSTICS_LINES
+        except (TypeError, ValueError):
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Số dòng nhật ký phải là một con số") from None
+        try:
+            return diagnostics.redact_report(remote_books.diagnostics(device, count))
+        except remote_books.RemoteError as error:
+            extra = {"reason": "needs-newer"} if error.status == 404 else {}
+            raise ApiError(HTTPStatus.BAD_GATEWAY, str(error), **extra) from error
+
+    def _diagnostics_folder(self, target: str) -> Path:
+        """Nơi lưu file chẩn đoán: thư mục người dùng chọn, không thì "Đã xuất" trong thư viện (như các kiểu xuất)."""
+        if target:
+            root = Path(target)
+        else:
+            self.require_library_root()
+            root = Path(self.preferences.get()["libraryRoot"]) / "Đã xuất"
+        try:
+            root.mkdir(parents=True, exist_ok=True)
+        except OSError as error:
+            raise ApiError(HTTPStatus.CONFLICT, f"Không tạo được thư mục để lưu: {error.strerror or error}") from error
+        return root
+
+    def save_phone_diagnostics(self, device: str, lines: Any, target: str) -> dict[str, Any]:
+        """"Lưu nhật ký" của điện thoại: hỏi lại điện thoại rồi ghi bản JSON vào thư mục (tên có tên máy + giờ). Trả {name, folder}."""
+        self._mutating()
+        report = self.phone_diagnostics(device, lines)
+        entry = self.computers.get(device) or {}
+        name = re.sub(r"[^\w.-]+", "-", str(entry.get("name") or "dien-thoai"), flags=re.UNICODE).strip("-.")[:40] or "dien-thoai"
+        folder = self._diagnostics_folder(target)
+        file = folder / f"abook-nhat-ky-{name}-{time.strftime('%Y%m%d-%H%M%S')}.json"
+        atomic_write_bytes(file, json.dumps(report, ensure_ascii=False, indent=2).encode("utf-8"))
+        return {"name": file.name, "folder": str(folder)}
+
+    def own_diagnostics(self) -> bytes:
+        """Gói .zip chẩn đoán của chính máy này (diagnostics.bundle): thông tin máy + đuôi nhật ký, không mã / vân tay / địa chỉ."""
+        paired = [{"name": str(item.get("name") or ""), "kind": str(item.get("kind") or ""), "lastSeen": item.get("lastSeen"),
+                   "error": str(item.get("error") or "")} for item in self.computers.list()]
+        library = self.preferences.get().get("libraryRoot")
+        info = diagnostics.machine_info(self.version, Path(library) if library else None, {
+            "sync": {"on": self.sync_server is not None, "error": self.sync_error, "devices": len(self.devices.list())},
+            "pairedMachines": paired,
+        })
+        return diagnostics.bundle(info, self.preferences.path.parent / "logs")
+
+    def save_own_diagnostics(self, target: str) -> dict[str, Any]:
+        self._mutating()
+        folder = self._diagnostics_folder(target)
+        file = folder / diagnostics.file_name()
+        atomic_write_bytes(file, self.own_diagnostics())
+        return {"name": file.name, "folder": str(folder)}
+
     # Loa / TV (webui/cast.py) dùng đúng đường của trình phát trong app: sách nghe được, file chương, chỗ nghe, bìa.
     def _cast_book(self, value: str) -> dict[str, Any]:
         try:
@@ -5635,6 +5693,19 @@ class Handler(BaseHTTPRequestHandler):
         self._mutating_guard()
         self._send_json(HTTPStatus.OK, self.app.remote_send(device, self._body()))
 
+    def get_remote_diagnostics(self, query: dict[str, list[str]], device: str) -> None:
+        # Nhật ký + trạng thái của điện thoại đã ghép, qua cổng đồng bộ của nó (remote_books.diagnostics). Chỉ trên chính máy này:
+        # remote_studio.ALLOWED không có đường này - nhật ký điện thoại không ra khỏi máy bằng Studio từ xa.
+        self._send_json(HTTPStatus.OK, self.app.phone_diagnostics(device, (query.get("lines") or [""])[0]))
+
+    def post_remote_diagnostics_save(self, query: dict[str, list[str]], device: str) -> None:
+        body = self._body()
+        self._send_json(HTTPStatus.OK, self.app.save_phone_diagnostics(device, body.get("lines"), self._target(body)))
+
+    def post_diagnostics_save(self, _query: dict[str, list[str]]) -> None:
+        # "Gửi nhật ký" của chính máy tính: ghi gói .zip vào thư mục người dùng chọn; app không gửi đi đâu.
+        self._send_json(HTTPStatus.OK, self.app.save_own_diagnostics(self._target(self._body())))
+
     def _mutating_guard(self) -> None:
         if self.app.read_only:
             raise ApiError(HTTPStatus.FORBIDDEN, "Giao diện đang ở chế độ chỉ xem")
@@ -6746,6 +6817,9 @@ ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/remote"), Handler.get_remote),
     ("POST", re.compile(r"/api/player/report"), Handler.post_player_report),
     ("POST", re.compile(r"/api/remote/([0-9a-f]{12})"), Handler.post_remote),
+    ("GET", re.compile(r"/api/remote/([0-9a-f]{12})/diagnostics"), Handler.get_remote_diagnostics),
+    ("POST", re.compile(r"/api/remote/([0-9a-f]{12})/diagnostics/save"), Handler.post_remote_diagnostics_save),
+    ("POST", re.compile(r"/api/diagnostics/save"), Handler.post_diagnostics_save),
     ("POST", re.compile(r"/api/cast/scan"), Handler.post_cast_scan),
     ("DELETE", re.compile(r"/api/sync/pairing"), Handler.delete_sync_pairing),
     ("DELETE", re.compile(r"/api/sync/devices/([0-9a-f]+)"), Handler.delete_sync_device),

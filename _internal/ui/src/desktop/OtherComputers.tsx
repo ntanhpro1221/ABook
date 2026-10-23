@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bluetooth, Check, Clapperboard, Laptop, Moon, Radar, RefreshCw, Smartphone, Unplug } from "lucide-react";
+import { Bluetooth, Check, Clapperboard, Laptop, Moon, Radar, RefreshCw, Smartphone, Stethoscope, Unplug } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/studio/api";
@@ -12,6 +12,7 @@ import { Button, IconButton, Skeleton, Tooltip } from "@/shared/ui";
 import type { UnsentEdits } from "@/shared/unpair";
 import { useUnpair } from "@/shared/useUnpair";
 import { bluetoothAddress, deviceKindLabel, isBluetoothHost, routeLine, wakingLine, type PairedDevice, type Waking } from "./computerRoutes";
+import { PhoneDiagnostics } from "./PhoneDiagnostics";
 
 // Máy tính khác (webui/remote_books.py): ghép bằng địa chỉ + mã 6 số đang hiện trên máy ấy - đúng mã điện thoại dùng - rồi
 // thư viện của máy ấy hiện trong Thư viện của máy này ("Trên <máy>"). Chương tải về lần đầu nghe tới và được giữ lại, nên
@@ -131,6 +132,8 @@ export function OtherComputers() {
     onError: (error: Error) => toast.error("Không tìm được", { description: error.message }),
   });
   const codeInput = useRef<HTMLInputElement>(null);
+  // Hộp "Chẩn đoán" của một điện thoại đã ghép (nhật ký + tình trạng, lấy qua kết nối đã ghép).
+  const [diagnosing, setDiagnosing] = useState<Computer | null>(null);
   const choose = (found: FoundComputer) => {
     setAddress(`${found.host}:${found.port}`);
     codeInput.current?.focus();
@@ -197,6 +200,11 @@ export function OtherComputers() {
                   aria-label={`Mở Studio của ${computer.name}`}
                 >
                   Mở Studio
+                </Button>
+              )}
+              {computer.kind === "phone" && (
+                <Button size="sm" variant="ghost" icon={Stethoscope} onClick={() => setDiagnosing(computer)} aria-label={`Chẩn đoán ${computer.name}`}>
+                  Chẩn đoán
                 </Button>
               )}
               {!isBluetoothHost(computer.host) && (
@@ -328,6 +336,7 @@ export function OtherComputers() {
         </p>
       </div>
       {unpair.dialog}
+      {diagnosing && <PhoneDiagnostics computer={diagnosing} open onOpenChange={(open) => !open && setDiagnosing(null)} />}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { LocalVoiceModules, type VieneuBackend } from "@/listen/VieneuModuleCard
 import { VoiceSpeedSetting, type VoiceSpeedBackend } from "@/listen/VoiceSpeedSetting";
 import { VoiceSettings, type VoiceSettingsApi } from "@/listen/VoiceSettings";
 import { androidSource, phoneVieneu } from "./androidSource";
+import { CLEAR_HINT, DIAGNOSTICS_HINT, DiagnosticsPanel, SEND_HINT, useDiagnostics } from "./Diagnostics";
 import { NOTIFICATION_ROW_HINT, notificationState, openNotificationSettings, type NotificationState } from "./notifications";
 import { ReadAloud } from "./plugins";
 import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
@@ -76,6 +77,40 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
       </div>
       <div className="ml-auto max-w-full">{children}</div>
     </div>
+  );
+}
+
+/** "Chẩn đoán": xem / gửi / xoá nhật ký của app (Diagnostics.kt). Gửi = bảng chia sẻ của hệ thống, bạn tự chọn gửi cho ai. */
+function DiagnosticsGroup() {
+  const diagnostics = useDiagnostics();
+  return (
+    <Group title="Chẩn đoán" id="diagnostics">
+      <Row label="Xem nhật ký" hint={DIAGNOSTICS_HINT}>
+        <Sheet
+          open={diagnostics.open}
+          onOpenChange={diagnostics.changeOpen}
+          title="Nhật ký của ABook"
+          trigger={<Button size="sm">Xem</Button>}
+        >
+          <div className="space-y-3 px-1.5 pb-3 pt-3">
+            <Button size="sm" variant="secondary" loading={diagnostics.loading} onClick={() => void diagnostics.load()}>
+              Làm mới
+            </Button>
+            <DiagnosticsPanel report={diagnostics.report} error={diagnostics.error} loading={diagnostics.loading} />
+          </div>
+        </Sheet>
+      </Row>
+      <Row label="Gửi nhật ký" hint={SEND_HINT}>
+        <Button size="sm" loading={diagnostics.sending} onClick={() => void diagnostics.send()}>
+          Gửi
+        </Button>
+      </Row>
+      <Row label="Xoá nhật ký" hint={CLEAR_HINT}>
+        <Button size="sm" onClick={() => void diagnostics.clear()}>
+          Xoá
+        </Button>
+      </Row>
+    </Group>
   );
 }
 
@@ -374,6 +409,8 @@ export function SettingsScreen() {
           </Row>
         </Group>
       )}
+
+      <DiagnosticsGroup />
 
       <AboutGroup version={current} />
     </div>

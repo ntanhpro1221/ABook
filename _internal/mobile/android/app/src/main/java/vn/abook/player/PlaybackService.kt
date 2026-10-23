@@ -83,6 +83,7 @@ class PlaybackService : MediaLibraryService() {
     override fun onCreate() {
         super.onCreate()
         instance = this
+        AppLog.i("PlaybackService", "dịch vụ phát bật")
         Playback.init(this)
         Playback.addListener(sleepButtons)
         val player = ExoPlayer.Builder(this)
@@ -432,10 +433,12 @@ class PlaybackService : MediaLibraryService() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         val player = session?.player
+        AppLog.i("PlaybackService", "vuốt app khỏi danh sách gần đây (đang phát: ${player?.playWhenReady == true})")
         if (player == null || !player.playWhenReady || player.mediaItemCount == 0) stopSelf()
     }
 
     override fun onDestroy() {
+        AppLog.i("PlaybackService", "dịch vụ phát tắt")
         Playback.removeListener(sleepButtons)
         Playback.saveNow()
         session?.run {
