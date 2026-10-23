@@ -45,7 +45,9 @@ def test_undo_of_a_delete_keeps_the_sentence_and_junk_is_dropped(tmp_path: Path)
 
 
 def test_old_bookmarks_without_the_new_fields_survive_a_merge(tmp_path: Path) -> None:
-    ours = {"chapters": {}, "bookmarks": [{"id": "a1", "chapterId": 1, "seconds": 5.0, "note": "", "at": 10}]}
-    theirs = {"chapters": {}, "bookmarks": [{"id": "b2", "chapterId": 2, "seconds": 0.0, "note": "", "at": 20, "index": 4, "quote": "Câu bốn."}]}
+    # Hợp đồng phiên bản (Lamport): dấu trang máy kia gửi phải mang `rev`; dấu trang cũ (chưa có index/quote) vẫn là dấu trang có phiên bản.
+    ours = {"chapters": {}, "bookmarks": [{"id": "a1", "chapterId": 1, "seconds": 5.0, "note": "", "at": 10, "rev": {"counter": 1, "node": "pc"}}]}
+    theirs = {"chapters": {}, "bookmarks": [{"id": "b2", "chapterId": 2, "seconds": 0.0, "note": "", "at": 20, "index": 4, "quote": "Câu bốn.",
+                                             "rev": {"counter": 2, "node": "phone"}}]}
     merged = merge_states(ours, theirs)
     assert [(mark["id"], mark.get("index")) for mark in merged["bookmarks"]] == [("a1", None), ("b2", 4)]

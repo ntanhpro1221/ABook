@@ -129,9 +129,9 @@ def test_the_later_choice_of_record_wins_across_devices(tmp_path: Path) -> None:
         ("Máy tính", False), ("Con", True)]
 
 
-def test_old_phones_are_rejected_without_creating_a_record(tmp_path: Path) -> None:
+def test_missing_revisions_are_rejected_without_creating_a_record(tmp_path: Path) -> None:
     listening = Listening(tmp_path / "listening.json")
-    with pytest.raises(ValueError, match="Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"):
+    with pytest.raises(ValueError, match="Dữ liệu đồng bộ thiếu phiên bản"):
         listening.merge("sach", {"last": {"chapterId": 1, "seconds": 9.0, "at": 3.0}})
     assert listening.records("sach") == []
 
@@ -174,8 +174,9 @@ def test_a_move_here_stamps_the_record_and_its_choice(tmp_path: Path) -> None:
     listening.move_record(record, "ban-moi")
 
     reply = listening.merge_record("ban-moi", record, {})
-    assert reply["movedAt"] >= before and reply["active"] == {"record": record, "at": reply["movedAt"]}
+    assert reply["movedAt"] >= before and reply["active"] == {"record": record, "at": reply["movedAt"], "rev": reply["movedRev"]}
     assert [item["movedAt"] for item in reply["records"]] == [reply["movedAt"]]
+    assert [item["movedRev"] for item in reply["records"]] == [reply["movedRev"]], "lần chuyển mang phiên bản (soát a118 lỗi 5)"
 
 
 def test_a_phone_move_reaches_the_computer_through_sync(library, tmp_path: Path) -> None:  # noqa: F811 - fixture

@@ -54,11 +54,11 @@ def test_r1_ceiling_rolls_epoch_and_replays_without_losing_other_fields(tmp_path
     {"bookmarks": [{"id": "m", "chapterId": 1, "seconds": 20, "note": "changed", "at": 200}]},
     {"deleted": {"m": 200}}, {"rate": 1.5, "rateAt": 200},
 ])
-def test_r2_old_peer_is_rejected_atomically(tmp_path, peer):
+def test_r2_missing_revision_is_rejected_atomically(tmp_path, peer):
     saved = listening.Listening(tmp_path / "listening.json")
     saved.progress("book", 1, 10, 1000)
     original = saved.path.read_bytes()
-    with pytest.raises(ValueError, match="Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"):
+    with pytest.raises(ValueError, match="Dữ liệu đồng bộ thiếu phiên bản"):
         saved.merge("book", peer)
     assert saved.path.read_bytes() == original
 
@@ -170,7 +170,7 @@ def test_r2_invalid_active_state_rejects_before_record_deletions(tmp_path):
     saved.progress("book", 1, 10, 1000)
     record = saved.records("book")[0]["id"]
     original = saved.path.read_bytes()
-    with pytest.raises(ValueError, match="Máy kia đang dùng"):
+    with pytest.raises(ValueError, match="Dữ liệu đồng bộ thiếu phiên bản"):
         saved.merge_reply("book", record, {"record": record, "deletedRecords": {record: 100},
                                           "activeState": {"reading": {"chapterId": 1, "index": 200, "at": 100}}})
     assert saved.path.read_bytes() == original

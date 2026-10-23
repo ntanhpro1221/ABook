@@ -1308,7 +1308,8 @@ class SyncHandler(BaseHTTPRequestHandler):
                     reply = self.app.listening.merge_record(
                         key, record, state, name=str(body.get("recordName") or ""),
                         name_at=float(body.get("nameAt") or 0), active_at=float(body.get("activeAt") or 0),
-                        moved_at=float(body.get("movedAt") or 0), deleted=deleted if isinstance(deleted, dict) else None)
+                        moved_at=float(body.get("movedAt") or 0), deleted=deleted if isinstance(deleted, dict) else None,
+                        name_rev=body.get("nameRev"), active_rev=body.get("activeRev"), moved_rev=body.get("movedRev"))
                     if reply.get("book") == key:
                         reply["book"] = book
                     self._json(HTTPStatus.OK, reply)

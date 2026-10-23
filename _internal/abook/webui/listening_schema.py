@@ -27,6 +27,14 @@ def revisions(item: dict) -> dict:
     return item
 
 
+def meta_revisions(row: dict, *keys: str) -> dict:
+    """Phiên bản tên / lần chuyển / hồ sơ đang chọn hỏng thì bỏ: còn mốc giờ để gộp như máy chưa có phiên bản."""
+    for key in keys:
+        if key in row and revision({"rev": row[key]})[0] == 0:
+            row.pop(key)
+    return row
+
+
 def clean_state(raw: Any) -> dict:
     if not isinstance(raw, dict):
         return {"chapters": {}, "bookmarks": []}
@@ -39,6 +47,14 @@ def clean_state(raw: Any) -> dict:
         if key in state:
             rows = state[key]
             state[key] = {k: v for k, v in rows.items() if revision({"rev": v})[0]} if isinstance(rows, dict) else {}
+    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
+        # Giá trị + mốc giờ + phiên bản là một bộ: một phần hỏng thì bỏ cả bộ (máy kia gửi lại bản đủ) - trước đây giữ giá trị và phiên
+        # bản mà mất mốc, máy kia gộp văng lỗi ở mọi lần đồng bộ (soát a118 lỗi 3). Phiên bản hỏng một mình: upgrade_local gán phiên bản mới.
+        if (field in raw and field not in state) or (stamp in raw and stamp not in state):
+            state.pop(field, None)
+            state.pop(stamp, None)
+            if isinstance(state.get("_fieldRevs"), dict):
+                state["_fieldRevs"].pop(field, None)
     for key, required in (("last", ("chapterId", "seconds")), ("reading", ("chapterId", "index"))):
         if key in state:
             item = state[key]
@@ -84,11 +100,15 @@ def clean_profiles(raw: dict) -> dict:
     data = copy.deepcopy(raw)
     if data.get("version") != 2:
         return {key: clean_state(value) for key, value in data.items() if isinstance(value, dict)}
+    if "_clock" in data and (type(data["_clock"]) is not int or not 0 <= data["_clock"] <= MAX_COUNTER):
+        data.pop("_clock")
+    if "_epoch" in data and not valid_epoch(data["_epoch"]):
+        data.pop("_epoch")
     records = data.get("records", {})
     data["records"] = {}
     for key, row in (records.items() if isinstance(records, dict) else []):
         if isinstance(row, dict):
-            row = fields(row, ("createdAt", "nameAt", "movedAt"), ("name",))
+            row = meta_revisions(fields(row, ("createdAt", "nameAt", "movedAt"), ("name",)), "nameRev", "movedRev")
             if "state" in row:
                 row["state"] = clean_state(row["state"])
             data["records"][key] = row
@@ -97,7 +117,7 @@ def clean_profiles(raw: dict) -> dict:
     for key, link in (links.items() if isinstance(links, dict) else []):
         if not isinstance(link, dict):
             continue
-        link = fields(link, ("activeAt",))
+        link = meta_revisions(fields(link, ("activeAt",)), "activeRev")
         ids = link.get("records", [])
         link["records"] = list(dict.fromkeys(v for v in (ids if isinstance(ids, list) else [])
                                              if isinstance(v, str) and v in data["records"]))

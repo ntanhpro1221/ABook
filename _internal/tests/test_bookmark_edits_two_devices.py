@@ -48,10 +48,12 @@ def test_undoing_a_delete_beats_the_tombstone_already_on_the_other_device(tmp_pa
 
 
 def test_a_tombstone_still_removes_an_unchanged_mark_and_the_later_delete_wins(tmp_path: Path) -> None:
-    mark = {"id": "m1", "chapterId": 1, "seconds": 5.0, "note": "", "at": 100.0, "createdAt": 100.0}
-    ours = {"bookmarks": [mark], "chapters": {}, "deleted": {"m1": 50.0}}
-    theirs = {"bookmarks": [], "chapters": {}, "deleted": {"m1": 200.0}}
+    # Hợp đồng phiên bản (Lamport): bia mộ và dấu trang so bằng rev, không bằng giờ tường.
+    mark = {"id": "m1", "chapterId": 1, "seconds": 5.0, "note": "", "at": 100.0, "createdAt": 100.0, "rev": {"counter": 2, "node": "a"}}
+    ours = {"listeningRevision": 1, "bookmarks": [mark], "chapters": {}, "deleted": {"m1": 50.0}, "_deletedRevs": {"m1": {"counter": 1, "node": "a"}}}
+    theirs = {"listeningRevision": 1, "bookmarks": [], "chapters": {}, "deleted": {"m1": 200.0}, "_deletedRevs": {"m1": {"counter": 3, "node": "b"}}}
     merged = merge_states(ours, theirs)
     assert merged["bookmarks"] == [] and merged["deleted"]["m1"] == 200.0
-    assert merge_states(theirs, {"bookmarks": [], "deleted": {"m1": 50.0}})["deleted"]["m1"] == 200.0
+    older = {"listeningRevision": 1, "bookmarks": [], "deleted": {"m1": 50.0}, "_deletedRevs": {"m1": {"counter": 1, "node": "a"}}}
+    assert merge_states(theirs, older)["deleted"]["m1"] == 200.0
 

@@ -8,14 +8,18 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 ### Dữ liệu của bạn
+- Khi nâng cấp từ 0.4.132, hồ sơ nghe được tự chuyển đổi một lần để hai máy tiếp tục đồng bộ chỗ nghe, chương và dấu trang của bạn.
 - Hồ sơ nghe hỏng một phần trên máy tính hoặc điện thoại: app giữ nguyên bản gốc, báo rõ nơi giữ và tiếp tục dùng phần còn đọc được; sách không biến mất chỉ vì hồ sơ sai định dạng. File thông báo hỏng trên điện thoại cũng được giữ riêng, không chặn thư viện hay việc lưu dữ liệu đã giữ an toàn; máy tính sửa hồ sơ dưới cùng khoá với các lượt lưu khác.
 - Máy tính: nhật ký chỗ nghe tạm bị chương trình khác giữ sẽ được đọc lại trước khi lưu, tránh mất chỗ nghe mới nhất khi bạn đặt dấu trang.
 - Máy tính: nếu cửa sổ khác đang lưu dữ liệu quá lâu, app báo bạn thử lại thay vì ghi đè thay đổi của nhau.
-- Chỗ đọc, chỗ nghe, chương đã nghe, tốc độ, giọng và dấu trang được gộp theo thứ tự thay đổi, tránh quay về bản cũ khi bạn chỉnh đồng hồ lùi; lượt lưu chỗ đọc đến muộn được báo rõ. Bản đồng bộ có phiên bản nhảy bất thường không đẩy hồ sơ của bạn tới mức kẹt lưu; danh tính máy không đi theo bản sao thư viện, và chỗ đọc lưu tạm có phiên bản hỏng vẫn giữ được vị trí hợp lệ. Máy kia thiếu phiên bản thay đổi sẽ bị từ chối đồng bộ với lời nhắc cập nhật cả hai máy.
+- Chỗ đọc, chỗ nghe, chương đã nghe, tốc độ, giọng và dấu trang được gộp theo thứ tự thay đổi, tránh quay về bản cũ khi bạn chỉnh đồng hồ lùi; lượt lưu chỗ đọc đến muộn được báo rõ. Bản đồng bộ có phiên bản nhảy bất thường không đẩy hồ sơ của bạn tới mức kẹt lưu; danh tính máy không đi theo bản sao thư viện, và chỗ đọc lưu tạm có phiên bản hỏng vẫn giữ được vị trí hợp lệ. Khi máy kia báo chưa hỗ trợ đồng bộ theo phiên bản, app nhắc bạn cập nhật cả hai máy.
+- Máy mới hay vừa cài lại nhận đủ hồ sơ nghe dùng lâu năm; tên hồ sơ, hồ sơ đang chọn và lần chuyển hồ sơ không còn bị đảo khi đồng hồ một máy chạy chậm; dấu trang vừa hoàn tác xoá giữ nguyên trên cả hai máy; hồ sơ thiếu mốc giờ hay vừa dựng lại từ file hỏng vẫn đồng bộ bình thường.
 - Máy tính: chuyển thư viện bị ngắt giữa chừng sẽ được hoàn tất khi mở lại, để hồ sơ và dấu trang đi theo sách. Nhật ký chuyển hỏng không chặn mở app: bạn có thể chọn hoàn tất, quay lui hoặc bỏ qua sau khi kiểm tra thư mục; nhật ký gốc vẫn được giữ lại.
 - Điện thoại: trước khi ghi đè file sách, app giữ bền bản trước; nếu lần lưu bị hệ thống dừng, mở lại bạn tìm thấy bản trước trong Cài đặt → Bản lưu cũ. Chỗ lưu đã mất truy cập sẽ mời bạn chọn nơi khác, trước khi ghi vào URI cũ.
 
 ### Chẩn đoán
+- Gói nhật ký có thêm tóm tắt cảnh báo phục hồi dữ liệu và tình trạng chặn lưu, không kèm nội dung hồ sơ hỏng.
+- Nhật ký che thêm đường dẫn trên mọi ổ Windows, đường dẫn thư mục dùng chung và đường có khoảng trắng; vẫn giữ tên file mã nguồn và số dòng để tìm lỗi.
 - Điện thoại: app ghi lại nhật ký những gì nó đã làm (phát, tải, xuất, chia sẻ, lỗi) vào một file bền, không mất khi app bị tắt hay điện thoại khởi động lại; lần app bị văng và lý do hệ thống tắt app gần nhất cũng được giữ lại.
 - Điện thoại: Cài đặt có mục “Chẩn đoán” với “Xem nhật ký”, “Gửi nhật ký” (mở bảng chia sẻ để bạn chọn gửi cho ai, app không tự gửi đi đâu) và “Xoá nhật ký”. Nhật ký có tên cuốn đang nghe; app che các dạng khóa, mã ghép, đường dẫn riêng và địa chỉ IP nhận diện được. Bạn nên xem lại trước khi gửi.
 - Máy tính: trang Máy tính khác có nút “Chẩn đoán” cho từng điện thoại đã ghép, hiện tình trạng (bản app, pin, mạng, việc nền, lần tắt gần nhất) và nhật ký, có nút “Lưu nhật ký”; đi được cả khi điện thoại ở mạng khác. Điện thoại bản cũ chưa gửi được nhật ký thì app nói cần cập nhật ABook trên điện thoại.

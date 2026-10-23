@@ -1,0 +1,17 @@
+[
+  {"raw": "FileNotFoundError: D:\\Novels\\Private Library\\My Book\\novel.txt", "safe": "FileNotFoundError: <đường>"},
+  {"raw": "Error: Z:/Private Library/My Book/file.mp3", "safe": "Error: <đường>"},
+  {"raw": "Error: \\\\private-host\\Private Share\\My Book\\file.mp3", "safe": "Error: <đường>"},
+  {"raw": "Error: //private-host/Private Share/My Book/file.mp3", "safe": "Error: <đường>"},
+  {"raw": "Error: /home/alice/Private Library/book.txt", "safe": "Error: <đường>"},
+  {"raw": "Error: /Users/alice/Private Library/book.txt", "safe": "Error: <đường>"},
+  {"raw": "Error: /storage/emulated/0/Private Library/book.txt", "safe": "Error: <đường>"},
+  {"raw": "Error: /sdcard/Private Library/book.txt", "safe": "Error: <đường>"},
+  {"raw": "Error: /data/user/0/Private App/book.txt", "safe": "Error: <đường>"},
+  {"raw": "  File \"D:\\Private Source\\abook\\server.py\", line 3587, in listen_library", "safe": "  File \"<đường>/server.py\", line 3587, in listen_library"},
+  {"raw": "  at vn.abook.Playback.play(/data/user/0/Private App/Playback.kt:306)", "safe": "  at vn.abook.Playback.play(<đường>/Playback.kt:306)"},
+  {"raw": "  at fn(D:\\Private Source\\server.py:3587)", "safe": "  at fn(<đường>/server.py:3587)"},
+  {"raw": "Error: C:\\Program Files (x86)\\Private Library\\book.mp3", "safe": "Error: <đường>"},
+  {"raw": "  at fn(D:\\Private (old)\\server.py:42)", "safe": "  at fn(<đường>/server.py:42)"},
+  {"raw": "Error: /home/alice/My (copy) Book/audio.mp3", "safe": "Error: <đường>"}
+]
