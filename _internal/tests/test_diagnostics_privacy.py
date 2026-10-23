@@ -61,9 +61,32 @@ def test_nested_bundle_metadata_is_scrubbed(tmp_path):
         assert 'private-azure-key' not in data
 
 
+def test_address_lists_hide_names_and_ipv6_in_raw_logs_and_structured_reports():
+    text = 'routes addresses=[{"address":"private-phone.local:47630","lastSuccess":12},{"address":"[fd00::7]:47630"}] failed'
+    clean = diagnostics.redact(text)
+    assert 'private-phone' not in clean and 'fd00' not in clean
+    assert 'failed' in clean
+    assert diagnostics.redact('addresses=[private-phone.local:47630, [fd00::7]:47630] failed') == 'addresses=*** failed'
+    assert diagnostics.redact_report({'nested': {'addresses': ['private-phone.local:47630']}}) == {'nested': {'addresses': '***'}}
+
+
+def test_pretty_and_truncated_address_lists_are_scrubbed_in_log_bundle(tmp_path):
+    payload = json.dumps({"addresses": [{"address": "private-phone.local:47630", "note": 'brackets ] [ and escaped " quote'}]}, indent=2)
+    for text in (payload + "\nfinished", payload[:-8], payload.split("[", 1)[1]):
+        safe = diagnostics.redact(text)
+        assert "private-phone" not in safe
+    assert "finished" in diagnostics.redact(payload + "\nfinished")
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "host.log").write_text(payload, encoding="utf-8")
+    with zipfile.ZipFile(io.BytesIO(diagnostics.bundle({}, logs))) as archive:
+        assert b"private-phone" not in archive.read("nhat-ky/host.log")
+
+
 def test_phone_report_is_scrubbed_at_the_shared_network_boundary(monkeypatch):
     monkeypatch.setattr(remote_books, '_COMPUTERS', types.SimpleNamespace(get=lambda _: {
-        'host': '127.0.0.1', 'port': 12345, 'token': 'fixture', 'name': 'phone'}))
+        'host': '127.0.0.1', 'port': 12345, 'token': 'fixture', 'name': 'phone',
+        'addresses': [{'address': '127.0.0.1:12345', 'lastSuccess': 0}]}))
     monkeypatch.setattr(remote_books, '_request', lambda *args, **kwargs: json.dumps({
         'playback': {'error': 'IllegalStateException: Bearer private-token-123456789'},
         'exitReasons': [{'description': r'C:\Users\Alice\Private\novel.txt', 'trace': 'connect 2001:db8::1'}],

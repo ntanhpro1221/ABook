@@ -80,8 +80,8 @@ object Diagnostics {
                     if (bounded && keys.size > 200) clipped = true
                     for (key in if (bounded) keys.take(200) else keys) {
                         val item = value.get(key)
-                        val secret = key.matches(Regex("(?i)(?:key|api[_-]?key|token|secret|password|code|mật khẩu|mã ghép)"))
-                        out.put(text(key), if (secret && item is String) "***" else walk(item, depth + 1))
+                        val secret = key.matches(Regex("(?i)(?:key|api[_-]?key|token|secret|password|code|mật khẩu|mã ghép|host|hostname|address)"))
+                        out.put(text(key), if (key.equals("addresses", true) || (secret && item is String)) "***" else walk(item, depth + 1))
                     }
                 }
                 is JSONArray -> JSONArray().also { out ->

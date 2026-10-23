@@ -1,3 +1,4 @@
+import { connectionRoute } from "@/shared/connectionRoute";
 // Máy đã ghép đi đường nào (webui/remote_books.py): Wi-Fi ("192.168.1.20:47630"), Bluetooth ("bt:<địa chỉ>" - ghép bằng địa
 // chỉ Bluetooth), hay Wi-Fi có Bluetooth dự phòng (trường `bt`). Phần chữ hiện cho người dùng nằm ở đây để thử được.
 
@@ -11,6 +12,7 @@ export interface PairedDevice {
 export interface RoutedComputer {
   host: string;
   port: number;
+  connectedVia?: string;
   /** Địa chỉ Bluetooth dự phòng của máy ghép qua Wi-Fi (máy tự tìm theo tên, hay người dùng chọn). */
   bt?: string;
 }
@@ -30,13 +32,9 @@ export function deviceName(devices: readonly PairedDevice[], address: string): s
   return devices.find((device) => device.address.toUpperCase() === address.toUpperCase())?.name || address;
 }
 
-/** Dòng "đi đường nào" dưới tên máy: "Bluetooth · Galaxy của An", "192.168.1.20:47630", hay
- *  "192.168.1.20:47630 · dự phòng Bluetooth · Galaxy của An". */
-export function routeLine(computer: RoutedComputer, devices: readonly PairedDevice[]): string {
-  const address = bluetoothAddress(computer);
-  if (isBluetoothHost(computer.host)) return `Bluetooth · ${deviceName(devices, address)}`;
-  const wifi = `${computer.host}:${computer.port}`;
-  return address ? `${wifi} · dự phòng Bluetooth · ${deviceName(devices, address)}` : wifi;
+/** Nhãn đường vừa nối thành công, không đưa địa chỉ vào dòng trạng thái. */
+export function routeLine(computer: RoutedComputer, _devices: readonly PairedDevice[]): string {
+  return connectionRoute(computer.connectedVia);
 }
 
 export function deviceKindLabel(kind: PairedDevice["kind"]): string {

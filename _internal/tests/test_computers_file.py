@@ -61,7 +61,8 @@ def test_a_read_blocked_for_a_moment_never_wipes_the_paired_computers(tmp_path: 
     computers = _paired(tmp_path)
     _blocked_reads(monkeypatch, computers.path, 2)
     assert len(computers.own_id()) == 16, "đọc lại được sau một thoáng"
-    assert json.loads(computers.path.read_bytes())["computers"] == PAIRED["computers"], "máy đã ghép còn nguyên"
+    migrated = {**PAIRED["computers"]["m1"], "addresses": [{"address": "192.168.1.20:47630", "lastSuccess": 0}]}
+    assert json.loads(computers.path.read_bytes())["computers"] == {"m1": migrated}, "máy đã ghép còn nguyên sau nâng định dạng"
 
 
 def test_a_read_that_keeps_failing_raises_and_writes_nothing(tmp_path: Path, monkeypatch) -> None:

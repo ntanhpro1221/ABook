@@ -62,8 +62,23 @@ object Streaming {
         Pin.install(context)
         val http = DefaultHttpDataSource.Factory().setConnectTimeoutMs(5000).setReadTimeoutMs(20_000)
         val retrying = DataSource.Factory { RetryingDataSource(http.createDataSource()) }
-        val authorized = ResolvingDataSource.Factory(retrying) { spec ->
-            spec.withAdditionalHeaders(mapOf("Authorization" to "Bearer ${SyncLink.tokenFor(context, spec.uri)}"))
+        val pinned = DataSource.Factory {
+            val upstream = retrying.createDataSource()
+            object : DataSource by upstream {
+                override fun open(dataSpec: DataSpec): Long {
+                    val token = dataSpec.httpRequestHeaders["Authorization"]?.removePrefix("Bearer ").orEmpty()
+                    val expected = PeerRouting.expected(context, token)
+                    return if (expected == null) upstream.open(dataSpec) else Pin.forPeer(expected) { upstream.open(dataSpec) }
+                }
+            }
+        }
+        val authorized = ResolvingDataSource.Factory(pinned) { spec ->
+            val token = SyncLink.tokenFor(context, spec.uri)
+            val original = spec.uri.buildUpon().fragment(null).build()
+            val root = "${original.scheme}://${original.encodedAuthority}"
+            val selected = PeerRouting.resolve(context, root, token)
+            spec.withUri(Uri.parse(selected + original.toString().removePrefix(root)))
+                .withAdditionalHeaders(mapOf("Authorization" to "Bearer $token"))
         }
         val cached = CacheDataSource.Factory()
             .setCache(cache(context))
@@ -135,7 +150,9 @@ object Streaming {
         val local = runCatching { Store.file(id, file) }.getOrNull()
         if (local != null && local.isFile) return Uri.fromFile(local)
         val (link, remote) = SyncLink.linkFor(context, id)
+        // Keep the peer identity even if this URI's old address is later evicted from the bounded route history.
         return Uri.parse("${link.base}/sync/v1/books/${Uri.encode(remote)}/files/${Uri.encode(file, "/")}")
+            .buildUpon().fragment("abook-book:$id").build()
     }
 
     /** Khoá bộ đệm: sách + file + SHA-256 trong gói (null = file trên máy, không qua bộ đệm). */
@@ -203,7 +220,9 @@ object Streaming {
         val target = runCatching { Store.file(id, relative) }.getOrNull() ?: return null
         return fetchSmallFile(target) {
             val (link, remote) = SyncLink.linkFor(context, id)
-            val connection = URL("${link.base}/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
+            val selected = PeerRouting.resolve(context, link.base, link.token)
+            val connection = URL("$selected/sync/v1/books/$remote/files/$relative").openConnection() as HttpURLConnection
+            PeerRouting.expected(context, link.token)?.let { if (connection is javax.net.ssl.HttpsURLConnection) Pin.pin(connection, it) }
             connection.connectTimeout = 3000
             connection.readTimeout = 15_000
             connection.setRequestProperty("Authorization", "Bearer ${link.token}")

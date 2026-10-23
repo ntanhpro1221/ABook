@@ -17,6 +17,7 @@ import hashlib
 import http.client
 import os
 import secrets
+import socket
 import ssl
 import tempfile
 import threading
@@ -283,7 +284,41 @@ class PinnedHTTPSConnection(http.client.HTTPSConnection):
         self.peer_fingerprint = ""
 
     def connect(self) -> None:
-        super().connect()
+        deadline = time.monotonic() + self.timeout
+        handshake_budget = getattr(self, "handshake_budget", None)
+
+        def left():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("Hết thời gian nối TLS")
+            return remaining
+
+        # getaddrinfo cannot be cancelled portably. The peer resolver retains the I/O slot
+        # until it returns, and closes any late socket; it never queues more DNS behind it.
+        addresses = socket.getaddrinfo(self.host, self.port, 0, socket.SOCK_STREAM)
+        failure = OSError("Không tìm thấy địa chỉ máy kia")
+        for family, kind, proto, _, address in addresses:
+            raw = socket.socket(family, kind, proto)
+            try:
+                raw.settimeout(left())
+                if self.source_address:
+                    raw.bind(self.source_address)
+                raw.connect(address)
+                raw.settimeout(left())
+                if handshake_budget is not None:
+                    # Explicit sleeping-device wake has its own cancellable handshake budget.
+                    deadline = time.monotonic() + handshake_budget
+                self.sock = self._context.wrap_socket(raw, server_hostname=self.host)
+                left()  # Reject a result delivered after the total deadline.
+                break
+            except BaseException as error:
+                raw.close()
+                self.close()
+                if not isinstance(error, OSError):
+                    raise
+                failure = error
+        else:
+            raise failure
         der = self.sock.getpeercert(binary_form=True) if isinstance(self.sock, ssl.SSLSocket) else None
         self.peer_fingerprint = fingerprint(der) if der else ""
         if self.expected is not None and self.peer_fingerprint != self.expected:

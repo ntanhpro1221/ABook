@@ -119,6 +119,8 @@ object LibraryServer {
      */
     private fun identity(reply: JSONObject): JSONObject {
         reply.put("name", name())
+        reply.put("addresses", JSONArray(advertisedAddresses()))
+        reply.put("fingerprint", fingerprint)
         val bluetooth = runCatching { bluetoothNameSource() }.getOrDefault("")
         if (bluetooth.isNotBlank()) reply.put("bluetoothName", bluetooth)
         return reply
@@ -327,6 +329,10 @@ object LibraryServer {
         NetworkInterface.getNetworkInterfaces().toList().filter { it.isUp }
             .flatMap { it.inetAddresses.toList() }.mapNotNull { it.hostAddress }.distinct()
     }.getOrDefault(emptyList())
+
+    internal fun advertisedAddresses(): List<String> = ownAddresses().mapNotNull {
+        PeerAddresses.valid(PeerAddresses.endpoint(it, PORT), advertised = true)
+    }.distinct().sortedBy { it.startsWith("[") }
 
     // ---- tìm máy (UDP) ---------------------------------------------------------------------------------------------
 
@@ -573,8 +579,8 @@ object LibraryServer {
             request.method == "POST" && match.groupValues[2] == "state" -> {
                 val body = runCatching { JSONObject(String(request.body)) }.getOrNull()
                 if (body == null) json(output, 400, JSONObject().put("error", "Thân yêu cầu không phải JSON"))
-                else if (Store.isRecordId(body.optString("record"))) json(output, 200, Store.mergeRecord(book, body))
-                else json(output, 200, Store.mergeRemote(book, body))
+                else if (Store.isRecordId(body.optString("record"))) json(output, 200, addressesReply(Store.mergeRecord(book, body)))
+                else json(output, 200, addressesReply(Store.mergeRemote(book, body)))
             }
             else -> json(output, 405, JSONObject().put("error", "Không hỗ trợ"))
         }
@@ -726,6 +732,9 @@ object LibraryServer {
         BookMusic.tracks(manifest.optJSONObject("music")).forEach { names += it.name }
         return names.filter { !it.contains("..") }.toSet()
     }
+
+    private fun addressesReply(reply: JSONObject): JSONObject =
+        JSONObject(reply.toString()).put("addresses", JSONArray(advertisedAddresses()))
 
     private fun json(output: OutputStream, status: Int, payload: JSONObject) {
         val body = payload.toString().toByteArray()
