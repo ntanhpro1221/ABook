@@ -52,7 +52,7 @@ import java.nio.ByteBuffer
  * `entry` = `clip,seam` (mặc định cả hai): trước lần A trình phát dừng ở Clip lặp (A là tua từ mục khác) hay ở đầu Nối (A là tua trong mục); ca `D<Δ>_edge_*`: lần B chờ vị trí phát vừa qua ranh khối 100 ms rồi tua vào khối ấy). Dòng thêm, chỉ khi có RS:
  * `EV <ns> rs case <ca> <lần> <entry> <Δms> <đích,...>`, `EV <ns> rs skip <ca> <khungNối> <đích,...>` (không áp: Nối ngắn),
  * `EV <ns> rs seek <ca> <lần> <A|B|C> <đích> <positionMs> <trim> <mụcĐang> <currentPositionMs> <bufferedPositionMs> <playbackState> <sốFlushTừLầnTrước> <msTừLầnTrước> <noop 0|1>` (ghi ngay trước seekToSample; noop = LoopSeam.seekIsNoop đúng, tức có thêm lệnh tua đệm stepAside),
- * `EV <ns> rs flush <armed 0|1> <toDrop> <seekPending 0|1>` và `EV <ns> rs first <ptsUs> <khung> <toDrop> <seekPending 0|1>` (móc [LoopSeam.LoopSink.Probe]; `first` = buffer đầu sau flush, trước cắt),
+ * `EV <ns> rs flush <armed 0|1> <toDrop> <seekPending 0|1> <sốLầnXảCònChờ>` (cột cuối thêm từ APK47: lệnh tua có tua đệm chờ 2 lần xả) và `EV <ns> rs first <ptsUs> <khung> <toDrop> <seekPending 0|1>` (móc [LoopSeam.LoopSink.Probe]; `first` = buffer đầu sau flush, trước cắt),
  * `EV <ns> rs disc <reason> <mụcCũ> <msCũ> <mụcMới> <msMới>`, `EV <ns> rs state <playbackState>`,
  * `EV <ns> rs land <ca> <lần> <A|B|C> <đích> <đáp> <lệchKhung> <lệchMs> <khungMẩuĐầuTee> <khớpThứHai|-1> <K>` (đáp = vị trí K = 256 khung đầu sau lần tua của tee trong WAV Nối, khớp từng bit;
  * thay `<đáp>...` bằng `noflush`, `short <khung> <mẩuĐầu>` hay `nomatch 0 0 <mẩuĐầu> -1 <K>`). Mọi dòng `rs land` kết bằng `app <mẫu|none|pending>`: lưới an toàn của chính app
@@ -415,9 +415,9 @@ class MusicLoopSeamTest {
             val rsFlushes = java.util.concurrent.atomic.AtomicInteger()
             fun bit(b: Boolean) = if (b) 1 else 0
             val rsProbe = object : LoopSeam.LoopSink.Probe {
-                override fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean) {
+                override fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean, flushesLeft: Int) {
                     rsFlushes.incrementAndGet()
-                    log("EV ${System.nanoTime()} rs flush ${bit(armed)} $toDrop ${bit(seekPending)}")
+                    log("EV ${System.nanoTime()} rs flush ${bit(armed)} $toDrop ${bit(seekPending)} $flushesLeft")
                 }
 
                 override fun onFirstBuffer(presentationTimeUs: Long, frames: Long, toDrop: Long, seekPending: Boolean) {

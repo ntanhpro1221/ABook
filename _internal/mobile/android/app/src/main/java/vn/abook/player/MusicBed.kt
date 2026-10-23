@@ -153,7 +153,8 @@ object MusicBed {
      * Một lần chuyển a87 -> P3 đang diễn ra ([SeamHandover]): `old` (a87) vẫn là [current] và vẫn kêu; `p3` phát câm cho tới khi pha khớp. `lag` = trễ khởi động dùng cho lần tua kế;
      * `targetSample` / `issuedNano` = lần tua cuối của P3 (mẫu đích của Nối, [System.nanoTime] lúc tua: chỉ AudioTrack sinh ra sau lần xả SAU mốc này mới tin, [SeamHandover.fresh]);
      * `readings` = pha P3 - a87 (ms) của các lần đọc tin được kể từ lần tua cuối ([SeamHandover.decide]); `landing` = lưới an toàn của lần tua cuối (mẫu đáp thật), `seeks` đánh số
-     * lần tua để bỏ kết quả muộn của lần tua cũ.
+     * lần tua để bỏ kết quả muộn của lần tua cũ. Dịch trong dòng ([SeamHandover.Act.SHIFT]): `shifted` = các dịch đã áp sau lần tua cuối (cũ trước), `shiftPending` = đã ra lệnh mà
+     * sink chưa báo áp xong (không lần đọc nào tính), `shifts` = số lần dịch của cả lần chuyển; `seekPhase` = pha ổn định đầu tiên của lần tua cuối, trước mọi dịch (tua lại sửa trễ theo nó).
      */
     private class Handover(val p3: Bed, val old: Bed, val startedAt: Long, var lag: Long) {
         var issued = false
@@ -164,6 +165,10 @@ object MusicBed {
         var retunes = 0
         val readings = ArrayList<Double>()
         var learned = false
+        var shifts = 0
+        var shiftPending = false
+        val shifted = ArrayList<LoopSeam.Shift>()
+        var seekPhase: Double? = null
     }
 
     /** Bản lặp mới và bản cũ nó nối vào: lúc bản mới có tiếng, sửa pha theo bản cũ một lần ([MusicCues.loopSettle]). */
@@ -731,6 +736,9 @@ object MusicBed {
         h.issuedNano = System.nanoTime()
         h.readings.clear()
         h.landing = SeamHandover.Landing.Pending
+        h.shifted.clear() // lần xả của lần tua này bỏ mọi dịch (cả lệnh chưa áp) ở sink
+        h.shiftPending = false
+        h.seekPhase = null
         val seek = ++h.seeks
         if (!h.issued) setVolume(p3, 0f) // P3 câm tới lúc đổi tiếng
         // Lưới an toàn: mẫu đáp thật của lần tua này; kết quả của lần tua cũ (đã tua lại) hay của lần chuyển đã xong / bỏ thì không tính.
@@ -783,31 +791,63 @@ object MusicBed {
             return
         }
         // Pha theo AudioTrack MỚI của P3 (sinh sau lần tua cuối, đã phát >= SETTLE_MS) và theo MẪU ĐÁP thật của lần tua (lưới an toàn); thiếu một trong hai thì nhịp này không có lần đọc.
+        // Có dịch trong dòng: chờ sink báo áp xong, rồi chờ AudioTrack phát qua chỗ dịch + khung chèn + SETTLE_MS; vị trí P3 trừ khung lặng / cộng khung bỏ đã ra loa.
         val now = System.nanoTime()
         val stamp = stampOf(p3.trackRef)
         val landing = h.landing
-        val delta = stamp?.let { SeamHandover.landedReading(seam, landing, h.issuedNano, it, now, a87) }
+        val delta = if (h.shiftPending) null else stamp?.let { SeamHandover.landedReading(seam, landing, h.issuedNano, it, now, a87, h.shifted) }
         if (delta != null && stamp != null) {
             h.readings += delta
             emit { SeamEvents.handoverReading(p3.testK, delta, SeamHandover.played(seam, stamp, now) * 1000.0 / seam.sampleRate) }
         }
         val settled = SeamHandover.settled(h.readings)
+        if (settled != null && h.shifted.isEmpty() && h.seekPhase == null) h.seekPhase = SeamHandover.lagPhase(seam, h.targetSample, landing, settled)
         if (settled != null && !h.learned) {
-            h.learned = true // trễ khởi động đo ở lần khởi động nguội đầu tiên (pha đã ổn định): dùng cho các ranh sau
+            // trễ khởi động đo ở lần khởi động nguội đầu tiên (pha đã ổn định, trước mọi dịch trong dòng): dùng cho các ranh sau. Dịch trong dòng không bao giờ cộng vào trễ.
+            h.learned = true
             p3LagMs = SeamHandover.nextLag(h.lag, SeamHandover.lagPhase(seam, h.targetSample, landing, settled))
         }
         // Nhịp không có lần đọc mới thì chỉ xét hạn chót: không đổi tiếng / tua theo số cũ. Lần tua không tìm thấy mẫu đáp: tua lại ngay.
-        when (SeamHandover.decide(elapsed, SeamHandover.remainingMs(seam, a87), h.retunes, if (delta != null) h.readings else emptyList(), landing)) {
+        val counted = if (delta != null) h.readings else emptyList()
+        when (SeamHandover.decide(elapsed, SeamHandover.remainingMs(seam, a87), h.retunes, counted, landing, muted = p3.volume == 0f, shifts = h.shifts)) {
             SeamHandover.Act.SWITCH -> return completeHandover(h, a87, a87 + delta!! / 1000.0)
             SeamHandover.Act.FALLBACK -> return abortHandover(DemoteReason.LATE)
             SeamHandover.Act.RETUNE -> {
                 h.retunes++
-                h.lag = SeamHandover.nextLag(h.lag, SeamHandover.lagPhase(seam, h.targetSample, landing, settled ?: 0.0))
+                // Tua lại = AudioTrack mới: sửa trễ theo pha của lần tua này TRƯỚC các dịch (pha sau dịch chỉ là phần dư của AudioTrack cũ).
+                h.lag = SeamHandover.nextLag(h.lag, h.seekPhase ?: SeamHandover.lagPhase(seam, h.targetSample, landing, settled ?: 0.0))
                 if (!issueHandover(h, a87)) return abortHandover(DemoteReason.LATE)
             }
+            SeamHandover.Act.SHIFT -> if (!shiftHandover(h, settled!!)) return abortHandover(DemoteReason.LATE)
             SeamHandover.Act.WAIT -> {}
         }
         main.postDelayed(handoverTick, SeamHandover.POLL_MS)
+    }
+
+    /**
+     * Dịch pha P3 (câm, đã đáp đúng) TRONG DÒNG thay vì tua lại ([SeamHandover.Act.SHIFT]): pha `settledMs` > 0 thì chèn K khung lặng, < 0 thì bỏ |K| khung ([SeamHandover.shiftFrames]).
+     * Các lần đọc bắt đầu lại; tới khi sink báo đã áp (luồng phát -> luồng chính) không lần đọc nào tính. Báo của lần tua cũ (đã tua lại) hay của lần chuyển đã xong / bỏ thì bỏ qua.
+     * False = không dịch được (không có sink của P3).
+     */
+    private fun shiftHandover(h: Handover, settledMs: Double): Boolean {
+        val p3 = h.p3
+        val seam = p3.built?.seam ?: return false
+        val sink = p3.sink ?: return false
+        val frames = SeamHandover.shiftFrames(seam, settledMs)
+        h.shifts++
+        h.readings.clear()
+        h.shiftPending = true
+        val seek = h.seeks
+        emit { SeamEvents.shift(p3.testK, frames, settledMs) }
+        sink.shift(frames) { applied ->
+            main.post {
+                if (handover === h && h.seeks == seek && h.shiftPending) {
+                    h.shifted += applied
+                    h.shiftPending = false
+                }
+            }
+        }
+        return true
     }
 
     /** Pha đã khớp, P3 đang kêu câm: P3 lên âm lượng của a87 và a87 về 0 trong cùng một lần (cùng nội dung, lệch <= [SeamHandover.TOLERANCE_MS] nên không chồng nghe ra); a87 nhả ở nhịp mờ kế. */
