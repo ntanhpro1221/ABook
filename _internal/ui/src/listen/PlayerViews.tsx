@@ -74,6 +74,7 @@ import { sentenceIndexAt } from "./words";
 import { cacheLabel, canPrepare, clearCacheQuestion, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import { READINGS_CHANGED_EVENT, type ReadAloudVoice, type ReadingsChanged } from "./readAloud";
 import { chapterScriptQuery, useBookVoice, useWarmVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource, useChosenVoice } from "./source";
+import { isRecordGone, RECORD_GONE_MESSAGE, reportWriteFailure } from "./recordWrites";
 
 export function speedLabel(rate: number): string {
   return `${rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}×`;
@@ -1107,9 +1108,14 @@ export function useAddBookmark() {
   const position = expanded && !Capacitor.isNativePlatform() ? (phoneLayout ? "top-center" : "bottom-right") : undefined;
   return useCallback(async () => {
     if (!track) return;
-    const mark = await addBookmark().catch(() => null);
+    let failure: unknown;
+    const mark = await addBookmark().catch((error: unknown) => {
+      failure = error;
+      return null;
+    });
     if (!mark) {
-      toast.error("Chưa thêm được dấu trang", { position });
+      if (isRecordGone(failure)) toast.error(RECORD_GONE_MESSAGE, { id: "record-gone", position });
+      else toast.error("Chưa thêm được dấu trang", { position });
       return;
     }
     if (mark.existing) {
@@ -1133,9 +1139,10 @@ export function useAddBookmark() {
       cancel: {
         label: "Hoàn tác",
         onClick: () => {
-          void source.deleteBookmark(track.bookId, mark.id).then(() => {
+          // dấu vừa đặt vào hồ sơ của phiên phát: hoàn tác cũng vào đúng hồ sơ ấy
+          void source.deleteBookmark(track.bookId, mark.id, track.recordId).then(() => {
             void client.invalidateQueries({ queryKey: ["listen", "book", track.bookId] });
-          });
+          }).catch((error: unknown) => reportWriteFailure(error, "Chưa hoàn tác được dấu trang"));
         },
       },
     });

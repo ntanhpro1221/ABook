@@ -251,10 +251,10 @@ export const httpSource: ListenSource = {
   saveProgress: (bookId, chapterId, seconds, duration, record, anchor, delivery) =>
     api<ListeningState>(`/api/listen/books/${bookId}/progress`, { method: "POST", body: { chapterId, seconds, duration, record, anchor,
       sessionId: delivery?.sessionId, revision: delivery?.revision }, keepalive: delivery?.keepalive }),
-  setChapterDone: (bookId, chapterId, done) =>
-    api<ListeningState>(`/api/listen/books/${bookId}/chapters/${chapterId}/done`, { method: "POST", body: { done } }),
-  setFinished: (bookId, finished) =>
-    api<ListeningState>(`/api/listen/books/${bookId}/finished`, { method: "POST", body: { finished } }),
+  setChapterDone: (bookId, chapterId, done, record) =>
+    api<ListeningState>(`/api/listen/books/${bookId}/chapters/${chapterId}/done`, { method: "POST", body: { done, record } }),
+  setFinished: (bookId, finished, record) =>
+    api<ListeningState>(`/api/listen/books/${bookId}/finished`, { method: "POST", body: { finished, record } }),
   setVoice: async (bookId, voice, record) => {
     await api(`/api/listen/books/${bookId}/voice`, { method: "POST", body: { voice, record } });
   },
@@ -263,11 +263,12 @@ export const httpSource: ListenSource = {
   },
   addBookmark: (bookId, chapterId, seconds, note, record, sentence) =>
     api<Bookmark>(`/api/listen/books/${bookId}/bookmarks`, { method: "POST", body: { chapterId, seconds, note, record, index: sentence?.index, quote: sentence?.quote } }),
-  updateBookmark: async (bookId, id, note) => {
-    await api(`/api/listen/books/${bookId}/bookmarks/${id}`, { method: "PUT", body: { note } });
+  updateBookmark: async (bookId, id, note, record) => {
+    await api(`/api/listen/books/${bookId}/bookmarks/${id}`, { method: "PUT", body: { note, record } });
   },
-  deleteBookmark: async (bookId, id) => {
-    await api(`/api/listen/books/${bookId}/bookmarks/${id}`, { method: "DELETE" });
+  deleteBookmark: async (bookId, id, record) => {
+    // DELETE không mang thân: hồ sơ đi ở `?record=`
+    await api(`/api/listen/books/${bookId}/bookmarks/${id}${record ? `?record=${encodeURIComponent(record)}` : ""}`, { method: "DELETE" });
   },
   restoreBookmark: async (bookId, mark) => {
     await api(`/api/listen/books/${bookId}/bookmarks/restore`, { method: "POST", body: mark });
