@@ -96,6 +96,7 @@ object MusicBed {
         var built: SeamPicker.Built? = null
         var sink: LoopSeam.LoopSink? = null
         var attached = false // đã nối Nối / Clip lặp vào hàng phát (trước đó chỉ có Clip đầu)
+        var lastSeamTickNs: Long? = null // khoảng cách nhịp thật để rơi về trước hạn; tua / reset bỏ mốc cũ
         // Bài a87 mở vào giữa vòng khi Nối chưa dựng xong (hay vừa rơi về): Nối đang dựng, xong thì chuyển sang P3 ở ranh lặp kế ([enterLoop]).
         var pending: SeamPicker.Built? = null
         var forcedTarget: SeamClock.Target? = null // bản P3 tạo sẵn để nhận ranh lặp: đích tua cố định (Nối, mẫu 0), [promoteTo] chỉnh lại theo chỗ bài cũ đang ở
@@ -423,6 +424,7 @@ object MusicBed {
         }
         val newChapter = (chapterId ?: Int.MIN_VALUE) != chapter
         val seeked = abs(seconds - lastSeconds) > SEEK_JUMP_SECONDS
+        if (seeked) current?.lastSeamTickNs = null
         lastSeconds = seconds
         playing = isPlaying
         if (newChapter) {
@@ -496,7 +498,10 @@ object MusicBed {
         val bed = current ?: return
         val built = bed.built ?: return
         val player = bed.player
-        when (SeamClock.gate(built.state, bed.attached, SeamClock.clip0RemainingMs(built.seam, player.currentMediaItemIndex, player.currentPosition))) {
+        val now = System.nanoTime()
+        val gapMs = bed.lastSeamTickNs?.let { ((now - it) / 1_000_000L).coerceIn(0L, 1000L) } ?: 0L
+        bed.lastSeamTickNs = now
+        when (SeamClock.gate(built.state, bed.attached, SeamClock.clip0RemainingMs(built.seam, player.currentMediaItemIndex, player.currentPosition), gapMs)) {
             SeamClock.Gate.ATTACH -> attachSeam(bed)
             SeamClock.Gate.DEMOTE -> demote(appContext, bed, SeamClock.demoteReason(built.state), reject = false)
             else -> {}
@@ -697,6 +702,7 @@ object MusicBed {
 
     /** Huỷ vé hẹn + bản lặp tạo sẵn ([loopHandoff]) và lần chuyển sang P3 đang diễn ra: tua, đổi bài, dừng. */
     private fun resetLoop() {
+        current?.lastSeamTickNs = null
         cancelHandover()
         loopHandoff.reset()
     }
