@@ -129,8 +129,9 @@ enum class DemoteReason(val word: String) { LATE("late"), FAIL("fail"), SEEK("se
  *   của lần tua cuối (dòng `land`, không phải mẫu đích) + framePosition của AudioTrack P3 - khung lặng đã chèn + khung đã bỏ (các dòng `shift` sau lần tua cuối đã ra loa, [LoopSeam.contentFrames])) / sr,
  *   nên hiệu hai số là pha lệch lúc chuyển (chỉ để đối chiếu). Ngay sau: `vol <k> <âm lượng của a87>` (> 0)
  *   rồi `vol <k cũ> 0` (lần đầu a87 về 0 nằm SAU lúc P3 ra loa); không có `demote`.
- * - `hread <k> <deltaMs> <playedMs>`: MỖI lần đọc pha được tính vào quyết định ([SeamHandover.landedReading] khác null), giữa `promote` và `handover` / `demote`: deltaMs = P3 - a87 (ms, cùng cách đo
+ * - `hread <k> <deltaMs> <playedMs> <leadMs>`: MỖI lần đọc pha được tính vào quyết định ([SeamHandover.landedReading] khác null), giữa `promote` và `handover` / `demote`: deltaMs = P3 - a87 (ms, cùng cách đo
  *   như `handover`, theo MẪU ĐÁP), playedMs = P3 đã phát bao lâu kể từ lần xả sau lần tua cuối ([SeamHandover.played], gồm cả khung lặng đã chèn); 3 chữ số thập phân.
+ *   leadMs = [SeamHandover.leadNs] của nhịp (timestamp của a87 ghi giờ TƯƠNG LAI bao lâu; mọi vị trí của nhịp tính ở mốc nay + lead), 1 chữ số thập phân; 0.0 trên máy ảo / máy thường.
  *   Danh sách lần đọc bắt đầu lại sau mỗi `seek <k>` và mỗi `shift <k>`; chưa có `land` của lần tua cuối thì không có `hread`; sau `shift` thì deltaMs là pha SAU dịch
  *   và chỉ có `hread` khi AudioTrack đã phát qua chỗ dịch + khung chèn + [SeamHandover.SETTLE_MS]. Thước so pha theo dòng `ts` thì chỉ lấy timestamp có nanoTime sau dòng `audiotrack <k>`
  *   đầu tiên sau lần tua cuối (như [SeamHandover.fresh]).
@@ -159,7 +160,8 @@ object SeamEvents {
     fun volume(k: Int, v: Float) = "vol $k ${f(v.toDouble(), 6)}"
     fun promote(k: Int, legacyPositionSeconds: Double) = "promote $k loop ${f(legacyPositionSeconds)}"
     fun handover(k: Int, legacySeconds: Double, p3Seconds: Double) = "handover $k ${f(legacySeconds)} ${f(p3Seconds)}"
-    fun handoverReading(k: Int, deltaMs: Double, playedMs: Double) = "hread $k ${f(deltaMs, 3)} ${f(playedMs, 3)}"
+    fun handoverReading(k: Int, deltaMs: Double, playedMs: Double, leadMs: Double? = null) =
+        "hread $k ${f(deltaMs, 3)} ${f(playedMs, 3)}" + (if (leadMs == null) "" else " ${f(leadMs, 1)}")
     fun land(k: Int, expSample: Long, landedSample: Long?) = "land $k $expSample ${landedSample ?: "none"}"
     fun shift(k: Int, frames: Long, deltaBeforeMs: Double) = "shift $k $frames ${f(deltaBeforeMs, 3)}"
 }
@@ -340,6 +342,14 @@ object SeamHandover {
         fun framesAt(nowNano: Long): Long = framePosition + (nowNano - nanoTime) * sampleRate / 1_000_000_000L
     }
 
+    /**
+     * Timestamp của AudioTrack a87 ghi giờ TƯƠNG LAI bao lâu (ns, >= 0): máy thật (OPPO) cho `nanoTime` của timestamp lệch dần so với [System.nanoTime] lúc đọc (0,16-3 s), cả dòng ra như nhau;
+     * âm lượng đổi ở mixer, tức mốc TRỘN sớm hơn mốc nghe đúng chừng ấy. Mọi vị trí theo timestamp trong một nhịp (a87, P3, còn bao lâu tới hết Nối) tính ở mốc `nowNano + lead`, CÙNG một mốc
+     * cho a87 lẫn P3 nên pha không phụ thuộc sai số của lead. 0 khi không có timestamp tin được ([fresh]) hay nó ở quá khứ (máy ảo, máy thường): tính ở `nowNano` như cũ.
+     */
+    fun leadNs(stamp: Stamp?, nowNano: Long): Long =
+        if (stamp == null || !fresh(0L, stamp.flushedNano, stamp.nanoTime, stamp.framePosition)) 0L else maxOf(0L, stamp.nanoTime - nowNano)
+
     /** Vị trí a87 theo AudioTrack của nó ([legacySeconds]); null khi timestamp không tin được (người gọi dùng currentPosition). */
     fun legacySeconds(startUs: Long, stamp: Stamp, nowNano: Long): Double? =
         if (fresh(0L, stamp.flushedNano, stamp.nanoTime, stamp.framePosition)) legacySeconds(startUs, stamp.framesAt(nowNano), stamp.sampleRate) else null
@@ -396,15 +406,15 @@ object SeamHandover {
      * tua) mà P3 còn câm (`muted`, mức logic 0), đã đáp đúng ([Landing.At]) và pha ổn định lệch <= [MAX_SHIFT_MS] thì dịch trong dòng (SHIFT); `shifts` = số lần đã dịch, hết
      * [MAX_SHIFTS] thì bỏ (FALLBACK). Hạn chót / sát hết Nối vẫn bỏ trước mọi thứ.
      */
-    fun decide(elapsedMs: Long, remainingMs: Double, retunes: Int, readings: List<Double>, landing: Landing, muted: Boolean = false, shifts: Int = 0): Act {
+    fun decide(elapsedMs: Long, remainingMs: Double, retunes: Int, readings: List<Double>, landing: Landing, muted: Boolean = false, shifts: Int = 0, deadlineMs: Long = DEADLINE_MS): Act {
         if (landing is Landing.None) {
-            if (elapsedMs >= DEADLINE_MS || remainingMs <= GUARD_MS) return Act.FALLBACK
+            if (elapsedMs >= deadlineMs || remainingMs <= GUARD_MS) return Act.FALLBACK
             return if (retunes >= MAX_RETUNES) Act.FALLBACK else Act.RETUNE
         }
         val counted = if (landing is Landing.At) readings else emptyList()
-        val act = decide(elapsedMs, remainingMs, retunes, counted)
+        val act = decide(elapsedMs, remainingMs, retunes, counted, deadlineMs)
         if (act != Act.RETUNE && act != Act.FALLBACK) return act
-        if (elapsedMs >= DEADLINE_MS || remainingMs <= GUARD_MS) return act
+        if (elapsedMs >= deadlineMs || remainingMs <= GUARD_MS) return act
         val settled = settled(counted)
         if (!muted || landing !is Landing.At || settled == null || Math.abs(settled) > MAX_SHIFT_MS) return act
         return if (shifts >= MAX_SHIFTS) Act.FALLBACK else Act.SHIFT
@@ -429,8 +439,8 @@ object SeamHandover {
      * SWITCH khi [STEADY_READINGS] lần cuối đều trong [TOLERANCE_MS]; RETUNE (tua lại P3, câm, theo [settled]) chỉ khi [STEADY_READINGS] lần cuối ỔN ĐỊNH mà lệch - một lần đọc lẻ không bao giờ đủ để tua;
      * FALLBACK = bỏ, ở lại đường a87.
      */
-    fun decide(elapsedMs: Long, remainingMs: Double, retunes: Int, readings: List<Double>): Act {
-        if (elapsedMs >= DEADLINE_MS || remainingMs <= GUARD_MS) return Act.FALLBACK
+    fun decide(elapsedMs: Long, remainingMs: Double, retunes: Int, readings: List<Double>, deadlineMs: Long = DEADLINE_MS): Act {
+        if (elapsedMs >= deadlineMs || remainingMs <= GUARD_MS) return Act.FALLBACK
         if (readings.size < STEADY_READINGS) return Act.WAIT
         if (readings.subList(readings.size - STEADY_READINGS, readings.size).all { Math.abs(it) <= TOLERANCE_MS }) return Act.SWITCH
         if (settled(readings) == null) return Act.WAIT

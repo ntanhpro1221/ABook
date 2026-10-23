@@ -439,7 +439,8 @@ object LoopSeam {
      * - tua: [seekToSample] gọi [armSeek]; MỖI lần `flush` khi còn lệnh đặt lại số cắt = số mẫu từ khung đáp tới mốc tua, và lần `configure` theo sau (nếu mục đổi) KHÔNG ghi đè nó.
      *   Số lần xả của sink KHÔNG ứng 1-1 với số lệnh `seekTo` (máy thật OPPO, PLAN_loop §46.3 / §47.1: buffer của lệnh tua trước tới sau lần xả của lệnh tua sau). Hai đường:
      *   (a) lệnh CÓ vị trí đích và đã biết offset dòng ra ([setOutputStreamOffsetUs]; Nối WAV): lệnh gắn với NHÃN THỜI GIAN của buffer đích: chỉ buffer ĐẦU TIÊN sau một lần xả, có nhãn
-     *   đúng vị trí đích, mới tiêu lệnh (cắt + chụp); buffer đầu có nhãn khác là của dòng CŨ, đi qua nguyên vẹn, lệnh chờ lần xả kế;
+     *   đúng vị trí đích, mới tiêu lệnh (cắt + chụp), VÀ lệnh đã qua ít nhất một lần xả sau khi nạp ([Arm.flushed]); buffer đầu có nhãn khác (hay lệnh chưa qua lần xả nào) là của dòng CŨ,
+     *   đi qua nguyên vẹn, lệnh chờ lần xả kế;
      *   (b) lệnh KHÔNG kiểm được nhãn (Clip mp3: lần tua đệm chỉ lệch 1 ms và chưa có số máy về offset; hay chưa biết offset): đếm lần xả (`flushes`: 2 khi có lệnh tua đệm), mỗi lần xả
      *   đặt lại số cắt, chỉ lần xả CUỐI bắt đầu chụp và bỏ lệnh;
      * mẫu bị cắt khỏi các buffer đầu dòng ngay trước khi đưa xuống sink trong, nên không phụ thuộc trạng thái nào của media3 ngoài thứ tự gọi flush -> configure -> handleBuffer.
@@ -451,8 +452,12 @@ object LoopSeam {
         /**
          * Lệnh tua đang chờ: số cắt, lúc nạp, lệnh chép (lưới an toàn), vị trí đích trên trục dòng ra (µs, chưa cộng offset; [C.TIME_UNSET] = không kiểm nhãn) và độ lệch nhãn cho phép.
          * Giữ vị trí chứ không giữ nhãn đã cộng offset vì offset có thể đổi giữa lúc nạp và lúc buffer tới (tua sang mục khác đặt offset mới).
+         * `flushed` = đã có ít nhất một lần xả SAU khi nạp: lệnh có kiểm nhãn chỉ được tiêu bởi buffer đầu sau một lần xả như thế (buffer đầu sau lần xả của lệnh tua TRƯỚC, tới sau khi lệnh này
+         * nạp mà trước các lần xả của nó, mang nhãn trùng đích khi hai lần tua cùng đích: tiêu nhầm thì hai lần xả thật sau đó không còn lệnh, rs48p §46.12).
          */
-        private class Arm(val frames: Long, val ns: Long, val capture: Capture?, val positionUs: Long, val toleranceUs: Long, var flushesLeft: Int)
+        private class Arm(val frames: Long, val ns: Long, val capture: Capture?, val positionUs: Long, val toleranceUs: Long, var flushesLeft: Int) {
+            @Volatile var flushed = false
+        }
 
         /** Lệnh [shift] chờ áp; `onApplied` gọi ở luồng phát khi đã chèn / bỏ xong. */
         private class ShiftOrder(val frames: Long, val onApplied: ((Shift) -> Unit)?)
@@ -470,11 +475,11 @@ object LoopSeam {
 
             /**
              * Buffer ĐẦU TIÊN sau flush, TRƯỚC khi cắt: nhãn thời gian (µs), số khung (-1 khi chưa biết cỡ khung), số cắt còn lại, cờ seekPending,
-             * khớp: 1 = nhãn khớp lệnh tua nên lệnh bị tiêu, 0 = nhãn khác (buffer dòng cũ, lệnh chờ tiếp), -1 = không có lệnh hay lệnh không kiểm nhãn (đường đếm lần xả, đã xử lý ở [flush]).
+             * khớp: 1 = nhãn khớp lệnh tua nên lệnh bị tiêu, 0 = nhãn khác hay lệnh chưa qua lần xả nào sau khi nạp (buffer dòng cũ, lệnh chờ tiếp), -1 = không có lệnh hay lệnh không kiểm nhãn (đường đếm lần xả, đã xử lý ở [flush]).
              */
             fun onFirstBuffer(presentationTimeUs: Long, frames: Long, toDrop: Long, seekPending: Boolean, match: Int)
 
-            /** Buffer đầu sau flush bị bỏ qua lệnh vì nhãn khác lệnh có kiểm nhãn mong đợi (nhãn, nhãn mong đợi µs): buffer của dòng cũ. */
+            /** Buffer đầu sau flush bị bỏ qua lệnh vì nhãn khác lệnh có kiểm nhãn mong đợi, hay lệnh chưa qua lần xả nào (nhãn, nhãn mong đợi µs): buffer của dòng cũ. */
             fun onSkip(presentationTimeUs: Long, expectedUs: Long)
         }
 
@@ -583,6 +588,7 @@ object LoopSeam {
             if (waiting != null && arm == null) armed.compareAndSet(waiting, null) // quá hạn: lệnh tua ấy không sinh đủ lần xả, đừng áp cho lần xả lạ
             if (arm != null) {
                 // Còn lệnh tua: mỗi lần xả đặt lại số cắt (buffer giữa hai lần xả có thể đã tiêu nó), lượt chép của lần xả trước (dở hay xong) bị bỏ.
+                arm.flushed = true
                 toDrop = arm.frames
                 seekPending = true
                 if (checks(arm)) {
@@ -690,6 +696,7 @@ object LoopSeam {
                 val expected = if (checked) streamOffsetUs + arm!!.positionUs else -1L
                 val match = when {
                     !checked -> -1
+                    !arm!!.flushed -> 0 // chưa có lần xả nào sau khi nạp lệnh: buffer này là của lần xả TRƯỚC (dòng cũ), dù nhãn trùng đích
                     Math.abs(presentationTimeUs - expected) <= arm!!.toleranceUs -> 1
                     else -> 0
                 }
