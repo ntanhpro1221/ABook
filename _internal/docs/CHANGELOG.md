@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+- Máy đã ghép nhớ mọi đường tới nhau (Wi-Fi nhà, Tailscale...) và tự chọn đường đang thông.
+
 ### Dữ liệu của bạn
 - Hồ sơ nghe hỏng một phần trên máy tính hoặc điện thoại: app giữ nguyên bản gốc, báo rõ nơi giữ và tiếp tục dùng phần còn đọc được; sách không biến mất chỉ vì hồ sơ sai định dạng. File thông báo hỏng trên điện thoại cũng được giữ riêng, không chặn thư viện hay việc lưu dữ liệu đã giữ an toàn; máy tính sửa hồ sơ dưới cùng khoá với các lượt lưu khác.
 - Máy tính: nhật ký chỗ nghe tạm bị chương trình khác giữ sẽ được đọc lại trước khi lưu, tránh mất chỗ nghe mới nhất khi bạn đặt dấu trang.

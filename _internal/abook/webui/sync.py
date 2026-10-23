@@ -333,6 +333,14 @@ class TlsHTTPServer(ExclusiveHTTPServer):
             super().handle_error(request, client_address)
 
 
+class DualTlsHTTPServer(TlsHTTPServer):
+    address_family = socket.AF_INET6
+
+    def server_bind(self) -> None:
+        self.socket.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+        super().server_bind()
+
+
 class Devices:
     """Điện thoại đã ghép nối: lưu băm của mã (không lưu mã thật), tên, lần thấy cuối.
 
@@ -639,6 +647,7 @@ class SyncApp:
         self._work: dict[str, tuple[tuple[Any, ...], int]] = {}  # đường dẫn -> (dấu thời gian + phán quyết, số việc)
         # Vân tay chứng chỉ TLS của cổng phục vụ app này (SyncServer điền lúc dựng): đi trong lời đáp ghép nối.
         self.fingerprint = ""
+        self.addresses: Callable[[], list[str]] = lambda: []
         self._work_lock = threading.Lock()
         # Dòng thư viện của từng dự án (`_row`): mã cuốn -> (chữ ký, lúc nhớ, bài nhạc, cỡ bài đã tải, dòng).
         self._rows: dict[str, tuple[tuple, float, tuple[str, ...], tuple, dict[str, Any] | None]] = {}
@@ -970,6 +979,10 @@ class SyncHandler(BaseHTTPRequestHandler):
         return
 
     def _json(self, status: int, payload: Any) -> None:
+        route_path = self.path.split("?", 1)[0]
+        if (200 <= status < 300 and isinstance(payload, dict)
+                and (route_path in ("/sync/v1/pair", "/sync/v1/library") or route_path.endswith("/state"))):
+            payload = {**payload, "addresses": self.app.addresses()}
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
@@ -1355,10 +1368,11 @@ class SyncHandler(BaseHTTPRequestHandler):
 class Discovery(threading.Thread):
     """Trả lời điện thoại đang tìm máy tính trong cùng mạng Wi-Fi (UDP broadcast)."""
 
-    def __init__(self, name: str, port: int, discovery_port: int = DISCOVERY_PORT) -> None:
+    def __init__(self, name: str, port: int, discovery_port: int = DISCOVERY_PORT, fingerprint: str = "") -> None:
         super().__init__(name="sync-discovery", daemon=True)
         self.name_text = name
         self.port = port
+        self.fingerprint = fingerprint
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind(("0.0.0.0", discovery_port))
@@ -1366,7 +1380,7 @@ class Discovery(threading.Thread):
         self._stop = threading.Event()
 
     def run(self) -> None:
-        reply = json.dumps({"app": "abook", "name": self.name_text, "port": self.port}).encode("utf-8")
+        reply = json.dumps({"app": "abook", "name": self.name_text, "port": self.port, "fingerprint": self.fingerprint}).encode("utf-8")
         while not self._stop.is_set():
             try:
                 data, address = self.socket.recvfrom(512)
@@ -1398,9 +1412,16 @@ class SyncServer:
         app.fingerprint = identity.fingerprint
         self.fingerprint = identity.fingerprint
         handler = type("BoundSyncHandler", (SyncHandler,), {"app": app})
-        self.httpd = TlsHTTPServer((host, port), handler, identity.server_context())
+        # One listening socket serves both IP families where the OS supports dual stack.
+        dual = host == "0.0.0.0" and socket.has_dualstack_ipv6()
+        server_type = DualTlsHTTPServer if dual else TlsHTTPServer
+        self.httpd = server_type(("::" if dual else host, port), handler, identity.server_context())
         self.port = int(self.httpd.server_address[1])
-        self.discovery = Discovery(app.name, self.port, discovery_port) if host == "0.0.0.0" else None
+        from .peer_addresses import endpoint, valid
+        app.addresses = lambda: [clean for address in (network_addresses() if host in ("0.0.0.0", "::") else [host])
+                                 if (dual or ":" not in address)
+                                 if (clean := valid(endpoint(address, self.port), advertised=True))]
+        self.discovery = Discovery(app.name, self.port, discovery_port, identity.fingerprint) if host == "0.0.0.0" else None
         self._thread: threading.Thread | None = None
         self.app = app
 
@@ -1518,3 +1539,20 @@ def local_addresses() -> list[str]:
         primary = ""
     away = set(away_addresses(sorted(addresses)))
     return sorted(addresses, key=lambda address: (address != primary, address in away, address))
+
+
+def network_addresses() -> list[str]:
+    """Protocol advertisement: all LAN/VPN IPv4 and IPv6, excluding virtual/loopback/link-local interfaces."""
+    from .peer_addresses import endpoint, valid
+    addresses = set(local_addresses())
+    try:
+        import psutil
+        for name, values in psutil.net_if_addrs().items():
+            if any(marker in name.casefold() for marker in VIRTUAL_ADAPTERS):
+                continue
+            for value in values:
+                if value.family in (socket.AF_INET, socket.AF_INET6) and valid(endpoint(value.address, SYNC_PORT), advertised=True):
+                    addresses.add(value.address)
+    except (ImportError, OSError):
+        pass
+    return sorted(addresses)
