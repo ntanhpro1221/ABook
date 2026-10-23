@@ -136,6 +136,15 @@ def test_merging_two_devices_keeps_the_newest_of_each_part() -> None:
     phone = {"last": {"chapterId": 2, "seconds": 5, "at": 200}, "chapters": {"2": {"heard": 5, "done": False, "at": 200}},
              "bookmarks": [{"id": "b", "chapterId": 2, "seconds": 3, "note": "hay", "at": 150}],
              "deleted": {"a": 180}, "rate": 1.5, "rateAt": 20}
+    for state, node, counter in ((desktop, "desktop", 1), (phone, "phone", 2)):
+        rev = {"counter": counter, "node": node}
+        state["last"]["rev"] = rev
+        for item in state["chapters"].values():
+            item["rev"] = rev
+        for item in state["bookmarks"]:
+            item["rev"] = rev
+        state["_fieldRevs"] = {"rate": rev}
+        state["_deletedRevs"] = {key: rev for key in state.get("deleted", {})}
     merged = merge_states(desktop, phone)
     assert merged["last"]["chapterId"] == 2
     assert set(merged["chapters"]) == {"1", "2"}
@@ -327,9 +336,14 @@ def test_a_paired_phone_downloads_a_book_and_syncs_its_place(library, tmp_path: 
         assert status == 404, "chỉ phát file có trong gói"
         status, data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/scripts/1.json", token)
         assert json.loads(data)["segments"][0]["kind"] == "heading"
-        phone_state = {"last": {"chapterId": 1, "seconds": 4.2, "at": time.time()}, "chapters": {}, "bookmarks": []}  # chương 1 dài 9,7 giây
+        phone_state = {"last": {"chapterId": 1, "seconds": 4.2, "at": time.time(), "rev": {"counter": 1, "node": "phone"}}, "chapters": {}, "bookmarks": []}  # chương 1 dài 9,7 giây
         status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=phone_state)
         assert status == 200 and listening.get(identifier)["last"]["seconds"] == 4.2
+        legacy = {"last": {"chapterId": 1, "seconds": 7, "at": time.time() + 10}}
+        status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=legacy)
+        assert status == 400
+        assert json.loads(data)["error"] == "Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"
+        assert listening.get(identifier)["last"]["seconds"] == 4.2
     finally:
         server.stop()
 
@@ -608,9 +622,10 @@ def test_the_reading_place_is_kept_and_the_newest_device_wins(tmp_path: Path) ->
     listening.set_reading("b", 3, 24)
     mine = listening.get("b")["reading"]
     assert (mine["chapterId"], mine["index"]) == (3, 24)
-    older = {"reading": {"chapterId": 1, "index": 5, "at": mine["at"] - 100}}
+    older = {"reading": {"chapterId": 1, "index": 5, "at": mine["at"] - 100, "rev": mine["rev"]}}
     assert listening.merge("b", older)["reading"]["chapterId"] == 3
-    newer = {"reading": {"chapterId": 4, "index": 0, "at": mine["at"] + 100}}
+    newer = {"reading": {"chapterId": 4, "index": 0, "at": mine["at"] - 100,
+                         "rev": {"counter": mine["rev"]["counter"] + 1, "node": "phone"}}}
     assert listening.merge("b", newer)["reading"]["chapterId"] == 4
 
 

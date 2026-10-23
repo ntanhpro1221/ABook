@@ -44,7 +44,7 @@ class StoreInflightReplyTest {
         assertTrue(StrictJson.equal(spec.getJSONObject("expected"), Store.state("b")))
     }
 
-    @Test fun legacy_reply_merges_with_current_state() {
+    @Test fun versioned_reply_without_record_merges_with_current_state() {
         Store.mergeRemote("b", spec.getJSONObject("current"))
         Store.applySync("b", spec.getJSONObject("reply"), { "" to false })
         assertTrue(StrictJson.equal(spec.getJSONObject("expected"), Store.state("b")))

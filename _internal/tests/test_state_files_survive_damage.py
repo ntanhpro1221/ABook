@@ -377,7 +377,8 @@ def test_a_held_preferences_file_is_never_overwritten(tmp_path: Path, monkeypatc
     held = _Held(monkeypatch, path)
     preferences = Preferences(path)
     assert any("đang bị một chương trình khác giữ" in item["text"] for item in notices.NOTICES.all())
-    preferences.update({"theme": "light"})
+    with pytest.raises(OSError, match="thử lại"):
+        preferences.update({"theme": "light"})
     assert path.open("rb").read() == original
     held.release()
     preferences.update({"theme": "light"})

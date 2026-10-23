@@ -4,7 +4,7 @@ import java.io.File
 import java.io.OutputStream
 
 /**
- * "Bản lưu cũ": file bản lưu trước mà [BookSave] giữ lại khi lần lưu mới hỏng giữa chừng và bản trước cũng chưa trả lại vào chỗ đã chọn được
+ * "Bản lưu cũ": file bản lưu trước mà [BookSave] giữ lại khi lần lưu mới bị gián đoạn hoặc bản trước chưa trả lại vào chỗ đã chọn được
  * (filesDir/ban-luu-cu). Người dùng thấy danh sách ở Cài đặt, lưu ra chỗ khác hoặc xoá - phần thuần ở đây (liệt kê, chặn tên, chép, xoá),
  * phần hộp chọn chỗ lưu của hệ thống nằm ở LibraryPlugin.
  */
@@ -31,7 +31,13 @@ object OldSaves {
     fun copyTo(dir: File, name: String, sink: OutputStream): Long = resolve(dir, name).inputStream().use { it.copyTo(sink) }
 
     /** Xoá file (không lấy lại được). Trả true khi đã xoá. */
-    fun delete(dir: File, name: String): Boolean = resolve(dir, name).delete()
+    fun delete(dir: File, name: String): Boolean {
+        if (!resolve(dir, name).delete()) return false
+        val journal = File(dir, ".pending/$name.json")
+        if (journal.isFile) journal.delete()
+        journal.parentFile?.delete() // only an empty directory; no other recovery intent is removed
+        return true
+    }
 
     /** Loại file để hộp "Lưu ra…" của hệ thống đặt đúng đuôi. */
     fun mimeOf(name: String): String =

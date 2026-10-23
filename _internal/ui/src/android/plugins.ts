@@ -498,7 +498,7 @@ export interface EbookLibraryPlugin {
   scanPlayers(): Promise<void>;
   /** "load" mang mã cuốn của điện thoại này - bên native đổi sang mã của máy kia (hoặc từ chối: máy kia không có). */
   remoteCommand(options: { device: string; command: RemotePlayerCommand }): Promise<{ id?: string; ok?: boolean; message?: string }>;
-  localBooks(): Promise<{ books: LocalBook[] }>;
+  localBooks(): Promise<{ books: LocalBook[]; notices?: string[] }>;
   /** Sách trên máy tính chưa tải mà nghe thẳng được; máy tính không trả lời thì rỗng. */
   streamableBooks(): Promise<{ books: LocalBook[] }>;
   book(options: { id: string }): Promise<LocalBook>;
@@ -567,7 +567,7 @@ export interface EbookLibraryPlugin {
   /** `bytes`: cả thư viện; `books`: cỡ từng cuốn trên máy (mã thư mục = mã cuốn). */
   storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number; title?: string }[] }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor }): Promise<ListeningState>;
-  saveReading(options: { id: string; chapterId: number; index: number; at?: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor; quote?: string; record?: string }): Promise<ListeningState>;
+  saveReading(options: { id: string; chapterId: number; index: number; at?: number; rev?: import("@/listen/readingPosition").ReadingPosition["rev"]; anchor?: import("@/listen/readingAnchor").ReadingAnchor; quote?: string; record?: string }): Promise<ListeningState>;
   setChapterDone(options: { id: string; chapterId: number; done: boolean; record?: string }): Promise<ListeningState>;
   setFinished(options: { id: string; finished: boolean; record?: string }): Promise<ListeningState>;
   setRate(options: { id: string; rate: number; record?: string }): Promise<void>;

@@ -124,6 +124,33 @@ it('ACK cũ không xác nhận nhầm lần cuộn mới hơn',async()=>{
   cleanup();
 });
 
+it('chỗ đọc local có revision hỏng được cấp lại revision an toàn trước khi thử gửi', async()=>{
+  h.book.state._clock=2;
+  h.book.state.reading={chapterId:1,index:10,at:100,rev:{counter:2,node:'server'}};
+  localStorage.setItem('abook-reading-b#default',JSON.stringify({chapterId:1,index:50,at:200,pending:true,rev:{counter:1e100,node:'peer'}}));
+  mount();
+  const cleanup=h.effects.find(e=>e.run.toString().includes('visibilitychange')).run();
+  await vi.advanceTimersByTimeAsync(5000);
+  expect(h.source.saveReading).toHaveBeenCalledWith('b',1,50,expect.objectContaining({rev:expect.objectContaining({counter:3})}),undefined);
+  expect(JSON.parse(localStorage.getItem('abook-reading-b#default')!).pending).toBe(false);
+  cleanup();
+});
+
+it('ACK từ epoch trước không xác nhận nhầm counter trùng trong epoch mới', async()=>{
+  let ack!:()=>void;
+  h.source.saveReading.mockImplementationOnce(()=>new Promise<void>(resolve=>{ack=resolve;}));
+  const {node}=mount();
+  const cleanup=h.effects.find(e=>e.run.toString().includes('visibilitychange')).run();
+  node.props.onScroll();
+  await vi.advanceTimersByTimeAsync(2000);
+  const place=JSON.parse(localStorage.getItem('abook-reading-b#default')!);
+  localStorage.setItem('abook-reading-b#default',JSON.stringify({...place,rev:{...place.rev,epoch:'1'},pending:true}));
+  ack();
+  await vi.advanceTimersByTimeAsync(0);
+  expect(JSON.parse(localStorage.getItem('abook-reading-b#default')!).pending).toBe(true);
+  cleanup();
+});
+
 it('ReaderScreen dùng câu trích để mở đúng đoạn của dấu trang đã dịch chỉ số',()=>{
   h.script=textScript(1,'Chương 1','Chương 1\n\nTrans: Lan\n\nCâu đã đánh dấu.\n\nCâu sau.',['Trans: Lan']);
   h.params=new URLSearchParams({at:'2',quote:'Câu đã đánh dấu.'});

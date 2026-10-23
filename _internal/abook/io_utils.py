@@ -298,18 +298,21 @@ def project_write_lock(project_root: Path | str) -> threading.RLock:
         return _PROJECT_LOCKS.setdefault(key, threading.RLock())
 
 
+class FileLockUnavailable(TimeoutError):
+    """Retryable: a state writer has not acquired its required OS lock."""
+
+
 @contextlib.contextmanager
 def file_lock(path: Path, *, timeout: float = FILE_LOCK_TIMEOUT_SECONDS) -> Iterator[None]:
     """Khoá GIỮA CÁC TIẾN TRÌNH cho file trạng thái `path` (khoá nằm trên file `<tên>.lock` cạnh nó; tiến trình chết thì hệ điều hành tự
     nhả - không có khoá mồ côi). Hai tiến trình cùng hồ sơ (soát a28 lỗi 14) đọc-gộp-ghi lần lượt thay vì đè nhau. Chờ quá `timeout`
-    giây (tiến trình kia treo) hay không tạo được file khoá (thư mục chỉ đọc): làm tiếp không khoá - không bao giờ chặn việc lưu."""
+    giây hay không tạo được file khoá: báo lỗi thử lại, tuyệt đối không vào vùng đọc-sửa-ghi."""
     lock = path.with_name(path.name + ".lock")
     try:
         lock.parent.mkdir(parents=True, exist_ok=True)
         handle = open(lock, "a+b")  # noqa: SIM115 - đóng ở finally
-    except OSError:
-        yield
-        return
+    except OSError as error:
+        raise FileLockUnavailable("Chưa giữ được khoá dữ liệu của bạn. Bạn hãy thử lại.") from error
     locked = False
     try:
         deadline = time.monotonic() + timeout
@@ -328,7 +331,7 @@ def file_lock(path: Path, *, timeout: float = FILE_LOCK_TIMEOUT_SECONDS) -> Iter
                 break
             except OSError:
                 if time.monotonic() >= deadline:
-                    break
+                    raise FileLockUnavailable("Dữ liệu của bạn đang được một cửa sổ khác lưu. Bạn hãy thử lại.")
                 time.sleep(0.01)
         yield
     finally:

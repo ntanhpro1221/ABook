@@ -154,11 +154,11 @@ class BookSaveTest {
             save(target, cache = cache)
             fail("chép hỏng hai lần phải báo lỗi")
         } catch (expected: BookSave.Failed) {
-            val kept = keep.listFiles().orEmpty().single()
+            val kept = File(keep, OldSaves.list(keep).single().name)
             assertTrue(expected.message!!, expected.message!!.contains(kept.name))
-            assertTrue(expected.message!!, expected.message!!.contains("ban-luu-cu"))
+            assertTrue(expected.message!!, expected.message!!.contains("Bản lưu cũ"))
         }
-        val kept = keep.listFiles().orEmpty().single()
+        val kept = File(keep, OldSaves.list(keep).single().name)
         assertArrayEquals("file giữ phòng là đúng bản cũ", old, kept.readBytes())
         assertTrue(kept.name, kept.name.startsWith("Sách thử") && kept.name.endsWith(".abook"))
         assertFalse("cache không còn giữ bản cũ", cache.listFiles().orEmpty().any { it.isFile })

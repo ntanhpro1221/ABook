@@ -446,7 +446,8 @@ class Preferences:
         if not bad:
             return raw
         clean = {key: value for key, value in raw.items() if key not in bad}
-        notices.keep_broken(self.path, "Một vài cài đặt của app", then="các cài đặt ấy về mặc định")
+        if notices.keep_broken(self.path, "Một vài cài đặt của app", then="các cài đặt ấy về mặc định", copy_only=True) is None:
+            raise notices.Unreadable("Chưa giữ được cài đặt cũ của bạn. Bạn hãy thử lại.")
         try:
             atomic_write_json(self.path, clean)
         except OSError:
@@ -478,9 +479,16 @@ class Preferences:
                     self._data = self._load(keep=None if self._unread else self._data)
                     self._unread = False
                 except notices.Unreadable:
-                    pass
+                    self._unread = True
                 self._stamp = file_stamp(self.path)
-            yield
+            if self._unread:
+                raise notices.Unreadable("Chưa đọc được cài đặt của bạn. Bạn hãy thử lại.")
+            before = json.loads(json.dumps(self._data))
+            try:
+                yield
+            except BaseException:
+                self._data = before
+                raise
 
     def get(self) -> dict[str, Any]:
         with self._lock:
