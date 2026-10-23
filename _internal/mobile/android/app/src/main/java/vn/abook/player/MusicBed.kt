@@ -9,7 +9,6 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.util.Log
 import androidx.annotation.OptIn
 import androidx.annotation.VisibleForTesting
 import androidx.media3.common.AudioAttributes
@@ -199,7 +198,7 @@ object MusicBed {
             return block()
         } finally {
             val spent = SystemClock.elapsedRealtime() - began
-            if (spent > SLOW_STEP_MS) Log.i(TAG, "$step chậm: $spent ms")
+            if (spent > SLOW_STEP_MS) AppLog.i(TAG, "$step chậm: $spent ms")
         }
     }
 
@@ -310,7 +309,7 @@ object MusicBed {
             if (testRenderDelayMs > 0) Thread.sleep(testRenderDelayMs)
             LoopSeam.render(built.seam)
         },
-        note = { Log.w(TAG, it) },
+        note = { AppLog.w(TAG, it) },
     )
 
     /** Hình học Nối của `file` theo vòng của `cue` (null: bài không lặp mờ chéo). Cỡ mili giây: đọc độ dài + định dạng file; bản WAV Nối dựng sau ([LoopSeam.render]). */
@@ -548,7 +547,7 @@ object MusicBed {
             DemoteReason.SEEK -> "tua tới chỗ Nối chưa dựng xong"
             DemoteReason.ERROR -> "lỗi phát"
         }
-        Log.w(TAG, "đường P3 rơi về a87: $why (${built.key})")
+        AppLog.w(TAG, "đường P3 rơi về a87: $why (${built.key})")
         emit { SeamEvents.demote(bed.testK, reason) }
         if (reject) seamPicker.reject(built, why)
         val cue = bed.cue
@@ -680,7 +679,7 @@ object MusicBed {
     /** Lần chuyển hỏng / không kịp: nhả P3, a87 vào bản lặp mờ chéo của nó như khi không có Nối (ranh lặp này vẫn đang tới hạn). */
     private fun abortHandover(reason: DemoteReason) {
         val h = handover ?: return
-        Log.w(TAG, "chuyển a87 sang P3 không kịp / hỏng (${reason.word}), a87 lặp mờ chéo")
+        AppLog.w(TAG, "chuyển a87 sang P3 không kịp / hỏng (${reason.word}), a87 lặp mờ chéo")
         emit { SeamEvents.demote(h.p3.testK, reason) }
         cancelHandover()
         loopHandoff.check()
@@ -696,7 +695,7 @@ object MusicBed {
         val built = ready.built ?: return false
         if (!playing) return false
         if (SeamHandover.target(built.seam, snap.position, p3LagMs) == null) {
-            Log.w(TAG, "chuyển a87 sang P3 không kịp: a87 sát hết Nối")
+            AppLog.w(TAG, "chuyển a87 sang P3 không kịp: a87 sát hết Nối")
             emit { SeamEvents.demote(ready.testK, DemoteReason.LATE) }
             return false
         }
@@ -1302,6 +1301,7 @@ object MusicBed {
             // Nhạc của sách hỏng (file thiếu trong gói, mạng tới máy tính rớt khi nghe thẳng): đoạn này im lặng, RETRY_MS sau thử
             // lại như máy tính. Bài của danh sách phát phát hỏng (file hỏng) thì bỏ cả phiên - tải hỏng đã có fetch lo.
             override fun onPlayerError(error: PlaybackException) {
+                AppLog.w(TAG, "nhạc nền: lỗi phát ${error.errorCodeName}", error)
                 main.post {
                     if (bed.released) return@post // đã nhả (bản tạo sẵn bị bỏ, bài mờ xong): lỗi muộn không tính là bài hỏng
                     if (bed.built != null && handover?.p3 === bed) { // P3 hỏng khi đang khởi động câm: bỏ Nối này, a87 lặp mờ chéo

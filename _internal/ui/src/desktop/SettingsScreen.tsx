@@ -25,6 +25,7 @@ import { VoiceSettings, type KeyCheck, type OnlineProviderInfo, type VoiceSettin
 import { scrollMotion } from "@/shared/motion";
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
+import { OwnDiagnostics } from "./OwnDiagnostics";
 import { PhoneSync, Switch } from "./PhoneSync";
 import { checkLine, UPDATE_CHECKED_EVENT, UPDATE_CHECK_WAIT_MS, type CheckLine, type UpdateChecked } from "./updateCheck";
 
@@ -539,6 +540,13 @@ export function SettingsScreen() {
           description="Nghe sách trên máy tính khác cùng mạng (hay cùng mạng riêng ảo) mà không phải chép sang: sách của máy ấy hiện trong Thư viện, chương tải về lần đầu nghe tới."
         >
           <OtherComputers />
+        </Section>
+        <Section
+          id="diagnostics"
+          title="Chẩn đoán"
+          description="Khi có chuyện lạ, lưu nhật ký thành file để gửi cho người sửa lỗi. Điện thoại đã ghép có nút “Chẩn đoán” ở mục Máy tính khác."
+        >
+          <OwnDiagnostics />
         </Section>
         </>
         )}

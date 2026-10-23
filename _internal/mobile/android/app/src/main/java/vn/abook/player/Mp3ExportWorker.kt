@@ -317,7 +317,9 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
     override fun getForegroundInfo(): ForegroundInfo =
         Mp3Exports.foreground(applicationContext, id, Mp3Exports.inputs(inputData).first.orEmpty(), title, 0, 0)
 
-    override fun doWork(): Result {
+    override fun doWork(): Result = AppLog.worker("Mp3Export", this) { execute() }
+
+    private fun execute(): Result {
         val context = applicationContext
         Store.init(context)
         val (bookId, tree, cover) = Mp3Exports.inputs(inputData)

@@ -44,12 +44,14 @@ class ShareService : Service() {
             }
         } catch (error: Exception) {
             // Máy từ chối dịch vụ chạy nền: không làm sập app - chia sẻ vẫn chạy, chỉ thiếu phần chống đóng băng.
+            AppLog.w("ShareService", "máy từ chối dịch vụ nền của chia sẻ: ${error.javaClass.simpleName}: ${error.message}", error)
             stopSelf()
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
+            AppLog.i("ShareService", "bấm Tắt chia sẻ trên thông báo")
             // Nút trên thông báo: tắt công tắc như người dùng tắt trong app.
             Thread({ turnOff(applicationContext) }, "share-service-stop").start()
         }

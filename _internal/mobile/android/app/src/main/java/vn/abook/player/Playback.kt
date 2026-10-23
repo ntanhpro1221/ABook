@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.util.Log
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
@@ -304,6 +303,7 @@ object Playback {
     fun onError(error: Throwable? = null) {
         // Đoạn đọc to hỏng (file bị Android dọn khỏi bộ nhớ đệm...): đọc lại đúng chỗ, tối đa vài lần liền.
         if (ReadAloud.recoverFromPlayerError()) return
+        AppLog.w("Playback", "lỗi phát (sách $bookId, chương ${currentChapter?.id}): ${error?.javaClass?.simpleName ?: "?"}: ${error?.message.orEmpty().take(200)}", error)
         val streamed = player?.currentMediaItem?.localConfiguration?.uri?.scheme == "https"
         val retrying = reconnectDelayMs > 0
         lastError = if (streamed && error != null && Pin.isCertificateProblem(error)) {
@@ -660,7 +660,7 @@ object Playback {
             return
         }
         if (stalledSince != 0L && now - stalledSince >= STALL_LOG_MS) {
-            Log.i("ABookStall", "giọng chờ đoạn kế ${now - stalledSince} ms (chương ${currentChapter?.id}, ${"%.1f".format(positionSeconds)} s)")
+            AppLog.i("ABookStall", "giọng chờ đoạn kế ${now - stalledSince} ms (chương ${currentChapter?.id}, ${"%.1f".format(positionSeconds)} s)")
         }
         stalledSince = 0L
     }
@@ -687,7 +687,7 @@ object Playback {
     fun onRateChanged(speed: Float) {
         if (speed == knownSpeed) return
         knownSpeed = speed
-        if (bookId.isNotEmpty()) runCatching { Store.setRate(bookId, speed.toDouble(), recordId.ifEmpty { null }) }.onFailure { Log.w("ABookSave", "không lưu được tốc độ", it) }
+        if (bookId.isNotEmpty()) runCatching { Store.setRate(bookId, speed.toDouble(), recordId.ifEmpty { null }) }.onFailure { AppLog.w("ABookSave", "không lưu được tốc độ", it) }
         emit("rateChanged")
     }
 
@@ -854,7 +854,7 @@ object Playback {
             if (recordId.isNotEmpty() && !Store.holds(bookId, recordId)) return
             Store.progress(bookId, chapter.id, positionSeconds, duration, ReadAloud.anchor(), recordId.ifEmpty { null })
         } catch (error: Exception) {
-            Log.w("ABookSave", "không lưu được chỗ nghe (chương ${chapter.id}, ${"%.1f".format(positionSeconds)} s)", error)
+            AppLog.w("ABookSave", "không lưu được chỗ nghe (chương ${chapter.id}, ${"%.1f".format(positionSeconds)} s)", error)
             if (!saveFailing) {
                 saveFailing = true
                 emit("saveFailed")

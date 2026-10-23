@@ -1003,6 +1003,42 @@ def player_command(entry: dict[str, Any], command: dict[str, Any], *, timeout: f
     return reply if isinstance(reply, dict) else {}
 
 
+DIAGNOSTICS_LINES = 2000  # đuôi nhật ký mặc định; điện thoại cũng cắt ở trần này (Diagnostics.kt MAX_LINES)
+DIAGNOSTICS_MAX_LINES = 20_000
+DIAGNOSTICS_TIMEOUT = 20  # điện thoại gom nhật ký + logcat rồi mới trả lời: lâu hơn một lời hỏi thường
+NEEDS_NEWER = "điện thoại cần bản ABook mới hơn (bản này chưa biết gửi nhật ký chẩn đoán)"
+
+
+def diagnostics(device_id: str, lines: int = DIAGNOSTICS_LINES) -> dict[str, Any]:
+    """Bản chẩn đoán của điện thoại đã ghép `device_id` (`GET /sync/v1/diagnostics`, Diagnostics.kt): phiên bản app, pin, mạng, việc nền,
+    lần chết gần nhất và `lines` dòng nhật ký cuối - đúng đường `player`/`library` (TLS ghim vân tay, cùng mã thiết bị), nên đi được qua LAN, Tailscale
+    hay 4G mà không cần adb. Lỗi nói cho người dùng: máy không với tới, chưa bật "Cho máy khác nghe thư viện này" (cổng đóng), mã bị thu hồi,
+    bản app điện thoại cũ chưa có đường này (404)."""
+    entry = _COMPUTERS.get(device_id) if _COMPUTERS is not None else None
+    if entry is None:
+        raise RemoteError("Máy này không ghép với máy ấy")
+    wanted = max(1, min(int(lines), DIAGNOSTICS_MAX_LINES))
+    name = str(entry.get("name") or "máy kia")
+    try:
+        data = _request(_base(entry), "GET", f"/sync/v1/diagnostics?lines={wanted}", entry["token"],
+                        timeout=DIAGNOSTICS_TIMEOUT, wake=True)
+    except RemoteError as error:
+        if error.status == 404:
+            raise RemoteError(f"{name}: {NEEDS_NEWER}", status=404) from error
+        if error.status == 401:
+            raise RemoteError(f"{name} không nhận máy này nữa (đã thôi ghép ở phía điện thoại?) - ghép lại rồi thử lại", status=401) from error
+        raise
+    try:
+        reply = json.loads(data.decode("utf-8"))
+    except ValueError as error:
+        raise RemoteError("Máy kia trả lời lạ - có phải ABook không?") from error
+    if not isinstance(reply, dict):
+        raise RemoteError("Máy kia trả lời lạ - có phải ABook không?")
+    reply["fetchedAt"] = time.time()
+    from .diagnostics import redact_report
+    return redact_report(reply)
+
+
 def local_book(library_root: Path, computer: str, book: str) -> Path | None:
     """Cuốn ảo của máy này cho sách `book` của máy `computer` (đã dựng bởi `refresh`), None nếu chưa có."""
     root = Path(library_root).expanduser() / REMOTE_FOLDER

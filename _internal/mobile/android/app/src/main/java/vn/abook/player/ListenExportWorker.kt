@@ -114,7 +114,9 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
     override fun getForegroundInfo(): ForegroundInfo =
         ListenExports.foreground(applicationContext, id, ListenExports.inputs(inputData).bookId.orEmpty(), title, 0, 0, null)
 
-    override fun doWork(): Result {
+    override fun doWork(): Result = AppLog.worker("ListenExport", this) { execute() }
+
+    private fun execute(): Result {
         val context = applicationContext
         Playback.init(context)
         val input = ListenExports.inputs(inputData)
@@ -197,7 +199,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
                 stamps[index].peakDbtp?.takeIf { guard != null && it > guard.ceilingDbtp }?.let { index + 1 to it }
             }
             if (over.isNotEmpty()) {
-                android.util.Log.w("ListenExport", "sau ${ListenExport.Run.PEAK_RETRIES} lượt mã hoá lại vẫn vượt trần: $over")
+                AppLog.w("ListenExport", "sau ${ListenExport.Run.PEAK_RETRIES} lượt mã hoá lại vẫn vượt trần: $over")
                 finished.put("overCeiling", org.json.JSONArray(over.map { (chapter, dbtp) -> JSONObject().put("chapter", chapter).put("dbtp", dbtp) }))
             }
             ListenExports.emit(finished)
