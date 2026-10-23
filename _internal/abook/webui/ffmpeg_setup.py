@@ -2,8 +2,8 @@
 nhạc (thẻ + độ dài đọc bằng tinytag). ffmpeg chỉ phục vụ phần phân tích: giải mã cho model (music_mel.py) và đo độ to (music_plan.py).
 Đường tải ghim cứng (URL + SHA-256 + cỡ), qua studio_setup.download (.part, kiểm băm, rồi mới đổi tên).
 
-Nguồn: bánh xe imageio-ffmpeg 0.6.0 trên PyPI (một file zip) chứa đúng một exe tĩnh - FFmpeg 7.1 bản "essentials" của gyan.dev
-(cấu hình GPL-3.0; phần bọc imageio-ffmpeg BSD-2-Clause, docs/THIRD_PARTY.md). Chỉ Windows x86_64 có đường tải; nền tảng khác phải tự
+Nguồn: ZIP GyanD/codexffmpeg 8.1.2 essentials, Windows x64 tĩnh GPL-3.0-or-later, tag cố định 8.1.2.
+Chỉ tải phần nén của ffmpeg.exe bằng HTTP Range; ghim SHA-256/cỡ cả phần nén và exe, kiểm CRC (docs/THIRD_PARTY.md). Chỉ Windows x86_64 có đường tải; nền tảng khác phải tự
 cài ffmpeg (lý do nói rõ). Máy đã có ffmpeg không phải của mình (imageio_ffmpeg, hay trong PATH) thì `external()` đúng và mô-đun không
 tải gì. Việc tải/đặt trạng thái do music_module.py lo; ở đây chỉ có `install` (đồng bộ) và các phép kiểm.
 
@@ -16,21 +16,24 @@ import platform
 import shutil
 import sys
 import threading
-import zipfile
 from pathlib import Path
 from typing import Callable
 
 from .. import io_utils
-from . import studio_setup
+from . import studio_setup, zip_range
 
+# Giữ tên WHEEL cho caller: cỡ/băm của phần DEFLATE, URL của ZIP có tag cố định.
 WHEEL = studio_setup.Download(
     "bộ đọc nhạc (ffmpeg)",
-    "https://files.pythonhosted.org/packages/2c/c6/fa760e12a2483469e2bf5058c5faff664acf66cadb4df2ad6205b016a73d/"
-    "imageio_ffmpeg-0.6.0-py3-none-win_amd64.whl",
-    "02fa47c83703c37df6bfe4896aab339013f62bf02c5ebf2dce6da56af04ffc0a",
-    31_246_824,
+    "https://github.com/GyanD/codexffmpeg/releases/download/8.1.2/ffmpeg-8.1.2-essentials_build.zip",
+    "fcc9bb26d29ef695533bec19e0b2e15f0d3745cb900d260d8b6c97eab07277aa",
+    35_710_575,
 )
-MEMBER = "imageio_ffmpeg/binaries/ffmpeg-win-x86_64-v7.1.exe"
+MEMBER = "ffmpeg-8.1.2-essentials_build/bin/ffmpeg.exe"
+ARCHIVE_SIZE = 109_728_040
+EXE_SIZE = 101_897_728
+EXE_SHA256 = "1326dde4c84ff1f96fe6b8916c5bed29e163e9b5dccf995f6f3db069d143ec5e"
+EXE_CRC = 1558300500
 ENV_DOWNLOAD = "ABOOK_FFMPEG_DOWNLOAD"  # "0" = không bao giờ tải
 NOUN = "bộ đọc nhạc (ffmpeg)"  # trong câu báo lỗi tải
 FOLDER = Path("tools") / "ffmpeg"  # dưới thư mục dữ liệu của app (server.py)
@@ -108,23 +111,23 @@ def install(progress: Callable[[int, int], None], cancelled: Callable[[], bool] 
 
 
 def _install(progress: Callable[[int, int], None], cancelled: Callable[[], bool]) -> Path:
-    """Tải bánh xe (ghim), lấy ra exe, đăng ký với io_utils. Đồng bộ - gọi ở luồng nền của mô-đun. Ném lỗi để mô-đun nói lý do (`reason`)."""
+    """Tải riêng mục FFmpeg đã ghim, kiểm băm trước khi đăng ký với io_utils. Đồng bộ - gọi ở luồng nền của mô-đun. Ném lỗi để mô-đun nói lý do (`reason`)."""
     assert _folder is not None
     _folder.mkdir(parents=True, exist_ok=True)
-    wheel = _folder / "imageio_ffmpeg.whl"
-    studio_setup.download(WHEEL, wheel, progress, cancelled)
+    archive = _folder / "ffmpeg.deflate"
+    offset = zip_range.member_offset(WHEEL, ARCHIVE_SIZE, MEMBER, EXE_SIZE, EXE_CRC, cancelled)
+    studio_setup.download(WHEEL, archive, progress, cancelled, byte_range=(offset, ARCHIVE_SIZE))
     exe = _folder / EXE_NAME
     part = exe.with_name(exe.name + ".part")
-    with zipfile.ZipFile(wheel) as bundle, bundle.open(MEMBER) as source, part.open("wb") as target:
-        shutil.copyfileobj(source, target, 1 << 20)
+    zip_range.inflate(archive, part, EXE_SIZE, EXE_SHA256, EXE_CRC, cancelled)
     os.replace(part, exe)
-    wheel.unlink(missing_ok=True)
+    os.remove(archive.resolve())
     io_utils.use_downloaded_ffmpeg(exe)
     return exe
 
 
 # ---- tải riêng ffmpeg (xuất sách nói: hộp Xuất mời tải khi máy chưa có) ---------------------------------------------------------
-# Mô-đun "Phân tích nhạc" tải ffmpeg cùng thư viện + model; xuất sách nói chỉ cần ffmpeg (~31 MB) nên có đường tải riêng, cùng `install` và cùng thư mục.
+# Mô-đun "Phân tích nhạc" tải ffmpeg cùng thư viện + model; xuất sách nói chỉ cần ffmpeg (~36 MB) nên có đường tải riêng, cùng `install` và cùng thư mục.
 
 _state: dict[str, object] = {"downloading": False, "done": 0, "total": 0, "error": ""}
 _cancel = threading.Event()
