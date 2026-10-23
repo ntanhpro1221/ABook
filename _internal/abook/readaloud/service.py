@@ -207,7 +207,7 @@ class ReadAloud:
                  spare: Callable[[], bool] = lambda: True) -> None:
         self.folder = Path(folder)
         kwargs = {} if limit is None else {"limit": limit}
-        self.cache = ClipCache(self.folder, **kwargs)
+        self.cache = ClipCache(self.folder, pin_file=self.folder.with_name(self.folder.name + "-clip-pins.txt"), **kwargs)
         if providers is None:
             providers = [EdgeProvider(), *(keyed_providers(keys) if keys is not None else []), DeviceProvider(self.folder / "tools")]
         self.providers: dict[str, Provider] = {provider.id: provider for provider in providers}
@@ -233,8 +233,8 @@ class ReadAloud:
         self.origins = names.BookOrigins(self.folder.with_name(self.folder.name + "-book-origins.json"))
         # Cuốn nào đã làm ra clip nào ("bản đọc đã làm" của cuốn): cạnh thư mục bộ đệm như `origins`.
         self.books = ClipBooks(self.folder.with_name(self.folder.name + "-clip-books.jsonl"))
-        self.prepare = Prepare(lambda voice, text, origin, readings, book: self.clip(voice, text, background=True, origin=origin, readings=readings, book=book),
-                               lambda: self._live, int(self.cache.limit * PREPARE_SHARE), rtf)
+        self.prepare = Prepare(lambda voice, text, origin, readings, book: self.clip(voice, text, background=True, pin=True, origin=origin, readings=readings, book=book),
+                               lambda: self._live, int(self.cache.limit * PREPARE_SHARE), rtf, lambda: self.cache.pinned_bytes() >= int(self.cache.limit * PREPARE_SHARE))
         # Nhả model của giọng trên máy khi thôi dùng ([release_idle]): lúc dùng gần nhất / số việc đang dùng, theo nhà cung cấp; giọng đã nhả không còn trong `_used`.
         self._clock = clock
         self._idle_guard = threading.Lock()
@@ -422,7 +422,7 @@ class ReadAloud:
 
     def clip(self, voice_id: str, text: str, *, cached_only: bool = False, background: bool = False, origin: str | None = None,
              readings: Mapping[str, str] | None = None, book: str | None = None, rank: int = edge.RANK_BACKGROUND,
-             stream: StreamListener | None = None, cancelled: Callable[[], bool] | None = None, quality: bool = False) -> dict[str, Any]:
+             stream: StreamListener | None = None, cancelled: Callable[[], bool] | None = None, quality: bool = False, pin: bool = False) -> dict[str, Any]:
         """Clip của `text` bằng `voice_id`: `{file, duration_ms, words}` (từ bộ đệm hay đọc mới). `cached_only`: không đọc mới - chưa có thì `VoiceError("uncached")`.
         `background`: việc "Làm trước" (prepare.py) - không tính là người đang nghe chờ. `origin`: gốc của cuốn ("ja" / "ko", `names.BookOrigins`) - giọng đọc
         trên máy (VieNeu, Supertonic: có `reading_tag`) đọc tên romaji / RR theo luật phiên âm, Supertonic còn Việt hoá từ Anh (`speaks_english` False); Edge (`normalises_text`) nhận
@@ -441,7 +441,8 @@ class ReadAloud:
         uxfix70) thì dừng trong vòng một phần giây với `VoiceError` lý do "cancelled" và không có gì vào bộ đệm. Giọng khác đọc nốt đoạn đang đọc.
         `quality`: luôn bậc chất lượng của giọng (xuất sách nói, MP3 / M4B) - không thì giọng có hai bậc đọc bậc mà "Tốc độ giọng trên máy" đang dùng (`speed`);
         clip bậc nhanh có dấu bậc trong khoá nên không bao giờ đứng thay clip chất lượng. Ngược lại thì được (uxfix70): nghe ở bậc nhanh mà đoạn đã có clip bậc chất lượng
-        (làm trước khi đổi bậc, hay xuất sách nói) thì dùng clip ấy, không đọc lại."""
+        (làm trước khi đổi bậc, hay xuất sách nói) thì dùng clip ấy, không đọc lại.
+        `pin`: "Làm trước" (prepare.py) - clip được GHIM trong bộ đệm (cache.py) tới khi người nghe tới nó; một lần gọi không phải nền (nghe, kể cả `cached_only`) bỏ ghim clip ấy."""
         if not fold(text):
             raise VoiceError("Đoạn này không có chữ nào để đọc.", "empty")
         if len(text) > MAX_TEXT:
@@ -520,6 +521,8 @@ class ReadAloud:
                             raise
                         words = made.words if made.words is not None else map_boundaries(said, made.boundaries, made.duration_ms)
                         words = _shown_words(words, spans, slots)  # chữ hiện thành nhiều chữ đọc / cụm đọc ngắn hơn số chữ hiện: mốc về đủ chữ hiện
+                        if pin:
+                            self.cache.pin(key)  # trước khi ghi: lần tỉa ngay trong lúc ghi đã thấy nó là clip ghim
                         hit = self.cache.put(key, made.audio, made.ext, made.duration_ms, words)
                 finally:
                     lock.release()
@@ -528,6 +531,10 @@ class ReadAloud:
                 with self._locks_guard:
                     self._locks.pop(key, None)
                     self._live -= 0 if background else 1
+        if pin:
+            self.cache.pin(hit.key)
+        elif not background:
+            self.cache.unpin(hit.key)
         if book:
             self.books.note(book, key)
         return {"file": hit.file, "duration_ms": hit.duration_ms, "words": hit.words}

@@ -36,8 +36,8 @@ import {
 const ONLINE_VOICE = "edge:vi-VN-HoaiMyNeural";
 
 /** Nơi mô-đun sống: máy tính hỏi máy chủ cục bộ (`desktopVieneu`, `desktopSupertonic`), điện thoại hỏi plugin ReadAloud (android/SettingsScreen.tsx).
- *  Cùng hình trạng thái. `remove` có trên điện thoại và với giọng Supertonic (gỡ một giọng để lấy lại chỗ). `start()` không kèm lựa chọn = cập nhật
- *  phần đã cũ. */
+ *  Cùng hình trạng thái. `remove` có trên điện thoại và với cả hai giọng của máy tính (gỡ một giọng để lấy lại chỗ; VieNeu: Turbo, Nano, bản tăng tốc - bộ căn chữ dùng chung
+ *  nên ở lại). `start()` không kèm lựa chọn = cập nhật phần đã cũ. */
 export interface VieneuBackend {
   status(): Promise<VieneuStatus>;
   start(choices?: VieneuChoiceId[]): Promise<VieneuStatus>;
@@ -58,6 +58,7 @@ export const desktopVieneu: VieneuBackend = {
   measure: () => api<VieneuStatus>("/api/readaloud/vieneu/measure", { method: "POST", body: {} }),
   cancel: () => api<VieneuStatus>("/api/readaloud/vieneu/cancel", { method: "POST", body: {} }),
   accelerate: (on) => api<VieneuStatus>("/api/readaloud/vieneu/accelerate", { method: "POST", body: { on } }),
+  remove: (choice) => api<VieneuStatus>("/api/readaloud/vieneu/remove", { method: "POST", body: { choice } }),
   voices: () => api<ReadAloudVoice[]>("/api/readaloud/voices"),
 };
 

@@ -68,11 +68,12 @@ def estimate(voice: str, chapter_chars: list[int], budget: int, rtf: float | Non
 
 class Prepare:
     """`clip(voice, text, origin, readings, book)`: ReadAloud.clip (đánh dấu là việc nền; `origin`, `readings`, `book`: gốc, cách đọc riêng và mã của cuốn, xem `start`); `live()`: số clip của người đang nghe đang làm; `budget`: byte bộ đệm dành
-    cho việc làm trước; `rtf(voice)`: tốc độ đo được của giọng (ước thời gian lúc chưa làm đoạn nào), None nếu chưa đo."""
+    cho việc làm trước; `rtf(voice)`: tốc độ đo được của giọng (ước thời gian lúc chưa làm đoạn nào), None nếu chưa đo; `full()`: các clip đã ghim ([cache.ClipCache.pin])
+    đã chiếm hết `budget` - việc dừng ở đó (state "done", `full` True) thay vì ghim thêm, như PrepareRunner trên điện thoại."""
 
     def __init__(self, clip: Callable[[str, str, str | None, Mapping[str, str] | None, str | None], Any], live: Callable[[], int], budget: int,
-                 rtf: Callable[[str], float | None] = lambda _voice: None) -> None:
-        self._clip, self._live, self.budget, self._rtf = clip, live, budget, rtf
+                 rtf: Callable[[str], float | None] = lambda _voice: None, full: Callable[[], bool] = lambda: False) -> None:
+        self._clip, self._live, self.budget, self._rtf, self._full = clip, live, budget, rtf, full
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
         self._stop = threading.Event()
@@ -142,6 +143,11 @@ class Prepare:
             while self._live() > 0 and not stop.is_set():  # người đang nghe đi trước
                 time.sleep(0.2)
             if stop.is_set():
+                return
+            if self._full():
+                with self._lock:
+                    if not stop.is_set():
+                        job.update(state="done", full=True)
                 return
             began = time.perf_counter()
             try:
