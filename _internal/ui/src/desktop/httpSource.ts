@@ -262,7 +262,7 @@ export const httpSource: ListenSource = {
     await api(`/api/listen/books/${bookId}/rate`, { method: "POST", body: { rate, record } });
   },
   addBookmark: (bookId, chapterId, seconds, note, record, sentence) =>
-    api<Bookmark>(`/api/listen/books/${bookId}/bookmarks`, { method: "POST", body: { chapterId, seconds, note, record, index: sentence?.index, quote: sentence?.quote } }),
+    api<Bookmark>(`/api/listen/books/${bookId}/bookmarks`, { method: "POST", body: { chapterId, seconds, note, record, ...sentence } }),
   updateBookmark: async (bookId, id, note, record) => {
     await api(`/api/listen/books/${bookId}/bookmarks/${id}`, { method: "PUT", body: { note, record } });
   },

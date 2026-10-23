@@ -27,6 +27,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: trang chia sẻ thư viện chỉ nhắc cho ABook chạy nền khi máy thật sự chưa cho, và nói rõ vì sao.
 - Điện thoại: biểu tượng thông báo của chia sẻ và phát lên loa dùng biểu tượng đơn sắc của ABook, và thông báo "Làm trước" bị kẹt lại sau khi app bị tắt giữa chừng được dọn đi, vuốt bỏ được.
 
+### Đọc và nghe trên điện thoại
+- Điện thoại: chữ đang đọc và hẹn giờ giữ đúng vị trí khi giọng đọc đang chờ hoặc tải đoạn tiếp theo.
+- Điện thoại: “Nghe từ đây” và “Nghe từ câu này” vào đúng câu bạn chọn, kể cả khi cuốn sách dùng giọng khác.
+- Điện thoại: dấu trang sách chữ giữ câu đang nghe cả khi bạn chưa mở văn bản hoặc đặt dấu từ màn hình khoá; vị trí chữ được giữ khi đồng bộ và hoàn tác xoá.
+- Điện thoại: widget cỡ vừa có đủ nút lùi, phát/dừng, tới và hẹn giờ, kèm tên sách/chương; thu nhỏ vẫn giữ nút phát/dừng trọn vẹn, nới rộng có thêm bìa lớn.
+
 ## [0.4.131] - 2026-10-23
 
 ### Hồ sơ người nghe

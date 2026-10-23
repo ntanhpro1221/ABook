@@ -195,7 +195,7 @@ export const androidSource: ListenSource = {
   setFinished: (id, finished, record) => EbookLibrary.setFinished({ id, finished, record }),
   setRate: (id, rate, record) => EbookLibrary.setRate({ id, rate, record }),
   setVoice: (id, voice, record) => EbookLibrary.setVoice({ id, voice, record }),
-  addBookmark: (id, chapterId, seconds, note, record, sentence) => EbookLibrary.addBookmark({ id, chapterId, seconds, note, index: sentence?.index, quote: sentence?.quote, record }),
+  addBookmark: (id, chapterId, seconds, note, record, sentence) => EbookLibrary.addBookmark({ id, chapterId, seconds, note, ...sentence, record }),
   refreshListening: async (id) => {
     await EbookLibrary.syncState({ id });
   },
