@@ -138,6 +138,65 @@ class LoopSinkCaptureTest {
     }
 
     @Test
+    fun theStepAsideBufferBetweenTwoFlushesNeitherUsesUpTheTrimNorFeedsTheLanding() {
+        // Máy thật OPPO (rs46p, PLAN_loop §47.1): lệnh tua đệm (100 ms) xả, buffer của nó tới sink TRƯỚC lần xả của lệnh tua thật (200 ms). Trước đây: buffer đệm tiêu số cắt
+        // + lượt chụp, buffer đúng ra loa không cắt (đáp -4063) và land báo khung của buffer đã bị xả.
+        val inner = Inner()
+        val s = sink(inner)
+        val calls = mutableListOf<ShortArray>()
+        s.armSeek(4063, LoopSeam.LoopSink.Capture(256) { calls += it }, flushes = 2)
+        s.flush() // lần xả của lệnh tua đệm
+        assertFalse(s.capturing) // chưa phải lần xả cuối: chưa chụp
+        s.handleBuffer(chunk(4410, 4410), 100_000, 1) // buffer của lệnh tua đệm: vẫn bị cắt như thường
+        assertTrue(calls.isEmpty())
+        s.flush() // lần xả của lệnh tua thật: đặt lại số cắt + bắt đầu chụp
+        assertTrue(s.capturing)
+        s.handleBuffer(chunk(8820, 4410), 200_000, 1)
+        assertEquals(1, calls.size)
+        assertArrayEquals(expected(8820 + 4063, 256), calls[0]) // chỉ khung của buffer sau lần xả cuối
+        val trimUs = 4063L * 1_000_000 / 44100
+        assertEquals(listOf(100_000L + trimUs to 4410 + 4063, 200_000L + trimUs to 8820 + 4063), inner.got)
+        // dùng hết: lần xả không kèm lệnh tua thì không cắt như cũ
+        s.handleBuffer(chunk(13230, 4410), 300_000, 1)
+        s.flush()
+        s.handleBuffer(chunk(0, 4410), 0, 1)
+        assertEquals(0L to 0, inner.got.last())
+    }
+
+    @Test
+    fun oneFlushArmBehavesAsBefore() {
+        val inner = Inner()
+        val s = sink(inner)
+        val calls = mutableListOf<ShortArray>()
+        s.armSeek(4063, LoopSeam.LoopSink.Capture(256) { calls += it }, flushes = 1)
+        s.flush()
+        assertTrue(s.capturing)
+        s.handleBuffer(chunk(17640, 4410), 400_000, 1)
+        s.flush() // xả thêm không nạp: không cắt
+        s.handleBuffer(chunk(0, 4410), 0, 1)
+        assertArrayEquals(expected(21703, 256), calls.single())
+        assertEquals(listOf(400_000L + 4063L * 1_000_000 / 44100 to 21703, 0L to 0), inner.got)
+    }
+
+    @Test
+    fun anArmOlderThanTwoSecondsIsDropped() {
+        val inner = Inner()
+        val s = sink(inner)
+        var now = 5_000_000_000L
+        s.clock = { now }
+        val calls = mutableListOf<ShortArray>()
+        s.armSeek(4063, LoopSeam.LoopSink.Capture(256) { calls += it }, flushes = 2)
+        now += 2_100_000_000L // lệnh tua không sinh đủ lần xả trong hạn
+        s.flush() // lần xả lạ: không áp
+        assertFalse(s.capturing)
+        s.handleBuffer(chunk(4410, 4410), 100_000, 1)
+        s.flush()
+        s.handleBuffer(chunk(8820, 4410), 200_000, 1)
+        assertEquals(listOf(100_000L to 4410, 200_000L to 8820), inner.got)
+        assertTrue(calls.isEmpty())
+    }
+
+    @Test
     fun nonPcm16OutputIsNeverCaptured() {
         val inner = Inner()
         val s = sink(inner, C.ENCODING_PCM_FLOAT)
