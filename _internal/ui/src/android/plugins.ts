@@ -68,6 +68,7 @@ export interface EbookPlayerPlugin {
     rate: number;
     autoplay?: boolean;
     readAloudVoice?: string;
+    readAloudRecord?: string;
   }): Promise<NativeState>;
   play(): Promise<NativeState>;
   pause(): Promise<NativeState>;
@@ -107,6 +108,8 @@ export interface EbookPlayerPlugin {
     readAloudVoice?: string;
     /** Cuốn của `readAloudVoice`: lõi nhớ giọng ấy cho cuốn ấy (ReadAloud.chooseFor); không có thì cuốn đang nạp. */
     readAloudBook?: string;
+    /** Hồ sơ nghe của `readAloudVoice`: giọng riêng nhớ theo (cuốn, hồ sơ), hồ sơ khác của cùng cuốn không kế thừa. */
+    readAloudRecord?: string;
     /** Giọng mặc định (Cài đặt) cho cuốn chưa chọn giọng riêng; "" = chưa đặt. Không đổi giọng của chương đang đọc. */
     readAloudDefault?: string;
     /** Nhà cung cấp giọng trực tuyến người nghe đã đồng ý gửi chữ tới (listen/onlineConsent.ts): lõi tự sang chương chữ chỉ với những giọng ấy. */
@@ -551,9 +554,9 @@ export interface EbookLibraryPlugin {
   saveReading(options: { id: string; chapterId: number; index: number; at?: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor; quote?: string; record?: string }): Promise<ListeningState>;
   setChapterDone(options: { id: string; chapterId: number; done: boolean }): Promise<ListeningState>;
   setFinished(options: { id: string; finished: boolean }): Promise<ListeningState>;
-  setRate(options: { id: string; rate: number }): Promise<void>;
+  setRate(options: { id: string; rate: number; record?: string }): Promise<void>;
   /** Giọng Nghe ngay riêng của cuốn ("" = giọng mặc định) - đi theo hồ sơ nghe sang máy kia (soát a68 lỗi 8). */
-  setVoice(options: { id: string; voice: string }): Promise<void>;
+  setVoice(options: { id: string; voice: string; record?: string }): Promise<void>;
   addBookmark(options: { id: string; chapterId: number; seconds: number; note: string; index?: number; quote?: string; createdAt?: number }): Promise<Bookmark>;
   restoreBookmark(options: { id: string; mark: Bookmark }): Promise<Bookmark>;
   updateBookmark(options: { id: string; markId: string; note: string }): Promise<void>;

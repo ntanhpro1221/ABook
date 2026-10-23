@@ -278,6 +278,8 @@ object Store {
     private val recordsFile get() = File(root, "records.json")
     private var recordsCache: JSONObject? = null
 
+    fun isRecordId(value: String) = RECORD_ID.matches(value)
+
     private fun newRecordId() = "r-" + UUID.randomUUID().toString().replace("-", "").take(16)
 
     /**
@@ -381,7 +383,8 @@ object Store {
      * và có đang phát không (test JVM đưa giá trị giả - Playback cần Android).
      */
     @Synchronized
-    fun applySync(bookId: String, reply: JSONObject, player: () -> Pair<String, Boolean> = { Playback.bookId to Playback.isPlaying }) {
+    fun applySync(bookId: String, reply: JSONObject, player: () -> Pair<String, Boolean> = { Playback.bookId to Playback.isPlaying },
+                  onGone: (Set<String>) -> Unit = { Playback.recordsGone(it) }) {
         val record = reply.optString("record")
         if (!RECORD_ID.matches(record)) {
             save(bookId, mergeStates(state(bookId), withoutSyncKeys(reply)))
@@ -393,13 +396,18 @@ object Store {
         // bia mộ của máy tính: xoá theo, kể cả hồ sơ vừa gửi (máy tính trả deleted=true)
         val tombstones = reply.optJSONObject("deletedRecords") ?: JSONObject()
         if (reply.optBoolean("deleted")) tombstones.put(record, now())
+        val removed = mutableSetOf<String>()
         for (gone in tombstones.keys()) {
             if (!RECORD_ID.matches(gone)) continue
+            if (records.has(gone)) removed.add(gone)
             forget(book, gone)
             book.getJSONObject("deleted").put(gone, tombstones.optDouble(gone, now()))
         }
+        // Trình phát đang giữ hồ sơ vừa bị xoá từ máy khác thì phải dừng / đóng phiên và chọn hồ sơ thay thế (sau khi sổ đã lưu): lần lưu
+        // kế không được rơi sang hồ sơ còn lại (hay đẻ hồ sơ mới).
         if (reply.optBoolean("deleted") || book.getJSONObject("deleted").has(record)) {
             saveRecords(book)
+            if (removed.isNotEmpty()) onGone(removed)
             return
         }
         // Trong lúc chờ mạng người nghe vẫn sửa hồ sơ: gộp với bản đang có của ĐÚNG mã vừa gửi.
@@ -426,6 +434,24 @@ object Store {
         if (owner != bookId) unlink(links, bookId, record)
         val link = links.optJSONObject(owner) ?: JSONObject().put("records", JSONArray()).put("activeAt", 0.0)
         addRecord(link, record)
+        // Mọi hồ sơ máy giữ sách biết của cuốn này (không chỉ hồ sơ vừa gửi và hồ sơ đang chọn) hiện trong bộ chọn hồ sơ: hồ sơ chưa
+        // thuộc cuốn nào ở đây thì gắn vào; đang ở cuốn khác thì theo lần chuyển sau thắng (`movedAt`, như hồ sơ vừa gửi).
+        for (index in 0 until known.length()) {
+            val item = known.optJSONObject(index) ?: continue
+            val id = item.optString("id")
+            val meta = records.optJSONObject(id) ?: continue
+            if (!RECORD_ID.matches(id) || id == record || book.getJSONObject("deleted").has(id)) continue
+            val there = ownerOf(links, id)
+            val theirMoved = item.optDouble("movedAt", 0.0)
+            if (there != null && there != owner) {
+                if (theirMoved <= meta.optDouble("movedAt", 0.0)) continue
+                unlink(links, there, id)
+            }
+            if (there == owner || there == null || theirMoved > meta.optDouble("movedAt", 0.0)) {
+                addRecord(link, id)
+                if (theirMoved > meta.optDouble("movedAt", 0.0)) meta.put("movedAt", theirMoved)
+            }
+        }
         val active = reply.optJSONObject("active")
         val chosen = active?.optString("record").orEmpty()
         val chosenAt = active?.optDouble("at", 0.0) ?: 0.0
@@ -455,7 +481,84 @@ object Store {
         if (link.optString("active").isBlank()) link.put("active", record)
         links.put(owner, link)
         saveRecords(book)
+        if (removed.isNotEmpty()) onGone(removed)
         if (follow) Playback.onMain { Playback.follow(owner) }
+    }
+
+    /**
+     * Điện thoại làm MÁY GIỮ SÁCH: máy kia (máy tính hay điện thoại khác) gửi hồ sơ của nó, gộp vào đúng hồ sơ ấy chứ không phải
+     * hồ sơ đang dùng ở đây (webui/listening.py merge_record; bộ ví dụ dùng chung tests/fixtures/sync/records_host.json): hồ sơ lạ
+     * được nhận cùng mã, tên đổi sau thắng (`nameAt`), hồ sơ đang chọn bên chọn sau thắng (`activeAt`), hồ sơ gắn ở cuốn nào
+     * lần chuyển sau thắng (`movedAt`), bia mộ gửi tới xoá theo, hồ sơ đã xoá ở đây thì không sống lại (`deleted: true`).
+     * Lời đáp mang `record`, `book`, `movedAt`, danh sách hồ sơ của cuốn, hồ sơ đang chọn (kèm `activeState` nếu khác hồ sơ
+     * vừa gộp) và mọi bia mộ.
+     */
+    @Synchronized
+    fun mergeRecord(bookId: String, body: JSONObject, onGone: (Set<String>) -> Unit = { Playback.recordsGone(it) }): JSONObject {
+        val record = body.optString("record")
+        require(RECORD_ID.matches(record)) { "Thiếu mã hồ sơ nghe" }
+        val book = recordsBook()
+        val records = book.getJSONObject("records")
+        val links = book.getJSONObject("links")
+        val tombstones = book.getJSONObject("deleted")
+        val removed = mutableSetOf<String>()
+        body.optJSONObject("deletedRecords")?.let { sent ->
+            for (id in sent.keys()) {
+                if (!RECORD_ID.matches(id)) continue
+                if (records.has(id)) removed.add(id)
+                forget(book, id)
+                tombstones.put(id, maxOf(tombstones.optDouble(id, 0.0).takeIf { !it.isNaN() } ?: 0.0, sent.optDouble(id, 0.0)))
+            }
+        }
+        if (tombstones.has(record)) {
+            saveRecords(book)
+            if (removed.isNotEmpty()) onGone(removed)
+            return JSONObject().put("record", record).put("deleted", true).put("deletedRecords", JSONObject(tombstones.toString()))
+        }
+        val nameAt = body.optDouble("nameAt", 0.0).takeIf { !it.isNaN() } ?: 0.0
+        val sentName = body.optString("recordName").trim().take(60)
+        val meta = records.optJSONObject(record) ?: JSONObject().put("name", sentName.ifBlank { DEFAULT_RECORD_NAME })
+            .put("createdAt", now()).put("nameAt", nameAt).also { records.put(record, it) }
+        if (sentName.isNotBlank() && nameAt > meta.optDouble("nameAt", 0.0)) meta.put("name", sentName).put("nameAt", nameAt)
+        val movedAt = body.optDouble("movedAt", 0.0).takeIf { !it.isNaN() } ?: 0.0
+        var owner = ownerOf(links, record)
+        if (owner != null && owner != bookId && movedAt > meta.optDouble("movedAt", 0.0)) {
+            unlink(links, owner, record)  // máy kia chuyển hồ sơ sang cuốn này sau lần chuyển ở đây: theo nó
+            owner = null
+        }
+        if (owner == null) {
+            owner = bookId
+            val fresh = links.optJSONObject(bookId) ?: JSONObject().put("records", JSONArray()).put("activeAt", 0.0)
+            addRecord(fresh, record)
+            if (fresh.optString("active").isBlank() || !records.has(fresh.optString("active"))) fresh.put("active", record)
+            links.put(bookId, fresh)
+        }
+        if (owner == bookId) meta.put("movedAt", maxOf(meta.optDouble("movedAt", 0.0), movedAt))
+        val link = links.getJSONObject(owner)
+        val activeAt = body.optDouble("activeAt", 0.0).takeIf { !it.isNaN() } ?: 0.0
+        if (activeAt > 0.0 && activeAt > link.optDouble("activeAt", 0.0)) {
+            link.put("active", record).put("activeAt", activeAt)
+        }
+        val merged = mergeStates(recordState(record), withoutSyncKeys(body))
+        writeAtomic(recordFile(record), merged.toString())
+        saveRecords(book)
+        if (removed.isNotEmpty()) onGone(removed)
+        val listed = JSONArray()
+        val list = link.optJSONArray("records") ?: JSONArray()
+        for (index in 0 until list.length()) {
+            val id = list.optString(index)
+            val item = records.optJSONObject(id) ?: continue
+            listed.put(JSONObject().put("id", id).put("name", item.optString("name", DEFAULT_RECORD_NAME))
+                .put("nameAt", item.optDouble("nameAt", 0.0)).put("movedAt", item.optDouble("movedAt", 0.0)))
+        }
+        val chosen = link.optString("active")
+        val reply = JSONObject(merged.toString()).put("record", record)
+            .put("recordName", meta.optString("name", DEFAULT_RECORD_NAME)).put("book", owner)
+            .put("movedAt", meta.optDouble("movedAt", 0.0)).put("records", listed)
+            .put("active", JSONObject().put("record", chosen).put("at", link.optDouble("activeAt", 0.0)))
+            .put("deletedRecords", JSONObject(tombstones.toString()))
+        if (chosen.isNotBlank() && chosen != record && records.has(chosen)) reply.put("activeState", recordState(chosen))
+        return reply
     }
 
     private fun ownerOf(links: JSONObject, record: String): String? = links.keys().asSequence().firstOrNull { bookId ->
@@ -610,6 +713,10 @@ object Store {
 
     @Synchronized
     fun hasRecord(record: String): Boolean = recordsBook().getJSONObject("records").has(record)
+
+    /** Hồ sơ này đã có trạng thái nghe ở máy chưa (hồ sơ máy giữ sách báo trong danh sách mà chưa được tải về thì chưa). */
+    @Synchronized
+    fun hasState(record: String): Boolean = recordFile(record).isFile
 
     /** Hồ sơ [record] còn gắn với cuốn [bookId] (không đọc file trạng thái nào). */
     private fun ownsRecord(bookId: String, record: String): Boolean {
@@ -775,32 +882,44 @@ object Store {
         return state
     }
 
+    /** Hồ sơ để ghi: [recordId] là hồ sơ nơi gọi đã chốt lúc bắt đầu việc (phiên phát, yêu cầu gửi đi) - còn thuộc cuốn thì ghi vào đúng
+     *  nó, đã xoá hay sang cuốn khác thì null (bỏ lần ghi, không rơi sang hồ sơ khác); không nói thì hồ sơ đang dùng. */
+    private fun target(id: String, recordId: String?): String? =
+        if (recordId == null) activeRecord(id) else recordId.takeIf { ownsRecord(id, it) }
+
+    /** Hồ sơ [record] còn thuộc cuốn [id] (phiên phát đang giữ nó có còn ghi được không). */
     @Synchronized
-    fun setRate(id: String, rate: Double) {
-        val state = state(id)
+    fun holds(id: String, record: String): Boolean = ownsRecord(id, record)
+
+    @Synchronized
+    fun setRate(id: String, rate: Double, recordId: String? = null) {
+        val target = target(id, recordId) ?: return
+        val state = recordState(target)
         state.put("rate", rate).put("rateAt", now()).put("updatedAt", now())
-        save(id, state)
+        writeAtomic(recordFile(target), state.toString())
     }
 
     /** Giọng Nghe ngay riêng của cuốn (rỗng = giọng mặc định) - mang mốc giờ như tốc độ, đi theo hồ sơ nghe sang máy kia (webui/listening.py set_voice). */
     @Synchronized
-    fun setVoice(id: String, voice: String) {
-        val state = state(id)
+    fun setVoice(id: String, voice: String, recordId: String? = null) {
+        val target = target(id, recordId) ?: return
+        val state = recordState(target)
         state.put("voice", voice.take(200)).put("voiceAt", now()).put("updatedAt", now())
-        save(id, state)
+        writeAtomic(recordFile(target), state.toString())
     }
 
     /** Một phiên nghe (cùng hình dạng với máy tính: webui/listening.py add_session), giữ 200 phiên gần nhất. */
     @Synchronized
-    fun addSession(id: String, session: JSONObject) {
-        val state = state(id)
+    fun addSession(id: String, session: JSONObject, recordId: String? = null) {
+        val target = target(id, recordId) ?: return
+        val state = recordState(target)
         val sessions = state.optJSONArray("sessions") ?: JSONArray()
         val kept = JSONArray()
         val start = maxOf(0, sessions.length() - 199)
         for (index in start until sessions.length()) kept.put(sessions.getJSONObject(index))
         kept.put(session)
         state.put("sessions", kept).put("updatedAt", now())
-        save(id, state)
+        writeAtomic(recordFile(target), state.toString())
     }
 
     /** `listening.bookmark_quote`: đầu câu cho dòng dấu trang - gộp khoảng trắng, cắt ở ranh giới từ quanh 60 ký tự, thêm "…" khi có cắt. */
@@ -815,8 +934,10 @@ object Store {
     /** `index` + `quote`: dấu đặt ở màn đọc trỏ tới CÂU (thứ tự câu trong chương, như `?at=`) và giữ ~60 chữ đầu câu - cùng trường với
      *  máy tính (listening.py `add_bookmark`); dấu đặt từ trình phát chỉ có hai trường này khi đang đọc to chương chữ. */
     @Synchronized
-    fun addBookmark(id: String, chapterId: Int, seconds: Double, note: String, index: Int? = null, quote: String = "", createdAt: Double? = null): JSONObject {
-        val state = state(id)
+    fun addBookmark(id: String, chapterId: Int, seconds: Double, note: String, index: Int? = null, quote: String = "", createdAt: Double? = null,
+                    recordId: String? = null): JSONObject {
+        val target = target(id, recordId) ?: throw IllegalStateException("Hồ sơ nghe này không còn ở cuốn này")
+        val state = recordState(target)
         val marks = state.getJSONArray("bookmarks")
         val cleanNote = note.trim().take(500)
         // Same place twice (a double tap, or the same sentence): one bookmark, flagged `existing` like the computer's add_bookmark.
@@ -831,7 +952,7 @@ object Store {
                     if (!current.has("createdAt")) current.put("createdAt", current.optDouble("at", at))
                     current.put("note", cleanNote).put("at", at)
                     state.put("updatedAt", at)
-                    save(id, state)
+                    writeAtomic(recordFile(target), state.toString())
                 }
                 return JSONObject(current.toString()).put("existing", true)
             }
@@ -845,7 +966,7 @@ object Store {
         if (index != null && index >= 0) mark.put("index", index).put("quote", bookmarkQuote(quote))
         marks.put(mark)
         state.put("updatedAt", now())
-        save(id, state)
+        writeAtomic(recordFile(target), state.toString())
         return mark
     }
 

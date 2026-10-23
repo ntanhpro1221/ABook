@@ -255,11 +255,11 @@ export const httpSource: ListenSource = {
     api<ListeningState>(`/api/listen/books/${bookId}/chapters/${chapterId}/done`, { method: "POST", body: { done } }),
   setFinished: (bookId, finished) =>
     api<ListeningState>(`/api/listen/books/${bookId}/finished`, { method: "POST", body: { finished } }),
-  setVoice: async (bookId, voice) => {
-    await api(`/api/listen/books/${bookId}/voice`, { method: "POST", body: { voice } });
+  setVoice: async (bookId, voice, record) => {
+    await api(`/api/listen/books/${bookId}/voice`, { method: "POST", body: { voice, record } });
   },
-  setRate: async (bookId, rate) => {
-    await api(`/api/listen/books/${bookId}/rate`, { method: "POST", body: { rate } });
+  setRate: async (bookId, rate, record) => {
+    await api(`/api/listen/books/${bookId}/rate`, { method: "POST", body: { rate, record } });
   },
   addBookmark: (bookId, chapterId, seconds, note, record, sentence) =>
     api<Bookmark>(`/api/listen/books/${bookId}/bookmarks`, { method: "POST", body: { chapterId, seconds, note, record, index: sentence?.index, quote: sentence?.quote } }),
@@ -291,8 +291,8 @@ export const httpSource: ListenSource = {
   saveReading: async (bookId, chapterId, index, position, record) => {
     await api(`/api/listen/books/${bookId}/reading`, { method: "POST", body: { ...position, chapterId, index, record } });
   },
-  saveNight: async (bookId, night) => {
-    await api(`/api/listen/books/${bookId}/night`, { method: "POST", body: night });
+  saveNight: async (bookId, night, record) => {
+    await api(`/api/listen/books/${bookId}/night`, { method: "POST", body: { ...night, record } });
   },
   // Cuốn của máy tính khác (webui/remote_books.py): phần sửa về máy ấy như điện thoại gửi về máy tính.
   sendEdits: (bookId) => api<EditsSyncState>(`/api/listen/books/${bookId}/edits/send`, { method: "POST" }),

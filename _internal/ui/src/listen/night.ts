@@ -30,23 +30,26 @@ function newId(): string {
 export class NightRecorder {
   private session: NightSession | null = null;
   private bookId = "";
+  /** Hồ sơ nghe của phiên đêm, chốt lúc hẹn giờ: mọi lần lưu mang nó, và chỉ người nghe ấy mới nối tiếp được đêm này. */
+  private record: string | undefined;
   private lastTouch = 0;
   private lastPoint = 0;
   private fadingLogged = false;
   private saveTimer: number | undefined;
 
-  constructor(private readonly persist?: (bookId: string, night: NightSession) => Promise<void>) {}
+  constructor(private readonly persist?: (bookId: string, night: NightSession, record?: string) => Promise<void>) {}
 
   get active(): boolean {
     return Boolean(this.session && !this.session.endedAt);
   }
 
-  start(book: { id: string; title: string }, minutes: number | null, position: NightPosition, reason?: "safety"): void {
+  start(book: { id: string; title: string; record?: string }, minutes: number | null, position: NightPosition, reason?: "safety"): void {
     const now = Date.now();
     const current = this.session;
     const reusable =
       current &&
       this.bookId === book.id &&
+      this.record === book.record &&
       (!current.endedAt || now - current.endedAt * 1000 < SAME_NIGHT_MS);
     if (!reusable) {
       this.flush();
@@ -61,6 +64,7 @@ export class NightRecorder {
         timeline: [],
       };
       this.bookId = book.id;
+      this.record = book.record;
     } else if (current) {
       current.endedAt = null;
     }
@@ -126,7 +130,7 @@ export class NightRecorder {
     window.clearTimeout(this.saveTimer);
     this.saveTimer = undefined;
     if (this.session && this.bookId && this.persist) {
-      void this.persist(this.bookId, JSON.parse(JSON.stringify(this.session)) as NightSession).catch(() => undefined);
+      void this.persist(this.bookId, JSON.parse(JSON.stringify(this.session)) as NightSession, this.record).catch(() => undefined);
     }
   }
 

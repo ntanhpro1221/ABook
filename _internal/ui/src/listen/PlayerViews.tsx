@@ -616,7 +616,7 @@ export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
                             const resumeAfter = fromAlert.current;
                             void pickVoiceWithConsent(voice, voices).then((id) => {
                               if (!id) return;
-                              chooseVoice(track.bookId, id);
+                              chooseVoice(track.bookId, id, track.recordId);
                               announce(`Đã chọn giọng ${spokenVoiceName(voices.find((item) => item.id === id)?.name ?? voice.name)}`);
                               // Lõi điện thoại nhận giọng mới qua một lệnh riêng: cho nó kịp tới trước lệnh phát (như "Đọc bằng …").
                               if (resumeAfter) window.setTimeout(resume, 300);
@@ -1284,7 +1284,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
   const stuck = Boolean(error) && isVoiceStuck(error);
   useRetryWhenOnline(offline, retry, dismissError, wantsPlay);
   if (error) {
-    const current = voices && track ? resolveVoice(voices, chosenVoice(track.bookId)) : undefined;
+    const current = voices && track ? resolveVoice(voices, chosenVoice(track.bookId, track.recordId)) : undefined;
     const local = stuck && voices ? localVoiceFor(voices, current) : undefined;
     const button = "min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[48px]";
     return (
@@ -1297,7 +1297,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
             <button
               type="button"
               onClick={() => {
-                chooseVoice(track.bookId, local.id);
+                chooseVoice(track.bookId, local.id, track.recordId);
                 dismissError();
                 // Lõi điện thoại nhận giọng mới qua một lệnh riêng: cho nó kịp tới trước lệnh phát.
                 window.setTimeout(resume, 300);
