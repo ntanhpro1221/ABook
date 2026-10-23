@@ -22,6 +22,7 @@ import kotlin.concurrent.thread
  */
 object Store {
     private const val DONE_TAIL_SECONDS = 20.0
+    private val unpreservedData = linkedSetOf<String>()
     lateinit var root: File
         private set
 
@@ -32,6 +33,7 @@ object Store {
             // Đổi tên trả lại ngay (rẻ); xoá thì ở nền - danh sách sách không bao giờ thấy chúng (bookFolders).
             val stale = recoverStaging()
             recoverRekeys()
+            BookSave.recover(OldSaves.dir(context.filesDir))
             if (stale.isNotEmpty()) thread(name = "abook-staging-sweep", isDaemon = true) { stale.forEach { it.deleteRecursively() } }
         }
     }
@@ -242,6 +244,14 @@ object Store {
 
     @Synchronized
     fun writeAtomic(target: File, bytes: ByteArray) {
+        if (target.absolutePath in unpreservedData) {
+            try {
+                preserveCorrupt(target, copyOnly = true)
+            } catch (error: Exception) {
+                throw IllegalStateException("Chưa giữ được bản dữ liệu cũ của bạn. Bạn hãy thử lại.", error)
+            }
+            unpreservedData.remove(target.absolutePath)
+        }
         check(!target.isDirectory) { "Không ghi được dữ liệu của bạn lên thư mục: ${target.name}" }
         target.parentFile?.mkdirs()
         val temporary = File(target.path + ".part")
@@ -264,9 +274,83 @@ object Store {
         }
     }
 
-    fun preserveCorrupt(file: File) {
+    private val pendingDataNotices = linkedSetOf<String>()
+
+    /** This byte-preservation primitive never reads or writes the notice file. */
+    private fun keepCorruptBytes(file: File, copyOnly: Boolean): File {
         val copy = File(file.path + ".corrupt-${System.currentTimeMillis()}-${UUID.randomUUID()}")
-        check(file.renameTo(copy)) { "Không giữ được bản dữ liệu hỏng của bạn: ${file.name}" }
+        if (copyOnly) {
+            check(copy.createNewFile()) { "Không giữ được bản dữ liệu cũ của bạn" }
+            file.inputStream().use { input -> FileOutputStream(copy).use { output ->
+                input.copyTo(output)
+                output.fd.sync()
+            } }
+        } else check(!copy.exists() && file.renameTo(copy)) { "Không giữ được bản dữ liệu hỏng của bạn: ${file.name}" }
+        return copy
+    }
+
+    fun preserveCorrupt(file: File, copyOnly: Boolean = false) {
+        val copy = keepCorruptBytes(file, copyOnly)
+        // A failed notice must not claim that the already-synced original is unpreserved.
+        addDataNotice("Một phần dữ liệu của bạn trong ${file.name} bị hỏng. Bản gốc được giữ ở ${copy.name}; phần còn đọc được vẫn dùng được.")
+    }
+
+    private fun noticeRows(): JSONArray {
+        val file = File(root, "data-notices.json")
+        if (!file.exists()) return JSONArray()
+        try {
+            val rows = JSONObject(file.readText(Charsets.UTF_8)).getJSONArray("notices")
+            require((0 until rows.length()).all { rows.opt(it) is String })
+            return rows
+        } catch (error: Exception) {
+            // Keep the original independently; never recurse through preserveCorrupt/addDataNotice.
+            val copy = keepCorruptBytes(file, copyOnly = true)
+            val text = "Danh sách thông báo của bạn bị hỏng. Bản gốc được giữ ở ${copy.name}; app bắt đầu danh sách mới."
+            pendingDataNotices.add(text)
+            val rows = JSONArray().put(text)
+            writeAtomic(file, JSONObject().put("notices", rows).toString())
+            return rows
+        }
+    }
+
+    @Synchronized
+    internal fun addDataNotice(text: String) {
+        if (!::root.isInitialized) return
+        pendingDataNotices.add(text)
+        try {
+            val rows = noticeRows()
+            for (notice in pendingDataNotices) if ((0 until rows.length()).none { rows.optString(it) == notice }) rows.put(notice)
+            writeAtomic(File(root, "data-notices.json"), JSONObject().put("notices", rows).toString())
+            pendingDataNotices.clear()
+        } catch (_: Exception) {
+            pendingDataNotices.add("Chưa lưu được danh sách thông báo của bạn. Dữ liệu đã giữ an toàn vẫn dùng được; bạn hãy thử lại.")
+        }
+    }
+
+    @Synchronized
+    fun dataNotices(): JSONArray {
+        val rows = try { noticeRows() } catch (_: Exception) {
+            pendingDataNotices.add("Chưa đọc được danh sách thông báo của bạn. App giữ nguyên file này và vẫn mở thư viện.")
+            JSONArray()
+        }
+        for (text in pendingDataNotices) if ((0 until rows.length()).none { rows.optString(it) == text }) rows.put(text)
+        if (unpreservedData.isNotEmpty()) rows.put("Chưa giữ được bản dữ liệu cũ của bạn. Bạn vẫn đọc được phần hợp lệ; app chưa ghi đè bản gốc. Bạn hãy thử lưu lại.")
+        return rows
+    }
+
+    private fun repaired(file: File, raw: JSONObject, clean: JSONObject): JSONObject {
+        if (raw.toString() != clean.toString()) {
+            try {
+                preserveCorrupt(file, copyOnly = true)
+            } catch (_: Exception) {
+                unpreservedData.add(file.absolutePath)
+                return clean
+            }
+            unpreservedData.remove(file.absolutePath)
+            try { writeAtomic(file, clean.toString()) }
+            catch (_: Exception) { addDataNotice("Chưa lưu được phần dữ liệu đã đọc lại của bạn. Bản gốc đã giữ an toàn; bạn hãy thử lại.") }
+        }
+        return clean
     }
 
     // ---- hồ sơ nghe + liên kết với sách ----------------------------------------------------------------------
@@ -298,7 +382,7 @@ object Store {
      */
     private fun recordsBook(): JSONObject {
         recordsCache?.let { return it }
-        val loaded = readJson(recordsFile)
+        val loaded = readJson(recordsFile)?.let { repaired(recordsFile, it, ListeningSchema.index(it)) }
         val book = loaded ?: upgradeStates()
         if (!book.has("deleted")) book.put("deleted", JSONObject())
         recordsCache = book
@@ -328,8 +412,13 @@ object Store {
     }
 
     private fun saveRecords(book: JSONObject) {
-        writeAtomic(recordsFile, book.toString())
-        recordsCache = book
+        try {
+            writeAtomic(recordsFile, book.toString())
+            recordsCache = book
+        } catch (error: Throwable) {
+            recordsCache = null // the caller may already have mutated the cached object
+            throw error
+        }
     }
 
     /** Hồ sơ đang dùng của sách - chưa có thì tạo hồ sơ "Mặc định" và gắn vào. */
@@ -385,6 +474,7 @@ object Store {
     @Synchronized
     fun applySync(bookId: String, reply: JSONObject, player: () -> Pair<String, Boolean> = { Playback.bookId to Playback.isPlaying },
                   onGone: (Set<String>) -> Unit = { Playback.recordsGone(it) }) {
+        validatePeerRevisions(reply)
         val record = reply.optString("record")
         if (!RECORD_ID.matches(record)) {
             save(bookId, mergeStates(state(bookId), withoutSyncKeys(reply)))
@@ -495,6 +585,7 @@ object Store {
      */
     @Synchronized
     fun mergeRecord(bookId: String, body: JSONObject, onGone: (Set<String>) -> Unit = { Playback.recordsGone(it) }): JSONObject {
+        validatePeerRevisions(body)
         val record = body.optString("record")
         require(RECORD_ID.matches(record)) { "Thiếu mã hồ sơ nghe" }
         val book = recordsBook()
@@ -730,7 +821,7 @@ object Store {
 
     private fun recordState(record: String?): JSONObject {
         val file = record?.let(::recordFile)
-        val state = file?.let(::readJson) ?: JSONObject()
+        val state = file?.let { path -> readJson(path)?.let { repaired(path, it, ListeningSchema.state(it)) } } ?: JSONObject()
         if (!state.has("chapters")) state.put("chapters", JSONObject())
         if (!state.has("bookmarks")) state.put("bookmarks", JSONArray())
         return state
@@ -746,12 +837,22 @@ object Store {
      */
     @Synchronized
     fun mergeRemote(id: String, incoming: JSONObject): JSONObject {
+        validatePeerRevisions(incoming)
         val merged = mergeStates(state(id), withoutSyncKeys(incoming))
         save(id, merged)
         return JSONObject(merged.toString())
     }
 
     private const val MAX_SESSIONS = 200
+
+    private fun validatePeerRevisions(body: JSONObject) {
+        try { ListeningRevision.checkedPeer(JSONObject(), withoutSyncKeys(body)) { } }
+        catch (error: IllegalArgumentException) {
+            addDataNotice(error.message ?: ListeningRevision.OLD_PEER)
+            throw error
+        }
+        body.optJSONObject("activeState")?.let { validatePeerRevisions(it) }
+    }
     /** Cùng chương, cách nhau tối đa 5 giây là cùng chỗ (listening.py). */
     private const val BOOKMARK_SAME_SECONDS = 5.0
 
@@ -760,42 +861,58 @@ object Store {
     /** `merge_states` của máy tính: mỗi phần mang mốc thời gian riêng, bên mới hơn thắng; dấu trang hợp theo id, dấu trang
      *  đã xoá ở một bên (bia mộ "deleted") thì xoá ở cả hai; phiên nghe hợp theo id, giữ 200 phiên cuối; đêm nghe theo
      *  `merge_nights`. */
-    fun mergeStates(ours: JSONObject, theirs: JSONObject): JSONObject {
+    fun mergeStates(ours: JSONObject, incoming: JSONObject): JSONObject {
+        val theirs = ListeningRevision.checkedPeer(ours, incoming, ::addDataNotice)
         val result = JSONObject(ours.toString())
         if (result.optJSONObject("chapters") == null) result.put("chapters", JSONObject())
         if (result.optJSONArray("bookmarks") == null) result.put("bookmarks", JSONArray())
         for (key in listOf("last", "reading")) {
-            if (stamp(theirs.optJSONObject(key)) > stamp(result.optJSONObject(key))) result.put(key, theirs.get(key))
+            theirs.optJSONObject(key)?.let { if (ListeningRevision.newer(it, result.optJSONObject(key))) result.put(key, it) }
         }
         val chapters = result.getJSONObject("chapters")
         theirs.optJSONObject("chapters")?.let { incoming ->
             for (key in incoming.keys()) {
                 val record = incoming.optJSONObject(key) ?: continue
-                if (stamp(record) > stamp(chapters.optJSONObject(key)) || chapters.optJSONObject(key) == null) chapters.put(key, record)
+                if (ListeningRevision.newer(record, chapters.optJSONObject(key))) chapters.put(key, record)
             }
         }
         for ((field, at) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) {
-            if (theirs.has(field) && stamp(theirs, at) > stamp(result, at)) {
+            val theirStamp = JSONObject().put("at", stamp(theirs, at)).put("rev", theirs.optJSONObject("_fieldRevs")?.opt(field))
+            val myStamp = JSONObject().put("at", stamp(result, at)).put("rev", result.optJSONObject("_fieldRevs")?.opt(field))
+            if (theirs.has(field) && ListeningRevision.newer(theirStamp, myStamp)) {
                 result.put(field, theirs.get(field)).put(at, theirs.get(at))
+                theirStamp.optJSONObject("rev")?.let { revision ->
+                    val fields = result.optJSONObject("_fieldRevs") ?: JSONObject().also { result.put("_fieldRevs", it) }
+                    fields.put(field, revision)
+                }
             }
         }
         // Bookmarks: newer edit wins (a tie keeps ours); a tombstone only removes a mark not changed after it - an undone delete
         // (newer `at`) comes back on both devices. Both sides deleted: keep the later stamp.
         val deleted = JSONObject((result.optJSONObject("deleted") ?: JSONObject()).toString())
+        val deletedRevs = JSONObject((result.optJSONObject("_deletedRevs") ?: JSONObject()).toString())
         theirs.optJSONObject("deleted")?.let { gone ->
-            for (key in gone.keys()) deleted.put(key, maxOf(gone.optDouble(key, 0.0).takeIf { !it.isNaN() } ?: 0.0, stamp(deleted, key)))
+            for (key in gone.keys()) {
+                val rev = theirs.optJSONObject("_deletedRevs")?.optJSONObject(key)
+                if (ListeningRevision.newer(JSONObject().put("at", stamp(gone, key)).put("rev", rev),
+                        JSONObject().put("at", stamp(deleted, key)).put("rev", deletedRevs.opt(key)))) {
+                    deleted.put(key, gone.get(key))
+                    if (rev != null) deletedRevs.put(key, rev)
+                }
+            }
         }
         val marks = LinkedHashMap<String, JSONObject>()
         result.getJSONArray("bookmarks").let { list -> for (i in 0 until list.length()) list.optJSONObject(i)?.let { marks[it.optString("id")] = it } }
         (theirs.optJSONArray("bookmarks") ?: JSONArray()).let { list ->
             for (i in 0 until list.length()) {
                 val mark = list.optJSONObject(i) ?: continue
-                if (marks[mark.optString("id")] == null || stamp(mark) > stamp(marks[mark.optString("id")])) marks[mark.optString("id")] = mark
+                if (ListeningRevision.newer(mark, marks[mark.optString("id")])) marks[mark.optString("id")] = mark
             }
         }
-        result.put("bookmarks", JSONArray(marks.values.filter { stamp(it) > stamp(deleted, it.optString("id")) }
+        result.put("bookmarks", JSONArray(marks.values.filter { ListeningRevision.newer(it, JSONObject().put("at", stamp(deleted, it.optString("id"))).put("rev", deletedRevs.opt(it.optString("id")))) }
             .sortedBy { if (it.has("createdAt")) stamp(it, "createdAt") else stamp(it) }))
         result.put("deleted", deleted)
+        if (deletedRevs.length() > 0) result.put("_deletedRevs", deletedRevs)
         val sessions = LinkedHashMap<String, JSONObject>()
         for (source in listOf(result, theirs)) {
             val list = source.optJSONArray("sessions") ?: continue
@@ -804,6 +921,8 @@ object Store {
         if (sessions.isNotEmpty()) result.put("sessions", JSONArray(sessions.values.sortedBy { stamp(it, "startedAt") }.takeLast(MAX_SESSIONS)))
         mergeNights(result.optJSONObject("night"), theirs.optJSONObject("night"))?.let { result.put("night", it) }
         result.put("updatedAt", maxOf(stamp(result, "updatedAt"), stamp(theirs, "updatedAt")))
+        result.put("_clock", ListeningRevision.clock(result))
+        if (ListeningRevision.epoch(result).isNotEmpty()) result.put("_epoch", ListeningRevision.epoch(result))
         return result
     }
 
@@ -822,15 +941,40 @@ object Store {
 
     private fun now() = System.currentTimeMillis() / 1000.0
 
+    private fun revisionNode(): String {
+        val file = File(root, "listening-node.json")
+        val saved = readJson(file)
+        if (ListeningRevision.revision(JSONObject().put("rev", JSONObject().put("counter", 1).put("node", saved?.opt("node")))).first > 0)
+            return saved!!.getString("node")
+        if (saved != null) preserveCorrupt(file)
+        val node = UUID.randomUUID().toString().replace("-", "")
+        writeAtomic(file, JSONObject().put("node", node).toString())
+        return node
+    }
+
+    private fun fieldRevision(state: JSONObject, field: String) {
+        val fields = state.optJSONObject("_fieldRevs") ?: JSONObject().also { state.put("_fieldRevs", it) }
+        fields.put(field, ListeningRevision.advance(state, revisionNode()))
+    }
+
     /** Chỗ đọc cùng hợp đồng anchor với chỗ nghe; flush của hồ sơ cũ vẫn về đúng hồ sơ ấy. */
     @Synchronized
-    fun saveReading(id: String, chapterId: Int, index: Int, at: Double = now(), anchor: JSONObject? = null, record: String? = null): JSONObject {
+    fun saveReading(id: String, chapterId: Int, index: Int, at: Double = now(), anchor: JSONObject? = null, record: String? = null, rev: JSONObject? = null): JSONObject {
         require(at.isFinite() && at >= 0) { "Thời điểm chỗ đọc không hợp lệ" }
         val target = record ?: activeRecord(id)
         require(records(id).let { rows -> (0 until rows.length()).any { rows.getJSONObject(it).optString("id") == target } }) { "Hồ sơ đọc không còn thuộc cuốn này" }
         val state = recordState(target)
-        if ((state.optJSONObject("reading")?.optDouble("at", 0.0) ?: 0.0) >= at) return state
         val place = JSONObject().put("chapterId", chapterId).put("index", index.coerceAtLeast(0)).put("at", at)
+        if (rev == null) place.put("rev", ListeningRevision.advance(state, revisionNode())) else {
+            place.put("rev", rev)
+            require(ListeningRevision.revision(place).first > 0) { "Phiên bản chỗ đọc không hợp lệ" }
+            val current = state.optJSONObject("reading")
+            if (current != null && !ListeningRevision.newer(place, current)) {
+                if (ListeningRevision.order(place) == ListeningRevision.order(current) && chapterId == current.optInt("chapterId") && index == current.optInt("index")) return state
+                throw IllegalStateException("Chỗ đọc đã được cập nhật. Bạn hãy nạp lại sách.")
+            }
+            ListeningRevision.observe(state, rev)
+        }
         vn.abook.player.readaloud.ReadingAnchor.validated(anchor)?.let { place.put("anchor", it) }
         state.put("reading", place).put("updatedAt", maxOf(state.optDouble("updatedAt", 0.0), at))
         writeAtomic(recordFile(target), state.toString())
@@ -846,14 +990,15 @@ object Store {
         val target = if (recordId == null) activeRecord(id) else recordId.takeIf { ownsRecord(id, it) } ?: return state(id)
         val state = recordState(target)
         val at = now()
-        state.put("last", JSONObject().put("chapterId", chapterId).put("seconds", seconds).put("at", at))
+        val rev = ListeningRevision.advance(state, revisionNode())
+        state.put("last", JSONObject().put("chapterId", chapterId).put("seconds", seconds).put("at", at).put("rev", rev))
         vn.abook.player.readaloud.ReadingAnchor.validated(anchor)?.let { state.getJSONObject("last").put("anchor", it) }
         val chapters = state.getJSONObject("chapters")
         val record = chapters.optJSONObject(chapterId.toString()) ?: JSONObject().put("heard", 0.0).put("done", false)
         record.put("heard", maxOf(record.optDouble("heard", 0.0), seconds))
         if (duration > 0 && duration - seconds <= DONE_TAIL_SECONDS) record.put("done", true)
         if (duration > 0) record.put("duration", duration)
-        record.put("at", at)
+        record.put("at", at).put("rev", rev)
         chapters.put(chapterId.toString(), record)
         state.put("updatedAt", at)
         writeAtomic(recordFile(target), state.toString())
@@ -877,6 +1022,7 @@ object Store {
         record.put("done", done)
         if (!done) record.put("heard", 0.0)
         record.put("at", now())
+        record.put("rev", ListeningRevision.advance(state, revisionNode()))
         chapters.put(chapterId.toString(), record)
         state.put("updatedAt", now())
         writeAtomic(recordFile(target), state.toString())
@@ -888,6 +1034,7 @@ object Store {
         val target = named(id, recordId)
         val state = recordState(target)
         state.put("finished", finished).put("finishedAt", now()).put("updatedAt", now())
+        fieldRevision(state, "finished")
         writeAtomic(recordFile(target), state.toString())
         return state
     }
@@ -906,6 +1053,7 @@ object Store {
         val target = target(id, recordId) ?: return
         val state = recordState(target)
         state.put("rate", rate).put("rateAt", now()).put("updatedAt", now())
+        fieldRevision(state, "rate")
         writeAtomic(recordFile(target), state.toString())
     }
 
@@ -915,6 +1063,7 @@ object Store {
         val target = target(id, recordId) ?: return
         val state = recordState(target)
         state.put("voice", voice.take(200)).put("voiceAt", now()).put("updatedAt", now())
+        fieldRevision(state, "voice")
         writeAtomic(recordFile(target), state.toString())
     }
 
@@ -961,6 +1110,7 @@ object Store {
                     val at = now()
                     if (!current.has("createdAt")) current.put("createdAt", current.optDouble("at", at))
                     current.put("note", cleanNote).put("at", at)
+                    current.put("rev", ListeningRevision.advance(state, revisionNode()))
                     state.put("updatedAt", at)
                     writeAtomic(recordFile(target), state.toString())
                 }
@@ -975,6 +1125,7 @@ object Store {
             .put("createdAt", createdAt?.takeIf { it > 0 && it <= at } ?: at)
         if (index != null && index >= 0) mark.put("index", index).put("quote", bookmarkQuote(quote))
         vn.abook.player.readaloud.ReadingAnchor.validated(anchor)?.let { mark.put("anchor", it) }
+        mark.put("rev", ListeningRevision.advance(state, revisionNode()))
         marks.put(mark)
         state.put("updatedAt", now())
         writeAtomic(recordFile(target), state.toString())
@@ -991,6 +1142,7 @@ object Store {
             if (mark.optString("id") != markId) continue
             if (!mark.has("createdAt")) mark.put("createdAt", mark.optDouble("at", now()))
             mark.put("note", note.take(500)).put("at", now())
+            mark.put("rev", ListeningRevision.advance(state, revisionNode()))
         }
         state.put("updatedAt", now())
         writeAtomic(recordFile(target), state.toString())
@@ -1009,6 +1161,8 @@ object Store {
         state.put("bookmarks", kept)
         val deleted = state.optJSONObject("deleted") ?: JSONObject()
         deleted.put(markId, now())
+        val revs = state.optJSONObject("_deletedRevs") ?: JSONObject().also { state.put("_deletedRevs", it) }
+        revs.put(markId, ListeningRevision.advance(state, revisionNode()))
         state.put("deleted", deleted).put("updatedAt", now())
         writeAtomic(recordFile(target), state.toString())
     }
@@ -1026,6 +1180,7 @@ object Store {
         val index = mark.opt("index")
         if (index is Int && index >= 0) restored.put("index", index).put("quote", bookmarkQuote(mark.optString("quote")))
         vn.abook.player.readaloud.ReadingAnchor.validated(mark.optJSONObject("anchor"))?.let { restored.put("anchor", it) }
+        restored.put("rev", ListeningRevision.advance(state, revisionNode()))
         val marks = state.getJSONArray("bookmarks")
         val kept = JSONArray()
         for (i in 0 until marks.length()) {

@@ -338,6 +338,7 @@ export interface AppInfo {
   sleepSchedule: { from: string; to: string; minutes: number } | null;
   /** File trạng thái hỏng đã được giữ lại lúc mở app (webui/notices.py): mỗi dòng báo một lần. */
   notices?: { id: string; text: string }[];
+  libraryMoveRecovery?: import("@/desktop/LibraryMoveRecovery").LibraryMoveRecoveryState | null;
 }
 
 export interface Preferences {

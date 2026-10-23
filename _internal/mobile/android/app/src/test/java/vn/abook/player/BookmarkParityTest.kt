@@ -13,13 +13,14 @@ class BookmarkParityTest {
         val spec = JSONObject(File("../../../tests/fixtures/listening_records/restore_bookmark.json").readText())
         val mark = spec.getJSONObject("mark")
         val gone = JSONObject().put(mark.getString("id"), spec.getDouble("deletedAt"))
-        Store.mergeRemote("b", JSONObject().put("deleted", gone))
+        val goneRevs = JSONObject().put(mark.getString("id"), spec.getJSONObject("deletedRev"))
+        Store.mergeRemote("b", JSONObject().put("deleted", gone).put("_deletedRevs", goneRevs))
         val restored = Store.restoreBookmark("b", mark)
-        val expected = JSONObject(mark.toString()).put("at", restored.getDouble("at"))
+        val expected = JSONObject(mark.toString()).put("at", restored.getDouble("at")).put("rev", restored.getJSONObject("rev"))
         assertTrue(StrictJson.equal(expected, restored))
         assertTrue(restored.getDouble("at") > spec.getDouble("deletedAt"))
         assertFalse(Store.state("b").getJSONObject("deleted").has(mark.getString("id")))
-        Store.mergeRemote("b", JSONObject().put("deleted", gone).put("bookmarks", JSONArray().put(spec.getJSONObject("remoteEdit"))))
+        Store.mergeRemote("b", JSONObject().put("deleted", gone).put("_deletedRevs", goneRevs).put("bookmarks", JSONArray().put(spec.getJSONObject("remoteEdit"))))
         assertTrue(StrictJson.equal(JSONArray().put(restored), Store.state("b").getJSONArray("bookmarks")))
         Store.restoreBookmark("b", mark)
         assertEquals(1, Store.state("b").getJSONArray("bookmarks").length())
@@ -45,7 +46,7 @@ class BookmarkParityTest {
     }
 
     @Test fun a_duplicate_fills_an_empty_note_without_changing_creation_time() {
-        Store.mergeRemote("b", JSONObject("""{"chapters":{},"bookmarks":[{"id":"old","chapterId":1,"seconds":64,"note":"","at":10}]}"""))
+        Store.mergeRemote("b", JSONObject("""{"chapters":{},"bookmarks":[{"id":"old","chapterId":1,"seconds":64,"note":"","at":10,"rev":{"counter":1,"node":"fixture"}}]}"""))
         val mark = Store.addBookmark("b", 1, 64.0, " Ghi chú mới ")
         assertEquals("old", mark.getString("id"))
         assertEquals("Ghi chú mới", mark.getString("note"))

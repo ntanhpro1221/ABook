@@ -11,4 +11,5 @@
     <exclude domain="sharedpref" path="mp3_export.xml" />
     <exclude domain="sharedpref" path="book_saves.xml" />
     <exclude domain="file" path="share.json" />
+    <exclude domain="file" path="library/listening-node.json" />
 </full-backup-content>

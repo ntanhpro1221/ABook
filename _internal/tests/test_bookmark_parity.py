@@ -33,10 +33,11 @@ def test_duplicate_fills_only_an_empty_note_and_keeps_creation_time(tmp_path, mo
 def test_restore_keeps_id_and_outlives_the_tombstone_on_another_device(tmp_path, monkeypatch):
     spec = json.loads((Path(__file__).parent / "fixtures/listening_records/restore_bookmark.json").read_text(encoding="utf-8"))
     listening = Listening(tmp_path / "listening.json")
-    listening.merge("b", {"chapters": {}, "bookmarks": [], "deleted": {spec["mark"]["id"]: spec["deletedAt"]}})
+    listening.merge("b", {"chapters": {}, "bookmarks": [], "deleted": {spec["mark"]["id"]: spec["deletedAt"]}, "_deletedRevs": {spec["mark"]["id"]: spec["deletedRev"]}})
     monkeypatch.setattr("abook.webui.listening.time.time", lambda: 30)
     restored = listening.restore_bookmark("b", spec["mark"])
-    assert restored == {**spec["mark"], "at": 30}
+    assert restored == {**spec["mark"], "at": 30, "rev": restored["rev"]}
+    assert restored["rev"]["counter"] > spec["deletedRev"]["counter"]
     assert spec["mark"]["id"] not in listening.get("b").get("deleted", {})
-    listening.merge("b", {"bookmarks": [spec["remoteEdit"]], "deleted": {restored["id"]: spec["deletedAt"]}})
+    listening.merge("b", {"bookmarks": [spec["remoteEdit"]], "deleted": {restored["id"]: spec["deletedAt"]}, "_deletedRevs": {restored["id"]: spec["deletedRev"]}})
     assert listening.get("b")["bookmarks"] == [restored]

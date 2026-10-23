@@ -12,6 +12,7 @@ import logging
 import os
 import threading
 import time
+import uuid
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -45,11 +46,18 @@ class Notices:
 NOTICES = Notices()
 
 
-def keep_broken(path: Path, what: str, *, then: str = "app dùng mặc định") -> Path | None:
+def keep_broken(path: Path, what: str, *, then: str = "app dùng mặc định", copy_only: bool = False) -> Path | None:
     """Đổi tên file hỏng thành `<tên>.hong-<giờ>` và báo một dòng; trả tên mới (None: không đổi tên được - vẫn báo)."""
-    kept = path.with_name(f"{path.name}.hong-{time.strftime('%Y%m%d-%H%M%S')}")
+    kept = path.with_name(f"{path.name}.hong-{time.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:8]}")
     try:
-        os.replace(path, kept)
+        if copy_only:
+            with path.open("rb") as source, kept.open("xb") as target:
+                import shutil
+                shutil.copyfileobj(source, target)
+                target.flush()
+                os.fsync(target.fileno())
+        else:
+            os.replace(path, kept)
     except OSError:
         log.warning("Không giữ được bản hỏng của %s", path, exc_info=True)
         NOTICES.add(f"{what} bị hỏng nên {then}. Chưa giữ được bản cũ ({path.name}) - đừng xoá nó nếu cần lấy lại.")
@@ -90,9 +98,11 @@ def read_json(path: Path, what: str, valid: Callable[[Any], bool] = lambda _data
     try:
         data = json.loads(raw.decode("utf-8"))
     except ValueError:  # gồm UnicodeDecodeError, JSONDecodeError
-        keep_broken(path, what)
+        if keep_broken(path, what) is None:
+            raise Unreadable(f"Chưa giữ được bản cũ của {path.name}. Bạn hãy thử lại.")
         return None
     if not valid(data):
-        keep_broken(path, what)
+        if keep_broken(path, what) is None:
+            raise Unreadable(f"Chưa giữ được bản cũ của {path.name}. Bạn hãy thử lại.")
         return None
     return data

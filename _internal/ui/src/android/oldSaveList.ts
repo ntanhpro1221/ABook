@@ -23,7 +23,7 @@ export function useOldSaves() {
 
 /** Tên sách trong tên file giữ phòng ("Tên sách 20260101-101010.abook" -> "Tên sách"). */
 export function oldSaveTitle(name: string): string {
-  return name.replace(/\.abook(proj)?$/, "").replace(/ \d{8}-\d{6}$/, "").trim() || name;
+  return name.replace(/\.abook(proj)?$/, "").replace(/ \d{8}-\d{6}(?:-\d+)?$/, "").trim() || name;
 }
 
 /** Những file chưa từng báo cho người dùng. */

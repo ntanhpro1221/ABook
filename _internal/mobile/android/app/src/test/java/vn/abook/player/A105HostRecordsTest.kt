@@ -141,12 +141,13 @@ class A105HostRecordsTest {
     }
 
     @Test
-    fun a_request_without_a_record_still_merges_into_the_active_one_for_old_senders() {
+    fun a_request_without_revisions_is_rejected_for_old_senders() {
         val spec = fixture.getJSONObject("cases").getJSONObject("other_person_is_not_overwritten")
         host(spec.getJSONObject("host"))
-        val merged = Store.mergeRemote("sach", JSONObject().put("last", JSONObject().put("chapterId", 1).put("seconds", 700.0).put("at", 5000.0)))
-        assertEquals(700.0, merged.getJSONObject("last").getDouble("seconds"), 0.0)
-        assertEquals(700.0, lastSeconds(id("b"))!!, 0.0)
-        assertFalse(merged.has("record"))
+        val before = lastSeconds(id("b"))
+        val error = runCatching { Store.mergeRemote("sach", JSONObject().put("last", JSONObject().put("chapterId", 1).put("seconds", 700.0).put("at", 5000.0))) }.exceptionOrNull()
+        assertTrue(error is IllegalArgumentException)
+        assertEquals("Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy", error?.message)
+        assertEquals(before, lastSeconds(id("b")))
     }
 }
