@@ -628,4 +628,87 @@ class MusicSeamBedTest {
         assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(300, SeamHandover.GUARD_MS.toDouble(), 0, listOf(0.0, 0.0, 0.0))) // a87 tới cuối vòng trước khi P3 sẵn sàng
         assertEquals(SeamHandover.Act.WAIT, SeamHandover.decide(SeamHandover.DEADLINE_MS - 1, SeamHandover.GUARD_MS + 1.0, 0, emptyList()))
     }
+
+    // ---- lưới an toàn: pha theo MẪU ĐÁP thật (PLAN_loop §44.7, ls_06 lần 3 đáp +4365 khung) ----
+
+    /** Nối 44,1 kHz như ls_06 (X' = 77 khung ~ 2,01 s); đích 21703 (lần 3 của ls_06). */
+    private val ls06 = LoopSeam.Seam(File("ls_06.mp3"), File("ls_06.wav"), 1152, 100 * 1152L, 1000 * 1152L, 77 * 1152, 44100, 2, 1152, 0, 3)
+    private val lsTarget = 21703L
+
+    /**
+     * Chuỗi nhịp của MusicBed.stepHandover sau một lần tua tới [lsTarget] với trễ ước lượng ĐÚNG (lúc P3 ra loa a87 ở đúng đích): AudioTrack mới chạy từ +80 ms, đọc mỗi POLL_MS
+     * từ SETTLE_MS. `landing` = kết quả lưới an toàn. Trả việc đầu tiên khác WAIT (hay WAIT sau 10 nhịp) và các lần đọc đã tính.
+     */
+    private fun ticks(landing: SeamHandover.Landing, retunes: Int = 0): Pair<SeamHandover.Act, List<Double>> {
+        val s = ls06
+        val sr = s.sampleRate
+        val ms = 1_000_000L
+        val issued = 10_000 * ms
+        val flushed = issued + 4 * ms
+        val startAt = issued + 80 * ms
+        val readings = ArrayList<Double>()
+        var now = startAt + 60 * ms
+        repeat(10) {
+            val stamp = SeamHandover.Stamp((now - 2 * ms - startAt) * sr / 1_000_000_000L, now - 2 * ms, sr, flushed)
+            val a87 = (s.loopEndSamples - s.xFrames + lsTarget).toDouble() / sr + (now - startAt) / 1e9
+            val delta = SeamHandover.landedReading(s, landing, issued, stamp, now, a87)
+            if (delta != null) readings += delta
+            val act = SeamHandover.decide(400, 800.0, retunes, if (delta != null) readings else emptyList(), landing)
+            if (act != SeamHandover.Act.WAIT) return act to readings
+            now += SeamHandover.POLL_MS * ms
+        }
+        return SeamHandover.Act.WAIT to readings
+    }
+
+    @Test fun aSeekThatLandsAChunkLateShowsAsPhaseAndRetunes() {
+        val (act, readings) = ticks(SeamHandover.Landing.At(lsTarget + 4365))
+        assertEquals(SeamHandover.Act.RETUNE, act)
+        assertEquals(SeamHandover.STEADY_READINGS, readings.size)
+        for (r in readings) assertEquals(98.98, r, 0.1) // hread thấy P3 trước a87 ~99 ms
+        // trễ ước lượng vẫn đúng: lần tua lại học trễ từ pha TRỪ chỗ đáp lệch, không dời trễ 99 ms
+        val settled = SeamHandover.settled(readings)!!
+        assertEquals(0.0, SeamHandover.lagPhase(ls06, lsTarget, SeamHandover.Landing.At(lsTarget + 4365), settled), 0.1)
+        assertEquals(250L, SeamHandover.nextLag(250, SeamHandover.lagPhase(ls06, lsTarget, SeamHandover.Landing.At(lsTarget + 4365), settled)))
+        // đối chứng: theo mẫu ĐÍCH (cách cũ) pha ~0 -> đã đổi tiếng với nhạc lệch 99 ms
+        val (old, _) = ticks(SeamHandover.Landing.At(lsTarget))
+        assertEquals(SeamHandover.Act.SWITCH, old)
+    }
+
+    @Test fun aSeekThatLandsOnTheTargetSwitchesAsBefore() {
+        val (act, readings) = ticks(SeamHandover.Landing.At(lsTarget))
+        assertEquals(SeamHandover.Act.SWITCH, act)
+        assertEquals(SeamHandover.STEADY_READINGS, readings.size)
+        for (r in readings) assertEquals(0.0, r, 0.1)
+        assertEquals(12.5, SeamHandover.lagPhase(ls06, lsTarget, SeamHandover.Landing.At(lsTarget), 12.5), 0.0) // đáp đúng: pha là trễ
+    }
+
+    @Test fun withoutALandingNoReadingCounts() {
+        val (act, readings) = ticks(SeamHandover.Landing.Pending)
+        assertEquals(SeamHandover.Act.WAIT, act)
+        assertTrue(readings.isEmpty())
+        // vẫn có hạn chót
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(SeamHandover.DEADLINE_MS, 800.0, 0, listOf(0.0, 0.0, 0.0), SeamHandover.Landing.Pending))
+        assertEquals(SeamHandover.Act.WAIT, SeamHandover.decide(400, 800.0, 0, listOf(0.0, 0.0, 0.0), SeamHandover.Landing.Pending))
+        assertEquals(3.0, SeamHandover.lagPhase(ls06, lsTarget, SeamHandover.Landing.Pending, 3.0), 0.0)
+    }
+
+    @Test fun aSeekWhoseContentIsNotFoundRetunesAtOnceThenFallsBack() {
+        val none = SeamHandover.Landing.None
+        assertNull(SeamHandover.landedReading(ls06, none, 0, SeamHandover.Stamp(44_100, 2_000_000_000L, 44100, 1_000_000_000L), 2_000_000_000L, 1.0))
+        val (act, readings) = ticks(none)
+        assertEquals(SeamHandover.Act.RETUNE, act) // ngay nhịp đầu, không chờ lần đọc
+        assertTrue(readings.isEmpty())
+        for (r in 0 until SeamHandover.MAX_RETUNES) assertEquals(SeamHandover.Act.RETUNE, SeamHandover.decide(400, 800.0, r, emptyList(), none))
+        assertEquals(SeamHandover.Act.FALLBACK, ticks(none, retunes = SeamHandover.MAX_RETUNES).first) // hết lượt: a87 lặp mờ chéo như cũ
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(SeamHandover.DEADLINE_MS, 800.0, 0, emptyList(), none))
+        assertEquals(SeamHandover.Act.FALLBACK, SeamHandover.decide(400, SeamHandover.GUARD_MS.toDouble(), 0, emptyList(), none))
+        assertEquals(0.0, SeamHandover.lagPhase(ls06, lsTarget, none, 0.0), 0.0) // tua lại không đổi trễ
+        assertSame(none, SeamHandover.Landing.of(null))
+        assertEquals(26068L, (SeamHandover.Landing.of(26068) as SeamHandover.Landing.At).sample)
+    }
+
+    @Test fun landLineNamesTheTargetAndTheLandedSample() {
+        assertEquals("land 2 21703 26068", SeamEvents.land(2, 21703, 26068))
+        assertEquals("land 2 21703 none", SeamEvents.land(2, 21703, null))
+    }
 }

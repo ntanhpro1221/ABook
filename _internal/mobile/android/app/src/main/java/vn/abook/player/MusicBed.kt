@@ -152,12 +152,15 @@ object MusicBed {
     /**
      * Một lần chuyển a87 -> P3 đang diễn ra ([SeamHandover]): `old` (a87) vẫn là [current] và vẫn kêu; `p3` phát câm cho tới khi pha khớp. `lag` = trễ khởi động dùng cho lần tua kế;
      * `targetSample` / `issuedNano` = lần tua cuối của P3 (mẫu đích của Nối, [System.nanoTime] lúc tua: chỉ AudioTrack sinh ra sau lần xả SAU mốc này mới tin, [SeamHandover.fresh]);
-     * `readings` = pha P3 - a87 (ms) của các lần đọc tin được kể từ lần tua cuối ([SeamHandover.decide]).
+     * `readings` = pha P3 - a87 (ms) của các lần đọc tin được kể từ lần tua cuối ([SeamHandover.decide]); `landing` = lưới an toàn của lần tua cuối (mẫu đáp thật), `seeks` đánh số
+     * lần tua để bỏ kết quả muộn của lần tua cũ.
      */
     private class Handover(val p3: Bed, val old: Bed, val startedAt: Long, var lag: Long) {
         var issued = false
         var targetSample = 0L
         var issuedNano = 0L
+        var landing: SeamHandover.Landing = SeamHandover.Landing.Pending
+        var seeks = 0
         var retunes = 0
         val readings = ArrayList<Double>()
         var learned = false
@@ -518,13 +521,26 @@ object MusicBed {
         return seamSeekTo(bed, SeamClock.target(built.seam, built.bounds, sinceSeconds), sinceSeconds)
     }
 
+    /**
+     * `onLand`: mẫu đáp thật của lần tua (lưới an toàn của Nối, [LoopSeam.seekToSample]), gọi ở luồng chính; chỉ lần chuyển a87 -> P3 dùng. Ngoài ra lưới an toàn chỉ chạy khi đang đo
+     * (dòng `land`), không đổi quyết định nào.
+     */
     @OptIn(UnstableApi::class)
-    private fun seamSeekTo(bed: Bed, target: SeamClock.Target, sinceSeconds: Double): Boolean {
+    private fun seamSeekTo(bed: Bed, target: SeamClock.Target, sinceSeconds: Double, onLand: ((Long?) -> Unit)? = null): Boolean {
         val built = bed.built ?: return false
         val sink = bed.sink ?: return false
         if (target.index != 0 && !bed.attached) return false
         emit { SeamEvents.seek(bed.testK, sinceSeconds, target) }
-        LoopSeam.seekToSample(bed.player, sink, built.seam, target.index, target.sample)
+        val k = bed.testK
+        val landed: ((Long?) -> Unit)? = if (target.index % 2 == 1 && (onLand != null || testEvents != null)) {
+            { sample ->
+                main.post {
+                    emit { SeamEvents.land(k, target.sample, sample) }
+                    onLand?.invoke(sample)
+                }
+            }
+        } else null
+        LoopSeam.seekToSample(bed.player, sink, built.seam, target.index, target.sample, landed)
         return true
     }
 
@@ -714,8 +730,14 @@ object MusicBed {
         h.targetSample = target.sample
         h.issuedNano = System.nanoTime()
         h.readings.clear()
+        h.landing = SeamHandover.Landing.Pending
+        val seek = ++h.seeks
         if (!h.issued) setVolume(p3, 0f) // P3 câm tới lúc đổi tiếng
-        if (!seamSeekTo(p3, target, lastSeconds - (h.old.cue?.start ?: 0.0))) return false
+        // Lưới an toàn: mẫu đáp thật của lần tua này; kết quả của lần tua cũ (đã tua lại) hay của lần chuyển đã xong / bỏ thì không tính.
+        val onLand: (Long?) -> Unit = { landed ->
+            if (handover === h && h.seeks == seek) h.landing = SeamHandover.Landing.of(landed)
+        }
+        if (!seamSeekTo(p3, target, lastSeconds - (h.old.cue?.start ?: 0.0), onLand)) return false
         h.issued = true
         p3.player.play()
         return true
@@ -760,10 +782,11 @@ object MusicBed {
             main.postDelayed(handoverTick, SeamHandover.POLL_MS)
             return
         }
-        // Pha theo AudioTrack MỚI của P3 (sinh sau lần tua cuối, đã phát >= SETTLE_MS); không thì nhịp này không có lần đọc.
+        // Pha theo AudioTrack MỚI của P3 (sinh sau lần tua cuối, đã phát >= SETTLE_MS) và theo MẪU ĐÁP thật của lần tua (lưới an toàn); thiếu một trong hai thì nhịp này không có lần đọc.
         val now = System.nanoTime()
         val stamp = stampOf(p3.trackRef)
-        val delta = stamp?.let { SeamHandover.reading(seam, h.targetSample, h.issuedNano, it, now, a87) }
+        val landing = h.landing
+        val delta = stamp?.let { SeamHandover.landedReading(seam, landing, h.issuedNano, it, now, a87) }
         if (delta != null && stamp != null) {
             h.readings += delta
             emit { SeamEvents.handoverReading(p3.testK, delta, SeamHandover.played(seam, stamp, now) * 1000.0 / seam.sampleRate) }
@@ -771,15 +794,15 @@ object MusicBed {
         val settled = SeamHandover.settled(h.readings)
         if (settled != null && !h.learned) {
             h.learned = true // trễ khởi động đo ở lần khởi động nguội đầu tiên (pha đã ổn định): dùng cho các ranh sau
-            p3LagMs = SeamHandover.nextLag(h.lag, settled)
+            p3LagMs = SeamHandover.nextLag(h.lag, SeamHandover.lagPhase(seam, h.targetSample, landing, settled))
         }
-        // Nhịp không có lần đọc mới thì chỉ xét hạn chót: không đổi tiếng / tua theo số cũ.
-        when (SeamHandover.decide(elapsed, SeamHandover.remainingMs(seam, a87), h.retunes, if (delta != null) h.readings else emptyList())) {
+        // Nhịp không có lần đọc mới thì chỉ xét hạn chót: không đổi tiếng / tua theo số cũ. Lần tua không tìm thấy mẫu đáp: tua lại ngay.
+        when (SeamHandover.decide(elapsed, SeamHandover.remainingMs(seam, a87), h.retunes, if (delta != null) h.readings else emptyList(), landing)) {
             SeamHandover.Act.SWITCH -> return completeHandover(h, a87, a87 + delta!! / 1000.0)
             SeamHandover.Act.FALLBACK -> return abortHandover(DemoteReason.LATE)
             SeamHandover.Act.RETUNE -> {
                 h.retunes++
-                h.lag = SeamHandover.nextLag(h.lag, settled ?: 0.0)
+                h.lag = SeamHandover.nextLag(h.lag, SeamHandover.lagPhase(seam, h.targetSample, landing, settled ?: 0.0))
                 if (!issueHandover(h, a87)) return abortHandover(DemoteReason.LATE)
             }
             SeamHandover.Act.WAIT -> {}
