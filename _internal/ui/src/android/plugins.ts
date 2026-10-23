@@ -13,6 +13,7 @@ import type { MusicExportState } from "@/desktop/listenExport";
 import type { ImportResult } from "@/studio/musicLocal";
 import type { VieneuChoiceId, VieneuStatus } from "@/listen/vieneuModule";
 import type { VoiceSpeedChoice, VoiceSpeedStatus } from "@/listen/voiceSpeed";
+import type { DiagnosticsReport } from "@/shared/diagnostics";
 
 // Hai plugin native của app Android (mobile/android/app/src/main/java/vn/abook/player):
 //  EbookPlayer  - lõi phát Media3: hàng đợi chương, hẹn giờ ngủ, lắc để nghe thêm, nhật ký đêm.
@@ -531,6 +532,12 @@ export interface EbookLibraryPlugin {
   /** "Chia sẻ…": đóng cuốn (kèm thay đổi của người nghe) thành file rồi mở bảng chia sẻ của hệ thống (Zalo, Drive, email…). `as` không nói:
    *  sách nghe `.abook`. `shared: true` khi bảng chia sẻ đã mở. */
   shareBook(options: { id: string; as?: "abook" | "abookproj" }): Promise<{ shared: boolean; name?: string }>;
+  /** Cài đặt → Chẩn đoán (Diagnostics.kt, AppLog.kt): bản chẩn đoán của chính điện thoại với `lines` dòng nhật ký cuối (mặc định 500). */
+  diagnostics(options?: { lines?: number }): Promise<DiagnosticsReport>;
+  /** "Gửi nhật ký": ghi gói .zip (chẩn đoán + nhật ký chữ) rồi mở bảng chia sẻ của hệ thống - người dùng tự chọn gửi cho ai; app không gửi đi đâu. */
+  shareDiagnostics(): Promise<{ shared: boolean; name?: string }>;
+  /** "Xoá nhật ký": bỏ nhật ký của app và các file văng. */
+  clearDiagnostics(): Promise<{ cleared: boolean }>;
   /** "Xuất MP3 để nghe ở app khác" (Mp3Export.kt): thư mục MP3 như máy tính, chạy nền. Lần đầu (hay `pick`) hỏi chỗ lưu bằng bộ
    *  chọn thư mục của hệ thống rồi nhớ lại. `cover`: bìa tự vẽ (data URL PNG) khi sách không có bìa. Tiến độ / kết quả: sự kiện
    *  "mp3Export" mang cùng `run`. `started: false` khi không chọn thư mục. */

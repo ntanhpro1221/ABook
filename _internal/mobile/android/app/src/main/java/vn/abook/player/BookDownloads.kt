@@ -35,6 +35,7 @@ object BookDownloads {
 
     /** Giao diện đang mở thì nghe tin của việc nền ("download" của EbookLibrary): tiến độ, xong, huỷ, lỗi. */
     @Volatile var events: ((JSONObject) -> Unit)? = null
+    private val lastProgress = ConcurrentHashMap<String, JSONObject>()
 
     /** Cuốn có lượt tải (đang xếp hàng hay đang chạy) -> mã việc: không xoá thư mục của nó, không sửa book.json của nó từ chỗ khác. */
     val active: MutableMap<String, String> = ConcurrentHashMap()
@@ -72,7 +73,20 @@ object BookDownloads {
     }
 
     fun emit(event: JSONObject) {
+        val book = event.optString("bookId")
+        val run = active[book]
+        if (run == null || event.optBoolean("finished") || event.optBoolean("cancelled") || event.has("error")) {
+            lastProgress.remove(book)
+        } else {
+            val safe = JSONObject().put("run", run)
+            for (key in listOf("done", "total", "percent", "phase")) if (event.has(key)) safe.put(key, event.get(key))
+            lastProgress[book] = safe
+        }
         runCatching { events?.invoke(event) }
+    }
+
+    internal fun diagnosticProgress(): List<JSONObject> = lastProgress.entries.mapNotNull { (book, event) ->
+        if (active[book] == event.optString("run")) JSONObject(event.toString()) else null
     }
 
     /** Lời cho người nghe + chữ gốc (chỉ khi là lỗi mạng đã dịch thành câu) - dùng chung cho lời gọi bị từ chối và sự kiện "download". */
@@ -340,7 +354,9 @@ class BookDownloadWorker(context: Context, params: WorkerParameters) : Worker(co
     override fun getForegroundInfo(): ForegroundInfo =
         BookDownloads.foreground(applicationContext, id, BookDownloads.inputs(inputData).first.orEmpty(), title, 0.0)
 
-    override fun doWork(): Result {
+    override fun doWork(): Result = AppLog.worker("BookDownload", this) { execute() }
+
+    private fun execute(): Result {
         val context = applicationContext
         Store.init(context)
         val (bookId, source, remote) = BookDownloads.inputs(inputData)

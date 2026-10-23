@@ -580,7 +580,7 @@ class MusicCatalog(
 
         /** Nhật ký mặc định; `android.util.Log` không chạy trong bài thử JVM nên nuốt lỗi (test truyền bộ ghi riêng). */
         private fun logWarning(message: String) {
-            runCatching { android.util.Log.w("MusicCatalog", message) }
+            runCatching { AppLog.w("MusicCatalog", message) }
         }
 
         /** Lỗi tầng mạng (không phân giải được tên, không nối được, hết giờ, đứt giữa chừng, bắt tay SSL) - khác nguồn trả lỗi HTTP, bản sao sai,
