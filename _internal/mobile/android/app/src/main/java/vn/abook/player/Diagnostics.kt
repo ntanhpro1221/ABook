@@ -71,7 +71,7 @@ object Diagnostics {
             if (bounded && safe.length > 2000) { clipped = true; return safe.take(2000) }
             return safe
         }
-        fun walk(value: Any?, depth: Int): Any? {
+        fun walk(value: Any?, depth: Int, logArray: Boolean = false): Any? {
             if (bounded && depth > 10) { clipped = true; return JSONObject.NULL }
             return when (value) {
                 is String -> text(value)
@@ -81,11 +81,13 @@ object Diagnostics {
                     for (key in if (bounded) keys.take(200) else keys) {
                         val item = value.get(key)
                         val secret = key.matches(Regex("(?i)(?:key|api[_-]?key|token|secret|password|code|mật khẩu|mã ghép)"))
-                        out.put(text(key), if (secret && item is String) "***" else walk(item, depth + 1))
+                        out.put(text(key), if (secret && item is String) "***" else walk(item, depth + 1,
+                            logArray = depth == 0 && key in setOf("log", "logcat")))
                     }
                 }
                 is JSONArray -> JSONArray().also { out ->
-                    val start = if (bounded) (value.length() - 200).coerceAtLeast(0) else 0
+                    val limit = if (logArray) MAX_LINES else 200
+                    val start = if (bounded) (value.length() - limit).coerceAtLeast(0) else 0
                     if (start > 0) clipped = true
                     for (i in start until value.length()) out.put(walk(value.get(i), depth + 1))
                 }
@@ -181,6 +183,7 @@ object Diagnostics {
             "playback" to { playback() },
             "work" to { work(app) },
             "share" to { share() },
+            "dataRecovery" to { Store.dataDiagnostics() },
             "exitReasons" to { ExitReasons.read(app) },
             "crashes" to { JSONArray().also { array -> CrashLog.read(AppLog.folder()).forEach { (name, text) -> array.put(JSONObject().put("name", name).put("text", text)) } } },
             "log" to { JSONArray(AppLog.tail(lines)) },

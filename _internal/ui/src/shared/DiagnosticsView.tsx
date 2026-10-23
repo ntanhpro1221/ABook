@@ -1,9 +1,9 @@
-import { emptyLogNote, logLines, summaryRows, type DiagnosticsReport } from "./diagnostics";
+import { emptyLogNote, logLines, summaryRows, workProgressRows, type DiagnosticsReport } from "./diagnostics";
 
 /** Bản chẩn đoán của điện thoại cho người đọc: tóm tắt từng mục rồi nhật ký cuộn được (dòng mới nhất ở cuối, cuộn sẵn xuống đó). Dùng chung hộp
  *  "Chẩn đoán" của máy tính và màn Cài đặt → Chẩn đoán của điện thoại. */
 export function DiagnosticsView({ report }: { report: DiagnosticsReport }) {
-  const rows = summaryRows(report);
+  const rows = [...summaryRows(report), ...workProgressRows(report)];
   const app = logLines(report, "log");
   const cat = logLines(report, "logcat");
   return (

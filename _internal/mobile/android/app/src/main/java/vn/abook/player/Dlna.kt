@@ -361,6 +361,17 @@ object Dlna {
 
     // ---- cổng audio -----------------------------------------------------------------------------------------------
 
+    internal class TransferFailures(private val emit: (String) -> Unit) {
+        private val last = mutableMapOf<String, Long>()
+        @Synchronized fun record(timeout: Boolean, sent: Long, now: Long = System.nanoTime()) {
+            val kind = if (timeout) "idle-timeout" else "write-error"
+            last[kind]?.let { if (now - it < TimeUnit.SECONDS.toNanos(30)) return }
+            last[kind] = now
+            emit("Cast transfer $kind bytes_sent=$sent")
+        }
+    }
+    private val transferFailures = TransferFailures { AppLog.w("PhoneCast", it) }
+
     /**
      * Cổng riêng để thiết bị tải chương: chỉ file đã đưa qua [share], mỗi file một mã ngẫu nhiên 128 bit, hết hạn sau 12
      * giờ; GET/HEAD có Range (thiết bị tua bằng Range). Mở lần đầu cần.
@@ -398,7 +409,7 @@ object Dlna {
             val socket = start()
             val now = System.currentTimeMillis()
             files.entries.removeIf { it.value.second < now }
-            val token = ByteArray(16).also(random::nextBytes).joinToString("") { "%02x".format(it) }
+            val token = newToken()
             files[token] = file to now + TTL_MS
             val address = if (bind == "127.0.0.1") "127.0.0.1" else routeTo(reach)
             return "http://$address:${socket.localPort}/c/$token.${file.extension.lowercase()}"
@@ -409,6 +420,8 @@ object Dlna {
             server?.close()
             server = null
         }
+
+        internal fun newToken(): String = ByteArray(16).also(random::nextBytes).joinToString("") { "%02x".format(it) }
 
         private fun accept(socket: ServerSocket) {
             while (!socket.isClosed) {
@@ -467,17 +480,25 @@ object Dlna {
                 val token = Regex("/c/([0-9a-f]{32})(?:\\.[a-z0-9]{1,5})?").matchEntire(parts[1].substringBefore('?'))?.groupValues?.get(1)
                 val entry = token?.let { files[it] }
                 if (entry == null || entry.second < System.currentTimeMillis() || !entry.first.isFile) return status(output, 404)
+                output.authenticated = true
                 send(output, entry.first, headers["range"], parts[0] == "HEAD")
             }
         }
 
         /** soTimeout chỉ canh ĐỌC. Luồng canh độc lập đóng socket để đánh thức cả write đang kẹt vì bên nhận không đọc. */
-        private class ProgressOutput(private val socket: Socket, idleMs: Long) : OutputStream() {
+        internal class ProgressOutput(private val socket: Socket, idleMs: Long,
+            private val failures: TransferFailures = transferFailures) : OutputStream() {
             private val output = socket.getOutputStream()
+            @Volatile var authenticated = false
+            private val sent = java.util.concurrent.atomic.AtomicLong(0)
+            private val failed = java.util.concurrent.atomic.AtomicBoolean(false)
             @Volatile private var progress = System.nanoTime()
             private val idleNanos = TimeUnit.MILLISECONDS.toNanos(idleMs.coerceAtLeast(1))
             private val watch = WRITE_WATCH.scheduleWithFixedDelay({
-                if (System.nanoTime() - progress >= idleNanos) runCatching { socket.close() }
+                if (System.nanoTime() - progress >= idleNanos) {
+                    failure(timeout = true)
+                    runCatching { socket.close() }
+                }
             }, 1, minOf(1000, maxOf(1, idleMs / 4)), TimeUnit.MILLISECONDS)
 
             override fun write(value: Int) = write(byteArrayOf(value.toByte()), 0, 1)
@@ -487,13 +508,22 @@ object Dlna {
                 while (done < length) {
                     // Khúc nhỏ để lần ghi đã trả về thể hiện tiến độ, không canh thời gian cho cả chương hay khối lớn.
                     val count = minOf(8192, length - done)
-                    output.write(data, offset + done, count)
+                    try { output.write(data, offset + done, count) }
+                    catch (error: IOException) { failure(timeout = error is SocketTimeoutException); throw error }
+                    sent.addAndGet(count.toLong())
                     progress = System.nanoTime()
                     done += count
                 }
             }
 
-            override fun flush() = output.flush()
+            internal fun failure(timeout: Boolean) {
+                if (authenticated && failed.compareAndSet(false, true)) failures.record(timeout, sent.get())
+            }
+
+            override fun flush() {
+                try { output.flush() }
+                catch (error: IOException) { failure(timeout = error is SocketTimeoutException); throw error }
+            }
             override fun close() { watch.cancel(false) }
         }
 

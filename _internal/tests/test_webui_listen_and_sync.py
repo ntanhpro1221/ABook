@@ -194,7 +194,8 @@ def test_two_bookmarks_at_the_same_spot_are_one(tmp_path: Path) -> None:
     listening.delete_bookmark("b", first["id"])
     listening.restore_bookmark("b", first)
     state = listening.get("b")
-    assert first["id"] in [mark["id"] for mark in state["bookmarks"]] and first["id"] not in state["deleted"]
+    # bia mộ ở lại (soát a118 lỗi 6): dấu hoàn tác sống nhờ phiên bản mới hơn nó
+    assert first["id"] in [mark["id"] for mark in state["bookmarks"]] and first["id"] in state["deleted"]
 
 
 def test_last_night_is_the_newest_undismissed_night(tmp_path: Path) -> None:
@@ -342,7 +343,7 @@ def test_a_paired_phone_downloads_a_book_and_syncs_its_place(library, tmp_path: 
         legacy = {"last": {"chapterId": 1, "seconds": 7, "at": time.time() + 10}}
         status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=legacy)
         assert status == 400
-        assert json.loads(data)["error"] == "Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"
+        assert json.loads(data)["error"] == "Dữ liệu đồng bộ thiếu phiên bản. Bạn hãy mở lại hồ sơ trên máy gửi rồi thử lại."
         assert listening.get(identifier)["last"]["seconds"] == 4.2
     finally:
         server.stop()

@@ -45,7 +45,8 @@ from typing import Any
 from ..io_utils import atomic_write_json, file_lock, file_stamp
 from . import notices
 from .library import preferences_path
-from .listening_revision import advance, clock, epoch, observe, checked_peer, require_peer_revisions, newer, revision as place_revision
+from .listening_revision import (advance, adopt_meta, clock, epoch, observe, checked_peer, meta_items, meta_newer, require_peer_revisions,
+                                 newer, upgrade_local, revision as place_revision)
 
 # Nghe tới cách cuối chương dưới 20 giây là coi như nghe xong chương (đoạn cuối thường là khoảng lặng + lời
 # chuyển chương, người nghe hay bấm sang chương kế trước khi nó hết).
@@ -81,7 +82,14 @@ DEFAULT_RECORD_NAME = "Mặc định"
 MAX_RECORD_NAME = 60
 RECORD_ID = re.compile(r"r-[0-9a-f]{16}")
 SYNC_KEYS = ("record", "recordName", "nameAt", "activeAt", "movedAt", "book", "records", "active", "activeState",
-             "deleted", "deletedRecords")
+             "deleted", "deletedRecords", "nameRev", "activeRev", "movedRev")
+# Siêu dữ liệu hồ sơ gộp theo phiên bản Lamport của bảng liên kết (`nameRev`, `activeRev`, `movedRev`, listening_revision.meta_newer);
+# `nameAt`/`activeAt`/`movedAt` (đồng hồ tường) vẫn gửi cho máy 0.4.133 và chỉ quyết khi một bên chưa có phiên bản.
+
+
+def _revs(row: dict[str, Any], *keys: str) -> dict[str, Any]:
+    """Các phiên bản siêu dữ liệu `row` đang có, để gửi kèm mốc giờ (thiếu thì không gửi khoá ấy)."""
+    return {key: row[key] for key in keys if key in row}
 
 
 def listening_path() -> Path:
@@ -118,7 +126,9 @@ def _upgrade(raw: Any) -> dict[str, Any]:
         records = raw.get("records") if isinstance(raw.get("records"), dict) else {}
         links = raw.get("links") if isinstance(raw.get("links"), dict) else {}
         deleted = raw.get("deleted") if isinstance(raw.get("deleted"), dict) else {}
-        return {"version": FORMAT_VERSION, "records": records, "links": links, "deleted": deleted}
+        # `_clock`/`_epoch`: đồng hồ của tên, lần chuyển, hồ sơ đang chọn (listening_revision.meta_items).
+        return {"version": FORMAT_VERSION, "records": records, "links": links, "deleted": deleted,
+                **{key: raw[key] for key in ("_clock", "_epoch") if key in raw}}
     data: dict[str, Any] = {"version": FORMAT_VERSION, "records": {}, "links": {}, "deleted": {}}
     for book, state in (raw.items() if isinstance(raw, dict) else []):
         if not isinstance(state, dict):
@@ -198,6 +208,7 @@ class Listening:
                 raw = self._read() or {}
                 self._data, self._legacy = _upgrade(raw), _legacy_format(raw)
                 self._replay()
+                self._upgrade_revisions()
                 self._stamp = self._stamps()
         except notices.Unreadable as error:
             self._data, self._unread = _upgrade(error.readable if isinstance(error, UnpreservedProfile) else {}), True
@@ -206,6 +217,20 @@ class Listening:
     def _stamps(self) -> tuple[Any, Any]:
         """Dấu của hồ sơ và của nhật ký: một trong hai đổi (kể cả do tiến trình khác) thì bản trong bộ nhớ đã cũ."""
         return file_stamp(self.path), file_stamp(self._journal)
+
+    def _upgrade_revisions(self) -> None:
+        # Constructor and _changing both own the profile's file lock here.
+        try:
+            changed = False
+            for key in sorted(self._data["records"]):
+                state = self._data["records"][key].get("state", {})
+                changed = upgrade_local(state, self._node) or changed
+            if changed:
+                self._save()
+        except OSError as error:
+            self._unread = True  # retry disk read/migration; never sync an uncommitted in-memory rev
+            notices.NOTICES.add("Chưa lưu được phiên bản hồ sơ của bạn. App giữ bản gốc; bạn hãy thử lại.", kind="saving-blocked")
+            raise UnpreservedProfile(self._data) from error
 
     def _replay(self) -> None:
         """Áp nhật ký chỗ nghe lên `self._data` (vừa đọc từ hồ sơ). Dòng cụt do tắt ngang, hay trỏ tới hồ sơ không còn: bỏ qua."""
@@ -262,8 +287,11 @@ class Listening:
         trước đây app im lặng coi như chưa nghe gì và lần ghi kế ĐÈ mất hết chỗ nghe, dấu trang."""
         from .listening_schema import clean_profiles
         what = "Hồ sơ nghe (chỗ nghe dở, dấu trang)"
+        existed = self.path.exists()
         raw = notices.read_json(self.path, what, lambda value: isinstance(value, dict))
         if raw is None:
+            if existed:  # bản hỏng vừa được giữ sang .hong-*: hồ sơ bắt đầu lại từ trống
+                self._fresh_node()
             return None
         clean = clean_profiles(raw)
         if clean != raw:
@@ -274,7 +302,17 @@ class Listening:
             except OSError as error:
                 notices.NOTICES.add("Chưa lưu được phần hồ sơ đã đọc lại của bạn. Bản gốc vẫn được giữ; bạn hãy thử lại.")
                 raise UnpreservedProfile(clean) from error
+            self._fresh_node()
         return clean
+
+    def _fresh_node(self) -> None:
+        """Hồ sơ dựng lại từ bản hỏng / chỉ đọc được một phần: đồng hồ có thể lùi dưới những phiên bản máy này đã gửi đi. Mã máy mới giữ
+        (counter, node) không bao giờ lặp lại cho nội dung khác (soát a118 lỗi 2). Lưu mã không được thì lần chạy này vẫn dùng mã mới."""
+        node = uuid.uuid4().hex
+        path = preferences_path().with_name("listening-node.json")
+        with contextlib.suppress(OSError), file_lock(path):
+            atomic_write_json(path, {"node": node})
+        self._node_id = node
 
     @contextlib.contextmanager
     def _changing(self, *, require_commit: bool = False, snapshot: bool = True) -> Iterator[None]:
@@ -293,6 +331,7 @@ class Listening:
                         self._data, self._legacy = _upgrade(raw or {}), _legacy_format(raw)
                     self._replay()
                     self._unread = False
+                    self._upgrade_revisions()
                 self._stamp = self._stamps()
             if self._unread or self._journal_unread:
                 raise notices.Unreadable("Chưa đọc được hồ sơ nghe. Bạn hãy thử lại.")
@@ -396,11 +435,13 @@ class Listening:
             link = self._data["links"].setdefault(book, {"records": []})
             record_id = _new_record_id()
             label = name.strip()[:MAX_RECORD_NAME] or f"Hồ sơ {len(link.get('records', [])) + 1}"
-            self._data["records"][record_id] = {"name": label, "createdAt": time.time(), "nameAt": time.time(),
+            rev = self._meta_rev()
+            self._data["records"][record_id] = {"name": label, "createdAt": time.time(), "nameAt": time.time(), "nameRev": rev,
                                                 "state": _empty_state()}
             link["records"] = [*link.get("records", []), record_id]
             link["active"] = record_id
             link["activeAt"] = time.time()
+            link["activeRev"] = rev
             self._save()
             return {"id": record_id, "name": label, "active": True}
 
@@ -411,6 +452,7 @@ class Listening:
                 return False
             link["active"] = record_id
             link["activeAt"] = time.time()
+            link["activeRev"] = self._meta_rev()
             self._save()
             return True
 
@@ -420,9 +462,14 @@ class Listening:
             if record is None or not name.strip():
                 return False
             record["name"] = name.strip()[:MAX_RECORD_NAME]
-            record["nameAt"] = time.time()  # đổi tên sau thắng khi đồng bộ
+            record["nameAt"] = time.time()
+            record["nameRev"] = self._meta_rev()  # đổi tên sau (theo nhân quả, không theo đồng hồ tường) thắng khi đồng bộ
             self._save()
             return True
+
+    def _meta_rev(self) -> dict[str, Any]:
+        """Phiên bản mới cho tên / lần chuyển / hồ sơ đang chọn: một đồng hồ cho cả bảng liên kết (soát a118 lỗi 5)."""
+        return advance(self._data, self._node(), meta_items)
 
     def book_of(self, record_id: str) -> str | None:
         with self._lock:
@@ -439,6 +486,7 @@ class Listening:
             link["records"] = [*link.get("records", []), record_id]
             link["active"] = record_id
             link["activeAt"] = self._data["records"][record_id]["movedAt"] = time.time()
+            link["activeRev"] = self._data["records"][record_id]["movedRev"] = self._meta_rev()
             self._save()
             return True
 
@@ -474,9 +522,11 @@ class Listening:
                     known = list(existing.get("records", []))
                     existing["records"] = known + [item for item in moved.get("records", []) if item not in known]
                     if moved.get("active") and (not existing.get("active")
-                                                or float(moved.get("activeAt") or 0) > float(existing.get("activeAt") or 0)):
+                                                or meta_newer(self._data, moved.get("activeRev"), moved.get("activeAt"),
+                                                              existing.get("activeRev"), existing.get("activeAt"), notices.NOTICES.add)):
                         existing["active"] = moved["active"]
                         existing["activeAt"] = float(moved.get("activeAt") or 0)
+                        adopt_meta(self._data, existing, "activeRev", moved.get("activeRev"))
                 changed = True
             if changed:
                 self._save()
@@ -725,8 +775,9 @@ class Listening:
             self._save()
 
     def restore_bookmark(self, book: str, mark: dict[str, Any]) -> dict[str, Any]:
-        """Hoàn tác xoá: đặt lại đúng dấu cũ (cùng id) và gỡ tombstone của nó. `at` mới hơn tombstone - lệnh xoá đã kịp sang máy kia
-        cũng không xoá lại nó khi gộp (merge_states); `createdAt` giữ lúc đặt dấu gốc, không thành "vừa xong" (soát a70)."""
+        """Hoàn tác xoá: đặt lại đúng dấu cũ (cùng id) với phiên bản mới hơn tombstone - lệnh xoá đã kịp sang máy kia cũng không xoá lại
+        nó khi gộp (merge_states); `createdAt` giữ lúc đặt dấu gốc, không thành "vừa xong" (soát a70). Tombstone ở lại: gỡ nó ở đây mà máy
+        kia còn giữ thì tập tombstone hai máy không bao giờ khớp (soát a118 lỗi 6)."""
         with self._changing():
             entry = self._book(book)
             now = time.time()
@@ -742,7 +793,6 @@ class Listening:
                 restored["anchor"] = clean
             restored["rev"] = advance(entry, self._node())
             entry["bookmarks"] = [item for item in entry["bookmarks"] if item["id"] != restored["id"]] + [restored]
-            (entry.get("deleted") or {}).pop(restored["id"], None)
             entry["updatedAt"] = restored["at"]
             self._save()
             return restored
@@ -854,16 +904,18 @@ class Listening:
             entry.clear()
             entry.update(merged)
             self._save()
-            return json.loads(json.dumps(merged))
+            return {**json.loads(json.dumps(merged)), "listeningRevision": 1}
 
     def merge_record(self, book: str, record_id: str, incoming: dict[str, Any], *, name: str = "",
                      name_at: float = 0.0, active_at: float = 0.0, moved_at: float = 0.0,
-                     deleted: dict[str, Any] | None = None) -> dict[str, Any]:
+                     deleted: dict[str, Any] | None = None, name_rev: Any = None, active_rev: Any = None,
+                     moved_rev: Any = None) -> dict[str, Any]:
         """Gộp MỘT hồ sơ từ thiết bị khác - đúng hồ sơ ấy, không phải hồ sơ đang dùng ở đây (đổi hồ sơ ở máy này đúng
         lúc điện thoại gửi lên thì không trộn hai hồ sơ). Hồ sơ lạ (tạo trên điện thoại) được nhận, cùng mã, gắn vào
         `book`. Hồ sơ đang dùng: bên chọn sau thắng (`active_at` là lúc điện thoại chọn hồ sơ này); tên: bên đổi sau
         thắng (`name_at`). Hồ sơ gắn ở sách nào: lần chuyển sau thắng (`moved_at` là lúc điện thoại chuyển hồ sơ sang
-        `book`; chuyển ở đây sau đó thì `book` trong lời đáp nói sách mới cho điện thoại theo). `deleted`: bia mộ của những
+        `book`; chuyển ở đây sau đó thì `book` trong lời đáp nói sách mới cho điện thoại theo). Ba lần "sau" ấy theo phiên bản
+        `name_rev` / `active_rev` / `moved_rev` khi cả hai bên có (meta_newer), không thì theo mốc giờ. `deleted`: bia mộ của những
         hồ sơ điện thoại đã xoá - ở đây xoá theo; hồ sơ vừa gửi đã bị xoá ở đây thì không sống lại (trả `deleted: true`).
 
         Trả trạng thái đã gộp, kèm `record`, `book` (sách hồ sơ gắn ở đây - có thể đã được chuyển), `movedAt` của hồ sơ,
@@ -879,17 +931,21 @@ class Listening:
                     self._data["deleted"][gone] = max(float(self._data["deleted"].get(gone) or 0), float(at or 0))
             if record_id in self._data["deleted"]:
                 self._save()
-                return {"record": record_id, "deleted": True, "deletedRecords": dict(self._data["deleted"])}
+                return {"listeningRevision": 1, "record": record_id, "deleted": True, "deletedRecords": dict(self._data["deleted"])}
+            notify = notices.NOTICES.add
             record = self._data["records"].get(record_id)
-            if record is None:
-                record = self._data["records"][record_id] = {"name": name.strip()[:MAX_RECORD_NAME] or DEFAULT_RECORD_NAME,
-                                                              "createdAt": time.time(), "nameAt": float(name_at or 0),
-                                                              "state": _empty_state()}
-            elif name.strip() and float(name_at or 0) > float(record.get("nameAt") or 0):
+            fresh = record is None
+            if fresh:
+                record = self._data["records"][record_id] = {"name": DEFAULT_RECORD_NAME, "createdAt": time.time(),
+                                                              "nameAt": float(name_at or 0), "state": _empty_state()}
+            if name.strip() and meta_newer(self._data, name_rev, name_at, record.get("nameRev"),
+                                           -1.0 if fresh else record.get("nameAt"), notify):
                 record["name"] = name.strip()[:MAX_RECORD_NAME]
-                record["nameAt"] = float(name_at)
+                record["nameAt"] = float(name_at or 0)
+                adopt_meta(self._data, record, "nameRev", name_rev)
+            moved_later = meta_newer(self._data, moved_rev, moved_at, record.get("movedRev"), record.get("movedAt"), notify)
             owner = self._owner(record_id)
-            if owner is not None and owner != book and float(moved_at or 0) > float(record.get("movedAt") or 0):
+            if owner is not None and owner != book and moved_later:
                 self._unlink(record_id)  # điện thoại chuyển hồ sơ sang `book` sau lần chuyển ở đây: theo nó
                 owner = None
             if owner is None:
@@ -898,26 +954,31 @@ class Listening:
                 link["records"] = [*link.get("records", []), record_id]
                 if not link.get("active") or link["active"] not in self._data["records"]:
                     link["active"] = record_id
-            if owner == book:  # hai bên cùng chỗ gắn: giữ lần chuyển muộn nhất mà bên nào biết
-                record["movedAt"] = max(float(record.get("movedAt") or 0), float(moved_at or 0))
+            if owner == book and moved_later:  # hai bên cùng chỗ gắn: giữ lần chuyển sau cùng mà bên nào biết
+                record["movedAt"] = float(moved_at or 0)
+                adopt_meta(self._data, record, "movedRev", moved_rev)
             link = self._data["links"][owner]
-            if active_at and float(active_at) > float(link.get("activeAt") or 0):
+            if (active_at or active_rev is not None) and meta_newer(self._data, active_rev, active_at, link.get("activeRev"),
+                                                                     link.get("activeAt"), notify):
                 link["active"] = record_id
-                link["activeAt"] = float(active_at)
+                link["activeAt"] = float(active_at or 0)
+                adopt_meta(self._data, link, "activeRev", active_rev)
             state = record.setdefault("state", _empty_state())
             merged = merge_states(state, incoming)
             state.clear()
             state.update(merged)
             self._save()
             reply = json.loads(json.dumps(merged))
-            reply.update({"record": record_id, "recordName": record.get("name") or DEFAULT_RECORD_NAME, "book": owner,
-                          "movedAt": float(record.get("movedAt") or 0),
+            reply.update({"listeningRevision": 1, "record": record_id, "recordName": record.get("name") or DEFAULT_RECORD_NAME, "book": owner,
+                          "movedAt": float(record.get("movedAt") or 0), **_revs(record, "movedRev"),
                           "records": [{"id": item,
                                        "name": self._data["records"][item].get("name") or DEFAULT_RECORD_NAME,
                                        "nameAt": float(self._data["records"][item].get("nameAt") or 0),
-                                       "movedAt": float(self._data["records"][item].get("movedAt") or 0)}
+                                       "movedAt": float(self._data["records"][item].get("movedAt") or 0),
+                                       **_revs(self._data["records"][item], "nameRev", "movedRev")}
                                       for item in link.get("records", []) if item in self._data["records"]],
-                          "active": {"record": link.get("active"), "at": float(link.get("activeAt") or 0)},
+                          "active": {"record": link.get("active"), "at": float(link.get("activeAt") or 0),
+                                     **({"rev": link["activeRev"]} if "activeRev" in link else {})},
                           "deletedRecords": dict(self._data["deleted"])})
             if link.get("active") and link["active"] != record_id:
                 active = self._data["records"].get(link["active"]) or {}
@@ -942,10 +1003,11 @@ class Listening:
             link = self._data["links"][book]
             meta = self._data["records"][record]
             body = json.loads(json.dumps(meta.get("state") or _empty_state()))
-            body.update({"record": record, "recordName": meta.get("name") or DEFAULT_RECORD_NAME,
+            body.update({"listeningRevision": 1, "record": record, "recordName": meta.get("name") or DEFAULT_RECORD_NAME,
                          "nameAt": float(meta.get("nameAt") or 0),
                          "activeAt": float(link.get("activeAt") or 0) if link.get("active") == record else 0.0,
-                         "movedAt": float(meta.get("movedAt") or 0), "deletedRecords": dict(self._data["deleted"])})
+                         "movedAt": float(meta.get("movedAt") or 0), "deletedRecords": dict(self._data["deleted"]),
+                         **_revs(meta, "nameRev", "movedRev"), **(_revs(link, "activeRev") if link.get("active") == record else {})})
             return body
 
     def merge_reply(self, book: str, record: str, reply: dict[str, Any], *, remote_book: str = "",
@@ -979,10 +1041,12 @@ class Listening:
             state.clear()
             state.update(merged)
             # sách hồ sơ gắn ở máy kia: lần chuyển sau thắng
+            notify = notices.NOTICES.add
             target = book if self._owner(record) == book else None
             remote_moved = float(reply.get("movedAt") or 0)
+            moved_later = meta_newer(self._data, reply.get("movedRev"), remote_moved, entry.get("movedRev"), entry.get("movedAt"), notify)
             there = reply.get("book")
-            if target is not None and isinstance(there, str) and there and there != remote_book and remote_moved > float(entry.get("movedAt") or 0):
+            if target is not None and isinstance(there, str) and there and there != remote_book and moved_later:
                 destination = resolve(there) if resolve is not None else None
                 if destination and destination != book:
                     self._unlink(record)
@@ -991,8 +1055,9 @@ class Listening:
                     target = destination
                 else:
                     target = None  # chuyển sang cuốn ta không có: giữ chỗ gắn ở đây, không trộn danh sách hồ sơ của hai cuốn
-            if target is not None:
-                entry["movedAt"] = max(float(entry.get("movedAt") or 0), remote_moved)
+            if target is not None and moved_later:
+                entry["movedAt"] = remote_moved
+                adopt_meta(self._data, entry, "movedRev", reply.get("movedRev"))
             link = self._data["links"].get(target) if target is not None else None
             for item in reply.get("records") or []:
                 if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not RECORD_ID.fullmatch(item["id"]):
@@ -1007,17 +1072,22 @@ class Listening:
                                                                   "createdAt": time.time(), "nameAt": 0.0, "state": _empty_state()}
                     link["records"] = [*link.get("records", []), item["id"]]
                 at = float(item.get("nameAt") or 0)
-                if str(item.get("name") or "").strip() and at > float(known.get("nameAt") or 0):
+                if str(item.get("name") or "").strip() and meta_newer(self._data, item.get("nameRev"), at, known.get("nameRev"),
+                                                                      known.get("nameAt"), notify):
                     known["name"] = str(item["name"]).strip()[:MAX_RECORD_NAME]
                     known["nameAt"] = at
-                if link is not None and item["id"] in link.get("records", []):
-                    known["movedAt"] = max(float(known.get("movedAt") or 0), float(item.get("movedAt") or 0))
+                    adopt_meta(self._data, known, "nameRev", item.get("nameRev"))
+                if (link is not None and item["id"] in link.get("records", [])
+                        and meta_newer(self._data, item.get("movedRev"), item.get("movedAt"), known.get("movedRev"), known.get("movedAt"), notify)):
+                    known["movedAt"] = float(item.get("movedAt") or 0)
+                    adopt_meta(self._data, known, "movedRev", item.get("movedRev"))
             active = reply.get("active")
             chosen = active.get("record") if isinstance(active, dict) else None
             if (link is not None and isinstance(chosen, str) and chosen in link.get("records", [])
-                    and float(active.get("at") or 0) > float(link.get("activeAt") or 0)):
+                    and meta_newer(self._data, active.get("rev"), active.get("at"), link.get("activeRev"), link.get("activeAt"), notify)):
                 link["active"] = chosen
-                link["activeAt"] = float(active["at"])
+                link["activeAt"] = float(active.get("at") or 0)
+                adopt_meta(self._data, link, "activeRev", active.get("rev"))
                 if chosen != record and isinstance(reply.get("activeState"), dict):
                     other = self._data["records"][chosen].setdefault("state", _empty_state())
                     merged_other = merge_states(other, {key: value for key, value in reply["activeState"].items()
@@ -1166,6 +1236,7 @@ def merge_nights(ours: dict[str, Any] | None, theirs: dict[str, Any] | None) -> 
 
 
 def merge_states(ours: dict[str, Any], theirs: dict[str, Any]) -> dict[str, Any]:
+    from .listening_schema import number
     theirs = checked_peer(ours, theirs, notices.NOTICES.add)
     result = json.loads(json.dumps(ours))
     result.setdefault("chapters", {})
@@ -1183,7 +1254,11 @@ def merge_states(ours: dict[str, Any], theirs: dict[str, Any]) -> dict[str, Any]
         my_stamp = {"at": result.get(stamp, 0), "rev": result.get("_fieldRevs", {}).get(field)}
         if field in theirs and newer(their_stamp, my_stamp):
             result[field] = theirs[field]
-            result[stamp] = theirs[stamp]
+            # Mốc giờ chỉ còn cho máy đời trước; máy kia thiếu / hỏng mốc thì không văng lỗi ở mọi lần đồng bộ (soát a118 lỗi 3).
+            if number(theirs.get(stamp)):
+                result[stamp] = theirs[stamp]
+            else:
+                result.pop(stamp, None)
             if their_stamp["rev"]:
                 result.setdefault("_fieldRevs", {})[field] = their_stamp["rev"]
     # Dấu trang: hợp theo id, bản sửa sau thắng (bằng nhau thì giữ bản ở đây); bia mộ chỉ xoá dấu không đổi gì sau lúc xoá - dấu được

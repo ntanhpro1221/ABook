@@ -33,7 +33,7 @@ class A113SecurityTest {
             }
             await("worker đã giữ slot") { media.activeConnections() == 1 }
             await("không đọc: canh ghi đóng socket và nhả slot") { media.activeConnections() == 0 }
-            assertEquals(200, uri.toURL().openConnection().apply { connectTimeout = 2000; readTimeout = 2000; setRequestProperty("Range", "bytes=0-9") }
+            assertEquals(206, uri.toURL().openConnection().apply { connectTimeout = 2000; readTimeout = 2000; setRequestProperty("Range", "bytes=0-9") }
                 .let { it as java.net.HttpURLConnection }.run { try { responseCode } finally { disconnect() } })
         } finally {
             client?.close()

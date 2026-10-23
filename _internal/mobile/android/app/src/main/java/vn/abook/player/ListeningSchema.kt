@@ -26,6 +26,16 @@ internal object ListeningSchema {
             } }
             state.put(key, clean)
         }
+        for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) {
+            // Value + stamp + revision are one unit (Python clean_state): a broken part drops all three and the other device resends
+            // it - keeping the value and revision without the stamp broke every merge on the peer (a118 bug 3). A broken revision
+            // alone is re-stamped by ListeningRevision.upgradeLocal.
+            if (raw.has(field) && !state.has(field) || raw.has(stamp) && !state.has(stamp)) {
+                state.remove(field)
+                state.remove(stamp)
+                state.optJSONObject("_fieldRevs")?.remove(field)
+            }
+        }
         for ((key, required) in listOf("last" to listOf("chapterId", "seconds"), "reading" to listOf("chapterId", "index"))) {
             if (!state.has(key)) continue
             val item = state.optJSONObject(key)
@@ -74,20 +84,28 @@ internal object ListeningSchema {
         return state
     }
 
+    /** Broken name / move / active-choice revisions are dropped; the wall-clock stamp still merges like a peer without them. */
+    private fun metaRevisions(row: JSONObject, vararg keys: String): JSONObject {
+        for (key in keys) if (row.has(key) && ListeningRevision.revision(JSONObject().put("rev", row.opt(key))).first == 0L) row.remove(key)
+        return row
+    }
+
     private fun numericMap(raw: JSONObject?): JSONObject = JSONObject().also { clean ->
         raw?.let { for (key in it.keys()) if (number(it.opt(key))) clean.put(key, it.get(key)) }
     }
 
     fun index(raw: JSONObject): JSONObject {
         val clean = JSONObject(raw.toString())
+        if (clean.has("_clock") && !ListeningRevision.validNumber(clean.opt("_clock"))) clean.remove("_clock")
+        if (clean.has("_epoch") && !ListeningRevision.validEpoch(clean.opt("_epoch"))) clean.remove("_epoch")
         val records = JSONObject()
         raw.optJSONObject("records")?.let { rows -> for (key in rows.keys()) rows.optJSONObject(key)?.let {
-            records.put(key, fields(it, listOf("createdAt", "nameAt", "movedAt"), listOf("name")))
+            records.put(key, metaRevisions(fields(it, listOf("createdAt", "nameAt", "movedAt"), listOf("name")), "nameRev", "movedRev"))
         } }
         clean.put("records", records)
         val links = JSONObject()
         raw.optJSONObject("links")?.let { rows -> for (key in rows.keys()) rows.optJSONObject(key)?.let { rawLink ->
-            val link = fields(rawLink, listOf("activeAt"))
+            val link = metaRevisions(fields(rawLink, listOf("activeAt")), "activeRev")
             val ids = linkedSetOf<String>()
             link.optJSONArray("records")?.let { array -> for (i in 0 until array.length()) {
                 val id = array.opt(i)

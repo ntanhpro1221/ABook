@@ -12,6 +12,7 @@ import pytest
 
 from abook.webui import remote_books, server, sync
 from abook.webui.listening import Listening, RecordGone
+from abook.webui.listening_revision import meta_items, observe
 
 BOOK = "sach"
 FIXTURE = json.loads((Path(__file__).parent / "fixtures" / "sync" / "records_host.json").read_text(encoding="utf-8"))
@@ -129,6 +130,12 @@ def test_computer_sync_keeps_two_people_apart_and_brings_back_only_ones_own_book
     receiver.add_bookmark(BOOK, 1, 90, "Ghi chu rieng cua B")
     mine = sender.create_record(BOOK, "A")["id"]
     sender.progress(BOOK, 1, 600, 1000, record=mine)
+    # Hợp đồng phiên bản (Lamport): hai lần chọn đồng thời xếp theo (counter, node) ngẫu nhiên, không theo giờ tường. "Người chọn sau" là người
+    # đã THẤY lựa chọn của B rồi mới chọn: máy gửi nhận phiên bản chọn của máy giữ sách (như khi gộp lời đáp), rồi A chọn lại hồ sơ của mình.
+    with sender._changing():
+        observe(sender._data, receiver._data["links"][BOOK]["activeRev"], meta_items)
+        sender._save()
+    sender.activate(BOOK, mine)
     sent: list = []
 
     def send(body: dict) -> dict:
@@ -141,7 +148,7 @@ def test_computer_sync_keeps_two_people_apart_and_brings_back_only_ones_own_book
     assert sent[0]["record"] == mine and sent[0]["recordName"] == "A"
     assert {"nameAt", "activeAt", "movedAt", "deletedRecords"} <= set(sent[0])
     assert state_of(receiver, other)["last"]["seconds"] == 100, "hồ sơ của người kia ở máy giữ sách không bị đè"
-    assert receiver.active_record(BOOK) == mine, "người chọn sau (activeAt) thắng, như điện thoại"
+    assert receiver.active_record(BOOK) == mine, "người chọn sau (phiên bản cao hơn) thắng, như điện thoại"
     assert state_of(receiver, mine)["last"]["seconds"] == 600
     assert state_of(receiver, other)["bookmarks"][0]["note"] == "Ghi chu rieng cua B"
     assert state_of(sender, mine)["bookmarks"] == [], "dấu trang của B không chảy sang A"

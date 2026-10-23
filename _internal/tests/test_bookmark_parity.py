@@ -38,6 +38,6 @@ def test_restore_keeps_id_and_outlives_the_tombstone_on_another_device(tmp_path,
     restored = listening.restore_bookmark("b", spec["mark"])
     assert restored == {**spec["mark"], "at": 30, "rev": restored["rev"]}
     assert restored["rev"]["counter"] > spec["deletedRev"]["counter"]
-    assert spec["mark"]["id"] not in listening.get("b").get("deleted", {})
+    assert spec["mark"]["id"] in listening.get("b").get("deleted", {}), "bia mộ ở lại để hai máy hội tụ (soát a118 lỗi 6)"
     listening.merge("b", {"bookmarks": [spec["remoteEdit"]], "deleted": {restored["id"]: spec["deletedAt"]}, "_deletedRevs": {restored["id"]: spec["deletedRev"]}})
     assert listening.get("b")["bookmarks"] == [restored]

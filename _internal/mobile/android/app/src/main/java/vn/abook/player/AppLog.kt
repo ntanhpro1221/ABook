@@ -37,13 +37,15 @@ object AppLog {
     }
     // Same rules as webui/diagnostics.py: credentials, pairing codes, >=24 hex, private paths and numeric IPs.
     private val secrets = listOf(
+        Regex("""(/c/)(?:[A-Za-z0-9_-]{22}|[0-9a-fA-F]{32})(?=\.[A-Za-z0-9]{1,5}\b|[^A-Za-z0-9_-]|$)""") to "$1***",
         Regex("""(?i)\bbearer\s+[A-Za-z0-9._~+/=-]+""") to "Bearer ***",
         Regex("""(?i)\b((?:key|api[_-]?key|token|secret|password|code|mật khẩu|mã ghép)["']?\s*[:=]\s*)(?:"(?:\\.|[^"\\])*+"|'(?:\\.|[^'\\])*+'|[^\s"',;&}\]]+)""") to "$1***",
         Regex("""(?i)(\b(?:pair(?:ing)?|code|mã ghép)\b[^\r\n\d]{0,32})\d{6}\b""") to "$1***",
         Regex("""\b[0-9a-fA-F]{24,}\b""") to "***",
         Regex("\\bsk-[A-Za-z0-9_-]{16,}") to "sk-***",
-        Regex("""(?i)(?:[a-z]:[\\/]+Users[\\/]+|/storage/emulated/0/|/data/user/0/|content://)[^\r\n"'<>|]*""") to "<đường>",
     )
+    private val paths = Regex("""(?i)(?:\b[a-z]:[\\/]+|\\\\[^\\/\r\n"'<>|]+[\\/]+|(?<!:)//[^/\r\n"'<>|]+/|/(?:home|Users|storage|sdcard|data)/|content://)[^\r\n"'<>|]*""")
+    private val sourceFile = Regex("""(?i)[\\/]([^\\/\r\n"'<>|]*?\.(?:py|kt))(:\d+(?::\d+)?)?(?=$|[,\s:)])""")
     private val ipv6 = Regex("""(?<![\w:])(?:[0-9a-fA-F]{0,4}:){2,}[0-9a-fA-F:.]*(?:%[\w.-]+)?(?![\w:])""")
     private val ipv4 = Regex("""(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?!\w|\.\d)""")
 
@@ -119,6 +121,11 @@ object AppLog {
     internal fun scrub(message: String): String {
         var text = message
         for ((pattern, replacement) in secrets) text = pattern.replace(text, replacement)
+        text = paths.replace(text) { match ->
+            val source = sourceFile.find(match.value)
+            "<đường>" + if (source == null) "" else "/" + source.groupValues[1] + source.groupValues[2] +
+                match.value.substring(source.range.last + 1).takeWhile { it == ')' }
+        }
         // Numeric parsing only; no name resolution/network I/O. Avoid treating times/stack line numbers as IPs.
         text = ipv6.replace(text) { match ->
             val address = match.value.trimEnd('.')

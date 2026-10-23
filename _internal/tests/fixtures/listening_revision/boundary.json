@@ -85,20 +85,20 @@
     "clock": 1
   },
   {
-    "name": "jump limit accepted",
+    "name": "upper half: jump limit accepted",
     "ours": {
       "reading": {
         "chapterId": 1,
         "index": 100,
         "at": 100,
         "rev": {
-          "counter": 1,
+          "counter": 549755813893,
           "node": "local"
         }
       },
       "chapters": {},
       "bookmarks": [],
-      "_clock": 1
+      "_clock": 549755813893
     },
     "theirs": {
       "reading": {
@@ -106,40 +106,40 @@
         "index": 200,
         "at": 100,
         "rev": {
-          "counter": 1000001,
+          "counter": 549756813893,
           "node": "peer"
         }
       },
       "chapters": {},
       "bookmarks": [],
-      "_clock": 1000001
+      "_clock": 549756813893
     },
     "expected": {
       "chapterId": 1,
       "index": 200,
       "at": 100,
       "rev": {
-        "counter": 1000001,
+        "counter": 549756813893,
         "node": "peer"
       }
     },
-    "clock": 1000001
+    "clock": 549756813893
   },
   {
-    "name": "jump over limit ignored",
+    "name": "upper half: jump over limit ignored",
     "ours": {
       "reading": {
         "chapterId": 1,
         "index": 100,
         "at": 100,
         "rev": {
-          "counter": 1,
+          "counter": 549755813893,
           "node": "local"
         }
       },
       "chapters": {},
       "bookmarks": [],
-      "_clock": 1
+      "_clock": 549755813893
     },
     "theirs": {
       "reading": {
@@ -147,24 +147,24 @@
         "index": 200,
         "at": 100,
         "rev": {
-          "counter": 1000002,
+          "counter": 549756813894,
           "node": "peer"
         }
       },
       "chapters": {},
       "bookmarks": [],
-      "_clock": 1000002
+      "_clock": 549756813894
     },
     "expected": {
       "chapterId": 1,
       "index": 100,
       "at": 100,
       "rev": {
-        "counter": 1,
+        "counter": 549755813893,
         "node": "local"
       }
     },
-    "clock": 1
+    "clock": 549755813893
   },
   {
     "name": "epoch leap ignored",
@@ -228,6 +228,119 @@
     "theirs": {
       "_clock": 1099511627776,
       "_epoch": "111"
+    },
+    "expected": {
+      "chapterId": 1,
+      "index": 100,
+      "at": 100,
+      "rev": {
+        "counter": 1,
+        "node": "local"
+      }
+    },
+    "clock": 1
+  },
+  {
+    "name": "new device takes a profile with 1.2 million saves",
+    "ours": {
+      "chapters": {},
+      "bookmarks": []
+    },
+    "theirs": {
+      "reading": {
+        "chapterId": 1,
+        "index": 200,
+        "at": 100,
+        "rev": {
+          "counter": 1200000,
+          "node": "peer"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1200000
+    },
+    "expected": {
+      "chapterId": 1,
+      "index": 200,
+      "at": 100,
+      "rev": {
+        "counter": 1200000,
+        "node": "peer"
+      }
+    },
+    "clock": 1200000
+  },
+  {
+    "name": "lower half accepted whatever the receiver clock",
+    "ours": {
+      "reading": {
+        "chapterId": 1,
+        "index": 100,
+        "at": 100,
+        "rev": {
+          "counter": 1,
+          "node": "local"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1
+    },
+    "theirs": {
+      "reading": {
+        "chapterId": 1,
+        "index": 200,
+        "at": 100,
+        "rev": {
+          "counter": 549755813888,
+          "node": "peer"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 549755813888
+    },
+    "expected": {
+      "chapterId": 1,
+      "index": 200,
+      "at": 100,
+      "rev": {
+        "counter": 549755813888,
+        "node": "peer"
+      }
+    },
+    "clock": 549755813888
+  },
+  {
+    "name": "upper half leap from a fresh clock ignored",
+    "ours": {
+      "reading": {
+        "chapterId": 1,
+        "index": 100,
+        "at": 100,
+        "rev": {
+          "counter": 1,
+          "node": "local"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 1
+    },
+    "theirs": {
+      "reading": {
+        "chapterId": 1,
+        "index": 200,
+        "at": 100,
+        "rev": {
+          "counter": 549755813889,
+          "node": "peer"
+        }
+      },
+      "chapters": {},
+      "bookmarks": [],
+      "_clock": 549755813889
     },
     "expected": {
       "chapterId": 1,

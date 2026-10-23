@@ -25,21 +25,35 @@ def test_a_place_beyond_the_chapter_is_dropped_but_text_chapters_are_not_judged(
 
 def test_the_book_voice_travels_with_the_listening_record_and_the_later_choice_wins(tmp_path: Path) -> None:
     listening = Listening(tmp_path / "listening.json")
+    listening.set_voice("b", "vieneu:Ái Hân")  # chọn lần đầu; lần chọn sau mới là lần cần so
     listening.set_voice("b", "edge:vi-VN-NamMinhNeural")
     computer = listening.get("b")
     assert computer["voice"] == "edge:vi-VN-NamMinhNeural" and computer["voiceAt"] > 0
-    older = {"chapters": {}, "bookmarks": [], "voice": "vieneu:Ái Hân", "voiceAt": computer["voiceAt"] - 60}
-    newer = {**older, "voiceAt": computer["voiceAt"] + 60}
+    # Hợp đồng phiên bản (Lamport): "chọn sau" là phiên bản cao hơn (đã thấy lựa chọn kia rồi mới chọn), không phải giờ tường cao hơn.
+    # Điện thoại gửi giọng kèm `_fieldRevs.voice`, như Store.kt; bản cũ mang phiên bản thấp hơn của máy tính, bản mới mang phiên bản cao hơn.
+    mine = computer["_fieldRevs"]["voice"]
+    assert mine["counter"] >= 2
+    older = {"chapters": {}, "bookmarks": [], "voice": "vieneu:Ái Hân", "voiceAt": computer["voiceAt"] - 60,
+             "_fieldRevs": {"voice": {"counter": mine["counter"] - 1, "node": "phone"}}}
+    newer = {**older, "voiceAt": computer["voiceAt"] + 60, "_fieldRevs": {"voice": {"counter": mine["counter"] + 1, "node": "phone"}}}
     assert merge_states(computer, older)["voice"] == "edge:vi-VN-NamMinhNeural"
     assert merge_states(computer, newer)["voice"] == "vieneu:Ái Hân"
+    # Giờ tường không còn quyết định: giờ muộn mà phiên bản thấp thì thua.
+    late_but_unseen = {**older, "voiceAt": computer["voiceAt"] + 3600}
+    assert merge_states(computer, late_but_unseen)["voice"] == "edge:vi-VN-NamMinhNeural"
 
 
-def test_a_place_heard_offline_wins_when_the_phone_comes_back(tmp_path: Path) -> None:
+def test_a_place_heard_offline_wins_when_the_phone_comes_back() -> None:
+    # Hợp đồng phiên bản (Lamport): chỗ nghe mới hơn là chỗ mang phiên bản cao hơn (điện thoại nghe tiếp sau khi đã thấy chỗ của máy tính),
+    # không phải giờ tường muộn hơn. Mọi mục gửi đi mang `rev` như Store.kt.
     now = time.time()
-    computer = {"last": {"chapterId": 726, "seconds": 691.0, "at": now - 600}, "chapters": {}, "bookmarks": []}
-    phone = {"last": {"chapterId": 727, "seconds": 17.0, "at": now - 60}, "chapters": {}, "bookmarks": []}
+    computer = {"last": {"chapterId": 726, "seconds": 691.0, "at": now - 600, "rev": {"counter": 4, "node": "pc"}}, "chapters": {}, "bookmarks": []}
+    phone = {"last": {"chapterId": 727, "seconds": 17.0, "at": now - 60, "rev": {"counter": 5, "node": "phone"}}, "chapters": {}, "bookmarks": []}
     assert merge_states(computer, phone)["last"]["chapterId"] == 727
     assert merge_states(phone, computer)["last"]["chapterId"] == 727, "máy tính không kéo điện thoại về chỗ cũ"
+    # Đồng hồ điện thoại chạy chậm hơn máy tính: phiên bản vẫn thắng.
+    slow = {**phone, "last": {**phone["last"], "at": now - 7200}}
+    assert merge_states(computer, slow)["last"]["chapterId"] == 727
 
 
 def test_the_size_before_download_counts_the_background_music_too() -> None:
@@ -82,10 +96,11 @@ def test_over_the_wire_the_phone_renames_itself_and_a_foreign_place_is_refused(l
         assert book["producing"] is False, "không chạy Studio thì không phải đang làm, dù cuốn chưa xong"
 
         identifier = book["id"]
-        foreign = {"last": {"chapterId": 1, "seconds": 812.4, "at": time.time()}, "chapters": {}, "bookmarks": []}
+        # Hợp đồng phiên bản (Lamport): thân điện thoại gửi mang `rev` từng mục (Store.syncBody), không thì máy tính từ chối 400.
+        foreign = {"last": {"chapterId": 1, "seconds": 812.4, "at": time.time(), "rev": {"counter": 1, "node": "phone"}}, "chapters": {}, "bookmarks": []}
         status, _data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=foreign)
         assert status == 200 and "last" not in listening.get(identifier), "chỗ nghe vượt độ dài chương không vào hồ sơ"
-        good = {"last": {"chapterId": 1, "seconds": 5.0, "at": time.time()}, "chapters": {}, "bookmarks": []}
+        good = {"last": {"chapterId": 1, "seconds": 5.0, "at": time.time(), "rev": {"counter": 2, "node": "phone"}}, "chapters": {}, "bookmarks": []}
         _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=good)
         assert listening.get(identifier)["last"]["seconds"] == 5.0
     finally:

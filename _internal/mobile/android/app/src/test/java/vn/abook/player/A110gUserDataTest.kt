@@ -38,7 +38,7 @@ class A110gUserDataTest {
         assertTrue(ListeningRevision.newer(JSONObject().put("rev", rev), JSONObject("""{"rev":{"counter":1099511627776,"node":"old"}}""")))
     }
 
-    @Test fun oldPeerIsRejectedBeforeAnyStateChangeAndNoteEditsAdvance() {
+    @Test fun missingRevisionIsRejectedBeforeAnyStateChangeAndNoteEditsAdvance() {
         val mark = Store.addBookmark("book", 1, 10.0, "first")
         val before = Store.state("book").toString()
         for (body in listOf(
@@ -48,7 +48,7 @@ class A110gUserDataTest {
         )) {
             val failure = runCatching { Store.mergeRemote("book", JSONObject(body)) }.exceptionOrNull()
             assertTrue(failure is IllegalArgumentException)
-            assertEquals("Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy", failure?.message)
+            assertEquals(ListeningRevision.MISSING_REVISION, failure?.message)
             assertEquals(before, Store.state("book").toString())
         }
         val counter = mark.getJSONObject("rev").getLong("counter")
