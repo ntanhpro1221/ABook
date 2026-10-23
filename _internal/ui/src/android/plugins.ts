@@ -322,6 +322,8 @@ export interface Mp3ExportEvent {
   uri?: string;
   stopped?: boolean;
   error?: string;
+  /** Chỉ trong `exportJobs` (ghi lúc việc bắt đầu): ô "Kèm nhạc nền" của lượt. */
+  music?: boolean;
   /** "Kèm nhạc nền" (soát a99 V3): pha như `M4bExportEvent` (tải bài / trộn / kiểm đỉnh / mã hoá lại); `mixed`: chương ra file .m4a đã trộn nhạc; `musicMissing`: đoạn thiếu nhạc. */
   phase?: "music-fetch" | "music" | "peaks" | "reencode";
   chapter?: number;
@@ -359,6 +361,12 @@ export interface M4bExportEvent {
   stopped?: boolean;
   error?: string;
 }
+
+/** Một lượt xuất đang chạy (`exportJobs`): tin cuối của lượt kèm kiểu xuất. Chưa có tin nào thì chỉ có `kind`, `bookId`, `run`. */
+export type RunningExport =
+  | ({ kind: "mp3" } & Mp3ExportEvent)
+  | ({ kind: "m4b" } & M4bExportEvent)
+  | ({ kind: "audiobook" } & AudiobookExportEvent);
 
 /** Phần trả lời của `audiobookPlan` ("Xuất sách nói", ListenExport.kt): cùng hình với máy tính (desktop/listenExport.ts AudiobookPlan, trừ ffmpeg - điện thoại tự mã hoá), thêm chỗ trống cần. */
 export interface AudiobookPhonePlan {
@@ -545,8 +553,9 @@ export interface EbookLibraryPlugin {
   exportAudiobook(options: { bookId: string; voice: string; cover?: string; music?: boolean }): Promise<{ started: boolean; run?: string; name?: string }>;
   /** Dừng lượt xuất sách nói của cuốn (file dở bị xoá, phần đã đọc xong giữ để xuất lại làm tiếp). */
   cancelAudiobookExport(options: { bookId: string }): Promise<void>;
-  /** Các lượt xuất sách nói đang chạy (tin cuối của từng lượt): mở lại giao diện thì hiện lại tiến độ. */
-  audiobookJobs(): Promise<{ jobs: AudiobookExportEvent[] }>;
+  /** Các lượt xuất (MP3, M4B, sách nói) đang chạy, tin cuối của từng lượt: mở lại (hay tải lại) giao diện giữa lúc việc nền chạy thì hiện lại tiến độ
+   *  và nhận tiếp tin xong / lỗi. */
+  exportJobs(): Promise<{ jobs: RunningExport[] }>;
   /** Mở file vừa xuất bằng app nghe sách nói của máy; `opened: false` khi không mở được. */
   openFile(options: { uri: string }): Promise<{ opened: boolean }>;
   addListener(event: "audiobookExport", handler: (event: AudiobookExportEvent) => void): Promise<PluginListenerHandle>;

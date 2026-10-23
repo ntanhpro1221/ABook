@@ -1,6 +1,6 @@
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BatteryCharging, Bluetooth, CheckCircle2, ChevronRight, Copy, Download, FileAudio, Laptop, Link2, Loader2, Pencil, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi, X } from "lucide-react";
+import { Bluetooth, CheckCircle2, ChevronRight, Copy, Download, FileAudio, Laptop, Link2, Loader2, Pencil, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BookCover } from "@/shared/BookCover";
@@ -9,7 +9,7 @@ import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
 import { Button, Dialog, EmptyState, Progress } from "@/shared/ui";
 import { useUnpair } from "@/shared/useUnpair";
-import { backgroundHelp } from "./backgroundHelp";
+import { BackgroundNote } from "./BackgroundNote";
 import { BLUETOOTH_DENIED, BLUETOOTH_REASON, bluetoothStep } from "./bluetoothPermission";
 import { useDownloadProgress } from "./downloads";
 import { pickBookFile } from "./imports";
@@ -613,7 +613,7 @@ function PeersPanel() {
 // Mạng trạm bước 2 (LibraryServer.kt): điện thoại PHỤC VỤ sách mở từ file cho máy đã ghép - máy tính nghe thẳng những cuốn chỉ
 // có trên điện thoại (không phải bản soi sách của máy khác). Cùng giao thức cổng đồng bộ của máy tính, nên máy tính ghép như ghép một máy tính khác: Cài đặt →
 // Máy tính khác → địa chỉ + mã 6 số hiện ở đây.
-function SharePanel() {
+export function SharePanel() {
   const client = useQueryClient();
   const status = useQuery({
     queryKey: ["share"],
@@ -716,19 +716,12 @@ function SharePanel() {
           Mở cài đặt để cho phép
         </Button>
       )}
+      {/* Như các khung xuất: ẩn hẳn khi ABook đã được cho chạy nền, đọc lại mỗi lần bạn quay về từ Cài đặt. */}
       {enabled && (
-        <div className="mt-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={BatteryCharging}
-            className="h-auto min-h-8 justify-start whitespace-normal py-1.5 text-left"
-            onClick={() => void EbookLibrary.openAppSettings().catch((error: Error) => toast.error(error.message))}
-          >
-            Để máy tính khỏi phải chờ: cho ABook chạy nền
-          </Button>
-          <p className="mt-1 px-1 text-xs leading-snug text-fg-2">{backgroundHelp(data?.manufacturer)}</p>
-        </div>
+        <BackgroundNote
+          note="Khi tắt màn hình, máy có thể tạm dừng chia sẻ - máy tính sẽ phải chờ lâu hơn."
+          action="Để máy tính khỏi phải chờ: cho ABook chạy nền"
+        />
       )}
       {enabled && data && (
         <div className="mt-4 space-y-3 border-t border-line pt-4">

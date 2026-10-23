@@ -32,6 +32,9 @@ object M4bExports {
     /** Giao diện đang mở thì nghe tin của việc nền ("m4bExport" của EbookLibrary): tiến độ, xong, dừng, lỗi. */
     @Volatile var events: ((JSONObject) -> Unit)? = null
 
+    /** Tin cuối của các lượt đang chạy: giao diện mở lại giữa chừng hỏi [ExportJobs.running]. */
+    val live = ExportLive("m4b")
+
     /** Hộp thoại "tạo file" của hệ thống, mở sẵn tên "<tên sách>.m4b". */
     fun createIntent(title: String): Intent =
         Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
@@ -74,6 +77,7 @@ object M4bExports {
         val request = OneTimeWorkRequestBuilder<M4bExportWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setInputData(data.build())
+            .apply { ExportJobs.tags("m4b", bookId).forEach { addTag(it) } }
             .build()
         ExportCancellation.enqueue(context, "$TAG:$bookId", request)
         return request.id.toString()
@@ -84,6 +88,7 @@ object M4bExports {
     }
 
     internal fun emit(event: JSONObject) {
+        live.emit(event)
         runCatching { events?.invoke(event) }
     }
 
@@ -213,6 +218,12 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 return Result.retry()
             }
             M4bExports.discard(context, file)
+            if (Mp3Exports.timedOut(this)) {
+                // Dịch vụ nền hết 6 giờ (Android 15): một file duy nhất không làm tiếp được, nên file dở đã xoá và người nghe xuất lại.
+                M4bExports.finished(context, bookId, "Hệ thống đã dừng việc xuất", "$title · ${Mp3Exports.TIMEOUT_NOTE}.")
+                M4bExports.emit(event().put("error", Mp3Exports.TIMEOUT_NOTE))
+                return Result.failure()
+            }
             M4bExports.finished(context, bookId, "Đã dừng xuất M4B", "$title · file dở đã được xoá")
             M4bExports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
@@ -222,7 +233,8 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 return Result.retry()
             }
             M4bExports.discard(context, file)
-            val message = M4bExports.describe(error, lowSpace = context.cacheDir.usableSpace < (32L shl 20))
+            val message = if (isStopped && Mp3Exports.timedOut(this)) Mp3Exports.TIMEOUT_NOTE
+                else M4bExports.describe(error, lowSpace = context.cacheDir.usableSpace < (32L shl 20))
             M4bExports.finished(context, bookId, "Không xuất được M4B", "$title · $message")
             M4bExports.emit(event().put("error", message))
             return Result.failure()

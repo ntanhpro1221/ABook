@@ -31,6 +31,12 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // App chỉ có tiếng Việt (res/values) và muốn chữ của media3 cũng tiếng Việt cả khi máy để tiếng Anh (strings.xml). Thư viện media3 mang theo
+    // values-en-rGB / en-rAU / en-rIN: trên máy đặt các vùng ấy, bản dịch cụ thể hơn của thư viện thắng chữ Việt mặc định của app. Chỉ giữ "vi" của thư viện;
+    // tài nguyên mặc định luôn được giữ.
+    androidResources {
+        localeFilters += ["vi"]
+    }
     // Loa giả DLNA (FakeRenderer) dùng chung cho bài thử JVM (DlnaTest) và bài thử trên máy Android (DlnaOnDeviceTest).
     sourceSets {
         test.java.srcDirs += "src/sharedTest/java"

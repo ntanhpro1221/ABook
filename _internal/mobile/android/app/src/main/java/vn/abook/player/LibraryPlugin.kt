@@ -93,6 +93,8 @@ class LibraryPlugin : Plugin() {
         Mp3Exports.events = { event -> notifyListeners("mp3Export", JSObject.fromJSONObject(event)) }
         M4bExports.events = { event -> notifyListeners("m4bExport", JSObject.fromJSONObject(event)) }
         ListenExports.events = { event -> notifyListeners("audiobookExport", JSObject.fromJSONObject(event)) }
+        BookDownloads.events = { event -> notifyListeners("download", JSObject.fromJSONObject(event)) }
+        io.execute { runCatching { BookDownloads.restore(context) } } // lượt tải WorkManager còn giữ từ lần trước: tính là đang tải
         Playback.init(context)
         PhoneCast.init(context)
         TextImports.codec = AndroidCoverCodec
@@ -136,12 +138,7 @@ class LibraryPlugin : Plugin() {
     }
 
     /** Lời cho người nghe + chữ gốc (chỉ khi là lỗi mạng đã dịch thành câu) - dùng chung cho lời gọi bị từ chối và sự kiện "download". */
-    private fun describe(error: Exception, fallback: String = error.javaClass.simpleName): Pair<String, String?> {
-        if (error is Pin.ChangedException) return (error.message ?: Pin.CHANGED) to null
-        if (NetErrors.unpaired(error)) return "Máy kia đã thôi ghép với điện thoại này - ghép lại để tải và nghe thẳng sách của nó" to null
-        val kind = NetErrors.kind(error) ?: return (error.message ?: fallback) to null
-        return NetErrors.message(kind) to NetErrors.technical(error)
-    }
+    private fun describe(error: Exception, fallback: String = error.javaClass.simpleName): Pair<String, String?> = BookDownloads.describe(error, fallback)
 
     // Large options (the drawn cover of an export) wait in memory while a system picker is open - see HeldCallFields.
     private val held = HeldCallFields()
@@ -781,148 +778,24 @@ class LibraryPlugin : Plugin() {
         StateSync.flushPending(context) // chỗ nghe ghi trong lúc mất kết nối (soát a68 lỗi 9)
     }
 
-    /**
-     * Cuốn mở từ file mà máy tính cũng có: hỏi máy tính (POST /sync/v1/match, gửi cỡ + mã băm audio từng chương - sách
-     * không mang mã nào) rồi gộp làm một (Store.adopt). Cuốn đang nằm trong trình phát thì để lần sau - đổi thư mục dưới
-     * tay trình phát là mất chương kế tiếp và chỗ đang nghe. Máy tính không trả lời thì thôi, lần sau hỏi lại.
-     *
-     * `listed`: mã các cuốn máy tính vừa liệt kê. Cuốn của máy tính trên máy này mà không có trong đó có thể mang mã kiểu
-     * cũ (tải từ bản cũ, docs/BOOK_IDS.md): gửi luôn mã ấy - máy tính nhận ra mã cũ của chính nó và trả mã mới, điện
-     * thoại đổi khoá (Store.rekey) thay vì hiện hai bản của một cuốn.
-     */
-    private fun matchImported(listed: Set<String>? = null) {
-        val waiting = Store.importedBooks().filter { it != Playback.bookId }
-        val renamed = if (listed == null) emptyList()
-        else Store.computerBooks().filter { it !in listed && it != Playback.bookId }
-        if (waiting.isEmpty() && renamed.isEmpty()) return
-        val books = JSONArray()
-        for (id in waiting) books.put(JSONObject().put("key", id).put("chapters", Store.chapterPrints(id)))
-        for (id in renamed) books.put(JSONObject().put("key", id))
-        val reply = runCatching { JSONObject(request("POST", "/sync/v1/match", JSONObject().put("books", books))) }
-            .getOrNull() ?: return
-        val matches = reply.optJSONObject("matches") ?: return
-        for (key in matches.keys()) {
-            if (key in waiting) Store.adopt(key, matches.getString(key))
-            else if (key in renamed) Store.rekey(key, matches.getString(key))
-        }
-    }
+    private fun matchImported(listed: Set<String>? = null) = BookDownloads.matchImported(context, listed)
 
     private fun listed(books: JSONArray): Set<String> =
         (0 until books.length()).mapNotNull { books.optJSONObject(it)?.optString("id")?.takeIf(String::isNotEmpty) }.toSet()
 
     // ---- tải sách --------------------------------------------------------------------------------------------
 
-    /** Cuốn người nghe bấm Huỷ tải ([cancelDownload]): lượt tải dừng ở khối kế, giữ phần đã về (`.part`, file đã đủ) để lần bấm Tải sau tải tiếp. */
-    private val cancelledDownloads: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
-    /** Cuốn có lượt tải đang chạy (kể cả đang xếp hàng): không xoá thư mục của nó, không sửa book.json của nó từ chỗ khác. */
-    private val activeDownloads: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
-
-    private class DownloadCancelled : Exception("Đã huỷ tải")
-
-    private fun checkCancelled(id: String) {
-        if (id in cancelledDownloads) throw DownloadCancelled()
-    }
-
-    /** Kết nối tới một file của sách bên máy kia (đã ghim chứng chỉ, mang mã thiết bị); `resumeFrom` > 0 thì xin tiếp từ byte ấy. */
-    private fun fetchFile(id: String, relative: String, expectedSize: Long, link: Peers.Link, remote: String, digest: String): Long {
-        val limit = PeerTransfer.budget(relative, expectedSize)
-        val target = Store.file(id, relative)
-        if (expectedSize > 0 && AudioRevision.matches(target, expectedSize, digest)) return 0
-        target.parentFile?.mkdirs()
-        val partial = File(target.path + ".part")
-        // Phần dở chỉ được nối khi biết nó thuộc phiên bản nào (ETag cạnh nó) và máy kia xác nhận đúng phiên bản + đúng chỗ (PartResume).
-        var (have, tag) = PartResume.point(partial, expectedSize)
-        var connection = SyncLink.bookFile(context, link, remote, relative, have, tag)
-        var code = Pin.guard { connection.responseCode }
-        // 416: phần dở dài hơn file hiện có trên máy kia (file đã đổi) - bỏ phần dở như đuôi lạ bên dưới.
-        if (code >= 400 && !(code == 416 && have > 0)) {
-            connection.disconnect()
-            throw IllegalStateException("Không tải được $relative (mã $code)")
-        }
-        var answer = if (code == 416) PartResume.Answer.STALE_TAIL
-        else PartResume.answer(code, connection.getHeaderField("Content-Range"), connection.getHeaderField("ETag"), have, tag)
-        if (have > 0 && answer == PartResume.Answer.STALE_TAIL) {
-            // 206 mà ETag lệch (máy kia bỏ qua If-Range): đây là đuôi của file khác. Bỏ phần dở, hỏi lại cả file.
-            connection.disconnect()
-            PartResume.discard(partial)
-            have = 0
-            connection = SyncLink.bookFile(context, link, remote, relative)
-            code = Pin.guard { connection.responseCode }
-            if (code >= 400) {
-                connection.disconnect()
-                throw IllegalStateException("Không tải được $relative (mã $code)")
-            }
-            answer = PartResume.Answer.WHOLE
-        }
-        val append = answer == PartResume.Answer.RESUME
-        try {
-            val initial = if (append) have else 0L
-            if (connection.getHeaderFieldLong("Content-Length", -1) > limit - initial) throw PeerTransfer.Limit()
-            java.io.FileOutputStream(partial, append).use { output ->
-                // Ghi phiên bản SAU khi cắt `.part` (mở không nối): phần cũ không bao giờ mang ETag mới.
-                if (!append) PartResume.stamp(partial, connection.getHeaderField("ETag"))
-                connection.inputStream.use { input ->
-                    PeerTransfer.copy(input, output, limit, target.parentFile!!, initial) { checkCancelled(id) }
-                }
-                output.fd.sync()
-            }
-        } catch (error: Exception) {
-            if (error is PeerTransfer.Limit || expectedSize <= 0) PartResume.discard(partial)
-            throw error
-        } finally {
-            connection.disconnect()
-        }
-        // Cỡ cuối phải đúng cỡ sách ghi trước khi nhận file: thiếu thì giữ phần dở cho lần sau, khác thì bỏ - không bao giờ đổi tên file sai thành file thật.
-        when (PartResume.finish(partial.length(), expectedSize)) {
-            PartResume.Final.OK -> {}
-            PartResume.Final.SHORT -> throw java.io.IOException("Tải $relative chưa đủ (${partial.length()}/$expectedSize byte)")
-            PartResume.Final.WRONG -> {
-                val got = partial.length()
-                PartResume.discard(partial)
-                throw java.io.IOException("File $relative tải về không đúng cỡ ($got/$expectedSize byte)")
-            }
-        }
-        // Băm đúng byte vừa tải (không qua bộ nhớ: `.part` là file đang đổi), rồi ghi vào sổ khi đã đổi tên - lần kiểm sau không băm lại.
-        val actual = if (digest.isEmpty()) "" else AudioRevision.sha256(partial)
-        if (actual != digest) {
-            PartResume.discard(partial)
-            throw java.io.IOException("Bản thu đã đổi trong lúc tải; bạn hãy tải lại.")
-        }
-        if (!partial.renameTo(target)) {
-            throw java.io.IOException("Không ghi được file; bạn hãy thử tải lại.")
-        }
-        if (actual.isNotEmpty()) Store.rememberDigest(id, relative, target, actual)
-        PartResume.tagFile(partial).delete()
-        return target.length()
-    }
-
-    /** Tải (hoặc cập nhật) một cuốn: chỉ tải file mới/đổi; book.json ghi CUỐI để sách chỉ hiện khi đã đủ file. */
+    /**
+     * Tải (hoặc cập nhật) một cuốn: chỉ tải file mới/đổi; book.json ghi CUỐI để sách chỉ hiện khi đã đủ file. Việc chạy ở nền (BookDownloads - WorkManager, dịch vụ
+     * nền, tiếp tục sau khi tiến trình bị giết): lời gọi trả về ngay khi việc đã xếp hàng, tiến độ / xong / huỷ / lỗi đến qua sự kiện "download".
+     */
     @PluginMethod
-    fun download(call: PluginCall) {
-        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
+    fun download(call: PluginCall) = background(call) {
+        val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
         // Sách của thiết bị ghép (Peers): `source` = mã thiết bị ở đây, `remoteId` = mã sách bên ấy.
         val source = call.getString("source")?.takeIf { it.isNotEmpty() }
-        cancelledDownloads.remove(id) // bấm Tải lại sau khi huỷ: lượt mới chạy như thường
-        call.setKeepAlive(true)
-        activeDownloads.add(id)
-        downloads.execute {
-            try {
-                checkCancelled(id) // huỷ khi còn xếp hàng sau cuốn khác
-                downloadBook(id, source, call.getString("remoteId"), announce = true)
-                call.resolve(JSObject().put("bookId", id))
-            } catch (error: DownloadCancelled) {
-                cancelledDownloads.remove(id)
-                notifyListeners("download", JSObject().put("bookId", id).put("cancelled", true))
-                call.reject("Đã huỷ tải", "CANCELLED")
-            } catch (error: Exception) {
-                val (message, technical) = describe(error, "lỗi tải")
-                notifyListeners("download", JSObject().put("bookId", id).put("error", message).apply { if (technical != null) put("technical", technical) })
-                fail(call, error, "lỗi tải")
-            } finally {
-                activeDownloads.remove(id)
-                call.setKeepAlive(false)
-            }
-        }
+        BookDownloads.start(context, id, source, call.getString("remoteId"))
+        call.resolve(JSObject().put("bookId", id))
     }
 
     /**
@@ -931,7 +804,7 @@ class LibraryPlugin : Plugin() {
      * thì để lượt tải ghi book.json mới (soát a97 V1).
      */
     private fun refreshMetadata(id: String, entry: JSONObject, source: String? = null, remoteId: String? = null) {
-        if (id in activeDownloads) return
+        if (id in BookDownloads.active) return
         val local = Store.rawManifest(id) ?: return
         if (!StreamRefresh.metadataStale(local, entry)) return
         val remote = remoteId ?: id
@@ -947,9 +820,9 @@ class LibraryPlugin : Plugin() {
 
     /** Nút Huỷ khi đang tải một cuốn (soát a68 lỗi 7): dừng thật ở khối kế; phần đã về giữ lại để lần Tải sau tải tiếp. */
     @PluginMethod
-    fun cancelDownload(call: PluginCall) {
-        val id = call.getString("bookId") ?: return call.reject("thiếu bookId")
-        cancelledDownloads.add(id)
+    fun cancelDownload(call: PluginCall) = background(call) {
+        val id = call.getString("bookId") ?: throw IllegalArgumentException("thiếu bookId")
+        BookDownloads.cancel(context, id)
         call.resolve()
     }
 
@@ -957,7 +830,7 @@ class LibraryPlugin : Plugin() {
     private fun refreshAfterPush(id: String) {
         val (peer, remote) = Store.editDestination(id) ?: return
         if (Store.rawManifest(id) != null) {
-            downloadBook(id, peer, remote, announce = false)
+            BookDownloads.downloadBook(context, id, peer, remote, announce = false)
             return
         }
         val manifest = Streaming.fetchManifest(context, id, peer, remote)
@@ -982,82 +855,6 @@ class LibraryPlugin : Plugin() {
 
     private fun fetchHolderEdits(id: String) {
         if (Streaming.fetchSmall(context, id, BookEdits.HOLDER_FILE) != null) ReadAloud.readingsChanged(id)
-    }
-
-    /**
-     * Phần việc của [download], dùng được ngoài một lời gọi giao diện: gửi phần sửa về máy tính xong thì tải lại sách (EditsSync) mà
-     * không báo "Đã tải xong". `announce`: báo tiến độ cho giao diện qua sự kiện "download".
-     */
-    private fun downloadBook(id: String, source: String?, remoteId: String?, announce: Boolean) {
-        Store.bookDir(id) // xác minh đích trước mọi yêu cầu mạng hay ghi dữ liệu
-        Store.requireBookId(remoteId ?: id)
-        val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException("Thiết bị này đã thôi ghép")
-        else Peers.Link(base(), prefs.getString("token", "") ?: "")
-        val remote = if (source != null) remoteId ?: throw IllegalArgumentException("thiếu remoteId") else id
-        if (source == null) matchImported() // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu
-        val manifest = JSONObject(SyncLink.request(context, "GET", "/sync/v1/books/$remote/manifest", root = link.base, token = link.token))
-        require(manifest.getString("id") == remote) { "Mã sách máy gửi trả về không khớp; bạn hãy thử tải lại." }
-        PeerPaths.checkManifest(manifest)
-        if (source != null) {
-            manifest.put("id", id).put("source", source).put("remoteId", remote).put("sourceKind", Peers.kindOf(context, source))
-            Peers.localizeSeries(manifest, source)
-        }
-        val chapters = manifest.getJSONArray("chapters")
-        val files = mutableListOf<Pair<String, Long>>()
-        for (index in 0 until chapters.length()) {
-            val chapter = chapters.getJSONObject(index)
-            // Văn bản của MỌI chương (vài KB) - chế độ đọc đọc được cả chương chưa thu âm; audio chỉ chương đã có.
-            val script = chapter.optString("script")
-            if (script.isNotBlank() && script != "null") files += script to 0L
-            // Chữ của chương chỉ-có-chữ (`texts/<n>.txt`, sync.text_layer): sách chưa có audio nghe được bằng Nghe ngay khi đã tải, như bản máy tính
-            // (remote_books.wanted) - trước đây bỏ sót, tải xong chỉ có book.json + cast.json (soát a68 lỗi 1).
-            val text = chapter.optString("text")
-            if (text.isNotBlank() && text != "null") files += text to 0L
-            if (!chapter.optBoolean("available")) continue
-            files += chapter.getString("file") to chapter.optLong("size")
-        }
-        files += "cast.json" to 0L
-        val samples = manifest.optJSONArray("samples") ?: JSONArray()
-        for (index in 0 until samples.length()) files += samples.getString(index) to 0L
-        // Ảnh bìa thật (webui/covers.py): tải lại mỗi lần (vài trăm KB); máy tính đã bỏ bìa thì xoá bản cũ.
-        val cover = manifest.optJSONObject("cover")
-        if (cover != null) files += cover.optString("file", "cover.jpg") to 0L
-        // Nhạc nền: đúng các bài mà một mốc đang dùng (BookMusic.tracks) - nghe được cả khi không có mạng, và chuyển tiếp được cho máy khác.
-        val tracks = BookMusic.tracks(manifest.optJSONObject("music"))
-        PeerTransfer.checkJob(files + tracks.map { it.name to it.size })
-        val total = files.sumOf { it.second } + tracks.sumOf { it.size }
-        // Đủ chỗ trước khi tải (soát a68 lỗi 10): thiếu thì báo ngay, không tải dở rồi hỏng giữa chừng.
-        val missing = files.sumOf { (relative, size) ->
-            DownloadSpace.stillNeeded(size, Store.file(id, relative), AudioRevision.expected(manifest, relative))
-        } +
-            tracks.sumOf { track -> DownloadSpace.stillNeeded(track.size, runCatching { Store.contained(Store.bookDir(id), track.name) }.getOrNull()) }
-        DownloadSpace.shortage(missing, Store.root.usableSpace)?.let { throw IllegalStateException(it) }
-        if (cover == null) Store.file(id, "cover.jpg").delete()
-        val filesTotal = files.size + tracks.size
-        var done = 0L
-        files.forEachIndexed { index, (relative, size) ->
-            checkCancelled(id)
-            fetchFile(id, relative, size, link, remote, AudioRevision.expected(manifest, relative))
-            done += size
-            if (announce) {
-                notifyListeners("download", JSObject().put("bookId", id).put("done", done).put("total", total)
-                    .put("files", index + 1).put("filesTotal", filesTotal))
-            }
-        }
-        tracks.forEachIndexed { index, track ->
-            checkCancelled(id)
-            // Một bài không tải được (sai cỡ / mã băm, máy kia ngắt) thì bỏ bài ấy: sách vẫn lưu, chỗ đó nghe thẳng từ máy kia khi có mạng.
-            BookMusic.fetch(Store.bookDir(id), track) { name -> SyncLink.musicSource(context, link, remote, name) }
-            done += track.size
-            if (announce) {
-                notifyListeners("download", JSObject().put("bookId", id).put("done", done).put("total", total)
-                    .put("files", files.size + index + 1).put("filesTotal", filesTotal))
-            }
-        }
-        Store.writeAtomic(File(Store.bookDir(id), "book.json"), manifest.toString())
-        File(Store.bookDir(id), "stream.json").delete() // từng nghe thẳng: nay đã tải hẳn
-        pushState(id)
-        if (announce) notifyListeners("download", JSObject().put("bookId", id).put("finished", true))
     }
 
     // ---- sách trên máy ---------------------------------------------------------------------------------------
@@ -1697,10 +1494,13 @@ class LibraryPlugin : Plugin() {
         }
     }
 
-    /** Các lượt xuất sách nói đang chạy, tin cuối của từng lượt: giao diện vừa mở lại (hay tải lại) hiện lại thông báo tiến độ. */
+    /**
+     * Các lượt xuất (MP3, M4B, sách nói) đang chạy, tin cuối của từng lượt kèm `kind` ("mp3" | "m4b" | "audiobook"): giao diện vừa mở lại (hay
+     * tải lại) hiện lại thông báo tiến độ và nhận tiếp tin xong / lỗi của lượt ấy. Có cả lượt WorkManager còn giữ mà tiến trình này chưa có tin nào.
+     */
     @PluginMethod
-    fun audiobookJobs(call: PluginCall) {
-        call.resolve(JSObject().put("jobs", JSONArray(ListenExports.running())))
+    fun exportJobs(call: PluginCall) = background(call) {
+        call.resolve(JSObject().put("jobs", JSONArray(ExportJobs.running(context))))
     }
 
     /** Mở file vừa xuất bằng app nghe sách nói của máy (nút "Mở" ở thông báo xong). Chỉ địa chỉ `content:` của nơi lưu người dùng chọn, không phải của chính app. */
@@ -1877,7 +1677,7 @@ class LibraryPlugin : Plugin() {
     fun deleteBook(call: PluginCall) = background(call) {
         // Thiếu mã thì từ chối (Store.deletableBookDir) - trước đây `?: ""` biến thành xoá CẢ thư mục sách.
         // Cuốn đang có lượt tải chạy thì không dời thư mục dưới chân nó (màn Tải sách tắt nút Xoá; đây là lớp chặn cuối, soát a97 V6).
-        require(call.getString("id").orEmpty() !in activeDownloads) { "Đang tải cuốn này - huỷ tải rồi mới xoá được." }
+        require(call.getString("id").orEmpty() !in BookDownloads.active) { "Đang tải cuốn này - huỷ tải rồi mới xoá được." }
         // Cuốn nằm chờ UNDO_SECONDS giây (TrashPending) rồi mới xoá hẳn; `undo` là mã để "Hoàn tác" (không có khi xoá thẳng).
         val undo = Store.holdBook(call.getString("id").orEmpty())
         // Chương tạm của "Xuất sách nói" bỏ dở đi theo sách khi sách bị xoá hẳn (ListenExports.sweep - cuốn đang xuất không bị đụng).

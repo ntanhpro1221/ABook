@@ -18,6 +18,13 @@ class PrepareAheadTest {
     }
 
     @Test
+    fun a_progress_notification_left_by_a_killed_process_is_dropped_but_the_done_one_stays() {
+        assertTrue("có thanh tiến độ, không lượt nào đang chạy ở tiến trình này", PrepareAhead.staleProgress(working = false, progressMax = 12))
+        assertFalse("lượt đang chạy thật tự cập nhật nó", PrepareAhead.staleProgress(working = true, progressMax = 12))
+        assertFalse("thông báo xong / lỗi không có thanh tiến độ", PrepareAhead.staleProgress(working = false, progressMax = 0))
+    }
+
+    @Test
     fun schema_broken_checkpoint_is_preserved_without_breaking_opening() {
         val unsafeClass = Class.forName("sun.misc.Unsafe")
         val unsafe = unsafeClass.getDeclaredField("theUnsafe").apply { isAccessible = true }.get(null)
