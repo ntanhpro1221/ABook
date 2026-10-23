@@ -29,6 +29,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: mở lại app đúng lúc việc xuất MP3, M4B hay sách nói vừa xong thì không còn hiện lại thanh tiến độ hay nút Dừng cho việc đã xong.
 
 ### Bảo mật
+- Máy tính: khi bạn đặt bìa hoặc xuất sách, app chỉ nhận ảnh JPEG, PNG, WebP, GIF hoặc BMP.
+- Máy tính: cập nhật chứng chỉ gốc và thư viện ảnh/TLS để bạn tải và dùng bìa an toàn hơn.
 - Máy tính và điện thoại: sách do người khác gửi không còn làm máy bạn tự gọi một địa chỉ lạ chỉ vì hiện bìa trong thư viện; màu bìa không hợp lệ được thay bằng màu nền mặc định, ảnh bìa vẫn hiển thị.
 - Máy tính: thư mục trong "Nguồn tải lên" là một liên kết trỏ ra ngoài thư viện thì thiết bị gửi sách từ xa không còn đọc hay ghi qua nó được, kể cả khi tách chương; app báo "Thư mục nguồn trỏ ra ngoài thư viện của bạn" và bạn chép file vào thư viện trên máy tính rồi gửi lại.
 - Máy tính và điện thoại: khi bạn phát lên loa hay TV, cổng phát giới hạn số kết nối cả cổng và mỗi địa chỉ; kết nối gửi phần đầu quá chậm bị đóng. Sau khi mã truy cập hợp lệ, kết nối không ghi thêm được dữ liệu trong khoảng 5 phút trên máy tính hoặc 2 phút trên điện thoại sẽ bị đóng; chương dài vẫn tiếp tục khi thiết bị còn nhận dữ liệu.
