@@ -39,25 +39,16 @@ object ListenExports {
     /** Giao diện đang mở thì nghe tin của việc nền ("audiobookExport" của EbookLibrary): tiến độ, xong, dừng, lỗi. */
     @Volatile var events: ((JSONObject) -> Unit)? = null
 
-    /** Tin cuối của mỗi lượt đang chạy (theo cuốn): tải lại giao diện vẫn thấy tiến độ ([running]). */
-    private val live = ConcurrentHashMap<String, JSONObject>()
+    /** Tin cuối của mỗi lượt đang chạy (theo cuốn): tải lại giao diện vẫn thấy tiến độ ([ExportJobs.running]). */
+    val live = ExportLive("audiobook")
 
     /** Cuốn đang có lượt chạy (kể cả lượt WorkManager vừa chạy lại, chưa báo tin nào): thư mục làm việc của chúng không bị dọn. */
     internal val active: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     fun workRoot(context: Context) = File(context.filesDir, WORK_FOLDER)
 
-    /** Các lượt đang chạy, tin cuối của từng lượt. */
-    fun running(): List<JSONObject> = live.values.toList()
-
     internal fun emit(event: JSONObject) {
-        val book = event.optString("bookId")
-        if (event.optBoolean("finished") || event.optBoolean("stopped") || event.has("error")) {
-            // Lượt cũ bị thay bằng lượt mới báo "dừng" muộn: không được xoá trạng thái của lượt mới.
-            if (live[book]?.optString("run") == event.optString("run")) live.remove(book)
-        } else {
-            live[book] = event
-        }
+        live.emit(event)
         runCatching { events?.invoke(event) }
     }
 
@@ -66,7 +57,7 @@ object ListenExports {
      * bao giờ dọn). Lúc mở app và sau khi một cuốn bị xoá hẳn; cuốn đang xuất không bị đụng.
      */
     fun sweep(context: Context) {
-        ListenExport.sweepFolders(workRoot(context), { Store.rawManifest(it) != null }, active.toSet() + live.keys)
+        ListenExport.sweepFolders(workRoot(context), { Store.rawManifest(it) != null }, active.toSet() + live.books())
     }
 
     /**
@@ -79,6 +70,7 @@ object ListenExports {
         val request = OneTimeWorkRequestBuilder<ListenExportWorker>()
             .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
             .setInputData(data.build())
+            .apply { ExportJobs.tags("audiobook", bookId).forEach { addTag(it) } }
             .build()
         ExportCancellation.enqueue(context, "$TAG:$bookId", request)
         return request.id.toString()
@@ -217,6 +209,12 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
                 return Result.retry()
             }
             M4bExports.discard(context, file)
+            if (Mp3Exports.timedOut(this)) {
+                // Dịch vụ nền hết 6 giờ (Android 15): phần đã đọc xong được giữ, xuất lại là làm tiếp từ đó.
+                ListenExports.finished(context, bookId, "Hệ thống đã dừng việc xuất", "$title · ${Mp3Exports.TIMEOUT_NOTE}; phần đã đọc xong được giữ.")
+                ListenExports.emit(event().put("error", Mp3Exports.TIMEOUT_NOTE))
+                return Result.failure()
+            }
             ListenExports.finished(context, bookId, "Đã dừng xuất sách nói", "$title · phần đã đọc xong được giữ, xuất lại để làm tiếp")
             ListenExports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
@@ -226,7 +224,8 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
                 return Result.retry()
             }
             M4bExports.discard(context, file)
-            val message = M4bExports.describe(error, lowSpace = context.filesDir.usableSpace < (32L shl 20))
+            val message = if (isStopped && Mp3Exports.timedOut(this)) Mp3Exports.TIMEOUT_NOTE
+                else M4bExports.describe(error, lowSpace = context.filesDir.usableSpace < (32L shl 20))
             ListenExports.finished(context, bookId, "Không xuất được sách nói", "$title · $message")
             ListenExports.emit(event().put("error", message))
             return Result.failure()

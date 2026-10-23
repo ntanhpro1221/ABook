@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sao lưu tự động của Android 12+ (Auto Backup và chuyển máy). Sách và chỗ nghe vẫn đi theo; các file ghép đôi / chia sẻ thì không: mã ghép nối và vân tay TLS
+     đi sang máy mới mà khoá của chúng (Android Keystore: danh tính TLS khi chia sẻ, khoá giọng trực tuyến) thì không đi theo, nên máy mới sẽ có mã ghép
+     của máy cũ nhưng không chứng minh được mình là ai. Danh sách này phải giống backup_rules.xml (Android 11 trở xuống). -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="sync.xml" />
+        <exclude domain="sharedpref" path="peers.xml" />
+        <exclude domain="sharedpref" path="abook_self.xml" />
+        <exclude domain="sharedpref" path="readaloud-online-keys.xml" />
+        <exclude domain="sharedpref" path="studio_alerts.xml" />
+        <exclude domain="sharedpref" path="export_cancellation.xml" />
+        <exclude domain="sharedpref" path="mp3_export.xml" />
+        <exclude domain="sharedpref" path="book_saves.xml" />
+        <exclude domain="file" path="share.json" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="sync.xml" />
+        <exclude domain="sharedpref" path="peers.xml" />
+        <exclude domain="sharedpref" path="abook_self.xml" />
+        <exclude domain="sharedpref" path="readaloud-online-keys.xml" />
+        <exclude domain="sharedpref" path="studio_alerts.xml" />
+        <exclude domain="sharedpref" path="export_cancellation.xml" />
+        <exclude domain="sharedpref" path="mp3_export.xml" />
+        <exclude domain="sharedpref" path="book_saves.xml" />
+        <exclude domain="file" path="share.json" />
+    </device-transfer>
+</data-extraction-rules>

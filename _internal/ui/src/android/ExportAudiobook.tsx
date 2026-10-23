@@ -14,6 +14,7 @@ import { coverArtwork } from "@/shared/cover";
 import { formatSize } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
 import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
+import { rejoinExports } from "./exportJobs";
 import { EbookLibrary, type AudiobookExportEvent, type AudiobookPhonePlan } from "./plugins";
 
 // "Xuất sách nói" của sách Nghe ngay (chỉ có chữ) trên điện thoại: cùng việc với máy tính (desktop/AudiobookDialog.tsx) - điện thoại đọc cả cuốn bằng giọng đã chọn cho cuốn
@@ -125,15 +126,11 @@ export function watchAudiobookExports(): () => void {
     }
   });
   // Mở lại (hay tải lại) app khi việc nền đang chạy: hỏi tin cuối của từng lượt để hiện lại thông báo.
-  void EbookLibrary.audiobookJobs().then(
-    ({ jobs }) =>
-      jobs.forEach((job) => {
-        if (runs.has(job.bookId)) return;
-        runs.set(job.bookId, job.run);
-        showProgress(job);
-      }),
-    () => undefined,
-  );
+  rejoinExports("audiobook", (job) => {
+    if (runs.has(job.bookId)) return;
+    runs.set(job.bookId, job.run);
+    showProgress(job);
+  });
   return () => void handle.then((listener) => listener.remove());
 }
 

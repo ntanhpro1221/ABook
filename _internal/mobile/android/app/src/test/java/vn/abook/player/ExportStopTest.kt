@@ -37,6 +37,26 @@ class ExportStopTest {
     }
 
     @Test
+    fun the_user_stopping_the_work_in_the_task_manager_is_a_cancel_not_a_retry() {
+        // Android 14+: người dùng dừng ở "Ứng dụng đang chạy" của hệ thống (STOP_REASON_USER) - không chạy lại.
+        assertFalse(Mp3Exports.stoppedBySystem(34, WorkInfo.STOP_REASON_USER))
+        assertFalse(Mp3Exports.stoppedBySystem(31, WorkInfo.STOP_REASON_USER))
+        // Android 11 trở xuống không báo lý do: giữ tài nguyên như cũ.
+        assertTrue(Mp3Exports.stoppedBySystem(30, WorkInfo.STOP_REASON_USER))
+    }
+
+    @Test
+    fun a_data_sync_timeout_is_reported_not_retried_forever() {
+        // Android 15: dịch vụ nền dataSync hết 6 giờ - chạy lại ngay chỉ thất bại tiếp, nên việc kết thúc và báo người nghe.
+        assertTrue(Mp3Exports.timedOut(35, WorkInfo.STOP_REASON_FOREGROUND_SERVICE_TIMEOUT))
+        assertFalse(Mp3Exports.stoppedBySystem(35, WorkInfo.STOP_REASON_FOREGROUND_SERVICE_TIMEOUT))
+        assertFalse(Mp3Exports.timedOut(35, WorkInfo.STOP_REASON_TIMEOUT))
+        assertFalse(Mp3Exports.timedOut(30, WorkInfo.STOP_REASON_FOREGROUND_SERVICE_TIMEOUT))
+        assertTrue(Mp3Exports.TIMEOUT_NOTE.contains("6 giờ") && Mp3Exports.TIMEOUT_NOTE.contains("Xuất lại"))
+        assertTrue(BookDownloads.TIMEOUT_NOTE.contains("6 giờ") && BookDownloads.TIMEOUT_NOTE.contains("Tải"))
+    }
+
+    @Test
     fun only_the_listener_or_the_app_cancelling_is_a_real_stop() {
         assertTrue(Mp3Exports.stoppedBySystem(34, WorkInfo.STOP_REASON_CANCELLED_BY_APP))
         assertTrue("không rõ lý do: giữ tài nguyên", Mp3Exports.stoppedBySystem(34, WorkInfo.STOP_REASON_UNKNOWN))

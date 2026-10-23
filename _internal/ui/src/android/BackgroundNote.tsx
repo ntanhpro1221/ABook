@@ -54,23 +54,32 @@ export function openBackgroundSettings() {
   return EbookLibrary.openAppSettings().catch((error: Error) => void toast.error(error.message));
 }
 
+/** Lời mặc định của ghi chú trong khung xuất; chỗ khác (chia sẻ thư viện) nói việc của mình bằng `note` / `action`. */
+const EXPORT_NOTE = "Xuất sách dài khi tắt màn hình có thể bị máy tạm dừng.";
+const EXPORT_ACTION = "Cho ABook chạy nền";
+
+interface NoteWords {
+  note?: string;
+  action?: string;
+}
+
 /** Thuần hiển thị: chỉ hiện khi biết chắc ABook CHƯA được chạy nền. */
-export function BackgroundNoteView({ status, onOpen = () => void openBackgroundSettings() }: { status: BackgroundStatus | undefined; onOpen?: () => void }) {
+export function BackgroundNoteView({ status, onOpen = () => void openBackgroundSettings(), note = EXPORT_NOTE, action = EXPORT_ACTION }: { status: BackgroundStatus | undefined; onOpen?: () => void } & NoteWords) {
   if (!status || status.backgroundAllowed) return null;
   return (
     <div role="note" className="mt-2 rounded-lg border border-line bg-hover/40 p-2.5">
-      <p className="text-xs leading-snug text-fg-2">Xuất sách dài khi tắt màn hình có thể bị máy tạm dừng.</p>
+      <p className="text-xs leading-snug text-fg-2">{note}</p>
       <Button size="sm" variant="ghost" icon={BatteryCharging} className="mt-1 h-auto min-h-8 justify-start whitespace-normal py-1.5 text-left" onClick={onOpen}>
-        Cho ABook chạy nền
+        {action}
       </Button>
       <p className="px-1 text-xs leading-snug text-fg-2">{backgroundHelp(status.manufacturer)}</p>
     </div>
   );
 }
 
-/** Ghi chú trong khung xuất (hộp chọn xuất, thông báo đang xuất). */
-export function BackgroundNote() {
-  return <BackgroundNoteView status={useBackgroundStatus()} />;
+/** Ghi chú trong khung xuất (hộp chọn xuất, thông báo đang xuất) và ở trang chia sẻ thư viện (DevicesScreen). */
+export function BackgroundNote(words: NoteWords) {
+  return <BackgroundNoteView status={useBackgroundStatus()} {...words} />;
 }
 
 /** Chữ tiến độ của thông báo đang xuất + ghi chú chạy nền (nếu cần). Cùng `shown`/`spoken` với LiveText. */

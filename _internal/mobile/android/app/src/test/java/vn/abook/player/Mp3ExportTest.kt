@@ -29,6 +29,51 @@ class Mp3ExportTest {
         assertArrayEquals(byteArrayOf(3), File(out, "Sách (3)/cover.jpg").readBytes())
     }
 
+    /** Nhớ tên thư mục trong bộ nhớ, thay cho SharedPreferences của việc nền. */
+    private class Memory : Mp3Export.FolderMemory {
+        var name: String? = null
+        override fun recall() = name
+        override fun remember(name: String) {
+            this.name = name
+        }
+    }
+
+    @Test
+    fun aRetryAfterTheSystemStoppedTheWorkReusesTheFolderTheFirstAttemptMade() {
+        book("b7", cover = false, chapters = listOf("Một" to true, "Hai" to true))
+        val memory = Memory()
+        var asked = 0
+        // Lần đầu bị hệ thống dừng sau chương 1 (WorkManager sẽ chạy lại cùng việc); thư mục dở còn đó.
+        runCatching {
+            Mp3Export.run(Mp3Export.plan("b7"), Mp3Export.FileDestination(out), progress = { done, _ -> asked = done },
+                stopped = { asked >= 1 }, memory = memory)
+        }
+        assertEquals("Sách thử Tập 1", memory.name)
+        assertEquals(listOf("01 - Một.mp3"), File(out, "Sách thử Tập 1").list()!!.filter { it.endsWith(".mp3") })
+        val result = Mp3Export.run(Mp3Export.plan("b7"), Mp3Export.FileDestination(out), memory = memory)
+        assertEquals(2, result.files)
+        assertEquals("${out.name}/Sách thử Tập 1", result.folder)
+        assertEquals(listOf("Sách thử Tập 1"), out.list()!!.toList())
+        assertEquals(listOf("01 - Một.mp3", "02 - Hai.mp3", "Sách thử Tập 1.m3u8"), File(out, "Sách thử Tập 1").list()!!.sorted())
+    }
+
+    @Test
+    fun aRetryWhoseFolderTheUserDeletedStartsANewOne() {
+        book("b8", cover = false, chapters = listOf("Một" to true))
+        val memory = Memory().also { it.name = "Sách thử Tập 1" }
+        val result = Mp3Export.run(Mp3Export.plan("b8"), Mp3Export.FileDestination(out), memory = memory)
+        assertEquals("${out.name}/Sách thử Tập 1", result.folder)
+        assertEquals("Sách thử Tập 1", memory.name)
+    }
+
+    @Test
+    fun aNewExportWithoutMemoryStillGetsANumberedFolder() {
+        book("b9", cover = false, chapters = listOf("Một" to true))
+        Mp3Export.run(Mp3Export.plan("b9"), Mp3Export.FileDestination(out), memory = Memory())
+        val second = Mp3Export.run(Mp3Export.plan("b9"), Mp3Export.FileDestination(out), memory = Memory())
+        assertEquals("${out.name}/Sách thử Tập 1 (2)", second.folder)
+    }
+
     @Before
     fun setUp() {
         root = Files.createTempDirectory("abook-mp3").toFile()
