@@ -191,16 +191,16 @@ export const androidSource: ListenSource = {
   saveReading: async (id, chapterId, index, position, record) => {
     await EbookLibrary.saveReading({ id, ...position, chapterId, index, record });
   },
-  setChapterDone: (id, chapterId, done) => EbookLibrary.setChapterDone({ id, chapterId, done }),
-  setFinished: (id, finished) => EbookLibrary.setFinished({ id, finished }),
+  setChapterDone: (id, chapterId, done, record) => EbookLibrary.setChapterDone({ id, chapterId, done, record }),
+  setFinished: (id, finished, record) => EbookLibrary.setFinished({ id, finished, record }),
   setRate: (id, rate, record) => EbookLibrary.setRate({ id, rate, record }),
   setVoice: (id, voice, record) => EbookLibrary.setVoice({ id, voice, record }),
-  addBookmark: (id, chapterId, seconds, note, _record, sentence) => EbookLibrary.addBookmark({ id, chapterId, seconds, note, index: sentence?.index, quote: sentence?.quote }),
+  addBookmark: (id, chapterId, seconds, note, record, sentence) => EbookLibrary.addBookmark({ id, chapterId, seconds, note, index: sentence?.index, quote: sentence?.quote, record }),
   refreshListening: async (id) => {
     await EbookLibrary.syncState({ id });
   },
-  updateBookmark: (id, markId, note) => EbookLibrary.updateBookmark({ id, markId, note }),
-  deleteBookmark: (id, markId) => EbookLibrary.deleteBookmark({ id, markId }),
+  updateBookmark: (id, markId, note, record) => EbookLibrary.updateBookmark({ id, markId, note, record }),
+  deleteBookmark: (id, markId, record) => EbookLibrary.deleteBookmark({ id, markId, record }),
   restoreBookmark: async (id, mark) => {
     // Hoàn tác đúng ID và lúc đặt dấu gốc; lõi gỡ bia mộ để đồng bộ không xoá dấu lần nữa.
     await EbookLibrary.restoreBookmark({ id, mark });

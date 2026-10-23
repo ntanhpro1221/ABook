@@ -5741,14 +5741,23 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_chapter_done(self, _query: dict[str, list[str]], value: str, chapter: str) -> None:
         self.app._listenable(value)
-        self.app.sync_remote_state(value, wait=False)
-        state = self.app.listening.set_chapter_done(value, int(chapter), bool(self._body().get("done", True)))
+        body = self._body()
+        self.app.sync_remote_state(value, wait=False, record=_held_record(body))
+        try:  # hồ sơ của màn đang hiện: ghi đúng nó, đã xoá / chuyển thì từ chối rõ (như post_rate)
+            state = self.app.listening.set_chapter_done(value, int(chapter), bool(body.get("done", True)), _held_record(body))
+        except RecordGone as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self._send_json(HTTPStatus.OK, state)
 
     def post_finished(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
-        self.app.sync_remote_state(value, wait=False)
-        self._send_json(HTTPStatus.OK, self.app.listening.set_finished(value, bool(self._body().get("finished", True))))
+        body = self._body()
+        self.app.sync_remote_state(value, wait=False, record=_held_record(body))
+        try:
+            state = self.app.listening.set_finished(value, bool(body.get("finished", True)), _held_record(body))
+        except RecordGone as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
+        self._send_json(HTTPStatus.OK, state)
 
     def post_rate(self, _query: dict[str, list[str]], value: str) -> None:
         self.app._listenable(value)
@@ -5783,14 +5792,24 @@ class Handler(BaseHTTPRequestHandler):
 
     def put_bookmark(self, _query: dict[str, list[str]], value: str, mark: str) -> None:
         self.app._listenable(value)
-        self.app.sync_remote_state(value, wait=False)
-        self.app.listening.update_bookmark(value, mark, str(self._body().get("note", "")))
+        body = self._body()
+        self.app.sync_remote_state(value, wait=False, record=_held_record(body))
+        try:
+            self.app.listening.update_bookmark(value, mark, str(body.get("note", "")), _held_record(body))
+        except RecordGone as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self._send_json(HTTPStatus.OK, {"ok": True})
 
-    def delete_bookmark(self, _query: dict[str, list[str]], value: str, mark: str) -> None:
+    def delete_bookmark(self, query: dict[str, list[str]], value: str, mark: str) -> None:
         self.app._listenable(value)
-        self.app.sync_remote_state(value, wait=False)
-        self.app.listening.delete_bookmark(value, mark)
+        # DELETE thường không có thân: hồ sơ đi ở `?record=` (thân JSON, nếu có, thắng).
+        body = self._body()
+        record = _held_record(body) or _held_record({"record": (query.get("record") or [None])[0]})
+        self.app.sync_remote_state(value, wait=False, record=record)
+        try:
+            self.app.listening.delete_bookmark(value, mark, record)
+        except RecordGone as error:
+            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
         self._send_json(HTTPStatus.OK, {"ok": True})
 
     def post_bookmark_restore(self, _query: dict[str, list[str]], value: str) -> None:
