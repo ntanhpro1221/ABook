@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.131] - 2026-10-23
+
 ### Hồ sơ người nghe
 - Hai máy tính ghép với nhau: chỗ nghe, dấu trang và ghi chú của bạn đi đúng hồ sơ của bạn ở máy giữ sách, không đè lên hồ sơ của người khác đang chọn ở đó; đổi tên hay xoá hồ sơ ở một máy cũng sang máy kia.
 - Điện thoại làm máy giữ sách: máy khác đã ghép (máy tính hay điện thoại) đẩy chỗ nghe, dấu trang, tên và việc xoá hồ sơ của bạn lên đúng hồ sơ của bạn, không còn trộn vào hồ sơ người khác đang chọn trên điện thoại.
