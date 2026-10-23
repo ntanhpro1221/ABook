@@ -3,7 +3,8 @@ nhập nhạc - nhập đọc thẻ bằng tinytag). Không chạm mạng: studi
 from __future__ import annotations
 
 import sys
-import zipfile
+import hashlib
+import zlib
 from pathlib import Path
 
 import pytest
@@ -18,6 +19,10 @@ def bare_machine(tmp_path: Path, monkeypatch):
     monkeypatch.setenv(ffmpeg_setup.ENV_DOWNLOAD, "1")
     monkeypatch.setitem(sys.modules, "imageio_ffmpeg", None)
     monkeypatch.setattr(io_utils.shutil, "which", lambda name: None)
+    monkeypatch.setattr(ffmpeg_setup.zip_range, "member_offset", lambda *args: 0)
+    monkeypatch.setattr(ffmpeg_setup, "EXE_SIZE", len(b"MZ fake ffmpeg"))
+    monkeypatch.setattr(ffmpeg_setup, "EXE_SHA256", hashlib.sha256(b"MZ fake ffmpeg").hexdigest())
+    monkeypatch.setattr(ffmpeg_setup, "EXE_CRC", zlib.crc32(b"MZ fake ffmpeg"))
     folder = tmp_path / "tools" / "ffmpeg"
     ffmpeg_setup.configure(folder)
     yield folder
@@ -25,11 +30,10 @@ def bare_machine(tmp_path: Path, monkeypatch):
 
 
 def _fake_download(calls: list, payload: bytes = b"MZ fake ffmpeg"):
-    def download(item, target: Path, progress, cancelled):
+    def download(item, target: Path, progress, cancelled, **kwargs):
         calls.append(item)
         target.parent.mkdir(parents=True, exist_ok=True)
-        with zipfile.ZipFile(target, "w") as bundle:
-            bundle.writestr(ffmpeg_setup.MEMBER, payload)
+        target.write_bytes(zlib.compress(payload)[2:-4])
         progress(item.size // 2, item.size)
         progress(item.size, item.size)
         return target
@@ -37,7 +41,7 @@ def _fake_download(calls: list, payload: bytes = b"MZ fake ffmpeg"):
     return download
 
 
-def test_install_unpacks_the_exe_removes_the_wheel_and_registers_it(bare_machine: Path, monkeypatch) -> None:
+def test_install_unpacks_the_exe_removes_the_archive_and_registers_it(bare_machine: Path, monkeypatch) -> None:
     calls: list = []
     seen: list[tuple[int, int]] = []
     monkeypatch.setattr(studio_setup, "download", _fake_download(calls))
@@ -49,9 +53,10 @@ def test_install_unpacks_the_exe_removes_the_wheel_and_registers_it(bare_machine
     assert io_utils.ffmpeg_executable() == str(exe) and ffmpeg_setup.ready() and ffmpeg_setup.downloaded()
 
 
-def test_the_wheel_is_pinned_and_only_the_member_is_taken() -> None:
-    assert ffmpeg_setup.WHEEL.url.startswith("https://files.pythonhosted.org/") and len(ffmpeg_setup.WHEEL.sha256) == 64
-    assert ffmpeg_setup.MEMBER.startswith("imageio_ffmpeg/binaries/ffmpeg-win-x86_64")
+def test_the_archive_is_pinned_and_only_the_member_is_taken() -> None:
+    assert ffmpeg_setup.WHEEL.url.startswith("https://github.com/GyanD/codexffmpeg/releases/download/8.1.2/")
+    assert len(ffmpeg_setup.WHEEL.sha256) == 64 and ffmpeg_setup.WHEEL.size > 0
+    assert ffmpeg_setup.MEMBER == "ffmpeg-8.1.2-essentials_build/bin/ffmpeg.exe"
     assert ffmpeg_setup.pin() == ffmpeg_setup.WHEEL.sha256
 
 
@@ -87,18 +92,18 @@ def test_ffmpeg_in_the_path_is_used_when_nothing_was_downloaded(bare_machine: Pa
 
 
 def test_each_failure_gets_its_own_reason(bare_machine: Path, monkeypatch) -> None:
-    def broken(item, target, progress, cancelled):
+    def broken(item, target, progress, cancelled, **kwargs):
         raise studio_setup.SetupError("Không tải được") from OSError("không có mạng")
 
-    def wrong_hash(item, target, progress, cancelled):
+    def wrong_hash(item, target, progress, cancelled, **kwargs):
         raise studio_setup.SetupError("không đúng bản đã ghim")
 
-    def not_a_zip(item, target, progress, cancelled):
+    def not_a_zip(item, target, progress, cancelled, **kwargs):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(b"khong phai zip")
         return target
 
-    def disk_full(item, target, progress, cancelled):
+    def disk_full(item, target, progress, cancelled, **kwargs):
         raise OSError(28, "Không còn chỗ trống trên ổ đĩa")
 
     reasons = {}

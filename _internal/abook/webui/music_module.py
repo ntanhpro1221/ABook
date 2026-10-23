@@ -3,7 +3,7 @@
 Người dùng bấm "Phân tích nhạc" (ở màn Nhạc của tôi, hay ở một bài "chưa phân tích") thì mới tải - không bao giờ tự tải, kể cả lúc
 nhập nhạc (nhập chạy không cần mô-đun: thẻ + độ dài đọc bằng tinytag). MỘT nút, MỘT thanh tiến độ, MỘT tổng dung lượng. Gồm tối đa ba phần,
 tuỳ máy (`_components`):
-- `ffmpeg`  (ffmpeg_setup.py, ~31 MB): giải mã cho model + đo độ to. Máy đã có ffmpeg (Studio, PATH) thì không tải.
+- `ffmpeg`  (ffmpeg_setup.py, ~36 MB): giải mã cho model + đo độ to. Máy đã có ffmpeg (Studio, PATH) thì không tải.
 - `libs`    (~27 MB): numpy + onnxruntime + ba gói nó đòi - wheel cp314 win_amd64 ghim URL + SHA-256, giải vào <dữ liệu app>/music/lib và thêm
             vào sys.path trước khi import. Máy đã import được (Studio, máy dev) thì không tải.
 - `model`   (music_student.py, ~59 MB onnx / ~55 MB torch): gói model trên Hugging Face, ghim commit + SHA-256. Máy Studio (đã có torch + ffmpeg)

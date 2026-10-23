@@ -29,6 +29,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Điện thoại: mở lại app đúng lúc việc xuất MP3, M4B hay sách nói vừa xong thì không còn hiện lại thanh tiến độ hay nút Dừng cho việc đã xong.
 
 ### Bảo mật
+- Máy tính: bộ FFmpeg và Git tải khi bạn cần đã lên bản vá lỗi bảo mật; FFmpeg chỉ tải đúng phần cần dùng (khoảng 36 MB).
 - Máy tính: khi bạn đặt bìa hoặc xuất sách, app chỉ nhận ảnh JPEG, PNG, WebP, GIF hoặc BMP.
 - Máy tính: cập nhật chứng chỉ gốc và thư viện ảnh/TLS để bạn tải và dùng bìa an toàn hơn.
 - Máy tính và điện thoại: sách do người khác gửi không còn làm máy bạn tự gọi một địa chỉ lạ chỉ vì hiện bìa trong thư viện; màu bìa không hợp lệ được thay bằng màu nền mặc định, ảnh bìa vẫn hiển thị.

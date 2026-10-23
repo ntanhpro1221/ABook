@@ -677,7 +677,7 @@ def export_m4b(project_root: Path, target_root: Path, *, cover: str | None = Non
     if not chapters:
         raise ValueError("Sách chưa có chương nào nghe được để xuất")
     if not ffmpeg_available():
-        raise ValueError("Cần tải thêm công cụ ghép âm thanh (khoảng 31 MB) để làm file M4B - mở Xuất, chọn Sách nói M4B rồi bấm Tải công cụ.")
+        raise ValueError("Cần tải thêm công cụ ghép âm thanh (khoảng 36 MB) để làm file M4B - mở Xuất, chọn Sách nói M4B rồi bấm Tải công cụ.")
     ffmpeg = ffmpeg_executable()
     ids = [chapter_id for chapter_id, _title, _path in listed]
     mixer: Any = None

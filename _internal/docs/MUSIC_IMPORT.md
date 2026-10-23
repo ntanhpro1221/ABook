@@ -67,7 +67,7 @@ Nhạc huấn luyện) cắm vào bằng `music_local.set_analyzer(hàm)`; kết
   "chưa phân tích". Gói chỉ tải khi người dùng bấm "Phân tích nhạc" (mục dưới) - không bao giờ tự tải, kể cả lúc nhập.
   `ABOOK_MUSIC_STUDENT_DIR` trỏ tới một thư mục gói có sẵn (bài thử, máy không mạng); `ABOOK_MUSIC_STUDENT_DOWNLOAD=0` chặn mọi lần tải.
 - **Mô-đun "Phân tích nhạc"** (`abook/webui/music_module.py`, quản lý như Studio): một nút, một thanh tiến độ, một tổng dung lượng cho mọi thứ
-  bộ phân tích cần mà bộ cài không mang. Máy tính chỉ-nghe: **ffmpeg** (~31 MB, `ffmpeg_setup.py`) + **thư viện** (numpy 2.4.6, onnxruntime 1.28.0,
+  bộ phân tích cần mà bộ cài không mang. Máy tính chỉ-nghe: **ffmpeg** (~36 MB, Gyan 8.1.2 essentials: chỉ tải `ffmpeg.exe` qua HTTP Range, `ffmpeg_setup.py`; SHA-256/cỡ phần nén + exe và CRC đều được kiểm, `.part` nối tiếp sau mất mạng) + **thư viện** (numpy 2.4.6, onnxruntime 1.28.0,
   flatbuffers, packaging, protobuf: ~27 MB wheel cp314 win_amd64, ghim URL + SHA-256, giải vào `<dữ liệu app>/music/lib` rồi thêm vào `sys.path`
   trước khi import) + **model** (~59 MB); máy Studio (đã có torch + ffmpeg) chỉ tải model. Giao diện: MỘT thẻ (`MusicModuleNotice`) ở "Nhạc của
   tôi" khi đã có bài, hiện tổng dung lượng và nút "Phân tích nhạc (N MB)"; không còn thẻ "bộ đọc nhạc" riêng, không còn đợi tải lúc nhập.
