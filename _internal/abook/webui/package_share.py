@@ -35,7 +35,8 @@ def _cover_meta(path: Path, book: dict[str, Any]) -> dict[str, Any] | None:
     cover = book.get("cover")
     if not isinstance(cover, dict) or book_edits.cover_file(path) is None:
         return None
-    return {key: cover[key] for key in ("color", "width", "height", "version") if key in cover}
+    return {**covers.stored_meta(cover), "color": covers.clean_color(cover.get("color")),
+            **({"version": cover["version"]} if "version" in cover else {})}
 
 
 def library_entry(path: Path, key: str, state: dict[str, Any]) -> dict[str, Any]:
