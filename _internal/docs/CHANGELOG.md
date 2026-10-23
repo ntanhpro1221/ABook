@@ -14,6 +14,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính và điện thoại: thông báo ngắn hơn, giữ cùng lời cho cùng lỗi.
 
 ### Bảo mật
+- Điện thoại: cập nhật thư viện Android (giao diện, WebView, kiểm chữ ký).
 - Máy tính: bộ FFmpeg và Git tải khi bạn cần đã lên bản vá lỗi bảo mật; FFmpeg chỉ tải đúng phần cần dùng (khoảng 36 MB).
 - Máy tính: khi bạn đặt bìa hoặc xuất sách, app chỉ nhận ảnh JPEG, PNG, WebP, GIF hoặc BMP.
 - Máy tính: cập nhật chứng chỉ gốc và thư viện ảnh/TLS để bạn tải và dùng bìa an toàn hơn.
