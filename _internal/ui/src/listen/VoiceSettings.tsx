@@ -68,24 +68,30 @@ function errorText(error: unknown): string {
   return (error as Error)?.message || "Không làm được lúc này.";
 }
 
-/** Nghe thử giọng: Cài đặt › Giọng đọc và menu giọng của trình phát dùng chung. `sample`: đọc câu mẫu bằng giọng ấy, trả địa chỉ phát được. */
+/** Nghe thử giọng: Cài đặt › Giọng đọc và menu giọng của trình phát dùng chung. `sample`: đọc câu mẫu bằng giọng ấy, trả địa chỉ phát được.
+ *  Mỗi lần bấm "Thử giọng" / "Dừng" là một lượt mới: mẫu của lượt cũ về muộn (lấy mẫu mất vài giây) bị bỏ, không phát chồng lên giọng bấm sau, không tự phát sau khi đã bấm dừng. */
 export function useVoiceSample(sample: (voiceId: string, text: string) => Promise<string>) {
   const audio = useRef<HTMLAudioElement | null>(null);
+  const turn = useRef(0);
   const [playing, setPlaying] = useState("");
   const [loading, setLoading] = useState("");
   const [failed, setFailed] = useState<{ voice: string; message: string } | null>(null);
   const stop = useCallback(() => {
+    turn.current += 1;
     audio.current?.pause();
     audio.current = null;
     setPlaying("");
+    setLoading(""); // đang lấy mẫu mà bấm dừng: lượt ấy bị bỏ nên không còn ai tắt dấu "đang lấy"
   }, []);
   useEffect(() => stop, [stop]);
   const play = async (voice: string) => {
     stop();
+    const mine = turn.current;
     setFailed(null);
     setLoading(voice);
     try {
       const url = await sample(voice, SAMPLE_TEXT);
+      if (turn.current !== mine) return;
       const element = new Audio(url);
       element.muted = muted();
       element.onended = () => setPlaying((current) => (current === voice ? "" : current));
@@ -93,10 +99,11 @@ export function useVoiceSample(sample: (voiceId: string, text: string) => Promis
       setPlaying(voice);
       await element.play();
     } catch (error) {
+      if (turn.current !== mine) return; // lượt cũ: lỗi của nó không còn ai chờ
       setPlaying("");
       setFailed({ voice, message: errorText(error) });
     } finally {
-      setLoading("");
+      if (turn.current === mine) setLoading("");
     }
   };
   return { playing, loading, failed, play, stop };

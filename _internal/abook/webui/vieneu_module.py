@@ -99,6 +99,7 @@ GGUF_FILES = (SERVER_ZIP, GGUF_MODEL)
 FILES = {"g2p": (G2P,), "voices": (VOICES,), "turbo": TURBO_FILES, "nano": NANO_FILES, "aligner": studio_setup.WORD_ALIGN_FILES, "gguf": GGUF_FILES}
 
 CHOICES = ("turbo", "nano", "aligner")
+REMOVABLE = ("turbo", "nano", "fast")  # "Gỡ": bộ căn chữ dùng chung với phần tô chữ của sách (word_timing) nên không có
 FAST = "fast"  # "Bản tăng tốc": chỉ hiện trên máy chạy được (`fast_supported`)
 NEEDS = {"turbo": ("libs", "g2p", "voices", "turbo"), "nano": ("libs", "g2p", "voices", "nano"), "aligner": ("libs", "aligner"),
          FAST: ("libs", "g2p", "voices", "turbo", "gguf")}
@@ -418,7 +419,8 @@ def status() -> dict[str, Any]:
                 lacking = [part for part in lacking if part.id == "gguf"]  # cỡ riêng của nó; phần Giọng VieNeu nó cần đã có dòng của mình
             choices.append({"id": choice, "label": label, "detail": detail, "needs": list(NEEDS[choice]),
                             "bytes": sum(left[part.id] for part in lacking), "installed": choice in have,
-                            "recommended": choice in picks, "default": choice in picks, **({"requires": ["turbo"]} if choice == FAST else {})})
+                            "recommended": choice in picks, "default": choice in picks, "removable": _removable(choice),
+                            **({"requires": ["turbo"]} if choice == FAST else {})})
         return {
             "state": state, "done": _state["done"] if state == "downloading" else 0,
             "total": _state["total"] if state == "downloading" else 0, "error": _state["error"],
@@ -458,6 +460,34 @@ def start(choices: list[str] | None = None) -> None:
 def _tiers_changed(changed: set[str]) -> list[str]:
     """Giọng cần tự đo lại sau khi tải: tầng có phần vừa đổi; bản tăng tốc đổi thì đo lại Turbo (lần đo ấy chạy bằng nó)."""
     return [tier for tier in ("turbo", "nano") if changed & (set(NEEDS[tier]) | ({"gguf"} if tier == "turbo" else set()))]
+
+
+def _removable(choice: str) -> bool:
+    """Lựa chọn có thứ gì trên đĩa để gỡ (đã tải hay còn dở)."""
+    if choice not in REMOVABLE:
+        return False
+    folder = _dir("gguf" if choice == FAST else choice)
+    return folder is not None and folder.exists()
+
+
+def remove(choice: str) -> None:
+    """Gỡ giọng `choice` ("turbo" | "nano" | "fast") để lấy lại chỗ: xoá thư mục của nó, quên ghim và số đo tốc độ. Gỡ Turbo thì bản tăng tốc (chỉ chạy kèm Turbo) đi theo.
+    Ở lại: bộ đọc chữ (cũng của Supertonic), danh sách giọng, thư viện chạy model (mô-đun nhạc), bộ căn chữ (phần tô chữ của sách). Studio không dùng file nào ở đây:
+    giọng VieNeu của Studio là gói `vieneu` với model riêng, nên không cần hỏi cuốn nào trước khi gỡ."""
+    if choice not in REMOVABLE:
+        raise ValueError(f"Không gỡ được {choice!r}: " + ("bộ căn chữ dùng chung với phần tô chữ của sách" if choice == "aligner" else "không có lựa chọn này"))
+    if _core.folder is None:
+        raise ValueError("Mô-đun giọng VieNeu chưa được cấu hình")
+    if choice != FAST:
+        _core.remove(_dir(choice), choice, choice)
+    gguf = _dir("gguf")
+    if choice != "nano" and gguf is not None and gguf.exists():
+        _core.remove(gguf, "gguf", "")
+    vieneu_gguf.reset_failure()
+    if choice == FAST:
+        found = installed()
+        if found is not None and found.turbo is not None:
+            _core.measure_again(["turbo"])  # số đo của Turbo là số đo bằng bản tăng tốc: đo lại bằng ONNX
 
 
 def join(timeout: float | None = None) -> None:
