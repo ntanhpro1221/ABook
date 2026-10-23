@@ -16,6 +16,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính: tải giọng trên máy báo ngay nếu ổ đĩa không đủ chỗ cho phần còn phải tải (chừa lại một ít cho Windows), thay vì tải gần xong rồi mới hỏng.
 - Máy tính: giọng VieNeu trong Cài đặt có nút "Gỡ" cho từng giọng (VieNeu, VieNeu Nano, bản tăng tốc) để lấy lại chỗ; bộ căn chữ dùng chung với phần tô chữ nên ở lại.
 
+### Điện thoại
+
+- Chữ đang đọc và hẹn giờ giữ đúng vị trí khi giọng đọc đang chờ hoặc tải đoạn tiếp theo.
+- “Nghe từ đây” và “Nghe từ câu này” vào đúng câu bạn chọn, kể cả khi cuốn sách dùng giọng khác.
+- Dấu trang sách chữ giữ câu đang nghe cả khi bạn chưa mở văn bản hoặc đặt dấu từ màn hình khoá; vị trí chữ được giữ khi đồng bộ và hoàn tác xoá.
+- Widget cỡ vừa có đủ nút lùi, phát/dừng, tới và hẹn giờ, kèm tên sách/chương; thu nhỏ vẫn giữ nút phát/dừng trọn vẹn, nới rộng có thêm bìa lớn.
+
 ## [0.4.131] - 2026-10-23
 
 ### Hồ sơ người nghe

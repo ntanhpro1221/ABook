@@ -7,7 +7,7 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
-import { anchorOf, type ReadingAnchor } from "./readingAnchor";
+import { anchorOf, makeAnchor, type ReadingAnchor } from "./readingAnchor";
 import { tellSceneMusic } from "./musicHint";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit } from "./musicBed";
 import { SceneCues, isSceneCues, sceneRetryDelay } from "./sceneCues";
@@ -1248,7 +1248,9 @@ export function PlayerProvider({
       // audio để dòng dấu trang tự tìm câu theo giờ (soát a70).
       const script = client.getQueryData<Script>(["listen", "script", current.bookId, current.chapterId, "text"]);
       const index = script?.timed ? sentenceIndexAt(script.segments.map((segment) => segment.start ?? 0), engine.time) : -1;
-      const sentence: BookmarkSentence | undefined = script && index >= 0 ? { index, quote: script.segments[index].text } : undefined;
+      const sentence: BookmarkSentence | undefined = script && index >= 0
+        ? { index, quote: script.segments[index].text, anchor: makeAnchor(script.segments.map((segment) => segment.text), index, 0) } : undefined;
+      // Không có kịch bản: để native tự chốt câu và chữ đang đọc, không gửi câu rỗng.
       const mark = native
         ? await native.addBookmark(note, sentence)
         : await source.addBookmark(current.bookId, current.chapterId, engine.time, note ?? "", current.recordId, sentence);
