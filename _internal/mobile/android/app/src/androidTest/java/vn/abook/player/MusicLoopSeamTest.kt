@@ -47,6 +47,16 @@ import java.nio.ByteBuffer
  * `EV <ns> sinkcfg / sinkflush / sinkbuf` (nhật ký sink, thông tin), `FMT <ns> 0 <seg> <sr> <ch> <enc>`, `PCM 0 <seg> <f0> <n> <off>` (k = 0: một trình phát; seg đếm
  * tăng suốt bài; off = byte trong file tee của lượt chứa seg, lượt = `EV seek` gần nhất trước FMT). Bảng mục: 0 = Clip đầu, lẻ = Nối, chẵn >= 2 = Clip lặp.
  * Luồng nhạc của máy bằng 0 thì chạy im (tee lấy PCM trước AudioTrack): test không đổi âm lượng hay cài đặt nào.
+ *
+ * Ca RS (PLAN_loop §44.7, chỉ chạy khi `runs` có `RS`): tua liền nhau trong CÙNG mục Nối, lưới ca ở [ReseekCases] (`rs` = lọc ca, vd `D180,LS06`; `reps` = số lần mỗi ca, mặc định 5;
+ * `entry` = `clip,seam` (mặc định cả hai): trước lần A trình phát dừng ở Clip lặp (A là tua từ mục khác) hay ở đầu Nối (A là tua trong mục); ca `D<Δ>_edge_*`: lần B chờ vị trí phát vừa qua ranh khối 100 ms rồi tua vào khối ấy). Dòng thêm, chỉ khi có RS:
+ * `EV <ns> rs case <ca> <lần> <entry> <Δms> <đích,...>`, `EV <ns> rs skip <ca> <khungNối> <đích,...>` (không áp: Nối ngắn),
+ * `EV <ns> rs seek <ca> <lần> <A|B|C> <đích> <positionMs> <trim> <mụcĐang> <currentPositionMs> <bufferedPositionMs> <playbackState> <sốFlushTừLầnTrước> <msTừLầnTrước> <noop 0|1>` (ghi ngay trước seekToSample; noop = LoopSeam.seekIsNoop đúng, tức có thêm lệnh tua đệm stepAside),
+ * `EV <ns> rs flush <armed 0|1> <toDrop> <seekPending 0|1>` và `EV <ns> rs first <ptsUs> <khung> <toDrop> <seekPending 0|1>` (móc [LoopSeam.LoopSink.Probe]; `first` = buffer đầu sau flush, trước cắt),
+ * `EV <ns> rs disc <reason> <mụcCũ> <msCũ> <mụcMới> <msMới>`, `EV <ns> rs state <playbackState>`,
+ * `EV <ns> rs land <ca> <lần> <A|B|C> <đích> <đáp> <lệchKhung> <lệchMs> <khungMẩuĐầuTee> <khớpThứHai|-1> <K>` (đáp = vị trí K = 256 khung đầu sau lần tua của tee trong WAV Nối, khớp từng bit;
+ * thay `<đáp>...` bằng `noflush`, `short <khung> <mẩuĐầu>` hay `nomatch 0 0 <mẩuĐầu> -1 <K>`). Mọi dòng `rs land` kết bằng `app <mẫu|none|pending>`: lưới an toàn của chính app
+ * ([LoopSeam.seekToSample] `onLand`, K khung đầu sau khi cắt ở LoopSink, tìm gần đích nhất trong ±1 s của WAV Nối), `pending` = chưa có kết quả lúc ghi.
  */
 @OptIn(UnstableApi::class)
 @Suppress("DEPRECATION") // AudioTrackProvider: như MusicBed.probeRenderers
@@ -74,6 +84,8 @@ class MusicLoopSeamTest {
         private val pcm = ByteArrayOutputStream()
         /** Mốc từng lần flush trong lượt: (seg, ns, byte trong file tee tại lúc đó). */
         val marks = mutableListOf<Triple<Int, Long, Int>>()
+        /** Số khung của khối PCM đầu tiên mỗi seg trong lượt (ca RS: "mẩu đầu" sau tua, đã cắt). */
+        val firstFrames = HashMap<Int, Int>()
 
         override fun flush(sampleRate: Int, channelCount: Int, encoding: Int) {
             seg++
@@ -91,7 +103,10 @@ class MusicLoopSeamTest {
             if (!armed) return
             val copy = ByteArray(bytes)
             buffer.duplicate().get(copy)
-            val offset = synchronized(pcm) { pcm.size().also { pcm.write(copy) } }
+            val offset = synchronized(pcm) {
+                firstFrames.putIfAbsent(seg, count)
+                pcm.size().also { pcm.write(copy) }
+            }
             log("PCM 0 $seg $first $count $offset")
         }
 
@@ -99,6 +114,7 @@ class MusicLoopSeamTest {
         fun begin() = synchronized(pcm) {
             pcm.reset()
             marks.clear()
+            firstFrames.clear()
             armed = true
         }
 
@@ -181,20 +197,8 @@ class MusicLoopSeamTest {
     private fun shortsOf(bytes: ByteArray, skip: Int) = SeamTestSupport.shortsOf(bytes, skip)
 
     /** Khung đầu (index p) của `w` (n khung xen kênh) trong `ref` quanh `center` ± `radius` khung, lệch từng mẫu <= 2; -1 nếu không thấy. */
-    private fun locate(ref: ShortArray, channels: Int, center: Long, radius: Int, w: ShortArray): Long {
-        val n = w.size / channels
-        val lo = maxOf(0L, center - radius)
-        val hi = minOf((ref.size / channels - n).toLong(), center + radius)
-        var p = lo
-        while (p <= hi) {
-            var k = 0
-            val base = (p * channels).toInt()
-            while (k < w.size && Math.abs(ref[base + k] - w[k]) <= 2) k++
-            if (k == w.size) return p
-            p++
-        }
-        return -1
-    }
+    private fun locate(ref: ShortArray, channels: Int, center: Long, radius: Int, w: ShortArray): Long =
+        SeamMatch.locate(ref, channels, w, center - radius, center + radius, 2)
 
     private fun <T> onMain(block: () -> T): T = SeamTestSupport.onMain(instrumentation, block)
 
@@ -309,6 +313,16 @@ class MusicLoopSeamTest {
                         log("EV ${System.nanoTime()} error ${failure.get()}")
                     }
                 })
+                if ("RS" in runs) player!!.addListener(object : Player.Listener {
+                    // Ca RS: mọi bước nhảy vị trí và đổi trạng thái giữa các lần tua (các lượt khác không ghi, giữ nguyên định dạng file cũ).
+                    override fun onPositionDiscontinuity(oldPosition: Player.PositionInfo, newPosition: Player.PositionInfo, reason: Int) {
+                        log("EV ${System.nanoTime()} rs disc $reason ${oldPosition.mediaItemIndex} ${oldPosition.positionMs} ${newPosition.mediaItemIndex} ${newPosition.positionMs}")
+                    }
+
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        log("EV ${System.nanoTime()} rs state $playbackState")
+                    }
+                })
                 player!!.addAnalyticsListener(object : AnalyticsListener {
                     // Thông tin: encoderDelay / encoderPadding trong Format đưa cho sink (delay là lời nhắn preroll cho LoopSink; sink trong luôn nhận 0).
                     override fun onAudioInputFormatChanged(eventTime: AnalyticsListener.EventTime, format: androidx.media3.common.Format, decoderReuseEvaluation: DecoderReuseEvaluation?) {
@@ -346,7 +360,7 @@ class MusicLoopSeamTest {
                 val target = itemStart(index) + sample
                 val ref = if (kind == "seam") shortsOf(seam.wav.readBytes(), 44) else fullRef
                 // Đoạn tee của lượt = đoạn flush cuối cùng trong 300 ms sau lệnh tua (như bộ đo).
-                val mark = marks.lastOrNull { it.second in seekNs..(seekNs + 300_000_000L) } ?: marks.firstOrNull { it.second >= seekNs }
+                val mark = SeamMatch.teeMark(marks, seekNs, 300_000_000L)
                 var landed = Long.MIN_VALUE
                 if (mark != null) {
                     val data = shortsOf(bytes, mark.third)
@@ -396,6 +410,105 @@ class MusicLoopSeamTest {
             val r1Ms = (seam.clip0Ms - before).coerceAtLeast(0) + 13.0
             val r2Ms = (loopNominalMs - before).coerceAtLeast(0.0) + 13.0
             val r2Sample = msToSample(r2Ms)
+
+            // Ca RS (PLAN_loop §44.7): các lần tua liền nhau trong CÙNG mục Nối (index 1), đo mẫu đáp thật của từng lần + trạng thái LoopSink / trình phát quanh đó.
+            val rsFlushes = java.util.concurrent.atomic.AtomicInteger()
+            fun bit(b: Boolean) = if (b) 1 else 0
+            val rsProbe = object : LoopSeam.LoopSink.Probe {
+                override fun onFlush(armed: Boolean, toDrop: Long, seekPending: Boolean) {
+                    rsFlushes.incrementAndGet()
+                    log("EV ${System.nanoTime()} rs flush ${bit(armed)} $toDrop ${bit(seekPending)}")
+                }
+
+                override fun onFirstBuffer(presentationTimeUs: Long, frames: Long, toDrop: Long, seekPending: Boolean) {
+                    log("EV ${System.nanoTime()} rs first $presentationTimeUs $frames $toDrop ${bit(seekPending)}")
+                }
+            }
+            val rsK = 256 // số khung đầu sau tua đem đi tìm trong WAV Nối (PCM16: khớp từng bit)
+
+            /** Một lần chạy của ca `c`: vào (`entry` = clip: dừng ở Clip lặp mục 2, 1 s; seam: dừng ở đầu Nối), rồi tua lần lượt tới từng đích, cách nhau Δ ms đồng hồ thật, phát 500 ms sau lần cuối. */
+            fun reseek(c: ReseekCases.Case, rep: Int, entry: String, wav: ShortArray) {
+                val (entryIndex, entrySample) = if (entry == "seam") 1 to 0L else 2 to msToSample(1000.0)
+                onMain {
+                    p.playWhenReady = false
+                    LoopSeam.seekToSample(p, sink, seam, entryIndex, entrySample)
+                }
+                waitUntil("${c.name} vào") { i, _ -> i == entryIndex && onMain { p.playbackState == Player.STATE_READY } }
+                Thread.sleep(300)
+                log("EV ${System.nanoTime()} rs case ${c.name} $rep $entry ${c.deltaMs} ${c.targets.joinToString(",")}")
+                val edge = c.edgeFraction >= 0
+                val targets = c.targets.toMutableList() // ca edge: đích B thêm lúc chạy
+                val steps = c.targets.size + if (edge) 1 else 0
+                val seekNs = LongArray(steps)
+                val appLand = java.util.concurrent.ConcurrentHashMap<Int, String>()
+                tee.begin()
+                rsFlushes.set(0)
+                sink.probe = rsProbe
+                try {
+                    var lastClock = 0L
+                    for (k in 0 until steps) {
+                        if (k > 0) {
+                            val left = lastClock + c.deltaMs * 1_000_000L - SystemClock.elapsedRealtimeNanos()
+                            if (left > 0) Thread.sleep(left / 1_000_000L, (left % 1_000_000L).toInt())
+                        }
+                        if (k == targets.size) {
+                            // Ca edge: chờ vị trí phát vừa qua ranh khối (tối đa EDGE_MAX_WAIT_MS), không thấy thì vẫn tua (cột noop của dòng seek cho biết)
+                            val until = SystemClock.elapsedRealtime() + ReseekCases.EDGE_MAX_WAIT_MS
+                            while (!ReseekCases.atChunkStart(onMain { p.currentPosition }) && SystemClock.elapsedRealtime() < until) Thread.sleep(0, 200_000)
+                        }
+                        failure.get()?.let { error("${c.name}: lỗi phát $it") }
+                        onMain {
+                            if (k == targets.size) targets += ReseekCases.edgeTarget(p.currentPosition, sr, c.edgeFraction)
+                            val target = targets[k]
+                            val plan = LoopSeam.seekPlan(seam, 1, target)
+                            val noop = LoopSeam.seekIsNoop(p.currentMediaItemIndex, p.currentPosition, 1, plan.positionMs)
+                            val clock = SystemClock.elapsedRealtimeNanos()
+                            val since = if (k == 0) 0.0 else (clock - lastClock) / 1e6
+                            seekNs[k] = System.nanoTime()
+                            log("EV ${seekNs[k]} rs seek ${c.name} $rep ${'A' + k} $target ${plan.positionMs} ${plan.trimFrames} ${p.currentMediaItemIndex} ${p.currentPosition} ${p.bufferedPosition} ${p.playbackState} ${rsFlushes.getAndSet(0)} ${"%.1f".format(java.util.Locale.ROOT, since)} ${bit(noop)}")
+                            lastClock = clock
+                            // lưới an toàn của app (cùng K khung, tìm trong WAV Nối): so với đáp của tee ở dòng `rs land`
+                            LoopSeam.seekToSample(p, sink, seam, 1, target) { landed -> appLand[k] = landed?.toString() ?: "none" }
+                            if (k == 0) p.playWhenReady = true
+                        }
+                    }
+                    val left = lastClock + 500_000_000L - SystemClock.elapsedRealtimeNanos()
+                    if (left > 0) Thread.sleep(left / 1_000_000L, (left % 1_000_000L).toInt())
+                } finally {
+                    onMain { p.playWhenReady = false }
+                    Thread.sleep(300)
+                    sink.probe = null
+                }
+                val (marks, firstFrames) = synchronized(tee.marks) { tee.marks.toList() to HashMap(tee.firstFrames) }
+                val bytes = tee.end()
+                for (k in 0 until targets.size) {
+                    val target = targets[k]
+                    val head = "EV ${System.nanoTime()} rs land ${c.name} $rep ${'A' + k} $target"
+                    val app = " app ${appLand[k] ?: "pending"}"
+                    val mark = SeamMatch.teeMark(marks, seekNs[k], 300_000_000L, if (k + 1 < targets.size) seekNs[k + 1] else Long.MAX_VALUE)
+                    if (mark == null) {
+                        log("$head noflush$app")
+                        continue
+                    }
+                    // Đoạn tee của lần tua: từ mốc flush tới mốc flush kế (hay hết file).
+                    val end = marks.firstOrNull { it.second > mark.second }?.third ?: bytes.size
+                    val avail = (end - mark.third) / (2 * ch)
+                    val kFrames = minOf(rsK, avail)
+                    if (kFrames < 32) {
+                        log("$head short $avail ${firstFrames[mark.first] ?: -1}$app")
+                        continue
+                    }
+                    val w = shortsOf(bytes.copyOfRange(mark.third, mark.third + kFrames * 2 * ch), 0)
+                    val hit = SeamMatch.locate(wav, ch, w, 0, Long.MAX_VALUE, 0)
+                    if (hit < 0) {
+                        log("$head nomatch 0 0 ${firstFrames[mark.first] ?: -1} -1 $kFrames$app")
+                        continue
+                    }
+                    val second = SeamMatch.locate(wav, ch, w, hit + 1, Long.MAX_VALUE, 0)
+                    log("$head $hit ${hit - target} ${"%.3f".format(java.util.Locale.ROOT, (hit - target) * 1000.0 / sr)} ${firstFrames[mark.first] ?: -1} $second $kFrames$app")
+                }
+            }
+
             for (run in runs) when (run) {
                 "R1" -> lap("R1", 0, r1Ms, msToSample(r1Ms)) { i, pos -> i == 2 && pos >= after }
                 "R2" -> lap("R2", 2, r2Ms, r2Sample) { i, pos -> i == 4 && pos >= after }
@@ -427,6 +540,18 @@ class MusicLoopSeamTest {
                         }
                         switched = true
                     }) { i, pos -> switched && i == 0 && pos >= 3600 }
+                }
+                "RS" -> {
+                    val reps = number("reps")?.toInt() ?: 5
+                    val entries = (args.getString("entry") ?: "clip,seam").split(',').map { it.trim() }.filter { it.isNotEmpty() }
+                    val wav = shortsOf(seam.wav.readBytes(), 44)
+                    for (c in ReseekCases.select(ReseekCases.build(sr, seam.xFrames.toLong()), args.getString("rs"))) {
+                        if (!c.applicable) {
+                            log("EV ${System.nanoTime()} rs skip ${c.name} ${seam.xFrames} ${c.targets.joinToString(",")}")
+                            continue
+                        }
+                        for (entry in entries) for (rep in 1..reps) reseek(c, rep, entry, wav)
+                    }
                 }
                 "Q", "QC" -> {
                     // Độ chính xác tua (chỉ để tự thử): lặp nhiều cú tua vào Nối / Clip lặp / Clip đầu từ mục khác (và cùng mục), mỗi cú đo ngay trong máy (LAND).
