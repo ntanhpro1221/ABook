@@ -1,5 +1,6 @@
 package vn.abook.player.readaloud
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -95,6 +96,7 @@ object PrepareAhead {
 
     /** Checkpoint đã ghi mà app chưa kịp enqueue: đối chiếu với WorkManager khi mở lại. KEEP chống xếp trùng. */
     fun reconcile(context: Context) {
+        dropStaleProgress(context)
         val saved = current(context)?.takeIf { it.state == "running" } ?: return
         val work = WorkManager.getInstance(context).getWorkInfosForUniqueWork(WORK)
         work.addListener({
@@ -104,6 +106,21 @@ object PrepareAhead {
             }
         }, { it.run() })
     }
+
+    /**
+     * Thông báo tiến độ còn dính từ lần chạy trước khi tiến trình bị giết (soát a107 F7): việc không phải dịch vụ nền nên không ai cập nhật hay gỡ nó. Lúc mở app
+     * mà chưa có lượt nào đang làm thì dọn; việc được xếp lại sẽ đăng lại thông báo mới ở lần lưu tiến độ kế.
+     */
+    private fun dropStaleProgress(context: Context) {
+        runCatching {
+            val system = context.getSystemService(NotificationManager::class.java)
+            val shown = system.activeNotifications.firstOrNull { it.id == NOTIFICATION } ?: return
+            if (staleProgress(working, shown.notification.extras?.getInt(Notification.EXTRA_PROGRESS_MAX, 0) ?: 0)) system.cancel(NOTIFICATION)
+        }
+    }
+
+    /** Thông báo có thanh tiến độ ("đang làm") mà không lượt nào đang chạy ở tiến trình này là thông báo cũ. Thông báo "xong" / "lỗi" không có thanh nên được giữ. */
+    internal fun staleProgress(working: Boolean, progressMax: Int): Boolean = !working && progressMax > 0
 
     @JvmName("reconcileJob")
     internal fun reconcileJob(saved: PrepareJob, unfinished: Boolean, enqueue: (PrepareJob) -> Unit) {
@@ -303,7 +320,8 @@ object PrepareAhead {
             .setOnlyAlertOnce(true)
             .setSilent(true)
         tap?.let { builder.setContentIntent(it) }
-        if (job.state == "running") builder.setOngoing(true).setProgress(job.total.coerceAtLeast(1), job.done, false)
+        // Không đặt "ongoing": việc làm trước là Worker thường, không phải dịch vụ nền - thông báo không vuốt đi được mà tiến trình chết thì nó kẹt lại.
+        if (job.state == "running") builder.setProgress(job.total.coerceAtLeast(1), job.done, false)
         else builder.setAutoCancel(true)
         runCatching { manager.notify(NOTIFICATION, builder.build()) }
     }
