@@ -501,6 +501,20 @@ describe("tua", () => {
     return s;
   }
 
+  it("tua trước khi chương nạp xong: nạp xong thì đứng đúng chỗ đã tua, không về chỗ cũ (a106r)", async () => {
+    const s = setup();
+    s.engine.load(s.trackInfo, 0, false);
+    s.engine.seek(2.5); // kịch bản chương chưa về
+    expect(s.engine.time).toBe(2.5);
+    await flush();
+    expect(s.engine.time).toBeCloseTo(2.5, 1);
+    expect(s.engine.paused).toBe(true);
+    // chỉ một lần: tua tiếp sau khi nạp xong là tua bình thường
+    s.engine.seek(0.5);
+    expect(s.engine.time).toBeCloseTo(0.5, 1);
+    s.engine.stop();
+  });
+
   it("tua vào trong một clip đã biết rơi đúng chỗ trong clip, không về đầu đoạn", async () => {
     const s = await playing();
     // đoạn 2 bắt đầu ở 1 s, dài 2 s: giây 2,25 là 1,25 s trong clip
@@ -1049,8 +1063,30 @@ describe("nghe dở và lỗi", () => {
     await flush();
     expect(audioOf(s, TEXTS[0])!.plays).toBe(1);
     expect(audioOf(s, TEXTS[1])!.released).toBe(true);
-    expect(s.requests.length).toBe(requested + 2); // đoạn 2 và 3 được xin lại (đoạn 4 chưa từng xin)
+    expect(s.requests.length).toBe(requested + 3); // đoạn 2, 3 và đoạn 4 (đang lấy bằng giọng cũ) được xin lại
     expect(s.published.at(-1)!.segments[1].words).toBeUndefined();
+  });
+
+  it("đổi giọng khi đoạn sau còn đang lấy: clip giọng cũ về muộn bị bỏ, đoạn ấy xin lại bằng giọng mới (a106r)", async () => {
+    const s = setup();
+    let voice = "edge:vi-VN-HoaiMyNeural";
+    s.track.voice = () => voice;
+    s.engine.load(s.trackInfo, 0, true);
+    await flush();
+    await s.arrive(TEXTS[0]);
+    const old = s.requests.filter((r) => r.text === TEXTS[1]); // đoạn 2 đang lấy bằng giọng cũ
+    expect(old.length).toBe(1);
+    voice = "edge:vi-VN-NamMinhNeural";
+    (s.engine as unknown as { voiceChanged(): void }).voiceChanged();
+    await flush();
+    old[0].resolve({ ...clipOf(TEXTS[1]), url: "/clip/OLD" }); // clip của giọng cũ về sau khi đã đổi giọng
+    await flush();
+    expect(s.audios.some((a) => a.src === "/clip/OLD")).toBe(false);
+    const slots = (s.engine as unknown as { slots: { clip: { url: string } | null }[] }).slots;
+    expect(slots[1].clip?.url ?? "").not.toBe("/clip/OLD");
+    expect(s.requests.filter((r) => r.text === TEXTS[1]).length).toBe(2); // đã xin lại bằng giọng mới
+    await s.arrive(TEXTS[1]);
+    expect(slots[1].clip?.url).toBe(clipOf(TEXTS[1]).url);
   });
 });
 

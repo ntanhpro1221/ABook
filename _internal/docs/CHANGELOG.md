@@ -22,6 +22,15 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Đánh dấu chương đã nghe, đánh dấu cả cuốn, thêm / sửa ghi chú / xoá dấu trang: ghi vào đúng hồ sơ đang hiện trên màn bạn bấm, kể cả khi cửa sổ khác hay máy kia vừa đổi hồ sơ; hồ sơ đã xoá hay chuyển sang cuốn khác thì báo “Hồ sơ nghe này đã bị xoá hoặc chuyển sang cuốn khác. Bạn hãy nạp lại sách.” thay vì ghi nhầm vào người khác (máy tính và điện thoại).
 - Điện thoại: Cài đặt có mục “Bản lưu cũ” khi lần lưu sách bị hỏng giữa chừng và app phải giữ bản lưu trước hộ bạn; mỗi bản có “Lưu ra…” (chọn chỗ lưu) và “Xoá…” (hỏi lại, nói rõ không lấy lại được), Thư viện báo một lần khi có bản mới. Không có bản nào thì không hiện mục.
 
+### Nghe ngay
+- Máy tính: đổi giọng đọc khi các đoạn sau còn đang được đọc sẵn bằng giọng cũ thì đoạn nào về muộn bằng giọng cũ cũng bị bỏ, không còn nghe lẫn giọng cũ giữa lúc đã chọn giọng mới.
+- Máy tính: "Làm trước" giữ chắc những đoạn đã làm sẵn cho đến khi bạn nghe tới chúng - nghe trực tiếp nhiều không đẩy chúng ra khỏi bộ nhớ đệm như trước; đoạn nào bạn đã nghe tới thì trở lại như đoạn thường, và phần giữ sẵn có trần để không chiếm hết chỗ.
+- Máy tính: tua trước khi chương nạp xong thì nạp xong bạn đứng đúng chỗ đã tua, không về chỗ cũ.
+- Máy tính và điện thoại: bấm "Thử giọng" cho giọng khác khi giọng trước còn đang chuẩn bị thì chỉ giọng bấm sau cùng được nghe, không còn hai giọng nói chồng lên nhau; bấm "Dừng" lúc còn đang chuẩn bị thì giọng ấy không tự vang lên sau đó.
+- Máy tính: tải giọng trên máy mà đường truyền mã hoá bị đứt giữa chừng thì app thử lại và tải tiếp phần còn lại, rồi nói là mất kết nối thay vì báo "không ghi được vào ổ đĩa".
+- Máy tính: tải giọng trên máy báo ngay nếu ổ đĩa không đủ chỗ cho phần còn phải tải (chừa lại một ít cho Windows), thay vì tải gần xong rồi mới hỏng.
+- Máy tính: giọng VieNeu trong Cài đặt có nút "Gỡ" cho từng giọng (VieNeu, VieNeu Nano, bản tăng tốc) để lấy lại chỗ; bộ căn chữ dùng chung với phần tô chữ nên ở lại.
+
 ## [0.4.130] - 2026-10-23
 
 ### Hiệu năng
