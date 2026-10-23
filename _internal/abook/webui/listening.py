@@ -613,7 +613,8 @@ class Listening:
             self._save()
 
     def add_bookmark(self, book: str, chapter_id: int, seconds: float, note: str = "",
-                     record: str | None = None, index: int | None = None, quote: str = "") -> dict[str, Any]:
+                     record: str | None = None, index: int | None = None, quote: str = "",
+                     anchor: dict[str, Any] | None = None) -> dict[str, Any]:
         """Dấu trang mới - hoặc dấu đã có ngay chỗ ấy (±5 giây cùng chương; dấu đặt ở màn đọc: cùng câu), kèm cờ `existing`.
         Đặt từ trình phát thì vào hồ sơ đang phát (`record`, xem `_held`); hồ sơ ấy vừa bị xoá thì vào hồ sơ đang dùng - người
         nghe đã bấm. `index` + `quote`: dấu đặt ở màn đọc trỏ tới CÂU (thứ tự câu trong chương, như `?at=`) và giữ ~60 chữ đầu
@@ -621,6 +622,9 @@ class Listening:
         now = time.time()
         mark = {"id": uuid.uuid4().hex[:12], "chapterId": int(chapter_id), "seconds": round(float(seconds), 1),
                 "note": note.strip()[:500], "at": now, "createdAt": now}
+        from .reading_anchor import validated
+        if clean := validated(anchor):
+            mark["anchor"] = clean
         if index is not None and int(index) >= 0:
             mark["index"] = int(index)
             mark["quote"] = bookmark_quote(quote)
@@ -678,6 +682,9 @@ class Listening:
             if isinstance(mark.get("index"), int) and not isinstance(mark["index"], bool) and mark["index"] >= 0:
                 restored["index"] = mark["index"]
                 restored["quote"] = bookmark_quote(mark.get("quote"))
+            from .reading_anchor import validated
+            if clean := validated(mark.get("anchor")):
+                restored["anchor"] = clean
             entry["bookmarks"] = [item for item in entry["bookmarks"] if item["id"] != restored["id"]] + [restored]
             (entry.get("deleted") or {}).pop(restored["id"], None)
             entry["updatedAt"] = restored["at"]

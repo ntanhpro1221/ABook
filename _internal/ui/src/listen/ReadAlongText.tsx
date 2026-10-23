@@ -32,7 +32,7 @@ export function useListenFrom(bookId: string, book: ListenBook | undefined, chap
   // Chương chỉ có chữ mà máy có giọng đọc: giọng máy đọc (listen/readAloud.ts).
   const canSpeak = chapter?.state === "text" && chapter.speech === true;
   const canListen = Boolean(script && (script.timed || canSpeak));
-  // Giây bắt đầu của một câu: mốc đã có; chương đọc to chưa chạy thì ước (cùng cách ước với bộ máy đọc nên "Nghe từ đây" rơi đúng câu).
+  // Giây bắt đầu để hiện mốc; chương chữ gửi thêm segment/word để giữ đúng câu khi giọng hoặc độ dài clip thay đổi.
   const startOf = useCallback(
     (sentence: number): number | null => {
       const start = script?.segments[sentence]?.start;
@@ -47,7 +47,7 @@ export function useListenFrom(bookId: string, book: ListenBook | undefined, chap
     if (!chapter || !segment || start === null || !canListen) return false;
     const spans = word >= 0 ? usableWords(segment.text, segment.words) : null;
     const at = spans ? spans[word][0] / 1000 : start;
-    const target = canSpeak && word >= 0 ? { segment: sentence, word } : undefined;
+    const target = canSpeak ? { segment: sentence, word: Math.max(0, word) } : undefined;
     let offset = 0;
     if (word >= 0) for (const piece of splitPieces(segment.text)) { if (piece.word === word) break; offset += piece.text.length; }
     const note = `Nghe từ “${excerpt(segment.text.slice(offset))}”`;
