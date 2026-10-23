@@ -24,7 +24,11 @@ import java.net.URL
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.Executors
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.ThreadFactory
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
@@ -361,10 +365,21 @@ object Dlna {
      * Cổng riêng để thiết bị tải chương: chỉ file đã đưa qua [share], mỗi file một mã ngẫu nhiên 128 bit, hết hạn sau 12
      * giờ; GET/HEAD có Range (thiết bị tua bằng Range). Mở lần đầu cần.
      */
-    class Media(private val bind: String = "0.0.0.0") {
+    class Media(
+        private val bind: String = "0.0.0.0",
+        private val writeIdleMs: Long = STREAM_TIMEOUT_MS.toLong(),
+        private val acceptClient: (ServerSocket) -> Socket = { it.accept() },
+        workerFactory: ThreadFactory = ThreadFactory { task -> Thread(task, "dlna-media-worker").apply { isDaemon = true } },
+    ) {
         private val files = ConcurrentHashMap<String, Pair<File, Long>>()
         private val random = SecureRandom()
-        private val workers = Executors.newCachedThreadPool()
+        // Có trần (soát a109 F3): hàng đợi đầy hay một IP mở quá nhiều thì đóng socket ngay, không cấp thêm thread.
+        private val workers = ThreadPoolExecutor(
+            ConnectionBudget.WORKERS, ConnectionBudget.WORKERS, 30, TimeUnit.SECONDS, ArrayBlockingQueue<Runnable>(ConnectionBudget.QUEUE),
+            workerFactory, ThreadPoolExecutor.AbortPolicy(),
+        ).apply { allowCoreThreadTimeOut(true) }
+        private val budget = ConnectionBudget()
+        internal fun activeConnections(): Int = budget.active()
         private var server: ServerSocket? = null
 
         @Synchronized
@@ -397,32 +412,89 @@ object Dlna {
 
         private fun accept(socket: ServerSocket) {
             while (!socket.isClosed) {
-                val client = runCatching { socket.accept() }.getOrNull() ?: break
-                workers.execute { runCatching { client.use(::serve) } }
+                val client = try {
+                    acceptClient(socket)
+                } catch (error: IOException) {
+                    if (socket.isClosed) break
+                    Thread.sleep(50) // accept lỗi thoáng qua (EMFILE...): nhường máy rồi thử lại, không giết cổng
+                    continue
+                }
+                val who = client.inetAddress?.hostAddress.orEmpty()
+                val arrived = System.currentTimeMillis()
+                if (!budget.take(who)) {
+                    runCatching { client.close() }
+                    continue
+                }
+                val released = java.util.concurrent.atomic.AtomicBoolean(false)
+                fun release() { if (released.compareAndSet(false, true)) budget.release(who) }
+                val task = Runnable {
+                    try {
+                        runCatching { client.use { if (!released.get()) serve(it, arrived) } }
+                    } finally {
+                        release()
+                    }
+                }
+                try {
+                    workers.execute(task)
+                } catch (failed: Throwable) { // cả lỗi tạo thread (OOM), không chỉ hàng đợi đầy
+                    workers.remove(task) // execute có thể đã đưa vào hàng đợi rồi mới thất bại khi tạo worker
+                    release()
+                    runCatching { client.close() }
+                }
             }
         }
 
-        private fun serve(client: Socket) {
-            client.soTimeout = 15_000
+        private fun serve(client: Socket, arrived: Long) {
             val input = client.getInputStream().buffered()
             val head = StringBuilder()
             while (!head.endsWith("\r\n\r\n")) {
+                // Deadline TỔNG của header, tính từ lúc nhận kết nối (kể cả thời gian chờ trong hàng đợi): đọc từng byte chậm vẫn bị cắt đúng hạn.
+                val left = ConnectionBudget.headerRemainingMs(arrived, System.currentTimeMillis())
+                if (left <= 0) return
+                client.soTimeout = left.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
                 val byte = input.read()
                 if (byte < 0 || head.length > 16 * 1024) return
                 head.append(byte.toChar())
             }
-            val lines = head.split("\r\n")
-            val parts = lines.first().split(" ")
-            if (parts.size < 2 || parts[0] !in setOf("GET", "HEAD")) return status(client.getOutputStream(), 405)
-            val headers = lines.drop(1).mapNotNull { line ->
-                val colon = line.indexOf(':')
-                if (colon > 0) line.substring(0, colon).trim().lowercase() to line.substring(colon + 1).trim() else null
-            }.toMap()
-            val token = Regex("/c/([0-9a-f]{32})(?:\\.[a-z0-9]{1,5})?").matchEntire(parts[1].substringBefore('?'))?.groupValues?.get(1)
-            val entry = token?.let { files[it] }
-            val output = client.getOutputStream()
-            if (entry == null || entry.second < System.currentTimeMillis() || !entry.first.isFile) return status(output, 404)
-            send(output, entry.first, headers["range"], parts[0] == "HEAD")
+            ProgressOutput(client, writeIdleMs).use { output ->
+                val lines = head.split("\r\n")
+                val parts = lines.first().split(" ")
+                if (parts.size < 2 || parts[0] !in setOf("GET", "HEAD")) return status(output, 405)
+                val headers = lines.drop(1).mapNotNull { line ->
+                    val colon = line.indexOf(':')
+                    if (colon > 0) line.substring(0, colon).trim().lowercase() to line.substring(colon + 1).trim() else null
+                }.toMap()
+                val token = Regex("/c/([0-9a-f]{32})(?:\\.[a-z0-9]{1,5})?").matchEntire(parts[1].substringBefore('?'))?.groupValues?.get(1)
+                val entry = token?.let { files[it] }
+                if (entry == null || entry.second < System.currentTimeMillis() || !entry.first.isFile) return status(output, 404)
+                send(output, entry.first, headers["range"], parts[0] == "HEAD")
+            }
+        }
+
+        /** soTimeout chỉ canh ĐỌC. Luồng canh độc lập đóng socket để đánh thức cả write đang kẹt vì bên nhận không đọc. */
+        private class ProgressOutput(private val socket: Socket, idleMs: Long) : OutputStream() {
+            private val output = socket.getOutputStream()
+            @Volatile private var progress = System.nanoTime()
+            private val idleNanos = TimeUnit.MILLISECONDS.toNanos(idleMs.coerceAtLeast(1))
+            private val watch = WRITE_WATCH.scheduleWithFixedDelay({
+                if (System.nanoTime() - progress >= idleNanos) runCatching { socket.close() }
+            }, 1, minOf(1000, maxOf(1, idleMs / 4)), TimeUnit.MILLISECONDS)
+
+            override fun write(value: Int) = write(byteArrayOf(value.toByte()), 0, 1)
+
+            override fun write(data: ByteArray, offset: Int, length: Int) {
+                var done = 0
+                while (done < length) {
+                    // Khúc nhỏ để lần ghi đã trả về thể hiện tiến độ, không canh thời gian cho cả chương hay khối lớn.
+                    val count = minOf(8192, length - done)
+                    output.write(data, offset + done, count)
+                    progress = System.nanoTime()
+                    done += count
+                }
+            }
+
+            override fun flush() = output.flush()
+            override fun close() { watch.cancel(false) }
         }
 
         private fun status(output: OutputStream, code: Int) {
@@ -487,6 +559,11 @@ object Dlna {
 
         companion object {
             const val TTL_MS = 12 * 3600 * 1000L
+            /** Đóng sau khoảng 120 giây KHÔNG ghi thêm được byte, không giới hạn thời lượng chương. */
+            const val STREAM_TIMEOUT_MS = 120_000
+            private val WRITE_WATCH = java.util.concurrent.ScheduledThreadPoolExecutor(1) { task ->
+                Thread(task, "dlna-write-watch").apply { isDaemon = true }
+            }.apply { removeOnCancelPolicy = true }
         }
     }
 }

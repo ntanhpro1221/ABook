@@ -1,6 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import * as Popover from "@radix-ui/react-popover";
-import { coverStyle } from "@/shared/cover";
+import { coverColor, coverStyle } from "@/shared/cover";
 import * as Slider from "@radix-ui/react-slider";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -2163,7 +2163,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
         // Mỗi cuốn một sắc: màu chủ đạo của ảnh bìa thật (máy chủ tính sẵn), không có thì màu của bìa vẽ từ tên.
         // Nhạt dần trước khi tới chữ và nút, nên không đụng tới độ tương phản của chúng.
         style={{
-          backgroundImage: `linear-gradient(180deg, color-mix(in oklab, ${track.bookCover?.color || coverStyle(track.bookTitle).from} 42%, transparent) 0%, transparent 58%)`,
+          backgroundImage: `linear-gradient(180deg, color-mix(in oklab, ${coverColor(track.bookCover?.color) || coverStyle(track.bookTitle).from} 42%, transparent) 0%, transparent 58%)`,
         }}
       >
         <div className="grid grid-cols-[1fr_auto_1fr] items-center">

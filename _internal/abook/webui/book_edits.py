@@ -88,7 +88,7 @@ _SHA1 = re.compile(r"[0-9a-f]{40}")
 _CHAPTER_KEYS = {"title", "subtitle"}
 _CHAPTER_ID = re.compile(r"[0-9]{1,9}")
 _CUE_KEY = re.compile(r"[0-9]{1,9}:[0-9]{1,12}")
-_COLOR = re.compile(r"#[0-9a-f]{6}")
+_COLOR = covers.COLOR
 _LOCK = threading.RLock()
 
 

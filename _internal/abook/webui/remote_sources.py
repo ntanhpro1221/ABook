@@ -56,5 +56,6 @@ def parse(text: str) -> tuple[str, str, int, str] | None:
 
 
 def upload_path(relative: str, uploads: Path) -> Path:
-    """File thật của `up:<relative>` (đã qua `parse`): nối từng tầng vào `uploads`, không phân giải gì."""
-    return uploads.joinpath(*relative.split("/"))
+    """File thật của `up:<relative>` (đã qua `parse`): nối từng tầng vào `uploads` rồi phân giải, và từ chối (`actions.UploadEscape`) khi một liên kết /
+    junction đưa nó ra ngoài `uploads` (hay `uploads` ra ngoài thư viện). Trả đường đã phân giải: không còn liên kết để đổi sau lúc kiểm."""
+    return actions.contained_upload(uploads, uploads.joinpath(*relative.split("/")))

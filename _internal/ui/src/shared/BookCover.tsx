@@ -1,6 +1,6 @@
 import { cn } from "@/shared/cn";
 import { useState } from "react";
-import { coverLabel, coverStyle, splitTitle, type CoverImage } from "@/shared/cover";
+import { coverColor, coverLabel, coverStyle, splitTitle, type CoverImage } from "@/shared/cover";
 import { Vu } from "@/shared/ui";
 
 // Bìa vuông kiểu album sách nói. Hoạ tiết là các vòng sóng âm lan ra từ góc - thứ duy nhất sách TXT
@@ -134,7 +134,7 @@ function PhotoCover({
   return (
     <div
       className={cn("relative aspect-square shrink-0 self-start overflow-hidden rounded-lg shadow-card", className)}
-      style={{ background: image.color || "var(--color-hover)" }}
+      style={{ backgroundColor: coverColor(image.color) || "var(--color-hover)" }}
       aria-hidden
     >
       {!square && (

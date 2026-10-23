@@ -119,6 +119,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
     private fun execute(): Result {
         val context = applicationContext
         Playback.init(context)
+        if (ExportCancellation.cancelled(context, id)) return Result.failure() // việc đã kết thúc hẳn (huỷ / hết 6 giờ): không I/O nào
         val input = ListenExports.inputs(inputData)
         val bookId = input.bookId
         val voice = input.voice
@@ -203,8 +204,10 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
                 finished.put("overCeiling", org.json.JSONArray(over.map { (chapter, dbtp) -> JSONObject().put("chapter", chapter).put("dbtp", dbtp) }))
             }
             ListenExports.emit(finished)
+            Mp3Exports.endIfTimedOut(this)
             return Result.success()
         } catch (stopped: Mp3Export.Stopped) {
+            Mp3Exports.endIfTimedOut(this) // hết 6 giờ: kết thúc HẲN việc (WorkManager không chạy lại) TRƯỚC khi dọn gì
             // Hệ thống dừng việc (không phải người dùng): WorkManager chạy lại, file đích, quyền ghi và phần đã làm đều còn.
             if (Mp3Exports.stoppedBySystem(this)) {
                 retrying = true
@@ -221,6 +224,7 @@ class ListenExportWorker(context: Context, params: WorkerParameters) : Worker(co
             ListenExports.emit(event().put("stopped", true).put("files", done))
             return Result.failure()
         } catch (error: Throwable) {
+            Mp3Exports.endIfTimedOut(this) // hết 6 giờ: kết thúc HẲN việc (WorkManager không chạy lại) TRƯỚC khi dọn gì
             if (isStopped && Mp3Exports.stoppedBySystem(this)) {
                 retrying = true
                 return Result.retry()

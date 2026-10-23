@@ -14,6 +14,7 @@ internal object PeerPaths {
     fun checkManifest(book: JSONObject) {
         try {
             BookFileImport.checkShape(book)
+            BookEdits.scrubCoverColor(book) // manifest của máy khác: màu bìa chỉ #rrggbb
             val names = mutableListOf<String>()
             fun add(obj: JSONObject, key: String) {
                 if (obj.has(key) && !obj.isNull(key) && obj.optString(key).isNotEmpty()) names += obj.getString(key)
