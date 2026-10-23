@@ -62,7 +62,7 @@ object BookSave {
         val needed = roomNeeded(bookDir, previousSize)
         val free = spaceLeft(scratch)
         if (free < needed) {
-            throw Failed("Máy không đủ chỗ trống để lưu: cần khoảng ${megabytes(needed)} MB (gói mới và bản đang có), còn ${free.coerceAtLeast(0) shr 20} MB - file đang lưu không bị thay.")
+            throw Failed("Thiếu chỗ lưu (cần ${megabytes(needed)} MB, còn ${free.coerceAtLeast(0) shr 20} MB); giữ file đang có.")
         }
         val built = File.createTempFile("save-", ".part", scratch)
         var backup: File? = null
@@ -140,7 +140,7 @@ object BookSave {
     private fun megabytes(bytes: Long) = ((bytes + (1L shl 20) - 1) shr 20)
 
     private fun lostMessage(kept: File): String =
-        "Lưu giữa chừng bị hỏng và bản lưu trước cũng chưa trả lại được vào file. Bản lưu trước của bạn vẫn còn nguyên trong Cài đặt → Bản lưu cũ: ${kept.name}."
+        "Lưu lỗi, chưa khôi phục được; bản cũ còn ở Cài đặt → Bản lưu cũ: ${kept.name}."
 
     /** Reopening an interrupted save exposes the already durable backup in OldSaves. Idempotent; never opens a URI. */
     fun recover(keepDir: File): List<String> = File(keepDir, ".pending").listFiles().orEmpty()
@@ -152,7 +152,7 @@ object BookSave {
                 name
             } catch (_: Exception) {
                 // A broken journal or a backup the user already exported/deleted must not hide other saves.
-                Store.addDataNotice("Một lần lưu sách của bạn chưa hoàn tất. Bạn hãy kiểm tra Cài đặt → Bản lưu cũ; app giữ nguyên những file còn lại.")
+                Store.addDataNotice("Lưu chưa xong; giữ các file còn lại — bạn xem Cài đặt → Bản lưu cũ.")
                 null
             }
         }

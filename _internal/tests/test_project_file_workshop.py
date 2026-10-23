@@ -246,7 +246,7 @@ def test_an_older_format_is_not_read(tmp_path: Path) -> None:
         manifest["version"] = 2
         return json.dumps(manifest).encode("utf-8")
 
-    with pytest.raises(ProjectFileError, match="cũ hơn"):
+    with pytest.raises(ProjectFileError, match="định dạng cũ"):
         ProjectFile(_rewrite_plain(packed, tmp_path / "cu.abookproj", older))
 
 
@@ -405,7 +405,7 @@ def test_a_book_saved_as_a_project_has_no_workshop_and_says_so(tmp_path: Path) -
         assert opened.workshop == PENDING and opened.manifest["projectRoot"] == "" and opened.manifest["sources"] == []
         assert not [name for name in opened.manifest["files"] if name.startswith(("project/", "sources/"))]
         assert opened.edits["title"] == "Tên mới" and opened.listenable
-        with pytest.raises(ProjectFileError, match="chưa có xưởng"):
+        with pytest.raises(ProjectFileError, match="chỉ có phần nghe"):
             opened.open_into(tmp_path / "thu_vien")
     names = zipfile.ZipFile(pending).namelist()
     assert names[0] == "mimetype" and names[1] == "project.json"

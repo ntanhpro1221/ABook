@@ -308,8 +308,8 @@ class PrepareAheadTest {
         assertEquals(PrepareRunner.Outcome.ERROR, harness.runner().run(job))
         assertEquals("error", job.state)
         assertEquals(listOf("a1", "b1"), harness.made)
-        assertTrue(job.error, job.error.startsWith("Mất mạng nên đã dừng làm trước ở “Chương 2”."))
-        assertTrue(job.error, job.error.contains("Đã sẵn sàng 1/2 chương"))
+        assertTrue(job.error, job.error.startsWith("Mất mạng ở “Chương 2”"))
+        assertTrue(job.error, job.error.contains("giữ 1/2 chương đã xong"))
     }
 
     @Test

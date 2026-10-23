@@ -400,15 +400,14 @@ def serve_static(handler: Any, root: Path, path: str) -> None:
 
 
 def closed_page(machine: str) -> str:
-    return _page("ABook chưa mở", f"Giao diện ABook trên <b>{html.escape(machine)}</b> chưa chạy. Mở ABook trên máy tính "
-                 "rồi tải lại trang này.")
+    return _page("ABook chưa mở", f"ABook trên <b>{html.escape(machine)}</b> chưa chạy — bạn mở app rồi tải lại trang.")
 
 
 def pairing_page(machine: str) -> str:
     """Trình duyệt chưa ghép: nhập mã 6 số máy tính đưa ra (như điện thoại), cổng đặt cookie rồi mở Studio."""
     return _page(f"Ghép với {machine}", f"""
-<p>Ghép trình duyệt này với ABook trên <b>{html.escape(machine)}</b> để nghe sách của máy ấy. Trên máy tính: Cài đặt →
-Điện thoại và thiết bị → “Ghép thiết bị mới”, rồi nhập mã 6 số vào đây.</p>
+<p>Trên <b>{html.escape(machine)}</b>: Cài đặt → Điện thoại và thiết bị → “Ghép thiết bị mới”.<br>
+Bạn nhập mã 6 số vào đây để nghe sách của máy ấy.</p>
 <form id="pair">
   <label>Mã ghép nối<input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" required></label>
   <label>Tên thiết bị này<input id="device" maxlength="80" placeholder="Ví dụ: Điện thoại của Anh"></label>

@@ -245,7 +245,7 @@ def test_a_phone_sends_chapters_then_creates_the_book_from_them(studio) -> None:
     assert status == 403, "đường dẫn trần không nhận từ xa, kể cả nằm trong thư mục tải lên"
     status, data, _ = _sync_request(port, "POST", "/api/sources/upload", headers=cookie, body={
         "folder": "x", "name": "anh.jpg", "data": base64.b64encode(b"\xff\xd8").decode("ascii")})
-    assert status == 400 and ".txt" in json.loads(data)["error"]
+    assert status == 400 and "TXT" in json.loads(data)["error"]
     # Không ghi đè: đè lên nguồn của một cuốn đã tạo là cuốn ấy không chạy tiếp được nữa.
     status, data, _ = _sync_request(port, "POST", "/api/sources/upload", headers=cookie, body={
         "folder": "Truyện của Anh", "name": "001.txt", "data": base64.b64encode(b"khac").decode("ascii")})

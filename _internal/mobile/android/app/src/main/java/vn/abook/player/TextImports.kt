@@ -78,7 +78,7 @@ object TextImports {
         if (type != "application/octet-stream" && type != "application/zip") return null
         if (incomingName(mime, displayName) != null || isAppBookFile(mime, displayName)) return null
         if (BookFileImport.looksLikeBookFile(head() ?: ByteArray(0))) return null
-        return "Đây không phải file sách của ABook (.abook hay .abookproj). ABook chỉ nhận file sách của mình, hoặc EPUB, Word, PDF, TXT."
+        return "Bạn chọn .abook, .abookproj, EPUB, Word, PDF hoặc TXT; chưa nhận loại file này."
     }
 
     /** File sách / dự án của app (.abook, .abookproj - theo đuôi tên, hay kiểu nội dung khi tên mất đuôi): đi đường mở file sách
@@ -169,7 +169,7 @@ object TextImports {
                     budget -= input.use { copy(it, File(folder, diskName), budget) }
                     names.put(diskName, fileName)
                 } catch (error: Exception) {
-                    throw BookImport.Failed("Không đọc được “$fileName”. Bạn hãy kiểm tra quyền đọc hoặc chép đủ file về máy rồi chọn lại thư mục.")
+                    throw BookImport.Failed("Chưa đọc được “$fileName” — bạn kiểm tra quyền đọc và chép đủ file rồi chọn lại.")
                 }
             }
             File(folder, FOLDER_NAMES).writeText(names.toString(), Charsets.UTF_8)

@@ -31,7 +31,7 @@ class BookImportTest {
 
     private fun titles(book: BookImport.Book) = book.chapters.map { it.title }
 
-    private val drmMessage = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
+    private val drmMessage = "EPUB bị khoá bản quyền — bạn dùng bản không khoá hoặc TXT."
 
     @Test
     fun encrypted_epubs_are_refused_but_obfuscated_fonts_keep_the_text() {
@@ -497,7 +497,7 @@ class BookImportTest {
         val empty = File(work, "trong").apply { mkdirs() }
         File(empty, "1.txt").writeBytes("  \n".toByteArray())
         val emptyReason = failure { BookImport.importFile(empty) }
-        assertTrue(emptyReason, emptyReason.startsWith("Không có chương nào có chữ trong “trong”") && emptyReason.contains("Notepad"))
+        assertEquals("Không lấy được chữ từ “trong” — bạn thử bản khác; với TXT, lưu UTF-8 rồi nhập lại.", emptyReason)
         assertNotNull(work)
     }
 }

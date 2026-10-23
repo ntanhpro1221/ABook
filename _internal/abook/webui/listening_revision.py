@@ -10,7 +10,7 @@ import re
 MAX_COUNTER = 2**40
 MAX_JUMP = 1_000_000
 OLD_PEER = "Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"
-JUMP_NOTICE = "Một phần dữ liệu từ máy kia có bước nhảy phiên bản bất thường. App giữ bản của bạn; bạn hãy kiểm tra và đồng bộ lại từ máy có dữ liệu đúng."
+JUMP_NOTICE = "Phiên bản đồng bộ bất thường; giữ bản của bạn — bạn đồng bộ từ máy có bản đúng."
 
 
 def valid_epoch(value: Any) -> bool:

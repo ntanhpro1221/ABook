@@ -52,6 +52,9 @@ def test_the_phone_downloads_the_same_pinned_model_files_as_the_computer():
 
 def test_the_phone_reads_with_the_computers_settings():
     text = _kotlin("readaloud/SupertonicTts.kt")
+    detail = supertonic_module.CHOICE_TEXT[supertonic_module.FAST_CHOICE][1]
+    assert detail == "Tạo giọng nhanh hơn, tiếng kém chút; xuất sách vẫn dùng bản tốt nhất."
+    assert f'private const val FAST_DETAIL = "{detail}"' in _kotlin("readaloud/SupertonicModule.kt")
     for name in ("STEPS", "SPEED", "SHORT_SPEED", "SHORT_SYLLABLES", "LONG_SYLLABLES", "MAX_CHARS", "GAIN_DB"):
         assert f"const val {name} = {getattr(supertonic, name)}" in text, name
     assert f"const val FAST_STEPS = {supertonic.FAST[1]}" in text

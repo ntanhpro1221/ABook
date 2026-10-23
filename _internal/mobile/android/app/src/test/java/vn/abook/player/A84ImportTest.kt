@@ -40,7 +40,7 @@ class A84ImportTest {
         try { BookImport.fromPdfPages("Scan", List(3) { emptyList() }); fail("Phải báo không có chữ") }
         catch (error: BookImport.Failed) {
             val message = error.message.orEmpty()
-            assertTrue(message.contains("chữ") && message.contains("Bạn") && message.contains("OCR"))
+            assertTrue(message == "PDF chưa có chữ để đọc — bạn nhận dạng chữ (OCR) hoặc dùng TXT/DOCX.")
         }
     }
 
@@ -66,7 +66,7 @@ class A84ImportTest {
                 BookImport.importFile(File(fixtures, "a84_bad_$name.txt"))
                 fail("Không được tự thay byte hỏng: $name")
             } catch (error: BookImport.Failed) {
-                assertTrue(error.message.orEmpty().contains("Bạn"))
+                assertEquals("File “a84_bad_$name.txt” hỏng chữ — bạn lưu lại dạng UTF-8 hoặc tải lại.", error.message)
                 assertTrue(error.message.orEmpty().contains("UTF-8"))
             }
         }

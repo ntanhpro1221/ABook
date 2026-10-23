@@ -87,7 +87,7 @@ def cannot_download() -> str:
     if _folder is None:
         return "chưa có thư mục để đặt bộ đọc nhạc"
     if sys.platform != "win32" or platform.machine().lower() not in ("amd64", "x86_64"):
-        return "bản tải sẵn chỉ có cho Windows 64-bit - hãy cài ffmpeg cho máy này (có trong PATH) rồi bấm lại"
+        return "Máy này chưa có bản tải sẵn của bộ xuất âm thanh — bạn xem Chi tiết để nhờ hỗ trợ."
     return ""
 
 

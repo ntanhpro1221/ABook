@@ -217,7 +217,7 @@ class Listening:
             return
         except OSError:
             self._journal_unread = True
-            notices.NOTICES.add("Chưa đọc được nhật ký chỗ nghe của bạn. App giữ nguyên nhật ký và sẽ thử lại trước khi lưu.")
+            notices.NOTICES.add("Chưa đọc được chỗ nghe; giữ nguyên nhật ký và thử lại trước khi lưu.")
             return
         self._journal_unread = False
         for text in raw.splitlines():
@@ -272,7 +272,7 @@ class Listening:
             try:
                 atomic_write_json(self.path, clean, compact=True)
             except OSError as error:
-                notices.NOTICES.add("Chưa lưu được phần hồ sơ đã đọc lại của bạn. Bản gốc vẫn được giữ; bạn hãy thử lại.")
+                notices.NOTICES.add("Chưa lưu được hồ sơ; bản gốc vẫn còn — bạn thử lại.")
                 raise UnpreservedProfile(clean) from error
         return clean
 

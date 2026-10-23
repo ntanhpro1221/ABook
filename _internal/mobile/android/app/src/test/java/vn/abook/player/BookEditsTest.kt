@@ -149,7 +149,7 @@ class BookEditsTest {
         assertEquals(badPins, said("\"pins\": {\"x\": \"local:$sha\"}", tracks))
         assertEquals(badPins, said("\"pins\": {\"1:0\": \"https://x/y.mp3\"}", tracks))
         assertEquals(badPins, said("\"pins\": [\"local:$sha\"]", tracks))
-        val mismatch = "Nhạc đã chọn trong phần sửa không khớp với các đoạn đổi bài và danh sách đã chọn."
+        val mismatch = "Nhạc trong phần sửa không khớp các đoạn đổi bài và danh sách đã chọn."
         assertEquals(mismatch, said(pins))
         assertEquals(mismatch, said(tracks))
         assertEquals(mismatch, said(pins, "\"tracks\": {\"$sha\": {\"ext\": \"wav\"}, \"${"1".repeat(40)}\": {\"ext\": \"wav\"}}"))

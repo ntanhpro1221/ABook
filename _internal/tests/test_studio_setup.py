@@ -239,7 +239,7 @@ def test_a_machine_without_an_nvidia_card_is_told_so_before_anything_downloads(t
     setup.start()
     setup.wait(30)
     status = setup.status()
-    assert "NVIDIA" in status["error"] and "nghe sách vẫn dùng" in status["error"]
+    assert "NVIDIA" in status["error"] and "vẫn nghe sách" in status["error"]
     assert setup.fetched == [] and commands == []  # type: ignore[attr-defined]
 
 
@@ -462,7 +462,7 @@ def test_a_download_resumes_where_it_stopped_and_refuses_a_wrong_file(tmp_path: 
         assert target.read_bytes() == Blob.data and not target.with_name("uv.zip.part").exists()
 
         wrong = Download("uv", url, "0" * 64, len(Blob.data))
-        with pytest.raises(SetupError, match="không đúng bản đã ghim"):
+        with pytest.raises(SetupError, match="sai bản"):
             studio_setup.download(wrong, tmp_path / "other" / "uv.zip", lambda *_: None, lambda: False)
         assert not list((tmp_path / "other").iterdir()), "file sai băm bị xoá"
     finally:
@@ -821,8 +821,8 @@ def test_a_failed_module_download_reads_as_vietnamese_with_the_raw_error_folded_
     wrapped = SetupError("x")
     wrapped.__cause__ = gone
     message, detail = studio_setup.download_failure("giọng VieNeu", wrapped)
-    assert message.startswith("Không tải được giọng VieNeu. Bấm Thử lại") and "404" in detail
-    assert "ghim" in studio_setup.download_failure("giọng VieNeu", SetupError("sai băm"))[0]
+    assert message.startswith("Chưa tải được giọng VieNeu — bạn bấm Thử lại") and "404" in detail
+    assert "sai bản" in studio_setup.download_failure("giọng VieNeu", SetupError("sai băm"))[0]
     message, detail = studio_setup.download_failure("giọng VieNeu", RuntimeError("boom"))
     assert "RuntimeError" not in message and detail == "RuntimeError: boom"
     assert studio_setup.download_failure("Studio", OSError(28, "No space"), retry="Cài tiếp")[0].endswith("bấm Cài tiếp.")

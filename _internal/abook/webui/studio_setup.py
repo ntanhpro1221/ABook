@@ -234,7 +234,7 @@ class NoSpace(SetupError):
     """Ổ đĩa không đủ chỗ cho phần còn phải tải: báo TRƯỚC khi tải byte nào (`need` = phần còn thiếu + SPACE_MARGIN, `free` = chỗ trống), không để tải nửa chừng rồi hỏng khi ghi."""
 
     def __init__(self, name: str, need: int, free: int) -> None:
-        super().__init__(f"Ổ đĩa không đủ chỗ trống để tải {name}: cần khoảng {_megabytes(need)}, còn {_megabytes(free)}. Giải phóng bớt chỗ rồi bấm Cài tiếp.")
+        super().__init__(f"Thiếu chỗ tải {name} (cần {_megabytes(need)}, còn {_megabytes(free)}) — bạn dọn ổ rồi bấm Cài tiếp.")
         self.need, self.free = need, free
 
 
@@ -268,18 +268,18 @@ def download_failure(noun: str, error: BaseException, retry: str = "Thử lại"
     hỏng. Lỗi mạng -> NETWORK_FAILURE; file hỏng / ổ đầy -> nói thẳng; lỗi khác -> câu chung, nguyên văn thu vào chi tiết (soát a66: lời lỗi
     tiếng Anh thô). Cùng luật với điện thoại (PinnedFiles.failure)."""
     if isinstance(error, NoSpace):
-        return f"Không tải được {noun}: ổ đĩa không đủ chỗ trống - cần khoảng {_megabytes(error.need)}, còn {_megabytes(error.free)}. Giải phóng bớt chỗ rồi bấm {retry}.", ""
+        return f"Thiếu chỗ tải {noun} (cần {_megabytes(error.need)}, còn {_megabytes(error.free)}) — bạn dọn ổ rồi bấm {retry}.", ""
     wrapped = isinstance(error, SetupError) and error.__cause__ is not None  # download() bọc lỗi đường truyền sau 5 lần thử
     cause = error.__cause__ if wrapped else error
     if _network(cause) or (wrapped and not isinstance(cause, urllib.error.HTTPError)):
         return NETWORK_FAILURE.format(retry=retry), technical(cause)
     if isinstance(error, SetupError) and not wrapped:  # download(): sai băm, file đã xoá
-        return f"Không tải được {noun}: file tải về không đúng bản đã ghim (đã xoá) - bấm {retry} để tải lại.", ""
+        return f"{noun} tải về sai bản, đã xoá — bạn bấm {retry} để tải lại.", ""
     if isinstance(error, (zipfile.BadZipFile, KeyError)):
         return f"Không tải được {noun}: gói tải về bị hỏng - bấm {retry} để tải lại.", technical(error)
     if isinstance(error, OSError):
         return f"Không tải được {noun}: không ghi được vào ổ đĩa - kiểm tra chỗ trống rồi bấm {retry}.", technical(error)
-    return f"Không tải được {noun}. Bấm {retry}; nếu vẫn lỗi, mở Chi tiết để gửi cho người hỗ trợ.", technical(cause)
+    return f"Chưa tải được {noun} — bạn bấm {retry} hoặc xem Chi tiết để nhờ hỗ trợ.", technical(cause)
 
 
 def default_root() -> Path:
@@ -449,7 +449,7 @@ def download(item: Download, target: Path, progress: Callable[[int, int], None],
     actual = _sha256(part)
     if actual != item.sha256:
         part.unlink(missing_ok=True)
-        raise SetupError(f"{item.name} tải về không đúng bản đã ghim (SHA-256 {actual[:12]}…) - đã xoá, bấm Cài tiếp để tải lại.")
+        raise SetupError(f"{item.name} tải về sai bản, đã xoá — bạn bấm Cài tiếp để tải lại.")
     os.replace(part, target)
     stamp = _stamp(target)
     if stamp is not None:
@@ -931,9 +931,8 @@ class StudioSetup:
     def _leftover_message(other: dict[str, Any]) -> str:
         when = time.strftime("%H:%M", time.localtime(other["since"])) if other.get("since") else "trước"
         if other.get("orphan"):
-            return (f"Lượt cài lúc {when} (lần mở app trước) vẫn còn chạy ngầm. Bạn chờ nó xong rồi bấm Cài tiếp, "
-                    "hoặc bấm Dừng lượt cũ để làm lại từ chỗ dở.")
-        return f"Một cửa sổ ABook khác đang cài Studio từ {when}. Bạn đóng nó hoặc chờ nó xong rồi bấm Cài tiếp."
+            return ("Lượt cài cũ còn chạy — bạn chờ hoặc bấm Dừng lượt cũ để làm tiếp từ chỗ dở.")
+        return "ABook khác đang cài Studio — bạn chờ xong hoặc đóng cửa sổ đó rồi bấm Cài tiếp."
 
     def start(self) -> dict[str, Any]:
         with self._lock:
@@ -963,7 +962,7 @@ class StudioSetup:
 
     def _require_idle(self) -> None:
         if self.busy() is not None:
-            raise SetupError("Bạn hãy chờ cuốn đang chạy, khởi động hoặc tạm dừng làm xong rồi cập nhật Studio.")
+            raise SetupError("Bạn chờ sách đang chạy, khởi động hoặc tạm dừng xong rồi cập nhật Studio.")
 
     def stop(self) -> None:
         """Bảo lượt cài đang chạy dừng NGAY: tiến trình con của nó (cả cây) bị giết, các bước tải thấy cờ và thoát. Không đụng
@@ -1255,8 +1254,7 @@ class StudioSetup:
         gpu = self.gpu()
         self._probed = (gpu,)
         if gpu is None:
-            raise SetupError("Studio cần card đồ hoạ NVIDIA (dây chuyền đọc sách chạy bằng CUDA) - máy này không có, "
-                             "hay driver NVIDIA chưa cài. Phần nghe sách vẫn dùng bình thường.")
+            raise SetupError("Studio cần card đồ hoạ NVIDIA đã cài trình điều khiển; bạn vẫn nghe sách được.")
         self._save(gpu=gpu)
         self.root.mkdir(parents=True, exist_ok=True)
         free = shutil.disk_usage(self.root).free
@@ -1272,8 +1270,7 @@ class StudioSetup:
         try:
             place_assets(self.assets, package / "assets")
         except OSError as error:
-            raise SetupError(f"Không đặt được từ điển phát âm và giọng nghe thử của Studio vào {package / 'assets'} "
-                             f"({error}) - bấm Cài tiếp để thử lại.") from error
+            raise SetupError("Chưa cài được từ điển và giọng nghe thử — bạn bấm Cài tiếp để thử lại.") from error
 
     def _step_assets(self) -> None:
         """Tải gói dữ liệu ghim, giải vào kho `Studio\\assets`, rồi đặt vào mã của app."""
@@ -1333,7 +1330,7 @@ class StudioSetup:
                           self.app_root / "shell" / "python" / "studio-requirements.txt"):
             if candidate.is_file():
                 return candidate
-        raise SetupError("Bản cài thiếu danh sách thư viện của Studio (studio-requirements.txt) - cài lại app.")
+        raise SetupError("Bản cài thiếu danh sách thư viện Studio — bạn cài lại ABook.")
 
     def _step_packages(self) -> None:
         from .studio_dependencies import locked_requirements
@@ -1562,7 +1559,7 @@ class StudioSetup:
             return
         executable = self.ollama_executable
         if not executable.is_file():
-            raise SetupError("Studio mất Ollama (file đã bị xoá hay hỏng) - vào Dự án, bấm \"Sửa Studio\" để tải lại đúng phần ấy.")
+            raise SetupError("Studio thiếu Ollama — bạn bấm “Sửa Studio” ở Dự án.")
         home = self.root / "ollama-home"
         home.mkdir(parents=True, exist_ok=True)
         log = self.root / "logs" / "ollama.log"
@@ -1596,7 +1593,7 @@ class StudioSetup:
             lines = [line for line in result.stdout.splitlines() if line.startswith("{")]
             url = str(json.loads(lines[-1])["turbo"]) if result.returncode == 0 and lines else ""
         except (OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
-            raise SetupError(f"Không đọc được đường tải Whisper từ thư viện đã cài ({technical(error)}) - bấm Cài tiếp để thử lại.") from error
+            raise SetupError("Chưa đọc được đường tải Whisper — bạn bấm Cài tiếp để thử lại.") from error
         digest = url.rstrip("/").split("/")[-2] if url.count("/") >= 2 else ""
         if not url.startswith("https://") or not re.fullmatch(r"[0-9a-f]{64}", digest) or not url.endswith(".pt"):
             raise SetupError("Thư viện Whisper đã cài khai đường tải không như mong đợi - cài lại Studio.")

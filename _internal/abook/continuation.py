@@ -777,5 +777,5 @@ def seed_when_ready(target: Path, log: Log = _quiet) -> dict[str, Any] | None:
         return {"from": None}
     if not source_ready(previous):
         raise ContinuationError(
-            f"Phần trước ({previous.name}) chưa phân tích xong - tập này mang giọng và cách đọc tên từ nó nên phải chờ")
+            f"Phần trước ({previous.name}) chưa phân tích xong — bạn chờ để giữ cùng giọng và cách đọc.")
     return seed(previous, target, log)

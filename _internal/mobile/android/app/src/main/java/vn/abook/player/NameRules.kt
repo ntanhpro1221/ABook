@@ -45,7 +45,7 @@ object NameRules {
     }
 
     private fun tooLong(cleaned: String, limit: Int, what: String) {
-        if (length(cleaned) > limit) throw Problem("$what dài tối đa $limit ký tự (bạn đang gõ ${length(cleaned)}) - bạn rút ngắn lại.")
+        if (length(cleaned) > limit) throw Problem("$what tối đa $limit ký tự, hiện có ${length(cleaned)} — bạn rút ngắn lại.")
     }
 
     fun isReserved(name: String): Boolean {
@@ -65,7 +65,7 @@ object NameRules {
         val folded = VietnameseReading.casefold(name)
         for (other in others) {
             if (VietnameseReading.casefold(tidy(other)) == folded) {
-                throw Problem("Trong sách đã có người tên “${tidy(other)}” - bạn đặt tên khác để khỏi nhầm hai người.")
+                throw Problem("Đã có “${tidy(other)}” trong sách — bạn đặt tên khác để tránh nhầm người.")
             }
         }
         return name

@@ -867,8 +867,7 @@ def check_expansion(infos: Sequence[zipfile.ZipInfo], error: type[Exception], *,
         media = info.filename.lower().endswith(_STORED)
         if (media and size >= _MEDIA_FLOOR and size > packed * MEDIA_RATIO) or (
                 text and not media and size >= _TEXT_FLOOR and size > packed * TEXT_RATIO):
-            raise error(f"File này có mục nén bất thường ({info.filename}) - có thể là file độc hoặc hỏng. "
-                        "Bạn hãy xin người gửi gửi lại.")
+            raise error("Gói nén có thể gây hại hoặc bị hỏng — bạn xin người gửi gửi lại.")
 
 
 def exact_mime(archive: zipfile.ZipFile, info: zipfile.ZipInfo, mime: str) -> bool:
@@ -886,8 +885,7 @@ def check_distinct(names: Sequence[str], error: type[Exception]) -> None:
     for name in names:
         key = "/".join(part.rstrip(". ").casefold() for part in name.split("/"))
         if seen.setdefault(key, name) != name:
-            raise error(f"File này có hai mục trùng tên khi chép vào máy ({seen[key]!r} và {name!r}). "
-                        "Bạn hãy xin người gửi gửi lại.")
+            raise error("Gói có mục trùng tên — bạn xin người gửi gửi lại.")
 
 
 def _is_music(name: str) -> bool:
@@ -908,7 +906,7 @@ def _drop_tracks(book: dict[str, Any], names: set[str]) -> None:
                 music["chapters"][chapter] = [cue for cue in cues if not (isinstance(cue, dict) and cue.get("track") in names)]
 
 
-IN_USE = "Cuốn này đang được mở hoặc đang phát. Bạn hãy dừng phát rồi mở lại file để cập nhật."
+IN_USE = "Cuốn này đang mở hoặc phát — bạn dừng phát rồi mở lại file để cập nhật."
 
 
 def swap_in(staging: Path, target: Path) -> None:
@@ -985,8 +983,7 @@ def ensure_room(library: Path, size: int) -> None:
     need = size + _ROOM_MARGIN
     free = shutil.disk_usage(library).free
     if free < need:
-        raise BookFileError(f"Ổ đĩa không đủ chỗ để mở sách này: cần khoảng {_gigabytes(need)}, còn {_gigabytes(free)}. "
-                            "Bạn hãy dọn bớt ổ đĩa rồi mở lại file.")
+        raise BookFileError(f"Thiếu chỗ mở sách (cần {_gigabytes(need)}, còn {_gigabytes(free)}) — bạn dọn ổ rồi thử lại.")
 
 
 def _gigabytes(size: int) -> str:

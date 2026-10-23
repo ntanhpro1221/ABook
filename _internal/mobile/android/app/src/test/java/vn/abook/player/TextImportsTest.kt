@@ -40,7 +40,7 @@ class TextImportsTest {
             fail("Không được nhập thiếu chương 2")
         } catch (error: BookImport.Failed) {
             assertTrue(error.message.orEmpty().contains("2.txt"))
-            assertTrue(error.message.orEmpty().contains("Bạn"))
+            assertTrue(error.message.orEmpty().contains("bạn"))
         }
     }
     private lateinit var root: File
@@ -314,7 +314,7 @@ class TextImportsTest {
             // a84: lời báo nêu lý do và việc bạn làm được (OCR / bản TXT, DOCX) - cùng chữ với Python (expected/scan.json).
             val expected = (StrictJson.parse(File(imports, "expected/scan.json").readText(Charsets.UTF_8)) as JSONObject).getString("error")
             assertEquals(expected, error.message)
-            assertTrue(error.message!!, error.message!!.contains("ảnh chụp") && error.message!!.contains("OCR") && error.message!!.contains("Bạn"))
+            assertEquals("PDF chưa có chữ để đọc — bạn nhận dạng chữ (OCR) hoặc dùng TXT/DOCX.", error.message)
         }
     }
 

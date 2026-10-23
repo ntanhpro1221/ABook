@@ -8,7 +8,7 @@ internal object ListeningRevision {
     const val MAX_COUNTER = 1_099_511_627_776L
     const val MAX_JUMP = 1_000_000L
     const val OLD_PEER = "Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"
-    const val JUMP_NOTICE = "Một phần dữ liệu từ máy kia có bước nhảy phiên bản bất thường. App giữ bản của bạn; bạn hãy kiểm tra và đồng bộ lại từ máy có dữ liệu đúng."
+    const val JUMP_NOTICE = "Phiên bản đồng bộ bất thường; giữ bản của bạn — bạn đồng bộ từ máy có bản đúng."
 
     fun validNumber(value: Any?, minimum: Long = 0L) =
         (value is Int || value is Long) && (value as Number).toLong() in minimum..MAX_COUNTER

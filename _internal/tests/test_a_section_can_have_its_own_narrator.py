@@ -270,7 +270,7 @@ def test_the_inbox_offers_the_section_and_a_decision_is_stored_beside_the_databa
     middle = [row for row in rows if "Kakeru" in row["text"]]
     section = cards[0]["narratorSection"]
     assert (section["fromSeq"], section["toSeq"]) == (middle[0]["seq"], middle[-1]["seq"]) and section["chapterIndex"] == 1
-    assert "không phải Kakeru kể" in cards[0]["title"] and section["appliesNote"] == "", "chưa phân tích: áp ngay"
+    assert "khác người kể?" in cards[0]["title"] and section["appliesNote"] == "", "chưa phân tích: áp ngay"
     narrator_cards.decide(project, {"chapterIndex": 1, "fromSeq": section["fromSeq"], "toSeq": section["toSeq"], "action": "accept"})
     assert narrator_sections.narrator_at(narrator_sections.load(project), 1, middle[0]["seq"]) == ""
     card = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
@@ -291,8 +291,7 @@ def test_a_chapter_already_analysed_says_the_change_waits_for_a_redo(tmp_path: P
     db.commit()
     db.close()
     card = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
-    assert card["narratorSection"]["appliesNote"] == ("Chương này đã phân tích xong - đổi sẽ áp khi làm lại phân tích từ đầu"
-                                                      " (tạo lại cuốn từ file truyện).")
+    assert card["narratorSection"]["appliesNote"] == ("Chương đã phân tích chỉ nhận thay đổi khi bạn tạo lại cuốn từ file truyện.")
 
 
 def test_a_book_without_a_narrator_gets_no_card_and_a_stale_range_is_refused(tmp_path: Path) -> None:
@@ -325,7 +324,7 @@ def test_a_one_line_section_says_line_not_a_range_and_suggests_the_names_in_it(t
     card = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
     section = card["narratorSection"]
     where = f"câu {section['fromSeq']}" if section["fromSeq"] == section["toSeq"] else f"câu {section['fromSeq']}–{section['toSeq']}"
-    assert card["title"].endswith(f"{where}: có vẻ không phải Kakeru kể")
+    assert card["title"].endswith(f"{where}: khác người kể?")
     assert "Kakeru" not in [choice["label"] for choice in section["choices"]], "người kể của sách không phải gợi ý"
 
 
@@ -348,7 +347,7 @@ def test_a_card_that_only_a_redo_can_apply_goes_last_and_stops_saying_the_machin
 
     project, _rows = _book(tmp_path)
     card = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
-    assert not card["redoOnly"] and "Chưa trả lời thì máy giữ nguyên" in card["problem"], "chưa phân tích: áp ngay, như cũ"
+    assert not card["redoOnly"] and "Chưa chọn: giữ nguyên" in card["problem"], "chưa phân tích: áp ngay, như cũ"
     db = sqlite3.connect(project / "project.sqlite3")
     db.execute("UPDATE segments SET status='verified'")
     # Một thẻ khác, điểm thấp hơn hẳn: một cách đọc tên máy kém chắc.
@@ -363,7 +362,7 @@ def test_a_card_that_only_a_redo_can_apply_goes_last_and_stops_saying_the_machin
     narrator_cards.decide(project, {"chapterIndex": 1, "fromSeq": section["fromSeq"], "toSeq": section["toSeq"], "action": "accept"})
     answered = [item for item in work_items(project)["items"] if item["kind"] == "narrator"][0]
     assert answered["requested"] == "Đổi người kể" and answered["redoOnly"]
-    assert "Chưa trả lời" not in answered["problem"]
+    assert "Chưa chọn" not in answered["problem"]
 
 
 def test_overlapping_name_fragments_keep_the_longest_name_that_does_not_overlap(tmp_path: Path) -> None:
@@ -397,8 +396,8 @@ def test_a_pov_heading_card_names_the_narrator_and_accepting_stores_that_name(tm
     card, section = cards[0], cards[0]["narratorSection"]
     heading = next(row["seq"] for row in rows if row["text"] == "Góc nhìn của Mai")
     assert (section["fromSeq"], section["toSeq"]) == (heading, heading + 1)
-    assert card["title"].endswith(f"câu {heading}–{heading + 1}: đoạn này kể bởi Mai")
-    assert card["problem"].startswith("Theo dòng “Góc nhìn của Mai” ở đầu đoạn.") and "Chưa trả lời thì máy giữ nguyên" in card["problem"]
+    assert card["title"].endswith(f"câu {heading}–{heading + 1}: Mai kể?")
+    assert card["problem"].startswith("Theo “Góc nhìn của Mai”: Mai kể.") and "Chưa chọn: giữ nguyên" in card["problem"]
     assert section["heading"] == {"line": "Góc nhìn của Mai", "narrator": "Mai", "label": "Mai"}
     assert card["requested"] is None and narrator_sections.load(project) == {}, "đề xuất, chưa áp"
     result = narrator_cards.decide(project, {"chapterIndex": 1, "fromSeq": heading, "toSeq": heading + 1, "action": "accept"})
@@ -448,7 +447,7 @@ def test_a_third_person_heading_proposes_that_the_section_has_no_narrator(tmp_pa
 
     project, _rows = _book(tmp_path, text=HEADED.replace("Góc nhìn của Mai", "Quay lại góc nhìn thứ 3 nào"))
     card = _narrator_cards(project)[0]
-    assert card["title"].endswith("đoạn này kể ở ngôi thứ ba") and card["narratorSection"]["heading"]["label"] == ""
+    assert card["title"].endswith("Ngôi thứ ba?") and card["narratorSection"]["heading"]["label"] == ""
     section = card["narratorSection"]
     narrator_cards.decide(project, {"chapterIndex": 1, "fromSeq": section["fromSeq"], "toSeq": section["toSeq"], "action": "accept"})
     assert narrator_sections.narrator_at(narrator_sections.load(project), 1, section["toSeq"]) == ""

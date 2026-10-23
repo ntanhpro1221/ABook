@@ -71,8 +71,8 @@ def test_two_names_written_almost_alike_ask_whether_they_are_one_person(tmp_path
     project = make_book(tmp_path)
     card = _card(project, "alias:ARYA|ARIA")
     assert card is not None and card["kind"] == "alias"
-    assert card["title"] == "“Aria” và “Arya” - hai tên này có phải một người?"
-    assert "Aria 2 câu, Arya 6 câu" in card["problem"]
+    assert card["title"] == "Cùng một người?"
+    assert "đọc Aria bằng giọng Arya" in card["problem"]
     assert card["choices"] == [{"label": "Cùng một người", "value": "ARYA", "name": "Arya"}]
     assert card["currentValue"] == "ARIA" and card["keepLabel"] == "Hai người khác nhau" and card["subject"] == "Aria"
     assert [line["stableId"] for line in card["lines"]] == ["r0", "r1"] and card["affected"] == 2
@@ -128,9 +128,9 @@ def test_an_unnamed_speaker_beside_named_people_asks_which_of_them_it_is(tmp_pat
     assert len(cards) == 1, "một câu một thẻ: thay thẻ “… là ai?” của chính nhãn ấy"
     card = cards[0]
     assert card["key"] == f"unnamed:{GIRL}" and card["kind"] == "unnamed"
-    assert card["title"].endswith("có phải Mira hay Lena?"), card["title"]
+    assert card["title"] == "Vai này là ai?", card["title"]
     assert [choice["value"] for choice in card["choices"]] == ["MIRA", "LENA"]
-    assert card["keepLabel"] == "Không ai trong số này" and card["currentValue"] == GIRL
+    assert card["keepLabel"] == "Không phải họ" and card["currentValue"] == GIRL
     assert card["suggested"] is False, "máy hay đoán nhầm: không tô ứng viên nào"
     assert card["affected"] == 20
     # Hai câu của nhãn và lời kể có tên quanh đó, theo thứ tự đọc; lời kể không có "máy gán", tên được tô.
@@ -146,9 +146,9 @@ def test_an_unnamed_speaker_beside_named_people_asks_which_of_them_it_is(tmp_pat
 def test_a_candidate_without_a_voice_is_not_offered(tmp_path: Path) -> None:
     # Lena chưa có giọng: bấm "Lena" thì dây chuyền từ chối ("chưa gán được") - thẻ chỉ hỏi về Mira.
     card = _card(make_book(tmp_path, voiceless=("LENA",)), f"unnamed:{GIRL}")
-    assert card["title"].endswith("có phải Mira?"), card["title"]
+    assert card["title"] == "Vai này là ai?", card["title"]
     assert [choice["value"] for choice in card["choices"]] == ["MIRA"]
-    assert card["options"] == ["Mira", "Không ai trong số này"]
+    assert card["options"] == ["Mira", "Không phải họ"]
     assert "Lena" not in card["problem"]
 
 

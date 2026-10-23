@@ -77,7 +77,5 @@ def not_vietnamese_note(surface: str, spoken_form: str) -> str:
     """Lời từ chối một cách đọc nói đúng lý do (soát a70: "thoi" là âm tiết Việt thật mà lời báo nói "phải là âm tiết tiếng Việt"). Phép kiểm
     không nhận cách đọc chỉ khác chữ trong sách ở dấu ("Tám" -> "Tâm", "thôi" -> "thoi"); còn lại là có âm tiết nó không nhận ra."""
     if _unmarked(" ".join(spoken_form.split())) == _unmarked(surface):
-        return (f"ABook chưa nhận “{spoken_form}” làm cách đọc cho “{surface}”: hai chữ chỉ khác nhau ở dấu. "
-                "Thử viết khác, hay để máy đọc như chữ trong sách.")
-    return (f"ABook chưa nhận “{spoken_form}” là cách đọc tiếng Việt - thử viết khác: mỗi âm tiết viết như tiếng Việt, "
-            "nối bằng gạch nối (vd Hên-khơ).")
+        return (f"“{spoken_form}” chỉ khác dấu với “{surface}” — bạn viết khác hoặc giữ cách đọc gốc.")
+    return (f"Chưa nhận được “{spoken_form}” — bạn viết từng âm tiếng Việt, nối bằng gạch nối.")

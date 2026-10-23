@@ -422,7 +422,7 @@ object ListenExport {
                         pause(failures * 1000L)
                         continue
                     }
-                    throw Mp3Export.Refused("Giọng đọc không đọc được một đoạn ở “${chapters[index].title}”: ${error.message} Phần đã làm được giữ - bấm xuất lại để làm tiếp.")
+                    throw Mp3Export.Refused("“${chapters[index].title}”: ${error.message}; giữ phần đã làm — bạn xuất lại để tiếp tục.")
                 }
             }
         }

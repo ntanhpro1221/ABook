@@ -129,7 +129,7 @@ internal object DeviceEngine {
         }
         if (!ready.await(INIT_TIMEOUT_MS, TimeUnit.MILLISECONDS) || status != TextToSpeech.SUCCESS) {
             created?.shutdown()
-            throw VoiceException("Máy chưa có bộ đọc giọng nói - cài trong Cài đặt > Chuyển văn bản thành giọng nói")
+            throw VoiceException("Thiếu bộ đọc — bạn cài ở Cài đặt → Chuyển văn bản thành giọng nói.")
         }
         return created!!.also { tts = it }
     }
@@ -148,7 +148,7 @@ internal object DeviceEngine {
         }
         val result = engine.setLanguage(Locale.forLanguageTag("vi-VN"))
         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
-            throw VoiceException("Máy chưa có giọng tiếng Việt - cài trong Cài đặt > Chuyển văn bản thành giọng nói")
+            throw VoiceException("Thiếu giọng Việt — bạn cài ở Cài đặt → Chuyển văn bản thành giọng nói.")
         }
     }
 }

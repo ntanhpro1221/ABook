@@ -152,7 +152,7 @@ def build(folder: Path, library_root: Path, create: Callable[[list[str], str, st
     cast = packages.cast(folder)
     paths, without = _sources(folder, library_root, title)
     if not paths:
-        raise WorkshopError("Cuốn này không có chữ của chương nào để dựng lại - file không mang kịch bản hay nguồn chương.")
+        raise WorkshopError("Cuốn này thiếu chữ và nguồn chương nên chưa dựng lại được.")
     narrator = str((cast.get("narrator") or {}).get("voice") or book.get("narrator") or "")
     project = Path(create(paths, title, narrator))
     voices = _seed_voices(project, cast)

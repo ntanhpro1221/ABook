@@ -269,7 +269,7 @@ def test_a_wrong_hash_is_deleted_and_reported(module, monkeypatch: pytest.Monkey
     target = tmp_path / "out" / "onnx" / "vocoder.onnx"
     with pytest.raises(studio_setup.SetupError) as error:
         studio_setup.download(bad, target, lambda *_: None, lambda: False)
-    assert "không đúng bản đã ghim" in str(error.value)
+    assert "tải về sai bản" in str(error.value)
     assert not target.exists() and not target.with_name(target.name + ".part").exists()
 
 
@@ -290,7 +290,7 @@ def test_the_module_reports_a_wrong_hash_as_an_error_with_no_files(tmp_path: Pat
         supertonic_module.start(["supertonic"])
         supertonic_module.join(30)
         status = supertonic_module.status()
-        assert status["state"] == "error" and "Không tải được giọng Supertonic" in status["error"] and "ghim" in status["error"]
+        assert status["state"] == "error" and "giọng Supertonic tải về sai bản" in status["error"] and "đã xoá" in status["error"]
         assert not (tmp_path / "supertonic" / "model" / "onnx" / "vocoder.onnx").exists()
         assert supertonic_module.installed() is None
     finally:

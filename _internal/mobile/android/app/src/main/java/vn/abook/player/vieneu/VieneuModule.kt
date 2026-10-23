@@ -55,7 +55,7 @@ class VieneuModule(
         val (label, text) = CHOICE_TEXT.getValue(choice)
         // Turbo trên máy ít RAM: vẫn tải được (người dùng quyết), nhưng nói trước vì sao Nano hợp hơn.
         val detail = if (choice == "turbo" && facts.ramGb < TURBO_MIN_RAM_GB)
-            "$text. Máy này có khoảng ${"%.0f".format(java.util.Locale.ROOT, facts.ramGb)} GB RAM, mà giọng này cần khoảng 1,3 GB khi đọc nên Android dễ tắt nó - Giọng VieNeu Nano hợp hơn"
+            "$text. Cần 1,3 GB RAM, dễ bị Android tắt — bạn nên chọn Nano."
         else text
         return label to detail
     }
@@ -127,10 +127,10 @@ class VieneuModule(
         val CHOICES = listOf("nano", "turbo")
         val NEEDS = mapOf("turbo" to listOf("ort", "g2p", "voices", "turbo"), "nano" to listOf("ort", "g2p", "voices", "nano"))
         val CHOICE_TEXT = mapOf(
-            "nano" to ("Giọng VieNeu Nano" to "11 giọng, âm thanh 24 kHz - lúc đọc tốn ít bộ nhớ hơn, hợp điện thoại yếu; file tải nặng hơn Giọng VieNeu"),
+            "nano" to ("Giọng VieNeu Nano" to "11 giọng, 24 kHz; ít bộ nhớ, hợp điện thoại yếu; tải nặng hơn VieNeu."),
             "turbo" to ("Giọng VieNeu" to "25 giọng, âm thanh 48 kHz - hay nhất, cần điện thoại mạnh"),
         )
-        val PART_LABEL = mapOf("ort" to "Thư viện chạy model", "g2p" to "Bộ đọc chữ tiếng Việt", "voices" to "Danh sách giọng",
+        val PART_LABEL = mapOf("ort" to "Bộ chạy giọng", "g2p" to "Bộ đọc tiếng Việt", "voices" to "Danh sách giọng",
             "turbo" to "Giọng VieNeu", "nano" to "Giọng VieNeu Nano")
 
         // Pins: the same upstream files as abook/webui/vieneu_module.py (tests/test_vieneu_android.py compares the two tables).
@@ -145,7 +145,7 @@ class VieneuModule(
         private const val G2P_BASE = "https://huggingface.co/NGDtuanh/abook-music-student/resolve/$G2P_REVISION/sea-g2p/0.9.1/"
 
         private fun g2pLib(abi: String, sha256: String, size: Long, packedSha256: String, packedSize: Long) =
-            Part("g2p/libabook_sea_g2p.so", sha256, size, "$G2P_BASE$abi/libabook_sea_g2p.so.gz", Packed(packedSha256, packedSize), true, "Bộ đọc chữ tiếng Việt")
+            Part("g2p/libabook_sea_g2p.so", sha256, size, "$G2P_BASE$abi/libabook_sea_g2p.so.gz", Packed(packedSha256, packedSize), true, "Bộ đọc tiếng Việt")
 
         // As scripts/prepare_sea_g2p_android.py prints them (SHA-256 + size of the library and of its gzip on the server).
         val G2P_LIBRARIES = mapOf(
@@ -157,7 +157,7 @@ class VieneuModule(
         /** The 63 MB dictionary, taken out of the very wheel the desktop downloads (vieneu_module.G2P). */
         val DICTIONARY = Part("g2p/sea_g2p.bin", "4346e690d0711ebc5231e7a42c5c88aaf6e40377e894b4617c018fd81c6f4096", 62_829_820,
             "https://files.pythonhosted.org/packages/73/57/58916050fe1218c106f89d4fa3b8f18f4ef5d264e6ec5906020f2f1dfcf2/sea_g2p-0.10.0-cp310-abi3-win_amd64.whl",
-            Packed("118d471796ff4fafe5cdcf1f75431a63e76ec5c0e7786cb7b3ff876d6d5292ea", 27_530_792, "sea_g2p/sea_g2p.bin"), label = "Bộ đọc chữ tiếng Việt")
+            Packed("118d471796ff4fafe5cdcf1f75431a63e76ec5c0e7786cb7b3ff876d6d5292ea", 27_530_792, "sea_g2p/sea_g2p.bin"), label = "Bộ đọc tiếng Việt")
 
         /** The vieneu 3.8.3 wheel (vieneu_module.VOICES), kept whole: the two voice lists are read out of it. */
         val VOICES = Part("voices/vieneu-3.8.3-py3-none-any.whl", "7388d166e65746f5bb075bf8094d324f8131a82393680b712260d6f2f983ef06", 2_643_059,

@@ -157,11 +157,10 @@ VOICE_PROBLEMS = {
 }
 # "Hoàn tác" tới sau khi dây chuyền đã đưa quyết định vào sách (ranh giới chương rơi đúng mấy giây ấy).
 WITHDRAW_APPLIED = {
-    "speakers": "Máy vừa đưa quyết định này vào sách nên không hoàn tác được nữa - muốn đổi lại, chọn người nói cho câu"
-                " ở tab Kịch bản.",
+    "speakers": "Đã áp vào sách — bạn đổi người nói ở tab Kịch bản.",
     "pronunciations": "Máy vừa đưa cách đọc này vào sách nên không hoàn tác được nữa.",
-    "voices": "Máy vừa đưa quyết định này vào sách nên không hoàn tác được nữa - muốn đổi lại, đổi giọng ở tab Nhân vật.",
-    "lines": "Máy vừa đưa cách đọc câu này vào sách nên không hoàn tác được nữa - muốn đổi lại, sửa cách đọc câu ở tab Kịch bản.",
+    "voices": "Đã áp vào sách — bạn đổi giọng ở tab Nhân vật.",
+    "lines": "Đã áp vào sách — bạn sửa cách đọc câu ở tab Kịch bản.",
 }
 
 SPEAKER_PROBLEMS = {
@@ -171,11 +170,9 @@ SPEAKER_PROBLEMS = {
     listener_overrides.NO_VOICE: "Người này chưa có giọng trong sách (chưa nói câu nào) - chưa gán được.",
 }
 
-NOT_CAST_YET = ("Sách chưa phân vai xong (xong ngay sau bước phân tích truyện) nên chưa gán người nói cho câu này được - "
-                "bạn thử lại khi máy phân vai xong.")
+NOT_CAST_YET = ("Sách chưa phân vai xong — bạn chờ xong để gán người nói.")
 
-UNNAMED_PROBLEM = ("Sách này chưa có nhóm “vai phụ không tên” để đưa câu vào. Chọn một người cụ thể, hay bấm “Người khác…” để đặt tên"
-                   " cho vai này (vd “lính gác”) - vai ấy sẽ có giọng riêng.")
+UNNAMED_PROBLEM = ("Chưa có vai vô danh — bạn chọn nhân vật hoặc “Người khác…” để tạo giọng riêng.")
 
 
 CLOSE_SECONDS = 3.0  # `App.close` chờ các lượt xuất dọn file tạm tới chừng này (cả lượt đóng phải xong trong 5 giây của vỏ Tauri)
@@ -258,8 +255,7 @@ class TrackTooBig(OSError):
 
 
 
-HELD_TEXT = ("sổ làm việc của sách này đang bị một chương trình khác giữ (diệt virus, sao lưu, đồng bộ đám mây...) - chờ một lát rồi "
-             "bấm Thử lại")
+HELD_TEXT = ("Sổ làm việc đang bị khoá — bạn chờ một lát rồi bấm Thử lại")
 
 
 def broken_reason(error: Exception) -> str:
@@ -268,7 +264,7 @@ def broken_reason(error: Exception) -> str:
     if isinstance(error, sqlite3.OperationalError) and "locked" in str(error).lower():
         return HELD_TEXT
     if isinstance(error, sqlite3.DatabaseError):
-        return "sổ làm việc của sách này bị hỏng hoặc do một bản ABook khác ghi, nên chưa mở được"
+        return "Sổ làm việc bị hỏng hoặc không hợp bản ABook này nên chưa mở được"
     return str(error)
 
 
@@ -293,7 +289,7 @@ def project_problem(project: Path, error: Exception) -> dict[str, Any]:
         return {"broken": HELD_TEXT, "brokenKind": "busy"}
     if isinstance(error, sqlite3.DatabaseError):
         backup = bool(store.db_backups(project))
-        text = "sổ làm việc của sách này bị hỏng hoặc do một bản ABook khác ghi, nên chưa mở được"
+        text = "Sổ làm việc bị hỏng hoặc không hợp bản ABook này nên chưa mở được"
         return {"broken": text + (" - có bản sao cũ hơn nằm cạnh nó, khôi phục được" if backup else ""), "brokenKind": "damaged", "backup": backup}
     return {"broken": broken_reason(error), "brokenKind": "other"}
 
@@ -389,7 +385,7 @@ class App:
                 self._adopt_new_book_ids()
             except OSError as error:
                 self.library_move_recovery = {
-                    "message": "Lần chuyển thư viện trước chưa hoàn tất. Bạn hãy vào Cài đặt → Thư viện để chọn hoàn tất, quay lui hoặc bỏ qua. App giữ nguyên nhật ký và hồ sơ của bạn.",
+                    "message": "Chuyển thư viện chưa xong; hồ sơ vẫn còn — bạn xử lý ở Cài đặt → Thư viện.",
                     "currentRoot": str(self.library.root),
                 }
                 notices.NOTICES.add(self.library_move_recovery["message"])
@@ -533,7 +529,7 @@ class App:
             raise notices.Unreadable("Chưa hiểu được nhật ký chuyển thư viện. Bạn hãy giữ bản cũ để khôi phục hồ sơ.")
         current = str(self.library.root)
         if current not in (intent["oldRoot"], intent["newRoot"]):
-            raise OSError("Lần chuyển thư viện trước chưa xong. Bạn hãy mở lại thư viện trước khi chọn nơi khác.")
+            raise OSError("Chuyển thư viện chưa xong — bạn mở lại thư viện trước khi chọn nơi khác.")
         self.preferences.update({"libraryRoot": intent["newRoot"]})
         self._rename_book_ids(intent["renamed"], intent.get("backupSuffix", ".pre-move.bak"))
         os.remove(str(path.resolve()))
@@ -542,7 +538,7 @@ class App:
         path = self._library_move_path()
         with file_lock(path):
             if getattr(self, "library_move_recovery", None):
-                raise notices.Unreadable("Bạn hãy xử lý lần chuyển thư viện trước trong Cài đặt → Thư viện trước khi chọn nơi khác.")
+                raise notices.Unreadable("Chuyển thư viện chưa xong — bạn xử lý ở Cài đặt → Thư viện trước khi đổi nơi.")
             self._finish_library_move()
             old_root = self.library.root
             new_root = Path(changes["libraryRoot"]).expanduser()
@@ -671,8 +667,7 @@ class App:
         """Thư mục thư viện người dùng chọn không còn (ổ rời rút ra, bị đổi tên / xoá khi app đang chạy - soát a28 lỗi 6): nói ra, và KHÔNG
         để việc nhập / xuất tự tạo lại một thư mục rỗng ở chỗ cũ (thư viện tách đôi)."""
         if self.library.root_missing():
-            raise ApiError(HTTPStatus.CONFLICT, f"Không thấy thư mục thư viện “{self.library.root.name}” - cắm lại ổ chứa nó, hay chọn thư mục "
-                                                "khác trong Cài đặt.")
+            raise ApiError(HTTPStatus.CONFLICT, f"Không thấy thư viện “{self.library.root.name}” — bạn cắm lại ổ hoặc chọn thư mục khác trong Cài đặt.")
 
     # ---- sách ------------------------------------------------------------------------------------------
 
@@ -1247,7 +1242,7 @@ class App:
             self.notify_desktop(
                 f"“{summary.get('title') or path.name}” đã phân tích xong",
                 "Sách đang chờ duyệt: xem giọng, cách đọc tên và người nói rồi bấm “Thu âm”." if held else
-                "Duyệt giọng, cách đọc tên và người nói trước khi thu - sửa bây giờ không phải thu lại.",
+                "Bạn duyệt giọng, cách đọc và người nói trước khi thu để tránh thu lại.",
             )
         return running
 
@@ -1263,7 +1258,7 @@ class App:
         self._battery_told.add(key)
         self.notify_desktop(
             f"“{summary.get('title') or path.name}” tạm dừng vì máy chạy pin",
-            "Tạo sách trên pin chậm hơn nhiều mà hao pin, nên Studio tạm dừng. Cắm sạc là tự làm tiếp; bấm “Tiếp tục” nếu muốn làm tiếp ngay trên pin.",
+            "Studio tạm dừng trên pin — cắm sạc để tự làm tiếp hoặc bấm “Tiếp tục” ngay.",
         )
 
     def stop(self, value: str) -> dict[str, Any]:
@@ -1293,7 +1288,7 @@ class App:
                 return self.summary(path)
             started = self.jobs.starting(path) or self.runner.running(path)
         if started:
-            raise ApiError(HTTPStatus.CONFLICT, "Cuốn này đã bắt đầu chạy nên không còn xếp hàng nữa. Muốn dừng, bạn dùng “Tạm dừng” hay “Dừng” ở trang sách")
+            raise ApiError(HTTPStatus.CONFLICT, "Sách đã chạy — bạn dùng “Tạm dừng” hoặc “Dừng” ở trang sách.")
         return self.summary(path)  # đã không còn trong hàng (lệnh gửi hai lần): không có gì để bỏ
 
     def existing_projects(self, digests: list[str]) -> list[dict[str, Any]]:
@@ -1367,8 +1362,7 @@ class App:
             queued = self._dequeue(value)
             token = self._discard(
                 resolved, "project", undo=undo, queued=queued,
-                failure="Không chuyển được vào Thùng rác - có thể một file trong dự án đang mở (đang nghe cuốn này, hay thư mục"
-                        " đang mở trong cửa sổ khác). Đóng rồi thử lại. ({error})")
+                failure="Chưa đưa vào Thùng rác — bạn đóng file đang mở rồi thử lại. ({error})")
         finally:
             with self._queue_lock:
                 self._deleting.discard(key)
@@ -1461,11 +1455,9 @@ class App:
             meta = self.trash.restore(self.trash.root_of(token, root), token,  # thư viện lúc xoá, nếu đã đổi giữa hạn
                                       may_rename=lambda held, item: not self._in_series(held, item))
         except trash_pending.NotPending as error:
-            raise ApiError(HTTPStatus.NOT_FOUND, "Hết thời gian hoàn tác - cuốn này đã nằm trong Thùng rác của Windows, "
-                                                 "khôi phục từ đó được.") from error
+            raise ApiError(HTTPStatus.NOT_FOUND, "Đã hết hạn hoàn tác — bạn khôi phục sách từ Thùng rác Windows.") from error
         except trash_pending.Occupied as error:
-            raise ApiError(HTTPStatus.CONFLICT, "Chỗ cũ đã có một cuốn cùng tên, mà cuốn này là một phần của bộ nhiều phần nên không khôi phục "
-                                                "dưới tên khác được. Bạn xoá cuốn vừa thêm rồi bấm Hoàn tác lại (còn ít giây nữa).") from error
+            raise ApiError(HTTPStatus.CONFLICT, "Trùng tên trong bộ — bạn dời cuốn mới rồi bấm Hoàn tác ngay để khôi phục.") from error
         except OSError as error:
             raise ApiError(HTTPStatus.CONFLICT, f"Không khôi phục được - có thể thư mục đích đang mở. ({error})") from error
         path = Path(meta["original"])
@@ -1519,12 +1511,12 @@ class App:
             raise ApiError(HTTPStatus.CONFLICT, "Đây là dự án của Studio - xoá ở trang dự án trong Studio (nút …)")
         if path.parent.parent == (root / REMOTE_FOLDER).resolve():
             raise ApiError(HTTPStatus.CONFLICT,
-                           "Sách này nằm trên máy tính khác - muốn thôi hiện thì gỡ máy ấy ở Cài đặt → Máy tính khác")
+                           "Sách ở máy khác — bạn gỡ máy ấy trong Cài đặt → Máy tính khác để ẩn sách.")
         if path.parent != (root / packages.IMPORTED_FOLDER).resolve() or not packages.is_package(path):
             raise ApiError(HTTPStatus.CONFLICT, "Cuốn này không phải sách đã nhập từ file")
         gone = book_id(path)
         token = self._discard(path, "imported", undo=undo, queued=False,
-                              failure="Không chuyển được vào Thùng rác - có thể một chương đang mở (đang nghe cuốn này). Thử lại. ({error})")
+                              failure="Chưa đưa vào Thùng rác — bạn dừng nghe rồi thử lại. ({error})")
         # Chương đã ghép của lượt xuất sách nói bỏ dở đi theo sách - nhưng chỉ khi sách đã vào Thùng rác: còn "Hoàn tác" thì giữ (hoàn tác xong
         # xuất tiếp không phải đọc lại); hết hạn mà không hoàn tác thì lượt dọn lúc mở app (`sweep_work`, sách không còn) xoá.
         if token is None and gone not in self._listen_exporting():
@@ -1638,8 +1630,7 @@ class App:
         replaced = self._book(replaces) if replaces else None
         if replaced is not None and (self.runner.running(replaced) or self.jobs.starting(replaced)
                                      or not store.can_redo(replaced)):
-            raise ApiError(HTTPStatus.CONFLICT, "Sách cũ đã bắt đầu chạy và qua bước phân tích - không làm lại được nữa. Tạo sách mới hay dùng "
-                                                "“Làm tiếp cuốn này”.")
+            raise ApiError(HTTPStatus.CONFLICT, "Sách đã bắt đầu chạy — bạn tạo sách mới hoặc chọn “Làm tiếp cuốn này”.")
         kept_covers: dict[str, bytes] = {}
         held: str | None = None  # mã hoàn tác của bản dở đang nằm chờ (khôi phục nếu việc tạo cuốn mới hỏng)
         # Kiểm điều kiện của cuốn mới (model phân tích có trong Ollama...) TRƯỚC khi đụng tới bản cũ: lỗi ở đây không được
@@ -1715,9 +1706,7 @@ class App:
         offsets = [sum(sizes[:index]) for index in range(len(split))]
         for number, volume in enumerate(split, start=1):
             if volumes.reading_order_problem(volume):
-                raise ApiError(HTTPStatus.BAD_REQUEST, f"Tập {number} gồm chương của nhiều thư mục mà tên file xen nhau - dây chuyền "
-                                                       "xếp chương theo tên file nên không giữ được thứ tự đọc. Dời chỗ cắt về ranh "
-                                                       "giới giữa hai thư mục.")
+                raise ApiError(HTTPStatus.BAD_REQUEST, f"Tập {number} xếp xen chương giữa thư mục — bạn cắt ở ranh thư mục để giữ thứ tự.")
         first = self.create({**body, "paths": split[0], "volumeStarts": None,
                              "firstPersonChapters": volumes.localize_chapters(chapters, offsets[0], sizes[0]) or {}})
         parts = [{"id": first["id"], "part": 1, "queued": first.get("queued", 0)}]
@@ -1949,8 +1938,7 @@ class App:
         """Phân tích các bài chưa phân tích (khi bộ phân tích đã có); chưa có thì nói rõ, không bịa."""
         self._mutating()
         if not music_local.analyzer_available():
-            raise ApiError(HTTPStatus.CONFLICT, "Chưa có bộ phân tích âm thanh - bài nhập vào vẫn ghim tay được, "
-                                                "nhưng máy chưa tự chọn chúng.")
+            raise ApiError(HTTPStatus.CONFLICT, "Chưa có bộ phân tích nhạc; bạn vẫn chọn bài thủ công được.")
         analysed = self.my_music.analyze_pending()
         music_valence.kick()
         return {"analysed": analysed, **self.my_music_view()}
@@ -1959,8 +1947,7 @@ class App:
         """Người dùng bấm "Phân tích lại N bài bằng bản mới" sau khi cập nhật mô-đun: ở luồng nền, không bao giờ tự chạy."""
         self._mutating()
         if not music_local.analyzer_available():
-            raise ApiError(HTTPStatus.CONFLICT, "Chưa có bộ phân tích âm thanh - bài nhập vào vẫn ghim tay được, "
-                                                "nhưng máy chưa tự chọn chúng.")
+            raise ApiError(HTTPStatus.CONFLICT, "Chưa có bộ phân tích nhạc; bạn vẫn chọn bài thủ công được.")
         music_module.run_job(lambda: (self.my_music.reanalyse(), music_valence.kick()))
         return self.my_music_view()
 
@@ -2041,7 +2028,7 @@ class App:
         if packages.is_package(path):
             extra = set(body) - {"enabled", "levelDb", "silence", "pins", "playlist"}
             if extra:
-                raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền")
+                raise ApiError(HTTPStatus.BAD_REQUEST, "Sách đóng gói chỉ đổi được bật/tắt, mức nhạc, đoạn im, bài và danh sách nhạc.")
             return self._with_auto_playlist(value, path, book_edits.set_music(path, body, self._my_track, self._my_mine))
         music_plan.write_overrides(path, body)
         if music_plan.read_plan(path) is None:
@@ -3052,7 +3039,7 @@ class App:
     def open_existing(self, body: dict[str, Any]) -> dict[str, Any]:
         path = Path(str(body.get("path", ""))).expanduser()
         if not store.is_project(path):
-            raise ApiError(HTTPStatus.BAD_REQUEST, "Thư mục này không phải một dự án. Chọn đúng thư mục của dự án sách nói (thư mục ABook đã tạo cho nó); còn file .abook hay .abookproj thì mở từ Thư viện.")
+            raise ApiError(HTTPStatus.BAD_REQUEST, "Sai thư mục — bạn chọn dự án ABook; file .abook/.abookproj mở từ Thư viện.")
         self.preferences.add_recent(path.resolve())
         return {"id": book_id(path.resolve())}
 
@@ -3699,8 +3686,7 @@ def without_local_paths(value: Any) -> Any:
 
 
 def _overrides_busy() -> ApiError:
-    return ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Danh sách yêu cầu của cuốn này đang bị một chương trình khác giữ nên chưa lưu được. "
-                                                   "Bạn thử lại sau vài giây - các yêu cầu cũ vẫn còn nguyên")
+    return ApiError(HTTPStatus.SERVICE_UNAVAILABLE, "Yêu cầu cũ vẫn còn; danh sách bị khoá nên chưa lưu — bạn thử lại sau vài giây.")
 
 
 def _serialized_per_book(method: Callable[..., None]) -> Callable[..., None]:
@@ -3912,7 +3898,7 @@ class Handler(BaseHTTPRequestHandler):
             if files is None:
                 files = listed[(kind, book)] = self.app.source_files(kind, book)
             if number >= len(files) or files[number].name != name:
-                raise ApiError(HTTPStatus.CONFLICT, "Các chương của sách ấy đã đổi từ lúc bạn mở trang này - mở lại trang rồi làm lại.")
+                raise ApiError(HTTPStatus.CONFLICT, "Các chương đã đổi — bạn mở lại trang rồi thử lại.")
             out[str(item)] = str(files[number])
         return out
 
@@ -4773,7 +4759,7 @@ class Handler(BaseHTTPRequestHandler):
         if not chapters:
             raise ApiError(HTTPStatus.CONFLICT, "Sách chưa có chương nào có chữ để đọc")
         if not ffmpeg_setup.ready():
-            raise ApiError(HTTPStatus.CONFLICT, "Máy này chưa có công cụ ghép âm thanh (ffmpeg) - tải nó trong hộp Xuất sách nói rồi bấm lại")
+            raise ApiError(HTTPStatus.CONFLICT, "Thiếu công cụ ghép âm thanh — bạn tải trong hộp Xuất sách nói rồi thử lại.")
         root = self._export_root(body)
         cover = body.get("cover") if isinstance(body.get("cover"), str) else None
         app = self.app
@@ -5234,8 +5220,7 @@ class Handler(BaseHTTPRequestHandler):
         if reach["never"]:
             raise ApiError(HTTPStatus.BAD_REQUEST, never_text(surface))
         # Chữ chưa có câu nào trong sách (gõ sai, hay chỉ có ở chương sau): vẫn ghi - nhưng nói để người nghe soát lại chữ đã gõ.
-        warning = {} if reach.get("lines") else {"warning": f"Trong sách này chưa có câu nào có chữ “{surface}” - đã ghi, nhưng chưa đổi cách đọc câu nào. "
-                                                           "Bạn kiểm lại chữ đã gõ có đúng như trong sách không."}
+        warning = {} if reach.get("lines") else {"warning": f"Đã ghi nhưng chưa có câu chứa “{surface}” để đổi — bạn kiểm tra chữ đã gõ."}
         now = time.time()
         if package:
             book_wishes.request_pronunciation(path, surface, spoken, now=now)
@@ -5793,7 +5778,7 @@ class Handler(BaseHTTPRequestHandler):
             entry = next((item for item in book.get("chapters") or []
                           if isinstance(item, dict) and item.get("id") == int(chapter)), {})
             if entry.get("text") and remote_books.remote_of(book) is None:
-                raise ApiError(HTTPStatus.NOT_FOUND, "Mất file chữ của chương này trên máy. Bạn hãy thêm lại đúng file sách gốc để chép bù.")
+                raise ApiError(HTTPStatus.NOT_FOUND, "Mất chữ chương — bạn thêm lại đúng file sách gốc để chép bù.")
         if text is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Chương này không có chữ riêng")
         self._send_json(HTTPStatus.OK, {"chapterId": int(chapter), "text": text})
@@ -6590,7 +6575,7 @@ class Handler(BaseHTTPRequestHandler):
         setup = self._studio_setup()
         with self.app._queue_lock:
             if self.app._busy_elsewhere() is not None:
-                raise ApiError(HTTPStatus.CONFLICT, "Bạn hãy chờ cuốn đang chạy, khởi động hoặc tạm dừng làm xong rồi cập nhật Studio.")
+                raise ApiError(HTTPStatus.CONFLICT, "Bạn chờ sách đang chạy, khởi động hoặc tạm dừng xong rồi cập nhật Studio.")
             setup.busy = self.app._busy_elsewhere
             self.app.previews.shutdown()
             result = setup.start()

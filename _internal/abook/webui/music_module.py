@@ -198,7 +198,7 @@ def _libs_external() -> bool:
 def libs_problem() -> str:
     """Vì sao máy này không tải được thư viện (rỗng = tải được). Dùng chung với mô-đun "Giọng VieNeu" (vieneu_module.py)."""
     if sys.platform != "win32" or sys.version_info[:2] != (3, 14):
-        return "thư viện tải sẵn chỉ có cho bản ABook Windows 64-bit - hãy cài numpy và onnxruntime cho Python của máy này"
+        return "Máy này chưa có bản tải sẵn của bộ đọc — bạn xem Chi tiết để nhờ hỗ trợ."
     return ""
 
 
@@ -243,7 +243,7 @@ def libs_pin() -> str:
 
 def libs_part(blocked: str | None = None) -> Component:
     """Phần "thư viện chạy model" (numpy + onnxruntime): MỘT bản cho cả máy - mô-đun nào tải trước thì mô-đun kia thấy đã có."""
-    return Component("libs", "Thư viện chạy model", libs_pin(), sum(w.size for w in WHEELS), _libs_present(), external=_libs_external(),
+    return Component("libs", "Bộ chạy giọng", libs_pin(), sum(w.size for w in WHEELS), _libs_present(), external=_libs_external(),
                      blocked=_cannot_install_libs() if blocked is None else blocked, downloads=list(WHEELS),
                      targets=[_folder / DOWNLOADS / f"{wheel.name}.whl" for wheel in WHEELS] if _folder is not None else [])
 

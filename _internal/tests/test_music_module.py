@@ -154,7 +154,7 @@ def test_a_new_ffmpeg_or_libs_pin_updates_just_that_part(machine: Machine, tmp_p
     new_numpy = studio_setup.Download("numpy", music_module.WHEELS[0].url, "e" * 64, music_module.WHEELS[0].size)
     monkeypatch.setattr(music_module, "WHEELS", (new_numpy, *music_module.WHEELS[1:]))
     monkeypatch.setattr(music_module, "_libs_loaded", lambda: True)
-    assert music_module.status()["outdatedParts"] == ["Thư viện chạy model"]
+    assert music_module.status()["outdatedParts"] == ["Bộ chạy giọng"]
     music_module.start()
     music_module.join(10)
     assert len(machine.calls) == len(music_module.WHEELS)
