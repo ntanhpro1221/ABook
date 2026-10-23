@@ -12,6 +12,7 @@ import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { canTeachWords, wordOf } from "./readings";
 import type { ListenBook, ListenChapter, Script, ScriptSegment } from "./model";
 import { useListenMutations } from "./source";
+import { reportWriteFailure } from "./recordWrites";
 import { WordReadingDialog } from "./WordReadings";
 
 // Chọn một câu của văn bản đọc theo rồi làm gì với nó - MỘT chỗ cho màn Đọc (ReaderScreen) và tab "Đọc theo" của màn "Đang nghe" (PlayerViews):
@@ -40,7 +41,7 @@ function BookmarkNoteDialog({ bookId, mark, onClose }: { bookId: string; mark: {
   const save = () =>
     mutations.updateBookmark.mutate(
       { id: mark!.id, note: note.trim() },
-      { onSuccess: onClose, onError: () => toast.error("Chưa lưu được ghi chú") },
+      { onSuccess: onClose, onError: (error) => reportWriteFailure(error, "Chưa lưu được ghi chú") },
     );
   return (
     <Dialog open={mark !== null} onOpenChange={(open) => !open && onClose()} width="max-w-md" title="Ghi chú cho dấu trang" description={mark ? `“${excerpt(mark.quote)}”` : undefined}>
@@ -176,7 +177,7 @@ export function useSentenceMenu({
             cancel: { label: "Hoàn tác", onClick: () => mutations.deleteBookmark.mutate(mark.id) },
           });
         },
-        onError: () => toast.error("Chưa đặt được dấu trang"),
+        onError: (error) => reportWriteFailure(error, "Chưa đặt được dấu trang"),
       },
     );
   };
