@@ -1,15 +1,15 @@
 [
   {
     "file": "a84_bad_be.txt",
-    "error": "File “a84_bad_be.txt” có byte chữ bị hỏng. Bạn hãy mở bản gốc, lưu lại dạng UTF-8 hoặc tải lại file rồi nhập lại."
+    "error": "File “a84_bad_be.txt” hỏng chữ — bạn lưu lại dạng UTF-8 hoặc tải lại."
   },
   {
     "file": "a84_bad_le.txt",
-    "error": "File “a84_bad_le.txt” có byte chữ bị hỏng. Bạn hãy mở bản gốc, lưu lại dạng UTF-8 hoặc tải lại file rồi nhập lại."
+    "error": "File “a84_bad_le.txt” hỏng chữ — bạn lưu lại dạng UTF-8 hoặc tải lại."
   },
   {
     "file": "a84_bad_tail.txt",
-    "error": "File “a84_bad_tail.txt” có byte chữ bị hỏng. Bạn hãy mở bản gốc, lưu lại dạng UTF-8 hoặc tải lại file rồi nhập lại."
+    "error": "File “a84_bad_tail.txt” hỏng chữ — bạn lưu lại dạng UTF-8 hoặc tải lại."
   },
   {
     "file": "a84_breaks.docx",
@@ -888,7 +888,7 @@
         }
       ],
       "notes": [
-        "1 mục có vẻ không phải truyện (bìa, bản quyền, mục lục…) chưa chọn - tích nếu muốn nghe."
+        "1 mục có vẻ là bìa, bản quyền, mục lục… chưa chọn — bạn tích nếu muốn nghe."
       ],
       "splitOffer": 4,
       "splitHeadings": 3
@@ -934,7 +934,7 @@
         }
       ],
       "notes": [
-        "1 mục có vẻ không phải truyện (bìa, bản quyền, mục lục…) chưa chọn - tích nếu muốn nghe."
+        "1 mục có vẻ là bìa, bản quyền, mục lục… chưa chọn — bạn tích nếu muốn nghe."
       ],
       "splitOffer": 4,
       "splitHeadings": 3,

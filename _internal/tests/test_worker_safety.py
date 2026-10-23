@@ -65,7 +65,7 @@ def test_worker_rejects_external_settings_that_differ_from_sqlite(tmp_path: Path
     tampered["tts"]["batch_size"] += 1
     save_settings(paths.settings, tampered)
 
-    with pytest.raises(RuntimeError, match="khác settings đã khóa"):
+    with pytest.raises(RuntimeError, match="không khớp bản đã khoá"):
         _load_locked_settings(paths, db)
 
 
@@ -129,7 +129,7 @@ def test_worker_rejects_legacy_high_quality_project_after_analysis_started(
     segment_id = int(db.list_segments()[0]["id"])
     db.update_analysis(segment_id, {"confidence": 0.9})
 
-    with pytest.raises(RuntimeError, match="tạo project sạch"):
+    with pytest.raises(RuntimeError, match="tạo dự án mới"):
         _load_locked_settings(paths, db)
 
 

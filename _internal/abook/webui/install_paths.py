@@ -14,4 +14,4 @@ def validate_library_folder(folder: Path, studio: Any = None) -> None:
         protected.extend((studio.root, studio.app_root))
     resolved = folder.resolve()
     if any(resolved.is_relative_to(root.resolve()) for root in protected):
-        raise ValueError("Thư mục này có thể bị xoá khi gỡ ABook. Bạn hãy chọn thư viện ở nơi khác để giữ sách của bạn.")
+        raise ValueError("Thư mục này có thể mất khi gỡ ABook — bạn chọn nơi khác để giữ sách.")

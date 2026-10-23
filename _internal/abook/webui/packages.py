@@ -564,7 +564,7 @@ def import_opened(opened: Any, library_root: Path, projects: Iterable[Path], fin
     if getattr(opened, "book", True) is None:  # file dự án đang làm dở: chưa có chương nào xong thì chưa có gì để nghe
         from .projectfile import ProjectFileError
 
-        raise ProjectFileError("Dự án này chưa có chương nào hoàn thành nên chưa nghe được. Bạn hãy mở nó bằng ABook Studio.")
+        raise ProjectFileError("Dự án chưa có chương nghe được — bạn mở bằng ABook Studio.")
     with _IMPORTING_GUARD:
         lock = _IMPORTING.setdefault(f"{Path(library_root).expanduser()}|{opened.content_key}", threading.Lock())
     with lock:

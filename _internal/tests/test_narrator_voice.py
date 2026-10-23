@@ -174,7 +174,8 @@ def test_the_narrator_gets_the_voice_first_and_the_blocked_wish_becomes_a_card(t
     assert _narrator_preset(db) == picked
     cards = [item for item in work_items(paths.root)["items"] if item["kind"] == "voice-wish"]
     assert [card["key"] for card in cards] == ["voice-wish:LUCIEN"]
-    assert picked in cards[0]["title"] and cards[0]["keepCharacters"] == ["LUCIEN"]
+    assert cards[0]["title"] == "Giọng của Lucien" and cards[0]["keepCharacters"] == ["LUCIEN"]
+    assert picked in cards[0]["problem"]
 
     request_voice(paths.root, "LUCIEN", now=3.0)  # "Giữ giọng đang dùng"
     assert not [item for item in work_items(paths.root)["items"] if item["kind"] == "voice-wish"]

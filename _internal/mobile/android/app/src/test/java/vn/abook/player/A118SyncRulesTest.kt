@@ -14,6 +14,25 @@ import org.junit.Test
 class A118SyncRulesTest {
     private val book = "book"
 
+    @Test fun sharedRevisionMessagesMatchPython() {
+        val rows = JSONArray(File("../../../tests/fixtures/listening_revision/messages.json").readText())
+        for (i in 0 until rows.length()) {
+            val row = rows.getJSONObject(i)
+            val notices = mutableListOf<String>()
+            val result = runCatching {
+                ListeningRevision.checkedPeer(JSONObject(), row.getJSONObject("incoming")) { notices.add(it) }
+            }
+            if (row.has("error")) {
+                assertTrue(row.getString("name"), result.exceptionOrNull() is IllegalArgumentException)
+                assertEquals(row.getString("name"), row.getString("error"), result.exceptionOrNull()?.message)
+                assertTrue(notices.isEmpty())
+            } else {
+                assertFalse(row.getString("name"), result.getOrThrow().has("reading"))
+                assertEquals(row.getString("name"), listOf(row.getString("notice")), notices)
+            }
+        }
+    }
+
     private fun phone(name: String): File = BookEditsFixtures.tempDir("a118-$name").also {
         BookEditsFixtures.useStoreRoot(it)
         File(it, "state").mkdirs()

@@ -592,7 +592,7 @@ def test_a_pin_that_does_not_fit_is_refused_with_a_sentence_and_changes_nothing(
              ({"pins": {"1:0": "https://x/y.mp3"}}, "Chỉ đổi được sang bài trong Nhạc của tôi"),
              ({"pins": {"7:7": link}}, "Không có đoạn nhạc này"),
              ({"pins": "tone"}, "không hợp lệ"),
-             ({"volume": 3}, "đổi bài")]
+             ({"volume": 3}, "bài và danh sách nhạc")]
     for body, message in cases:
         status, answer = call("PUT", "/api/books/{id}/music", body)
         assert status == 400 and message in answer["error"], body

@@ -158,7 +158,7 @@ def test_ffmpeg_range_integrity_failure_preserves_previous_exe_and_stamp(remote_
     else:
         attr = {"exe_sha": "EXE_SHA256", "crc": "EXE_CRC", "size": "EXE_SIZE"}[failure]
         monkeypatch.setattr(ff, attr, "0" * 64 if failure == "exe_sha" else 1)
-    with pytest.raises(setup.SetupError, match="ghim"):
+    with pytest.raises(setup.SetupError, match="tải về sai bản" if failure == "compressed_sha" else "ghim"):
         ff.install(lambda *_: None)
     assert (r.folder / "ffmpeg.exe").read_bytes() == b"old executable"
     assert (r.folder / "installed.sha256").read_text() == "old stamp"

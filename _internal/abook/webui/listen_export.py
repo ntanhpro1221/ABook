@@ -321,7 +321,7 @@ class _Run:
                     failures += 1
                     self.pause(float(failures))
                     continue
-                raise ExportError(f"Giọng đọc không đọc được một đoạn ở “{chapter.title}”: {error} Phần đã làm được giữ - bấm xuất lại để làm tiếp.") from error
+                raise ExportError(f"“{chapter.title}”: {error}; giữ phần đã làm — bạn xuất lại để tiếp tục.") from error
             spent = time.perf_counter() - began
             if spent > CACHED_SECONDS:
                 self.timed_chars += len(text)
@@ -413,7 +413,7 @@ def export_audiobook(reader: ReadAloud, path: Path, target_root: Path, work_root
     if fmt not in FORMATS:
         raise ExportError("Chỉ xuất được MP3 hoặc M4B")
     if not ffmpeg_available():
-        raise ExportError("Máy này chưa có công cụ ghép âm thanh (ffmpeg) - tải nó trong hộp Xuất sách nói rồi bấm lại.")
+        raise ExportError("Thiếu công cụ ghép âm thanh — bạn tải trong hộp Xuất sách nói rồi thử lại.")
     manifest = packages.edited_manifest(path)
     title = str(manifest.get("title") or path.name)
     author = str(manifest.get("author") or "")

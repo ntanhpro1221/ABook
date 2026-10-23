@@ -88,7 +88,7 @@ def test_one_card_gathers_every_line_of_the_role_across_the_book(tmp_path: Path)
 
     assert set(cards) == {"unnamed-role:lính gác", f"unnamed:{DWARF}"}, "thẻ từng chỗ của vai trong nhóm không hiện lặp"
     card = cards["unnamed-role:lính gác"]
-    assert card["title"] == "4 câu của vai phụ “lính gác” ở 2 chương - một người?"
+    assert card["title"] == "Vai phụ cùng tên"
     assert card["affected"] == 4 and card["pick"] is True and card["chapters"] == [1, 2]
     assert _pairs(card["lines"]) == [("b", "sha-b"), ("d", "sha-d"), ("e", "sha-e"), ("g", "sha-g")]
     # Mọi câu (kèm chương) để người nghe bỏ chọn từng câu, theo thứ tự trong sách.
@@ -114,7 +114,7 @@ def test_one_role_in_two_scenes_of_a_chapter_is_a_group_too(tmp_path: Path) -> N
     request_speakers(project, [("b", "sha-b"), ("d", "sha-d")], GUARD_1, now=time.time())  # chương 1: giữ nguyên
 
     card = _unnamed(project)["unnamed-role:lính gác"]
-    assert card["title"] == "2 câu của vai phụ “Lính gác” ở 2 cảnh - một người?"
+    assert card["title"] == "Vai phụ cùng tên"
     assert _pairs(card["lines"]) == [("e", "sha-e"), ("g", "sha-g")]
 
 

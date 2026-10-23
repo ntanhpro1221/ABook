@@ -8,6 +8,23 @@ import json
 FIXTURES = Path(__file__).parent / "fixtures" / "import"
 
 
+@pytest.mark.parametrize("case", json.loads((FIXTURES / "expected/a84_contracts.json").read_text(encoding="utf-8")),
+                         ids=lambda case: case["file"])
+def test_shared_a84_contract_used_by_the_kotlin_importer(case):
+    from abook.webui import textbook
+
+    source = FIXTURES / case["file"]
+    if "error" in case:
+        with pytest.raises(importers.ImportFailed) as error:
+            importers.import_text(source, split_chapters=True, keep_short=True)
+        assert str(error.value) == case["error"]
+    else:
+        book = (importers.import_pdf_pages(json.loads(source.read_text(encoding="utf-8")), "Sách")
+                if source.suffix == ".json" else importers.import_text(source, split_chapters=True, keep_short=True))
+        assert book.to_dict() == case["book"]
+        assert textbook.preview(book) == case["preview"]
+
+
 def test_a84_01_docx_notes_and_call_marks_stay_until_explicitly_removed():
     source = FIXTURES / "notes.docx"
     book = importers.import_text(source)
@@ -141,7 +158,7 @@ def test_a84_14_docx_inherited_and_outline_headings_split():
 
 @pytest.mark.parametrize("name", ["le", "be", "tail"])
 def test_a84_15_bad_txt_bytes_are_reported_without_replacement(name):
-    with pytest.raises(importers.ImportFailed, match="Bạn.*UTF-8"):
+    with pytest.raises(importers.ImportFailed, match="bạn.*UTF-8"):
         importers.import_text(FIXTURES / f"a84_bad_{name}.txt")
 
 
@@ -172,12 +189,12 @@ def test_a84_17_unicode_filename_order_matches_shared_contract(tmp_path):
     assert [c.text for c in book.chapters] == ["A01.txt", "a1.txt", "Straße1.txt", "STRASSE2.txt", "Ánh2.txt", "ÁNH10.txt", "Σ1.txt", "ς2.txt", "σ10.txt"]
 
 
-@pytest.mark.parametrize("name,reason,action", [("scan.pdf", "chữ", "OCR"), ("a84_locked.pdf", "mật khẩu", "mở khóa")])
+@pytest.mark.parametrize("name,reason,action", [("scan.pdf", "chữ", "OCR"), ("a84_locked.pdf", "mật khẩu", "mở khoá")])
 def test_a84_19_pdf_errors_say_why_and_what_you_can_do(name, reason, action):
     with pytest.raises(importers.ImportFailed) as caught:
         importers.import_text(FIXTURES / name)
     message = str(caught.value)
-    assert reason in message and "Bạn" in message and action in message
+    assert reason in message and "bạn" in message and action in message
 
 
 def test_a84_03_pdf_defaults_are_visible_suggestions_and_never_delete_source_text():

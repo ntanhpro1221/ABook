@@ -72,7 +72,7 @@ def _folder(name: str, key: str) -> str:
 
 def broken_note(kept: str | None) -> str:
     """Một dòng cho người dùng khi danh sách máy đã ghép hỏng và được làm lại (`Computers.broken`: tên bản hỏng giữ bên cạnh)."""
-    return (f"Danh sách máy tính đã ghép trên máy này bị hỏng nên các máy ấy phải ghép lại - bản hỏng được giữ lại ({kept})."
+    return (f"Danh sách máy ghép bị hỏng; đã giữ bản cũ ({kept}) — bạn ghép lại các máy."
             if kept else "")
 
 
@@ -154,8 +154,7 @@ class Computers:
         match = None if by_bluetooth or re.match(r"(?i)\s*bt:", address or "") else re.fullmatch(
             r"\s*\[?([A-Za-z0-9.\-:]+?)\]?(?::(\d{2,5}))?\s*", address or "")  # "bt:..." hỏng không phải tên máy
         if (not match and not by_bluetooth) or len(digits) != 6:
-            raise RemoteError("Nhập địa chỉ máy kia (vd 192.168.1.20, hay địa chỉ Bluetooth AA:BB:CC:DD:EE:FF) và mã 6 số "
-                              "đang hiện trên máy ấy")
+            raise RemoteError("Bạn nhập địa chỉ Wi-Fi hoặc Bluetooth và mã 6 số trên máy kia.")
         host, port = (f"bt:{by_bluetooth}", LIBRARY_PORT) if by_bluetooth else (match.group(1), int(match.group(2) or LIBRARY_PORT))
         if not by_bluetooth and own_port is not None and port == own_port and is_own_host(host):
             raise RemoteError("Đây là địa chỉ của chính máy này - nhập địa chỉ máy kia")
@@ -170,7 +169,7 @@ class Computers:
         except (ValueError, KeyError) as error:
             raise RemoteError("Máy kia trả lời lạ - có phải ABook không?") from error
         if not seen or claimed != seen:
-            raise RemoteError("Máy kia trả lời không đáng tin (chứng chỉ không khớp vân tay nó báo) - chưa ghép, thử lại; vẫn lỗi thì kiểm tra mạng")
+            raise RemoteError("Chứng chỉ không khớp nên chưa ghép — bạn thử lại; vẫn lỗi thì kiểm tra mạng.")
         with self._lock:
             data = self._read()
             # Ghép lại cùng một máy thì thay chỗ cũ: sách đã tải và chỗ nghe giữ nguyên. Máy được nhận ra bằng vân tay chứng chỉ
@@ -313,7 +312,7 @@ def cached_books(library_root: Path, computer: str) -> list[dict[str, Any]]:
 def refuse_if_unsent(library_root: Path, computer: str) -> None:
     left = unsent_edits(library_root, computer)
     if left:
-        raise UnsentEdits(f"{len(left)} cuốn còn {sum(item['changes'] for item in left)} thay đổi chưa gửi - gửi trước hay chọn bỏ rồi thôi ghép")
+        raise UnsentEdits(f"Còn {sum(item['changes'] for item in left)} sửa đổi chưa gửi — bạn gửi hoặc chọn bỏ trước khi thôi ghép.")
 
 
 def send_unsent(library_root: Path, computer: str) -> None:
@@ -424,15 +423,14 @@ class Endpoint(NamedTuple):
 
 # Tên công tắc ở Cài đặt của máy kia - đúng chuỗi của ui/src/shared/syncSwitch.ts (tests/test_sync_switch_label.py giữ hai bên không lệch).
 SYNC_SWITCH = "Cho phép thiết bị khác kết nối qua Wi-Fi"
-UNREACHABLE = f"Không kết nối được máy kia - máy tắt, khác mạng hay chưa bật “{SYNC_SWITCH}”"
-UNREACHABLE_BLUETOOTH = ("Không kết nối được máy kia qua Bluetooth - máy kia đã bật ABook và Bluetooth chưa, và có trong tầm "
-                         "sóng không?")
+UNREACHABLE = f"Chưa nối được máy kia — bạn mở ABook, kiểm tra cùng Wi-Fi và bật “{SYNC_SWITCH}”."
+UNREACHABLE_BLUETOOTH = ("Chưa nối được Bluetooth — bạn bật ABook, Bluetooth và đưa hai máy lại gần.")
 
 
 # Máy có ở địa chỉ ấy nhưng cái trả lời không phải cổng ghép của ABook (gõ nhầm cổng giao diện, cổng của phần mềm khác), hay không có gì
 # nghe ở cổng ấy: khác hẳn "máy tắt" - người dùng cần sửa địa chỉ hay mở ABook bên kia, không phải chờ (soát a27 lỗi 9).
-NOT_ABOOK = "Địa chỉ này có trả lời nhưng không phải cổng ghép của ABook - xem lại dòng “Địa chỉ máy này” cạnh mã ghép trên máy kia"
-REFUSED = f"Có máy ở địa chỉ này nhưng ABook trên máy kia chưa mở, chưa bật “{SYNC_SWITCH}”, hay địa chỉ sai cổng"
+NOT_ABOOK = "Địa chỉ chưa đúng — bạn chép lại “Địa chỉ máy này” cạnh mã ghép trên máy kia."
+REFUSED = f"Chưa nối được máy kia — bạn mở ABook, bật “{SYNC_SWITCH}” và chép lại địa chỉ ghép."
 
 
 def _unreachable(endpoint: Endpoint, error: BaseException | None = None) -> str:
@@ -487,7 +485,7 @@ WAKE_BLUETOOTH_SECONDS = 300
 WAKE_WIFI_SECONDS = 60
 SLEEPY_SECONDS = 3  # tầng dưới đã nối mà ngần này chưa bắt tay xong: báo "đang ngủ"
 QUIET_SECONDS = 600  # thôi chờ / chờ hết hạn: ngần này không tự chờ lại ở nền (người dùng bấm hỏi lại thì vẫn chờ)
-STILL_ASLEEP = "Điện thoại vẫn chưa trả lời - mở ABook trên điện thoại rồi bấm “Hỏi lại thư viện”"
+STILL_ASLEEP = "Điện thoại chưa trả lời — bạn mở ABook rồi bấm “Hỏi lại thư viện”."
 STOPPED_WAITING = "Đã thôi chờ - mở ABook trên điện thoại rồi bấm “Hỏi lại thư viện”"
 _WAKE_LOCK = threading.Lock()
 _waits: dict[str, list["_Wait"]] = {}  # máy -> các lần nối đang chờ nó dậy
@@ -734,8 +732,7 @@ def _open(endpoint: Endpoint, method: str, path: str, token: str, body: dict[str
                 if method != "GET" or response.status != 503 or attempt == 2:
                     break
             except tls.PinError as error:
-                raise RemoteError("Chứng chỉ bảo mật của máy kia đã khác lúc ghép (máy kia cài lại ABook?) - bấm Thôi ghép rồi ghép lại. "
-                                  "Nếu máy kia không cài lại gì thì đừng ghép lại: có thể có ai chen vào mạng") from error
+                raise RemoteError("Chứng chỉ đổi, có thể bị chen mạng — chỉ khi máy kia cài lại ABook, bạn Thôi ghép rồi ghép lại.") from error
             except (OSError, http.client.HTTPException) as error:
                 if (method != "GET" or attempt == 2
                         or not isinstance(error, (ConnectionResetError, ConnectionAbortedError, BrokenPipeError,
@@ -1026,7 +1023,7 @@ def diagnostics(device_id: str, lines: int = DIAGNOSTICS_LINES) -> dict[str, Any
         if error.status == 404:
             raise RemoteError(f"{name}: {NEEDS_NEWER}", status=404) from error
         if error.status == 401:
-            raise RemoteError(f"{name} không nhận máy này nữa (đã thôi ghép ở phía điện thoại?) - ghép lại rồi thử lại", status=401) from error
+            raise RemoteError(f"{name} đã thôi ghép với máy này — bạn ghép lại để dùng tiếp.", status=401) from error
         raise
     try:
         reply = json.loads(data.decode("utf-8"))

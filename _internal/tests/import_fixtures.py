@@ -868,7 +868,7 @@ def whole_titled_txt() -> bytes:
 
 # --- toàn bộ ----------------------------------------------------------------------------------------------------------
 
-DRM_ERROR = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
+DRM_ERROR = "EPUB bị khoá bản quyền — bạn dùng bản không khoá hoặc TXT."
 
 
 def build_encrypted_epub(algorithm: str = "http://www.w3.org/2001/04/xmlenc#aes128-cbc", *, font: bool = False,

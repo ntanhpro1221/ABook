@@ -69,9 +69,9 @@ def keep_broken(path: Path, what: str, *, then: str = "app dùng mặc định",
             os.replace(path, kept)
     except OSError:
         log.warning("Không giữ được bản hỏng của %s", path, exc_info=True)
-        NOTICES.add(f"{what} bị hỏng nên {then}. Chưa giữ được bản cũ ({path.name}) - đừng xoá nó nếu cần lấy lại.", kind="saving-blocked")
+        NOTICES.add(f"{what} hỏng nên {then}; chưa giữ được bản cũ — bạn đừng xoá {path.name}.", kind="saving-blocked")
         return None
-    NOTICES.add(f"{what} bị hỏng nên {then}. Bản cũ được giữ lại ở {kept.name}, cùng thư mục với {path.name}.",
+    NOTICES.add(f"{what} hỏng nên {then}; bản cũ còn ở {kept.name}, cạnh {path.name}.",
                 kind="recovered", preserved_file=kept.name)
     return kept
 
@@ -86,8 +86,7 @@ READ_PAUSE_SECONDS = 0.2
 
 
 def unreadable(what: str) -> None:
-    NOTICES.add(f"{what} đang bị một chương trình khác giữ nên chưa đọc được - app tạm dùng mặc định và chưa lưu thay đổi vào đó cho tới "
-                "khi đọc được (thường chỉ vài giây).", kind="saving-blocked")
+    NOTICES.add(f"{what} bị khoá; tạm dùng mặc định và chờ đọc được mới lưu.", kind="saving-blocked")
 
 
 def read_json(path: Path, what: str, valid: Callable[[Any], bool] = lambda _data: True) -> Any:

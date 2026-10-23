@@ -218,7 +218,7 @@ def _plain_error(raw: Any) -> str:
     detail = found.group(1).strip()
     if detail and any(ord(character) > 127 for character in detail) and not detail.startswith(("'", '"')):
         return detail
-    return "máy đọc thử gặp lỗi - thử lại, hay chọn giọng khác. Chi tiết có trong nhật ký của máy."
+    return "Đọc thử gặp lỗi — bạn thử lại hoặc chọn giọng khác."
 
 
 class PreviewError(Exception):
@@ -243,11 +243,9 @@ def producing_error(blocker: Any) -> PreviewError:
     if not title:
         return PreviewError(HTTPStatus.CONFLICT, "Đang làm sách - nghe thử khi máy rảnh.", "producing")
     if phase in ("analysis", "casting"):
-        message = (f"Máy đang phân tích cuốn “{title}” nên chưa nghe thử được - thử lại khi cuốn ấy làm xong. "
-                   "Đừng bấm Dừng lúc này: dừng giữa lúc phân tích là mất phần đã phân tích.")
+        message = (f"Đang phân tích “{title}”; Dừng sẽ mất phân tích — bạn chờ xong để nghe thử.")
     elif phase == "synthesis":
-        message = (f"Máy đang thu âm cuốn “{title}” nên chưa nghe thử được - thử lại khi cuốn ấy xong, "
-                   "hoặc Dừng nó ở trang của nó (làm tiếp sau, không mất gì) rồi nghe thử.")
+        message = (f"Đang thu “{title}” — bạn chờ xong hoặc Dừng ở trang sách; phần đã thu vẫn còn.")
     else:
         message = f"Máy đang làm cuốn “{title}” nên chưa nghe thử được - thử lại khi cuốn ấy xong."
     return PreviewError(HTTPStatus.CONFLICT, message, "producing", **extra)

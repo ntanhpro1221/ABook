@@ -93,7 +93,7 @@ def test_download_refuses_before_the_first_byte_when_the_disk_cannot_hold_the_re
         download(item(), tmp_path / "m.bin", lambda _done, _total: None, lambda: False)
     assert opened == [] and asked == [tmp_path]
     sentence, detail = download_failure("giọng VieNeu", raised.value)
-    assert "chỗ trống" in sentence and "ổ đĩa" in sentence.lower() and "Thử lại" in sentence and "không ghi được" not in sentence
+    assert "Thiếu chỗ tải" in sentence and "bạn dọn ổ" in sentence and "cần" in sentence and "còn" in sentence and "Thử lại" in sentence and "không ghi được" not in sentence
     assert detail == ""
 
 

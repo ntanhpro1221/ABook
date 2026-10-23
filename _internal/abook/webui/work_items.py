@@ -645,9 +645,8 @@ def _snapped_labels(project_root: Path, spoken: Any, names: dict[int, dict[str, 
         cards.append({
             "kind": "snap",
             "key": f"snap:{index}:{_character_key(label)}",
-            "title": f"“{who}” và “{written}” là một người?",
-            "problem": f"Ở {chapter}, máy ghi người nói là “{who}” nhưng sách chỉ viết “{written}”, nên máy coi là {written}"
-                       f" ({len(lines)} câu). Nếu đó là hai người khác nhau, chọn “Không, là người khác” - {who} được giọng riêng.",
+            "title": "Cùng một người?",
+            "problem": f"Máy đã gộp “{who}” vào “{written}” — khác người thì bạn chọn “Không, là người khác”.",
             "affected": len(lines),
             "doubt": 0.5,
             "options": ["Đúng, cùng một người", "Không, là người khác"],
@@ -701,9 +700,8 @@ def _teller_cards(project_root: Path, overrides: dict[str, Any], names: dict[int
             cards.append({
                 "kind": "teller-voice",
                 "key": "teller-voice",
-                "title": f"Lời dẫn nên đọc bằng giọng {'nữ' if female else 'nam'} như người kể “tôi”?",
-                "problem": f"Người kể xưng “tôi” là {'nữ' if female else 'nam'} nhưng lời dẫn đang đọc bằng giọng {'nam' if female else 'nữ'} ({now}). "
-                           f"Đổi sang {new} thì lời dẫn cùng giới với người kể. Lời “tôi” nói ra vẫn giữ giọng nhân vật.",
+                "title": "Giọng lời dẫn",
+                "problem": f"Người kể {'nữ' if female else 'nam'}, giọng {'nam' if female else 'nữ'} — đổi lời dẫn sang {new}; lời nói giữ giọng nhân vật.",
                 "affected": len(narrated),
                 "doubt": 0.4,
                 "options": [f"Đổi sang {new}", "Giữ giọng hiện tại"],
@@ -730,9 +728,8 @@ def _teller_cards(project_root: Path, overrides: dict[str, Any], names: dict[int
         cards.append({
             "kind": "teller-thought",
             "key": f"teller-thought:{speaker}",
-            "title": f"Nội tâm của “{who}” đọc bằng giọng người kể?",
-            "problem": f"{who} là người kể xưng “tôi”: lời nghĩ trong đầu nghe như người kể tự nói với mình. Máy đang đọc những câu này "
-                       f"bằng giọng nhân vật {who}; đọc bằng giọng người kể thì liền mạch với lời dẫn quanh nó. Lời {who} nói ra vẫn giữ giọng của họ.",
+            "title": "Giọng nội tâm",
+            "problem": f"Bạn đổi lời nghĩ của {who} sang giọng kể; lời nói ra giữ giọng nhân vật.",
             "affected": len(rows),
             "doubt": 0.4,
             "options": ["Đọc bằng giọng người kể", "Giữ giọng nhân vật"],
@@ -790,8 +787,8 @@ def _blocked_voice_wishes(project_root: Path, overrides: dict[str, Any], charact
         cards.append({
             "kind": "voice-wish",
             "key": f"voice-wish:{key}",
-            "title": f"Chưa đổi được giọng {who} sang {voice_label(preset)}",
-            "problem": f"{why} Chọn giọng khác ở tab Nhân vật, hay giữ giọng đang dùng.",
+            "title": f"Giọng của {who}",
+            "problem": f"{why} Bạn chọn giọng khác ở tab Nhân vật, hay giữ giọng đang dùng.",
             "affected": affected,
             "doubt": 1.0,
             "options": ["Chọn giọng khác", "Giữ giọng đang dùng"],
@@ -883,7 +880,7 @@ def _refused_requests(project_root: Path, overrides: dict[str, Any]) -> list[dic
                 "kind": "refused",
                 "key": f"refused:{found['section']}:{found['key']}",
                 "title": found["title"],
-                "problem": f"Máy đã xét yêu cầu của bạn nhưng không làm được: {found['reason']}. Bạn bỏ yêu cầu này, hay sửa lại ở tab tương ứng.",
+                "problem": f"Chưa làm được yêu cầu: {found['reason']} — bạn bỏ hoặc sửa lại ở tab tương ứng.",
                 "affected": 1,
                 "doubt": 1.0,
                 "options": ["Bỏ yêu cầu này"],
@@ -980,7 +977,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         items.append({
             "kind": "speaker",
             "key": f"speaker:{stable_id}",
-            "title": f"Ai nói câu này - {speaker_label(current)} hay {speaker_label(suggested)}?",
+            "title": "Ai đang nói?",
             "problem": f"Cách xưng hô trong câu ({words}) giống cách {speaker_label(suggested)} nói ở chương này hơn cách"
                        f" {speaker_label(current)} nói.",
             "affected": 1,
@@ -1015,11 +1012,8 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         items.append({
             "kind": "speaker",
             "key": f"split:{chapter_id}:{_character_key(label)}",
-            "title": f"{len(odd_rows)} câu của {who} ở chương này là của một người khác?",
-            "problem": f"{who} nói theo hai kiểu xưng hô ở chương này - {odd_list} ({len(odd_rows)} câu) và {usual_list}"
-                       f" ({usual_count} câu), không câu nào dùng cả hai - và kiểu {odd_list} khác cách {who} nói ở các chương"
-                       f" khác. Thường là máy đã gán lời một người không tên cho {who}. “Người khác…” để đặt tên và giới"
-                       f" (vd “bà thầy bói”, nữ) - người ấy được giọng riêng.",
+            "title": f"Người nói: {who}?",
+            "problem": f"{who} xưng {odd_list}, thường xưng {usual_list} — bạn kiểm tra người nói.",
             "affected": len(odd_rows),
             "doubt": 0.8,
             "options": list(dict.fromkeys(["Vai phụ không tên"] + [choice["label"] for choice in choices] + [who])),
@@ -1061,20 +1055,19 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         if heading is not None:
             # Đoạn mở bằng dòng tiêu đề góc nhìn ("Góc nhìn của Mai"): đề xuất CÓ TÊN, theo chính chữ của sách.
             told_by = speaker_label(proposal["suggested"]) if proposal["suggested"] else ""
-            title = f"{chapter_name}, {where}: " + (f"đoạn này kể bởi {told_by}" if told_by else "đoạn này kể ở ngôi thứ ba")
-            problem = (f"Theo dòng “{heading}” ở đầu đoạn. "
-                       + (f"Nhận thì máy coi {told_by} là người xưng “tôi” ở đoạn này" + (f", không phải {who}." if who else ".")
-                          if told_by else f"Nhận thì máy thôi gán lời kể ở đoạn này cho {who}."))
-            options = [f"{told_by} kể đoạn này" if told_by else "Đoạn kể ngôi thứ ba",
-                       f"Giữ {who} là người kể" if who else "Giữ nguyên", "Người kể là ai khác…"]
+            title = f"{chapter_name}, {where}: " + (f"{told_by} kể?" if told_by else "Ngôi thứ ba?")
+            problem = (f"Theo “{heading}”: {told_by} kể."
+                       if told_by else f"Theo “{heading}”: thôi gán lời kể cho {who}.")
+            options = [f"{told_by} kể đoạn này" if told_by else "Kể ngôi thứ ba",
+                       f"Giữ {who} kể" if who else "Giữ nguyên", "Người kể khác…"]
         else:
             if proposal["r1"] is not None and proposal["r1"] < 1:
-                why = "Lời kể ở đây hầu như không có “tôi”, khác với phần còn lại của chương."
+                why = "Lời kể ít “tôi”."
             else:
-                why = f"Lời kể gọi tên {who} như nói về một người khác, và ít “tôi” hơn hẳn phần còn lại."
-            title = f"{chapter_name}, {where}: có vẻ không phải {who} kể"
-            problem = f"{why} Nếu người kể ở đây là người khác, máy sẽ thôi gán lời họ cho {who}."
-            options = [f"Không phải {who} kể", f"Giữ {who} là người kể", "Người kể là ai khác…"]
+                why = f"Lời kể ít “tôi”, gọi tên {who}."
+            title = f"{chapter_name}, {where}: khác người kể?"
+            problem = f"{why} Bạn nhận để thôi gán lời kể đoạn này cho {who}."
+            options = [f"Không phải {who} kể", f"Giữ {who} kể", "Người kể khác…"]
         # Đoạn đã phân tích XONG: lựa chọn chỉ áp khi làm lại sách (applies_note) - thẻ này không làm được gì ngay, nên xuống
         # cuối danh sách (xem sort ở cuối) và sau khi bấm không tính vào "chờ áp dụng".
         redo_only = total > 0 and done >= total
@@ -1082,7 +1075,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             "kind": "narrator",
             "key": f"narrator:{proposal['chapter_index']}:{first}:{last}",
             "title": title,
-            "problem": problem + ("" if decision is not None else " Chưa trả lời thì máy giữ nguyên."),
+            "problem": problem + ("" if decision is not None else " Chưa chọn: giữ nguyên."),
             "affected": total,
             "doubt": 0.5,
             "options": options,
@@ -1129,7 +1122,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             "key": f"gender:{character['canonical_name']}",
             # Vai phụ cục bộ cùng tên ở nhiều chương là những người khác nhau ("Người Dân" ở 727, 728, 731): tên chương
             # trong tiêu đề để ba thẻ không trông như một thẻ lặp (soát UX 29-09) - chỉ khi tên hiển thị thật sự trùng.
-            "title": f"{speaker_label(character['canonical_name'])} là nam hay nữ?"
+            "title": f"Giới {speaker_label(character['canonical_name'])}"
                      + (f" · {names.get(chapters_of[0], {}).get('name', '')}"
                         if len(chapters_of) == 1 and shown_names[speaker_label(str(character["canonical_name"]))] > 1 else ""),
             "problem": "Truyện chưa cho máy đủ dấu hiệu về giới của nhân vật này; máy đang đọc bằng "
@@ -1166,9 +1159,8 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         items.append({
             "kind": "vocative",
             "key": f"vocative:{row['id']}",
-            "title": f"Câu này gọi tên “{name}” nhưng lại gán cho chính {name}",
-            "problem": f"Không ai gọi tên chính mình: câu có tên {name} thường là nói với {name} hay nói về {name}, không"
-                       f" phải {name} nói.",
+            "title": "Tên người nghe",
+            "problem": f"Câu nhắc tên {name} có thể nói với hoặc nói về họ — bạn kiểm tra người nói.",
             "affected": 1,
             "doubt": 0.7,
             "options": ["Chọn người nói khác", "Giữ nguyên"],
@@ -1212,9 +1204,8 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
                 items.append({
                     "kind": "turn",
                     "key": f"turn:{lines[1]['stable_id']}",
-                    "title": f"Hai câu liền nhau đều là của {name}?",
-                    "problem": f"Câu sau là một đoạn riêng, không lời dẫn, nói ngay sau một câu của {name}. Hầu hết những"
-                               " cặp như thế là hai người đối đáp - có thể câu sau là của người đang nói với " + name + ".",
+                    "title": "Cùng người nói?",
+                    "problem": "Hai câu không có lời dẫn có thể là đối đáp — câu sau có thể đang nói với " + name + ".",
                     "affected": 1,
                     "doubt": 0.9,
                     # Chip đầu (người kể "tôi", hay người nói nhiều nhất) chỉ là ứng viên thường gặp, máy không đề xuất ai.
@@ -1229,10 +1220,8 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             items.append({
                 "kind": "turn",
                 "key": f"turns:{lines[0]['stable_id']}",
-                "title": f"{len(lines)} câu liền nhau đều là của {name}?",
-                "problem": f"{len(lines)} đoạn thoại liền nhau, không lời dẫn, đều gán cho {name}. Thường là hai người đối"
-                           f" đáp: chọn người nói các câu xen kẽ (đánh dấu “sẽ đổi”), các câu còn lại vẫn của {name}. Cả"
-                           " chuỗi là lời của MỘT người khác (độc thoại vắt nhiều đoạn) thì chọn “Cả chuỗi”.",
+                "title": "Cùng người nói?",
+                "problem": f"Cùng gán {name} — bạn đổi câu xen kẽ khi đối đáp, hoặc “Cả chuỗi” nếu độc thoại.",
                 "affected": len(changing),
                 "doubt": 0.9,
                 "suggested": False,
@@ -1280,7 +1269,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             items.append({
                 "kind": "speaker",
                 "key": f"speaker:{stable_id}",
-                "title": f"Ai nói câu này - {speaker_label(current)}?",
+                "title": "Ai đang nói?",
                 "problem": f"Máy gán cho {speaker_label(current)} nhưng chỉ chắc khoảng {round(float(found['p_first']) * 100)}%.",
                 "suggested": False,  # không có ứng viên nào được đề xuất: nút đầu không được tô như "máy đề xuất"
                 "affected": 1,
@@ -1321,10 +1310,8 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             items.append({
                 "kind": "alias",
                 "key": f"alias:{longer}|{shorter}",
-                "title": f"“{speaker_label(shorter)}” và “{speaker_label(longer)}” là một người?",
-                "problem": "Hai tên này đang là hai nhân vật với hai giọng khác nhau, nhưng tên ngắn nằm trọn trong tên dài."
-                           f" Gộp thì {len(named[minor])} câu của {speaker_label(minor)} đọc bằng giọng của {into}"
-                           f" - giọng đang đọc {len(named[major])} câu của {into}.",
+                "title": "Tên trùng một phần",
+                "problem": f"Tên ngắn nằm trong tên dài — gộp sẽ đọc {speaker_label(minor)} bằng giọng {into}.",
                 "affected": len(named[minor]),
                 "doubt": 0.6,
                 "options": [f"Gộp vào {into}", "Hai người khác nhau"],
@@ -1374,10 +1361,8 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             items.append({
                 "kind": "alias",
                 "key": f"alias:{major}|{minor}",
-                "title": f"“{speaker_label(minor)}” là tên khác của {into}?",
-                "problem": f"Sách viết hai tên này sát nhau {both} lần (như “{second} {first}”) - thường là danh hiệu hay"
-                           f" biệt danh của một người. Máy đang cho {len(named[minor])} câu của {speaker_label(minor)} một"
-                           f" giọng riêng; gộp thì đọc bằng giọng của {into} - giọng đang đọc {len(named[major])} câu của {into}.",
+                "title": "Tên khác?",
+                "problem": f"Hai tên hay đi liền nhau — gộp sẽ đọc {speaker_label(minor)} bằng giọng {into}.",
                 "affected": len(named[minor]),
                 "doubt": 0.7,
                 "options": [f"Gộp vào {into}", "Hai người khác nhau"],
@@ -1411,10 +1396,8 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         items.append({
             "kind": "alias",
             "key": f"alias:{major}|{minor}",
-            "title": f"“{who}” và “{into}” - hai tên này có phải một người?",
-            "problem": f"Hai tên viết gần giống nhau mà máy đang đọc bằng hai giọng: {who} {len(named[minor])} câu, {into}"
-                       f" {len(named[major])} câu. Cùng một người thì {len(named[minor])} câu của {who} đọc bằng giọng của {into};"
-                       " hai người khác nhau thì giữ nguyên.",
+            "title": "Cùng một người?",
+            "problem": f"Hai tên gần giống đang có hai giọng — gộp sẽ đọc {who} bằng giọng {into}.",
             "affected": len(named[minor]),
             "doubt": NAME_PAIR_DOUBT,
             "options": ["Cùng một người", "Hai người khác nhau"],
@@ -1452,7 +1435,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             for choice in _cast_choices(spoken, chapters, offered, speaker_label):
                 offered.add(choice["value"].casefold())
                 choices.append({**choice, "label": f"Tất cả là {choice['label']}", "name": choice["label"]})
-        choices.append({"label": "Người kể đọc tất cả", "value": NARRATOR, "name": "Người kể"})
+        choices.append({"label": "Người kể", "value": NARRATOR, "name": "Người kể"})
         # Mọi câu đã được giữ đúng người nó đang có: người nghe xác nhận máy chia đúng.
         if all((wish := speaker_wishes.get(str(row["stable_id"]))) is not None
                and wish["speaker"].casefold() == str(row["speaker"]).casefold() for row in rows):
@@ -1468,10 +1451,8 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         items.append({
             "kind": "bracket",
             "key": f"bracket:{chapter_id}",
-            "title": f"Lời trong 『』 ở {chapter.get('full') or chapter.get('title') or 'chương này'} là của một người?",
-            "problem": f"{len(rows)} câu trong ngoặc 『』 - thường là thần giao, linh thể, giọng qua điện thoại hay bình"
-                       f" luận - máy chia cho {len(counts)} người ({split}). Máy hay sai loại câu này nhất. Nếu đúng là"
-                       " những người ấy, bấm “Đúng rồi, giữ nguyên”; sai vài câu thì sửa từng câu ở tab Kịch bản.",
+            "title": "Lời trong 『』",
+            "problem": f"{len(rows)} câu 『』 đang chia cho {split} — bạn kiểm tra người nói.",
             "affected": len(rows),
             "doubt": 0.8,
             "options": [choice["label"] for choice in choices],
@@ -1525,7 +1506,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         items.append({
             "kind": "shared-voice",
             "key": "shared-voice:" + "|".join(sorted(people)),
-            "title": f"{', '.join(labels)} dùng chung một giọng trong cùng chương",
+            "title": f"{', '.join(labels)}: trùng giọng",
             "problem": f"Cùng nói trong {len(chapter_ids)} chương mà một giọng - nghe không biết ai đang nói.",
             "affected": len(rows),
             "doubt": 0.8,
@@ -1558,12 +1539,11 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             "kind": "unnamed",
             "newPerson": label[:1].upper() + label[1:],
             "key": f"unnamed-role:{role}",
-            "title": f"{len(rows)} câu của vai phụ “{label}” ở {where} - một người?",
-            "problem": f"Máy để “{label}” là vai phụ không tên riêng ở từng chỗ - {len(members)} giọng khác nhau. Nếu cả"
-                       " cuốn là một người, chọn người ấy một lần cho mọi câu; câu nào không phải thì bỏ chọn trước.",
+            "title": "Vai phụ cùng tên",
+            "problem": f"“{label}” có {len(members)} giọng — bạn chọn một người cho các câu đúng, bỏ chọn câu khác.",
             "affected": len(rows),
             "doubt": 0.4,
-            "options": [choice["label"] for choice in choices] + [f"Là một người mới tên “{label[:1].upper() + label[1:]}”", "Mỗi chỗ một người"],
+            "options": [choice["label"] for choice in choices] + [f"Người mới: “{label[:1].upper() + label[1:]}”", "Mỗi chỗ một người"],
             "current": f"{len(members)} vai phụ riêng",
             # Mọi câu của nhóm (không chỉ vài câu ví dụ): người nghe bỏ chọn từng câu ngay trên thẻ.
             "examples": [{**_example(row, names, speaker_label, audio), "stableId": str(row["stable_id"])}
@@ -1615,17 +1595,15 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             items.append({
                 "kind": "unnamed",
                 "key": f"unnamed:{speaker}",
-                "title": f"“{who}” có phải {_or_list(people, 'hay')}?",
-                "problem": f"Ở {chapter}, máy để “{who}” là vai phụ không tên với giọng riêng ({len(rows)} câu), nhưng lời kể quanh"
-                           f" đó nhắc tới {_or_list(people, 'và')} - người cũng nói trong chương này. Nếu đúng là một người trong"
-                           " số đó, chọn tên ấy để các câu này đọc bằng giọng của họ. Máy hay đoán nhầm chỗ này nên không tự đổi.",
+                "title": "Vai này là ai?",
+                "problem": f"“{who}” có thể là {_or_list(people, 'và')} — bạn chọn đúng tên để dùng giọng của họ.",
                 "affected": len(rows),
                 "doubt": ANONYMOUS_DOUBT,
                 "suggested": False,
                 "askLast": True,
-                "options": people + ["Không ai trong số này"],
+                "options": people + ["Không phải họ"],
                 "current": "Vai phụ không tên",
-                "keepLabel": "Không ai trong số này",
+                "keepLabel": "Không phải họ",
                 # Lời kể làm bằng chứng: không có "máy gán", tên ứng viên được tô (`names`: các dạng tên, đã hạ chữ).
                 "examples": [_example(row, names, speaker_label, audio) if row["kind"] != "narration"
                              else {**_example(row, names, speaker_label, audio), "speaker": "", "narration": True,
@@ -1643,8 +1621,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
             "kind": "unnamed",
             "key": f"unnamed:{speaker}",
             "title": f"“{speaker_label(speaker)}” là ai?",
-            "problem": "Máy để người này là vai phụ không tên (giọng riêng trong chương). Nếu thật ra là nhân vật có tên thì"
-                       " nên dùng giọng của nhân vật ấy.",
+            "problem": "Vai phụ có giọng riêng trong chương — bạn chọn tên nếu là nhân vật đã có.",
             "affected": len(rows),
             "doubt": 0.4,
             "options": ["Là một nhân vật có tên", "Đúng là vai phụ"],
@@ -1663,7 +1640,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         items.append({
             "kind": "pronunciation",
             "key": f"pronunciation:{row['surface']}",
-            "title": f"Đọc “{row['surface']}” là “{shown_reading(str(row['spoken_form']))}”?",
+            "title": f"Đọc “{row['surface']}”?",
             # Không ghi "máy chắc 88%": gần như mọi tên máy tự đoán đều mang đúng con số ấy nên nó không nói gì (soát UX
             # 29-09: 50/51 thẻ); số câu đã có ở "Ảnh hưởng N câu".
             "problem": "Cách đọc do máy tự đoán - nghe một câu mẫu, sai thì sửa ngay trên thẻ."
@@ -1693,7 +1670,7 @@ def work_items(project_root: Path, verdicts: dict[str, Any] | None = None) -> di
         items.append({
             "kind": "audio",
             "key": f"audio:{chapter_id}",
-            "title": f"{len(entries)} câu thu âm cần nghe lại - {entries[0].get('chapterTitle', '')}",
+            "title": "Nghe lại bản thu",
             "problem": "Khâu tự kiểm tra không chắc các câu này (xem tab Cần nghe lại).",
             "affected": len(entries),
             "doubt": 0.5,

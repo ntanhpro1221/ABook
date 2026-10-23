@@ -116,7 +116,7 @@ def test_studio_announces_anyway_when_the_supervisor_never_holds(studio) -> None
     runner._running.add(str(paths.root.resolve()))
     app._precast_tick(now=0.0)
     app._precast_tick(now=31.0)
-    assert len(toasts) == 1 and "không phải thu lại" in toasts[0][1]
+    assert len(toasts) == 1 and "tránh thu lại" in toasts[0][1]
 
 
 def test_by_default_the_line_does_not_wait(studio) -> None:
@@ -126,7 +126,7 @@ def test_by_default_the_line_does_not_wait(studio) -> None:
 
     app._precast_tick()
     assert pauses == [], "tắt (mặc định): không tạm dừng"
-    assert len(toasts) == 1 and "không phải thu lại" in toasts[0][1], "vẫn báo để người dùng mở màn duyệt"
+    assert len(toasts) == 1 and "tránh thu lại" in toasts[0][1], "vẫn báo để người dùng mở màn duyệt"
     status, data = _call(server, "GET", _url(paths) + "/precast")
     assert data["wait"] is False and data["held"] is False and data["announcedAt"]
 

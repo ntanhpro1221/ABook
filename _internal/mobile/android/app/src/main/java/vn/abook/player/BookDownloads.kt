@@ -148,7 +148,7 @@ object BookDownloads {
     /** Lời cho người nghe + chữ gốc (chỉ khi là lỗi mạng đã dịch thành câu) - dùng chung cho lời gọi bị từ chối và sự kiện "download". */
     fun describe(error: Exception, fallback: String = error.javaClass.simpleName): Pair<String, String?> {
         if (error is Pin.ChangedException) return (error.message ?: Pin.CHANGED) to null
-        if (NetErrors.unpaired(error)) return "Máy kia đã thôi ghép với điện thoại này - ghép lại để tải và nghe thẳng sách của nó" to null
+        if (NetErrors.unpaired(error)) return "Máy kia đã thôi ghép — bạn ghép lại để tải và nghe sách." to null
         val kind = NetErrors.kind(error) ?: return (error.message ?: fallback) to null
         return NetErrors.message(kind) to NetErrors.technical(error)
     }

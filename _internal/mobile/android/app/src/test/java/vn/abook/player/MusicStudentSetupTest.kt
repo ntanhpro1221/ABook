@@ -379,7 +379,7 @@ class MusicStudentSetupTest {
         setup.join()
         var status = setup.status()
         assertEquals("error", status.getString("state"))
-        assertTrue(status.getString("error"), status.getString("error").contains("mã kiểm"))
+        assertEquals("bộ phân tích nhạc tải về bị hỏng — bạn bấm Thử lại để tải lại.", status.getString("error"))
         assertFalse(File(root, "music/student/big.bin").exists())
         assertFalse("bản hỏng không được giữ để tải tiếp", File(root, "music/student/big.bin.part").exists())
         assertNull("không cắm bộ phân tích từ bản hỏng", store.analyzer)
@@ -399,7 +399,7 @@ class MusicStudentSetupTest {
         setup.join()
         val status = setup.status()
         assertEquals("error", status.getString("state"))
-        assertTrue(status.getString("error"), status.getString("error").startsWith("Không tải được bộ phân tích nhạc"))
+        assertTrue(status.getString("error"), status.getString("error").startsWith("Chưa tải được bộ phân tích nhạc"))
         // Nguyên văn lỗi máy chủ nằm trong "Chi tiết", không trong câu người dùng đọc (soát a66).
         assertTrue(status.getString("errorDetail"), status.getString("errorDetail").contains("404"))
         assertFalse(status.getBoolean("ready"))

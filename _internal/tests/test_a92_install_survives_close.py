@@ -124,7 +124,7 @@ def test_an_install_child_orphaned_by_a_dead_host_blocks_a_second_install_until_
         status = setup.status()
         assert status["leftover"] and status["leftover"]["orphan"] is True and status["leftover"]["childPid"] == orphan.pid
         status = setup.start()
-        assert status["running"] is False and "vẫn còn chạy ngầm" in status["error"], "báo rõ, không cài chồng"
+        assert status["running"] is False and "Lượt cài cũ còn chạy" in status["error"], "báo rõ, không cài chồng"
         assert setup._thread is None
         setup.cancel()  # Dừng lượt cũ
         assert _wait_gone([orphan.pid]), "tiến trình mồ côi bị dừng"
@@ -145,7 +145,7 @@ def test_a_second_app_window_installing_is_reported_and_left_alone(tmp_path: Pat
             "pid": other_app.pid, "started": install_lock.process_started(other_app.pid), "since": time.time(), "what": "cài Studio",
             "child": None}), encoding="utf-8")
         status = setup.start()
-        assert "cửa sổ ABook khác" in status["error"] and not status["running"]
+        assert "ABook khác đang cài Studio" in status["error"] and not status["running"]
         setup.cancel()
         assert other_app.poll() is None, "app khác đang cài không bị giết"
     finally:

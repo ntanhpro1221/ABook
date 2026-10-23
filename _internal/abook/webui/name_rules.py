@@ -40,7 +40,7 @@ def _typed(raw: Any, what: str) -> str:
 
 def _too_long(cleaned: str, limit: int, what: str) -> None:
     if len(cleaned) > limit:
-        raise NameProblem(f"{what} dài tối đa {limit} ký tự (bạn đang gõ {len(cleaned)}) - bạn rút ngắn lại.")
+        raise NameProblem(f"{what} tối đa {limit} ký tự, hiện có {len(cleaned)} — bạn rút ngắn lại.")
 
 
 def is_reserved(name: str) -> bool:
@@ -61,7 +61,7 @@ def person(raw: Any, others: Iterable[str] = (), *, allow_empty: bool = False) -
     folded = name.casefold()
     for other in others:
         if clean(other).casefold() == folded:
-            raise NameProblem(f"Trong sách đã có người tên “{clean(other)}” - bạn đặt tên khác để khỏi nhầm hai người.")
+            raise NameProblem(f"Đã có “{clean(other)}” trong sách — bạn đặt tên khác để tránh nhầm người.")
     return name
 
 

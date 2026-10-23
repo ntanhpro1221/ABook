@@ -52,7 +52,7 @@ object BookEdits {
     private const val LEVEL_MAX = -6.0
     internal const val DEFAULT_LEVEL_DB = -20.0 // music_plan.DEFAULT_LEVEL_DB
     private val TOP_KEYS = setOf("format", "version", "title", "author", "cover", "characters", "chapters", "skip", "readings", "music", "wishes")
-    const val TOO_BIG = "Quá nhiều thay đổi đang chờ trong cuốn này - hãy lưu, áp bớt vào dự án rồi làm tiếp."
+    const val TOO_BIG = "Quá nhiều sửa đổi đang chờ — bạn lưu và áp bớt vào dự án rồi làm tiếp."
     private val COVER_KEYS = setOf("color", "width", "height", "version")
     private val MUSIC_KEYS = setOf("enabled", "levelDb", "silenced", "pins", "tracks", "playlist", "mine")
     /** Số bài tối đa của "Nhạc của tôi" mang theo sách (book_edits.MAX_MINE). */
@@ -444,7 +444,7 @@ object BookEdits {
         if (music.has("tracks") || wanted.isNotEmpty()) {
             val tracks = music.opt("tracks")
             if (tracks !is JSONObject || names(tracks).toSet() != wanted) {
-                throw EditsError("Nhạc đã chọn trong phần sửa không khớp với các đoạn đổi bài và danh sách đã chọn.")
+                throw EditsError("Nhạc trong phần sửa không khớp các đoạn đổi bài và danh sách đã chọn.")
             }
             val kept = JSONObject()
             for (sha in names(tracks).sorted()) kept.put(sha, validateTrack(tracks.opt(sha)))
@@ -1241,7 +1241,7 @@ object BookEdits {
             val (start, end) = Readings.coreSpan(word)
             word = word.substring(start, end)
         }
-        if (word.isEmpty() || !Readings.isKey(word)) throw EditsError("Chỉ đặt được cách đọc cho một từ hay tối đa 6 từ liền nhau, không có dấu câu ở giữa.")
+        if (word.isEmpty() || !Readings.isKey(word)) throw EditsError("Bạn chọn tối đa 6 từ liền nhau, không có dấu câu, để đặt cách đọc.")
         return word to cleanText(spoken, READING_SPOKEN_MAX)
     }
 
@@ -1337,7 +1337,7 @@ object BookEdits {
                 if (!part.renameTo(target)) throw IOException("không đổi tên được file tạm")
             }
         } catch (error: IOException) {
-            throw EditsError("Không chép được bài nhạc vào sách (${error.message ?: error.javaClass.simpleName}).")
+            throw EditsError("Chưa chép được nhạc vào sách — bạn thử lại.")
         } finally {
             part.delete()
         }

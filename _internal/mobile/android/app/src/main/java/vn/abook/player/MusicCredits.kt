@@ -8,7 +8,7 @@ import org.json.JSONObject
  */
 object MusicCredits {
     /** Câu nói nhạc đã bị chỉnh (cắt vòng, trộn dưới giọng, đổi âm lượng) - CC BY đòi nói rõ; cùng câu với máy tính và giao diện. */
-    const val MODIFIED_NOTE = "Đã chỉnh sửa: các bài nhạc được cắt vòng, trộn nhỏ dưới giọng đọc và chỉnh âm lượng cho vừa sách."
+    const val MODIFIED_NOTE = "Nhạc đã cắt vòng, trộn nhỏ dưới giọng đọc và cân âm lượng cho sách."
     private val CC_KINDS = Regex("""^by(-(nc|nd|sa))*$""")
     private val CC_URL = Regex("""creativecommons\.org/(licenses|publicdomain)/([a-z-]+)/(\d+(?:\.\d+)?)""", RegexOption.IGNORE_CASE)
 

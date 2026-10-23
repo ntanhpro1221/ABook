@@ -19,6 +19,20 @@ HOLDER = "B"
 META = Path(__file__).parent / "fixtures/listening_revision/a118_meta.json"
 
 
+@pytest.mark.parametrize("case", json.loads(META.with_name("messages.json").read_text("utf-8")), ids=lambda c: c["name"])
+def test_shared_revision_messages_match_android(case):
+    seen = []
+    if "error" in case:
+        with pytest.raises(ValueError) as error:
+            checked_peer({}, case["incoming"], seen.append)
+        assert str(error.value) == case["error"]
+        assert seen == []
+    else:
+        accepted = checked_peer({}, case["incoming"], seen.append)
+        assert "reading" not in accepted
+        assert seen == [case["notice"]]
+
+
 class Clock:
     def __init__(self) -> None:
         self.now = 1_800_000_000.0

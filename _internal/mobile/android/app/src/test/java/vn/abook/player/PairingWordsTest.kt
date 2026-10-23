@@ -14,6 +14,7 @@ import org.junit.Test
  * đếm lùi số lần thử, đủ 5 lần thì mã bị huỷ; ghép bằng địa chỉ của chính điện thoại này thì bị từ chối trước khi gửi mã.
  */
 class PairingWordsTest {
+    private val words = BookEditsFixtures.obj("pairing_words.json")
     @Before
     fun setUp() {
         val root = BookEditsFixtures.tempDir("abook-pairing-words")
@@ -37,10 +38,10 @@ class PairingWordsTest {
         for (left in 4 downTo 1) {
             val (status, error) = tryCode(wrong)
             assertEquals(403, status)
-            assertEquals("Mã ghép nối sai - còn $left lần thử (sai 5 lần mã sẽ bị huỷ)", error)
+            assertEquals(words.getString("wrong").replace("{left}", left.toString()), error)
         }
         val (_, last) = tryCode(wrong)
-        assertEquals("Nhập sai 5 lần nên mã đã bị huỷ - tạo mã mới ở máy kia rồi nhập lại", last)
+        assertEquals(words.getString("blocked"), last)
         // Mã đã huỷ: ngay cả mã đúng cũng không vào được nữa.
         assertEquals(403, tryCode(code).first)
         assertTrue(LibraryServer.blocked)
@@ -51,13 +52,13 @@ class PairingWordsTest {
         LibraryServer.cancelPairing()
         val (status, error) = tryCode("123456")
         assertEquals(403, status)
-        assertEquals("Mã ghép nối sai hoặc đã hết hạn - tạo mã mới ở máy kia", error)
+        assertEquals(words.getString("expired"), error)
     }
 
     @Test
     fun theLeftoverWordsMatchTheComputer() {
-        assertEquals("Mã ghép nối sai - còn 3 lần thử (sai 5 lần mã sẽ bị huỷ)", LibraryServer.wrongCodeText(false, true, 2))
-        assertEquals("Mã ghép nối sai hoặc đã hết hạn - tạo mã mới ở máy kia", LibraryServer.wrongCodeText(false, false, 0))
+        assertEquals(words.getString("wrong").replace("{left}", "3"), LibraryServer.wrongCodeText(false, true, 2))
+        assertEquals(words.getString("expired"), LibraryServer.wrongCodeText(false, false, 0))
     }
 
     @Test

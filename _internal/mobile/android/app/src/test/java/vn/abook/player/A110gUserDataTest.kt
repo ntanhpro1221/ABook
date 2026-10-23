@@ -22,7 +22,7 @@ class A110gUserDataTest {
         val peer = JSONObject("""{"last":{"chapterId":1,"seconds":50,"at":100,"rev":{"counter":1099511627776,"node":"peer"}},"_clock":1099511627776}""")
         Store.mergeRemote("book", peer)
         assertEquals(10.0, Store.state("book").getJSONObject("last").getDouble("seconds"), 0.0)
-        assertTrue(Store.dataNotices().toString().contains("bước nhảy"))
+        assertTrue(Store.dataNotices().toString().contains("Phiên bản đồng bộ"))
         Store.progress("book", 1, 600.0, 1000.0)
         Store.saveReading("book", 1, 100)
         Store.addBookmark("book", 1, 600.0, note = "")

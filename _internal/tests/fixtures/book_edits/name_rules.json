@@ -48,7 +48,7 @@
  {
   "fn": "person",
   "input": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "error": "T\u00ean d\u00e0i t\u1ed1i \u0111a 80 k\u00fd t\u1ef1 (b\u1ea1n \u0111ang g\u00f5 81) - b\u1ea1n r\u00fat ng\u1eafn l\u1ea1i."
+  "error": "T\u00ean t\u1ed1i \u0111a 80 k\u00fd t\u1ef1, hi\u1ec7n c\u00f3 81 \u2014 b\u1ea1n r\u00fat ng\u1eafn l\u1ea1i."
  },
  {
   "fn": "person",
@@ -82,7 +82,7 @@
    "Lucien",
    "Natasha"
   ],
-  "error": "Trong s\u00e1ch \u0111\u00e3 c\u00f3 ng\u01b0\u1eddi t\u00ean \u201cNatasha\u201d - b\u1ea1n \u0111\u1eb7t t\u00ean kh\u00e1c \u0111\u1ec3 kh\u1ecfi nh\u1ea7m hai ng\u01b0\u1eddi."
+  "error": "\u0110\u00e3 c\u00f3 \u201cNatasha\u201d trong s\u00e1ch \u2014 b\u1ea1n \u0111\u1eb7t t\u00ean kh\u00e1c \u0111\u1ec3 tr\u00e1nh nh\u1ea7m ng\u01b0\u1eddi."
  },
  {
   "fn": "person",
@@ -121,7 +121,7 @@
  {
   "fn": "surface",
   "input": "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
-  "error": "T\u1eeb c\u1ea7n \u0111\u1ed5i c\u00e1ch \u0111\u1ecdc d\u00e0i t\u1ed1i \u0111a 80 k\u00fd t\u1ef1 (b\u1ea1n \u0111ang g\u00f5 81) - b\u1ea1n r\u00fat ng\u1eafn l\u1ea1i."
+  "error": "T\u1eeb c\u1ea7n \u0111\u1ed5i c\u00e1ch \u0111\u1ecdc t\u1ed1i \u0111a 80 k\u00fd t\u1ef1, hi\u1ec7n c\u00f3 81 \u2014 b\u1ea1n r\u00fat ng\u1eafn l\u1ea1i."
  },
  {
   "fn": "spoken",
@@ -136,6 +136,6 @@
  {
   "fn": "spoken",
   "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "error": "C\u00e1ch \u0111\u1ecdc d\u00e0i t\u1ed1i \u0111a 120 k\u00fd t\u1ef1 (b\u1ea1n \u0111ang g\u00f5 121) - b\u1ea1n r\u00fat ng\u1eafn l\u1ea1i."
+  "error": "C\u00e1ch \u0111\u1ecdc t\u1ed1i \u0111a 120 k\u00fd t\u1ef1, hi\u1ec7n c\u00f3 121 \u2014 b\u1ea1n r\u00fat ng\u1eafn l\u1ea1i."
  }
 ]

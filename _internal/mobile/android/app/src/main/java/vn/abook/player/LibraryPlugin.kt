@@ -1075,7 +1075,7 @@ class LibraryPlugin : Plugin() {
         val body = call.getObject("body")?.let { JSONObject(it.toString()) }
         if (method.uppercase() == "GET" && !fetchStreamedScript(path)) {
             // Chữ chương chưa về máy mà máy giữ sách không trả lời: nói đúng thế, không phải "không có chương này" (soát a27 lỗi 12).
-            val error = JSONObject().put("error", "Máy giữ sách này không trả lời (tắt hay mất mạng). Chữ chương này chưa có trên máy này")
+            val error = JSONObject().put("error", "Máy giữ sách chưa trả lời nên chưa lấy được chữ chương — bạn kiểm tra kết nối.")
             call.resolve(JSObject().put("status", 503).put("body", JSObject.fromJSONObject(error)))
             return@background
         }

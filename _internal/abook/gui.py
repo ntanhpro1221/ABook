@@ -726,8 +726,7 @@ class MainWindow(QMainWindow):
         if not self.title_edit.text().strip():
             self.title_edit.setText(folder.name)
         self._append_log(
-            f"Đã tìm thấy {len(discovered)} file TXT trong folder; thêm mới {added} file. "
-            "Không quét thư mục con."
+            f"Thấy {len(discovered)} file TXT, thêm {added}; không quét thư mục con."
         )
 
     def _remove_files(self) -> None:

@@ -203,11 +203,10 @@ def test_the_refusal_names_the_book_and_the_phase_that_hold_the_card(tmp_path: P
         return raised.value
 
     analysis = refusal("analysis")
-    assert analysis.reason == "producing" and "phân tích cuốn “Tắt đèn”" in analysis.message
-    assert "Đừng bấm Dừng" in analysis.message, "dừng giữa pha phân tích là đổi quyển sách: không mời"
+    assert analysis.reason == "producing" and analysis.message == "Đang phân tích “Tắt đèn”; Dừng sẽ mất phân tích — bạn chờ xong để nghe thử."
     assert analysis.extra == {"busyBook": "Tắt đèn", "busyBookId": "tat-den", "busyPhase": "analysis"}
     synthesis = refusal("synthesis")
-    assert "thu âm cuốn “Tắt đèn”" in synthesis.message and "Dừng nó" in synthesis.message
+    assert synthesis.message == "Đang thu “Tắt đèn” — bạn chờ xong hoặc Dừng ở trang sách; phần đã thu vẫn còn."
     assert "Tạm dừng" not in synthesis.message, "Tạm dừng không nhả card: không hứa điều đó"
     assert "cuốn “Tắt đèn”" in refusal("").message
 

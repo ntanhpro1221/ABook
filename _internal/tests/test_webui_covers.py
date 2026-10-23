@@ -164,7 +164,7 @@ def test_a_picture_with_too_many_pixels_is_refused_before_it_is_unpacked() -> No
     buffer = io.BytesIO()
     huge.save(buffer, "PNG", optimize=False)
     assert len(buffer.getvalue()) < covers.MAX_UPLOAD_BYTES
-    with pytest.raises(covers.CoverError, match="quá nhiều điểm ảnh"):
+    with pytest.raises(covers.CoverError, match="Ảnh vượt 40 triệu điểm ảnh"):
         covers.render_cover(buffer.getvalue())
 
     # Ảnh chụp điện thoại lớn (JPEG) vẫn dùng được: giải mã thẳng ở cỡ nhỏ.

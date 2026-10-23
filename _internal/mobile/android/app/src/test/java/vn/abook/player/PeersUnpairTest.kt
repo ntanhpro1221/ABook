@@ -78,7 +78,7 @@ class PeersUnpairTest {
         val id = streamed("k1", "b1", "phone")
         rename(id, "Chỉ ở đây")
         val error = assertThrows(IllegalStateException::class.java) { Peers.refuseIfUnsent("k1", discard = false) }
-        assertTrue(error.message!!.contains("1 cuốn còn 1 thay đổi chưa gửi"))
+        assertTrue(error.message!!.contains("Còn 1 sửa đổi chưa gửi"))
         assertTrue(File(Store.bookDir(id), "edits.json").isFile) // từ chối thì không đụng gì
         Peers.refuseIfUnsent("k1", discard = true) // đã chọn bỏ: không từ chối
         Peers.refuseIfUnsent("k9", discard = false) // thiết bị không có sửa nào: như cũ
@@ -110,7 +110,7 @@ class PeersUnpairTest {
         val error = assertThrows(java.io.IOException::class.java) {
             Peers.sendUnsent("k1") { id -> EditsSync.push(id) { if (id == two) throw java.io.IOException("mất mạng") else accepted() } }
         }
-        assertTrue(error.message!!.contains("Chưa tới được máy tính"))
+        assertTrue(error.message!!.contains("Chưa nối được máy tính"))
         assertEquals(listOf(two), Peers.unsent("k1").books.map { it.id })
         assertEquals("Tên hai", BookEdits.load(Store.bookDir(two)).getString("title"))
         assertThrows(IllegalStateException::class.java) { Peers.refuseIfUnsent("k1", discard = false) }

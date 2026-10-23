@@ -29,7 +29,7 @@ class TwoDevicesTest {
         assertTrue(NetErrors.unpaired(IOException("x", NetErrors.Refused(401, "Thiết bị chưa ghép nối"))))
         assertFalse(NetErrors.unpaired(NetErrors.Refused(404, "Không có sách này")))
         val message = NetErrors.message(NetErrors.Kind.UNREACHABLE, "máy tính NGDtuanh-Lecoo")
-        assertTrue(message, message.startsWith("Không tới được máy tính NGDtuanh-Lecoo"))
+        assertEquals("Chưa nối được máy tính NGDtuanh-Lecoo — bạn mở ABook, kiểm tra cùng Wi-Fi và bật “Cho phép thiết bị khác kết nối qua Wi-Fi”.", message)
         assertFalse(message.contains("Failed to connect"))
         assertEquals("IOException: wrapped (SocketTimeoutException: timeout)", NetErrors.technical(IOException("wrapped", SocketTimeoutException("timeout"))))
     }
@@ -58,7 +58,7 @@ class TwoDevicesTest {
         val mb = 1L shl 20
         assertNull(DownloadSpace.shortage(10 * mb, 200 * mb))
         val short = DownloadSpace.shortage(125 * mb, 50 * mb)!!
-        assertTrue(short, short.contains("cần khoảng 225 MB, còn 50 MB"))
+        assertTrue(short, short.contains("cần 225 MB, còn 50 MB"))
         val manifest = JSONObject("""{"chapters":[{"available":true,"size":1000},{"available":false,"size":500},{"available":true,"size":24}]}""")
         assertEquals(1024L, DownloadSpace.bookBytes(manifest))
     }

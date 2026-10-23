@@ -64,13 +64,13 @@ def test_the_inbox_finds_each_kind_of_doubt_and_ranks_by_benefit(tmp_path: Path)
     view = work_items(make_book(tmp_path))
     kinds = {item["kind"]: item for item in view["items"]}
     assert kinds["vocative"]["examples"][0]["text"].startswith("“Heidi,"), "người được gọi không phải người nói"
-    assert kinds["gender"]["title"].casefold().startswith("áo choàng đen") and kinds["gender"]["affected"] == 2
+    assert kinds["gender"]["title"].casefold() == "giới áo choàng đen" and kinds["gender"]["affected"] == 2
     assert "LUCIEN" not in str(kinds["gender"]), "đã biết giới thì không hỏi"
     shared = kinds["shared-voice"]
     assert "Lucien" in shared["title"] and "Rhine" in shared["title"], "hai người có tên, một giọng, cùng chương"
     assert kinds["unnamed"]["title"].casefold() == "“người gác” là ai?"
     pronunciation = kinds["pronunciation"]
-    assert pronunciation["affected"] == 1 and "Hain" in pronunciation["title"], "đếm câu chứa tên, không đếm lần nhắc"
+    assert pronunciation["affected"] == 1 and "Hailkes" in pronunciation["title"], "đếm câu chứa tên, không đếm lần nhắc"
     assert not any("Lucien" in item["title"] and item["kind"] == "pronunciation" for item in view["items"]), "0,99 là chắc"
     scores = [item["score"] for item in view["items"]]
     assert scores == sorted(scores, reverse=True), "xếp theo lợi trên mỗi lần bấm"
@@ -151,7 +151,7 @@ def test_the_studio_writes_the_request_and_refuses_a_reading_the_voice_cannot_sa
         assert pronunciation_requests(read_overrides(project)) == [{"surface": "Hailkes", "spoken_form": "Hên-khơ"}]
         status, data, _ = _request(server.port, "POST", path, headers=headers,
                                    body={"surface": "Hailkes", "spokenForm": "Hlkx"})
-        assert status == 400 and "cách đọc tiếng Việt" in json.loads(data)["error"]
+        assert status == 400 and json.loads(data)["error"] == "Chưa nhận được “Hlkx” — bạn viết từng âm tiếng Việt, nối bằng gạch nối."
         assert "suggestion" not in json.loads(data), "không có bản viết lại qua được phép kiểm thì không mời"
         # Gõ theo tai sai chính tả: lời báo chỉ đúng âm tiết sai và mời dùng bản sửa - chưa ghi gì tới khi người nghe chọn.
         status, data, _ = _request(server.port, "POST", path, headers=headers,
@@ -360,7 +360,7 @@ def test_quoted_paragraphs_in_a_row_given_to_one_person_are_one_card_that_altern
     turns = [item for item in view["items"] if item["kind"] == "turn"]
     assert [item["key"] for item in turns] == ["turns:s1"], "chỉ cặp đóng ngoặc -> mở ngoặc, đoạn sau không lời dẫn"
     card = turns[0]
-    assert card["title"] == "3 câu liền nhau đều là của Glast?"
+    assert card["title"] == "Cùng người nói?"
     assert card["suggested"] is False, "chip đầu của thẻ lượt đối đáp không phải đề xuất của máy (soát UX a13 #15)"
     assert [(example["text"], example["changes"]) for example in card["examples"]] == [
         ("“Cuối cùng, kế hoạch nào rồi cũng thất bại.”", False), ("“Ai biết ạ?”", True), ("“Ai biết được.”", False),
@@ -392,7 +392,7 @@ def test_a_lone_pair_keeps_its_two_line_card(tmp_path: Path) -> None:
     db.commit()
     db.close()
     card = next(item for item in work_items(project)["items"] if item["kind"] == "turn")
-    assert (card["key"], card["title"]) == ("turn:s2", "Hai câu liền nhau đều là của Glast?")
+    assert (card["key"], card["title"]) == ("turn:s2", "Cùng người nói?")
     assert [example["changes"] for example in card["examples"]] == [False, True], "sửa câu SAU, câu trước giữ người của nó"
     assert [line["stableId"] for line in card["lines"]] == ["s2"] and "allLines" not in card
 
@@ -413,7 +413,7 @@ def test_a_long_run_is_cut_into_cards_that_keep_the_alternation(tmp_path: Path) 
     turns = [item for item in work_items(project)["items"] if item["kind"] == "turn"]
     assert [item["key"] for item in turns] == ["turns:t1", "turn:t10"]
     assert [line["stableId"] for line in turns[0]["lines"]] == ["t2", "t4", "t6", "t8"]
-    assert turns[0]["affected"] == 4 and turns[0]["title"] == "8 câu liền nhau đều là của Glast?"
+    assert turns[0]["affected"] == 4 and turns[0]["title"] == "Cùng người nói?"
     assert [line["stableId"] for line in turns[1]["lines"]] == ["t10"]
     assert [example["text"] for example in turns[1]["examples"]] == ["“Câu 9.”", "“Câu 10.”"]
 
@@ -467,7 +467,7 @@ def test_one_person_under_two_names_merges_the_fewer_lines_into_the_voice_heard_
     cards = {item["key"]: item for item in work_items(project)["items"] if item["kind"] == "alias"}
     assert set(cards) == {"alias:LUCIEN EVANS|LUCIEN", "alias:HEIDI SCHMIDT|HEIDI"}, "Anna / Anna Rhine khác giới"
     lucien = cards["alias:LUCIEN EVANS|LUCIEN"]
-    assert lucien["title"] == "“Lucien” và “Lucien Evans” là một người?"
+    assert lucien["title"] == "Tên trùng một phần"
     assert [line["stableId"] for line in lucien["lines"]] == ["a4"] and lucien["affected"] == 1
     assert lucien["choices"] == [{"label": "Gộp vào Lucien", "value": "LUCIEN", "name": "Lucien"}]
     assert lucien["currentValue"] == "LUCIEN EVANS" and lucien["keepLabel"] == "Hai người khác nhau"
@@ -524,6 +524,7 @@ def test_telepathy_in_corner_brackets_split_across_people_is_fixed_for_the_whole
     cards = [item for item in work_items(project)["items"] if item["kind"] == "bracket"]
     assert [card["key"] for card in cards] == ["bracket:1"], "chương 2 đã nhất quán"
     card = cards[0]
+    assert card["problem"] == "4 câu 『』 đang chia cho Tọa Phu Đồng Tử 2, Tomobe 1, Hina 1 — bạn kiểm tra người nói."
     assert [line["stableId"] for line in card["lines"]] == ["s1", "s3", "s4", "s5"] and card["affected"] == 4
     assert card["choices"][0] == {"label": "Tất cả là Tọa Phu Đồng Tử", "value": "TỌA PHU ĐỒNG TỬ",
                                   "name": "Tọa Phu Đồng Tử"}, "người nói nhiều nhất trong 『』 đứng đầu"
@@ -576,7 +577,7 @@ def test_a_title_the_book_writes_next_to_one_name_asks_to_join_that_voice(tmp_pa
     card = cards["alias:KRAI ANDREY|THIÊN BIẾN VẠN HÓA"]
     assert [line["stableId"] for line in card["lines"]] == ["e1"] and card["affected"] == 1
     assert card["choices"] == [{"label": "Gộp vào Krai Andrey", "value": "KRAI ANDREY", "name": "Krai Andrey"}]
-    assert "sát nhau 3 lần" in card["problem"] and card["keepLabel"] == "Hai người khác nhau"
+    assert "hay đi liền nhau" in card["problem"] and card["keepLabel"] == "Hai người khác nhau"
 
 
 def test_a_sample_line_is_playable_only_when_its_recording_exists(tmp_path: Path) -> None:
@@ -694,7 +695,7 @@ def test_the_models_own_doubt_asks_only_the_least_sure_fifth_of_the_measured_lin
     assert [card["key"] for card in cards] == ["speaker:b", "speaker:c", "speaker:g"], (
         "20 câu x 20% = 4 chỗ nhưng chỉ 3 câu dưới ngưỡng, p_first thấp nhất trước")
     first = cards[0]
-    assert first["title"] == "Ai nói câu này - Heidi?"
+    assert first["title"] == "Ai đang nói?"
     assert first["problem"] == "Máy gán cho Heidi nhưng chỉ chắc khoảng 20%."
     assert first["suggested"] is False, "thẻ logprob không đề xuất ai: chip đầu không tô cam"
     assert first["doubt"] == 0.8 and first["current"] == "Heidi"

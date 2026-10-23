@@ -267,7 +267,7 @@ class SupertonicProvider:
                 try:
                     self._engine = (where, self._make(installed))
                 except (OSError, ValueError, KeyError, ImportError) as error:
-                    raise VoiceError(f"Giọng Supertonic chưa sẵn sàng ({error}) - hãy tải lại Giọng Supertonic trong Cài đặt.", "voice") from error
+                    raise VoiceError("Giọng Supertonic chưa sẵn sàng — bạn tải lại trong Cài đặt.", "voice") from error
             return self._engine[1]
 
     def forget(self) -> None:

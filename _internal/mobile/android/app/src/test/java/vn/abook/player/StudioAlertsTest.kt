@@ -56,7 +56,7 @@ class StudioAlertsTest {
         val notes = StudioAlerts.alerts(book(running = true, paused = "battery", held = false),
             snapshot(running = true, paused = "", held = false), machineOnBattery = false)
         assertEquals(listOf("b1:battery"), notes.map { it.key })
-        assertEquals("Máy tính đang chạy pin", notes[0].title)
+        assertEquals("Chạy pin: Sách thử", notes[0].title)
     }
 
     @Test
@@ -95,15 +95,15 @@ class StudioAlertsTest {
         val old = snapshot(running = true, paused = "", held = false)
         val stopped = StudioAlerts.alerts(ended("stopped"), old, machineOnBattery = false)
         assertEquals(listOf("b1:stopped"), stopped.map { it.key })
-        assertEquals("Đã dừng theo yêu cầu: Sách thử", stopped[0].title)
+        assertEquals("Đã dừng: Sách thử", stopped[0].title)
 
         val crashed = StudioAlerts.alerts(ended("failed", "worker thoát với exit code 3221225477"), old, machineOnBattery = false)
         assertEquals(listOf("b1:crashed"), crashed.map { it.key })
-        assertEquals("Máy tính gặp sự cố: Sách thử", crashed[0].title)
-        assertEquals(true, crashed[0].text.contains("3221225477"))
+        assertEquals("Sự cố: Sách thử", crashed[0].title)
+        assertEquals("Làm sách gặp sự cố · 0/10 chương — bạn mở Studio.", crashed[0].text)
 
         val lost = StudioAlerts.alerts(ended("lost"), old, machineOnBattery = false)
         assertEquals(listOf("b1:crashed"), lost.map { it.key })
-        assertEquals(true, lost[0].text.contains("bị tắt đột ngột"))
+        assertEquals(true, lost[0].text.contains("bị ngắt đột ngột"))
     }
 }

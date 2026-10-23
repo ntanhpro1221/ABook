@@ -40,7 +40,7 @@ def test_a_refused_write_is_a_permission_problem_of_the_destination(tmp_path: Pa
     monkeypatch.setattr(export, "run_hidden", _fail("Error opening output file out.mp3.part: Permission denied"))
     with pytest.raises(PermissionError) as caught:
         _write(tmp_path)
-    assert "chỉ đọc hoặc app không có quyền ghi" in humanize.write_error(caught.value)
+    assert "Không có quyền ghi" in humanize.write_error(caught.value)
 
 
 def test_a_source_the_app_cannot_read_still_blames_the_source(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -57,7 +57,7 @@ def test_an_unknown_ffmpeg_failure_does_not_claim_the_source_is_broken(tmp_path:
     monkeypatch.setattr(export, "run_hidden", _fail("Conversion failed!"))
     with pytest.raises(ValueError) as caught:
         _write(tmp_path)
-    assert "không đọc được" not in str(caught.value) and "chưa rõ nguyên nhân" in str(caught.value)
+    assert "không đọc được" not in str(caught.value) and "bị ngắt" in str(caught.value)
     assert caught.value.detail == "Conversion failed!"
 
 

@@ -58,7 +58,7 @@ class MainActivity : BridgeActivity() {
         if (uri == null) {
             // Chia sẻ chữ trần (vd một đường link) cũng tới đây vì app nhận SEND text/plain cho file .txt: nói rõ thay vì im lặng.
             if (intent?.action == Intent.ACTION_SEND && intent.getStringExtra(Intent.EXTRA_TEXT) != null) {
-                Toast.makeText(this, "ABook chỉ nhận file truyện (EPUB, Word, PDF, TXT) - đoạn chữ được chia sẻ không phải file.",
+                Toast.makeText(this, "Bạn gửi file EPUB, Word, PDF hoặc TXT; chưa nhận đoạn chữ chia sẻ.",
                     Toast.LENGTH_LONG).show()
             }
             return
