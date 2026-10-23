@@ -236,7 +236,7 @@ def write_error(error: OSError) -> str:
     if error.errno == errno.ENOSPC:
         return f"Ổ đĩa chứa {where} đã đầy - dọn bớt rồi thử lại."
     if is_write_problem(error):
-        return f"Không ghi được vào {where}: thư mục chỉ đọc hoặc app không có quyền ghi - chọn thư mục khác trong Cài đặt."
+        return f"Không có quyền ghi vào {where} — bạn chọn thư mục khác trong Cài đặt."
     return f"Không ghi được vào {where} ({error.strerror or error})."
 
 
@@ -270,7 +270,7 @@ def _listed_names(message: str) -> str:
 
 def _mismatch(message: str, chapters: dict[int, str]) -> str:
     where = _where(message, chapters)
-    return (f"Một câu ở {where} vẫn đọc lệch chữ sau khi thử lại hết lượt; đã giữ bản tốt nhất - nên nghe lại"
+    return (f"Câu ở {where} vẫn lệch chữ; đã giữ bản tốt nhất — bạn nên nghe lại."
             if where else "")
 
 
@@ -391,20 +391,20 @@ def rejected_request(details: dict, quote: str = "") -> dict[str, str] | None:
     if "spoken_form" in details and details.get("surface"):
         surface = str(details["surface"])
         return {"section": "pronunciations", "key": surface_key(surface), "reason": reason,
-                "title": f"Chưa đổi được cách đọc “{surface}” thành “{details['spoken_form']}”"}
+                "title": f"Chưa đổi cách đọc: “{surface}” → “{details['spoken_form']}”"}
     if details.get("character"):
         character = str(details["character"])
         return {"section": "voices", "key": character_key(character), "reason": reason,
-                "title": f"Chưa đổi được giọng của {person_name(character)}"}
+                "title": f"Chưa đổi giọng: {person_name(character)}"}
     stable_id = str(details.get("stable_id") or "")
     if not stable_id:
         return None
     if "kind" in details or "emotion" in details:
-        return {"section": "lines", "key": stable_id, "reason": reason, "title": f"Chưa đổi được cách đọc {sentence}"}
+        return {"section": "lines", "key": stable_id, "reason": reason, "title": f"Chưa đổi cách đọc: {sentence}"}
     if details.get("speaker"):
         return {"section": "speakers", "key": stable_id, "reason": reason,
-                "title": f"Chưa gán được {sentence} cho {person_name(str(details['speaker']))}"}
-    return {"section": "retakes", "key": stable_id, "reason": reason, "title": f"Chưa thu lại được {sentence}"}
+                "title": f"Chưa đổi người nói: {sentence} → {person_name(str(details['speaker']))}"}
+    return {"section": "retakes", "key": stable_id, "reason": reason, "title": f"Chưa thu lại: {sentence}"}
 
 
 def _rejected(_message: str, _chapters: dict[int, str]) -> str:

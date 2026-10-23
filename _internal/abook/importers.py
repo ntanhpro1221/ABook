@@ -89,7 +89,7 @@ HEADINGS = {"h1", "h2", "h3"}
 WRAPPERS = {"body", "section", "div", "article", "main"}  # khối bọc cả trang: vai của chúng (trước chữ đầu tiên) là vai của trang
 UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')  # ký tự Windows không nhận trong tên file
 BROKEN = "Không phải file {kind} thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
-EPUB_DRM = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
+EPUB_DRM = "EPUB bị khoá bản quyền — bạn dùng bản không khoá hoặc TXT."
 
 # Số của chương: chữ số, số La Mã, hay số viết bằng chữ ("Chương Một", "Hồi thứ hai").
 _NUMBER_WORDS = (
@@ -254,11 +254,10 @@ def _finish(book: ImportedBook, keep_short: bool = False, source: str = "") -> I
     if not keep_short:
         book.chapters = [chapter for chapter in book.chapters if not chapter.short]
     if not book.chapters or not any(chapter.text.strip() or chapter.short for chapter in book.chapters):
-        raise ImportFailed(f"Không có chương nào có chữ trong “{source or book.title}” - file rỗng hay mã hoá lạ? "
-                           "Với file .txt: thử mở bằng Notepad rồi lưu lại ở dạng UTF-8.")
+        raise ImportFailed(f"Không lấy được chữ từ “{source or book.title}” — bạn thử bản khác; với TXT, lưu UTF-8 rồi nhập lại.")
     matter = sum(bool(chapter.matter) and not chapter.short for chapter in book.chapters)
     if matter and keep_short:
-        book.notes.append(f"{matter} mục có vẻ không phải truyện (bìa, bản quyền, mục lục…) chưa chọn - tích nếu muốn nghe.")
+        book.notes.append(f"{matter} mục có vẻ là bìa, bản quyền, mục lục… chưa chọn — bạn tích nếu muốn nghe.")
     if len(book.chapters) > 1:
         # File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do. Mục rất ngắn mà chỉ có
         # tên (trang đề tựa) thì ở lại: người dùng quyết có tích nó không.
@@ -479,8 +478,7 @@ def legacy_note(kind: str, names: list[str]) -> str:
     """Một ghi chú cho cả lô: những file nào có vẻ ở bảng mã cũ và cách đi tiếp."""
     shown = ", ".join(names[:2]) + (" …" if len(names) > 2 else "")
     who = f"{len(names)} file ({shown})" if names else "File này"
-    return (f"{who} có vẻ ở bảng mã tiếng Việt cũ {LEGACY_NAMES[kind]} nên chữ đang vỡ. Bạn hãy chuyển sang UTF-8 "
-            "(UniKey > Chuyển mã) rồi chọn lại - ABook không tự đổi chữ của truyện.")
+    return (f"{who} dùng mã {LEGACY_NAMES[kind]}, chưa đổi chữ — bạn đổi sang UTF-8 bằng UniKey rồi nhập lại.")
 
 
 def _txt_chapter(path: Path) -> tuple[Chapter, str]:
@@ -492,7 +490,7 @@ def _txt_chapter(path: Path) -> tuple[Chapter, str]:
         raw = path.read_bytes()
         text, encoding = decode_text(raw)
     except UnicodeDecodeError as error:
-        raise ImportFailed(f"File “{path.name}” có byte chữ bị hỏng. Bạn hãy mở bản gốc, lưu lại dạng UTF-8 hoặc tải lại file rồi nhập lại.") from error
+        raise ImportFailed(f"File “{path.name}” hỏng chữ — bạn lưu lại dạng UTF-8 hoặc tải lại.") from error
     encoding = legacy_encoding(raw, encoding) or encoding
     text = _clean_text(_text_controls(text))
     first = next((line.strip() for line in text.split("\n") if line.strip()), "")
@@ -506,7 +504,7 @@ def _txt_chapter(path: Path) -> tuple[Chapter, str]:
 def _encoding_notes(encodings: Iterable[str]) -> list[str]:
     found = set(encodings)
     names = [name for encoding, name in ENCODING_NAMES.items() if encoding in found]
-    notes = [f"File chữ không phải UTF-8 - đã đọc theo bảng mã {', '.join(names)}. Nếu chữ lạ, lưu lại file dạng UTF-8 rồi nhập lại."] if names else []
+    notes = [f"Đã đọc theo mã {', '.join(names)} — nếu chữ lạ, bạn lưu file dạng UTF-8 rồi nhập lại."] if names else []
     return notes + [legacy_note(kind, []) for kind in LEGACY_NAMES if kind in found]
 
 
@@ -1885,7 +1883,7 @@ def _vendored_pypdf():
     try:
         import pypdf
     except ImportError as error:
-        raise ImportFailed("Thiếu thư viện đọc PDF (abook/vendor/pypdf) - cài lại ABook hay dùng bản EPUB/TXT") from error
+        raise ImportFailed("Thiếu bộ đọc PDF — bạn cài lại ABook hoặc dùng EPUB/TXT.") from error
     return pypdf
 
 
@@ -1896,7 +1894,7 @@ def pdf_pages(path: Path) -> tuple[list[list[str]], str, str]:
     try:
         reader = PdfReader(str(path))
         if reader.is_encrypted and not reader.decrypt(""):
-            raise ImportFailed("PDF này có mật khẩu - ABook chưa mở được. Bạn hãy dùng bản PDF đã mở khóa hoặc bản TXT/DOCX.")
+            raise ImportFailed("PDF có mật khẩu — bạn dùng bản đã mở khoá hoặc TXT/DOCX.")
         raw_pages = [page.extract_text() or "" for page in reader.pages]
         metadata = reader.metadata
     except ImportFailed:
@@ -1915,7 +1913,7 @@ def import_pdf_pages(pages: list[list[str]], stem: str, title: str = "", author:
         raise ImportFailed(BROKEN.format(kind="PDF"))
     chars = sum(len(line) for lines in pages for line in lines)
     if chars == 0:
-        raise ImportFailed("PDF này chưa trích được chữ để đọc (có thể là ảnh chụp). Bạn hãy nhận dạng chữ bằng OCR hoặc dùng bản TXT/DOCX có chữ.")
+        raise ImportFailed("PDF chưa có chữ để đọc — bạn nhận dạng chữ (OCR) hoặc dùng TXT/DOCX.")
     result = ImportedBook(title=title or stem, author=author or None, keep_matter=True)
     empty = sum(1 for lines in pages if not any(lines))
     if empty:
@@ -1964,7 +1962,7 @@ def _studio_notes(book: ImportedBook) -> list[str]:
     notes = [note for note in book.notes if not note.startswith(PDF_EDGE_NOTE) and not PICK_NOTE.fullmatch(note)]
     dropped, kept = _edge_split(book)
     if dropped:
-        notes.append(f"Không đưa vào chương {len(dropped)} dòng tiêu đề chạy hay số trang lặp ở mép trang PDF{_quoted(dropped)} - chữ truyện giữ nguyên.")
+        notes.append(f"Đã bỏ {len(dropped)} dòng tiêu đề/số trang lặp ở mép PDF{_quoted(dropped)}; giữ nguyên chữ truyện.")
     if kept:
         notes.append(f"{len(kept)} dòng lặp ở mép trang PDF{_quoted(kept)} vẫn nằm trong chữ chương.")
     return notes
@@ -2004,7 +2002,7 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
     try:
         digest = hashlib.sha256(path.read_bytes()).hexdigest()[:8]
     except OSError as error:
-        raise ImportFailed(f"Không đọc được file này ({error.strerror or 'lỗi đọc đĩa'}) - kiểm tra file còn đó và không bị chương trình khác khoá.") from error
+        raise ImportFailed("Chưa đọc được file — bạn kiểm tra quyền đọc, file còn đó và không bị khoá.") from error
     stem = UNSAFE_NAME.sub(" ", path.stem).strip() or path.suffix.lstrip(".") or "sach"
     folder = contained_upload(folder_root, folder_root / f"{stem[:80]} - {digest}")
     if folder.is_dir():

@@ -23,7 +23,7 @@ def test_r1_peer_cannot_poison_clock_and_saves_keep_working(tmp_path, counter):
     saved.merge("book", {"last": {"chapterId": 1, "seconds": 50, "at": 100,
                                     "rev": {"counter": counter, "node": "peer"}}, "_clock": counter})
     assert saved.get("book")["last"] == before["last"]
-    assert any("bước nhảy" in n["text"] for n in notices.NOTICES.all())
+    assert any("Phiên bản đồng bộ" in n["text"] for n in notices.NOTICES.all())
     for store in (saved, listening.Listening(saved.path)):
         store.progress("book", 1, 600, 1000)
         store.set_reading("book", 1, 100)

@@ -81,8 +81,7 @@ $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
 
     def critical_stop(self, book_title: str, reason: str, project_path: Path, checkpoint: str = "") -> None:
         message = (
-            f"Book: {book_title}. Lý do: {reason}. "
-            "Các checkpoint đã commit vẫn được giữ; đoạn đang chạy sẽ được recovery kiểm tra."
+            f"“{book_title}” đã dừng: {reason}; giữ phần đã lưu, phần dở sẽ được kiểm lại."
         )
         if checkpoint:
             message += f" Vị trí: {checkpoint}."
@@ -90,8 +89,8 @@ $toast = [Windows.UI.Notifications.ToastNotification]::new($xml)
 
     def recovery_notice(self, book_title: str, project_path: Path, recovered: int, reset: int) -> None:
         self.notify(
-            "Đã khôi phục audiobook bị gián đoạn",
-            f"Book: {book_title}. Giữ lại {recovered} đoạn hợp lệ; {reset} đoạn dở sẽ được tạo lại.",
+            "Đã khôi phục sách",
+            f"“{book_title}”: giữ {recovered} đoạn hợp lệ, làm lại {reset} đoạn dở.",
             critical=False,
             project_path=project_path,
         )

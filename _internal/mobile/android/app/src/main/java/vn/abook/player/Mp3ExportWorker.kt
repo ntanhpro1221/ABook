@@ -78,7 +78,7 @@ object Mp3Exports {
     }
 
     /** Lời cho người nghe khi hệ thống dừng việc xuất vì dịch vụ nền hết 6 giờ. */
-    const val TIMEOUT_NOTE = "Hệ thống Android đã dừng việc xuất sau 6 giờ - bạn bấm Xuất lại để làm tiếp"
+    const val TIMEOUT_NOTE = "Android dừng xuất sau 6 giờ — bạn bấm Xuất lại."
 
     private const val CHANNEL = "export"
 
@@ -387,7 +387,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
                 } ?: 0L
                 val need = M4bExport.estimatedBytes(Mp3Export.Plan(plan.title, plan.narrator, listOf(longest), 1, plan.chaptersTotal, plan.cover, plan.coverName, plan.music, plan.guard), musicBytes)
                 if (work.parentFile!!.usableSpace < need) {
-                    throw Mp3Export.Refused("Điện thoại không đủ chỗ trống để trộn nhạc nền (cần khoảng ${need shr 20} MB) - dọn bớt rồi xuất lại")
+                    throw Mp3Export.Refused("Thiếu chỗ trộn nhạc (cần ${need shr 20} MB) — bạn dọn bớt rồi xuất lại.")
                 }
                 var offset = 0
                 var phase: (JSONObject) -> JSONObject = { it }
@@ -412,8 +412,8 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             ExportHistory.remember(Store.bookDir(bookId), "mp3", result.uri ?: result.folder, snapshot)
             // Nói chỗ lưu trước (người nghe cần biết đi đâu tìm), rồi mới tới lưu ý chương thiếu.
             val selection = inputData.getIntArray("chapterIds") != null
-            val partial = if (!selection && result.files < result.chaptersTotal) " Các chương chưa làm xong sẽ không có trong bản xuất." else ""
-            val lost = if (missing > 0) " $missing đoạn thiếu nhạc vì chưa tải được bài." else ""
+            val partial = if (!selection && result.files < result.chaptersTotal) " Chưa gồm chương dở." else ""
+            val lost = if (missing > 0) " $missing đoạn chưa tải được nhạc — bạn tải lại nếu muốn xuất đủ nhạc." else ""
             Mp3Exports.finished(context, bookId, "Đã xuất ${result.files} chương", "$title · lưu ở ${result.folder}.$partial$lost")
             val finished = event().put("finished", true).put("files", result.files).put("chaptersTotal", result.chaptersTotal)
                 .put("selection", selection)
@@ -432,7 +432,7 @@ class Mp3ExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             }
             if (Mp3Exports.timedOut(this)) {
                 // Dịch vụ nền hết 6 giờ (Android 15): các chương đã xuất còn nguyên; không chạy lại vô hạn.
-                Mp3Exports.finished(context, bookId, "Hệ thống đã dừng việc xuất", "$title · đã xuất $done chương. ${Mp3Exports.TIMEOUT_NOTE}.")
+                Mp3Exports.finished(context, bookId, "Xuất đã dừng", "$title · đã xuất $done chương. ${Mp3Exports.TIMEOUT_NOTE}.")
                 Mp3Exports.emit(event().put("error", Mp3Exports.TIMEOUT_NOTE))
                 return Result.failure()
             }

@@ -111,7 +111,7 @@ def test_pairing_refuses_a_bad_code_or_address_with_a_readable_reason(library, t
     app = App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "nay" / "l.json"))
     try:
         devices.start_pairing()
-        with pytest.raises(ApiError, match="Mã ghép nối sai - còn 4 lần thử"):
+        with pytest.raises(ApiError, match="Mã sai; còn 4 lần thử trước khi mã bị huỷ."):
             app.pair_computer(f"127.0.0.1:{other.port}", "000000" if devices.pairing()["code"] != "000000" else "111111")
         with pytest.raises(ApiError, match="mã 6 số"):
             app.pair_computer("", "12")
@@ -244,7 +244,7 @@ def test_this_computer_sees_and_controls_the_player_of_another_computer(library,
             app.remote_send(peer["device"], {"action": "load", "bookId": "khongcosach", "chapterId": 1, "seconds": 0})
     finally:
         other.stop()
-    with pytest.raises(ApiError, match="ABook trên máy kia chưa mở"):  # cổng đã đóng: máy còn đó, ABook thì không (soát a27 lỗi 9)
+    with pytest.raises(ApiError, match="^Chưa nối được máy kia — bạn mở ABook, bật “Cho phép thiết bị khác kết nối qua Wi-Fi” và chép lại địa chỉ ghép.$"):  # cổng đã đóng: máy còn đó, ABook thì không (soát a27 lỗi 9)
         app.remote_send(peer["device"], {"action": "play"})
 
 

@@ -198,7 +198,7 @@ class MusicStore(
                     }
                 }
             } catch (error: IOException) {
-                throw ImportError("“$name”: không chép được vào kho nhạc (${error.message ?: error.javaClass.simpleName}).")
+                throw ImportError("Chưa chép được “$name” vào kho nhạc — bạn thử lại.")
             }
             val sha = digest.digest().joinToString("") { "%02x".format(it) }
             synchronized(lock) { duplicate(sha)?.let { return it to true } }
@@ -287,7 +287,7 @@ class MusicStore(
         private val FAMILIES = setOf("eastern", "orchestral", "piano", "ambient", "acoustic", "electronic", "other") // music_plan.FAMILIES
         private val EMOTIONS = listOf("peacefulness", "tenderness", "nostalgia", "sadness", "joy", "playful", "power", "wonder", "tension",
             "fear", "anger", "mystery", "moved") // music_scenes.EMOTION_CLASSES
-        const val NO_ANALYZER = "Chưa có bộ phân tích âm thanh - bài nhập vào vẫn ghim tay được, nhưng máy chưa tự chọn chúng."
+        const val NO_ANALYZER = "Chưa có bộ phân tích nhạc; bạn vẫn chọn bài thủ công được."
 
         /** Mã sha1 (40 hex) của file trong link `local:<sha1>`; link khác dạng -> null. */
         fun localHash(link: String): String? = link.removePrefix(LOCAL_PREFIX).takeIf { link.startsWith(LOCAL_PREFIX) && SHA1.matches(it) }

@@ -309,7 +309,7 @@ object Playback {
         lastError = if (streamed && error != null && Pin.isCertificateProblem(error)) {
             Pin.CHANGED // máy tính đã đổi chứng chỉ: không phải Wi-Fi hỏng, người nghe phải ghép lại
         } else if (streamed && error != null && NetErrors.unpaired(error)) {
-            "${SyncLink.holderName(appContext, bookId).replaceFirstChar { it.uppercase() }} đã thôi ghép với điện thoại này - ghép lại để nghe tiếp"
+            "${SyncLink.holderName(appContext, bookId)} đã thôi ghép — bạn ghép lại để nghe tiếp."
         } else if (streamed) {
             // Phần đã đệm đã phát hết: không bỏ cuộc - hỏi lại thưa dần, máy kia trả lời là phát tiếp đúng chỗ (soát a68 lỗi 3).
             scheduleReconnect()
@@ -837,7 +837,7 @@ object Playback {
 
     /** Lần lưu chỗ nghe gần nhất hỏng (bộ nhớ đầy, ghi/đổi tên lỗi): đang báo người nghe rồi, chưa báo lần nữa tới khi lưu được. */
     private var saveFailing = false
-    private const val SAVE_FAILED = "Chưa lưu được chỗ bạn đang nghe - bộ nhớ trong máy có thể đã đầy. Bạn cứ nghe tiếp, ABook sẽ thử lưu lại sau ít giây."
+    private const val SAVE_FAILED = "Chưa lưu được chỗ nghe, có thể hết bộ nhớ — bạn vẫn nghe được; app sẽ thử lưu lại."
 
     /**
      * Lưu chỗ nghe. Lỗi ghi (Store.progress: ghi file, sync, đổi tên) KHÔNG được thoát ra khỏi đây - các nơi gọi chạy ở luồng chính (nhịp 5 giây, sự kiện dừng/lỗi của ExoPlayer), ném là văng cả

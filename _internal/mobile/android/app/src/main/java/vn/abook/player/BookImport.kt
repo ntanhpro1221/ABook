@@ -105,7 +105,7 @@ object BookImport {
     private const val TITLE_FROM_LINE = 80
     private const val CREDIT_HEAD_LINES = 64
     private const val BROKEN = "Không phải file %s thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
-    private const val EPUB_DRM = "EPUB này có khoá bản quyền (DRM), ABook không mở được. Bạn hãy dùng bản không khoá hoặc bản TXT."
+    private const val EPUB_DRM = "EPUB bị khoá bản quyền — bạn dùng bản không khoá hoặc TXT."
 
     private fun broken(kind: String) = Failed(BROKEN.format(kind))
 
@@ -164,7 +164,7 @@ object BookImport {
         if (pages.isEmpty()) throw broken("PDF")
         val chars = pages.sumOf { page -> page.sumOf { cpLen(it) } }
         if (chars == 0) {
-            throw Failed("PDF này chưa trích được chữ để đọc (có thể là ảnh chụp). Bạn hãy nhận dạng chữ bằng OCR hoặc dùng bản TXT/DOCX có chữ.")
+            throw Failed("PDF chưa có chữ để đọc — bạn nhận dạng chữ (OCR) hoặc dùng TXT/DOCX.")
         }
         val result = Book(title.ifEmpty { titleFromFilename(stem) }, author = author.ifEmpty { null }, keepMatter = true)
         val empty = pages.count { it.isEmpty() }
@@ -230,10 +230,9 @@ object BookImport {
             book.notes.add(if (keepShort) "$short mục rất ngắn chưa chọn - tích nếu muốn giữ." else "Bỏ qua $short mục rất ngắn (bìa, trang bản quyền?).")
         }
         val matter = all.count { it.matter.isNotEmpty() && !it.short }
-        if (matter > 0 && keepShort) book.notes.add("$matter mục có vẻ không phải truyện (bìa, bản quyền, mục lục…) chưa chọn - tích nếu muốn nghe.")
+        if (matter > 0 && keepShort) book.notes.add("$matter mục có vẻ là bìa, bản quyền, mục lục… chưa chọn — bạn tích nếu muốn nghe.")
         val chapters = if (keepShort) all else all.filter { !it.short }
-        if (chapters.none { pyStrip(it.text).isNotEmpty() || it.short }) throw Failed("Không có chương nào có chữ trong “${source.ifEmpty { book.title }}” - file rỗng hay mã hoá lạ? " +
-            "Với file .txt: thử mở bằng Notepad rồi lưu lại ở dạng UTF-8.")
+        if (chapters.none { pyStrip(it.text).isNotEmpty() || it.short }) throw Failed("Không lấy được chữ từ “${source.ifEmpty { book.title }}” — bạn thử bản khác; với TXT, lưu UTF-8 rồi nhập lại.")
         book.chapters.clear()
         if (chapters.size > 1) {
             // File TXT rỗng (hay chỉ có khoảng trắng) không thành chương - nói ra, để số chương ít hơn số file có lý do. Mục rất ngắn mà chỉ có
@@ -563,7 +562,7 @@ object BookImport {
      *  Buổi sáng" - đúng thứ người nghe thấy ở đầu chương), không thì tên file ("01.txt" -> "Chương 1"). */
     private fun txtChapter(file: File, originalName: String = file.name): Pair<Chapter, String> {
         val (decoded, encoding) = try { decodeText(file.readBytes()) } catch (_: Failed) {
-            throw Failed("File “${file.name}” có byte chữ bị hỏng. Bạn hãy mở bản gốc, lưu lại dạng UTF-8 hoặc tải lại file rồi nhập lại.")
+            throw Failed("File “${file.name}” hỏng chữ — bạn lưu lại dạng UTF-8 hoặc tải lại.")
         }
         val text = cleanText(textControls(decoded))
         val first = text.split("\n").map(::pyStrip).firstOrNull { it.isNotEmpty() }.orEmpty()
@@ -582,7 +581,7 @@ object BookImport {
     private fun encodingNotes(encodings: Collection<String>): MutableList<String> {
         val names = ENCODING_NAMES.filterKeys { it in encodings }.values
         if (names.isEmpty()) return mutableListOf()
-        return mutableListOf("File chữ không phải UTF-8 - đã đọc theo bảng mã ${names.joinToString(", ")}. Nếu chữ lạ, lưu lại file dạng UTF-8 rồi nhập lại.")
+        return mutableListOf("Đã đọc theo mã ${names.joinToString(", ")} — nếu chữ lạ, bạn lưu file dạng UTF-8 rồi nhập lại.")
     }
 
     internal fun decodeTextBytes(raw: ByteArray): String = decodeText(raw).first

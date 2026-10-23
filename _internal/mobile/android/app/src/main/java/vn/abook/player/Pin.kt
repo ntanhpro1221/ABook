@@ -30,8 +30,7 @@ import javax.net.ssl.X509TrustManager
  */
 object Pin {
     // Cùng nghĩa với webui/remote_books.py `_open`: bấm Thôi ghép rồi ghép lại; máy kia không cài lại thì đừng ghép lại.
-    const val CHANGED = "Chứng chỉ bảo mật của máy kia đã khác lúc ghép (máy kia cài lại ABook?) - bấm Thôi ghép rồi ghép lại. " +
-        "Nếu máy kia không cài lại gì thì đừng ghép lại: có thể có ai chen vào mạng"
+    const val CHANGED = "Chứng chỉ đổi, có thể bị chen mạng — chỉ khi máy kia cài lại ABook, bạn Thôi ghép rồi ghép lại."
 
     /** SHA-256 của chứng chỉ DER, 64 ký tự hex thường - cùng dạng với webui/tls.py `fingerprint`. */
     fun fingerprint(der: ByteArray): String =

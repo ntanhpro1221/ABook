@@ -107,7 +107,7 @@ def test_each_failure_gets_its_own_reason(bare_machine: Path, monkeypatch) -> No
         with pytest.raises(Exception) as error:
             ffmpeg_setup.install(lambda done, total: None)
         reasons[name] = studio_setup.download_failure(ffmpeg_setup.NOUN, error.value)[0]
-    assert reasons["network"] == studio_setup.NETWORK_FAILURE.format(retry="Thử lại") and "không đúng bản đã ghim" in reasons["hash"]
+    assert reasons["network"] == studio_setup.NETWORK_FAILURE.format(retry="Thử lại") and "tải về sai bản" in reasons["hash"]
     assert "ffmpeg" in reasons["zip"] and "ổ đĩa" in reasons["disk"]
     assert not (bare_machine / "ffmpeg.exe").exists() and not (bare_machine / "ffmpeg.exe.part").exists()
 
@@ -118,4 +118,4 @@ def test_the_download_can_be_switched_off_and_other_platforms_are_told_to_instal
     assert "tắt" in ffmpeg_setup.cannot_download()
     monkeypatch.setenv(ffmpeg_setup.ENV_DOWNLOAD, "1")
     monkeypatch.setattr(sys, "platform", "linux")
-    assert "cài ffmpeg" in ffmpeg_setup.cannot_download()
+    assert ffmpeg_setup.cannot_download() == "Máy này chưa có bản tải sẵn của bộ xuất âm thanh — bạn xem Chi tiết để nhờ hỗ trợ."

@@ -30,7 +30,7 @@ KINDS = ("failed", "unverified", "name-low", "text-low", "name", "text")
 MINOR_KINDS = ("name", "text")
 REASONS = {
     "failed": "Thu âm hỏng sau mọi lần thử - chương này chưa xuất được",
-    "unverified": "Máy nghe lại không kiểm được câu này (quá ngắn hoặc máy nghe nhầm) - bạn nên nghe bằng tai",
+    "unverified": "Máy chưa kiểm được câu này — bạn nên nghe lại bằng tai.",
     "name-low": "Tên riêng đọc khác nhiều so với chữ viết",
     "name": "Tên riêng đọc hơi khác chữ viết - thường vẫn ổn",
     "text-low": "Máy nghe ra khác nhiều so với chữ viết",

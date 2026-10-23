@@ -289,7 +289,7 @@ class BookFileImportTest {
     @Test
     fun a_book_that_does_not_fit_is_refused_before_anything_is_copied() {
         val message = refusal { BookFileImport.importFile(seriesFile()) { 1_000L } }
-        assertTrue(message, "không đủ chỗ" in message && "cần khoảng" in message && "còn" in message)
+        assertTrue(message, "Thiếu chỗ" in message && "cần " in message && "còn" in message)
         assertTrue("chưa chép gì vào thư viện", File(root, "books").listFiles().orEmpty().isEmpty())
     }
 
@@ -521,14 +521,14 @@ class BookFileImportTest {
         val newer = refusal { BookFileImport.importFile(abookproj("moi.abookproj", projectVersion = 4)) }
         assertTrue(newer, "Hãy cập nhật app" in newer)
         val older = refusal { BookFileImport.importFile(abookproj("cu.abookproj", projectVersion = 2)) }
-        assertTrue(older, "cũ hơn" in older)
+        assertEquals("Dự án dùng định dạng cũ — bạn mở bằng bản app đã gói rồi gói lại.", older)
         assertTrue(File(root, "books").listFiles().orEmpty().isEmpty())
     }
 
     @Test
     fun a_project_without_a_finished_chapter_says_so() {
         val message = refusal { BookFileImport.importFile(abookproj("trong.abookproj", listening = emptyMap(), aliases = emptyMap(), withBook = false)) }
-        assertTrue(message, "chưa có chương nào nghe được" in message)
+        assertEquals("Dự án chưa có chương nghe được — bạn mở bằng ABook Studio.", message)
     }
 
     @Test
@@ -572,7 +572,7 @@ class BookFileImportTest {
         val margin = 64L shl 20
         val need = listeningBytes + workshopBytes
         val message = refusal { BookFileImport.importFile(whole) { margin + need - 1_000 } }
-        assertTrue(message, "không đủ chỗ" in message)
+        assertTrue(message, "Thiếu chỗ mở sách (cần " in message && ", còn " in message && "bạn dọn ổ rồi thử lại" in message)
         assertTrue(File(root, "books").listFiles().orEmpty().isEmpty())
         val imported = BookFileImport.importFile(whole) { margin + need + 100_000 }
         assertTrue(File(Store.bookDir(imported.id), "chapters/00001_645.mp3").isFile)

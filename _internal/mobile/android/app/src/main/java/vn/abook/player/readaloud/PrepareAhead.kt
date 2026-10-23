@@ -154,7 +154,7 @@ object PrepareAhead {
 
     /** Câu từ chối khi giọng gửi chữ đi mà người nghe chưa đồng ý (giao diện hỏi trước; đây là lưới cuối - soát a79 lỗi 6), null nếu làm được. */
     internal fun refusal(voice: String): String? =
-        if (ReadAloud.voiceNeedsConsent(voice)) "Chưa cho phép gửi chữ đi - cho phép giọng này (bấm Phát rồi chọn Nghe) hoặc chọn giọng của máy trước khi làm trước." else null
+        if (ReadAloud.voiceNeedsConsent(voice)) "Chưa cho phép gửi chữ — bạn bấm Phát → Nghe, hoặc dùng giọng máy." else null
 
     /** Bắt đầu (thay việc cũ). Đoạn đã có trong bộ đệm được bỏ qua, nên bấm lại sau khi dừng / mất mạng là làm tiếp. Giọng chưa được đồng ý: ném [VoiceException], không có việc nào. */
     fun start(context: Context, bookId: String, voice: String, ids: List<Int>, label: String, chargingOnly: Boolean): JSONObject {
@@ -307,7 +307,7 @@ object PrepareAhead {
             "running" -> "Đang làm trước ${job.label}" to "Đã sẵn sàng $ready/${job.chapters.size} chương"
             "done" -> "Đã làm trước ${job.label}" to
                 if (job.online) "Nghe được cả khi không có mạng." else "Nghe liền mạch, không phải chờ."
-            "error" -> "Đã dừng làm trước" to job.error
+            "error" -> "Đã dừng làm trước" to "Giữ chương đã xong — bạn mở ABook để xem lỗi."
             else -> return manager.cancel(NOTIFICATION)
         }
         val open = context.packageManager.getLaunchIntentForPackage(context.packageName)
