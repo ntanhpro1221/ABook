@@ -576,9 +576,10 @@ class Listening:
     def _record_id(self, entry: dict[str, Any]) -> str:
         return next(key for key, row in self._data["records"].items() if row.get("state") is entry)
 
-    def set_chapter_done(self, book: str, chapter_id: int, done: bool) -> dict[str, Any]:
+    def set_chapter_done(self, book: str, chapter_id: int, done: bool, record: str | None = None) -> dict[str, Any]:
+        """Đánh dấu chương đã nghe / chưa nghe vào hồ sơ màn đang hiện (`record`; không nói: hồ sơ đang dùng). Đã xoá / chuyển sách: RecordGone."""
         with self._changing():
-            entry = self._book(book)
+            entry = self._named(book, record)
             chapter = entry["chapters"].setdefault(str(int(chapter_id)), {"heard": 0.0, "done": False})
             chapter["done"] = bool(done)
             if not done:
@@ -587,9 +588,9 @@ class Listening:
             self._save()
             return json.loads(json.dumps(entry))
 
-    def set_finished(self, book: str, finished: bool) -> dict[str, Any]:
+    def set_finished(self, book: str, finished: bool, record: str | None = None) -> dict[str, Any]:
         with self._changing():
-            entry = self._book(book)
+            entry = self._named(book, record)
             entry["finished"] = bool(finished)
             entry["finishedAt"] = entry["updatedAt"] = time.time()
             self._save()
@@ -642,11 +643,11 @@ class Listening:
             self._save()
         return mark
 
-    def update_bookmark(self, book: str, mark_id: str, note: str) -> None:
+    def update_bookmark(self, book: str, mark_id: str, note: str, record: str | None = None) -> None:
         """Sửa ghi chú: `at` (mốc gộp hai máy) thành lúc sửa để bản vừa sửa thắng bản cũ của máy kia (soát a70); `createdAt` giữ lúc
-        đặt dấu - điều dòng dấu trang hiện."""
+        đặt dấu - điều dòng dấu trang hiện. `record`: hồ sơ của màn đang sửa (xem `_named`)."""
         with self._changing():
-            entry = self._book(book)
+            entry = self._named(book, record)
             now = time.time()
             for mark in entry["bookmarks"]:
                 if mark["id"] == mark_id:
@@ -656,9 +657,9 @@ class Listening:
             entry["updatedAt"] = now
             self._save()
 
-    def delete_bookmark(self, book: str, mark_id: str) -> None:
+    def delete_bookmark(self, book: str, mark_id: str, record: str | None = None) -> None:
         with self._changing():
-            entry = self._book(book)
+            entry = self._named(book, record)
             entry["bookmarks"] = [mark for mark in entry["bookmarks"] if mark["id"] != mark_id]
             entry.setdefault("deleted", {})[mark_id] = time.time()
             entry["updatedAt"] = time.time()

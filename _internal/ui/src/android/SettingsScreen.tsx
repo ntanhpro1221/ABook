@@ -14,6 +14,8 @@ import { androidSource, phoneVieneu } from "./androidSource";
 import { NOTIFICATION_ROW_HINT, notificationState, openNotificationSettings, type NotificationState } from "./notifications";
 import { ReadAloud } from "./plugins";
 import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
+import { OldSavesList } from "./OldSaves";
+import { useOldSaves } from "./oldSaveList";
 import { openRelease } from "./UpdateNotice";
 import { useAppUpdate } from "./updates";
 
@@ -23,6 +25,17 @@ function Group({ title, id, children }: { title: string; id?: string; children: 
       <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</h2>
       <div className="divide-y divide-line rounded-2xl border border-line bg-panel">{children}</div>
     </section>
+  );
+}
+
+/** Bản lưu cũ app đang giữ hộ (lần lưu hỏng giữa chừng): chỉ hiện khi có file, đứng đầu trang vì là thứ có thể mất nếu không để ý. */
+function OldSavesGroup() {
+  const { data } = useOldSaves();
+  if (!data?.length) return null;
+  return (
+    <Group title={`Bản lưu cũ (${data.length})`} id="old-saves">
+      <OldSavesList files={data} />
+    </Group>
   );
 }
 
@@ -138,6 +151,8 @@ export function SettingsScreen() {
   return (
     <div className="px-4 pb-10 pt-4">
       <h1 className="text-2xl font-bold tracking-tight">Cài đặt</h1>
+
+      <OldSavesGroup />
 
       {/* Giọng đọc là việc người mới cần trước hết; hẹn giờ ngủ là tuỳ chọn nên xuống sau (soát UX a9). */}
       <Group title="Giọng đọc" id="voices">

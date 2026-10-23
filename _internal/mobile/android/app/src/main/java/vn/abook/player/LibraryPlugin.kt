@@ -1391,7 +1391,7 @@ class LibraryPlugin : Plugin() {
             val written = BookSave.save(Store.bookDir(id), File(context.cacheDir, "save"), project,
                 previous = { try { context.contentResolver.openInputStream(uri) } catch (_: java.io.FileNotFoundException) { null } },
                 open = { context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn") },
-                keepDir = File(context.filesDir, "ban-luu-cu"), keepName = Store.manifest(id)?.optString("title").orEmpty(),
+                keepDir = OldSaves.dir(context.filesDir), keepName = Store.manifest(id)?.optString("title").orEmpty(),
                 previousSize = savedSize(uri))
             ExportHistory.remember(Store.bookDir(id), if (project) "abookproj" else "abook", uri.toString(), snapshot)
             BookEdits.markSaved(Store.bookDir(id)) // "Save (N changes)" counts again from here
@@ -1417,6 +1417,53 @@ class LibraryPlugin : Plugin() {
             if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getLong(0) else 0L
         }
     }.getOrNull() ?: 0L
+
+    /** Bản lưu cũ [BookSave] giữ lại khi lần lưu hỏng giữa chừng mà bản trước chưa trả lại được: tên, cỡ, lúc giữ (giây) - mới nhất đứng đầu. */
+    @PluginMethod
+    fun listOldSaves(call: PluginCall) = background(call) {
+        val files = JSONArray()
+        OldSaves.list(OldSaves.dir(context.filesDir)).forEach { files.put(JSONObject().put("name", it.name).put("size", it.size).put("modified", it.modified / 1000.0)) }
+        call.resolve(JSObject().put("files", files))
+    }
+
+    /** "Lưu ra…": hộp chọn chỗ lưu của hệ thống, rồi chép bản lưu cũ `name` ra đó theo khối (không giữ cả file trong bộ nhớ). */
+    @PluginMethod
+    fun exportOldSave(call: PluginCall) {
+        val name = call.getString("name") ?: return call.reject("thiếu tên")
+        try {
+            OldSaves.resolve(OldSaves.dir(context.filesDir), name)
+        } catch (error: IllegalArgumentException) {
+            return call.reject(error.message ?: "Không thấy bản lưu cũ này")
+        }
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE)
+            .setType(OldSaves.mimeOf(name)).putExtra(Intent.EXTRA_TITLE, name)
+        startActivityForResult(call, intent, "exportedOldSave")
+    }
+
+    @ActivityCallback
+    private fun exportedOldSave(call: PluginCall?, result: ActivityResult) {
+        answered(call)
+        val uri = result.data?.data
+        if (call == null) return
+        val name = call.getString("name")
+        if (uri == null || name == null) return call.resolve(JSObject().put("saved", false))
+        io.execute {
+            try {
+                val sink = context.contentResolver.openOutputStream(uri, "wt") ?: throw IllegalStateException("Không ghi được vào chỗ đã chọn")
+                sink.use { OldSaves.copyTo(OldSaves.dir(context.filesDir), name, it) }
+                call.resolve(JSObject().put("saved", true))
+            } catch (error: Exception) {
+                fail(call, error, "không lưu được file")
+            }
+        }
+    }
+
+    /** "Xoá…" (đã xác nhận trong app): bản lưu cũ biến mất, không lấy lại được. */
+    @PluginMethod
+    fun deleteOldSave(call: PluginCall) = background(call) {
+        val deleted = OldSaves.delete(OldSaves.dir(context.filesDir), call.getString("name") ?: throw IllegalArgumentException("thiếu tên"))
+        call.resolve(JSObject().put("deleted", deleted))
+    }
 
     /**
      * "Chia sẻ…": đóng cuốn (kèm thay đổi của người nghe, như "Lưu thành…") thành file trong `cacheDir/share` ([BookShare]) rồi mở bảng
@@ -1867,7 +1914,8 @@ class LibraryPlugin : Plugin() {
     private fun resolveState(call: PluginCall, state: JSONObject) {
         call.resolve(JSObject.fromJSONObject(state))
         val id = call.getString("id") ?: return
-        io.execute { runCatching { pushState(id) } }
+        // `record`: hồ sơ màn đã chốt - gửi đúng nó, không phải hồ sơ đang dùng lúc này.
+        io.execute { runCatching { StateSync.pushNow(context, id, call.getString("record")) } }
     }
 
     @PluginMethod
@@ -1892,12 +1940,12 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun setChapterDone(call: PluginCall) = background(call) {
-        resolveState(call, Store.setChapterDone(call.getString("id")!!, call.getInt("chapterId")!!, call.getBoolean("done") ?: true))
+        resolveState(call, Store.setChapterDone(call.getString("id")!!, call.getInt("chapterId")!!, call.getBoolean("done") ?: true, call.getString("record")))
     }
 
     @PluginMethod
     fun setFinished(call: PluginCall) = background(call) {
-        resolveState(call, Store.setFinished(call.getString("id")!!, call.getBoolean("finished") ?: true))
+        resolveState(call, Store.setFinished(call.getString("id")!!, call.getBoolean("finished") ?: true, call.getString("record")))
     }
 
     @PluginMethod
@@ -1923,10 +1971,10 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun addBookmark(call: PluginCall) = background(call) {
         val mark = Store.addBookmark(call.getString("id")!!, call.getInt("chapterId")!!, call.getDouble("seconds") ?: 0.0, call.getString("note") ?: "",
-            call.getInt("index"), call.getString("quote") ?: "", call.getDouble("createdAt"))
+            call.getInt("index"), call.getString("quote") ?: "", call.getDouble("createdAt"), call.getString("record"))
         call.resolve(JSObject.fromJSONObject(mark))
         // Bookmarks reach the computer like the listening position does (a70: a bookmark set in the reader never left the phone).
-        runCatching { pushState(call.getString("id")!!) }
+        runCatching { StateSync.pushNow(context, call.getString("id")!!, call.getString("record")) }
     }
 
     @PluginMethod
@@ -1939,16 +1987,20 @@ class LibraryPlugin : Plugin() {
 
     @PluginMethod
     fun updateBookmark(call: PluginCall) = background(call) {
-        Store.updateBookmark(call.getString("id")!!, call.getString("markId")!!, call.getString("note") ?: "")
+        val id = call.getString("id")!!
+        val record = call.getString("record")
+        Store.updateBookmark(id, call.getString("markId")!!, call.getString("note") ?: "", record)
         call.resolve()
-        runCatching { pushState(call.getString("id")!!) }
+        runCatching { StateSync.pushNow(context, id, record) }
     }
 
     @PluginMethod
     fun deleteBookmark(call: PluginCall) = background(call) {
-        Store.deleteBookmark(call.getString("id")!!, call.getString("markId")!!)
+        val id = call.getString("id")!!
+        val record = call.getString("record")
+        Store.deleteBookmark(id, call.getString("markId")!!, record)
         call.resolve()
-        runCatching { pushState(call.getString("id")!!) }
+        runCatching { StateSync.pushNow(context, id, record) }
     }
 
     /**
@@ -1958,7 +2010,7 @@ class LibraryPlugin : Plugin() {
     private fun pushState(id: String) = StateSync.pushNow(context, id)
 
     /** Tốc độ / giọng gửi kèm hồ sơ đã bị xoá hay chuyển sang sách khác: báo rõ, không ghi sang hồ sơ khác (soát a105 F7). */
-    private val RECORD_GONE = "Hồ sơ nghe này đã bị xoá hoặc chuyển sang sách khác"
+    private val RECORD_GONE = Store.RECORD_GONE
 
     @PluginMethod
     fun syncState(call: PluginCall) = background(call) {

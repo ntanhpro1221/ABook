@@ -513,6 +513,12 @@ export interface EbookLibraryPlugin {
    *  giữ loại file cuốn đã đến (`.abookproj` hay `.abook`). */
   /** `ask`: luôn hỏi chỗ lưu ("Lưu thành…"); không thì "Lưu" ghi thẳng vào chỗ đã lưu lần trước của cuốn này, chưa có mới hỏi. */
   saveBook(options: { id: string; as?: "abook" | "abookproj"; ask?: boolean }): Promise<{ saved: boolean; name?: string; size?: number; edits?: number }>;
+  /** Bản lưu cũ app đang giữ hộ (lần lưu hỏng giữa chừng mà bản trước chưa trả lại được vào file - OldSaves.kt); `modified` tính bằng giây. */
+  listOldSaves(): Promise<{ files: { name: string; size: number; modified: number }[] }>;
+  /** "Lưu ra…": hộp chọn chỗ lưu của hệ thống rồi chép bản cũ `name` ra đó; `saved: false` khi người dùng bỏ qua hộp. */
+  exportOldSave(options: { name: string }): Promise<{ saved: boolean }>;
+  /** Xoá hẳn một bản lưu cũ (không lấy lại được; giao diện đã hỏi xác nhận). */
+  deleteOldSave(options: { name: string }): Promise<{ deleted: boolean }>;
   /** "Chia sẻ…": đóng cuốn (kèm thay đổi của người nghe) thành file rồi mở bảng chia sẻ của hệ thống (Zalo, Drive, email…). `as` không nói:
    *  sách nghe `.abook`. `shared: true` khi bảng chia sẻ đã mở. */
   shareBook(options: { id: string; as?: "abook" | "abookproj" }): Promise<{ shared: boolean; name?: string }>;
@@ -552,15 +558,15 @@ export interface EbookLibraryPlugin {
   storage(): Promise<{ bytes: number; free: number; books: { id: string; bytes: number; title?: string }[] }>;
   progress(options: { id: string; chapterId: number; seconds: number; duration: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor }): Promise<ListeningState>;
   saveReading(options: { id: string; chapterId: number; index: number; at?: number; anchor?: import("@/listen/readingAnchor").ReadingAnchor; quote?: string; record?: string }): Promise<ListeningState>;
-  setChapterDone(options: { id: string; chapterId: number; done: boolean }): Promise<ListeningState>;
-  setFinished(options: { id: string; finished: boolean }): Promise<ListeningState>;
+  setChapterDone(options: { id: string; chapterId: number; done: boolean; record?: string }): Promise<ListeningState>;
+  setFinished(options: { id: string; finished: boolean; record?: string }): Promise<ListeningState>;
   setRate(options: { id: string; rate: number; record?: string }): Promise<void>;
   /** Giọng Nghe ngay riêng của cuốn ("" = giọng mặc định) - đi theo hồ sơ nghe sang máy kia (soát a68 lỗi 8). */
   setVoice(options: { id: string; voice: string; record?: string }): Promise<void>;
-  addBookmark(options: { id: string; chapterId: number; seconds: number; note: string; index?: number; quote?: string; createdAt?: number }): Promise<Bookmark>;
+  addBookmark(options: { id: string; chapterId: number; seconds: number; note: string; index?: number; quote?: string; createdAt?: number; record?: string }): Promise<Bookmark>;
   restoreBookmark(options: { id: string; mark: Bookmark }): Promise<Bookmark>;
-  updateBookmark(options: { id: string; markId: string; note: string }): Promise<void>;
-  deleteBookmark(options: { id: string; markId: string }): Promise<void>;
+  updateBookmark(options: { id: string; markId: string; note: string; record?: string }): Promise<void>;
+  deleteBookmark(options: { id: string; markId: string; record?: string }): Promise<void>;
   syncState(options: { id: string }): Promise<ListeningState>;
   createRecord(options: { id: string; name: string }): Promise<{ records: ListeningRecord[] }>;
   activateRecord(options: { id: string; record: string }): Promise<{ records: ListeningRecord[] }>;
