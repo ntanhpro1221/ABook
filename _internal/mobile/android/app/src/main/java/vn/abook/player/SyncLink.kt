@@ -216,7 +216,7 @@ object SyncLink {
         val reply = JSONObject(text)
         val fingerprint = seen[0].orEmpty()
         if (fingerprint.isEmpty() || !reply.optString("fingerprint").equals(fingerprint, ignoreCase = true)) {
-            throw IllegalStateException("Máy kia trả lời không đáng tin (chứng chỉ không khớp vân tay nó báo) - chưa ghép, thử lại; vẫn lỗi thì kiểm tra mạng")
+            throw IllegalStateException("Chứng chỉ không khớp nên chưa ghép — bạn thử lại; vẫn lỗi thì kiểm tra mạng.")
         }
         return reply to fingerprint
     }

@@ -124,7 +124,7 @@ object VieneuVoices {
             return Ready(tier, loaded, reader, preset)
         } catch (failure: Throwable) {
             if (failure is VoiceException) throw failure
-            throw VoiceException("Giọng VieNeu chưa sẵn sàng (${failure.message ?: failure.javaClass.simpleName}) - hãy tải lại Giọng VieNeu trong Cài đặt.", cause = failure, reason = "voice")
+            throw VoiceException("Giọng VieNeu chưa sẵn sàng — bạn tải lại trong Cài đặt.", cause = failure, reason = "voice")
         }
     }
 

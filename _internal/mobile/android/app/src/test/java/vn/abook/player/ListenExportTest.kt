@@ -395,7 +395,7 @@ class ListenExportTest {
         } catch (refused: Mp3Export.Refused) {
             assertTrue(refused.message!!.contains("“Chương 2”"))
             assertTrue(refused.message!!.contains("Khóa không dùng được."))
-            assertTrue(refused.message!!.contains("xuất lại để làm tiếp"))
+            assertTrue(refused.message!!.contains("xuất lại để tiếp tục"))
         }
         assertNotNull(ListenExport.ready(work, chapters[0], reading))
         assertNull(ListenExport.ready(work, chapters[1], reading))

@@ -42,7 +42,7 @@ object Covers {
         return (width / scale).toLong() * (height / scale)
     }
 
-    fun tooManyPixels() = CoverCodec.CoverError("Ảnh có quá nhiều điểm ảnh (tối đa ${MAX_PIXELS / 1_000_000} triệu) - bạn thu nhỏ ảnh rồi thử lại")
+    fun tooManyPixels() = CoverCodec.CoverError("Ảnh vượt ${MAX_PIXELS / 1_000_000} triệu điểm ảnh — bạn thu nhỏ rồi thử lại.")
 
     fun tooLarge() = CoverCodec.CoverError("Ảnh quá lớn (tối đa ${MAX_UPLOAD_BYTES / (1 shl 20)} MB)")
 

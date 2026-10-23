@@ -10,6 +10,6 @@
   }
  ],
  "notes": [
-  "File chữ không phải UTF-8 - đã đọc theo bảng mã Tây Âu (cp1252). Nếu chữ lạ, lưu lại file dạng UTF-8 rồi nhập lại."
+  "Đã đọc theo mã Tây Âu (cp1252) — nếu chữ lạ, bạn lưu file dạng UTF-8 rồi nhập lại."
  ]
 }

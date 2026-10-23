@@ -21,7 +21,7 @@ def test_a_port_that_is_not_abooks_says_so_not_that_the_machine_is_off(tmp_path:
     try:
         with pytest.raises(ApiError) as caught:
             app.pair_computer(f"127.0.0.1:{plain.server_address[1]}", "123456")
-        assert str(caught.value).startswith("Địa chỉ này có trả lời nhưng không phải cổng ghép của ABook"), caught.value
+        assert str(caught.value) == remote_books.NOT_ABOOK, caught.value
     finally:
         plain.shutdown()
         plain.server_close()
@@ -41,3 +41,15 @@ def test_silence_is_still_the_machine_not_answering() -> None:
     endpoint = remote_books.Endpoint("192.0.2.1", 1, "ab" * 32)
     assert remote_books._unreachable(endpoint, TimeoutError()) == remote_books.UNREACHABLE
     assert remote_books._unreachable(endpoint, None) == remote_books.UNREACHABLE
+
+
+@pytest.mark.parametrize("error, steps", [
+    (TimeoutError(), ("mở ABook", "cùng Wi-Fi", remote_books.SYNC_SWITCH)),
+    (ConnectionRefusedError(), ("mở ABook", remote_books.SYNC_SWITCH, "chép lại địa chỉ ghép")),
+])
+def test_network_help_keeps_the_known_computers_name(monkeypatch, error, steps) -> None:
+    endpoint = remote_books.Endpoint("192.0.2.1", 1, "ab" * 32)
+    monkeypatch.setattr(remote_books, "_peer_name", lambda _endpoint: "Máy thử A")
+    message = remote_books._unreachable(endpoint, error)
+    assert "máy thử A" in message and "máy kia" not in message
+    assert all(step in message for step in steps)

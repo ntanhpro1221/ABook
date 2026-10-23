@@ -188,7 +188,7 @@ class BookSaveTest {
             save(target, space = { 0L })
             fail("thiếu chỗ phải báo sớm")
         } catch (expected: BookSave.Failed) {
-            assertTrue(expected.message!!, Regex("""cần khoảng \d+ MB""").containsMatchIn(expected.message!!))
+            assertTrue(expected.message!!, Regex("""cần \d+ MB""").containsMatchIn(expected.message!!))
         }
         assertEquals("bản cũ chưa được hỏi", 0, target.asked)
         assertEquals("đích chưa được mở", 0, target.opens)

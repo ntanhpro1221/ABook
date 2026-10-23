@@ -177,7 +177,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             } ?: 0L
             val need = M4bExport.estimatedBytes(plan, musicBytes)
             if (work.parentFile!!.usableSpace < need) {
-                throw Mp3Export.Refused("Điện thoại không đủ chỗ trống để làm file M4B (cần khoảng ${need shr 20} MB) - dọn bớt rồi xuất lại")
+                throw Mp3Export.Refused("Thiếu chỗ làm M4B (cần ${need shr 20} MB) — bạn dọn bớt rồi xuất lại.")
             }
             var shown = 0L
             // Pha đang chạy (trộn nhạc / kiểm đỉnh / mã hoá lại) đi kèm mọi tin tiến độ cho tới pha sau.
@@ -203,8 +203,8 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             val missing = music.mixer?.missing(ids) ?: 0
             val over = encoded?.peakOver.orEmpty()
             if (over.isNotEmpty()) AppLog.w("M4bExport", "sau ${AacJoin.RETRIES} lượt mã hoá lại vẫn vượt trần: $over")
-            val partial = if (result.chapters < result.chaptersTotal) " Các chương chưa làm xong sẽ không có trong file." else ""
-            val lost = if (missing > 0) " $missing đoạn thiếu nhạc vì chưa tải được bài." else ""
+            val partial = if (result.chapters < result.chaptersTotal) " Chưa gồm chương dở." else ""
+            val lost = if (missing > 0) " $missing đoạn chưa tải được nhạc — bạn tải lại nếu muốn xuất đủ nhạc." else ""
             M4bExports.finished(context, bookId, "Đã xuất M4B", "$title · ${result.chapters} chương, ${megabytes(result.size)} MB.$partial$lost")
             val finished = event().put("finished", true).put("name", result.name).put("size", result.size).put("chapters", result.chapters)
                 .put("chaptersTotal", result.chaptersTotal)
@@ -225,7 +225,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             M4bExports.discard(context, file)
             if (Mp3Exports.timedOut(this)) {
                 // Dịch vụ nền hết 6 giờ (Android 15): một file duy nhất không làm tiếp được, nên file dở đã xoá và người nghe xuất lại.
-                M4bExports.finished(context, bookId, "Hệ thống đã dừng việc xuất", "$title · ${Mp3Exports.TIMEOUT_NOTE}.")
+                M4bExports.finished(context, bookId, "Xuất đã dừng", "$title · ${Mp3Exports.TIMEOUT_NOTE}.")
                 M4bExports.emit(event().put("error", Mp3Exports.TIMEOUT_NOTE))
                 return Result.failure()
             }

@@ -139,7 +139,7 @@ object LibraryServer {
         val identity = try {
             ShareTls.identity()
         } catch (error: Exception) {
-            lastError = "Không tạo được chứng chỉ bảo mật cho kết nối - ${error.message ?: error.javaClass.simpleName}"
+            lastError = "Chưa tạo được chứng chỉ kết nối — bạn thử lại."
             AppLog.e("Share", "cổng đồng bộ không bật được: $lastError", error)
             throw IllegalStateException(lastError)
         }
@@ -212,9 +212,9 @@ object LibraryServer {
     fun wrongCodeMessage(): String = wrongCodeText(blocked, pairing != null && pairing!!.second > System.currentTimeMillis(), failures)
 
     internal fun wrongCodeText(blocked: Boolean, active: Boolean, failures: Int): String = when {
-        blocked -> "Nhập sai $PAIRING_ATTEMPTS lần nên mã đã bị huỷ - tạo mã mới ở máy kia rồi nhập lại"
-        active -> "Mã ghép nối sai - còn ${PAIRING_ATTEMPTS - failures} lần thử (sai $PAIRING_ATTEMPTS lần mã sẽ bị huỷ)"
-        else -> "Mã ghép nối sai hoặc đã hết hạn - tạo mã mới ở máy kia"
+        blocked -> "Mã đã huỷ sau $PAIRING_ATTEMPTS lần nhập sai — bạn tạo mã mới trên máy kia."
+        active -> "Mã sai; còn ${PAIRING_ATTEMPTS - failures} lần thử trước khi mã bị huỷ."
+        else -> "Mã sai hoặc hết hạn — bạn tạo mã mới trên máy kia."
     }
 
     @Synchronized
@@ -306,7 +306,7 @@ object LibraryServer {
             // Sao lưu, giữ nguyên file gốc để mọi writer tiếp theo vẫn fail-closed.
             val copy = File(devicesFile.path + ".corrupt-${hash(text)}")
             if (!copy.exists()) Store.writeAtomic(copy, text)
-            throw java.io.IOException("Danh sách máy đã ghép bị hỏng; bạn hãy khôi phục bản sao trước khi ghép hoặc thôi ghép. Dữ liệu cũ vẫn được giữ.", error)
+            throw java.io.IOException("Danh sách máy ghép hỏng; giữ bản cũ — bạn khôi phục bản sao trước khi đổi ghép.", error)
         }
     }
 

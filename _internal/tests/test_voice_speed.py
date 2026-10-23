@@ -177,7 +177,7 @@ def test_the_fast_file_must_match_its_pinned_hash(env, monkeypatch: pytest.Monke
     supertonic_module.start(["supertonic_fast"])
     supertonic_module.join(30)
     status = supertonic_module.status()
-    assert status["state"] == "error" and "ghim" in status["error"]
+    assert status["state"] == "error" and status["error"] == "giọng Supertonic tải về sai bản, đã xoá — bạn bấm Thử lại để tải lại."
     assert not (tmp_path / "supertonic" / "fast" / FAST_NAME).exists() and supertonic_module.installed_fast() is None
     assert voice_speed.live_tag("supertonic:F1") == ""
 

@@ -125,7 +125,7 @@ def test_an_old_phone_app_is_told_apart_from_a_revoked_code_and_from_a_closed_do
     revoked, device2 = _paired(tmp_path / "khac", phone, token="ma-da-bi-thu-hoi")
     with pytest.raises(ApiError) as gone:
         revoked.phone_diagnostics(device2)
-    assert "không nhận máy này" in str(gone.value) and "ghép lại" in str(gone.value)
+    assert str(gone.value) == "Pixel của tôi đã thôi ghép với máy này — bạn ghép lại để dùng tiếp."
 
 
 def test_a_phone_that_is_off_or_has_sharing_switched_off_says_so(tmp_path: Path) -> None:

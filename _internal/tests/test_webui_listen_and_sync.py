@@ -245,10 +245,13 @@ def test_guessing_the_pairing_code_burns_it(tmp_path: Path) -> None:
     """Một triệu khả năng: máy lạ trong mạng đoán mò được trong vài phút nếu mã cứ sống. Sai 5 lần là huỷ mã, và
     mã KHÔNG tự sinh lại - người dùng thấy lý do rồi chủ động tạo mã mới."""
     devices = Devices(tmp_path / "devices.json")
+    words = json.loads((Path(__file__).parent / "fixtures/book_edits/pairing_words.json").read_text(encoding="utf-8"))
+    assert devices.wrong_code_message() == words["expired"]
     code = devices.start_pairing()["code"]
     wrong = "000000" if code != "000000" else "111111"
-    for _ in range(PAIRING_ATTEMPTS):
+    for left in range(PAIRING_ATTEMPTS - 1, -1, -1):
         assert devices.pair(wrong, "máy lạ") is None
+        assert devices.wrong_code_message() == (words["wrong"].format(left=left) if left else words["blocked"])
     assert devices.blocked and devices.pairing() is None
     assert devices.pair(code, "chủ máy") is None, "mã đúng cũng hết giá trị sau khi bị đoán mò"
     fresh = devices.start_pairing()["code"]

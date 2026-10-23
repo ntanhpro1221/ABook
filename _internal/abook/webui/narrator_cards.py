@@ -180,9 +180,8 @@ def applies_note(total: int, done: int) -> str:
     if not total or not done:
         return ""
     if done >= total:
-        return "Chương này đã phân tích xong - đổi sẽ áp khi làm lại phân tích từ đầu (tạo lại cuốn từ file truyện)."
-    return (f"{done}/{total} câu của đoạn này đã phân tích xong - phần ấy chỉ đổi khi làm lại phân tích từ đầu; phần còn lại"
-            " áp ngay.")
+        return "Chương đã phân tích chỉ nhận thay đổi khi bạn tạo lại cuốn từ file truyện."
+    return (f"{done}/{total} câu đã phân tích chỉ đổi khi phân tích lại; phần còn lại áp ngay.")
 
 
 def decide(project_root: Path, body: dict[str, Any]) -> dict[str, Any]:

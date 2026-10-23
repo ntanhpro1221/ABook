@@ -4,11 +4,11 @@
     <string name="title_activity_main">ABook</string>
     <string name="package_name">com.ngdtuanh.abook</string>
     <string name="custom_url_scheme">com.ngdtuanh.abook</string>
-    <string name="widget_description">Trình phát sách nói thu nhỏ</string>
+    <string name="widget_description">Trình phát thu nhỏ</string>
     <string name="widget_cover">Bìa sách</string>
     <string name="widget_back">Lùi 15 giây</string>
     <string name="widget_forward">Tới 15 giây</string>
-    <string name="widget_toggle">Phát hoặc tạm dừng</string>
+    <string name="widget_toggle">Phát/tạm dừng</string>
     <string name="widget_sleep">Hẹn giờ ngủ</string>
     <!-- media3 (thông báo đang phát, Android Auto, kênh thông báo): app chỉ có tiếng Việt, nên chữ của media3 là tiếng Việt cả khi máy để
          tiếng Anh - không theo ngôn ngữ hệ thống ("Pause", "Now playing" - soát a66). -->
@@ -19,17 +19,17 @@
     <string name="media3_controls_seek_forward_description">Tới</string>
     <string name="media3_controls_seek_to_next_description">Chương sau</string>
     <string name="media3_controls_seek_to_previous_description">Chương trước</string>
-    <string name="error_message_authentication_expired">Hãy đăng nhập để dùng ứng dụng này</string>
-    <string name="error_message_bad_value">Dữ liệu đầu vào không chính xác</string>
+    <string name="error_message_authentication_expired">Bạn đăng nhập để dùng app.</string>
+    <string name="error_message_bad_value">Dữ liệu không hợp lệ.</string>
     <string name="error_message_concurrent_stream_limit">Đang nghe trên quá nhiều thiết bị</string>
     <string name="error_message_content_already_playing">Đang phát nội dung đó</string>
     <string name="error_message_disconnected">Đã ngắt kết nối khỏi ABook</string>
-    <string name="error_message_end_of_playlist">Không còn chương nào sau</string>
-    <string name="error_message_fallback">Đã xảy ra lỗi. Hãy thử lại sau.</string>
-    <string name="error_message_info_cancelled">Không làm xong được. Hãy thử lại.</string>
-    <string name="error_message_invalid_state">Chưa làm được việc đó lúc này</string>
+    <string name="error_message_end_of_playlist">Đã hết chương.</string>
+    <string name="error_message_fallback">Có lỗi — bạn thử lại sau.</string>
+    <string name="error_message_info_cancelled">Chưa làm xong — bạn thử lại.</string>
+    <string name="error_message_invalid_state">Chưa làm được lúc này.</string>
     <string name="error_message_io">Lỗi đọc ghi</string>
-    <string name="error_message_not_available_in_region">Không nghe được nội dung đó ở đây</string>
+    <string name="error_message_not_available_in_region">Nội dung chưa có ở khu vực này.</string>
     <string name="error_message_not_supported">ABook chưa làm được việc đó</string>
     <string name="error_message_parental_control_restricted">Nội dung đó đã bị chặn</string>
     <string name="error_message_permission_denied">Không được phép truy cập</string>

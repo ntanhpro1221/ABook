@@ -442,7 +442,7 @@ class EditsSyncTest {
             EditsSync.push(id) { throw IOException("connect failed") }
             fail("phải ném lỗi")
         } catch (error: IOException) {
-            assertTrue(error.message!!.startsWith("Chưa tới được máy tính"))
+            assertTrue(error.message!!.startsWith("Chưa nối được máy tính"))
         }
         view = Store.manifest(id)!!.getJSONObject("editsSync")
         assertEquals("error", view.getJSONObject("last").getString("state"))

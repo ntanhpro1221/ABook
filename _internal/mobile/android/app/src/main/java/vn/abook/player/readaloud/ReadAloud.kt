@@ -511,7 +511,7 @@ object ReadAloud {
     private fun sendsText(index: Int, voice: String = voiceId): Boolean = chapters().getOrNull(index)?.isText == true && needsConsent(voice)
 
     /** Lời khi chữ sắp rời máy mà người nghe chưa đồng ý (đường không qua giao diện: Android Auto, widget, nút tai nghe; giao diện thì hỏi trước - player.tsx withConsent). */
-    internal const val CONSENT_NOTICE = "Giọng này gửi chữ của sách ra ngoài máy: mở ABook và bấm Phát để cho phép, hoặc chọn giọng của máy."
+    internal const val CONSENT_NOTICE = "Giọng gửi chữ sách ra ngoài — bạn cho phép ở ABook → Phát hoặc dùng giọng máy."
 
     /** Đổi giọng: các đoạn đã đọc sẵn mà chưa tới thì bỏ, đoạn kế đọc bằng giọng mới. Đang nghe chương chữ mà giọng mới gửi chữ đi chưa được đồng ý thì từ chối: giữ giọng cũ, báo người nghe
      *  (giao diện hỏi đồng ý TRƯỚC khi đổi - listen/PlayerViews.tsx; đây là lưới cuối cho đường không qua nó). */
@@ -749,7 +749,7 @@ object ReadAloud {
         val running = key in textWaits
         textWaits[key] = { ok ->
             if (token == generation && Playback.bookId == book) {
-                if (ok) then() else fail("Không lấy được chữ chương “${chapter.title}” từ ${SyncLink.holderName(ctx, book)} - kiểm tra kết nối rồi bấm phát lại")
+                if (ok) then() else fail("Chưa lấy được chữ “${chapter.title}” từ ${SyncLink.holderName(ctx, book)} — bạn kiểm tra mạng rồi phát lại.")
             }
         }
         if (!running) {

@@ -193,7 +193,7 @@ class LocalStudioTest {
         // máy chưa có bộ phân tích: nói rõ, không bịa số
         val (conflict, refusal) = LocalStudio.handle("POST", "/api/music/local/analyze", null)
         assertEquals(409, conflict)
-        assertEquals("Chưa có bộ phân tích âm thanh - bài nhập vào vẫn ghim tay được, nhưng máy chưa tự chọn chúng.", (refusal as JSONObject).getString("error"))
+        assertEquals("Chưa có bộ phân tích nhạc; bạn vẫn chọn bài thủ công được.", (refusal as JSONObject).getString("error"))
         val digest = toneLink.removePrefix("local:")
         assertEquals(404, LocalStudio.handle("DELETE", "/api/music/local/${"0".repeat(40)}", null).first)
         val (removed, after) = LocalStudio.handle("DELETE", "/api/music/local/$digest", null)
@@ -268,7 +268,7 @@ class LocalStudioTest {
         assertEquals("Chỉ đổi được sang bài trong Nhạc của tôi", refused(JSONObject().put("pins", JSONObject().put("1:0", "https://x/y.mp3"))))
         assertEquals("Không có đoạn nhạc này trong sách", refused(JSONObject().put("pins", JSONObject().put("7:7", toneLink))))
         assertEquals("Phần sửa nhạc nền không hợp lệ.", refused(JSONObject().put("pins", "tone")))
-        assertEquals("Sách đã đóng gói chỉ chỉnh được bật/tắt nhạc, mức nhạc, im lặng từng đoạn, đổi bài và danh sách nhạc nền", refused(JSONObject().put("volume", 3)))
+        assertEquals("Sách đóng gói chỉ đổi được bật/tắt, mức nhạc, đoạn im, bài và danh sách nhạc.", refused(JSONObject().put("volume", 3)))
         assertFalse(File(dir, "edits.json").exists())
         assertFalse(File(dir, "music/${toneLink.removePrefix("local:")}.wav").exists())
     }

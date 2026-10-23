@@ -44,7 +44,7 @@ class ClipReader(
             return when {
                 local(failed) -> "Giọng ${if (provider(failed) == "supertonic") "Supertonic" else "VieNeu"} chưa đọc được lúc này - tạm đọc bằng $instead."
                 keyed == null -> "Không dùng được giọng trực tuyến - tạm đọc bằng $instead."
-                problem.reason == "auth" -> "Khóa $keyed không dùng được - tạm đọc bằng $instead. Kiểm tra lại khóa trong Cài đặt."
+                problem.reason == "auth" -> "Khoá $keyed lỗi; tạm dùng $instead — bạn kiểm tra khoá trong Cài đặt."
                 problem.reason == "quota" -> "Khóa $keyed đã hết hạn mức - tạm đọc bằng $instead."
                 else -> "Không dùng được giọng $keyed lúc này - tạm đọc bằng $instead."
             }
