@@ -1330,6 +1330,8 @@ class SyncHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.METHOD_NOT_ALLOWED, {"error": "Không hỗ trợ"})
         except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
             return
+        except ValueError as error:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
         except Exception as error:  # noqa: BLE001 - lỗi nào cũng về thành JSON cho điện thoại
             self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": f"{type(error).__name__}: {error}"})
 

@@ -13,6 +13,7 @@
         <exclude domain="sharedpref" path="mp3_export.xml" />
         <exclude domain="sharedpref" path="book_saves.xml" />
         <exclude domain="file" path="share.json" />
+        <exclude domain="file" path="library/listening-node.json" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="sync.xml" />
@@ -24,5 +25,6 @@
         <exclude domain="sharedpref" path="mp3_export.xml" />
         <exclude domain="sharedpref" path="book_saves.xml" />
         <exclude domain="file" path="share.json" />
+        <exclude domain="file" path="library/listening-node.json" />
     </device-transfer>
 </data-extraction-rules>

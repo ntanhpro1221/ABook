@@ -7,6 +7,7 @@ import { EbookLibrary, EbookPlayer, ReadAloud, type LocalBook } from "./plugins"
 import { phonePrepare } from "./readAloud";
 import { phoneTextImport } from "./textImport";
 import { recentFirst } from "@/listen/librarySort";
+import { showDataNotices } from "./dataNotices";
 
 // Phía Nghe trên Android: đọc sách đã tải về máy, và sách trên máy tính nghe thẳng qua mạng (EbookLibrary). Audio chương do lõi phát native mở thẳng từ
 // file, nên audioUrl không dùng tới; câu mẫu nhân vật phát trong WebView qua đường dẫn file đã chuyển đổi.
@@ -124,7 +125,8 @@ export const androidSource: ListenSource = {
   async library() {
     // Sách trên máy tính chưa tải cũng là sách của thư viện này (nghe thẳng - Streaming.kt). Hỏi máy tính chạy song song, không chặn sách đã tải.
     const asking = refreshStreamed();
-    const { books } = await EbookLibrary.localBooks();
+    const { books, notices } = await EbookLibrary.localBooks();
+    showDataNotices(notices);
     await Promise.race([asking, new Promise<void>((resolve) => setTimeout(resolve, STREAMED_GRACE_MS))]);
     // Hai nguồn nối nhau không phải thứ tự "nghe gần đây": xếp theo lần nghe cuối (cùng khoá với máy tính) - soát a97 T1.
     return recentFirst([...books, ...streamedBooks].map((book) => toListenBook(book, false)));
