@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import { launch, findBrowser, connect, openPage, evaluate, parseArgs } from "./gallery_browser.mjs";
 import { inspectionExpression, captureCrops } from "./gallery_inspect.mjs";
 
-export async function layoutFixtures({ browser: executable, out } = {}) {
+export async function layoutFixtures({ browser: executable, out, fixture = "ink-rhythm.html" } = {}) {
   const browser = await launch(findBrowser(executable), { preserveProfile: true });
   let cdp;
   const results = [];
@@ -14,14 +14,14 @@ export async function layoutFixtures({ browser: executable, out } = {}) {
       const viewport = { width: phone ? 412 : 1440, height: phone ? 915 : 900, deviceScale: phone ? 2 : 1 };
       const page = await openPage(cdp, { ...viewport, scale: viewport.deviceScale, mobile: phone, theme });
       const { frameTree } = await cdp.send("Page.getFrameTree", {}, page.sessionId);
-      const html = readFileSync(new URL("./fixtures/ink-rhythm.html", import.meta.url), "utf8")
+      const html = readFileSync(new URL(`./fixtures/${fixture}`, import.meta.url), "utf8")
         .replace("</style>", `${theme === "dark" ? "body{background:#181818;color:white}svg{stroke:white}" : ""}</style>`);
       await cdp.send("Page.setDocumentContent", { frameId: frameTree.frame.id, html }, page.sessionId);
       await evaluate(cdp, page.sessionId, "document.fonts.ready.then(() => true)");
       const result = await evaluate(cdp, page.sessionId, inspectionExpression(phone));
       if (out) {
         mkdirSync(path.join(out, "crops"), { recursive: true });
-        const crop = captureCrops(cdp, page.sessionId, out, `${phone ? "phone" : "desktop"}-${theme}`, viewport);
+        const crop = captureCrops(cdp, page.sessionId, out, `${phone ? "phone" : "desktop"}-${theme}`, viewport, { nearest: true });
         for (const finding of result.findings) finding.crop = await crop(finding.rects);
       }
       results.push({ phone, theme, ...result });

@@ -195,6 +195,34 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
           listSelector: selector(parent), referenceSelector: selector(reference.element), previousSelector: selector(sample.previous), reason: "gap differs from same-role sibling majority" });
     }
   }
+  // Nhãn inline + câu: so nét cuối nhãn với glyph đầu câu (kể cả dấu “), không so hộp span.
+  const inlineSlots = new Map();
+  for (let i = 1; i < inkTexts.length; i++) {
+    const label = inkTexts[i - 1], next = inkTexts[i];
+    if (label.element === next.element || !label.element.matches("span,b,strong,label") || !css(label.element).display.startsWith("inline") || label.element.contains(next.element)) continue;
+    const between = document.createRange(); between.setStart(label.node, label.node.length); between.setEnd(next.node, 0);
+    const overlap = Math.min(label.original.y + label.original.height, next.original.y + next.original.height) - Math.max(label.original.y, next.original.y);
+    if (between.toString().trim() || !label.singleLine || overlap < Math.min(label.original.height, next.original.height) / 2 || next.first.x < right(label.last)) continue;
+    let scope = label.element.parentElement;
+    while (scope && !scope.contains(next.element)) scope = scope.parentElement;
+    if (!scope || /flex|grid/.test(css(scope).display)) continue;
+    const inlineBranch = (el) => { for (let p = el; p && p !== scope; p = p.parentElement) if (!css(p).display.startsWith("inline")) return false; return true; };
+    if (!inlineBranch(label.element) || !inlineBranch(next.element)) continue;
+    // Cùng đường cấu trúc trong một component, kể cả nhãn ở các paragraph khác nhau.
+    const family = selector(scope).replace(/:nth-of-type\(\d+\)/g, "");
+    const key = `${family}:${childPath(label.element, scope)}:${childPath(next.element, scope)}:${css(label.element).fontSize}:${css(next.element).fontSize}`;
+    if (!inlineSlots.has(key)) inlineSlots.set(key, []);
+    inlineSlots.get(key).push({ element: label.element, scope, value: next.first.x - right(label.last), rect: union([label.last, next.first]), next: next.element });
+  }
+  for (const samples of inlineSlots.values()) {
+    if (samples.length < 3) continue;
+    const reference = majority(samples, 1);
+    if (!reference) continue;
+    gaps.push({ selector: selector(reference.scope), metric: "ink-inline-text-gap", values: samples.map((s) => s.value) });
+    for (const sample of samples) if (Math.abs(sample.value - reference.value) > 1.01) add("INK EDGE", sample.element, sample.scope.textContent,
+      [sample.rect, reference.rect], { metric: "ink-inline-text-gap", value: sample.value, referenceValue: reference.value, delta: sample.value - reference.value, tolerance: 1,
+        listSelector: selector(sample.scope), otherSelector: selector(sample.next), referenceSelector: selector(reference.element), reason: "label to first glyph gap differs from repeated inline majority" });
+  }
   // Khung có header trang + các section là cùng một họ nội dung. Dialog và trang đang cuộn không so với trang gốc.
   let firstBlock = null;
   if (!all.some((e) => e.matches('[role="dialog"],[role="alertdialog"]') && visible(e, rect(e.getBoundingClientRect())))) {

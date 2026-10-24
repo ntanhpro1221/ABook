@@ -1,0 +1,32 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><style>
+*{box-sizing:border-box}body{margin:12px;font:16px/1.5 Arial;background:white;color:black}
+section{margin-bottom:4px}.columns p{margin:0}.row{display:flex;gap:10px;align-items:flex-start}.row>span{display:block}
+.large{font-size:28px}.small{font-size:24px}.baseline{align-items:baseline}
+.columns{display:grid;grid-template-columns:140px 200px;align-items:start}
+.self{align-self:baseline}.centre{align-items:center}.icon{width:24px;height:24px}
+input,select,textarea,button{font:14px Arial;border:1px solid #666;background:#eee;height:35px;width:100px;padding:2px}
+button{background:#ddd}.short{height:31.5px}.offset{transform:translateY(2px)}
+.ghost{border:0;background:transparent;height:28px}.reach{position:relative}.reach:after{content:"";position:absolute;inset:-8px 0;background:transparent}
+.chip{background:#ddd;font-size:12px;padding:2px 5px;border-radius:8px}
+.inline p{margin:0;line-height:24px;font-size:16px}.inline span{font-size:12px;margin-right:7px}
+.inline .wide{margin-right:11px}.shift{position:relative;top:-2px}
+</style><body>
+<section id="top" class="row"><span class="large">Cài đặt</span><span class="small">Giọng đọc</span></section>
+<section id="baseline" class="row baseline"><span class="large">Cài đặt</span><span class="small">Giọng đọc</span></section>
+<section id="columns" class="columns"><div><span class="large">Cài đặt</span><p>Phần dưới</p></div><div><span class="small">Giọng đọc</span></div></section>
+<section id="self" class="columns"><span class="large self">Cài đặt</span><span class="small self">Giọng đọc</span></section>
+<section id="icon" class="row centre"><svg class="icon" viewBox="0 0 24 24"><path d="M2 12h20" stroke="black"/></svg><span class="small">Giọng đọc</span></section>
+<section id="chip" class="row centre"><span>Nhân vật</span><span class="chip">Đang đọc</span></section>
+<section id="height" class="row centre"><input aria-label="Địa chỉ"><button class="short">Thêm</button></section>
+<section id="equal" class="row"><input aria-label="Tên"><button class="reach">Lưu</button></section>
+<section id="ghost" class="row centre"><input aria-label="Tác giả"><button class="ghost">Huỷ</button></section>
+<section id="offset" class="row"><select aria-label="Giọng"><option>Giọng</option></select><button class="offset">Thử</button></section>
+<section id="textarea" class="row"><textarea rows="1" aria-label="Tên"></textarea><button class="short">Lưu</button></section>
+<section id="multiline" class="row"><textarea rows="2" aria-label="Mô tả" style="height:50px"></textarea><button>Lưu</button></section>
+<section id="inline-baseline"><span style="font-size:12px" class="shift">Người kể</span> Câu chuyện.</section>
+<section id="inline-gap" class="inline"><p><span>Lan</span>“Một câu</p><p><span>Lan</span>“Một câu</p><p><span class="wide">Lan</span>“Một câu</p></section>
+<section id="inline-pass" class="inline"><p><span>Lan</span>“Một câu</p><p><span>Lan</span>“Một câu</p><p><span>Lan</span>“Một câu</p></section>
+<section id="ghost-baseline" class="row centre"><span class="large">Cài đặt</span><button class="ghost" style="display:flex;align-items:center;justify-content:center">Mở</button></section>
+<section id="same-font" class="row"><div><span>Nhân vật</span></div><div style="transform:translateY(2px)"><span>Giọng đọc</span></div></section>
+<section id="segmented" class="row"><input aria-label="Chọn"><div role="radiogroup" style="display:flex;background:#eee;border:1px solid #666;height:31px"><button role="radio" style="height:29px;width:40px">Nam</button><button role="radio" style="height:29px;width:40px">Nữ</button></div></section>
+</body></html>
