@@ -347,7 +347,7 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
         </div>
       ) : book.downloaded && newChapters <= 0 && !newCover && !newWords && !newAudio && !newMeta ? (
         <span className="flex items-center gap-1 text-xs text-success">
-          <CheckCircle2 className="size-4" /> Đã tải
+          <CheckCircle2 className="ink-start size-4" /> Đã tải
         </span>
       ) : (
         <Button size="sm" variant={compact ? "ghost" : book.downloaded ? "secondary" : "primary"} icon={Download} onClick={onDownload}>
