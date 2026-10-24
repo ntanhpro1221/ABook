@@ -39,7 +39,7 @@ export function otherBookLine(book: { duration: number; chaptersTotal: number; c
   return book.duration > 0 ? `Chưa nghe · ${formatLength(book.duration)}` : `Chưa nghe · ${book.chaptersTotal} chương`;
 }
 
-/** Nút chính của trang sách: nói rõ nghe bắt đầu từ đâu. Không đổi theo việc giọng máy đã đọc sẵn tới đâu. */
+/** Nút chính của trang sách: "Nghe tiếp · Chương 4" hay "Nghe". Không đổi theo việc giọng máy đã đọc sẵn tới đâu. */
 export function primaryListenLabel(state: {
   /** Cuốn này đang phát trong trình phát. */
   playingHere: boolean;
@@ -54,9 +54,9 @@ export function primaryListenLabel(state: {
 }): string {
   if (state.playingHere) return "Tạm dừng";
   if (state.finished) return "Nghe lại từ đầu";
-  if (state.point && state.point.at > 0) return `Nghe tiếp · ${resumeWhere(state.point.title, state.point.at)}`;
-  if (state.heard > 0) return state.point ? `Nghe tiếp · ${state.point.title}` : "Nghe tiếp";
-  return state.textOnly ? "Nghe ngay" : "Bắt đầu nghe";
+  // Nhãn ngắn (docs/DESIGN.md mục 7): chương là đủ - giờ phút đã ở dòng tiến độ ngay trên.
+  if (state.point && (state.point.at > 0 || state.heard > 0)) return `Nghe tiếp · ${state.point.title}`;
+  return state.heard > 0 ? "Nghe tiếp" : "Nghe";
 }
 
 /** Nhãn đọc màn hình của nút phát: đang chờ thì nói đang chờ gì - không nói "Tạm dừng" khi chưa có tiếng nào. */

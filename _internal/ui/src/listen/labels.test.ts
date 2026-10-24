@@ -4,16 +4,16 @@ import { bookProgressText, caughtUpDetail, chapterOpenProblem, retryChapterText,
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
 describe("nút chính của trang sách", () => {
-  it("sách mới: 'Nghe ngay' cho sách chỉ có chữ, 'Bắt đầu nghe' cho sách nói", () => {
-    expect(primaryListenLabel({ ...fresh, textOnly: true })).toBe("Nghe ngay");
-    expect(primaryListenLabel(fresh)).toBe("Bắt đầu nghe");
+  it("sách mới: 'Nghe', cả sách nói lẫn sách chỉ có chữ", () => {
+    expect(primaryListenLabel({ ...fresh, textOnly: true })).toBe("Nghe");
+    expect(primaryListenLabel(fresh)).toBe("Nghe");
   });
 
-  it("có tiến độ: nói nghe tiếp từ đâu, cùng dạng với thẻ ở Thư viện", () => {
-    const label = primaryListenLabel({ ...fresh, textOnly: true, point: { title: "Chương 3", at: 724 }, heard: 900 });
-    expect(label).toBe(`Nghe tiếp · ${resumeWhere("Chương 3", 724)}`);
+  it("có tiến độ: 'Nghe tiếp · Chương N' - chỉ chương, không giờ phút", () => {
+    expect(primaryListenLabel({ ...fresh, textOnly: true, point: { title: "Chương 3", at: 724 }, heard: 900 })).toBe("Nghe tiếp · Chương 3");
     expect(resumeWhere("Chương 3", 724)).toBe("Chương 3 · 12:04");
     expect(primaryListenLabel({ ...fresh, point: { title: "Chương 2", at: 0 }, heard: 300 })).toBe("Nghe tiếp · Chương 2");
+    expect(primaryListenLabel({ ...fresh, point: null, heard: 300 })).toBe("Nghe tiếp");
   });
 
   it("đang phát: Tạm dừng; nghe hết sách: Nghe lại từ đầu", () => {

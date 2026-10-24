@@ -320,6 +320,23 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   width: clamp(1.375rem, 0.9167rlh, 2.25rem);
   height: clamp(1.375rem, 0.9167rlh, 2.25rem);
 }
+/* Hàng nút cách đều theo TÂM, phần nhìn thấy của hai nút đầu mút sát mép nội dung (soát 24-10: justify-between chia đều khoảng HỞ, nên nút rộng
+ * hẹp khác nhau làm tâm lệch 76/88/88/76 px, còn nền chạm của nút đầu đẩy biểu tượng thụt 15 px khỏi mép chữ). Mỗi con nằm giữa một rãnh rộng 0
+ * (tràn đều hai bên), hàng lùi vào nửa --slot mỗi đầu; --slot = bề rộng phần nhìn thấy của nút đầu mút (biểu tượng hay nhãn), tính theo rlh để
+ * giãn cùng cỡ chữ (xem `glyph`). */
+@utility slot-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 0;
+  justify-content: space-between;
+  justify-items: center;
+  align-items: center;
+  padding-inline: calc(var(--slot) / 2);
+  /* Rãnh 0 cho con cỡ min-content - nhãn hai chữ ("Dấu trang") sẽ gãy dòng; giữ cỡ tự nhiên. */
+  & > * {
+    width: max-content;
+  }
+}
 @utility touch-hit {
   @media (pointer: coarse), (max-width: 40rem) {
     position: relative;
@@ -732,6 +749,16 @@ details[open]:not([data-motion="closing"]) > summary .fold-chevron {
 .motion-row[data-state="exit"] {
   animation: row-out var(--motion-medium-out) var(--ease-accelerate) both;
   pointer-events: none;
+}
+
+/* Màn "Đang nghe": nền pha màu chủ đạo của bìa vào --bg, 10 % (sáng) / 16 % (tối) - mỗi cuốn một không khí (docs/DESIGN.md 5.1). Đổi cuốn thì
+   nền mờ chéo sang màu mới. --cover-tint đặt tại chỗ (PlayerViews.NowPlaying, màu đã lọc). */
+.now-playing-tint {
+  background-color: color-mix(in oklab, var(--cover-tint, var(--bg)) 10%, var(--bg));
+  transition: background-color var(--motion-slow) var(--ease-standard);
+}
+[data-theme="dark"] .now-playing-tint {
+  background-color: color-mix(in oklab, var(--cover-tint, var(--bg)) 16%, var(--bg));
 }
 
 /* Màn "Đang nghe" khi không có View Transitions (đường dự phòng): trượt lên từ đáy. */

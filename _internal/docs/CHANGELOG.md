@@ -13,6 +13,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Giao diện
 - Thanh bên gọn còn Thư viện, Studio và Cài đặt; dự án đang chạy/chờ có tiến độ, vùng tải dùng khung chờ, lỗi có thử lại và mất mạng hiện dải nhỏ.
 - Thư viện mở lưới bìa và gom bộ sách; điện thoại có tab Studio, sách máy kia ở Thư viện và ghép máy trong Cài đặt › Thiết bị.
+- Trang sách gọn lại: một nút chính “Nghe tiếp · Chương N” (hay “Nghe”), dưới là một hàng Đọc · Tìm · Từ đầu · Thêm; mọi việc khác nằm trong “Thêm”.
+- Danh sách chương, nhân vật phẳng, không còn khung lồng khung; sách không chia phần thì chương hiện thẳng dưới tab.
+- Màn Đang nghe: bìa lớn, nền nhuốm màu bìa, nút phát tròn màu nhấn giữa 5 nút; hàng Tốc độ · Hẹn giờ · Dấu trang · Chương; “Đọc theo” ở đáy.
+- Nhạc nền, giọng đọc, âm lượng, danh sách dấu trang, quay lại chỗ vừa nghe và phát trên thiết bị khác vào menu “…”.
+- Thanh phát máy tính còn tối đa 6 nút: lùi · phát · tới, tốc độ, âm lượng, “…”.
+- Màn đọc: chữ 20 px, giãn dòng 1,7; thanh đầu chỉ còn nút về và tên chương, không đè lên chữ; thanh điều khiển dưới mờ đi khi bạn cuộn đọc, chạm là hiện lại.
+- Trang sách và màn Đang nghe căn thẳng hàng: các nút cách đều nhau, biểu tượng ở hai đầu thẳng mép với chữ, bìa lớn bằng bề ngang màn; tab Nhân vật, Lịch sử không còn khung lồng khung; dòng thông tin không rớt một chữ xuống dòng.
 
 ### Sửa lỗi
 - Back đóng mọi thông báo đang hiện (kể cả lời mời bật thông báo) rồi mới về trang trước; menu đang khép không chặn chạm bên dưới; đóng nhóm Cài đặt quay đúng một bước.
