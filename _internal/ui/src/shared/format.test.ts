@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { MUSIC_MODIFIED_NOTE, etaOf, excerpt, fileName, formatEta, formatFingerprint, formatLengthUp, formatSize, licenseLabel, musicCreditText, musicNeedsModifiedNote, shownReading } from "./format";
+import { MUSIC_MODIFIED_NOTE, etaOf, excerpt, fileName, formatEta, formatFingerprint, formatLengthUp, formatSize, joinParts, licenseLabel, musicCreditText, musicNeedsModifiedNote, shownReading } from "./format";
+
+describe("joinParts", () => {
+  it("nối các phần bằng đúng một dấu \" · \" và bỏ phần rỗng", () => {
+    expect(joinParts(["Chương 3", "Người kể", "khớp 71%"])).toBe("Chương 3 · Người kể · khớp 71%");
+    expect(joinParts(["Chương 3", "", null, undefined, false, "Người kể"])).toBe("Chương 3 · Người kể");
+    expect(joinParts([false, ""])).toBe("");
+  });
+});
 
 describe("shownReading", () => {
   it("capitalises each word of a name's reading for display", () => {
