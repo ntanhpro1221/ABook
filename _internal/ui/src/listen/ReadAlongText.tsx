@@ -374,6 +374,9 @@ interface Shared {
   hint?: string;
 }
 
+/** Dòng chỉ gồm dấu ngăn cảnh: "***", "* * *", "~~~", "---"... */
+const SCENE_BREAK = /^\s*(?:[*·•~#=—–-]\s*){3,}$/;
+
 type ChunkItems = { first: number; last: number; paragraphs: ParagraphItems[] };
 /** Số đoạn mỗi nhóm: lần vẽ lại chỉ so ~1/50 số đoạn (chương 11.000 đoạn: 220 nhóm). */
 const CHUNK = 50;
@@ -468,8 +471,10 @@ const Paragraph = memo(function Paragraph({
       </Heading>
     );
   }
+  // Dòng ngăn cảnh ("***", "* * *") đứng giữa trang như sách in - chỉ cách bày, chữ giữ nguyên.
+  const sceneBreak = paragraph.items.length === 1 && (first.segment.sceneBreak || SCENE_BREAK.test(first.segment.text));
   return (
-    <p className="text-pretty">
+    <p className={sceneBreak ? "pl-[0.3em] text-center tracking-[0.3em] text-fg-2" : "text-pretty"}>
       {paragraph.items.map(({ index, segment }) => (
         <span key={index}>
           {speakers && segment.speaker && (segment.kind === "dialogue" || segment.kind === "thought") && (
