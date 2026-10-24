@@ -492,7 +492,8 @@ function PeersPanel() {
   return (
     <MotionRegion as="section" className="mt-8" aria-labelledby="peers-title">
       <div className="flex items-center justify-between gap-3">
-        <h2 id="peers-title" className="text-lg font-semibold">
+        {/* Cùng bậc với các tiêu đề mục khác của trang ("Studio trên máy tính", "Nối máy tính", "Máy tính tìm thấy"). */}
+        <h2 id="peers-title" className="font-semibold">
           Thiết bị khác
         </h2>
         <Button size="sm" variant="secondary" icon={Link2} onClick={() => { setOpen((value) => !value); if (!open) discover.mutate(); }}>

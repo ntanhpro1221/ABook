@@ -1237,6 +1237,11 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 /* Nút chữ ở cuối hàng có vùng chạm rộng hơn chữ: bù phần đệm để chữ kết thúc đúng mép nội dung. */
 .settings-page .settings-row-control > button[data-variant="ghost"],
 .settings-page .settings-edge-action { margin-right: calc(var(--spacing) * -3); }
+/* Bù đúng đệm ngang của từng cỡ nút (sm px-3, md px-3.5, lg px-5): chữ của nút ghost thẳng mép phải với công tắc / chữ hàng khác. */
+.settings-page .settings-row-control > button[data-variant="ghost"][data-size="md"],
+.settings-page .settings-edge-action[data-size="md"] { margin-right: calc(var(--spacing) * -3.5); }
+.settings-page .settings-row-control > button[data-variant="ghost"][data-size="lg"],
+.settings-page .settings-edge-action[data-size="lg"] { margin-right: calc(var(--spacing) * -5); }
 
 @keyframes fade-in-off { from { opacity: 0; } to { opacity: 1; } }
 
