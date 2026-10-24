@@ -17,7 +17,7 @@ import { useScrollMemory } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
 import { Dialog, EmptyState, failedEmpty, heardBarProps, LoadError, Progress, Sheet, Skeleton } from "@/shared/ui";
-import { caughtUpDetail, resumeWhere } from "./labels";
+import { caughtUpDetail, displayTitle, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, type LibrarySort } from "./librarySort";
 import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, resumeTarget, seriesIndex, twinBookIds, twinKind, volumeBadge, type ListenBook, type ListenChapter } from "./model";
 import { usePlayer, type WordTarget } from "./player";
@@ -194,7 +194,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
         {extras.cover?.(book)}
       </div>
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="touch-row mt-2.5 block w-full text-left">
-        <div className={cn("line-clamp-2 text-sm font-medium leading-snug", current && "text-accent-text")}>{book.title}</div>
+        <div className={cn("line-clamp-2 text-sm font-medium leading-snug", current && "text-accent-text")}>{displayTitle(book.title)}</div>
         <div className="mt-1 truncate text-xs text-fg-2">{progressText(book, speaks)}</div>
         {/* Hai cuốn cùng tên: nhãn "Dự án" (làm trên máy này) / "Đã nhập" (mở từ file) và ngày vào thư viện để biết cuốn nào là cuốn nào
             (tác giả, nếu có, đã nằm ở dòng trên). */}
@@ -231,7 +231,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
       {/* Màn rộng: cột chữ giới hạn 28rem để nút phát đứng ngay cạnh thanh tiến độ, không trôi ra mép màn. */}
       <div className="min-w-0 flex-1 sm:max-w-md">
         <div className="text-xs font-medium uppercase tracking-[0.06em] text-fg-2">Đang nghe</div>
-        <h2 className="mt-2 line-clamp-2 text-lg font-bold sm:text-2xl">{book.title}</h2>
+        <h2 className="mt-2 line-clamp-2 text-lg font-bold sm:text-2xl">{displayTitle(book.title)}</h2>
         {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
         <MotionRegion as="p" className="tabular mt-1 truncate text-sm text-fg-2">
           {where}

@@ -128,6 +128,12 @@ export function keepTogether(title: string): string {
   return title.replace(/^(Chương|Tập|Phần|Hồi|Quyển)\s+(\S+)/i, "$1\u00a0$2");
 }
 
+/** Tên sách khi hiển thị: dấu "·" dính hai chữ bên cạnh và "Tập 1" không tách, để không dòng nào kết thúc hay mở đầu bằng "·"
+ *  ("Thành Phố Sương Mù · / Tập 1" - soát 24-10 T02). Chỉ đổi dấu cách lúc vẽ, tên lưu giữ nguyên. */
+export function displayTitle(title: string): string {
+  return title.replace(/\s+·\s+/g, "\u00a0·\u00a0").replace(/(^|\s)(Chương|Tập|Phần|Hồi|Quyển)\s+(\S+)/gi, "$1$2\u00a0$3");
+}
+
 /** Lời sau khi nghe hết phần đã có. Chỉ hứa "máy làm xong thì nghe được" khi chắc có máy đang làm (`producing`); không thì nói điều chắc chắn - sách mở từ
  *  file .abook hay tải về điện thoại không có máy nào làm tiếp ở đây (soát UX a9: "việc thu đang dừng" / "khi máy làm xong" sai sự thật). */
 export function caughtUpDetail(producing?: boolean): string {
