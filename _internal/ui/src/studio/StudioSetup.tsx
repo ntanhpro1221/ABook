@@ -7,6 +7,7 @@ import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { peerPage } from "@/shared/peerStudio";
 import { Button, Progress } from "@/shared/ui";
+import { SettingsRow } from "@/shared/SettingsNav";
 import { api } from "./api";
 import { useAppInfo, useStudioMissing } from "./data";
 import { friendlySetupError } from "./errorText";
@@ -359,9 +360,15 @@ export function StudioSettings() {
     }
   };
   return (
-    <MotionRegion as="div" className="mb-6 max-w-xl">
-      <h3 className="text-sm font-semibold">Studio trên máy này</h3>
-      <p className="mt-1 text-sm">Studio đã cài{status.gpu ? `, chạy trên ${status.gpu.name}` : ""}.</p>
+    <MotionRegion as="div" className="mb-6">
+      <SettingsRow label="Studio trên máy này" hint={<>
+        <p>Đã cài{status.gpu ? ` · ${status.gpu.name}` : ""}</p>
+        <p className="mt-1 break-all">{status.root}</p>
+      </>}>
+        <Button variant={armed ? "danger" : "secondary"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
+          {busy ? "Đang gỡ…" : armed ? "Xác nhận gỡ" : "Gỡ Studio"}
+        </Button>
+      </SettingsRow>
       {status.outdated.length > 0 && (
         <p className="mt-1 text-[0.8125rem] text-fg-2">
           {status.damaged?.length ? `Mất ${status.damaged.join(", ")} (file đã bị xoá hay hỏng)` : `Cần cập nhật ${status.outdated.join(", ")}`} -{" "}
@@ -371,10 +378,6 @@ export function StudioSettings() {
           .
         </p>
       )}
-      <p className="mt-1 break-all text-[0.8125rem] text-fg-2">{status.root}</p>
-      <Button className="mt-3" variant={armed ? "danger" : "secondary"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
-        {busy ? "Đang gỡ…" : armed ? "Xác nhận gỡ" : "Gỡ Studio"}
-      </Button>
       <p className="mt-2 text-xs leading-relaxed text-fg-2 text-pretty">
         Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài.
       </p>

@@ -46,7 +46,7 @@ export function SettingsList({ rows, current, className }: { rows: readonly Grou
   const replace = current !== undefined;
   const shown = SETTINGS_GROUPS.filter((group) => rows.some((row) => row.id === group.id));
   return (
-    <nav aria-label="Nhóm cài đặt" className={cn("overflow-hidden rounded-2xl border border-line bg-panel", className)}>
+    <nav aria-label="Nhóm cài đặt" className={cn("settings-nav", className)}>
       <AnimatedRows as="ul" className="divide-y divide-line" items={shown} keyOf={group => group.id}>{({ id, label, icon: Icon }) => {
         const summary = rows.find((row) => row.id === id)?.summary;
         return (
@@ -56,9 +56,9 @@ export function SettingsList({ rows, current, className }: { rows: readonly Grou
             replace={replace}
             state={{ settingsList: !replace || Boolean(location.state?.settingsList) }}
             aria-current={id === current ? "page" : undefined}
-            className={cn("flex min-h-[3.5rem] items-center gap-3.5 px-4 py-2.5 transition-colors hover:bg-hover", id === current && "bg-hover")}
+            className={cn("relative -mx-2 flex min-h-[3.5rem] items-center gap-3.5 rounded-lg px-2 py-2.5 transition-colors hover:bg-hover", id === current && "bg-accent-soft text-accent-text")}
           >
-            <Icon className="size-5 shrink-0 text-fg-2" strokeWidth={1.9} aria-hidden />
+            <Icon className={cn("size-5 shrink-0", id === current ? "text-accent-text" : "text-fg-2")} strokeWidth={1.9} aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="block text-[0.9375rem] font-medium">{label}</span>
               {/* Giá trị hiện tại đổi (chọn giọng khác, bật / tắt tự lùi) hay mới có (phiên bản): mờ chéo, không thay chữ cứng. */}
@@ -89,7 +89,7 @@ export function GroupHeader({ id, back = true }: { id: SettingsGroupId; back?: b
   return (
     <div className="flex items-center gap-1">
       {back && (
-        <button type="button" onClick={leave} aria-label="Về Cài đặt" className="touch-box -ml-2 grid size-10 place-items-center rounded-lg text-fg-2 hover:bg-hover">
+        <button type="button" onClick={leave} aria-label="Về Cài đặt" className="touch-box -ml-2.5 grid size-10 place-items-center rounded-lg text-fg-2 hover:bg-hover">
           <ChevronLeft className="size-5" />
         </button>
       )}
@@ -98,14 +98,14 @@ export function GroupHeader({ id, back = true }: { id: SettingsGroupId; back?: b
   );
 }
 
-/** Khối trong màn con: tiêu đề nhỏ + thẻ. `fold` (khoá nhớ): khối ít dùng trong một nhóm dài gập lại sau tiêu đề bấm được (a120 - chủ app: nhiều
+/** Khối phẳng trong màn con: khoảng trắng + tiêu đề nhỏ. `fold` (khoá nhớ): khối ít dùng trong một nhóm dài gập lại sau tiêu đề bấm được (a120 - chủ app: nhiều
  *  đầu mục thì "foldout chúng lại"); mở rồi thì lần sau vẫn mở. */
 export function SettingsBlock({ title, id, children, className, fold }: { title?: string; id?: string; children: ReactNode; className?: string; fold?: string }) {
   if (fold && title) return <FoldedBlock title={title} id={id} storageKey={fold} className={className}>{children}</FoldedBlock>;
   return (
-    <section id={id} className={cn("mt-6 first:mt-4", className)}>
-      {title && <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</h2>}
-      <div className="divide-y divide-line rounded-2xl border border-line bg-panel">{children}</div>
+    <section id={id} className={cn("settings-block mt-8 first:mt-4", className)}>
+      {title && <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</h2>}
+      <div className="divide-y divide-line">{children}</div>
     </section>
   );
 }
@@ -114,30 +114,30 @@ function FoldedBlock({ title, id, children, className, storageKey }: { title: st
   const [open, setOpen] = useFold(`settings.${storageKey}`);
   const bodyId = useId();
   return (
-    <section id={id} className={cn("mt-6 first:mt-4", className)}>
+    <section id={id} className={cn("settings-block mt-8 first:mt-4", className)}>
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-3">
-        <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)} className="touch-row -mx-1 flex w-[calc(100%+0.5rem)] items-center justify-between gap-2 rounded-lg px-2 py-1 text-left uppercase hover:bg-hover">
+        <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)} className="touch-row -mx-2 flex w-[calc(100%+var(--spacing)*4)] items-center justify-between gap-2 rounded-lg px-2 py-1 text-left uppercase hover:bg-hover">
           {title}
           <ChevronDown className="fold-chevron size-4 shrink-0" aria-hidden />
         </button>
       </h2>
       <Collapse open={open} id={bodyId}>
-        <div className="divide-y divide-line rounded-2xl border border-line bg-panel">{children}</div>
+        <div className="divide-y divide-line">{children}</div>
       </Collapse>
     </section>
   );
 }
 
-/** Một dòng tuỳ chọn: tên (+ một dòng mô tả ngắn khi thật cần) bên trái, điều khiển bên phải; hẹp thì điều khiển xuống hàng. */
+/** Công tắc / giá trị cùng hàng với nhãn. Nhóm lựa chọn luôn nằm dưới nhãn, trải hết bề ngang. */
 export function SettingsRow({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
+    <div className="settings-row grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 py-3">
       {/* Tên / mô tả đổi theo trạng thái ("Có bản mới …", lời nhắc theo lựa chọn): mờ chéo cả cụm; số đếm, phần trăm không tính (MotionRegion). */}
-      <MotionRegion className="min-w-0 flex-[1_1_12rem]">
-        <div className="text-[0.9375rem] font-medium [overflow-wrap:anywhere]">{label}</div>
+      <MotionRegion className="settings-row-label min-w-0">
+        <div className="text-[0.9375rem] font-medium text-pretty">{label}</div>
         {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
       </MotionRegion>
-      {children !== undefined && <div className="ml-auto max-w-full">{children}</div>}
+      {children !== undefined && <div className="settings-row-control min-w-0 max-w-full">{children}</div>}
     </div>
   );
 }
