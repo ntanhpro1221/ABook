@@ -6,6 +6,7 @@ import { useId, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { cn } from "./cn";
 import { Collapse, useFold } from "./Collapse";
+import { MotionRegion } from "./MotionRegion";
 
 export type SettingsGroupId = "voice" | "listen" | "sleep" | "look" | "devices" | "studio" | "advanced";
 
@@ -58,7 +59,8 @@ export function SettingsList({ rows, current, className }: { rows: readonly Grou
             <Icon className="size-5 shrink-0 text-fg-2" strokeWidth={1.9} aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="block text-[0.9375rem] font-medium">{label}</span>
-              {summary && <span className="block truncate text-xs text-fg-2">{summary}</span>}
+              {/* Giá trị hiện tại đổi (chọn giọng khác, bật / tắt tự lùi) hay mới có (phiên bản): mờ chéo, không thay chữ cứng. */}
+              <MotionRegion as="span" className="block truncate text-xs text-fg-2">{summary}</MotionRegion>
             </span>
             <ChevronRight className="size-4 shrink-0 text-fg-3" aria-hidden />
           </NavLink>
@@ -129,10 +131,11 @@ function FoldedBlock({ title, id, children, className, storageKey }: { title: st
 export function SettingsRow({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
-      <div className="min-w-0 flex-[1_1_12rem]">
+      {/* Tên / mô tả đổi theo trạng thái ("Có bản mới …", lời nhắc theo lựa chọn): mờ chéo cả cụm; số đếm, phần trăm không tính (MotionRegion). */}
+      <MotionRegion className="min-w-0 flex-[1_1_12rem]">
         <div className="text-[0.9375rem] font-medium [overflow-wrap:anywhere]">{label}</div>
         {hint && <div className="mt-0.5 text-xs leading-snug text-fg-2 [overflow-wrap:anywhere]">{hint}</div>}
-      </div>
+      </MotionRegion>
       {children !== undefined && <div className="ml-auto max-w-full">{children}</div>}
     </div>
   );

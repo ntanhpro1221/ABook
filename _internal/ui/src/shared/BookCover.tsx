@@ -1,5 +1,5 @@
 import { cn } from "@/shared/cn";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { coverColor, coverLabel, coverStyle, splitTitle, type CoverImage } from "@/shared/cover";
 import { Vu } from "@/shared/ui";
 import { MotionRegion } from "./MotionRegion";
@@ -35,8 +35,21 @@ export function BookCover({
   className?: string;
 }) {
   const [failed, setFailed] = useState<string | null>(null);
-  if (image?.url && failed !== image.url) {
-    return <PhotoCover image={image} playing={playing} className={className} onError={() => setFailed(image.url)} />;
+  // Bìa ảnh và bìa vẽ là hai cây khác nhau: một gốc MotionRegion cho cả hai, khoá theo ảnh đang hiện + tên. Đổi cuốn (thanh phát), ảnh lỗi rơi
+  // về bìa vẽ, hay bìa vẽ đổi màu theo tên thì mờ chéo, không thay tức thì.
+  const photo = image?.url && failed !== image.url ? image : null;
+  const motionKey = [photo?.url ?? null, title, part ?? null, badge ?? null];
+  if (photo) {
+    return (
+      <MotionRegion
+        motionKey={motionKey}
+        className={cn("relative aspect-square shrink-0 self-start overflow-hidden rounded-lg shadow-card", className)}
+        style={{ backgroundColor: coverColor(photo.color) || "var(--color-hover)" }}
+        aria-hidden
+      >
+        <PhotoCover image={photo} playing={playing} onError={() => setFailed(photo.url)} />
+      </MotionRegion>
+    );
   }
   const style = coverStyle(title);
   const [main, titled] = splitTitle(title, part);
@@ -54,7 +67,8 @@ export function BookCover({
   const leading = { xs: "", sm: "", md: "leading-[1.15]", lg: "leading-[1.12]", xl: "leading-[1.1]" }[size];
   const rings = [0.28, 0.46, 0.64, 0.82, 1.0];
   return (
-    <div
+    <MotionRegion
+      motionKey={motionKey}
       className={cn("@container relative aspect-square shrink-0 self-start overflow-hidden rounded-lg text-left shadow-card", className)}
       style={{ background: `linear-gradient(155deg, ${style.from} 0%, ${style.to} 100%)` }}
       aria-hidden
@@ -109,49 +123,55 @@ export function BookCover({
       <MotionRegion as="span" className="absolute bottom-1.5 right-1.5 grid place-items-center rounded-md bg-black/45 px-1 py-0.5" style={{ color: style.ink }}>
         {playing && <Vu className="h-3" />}
       </MotionRegion>
-    </div>
+    </MotionRegion>
   );
 }
 
 /**
- * Bìa là ảnh thật. Khung luôn vuông như bìa album; bìa sách thường dọc (2:3) nên không cắt mất tên ở trên - đặt trọn
+ * Lớp trong của bìa là ảnh thật (khung MotionRegion do BookCover dựng chung với bìa vẽ). Khung luôn vuông như bìa album; bìa sách thường dọc (2:3) nên không cắt mất tên ở trên - đặt trọn
  * ảnh ở giữa, hai bên là chính ảnh ấy phóng to và làm mờ, cách các app sách nói vẫn làm.
  */
 function PhotoCover({
   image,
   playing,
-  className,
   onError,
 }: {
   image: CoverImage;
   playing: boolean;
-  className?: string;
   onError: () => void;
 }) {
   const ratio = image.width && image.height ? image.width / image.height : 1;
   const square = Math.abs(ratio - 1) < 0.08;
+  // Ảnh lười (loading=lazy) tải xong thì hiện dần trên nền màu chủ đạo, không bật ra đột ngột. Ảnh đã có sẵn (bộ đệm) thì hiện ngay từ khung
+  // đầu: kiểm `complete` trước khi vẽ, nên không mờ lại những bìa đã thấy.
+  const main = useRef<HTMLImageElement>(null);
+  const [loaded, setLoaded] = useState<string | null>(null);
+  useLayoutEffect(() => {
+    const element = main.current;
+    if (element?.complete && element.naturalWidth > 0) setLoaded(image.url);
+  }, [image.url]);
+  const shown = loaded === image.url;
   return (
-    <div
-      className={cn("relative aspect-square shrink-0 self-start overflow-hidden rounded-lg shadow-card", className)}
-      style={{ backgroundColor: coverColor(image.color) || "var(--color-hover)" }}
-      aria-hidden
-    >
+    <>
       {!square && (
         // Nền mờ cần một bản ảnh thứ hai (cùng địa chỉ nên trình duyệt chỉ tải một lần); lười như ảnh chính - kệ 160 bìa không tải cả 320 ảnh ngay lúc vẽ.
-        <img src={image.url} alt="" draggable={false} loading="lazy" decoding="async" className="absolute inset-0 size-full scale-125 object-cover opacity-60 blur-xl" />
+        <img src={image.url} alt="" draggable={false} loading="lazy" decoding="async" className={cn("absolute inset-0 size-full scale-125 object-cover blur-xl transition-opacity duration-motion-medium", shown ? "opacity-60" : "opacity-0")} />
       )}
       <img
+        ref={main}
         src={image.url}
         alt=""
         draggable={false}
         loading="lazy"
         decoding="async"
+        onLoad={() => setLoaded(image.url)}
         onError={onError}
-        className={cn("relative size-full", square ? "object-cover" : "object-contain")}
+        data-loaded={shown || undefined}
+        className={cn("relative size-full transition-opacity duration-motion-medium", square ? "object-cover" : "object-contain", shown ? "opacity-100" : "opacity-0")}
       />
       <MotionRegion as="span" className="absolute bottom-1.5 right-1.5 grid place-items-center rounded-md bg-black/45 px-1 py-0.5 text-white">
         {playing && <Vu className="h-3" />}
       </MotionRegion>
-    </div>
+    </>
   );
 }
