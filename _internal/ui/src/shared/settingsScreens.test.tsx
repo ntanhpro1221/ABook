@@ -90,7 +90,7 @@ describe("cây Cài đặt (chủ app 23-10: không còn là ma trận)", () => 
   /** Tên các nhóm trên trang gốc, theo thứ tự. */
   const groupNames = (html: string) => [...html.matchAll(/<a[^>]*href="[^"]*\/settings\/([a-z]+)"[^>]*>[\s\S]*?<span class="block text-\[0.9375rem\][^"]*">([^<]+)</g)].map((match) => [match[1], match[2]]);
 
-  it("trang gốc điện thoại: 5 nhóm, mỗi nhóm một dòng, đúng thứ tự dùng nhiều trước", async () => {
+  it("trang gốc điện thoại: 6 nhóm, mỗi nhóm một dòng, đúng thứ tự dùng nhiều trước", async () => {
     const { SettingsScreen } = await import("@/android/SettingsScreen");
     const html = wrap(<SettingsAt screen={<SettingsScreen />} />);
     expect(groupNames(html)).toEqual([
@@ -98,6 +98,7 @@ describe("cây Cài đặt (chủ app 23-10: không còn là ma trận)", () => 
       ["listen", "Nghe"],
       ["sleep", "Hẹn giờ ngủ"],
       ["look", "Giao diện"],
+      ["devices", "Thiết bị"],
       ["advanced", "Nâng cao"],
     ]);
     // Trang gốc chỉ là danh sách: không có công tắc nào.

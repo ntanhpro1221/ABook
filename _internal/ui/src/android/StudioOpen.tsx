@@ -66,16 +66,24 @@ export function ComputerList({ computers, onPick }: { computers: StudioComputer[
 /** Máy tính mở Studio được lúc này. Hỏi lại khi máy tính chính đổi (`connection`) và sau mỗi lượt hỏi thư viện thiết bị ghép
  *  (`peer-libraries`): máy ghép thêm chỉ được biết là máy tính sau khi nó trả lời lần đầu (Peers.kt rememberKind). */
 export function useStudioComputers(book?: string): StudioComputer[] {
+  return useStudioComputersQuery(book).data?.computers ?? [];
+}
+
+export function useStudioComputersQuery(book?: string) {
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
   const peers = useQuery({ queryKey: ["peer-libraries"], queryFn: () => EbookLibrary.peerLibraries(), retry: 0 });
-  const computers = useQuery({
+  return useQuery({
     queryKey: ["studio-computers", book ?? "", connection.dataUpdatedAt, peers.dataUpdatedAt],
     queryFn: () => EbookLibrary.studioComputers(book ? { book } : undefined),
   });
-  return computers.data?.computers ?? [];
 }
 
-/** Nút "Mở Studio" ở màn Tải sách: chỉ có khi có ít nhất một máy tính mở được Studio (máy tính chính hay máy ghép thêm); hỏi máy
+export async function openStudioComputer(computer: StudioComputer): Promise<void> {
+  try { await EbookLibrary.openStudio({ computer: computer.key }); }
+  catch (error) { toast.error((error as Error).message); }
+}
+
+/** Nút "Mở Studio" ở tab Studio: chỉ có khi có ít nhất một máy tính mở được Studio (máy tính chính hay máy ghép thêm); hỏi máy
  *  nào khi có hơn một. */
 export function OpenStudioButton({ computers, className }: { computers: StudioComputer[]; className?: string }) {
   const [choices, setChoices] = useState<StudioComputer[]>([]);
@@ -93,7 +101,7 @@ export function OpenStudioButton({ computers, className }: { computers: StudioCo
   }
   const pick = (computer: StudioComputer) => {
     setChoices([]);
-    void EbookLibrary.openStudio({ computer: computer.key }).catch((error: Error) => toast.error(error.message));
+    void openStudioComputer(computer);
   };
   return (
     <>
@@ -109,7 +117,7 @@ export function OpenStudioButton({ computers, className }: { computers: StudioCo
 
 /** Chip ở trang sách: cuốn đang làm ở máy tính đã ghép mở thẳng trong Studio của máy ấy. Cuốn không phải dự án Studio: không có gì.
  *  `computers`: các máy tính đã ghép (máy GIỮ cuốn này mang `holdsBook`); chip đi tới máy giữ cuốn nên mờ kèm lý do khi CHÍNH máy ấy chỉ cho nghe -
- *  còn mở được ở máy khác cũng vậy. Chưa biết máy nào giữ cuốn thì mờ khi mọi máy chỉ cho nghe, như nút "Mở Studio" ở màn Tải sách. */
+ *  còn mở được ở máy khác cũng vậy. Chưa biết máy nào giữ cuốn thì mờ khi mọi máy chỉ cho nghe, như nút "Mở Studio" ở tab Studio. */
 export function StudioChip({ book, computers = [] }: { book: ListenBook; computers?: StudioComputer[] }) {
   if (!book.studio) return null;
   const holder = computers.find((computer) => computer.holdsBook);

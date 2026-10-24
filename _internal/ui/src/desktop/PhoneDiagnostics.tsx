@@ -16,7 +16,7 @@ import { pickFolder, useAppInfo } from "@/studio/data";
 export const VIEW_LINES = 400;
 export const SAVE_LINES = 2000;
 
-const UNREACHABLE_HELP = "Trên điện thoại: Cài đặt › Thiết bị › bật “Cho máy khác nghe thư viện này”. Cùng Wi-Fi hay Tailscale.";
+const UNREACHABLE_HELP = "Trên điện thoại: Cài đặt › Thiết bị › Điện thoại này › bật “Cho máy khác nghe thư viện này”. Cùng Wi-Fi hay Tailscale.";
 
 /** Lời báo cho một lần hỏi hỏng: câu của máy chủ (đã nói tên máy và lý do) và, nếu đáng, điều bạn có thể làm. */
 export function failureView(error: unknown): { title: string; help: string } {

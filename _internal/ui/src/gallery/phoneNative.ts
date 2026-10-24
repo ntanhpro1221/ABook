@@ -232,7 +232,15 @@ export const ebookLibrary: NativeImpl = {
   m4bMusicState: () => ({ music: false, tracks: 0, missing: 0 }),
   deleteBook: () => ({ undo: "undo-1" }),
   undoDelete: () => undefined,
-  download: (options) => ({ bookId: options.bookId }),
+  download: (options) => {
+    emitNative("EbookLibrary", "download", { bookId: options.bookId, done: 42_000_000, total: 100_000_000, files: 4, filesTotal: 10 });
+    return { bookId: options.bookId };
+  },
+  cancelDownload: (options) => {
+    emitNative("EbookLibrary", "download", { bookId: options.bookId, cancelled: true });
+    return undefined;
+  },
+  openStudio: () => undefined,
   diagnostics: () => ({ lines: [], files: [], bytes: 0 }),
   // Lệnh sửa sách "áp ngay" của điện thoại (android/localStudio.ts): cùng đường + JSON như máy chủ máy tính - đi vào máy chủ giả.
   studio: async (options) => {
