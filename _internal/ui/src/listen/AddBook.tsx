@@ -647,7 +647,7 @@ export function AddBookDialog({
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               aria-invalid={!title.trim()}
-              className="mt-1.5 h-11 w-full rounded-xl border border-line bg-bg px-3.5 text-[0.9375rem] font-medium outline-none focus:border-focus"
+              className="touch-box mt-1.5 h-11 w-full rounded-xl border border-line bg-bg px-3.5 text-[0.9375rem] font-medium outline-none focus:border-focus"
               placeholder="Tên hiển thị trong thư viện"
             />
           </label>
