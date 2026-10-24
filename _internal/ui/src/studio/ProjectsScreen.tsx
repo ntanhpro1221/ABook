@@ -231,7 +231,7 @@ function StudioMenu({ onOpenExisting }: { onOpenExisting: () => void }) {
           aria-label="Tuỳ chọn Studio"
           className="touch-box inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
         >
-          <MoreHorizontal className="glyph" />
+          <MoreHorizontal className="glyph ink-end" />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>

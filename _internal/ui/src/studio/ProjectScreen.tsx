@@ -612,7 +612,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
               className,
             )}
           >
-            <MoreHorizontal className="glyph" />
+            <MoreHorizontal className="glyph ink-end" />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
@@ -897,7 +897,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
             aria-label={`Tuỳ chọn ${chapter.displayTitle}`}
             className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
           >
-            <MoreHorizontal className="glyph" />
+            <MoreHorizontal className="glyph ink-end" />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
@@ -971,7 +971,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       aria-rowindex={rowIndex}
       onDoubleClick={onPlay}
       className={cn(
-        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 rounded-lg px-2 text-sm",
+        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-baseline gap-3 rounded-lg px-2 text-sm",
         current ? "bg-accent-soft" : "hover:bg-hover",
       )}
     >
@@ -981,7 +981,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
             type="button"
             onClick={onPlay}
             aria-label={current && player.playing ? `Tạm dừng ${chapter.displayTitle}` : `Nghe ${chapter.displayTitle}`}
-            className="relative -ml-[9px] grid h-8 min-w-8 items-center justify-items-start rounded-full px-[9px] text-fg-2 hover:bg-panel hover:text-fg"
+            className="touch-hit relative -ml-[9px] grid h-8 min-w-8 items-center justify-items-start rounded-full px-[9px] text-fg-2 hover:bg-panel hover:text-fg"
           >
             {/* Mực của Play / Pause bắt đầu 3,5 px trong ô 14 px: đặt ở 5,5 px để mực đứng đúng chỗ chữ số (đệm 9 px). */}
             {current && player.playing ? (
@@ -1010,8 +1010,8 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       </div>
       <div role="cell">
         {working ? (
-          <div className="flex items-center gap-2" title={book.running ? "Đang thu âm" : "Tạm dừng giữa chương"}>
-            <Progress value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" label="Đã thu âm" />
+          <div className="flex items-baseline gap-2" title={book.running ? "Đang thu âm" : "Tạm dừng giữa chương"}>
+            <Progress className="self-center" value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" label="Đã thu âm" />
             <span className="tabular text-xs text-fg-2">
               {book.running ? "" : "dừng ở "}
               {chapter.segments.finished}/{chapter.segments.total}

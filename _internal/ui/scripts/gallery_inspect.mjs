@@ -2,7 +2,7 @@
 // Soi chi tiết mọi mục gallery bằng hình học DOM; ảnh cắt phóng 4 lần qua CDP, không thêm dependency.
 // node scripts/gallery_inspect.mjs --out ../../inspect --theme both [--browser PATH] [--only phone/player]
 // Cùng --browser --out --only --theme --base --dist --timeout với gallery_shots.
-// Default gate: audited rules 4,5,6,8. --fail-on none is advisory; a list replaces defaults.
+// --fail-on none is advisory; a list replaces the audited default gate.
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -10,22 +10,23 @@ import { parseArgs, findBrowser, serve, launch, connect, evaluate, waitUntil, op
 import { createInspectorHelpers, inspectPage } from "./gallery_inspect_helpers.mjs";
 import { sourceIndex, deduplicate } from "./gallery_inspect_report.mjs";
 import { createLayoutHelpers, inspectLayout, crossFrameRhythm } from "./gallery_inspect_layout.mjs";
+import { inspectAlignment } from "./gallery_inspect_alignment.mjs";
 
-export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM"];
-// ink140: 0 phát hiện ngoài Studio sau sửa; nhịp được đối chứng bằng fixture trên Edge.
-export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM"];
+export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET"];
+// rules142: gallery đủ cả Studio, hai chủ đề; BASELINE/CONTROL HEIGHT không còn lỗi thật.
+export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT"];
 export function gateRules(value) {
   return value === undefined ? [...DEFAULT_FAIL_ON] : value.length === 1 && value[0].toUpperCase() === "NONE" ? [] : value.map(normalizeRule);
 }
 export function normalizeRule(value) {
   const key = value.trim().toUpperCase().replaceAll("_", " ");
-  const numbered = /^RULE([1-9]|10|11)$/.exec(key);
+  const numbered = /^RULE([1-9]|1[0-4])$/.exec(key);
   const rule = numbered ? RULES[Number(numbered[1]) - 1] : RULES.find((r) => r === key || r.replaceAll(" ", "-") === key);
   if (!rule) throw new Error(`Quy tắc lạ: ${value}. Chọn ${RULES.join(", ")}`);
   return rule;
 }
 
-export const inspectionExpression = (phone) => `(${inspectPage.toString()})(${JSON.stringify({ phone })}, (${createInspectorHelpers.toString()})(), (context) => (${inspectLayout.toString()})(context, (${createLayoutHelpers.toString()})()))`;
+export const inspectionExpression = (phone) => `(${inspectPage.toString()})(${JSON.stringify({ phone })}, (${createInspectorHelpers.toString()})(), (context) => ({ ...(${inspectLayout.toString()})(context, (${createLayoutHelpers.toString()})()), ...(${inspectAlignment.toString()})(context) }))`;
 
 export async function settle(cdp, session, timeout) {
   await evaluate(cdp, session, `(async () => {
@@ -101,15 +102,15 @@ export function writeOutputs(out, report) {
   const list = RULES.map((rule) => {
     const findings = report.findings.filter((f) => f.rule === rule);
     const groups = [...new Set(findings.map((f) => f.story))];
-    return `<section><h2>${esc(rule)} (${findings.length})</h2>${groups.map((id) => `<details><summary>${esc(id)} (${findings.filter((f) => f.story === id).length})</summary><div class="grid">${findings.filter((f) => f.story === id).map((f) => `<figure id="${f.id}"><a href="${f.crop}"><img loading="lazy" src="${f.crop}" alt="${esc(f.text)}"></a><figcaption><b>${f.id} · ${f.theme}</b><br>${esc(f.text)}<br><code>${esc(f.selector)}</code>${f.referenceValue !== undefined ? `<br>${f.rowIndex !== undefined ? `Hàng ${f.rowIndex} / mốc ${f.referenceRowIndex} · ` : ""}${esc(f.metric)}: ${f.value.toFixed(3)} / ${f.referenceValue.toFixed(3)} px · Δ ${f.delta.toFixed(3)} px` : f.metric ? `<br>${esc(f.metric)}: ${f.value.toFixed(3)} px` : ""}${f.referenceStory ? `<br>Mốc: <a href="${esc(f.referenceCrop)}">${esc(f.referenceStory)}</a>` : ""}${f.ratio ? `<br>Tương phản ${f.ratio}:1 / ${f.threshold}:1` : ""}<br><a href="${report.stories.find((s) => s.id === id && s.theme === f.theme)?.sheet}">Bảng chi tiết</a></figcaption></figure>`).join("")}</div></details>`).join("")}</section>`;
+    return `<section><h2>${esc(rule)} (${findings.length})</h2>${groups.map((id) => `<details><summary>${esc(id)} (${findings.filter((f) => f.story === id).length})</summary><div class="grid">${findings.filter((f) => f.story === id).map((f) => `<figure id="${f.id}"><a href="${f.crop}"><img loading="lazy" src="${f.crop}" alt="${esc(f.text)}"></a><figcaption><b>${f.id} · ${f.theme}</b><br>${esc(f.text)}<br><code>${esc(f.selector)}</code>${f.otherSelector || f.referenceSelector ? `<br>↔ <code>${esc(f.otherSelector ?? f.referenceSelector)}</code>` : ""}${f.fontSizes ? `<br>Cỡ chữ: ${f.fontSizes.join(" / ")} px` : ""}${f.topDelta !== undefined ? `<br>Δ trên / dưới: ${f.topDelta.toFixed(3)} / ${f.bottomDelta.toFixed(3)} px` : ""}${f.referenceValue !== undefined ? `<br>${f.rowIndex !== undefined ? `Hàng ${f.rowIndex} / mốc ${f.referenceRowIndex} · ` : ""}${esc(f.metric)}: ${f.value.toFixed(3)} / ${f.referenceValue.toFixed(3)} px · Δ ${f.delta.toFixed(3)} px` : f.metric ? `<br>${esc(f.metric)}: ${f.value.toFixed(3)} px` : ""}${f.referenceStory ? `<br>Mốc: <a href="${esc(f.referenceCrop)}">${esc(f.referenceStory)}</a>` : ""}${f.ratio ? `<br>Tương phản ${f.ratio}:1 / ${f.threshold}:1` : ""}<br><a href="${report.stories.find((s) => s.id === id && s.theme === f.theme)?.sheet}">Bảng chi tiết</a></figcaption></figure>`).join("")}</div></details>`).join("")}</section>`;
   }).join("");
-  writeFileSync(path.join(out, "index.html"), html("ABook · soi chi tiết gallery", `<h1>ABook · soi chi tiết gallery</h1><p>${report.stories.length} lượt · ${report.findings.length} phát hiện · ${report.errors.length} lỗi chạy · ${esc(report.created)}</p><p>Ảnh cắt lề 8 CSS px: quy tắc cũ dùng CDP scale:4; INK EDGE/RHYTHM phóng 4× nearest-neighbour từ raster CSS. Bấm ảnh để xem nguyên cỡ; phát hiện hình học cần được duyệt qua ảnh.</p><p>${RULES.map((r) => `${esc(r)}: ${report.counts[r]}`).join(" · ")}</p><details><summary>Bảng điều khiển / biểu tượng (${report.stories.length})</summary><ul>${report.stories.map((s) => `<li><a href="${s.sheet}">${esc(s.id)} · ${s.theme}</a> (${s.contacts.length})${s.error ? ` · ${esc(s.error)}` : ""}</li>`).join("")}</ul></details>${report.errors.length ? `<pre>${esc(JSON.stringify(report.errors, null, 2))}</pre>` : ""}${list}`));
+  writeFileSync(path.join(out, "index.html"), html("ABook · soi chi tiết gallery", `<h1>ABook · soi chi tiết gallery</h1><p>${report.stories.length} lượt · ${report.findings.length} phát hiện · ${report.errors.length} lỗi chạy · ${esc(report.created)}</p><p>Ảnh cắt lề 8 CSS px: quy tắc cũ dùng CDP scale:4; INK EDGE/RHYTHM/BASELINE/CONTROL HEIGHT/FILL INSET phóng 4× nearest-neighbour từ raster CSS. Bấm ảnh để xem nguyên cỡ; phát hiện hình học cần được duyệt qua ảnh.</p><p>${RULES.map((r) => `${esc(r)}: ${report.counts[r]}`).join(" · ")}</p><details><summary>Bảng điều khiển / biểu tượng (${report.stories.length})</summary><ul>${report.stories.map((s) => `<li><a href="${s.sheet}">${esc(s.id)} · ${s.theme}</a> (${s.contacts.length})${s.error ? ` · ${esc(s.error)}` : ""}</li>`).join("")}</ul></details>${report.errors.length ? `<pre>${esc(JSON.stringify(report.errors, null, 2))}</pre>` : ""}${list}`));
 }
 
 export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(["--theme", "both", ...argv]);
   if (args.help || !args.out) {
-    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule11]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11 (ink140/report.md; Studio findings retained)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. Use --fail-on none for advisory output.");
+    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule14]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11,rule12,rule13 (rules142/report.md; Studio included)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. rule12 BASELINE: >1 px alphabetic baseline delta. rule13 CONTROL HEIGHT: >1 px visible height/top/bottom or same-role menu-row delta. rule14 FILL INSET: <6 px ink padding, or selected fill ends >8 px before its row control. Use --fail-on none for advisory output.");
     return !args.help ? 2 : 0;
   }
   if (!["light", "dark", "both"].includes(args.theme)) throw new Error("--theme phải là light, dark hoặc both");
@@ -164,7 +165,7 @@ export async function main(argv = process.argv.slice(2)) {
         for (const finding of result.findings) {
           finding.id = `F${String(report.findings.length + 1).padStart(5, "0")}`;
           finding.story = entry.id; finding.theme = theme;
-          finding.crop = await (["INK EDGE", "RHYTHM"].includes(finding.rule) ? inkCrop : crop)(finding.rects);
+          finding.crop = await (["INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET"].includes(finding.rule) ? inkCrop : crop)(finding.rects);
           report.findings.push(finding);
         }
         for (const contact of result.contacts) story.contacts.push({ ...contact, crop: await crop([contact.rect]) });
@@ -193,7 +194,7 @@ export async function main(argv = process.argv.slice(2)) {
   }
   report.counts = Object.fromEntries(RULES.map((r) => [r, report.findings.filter((f) => f.rule === r).length]));
   report.settings.failOn = failOn;
-  report.settings.gateEvidence = "uicheck139c/result.md; ink140/report.md (INK EDGE/RHYTHM fixtures and both-theme audit; Studio findings retained)";
+  report.settings.gateEvidence = "uicheck139c/result.md; ink140/report.md; rules142/report.md (full gallery including Studio, both themes; baseline/control/surface/fill fixtures and old-build proofs)";
   report.distinctDefects = deduplicate(report.findings, sourceIndex(path.resolve(import.meta.dirname, "../src")));
   writeOutputs(out, report);
   console.log(`${report.findings.length} phát hiện; ${report.errors.length} lỗi chạy → ${path.join(out, "index.html")}`);
