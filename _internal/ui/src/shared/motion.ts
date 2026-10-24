@@ -219,9 +219,17 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
       }
     }
   }
+  // Phần tử sticky con (khung cuộn nằm NGOÀI vùng chụp): ảnh không tự ghim được, nên đặt relative
+  // và mỗi frame bù theo rect thật của phần tử gốc (xem trackSurfaceSnapshot).
+  const pins: StickyPin[] = [];
   // cloneNode không sao chép lựa chọn sống của select (cả multiple / selectedIndex=-1).
   originalNodes.forEach((node, index) => {
     const copy = clonedNodes[index];
+    if (index > 0 && getComputedStyle(node).position === "sticky" && !scrollsInside(node, target)) {
+      copy.style.position = "relative";
+      copy.style.top = "0px"; copy.style.left = "0px"; copy.style.right = "auto"; copy.style.bottom = "auto";
+      pins.push({ node, copy, x: 0, y: 0, natural: undefined });
+    }
     if (node.tagName === "SELECT") {
       const select = node as HTMLSelectElement, image = copy as HTMLSelectElement;
       Array.from(select.options).forEach((option, at) => { image.options[at].selected = option.selected; });
@@ -240,7 +248,7 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
     }
   });
   (host ?? doc.body).append(clone);
-  const stopTracking = trackSurfaceSnapshot(target, clone, bounds, host, followScroll);
+  const stopTracking = trackSurfaceSnapshot(target, clone, bounds, host, followScroll, pins);
   originalNodes.forEach((node, index) => {
     if (node.scrollTop) clonedNodes[index].scrollTop = node.scrollTop;
     if (node.scrollLeft) clonedNodes[index].scrollLeft = node.scrollLeft;
@@ -264,7 +272,20 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
   return settleMotionSnapshot(target, clone);
 }
 
-function trackSurfaceSnapshot(target: HTMLElement, clone: HTMLElement, bounds: DOMRect, host?: HTMLElement, followScroll = false): (() => void) | undefined {
+/** Phần tử sticky trong vùng chụp: `copy` trong ảnh (relative), `x`/`y` là độ bù đang áp (px trong ảnh),
+ *  `natural` là toạ độ tự nhiên của copy so với góc ảnh (px màn hình), đo một lần ở lần đặt đầu. */
+type StickyPin = { node: HTMLElement; copy: HTMLElement; x: number; y: number; natural?: { x: number; y: number } };
+
+/** Khung cuộn gần nhất của sticky nằm trong vùng chụp thì ảnh tự giữ đúng (scrollTop được chép), không cần bù. */
+function scrollsInside(node: HTMLElement, target: HTMLElement): boolean {
+  for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+    const style = getComputedStyle(parent);
+    if (/auto|scroll|hidden|clip|overlay/.test(`${style.overflowX || style.overflow} ${style.overflowY || style.overflow}`)) return target.contains(parent);
+  }
+  return false;
+}
+
+function trackSurfaceSnapshot(target: HTMLElement, clone: HTMLElement, bounds: DOMRect, host?: HTMLElement, followScroll = false, pins: StickyPin[] = []): (() => void) | undefined {
   // Host có thể là menu tĩnh trong popper transform: offsetParent sau append mới là containing block.
   const containingBlock = host ? (clone.offsetParent as HTMLElement | null) ?? host : undefined;
   const hostBounds = containingBlock?.getBoundingClientRect();
@@ -286,7 +307,7 @@ function trackSurfaceSnapshot(target: HTMLElement, clone: HTMLElement, bounds: D
       clipY: /auto|scroll|hidden|clip/.test(style.overflowY || style.overflow) });
     if (node === host) break;
   }
-  if (!host && !ancestors.some(item => item.clipX || item.clipY)) return;
+  if (!host && !ancestors.some(item => item.clipX || item.clipY) && !pins.length) return;
   // Chỉ phần đã nhìn thấy lúc chụp được vẽ; hộp lớn lên không lộ chương cũ khác.
   const initialClip = { left: 0, top: 0, right: 0, bottom: 0 };
   if (host) for (const item of ancestors) {
@@ -326,6 +347,22 @@ function trackSurfaceSnapshot(target: HTMLElement, clone: HTMLElement, bounds: D
       item.x = x; item.y = y; item.maxX = maxX; item.maxY = maxY;
     }
     clone.style.left = `${left - dx / scaleX}px`; clone.style.top = `${top - dy / scaleY}px`;
+    if (pins.length) {
+      // Cuộn tuyến tính chỉ đúng với phần chưa ghim: phần sticky đứng theo vị trí thật của bản gốc.
+      const frame = clone.getBoundingClientRect();
+      const px = frame.width ? frame.width / (bounds.width / scaleX) : scaleX;
+      const py = frame.height ? frame.height / (bounds.height / scaleY) : scaleY;
+      for (const pin of pins) {
+        if (!pin.node.isConnected) continue; // Bản gốc đã gỡ sau commit: giữ chỗ ghim cuối.
+        const live = pin.node.getBoundingClientRect();
+        if (!pin.natural) { const copy = pin.copy.getBoundingClientRect(); pin.natural = { x: copy.left - frame.left, y: copy.top - frame.top }; }
+        let outerX = 0, outerY = 0; // sticky lồng nhau: copy con đi theo độ bù của copy cha.
+        for (const other of pins) if (other !== pin && other.copy.contains(pin.copy)) { outerX += other.x * px; outerY += other.y * py; }
+        pin.x = (live.left - frame.left - pin.natural.x - outerX) / px;
+        pin.y = (live.top - frame.top - pin.natural.y - outerY) / py;
+        pin.copy.style.left = `${pin.x}px`; pin.copy.style.top = `${pin.y}px`;
+      }
+    }
     if (!ancestors.some(item => item.clipX || item.clipY)) return;
     // Đo ảnh sau đặt vị trí: host có thể vừa cuộn/di chuyển bằng CSS, ảnh tự đi theo host.
     const image = clone.getBoundingClientRect();
