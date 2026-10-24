@@ -482,7 +482,7 @@ export function LibraryScreen({
 
   return (
     <BookExtrasContext.Provider value={bookExtras}>
-    <div ref={container} className="library-screen mx-auto max-w-[1180px] px-[20px] pb-16 pt-6 sm:px-[40px] sm:pt-9">
+    <div ref={container} className="library-screen page-x mx-auto max-w-[1180px] pb-16 pt-6 sm:pt-9">
       {/* Hai nút cạnh tiêu đề không được bóp tiêu đề thành "Thư / viện" ở 390 px (soát UX 05-10): tiêu đề giữ một dòng, nút xuống dưới. */}
       <header>
         {/* Nút nằm trên CÙNG dòng tiêu đề, căn giữa theo dòng ấy (không lơ lửng giữa tiêu đề và số cuốn). */}
