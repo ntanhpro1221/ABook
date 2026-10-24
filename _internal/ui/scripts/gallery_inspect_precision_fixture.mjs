@@ -11,6 +11,7 @@ const rows = (a, b, styleA = "", styleB = "") => `<ul><li><button style="${style
 const row = (size = 18, shape) => `${svg(size, shape)}<span>Label</span>`;
 export const precisionCases = [
   { name: "overlay", rule: "TEXT-OVER-GRAPHIC", good: `<div data-overlay="art" class="layer">${svg()}<span>15</span></div>`, bad: `<div class="layer">${svg()}<span>15</span></div>` },
+  { name: "scroll-fade", rule: "TEXT-OVER-GRAPHIC", good: '<div class="layer"><span>15</span><div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(to top,#fff,transparent)"></div></div>', bad: '<div class="layer"><div style="position:absolute;inset:0;pointer-events:none;background:linear-gradient(to top,#fff,#888)"></div><span>15</span></div>' },
   { name: "hidden-zero-graphic", rule: "TEXT-OVER-GRAPHIC", good: `<div class="layer">${svg().replace('<svg ', '<svg style="display:none" ')}${svg(0)}<span>15</span></div>`, bad: `<div class="layer">${svg()}<span>15</span></div>` },
   { name: "font-padding", rule: "TEXT-OVER-TEXT", good: '<div class="line" style="top:20px">mmm</div><div class="line" style="top:33px">mmm</div>', bad: '<div class="line" style="top:20px">mmm</div><div class="line" style="top:23px">mmm</div>' },
   { name: "glyph-empty-corners", rule: "TEXT-OVER-TEXT", good: '<div class="line" style="left:24px;top:20px">O</div><div class="line" style="left:33px;top:29px">O</div>', bad: '<div class="line" style="left:24px;top:20px">O</div><div class="line" style="left:27px;top:23px">O</div>' },
