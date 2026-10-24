@@ -23,8 +23,6 @@ import {
   Pencil,
   Play,
   Plus,
-  RotateCcw,
-  RotateCw,
   SkipBack,
   SkipForward,
   Square,
@@ -198,21 +196,36 @@ function SeekBar({ large = false }: { large?: boolean }) {
 
 // ---- Nút điều khiển ------------------------------------------------------------------------------------
 
-function skipIcon(Base: typeof RotateCcw) {
-  return function SkipGlyph({ className }: { className?: string; strokeWidth?: number }) {
+// Vẽ riêng, không đè chữ lên RotateCcw/RotateCw: vòng mũi tên chừa khe ở đầu, mũi tên nằm ngoài vòng, số nằm gọn trong
+// lòng vòng bằng <text> cùng hệ toạ độ - chữ co giãn theo biểu tượng, không bao giờ chạm nét (chủ sách 24-10: số 15 đè lên vòng).
+function skipIcon(forward: boolean) {
+  return function SkipGlyph({ className, strokeWidth = 1.9 }: { className?: string; strokeWidth?: number }) {
     return (
-      <span className={cn("relative inline-grid scale-[1.2] place-items-center", className)}>
-        <Base className="size-full" strokeWidth={1.75} />
-        {/* Cỡ chữ tuyệt đối, không theo font của nút (0,42em từng ra 5,9 px - không đọc được): 10 px nằm vừa trong vòng mũi tên (biểu tượng nới 1,2 lần để chữ không chạm nét vẽ). */}
-        <span className="tabular absolute inset-0 grid place-items-center pt-[1px] text-[0.625rem] font-bold leading-none tracking-tighter">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden className={cn("size-6 shrink-0", className)}>
+        <g transform={forward ? "matrix(-1 0 0 1 24 0)" : undefined}>
+          <path d="M12 3.5A8.5 8.5 0 1 1 5.04 7.12" />
+          <path d="M13.4 1.3 11 3.5l2.4 2.2" />
+        </g>
+        <text
+          x="12"
+          y="12.6"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fill="currentColor"
+          stroke="none"
+          fontSize="8.5"
+          fontWeight="600"
+          letterSpacing="-0.2"
+          style={{ fontFamily: "inherit", fontVariantNumeric: "tabular-nums" }}
+        >
           {SKIP_SECONDS}
-        </span>
-      </span>
+        </text>
+      </svg>
     );
   };
 }
-export const Back15 = skipIcon(RotateCcw);
-export const Forward15 = skipIcon(RotateCw);
+export const Back15 = skipIcon(false);
+export const Forward15 = skipIcon(true);
 
 /** Chương đang phát là chương chỉ có chữ (giọng máy đọc). */
 function useSpeaking(): boolean {
