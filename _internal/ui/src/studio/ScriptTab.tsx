@@ -1,6 +1,7 @@
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { AlertTriangle, BookOpenText, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Pause, Play, RefreshCw, Search, X } from "lucide-react";
@@ -12,7 +13,7 @@ import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { useMediaQuery } from "@/shared/media";
-import { Button, EmptyState, IconButton, Kbd, Segmented, Sheet, Skeleton, ContentSkeleton, InlineError } from "@/shared/ui";
+import { Button, EmptyState, FilterRow, IconButton, Kbd, Segmented, Sheet, Skeleton, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
 import { UNDO_MS, optimistic, undoAction, undoSteps, usePendingNote, useWhenApplied } from "./decisions";
@@ -260,10 +261,8 @@ function chapterExtras(chapter: ChapterEntry): string {
     .join(" · ");
 }
 
-/** `compact` (màn hẹp): ô chọn chỉ có tên chương - ô native không có dấu "…" nên chữ dài bị cụt giữa chừng ("… · 9 c…"); số câu nằm ở dòng dưới ô. */
-function chapterLabel(chapter: ChapterEntry, compact = false): string {
-  const title = chapter.title || `Chương ${chapter.index}`;
-  return compact ? title : `${title} — ${chapterExtras(chapter)}`;
+function chapterLabel(chapter: ChapterEntry): string {
+  return chapter.title || `Chương ${chapter.index}`;
 }
 
 interface UndoStack {
@@ -720,6 +719,12 @@ export function DeliveryMenu({
   );
 }
 
+/** Cách đọc mặc định ("Bình thường · vừa", không có yêu cầu đang chờ): không phải thông tin, chỉ là lối vào sửa - nên hiện khi rê / chọn câu
+ *  và đứng ở cột hành động bên phải câu (không chiếm một dòng dưới mọi câu thoại). */
+function plainDelivery(line: Line): boolean {
+  return line.lineWish?.state !== "pending" && line.emotion === "neutral" && (!line.intensity || line.intensity === 1);
+}
+
 function DeliveryChip({
   bookId,
   line,
@@ -757,8 +762,7 @@ function DeliveryChip({
     : deliveryText(line.emotion, line.intensity);
   // "Bình thường · vừa" là mặc định, không phải thông tin - lặp dưới mọi câu chỉ làm rối (soát UX a8, mục 20). Chỉ hiện khi khác
   // mặc định, hay khi chọn / rê vào câu (vẫn là lối vào sửa cách đọc).
-  const plain = !waiting && line.emotion === "neutral" && (!line.intensity || line.intensity === 1);
-  const hidden = plain ? !active : quiet;
+  const hidden = plainDelivery(line) ? !active : quiet;
   const trigger = (
     <button
       type="button"
@@ -1048,8 +1052,8 @@ function ScriptRow({
       }}
       onClick={speech ? (event) => (event.shiftKey ? onExtend() : onActivate()) : undefined}
       className={cn(
-        "group transition-[background-color,box-shadow,opacity] duration-motion-fast grid grid-cols-[minmax(0,1fr)_28px] gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 outline-none lg:grid-cols-[160px_minmax(0,1fr)_28px]",
-        gap && "mt-3",
+        "group transition-[background-color,box-shadow,opacity] duration-motion-fast grid grid-cols-[calc(var(--spacing)*7)_minmax(0,1fr)] gap-x-2 gap-y-1 rounded-lg px-2 py-1.5 outline-none lg:grid-cols-[10rem_calc(var(--spacing)*7)_minmax(0,1fr)]",
+        gap && "mt-2",
         active && "bg-hover",
         selected && "bg-accent-soft ring-1 ring-inset ring-accent/40",
         speech && "focus-visible:ring-2 focus-visible:ring-focus",
@@ -1057,10 +1061,34 @@ function ScriptRow({
         marks?.length && !selected && (markNow ? "ring-2 ring-inset ring-warning/60" : "ring-1 ring-inset ring-warning/25"),
       )}
     >
+      {/* Ô người nói: chip bấm được cho câu thoại; câu kể ghi nhãn "Người kể" mờ - cột không bỏ trống, bảng đọc như kịch bản. Chip / nhãn cao
+          bằng dòng chữ đầu (24,5 px) nên tâm hai bên trùng nhau và hàng chỉ cao đúng nội dung. */}
       <div className={cn("col-span-2 min-w-0 lg:col-span-1", !speech && "hidden lg:block")}>
-        {speech && <SpeakerChip line={line} script={script} open={menuOpen} onOpenChange={onMenu} onPick={onPick} />}
+        {speech ? (
+          <SpeakerChip line={line} script={script} open={menuOpen} onOpenChange={onMenu} onPick={onPick} />
+        ) : (
+          <span className="flex h-7 items-center truncate text-xs text-fg-3">{line.label || "Người kể"}</span>
+        )}
       </div>
-      <div className="min-w-0">
+      {/* Nút nghe đứng ngay trước chữ (cột cố định, cao bằng dòng chữ đầu): luôn sát chữ dù câu ngắn hay dài, không trôi sang mép phải. */}
+      <div className="flex justify-center">
+        {line.hasAudio && (
+          <button
+            type="button"
+            tabIndex={-1}
+            onClick={(event) => {
+              event.stopPropagation();
+              clip.toggle(id, urls.sample(bookId, line.segmentId));
+            }}
+            aria-label={playing ? "Dừng" : `Nghe câu: ${line.text}`}
+            className="grid size-7 place-items-center rounded-full text-fg-3 hover:bg-panel hover:text-fg"
+          >
+            {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+          </button>
+        )}
+      </div>
+      <div className="flex min-w-0 flex-wrap items-start gap-x-2 gap-y-0.5">
+      <div className="min-w-0 max-w-[44rem] flex-1 basis-[min(100%,16rem)]">
         <p className={cn("text-[0.9375rem] leading-relaxed", speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
           {line.kind === "thought" && <span className="mr-1.5 rounded bg-hover px-1.5 py-px align-[1px] text-[0.6875rem] font-medium not-italic text-fg-2">nghĩ</span>}
           {marks?.length ? (
@@ -1082,7 +1110,7 @@ function ScriptRow({
             Đọc là: <span className="text-fg">{line.spoken}</span>
           </p>
         )}
-        {script.castReady && (
+        {script.castReady && !plainDelivery(line) && (
           <DeliveryChip bookId={bookId} line={line} script={script} open={deliveryOpen} onOpenChange={onDelivery} onSave={onSaveDelivery} quiet={!speech && !active} active={active} />
         )}
         {line.lineWish?.state === "pending" && (
@@ -1147,21 +1175,8 @@ function ScriptRow({
           </p>
         )}
       </div>
-      <div className="flex flex-col items-center gap-0.5">
-        {line.hasAudio && (
-          <button
-            type="button"
-            tabIndex={-1}
-            onClick={(event) => {
-              event.stopPropagation();
-              clip.toggle(id, urls.sample(bookId, line.segmentId));
-            }}
-            aria-label={playing ? "Dừng" : `Nghe câu: ${line.text}`}
-            className="grid size-7 place-items-center rounded-full text-fg-3 hover:bg-panel hover:text-fg"
-          >
-            {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
-          </button>
-        )}
+      {/* Việc phụ chỉ hiện khi rê / chọn câu (thu lại, cách đọc mặc định): sau cột chữ, không chiếm chỗ dưới câu. */}
+      <div className="flex shrink-0 items-center gap-0.5">
         {/* Chỉ câu đã thu mới có gì để thu lại; câu chưa thu không có nút (chương chưa thu thì banner đầu tab đã nói). */}
         {line.hasAudio && line.retake !== "pending" && (
           <button
@@ -1181,6 +1196,10 @@ function ScriptRow({
             <RefreshCw className="size-3.5" />
           </button>
         )}
+        {script.castReady && plainDelivery(line) && (
+          <DeliveryChip bookId={bookId} line={line} script={script} open={deliveryOpen} onOpenChange={onDelivery} onSave={onSaveDelivery} quiet={!speech && !active} active={active} />
+        )}
+      </div>
       </div>
     </MotionRegion>
   );
@@ -1437,7 +1456,7 @@ function ChapterScriptView({
           })()}
         </p>
       )}
-      <ol aria-label={`Kịch bản ${script.title}`} aria-multiselectable onKeyDown={onKeyDown} className="mt-3">
+      <ol aria-label={`Kịch bản ${script.title}`} aria-multiselectable onKeyDown={onKeyDown} className="-mx-2 mt-3">
       {shown.map(({ line, context }, index) => {
         const before = shown[index - 1]?.line;
         const gap = index > 0 && (filter === "doubt" ? !context && !shown[index - 1]?.context && before?.seq !== line.seq - 1 : line.paragraph !== before?.paragraph);
@@ -1537,6 +1556,59 @@ export function useCastingContents(bookId: string, enabled = true) {
     queryFn: () => api<Contents>(`/api/books/${bookId}/casting`),
     enabled,
   });
+}
+
+/** Mở menu chọn chương thì cuộn tới chương đang xem (giữa khung), không bắt đầu ở chương đầu của danh sách dài. */
+function scrollToChecked(element: HTMLElement | null) {
+  const checked = element?.querySelector<HTMLElement>("[data-state=checked]");
+  if (element && checked) element.scrollTop = checked.getBoundingClientRect().top - element.getBoundingClientRect().top + element.scrollTop - element.clientHeight / 2;
+}
+
+/** Chọn chương: menu của app (Radix) thay ô chọn gốc của trình duyệt - mở ra có đánh dấu chương đang xem, kèm số câu nói / chỗ nghi từng chương. */
+function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: ChapterEntry[]; chapterId: number | undefined; narrow: boolean; onPick: (id: number) => void }) {
+  const current = chapters.find((chapter) => chapter.chapterId === chapterId);
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          id="script-chapter"
+          aria-label="Chương"
+          className="-ml-2.5 inline-flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial"
+        >
+          <span className="truncate">{current ? chapterLabel(current) : ""}</span>
+          <ChevronDown className="fold-chevron size-4 shrink-0 text-fg-3" aria-hidden />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="start"
+          sideOffset={4}
+          collisionPadding={12}
+          className="z-50 max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height))] w-[min(30rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float"
+          ref={scrollToChecked}
+        >
+          <DropdownMenu.RadioGroup value={String(chapterId ?? "")} onValueChange={(value) => onPick(Number(value))}>
+            {chapters.map((chapter) => (
+              <DropdownMenu.RadioItem
+                key={chapter.chapterId}
+                value={String(chapter.chapterId)}
+                className="flex min-h-9 cursor-default items-center gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"
+              >
+                <span className="grid size-4 shrink-0 place-items-center" aria-hidden>
+                  <DropdownMenu.ItemIndicator>
+                    <Check className="size-4" />
+                  </DropdownMenu.ItemIndicator>
+                </span>
+                <span className="min-w-0 flex-1 truncate">{chapterLabel(chapter)}</span>
+                {!narrow && <span className="shrink-0 text-xs text-fg-2">{chapterExtras(chapter)}</span>}
+              </DropdownMenu.RadioItem>
+            ))}
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
 }
 
 export function ScriptTab({ bookId }: { bookId: string }) {
@@ -1649,23 +1721,12 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       )}
       {/* Chương + chú giải người nói DÍNH khi cuộn (soát UX a6 01-10: cuộn xuống giữa chương là quên phím 4 là ai, muốn sang
           chương sau phải cuộn ngược lên đầu). */}
-      <div className="sticky top-0 z-10 -mx-2 mt-2 bg-bg/95 px-2 pb-2 pt-2 backdrop-blur">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex w-full min-w-0 items-center gap-1 sm:w-auto sm:max-w-full">
+      <div className="sticky top-0 z-10 -mx-2 mt-2 flex flex-col gap-2 bg-bg/95 px-2 pb-2 pt-2 backdrop-blur">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {/* Tên chương (menu của app, không ô chọn gốc) rồi chương trước · sau. Chữ tên chương đứng đúng mép nội dung (nút lùi lề bằng đệm của nó). */}
+        <div className="flex w-full min-w-0 items-center sm:w-auto sm:max-w-full">
+          <ChapterMenu chapters={chapters} chapterId={chapterId} narrow={narrow} onPick={go} />
           <IconButton label="Chương trước" icon={ChevronLeft} disabled={!data?.previous} onClick={() => go(data?.previous ?? null)} />
-          <select
-            id="script-chapter"
-            aria-label="Chương"
-            value={chapterId}
-            onChange={(event) => go(Number(event.target.value))}
-            className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus sm:w-[440px] sm:flex-initial"
-          >
-            {chapters.map((chapter) => (
-              <option key={chapter.chapterId} value={chapter.chapterId}>
-                {chapterLabel(chapter, narrow)}
-              </option>
-            ))}
-          </select>
           <IconButton label="Chương sau" icon={ChevronRight} disabled={!data?.next} onClick={() => go(data?.next ?? null)} />
         </div>
         {narrow && entry && <p className="w-full text-xs text-fg-3">{chapterExtras(entry)}</p>}
@@ -1698,21 +1759,21 @@ export function ScriptTab({ bookId }: { bookId: string }) {
             </span>
           )}
         </div>
-        <div className="max-w-full overflow-x-auto sm:ml-auto">
-          <Segmented<Filter>
-            label="Hiện câu nào"
-            value={filter}
-            onChange={setFilter}
-            options={[
-              { value: "all", label: "Cả chương" },
-              { value: "speech", label: "Chỉ lời nói" },
-              { value: "doubt", label: `Máy nghi · ${doubts}` },
-            ]}
-          />
-        </div>
+        <FilterRow<Filter>
+          label="Hiện câu nào"
+          className="sm:ml-auto"
+          value={filter}
+          onChange={setFilter}
+          options={[
+            { value: "all", label: "Cả chương" },
+            { value: "speech", label: "Chỉ lời nói" },
+            { value: "doubt", label: `Máy nghi · ${doubts}` },
+          ]}
+        />
       </div>
+      {/* Chú giải người nói: cùng mép trái với thanh công cụ và hàng chữ (chip lùi 4 px để vòng chữ cái đầu chạm mép), cùng nhịp 8 px. */}
       {data && (people.length > 0 || unnamed > 0) && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5" role="group" aria-label="Người nói trong chương - bấm để chỉ xem câu của họ, bấm lại để xem tất cả">
+        <div className="-ml-1 flex flex-wrap items-center gap-1" role="group" aria-label="Người nói trong chương - bấm để chỉ xem câu của họ, bấm lại để xem tất cả">
           {[...people.map((person, index) => ({ person, badge: index < HOTKEYS ? String(index + 1) : "" })), ...(unnamed > 0 ? [{ person: { value: UNNAMED, label: "Chưa rõ", lines: unnamed }, badge: "?" }] : [])].map(
             ({ person, badge }) => (
               <button
@@ -1722,8 +1783,8 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                 title={person.value === UNNAMED ? "Câu máy chưa biết ai nói, và vai phụ không tên" : undefined}
                 onClick={() => setWho(who === person.value ? null : person.value)}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1.5 rounded-full border py-0 pl-1 pr-2.5 text-[0.8125rem] font-medium transition-opacity",
-                  who === person.value ? "border-line-strong bg-panel" : "border-transparent hover:bg-hover",
+                  "inline-flex h-7 items-center gap-1.5 rounded-full py-0 pl-1 pr-2.5 text-[0.8125rem] font-medium transition-[opacity,background-color]",
+                  who === person.value ? "bg-hover" : "hover:bg-hover",
                   who && who !== person.value && "opacity-50",
                 )}
               >
@@ -1743,7 +1804,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
         </div>
       )}
       {data?.castReady && people.length > 0 && (
-        <MoreInfo label="Phím tắt" className="mt-1.5 hidden md:block">
+        <MoreInfo label="Phím tắt" className="hidden md:block">
           Bàn phím: <Kbd>↑</Kbd> <Kbd>↓</Kbd> chọn câu (<Kbd>Shift</Kbd> chọn nhiều) · <Kbd>1</Kbd>–<Kbd>{Math.min(HOTKEYS, people.length)}</Kbd> gán
           người theo số rồi sang câu kế · <Kbd>Enter</Kbd> danh sách · <Kbd>P</Kbd> nghe câu · <Kbd>R</Kbd> thu lại câu · <Kbd>/</Kbd> tìm chữ · <Kbd>Ctrl</Kbd>+<Kbd>Z</Kbd> hoàn tác
         </MoreInfo>

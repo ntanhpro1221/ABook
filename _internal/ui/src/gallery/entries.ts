@@ -212,6 +212,7 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/studio-review", group: "Studio", title: "Cần nghe lại", route: "/studio/dong-ho-cat?tab=review" },
   { id: "desktop/studio-precast", group: "Studio", title: "Duyệt trước khi thu", route: "/studio/dong-ho-cat?tab=precast" },
   { id: "desktop/studio-script", group: "Studio", title: "Kịch bản chương", route: "/studio/dong-ho-cat?tab=script" },
+  { id: "desktop/studio-script-menu", group: "Studio", title: "Kịch bản · chọn chương", route: "/studio/dong-ho-cat?tab=script", act: () => click("Chương").then(() => undefined) },
   { id: "desktop/studio-music", group: "Studio", title: "Nhạc nền", route: "/studio/dong-ho-cat?tab=music" },
   { id: "desktop/studio-activity", group: "Studio", title: "Diễn biến", route: "/studio/dong-ho-cat?tab=activity" },
   { id: "desktop/studio-new", group: "Studio", title: "Tạo sách nói", route: "/studio/new" },

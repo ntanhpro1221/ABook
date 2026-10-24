@@ -7,8 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { useClip, type ClipSource } from "@/listen/clip";
 import { cn } from "@/shared/cn";
-import { formatPercent } from "@/shared/format";
-import { Button, EmptyState, Kbd, Segmented, Vu, ContentSkeleton, InlineError } from "@/shared/ui";
+import { formatPercent, joinParts } from "@/shared/format";
+import { Button, EmptyState, FilterRow, Kbd, Vu, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, urls } from "./api";
 import { useCachedBook } from "./data";
 import { retryUnlessGone } from "./polling";
@@ -234,13 +234,13 @@ function Row({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className={cn("rounded-md px-1.5 py-0.5 font-semibold", KIND_TONE[item.kind])}>{KIND_LABEL[item.kind]}</span>
-          <span className="text-fg-2">{item.chapterTitle}</span>
-          {item.speaker && <span className="text-fg-2">· {item.speaker}</span>}
-          {item.similarity !== null && (
-            <span className="tabular text-fg-2" title="Máy nghe lại bản thu và so với chữ của câu: 100% là nghe ra đúng từng chữ">
-              · {matchPhrase(formatPercent(item.similarity))}
-            </span>
-          )}
+          {/* Một span, một chỗ ghép " · ": khoảng trắng hai bên mọi dấu chấm giữa luôn đều nhau. */}
+          <span
+            className="tabular text-fg-2"
+            title={item.similarity !== null ? "Máy nghe lại bản thu và so với chữ của câu: 100% là nghe ra đúng từng chữ" : undefined}
+          >
+            {joinParts([item.chapterTitle, item.speaker, item.similarity !== null && matchPhrase(formatPercent(item.similarity))])}
+          </span>
         </div>
         <p className="mt-1 text-[0.9375rem] leading-snug">{item.text}</p>
         {item.heard && (
@@ -298,32 +298,32 @@ function Row({
           </button>
         )}
       </div>
-      <div className="flex gap-1.5">
+      {/* Một kiểu nút cho mọi phán quyết: chữ trơn (ghost), không viền; đã chọn thì nền nhạt cùng sắc trạng thái. Nút cuối kéo lề -12 px
+          để chữ của nó thẳng mép phải nội dung (nút ghost đệm 12 px mỗi bên). */}
+      <div className="-mr-3 flex gap-1">
         {/* Không có gì để nghe thì không phán "Ổn" được - chỉ còn thu lại (soát UX 29-09). */}
         {source && (
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={Check}
             aria-pressed={item.verdict === "ok"}
             onClick={() => onVerdict(item.verdict === "ok" ? null : "ok")}
-            className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium",
-              item.verdict === "ok" ? "bg-success-soft text-success" : "border border-line hover:bg-hover",
-            )}
+            className={item.verdict === "ok" ? "bg-success-soft text-success hover:bg-success-soft hover:text-success" : undefined}
           >
-            <Check className="size-4" /> Ổn
-          </button>
+            Ổn
+          </Button>
         )}
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
+          icon={RotateCcw}
           aria-pressed={item.verdict === "redo"}
           onClick={() => onVerdict(item.verdict === "redo" ? null : "redo")}
-          className={cn(
-            "inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium",
-            item.verdict === "redo" ? "bg-danger-soft text-danger" : "border border-line hover:bg-hover",
-          )}
+          className={item.verdict === "redo" ? "bg-danger-soft text-danger hover:bg-danger-soft hover:text-danger" : undefined}
         >
-          <RotateCcw className="size-4" /> {source ? "Cần thu lại" : "Thu lại câu này"}
-        </button>
+          {source ? "Cần thu lại" : "Thu lại câu này"}
+        </Button>
       </div>
     </Tag>
   );
@@ -478,7 +478,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
             "Đã xem hết các câu đáng lo."
           )}
         </p>
-        <Segmented<"todo" | "done">
+        <FilterRow<"todo" | "done">
           label="Lọc"
           value={filter}
           onChange={setFilter}
@@ -512,7 +512,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
           <MoreInfo>Chạy tiếp hoặc Áp dụng thay đổi để thu lại.</MoreInfo>
         </div>
       )}
-        <AnimatedRows className="mt-3 space-y-1" items={items} keyOf={(item) => item.stableId}>
+        <AnimatedRows className="-mx-3 mt-3 space-y-1" items={items} keyOf={(item) => item.stableId}>
           {(item) => (
             <Row as="div"
               key={item.stableId}

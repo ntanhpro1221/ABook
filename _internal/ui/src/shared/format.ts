@@ -208,3 +208,9 @@ export function formatFingerprint(value?: string | null): string {
   const hex = (value ?? "").replace(/\s+/g, "").toUpperCase();
   return hex.replace(/(.{4})(?=.)/g, "$1 ");
 }
+
+/** Ghép các phần của một dòng phụ bằng " · " (bỏ phần rỗng): MỘT chỗ làm dấu chấm giữa - nhờ vậy khoảng trắng hai bên dấu luôn đều
+ *  nhau, thay vì mỗi nơi tự gắn "· " vào đầu từng phần trong một hàng có `gap`. */
+export function joinParts(parts: ReadonlyArray<string | false | null | undefined>): string {
+  return parts.filter(Boolean).join(" · ");
+}
