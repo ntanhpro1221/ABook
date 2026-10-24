@@ -1,9 +1,10 @@
 // @vitest-environment node
 import { beforeAll, describe, expect, it } from "vitest";
 import { layoutFixtures } from "./gallery_inspect_layout_fixture.mjs";
+import { browserAvailable } from "./gallery_browser.mjs";
 import { normalizeRule } from "./gallery_inspect.mjs";
 
-describe("baseline, visible control boxes, inline ink on Edge in both themes and viewports", () => {
+describe.skipIf(!browserAvailable)("baseline, visible control boxes, inline ink on Edge in both themes and viewports", () => {
   let results;
   beforeAll(async () => { results = await layoutFixtures({ fixture: "baseline-controls.html" }); }, 60000);
   const at = (r, id, rule) => r.findings.filter((f) => f.rule === rule && f.selector.startsWith(`#${id} >`));

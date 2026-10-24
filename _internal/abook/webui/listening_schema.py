@@ -21,10 +21,9 @@ def fields(value: dict, numbers=(), strings=(), booleans=()) -> dict:
     return result
 
 
-def revisions(item: dict) -> dict:
-    if "rev" in item and revision(item)[0] == 0:
-        item.pop("rev")
-    return item
+def revisions(item: dict) -> dict | None:
+    """Phiên bản hỏng thì bỏ cả hàng: hàng còn lại mà thiếu phiên bản thì máy kia từ chối mãi (thiếu phiên bản), bỏ đi thì máy kia gửi lại bản đủ."""
+    return None if "rev" in item and revision(item)[0] == 0 else item
 
 
 def meta_revisions(row: dict, *keys: str) -> dict:
@@ -50,7 +49,8 @@ def clean_state(raw: Any) -> dict:
     for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
         # Giá trị + mốc giờ + phiên bản là một bộ: một phần hỏng thì bỏ cả bộ (máy kia gửi lại bản đủ) - trước đây giữ giá trị và phiên
         # bản mà mất mốc, máy kia gộp văng lỗi ở mọi lần đồng bộ (soát a118 lỗi 3).
-        if (field in raw and field not in state) or (stamp in raw and stamp not in state):
+        broken_rev = isinstance(raw.get("_fieldRevs"), dict) and field in raw["_fieldRevs"] and field not in state.get("_fieldRevs", {})
+        if (field in raw and field not in state) or (stamp in raw and stamp not in state) or broken_rev:
             state.pop(field, None)
             state.pop(stamp, None)
             if isinstance(state.get("_fieldRevs"), dict):
@@ -60,23 +60,29 @@ def clean_state(raw: Any) -> dict:
             item = state[key]
             if not isinstance(item, dict) or not all(number(item.get(k)) for k in required):
                 del state[key]
+            elif (kept := revisions(fields(item, (*required, "at")))) is None:
+                del state[key]
             else:
-                state[key] = revisions(fields(item, (*required, "at")))
+                state[key] = kept
     chapters = state.get("chapters", {})
-    state["chapters"] = {key: revisions(fields(item, ("heard", "duration", "at"), booleans=("done",)))
-                         for key, item in (chapters.items() if isinstance(chapters, dict) else [])
-                         if isinstance(item, dict)}
+    state["chapters"] = {key: kept for key, item in (chapters.items() if isinstance(chapters, dict) else [])
+                         if isinstance(item, dict)
+                         and (kept := revisions(fields(item, ("heard", "duration", "at"), booleans=("done",)))) is not None}
     marks = state.get("bookmarks", [])
-    state["bookmarks"] = [revisions(fields(item, ("seconds", "at", "createdAt", "index"), ("note", "quote")))
-                          for item in (marks if isinstance(marks, list) else [])
+    state["bookmarks"] = [kept for item in (marks if isinstance(marks, list) else [])
                           if isinstance(item, dict) and isinstance(item.get("id"), str)
-                          and number(item.get("chapterId")) and number(item.get("seconds"))]
+                          and number(item.get("chapterId")) and number(item.get("seconds"))
+                          and (kept := revisions(fields(item, ("seconds", "at", "createdAt", "index"), ("note", "quote")))) is not None]
     for key in ("chapters", "bookmarks"):
         if key not in raw:
             state.pop(key, None)
     for key in ("deleted",):
         if key in state:
             state[key] = {k: v for k, v in state[key].items() if number(v)} if isinstance(state[key], dict) else {}
+            # Dấu xoá mất phiên bản (phiên bản hỏng vừa bị lọc) cũng bỏ, cùng lý do như hàng.
+            raw_revs = raw.get("_deletedRevs")
+            if isinstance(raw_revs, dict):
+                state[key] = {k: v for k, v in state[key].items() if k not in raw_revs or k in state.get("_deletedRevs", {})}
     if "sessions" in state:
         state["sessions"] = [fields(v, ("startedAt", "endedAt", "listened"))
                              for v in (state["sessions"] if isinstance(state["sessions"], list) else [])

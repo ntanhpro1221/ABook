@@ -144,10 +144,13 @@ export async function pushSettings(settings: PlayerSettings): Promise<void> {
     schedule: settings.sleepSchedule,
     settingsStamp: settings.savedAt,
     autoMusic: settings.autoMusic !== false,
+    touchSounds: settings.touchSounds,
+    haptics: settings.haptics,
+    readingSurface: settings.readingSurface,
   }).catch(() => undefined);
 }
 
-/** Tiếng chạm, rung và nền đọc theo tuỳ chọn: lúc mở app và mỗi lần đổi. Chỉ ở WebView - lõi native không cần nhớ. */
+/** Tiếng chạm, rung và nền đọc theo tuỳ chọn: lúc mở app và mỗi lần đổi. WebView áp; native chỉ nhớ (pushSettings) để lấy lại khi localStorage mất. */
 export function applySenses(settings: PlayerSettings): void {
   configureFeedback({ sounds: settings.touchSounds, haptics: settings.haptics, haptic: (effect) => EbookPlayer.haptic({ effect }) });
   applyReadingSurface(settings.readingSurface);

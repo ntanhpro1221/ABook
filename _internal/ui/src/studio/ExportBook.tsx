@@ -356,7 +356,7 @@ export function ExportDialog({
       description={wholeSeries ? `Các chương nghe được của cả ${parts.length} phần sẽ vào bản xuất.` : `${formatNumber(selectedCount)} chương sẽ vào bản xuất.`}>
       <MotionRegion fadeThrough>
       {busy ? (
-        <MotionRegion className="py-2" role="status" motionKey={[cancelling, Boolean(downloading), Boolean(packing), packShown?.title, packShown?.fraction === null]}>
+        <MotionRegion className="py-2" role="status" motionKey={[cancelling, Boolean(downloading), Boolean(packing), Boolean(packShown), packShown?.fraction === null]}>
           {packShown && !downloading && packShown.fraction !== null ? (
             <Progress value={packShown.fraction} size="md" label={packShown.title} />
           ) : (
