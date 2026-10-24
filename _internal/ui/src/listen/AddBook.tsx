@@ -530,7 +530,7 @@ export function AddBookDialog({
           ? "Xem lại chương trước khi thêm. Chữ của truyện giữ nguyên."
           : "EPUB, DOCX, PDF có chữ, TXT, thư mục TXT hay file .abook. Chọn được nhiều file."
       }
-    ><MotionRegion>
+    ><MotionRegion fadeThrough>
       {confirmLeave && (
         <div
           ref={confirmBox}

@@ -17,7 +17,7 @@ export function motionSignature(element: HTMLElement): string {
   return parts.join("|");
 }
 
-type Props = HTMLAttributes<HTMLElement> & { as?: "div" | "section" | "ul" | "ol" | "p" | "span" | "li" | "label" | "button"; htmlFor?: string; type?: "button" | "submit" | "reset"; disabled?: boolean; children?: ReactNode; motionKey?: unknown; elementRef?: Ref<HTMLElement> };
+type Props = HTMLAttributes<HTMLElement> & { as?: "div" | "section" | "ul" | "ol" | "p" | "span" | "li" | "label" | "button"; htmlFor?: string; type?: "button" | "submit" | "reset"; disabled?: boolean; children?: ReactNode; motionKey?: unknown; elementRef?: Ref<HTMLElement>; followScroll?: boolean; fadeThrough?: boolean };
 type Snapshot = { clone?: HTMLElement; signature: string; height: number; display?: string; margins?: [number, number] } | null;
 
 /** So sánh cây React trước commit: polling/đồng hồ/ô nhập không được clone cả vùng DOM mỗi nhịp.
@@ -57,7 +57,7 @@ export class MotionRegion extends Component<Props> {
     // Chọn host TRƯỚC khi đo/đặt ảnh: fixed dùng toạ độ viewport sẽ lệch khi đưa vào surface có transform.
     // Vùng trang giữ ảnh fixed trên body; chỉ surface cần hệ toạ độ cục bộ.
     const host = surface ? (surface !== box ? surface : box.offsetParent) : undefined;
-    const clone = captureMotionSnapshot(box, box.ownerDocument, floorZ, host && host !== box.ownerDocument.body ? host as HTMLElement : undefined, true);
+    const clone = captureMotionSnapshot(box, box.ownerDocument, floorZ, host && host !== box.ownerDocument.body ? host as HTMLElement : undefined, true, this.props.followScroll);
     const computed = box.style ? getComputedStyle(box) : undefined;
     return { clone, signature: motionSignature(box), height: box.getBoundingClientRect().height, display: computed?.display,
       margins: [parseFloat(computed?.marginTop ?? "0") || 0, parseFloat(computed?.marginBottom ?? "0") || 0] };
@@ -91,19 +91,25 @@ export class MotionRegion extends Component<Props> {
       };
     }
     const finish = () => { if (generation === this.generation) this.clearExit?.(); };
-    const frames: Keyframe[] = [{ opacity: 0.45 }, { opacity: 1 }];
+    const duration = prefersReducedMotion() ? MOTION.fast : MOTION.medium;
+    const through = this.props.fadeThrough && Math.abs(to - snapshot.height) > 1;
+    // Hộp đổi chiều cao: chữ mới chỉ hiện sau khi ảnh cũ mờ hết, tránh hai bố cục
+    // cùng đọc được chồng nhau. Cả hai lượt vẫn fade, kể cả reduced motion.
+    const frames: Keyframe[] = through
+      ? [{ opacity: 0, offset: 0 }, { opacity: 0, offset: MOTION.fastOut / duration }, { opacity: 1, offset: 1 }]
+      : [{ opacity: 0.45 }, { opacity: 1 }];
     if (!prefersReducedMotion() && Math.abs(to - snapshot.height) > 1) {
-      frames[0].height = `${snapshot.height}px`; frames[1].height = `${to}px`;
+      frames[0].height = `${snapshot.height}px`; frames[frames.length - 1].height = `${to}px`;
       if (empty) for (const [index, name] of ["marginTop", "marginBottom"].entries()) {
-        if (snapshot.margins?.[index]) { frames[0][name] = `${snapshot.margins[index]}px`; frames[1][name] = "0px"; }
+        if (snapshot.margins?.[index]) { frames[0][name] = `${snapshot.margins[index]}px`; frames[frames.length - 1][name] = "0px"; }
       }
     }
-    this.animation = box.animate?.(frames, { duration: prefersReducedMotion() ? MOTION.fast : MOTION.medium, easing: EASE.standard }) ?? null;
+    this.animation = box.animate?.(frames, { duration, easing: through ? "linear" : EASE.standard }) ?? null;
     if (this.animation) this.animation.onfinish = finish;
   }
   componentWillUnmount() { ++this.generation; this.animation?.cancel(); this.clearExit?.(); removeMotionSnapshot(this.clone); }
   render() {
-    const { as: Tag = "div", motionKey: _key, elementRef, ...props } = this.props;
+    const { as: Tag = "div", motionKey: _key, elementRef, followScroll: _followScroll, fadeThrough: _fadeThrough, ...props } = this.props;
     return createElement(Tag as ElementType, { ...props, ref: (element: HTMLElement | null) => {
       this.box.current = element;
       if (typeof elementRef === "function") elementRef(element);
