@@ -12,7 +12,7 @@ import { ApiError, api, apiOrStream, canStream, mediaUrl } from "@/studio/api";
 import { watchAppDropPaths } from "@/studio/appDrops";
 import { pickFiles, pickFolder } from "@/studio/data";
 import { batchName, pickedFromDrop, planUpload, sendPlan, UPLOAD_LIMIT, type Picked } from "@/studio/upload";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { paragraphsFor, type PreparePlan, type PrepareStatus, type ReadAloudCacheUsage } from "@/listen/prepareAhead";
 
 function fileName(path: string): string {

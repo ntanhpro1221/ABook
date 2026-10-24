@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import {
   api,
   hasLocalTransport,

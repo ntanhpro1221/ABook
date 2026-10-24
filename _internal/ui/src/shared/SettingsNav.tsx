@@ -40,6 +40,7 @@ export interface GroupRow {
 
 /** Danh sách nhóm. `current`: máy tính hai cột - nhóm đang mở bên phải sáng lên, đổi nhóm như đổi tab (không chồng lịch sử). */
 export function SettingsList({ rows, current, className }: { rows: readonly GroupRow[]; current?: SettingsGroupId; className?: string }) {
+  const location = useLocation();
   const replace = current !== undefined;
   const shown = SETTINGS_GROUPS.filter((group) => rows.some((row) => row.id === group.id));
   return (
@@ -51,7 +52,7 @@ export function SettingsList({ rows, current, className }: { rows: readonly Grou
             key={id}
             to={settingsPath(id)}
             replace={replace}
-            state={{ settingsList: true }}
+            state={{ settingsList: !replace || Boolean(location.state?.settingsList) }}
             aria-current={id === current ? "page" : undefined}
             className={cn("flex min-h-[3.5rem] items-center gap-3.5 px-4 py-2.5 transition-colors hover:bg-hover", id === current && "bg-hover")}
           >
@@ -74,8 +75,7 @@ export function useLeaveSettingsGroup(): () => void {
   const location = useLocation();
   return () => {
     const idx = (typeof window === "undefined" ? null : (window.history.state as { idx?: number } | null))?.idx ?? 0;
-    if (location.state?.settingsList) navigate(settingsPath(), { replace: true });
-    else if (idx > 0) navigate(-1);
+    if (location.state?.settingsList || (location.state?.settingsList === undefined && idx > 0)) navigate(-1);
     else navigate(settingsPath(), { replace: true });
   };
 }

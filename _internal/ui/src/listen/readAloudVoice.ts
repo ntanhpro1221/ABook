@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { VOICE_CHANGED_EVENT, isTransientClipError, type ClipFetcher, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
 import { onlineConsentGiven } from "./onlineConsent";

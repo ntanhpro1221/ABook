@@ -36,7 +36,9 @@ it.each([false, true])("a resizing dialog fades old text out before new text ent
   const duration = reduced ? MOTION.fast : MOTION.medium;
   const frames = call[0] as Keyframe[];
   expect(frames[0].opacity).toBe(0);
-  expect(frames[1]).toMatchObject({ opacity: 0, offset: Math.min(MOTION.fastOut * .6, duration * .25) / duration });
+  expect(frames[1]).toMatchObject({ opacity: 0, offset: Math.min(MOTION.fastOut, duration * .75) / duration });
+  // Cây mới không hiện trước khi ảnh cũ mờ hết: hai lớp chữ không chồng nhau (emu138 VỪA 1).
+  expect(frames[1].offset! * duration).toBeGreaterThanOrEqual(Math.min(MOTION.fastOut, duration * .75));
   expect(frames.at(-1)?.opacity).toBe(1);
   expect(call[1]).toMatchObject({ duration, easing: "linear" });
   expect(snapshots()[0].textContent).toBe("Old long preview");
@@ -58,7 +60,7 @@ it.each(["reveal", "finish", "cancel", "replace", "unmount"])("hidden fadeThroug
   await act(() => { button.click(); button.focus(); });
   expect(click).not.toHaveBeenCalled(); expect(document.activeElement).toBe(mount);
   if (end === "reveal") {
-    Object.defineProperty(animation, "currentTime", { value: 55, configurable: true });
+    Object.defineProperty(animation, "currentTime", { value: MOTION.fastOut + 1, configurable: true });
     await act(() => vi.advanceTimersByTime(20));
   } else if (end === "finish") animation.onfinish?.(new Event("finish") as AnimationPlaybackEvent);
   else if (end === "cancel") animation.oncancel?.(new Event("cancel") as AnimationPlaybackEvent);

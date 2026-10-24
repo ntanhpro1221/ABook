@@ -72,9 +72,12 @@ export class MotionRegion extends Component<Props> {
   }
   componentDidUpdate(_previous: Props, _state: unknown, snapshot: Snapshot) {
     const box = this.box.current;
-    if (!box || !snapshot) return;
+    if (!box || !snapshot) {
+      if (this.clearExit) { ++this.generation; this.animation?.cancel(); this.clearExit?.(); }
+      return;
+    }
     this.clone = snapshot.clone;
-    if (snapshot.signature === motionSignature(box) && this.props.motionKey === undefined) { removeMotionSnapshot(this.clone); this.clone = undefined; return; }
+    if (snapshot.signature === motionSignature(box) && this.props.motionKey === undefined) { this.clearExit?.(); removeMotionSnapshot(this.clone); this.clone = undefined; return; }
     this.clone = settleMotionSnapshot(box, this.clone);
     ++this.generation;
     this.animation?.cancel();
@@ -82,7 +85,7 @@ export class MotionRegion extends Component<Props> {
     this.clearExit?.();
     const generation = ++this.generation;
     const to = box.getBoundingClientRect().height;
-    const empty = box.matches(":empty");
+    const empty = !box.children.length && !box.textContent;
     if (empty && snapshot.height > 0) {
       const { height, overflow, display, marginTop, marginBottom } = box.style;
       box.setAttribute("data-motion-exit", "");
@@ -103,10 +106,10 @@ export class MotionRegion extends Component<Props> {
     const finish = () => { if (generation === this.generation) { this.clearHidden?.(); this.clearExit?.(); } };
     const duration = prefersReducedMotion() ? MOTION.fast : MOTION.medium;
     const through = this.props.fadeThrough && Math.abs(to - snapshot.height) > 1;
-    // Chồng nhẹ hai pha: cây mới bắt đầu hiện khi ảnh cũ còn mờ, tránh đáy sáng.
+    // Cây mới chỉ hiện khi ảnh cũ đã mờ hết (fastOut) - hiện sớm hơn là hai lớp chữ chồng nhau ~60-100 ms (emu138 VỪA 1).
     // Reduced vẫn có đủ thời gian fade vào, không tween chiều cao.
-    const revealAt = Math.min(MOTION.fastOut * .6, duration * .25);
-    const frames: Keyframe[] = through
+    const revealAt = Math.min(MOTION.fastOut, duration * .75);
+    const frames: Keyframe[] = empty ? [{ opacity: 1 }, { opacity: 0 }] : through
       ? [{ opacity: 0, offset: 0 }, { opacity: 0, offset: revealAt / duration }, { opacity: 1, offset: 1 }]
       : [{ opacity: 0.45 }, { opacity: 1 }];
     if (!prefersReducedMotion() && Math.abs(to - snapshot.height) > 1) {

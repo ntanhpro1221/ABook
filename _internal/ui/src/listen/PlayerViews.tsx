@@ -1829,7 +1829,7 @@ export function BookmarkList({
   // Thêm / xoá dấu trang: hàng mở ra hay khép lại tại chỗ (shared/motion.ts useListPresence), không nhảy cả danh sách.
   const rows = useListPresence(sorted, bookmarkKey);
   return (
-    <>{!rows.length && empty}<ul className="space-y-1">
+    <><MotionPresence open={!rows.length && Boolean(empty)}>{empty}</MotionPresence><ul className="space-y-1">
       {rows.map(({ key, item: mark, state, ref }) => (
         <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
           <BookmarkRow

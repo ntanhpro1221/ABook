@@ -31,7 +31,7 @@ it("thẻ chuyển nhóm: bản exit bỏ ID và ARIA định danh, bản sống
 });
 
 it("rộng → chọn nhóm bằng replace → hẹp → Về Cài đặt luôn về route cha", () => {
-  h.state = { settingsList: true };
+  h.state = { settingsList: false };
   vi.stubGlobal("window", { history: { state: { idx: 3 } } });
   useLeaveSettingsGroup()();
   expect(h.navigate).toHaveBeenLastCalledWith("/settings", { replace: true });

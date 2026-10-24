@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import type { EngineEvent, NativeEngine, NativeQueue, TrackInfo } from "@/listen/engine";
 import type { Bookmark, BookmarkSentence, ListenBook } from "@/listen/model";
 import type { MusicCredit } from "@/listen/musicBed";

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import type { CastMember } from "@/listen/model";
 import type { PendingDetails } from "./ApplyChanges";
 import { api } from "./api";

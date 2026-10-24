@@ -12,12 +12,12 @@ export function AnimatedRows<T>({ items, keyOf, children, className, as: List = 
 }
 
 /** Lớp tự dựng: đóng là inert ngay, giữ hình tới animationend; thời hạn dự phòng lo trường hợp WebView bỏ sự kiện. */
-export function MotionPresence({ open, children, className }: { open: boolean; children: ReactNode; className?: string }) {
+export function MotionPresence({ open, children, className, bodyClassName }: { open: boolean; children: ReactNode; className?: string; bodyClassName?: string }) {
   const presence = usePresence(open);
   const last = useRef(children);
   if (open) last.current = children;
   if (!presence.mounted) return null;
-  return <div className={cn("motion-flow", className)}><Collapse open={open} appear><div className="motion-panel" data-state={presence.state} inert={!open} aria-hidden={!open || undefined} onAnimationEnd={presence.onAnimationEnd}>{open ? children : last.current}</div></Collapse></div>;
+  return <div className={cn("motion-flow", className)}><Collapse open={open} appear className={bodyClassName}><div className="motion-panel" data-state={presence.state} inert={!open} aria-hidden={!open || undefined} onAnimationEnd={presence.onAnimationEnd}>{open ? children : last.current}</div></Collapse></div>;
 }
 
 /** Khung chờ cũ mờ ra đè trên nội dung đang hiện vào; không dựng nội dung thật hai lần, không trì hoãn tương tác. */

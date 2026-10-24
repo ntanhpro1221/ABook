@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { moveBookStorage } from "@/shared/bookStorage";
 import { api } from "@/studio/api";
 

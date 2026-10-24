@@ -106,8 +106,7 @@ export function dismissTopLayer(
   if (hasActionToast(doc)) {
     if (toastElement && dismissToastElement(toastElement)) return true;
     const close = toastElement?.querySelector<HTMLButtonElement>("[data-close-button]");
-    if (close) close.click();
-    return true;
+    if (close) { close.click(); return true; }
   }
   return false;
 }
