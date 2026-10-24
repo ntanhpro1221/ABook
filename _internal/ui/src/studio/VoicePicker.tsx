@@ -8,7 +8,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
-import { excerpt, formatNumber } from "@/shared/format";
+import { formatNumber } from "@/shared/format";
 import { Button, Dialog, Progress, Segmented, Skeleton, Vu } from "@/shared/ui";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { api, urls } from "./api";
@@ -309,7 +309,7 @@ export function VoicePicker({
           <div className="mt-2 space-y-0.5">
             <p className="text-xs text-pretty text-fg-3">
               {data.tryLine
-                ? `Nút sách đọc câu “${excerpt(data.tryLine.text, 70)}” của ${name} bằng giọng ấy; nút ▶ là câu mẫu chung.`
+                ? `Nút sách đọc câu của ${name}; ▶ đọc mẫu chung.`
                 : `${name} chưa có câu nào để đọc thử - nút ▶ là câu mẫu chung của giọng.`}
             </p>
             {tryVoice.note}

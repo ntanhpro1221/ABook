@@ -251,15 +251,15 @@ export function ProjectsScreen() {
       ) : !books.length ? (
         <EmptyState
           icon={Wand2}
-          title="Biến truyện chữ thành sách nói"
+          title="Chưa có dự án"
           className="mt-12 rounded-2xl border border-dashed border-line"
           action={
             <Button variant="primary" size="lg" icon={Plus} onClick={() => navigate("/studio/new")}>
-              Tạo dự án đầu tiên
+              Tạo dự án
             </Button>
           }
         >
-          Chọn EPUB, DOCX, PDF hay thư mục TXT. Mỗi nhân vật sẽ có giọng riêng.
+          Thêm truyện để tạo sách với giọng riêng cho từng nhân vật.
         </EmptyState>
       ) : (
         <>

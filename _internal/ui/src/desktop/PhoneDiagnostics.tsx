@@ -16,9 +16,9 @@ import { pickFolder, useAppInfo } from "@/studio/data";
 export const VIEW_LINES = 400;
 export const SAVE_LINES = 2000;
 
-export const NEEDS_NEWER_TITLE = "Điện thoại cần bản ABook mới hơn";
+export const NEEDS_NEWER_TITLE = "Cần cập nhật ABook";
 const NEEDS_NEWER_HELP = "Cập nhật ABook trên điện thoại rồi bấm Làm mới.";
-const UNREACHABLE_HELP = "Trên điện thoại: Tải sách › bật “Cho máy khác nghe thư viện này”. Cùng Wi-Fi hay Tailscale.";
+const UNREACHABLE_HELP = "Trên cùng Wi-Fi hoặc Tailscale: vào Tải sách › bật chia sẻ thư viện.";
 
 /** Lời báo cho một lần hỏi hỏng: câu của máy chủ (đã nói tên máy và lý do) và, nếu đáng, điều bạn có thể làm. */
 export function failureView(error: unknown): { title: string; help: string } {
@@ -78,7 +78,7 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
       open={open}
       onOpenChange={onOpenChange}
       title={`Chẩn đoán ${computer.name}`}
-      description="Nhật ký của điện thoại, có tên cuốn đang nghe; khoá, mã ghép, đường dẫn, IP đã được che. Xem lại trước khi gửi."
+      description="Nhật ký có tên sách; thông tin riêng được che nhưng hãy xem lại trước khi gửi."
       width="max-w-2xl"
     >
       <div className="space-y-4">

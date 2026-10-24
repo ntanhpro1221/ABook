@@ -15,7 +15,7 @@ it("hỏi trước khi thay bằng file cũ và chỉ gửi xác nhận khi bạ
   await useOpenBookPath()("old.abook");
   expect(mocks.navigate).not.toHaveBeenCalled();
   expect(mocks.api).toHaveBeenCalledTimes(1);
-  expect(mocks.warning).toHaveBeenCalledWith("File này cũ hơn bản bạn đang có", expect.any(Object));
+  expect(mocks.warning).toHaveBeenCalledWith("Bản sách cũ hơn", expect.any(Object));
   const options = mocks.warning.mock.calls[0][1];
   options.cancel.onClick();
   expect(mocks.api).toHaveBeenCalledTimes(1);

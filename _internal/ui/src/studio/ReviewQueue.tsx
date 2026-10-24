@@ -160,14 +160,14 @@ function SpokenEditor({
         }}
         className="mt-1 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-[0.9375rem] outline-none focus-visible:border-focus"
       />
-      <p className="mt-1 text-xs text-fg-3">Viết như cách đọc thành tiếng, ví dụ “Tách tách tách” thành “tách, tách, tách”. Để trống là đọc đúng chữ sách.</p>
+      <p className="mt-1 text-xs text-fg-3">Viết cách đọc thành tiếng; để trống để dùng chữ gốc.</p>
       <div className="mt-2 flex flex-wrap gap-1.5">
         <Button type="submit" size="sm" variant="primary" loading={busy} disabled={!value.trim() && !item.spoken}>
           Lưu
         </Button>
         {twins.length > 0 && (
           <Button size="sm" variant="secondary" disabled={busy} onClick={() => void save([item, ...twins])}>
-            Lưu cho cả {twins.length + 1} câu giống hệt
+            Lưu {twins.length + 1} câu
           </Button>
         )}
         <Button size="sm" variant="ghost" disabled={busy} onClick={() => onDone(null)}>
@@ -206,7 +206,7 @@ function Row({
   return (
     <Tag
       data-review-row={item.stableId}
-      className={cn("grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-3 rounded-xl px-3 py-3", handled(item) && !editing ? "opacity-70" : "hover:bg-hover")}
+      className={cn("grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-3 rounded-xl px-3 py-3 transition-[opacity,background-color] duration-motion-fast", handled(item) && !editing ? "opacity-70" : "hover:bg-hover")}
     >
       {source ? (
         <button
@@ -218,7 +218,7 @@ function Row({
             playing ? "bg-accent text-accent-ink" : "bg-hover text-fg hover:bg-line",
           )}
         >
-          {playing && clip.loading ? <Loader2 className="size-4 animate-spin" /> : playing ? <Vu className="h-3" /> : <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+          <MotionRegion as="span" className="grid size-4 place-items-center">{playing && clip.loading ? <Loader2 className="size-4 animate-spin" /> : playing ? <Vu className="h-3" /> : <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
         </button>
       ) : (
         // Không có gì để nghe thì không có nút ▶ nhìn như bấm được: một dấu nói thẳng lý do (câu hỏng / đã dọn bản thu).
@@ -265,6 +265,7 @@ function Row({
             </p>
           )
         )}
+        <MotionRegion>
         {editing ? (
           <SpokenEditor
             bookId={bookId}
@@ -286,13 +287,14 @@ function Row({
             </button>
           )
         )}
+        </MotionRegion>
         {onOpenScript && (item.verdict === "redo" || item.kind === "failed") && (
           <button
             type="button"
             onClick={() => onOpenScript(item.chapterId, item.stableId)}
             className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline"
           >
-            <FileText className="size-3.5" /> Sửa câu này ở tab Kịch bản
+            <FileText className="size-3.5" /> Mở Kịch bản
           </button>
         )}
       </div>
@@ -470,7 +472,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
               <span className="font-semibold text-fg">{data.pending} câu</span>: nghe rồi chọn Ổn hoặc Cần thu lại.
             </>
           ) : unrecorded ? (
-            "Chưa có câu nào để kiểm - sẽ có sau khi thu âm."
+            "Chưa có bản thu - sẽ có sau khi thu âm."
           ) : (
             "Đã xem hết các câu đáng lo."
           )}
@@ -505,8 +507,8 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       )}
       {data.redoChapters.length > 0 && (
         <div className="mt-3 rounded-xl bg-danger-soft px-4 py-2.5 text-sm text-danger">
-          <p>{data.redoChapters.length} chương chờ thu lại. Sửa chữ ở Kịch bản.</p>
-          <MoreInfo>Máy thu lại khi sách chạy tiếp. Sách đã xong: chọn “Áp dụng thay đổi” ở trang dự án.</MoreInfo>
+          <p>{data.redoChapters.length} chương chờ thu lại; sửa chữ ở Kịch bản.</p>
+          <MoreInfo>Chạy tiếp hoặc Áp dụng thay đổi để thu lại.</MoreInfo>
         </div>
       )}
         <AnimatedRows className="mt-3 space-y-1" items={items} keyOf={(item) => item.stableId}>
@@ -528,7 +530,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         </AnimatedRows>
       {!items.length && (
         <div data-review-row={EMPTY} tabIndex={-1} className="rounded-xl outline-none">
-          <EmptyState icon={ShieldCheck} title={filter === "todo" ? (unrecorded ? "Chưa có câu nào để kiểm" : "Không còn câu nào cần xem") : "Chưa đánh dấu câu nào"} className="mt-4">
+          <EmptyState icon={ShieldCheck} title={filter === "todo" ? (unrecorded ? "Chưa có bản thu" : "Đã xem hết") : "Chưa đánh dấu câu nào"} className="mt-4">
             {filter === "todo"
               ? unrecorded
                 ? "Máy kiểm từng câu ngay khi thu xong; câu nào đáng lo sẽ hiện ở đây."
@@ -544,7 +546,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       )}
       {minor > 0 && (
         <button type="button" onClick={() => setShowMinor((value) => !value)} className="touch-row mt-4 text-sm font-medium text-fg-2 hover:text-fg">
-          {showMinor ? "Ẩn" : "Hiện"} {minor} câu lệch ít (thường vẫn ổn)
+          {showMinor ? "Ẩn" : "Hiện"} {minor} câu nhẹ
         </button>
       )}
     </MotionRegion>

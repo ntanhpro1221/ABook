@@ -53,10 +53,10 @@ describe("auto-pick switch", () => {
     expect(autoLabel({ analysed: false })).toBeNull();
   });
   it("offers exactly one button per state, each leading to the next state", () => {
-    expect(autoSwitch(plain)).toEqual({ text: "Đừng tự chọn bài này", next: "off" });
-    expect(autoSwitch(sung)).toEqual({ text: "Vẫn cho máy tự chọn", next: "on" });
-    expect(autoSwitch({ ...sung, auto: "on" })).toEqual({ text: "Thôi, không cho máy tự chọn", next: null });
-    expect(autoSwitch({ ...plain, auto: "off" })).toEqual({ text: "Cho máy tự chọn lại", next: null });
+    expect(autoSwitch(plain)).toEqual({ text: "Tắt tự chọn", next: "off" });
+    expect(autoSwitch(sung)).toEqual({ text: "Cho tự chọn", next: "on" });
+    expect(autoSwitch({ ...sung, auto: "on" })).toEqual({ text: "Theo mặc định", next: null });
+    expect(autoSwitch({ ...plain, auto: "off" })).toEqual({ text: "Tự chọn lại", next: null });
   });
 });
 
