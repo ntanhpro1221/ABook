@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+
+- Thư viện mở lưới bìa và gom bộ sách; điện thoại có tab Studio, sách máy kia ở Thư viện và ghép máy trong Cài đặt › Thiết bị.
+
 ### Sửa lỗi
 - Back đóng mọi thông báo đang hiện (kể cả lời mời bật thông báo) rồi mới về trang trước; menu đang khép không chặn chạm bên dưới; đóng nhóm Cài đặt quay đúng một bước.
 - Nội dung đổi trong hộp không còn hai lớp chữ chồng nhau; phần trống mờ dần thay vì biến mất; danh sách dấu trang trống hiện mượt; viền chọn ở đầu Thư viện không bị cắt.

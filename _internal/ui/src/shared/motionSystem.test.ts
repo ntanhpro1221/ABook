@@ -143,8 +143,8 @@ describe("navMotion: hướng chuyển trang", () => {
     expect(navMotion("POP", at("/settings/voice", 2), at("/settings", 1))).toBe("back");
   });
   it("giữa các mục gốc (tab dưới, thanh bên) là ngang hàng", () => {
-    expect(navMotion("PUSH", at("/", 0), at("/devices", 1))).toBe("through");
-    expect(navMotion("POP", at("/settings", 2), at("/devices", 1))).toBe("through");
+    expect(navMotion("PUSH", at("/", 0), at("/studio", 1))).toBe("through");
+    expect(navMotion("POP", at("/settings", 2), at("/studio", 1))).toBe("through");
   });
   it("cùng trang, chỉ đổi ?tìm / # bằng PUSH: không chuyển vùng trang", () => {
     expect(navMotion("PUSH", at("/book/a", 1), at("/book/a", 2))).toBe("none");

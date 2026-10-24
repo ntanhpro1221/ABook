@@ -1220,7 +1220,7 @@ class SyncHandler(BaseHTTPRequestHandler):
                 self._json(HTTPStatus.OK, {"ok": True})
                 return
             if method == "POST" and path == "/sync/v1/name":
-                # Thiết bị đã ghép tự đổi tên mình (điện thoại: Tải sách -> Tên điện thoại này - soát a68 lỗi 16).
+                # Thiết bị đã ghép tự đổi tên mình (điện thoại: Cài đặt > Thiết bị > Tên điện thoại này - soát a68 lỗi 16).
                 if self.app.devices.rename(device["id"], str(self._body().get("name", ""))):
                     self._json(HTTPStatus.OK, {"ok": True})
                 else:

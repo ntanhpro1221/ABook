@@ -56,7 +56,7 @@ describe("Mở Studio của máy tính trên điện thoại", () => {
     expect(library.openStudio).not.toHaveBeenCalled();
   });
 
-  it("nút ở màn Tải sách chỉ hiện khi có ít nhất một máy tính mở được Studio, kể cả chỉ ghép máy tính phụ", () => {
+  it("nút ở tab Studio chỉ hiện khi có ít nhất một máy tính mở được Studio, kể cả chỉ ghép máy tính phụ", () => {
     expect(renderToString(<OpenStudioButton computers={[]} />)).toBe("");
     expect(renderToString(<OpenStudioButton computers={[office]} />)).toContain("Mở Studio");
     expect(renderToString(<OpenStudioButton computers={[home, office]} />)).toContain("Mở Studio");
