@@ -149,14 +149,14 @@ describe("Back khi không còn lớp: trang trước -> trang cha -> thu nhỏ �
     expect(parentPath("/book/abc/read/ch2")).toBe("/book/abc");
     expect(parentPath("/book/abc/read")).toBe("/book/abc");
     expect(parentPath("/book/abc")).toBe("/");
-    expect(parentPath("/devices")).toBe("/");
+    expect(parentPath("/settings/devices")).toBe("/settings");
   });
 
   it("có lịch sử thì lùi trang; không có (mở từ thông báo / file) thì lên trang cha; chỉ Thư viện mới thu nhỏ", () => {
     expect(backStep("/settings/voice", 2)).toEqual({ kind: "history" });
     expect(backStep("/settings/voice", 0)).toEqual({ kind: "replace", to: "/settings" });
     expect(backStep("/book/x/read/c", 0)).toEqual({ kind: "replace", to: "/book/x" });
-    expect(backStep("/devices", 0)).toEqual({ kind: "replace", to: "/" });
+    expect(backStep("/studio", 0)).toEqual({ kind: "replace", to: "/" });
     expect(backStep("/", 5)).toEqual({ kind: "minimize" });
     expect(backStep("/", 0)).toEqual({ kind: "minimize" });
   });

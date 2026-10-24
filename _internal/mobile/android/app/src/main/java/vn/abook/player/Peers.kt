@@ -143,7 +143,7 @@ object Peers {
         all(context).keys().asSequence().firstOrNull { localId.startsWith("p${it}_") }
             ?.let { it to localId.removePrefix("p${it}_") }
 
-    /** Ghép bằng mã 6 số đang hiện trên thiết bị kia (điện thoại: màn Tải sách; máy tính: Cài đặt). Ghép lại cùng máy (cùng vân tay
+    /** Ghép bằng mã 6 số đang hiện trên thiết bị kia (điện thoại: Cài đặt › Thiết bị; máy tính: Cài đặt). Ghép lại cùng máy (cùng vân tay
      *  chứng chỉ, hay cùng địa chỉ) thì thay chỗ cũ - sách đã tải và chỗ nghe giữ nguyên. */
     fun pair(context: Context, host: String, port: Int, code: String): JSONObject {
         SyncLink.refuseSelf(host, port)
