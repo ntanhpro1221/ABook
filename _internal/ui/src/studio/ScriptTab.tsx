@@ -1783,12 +1783,12 @@ export function ScriptTab({ bookId }: { bookId: string }) {
                 title={person.value === UNNAMED ? "Câu máy chưa biết ai nói, và vai phụ không tên" : undefined}
                 onClick={() => setWho(who === person.value ? null : person.value)}
                 className={cn(
-                  "inline-flex h-7 items-center gap-1.5 rounded-full py-0 pl-1 pr-2.5 text-[0.8125rem] font-medium transition-[opacity,background-color]",
+                  "inline-flex h-7 items-center gap-1.5 rounded-full py-0 pl-0.5 pr-2.5 text-[0.8125rem] font-medium transition-[opacity,background-color]",
                   who === person.value ? "bg-hover" : "hover:bg-hover",
                   who && who !== person.value && "opacity-50",
                 )}
               >
-                <span className="avatar grid size-5 place-items-center rounded-full text-[0.625rem] font-bold" style={hue(person.label)} aria-hidden>
+                <span className="avatar grid size-6 place-items-center rounded-full text-[0.6875rem] font-bold" style={hue(person.label)} aria-hidden>
                   {badge}
                 </span>
                 {person.label}
