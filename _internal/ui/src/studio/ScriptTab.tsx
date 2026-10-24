@@ -1,3 +1,4 @@
+import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import * as Popover from "@radix-ui/react-popover";
@@ -644,7 +645,7 @@ export function DeliveryMenu({
           )}
         </div>
       )}
-      <Fold storageKey="delivery.emotion" title="Cảm xúc" summary={`${emotion} · ${level}`} bodyClassName="space-y-3 px-3 pb-3">
+      <Fold storageKey="delivery.emotion" title="Cảm xúc" summary={deliveryText(emotion, level)} bodyClassName="space-y-3 px-3 pb-3">
       {line.emotion !== null && (
         <div>
           <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Cảm xúc</div>
@@ -691,13 +692,13 @@ export function DeliveryMenu({
           className="w-full resize-y rounded-lg border border-line bg-panel px-2.5 py-1.5 text-sm leading-relaxed outline-none focus:border-focus"
         />
         <span className="mt-1 block text-[0.6875rem] leading-snug text-fg-3">
-          Sửa lỗi chữ hay cách viết lạ của riêng câu này; sách và phần đọc theo giữ nguyên.
-          {line.spoken ? " Xoá hết rồi lưu để trả về chữ của sách." : ""}
+          Chỉ sửa chữ đem đọc; sách giữ nguyên
+          {line.spoken ? "; xoá hết để dùng chữ gốc." : ""}
         </span>
       </label>
       {line.spoken && (
         <button type="button" className="text-xs font-medium text-accent-text" onClick={() => setWords(line.text)}>
-          Trả về chữ của sách
+          Dùng chữ gốc
         </button>
       )}
       <Button size="sm" variant="primary" className="w-full" disabled={!ready} onClick={() => onSave(change)}>
@@ -707,7 +708,7 @@ export function DeliveryMenu({
           Nhân vật) - tách khỏi nút "Lưu cách đọc" vốn chỉ cho riêng câu này. */}
       {names.length > 0 && (
         <Fold storageKey="delivery.names" title="Tên trong câu" summary={`${names.length} tên`} bodyClassName="px-3 pb-3"><div data-names-section>
-          <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Tên trong câu · sửa cho cả cuốn</div>
+          <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Sửa tên cả cuốn</div>
           <div className="space-y-2">
             {names.map((item) => (
               <NameInLine key={item.surface} bookId={bookId} item={item} />
@@ -1047,7 +1048,7 @@ function ScriptRow({
       }}
       onClick={speech ? (event) => (event.shiftKey ? onExtend() : onActivate()) : undefined}
       className={cn(
-        "group grid grid-cols-[minmax(0,1fr)_28px] gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 outline-none lg:grid-cols-[160px_minmax(0,1fr)_28px]",
+        "group transition-[background-color,box-shadow,opacity] duration-motion-fast grid grid-cols-[minmax(0,1fr)_28px] gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 outline-none lg:grid-cols-[160px_minmax(0,1fr)_28px]",
         gap && "mt-3",
         active && "bg-hover",
         selected && "bg-accent-soft ring-1 ring-inset ring-accent/40",
@@ -1430,7 +1431,7 @@ function ChapterScriptView({
                 onClick={() => askRetake(group[0])}
                 title={recorded ? "" : "Các câu đang chọn chưa thu hay đã xin thu lại"}
               >
-                {recorded ? `Thu lại ${recorded} câu đã thu` : "Chưa có câu nào để thu lại"}
+                {recorded ? `Thu lại ${recorded} câu` : "Chưa có bản thu"}
               </Button>
             );
           })()}
@@ -1504,10 +1505,10 @@ function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: string;
       {script.castReady && open.length > 0 ? (
         <div className="min-w-0">
           <Button size="sm" variant="secondary" icon={Check} loading={confirm.isPending} onClick={() => confirm.mutate(open)}>
-            Xác nhận cả chương đúng - {open.length} câu
+            Duyệt {open.length} câu
           </Button>
           <p className="mt-1 text-xs text-fg-3">
-            Coi người nói của các câu chưa ai quyết là đúng{doubtful ? `, trừ ${doubtful} câu máy còn nghi` : ""}: máy thôi hỏi và học từ đó. Bấm nhầm thì Hoàn tác hay Ctrl+Z.
+            Coi người nói của các câu chưa ai quyết là đúng{doubtful ? `, trừ ${doubtful} câu máy còn nghi` : ""}: máy thôi hỏi; Ctrl+Z để hoàn tác.
           </p>
         </div>
       ) : (
@@ -1635,13 +1636,13 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       ]
     : [];
   return (
-    <MotionRegion as="div" className="mt-5">
+    <MotionRegion as="div" className="mt-5" motionKey={[filter, who, chapterId, Boolean(data), data?.castReady]}>
       <p className="max-w-3xl text-sm text-fg-2">
-        Bấm tên ở đầu câu để đổi người nói. Câu máy nghi có dấu vàng.
+        Bấm tên để đổi người nói; dấu vàng là câu cần xem.
       </p>
       {data && data.lines.length > 0 && !data.lines.some((line) => line.hasAudio) && (
         <p className="mt-1 max-w-3xl text-sm text-fg-2">
-          Chương này chưa thu âm nên chưa có nút ▶ cạnh câu - thu xong mới nghe lại được từng câu ở đây.
+          Thu xong chương sẽ nghe lại được từng câu.
         </p>
       )}
       {/* Chương + chú giải người nói DÍNH khi cuộn (soát UX a6 01-10: cuộn xuống giữa chương là quên phím 4 là ai, muốn sang
@@ -1740,10 +1741,10 @@ export function ScriptTab({ bookId }: { bookId: string }) {
         </div>
       )}
       {data?.castReady && people.length > 0 && (
-        <p className="mt-1.5 hidden flex-wrap items-center gap-1.5 text-xs text-fg-3 md:flex">
+        <MoreInfo label="Phím tắt" className="mt-1.5 hidden md:block">
           Bàn phím: <Kbd>↑</Kbd> <Kbd>↓</Kbd> chọn câu (<Kbd>Shift</Kbd> chọn nhiều) · <Kbd>1</Kbd>–<Kbd>{Math.min(HOTKEYS, people.length)}</Kbd> gán
           người theo số rồi sang câu kế · <Kbd>Enter</Kbd> danh sách · <Kbd>P</Kbd> nghe câu · <Kbd>R</Kbd> thu lại câu · <Kbd>/</Kbd> tìm chữ · <Kbd>Ctrl</Kbd>+<Kbd>Z</Kbd> hoàn tác
-        </p>
+        </MoreInfo>
       )}
       </div>
       {!data ? (

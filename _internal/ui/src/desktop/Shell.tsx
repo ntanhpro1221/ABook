@@ -201,7 +201,7 @@ export function Shell({ children }: { children: ReactNode }) {
           onClick={() => main.current?.focus()}
           className="fixed left-3 top-3 z-[60] -translate-y-[200%] rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float focus:translate-y-0"
         >
-          Bỏ qua tới nội dung
+          Tới nội dung
         </button>
       )}
       <ShortcutsHost remote={remote} />
@@ -213,7 +213,7 @@ export function Shell({ children }: { children: ReactNode }) {
               Thư viện
             </NavItem>
           </Section>
-          {!listenOnly && (
+          <MotionPresence open={!listenOnly}>
             <Section title="Studio">
               <NavItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio") && path !== "/studio/new"}>
                 Dự án
@@ -223,7 +223,7 @@ export function Shell({ children }: { children: ReactNode }) {
               </NavItem>
               <Producing />
             </Section>
-          )}
+          </MotionPresence>
         </nav>
         <div className="mt-auto">
           <UpdateNotice />
@@ -249,6 +249,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <TabItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>
             Thư viện
           </TabItem>
+          <MotionRegion className={cn("flex min-w-0 overflow-hidden transition-[flex-grow] duration-(--motion-medium) [&>a]:flex-1", listenOnly ? "flex-[0]" : "flex-[2]")} motionKey={listenOnly}>
           {!listenOnly && (
             <TabItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio") && path !== "/studio/new"}>
               Dự án
@@ -259,6 +260,7 @@ export function Shell({ children }: { children: ReactNode }) {
               Tạo sách
             </TabItem>
           )}
+          </MotionRegion>
           <TabItem to="/settings" icon={Settings} match={(path) => path.startsWith("/settings")}>
             Cài đặt
           </TabItem>

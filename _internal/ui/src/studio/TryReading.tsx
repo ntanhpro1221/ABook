@@ -112,7 +112,7 @@ export function useTryReading({
       note: aloud.failed ? (
         <p role="status" className="text-xs text-fg-2">{aloud.failed}</p>
       ) : (
-        <p className="text-xs text-fg-3">Nghe thử bằng giọng đọc của máy - giọng trong sách nói có thể đọc hơi khác.</p>
+        <p className="text-xs text-fg-3">Giọng máy nghe thử có thể khác bản thu.</p>
       ),
     };
   }

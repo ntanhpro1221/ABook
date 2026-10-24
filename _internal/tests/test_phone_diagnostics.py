@@ -127,7 +127,7 @@ def test_a_phone_that_is_off_or_has_sharing_switched_off_says_so(tmp_path: Path)
     fake.stop()  # cổng đóng: "Cho máy khác nghe thư viện này" chưa bật / ABook chưa mở
     with pytest.raises(ApiError) as caught:
         app.phone_diagnostics(device)
-    assert "Cho phép thiết bị khác kết nối qua Wi-Fi" in str(caught.value) or "chưa bật" in str(caught.value)
+    assert "Kết nối Wi-Fi" in str(caught.value) or "chưa bật" in str(caught.value)
     assert "Pixel" in str(caught.value), "lời báo nói tên máy"
 
 

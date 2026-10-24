@@ -367,7 +367,7 @@ export function HandOffButton({ className }: { className?: string }) {
         candidate.via === "cast" ||
         (candidate.via === "peer" ? candidate.device === owner : candidate.stream || candidate.books.includes(track.bookId)))
     : [];
-  if (!track || !data) return <MotionRegion />;
+  if (!track || !data) return <MotionRegion as="span" />;
   // Tìm lại loa / TV ngay, không đợi nhịp 30 giây của máy chủ (cast.scan); hỏi lại danh sách sau khi lượt tìm (~2 giây) xong.
   const rescan = () => {
     setSearching(true);
@@ -403,7 +403,7 @@ export function HandOffButton({ className }: { className?: string }) {
   if (targets.length === 1 && !menuOpen) {
     const [only] = targets;
     return (
-      <MotionRegion><IconButton
+      <MotionRegion as="span"><IconButton
         label={`Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`}
         icon={only.via === "cast" ? Cast : MonitorSmartphone}
         size="sm"
@@ -413,6 +413,7 @@ export function HandOffButton({ className }: { className?: string }) {
     );
   }
   return (
+    <MotionRegion as="span">
     <DropdownMenu.Root
       open={menuOpen}
       onOpenChange={(open) => {
@@ -420,9 +421,9 @@ export function HandOffButton({ className }: { className?: string }) {
         if (open && !searching) rescan();
       }}
     >
-      <Tooltip label="Phát trên thiết bị khác">
+      <Tooltip label="Phát trên máy khác">
         <DropdownMenu.Trigger
-          aria-label="Phát trên thiết bị khác"
+          aria-label="Phát trên máy khác"
           className={cn(
             "inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg",
             className,
@@ -438,9 +439,9 @@ export function HandOffButton({ className }: { className?: string }) {
           {!targets.length && (
             <>
               <div role="status" className="px-2 py-1.5 text-sm text-fg-2">
-                {searching ? "Đang tìm loa / TV trong mạng…" : "Không thấy loa / TV nào trong mạng"}
+                {searching ? "Đang tìm thiết bị…" : "Chưa thấy thiết bị"}
               </div>
-              <p className="px-2 pb-1 text-xs text-fg-3">Máy kia cần bật và cùng Wi-Fi với máy này.</p>
+              <p className="px-2 pb-1 text-xs text-fg-3">Bật máy kia và nối cùng Wi-Fi để phát.</p>
               <DropdownMenu.Item
                 disabled={searching}
                 onSelect={(event) => {
@@ -465,6 +466,7 @@ export function HandOffButton({ className }: { className?: string }) {
         </MotionRegion></DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
+    </MotionRegion>
   );
 }
 

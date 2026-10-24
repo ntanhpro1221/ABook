@@ -1,12 +1,15 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { Collapse } from "@/shared/Collapse";
+import type { ReactNode } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookAudio, FileAudio, FolderDown, Headphones, type LucideIcon } from "lucide-react";
+import { BookAudio, CheckCircle2, CircleAlert, FileAudio, FolderDown, Headphones, Info, Loader2, type LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import { useMatch } from "react-router";
 import { toast } from "@/shared/toast";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
-import { LiveText, Progress } from "@/shared/ui";
+import { Button, LiveText, Progress } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { pickFolder, useAppInfo, usePreferences } from "@/studio/data";
 import { listenOnlyOwner } from "@/shared/peerStudio";
@@ -97,27 +100,27 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
       <Icon className="mt-0.5 size-4 shrink-0 self-start" />
       <span className="min-w-0">
         <span className="block">{label}</span>
-        <span className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
+        <MotionRegion as="span" className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
           {lastExportHint(job, KINDS[kind].copy, dataUpdatedAt) ??
             (kind === "bookfile" && !book.chaptersAvailable && book.chaptersTotal ? "Chưa có audio: file chỉ mang chữ của các chương" : exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot))}
-        </span>
+        </MotionRegion>
       </span>
     </DropdownMenu.Item>
   );
 }
 
 export function BookFileMenuItem({ book }: { book: ListenBook }) {
-  return <ExportJobMenuItem book={book} kind="bookfile" icon={FileAudio} label="Xuất file sách (mở bằng app ở máy khác)" />;
+  return <ExportJobMenuItem book={book} kind="bookfile" icon={FileAudio} label="Xuất file sách" />;
 }
 
 /** Cả cuốn trong một file `.m4b` có mục lục chương - app sách nói (Apple Books, Smart AudioBook Player...) mở là thấy đủ chương. */
 export function M4bMenuItem({ book }: { book: ListenBook }) {
-  return <ExportJobMenuItem book={book} kind="m4b" icon={BookAudio} label="Xuất M4B cho app sách nói" />;
+  return <ExportJobMenuItem book={book} kind="m4b" icon={BookAudio} label="Xuất M4B" />;
 }
 
 /** Thư mục MP3 có tên sách, tên chương, bìa - nghe được bằng mọi trình phát khác. */
 export function Mp3MenuItem({ book }: { book: ListenBook }) {
-  return <ExportJobMenuItem book={book} kind="mp3" icon={FolderDown} label="Xuất MP3 để nghe ở app khác" />;
+  return <ExportJobMenuItem book={book} kind="mp3" icon={FolderDown} label="Xuất MP3" />;
 }
 
 /** Mở hộp Xuất sách nói (AudiobookDialogHost) cho cuốn này. */
@@ -134,10 +137,10 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
     >
       <Headphones className="mt-0.5 size-4 shrink-0 self-start" />
       <span className="min-w-0">
-        <span className="block">Xuất sách nói (MP3 / M4B)…</span>
-        <span className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
+        <span className="block">Xuất sách nói…</span>
+        <MotionRegion as="span" className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
           {lastExportHint(job, KINDS.audiobook.copy, dataUpdatedAt) ?? "Mang sang điện thoại, xe hơi, trình phát khác"}
-        </span>
+        </MotionRegion>
       </span>
     </DropdownMenu.Item>
   );
@@ -151,12 +154,12 @@ export function ProgressNote({ text, spoken, fraction, label }: { text: string; 
       <span>
         <LiveText shown={text} spoken={spoken} />
       </span>
-      {fraction !== undefined && (
+      <Collapse open={fraction !== undefined}>
         <div aria-hidden>
           {/* Tên thanh là tên việc, không phải lời đọc có mốc % (đứng yên ở 0 % trong khi thanh chạy tới 14 - soát a67). */}
-          <Progress value={fraction} size="sm" running label={label} />
+          <Progress value={fraction ?? 0} size="sm" running label={label} />
         </div>
-      )}
+      </Collapse>
     </div>
   );
 }
@@ -168,6 +171,24 @@ const stoppingNote = (copy: ExportCopy) => copy.stopping ?? STOPPING.note;
 /** Thông báo cùng mã thay nhau (đang làm -> đang dừng -> đã dừng / xong / lỗi): sonner giữ nút của lần trước nếu lần sau không nói rõ `action`,
  *  nên mọi lần cập nhật không có nút phải ghi `action: undefined` (soát 10-10: "Đã dừng xuất sách nói" còn nút Huỷ cũ). */
 const NO_ACTION = { action: undefined } as const;
+
+/** Cùng một kiểu toast suốt vòng đời: chữ, biểu tượng và nút giữ vùng fade riêng. */
+function exportToast(kind: "loading" | "success" | "info" | "error", title: string, options: {
+  id: string; description?: ReactNode; duration?: number;
+  action?: { label: string; onClick: () => void };
+}) {
+  const Icon = kind === "loading" ? Loader2 : kind === "success" ? CheckCircle2 : kind === "error" ? CircleAlert : Info;
+  return toast.message(<MotionRegion as="span" motionKey={[kind, title]} className="flex items-center gap-2">
+    <Icon className={kind === "loading" ? "size-4 shrink-0 animate-spin" : "size-4 shrink-0"} />{title}
+  </MotionRegion>, {
+    ...options,
+    icon: null,
+    description: <MotionRegion>{options.description}</MotionRegion>,
+    action: <MotionRegion as="span" motionKey={options.action?.label ?? ""}>{options.action &&
+      <Button data-button="" size="sm" variant="primary" onClick={options.action.onClick}>{options.action.label}</Button>}
+    </MotionRegion>,
+  });
+}
 
 export function ExportJobHost({ kind }: { kind: ExportKind }) {
   const { data: info } = useAppInfo();
@@ -189,10 +210,10 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
       if (view.kind === "none") return job.state === "running";
       if (view.kind === "loading") {
         if (stopping.current.has(id)) {
-          toast.loading(STOPPING.title, { id: toastId(kind, id), description: stoppingNote(copy), duration: Infinity, ...NO_ACTION });
+          exportToast("loading", STOPPING.title, { id: toastId(kind, id), description: stoppingNote(copy), duration: Infinity, ...NO_ACTION });
           return true;
         }
-        toast.loading(view.title, {
+        exportToast("loading", view.title, {
           id: toastId(kind, id),
           description: <ProgressNote text={view.description} spoken={view.spoken ?? ""} fraction={view.progress} label={view.title} />,
           duration: Infinity,
@@ -201,7 +222,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
                 label: "Huỷ",
                 onClick: () => {
                   stopping.current.add(id);
-                  toast.loading(STOPPING.title, { id: toastId(kind, id), description: stoppingNote(copy), duration: Infinity, ...NO_ACTION });
+                  exportToast("loading", STOPPING.title, { id: toastId(kind, id), description: stoppingNote(copy), duration: Infinity, ...NO_ACTION });
                   void api(cancel(id), { method: "POST", body: {} }).catch(() => stopping.current.delete(id));
                 },
               }
@@ -211,12 +232,12 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
       }
       stopping.current.delete(id);
       if (view.kind === "info") {
-        toast.info(view.title, { id: toastId(kind, id), description: view.description, duration: 15000, ...NO_ACTION });
+        exportToast("info", view.title, { id: toastId(kind, id), description: view.description, duration: 15000, ...NO_ACTION });
         return false;
       }
       if (view.kind === "success" && job.result) {
         const folder = job.result.folder;
-        toast.success(view.title, {
+        exportToast("success", view.title, {
           id: toastId(kind, id),
           // Thông báo chỉ nói tên file; đường đầy đủ hiện khi rê chuột (nút “Mở thư mục” đưa tới đúng chỗ).
           description: remote
@@ -229,7 +250,7 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
           action: remote ? undefined : { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }) },
         });
       } else {
-        toast.error(view.title, { id: toastId(kind, id), description: view.description, duration: 15000, ...NO_ACTION });
+        exportToast("error", view.title, { id: toastId(kind, id), description: view.description, duration: 15000, ...NO_ACTION });
       }
       return false;
     },
@@ -263,10 +284,10 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
     const listener = (event: Event) => {
       const { id, chapters, target, cover, extra } = (event as CustomEvent<StartDetail>).detail;
       stopping.current.delete(id);
-      toast.loading(copy.busy, { id: toastId(kind, id), duration: Infinity, ...NO_ACTION });
+      exportToast("loading", copy.busy, { id: toastId(kind, id), duration: Infinity, ...NO_ACTION });
       api<ExportJob>(jobUrl(kind, id), { method: "POST", body: { target, cover, ...extra } })
         .then(() => track(id, chapters))
-        .catch((error: Error) => toast.error(copy.failed, { id: toastId(kind, id), description: error.message, ...NO_ACTION }));
+        .catch((error: Error) => exportToast("error", copy.failed, { id: toastId(kind, id), description: error.message, ...NO_ACTION }));
     };
     window.addEventListener(startEvent(kind), listener);
     return () => window.removeEventListener(startEvent(kind), listener);

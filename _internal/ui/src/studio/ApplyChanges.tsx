@@ -159,7 +159,7 @@ export function ApplyChangesDialog({
       title={running ? `${count} thay đổi đang chờ áp` : `Áp dụng ${count} thay đổi?`}
       description={
         running
-          ? "Máy tự áp chúng ở chương kế tiếp. Bạn bỏ được một việc ở đây bất cứ lúc nào, miễn là máy chưa áp nó - việc đã áp rồi thì máy báo và giữ nguyên."
+          ? "Tự áp ở chương kế tiếp; chỉ bỏ được việc chưa áp."
           : "Máy chỉ thu lại những câu bị ảnh hưởng, rồi dựng lại các chương có câu ấy - không làm lại cả cuốn."
       }
     ><MotionRegion>
@@ -182,7 +182,7 @@ export function ApplyChangesDialog({
                 {data.seconds > 0 && <> - {estimateText(data.seconds, data.measured)}</>}.
               </>
             ) : (
-              "Không câu đã thu nào phải thu lại - máy chỉ ghi các thay đổi vào sách, vài giây là xong."
+              "Chỉ ghi thay đổi, không thu lại câu nào."
             )}
           </p>
         </>

@@ -75,7 +75,7 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
       open={open}
       onOpenChange={onOpenChange}
       title={`Chẩn đoán ${computer.name}`}
-      description="Nhật ký của điện thoại, có tên cuốn đang nghe; khoá, mã ghép, đường dẫn, IP đã được che. Xem lại trước khi gửi."
+      description="Nhật ký có tên sách; thông tin riêng được che nhưng hãy xem lại trước khi gửi."
       width="max-w-2xl"
     >
       <div className="space-y-4">

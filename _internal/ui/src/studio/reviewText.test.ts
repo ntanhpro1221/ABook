@@ -13,8 +13,8 @@ describe("chữ tab Cần nghe lại", () => {
   });
 
   it("nút sửa cách đọc nói tự nhiên và nhắc câu giống hệt", () => {
-    expect(spokenEditLabel(0)).toBe("Sửa cách máy đọc câu này");
-    expect(spokenEditLabel(3)).toBe("Sửa cách máy đọc câu này (còn 3 câu giống hệt)");
+    expect(spokenEditLabel(0)).toBe("Sửa cách đọc");
+    expect(spokenEditLabel(3)).toBe("Sửa 4 câu");
   });
 
   it("dòng phím tắt chỉ hiện khi đang nghe liền", () => {

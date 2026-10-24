@@ -60,8 +60,8 @@ describe("Cài đặt trên máy tính: không tràn ngang ở 320 px / chữ 32
     expect(html).toMatch(/<div class="[^"]*\bflex-wrap\b[^"]*"><div class="[^"]*\bmin-w-0\b[^"]*"><svg/);
   });
 
-  it("nút Thành phần bên thứ ba xuống dòng", () => {
-    expectWraps(opening(html, "button", "Thành phần bên thứ ba"));
+  it("nút Thành phần sử dụng xuống dòng", () => {
+    expectWraps(opening(html, "button", "Thành phần sử dụng"));
   });
 
   it("liên kết github cắt đúng chỗ thay vì đẩy trang rộng ra", () => {
