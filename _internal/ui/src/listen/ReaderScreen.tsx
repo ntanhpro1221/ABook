@@ -366,7 +366,7 @@ export function ReaderScreen(edit: SentenceEditing) {
         )}
       </header>
 
-      <div ref={container} onScroll={onScroll} {...follow.input} className="relative min-h-0 flex-1 overflow-y-auto">
+      <div ref={container} onScroll={onScroll} {...follow.input} className="reading-surface relative min-h-0 flex-1 overflow-y-auto">
         {/* Hộp (Radix) mở / đóng thì đặt lên body pointer-events:none và biến --removed-body-scroll-bar-size (khoá cuộn) - cả hai đều
             kế thừa, chương 1,5 triệu chữ phải tính lại kiểu chữ của mọi câu: ~400 ms mỗi lần mở / đóng ô "Tìm trong sách" (soát uxfix30).
             Giá trị riêng ở đây chặn thay đổi lan xuống; lớp phủ của hộp vẫn che trang nên bấm ra ngoài vẫn không tới chữ. */}

@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { feedback } from "@/shared/feedback";
 import { Fold } from "@/shared/Collapse";
 import { useBackLayer } from "@/shared/backStack";
 import { useMotionState } from "@/shared/motion";
@@ -286,7 +287,8 @@ export function AddBookDialog({
   // Hàng xong: không file nào lỗi thì đóng hộp (một cuốn mới duy nhất thì mở trang sách, như thêm một file); có file lỗi thì giữ hộp để đọc lý do.
   const finish = (items: QueueItem[]) => {
     const summary = summarize(items);
-    if (summary.failed > 0) return;
+    if (summary.failed > 0) return feedback("reject");
+    if (summary.added) feedback("confirm");
     const added = items.filter((item) => item.state === "added");
     // Đúng một cuốn "đã có": toast cho nút đi thẳng tới cuốn đó (như nút "Mở cuốn đó" của hộp xem trước) thay vì bắt đi tìm trong thư viện.
     const known = summary.existing === 1 ? items.find((item) => item.state === "existing")?.bookId : undefined;
@@ -451,6 +453,7 @@ export function AddBookDialog({
         await goNext(done);
         return;
       }
+      if (added.how !== "existing") feedback("confirm");
       toast.success(added.how === "existing" ? "Cuốn này đã có trong thư viện" : "Đã thêm sách vào thư viện", {
         description: added.how === "existing" ? undefined : READY_NOTE,
       });
@@ -458,6 +461,7 @@ export function AddBookDialog({
       onOpenChange(false);
       navigate(`/book/${added.id}`);
     } catch (error) {
+      feedback("reject");
       toast.error("Chưa thêm được sách", { description: (error as Error).message });
     } finally {
       setBusy(null);

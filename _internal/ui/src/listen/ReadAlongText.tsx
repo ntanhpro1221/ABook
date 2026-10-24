@@ -1,4 +1,5 @@
 import { Locate } from "lucide-react";
+import { feedback } from "@/shared/feedback";
 import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode, type RefObject, type TouchEvent } from "react";
 import { cn } from "@/shared/cn";
 import { excerpt } from "@/shared/format";
@@ -255,6 +256,7 @@ export function ReadAlongText({
     const word = onWordMenu ? wordAtPoint(element, script.segments[index].text, x, y) : -1;
     if (word < 0) return false;
     menuAt.current = Date.now();
+    feedback("longPress");
     onWordMenu!(index, word);
     return true;
   };
