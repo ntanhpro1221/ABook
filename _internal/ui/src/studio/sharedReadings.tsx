@@ -69,13 +69,13 @@ export function SharedReadingsSettings() {
   const entries = data?.entries ?? [];
   const filtered = entries.filter((entry) => `${entry.surface} ${entry.spokenForm}`.toLocaleLowerCase("vi").includes(filter.toLocaleLowerCase("vi")));
   return (
-    <MotionRegion><Fold storageKey="studio.shared-readings" title="Cách đọc chung" summary={`${entries.length} tên`} bodyClassName="px-3 pb-3">
+    <MotionRegion><Fold flat storageKey="studio.shared-readings" title="Cách đọc chung" summary={`${entries.length} tên`} bodyClassName="pb-3">
       <input aria-label="Tìm cách đọc" value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm" placeholder="Tìm tên…" />
       <p className="mt-0.5 text-[0.8125rem] text-fg-2 text-pretty">Sửa cách đọc một tên một lần, sách mới tự dùng.</p>
       {entries.length > 0 && (
-        <ul className="mt-2 divide-y divide-line rounded-xl border border-line">
+        <ul className="mt-2 divide-y divide-line">
           {filtered.slice(0, shown).map((entry) => (
-            <li key={entry.surface} className="flex items-center gap-3 px-3 py-1.5 text-sm">
+            <li key={entry.surface} className="flex items-center gap-3 py-1.5 text-sm">
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium">{entry.surface}</span> <span className="text-fg-3">→</span> “{shownReading(entry.spokenForm)}”
                 {entry.from && <span className="text-xs text-fg-3"> · từ {entry.from}</span>}

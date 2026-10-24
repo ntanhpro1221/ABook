@@ -139,8 +139,8 @@ export function MyMusicSection() {
   const tracks = data?.tracks ?? [];
   const rows = useListPresence(tracks, (track) => track.link);
   return (
-    <MotionRegion><Fold storageKey="my-music.library" title="Nhạc của tôi" summary={`${tracks.length} bài`} bodyClassName="space-y-2">
-      <div className="flex flex-wrap items-center gap-3">
+    <MotionRegion><Fold flat storageKey="my-music.library" title="Nhạc của tôi" summary={`${tracks.length} bài`} bodyClassName="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-sm font-medium">Nhạc của tôi{tracks.length ? ` (${tracks.length})` : ""}</h3>
         {canImport && (
           <Button size="sm" variant="secondary" icon={Upload} className={WRAP_LABEL} loading={Boolean(progress)} onClick={() => void importFiles()}>
@@ -154,9 +154,9 @@ export function MyMusicSection() {
       {!canImport && <p className="text-xs text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách.</p>}
       <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={Music2} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>
       {!!rows.length && (
-        <ul className="divide-y divide-line rounded-lg border border-line">
+        <ul className="divide-y divide-line">
           {rows.map(({ item: track, key, state, ref }) => (
-            <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+            <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
               <span className="min-w-0 flex-1 break-words">
                 <Music2 className="mr-1.5 inline size-4 text-accent-text" />
                 {track.title}

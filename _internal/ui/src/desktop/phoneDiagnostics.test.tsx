@@ -35,7 +35,7 @@ describe("hộp Chẩn đoán điện thoại", () => {
     const error = new ApiError(502, "Không kết nối được máy Pixel");
     const html = renderToStaticMarkup(<DiagnosticsBody onRetry={vi.fn()} error={error} />);
     expect(html).toContain("Không kết nối được máy Pixel");
-    expect(html).toContain("Cho máy khác nghe thư viện này");
+    expect(html).toContain("Chia sẻ thư viện");
     expect(html).toContain("Tailscale");
   });
 

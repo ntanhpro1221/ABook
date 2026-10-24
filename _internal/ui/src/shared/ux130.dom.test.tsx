@@ -42,21 +42,22 @@ it("V2 Toaster Android không nút đóng: Back chỉ gỡ toast mới nhất tr
 afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); document.head.replaceChildren(); vi.restoreAllMocks(); });
 const render = async (node: ReactNode) => { await act(() => root.render(node)); };
 
-it("V1 reduced Switch: vị trí 2/22px, không cộng translate; bật và tắt đều fade", async () => {
+it("V1 reduced Switch: không cộng translate; bật và tắt đều fade", async () => {
   const sheet = new CSSStyleSheet();
   sheet.replaceSync(readFileSync(`${cwd()}/src/styles.css`, "utf8"));
   const reduced = Array.from(sheet.cssRules).filter((rule) => rule.type === 4 && (rule as CSSMediaRule).conditionText.includes("prefers-reduced-motion"));
   expect(reduced.length).toBeGreaterThan(0);
   const style = document.createElement("style");
-  style.textContent = `.motion-switch-thumb { translate: 2px; } .motion-switch-thumb[data-state=checked] { translate: 22px; }\n` + reduced.map((rule) => Array.from((rule as CSSMediaRule).cssRules).map((child) => child.cssText).join("\n")).join("\n");
+  style.textContent = Array.from(sheet.cssRules).filter((rule) => (rule as CSSStyleRule).selectorText?.startsWith(".ui-switch")).map(rule => rule.cssText).join("\n") + "\n" + reduced.map((rule) => Array.from((rule as CSSMediaRule).cssRules).map((child) => child.cssText).join("\n")).join("\n");
   document.head.append(style);
   const names: string[] = [];
   for (const checked of [false, true, false]) {
     await render(<Switch checked={checked} onCheckedChange={() => {}} label="Lịch đêm" />);
     const thumb = host.querySelector<HTMLElement>(".motion-switch-thumb")!;
     const computed = getComputedStyle(thumb);
-    expect(computed.left).toBe(checked ? "22px" : "2px");
+    expect(computed.position).toBe("absolute"); // Hình học và inset đo bằng Edge: happy-dom không có layout.
     expect(computed.translate).toBe("none");
+    expect(computed.transform).toBe("none");
     const name = computed.animationName || computed.animation.split(" ")[0];
     expect(name).toMatch(/^fade-in/);
     names.push(name);

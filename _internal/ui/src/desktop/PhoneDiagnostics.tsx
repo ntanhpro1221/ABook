@@ -10,13 +10,13 @@ import { ApiError, api } from "@/studio/api";
 import { pickFolder, useAppInfo } from "@/studio/data";
 
 // Hộp "Chẩn đoán" của một điện thoại đã ghép (OtherComputers): máy tính hỏi điện thoại qua cổng đồng bộ (webui/remote_books.py `diagnostics`) nên đi được
-// cả khi điện thoại ở mạng khác (Tailscale, 4G) - không cần cáp hay adb. Điện thoại phải mở ABook và bật "Cho máy khác nghe thư viện này".
+// cả khi điện thoại ở mạng khác (Tailscale, 4G) - không cần cáp hay adb. Điện thoại phải mở ABook và bật "Chia sẻ thư viện".
 
 /** Số dòng nhật ký hộp xem (đủ để đọc; "Lưu nhật ký" lấy nhiều hơn). */
 export const VIEW_LINES = 400;
 export const SAVE_LINES = 2000;
 
-const UNREACHABLE_HELP = "Trên điện thoại: Cài đặt › Thiết bị › Điện thoại này › bật “Cho máy khác nghe thư viện này”. Cùng Wi-Fi hay Tailscale.";
+const UNREACHABLE_HELP = "Trên điện thoại: Cài đặt › Thiết bị › Điện thoại này › bật “Chia sẻ thư viện”. Cùng Wi-Fi hay Tailscale.";
 
 /** Lời báo cho một lần hỏi hỏng: câu của máy chủ (đã nói tên máy và lý do) và, nếu đáng, điều bạn có thể làm. */
 export function failureView(error: unknown): { title: string; help: string } {
