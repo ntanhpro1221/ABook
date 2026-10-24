@@ -8,7 +8,7 @@ import { toast } from "@/shared/toast";
 import { useClip, type ClipSource } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatPercent } from "@/shared/format";
-import { Button, EmptyState, Kbd, Segmented, Vu } from "@/shared/ui";
+import { Button, EmptyState, Kbd, Segmented, Vu, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, urls } from "./api";
 import { useCachedBook } from "./data";
 import { retryUnlessGone } from "./polling";
@@ -393,7 +393,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
   }, [continuous, clip]);
   const unrecorded = notRecordedYet(useCachedBook(bookId).data?.book.segments);
   const refetchInterval = useProducingRefetch(bookId); // sách đang chạy: câu cần nghe lại mới hiện tự (soát a90 V4)
-  const { data: pages, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
+  const { data: pages, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ["review", bookId, showMinor, filter],
     initialPageParam: "",
     queryFn: ({ pageParam }) => {
@@ -450,7 +450,8 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
     void client.invalidateQueries({ queryKey: ["library"] });
     void client.invalidateQueries({ queryKey: ["casting", bookId] });
   };
-  if (isLoading || !data) return <MotionRegion as="div" className="mt-6 text-sm text-fg-2">Đang tìm các câu cần nghe lại…</MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError className="mt-6" message="Bạn hãy kiểm tra kết nối rồi tải lại câu cần nghe." onRetry={() => void refetch()} /></MotionRegion>;
+  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton shape="cards" className="mt-6" label="Đang tải câu nghe" /></MotionRegion>;
   const items = data.items.filter((item) => (filter === "todo" ? !handled(item) : handled(item)));
   const judge = (item: ReviewItem, value: ReviewItem["verdict"]) => {
     const index = items.findIndex((current) => current.stableId === item.stableId);

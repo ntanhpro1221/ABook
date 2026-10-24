@@ -12,7 +12,7 @@ import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { useMediaQuery } from "@/shared/media";
-import { Button, EmptyState, IconButton, Kbd, Segmented, Sheet, Skeleton } from "@/shared/ui";
+import { Button, EmptyState, IconButton, Kbd, Segmented, Sheet, Skeleton, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
 import { UNDO_MS, optimistic, undoAction, undoSteps, usePendingNote, useWhenApplied } from "./decisions";
@@ -1613,7 +1613,8 @@ export function ScriptTab({ bookId }: { bookId: string }) {
     );
   };
 
-  if (contents.isLoading) return <MotionRegion><Skeleton className="mt-6 h-40 rounded-xl" /></MotionRegion>;
+  if (contents.isError && !contents.data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tải lại kịch bản." onRetry={() => void contents.refetch()} /></MotionRegion>;
+  if (contents.isLoading) return <MotionRegion fadeThrough><ContentSkeleton className="mt-6" label="Đang tải kịch bản" /></MotionRegion>;
   if (!chapters.length) {
     return (
       <MotionRegion><EmptyState icon={BookOpenText} title="Chưa có kịch bản" className="py-10">
@@ -1621,6 +1622,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       </EmptyState></MotionRegion>
     );
   }
+  if (script.isError && !script.data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tải lại chương này." onRetry={() => void script.refetch()} /></MotionRegion>;
   const data = script.data?.chapterId === chapterId ? script.data : undefined;
   const entry = chapters.find((chapter) => chapter.chapterId === chapterId);
   const doubts = data?.lines.filter((line) => line.hint).length ?? entry?.hints ?? 0;

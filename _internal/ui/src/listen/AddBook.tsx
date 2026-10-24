@@ -12,7 +12,7 @@ import { ChapterPreview } from "@/shared/ChapterPreview";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog } from "@/shared/ui";
+import { Button, ContentSkeleton, Dialog, InlineError } from "@/shared/ui";
 import {
   addRest,
   advanceQueue,
@@ -109,6 +109,7 @@ export function AddBookDialog({
   const client = useQueryClient();
   const navigate = useNavigate();
   const [choice, setChoice] = useState<ImportChoice | null>(null);
+  const lastRead = useRef<ImportChoice | null>(null);
   // Các bước con do MotionRegion trong hộp chuyển động; reset khi đóng không chụp cả nền trang.
   const [preview, , setPreview] = useMotionState<ImportPreview | null>(null);
   const [title, setTitle] = useState("");
@@ -232,6 +233,7 @@ export function AddBookDialog({
     setFootnotes(NO_FOOTNOTES);
   };
   const read = async (picked: ImportChoice) => {
+    lastRead.current = picked;
     const session = reads.current.start();
     if (onBookFile && isBookFile(picked.ref)) {
       // Soát UX 05-10: dán đường dẫn .abook vào đây từng báo "Chưa đọc được file .abook" mà không chỉ sang "Mở file sách".
@@ -566,9 +568,7 @@ export function AddBookDialog({
       {queue && !preview ? (
         <div>
           {busy === "reading" && (
-            <p role="status" className="flex items-center gap-2 text-sm text-fg-2">
-              <Loader2 className="size-4 animate-spin" /> Đang đọc file kế tiếp…
-            </p>
+            <ContentSkeleton count={1} label="Đang đọc file tiếp" />
           )}
           <QueueList items={queue} currentId={currentId} working={working} tall />
           {busy === null && (
@@ -623,10 +623,11 @@ export function AddBookDialog({
               File sách (EPUB, Word, PDF, TXT) hay thư mục TXT, ví dụ D:\Truyện\Tên truyện.epub
             </p>
           )}
+          {busy === "reading" && <ContentSkeleton shape="cards" count={2} label="Đang đọc file sách" className="mt-4" />}
           {problem && (
-            <div role="alert" className="mt-3 text-sm text-danger">
-              <p>{problem}</p>
-              <ErrorDetails technical={technical} />
+            <div className="mt-3">
+              <InlineError message="Bạn hãy kiểm tra file sách rồi thử đọc lại." onRetry={() => { if (lastRead.current) void read(lastRead.current); else void choose("file"); }} />
+              <ErrorDetails technical={technical || problem} />
             </div>
           )}
           <p className="mt-4 text-xs text-fg-3">PDF phải có chữ - PDF chụp từ máy quét thì ABook chưa đọc được.</p>
@@ -756,9 +757,7 @@ export function AddBookDialog({
             </p>
           )}
           {busy === "adding" && working && queue && (
-            <p role="status" className="mt-3 flex items-center gap-2 text-sm text-fg-2">
-              <Loader2 className="size-4 shrink-0 animate-spin" /> <span className="min-w-0 truncate">Đang thêm “{working}”…</span>
-            </p>
+            <ContentSkeleton className="mt-3" count={1} label={`Đang thêm ${working}`} />
           )}
           <div className="sticky bottom-0 z-10 mt-5 flex flex-wrap justify-end gap-2 border-t border-line bg-panel py-3" data-add-book-actions>
             <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>

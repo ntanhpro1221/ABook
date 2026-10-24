@@ -9,7 +9,7 @@ import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog, Progress, Segmented, Skeleton, Vu } from "@/shared/ui";
+import { Button, Dialog, Progress, Segmented, Skeleton, Vu, InlineError } from "@/shared/ui";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { api, urls } from "./api";
 import { useAppInfo } from "./data";
@@ -160,7 +160,7 @@ export function VoicePicker({
 }) {
   const client = useQueryClient();
   const clip = useClip();
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["voice-choices", bookId, person?.name],
     queryFn: () => api<VoiceChoices>(`/api/books/${bookId}/voices?character=${encodeURIComponent(person!.name)}`),
     enabled: person !== null,
@@ -267,7 +267,7 @@ export function VoicePicker({
           ))}
         </div>
       ) : error || !data ? (
-        <p className="text-sm text-danger">{(error as Error | null)?.message ?? "Không đọc được danh sách giọng."}</p>
+        <InlineError message="Bạn hãy kiểm tra kết nối rồi tải lại danh sách giọng." onRetry={() => void refetch()} />
       ) : (
         <>
           {data.pending && (

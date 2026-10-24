@@ -7,7 +7,7 @@ import { ShieldAlert, Smartphone } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { api } from "@/studio/api";
-import { Button, Dialog, Skeleton } from "@/shared/ui";
+import { Button, ContentSkeleton, Dialog, InlineError } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { useListPresence } from "@/shared/motion";
 import { formatDate, formatRelative } from "@/shared/format";
@@ -246,7 +246,7 @@ const NO_DEVICES: SyncDevice[] = [];
 
 /** Mục "Điện thoại" trong Cài đặt: bật đồng bộ, ghép nối bằng mã 6 số, quản lý điện thoại đã ghép. */
 export function PhoneSync() {
-  const { data: sync, toggle, pair, cancel, revoke, rename, studio, deviceStudio } = useSync();
+  const { data: sync, error, refetch, toggle, pair, cancel, revoke, rename, studio, deviceStudio } = useSync();
   const [removing, setRemoving] = useState<SyncDevice | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; draft: string } | null>(null);
   // Bật điều khiển sản xuất từ xa phải hỏi lại (soát UX 29-09): thiết bị đã ghép bắt đầu / dừng sản xuất qua http trong mạng.
@@ -264,7 +264,8 @@ export function PhoneSync() {
     if (added) toast.success(`Đã ghép ${added.name}`, { description: "Thiết bị này giờ tải được sách và đồng bộ chỗ đang nghe." });
   }, [sync]);
 
-  if (!sync) return <MotionRegion><Skeleton className="h-20" /></MotionRegion>;
+  if (error && !sync) return <MotionRegion fadeThrough><InlineError message="Bạn hãy thử tải lại cài đặt kết nối." onRetry={() => void refetch()} /></MotionRegion>;
+  if (!sync) return <MotionRegion fadeThrough><ContentSkeleton count={2} label="Đang tải kết nối" /></MotionRegion>;
   const wanted = toggle.isPending ? Boolean(toggle.variables) : sync.wanted;
   const failing = sync.wanted && !sync.enabled;
   const studioWanted = studio.isPending ? Boolean(studio.variables) : sync.remoteStudio;
