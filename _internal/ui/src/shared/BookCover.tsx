@@ -121,7 +121,7 @@ export function BookCover({
         )}
       </div>
       <MotionRegion as="span" className="absolute bottom-1.5 right-1.5" style={{ color: style.ink }}>
-        {playing && <span className="grid place-items-center rounded-md bg-black/45 px-1 py-0.5"><Vu className="h-3" /></span>}
+        {playing && <span className="grid place-items-center rounded-md bg-cover-overlay px-1 py-0.5"><Vu className="h-3" /></span>}
       </MotionRegion>
     </MotionRegion>
   );
@@ -169,8 +169,8 @@ function PhotoCover({
         data-loaded={shown || undefined}
         className={cn("relative size-full transition-opacity duration-motion-medium", square ? "object-cover" : "object-contain", shown ? "opacity-100" : "opacity-0")}
       />
-      <MotionRegion as="span" className="absolute bottom-1.5 right-1.5 text-white">
-        {playing && <span className="grid place-items-center rounded-md bg-black/45 px-1 py-0.5"><Vu className="h-3" /></span>}
+      <MotionRegion as="span" className="absolute bottom-1.5 right-1.5 text-cover-ink">
+        {playing && <span className="grid place-items-center rounded-md bg-cover-overlay px-1 py-0.5"><Vu className="h-3" /></span>}
       </MotionRegion>
     </>
   );

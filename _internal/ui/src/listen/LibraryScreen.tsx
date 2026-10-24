@@ -175,7 +175,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
           )}
         </button>
         {book.progress.fraction > 0 && !book.progress.finished && (
-          <div {...heardBarProps(book.progress.fraction)} className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-black/40">
+          <div {...heardBarProps(book.progress.fraction)} className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-cover-overlay">
             <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${book.progress.fraction * 100 / 100})` }} />
           </div>
         )}
