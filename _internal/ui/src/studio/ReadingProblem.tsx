@@ -1,4 +1,5 @@
 import { Button } from "@/shared/ui";
+import { MotionRegion } from "@/shared/MotionRegion";
 
 /** Lời từ chối một cách đọc, ngay dưới ô nhập. Máy chủ có bản viết lại đúng chính tả ("Hên-kơ" -> "Hên-cơ",
  *  webui/spelling.py) thì mời dùng bằng một cú bấm - soát UX 29-09: bị từ chối mà không biết sửa chỗ nào. */
@@ -15,9 +16,9 @@ export function ReadingProblem({
   onUse: (spoken: string) => void;
   className?: string;
 }) {
-  if (!problem) return null;
   return (
-    <div className={className ?? "mt-1.5"}>
+    <MotionRegion className={problem ? className ?? "mt-1.5" : undefined}>
+      {problem && <>
       <p id={id} role="alert" className="text-xs text-danger">
         {problem}
       </p>
@@ -26,6 +27,7 @@ export function ReadingProblem({
           Dùng “{suggestion}”
         </Button>
       )}
-    </div>
+      </>}
+    </MotionRegion>
   );
 }

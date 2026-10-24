@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "@/shared/toast";
@@ -56,7 +57,7 @@ export function RenamePersonDialog({
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
       title={`Đổi tên ${name}`}
-      description="Chỉ đổi cái tên hiện trên màn hình. Giọng đọc và audio không đổi."
+      description="Chỉ đổi tên hiển thị, giữ giọng và audio."
     >
       <form
         onSubmit={(event) => {
@@ -154,21 +155,22 @@ export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved
       title={`Giới tính của ${name}`}
       description={current ? `Hiện đang là nhân vật ${current === "female" ? "nữ" : "nam"}.` : "Máy chưa xác định được giới của người này."}
     >
+      <MotionRegion>
       <Segmented<Gender> value={(choice ?? "") as Gender} onChange={setChoice} options={GENDERS} label="Giới tính" />
       {waiting && <p className="mt-3 text-sm text-pretty">Giọng đọc của {name} chưa đổi ngay - Studio sẽ làm khi bạn mở file này ở máy có Studio.</p>}
       {/* Chưa có câu nào được thu: vẫn nói giọng sẽ đổi - đổi giới là đổi giọng (soát UX a23: hộp không nói). */}
       {!waiting && recorded === 0 && person && choice && choice !== current && (
         <p className="mt-3 text-sm text-pretty">
           Nếu giọng {voiceToUse(person) ? `${voiceToUse(person)} ` : ""}đang đọc {name} không hợp giới mới, máy chọn một giọng{" "}
-          {choice === "female" ? "nữ" : "nam"} khác cho người ấy. {when}
+          {choice === "female" ? "nữ" : "nam"} khác cho người ấy khi áp dụng.
         </p>
       )}
       {recorded > 0 && (
         <p className="mt-3 text-sm text-pretty">
-          {name} đã có {formatNumber(recorded)} câu được thu. Khi bấm “Áp dụng thay đổi”, nếu giọng đang đọc không hợp giới mới,
-          mọi câu đã thu của {name} sẽ được thu lại bằng giọng mới; nếu giọng đã hợp, chỉ ghi nhớ giới và không câu nào bị thu lại.
+          Áp dụng sẽ thu lại {formatNumber(recorded)} câu của {name} nếu giọng chưa hợp giới mới.
         </p>
       )}
+      </MotionRegion>
       <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={onClose}>
           Thôi

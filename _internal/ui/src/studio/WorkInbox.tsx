@@ -1,5 +1,6 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows } from "@/shared/MotionPresence";
+import { Collapse } from "@/shared/Collapse";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioLines, Check, Pause, Play, RotateCcw, Search, UserPlus } from "lucide-react";
 import { createContext, useContext, useEffect, useRef, useState } from "react";
@@ -88,7 +89,7 @@ export interface WorkItem {
    *  ghi yêu cầu rỗng cho từng người trong `keepCharacters` (thẻ thôi hỏi). */
   voiceChoices?: VoiceChoice[];
   keepCharacters?: string[];
-  /** Thẻ "Yêu cầu bị từ chối": yêu cầu của bạn máy đã xét mà không làm được - phần, khoá và mốc để bỏ đúng yêu cầu ấy. */
+  /** Thẻ "Yêu cầu chưa được": yêu cầu của bạn máy đã xét mà không làm được - phần, khoá và mốc để bỏ đúng yêu cầu ấy. */
   refused?: { section: string; key: string; requestedAt: number };
   /** Thẻ "Giọng chưa đổi được": người có giọng đã chọn mà không áp được - nút "Chọn giọng khác…" mở hộp "Đổi giọng" của họ. */
   pickVoice?: { name: string; displayName: string };
@@ -145,7 +146,7 @@ const KIND_LABEL: Record<WorkKind, string> = {
   turn: "Lượt đối đáp",
   pronunciation: "Cách đọc tên",
   gender: "Nam hay nữ",
-  vocative: "Người gọi hay người nói",
+  vocative: "Gọi hay nói",
   alias: "Một người hai tên",
   bracket: "Lời trong 『』",
   "shared-voice": "Chung giọng",
@@ -153,10 +154,10 @@ const KIND_LABEL: Record<WorkKind, string> = {
   audio: "Bản thu lỗi",
   narrator: "Người kể của đoạn",
   "voice-wish": "Giọng chưa đổi được",
-  snap: "Hai cách viết một tên",
+  snap: "Tên viết khác",
   "teller-voice": "Giọng lời dẫn",
-  "teller-thought": "Nội tâm của người kể",
-  refused: "Yêu cầu bị từ chối",
+  "teller-thought": "Nội tâm người kể",
+  refused: "Yêu cầu chưa được",
 };
 
 const PAGE = 40;
@@ -207,7 +208,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
   const id = `work-${example.segmentId}`;
   const playing = clip.current === id;
   return (
-    <li className={cn("flex items-start gap-2 text-sm", onPick && !picked && "opacity-60")}>
+    <li className={cn("flex items-start gap-2 text-sm transition-opacity duration-motion-fast", onPick && !picked && "opacity-60")}>
       {onPick && (
         // Ô 14 px: nhãn bọc nới vùng bấm ra 24 px (màn hẹp/cảm ứng cao 40 px) mà ô vẫn đứng đúng chỗ cũ (soát a31, 2.5.8).
         <label className="touch-reach -mx-[5.25px] grid size-[24.5px] shrink-0 cursor-pointer place-items-center">
@@ -227,7 +228,7 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
           aria-label={playing ? "Dừng" : `Nghe câu: ${example.text}`}
           className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-hover text-fg-2 hover:text-fg"
         >
-          {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+          <MotionRegion as="span" className="grid size-3.5 place-items-center">{playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
         </button>
       ) : (
         <span className="mt-0.5 size-7 shrink-0" aria-hidden />
@@ -554,8 +555,8 @@ function SpeakerFix({
       {item.allLines && item.lines && onScope && (
         <p className="mb-2 text-xs text-fg-3">
           {item.scopeLabels
-            ? `${item.scopeLabels[0]}: chỉ những câu 『』 của chương này. ${item.scopeLabels[1]}: mọi câu 『』 của sách, và các phần làm sau cũng theo.`
-            : "Câu xen kẽ: chỉ những câu đánh dấu “sẽ đổi”. Cả chuỗi: mọi câu của chuỗi này - khi cả chuỗi là lời của một người."}
+            ? `${item.scopeLabels[0]} theo chương; ${item.scopeLabels[1]} theo cả sách và các phần sau.`
+            : "Câu xen kẽ chỉ đổi câu đánh dấu; cả chuỗi đổi toàn bộ người nói."}
         </p>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
@@ -581,7 +582,7 @@ function SpeakerFix({
         {/* Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng. */}
         {item.newPerson && (
           <Button data-choice size="sm" variant="secondary" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
-            {item.newPersonLabel ?? `Là một người mới tên “${item.newPerson}”`}
+            {item.newPersonLabel ?? `Tạo nhân vật`}
           </Button>
         )}
         {item.keepGroups && item.keepGroups.length > 0 && (
@@ -598,18 +599,18 @@ function SpeakerFix({
         {/* Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó (soát UX 29-09). */}
         {onOpenScript && item.lines?.length === 1 && item.examples?.[0] && (
           <Button size="sm" variant="ghost" icon={Search} onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>
-            Chọn người khác trong truyện…
+            Tìm người khác…
           </Button>
         )}
         {/* Thẻ nhóm chỉ in vài câu làm ví dụ ("Hai người chung một tên" có thể 16 câu): đọc đủ ngữ cảnh ở tab Kịch bản trước khi
             quyết, mở đúng chương, tại câu đầu của nhóm. */}
         {onOpenScript && (item.lines?.length ?? 0) > (item.examples?.length ?? 0) && item.examples?.[0] && (
           <Button size="sm" variant="ghost" icon={Search} onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId, false)}>
-            Đọc cả {item.lines!.length} câu trong Kịch bản
+            Xem {item.lines!.length} câu
           </Button>
         )}
       </div>
-      {creating && (
+      <Collapse open={creating}>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {moreChoices.length > 0 && (
             <div className="flex w-full flex-wrap items-center gap-1.5" role="group" aria-label="Những người khác trong sách">
@@ -650,7 +651,7 @@ function SpeakerFix({
             </Button>
           ))}
         </div>
-      )}
+      </Collapse>
     </div>
   );
 }
@@ -708,10 +709,10 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
           {buttons.keep}
         </Button>
         <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} onClick={() => setChoosing((value) => !value)}>
-          Người kể là ai khác…
+          Người kể khác…
         </Button>
       </div>
-      {choosing && (
+      <Collapse open={choosing}>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {section.choices.map((choice) => (
             <Button key={choice.value} size="sm" variant="secondary" disabled={save.isPending} onClick={() => save.mutate({ action: "choose", narrator: choice.value })}>
@@ -731,7 +732,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             Đặt người kể
           </Button>
         </div>
-      )}
+      </Collapse>
     </div>
   );
 }
@@ -929,15 +930,16 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       tabIndex={-1}
       aria-labelledby={exiting ? undefined : `work-${item.key}-title`}
       aria-current={active ? "true" : undefined}
-      className={cn("scroll-mt-24 rounded-xl border bg-panel p-4", active ? "border-focus ring-1 ring-focus" : "border-line")}
+      className={cn("scroll-mt-24 rounded-xl border bg-panel p-4 transition-[border-color,box-shadow] duration-motion-fast", active ? "border-focus ring-1 ring-focus" : "border-line")}
     >
+      <MotionRegion>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
         <span className="rounded-full bg-hover px-2 py-0.5 text-[0.6875rem] font-medium text-fg-2">{KIND_LABEL[item.kind]}</span>
         <h3 id={exiting ? undefined : `work-${item.key}-title`} className="text-[0.9375rem] font-semibold">{decidedTitle(item) ?? item.title}</h3>
         {item.requested && item.undo && <UndoDecision bookId={bookId} item={item} />}
       </div>
       <p className="mt-1.5 text-sm text-fg-2">{item.problem}</p>
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-2">
+      <MotionRegion motionKey={scope} className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-fg-2">
         <span>
           Ảnh hưởng <span className="tabular font-semibold text-fg">{formatNumber(item.allLines && scope === "all" ? item.allLines.length : item.affected)}</span> câu
         </span>
@@ -945,10 +947,10 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
           {item.kind === "audio" ? "Trạng thái" : item.kind === "narrator" ? "Máy coi người kể là" : "Máy đang dùng"}:{" "}
           <span className="font-medium text-fg">{item.kind === "narrator" && !item.current ? "không ai - chương kể ở ngôi thứ ba" : item.current}</span>
         </span>
-      </div>
+      </MotionRegion>
       {item.kind === "audio" ? (
         <Button size="sm" variant="secondary" icon={AudioLines} className="mt-3" onClick={() => onOpenReview(item.key)}>
-          Nghe ở tab Cần nghe lại
+          Nghe lại
         </Button>
       ) : item.kind === "pronunciation" && item.surface ? (
         <PronunciationFix bookId={bookId} item={item} onOpenNames={openNames} />
@@ -979,7 +981,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
         </div>
       )}
       {item.examples.length > 0 && (
-        <ul className="mt-3 space-y-2 border-t border-line pt-3">
+        <MotionRegion motionKey={[scope, shownExamples.map(example => example.segmentId)]}><ul className="mt-3 space-y-2 border-t border-line pt-3">
           {picked && item.lines && (
             <li className="text-xs text-fg-2">{pickNote(picked.length, item.lines.length)} - bỏ chọn câu không phải của người ấy.</li>
           )}
@@ -993,7 +995,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
                 : {})}
             />
           ))}
-        </ul>
+        </ul></MotionRegion>
       )}
       {item.pick && total > PICK_PREVIEW && (
         <div className="mt-2 flex flex-wrap gap-2">
@@ -1015,6 +1017,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
           )}
         </div>
       )}
+      </MotionRegion>
     </Tag>
   );
 }
@@ -1084,7 +1087,7 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
   return (
     <>
       <Button size="sm" variant="ghost" icon={Check} className="mt-3" onClick={() => setConfirm(true)}>
-        Giữ như máy đang làm - cả {keepable.length} thẻ “{KIND_LABEL[kind]}”…
+        Giữ {keepable.length} thẻ…
       </Button>
       <Dialog
         open={confirm}
@@ -1092,8 +1095,8 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
         title={`Giữ cả ${keepable.length} thẻ “${KIND_LABEL[kind]}”?`}
         description={
           pronunciation
-            ? "Giữ cách đọc tên như máy; không phải thu lại. Hoàn tác được."
-            : "Giữ người nói như máy gán; không phải thu lại. Hoàn tác được."
+            ? "Giữ cách đọc tên, không thu lại; có thể hoàn tác."
+            : "Giữ người nói, không thu lại; có thể hoàn tác."
         }
       >
         <div className="mt-5 dialog-actions">
@@ -1157,7 +1160,7 @@ export function WorkInbox(props: InboxProps) {
   );
 }
 
-/** Số thay đổi đang chờ áp dụng trong các thẻ đã quyết: hai thẻ cùng quyết một câu (“Ai nói câu này” + “Người gọi hay người nói”) là MỘT thay đổi -
+/** Số thay đổi đang chờ áp dụng trong các thẻ đã quyết: hai thẻ cùng quyết một câu (“Ai nói câu này” + “Gọi hay nói”) là MỘT thay đổi -
  *  khớp số trên nút “Áp dụng N thay đổi”. “Giữ” cách đang đọc là đã quyết mà không có gì chờ áp dụng. */
 export function waitingChanges(decided: WorkItem[]): number {
   const changes = new Set<string>();
@@ -1224,7 +1227,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
   if (isLoading || !data) return <MotionRegion as="div" className="mt-6 text-sm text-fg-2">Đang tìm những chỗ máy chưa chắc…</MotionRegion>;
   if (!data.items.length) {
     return (
-      <MotionRegion><EmptyState icon={AudioLines} title="Không có việc nào cần duyệt" className="py-10">
+      <MotionRegion><EmptyState icon={AudioLines} title="Không còn việc duyệt" className="py-10">
         Máy chắc chắn về mọi thứ đã làm tới giờ.
       </EmptyState></MotionRegion>
     );
@@ -1319,9 +1322,9 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       )}
       {later.length > 0 && (
         <details className="mt-4 rounded-xl border border-line px-4 py-3">
-          <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Chỉ áp khi làm lại phân tích · {later.length}</summary>
+          <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Chờ phân tích lại</summary>
           <p className="mt-2 max-w-3xl text-pretty text-xs text-fg-2">
-            Chỉ có tác dụng khi làm lại phân tích từ đầu. Không cần quyết để sách chạy tiếp.
+            Chỉ áp khi phân tích lại; không chặn sách chạy tiếp.
           </p>
           <ol className="mt-3 space-y-3">
             {later.map((item) => (
@@ -1332,7 +1335,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       )}
       {redo.length > 0 && (
         <details className="mt-4 rounded-xl border border-line px-4 py-3">
-          <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Đã ghi, áp khi làm lại phân tích · {redo.length}</summary>
+          <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Đã ghi</summary>
           <ol className="mt-3 space-y-3">
             {redo.map((item) => (
               <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />

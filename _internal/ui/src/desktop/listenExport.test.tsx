@@ -218,7 +218,7 @@ describe("the dialog body", () => {
     expect(form({ ffmpeg: ffmpegReady })).not.toContain("Tải công cụ");
     expect(form({ ffmpeg: ffmpegMissing })).toContain("Tải công cụ");
     const update = form({ ffmpeg: { ...ffmpegReady, outdated: true } });
-    expect(update).toContain("Công cụ ghép âm thanh cần cập nhật");
+    expect(update).toContain("Cập nhật công cụ");
     expect(update).toContain("Cập nhật công cụ");
     const downloading = renderToString(
       <FfmpegNeeded status={{ ...ffmpegMissing, downloading: true, done: 40, total: 160 }} onDownload={noop} onStop={noop} />,
@@ -236,7 +236,7 @@ describe("the dialog body", () => {
         <FfmpegNeeded status={ffmpegMissing} remote onDownload={noop} onStop={noop} />
       </QueryClientProvider>,
     );
-    expect(remote).toContain("Máy tính chưa có công cụ ghép âm thanh");
+    expect(remote).toContain("Thiếu công cụ ghép");
     expect(remote).toContain("ở máy tính");
     expect(remote).not.toContain("Tải công cụ<");
   });

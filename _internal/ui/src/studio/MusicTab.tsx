@@ -81,7 +81,7 @@ interface MusicView {
   error: string;
   /** Tên các bài đã bỏ (từ danh mục; thiếu thì hiện tên file). */
   bannedTracks?: Record<string, TrackInfo>;
-  /** Việc nền "Đọc lại không khí các đoạn" của cuốn này. */
+  /** Việc nền "Đọc lại ngữ cảnh" của cuốn này. */
   moods?: { running: boolean; error: string };
   /** Máy đang tải sẵn các bài của rãnh nhạc (để nghe / điện thoại / file sách có nhạc ngay) - huỷ được. */
   download?: MusicDownload;
@@ -370,7 +370,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
       <p className="text-sm text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
       <MoreInfo label="Nhạc riêng">{MY_MUSIC_HELP}</MoreInfo>
       {!canImport && (
-        <p className="text-sm text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách. Ở đây bạn vẫn ghim được bài đã nhập qua “Đổi bài”.</p>
+        <p className="text-sm text-fg-2">Nhập/xoá trên máy chủ; ở đây dùng “Đổi bài” để ghim nhạc.</p>
       )}
       {canImport && !!tracks.length && <MusicModuleNotice view={data} queryKey={key} />}
       {canImport && !tracks.length && <p className="text-sm text-fg-2">Chưa có bài nào.</p>}
@@ -413,8 +413,8 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
   );
 }
 
-/** "Chọn nhạc sát không khí hơn": model nhỏ (tuỳ chọn, tải khi bấm) đọc nguyên đoạn để chọn nhạc sát không khí hơn. Chưa tải:
- *  nút "Tải thêm"; đang tải: tiến độ; đã tải: "Đọc lại không khí các đoạn" cho cuốn này. */
+/** "Nhạc theo ngữ cảnh": model nhỏ (tuỳ chọn, tải khi bấm) đọc nguyên đoạn để chọn nhạc sát không khí hơn. Chưa tải:
+ *  nút "Tải thêm"; đang tải: tiến độ; đã tải: "Đọc lại ngữ cảnh" cho cuốn này. */
 function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { running: boolean; error: string }; onCompute: (view: MusicView) => void }) {
   const client = useQueryClient();
   const { data: info } = useAppInfo();
@@ -439,14 +439,14 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
   const percent = data.progress && data.progress.total > 0 ? Math.round((data.progress.done * 100) / data.progress.total) : null;
   return (
     <MotionRegion as="section" className="space-y-2 rounded-xl border border-line bg-panel p-4">
-      <h3 className="text-sm font-semibold">Chọn nhạc sát không khí hơn</h3>
+      <h3 className="text-sm font-semibold">Nhạc theo ngữ cảnh</h3>
       <p className="text-sm text-fg-2 text-pretty">
-        Máy đọc cả đoạn để hiểu không khí, nhạc hợp hơn. ~1 phút mỗi giờ sách.
+        Hiểu ngữ cảnh để chọn nhạc; ~1 phút mỗi giờ sách.
       </p>
       {data.installed ? (
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" variant="secondary" icon={RefreshCw} loading={running} onClick={() => compute.mutate()}>
-            {running ? "Đang đọc không khí…" : "Đọc lại không khí các đoạn"}
+            {running ? "Đang đọc không khí…" : "Đọc lại ngữ cảnh"}
           </Button>
           {moods?.error && <span className="text-sm text-warning">{moods.error}</span>}
         </div>
@@ -490,18 +490,18 @@ function SceneMenu({
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 rounded-xl border border-line bg-panel p-1.5 shadow-float">
           <DropdownMenu.Item onSelect={onSilence} className={MENU_ITEM}>
-            <VolumeX className="size-4" /> {scene.silenced ? "Cho đoạn này có nhạc" : "Để đoạn này im lặng"}
+            <VolumeX className="size-4" /> {scene.silenced ? "Bật nhạc đoạn này" : "Tắt nhạc đoạn này"}
           </DropdownMenu.Item>
           {scene.pinned && (
             <DropdownMenu.Item onSelect={onUnpin} className={MENU_ITEM}>
-              <PinOff className="size-4" /> Bỏ ghim - để máy chọn lại bài
+              <PinOff className="size-4" /> Bỏ ghim
             </DropdownMenu.Item>
           )}
           {onBan && (
             <>
               <DropdownMenu.Separator className="my-1 h-px bg-line" />
               <DropdownMenu.Item onSelect={onBan} className={cn(MENU_ITEM, "text-danger")}>
-                <Ban className="size-4" /> Không dùng bài này cho cả cuốn
+                <Ban className="size-4" /> Loại khỏi cuốn
               </DropdownMenu.Item>
             </>
           )}
@@ -525,7 +525,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
     // Đang đọc không khí / đang tải sẵn nhạc: hỏi lại tới khi xong.
     refetchInterval: (query) => (query.state.data?.moods?.running ? 3000 : query.state.data?.download?.active ? 2000 : false),
   });
-  // Việc "Đọc lại không khí các đoạn" vừa xong: nhạc đã dựng lại, báo trình phát nạp lại mốc nhạc.
+  // Việc "Đọc lại ngữ cảnh" vừa xong: nhạc đã dựng lại, báo trình phát nạp lại mốc nhạc.
   const moodsRunning = useRef(false);
   useEffect(() => {
     const running = Boolean(data?.moods?.running);
@@ -594,7 +594,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
 
   // Lần đầu (danh mục chưa có trên máy) mất cỡ 10 giây - bài nhạc tải sau ở nền, không chờ ở đây (soát UX a60: từng mất 2,7 phút).
   if (isLoading || !data)
-    return <MotionRegion as="p" className="mt-6 text-sm text-fg-2">Đang chọn nhạc nền cho các đoạn… Lần đầu cần tải danh mục nhạc, thường chừng mười giây.</MotionRegion>;
+    return <MotionRegion as="p" className="mt-6 text-sm text-fg-2">Đang chọn nhạc nền; lần đầu tải danh mục khoảng 10 giây.</MotionRegion>;
   const { plan, overrides, taxonomy } = data;
   const genres = Object.entries(taxonomy.genres ?? {});
   // Màn hẹp: ô chọn không đủ rộng cho tên thể loại dài ("Dị giới / kỳ ảo phương Tây (…)") nên chữ bị cắt - ghi đủ tên bên dưới.
@@ -690,7 +690,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         )}
       </section>
 
-      <Fold storageKey="studio.music.moods" title="Chọn nhạc sát không khí hơn" heading="h3">
+      <Fold storageKey="studio.music.moods" title="Nhạc theo ngữ cảnh" heading="h3">
         <MoodsPanel bookId={bookId} moods={data.moods} onCompute={(view) => client.setQueryData(key, view)} />
       </Fold>
 
@@ -796,7 +796,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       )}
       {plan && Object.keys(plan.tracks).length > 0 && (
         <details className="text-xs text-fg-2">
-          <summary className="cursor-pointer">Ghi công các bài nhạc ({Object.keys(plan.tracks).length})</summary>
+          <summary className="cursor-pointer">Ghi công ({Object.keys(plan.tracks).length})</summary>
           <ul className="mt-2 space-y-1">
             {Object.entries(plan.tracks).map(([link, track]) => (
               <li key={link} className="break-words">

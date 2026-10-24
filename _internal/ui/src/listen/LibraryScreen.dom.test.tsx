@@ -127,3 +127,27 @@ it("same-structure membership changes keep row presence and fade the result regi
   expect(vi.mocked(HTMLElement.prototype.animate).mock.calls.length).toBeGreaterThan(0);
   await act(() => vi.advanceTimersByTime(500)); expect(tile.isConnected).toBe(false);
 });
+
+it.each([false, true])("gập nhóm cuối giữ chỗ cuộn, chỉ nhường khi người nghe tự cuộn=%s", async moved => {
+  localStorage.setItem("abook.fold.library.series.singles", "1");
+  Object.defineProperty(main, "clientHeight", { configurable: true, value: 600 });
+  await draw(); await act(() => vi.advanceTimersByTime(500));
+  const group = main.querySelector<HTMLElement>('section[aria-label="Sách lẻ"]')!;
+  const shelves = group.parentElement!;
+  vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(function(this: HTMLElement) {
+    const top = this === shelves ? -500 : 0;
+    return { top, left: 0, bottom: top + 200, right: 300, height: 200, width: 300, x: 0, y: top, toJSON() {} };
+  });
+  main.scrollTop = 500; main.dispatchEvent(new Event("scroll"));
+  const button = group.querySelector<HTMLButtonElement>("button[aria-expanded]")!;
+  await act(() => button.click());
+  expect(group.querySelector(".motion-collapse")?.getAttribute("data-state")).toBe("closed");
+  expect(shelves.style.minHeight).toBe("1100px");
+  expect(main.style.overflowAnchor).toBe("none");
+  if (moved) main.dispatchEvent(new Event("wheel"));
+  main.scrollTop = moved ? 300 : 0;
+  await act(() => vi.advanceTimersByTime(50));
+  expect(main.scrollTop).toBe(moved ? 300 : 500);
+  expect(main.style.overflowAnchor).toBe("");
+  expect(group.style.minHeight).toBe("");
+});

@@ -82,7 +82,7 @@ describe("cuốn xếp hàng sau cuốn đang tạm dừng", () => {
     const out = html(
       <Actions book={book({ running: false, queuePosition: 1, queueWaitsOn: { id: "a", title: "Sách A", paused: "listener" } })} />,
     );
-    expect(out).toContain("Đang xếp hàng");
+    expect(out).toContain("Chờ lượt");
     expect(out).toContain("Sách A");
     expect(out).toContain("chưa tới lượt");
   });

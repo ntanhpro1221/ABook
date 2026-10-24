@@ -1,3 +1,4 @@
+import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ClipboardCheck, MessageSquareQuote, SpellCheck, Users } from "lucide-react";
@@ -98,9 +99,9 @@ function Intro({ book, view }: { book: BookSummary; view: PrecastView }) {
   return (
     <>
       <p className="mt-1 max-w-2xl text-pretty text-sm text-fg-2">
-        Máy đã đọc hết truyện và phân vai. Xem nhanh những chỗ đáng sửa nhất trước khi thu - mỗi bước bỏ qua được, sửa xong máy áp từ
-        chương sau. {freeNote(view)}
+        Duyệt nhanh trước khi thu; có thể bỏ qua từng bước.
       </p>
+      <MoreInfo label="Khi áp dụng">{freeNote(view)}</MoreInfo>
       {/* Công tắc chỉ có nghĩa trước mốc (Studio mở màn này cả khi chưa kịp báo, vd app đóng lúc phân tích xong). */}
       {!book.precast?.announcedAt && !view.recordedChapters && <PrecastWaitSwitch book={book} className="mt-4 border-none bg-panel-2" />}
     </>
@@ -175,7 +176,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
         </div>
         {narrow ? (
           <details className="mt-2">
-            <summary className="cursor-pointer text-sm text-fg-2">Giải thích và công tắc chờ duyệt</summary>
+            <summary className="cursor-pointer text-sm text-fg-2">Chờ duyệt</summary>
             <Intro book={book} view={view} />
           </details>
         ) : (
@@ -220,8 +221,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
         {step === "cast" && (
           <>
             <p className="max-w-3xl text-sm text-fg-2">
-              {people.length} người nói nhiều nhất - giọng của họ nghe suốt cuốn. Nghe thử câu mẫu; đổi giọng, đổi giới tính hay gộp
-              hai tên của một người ngay trên dòng.
+              Nghe và chỉnh giọng cho {people.length} nhân vật nói nhiều nhất.
             </p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {people.map((person) => (
@@ -260,12 +260,12 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
           <>
             <p className="max-w-3xl text-sm text-fg-2">
               {nameCards.length
-                ? `${nameCards.length} tên máy tự đoán cách đọc - tên máy kém chắc nhất ở trên. Nghe câu mẫu, sai thì sửa ngay trên thẻ.`
-                : "Máy chắc cách đọc mọi tên đã gặp. Vẫn xem và sửa được từng tên ở danh sách dưới."}
+                ? `Nghe và sửa ${nameCards.length} cách đọc tên, tên kém chắc ở trên.`
+                : "Xem và sửa cách đọc từng tên ở danh sách dưới."}
             </p>
             {nameCards.length > 0 && <WorkCards {...cards} items={nameCards} />}
             <details className="mt-6 rounded-xl border border-line px-4 py-3">
-              <summary className="cursor-pointer text-sm font-medium text-fg-2">Mọi cách đọc tên của cuốn</summary>
+              <summary className="cursor-pointer text-sm font-medium text-fg-2">Cách đọc tên</summary>
               <NameReadings bookId={book.id} />
             </details>
           </>
@@ -274,11 +274,11 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
           <>
             <p className="max-w-3xl text-sm text-fg-2">
               {lineCards.length
-                ? `${formatNumber(lineCount(lineCards))} câu máy chưa chắc ai nói ở ${range || "những chương sắp thu"} - các chương thu đầu tiên.`
+                ? `${formatNumber(lineCount(lineCards))} câu máy chưa chắc ai nói ở ${range || "những chương sắp thu"} - các chương thu đầu tiên;`
                 : view.upcoming.length
-                  ? `Máy không nghi ngờ câu nào ở ${range}.`
-                  : "Mọi chương đã thu."}{" "}
-              Thẻ ở các chương sau vẫn nằm trong “Việc cần duyệt”.
+                  ? `Không có câu nghi ngờ ở ${range}`
+                  : "Đã thu mọi chương"}{" "}
+              các chương sau xem ở Việc cần duyệt.
             </p>
             {lineCards.length > 0 && <WorkCards {...cards} items={lineCards} />}
           </>
@@ -306,7 +306,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
             Bỏ qua bước này
           </Button>
           <Button variant="primary" onClick={next}>
-            Xong, sang {STEP_TITLE[PRECAST_STEPS[index + 1]].toLowerCase()}
+            Tiếp tục
           </Button>
         </div>
       )}
@@ -358,7 +358,7 @@ export function PrecastBanner({ book, onOpen }: { book: BookSummary; onOpen: () 
       <ClipboardCheck className={cn("size-5 shrink-0", held ? "text-warning" : "text-accent-text")} />
       <div className="min-w-0 flex-1 text-sm">
         <div className="font-semibold">{held ? "Phân tích xong - sách đang chờ bạn duyệt" : "Phân tích xong - duyệt trước khi thu?"}</div>
-        <div className="text-fg-2">Giọng nhân vật, cách đọc tên, người nói ở các chương đầu: sửa bây giờ thì không phải thu lại.</div>
+        <div className="text-fg-2">Duyệt giọng, tên và người nói trước để tránh thu lại.</div>
       </div>
       {/* Chờ duyệt: nút "Thu âm" đã là nút chính ở đầu trang (ProjectScreen Actions) - dải này chỉ mời duyệt, không thêm nút thứ hai. */}
       <div className="flex gap-2">
