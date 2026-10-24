@@ -36,6 +36,7 @@ import { WishesDialog } from "./WishesDialog";
 import { useBookVoice, useCast, useListenBook, useListenLibrary, useListenMutations, useSource, useWarmVoice } from "./source";
 import { latestReading } from "./readingPosition";
 import { moreMenuHasItems } from "./bookMenu";
+import { withFeedback } from "@/shared/feedback";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
@@ -1037,7 +1038,7 @@ export function BookScreen({
                 variant="primary"
                 size="lg"
                 icon={listening && player.playing ? Pause : finished ? RotateCcw : Play}
-                onClick={() => (finished ? restart() : listening ? player.toggle() : void playBook(book))}
+                onClick={withFeedback("playPause", () => (finished ? restart() : listening ? player.toggle() : void playBook(book)))}
                 // Điện thoại: nút chính một hàng riêng, các nút phụ luôn ở hàng dưới theo cùng thứ tự - nhãn đổi độ dài khi
                 // phát/dừng từng làm hàng xuống dòng khác đi, "Từ đầu" nhảy sang chỗ nút khác (soát UX 29-09).
                 className="min-w-0 max-w-full max-sm:w-full"

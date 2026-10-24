@@ -38,7 +38,7 @@ import { SettingsScreen } from "./SettingsScreen";
 import { useOldSaveNotice } from "./oldSaveList";
 import { StudioChipHost } from "./StudioOpen";
 import { UpdateNotice } from "./UpdateNotice";
-import { applyTheme, loadSettings, syncSettings } from "./settings";
+import { applySenses, applyTheme, loadSettings, syncSettings } from "./settings";
 import { backStep, dismissTopLayer, historyIndex } from "./backLayers";
 import { useBookBytes, type RemovableFromPhone } from "./storage";
 import { formatSize } from "@/shared/format";
@@ -279,8 +279,10 @@ export function AndroidApp() {
   const [synced, setSynced] = useState(0);
   useEffect(() => {
     applyTheme(loadSettings().theme);
+    applySenses(loadSettings());
     void syncSettings().then((settings) => {
       applyTheme(settings.theme);
+      applySenses(settings);
       setSynced((count) => count + 1);
     });
   }, []);

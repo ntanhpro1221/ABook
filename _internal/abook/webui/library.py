@@ -67,6 +67,10 @@ DEFAULT_PREFERENCES: dict[str, Any] = {
     # Tạm dừng rồi nghe tiếp thì lùi vài giây (listen/sleep.ts rewindAfter; Cài đặt > Nghe; mặc định bật). Theo máy này, không đồng bộ sang máy khác;
     # điện thoại có công tắc cùng tên ở lõi native (soát a100 T1).
     "autoRewind": True,
+    # Tiếng chạm của giao diện (shared/feedback.ts; Cài đặt > Giao diện > "Âm thanh chạm"; mặc định bật). Tự im khi sách đang phát.
+    "touchSounds": True,
+    # Nền vùng chữ đọc theo (shared/readingSurface.ts; Cài đặt > Giao diện > "Nền đọc"): auto = theo giao diện sáng/tối.
+    "readingSurface": "auto",
 }
 MAX_RECENTS = 30
 BOOK_PROFILES = ("fast", "balanced", "high_quality")
@@ -321,7 +325,8 @@ def _key(path: Path) -> str:
 
 
 PREFERENCES_WHAT = "Cài đặt của app"
-CHOICES: dict[str, tuple[str, ...]] = {"theme": ("system", "light", "dark"), "newBookProfile": BOOK_PROFILES}
+READING_SURFACES = ("auto", "paper", "ivory", "night")
+CHOICES: dict[str, tuple[str, ...]] = {"theme": ("system", "light", "dark"), "newBookProfile": BOOK_PROFILES, "readingSurface": READING_SURFACES}
 
 
 # Hợp đồng của các tuỳ chọn hẹn giờ ngủ và trình phát: đúng các mức giao diện đưa ra. PUT /api/preferences và lúc ĐỌC file dùng chung

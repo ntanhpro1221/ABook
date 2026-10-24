@@ -18,7 +18,9 @@ import { androidSource, phoneVieneu } from "./androidSource";
 import { CLEAR_HINT, DIAGNOSTICS_HINT, DIAGNOSTICS_MORE, DiagnosticsPanel, SEND_HINT, useDiagnostics } from "./Diagnostics";
 import { NOTIFICATION_ROW_HINT, notificationState, openNotificationSettings, type NotificationState } from "./notifications";
 import { ReadAloud } from "./plugins";
-import { applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
+import { applySenses, applyTheme, loadSettings, saveSettings, type PlayerSettings } from "./settings";
+import { feedback, TOUCH_SOUNDS_HINT } from "@/shared/feedback";
+import { READING_SURFACES } from "@/shared/readingSurface";
 import { OldSavesList } from "./OldSaves";
 import { useOldSaves } from "./oldSaveList";
 import { openRelease } from "./UpdateNotice";
@@ -63,7 +65,10 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
   return (
     <Switch.Root
       checked={checked}
-      onCheckedChange={onChange}
+      onCheckedChange={(value) => {
+        feedback("toggle");
+        onChange(value);
+      }}
       aria-label={label}
       className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
     >
@@ -269,6 +274,15 @@ function LookGroup({ settings, change }: { settings: PlayerSettings; change: Cha
           ]}
         />
       </SettingsRow>
+      <SettingsRow label="Nền đọc" hint="Nền của chữ khi đọc theo.">
+        <Segmented label="Nền đọc" value={settings.readingSurface} onChange={(value) => change({ readingSurface: value })} options={READING_SURFACES} />
+      </SettingsRow>
+      <SettingsRow label="Âm thanh chạm" hint={TOUCH_SOUNDS_HINT}>
+        <Toggle label="Âm thanh chạm" checked={settings.touchSounds} onChange={(value) => change({ touchSounds: value })} />
+      </SettingsRow>
+      <SettingsRow label="Rung" hint="Rung nhẹ khi bạn chọn hay giữ.">
+        <Toggle label="Rung" checked={settings.haptics} onChange={(value) => change({ haptics: value })} />
+      </SettingsRow>
     </SettingsBlock>
   );
 }
@@ -407,6 +421,7 @@ export function SettingsScreen() {
     setSettings(next);
     if (!saveSettings(next)) toast.error(SAVE_FAILED, { id: "settings-not-saved" });
     if (patch.theme) applyTheme(patch.theme, true);
+    if ("touchSounds" in patch || "haptics" in patch || "readingSurface" in patch) applySenses(next);
   };
   const active = isSettingsGroup(group) && PHONE_GROUPS.includes(group) ? group : null;
   if (active) {

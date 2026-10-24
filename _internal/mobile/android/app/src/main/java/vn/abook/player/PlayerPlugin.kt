@@ -206,6 +206,18 @@ class PlayerPlugin : Plugin() {
         call.resolve(JSObject().put("prefs", JSObject.fromJSONObject(ListenPrefs.stored())))
     }
 
+    /** Rung phản hồi của giao diện ([Haptics]): `effect` là tên hằng số HapticFeedbackConstants; máy không có hằng số ấy thì im. */
+    @PluginMethod
+    fun haptic(call: PluginCall) {
+        val constant = Haptics.constant(call.getString("effect") ?: "")
+        val view = bridge?.webView
+        if (constant == null || view == null) return call.resolve()
+        view.post {
+            view.performHapticFeedback(constant)
+            call.resolve()
+        }
+    }
+
     @PluginMethod
     fun lastNight(call: PluginCall) {
         val latest = Bedtime.latest()
