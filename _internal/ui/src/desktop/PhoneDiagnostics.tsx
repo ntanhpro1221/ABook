@@ -16,14 +16,11 @@ import { pickFolder, useAppInfo } from "@/studio/data";
 export const VIEW_LINES = 400;
 export const SAVE_LINES = 2000;
 
-export const NEEDS_NEWER_TITLE = "Điện thoại cần bản ABook mới hơn";
-const NEEDS_NEWER_HELP = "Cập nhật ABook trên điện thoại rồi bấm Làm mới.";
 const UNREACHABLE_HELP = "Trên điện thoại: Tải sách › bật “Cho máy khác nghe thư viện này”. Cùng Wi-Fi hay Tailscale.";
 
 /** Lời báo cho một lần hỏi hỏng: câu của máy chủ (đã nói tên máy và lý do) và, nếu đáng, điều bạn có thể làm. */
 export function failureView(error: unknown): { title: string; help: string } {
   const message = error instanceof Error ? error.message : String(error);
-  if (error instanceof ApiError && error.detail?.reason === "needs-newer") return { title: NEEDS_NEWER_TITLE, help: NEEDS_NEWER_HELP };
   const conflict = error instanceof ApiError && (error.status === 409 || error.status === 404);
   return { title: message, help: conflict ? "" : UNREACHABLE_HELP };
 }

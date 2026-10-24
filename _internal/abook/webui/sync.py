@@ -78,7 +78,7 @@ REDELIVER_SECONDS = 5
 REMOTE_ACTIONS = frozenset({"play", "pause", "toggle", "skip", "seek", "next", "previous", "jump", "rate", "load", "stop",
                             "sleep"})
 CAST_ONLY_ACTIONS = frozenset({"sleep"})
-# Mã sách: library.book_id (24 hex), hay mã kiểu cũ của điện thoại chưa đổi khoá (đường dẫn base64, tới ~700 ký tự).
+# Mã sách: library.book_id (24 hex), hay mã phía điện thoại (cuốn nhập từ file, cuốn ghép từ điện thoại khác).
 BOOK_ID = re.compile(r"[A-Za-z0-9_-]{1,700}")
 LOCAL_PLAYER = "local"  # trình phát trong giao diện của chính máy này, một "thiết bị" của Remote riêng
 PLAYER_STATE = ("bookId", "bookTitle", "chapterId", "chapterTitle", "position", "duration", "playing", "buffering", "rate")
@@ -799,8 +799,7 @@ class SyncApp:
     def match(self, books: Any) -> dict[str, str]:
         """Cuốn điện thoại mở từ file là cuốn nào của máy này (mã máy này), so bằng audio từng chương - sách không mang
         mã nào (fingerprints.py). `books`: [{"key": mã phía điện thoại, "chapters": {"chapters/x.mp3": {size, sha256}}}].
-        Khoá là mã sách kiểu cũ của chính máy này (cuốn điện thoại tải từ bản cũ, docs/BOOK_IDS.md): trả thẳng mã hiện
-        hành để điện thoại đổi khoá cuốn ấy - không cần audio."""
+        Khoá đã là mã sách của chính máy này thì trả thẳng mã ấy - không cần audio."""
         found: dict[str, str] = {}
         if not isinstance(books, list):
             return found
@@ -1302,11 +1301,9 @@ class SyncHandler(BaseHTTPRequestHandler):
             if match.group(2) == "edits":
                 self._edits(method, project, device)
                 return
-            # Điện thoại chưa đổi khoá gọi bằng mã kiểu cũ: dữ liệu nghe lưu theo mã hiện hành (`key`), lời đáp nói lại
-            # đúng mã nó dùng - không thì nó tưởng hồ sơ đã chuyển sang cuốn khác và gỡ khỏi cuốn đang nghe.
             key = book_id(project)
             if method == "GET" and match.group(2) == "manifest":
-                self._json(HTTPStatus.OK, {**self.app.book_manifest(project, key), "id": book})
+                self._json(HTTPStatus.OK, self.app.book_manifest(project, key))
             elif method == "POST" and match.group(2) == "state":
                 body = self._body()
                 record = body.get("record")
@@ -1323,8 +1320,6 @@ class SyncHandler(BaseHTTPRequestHandler):
                         name_at=float(body.get("nameAt") or 0), active_at=float(body.get("activeAt") or 0),
                         moved_at=float(body.get("movedAt") or 0), deleted=deleted if isinstance(deleted, dict) else None,
                         name_rev=body.get("nameRev"), active_rev=body.get("activeRev"), moved_rev=body.get("movedRev"))
-                    if reply.get("book") == key:
-                        reply["book"] = book
                     self._json(HTTPStatus.OK, reply)
                 else:  # điện thoại đời trước: hồ sơ đang dùng
                     self._json(HTTPStatus.OK, self.app.listening.merge(key, state))

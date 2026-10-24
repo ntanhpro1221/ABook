@@ -15,9 +15,7 @@ import psutil
 
 from .config import (
     deep_merge,
-    is_legacy_director_settings,
     load_settings_raw,
-    normalize_legacy_locked_settings,
     settings_hash,
     validate_settings,
 )
@@ -309,17 +307,12 @@ def _load_locked_settings(paths: ProjectPaths, db: ProjectDB) -> dict[str, Any]:
         raise RuntimeError(
             "Cài đặt không khớp bản đã khoá — từ chối làm tiếp để giữ giọng và model."
         )
-    legacy_director_settings = is_legacy_director_settings(locked)
-    effective = normalize_legacy_locked_settings(locked)
+    effective = locked
     validate_settings(effective)
     analysis_started = db.casting_is_finalized() or any(
         str(row["status"]) != "pending" for row in db.list_segments()
     )
     if effective.get("quality_profile") == "high_quality" and analysis_started:
-        if legacy_director_settings:
-            raise RuntimeError(
-                "Dự án cũ thiếu bước duyệt phân tích — bạn tạo dự án mới để tránh trộn dữ liệu."
-            )
         model_lock = db.analysis_model_lock()
         expected_model = str(effective.get("analysis", {}).get("model", ""))
         if model_lock is None or str(model_lock["model_name"]) != expected_model:

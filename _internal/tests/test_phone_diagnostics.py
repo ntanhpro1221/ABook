@@ -22,8 +22,7 @@ TOKEN = "ma-thiet-bi-bi-mat-0123456789abcdef"
 
 
 class FakePhone:
-    """Một "điện thoại" nghe TLS: `mode` chọn cách đáp /sync/v1/diagnostics ("ok", "old" = bản app cũ chưa có đường này -> 404 như
-    LibraryServer cũ, "boom" = lỗi 500)."""
+    """Một "điện thoại" nghe TLS: `mode` chọn cách đáp /sync/v1/diagnostics ("ok", "boom" = lỗi 500)."""
 
     def __init__(self, tmp: Path, mode: str = "ok") -> None:
         self.mode = mode
@@ -47,7 +46,7 @@ class FakePhone:
                 parts = urlsplit(self.path)
                 if self.headers.get("Authorization") != f"Bearer {TOKEN}":
                     return self._send(401, {"error": "Thiết bị chưa ghép nối"})
-                if parts.path != "/sync/v1/diagnostics" or phone.mode == "old":
+                if parts.path != "/sync/v1/diagnostics":
                     return self._send(404, {"error": "Không có sách này"})
                 phone.asked.append(self.path)
                 if phone.mode == "boom":
@@ -108,14 +107,8 @@ def test_the_route_serves_it_and_unknown_or_bad_requests_are_plain(tmp_path: Pat
         server.stop()
 
 
-def test_an_old_phone_app_is_told_apart_from_a_revoked_code_and_from_a_closed_door(tmp_path: Path, phone: FakePhone) -> None:
+def test_a_phone_error_and_a_revoked_code_are_told_apart(tmp_path: Path, phone: FakePhone) -> None:
     app, device = _paired(tmp_path, phone)
-    phone.mode = "old"
-    with pytest.raises(ApiError) as old:
-        app.phone_diagnostics(device)
-    assert old.value.extra == {"reason": "needs-newer"} and "cần bản ABook mới hơn" in str(old.value)
-    assert "Pixel của tôi" in str(old.value)
-
     phone.mode = "boom"
     with pytest.raises(ApiError) as boom:
         app.phone_diagnostics(device)
