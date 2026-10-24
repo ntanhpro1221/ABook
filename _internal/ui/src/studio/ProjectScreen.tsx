@@ -725,7 +725,7 @@ export function Actions({ book }: { book: BookSummary }) {
               Tạm dừng
             </Button>
           ) : null}
-          {/* Lượt chạy bắt đầu bằng bản app cũ không tạm dừng được: "Dừng" là nút duy nhất, giữ như trước. */}
+          {/* Không tạm dừng được thì "Dừng" là nút duy nhất. */}
           {!book.stopping && (
             <Button variant={book.canPause ? "ghost" : "outline"} size="lg" icon={Square} onClick={() => setConfirmStop(true)}>
               Dừng

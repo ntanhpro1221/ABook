@@ -200,25 +200,16 @@ def test_a_pause_request_of_another_run_is_ignored(tmp_path: Path, monkeypatch) 
     assert "PAUSE" not in tail_log(project, lines=40)
 
 
-def test_a_run_started_by_older_code_says_it_cannot_pause(tmp_path: Path, monkeypatch) -> None:
-    """Supervisor khởi động bằng mã cũ (trước tính năng này) không đọc pause.request - app phải nói thật, không ghi yêu
-    cầu rồi báo "Đang tạm dừng" (soát QA 29-09)."""
-    import pytest
-
-    from abook.background_runner import BackgroundIdentityError, request_pause
+def test_resume_overrides_only_the_battery_pause(tmp_path: Path, monkeypatch) -> None:
+    from abook.background_runner import request_pause
 
     project = _make_project(tmp_path)
     paths = BackgroundPaths.for_project(project)
     paths.ensure_root()
-    state = {"schema_version": 1, "project_root": str(project.resolve()), "instance_id": "old-run", "state": "running",
+    state = {"schema_version": 1, "project_root": str(project.resolve()), "instance_id": "run", "state": "running",
              "supervisor_pid": os.getpid(), "supervisor_create_time": 1.0, "worker_pid": 1234}
     atomic_write_json(paths.state, state)
     monkeypatch.setattr(background_runner, "_validate_supervisor_identity", lambda state, root: (True, None))
-    with pytest.raises(BackgroundIdentityError, match="bản cũ"):
-        request_pause(project, True)
-    assert not paths.pause_request.exists()
-    assert get_status(project).can_pause is False
-
     atomic_write_json(paths.state, {**state, "pause_reason": "battery"})
     request_pause(project, False)
     written = json.loads(paths.pause_request.read_text(encoding="utf-8"))

@@ -22,10 +22,8 @@ from typing import Any, Iterator, Sequence
 from .config import (
     PROFILE_OVERRIDES,
     build_settings,
-    is_legacy_director_settings,
     load_settings,
     load_settings_raw,
-    normalize_legacy_locked_settings,
     settings_hash,
     validate_settings,
 )
@@ -354,9 +352,8 @@ def _load_locked_settings_read_only(paths: ProjectPaths, db: ProjectDB) -> dict[
         raise RuntimeError("Settings JSON in SQLite does not match its locked settings_hash")
     if settings_hash(external) != locked_hash:
         raise RuntimeError("book_settings.json differs from the settings locked in SQLite")
-    effective = normalize_legacy_locked_settings(locked)
-    validate_settings(effective)
-    return effective
+    validate_settings(locked)
+    return locked
 
 
 def _validate_analysis_provenance_read_only(
@@ -368,13 +365,6 @@ def _validate_analysis_provenance_read_only(
     )
     if settings.get("quality_profile") != "high_quality" or not analysis_started:
         return
-    raw_locked = json.loads(str(db.book()["settings_json"]))
-    if not isinstance(raw_locked, dict):
-        raise RuntimeError("Settings JSON in SQLite must be an object")
-    if is_legacy_director_settings(raw_locked):
-        raise RuntimeError(
-            "Legacy high_quality analysis checkpoints predate mandatory director critic"
-        )
     model_lock = db.analysis_model_lock()
     expected_model = str(settings.get("analysis", {}).get("model", ""))
     if model_lock is None or str(model_lock["model_name"]) != expected_model:

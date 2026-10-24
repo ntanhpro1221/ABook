@@ -45,7 +45,7 @@ object RemotePlayers {
                 (served != null && (0 until served.length()).any { served.optString(it) == remoteBook }))
             out.put(reply.put("device", key).put("localBookId", local).put("known", known))
         }
-        // Máy tính chính bản cũ (trước khi có loa / TV) không có /sync/v1/cast: bỏ qua lặng lẽ.
+        // Không hỏi được loa / TV qua máy tính (/sync/v1/cast): bỏ qua lặng lẽ.
         val reached = renderers?.let { runCatching { it.get(4, TimeUnit.SECONDS) }.getOrNull() }
         val cast = reached ?: JSONArray()
         val direct = runCatching { PhoneCast.players.view() }.getOrDefault(JSONArray())

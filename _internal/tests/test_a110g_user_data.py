@@ -249,7 +249,7 @@ def test_r7_recovery_rekeys_profiles_and_survives_a_failed_commit(tmp_path, acti
             app.resolve_library_move(action, str(old), str(new))
     assert app._library_move_path().exists()
     assert any(p.read_bytes() == original for p in tmp_path.glob("library-move.json.hong-*"))
-    app._adopt_new_book_ids()
+    app._recover_library_move()
     assert not app._library_move_path().exists()
     assert app.library.root == target
     assert saved.get(after)["bookmarks"][0]["id"] == mark["id"]

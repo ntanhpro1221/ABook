@@ -12,12 +12,12 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Máy tính đổi mã sách (0.4.0, docs/BOOK_IDS.md): cuốn điện thoại tải hay nghe thẳng theo mã kiểu cũ đổi sang mã mới -
- * thư mục, gói sách, liên kết hồ sơ nghe, sổ dấu vân tay - thay vì hiện hai bản của một cuốn.
+ * Cuốn mở từ file được máy tính nhận ra (Store.adopt): đổi sang mã của máy tính - thư mục, gói sách, liên kết hồ sơ nghe,
+ * sổ dấu vân tay - thay vì hiện hai bản của một cuốn; việc đổi mã đi qua journal nên tắt ngang vẫn làm nốt.
  */
 class StoreRekeyTest {
     private lateinit var root: File
-    private val old = "QzpcVXNlcnNcQW5oXEF1ZGlvYm9va3NcU8OhY2g" // "C:\Users\Anh\Audiobooks\Sách" mã hoá base64
+    private val old = "f-cua-dien-thoai"
     private val new = "0123456789abcdef01234567"
 
     @Before
@@ -34,14 +34,12 @@ class StoreRekeyTest {
             .put("links", JSONObject().put(old, JSONObject().put("records", JSONArray().put("r-1")).put("active", "r-1")))
             .put("deleted", JSONObject()).toString())
         File(root, "prints.json").writeText(JSONObject()
-            .put(old, JSONObject().put("chapters", JSONObject()).put("imported", false)).toString())
+            .put(old, JSONObject().put("chapters", JSONObject()).put("imported", true)).toString())
     }
 
     @Test
-    fun a_book_downloaded_under_an_old_id_moves_with_its_listening_records() {
-        assertEquals(listOf(old), Store.computerBooks())
-
-        Store.rekey(old, new)
+    fun a_book_opened_from_a_file_moves_with_its_listening_records() {
+        Store.adopt(old, new)
 
         assertFalse(File(root, "books/$old").exists())
         assertTrue(File(root, "books/$new/chapters/001.mp3").isFile)
@@ -49,7 +47,6 @@ class StoreRekeyTest {
         assertEquals("r-1", Store.knownActiveRecord(new))
         assertNull(Store.knownActiveRecord(old))
         assertTrue(JSONObject(File(root, "prints.json").readText()).has(new))
-        assertEquals(listOf(new), Store.computerBooks())
     }
 
     @Test
@@ -57,20 +54,20 @@ class StoreRekeyTest {
         File(root, "rekey_journal.json").writeText(JSONObject().put(old,
             JSONObject().put("to", new).put("adopt", false)).toString())
         assertTrue(File(root, "books/$old").renameTo(File(root, "books/$new")))
-        Store.rekey(old, new)
+        Store.adopt(old, new)
         assertEquals("r-1", Store.knownActiveRecord(new))
         assertNull(Store.knownActiveRecord(old))
         assertEquals(new, Store.rawManifest(new)!!.getString("id"))
         assertTrue(JSONObject(File(root, "prints.json").readText()).has(new))
         // A second restart is harmless even after some writes were already completed.
-        Store.rekey(old, new)
+        Store.adopt(old, new)
         assertEquals("r-1", Store.knownActiveRecord(new))
     }
 
     @Test
     fun retry_after_a_failed_links_write_still_commits_links_before_clearing_the_journal() {
         val blocker = File(root, "records.json.part").apply { mkdirs() }
-        assertTrue(runCatching { Store.rekey(old, new) }.isFailure)
+        assertTrue(runCatching { Store.adopt(old, new) }.isFailure)
         assertTrue(File(root, "rekey_journal.json").isFile)
         assertTrue(blocker.delete())
         Store.recoverRekeys()
@@ -91,29 +88,14 @@ class StoreRekeyTest {
 
     @Test
     fun an_escaping_id_or_a_copy_already_under_the_new_id_changes_nothing() {
-        Store.rekey(old, "../x")
-        Store.rekey(old, "")
+        runCatching { Store.adopt(old, "../x") }
+        runCatching { Store.adopt(old, "") }
         File(root, "books/$new").mkdirs()
         File(root, "books/$new/book.json").writeText(JSONObject().put("id", new).toString())
 
-        Store.rekey(old, new)
+        Store.adopt(old, new)
 
         assertTrue(File(root, "books/$old/chapters/001.mp3").isFile)
         assertEquals("r-1", Store.knownActiveRecord(old))
-    }
-
-    @Test
-    fun a_streamed_book_moves_too_and_books_of_other_devices_stay_out_of_it() {
-        val streamed = "QzpcU3RyZWFt"
-        File(root, "books/$streamed").mkdirs()
-        File(root, "books/$streamed/stream.json").writeText(JSONObject().put("id", streamed).toString())
-        File(root, "books/pKEY_b2").mkdirs()
-        File(root, "books/pKEY_b2/book.json").writeText(JSONObject().put("id", "pKEY_b2").put("source", "KEY").toString())
-
-        assertEquals(setOf(old, streamed), Store.computerBooks().toSet())
-        Store.rekey(streamed, "aaaaaaaaaaaaaaaaaaaaaaaa")
-
-        assertEquals("aaaaaaaaaaaaaaaaaaaaaaaa", Store.streamManifest("aaaaaaaaaaaaaaaaaaaaaaaa")!!.getString("id"))
-        assertNull(Store.streamManifest(streamed))
     }
 }

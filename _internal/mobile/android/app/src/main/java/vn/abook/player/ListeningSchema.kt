@@ -28,8 +28,7 @@ internal object ListeningSchema {
         }
         for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) {
             // Value + stamp + revision are one unit (Python clean_state): a broken part drops all three and the other device resends
-            // it - keeping the value and revision without the stamp broke every merge on the peer (a118 bug 3). A broken revision
-            // alone is re-stamped by ListeningRevision.upgradeLocal.
+            // it - keeping the value and revision without the stamp broke every merge on the peer (a118 bug 3).
             if (raw.has(field) && !state.has(field) || raw.has(stamp) && !state.has(stamp)) {
                 state.remove(field)
                 state.remove(stamp)
