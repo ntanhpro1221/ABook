@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useId, useMemo, useRef, useState, type Ke
 import { cn } from "@/shared/cn";
 import { excerpt } from "@/shared/format";
 import { useClock } from "./clock";
+import { speakerGap } from "./labels";
 import { followScrollTop, needsFollowScroll, placementOf, SCROLL_KEYS, SETTLE_MS, shouldResumeFollowing, showJumpToPlaying, type Placement } from "./follow";
 import { usePlayListenBook } from "./LibraryScreen";
 import type { ListenBook, ListenChapter, Script, ScriptSegment } from "./model";
@@ -481,7 +482,7 @@ const Paragraph = memo(function Paragraph({
       {paragraph.items.map(({ index, segment, showSpeaker }) => (
         <span key={index}>
           {speakers && segment.speaker && showSpeaker && (
-            <span className="mr-1.5 inline-block text-xs font-medium text-fg-2">
+            <span className={cn(speakerGap(segment.text), "inline-block text-xs font-medium text-fg-2")}>
               {segment.speaker}
             </span>
           )}
