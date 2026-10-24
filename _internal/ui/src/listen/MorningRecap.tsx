@@ -148,7 +148,7 @@ export function MorningRecap({ className }: { className?: string }) {
 
   return (
     <MotionRegion as="section" className={cn("relative overflow-hidden rounded-2xl border border-line bg-panel p-4 shadow-card sm:p-5", className)} aria-label={sessionLabel(session.endedAt)}>
-      <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="absolute right-2 top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
+      <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="absolute right-[2px] top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
         <X className="size-4" />
       </button>
       <div className="flex items-center gap-2 pr-11 text-xs font-semibold uppercase tracking-[0.08em] text-accent-text">
@@ -156,7 +156,9 @@ export function MorningRecap({ className }: { className?: string }) {
       </div>
       <h2 className="mt-1.5 pr-11 text-lg font-semibold leading-snug">Nghe tới đâu rồi thiếp đi?</h2>
 
-      <ol className="mt-4 grid gap-3 lg:grid-cols-2">
+      {/* Nét ✕ và chữ "Tìm đúng câu" bù đệm nút (right-[2px], -mr-4) để chạm đúng mép chữ như giờ của các mốc. */}
+      {/* Các mốc là hàng phẳng trong thẻ (không thẻ lồng thẻ - soát 24-10 V04): mốc gợi ý nổi bằng biểu tượng + tên màu nhấn, không khung. */}
+      <ol className="mt-3 grid gap-x-6 gap-y-1 lg:grid-cols-2">
         {markers.map((marker) => {
           const sentence = sentenceAt(scripts.data?.[marker.chapterId], marker.seconds);
           return (
@@ -165,18 +167,19 @@ export function MorningRecap({ className }: { className?: string }) {
                 type="button"
                 onClick={() => void resume(marker.chapterId, marker.seconds)}
                 className={cn(
-                  "flex h-full w-full gap-3 rounded-xl p-3 text-left",
-                  marker.suggested ? "bg-accent-soft ring-1 ring-accent/40" : "bg-hover/60 hover:bg-hover",
+                  "-mx-2 flex h-full w-[calc(100%+14px)] gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-hover",
                 )}
               >
                 <marker.icon className={cn("mt-0.5 size-4 shrink-0", marker.suggested ? "text-accent-text" : "text-fg-2")} />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline justify-between gap-2">
-                    <span className="text-sm font-semibold">{marker.label}</span>
+                    <span className={cn("text-sm font-semibold", marker.suggested && "text-accent-text")}>{marker.label}</span>
                     <span className="tabular shrink-0 text-xs text-fg-2">{timeOf(marker.at)}</span>
                   </span>
-                  <span className="tabular block text-xs text-fg-2">
-                    {marker.hint} · {marker.chapterTitle} {formatClock(marker.seconds)}
+                  <span className="block text-xs text-fg-2">{marker.hint}</span>
+                  <span className="tabular flex gap-1.5 text-xs text-fg-2">
+                    <span className="min-w-0 truncate">{marker.chapterTitle}</span>
+                    <span className="shrink-0">{formatClock(marker.seconds)}</span>
                   </span>
                   {sentence && <span className="mt-1.5 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}
                 </span>
@@ -195,30 +198,31 @@ export function MorningRecap({ className }: { className?: string }) {
           <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe tiếp từ {sentenceAt(script, suggested.seconds) ? "câu này" : formatClock(suggested.seconds)}
         </button>
         {script?.timed && (
-          <button type="button" onClick={() => setScrubbing((value) => !value)} className="h-11 rounded-xl bg-hover px-4 text-sm font-medium">
+          <button type="button" onClick={() => setScrubbing((value) => !value)} className="-mr-4 h-11 rounded-xl px-4 text-sm font-medium text-fg-2 transition-colors hover:bg-hover hover:text-fg">
             {scrubbing ? "Thu gọn" : "Tìm đúng câu"}
           </button>
         )}
       </div>
 
       {scrubbing && script?.timed && (
-        <div className="mt-4 max-h-80 overflow-y-auto rounded-xl border border-line">
-          <p className="sticky top-0 bg-panel px-3 py-2 text-xs text-fg-2">Chọn câu cuối cùng còn nhớ:</p>
+        // Vạch trên đúng mép chữ; vùng cuộn nới 7 px mỗi bên để nền khi rê của hàng (-mx-2) không bị cắt / sinh cuộn ngang.
+        <div className="mt-4 border-t border-line"><div className="-mx-2 max-h-80 overflow-y-auto px-2">
+          <p className="sticky top-0 z-[1] bg-panel py-2 text-xs text-fg-2">Chọn câu cuối cùng còn nhớ:</p>
           {scrub.map(group => <section key={group.chapterId} aria-label={group.title}>
-            <h3 className="bg-hover px-3 py-2 text-sm font-semibold">{group.title}</h3>
+            <h3 className="pb-1 pt-3 text-xs font-semibold text-fg-2">{group.title}</h3>
             {group.segments.map((segment) => (
             <button
               key={segment.id}
               type="button"
               onClick={() => void resume(group.chapterId, segment.start ?? 0)}
-              className="block w-full border-t border-line px-3 py-2.5 text-left text-[0.9375rem] leading-snug hover:bg-hover active:bg-hover"
+              className="-mx-2 block w-[calc(100%+14px)] rounded-lg px-2 py-2.5 text-left text-[0.9375rem] leading-snug hover:bg-hover active:bg-hover"
             >
               {segment.speaker && <span className="mr-1.5 text-[0.6875rem] font-semibold uppercase text-accent-text">{segment.speaker}</span>}
               {segment.text}
             </button>
             ))}
           </section>)}
-        </div>
+        </div></div>
       )}
     </MotionRegion>
   );
