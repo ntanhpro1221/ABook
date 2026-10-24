@@ -27,7 +27,7 @@ export interface CoverSearchResult {
 
 /** Câu báo "chưa hỏi được nguồn nào" - dùng chung để hai nơi hiện cùng một câu. */
 export function failedSourcesNote(failed: string[]): string {
-  return `Chưa hỏi được ${failed.map((name) => PROVIDER_NAMES[name] ?? name.replace("_", " ")).join(", ")} lần này (mạng chậm hay trang ấy không trả lời) - thử lại sau, hoặc dùng ảnh có sẵn trên máy.`;
+  return `Chưa nối được ${failed.map((name) => PROVIDER_NAMES[name] ?? name.replace("_", " ")).join(", ")}. Thử lại hoặc chọn ảnh trên máy.`;
 }
 
 /**
