@@ -1961,7 +1961,7 @@ function BookmarkRow({
         </button>
         <div className="flex shrink-0 gap-2 transition-opacity duration-motion-fast [@media(hover:hover)_and_(pointer:fine)]:opacity-0 group-hover/bookmark:opacity-100 group-focus-within/bookmark:opacity-100">
           <IconButton ref={editButton} label="Sửa ghi chú" icon={Pencil} size="sm" className="max-sm:!justify-end" onClick={() => editing ? cancelEdit() : onEdit(true)} />
-          <IconButton label="Xoá dấu trang" icon={Trash2} size="sm" className="max-sm:!justify-end sm:-mr-[5px]" onClick={remove} />
+          <IconButton label="Xoá dấu trang" icon={Trash2} size="sm" className="ink-end-icon max-sm:!justify-end sm:-mr-[5px]" onClick={remove} />
         </div>
       </div>
       {editing ? (
