@@ -81,7 +81,7 @@ def test_standalone_import_error_starts_with_a_capital(tmp_path: Path, kind: str
     source.write_bytes(b"not a zip")
     with pytest.raises(ApiError) as caught:
         getattr(studio, operation)(str(source))
-    assert caught.value.message.startswith(f"Không phải file {kind}")
+    assert caught.value.message == f"File {kind} hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
 
 
 def test_audio_with_missing_text_still_counts_as_one_complete_chapter(tmp_path: Path) -> None:

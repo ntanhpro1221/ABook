@@ -70,7 +70,7 @@ export function Button({
       aria-busy={loading || undefined}
       onClick={busyClick(loading, onClick)}
       className={cn(
-        "inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] transition-[background-color,color,border-color,transform,opacity] duration-motion-fast active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:active:scale-100",
+        "inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] transition-[background-color,color,border-color,outline-color,box-shadow,transform,opacity] duration-motion-fast active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:active:scale-100",
         VARIANTS[variant],
         SIZES[size],
         // Màn hẹp / cảm ứng: nút 28-38 px nới vùng chạm theo chiều dọc lên 40 px (touch-reach trong styles.css; soát UX 29-09 và a14: "Sửa",
@@ -85,7 +85,7 @@ export function Button({
       ) : Icon ? (
         <Icon className={size === "lg" ? "glyph" : "size-4"} strokeWidth={2} />
       ) : loading !== undefined ? <span /> : null}</MotionRegion>
-      {children}
+      <MotionRegion as="span" className="inline-flex min-w-0 items-center justify-center gap-2" motionKey={typeof children === "string" || typeof children === "number" ? children : undefined}>{children}</MotionRegion>
     </button>
   );
 }
@@ -141,7 +141,7 @@ export function IconButton({
         type="button"
         aria-label={label}
         className={cn(
-          "inline-flex shrink-0 items-center justify-center rounded-lg transition-[color,background-color,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-40",
+          "inline-flex shrink-0 items-center justify-center rounded-lg transition-[color,background-color,outline-color,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-40",
           tone === "ghost" ? "text-fg-2 hover:bg-hover hover:text-fg" : "bg-panel-2 text-fg hover:bg-hover",
           box,
           reach,
@@ -362,16 +362,16 @@ export function StatusPill({
   className?: string;
 }) {
   return (
-    <span
+    <MotionRegion as="span" motionKey={[label, tone, live]}
       className={cn(
-        "inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium",
+        "inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 text-xs font-medium transition-colors duration-motion-fast",
         PILL[tone],
         className,
       )}
     >
       {live ? <Vu className="h-2.5" /> : <span className="size-1.5 rounded-full bg-current" />}
       {label}
-    </span>
+    </MotionRegion>
   );
 }
 
@@ -470,13 +470,13 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
     >
       {children}
       {/* Số đếm dính vào tên khi đọc ("Chương6") - trình đọc màn hình nghe "Chương, 6 mục" (soát a67). */}
-      {count !== undefined && (
+      <MotionRegion as="span" className="inline-flex" motionKey={count ?? null}>{count !== undefined && (
         <span className="tabular rounded-full bg-hover px-1.5 py-px text-[0.6875rem] font-semibold text-fg-2">
           <span className="sr-only">, </span>
           {count}
           <span className="sr-only"> mục</span>
         </span>
-      )}
+      )}</MotionRegion>
     </TabsPrimitive.Trigger>
   );
 }

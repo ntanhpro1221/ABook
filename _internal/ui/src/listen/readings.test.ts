@@ -49,8 +49,8 @@ describe("lời nhắc màn đọc nói cách mở “Đọc từ này là…”
   const base = { textOnly: true, canSpeak: true, timed: false, tapped: false, coarse: false, wish: false };
 
   it("chuột phải trên máy tính, giữ trên điện thoại; chỉ khi sửa được cuốn", () => {
-    expect(readerHint({ ...base, readings: true })).toContain("Bấm chuột phải vào một chữ đọc sai để sửa cách đọc.");
-    expect(readerHint({ ...base, coarse: true, tapped: true, readings: true })).toContain("Giữ vào một chữ đọc sai");
+    expect(readerHint({ ...base, readings: true })).toContain("Bấm chuột phải vào chữ để sửa cách đọc.");
+    expect(readerHint({ ...base, coarse: true, tapped: true, readings: true })).toContain("Giữ chữ để sửa cách đọc.");
     expect(readerHint(base)).not.toContain("sửa cách đọc");
   });
 });
