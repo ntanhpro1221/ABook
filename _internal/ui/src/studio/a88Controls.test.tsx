@@ -52,27 +52,24 @@ function html(element: ReactElement): string {
 }
 
 describe("nút điều khiển khi đang dừng", () => {
-  it("đang chạy bình thường: có Tạm dừng và Dừng bấm được", async () => {
+  it("đang chạy bình thường: Tạm dừng là nút chính bấm được, Dừng nằm trong \"…\"", async () => {
     const { Actions } = await import("./ProjectScreen");
     const out = html(<Actions book={book()} />);
-    expect(out).toContain("Tạm dừng");
+    const buttons = [...out.matchAll(/<button[^>]*>[\s\S]*?<\/button>/g)].map(([button]) => button);
+    const pause = buttons.find((button) => button.replace(/<[^>]+>/g, "") === "Tạm dừng");
+    expect(pause).toContain("bg-accent");
+    expect(pause).not.toMatch(/disabled=""|aria-disabled="true"/);
     expect(out).not.toContain("Đang dừng…");
-    expect(out).not.toContain('disabled=""');
-    const stop = [...out.matchAll(/<button[^>]*>[\s\S]*?<\/button>/g)].map(([button]) => button).find((button) => button.replace(/<[^>]+>/g, "") === "Dừng");
-    expect(stop).toBeDefined();
-    expect(stop).not.toMatch(/disabled=""|aria-disabled="true"/);
+    expect(out).toContain("Tuỳ chọn dự án Sách thử");
   });
 
-  it("đã bấm Dừng: nhãn 'Đang dừng…' và hai nút bị khoá, không còn nút Dừng nào bấm được (V1)", async () => {
+  it("đã bấm Dừng: nút chính 'Đang dừng…' bị khoá, không còn Tạm dừng / Dừng nào bấm được (V1)", async () => {
     const { Actions } = await import("./ProjectScreen");
     const out = html(<Actions book={book({ stopping: true, canPause: false, statusLabel: "Đang dừng…" })} />);
-    expect(out).toContain("Đang dừng…");
     const buttons = [...out.matchAll(/<button[^>]*>(?:(?!<\/button>).)*<\/button>/g)].map((match) => match[0]);
-    const pause = buttons.find((button) => button.includes("Tạm dừng"));
     const stopping = buttons.find((button) => button.includes("Đang dừng…"));
-    expect(pause).toContain('disabled=""');
     expect(stopping).toContain('aria-disabled="true"');
-    expect(buttons.some((button) => button.replace(/<[^>]+>/g, "") === "Dừng")).toBe(false);
+    expect(buttons.some((button) => ["Dừng", "Tạm dừng"].includes(button.replace(/<[^>]+>/g, "")))).toBe(false);
   });
 });
 
