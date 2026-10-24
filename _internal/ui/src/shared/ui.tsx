@@ -485,18 +485,28 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
   return (
     <TabsPrimitive.Trigger
       value={value}
-      className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
+      className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
     >
+      <TabLabel count={count}>{children}</TabLabel>
+    </TabsPrimitive.Trigger>
+  );
+}
+
+/** Tên tab + số đếm trên CÙNG một đường chân chữ (DESIGN 6 "Tab trong trang": số nhỏ cạnh chữ). Dùng cho mọi tab - kể cả nút "Thêm" -
+ *  để số không lệch dòng với tên ở chỗ nào. Số là chữ trơn `--text-2`, không viên thuốc. */
+export function TabLabel({ count, children }: { count?: number; children: ReactNode }) {
+  return (
+    <span className="inline-flex items-baseline gap-1.5">
       {children}
       {/* Số đếm dính vào tên khi đọc ("Chương6") - trình đọc màn hình nghe "Chương, 6 mục" (soát a67). */}
       <MotionRegion as="span" className="inline-flex" motionKey={count ?? null}>{count !== undefined && (
-        <span className="tabular rounded-full bg-hover px-1.5 py-px text-[0.6875rem] font-semibold text-fg-2">
+        <span className="tabular text-xs font-normal text-fg-2">
           <span className="sr-only">, </span>
           {count}
           <span className="sr-only"> mục</span>
         </span>
       )}</MotionRegion>
-    </TabsPrimitive.Trigger>
+    </span>
   );
 }
 
@@ -1024,6 +1034,44 @@ export function Segmented<T extends string>({
             "touch-row h-7 whitespace-nowrap rounded-md px-3 text-[0.8125rem] font-medium transition-colors pointer-coarse:min-w-[48px]",
             value === option.value ? "bg-accent text-accent-ink" : "text-fg-2 hover:text-fg",
             itemClassName,
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** Hàng lọc: chữ trơn, mục đang chọn có gạch chân hổ phách (DESIGN 6 "Bộ lọc") - không hộp segmented. Cùng nghĩa radiogroup như `Segmented`
+ *  (mũi tên đổi mục, tiêu điểm vào đúng mục đang chọn). Khoảng cách như hàng lọc Thư viện: 20 px, 24 px từ `sm`. */
+export function FilterRow<T extends string>({
+  value,
+  onChange,
+  options,
+  label,
+  className,
+}: {
+  value: T;
+  onChange: (value: T) => void;
+  options: { value: T; label: string }[];
+  label: string;
+  className?: string;
+}) {
+  const values = options.map((option) => option.value);
+  return (
+    <div role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys(values, value, onChange)} className={cn("flex max-w-full gap-5 overflow-x-auto [scrollbar-width:none] sm:gap-6", className)}>
+      {options.map((option, index) => (
+        <button
+          key={option.value}
+          type="button"
+          role="radio"
+          aria-checked={value === option.value}
+          tabIndex={radioTabIndex(values, value, index)}
+          onClick={() => onChange(option.value)}
+          className={cn(
+            "touch-row h-9 shrink-0 whitespace-nowrap border-b-2 text-sm font-medium transition-colors duration-motion-fast",
+            value === option.value ? "border-accent text-accent-text" : "border-transparent text-fg-2 hover:text-fg",
           )}
         >
           {option.label}
