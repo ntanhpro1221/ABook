@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit
  * dịch vụ chia sẻ, lý do tiến trình chết lần trước ([ExitReasons]), các file văng ([CrashLog]), đuôi nhật ký của app ([AppLog]) và đuôi logcat của
  * CHÍNH tiến trình (`logcat -d --pid=<pid>` không cần quyền READ_LOGS).
  *
- * Mỗi phần bọc try riêng ([assemble]): một phần lỗi thì phần đó thành `{"error": "..."}`, cả bản vẫn ra. Có tên cuốn đang nghe vì bản này chỉ đi
+ * Mỗi phần bọc try riêng ([assemble]): một phần lỗi thì thành `{"collectionFailed": true, "error": "..."}`, cả bản vẫn ra. Có tên cuốn đang nghe vì bản này chỉ đi
  * tới máy đã ghép (`GET /sync/v1/diagnostics`, [LibraryServer]) hay tới nơi người dùng tự chọn gửi; không có mã thiết bị, khoá, chữ của truyện.
  */
 object Diagnostics {
@@ -47,7 +47,7 @@ object Diagnostics {
         query.split('&').firstOrNull { it.startsWith("lines=") }?.removePrefix("lines=")?.toIntOrNull()
 
     /**
-     * Ghép các phần: mỗi phần chạy trong try riêng. Ném (kể cả `Error` như thiếu lớp ở máy lạ) thì phần ấy là `{"error": "Loại: lời"}`.
+     * Ghép các phần: mỗi phần chạy trong try riêng. Ném (kể cả `Error` như thiếu lớp ở máy lạ) thì gắn collectionFailed và error.
      * Phần trả null thì bỏ khỏi bản.
      */
     internal fun assemble(parts: List<Pair<String, () -> Any?>>): JSONObject {
@@ -57,7 +57,8 @@ object Diagnostics {
                 val value = build() ?: continue
                 report.put(name, value)
             } catch (error: Throwable) {
-                report.put(name, JSONObject().put("error", "${error.javaClass.simpleName}: ${AppLog.scrub(error.message.orEmpty()).take(200)}"))
+                report.put(name, JSONObject().put("collectionFailed", true)
+                    .put("error", "${error.javaClass.simpleName}: ${AppLog.scrub(error.message.orEmpty()).take(200)}"))
             }
         }
         return sanitize(report, bounded = true)
@@ -182,7 +183,7 @@ object Diagnostics {
             "power" to { power(app) },
             "playback" to { playback() },
             "work" to { work(app) },
-            "share" to { share() },
+            "share" to { share(app) },
             "dataRecovery" to { Store.dataDiagnostics() },
             "exitReasons" to { ExitReasons.read(app) },
             "crashes" to { JSONArray().also { array -> CrashLog.read(AppLog.folder()).forEach { (name, text) -> array.put(JSONObject().put("name", name).put("text", text)) } } },
@@ -263,7 +264,8 @@ object Diagnostics {
             .associateWith { event.get(it).toString() }
     }
 
-    private fun share(): JSONObject {
+    internal fun share(context: Context): JSONObject {
+        LibraryServer.init(context) // Chuẩn bị share.json trước devices(); không bật máy chủ.
         val devices = LibraryServer.devices()
         return JSONObject().put("running", LibraryServer.running()).put("pairedDevices", devices.length())
             .put("lastError", LibraryServer.lastError)

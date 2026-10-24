@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { emptyLogNote, logLines, reportFileName, summaryRows, type DiagnosticsReport } from "./diagnostics";
+import { emptyLogNote, logLines, reportFileName, summaryRows, failureDetails, type DiagnosticsReport } from "./diagnostics";
+import states from "../../../tests/fixtures/diagnostics_states.json";
 
 // Bản chẩn đoán của điện thoại (Diagnostics.kt) đọc cho người: tóm tắt từng mục, phần lỗi nói "không đọc được", bản cũ thiếu mục thì bỏ mục.
 
@@ -28,6 +29,11 @@ const FULL: DiagnosticsReport = {
 
 const byLabel = (report: DiagnosticsReport) => Object.fromEntries(summaryRows(report).map((row) => [row.label, row.value]));
 
+it.each(states)("diagnostics contract: $name", ({ report, summary, details }) => {
+  expect(byLabel(report as DiagnosticsReport)).toMatchObject(summary);
+  expect(failureDetails(report as DiagnosticsReport)).toEqual(details);
+});
+
 describe("summaryRows", () => {
   it("tóm tắt bản app, máy, pin, mạng, việc nền và lần tắt gần nhất", () => {
     const rows = byLabel(FULL);
@@ -47,7 +53,8 @@ describe("summaryRows", () => {
 
   it("phần lỗi nói không đọc được, phần thiếu thì bỏ mục, phần còn lại vẫn ra", () => {
     const rows = byLabel({ schema: 1, app: { versionName: "0.4.133" }, battery: { error: "SecurityException: x" }, network: { connected: false } });
-    expect(rows["Pin"]).toBe("không đọc được (SecurityException: x)");
+    expect(rows["Pin"]).toBe("không đọc được");
+    expect(failureDetails({ battery: { error: "SecurityException: x" } })).toEqual([{ label: "battery", value: "SecurityException: x" }]);
     expect(rows["Mạng"]).toBe("chưa có mạng");
     expect(rows["Bản ABook"]).toBe("0.4.133");
     expect(rows["Điện thoại"]).toBeUndefined();
@@ -67,7 +74,7 @@ describe("nhật ký và tên file", () => {
     expect(logLines(FULL)).toEqual(["dòng 1", "dòng 2"]);
     expect(logLines(FULL, "logcat")).toEqual(["I/x: y"]);
     expect(logLines({ log: { error: "IOException: x" } })).toEqual([]);
-    expect(emptyLogNote({ log: { error: "IOException: x" } })).toBe("không đọc được (IOException: x)");
+    expect(emptyLogNote({ log: { error: "IOException: x" } })).toBe("không đọc được");
     expect(emptyLogNote({})).toBe("Chưa có dòng nào.");
   });
 

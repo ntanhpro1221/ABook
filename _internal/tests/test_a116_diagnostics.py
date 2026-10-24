@@ -11,6 +11,20 @@ from abook.webui.listening import Listening
 from abook.webui.cast import CastMedia
 
 
+@pytest.mark.parametrize("case", json.loads((Path(__file__).parent / "fixtures/diagnostics_states.json").read_text("utf-8")), ids=lambda case: case["name"])
+def test_diagnostics_states_survive_python_boundaries(case, monkeypatch):
+    """Python relays the same state/error envelope to the shared UI; blank errors are data, not collection failures."""
+    report = case["report"]
+    monkeypatch.setattr(remote_books, "_COMPUTERS", SimpleNamespace(get=lambda _: {"host": "127.0.0.1", "port": 1, "token": "test",
+        "addresses": [{"address": "127.0.0.1:1", "lastSuccess": 0}]}))
+    monkeypatch.setattr(remote_books, "_request", lambda *args, **kwargs: json.dumps(report).encode())
+    result = remote_books.diagnostics("test")
+    result.pop("fetchedAt")
+    assert result == report
+    with zipfile.ZipFile(io.BytesIO(diagnostics.bundle(report, None))) as archive:
+        assert json.loads(archive.read("thong-tin.json")) == report
+
+
 @pytest.mark.parametrize("case", json.loads((Path(__file__).parent / "fixtures/diagnostics_paths.json").read_text("utf-8")))
 def test_shared_private_paths_and_source_frames(case):
     assert diagnostics.redact(case["raw"]) == case["safe"]

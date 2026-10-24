@@ -1,6 +1,7 @@
 package vn.abook.player
 
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.util.zip.ZipInputStream
 import org.json.JSONArray
 import org.json.JSONObject
@@ -12,6 +13,14 @@ import org.junit.Test
 
 /** Phần thuần của bản chẩn đoán (a114): kẹp số dòng, ghép từng phần trong try riêng, giữ cỡ trong trần, gói .zip, tên lý do chết. */
 class DiagnosticsTest {
+    @Test fun shared_states_preserve_empty_errors_and_collection_failure_envelopes() {
+        val cases = JSONArray(File("../../../tests/fixtures/diagnostics_states.json").readText(Charsets.UTF_8))
+        for (index in 0 until cases.length()) {
+            val case = cases.getJSONObject(index)
+            val report = case.getJSONObject("report")
+            assertEquals(case.getString("name"), report.toString(), Diagnostics.sanitize(report).toString())
+        }
+    }
     @Test
     fun the_line_count_is_clamped_and_read_from_the_query() {
         assertEquals(Diagnostics.DEFAULT_LINES, Diagnostics.clampLines(null))
@@ -36,6 +45,7 @@ class DiagnosticsTest {
         assertEquals(1, report.getInt("schema"))
         assertEquals(1, report.getJSONObject("ok").getInt("a"))
         assertEquals("IllegalStateException: hỏng ở đây", report.getJSONObject("boom").getString("error"))
+        assertTrue(report.getJSONObject("boom").getBoolean("collectionFailed"))
         assertTrue(!report.has("none"))
         assertEquals("x", report.getJSONArray("list").getString(0))
     }

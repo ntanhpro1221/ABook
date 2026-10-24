@@ -262,11 +262,25 @@ export function presenceMounted(open: boolean, mounted: boolean, exitDone: boole
   return open || (mounted && !exitDone);
 }
 
-/** State thay cả bước/nội dung (không dùng cho ô gõ, clock, tiến độ): VT hoặc ảnh cũ mờ ra, thao tác không chờ animation. */
+/** State thay cả bước/nội dung: bỏ cập nhật bằng nhau. Setter thứ ba không mở VT (dọn khi đóng, hoặc MotionRegion cục bộ).
+ * Giữ giá trị mới ngay khi gọi để các updater liên tiếp thấy đúng thứ tự; callback VT đến muộn không ghi đè lần dọn mới hơn.
+ * Không chạy side effect trong React updater: StrictMode có thể gọi updater nhiều lần. */
 export function useMotionState<T>(initial: T | (() => T)) {
   const [value, set] = useState(initial);
-  const change = useCallback((next: SetStateAction<T>) => { withViewTransition(() => set(next)); }, []);
-  return [value, change] as const;
+  const current = useRef(value);
+  const generation = useRef(0);
+  const update = useCallback((next: SetStateAction<T>, animate: boolean) => {
+    const resolved = typeof next === "function" ? (next as (previous: T) => T)(current.current) : next;
+    if (Object.is(current.current, resolved)) return;
+    current.current = resolved;
+    const version = ++generation.current;
+    const apply = () => { if (version === generation.current) set(typeof resolved === "function" ? () => resolved : resolved); };
+    if (animate) withViewTransition(apply);
+    else apply();
+  }, []);
+  const change = useCallback((next: SetStateAction<T>) => update(next, true), [update]);
+  const withoutTransition = useCallback((next: SetStateAction<T>) => update(next, false), [update]);
+  return [value, change, withoutTransition] as const;
 }
 
 /** Một lần đóng: sự kiện của con không được gỡ cha; huỷ khi mở lại/unmount; luôn có hạn chờ nếu animationend bị bỏ. */

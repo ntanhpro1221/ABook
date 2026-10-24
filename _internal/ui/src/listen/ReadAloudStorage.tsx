@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { Button, Dialog } from "@/shared/ui";
+import { MoreInfo } from "@/shared/SettingsNav";
 import { PREPARE_STATUS_KEY, clearStorageQuestion, storageLabel, type ReadAloudCacheUsage } from "./prepareAhead";
 import { READINGS_CHANGED_EVENT, type ReadingsChanged } from "./readAloud";
 
@@ -62,8 +63,9 @@ export function ReadAloudStorage({ api }: { api: ReadAloudStorageApi }) {
     <MotionRegion as="div" data-readaloud-storage elementRef={region} tabIndex={-1} className="outline-none">
       <h3 className="text-sm font-semibold">Bản đọc đã làm</h3>
       <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">
-        {storageLabel(usage)} Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống.
+        {storageLabel(usage)}
       </p>
+      <MoreInfo className="mt-1">Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống.</MoreInfo>
       {usage.total > 0 && (
         <Button size="sm" className="mt-2" onClick={() => setAsking(true)}>
           Dọn bản đọc đã làm

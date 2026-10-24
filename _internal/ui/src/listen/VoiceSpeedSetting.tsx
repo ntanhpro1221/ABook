@@ -13,6 +13,7 @@ import {
   VOICE_SPEED_OPTIONS,
   VOICE_SPEED_TITLE,
   voiceSpeedDescription,
+  voiceSpeedLabel,
   voiceSpeedLine,
   type VoiceSpeedChoice,
   type VoiceSpeedStatus,
@@ -72,7 +73,7 @@ export function VoiceSpeedSetting({
     }
   };
   return (
-    <MotionRegion><Fold storageKey="voice.performance" title="Hiệu năng" summary={voiceSpeedDescription(status.choice)} bodyClassName="space-y-2 px-3 pb-3">
+    <MotionRegion><Fold storageKey="voice.performance" title="Hiệu năng" summary={voiceSpeedLabel(status.choice)} bodyClassName="space-y-2 px-3 pb-3">
       <h3 id={`${id}-title`} className="text-sm font-semibold">{VOICE_SPEED_TITLE}</h3>
       <Segmented
         value={status.choice}

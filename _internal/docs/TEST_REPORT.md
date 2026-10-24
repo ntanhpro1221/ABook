@@ -2,6 +2,11 @@
 
 Ngày cập nhật: 2026-10-24
 
+Đợt fix136, cây `ABook_rel135` trên `dev/rel135`: sửa bốn mục emu135. Reset Thêm sách và đóng Đổi bài dùng chuyển động cục bộ, không mở View Transition toàn trang; hook bỏ cập nhật bằng nhau và bảo vệ callback đến muộn. Hiệu năng chỉ tóm tắt lựa chọn, Bộ nhớ/hint ngắn hơn. Chẩn đoán khởi tạo dữ liệu chia sẻ trước đọc, phân biệt lỗi thu thập/lỗi phát, chi tiết kỹ thuật nằm sau phần mở rộng.
+
+- Vitest toàn bộ: **1842 passed, 0 failed, 1 skipped**, **250 file** (249 passed, 1 skipped), gồm `*.dom.test.tsx`, tối đa 2 worker; skip corpus PDF tuỳ chọn có sẵn. `tsc -p tsconfig.json`: **0 lỗi**. Pytest 4 file diagnostics/voice_speed, CUDA tắt, `-p no:cacheprovider -rf`: **75 passed**.
+- Fixture `diagnostics_states.json` dùng chung TypeScript/Python/Kotlin. JUnit mới: `DiagnosticsShareTest` (3 ca) và ca hợp đồng trong `DiagnosticsTest`; **chưa chạy Gradle**, Lead chạy. Chưa kiểm lại máy ảo/thiết bị thật. Hash trước/sau giữ `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`; không sửa file khoá, không Git ghi, không npm install/update. Chi tiết đỏ → xanh, file:dòng và lệnh kiểm nằm ở scratchpad `fix136/result.md`.
+
 Đợt hot135 trên `dev/hot135`, nền `bcdc4ff7` (0.4.134): kiểm máy ảo Android (AVD riêng, emulator-5580) thấy chạm nút trong hộp Thêm sách làm hộp đóng; Chromium máy tính cho cùng kết quả (`elementFromPoint` ở nút trả `HTML`, hộp `pointer-events: none`). Nguyên nhân: Radix đặt `pointer-events: auto` cho hộp/nền rồi trải `style` của ta đè, khoá `pointerEvents: undefined` xoá mất `auto`. Test DOM mới (Dialog + Sheet đang mở giữ `auto`) đỏ trên mã cũ, xanh sau sửa. Vitest toàn bộ **1787 passed, 0 failed, 1 skipped**; `tsc` 0 lỗi. Hash khoá giữ `c9176123`.
 
 Đợt ux131, cây `ABook_ux131`, nhánh `dev/ux131`, nền `2805d419`: bổ sung chuyển động cho nhãn nút, trạng thái, số đếm, huy hiệu bìa, nghe thử, hàng nhập sách và sidebar; gấp nhóm thư viện/chương/nhân vật, các bước Studio và phần chi tiết tạo sách. Rút chữ giao diện, đồng nhất lỗi PDF giữa TypeScript/Python/Kotlin qua fixture. Có **29 test Vitest mới**, gồm **26 test DOM component thật** và 3 test chữ/hợp đồng.
