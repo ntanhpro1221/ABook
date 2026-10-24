@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.134] - 2026-10-24
+
 ### Kết nối
 - Máy đã ghép nhớ tối đa 8 địa chỉ tới nhau (Wi-Fi nhà, Tailscale...) và tự chọn đường đang thông.
 
