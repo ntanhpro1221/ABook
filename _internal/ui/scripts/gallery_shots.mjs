@@ -15,6 +15,7 @@
 //   --theme T        light | dark | both (mặc định light)
 //   --scale N        tỉ lệ điểm ảnh (mặc định: điện thoại 2, máy tính 1)
 //   --timeout MS     chờ một mục tối đa (mặc định 45000)
+//   --probe FILE     biểu thức JS chạy trên từng màn đã đứng yên; trả mảng chuỗi, mỗi chuỗi là một vấn đề (vd scripts/probes/orphans.js)
 
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -38,6 +39,7 @@ function parseArgs(argv) {
     else if (flag === "--theme") args.theme = value();
     else if (flag === "--scale") args.scale = Number(value());
     else if (flag === "--timeout") args.timeout = Number(value());
+    else if (flag === "--probe") args.probe = readFileSync(path.resolve(value()), "utf8");
     else if (flag === "--help" || flag === "-h") args.help = true;
     else throw new Error(`Tham số lạ: ${argv[index]}`);
   }
@@ -267,6 +269,9 @@ async function main() {
           await evaluate(cdp, page.sessionId, "document.fonts ? document.fonts.ready.then(() => true) : true");
           await evaluate(cdp, page.sessionId, STILL);
           const report = await evaluate(cdp, page.sessionId, "window.__gallery");
+          // --probe <file.js>: biểu thức máy dò chạy trên màn đã đứng yên; mảng khác rỗng = vấn đề (vd chữ mồ côi).
+          const probe = args.probe ? await evaluate(cdp, page.sessionId, args.probe) : [];
+          problems.push(...(Array.isArray(probe) ? probe : [probe]).map((item) => `dò: ${item}`));
           problems.push(...report.errors.map((error) => `lỗi: ${error.split("\n")[0]}`), ...report.missing.map((name) => `chưa giả: ${name}`));
           const { data } = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false }, page.sessionId);
           writeFileSync(path.join(out, file), Buffer.from(data, "base64"));
