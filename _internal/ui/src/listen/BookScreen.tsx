@@ -4,7 +4,7 @@ import { LoadingCrossfade } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
-import { useEffect, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { holderName } from "@/shared/editsSync";
@@ -13,10 +13,11 @@ import { cn } from "@/shared/cn";
 import { syncsToComputer } from "@/shared/capabilities";
 import { usePageTitle } from "@/shared/title";
 import { reveal, scrollParent, useScrollMemory } from "@/shared/scrollMemory";
+import { useListPresence } from "@/shared/motion";
 import { Windowed } from "@/shared/Windowed";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { toneLabel } from "./voiceTone";
-import { Button, Dialog, EmptyState, heardBarProps, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
+import { Button, Dialog, EmptyState, heardBarProps, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
@@ -177,29 +178,41 @@ export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared
               const row = element.querySelector(`[data-chapter="${CSS.escape(String(currentChapter))}"]`);
               if (row && !row.closest("[inert]")) reveal(scrollParent(row), row);
             }} heading="h3" className="mt-3" bodyClassName="px-1 pb-1">
-              {/* Sách vài nghìn chương: chỉ dựng các chương gần màn hình (shared/Windowed); chương đang nghe luôn có sẵn. */}
-              <div role="list" aria-label={group.heading ?? "Danh sách chương"}>
-                <Windowed
-                  items={group.chapters}
-                  estimate={54}
-                  memory={`book.${book.id}.${index}`}
-                  keep={group.chapters.findIndex((chapter) => chapter.id === currentChapter)}
-                  row={(chapter, index) => (
-                    <div key={chapter.id} role="listitem" aria-posinset={index + 1} aria-setsize={group.chapters.length} data-chapter={chapter.id}>
-                      <ChapterRow
-                        book={book}
-                        chapter={chapter}
-                        onDone={(chapterId, done) => onDone(chapterId, done)}
-                        onRename={onRename}
-                        prepared={chapter.state === "text" && prepared?.has(chapter.id)}
-                        voice={voice}
-                      />
-                    </div>
-                  )}
-                />
-              </div>
+              <ChapterGroupList book={book} chapters={group.chapters} heading={group.heading} memory={`book.${book.id}.${index}`} currentChapter={currentChapter} onDone={onDone} onRename={onRename} prepared={prepared} voice={voice} />
             </Fold>
           ))}</>;
+}
+
+/** Sách vài nghìn chương: chỉ dựng các chương gần màn hình (shared/Windowed); chương đang nghe luôn có sẵn. Chương mới về (sách đang
+ *  thu) hay bị gỡ: hàng mở ra / khép lại tại chỗ (useListPresence, như kệ sách của thư viện), không nhảy cả danh sách. */
+function ChapterGroupList({ book, chapters, heading, memory, currentChapter, onDone, onRename, prepared, voice }: {
+  book: ListenBook; chapters: ListenChapter[]; heading?: string | null; memory: string; currentChapter?: number;
+  onDone: (chapterId: number, done: boolean) => void; onRename?: (chapter: ListenChapter) => void; prepared?: Set<number>; voice: string;
+}) {
+  const rows = useListPresence(chapters, (chapter) => String(chapter.id));
+  const positions = useMemo(() => new Map(chapters.map((chapter, index) => [chapter.id, index + 1])), [chapters]);
+  return (
+    <div role="list" aria-label={heading ?? "Danh sách chương"}>
+      <Windowed
+        items={rows}
+        estimate={54}
+        memory={memory}
+        keep={rows.findIndex((row) => row.item.id === currentChapter)}
+        row={({ key, item: chapter, state, ref }) => (
+          <div key={key} ref={ref} role="listitem" aria-posinset={positions.get(chapter.id)} aria-setsize={chapters.length} data-chapter={chapter.id} className="motion-row" data-state={state} inert={state === "exit"}>
+            <ChapterRow
+              book={book}
+              chapter={chapter}
+              onDone={(chapterId, done) => onDone(chapterId, done)}
+              onRename={onRename}
+              prepared={chapter.state === "text" && prepared?.has(chapter.id)}
+              voice={voice}
+            />
+          </div>
+        )}
+      />
+    </div>
+  );
 }
 
 function BookmarksTab({ book }: { book: ListenBook }) {
@@ -507,7 +520,7 @@ function clockOf(epoch: number): string {
 export function HistoryTab({ book }: { book: ListenBook }) {
   const source = useSource();
   const playBook = usePlayListenBook();
-  const { data: sessions } = useQuery({
+  const { data: sessions, isLoading } = useQuery({
     queryKey: ["listen", "sessions", book.id],
     queryFn: () => source.sessions!(book.id),
     enabled: Boolean(source.sessions),
@@ -516,6 +529,15 @@ export function HistoryTab({ book }: { book: ListenBook }) {
     const chapter = book.chapters?.find((item) => item.id === chapterId);
     return chapter ? chapter.title : "chương đã gỡ";
   };
+  // Đang hỏi lịch sử: khung chờ, không phải "Chưa có lịch sử nghe" (đọc như mất hết lịch sử) rồi mới thay bằng danh sách. Trống <-> có thì mờ hẳn qua.
+  const placeholder = (
+    <div className="mt-3 space-y-3" aria-hidden>
+      <Skeleton className="h-4 w-56" />
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+    </div>
+  );
+  const historyBody = () => {
   if (!sessions?.length) {
     return (
       <EmptyState icon={History} title="Chưa có lịch sử nghe" className="mt-2">
@@ -559,6 +581,12 @@ export function HistoryTab({ book }: { book: ListenBook }) {
         </Fold>
       ))}
     </div>
+  );
+  };
+  return (
+    <LoadingCrossfade loading={isLoading} placeholder={placeholder}>
+      <MotionRegion fadeThrough motionKey={sessions?.length ? "list" : "empty"}>{historyBody()}</MotionRegion>
+    </LoadingCrossfade>
   );
 }
 
@@ -1119,6 +1147,7 @@ export function BookScreen({
           <TabsTrigger value="history">Lịch sử</TabsTrigger>
           {!textOnly && <TabsTrigger value="cast">Nhân vật</TabsTrigger>}
         </TabsList>
+        <TabsPanels value={tab}>
         <TabsContent value="chapters" className="mt-2" ref={chapterList}>
           <ChapterGroups book={book} currentChapter={point?.chapter.id} onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })} onRename={editable ? setRenamingChapter : undefined} prepared={prepared} voice={voice} />
         </TabsContent>
@@ -1138,6 +1167,7 @@ export function BookScreen({
             waiting={waiting}
           />
         </TabsContent>
+        </TabsPanels>
       </Tabs>
       {editing !== false && editable && (
         <>
