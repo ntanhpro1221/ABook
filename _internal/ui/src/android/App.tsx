@@ -246,6 +246,7 @@ function RemoveFromPhoneHost() {
   };
   return (
     <Dialog
+      phoneSheet
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
       title={book?.partial ? `Xoá phần đã tải của “${book.title}”?` : `Xoá “${book?.title ?? ""}” khỏi điện thoại?`}
@@ -319,6 +320,7 @@ export function AndroidApp() {
                       <BookScreen
                         studioLink={(book) => <StudioChipHost book={book} />}
                         notice={(book) => <ExportRevisionNotice book={book} />}
+                        dangerActions={(book) => !book.remote && <RemoveFromPhoneMenuItem book={book} />}
                         extraActions={(book) =>
                           book.remote ? (
                             <DownloadMenuItem book={book} />
@@ -327,7 +329,6 @@ export function AndroidApp() {
                               <ExportAudiobookMenuItem book={book} />
                               <ExportMp3MenuItem book={book} />
                               <ExportM4bMenuItem book={book} />
-                              <RemoveFromPhoneMenuItem book={book} />
                             </>
                           )
                         }

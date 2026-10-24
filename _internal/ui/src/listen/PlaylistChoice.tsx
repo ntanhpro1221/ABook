@@ -177,7 +177,7 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
         <DropdownMenu.SubContent sideOffset={4} collisionPadding={12} className="z-50 max-h-[70vh] w-72 overflow-y-auto rounded-xl border border-line bg-panel p-1.5 shadow-float">
           {options.map((option) => (
             <DropdownMenu.Item
-              key={option.id ?? "off"}
+              key={JSON.stringify(option.id)}
               disabled={option.disabled}
               onSelect={() => choose(option.id)}
               className={cn(MENU_ITEM, "h-auto min-h-9 py-1.5 data-[disabled]:opacity-50", option.id === chosen && "font-semibold")}

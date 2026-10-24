@@ -102,7 +102,7 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
         <span className="block">{label}</span>
         <MotionRegion as="span" className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
           {lastExportHint(job, KINDS[kind].copy, dataUpdatedAt) ??
-            (kind === "bookfile" && !book.chaptersAvailable && book.chaptersTotal ? "Chưa có audio: file chỉ mang chữ của các chương" : exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot))}
+            (kind === "bookfile" && !book.chaptersAvailable && book.chaptersTotal ? "Chưa có audio: file chỉ mang chữ của các chương" : kind === "mp3" ? "Mỗi chương một file." : kind === "m4b" ? "Một file có mục lục." : exportWhereHint(Boolean(info?.dialogs), preferences?.libraryRoot))}
         </MotionRegion>
       </span>
     </DropdownMenu.Item>
