@@ -6,7 +6,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  Clock3,
   FileText,
   Folder,
   FolderInput,
@@ -260,7 +259,7 @@ function StepRail({ step, allowed, onGo }: { step: number; allowed: number; onGo
 
 // ---- Bước 1 ---------------------------------------------------------------------------------------------------
 
-function SourceStep({
+export function SourceStep({
   scan,
   title,
   onTitle,
@@ -428,12 +427,13 @@ function SourceStep({
           />
         </>
       )}
-      <h2 className="text-xl font-semibold">Chọn các chương của truyện</h2>
-      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg-2">
+      <h2 className="text-xl font-semibold">Nguồn truyện</h2>
+      <p className="mt-1 text-sm text-fg-2">Chọn TXT, EPUB, Word hoặc PDF có chữ.</p>
+      <Fold storageKey="new-project.formats" title="Định dạng" className="mt-3" heading="h3"><ul className="list-disc space-y-1 pl-5 text-sm text-fg-2">
         <li>Mỗi file TXT là một chương, xếp theo tên file (2 đứng trước 10).</li>
         <li>EPUB, Word, PDF (có chữ): chọn thẳng, máy tự tách chương.</li>
         <li>Cả truyện nằm trong một file TXT thì máy gợi ý tách theo các dòng “Chương N”.</li>
-      </ul>
+      </ul></Fold>
       {!files.length ? (
         <div
           className={cn(
@@ -715,7 +715,8 @@ function SourceStep({
             </div>
           )}
           {/* Danh sách thật cho trình đọc màn hình ("danh sách 12 mục", soát a31 A4); vạch "Phần N" chỉ để nhìn - lời của nó đọc ở đầu mục. */}
-          <div role="list" aria-label="Các chương sẽ làm" className="mt-3 max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel">
+          <Fold storageKey="new-project.chapters" title="Danh sách chương" summary={`${files.length} chương`} defaultOpen={files.length <= 4} className="mt-3" heading="h3">
+          <div role="list" aria-label="Các chương sẽ làm" className="max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel">
             {files.map((file, index) => {
               // Chia phần: một vạch "Phần N bắt đầu" trước chương đầu mỗi phần - khỏi phải đối số chương với ô "từ chương" ở trên.
               const part = splitting && volumeStarts && volumeStarts.length > 1 ? volumeStarts.indexOf(index + 1) : -1;
@@ -757,6 +758,7 @@ function SourceStep({
               );
             })}
           </div>
+          </Fold>
           {scan!.skipped.length > 0 && <p className="mt-2 text-xs text-fg-2">Bỏ qua {scan!.skipped.length} file không phải .txt.</p>}
           {/* File sách hỏng / PDF scan nằm cạnh file tốt, thư mục có cả TXT lẫn EPUB, trang chỉ có ảnh bị bỏ, gợi ý dòng ghi công: không chặn, nhưng nói ra (soát UX 01-10: bị bỏ âm thầm). */}
           {[...(scan!.errors ?? []).map((error) => `Bỏ qua ${error}`), ...(scan!.notes ?? [])].map((line) => (
@@ -987,7 +989,7 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
 
 // ---- Bước 2 ---------------------------------------------------------------------------------------------------
 
-function VoiceCard({
+export function VoiceCard({
   voice,
   selected,
   focusable,
@@ -1020,7 +1022,7 @@ function VoiceCard({
           playing ? "bg-accent text-accent-ink" : "bg-hover text-fg hover:bg-line",
         )}
       >
-        {playing ? <Vu className="h-3" /> : <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+        <MotionRegion as="span" className="grid size-4 place-items-center">{playing ? <Vu className="h-3" /> : <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
       </button>
       <button
         type="button"
@@ -1041,11 +1043,9 @@ function VoiceCard({
           </span>
         )}
       </button>
-      {selected && (
-        <span className="grid size-6 shrink-0 place-items-center rounded-full bg-accent text-accent-ink" aria-hidden>
-          <Check className="size-3.5" strokeWidth={3} />
-        </span>
-      )}
+      <MotionRegion as="span" className="grid size-6 shrink-0 place-items-center" aria-hidden>
+        {selected ? <span className="grid size-6 place-items-center rounded-full bg-accent text-accent-ink"><Check className="size-3.5" strokeWidth={3} /></span> : <span />}
+      </MotionRegion>
     </div>
   );
 }
@@ -1084,7 +1084,7 @@ function PovChapters({ hint, narrator, off, onOffChange }: {
       <legend className="sr-only">Chương đổi người kể</legend>
       <p className="text-sm font-semibold">Chương đổi người kể</p>
       <p className="mt-0.5 text-sm text-fg-2 text-pretty">
-        Chương mang tên nhân vật và kể bằng “tôi” - thường là người ấy kể. Bỏ chọn nếu không phải.
+        Kể bằng “tôi”; bỏ chọn nếu máy đoán sai.
       </p>
       <ul className="mt-2 space-y-1.5">
         {chapters.map((chapter) => {
@@ -1133,7 +1133,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
         className="mt-3 text-sm font-medium text-accent-text underline underline-offset-2 disabled:opacity-60"
         disabled={isLoading}
       >
-        Truyện kể ở ngôi thứ nhất (người kể xưng “tôi”)?
+        Kể bằng “tôi”?
       </MotionRegion>
     );
   }
@@ -1141,14 +1141,13 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
     <MotionRegion as="section" aria-labelledby="first-person-title" className="mt-5 max-w-2xl rounded-2xl border border-line bg-panel p-4 sm:p-5">
       <h3 id="first-person-title" className="font-semibold">“Tôi” là ai?</h3>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
-        {hint?.firstPerson
-          ? hint.chaptersSampled && hint.chaptersWithI
-            ? `Truyện có vẻ kể ở ngôi thứ nhất: ${hint.chaptersWithI}/${hint.chaptersSampled} chương đầu có nhiều lời kể xưng “tôi”. `
-            : `Truyện có vẻ kể ở ngôi thứ nhất: ${Math.round(hint.rate * 100)}% đoạn lời kể có “tôi”. `
-          : "Nếu người kể chuyện xưng “tôi”, cho biết đó là nhân vật nào. "}
-        Biết tên người kể thì lời thoại của nhân vật chính được đọc bằng đúng giọng của họ - không thì dễ bị gán cho người
-        đang nói chuyện với họ.
+        Tên người kể giúp phân vai đúng lời thoại.
       </p>
+      <MoreInfo label="Máy đoán">{hint?.firstPerson
+        ? hint.chaptersSampled && hint.chaptersWithI
+          ? `${hint.chaptersWithI}/${hint.chaptersSampled} chương đầu có lời kể xưng “tôi”.`
+          : `${Math.round(hint.rate * 100)}% đoạn lời kể có “tôi”.`
+        : "Chọn nhân vật xưng “tôi” trong lời kể."} Bạn có thể sửa gợi ý này.</MoreInfo>
       {Boolean(hint?.suggestions.length) && (
         <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Gợi ý tên người kể">
           {hint!.suggestions.map((name) => (
@@ -1206,7 +1205,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
   );
 }
 
-function VoiceStep({
+export function VoiceStep({
   narrator,
   setNarrator,
   paths,
@@ -1262,7 +1261,7 @@ function VoiceStep({
   };
   return (
     <MotionRegion as="div">
-      <h2 className="text-xl font-semibold">Chọn giọng kể chuyện</h2>
+      <h2 className="text-xl font-semibold">Giọng kể</h2>
       <p className="mt-1 max-w-2xl text-sm text-fg-2 text-pretty">
         Giọng đọc lời dẫn. Nhân vật được trao giọng riêng sau.
       </p>
@@ -1280,22 +1279,9 @@ function VoiceStep({
       />
       {narratorAuto && (
         <p className="mt-4 max-w-2xl text-sm text-fg-2 text-pretty">
-          Máy chọn giọng cùng giới người kể “tôi”. Bấm một giọng để đổi.
+          Máy chọn cùng giới người kể; chọn giọng để đổi.
         </p>
       )}
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Segmented label="Giới tính" value={gender} onChange={setGender} options={[
-          { value: "all", label: "Mọi giọng" },
-          { value: "Nam", label: "Giọng nam" },
-          { value: "Nữ", label: "Giọng nữ" },
-        ]} />
-        <Segmented label="Miền" value={region} onChange={setRegion} options={[
-          { value: "all", label: "Mọi miền" },
-          { value: "Bắc", label: "Miền Bắc" },
-          { value: "Nam", label: "Miền Nam" },
-          { value: "Trung", label: "Miền Trung" },
-        ]} />
-      </div>
       {previousNarrator && (
         <p className="mt-4 text-sm text-fg-2">
           Giọng kể phần trước: <span className="font-semibold text-fg">{previousNarrator}</span>
@@ -1309,6 +1295,20 @@ function VoiceStep({
           )}
         </p>
       )}
+      <Fold storageKey="new-project.voices" title="Đổi giọng" summary={narrator || "Chọn một giọng"} defaultOpen={!narrator} className="mt-4" heading="h3">
+      <div className="flex flex-wrap items-center gap-3">
+        <Segmented label="Giới tính" value={gender} onChange={setGender} options={[
+          { value: "all", label: "Mọi giọng" },
+          { value: "Nam", label: "Giọng nam" },
+          { value: "Nữ", label: "Giọng nữ" },
+        ]} />
+        <Segmented label="Miền" value={region} onChange={setRegion} options={[
+          { value: "all", label: "Mọi miền" },
+          { value: "Bắc", label: "Miền Bắc" },
+          { value: "Nam", label: "Miền Nam" },
+          { value: "Trung", label: "Miền Trung" },
+        ]} />
+      </div>
       {hiddenSelection && (
         <p className="mt-3 text-sm text-fg-2">
           Đang chọn: <span className="font-semibold text-fg">{narrator}</span> (bộ lọc đang ẩn giọng này).{" "}
@@ -1328,13 +1328,14 @@ function VoiceStep({
           />
         ))}
       </div>
+      </Fold>
     </MotionRegion>
   );
 }
 
 // ---- Bước 3 ---------------------------------------------------------------------------------------------------
 
-function QualityStep({
+export function QualityStep({
   profile,
   setProfile,
   words,
@@ -1355,9 +1356,10 @@ function QualityStep({
   // Số đo là của MỘT máy: máy khác / model phân tích khác chỉ được khoảng rộng, có nhãn tham khảo (timeEstimate.ts).
   const exact = matchesMeasured(useStudioGpu(), analysisModel);
   const guess = estimate(words, chapters, exact);
+  const chosen = PROFILES.find((option) => option.value === profile)!;
   return (
     <div>
-      <h2 className="text-xl font-semibold">Chọn mức chất lượng</h2>
+      <h2 className="text-xl font-semibold">Chất lượng</h2>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
         Không đổi được sau khi tạo, để mọi chương đọc giống nhau.
       </p>
@@ -1389,41 +1391,22 @@ function QualityStep({
               )}
               <div className="flex items-center justify-between">
                 <span className="text-base font-semibold">{option.title}</span>
-                {selected && (
-                  <span className="grid size-6 place-items-center rounded-full bg-accent text-accent-ink">
-                    <Check className="size-3.5" strokeWidth={3} />
-                  </span>
-                )}
+                <MotionRegion as="span" className="grid size-6 place-items-center" aria-hidden>{selected ? <span className="grid size-6 place-items-center rounded-full bg-accent text-accent-ink"><Check className="size-3.5" strokeWidth={3} /></span> : <span />}</MotionRegion>
               </div>
               <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-fg-2">
                 <Gauge className="size-3.5" /> {option.pace}
               </div>
               <p className="mt-3 text-sm text-fg-2">{option.summary}</p>
-              <ul className="mt-4 space-y-2 text-[0.8125rem]">
-                {option.points.map((point) => (
-                  <li key={point} className="flex gap-2">
-                    <Check className="mt-0.5 size-3.5 shrink-0 text-success" strokeWidth={3} />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-4 flex items-start gap-1.5 border-t border-line pt-3 text-[0.8125rem] text-fg-2">
-                <Clock3 className="mt-0.5 size-3.5 shrink-0" />
-                {noStudio ? (
-                  <span>Thời gian làm tính được khi Studio đã cài.</span>
-                ) : option.value === "high_quality" ? (
-                  <span>
-                    Tham khảo: <span className="font-semibold text-fg">{lengthRange(guess.totalLow, guess.totalHigh)}</span> cho {chapters}{" "}
-                    chương. {timeBasis(exact)}.
-                  </span>
-                ) : (
-                  <span>Nhanh hơn Chất lượng cao; chưa có số đo.</span>
-                )}
-              </div>
             </button>
           );
         })}
       </div>
+      <Fold storageKey="new-project.quality" title="Chi tiết" summary={chosen.title} className="mt-4" heading="h3">
+        <MotionRegion>
+          <ul className="space-y-2 text-sm">{chosen.points.map((point) => <li key={point} className="flex gap-2"><Check className="mt-0.5 size-3.5 shrink-0 text-success" aria-hidden /><span>{point}</span></li>)}</ul>
+          <p className="mt-3 text-sm text-fg-2">{noStudio ? "Cài Studio để ước tính thời gian." : profile === "high_quality" ? <>Tham khảo: {lengthRange(guess.totalLow, guess.totalHigh)} cho {chapters} chương. {timeBasis(exact)}.</> : "Nhanh hơn Chất lượng cao; chưa có số đo."}</p>
+        </MotionRegion>
+      </Fold>
       <AnalysisModelPicker value={analysisModel} onChange={setAnalysisModel} />
     </div>
   );
@@ -1544,10 +1527,10 @@ function ConfirmStep({
   ];
   return (
     <div>
-      <h2 className="text-xl font-semibold">Xem lại trước khi tạo</h2>
+      <h2 className="text-xl font-semibold">Xem lại</h2>
       {unfit && <NoStudioHere fit={unfit} className="mt-4" />}
-      <div className="mt-6 flex flex-col gap-6 rounded-2xl border border-line bg-panel p-6 sm:flex-row">
-        <BookCover title={title} size="lg" className="w-40 max-sm:mx-auto" />
+      <div className="mt-5 flex items-start gap-4 rounded-2xl border border-line bg-panel p-4">
+        <BookCover title={title} size="lg" className="w-20 sm:w-32" />
         <div className="min-w-0 flex-1">
           <h3 className="text-lg font-semibold text-balance">{title}</h3>
           <dl className="mt-3 divide-y divide-line text-sm">

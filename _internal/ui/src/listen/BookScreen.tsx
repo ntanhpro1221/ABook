@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
 import { LoadingCrossfade } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,7 +12,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { syncsToComputer } from "@/shared/capabilities";
 import { usePageTitle } from "@/shared/title";
-import { reveal, useScrollMemory } from "@/shared/scrollMemory";
+import { reveal, scrollParent, useScrollMemory } from "@/shared/scrollMemory";
 import { Windowed } from "@/shared/Windowed";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { toneLabel } from "./voiceTone";
@@ -37,7 +38,7 @@ import { moreMenuHasItems } from "./bookMenu";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
-function ChapterRow({
+export function ChapterRow({
   book,
   chapter,
   onDone,
@@ -68,9 +69,9 @@ function ChapterRow({
   };
   const name = chapter.subtitle || chapter.title;
   return (
-    <div
+    <MotionRegion as="div"
       className={cn(
-        "group flex items-center gap-3 rounded-xl px-2 py-2.5 sm:px-3",
+        "group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors duration-motion-fast sm:px-3",
         current ? "bg-accent-soft" : canPlay(chapter) && "hover:bg-hover",
       )}
     >
@@ -149,7 +150,7 @@ function ChapterRow({
                 {canPlay(chapter) && (
                   <DropdownMenu.Item onSelect={() => onDone(chapter.id, !done)} className={MENU_ITEM}>
                     {done ? <CircleDashed className="size-4" /> : <CheckCheck className="size-4" />}
-                    {done ? "Đánh dấu chưa nghe" : "Đánh dấu đã nghe xong"}
+                    {done ? "Chưa nghe" : "Đã nghe xong"}
                   </DropdownMenu.Item>
                 )}
                 {onRename && (
@@ -162,8 +163,43 @@ function ChapterRow({
           </DropdownMenu.Root>
         )}
       </div>
-    </div>
+    </MotionRegion>
   );
+}
+
+export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared, voice = "" }: {
+  book: ListenBook; currentChapter?: number; onDone: (chapterId: number, done: boolean) => void;
+  onRename?: (chapter: ListenChapter) => void; prepared?: Set<number>; voice?: string;
+}) {
+  const chapters = book.chapters ?? [];
+  return <>{chaptersByPart(chapters, book.parts).map((group, index) => (
+            <Fold key={group.heading ?? index} storageKey={`book.${book.id}.chapters.${index}`} title={group.heading || "Danh sách chương"} summary={`${group.chapters.length} chương${group.chapters.some(chapter => chapter.id === currentChapter) ? " · Đang nghe" : ""}`} defaultOpen={group.chapters.length <= 4 || group.chapters.some(chapter => chapter.id === currentChapter)} onOpened={(element) => {
+              const row = element.querySelector(`[data-chapter="${CSS.escape(String(currentChapter))}"]`);
+              if (row && !row.closest("[inert]")) reveal(scrollParent(row), row);
+            }} heading="h3" className="mt-3" bodyClassName="px-1 pb-1">
+              {/* Sách vài nghìn chương: chỉ dựng các chương gần màn hình (shared/Windowed); chương đang nghe luôn có sẵn. */}
+              <div role="list" aria-label={group.heading ?? "Danh sách chương"}>
+                <Windowed
+                  items={group.chapters}
+                  estimate={54}
+                  memory={`book.${book.id}.${index}`}
+                  keep={group.chapters.findIndex((chapter) => chapter.id === currentChapter)}
+                  row={(chapter, index) => (
+                    <div key={chapter.id} role="listitem" aria-posinset={index + 1} aria-setsize={group.chapters.length} data-chapter={chapter.id}>
+                      <ChapterRow
+                        book={book}
+                        chapter={chapter}
+                        onDone={(chapterId, done) => onDone(chapterId, done)}
+                        onRename={onRename}
+                        prepared={chapter.state === "text" && prepared?.has(chapter.id)}
+                        voice={voice}
+                      />
+                    </div>
+                  )}
+                />
+              </div>
+            </Fold>
+          ))}</>;
 }
 
 function BookmarksTab({ book }: { book: ListenBook }) {
@@ -192,7 +228,7 @@ function BookmarksTab({ book }: { book: ListenBook }) {
   );
 }
 
-function SampleButton({ id, url, label }: { id: string; url: string; label: string }) {
+export function SampleButton({ id, url, label }: { id: string; url: string; label: string }) {
   const clip = useClip();
   const active = clip.current === id;
   return (
@@ -206,7 +242,7 @@ function SampleButton({ id, url, label }: { id: string; url: string; label: stri
           active ? "border-accent bg-accent text-accent-ink" : "border-line text-fg-2 hover:border-line-strong hover:text-fg",
         )}
       >
-        {active && clip.loading ? <Loader2 className="size-4 animate-spin" /> : active ? <Vu className="h-3" /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+        <MotionRegion as="span" className="grid size-4 place-items-center">{active && clip.loading ? <Loader2 className="size-4 animate-spin" /> : active ? <Vu className="h-3" /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
       </button>
     </Tooltip>
   );
@@ -389,9 +425,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
 }) {
   const source = useSource();
   const { data: cast, isLoading } = useCast(bookId);
-  const [extras, setExtras] = useState(false);
   const [later, setLater] = useState(false);
-  const [carried, setCarried] = useState(false);
   const carriedPeople = onPickVoice ? (cast?.carried ?? []) : [];
   if (isLoading) return <MotionRegion as="div" className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }, (_, index) => <Skeleton key={index} className="h-[84px] rounded-xl" />)}</MotionRegion>;
   if (!cast || (!cast.characters.length && !cast.extras.length && !carriedPeople.length)) {
@@ -421,9 +455,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
         {onPickNarrator && <IconButton label="Đổi giọng người kể" icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}
       </div>
       {narratorNote && <div className="mt-2 text-xs text-fg-2">{narratorNote}</div>}
-      <h3 className="mb-3 mt-6 text-sm font-semibold">
-        Nhân vật <span className="font-normal text-fg-2">· {cast.characters.length} người có lời thoại</span>
-      </h3>
+      <Fold storageKey={`book.${bookId}.cast`} title="Nhân vật" summary={`${cast.characters.length} người có lời thoại`} defaultOpen={cast.characters.length <= 4} heading="h3" className="mt-4">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {cast.characters
           .filter((person) => later || !reached || !person.firstChapter || reached.has(person.firstChapter))
@@ -431,36 +463,23 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
       </div>
       {reached && ahead(cast.characters, reached) > 0 && (
         <button type="button" onClick={() => setLater((value) => !value)} className="touch-row mt-3 text-sm font-medium text-fg-2 hover:text-fg">
-          {later ? "Ẩn" : "Hiện"} {ahead(cast.characters, reached)} người chỉ xuất hiện ở chương sau chỗ đang nghe
+          {later ? "Ẩn chương sau" : "Hiện chương sau"} · {ahead(cast.characters, reached)} người
         </button>
       )}
+      </Fold>
       {cast.extras.length > 0 && (
-        <div className="mt-6">
-          <button type="button" onClick={() => setExtras((value) => !value)} className="touch-row text-sm font-medium text-fg-2 hover:text-fg">
-            {extras ? "Ẩn" : "Hiện"} {cast.extras.length} vai phụ chỉ xuất hiện trong một cảnh
-          </button>
-          {extras && <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}</div>}
-        </div>
+        <Fold storageKey={`book.${bookId}.extras`} title="Vai phụ" summary={`${cast.extras.length} người trong một cảnh`} heading="h3" className="mt-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}</div>
+        </Fold>
       )}
       {/* Phần nối tiếp: dàn mang sang chưa nói ở phần này (soát UX a6 01-10, B2 - tab từng ghi "Chưa có dàn"). Mở sẵn khi chưa ai
           nói câu nào - lúc ấy đây là cả dàn. */}
       {carriedPeople.length > 0 && (
-        <div className="mt-6">
-          {cast.characters.length ? (
-            <button type="button" onClick={() => setCarried((value) => !value)} className="text-sm font-medium text-fg-2 hover:text-fg">
-              {carried ? "Ẩn" : "Hiện"} {carriedPeople.length} người từ phần trước (chưa xuất hiện ở phần này)
-            </button>
-          ) : (
-            <h3 className="text-sm font-semibold">
-              Từ phần trước (chưa xuất hiện ở phần này) <span className="font-normal text-fg-2">· {carriedPeople.length} người giữ nguyên giọng</span>
-            </h3>
-          )}
-          {(carried || !cast.characters.length) && (
+        <Fold storageKey={`book.${bookId}.carried`} title="Từ phần trước" summary={`${carriedPeople.length} người chưa xuất hiện`} defaultOpen={!cast.characters.length && carriedPeople.length <= 4} heading="h3" className="mt-4">
             <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {carriedPeople.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onRename={onRename} onGender={onGender} />)}
             </div>
-          )}
-        </div>
+        </Fold>
       )}
     </MotionRegion>
   );
@@ -485,7 +504,7 @@ function clockOf(epoch: number): string {
 }
 
 /** Lịch sử nghe: mỗi phiên một dòng, gom theo ngày; bấm để nghe tiếp từ cuối phiên ấy. */
-function HistoryTab({ book }: { book: ListenBook }) {
+export function HistoryTab({ book }: { book: ListenBook }) {
   const source = useSource();
   const playBook = usePlayListenBook();
   const { data: sessions } = useQuery({
@@ -500,7 +519,7 @@ function HistoryTab({ book }: { book: ListenBook }) {
   if (!sessions?.length) {
     return (
       <EmptyState icon={History} title="Chưa có lịch sử nghe" className="mt-2">
-        Mỗi lần nghe (bấm phát tới lúc dừng) sẽ hiện ở đây - để biết hôm nào nghe tới đâu.
+        Mỗi lượt nghe lưu lại chỗ bạn dừng.
       </EmptyState>
     );
   }
@@ -516,8 +535,7 @@ function HistoryTab({ book }: { book: ListenBook }) {
         7 ngày qua: <span className="font-semibold text-fg">{formatLength(week)}</span> nghe cuốn này.
       </p>
       {[...groups.entries()].map(([day, items]) => (
-        <section key={day} className="mt-5">
-          <h3 className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">{day}</h3>
+        <Fold key={day} storageKey={`book.${book.id}.history.${day}`} title={day} summary={`${items.length} lượt nghe`} className="mt-3" heading="h3">
           <ul className="mt-2 divide-y divide-line">
             {items.map((item) => (
               <li key={item.id} className="flex items-center gap-3 py-2.5">
@@ -538,7 +556,7 @@ function HistoryTab({ book }: { book: ListenBook }) {
               </li>
             ))}
           </ul>
-        </section>
+        </Fold>
       ))}
     </div>
   );
@@ -831,7 +849,7 @@ export function BookScreen({
   const chapterList = useRef<HTMLDivElement>(null);
   useScrollMemory(book && tab === "chapters" ? `book.${book.id}` : null, chapterList, (scroller) => {
     const row = point && chapterList.current?.querySelector(`[data-chapter="${CSS.escape(String(point.chapter.id))}"]`);
-    if (row) reveal(scroller, row);
+    if (row && !row.closest("[inert]")) reveal(scroller, row);
   });
 
   const placeholder = (
@@ -916,9 +934,9 @@ export function BookScreen({
       <button type="button" onClick={() => navigate("/")} className="touch-hit touch-row inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Thư viện
       </button>
-      <header className="mt-5 flex flex-col gap-5 sm:flex-row sm:gap-7">
-        <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-40 max-sm:mx-auto sm:w-44" />
-        <div className="min-w-0 flex-1 max-sm:text-center">
+      <header className="mt-5 flex items-start gap-4 sm:gap-7">
+        <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-24 sm:w-44" />
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[1.875rem]">{book.title}</h1>
           {book.author && <p className="mt-1.5 text-[0.9375rem] text-fg-2">{book.author}</p>}
           <p className="tabular mt-2 text-sm text-fg-2">
@@ -940,14 +958,14 @@ export function BookScreen({
             <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-text">
               {book.producing && <Vu className="h-2.5" />}
               {book.producing
-                ? "Đang thu âm - chương mới tự hiện ra khi xong"
+                ? "Đang thu; chương mới tự hiện khi xong."
                 : book.remote
                   ? remoteUnfinishedLine(book)
                   : book.imported
-                    ? "Chưa hoàn thành - file sách này chỉ có các chương đã làm; mở bản mới hơn để nghe tiếp"
+                    ? "Chưa đủ chương; mở file sách mới hơn để nghe tiếp."
                     : phonePartial
                       ? partialBookLine(book.chaptersAvailable, book.chaptersTotal)
-                      : "Chưa hoàn thành - việc thu đang dừng"}
+                      : "Chưa đủ chương; đang dừng thu."}
               {studioLink?.(book)}
             </p>
           )}
@@ -1102,32 +1120,7 @@ export function BookScreen({
           {!textOnly && <TabsTrigger value="cast">Nhân vật</TabsTrigger>}
         </TabsList>
         <TabsContent value="chapters" className="mt-2" ref={chapterList}>
-          {chaptersByPart(chapters, book.parts).map((group, index) => (
-            <section key={group.heading ?? index} aria-label={group.heading ?? undefined}>
-              {group.heading && <h3 className="px-2 pb-1 pt-4 text-sm font-semibold text-fg-2 sm:px-3">{group.heading}</h3>}
-              {/* Sách vài nghìn chương: chỉ dựng các chương gần màn hình (shared/Windowed); chương đang nghe luôn có sẵn. */}
-              <div role="list" aria-label={group.heading ?? "Danh sách chương"}>
-                <Windowed
-                  items={group.chapters}
-                  estimate={54}
-                  memory={`book.${book.id}.${index}`}
-                  keep={point ? group.chapters.findIndex((chapter) => chapter.id === point.chapter.id) : undefined}
-                  row={(chapter, index) => (
-                    <div key={chapter.id} role="listitem" aria-posinset={index + 1} aria-setsize={group.chapters.length} data-chapter={chapter.id}>
-                      <ChapterRow
-                        book={book}
-                        chapter={chapter}
-                        onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })}
-                        onRename={editable ? setRenamingChapter : undefined}
-                        prepared={chapter.state === "text" && prepared.has(chapter.id)}
-                        voice={voice}
-                      />
-                    </div>
-                  )}
-                />
-              </div>
-            </section>
-          ))}
+          <ChapterGroups book={book} currentChapter={point?.chapter.id} onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })} onRename={editable ? setRenamingChapter : undefined} prepared={prepared} voice={voice} />
         </TabsContent>
         <TabsContent value="bookmarks">
           <BookmarksTab book={book} />
