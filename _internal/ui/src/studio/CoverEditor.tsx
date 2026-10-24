@@ -107,13 +107,14 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
             <Skeleton className="h-full w-full" />
           </div>
       </div>
-      <div className="mt-2 flex items-center gap-1">
+      {/* Biểu tượng / chữ đầu thẳng mép trái của bìa (soát 24-10): lề âm bù đệm của nút; điện thoại (chỉ biểu tượng, nền chạm 48 px) dồn biểu tượng về trái. */}
+      <div className="mt-2 -ml-2 flex items-center gap-1 max-sm:ml-0">
         <button
           type="button"
           disabled={busy}
           onClick={() => input.current?.click()}
           aria-label={book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}
-          className="touch-box inline-flex h-8 items-center gap-1.5 rounded-lg px-1.5 text-[0.8125rem] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 sm:px-2"
+          className="touch-box inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-[0.8125rem] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 max-sm:!justify-start max-sm:px-0"
         >
           <ImagePlus className="size-4" /> <span className="max-sm:hidden">{book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}</span>
         </button>
@@ -140,7 +141,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           </button>
         )}
       </div>
-      <p className="px-2 text-xs text-fg-3 max-sm:hidden">Kéo hoặc dán ảnh</p>
+      <p className="text-xs text-fg-3 max-sm:hidden">Kéo hoặc dán ảnh</p>
       <CoverSearchDialog
         bookId={book.id}
         defaultQuery={seriesOf(book.title).series || book.title}

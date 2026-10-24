@@ -185,7 +185,7 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/studio-script", group: "Studio", title: "Kịch bản chương", route: "/studio/dong-ho-cat?tab=script" },
   { id: "desktop/studio-music", group: "Studio", title: "Nhạc nền", route: "/studio/dong-ho-cat?tab=music" },
   { id: "desktop/studio-activity", group: "Studio", title: "Diễn biến", route: "/studio/dong-ho-cat?tab=activity" },
-  { id: "desktop/studio-new", group: "Studio", title: "Tạo sách nói · bước 1", route: "/studio/new" },
+  { id: "desktop/studio-new", group: "Studio", title: "Tạo sách nói", route: "/studio/new" },
 ];
 
 

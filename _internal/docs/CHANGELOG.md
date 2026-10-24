@@ -20,6 +20,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thanh phát máy tính còn tối đa 6 nút: lùi · phát · tới, tốc độ, âm lượng, “…”.
 - Màn đọc: chữ 20 px, giãn dòng 1,7; thanh đầu chỉ còn nút về và tên chương, không đè lên chữ; thanh điều khiển dưới mờ đi khi bạn cuộn đọc, chạm là hiện lại.
 - Trang sách và màn Đang nghe căn thẳng hàng: các nút cách đều nhau, biểu tượng ở hai đầu thẳng mép với chữ, bìa lớn bằng bề ngang màn; tab Nhân vật, Lịch sử không còn khung lồng khung; dòng thông tin không rớt một chữ xuống dòng.
+- Studio: danh sách dự án thành bảng gọn (tên · trạng thái · tiến độ · cập nhật), không còn khung lồng khung; "Mở dự án có sẵn", "Mở thư mục" và việc hiếm khác vào menu "…".
+- Trang dự án: đúng một nút chính theo trạng thái (Bắt đầu / Tạm dừng / Tiếp tục / Nghe trong Thư viện…), mọi việc khác vào "…"; năm tab hay dùng, Kịch bản, Nhật ký và Duyệt trước khi thu vào "Thêm".
+- Tạo sách nói một trang: chọn file rồi bấm "Bắt đầu"; giọng kể, chất lượng và cách bắt đầu gập dưới "Tuỳ chọn".
+- Studio căn thẳng hàng: nút đầu trang cùng hàng với tiêu đề, bảng dự án và bảng chương thẳng mép hai bên, "…" hiện đúng chỗ cột Cập nhật khi rê chuột; thời gian còn lại không còn bị cắt; danh sách chương và các bước không còn khung lồng khung.
 
 ### Sửa lỗi
 - Back đóng mọi thông báo đang hiện (kể cả lời mời bật thông báo) rồi mới về trang trước; menu đang khép không chặn chạm bên dưới; đóng nhóm Cài đặt quay đúng một bước.

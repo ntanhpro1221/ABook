@@ -28,14 +28,14 @@ vi.mock("react", async (original) => {
     },
   };
 });
-vi.mock("react-router", () => ({ Link: () => null, useNavigate: () => vi.fn(), useSearchParams: () => [new URLSearchParams("step=3"), vi.fn()] }));
+vi.mock("react-router", () => ({ Link: () => null, useNavigate: () => vi.fn(), useSearchParams: () => [new URLSearchParams(), vi.fn()] }));
 vi.mock("@/desktop/PhoneSync", () => ({ Switch: () => null }));
 vi.mock("@/listen/clip", () => ({ useClip: () => ({}) }));
 vi.mock("@/listen/source", () => ({ useSource: () => ({}) }));
 vi.mock("@/shared/BookCover", () => ({ BookCover: () => null }));
 vi.mock("@/shared/ui", () => ({
   Button: (p: { children: unknown; disabled?: boolean; variant?: string; onClick?: () => void }) => {
-    if (p.variant === "primary" && typeof p.children === "string" && /Tạo|đọc nguồn/.test(p.children)) {
+    if (p.variant === "primary" && typeof p.children === "string" && /Bắt đầu|Tạo|đọc nguồn/.test(p.children)) {
       ev.submit = p.onClick ?? null;
       ev.labels.push({ text: p.children, disabled: p.disabled });
     }
@@ -78,13 +78,13 @@ it("nguồn vừa đổi, kết quả quét còn của danh sách cũ: nút Tạ
 it("quét xong đúng danh sách hiện tại: Tạo gửi đủ cả hai nguồn", () => {
   ev.states = [ev.draft, { key: sourcesKey(ev.draft.paths), result: ev.scan(ev.draft.paths) }];
   renderToStaticMarkup(<NewProjectScreen />);
-  expect(ev.labels.at(-1)).toEqual({ text: "Tạo và bắt đầu", disabled: false });
+  expect(ev.labels.at(-1)).toEqual({ text: "Bắt đầu", disabled: false });
   ev.submit!();
   expect(ev.create.mock.calls[0][0].paths).toEqual(["old/1.txt", "new/2.txt"]);
 });
 
 // Soát a92 T2: thời gian hứa ghi rõ là số tham khảo từ máy đã đo, không nhận là "máy này".
-it("bước xác nhận: thời gian là số tham khảo và nói đo ở đâu", () => {
+it("tuỳ chọn: thời gian là số tham khảo và nói đo ở đâu", () => {
   ev.states = [ev.draft, { key: sourcesKey(ev.draft.paths), result: ev.scan(ev.draft.paths) }];
   const html = renderToStaticMarkup(<NewProjectScreen />);
   expect(html).toContain("Thời gian làm (tham khảo)");
