@@ -9,6 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Sửa lỗi
 - Giữ đúng phần chương đang xem khi sang file kế; đổi lọc/xếp Thư viện mờ đúng vùng, không chồng thanh điều khiển hay tràn xuống thanh phát.
+- Điện thoại: chia sẻ chẩn đoán chỉ đọc, không còn ghi đè hay sửa file chia sẻ; app mở lạnh nhiều lần liền không khởi tạo dữ liệu hai lần.
 
 ## [0.4.137] - 2026-10-24
 
