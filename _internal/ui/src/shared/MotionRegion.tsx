@@ -18,7 +18,7 @@ export function motionSignature(element: HTMLElement): string {
 }
 
 type Props = HTMLAttributes<HTMLElement> & { as?: "div" | "section" | "ul" | "ol" | "p" | "span" | "li" | "label" | "button"; htmlFor?: string; type?: "button" | "submit" | "reset"; disabled?: boolean; children?: ReactNode; motionKey?: unknown; elementRef?: Ref<HTMLElement>; followScroll?: boolean; fadeThrough?: boolean };
-type Snapshot = { clone?: HTMLElement; signature: string; height: number; display?: string; margins?: [number, number] } | null;
+type Snapshot = { clone?: HTMLElement; signature: string; height: number; display?: string; margins?: [number, number]; focus?: HTMLElement } | null;
 
 /** So sánh cây React trước commit: polling/đồng hồ/ô nhập không được clone cả vùng DOM mỗi nhịp.
  * Vùng con có MotionRegion tự lo chuyển cảnh; vùng cha không chụp lại cùng thay đổi ấy. */
@@ -45,12 +45,19 @@ export class MotionRegion extends Component<Props> {
   private animation: Animation | null = null;
   private clone: HTMLElement | undefined;
   private clearExit: (() => void) | undefined;
+  private clearHidden: ((restoreFocus?: boolean) => void) | undefined;
+  private hiddenFocus: HTMLElement | undefined;
   private generation = 0;
   getSnapshotBeforeUpdate(previous: Props): Snapshot {
     const box = this.box.current;
     if (!box || viewTransitionRunning()) return null;
     if (this.props.motionKey !== undefined && JSON.stringify(previous.motionKey) === JSON.stringify(this.props.motionKey)) return null;
     if (this.props.motionKey === undefined && contentSignature(previous.children) === contentSignature(this.props.children)) return null;
+    const active = box.ownerDocument.activeElement;
+    const focus = box.contains(active) ? active as HTMLElement : this.hiddenFocus && (active === box.parentElement || active === box.ownerDocument.body) ? this.hiddenFocus : undefined;
+    this.clearHidden?.(false);
+    ++this.generation;
+    this.animation?.cancel();
     removeMotionSnapshot(this.clone);
     const surface = box.closest('[data-state="open"]:is([role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"])');
     const floorZ = surface ? Math.max(51, (parseInt(getComputedStyle(surface).zIndex) || 50) + 1) : 39;
@@ -60,7 +67,8 @@ export class MotionRegion extends Component<Props> {
     const clone = captureMotionSnapshot(box, box.ownerDocument, floorZ, host && host !== box.ownerDocument.body ? host as HTMLElement : undefined, true, this.props.followScroll);
     const computed = box.style ? getComputedStyle(box) : undefined;
     return { clone, signature: motionSignature(box), height: box.getBoundingClientRect().height, display: computed?.display,
-      margins: [parseFloat(computed?.marginTop ?? "0") || 0, parseFloat(computed?.marginBottom ?? "0") || 0] };
+      margins: [parseFloat(computed?.marginTop ?? "0") || 0, parseFloat(computed?.marginBottom ?? "0") || 0],
+      focus };
   }
   componentDidUpdate(_previous: Props, _state: unknown, snapshot: Snapshot) {
     const box = this.box.current;
@@ -68,7 +76,9 @@ export class MotionRegion extends Component<Props> {
     this.clone = snapshot.clone;
     if (snapshot.signature === motionSignature(box) && this.props.motionKey === undefined) { removeMotionSnapshot(this.clone); this.clone = undefined; return; }
     this.clone = settleMotionSnapshot(box, this.clone);
+    ++this.generation;
     this.animation?.cancel();
+    this.clearHidden?.();
     this.clearExit?.();
     const generation = ++this.generation;
     const to = box.getBoundingClientRect().height;
@@ -90,13 +100,14 @@ export class MotionRegion extends Component<Props> {
         this.clearExit = undefined;
       };
     }
-    const finish = () => { if (generation === this.generation) this.clearExit?.(); };
+    const finish = () => { if (generation === this.generation) { this.clearHidden?.(); this.clearExit?.(); } };
     const duration = prefersReducedMotion() ? MOTION.fast : MOTION.medium;
     const through = this.props.fadeThrough && Math.abs(to - snapshot.height) > 1;
-    // Hộp đổi chiều cao: chữ mới chỉ hiện sau khi ảnh cũ mờ hết, tránh hai bố cục
-    // cùng đọc được chồng nhau. Cả hai lượt vẫn fade, kể cả reduced motion.
+    // Chồng nhẹ hai pha: cây mới bắt đầu hiện khi ảnh cũ còn mờ, tránh đáy sáng.
+    // Reduced vẫn có đủ thời gian fade vào, không tween chiều cao.
+    const revealAt = Math.min(MOTION.fastOut * .6, duration * .25);
     const frames: Keyframe[] = through
-      ? [{ opacity: 0, offset: 0 }, { opacity: 0, offset: MOTION.fastOut / duration }, { opacity: 1, offset: 1 }]
+      ? [{ opacity: 0, offset: 0 }, { opacity: 0, offset: revealAt / duration }, { opacity: 1, offset: 1 }]
       : [{ opacity: 0.45 }, { opacity: 1 }];
     if (!prefersReducedMotion() && Math.abs(to - snapshot.height) > 1) {
       frames[0].height = `${snapshot.height}px`; frames[frames.length - 1].height = `${to}px`;
@@ -105,9 +116,58 @@ export class MotionRegion extends Component<Props> {
       }
     }
     this.animation = box.animate?.(frames, { duration, easing: through ? "linear" : EASE.standard }) ?? null;
-    if (this.animation) this.animation.onfinish = finish;
+    if (this.animation) {
+      this.animation.onfinish = finish;
+      this.animation.oncancel = finish;
+      if (through) this.hideUntilReveal(box, snapshot.focus, this.animation, revealAt);
+    } else finish();
+    if (!through && snapshot.focus && (box.ownerDocument.activeElement === box.parentElement || box.ownerDocument.activeElement === box.ownerDocument.body)) {
+      const target = snapshot.focus.isConnected ? snapshot.focus : box.querySelector<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]');
+      target?.focus({ preventScroll: true });
+    }
   }
-  componentWillUnmount() { ++this.generation; this.animation?.cancel(); this.clearExit?.(); removeMotionSnapshot(this.clone); }
+  private hideUntilReveal(box: HTMLElement, previousFocus: HTMLElement | undefined, animation: Animation, revealAt: number) {
+    const doc = box.ownerDocument;
+    const active = doc.activeElement as HTMLElement | null;
+    const focused = box.contains(active) ? active! : previousFocus;
+    // Park outside the inert tree, including when React just removed the old control.
+    const park = box.parentElement;
+    const tabIndex = park?.getAttribute("tabindex") ?? null;
+    let parked = false;
+    const parkFocus = () => {
+      if (!park) return;
+      if (tabIndex === null) park.setAttribute("tabindex", "-1");
+      park.focus({ preventScroll: true }); parked = true;
+    };
+    if (focused && (box.contains(active) || active === doc.body || active === park)) parkFocus();
+    this.hiddenFocus = focused;
+    box.setAttribute("inert", ""); box.setAttribute("aria-hidden", "true");
+    const block = (event: Event) => { event.preventDefault(); event.stopImmediatePropagation(); if (event.type === "focusin") parkFocus(); };
+    const events = ["click", "dblclick", "pointerdown", "keydown", "focusin"];
+    events.forEach(type => box.addEventListener(type, block, true));
+    let frame = 0;
+    this.clearHidden = (restoreFocus = true) => {
+      cancelAnimationFrame(frame);
+      events.forEach(type => box.removeEventListener(type, block, true));
+      box.toggleAttribute("inert", Boolean(this.props.inert));
+      const hidden = this.props["aria-hidden"];
+      if (hidden == null) box.removeAttribute("aria-hidden"); else box.setAttribute("aria-hidden", String(hidden));
+      if (restoreFocus && parked && doc.activeElement === park && box.isConnected && !box.closest("[inert]")) {
+        const target = focused?.isConnected && box.contains(focused) ? focused : box.querySelector<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]');
+        target?.focus({ preventScroll: true });
+      }
+      if (parked && park && tabIndex === null) park.removeAttribute("tabindex");
+      this.hiddenFocus = undefined;
+      this.clearHidden = undefined;
+    };
+    const check = () => {
+      // Follow the animation clock, so pausing it never exposes an invisible tree.
+      if (typeof animation.currentTime === "number" && animation.currentTime > revealAt) this.clearHidden?.();
+      else frame = requestAnimationFrame(check);
+    };
+    frame = requestAnimationFrame(check);
+  }
+  componentWillUnmount() { ++this.generation; this.animation?.cancel(); this.clearHidden?.(false); this.clearExit?.(); removeMotionSnapshot(this.clone); }
   render() {
     const { as: Tag = "div", motionKey: _key, elementRef, followScroll: _followScroll, fadeThrough: _fadeThrough, ...props } = this.props;
     return createElement(Tag as ElementType, { ...props, ref: (element: HTMLElement | null) => {
