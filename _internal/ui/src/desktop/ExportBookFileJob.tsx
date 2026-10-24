@@ -1,5 +1,4 @@
 import { MotionRegion } from "@/shared/MotionRegion";
-import { cn } from "@/shared/cn";
 import { Collapse } from "@/shared/Collapse";
 import type { ReactNode } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
@@ -98,7 +97,7 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
       onSelect={() => void run()}
       className="flex h-auto cursor-default items-center gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
-      <Icon className={cn("mt-0.5 size-4 shrink-0 self-start", kind !== "mp3" && "translate-x-px")} />
+      <Icon className="mt-0.5 size-4 shrink-0 self-start" />
       <span className="min-w-0">
         <span className="block">{label}</span>
         <MotionRegion as="span" className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
