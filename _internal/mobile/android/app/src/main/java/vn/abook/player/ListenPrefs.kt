@@ -14,6 +14,8 @@ object ListenPrefs {
     private val KEYS = listOf(
         "sleepExtendMinutes", "sleepFadeSeconds", "shakeToExtend", "shakeAction", "shakeSensitivity", "flipToPause",
         "headsetSkips", "autoRewind", "safetyStopHours", "schedule", "theme",
+        // Tiếng chạm, rung, nền đọc: WebView áp; native chỉ nhớ để trả lại khi localStorage của WebView mất (như theme).
+        "touchSounds", "haptics", "readingSurface",
         // Dấu giờ (ms) lần đổi cuối của giao diện: lúc mở app giao diện so với dấu này để biết bản nào mới hơn (soát a100 T3).
         "settingsStamp",
     )
@@ -30,8 +32,9 @@ object ListenPrefs {
     private val SHAKE_ACTIONS = listOf("extend", "reset")
     private val SHAKE_SENSITIVITIES = listOf("gentle", "normal", "firm")
     private val THEMES = listOf("system", "light", "dark")
+    private val READING_SURFACES = listOf("auto", "paper", "ivory", "night")
     private val CLOCK = Regex("""([01]\d|2[0-3]):[0-5]\d""")
-    private val SWITCHES = mapOf("shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "autoRewind" to true)
+    private val SWITCHES = mapOf("shakeToExtend" to true, "flipToPause" to false, "headsetSkips" to true, "autoRewind" to true, "touchSounds" to true, "haptics" to true)
 
     private fun choiceOr(json: JSONObject, key: String, allowed: List<Int>, default: Int): Int {
         val value = json.opt(key) as? Number ?: return default
@@ -67,6 +70,7 @@ object ListenPrefs {
         if (json.has("shakeSensitivity")) out.put("shakeSensitivity", wordOr(json, "shakeSensitivity", SHAKE_SENSITIVITIES, "normal"))
         // Giao diện sáng/tối do WebView áp; native chỉ nhớ để trả lại lúc mở app ([stored]).
         if (json.has("theme")) out.put("theme", wordOr(json, "theme", THEMES, "system"))
+        if (json.has("readingSurface")) out.put("readingSurface", wordOr(json, "readingSurface", READING_SURFACES, "auto"))
         for ((key, default) in SWITCHES) if (json.has(key)) out.put(key, json.opt(key) as? Boolean ?: default)
         if (json.has("schedule")) out.put("schedule", cleanSchedule(json.opt("schedule")) ?: JSONObject.NULL)
         if (json.has("settingsStamp")) out.put("settingsStamp", (json.opt("settingsStamp") as? Number)?.toLong()?.takeIf { it > 0 } ?: 0L)

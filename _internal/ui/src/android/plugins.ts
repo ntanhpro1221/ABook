@@ -109,6 +109,10 @@ export interface EbookPlayerPlugin {
     settingsStamp?: number;
     /** Máy tự chọn nhạc nền cho sách chỉ có chữ chưa chọn nhạc (Cài đặt > Nhạc nền). */
     autoMusic?: boolean;
+    /** Tiếng chạm, rung, nền đọc: WebView áp; native chỉ NHỚ như `theme`. */
+    touchSounds?: boolean;
+    haptics?: boolean;
+    readingSurface?: "auto" | "paper" | "ivory" | "night";
     /** Giọng đọc của "Nghe ngay" (mã giọng của ReadAloud.voices); "" = giọng mặc định của máy. */
     readAloudVoice?: string;
     /** Cuốn của `readAloudVoice`: lõi nhớ giọng ấy cho cuốn ấy (ReadAloud.chooseFor); không có thì cuốn đang nạp. */

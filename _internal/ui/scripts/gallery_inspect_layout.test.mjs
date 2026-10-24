@@ -2,6 +2,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { createLayoutHelpers, crossFrameRhythm } from "./gallery_inspect_layout.mjs";
 import { layoutFixtures } from "./gallery_inspect_layout_fixture.mjs";
+import { browserAvailable } from "./gallery_browser.mjs";
 import { normalizeRule } from "./gallery_inspect.mjs";
 
 describe("đa số và nhịp giữa frame", () => {
@@ -19,7 +20,7 @@ describe("đa số và nhịp giữa frame", () => {
   });
 });
 
-describe("fixture HTML trên Edge, hai theme và hai khổ", () => {
+describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai khổ", () => {
   let results;
   beforeAll(async () => { results = await layoutFixtures(); }, 60000);
   const at = (result, id, metric) => result.findings.filter((f) => f.selector.startsWith(`#${id} >`) && f.metric === metric);

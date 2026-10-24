@@ -257,6 +257,8 @@ export function AddBookDialog({
       await loadPreview(picked, session);
     } catch (error) {
       void importer.discard?.(picked).catch(() => undefined);
+      // Bản chép đã bỏ (điện thoại xoá thư mục chép): "Thử lại" phải chọn lại file, không đọc lại chỗ không còn. Đường dẫn gõ tay thì đọc lại được.
+      if (importer.choose && lastRead.current === picked) lastRead.current = null;
       if (error instanceof ReadCancelled) return;
       fail(error);
       setChoice(null);
@@ -631,8 +633,8 @@ export function AddBookDialog({
           {busy === "reading" && <ContentSkeleton shape="cards" count={2} label="Đang đọc file sách" className="mt-4" />}
           {problem && (
             <div className="mt-3">
-              <InlineError message="Bạn hãy kiểm tra file sách rồi thử đọc lại." onRetry={() => { if (lastRead.current) void read(lastRead.current); else void choose("file"); }} />
-              <ErrorDetails technical={technical || problem} />
+              <InlineError message={problem} onRetry={() => { if (lastRead.current) void read(lastRead.current); else void choose("file"); }} />
+              {technical && <ErrorDetails technical={technical} />}
             </div>
           )}
           <p className="mt-4 text-xs text-fg-3">PDF phải có chữ - PDF chụp từ máy quét thì ABook chưa đọc được.</p>

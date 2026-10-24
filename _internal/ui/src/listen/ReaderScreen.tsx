@@ -307,6 +307,9 @@ export function ReaderScreen(edit: SentenceEditing) {
     onWheel: () => { follow.input.onWheel(); setControls(false); },
     onTouchMove: () => { follow.input.onTouchMove(); setControls(false); },
     onKeyDown: (event: ReactKeyboardEvent<HTMLDivElement>) => {
+      // Phím trên chính thanh hay hộp cỡ chữ (nổi qua portal) không phải cuộn trang: không gỡ thanh đang giữ con trỏ. Tab gọi thanh lại.
+      if ((event.target as HTMLElement).closest?.("[data-reader-controls],[data-radix-popper-content-wrapper]")) return;
+      if (event.key === "Tab") { setControls(true); return; }
       follow.input.onKeyDown(event);
       if (SCROLL_KEYS.has(event.key)) setControls(false);
     },
@@ -315,13 +318,14 @@ export function ReaderScreen(edit: SentenceEditing) {
   const hint = readerHint({ textOnly, canSpeak, timed: script.timed, tapped: Boolean(prefs.tapped), coarse, wish: lineEdit?.mode === "wish", readings: readingEdit || lineEdit?.mode === "wish" });
   const name = chapter.subtitle || chapter.title;
   const bar = (
-    <div role="toolbar" aria-label="Điều khiển đọc" data-reader-controls className="pointer-events-auto mx-auto flex items-center gap-1 rounded-2xl bg-panel px-2 py-1.5 shadow-float">
+    <div role="toolbar" aria-label="Điều khiển đọc" data-reader-controls className="pointer-events-auto mx-auto flex max-w-[calc(100vw-16px)] items-center gap-1 rounded-2xl bg-panel px-2 py-1.5 shadow-float">
       <IconButton label="Chương trước" icon={ChevronLeft} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
       <IconButton label="Tìm trong sách" icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
       {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
       {canListen && (
-        <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="mx-1 max-sm:h-11">
-          Nghe từ đây
+        // Thanh rộng ~345 px với nhãn: màn dưới 380 px (hay chữ hệ thống 130 % trên máy 360 px) chỉ còn icon - nhãn vẫn đọc cho trình đọc màn hình.
+        <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="mx-1 max-sm:h-11 max-[379px]:px-3">
+          <span className="max-[379px]:sr-only">Nghe từ đây</span>
         </Button>
       )}
       <Popover.Root>

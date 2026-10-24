@@ -125,6 +125,22 @@ class A118SyncRulesTest {
         }
     }
 
+    @Test fun bug3ABrokenRowRevisionDropsTheRowSoThePeerResendsIt() {
+        fun rev(counter: Int, node: String) = JSONObject().put("counter", counter).put("node", node)
+        val clean = ListeningSchema.state(JSONObject()
+            .put("chapters", JSONObject().put("1", JSONObject().put("heard", 5).put("duration", 9).put("at", 1).put("rev", rev(-3, "x")))
+                .put("2", JSONObject().put("heard", 1).put("at", 1).put("rev", rev(2, "n"))))
+            .put("bookmarks", JSONArray().put(JSONObject().put("id", "a").put("chapterId", 1).put("seconds", 2).put("rev", rev(-3, "x"))))
+            .put("last", JSONObject().put("chapterId", 1).put("seconds", 3).put("rev", rev(-3, "x")))
+            .put("rate", 1.2).put("rateAt", 5).put("_fieldRevs", JSONObject().put("rate", rev(-3, "x")))
+            .put("deleted", JSONObject().put("b", 4)).put("_deletedRevs", JSONObject().put("b", rev(-3, "x"))))
+        assertEquals(listOf("2"), clean.getJSONObject("chapters").keys().asSequence().toList())
+        assertEquals(0, clean.getJSONArray("bookmarks").length())
+        assertFalse(clean.has("last") || clean.has("rate") || clean.has("rateAt"))
+        assertEquals(0, clean.getJSONObject("deleted").length())
+        assertTrue(ListeningRevision.checkedPeer(JSONObject(), clean) {}.getJSONObject("chapters").has("2"))
+    }
+
     @Test fun bug5RecordMetadataFollowsCausalityNotTheWallClock() {
         val holder = phone("meta-holder")
         val record = Store.activeRecord(book)
