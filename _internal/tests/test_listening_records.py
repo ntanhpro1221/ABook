@@ -23,24 +23,6 @@ from tests.test_webui_listen_and_sync import _request, _sync_request, library  #
 MOVE_SYNC = json.loads((Path(__file__).parent / "fixtures" / "listening_records" / "move_sync.json").read_text(encoding="utf-8"))
 
 
-def test_the_old_file_becomes_one_default_record_per_book(tmp_path: Path) -> None:
-    path = tmp_path / "listening.json"
-    old = {"sach-a": {"last": {"chapterId": 3, "seconds": 812.4, "at": 1.0}, "chapters": {}, "bookmarks": [
-        {"id": "m1", "chapterId": 3, "seconds": 64.0, "note": "đoạn hay", "at": 1.0}], "updatedAt": 5.0}}
-    path.write_text(json.dumps(old, ensure_ascii=False), encoding="utf-8")
-
-    listening = Listening(path)
-
-    assert listening.get("sach-a")["last"]["seconds"] == 812.4
-    assert [mark["note"] for mark in listening.get("sach-a")["bookmarks"]] == ["đoạn hay"]
-    [record] = listening.records("sach-a")
-    assert record["name"] == DEFAULT_RECORD_NAME and record["active"]
-    listening.progress("sach-a", 3, 900.0, 1000.0)
-    saved = json.loads(path.read_text(encoding="utf-8"))
-    assert saved["version"] == 2 and set(saved) == {"version", "records", "links", "deleted"}
-    assert "sach-a" not in json.dumps(saved["records"]), "hồ sơ không biết mình thuộc sách nào"
-
-
 def test_one_book_many_records_each_with_its_own_place(tmp_path: Path) -> None:
     listening = Listening(tmp_path / "listening.json")
     listening.progress("sach", 1, 300.0, 1000.0)
@@ -312,12 +294,10 @@ def test_the_ui_moves_a_record_to_another_book(library) -> None:  # noqa: F811 -
         server.stop()
 
 def test_both_devices_share_one_default_record_per_book(tmp_path: Path) -> None:
-    """Hồ sơ "Mặc định" mang mã suy từ mã sách ở mọi máy: máy tính và điện thoại cùng nghe một cuốn (hay cùng chuyển
-    bản lưu cũ) là MỘT hồ sơ - đồng bộ gộp vào nhau, không tách đôi chỗ nghe."""
-    old = tmp_path / "listening.json"
-    old.write_text(json.dumps({"sach": {"bookmarks": [{"id": "m-may-tinh", "chapterId": 1, "seconds": 5.0,
-                                                       "note": "", "at": 1.0}], "chapters": {}}}), encoding="utf-8")
-    desktop = Listening(old)
+    """Hồ sơ "Mặc định" mang mã suy từ mã sách ở mọi máy: máy tính và điện thoại cùng nghe một cuốn là MỘT hồ sơ -
+    đồng bộ gộp vào nhau, không tách đôi chỗ nghe."""
+    desktop = Listening(tmp_path / "listening.json")
+    mark = desktop.add_bookmark("sach", 1, 5.0)
     [record] = desktop.records("sach")
     assert record["id"] == default_record_id("sach")
 
@@ -327,7 +307,7 @@ def test_both_devices_share_one_default_record_per_book(tmp_path: Path) -> None:
     reply = desktop.merge_record("sach", default_record_id("sach"), phone_state)
 
     assert len(desktop.records("sach")) == 1 and reply["record"] == record["id"]
-    assert {mark["id"] for mark in desktop.get("sach")["bookmarks"]} == {"m-may-tinh", "m-dien-thoai"}
+    assert {item["id"] for item in desktop.get("sach")["bookmarks"]} == {mark["id"], "m-dien-thoai"}
     fresh = Listening(tmp_path / "moi.json")
     fresh.progress("sach-moi", 1, 3.0, 100.0)
     assert fresh.records("sach-moi")[0]["id"] == default_record_id("sach-moi")

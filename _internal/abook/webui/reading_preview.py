@@ -110,7 +110,6 @@ import os
 import sys
 from pathlib import Path
 
-from abook.config import normalize_legacy_locked_settings
 from abook.tts import TTSCoordinator
 from abook.tts_pool import ReadOnlyVoiceDB
 '''
@@ -155,7 +154,7 @@ def run_job(request, state, emit):
         row = connection.execute("SELECT * FROM segments WHERE id=?", (int(request["segment"]),)).fetchone()
     if book is None or row is None:
         return {"error": "Không đọc được câu này trong sách."}
-    settings = normalize_legacy_locked_settings(json.loads(str(book["settings_json"])))
+    settings = json.loads(str(book["settings_json"]))
     if os.environ.get("ABOOK_PREVIEW_FAKE") == "1":
         fake_voice(db, settings)
         state.pop("engine", None)
