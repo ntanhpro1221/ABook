@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import "../styles.css";
 import { installDetailsMotion } from "@/shared/motion";
 import { createAppQueryClient } from "@/shared/queryClient";
+import { OfflineFrame } from "@/shared/OfflineFrame";
 import { setApiTransport } from "@/studio/api";
 import { setNativeMusicImport } from "@/studio/musicImport";
 import { initAndroidSource } from "./androidSource";
@@ -24,7 +25,7 @@ void initAndroidSource().finally(() => {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <QueryClientProvider client={client}>
-        <AndroidApp />
+        <OfflineFrame><AndroidApp /></OfflineFrame>
       </QueryClientProvider>
     </StrictMode>,
   );

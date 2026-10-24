@@ -53,7 +53,7 @@ function chapterRows(item: GalleryBook): Chapter[] {
 export function summary(item: GalleryBook): BookSummary {
   const rows = chapterRows(item);
   const phase = phaseOf(item);
-  const running = Boolean(item.producing);
+  const running = Boolean(item.producing) && !(galleryState.scenario.queued && item.pauseReason);
   const done = rows.filter((row) => row.playable).length;
   const segments = rows.reduce((sum, row) => sum + row.segments.total, 0);
   const recorded = rows.reduce((sum, row) => sum + row.segments.recorded, 0);
@@ -79,12 +79,12 @@ export function summary(item: GalleryBook): BookSummary {
     settings: { profile: "balanced", profileLabel: "Cân bằng", narrator: item.narrator, analyzer: "qwen3.5:9b" },
     chapters: { total: rows.length, completed: done, failed: 0, working: running && phase === "synthesis" ? 1 : 0 },
     segments: { total: segments, analyzed: Math.round(segments * analysis), pending: Math.round(segments * (1 - analysis)), recorded, finished: recorded, failed: 0 },
-    progress: { overall: phase === "analysis" ? 0.18 : 0.3 + synthesis * 0.7, analysis, synthesis },
+    progress: { overall: galleryState.scenario.queued && !running ? 0 : phase === "analysis" ? 0.18 : 0.3 + synthesis * 0.7, analysis, synthesis },
     audioSeconds: rows.reduce((sum, row) => sum + row.seconds, 0),
     eta: item.eta ? { phase: item.eta.phase as Phase, seconds: item.eta.seconds } : null,
     speakerPass: null,
     position: item.state.last ? { chapterId: item.state.last.chapterId, seconds: item.state.last.seconds, duration: 1800, at: item.state.last.at } : null,
-    queuePosition: null,
+    queuePosition: galleryState.scenario.queued && !running ? projects().filter((entry) => !entry.producing || entry.pauseReason).findIndex((entry) => entry.id === item.id) + 1 : null,
     paused: item.pauseReason ?? null,
     canPause: true,
     stopping: false,
@@ -392,6 +392,9 @@ const ROUTES: [string, RegExp, Handler][] = [
 
 export async function respond(path: string, method: string, body: Record<string, unknown>): Promise<Reply> {
   const url = new URL(path, "http://gallery.local");
+  const state = galleryState.scenario.requests?.[url.pathname];
+  if (method === "GET" && state === "loading") return never();
+  if (method === "GET" && state === "error") return fail(503, "Bạn hãy thử lại sau một lát.");
   for (const [verb, pattern, handler] of ROUTES) {
     if (verb !== method) continue;
     const match = url.pathname.match(pattern);

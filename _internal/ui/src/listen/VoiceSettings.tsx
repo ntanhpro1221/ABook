@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, KeyRound, Play, Square, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Button, StatusPill, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { Button, StatusPill, radioGroupKeys, radioTabIndex, ContentSkeleton, InlineError } from "@/shared/ui";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { Collapse, Fold, useFold } from "@/shared/Collapse";
 import { cn } from "@/shared/cn";
@@ -266,7 +266,6 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
       setProviders(online);
       setLoadError("");
     } catch (error) {
-      setVoices([]);
       setLoadError(errorText(error));
     }
   }, [api]);
@@ -284,9 +283,9 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
 
   return (
     <MotionRegion as="div" className="grid grid-cols-[minmax(0,1fr)] gap-5">
-      {loadError && <p role="alert" className="text-[0.8125rem] text-danger">{loadError}</p>}
+      {loadError && <InlineError message="Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc." onRetry={() => void load()} />}
       {current && <p className="text-sm font-medium">Đang dùng: {current.name}</p>}
-      {voices === null && <p className="text-[0.8125rem] text-fg-2">Đang tìm các giọng…</p>}
+      {voices === null && !loadError && <ContentSkeleton label="Đang tải giọng đọc" />}
       {voices &&
         VOICE_GROUPS.map(({ provider, title }) => {
           const list = voices.filter((voice) => voice.provider === provider);

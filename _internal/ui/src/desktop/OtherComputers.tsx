@@ -10,7 +10,7 @@ import { cn } from "@/shared/cn";
 import { formatFingerprint, formatRelative } from "@/shared/format";
 import { peerPage } from "@/shared/peerStudio";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
-import { Button, IconButton, Skeleton, Tooltip } from "@/shared/ui";
+import { Button, ContentSkeleton, IconButton, InlineError, Tooltip } from "@/shared/ui";
 import type { UnsentEdits } from "@/shared/unpair";
 import { useUnpair } from "@/shared/useUnpair";
 import { bluetoothAddress, deviceKindLabel, isBluetoothHost, routeLine, wakingLine, type PairedDevice, type Waking } from "./computerRoutes";
@@ -59,7 +59,7 @@ interface FoundComputer {
 
 export function OtherComputers() {
   const client = useQueryClient();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["computers"],
     queryFn: () => api<ComputersView>("/api/computers"),
     // Đang chờ một máy dậy: xem lại thường xuyên để thấy nó trả lời (hay hết hạn chờ).
@@ -147,7 +147,8 @@ export function OtherComputers() {
     setAddress(device.address);
     codeInput.current?.focus();
   };
-  if (isLoading || !data) return <MotionRegion><Skeleton className="h-20" /></MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tải lại thiết bị." onRetry={() => void refetch()} /></MotionRegion>;
+  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton count={2} label="Đang tải thiết bị" /></MotionRegion>;
   // Đã ghép rồi thì không mời ghép lại.
   const pairedAddresses = new Set(data.computers.filter((computer) => isBluetoothHost(computer.host)).map((computer) => bluetoothAddress(computer)));
   const unpaired = devices.filter((device) => !pairedAddresses.has(device.address));

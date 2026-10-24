@@ -59,7 +59,7 @@ export async function runEntry(entry: Entry, theme: Theme, container: HTMLElemen
   installPlatform(entry.platform, entry.clock);
   prepare(entry, theme);
   window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${entry.route}`);
-  const unmount = await mountApp(entry.platform, container);
+  const unmount = await mountApp(entry.platform, container, entry.showcase);
   await waitStill(quiet);
   if (entry.act) {
     try {

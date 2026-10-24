@@ -14,7 +14,7 @@ import { cn } from "@/shared/cn";
 import { MUSIC_MODIFIED_NOTE, formatClock, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { MUSIC_LEVELS as LEVELS, levelText } from "@/shared/musicLevels";
-import { Button, IconButton, LiveText, Progress } from "@/shared/ui";
+import { Button, IconButton, LiveText, Progress, ContentSkeleton, InlineError, EmptyState } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
 import { importMusic } from "./musicImport";
@@ -255,7 +255,7 @@ function Alternatives({
 }) {
   useEffect(() => onStopPreview, [onStopPreview]); // đóng danh sách (hay mở đoạn khác) thì bài nghe thử dừng
   const { data: info } = useAppInfo();
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["music-alternatives", bookId, sceneKey],
     queryFn: () =>
       api<{ alternatives: Alternative[]; mine?: MineAlternative[] }>(
@@ -264,8 +264,8 @@ function Alternatives({
     staleTime: 0,
     gcTime: 0,
   });
-  if (isLoading) return <MotionRegion as="p" className="text-fg-2">Đang tìm bài khác…</MotionRegion>;
-  if (error) return <MotionRegion as="p" className="text-warning">{(error as Error).message}</MotionRegion>;
+  if (isLoading) return <MotionRegion fadeThrough><ContentSkeleton label="Đang tải bài khác" /></MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tìm lại bài nhạc." onRetry={() => void refetch()} /></MotionRegion>;
   const mine = data?.mine ?? [];
   // Nhạc của tôi nằm trên máy tính chủ sách: nghe thử từ máy khác (Studio từ xa) không đi qua đường theo sách.
   const canPreviewMine = !info?.remote;
@@ -318,7 +318,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
   const { data: info } = useAppInfo();
   const canImport = Boolean(info?.dialogs); // hộp chọn file là của máy tính chủ sách, không có ở Studio từ xa
   const key = ["music-local"];
-  const { data } = useQuery({ queryKey: key, queryFn: () => api<LocalMusicView>("/api/music/local"), enabled: canImport });
+  const { data, isLoading, error, refetch } = useQuery({ queryKey: key, queryFn: () => api<LocalMusicView>("/api/music/local"), enabled: canImport });
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const removeBox = useRef<HTMLElement>(null);
@@ -373,7 +373,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
         <p className="text-sm text-fg-2">Nhập/xoá trên máy chủ; ở đây dùng “Đổi bài” để ghim nhạc.</p>
       )}
       {canImport && !!tracks.length && <MusicModuleNotice view={data} queryKey={key} />}
-      {canImport && !tracks.length && <p className="text-sm text-fg-2">Chưa có bài nào.</p>}
+      {canImport && <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : !tracks.length ? <EmptyState icon={Music2} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>}
       {!!tracks.length && (
         <ul className="divide-y divide-line rounded-lg border border-line">
           {tracks.map((track: LocalTrack) => (
@@ -519,7 +519,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
   useBackLayer(swapping !== null, () => setSwapping(null), swapBox, swapTrigger); // khoá đoạn đang mở "Đổi bài"
   const preview = usePreview();
   const key = ["music", bookId];
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: key,
     queryFn: () => api<MusicView>(`/api/books/${bookId}/music`),
     // Đang đọc không khí / đang tải sẵn nhạc: hỏi lại tới khi xong.
@@ -593,8 +593,8 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
   };
 
   // Lần đầu (danh mục chưa có trên máy) mất cỡ 10 giây - bài nhạc tải sau ở nền, không chờ ở đây (soát UX a60: từng mất 2,7 phút).
-  if (isLoading || !data)
-    return <MotionRegion as="p" className="mt-6 text-sm text-fg-2">Đang chọn nhạc nền; lần đầu tải danh mục khoảng 10 giây.</MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError className="mt-6" message="Bạn hãy kiểm tra kết nối rồi tải lại nhạc nền." onRetry={() => void refetch()} /></MotionRegion>;
+  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton shape="cards" label="Đang tải nhạc nền" className="mt-6" /></MotionRegion>;
   const { plan, overrides, taxonomy } = data;
   const genres = Object.entries(taxonomy.genres ?? {});
   // Màn hẹp: ô chọn không đủ rộng cho tên thể loại dài ("Dị giới / kỳ ảo phương Tây (…)") nên chữ bị cắt - ghi đủ tên bên dưới.

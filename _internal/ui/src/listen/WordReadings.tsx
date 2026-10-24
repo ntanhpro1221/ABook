@@ -3,7 +3,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { Pause, Pencil, Trash2, Volume2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
-import { Button, Dialog, IconButton } from "@/shared/ui";
+import { Button, Dialog, IconButton, ContentSkeleton, InlineError } from "@/shared/ui";
 import {
   cleanSpoken,
   MAX_PHRASE_WORDS,
@@ -226,8 +226,8 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
   const { data: info } = useAppInfo();
   const listenOnly = Boolean(info?.listenOnly);
   // Không đọc được danh sách thì nói thẳng - đừng bảo "chưa có từ nào" khi chỉ là chưa lấy được.
-  if (readings.isError) return <MotionRegion as="p" className="text-xs text-danger">Chưa đọc được danh sách cách đọc: {(readings.error as Error).message}</MotionRegion>;
-  if (readings.isPending) return <MotionRegion as="p" className="text-xs text-fg-2">Đang đọc danh sách…</MotionRegion>;
+  if (readings.isError && !readings.data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy thử tải lại danh sách cách đọc." onRetry={() => void readings.refetch()} /></MotionRegion>;
+  if (readings.isPending) return <MotionRegion fadeThrough><ContentSkeleton count={2} label="Đang tải cách đọc" /></MotionRegion>;
   if (!list.length && listenOnly) return <MotionRegion as="p" className="text-xs text-fg-2">Chưa có từ nào.</MotionRegion>;
   if (!list.length) {
     return <MotionRegion as="p" className="text-xs text-fg-2">Chưa có từ nào. Ở màn đọc, giữ (hay bấm chuột phải) vào một từ đọc sai rồi chọn cách đọc.</MotionRegion>;

@@ -925,3 +925,22 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 @utility ease-standard { --tw-ease: var(--ease-standard); transition-timing-function: var(--ease-standard); }
 @utility ease-decelerate { --tw-ease: var(--ease-decelerate); transition-timing-function: var(--ease-decelerate); }
 @utility ease-accelerate { --tw-ease: var(--ease-accelerate); transition-timing-function: var(--ease-accelerate); }
+/* Thanh bên: phản hồi nhấn và nhả cùng nhịp của hệ thiết kế. */
+.sidebar-link {
+  transition: transform var(--motion-fast) var(--ease-standard), background-color var(--motion-medium) var(--ease-standard), color var(--motion-medium) var(--ease-standard), filter var(--motion-fast) var(--ease-standard);
+}
+.sidebar-link:active {
+  transform: scale(.97);
+  filter: brightness(.94);
+  transition-duration: var(--motion-fast-out);
+}
+/* Khung chờ xám, nhịp 1,6 giây; giữ quy tắc giảm chuyển động ở trên. */
+@media (prefers-reduced-motion: no-preference) {
+  .motion-skeleton {
+    animation: fade-in var(--motion-medium) linear var(--motion-fast) backwards, state-skeleton-pulse 1.6s ease-in-out calc(var(--motion-fast) + var(--motion-medium)) infinite;
+  }
+}
+@keyframes state-skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-link:active { transform: none; }
+}

@@ -9,7 +9,7 @@ import { MoreInfo } from "@/shared/SettingsNav";
 import { MY_MUSIC_HELP } from "@/studio/musicLocal";
 import { toast } from "@/shared/toast";
 import { formatClock } from "@/shared/format";
-import { Button, WRAP_LABEL } from "@/shared/ui";
+import { Button, WRAP_LABEL, ContentSkeleton, InlineError, EmptyState } from "@/shared/ui";
 import { api, type AppInfo } from "@/studio/api";
 import { hasNativeMusicImport, importMusic } from "@/studio/musicImport";
 import { analysisLabel, importSummary, LOCAL_PREFIX, MY_MUSIC_INTRO, mineNote, type LocalMusicView } from "@/studio/musicLocal";
@@ -61,14 +61,14 @@ export function SwapTrack({
   choosing: string | null;
   onChoose: (link: string) => void;
 }) {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["music-alternatives", bookId, cueKey],
     queryFn: () => api<{ mine?: MineItem[] }>(`/api/books/${bookId}/music/scenes/${encodeURIComponent(cueKey)}/alternatives`),
     staleTime: 0,
     gcTime: 0,
   });
-  if (isLoading) return <MotionRegion as="p" className="px-3 py-2 text-xs text-fg-2">Đang tìm bài của bạn…</MotionRegion>;
-  if (error) return <MotionRegion as="p" className="px-3 py-2 text-xs text-warning">{(error as Error).message}</MotionRegion>;
+  if (isLoading) return <MotionRegion fadeThrough><ContentSkeleton className="px-3 py-2" label="Đang tải bài nhạc" /></MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tìm lại bài nhạc." onRetry={() => void refetch()} /></MotionRegion>;
   const mine = data?.mine ?? [];
   if (!mine.length) {
     return <MotionRegion as="p" className="px-3 py-2 text-xs text-fg-2">Chưa có bài nào khác trong Nhạc của tôi - nhập nhạc của bạn ở mục “Nhạc của tôi” bên dưới.</MotionRegion>;
@@ -97,7 +97,7 @@ export function SwapTrack({
 export function MyMusicSection() {
   const client = useQueryClient();
   const canImport = useCanImportMusic();
-  const { data } = useMyMusic();
+  const { data, isLoading, error, refetch } = useMyMusic();
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const removeBox = useRef<HTMLElement>(null);
@@ -152,7 +152,7 @@ export function MyMusicSection() {
       <p className="text-xs text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
       <MoreInfo label="Nhạc riêng">{MY_MUSIC_HELP}</MoreInfo>
       {!canImport && <p className="text-xs text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách.</p>}
-      {canImport && !tracks.length && <p className="text-xs text-fg-2">Chưa có bài nào.</p>}
+      <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={Music2} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>
       {!!rows.length && (
         <ul className="divide-y divide-line rounded-lg border border-line">
           {rows.map(({ item: track, key, state, ref }) => (

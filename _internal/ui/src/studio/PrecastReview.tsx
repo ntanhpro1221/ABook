@@ -12,7 +12,7 @@ import { useCast } from "@/listen/source";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
 import { formatNumber } from "@/shared/format";
-import { Button, EmptyState } from "@/shared/ui";
+import { Button, EmptyState, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, type BookSummary, type PrecastView } from "./api";
 import { NameReadings } from "./NameReadings";
 import { pollDelay, retryUnlessGone } from "./polling";
@@ -136,16 +136,20 @@ type Open = {
 };
 
 export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open }: { book: BookSummary } & Open) {
-  const { data: view } = usePrecast(book.id);
-  const { data: work, isLoading } = useWork(book.id);
-  const { data: cast } = useCast(book.id);
+  const precast = usePrecast(book.id);
+  const { data: view } = precast;
+  const workQuery = useWork(book.id);
+  const { data: work, isLoading } = workQuery;
+  const castQuery = useCast(book.id);
+  const { data: cast } = castQuery;
   const step: PrecastStep = PRECAST_STEPS.includes(stepParam as PrecastStep) ? (stepParam as PrecastStep) : "cast";
   // Điện thoại: bốn bước phải nằm ở màn đầu - lời giới thiệu và công tắc gập lại (soát UX a8 07-10).
   const narrow = useMediaQuery("(max-width: 639px)");
   // Quyết xong một thẻ thì thẻ rời danh sách: tiêu điểm sang thẻ kế (hết thẻ thì về đầu vùng bước), không rơi về BODY (useCardFocus.ts).
   const lists = useRef<WorkLists | null>(null);
   useCardFocus(lists, PRECAST_ENDS);
-  if (!view || isLoading || !work) return <MotionRegion as="div" className="mt-6 text-sm text-fg-2">Đang gom những gì cần duyệt…</MotionRegion>;
+  if ((precast.isError && !view) || (workQuery.isError && !work) || (castQuery.isError && !cast)) return <MotionRegion fadeThrough><InlineError className="mt-6" message="Bạn hãy kiểm tra kết nối rồi tải lại lượt duyệt." onRetry={() => { void precast.refetch(); void workQuery.refetch(); void castQuery.refetch(); }} /></MotionRegion>;
+  if (!view || isLoading || !work || !cast) return <MotionRegion fadeThrough><ContentSkeleton shape="cards" className="mt-6" label="Đang tải lượt duyệt" /></MotionRegion>;
 
   const people = (cast?.characters ?? []).slice(0, TOP_PEOPLE);
   // Nhiều dòng cùng tên ("Lính gác" ba lần) hầu như là một người máy tách ra theo từng chương - hỏi, và cho đường tắt tới chỗ gộp.
