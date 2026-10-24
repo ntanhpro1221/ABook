@@ -90,7 +90,11 @@ function BackButton() {
   return null;
 }
 
-function Tab({ to, icon: Icon, label }: { to: string; icon: typeof Library; label: string }) {
+/** `also`: đường không nằm dưới `to` nhưng vẫn thuộc tab này - trang sách và trang đọc mở từ Thư viện nên tô Thư viện
+ *  (soát 24-10 T16: ở trang sách thanh đáy không tô mục nào). */
+function Tab({ to, icon: Icon, label, also }: { to: string; icon: typeof Library; label: string; also?: string }) {
+  const { pathname } = useLocation();
+  const within = also !== undefined && pathname.startsWith(also);
   return (
     <NavLink
       to={to}
@@ -98,14 +102,14 @@ function Tab({ to, icon: Icon, label }: { to: string; icon: typeof Library; labe
       className={({ isActive }) =>
         cn(
           "flex flex-1 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium transition-colors duration-(--motion-medium) ease-standard",
-          isActive ? "text-accent-text" : "text-fg-2",
+          isActive || within ? "text-accent-text" : "text-fg-2",
         )
       }
     >
       {({ isActive }) => (
         <>
           {/* Tab vừa chọn: biểu tượng nhún nhẹ lên, màu chuyển dần (trang đổi bằng "fade through" - MotionHashRouter). */}
-          <Icon className={cn("motion-tab-icon glyph-22 transition-transform duration-(--motion-medium) ease-decelerate", isActive && "-translate-y-px scale-110")} strokeWidth={1.9} />
+          <Icon className={cn("motion-tab-icon glyph-22 transition-transform duration-(--motion-medium) ease-decelerate", (isActive || within) && "-translate-y-px scale-110")} strokeWidth={1.9} />
           {label}
         </>
       )}
@@ -139,7 +143,7 @@ function MobileShell({ children }: { children: ReactNode }) {
         style={{ paddingBottom: "env(safe-area-inset-bottom)", boxSizing: "content-box" }}
         aria-label="Điều hướng"
       >
-        <Tab to="/" icon={Library} label="Thư viện" />
+        <Tab to="/" icon={Library} label="Thư viện" also="/book/" />
         <Tab to="/studio" icon={Clapperboard} label="Studio" />
         <Tab to="/settings" icon={Settings} label="Cài đặt" />
       </nav>

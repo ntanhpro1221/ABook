@@ -28,6 +28,12 @@ it("ba tab là Thư viện · Studio · Cài đặt, không có tab Tải sách"
   expect(nav.querySelector('[href="#/devices"]')).toBeNull();
 });
 
+it("ở trang sách thanh đáy vẫn tô Thư viện", async () => {
+  await draw("phone/book");
+  const nav = document.querySelector('nav[aria-label="Điều hướng"]')!;
+  expect([...nav.querySelectorAll("a")].filter(link => link.classList.contains("text-accent-text")).map(link => link.textContent)).toEqual(["Thư viện"]);
+});
+
 it("Thiết bị ở cấp hai, tới được bằng hai chạm qua Cài đặt", async () => {
   await draw("phone/library-full");
   await click("Cài đặt", document.querySelector('nav[aria-label="Điều hướng"]')!);
