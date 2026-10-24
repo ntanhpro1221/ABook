@@ -1,6 +1,6 @@
 import { App as CapacitorApp } from "@capacitor/app";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Clapperboard, Download, Library, Link2, Settings, Trash2 } from "lucide-react";
+import { Clapperboard, Download, Headphones, Library, Link2, Settings, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -152,7 +152,7 @@ function EmptyLibrary() {
   const navigate = useNavigate();
   return (
     <EmptyState
-      icon={Download}
+      icon={Headphones} // như máy tính: biểu tượng nói "nghe", không phải "tải xuống" (việc ở đây là thêm file - soát 24-10 T05)
       title="Chưa có sách trên máy"
       className="mt-10"
       action={
