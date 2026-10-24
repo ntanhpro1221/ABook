@@ -327,7 +327,7 @@ describe("không chỗ nào bật tắt cứng: các chỗ chung đều đi qua 
     const ui = source("./ui.tsx");
     expect(ui).toContain('className="motion-scrim');
     expect(ui).toContain('"motion-dialog ');
-    expect(ui).toContain('className="motion-sheet ');
+    expect(ui).toContain('"motion-sheet sheet-surface ');
     expect(ui).toContain('className="motion-tooltip ');
     for (const name of ["motion-dialog", "motion-sheet", "motion-scrim"]) {
       expect(css).toMatch(new RegExp(String.raw`\.${name}\[data-state="open"\] \{\s*animation: (motion-enter|fade-in) `));

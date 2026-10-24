@@ -1,3 +1,4 @@
+import { ActionMenu } from "@/shared/ActionMenu";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { LoadingCrossfade } from "@/shared/MotionPresence";
@@ -7,7 +8,6 @@ import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, C
 import { Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
-import { holderName } from "@/shared/editsSync";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { syncsToComputer } from "@/shared/capabilities";
@@ -613,8 +613,8 @@ export function singleRecordActions(book: ListenBook): { key: string; label: str
   if (book.records?.length !== 1) return [];
   const name = book.records[0].name;
   return [
-    { key: "create", label: "Nghe lại từ đầu (hồ sơ mới)…", icon: Plus, dialog: newRecordDialog(book) },
-    { key: "move", label: "Chuyển chỗ nghe sang cuốn khác…", icon: ArrowRightLeft, dialog: { kind: "move", name } },
+    { key: "create", label: "Hồ sơ mới", icon: Plus, dialog: newRecordDialog(book) },
+    { key: "move", label: "Chuyển hồ sơ", icon: ArrowRightLeft, dialog: { kind: "move", name } },
     { key: "rename", label: "Đổi tên hồ sơ…", icon: Pencil, dialog: { kind: "rename", name } },
     { key: "delete", label: "Xoá hồ sơ…", icon: Trash2, dialog: { kind: "delete", name }, danger: true },
   ];
@@ -652,7 +652,7 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
 /**
  * Hồ sơ nghe của cuốn: dữ liệu nghe độc lập với sách, app giữ liên kết - một cuốn nhiều hồ sơ (nghe lại từ đầu mà giữ
  * lần trước, mỗi người trong nhà một hồ sơ). Cuốn đang nạp trong trình phát thì trình phát theo sang hồ sơ mới.
- * Chỉ có một hồ sơ (gần như mọi người): không hiện nút "Hồ sơ nghe: Mặc định"; "Nghe lại từ đầu (hồ sơ mới)…" nằm trong menu "Thêm" (…)
+ * Chỉ có một hồ sơ (gần như mọi người): không hiện nút "Hồ sơ nghe: Mặc định"; "Hồ sơ mới" nằm trong menu "Thêm" (…)
  * (soát UX 03-10) - vì thế trang sách giữ `dialog`, menu ấy mở được cùng hộp.
  */
 function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: RecordDialog; setDialog: Dispatch<SetStateAction<RecordDialog>> }) {
@@ -729,7 +729,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
             ))}
             <DropdownMenu.Separator className="my-1 h-px bg-line" />
             <DropdownMenu.Item onSelect={() => setDialog(newRecordDialog(book))} className={MENU_ITEM}>
-              <Plus className="size-4" /> Nghe lại từ đầu (hồ sơ mới)…
+              <Plus className="size-4" /> Hồ sơ mới
             </DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "rename", name: active.name })} className={MENU_ITEM}>
               <Pencil className="size-4" /> Đổi tên hồ sơ này…
@@ -744,7 +744,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
       )}
-      <Dialog
+      <Dialog phoneSheet
         open={dialog !== null}
         onOpenChange={(open) => !open && setDialog(null)}
         title={
@@ -844,11 +844,13 @@ function DotJoin({ parts }: { parts: (string | false | null | undefined)[] }) {
 
 export function BookScreen({
   extraActions,
+  dangerActions,
   studioLink,
   notice,
   editing = {},
 }: {
   extraActions?: (book: ListenBook) => ReactNode;
+  dangerActions?: (book: ListenBook) => ReactNode;
   /** Máy tính: lối sang Studio ngay trên dòng trạng thái của sách đang làm. */
   studioLink?: (book: ListenBook) => ReactNode;
   /** Dòng tình trạng riêng của nền tảng dưới tên sách (máy tính: tải sách của máy khác về máy). */
@@ -932,13 +934,14 @@ export function BookScreen({
   const remoteEdit = editing !== false && Boolean(editing.remote);
   const waiting = editable && !workshop && !remoteEdit;
   const extra = extraActions?.(book);
+  const danger = dangerActions?.(book);
   // Nút "…" chỉ khi menu có mục (thiết bị chỉ được nghe: sách chỉ có chữ thì menu rỗng).
   const moreMenu = moreMenuHasItems({
     records: Boolean(source.records) && book.records?.length === 1,
     finishedToggle: !textOnly,
     edit: editing !== false && editable,
     platform: editing !== false && !remoteEdit,
-    extra,
+    extra: extra || danger,
   });
   const listening = player.track?.bookId === book.id;
   const heard = book.progress.heardSeconds;
@@ -1088,29 +1091,24 @@ export function BookScreen({
             {(listenFirst || caughtUp) && <ActionButton icon={BookOpen} label="Đọc" aria-label={readLabel === "Đọc" ? undefined : readLabel} onClick={read} />}
             <ActionButton icon={Search} label="Tìm" aria-label="Tìm chữ trong sách" disabled={!chapters.length} onClick={() => setFinding(true)} />
             {!textOnly || point ? <ActionButton icon={RotateCcw} label="Từ đầu" aria-label="Nghe lại từ đầu" disabled={!(started && point && !finished)} onClick={restart} /> : null}
-            {moreMenu && <DropdownMenu.Root>
-              <DropdownMenu.Trigger asChild>
-                <ActionButton icon={MoreHorizontal} label="Thêm" aria-label="Thêm việc với sách" />
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Portal>
-                <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-[min(20rem,calc(100vw-24px))] rounded-xl border border-line bg-panel p-1.5 shadow-float">
+            {moreMenu && <ActionMenu title="Việc với sách" trigger={<ActionButton icon={MoreHorizontal} label="Thêm" aria-label="Thêm việc với sách" />}>
                   {/* Một hồ sơ thì không có nút hồ sơ nghe: tạo / chuyển / đổi tên / xoá hồ sơ duy nhất nằm ở đây (soát a105 F9), dùng chung hộp thoại của RecordPicker. */}
-                  {source.records && singleRecordActions(book).map((action) => (
-                    <DropdownMenu.Item key={action.key} onSelect={() => setRecordDialog(action.dialog)} className={action.danger ? cn(MENU_ITEM, "text-danger") : MENU_ITEM}>
+                  {source.records && singleRecordActions(book).filter(action => !action.danger).map((action) => (
+                    <DropdownMenu.Item key={action.key} onSelect={() => setRecordDialog(action.dialog)} className={MENU_ITEM}>
                       <action.icon className="size-4" /> {action.label}
                     </DropdownMenu.Item>
                   ))}
                   {!textOnly && (
                     <DropdownMenu.Item onSelect={() => mutations.finished.mutate(!book.progress.finished)} className={MENU_ITEM}>
                       <CheckCheck className="size-4" />
-                      {book.progress.finished ? "Đánh dấu chưa nghe xong" : "Đánh dấu đã nghe xong"}
+                      {book.progress.finished ? "Chưa nghe xong" : "Đã nghe xong"}
                     </DropdownMenu.Item>
                   )}
                   {editing !== false && editable && (
                     <>
                       <DropdownMenu.Separator className="my-1 h-px bg-line" />
                       <DropdownMenu.Item onSelect={() => setEditOpen(true)} className={MENU_ITEM}>
-                        <Pencil className="size-4" /> {textOnly ? (workshop ? "Sửa tên, bìa…" : "Sửa tên, tác giả, bìa…") : "Sửa tên, bìa, nhạc nền…"}
+                        <Pencil className="size-4" /> Sửa thông tin
                       </DropdownMenu.Item>
                       {textOnly && <PlaylistSubmenu bookId={book.id} />}
                       {syncs && <SendEditsItem book={book} />}
@@ -1121,7 +1119,7 @@ export function BookScreen({
                             onSelect={() => void saver.save()}
                             className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
                           >
-                            <Save className="size-4" /> {(book.unsaved ?? book.edits) ? `Lưu (${book.unsaved ?? book.edits} thay đổi)` : "Lưu (chưa có thay đổi)"}
+                            <Save className="size-4" /> Lưu thay đổi
                           </DropdownMenu.Item>
                           <DropdownMenu.Item onSelect={() => setSaveAsOpen(true)} className={MENU_ITEM}>
                             <FileDown className="size-4" /> Lưu thành…
@@ -1139,7 +1137,7 @@ export function BookScreen({
                       )}
                       {!remoteEdit && !workshop && Boolean(book.wishes) && (
                         <DropdownMenu.Item onSelect={() => setWishesOpen(true)} className={MENU_ITEM}>
-                          <Hourglass className="size-4" /> Việc đang chờ {syncs ? `gửi về ${holderName(book.remote)}` : "máy làm sách"} ({book.wishes})
+                          <Hourglass className="size-4" /> Việc đang chờ ({book.wishes})
                         </DropdownMenu.Item>
                       )}
                     </>
@@ -1149,9 +1147,15 @@ export function BookScreen({
                   {editing !== false && !remoteEdit && <ProjectFileItems book={book} onViews={() => setViewsOpen(true)} />}
                   {editing !== false && !remoteEdit && <TextBookItems book={book} />}
                   {extra}
-                </DropdownMenu.Content>
-              </DropdownMenu.Portal>
-            </DropdownMenu.Root>}
+                  {source.records && singleRecordActions(book).filter(action => action.danger).map(action => <Fragment key={action.key}>
+                    <DropdownMenu.Separator className="my-2 h-px bg-line" />
+                    <DropdownMenu.Item onSelect={() => setRecordDialog(action.dialog)} className={cn(MENU_ITEM, "text-danger")}>
+                      <action.icon className="size-4" /> {action.label}
+                    </DropdownMenu.Item>
+                  </Fragment>)}
+                  {danger && <DropdownMenu.Separator className="my-2 h-px bg-line" />}
+                  {danger}
+            </ActionMenu>}
           </div>
           {chapters.length > 0 && <FindInBook book={book} open={finding} onOpenChange={setFinding} />}
         </div>

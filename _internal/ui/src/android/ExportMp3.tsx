@@ -15,7 +15,7 @@ import { progressText } from "./ExportM4b";
 import { isEnded, noteEnded, rejoinExports } from "./exportJobs";
 import { EbookLibrary, type Mp3ExportEvent } from "./plugins";
 
-// "Xuất MP3 để nghe ở app khác" trên điện thoại: cùng chữ, cùng bản xuất với máy tính (desktop/App.tsx ExportMenuItem). Việc chạy nền
+// "Xuất MP3" trên điện thoại: cùng chữ, cùng bản xuất với máy tính (desktop/App.tsx ExportMenuItem). Việc chạy nền
 // (Mp3ExportWorker.kt): app đang mở thì thông báo trong app theo tiến độ; ra ngoài app thì thông báo của hệ thống, có nút "Dừng".
 // Cuốn có nhạc nền gắn theo chương (soát a99 V3): mục menu mở hộp nhỏ có ô "Kèm nhạc nền" như "Xuất M4B"; cuốn không có nhạc thì bấm là chạy.
 // Điện thoại không có bộ mã hoá MP3, nên chương đã trộn nhạc ra file .m4a (hộp nói trước điều đó).
@@ -194,7 +194,7 @@ export function ExportMp3MenuItem({ book }: { book: ListenBook }) {
       onSelect={() => void chooseMp3(book)}
       className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
-      <FolderDown className="size-4" /> Xuất MP3 để nghe ở app khác
+      <FolderDown className="size-4" /> Xuất MP3
     </DropdownMenu.Item>
   );
 }

@@ -616,6 +616,7 @@ export function App() {
                     path="/book/:id"
                     element={
                       <BookScreen
+                        dangerActions={(book) => book.imported && !info.remote && !book.remote && <RemoveImportedMenuItem book={book} />}
                         extraActions={(book) =>
                           book.imported ? (
                             // Sách của máy khác (remote) thôi hiện khi gỡ máy ấy - không có gì để xoá ở đây; tải về máy được.
@@ -632,8 +633,7 @@ export function App() {
                                     <M4bMenuItem book={book} />
                                   </>
                                 )}
-                                <RemoveImportedMenuItem book={book} />
-                              </>
+                                </>
                             )
                           ) : (
                             // Thiết bị chỉ được nghe (remote_studio.LISTEN_ROUTES): xuất file và Studio đều chỉ kết thúc bằng 403 - không hiện.

@@ -731,12 +731,77 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
 /* Tấm trượt từ đáy */
 .motion-sheet {
   --enter-y: calc(100% * var(--motion-amount));
+  transition: transform var(--motion-fast) var(--ease-standard);
 }
 .motion-sheet[data-state="open"] {
   animation: motion-enter var(--motion-slow) var(--ease-decelerate) backwards;
 }
 .motion-sheet[data-state="closed"] {
   animation: motion-exit var(--motion-slow-out) var(--ease-accelerate) both;
+}
+
+/* Menu sách: cùng mép chữ, nhịp hàng và cỡ biểu tượng cho cả hai nền tảng. */
+.book-action-menu [role="menuitem"] {
+  min-height: 48px;
+  height: auto;
+  gap: 12px;
+  padding: 12px 0;
+  align-items: flex-start;
+  line-height: 24px;
+}
+.book-action-menu [role="menuitem"] > svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.book-action-menu [role="menuitem"] > span { min-width: 0; }
+.book-action-sheet .sheet-body > [data-radix-popper-content-wrapper] {
+  position: static !important;
+  transform: none !important;
+  min-width: 0 !important;
+  width: 100%;
+}
+.book-action-sheet .book-action-menu {
+  max-height: none;
+  min-width: 0;
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+.player-sheet .sheet-body > div > .grid,
+.player-sheet .sheet-body > .grid { padding-inline: 0; gap: 8px; }
+.player-sheet .sheet-body button { min-height: 48px; }
+.sheet-surface [data-add-book-actions] > button:first-child { margin-left: calc(var(--spacing) * -3.5); }
+.sheet-surface .dialog-actions > button { min-height: 48px; }
+.sheet-surface [data-sheet-grip] button { margin-right: -14px; }
+.player-sheet .sheet-body [class~="px-2"],
+.player-sheet .sheet-body [class~="px-1"] { padding-inline: 0; }
+.sheet-surface .add-book-choose { display: flex; flex-direction: column; }
+.sheet-surface .add-book-pick { order: 1; display: flex; flex-direction: column-reverse; margin-top: 16px; }
+.sheet-surface .add-book-pick > button { min-height: 48px; width: 100%; }
+.sheet-surface [data-add-book-actions] { justify-content: space-between; }
+.sheet-surface [data-add-book-actions] > button { min-height: 48px; }
+.player-sheet [data-player-menu-row] { min-height: 48px; padding-inline: 0; gap: 12px; }
+.player-sheet [data-player-menu-row] > span:first-child { gap: 12px; }
+.player-sheet [data-player-menu-row] > svg,
+.player-sheet [data-player-menu-row] > span:first-child > svg { width: 20px; height: 20px; }
+.chapter-sheet [role="tabpanel"] > div { padding-inline: 0; }
+.chapter-sheet button[data-current] { min-height: 48px; padding: 12px 0; gap: 12px; }
+.chapter-sheet button[data-current] > span:first-child { width: 20px; }
+.chapter-sheet button[data-current] > span:first-child svg { width: 20px; height: 20px; }
+[data-menu-slot] button {
+  width: 48px;
+  min-width: 48px;
+}
+[data-menu-slot] > :last-child {
+  margin-right: calc((clamp(1.125rem, 0.75rlh, 1.96875rem) - 48px) / 2);
+}
+[data-radix-popper-content-wrapper] > [role="dialog"]:has(> [data-player-more]) {
+  padding: 20px;
 }
 
 /* Menu, bảng nổi, danh sách chọn, tooltip của Radix (mọi chỗ, không phải sửa từng nơi): mọc ra từ phía nút mở (gốc biến đổi Radix tính sẵn). */

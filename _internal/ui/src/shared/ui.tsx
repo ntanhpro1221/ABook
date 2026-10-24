@@ -10,6 +10,7 @@ import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { MotionRegion } from "./MotionRegion";
 import { MotionPresence } from "./MotionPresence";
 import { useBackLayer } from "./backStack";
+import { useMediaQuery } from "./media";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
@@ -563,6 +564,7 @@ export function Dialog({
   description,
   children,
   width = "max-w-lg",
+  phoneSheet = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -570,6 +572,7 @@ export function Dialog({
   description?: ReactNode;
   children: ReactNode;
   width?: string;
+  phoneSheet?: boolean;
 }) {
   // Nhớ phần tử đang giữ con trỏ lúc hộp mở (trước khi Radix chuyển con trỏ vào hộp) để trả về khi đóng.
   const opener = useRef<Element | null>(null);
@@ -579,6 +582,8 @@ export function Dialog({
   useLayoutEffect(() => {
     if (open) opener.current = lastFocus;
   }, [open]);
+  const phone = useMediaQuery("(max-width: 640px)");
+  if (phone && phoneSheet) return <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description}>{children}</Sheet>;
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -589,7 +594,7 @@ export function Dialog({
           inert={!open}
           style={open ? undefined : CLOSING}
           className={cn(
-            "motion-dialog fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex max-h-[90dvh] flex-col rounded-2xl border border-line bg-panel p-6 shadow-float focus:outline-none",
+            "motion-dialog fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex max-h-[90dvh] flex-col rounded-[20px] border border-line bg-panel p-6 shadow-float focus:outline-none",
             width,
           )}
           onInteractOutside={keepOpenForToasts}
@@ -647,44 +652,134 @@ export function Sheet({
   trigger,
   children,
   onEscapeKeyDown,
+  description,
+  footer,
+  focusSelector,
+  onKeyDown,
+  className,
+  onHeightChange,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: ReactNode;
-  trigger: ReactNode;
+  trigger?: ReactNode;
   children: ReactNode;
   onEscapeKeyDown?: (event: KeyboardEvent) => void;
+  description?: ReactNode;
+  footer?: ReactNode;
+  focusSelector?: string;
+  onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
+  className?: string;
+  onHeightChange?: (height: number) => void;
 }) {
-  const lastContent = useRef({ title, children });
-  if (open) lastContent.current = { title, children };
-  const shown = open ? { title, children } : lastContent.current;
+  const lastContent = useRef({ title, children, description, footer });
+  if (open) lastContent.current = { title, children, description, footer };
+  const shown = open ? { title, children, description, footer } : lastContent.current;
+  const opener = useRef<Element | null>(null);
+  const start = useRef<number | null>(null);
+  const [drag, setDrag] = useState(0);
+  const [surface, setSurface] = useState<HTMLDivElement | null>(null);
+  const closeSheet = useRef(onOpenChange);
+  closeSheet.current = onOpenChange;
+  useEffect(() => {
+    if (!surface || !open) return;
+    let origin: { x: number; y: number } | null = null;
+    let distance = 0;
+    const begin = (event: TouchEvent) => {
+      const target = event.target as Element;
+      if (target.closest('button, input, textarea, select, [role="slider"], [data-sheet-grip]')) return;
+      for (let node = target; node && node !== surface; node = node.parentElement!) {
+        if (node.scrollTop > 0) return;
+      }
+      const touch = event.touches[0];
+      if (touch) origin = { x: touch.clientX, y: touch.clientY };
+    };
+    const move = (event: TouchEvent) => {
+      if (!origin || !event.touches[0]) return;
+      const touch = event.touches[0];
+      distance = Math.max(0, touch.clientY - origin.y);
+      if (distance <= Math.abs(touch.clientX - origin.x)) { distance = 0; return; }
+      event.preventDefault(); setDrag(distance);
+    };
+    const end = () => { if (distance >= 64) closeSheet.current(false); origin = null; distance = 0; setDrag(0); };
+    const cancel = () => { origin = null; distance = 0; setDrag(0); };
+    surface.addEventListener("touchstart", begin, { passive: true });
+    surface.addEventListener("touchmove", move, { passive: false });
+    surface.addEventListener("touchend", end);
+    surface.addEventListener("touchcancel", cancel);
+    return () => {
+      surface.removeEventListener("touchstart", begin); surface.removeEventListener("touchmove", move);
+      surface.removeEventListener("touchend", end); surface.removeEventListener("touchcancel", cancel);
+    };
+  }, [surface, open]);
+  useEffect(() => {
+    if (!open || !onHeightChange) return;
+    const element = surface;
+    if (!element) return;
+    const update = () => onHeightChange(element.getBoundingClientRect().height);
+    update();
+    const observer = new ResizeObserver(update); observer.observe(element);
+    return () => { observer.disconnect(); onHeightChange(0); };
+  }, [open, onHeightChange, surface]);
+  useLayoutEffect(() => { if (open) opener.current = lastFocus; }, [open]);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
-      <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>
+      {trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
         <DialogPrimitive.Content
-          aria-describedby={undefined}
+          {...(!shown.description ? { "aria-describedby": undefined } : {})}
+          ref={setSurface}
           inert={!open}
-          style={open ? undefined : CLOSING}
-          onCloseAutoFocus={keepNewLayerFocus}
+          style={!open ? CLOSING : drag ? { transform: `translateY(${drag}px)`, animation: "none", transition: "none" } : undefined}
+          onCloseAutoFocus={(event) => {
+            if (keepNewLayerFocus(event)) return;
+            if (!trigger) {
+              const target = focusReturnTarget(opener.current, document.body);
+              if (target) { event.preventDefault(); target.focus(); }
+            }
+          }}
+          onOpenAutoFocus={(event) => {
+            const target = (event.currentTarget as HTMLElement).querySelector<HTMLElement>(focusSelector ?? "[data-autofocus]");
+            if (!target) return;
+            event.preventDefault(); target.focus();
+            if (target instanceof HTMLInputElement) target.select();
+          }}
+          onKeyDown={onKeyDown}
           // Đóng (Esc, nút Đóng, chạm nền): Radix tự trả tiêu điểm về nút mở (Trigger) - trước đây chặn việc ấy nên tiêu điểm rơi về BODY (soát a31 K1).
           onEscapeKeyDown={onEscapeKeyDown}
           onInteractOutside={keepOpenForToasts}
-          className="motion-sheet fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-line bg-panel px-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] pt-2 shadow-float focus:outline-none"
+          className={cn("motion-sheet sheet-surface fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] min-w-0 flex-col overflow-hidden rounded-t-[20px] bg-panel px-[20px] pb-[max(env(safe-area-inset-bottom),20px)] shadow-float focus:outline-none", className)}
         >
-          <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-line-strong" aria-hidden />
-          <div className="flex items-center justify-between gap-3 px-1.5">
+          <div data-sheet-grip className="shrink-0 touch-none pb-3 pt-3"
+            onPointerDown={(event) => {
+              if (event.target instanceof Element && event.target.closest("button")) return;
+              start.current = event.clientY; event.currentTarget.setPointerCapture?.(event.pointerId);
+            }}
+            onPointerMove={(event) => { if (start.current !== null) setDrag(Math.max(0, event.clientY - start.current)); }}
+            onPointerUp={(event) => {
+              const distance = start.current === null ? 0 : event.clientY - start.current;
+              start.current = null; setDrag(0);
+              if (distance >= 64) onOpenChange(false);
+            }}
+            onPointerCancel={() => { start.current = null; setDrag(0); }}>
+          <div data-sheet-handle className="mx-auto mb-3 h-[4px] w-[40px] rounded-full bg-line-strong" aria-hidden />
+          <div className="flex items-center justify-between gap-3">
             <DialogPrimitive.Title className="text-sm font-semibold">
               <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{shown.title}</MotionRegion>
             </DialogPrimitive.Title>
             <DialogPrimitive.Close asChild>
-              <button aria-label="Đóng" className={CLOSE_BUTTON}>
-                <X className="size-5" />
+              <button aria-label="Đóng" className={cn(CLOSE_BUTTON, "-mr-3")}>
+                <X className="size-[20px]" />
               </button>
             </DialogPrimitive.Close>
           </div>
-          {shown.children}
+          </div>
+          <div className="sheet-body -mx-[20px] min-h-0 min-w-0 overflow-y-auto overscroll-contain px-[20px]">
+            {shown.description && <DialogPrimitive.Description className="mb-3 text-pretty text-sm text-fg-2"><MotionRegion as="span" className="block" motionKey={typeof shown.description === "string" ? shown.description : undefined}>{shown.description}</MotionRegion></DialogPrimitive.Description>}
+            {shown.children}
+          </div>
+          {shown.footer && <div className="sheet-footer shrink-0 border-t border-line pt-4">{shown.footer}</div>}
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
