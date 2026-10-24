@@ -90,20 +90,25 @@ Bộ hiện có (xám lạnh #f4f5f7 + hổ phách) chỉnh lại có chủ đí
 | `--line` vạch | #e3dfd7 | #2e2b27 | vạch chia hàng |
 | `--text` mực | #1a1814 | #ece8e1 | chữ chính, icon chính |
 | `--text-2` mực phụ (Tailwind `fg-2`) | #5e5950 | #a8a196 | chữ phụ (≥ 4,5:1 trên nền) |
-| `--text-3` mực ba (Tailwind `fg-3`) | #67615a | #958e83 | chữ phụ bậc ba, cả trên `--bg-sunken` / `--accent-soft` (≥ 4,5:1) |
+| `--text-3` mực ba (Tailwind `fg-3`) | #67615a | #a0998e | chữ phụ bậc ba, cả trên `--bg-sunken` / các lớp `*-soft` (≥ 4,5:1) |
 | `--fg-3` mực mờ (Tailwind `fg-faint`) | #8a8478 | #7a746a | chỉ icon phụ / chữ ≥ 18px (≥ 3:1) |
 | `--accent` đồng thau | #d4912b | #e9a945 | nút chính, thanh tiến độ, tab đang chọn |
 | `--accent-ink` chữ trên nhấn | #1d1304 | #1b1204 | chữ/icon trên nền hổ phách |
 | `--accent-text` chữ nhấn | #8a5309 | #f0b961 | chữ màu nhấn trên nền |
 | `--accent-soft` nhấn nhạt | #f7ead5 | rgb(233 169 69 / .14) | câu đang đọc, hàng đang phát |
-| `--success` / `--danger` | #2d7957 / #b23b33 | #5cc596 / #ef7b70 | chỉ cho trạng thái, kèm chữ/icon |
+| `--success` / `--danger` | #2a7554 / #b23b33 | #5cc596 / #ef7b70 | chỉ cho trạng thái, kèm chữ/icon |
 
 - Mặt đọc theo có 3 nền riêng, chọn trong Giao diện > "Nền đọc": Giấy #fbfaf7 / mực #1b1a17; Ngà #f3ead8 / #3b2f1e; Đêm #121110 / #d9d3c8
   (mặc định "Tự động" = Giấy khi sáng, Đêm khi tối). Trong vùng đọc, chữ phụ và chữ nhấn theo mặt đọc (`.reading-surface`).
-- Trình phát đầy đủ lấy màu chủ đạo của bìa, pha 10 % (sáng) / 16 % (tối) vào `--bg` làm nền màn - mỗi cuốn một không
+- Trình phát đầy đủ lấy màu chủ đạo của bìa, pha 6 % (sáng) / 12 % (tối) vào `--bg` làm nền màn (trần mà chữ phụ còn ≥ 4,5:1 kể cả với bìa đen / trắng) - mỗi cuốn một không
   khí; đổi cuốn thì mờ chéo màu nền theo `--motion-slow`. Bìa không có màu rõ: giữ `--bg`.
 - Mọi cặp chữ/nền kiểm tỉ lệ tương phản bằng test (`ui/src/shared/palette.test.ts`; WCAG AA: 4,5:1 chữ thường, 3:1 chữ lớn/icon) ở cả hai
   chủ đề; test cũng đối chiếu bảng này với `styles.css`. `--success` sẫm hơn bản nháp (#2f7d5b) để chữ trên `--success-soft` đạt 4,5:1.
+- `npm run contrast` (`ui/scripts/check_contrast.mjs`) đọc thẳng `styles.css` và đo MỌI cặp token thực dùng: chữ trên từng nền (kể cả lớp `*-soft` chồng lên nền),
+  viền / rãnh công tắc / vòng tiêu điểm (3:1), ba mặt đọc x hai giao diện, nền màn Đang nghe với mọi màu bìa, chữ cái đầu nhân vật với mọi sắc. Thoát khác 0 nếu
+  một cặp trượt. Không thành phần nào dùng màu thô: chữ / icon trên ảnh bìa dùng `--cover-ink` trên `--cover-overlay`; chữ trên nền đặc trạng thái dùng `--success-ink` /
+  `--danger-ink`; núm công tắc dùng `--switch-thumb`. Màn chờ và thanh hệ thống Android lấy `app_bg` (values / values-night) bằng đúng `--bg`.
+- Thông tin (`--info`) là xám ấm, không có sắc thứ hai: ngoài hổ phách chỉ có xanh lục / đỏ / vàng đất của trạng thái.
 - Không gradient trang trí, không màu thứ hai cho nút. Màu chỉ để nói trạng thái hay hướng mắt tới việc chính.
 
 ### 5.2 Chuyển động và hiệu ứng (VFX)
