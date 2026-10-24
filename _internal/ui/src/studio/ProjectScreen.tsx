@@ -1285,7 +1285,7 @@ export function ProjectScreen() {
   };
 
   const placeholder = (
-      <div className="mx-auto max-w-[1180px] px-10 pt-9">
+      <div className="page-x mx-auto max-w-[1180px] pt-9">
         <Skeleton className="h-5 w-24" />
         <div className="mt-6 flex gap-7">
           <Skeleton className="size-44 rounded-lg" />
@@ -1344,7 +1344,7 @@ export function ProjectScreen() {
   ].filter(Boolean);
 
   return (
-    <div className="motion-reveal mx-auto max-w-[1180px] px-4 pb-16 pt-7 sm:px-10">
+    <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16 pt-7">
       <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>

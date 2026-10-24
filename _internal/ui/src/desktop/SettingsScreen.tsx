@@ -543,7 +543,7 @@ export function SettingsScreen() {
     // Hai cột: /settings mở sẵn nhóm đầu; đổi nhóm thay chỗ trong lịch sử như đổi tab.
     const shown = active ?? groups[0];
     return (
-      <div className="settings-page mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-8 px-10 pb-16 pt-9">
+      <div className="settings-page page-x mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-8 pb-16 pt-9">
         <div>
           <h1 className="text-[1.75rem] font-bold tracking-tight">Cài đặt</h1>
           {notices}

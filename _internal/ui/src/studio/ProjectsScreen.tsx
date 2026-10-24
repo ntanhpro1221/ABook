@@ -271,7 +271,7 @@ export function ProjectsScreen() {
   };
 
   return (
-    <MotionRegion as="div" className="mx-auto max-w-[1180px] px-4 pb-16 pt-9 md:px-10">
+    <MotionRegion as="div" className="page-x mx-auto max-w-[1180px] pb-16 pt-9">
       {/* Nút đầu trang cùng hàng (căn giữa) với tiêu đề, biểu tượng cuối thẳng mép phải bảng - như đầu trang Thư viện (soát 24-10). */}
       <header>
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">

@@ -510,6 +510,15 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   letter-spacing: 0.06em;
 }
 
+/* Lề màn (DESIGN 5.5: điện thoại 20, máy tính 40). Viết bằng px: thang khoảng cách của app là 3,5 px nên px-4 / px-10 ra 14 / 35 -
+   Thư viện 40 mà Sách, Studio, Cài đặt 35, chuyển trang là nội dung nhảy 5 px (soát 25-10). Mọi khung trang dùng lớp này. */
+@utility page-x {
+  padding-inline: 20px;
+  @media (width >= 40rem) {
+    padding-inline: 40px;
+  }
+}
+
 @utility touch-box {
   @media (pointer: coarse), (max-width: 40rem) {
     min-height: var(--touch);
