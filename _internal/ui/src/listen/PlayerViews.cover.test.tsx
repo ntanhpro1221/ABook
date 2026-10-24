@@ -27,7 +27,8 @@ afterEach(() => vi.unstubAllGlobals());
 function background(color: string): string {
   state.color = color;
   vi.stubGlobal("localStorage", { getItem: () => null });
-  const view = NowPlaying({ mobile: true }) as ReactElement<{ style: Record<string, string> }>;
+  const provider = NowPlaying({ mobile: true }) as ReactElement<{ children: ReactElement<{ style: Record<string, string> }> }>;
+  const view = provider.props.children;
   return view.props.style["--cover-tint"];
 }
 
