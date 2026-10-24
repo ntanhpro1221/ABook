@@ -77,7 +77,85 @@ gọn dưới Studio) và **Cài đặt** ở đáy; không nhóm tiêu đề "N
 
 ## 5. Token
 
-Màu giữ bộ hiện có trong `ui/src/styles.css` (nền xám lạnh, hổ phách, sáng/tối) - không phải vấn đề. Siết phần còn lại:
+### 5.1 Màu - "phòng nghe ấm"
+
+Bộ hiện có (xám lạnh #f4f5f7 + hổ phách) chỉnh lại có chủ đích: nền ấm như giấy, mực gần đen hơi nâu, hổ phách sẫm như
+đồng thau; một màu nhấn duy nhất, mọi màu trạng thái trầm. Tên token giữ như `styles.css` để đổi một chỗ.
+
+| Vai | Sáng | Tối | Dùng cho |
+|---|---|---|---|
+| `--bg` nền | #f5f3ef | #121110 | nền màn |
+| `--panel` mặt nổi | #ffffff | #1b1a18 | thanh phát, bảng trượt, hộp thoại, menu |
+| `--bg-sunken` mặt chìm | #ece9e3 | #0c0b0a | ô nhập, rãnh thanh tiến độ |
+| `--line` vạch | #e3dfd7 | #2e2b27 | vạch chia hàng |
+| `--text` mực | #1a1814 | #ece8e1 | chữ chính, icon chính |
+| `--fg-2` mực phụ | #5e5950 | #a8a196 | chữ phụ (≥ 4,5:1 trên nền) |
+| `--fg-3` mực mờ | #8a8478 | #7a746a | chỉ icon phụ / chữ ≥ 18px (≥ 3:1) |
+| `--accent` đồng thau | #d4912b | #e9a945 | nút chính, thanh tiến độ, tab đang chọn |
+| `--accent-ink` chữ trên nhấn | #1d1304 | #1b1204 | chữ/icon trên nền hổ phách |
+| `--accent-text` chữ nhấn | #8a5309 | #f0b961 | chữ màu nhấn trên nền |
+| `--accent-soft` nhấn nhạt | #f7ead5 | rgb(233 169 69 / .14) | câu đang đọc, hàng đang phát |
+| `--success` / `--danger` | #2f7d5b / #b23b33 | #5cc596 / #ef7b70 | chỉ cho trạng thái, kèm chữ/icon |
+
+- Mặt đọc theo có 3 nền riêng, chọn trong Giao diện: Giấy #fbfaf7 / mực #1b1a17; Ngà #f3ead8 / #3b2f1e; Đêm #121110 / #d9d3c8.
+- Trình phát đầy đủ lấy màu chủ đạo của bìa, pha 10 % (sáng) / 16 % (tối) vào `--bg` làm nền màn - mỗi cuốn một không
+  khí; đổi cuốn thì mờ chéo màu nền theo `--motion-slow`. Bìa không có màu rõ: giữ `--bg`.
+- Mọi cặp chữ/nền kiểm tỉ lệ tương phản bằng test (WCAG AA: 4,5:1 chữ thường, 3:1 chữ lớn/icon) ở cả hai chủ đề.
+- Không gradient trang trí, không màu thứ hai cho nút. Màu chỉ để nói trạng thái hay hướng mắt tới việc chính.
+
+### 5.2 Chuyển động và hiệu ứng (VFX)
+
+Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 120/90 ms, vừa 220/150, chậm 300/200 (vào/ra);
+đường cong Material 3 (vào = decelerate, ra = accelerate, đổi chỗ = standard). Quy tắc:
+
+- **Vào chậm hơn ra**; ra luôn dùng thời lượng `*Out`.
+- **Đổi nội dung tại chỗ = mờ qua** (ảnh cũ mờ hết rồi cái mới mới hiện, không hai lớp chữ chồng nhau); đổi cỡ thì tween chiều
+  cao cùng lúc (MotionRegion, Collapse).
+- **Phần tử chung giữa hai màn** (shared element): thanh phát thu nhỏ nở thành trình phát đầy đủ (khung + bìa bay từ ô nhỏ ra
+  ô lớn); bìa ở Thư viện bay vào vị trí bìa ở trang sách. View Transitions khi WebView có, không thì mờ qua.
+- **Danh sách**: thêm/xoá hàng mở/khép tại chỗ (useListPresence), hàng khác trượt theo, không nhảy.
+- **Phản hồi chạm**: nhấn = thu 0,97 + tối nền 6 % trong 90 ms, thả = về trong 120 ms; nút phát đổi icon phát/dừng bằng mờ
+  chéo + thu/phóng nhẹ. Không nảy, không vượt đích - sang trọng là dứt khoát.
+- **Câu đang đọc**: dải tô nhạt trượt sang câu kế (120 ms), từ đang đọc tô đậm hơn; tự cuộn mềm giữ câu ở 1/3 trên màn.
+- **Đang tải**: khung xám đúng hình nội dung, nhịp mờ 0,6 <-> 1 chu kỳ 1,6 s; không vòng xoay giữa màn, không ánh lấp lánh.
+- **Chỉ animate transform/opacity** (và chiều cao trong Collapse/MotionRegion); 60 fps trên máy Android tầm trung.
+- **Giảm chuyển động** (cài đặt hệ điều hành): bỏ trượt/bay/tween cỡ, giữ mờ ≤ 120 ms.
+- Không: thị sai, hạt, hiệu ứng nền chạy mãi, chuyển trang kiểu lật sách.
+
+### 5.3 Âm thanh giao diện (SFX)
+
+App nghe sách: âm thanh giao diện KHÔNG bao giờ trộn vào lời đọc.
+
+- **Tự im khi đang phát**: mọi tiếng chạm tắt khi sách đang phát, trừ một: báo hẹn giờ ngủ sắp tắt.
+- **Bộ tiếng** (ngắn ≤ 250 ms, mềm, cùng một âm sắc "đồng thau gõ nhẹ", tự tổng hợp bằng mã - Web Audio / Android AudioTrack -
+  không file thu âm, không giấy phép ngoài; mức −24 dB so với lời đọc):
+  - *chạm* (tick rất khẽ): chỉ cho công tắc, chọn mức tốc độ/hẹn giờ; KHÔNG cho mọi nút.
+  - *xác nhận* (hai nốt đi lên, quãng ba): đặt dấu trang, thêm sách xong, ghép máy xong.
+  - *xong việc* (ba nốt): sách nói Studio làm xong (máy tính phát; điện thoại qua thông báo).
+  - *hẹn giờ* (một nốt trầm, 30 giây trước khi tắt, rồi lời đọc nhỏ dần 10 giây).
+  - Lỗi: không tiếng - dùng chữ + rung.
+- Theo âm lượng/chế độ im của hệ thống (Android: USAGE_ASSISTANCE_SONIFICATION). Cài đặt > "Âm thanh chạm" bật/tắt, mặc
+  định bật.
+
+### 5.4 Rung (điện thoại)
+
+Dùng hằng số phản hồi xúc giác của hệ điều hành (`View.performHapticFeedback`) - tự theo cài đặt rung của máy, cảm giác
+giống app hệ thống; không tự chế chuỗi rung dài.
+
+| Lúc | Hằng số Android | Ghi chú |
+|---|---|---|
+| phát / dừng | CONTEXT_CLICK | nhẹ |
+| kéo thanh tiến độ qua mốc chương / mỗi 15 giây | CLOCK_TICK | chỉ khi đang kéo |
+| đổi mức tốc độ, hẹn giờ, công tắc | SEGMENT_TICK (API 34+), không có thì CLOCK_TICK | |
+| chạm giữ (menu bìa, sửa câu) | LONG_PRESS | |
+| vuốt đóng trình phát / bảng trượt qua ngưỡng | GESTURE_THRESHOLD_ACTIVATE (34+) / bỏ qua | |
+| đặt dấu trang, thêm sách xong | CONFIRM (30+) | |
+| lỗi cần người dùng làm gì | REJECT (30+) | |
+
+- Không rung: hẹn giờ ngủ tắt (người có thể đã ngủ), tiến độ chạy, sự kiện nền, cuộn đọc.
+- Cài đặt > "Rung" bật/tắt, mặc định bật. Máy tính không rung.
+
+### 5.5 Kích thước
 
 - **Khoảng cách**: 4 · 8 · 12 · 16 · 24 · 32 · 48 · 64 px. Lề màn: điện thoại 20, máy tính 40. Giữa các phần của một màn: 32
   (điện thoại) / 48 (máy tính); trong một phần: 12-16.
