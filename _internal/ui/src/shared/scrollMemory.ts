@@ -88,6 +88,8 @@ export function useScrollMemory(key: string | null, ref: RefObject<HTMLElement |
     const target: EventTarget = isPage(scroller) ? window : scroller;
     let alive = true;
     let restored = false;
+    let scrolled = false;
+    let settled: number | undefined;
     let cancelLayout: (() => void) | undefined;
     // Sau mọi layout effect của lần dựng này: vỏ app (usePageEnter) đưa trang mới về đầu trong effect của chính nó, chạy SAU effect
     // của trang con. Microtask vẫn chạy trước khi trình duyệt vẽ - không thấy trang nháy ở đầu. Hàng đích có thể còn trong nhóm
@@ -95,17 +97,23 @@ export function useScrollMemory(key: string | null, ref: RefObject<HTMLElement |
     queueMicrotask(() => {
       if (!alive) return;
       restoreScroll(key, scroller, firstNow.current);
-      const settled = scroller.scrollTop;
+      settled = scroller.scrollTop;
       cancelLayout = afterScrollLayout(scroller, () => {
-        if (scroller.scrollTop === settled) restoreScroll(key, scroller, firstNow.current);
+        if (!scrolled && scroller.scrollTop === settled) restoreScroll(key, scroller, firstNow.current);
         restored = true;
       });
     });
-    const save = () => { if (restored) saveScroll(key, scroller); };
+    // Scroll do restore đầu (có thể bị clamp khi Fold chưa mở hết) không ghi đè đích đã nhớ.
+    // Khác vị trí ấy là bạn đã tự cuộn: giữ ngay, kể cả khi rời trang trước RAF/animation.finished.
+    const save = () => {
+      if (settled !== undefined && scroller.scrollTop !== settled) scrolled = true;
+      if (restored || scrolled) saveScroll(key, scroller);
+    };
     target.addEventListener("scroll", save, { passive: true });
     return () => {
       alive = false;
       cancelLayout?.();
+      save(); // Sự kiện scroll có thể vẫn đang chờ khi trang bị gỡ.
       target.removeEventListener("scroll", save);
     };
   }, [key, ref]);

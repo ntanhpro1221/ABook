@@ -17,7 +17,8 @@ it("lời ngắn vẫn nói được việc tiếp theo", () => {
 it("nhắc màn đọc gọn, vẫn phân biệt chuột/chạm và quyền sửa", () => {
   for (const coarse of [false, true]) {
     const text = readerHint({ textOnly: false, canSpeak: false, timed: true, tapped: false, coarse, wish: true, readings: true })!;
-    expect(text.length).toBeLessThanOrEqual(110); expect(text).toContain(coarse ? "Chạm chữ" : "Bấm chữ");
+    expect(text.length).toBeLessThanOrEqual(120); expect(text).not.toContain("\n"); expect(text).toContain(coarse ? "Chạm chữ" : "Bấm chữ");
+    expect(text).toContain("đổi người nói, cách đọc hoặc thu lại");
     expect(text).toContain("Sửa câu này"); expect(text).toContain(coarse ? "Giữ chữ" : "Bấm chuột phải vào chữ");
   }
 });
