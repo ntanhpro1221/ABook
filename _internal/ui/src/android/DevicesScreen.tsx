@@ -933,7 +933,7 @@ export function DevicesScreen() {
   const unpair = async (announce: boolean) => {
     await EbookLibrary.unpair();
     void client.invalidateQueries({ queryKey: ["connection"] });
-    if (announce) toast.success(`Đã ngắt kết nối với ${computerName}`, { description: "Sách đã tải về vẫn ở điện thoại và nghe được." });
+    if (announce) toast.success(`Đã bỏ ghép với ${computerName}`, { description: "Sách đã tải về vẫn ở điện thoại và nghe được." });
   };
   // Máy tính trả 401: nó đã thôi ghép điện thoại này - không phải tắt máy hay khác Wi-Fi (soát a68 lỗi 5). "Ghép lại" quên mã cũ rồi mở hộp
   // ghép với sẵn địa chỉ máy tính (PairPanel).
@@ -989,13 +989,14 @@ export function DevicesScreen() {
                 </MoreInfo>
               </div>
             )}
-            <button type="button" onClick={() => setConfirmUnpair(true)} className="mt-6 flex items-center gap-2 text-sm text-fg-2">
-              <Unplug className="size-4" /> Ngắt kết nối
+            {/* Cùng cột icon / mép chữ với hàng máy tính ở trên. "Bỏ ghép", không "Ngắt kết nối": máy có khi đang chưa kết nối, việc làm là quên mã ghép. */}
+            <button type="button" onClick={() => setConfirmUnpair(true)} className="touch-hit mt-2 flex items-center gap-3 text-sm text-fg-2">
+              <Unplug className="size-5" /> Bỏ ghép
             </button>
             <Dialog
               open={confirmUnpair}
               onOpenChange={setConfirmUnpair}
-              title={`Ngắt kết nối với ${computerName}?`}
+              title={`Bỏ ghép với ${computerName}?`}
               description="Sách đã tải vẫn nghe được. Muốn tải thêm thì ghép lại bằng mã mới."
             >
               <div className="dialog-actions">
@@ -1006,10 +1007,10 @@ export function DevicesScreen() {
                   variant="danger"
                   onClick={() => {
                     setConfirmUnpair(false);
-                    void unpair(true).catch((error) => toastNativeError("Chưa ngắt kết nối được", error));
+                    void unpair(true).catch((error) => toastNativeError("Chưa bỏ ghép được", error));
                   }}
                 >
-                  Ngắt kết nối
+                  Bỏ ghép
                 </Button>
               </div>
             </Dialog>
