@@ -1,6 +1,8 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FolderOpen, History, Plus, RotateCw, Wand2 } from "lucide-react";
+import { FolderOpen, History, MoreHorizontal, Plus, RotateCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
@@ -9,23 +11,26 @@ import { cn } from "@/shared/cn";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { RowBoundary } from "@/shared/RowBoundary";
 import { etaOf, formatPercent, formatRelative } from "@/shared/format";
-import { Button, Dialog, EmptyState, failedEmpty, LoadError, Progress, Skeleton, StatusPill } from "@/shared/ui";
+import { Button, Dialog, failedEmpty, IconButton, LoadError, Progress, Skeleton, StatusPill } from "@/shared/ui";
 import { MissingLibrary } from "@/shared/MissingLibrary";
 import { api, type BookSummary } from "./api";
 import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook, useReveal } from "./data";
-import { ProjectMenu } from "./ProjectScreen";
+import { MenuItem, ProjectMenu } from "./ProjectScreen";
 import { StudioSetupCard } from "./StudioSetup";
 import { groupParts, splitLive, type Entry } from "./projectGroups";
 
-// Studio: nơi làm sách. Danh sách là bảng công việc - trạng thái sản xuất, tiến độ, thời gian còn lại - chứ không
-// phải kệ sách (kệ sách là của phía Nghe).
+// Studio: nơi làm sách. Danh sách là bảng công việc gọn - tên · trạng thái · tiến độ · cập nhật (DESIGN.md mục 7) - chứ không
+// phải kệ sách (kệ sách là của phía Nghe). Bảng phẳng: vạch mảnh giữa các hàng, không khung; việc hiếm của một hàng ở "…".
+
+/** Cột của bảng: màn hẹp (Studio từ xa trên điện thoại) trạng thái và tiến độ xếp dưới tên, không chia cột. */
+const COLUMNS = "grid-cols-[40px_minmax(0,1fr)_36px] md:grid-cols-[40px_minmax(0,1fr)_190px_170px_36px] xl:grid-cols-[40px_minmax(0,1fr)_230px_190px_100px_36px]";
 
 /** Một hàng lỗi khi vẽ (dữ liệu thiếu) chỉ làm hàng ấy báo "Không đọc được", không trắng cả danh sách. */
 function ProjectRow({ book }: { book: BookSummary }) {
   return (
     <RowBoundary
       fallback={
-        <div className="rounded-xl border border-dashed border-line px-4 py-2 text-sm">
+        <div className="px-3 py-3 text-sm">
           <span className="font-medium">{book.title}</span> <span className="text-xs text-danger">Không đọc được dự án này</span>
         </div>
       }
@@ -36,7 +41,7 @@ function ProjectRow({ book }: { book: BookSummary }) {
 }
 
 /** Dự án không mở được. Đang bị chương trình khác giữ (diệt virus, sao lưu) thì KHÔNG phải hỏng - chỉ Thử lại / Mở thư mục, không mời xoá
- *  (soát a28 lỗi 5). Hỏng thật: mở thư mục, khôi phục từ bản sao cũ cạnh nó nếu có (lỗi 13), hay xoá (vào Thùng rác). */
+ *  (soát a28 lỗi 5). Hỏng thật: mở thư mục, khôi phục từ bản sao cũ cạnh nó nếu có (lỗi 13), hay xoá (vào Thùng rác) - ở "…". */
 function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
   const client = useQueryClient();
   const reveal = useReveal();
@@ -52,31 +57,30 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
     onSettled: () => void client.invalidateQueries({ queryKey: ["library"] }),
   });
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-dashed border-line px-4 py-2 text-sm">
-      <span className="min-w-0 max-w-full truncate font-medium">{book.title}</span>
-      <span className={cn("min-w-0 flex-1 text-xs", busy ? "text-warning" : "text-danger")}>
-        {busy ? "Chưa mở được: " : "Không đọc được: "}
-        {book.broken}
-      </span>
-      <div className="flex items-center gap-1.5">
-        {busy && (
-          <Button variant="secondary" size="sm" icon={RotateCw} onClick={() => void client.invalidateQueries({ queryKey: ["library"] })}>
-            Thử lại
-          </Button>
+    <div className={cn("grid items-center gap-x-4 px-3 py-3 text-sm", COLUMNS)}>
+      <span aria-hidden className="size-10 rounded-lg bg-hover" />
+      <div className="min-w-0 md:col-span-2 xl:col-span-3">
+        <div className="truncate font-medium">{book.title}</div>
+        <div className={cn("truncate text-xs", busy ? "text-warning" : "text-danger")}>
+          {busy ? "Chưa mở được: " : "Không đọc được: "}
+          {book.broken}
+        </div>
+      </div>
+      <div className="col-span-full flex items-center justify-end gap-1 md:col-span-1">
+        {busy ? (
+          <>
+            <IconButton label="Thử lại" icon={RotateCw} onClick={() => void client.invalidateQueries({ queryKey: ["library"] })} />
+            {local && <IconButton label="Mở thư mục" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}
+          </>
+        ) : local ? (
+          <ProjectMenu book={book} rename={false}>
+            {book.backup && <MenuItem icon={History} onSelect={() => setAsking(true)}>Khôi phục bản sao…</MenuItem>}
+            <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>Mở thư mục</MenuItem>
+          </ProjectMenu>
+        ) : (
+          // Studio từ xa: khôi phục bản sao, mở thư mục, xoá đều là việc ngay trên máy tính - nói thẳng thay vì để chỗ trống.
+          <OnComputerOnly verb="Khôi phục hoặc xoá" />
         )}
-        {book.backup && local && (
-          <Button variant="secondary" size="sm" icon={History} onClick={() => setAsking(true)}>
-            Khôi phục bản sao
-          </Button>
-        )}
-        {local && (
-          <Button variant="ghost" size="sm" icon={FolderOpen} onClick={() => reveal.mutate(book.id)}>
-            Mở thư mục
-          </Button>
-        )}
-        {local && !busy && <ProjectMenu book={book} rename={false} />}
-        {/* Studio từ xa: khôi phục bản sao, mở thư mục, xoá đều là việc ngay trên máy tính - nói thẳng thay vì để dòng trống. */}
-        {!local && !busy && <OnComputerOnly verb="Khôi phục hoặc xoá" />}
       </div>
       <Dialog
         open={asking}
@@ -99,33 +103,29 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
 
 function ProjectRowBody({ book }: { book: BookSummary }) {
   const navigate = useNavigate();
+  const reveal = useReveal();
   // Dự án hỏng: khôi phục / mở thư mục / xoá chỉ trên máy này. Dự án bình thường: menu nào cũng hiện, Studio từ xa chỉ thay dòng Xoá bằng lý do.
   const local = !useAppInfo().data?.remote;
   const live = book.running || book.starting;
   if (book.broken) return <BrokenRow book={book} local={local} />;
   const detail =
-    book.phase === "done"
-      ? `${book.chapters.completed}/${book.chapters.total} chương xong`
-      : book.eta && live
-        ? etaOf(book)
-        : `${book.chapters.completed}/${book.chapters.total} chương xong`;
+    book.phase !== "done" && book.eta && live ? etaOf(book) : `${book.chapters.completed}/${book.chapters.total} chương`;
   const needs = [
     book.pendingChanges ? `${book.pendingChanges} thay đổi chờ áp` : book.phase === "done" && book.chapters.redo ? `${book.chapters.redo} chương chờ thu lại` : "",
     book.chapters.missingAudio ? `${book.chapters.missingAudio} chương mất audio` : "",
   ].filter(Boolean);
   return (
-    // Nút "…" nằm NGOÀI nút của dòng (nút lồng nút không hợp lệ), đè lên lề phải mà dòng chừa sẵn (pr-12).
+    // Nút "…" nằm NGOÀI nút của dòng (nút lồng nút không hợp lệ), đè lên cột cuối mà dòng chừa sẵn.
     <div className="group relative">
       <button
         type="button"
         onClick={() => navigate(`/studio/${book.id}`)}
-        className="grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-x-4 gap-y-1.5 rounded-xl px-3 py-2.5 pr-12 text-left transition-colors hover:bg-hover md:grid-cols-[48px_minmax(0,1fr)_160px_170px] md:gap-y-4 xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]"
+        className={cn("grid w-full items-center gap-x-4 gap-y-1 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-hover", COLUMNS)}
       >
-        {/* Màn hẹp (Studio từ xa trên điện thoại): trạng thái và tiến độ xếp dưới tên, không chia cột. */}
-        <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="row-span-3 size-12 self-start md:row-span-1 md:self-center" />
+        <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="row-span-3 size-10 self-start md:row-span-1 md:self-center" />
         <div className="min-w-0">
-          <div className="truncate font-semibold">{book.title}</div>
-          <div className="truncate text-xs text-fg-2">
+          <div className="truncate font-medium">{book.title}</div>
+          <div className="truncate text-[0.8125rem] text-fg-2">
             {book.settings.narrator ? `Giọng kể ${book.settings.narrator} · ` : ""}
             {book.settings.profileLabel}
           </div>
@@ -133,7 +133,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
         <div className="col-start-2 md:col-start-auto">
           <StatusPill
             label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
-            // Cùng trạng thái = cùng màu với chip ở trang dự án (soát UX a8 05-10); việc còn lại của sách xong nói ở dòng tiến độ.
+            // Cùng trạng thái = cùng màu với chip ở trang dự án (soát UX a8 05-10); việc còn lại của sách xong nói ở cột tiến độ.
             tone={book.queuePosition || book.paused || book.stopping ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused && !book.stopping}
           />
@@ -142,15 +142,14 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
           {book.phase === "done" ? (
             <span className="text-xs text-fg-2">
               {detail}
-              {/* Sách "Hoàn tất" mà còn việc của mình: nói ngay trên dòng (soát UX a6 01-10 - lo18 xanh "Hoàn tất" trong khi còn
-                  15 thay đổi chờ áp và 40 chương mất audio, nhìn danh sách không biết cuốn nào cần mình). */}
+              {/* Sách "Hoàn tất" mà còn việc của mình: nói ngay trên dòng (soát UX a6 01-10 - nhìn danh sách không biết cuốn nào cần mình). */}
               {needs.length > 0 && <span className="font-medium text-warning"> · {needs.join(" · ")}</span>}
             </span>
           ) : (
             <>
               <div className="flex items-center gap-2">
                 <Progress value={book.progress.overall} running={live} tone={live ? "accent" : "muted"} size="sm" label={`Tiến độ: ${book.title}`} />
-                <span className="tabular w-9 text-right text-xs font-semibold">{formatPercent(book.progress.overall)}</span>
+                <span className="tabular w-9 text-right text-xs font-medium">{formatPercent(book.progress.overall)}</span>
               </div>
               <div className="mt-1 truncate text-xs text-fg-2">{detail}</div>
             </>
@@ -162,35 +161,72 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
           {live ? (book.stopping ? "đang dừng" : book.paused ? "tạm dừng" : "đang chạy") : formatRelative(book.updatedAt)}
         </div>
       </button>
-      <div className="absolute right-2 top-2.5 md:top-1/2 md:-translate-y-1/2">
+      <div className="absolute right-3 top-2.5 md:top-1/2 md:-translate-y-1/2">
         <ProjectMenu
           book={book}
-          className="opacity-0 focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100"
-        />
+          className="opacity-0 transition-opacity duration-motion-fast focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100"
+        >
+          {local && <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>Mở thư mục</MenuItem>}
+        </ProjectMenu>
       </div>
     </div>
   );
 }
 
-/** Một dòng dự án, hay khung các phần của một cuốn ("lo18 · 2 phần"). `inset`: khung nằm trong hộp "Đang chạy" (đã có lề
- *  trong) - không kéo ra lề như trong bảng chính. */
-function EntryView({ entry, inset = false }: { entry: Entry; inset?: boolean }) {
+/** Một dòng dự án, hay các phần của một cuốn ("lo18 · 2 phần") dưới một dòng tên nhóm - thụt vào, không khung. */
+function EntryView({ entry }: { entry: Entry }) {
   if (entry.kind === "book") return <ProjectRow book={entry.book} />;
   return (
-    <section aria-label={entry.name} className={cn("rounded-xl border border-line/70 p-1", !inset && "-mx-[5px]")}>
-      <h3 className="px-3 pb-1 pt-1.5 text-xs font-semibold text-fg-2">
-        {entry.name} <span className="font-normal text-fg-3">· {entry.books.length} {entry.unit}</span>
+    <section aria-label={entry.name}>
+      <h3 className="px-3 pb-0.5 pt-3 text-xs font-medium text-fg-2">
+        {entry.name} <span className="font-normal">· {entry.books.length} {entry.unit}</span>
       </h3>
-      <div className="space-y-0.5">
-        {entry.books.map((book) => (
-          <ProjectRow key={book.id} book={book} />
-        ))}
-      </div>
+      {entry.books.map((book) => (
+        <ProjectRow key={book.id} book={book} />
+      ))}
     </section>
   );
 }
 
 const entryKey = (entry: Entry) => (entry.kind === "book" ? entry.book.id : `series:${entry.name}`);
+
+/** Khung chờ đúng hình một hàng của bảng (DESIGN.md mục 2: không vòng xoay giữa màn). */
+function RowSkeleton() {
+  return (
+    <div className={cn("grid items-center gap-x-4 px-3 py-2.5", COLUMNS)}>
+      <Skeleton className="size-10 rounded-lg" />
+      <div className="space-y-1.5">
+        <Skeleton className="h-4 w-1/2" />
+        <Skeleton className="h-3 w-1/3" />
+      </div>
+      <Skeleton className="hidden h-6 w-28 rounded-full md:block" />
+      <Skeleton className="hidden h-1.5 w-full md:block" />
+      <Skeleton className="hidden h-3 w-16 justify-self-end xl:block" />
+    </div>
+  );
+}
+
+/** "…" của đầu trang: việc hiếm của cả Studio. */
+function StudioMenu({ onOpenExisting }: { onOpenExisting: () => void }) {
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button
+          type="button"
+          aria-label="Tuỳ chọn Studio"
+          className="touch-box inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover"
+        >
+          <MoreHorizontal className="glyph" />
+        </button>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          <MenuItem icon={FolderOpen} onSelect={onOpenExisting}>Mở dự án có sẵn…</MenuItem>
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
 
 export function ProjectsScreen() {
   const libraryQuery = useLibrary();
@@ -199,9 +235,14 @@ export function ProjectsScreen() {
   const navigate = useNavigate();
   const open = useOpenBook();
   const books = useMemo(() => data?.books ?? [], [data]);
-  // Nhóm phần trước, rồi mới tách mục "Đang chạy": một phần đang chạy kéo cả nhóm của nó lên, không để phần 2 ở trên và
+  // Nhóm phần trước, rồi mới đưa nhóm đang chạy lên đầu: một phần đang chạy kéo cả nhóm của nó lên, không để phần 2 ở trên và
   // phần 1 đứng lẻ bên dưới (soát UX 30-09).
-  const { live: liveEntries, rest: otherEntries, books: live } = useMemo(() => splitLive(groupParts(books)), [books]);
+  const entries = useMemo(() => {
+    const { live, rest } = splitLive(groupParts(books));
+    return [...live, ...rest];
+  }, [books]);
+  // Rỗng thì lời mời giữa trang là nút duy nhất; đầu trang không lặp lại nó.
+  const empty = !isLoading && !libraryQuery.isError && !data?.rootMissing && !books.length;
 
   const openExisting = async () => {
     try {
@@ -216,32 +257,29 @@ export function ProjectsScreen() {
 
   return (
     <MotionRegion as="div" className="mx-auto max-w-[1180px] px-4 pb-16 pt-9 md:px-10">
-      <header className="flex flex-wrap items-end justify-between gap-4 md:gap-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <div className="text-xs font-semibold uppercase tracking-wider text-accent-text">Studio</div>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-tight">Dự án sách nói</h1>
-          <p className="mt-1 text-sm text-fg-2">
-            {books.length ? `${books.length} dự án` : "Chưa có dự án"}
-          </p>
+          <h1 className="text-[1.75rem] font-bold tracking-tight md:text-[2rem]">Studio</h1>
+          <MotionRegion as="p" className="mt-1 text-sm text-fg-2">
+            {isLoading ? " " : books.length ? `${books.length} dự án` : "Chưa có dự án"}
+          </MotionRegion>
         </div>
-        <div className="flex items-center gap-2">
-          {info?.dialogs && (
-            <Button variant="ghost" icon={FolderOpen} onClick={() => void openExisting()}>
-              Mở dự án có sẵn
+        <div className="flex items-center gap-1">
+          <MotionPresence open={!empty}>
+            <Button variant="ghost" icon={Plus} onClick={() => navigate("/studio/new")}>
+              Dự án mới
             </Button>
-          )}
-          <Button variant="primary" icon={Plus} onClick={() => navigate("/studio/new")}>
-            Tạo sách nói
-          </Button>
+          </MotionPresence>
+          {info?.dialogs && <StudioMenu onOpenExisting={() => void openExisting()} />}
         </div>
       </header>
 
       <StudioSetupCard className="mt-8" />
 
       {isLoading ? (
-        <div className="mt-8 space-y-2">
-          {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className="h-16 rounded-xl" />
+        <div className="mt-8" aria-hidden>
+          {Array.from({ length: 5 }, (_, index) => (
+            <RowSkeleton key={index} />
           ))}
         </div>
       ) : failedEmpty({ isError: libraryQuery.isError, data: data?.books }) ? (
@@ -249,50 +287,27 @@ export function ProjectsScreen() {
       ) : data?.rootMissing ? (
         <MissingLibrary root={data.root} className="mt-12" />
       ) : !books.length ? (
-        <EmptyState
-          icon={Wand2}
-          title="Chưa có dự án"
-          className="mt-12 rounded-2xl border border-dashed border-line"
-          action={
-            <Button variant="primary" size="lg" icon={Plus} onClick={() => navigate("/studio/new")}>
-              Tạo dự án
-            </Button>
-          }
-        >
-          Thêm truyện để tạo sách với giọng riêng cho từng nhân vật.
-        </EmptyState>
+        // Rỗng: một câu + một nút dẫn tới việc tạo (DESIGN.md mục 2), không khung, không minh hoạ.
+        <div className="motion-reveal mt-20 flex flex-col items-center text-center">
+          <p className="text-base font-medium">Chưa có dự án</p>
+          <p className="mt-1 text-sm text-fg-2">Biến một truyện thành sách nói nhiều giọng.</p>
+          <Button variant="primary" size="lg" icon={Plus} className="mt-6" onClick={() => navigate("/studio/new")}>
+            Dự án mới
+          </Button>
+        </div>
       ) : (
-        <>
-          {live.length > 0 && (
-            <section className="mt-8">
-              <h2 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-fg-3">{live.every((book) => book.paused) ? "Đang tạm dừng" : "Đang chạy"}</h2>
-              <div className="space-y-0.5 rounded-2xl border border-accent/30 bg-panel p-1.5">
-                {liveEntries.map((entry) => (
-                  <EntryView key={entryKey(entry)} entry={entry} inset />
-                ))}
-              </div>
-            </section>
-          )}
-          <section className={cn("mt-8", !otherEntries.length && "hidden")}>
-            <div
-              className={cn(
-                "hidden grid-cols-[48px_minmax(0,1fr)_160px_170px] gap-4 border-b border-line px-3 pb-2 text-xs font-semibold uppercase tracking-[0.06em] text-fg-2 md:grid xl:grid-cols-[48px_minmax(0,1fr)_170px_200px_110px]",
-                !info?.remote && "pr-12",
-              )}
-            >
-              <span />
-              <span>Dự án</span>
-              <span>Trạng thái</span>
-              <span>Tiến độ</span>
-              <span className="hidden text-right xl:block">Cập nhật</span>
-            </div>
-            <div className="mt-1.5 space-y-0.5">
-              {otherEntries.map((entry) => (
-                <EntryView key={entryKey(entry)} entry={entry} />
-              ))}
-            </div>
-          </section>
-        </>
+        <section className="mt-8" aria-label="Dự án">
+          <div className={cn("hidden gap-x-4 border-b border-line px-3 pb-2 text-xs font-semibold uppercase tracking-[0.06em] text-fg-2 md:grid", COLUMNS)}>
+            <span />
+            <span>Dự án</span>
+            <span>Trạng thái</span>
+            <span>Tiến độ</span>
+            <span className="hidden text-right xl:block">Cập nhật</span>
+          </div>
+          <AnimatedRows items={entries} keyOf={entryKey} className="divide-y divide-line">
+            {(entry) => <EntryView entry={entry} />}
+          </AnimatedRows>
+        </section>
       )}
     </MotionRegion>
   );

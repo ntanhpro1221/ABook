@@ -37,7 +37,7 @@ Mỗi luồng có: điểm vào, các bước, số chạm đích, trạng thái
 | L7 | Đọc theo chữ | 1 | trình phát -> "Đọc theo"; thanh điều khiển tự mờ khi đọc, chạm hiện lại |
 | L8 | Chọn cuốn khác | 2 | Thư viện -> chạm bìa (vào trang sách) -> "Nghe" ; hay chạm giữ bìa -> phát ngay |
 | L9 | Sách ở máy kia | 2 | máy đã ghép: sách máy kia nằm NGAY trong Thư viện (dấu nhỏ "Trên máy tính"), chạm là nghe (stream) hay tải; chưa ghép: Cài đặt > Thiết bị > Nối máy (một lần) |
-| L10 | Tạo sách nói (máy tính) | ≤ 3 | Studio -> "Tạo sách nói" -> chọn file -> "Bắt đầu" (giọng, nhạc nền chọn sẵn theo mặc định tốt; chỉnh được nhưng không bắt chỉnh) |
+| L10 | Tạo sách nói (máy tính) | ≤ 3 | Studio -> "Dự án mới" -> chọn file -> "Bắt đầu" (một trang; giọng, chất lượng, cách bắt đầu chọn sẵn theo mặc định tốt, gập dưới "Tuỳ chọn"; chỉnh được nhưng không bắt chỉnh) |
 | L11 | Theo dõi / can thiệp Studio | 1 | tiến độ ở thanh bên (máy tính) và ở Studio (điện thoại ghép); "Việc cần bạn" chỉ hiện khi có, không chặn dây chuyền |
 | L12 | Sửa cách đọc / ai nói | 2 | đang đọc theo -> chạm giữ câu -> sửa -> ghi vào hàng chờ Studio (mọi player đều sửa được) |
 | L13 | Cài đặt | ≤ 2 cấp | Cài đặt -> nhóm -> mục. Không cấp ba |
@@ -195,8 +195,9 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 - **Đọc theo**: chữ 20/1.7, rộng ≤ 68 ký tự; đầu màn chỉ nút về + tên chương (nền đặc, không chồng lên chữ); thanh dưới mờ
   khi cuộn đọc, chạm hiện lại; câu đang đọc tô nhạt, từ đang đọc tô đậm hơn.
 - **Studio (máy tính)**: danh sách dự án là bảng gọn (tên · trạng thái · tiến độ · cập nhật); dự án: tiêu đề + trạng thái +
-  MỘT nút chính theo trạng thái (Bắt đầu / Tạm dừng / Nghe trong Thư viện), còn lại vào "…"; tab tối đa 5 hiện, phần còn
-  lại vào "Thêm".
+  MỘT nút chính theo trạng thái (Bắt đầu / Tạm dừng / Tiếp tục / Nghe trong Thư viện; sách xong còn sửa chờ áp: "Áp dụng N
+  thay đổi"), còn lại vào "…"; tab hiện: Chương · Việc cần duyệt · Cần nghe lại · Nhân vật · Nhạc nền, phần còn lại (Duyệt
+  trước khi thu, Kịch bản, Nhật ký) vào "Thêm" - tab đang chọn nằm trong "Thêm" thì nút ấy mang tên tab.
 - **Cài đặt**: danh sách nhóm phẳng (Giọng đọc · Nghe · Hẹn giờ ngủ · Giao diện · Thiết bị · Nâng cao), máy tính hai cột.
 
 ## 8. Kiểm trước khi gộp một thay đổi giao diện

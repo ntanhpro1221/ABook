@@ -1,7 +1,7 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
-import { LoadingCrossfade } from "@/shared/MotionPresence";
+import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -9,6 +9,7 @@ import {
   BookPlus,
   Headphones,
   Check,
+  ChevronDown,
   CircleAlert,
   Download,
   FolderDown,
@@ -28,7 +29,7 @@ import {
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useListPresence } from "@/shared/motion";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
@@ -36,7 +37,6 @@ import {
   Button,
   Dialog,
   EmptyState,
-  IconButton,
   Progress,
   Segmented,
   Skeleton,
@@ -150,7 +150,8 @@ function Step({
   icon: typeof Wand2;
 }) {
   return (
-    <MotionRegion as="div" className={cn("relative flex-1 rounded-xl border p-4", state === "active" ? "border-accent/40 bg-accent-soft" : "border-line bg-panel")}>
+    // Phẳng, không khung: ba bước đứng trong khối "Các bước" (đã là một khối), nhóm bằng khoảng trắng (DESIGN.md mục 4.2).
+    <MotionRegion as="div" className="relative min-w-0 flex-1">
       <div className="flex items-center gap-2.5">
         <div
           className={cn(
@@ -291,7 +292,7 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
         </p>
       )}
       <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={analysis === "active" ? "Phân tích truyện" : casting === "active" ? "Phân vai" : synthesis === "active" ? "Thu âm và kiểm tra" : book.statusLabel} heading="h3">
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-6 sm:flex-row sm:gap-8">
         <Step
           index={1}
           state={analysis}
@@ -569,8 +570,24 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
   );
 }
 
-/** "…" của một dự án: đổi tên, xoá. `rename={false}` cho dự án hỏng (không đọc được - chỉ còn xoá). */
-export function ProjectMenu({ book, rename = true, className }: { book: BookSummary; rename?: boolean; className?: string }) {
+/** Một dòng của menu "…" (dự án, hàng dự án). */
+export function MenuItem({ icon: Icon, onSelect, danger = false, disabled = false, children }: {
+  icon: typeof Wand2;
+  onSelect: () => void;
+  danger?: boolean;
+  disabled?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <DropdownMenu.Item disabled={disabled} onSelect={onSelect} className={cn(MENU_ITEM, "data-[disabled]:opacity-50", danger && "text-danger")}>
+      <Icon className="size-4" /> {children}
+    </DropdownMenu.Item>
+  );
+}
+
+/** "…" của một dự án: việc ít dùng của đầu trang (`children`, đứng trên), rồi đổi tên, làm tiếp, xoá. `rename={false}` cho dự án hỏng
+ *  (không đọc được - chỉ còn xoá). */
+export function ProjectMenu({ book, rename = true, className, children }: { book: BookSummary; rename?: boolean; className?: string; children?: ReactNode }) {
   const [dialog, setDialog] = useState<"rename" | "delete" | null>(null);
   const navigate = useNavigate();
   // Studio từ xa: đổi tên và làm tiếp chạy được; xoá dự án chỉ làm được trên máy tính (DELETE không nằm trong remote_studio.ALLOWED).
@@ -594,38 +611,33 @@ export function ProjectMenu({ book, rename = true, className }: { book: BookSumm
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
           <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-52 rounded-xl border border-line bg-panel p-1.5 shadow-float">
-            {rename && (
+            {children && (
               <>
-                <DropdownMenu.Item onSelect={() => setDialog("rename")} className={MENU_ITEM}>
-                  <Pencil className="size-4" /> Đổi tên…
-                </DropdownMenu.Item>
+                {children}
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
               </>
             )}
+            {rename && <MenuItem icon={Pencil} onSelect={() => setDialog("rename")}>Đổi tên…</MenuItem>}
             {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). Dự án chưa
                 phân tích câu nào thì không có gì để mang theo - mờ kèm lý do thay vì dẫn tới một phần mới trống (soát UX 29-09). */}
             {/* Dự án hỏng (`broken`) không có `segments` và không có gì để mang theo: chỉ còn xoá. */}
             {!book.broken && (
-              <>
-                <DropdownMenu.Item
-                  disabled={!analyzed}
-                  onSelect={() => navigate(`/studio/new?continue=${book.id}`)}
-                  className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
-                >
-                  <BookPlus className="size-4" /> Làm tiếp cuốn này…
-                  {!analyzed && <span className="ml-auto pl-3 text-xs text-fg-3">chạy phần này trước</span>}
-                </DropdownMenu.Item>
-                <DropdownMenu.Separator className="my-1 h-px bg-line" />
-              </>
+              <DropdownMenu.Item
+                disabled={!analyzed}
+                onSelect={() => navigate(`/studio/new?continue=${book.id}`)}
+                className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
+              >
+                <BookPlus className="size-4" /> Làm tiếp cuốn này…
+                {!analyzed && <span className="ml-auto pl-3 text-xs text-fg-3">chạy phần này trước</span>}
+              </DropdownMenu.Item>
             )}
+            <DropdownMenu.Separator className="my-1 h-px bg-line" />
             {remote ? (
               <div className="px-2 py-1.5">
                 <OnComputerOnly verb="Xoá dự án" />
               </div>
             ) : (
-              <DropdownMenu.Item onSelect={() => setDialog("delete")} className={cn(MENU_ITEM, "text-danger")}>
-                <Trash2 className="size-4" /> Xoá dự án…
-              </DropdownMenu.Item>
+              <MenuItem icon={Trash2} danger onSelect={() => setDialog("delete")}>Xoá dự án…</MenuItem>
             )}
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
@@ -634,6 +646,43 @@ export function ProjectMenu({ book, rename = true, className }: { book: BookSumm
       {!remote && <DeleteDialog book={book} open={dialog === "delete"} onOpenChange={(open) => setDialog(open ? "delete" : null)} />}
     </>
   );
+}
+
+/** MỘT nút chính của đầu trang dự án, chọn theo trạng thái (DESIGN.md mục 7); `null` = lúc ấy không có việc gì để bấm (xếp hàng mà chưa có
+ *  chương nào nghe được). Mọi việc khác vào "…". */
+export type PrimaryKind =
+  | "starting"
+  | "stopping"
+  | "unpause"
+  | "pause"
+  | "start"
+  | "record"
+  | "reanalyze"
+  | "continue"
+  | "apply"
+  | "listen";
+
+export function primaryKind(book: BookSummary): PrimaryKind | null {
+  const listen = book.chapters.completed > 0 ? "listen" : null;
+  const redoWaiting = book.phase === "done" ? (book.chapters.redo ?? 0) : 0;
+  if (book.queuePosition) return listen;
+  if (book.starting) return "starting";
+  if (book.running) {
+    if (book.stopping) return "stopping";
+    if (book.paused) return "unpause";
+    return book.canPause ? "pause" : listen;
+  }
+  if (book.phase === "idle") return "start";
+  // Sách đang chờ duyệt mà tiến trình đã chết (máy chủ khởi động lại): vẫn là "Thu âm" (soát UX a8).
+  if (book.precast?.held && book.phase !== "done") return "record";
+  // Phân tích bị ngắt: chạy tiếp ra MỘT CUỐN KHÁC (AGENTS.md) - việc chính là làm lại từ đầu; "Tiếp tục" lùi vào "…" và hỏi lại.
+  if (asksBeforeResume(book)) return "reanalyze";
+  if (book.phase !== "done") return "continue";
+  // Sách đã xong không tự chạy lại: sửa của người nghe chờ ở đây (Pipeline._recover chỉ thu lại câu bị ảnh hưởng).
+  if (book.pendingChanges) return "apply";
+  // Chương chờ thu lại mà không còn yêu cầu nào để "áp" (soát UX a32, #1).
+  if (redoWaiting > 0) return "continue";
+  return "listen";
 }
 
 export function Actions({ book }: { book: BookSummary }) {
@@ -657,158 +706,103 @@ export function Actions({ book }: { book: BookSummary }) {
   const live = book.running;
   const leaveQueue = useLeaveQueue();
   const pause = usePause();
-  // Phân tích xong thì sổ nhân vật đã đủ để làm tiếp; nút chỉ hiện khi thư mục truyện có chương mới sau chương cuối.
+  // Phân tích xong thì sổ nhân vật đã đủ để làm tiếp; mục chỉ hiện khi thư mục truyện có chương mới sau chương cuối.
   const analyzed = book.segments.total > 0 && book.segments.analyzed === book.segments.total;
   const next = useContinuation(book.id, analyzed).data?.paths.length ?? 0;
   const redoWaiting = book.phase === "done" ? (book.chapters.redo ?? 0) : 0;
+  const kind = primaryKind(book);
+  const unpause = () => pause.mutate({ id: book.id, paused: false, battery: book.paused === "battery" });
+  // Một nút, nhãn và biểu tượng đổi theo trạng thái: Button mờ chéo chữ / biểu tượng tại chỗ, không thay cả nút.
+  const primary: Record<PrimaryKind, { label: string; icon?: typeof Wand2; loading?: boolean; run?: () => void }> = {
+    starting: { label: "Đang khởi động", loading: true },
+    // Đã bấm Dừng: sách còn chạy tới chỗ dừng sạch kế - tạm dừng / dừng thêm lần nữa không còn nghĩa (soát a88 V1).
+    stopping: { label: "Đang dừng…", loading: true },
+    // Giữ chờ duyệt: "Tiếp tục" và "Thu âm" là MỘT việc - tên là "Thu âm" (soát UX a8 05-10, mục 12).
+    unpause: { label: book.precast?.held ? "Thu âm" : "Tiếp tục", icon: book.precast?.held ? Mic2 : Play, loading: pause.isPending, run: unpause },
+    // Tạm dừng giữ tiến trình sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích; "Dừng" (kết thúc lượt chạy) ở "…".
+    pause: { label: "Tạm dừng", icon: Pause, loading: pause.isPending, run: () => pause.mutate({ id: book.id, paused: true }) },
+    start: { label: "Bắt đầu", icon: Wand2, loading: start.isPending, run: () => begin(book.id) },
+    record: { label: "Thu âm", icon: Mic2, loading: start.isPending, run: () => begin(book.id) },
+    reanalyze: { label: "Phân tích lại", icon: RotateCcw, run: () => navigate(`/studio/new?redo=${book.id}`) },
+    continue: { label: "Tiếp tục", icon: Play, loading: start.isPending, run: () => begin(book.id) },
+    apply: { label: `Áp dụng ${book.pendingChanges ?? 0} thay đổi`, icon: RefreshCw, loading: start.isPending, run: () => setConfirmApply(true) },
+    listen: { label: "Nghe trong Thư viện", icon: Headphones, run: () => navigate(`/book/${book.id}`) },
+  };
+  const shown = kind ? primary[kind] : null;
+  const pending = book.segments.pending ?? book.segments.total - book.segments.analyzed;
   return (
-    <MotionRegion as="div" className="flex flex-wrap items-center gap-2 sm:mt-5">
-      {book.chapters.completed > 0 && (
-        // Một nút chính mỗi lúc: sách xong mà còn thay đổi chờ áp thì "Áp dụng" là việc chính, không phải hai nút cam cạnh nhau
-        // (soát UX 29-09).
-        <Button
-          variant={book.phase === "done" && !book.pendingChanges && !redoWaiting ? "primary" : "secondary"}
-          size="lg"
-          icon={Headphones}
-          className="max-sm:basis-full"
-          onClick={() => navigate(`/book/${book.id}`)}
-        >
-          Nghe trong Thư viện
-        </Button>
-      )}
-      {book.chapters.completed > 0 && (
-        <Button variant="ghost" size="lg" icon={FolderDown} onClick={() => setExporting(true)}>
-          Xuất…
-        </Button>
-      )}
+    <MotionRegion as="div" className="flex flex-wrap items-center gap-2">
+      <MotionPresence open={Boolean(shown)}>
+        {shown && (
+          <Button variant="primary" size="lg" icon={shown.icon} loading={shown.loading} disabled={!shown.run} onClick={shown.run} className="max-sm:basis-full">
+            {shown.label}
+          </Button>
+        )}
+      </MotionPresence>
+      <ProjectMenu book={book}>
+        {book.chapters.completed > 0 && kind !== "listen" && (
+          <MenuItem icon={Headphones} onSelect={() => navigate(`/book/${book.id}`)}>Nghe trong Thư viện</MenuItem>
+        )}
+        {asksBeforeResume(book) && !live && !book.starting && !book.queuePosition && (
+          <MenuItem icon={Play} onSelect={() => setConfirmResume(true)}>Vẫn tiếp tục…</MenuItem>
+        )}
+        {live && !book.stopping && <MenuItem icon={Square} onSelect={() => setConfirmStop(true)}>Dừng…</MenuItem>}
+        {/* Thay đổi chờ áp khi máy đang chạy: xem được, và bỏ được khi đã tạm dừng tới checkpoint (soát a83 B5). */}
+        {live && book.pendingChanges ? (
+          <MenuItem icon={RefreshCw} onSelect={() => setConfirmApply(true)}>{book.pendingChanges} thay đổi chờ áp</MenuItem>
+        ) : null}
+        {book.queuePosition ? <MenuItem icon={Square} onSelect={() => leaveQueue.mutate({ id: book.id })}>Bỏ xếp hàng</MenuItem> : null}
+        {/* Chưa chạy bước nào: chọn lại chương, giọng kể, chất lượng, "tôi" (soát UX a5 01-10, #4) - trình tạo điền sẵn mọi lựa chọn cũ. */}
+        {book.phase === "idle" && !live && !book.queuePosition && (
+          <MenuItem icon={SlidersHorizontal} onSelect={() => navigate(`/studio/new?redo=${book.id}`)}>Sửa thiết lập</MenuItem>
+        )}
+        {book.chapters.completed > 0 && <MenuItem icon={FolderDown} onSelect={() => setExporting(true)}>Xuất…</MenuItem>}
+        {next > 0 && <MenuItem icon={BookPlus} onSelect={() => navigate(`/studio/new?continue=${book.id}`)}>Thêm {next} chương</MenuItem>}
+        {/* Mở thư mục chỉ có trên máy tính. */}
+        {!remote && <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>Mở thư mục</MenuItem>}
+      </ProjectMenu>
       {/* key: chuyển Phần 1 -> Phần 2 là một hộp mới - không mang `busy`, nút Huỷ, kết quả của cuốn trước sang cuốn này. */}
       <ExportDialog key={book.id} book={book} open={exporting} onOpenChange={setExporting} onApplyFirst={() => setConfirmApply(true)} />
-      {book.queuePosition ? (
-        <>
-          <span className="inline-flex h-11 items-center gap-2 rounded-xl bg-warning-soft px-4 text-sm font-medium text-warning">
-            Chờ lượt {book.queuePosition}
-            <span className="sr-only">Tự chạy khi cuốn trước xong{book.seedPending ? ", giữ giọng và cách đọc tên" : ""}.</span>
-          </span>
-          <Button variant="ghost" size="lg" onClick={() => leaveQueue.mutate({ id: book.id })}>
-            Bỏ xếp hàng
-          </Button>
-          {/* Cuốn đang giữ máy tạm dừng thì hàng không tự đi: nói vì sao chờ và làm gì (soát a88 T5). */}
-          {book.queueWaitsOn && <p className="basis-full text-pretty text-sm text-fg-2">{queueWaitNotice(book.queueWaitsOn)}</p>}
-        </>
-      ) : book.starting ? (
-        <Button variant="primary" size="lg" loading>
-          Đang khởi động
-        </Button>
-      ) : live ? (
-        // Tạm dừng giữ tiến trình sống, làm tiếp đúng chỗ - an toàn cả giữa lúc phân tích; "Dừng" kết thúc lượt chạy.
-        <>
-          {book.stopping ? (
-            // Đã bấm Dừng: sách còn chạy tới chỗ dừng sạch kế. Hai nút khoá - tạm dừng / dừng thêm lần nữa không còn nghĩa (soát a88 V1).
-            <>
-              <Button variant="outline" size="lg" icon={Pause} disabled>
-                Tạm dừng
-              </Button>
-              <Button variant="outline" size="lg" icon={Square} loading disabled>
-                Đang dừng…
-              </Button>
-              <p className="basis-full text-pretty text-sm text-fg-2">
-                Dừng ở checkpoint kế, giữ phần đã xong; có thể mất vài phút.
-              </p>
-            </>
-          ) : book.paused ? (
-            // Giữ chờ duyệt: "Tiếp tục" và "Thu âm" là MỘT việc - chỉ có nút này, tên là "Thu âm" (soát UX a8 05-10, mục 12).
-            <Button
-              variant="primary"
-              size="lg"
-              icon={book.precast?.held ? Mic2 : Play}
-              loading={pause.isPending}
-              onClick={() => pause.mutate({ id: book.id, paused: false, battery: book.paused === "battery" })}
-            >
-              {book.precast?.held ? "Thu âm" : "Tiếp tục"}
-            </Button>
-          ) : book.canPause ? (
-            <Button variant="outline" size="lg" icon={Pause} loading={pause.isPending} onClick={() => pause.mutate({ id: book.id, paused: true })}>
-              Tạm dừng
-            </Button>
-          ) : null}
-          {/* Không tạm dừng được thì "Dừng" là nút duy nhất. */}
-          {!book.stopping && (
-            <Button variant={book.canPause ? "ghost" : "outline"} size="lg" icon={Square} onClick={() => setConfirmStop(true)}>
-              Dừng
-            </Button>
-          )}
-          {/* Thay đổi chờ áp khi máy đang chạy: xem được, và bỏ được khi đã tạm dừng tới checkpoint (soát a83 B5). */}
-          {book.pendingChanges ? (
-            <Button variant="ghost" size="lg" icon={RefreshCw} onClick={() => setConfirmApply(true)}>
-              {book.pendingChanges} thay đổi chờ áp
-            </Button>
-          ) : null}
-        </>
-      ) : book.phase === "idle" ? (
-        <>
-          <Button variant="primary" size="lg" icon={Wand2} loading={start.isPending} onClick={() => begin(book.id)}>
-            Bắt đầu thu
-          </Button>
-          {/* Chưa chạy bước nào: chọn lại chương, giọng kể, chất lượng, "tôi" (soát UX a5 01-10, #4). Cài đặt khoá theo sách
-              nên là tạo lại - trình tạo điền sẵn mọi lựa chọn cũ, cuốn cũ vào Thùng rác khi cuốn mới tạo xong. */}
-          <Button variant="ghost" size="lg" icon={SlidersHorizontal} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
-            Sửa thiết lập
-          </Button>
-        </>
-      ) : book.precast?.held && book.phase !== "done" ? (
-        // Sách đang chờ duyệt mà tiến trình đã chết (máy chủ khởi động lại): vẫn là "Thu âm", không phải "Tiếp tục tạo" cạnh
-        // một khung mời duyệt (soát UX a8) - cùng việc với nút "Thu âm" lúc sách đang giữ.
-        <Button variant="primary" size="lg" icon={Mic2} loading={start.isPending} onClick={() => begin(book.id)}>
-          Thu âm
-        </Button>
-      ) : asksBeforeResume(book) ? (
-        // Phân tích bị ngắt: chạy tiếp ra MỘT CUỐN KHÁC (AGENTS.md) - nút chính là làm lại từ đầu, "Tiếp tục" lùi xuống và hỏi
-        // lại trước khi chạy (ResumeAnalysisDialog). Làm lại = dự án mới thay bản dở; Studio từ xa cũng làm được (gửi `redoOf`, máy tính tự tìm chương nguồn).
-        <>
-          <Button variant="primary" size="lg" icon={RotateCcw} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
-            Phân tích lại
-          </Button>
-          <Button variant="outline" size="lg" icon={Play} loading={start.isPending} onClick={() => setConfirmResume(true)}>
-            Tiếp tục
-          </Button>
-          <p className="basis-full text-pretty text-sm text-fg-2">
-            Phân tích đã dừng giữa chừng
-            {book.segments.total ? ` (còn ${formatNumber(book.segments.pending ?? book.segments.total - book.segments.analyzed)}/${formatNumber(book.segments.total)} câu chưa phân tích)` : ""}; phân tích lại để giữ kết quả liền mạch, tiếp tục thì {ANALYSIS_CUT_COST}.
+      <MotionRegion as="div" className="basis-full text-pretty text-sm text-fg-2">
+        {book.queuePosition ? (
+          <p>
+            Chờ lượt {book.queuePosition}, tự chạy khi cuốn trước xong{book.seedPending ? ", giữ giọng và cách đọc tên" : ""}.
+            {/* Cuốn đang giữ máy tạm dừng thì hàng không tự đi: nói vì sao chờ và làm gì (soát a88 T5). */}
+            {book.queueWaitsOn && <> {queueWaitNotice(book.queueWaitsOn)}</>}
           </p>
-        </>
-      ) : book.phase !== "done" ? (
-        <Button variant="primary" size="lg" icon={Play} loading={start.isPending} onClick={() => begin(book.id)}>
-          Tiếp tục tạo
-        </Button>
-      ) : book.pendingChanges ? (
-        // Sách đã xong không tự chạy lại: sửa của người nghe chờ ở đây. Chạy lại áp chúng trước rồi chỉ thu lại câu bị ảnh
-        // hưởng (Pipeline._recover) - không làm lại cả cuốn.
-        <Button variant="primary" size="lg" icon={RefreshCw} loading={start.isPending} onClick={() => setConfirmApply(true)}>
-          Áp dụng {book.pendingChanges} thay đổi
-        </Button>
-      ) : redoWaiting > 0 ? (
-        // Chương chờ thu lại mà không còn yêu cầu nào để "áp" (đổi người kể “tôi”, hay một lần chạy áp sửa rồi bị dừng giữa chừng): chạy tiếp
-        // là thu những câu ấy. Không có nút này thì sách "Hoàn tất" mà chương cứ chờ mãi (soát UX a32, #1).
-        <>
-          <Button variant="primary" size="lg" icon={Play} loading={start.isPending} onClick={() => begin(book.id)}>
-            Tiếp tục
-          </Button>
-          <p className="basis-full text-pretty text-sm text-fg-2">
+        ) : live && book.stopping ? (
+          <p>Dừng ở checkpoint kế, giữ phần đã xong; có thể mất vài phút.</p>
+        ) : kind === "reanalyze" ? (
+          <p>
+            Phân tích đã dừng giữa chừng
+            {book.segments.total ? ` (còn ${formatNumber(pending)}/${formatNumber(book.segments.total)} câu)` : ""}; phân tích lại để giữ kết quả liền mạch,
+            tiếp tục thì {ANALYSIS_CUT_COST}.
+          </p>
+        ) : redoWaiting > 0 && kind === "continue" ? (
+          <p>
             {redoWaiting === 1 ? "1 chương đang chờ thu lại" : `${redoWaiting} chương đang chờ thu lại`} theo sửa của bạn. Bản cũ vẫn nghe được cho tới khi thu xong.
           </p>
-        </>
-      ) : null}
-      {next > 0 && (
-        <Button variant="secondary" size="lg" icon={BookPlus} onClick={() => navigate(`/studio/new?continue=${book.id}`)}>
-          Thêm {next} chương
-        </Button>
-      )}
-      {/* Hai nút biểu tượng đi thành một cụm: màn hẹp xuống dòng thì xuống cùng nhau, không để "…" đứng một mình một hàng.
-          Mở thư mục chỉ có trên máy tính; xoá dự án ở Studio từ xa là dòng "Xoá dự án ở máy tính <tên>" trong menu. */}
-      <span className="inline-flex items-center gap-2">
-        {!remote && <IconButton label="Mở thư mục sách" icon={FolderOpen} onClick={() => reveal.mutate(book.id)} />}
-        <ProjectMenu book={book} />
-      </span>
+        ) : null}
+        {studio.missing && !live && (book.phase !== "done" || Boolean(book.pendingChanges) || redoWaiting > 0) && (
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span>
+              Máy này {studio.repair ? "cần sửa" : studio.update ? "cần cập nhật" : "chưa cài"} Studio nên chưa làm tiếp được phần phân tích và thu âm (nghe, xem,
+              sửa cách đọc, nhạc nền, bìa và xuất sách vẫn được).
+            </span>
+            {!remote && (
+              <Button variant="ghost" size="sm" icon={Download} onClick={() => navigate("/studio")}>
+                {studio.action}
+              </Button>
+            )}
+          </p>
+        )}
+        {live && book.paused === "battery" && (
+          <div>
+            <p>Studio tạm dừng; cắm sạc để tiếp tục.</p>
+            <MoreInfo label="Dùng pin">Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin{remote ? "." : ", hoặc đổi ở Cài đặt › Studio."}</MoreInfo>
+          </div>
+        )}
+      </MotionRegion>
       <StopDialog book={book} open={confirmStop} onOpenChange={setConfirmStop} />
       <ResumeAnalysisDialog
         book={book}
@@ -825,25 +819,6 @@ export function Actions({ book }: { book: BookSummary }) {
         onApply={() => begin(book.id)}
         running={live ? (book.paused && book.status === "paused" ? "checkpoint" : "busy") : undefined}
       />
-      {studio.missing && !live && (book.phase !== "done" || Boolean(book.pendingChanges) || redoWaiting > 0) && (
-        <p className="flex basis-full flex-wrap items-center gap-x-3 gap-y-2 text-pretty text-sm text-fg-2">
-          <span>
-            Máy này {studio.repair ? "cần sửa" : studio.update ? "cần cập nhật" : "chưa cài"} Studio nên chưa làm tiếp được phần phân tích và thu âm (nghe, xem,
-            sửa cách đọc, nhạc nền, bìa và xuất sách vẫn được).
-          </span>
-          {!remote && (
-            <Button variant="secondary" size="sm" icon={Download} onClick={() => navigate("/studio")}>
-              {studio.action}
-            </Button>
-          )}
-        </p>
-      )}
-      {live && book.paused === "battery" && (
-        <div className="basis-full text-pretty text-sm text-fg-2">
-          <p>Studio tạm dừng; cắm sạc để tiếp tục.</p>
-          <MoreInfo label="Dùng pin">Làm sách trên pin chậm và hao pin. Bấm “Tiếp tục” để làm ngay trên pin{remote ? "." : ", hoặc đổi ở Cài đặt › Studio."}</MoreInfo>
-        </div>
-      )}
     </MotionRegion>
   );
 }
@@ -1183,6 +1158,72 @@ function ActivityView({ book }: { book: BookSummary }) {
 
 // ---- Trang -----------------------------------------------------------------------------------------------------------
 
+const TAB_LABEL: Record<string, string> = {
+  chapters: "Chương",
+  precast: "Duyệt trước khi thu",
+  work: "Việc cần duyệt",
+  script: "Kịch bản",
+  review: "Cần nghe lại",
+  cast: "Nhân vật",
+  music: "Nhạc nền",
+  activity: "Nhật ký",
+};
+
+/** Năm tab hiện thẳng, theo tần suất: Chương (nghe kiểm, thu lại), Việc cần duyệt và Cần nghe lại (hai hộp việc dây chuyền chờ bạn),
+ *  Nhân vật (đổi giọng - việc hay làm nhất sau phân vai), Nhạc nền. Còn lại vào "Thêm" (DESIGN.md mục 4.3, 7). */
+export const MAIN_TABS = ["chapters", "work", "review", "cast", "music"] as const;
+
+/** Hàng tab của dự án. "Duyệt trước khi thu" chỉ có trong một khoảng ngắn (sau phân tích, trước khi thu) và đã có dải mời ở đầu
+ *  trang; Kịch bản thường mở từ một thẻ / chương ("Kịch bản chương này"); Nhật ký hiếm khi cần. Tab đang chọn nằm trong "Thêm" thì
+ *  nút "Thêm" mang tên tab ấy và gạch chân như tab thường. */
+export function ProjectTabBar({ tab, onTab, precast, counts }: {
+  tab: string;
+  onTab: (tab: string) => void;
+  precast: boolean;
+  counts: Partial<Record<string, number>>;
+}) {
+  const more = [...(precast ? ["precast"] : []), "script", "activity"];
+  const inMore = more.includes(tab);
+  // Số cạnh "Thêm": cộng các tab bên trong (số của "Duyệt trước khi thu" không mất khi nó nằm trong "Thêm"); nút đang mang tên một tab
+  // thì chỉ số của tab ấy - "Kịch bản 4" mà 4 là việc ở tab khác thì đọc sai.
+  const moreCount = (inMore ? counts[tab] : more.reduce((sum, key) => sum + (counts[key] ?? 0), 0)) || undefined;
+  return (
+    <TabsList label="Mục của dự án">
+      {MAIN_TABS.map((key) => (
+        <TabsTrigger key={key} value={key} count={counts[key]}>
+          {TAB_LABEL[key]}
+        </TabsTrigger>
+      ))}
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button
+            type="button"
+            data-active={inMore || undefined}
+            className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-2 text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[active]:border-accent data-[active]:text-fg data-[state=open]:text-fg sm:px-3"
+          >
+            <MotionRegion as="span" motionKey={inMore ? tab : "more"}>{inMore ? TAB_LABEL[tab] : "Thêm"}</MotionRegion>
+            <MotionRegion as="span" className="inline-flex" motionKey={moreCount ?? null}>{moreCount !== undefined && (
+              <span className="tabular rounded-full bg-hover px-1.5 py-px text-[0.6875rem] font-semibold text-fg-2">{moreCount}</span>
+            )}</MotionRegion>
+            <ChevronDown className="fold-chevron size-3.5 text-fg-3" aria-hidden />
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content collisionPadding={12} align="start" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-52 overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float">
+            {more.map((key) => (
+              <DropdownMenu.Item key={key} onSelect={() => onTab(key)} className={MENU_ITEM}>
+                <span className="grid size-4 place-items-center" aria-hidden>{key === tab && <Check className="size-4 text-accent-text" />}</span>
+                {TAB_LABEL[key]}
+                {counts[key] ? <span className="tabular ml-auto pl-3 text-xs text-fg-2">{counts[key]}</span> : null}
+              </DropdownMenu.Item>
+            ))}
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+    </TabsList>
+  );
+}
+
 /** Tab mở lối nhảy sang tab khác ("Đọc cả N câu trong Kịch bản") - nhãn nút "Về …" ở tab đích. */
 const FROM_LABEL: Record<string, string> = { work: "Việc cần duyệt", review: "Cần nghe lại", precast: "Duyệt trước khi thu" };
 
@@ -1321,7 +1362,7 @@ export function ProjectScreen() {
             tone={book.paused || book.stopping ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused && !book.stopping}
           />
-          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-[1.875rem]">{book.title}</h1>
+          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-[2rem]">{book.title}</h1>
           {/* Điện thoại: một dòng gọn (số chương) + "Chi tiết" gập - giọng kể, chất lượng, model, ngày tạo từng chiếm 3 dòng đầu
               trang (soát UX a8 07-10). */}
           <p className="mt-2 text-sm text-fg-2">
@@ -1348,7 +1389,7 @@ export function ProjectScreen() {
             </p>
           ) : null}
           </div>
-          <div className="col-span-2 sm:col-auto">
+          <div className="col-span-2 sm:col-auto sm:mt-6">
             <Actions book={book} />
           </div>
         </div>
@@ -1370,27 +1411,13 @@ export function ProjectScreen() {
         </div>
       )}
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-9">
-        <TabsList label="Mục của dự án">
-          <TabsTrigger value="chapters" count={chapters.length}>
-            Chương
-          </TabsTrigger>
-          {canReview(book) && (
-            // Cùng phép đếm với "Việc cần duyệt" (thẻ ở đây không đếm lại bên kia): cộng hai nhãn = số việc điện thoại báo.
-            <TabsTrigger value="precast" count={precastKeys?.size || undefined}>
-              Duyệt trước khi thu
-            </TabsTrigger>
-          )}
-          <TabsTrigger value="work" count={workCount || undefined}>
-            Việc cần duyệt
-          </TabsTrigger>
-          <TabsTrigger value="script">Kịch bản</TabsTrigger>
-          <TabsTrigger value="review" count={reviewCount || undefined}>
-            Cần nghe lại
-          </TabsTrigger>
-          <TabsTrigger value="cast">Nhân vật</TabsTrigger>
-          <TabsTrigger value="music">Nhạc nền</TabsTrigger>
-          <TabsTrigger value="activity">Nhật ký</TabsTrigger>
-        </TabsList>
+        <ProjectTabBar
+          tab={tab}
+          onTab={(value) => setParams({ tab: value }, { replace: true })}
+          precast={canReview(book)}
+          // Cùng phép đếm với "Việc cần duyệt" (thẻ ở màn duyệt trước khi thu không đếm lại bên kia): cộng hai nhãn = số việc điện thoại báo.
+          counts={{ chapters: chapters.length, precast: precastKeys?.size || undefined, work: workCount || undefined, review: reviewCount || undefined }}
+        />
         <TabsPanels value={tab}>
         {from && FROM_LABEL[from] && tab !== from && (
           <button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">

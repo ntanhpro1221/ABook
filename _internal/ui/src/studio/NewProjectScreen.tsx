@@ -1,12 +1,12 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
-import { Collapse, Fold } from "@/shared/Collapse";
+import { Collapse, Fold, useFold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
   Check,
+  ChevronDown,
   FileText,
   Folder,
   FolderInput,
@@ -17,6 +17,7 @@ import {
   Mic,
   Play,
   Scissors,
+  SlidersHorizontal,
   Sparkles,
   Trash2,
   Upload,
@@ -28,7 +29,6 @@ import { toast } from "@/shared/toast";
 import { Switch } from "@/desktop/PhoneSync";
 import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
-import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
 import { formatLength, formatNumber } from "@/shared/format";
@@ -83,13 +83,6 @@ import type { StudioFit } from "@/studio/studioFit";
 import { TemplateBar } from "@/studio/TemplateBar";
 import { VolumeSplit } from "@/studio/VolumeSplit";
 import { inOrder, ranges, startNumbers, volumeTitles } from "@/studio/volumes";
-
-const STEPS = [
-  { title: "Nội dung", hint: "TXT/EPUB/DOCX/PDF" },
-  { title: "Giọng kể", hint: "Người dẫn truyện" },
-  { title: "Chất lượng", hint: "Nhanh hay kỹ" },
-  { title: "Xác nhận", hint: "Xem lại và tạo" },
-];
 
 const PROFILES: { value: Profile; title: string; pace: string; summary: string; points: string[] }[] = [
   {
@@ -215,50 +208,7 @@ function cleanPath(value: string): string {
   return value.trim().replace(/^["']+|["']+$/g, "").trim();
 }
 
-// ---- Thanh bước --------------------------------------------------------------------------------------------------
-
-function StepRail({ step, allowed, onGo }: { step: number; allowed: number; onGo: (index: number) => void }) {
-  return (
-    // Dưới lg (điện thoại, cửa sổ hẹp): bốn bước một hàng ngang, bỏ dòng gợi ý - xếp dọc thì chiếm ~250 px trước khi tới
-    // nội dung của bước (soát UX 29-09).
-    <ol className="grid grid-cols-4 gap-1 lg:block lg:space-y-1">
-      {STEPS.map((item, index) => {
-        const done = index < step;
-        const current = index === step;
-        const enabled = index <= allowed;
-        return (
-          <li key={item.title}>
-            <button
-              type="button"
-              disabled={!enabled}
-              aria-current={current ? "step" : undefined}
-              onClick={() => onGo(index)}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors disabled:cursor-not-allowed max-lg:flex-col max-lg:gap-1 max-lg:px-1 max-lg:text-center",
-                current ? "bg-hover" : enabled && "hover:bg-hover",
-              )}
-            >
-              <span
-                className={cn(
-                  "grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold",
-                  done ? "bg-success text-white" : current ? "bg-accent text-accent-ink" : "bg-hover text-fg-2",
-                )}
-              >
-                {done ? <Check className="size-4" strokeWidth={3} /> : index + 1}
-              </span>
-              <span>
-                <span className={cn("block text-sm font-medium max-lg:text-xs", !current && !done && "text-fg-2")}>{item.title}</span>
-                <span className="block text-xs text-fg-2 max-lg:hidden">{item.hint}</span>
-              </span>
-            </button>
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
-
-// ---- Bước 1 ---------------------------------------------------------------------------------------------------
+// ---- Nguồn -----------------------------------------------------------------------------------------------------
 
 export function SourceStep({
   scan,
@@ -978,7 +928,7 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
   );
 }
 
-// ---- Bước 2 ---------------------------------------------------------------------------------------------------
+// ---- Giọng -----------------------------------------------------------------------------------------------------
 
 export function VoiceCard({
   voice,
@@ -1324,7 +1274,7 @@ export function VoiceStep({
   );
 }
 
-// ---- Bước 3 ---------------------------------------------------------------------------------------------------
+// ---- Chất lượng -----------------------------------------------------------------------------------------------
 
 export function QualityStep({
   profile,
@@ -1403,7 +1353,7 @@ export function QualityStep({
   );
 }
 
-// ---- Bước 4 ---------------------------------------------------------------------------------------------------
+// ---- Khi tạo ---------------------------------------------------------------------------------------------------
 
 function ConfirmStep({
   title,
@@ -1424,8 +1374,6 @@ function ConfirmStep({
   dropCredits,
   credits,
   analysisModel,
-  restart,
-  onReview,
   noStudio,
   unfit,
 }: {
@@ -1450,10 +1398,6 @@ function ConfirmStep({
   /** Dòng ghi công / ủng hộ phát hiện ở các chương đã chọn (gợi ý chưa áp nếu `dropCredits` tắt). */
   credits: Credits;
   analysisModel: string;
-  /** "Làm lại phân tích": bản dở của cuốn này vào Thùng rác khi cuốn mới tạo xong. */
-  restart?: { title: string };
-  /** Quay lại bước đầu (chọn file, gợi ý dòng ghi công). */
-  onReview: () => void;
   /** Máy chưa có Studio: tạo được nhưng không chạy được - không ước thời gian, không "bắt đầu ngay". */
   noStudio?: boolean;
   /** Máy chưa có Studio và không đủ để làm sách nói (studioFit.ts): không tạo được ở đây - nói thật, mời tạo ở máy đã ghép. */
@@ -1517,85 +1461,80 @@ function ConfirmStep({
           ([["Thời gian làm", `chưa đo cho chế độ này - ngắn hơn “Chất lượng cao” (dưới ${formatLength(guess.totalHigh)}, số tham khảo)`]] as [string, string][])),
   ];
   return (
-    <MotionRegion>
-    <div>
-      <h2 className="text-xl font-semibold">Xem lại</h2>
-      {unfit && <NoStudioHere fit={unfit} className="mt-4" />}
-      <div className="mt-5 flex items-start gap-4 rounded-2xl border border-line bg-panel p-4">
-        <BookCover title={title} size="lg" className="w-20 sm:w-32" />
-        <div className="min-w-0 flex-1">
-          <h3 className="text-lg font-semibold text-balance">{title}</h3>
-          <dl className="mt-3 divide-y divide-line text-sm">
-            {rows.filter(([label]) => /Giọng|Chất lượng|Thời gian làm/.test(label)).slice(0, 3).map(([label, value]) => (
-              // Điện thoại: nhãn trên, giá trị dưới - cột nhãn 170 px cố định từng ép giá trị thành 5-6 dòng ở 390 px.
-              <div key={label} className="grid gap-0.5 py-2 sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-4">
-                <dt className="text-fg-2">{label}</dt>
-                <dd className="font-medium">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+    <MotionRegion as="div">
+      <h3 className="text-base font-semibold">Khi tạo</h3>
+      <div className="mt-2 divide-y divide-line">
+        <label className="flex items-start gap-3 py-3" htmlFor="start-now">
+          <Switch
+            id="start-now"
+            labelledBy="start-now-name"
+            describedBy="start-now-hint"
+            checked={startNow && !noStudio}
+            disabled={noStudio}
+            onCheckedChange={setStartNow}
+          />
+          <span>
+            <span id="start-now-name" className="block text-sm font-medium">Bắt đầu tạo ngay</span>
+            <MotionRegion as="span" id="start-now-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
+              {unfit
+                ? "Tắt vì máy này không làm sách nói được (lý do ở đầu trang)."
+                : noStudio
+                ? "Chưa có Studio: sách được tạo và chờ cài xong."
+                : startNow
+                ? "Chạy nền; nghe được ngay từng chương đã xong."
+                : "Tạo nhưng chưa chạy; bắt đầu ở trang dự án khi sẵn sàng."}
+            </MotionRegion>
+          </span>
+        </label>
+        <label className="flex items-start gap-3 py-3" htmlFor="precast-wait">
+          <Switch id="precast-wait" labelledBy="precast-wait-name" describedBy="precast-wait-hint" checked={precastWait} onCheckedChange={setPrecastWait} />
+          <span>
+            <span id="precast-wait-name" className="block text-sm font-medium">Duyệt trước khi thu</span>
+            <MotionRegion as="span" id="precast-wait-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
+              {precastWait
+                ? "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”."
+                : "Phân tích xong thì thu luôn; duyệt lúc nào cũng được."}
+            </MotionRegion>
+          </span>
+        </label>
       </div>
-      <Fold storageKey="new-project.review.details" title="Chi tiết" className="mt-4" bodyClassName="px-4 pb-4"><dl className="divide-y divide-line text-sm">{rows.map(([label, value]) => <div key={label} className="py-2"><dt className="text-fg-2">{label}</dt><dd>{value}</dd></div>)}</dl></Fold>
-      <div className="mt-5 flex gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm">
+      {/* Mọi lựa chọn sẽ gửi đi, kể cả thời gian tham khảo - một danh sách phẳng. */}
+      <h3 className="mt-8 text-base font-semibold">Tóm tắt</h3>
+      <dl className="mt-2 divide-y divide-line text-sm">
+        {rows.map(([label, value]) => (
+          // Điện thoại: nhãn trên, giá trị dưới - cột nhãn cố định từng ép giá trị thành 5-6 dòng ở 390 px.
+          <div key={label} className="grid gap-0.5 py-2 sm:grid-cols-[200px_minmax(0,1fr)] sm:gap-4">
+            <dt className="text-fg-2">{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </MotionRegion>
+  );
+}
+
+/** Nhắc ngay trên nút tạo, luôn thấy (không nằm trong "Tuỳ chọn"): phân tích không nên bị ngắt (AGENTS.md), làm lại thì bản dở vào
+ *  Thùng rác, máy không đủ thì nói vì sao. */
+function StartNotes({ restart, noStudio, unfit, analysis }: { restart?: { title: string }; noStudio: boolean; unfit?: StudioFit; analysis?: string }) {
+  return (
+    <MotionRegion as="div" className="mt-8 space-y-2 text-sm text-fg-2">
+      {unfit && <NoStudioHere fit={unfit} />}
+      {restart && (
+        <p className="flex gap-2 text-pretty">
+          <Info className="mt-0.5 size-4 shrink-0 text-info" />
+          <span>Tạo cuốn mới từ đầu, giữ bìa và file gốc; bản dở “{restart.title}” vào Thùng rác.</span>
+        </p>
+      )}
+      <div className="flex gap-2 text-pretty">
         <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
-        <div className="text-pretty"><p className="font-semibold">Phân tích</p><p>Cần nghỉ, hãy dùng Tạm dừng.</p>
+        <div>
+          Đang phân tích mà cần nghỉ, hãy dùng Tạm dừng.{" "}
           <MoreInfo label="Vì sao?">
             Đừng tắt máy, cho máy ngủ hoặc bấm Dừng trong lúc phân tích. Dừng hoặc nạp lại model có thể đổi phân vai và audio; bản cũ cần tạo dự án mới nếu bị ngắt. Tạm dừng quá 30 phút cũng có thể dỡ model. Sau phân tích, bạn có thể dừng và tiếp tục.
-            {!noStudio && measured && ` Thời gian tham khảo: ${exact ? formatLength(guess.analysis) : lengthRange(guess.analysisLow, guess.analysisHigh)}.`}
-          </MoreInfo> </div> </div> {restart && (
-        <div className="mt-3 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
-          <Info className="mt-0.5 size-4 shrink-0 text-info" />
-          <p className="text-pretty">
-            Tạo cuốn mới từ đầu, giữ bìa và file gốc; bản dở “{restart.title}” vào Thùng rác.
-          </p>
+            {!noStudio && analysis && ` Thời gian tham khảo: ${analysis}.`}
+          </MoreInfo>
         </div>
-      )}
-      {credits.lines > 0 && !droppedLines(credits, dropCredits) && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-panel p-4 text-sm">
-          <Sparkles className="size-4 shrink-0 text-accent-text" />
-          <p className="min-w-0 flex-1 text-pretty">
-            Còn {formatNumber(credits.lines)} {creditWhere(credits)} được đọc; hãy chọn trước khi phân tích.
-          </p>
-          <Button variant="secondary" size="sm" onClick={onReview}>
-            Xem gợi ý
-          </Button>
-        </div>
-      )}
-      <label className="mt-4 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="start-now">
-        <Switch
-          id="start-now"
-          labelledBy="start-now-name"
-          describedBy="start-now-hint"
-          checked={startNow && !noStudio}
-          disabled={noStudio}
-          onCheckedChange={setStartNow}
-        />
-        <span>
-          <span id="start-now-name" className="block text-sm font-medium">Bắt đầu tạo ngay</span>
-          <MotionRegion as="span" id="start-now-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
-            {unfit
-              ? "Tắt vì máy này không làm sách nói được (lý do ở đầu trang)."
-              : noStudio
-              ? "Chưa có Studio: sách được tạo và chờ cài xong."
-              : startNow
-              ? "Chạy nền; nghe được ngay từng chương đã xong."
-              : "Tạo nhưng chưa chạy; bắt đầu ở trang dự án khi sẵn sàng."}
-          </MotionRegion>
-        </span>
-      </label>
-      <label className="mt-3 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="precast-wait">
-        <Switch id="precast-wait" labelledBy="precast-wait-name" describedBy="precast-wait-hint" checked={precastWait} onCheckedChange={setPrecastWait} />
-        <span>
-          <span id="precast-wait-name" className="block text-sm font-medium">Duyệt trước khi thu</span>
-          <MotionRegion as="span" id="precast-wait-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
-            {precastWait
-              ? "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”."
-              : "Phân tích xong thì thu luôn; duyệt lúc nào cũng được."}
-          </MotionRegion>
-        </span>
-      </label>
-    </div>
+      </div>
     </MotionRegion>
   );
 }
@@ -1672,8 +1611,7 @@ export function NewProjectScreen() {
         ...(redo.analysisInterrupted ? { restart: true } : {}),
       },
     });
-    // Làm lại phân tích: không có gì để chọn lại - thẳng bước Xác nhận (lựa chọn cũ đã điền sẵn, vẫn đổi được ở các bước trước).
-    setParams(redo.analysisInterrupted ? { step: "3" } : {}, { replace: true });
+    setParams({}, { replace: true });
   }, [redoId, redo, setParams, navigate]);
   useEffect(() => {
     if (redoError) toast.error("Không đọc được thiết lập của sách", { description: (redoError as Error).message });
@@ -1826,37 +1764,25 @@ export function NewProjectScreen() {
   const autoNarrator = narratorIsAuto(draft, preferences?.newBookNarrator, voices);
 
   const title = draft.title;
-  const allowed = !scan?.files.length || !title.trim() ? 0 : !draft.narrator ? 1 : STEPS.length - 1;
-  const requested = Number(params.get("step") ?? 0);
-  const step = Number.isInteger(requested) ? Math.max(0, Math.min(requested, allowed)) : 0;
-  useEffect(() => {
-    document.querySelector("main")?.scrollTo({ top: 0 });
-  }, [step]);
-  // URL đòi bước chưa được phép (tên vừa bị xoá trống...): kéo URL về đúng bước đang hiện, để lúc điều kiện thoả
-  // lại, trình tạo KHÔNG tự nhảy tới bước cũ trong URL.
-  // Nhưng KHÔNG trong lúc nháp đang quét lại file (tải lại trang ở bước 4): lúc ấy chưa có chương nên mọi bước sau đều
-  // "chưa được phép" - kéo URL về bước 1 thì quét xong người dùng mất chỗ (soát UX 29-09).
   const reading = !scanIsCurrent(scanned, draft.paths);
-  const scanning = reading;
-  useEffect(() => {
-    if (scanning) return;
-    if (params.get("step") && requested !== step) setParams(step ? { step: String(step) } : {}, { replace: true });
-  }, [params, requested, scanning, setParams, step]);
-
-  // Bước nằm trong URL: nút Back của trình duyệt/chuột lùi đúng một bước.
-  const go = (index: number) => {
-    const target = Math.max(0, Math.min(index, allowed));
-    setParams(target ? { step: String(target) } : {});
-  };
+  // Một trang, không bước (DESIGN.md L10: Studio -> "Dự án mới" -> chọn file -> "Bắt đầu"): giọng, chất lượng, model, "bắt đầu ngay"
+  // đã chọn sẵn theo mặc định tốt và gập dưới "Tuỳ chọn"; mở rồi thì lần sau vẫn mở.
+  const [optionsOpen, setOptionsOpen] = useFold("new-project.options", false);
+  const ready = Boolean(scan?.files.length);
+  const exact = matchesMeasured(useStudioGpu(), draft.analysisModel ?? "");
+  const guess = scan ? estimate(scan.totals.words, scan.files.length, exact) : null;
+  const analysisTime = guess && draft.profile === "high_quality" ? (exact ? formatLength(guess.analysis) : lengthRange(guess.analysisLow, guess.analysisHigh)) : undefined;
+  const optionsSummary = [
+    autoNarrator ? "Giọng kể máy chọn" : `Giọng kể ${draft.narrator}`,
+    PROFILES.find((option) => option.value === draft.profile)?.title,
+    draft.startNow && !noStudio ? "bắt đầu ngay" : "chưa chạy",
+  ].filter(Boolean).join(" · ");
 
   const gate = createGate({ title, reading, unfit: Boolean(unfit) });
   const submit = () => {
     // Đang đọc lại nguồn (vừa thêm / bớt file): `scan` còn là của danh sách cũ - đợi, đừng tạo sách thiếu chương vừa chọn.
     if (reading) return;
-    if (!scan?.files.length || !title.trim() || submitting.current) {
-      if (!title.trim()) go(0);
-      return;
-    }
+    if (!scan?.files.length || !title.trim() || submitting.current) return;
     submitting.current = true;
     create.mutate(
       {
@@ -1931,11 +1857,11 @@ export function NewProjectScreen() {
   };
 
   return (
-    <div className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
-      <button type="button" onClick={() => navigate("/studio")} className="inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+    <div className="mx-auto max-w-[920px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
+      <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[1.75rem]"><MotionRegion as="span">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</MotionRegion></h1>
+      <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[2rem]"><MotionRegion as="span">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</MotionRegion></h1>
       <MotionPresence open={Boolean(draft.seed)}>{draft.seed && (
         <SeedBanner
           seed={draft.seed}
@@ -1952,170 +1878,177 @@ export function NewProjectScreen() {
           }}
         />
       )}</MotionPresence>
-      <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:gap-10">
-        <aside className="shrink-0 lg:w-56">
-          <StepRail step={step} allowed={allowed} onGo={go} />
-          <Collapse open={Boolean(draft.paths.length > 0 || draft.title)}>
-            <button
-              type="button"
-              onClick={() => {
-                saveDraft(null);
-                setDraft(EMPTY_DRAFT);
-                latestSources.current = "";
-                setScanned(null);
-                go(0);
-              }}
-              className="touch-row mt-4 px-2.5 text-[0.8125rem] text-fg-2 hover:text-fg"
-            >
-              Bắt đầu lại
-            </button>
-          </Collapse>
-        </aside>
-        <section className="min-w-0 flex-1">
-          {/* Mẫu thiết lập chỉ cho sách mới: "Làm tiếp cuốn này" theo phần trước. */}
-          {step > 0 && !draft.seed && <TemplateBar draft={draft} onPick={pickTemplate} narratorAuto={autoNarrator} />}
-          {step === 0 && <StudioInstallNotice className="mb-6" />}
-          {step === 0 && (
-            <SourceStep
-              scan={scan}
-              title={title}
-              onTitle={(value) => update({ title: value, titleEdited: true })}
-              scanning={scanMutation.isPending}
-              onPaths={(paths) => update({ paths, excluded: [], keepMatter: [], limit: null, volumeStarts: null, titleEdited: paths.length ? draft.titleEdited : false })}
-              matter={{ files: rawScan?.files ?? [], keep: draft.keepMatter ?? [] }}
-              onKeepMatter={(path, on) => setDraft((current) => ({ ...current, ...keepMatter(current, path, on) }))}
-              onAddFiles={(paths) => setDraft((current) => ({ ...current, paths: [...current.paths, ...paths], volumeStarts: null }))}
-              splitting={splitting}
-              volumeStarts={volumeStarts}
-              volumeSplit={
-                <VolumeSplit
-                  ordered={ordered}
-                  excluded={excludedPaths}
-                  files={scan?.files ?? []}
-                  proposal={rawScan?.volumes}
-                  title={title.trim()}
-                  value={draft.volumeStarts ?? null}
-                  onChange={(volumeStarts) => update({ volumeStarts })}
-                />
-              }
-              total={rawScan?.files.length ?? 0}
-              limit={draft.limit ?? null}
-              later={(rawScan?.files.filter((file) => !excludedPaths.includes(file.path)).length ?? 0) - (scan?.files.length ?? 0)}
-              onLimit={(count) => update({ limit: count })}
-              onRemove={(path) => {
-                update({ excluded: [...draft.excluded, path] });
-                const name = sourceName(path);
-                toast(`Đã bỏ ${name}`, {
-                  id: `removed-${path}`,
-                  action: {
-                    label: "Hoàn tác",
-                    onClick: () => setDraft((current) => ({ ...current, excluded: current.excluded.filter((item) => item !== path) })),
-                  },
+      <div className="mt-8">
+          <StudioInstallNotice className="mb-6" />
+          <SourceStep
+            scan={scan}
+            title={title}
+            onTitle={(value) => update({ title: value, titleEdited: true })}
+            scanning={scanMutation.isPending}
+            onPaths={(paths) => update({ paths, excluded: [], keepMatter: [], limit: null, volumeStarts: null, titleEdited: paths.length ? draft.titleEdited : false })}
+            matter={{ files: rawScan?.files ?? [], keep: draft.keepMatter ?? [] }}
+            onKeepMatter={(path, on) => setDraft((current) => ({ ...current, ...keepMatter(current, path, on) }))}
+            onAddFiles={(paths) => setDraft((current) => ({ ...current, paths: [...current.paths, ...paths], volumeStarts: null }))}
+            splitting={splitting}
+            volumeStarts={volumeStarts}
+            volumeSplit={
+              <VolumeSplit
+                ordered={ordered}
+                excluded={excludedPaths}
+                files={scan?.files ?? []}
+                proposal={rawScan?.volumes}
+                title={title.trim()}
+                value={draft.volumeStarts ?? null}
+                onChange={(volumeStarts) => update({ volumeStarts })}
+              />
+            }
+            total={rawScan?.files.length ?? 0}
+            limit={draft.limit ?? null}
+            later={(rawScan?.files.filter((file) => !excludedPaths.includes(file.path)).length ?? 0) - (scan?.files.length ?? 0)}
+            onLimit={(count) => update({ limit: count })}
+            onRemove={(path) => {
+              update({ excluded: [...draft.excluded, path] });
+              const name = sourceName(path);
+              toast(`Đã bỏ ${name}`, {
+                id: `removed-${path}`,
+                action: {
+                  label: "Hoàn tác",
+                  onClick: () => setDraft((current) => ({ ...current, excluded: current.excluded.filter((item) => item !== path) })),
+                },
+              });
+            }}
+            problem={problem}
+            dropCredits={draft.dropCredits ?? KEEP_CREDITS}
+            onDropCredits={(value) => update({ dropCredits: value })}
+            previousLast={draft.seed?.lastChapter}
+            replaces={draft.replaces}
+            onSplit={async (path) => {
+              try {
+                // Tên sách đang điền đi kèm: dòng tên truyện đầu file trùng nó thì không thành chương "Mở đầu" (txt_split.split).
+                const { folder } = await api<{ folder: string }>("/api/sources/split", { method: "POST", body: { path, title: draft.title.trim() } });
+                // File đã chọn thẳng: thư mục chương thay chỗ nó. File nằm trong một thư mục đã chọn: thêm thư mục chương,
+                // bỏ file cả truyện khỏi danh sách (vẫn hoàn tác được như mọi chương bỏ tay).
+                // Đường người dùng gõ ("D:/Truyện/a.txt") khác dạng đường máy quét ("D:\Truyện\a.txt"): so bằng samePath.
+                const replaced = draft.paths.some((item) => samePath(item, path));
+                // Tên sách người dùng đã có / đã gõ ở lại: thư mục chương mang tên FILE ("ngon_den_cuoi_cung"), không được đè lên nó khi quét lại.
+                const keepTitle = draft.title.trim() ? { titleEdited: true } : {};
+                update(
+                  replaced
+                    ? { paths: draft.paths.map((item) => (samePath(item, path) ? folder : item)), excluded: [], keepMatter: [], limit: null, volumeStarts: null, ...keepTitle }
+                    : { paths: [...draft.paths, folder], excluded: [...draft.excluded, path], limit: null, volumeStarts: null, ...keepTitle },
+                );
+                const plan = scan?.files.find((file) => samePath(file.path, path))?.split;
+                const chapters = plan ? splitOutcome(plan, draft.title).chapters : undefined;
+                toast.success(chapters ? `Đã tách thành ${formatNumber(chapters)} chương` : "Đã tách thành các chương", {
+                  description: "File gốc vẫn giữ nguyên.",
                 });
-              }}
-              problem={problem}
-              dropCredits={draft.dropCredits ?? KEEP_CREDITS}
-              onDropCredits={(value) => update({ dropCredits: value })}
-              previousLast={draft.seed?.lastChapter}
-              replaces={draft.replaces}
-              onSplit={async (path) => {
-                try {
-                  // Tên sách đang điền đi kèm: dòng tên truyện đầu file trùng nó thì không thành chương "Mở đầu" (txt_split.split).
-                  const { folder } = await api<{ folder: string }>("/api/sources/split", { method: "POST", body: { path, title: draft.title.trim() } });
-                  // File đã chọn thẳng: thư mục chương thay chỗ nó. File nằm trong một thư mục đã chọn: thêm thư mục chương,
-                  // bỏ file cả truyện khỏi danh sách (vẫn hoàn tác được như mọi chương bỏ tay).
-                  // Đường người dùng gõ ("D:/Truyện/a.txt") khác dạng đường máy quét ("D:\Truyện\a.txt"): so bằng samePath.
-                  const replaced = draft.paths.some((item) => samePath(item, path));
-                  // Tên sách người dùng đã có / đã gõ ở lại: thư mục chương mang tên FILE ("ngon_den_cuoi_cung"), không được đè lên nó khi quét lại.
-                  const keepTitle = draft.title.trim() ? { titleEdited: true } : {};
-                  update(
-                    replaced
-                      ? { paths: draft.paths.map((item) => (samePath(item, path) ? folder : item)), excluded: [], keepMatter: [], limit: null, volumeStarts: null, ...keepTitle }
-                      : { paths: [...draft.paths, folder], excluded: [...draft.excluded, path], limit: null, volumeStarts: null, ...keepTitle },
-                  );
-                  const plan = scan?.files.find((file) => samePath(file.path, path))?.split;
-                  const chapters = plan ? splitOutcome(plan, draft.title).chapters : undefined;
-                  toast.success(chapters ? `Đã tách thành ${formatNumber(chapters)} chương` : "Đã tách thành các chương", {
-                    description: "File gốc vẫn giữ nguyên.",
-                  });
-                } catch (error) {
-                  toast.error("Không tách được", { description: (error as Error).message });
-                }
-              }}
-            />
-          )}
-          {step === 1 && (
-            <VoiceStep
-              narrator={draft.narrator}
-              setNarrator={(narrator) => update({ narrator, narratorPicked: true })}
-              paths={scan?.files.map((file) => file.path) ?? []}
-              seedFrom={draft.seed?.id}
-              previousNarrator={draft.seed?.narrator}
-              firstPerson={draft.firstPerson}
-              setFirstPerson={(firstPerson) => update({ firstPerson, ...(firstPerson.trim() ? {} : { firstPersonGender: undefined, tellerMode: false }) })}
-              firstPersonGender={draft.firstPersonGender}
-              setFirstPersonGender={(firstPersonGender) => {
-                // Máy chọn giọng dẫn thì giọng hiện trong lưới theo giới vừa chọn (máy chủ đặt đúng giọng ấy lúc tạo).
-                const suggested = autoNarrator ? recommendedFor(voices, firstPersonGender) : undefined;
-                update({ firstPersonGender, ...(suggested ? { narrator: suggested } : {}) });
-              }}
-              tellerMode={draft.tellerMode}
-              setTellerMode={(tellerMode) => update({ tellerMode })}
-              narratorAuto={autoNarrator}
-              povOff={draft.povOff ?? []}
-              setPovOff={(povOff) => update({ povOff })}
-            />
-          )}
-          {step === 2 && scan && (
-            <QualityStep profile={draft.profile} setProfile={(profile) => update({ profile })} words={scan.totals.words} chapters={scan.files.length}
-              analysisModel={draft.analysisModel ?? ""} setAnalysisModel={(analysisModel) => update({ analysisModel })} noStudio={noStudio} />
-          )}
-          {step === 3 && scan && (
-            <ConfirmStep
-              title={title.trim()}
-              scan={scan}
-              narrator={draft.narrator}
-              narratorAuto={autoNarrator}
-              firstPerson={draft.firstPerson.trim()}
-              firstPersonGender={draft.firstPerson.trim() ? draft.firstPersonGender : undefined}
-              tellerMode={draft.firstPerson.trim() ? draft.tellerMode : false}
-              povChapters={povChapters}
-              profile={draft.profile}
-              seed={draft.seed}
-              volumes={volumeStarts.length > 1 ? ranges(volumeStarts, scan.files.length) : undefined}
-              startNow={draft.startNow}
-              setStartNow={(startNow) => update({ startNow })}
-              precastWait={Boolean(draft.precastWait)}
-              setPrecastWait={(precastWait) => update({ precastWait })}
-              dropCredits={draft.dropCredits ?? KEEP_CREDITS}
-              credits={creditSummary(scan.files)}
-              analysisModel={draft.analysisModel ?? ""}
-              restart={draft.replaces?.restart ? { title: draft.replaces.title } : undefined}
-              onReview={() => go(0)}
-              noStudio={noStudio}
-              unfit={unfit}
-            />
-          )}
+              } catch (error) {
+                toast.error("Không tách được", { description: (error as Error).message });
+              }
+            }}
+          />
+          {/* "Tuỳ chọn": một dòng tóm tắt lựa chọn đang dùng; bấm thì mở giọng kể, chất lượng, model và cách bắt đầu. Hiện khi đã có
+              chương - trước đó chưa có gì để chọn. */}
+          <MotionPresence open={ready}>
+            <section className="mt-8 border-t border-line">
+              <button
+                type="button"
+                aria-expanded={optionsOpen}
+                aria-controls="new-project-options"
+                onClick={() => setOptionsOpen(!optionsOpen)}
+                className="flex min-h-14 w-full items-center gap-3 py-3 text-left"
+              >
+                <SlidersHorizontal className="size-4 shrink-0 text-fg-2" aria-hidden />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[0.9375rem] font-medium">Tuỳ chọn</span>
+                  <MotionRegion as="span" motionKey={optionsSummary} className="block truncate text-xs text-fg-2">{optionsSummary}</MotionRegion>
+                </span>
+                <ChevronDown className="fold-chevron size-4 shrink-0 text-fg-3" aria-hidden />
+              </button>
+              <Collapse open={optionsOpen} id="new-project-options">
+                <div className="space-y-12 pb-4 pt-4">
+                  {/* Mẫu thiết lập chỉ cho sách mới: "Làm tiếp cuốn này" theo phần trước. */}
+                  {!draft.seed && <TemplateBar draft={draft} onPick={pickTemplate} narratorAuto={autoNarrator} />}
+                  <VoiceStep
+                    narrator={draft.narrator}
+                    setNarrator={(narrator) => update({ narrator, narratorPicked: true })}
+                    paths={scan?.files.map((file) => file.path) ?? []}
+                    seedFrom={draft.seed?.id}
+                    previousNarrator={draft.seed?.narrator}
+                    firstPerson={draft.firstPerson}
+                    setFirstPerson={(firstPerson) => update({ firstPerson, ...(firstPerson.trim() ? {} : { firstPersonGender: undefined, tellerMode: false }) })}
+                    firstPersonGender={draft.firstPersonGender}
+                    setFirstPersonGender={(firstPersonGender) => {
+                      // Máy chọn giọng dẫn thì giọng hiện trong lưới theo giới vừa chọn (máy chủ đặt đúng giọng ấy lúc tạo).
+                      const suggested = autoNarrator ? recommendedFor(voices, firstPersonGender) : undefined;
+                      update({ firstPersonGender, ...(suggested ? { narrator: suggested } : {}) });
+                    }}
+                    tellerMode={draft.tellerMode}
+                    setTellerMode={(tellerMode) => update({ tellerMode })}
+                    narratorAuto={autoNarrator}
+                    povOff={draft.povOff ?? []}
+                    setPovOff={(povOff) => update({ povOff })}
+                  />
+                  {scan && (
+                    <QualityStep profile={draft.profile} setProfile={(profile) => update({ profile })} words={scan.totals.words} chapters={scan.files.length}
+                      analysisModel={draft.analysisModel ?? ""} setAnalysisModel={(analysisModel) => update({ analysisModel })} noStudio={noStudio} />
+                  )}
+                  {scan && (
+                    <ConfirmStep
+                      title={title.trim()}
+                      scan={scan}
+                      narrator={draft.narrator}
+                      narratorAuto={autoNarrator}
+                      firstPerson={draft.firstPerson.trim()}
+                      firstPersonGender={draft.firstPerson.trim() ? draft.firstPersonGender : undefined}
+                      tellerMode={draft.firstPerson.trim() ? draft.tellerMode : false}
+                      povChapters={povChapters}
+                      profile={draft.profile}
+                      seed={draft.seed}
+                      volumes={volumeStarts.length > 1 ? ranges(volumeStarts, scan.files.length) : undefined}
+                      startNow={draft.startNow}
+                      setStartNow={(startNow) => update({ startNow })}
+                      precastWait={Boolean(draft.precastWait)}
+                      setPrecastWait={(precastWait) => update({ precastWait })}
+                      dropCredits={draft.dropCredits ?? KEEP_CREDITS}
+                      credits={creditSummary(scan.files)}
+                      analysisModel={draft.analysisModel ?? ""}
+                      noStudio={noStudio}
+                      unfit={unfit}
+                    />
+                  )}
+                </div>
+              </Collapse>
+            </section>
+          </MotionPresence>
+          <MotionPresence open={ready}>
+            <StartNotes restart={draft.replaces?.restart ? { title: draft.replaces.title } : undefined} noStudio={noStudio} unfit={unfit} analysis={analysisTime} />
+          </MotionPresence>
           {/* Ghim ở đáy vùng cuộn: bước xác nhận dài (thêm dòng "Dòng ghi công"...) đẩy nút tạo xuống dưới nếp màn hình - soát
               UX 29-09. */}
-          <div className="sticky bottom-0 z-10 mt-8 flex items-center justify-between border-t border-line bg-bg py-4">
-            <Button variant="ghost" icon={ArrowLeft} disabled={step === 0} onClick={() => go(step - 1)}>
-              Quay lại
-            </Button>
-            {step < STEPS.length - 1 ? (
-              <Button variant="primary" disabled={step >= allowed} onClick={() => go(step + 1)}>
-                Tiếp tục <ArrowRight className="size-4" />
+          {/* Ghim ở đáy vùng cuộn: "Tuỳ chọn" mở ra dài thì nút tạo vẫn luôn thấy (DESIGN.md mục 6). Hiện khi đã đọc được chương - trước
+              đó việc chính là chọn nguồn, mỗi lúc một nút chính. */}
+          <MotionPresence open={ready} className="sticky bottom-0 z-10 mt-8 bg-bg">
+            <div className="flex items-center justify-between gap-3 border-t border-line py-4">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  saveDraft(null);
+                  setDraft(EMPTY_DRAFT);
+                  latestSources.current = "";
+                  setScanned(null);
+                }}
+              >
+                Bắt đầu lại
               </Button>
-            ) : (
               <span className="flex min-w-0 items-center gap-3">
                 <MotionPresence open={Boolean(unfit)}><span className="min-w-0 text-right text-[0.8125rem] text-fg-2 text-pretty">Máy thiếu cấu hình</span></MotionPresence>
-                <Button variant="primary" icon={draft.startNow && !noStudio ? Wand2 : Mic} loading={create.isPending || gate.reading} disabled={gate.disabled} onClick={submit}>
-                  {gate.label ?? (draft.startNow && !noStudio ? "Tạo và bắt đầu" : "Tạo sách")}
+                <Button variant="primary" size="lg" icon={draft.startNow && !noStudio ? Wand2 : Mic} loading={create.isPending || gate.reading} disabled={gate.disabled} onClick={submit}>
+                  {gate.label ?? (draft.startNow && !noStudio ? "Bắt đầu" : "Tạo sách")}
                 </Button>
               </span>
-            )}
-          </div>
-        </section>
+            </div>
+          </MotionPresence>
       </div>
     </div>
   );
