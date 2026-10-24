@@ -261,7 +261,9 @@ export function PhoneHandOffButton() {
   const [searching, setSearching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const track = player.track;
-  if (!track || !data) return <MotionRegion />;
+  // Một vỏ cho mọi nhánh (chưa có gì / một nút / menu): số nơi phát đổi thì nút mờ chéo, không thay gốc MotionRegion <-> Button <-> DropdownMenu.
+  const content = () => {
+  if (!track || !data) return null;
   // Tìm lại loa / TV ngay, không đợi nhịp 30 giây (DlnaPlayers.scan); hỏi lại danh sách khi lượt tìm (~2 giây) xong.
   const rescan = () => {
     setSearching(true);
@@ -298,8 +300,8 @@ export function PhoneHandOffButton() {
   if (targets.length === 1 && !menuOpen) {
     const [only] = targets;
     return (
-      <MotionRegion><IconButton label={`Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`} icon={only.via === "cast" ? Cast : KIND_ICONS[only.kind] ?? Smartphone}
-        size="sm" onClick={() => void handOff(only)} /></MotionRegion>
+      <IconButton label={`Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`} icon={only.via === "cast" ? Cast : KIND_ICONS[only.kind] ?? Smartphone}
+        size="sm" onClick={() => void handOff(only)} />
     );
   }
   return (
@@ -354,4 +356,6 @@ export function PhoneHandOffButton() {
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
   );
+  };
+  return <MotionRegion as="span" className="inline-flex">{content()}</MotionRegion>;
 }
