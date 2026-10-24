@@ -762,7 +762,7 @@ class LibraryPlugin : Plugin() {
     fun remoteLibrary(call: PluginCall) = background(call) {
         val reply = JSONObject(request("GET", "/sync/v1/library"))
         val books = reply.getJSONArray("books")
-        matchImported(listed(books))
+        matchImported()
         for (index in 0 until books.length()) {
             val book = books.getJSONObject(index)
             runCatching { refreshMetadata(book.getString("id"), book) }
@@ -785,10 +785,7 @@ class LibraryPlugin : Plugin() {
         StateSync.flushPending(context) // chỗ nghe ghi trong lúc mất kết nối (soát a68 lỗi 9)
     }
 
-    private fun matchImported(listed: Set<String>? = null) = BookDownloads.matchImported(context, listed)
-
-    private fun listed(books: JSONArray): Set<String> =
-        (0 until books.length()).mapNotNull { books.optJSONObject(it)?.optString("id")?.takeIf(String::isNotEmpty) }.toSet()
+    private fun matchImported() = BookDownloads.matchImported(context)
 
     // ---- tải sách --------------------------------------------------------------------------------------------
 
@@ -904,7 +901,7 @@ class LibraryPlugin : Plugin() {
         } else null
         val remote = reply?.optJSONArray("books") ?: JSONArray()
         if (reply != null) {
-            matchImported(listed(remote))
+            matchImported()
             StateSync.flushPending(context) // chỗ nghe ghi trong lúc mất kết nối về máy tính ngay khi nối lại (soát a68 lỗi 9)
         }
         val peers = try {

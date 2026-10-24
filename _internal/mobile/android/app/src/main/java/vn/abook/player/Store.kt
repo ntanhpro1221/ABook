@@ -420,7 +420,7 @@ object Store {
     private const val DEFAULT_RECORD_NAME = "Mặc định"
     private val RECORD_ID = Regex("r-[0-9a-f]{16}")
     private val SYNC_KEYS = listOf("record", "recordName", "nameAt", "activeAt", "movedAt", "book", "records", "active", "activeState",
-        "deleted", "deletedRecords", "listeningRevision", "nameRev", "activeRev", "movedRev")
+        "deleted", "deletedRecords", "nameRev", "activeRev", "movedRev")
 
     /** Name / move / active choice: a revision of the records.json clock (ListeningRevision.metaItems; a118 bug 5). The wall-clock
      *  `nameAt`/`activeAt`/`movedAt` still go out for 0.4.133 peers and only decide when one side has no revision. */
@@ -462,31 +462,9 @@ object Store {
         val loaded = raw?.let { repaired(recordsFile, it, ListeningSchema.index(it)) }
         // names / moves / active choices carry revisions of this table's clock (a118 bug 5): rebuilt from damage -> new node too
         if (existed && (raw == null || raw.toString() != loaded.toString())) freshRevisionNode()
-        val book = loaded ?: upgradeStates()
+        val book = loaded ?: JSONObject().put("version", 2).put("records", JSONObject()).put("links", JSONObject())
         if (!book.has("deleted")) book.put("deleted", JSONObject())
         recordsCache = book
-        return book
-    }
-
-    /** Bản cũ state/<mã sách>.json: giữ nguồn tới khi bảng liên kết đã commit để restart làm tiếp được. */
-    private fun upgradeStates(): JSONObject {
-        val book = JSONObject().put("version", 2).put("records", JSONObject()).put("links", JSONObject())
-        val sources = File(workingRoot, "state").listFiles()?.filter {
-            it.isFile && it.name.endsWith(".json") && !RECORD_ID.matches(it.name.removeSuffix(".json"))
-        } ?: emptyList()
-        for (file in sources) {
-            val bookId = file.name.removeSuffix(".json")
-            val record = defaultRecordId(bookId)
-            val target = File(workingRoot, "state/$record.json")
-            writeAtomic(target, file.readBytes())
-            check(target.isFile) { "Không lưu được hồ sơ nghe của bạn" }
-            book.getJSONObject("records").put(record, JSONObject().put("name", DEFAULT_RECORD_NAME).put("createdAt", now()).put("nameAt", 0.0))
-            book.getJSONObject("links").put(bookId,
-                JSONObject().put("records", JSONArray().put(record)).put("active", record).put("activeAt", 0.0))
-        }
-        writeAtomic(recordsFile, book.toString())
-        check(recordsFile.isFile) { "Không lưu được liên kết hồ sơ nghe của bạn" }
-        sources.forEach { it.delete() }
         return book
     }
 
@@ -538,7 +516,7 @@ object Store {
         val book = recordsBook()
         val meta = book.getJSONObject("records").optJSONObject(record)
         val chosenAt = if (record == active) book.getJSONObject("links").optJSONObject(bookId)?.optDouble("activeAt", 0.0) ?: 0.0 else 0.0
-        val body = recordState(record, requireRevisions = true).put("listeningRevision", 1).put("record", record).put("recordName", meta?.optString("name") ?: DEFAULT_RECORD_NAME)
+        val body = recordState(record).put("record", record).put("recordName", meta?.optString("name") ?: DEFAULT_RECORD_NAME)
             .put("nameAt", meta?.optDouble("nameAt", 0.0) ?: 0.0).put("activeAt", chosenAt)
             .put("movedAt", meta?.optDouble("movedAt", 0.0) ?: 0.0)
             .put("deletedRecords", book.getJSONObject("deleted"))
@@ -702,7 +680,7 @@ object Store {
         if (tombstones.has(record)) {
             saveRecords(book)
             if (removed.isNotEmpty()) onGone(removed)
-            return JSONObject().put("listeningRevision", 1).put("record", record).put("deleted", true).put("deletedRecords", JSONObject(tombstones.toString()))
+            return JSONObject().put("record", record).put("deleted", true).put("deletedRecords", JSONObject(tombstones.toString()))
         }
         val nameAt = body.optDouble("nameAt", 0.0).takeIf { !it.isNaN() } ?: 0.0
         val sentName = body.optString("recordName").trim().take(60)
@@ -751,14 +729,14 @@ object Store {
                 .put("nameAt", item.optDouble("nameAt", 0.0)).put("movedAt", item.optDouble("movedAt", 0.0)), item, "nameRev", "movedRev"))
         }
         val chosen = link.optString("active")
-        val reply = JSONObject(merged.toString()).put("listeningRevision", 1).put("record", record)
+        val reply = JSONObject(merged.toString()).put("record", record)
             .put("recordName", meta.optString("name", DEFAULT_RECORD_NAME)).put("book", owner)
             .put("movedAt", meta.optDouble("movedAt", 0.0)).put("records", listed)
             .put("active", JSONObject().put("record", chosen).put("at", link.optDouble("activeAt", 0.0))
                 .also { active -> link.optJSONObject("activeRev")?.let { active.put("rev", it) } })
             .put("deletedRecords", JSONObject(tombstones.toString()))
         withRevs(reply, meta, "movedRev")
-        if (chosen.isNotBlank() && chosen != record && records.has(chosen)) reply.put("activeState", recordState(chosen, requireRevisions = true))
+        if (chosen.isNotBlank() && chosen != record && records.has(chosen)) reply.put("activeState", recordState(chosen))
         return reply
     }
 
@@ -928,9 +906,9 @@ object Store {
     }
 
     @Synchronized
-    fun state(id: String): JSONObject = recordState(knownActiveRecord(id), requireRevisions = false)
+    fun state(id: String): JSONObject = recordState(knownActiveRecord(id))
 
-    private fun recordState(record: String?, requireRevisions: Boolean = true): JSONObject {
+    private fun recordState(record: String?): JSONObject {
         val file = record?.let(::recordFile)
         val existed = file?.isFile == true
         val raw = file?.let { readJson(it) }
@@ -939,19 +917,6 @@ object Store {
         if (existed && (raw == null || raw.toString() != clean.toString())) freshRevisionNode()
         if (!state.has("chapters")) state.put("chapters", JSONObject())
         if (!state.has("bookmarks")) state.put("bookmarks", JSONArray())
-        val upgraded = JSONObject(state.toString())
-        if (file != null) {
-            try {
-                if (ListeningRevision.upgradeLocal(upgraded, ::revisionNode)) {
-                    writeAtomic(file, upgraded.toString())
-                    return upgraded
-                }
-            }
-            catch (error: Exception) {
-                addDataNotice("Chưa lưu được phiên bản hồ sơ của bạn. App giữ bản gốc; bạn hãy thử lại.")
-                if (requireRevisions) throw error
-            }
-        }
         return state
     }
 
@@ -968,16 +933,15 @@ object Store {
         validatePeerRevisions(incoming)
         val merged = mergeStates(recordState(knownActiveRecord(id)), withoutSyncKeys(incoming))
         save(id, merged)
-        return JSONObject(merged.toString()).put("listeningRevision", 1)
+        return JSONObject(merged.toString())
     }
 
     private const val MAX_SESSIONS = 200
 
     private fun validatePeerRevisions(body: JSONObject) {
-        require(body.opt("listeningRevision") != 0) { ListeningRevision.OLD_PEER }
         try { ListeningRevision.checkedPeer(JSONObject(), withoutSyncKeys(body)) { } }
         catch (error: IllegalArgumentException) {
-            addDataNotice(error.message ?: ListeningRevision.OLD_PEER)
+            addDataNotice(error.message ?: ListeningRevision.MISSING_REVISION)
             throw error
         }
         body.optJSONObject("activeState")?.let { validatePeerRevisions(it) }
@@ -1575,17 +1539,6 @@ object Store {
         beginRekey(localId, syncId, adopt = true)
     }
 
-    /** Cuốn của máy tính đã ghép chính - tải hẳn hay nghe thẳng; không kể cuốn mở từ file, cuốn của thiết bị ghép khác
-     *  (gói mang `source`). */
-    @Synchronized
-    fun computerBooks(): List<String> {
-        val prints = printsBook()
-        return bookFolders().mapNotNull { dir ->
-            val manifest = rawManifest(dir.name) ?: streamManifest(dir.name) ?: return@mapNotNull null
-            dir.name.takeIf { isComputer(manifest, prints.optJSONObject(dir.name)) }
-        }
-    }
-
     /** Cuốn này lấy từ máy tính chính (không phải mở từ file, không phải của thiết bị ghép khác)? */
     @Synchronized
     fun isComputerBook(id: String): Boolean {
@@ -1606,21 +1559,6 @@ object Store {
 
     private fun isComputer(manifest: JSONObject, print: JSONObject?) =
         manifest.optString("source").isEmpty() && print?.optBoolean("imported") != true
-
-    /**
-     * Máy tính đổi mã một cuốn (mã kiểu cũ - đường dẫn thư mục mã hoá - sang mã mới, docs/BOOK_IDS.md): thư
-     * mục, gói sách, liên kết hồ sơ nghe và sổ dấu vân tay sang mã mới. Hồ sơ giữ nguyên mã (máy tính cũng giữ) nên vẫn
-     * gộp được với nhau. Máy đã có bản tải hẳn mang mã mới: để nguyên cả hai - không xoá gì của người nghe.
-     */
-    @Synchronized
-    fun rekey(oldId: String, newId: String) {
-        recoverRekeys()
-        if (oldId == newId) return
-        val target = runCatching { deletableBookDir(newId) }.getOrNull() ?: return
-        val source = runCatching { deletableBookDir(oldId) }.getOrNull() ?: return
-        if (!source.isDirectory || rawManifest(newId) != null) return
-        beginRekey(oldId, newId, adopt = false)
-    }
 
     private val rekeyJournal get() = File(workingRoot, "rekey_journal.json")
 

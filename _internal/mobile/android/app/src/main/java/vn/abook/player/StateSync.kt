@@ -73,15 +73,6 @@ object StateSync {
     fun flushPending(context: Context) {
         if (pending.ids().isEmpty()) return
         io.execute {
-            // Hàng chờ đời cũ chỉ biết cuốn: gửi mọi hồ sơ của nó, tránh đánh mất hồ sơ vừa rời.
-            pending.legacyIds().forEach { book -> runCatching {
-                val records = Store.records(book)
-                for (index in 0 until records.length()) {
-                    val record = records.getJSONObject(index).getString("id")
-                    pending.add(book, Store.syncBody(book, record))
-                }
-                if (records.length() > 0) pending.remove(book)
-            } }
             pending.entries().forEach { runCatching { send(context, it) } }
         }
     }
@@ -109,14 +100,11 @@ class PendingPushes(private val file: File) {
     @Synchronized
     fun ids(): Set<String> {
         val array = read()
-        return (0 until array.length()).map { array.optJSONObject(it)?.getString("bookId") ?: array.getString(it) }.toSet()
+        return (0 until array.length()).map { array.getJSONObject(it).getString("bookId") }.toSet()
     }
 
     @Synchronized
     fun entries(): List<JSONObject> = read().let { array -> (0 until array.length()).mapNotNull { array.optJSONObject(it) } }
-
-    @Synchronized
-    fun legacyIds(): Set<String> = read().let { array -> (0 until array.length()).mapNotNull { array.opt(it) as? String }.toSet() }
 
     @Synchronized
     fun add(bookId: String, body: JSONObject): JSONObject {
@@ -124,7 +112,7 @@ class PendingPushes(private val file: File) {
         val saved = JSONObject().put("bookId", bookId).put("recordId", record).put("revision", UUID.randomUUID().toString())
             .put("body", JSONObject(body.toString()))
         val kept = entries().filterNot { it.optString("bookId") == bookId && it.optString("recordId") == record }
-        write(JSONArray(kept + saved).also { array -> legacyIds().sorted().forEach { array.put(it) } })
+        write(JSONArray(kept + saved))
         return saved
     }
 
@@ -133,17 +121,7 @@ class PendingPushes(private val file: File) {
         val kept = entries().filterNot {
             it.optString("bookId") == bookId && it.optString("recordId") == recordId && it.optString("revision") == revision
         }
-        write(JSONArray(kept).also { array -> legacyIds().sorted().forEach { array.put(it) } })
-    }
-
-    @Synchronized
-    fun add(id: String) {
-        if (id !in legacyIds()) write(read().put(id))
-    }
-
-    @Synchronized
-    fun remove(id: String) {
-        write(JSONArray(entries()).also { array -> (legacyIds() - id).sorted().forEach { array.put(it) } })
+        write(JSONArray(kept))
     }
 
     private fun write(ids: JSONArray) {

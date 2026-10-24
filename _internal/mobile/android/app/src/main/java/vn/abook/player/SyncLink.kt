@@ -51,7 +51,7 @@ object SyncLink {
             .put("addresses", previous?.optJSONArray("addresses") ?: JSONArray())
         PeerAddresses.learn(peer, reply.optJSONArray("addresses"), fingerprint,
             if (host.startsWith("bt:")) "" else PeerAddresses.endpoint(host, port))
-        return editor.putString("addresses", peer.getJSONArray("addresses").toString()).remove("lan").remove("lanPort")
+        return editor.putString("addresses", peer.getJSONArray("addresses").toString())
             .putString("bt", reply.optJSONObject("routes")?.optString("bluetooth").orEmpty().ifBlank { previous?.optString("bt").orEmpty() })
     }
 
