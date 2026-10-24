@@ -1,4 +1,4 @@
-import { MoreInfo } from "@/shared/SettingsNav";
+import { MoreInfo, SettingsBlock } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
@@ -269,18 +269,23 @@ export function PhoneSync() {
     if (added) toast.success(`Đã ghép ${added.name}`, { description: "Thiết bị này giờ tải được sách và đồng bộ chỗ đang nghe." });
   }, [sync]);
 
-  if (error && !sync) return <MotionRegion fadeThrough><InlineError message="Bạn hãy thử tải lại cài đặt kết nối." onRetry={() => void refetch()} /></MotionRegion>;
-  if (!sync) return <MotionRegion fadeThrough><ContentSkeleton count={2} label="Đang tải kết nối" /></MotionRegion>;
+  if (error && !sync) return <SettingsBlock title="Máy này" id="phone" className="first:mt-8"><MotionRegion fadeThrough className="py-3.5"><InlineError message="Bạn hãy thử tải lại cài đặt kết nối." onRetry={() => void refetch()} /></MotionRegion></SettingsBlock>;
+  if (!sync) return <SettingsBlock title="Máy này" id="phone" className="first:mt-8"><MotionRegion fadeThrough className="py-3.5"><ContentSkeleton count={2} label="Đang tải kết nối" /></MotionRegion></SettingsBlock>;
   const wanted = toggle.isPending ? Boolean(toggle.variables) : sync.wanted;
   const failing = sync.wanted && !sync.enabled;
   const studioWanted = studio.isPending ? Boolean(studio.variables) : sync.remoteStudio;
 
   return (
-    <MotionRegion as="div" className="motion-reveal space-y-5">
+    // Hai khối cài đặt như mọi trang: "Máy này" (mọi thứ của chính máy tính) rồi "Thiết bị đã ghép" - cùng nhãn mục, cùng khoảng
+    // cách giữa khối (trước đây danh sách thiết bị là tiêu đề con bên trong, sát hàng trên 17 px, và "Kết nối" rơi xuống dưới nó).
+    // Khối đầu là con đầu của vỏ này nên first:mt-4 sẽ bám nhầm: giữ mt-8 như khối đầu (sau h1) của mọi trang cài đặt khác.
+    <MotionRegion as="div" className="motion-reveal">
+      <SettingsBlock title="Máy này" id="phone" className="first:mt-8">
+      <div className="space-y-5 py-3.5">
       <div className="flex items-center justify-between gap-6">
         <label htmlFor="phone-sync" className="min-w-0 cursor-pointer">
-          <span className="block text-sm font-medium">{SYNC_SWITCH_LABEL}</span>
-          <span className={cn("mt-0.5 block text-[0.8125rem]", failing ? "text-danger" : "text-fg-2")}>
+          <span className="block text-[0.9375rem] font-medium">{SYNC_SWITCH_LABEL}</span>
+          <span className={cn("mt-0.5 block text-xs leading-snug", failing ? "text-danger" : "text-fg-2")}>
             {sync.enabled
               ? `Máy cùng mạng thấy máy này là “${sync.name}”.`
               : failing
@@ -300,7 +305,7 @@ export function PhoneSync() {
 
       {sync.enabled && (
         <>
-          <Fold flat storageKey="phone-sync.pair" title="Ghép thiết bị" defaultOpen={Boolean(sync.pairing)} bodyClassName="pb-3">
+          <Fold flat storageKey="phone-sync.pair" title="Ghép thiết bị" summary={sync.pairing ? "Đang hiện mã ghép" : "Điện thoại, máy tính bảng"} defaultOpen={Boolean(sync.pairing)} bodyClassName="pb-3">
           <PairingPanel
             sync={sync}
             busy={pair.isPending}
@@ -354,17 +359,44 @@ export function PhoneSync() {
             </div>
           </Dialog>
           </Fold>
-          <div>
-            <h3 className="label-section text-fg-2">Thiết bị đã ghép</h3>
+          <Fold flat storageKey="phone-sync.connection" title="Kết nối" summary="Địa chỉ và Bluetooth" bodyClassName="space-y-2 pb-3">
+          {sync.bluetooth && (
+            <p className="text-xs text-fg-3">
+              {sync.bluetooth.running
+                ? `Bluetooth: điện thoại đã ghép nối được cả khi khác Wi-Fi${
+                    sync.bluetooth.connections ? ` - ${sync.bluetooth.connections} đang kết nối` : ""
+                  }.`
+                : sync.bluetooth.error}
+            </p>
+          )}
+          {sync.addresses.length > 0 && (
+            <p className="text-xs text-fg-3">
+              Điện thoại không thấy máy này? Chọn “Nhập địa chỉ máy tính” rồi gõ{" "}
+              <Where sync={sync} scheme={false} />.
+            </p>
+          )}
+          {/* Chủ sách 29-09 hỏi khác mạng có dùng được không: app không cần gì riêng - mạng riêng ảo người dùng tự cài cho
+              máy này một địa chỉ điện thoại tới được, và điện thoại học địa chỉ ấy mỗi lần mở Thư viện (SyncLink.refreshRoutes). */}
+          <p className="text-xs text-fg-3">
+            Ngoài nhà: nghe sách đã tải, hoặc nối mạng riêng ảo để nghe thẳng.
+          </p>
+          </Fold>
+        </>
+      )}
+      </div>
+      </SettingsBlock>
+      {sync.enabled && (
+        <SettingsBlock title="Thiết bị đã ghép" id="paired">
+          <div className="py-3.5">
             {deviceRows.length === 0 ? (
               // Người mới chưa có app trên điện thoại: nói chỗ lấy (chữ chọn được, không phải liên kết - trong cửa sổ app một
               // liên kết có thể điều hướng chính cửa sổ).
-              <p className="mt-2 select-text text-[0.8125rem] leading-relaxed text-fg-2">
+              <p className="select-text text-[0.8125rem] leading-relaxed text-fg-2">
                 Chưa có thiết bị. App Android: file <span className="font-medium text-fg">.apk</span> ở{" "}
                 <span className="font-medium text-fg">github.com/ntanhpro1221/ABook/releases</span>. iPhone, iPad: nghe bằng trình duyệt.
               </p>
             ) : (
-              <ul className="mt-2 divide-y divide-line">
+              <ul className="divide-y divide-line">
                 {deviceRows.map(({ key, state, item: device, ref }) => (
                   // Điện thoại hẹp + công tắc "Điều khiển sản xuất": hàng tự xuống dòng thay vì bóp tên máy còn "NGDtuanh-…".
                   <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
@@ -399,29 +431,7 @@ export function PhoneSync() {
               </ul>
             )}
           </div>
-          <Fold flat storageKey="phone-sync.connection" title="Kết nối" summary="Địa chỉ và Bluetooth" bodyClassName="space-y-2 pb-3">
-          {sync.bluetooth && (
-            <p className="text-xs text-fg-3">
-              {sync.bluetooth.running
-                ? `Bluetooth: điện thoại đã ghép nối được cả khi khác Wi-Fi${
-                    sync.bluetooth.connections ? ` - ${sync.bluetooth.connections} đang kết nối` : ""
-                  }.`
-                : sync.bluetooth.error}
-            </p>
-          )}
-          {sync.addresses.length > 0 && (
-            <p className="text-xs text-fg-3">
-              Điện thoại không thấy máy này? Chọn “Nhập địa chỉ máy tính” rồi gõ{" "}
-              <Where sync={sync} scheme={false} />.
-            </p>
-          )}
-          {/* Chủ sách 29-09 hỏi khác mạng có dùng được không: app không cần gì riêng - mạng riêng ảo người dùng tự cài cho
-              máy này một địa chỉ điện thoại tới được, và điện thoại học địa chỉ ấy mỗi lần mở Thư viện (SyncLink.refreshRoutes). */}
-          <p className="text-xs text-fg-3">
-            Ngoài nhà: nghe sách đã tải, hoặc nối mạng riêng ảo để nghe thẳng.
-          </p>
-          </Fold>
-        </>
+        </SettingsBlock>
       )}
 
       <Dialog
