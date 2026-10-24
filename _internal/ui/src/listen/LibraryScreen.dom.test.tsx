@@ -56,3 +56,65 @@ it.each(["filter", "sort", "search"])("%s fades results without copying library 
     expect(main.querySelector('[role="listitem"]')).toBeNull();
   }
 });
+
+const draw = () => act(() => root.render(<MemoryRouter><LibraryScreen header={<button>Thêm sách</button>} /></MemoryRouter>));
+const search = (text: string) => act(() => {
+  const input = main.querySelector("input")!;
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, text);
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+});
+
+it("the last book leaves an animated header count and exiting actions", async () => {
+  state.books = state.books.slice(0, 1); await draw();
+  const count = main.querySelector("header p")!;
+  vi.mocked(HTMLElement.prototype.animate).mockClear();
+  state.books = []; await draw();
+  const exit = main.querySelector('header .motion-panel[data-state="closed"]');
+  expect(exit?.textContent).toContain("Thêm sách");
+  expect(exit?.hasAttribute("inert")).toBe(true);
+  expect(vi.mocked(HTMLElement.prototype.animate).mock.contexts).toContain(count);
+  expect(document.querySelector('.motion-snapshot')?.textContent).toContain("1 cuốn");
+});
+
+it.each(["battery", "eta"])("upcoming text animates a same-ID %s update", async change => {
+  state.books = [{ ...state.books[0], chaptersAvailable: 0, producing: true }]; await draw();
+  vi.mocked(HTMLElement.prototype.animate).mockClear();
+  state.books = [{ ...state.books[0], ...(change === "battery" ? { pauseReason: "battery" as const } : { eta: { phase: "analysis" as const, seconds: 300 } }) }];
+  await draw();
+  const box = [...main.querySelectorAll("[data-motion-region]")].find(e => e.textContent?.includes(change === "battery" ? "máy đang chạy pin" : "chương đầu nghe được"));
+  expect(box).toBeDefined();
+  const calls = vi.mocked(HTMLElement.prototype.animate);
+  expect(calls.mock.contexts).toContain(box);
+  expect(calls.mock.calls[calls.mock.contexts.indexOf(box as HTMLElement)][0]).toEqual(expect.arrayContaining([expect.objectContaining({ opacity: 1 })]));
+});
+
+it("no-results wording fades when raw query changes case", async () => {
+  await draw(); await search("zz"); await act(() => vi.advanceTimersByTime(500));
+  vi.mocked(HTMLElement.prototype.animate).mockClear(); await search("ZZ");
+  expect(main.textContent).toContain("“ZZ”");
+  expect(vi.mocked(HTMLElement.prototype.animate).mock.calls.length).toBeGreaterThan(0);
+  expect([...document.querySelectorAll(".motion-snapshot")].some(e => e.textContent?.includes("“zz”"))).toBe(true);
+});
+
+it("identical search membership retains the focused tile and Windowed blocks", async () => {
+  state.books = Array.from({ length: 200 }, (_, i) => ({ ...state.books[0], id: String(i), title: `Book ${i}` }));
+  await draw(); await search("B"); await act(() => vi.advanceTimersByTime(500));
+  const tile = main.querySelector('[role="listitem"]')!;
+  const button = tile.querySelector<HTMLElement>("button[tabindex]")!; await act(() => button.focus());
+  const blocks = [...main.querySelectorAll('[role="list"] > div')];
+  await search("Bo");
+  expect(tile.isConnected).toBe(true); expect(document.activeElement).toBe(button);
+  expect(blocks.every(block => block.isConnected)).toBe(true);
+});
+
+it("same-structure membership changes keep row presence and fade the result region", async () => {
+  state.books = state.books.slice(0, 3); await draw(); await search("B");
+  await act(() => vi.advanceTimersByTime(500));
+  const tile = main.querySelector('[role="listitem"]')!;
+  vi.mocked(HTMLElement.prototype.animate).mockClear();
+  state.books = state.books.slice(1); await draw();
+  expect(tile.isConnected).toBe(true); expect(tile.getAttribute("data-state")).toBe("exit");
+  expect(tile.hasAttribute("inert")).toBe(true);
+  expect(vi.mocked(HTMLElement.prototype.animate).mock.calls.length).toBeGreaterThan(0);
+  await act(() => vi.advanceTimersByTime(500)); expect(tile.isConnected).toBe(false);
+});

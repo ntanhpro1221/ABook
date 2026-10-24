@@ -286,6 +286,7 @@ export function upcomingStatus(book: ListenBook, canOpen: boolean): string {
 
 function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book: ListenBook) => void }) {
   const onOpen = book.remote ? undefined : open;
+  const status = upcomingStatus(book, Boolean(onOpen));
   return (
     <button
       type="button"
@@ -294,10 +295,10 @@ function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book
       className="flex items-center gap-3 rounded-xl border border-dashed border-line-strong bg-panel p-3 text-left hover:border-accent disabled:hover:border-line-strong"
     >
       <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
-      <span className="min-w-0">
+      <MotionRegion as="span" className="min-w-0" motionKey={[book.title, status]}>
         <span className="block truncate text-sm font-semibold">{book.title}</span>
-        <span className="block text-xs text-fg-2">{upcomingStatus(book, Boolean(onOpen))}</span>
-      </span>
+        <span className="block text-xs text-fg-2">{status}</span>
+      </MotionRegion>
     </button>
   );
 }
@@ -338,8 +339,8 @@ function badgesOf(items: { book: ListenBook; volume: number | null; unit: string
   return badges;
 }
 
-/** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
-export function SeriesShelves({ books, twins, memory, grouped = true }: { books: ListenBook[]; twins: Set<string>; memory?: string; grouped?: boolean }) {
+/** Một nguồn cấu trúc cho cả rendering và identity; thay IDs trong cùng kệ để presence lo. */
+function librarySections(books: ListenBook[], grouped: boolean) {
   const places = seriesIndex(books);
   const groups = new Map<string, { book: ListenBook; volume: number | null; unit: string; name: string }[]>();
   for (const book of books) {
@@ -351,10 +352,15 @@ export function SeriesShelves({ books, twins, memory, grouped = true }: { books:
     .filter(([key, items]) => grouped && !key.startsWith("\u0000") && items.length > 1)
     .map(([key, items]) => [key, [...items].sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0))] as const);
   const singles = books.filter((book) => !series.some(([, items]) => items.some((item) => item.book.id === book.id)));
-  const sections = [
+  return [
     ...series.map(([key, items]) => ({ key, label: items[0].name, items: items.map((item) => item.book), badges: badgesOf(items) })),
     ...(singles.length ? [{ key: "singles", label: series.length ? "Sách khác" : "", items: singles, badges: undefined }] : []),
   ];
+}
+
+/** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
+export function SeriesShelves({ books, twins, memory, grouped = true }: { books: ListenBook[]; twins: Set<string>; memory?: string; grouped?: boolean }) {
+  const sections = librarySections(books, grouped);
   const rows = useListPresence(sections, (section) => section.key);
   return <div className="mt-6 space-y-10">{rows.map(({ key, item, state, ref }) => (
     <section key={key} ref={ref} aria-label={item.label || "Sách lẻ"} className="motion-row" data-state={state} inert={state === "exit"}><div>
@@ -416,16 +422,19 @@ export function LibraryScreen({
   );
   const libraryRows = useListPresence(books ?? [], (book) => book.id);
   const upcomingRows = useListPresence(upcoming, (book) => book.id);
+  const noResultsTitle = query ? `Không tìm thấy sách nào khớp “${query}”` : "Không có sách ở đây";
+  const grouped = filter === "all" && !folded;
+  const shelvesKey = JSON.stringify(librarySections(shown, grouped).map(section => [section.key, Boolean(grouped && (section.label || section.items.length > 4))]));
   return (
     <div ref={container} className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
       {/* Hai nút cạnh tiêu đề không được bóp tiêu đề thành "Thư / viện" ở 390 px (soát UX 05-10): tiêu đề giữ một dòng, nút xuống dưới. */}
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="shrink-0">
           <h1 className="whitespace-nowrap text-2xl font-bold tracking-tight sm:text-[1.75rem]">Thư viện</h1>
-          <p className="mt-1 text-sm text-fg-2">{books?.length ? `${books.length} cuốn` : ""}</p>
+          <MotionRegion as="p" motionKey={books?.length ?? 0} className="mt-1 text-sm text-fg-2">{books?.length ? `${books.length} cuốn` : ""}</MotionRegion>
         </div>
         {/* Thư viện trống: nút giữa màn (`empty`) là lời mời chính - nút thứ hai cùng tên ở đầu trang chỉ lặp lại (soát UX a9). */}
-        {(books?.length || upcoming.length > 0) && header}
+        <MotionPresence open={Boolean(books?.length || upcoming.length)}>{header}</MotionPresence>
       </header>
       {recap}
       {upcomingRows.length > 0 && (
@@ -519,12 +528,12 @@ export function LibraryScreen({
             </label>
           </div>
           {/* Chỉ fade kết quả: header/tiếp tục nghe/controls giữ một cây. Ảnh theo scrollMemory trước paint. */}
-          <MotionRegion followScroll fadeThrough motionKey={[filter, sort, folded, shown.map(book => book.id)]}>
-            {/* Snapshot giữ cây cũ. Reset presence của bộ kết quả mới để hàng exit cũ
-                không đổi từ Fold sang lưới phẳng rồi chồng thêm lên ảnh đang mờ. */}
-            <SeriesShelves key={JSON.stringify([filter, sort, folded])} books={shown} twins={twins} memory={memory} grouped={filter === "all" && !folded} />
+          <MotionRegion followScroll fadeThrough motionKey={[filter, sort, folded, shown.map(book => book.id), !shown.length && noResultsTitle]}>
+            {/* Chỉ reset khi đổi cấu trúc kệ/Fold: tránh hàng exit đổi bố cục rồi chồng ảnh.
+                Cùng cấu trúc giữ node, focus và Windowed; presence lo IDs vào/ra. */}
+            <SeriesShelves key={shelvesKey} books={shown} twins={twins} memory={memory} grouped={grouped} />
             <MotionPresence open={!shown.length}>
-              {!shown.length && <EmptyState icon={Search} title={query ? `Không tìm thấy sách nào khớp “${query}”` : "Không có sách ở đây"} className="mt-4">
+              {!shown.length && <EmptyState icon={Search} title={noResultsTitle} className="mt-4">
                 {query ? "Thử tên sách hoặc tác giả khác." : EMPTY_TEXT[filter]}
               </EmptyState>}
             </MotionPresence>

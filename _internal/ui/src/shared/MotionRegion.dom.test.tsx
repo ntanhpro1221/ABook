@@ -36,10 +36,58 @@ it.each([false, true])("a resizing dialog fades old text out before new text ent
   const duration = reduced ? MOTION.fast : MOTION.medium;
   const frames = call[0] as Keyframe[];
   expect(frames[0].opacity).toBe(0);
-  expect(frames[1]).toMatchObject({ opacity: 0, offset: MOTION.fastOut / duration });
+  expect(frames[1]).toMatchObject({ opacity: 0, offset: Math.min(MOTION.fastOut * .6, duration * .25) / duration });
   expect(frames.at(-1)?.opacity).toBe(1);
   expect(call[1]).toMatchObject({ duration, easing: "linear" });
   expect(snapshots()[0].textContent).toBe("Old long preview");
+});
+
+it.each(["reveal", "finish", "cancel", "replace", "unmount"])("hidden fadeThrough blocks actions and parks focus until %s", async end => {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+    return rect(40, 60, 240, this.textContent?.includes("Old") ? 60 : 180);
+  });
+  const click = vi.fn();
+  const draw = (next: boolean) => act(() => root.render(<MotionRegion fadeThrough motionKey={next}><button onClick={click}>{next ? "New" : "Old"}</button></MotionRegion>));
+  await draw(false);
+  const button = mount.querySelector("button")!; await act(() => button.focus());
+  await draw(true);
+  const box = mount.firstElementChild as HTMLElement;
+  const animation = vi.mocked(box.animate).mock.results.at(-1)!.value as Animation;
+  expect(box.hasAttribute("inert")).toBe(true); expect(box.getAttribute("aria-hidden")).toBe("true");
+  expect(document.activeElement).toBe(mount);
+  await act(() => { button.click(); button.focus(); });
+  expect(click).not.toHaveBeenCalled(); expect(document.activeElement).toBe(mount);
+  if (end === "reveal") {
+    Object.defineProperty(animation, "currentTime", { value: 55, configurable: true });
+    await act(() => vi.advanceTimersByTime(20));
+  } else if (end === "finish") animation.onfinish?.(new Event("finish") as AnimationPlaybackEvent);
+  else if (end === "cancel") animation.oncancel?.(new Event("cancel") as AnimationPlaybackEvent);
+  else if (end === "replace") await act(() => root.render(<MotionRegion fadeThrough motionKey="replacement"><button onClick={click}>Replacement</button></MotionRegion>));
+  else await act(() => root.render(null));
+  // Replacement starts its own guard; finish that transition as well.
+  if (end === "replace") {
+    const current = vi.mocked(box.animate).mock.results.at(-1)!.value as Animation;
+    current.onfinish?.(new Event("finish") as AnimationPlaybackEvent);
+  }
+  expect(box.hasAttribute("inert")).toBe(false); expect(box.hasAttribute("aria-hidden")).toBe(false);
+  if (end !== "unmount") {
+    expect(document.activeElement).toBe(button);
+    await act(() => button.click()); expect(click).toHaveBeenCalledOnce();
+  }
+  expect(mount.hasAttribute("tabindex")).toBe(false);
+});
+
+it("revealing a hidden region does not steal focus moved outside it", async () => {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+    return rect(0, 0, 100, this.textContent?.includes("Old") ? 60 : 180);
+  });
+  const draw = (next: boolean) => act(() => root.render(<><button data-outside>Outside</button><MotionRegion fadeThrough motionKey={next}><button>{next ? "New" : "Old"}</button></MotionRegion></>));
+  await draw(false); (mount.querySelector("[data-motion-region] button") as HTMLElement).focus();
+  await draw(true);
+  const outside = mount.querySelector<HTMLElement>("[data-outside]")!; outside.focus();
+  const animation = vi.mocked(HTMLElement.prototype.animate).mock.results.at(-1)!.value as Animation;
+  animation.onfinish?.(new Event("finish") as AnimationPlaybackEvent);
+  expect(document.activeElement).toBe(outside);
 });
 
 it.each(["dialog", "sheet"])("%s: snapshot uses the host padding coordinates, including border, scale and scroll", async kind => {
