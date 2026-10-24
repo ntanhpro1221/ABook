@@ -420,18 +420,36 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   }
 }
 
+/* Mọi câu của văn bản đọc theo (ReadAlongText): nền trong suốt sẵn, nên câu đang đọc / đã nghe / được chọn đổi nền, màu chữ, màu gạch chân
+   đều mờ dần - không bật tắt cứng. Chỉ màu: không đổi bố cục, chương dài không phải dàn trang lại. */
+[data-sentence] {
+  background-color: transparent;
+  transition: background-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard),
+    text-decoration-color var(--motion-fast) var(--ease-standard);
+}
+
 /* Câu đang đọc ở Đọc theo: đủ đậm để nổi lên ở cả hai giao diện (giao diện sáng trước đây chỉ 1,06:1). */
 .read-along-active {
   background: var(--read-along);
   color: var(--text);
 }
 
-/* Chữ đang đọc trong câu đang sáng (mốc từng chữ, listen/words.ts): chỉ đổi nền - không đệm, không đổi độ đậm - nên đổi chữ không làm dòng xuống hàng lại. */
+/* Chữ đang đọc trong câu đang sáng (mốc từng chữ, listen/words.ts): chỉ đổi nền - không đệm, không đổi độ đậm - nên đổi chữ không làm dòng xuống hàng lại.
+   Mọi chữ của câu đang nghe đều là span sẵn; chữ tới lượt thêm .is-lit, nền đến và đi đều mờ dần. */
 .read-along-word {
-  background: var(--read-along-word);
-  color: var(--text);
+  background-color: transparent;
   border-radius: 3px;
   transition: background-color var(--motion-fast-out) linear;
+}
+.read-along-word.is-lit {
+  background-color: var(--read-along-word);
+  color: var(--text);
+}
+/* Chữ đầu của câu vừa tới lượt: span mới dựng cũng hiện dần (trình duyệt có @starting-style). */
+@starting-style {
+  .read-along-word.is-lit {
+    background-color: transparent;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .read-along-word {
