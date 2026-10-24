@@ -46,7 +46,7 @@ from ..io_utils import atomic_write_json, file_lock, file_stamp
 from . import notices
 from .library import preferences_path
 from .listening_revision import (advance, adopt_meta, clock, epoch, observe, checked_peer, meta_items, meta_newer, require_peer_revisions,
-                                 newer, upgrade_local, revision as place_revision)
+                                 newer, revision as place_revision)
 
 # Nghe tới cách cuối chương dưới 20 giây là coi như nghe xong chương (đoạn cuối thường là khoảng lặng + lời
 # chuyển chương, người nghe hay bấm sang chương kế trước khi nó hết).
@@ -105,7 +105,7 @@ def _new_record_id() -> str:
 
 
 def default_record_id(book: str) -> str:
-    """Mã hồ sơ "Mặc định" của một cuốn - app tự tạo khi nghe lần đầu hay khi chuyển bản lưu cũ. Suy từ mã sách theo MỘT
+    """Mã hồ sơ "Mặc định" của một cuốn - app tự tạo khi nghe lần đầu. Suy từ mã sách theo MỘT
     công thức ở mọi máy (Android: Store.defaultRecordId), nên máy tính và điện thoại cùng nghe một cuốn là cùng MỘT hồ
     sơ, gộp được với nhau - không tách đôi chỗ nghe. Hồ sơ người dùng tự tạo thêm thì mã ngẫu nhiên."""
     return "r-" + hashlib.sha256(f"default:{book}".encode()).hexdigest()[:16]
@@ -116,12 +116,8 @@ def _well_formed(raw: Any) -> bool:
     return isinstance(raw, dict) and clean_profiles(raw) == raw
 
 
-def _legacy_format(raw: Any) -> bool:
-    return isinstance(raw, dict) and bool(raw) and raw.get("version") != FORMAT_VERSION
-
-
-def _upgrade(raw: Any) -> dict[str, Any]:
-    """Bản lưu nào cũng thành dạng hồ sơ + liên kết. Bản cũ {mã sách: state}: mỗi sách một hồ sơ "Mặc định"."""
+def _profiles(raw: Any) -> dict[str, Any]:
+    """Nội dung file hồ sơ nghe thành dạng hồ sơ + liên kết; không phải dạng hiện hành thì là hồ sơ trống."""
     if isinstance(raw, dict) and raw.get("version") == FORMAT_VERSION:
         records = raw.get("records") if isinstance(raw.get("records"), dict) else {}
         links = raw.get("links") if isinstance(raw.get("links"), dict) else {}
@@ -129,15 +125,7 @@ def _upgrade(raw: Any) -> dict[str, Any]:
         # `_clock`/`_epoch`: đồng hồ của tên, lần chuyển, hồ sơ đang chọn (listening_revision.meta_items).
         return {"version": FORMAT_VERSION, "records": records, "links": links, "deleted": deleted,
                 **{key: raw[key] for key in ("_clock", "_epoch") if key in raw}}
-    data: dict[str, Any] = {"version": FORMAT_VERSION, "records": {}, "links": {}, "deleted": {}}
-    for book, state in (raw.items() if isinstance(raw, dict) else []):
-        if not isinstance(state, dict):
-            continue
-        record = default_record_id(str(book))
-        data["records"][record] = {"name": DEFAULT_RECORD_NAME,
-                                   "createdAt": float(state.get("updatedAt") or time.time()), "state": state}
-        data["links"][str(book)] = {"records": [record], "active": record}
-    return data
+    return {"version": FORMAT_VERSION, "records": {}, "links": {}, "deleted": {}}
 
 
 PLAYBACK_SESSIONS_KEPT = 16  # số phiên phát (lần nạp trang) nhớ mỗi hồ sơ
@@ -201,36 +189,19 @@ class Listening:
         # Có file mà không đọc được (chương trình khác giữ): hồ sơ trống trong bộ nhớ, KHÔNG ghi đè file thật; đọc lại ở lần sửa kế.
         self._unread = False
         self._journal_unread = False
-        # Hồ sơ trên đĩa còn dạng cũ ({mã sách: state}): lần ghi kế phải ghi đầy đủ để chuyển nó (nhật ký chỉ áp lên dạng hiện hành).
-        self._legacy = False
         try:
             with file_lock(self.path):
                 raw = self._read() or {}
-                self._data, self._legacy = _upgrade(raw), _legacy_format(raw)
+                self._data = _profiles(raw)
                 self._replay()
-                self._upgrade_revisions()
                 self._stamp = self._stamps()
         except notices.Unreadable as error:
-            self._data, self._unread = _upgrade(error.readable if isinstance(error, UnpreservedProfile) else {}), True
+            self._data, self._unread = _profiles(error.readable if isinstance(error, UnpreservedProfile) else {}), True
             self._stamp = self._stamps()
 
     def _stamps(self) -> tuple[Any, Any]:
         """Dấu của hồ sơ và của nhật ký: một trong hai đổi (kể cả do tiến trình khác) thì bản trong bộ nhớ đã cũ."""
         return file_stamp(self.path), file_stamp(self._journal)
-
-    def _upgrade_revisions(self) -> None:
-        # Constructor and _changing both own the profile's file lock here.
-        try:
-            changed = False
-            for key in sorted(self._data["records"]):
-                state = self._data["records"][key].get("state", {})
-                changed = upgrade_local(state, self._node) or changed
-            if changed:
-                self._save()
-        except OSError as error:
-            self._unread = True  # retry disk read/migration; never sync an uncommitted in-memory rev
-            notices.NOTICES.add("Chưa lưu được phiên bản hồ sơ của bạn. App giữ bản gốc; bạn hãy thử lại.", kind="saving-blocked")
-            raise UnpreservedProfile(self._data) from error
 
     def _replay(self) -> None:
         """Áp nhật ký chỗ nghe lên `self._data` (vừa đọc từ hồ sơ). Dòng cụt do tắt ngang, hay trỏ tới hồ sơ không còn: bỏ qua."""
@@ -328,10 +299,9 @@ class Listening:
                     self._unread = True
                 else:
                     if raw is not None or self._unread:
-                        self._data, self._legacy = _upgrade(raw or {}), _legacy_format(raw)
+                        self._data = _profiles(raw or {})
                     self._replay()
                     self._unread = False
-                    self._upgrade_revisions()
                 self._stamp = self._stamps()
             if self._unread or self._journal_unread:
                 raise notices.Unreadable("Chưa đọc được hồ sơ nghe. Bạn hãy thử lại.")
@@ -625,8 +595,8 @@ class Listening:
                     owner["_playback"] = playback = {**playback, "revision": revision}
                 rev = advance(entry, self._node())
                 _apply_progress(entry, chapter_id, seconds, duration, now, saved_anchor, rev)
-                if (len(self._data["records"]), len(self._data["links"])) != shape or self._legacy or file_stamp(self.path) is None:
-                    self._save()  # hồ sơ / liên kết mới sinh, hay file còn dạng cũ: nhật ký không có chỗ để áp lên
+                if (len(self._data["records"]), len(self._data["links"])) != shape or file_stamp(self.path) is None:
+                    self._save()  # hồ sơ / liên kết mới sinh, hay chưa có file: nhật ký không có chỗ để áp lên
                 else:
                     _append_journal(self._journal, {"record": self._record_id(entry), "chapter": int(chapter_id), "seconds": float(seconds),
                                                     "duration": float(duration), "now": now, "anchor": saved_anchor,
@@ -904,7 +874,7 @@ class Listening:
             entry.clear()
             entry.update(merged)
             self._save()
-            return {**json.loads(json.dumps(merged)), "listeningRevision": 1}
+            return json.loads(json.dumps(merged))
 
     def merge_record(self, book: str, record_id: str, incoming: dict[str, Any], *, name: str = "",
                      name_at: float = 0.0, active_at: float = 0.0, moved_at: float = 0.0,
@@ -931,7 +901,7 @@ class Listening:
                     self._data["deleted"][gone] = max(float(self._data["deleted"].get(gone) or 0), float(at or 0))
             if record_id in self._data["deleted"]:
                 self._save()
-                return {"listeningRevision": 1, "record": record_id, "deleted": True, "deletedRecords": dict(self._data["deleted"])}
+                return {"record": record_id, "deleted": True, "deletedRecords": dict(self._data["deleted"])}
             notify = notices.NOTICES.add
             record = self._data["records"].get(record_id)
             fresh = record is None
@@ -969,7 +939,7 @@ class Listening:
             state.update(merged)
             self._save()
             reply = json.loads(json.dumps(merged))
-            reply.update({"listeningRevision": 1, "record": record_id, "recordName": record.get("name") or DEFAULT_RECORD_NAME, "book": owner,
+            reply.update({"record": record_id, "recordName": record.get("name") or DEFAULT_RECORD_NAME, "book": owner,
                           "movedAt": float(record.get("movedAt") or 0), **_revs(record, "movedRev"),
                           "records": [{"id": item,
                                        "name": self._data["records"][item].get("name") or DEFAULT_RECORD_NAME,
@@ -1003,7 +973,7 @@ class Listening:
             link = self._data["links"][book]
             meta = self._data["records"][record]
             body = json.loads(json.dumps(meta.get("state") or _empty_state()))
-            body.update({"listeningRevision": 1, "record": record, "recordName": meta.get("name") or DEFAULT_RECORD_NAME,
+            body.update({"record": record, "recordName": meta.get("name") or DEFAULT_RECORD_NAME,
                          "nameAt": float(meta.get("nameAt") or 0),
                          "activeAt": float(link.get("activeAt") or 0) if link.get("active") == record else 0.0,
                          "movedAt": float(meta.get("movedAt") or 0), "deletedRecords": dict(self._data["deleted"]),
@@ -1101,7 +1071,6 @@ class Listening:
         if self._unread or self._journal_unread:
             raise notices.Unreadable("Chưa đọc được hồ sơ nghe. Bạn hãy thử lại.")
         atomic_write_json(self.path, self._data, compact=True)  # nguyên tử + fsync: mất điện không để lại file rỗng
-        self._legacy = False
         # Nhật ký đã nằm trong bản vừa ghi. Chưa xoá được (tắt ngang giữa hai việc, file bị giữ): lần mở sau phát lại cũng được - dòng cũ hơn chỗ nghe
         # đã có thì bị bỏ (`_replay_progress`).
         try:

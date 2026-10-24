@@ -2013,7 +2013,7 @@ def extract(path: Path, folder_root: Path) -> tuple[Path, dict[str, Any]]:
             info = json.loads(sidecar.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             info = None  # sidecar hỏng (tắt ngang lúc ghi): tách lại - trước đây nhập file ấy lỗi mãi (soát a28 lỗi 17)
-        if isinstance(info, dict) and "matter" in info:  # thư mục do bản cũ tách (không có cờ trang phụ): tách lại
+        if isinstance(info, dict):
             return folder, info
     book = import_text(path, keep_short=True)
     picked = {number for number, _name in default_picks(book)}

@@ -8,7 +8,7 @@ vi.mock("@/studio/data", () => ({ pickFolder: vi.fn(), useAppInfo: () => ({ data
 import type { DiagnosticsReport } from "@/shared/diagnostics";
 import { ApiError } from "@/studio/api";
 import { OWN_DIAGNOSTICS_HINT, OWN_DIAGNOSTICS_MORE, OwnDiagnostics } from "./OwnDiagnostics";
-import { DiagnosticsBody, NEEDS_NEWER_TITLE, failureView } from "./PhoneDiagnostics";
+import { DiagnosticsBody } from "./PhoneDiagnostics";
 
 const report: DiagnosticsReport = {
   schema: 1,
@@ -29,16 +29,6 @@ describe("hộp Chẩn đoán điện thoại", () => {
     }
     expect(html).toContain("Nhật ký của ABook (2 dòng)");
     expect(html).toContain("overflow-auto");
-  });
-
-  it("điện thoại bản cũ (404): nói cần bản ABook mới hơn, không đổ lỗi cho mạng", () => {
-    const error = new ApiError(502, "Pixel: điện thoại cần bản ABook mới hơn (bản này chưa biết gửi nhật ký chẩn đoán)", { reason: "needs-newer" });
-    expect(failureView(error).title).toBe(NEEDS_NEWER_TITLE);
-    const html = renderToStaticMarkup(<DiagnosticsBody error={error} />);
-    expect(html).toContain("Điện thoại cần bản ABook mới hơn");
-    expect(html).toContain("Cập nhật ABook trên điện thoại");
-    expect(html).not.toContain("Tailscale");
-    expect(html).toContain('role="alert"');
   });
 
   it("không với tới điện thoại: câu của máy chủ kèm cách khắc phục (bật chia sẻ, cùng mạng)", () => {

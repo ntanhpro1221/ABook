@@ -1045,7 +1045,6 @@ def _refresh_computer(library_root: Path, computers: Computers, computer: str, r
         library = json.loads(_request(_base(entry), "GET", "/sync/v1/library", entry["token"], wake=True).decode("utf-8"))
         folder = Path(library_root).expanduser() / REMOTE_FOLDER / _folder(str(library.get("name") or entry["name"]), computer)
         listed = [str(book["id"]) for book in library.get("books") or [] if isinstance(book, dict) and book.get("id")]
-        _follow_renamed(entry, computer, folder, set(listed))
         built = {remote["book"]: child for child, manifest in _manifests(folder)
                  if (remote := remote_of(manifest)) and remote["computer"] == computer}
         books = 0
@@ -1099,38 +1098,8 @@ def _write_manifest(target: Path, manifest: dict[str, Any]) -> None:
     atomic_write_json(target / MANIFEST, manifest)
 
 
-def _follow_renamed(entry: dict[str, Any], computer: str, folder: Path, listed: set[str]) -> None:
-    """Máy kia đổi mã sách (mã kiểu cũ -> mã mới, docs/BOOK_IDS.md): cuốn ảo dựng theo mã cũ hỏi máy kia mã
-    mới (`/sync/v1/match` nhận ra mã cũ của chính nó) rồi đổi trong book.json. Thư mục giữ nguyên - mã sách ở máy này,
-    chỗ nghe, file đã tải đều giữ; không thì máy này hiện hai bản của một cuốn. Máy kia chưa nâng cấp: không cuốn nào lệch
-    mã, không hỏi gì."""
-    stale = {}
-    for child, manifest in _manifests(folder):
-        remote = remote_of(manifest)
-        if remote and remote["computer"] == computer and remote["book"] not in listed:
-            stale[remote["book"]] = (child, manifest)
-    if not stale:
-        return
-    try:
-        reply = json.loads(_request(_base(entry), "POST", "/sync/v1/match", entry["token"],
-                                    {"books": [{"key": key} for key in stale]}).decode("utf-8"))
-    except (RemoteError, ValueError):
-        return
-    matches = reply.get("matches") if isinstance(reply, dict) else None
-    taken = {remote_of(manifest)["book"] for _child, manifest in _manifests(folder) if remote_of(manifest)}
-    for old, new in (matches.items() if isinstance(matches, dict) else []):
-        # mã mới phải là cuốn máy kia đang liệt kê, và chưa có cuốn ảo nào mang nó (có rồi thì để nguyên cả hai)
-        if old not in stale or not isinstance(new, str) or new not in listed or new in taken:
-            continue
-        child, manifest = stale[old]
-        manifest["package"]["remote"]["book"] = new
-        _write_manifest(child, manifest)
-        taken.add(new)
-
-
 def _refresh_book(entry: dict[str, Any], computer: str, folder: Path, book: str, built: Path | None = None) -> None:
-    """`built`: thư mục cuốn ảo đã dựng cho sách này - kể cả dựng theo mã cũ rồi đổi mã (`_follow_renamed`: tên thư mục
-    còn mang dấu của mã cũ)."""
+    """`built`: thư mục cuốn ảo đã dựng cho sách này."""
     manifest = json.loads(_request(_base(entry), "GET", f"/sync/v1/books/{book}/manifest", entry["token"]).decode("utf-8"))
     from .peer_paths import check_manifest
     try:
@@ -1195,14 +1164,12 @@ def player_command(entry: dict[str, Any], command: dict[str, Any], *, timeout: f
 DIAGNOSTICS_LINES = 2000  # đuôi nhật ký mặc định; điện thoại cũng cắt ở trần này (Diagnostics.kt MAX_LINES)
 DIAGNOSTICS_MAX_LINES = 20_000
 DIAGNOSTICS_TIMEOUT = 20  # điện thoại gom nhật ký + logcat rồi mới trả lời: lâu hơn một lời hỏi thường
-NEEDS_NEWER = "điện thoại cần bản ABook mới hơn (bản này chưa biết gửi nhật ký chẩn đoán)"
 
 
 def diagnostics(device_id: str, lines: int = DIAGNOSTICS_LINES) -> dict[str, Any]:
     """Bản chẩn đoán của điện thoại đã ghép `device_id` (`GET /sync/v1/diagnostics`, Diagnostics.kt): phiên bản app, pin, mạng, việc nền,
     lần chết gần nhất và `lines` dòng nhật ký cuối - đúng đường `player`/`library` (TLS ghim vân tay, cùng mã thiết bị), nên đi được qua LAN, Tailscale
-    hay 4G mà không cần adb. Lỗi nói cho người dùng: máy không với tới, chưa bật "Cho máy khác nghe thư viện này" (cổng đóng), mã bị thu hồi,
-    bản app điện thoại cũ chưa có đường này (404)."""
+    hay 4G mà không cần adb. Lỗi nói cho người dùng: máy không với tới, chưa bật "Cho máy khác nghe thư viện này" (cổng đóng), mã bị thu hồi."""
     entry = _COMPUTERS.get(device_id) if _COMPUTERS is not None else None
     if entry is None:
         raise RemoteError("Máy này không ghép với máy ấy")
@@ -1212,8 +1179,6 @@ def diagnostics(device_id: str, lines: int = DIAGNOSTICS_LINES) -> dict[str, Any
         data = _request(_base(entry), "GET", f"/sync/v1/diagnostics?lines={wanted}", entry["token"],
                         timeout=DIAGNOSTICS_TIMEOUT, wake=True)
     except RemoteError as error:
-        if error.status == 404:
-            raise RemoteError(f"{name}: {NEEDS_NEWER}", status=404) from error
         if error.status == 401:
             raise RemoteError(f"{name} đã thôi ghép với máy này — bạn ghép lại để dùng tiếp.", status=401) from error
         raise
@@ -1233,7 +1198,7 @@ def local_book(library_root: Path, computer: str, book: str) -> Path | None:
     root = Path(library_root).expanduser() / REMOTE_FOLDER
     mark = f"({hashlib.sha256(book.encode()).hexdigest()[:8]})"
     for folder in root.glob(f"*({computer[:8]})") if root.is_dir() else []:
-        # thư mục mang dấu của mã trước (nhanh: giao diện hỏi mỗi 1,5 giây); cuốn đổi mã (`_follow_renamed`) giữ tên cũ
+        # thư mục mang dấu của mã trước (nhanh: giao diện hỏi mỗi 1,5 giây)
         for suffix in (mark, ""):
             for child, manifest in _manifests(folder, suffix):
                 if remote_of(manifest) == {"computer": computer, "book": book}:

@@ -49,8 +49,7 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
                listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, package_share, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
-from .library import (NUMBER_RANGES, SLEEP_CHOICES, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule,
-                      legacy_ids)
+from .library import (NUMBER_RANGES, SLEEP_CHOICES, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule)
 from .listening import HEAVY_KEYS, RECORD_ID, Listening, RecordGone, StalePlayback
 from .opened_events import OpenedEvents
 from . import audio_revision, bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
@@ -382,7 +381,7 @@ class App:
         self.library_move_recovery: dict[str, Any] | None = None
         if not read_only:
             try:
-                self._adopt_new_book_ids()
+                self._recover_library_move()
             except OSError as error:
                 self.library_move_recovery = {
                     "message": "Chuyển thư viện chưa xong; hồ sơ vẫn còn — bạn xử lý ở Cài đặt → Thư viện.",
@@ -495,13 +494,10 @@ class App:
         """Dựng giao diện / bài thử: runner giả thì "nghe thử" cũng dùng giọng giả (không đòi Studio hay card đồ hoạ)."""
         return isinstance(self.runner, actions.FakeRunner) or os.environ.get("ABOOK_FAKE_RUNNER") == "1"
 
-    def _adopt_new_book_ids(self) -> None:
-        """Dữ liệu lưu theo mã sách kiểu cũ (đường dẫn base64 - docs/BOOK_IDS.md): đổi khoá sang mã mới, một
-        lần. Hồ sơ nghe giữ nguyên mã (điện thoại gộp theo mã hồ sơ). Sao lưu từng file trước lần ghi đầu
-        (`*.pre-ids.bak`)."""
+    def _recover_library_move(self) -> None:
+        """Lần chuyển thư viện dở (tắt ngang giữa chừng): làm nốt từ ý định đã ghi."""
         with file_lock(self._library_move_path()):
             self._finish_library_move()
-        self._rename_book_ids(legacy_ids(self._listened_ids()), ".pre-ids.bak")
 
     def _library_move_path(self) -> Path:
         return self.preferences.path.with_name("library-move.json")
@@ -613,7 +609,7 @@ class App:
     def adopt_moved_library(self, old_root: Path) -> dict[str, str]:
         """Người dùng trỏ thư viện sang thư mục khác - thường là CHÍNH thư viện cũ đã chuyển chỗ / đổi tên (soát a28 lỗi 2). Mã sách là HMAC
         của đường dẫn nên mọi cuốn mang mã mới, chỗ nghe / dấu trang / lịch sử mồ côi. Cuốn ở cùng đường tương đối dưới thư viện cũ có dữ
-        liệu nghe theo mã cũ: đổi khoá sang mã mới (như `_adopt_new_book_ids`). Chỉ khi chỗ cũ ĐÃ TRỐNG (thư viện thật sự dời đi): cuốn cũ
+        liệu nghe theo mã cũ: đổi khoá sang mã mới. Chỉ khi chỗ cũ ĐÃ TRỐNG (thư viện thật sự dời đi): cuốn cũ
         còn nằm nguyên chỗ cũ nghĩa là thư viện kia vẫn đó (đổi sang thư viện khác, hay bản sao) - tên thư mục trùng không chứng minh cùng
         nội dung, hồ sơ nghe ở lại mã cũ (soát a97 C1). Trả {mã cũ: mã mới}."""
         renamed = self._moved_library_ids(old_root, self.library.root)
@@ -3227,7 +3223,7 @@ class App:
     # ---- chẩn đoán (webui/diagnostics.py): đọc nhật ký điện thoại đã ghép, và gói nhật ký của chính máy này ----------------------
 
     def phone_diagnostics(self, device: str, lines: Any = None) -> dict[str, Any]:
-        """Bản chẩn đoán của điện thoại đã ghép `device` (remote_books.diagnostics). Điện thoại cũ chưa có đường này: `reason` "needs-newer"."""
+        """Bản chẩn đoán của điện thoại đã ghép `device` (remote_books.diagnostics)."""
         if self.computers.get(device) is None:
             raise ApiError(HTTPStatus.NOT_FOUND, "Máy này không ghép với máy ấy")
         try:
@@ -3237,8 +3233,7 @@ class App:
         try:
             return diagnostics.redact_report(remote_books.diagnostics(device, count))
         except remote_books.RemoteError as error:
-            extra = {"reason": "needs-newer"} if error.status == 404 else {}
-            raise ApiError(HTTPStatus.BAD_GATEWAY, str(error), **extra) from error
+            raise ApiError(HTTPStatus.BAD_GATEWAY, str(error)) from error
 
     def _diagnostics_folder(self, target: str) -> Path:
         """Nơi lưu file chẩn đoán: thư mục người dùng chọn, không thì "Đã xuất" trong thư viện (như các kiểu xuất)."""
@@ -4061,10 +4056,6 @@ class Handler(BaseHTTPRequestHandler):
                 match = pattern.fullmatch(path)
                 if match:
                     groups = [unquote(group) for group in match.groups()]
-                    if groups and pattern.pattern.startswith(BOOK_ROUTES):
-                        # mã kiểu cũ (link cũ, điện thoại chưa đổi khoá) -> mã hiện hành: mọi handler dùng mã làm khoá
-                        # dữ liệu nghe, phán quyết, hàng đợi nhận đúng một mã cho mỗi cuốn
-                        groups[0] = self.app.library.canonical(groups[0])
                     handler(self, query, *groups)
                     return
             raise ApiError(HTTPStatus.NOT_FOUND, "Không có đường dẫn này")
@@ -4110,7 +4101,7 @@ class Handler(BaseHTTPRequestHandler):
         prefs = self.app.preferences.get()
         # `?book=<mã>`: khả năng của máy này với CUỐN ấy (workshop, link); không có thì chỉ `toolchain` có nghĩa.
         wanted = (query.get("book") or [""])[0]
-        located = self.app.library.resolve_listenable(self.app.library.canonical(wanted)) if wanted else None
+        located = self.app.library.resolve_listenable(wanted) if wanted else None
         self._send_json(HTTPStatus.OK, {
             "capabilities": self.app.capabilities(located),
             "version": self.app.version,
@@ -6031,7 +6022,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_record_move(self, _query: dict[str, list[str]], value: str, record: str) -> None:
         self._own_record(value, record)
-        target = self.app.library.canonical(str(self._body().get("book", "")))
+        target = str(self._body().get("book", ""))
         self.app._listenable(target)
         self.app.listening.move_record(record, target)
         self._send_json(HTTPStatus.OK, {"records": self.app.listening.records(value)})
@@ -6076,7 +6067,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def post_night_dismiss(self, _query: dict[str, list[str]]) -> None:
         body = self._body()
-        book = self.app.library.canonical(str(body.get("bookId", "")))
+        book = str(body.get("bookId", ""))
         self.app.listening.dismiss_night(book, str(body.get("id", "")))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
@@ -6632,7 +6623,6 @@ class Handler(BaseHTTPRequestHandler):
 
 BOOK = r"/api/books/([A-Za-z0-9_-]+)"
 LISTEN = r"/api/listen/books/([A-Za-z0-9_-]+)"
-BOOK_ROUTES = (BOOK, LISTEN, r"/media/books/")
 ROUTES: list[Route] = [
     ("GET", re.compile(r"/api/app"), Handler.get_app),
     ("POST", re.compile(r"/api/app/update"), Handler.post_app_update),

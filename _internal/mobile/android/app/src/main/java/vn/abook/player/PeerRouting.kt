@@ -54,15 +54,6 @@ internal object PeerRouting {
         val original = if (hasAddresses) runCatching { JSONArray(values["addresses"] as String) }.getOrNull() else null
         if (hasAddresses) peer.put("addresses", original ?: JSONObject.NULL)
         PeerAddresses.migrate(peer)
-        if (!hasAddresses) {
-            val legacy = runCatching { JSONArray(values["lan"] as String) }.getOrDefault(JSONArray())
-            val values = JSONArray(PeerAddresses.ordered(peer)) // preserve the original paired host as the first item
-            val legacyPort = prefs.all["lanPort"] ?: 47630
-            for (i in 0 until legacy.length()) (legacy.opt(i) as? String)?.let { host ->
-                PeerAddresses.discoveryEndpoint(host, legacyPort)?.let(values::put)
-            }
-            PeerAddresses.learn(peer, values, peer.optString("fingerprint"))
-        }
         val clean = peer.getJSONArray("addresses").toString()
         val badPort = values.containsKey("port") && (values["port"] !is Int || (values["port"] as Int) !in 1..65535)
         val damaged = (hasAddresses && (original == null || original.toString() != clean)) || badPort ||
@@ -70,7 +61,7 @@ internal object PeerRouting {
         if (damaged) preserve(prefs, "routes", JSONObject(values).toString())
         if (!hasAddresses || values["addresses"] != clean || damaged) {
             val port = values["port"]?.toString()?.toIntOrNull()?.takeIf { it in 1..65535 } ?: 47630
-            check(prefs.edit().putString("addresses", clean).putInt("port", port).remove("lan").remove("lanPort").commit()) { "Chưa lưu được địa chỉ máy đã ghép" }
+            check(prefs.edit().putString("addresses", clean).putInt("port", port).commit()) { "Chưa lưu được địa chỉ máy đã ghép" }
         }
         return peer
     }

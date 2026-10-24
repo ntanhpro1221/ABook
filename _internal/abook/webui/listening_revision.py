@@ -14,7 +14,6 @@ MAX_JUMP = 1_000_000
 # profile with millions of saves. Even a forged peer can only push a profile here, still 2^39 edits from the ceiling.
 # Above it, a peer may lead the receiver by at most MAX_JUMP per exchange.
 SAFE_COUNTER = MAX_COUNTER // 2
-OLD_PEER = "Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"
 MISSING_REVISION = "Dữ liệu đồng bộ thiếu phiên bản. Bạn hãy mở lại hồ sơ trên máy gửi rồi thử lại."
 JUMP_NOTICE = "Phiên bản đồng bộ bất thường; giữ bản của bạn — bạn đồng bộ từ máy có bản đúng."
 
@@ -131,36 +130,8 @@ def adopt_meta(data: dict, row: dict, key: str, rev: Any) -> None:
         row.pop(key, None)
 
 
-def upgrade_local(state: dict, node: str | Callable[[], str]) -> bool:
-    """Stamp schema-checked local legacy data once. Caller locks and commits it.
-
-    Never apply this migration to incoming peer data.
-    """
-    pending = []
-    for key in ("last", "reading"):
-        if isinstance(state.get(key), dict):
-            pending.append((state[key].get("at", 0), key, state[key], "rev"))
-    for key, item in state.get("chapters", {}).items():
-        pending.append((item.get("at", 0), "chapters/" + key, item, "rev"))
-    for item in state.get("bookmarks", []):
-        pending.append((item.get("at", item.get("createdAt", 0)), "bookmarks/" + item["id"], item, "rev"))
-    for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
-        if field in state:
-            pending.append((state.get(stamp, 0), "fields/" + field, state.setdefault("_fieldRevs", {}), field))
-    for key, stamp in state.get("deleted", {}).items():
-        pending.append((stamp, "deleted/" + key, state.setdefault("_deletedRevs", {}), key))
-    changed = False
-    for _, _, target, key in sorted(pending, key=lambda row: (row[0], row[1])):
-        if not revision({"rev": target.get(key)})[0]:
-            target[key] = advance(state, node() if callable(node) else node)
-            changed = True
-    return changed
-
-
 def checked_peer(ours: dict, incoming: dict, notify) -> dict:
-    """Require versioned peer data; only an explicit capability can identify an old peer."""
-    if incoming.get("listeningRevision") == 0:
-        raise ValueError(OLD_PEER)
+    """Require versioned peer data."""
     state = copy.deepcopy(incoming)
     era, tick = epoch(ours), clock(ours)
 
@@ -195,7 +166,7 @@ def checked_peer(ours: dict, incoming: dict, notify) -> dict:
 
 def require_peer_revisions(payload: dict) -> None:
     """Preflight the entire exchange before record deletions or other side effects."""
-    fields = {key: payload[key] for key in ("listeningRevision", "last", "reading", "chapters", "bookmarks", "rate", "finished", "voice", "_fieldRevs", "_deletedRevs") if key in payload}
+    fields = {key: payload[key] for key in ("last", "reading", "chapters", "bookmarks", "rate", "finished", "voice", "_fieldRevs", "_deletedRevs") if key in payload}
     if isinstance(payload.get("deleted"), dict):
         fields["deleted"] = payload["deleted"]
     try:

@@ -17,7 +17,6 @@ from abook.webui import library, listening, notices, packages
 @pytest.fixture(autouse=True)
 def isolated(tmp_path, monkeypatch):
     monkeypatch.setenv("ABOOK_PREFERENCES", str(tmp_path / "preferences.json"))
-    monkeypatch.setattr(library, "_legacy_output_folder", lambda: "")
     notices.NOTICES.clear()
 
 
@@ -300,7 +299,7 @@ def test_f5_root_change_recovers_after_listening_save_fails(tmp_path, restart, f
     else:
         assert library.Preferences(pref.path).get()["libraryRoot"] == str(oldroot)
     reopened = app_for(library.Preferences(pref.path), listening.Listening(saved.path)) if restart else app
-    reopened._adopt_new_book_ids()
+    reopened._recover_library_move()
     handler.app = reopened
     Handler.put_preferences(handler, {})
     assert reopened.listening.get(newid)["bookmarks"][0]["id"] == mark["id"]

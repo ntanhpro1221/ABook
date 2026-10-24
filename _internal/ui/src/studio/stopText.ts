@@ -13,7 +13,7 @@ export const ANALYSIS_CUT_COST = "có thể ra một cuốn khác: người nói
 export const ANALYSIS_STOP_FACT = "Phần đã phân tích được giữ nguyên, nhưng làm tiếp từ chỗ dừng";
 
 /** Câu cuối hộp Dừng lúc phân tích: đang tạm dừng thì nói sách đang yên ở đâu, không mời "bấm Tạm dừng" - không có nút ấy (soát
- *  UX a23 B14). Lượt chạy bằng bản app cũ không tạm dừng được: không nói gì. */
+ *  UX a23 B14). Không tạm dừng được: không nói gì. */
 export function stopAnalysisAdvice(book: Pick<BookSummary, "paused" | "canPause">): string {
   if (book.paused) return "Sách đang tạm dừng - đứng yên đúng chỗ, phần đã phân tích không mất. Cứ để tạm dừng tới khi muốn làm tiếp.";
   if (book.canPause) return "Cần nghỉ thì bấm Tạm dừng: sách đứng yên rồi làm tiếp đúng chỗ, phần đã phân tích không mất.";

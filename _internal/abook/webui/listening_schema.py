@@ -49,7 +49,7 @@ def clean_state(raw: Any) -> dict:
             state[key] = {k: v for k, v in rows.items() if revision({"rev": v})[0]} if isinstance(rows, dict) else {}
     for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
         # Giá trị + mốc giờ + phiên bản là một bộ: một phần hỏng thì bỏ cả bộ (máy kia gửi lại bản đủ) - trước đây giữ giá trị và phiên
-        # bản mà mất mốc, máy kia gộp văng lỗi ở mọi lần đồng bộ (soát a118 lỗi 3). Phiên bản hỏng một mình: upgrade_local gán phiên bản mới.
+        # bản mà mất mốc, máy kia gộp văng lỗi ở mọi lần đồng bộ (soát a118 lỗi 3).
         if (field in raw and field not in state) or (stamp in raw and stamp not in state):
             state.pop(field, None)
             state.pop(stamp, None)

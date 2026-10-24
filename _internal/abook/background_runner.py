@@ -396,7 +396,7 @@ def _status_from_state(paths: BackgroundPaths, state: Mapping[str, Any]) -> Back
         log_lost=dict(state["log_lost"]) if running and isinstance(state.get("log_lost"), dict) else None,
         pause_reason=str(state["pause_reason"]) if running and state.get("pause_reason") else None,
         paused_at=str(state["paused_at"]) if running and state.get("paused_at") else None,
-        can_pause=running and "pause_reason" in state and recorded_state != "stopping",
+        can_pause=running and recorded_state != "stopping",
         stopping=running and recorded_state == "stopping",
         supervised=active,
     )
@@ -805,8 +805,6 @@ def request_pause(project_root: Path | str, paused: bool) -> BackgroundStatus:
     identity_ok, detail = _validate_supervisor_identity(state, paths.project_root)
     if not identity_ok:
         raise BackgroundGone(f"Từ chối tạm dừng: {detail}")
-    if "pause_reason" not in state:
-        raise BackgroundIdentityError("Lượt chạy này bắt đầu bằng bản cũ của app, chưa tạm dừng được")
     _write_pause_request(paths, state, paused)
     return get_status(paths.project_root)
 

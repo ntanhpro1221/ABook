@@ -1,10 +1,5 @@
 [
   {
-    "name": "explicit old peer",
-    "incoming": {"listeningRevision": 0},
-    "error": "Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"
-  },
-  {
     "name": "missing revision",
     "incoming": {"reading": {"chapterId": 1, "index": 10, "at": 100}},
     "error": "Dữ liệu đồng bộ thiếu phiên bản. Bạn hãy mở lại hồ sơ trên máy gửi rồi thử lại."

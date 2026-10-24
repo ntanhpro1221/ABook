@@ -228,25 +228,17 @@ object BookDownloads {
      * Cuốn mở từ file mà máy tính cũng có: hỏi máy tính (POST /sync/v1/match, gửi cỡ + mã băm audio từng chương - sách
      * không mang mã nào) rồi gộp làm một (Store.adopt). Cuốn đang nằm trong trình phát thì để lần sau - đổi thư mục dưới
      * tay trình phát là mất chương kế tiếp và chỗ đang nghe. Máy tính không trả lời thì thôi, lần sau hỏi lại.
-     *
-     * `listed`: mã các cuốn máy tính vừa liệt kê. Cuốn của máy tính trên máy này mà không có trong đó có thể mang mã kiểu
-     * cũ (tải từ bản cũ, docs/BOOK_IDS.md): gửi luôn mã ấy - máy tính nhận ra mã cũ của chính nó và trả mã mới, điện
-     * thoại đổi khoá (Store.rekey) thay vì hiện hai bản của một cuốn.
      */
-    fun matchImported(context: Context, listed: Set<String>? = null) {
+    fun matchImported(context: Context) {
         val waiting = Store.importedBooks().filter { it != Playback.bookId }
-        val renamed = if (listed == null) emptyList()
-        else Store.computerBooks().filter { it !in listed && it != Playback.bookId }
-        if (waiting.isEmpty() && renamed.isEmpty()) return
+        if (waiting.isEmpty()) return
         val books = JSONArray()
         for (id in waiting) books.put(JSONObject().put("key", id).put("chapters", Store.chapterPrints(id)))
-        for (id in renamed) books.put(JSONObject().put("key", id))
         val reply = runCatching { JSONObject(SyncLink.request(context, "POST", "/sync/v1/match", JSONObject().put("books", books))) }
             .getOrNull() ?: return
         val matches = reply.optJSONObject("matches") ?: return
         for (key in matches.keys()) {
             if (key in waiting) Store.adopt(key, matches.getString(key))
-            else if (key in renamed) Store.rekey(key, matches.getString(key))
         }
     }
 

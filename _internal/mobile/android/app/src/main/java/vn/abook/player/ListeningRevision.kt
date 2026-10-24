@@ -10,7 +10,6 @@ internal object ListeningRevision {
     /** Below half the range a counter is accepted whatever the receiver's clock (a new device takes a long-lived profile); even a
      *  forged peer can only push a profile here, still 2^39 edits from the ceiling. Above it a peer may lead by MAX_JUMP. */
     const val SAFE_COUNTER = MAX_COUNTER / 2
-    const val OLD_PEER = "Máy kia đang dùng bản ABook cũ, hãy cập nhật cả hai máy"
     const val MISSING_REVISION = "Dữ liệu đồng bộ thiếu phiên bản. Bạn hãy mở lại hồ sơ trên máy gửi rồi thử lại."
     const val JUMP_NOTICE = "Phiên bản đồng bộ bất thường; giữ bản của bạn — bạn đồng bộ từ máy có bản đúng."
 
@@ -115,42 +114,7 @@ internal object ListeningRevision {
         } else row.remove(key)
     }
 
-    /** Local schema-checked data only; caller owns Store's monitor and commits it. */
-    fun upgradeLocal(state: JSONObject, node: String): Boolean = upgradeLocal(state) { node }
-
-    fun upgradeLocal(state: JSONObject, node: () -> String): Boolean {
-        val localNode by lazy(node)
-        data class Edit(val at: Double, val order: String, val target: JSONObject, val key: String)
-        val pending = mutableListOf<Edit>()
-        for (key in listOf("last", "reading")) state.optJSONObject(key)?.let {
-            pending.add(Edit(it.optDouble("at", 0.0), key, it, "rev"))
-        }
-        state.optJSONObject("chapters")?.let { rows -> for (key in rows.keys()) rows.optJSONObject(key)?.let {
-            pending.add(Edit(it.optDouble("at", 0.0), "chapters/$key", it, "rev"))
-        } }
-        state.optJSONArray("bookmarks")?.let { rows -> for (i in 0 until rows.length()) rows.optJSONObject(i)?.let {
-            pending.add(Edit(it.optDouble("at", it.optDouble("createdAt", 0.0)), "bookmarks/${it.getString("id")}", it, "rev"))
-        } }
-        for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) if (state.has(field)) {
-            val rows = state.optJSONObject("_fieldRevs") ?: JSONObject().also { state.put("_fieldRevs", it) }
-            pending.add(Edit(state.optDouble(stamp, 0.0), "fields/$field", rows, field))
-        }
-        state.optJSONObject("deleted")?.let { rows -> for (key in rows.keys()) {
-            val revs = state.optJSONObject("_deletedRevs") ?: JSONObject().also { state.put("_deletedRevs", it) }
-            pending.add(Edit(rows.optDouble(key, 0.0), "deleted/$key", revs, key))
-        } }
-        var changed = false
-        for (edit in pending.sortedWith(compareBy<Edit> { it.at }.thenBy { it.order })) {
-            if (revision(JSONObject().put("rev", edit.target.opt(edit.key))).first == 0L) {
-                edit.target.put(edit.key, advance(state, localNode))
-                changed = true
-            }
-        }
-        return changed
-    }
-
     fun checkedPeer(ours: JSONObject, incoming: JSONObject, notify: (String) -> Unit): JSONObject {
-        require(incoming.opt("listeningRevision") != 0) { OLD_PEER }
         val state = JSONObject(incoming.toString())
         val era = epoch(ours)
         val tick = clock(ours)
