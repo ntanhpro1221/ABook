@@ -31,6 +31,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Trang dự án: đúng một nút chính theo trạng thái (Bắt đầu / Tạm dừng / Tiếp tục / Nghe trong Thư viện…), mọi việc khác vào "…"; năm tab hay dùng, Kịch bản, Nhật ký và Duyệt trước khi thu vào "Thêm".
 - Tạo sách nói một trang: chọn file rồi bấm "Bắt đầu"; giọng kể, chất lượng và cách bắt đầu gập dưới "Tuỳ chọn".
 - Studio căn thẳng hàng: nút đầu trang cùng hàng với tiêu đề, bảng dự án và bảng chương thẳng mép hai bên, "…" hiện đúng chỗ cột Cập nhật khi rê chuột; thời gian còn lại không còn bị cắt; danh sách chương và các bước không còn khung lồng khung.
+- Studio máy tính: Kịch bản đọc như một bản kịch (người nói · nút nghe · chữ sát nhau, hàng cao theo nội dung), chọn chương bằng menu của app và bộ lọc là chữ gạch chân; Cần nghe lại chỉ một kiểu nút và dấu chấm giữa đều nhau; chấm trên Nhật ký nằm đúng vạch; số đếm cạnh tên tab là số trơn thẳng chân chữ (cả điện thoại); danh sách chương khi thêm sách mờ dần ở mép dưới để biết còn chương cuộn tiếp.
 
 ### Sửa lỗi
 - Back đóng mọi thông báo đang hiện (kể cả lời mời bật thông báo) rồi mới về trang trước; menu đang khép không chặn chạm bên dưới; đóng nhóm Cài đặt quay đúng một bước.
