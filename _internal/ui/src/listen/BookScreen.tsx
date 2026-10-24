@@ -262,7 +262,7 @@ export function SampleButton({ id, url, label }: { id: string; url: string; labe
         aria-label={active ? "Dừng nghe thử" : label}
         onClick={() => clip.toggle(id, url)}
         className={cn(
-          "grid size-9 shrink-0 place-items-center rounded-full border transition-colors",
+          "touch-hit grid size-9 shrink-0 place-items-center rounded-full border transition-colors",
           active ? "border-accent bg-accent text-accent-ink" : "border-line text-fg-2 hover:border-line-strong hover:text-fg",
         )}
       >
@@ -795,7 +795,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               placeholder="Tên hồ sơ"
               value={dialog?.name ?? ""}
               onChange={(event) => setDialog((current) => (current ? { ...current, name: event.target.value } : current))}
-              className="h-10 rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
+              className="touch-box h-10 rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
             />
           )}
           <div className="dialog-actions">
@@ -1147,13 +1147,12 @@ export function BookScreen({
                   {editing !== false && !remoteEdit && <ProjectFileItems book={book} onViews={() => setViewsOpen(true)} />}
                   {editing !== false && !remoteEdit && <TextBookItems book={book} />}
                   {extra}
+                  {(source.records || danger) && <DropdownMenu.Separator className="my-2 h-px bg-line" />}
                   {source.records && singleRecordActions(book).filter(action => action.danger).map(action => <Fragment key={action.key}>
-                    <DropdownMenu.Separator className="my-2 h-px bg-line" />
                     <DropdownMenu.Item onSelect={() => setRecordDialog(action.dialog)} className={cn(MENU_ITEM, "text-danger")}>
                       <action.icon className="size-4" /> {action.label}
                     </DropdownMenu.Item>
                   </Fragment>)}
-                  {danger && <DropdownMenu.Separator className="my-2 h-px bg-line" />}
                   {danger}
             </ActionMenu>}
           </div>
