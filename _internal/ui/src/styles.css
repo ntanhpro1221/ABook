@@ -376,7 +376,9 @@ select[class~="border-line"] {
   justify-content: space-between;
   justify-items: center;
   align-items: center;
-  padding-inline: calc(var(--slot) / 2);
+  /* Hai đầu khác bề rộng ("Đọc" hẹp hơn "Thêm"): --slot-start / --slot-end riêng, không thì đầu hẹp thụt khỏi mép. */
+  padding-left: calc(var(--slot-start, var(--slot)) / 2);
+  padding-right: calc(var(--slot-end, var(--slot)) / 2);
   /* Rãnh 0 cho con cỡ min-content - nhãn hai chữ ("Dấu trang") sẽ gãy dòng; giữ cỡ tự nhiên. */
   & > * {
     width: max-content;
