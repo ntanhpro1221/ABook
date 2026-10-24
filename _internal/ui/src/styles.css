@@ -597,13 +597,17 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
    đều mờ dần - không bật tắt cứng. Chỉ màu: không đổi bố cục, chương dài không phải dàn trang lại. */
 [data-sentence] {
   background-color: transparent;
-  transition: background-color var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard),
-    text-decoration-color var(--motion-fast) var(--ease-standard);
+  box-shadow: -0.2em 0 0 transparent, 0.2em 0 0 transparent;
+  transition: background-color var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard),
+    color var(--motion-fast) var(--ease-standard), text-decoration-color var(--motion-fast) var(--ease-standard);
 }
 
 /* Câu đang đọc ở Đọc theo: đủ đậm để nổi lên ở cả hai giao diện (giao diện sáng trước đây chỉ 1,06:1). */
 .read-along-active {
   background: var(--read-along);
+  /* Nền thở 0,2em hai bên mà chữ không dời: bóng lệch ngang cùng màu chỉ vẽ ngoài hộp (box-decoration-break: clone - từng dòng một),
+     chữ đầu dòng không còn chạm mép nền (soát 25-10). */
+  box-shadow: -0.2em 0 0 var(--read-along), 0.2em 0 0 var(--read-along);
   color: var(--text);
 }
 
