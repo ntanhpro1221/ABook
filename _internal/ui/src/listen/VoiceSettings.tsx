@@ -173,7 +173,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
   };
   const status = info.valid ? <StatusPill tone="success" label={`Dùng được · ${info.voices} giọng`} /> : info.hasKey ? <StatusPill tone="warning" label="Chưa dùng được" /> : null;
   return (
-    <MotionRegion as="div" className="rounded-xl border border-line p-3.5" data-provider={info.id}>
+    <MotionRegion as="div" className="py-3" data-provider={info.id}>
       <button
         type="button"
         aria-expanded={open}
@@ -288,6 +288,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
       {voices === null && !loadError && <ContentSkeleton label="Đang tải giọng đọc" />}
       {voices &&
         VOICE_GROUPS.map(({ provider, title }) => {
+          const [heading, detail] = title.split(" · ");
           const list = voices.filter((voice) => voice.provider === provider);
           if (!list.length && provider !== "device") return null;
           const notice = provider === "edge" ? ONLINE_NOTICE : list[0] ? onlineNotice(list[0]) : "";
@@ -295,7 +296,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
           // giọng mặc định nằm ở nhóm khác). Nút "Thử giọng" chỉ vào vòng Tab ở đúng giọng ấy - 27 giọng không thành 27 điểm Tab.
           const ids = voiceSections(list).flatMap((section) => section.voices.map(({ voice }) => voice.id));
           return (
-            <Fold key={provider} storageKey={`voice.provider.${provider}`} title={title} summary={`${list.length} giọng${current?.provider === provider ? " · đang dùng" : ""}`} bodyClassName="px-3 pb-3">
+            <Fold flat key={provider} storageKey={`voice.provider.${provider}`} title={heading} summary={`${detail ? `${detail} · ` : ""}${list.length} giọng${current?.provider === provider ? " · đang dùng" : ""}`} bodyClassName="pb-3">
               {/* Thẻ tải giọng và dòng gợi ý đứng NGOÀI nhóm radio: nhóm giọng rỗng không được nhận phím của thẻ tốc độ nằm trong nó (soát a100 V1). */}
               {!list.length && <p className={cn("text-pretty", "py-1 text-[0.8125rem] text-fg-2")}>{deviceHint}</p>}
               {list.length > 0 && (
@@ -338,7 +339,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="touch-row"
+                            className="touch-row settings-edge-action"
                             tabIndex={radioTabIndex(ids, current?.id ?? "", ids.indexOf(voice.id))}
                             icon={playing ? Square : Play}
                             loading={sample.loading === voice.id}
@@ -374,7 +375,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
             onClick={() => setKeysOpen(!keysOpen)}
             className="touch-hit flex w-full items-center justify-between gap-2 text-left"
           >
-            <h3 className="text-sm font-semibold">Khoá giọng trực tuyến</h3>
+            <h3 className="text-sm font-semibold">Khoá trực tuyến</h3>
             {providers.some((info) => info.hasKey) && <span className="ml-auto text-xs text-fg-2">{providers.filter((info) => info.hasKey).length} khoá</span>}
             <ChevronDown className={cn("size-4 shrink-0 text-fg-3 transition-transform", !keysShown && "-rotate-90")} aria-hidden />
           </button>

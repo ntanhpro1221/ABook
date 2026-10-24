@@ -127,8 +127,8 @@ export function Fold({
           aria-expanded={open}
           aria-controls={id}
           onClick={() => setOpen(!open)}
-          // Phẳng: nền rê chuột tràn ra lề 7 px để chữ và mũi tên thẳng mép.
-          className={cn("flex min-h-[3.5rem] items-center gap-3 py-2.5 text-left transition-colors hover:bg-hover", flat ? "-mx-2 w-[calc(100%+14px)] rounded-lg px-2" : "w-full rounded-2xl px-4")}
+          // Phẳng: bù đúng hai phần đệm theo --spacing để chữ và mũi tên thẳng mép.
+          className={cn("flex min-h-[3.5rem] items-center gap-3 py-2.5 text-left transition-colors hover:bg-hover", flat ? "-mx-2 w-[calc(100%+var(--spacing)*4)] rounded-lg px-2" : "w-full rounded-2xl px-4")}
         >
           {icon && <span className="shrink-0 text-fg-2" aria-hidden>{icon}</span>}
           <span className="min-w-0 flex-1">
