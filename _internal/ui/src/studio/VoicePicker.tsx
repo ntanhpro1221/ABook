@@ -31,6 +31,8 @@ import { byGender, rerecordText, type GenderFilter, type Rerecord } from "./voic
 
 type Gender = "male" | "female";
 const GENDER_WORD: Record<Gender, string> = { male: "nam", female: "nữ" };
+/** Nút cuối hàng cùng một bề ngang ("Chọn" hay "Người kể dùng"): cột tên giọng của mọi hàng cùng mép phải (soát 25-10: lệch 12 px). */
+const ACTION_WIDTH = "w-[7.5rem] shrink-0";
 
 interface VoiceOption extends EngineVoice {
   /** Khoá giọng - cái duy nhất máy chủ nhận (POST /voice, /voice/preview, /media/voices); `name` chỉ để hiện cho người nghe. */
@@ -351,12 +353,13 @@ export function VoicePicker({
                 </div>
                 {voice.current && data.pending ? (
                   // Đã chọn giọng khác mà chưa vào sách: giọng đang dùng chọn lại được - là bỏ lựa chọn kia.
-                  <Button size="sm" variant="secondary" loading={keep.isPending} disabled={save.isPending} onClick={() => keep.mutate(data.pending!)}>
+                  <Button size="sm" variant="secondary" className={ACTION_WIDTH} loading={keep.isPending} disabled={save.isPending} onClick={() => keep.mutate(data.pending!)}>
                     Giữ giọng này
                   </Button>
                 ) : (
                   <Button
                     size="sm"
+                    className={ACTION_WIDTH}
                     variant={voice.suggested && !voice.current && !voice.pending ? "primary" : "secondary"}
                     disabled={voice.current || voice.pending || !voice.installed || Boolean(voice.takenBy?.length) || save.isPending || keep.isPending}
                     onClick={() => choose(voice)}
