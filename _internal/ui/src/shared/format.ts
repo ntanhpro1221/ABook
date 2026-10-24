@@ -102,15 +102,17 @@ export function etaOf(book: {
   eta: { phase: string; seconds: number } | null;
   progress: { analysis: number; synthesis: number };
   speakerPass?: { done: number; total: number } | null;
-}): string | null {
+}, short = false): string | null {
   if (!book.eta) return null;
+  // Gọn (cột hẹp của danh sách dự án, soát 24-10 - "pha thu âm còn khoảng 3 giờ 2…" bị cắt): bỏ "pha" và "khoảng", vẫn nói của bước nào.
+  const say = (step: string, left: string) => (short ? `${step} ${left.replace(/^còn khoảng /, "còn ")}` : `pha ${step} ${left}`);
   if (book.eta.phase === "speaker") {
     const pass = book.speakerPass;
-    return `pha xác định người nói ${formatEta(book.eta.seconds, pass && pass.total ? pass.done / pass.total : undefined)}`;
+    return say(short ? "dò người nói" : "xác định người nói", formatEta(book.eta.seconds, pass && pass.total ? pass.done / pass.total : undefined));
   }
   const synthesis = book.eta.phase === "synthesis";
   const left = formatEta(book.eta.seconds, synthesis ? book.progress.synthesis : book.progress.analysis);
-  return `pha ${synthesis ? "thu âm" : "phân tích"} ${left}`;
+  return say(synthesis ? "thu âm" : "phân tích", left);
 }
 
 export function formatRelative(epochSeconds: number | null | undefined): string {

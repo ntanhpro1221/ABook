@@ -185,12 +185,12 @@ it("Studio gập các bước; tiến độ và lỗi khởi động ở ngoài 
   await act(() => control.click()); expect(body(control).hasAttribute("inert")).toBe(false);
 });
 
-it("bảng chương Studio dài gập mà giữ hàng/cột ARIA khi mở", async () => {
+it("bảng chương Studio phẳng dưới tab (không khung gập lặp tên tab), giữ hàng/cột ARIA", async () => {
   const b = { id: "p", title: "Sách", running: false } as BookSummary;
   const chapters = Array.from({ length: 9 }, (_, i) => ({ id: i + 1, index: i + 1, displayTitle: `Chương ${i + 1}`, status: "pending", statusLabel: "Chờ", segments: { total: 10, finished: 0, analyzed: 0, recorded: 0, failed: 0, warnings: 0 }, playable: false, seconds: 0 })) as Chapter[];
   await render(<ChapterList book={b} chapters={chapters} />);
-  const control = fold("Danh sách chương"); expect(body(control).hasAttribute("inert")).toBe(true);
-  await act(() => control.click()); expect(body(control).hasAttribute("inert")).toBe(false);
+  expect([...host.querySelectorAll("button[aria-expanded]")].some((button) => button.textContent?.includes("Danh sách chương"))).toBe(false);
+  expect(host.querySelector('[role="table"]')?.closest("[inert]")).toBeNull();
   expect(host.querySelector('[role="table"]')?.getAttribute("aria-rowcount")).toBe("10");
   expect(host.querySelector('[role="row"][aria-rowindex="2"]')).not.toBeNull();
 });
