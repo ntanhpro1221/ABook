@@ -1045,7 +1045,7 @@ export function ChapterList({ book, chapters }: { book: BookSummary; chapters: C
       <div
         role="row"
         aria-rowindex={1}
-        className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 border-b border-line mx-2 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3"
+        className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 border-b border-line mx-2 label-section text-fg-2"
       >
         <span role="columnheader" className="w-[14px] text-center">
           <span aria-hidden>#</span>
@@ -1141,7 +1141,7 @@ function ActivityView({ book }: { book: BookSummary }) {
         <div className="mt-4 space-y-6">
           {groups.map((group) => (
             <section key={group.day}>
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-3">{group.day}</h4>
+              <h4 className="label-section mb-2 text-fg-2">{group.day}</h4>
               <ol className="relative space-y-1 border-l border-line pl-5">
                 {group.items.map((item) => (
                   <li key={item.id} className="relative py-1.5 text-sm">

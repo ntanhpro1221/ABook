@@ -104,7 +104,7 @@ export function SettingsBlock({ title, id, children, className, fold }: { title?
   if (fold && title) return <FoldedBlock title={title} id={id} storageKey={fold} className={className}>{children}</FoldedBlock>;
   return (
     <section id={id} className={cn("settings-block mt-8 first:mt-4", className)}>
-      {title && <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-3">{title}</h2>}
+      {title && <h2 className="label-section mb-2 text-fg-2">{title}</h2>}
       <div className="divide-y divide-line">{children}</div>
     </section>
   );
@@ -115,7 +115,7 @@ function FoldedBlock({ title, id, children, className, storageKey }: { title: st
   const bodyId = useId();
   return (
     <section id={id} className={cn("settings-block mt-8 first:mt-4", className)}>
-      <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-fg-3">
+      <h2 className="label-section mb-2 text-fg-2">
         <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)} className="touch-row -mx-2 flex w-[calc(100%+var(--spacing)*4)] items-center justify-between gap-2 rounded-lg px-2 py-1 text-left uppercase hover:bg-hover">
           {title}
           <ChevronDown className="fold-chevron size-4 shrink-0" aria-hidden />

@@ -622,12 +622,12 @@ export function DeliveryMenu({
     <MotionRegion as="div" className={cn("space-y-3 p-1.5", wide ? "w-full" : "w-[min(88vw,340px)]")} data-delivery-menu>
       {/* Mục tên nằm cuối bảng, dưới nếp cuộn - chỉ lối xuống đó ngay đầu bảng (soát UX 29-09). */}
       <div>
-        <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Loại đoạn</div>
+        <div className="mb-1.5 label-section text-fg-2">Loại đoạn</div>
         <Segmented label="Loại đoạn" value={kind} onChange={setKind} options={KINDS} />
       </div>
       {needsSpeaker && (
         <div>
-          <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Ai nói câu này?</div>
+          <div className="mb-1.5 label-section text-fg-2">Ai nói câu này?</div>
           {picked ? (
             <div className="flex items-center gap-2 rounded-lg border border-accent bg-accent-soft px-2.5 py-1.5 text-sm text-accent-text">
               <span className="min-w-0 flex-1 truncate font-medium">
@@ -648,7 +648,7 @@ export function DeliveryMenu({
       <Fold storageKey="delivery.emotion" title="Cảm xúc" summary={deliveryText(emotion, level)} bodyClassName="space-y-3 px-3 pb-3">
       {line.emotion !== null && (
         <div>
-          <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Cảm xúc</div>
+          <div className="mb-1.5 label-section text-fg-2">Cảm xúc</div>
           <div className="grid grid-cols-3 gap-1">
             {EMOTIONS.map(([value, label]) => (
               <button
@@ -669,7 +669,7 @@ export function DeliveryMenu({
       )}
       {line.intensity !== null && (
         <div>
-          <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Mức</div>
+          <div className="mb-1.5 label-section text-fg-2">Mức</div>
           <Segmented
             label="Mức"
             value={String(level)}
@@ -681,7 +681,7 @@ export function DeliveryMenu({
       )}
       </Fold>
       <label className="block">
-        <span className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Chữ đem đọc</span>
+        <span className="mb-1.5 block label-section text-fg-2">Chữ đem đọc</span>
         <textarea
           id={`spoken-${line.stableId}`}
           aria-label="Chữ máy sẽ đọc thay cho câu này"
@@ -708,7 +708,7 @@ export function DeliveryMenu({
           Nhân vật) - tách khỏi nút "Lưu cách đọc" vốn chỉ cho riêng câu này. */}
       {names.length > 0 && (
         <Fold storageKey="delivery.names" title="Tên trong câu" summary={`${names.length} tên`} bodyClassName="px-3 pb-3"><div data-names-section>
-          <div className="mb-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Sửa tên cả cuốn</div>
+          <div className="mb-1.5 label-section text-fg-2">Sửa tên cả cuốn</div>
           <div className="space-y-2">
             {names.map((item) => (
               <NameInLine key={item.surface} bookId={bookId} item={item} />
@@ -903,17 +903,17 @@ export function SpeakerMenu({
           <>
             {suggested && suggested.value !== line.current && (
               <>
-                <div className="px-2 pb-1 pt-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-warning">Máy gợi ý</div>
+                <div className="px-2 pb-1 pt-1.5 label-section text-warning">Máy gợi ý</div>
                 {item(suggested)}
               </>
             )}
             {script.cast.length > 0 && (
               <>
-                <div className="px-2 pb-1 pt-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Nói trong chương này</div>
+                <div className="px-2 pb-1 pt-1.5 label-section text-fg-2">Nói trong chương này</div>
                 {script.cast.map((person, index) => item(person, index < HOTKEYS ? index + 1 : undefined))}
               </>
             )}
-            <div className="px-2 pb-1 pt-1.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">Khác</div>
+            <div className="px-2 pb-1 pt-1.5 label-section text-fg-2">Khác</div>
             {FIXED.filter((person) => !embedded || person.value !== NARRATOR).map((person) => item(person))}
           </>
         )}

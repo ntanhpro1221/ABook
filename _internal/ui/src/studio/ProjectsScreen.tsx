@@ -301,7 +301,7 @@ export function ProjectsScreen() {
       ) : (
         // Lề âm bù đệm của dòng: bìa thẳng mép tiêu đề, cột cuối thẳng mép phải; nền rê chuột và vạch kẻ tràn ra lề.
         <section className="-mx-3 mt-8" aria-label="Dự án">
-          <div className={cn("hidden gap-x-4 border-b border-line px-3 pb-2 text-xs font-semibold uppercase tracking-[0.06em] text-fg-2 md:grid", COLUMNS)}>
+          <div className={cn("hidden gap-x-4 border-b border-line px-3 pb-2 label-section text-fg-2 md:grid", COLUMNS)}>
             <span />
             <span>Dự án</span>
             <span>Trạng thái</span>

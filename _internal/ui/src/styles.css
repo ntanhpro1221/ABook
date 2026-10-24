@@ -500,6 +500,16 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   }
 }
 /* Nút chỉ có biểu tượng đứng cạnh nhau theo chiều ngang (nới bằng ::after sẽ đè lên nhau): nâng cỡ thật lên 40 x 40 px. */
+/* Nhãn phần - kiểu chữ hoa giãn DUY NHẤT (DESIGN 5.5: 12 px, 600, +0.06em). Màu đặt riêng ở chỗ dùng (thường --fg-2). Soát 24-10 T01:
+   11/12 px, giãn 0.05/0.06/0.08em, đậm 500/600 lẫn lộn giữa các màn. Chip / nhãn người nói không dùng lớp này. */
+@utility label-section {
+  font-size: var(--text-xs);
+  line-height: var(--text-xs--line-height);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 @utility touch-box {
   @media (pointer: coarse), (max-width: 40rem) {
     min-height: var(--touch);

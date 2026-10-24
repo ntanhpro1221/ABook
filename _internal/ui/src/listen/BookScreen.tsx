@@ -466,7 +466,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
           <BookOpenText className="size-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">Người kể chuyện</div>
+          <div className="label-section text-fg-2">Người kể chuyện</div>
           <div className="mt-0.5 font-semibold">{cast.narrator.voice || "Mặc định"}</div>
           {onPickNarrator && cast.narrator.pendingVoice?.preset && (
             <div className="mt-0.5 truncate text-xs font-medium text-accent-text">Chờ áp dụng: giọng {voiceName(cast.narrator.pendingVoice)}</div>
