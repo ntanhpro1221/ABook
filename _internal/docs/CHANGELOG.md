@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.137] - 2026-10-24
+
 ### Sửa lỗi
 - Nội dung và tiêu đề cũ chuyển mượt đúng vị trí khi thêm nhiều file sách, kể cả trong hộp và bảng đang cuộn.
 
