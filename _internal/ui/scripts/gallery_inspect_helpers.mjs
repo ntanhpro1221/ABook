@@ -54,7 +54,7 @@ export function createInspectorHelpers() {
 }
 
 // Chạy hoàn toàn trong trang, chỉ trả dữ liệu JSON. Không đọc state nội bộ của React.
-export function inspectPage({ phone = false } = {}, h) {
+export function inspectPage({ phone = false } = {}, h, layoutInspector) {
   const { rect, intersection, union, overflow, contrastRatio, composite, graphicOverlap, siblingDifferences } = h;
   const viewport = { x: 0, y: 0, width: innerWidth, height: innerHeight };
   const findings = [], contacts = [], overlays = [];
@@ -505,5 +505,6 @@ export function inspectPage({ phone = false } = {}, h) {
       }
     }
   }
-  return { findings, contacts, overlays, siblingGroups, metrics: { textRuns: texts.length, graphics: graphics.length, viewport, devicePixelRatio, theme: document.documentElement.dataset.theme, animations: document.getAnimations().map((a) => a.playState), fonts: [...document.fonts].filter((f) => f.status === "loaded").map((f) => ({ family: f.family, weight: f.weight, status: f.status })) } };
+  const layout = layoutInspector?.({ all, texts, css, rect, union, visible, hidden, selector, add, shape, childPath });
+  return { findings, contacts, overlays, siblingGroups, layout, metrics: { textRuns: texts.length, graphics: graphics.length, viewport, devicePixelRatio, theme: document.documentElement.dataset.theme, animations: document.getAnimations().map((a) => a.playState), fonts: [...document.fonts].filter((f) => f.status === "loaded").map((f) => ({ family: f.family, weight: f.weight, status: f.status })) } };
 }
