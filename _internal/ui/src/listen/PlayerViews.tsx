@@ -1569,7 +1569,7 @@ function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLBut
   return (
     <Popover.Close asChild>
       <button type="button" data-player-menu-row className={MENU_ROW} {...keepFocus} {...rest}>
-        <Icon className="size-4 shrink-0 text-fg-2" />
+        <Icon className={cn("size-4 shrink-0 text-fg-2", (Icon === BookmarkPlus || Icon === X) && "translate-x-px")} />
         <span className="min-w-0 flex-1 truncate">{children}</span>
       </button>
     </Popover.Close>

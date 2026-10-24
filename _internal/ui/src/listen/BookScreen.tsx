@@ -1095,7 +1095,7 @@ export function BookScreen({
                   {/* Một hồ sơ thì không có nút hồ sơ nghe: tạo / chuyển / đổi tên / xoá hồ sơ duy nhất nằm ở đây (soát a105 F9), dùng chung hộp thoại của RecordPicker. */}
                   {source.records && singleRecordActions(book).filter(action => !action.danger).map((action) => (
                     <DropdownMenu.Item key={action.key} onSelect={() => setRecordDialog(action.dialog)} className={MENU_ITEM}>
-                      <action.icon className="size-4" /> {action.label}
+                      <action.icon className={cn("size-4", action.key === "create" && "translate-x-0.5", action.key === "move" && "translate-x-px")} /> {action.label}
                     </DropdownMenu.Item>
                   ))}
                   {!textOnly && (
