@@ -71,6 +71,7 @@ export function BookCover({
       motionKey={motionKey}
       className={cn("@container relative aspect-square shrink-0 self-start overflow-hidden rounded-lg text-left shadow-card", className)}
       style={{ background: `linear-gradient(155deg, ${style.from} 0%, ${style.to} 100%)` }}
+      data-overlay="Chữ bìa trên hoạ tiết sóng"
       aria-hidden
     >
       <svg className="absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none">

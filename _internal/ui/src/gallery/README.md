@@ -40,7 +40,35 @@ Asia/Ho_Chi_Minh, `prefers-color-scheme` theo chủ đề, chờ `__gallery.read
 chụp `<platform>__<tên>-<chủ đề>.png`. Ra kèm `index.html` (lưới ảnh theo nhóm, ghi lỗi dưới ảnh) và `report.json`. Mã thoát 1
 khi có mục lỗi.
 
-## Cách giả
+## Soi chi tiết: `scripts/gallery_inspect.mjs`
+
+```text
+npm run gallery:build
+npm run gallery:inspect -- --browser "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe" --out ../../inspect --theme both
+node scripts/gallery_inspect.mjs --out ../../inspect --fail-on rule1,rule2,rule3
+node scripts/gallery_inspect_fixture.mjs --out ../../inspect/skip-fixture
+```
+
+Mặc định quét cả hai chủ đề. Cùng cờ `--browser`, `--out`, `--only`, `--theme`, `--base`, `--dist`, `--timeout` với công cụ chụp;
+dùng chung `scripts/gallery_browser.mjs` (máy chủ loopback, CDP, Edge riêng tư, dọn hồ sơ tạm bằng Python sau khi đóng trình duyệt).
+Không cần thêm dependency. Chờ phông app tải và chuyển động hữu hạn kết thúc; spinner vô hạn được giữ khung rồi huỷ, có ghi vào JSON.
+
+Bảy quy tắc: chữ đè hình, chữ đè chữ, chữ bị cắt, chữ dưới 11 CSS px, vùng bấm điện thoại dưới 44×44, tương phản WCAG,
+và SVG không nhất quán trong cùng hàng flex. Chữ lấy từng dòng bằng `Range`, bỏ phần khuất/`sr-only` và các lớp dialog/menu/tooltip
+khác nhau; tính vùng bấm cả pseudo và nhãn checkbox; chữ trên ảnh/gradient không chấm tương phản.
+Vùng chồng lớp có chủ ý phải có `data-overlay` trên tổ tiên chung của chữ và hình, kèm lý do bằng tiếng Việt; không miễn cả trang.
+
+Ra `findings.json` (phát hiện, rect CSS, phông thực nạp, vùng bấm, tỉ lệ tương phản, lỗi chạy), `index.html` nhóm theo quy tắc rồi story,
+`contacts/*.html` chứa mọi điều khiển/SVG nhìn thấy, và `crops/*.png` qua CDP `clip.scale=4`, lề 8 CSS px.
+Ảnh điện thoại @2x có 8 điểm ảnh/CSS px sau phóng 4 lần; máy tính @1x có 4. Mở ảnh gốc hoặc bật nguyên cỡ trên bảng chi tiết.
+Đây là bộ tìm ứng viên: SVG khác mục đích/độ ưu tiên và chữ disabled vẫn có thể cần được loại khi duyệt ảnh.
+
+Mặc định mã thoát 0 dù có phát hiện; `--fail-on` nhận tên quy tắc (tên có dấu cách cần quote), dạng gạch dưới/gạch nối,
+hoặc `rule1`…`rule7`, mã thoát 1 khi có quy tắc được chọn vi phạm. Lỗi tải story/chụp ảnh là 2, luôn ghi riêng để không tạo lượt xanh giả.
+Fixture riêng dựng lại glyph HTML của `0bec019f` cạnh SVG mới `398db035`, dùng phông gallery thật và chính bộ đo trên Edge;
+không checkout/sửa component sản phẩm. Có unit test hình học và DOM ở `scripts/gallery_inspect.test.mjs`.
+
+## Cách giả (dữ liệu và nền tảng)
 
 | phần | file | cách |
 |---|---|---|
