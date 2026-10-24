@@ -120,10 +120,10 @@ it.each([false, true])("V7 nền badge nằm trên con được fade, ảnh=%s",
   await draw(true);
   // Vùng huy hiệu là vùng chuyển động cuối của bìa (trước nó là vùng mờ chéo ảnh bìa).
   const region = [...host.querySelectorAll<HTMLElement>("[data-motion-region]")].at(-1)!;
-  expect(region.className).not.toContain("bg-black/45");
-  expect(region.firstElementChild?.className).toContain("bg-black/45");
+  expect(region.className).not.toContain("bg-cover-overlay");
+  expect(region.firstElementChild?.className).toContain("bg-cover-overlay");
   await draw(false);
-  expect(document.querySelector(".motion-snapshot .bg-black\\/45")).not.toBeNull();
+  expect(document.querySelector(".motion-snapshot .bg-cover-overlay")).not.toBeNull();
   const frames = vi.mocked(region.animate).mock.calls.at(-1)![0] as Keyframe[];
   expect(frames[0].opacity).toBe(1); expect(frames.at(-1)?.opacity).toBe(0);
   await act(() => vi.advanceTimersByTime(MOTION.medium + 81));

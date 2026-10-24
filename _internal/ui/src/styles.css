@@ -57,7 +57,8 @@
   --control-line-strong: #6f685d;
   /* Rãnh công tắc đang tắt: >= 3:1 trên nền sáng (soát UX 29-09: line-strong chỉ 1,4:1, công tắc tắt gần như vô hình). */
   --switch-off: #857e72;
-  --switch-on: var(--accent);
+  /* Rãnh bật dùng màu vòng tiêu điểm (đồng thau sẫm), không dùng --accent: --accent chỉ 2,4:1 trên nền sáng nên rãnh bật nhạt hơn nền cả khi núm trắng đè lên. */
+  --switch-on: var(--focus);
   /* Vòng tiêu điểm và viền điều khiển đang chọn (WCAG 1.4.11 / 2.4.7: >= 3:1 với mọi nền; soát a31 K3/C4/C5: --accent #e39a2d chỉ
      2,1-2,4:1 trên nền sáng). --accent giữ cho nút chính, tiến độ, trang trí. */
   --focus: #a0600c;
@@ -72,23 +73,31 @@
   --accent-ink: #1d1304;
   --accent-text: #8a5309;
   --accent-soft: #f7ead5;
-  --success: #2d7957; /* cả chữ trên --success-soft (pill "Hoàn tất", soát UX a17) */
+  --success: #2a7554; /* cả chữ trên --success-soft (pill "Hoàn tất", soát UX a17) và trên --bg-sunken / --hover (>= 4,5:1) */
   --success-soft: #dff3ea;
   --danger: #b23b33; /* cả chữ trên --danger-soft (soát UX a17) */
   --danger-soft: #fbe4e4;
-  --warning: #955f11;
+  --warning: #905b10; /* chữ >= 4,5:1 cả trên --bg-sunken / --hover / --warning-soft */
   --warning-soft: #fcf1dc;
-  --info: #3666c7;
-  --info-soft: #e3ebfb;
+  /* Thông tin KHÔNG có màu riêng: ngoài hổ phách và các màu trạng thái (xanh lục / đỏ / vàng đất) app không có sắc thứ hai - ghi chú thông tin là mảng xám ấm. */
+  --info: #5e5950;
+  --info-soft: #ece9e3;
   --nav-active: #ffffff;
   --nav-active-ring: rgb(26 24 20 / 0.08);
-  --read-along: color-mix(in oklab, var(--accent) 26%, transparent);
-  --read-along-word: color-mix(in oklab, var(--accent) 62%, transparent);
   --avatar-bg-l: 0.93;
   --avatar-fg-l: 0.43;
   --shadow: 0 1px 2px rgb(20 24 29 / 0.06), 0 8px 24px -12px rgb(20 24 29 / 0.16);
   --shadow-lg: 0 24px 64px -24px rgb(20 24 29 / 0.35);
   --scrim: rgb(20 17 13 / 0.45);
+  /* Mực trên mảng tô đặc của trạng thái; núm công tắc; chữ / icon đè lên ảnh bìa (luôn trên lớp phủ tối, vì bìa là ảnh bất kỳ). */
+  --success-ink: #ffffff;
+  --danger-ink: #ffffff;
+  --switch-thumb: #ffffff;
+  --cover-overlay: rgb(18 17 16 / 0.72);
+  --cover-ink: #ffffff;
+  /* Vệt sáng trên nút chính và thanh đang chạy: trắng ngà, không trắng lạnh. */
+  --button-shine: rgb(255 250 240 / 0.25);
+  --sheen: rgb(255 250 240 / 0.35);
   color-scheme: light;
 }
 
@@ -107,7 +116,7 @@
   --focus: #e9a945; /* = --accent */
   --text: #ece8e1;
   --text-2: #a8a196;
-  --text-3: #958e83;
+  --text-3: #a0998e;
   --fg-3: #7a746a;
   --accent: #e9a945;
   --accent-hover: #f4b85c;
@@ -120,17 +129,22 @@
   --danger-soft: rgb(239 123 112 / 0.13);
   --warning: #e8b64c;
   --warning-soft: rgb(232 182 76 / 0.13);
-  --info: #6f9bf5;
-  --info-soft: rgb(111 155 245 / 0.13);
+  --info: #a8a196;
+  --info-soft: rgb(236 232 225 / 0.08);
   --nav-active: #252320;
   --nav-active-ring: transparent;
-  --read-along: color-mix(in oklab, var(--accent) 22%, transparent);
-  --read-along-word: color-mix(in oklab, var(--accent) 50%, transparent);
   --avatar-bg-l: 0.33;
   --avatar-fg-l: 0.84;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.7);
   --shadow-lg: 0 30px 80px -20px rgb(0 0 0 / 0.75);
   --scrim: rgb(6 5 4 / 0.62);
+  --success-ink: #0c241a;
+  --danger-ink: #32130f;
+  --switch-thumb: #1b1204;
+  --cover-overlay: rgb(18 17 16 / 0.72);
+  --cover-ink: #ffffff;
+  --button-shine: rgb(255 250 240 / 0.25);
+  --sheen: rgb(255 250 240 / 0.35);
   color-scheme: dark;
 }
 
@@ -165,6 +179,11 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --color-scrim: var(--scrim);
+  --color-success-ink: var(--success-ink);
+  --color-danger-ink: var(--danger-ink);
+  --color-switch-thumb: var(--switch-thumb);
+  --color-cover-overlay: var(--cover-overlay);
+  --color-cover-ink: var(--cover-ink);
   --color-nav-active: var(--nav-active);
   /* Gốc chữ 16px (Tailwind text-xs = 12px, text-sm = 14px - đánh giá 26-09: 10,5px là quá nhỏ cho app đọc/nghe);
      khoảng cách giữ nguyên 3,5px mỗi bậc như trước, nên bố cục không phình ra. */
@@ -490,13 +509,19 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
 }
 
 /* Mặt đọc theo (DESIGN 5.1; Cài đặt > Giao diện > "Nền đọc", shared/readingSurface.ts đặt data-surface lên <html>): Giấy / Ngà / Đêm, hay
-   Tự động = Giấy ở giao diện sáng, Đêm ở giao diện tối. Chỉ vùng chữ đọc theo đổi nền; chữ, chữ phụ, chữ nhấn và nền gợi ý trong vùng ấy theo
-   mặt đọc để đủ tương phản (shared/palette.test.ts). Đổi mặt thì mờ chéo màu theo --motion-slow. */
+   Tự động = Giấy ở giao diện sáng, Đêm ở giao diện tối. Chỉ vùng chữ đọc theo đổi nền; chữ, chữ phụ, chữ nhấn, màu nhấn, vòng tiêu điểm và
+   lớp tô câu / chữ đang đọc trong vùng ấy theo MẶT ĐỌC chứ không theo giao diện của app (Đêm trong app sáng vẫn là chữ sáng trên nền tối với
+   lớp tô nhạt), để đủ tương phản ở mọi cặp giao diện x mặt đọc (scripts/check_contrast.mjs). Lớp tô nhạt hơn ở mặt tối: chữ sáng nằm trên
+   hai lớp tô chồng nhau (câu + chữ) nên tổng độ phủ phải đủ thấp. Đổi mặt thì mờ chéo màu theo --motion-slow. */
 :root {
   --read-bg: #fbfaf7;
   --read-fg: #1b1a17;
   --read-fg-2: #5e5950;
   --read-accent-text: #8a5309;
+  --read-accent: #d4912b;
+  --read-focus: #a0600c;
+  --read-along: color-mix(in oklab, var(--read-accent) 26%, transparent);
+  --read-along-word: color-mix(in oklab, var(--read-accent) 62%, transparent);
   --read-scheme: light;
 }
 [data-theme="dark"] {
@@ -504,6 +529,10 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   --read-fg: #d9d3c8;
   --read-fg-2: #a8a196;
   --read-accent-text: #f0b961;
+  --read-accent: #e9a945;
+  --read-focus: #e9a945;
+  --read-along: color-mix(in oklab, var(--read-accent) 18%, transparent);
+  --read-along-word: color-mix(in oklab, var(--read-accent) 30%, transparent);
   --read-scheme: dark;
 }
 :root[data-surface="paper"] {
@@ -511,6 +540,10 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   --read-fg: #1b1a17;
   --read-fg-2: #5e5950;
   --read-accent-text: #8a5309;
+  --read-accent: #d4912b;
+  --read-focus: #a0600c;
+  --read-along: color-mix(in oklab, var(--read-accent) 26%, transparent);
+  --read-along-word: color-mix(in oklab, var(--read-accent) 62%, transparent);
   --read-scheme: light;
 }
 :root[data-surface="ivory"] {
@@ -518,6 +551,10 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   --read-fg: #3b2f1e;
   --read-fg-2: #5c4d36;
   --read-accent-text: #7a4806;
+  --read-accent: #d4912b;
+  --read-focus: #8a5309;
+  --read-along: color-mix(in oklab, var(--read-accent) 26%, transparent);
+  --read-along-word: color-mix(in oklab, var(--read-accent) 62%, transparent);
   --read-scheme: light;
 }
 :root[data-surface="night"] {
@@ -525,15 +562,21 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   --read-fg: #d9d3c8;
   --read-fg-2: #a8a196;
   --read-accent-text: #f0b961;
+  --read-accent: #e9a945;
+  --read-focus: #e9a945;
+  --read-along: color-mix(in oklab, var(--read-accent) 18%, transparent);
+  --read-along-word: color-mix(in oklab, var(--read-accent) 30%, transparent);
   --read-scheme: dark;
 }
 .reading-surface {
   --text: var(--read-fg);
   --text-2: var(--read-fg-2);
   --text-3: var(--read-fg-2);
+  --accent: var(--read-accent);
   --accent-text: var(--read-accent-text);
+  --focus: var(--read-focus);
   --hover: color-mix(in oklab, var(--read-fg) 7%, var(--read-bg));
-  --accent-soft: color-mix(in oklab, var(--accent) 16%, var(--read-bg));
+  --accent-soft: color-mix(in oklab, var(--read-accent) 16%, var(--read-bg));
   background-color: var(--read-bg);
   color: var(--read-fg);
   color-scheme: var(--read-scheme);
@@ -799,14 +842,15 @@ details[open]:not([data-motion="closing"]) > summary .fold-chevron {
   pointer-events: none;
 }
 
-/* Màn "Đang nghe": nền pha màu chủ đạo của bìa vào --bg, 10 % (sáng) / 16 % (tối) - mỗi cuốn một không khí (docs/DESIGN.md 5.1). Đổi cuốn thì
+/* Màn "Đang nghe": nền pha màu chủ đạo của bìa vào --bg, 6 % (sáng) / 12 % (tối) - mỗi cuốn một không khí (docs/DESIGN.md 5.1). Bìa là màu bất kỳ nên
+   trần pha là mức mà chữ phụ và chữ nhấn còn >= 4,5:1 kể cả với bìa đen (sáng) / trắng (tối): scripts/check_contrast.mjs quét lưới màu bìa. Đổi cuốn thì
    nền mờ chéo sang màu mới. --cover-tint đặt tại chỗ (PlayerViews.NowPlaying, màu đã lọc). */
 .now-playing-tint {
-  background-color: color-mix(in oklab, var(--cover-tint, var(--bg)) 10%, var(--bg));
+  background-color: color-mix(in oklab, var(--cover-tint, var(--bg)) 6%, var(--bg));
   transition: background-color var(--motion-slow) var(--ease-standard);
 }
 [data-theme="dark"] .now-playing-tint {
-  background-color: color-mix(in oklab, var(--cover-tint, var(--bg)) 16%, var(--bg));
+  background-color: color-mix(in oklab, var(--cover-tint, var(--bg)) 12%, var(--bg));
 }
 
 /* Màn "Đang nghe" khi không có View Transitions (đường dự phòng): trượt lên từ đáy. */
@@ -829,7 +873,7 @@ details[open]:not([data-motion="closing"]) > summary .fold-chevron {
   position: absolute;
   inset: 0;
   width: 40%;
-  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
+  background: linear-gradient(90deg, transparent, var(--sheen), transparent);
   animation: run-sheen 1.8s ease-in-out infinite;
 }
 
@@ -1063,7 +1107,7 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
   width: var(--switch-knob);
   height: var(--switch-knob);
   border-radius: 999px;
-  background: white;
+  background: var(--switch-thumb);
   transform: translateX(var(--switch-inset));
   transition: transform var(--motion-fast) var(--ease-standard);
 }

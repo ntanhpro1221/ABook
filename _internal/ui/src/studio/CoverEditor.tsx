@@ -103,7 +103,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
         }}
       >
         <BookCover title={book.title} part={book.series?.part} size={narrow ? "sm" : "lg"} image={book.cover} className="w-24 sm:w-44" />
-          <div aria-hidden={!busy} className={cn("pointer-events-none absolute inset-0 grid place-items-center rounded-lg bg-black/40 text-white transition-opacity duration-motion-fast", busy ? "opacity-100" : "opacity-0")}>
+          <div aria-hidden={!busy} className={cn("pointer-events-none absolute inset-0 grid place-items-center rounded-lg bg-cover-overlay text-cover-ink transition-opacity duration-motion-fast", busy ? "opacity-100" : "opacity-0")}>
             <Skeleton className="h-full w-full" />
           </div>
       </div>

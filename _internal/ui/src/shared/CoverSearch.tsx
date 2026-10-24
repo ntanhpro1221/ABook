@@ -149,7 +149,7 @@ export function CoverSearchDialog({
                     onError={() => setBroken((now) => new Set(now).add(found.thumb))}
                   />
                   {choose.isPending && choose.variables?.url === found.url && (
-                    <div className="absolute inset-0 grid place-items-center bg-black/40 text-white">
+                    <div className="absolute inset-0 grid place-items-center bg-cover-overlay text-cover-ink">
                       <Loader2 className="size-5 animate-spin" />
                     </div>
                   )}
