@@ -64,6 +64,13 @@ class BackupRulesTest {
         for (name in listOf("sync", "peers", "abook_self", "readaloud-online-keys")) {
             assertTrue("getSharedPreferences(\"$name\"", code.contains("getSharedPreferences(\"$name\""))
         }
-        assertTrue(code.contains("File(context.filesDir, \"share.json\")"))
+        val fixture = ColdStoreFixture()
+        try {
+            assertTrue(LibraryServer.init(fixture.context))
+            val actual = fixture.field(LibraryServer::class.java, "devicesFile") as File
+            assertEquals(File(fixture.context.filesDir, "share.json").canonicalFile, actual.canonicalFile)
+        } finally {
+            fixture.restore()
+        }
     }
 }
