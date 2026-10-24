@@ -11,13 +11,16 @@ import {
   Bookmark as BookmarkIcon,
   BookmarkPlus,
   Check,
+  Cast,
   ChevronDown,
   Gauge,
   Keyboard,
   ListOrdered,
+  Lightbulb,
   Loader2,
   Maximize2,
   Moon,
+  Minus,
   MoreHorizontal,
   Music2,
   Pause,
@@ -36,7 +39,7 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ComponentProps, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { createContext, useContext, useId, useCallback, useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ComponentProps, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -46,7 +49,7 @@ import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
 import { MUSIC_MODIFIED_NOTE, excerpt, formatClock, formatLength, formatWhen, licenseLabel, musicCreditText, musicNeedsModifiedNote, spokenClock } from "@/shared/format";
-import { announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
+import { announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/PhoneSync";
 import { LEVEL_NOTES, levelOptions } from "@/shared/musicLevels";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
@@ -298,6 +301,8 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
   );
 }
 
+const PlayerSheetSpace = createContext<(id: string, height: number) => void>(() => {});
+
 function MenuShell({
   trigger,
   triggerKey,
@@ -314,6 +319,7 @@ function MenuShell({
   caption,
   icon: RowIcon,
   side,
+  footer,
 }: {
   trigger: ReactNode;
   /** Kiểu nút mở: "chip" (thanh phát máy tính), "action" (nút phụ có nhãn của màn Đang nghe - `caption` là nhãn dưới), "row" (một dòng trong
@@ -323,6 +329,7 @@ function MenuShell({
   /** Biểu tượng đầu dòng của kiểu "row". */
   icon?: typeof Gauge;
   side?: "top" | "bottom";
+  footer?: ReactNode;
   /** Nút đổi theo một lựa chọn chỉ có số ("1,5×"): số không vào dấu đổi nội dung của MotionRegion, nên đưa lựa chọn làm khoá chuyển cảnh. */
   triggerKey?: unknown;
   label: string;
@@ -339,35 +346,44 @@ function MenuShell({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
+  const phone = useMediaQuery("(max-width: 640px)");
+  const reserve = useContext(PlayerSheetSpace);
+  const sheetId = useId();
+  const reserveHeight = useCallback((height: number) => reserve(sheetId, height), [reserve, sheetId]);
+  const [localOpen, setLocalOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const [popoverOffset, setPopoverOffset] = useState(8);
+  const isOpen = open ?? localOpen;
+  const changeOpen = (next: boolean) => {
+    if (next && !phone && look === "action") {
+      const button = triggerRef.current;
+      const play = button?.closest("aside")?.querySelector("[data-player-toggle]");
+      if (button && play) setPopoverOffset(Math.max(8, button.getBoundingClientRect().top - play.getBoundingClientRect().top + 12));
+    }
+    (onOpenChange ?? setLocalOpen)(next);
+  };
+  const button = <button ref={triggerRef} type="button" aria-label={label} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
+      className={cn(look === "action" ? ACTION_BUTTON : look === "row"
+        ? "flex min-h-12 w-full items-center gap-3 rounded-lg px-2 text-left text-sm text-fg hover:bg-hover"
+        : "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
+      {look === "row" && <span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span>}
+      <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("tabular min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
+      {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
+    </button>;
+  if (phone) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
+    <Sheet open={isOpen} onOpenChange={changeOpen} title={dialogLabel ?? label} trigger={button}
+      focusSelector={focusSelector} onKeyDown={menuArrowKeys} footer={footer} onHeightChange={reserveHeight} className="player-sheet">
+      {children}
+    </Sheet>
+  </Popover.Root>;
   return (
-    <Popover.Root open={open} onOpenChange={onOpenChange}>
-      <Tooltip label={tooltip ?? label}>
-        <Popover.Trigger asChild>
-          <button
-            type="button"
-            aria-label={label}
-            {...keepFocus}
-            className={cn(
-              look === "action"
-                ? ACTION_BUTTON
-                : look === "row"
-                  ? "flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-sm text-fg hover:bg-hover max-sm:min-h-[48px]"
-                  : // Điện thoại (màn "Đang nghe"): đủ 48 px để chạm.
-                    "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]",
-              look !== "row" && actionTone(active),
-            )}
-          >
-            {look === "row" && <span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span>}
-            {/* Mọi nút menu (tốc độ, nhạc, giọng, hẹn giờ, loa / TV) đổi biểu tượng / chữ theo trạng thái: một chỗ mờ chéo cho cả năm. */}
-            <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("tabular min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
-            {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
-          </button>
-        </Popover.Trigger>
-      </Tooltip>
+    <Popover.Root open={isOpen} onOpenChange={changeOpen}>
+      <Tooltip label={tooltip ?? label}><Popover.Trigger asChild>{button}</Popover.Trigger></Tooltip>
       <Popover.Portal>
         <Popover.Content
-          side={side}
-          sideOffset={8}
+          side={side ?? "top"}
+          align={look === "action" ? "start" : "end"}
+          sideOffset={popoverOffset}
           collisionPadding={12}
           // Esc hay chọn xong: Radix tự trả tiêu điểm về nút mở (bấm ra ngoài thì không) - trước đây chặn nên rơi về BODY (soát a31 K1). Mở
           // bằng chuột thì nút không bật chú thích (Tooltip quietFocus).
@@ -382,11 +398,12 @@ function MenuShell({
           onKeyDown={menuArrowKeys}
           // Không bao giờ cao hơn chỗ còn lại của màn (điện thoại 375x812: danh sách nhạc / giọng từng tràn đáy): phần dài cuộn trong hộp.
           className={cn(
-            "z-50 flex max-h-[var(--radix-popover-content-available-height)] flex-col overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float",
+            "z-50 flex max-h-[var(--radix-popover-content-available-height)] flex-col overflow-y-auto overscroll-contain rounded-[20px] border border-line bg-panel p-1.5 shadow-float",
             width,
           )}
         >
           {children}
+          {footer}
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
@@ -397,6 +414,7 @@ type MenuLook = "chip" | "action" | "row";
 
 export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
   const { rate, setRate } = usePlayer();
+  const speeds = [...new Set([...SPEEDS, rate])].sort((a, b) => a - b);
   return (
     <MenuShell
       label={speedButtonLabel(rate)}
@@ -411,7 +429,7 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
     >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Tốc độ đọc · nhớ riêng cho cuốn này</div>
       <div className="grid grid-cols-3 gap-1 p-1">
-        {SPEEDS.map((speed) => (
+        {speeds.map((speed) => (
           <Popover.Close asChild key={speed}>
             <button
               type="button"
@@ -496,6 +514,7 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
       label="Nhạc nền"
       active={music.enabled}
       width="w-64"
+
       look={look}
       caption="Nhạc nền"
       icon={Music2}
@@ -545,7 +564,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>
       <div role="group" aria-label="Danh sách nhạc nền" className="flex min-h-0 flex-col gap-0.5 overflow-y-auto p-1">
         {options.map((option) => (
-          <Popover.Close asChild key={option.id ?? "off"}>
+          <Popover.Close asChild key={JSON.stringify(option.id)}>
             <button
               type="button"
               disabled={option.disabled}
@@ -1019,6 +1038,9 @@ function SleepPicker({
       dialogLabel={name ? `Hẹn giờ tắt trên ${name}` : "Hẹn giờ tắt"}
       active={active}
       width="w-64"
+      footer={<Popover.Close asChild><button type="button" disabled={disabled}
+        onClick={() => onSet({ kind: "minutes", minutes: custom })}
+        className="min-h-[48px] w-full rounded-lg bg-accent text-sm font-semibold text-accent-ink disabled:opacity-40">Đặt {custom} phút</button></Popover.Close>}
       focusSelector="[data-current-choice]"
       look={look}
       icon={Moon}
@@ -1089,9 +1111,9 @@ function SleepPicker({
           type="button"
           aria-label="Bớt 5 phút"
           onClick={() => setCustom((value) => Math.max(5, value - 5))}
-          className="touch-box grid size-9 place-items-center rounded-lg text-lg hover:bg-hover"
+          className="grid size-[48px] shrink-0 place-items-center rounded-lg hover:bg-hover"
         >
-          −
+          <Minus className="size-[24px]" />
         </button>
         <span className="tabular flex-1 text-center text-sm font-medium" aria-live="polite">
           {custom} phút
@@ -1100,20 +1122,11 @@ function SleepPicker({
           type="button"
           aria-label="Thêm 5 phút"
           onClick={() => setCustom((value) => Math.min(240, value + 5))}
-          className="touch-box grid size-9 place-items-center rounded-lg text-lg hover:bg-hover"
+          className="grid size-[48px] shrink-0 place-items-center rounded-lg hover:bg-hover"
         >
-          +
+          <Plus className="size-[24px]" />
         </button>
-        <Popover.Close asChild>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onSet({ kind: "minutes", minutes: custom })}
-            className="touch-row h-9 rounded-lg bg-hover px-3 text-sm font-medium hover:bg-line disabled:opacity-40 pointer-coarse:min-w-[48px]"
-          >
-            Đặt
-          </button>
-        </Popover.Close>
+
       </div>
       <div className="px-1 pb-1">
         <Popover.Close asChild>
@@ -1123,7 +1136,7 @@ function SleepPicker({
             onClick={() => onSet({ kind: "chapter" })}
             className="h-9 w-full rounded-lg bg-hover text-sm font-medium hover:bg-line disabled:opacity-40"
           >
-            Dừng khi hết chương này
+            Hết chương này
           </button>
         </Popover.Close>
       </div>
@@ -1169,7 +1182,8 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
   // Một dòng trong menu "…" của màn Đang nghe: tên + nút tắt tiếng + thanh trượt, không thêm bảng nổi nào.
   if (look === "row") {
     return (
-      <div className="flex min-h-10 items-center gap-2 px-2 text-sm max-sm:min-h-[48px]">
+      <div data-volume-row data-player-menu-row className="flex min-h-10 items-center gap-3 px-2 text-sm max-sm:min-h-[48px]">
+        <Volume2 className="size-4 shrink-0 text-fg-2" />
         <span className="min-w-0 flex-1">Âm lượng</span>
         <IconButton label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} icon={Icon} size="sm" onClick={toggleMute} />
         {slider("flex w-28")}
@@ -1554,7 +1568,7 @@ const MENU_ROW = "flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-l
 function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: typeof Gauge }) {
   return (
     <Popover.Close asChild>
-      <button type="button" className={MENU_ROW} {...keepFocus} {...rest}>
+      <button type="button" data-player-menu-row className={MENU_ROW} {...keepFocus} {...rest}>
         <Icon className="size-4 shrink-0 text-fg-2" />
         <span className="min-w-0 flex-1 truncate">{children}</span>
       </button>
@@ -1599,9 +1613,10 @@ function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactN
 }
 
 /** Một dòng có tên cho nút riêng của nền / tính năng (gợi ý đọc, phát trên thiết bị khác): nút đứng bên phải; nút không có thì cả dòng không chiếm chỗ. */
-function MenuSlot({ label, children }: { label: string; children: ReactNode }) {
+function MenuSlot({ label, children, icon: Icon = Cast }: { label: string; children: ReactNode; icon?: typeof Cast }) {
   return (
-    <div className="flex min-h-10 items-center gap-3 rounded-lg pl-2 text-sm text-fg max-sm:min-h-[48px] [&:not(:has(button))]:hidden">
+    <div data-player-menu-row data-menu-slot className="flex min-h-10 items-center gap-3 rounded-lg pl-2 text-sm text-fg max-sm:min-h-[48px] [&:not(:has(button))]:hidden">
+      <Icon className="size-4 shrink-0 text-fg-2" />
       <span className="min-w-0 flex-1 truncate">{label}</span>
       {children}
     </div>
@@ -1725,7 +1740,7 @@ export function PlayerBar({
             <VoiceMenu look="row" />
             <MenuRow icon={Maximize2} onClick={() => setExpanded(true)}>Mở màn hình đang nghe</MenuRow>
             <MenuRow icon={X} onClick={close}>Đóng trình phát</MenuRow>
-            <MenuSlot label="Phát trên thiết bị khác">{extra}</MenuSlot>
+            <MenuSlot label="Thiết bị phát">{extra}</MenuSlot>
           </MoreMenu>
         </div>
       </div>
@@ -1968,7 +1983,7 @@ function BookmarkRow({
   );
 }
 
-/** Danh sách dấu trang - mới nhất lên đầu, mỗi dấu kèm câu văn ở chỗ đó để nhận ra mà không cần nhớ giây. */
+/** Dấu trang - mới nhất lên đầu, mỗi dấu kèm câu văn ở chỗ đó để nhận ra mà không cần nhớ giây. */
 const bookmarkKey = (mark: Bookmark) => mark.id;
 
 export function BookmarkList({
@@ -2248,6 +2263,9 @@ function CoverToggle({ title, image }: { title: string; image: ComponentProps<ty
 }
 
 export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean; actions?: ReactNode; edit?: SentenceEditing }) {
+  const [sheetHeights, setSheetHeights] = useState<Record<string, number>>({});
+  const reserveSheet = useCallback((id: string, height: number) => setSheetHeights(current => current[id] === height ? current : { ...current, [id]: height }), []);
+  const sheetHeight = Math.max(0, ...Object.values(sheetHeights));
   const { track, sleep, fading, canGoBack, goBack } = usePlayer();
   const { expanded, setExpanded } = useNowPlaying();
   const navigate = useNavigate();
@@ -2260,9 +2278,8 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   const opener = useRef<HTMLElement | null>(null);
   const open = expanded && Boolean(track);
   const presence = usePresence(open, MOTION.slowOut);
-  // Nút Back của điện thoại (android/backLayers.ts): panel (Chương, Dấu trang…) đóng trước, rồi tới màn Đang nghe, rồi mới tới trang.
+  // Bảng điện thoại dùng Sheet (Radix tự đăng ký Back); màn Đang nghe nằm dưới.
   useBackLayer(mobile && open, () => setExpanded(false));
-  useBackLayer(mobile && open && showPanel, () => setShowPanel(false));
 
   const setPanel = (value: Panel) => {
     setPanelState(value);
@@ -2291,7 +2308,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
     if (!open) return;
     opener.current = document.activeElement as HTMLElement | null;
     const timer = window.setTimeout(() => {
-      if (document.activeElement?.closest("[data-radix-popper-content-wrapper]")) return;
+      if (document.activeElement?.closest("[data-radix-popper-content-wrapper], [role='dialog']")) return;
       section.current?.querySelector<HTMLElement>("[data-player-toggle]")?.focus();
     }, 30);
     return () => {
@@ -2400,14 +2417,15 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   // (styles.css .now-playing-tint, docs/DESIGN.md 5.1); đổi cuốn thì nền mờ chéo sang màu mới.
   const tint = { "--cover-tint": coverColor(track.bookCover?.color) || coverStyle(track.bookTitle).from } as CSSProperties;
   return (
+    <PlayerSheetSpace.Provider value={reserveSheet}>
     <MotionRegion as="section"
       elementRef={section}
       data-state={presence.state}
       inert={!open}
       aria-hidden={!open || undefined}
       onAnimationEnd={presence.onAnimationEnd}
-      className={cn("now-playing now-playing-vt now-playing-tint absolute inset-0 z-30 flex", mobile && "flex-col")}
-      style={tint}
+      className={cn("now-playing now-playing-vt now-playing-tint absolute inset-0 z-30 flex", mobile && "flex-col transition-[height] duration-motion-medium")}
+      style={{ ...tint, ...(mobile ? { height: `calc(100% - ${sheetHeight}px)` } : {}) }}
       // Mở ra thì đây là nội dung chính: <main> của trang nằm dưới đã khoá (inert) và ra khỏi cây trợ năng - phím "tới vùng chính" của
       // trình đọc màn hình phải tới đây (soát a31 A3). role thay vì thẻ <main>: tài liệu chỉ được có một thẻ <main>.
       role="main"
@@ -2431,24 +2449,16 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
               <MusicMenu look="row" />
               <VoiceMenu scope="screen" look="row" />
               <VolumeControl look="row" />
-              <MenuRow icon={BookmarkIcon} onClick={() => selectPanel("bookmarks")}>Danh sách dấu trang</MenuRow>
-              {canGoBack && <MenuRow icon={Undo2} onClick={goBack}>Quay lại chỗ vừa nghe</MenuRow>}
+              <MenuRow icon={BookmarkIcon} onClick={() => selectPanel("bookmarks")}>Dấu trang</MenuRow>
+              {canGoBack && <MenuRow icon={Undo2} onClick={goBack}>Về chỗ vừa nghe</MenuRow>}
               {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
               {!COARSE && <MenuRow icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts}>Phím tắt</MenuRow>}
-              <MenuSlot label="Gợi ý cho phần đọc"><SuggestionsButton bookId={track.bookId} className="max-sm:size-[48px]" /></MenuSlot>
-              <MenuSlot label="Phát trên thiết bị khác">{actions}</MenuSlot>
+              <MenuSlot label="Gợi ý đọc" icon={Lightbulb}><SuggestionsButton bookId={track.bookId} className="max-sm:size-[48px]" /></MenuSlot>
+              <MenuSlot label="Thiết bị phát">{actions}</MenuSlot>
             </MoreMenu>
           </div>
         </div>
-        {mobile && showPanel ? (
-          <div key="panel" data-motion-content className="motion-reveal -mx-5 mt-2 flex min-h-56 flex-1 flex-col">
-            <div className="flex shrink-0 items-center justify-between px-5 pb-1">
-              <span className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-2">{panel === "bookmarks" ? "Dấu trang" : "Chương"}</span>
-              <IconButton label="Về bìa sách" icon={X} size="sm" onClick={() => setShowPanel(false)} />
-            </div>
-            <div className="min-h-0 flex-1 border-y border-line">{panelBody}</div>
-          </div>
-        ) : (
+        {(
           // Bìa vuông, to nhất 480px (điện thoại: cả bề ngang) nhưng co theo chỗ còn lại của khung (cả chiều cao): cqw/cqh là cỡ của chính khung này (container-type:size) -
           // nút bìa không co theo chiều cao thì đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10).
           <div key="cover" data-motion-content className="motion-reveal mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
@@ -2498,6 +2508,9 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
           Đọc theo
         </button>
       </aside>
+      {mobile && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title={panel === "bookmarks" ? "Dấu trang" : "Chương"} className={panel === "chapters" ? "chapter-sheet" : undefined}>
+        <div className="h-[55dvh] min-h-0">{panelBody}</div>
+      </Sheet>}
       {!mobile && (
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="@container flex h-14 shrink-0 items-center overflow-hidden border-b border-line px-3 lg:px-6">{panelTabs}</div>
@@ -2505,5 +2518,6 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
         </div>
       )}
     </MotionRegion>
+    </PlayerSheetSpace.Provider>
   );
 }

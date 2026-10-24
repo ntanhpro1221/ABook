@@ -713,7 +713,7 @@ export function StudioOnlyItem({ book }: { book: ListenBook }) {
     <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
       <Wrench className="mt-0.5 size-4 shrink-0" />
       <span className="min-w-0">
-        <span className="block">Đổi giọng, sửa lời đọc, thu lại chương</span>
+        <span className="block">Giọng và lời đọc</span>
         <span className="block text-xs text-fg-3">{syncs ? "Làm ở Studio trên máy tính" : need.charAt(0).toUpperCase() + need.slice(1)}</span>
       </span>
     </DropdownMenu.Item>
@@ -728,8 +728,8 @@ export function EditBlockedItem({ book }: { book: ListenBook }) {
     <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
       <Pencil className="mt-0.5 size-4 shrink-0" />
       <span className="min-w-0">
-        <span className="block">Sửa tên, bìa, nhạc nền…</span>
-        <span className="block text-xs text-fg-3">{note}</span>
+        <span className="block">Sửa thông tin</span>
+        <span className="block text-xs text-fg-3">Sửa ở máy gốc.</span>
       </span>
     </DropdownMenu.Item>
   );

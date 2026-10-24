@@ -15,7 +15,7 @@ import { chargerHint } from "./ExportAudiobook";
 import { isEnded, noteEnded, rejoinExports } from "./exportJobs";
 import { EbookLibrary, type M4bExportEvent } from "./plugins";
 
-// "Xuất M4B cho app sách nói" trên điện thoại: cùng chữ, cùng file với máy tính (desktop/ExportBookFileJob.tsx M4bMenuItem). Việc chạy
+// "Xuất M4B" trên điện thoại: cùng chữ, cùng file với máy tính (desktop/ExportBookFileJob.tsx M4bMenuItem). Việc chạy
 // nền (M4bExportWorker.kt): app đang mở thì thông báo trong app theo tiến độ; ra ngoài app thì thông báo của hệ thống, có nút "Dừng".
 // Khác xuất MP3: một file duy nhất, nên mỗi lần hệ thống hỏi tên và chỗ lưu (không nhớ thư mục). Cuốn có nhạc nền gắn theo chương thì
 // mục menu mở một hộp nhỏ có ô "Kèm nhạc nền" (M4bMusicDialogHost); cuốn không có nhạc thì bấm là chạy như trước.
@@ -178,7 +178,7 @@ export function ExportM4bMenuItem({ book }: { book: ListenBook }) {
       onSelect={() => void chooseM4b(book)}
       className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
-      <BookAudio className="size-4" /> Xuất M4B cho app sách nói
+      <BookAudio className="size-4" /> Xuất M4B
     </DropdownMenu.Item>
   );
 }
