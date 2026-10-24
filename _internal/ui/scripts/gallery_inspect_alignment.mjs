@@ -87,5 +87,24 @@ export function inspectAlignment({ all, texts, css, rect, visible, selector, add
       `${a.el.getAttribute("aria-label") ?? a.el.textContent} · ${b.el.getAttribute("aria-label") ?? b.el.textContent}`, [a.box, b.box],
       { ...controls.at(-1), metric: "visible-control-height", tolerance: 1, reason: "adjacent painted controls differ in height or top/bottom alignment" });
   }
+  // Menu/popover: các hàng cùng vai phải cao đều dù cấu trúc DOM khác nhau.
+  for (const surface of all.filter((el) => el.matches('[role="menu"],[data-radix-popper-content-wrapper] > [role="dialog"]'))) {
+    const rows = [...surface.querySelectorAll('[role="menuitem"],[role="option"],[data-player-menu-row]')]
+      .filter((el) => visible(el, rect(el.getBoundingClientRect())) && !el.parentElement.closest('[data-player-menu-row]'));
+    const groups = new Map();
+    for (const el of rows) {
+      const key = el.hasAttribute("data-player-menu-row") ? "player-row" : el.getAttribute("role");
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push({ el, box: rect(el.getBoundingClientRect()) });
+    }
+    for (const group of groups.values()) {
+      if (group.length < 2) continue;
+      const reference = group.map((r) => ({ ...r, votes: group.filter((o) => Math.abs(o.box.height - r.box.height) <= 1.01).length }))
+        .sort((a, b) => b.votes - a.votes)[0];
+      for (const r of group) if (Math.abs(r.box.height - reference.box.height) > 1.01) add("CONTROL HEIGHT", r.el, r.el.textContent,
+        [r.box, reference.box], { metric: "menu-row-height", value: r.box.height, referenceValue: reference.box.height, delta: r.box.height - reference.box.height,
+          tolerance: 1, referenceSelector: selector(reference.el), reason: "same-role rows in one menu differ in visible height" });
+    }
+  }
   return { baselines, controls };
 }

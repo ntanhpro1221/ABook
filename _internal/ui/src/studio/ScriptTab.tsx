@@ -1577,7 +1577,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
           className="-ml-2.5 inline-flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial"
         >
           <span className="truncate">{current ? chapterLabel(current) : ""}</span>
-          <ChevronDown className="fold-chevron size-4 shrink-0 text-fg-3" aria-hidden />
+          <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>

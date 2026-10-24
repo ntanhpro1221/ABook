@@ -135,7 +135,7 @@ export function Fold({
             <span className="block text-[0.9375rem] font-medium">{title}</span>
             <MotionRegion as="span" motionKey={typeof summary === "string" || typeof summary === "number" ? summary : undefined} className="block truncate text-xs font-normal text-fg-2">{summary}</MotionRegion>
           </span>
-          <ChevronDown className="fold-chevron size-4 shrink-0 text-fg-3" aria-hidden />
+          <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
         </button>
       </Heading>
       <Collapse open={open} onOpened={onOpened} id={id} className={cn(flat ? "pb-2" : "px-4 pb-4", bodyClassName)}>

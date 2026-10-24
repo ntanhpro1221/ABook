@@ -413,7 +413,7 @@ export function ReaderScreen(edit: SentenceEditing) {
                 <span className="block text-xs text-fg-2">Chương tiếp theo</span>
                 <span className="block font-semibold">{chapters[index + 1].subtitle || chapters[index + 1].title}</span>
               </span>
-              <ArrowRight className="size-5 text-fg-2" />
+              <ArrowRight className="ink-end [--icon-w:17.5px] size-5 text-fg-2" />
             </button>
           )}
         </article>

@@ -138,6 +138,8 @@ describe("audited release gate and defect grouping", () => {
     expect(gateRules()).toEqual(DEFAULT_FAIL_ON);
     expect(gateRules()).toContain("INK EDGE");
     expect(gateRules()).toContain("RHYTHM");
+    expect(gateRules()).toContain("BASELINE");
+    expect(gateRules()).toContain("CONTROL HEIGHT");
     expect(gateRules()).not.toContain("OPTICAL SIZE CONSISTENCY");
     expect(gateRules()).not.toContain("CLIPPED TEXT");
   });
@@ -255,7 +257,7 @@ describe("quy tắc 8–9 trong bộ soi DOM hoàn chỉnh", () => {
   });
 });
 
-it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..11; từ chối tên sai", () => {
+it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..14; từ chối tên sai", () => {
   expect(normalizeRule("rule1")).toBe("TEXT-OVER-GRAPHIC");
   expect(normalizeRule("CLIPPED_TEXT")).toBe("CLIPPED TEXT");
   expect(normalizeRule("touch-target")).toBe("TOUCH TARGET");
@@ -264,6 +266,9 @@ it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..11
   expect(normalizeRule("optical-size-consistency")).toBe("OPTICAL SIZE CONSISTENCY");
   expect(normalizeRule("rule10")).toBe("INK EDGE");
   expect(normalizeRule("rule11")).toBe("RHYTHM");
-  expect(() => normalizeRule("rule12")).toThrow("Quy tắc lạ");
+  expect(normalizeRule("rule12")).toBe("BASELINE");
+  expect(normalizeRule("rule13")).toBe("CONTROL HEIGHT");
+  expect(normalizeRule("rule14")).toBe("FILL INSET");
+  expect(() => normalizeRule("rule15")).toThrow("Quy tắc lạ");
   expect(() => normalizeRule("typo")).toThrow("Quy tắc lạ");
 });

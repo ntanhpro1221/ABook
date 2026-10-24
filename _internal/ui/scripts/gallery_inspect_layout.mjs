@@ -69,7 +69,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     let first = glyph(chars[0]), last = glyph(chars.at(-1));
     if (!first || !last) continue;
     // Số tabular thẳng cột theo ô chữ số chứ không theo mực ("1" có lề trái rộng hơn "2"): đo mép bằng ô.
-    if (/tabular-nums/.test(s.fontVariantNumeric) && /^\d+$/.test(run.node.textContent.trim())) {
+    if (/tabular-nums/.test(s.fontVariantNumeric) && /^[\d\s:.,×%/−+–-]+$/.test(run.node.textContent.trim())) {
       const range = document.createRange(); range.selectNodeContents(run.node);
       const box = range.getBoundingClientRect();
       first = { ...first, x: box.x, width: first.x + first.width - box.x };
@@ -134,7 +134,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
         const refs = inkTexts.filter((t) => !t.control && parent.contains(t.element) && branch(t.element, parent) !== current && aligned(t.element, side, parent))
           .filter((t) => side === "left" || t.singleLine)
           .map((t) => ({ ...t, value: side === "left" ? t.first.x : right(t.last), branch: branch(t.element, parent) }));
-        // Références du même bord de flow; ne pas comparer un bouton au milieu à une colonne voisine.
+        // Mốc cùng cạnh của flow; không so nút ở giữa với cột bên cạnh.
         const nearby = refs.filter((t) => Math.abs((side === "left" ? box.x : right(box)) - t.value) <= 21);
         const reference = majority(nearby, 1);
         if (!reference || new Set(nearby.filter((t) => Math.abs(t.value - reference.value) <= 1.01).map((t) => t.branch)).size < 2) continue;
@@ -147,6 +147,167 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       }
       if (/auto|scroll/.test(ps.overflowY) || parent.matches('main,[role="dialog"],[role="menu"]') || pb.width > innerWidth || !transparent(ps.backgroundColor) || Number.parseFloat(ps.borderLeftWidth) > 0 && ps.borderLeftStyle !== "none") break;
     }
+  }
+  // Một mặt nổi là cột độc lập. Đầu đề đặt mốc trái, nút đóng đặt mốc phải;
+  // body chỉ lấy cạnh ngoài của hàng, không lấy chữ nằm sau icon hay trong ô nhập.
+  const edgeSeen = new Set();
+  function edge(el, ink, side, value, reference, scope, metric = `surface-ink-${side}`) {
+    if (!ink || !reference) return;
+    const actual = side === "left" ? ink.x : right(ink), delta = actual - value;
+    columns.push({ selector: selector(el), side, value: actual, referenceValue: value, delta, metric });
+    const key = `${selector(el)}:${side}`;
+    if (edgeSeen.has(key) || Math.abs(delta) < (metric === "panel-tab-left" || metric.startsWith("player-column-") ? 1.01 : 1.99) || Math.abs(delta) > 22.01) return;
+    edgeSeen.add(key);
+    add("INK EDGE", el, el.textContent || el.getAttribute("aria-label") || "svg", [ink, reference],
+      { metric, value: actual, referenceValue: value, delta, tolerance: 1, listSelector: selector(scope), reason: "ink differs from the surface content column" });
+  }
+  function leading(el) {
+    const pieces = inkTexts.filter((t) => el.contains(t.element)).map((t) => visible(t.element, t.ink, true)).filter(Boolean);
+    for (const svg of el.querySelectorAll("svg")) { const ink = iconInk(svg); if (ink) pieces.push(ink); }
+    return union(pieces);
+  }
+  const surfaces = all.filter((el) => el.matches('[role="dialog"],.sheet-surface') && visible(el, rect(el.getBoundingClientRect())));
+  for (const surface of surfaces) {
+    const title = inkTexts.find((t) => surface.contains(t.element) && t.element.closest('h1,h2,[role="heading"]'));
+    const body = surface.querySelector(".sheet-body") ?? surface;
+    if (!title || !body) continue;
+    const close = surface.querySelector('[data-sheet-grip] button,button[aria-label="Đóng"]'), closeInk = close && controlInk(close);
+    const left = title.first.x, end = closeInk ? right(closeInk) : right(rect(surface.getBoundingClientRect())) - (left - surface.getBoundingClientRect().x);
+    const insetSurface = (el) => {
+      for (let p = el.parentElement; p && p !== body; p = p.parentElement) {
+        const s = css(p);
+        if (Number.parseFloat(s.borderLeftWidth) > 0 && s.borderLeftStyle !== "none") return true;
+      }
+      return false;
+    };
+    const candidates = [...body.querySelectorAll(controlSelector)].filter((el) => !el.parentElement.closest(controlSelector) && !el.matches('[role="menuitem"],[data-player-menu-row]'));
+    for (const el of candidates) {
+      const box = visible(el, rect(el.getBoundingClientRect()));
+      if (!box || insetSurface(el) || Number.parseFloat(css(el).borderLeftWidth) > 0 && css(el).borderLeftStyle !== "none" ||
+        !transparent(css(el).backgroundColor) && !el.hasAttribute("data-current-choice")) continue;
+      const ink = controlInk(el);
+      if (!ink) continue;
+      if (Math.abs(box.x - left) < 23) edge(el, ink, "left", left, title.first, surface);
+      if (closeInk && Math.abs(right(box) - end) < 23 && box.width < body.clientWidth / 2) edge(el, ink, "right", end, closeInk, surface);
+    }
+    for (const t of inkTexts.filter((t) => body.contains(t.element) && !t.control && t.singleLine && Math.abs(t.first.x - left) < 23)) {
+      if (t.element.closest('input,textarea,[role="tablist"]') || insetSurface(t.element) || !aligned(t.element, "left", body) ||
+        inkTexts.some((o) => o !== t && o.element === t.element && o.first.x < t.first.x - 1 && Math.abs(o.first.y - t.first.y) < 2)) continue;
+      let followsIcon = false;
+      for (let p = t.element; p && p !== body; p = p.parentElement) {
+        if (/flex/.test(css(p).display) && !css(p).flexDirection.startsWith("column")) for (const svg of p.querySelectorAll("svg")) {
+          const b = iconInk(svg);
+          if (b && b.x < t.first.x && right(b) > t.first.x - 24 && Math.abs(b.y - t.first.y) < 16) followsIcon = true;
+        }
+      }
+      if (followsIcon) continue;
+      let badge = false;
+      for (let p = t.element; p && p !== body; p = p.parentElement) if (!transparent(css(p).backgroundColor) && p.getBoundingClientRect().height < t.original.height + 16) badge = true;
+      if (badge) continue;
+      edge(t.element, t.first, "left", left, title.first, surface);
+    }
+  }
+  // Icon cuối hàng bấm được: đo riêng mực glyph, không gộp với nhãn.
+  for (const svg of all.filter((el) => el.matches("svg") && owner(el))) {
+    const el = owner(svg), box = rect(el.getBoundingClientRect()), ink = iconInk(svg);
+    if (!ink || svg !== el.lastElementChild || !/flex|grid/.test(css(el).display) || box.width < 100 || el.closest('[role="tablist"],[role="menu"],[role="listbox"]')) continue;
+    if (Number.parseFloat(css(el).borderRightWidth) > 0 && css(el).borderRightStyle !== "none") continue;
+    const s = css(el), end = right(box) - Number.parseFloat(s.paddingRight) - Number.parseFloat(s.borderRightWidth);
+    if (Math.abs(right(svg.getBoundingClientRect()) - end) <= 6) edge(svg, ink, "right", end, rect(el.getBoundingClientRect()), el, "trailing-icon-right");
+  }
+  // Nút cuối đầu trang và icon điều hướng cùng dùng cạnh nội dung làm mốc.
+  for (const el of all.filter((e) => e.matches("main button,main a") && e.querySelector("svg"))) {
+    const box = visible(el, rect(el.getBoundingClientRect())), ink = controlInk(el);
+    if (!box || !ink || box.width > 64 || inkTexts.some((t) => el.contains(t.element))) continue;
+    for (let parent = el.parentElement; parent && parent !== el.closest("main"); parent = parent.parentElement) {
+      const s = css(parent), b = rect(parent.getBoundingClientRect());
+      if (b.width < 300 || !parent.querySelector("h1") || !/flex|grid/.test(s.display) || s.flexDirection.startsWith("column")) continue;
+      const heading = parent.querySelector("h1").getBoundingClientRect();
+      if (Math.min(heading.bottom, box.y + box.height) <= Math.max(heading.y, box.y)) continue;
+      const end = right(b) - Number.parseFloat(s.paddingRight) - Number.parseFloat(s.borderRightWidth);
+      if (Math.abs(right(box) - end) < 24) edge(el, ink, "right", end, b, parent, "heading-control-right");
+      break;
+    }
+  }
+  for (const aside of all.filter((el) => el.matches("aside") && el.querySelector('nav'))) {
+    const logo = aside.firstElementChild?.querySelector('img,[class~="bg-accent"]'), box = logo && visible(logo, rect(logo.getBoundingClientRect()));
+    if (!box) continue;
+    for (const svg of aside.querySelectorAll('a > svg')) edge(svg, iconInk(svg), "left", box.x, box, aside, "navigation-icon-left");
+  }
+  // Cột trình phát theo lề trong của aside, kể cả khi chỉ có một dòng chữ.
+  for (const aside of all.filter((el) => el.matches('.now-playing > aside'))) {
+    const raw = rect(aside.getBoundingClientRect()), s = css(aside);
+    const box = { x: raw.x + Number.parseFloat(s.paddingLeft), y: raw.y, width: raw.width - Number.parseFloat(s.paddingLeft) - Number.parseFloat(s.paddingRight) - Number.parseFloat(s.borderRightWidth), height: raw.height };
+    if (!box) continue;
+    const controls = [...aside.querySelectorAll("button")].filter((el) => !el.closest('[role="dialog"],[role="menu"]'));
+    for (const el of controls) {
+      const b = rect(el.getBoundingClientRect()), ink = controlInk(el);
+      if (!ink || b.width > box.width / 2) continue;
+      for (const side of ["left", "right"]) if (Math.abs((side === "left" ? b.x : right(b)) - (side === "left" ? box.x : right(box))) < 23)
+        edge(el, ink, side, side === "left" ? box.x : right(box), box, aside, `player-column-${side}`);
+    }
+  }
+  // Tab và nội dung panel chung cạnh nội dung của tab đầu.
+  for (const tabs of all.filter((el) => el.matches('.now-playing [role="tablist"]'))) {
+    const tab = tabs.querySelector('[role="tab"]'), icon = tab?.querySelector("svg");
+    if (!tab || !icon || !visible(tab, rect(tab.getBoundingClientRect()))) continue;
+    const box = rect(tab.getBoundingClientRect()), value = box.x + Number.parseFloat(css(tab).paddingLeft);
+    edge(icon, iconInk(icon), "left", value, box, tabs, "panel-tab-left");
+    const container = tabs.parentElement.parentElement;
+    const reading = container.querySelector('.reading-surface > div'), panel = container.querySelector('[role="tabpanel"]');
+    if (reading && visible(reading, rect(reading.getBoundingClientRect()))) edge(reading, rect(reading.getBoundingClientRect()), "left", value, box, container, "panel-content-left");
+    if (panel) for (const row of panel.querySelectorAll('button[data-current]')) {
+      const b = rect(row.getBoundingClientRect());
+      if (visible(row, b)) edge(row, leading(row), "left", value, box, container, "panel-row-left");
+    }
+  }
+  // Ghi chú và hàng lựa chọn của popover dùng cạnh đệm chung; ô dành cho dấu chọn vẫn chiếm chỗ khi ẩn.
+  for (const surface of surfaces.filter((el) => !el.matches('.sheet-surface') && el.parentElement.matches('[data-radix-popper-content-wrapper]'))) {
+    const sb = rect(surface.getBoundingClientRect());
+    const choices = [...surface.querySelectorAll('button[aria-pressed],button[data-current-choice]')].filter((el) => css(el).textAlign === "left" && el.getBoundingClientRect().width > sb.width * 0.6);
+    const samples = choices.map((el) => ({ element: el, first: rect(el.getBoundingClientRect()), value: el.getBoundingClientRect().x + Number.parseFloat(css(el).paddingLeft) }));
+    const reference = majority(samples, 1);
+    if (reference) for (const t of inkTexts.filter((t) => surface.contains(t.element) && !t.control && Math.abs(t.first.x - reference.value) < 22))
+      edge(t.element, t.first, "left", reference.value, reference.first, surface, "popover-note-left");
+    // Điều khiển bên phải hàng menu chung cạnh với giá trị chữ.
+    const rows = [...surface.querySelectorAll('[data-player-menu-row]')];
+    const values = rows.flatMap((row) => {
+      const t = inkTexts.filter((t) => row.contains(t.element)).at(-1);
+      const end = right(row.getBoundingClientRect()) - Number.parseFloat(css(row).paddingRight);
+      return t && t.singleLine && t.element.closest('span') && Math.abs(right(t.last) - end) < 2 ? [{ ...t, value: right(t.last) }] : [];
+    });
+    // Một giá trị vẫn đủ làm mốc khi đã sát cạnh đệm của hàng.
+    const end = majority(values, 1) ?? (values.length === 1 ? values[0] : null);
+    if (end) for (const slot of rows.filter((row) => row.querySelector('button') && !row.matches('button'))) {
+      const buttons = [...slot.querySelectorAll('button')], last = buttons.at(-1);
+      if (last) edge(last, controlInk(last), "right", end.value, end.last, surface, "popover-control-right");
+    }
+  }
+  // Đệm trong nền riêng: đo mực nhìn thấy của thẻ, nhãn và lựa chọn; không đo nền mặt chứa/ô nhập.
+  const fills = [];
+  const surfaceColor = (el) => { for (let p = el; p; p = p.parentElement) if (!transparent(css(p).backgroundColor)) return css(p).backgroundColor; return "rgba(0, 0, 0, 0)"; };
+  for (const el of all) {
+    const s = css(el), box = visible(el, rect(el.getBoundingClientRect()));
+    if (!box || transparent(s.backgroundColor) || s.backgroundColor === surfaceColor(el.parentElement) ||
+      el.matches('svg,svg *,input,textarea,select,option,main,aside,header,footer,[role="dialog"],[role="menu"],[role="listbox"],.sheet-surface') ||
+      el.querySelector('img,canvas') || el.closest('[data-overlay]')) continue;
+    // Tô từ trong câu văn liên tục không tạo một hộp nội dung riêng.
+    if (s.display === "inline" && el.parentElement?.closest('p,[data-sentence]')) continue;
+    const ownTexts = inkTexts.filter((t) => el.contains(t.element) && !t.element.closest('svg'));
+    if (!ownTexts.length || box.height > 150) continue;
+    const ink = leading(el);
+    if (!ink) continue;
+    for (const side of ["left", "right"]) {
+      const value = side === "left" ? ink.x - box.x : right(box) - right(ink);
+      fills.push({ selector: selector(el), side, value });
+      if (value < 5.99) add("FILL INSET", el, el.textContent, [box, ink], { metric: `fill-inset-${side}`, value, referenceValue: 6, delta: value - 6, tolerance: 0, reason: "ink has less than 6 px inset inside its visible fill" });
+    }
+    const parent = el.parentElement;
+    if (!parent || !el.matches('[aria-pressed="true"],[aria-selected="true"],[data-current-choice]') || !/flex/.test(css(parent).display) || css(parent).flexDirection.startsWith("column") || css(parent).flexWrap === "wrap") continue;
+    const siblings = [...parent.children].filter((c) => c !== el && c.matches(controlSelector) && !c.matches('[aria-pressed],[aria-selected],[role="radio"],[role="tab"]') && visible(c, rect(c.getBoundingClientRect())));
+    const last = siblings.sort((a, b) => right(b.getBoundingClientRect()) - right(a.getBoundingClientRect()))[0];
+    if (last && right(last.getBoundingClientRect()) - right(box) > 8.01) add("FILL INSET", el, parent.textContent, [box, rect(last.getBoundingClientRect())],
+      { metric: "selection-fill-end", value: right(box), referenceValue: right(last.getBoundingClientRect()), delta: right(box) - right(last.getBoundingClientRect()), tolerance: 8, otherSelector: selector(last), reason: "selection fill stops before the last control of its row" });
   }
   const isHeader = (el) => el.matches('header,footer,h1,h2,h3,h4,[role="heading"]');
   const role = (el) => el.matches(".settings-block") ? "settings-block" : el.matches('section,[role="region"]') ? "section" : el.matches('.settings-row,li,[role="listitem"],button,a,[role="menuitem"],[role="option"]') ? `row:${el.getAttribute("role") ?? el.localName}` : null;
@@ -229,6 +390,11 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     for (const sample of samples) if (Math.abs(sample.value - reference.value) > 1.01) add("INK EDGE", sample.element, sample.scope.textContent,
       [sample.rect, reference.rect], { metric: "ink-inline-text-gap", value: sample.value, referenceValue: reference.value, delta: sample.value - reference.value, tolerance: 1,
         listSelector: selector(sample.scope), otherSelector: selector(sample.next), referenceSelector: selector(reference.element), reason: "label to first glyph gap differs from repeated inline majority" });
+    // Một mốc giữa có thể nằm trong ±1 px của cả hai đầu dù hai đầu lệch >1 px.
+    const sorted = [...samples].sort((a, b) => a.value - b.value), low = sorted[0], high = sorted.at(-1);
+    if (high.value - low.value > 1.01 && samples.every((s) => Math.abs(s.value - reference.value) <= 1.01)) add("INK EDGE", high.element, high.scope.textContent,
+      [high.rect, low.rect], { metric: "ink-inline-text-gap", value: high.value, referenceValue: low.value, delta: high.value - low.value, tolerance: 1,
+        listSelector: selector(high.scope), otherSelector: selector(high.next), referenceSelector: selector(low.element), reason: "repeated inline ink gaps span more than 1 px" });
   }
   // Khung có header trang + các section là cùng một họ nội dung. Dialog và trang đang cuộn không so với trang gốc.
   let firstBlock = null;
@@ -242,5 +408,5 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
         context: [{ tag: first.localName, classes: [...first.classList], data: {} }] };
     }
   }
-  return { columns, gaps, rhythms, firstBlock };
+  return { columns, gaps, rhythms, fills, firstBlock };
 }

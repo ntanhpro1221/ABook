@@ -64,7 +64,7 @@ export function SettingsList({ rows, current, className }: { rows: readonly Grou
               {/* Giá trị hiện tại đổi (chọn giọng khác, bật / tắt tự lùi) hay mới có (phiên bản): mờ chéo, không thay chữ cứng. */}
               <MotionRegion as="span" motionKey={summary ?? ""} className="block truncate text-xs text-fg-2">{summary}</MotionRegion>
             </span>
-            <ChevronRight className="size-4 shrink-0 text-fg-3" aria-hidden />
+            <ChevronRight className="ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
           </NavLink>
         );
       }}</AnimatedRows>
@@ -120,7 +120,7 @@ function FoldedBlock({ title, id, children, className, storageKey }: { title: st
       <h2 className="label-section mb-2 text-fg-2">
         <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)} className="touch-row -mx-2 flex w-[calc(100%+var(--spacing)*4)] items-center justify-between gap-2 rounded-lg px-2 py-1 text-left uppercase hover:bg-hover">
           {title}
-          <ChevronDown className="fold-chevron size-4 shrink-0" aria-hidden />
+          <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0" aria-hidden />
         </button>
       </h2>
       <Collapse open={open} id={bodyId}>

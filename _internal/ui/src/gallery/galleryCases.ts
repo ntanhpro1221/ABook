@@ -53,8 +53,13 @@ export function galleryCases(platform: Platform): void {
         if (entry.scenario?.requests) {
           const states = Object.values(entry.scenario.requests);
           if (states.includes("loading")) {
-            expect(container.querySelector(".motion-skeleton")).not.toBeNull();
-            expect(container.querySelector("main .animate-spin")).toBeNull();
+            // CoverSearch nằm trong portal; kiểm đúng hộp đang tải, không tìm trong trang phía sau.
+            const content = entry.id.endsWith("book-cover-search")
+              ? document.querySelector('[aria-label="Đang tìm ảnh bìa"]')?.closest('[role="dialog"]')
+              : container;
+            expect(content?.querySelector(".motion-skeleton") ?? null).not.toBeNull();
+            // Nút đang gửi vẫn báo bận tại chỗ; vùng nội dung phải dùng khung chờ.
+            expect([...(content?.querySelectorAll(".animate-spin") ?? [])].filter(spinner => !spinner.closest("button"))).toEqual([]);
           }
           if (states.includes("error")) {
             expect(container.querySelector('[role="alert"]')?.textContent).toContain("Thử lại");
