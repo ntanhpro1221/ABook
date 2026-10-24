@@ -172,6 +172,12 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   } },
   { id: "desktop/player-playing", group: "Trình phát", title: "Thanh phát đang phát", route: "/", act: () => click("Phát").then(() => undefined) },
   { id: "desktop/player-full", group: "Trình phát", title: "Màn Đang nghe (toàn màn)", route: "/", act: playerOpen },
+  { id: "desktop/player-full-chapters", group: "Trình phát", title: "Màn Đang nghe · tab Chương", route: "/", act: async () => {
+    await playerOpen(); await click(/^Chương$/, document.querySelector('[role="tablist"]')!);
+  } },
+  { id: "desktop/player-full-bookmarks", group: "Trình phát", title: "Màn Đang nghe · tab Dấu trang", route: "/", act: async () => {
+    await playerOpen(); await click(/^Dấu trang$/, document.querySelector('[role="tablist"]')!);
+  } },
   { id: "desktop/player-sleep", group: "Trình phát", title: "Hẹn giờ ngủ", route: "/", act: async () => {
     await click("Thêm tuỳ chọn");
     await click(/^Hẹn giờ tắt/);
