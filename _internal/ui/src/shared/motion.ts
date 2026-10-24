@@ -134,6 +134,20 @@ export function fallbackSnapshot(doc: TransitionDocument, nav: NavMotion): void 
 
 /** Ảnh tĩnh của một vùng trước React commit. Dùng chung cho VT fallback và nội dung cập nhật bất đồng bộ. */
 const snapshotCleanups = new WeakMap<HTMLElement, () => void>();
+const snapshotPlacements = new WeakMap<HTMLElement, () => void>();
+const snapshotTargets = new Map<HTMLElement, HTMLElement>();
+/** Chỉ nhận quyền vẽ sau khi vùng đã xác nhận đổi nội dung. Ảnh cha dự phòng có thể bị bỏ sau commit. */
+export function settleMotionSnapshot(target: HTMLElement, clone: HTMLElement | undefined): HTMLElement | undefined {
+  if (!clone || !snapshotCleanups.has(clone)) return clone;
+  snapshotPlacements.get(clone)?.(); // React commit có thể vừa đổi kích thước khung cuộn/hộp.
+  for (const [source, image] of snapshotTargets) {
+    if (image === clone) continue;
+    if (source !== target && source.contains?.(target)) { removeMotionSnapshot(clone); return; }
+    if (source === target || target.contains?.(source)) removeMotionSnapshot(image);
+  }
+  snapshotTargets.set(target, clone);
+  return clone;
+}
 export function removeMotionSnapshot(clone: HTMLElement | undefined): void {
   if (!clone) return;
   const cleanup = snapshotCleanups.get(clone);
@@ -141,11 +155,12 @@ export function removeMotionSnapshot(clone: HTMLElement | undefined): void {
   else clone.remove();
 }
 
-export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocument = document, floorZ = 51): HTMLElement | undefined {
+export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocument = document, floorZ = 51, host?: HTMLElement, deferOverlap = false): HTMLElement | undefined {
   if (!doc.body || doc.visibilityState === "hidden") return;
   const bounds = target.getBoundingClientRect();
   if (!bounds.width || !bounds.height) return;
   const clone = target.cloneNode(true) as HTMLElement;
+  clone.querySelectorAll(".motion-snapshot").forEach(node => node.remove());
   clone.querySelectorAll("[id], [autofocus]").forEach((node) => { node.removeAttribute("id"); node.removeAttribute("autofocus"); });
   clone.removeAttribute("id");
   clone.removeAttribute("role");
@@ -155,17 +170,70 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
   clone.setAttribute("inert", "");
   clone.classList.add("motion-snapshot");
   Object.assign(clone.style, {
-    position: "fixed", top: `${bounds.top}px`, left: `${bounds.left}px`, width: `${bounds.width}px`, height: `${bounds.height}px`,
+    position: host ? "absolute" : "fixed", top: `${bounds.top}px`, left: `${bounds.left}px`, right: "auto", bottom: "auto", width: `${bounds.width}px`, height: `${bounds.height}px`,
+    boxSizing: "border-box", minWidth: "0", minHeight: "0", maxWidth: "none", maxHeight: "none",
     margin: "0", zIndex: String(floorZ), pointerEvents: "none", overflow: "hidden", transform: "none", translate: "none",
   });
   // Các biến màu được giữ trước khi đổi theme, ảnh cũ không đổi màu theo ảnh mới.
   const computed = getComputedStyle(target);
+  // Header thường kế thừa font từ h2/h3; ảnh được đưa ra surface nên phải giữ kiểu chữ ấy.
+  for (const name of ["font", "line-height", "letter-spacing", "word-spacing", "color", "text-align", "text-transform", "white-space", "direction"]) {
+    const value = computed.getPropertyValue(name);
+    if (value) clone.style.setProperty(name, value);
+  }
   clone.style.zIndex = String(Math.max(floorZ, (parseInt(computed.zIndex) || 0) + 1));
   for (const name of computed) if (name.startsWith("--")) clone.style.setProperty(name, computed.getPropertyValue(name));
   clone.style.backgroundColor = computed.backgroundColor === "rgba(0, 0, 0, 0)" ? computed.getPropertyValue("--bg") : computed.backgroundColor;
-  const originalNodes = [target, ...target.querySelectorAll<HTMLElement>("*")];
+  const originalNodes = [target, ...target.querySelectorAll<HTMLElement>("*")].filter(node => !node.closest?.(".motion-snapshot"));
   const clonedNodes = [clone, ...clone.querySelectorAll<HTMLElement>("*")];
-  doc.body.append(clone);
+  (host ?? doc.body).append(clone);
+  // Host có thể là menu tĩnh trong popper transform: offsetParent sau append mới là containing block.
+  const containingBlock = host ? (clone.offsetParent as HTMLElement | null) ?? host : undefined;
+  const hostBounds = containingBlock?.getBoundingClientRect();
+  const scaleX = containingBlock?.offsetWidth ? hostBounds!.width / containingBlock.offsetWidth : 1;
+  const scaleY = containingBlock?.offsetHeight ? hostBounds!.height / containingBlock.offsetHeight : 1;
+  const left = hostBounds ? (bounds.left - hostBounds.left) / scaleX - containingBlock!.clientLeft + containingBlock!.scrollLeft : bounds.left;
+  const top = hostBounds ? (bounds.top - hostBounds.top) / scaleY - containingBlock!.clientTop + containingBlock!.scrollTop : bounds.top;
+  clone.style.width = `${bounds.width / scaleX}px`;
+  clone.style.height = `${bounds.height / scaleY}px`;
+  // Ảnh nằm trên surface nhưng vẫn phải cắt ở các khung cuộn của nội dung gốc.
+  const ancestors: { node: HTMLElement; x: number; y: number; sx: number; sy: number; clipX: boolean; clipY: boolean }[] = [];
+  for (let node = target.parentElement; node; node = node.parentElement) {
+    const style = getComputedStyle(node), rect = node.getBoundingClientRect();
+    ancestors.push({ node, x: node.scrollLeft, y: node.scrollTop,
+      sx: node.offsetWidth ? rect.width / node.offsetWidth : 1, sy: node.offsetHeight ? rect.height / node.offsetHeight : 1,
+      clipX: /auto|scroll|hidden|clip/.test(style.overflowX || style.overflow),
+      clipY: /auto|scroll|hidden|clip/.test(style.overflowY || style.overflow) });
+    if (node === host) break;
+  }
+  const viewportScroll = !host && ![target, ...ancestors.map(item => item.node)].some(node => getComputedStyle(node).position === "fixed");
+  const pageX = window.scrollX, pageY = window.scrollY;
+  const place = () => {
+    let dx = viewportScroll ? window.scrollX - pageX : 0, dy = viewportScroll ? window.scrollY - pageY : 0;
+    for (const item of ancestors) if (item.node !== host && item.node !== target.ownerDocument?.scrollingElement) {
+      dx += (item.node.scrollLeft - item.x) * item.sx; dy += (item.node.scrollTop - item.y) * item.sy;
+    }
+    clone.style.left = `${left - dx / scaleX}px`; clone.style.top = `${top - dy / scaleY}px`;
+    if (!ancestors.some(item => item.clipX || item.clipY)) return;
+    // Đo ảnh sau đặt vị trí: host có thể vừa cuộn/di chuyển bằng CSS, ảnh tự đi theo host.
+    const image = clone.getBoundingClientRect();
+    const sx = image.width ? image.width / (bounds.width / scaleX) : scaleX;
+    const sy = image.height ? image.height / (bounds.height / scaleY) : scaleY;
+    let l = image.left, t = image.top, r = image.right, b = image.bottom;
+    for (const item of ancestors) {
+      if (!item.clipX && !item.clipY) continue;
+      const rect = item.node.getBoundingClientRect();
+      const sx = item.node.offsetWidth ? rect.width / item.node.offsetWidth : 1;
+      const sy = item.node.offsetHeight ? rect.height / item.node.offsetHeight : 1;
+      const x = rect.left + item.node.clientLeft * sx, y = rect.top + item.node.clientTop * sy;
+      if (item.clipX) { l = Math.max(l, x); r = Math.min(r, x + item.node.clientWidth * sx); }
+      if (item.clipY) { t = Math.max(t, y); b = Math.min(b, y + item.node.clientHeight * sy); }
+    }
+    clone.style.clipPath = `inset(${Math.max(0, t - image.top) / sy}px ${Math.max(0, image.right - r) / sx}px ${Math.max(0, image.bottom - b) / sy}px ${Math.max(0, l - image.left) / sx}px)`;
+  };
+  // Scroll không bubble; capture theo cả khung đang cuộn trong lúc ảnh mờ đi.
+  target.ownerDocument?.addEventListener?.("scroll", place, true);
+  window.addEventListener?.("scroll", place);
   originalNodes.forEach((node, index) => {
     if (node.scrollTop) clonedNodes[index].scrollTop = node.scrollTop;
     if (node.scrollLeft) clonedNodes[index].scrollLeft = node.scrollLeft;
@@ -179,10 +247,16 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
     window.clearTimeout(timer);
     clone.removeEventListener?.("animationend", onEnd);
     snapshotCleanups.delete(clone);
+    snapshotPlacements.delete(clone);
+    if (snapshotTargets.get(target) === clone) snapshotTargets.delete(target);
+    target.ownerDocument?.removeEventListener?.("scroll", place, true);
+    window.removeEventListener?.("scroll", place);
     clone.remove();
   });
+  snapshotPlacements.set(clone, place);
   clone.addEventListener("animationend", onEnd);
-  return clone;
+  if (deferOverlap) { place(); return clone; }
+  return settleMotionSnapshot(target, clone);
 }
 
 /** Đang có một View Transition do app mở (đổi trang, Đang nghe, đổi giao diện). */
