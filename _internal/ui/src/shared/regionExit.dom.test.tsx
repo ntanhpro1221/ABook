@@ -29,7 +29,7 @@ it("V5 region rỗng giữ slot 80px qua exit, co về 0 rồi mới display:non
   expect(getComputedStyle(box).display).not.toBe("none");
   expect(box.style.height).toBe("80px");
   expect(HTMLElement.prototype.animate).toHaveBeenCalledWith(
-    [{ opacity: 0.45, height: "80px" }, { opacity: 1, height: "0px" }], expect.any(Object),
+    [{ opacity: 1, height: "80px" }, { opacity: 0, height: "0px" }], expect.any(Object),
   );
   await act(() => animation.onfinish?.(new Event("finish") as AnimationPlaybackEvent));
   expect(box.style.height).toBe("");
@@ -42,7 +42,7 @@ it("V5 giữ cả margin cũ khi class bị bỏ, rồi co margin cùng slot", a
   const box = document.querySelector<HTMLElement>("[data-motion-region]")!;
   expect(box.style.marginTop).toBe("12px");
   expect(HTMLElement.prototype.animate).toHaveBeenLastCalledWith([
-    { opacity: 0.45, height: "80px", marginTop: "12px" }, { opacity: 1, height: "0px", marginTop: "0px" },
+    { opacity: 1, height: "80px", marginTop: "12px" }, { opacity: 0, height: "0px", marginTop: "0px" },
   ], expect.any(Object));
 });
 
@@ -62,7 +62,7 @@ it("V5 reduced: giữ diện tích hết fade; mở lại giữa exit không b�
   const box = document.querySelector<HTMLElement>("[data-motion-region]")!;
   await act(() => root.render(<MotionRegion>{null}</MotionRegion>));
   expect(box.style.height).toBe("80px");
-  expect(HTMLElement.prototype.animate).toHaveBeenLastCalledWith([{ opacity: 0.45 }, { opacity: 1 }], expect.any(Object));
+  expect(HTMLElement.prototype.animate).toHaveBeenLastCalledWith([{ opacity: 1 }, { opacity: 0 }], expect.any(Object));
   const finish = animation.onfinish;
   await act(() => root.render(<MotionRegion><p>Nội dung mới</p></MotionRegion>));
   await act(() => finish?.call(animation, new Event("finish") as AnimationPlaybackEvent));

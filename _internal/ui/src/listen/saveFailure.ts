@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 
 /** Một hàm báo lỗi chỉ gọi `show` ở lần lỗi ĐẦU TIÊN - trình phát lưu chỗ nghe vài giây một lần, đĩa đầy thì đừng dội thông báo. */
 export function onceReporter(show: (detail: string) => void): (error: unknown) => void {

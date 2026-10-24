@@ -1,7 +1,7 @@
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { EbookLibrary } from "./plugins";
 
 // "Bản lưu cũ": khi lưu sách ra file bị hỏng giữa chừng mà bản lưu trước cũng chưa trả lại được, app giữ bản trước trong bộ nhớ của nó

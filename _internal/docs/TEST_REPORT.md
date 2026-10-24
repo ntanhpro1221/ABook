@@ -2,6 +2,11 @@
 
 Ngày cập nhật: 2026-10-24
 
+Đợt fix139, worktree `D:/Novels/ABook_fix139`, nhánh `dev/fix139`, nền `8a76056e` (0.4.138): xác minh chín finding UI; sửa CAO1/CAO2/CAO3/V5/V6/V7/V8/L9. V4 đã có Back stack và 6 test DOM xanh ở nền nên giữ nguyên. Chuyển 18 caller toast sang wrapper chung; Back chỉ nhận đã đóng khi thật sự gỡ toast. Giữ lịch sử nhóm Cài đặt, focus khi lưu lịch đêm, focus ring và các chuyển động exit/empty/badge.
+
+- Test mới: **15 test DOM** trong 4 file (2 mới, 2 mở rộng); chạy trên mã nền cho **14 đỏ**, ca bảo vệ replace ở bố cục rộng đã xanh sẵn. Sau sửa: **1923 passed, 0 failed, 1 skipped**, **258 file** (257 passed, 1 skipped); **19 file DOM, 146 test DOM xanh**. Skip có sẵn: `pdfPages.corpus.test.ts` cần corpus PDF cục bộ. `npx tsc -p tsconfig.json --noEmit`: **0 lỗi**; `git diff --check` xanh.
+- Chạy offline với node_modules junction sẵn có, không cài dependency, không sửa Python/audio/runtime, không commit. Kiểm DOM/CSS bằng happy-dom, chưa chạy trên thiết bị thật. Báo cáo file:dòng và log ở scratchpad `codex/fix139/result.md`.
+
 Đợt kt138, worktree `D:/Novels/ABook_kt138`, nhánh `dev/kt138`, nền `85c2790f` (0.4.137): sửa r136 M3/L1. Chẩn đoán share chỉ đọc/validate, không init Store/Remote/server, không tạo bản corrupt; kho lạnh báo chưa sẵn. Reader cho writer vẫn giữ bản hỏng rồi từ chối ghi. Store/LibraryServer serialize init, ghim filesDir canonical đầu tiên, từ chối thư mục khác bằng log; root/context chỉ công bố sau recovery.
 
 - Đỏ: nền cộng test và seam quan sát recovery, **1749 JUnit, 7 FAILED, 0 errors, 7 skipped**. Sau sửa và thêm ca A/B đồng thời, recovery lỗi/retry, socket sống và staging/rekey khi mở lại: **1753 JUnit, 0 FAILED, 0 errors, 7 skipped** (1746 passed), **13/13 test chẩn đoán/init xanh**. BackupRulesTest chuyển phép kiểm chuỗi source sang kiểm đường dẫn share.json thực, 5/5 xanh; quy tắc backup giữ nguyên.

@@ -137,6 +137,7 @@ export function Switch({
   checked,
   onCheckedChange,
   disabled,
+  ariaDisabled,
   label,
   labelledBy,
   describedBy,
@@ -145,6 +146,7 @@ export function Switch({
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
+  ariaDisabled?: boolean;
   /** Tên cho trình đọc màn hình khi không có <label htmlFor> trỏ tới công tắc (soát UX 29-09: "Lịch đêm" chỉ đọc "switch"). */
   label?: string;
   /** <label> bọc cả tên lẫn đoạn mô tả dài: tên là phần tử mang mã này, đoạn mô tả đọc riêng (`describedBy`) - không thì tên đọc lên dài
@@ -159,9 +161,10 @@ export function Switch({
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       checked={checked}
-      onCheckedChange={onCheckedChange}
+      onCheckedChange={(value) => { if (!ariaDisabled) onCheckedChange(value); }}
       disabled={disabled}
-      className="touch-hit relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-switch-off transition-[color,background-color,opacity] duration-motion-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 data-[state=checked]:bg-focus"
+      aria-disabled={ariaDisabled || undefined}
+      className="touch-hit relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-switch-off transition-[color,background-color,opacity] duration-motion-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 aria-disabled:opacity-50 data-[state=checked]:bg-focus"
     >
       <SwitchPrimitive.Thumb className="motion-switch-thumb block size-5 translate-x-0.5 rounded-full bg-white shadow-sm transition-transform duration-150 data-[state=checked]:translate-x-[22px]" />
     </SwitchPrimitive.Root>

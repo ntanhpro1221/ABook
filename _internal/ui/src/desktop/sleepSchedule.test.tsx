@@ -20,8 +20,8 @@ beforeEach(() => { h.draft = null; h.data = { sleepSchedule: null }; vi.clearAll
 it("PUT chưa về: công tắc đổi ngay, ba ô lịch hiện có motion và chặn gửi lặp", () => {
   (toggle().onCheckedChange as (value: boolean) => void)(true);
   expect(toggle().checked).toBe(true);
-  expect(toggle().disabled).toBe(true);
-  expect(tree().filter((el) => el.type === TimeSelect).map((el) => el.props.disabled)).toEqual([true, true]);
+  expect(toggle().ariaDisabled).toBe(true);
+  expect(tree().filter((el) => el.type === TimeSelect).map((el) => el.props.ariaDisabled)).toEqual([true, true]);
   expect(tree().find((el) => el.type === MotionPresence)?.props.open).toBe(true);
   expect(h.update.mock.calls[0][0]).toEqual({ sleepSchedule: { from: "22:00", to: "06:00", minutes: 30 } });
 });
@@ -29,7 +29,7 @@ it("lưu lỗi: trả công tắc về lịch thực, không kẹt trạng thái
   (toggle().onCheckedChange as (value: boolean) => void)(true);
   h.update.mock.calls[0][1].onError(new Error("offline"));
   expect(toggle().checked).toBe(false);
-  expect(toggle().disabled).toBe(false);
+  expect(toggle().ariaDisabled).toBe(false);
 });
 it("máy chủ trả 200 nhưng bỏ trường lịch: báo lỗi rõ, không giả thành công", () => {
   (toggle().onCheckedChange as (value: boolean) => void)(true);

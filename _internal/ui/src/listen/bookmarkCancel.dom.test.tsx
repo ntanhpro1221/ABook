@@ -30,6 +30,24 @@ it("M16 chỉ hiện empty sau khi dấu trang cuối đã hết exit", async ()
     expect(document.body.textContent).toContain("Hết dấu trang");
   } finally { vi.useRealTimers(); }
 });
+
+it("V8 empty dấu trang fade ra khi thêm và fade vào sau khi hàng cuối exit", async () => {
+  vi.useFakeTimers();
+  const mark = { id: "m", chapterId: 1, seconds: 3, at: 1, note: "Đã lưu", quote: "Câu văn" };
+  const render = (marks: typeof mark[], empty = true) => act(() => root.render(<QueryClientProvider client={client}><TooltipProvider><BookmarkList bookId="b" chapters={[]} marks={marks} onJump={() => {}} empty={empty ? <p>Hết dấu trang</p> : null} /></TooltipProvider></QueryClientProvider>));
+  try {
+    await render([]);
+    expect(document.querySelector(".motion-panel[data-state=open]")?.textContent).toBe("Hết dấu trang");
+    await render([mark], false);
+    const exiting = document.querySelector(".motion-panel[data-state=closed]");
+    expect(exiting?.textContent).toBe("Hết dấu trang"); expect(exiting?.hasAttribute("inert")).toBe(true);
+    await act(() => vi.advanceTimersByTime(500)); expect(exiting?.isConnected).toBe(false);
+    await render([]);
+    expect(document.querySelector(".motion-panel[data-state=open]")).toBeNull();
+    await act(() => vi.advanceTimersByTime(500));
+    expect(document.querySelector(".motion-panel[data-state=open]")?.textContent).toBe("Hết dấu trang");
+  } finally { vi.useRealTimers(); }
+});
 afterEach(async () => { await act(() => root.unmount()); client.clear(); document.body.replaceChildren(); vi.restoreAllMocks(); h.update.mockClear(); });
 
 it.each(["Escape", "Back", "Huỷ"])("V6 %s huỷ draft, mở lại là bản lưu, trả focus và giữ Dialog ngoài", async (method) => {

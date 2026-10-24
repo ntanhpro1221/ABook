@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 
 const KEY = "abook-data-notices-seen";
 const shown = new Set<string>();

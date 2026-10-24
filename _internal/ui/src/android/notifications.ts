@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { EbookPlayer } from "./plugins";
 
 // Quyền hiện thông báo của Android 13+. Nút tạm dừng / tua ở khay và màn khoá là thông báo của phiên media - Android miễn quyền này cho chúng (soát a77 #11);

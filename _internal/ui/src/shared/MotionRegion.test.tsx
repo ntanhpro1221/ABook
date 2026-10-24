@@ -25,7 +25,7 @@ it("pha, icon, hàng theo key và bước xác nhận vẫn đổi dấu; vùng 
 it("poll không đổi nội dung thì không clone DOM; đổi pha chụp trước commit và huỷ khi unmount", () => {
   const before = { children: <span>Đang tải · 12%</span> };
   const region = new MotionRegion({ children: <span>Đang tải · 13%</span> });
-  const box = { ownerDocument: { activeElement: null }, contains: () => false, closest: () => null, getBoundingClientRect: () => ({ height: 40 }), animate: vi.fn(), matches: () => false, hasAttribute: () => false, getAttribute: () => null, tagName: "DIV", childNodes: [] };
+  const box = { ownerDocument: { activeElement: null }, contains: () => false, closest: () => null, getBoundingClientRect: () => ({ height: 40 }), animate: vi.fn(), matches: () => false, hasAttribute: () => false, getAttribute: () => null, tagName: "DIV", childNodes: [], children: [], textContent: "Đã tải" };
   region.box.current = box as unknown as HTMLElement;
   expect(region.getSnapshotBeforeUpdate(before)).toBeNull();
   expect(captureMotionSnapshot).not.toHaveBeenCalled();

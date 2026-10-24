@@ -64,6 +64,15 @@ const search = (text: string) => act(() => {
   input.dispatchEvent(new Event("input", { bubbles: true }));
 });
 
+it("V6 header action có khoảng trống cho focus ring bên trong Collapse", async () => {
+  await draw();
+  const button = [...main.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "Thêm sách")!;
+  button.focus(); expect(document.activeElement).toBe(button);
+  const flow = button.closest(".motion-flow")!;
+  expect(flow.classList.contains("-m-1")).toBe(true);
+  expect(flow.querySelector(".motion-collapse > .flow-root")!.classList.contains("p-1")).toBe(true);
+});
+
 it("the last book leaves an animated header count and exiting actions", async () => {
   state.books = state.books.slice(0, 1); await draw();
   const count = main.querySelector("header p")!;

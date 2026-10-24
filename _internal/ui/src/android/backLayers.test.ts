@@ -126,7 +126,7 @@ describe("Back gỡ thông báo có nút", () => {
     let dismissed = 0;
     const withAction = fakeDocument([], "action");
     expect(hasActionToast(withAction.doc)).toBe(true);
-    expect(dismissTopLayer(withAction.doc, undefined, () => dismissed++)).toBe(true);
+    expect(dismissTopLayer(withAction.doc, undefined, () => dismissed++)).toBe(false);
     expect(dismissed).toBe(0); // Không dùng dismiss-all kể cả khi metadata không có.
     const plain = fakeDocument([], "plain");
     expect(dismissTopLayer(plain.doc, undefined, () => dismissed++)).toBe(false);

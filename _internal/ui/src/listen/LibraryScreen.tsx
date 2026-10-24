@@ -434,7 +434,7 @@ export function LibraryScreen({
           <MotionRegion as="p" motionKey={books?.length ?? 0} className="mt-1 text-sm text-fg-2">{books?.length ? `${books.length} cuốn` : ""}</MotionRegion>
         </div>
         {/* Thư viện trống: nút giữa màn (`empty`) là lời mời chính - nút thứ hai cùng tên ở đầu trang chỉ lặp lại (soát UX a9). */}
-        <MotionPresence open={Boolean(books?.length || upcoming.length)}>{header}</MotionPresence>
+        <MotionPresence open={Boolean(books?.length || upcoming.length)} className="-m-1" bodyClassName="p-1">{header}</MotionPresence>
       </header>
       {recap}
       {upcomingRows.length > 0 && (

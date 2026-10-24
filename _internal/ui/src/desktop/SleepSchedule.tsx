@@ -16,6 +16,7 @@ export function SleepSchedule() {
   const [draft, setDraft] = useState<{ value: Schedule } | null>(null);
   const schedule = draft ? draft.value : data?.sleepSchedule;
   const change = (value: Schedule) => {
+    if (!data || draft !== null) return;
     setDraft({ value });
     update({ sleepSchedule: value }, {
       onSuccess: (saved) => {
@@ -29,15 +30,18 @@ export function SleepSchedule() {
   };
   return <>
     <SettingsRow label="Lịch đêm" hint={draft ? "Đang lưu…" : "Nghe trong khung giờ này thì tự hẹn giờ."}>
-      <Switch id="sleep-schedule" label="Lịch đêm" checked={Boolean(schedule)} disabled={!data || draft !== null} onCheckedChange={(on) => change(on ? DEFAULT_SCHEDULE : null)} />
+      <Switch id="sleep-schedule" label="Lịch đêm" checked={Boolean(schedule)} ariaDisabled={!data || draft !== null} onCheckedChange={(on) => change(on ? DEFAULT_SCHEDULE : null)} />
     </SettingsRow>
     <MotionPresence open={Boolean(schedule)}>
       {schedule && <div className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm">
-        <TimeSelect disabled={draft !== null} label="Từ" value={schedule.from} onChange={(from) => change({ ...schedule, from })} className="h-9 rounded-lg border border-line bg-panel px-2" />
+        <TimeSelect ariaDisabled={draft !== null} label="Từ" value={schedule.from} onChange={(from) => change({ ...schedule, from })} className="h-9 rounded-lg border border-line bg-panel px-2" />
         <span className="text-fg-2">đến</span>
-        <TimeSelect disabled={draft !== null} label="Đến" value={schedule.to} onChange={(to) => change({ ...schedule, to })} className="h-9 rounded-lg border border-line bg-panel px-2" />
+        <TimeSelect ariaDisabled={draft !== null} label="Đến" value={schedule.to} onChange={(to) => change({ ...schedule, to })} className="h-9 rounded-lg border border-line bg-panel px-2" />
         <span className="text-fg-2">hẹn</span>
-        <select aria-label="Số phút hẹn" value={schedule.minutes} disabled={draft !== null} onChange={(event) => change({ ...schedule, minutes: Number(event.target.value) })} className="h-9 rounded-lg border border-line bg-panel px-2">
+        <select aria-label="Số phút hẹn" value={schedule.minutes} aria-disabled={draft !== null || undefined}
+          onPointerDown={(event) => { if (draft !== null) event.preventDefault(); }}
+          onKeyDown={(event) => { if (draft !== null && event.key !== "Tab") event.preventDefault(); }}
+          onChange={(event) => change({ ...schedule, minutes: Number(event.target.value) })} className="h-9 rounded-lg border border-line bg-panel px-2 aria-disabled:opacity-50">
           {[15, 30, 45, 60].map((minutes) => <option key={minutes} value={minutes}>{minutes} phút</option>)}
         </select>
       </div>}
