@@ -1,0 +1,183 @@
+[
+  {
+    "name": "Listen mobile - Add book",
+    "path": "#/",
+    "steps": [
+      {
+        "text": "Thêm sách từ file"
+      }
+    ],
+    "probe": {
+      "selector": "input[aria-label='Đường dẫn file hay thư mục']",
+      "type": "input"
+    },
+    "background": {
+      "text": "Thêm sách từ file"
+    }
+  },
+  {
+    "name": "Listen mobile - Find in book",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "text": "Tìm chữ trong sách"
+      }
+    ],
+    "probe": {
+      "selector": "input[type=search]",
+      "type": "input"
+    },
+    "background": {
+      "text": "Tìm chữ trong sách"
+    }
+  },
+  {
+    "name": "Listen mobile - Edit metadata",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "text": "Tuỳ chọn khác",
+        "exact": true
+      },
+      {
+        "text": "Sửa tên, tác giả, bìa"
+      }
+    ],
+    "probe": {
+      "selector": "input[aria-label='Tác giả']",
+      "type": "input"
+    },
+    "background": {
+      "text": "Tuỳ chọn khác",
+      "exact": true
+    }
+  },
+  {
+    "name": "Listen mobile - Rename chapter",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "button[aria-label^='Tuỳ chọn Ch']"
+      },
+      {
+        "text": "Đổi tên chương"
+      }
+    ],
+    "probe": {
+      "selector": "input",
+      "type": "input"
+    },
+    "background": {
+      "text": "Tuỳ chọn khác",
+      "exact": true
+    }
+  },
+  {
+    "name": "Listen mobile - New listening profile",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "text": "Tuỳ chọn khác",
+        "exact": true
+      },
+      {
+        "text": "Nghe lại từ đầu (hồ sơ mới)"
+      }
+    ],
+    "probe": {
+      "selector": "input[aria-label='Tên hồ sơ']",
+      "type": "input"
+    },
+    "background": {
+      "text": "Tuỳ chọn khác",
+      "exact": true
+    }
+  },
+  {
+    "name": "Listen mobile - Rename listening profile",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "text": "Tuỳ chọn khác",
+        "exact": true
+      },
+      {
+        "text": "Đổi tên hồ sơ"
+      }
+    ],
+    "probe": {
+      "selector": "input[aria-label='Tên hồ sơ']",
+      "type": "input"
+    },
+    "background": {
+      "text": "Tuỳ chọn khác",
+      "exact": true
+    }
+  },
+  {
+    "name": "Listen mobile - Delete profile confirmation",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "text": "Tuỳ chọn khác",
+        "exact": true
+      },
+      {
+        "text": "Xoá hồ sơ…",
+        "exact": true
+      }
+    ],
+    "probe": {
+      "text": "Huỷ",
+      "exact": true,
+      "closes": true
+    },
+    "background": {
+      "text": "Tuỳ chọn khác",
+      "exact": true
+    }
+  },
+  {
+    "name": "Studio desktop - Rename project",
+    "viewport": [
+      1280,
+      900
+    ],
+    "path": "#/studio/{studio}",
+    "steps": [
+      {
+        "text": "Tuỳ chọn dự án Tap Studio Fixture"
+      },
+      {
+        "text": "Đổi tên…",
+        "exact": true
+      }
+    ],
+    "probe": {
+      "selector": "#rename-book-title",
+      "type": "input"
+    },
+    "background": {
+      "text": "Tuỳ chọn dự án Tap Studio Fixture"
+    }
+  },
+  {
+    "name": "Studio mobile - Delivery sheet",
+    "path": "#/studio/{studio}?tab=script",
+    "steps": [
+      {
+        "selector": "[data-line=\"tap-ui-line-1\"] p"
+      },
+      {
+        "selector": "button[aria-label^=\"Cách đọc:\"]"
+      }
+    ],
+    "probe": {
+      "text": "Lời kể",
+      "exact": true
+    },
+    "background": {
+      "text": "Tuỳ chọn dự án Tap Studio Fixture"
+    }
+  }
+]
