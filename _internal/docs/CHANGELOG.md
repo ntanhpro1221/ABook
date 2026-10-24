@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+- Máy tính và điện thoại: nút trong hộp thoại và bảng trượt bấm/chạm được trở lại (ở 0.4.134, chạm vào nút làm hộp đóng luôn, ví dụ không chọn được file sách).
+
 ## [0.4.134] - 2026-10-24
 
 ### Kết nối

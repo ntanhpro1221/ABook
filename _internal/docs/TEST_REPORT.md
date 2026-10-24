@@ -2,6 +2,8 @@
 
 Ngày cập nhật: 2026-10-24
 
+Đợt hot135 trên `dev/hot135`, nền `bcdc4ff7` (0.4.134): kiểm máy ảo Android (AVD riêng, emulator-5580) thấy chạm nút trong hộp Thêm sách làm hộp đóng; Chromium máy tính cho cùng kết quả (`elementFromPoint` ở nút trả `HTML`, hộp `pointer-events: none`). Nguyên nhân: Radix đặt `pointer-events: auto` cho hộp/nền rồi trải `style` của ta đè, khoá `pointerEvents: undefined` xoá mất `auto`. Test DOM mới (Dialog + Sheet đang mở giữ `auto`) đỏ trên mã cũ, xanh sau sửa. Vitest toàn bộ **1787 passed, 0 failed, 1 skipped**; `tsc` 0 lỗi. Hash khoá giữ `c9176123`.
+
 Đợt fix134 trên `dev/fix134`, nền `2805d419`: sửa nhánh chờ điện thoại ngủ có nhiều địa chỉ; che hostname `host/IP` và URL không cổng; nhận bản FFmpeg cần cập nhật qua stamp riêng; chuẩn hoá dữ liệu peer hỏng ở biên đọc và giữ bản lỗi; tách nhận UDP Android khỏi xác minh TLS (tối đa 2 I/O, 16 việc chờ). Fixture nhật ký/địa chỉ sai dạng dùng chung Python và Kotlin. CHANGELOG ghi trần 8 địa chỉ; THIRD_PARTY bổ sung Tink Android 1.24.0. Giữ hash khoá `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`.
 
 - Test tái hiện từng mục đỏ → xanh: V1 2 FAILED → 184 passed/1 xfailed; V2 6 FAILED → 104 passed; V5 4 FAILED và 1 UI failed → 78 Python/33 UI passed; V3 15 FAILED → 209 passed/1 xfailed; V4 1 JUnit failure → 28 tests/0 failures và 83 Python passed; T1/T2 2 FAILED → 5 passed. Rà thêm cache wake và stamp UTF-8 hỏng: mỗi ca 1 FAILED → xanh.

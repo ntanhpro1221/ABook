@@ -45,6 +45,17 @@ it.each(["dialog", "sheet"])("V7 %s: Content vẫn còn để thoát nhưng iner
   expect(overlay.style.pointerEvents).toBe("none");
 });
 
+it.each(["dialog", "sheet"])("%s đang mở nhận chạm: Content và nền giữ pointer-events auto của Radix khi body bị khoá (máy ảo 0.4.134)", async (kind) => {
+  await act(() => root.render(kind === "dialog"
+    ? <Dialog open onOpenChange={() => {}} title="Hộp" description="Nội dung"><button>Thực hiện</button></Dialog>
+    : <Sheet open onOpenChange={() => {}} title="Tấm" trigger={<button>Mở</button>}><button>Thực hiện</button></Sheet>));
+  expect(document.body.style.pointerEvents).toBe("none");
+  const content = document.querySelector<HTMLElement>('[role="dialog"][data-state="open"]')!;
+  expect(content.style.pointerEvents).toBe("auto");
+  const overlay = document.querySelector<HTMLElement>('.motion-scrim[data-state="open"]')!;
+  expect(overlay.style.pointerEvents).toBe("auto");
+});
+
 it("V7 details: thân inert khi khép, summary còn đảo chiều và mở lại bỏ inert", () => {
   const details = document.createElement("details");
   details.innerHTML = '<summary>Chi tiết</summary><div><button>Thực hiện</button></div>';

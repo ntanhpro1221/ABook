@@ -487,6 +487,11 @@ function keepOpenForToasts(event: { target: EventTarget | null; preventDefault: 
   if (event.target instanceof Element && event.target.closest("[data-sonner-toaster]")) event.preventDefault();
 }
 
+/** Lớp đang đóng (Radix giữ lại tới khi chuyển động xong) không nhận chạm. Lúc mở KHÔNG truyền `style`: Radix đặt `pointer-events: auto`
+ *  cho hộp và nền (body bị đặt `none` khi hộp mở) rồi trải `style` của ta đè lên - một khoá `pointerEvents: undefined` xoá mất `auto`,
+ *  hộp thừa hưởng `none` từ body: chạm xuyên qua hộp thành bấm ra ngoài, hộp đóng (soát máy ảo 0.4.134). */
+const CLOSING = { pointerEvents: "none" } as const;
+
 // ---- Hộp thoại --------------------------------------------------------------------------------------------
 
 /** Nút ✕ của hộp thoại / tấm trượt: biểu tượng 20 px nhưng vùng bấm 44 x 44 px (máy tính), 48 x 48 (cảm ứng); lề âm giữ chỗ chiếm trong bố cục như
@@ -562,10 +567,10 @@ export function Dialog({
       <DialogPrimitive.Portal>
         {/* Mở / đóng đều có chuyển động (styles.css .motion-scrim / .motion-dialog): Radix giữ hộp lại tới khi hiệu ứng đóng xong. Làm mờ nền chỉ
             khi có chuột - trên điện thoại tầm trung, mờ nền mỗi khung hình làm hiệu ứng mở giật. */}
-        <DialogPrimitive.Overlay inert={!open} style={{ pointerEvents: open ? undefined : "none" }} className="motion-scrim fixed inset-0 z-40 bg-scrim pointer-fine:backdrop-blur-[2px]" />
+        <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim pointer-fine:backdrop-blur-[2px]" />
         <DialogPrimitive.Content
           inert={!open}
-          style={{ pointerEvents: open ? undefined : "none" }}
+          style={open ? undefined : CLOSING}
           className={cn(
             "motion-dialog fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex max-h-[90dvh] flex-col rounded-2xl border border-line bg-panel p-6 shadow-float focus:outline-none",
             width,
@@ -638,11 +643,11 @@ export function Sheet({
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay inert={!open} style={{ pointerEvents: open ? undefined : "none" }} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
+        <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
           inert={!open}
-          style={{ pointerEvents: open ? undefined : "none" }}
+          style={open ? undefined : CLOSING}
           onCloseAutoFocus={keepNewLayerFocus}
           // Đóng (Esc, nút Đóng, chạm nền): Radix tự trả tiêu điểm về nút mở (Trigger) - trước đây chặn việc ấy nên tiêu điểm rơi về BODY (soát a31 K1).
           onEscapeKeyDown={onEscapeKeyDown}
