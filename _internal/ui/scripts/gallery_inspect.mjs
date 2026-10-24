@@ -10,8 +10,9 @@ import { parseArgs, findBrowser, serve, launch, connect, evaluate, waitUntil, op
 import { createInspectorHelpers, inspectPage } from "./gallery_inspect_helpers.mjs";
 import { sourceIndex, deduplicate } from "./gallery_inspect_report.mjs";
 import { createLayoutHelpers, inspectLayout, crossFrameRhythm } from "./gallery_inspect_layout.mjs";
+import { inspectAlignment } from "./gallery_inspect_alignment.mjs";
 
-export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM"];
+export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT"];
 // ink140: 0 phát hiện ngoài Studio sau sửa; nhịp được đối chứng bằng fixture trên Edge.
 export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM"];
 export function gateRules(value) {
@@ -19,13 +20,13 @@ export function gateRules(value) {
 }
 export function normalizeRule(value) {
   const key = value.trim().toUpperCase().replaceAll("_", " ");
-  const numbered = /^RULE([1-9]|10|11)$/.exec(key);
+  const numbered = /^RULE([1-9]|1[0-3])$/.exec(key);
   const rule = numbered ? RULES[Number(numbered[1]) - 1] : RULES.find((r) => r === key || r.replaceAll(" ", "-") === key);
   if (!rule) throw new Error(`Quy tắc lạ: ${value}. Chọn ${RULES.join(", ")}`);
   return rule;
 }
 
-export const inspectionExpression = (phone) => `(${inspectPage.toString()})(${JSON.stringify({ phone })}, (${createInspectorHelpers.toString()})(), (context) => (${inspectLayout.toString()})(context, (${createLayoutHelpers.toString()})()))`;
+export const inspectionExpression = (phone) => `(${inspectPage.toString()})(${JSON.stringify({ phone })}, (${createInspectorHelpers.toString()})(), (context) => ({ ...(${inspectLayout.toString()})(context, (${createLayoutHelpers.toString()})()), ...(${inspectAlignment.toString()})(context) }))`;
 
 export async function settle(cdp, session, timeout) {
   await evaluate(cdp, session, `(async () => {
@@ -109,7 +110,7 @@ export function writeOutputs(out, report) {
 export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(["--theme", "both", ...argv]);
   if (args.help || !args.out) {
-    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule11]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11 (ink140/report.md; Studio findings retained)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. Use --fail-on none for advisory output.");
+    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule13]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11 (ink140/report.md; Studio findings retained)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. rule12 BASELINE: >1 px alphabetic baseline delta. rule13 CONTROL HEIGHT: >1 px visible height/top/bottom delta. Use --fail-on none for advisory output.");
     return !args.help ? 2 : 0;
   }
   if (!["light", "dark", "both"].includes(args.theme)) throw new Error("--theme phải là light, dark hoặc both");
@@ -164,7 +165,7 @@ export async function main(argv = process.argv.slice(2)) {
         for (const finding of result.findings) {
           finding.id = `F${String(report.findings.length + 1).padStart(5, "0")}`;
           finding.story = entry.id; finding.theme = theme;
-          finding.crop = await (["INK EDGE", "RHYTHM"].includes(finding.rule) ? inkCrop : crop)(finding.rects);
+          finding.crop = await (["INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT"].includes(finding.rule) ? inkCrop : crop)(finding.rects);
           report.findings.push(finding);
         }
         for (const contact of result.contacts) story.contacts.push({ ...contact, crop: await crop([contact.rect]) });

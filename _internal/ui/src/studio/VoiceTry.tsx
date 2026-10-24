@@ -85,7 +85,7 @@ export function useVoiceTry(bookId: string): {
           aria-label={label}
           title={label}
           className={cn(
-            "grid size-9 shrink-0 place-items-center rounded-full border transition-colors disabled:opacity-40",
+            "touch-hit grid size-9 shrink-0 place-items-center rounded-full border transition-colors disabled:opacity-40",
             playing ? "border-accent bg-accent text-accent-ink" : "border-line text-fg-2 hover:border-line-strong hover:text-fg in-[.bg-accent-soft]:border-line-strong",
           )}
         >
