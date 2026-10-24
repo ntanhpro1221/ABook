@@ -101,6 +101,8 @@ async function launch(executable) {
     "--remote-debugging-port=0",
     "--hide-scrollbars",
     "--mute-audio",
+    // Edge: hồ sơ mới tự đăng nhập tài khoản Microsoft và đồng bộ của máy - chụp ở cửa sổ riêng tư, tắt đồng bộ.
+    ...(/msedge/i.test(path.basename(executable)) ? ["--inprivate", "--disable-sync"] : []),
     // Chromium không chạy dưới root (máy ảo CI, container) nếu còn sandbox.
     ...(process.platform === "linux" && process.getuid?.() === 0 ? ["--no-sandbox"] : []),
     "about:blank",
