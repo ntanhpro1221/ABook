@@ -192,9 +192,11 @@ giống app hệ thống; không tự chế chuỗi rung dài.
   che hết bìa. Sách máy kia có dấu nguồn nhỏ góc bìa.
 - **Trang sách**: bìa + tên + tác giả · giọng · thời lượng + tiến độ mảnh; MỘT nút chính "Nghe tiếp · Chương 4" (hay
   "Nghe"); hàng phụ cùng kiểu: Đọc · Tìm · Từ đầu · Thêm(…). Tab Chương / Dấu trang / Lịch sử / Nhân vật; danh sách phẳng.
-- **Trình phát đầy đủ**: bìa lớn; tên chương (18) + tên sách; thanh tiến độ + thời gian; hàng điều khiển 5 nút (chương trước ·
-  lùi 15 · phát · tới 15 · chương sau); hàng phụ 4 nút có nhãn (Tốc độ · Hẹn giờ · Dấu trang · Thêm); đáy: Đọc theo · Chương.
-  Máy tính: trình phát bên trái, đọc theo bên phải như hiện nay.
+- **Trình phát đầy đủ**: thanh đầu: thu nhỏ · "ĐANG NGHE" · "…"; bìa lớn; tên chương (20) + tên sách; thanh tiến độ + thời gian;
+  hàng điều khiển 5 nút (chương trước · lùi 15 · phát tròn 72 · tới 15 · chương sau); hàng phụ 4 nút có nhãn (Tốc độ · Hẹn giờ ·
+  Dấu trang · Chương); đáy: một nút "Đọc theo" rộng cả hàng. Mọi việc khác (nhạc nền, giọng, âm lượng, danh sách dấu trang, quay
+  lại chỗ vừa nghe, gợi ý, phát trên thiết bị khác) ở "…" của thanh đầu - "Thêm" ở thanh đầu chứ không chiếm một ô hàng phụ, để
+  "Chương" (L4) còn 2 chạm. Điện thoại: "Đọc theo" mở màn đọc của chương đang nghe. Máy tính: trình phát bên trái, đọc theo bên phải.
 - **Đọc theo**: chữ 20/1.7, rộng ≤ 68 ký tự; đầu màn chỉ nút về + tên chương (nền đặc, không chồng lên chữ); thanh dưới mờ
   khi cuộn đọc, chạm hiện lại; câu đang đọc tô nhạt, từ đang đọc tô đậm hơn.
 - **Studio (máy tính)**: danh sách dự án là bảng gọn (tên · trạng thái · tiến độ · cập nhật); dự án: tiêu đề + trạng thái +

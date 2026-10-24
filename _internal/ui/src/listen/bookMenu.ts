@@ -1,4 +1,4 @@
-/** Menu "Tuỳ chọn khác" của trang sách có mục nào để hiện không (thiết bị chỉ được nghe: không sửa, không xuất - menu rỗng thì ẩn nút, soát a36). */
+/** Menu "Thêm" (…) của trang sách có mục nào để hiện không (thiết bị chỉ được nghe: không sửa, không xuất - menu rỗng thì ẩn nút, soát a36). */
 export function moreMenuHasItems(parts: {
   /** Mục hồ sơ nghe (nghe lại từ đầu / chuyển chỗ nghe) hiện. */
   records: boolean;
