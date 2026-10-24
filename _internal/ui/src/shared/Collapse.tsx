@@ -5,13 +5,16 @@ import { ChevronDown } from "lucide-react";
 import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "./cn";
 import { EASE, MOTION, prefersReducedMotion } from "./motion";
+import { MotionRegion } from "./MotionRegion";
 
 /** Thân gấp / mở. Gập thì ra khỏi Tab và trình đọc màn hình (inert ngay, visibility khi khép xong) - vẫn dựng sẵn để mở ra không chờ. */
-export function Collapse({ open, id, children, className, appear = false }: { open: boolean; id?: string; children: ReactNode; className?: string; appear?: boolean }) {
+export function Collapse({ open, id, children, className, appear = false, onOpened }: { onOpened?: (element: HTMLElement) => void; open: boolean; id?: string; children: ReactNode; className?: string; appear?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const animation = useRef<Animation | null>(null);
   const previous = useRef(open);
   const from = useRef<number | null>(appear && open ? 0 : null);
+  const opened = useRef(onOpened);
+  opened.current = onOpened;
   if (previous.current !== open) {
     from.current = box.current?.getBoundingClientRect().height ?? 0;
     previous.current = open;
@@ -31,8 +34,9 @@ export function Collapse({ open, id, children, className, appear = false }: { op
       easing: open ? EASE.standard : EASE.accelerate,
     }) ?? null;
     animation.current = current;
-    if (current) current.onfinish = () => { element.style.height = ""; };
-    else element.style.height = "";
+    const finish = () => { element.style.height = ""; if (open) opened.current?.(element); };
+    if (current) current.onfinish = finish;
+    else finish();
     return () => { current?.cancel(); element.style.height = ""; };
   }, [open]);
   return (
@@ -95,6 +99,7 @@ export function Fold({
   heading = "h2",
   className,
   bodyClassName,
+  onOpened,
   children,
 }: {
   storageKey: string;
@@ -105,6 +110,7 @@ export function Fold({
   heading?: "h2" | "h3";
   className?: string;
   bodyClassName?: string;
+  onOpened?: (element: HTMLElement) => void;
   children: ReactNode;
 }) {
   const [open, setOpen] = useFold(storageKey, defaultOpen);
@@ -123,12 +129,12 @@ export function Fold({
           {icon && <span className="shrink-0 text-fg-2" aria-hidden>{icon}</span>}
           <span className="min-w-0 flex-1">
             <span className="block text-[0.9375rem] font-medium">{title}</span>
-            {summary && <span className="block truncate text-xs font-normal text-fg-2">{summary}</span>}
+            <MotionRegion as="span" motionKey={typeof summary === "string" || typeof summary === "number" ? summary : undefined} className="block truncate text-xs font-normal text-fg-2">{summary}</MotionRegion>
           </span>
           <ChevronDown className="fold-chevron size-4 shrink-0 text-fg-3" aria-hidden />
         </button>
       </Heading>
-      <Collapse open={open} id={id} className={cn("px-4 pb-4", bodyClassName)}>
+      <Collapse open={open} onOpened={onOpened} id={id} className={cn("px-4 pb-4", bodyClassName)}>
         {children}
       </Collapse>
     </section>

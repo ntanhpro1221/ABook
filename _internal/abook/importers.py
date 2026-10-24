@@ -88,7 +88,7 @@ SUPERSCRIPT = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 HEADINGS = {"h1", "h2", "h3"}
 WRAPPERS = {"body", "section", "div", "article", "main"}  # khối bọc cả trang: vai của chúng (trước chữ đầu tiên) là vai của trang
 UNSAFE_NAME = re.compile(r'[<>:"/\\|?*\x00-\x1f]')  # ký tự Windows không nhận trong tên file
-BROKEN = "Không phải file {kind} thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+BROKEN = "File {kind} hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
 EPUB_DRM = "EPUB bị khoá bản quyền — bạn dùng bản không khoá hoặc TXT."
 
 # Số của chương: chữ số, số La Mã, hay số viết bằng chữ ("Chương Một", "Hồi thứ hai").
@@ -1894,7 +1894,7 @@ def pdf_pages(path: Path) -> tuple[list[list[str]], str, str]:
     try:
         reader = PdfReader(str(path))
         if reader.is_encrypted and not reader.decrypt(""):
-            raise ImportFailed("PDF có mật khẩu — bạn dùng bản đã mở khoá hoặc TXT/DOCX.")
+            raise ImportFailed("PDF có mật khẩu. Dùng bản đã mở khoá hoặc TXT/DOCX.")
         raw_pages = [page.extract_text() or "" for page in reader.pages]
         metadata = reader.metadata
     except ImportFailed:

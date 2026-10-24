@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { LoadingCrossfade } from "@/shared/MotionPresence";
 import {
@@ -263,7 +264,7 @@ function NarratorNote({ book }: { book: BookSummary }) {
   return <>Đổi được giọng kể khi máy phân vai xong (ngay sau bước phân tích truyện).</>;
 }
 
-function ProductionPanel({ book }: { book: BookSummary }) {
+export function ProductionPanel({ book }: { book: BookSummary }) {
   const [analysis, casting, synthesis] = stepStates(book);
   const live = book.running || book.starting;
   // Giữ chờ duyệt (precast.held) cũng là `paused` nhưng là đợi người nghe, không phải ai bấm Tạm dừng (soát UX a23: "47% tổng"
@@ -272,7 +273,7 @@ function ProductionPanel({ book }: { book: BookSummary }) {
   return (
     <MotionRegion as="section" className="mt-8">
       <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-base font-semibold">Tiến trình sản xuất</h2>
+        <h2 className="text-base font-semibold">Tiến trình</h2>
         <div className="tabular text-sm text-fg-2">
           {formatPercent(book.progress.overall)} tổng
           {eta && <span className="text-fg-3"> · {eta}</span>}
@@ -287,6 +288,7 @@ function ProductionPanel({ book }: { book: BookSummary }) {
           </span>
         </p>
       )}
+      <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={analysis === "active" ? "Phân tích truyện" : casting === "active" ? "Phân vai" : synthesis === "active" ? "Thu âm và kiểm tra" : book.statusLabel} heading="h3">
       <div className="flex flex-col gap-3 sm:flex-row">
         <Step
           index={1}
@@ -316,6 +318,7 @@ function ProductionPanel({ book }: { book: BookSummary }) {
           progress={book.progress.synthesis}
         />
       </div>
+      </Fold>
       {/* Trước mốc phân tích xong: đặt sẵn "Chờ tôi duyệt trước khi thu" cho cuốn này (webui/precast.py). */}
       {!book.castLocked && book.precast && <PrecastWaitSwitch book={book} className="mt-3" />}
       <StartError book={book} />
@@ -1044,14 +1047,15 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
   );
 }
 
-function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[] }) {
+export function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[] }) {
   // Bấm một chương (sang tab Kịch bản) rồi Back: về đúng chỗ đang xem, không về đầu danh sách (soát a30 L3).
   const table = useRef<HTMLDivElement>(null);
   useScrollMemory(`project.${book.id}`, table);
   return (
     // Bảng ARIA đủ phần (soát a31 A4): hàng tiêu đề là columnheader, mỗi ô của hàng chương là cell - trình đọc màn hình đọc "Trạng thái:
     // Đang thu âm" khi đi theo cột, thay vì chuỗi chữ rời. Hàng tiêu đề là hàng 1, nên hàng chương đánh số từ 2.
-    <div ref={table} role="table" aria-label="Danh sách chương" aria-rowcount={chapters.length + 1} className="mt-2">
+    <Fold storageKey={`project.${book.id}.chapters`} title="Danh sách chương" summary={`${chapters.length} chương`} defaultOpen={chapters.length <= 4} className="mt-2">
+    <div ref={table} role="table" aria-label="Danh sách chương" aria-rowcount={chapters.length + 1}>
       <div
         role="row"
         aria-rowindex={1}
@@ -1081,6 +1085,7 @@ function ChapterList({ book, chapters }: { book: BookSummary; chapters: Chapter[
         />
       </div>
     </div>
+    </Fold>
   );
 }
 

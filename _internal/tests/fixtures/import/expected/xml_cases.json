@@ -17,7 +17,7 @@
  {
   "case": "utf-16 (utf-8)",
   "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d227574662d3136223f3e3c613e54c3aa6e3c2f613e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "UTF-16BE (utf-16-be)",
@@ -27,7 +27,7 @@
  {
   "case": "UTF-16LE (utf-16-be)",
   "hex": "003c003f0078006d006c002000760065007200730069006f006e003d00220031002e0030002200200065006e0063006f00640069006e0067003d0022005500540046002d00310036004c00450022003f003e003c0061003e005400ea006e003c002f0061003e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "latin-1 (latin-1)",
@@ -82,22 +82,22 @@
  {
   "case": "us-ascii (utf-8)",
   "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d2275732d6173636969223f3e3c613e54c3aa6e3c2f613e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "UTF-32 (utf-32)",
   "hex": "fffe00003c0000003f000000780000006d0000006c0000002000000076000000650000007200000073000000690000006f0000006e0000003d00000022000000310000002e000000300000002200000020000000650000006e000000630000006f00000064000000690000006e000000670000003d000000220000005500000054000000460000002d0000003300000032000000220000003f0000003e0000003c000000610000003e00000054000000ea0000006e0000003c0000002f000000610000003e000000",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "shift_jis (shift_jis)",
   "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d2273686966745f6a6973223f3e3c613e938c8b9e3c2f613e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "foo (utf-8)",
   "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d22666f6f223f3e3c613e6162633c2f613e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "KOI8-R (koi8-r)",
@@ -112,17 +112,17 @@
  {
   "case": "ISO-2022-JP (iso2022_jp)",
   "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d2249534f2d323032322d4a50223f3e3c613e1b2442456c357e1b28423c2f613e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "HZ-GB-2312 (hz)",
   "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d22485a2d47422d32333132223f3e3c613e7e7b56504e447e7d3c2f613e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "mac-roman (mac-roman)",
   "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d226d61632d726f6d616e223f3e3c613e4361668e3c2f613e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "alias ansi_x3.4_1968",
@@ -622,17 +622,17 @@
  {
   "case": "windows-1252 0x81",
   "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d2277696e646f77732d31323532223f3e3c613e436166813c2f613e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "windows-1252 0x8D",
   "hex": "3c3f786d6c2076657273696f6e3d22312e302220656e636f64696e673d2277696e646f77732d31323532223f3e3c613e4361668d3c2f613e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "utf-8 hỏng",
   "hex": "3c613e436166e93c2f613e",
-  "error": "Không phải file EPUB thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+  "error": "File EPUB hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
  },
  {
   "case": "utf-8 bom",

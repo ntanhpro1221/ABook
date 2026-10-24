@@ -35,7 +35,7 @@ export async function pdfPages(data: ArrayBuffer | Uint8Array, workerSrc: string
   const bytes = Uint8Array.from(data instanceof Uint8Array ? data : new Uint8Array(data));
   const task = pdfjs.getDocument({ data: bytes, useSystemFonts: false, disableFontFace: true, verbosity: 0 });
   const doc = await task.promise.catch((error: { name?: string }) => {
-    throw new Error(error?.name === "PasswordException" ? "PDF này có mật khẩu - ABook chưa mở được. Bạn hãy dùng bản PDF đã mở khóa hoặc bản TXT/DOCX." : "Không phải file PDF thật hoặc bị hỏng. Bạn hãy tải lại file hoặc dùng bản TXT/DOCX.");
+    throw new Error(error?.name === "PasswordException" ? "PDF có mật khẩu. Dùng bản đã mở khoá hoặc TXT/DOCX." : "File PDF hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT.");
   });
   try {
     const pages: string[][] = [];

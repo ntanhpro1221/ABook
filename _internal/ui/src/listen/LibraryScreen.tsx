@@ -1,5 +1,6 @@
 import { MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { Fold } from "@/shared/Collapse";
 import { LoadingCrossfade } from "@/shared/MotionPresence";
 import { useListPresence } from "@/shared/motion";
 import { BookOpen, Headphones, Laptop, Pause, Play, Search, X } from "lucide-react";
@@ -141,7 +142,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
   const speaks = (voices.data?.length ?? 0) > 0;
   const textOnly = book.stage === "text" && !speaks;
   return (
-    <div className="group">
+    <MotionRegion as="div" className="group">
       <div className="relative">
         {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
         <button type="button" tabIndex={-1} onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
@@ -196,7 +197,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
           </div>
         ) : null}
       </button>
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -338,7 +339,7 @@ function badgesOf(items: { book: ListenBook; volume: number | null; unit: string
 }
 
 /** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
-function SeriesShelves({ books, twins, memory, grouped = true }: { books: ListenBook[]; twins: Set<string>; memory?: string; grouped?: boolean }) {
+export function SeriesShelves({ books, twins, memory, grouped = true }: { books: ListenBook[]; twins: Set<string>; memory?: string; grouped?: boolean }) {
   const places = seriesIndex(books);
   const groups = new Map<string, { book: ListenBook; volume: number | null; unit: string; name: string }[]>();
   for (const book of books) {
@@ -357,8 +358,11 @@ function SeriesShelves({ books, twins, memory, grouped = true }: { books: Listen
   const rows = useListPresence(sections, (section) => section.key);
   return <div className="mt-6 space-y-10">{rows.map(({ key, item, state, ref }) => (
     <section key={key} ref={ref} aria-label={item.label || "Sách lẻ"} className="motion-row" data-state={state} inert={state === "exit"}><div>
-      {item.label && <h2 className="mb-3 text-base font-semibold">{item.label} · {item.items.length}</h2>}
-      <Shelf books={item.items} badges={item.badges} twins={twins} memory={memory && `${memory}.${key}`} />
+      {grouped && (item.label || item.items.length > 4) ? (
+        <Fold storageKey={`library.series.${key}`} title={item.label || "Sách lẻ"} summary={`${item.items.length} cuốn`}>
+          <Shelf books={item.items} badges={item.badges} twins={twins} memory={memory && `${memory}.${key}`} />
+        </Fold>
+      ) : <Shelf books={item.items} badges={item.badges} twins={twins} memory={memory && `${memory}.${key}`} />}
     </div></section>
   ))}</div>;
 }

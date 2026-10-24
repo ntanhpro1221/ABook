@@ -4,9 +4,9 @@ import { excerpt } from "@/shared/format";
 
 /** Máy chủ trả mã `reason` kèm lời từ chối; câu chữ cho người nghe nằm ở đây (máy chủ giữ mã, giao diện giữ chữ). */
 const REFUSALS: Record<string, string> = {
-  producing: "Máy đang làm một cuốn sách nên chưa nghe thử được - thử lại khi cuốn ấy xong",
+  producing: "Máy đang làm sách; thử lại khi xong.",
   gpu: "Card đồ hoạ đang bận - thử lại sau ít phút",
-  studio: "Cần cài phần làm sách (Studio) trước khi nghe thử",
+  studio: "Cài Studio để nghe thử.",
   busy: "Đang nghe thử câu khác - bấm lại sau ít giây",
 };
 
@@ -35,6 +35,6 @@ export function tryNote(state: {
   if (state.refusal) return state.refusal;
   if (state.playing && state.caption) return `Đang phát · ${state.caption}`;
   if (state.caption) return `Đã nghe xong - bấm “Nghe thử” để nghe lại · ${state.caption}`;
-  if (state.bookBusy) return "Máy đang làm sách này nên chưa nghe thử được - thử lại khi cuốn này xong";
+  if (state.bookBusy) return "Đang làm sách; bạn thử lại khi xong.";
   return null;
 }

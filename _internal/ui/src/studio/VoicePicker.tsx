@@ -129,7 +129,7 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
   );
 }
 
-function PreviewButton({ voice }: { voice: VoiceOption }) {
+export function PreviewButton({ voice }: { voice: VoiceOption }) {
   const clip = useClip();
   const id = `voice-${voice.name}`;
   const active = clip.current === id;
@@ -144,7 +144,7 @@ function PreviewButton({ voice }: { voice: VoiceOption }) {
         active ? "border-accent bg-accent text-accent-ink" : "border-line text-fg-2 hover:border-line-strong hover:text-fg",
       )}
     >
-      {active && clip.loading ? <Loader2 className="size-4 animate-spin" /> : active ? <Vu className="h-3" /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+      <MotionRegion as="span" className="grid size-4 place-items-center">{active && clip.loading ? <Loader2 className="size-4 animate-spin" /> : active ? <Vu className="h-3" /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
     </button>
   );
 }

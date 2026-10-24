@@ -194,7 +194,7 @@ def test_a84_19_pdf_errors_say_why_and_what_you_can_do(name, reason, action):
     with pytest.raises(importers.ImportFailed) as caught:
         importers.import_text(FIXTURES / name)
     message = str(caught.value)
-    assert reason in message and "bạn" in message and action in message
+    assert reason in message and action in message
 
 
 def test_a84_03_pdf_defaults_are_visible_suggestions_and_never_delete_source_text():

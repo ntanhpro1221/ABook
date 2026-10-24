@@ -70,20 +70,20 @@ describe("lời nhắc màn đọc", () => {
   it("bấm với chuột, chạm với màn cảm ứng", () => {
     expect(tapVerb(false)).toBe("Bấm");
     expect(tapVerb(true)).toBe("Chạm");
-    expect(readerHint(base)).toContain("Bấm vào một chữ");
-    expect(readerHint({ ...base, coarse: true })).toContain("Chạm vào một chữ");
+    expect(readerHint(base)).toContain("Bấm chữ");
+    expect(readerHint({ ...base, coarse: true })).toContain("Chạm chữ");
   });
 
   it("không đổi khi giọng máy đã đọc xong đoạn đầu (kịch bản có mốc)", () => {
     expect(readerHint({ ...base, timed: true })).toBe(readerHint(base));
-    expect(readerHint({ ...base, tapped: true })).toBe("Chỉ có chữ · nghe bằng giọng đọc.");
+    expect(readerHint({ ...base, tapped: true })).toBe("Nghe bằng giọng đọc.");
   });
 
   it("sách nói của Studio", () => {
     const audio = { ...base, textOnly: false, canSpeak: false, timed: true };
-    expect(readerHint(audio)).toBe("Bấm vào một chữ để nghe từ đúng chữ ấy.");
+    expect(readerHint(audio)).toBe("Bấm chữ để nghe từ đó.");
     expect(readerHint({ ...audio, tapped: true })).toBeNull();
-    expect(readerHint({ ...audio, timed: false })).toContain("chưa thu thành sách nói");
+    expect(readerHint({ ...audio, timed: false })).toContain("Chưa có audio");
   });
 });
 
@@ -129,14 +129,14 @@ describe("giọng ghi dưới mỗi chương chỉ có chữ", () => {
 describe("lời nhắc màn đọc: giữ chữ ở cả hai loại sách", () => {
   it("sách nói sửa được cũng nhắc giữ chữ đọc sai, cùng câu với sách chữ", () => {
     const audio = { textOnly: false, canSpeak: false, timed: true, tapped: false, coarse: true, wish: true, readings: true };
-    expect(readerHint(audio)).toContain("Giữ vào một chữ đọc sai để sửa cách đọc.");
+    expect(readerHint(audio)).toContain("Giữ chữ để sửa cách đọc.");
     const text = { ...audio, textOnly: true, canSpeak: true, wish: false };
-    expect(readerHint(text)).toContain("Giữ vào một chữ đọc sai để sửa cách đọc.");
+    expect(readerHint(text)).toContain("Giữ chữ để sửa cách đọc.");
   });
 
   it("chuột phải trên máy tính", () => {
     const audio = { textOnly: false, canSpeak: false, timed: true, tapped: false, coarse: false, wish: true, readings: true };
-    expect(readerHint(audio)).toContain("Bấm chuột phải vào một chữ đọc sai để sửa cách đọc.");
+    expect(readerHint(audio)).toContain("Bấm chuột phải vào chữ để sửa cách đọc.");
   });
 });
 
