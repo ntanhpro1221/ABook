@@ -135,13 +135,15 @@ def build(project_root: Path, candidates_near: Callable[[float, float], Iterable
     overrides = read_overrides(project_root)
     if scenes is None:
         # Có kết quả LLM đọc cả đoạn (music_moods.py) thì valence / tension của đoạn lấy từ đó; không có thì đường nhãn câu. Học sinh NN-lite đóng sẵn trong app
-        # (music_nnlite.py) chỉnh tiếp V / E / T quanh mức chương LVJ - cùng hàm với "Nghe ngay" nhưng KHÔNG có ranh LB; model không nạp được thì đường cũ không học sinh.
+        # (music_nnlite.py) chỉnh tiếp V / E / T quanh mức chương LVJ và thêm ranh LB - cùng hàm, cùng ranh với "Nghe ngay" (Corpus PLAN_studio_lb §6.1:
+        # bộ 27 sai rõ 12,3 -> 9,6 %, đổi bài 14,7 / giờ dưới trần 22); model không nạp được thì đường cũ không học sinh, không ranh LB.
         moods = music_moods.load(project_root)
         student = music_nnlite.student_items if music_nnlite.model() is not None else None
         # Ranh giới cảnh do LLM chia (music_bounds.py) nếu có - moods dùng cùng ranh, nên khoá đoạn của nó khớp đoạn ở đây.
         boundaries = music_bounds.load(project_root) or {}
         scenes = [scene for script in book_scripts(project_root)
-                  for scene in music_nnlite.chapter_scenes(script, student, moods=moods["scenes"] if moods else None,
+                  for scene in music_nnlite.chapter_scenes(script, student, music_nnlite.scene_bounds,
+                                                           moods=moods["scenes"] if moods else None,
                                                            boundaries=boundaries.get(script.get("chapterId")))]
     genres = (taxonomy or {}).get("genres") or {}
     genre_styles = (genres.get(overrides["genre"]) or {}).get("styles") if overrides["genre"] else None

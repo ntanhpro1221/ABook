@@ -1,5 +1,6 @@
 """Nhạc theo cảnh của Studio dùng NN-lite + LVJ thay học sinh q06 (Corpus research/music/SPEC_studio_nnlite.md): `music_plan.build` dựng đoạn bằng đúng hàm của
-Nghe ngay (`music_nnlite.chapter_scenes`) - chỉ khác là không có ranh LB; model không nạp được thì đường cũ không học sinh; gói q06 không còn trong bộ cài."""
+Nghe ngay (`music_nnlite.chapter_scenes`), cả ranh LB (PLAN_studio_lb §6.1); model không nạp được thì đường cũ không học sinh, không ranh LB; gói q06 không còn
+trong bộ cài."""
 from __future__ import annotations
 
 import importlib.util
@@ -46,20 +47,31 @@ def test_the_studio_plan_is_built_with_nn_lite_and_lvj_with_the_weak_mood_floor(
     assert scenes and all(scene["moodSource"] == "student" for scene in scenes)
     assert all(scene["levelSource"] == {"V": "lvj", "E": "lvj", "T": "lvj"} for scene in scenes), "mục NN-lite có chapterP nên LVJ chạy"
     assert all(scene["confidence"] >= music_select.WEAK_MOOD for scene in scenes), "sàn WEAK_MOOD như Nghe ngay"
-    assert not any(scene.get("sceneSource") == music_nnlite.LB_SOURCE for scene in scenes), "Studio không có ranh LB (cánh đo không có LB)"
-    plain = [scene for script in book for scene in music_scenes.chapter_scenes(script)]
+    plain = [scene for script in book
+             for scene in music_scenes.book_scenes([script], None, {script["chapterId"]: {music_nnlite.LB_SOURCE: music_nnlite.scene_bounds(script)}})]
     assert [(s["chapterId"], s["firstSegment"], s["lastSegment"]) for s in scenes] == [(s["chapterId"], s["firstSegment"], s["lastSegment"]) for s in plain], \
-        "học sinh không đổi ranh đoạn của app"
+        "học sinh không đổi ranh đoạn: ranh của app + ranh LB"
     assert [s["valence"] for s in scenes] != [s["valence"] for s in plain]
 
 
 def test_the_studio_scenes_are_the_shared_function_chapter_by_chapter(tmp_path: Path, book: list[dict]) -> None:
     got = music_plan.build(tmp_path, NEAR, LOOKUP, persist=False)["scenes"]
-    wanted = [scene for script in book for scene in music_nnlite.chapter_scenes(script, music_nnlite.student_items)]
+    wanted = [scene for script in book for scene in music_nnlite.chapter_scenes(script, music_nnlite.student_items, music_nnlite.scene_bounds)]
     for scene, expected in zip(got, wanted):
         assert all(scene[field] == expected[field] for field in expected), scene["key"]
     assert len(got) == len(wanted)
 
+
+
+def test_the_lb_bounds_reach_the_studio_plan_of_a_sample_chapter(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from tests.test_music_nnlite import LB, _unique
+    script, cuts = _unique(next(chapter for chapter in LB["chapters"] if len(chapter["bounds"]) >= 2))
+    monkeypatch.setattr(music_plan, "book_scripts", lambda _root: iter([script]))
+    scenes = music_plan.build(tmp_path, NEAR, LOOKUP, persist=False)["scenes"]
+    lb = [scene["firstSegment"] for scene in scenes if scene["reason"] == music_nnlite.LB_REASON]
+    assert lb and set(lb) <= set(cuts), "ranh LB vào plan Studio, đúng chỗ model LB chia"
+    without = music_nnlite.chapter_scenes(script, music_nnlite.student_items)
+    assert [s["firstSegment"] for s in scenes] != [s["firstSegment"] for s in without], "ranh LB đổi đoạn so với không LB"
 
 def test_listen_now_and_the_studio_share_one_function(book: list[dict]) -> None:
     """Nghe ngay và Studio cùng một hàm: không ranh LB / moods / boundaries thì hai đường ra y hệt."""

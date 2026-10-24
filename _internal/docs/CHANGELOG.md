@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Nhạc nền
+- Studio đổi nhạc đúng chỗ cảnh đổi hơn: dùng chung cách chia cảnh với Nghe ngay (ít đoạn nhạc lệch không khí hơn, vẫn dưới 22 lần đổi bài mỗi giờ).
+
 ## [0.4.138] - 2026-10-24
 
 ### Sửa lỗi
