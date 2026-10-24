@@ -337,7 +337,7 @@ def test_lb_leaves_n0_and_a_student_that_gives_up_exactly_as_before() -> None:
     assert music_nnscene.chapter_scenes(script, lambda *_: None, music_nnlite.scene_bounds) == n0, "học sinh bỏ chương: đường N0 nguyên, không ranh LB"
     calls: list[Any] = []
     music_nnscene.chapter_scenes(script, lambda s, base: calls.append(base) or music_nnlite.student_items(s, base))
-    assert len(calls) == 1 and not any(scene["reason"] == "mood_shift" for scene in calls[0]), "không truyền bounds (Studio): giữ nguyên"
+    assert len(calls) == 1 and not any(scene["reason"] == "mood_shift" for scene in calls[0]), "không truyền bounds: giữ nguyên"
 
 
 def test_lb_a_cue_wins_a_spot_the_lite_bound_also_claims() -> None:
