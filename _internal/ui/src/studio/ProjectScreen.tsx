@@ -29,6 +29,7 @@ import {
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useListPresence } from "@/shared/motion";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import {
@@ -43,6 +44,7 @@ import {
   Tabs,
   TabsContent,
   TabsList,
+  TabsPanels,
   TabsTrigger,
   Vu,
 } from "@/shared/ui";
@@ -1051,6 +1053,9 @@ export function ChapterList({ book, chapters }: { book: BookSummary; chapters: C
   // Bấm một chương (sang tab Kịch bản) rồi Back: về đúng chỗ đang xem, không về đầu danh sách (soát a30 L3).
   const table = useRef<HTMLDivElement>(null);
   useScrollMemory(`project.${book.id}`, table);
+  // Chương thêm / bớt (nhập thêm chữ, gộp chương): hàng mở ra / khép lại tại chỗ (useListPresence), không nhảy cả bảng.
+  const rows = useListPresence(chapters, (chapter) => String(chapter.id));
+  const positions = useMemo(() => new Map(chapters.map((chapter, index) => [chapter.id, index])), [chapters]);
   return (
     // Bảng ARIA đủ phần (soát a31 A4): hàng tiêu đề là columnheader, mỗi ô của hàng chương là cell - trình đọc màn hình đọc "Trạng thái:
     // Đang thu âm" khi đi theo cột, thay vì chuỗi chữ rời. Hàng tiêu đề là hàng 1, nên hàng chương đánh số từ 2.
@@ -1077,11 +1082,15 @@ export function ChapterList({ book, chapters }: { book: BookSummary; chapters: C
       {/* Dự án vài nghìn chương: chỉ dựng các dòng gần màn hình (shared/Windowed). */}
       <div role="rowgroup" className="mt-1 space-y-px">
         <Windowed
-          items={chapters}
+          items={rows}
           estimate={50}
           memory={`project.${book.id}`}
           className="space-y-px"
-          row={(chapter, index) => <ChapterRow key={chapter.id} book={book} chapter={chapter} rowIndex={index + 2} />}
+          row={({ key, item: chapter, state, ref }) => (
+            <div key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
+              <ChapterRow book={book} chapter={chapter} rowIndex={(positions.get(chapter.id) ?? 0) + 2} />
+            </div>
+          )}
         />
       </div>
     </div>
@@ -1379,6 +1388,7 @@ export function ProjectScreen() {
           <TabsTrigger value="music">Nhạc nền</TabsTrigger>
           <TabsTrigger value="activity">Nhật ký</TabsTrigger>
         </TabsList>
+        <TabsPanels value={tab}>
         {from && FROM_LABEL[from] && tab !== from && (
           <button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
             <ArrowLeft className="size-4" /> Về {FROM_LABEL[from]}
@@ -1475,6 +1485,7 @@ export function ProjectScreen() {
         <TabsContent value="activity">
           <ActivityView book={book} />
         </TabsContent>
+        </TabsPanels>
       </Tabs>
       {/* Hộp đổi giọng / tên / giới / gộp người: mở từ tab Nhân vật và từ màn "Duyệt trước khi thu". */}
       <RenamePersonDialog bookId={book.id} person={renaming} onClose={() => setRenaming(null)} />

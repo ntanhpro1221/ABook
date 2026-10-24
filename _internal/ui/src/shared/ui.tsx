@@ -388,6 +388,12 @@ export function StatusPill({
 export const Tabs = TabsPrimitive.Root;
 export const TabsContent = TabsPrimitive.Content;
 
+/** Bao các TabsContent của một hàng tab: Radix gỡ bảng cũ ngay khi đổi tab - không có vỏ chung thì bảng mới thay tức thì và chiều cao trang
+ *  nhảy. Một MotionRegion khoá theo tab: bảng cũ mờ ra, bảng mới hiện vào, chiều cao chuyển dần. */
+export function TabsPanels({ value, children, className }: { value: string; children: ReactNode; className?: string }) {
+  return <MotionRegion motionKey={value} fadeThrough className={className}>{children}</MotionRegion>;
+}
+
 const FADE = 36;
 
 /** `label`: tên của hàng tab cho trình đọc màn hình ("Mục của sách") - không có thì chỉ nghe "danh sách tab" (soát a31 K7/A2). */
