@@ -1867,7 +1867,7 @@ export function NewProjectScreen() {
 
   return (
     <div className="page-x mx-auto max-w-[920px] pb-16 pt-6 sm:pt-9">
-      <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+      <button type="button" onClick={() => navigate("/studio")} className="touch-hit -ml-[2.333px] inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
       <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[2rem]"><MotionRegion as="span">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</MotionRegion></h1>

@@ -223,6 +223,18 @@ const DESKTOP: Omit<Entry, "platform">[] = [
 export const ENTRIES: Entry[] = [
   ...PHONE.map((item) => ({ ...item, platform: "phone" as const })),
   ...DESKTOP.map((item) => ({ ...item, platform: "desktop" as const })),
+  ...(["phone", "desktop"] as const).flatMap(platform => ([
+    { id: `${platform}/book-edit`, platform, group: "Trang sách", title: "Sửa tên sách và tác giả", route: "/book/gac-xep", act: async () => {
+      await click("Thêm việc với sách"); await click("Sửa thông tin");
+    } },
+    { id: `${platform}/book-cover-search`, platform, group: "Trang sách", title: "Tìm ảnh bìa", route: "/book/gac-xep", scenario: { requests: { "/api/books/gac-xep/cover/search": "loading" as const } }, act: async () => {
+      await click("Thêm việc với sách"); await click("Sửa thông tin"); await click("Tìm bìa…");
+    } },
+  ])),
+  { id: "desktop/studio-new-paste", platform: "desktop", group: "Studio", title: "Dán đường dẫn truyện", route: "/studio/new", act: async () => {
+    if (find("Dán đường dẫn")) await click("Dán đường dẫn");
+    await type("Đường dẫn thư mục", "D:/Truyện/Tiệm sách trên gác xép.epub");
+  } },
   ...(["phone", "desktop"] as const).flatMap(platform => (["skeleton", "empty", "error", "offline"] as const).map((showcase): Entry => ({
     id: `${platform}/state-${showcase}`, platform, group: "Trạng thái", title: ({ skeleton: "Khung chờ", empty: "Chưa có nội dung", error: "Lỗi tại chỗ", offline: "Mất mạng" })[showcase], route: "/", showcase,
   }))),

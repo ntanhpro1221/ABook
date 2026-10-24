@@ -32,7 +32,7 @@ import { byGender, rerecordText, type GenderFilter, type Rerecord } from "./voic
 type Gender = "male" | "female";
 const GENDER_WORD: Record<Gender, string> = { male: "nam", female: "nữ" };
 /** Nút cuối hàng cùng một bề ngang ("Chọn" hay "Người kể dùng"): cột tên giọng của mọi hàng cùng mép phải (soát 25-10: lệch 12 px). */
-const ACTION_WIDTH = "w-[7.5rem] shrink-0";
+const ACTION_WIDTH = "h-9 min-h-9 w-[7.5rem] shrink-0";
 
 interface VoiceOption extends EngineVoice {
   /** Khoá giọng - cái duy nhất máy chủ nhận (POST /voice, /voice/preview, /media/voices); `name` chỉ để hiện cho người nghe. */

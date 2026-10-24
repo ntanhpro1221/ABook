@@ -971,7 +971,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       aria-rowindex={rowIndex}
       onDoubleClick={onPlay}
       className={cn(
-        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 rounded-lg px-2 text-sm",
+        "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-baseline gap-3 rounded-lg px-2 text-sm",
         current ? "bg-accent-soft" : "hover:bg-hover",
       )}
     >
@@ -981,7 +981,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
             type="button"
             onClick={onPlay}
             aria-label={current && player.playing ? `Tạm dừng ${chapter.displayTitle}` : `Nghe ${chapter.displayTitle}`}
-            className="relative -ml-[9px] grid size-8 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg"
+            className="touch-hit relative -ml-[9px] grid size-8 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg"
           >
             {current && player.playing ? (
               <>
@@ -990,13 +990,13 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
               </>
             ) : (
               <>
-                <span className="tabular text-xs text-fg-3 transition-opacity duration-motion-fast group-hover:opacity-0">{chapter.index}</span>
+                <span className={cn("tabular text-xs text-fg-3 transition-opacity duration-motion-fast group-hover:opacity-0", chapter.index === 1 && "-translate-x-[2px]")}>{chapter.index}</span>
                 <Play className="absolute size-4 translate-x-[1px] opacity-0 transition-opacity duration-motion-fast group-hover:opacity-100" fill="currentColor" strokeWidth={0} />
               </>
             )}
           </button>
         ) : (
-          <span className="tabular w-[14px] text-center text-xs text-fg-3">{chapter.index}</span>
+          <span className={cn("tabular w-[14px] text-center text-xs text-fg-3", chapter.index === 1 && "-translate-x-[2px]")}>{chapter.index}</span>
         )}
       </div>
       <div role="cell" className="min-w-0">
@@ -1009,8 +1009,8 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       </div>
       <div role="cell">
         {working ? (
-          <div className="flex items-center gap-2" title={book.running ? "Đang thu âm" : "Tạm dừng giữa chương"}>
-            <Progress value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" label="Đã thu âm" />
+          <div className="flex items-baseline gap-2" title={book.running ? "Đang thu âm" : "Tạm dừng giữa chương"}>
+            <Progress className="self-center" value={recorded} running={book.running} tone={book.running ? "accent" : "muted"} size="xs" label="Đã thu âm" />
             <span className="tabular text-xs text-fg-2">
               {book.running ? "" : "dừng ở "}
               {chapter.segments.finished}/{chapter.segments.total}
@@ -1345,7 +1345,7 @@ export function ProjectScreen() {
 
   return (
     <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16 pt-7">
-      <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+      <button type="button" onClick={() => navigate("/studio")} className="touch-hit -ml-[2.333px] inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
       {failure === "stale" && !isListenOnly(error) && (
