@@ -125,14 +125,14 @@ export function modulePercent(module: Pick<MusicModuleStatus, "done" | "total">)
 export function moduleLabel(module: MusicModuleStatus): string {
   if (module.state === "error") return module.error;
   if (module.state === "downloading") return module.retrying ? `${RETRYING_NOTE} (Phân tích nhạc, ${modulePercent(module)}%)` : `Đang tải Phân tích nhạc (${formatSize(module.total)}, một lần) ${modulePercent(module)}%`;
-  if (module.analysing) return "Đang nghe các bài bạn đã nhập để hiểu không khí của chúng…";
+  if (module.analysing) return "Đang phân tích nhạc đã nhập…";
   if (module.state === "unsupported") return module.reason ? `Máy này chưa phân tích được nhạc: ${module.reason}.` : "Máy này chưa phân tích được nhạc.";
   if (module.state === "outdated" && module.stopped)
-    return `Phân tích nhạc đang tắt: cần tải lại phần chạy (${formatSize(module.outdatedBytes ?? module.total)}) để phân tích nhạc. Bài của bạn vẫn nhập, nghe và ghim tay được.`;
-  if (module.state === "outdated") return `${module.cancelled ? `${CANCELLED_NOTE} ` : ""}Phân tích nhạc có bản mới - ${formatSize(module.outdatedBytes ?? module.total)}. Bản đang dùng vẫn chạy bình thường.`;
+    return `Phân tích nhạc đang tắt; tải lại ${formatSize(module.outdatedBytes ?? module.total)}. Vẫn ghim tay được.`;
+  if (module.state === "outdated") return `${module.cancelled ? `${CANCELLED_NOTE} ` : ""}Có bản mới - ${formatSize(module.outdatedBytes ?? module.total)}; bản hiện tại vẫn dùng được.`;
   if (module.state === "ready") {
     if (module.restart) return "Phân tích nhạc đã cập nhật - mở lại ABook để dùng thư viện mới.";
-    if ((module.stale ?? 0) > 0) return `${module.stale} bài được phân tích bằng bản cũ - vẫn dùng được, bạn có thể phân tích lại bằng bản mới.`;
+    if ((module.stale ?? 0) > 0) return `${module.stale} bài dùng phân tích cũ; có thể phân tích lại.`;
     return "";
   }
   return `${module.cancelled ? `${CANCELLED_NOTE} ` : ""}Tải ${formatSize(module.total)} để tự chọn nhạc phù hợp trên máy.`;

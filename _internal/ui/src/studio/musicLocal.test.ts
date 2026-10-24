@@ -108,24 +108,24 @@ describe("mô-đun Phân tích nhạc", () => {
   });
   it("nói lý do hỏng, việc đang làm và máy không tải được", () => {
     expect(moduleLabel(status({ state: "error", error: "Không tải được" }))).toBe("Không tải được");
-    expect(moduleLabel(status({ state: "ready", ready: true, analysing: true }))).toContain("Đang nghe");
+    expect(moduleLabel(status({ state: "ready", ready: true, analysing: true }))).toContain("Đang phân tích");
     expect(moduleLabel(status({ state: "unsupported", reason: "chỉ có cho Windows 64-bit" }))).toContain("Windows 64-bit");
   });
   it("có bản mới thì nói dung lượng phần phải tải, không phải cả mô-đun", () => {
     const outdated = status({ state: "outdated", ready: true, outdatedParts: ["Model nghe nhạc"], outdatedBytes: 59_000_000 });
-    expect(moduleLabel(outdated)).toContain(`có bản mới - ${formatSize(59_000_000)}`);
+    expect(moduleLabel(outdated)).toContain(`Có bản mới - ${formatSize(59_000_000)}`);
     expect(moduleLabel(outdated)).not.toContain(formatSize(92_000_000));
-    expect(moduleLabel(outdated)).toContain("vẫn chạy bình thường");
+    expect(moduleLabel(outdated)).toContain("vẫn dùng được");
   });
   it("bản trên máy không chạy được (thiếu phần chạy) thì nói thật là đang tắt, không nói “vẫn chạy”", () => {
     const stopped = status({ state: "outdated", ready: false, stopped: true, outdatedParts: ["Thư viện chạy model"], outdatedBytes: 12_413_472 });
     expect(moduleLabel(stopped)).toBe(
-      `Phân tích nhạc đang tắt: cần tải lại phần chạy (${formatSize(12_413_472)}) để phân tích nhạc. Bài của bạn vẫn nhập, nghe và ghim tay được.`,
+      `Phân tích nhạc đang tắt; tải lại ${formatSize(12_413_472)}. Vẫn ghim tay được.`,
     );
-    expect(moduleLabel(stopped)).not.toContain("vẫn chạy bình thường");
+    expect(moduleLabel(stopped)).not.toContain("vẫn dùng được");
   });
   it("sau khi cập nhật chỉ đề nghị phân tích lại, không tự làm; yên thì không nói gì", () => {
-    expect(moduleLabel(status({ state: "ready", ready: true, stale: 3 }))).toContain("3 bài được phân tích bằng bản cũ");
+    expect(moduleLabel(status({ state: "ready", ready: true, stale: 3 }))).toContain("3 bài dùng phân tích cũ");
     expect(moduleLabel(status({ state: "ready", ready: true }))).toBe("");
     expect(moduleLabel(status({ state: "ready", ready: true, restart: true }))).toContain("mở lại ABook");
   });

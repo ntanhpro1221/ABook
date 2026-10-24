@@ -806,7 +806,7 @@ const STATE_TEXT: Record<Exclude<QueueItem["state"], "waiting">, string> = {
 };
 
 /** Danh sách các file đã chọn kèm tình trạng từng cái: cuốn đang xem, cuốn đã thêm / bỏ, cuốn không đọc được (kèm lý do). */
-function QueueList({ items, currentId, working = "", tall }: { items: QueueItem[]; currentId: number | null; working?: string; tall?: boolean }) {
+export function QueueList({ items, currentId, working = "", tall }: { items: QueueItem[]; currentId: number | null; working?: string; tall?: boolean }) {
   const rows = useListPresence(items, (item) => String(item.id));
   const focus = queueFocus(items, currentId, working);
   return (
@@ -821,10 +821,10 @@ function QueueList({ items, currentId, working = "", tall }: { items: QueueItem[
         const said = item.state === "waiting" ? (current ? (focus.adding ? "Đang thêm" : "Đang xem") : "Chờ") : item.note ?? STATE_TEXT[item.state];
         return (
           <li key={key} ref={ref} aria-current={current ? "true" : undefined} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex items-start gap-2">
-            <span key={item.state} className="icon-pop mt-0.5 grid size-3.5 shrink-0 place-items-center">{mark}</span>
+            <MotionRegion as="span" className="mt-0.5 grid size-3.5 shrink-0 place-items-center">{mark}</MotionRegion>
             <span className="min-w-0 flex-1">
               <span className={cn("block truncate", current ? "font-semibold text-fg" : "text-fg-2")}>{item.name}</span>
-              <span className={cn("block text-pretty", item.state === "error" ? "text-danger" : "text-fg-3")}>{said}</span>
+              <MotionRegion as="span" motionKey={said} className={cn("block text-pretty", item.state === "error" ? "text-danger" : "text-fg-3")}>{said}</MotionRegion>
             </span>
           </div></li>
         );

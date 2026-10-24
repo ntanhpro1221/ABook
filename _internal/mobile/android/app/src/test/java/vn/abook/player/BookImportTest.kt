@@ -117,7 +117,7 @@ class BookImportTest {
         val work = Files.createTempDirectory("abook-capital").toFile()
         for (kind in listOf("EPUB", "DOCX")) {
             val file = File(work, "broken.${kind.lowercase()}").apply { writeText("not a zip") }
-            assertTrue(failure { BookImport.importFile(file) }.startsWith("Không phải file $kind"))
+            assertTrue(failure { BookImport.importFile(file) }.startsWith("File $kind"))
         }
     }
 
