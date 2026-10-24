@@ -134,8 +134,10 @@ describe("so sánh hàng lặp với dung sai 1 CSS px", () => {
 });
 
 describe("audited release gate and defect grouping", () => {
-  it("defaults only to rules with reviewed gallery positives", () => {
+  it("gates reviewed rules and the two ink140 layout rules", () => {
     expect(gateRules()).toEqual(DEFAULT_FAIL_ON);
+    expect(gateRules()).toContain("INK EDGE");
+    expect(gateRules()).toContain("RHYTHM");
     expect(gateRules()).not.toContain("OPTICAL SIZE CONSISTENCY");
     expect(gateRules()).not.toContain("CLIPPED TEXT");
   });
@@ -253,13 +255,15 @@ describe("quy tắc 8–9 trong bộ soi DOM hoàn chỉnh", () => {
   });
 });
 
-it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..9; từ chối tên sai", () => {
+it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..11; từ chối tên sai", () => {
   expect(normalizeRule("rule1")).toBe("TEXT-OVER-GRAPHIC");
   expect(normalizeRule("CLIPPED_TEXT")).toBe("CLIPPED TEXT");
   expect(normalizeRule("touch-target")).toBe("TOUCH TARGET");
   expect(normalizeRule("rule8")).toBe("SIBLING CONSISTENCY");
   expect(normalizeRule("rule9")).toBe("OPTICAL SIZE CONSISTENCY");
   expect(normalizeRule("optical-size-consistency")).toBe("OPTICAL SIZE CONSISTENCY");
-  expect(() => normalizeRule("rule10")).toThrow("Quy tắc lạ");
+  expect(normalizeRule("rule10")).toBe("INK EDGE");
+  expect(normalizeRule("rule11")).toBe("RHYTHM");
+  expect(() => normalizeRule("rule12")).toThrow("Quy tắc lạ");
   expect(() => normalizeRule("typo")).toThrow("Quy tắc lạ");
 });
