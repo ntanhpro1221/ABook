@@ -94,19 +94,30 @@ function EmptyLibrary() {
   // thêm file được thì Studio vẫn là nút chính.
   const canAdd = Boolean(useSource().textImport);
   const openBookPath = useOpenBookPath();
-  if (library?.rootMissing) return <MotionRegion><MissingLibrary root={library.root} className="mt-12 rounded-2xl border border-dashed border-line" /></MotionRegion>;
+  if (library?.rootMissing) return <MotionRegion><MissingLibrary root={library.root} className="mt-12" /></MotionRegion>;
   return (
     <MotionRegion><EmptyState
       icon={Headphones}
       title="Chưa có sách"
-      className="mt-12 rounded-2xl border border-dashed border-line"
+      className="mt-12"
+      // Một nút chính; các lối khác cùng một kiểu chữ-có-biểu-tượng ở hàng dưới (DESIGN: một câu + một nút, không khung đứt nét - soát V25).
       action={
-        <div className="flex flex-wrap justify-center gap-2">
-          <AddBookButton variant="primary" size="lg" onBookFile={openBookPath} />
-          <Button variant={canAdd ? "secondary" : "primary"} size={canAdd ? "md" : "lg"} icon={Clapperboard} onClick={() => navigate("/studio/new")}>
-            Tạo sách nói
-          </Button>
-          <OpenBookFileButton variant="ghost" />
+        <div className="flex flex-col items-center gap-3">
+          {canAdd ? (
+            <AddBookButton variant="primary" size="lg" onBookFile={openBookPath} />
+          ) : (
+            <Button variant="primary" size="lg" icon={Clapperboard} onClick={() => navigate("/studio/new")}>
+              Tạo sách nói
+            </Button>
+          )}
+          <div className="flex flex-wrap justify-center gap-1">
+            {canAdd && (
+              <Button variant="ghost" icon={Clapperboard} className="touch-row" onClick={() => navigate("/studio/new")}>
+                Tạo sách nói
+              </Button>
+            )}
+            <OpenBookFileButton variant="ghost" />
+          </div>
         </div>
       }
     >
