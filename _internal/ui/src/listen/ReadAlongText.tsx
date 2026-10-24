@@ -182,23 +182,22 @@ export const LONG_PRESS_MS = 500;
 /** Ngón tay trượt quá chừng này (px) thì là cuộn, không phải giữ. */
 const PRESS_SLOP = 10;
 
-/** Câu đang nghe, chữ đang đọc sáng lên. Một component riêng: đồng hồ khung hình chỉ làm render lại MỘT câu, và chỉ khi sang chữ khác. */
+/** Câu đang nghe, chữ đang đọc sáng lên. Một component riêng: đồng hồ khung hình chỉ làm render lại MỘT câu, và chỉ khi sang chữ khác.
+ *  Mọi chữ của câu đều có sẵn span (chỉ câu đang nghe): sang chữ kế chỉ đổi lớp `is-lit`, nền mờ dần sang chữ mới (styles.css) - span dựng
+ *  đúng lúc tới lượt thì không có gì để chuyển tiếp, chữ bật sáng cứng. Chữ nhớ (memo): mỗi nhịp chỉ hai chữ vẽ lại. */
 function LitWords({ text, words }: { text: string; words: WordSpan[] }) {
   const wordIndex = useClock((time) => wordIndexAt(words, time * 1000));
+  const pieces = useMemo(() => splitPieces(text), [text]);
   return (
     <>
-      {splitPieces(text).map((piece, at) =>
-        piece.word >= 0 && piece.word === wordIndex ? (
-          <span key={at} className="read-along-word">
-            {piece.text}
-          </span>
-        ) : (
-          piece.text
-        ),
-      )}
+      {pieces.map((piece, at) => (piece.word >= 0 ? <Word key={at} text={piece.text} lit={piece.word === wordIndex} /> : piece.text))}
     </>
   );
 }
+
+const Word = memo(function Word({ text, lit }: { text: string; lit: boolean }) {
+  return <span className={lit ? "read-along-word is-lit" : "read-along-word"}>{text}</span>;
+});
 
 export function ReadAlongText({
   script,
@@ -447,13 +446,15 @@ const Paragraph = memo(function Paragraph({
     ...(menu ? actions.menu(index) : {}),
     className: cn(
       // scroll-mt: câu được cuộn tới không nằm khuất dưới thanh đầu dính (soát UX 29-09).
-      "scroll-mt-20 rounded-[4px] outline-none [box-decoration-break:clone] focus-visible:ring-2 focus-visible:ring-focus",
+      // Nền / màu / gạch chân của câu luôn có (trong suốt khi không dùng) và chuyển tiếp (styles.css [data-sentence]): sang câu kế, câu đã
+      // nghe nhạt đi, chọn / bỏ chọn câu đều mờ dần, không bật tắt cứng.
+      "scroll-mt-20 rounded-[4px] outline-none [box-decoration-break:clone] focus-visible:ring-2 focus-visible:ring-focus underline decoration-transparent decoration-2 underline-offset-[0.22em]",
       tappable && "cursor-pointer",
       segment.kind === "thought" && "italic",
       index === playing && "read-along-active",
       heard >= 0 && index < heard && "text-fg-2",
       // Câu đang chọn: gạch chân màu nhấn - khung bao từng dòng của câu dài thành nhiều ô rời, và gạch chân không lẫn với nền của câu đang phát.
-      index === selected && "underline decoration-accent decoration-2 underline-offset-[0.22em]",
+      index === selected && "decoration-accent",
     ),
   });
   const first = paragraph.items[0];

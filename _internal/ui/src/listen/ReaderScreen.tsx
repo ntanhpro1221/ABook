@@ -1,5 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
-import { LoadingCrossfade } from "@/shared/MotionPresence";
+import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import * as Popover from "@radix-ui/react-popover";
 import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -403,20 +403,14 @@ export function ReaderScreen(edit: SentenceEditing) {
             </button>
           )}
         </article>
-        {menu.bar && (
-          <div className={FLOATING}>
-            <div className={FLOATING_BODY}>
-              <div className="w-full">{menu.bar}</div>
-            </div>
+        {/* Thanh chọn câu / "Tới câu đang nghe" hiện / ẩn dần. Vùng con có khoá cố định: chúng không làm vùng của cả màn (MotionRegion dưới cùng)
+            thấy "nội dung đổi" mà mờ chéo cả chương mỗi lần chọn câu (W2). */}
+        <MotionRegion motionKey="floating" className={FLOATING}>
+          <div className={cn(FLOATING_BODY, "flex-col items-center")}>
+            <MotionPresence open={Boolean(menu.bar)} className="w-full">{menu.bar}</MotionPresence>
+            <MotionPresence open={selected === null && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
           </div>
-        )}
-        {selected === null && follow.showJump && (
-          <div className={FLOATING}>
-            <div className={cn(FLOATING_BODY, "justify-center")}>
-              <JumpToPlaying onClick={follow.jump} />
-            </div>
-          </div>
-        )}
+        </MotionRegion>
       </div>
       <FindInBook book={book} open={finding} onOpenChange={setFinding} />
       {menu.dialogs}
