@@ -231,6 +231,9 @@ function skipIcon(forward: boolean) {
 }
 export const Back15 = skipIcon(false);
 export const Forward15 = skipIcon(true);
+// Thanh phát nhỏ: ô biểu tượng 18 px làm số "15" chỉ cao ~6 px, nhoè không đọc được (soát độc lập 24-10) - ở đây vẽ 24 px, gần kín nút 28 px.
+const Back15Mini = ({ strokeWidth }: { className?: string; strokeWidth?: number }) => <Back15 className="size-6" strokeWidth={strokeWidth} />;
+const Forward15Mini = ({ strokeWidth }: { className?: string; strokeWidth?: number }) => <Forward15 className="size-6" strokeWidth={strokeWidth} />;
 
 /** Chương đang phát là chương chỉ có chữ (giọng máy đọc). */
 function useSpeaking(): boolean {
@@ -252,7 +255,7 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
   return (
     <MotionRegion as="div" data-player-transport className={cn(large ? "slot-row w-full max-w-sm [--slot:clamp(1.25rem,0.8333rlh,2.40625rem)]" : "flex items-center gap-1")}>
       {chapters && <IconButton label={withShortcut("Chương trước", "Shift+←")} icon={SkipBack} size={size} className="touch-box" onClick={previous} {...keepFocus} />}
-      <IconButton label={withShortcut(`Lùi ${SKIP_SECONDS} giây`, "←")} icon={Back15} size={size} className="touch-box" onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
+      <IconButton label={withShortcut(`Lùi ${SKIP_SECONDS} giây`, "←")} icon={large ? Back15 : Back15Mini} size={size} className="touch-box" onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
       <button
         type="button"
         onClick={withFeedback("playPause", toggle)}
@@ -280,7 +283,7 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
           </span>
         )}
       </button>
-      <IconButton label={withShortcut(`Tới ${SKIP_SECONDS} giây`, "→")} icon={Forward15} size={size} className="touch-box" onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
+      <IconButton label={withShortcut(`Tới ${SKIP_SECONDS} giây`, "→")} icon={large ? Forward15 : Forward15Mini} size={size} className="touch-box" onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
       {/* Còn chương sau mà chưa có audio: nút vẫn bấm được và nói vì sao (player.step báo + đường đọc chữ); chỉ chương cuối mới mờ. */}
       {chapters && <IconButton
         label={nextChapterLabel(hasNext, hasLater)}
