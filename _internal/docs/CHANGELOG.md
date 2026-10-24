@@ -24,6 +24,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Không còn chữ rớt một mình xuống dòng ở bất cứ đâu (tên sách trên bìa, mô tả trong Cài đặt, bộ chọn giọng).
 - Thông báo gọn hơn: chữ trải đủ bề ngang, nút Hoàn tác / Ghi chú xuống hàng riêng, nút đóng nằm trong góc.
 - Thẻ "Tối qua" buổi sáng phẳng: các mốc là hàng đơn giản, mốc gợi ý tô màu nhấn thay vì khung lồng khung.
+- Tìm sách: dòng đếm nói số cuốn khớp ("1 trong 11 cuốn"); cuốn đang làm ở máy khác cũng được lọc theo ô tìm.
 - Studio: danh sách dự án thành bảng gọn (tên · trạng thái · tiến độ · cập nhật), không còn khung lồng khung; "Mở dự án có sẵn", "Mở thư mục" và việc hiếm khác vào menu "…".
 - Trang dự án: đúng một nút chính theo trạng thái (Bắt đầu / Tạm dừng / Tiếp tục / Nghe trong Thư viện…), mọi việc khác vào "…"; năm tab hay dùng, Kịch bản, Nhật ký và Duyệt trước khi thu vào "Thêm".
 - Tạo sách nói một trang: chọn file rồi bấm "Bắt đầu"; giọng kể, chất lượng và cách bắt đầu gập dưới "Tuỳ chọn".
