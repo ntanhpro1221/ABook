@@ -170,9 +170,9 @@ export function Switch({
       }}
       disabled={disabled}
       aria-disabled={ariaDisabled || undefined}
-      className="touch-hit relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-switch-off transition-[color,background-color,opacity] duration-motion-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 aria-disabled:opacity-50 data-[state=checked]:bg-focus"
+      className="ui-switch touch-hit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 aria-disabled:opacity-50"
     >
-      <SwitchPrimitive.Thumb className="motion-switch-thumb block size-5 translate-x-0.5 rounded-full bg-white shadow-sm transition-transform duration-150 data-[state=checked]:translate-x-[22px]" />
+      <SwitchPrimitive.Thumb className="motion-switch-thumb" />
     </SwitchPrimitive.Root>
   );
 }
@@ -277,7 +277,7 @@ export function PhoneSync() {
 
   return (
     <MotionRegion as="div" className="motion-reveal space-y-5">
-      <div className="flex items-start justify-between gap-6">
+      <div className="flex items-center justify-between gap-6">
         <label htmlFor="phone-sync" className="min-w-0 cursor-pointer">
           <span className="block text-sm font-medium">{SYNC_SWITCH_LABEL}</span>
           <span className={cn("mt-0.5 block text-[0.8125rem]", failing ? "text-danger" : "text-fg-2")}>
@@ -300,7 +300,7 @@ export function PhoneSync() {
 
       {sync.enabled && (
         <>
-          <Fold storageKey="phone-sync.pair" title="Ghép thiết bị" defaultOpen={Boolean(sync.pairing)} bodyClassName="px-3 pb-3">
+          <Fold flat storageKey="phone-sync.pair" title="Ghép thiết bị" defaultOpen={Boolean(sync.pairing)} bodyClassName="pb-3">
           <PairingPanel
             sync={sync}
             busy={pair.isPending}
@@ -308,8 +308,8 @@ export function PhoneSync() {
             onCancel={() => cancel.mutate()}
           />
           </Fold>
-          <Fold storageKey="phone-sync.permissions" title="Quyền điều khiển" summary={studioWanted ? "Đang bật" : "Đang tắt"} bodyClassName="px-3 pb-3">
-          <div className="flex items-start justify-between gap-6">
+          <Fold flat storageKey="phone-sync.permissions" title="Quyền điều khiển" summary={studioWanted ? "Đang bật" : "Đang tắt"} bodyClassName="pb-3">
+          <div className="flex items-center justify-between gap-6">
             <label htmlFor="remote-studio" className="min-w-0 cursor-pointer">
               <span className="block text-sm font-medium">Điều khiển từ xa</span>
               <span id="remote-studio-hint" className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">
@@ -364,11 +364,11 @@ export function PhoneSync() {
                 <span className="font-medium text-fg">github.com/ntanhpro1221/ABook/releases</span>. iPhone, iPad: nghe bằng trình duyệt.
               </p>
             ) : (
-              <ul className="mt-2 divide-y divide-line rounded-xl border border-line">
+              <ul className="mt-2 divide-y divide-line">
                 {deviceRows.map(({ key, state, item: device, ref }) => (
                   // Điện thoại hẹp + công tắc "Điều khiển sản xuất": hàng tự xuống dòng thay vì bóp tên máy còn "NGDtuanh-…".
                   <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
-                  <Fold storageKey={`phone-sync.device.${device.id}`} title={device.name} summary={`Lần cuối ${formatRelative(device.lastSeen)}`} bodyClassName="flex flex-wrap items-center gap-3 px-3 pb-3">
+                  <Fold flat storageKey={`phone-sync.device.${device.id}`} title={device.name} summary={`Lần cuối ${formatRelative(device.lastSeen)}`} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
                     <Smartphone className="glyph shrink-0 text-fg-3" />
                     <div className="min-w-0 flex-1 basis-44">
                       <div className="truncate text-sm font-medium">{device.name}</div>
@@ -399,7 +399,7 @@ export function PhoneSync() {
               </ul>
             )}
           </div>
-          <Fold storageKey="phone-sync.connection" title="Kết nối" summary="Địa chỉ và Bluetooth" bodyClassName="space-y-2 px-3 pb-3">
+          <Fold flat storageKey="phone-sync.connection" title="Kết nối" summary="Địa chỉ và Bluetooth" bodyClassName="space-y-2 pb-3">
           {sync.bluetooth && (
             <p className="text-xs text-fg-3">
               {sync.bluetooth.running

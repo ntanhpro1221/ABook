@@ -71,7 +71,7 @@ function NewBookDefaults() {
   const { data: voices } = useVoices();
   const selectClass = "h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus";
   return (
-    <div className="grid gap-3 px-4 py-3 sm:grid-cols-2">
+    <div className="grid gap-3 py-3 sm:grid-cols-2">
       <label htmlFor="new-book-narrator" className="block">
         <span className="block text-sm font-medium">Giọng kể</span>
         <select
@@ -134,7 +134,7 @@ function UpdateRow({ update, current }: { update: { version: string; notes: stri
     }
   };
   return (
-    <div className="px-4 py-3">
+    <div className="py-3">
       <p className="text-sm">
         <span className="font-semibold">ABook {update.version}</span> đã có{current ? ` · đang dùng ${current}` : ""}
       </p>
@@ -204,7 +204,7 @@ function ThirdPartyButton() {
 function VoiceGroup() {
   return (
     <SettingsBlock>
-      <div className="px-4 py-3.5">
+      <div className="py-3.5">
         <VoiceSettings
           api={desktopVoices}
           deviceHint="Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."
@@ -252,7 +252,7 @@ function ListenGroup() {
             }
           />
         </SettingsRow>
-        <div className="px-4 py-3.5">
+        <div className="py-3.5">
           <MyMusicSection />
         </div>
       </SettingsBlock>
@@ -318,7 +318,7 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
             role="radiogroup"
             aria-label="Giao diện"
             onKeyDown={radioGroupKeys(THEME_VALUES, preferences?.theme ?? "system", (theme) => update({ theme }))}
-            className="grid max-w-md grid-cols-3 gap-2 p-3"
+            className="grid grid-cols-3 gap-2 py-3"
           >
             {THEMES.map((theme, index) => {
               const selected = (preferences?.theme ?? "system") === theme.value;
@@ -333,7 +333,7 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
                   onClick={() => update({ theme: theme.value })}
                   className={cn(
                     "flex flex-col items-center gap-2 rounded-xl border bg-panel py-4 text-sm font-medium transition-colors",
-                    selected ? "border-focus ring-1 ring-focus" : "border-line hover:border-line-strong",
+                    selected ? "border-focus bg-accent-soft text-accent-text ring-1 ring-focus" : "border-line hover:border-line-strong",
                   )}
                 >
                   <Icon className="size-5" />
@@ -382,7 +382,7 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
               />
             )}
           </SettingsRow>
-          <div className="px-4 py-3">
+          <div className="py-3">
             <ShortcutList remote={remote} />
           </div>
         </SettingsBlock>
@@ -395,12 +395,12 @@ function DevicesGroup() {
   return (
     <>
       <SettingsBlock title="Thiết bị" id="phone">
-        <div className="px-4 py-3.5">
+        <div className="py-3.5">
           <PhoneSync />
         </div>
       </SettingsBlock>
       <SettingsBlock title="Máy tính khác" id="computers">
-        <div className="px-4 py-3.5">
+        <div className="py-3.5">
           <OtherComputers />
         </div>
       </SettingsBlock>
@@ -413,7 +413,7 @@ function StudioGroup({ info }: { info: AppInfo | undefined }) {
   if (info?.remote) {
     return (
       <SettingsBlock title="Mẫu thiết lập" id="templates">
-        <div className="px-4 py-3.5">
+        <div className="py-3.5">
           <BookTemplates />
         </div>
       </SettingsBlock>
@@ -424,13 +424,13 @@ function StudioGroup({ info }: { info: AppInfo | undefined }) {
     <>
       <SettingsBlock>
         {/* Trạng thái Studio (đã cài / chưa cài + Gỡ hay Cài) ở đầu nhóm; chưa cài thì các tuỳ chọn dưới vẫn xem và chỉnh được, có một dòng nói rõ. */}
-        <div className="px-4 py-3.5">
+        <div className="py-3.5">
           <StudioSettings />
         </div>
       </SettingsBlock>
-      <MotionPresence open={!installed}><p className="mt-4 px-1 text-[0.8125rem] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p></MotionPresence>
+      <MotionPresence open={!installed}><p className="mt-4 text-[0.8125rem] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p></MotionPresence>
       <SettingsBlock>
-        <SettingsRow label={<span id="pause-on-battery-name">Dừng khi dùng pin</span>} hint={<span id="pause-on-battery-hint">Cắm sạc lại thì tự làm tiếp đúng chỗ.</span>}>
+        <SettingsRow label={<span id="pause-on-battery-name">Tạm dừng dùng pin</span>} hint={<span id="pause-on-battery-hint">Cắm sạc lại thì tự làm tiếp đúng chỗ.</span>}>
           <Switch
             id="pause-on-battery"
             labelledBy="pause-on-battery-name"
@@ -442,7 +442,7 @@ function StudioGroup({ info }: { info: AppInfo | undefined }) {
       </SettingsBlock>
       <SettingsBlock title="Sách mới" fold="studio.new-book">
         <NewBookDefaults />
-        <div className="px-4 py-3.5">
+        <div className="py-3.5">
           <BookTemplates />
         </div>
       </SettingsBlock>
@@ -454,7 +454,7 @@ function StudioGroup({ info }: { info: AppInfo | undefined }) {
 function SharedReadingsBlock() {
   return (
     <SettingsBlock>
-      <div className="px-4 py-3.5">
+      <div className="py-3.5">
         <SharedReadingsSettings />
       </div>
     </SettingsBlock>
@@ -477,8 +477,8 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
     <>
       <MotionPresence open={!info?.listenOnly}>
         <SettingsBlock title="Thư viện" id="library">
-          <div className="flex flex-wrap items-center gap-2 px-4 py-3">
-            <div className="flex h-10 min-w-0 flex-1 basis-48 items-center gap-2 rounded-lg bg-sunken px-3 text-sm text-fg-2">
+          <div className="settings-library-row flex flex-wrap items-center gap-2 py-3">
+            <div className="flex min-h-10 min-w-0 flex-1 basis-48 items-center gap-3 text-sm text-fg-2">
               <FolderOpen className="size-4 shrink-0" />
               <span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
             </div>
@@ -497,20 +497,20 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
       )}
       {!remote && (
         <SettingsBlock title="Bộ nhớ">
-          <div className="px-4 py-3.5">
+          <div className="py-3.5">
             <ReadAloudStorage api={{ usage: () => httpSource.readAloudCacheTotal!(), clear: () => httpSource.readAloudCacheClearAll!() }} />
           </div>
         </SettingsBlock>
       )}
       {!remote && (
         <SettingsBlock title="Chẩn đoán" id="diagnostics" fold="advanced.diagnostics">
-          <div className="px-4 py-3.5">
+          <div className="py-3.5">
             <OwnDiagnostics />
           </div>
         </SettingsBlock>
       )}
       <SettingsBlock title="Giới thiệu" id="about" fold="advanced.about">
-        <div className="space-y-3 px-4 py-3.5">
+        <div className="space-y-3 py-3.5">
           <p className="text-sm text-fg-2">ABook {info?.version} - nghe sách tiếng Việt và làm sách nói.</p>
           {/* Liên kết mở ở cửa sổ mới (target="_blank"), không điều hướng chính cửa sổ app; cửa sổ app Windows nuốt target nên openExternal nhờ máy chủ mở. */}
           <p className="select-text text-sm text-fg-2">
@@ -575,7 +575,7 @@ export function SettingsScreen() {
     <>
       {info?.remote && <RemoteNote listenOnly={Boolean(info.listenOnly)} />}
       <MotionPresence open={Boolean(info?.update && !info.remote && !wide)}>{info?.update && !info.remote && !wide && (
-        <Link to={settingsPath("advanced")} className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-sm font-medium hover:bg-hover">
+        <Link to={settingsPath("advanced")} className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel py-3 text-sm font-medium hover:bg-hover">
           <Download className="size-5 shrink-0 text-accent-text" />
           <span className="min-w-0 flex-1">Có ABook {info.update.version}</span>
           <ChevronRight className="size-4 shrink-0 text-fg-3" />
@@ -587,13 +587,13 @@ export function SettingsScreen() {
     // Hai cột: /settings mở sẵn nhóm đầu; đổi nhóm thay chỗ trong lịch sử như đổi tab.
     const shown = active ?? groups[0];
     return (
-      <div className="mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-8 px-10 pb-16 pt-9">
+      <div className="settings-page mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-8 px-10 pb-16 pt-9">
         <div>
           <h1 className="text-[1.75rem] font-bold tracking-tight">Cài đặt</h1>
           {notices}
           <SettingsList rows={rows} current={shown} className="mt-5" />
         </div>
-        <div className="min-w-0 max-w-[760px] pt-1">
+        <div className="min-w-0 max-w-[760px] pt-1 settings-detail">
           <GroupHeader id={shown} back={false} />
           <GroupBody id={shown} info={info} touchOnly={touchOnly} />
         </div>
@@ -602,14 +602,14 @@ export function SettingsScreen() {
   }
   if (active) {
     return (
-      <div className="mx-auto max-w-[760px] px-4 pb-16 pt-4 sm:px-10 sm:pt-7">
+      <div className="settings-page mx-auto max-w-[760px] px-4 pb-16 pt-4 sm:px-10 sm:pt-7">
         <GroupHeader id={active} />
         <GroupBody id={active} info={info} touchOnly={touchOnly} />
       </div>
     );
   }
   return (
-    <div className="mx-auto max-w-[760px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
+    <div className="settings-page mx-auto max-w-[760px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
       <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">Cài đặt</h1>
       {notices}
       <SettingsList rows={rows} className="mt-5" />

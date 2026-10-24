@@ -67,6 +67,7 @@ export function Button({
   return (
     <button
       type={type}
+      data-variant={variant}
       disabled={loading ? undefined : disabled}
       aria-disabled={loading || undefined}
       aria-busy={loading || undefined}
@@ -925,7 +926,7 @@ export function Segmented<T extends string>({
           onClick={() => onChange(option.value)}
           className={cn(
             "touch-row h-7 whitespace-nowrap rounded-md px-3 text-[0.8125rem] font-medium transition-colors pointer-coarse:min-w-[48px]",
-            value === option.value ? "bg-panel text-fg shadow-card" : "text-fg-2 hover:text-fg",
+            value === option.value ? "bg-accent text-accent-ink" : "text-fg-2 hover:text-fg",
             itemClassName,
           )}
         >

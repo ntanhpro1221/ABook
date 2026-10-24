@@ -77,7 +77,7 @@ describe("Cài đặt", () => {
     expect(listen).toContain("Nhạc của tôi");
     const advanced = wrap(<SettingsAt group="advanced" screen={<SettingsScreen />} />);
     expect(sections(advanced).about).toBe("Giới thiệu");
-    expect(advanced).toContain("Thành phần bên thứ ba");
+    expect(advanced).toContain("Thành phần sử dụng");
   });
 
   it("Giới thiệu trên điện thoại ghi phiên bản đang cài", async () => {

@@ -59,7 +59,7 @@ describe("mục Chẩn đoán của Cài đặt", () => {
     expect(DIAGNOSTICS_HINT.length).toBeLessThanOrEqual(60);
     expect(DIAGNOSTICS_MORE).toContain("nhận ra được");
     expect(DIAGNOSTICS_MORE).not.toContain("không có mật khẩu");
-    expect(DIAGNOSTICS_MORE).toContain("Cho máy khác nghe thư viện này");
+    expect(DIAGNOSTICS_MORE).toContain("Chia sẻ thư viện");
     expect(SEND_HINT).toContain("Bạn chọn gửi cho ai");
     expect(CLEAR_HINT).toContain("văng");
   });

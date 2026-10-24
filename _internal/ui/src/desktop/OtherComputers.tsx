@@ -160,10 +160,10 @@ export function OtherComputers() {
         </p>
       )}
       {data.computers.length > 0 && (
-        <ul className="divide-y divide-line rounded-xl border border-line">
+        <ul className="divide-y divide-line">
           {data.computers.map((computer) => (
             <li key={computer.id}>
-              <Fold storageKey={`other-computers.${computer.id}`} title={computer.name} heading="h3" summary={computer.waking ? "Đang chờ" : computer.error ? "Cần kiểm tra" : "Đã ghép"} bodyClassName="flex flex-wrap items-center gap-3 px-3 pb-3">
+              <Fold flat storageKey={`other-computers.${computer.id}`} title={computer.name} heading="h3" summary={computer.waking ? "Đang chờ" : computer.error ? "Cần kiểm tra" : "Đã ghép"} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
               <Laptop className="size-5 shrink-0 text-fg-2" />
               <div className="min-w-0 flex-1">
                 {computer.waking ? (
@@ -235,16 +235,16 @@ export function OtherComputers() {
           ))}
         </ul>
       )}
-      <Fold storageKey="other-computers.pair" title="Ghép máy" bodyClassName="space-y-3 px-3 pb-3">
+      <Fold flat storageKey="other-computers.pair" title="Ghép máy" bodyClassName="space-y-3 pb-3">
       <div className="space-y-2">
         <Button variant="secondary" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>
           Tìm máy trong mạng
         </Button>
         {discover.data &&
           (discover.data.found.length ? (
-            <ul className="divide-y divide-line rounded-xl border border-line">
+            <ul className="divide-y divide-line">
               {discover.data.found.map((found) => (
-                <li key={`${found.host}:${found.port}`} className="flex items-center gap-3 px-3 py-2">
+                <li key={`${found.host}:${found.port}`} className="flex items-center gap-3 py-2">
                   {found.kind === "phone" ? (
                     <Smartphone className="size-5 shrink-0 text-fg-2" aria-label="điện thoại" />
                   ) : (

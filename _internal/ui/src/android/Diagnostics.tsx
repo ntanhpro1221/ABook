@@ -12,7 +12,7 @@ import { EbookLibrary } from "./plugins";
 export const DIAGNOSTICS_HINT = "Việc app làm gần đây, để tìm lỗi. Xem lại trước khi gửi.";
 /** Quyền riêng tư của nhật ký: gập sau "Tìm hiểu thêm". */
 export const DIAGNOSTICS_MORE =
-  "Có tên sách; che khoá, mã ghép, IP và đường dẫn nhận ra được. Máy ghép đọc được khi bật “Cho máy khác nghe thư viện này”.";
+  "Có tên sách; che khoá, mã ghép, IP và đường dẫn nhận ra được. Máy ghép đọc được khi bật “Chia sẻ thư viện”.";
 export const SEND_HINT = "Bạn chọn gửi cho ai; app không tự gửi.";
 export const CLEAR_HINT = "Gồm cả các lần văng đã ghi.";
 export const VIEW_LINES = 500;

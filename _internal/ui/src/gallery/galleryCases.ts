@@ -33,6 +33,12 @@ export function galleryCases(platform: Platform): void {
         expect(galleryState.errors).toEqual([]);
         expect([...galleryState.missing]).toEqual([]);
         expect(container.textContent?.trim().length).toBeGreaterThan(0);
+        if (entry.id === "desktop/settings-studio") {
+          expect([...container.querySelectorAll("h1")].at(-1)?.textContent).toBe("Studio");
+          expect(container.textContent).toContain("Tạm dừng dùng pin");
+          expect(container.textContent).toContain("Sách mới");
+          expect(container.textContent).toContain("Cách đọc chung");
+        }
         // Mục trạng thái phải tới đúng màn, không chỉ dựng được vỏ app.
         if (entry.scenario?.requests) {
           const states = Object.values(entry.scenario.requests);

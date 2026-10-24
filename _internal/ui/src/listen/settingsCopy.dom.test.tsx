@@ -37,8 +37,8 @@ for (const total of [0, 1024 * 1024]) it(`storage status stays short and the exp
   client.setQueryData(STORAGE_KEY, { book: 0, total });
   await render(<ReadAloudStorage api={{ usage: vi.fn(), clear: vi.fn() }} />);
   const region = host.querySelector('[data-readaloud-storage]')!;
-  expect(region.querySelector(":scope > p")!.textContent).not.toContain("Nghe lại");
-  if (total === 0) expect(region.querySelector(":scope > p")!.textContent).toBe("Chưa có bản đọc đã lưu.");
+  expect(region.querySelector("p")!.textContent).not.toContain("Nghe lại");
+  if (total === 0) expect(region.querySelector("p")!.textContent).toBe("Chưa có bản đọc đã lưu.");
   const more = [...region.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "Tìm hiểu thêm")!;
   expect(more).toBeDefined();
   const content = document.getElementById(more.getAttribute("aria-controls")!)!;
@@ -46,5 +46,5 @@ for (const total of [0, 1024 * 1024]) it(`storage status stays short and the exp
   expect(content.textContent).toContain("Nghe lại đoạn đã đọc xong");
   await act(() => more.click()); expect(content.hasAttribute("inert")).toBe(false);
   expect(content.closest(".motion-collapse")).not.toBeNull();
-  expect([...region.querySelectorAll("button")].some(button => button.textContent === "Dọn bản đọc đã làm")).toBe(total > 0);
+  expect([...region.querySelectorAll("button")].some(button => button.textContent === "Dọn bản đọc")).toBe(total > 0);
 });
