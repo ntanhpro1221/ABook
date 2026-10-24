@@ -10,7 +10,7 @@ import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
 import { pageFocusKey, useLayoutChangeFade, usePageEnter, usePageFocus } from "@/shared/motion";
-import { AnimatedRows } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
@@ -91,7 +91,7 @@ function TabItem({ to, icon: Icon, match, children }: { to: string; icon: typeof
   );
 }
 
-function Producing() {
+export function Producing() {
   const { pathname } = useLocation();
   const { data } = useLibrary({ live: pathname.startsWith("/studio") });
   const navigate = useNavigate();
@@ -109,16 +109,16 @@ function Producing() {
           <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-md" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 truncate text-xs font-medium">
-              {book.paused || book.stopping ? (
+              <MotionRegion as="span" className="grid size-3 shrink-0 place-items-center">{book.paused || book.stopping ? (
                 <Pause className="size-3 shrink-0 text-warning" aria-label={book.stopping ? "Đang dừng" : "Đang tạm dừng"} />
               ) : (
                 <Vu className="h-2 text-accent" />
-              )}
+              )}</MotionRegion>
               <span className="truncate">{book.title}</span>
             </div>
             <div className="mt-1 flex items-center gap-2">
               <Progress value={book.progress.overall} running={!book.paused && !book.stopping} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />
-              <span className="tabular text-[0.6875rem] text-fg-2">{book.starting ? "…" : formatPercent(book.progress.overall)}</span>
+              <MotionRegion as="span" motionKey={book.starting ? "starting" : formatPercent(book.progress.overall)} className="tabular text-[0.6875rem] text-fg-2">{book.starting ? "…" : formatPercent(book.progress.overall)}</MotionRegion>
             </div>
           </div>
         </button>
@@ -128,13 +128,12 @@ function Producing() {
 }
 
 /** App Windows đóng gói có bản mới: nhắc ở thanh bên, bấm mở Cài đặt (mục "Cập nhật" nằm trên cùng). */
-function UpdateNotice() {
+export function UpdateNotice() {
   const { data: info } = useAppInfo();
   const navigate = useNavigate();
   const { setExpanded } = useNowPlaying();
-  if (!info?.update || info.remote) return null;
-  return (
-    <button
+  return <MotionPresence open={Boolean(info?.update && !info.remote)}>{info?.update && !info.remote && (
+    <MotionRegion as="button" motionKey={info.update.version}
       type="button"
       onClick={() => {
         setExpanded(false);
@@ -147,8 +146,8 @@ function UpdateNotice() {
         <span className="block truncate text-[0.8125rem] font-semibold">Có ABook {info.update.version}</span>
         <span className="block text-xs text-fg-2">Bấm để cập nhật</span>
       </span>
-    </button>
-  );
+    </MotionRegion>
+  )}</MotionPresence>;
 }
 
 const TITLES: [RegExp, string][] = [

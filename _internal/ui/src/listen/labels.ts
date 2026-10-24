@@ -114,13 +114,13 @@ export function readerHint(state: {
   const verb = tapVerb(state.coarse);
   if (state.textOnly) {
     if (!state.canSpeak) return `${textBookLine(false)}.`;
-    const reading = state.readings ? ` ${state.coarse ? "Giữ" : "Bấm chuột phải"} vào một chữ đọc sai để sửa cách đọc.` : "";
-    return state.tapped ? `${textBookLine(true)}.${reading}` : `${textBookLine(true)}. ${verb} vào một chữ để nghe từ chữ ấy.${reading}`;
+    const reading = state.readings ? ` ${state.coarse ? "Giữ chữ" : "Bấm chuột phải vào chữ"} để sửa cách đọc.` : "";
+    return state.tapped ? `Nghe bằng giọng đọc.${reading}` : `${verb} chữ để nghe từ đó.${reading}`;
   }
-  if (!state.timed) return "Chương này chưa thu thành sách nói - chữ vẫn đọc được. Thu xong thì “Nghe từ đây” hiện ra.";
+  if (!state.timed) return "Chưa có audio; bạn vẫn đọc được chữ.";
   if (state.tapped) return null;
-  const reading = state.readings ? ` ${state.coarse ? "Giữ" : "Bấm chuột phải"} vào một chữ đọc sai để sửa cách đọc.` : "";
-  return `${verb} vào một chữ để nghe từ đúng chữ ấy${state.wish ? "; “Sửa câu này” để đổi người nói, cách đọc, tên hay thu lại câu" : ""}.${reading}`;
+  const reading = state.readings ? ` ${state.coarse ? "Giữ chữ" : "Bấm chuột phải vào chữ"} để sửa cách đọc.` : "";
+  return `${verb} chữ để nghe từ đó.${state.wish ? " Chọn “Sửa câu này” để sửa." : ""}${reading}`;
 }
 
 /** "Chương 1" không gãy dòng giữa chữ và số (thẻ hẹp ở 1280 px từng gãy "từ Chương / 1"): dấu cách không ngắt thay cho dấu cách thường. */

@@ -104,7 +104,7 @@ object BookImport {
     private const val MAX_HEADING = 120
     private const val TITLE_FROM_LINE = 80
     private const val CREDIT_HEAD_LINES = 64
-    private const val BROKEN = "Không phải file %s thật hoặc bị hỏng - thử tải lại, hoặc dùng bản TXT"
+    private const val BROKEN = "File %s hỏng hoặc sai định dạng. Tải lại hoặc dùng TXT."
     private const val EPUB_DRM = "EPUB bị khoá bản quyền — bạn dùng bản không khoá hoặc TXT."
 
     private fun broken(kind: String) = Failed(BROKEN.format(kind))

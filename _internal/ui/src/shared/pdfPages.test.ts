@@ -10,10 +10,11 @@ import { pdfPages, words } from "@/shared/pdfPages";
 const FIXTURES = new URL("../../../tests/fixtures/import/", import.meta.url);
 const workerSrc = pathToFileURL(createRequire(import.meta.url).resolve("pdfjs-dist/legacy/build/pdf.worker.min.mjs")).href;
 const read = (name: string) => readFileSync(new URL(name, FIXTURES));
+const messages = JSON.parse(read("messages.json").toString("utf8")) as { broken: string; password: string };
 
 describe("pdfPages", () => {
   it("a84_19 tells you how to unlock a password protected PDF", async () => {
-    await expect(pdfPages(read("a84_locked.pdf"), workerSrc)).rejects.toThrow(/mật khẩu.*Bạn.*mở khóa/);
+    await expect(pdfPages(read("a84_locked.pdf"), workerSrc)).rejects.toThrow(messages.password);
   });
   it("reads the same lines per page as pypdf on the shared sample", async () => {
     const expected = JSON.parse(read("pages/story.pages.json").toString("utf-8")) as { title: string; author: string; pages: string[][] };
@@ -30,7 +31,7 @@ describe("pdfPages", () => {
   });
 
   it("rejects a file that is not a PDF", async () => {
-    await expect(pdfPages(new TextEncoder().encode("not a pdf"), workerSrc)).rejects.toThrow("PDF");
+    await expect(pdfPages(new TextEncoder().encode("not a pdf"), workerSrc)).rejects.toThrow(messages.broken);
   });
 
   it("collapses whitespace like Python str.split", () => {

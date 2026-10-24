@@ -205,6 +205,17 @@
   button {
     cursor: default;
   }
+  /* Cả điều khiển viết riêng cũng đổi màu/độ mờ êm; utility cục bộ vẫn ưu tiên hơn. */
+  :where(button, a, input, textarea, select, summary, [role="button"], [role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]) {
+    transition-property: color, background-color, border-color, box-shadow, outline-color, opacity;
+    transition-duration: var(--motion-fast);
+    transition-timing-function: var(--ease-standard);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+  :where(svg) {
+    transition: color var(--motion-fast) var(--ease-standard), opacity var(--motion-fast) var(--ease-standard), fill var(--motion-fast) var(--ease-standard), stroke var(--motion-fast) var(--ease-standard);
+  }
   :focus-visible {
     outline: 2px solid var(--focus);
     outline-offset: 2px;
@@ -849,6 +860,7 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
   * {
     transition-duration: var(--motion-fast) !important;
   }
+  button:active { scale: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -57,7 +57,7 @@ export function itemFromPath(path: string): PickedItem {
   const name = clean.split(/[\\/]/).filter(Boolean).pop() ?? clean;
   const last = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
   if (last && !BOOK_TYPES.test(name)) {
-    return { name, error: `ABook chưa đọc được file ${last.toLowerCase()} - chỉ nhận EPUB, Word (DOCX), PDF có chữ, TXT, hay file sách .abook.` };
+    return { name, error: `Chưa hỗ trợ ${last.toLowerCase()}. Chọn EPUB, DOCX, PDF có chữ, TXT hoặc .abook.` };
   }
   return { name, choice: { ref: clean, name } };
 }

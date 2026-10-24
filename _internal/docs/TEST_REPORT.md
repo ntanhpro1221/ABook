@@ -2,6 +2,13 @@
 
 Ngày cập nhật: 2026-10-24
 
+Đợt ux131, cây `ABook_ux131`, nhánh `dev/ux131`, nền `2805d419`: bổ sung chuyển động cho nhãn nút, trạng thái, số đếm, huy hiệu bìa, nghe thử, hàng nhập sách và sidebar; gấp nhóm thư viện/chương/nhân vật, các bước Studio và phần chi tiết tạo sách. Rút chữ giao diện, đồng nhất lỗi PDF giữa TypeScript/Python/Kotlin qua fixture. Có **29 test Vitest mới**, gồm **26 test DOM component thật** và 3 test chữ/hợp đồng.
+
+- Vitest toàn bộ: **1814 passed, 0 failed, 1 skipped**, 247 file; tối đa 2 worker. Skip sẵn có là corpus PDF cục bộ tuỳ chọn. `tsc -p tsconfig.json`: **0 lỗi**.
+- Pytest chỉ 7 file nhập sách liên quan, `-p no:cacheprovider -rf`, CUDA tắt: **296 passed**, 0 failed; một cảnh báo zip trùng mục từ fixture. Thêm 2 test Python kiểm lời lỗi PDF qua fixture chung.
+- `npm run build` và `npm run build:android`: exit 0. Tổng JS/mjs so với build nền cùng cấu hình: web 1.524.016 → 1.524.350 byte (+334); Android 2.944.290 → 2.943.735 byte (-555). Hash trước/sau: `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`.
+- Junction hiện thiếu happy-dom; loader riêng trong scratch dùng bản 21.0.4 đã có ở `ABook_a119`, không cài gói hay sửa junction. Chưa đo chiều cao/FPS ở browser 375×812, WebView/TalkBack hoặc thiết bị thật. Kotlin chỉ sửa chuỗi production và kỳ vọng chuỗi trong `BookImportTest`; Lead cần chạy JVM `BookImportTest`, không chạy Gradle ở lượt này. Chi tiết, lệnh tái chạy, bảng file:dòng, chuỗi trước/sau và logs: scratchpad `ux131/result.md`.
+
 Đợt m134 ngày 24-10, cây `ABook_rel134`, nhánh `dev/rel134` trên nền `27ab6434` (0.4.133): gộp lần lượt `dev/sec135`, `dev/copy131`, `dev/multiaddr129`, mỗi nhánh một merge commit. Giữ logic Lamport của 0.4.133 và chữ ngắn Python/Kotlin qua fixture chung; giữ che địa chỉ mới cùng basename/số dòng stack trace. Pytest sau từng nhánh: 360/363/483 đạt, 0 FAILED; lượt mở rộng copy131 có 68 file (1375 ca), hai kỳ vọng chữ cũ đã sửa và chạy lại trong nhóm 363 ca. Gradle `:app:testDebugUnitTest` offline theo khoá chung: 1732 tests, 0 failures/errors, 7 skipped; Vitest toàn bộ: 1674 passed, 1 skipped, 0 failed; `tsc --noEmit` và compileall abook/tests/scripts exit 0. Hash khoá giữ `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`. GPU tắt, giới hạn worker/CPU 4. Chi tiết xung đột, sửa test và log ở scratchpad `m134/result.md`.
 
 - 24-10 dev/multiaddr129 (a117h): sửa AppLog/diagnostics che nhầm dấu giờ ISO thành hostname:port (kể cả múi giờ âm). Giữ nguyên test định dạng; thêm 6 ca fixture chung giữ giờ/mức/tag/pid/luồng và vẫn che địa chỉ. Gradle testDebugUnitTest: 1712 test, 1705 passed / 7 skipped / 0 failures/errors; pytest tests -k "diagnostics or peer or route": 190 passed / 0 skipped / 0 FAILED; compileall abook/tests/scripts đạt; hash khoá giữ c9176123. CPU, tối đa 4; Gradle chạy theo khoá chung và đã trả khoá.
@@ -874,3 +881,14 @@ Bắt buộc smoke test một chapter 2.000–5.000 từ trước khi chạy boo
 - Tổng JS web: 1517520 → 1521575 byte; Android: 1620853 → 1624602 byte, so với build source trước sửa trong scratch.
 - Hash implementation trước/sau: c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886.
 - Test dùng happy-dom, geometry/WAAPI có stub; chưa xác nhận FPS/pixel, Tab/focus và Back trên WebView/TalkBack thật.
+
+
+## 24-10-2026 — Sửa bốn phát hiện ux131
+
+- V1: nhóm chứa chương đang nghe mở mặc định khi chưa có lựa chọn gấp; giữ trạng thái đã lưu và dấu Đang nghe. Khi mở nhóm, đợi Collapse hoàn tất mới cuộn; khôi phục cuộn đợi layout/hoạt ảnh hữu hạn và huỷ khi rời trang.
+- V2: cảnh báo đổi giọng phần nối tiếp và nút Dùng lại ở ngoài Fold bộ lọc/lưới giọng.
+- T1/T2: chỉ dẫn chuột phải đầy đủ, giữ nhánh cảm ứng; nhắc nghe thử nói rõ đang làm sách và bạn thử lại khi xong.
+- Vitest toàn UI: 1818 pass, 0 fail, 1 skip (246 file pass, 1 file skip), 32,19 s; tối đa 2 worker. Tsc `-p tsconfig.json`: 0 lỗi, exit 0. `git diff --check`: exit 0.
+- Bổ sung 4 test DOM happy-dom: mở chương giữa nhóm dài/quay lại, gấp đã lưu và cuộn sau hoạt ảnh, đợi layout/huỷ, cảnh báo giọng khi Fold lưu đóng. Các test chữ được cập nhật.
+- Hash trước/sau: c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886.
+- Không cài dependency, không Git ghi, không GPU/Gradle. Dùng loader happy-dom sẵn có từ scratchpad/ux131; chưa kiểm giao diện trên thiết bị thật.

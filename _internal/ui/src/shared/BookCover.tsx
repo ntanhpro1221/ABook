@@ -2,6 +2,7 @@ import { cn } from "@/shared/cn";
 import { useState } from "react";
 import { coverColor, coverLabel, coverStyle, splitTitle, type CoverImage } from "@/shared/cover";
 import { Vu } from "@/shared/ui";
+import { MotionRegion } from "./MotionRegion";
 
 // Bìa vuông kiểu album sách nói. Hoạ tiết là các vòng sóng âm lan ra từ góc - thứ duy nhất sách TXT
 // "có" là giọng đọc, nên bìa vẽ giọng đọc.
@@ -105,11 +106,9 @@ export function BookCover({
           </>
         )}
       </div>
-      {playing && (
-        <span className="absolute bottom-1.5 right-1.5 grid place-items-center rounded-md bg-black/45 px-1 py-0.5" style={{ color: style.ink }}>
-          <Vu className="h-3" />
-        </span>
-      )}
+      <MotionRegion as="span" className="absolute bottom-1.5 right-1.5 grid place-items-center rounded-md bg-black/45 px-1 py-0.5" style={{ color: style.ink }}>
+        {playing && <Vu className="h-3" />}
+      </MotionRegion>
     </div>
   );
 }
@@ -150,11 +149,9 @@ function PhotoCover({
         onError={onError}
         className={cn("relative size-full", square ? "object-cover" : "object-contain")}
       />
-      {playing && (
-        <span className="absolute bottom-1.5 right-1.5 grid place-items-center rounded-md bg-black/45 px-1 py-0.5 text-white">
-          <Vu className="h-3" />
-        </span>
-      )}
+      <MotionRegion as="span" className="absolute bottom-1.5 right-1.5 grid place-items-center rounded-md bg-black/45 px-1 py-0.5 text-white">
+        {playing && <Vu className="h-3" />}
+      </MotionRegion>
     </div>
   );
 }

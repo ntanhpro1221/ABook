@@ -49,6 +49,19 @@ export function reveal(scroller: HTMLElement, element: Element): void {
   if (shift !== null) scroller.scrollTop += shift;
 }
 
+/** Chờ layout và các hoạt ảnh đang đổi vị trí hàng trước khi đo chỗ cuộn. */
+export function afterScrollLayout(node: HTMLElement, callback: () => void): () => void {
+  let alive = true;
+  const frame = requestAnimationFrame(() => {
+    const animations = (node.getAnimations?.({ subtree: true }) ?? [])
+      .filter(animation => animation.effect?.getComputedTiming().endTime !== Infinity);
+    void Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
+      if (alive && node.isConnected) callback();
+    });
+  });
+  return () => { alive = false; cancelAnimationFrame(frame); };
+}
+
 const KEY = "abook.scroll.";
 
 /** Ghi chỗ cuộn hiện tại của trang `key`. */
@@ -74,15 +87,25 @@ export function useScrollMemory(key: string | null, ref: RefObject<HTMLElement |
     const scroller = scrollParent(node);
     const target: EventTarget = isPage(scroller) ? window : scroller;
     let alive = true;
+    let restored = false;
+    let cancelLayout: (() => void) | undefined;
     // Sau mọi layout effect của lần dựng này: vỏ app (usePageEnter) đưa trang mới về đầu trong effect của chính nó, chạy SAU effect
-    // của trang con. Microtask vẫn chạy trước khi trình duyệt vẽ - không thấy trang nháy ở đầu.
+    // của trang con. Microtask vẫn chạy trước khi trình duyệt vẽ - không thấy trang nháy ở đầu. Hàng đích có thể còn trong nhóm
+    // đang mở ra (Fold): đo lại sau layout và chuyển động, trừ khi bạn đã tự cuộn trong lúc chờ.
     queueMicrotask(() => {
-      if (alive) restoreScroll(key, scroller, firstNow.current);
+      if (!alive) return;
+      restoreScroll(key, scroller, firstNow.current);
+      const settled = scroller.scrollTop;
+      cancelLayout = afterScrollLayout(scroller, () => {
+        if (scroller.scrollTop === settled) restoreScroll(key, scroller, firstNow.current);
+        restored = true;
+      });
     });
-    const save = () => saveScroll(key, scroller);
+    const save = () => { if (restored) saveScroll(key, scroller); };
     target.addEventListener("scroll", save, { passive: true });
     return () => {
       alive = false;
+      cancelLayout?.();
       target.removeEventListener("scroll", save);
     };
   }, [key, ref]);
