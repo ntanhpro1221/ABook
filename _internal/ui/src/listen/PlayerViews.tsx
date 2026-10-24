@@ -204,23 +204,24 @@ function SeekBar({ large = false }: { large?: boolean }) {
 
 // ---- Nút điều khiển ------------------------------------------------------------------------------------
 
-// Cung mũi tên ở trên, số 15 ở dưới: chữ vẫn >= 12 px trong ô glyph 18 px, không chạm nét mũi tên.
+// Cung nông ở trên (đáy nét y <= 10), số 15 ở dưới (mực từ y ~11.6): chữ >= 12 px ở ô 20 px mà nét và số luôn cách nhau một khe đo được
+// (chủ sách 24-10: số 15 đè lên vòng; bản cung cũ để góc số 5 cách mũi tên 0,6 px - đo bằng điểm ảnh, không ước bằng mắt).
 function skipIcon(forward: boolean) {
   return function SkipGlyph({ className, strokeWidth = 1.9 }: { className?: string; strokeWidth?: number }) {
     return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden className={cn("size-6 shrink-0", className)}>
         <g transform={forward ? undefined : "matrix(-1 0 0 1 24 0)"}>
-          <path d="M3 11a9 9 0 0 1 17-4" />
-          <path d="M20 3v4h-4" />
+          <path d="M4.05 9A8.5 8.5 0 0 1 19.95 9" />
+          <path d="M20.94 6.17 19.95 9l-2.61-1.47" />
         </g>
         <text
           x="12"
-          y="16"
+          y="18.2"
           textAnchor="middle"
           dominantBaseline="central"
           fill="currentColor"
           stroke="none"
-          fontSize="16"
+          fontSize="14.5"
           fontWeight="600"
           letterSpacing="-0.2"
           style={{ fontFamily: "inherit", fontVariantNumeric: "tabular-nums" }}
