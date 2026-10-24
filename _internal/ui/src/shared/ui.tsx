@@ -71,6 +71,7 @@ export function Button({
     <button
       type={type}
       data-variant={variant}
+      data-size={size}
       disabled={loading ? undefined : disabled}
       aria-disabled={loading || undefined}
       aria-busy={loading || undefined}
