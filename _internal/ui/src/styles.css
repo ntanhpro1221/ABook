@@ -811,6 +811,16 @@ select[class~="border-line"] {
 .sheet-surface [data-sheet-grip] button { margin-right: -14px; }
 .player-sheet .sheet-body [class~="px-2"],
 .player-sheet .sheet-body [class~="px-1"] { padding-inline: 0; }
+/* Khung cuộn của danh sách (p-1) tràn ra 12 px mỗi bên, chữ vẫn ở mép 20 px: khung cuộn cắt mọi thứ tràn ngang, nên nền chọn tràn của dòng
+   bên trong cần chỗ ngay trong khung. */
+.player-sheet .sheet-body [class~="p-1"] { margin-inline: -12px; padding-inline: 12px; }
+/* Dòng lựa chọn của bảng trượt (giọng, nhạc): chữ đứng đúng mép nội dung 20 px như mọi dòng khác, còn nền chọn / nền rê tràn ra 12 px mỗi
+   bên để chữ không dính sát mép nền. Giọng: nền chọn phủ cả dòng (gồm nút "Thử"), không dừng giữa hàng. */
+.player-sheet .sheet-body [data-sheet-choice] { margin-inline: -12px; padding-inline: 12px; gap: 12px; border-radius: 12px; }
+.player-sheet .sheet-body [data-sheet-choice] > svg { width: 20px; height: 20px; }
+.player-sheet .sheet-body [data-sheet-current] { background: var(--color-accent-soft); }
+.player-sheet .sheet-body [data-sheet-current] > button { background: transparent; }
+.player-sheet .sheet-body [data-voice-try] { justify-content: flex-end; }
 .sheet-surface .add-book-choose { display: flex; flex-direction: column; }
 .sheet-surface .add-book-pick { order: 1; display: flex; flex-direction: column-reverse; margin-top: 16px; }
 .sheet-surface .add-book-pick > button { min-height: 48px; width: 100%; }
