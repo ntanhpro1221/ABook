@@ -1037,8 +1037,9 @@ export function BookScreen({
             </p>
           ) : null}
           {book.remote && !downloaded && (
-            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-fg-2">
-              <Laptop className="size-4 shrink-0" />
+            // Biểu tượng cao đúng một dòng chữ: chữ xuống hai dòng thì biểu tượng vẫn thẳng dòng đầu, không trôi vào giữa.
+            <p className="mt-1.5 flex items-start gap-1.5 text-sm text-fg-2">
+              <span className="grid h-[1lh] shrink-0 place-items-center"><Laptop className="size-4" /></span>
               {typeof book.remote === "object"
                 ? `Nghe thẳng từ ${book.remote.computer || "máy khác"} - chương nghe tới được giữ lại trên máy này`
                 : "Nghe thẳng từ máy tính - tải về để nghe cả khi không có mạng"}
