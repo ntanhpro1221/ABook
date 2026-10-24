@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import type { ImportChoice } from "@/listen/textImport";
 import { brokenMusicNote, keptEditsTitle } from "@/shared/editsKept";
 import { EbookLibrary } from "./plugins";

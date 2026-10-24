@@ -1,6 +1,6 @@
 import { type QueryClient } from "@tanstack/react-query";
 import { useCachedBook } from "./data";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { api, type BookSummary } from "./api";
 
 /** Thay đổi của người nghe vào sách lúc nào - lời báo chỉ nói vế đúng với sách này (soát UX 29-09: mọi thông báo nói cả

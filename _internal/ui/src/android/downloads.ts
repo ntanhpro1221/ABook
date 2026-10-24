@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import { errorDescription } from "./nativeError";
 import { EbookLibrary, type DownloadEvent } from "./plugins";
 

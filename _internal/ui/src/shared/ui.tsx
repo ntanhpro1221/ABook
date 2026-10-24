@@ -821,16 +821,21 @@ export function TimeSelect({
   label,
   className,
   disabled,
+  ariaDisabled,
 }: {
   value: string;
   onChange: (value: string) => void;
   label: string;
   className?: string;
   disabled?: boolean;
+  ariaDisabled?: boolean;
 }) {
   const options = QUARTERS.includes(value) ? QUARTERS : [...QUARTERS, value].sort();
   return (
-    <select aria-label={label} value={value} disabled={disabled} onChange={(event) => onChange(event.target.value)} className={cn("tabular", className)}>
+    <select aria-label={label} value={value} disabled={disabled} aria-disabled={ariaDisabled || undefined}
+      onPointerDown={(event) => { if (ariaDisabled) event.preventDefault(); }}
+      onKeyDown={(event) => { if (ariaDisabled && event.key !== "Tab") event.preventDefault(); }}
+      onChange={(event) => { if (!ariaDisabled) onChange(event.target.value); }} className={cn("tabular aria-disabled:opacity-50", className)}>
       {options.map((time) => (
         <option key={time} value={time}>
           {time}

@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 
 // Hai máy (hay hai cửa sổ) cùng sửa một chỗ: người nói của câu, cách đọc một tên, phán quyết "Nghe lại". Mỗi lần ghi gửi kèm `seen` - điều
 // giao diện này đang thấy - và máy chủ trả `elsewhere` khi điều đang ghi đã khác (server `_edited_elsewhere`, `_reading_elsewhere`, post_review).

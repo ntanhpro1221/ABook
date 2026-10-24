@@ -1,4 +1,4 @@
-import { toast } from "sonner";
+import { toast } from "@/shared/toast";
 import type { Script } from "@/listen/model";
 import { timedTextScript, VOICE_CHANGED_EVENT, type ReadAloudTimings } from "@/listen/readAloud";
 import { chosenVoice, DEFAULT_VOICE_EVENT, defaultVoice, recordOf } from "@/listen/readAloudVoice";

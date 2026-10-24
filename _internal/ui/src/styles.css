@@ -560,7 +560,11 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
 [data-radix-popper-content-wrapper] > :is([data-state="open"], [data-state="delayed-open"], [data-state="instant-open"]) {
   animation: motion-enter var(--motion-medium) var(--ease-decelerate) backwards;
 }
+[data-radix-popper-content-wrapper]:has(> [data-state="closed"]) {
+  pointer-events: none;
+}
 [data-radix-popper-content-wrapper] > [data-state="closed"] {
+  pointer-events: none !important;
   animation: motion-exit var(--motion-medium-out) var(--ease-accelerate) both;
 }
 [data-radix-popper-content-wrapper] > .motion-tooltip:is([data-state="delayed-open"], [data-state="instant-open"]) {
