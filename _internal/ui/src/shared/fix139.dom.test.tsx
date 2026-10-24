@@ -118,7 +118,8 @@ it.each([false, true])("V7 nền badge nằm trên con được fade, ảnh=%s",
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ top: 0, left: 0, width: 30, height: 20, right: 30, bottom: 20 } as DOMRect);
   const draw = (playing: boolean) => act(() => root.render(<BookCover title="Sách" playing={playing} image={photo ? { url: "cover.jpg" } : undefined} />));
   await draw(true);
-  const region = host.querySelector<HTMLElement>("[data-motion-region]")!;
+  // Vùng huy hiệu là vùng chuyển động cuối của bìa (trước nó là vùng mờ chéo ảnh bìa).
+  const region = [...host.querySelectorAll<HTMLElement>("[data-motion-region]")].at(-1)!;
   expect(region.className).not.toContain("bg-black/45");
   expect(region.firstElementChild?.className).toContain("bg-black/45");
   await draw(false);
