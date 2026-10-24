@@ -4,7 +4,7 @@ import { LoadingCrossfade } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { holderName } from "@/shared/editsSync";
@@ -37,6 +37,7 @@ import { useBookVoice, useCast, useListenBook, useListenLibrary, useListenMutati
 import { latestReading } from "./readingPosition";
 import { moreMenuHasItems } from "./bookMenu";
 import { withFeedback } from "@/shared/feedback";
+import { ActionButton } from "./ActionButton";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
@@ -72,9 +73,13 @@ export function ChapterRow({
   const name = chapter.subtitle || chapter.title;
   return (
     <MotionRegion as="div"
+      // Hàng đang phát: chữ màu nhấn + vạch tiến độ mảnh, không tô nền cả hàng (docs/DESIGN.md mục 6).
+      // Biểu tượng hai đầu thẳng mép nội dung như tab và nút chính (soát 24-10): lề âm bù đệm hàng, nút hai đầu bù nửa phần nền chạm thừa
+      // quanh biểu tượng 14 px (nút phát size-9 = 31,5 px, màn chạm 48 px; nút "…" size-8 = 28 px). Điện thoại hết chỗ cho lề âm (nút 48 px sẽ
+      // lòi khỏi màn): biểu tượng dồn về mép ngoài của nút. Nền rê chuột tràn ra lề.
       className={cn(
-        "group flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors duration-motion-fast sm:px-3",
-        current ? "bg-accent-soft" : canPlay(chapter) && "hover:bg-hover",
+        "group -mx-2 flex items-center gap-3 rounded-lg px-2 py-2.5 transition-colors duration-motion-fast sm:-mx-3 sm:px-3",
+        canPlay(chapter) && "hover:bg-hover",
       )}
     >
       <button
@@ -82,7 +87,7 @@ export function ChapterRow({
         onClick={onPlay}
         disabled={!canPlay(chapter)}
         aria-label={current && player.playing ? `Tạm dừng ${chapter.fullTitle}` : `Nghe ${chapter.fullTitle}`}
-        className="touch-hit touch-box grid size-9 shrink-0 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
+        className="touch-hit touch-box -ml-[8.75px] grid size-9 shrink-0 place-items-center rounded-full text-fg-2 max-sm:ml-0 max-sm:!min-w-0 max-sm:!justify-start sm:pointer-coarse:-ml-[17px] hover:bg-panel hover:text-fg disabled:text-fg-3 disabled:hover:bg-transparent"
       >
         {current && player.playing ? (
           <Vu className="h-3 text-accent" />
@@ -127,14 +132,14 @@ export function ChapterRow({
           </div>
         )}
       </button>
-      <div className="size-8 shrink-0 max-sm:size-[48px]">
+      <div className="-mr-[7px] size-8 shrink-0 max-sm:mr-0 max-sm:size-[48px]">
         {(
           <DropdownMenu.Root>
             <DropdownMenu.Trigger asChild>
               <button
                 type="button"
                 aria-label={`Tuỳ chọn ${chapter.fullTitle}`}
-                className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px]"
+                className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px] max-sm:justify-items-end"
               >
                 <MoreHorizontal className="size-4" />
               </button>
@@ -174,11 +179,16 @@ export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared
   onRename?: (chapter: ListenChapter) => void; prepared?: Set<number>; voice?: string;
 }) {
   const chapters = book.chapters ?? [];
-  return <>{chaptersByPart(chapters, book.parts).map((group, index) => (
+  const groups = chaptersByPart(chapters, book.parts);
+  // Sách không chia phần: một danh sách phẳng ngay dưới tab - không gấp trong một khối "Danh sách chương" lặp lại tên tab.
+  if (groups.length === 1 && !groups[0].heading) {
+    return <div className="mt-2"><ChapterGroupList book={book} chapters={groups[0].chapters} memory={`book.${book.id}.0`} currentChapter={currentChapter} onDone={onDone} onRename={onRename} prepared={prepared} voice={voice} /></div>;
+  }
+  return <>{groups.map((group, index) => (
             <Fold key={group.heading ?? index} storageKey={`book.${book.id}.chapters.${index}`} title={group.heading || "Danh sách chương"} summary={`${group.chapters.length} chương${group.chapters.some(chapter => chapter.id === currentChapter) ? " · Đang nghe" : ""}`} defaultOpen={group.chapters.length <= 4 || group.chapters.some(chapter => chapter.id === currentChapter)} onOpened={(element) => {
               const row = element.querySelector(`[data-chapter="${CSS.escape(String(currentChapter))}"]`);
               if (row && !row.closest("[inert]")) reveal(scrollParent(row), row);
-            }} heading="h3" className="mt-3" bodyClassName="px-1 pb-1">
+            }} heading="h3" flat className="mt-3">
               <ChapterGroupList book={book} chapters={group.chapters} heading={group.heading} memory={`book.${book.id}.${index}`} currentChapter={currentChapter} onDone={onDone} onRename={onRename} prepared={prepared} voice={voice} />
             </Fold>
           ))}</>;
@@ -313,7 +323,7 @@ export function PersonRow({
     .toUpperCase();
   return (
     // min-w-0: ô lưới mặc định không co dưới chiều rộng nội dung - tên dài từng đẩy "Đổi giọng" ra ngoài màn 375px.
-    <MotionRegion as="div" className="flex min-w-0 items-center gap-3 rounded-xl border border-line bg-panel p-3">
+    <MotionRegion as="div" className="flex min-w-0 items-center gap-3 py-3">
       <div
         className="avatar grid size-10 shrink-0 place-items-center rounded-full text-sm font-bold"
         style={{ ["--hue" as string]: hueOf(person.voice?.preset ?? person.name) }}
@@ -451,8 +461,8 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   }
   return (
     <MotionRegion as="div" className="motion-reveal mt-4">
-      <div className="flex items-center gap-3 rounded-2xl border border-line bg-panel p-4">
-        <div className="grid size-11 place-items-center rounded-full bg-accent-soft text-accent-text">
+      <div className="flex items-center gap-3 py-2">
+        <div className="grid size-10 place-items-center rounded-full bg-accent-soft text-accent-text">
           <BookOpenText className="size-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -469,8 +479,8 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
         {onPickNarrator && <IconButton label="Đổi giọng người kể" icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}
       </div>
       {narratorNote && <div className="mt-2 text-xs text-fg-2">{narratorNote}</div>}
-      <Fold storageKey={`book.${bookId}.cast`} title="Nhân vật" summary={`${cast.characters.length} người có lời thoại`} defaultOpen={cast.characters.length <= 4} heading="h3" className="mt-4">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <Fold storageKey={`book.${bookId}.cast`} title="Nhân vật" summary={`${cast.characters.length} người có lời thoại`} defaultOpen={cast.characters.length <= 4} heading="h3" flat className="mt-4">
+      <div className="grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">
         {cast.characters
           .filter((person) => later || !reached || !person.firstChapter || reached.has(person.firstChapter))
           .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}
@@ -482,15 +492,15 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
       )}
       </Fold>
       {cast.extras.length > 0 && (
-        <Fold storageKey={`book.${bookId}.extras`} title="Vai phụ" summary={`${cast.extras.length} người trong một cảnh`} heading="h3" className="mt-4">
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}</div>
+        <Fold storageKey={`book.${bookId}.extras`} title="Vai phụ" summary={`${cast.extras.length} người trong một cảnh`} heading="h3" flat className="mt-4">
+          <div className="grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}</div>
         </Fold>
       )}
       {/* Phần nối tiếp: dàn mang sang chưa nói ở phần này (soát UX a6 01-10, B2 - tab từng ghi "Chưa có dàn"). Mở sẵn khi chưa ai
           nói câu nào - lúc ấy đây là cả dàn. */}
       {carriedPeople.length > 0 && (
-        <Fold storageKey={`book.${bookId}.carried`} title="Từ phần trước" summary={`${carriedPeople.length} người chưa xuất hiện`} defaultOpen={!cast.characters.length && carriedPeople.length <= 4} heading="h3" className="mt-4">
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <Fold storageKey={`book.${bookId}.carried`} title="Từ phần trước" summary={`${carriedPeople.length} người chưa xuất hiện`} defaultOpen={!cast.characters.length && carriedPeople.length <= 4} heading="h3" flat className="mt-4">
+            <div className="mt-3 grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">
               {carriedPeople.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onRename={onRename} onGender={onGender} />)}
             </div>
         </Fold>
@@ -558,7 +568,7 @@ export function HistoryTab({ book }: { book: ListenBook }) {
         7 ngày qua: <span className="font-semibold text-fg">{formatLength(week)}</span> nghe cuốn này.
       </p>
       {[...groups.entries()].map(([day, items]) => (
-        <Fold key={day} storageKey={`book.${book.id}.history.${day}`} title={day} summary={`${items.length} lượt nghe`} className="mt-3" heading="h3">
+        <Fold key={day} storageKey={`book.${book.id}.history.${day}`} title={day} summary={`${items.length} lượt nghe`} className="mt-3" heading="h3" flat>
           <ul className="mt-2 divide-y divide-line">
             {items.map((item) => (
               <li key={item.id} className="flex items-center gap-3 py-2.5">
@@ -598,7 +608,7 @@ function newRecordDialog(book: ListenBook): RecordDialog {
   return { kind: "create", name: `Lần nghe ${(book.records?.length ?? 0) + 1}` };
 }
 
-/** Việc làm với hồ sơ nghe khi cuốn chỉ có MỘT hồ sơ (không có nút "Hồ sơ nghe:"): menu "Tuỳ chọn khác" liệt kê các việc này. Nhiều hồ sơ thì RecordPicker lo. */
+/** Việc làm với hồ sơ nghe khi cuốn chỉ có MỘT hồ sơ (không có nút "Hồ sơ nghe:"): menu "Thêm" (…) liệt kê các việc này. Nhiều hồ sơ thì RecordPicker lo. */
 export function singleRecordActions(book: ListenBook): { key: string; label: string; icon: typeof Plus; dialog: RecordDialog; danger?: boolean }[] {
   if (book.records?.length !== 1) return [];
   const name = book.records[0].name;
@@ -642,7 +652,7 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
 /**
  * Hồ sơ nghe của cuốn: dữ liệu nghe độc lập với sách, app giữ liên kết - một cuốn nhiều hồ sơ (nghe lại từ đầu mà giữ
  * lần trước, mỗi người trong nhà một hồ sơ). Cuốn đang nạp trong trình phát thì trình phát theo sang hồ sơ mới.
- * Chỉ có một hồ sơ (gần như mọi người): không hiện nút "Hồ sơ nghe: Mặc định"; "Nghe lại từ đầu (hồ sơ mới)…" nằm trong menu "Tuỳ chọn khác"
+ * Chỉ có một hồ sơ (gần như mọi người): không hiện nút "Hồ sơ nghe: Mặc định"; "Nghe lại từ đầu (hồ sơ mới)…" nằm trong menu "Thêm" (…)
  * (soát UX 03-10) - vì thế trang sách giữ `dialog`, menu ấy mở được cùng hộp.
  */
 function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: RecordDialog; setDialog: Dispatch<SetStateAction<RecordDialog>> }) {
@@ -817,6 +827,21 @@ export interface EditingOptions {
   remote?: string;
 }
 
+/** Các mẩu nối bằng " · ", chỉ xuống dòng ở dấu nối: "16 chương ·" / "7 giờ 37 phút", không "… 7 giờ" / "37 phút" hay một chữ "nghe" rớt dòng
+ *  (soát 24-10). Mẩu đầu (tên tác giả, có thể dài) vẫn được ngắt bên trong. */
+function DotJoin({ parts }: { parts: (string | false | null | undefined)[] }) {
+  return (
+    <>
+      {parts.filter(Boolean).map((part, index) => (
+        <Fragment key={index}>
+          {index > 0 && " · "}
+          {index > 0 ? <span className="whitespace-nowrap">{part}</span> : part}
+        </Fragment>
+      ))}
+    </>
+  );
+}
+
 export function BookScreen({
   extraActions,
   studioLink,
@@ -937,6 +962,11 @@ export function BookScreen({
     heard: started ? Math.max(heard, 1) : 0,
     textOnly,
   });
+  // Nghe được ở máy này: nút chính là nghe, "Đọc" vào hàng phụ; không nghe được (sách chữ, máy không có giọng): nút chính là "Đọc".
+  const listenFirst = Boolean(point);
+  const readLabel = listening ? "Đọc" : latestReading(book) ? "Đọc tiếp" : "Đọc";
+  // Đang nghe cuốn này: mở đúng chương đang phát (màn đọc tự tới câu đang nghe) - sửa câu vừa nghe không phải tìm lại (soát a70).
+  const read = () => navigate(`/book/${book.id}/read${listening && player.track ? `/${player.track.chapterId}` : ""}`);
   const restart = () => {
     const first = chapters.find(canPlay);
     if (!first) return;
@@ -963,28 +993,29 @@ export function BookScreen({
       <button type="button" onClick={() => navigate("/")} className="touch-hit touch-row inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Thư viện
       </button>
-      <header className="mt-5 flex items-start gap-4 sm:gap-7">
-        <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-24 sm:w-44" />
-        <div className="min-w-0 flex-1">
+      {/* Bìa · tên · tác giả · giọng · thời lượng · tiến độ mảnh; dưới là MỘT nút chính và một hàng nút phụ cùng kiểu (docs/DESIGN.md mục 7).
+          Điện thoại: hàng nút trải hết bề ngang dưới bìa; máy tính: nằm dưới tên, cạnh bìa. */}
+      <header className="mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7">
+        <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-24 sm:row-span-2 sm:w-44" />
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[1.875rem]">{book.title}</h1>
-          {book.author && <p className="mt-1.5 text-[0.9375rem] text-fg-2">{book.author}</p>}
-          <p className="tabular mt-2 text-sm text-fg-2">
-            {book.narrator && `Giọng kể ${book.narrator} · `}
-            {textOnly
-              ? `${book.chaptersTotal} chương`
-              : phonePartial
-                ? `${formatLength(book.duration)} phần đã có` // số chương đã nằm ở dòng "Sách này có x/y chương đã thu" ngay dưới
-                : book.complete
-                  ? `${book.chaptersTotal} chương · ${formatLength(book.duration)}`
-                  : `${book.chaptersAvailable}/${book.chaptersTotal} chương có audio · ${formatLength(book.duration)} phần đã có`}
+          <p className="tabular mt-1.5 text-sm text-fg-2">
+            <DotJoin
+              parts={[
+                book.author,
+                book.narrator && `Giọng ${book.narrator}`,
+                ...(textOnly
+                  ? [`${book.chaptersTotal} chương`]
+                  : phonePartial
+                    ? [`${formatLength(book.duration)} phần đã có`] // số chương đã nằm ở dòng "Sách này có x/y chương đã thu" ngay dưới
+                    : [book.complete ? `${book.chaptersTotal} chương` : `${book.chaptersAvailable}/${book.chaptersTotal} chương có audio`, formatLength(book.duration)]),
+              ]}
+            />
           </p>
-          {textOnly && (
-            <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-text">
-              {textBookLine(speaks)}
-            </p>
-          )}
+          {/* Tình trạng của cuốn: một dòng chữ nhỏ, không hộp, không viên thuốc màu. */}
+          {textOnly && <p className="mt-1.5 text-sm text-fg-2">{textBookLine(speaks)}</p>}
           {!book.complete && !textOnly && (
-            <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-text">
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-accent-text">
               {book.producing && <Vu className="h-2.5" />}
               {book.producing
                 ? "Đang thu; chương mới tự hiện khi xong."
@@ -999,15 +1030,15 @@ export function BookScreen({
             </p>
           )}
           {book.missingFiles ? (
-            <p className="mt-2 inline-flex flex-wrap items-center gap-2 rounded-full bg-warning-soft px-3 py-1 text-xs font-medium text-warning">
+            <p className="mt-1.5 text-sm text-warning">
               {book.missingFiles} chương mất file trên máy này - {book.stage === "text"
                 ? "bạn hãy thêm lại đúng file sách gốc (EPUB, Word, PDF hoặc TXT) để chép bù"
                 : "bạn hãy mở lại file sách (.abook) của cuốn này để chép bù"}
             </p>
           ) : null}
           {book.remote && !downloaded && (
-            <p className="mt-2 inline-flex flex-wrap items-center gap-1.5 rounded-full bg-info-soft px-3 py-1 text-xs font-medium text-info">
-              <Laptop className="size-3.5" />{" "}
+            <p className="mt-1.5 flex items-center gap-1.5 text-sm text-fg-2">
+              <Laptop className="size-4 shrink-0" />
               {typeof book.remote === "object"
                 ? `Nghe thẳng từ ${book.remote.computer || "máy khác"} - chương nghe tới được giữ lại trên máy này`
                 : "Nghe thẳng từ máy tính - tải về để nghe cả khi không có mạng"}
@@ -1018,68 +1049,50 @@ export function BookScreen({
           <LocalEditsBanner book={book} />
           <EditsNoticesBanner book={book} />
           {textOnly && editable && <BookSuggestions book={book} />}
-          <div className="mt-4 max-w-md max-sm:mx-auto">
+          <div className="mt-4 max-w-md">
             {!textOnly && (
               <>
                 <Progress value={book.progress.fraction} tone={book.progress.finished ? "success" : "accent"} size="sm" label="Đã nghe" />
-                <div className="tabular mt-1.5 flex justify-between text-xs text-fg-2">
-                  <span>{book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? `Đã nghe ${formatLength(heard)}` : listening ? (player.error ? "Không phát được" : "Đang nghe") : "Chưa nghe"}</span>
-                  {/* Tính theo phần ĐÃ PHỦ (chỗ tua qua vẫn là chưa nghe), khác "còn X" theo vị trí ở màn "Đang nghe" - nói rõ để hai con
-                      số không trông như mâu thuẫn (soát UX 29-09). */}
-                  {!book.progress.finished && !book.progress.caughtUp && heard > 0 && <span>còn {formatLength(left)} chưa nghe</span>}
-                </div>
+                {/* Một dòng. "Còn" tính theo phần ĐÃ PHỦ (chỗ tua qua vẫn là chưa nghe), khác "còn X" theo vị trí ở màn "Đang nghe" - nói rõ
+                    "chưa nghe" để hai con số không trông như mâu thuẫn (soát UX 29-09). */}
+                <p className="tabular mt-1.5 text-xs text-fg-2">
+                  {book.progress.finished || book.progress.caughtUp ? bookStatusText(book) : heard > 0 ? <DotJoin parts={[`Đã nghe ${formatLength(heard)}`, `còn ${formatLength(left)} chưa nghe`]} /> : listening ? (player.error ? "Không phát được" : "Đang nghe") : "Chưa nghe"}
+                </p>
               </>
             )}
             <RecordPicker book={book} dialog={recordDialog} setDialog={setRecordDialog} />
           </div>
-          <div className="mt-5 flex flex-wrap items-center gap-2 max-sm:justify-center">
-            {point && !caughtUp && (
-              <Button
-                variant="primary"
-                size="lg"
-                icon={listening && player.playing ? Pause : finished ? RotateCcw : Play}
-                onClick={withFeedback("playPause", () => (finished ? restart() : listening ? player.toggle() : void playBook(book)))}
-                // Điện thoại: nút chính một hàng riêng, các nút phụ luôn ở hàng dưới theo cùng thứ tự - nhãn đổi độ dài khi
-                // phát/dừng từng làm hàng xuống dòng khác đi, "Từ đầu" nhảy sang chỗ nút khác (soát UX 29-09).
-                className="min-w-0 max-w-full max-sm:w-full"
-              >
-                {/* Tên chương dài (truyện dịch) hay chữ hệ thống to: cắt "…" trong nút thay vì tràn ra hai mép màn hình (soát UX a9). */}
-                <span className="min-w-0 truncate">{primaryLabel}</span>
-              </Button>
-            )}
-            {caughtUp && (
-              <p className="rounded-xl bg-hover px-4 py-2.5 text-sm text-fg-2">Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong.</p>
-            )}
-            <Tooltip label="Đọc chữ, cả chương chưa thu âm">
-              <Button
-                variant={textOnly && !point ? "primary" : "outline"}
-                size="lg"
-                icon={BookOpen}
-                // Đang nghe cuốn này: mở đúng chương đang phát (màn đọc tự tới câu đang nghe) - sửa câu vừa nghe không phải tìm lại (soát a70).
-                onClick={() => navigate(`/book/${book.id}/read${listening && player.track ? `/${player.track.chapterId}` : ""}`)}
-              >
-                {listening ? "Đọc" : latestReading(book) ? "Đọc tiếp" : "Đọc"}
-              </Button>
-            </Tooltip>
-            {chapters.length > 0 && (
-              <>
-                <IconButton label="Tìm chữ trong sách" icon={Search} size="lg" onClick={() => setFinding(true)} />
-                <FindInBook book={book} open={finding} onOpenChange={setFinding} />
-              </>
-            )}
-            {started && point && !finished && (
-              <Tooltip label="Nghe lại từ chương đầu tiên">
-                <Button variant="ghost" size="lg" icon={RotateCcw} onClick={restart}>
-                  Từ đầu
-                </Button>
-              </Tooltip>
-            )}
+        </div>
+        {/* Máy tính: cột rộng đúng bằng nút chính (ít nhất 16rem cho 4 nút phụ) - hàng nút phụ trải đúng bề ngang nút chính, hai đầu thẳng nhau. */}
+        <div className="col-span-2 mt-6 flex max-w-md flex-col gap-3 sm:col-span-1 sm:col-start-2 sm:mt-5 sm:w-fit sm:min-w-[16rem]">
+          {caughtUp ? (
+            <p className="text-sm text-fg-2">Đã nghe hết phần đã có. Chương mới sẽ hiện ở đây khi làm xong.</p>
+          ) : (
+            // Đúng MỘT nút chính: nghe (hay nghe tiếp) - sách không nghe được ở máy này thì nút chính là "Đọc".
+            <Button
+              variant="primary"
+              size="lg"
+              data-book-primary
+              icon={listenFirst ? (listening && player.playing ? Pause : finished ? RotateCcw : Play) : BookOpen}
+              onClick={listenFirst ? withFeedback("playPause", () => (finished ? restart() : listening ? player.toggle() : void playBook(book))) : read}
+              // Tên chương dài (truyện dịch) hay chữ hệ thống to: cắt "…" trong nút thay vì tràn ra hai mép màn hình (soát UX a9).
+              className="min-w-0 max-w-full max-sm:w-full"
+            >
+              <span className="min-w-0 truncate">{listenFirst ? primaryLabel : readLabel}</span>
+            </Button>
+          )}
+          {/* Hàng phụ: luôn cùng bốn chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe). */}
+          <div role="group" aria-label="Việc với sách" data-book-secondary className="slot-row items-start [--slot:1.4rlh]">
+            {/* Nhãn luôn một chữ "Đọc" (hàng cách đều theo tâm, nhãn đầu mút sát mép - "Đọc tiếp" dài gấp đôi sẽ lòi ra); "tiếp" nói cho trình đọc màn hình. */}
+            {(listenFirst || caughtUp) && <ActionButton icon={BookOpen} label="Đọc" aria-label={readLabel === "Đọc" ? undefined : readLabel} onClick={read} />}
+            <ActionButton icon={Search} label="Tìm" aria-label="Tìm chữ trong sách" disabled={!chapters.length} onClick={() => setFinding(true)} />
+            {!textOnly || point ? <ActionButton icon={RotateCcw} label="Từ đầu" aria-label="Nghe lại từ đầu" disabled={!(started && point && !finished)} onClick={restart} /> : null}
             {moreMenu && <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild>
-                <IconButton label="Tuỳ chọn khác" icon={MoreHorizontal} size="lg" />
+                <ActionButton icon={MoreHorizontal} label="Thêm" aria-label="Thêm việc với sách" />
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal>
-                <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-[min(20rem,calc(100vw-24px))] rounded-xl border border-line bg-panel p-1.5 shadow-float">
+                <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-[min(20rem,calc(100vw-24px))] rounded-xl border border-line bg-panel p-1.5 shadow-float">
                   {/* Một hồ sơ thì không có nút hồ sơ nghe: tạo / chuyển / đổi tên / xoá hồ sơ duy nhất nằm ở đây (soát a105 F9), dùng chung hộp thoại của RecordPicker. */}
                   {source.records && singleRecordActions(book).map((action) => (
                     <DropdownMenu.Item key={action.key} onSelect={() => setRecordDialog(action.dialog)} className={action.danger ? cn(MENU_ITEM, "text-danger") : MENU_ITEM}>
@@ -1139,6 +1152,7 @@ export function BookScreen({
               </DropdownMenu.Portal>
             </DropdownMenu.Root>}
           </div>
+          {chapters.length > 0 && <FindInBook book={book} open={finding} onOpenChange={setFinding} />}
         </div>
       </header>
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-8">

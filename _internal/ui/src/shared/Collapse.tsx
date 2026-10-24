@@ -99,6 +99,7 @@ export function Fold({
   heading = "h2",
   className,
   bodyClassName,
+  flat,
   onOpened,
   children,
 }: {
@@ -110,6 +111,8 @@ export function Fold({
   heading?: "h2" | "h3";
   className?: string;
   bodyClassName?: string;
+  /** Không khung: đầu mục và nội dung thẳng mép nội dung của trang (mục nằm trong một tab đã phẳng - không khung lồng khung). */
+  flat?: boolean;
   onOpened?: (element: HTMLElement) => void;
   children: ReactNode;
 }) {
@@ -117,14 +120,15 @@ export function Fold({
   const id = useId();
   const Heading = heading;
   return (
-    <section className={cn("min-w-0 rounded-2xl border border-line bg-panel", className)}>
+    <section className={cn("min-w-0", !flat && "rounded-2xl border border-line bg-panel", className)}>
       <Heading className="m-0">
         <button
           type="button"
           aria-expanded={open}
           aria-controls={id}
           onClick={() => setOpen(!open)}
-          className="flex min-h-[3.5rem] w-full items-center gap-3 rounded-2xl px-4 py-2.5 text-left transition-colors hover:bg-hover"
+          // Phẳng: nền rê chuột tràn ra lề 7 px để chữ và mũi tên thẳng mép.
+          className={cn("flex min-h-[3.5rem] items-center gap-3 py-2.5 text-left transition-colors hover:bg-hover", flat ? "-mx-2 w-[calc(100%+14px)] rounded-lg px-2" : "w-full rounded-2xl px-4")}
         >
           {icon && <span className="shrink-0 text-fg-2" aria-hidden>{icon}</span>}
           <span className="min-w-0 flex-1">
@@ -134,7 +138,7 @@ export function Fold({
           <ChevronDown className="fold-chevron size-4 shrink-0 text-fg-3" aria-hidden />
         </button>
       </Heading>
-      <Collapse open={open} onOpened={onOpened} id={id} className={cn("px-4 pb-4", bodyClassName)}>
+      <Collapse open={open} onOpened={onOpened} id={id} className={cn(flat ? "pb-2" : "px-4 pb-4", bodyClassName)}>
         {children}
       </Collapse>
     </section>

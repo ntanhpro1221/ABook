@@ -454,7 +454,7 @@ export function TabsList({ children, className, label }: { children: ReactNode; 
         ref={list}
         aria-label={label}
         style={style}
-        className={cn("flex gap-1 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none]", className)}
+        className={cn("flex gap-5 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none] sm:gap-6", className)}
       >
         {children}
       </TabsPrimitive.List>
@@ -477,11 +477,12 @@ export function TabsList({ children, className, label }: { children: ReactNode; 
   );
 }
 
+// Không đệm ngang: chữ tab đầu thẳng mép nội dung (bìa, nút chính) và gạch chân dài đúng bằng chữ, như hàng lọc Thư viện (soát 24-10).
 export function TabsTrigger({ value, children, count }: { value: string; children: ReactNode; count?: number }) {
   return (
     <TabsPrimitive.Trigger
       value={value}
-      className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent px-2 text-sm sm:px-3 font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
+      className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-2 whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
     >
       {children}
       {/* Số đếm dính vào tên khi đọc ("Chương6") - trình đọc màn hình nghe "Chương, 6 mục" (soát a67). */}
