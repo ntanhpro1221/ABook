@@ -2,12 +2,12 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { SleepSchedule } from "./SleepSchedule";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
+import { ChevronRight, Download, FolderOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { useMediaQuery } from "@/shared/media";
-import { Button, Dialog, Segmented, WRAP_LABEL, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { Button, Dialog, Segmented, WRAP_LABEL } from "@/shared/ui";
 import { GroupHeader, isSettingsGroup, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
 import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
@@ -107,12 +107,12 @@ function NewBookDefaults() {
   );
 }
 
+// Cùng một điều khiển và cùng chữ với điện thoại (soát 24-10 T18: máy tính 3 thẻ to "Theo Windows", điện thoại segmented "Tự động").
 const THEMES = [
-  { value: "system", label: "Theo Windows", icon: Monitor },
-  { value: "light", label: "Sáng", icon: Sun },
-  { value: "dark", label: "Tối", icon: Moon },
+  { value: "system", label: "Tự động" },
+  { value: "light", label: "Sáng" },
+  { value: "dark", label: "Tối" },
 ] as const;
-const THEME_VALUES = THEMES.map((theme) => theme.value);
 
 /** App Windows đóng gói: vỏ đã tìm thấy bản mới (đã ký) - cài chỉ khi người dùng bấm, vì app phải đóng rồi mở lại. */
 function UpdateRow({ update, current }: { update: { version: string; notes: string }; current: string }) {
@@ -314,38 +314,9 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
     <>
       {!remote && (
         <SettingsBlock>
-          <div
-            role="radiogroup"
-            aria-label="Giao diện"
-            onKeyDown={radioGroupKeys(THEME_VALUES, preferences?.theme ?? "system", (theme) => update({ theme }))}
-            className="grid grid-cols-3 gap-2 py-3"
-          >
-            {THEMES.map((theme, index) => {
-              const selected = (preferences?.theme ?? "system") === theme.value;
-              const Icon = theme.icon;
-              return (
-                <button
-                  key={theme.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  tabIndex={radioTabIndex(THEME_VALUES, preferences?.theme ?? "system", index)}
-                  onClick={() => update({ theme: theme.value })}
-                  className={cn(
-                    "flex flex-col items-center gap-2 rounded-xl border bg-panel py-4 text-sm font-medium transition-colors",
-                    selected ? "border-focus bg-accent-soft text-accent-text ring-1 ring-focus" : "border-line hover:border-line-strong",
-                  )}
-                >
-                  <Icon className="size-5" />
-                  {theme.label}
-                </button>
-              );
-            })}
-          </div>
-        </SettingsBlock>
-      )}
-      {!remote && (
-        <SettingsBlock>
+          <SettingsRow label="Màu">
+            <Segmented label="Màu" value={preferences?.theme ?? "system"} onChange={(theme) => update({ theme })} options={[...THEMES]} />
+          </SettingsRow>
           <SettingsRow label="Nền đọc" hint="Nền của chữ khi đọc theo.">
             <Segmented<ReadingSurface>
               label="Nền đọc"
@@ -383,7 +354,7 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
             )}
           </SettingsRow>
           <div className="py-3">
-            <ShortcutList remote={remote} />
+            <ShortcutList remote={remote} inSettings />
           </div>
         </SettingsBlock>
       )}
@@ -554,7 +525,7 @@ function useRows(groups: readonly SettingsGroupId[], info: AppInfo | undefined):
     voice: voiceName,
     listen: `${preferences?.autoRewind !== false ? "Tự lùi" : "Không tự lùi"} · ${preferences?.autoMusic !== false ? "nhạc tự chọn" : "không nhạc nền"}`,
     sleep: sleepSummary(preferences?.sleepSchedule, preferences?.safetyStopHours ?? 2),
-    look: info?.remote ? "Phím tắt" : themeSummary(preferences?.theme, "Theo Windows"),
+    look: info?.remote ? "Phím tắt" : themeSummary(preferences?.theme, "Tự động"),
     devices: sync ? (sync.enabled ? `${sync.devices.length} thiết bị đã ghép` : "Đang tắt") : undefined,
     studio: info?.remote ? "Mẫu thiết lập" : info?.studio?.installed ? "Đã cài" : "Chưa cài",
     advanced: info?.update && !info.remote ? `Có bản mới ${info.update.version}` : info?.version ? `Phiên bản ${info.version}` : undefined,
