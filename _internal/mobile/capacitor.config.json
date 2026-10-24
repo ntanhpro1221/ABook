@@ -4,6 +4,6 @@
   "webDir": "www",
   "android": {
     "allowMixedContent": false,
-    "backgroundColor": "#0e1115"
+    "backgroundColor": "#121110"
   }
 }

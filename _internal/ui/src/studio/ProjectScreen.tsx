@@ -156,7 +156,7 @@ function Step({
         <div
           className={cn(
             "grid size-7 place-items-center rounded-full text-xs font-bold",
-            state === "done" && "bg-success text-white",
+            state === "done" && "bg-success text-success-ink",
             state === "active" && "bg-accent text-accent-ink",
             state === "paused" && "bg-fg-3 text-bg",
             state === "pending" && "bg-hover text-fg-2", // số bước: --fg-3 trên --hover chỉ 4,46:1 (soát a31 C2)
