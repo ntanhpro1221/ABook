@@ -145,6 +145,8 @@ export function preferences(): Preferences {
     newBookProfile: "balanced",
     bookTemplates: [],
     letterShortcuts: true,
+    touchSounds: true,
+    readingSurface: "auto",
     autoRewind: true,
   };
 }

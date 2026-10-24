@@ -49,7 +49,7 @@ from . import (actions, book_edits, book_wishes, bookfile, cover_search, covers,
                listen_export, music_bounds, music_catalog, music_export, music_cache, music_local, music_module, music_moods, music_nnlite, music_nnscene, music_plan, music_playlist, music_select, music_student, music_valence, notices, package_share, packages, project_views,
                projectfile, reading_preview, remote_config, shared_readings, store, supertonic_module, textbook, trash_pending, vieneu_module, voice_speed, volumes, word_timing, workshop, zerotts_module)
 from .fingerprints import Fingerprints
-from .library import (NUMBER_RANGES, SLEEP_CHOICES, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule)
+from .library import (NUMBER_RANGES, READING_SURFACES, SLEEP_CHOICES, BookTemplateError, Library, Preferences, apply_book_template_op, book_id, clean_sleep_schedule)
 from .listening import HEAVY_KEYS, RECORD_ID, Listening, RecordGone, StalePlayback
 from .opened_events import OpenedEvents
 from . import audio_revision, bluetooth, cancelled, name_rules, peer_studio, precast, remote_books, spelling, teller_mode, tls, workshop_merge
@@ -6517,6 +6517,10 @@ class Handler(BaseHTTPRequestHandler):
             allowed["letterShortcuts"] = body["letterShortcuts"]
         if isinstance(body.get("autoRewind"), bool):
             allowed["autoRewind"] = body["autoRewind"]
+        if isinstance(body.get("touchSounds"), bool):
+            allowed["touchSounds"] = body["touchSounds"]
+        if body.get("readingSurface") in READING_SURFACES:
+            allowed["readingSurface"] = body["readingSurface"]
         # Mặc định của trình tạo sách: chất lượng là một trong ba mức; giọng kể là tên giọng có thật ("" = máy đề xuất).
         if body.get("newBookProfile") in ("fast", "balanced", "high_quality"):
             allowed["newBookProfile"] = body["newBookProfile"]

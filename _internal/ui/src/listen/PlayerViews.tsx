@@ -78,6 +78,7 @@ import { cacheLabel, canPrepare, clearCacheQuestion, planLabel, PREPARE_STATUS_K
 import { READINGS_CHANGED_EVENT, type ReadAloudVoice, type ReadingsChanged } from "./readAloud";
 import { chapterScriptQuery, useBookVoice, useWarmVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource, useChosenVoice } from "./source";
 import { isRecordGone, RECORD_GONE_MESSAGE, reportWriteFailure } from "./recordWrites";
+import { crossedSeekMark, feedback, withFeedback } from "@/shared/feedback";
 
 export function speedLabel(rate: number): string {
   return `${rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}×`;
@@ -159,7 +160,9 @@ function SeekBar({ large = false }: { large?: boolean }) {
         value={[Math.min(shown, max)]}
         onPointerDown={() => (pointer.current = true)}
         onValueChange={([value]) => {
-          if (pointer.current) setDragging(value);
+          if (!pointer.current) return;
+          if (crossedSeekMark(dragging ?? second, value, duration, SKIP_SECONDS)) feedback("tick");
+          setDragging(value);
         }}
         onValueCommit={([value]) => {
           pointer.current = false;
@@ -249,7 +252,7 @@ function Transport({ large = false }: { large?: boolean }) {
       <IconButton label={withShortcut(`Lùi ${SKIP_SECONDS} giây`, "←")} icon={Back15} size={size} className="touch-box" onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
       <button
         type="button"
-        onClick={toggle}
+        onClick={withFeedback("playPause", toggle)}
         {...keepFocus}
         // Đang chờ đoạn đầu: nói đang chờ gì, không nói "Tạm dừng" khi chưa có tiếng nào (bấm vẫn là thôi chờ).
         aria-label={toggleLabel(playing, buffering, speaking)}
@@ -257,7 +260,7 @@ function Transport({ large = false }: { large?: boolean }) {
         aria-keyshortcuts={SHORTCUTS ? "Space" : undefined}
         data-player-toggle
         className={cn(
-          "grid place-items-center rounded-full bg-fg text-bg shadow-card transition-transform hover:scale-105 active:scale-95",
+          "grid place-items-center rounded-full bg-fg text-bg shadow-card transition-transform hover:scale-105 press",
           large ? "size-16" : "size-10",
         )}
       >
@@ -376,6 +379,7 @@ export function SpeedMenu() {
             <button
               type="button"
               onClick={() => {
+                feedback("toggle");
                 setRate(speed);
                 announce(`Đã chọn tốc độ đọc ${speedLabel(speed)}`);
               }}
@@ -878,7 +882,7 @@ export function SleepMenu() {
             <Popover.Close asChild>
               <button
                 type="button"
-                onClick={() => setSleep({ kind: "minutes", minutes: lastSleepMinutes })}
+                onClick={withFeedback("toggle", () => setSleep({ kind: "minutes", minutes: lastSleepMinutes }))}
                 className="mt-2 h-9 w-full rounded-lg bg-accent-soft text-sm font-semibold text-accent-text"
               >
                 Bật lại {lastSleepMinutes} phút
@@ -929,10 +933,9 @@ function SleepPicker({
   disabled = false,
   customStart,
   extendMinutes,
-  onExtend,
-  onSet,
   idle = null,
   note,
+  ...handlers
 }: {
   sleep: SleepMode;
   now: number;
@@ -947,6 +950,9 @@ function SleepPicker({
   idle?: ReactNode;
   note: ReactNode;
 }) {
+  // Chọn mức / thêm giờ là việc người nghe vừa làm: tiếng chạm + rung (DESIGN 5.3/5.4). Hẹn giờ tự tắt thì không đi qua đây.
+  const onExtend = withFeedback("toggle", handlers.onExtend);
+  const onSet = withFeedback("toggle", handlers.onSet);
   const [custom, setCustom] = useState(customStart);
   const active = sleep.kind !== "off";
   const left = sleepLeftMs(sleep, now);
@@ -1148,6 +1154,7 @@ export function useAddBookmark() {
     if (!mark) {
       if (isRecordGone(failure)) toast.error(RECORD_GONE_MESSAGE, { id: "record-gone", position });
       else toast.error("Chưa thêm được dấu trang", { position });
+      feedback("reject");
       return;
     }
     if (mark.existing) {
@@ -1155,6 +1162,7 @@ export function useAddBookmark() {
       toast("Đã có dấu trang ở chỗ này", { id: "bookmark-existing", description: formatClock(mark.seconds), position });
       return;
     }
+    feedback("confirm");
     toast.success("Đã thêm dấu trang", {
       id: "bookmark",
       position,
@@ -1519,10 +1527,10 @@ export function PlayerBar({
           </button>
           <button
             type="button"
-            onClick={toggle}
+            onClick={withFeedback("playPause", toggle)}
             aria-label={toggleLabel(playing, buffering, speaking)}
             aria-busy={(playing && buffering) || undefined}
-            className="touch-hit grid size-11 shrink-0 place-items-center rounded-full bg-fg text-bg"
+            className="touch-hit press grid size-11 shrink-0 place-items-center rounded-full bg-fg text-bg transition-transform"
           >
             <MotionRegion as="span" className="inline-grid size-5 place-items-center">{playing && buffering ? (
               <Loader2 className="size-5 animate-spin" />
@@ -1625,7 +1633,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   if (!script) return <MotionRegion />;
   return (
     <MotionRegion as="div" className="relative h-full">
-      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="h-full overflow-y-auto px-6 py-8 sm:px-10">
+      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface h-full overflow-y-auto px-6 py-8 sm:px-10">
         <div className="mx-auto max-w-[62ch] text-[1.0625rem] leading-[1.75]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải "chưa có audio". */}
           {!script.timed && current?.state !== "text" && (
@@ -2088,9 +2096,9 @@ function CoverToggle({ title, image }: { title: string; image: ComponentProps<ty
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={withFeedback("playPause", toggle)}
       aria-label={`${toggleLabel(playing, buffering, speaking)} (chạm bìa)`}
-      className="size-[min(300px,100cqw,100cqh)] shrink-0 rounded-lg transition-transform active:scale-[0.98]"
+      className="size-[min(300px,100cqw,100cqh)] shrink-0 rounded-lg transition-transform press"
     >
       <BookCover title={title} image={image} size="xl" className="cover-morph w-full" />
     </button>

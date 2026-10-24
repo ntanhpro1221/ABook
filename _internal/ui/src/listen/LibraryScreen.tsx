@@ -23,6 +23,7 @@ import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, resumeTar
 import { usePlayer, type WordTarget } from "./player";
 import { useClock } from "./clock";
 import { useListenBook, useListenLibrary, useReadAloudVoices, useSource } from "./source";
+import { feedback, withFeedback } from "@/shared/feedback";
 
 type Filter = "all" | "listening" | "new" | "finished";
 
@@ -158,7 +159,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
         <button
           type="button"
           aria-label={textOnly ? `Đọc ${book.title}` : playingHere ? `Tạm dừng ${book.title}` : book.stage === "text" ? `Nghe ngay ${book.title}` : `Nghe ${book.title}`}
-          onClick={() => (textOnly ? navigate(`/book/${book.id}/read`) : current ? player.toggle() : void playBook(book))}
+          onClick={() => (textOnly ? navigate(`/book/${book.id}/read`) : (feedback("playPause"), current ? player.toggle() : void playBook(book)))}
           className={cn(
             "touch-hit touch-box absolute bottom-2.5 right-2.5 grid size-[44px] place-items-center rounded-full bg-panel text-fg shadow-card transition-opacity duration-motion-fast focus-visible:pointer-events-auto focus-visible:opacity-100",
             // Điện thoại không có rê chuột: nút chỉ hiện cho cuốn đang ở trình phát, tranh bìa không bị che (soát 24-10).
@@ -246,7 +247,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
       ) : (
       <button
         type="button"
-        onClick={() => (current ? player.toggle() : void playBook(book))}
+        onClick={withFeedback("playPause", () => (current ? player.toggle() : void playBook(book)))}
         aria-label={playingHere ? `Tạm dừng ${book.title}` : `Nghe tiếp ${book.title}${where ? `, ${where}` : ""}`}
         className="grid size-14 shrink-0 place-items-center rounded-full bg-accent text-accent-ink transition-transform duration-motion-fast active:scale-[0.97]"
       >

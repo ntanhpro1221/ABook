@@ -12,6 +12,8 @@ import { GroupHeader, isSettingsGroup, SettingsBlock, SettingsList, SettingsRow,
 import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { cn } from "@/shared/cn";
+import { TOUCH_SOUNDS_HINT } from "@/shared/feedback";
+import { READING_SURFACES, readingSurfaceOr, type ReadingSurface } from "@/shared/readingSurface";
 import { openExternal } from "@/shared/openExternal";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { api, type AppInfo } from "@/studio/api";
@@ -340,6 +342,27 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
               );
             })}
           </div>
+        </SettingsBlock>
+      )}
+      {!remote && (
+        <SettingsBlock>
+          <SettingsRow label="Nền đọc" hint="Nền của chữ khi đọc theo.">
+            <Segmented<ReadingSurface>
+              label="Nền đọc"
+              value={readingSurfaceOr(preferences?.readingSurface)}
+              onChange={(readingSurface) => update({ readingSurface })}
+              options={READING_SURFACES}
+            />
+          </SettingsRow>
+          <SettingsRow label={<span id="touch-sounds-name">Âm thanh chạm</span>} hint={<span id="touch-sounds-hint">{TOUCH_SOUNDS_HINT}</span>}>
+            <Switch
+              id="touch-sounds"
+              labelledBy="touch-sounds-name"
+              describedBy="touch-sounds-hint"
+              checked={preferences?.touchSounds !== false}
+              onCheckedChange={(value) => update({ touchSounds: value })}
+            />
+          </SettingsRow>
         </SettingsBlock>
       )}
       {/* Phím tắt vô nghĩa trên màn chỉ có cảm ứng (điện thoại, máy tính bảng không bàn phím): ẩn cả khối. */}

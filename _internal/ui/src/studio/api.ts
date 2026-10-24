@@ -364,6 +364,10 @@ export interface Preferences {
   letterShortcuts?: boolean;
   /** Tạm dừng rồi nghe tiếp thì lùi vài giây - mặc định bật, theo máy này (listen/sleep.ts rewindAfter). */
   autoRewind?: boolean;
+  /** Tiếng chạm của giao diện - mặc định bật, tự im khi sách đang phát (shared/feedback.ts). */
+  touchSounds?: boolean;
+  /** Nền vùng chữ đọc theo (shared/readingSurface.ts). */
+  readingSurface?: import("@/shared/readingSurface").ReadingSurface;
 }
 
 // Mã phiên do cửa sổ app gắn vào URL (?t=...). Giữ lại trong phiên để điều hướng nội bộ không làm mất nó.

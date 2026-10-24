@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { toast } from "@/shared/toast";
+import { feedback } from "@/shared/feedback";
 import type { ImportChoice } from "@/listen/textImport";
 import { brokenMusicNote, keptEditsTitle } from "@/shared/editsKept";
 import { EbookLibrary } from "./plugins";
@@ -20,6 +21,7 @@ export function watchImports(client: QueryClient, open: (bookId: string) => void
   });
   const handle = EbookLibrary.addListener("import", (event) => {
     if (event.error || !event.bookId) {
+      feedback("reject");
       toast.error("Không mở được file sách", { description: event.error || "File không có sách nào." });
       return;
     }
@@ -35,6 +37,7 @@ export function watchImports(client: QueryClient, open: (bookId: string) => void
     }
     void client.invalidateQueries({ queryKey: ["listen"] });
     void client.invalidateQueries({ queryKey: ["storage"] });
+    feedback("confirm");
     toast.success(keptEditsTitle(event.keptEdits) ?? "Đã thêm sách vào Thư viện", {
       description: [event.title, brokenMusicNote(event.brokenMusic)].filter(Boolean).join(" · ") || undefined,
       action: { label: "Mở sách", onClick: () => open(bookId) },

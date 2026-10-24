@@ -61,6 +61,12 @@ describe("loadSettings", () => {
     const all = { sleepFadeSeconds: 10, sleepExtendMinutes: 15, safetyStopHours: 0, theme: "light", shakeSensitivity: "firm", headsetSkips: false };
     expect(normalizeSettings(all)).toEqual({ ...DEFAULT_SETTINGS, ...all });
   });
+
+  it("Âm thanh chạm, Rung mặc định bật, Nền đọc mặc định tự động; giá trị lạ về mặc định riêng trường ấy", () => {
+    expect(DEFAULT_SETTINGS).toMatchObject({ touchSounds: true, haptics: true, readingSurface: "auto" });
+    expect(normalizeSettings({ touchSounds: false, haptics: false, readingSurface: "ivory" })).toMatchObject({ touchSounds: false, haptics: false, readingSurface: "ivory" });
+    expect(normalizeSettings({ touchSounds: "no", haptics: 0, readingSurface: "sepia" })).toMatchObject({ touchSounds: true, haptics: true, readingSurface: "auto" });
+  });
 });
 
 describe("saveSettings", () => {

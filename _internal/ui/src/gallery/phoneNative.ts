@@ -91,6 +91,8 @@ export const ebookPlayer: NativeImpl = {
   },
   extendSleep: (options) =>
     changed({ sleep: { ...player.sleep, mode: "minutes", remaining: (player.sleep.remaining ?? 0) + (Number(options.minutes) || 10) * 60 } }),
+  // Phòng trưng bày không rung (shared/feedback.ts).
+  haptic: () => undefined,
   addBookmark: (options): Bookmark => {
     const item = book(player.bookId);
     const mark: Bookmark = { id: `bm${Date.now()}`, chapterId: player.chapterId ?? 1, seconds: player.position, note: String(options.note ?? ""), at: NOW_SECONDS, createdAt: NOW_SECONDS };
