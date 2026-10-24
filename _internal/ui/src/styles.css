@@ -963,6 +963,8 @@ select[class~="border-line"] {
   border-radius: 0;
   box-shadow: none;
   overflow: visible;
+  /* Menu (không modal) gắn lớp Radix TRƯỚC hộp Sheet chứa nó nên bị gán pointer-events: none - mục nào cũng không chạm được. */
+  pointer-events: auto !important;
 }
 .player-sheet .sheet-body > div > .grid,
 .player-sheet .sheet-body > .grid { padding-inline: 0; gap: 8px; }
