@@ -1588,7 +1588,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
           className="z-50 max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height))] w-[min(30rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float"
           ref={scrollToChecked}
         >
-          <DropdownMenu.RadioGroup value={String(chapterId ?? "")} onValueChange={(value) => onPick(Number(value))}>
+          <DropdownMenu.RadioGroup value={String(chapterId ?? "")} onValueChange={(value) => { if (Number(value) !== chapterId) onPick(Number(value)); }}>
             {chapters.map((chapter) => (
               <DropdownMenu.RadioItem
                 key={chapter.chapterId}

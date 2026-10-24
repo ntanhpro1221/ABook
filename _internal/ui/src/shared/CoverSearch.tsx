@@ -92,6 +92,8 @@ export function CoverSearchDialog({
     onOpenChange(next);
   };
   useEffect(() => {
+    // Hộp không bị gỡ khi đóng: lỗi đặt bìa của lần mở trước không được hiện lại cạnh kết quả mới.
+    if (open) choose.reset();
     if (open && !search.data && !search.isPending) search.mutate(query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

@@ -599,7 +599,11 @@ export function Dialog({
   // Thân cuộn mờ ở mép còn nội dung (DESIGN 4.5: không gì cụt cứng) - hộp dài như bộ sách nhiều tập không giấu hàng cuối không dấu hiệu.
   const [body, setBody] = useState<HTMLDivElement | null>(null);
   const fade = useScrollFadeOn(body);
-  if (phone && phoneSheet) return <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description}>{children}</Sheet>;
+  // Ô mang `data-escape-local` (vd ô đổi tên chương) tự xử lý phím Esc để huỷ việc đang gõ; Esc ở đó không đóng cả hộp.
+  const escapeLocal = (event: KeyboardEvent) => {
+    if ((event.target as HTMLElement | null)?.closest?.("[data-escape-local]")) event.preventDefault();
+  };
+  if (phone && phoneSheet) return <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description} onEscapeKeyDown={escapeLocal}>{children}</Sheet>;
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -622,10 +626,7 @@ export function Dialog({
             event.preventDefault();
             target.focus();
           }}
-          // Ô mang `data-escape-local` (vd ô đổi tên chương) tự xử lý phím Esc để huỷ việc đang gõ; Esc ở đó không đóng cả hộp.
-          onEscapeKeyDown={(event) => {
-            if ((event.target as HTMLElement | null)?.closest?.("[data-escape-local]")) event.preventDefault();
-          }}
+          onEscapeKeyDown={escapeLocal}
           onOpenAutoFocus={(event) => {
             // Radix đặt con trỏ vào thứ bấm được đầu tiên - nút X ở đầu hộp - đè lên `autoFocus` của ô nhập (soát UX 30-09:
             // hộp Đổi tên). Ô nào mang `data-autofocus` thì nhận con trỏ, chữ có sẵn được chọn để gõ đè.
@@ -717,7 +718,8 @@ export function Sheet({
       if (!origin || !event.touches[0]) return;
       const touch = event.touches[0];
       distance = Math.max(0, touch.clientY - origin.y);
-      if (distance <= Math.abs(touch.clientX - origin.x)) { distance = 0; return; }
+      // Ngón về lại trên điểm đầu (hay vuốt ngang): bảng về chỗ, không đứng lệch tới khi nhấc tay.
+      if (distance <= Math.abs(touch.clientX - origin.x)) { distance = 0; setDrag(0); return; }
       event.preventDefault(); setDrag(distance);
     };
     const end = () => { if (distance >= 64) closeSheet.current(false); origin = null; distance = 0; setDrag(0); };

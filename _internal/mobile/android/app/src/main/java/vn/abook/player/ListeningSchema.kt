@@ -14,6 +14,8 @@ internal object ListeningSchema {
         if (result.has("rev") && ListeningRevision.revision(result).first == 0L) result.remove("rev")
         return result
     }
+    /** A row whose revision is broken is dropped whole: kept without one, the peer rejects it forever (missing revision); dropped, the peer resends it. */
+    private fun revised(row: JSONObject) = !row.has("rev") || ListeningRevision.revision(row).first != 0L
 
     fun state(raw: JSONObject): JSONObject {
         val state = fields(raw, listOf("updatedAt", "rate", "rateAt", "finishedAt", "voiceAt", "_clock"), listOf("voice"), listOf("finished"))
@@ -29,7 +31,8 @@ internal object ListeningSchema {
         for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) {
             // Value + stamp + revision are one unit (Python clean_state): a broken part drops all three and the other device resends
             // it - keeping the value and revision without the stamp broke every merge on the peer (a118 bug 3).
-            if (raw.has(field) && !state.has(field) || raw.has(stamp) && !state.has(stamp)) {
+            val brokenRev = raw.optJSONObject("_fieldRevs")?.has(field) == true && state.optJSONObject("_fieldRevs")?.has(field) != true
+            if (raw.has(field) && !state.has(field) || raw.has(stamp) && !state.has(stamp) || brokenRev) {
                 state.remove(field)
                 state.remove(stamp)
                 state.optJSONObject("_fieldRevs")?.remove(field)
@@ -38,12 +41,12 @@ internal object ListeningSchema {
         for ((key, required) in listOf("last" to listOf("chapterId", "seconds"), "reading" to listOf("chapterId", "index"))) {
             if (!state.has(key)) continue
             val item = state.optJSONObject(key)
-            if (item == null || required.any { !number(item.opt(it)) }) state.remove(key)
+            if (item == null || required.any { !number(item.opt(it)) } || !revised(item)) state.remove(key)
             else state.put(key, fields(item, required + "at"))
         }
         val chapters = JSONObject()
         state.optJSONObject("chapters")?.let { rows ->
-            for (key in rows.keys()) rows.optJSONObject(key)?.let {
+            for (key in rows.keys()) rows.optJSONObject(key)?.takeIf(::revised)?.let {
                 chapters.put(key, fields(it, listOf("heard", "duration", "at"), booleans = listOf("done")))
             }
         }
@@ -51,13 +54,20 @@ internal object ListeningSchema {
         val marks = JSONArray()
         state.optJSONArray("bookmarks")?.let { rows ->
             for (i in 0 until rows.length()) rows.optJSONObject(i)?.let {
-                if (it.opt("id") is String && number(it.opt("chapterId")) && number(it.opt("seconds")))
+                if (it.opt("id") is String && number(it.opt("chapterId")) && number(it.opt("seconds")) && revised(it))
                     marks.put(fields(it, listOf("seconds", "at", "createdAt", "index"), listOf("note", "quote")))
             }
         }
         state.put("bookmarks", marks)
         for (key in listOf("chapters", "bookmarks")) if (!raw.has(key)) state.remove(key)
-        if (state.has("deleted")) state.put("deleted", numericMap(state.optJSONObject("deleted")))
+        if (state.has("deleted")) {
+            val deleted = numericMap(state.optJSONObject("deleted"))
+            // A deletion whose revision was just filtered out goes too, for the same reason as a row.
+            raw.optJSONObject("_deletedRevs")?.let { revs ->
+                for (key in revs.keys()) if (state.optJSONObject("_deletedRevs")?.has(key) != true) deleted.remove(key)
+            }
+            state.put("deleted", deleted)
+        }
         if (state.has("sessions")) {
             val sessions = JSONArray()
             state.optJSONArray("sessions")?.let { rows ->

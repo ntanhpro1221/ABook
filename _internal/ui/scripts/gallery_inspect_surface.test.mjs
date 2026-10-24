@@ -1,8 +1,9 @@
 // @vitest-environment node
 import { beforeAll, describe, expect, it } from "vitest";
 import { layoutFixtures } from "./gallery_inspect_layout_fixture.mjs";
+import { browserAvailable } from "./gallery_browser.mjs";
 
-describe("surface columns, trailing geometric ink, fill and menu rows on Edge", () => {
+describe.skipIf(!browserAvailable)("surface columns, trailing geometric ink, fill and menu rows on Edge", () => {
   let results;
   beforeAll(async () => { results = await layoutFixtures({ fixture: "surface-fill.html" }); }, 60000);
   const at = (r, id, metric) => r.findings.filter(f => f.selector.startsWith(`#${id} >`) && f.metric === metric);

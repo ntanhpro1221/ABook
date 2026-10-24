@@ -184,6 +184,17 @@ def test_3_a_missing_field_stamp_never_breaks_a_merge(world):
         assert sync(client, holder)
 
 
+def test_3_a_broken_row_revision_drops_the_row_so_the_peer_resends_it():
+    bad, ok = {"counter": -3, "node": "x"}, {"counter": 2, "node": "n"}
+    clean = clean_state({"chapters": {"1": {"heard": 5, "duration": 9, "at": 1, "rev": bad}, "2": {"heard": 1, "at": 1, "rev": ok}},
+                         "bookmarks": [{"id": "a", "chapterId": 1, "seconds": 2, "rev": bad}],
+                         "last": {"chapterId": 1, "seconds": 3, "rev": bad}, "rate": 1.2, "rateAt": 5,
+                         "_fieldRevs": {"rate": bad}, "deleted": {"b": 4}, "_deletedRevs": {"b": bad}})
+    assert list(clean["chapters"]) == ["2"] and clean["bookmarks"] == [] and "last" not in clean
+    assert "rate" not in clean and "rateAt" not in clean and clean["deleted"] == {}
+    assert checked_peer({}, clean, lambda _text: None)["chapters"] == {"2": {"heard": 1, "at": 1, "rev": ok}}
+
+
 def test_5_record_metadata_follows_causality_not_the_wall_clock(world):
     holder, client, clock, _ = world()
     record = default_record_id(HOLDER)

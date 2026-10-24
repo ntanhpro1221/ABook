@@ -53,6 +53,9 @@ export function findBrowser(given) {
   return found;
 }
 
+/** Máy không có Chrome / Edge (CI chỉ có Chromium riêng): bộ test fixture trình duyệt bỏ qua thay vì đỏ cả lượt vitest. */
+export const browserAvailable = CANDIDATES.some((candidate) => candidate && existsSync(candidate));
+
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png",
   ".woff2": "font/woff2", ".woff": "font/woff", ".json": "application/json", ".mjs": "text/javascript", ".wasm": "application/wasm" };
 

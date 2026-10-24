@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Clapperboard, Laptop } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/shared/toast";
@@ -75,6 +75,8 @@ export function useStudioComputersQuery(book?: string) {
   return useQuery({
     queryKey: ["studio-computers", book ?? "", connection.dataUpdatedAt, peers.dataUpdatedAt],
     queryFn: () => EbookLibrary.studioComputers(book ? { book } : undefined),
+    // Khoá đổi theo mỗi lượt hỏi máy ghép: giữ danh sách cũ trong lúc hỏi lại, không nháy về khung chờ (nút "Mở Studio" không biến mất dưới tay).
+    placeholderData: keepPreviousData,
   });
 }
 
