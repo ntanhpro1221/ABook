@@ -630,10 +630,11 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   }
 }
 
-/* Chữ cái đầu của nhân vật: cùng độ sáng cho mọi màu (OKLCH), chỉ đổi sắc - đủ tương phản ở cả hai giao diện. */
+/* Chữ cái đầu của nhân vật: cùng độ sáng cho mọi màu (OKLCH), chỉ đổi sắc - đủ tương phản ở cả hai giao diện. Sắc chỉ để phân biệt người
+   nói, nên rất trầm (độ rực thấp) - đứng cạnh bảng màu ấm như mực màu nhạt, không như kẹo pastel (soát 24-10 T03; DESIGN 5.1). */
 .avatar {
-  background: oklch(var(--avatar-bg-l) 0.05 var(--hue, 250));
-  color: oklch(var(--avatar-fg-l) 0.13 var(--hue, 250));
+  background: oklch(var(--avatar-bg-l) 0.03 var(--hue, 250));
+  color: oklch(var(--avatar-fg-l) 0.085 var(--hue, 250));
 }
 
 /* =========================================================================================================
