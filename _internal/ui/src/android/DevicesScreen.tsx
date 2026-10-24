@@ -975,7 +975,7 @@ export function DevicesScreen() {
                 )}
                 <Fingerprint value={connection.data.fingerprint} />
               </div>
-              <button type="button" aria-label="Làm mới" onClick={() => void remote.refetch()} className="-mr-3 grid size-10 place-items-center rounded-full text-fg-2">
+              <button type="button" aria-label="Làm mới" onClick={() => void remote.refetch()} className="touch-hit -mr-3 grid size-10 place-items-center rounded-full text-fg-2">
                 <RefreshCw className={cn("size-4", remote.isFetching && "animate-spin")} />
               </button>
             </div>

@@ -203,8 +203,11 @@ function RemoveFromPhoneMenuItem({ book }: { book: ListenBook }) {
       onSelect={() => window.dispatchEvent(new CustomEvent<RemovableFromPhone>("abook-remove-from-phone", { detail: { id: book.id, title: book.title } }))}
       className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
     >
-      <Trash2 className="size-4" /> Xoá khỏi điện thoại…
-      {bytes !== undefined && <span className="ml-auto text-xs text-fg-2">Chiếm {formatSize(bytes)}</span>}
+      <Trash2 className="size-4" />
+      <span className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
+        <span data-menu-label>Xoá khỏi điện thoại…</span>
+        {bytes !== undefined && <span className="shrink-0 text-xs text-fg-2">Chiếm {formatSize(bytes)}</span>}
+      </span>
     </DropdownMenu.Item>
   );
 }

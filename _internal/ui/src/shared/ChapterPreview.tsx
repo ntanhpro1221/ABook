@@ -80,7 +80,6 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
             className={cn(
               "grid items-center gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0",
               choice ? "grid-cols-[20px_28px_minmax(0,1fr)_64px] sm:grid-cols-[20px_36px_minmax(0,1fr)_90px]" : "grid-cols-[40px_minmax(0,1fr)_90px]",
-              !on && "opacity-60",
             )}
           >
             {choice && (
@@ -128,7 +127,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   disabled={choice.disabled}
                   onClick={() => setEditing(index)}
                   title="Bấm để đổi tên chương"
-                  className="group flex w-full items-start gap-1.5 rounded text-left text-sm font-medium hover:text-accent-text focus-visible:outline-2 focus-visible:outline-focus"
+                  className="touch-hit group flex w-full items-start gap-1.5 rounded text-left text-sm font-medium hover:text-accent-text focus-visible:outline-2 focus-visible:outline-focus"
                 >
                   <span className="line-clamp-2 min-w-0 break-words">{title}</span>
                   <Pencil className="mt-0.5 size-3 shrink-0 text-fg-3 group-hover:text-accent-text" aria-hidden />
