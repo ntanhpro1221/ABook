@@ -11,6 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Back đóng mọi thông báo đang hiện (kể cả lời mời bật thông báo) rồi mới về trang trước; menu đang khép không chặn chạm bên dưới; đóng nhóm Cài đặt quay đúng một bước.
 - Nội dung đổi trong hộp không còn hai lớp chữ chồng nhau; phần trống mờ dần thay vì biến mất; danh sách dấu trang trống hiện mượt; viền chọn ở đầu Thư viện không bị cắt.
 - Lịch đêm đang lưu vẫn đọc được bằng trình đọc màn hình.
+- Trình phát, đọc theo, bìa sách, tab và Cài đặt không còn đổi chữ hay hiện / ẩn cứng: tên chương, bìa, nút menu, câu và chữ đang đọc, thẻ Đang nghe dở, lời báo đều mờ chéo hoặc trượt mượt.
 
 ## [0.4.138] - 2026-10-24
 
