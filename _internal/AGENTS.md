@@ -94,7 +94,9 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   audio chương 8 GiB, nhạc 2 GiB; job 64 GiB/20.000 file). Kiểm byte trước ghi, đo chỗ trống từng khối; quá trần thì bỏ phần dở,
   mất mạng/huỷ giữ phần dở khi cỡ đã biết, chỉ nối tiếp khi ETag khớp và máy kia xác nhận Range. File nhỏ dùng temporary riêng,
   sync rồi rename, không xoá target cũ.
-  `share.json` hỏng phải giữ nguyên cùng bản `.corrupt-*`, chặn writer thay vì dựng danh sách rỗng; lỗi đọc cũng phải báo lên.
+  Đường ghi giữ nguyên `share.json` hỏng cùng bản `.corrupt-*`, chặn writer thay vì dựng danh sách rỗng; lỗi đọc cũng phải báo lên.
+  Chẩn đoán chỉ đọc/validate, không tạo bản corrupt, không gọi init/recovery; Store lạnh báo chưa sẵn.
+  Init Store/LibraryServer tuần tự dưới khoá, công bố root/context sau recovery; ghim filesDir canonical đầu tiên, thư mục khác thì log và bỏ qua.
 - Phán quyết nghe của Studio nằm trong `reviews.json`, gắn với `stable_id` và checksum bản thu `wav_sha256`; bản thu đổi thì
   phán quyết cũ vào lịch sử, không được che câu chưa nghe ở hàng nghe lại hoặc hộp việc. Không ghi phán quyết này vào SQLite.
 - Xuất `.abook` phải đối chiếu checksum của byte thực ghi trước khi công bố gói; nguồn đổi giữa băm và ghi thì báo lỗi và dọn
