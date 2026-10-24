@@ -612,7 +612,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
               className,
             )}
           >
-            <MoreHorizontal className="glyph" />
+            <MoreHorizontal className="glyph ink-end" />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>
@@ -897,7 +897,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
             aria-label={`Tuỳ chọn ${chapter.displayTitle}`}
             className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast transition-colors hover:bg-panel hover:text-fg focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:bg-panel data-[state=open]:opacity-100 max-md:opacity-100"
           >
-            <MoreHorizontal className="glyph" />
+            <MoreHorizontal className="glyph ink-end" />
           </button>
         </DropdownMenu.Trigger>
         <DropdownMenu.Portal>

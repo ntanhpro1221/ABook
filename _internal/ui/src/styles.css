@@ -779,15 +779,15 @@ select[class~="border-line"] {
   min-height: 48px;
   height: auto;
   gap: 12px;
-  padding: 12px 0;
-  align-items: flex-start;
+  padding: 4px 0;
+  align-items: center;
   line-height: 24px;
 }
 .book-action-menu [role="menuitem"] > svg {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 0;
 }
 .book-action-menu [role="menuitem"] > span { min-width: 0; }
 /* Mực hình học của icon lucide (getBBox từng nét + nửa nét, ô 24): --ink-l / --ink-r = khoảng trống từ mép ô tới mực, đơn vị 1/24
@@ -1359,7 +1359,7 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
   .motion-row[data-state="exit"] { animation-name: fade-out; }
   .motion-skeleton { animation: fade-in var(--motion-fast) linear backwards !important; }
   .fold-chevron, [aria-expanded="true"] .fold-chevron,
-  details[open] > summary .fold-chevron { transform: none; rotate: none; translate: none; scale: none; transition-property: opacity; }
+  details[open] > summary .fold-chevron { transform: none; rotate: none; scale: none; transition-property: opacity; }
   details[data-motion="opening"] > :not(summary) { animation: fade-in var(--motion-fast) linear; }
   details[data-motion="closing"] > :not(summary) { animation: fade-out var(--motion-fast) linear both; }
   .motion-tab-icon { transform: none; translate: none !important; scale: none !important; transition-property: opacity; }
