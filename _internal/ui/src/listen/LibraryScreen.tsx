@@ -143,7 +143,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
   const textOnly = book.stage === "text" && !speaks;
   return (
     <MotionRegion as="div" className="group">
-      <div className="relative">
+      <div className="relative" data-overlay="Huy hiệu máy tính trên bìa sách">
         {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
         <button type="button" tabIndex={-1} onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
           <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full" />

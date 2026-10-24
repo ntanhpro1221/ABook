@@ -12,6 +12,7 @@
     "gallery": "vite -c vite.gallery.config.ts",
     "gallery:build": "vite build -c vite.gallery.config.ts",
     "gallery:shots": "node scripts/gallery_shots.mjs",
+    "gallery:inspect": "node scripts/gallery_inspect.mjs",
     "build:android": "tsc -p tsconfig.json && vite build -c vite.android.config.ts && node -e \"require('fs').renameSync('../mobile/www/android.html','../mobile/www/index.html')\""
   },
   "dependencies": {
