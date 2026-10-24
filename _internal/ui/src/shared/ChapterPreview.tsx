@@ -4,6 +4,7 @@ import { Pencil } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "./cn";
 import { formatNumber } from "./format";
+import { useScrollFade } from "./scrollFade";
 
 /** Một hàng của danh sách chương xem trước: tên (dòng đầu của chương nếu có), số chữ và số ký tự. Cùng hàng chữ với danh sách chương
  *  ở bước "Chọn các chương" của trình tạo sách Studio (studio/NewProjectScreen.tsx). */
@@ -44,6 +45,9 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
   const cancelled = useRef(false); // Esc huỷ: ô mất con trỏ ngay sau đó không được lưu
   // Enter / Esc xong: tiêu điểm về đúng dòng vừa sửa (nút tên chương), không rơi về khung hộp rồi Tab nhảy lên "Đóng" (soát a67).
   const box = useRef<HTMLDivElement | null>(null);
+  // Danh sách dài cuộn trong khung: mép dưới mờ cho thấy còn chương dưới (trước đây hàng thứ 6 vừa khít khung, không gì báo còn 3 hàng nữa).
+  const scroller = useRef<HTMLDivElement | null>(null);
+  const fade = useScrollFade(scroller);
   const returnTo = useRef<number | null>(null);
   useBackLayer(editing !== null, () => {
     cancelled.current = true;
@@ -57,7 +61,8 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
     returnTo.current = null;
   }, [editing]);
   return (
-    <MotionRegion as="div" elementRef={box} className={cn("max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel", className)}>
+    <MotionRegion as="div" elementRef={box} className={cn("overflow-hidden rounded-xl border border-line bg-panel", className)}>
+    <div ref={scroller} style={fade} className="max-h-[320px] overflow-y-auto overscroll-contain">
       {chapters.map((chapter, position) => {
         const index = chapter.index ?? position + 1;
         const on = choice ? choice.picked.has(index) : true;
@@ -145,6 +150,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
           </div>
         );
       })}
+    </div>
     </MotionRegion>
   );
 }
