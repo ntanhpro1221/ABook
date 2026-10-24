@@ -25,7 +25,7 @@ import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
 import { bookmarkReadPath, canPlay, chapterHeard, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
-import { keepTogether, partialBookLine, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
+import { displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
 import { usePlayer } from "./player";
 import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerViews";
 import { EditsNoticesBanner, EditsSyncBanner, LocalEditsBanner, SendEditsItem } from "./SendEdits";
@@ -998,7 +998,7 @@ export function BookScreen({
       <header className="mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7">
         <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-24 sm:row-span-2 sm:w-44" />
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[1.875rem]">{book.title}</h1>
+          <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[1.875rem]">{displayTitle(book.title)}</h1>
           <p className="tabular mt-1.5 text-sm text-fg-2">
             <DotJoin
               parts={[
