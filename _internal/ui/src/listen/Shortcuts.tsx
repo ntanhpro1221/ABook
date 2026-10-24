@@ -27,12 +27,13 @@ const SHORTCUTS: [ReactNode, string, boolean][] = [
 export const LETTER_SHORTCUTS_HINT =
   "Tắt nếu hay lỡ chạm phím hay nhập bằng giọng nói.";
 
-/** `remote`: thiết bị ở xa (Studio từ xa) không đổi được cài đặt của máy tính - câu cuối không chỉ nó tới một công tắc nó không có. */
-export function ShortcutList({ remote = false }: { remote?: boolean }) {
+/** `remote`: thiết bị ở xa (Studio từ xa) không đổi được cài đặt của máy tính - câu cuối không chỉ nó tới một công tắc nó không có.
+ *  `inSettings`: danh sách nằm ngay dưới công tắc trong Cài đặt › Giao diện - không trỏ về chính trang ấy (soát 24-10 T18). */
+export function ShortcutList({ remote = false, inSettings = false }: { remote?: boolean; inSettings?: boolean }) {
   const letters = useLetterShortcuts();
   return (
     <>
-      <dl className="max-w-md space-y-2.5 text-sm">
+      <dl className={inSettings ? "space-y-2.5 text-sm" : "max-w-md space-y-2.5 text-sm"}>
         {SHORTCUTS.map(([keys, label, letter]) => (
           <div key={label} className="flex items-center justify-between gap-4">
             <dt className="text-fg-2">
@@ -43,13 +44,15 @@ export function ShortcutList({ remote = false }: { remote?: boolean }) {
           </div>
         ))}
       </dl>
+      {!(inSettings && letters) && (
       <p className="mt-3 max-w-md text-[0.8125rem] text-fg-2 text-pretty">
         {letters
           ? remote
             ? "Phím một chữ cái: B, M, [ ], ?, và J, K, 1–9, O, R ở Studio."
             : "Tắt phím một chữ cái ở Cài đặt › Giao diện."
-          : `Phím một chữ cái đang tắt${remote ? "" : " (bật ở Cài đặt › Giao diện)"}. Space, mũi tên, Esc vẫn chạy.`}
+          : `Phím một chữ cái đang tắt${remote || inSettings ? "" : " (bật ở Cài đặt › Giao diện)"}. Space, mũi tên, Esc vẫn chạy.`}
       </p>
+      )}
     </>
   );
 }
