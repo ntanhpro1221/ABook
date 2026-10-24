@@ -269,8 +269,8 @@ export function PhoneSync() {
     if (added) toast.success(`Đã ghép ${added.name}`, { description: "Thiết bị này giờ tải được sách và đồng bộ chỗ đang nghe." });
   }, [sync]);
 
-  if (error && !sync) return <SettingsBlock title="Máy này" id="phone" className="first:mt-8"><MotionRegion fadeThrough className="py-3.5"><InlineError message="Bạn hãy thử tải lại cài đặt kết nối." onRetry={() => void refetch()} /></MotionRegion></SettingsBlock>;
-  if (!sync) return <SettingsBlock title="Máy này" id="phone" className="first:mt-8"><MotionRegion fadeThrough className="py-3.5"><ContentSkeleton count={2} label="Đang tải kết nối" /></MotionRegion></SettingsBlock>;
+  if (error && !sync) return <SettingsBlock title="Máy này" id="phone"><MotionRegion fadeThrough className="py-3.5"><InlineError message="Bạn hãy thử tải lại cài đặt kết nối." onRetry={() => void refetch()} /></MotionRegion></SettingsBlock>;
+  if (!sync) return <SettingsBlock title="Máy này" id="phone"><MotionRegion fadeThrough className="py-3.5"><ContentSkeleton count={2} label="Đang tải kết nối" /></MotionRegion></SettingsBlock>;
   const wanted = toggle.isPending ? Boolean(toggle.variables) : sync.wanted;
   const failing = sync.wanted && !sync.enabled;
   const studioWanted = studio.isPending ? Boolean(studio.variables) : sync.remoteStudio;
@@ -278,9 +278,8 @@ export function PhoneSync() {
   return (
     // Hai khối cài đặt như mọi trang: "Máy này" (mọi thứ của chính máy tính) rồi "Thiết bị đã ghép" - cùng nhãn mục, cùng khoảng
     // cách giữa khối (trước đây danh sách thiết bị là tiêu đề con bên trong, sát hàng trên 17 px, và "Kết nối" rơi xuống dưới nó).
-    // Khối đầu là con đầu của vỏ này nên first:mt-4 sẽ bám nhầm: giữ mt-8 như khối đầu (sau h1) của mọi trang cài đặt khác.
     <MotionRegion as="div" className="motion-reveal">
-      <SettingsBlock title="Máy này" id="phone" className="first:mt-8">
+      <SettingsBlock title="Máy này" id="phone">
       <div className="space-y-5 py-3.5">
       <div className="flex items-center justify-between gap-6">
         <label htmlFor="phone-sync" className="min-w-0 cursor-pointer">

@@ -451,7 +451,7 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
               <span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
             </div>
             {info?.dialogs && (
-              <Button icon={FolderOpen} className={cn("touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>
+              <Button size="sm" variant="secondary" icon={FolderOpen} className={cn("touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>
                 Đổi thư mục
               </Button>
             )}

@@ -99,11 +99,12 @@ export function GroupHeader({ id, back = true }: { id: SettingsGroupId; back?: b
 }
 
 /** Khối phẳng trong màn con: khoảng trắng + tiêu đề nhỏ. `fold` (khoá nhớ): khối ít dùng trong một nhóm dài gập lại sau tiêu đề bấm được (a120 - chủ app: nhiều
- *  đầu mục thì "foldout chúng lại"); mở rồi thì lần sau vẫn mở. */
+ *  đầu mục thì "foldout chúng lại"); mở rồi thì lần sau vẫn mở. Luôn mt-8: khối nào cũng đứng sau tiêu đề trang; `first:mt-4` cũ bám nhầm
+ *  khi khối nằm trong một vỏ (Nâng cao, Thiết bị lệch 14 px so với các trang khác). */
 export function SettingsBlock({ title, id, children, className, fold }: { title?: string; id?: string; children: ReactNode; className?: string; fold?: string }) {
   if (fold && title) return <FoldedBlock title={title} id={id} storageKey={fold} className={className}>{children}</FoldedBlock>;
   return (
-    <section id={id} className={cn("settings-block mt-8 first:mt-4", className)}>
+    <section id={id} className={cn("settings-block mt-8", className)}>
       {title && <h2 className="label-section mb-2 text-fg-2">{title}</h2>}
       <div className="divide-y divide-line">{children}</div>
     </section>
@@ -114,7 +115,7 @@ function FoldedBlock({ title, id, children, className, storageKey }: { title: st
   const [open, setOpen] = useFold(`settings.${storageKey}`);
   const bodyId = useId();
   return (
-    <section id={id} className={cn("settings-block mt-8 first:mt-4", className)}>
+    <section id={id} className={cn("settings-block mt-8", className)}>
       <h2 className="label-section mb-2 text-fg-2">
         <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)} className="touch-row -mx-2 flex w-[calc(100%+var(--spacing)*4)] items-center justify-between gap-2 rounded-lg px-2 py-1 text-left uppercase hover:bg-hover">
           {title}

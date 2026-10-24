@@ -28,9 +28,9 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-8 px-3 text-[0.8125rem] gap-1.5 rounded-lg",
-  md: "h-9 px-3.5 text-sm gap-2 rounded-lg",
-  lg: "h-11 px-5 text-[0.9375rem] gap-2 rounded-xl",
+  sm: "h-8 min-h-8 px-3 text-[0.8125rem] gap-1.5 rounded-lg",
+  md: "h-9 min-h-9 px-3.5 text-sm gap-2 rounded-lg",
+  lg: "h-11 min-h-11 px-5 text-[0.9375rem] gap-2 rounded-xl",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -50,8 +50,9 @@ export function busyClick<E extends { preventDefault: () => void }>(loading: boo
   return (event: E) => event.preventDefault();
 }
 
-/** Nút có chữ dài (đường dẫn, tên mục): chữ xuống dòng, bẻ cả chuỗi liền, nút cao thêm thay vì rộng hơn khung - chữ hệ thống to ở 320 px không đẩy trang tràn ngang (soát a102). */
-export const WRAP_LABEL = "h-auto min-h-8 max-w-full whitespace-normal py-1.5 text-center [overflow-wrap:anywhere]";
+/** Nút có chữ dài (đường dẫn, tên mục): chữ xuống dòng, bẻ cả chuỗi liền, nút cao thêm thay vì rộng hơn khung - chữ hệ thống to ở 320 px không đẩy trang tràn ngang (soát a102).
+ *  Một dòng thì cao đúng như nút cùng cỡ (min-h của cỡ nút giữ lại): trước đây `min-h-8 py-1.5` làm nút sm cao 32, md 32,5 cạnh nút thường 28 / 31,5. */
+export const WRAP_LABEL = "h-auto max-w-full whitespace-normal py-1 leading-snug text-center [overflow-wrap:anywhere]";
 
 export function Button({
   variant = "secondary",
