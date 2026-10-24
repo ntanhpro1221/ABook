@@ -120,7 +120,7 @@ export function CoverSearchDialog({
           aria-label="Tên sách để tìm bìa"
           className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
         />
-        <Button type="submit" variant="primary" icon={Search} loading={search.isPending}>
+        <Button type="submit" variant="primary" className="h-10 min-h-10" icon={Search} loading={search.isPending}>
           Tìm
         </Button>
       </form>

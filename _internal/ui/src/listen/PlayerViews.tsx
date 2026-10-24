@@ -1787,7 +1787,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   if (!script) return <MotionRegion />;
   return (
     <MotionRegion as="div" className="relative h-full">
-      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface h-full overflow-y-auto px-6 py-8 sm:px-10">
+      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface h-full overflow-y-auto px-[20px] py-8 sm:px-10">
         <div className="mx-auto max-w-[68ch] text-[1.25rem] leading-[1.7]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải "chưa có audio". */}
           {!script.timed && current?.state !== "text" && (
@@ -2439,8 +2439,8 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
           mobile ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-[20px] pb-6 pt-2" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
         )}
       >
-        {/* Thanh đầu: thu nhỏ · ĐANG NGHE · "…" - không gì khác. */}
-        <div className="slot-row [--slot:clamp(1.125rem,0.75rlh,1.96875rem)]">
+        {/* Thanh đầu: thu nhỏ · ĐANG NGHE · "…" - không gì khác. Cùng --slot với hàng phát: nút thu nhỏ / "…" thẳng tâm nút chương trước / sau. */}
+        <div className="slot-row [--slot:clamp(1.25rem,0.8333rlh,2.40625rem)]">
           <IconButton label={withShortcut("Thu nhỏ", "Esc")} icon={ChevronDown} className="touch-box" onClick={() => setExpanded(false)} />
           <span className="label-section text-fg-2">Đang nghe</span>
           <div>
