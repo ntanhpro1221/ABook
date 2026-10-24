@@ -15,6 +15,10 @@ export function galleryCases(platform: Platform): void {
   };
   // Thế giới giả TRƯỚC khi mã app nạp (mountApp nạp bằng import động).
   installPlatform(platform);
+  const media = window.matchMedia.bind(window);
+  window.matchMedia = query => query.trim() === "(max-width: 640px)"
+    ? { ...media(query), matches: platform === "phone", addEventListener() {}, removeEventListener() {} } as MediaQueryList
+    : media(query);
   const entries = ENTRIES.filter((entry) => entry.platform === platform);
 
   it("danh mục: mã mục duy nhất, đúng tiền tố nền tảng", () => {
@@ -30,9 +34,15 @@ export function galleryCases(platform: Platform): void {
       document.body.append(container);
       const unmount = await runEntry(entry, "light", container, { quiet: 120 });
       try {
-        expect(galleryState.errors).toEqual([]);
+        expect(galleryState.errors, galleryState.errors.join("\n")).toEqual([]);
         expect([...galleryState.missing]).toEqual([]);
         expect(container.textContent?.trim().length).toBeGreaterThan(0);
+        if (platform === "phone" && /\/(book-menu|book-confirm-remove|add-book-[12]|player-(sleep|sleep-active|speed|more|chapters|bookmarks))$/.test(entry.id)) {
+          expect(document.querySelector('.motion-sheet[data-state="open"] [data-sheet-handle]')).not.toBeNull();
+        }
+        if (entry.id.endsWith("player-speed") || entry.id.endsWith("player-full-speed")) {
+          expect(document.querySelector('[data-current-choice][aria-pressed="true"]')?.textContent).toBe("1,15×");
+        }
         if (entry.id === "desktop/settings-studio") {
           expect([...container.querySelectorAll("h1")].at(-1)?.textContent).toBe("Studio");
           expect(container.textContent).toContain("Tạm dừng dùng pin");

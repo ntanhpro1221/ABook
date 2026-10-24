@@ -23,7 +23,7 @@ export const WORKSHOP_COST =
   "Studio sẽ tạo một dự án mới từ chữ và giọng của cuốn này, mang theo tên bạn đặt và những việc bạn ghi cho Studio. " +
   "Không còn dự án gốc: audio sẽ làm lại hết. Cuốn đang nghe giữ nguyên.";
 
-/** “Dựng xưởng” / “Làm sách nói từ cuốn này”: một dự án Studio mới từ cuốn đang nghe / đọc (`POST /api/books/<mã>/workshop`, workshop.py).
+/** “Dựng xưởng” / “Tạo sách nói”: một dự án Studio mới từ cuốn đang nghe / đọc (`POST /api/books/<mã>/workshop`, workshop.py).
  *  `done` nói điều đã mang sang, theo loại cuốn. */
 function useBuildProject(book: ListenBook, done: (made: { chapters: number; voices: number }) => { title: string; description: string }) {
   const navigate = useNavigate();
@@ -87,11 +87,11 @@ function DesktopNeedStudioItem({ title, note }: { title: string; note: string })
   );
 }
 
-/** Chữ nói rõ “Làm sách nói từ cuốn này” mang gì sang Studio. */
+/** Chữ nói rõ “Tạo sách nói” mang gì sang Studio. */
 export const TEXT_BOOK_COST =
   "Tạo dự án Studio từ chữ cuốn này. Chưa chạy gì; cuốn đang đọc giữ nguyên.";
 
-/** Mục menu của sách chỉ có chữ (nhập từ EPUB / DOCX / PDF / TXT): “Làm sách nói từ cuốn này” (máy có Studio) hay mở dự án đã làm. */
+/** Mục menu của sách chỉ có chữ (nhập từ EPUB / DOCX / PDF / TXT): “Tạo sách nói” (máy có Studio) hay mở dự án đã làm. */
 export function TextBookItems({ book }: { book: ListenBook }) {
   const navigate = useNavigate();
   const { build, building } = useBuildProject(book, (made) => ({
@@ -103,11 +103,11 @@ export function TextBookItems({ book }: { book: ListenBook }) {
   if (book.studioProject) {
     return (
       <DropdownMenu.Item onSelect={() => navigate(`/studio/${book.studioProject}`)} className={MENU_ITEM}>
-        <Hammer className="size-4" /> Mở dự án đã làm từ cuốn này
+        <Hammer className="size-4" /> Mở dự án Studio
       </DropdownMenu.Item>
     );
   }
-  if (!toolchain) return <NeedStudioItem title="Làm sách nói từ cuốn này" phoneNote="Chỉ làm được ở Studio trên máy tính. Ở đây bạn vẫn nghe cuốn này bằng Nghe ngay." />;
+  if (!toolchain) return <NeedStudioItem title="Tạo sách nói" phoneNote="Chỉ làm được ở Studio trên máy tính. Ở đây bạn vẫn nghe cuốn này bằng Nghe ngay." />;
   return (
     <DropdownMenu.Item
       disabled={building}
@@ -116,7 +116,7 @@ export function TextBookItems({ book }: { book: ListenBook }) {
     >
       <Hammer className="mt-0.5 size-4 shrink-0" />
       <span className="min-w-0">
-        <span className="block">Làm sách nói từ cuốn này</span>
+        <span className="block">Tạo sách nói</span>
         <span className="block text-xs text-fg-3">{TEXT_BOOK_COST}</span>
       </span>
     </DropdownMenu.Item>
@@ -138,7 +138,7 @@ export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews:
     <>
       {info.views.length > 0 && (
         <DropdownMenu.Item onSelect={onViews} className={MENU_ITEM}>
-          <ClipboardList className="size-4" /> Việc của xưởng (chỉ đọc)
+          <ClipboardList className="size-4" /> Việc của xưởng
         </DropdownMenu.Item>
       )}
       {pending && info.built && (
