@@ -1,3 +1,4 @@
+import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
@@ -184,39 +185,13 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
       <MotionRegion as="div" className="rounded-xl border border-accent/35 bg-accent-soft p-5" aria-live="polite">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="min-w-0">
-            <p className="text-sm font-semibold">Nhập mã này trên thiết bị cần ghép</p>
-            <ol className="mt-2 list-decimal space-y-1 pl-4 text-[0.8125rem] text-fg-2">
-              <li>
-                Mở ABook trên điện thoại, vào <span className="font-medium text-fg">Tải sách</span>.
-              </li>
-              <li>
-                Chọn máy <span className="font-medium text-fg">{sync.name}</span> trong danh sách máy tính tìm thấy
-                {sync.addresses.length > 0 && (
-                  <>
-                    {" "}
-                    - không thấy thì bấm <span className="font-medium text-fg">Nhập địa chỉ máy tính</span> và gõ{" "}
-                    <Where sync={sync} scheme={false} />
-                  </>
-                )}
-                .
-              </li>
-              <li>Gõ mã 6 số này. Mã chỉ dùng được một lần.</li>
-            </ol>
-            {/* Địa chỉ luôn hiện ở đây (máy tính khác không tự thấy máy này thì gõ địa chỉ), không chỉ khi bật điều khiển sản xuất. */}
-            {sync.addresses.length > 0 && (
-              <p className="mt-2 text-[0.8125rem] text-fg-2">
-                Địa chỉ máy này: <Where sync={sync} scheme={false} />
-              </p>
-            )}
-            {/* Ghép một chiều (soát a27 lỗi 9): ghép xong máy kia nghe sách của máy này, không ngược lại. */}
-            <p className="mt-2 text-[0.8125rem] text-fg-2">
-              Ghép một chiều: máy kia nghe sách của máy này, không ngược lại.
-            </p>
-            {sync.remoteStudio && (
-              <p className="mt-2 text-[0.8125rem] text-fg-2">
-                Trình duyệt: mở <Where sync={sync} /> rồi gõ mã. Báo “không an toàn” thì cứ tiếp tục (chứng chỉ của máy này).
-              </p>
-            )}
+            <p className="text-sm font-semibold">Mã ghép thiết bị</p>
+            <p className="mt-2 text-[0.8125rem] text-fg-2">Trên máy kia: Tải sách → chọn {sync.name} → nhập mã.</p>
+            <MoreInfo label="Cách dùng mã" className="mt-2">
+              Mã dùng một lần để máy kia nghe thư viện này.
+              {sync.addresses.length > 0 && <span className="block">Địa chỉ: <Where sync={sync} scheme={false} /></span>}
+              {sync.remoteStudio && <span className="block">Trình duyệt: mở <Where sync={sync} /> rồi nhập mã.</span>}
+            </MoreInfo>
           </div>
           {/* Mã và dòng hết hạn cùng một trục giữa (soát UX a19): khoảng cách chữ thừa sau số cuối đã được bù ở bên trái. */}
           <div className="text-center">
@@ -234,14 +209,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
           </div>
         </div>
         {/* Dòng vân tay dài (64 ký tự): để NGOÀI hàng hướng dẫn / mã, không thì nó chiếm hết bề rộng và đẩy mã xuống dưới. */}
-        {sync.fingerprint && (
-          <details className="group mt-3 text-[0.75rem] text-fg-3">
-            <summary className="cursor-pointer list-none text-fg-2 [&::-webkit-details-marker]:hidden">Chi tiết kỹ thuật</summary>
-            <p className="mt-1 break-words">
-              Vân tay của máy này: <span className="tabular-nums">{sync.fingerprint}</span>. Đối chiếu với dòng “Vân tay” trên máy kia sau khi ghép.
-            </p>
-          </details>
-        )}
+        {sync.fingerprint && <p className="mt-3 break-all text-xs text-fg-3" title="Đối chiếu vân tay với máy kia">Vân tay: {sync.fingerprint}</p>}
         <div className="mt-4 dialog-actions">
           {/* Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09). */}
           <Button size="sm" variant="ghost" onClick={onCancel}>
@@ -256,9 +224,9 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
       <MotionRegion as="div" className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4">
         <ShieldAlert className="mt-0.5 glyph shrink-0 text-warning" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold">Mã đã bị huỷ vì nhập sai 5 lần</p>
+          <p className="text-sm font-semibold">Mã bị khoá</p>
           <p className="mt-0.5 text-[0.8125rem] text-fg-2">
-            Gõ nhầm thì tạo mã mới. Không phải bạn thì có máy lạ đang đoán mã - chỉ tạo mã khi cần.
+            Sai 5 lần; chỉ tạo mã mới khi bạn đang ghép thiết bị.
           </p>
         </div>
         <Button size="sm" onClick={onPair} loading={busy}>
@@ -268,9 +236,9 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
     );
   }
   return (
-    <Button icon={Smartphone} onClick={onPair} loading={busy}><MotionRegion>
+    <MotionRegion><Button icon={Smartphone} onClick={onPair} loading={busy}>
       Ghép thiết bị mới
-    </MotionRegion></Button>
+    </Button></MotionRegion>
   );
 }
 
@@ -360,8 +328,8 @@ export function PhoneSync() {
           <Dialog
             open={confirmStudio}
             onOpenChange={setConfirmStudio}
-            title="Cho điều khiển từ xa?"
-            description="Thiết bị đã ghép mở được Studio của máy này trong trình duyệt. Mỗi thiết bị vẫn phải bật riêng ở danh sách dưới."
+            title="Bật Studio từ xa?"
+            description="Bật quyền riêng cho từng thiết bị để mở Studio trong trình duyệt."
           >
             <div className="dialog-actions">
               <Button variant="ghost" onClick={() => setConfirmStudio(false)}>
@@ -444,7 +412,7 @@ export function PhoneSync() {
           {/* Chủ sách 29-09 hỏi khác mạng có dùng được không: app không cần gì riêng - mạng riêng ảo người dùng tự cài cho
               máy này một địa chỉ điện thoại tới được, và điện thoại học địa chỉ ấy mỗi lần mở Thư viện (SyncLink.refreshRoutes). */}
           <p className="text-xs text-fg-3">
-            Ngoài nhà: sách đã tải nghe ở đâu cũng được. Nghe thẳng từ máy này thì dùng mạng riêng ảo (Tailscale, ZeroTier…).
+            Ngoài nhà: nghe sách đã tải, hoặc nối mạng riêng ảo để nghe thẳng.
           </p>
           </Fold>
         </>
@@ -454,7 +422,7 @@ export function PhoneSync() {
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
         title={`Thôi ghép ${removing?.name ?? "thiết bị"}?`}
-        description="Thiết bị này thôi tải sách và đồng bộ chỗ nghe. Sách đã tải vẫn nghe được."
+        description="Dừng tải và đồng bộ; giữ sách đã tải."
       >
         <div className="dialog-actions">
           <Button variant="ghost" onClick={() => setRemoving(null)}>

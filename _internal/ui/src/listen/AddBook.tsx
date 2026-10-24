@@ -148,7 +148,7 @@ export function AddBookDialog({
   // ảo bật lên che mất nút "Thêm vào thư viện", mà tên đã điền sẵn và hiếm khi cần sửa (soát máy thật 03-10).
   const hasPreview = preview !== null; // tích / bỏ tích tách chương đọc lại bản xem trước: con trỏ không nhảy về ô tên
   useEffect(() => {
-    if (!hasPreview || window.matchMedia?.("(pointer: coarse)").matches) return;
+    if (!hasPreview || window.matchMedia?.("(any-pointer: coarse)").matches) return;
     titleField.current?.focus();
     titleField.current?.select();
   }, [hasPreview]);
@@ -604,7 +604,7 @@ export function AddBookDialog({
             >
               <input
                 value={typed}
-                data-autofocus
+                data-autofocus={window.matchMedia?.("(any-pointer: coarse)").matches ? undefined : true}
                 onChange={(event) => setTyped(event.target.value)}
                 aria-label="Đường dẫn file hay thư mục"
                 aria-describedby={importer.choose ? undefined : "typed-path-hint"}
@@ -760,7 +760,7 @@ export function AddBookDialog({
               <Loader2 className="size-4 shrink-0 animate-spin" /> <span className="min-w-0 truncate">Đang thêm “{working}”…</span>
             </p>
           )}
-          <div className="mt-5 flex flex-wrap justify-end gap-2">
+          <div className="sticky bottom-0 z-10 mt-5 flex flex-wrap justify-end gap-2 border-t border-line bg-panel py-3" data-add-book-actions>
             <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>
               Chọn lại
             </Button>

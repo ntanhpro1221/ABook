@@ -123,7 +123,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
         )}
       </div>
       {modified && active && (
-        <p className="mt-2 text-[0.8125rem] text-fg-2">Bạn đã đổi so với mẫu “{active.name}”. Bấm lại tên mẫu để trở về như đã lưu.</p>
+        <p className="mt-2 text-[0.8125rem] text-fg-2">Bấm lại mẫu “{active.name}” để khôi phục thiết lập đã lưu.</p>
       )}
       {lostVoice && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingVoiceNote(lostVoice)}</p>}
       {lostModel && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingModelNote(lostModel)}</p>}

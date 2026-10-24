@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "@/shared/toast";
 import { Button } from "@/shared/ui";
@@ -19,16 +20,16 @@ export function AutoPickNote({ track, canOverride, onView, idleLabel }: {
     onError: (error: Error) => toast.error("Không đổi được", { description: error.message }),
   });
   const label = autoLabel(track) ?? idleLabel;
-  if (!label && !canOverride) return null;
+  if (!label && !canOverride) return <MotionRegion as="span" />;
   const switcher = autoSwitch(track);
   return (
-    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-2">
+    <MotionRegion as="span" className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-2">
       {label && <span>{label}</span>}
       {canOverride && (
         <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" aria-label={`${switcher.text}: ${track.title}`} loading={change.isPending} onClick={() => change.mutate(switcher.next)}>
           {switcher.text}
         </Button>
       )}
-    </span>
+    </MotionRegion>
   );
 }

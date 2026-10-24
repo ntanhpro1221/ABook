@@ -12,6 +12,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Nội dung đổi trong hộp không còn hai lớp chữ chồng nhau; phần trống mờ dần thay vì biến mất; danh sách dấu trang trống hiện mượt; viền chọn ở đầu Thư viện không bị cắt.
 - Lịch đêm đang lưu vẫn đọc được bằng trình đọc màn hình.
 - Trình phát, đọc theo, bìa sách, tab và Cài đặt không còn đổi chữ hay hiện / ẩn cứng: tên chương, bìa, nút menu, câu và chữ đang đọc, thẻ Đang nghe dở, lời báo đều mờ chéo hoặc trượt mượt.
+- Studio và các hộp trên máy tính không còn hiện / ẩn cứng: biểu mẫu mở tại chỗ trượt ra, trạng thái tải, menu và lỗi chương mờ dần; nhãn và mô tả gọn hơn; công tắc nối máy đổi tên thành "Kết nối Wi-Fi".
+- Thêm sách trên điện thoại: nút cuối hộp luôn trong tầm, bàn phím không tự bật lên; gập nhóm trong Thư viện không làm nhảy chỗ cuộn.
 
 ## [0.4.138] - 2026-10-24
 

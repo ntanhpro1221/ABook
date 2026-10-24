@@ -37,7 +37,7 @@ export function WordTimingsRow({ bookId, running }: { bookId: string; running: b
   const finished = data?.state === "done" && data.file;
   const lines = data?.lines ?? 0;
   const aligned = data?.words ?? 0;
-  let note = "Tuỳ chọn: khi nghe, từng chữ sáng lên đúng lúc được đọc. Sách làm từ trước chưa có - thêm một lần, chạy ngầm, thường mất vài phút.";
+  let note = "Thêm chữ sáng theo giọng đọc, chạy nền vài phút.";
   if (data?.state === "running") note = `Đang thêm chữ sáng… ${data.total ? Math.round(((data.done ?? 0) / data.total) * 100) : 0}%`;
   else if (data?.state === "error") note = data.error ?? "Chưa thêm được chữ sáng.";
   else if (finished) note = "Xong - file sách của dự án đã được làm lại kèm chữ sáng theo giọng đọc.";

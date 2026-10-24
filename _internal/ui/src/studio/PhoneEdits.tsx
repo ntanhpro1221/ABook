@@ -213,7 +213,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
       )}
       {data.recent.length > 0 && (
         <details className="mt-3 text-sm text-fg-2">
-          <summary className="cursor-pointer select-none">Điện thoại đã gửi gần đây ({data.recent.length})</summary>
+          <summary className="cursor-pointer select-none">Gửi gần đây ({data.recent.length})</summary>
           <ul className="mt-2 space-y-2">
             {data.recent.map((push) => (
               <li key={`${push.device}:${push.at}`} className="text-pretty">
@@ -233,7 +233,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
         onOpenChange={(open) => !open && setConfirmSkipAll(null)}
         width="max-w-md"
         title={`Bỏ qua mọi việc từ ${confirmSkipAll?.name ?? "máy này"}?`}
-        description={`${confirmSkipAll?.items.length ?? 0} việc sẽ rời danh sách chờ. Không có gì thay đổi trong sách, và bạn khôi phục lại được ở mục “Đã bỏ qua”.`}
+        description={`Bỏ ${confirmSkipAll?.items.length ?? 0} việc khỏi hàng chờ, khôi phục được ở “Đã bỏ qua”.`}
       >
         <div className="dialog-actions">
           <Button variant="ghost" onClick={() => setConfirmSkipAll(null)}>

@@ -86,7 +86,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
   return (
     <div className="w-24 shrink-0 sm:w-44">
       <div
-        className={cn("relative rounded-lg", dragging && "ring-2 ring-accent ring-offset-2 ring-offset-bg")}
+        className={cn("relative rounded-lg transition-shadow duration-motion-fast", dragging && "ring-2 ring-accent ring-offset-2 ring-offset-bg")}
         onDragOver={(event) => {
           if (!Array.from(event.dataTransfer.items).some((item) => item.type.startsWith("image/"))) return;
           event.preventDefault();
@@ -102,11 +102,9 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
         }}
       >
         <BookCover title={book.title} part={book.series?.part} size={narrow ? "sm" : "lg"} image={book.cover} className="w-24 sm:w-44" />
-        {busy && (
-          <div className="absolute inset-0 grid place-items-center rounded-lg bg-black/40 text-white">
+          <div aria-hidden={!busy} className={cn("pointer-events-none absolute inset-0 grid place-items-center rounded-lg bg-black/40 text-white transition-opacity duration-motion-fast", busy ? "opacity-100" : "opacity-0")}>
             <Loader2 className="size-6 animate-spin" />
           </div>
-        )}
       </div>
       <div className="mt-2 flex items-center gap-1">
         <button
@@ -141,7 +139,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           </button>
         )}
       </div>
-      <p className="px-2 text-xs text-fg-3 max-sm:hidden">Hoặc kéo thả / dán ảnh vào đây.</p>
+      <p className="px-2 text-xs text-fg-3 max-sm:hidden">Kéo hoặc dán ảnh</p>
       <CoverSearchDialog
         bookId={book.id}
         defaultQuery={seriesOf(book.title).series || book.title}
