@@ -272,7 +272,12 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
   const live = book.running || book.starting;
   // Giữ chờ duyệt (precast.held) cũng là `paused` nhưng là đợi người nghe, không phải ai bấm Tạm dừng (soát UX a23: "47% tổng"
   // đứng yên không nói vì sao).
-  const eta = book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "đang tạm dừng") : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
+  // Tạm dừng thường (pin, người bấm) đã nói ở viên trạng thái đầu trang và dòng hành động - không nói lại ở đây (soát 24-10 T19: "máy đang
+  // chạy pin" lặp 3-4 lần một màn).
+  const eta = book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "") : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
+  // Dòng phụ "Các bước" nói bước đang tới - cả khi đang tạm dừng; lý do dừng đã ở trên.
+  const current = [analysis, casting, synthesis].findIndex((state) => state === "active" || state === "paused");
+  const stepSummary = current >= 0 ? ["Phân tích truyện", "Phân vai", "Thu âm và kiểm tra"][current] : book.statusLabel;
   return (
     <MotionRegion as="section" className="mt-8">
       <div className="mb-3 flex items-baseline justify-between">
@@ -291,7 +296,7 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
           </span>
         </p>
       )}
-      <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={analysis === "active" ? "Phân tích truyện" : casting === "active" ? "Phân vai" : synthesis === "active" ? "Thu âm và kiểm tra" : book.statusLabel} heading="h3" flat>
+      <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={stepSummary} heading="h3" flat>
       <div className="flex flex-col gap-6 sm:flex-row sm:gap-8">
         <Step
           index={1}

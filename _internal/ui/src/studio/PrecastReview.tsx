@@ -171,11 +171,12 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
 
   return (
     <MotionRegion as="div" className="mt-5">
-      <div className="rounded-2xl border border-line bg-panel p-4 sm:p-5">
+      {/* Phẳng, không khung, không lặp tên tab làm tiêu đề (DESIGN 6 "Tab trong trang"; soát 24-10): tiêu đề chỉ cho trình đọc màn hình. */}
+      <div>
         <div className="min-w-0 max-w-2xl">
-          <h2 className="text-base font-semibold">Duyệt trước khi thu</h2>
+          <h2 className="sr-only">Duyệt trước khi thu</h2>
           {book.precast?.held && (
-            <p className="mt-2 text-sm font-medium text-warning">Sách đang chờ bạn duyệt - duyệt xong bấm “Thu âm” ở đầu trang.</p>
+            <p className="text-sm font-medium text-warning">Sách đang chờ bạn duyệt - duyệt xong bấm “Thu âm” ở đầu trang.</p>
           )}
         </div>
         {narrow ? (
@@ -199,7 +200,8 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                 aria-current={active ? "step" : undefined}
                 onClick={() => setStep(value)}
                 className={cn(
-                  "flex w-full items-center gap-2.5 rounded-xl border p-3 text-left transition-colors",
+                  // h-full: thẻ "Xong" không có dòng phụ vẫn cao bằng ba thẻ cạnh (soát 24-10 T19).
+                  "flex h-full w-full items-center gap-2.5 rounded-xl border p-3 text-left transition-colors",
                   active ? "border-accent/40 bg-accent-soft" : "border-line bg-panel hover:bg-hover",
                 )}
               >
