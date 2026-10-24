@@ -31,6 +31,7 @@ import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
 import { cn } from "@/shared/cn";
 import { usePageTitle } from "@/shared/title";
+import { useScrollFadeOn } from "@/shared/scrollFade";
 import { formatLength, formatNumber } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { Button, LiveText, Segmented, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
@@ -267,6 +268,8 @@ export function SourceStep({
   previousLast?: string;
 }) {
   const { data: info } = useAppInfo();
+  const [chapterList, setChapterList] = useState<HTMLDivElement | null>(null);
+  const chapterFade = useScrollFadeOn(chapterList);
   const [typed, setTyped] = useState("");
   // Studio trong trình duyệt (từ xa, hay ngay trên máy tính mà không có hộp chọn file của app): máy đang xem không có đường
   // dẫn nào trên máy tính để gõ - nó gửi các chương đi (studio/upload.ts). Ô dán đường dẫn lui vào "Nâng cao".
@@ -667,7 +670,8 @@ export function SourceStep({
           )}
           {/* Danh sách thật cho trình đọc màn hình ("danh sách 12 mục", soát a31 A4); vạch "Phần N" chỉ để nhìn - lời của nó đọc ở đầu mục. */}
           <Fold storageKey="new-project.chapters" title="Danh sách chương" summary={`${files.length} chương`} defaultOpen={files.length <= 4} className="mt-3" heading="h3">
-          <div role="list" aria-label="Các chương sẽ làm" className="max-h-[340px] overflow-y-auto rounded-xl border border-line bg-panel">
+          <div className="overflow-hidden rounded-xl border border-line bg-panel">
+          <div ref={setChapterList} style={chapterFade} role="list" aria-label="Các chương sẽ làm" className="max-h-[340px] overflow-y-auto overscroll-contain">
             {files.map((file, index) => {
               // Chia phần: một vạch "Phần N bắt đầu" trước chương đầu mỗi phần - khỏi phải đối số chương với ô "từ chương" ở trên.
               const part = splitting && volumeStarts && volumeStarts.length > 1 ? volumeStarts.indexOf(index + 1) : -1;
@@ -708,6 +712,7 @@ export function SourceStep({
                 </Fragment>
               );
             })}
+          </div>
           </div>
           </Fold>
           {scan!.skipped.length > 0 && <p className="mt-2 text-xs text-fg-2">Bỏ qua {scan!.skipped.length} file không phải .txt.</p>}
@@ -750,6 +755,8 @@ function carriedText(carries: Seed["carries"]): string {
 function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; drop: CreditDrop; onChange: (value: CreditDrop) => void }) {
   // Soát UX a24, A9: xem hết mọi dòng (theo chương) trước khi bỏ, và bỏ riêng dòng đầu chương / cuối chương - hai cài đặt riêng của sách.
   const [all, setAll] = useState(false);
+  const [list, setList] = useState<HTMLUListElement | null>(null);
+  const fade = useScrollFadeOn(list);
   const credits = creditSummary(files);
   if (!credits.lines) return <MotionRegion />;
   const quoted = credits.examples.join(", ");
@@ -780,7 +787,8 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
           </>
         )}
         {all && (
-          <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto rounded-lg bg-hover/50 p-2 text-xs text-fg-2" aria-label="Mọi dòng gợi ý theo chương">
+          <div className="mt-2 overflow-hidden rounded-lg bg-hover/50">
+          <ul ref={setList} style={fade} className="max-h-64 space-y-1 overflow-y-auto overscroll-contain p-2 text-xs text-fg-2" aria-label="Mọi dòng gợi ý theo chương">
             {creditRows(files, chapterLabel).map((row, index) => (
               <li key={`${index}-${row.chapter}`} className="break-words">
                 <span className="font-medium text-fg">{row.chapter}:</span>{" "}
@@ -793,6 +801,7 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
               </li>
             ))}
           </ul>
+          </div>
         )}
         <div className="mt-2.5 flex flex-wrap gap-2">
           {both ? (
