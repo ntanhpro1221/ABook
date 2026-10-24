@@ -16,6 +16,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Menu "…" và các hộp Tốc độ, Hẹn giờ, Nhạc nền, Giọng đọc của thanh phát trên máy tính: mọi dòng cao bằng nhau, chữ, dấu ✓, nút −/+ và icon "Thiết bị phát" thẳng một mép.
 - Màn Đang nghe: nút thu nhỏ, "…", chương trước / sau và hàng Tốc độ · Hẹn giờ · Dấu trang · Chương chạm đúng mép bìa; chữ đọc theo cuộn lên mờ dần dưới thanh tab, không còn chân chữ bị cắt. Ba tab Đọc theo, Chương, Dấu trang chung một mép chữ với nhau và với thanh tab.
 - Thanh bên máy tính: icon Thư viện, Studio, Cài đặt thẳng mép logo.
+- Menu và bảng "…": biểu tượng đầu dòng cách chữ đều nhau ở mọi dòng; "…" cuối hàng chương, mũi tên quay lại và nút đặt bìa thẳng mép nội dung.
 - Trình phát và dấu trang dễ đọc hơn, chỉ nhắc tên khi đổi người nói; thẻ buổi sáng, menu sách và hẹn giờ căn thẳng hàng, các nút trên điện thoại dễ chạm hơn.
 - Tên sách không còn ngắt dòng ngay ở dấu "·"; ở trang sách thanh đáy điện thoại vẫn tô Thư viện; màn Thiết bị trên điện thoại dựng hai khối giống nhau, liên kết chữ cùng một kiểu và dễ chạm hơn.
 - Menu sách, thêm sách và các bảng chọn của trình phát trượt từ đáy điện thoại, vuốt xuống để đóng; tốc độ đang dùng luôn được chọn, nút hẹn giờ dễ chạm; bảng tốc độ và hẹn giờ không che nút phát.
