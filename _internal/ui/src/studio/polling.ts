@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { notifyManager, useQueryClient } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import { ApiError } from "./api";
 
@@ -48,7 +48,8 @@ export function retryUnlessGone(failureCount: number, error: unknown): boolean {
 
 /** Truy vấn phụ của trang dự án (sổ làm việc, hàng nghe lại, hộp thư điện thoại...): lỗi của chúng không làm mất cả trang nên
  *  trước đây im lặng. */
-const SIDE_QUERIES = new Set(["review", "work", "cast", "edits-inbox", "precast", "activity"]);
+// Việc duyệt, lượt duyệt và câu nghe lại đã báo lỗi + thử lại ngay trong tab; không lặp thêm dải lỗi ở đầu dự án.
+const SIDE_QUERIES = new Set(["cast", "edits-inbox", "activity"]);
 
 /** Lời lỗi máy chủ trả của một truy vấn phụ đang hỏng ở sách `bookId`, hoặc "" khi không có (để trang hiện thay vì nuốt). */
 export function useSideError(bookId: string): string {
@@ -62,5 +63,6 @@ export function useSideError(bookId: string): string {
     }
     return "";
   };
-  return useSyncExternalStore((notify) => cache.subscribe(notify), read);
+  // Đổi tuỳ chọn truy vấn cũng báo cache ngay trong render của màn con: hẹn cùng nhịp React Query để không cập nhật màn cha giữa render.
+  return useSyncExternalStore((notify) => cache.subscribe(notifyManager.batchCalls(notify)), read);
 }

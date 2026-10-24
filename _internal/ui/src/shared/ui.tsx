@@ -1,13 +1,14 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, RotateCw, X } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, RotateCw, WifiOff, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, ReactNode, Ref } from "react";
 import { cn } from "@/shared/cn";
 import { scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { MotionRegion } from "./MotionRegion";
+import { MotionPresence } from "./MotionPresence";
 import { useBackLayer } from "./backStack";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
@@ -691,7 +692,55 @@ export function Sheet({
 // ---- Khác -------------------------------------------------------------------------------------------------
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("motion-skeleton rounded-md bg-hover", className)} />;
+  return <div aria-hidden="true" className={cn("motion-skeleton rounded-md bg-line", className)} />;
+}
+
+/** Khung chờ theo hình nội dung: dòng danh sách, thẻ duyệt, hay lưới bìa. */
+export function ContentSkeleton({ shape = "rows", count = 3, label = "Đang tải", className }: {
+  shape?: "rows" | "cards" | "covers";
+  count?: number;
+  label?: string;
+  className?: string;
+}) {
+  return <MotionRegion role="status" aria-label={label} className={cn("motion-reveal", shape === "covers" ? "grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-4" : "space-y-4", className)}>
+    <span className="sr-only">{label}</span>
+    {Array.from({ length: count }, (_, index) => <div key={index} aria-hidden="true" className={cn(shape === "rows" && "flex items-center gap-3", shape === "cards" && "space-y-3 py-3")}>
+      {shape === "covers" ? <Skeleton className="aspect-[2/3] rounded-xl" /> : shape === "rows" ? <Skeleton className="size-10 shrink-0" /> : <Skeleton className="h-4 w-1/3" />}
+      <div className={cn("min-w-0 flex-1 space-y-2", shape === "covers" && "mt-3")}>
+        <Skeleton className="h-3 w-3/4" />
+        <Skeleton className={cn("h-3 w-1/2", shape === "cards" && "w-full")} />
+      </div>
+    </div>)}
+  </MotionRegion>;
+}
+
+/** Lỗi ở ngay vùng bị ảnh hưởng; nội dung đã có vẫn dùng được. */
+export function InlineError({ message, onRetry, className }: { message: string; onRetry: () => void; className?: string }) {
+  // Nút đứng ngay sau câu (màn rộng không đẩy nó ra mép phải); màn hẹp xuống dòng thì thẳng mép với chữ - -ml bù phần đệm của nút ghost.
+  return <MotionRegion role="alert" motionKey={message} className={cn("motion-reveal flex items-start gap-3 py-3 text-sm", className)}>
+    <AlertTriangle aria-hidden className="mt-[3px] size-4 shrink-0 text-danger" />
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+      <p className="min-w-0 max-w-[60ch] text-pretty text-fg-2">{message}</p>
+      <Button variant="ghost" size="sm" icon={RotateCw} className="-ml-3" onClick={onRetry}>Thử lại</Button>
+    </div>
+  </MotionRegion>;
+}
+
+/** Chỉ thông báo mất mạng; không gỡ nội dung hay chặn thao tác trên máy. */
+export function OfflineStrip({ offline: forced, message = "Mất mạng · Bạn vẫn dùng được sách đã tải." }: { offline?: boolean; message?: string }) {
+  const [offline, setOffline] = useState(() => typeof navigator !== "undefined" && navigator.onLine === false);
+  useEffect(() => {
+    const lost = () => setOffline(true);
+    const back = () => setOffline(false);
+    window.addEventListener("offline", lost);
+    window.addEventListener("online", back);
+    return () => { window.removeEventListener("offline", lost); window.removeEventListener("online", back); };
+  }, []);
+  return <MotionPresence open={forced ?? offline} className="shrink-0">
+    <div role="status" className="flex items-center gap-2 border-b border-line bg-warning-soft px-5 py-2 text-xs text-fg-2">
+      <WifiOff aria-hidden className="size-3.5 shrink-0" /><span>{message}</span>
+    </div>
+  </MotionPresence>;
 }
 
 export function EmptyState({
@@ -725,22 +774,8 @@ export function failedEmpty(query: { isError: boolean; data?: readonly unknown[]
   return query.isError && !query.data?.length;
 }
 
-export function LoadError({ what, error, onRetry, className }: { what: string; error?: unknown; onRetry: () => void; className?: string }) {
-  const detail = error instanceof Error ? error.message : "";
-  return (
-    <EmptyState
-      icon={AlertTriangle}
-      title={`Chưa tải được ${what}`}
-      className={className}
-      action={
-        <Button variant="secondary" icon={RotateCw} onClick={onRetry}>
-          Thử lại
-        </Button>
-      }
-    >
-      {detail || "Có lỗi khi đọc thư viện trên máy này."} Sách của bạn vẫn còn nguyên - bấm Thử lại sau một lát.
-    </EmptyState>
-  );
+export function LoadError({ what, onRetry, className }: { what: string; error?: unknown; onRetry: () => void; className?: string }) {
+  return <InlineError message={`Chưa tải được ${what}; bạn hãy kiểm tra kết nối rồi thử lại.`} onRetry={onRetry} className={className} />;
 }
 
 export function Kbd({ children }: { children: ReactNode }) {

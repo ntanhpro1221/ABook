@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "@/shared/toast";
 import { DiagnosticsView } from "@/shared/DiagnosticsView";
 import { downloadText, reportFileName, type DiagnosticsReport } from "@/shared/diagnostics";
-import { Button, Dialog, Skeleton } from "@/shared/ui";
+import { Button, ContentSkeleton, Dialog, InlineError } from "@/shared/ui";
 import { ApiError, api } from "@/studio/api";
 import { pickFolder, useAppInfo } from "@/studio/data";
 
@@ -16,7 +16,7 @@ import { pickFolder, useAppInfo } from "@/studio/data";
 export const VIEW_LINES = 400;
 export const SAVE_LINES = 2000;
 
-const UNREACHABLE_HELP = "Trên điện thoại: Tải sách › bật “Cho máy khác nghe thư viện này”. Cùng Wi-Fi hay Tailscale.";
+const UNREACHABLE_HELP = "Trên điện thoại: Cài đặt › Thiết bị › bật “Cho máy khác nghe thư viện này”. Cùng Wi-Fi hay Tailscale.";
 
 /** Lời báo cho một lần hỏi hỏng: câu của máy chủ (đã nói tên máy và lý do) và, nếu đáng, điều bạn có thể làm. */
 export function failureView(error: unknown): { title: string; help: string } {
@@ -25,18 +25,13 @@ export function failureView(error: unknown): { title: string; help: string } {
   return { title: message, help: conflict ? "" : UNREACHABLE_HELP };
 }
 
-export function DiagnosticsBody({ report, error, loading }: { report?: DiagnosticsReport; error?: unknown; loading?: boolean }) {
-  if (loading && !report) return <MotionRegion><Skeleton className="h-40" /></MotionRegion>;
-  if (error) {
-    const { title, help } = failureView(error);
-    return (
-      <MotionRegion as="div" role="alert" className="space-y-2 rounded-xl border border-line p-3 text-sm">
-        <p className="font-medium text-danger [overflow-wrap:anywhere]">{title}</p>
-        {help && <p className="text-xs text-fg-2 text-pretty">{help}</p>}
-      </MotionRegion>
-    );
-  }
-  return <MotionRegion>{report ? <DiagnosticsView report={report} /> : null}</MotionRegion>;
+export function DiagnosticsBody({ report, error, loading, onRetry }: { report?: DiagnosticsReport; error?: unknown; loading?: boolean; onRetry: () => void }) {
+  if (loading && !report) return <ContentSkeleton shape="cards" count={2} label="Đang tải chẩn đoán" />;
+  const failure = error ? failureView(error) : null;
+  return <MotionRegion>
+    {failure && <InlineError message={`${failure.title} ${failure.help || "Bạn hãy thử tải lại chẩn đoán."}`} onRetry={onRetry} />}
+    {report && <DiagnosticsView report={report} />}
+  </MotionRegion>;
 }
 
 export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: { id: string; name: string }; open: boolean; onOpenChange: (open: boolean) => void }) {
@@ -87,7 +82,7 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
             Lưu nhật ký
           </Button>
         </div>
-        <DiagnosticsBody report={query.data} error={query.error} loading={query.isLoading} />
+        <DiagnosticsBody report={query.data} error={query.error} loading={query.isLoading} onRetry={() => void query.refetch()} />
       </div>
     </Dialog>
   );

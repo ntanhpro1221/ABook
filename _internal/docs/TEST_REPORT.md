@@ -2,6 +2,8 @@
 
 Ngày cập nhật: 2026-10-24
 
+Đợt shell139, nhánh `dev/shell139`: thanh bên ba điểm đến, tối đa ba dự án đang chạy/chờ; skeleton theo nội dung, lỗi tại chỗ có thử lại, dải mất mạng giữ nội dung. Thêm 21 test DOM chuyên biệt và 27 mục gallery, kiểm tra trạng thái tải/lỗi ở màn thật; thử lại thực sự gọi truy vấn, hàng dự án ra có inert và dải mất mạng khép bằng presence. `npx tsc -p tsconfig.json --noEmit`: 0 lỗi; `npx vitest run --maxWorkers=2`: **2105 passed, 1 skipped**, **269 file passed, 1 skipped**. Skip có sẵn cần corpus PDF. Ảnh sáng/tối và danh sách các vị trí giữ nguyên ở scratchpad `codex/shell139/result.md`; không sửa Python/runtime, không cài dependency, không commit.
+
 Đợt fix139, worktree `D:/Novels/ABook_fix139`, nhánh `dev/fix139`, nền `8a76056e` (0.4.138): xác minh chín finding UI; sửa CAO1/CAO2/CAO3/V5/V6/V7/V8/L9. V4 đã có Back stack và 6 test DOM xanh ở nền nên giữ nguyên. Chuyển 18 caller toast sang wrapper chung; Back chỉ nhận đã đóng khi thật sự gỡ toast. Giữ lịch sử nhóm Cài đặt, focus khi lưu lịch đêm, focus ring và các chuyển động exit/empty/badge.
 
 - Test mới: **15 test DOM** trong 4 file (2 mới, 2 mở rộng); chạy trên mã nền cho **14 đỏ**, ca bảo vệ replace ở bố cục rộng đã xanh sẵn. Sau sửa: **1923 passed, 0 failed, 1 skipped**, **258 file** (257 passed, 1 skipped); **19 file DOM, 146 test DOM xanh**. Skip có sẵn: `pdfPages.corpus.test.ts` cần corpus PDF cục bộ. `npx tsc -p tsconfig.json --noEmit`: **0 lỗi**; `git diff --check` xanh.
