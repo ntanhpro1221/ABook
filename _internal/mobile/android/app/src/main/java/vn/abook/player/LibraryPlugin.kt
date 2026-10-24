@@ -1740,7 +1740,7 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun deleteBook(call: PluginCall) = background(call) {
         // Thiếu mã thì từ chối (Store.deletableBookDir) - trước đây `?: ""` biến thành xoá CẢ thư mục sách.
-        // Cuốn đang có lượt tải chạy thì không dời thư mục dưới chân nó (màn Tải sách tắt nút Xoá; đây là lớp chặn cuối, soát a97 V6).
+        // Cuốn đang có lượt tải chạy thì không dời thư mục dưới chân nó (Cài đặt › Thiết bị tắt nút Xoá; đây là lớp chặn cuối, soát a97 V6).
         require(!BookDownloads.isActive(context, call.getString("id").orEmpty())) { "Đang tải cuốn này - huỷ tải rồi mới xoá được." }
         // Cuốn nằm chờ UNDO_SECONDS giây (TrashPending) rồi mới xoá hẳn; `undo` là mã để "Hoàn tác" (không có khi xoá thẳng).
         val undo = Store.holdBook(call.getString("id").orEmpty())

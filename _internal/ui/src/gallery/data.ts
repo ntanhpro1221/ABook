@@ -199,6 +199,7 @@ export function listenBook(book: GalleryBook, withChapters: boolean): ListenBook
   return {
     id: book.id,
     title: book.title,
+    remote: book.streamed ? { computer: "Máy phòng khách" } : false,
     author: book.author,
     narrator: book.narrator,
     duration: available.reduce((sum, chapter) => sum + chapter.duration, 0),

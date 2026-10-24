@@ -296,12 +296,12 @@ it("C5 hiệu năng: câu 5.000 chữ - dựng và 50 nhịp sang chữ kế tro
   expect(perTick).toBeLessThan(250);
 });
 
-it("C6 / V9 thư viện: thẻ Đang nghe dở mờ chéo chữ, icon và cụm nút; lỗi / trống / có sách mờ hẳn qua", async () => {
+it("C6 / V9 thư viện: thẻ Đang nghe mờ chéo chữ, icon và cụm nút; lỗi / trống / có sách mờ hẳn qua", async () => {
   const book = listenBook("a", "Sách A", { state: { chapters: {}, bookmarks: [], last: { chapterId: 1, seconds: 30, at: Date.now() / 1000 } } as unknown as ListenBook["state"] });
   state.books = [book];
   player({ track: null });
   await render(<LibraryScreen />);
-  const card = [...host.querySelectorAll("section")].find((element) => element.textContent?.includes("Đang nghe dở"))!;
+  const card = [...host.querySelectorAll("section")].find((element) => element.textContent?.includes("Đang nghe"))!;
   expect(card).toBeTruthy();
   player({ track: { bookId: "a", chapterId: 1, chapterTitle: "Chương 1", bookTitle: "Sách A" }, playing: true });
   animate.mockClear();
@@ -313,7 +313,7 @@ it("C6 / V9 thư viện: thẻ Đang nghe dở mờ chéo chữ, icon và cụm 
   animate.mockClear();
   player({ track: { bookId: "a", chapterId: 1, chapterTitle: "Chương 1", bookTitle: "Sách A" }, playing: false });
   await render(<LibraryScreen />);
-  expect(card.textContent).toContain("đang tạm dừng");
+  expect(card.textContent).toContain("tạm dừng");
   expect(animated((element) => card.contains(element) && element.tagName === "P").length).toBeGreaterThan(0);
   // Nghe hết phần đã có: nút phát -> chip "Chờ chương mới" mờ chéo trong một vỏ.
   state.books = [{ ...book, progress: { ...book.progress, caughtUp: true } }];
@@ -329,7 +329,7 @@ it("C6 / V9 thư viện: thẻ Đang nghe dở mờ chéo chữ, icon và cụm 
   animate.mockClear();
   await render(<LibraryScreen />);
   expect(host.textContent).toContain("Chưa có sách nào");
-  expect(snapshotWith("Đang nghe dở")?.hasAttribute("inert")).toBe(true);
+  expect(snapshotWith("Đang nghe")?.hasAttribute("inert")).toBe(true);
 });
 
 it("W2 màn đọc: thanh chọn câu hiện dần ngoài vùng của cả chương", async () => {
