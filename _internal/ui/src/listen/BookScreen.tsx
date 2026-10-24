@@ -993,8 +993,9 @@ export function BookScreen({
 
   return (
     <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16 pt-5 sm:pt-7">
+      {/* Mực mũi tên bắt đầu 2,33 px trong ô 14 px: lùi chừng ấy cho thẳng mép chữ bên dưới. */}
       <button type="button" onClick={() => navigate("/")} className="touch-hit touch-row inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-        <ArrowLeft className="size-4" /> Thư viện
+        <ArrowLeft className="-ml-[2.33px] size-4" /> Thư viện
       </button>
       {/* Bìa · tên · tác giả · giọng · thời lượng · tiến độ mảnh; dưới là MỘT nút chính và một hàng nút phụ cùng kiểu (docs/DESIGN.md mục 7).
           Điện thoại: hàng nút trải hết bề ngang dưới bìa; máy tính: nằm dưới tên, cạnh bìa. */}

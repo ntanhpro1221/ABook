@@ -116,7 +116,13 @@ export function inspectPage({ phone = false } = {}, h, layoutInspector) {
     findings.push({ rule, selector: selector(el), context, text: text.replace(/\s+/g, " ").trim().slice(0, 240), rects, ...details });
   }
   const all = [...document.body.querySelectorAll("*")];
-  const graphics = all.filter((el) => el.matches("svg,img,canvas") || css(el).backgroundImage !== "none")
+  // Lớp mờ cuộn (aria-hidden, không nhận chạm, dải màu về trong suốt) là mặt nạ có chủ ý: chữ cuộn dưới nó mờ dần, thanh nổi nằm trên nó.
+  const scrollFade = (el) => {
+    const s = css(el);
+    return el.getAttribute("aria-hidden") === "true" && s.pointerEvents === "none" && /gradient\(/.test(s.backgroundImage)
+      && /rgba\([^()]*,\s*0\)|transparent|\/\s*0\)/.test(s.backgroundImage) && !el.querySelector("svg,img,canvas");
+  };
+  const graphics = all.filter((el) => el.matches("svg,img,canvas") || (css(el).backgroundImage !== "none" && !scrollFade(el)))
     .map((element) => ({ element, rect: visible(element, rect(element.getBoundingClientRect()), true) })).filter((g) => g.rect);
   const texts = [], renderedRuns = [];
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
