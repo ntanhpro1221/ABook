@@ -944,6 +944,8 @@ select[class~="border-line"] {
 .book-action-menu [role="menuitem"] > svg:first-child { --icon-w: 20px; }
 /* Icon cuối hàng mà ô icon đã đứng sát mép nội dung: đẩy mực - không phải ô - ra đúng mép (ô 14 px; glyph tự ghi --icon-w). */
 .ink-end { translate: calc(var(--icon-w, 14px) * var(--ink-r, 1) / 24) 0; }
+/* Icon đầu dòng đứng ở mép cột chữ: kéo mực ra đúng mép, chữ theo sau dời cùng (khoảng icon - chữ giữ nguyên). */
+.ink-start { margin-inline-start: calc(var(--icon-w, 14px) * var(--ink-l, 1) / -24); }
 .book-action-sheet .sheet-body > [data-radix-popper-content-wrapper] {
   position: static !important;
   transform: none !important;
