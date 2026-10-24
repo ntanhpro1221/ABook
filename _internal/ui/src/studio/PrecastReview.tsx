@@ -206,7 +206,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                 <span
                   className={cn(
                     "grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold",
-                    position < index ? "bg-success text-white" : active ? "bg-accent text-accent-ink" : "bg-hover text-fg-3",
+                    position < index ? "bg-success text-success-ink" : active ? "bg-accent text-accent-ink" : "bg-hover text-fg-3",
                   )}
                 >
                   {position < index ? <Check className="size-4" strokeWidth={3} /> : <Icon className="size-3.5" />}

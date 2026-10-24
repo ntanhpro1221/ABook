@@ -18,6 +18,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Danh sách chương, nhân vật phẳng, không còn khung lồng khung; sách không chia phần thì chương hiện thẳng dưới tab.
 - Màn Đang nghe: bìa lớn, nền nhuốm màu bìa, nút phát tròn màu nhấn giữa 5 nút; hàng Tốc độ · Hẹn giờ · Dấu trang · Chương; “Đọc theo” ở đáy.
 - Nhạc nền, giọng đọc, âm lượng, danh sách dấu trang, quay lại chỗ vừa nghe và phát trên thiết bị khác vào menu “…”.
+- Chữ, biểu tượng và viền đều đủ rõ (chuẩn AA) ở giao diện sáng, tối và cả ba nền đọc; ghi chú thông tin hết xanh dương, chỉ còn tông ấm; màn chờ, thanh trạng thái và thanh điều hướng trên điện thoại cùng màu nền với app.
 - Thanh phát máy tính còn tối đa 6 nút: lùi · phát · tới, tốc độ, âm lượng, “…”.
 - Màn đọc: chữ 20 px, giãn dòng 1,7; thanh đầu chỉ còn nút về và tên chương, không đè lên chữ; thanh điều khiển dưới mờ đi khi bạn cuộn đọc, chạm là hiện lại.
 - Trang sách và màn Đang nghe căn thẳng hàng: các nút cách đều nhau, biểu tượng ở hai đầu thẳng mép với chữ, bìa lớn bằng bề ngang màn; tab Nhân vật, Lịch sử không còn khung lồng khung; dòng thông tin không rớt một chữ xuống dòng.

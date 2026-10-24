@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- DESIGN §5.1: cùng màu với ui/src/styles.css (--bg, --text, --text-2, --accent, --accent-text); values-night là bản tối. Thanh trạng thái,
+         thanh điều hướng, màn chờ và nền cửa sổ đều lấy app_bg nên khớp --bg ở cả hai giao diện. -->
+    <color name="app_bg">#f5f3ef</color>
+    <color name="app_text">#1a1814</color>
+    <color name="app_text_secondary">#5e5950</color>
+    <color name="colorPrimary">#d4912b</color>
+    <color name="colorPrimaryDark">#8a5309</color>
+    <color name="colorAccent">#d4912b</color>
+</resources>
