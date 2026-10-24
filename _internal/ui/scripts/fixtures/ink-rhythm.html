@@ -1,0 +1,33 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><style>
+*{box-sizing:border-box}body{margin:0;font:16px Arial;background:white;color:#181818}
+.cases{display:grid;grid-template-columns:repeat(2,180px);gap:12px;padding:20px}
+.column p{margin:0 0 8px}.column button{display:block;text-align:left;font:inherit;background:transparent;border:0;height:44px;padding:0 12px}
+.compensated{margin-left:-12px}.right p{text-align:right}.right button{margin-left:auto;text-align:right}
+.right .compensated{margin-left:auto;margin-right:-12px}
+.rows button{display:flex;align-items:center;gap:8px;padding:0;margin:0;height:36px;width:170px;background:transparent;border:0;font:inherit;text-align:left}
+svg{width:24px;height:24px;flex:none;overflow:visible;stroke:#181818;fill:none;stroke-width:2;stroke-linecap:round}
+.rows .wide{gap:12px}.rhythm section{height:8px;margin:0 0 8px}.rhythm .wide{margin-bottom:20px}
+.rhythm header,.rhythm footer{height:4px;margin:0 0 28px}.rhythm{height:150px}
+.negative section{margin-bottom:8px}
+</style><div class="cases">
+<div id="ghost" class="column"><p>Hàng thứ nhất</p><p>Hàng thứ hai</p><button>Hàng lệch</button></div>
+<div id="compensated" class="column"><p>Hàng thứ nhất</p><p>Hàng thứ hai</p><button class="compensated -ml-3 px-3">Hàng thẳng</button></div>
+<div id="right" class="column right"><p>Hàng một</p><p>Nhãn một</p><button>Hàng lệch</button></div>
+<div id="right-pass" class="column right"><p>Hàng một</p><p>Nhãn một</p><button class="compensated">Hàng thẳng</button></div>
+<div id="inset-icon" class="column"><p>Hàng một</p><p>Hàng hai</p><button style="padding:0"><svg viewBox="0 0 24 24"><path d="M8 6H16V18H8Z"/></svg></button></div>
+<div id="inset-pass" class="column"><p>Hàng một</p><p>Hàng hai</p><button style="padding:0;margin-left:-6px"><svg viewBox="0 0 24 24"><path d="M8 6H16V18H8Z"/></svg></button></div>
+<div id="gap" class="rows">
+<button><svg viewBox="0 0 24 24"><path d="M2 4H22V20H2Z"/></svg><span>Hàng một</span></button>
+<button><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg><span>Hàng hai</span></button>
+<button class="wide"><svg viewBox="0 0 24 24"><path d="M2 4H22V20H2Z"/></svg><span>Hàng ba</span></button>
+</div>
+<div id="gap-pass" class="rows">
+<button><svg viewBox="0 0 24 24"><path d="M8 6H16V18H8Z"/></svg><span>Hàng một</span></button>
+<button><svg viewBox="0 0 24 24"><path d="M8 6H16V18H8Z"/></svg><span>Hàng hai</span></button>
+<button><svg viewBox="0 0 24 24"><path d="M8 6H16V18H8Z"/></svg><span>Hàng ba</span></button>
+</div>
+<div id="rhythm" class="rhythm"><header>Đầu</header><section></section><section></section><section class="wide"></section><section></section><section></section><footer>Cuối</footer></div>
+<div id="rhythm-pass" class="rhythm negative"><header>Đầu</header><section></section><section></section><section></section><section></section><section></section><footer>Cuối</footer></div>
+<div id="panel" class="column"><p>Hàng một</p><p>Hàng hai</p><section style="border:1px solid #888;border-radius:12px"><button>Nội dung thẻ</button></section></div>
+<div id="centered" class="column"><p>Hàng một</p><p>Hàng hai</p><button style="width:100%;text-align:center">Nút ở giữa</button></div>
+</div></html>
