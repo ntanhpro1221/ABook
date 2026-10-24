@@ -529,7 +529,7 @@ export function LibraryScreen({
             <div role="group" aria-label="Lọc sách" className="flex min-w-0 flex-1 gap-5 overflow-x-auto sm:gap-6">
               {([{ value: "all", label: "Tất cả" }, { value: "listening", label: "Nghe dở" }, { value: "new", label: "Chưa nghe" }, { value: "finished", label: "Xong" }] as const).map(option => <button
                 key={option.value} type="button" aria-label={option.value === "finished" ? "Nghe xong" : option.label} aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
-                className={cn("min-h-[44px] shrink-0 border-b-2 text-xs font-medium transition-colors duration-motion-fast sm:text-sm", filter === option.value ? "border-accent text-accent-text" : "border-transparent text-fg-2 hover:text-fg")}>
+                className={cn("touch-box min-h-[44px] shrink-0 border-b-2 text-xs font-medium transition-colors duration-motion-fast first:text-left sm:text-sm", filter === option.value ? "border-accent text-accent-text" : "border-transparent text-fg-2 hover:text-fg")}>
                 {option.label}
               </button>)}
             </div>

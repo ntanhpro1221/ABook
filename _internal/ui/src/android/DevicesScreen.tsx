@@ -975,7 +975,7 @@ export function DevicesScreen() {
                 )}
                 <Fingerprint value={connection.data.fingerprint} />
               </div>
-              <button type="button" aria-label="Làm mới" onClick={() => void remote.refetch()} className="-mr-3 grid size-10 place-items-center rounded-full text-fg-2">
+              <button type="button" aria-label="Làm mới" onClick={() => void remote.refetch()} className="touch-hit -mr-3 grid size-10 place-items-center rounded-full text-fg-2">
                 <RefreshCw className={cn("size-4", remote.isFetching && "animate-spin")} />
               </button>
             </div>
@@ -989,7 +989,7 @@ export function DevicesScreen() {
                 </MoreInfo>
               </div>
             )}
-            <button type="button" onClick={() => setConfirmUnpair(true)} className="mt-6 flex items-center gap-2 text-sm text-fg-2">
+            <button type="button" onClick={() => setConfirmUnpair(true)} className="touch-hit mt-6 flex items-center gap-2 text-sm text-fg-2">
               <Unplug className="size-4" /> Ngắt kết nối
             </button>
             <Dialog

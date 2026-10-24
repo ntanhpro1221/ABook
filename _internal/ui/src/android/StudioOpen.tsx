@@ -137,7 +137,7 @@ export function StudioChip({ book, computers = [] }: { book: ListenBook; compute
     <button
       type="button"
       onClick={() => void EbookLibrary.openStudio({ book: book.id }).catch((error: Error) => toast.error(error.message))}
-      className="font-semibold underline underline-offset-2"
+      className="touch-hit font-semibold underline underline-offset-2"
     >
       Mở Studio
     </button>

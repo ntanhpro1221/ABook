@@ -24,6 +24,18 @@ const script: Script = {
 };
 
 describe("trình đọc chương", () => {
+  it("chỉ nhắc người nói ở đầu lượt, kể cả lượt qua ranh giới đoạn và nhóm 50 đoạn", async () => {
+    const { ReadAlongText } = await import("./ReadAlongText");
+    const speech = Array.from({ length: 52 }, (_, i) => ({ ...segment(i + 1, i + 1, "Lời thoại.", "dialogue"), speaker: "An" }));
+    const run = { ...script, segments: [script.segments[0], ...speech,
+      segment(53, 53, "Một câu dẫn."),
+      { ...segment(54, 54, "Lời tiếp.", "dialogue"), speaker: "An" },
+      { ...segment(55, 54, "Trả lời.", "dialogue"), speaker: "Bình" }] };
+    const html = renderToString(<ReadAlongText script={run} playingIndex={52} focusIndex={52} speakers dimHeard headingClassName="" />);
+    expect(html.match(/>An<\/span>/g)).toHaveLength(2);
+    expect(html.match(/>Bình<\/span>/g)).toHaveLength(1);
+    expect(html.match(/<h2[^>]*>/)?.[0]).not.toContain("text-fg-2");
+  });
   it("câu không là nút; đoạn là <p>; chỉ câu đang chọn nhận Tab và có lời chỉ phím", async () => {
     const { ReadAlongText } = await import("./ReadAlongText");
     const html = renderToString(<ReadAlongText script={script} playingIndex={-1} focusIndex={2} onTap={() => undefined} headingClassName="" />);
