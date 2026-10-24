@@ -257,8 +257,8 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
   const waiting = buffering && playing;
   return (
     <MotionRegion as="div" data-player-transport className={cn(large ? "slot-row w-full max-w-sm [--slot:clamp(1.25rem,0.8333rlh,2.40625rem)]" : "flex items-center gap-1",
-      // Mực ⏮ / ⏭ cách mép ô icon 4/24: hai đầu lùi ít hơn chừng ấy để mực thẳng mép bìa và thanh tua.
-      large && chapters && "[--slot-end:calc(var(--slot)*16/24)] [--slot-start:calc(var(--slot)*16/24)]")}>
+      // getBBox + nửa nét: ⏮ / ⏭ cách mép ô 2/24, nên bề rộng mực là 20/24 ô glyph-20.
+      large && chapters && "[--slot-end:calc(var(--slot)*20/24)] [--slot-start:calc(var(--slot)*20/24)]")}>
       {chapters && <IconButton label={withShortcut("Chương trước", "Shift+←")} icon={SkipBack} size={size} className="touch-box" onClick={previous} {...keepFocus} />}
       <IconButton label={withShortcut(`Lùi ${SKIP_SECONDS} giây`, "←")} icon={large ? Back15 : Back15Mini} size={size} className="touch-box" onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
       <button
@@ -866,12 +866,12 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
       {!(mine && running) && plan && <p className="mt-1 text-pretty">{planLabel(plan)}</p>}
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         {mine && running ? (
-          <button type="button" data-focus-next className="rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>
+          <button type="button" data-focus-next className="touch-hit -ml-2 rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>
             Dừng làm trước
           </button>
         ) : (
           upcoming.length > 0 && (
-            <button type="button" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className="rounded-lg px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void start())}>
+            <button type="button" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className="touch-hit -ml-2 rounded-lg px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void start())}>
               {upcoming.length === 1 ? "Làm trước chương sau" : `Làm trước ${upcoming.length} chương tới`}
             </button>
           )

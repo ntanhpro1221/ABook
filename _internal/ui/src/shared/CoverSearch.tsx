@@ -118,9 +118,9 @@ export function CoverSearchDialog({
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Tên sách (tiếng Anh thường cho nhiều kết quả hơn)"
           aria-label="Tên sách để tìm bìa"
-          className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
+          className="touch-box h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
         />
-        <Button type="submit" variant="primary" className="h-10 min-h-10" icon={Search} loading={search.isPending}>
+        <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" icon={Search} loading={search.isPending}>
           Tìm
         </Button>
       </form>

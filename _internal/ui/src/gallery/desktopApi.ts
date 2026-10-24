@@ -376,6 +376,7 @@ const ROUTES: [string, RegExp, Handler][] = [
   })],
   ["GET", /^\/api\/books\/([^/]+)\/voices$/, (match, _body, query) => voiceChoices(book(match[1]), query.get("character") ?? "")],
   ["GET", /^\/api\/books\/([^/]+)\/shared-readings$/, () => ({ entries: [] })],
+  ["GET", /^\/api\/books\/([^/]+)\/readings$/, () => ({ readings: [] })],
   ["GET", /^\/api\/readings$/, () => ({ entries: [] })],
   // Tab Kịch bản (studio/ScriptTab.tsx): mục lục chương + từng câu kèm người nói.
   ["GET", /^\/api\/books\/([^/]+)\/casting$/, (match) => ({

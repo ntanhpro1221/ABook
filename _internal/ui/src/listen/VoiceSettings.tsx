@@ -377,7 +377,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
           >
             <h3 className="text-sm font-semibold">Khoá trực tuyến</h3>
             {providers.some((info) => info.hasKey) && <span className="ml-auto text-xs text-fg-2">{providers.filter((info) => info.hasKey).length} khoá</span>}
-            <ChevronDown className={cn("size-4 shrink-0 text-fg-3 transition-transform", !keysShown && "-rotate-90")} aria-hidden />
+            <ChevronDown className={cn("ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3 transition-transform", !keysShown && "-rotate-90 [--ink-r:8]")} aria-hidden />
           </button>
           <Collapse open={keysShown}>
               <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">Chữ của sách gửi tới dịch vụ ấy; có thể bị tính tiền.</p>

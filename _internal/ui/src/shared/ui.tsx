@@ -896,7 +896,7 @@ export function LoadError({ what, onRetry, className }: { what: string; error?: 
 
 export function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-line-strong bg-panel-2 px-1 font-sans text-[0.6875rem] font-medium text-fg-2">
+    <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border border-line-strong bg-panel-2 px-[6px] font-sans text-[0.6875rem] font-medium text-fg-2">
       {children}
     </kbd>
   );
