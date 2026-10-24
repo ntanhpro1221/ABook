@@ -33,7 +33,7 @@ it("ảnh fallback chỉ là hình cũ: không role/id/name để Back hay radio
     const clone = {
       style: { setProperty: vi.fn() }, classList: { add: vi.fn() },
       removeAttribute: vi.fn(), setAttribute: vi.fn(), remove,
-      querySelectorAll: () => [child], addEventListener: vi.fn(), scrollTop: 0, scrollLeft: 0,
+      querySelectorAll: (selector: string) => selector === ".motion-snapshot" ? [] : [child], addEventListener: vi.fn(), scrollTop: 0, scrollLeft: 0,
     };
     const target = {
       getBoundingClientRect: () => ({ top: 20, left: 10, width: 360, height: 600 }),

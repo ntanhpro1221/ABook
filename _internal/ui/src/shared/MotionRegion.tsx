@@ -1,5 +1,5 @@
 import { Component, createElement, createRef, isValidElement, type ElementType, type HTMLAttributes, type ReactNode, type Ref } from "react";
-import { captureMotionSnapshot, removeMotionSnapshot, EASE, MOTION, prefersReducedMotion, viewTransitionRunning } from "./motion";
+import { captureMotionSnapshot, removeMotionSnapshot, settleMotionSnapshot, EASE, MOTION, prefersReducedMotion, viewTransitionRunning } from "./motion";
 
 /** Bỏ clock/%/giá trị ô nhập khỏi dấu đổi nội dung. Tiến độ vẫn chạy bằng Progress, không chụp lại theo từng tick. */
 export function motionSignature(element: HTMLElement): string {
@@ -54,9 +54,10 @@ export class MotionRegion extends Component<Props> {
     removeMotionSnapshot(this.clone);
     const surface = box.closest('[data-state="open"]:is([role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"])');
     const floorZ = surface ? Math.max(51, (parseInt(getComputedStyle(surface).zIndex) || 50) + 1) : 39;
-    const clone = captureMotionSnapshot(box, box.ownerDocument, floorZ);
-    // Ảnh thuộc stacking context của surface gốc, không đè hộp mở sau nó.
-    if (clone && surface && surface !== box) surface.append(clone);
+    // Chọn host TRƯỚC khi đo/đặt ảnh: fixed dùng toạ độ viewport sẽ lệch khi đưa vào surface có transform.
+    // Giữ ảnh trong stacking context gốc; vùng trang dùng offsetParent để theo cả cuộn của khung.
+    const host = surface !== box ? surface ?? box.offsetParent : box.offsetParent;
+    const clone = captureMotionSnapshot(box, box.ownerDocument, floorZ, host && host !== box.ownerDocument.body ? host as HTMLElement : undefined, true);
     const computed = box.style ? getComputedStyle(box) : undefined;
     return { clone, signature: motionSignature(box), height: box.getBoundingClientRect().height, display: computed?.display,
       margins: [parseFloat(computed?.marginTop ?? "0") || 0, parseFloat(computed?.marginBottom ?? "0") || 0] };
@@ -66,6 +67,7 @@ export class MotionRegion extends Component<Props> {
     if (!box || !snapshot) return;
     this.clone = snapshot.clone;
     if (snapshot.signature === motionSignature(box) && this.props.motionKey === undefined) { removeMotionSnapshot(this.clone); this.clone = undefined; return; }
+    this.clone = settleMotionSnapshot(box, this.clone);
     this.animation?.cancel();
     this.clearExit?.();
     const generation = ++this.generation;

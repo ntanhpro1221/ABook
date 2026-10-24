@@ -2,6 +2,12 @@
 
 Ngày cập nhật: 2026-10-24
 
+Đợt fix137, cây `ABook_rel135`, nền `fe359786` (0.4.136): sửa snapshot MotionRegion lệch trong hộp/bảng có translate/transform. Ảnh cũ dùng toạ độ containing block thực, bù border/scale/scroll, cắt theo khung cuộn và cập nhật clip sau commit; giữ font tiêu đề, fade, inert và lớp xếp chồng. Khử ảnh cha/con sau xác nhận nội dung đổi để không mất fade của vùng con.
+
+- Vitest toàn bộ: **1877 passed, 0 failed, 1 skipped**, **254 file** (253 passed, 1 skipped), tối đa 2 worker; đủ **15/15 file `*.dom.test.tsx`, 100 test DOM xanh**. Skip duy nhất là corpus PDF cục bộ tuỳ chọn. `tsc -p tsconfig.json`: **0 lỗi**. Test mới: 6 ca đỏ trên mã cũ → 10/10 xanh sau bổ sung ca nested/clip/font.
+- Edge headless/CDP, CPU tối đa 4 lõi, GPU tắt: fixture dùng MotionRegion thật, **18/18 ca đạt**. Trước sửa hộp lệch `(30.5, 283.5)` px, bảng trượt `(30.5, 409)` px; sau sửa `(0, 0)` px. Ca scale 0.8 có sai số vị trí/kích thước tối đa **0.012543 px**. Đã kiểm cuộn giữa fade và khung co khi commit; không kiểm lại APK/Android. Đã đóng tiến trình Edge riêng và xoá profile tạm.
+- Hash trước/sau giữ **c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886**. Không Git ghi, không cài/cập nhật dependency; thay đổi `capacitor.settings.gradle` có sẵn được giữ nguyên. Bằng chứng, lệnh, file:dòng và git status ở scratchpad `fix137/result.md`.
+
 Đợt fix136b, cây `ABook_rel135` trên `dev/rel135`: sửa M1/M2/M4/L2/L3 của rà r136. Header Dialog/Sheet chuyển động cục bộ và giữ ARIA; Back đóng tooltip trực tiếp, không phát Esc xuống hộp. Setter không VT thắng cả yêu cầu VT cùng giá trị đang chờ; chỗ tự cuộn được lưu trước lượt phục hồi muộn; hint sửa câu nêu rõ việc làm được.
 
 - Vitest toàn bộ: **1859 passed, 0 failed, 1 skipped**, **253 file** (252 passed, 1 skipped), tối đa 2 worker. Đủ **14/14 file `*.dom.test.tsx`, 82 test DOM xanh**; skip duy nhất là corpus PDF cục bộ tuỳ chọn. `tsc -p tsconfig.json`: **0 lỗi**.
