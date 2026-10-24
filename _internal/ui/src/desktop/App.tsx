@@ -21,7 +21,7 @@ import { ReaderScreen } from "@/listen/ReaderScreen";
 import { readerEditing } from "./readerEditing";
 import { PlayerProvider, usePlayer } from "@/listen/player";
 import { SourceProvider, useSource } from "@/listen/source";
-import { Button, Dialog, EmptyState, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
+import { Button, ContentSkeleton, Dialog, EmptyState, InlineError, OfflineStrip, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
 import { useMediaQuery, useModalOpen } from "@/shared/media";
 import type { ListenBook } from "@/listen/model";
 import { brokenMusicNote, keptEditsTitle, otherTitleNote, workshopMergeNote } from "@/shared/editsKept";
@@ -576,8 +576,9 @@ export function App() {
     [info?.remote, info?.dialogs],
   );
   if (!info && error && currentPeer()) return <MotionRegion motionKey="peer-error"><PeerTrouble error={error} retry={retry} /></MotionRegion>;
-  if (info && !info.remote && !voiceReady && preferencesError) return <MotionRegion motionKey="preferences-error"><EmptyState icon={Laptop} title="Chưa đọc cài đặt" action={<Button onClick={() => void reloadPreferences()}>Thử lại</Button>}>Bạn hãy thử lại để nạp giọng mặc định trước khi nghe.</EmptyState></MotionRegion>;
-  if (!info || (!info.remote && !voiceReady)) return <MotionRegion motionKey="loading" className="grid h-full place-items-center text-fg-3">Đang mở ABook…</MotionRegion>;
+  if (!info && error) return <MotionRegion motionKey="app-error" className="p-10"><OfflineStrip /><InlineError message="Bạn hãy mở lại ABook rồi thử kết nối lại." onRetry={retry} /></MotionRegion>;
+  if (info && !info.remote && !voiceReady && preferencesError) return <MotionRegion motionKey="preferences-error" className="p-10"><InlineError message="Bạn hãy thử tải lại cài đặt giọng đọc." onRetry={() => void reloadPreferences()} /></MotionRegion>;
+  if (!info || (!info.remote && !voiceReady)) return <MotionRegion motionKey="loading" className="h-full"><OfflineStrip /><div className="flex h-full gap-10 p-10"><ContentSkeleton count={3} className="hidden w-44 md:block" label="Đang tải điều hướng" /><ContentSkeleton shape="covers" count={5} className="flex-1 self-start" label="Đang mở ABook" /></div></MotionRegion>;
   return (
     <MotionRegion motionKey="ready" className="h-full" fadeThrough><TooltipProvider delayDuration={350} skipDelayDuration={150}>
       <SourceProvider source={source}>

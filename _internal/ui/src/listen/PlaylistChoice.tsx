@@ -1,10 +1,11 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronRight, Music2, Plus } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { LiveText } from "@/shared/ui";
+import { LiveText, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { importMusic } from "@/studio/musicImport";
 import { MY_MUSIC_KEY, useCanImportMusic } from "./MyMusic";
@@ -125,6 +126,8 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     scene: current.data?.playlist === SCENE_PLAYLIST,
     error: menu.data?.error || current.data?.error || "",
     loading: menu.isLoading,
+    loadFailed: menu.isError || current.isError,
+    retry: () => { void menu.refetch(); void current.refetch(); },
     choose: (id: string | null) => choose.mutate({ playlist: id }),
     /** Đang lưu lựa chọn; nút "Nhạc nền" của trình phát còn quay vòng chờ cả lúc máy xếp hàng bài ([usePlayer].musicLoading). */
     busy: choose.isPending,
@@ -161,7 +164,7 @@ export function playlistNote(error: string, scene = false): string {
 
 /** Mục "Nhạc nền" trong menu của sách chỉ có chữ: menu con với các lựa chọn. */
 export function PlaylistSubmenu({ bookId }: { bookId: string }) {
-  const { options, chosen, label, scene, error, loading, choose, canImport, addMusic } = usePlaylistChoice(bookId);
+  const { options, chosen, label, scene, error, loading, loadFailed, retry, choose, canImport, addMusic } = usePlaylistChoice(bookId);
   return (
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger className={MENU_ITEM}>
@@ -188,7 +191,7 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
               {ADD_MUSIC_LABEL}
             </DropdownMenu.Item>
           )}
-          {loading && <p className="px-2 py-1.5 text-xs text-fg-2">Đang tải các danh sách nhạc…</p>}
+          <MotionRegion motionKey={[loading, loadFailed]}>{loading ? <ContentSkeleton count={2} label="Đang tải danh sách" className="p-2" /> : loadFailed ? <InlineError message="Bạn hãy thử tải lại danh sách nhạc." onRetry={retry} /> : null}</MotionRegion>
           <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error, scene)}</p>
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>

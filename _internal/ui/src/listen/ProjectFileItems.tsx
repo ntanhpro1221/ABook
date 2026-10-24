@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
-import { Button, Dialog, Segmented } from "@/shared/ui";
+import { Button, Dialog, Segmented, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { useStudioMissing } from "@/studio/data";
 import { isOpenWork } from "@/studio/WorkInbox";
@@ -201,7 +201,7 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
   const [chosen, setTab] = useState<Tab>("work");
   const tab = available.some((item) => item.value === chosen) ? chosen : (available[0]?.value ?? "work");
   const path = { work: "work", casting: "casting", names: "pronunciations" }[tab];
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["project-view", book.id, tab],
     queryFn: () => api<WorkSnapshot | CastingSnapshot | NamesSnapshot>(`/api/books/${book.id}/${path}`),
     enabled: open && available.length > 0,
@@ -216,7 +216,8 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
     >
       {available.length > 1 && <Segmented<Tab> value={tab} onChange={setTab} label="Màn" options={available} />}
       <div className="mt-3 max-h-[50vh] overflow-y-auto text-sm">
-        {isLoading && <p className="text-fg-3">Đang đọc…</p>}
+        {isLoading && <ContentSkeleton label="Đang tải việc xưởng" />}
+        {error && !data && <InlineError message="Bạn hãy thử tải lại việc của xưởng." onRetry={() => void refetch()} />}
         {tab === "work" && <WorkList data={data as WorkSnapshot | undefined} />}
         {tab === "casting" && <CastingList data={data as CastingSnapshot | undefined} />}
         {tab === "names" && <NamesList data={data as NamesSnapshot | undefined} />}
