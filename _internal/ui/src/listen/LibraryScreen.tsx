@@ -1,27 +1,34 @@
 import { MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { Fold } from "@/shared/Collapse";
+import { Collapse } from "@/shared/Collapse";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { useBackLayer } from "@/shared/backStack";
+import { useMediaQuery } from "@/shared/media";
 import { LoadingCrossfade } from "@/shared/MotionPresence";
 import { useListPresence } from "@/shared/motion";
-import { BookOpen, Headphones, Laptop, Pause, Play, Search, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
+import { ArrowDownWideNarrow, BookOpen, Headphones, Laptop, Pause, Play, Search, X } from "lucide-react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { ShortName } from "@/shared/ShortName";
 import { Windowed } from "@/shared/Windowed";
-import { afterScrollLayout, isPage, saveScroll, scrollParent, useScrollMemory } from "@/shared/scrollMemory";
+import { useScrollMemory } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
-import { EmptyState, failedEmpty, heardBarProps, LoadError, Progress, Segmented, Skeleton } from "@/shared/ui";
+import { Dialog, EmptyState, failedEmpty, heardBarProps, LoadError, Progress, Sheet, Skeleton } from "@/shared/ui";
 import { caughtUpDetail, resumeWhere } from "./labels";
-import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, isLibrarySort, type LibrarySort } from "./librarySort";
+import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, type LibrarySort } from "./librarySort";
 import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, resumeTarget, seriesIndex, twinBookIds, twinKind, volumeBadge, type ListenBook, type ListenChapter } from "./model";
 import { usePlayer, type WordTarget } from "./player";
 import { useClock } from "./clock";
 import { useListenBook, useListenLibrary, useReadAloudVoices, useSource } from "./source";
 
 type Filter = "all" | "listening" | "new" | "finished";
+
+/** Hành động riêng của nền tảng đi cùng bìa, kể cả khi mở bộ sách. */
+type BookExtras = { actions?: (book: ListenBook) => ReactNode; cover?: (book: ListenBook) => ReactNode; seriesCover?: (books: ListenBook[]) => ReactNode };
+const BookExtrasContext = createContext<BookExtras>({});
 
 function stateOf(book: ListenBook): Filter {
   if (book.progress.finished) return "finished";
@@ -65,8 +72,7 @@ function progressText(book: ListenBook, speaks: boolean): string {
   if (book.progress.finished) return "Đã nghe xong";
   if (book.progress.caughtUp) return `Đã nghe hết phần đã có · ${chapters}`;
   if (!book.complete) {
-    const lead = book.producing ? "Đang thu âm" : "Chưa hoàn thành";
-    return `${lead} · ${chapters}`;
+    return book.producing ? `${chapters} · đang thu` : chapters;
   }
   const left = Math.max(0, book.duration - book.progress.heardSeconds);
   if (book.progress.heardSeconds <= 0) return formatLength(book.duration);
@@ -132,6 +138,7 @@ export function useRestoreLastListening() {
 }
 
 function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twin?: boolean }) {
+  const extras = useContext(BookExtrasContext);
   const navigate = useNavigate();
   const playBook = usePlayListenBook();
   const player = usePlayer();
@@ -146,15 +153,16 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
       <div className="relative">
         {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
         <button type="button" tabIndex={-1} onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
-          <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full" />
+          <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full !aspect-[2/3] !rounded-xl" />
         </button>
         <button
           type="button"
           aria-label={textOnly ? `Đọc ${book.title}` : playingHere ? `Tạm dừng ${book.title}` : book.stage === "text" ? `Nghe ngay ${book.title}` : `Nghe ${book.title}`}
           onClick={() => (textOnly ? navigate(`/book/${book.id}/read`) : current ? player.toggle() : void playBook(book))}
           className={cn(
-            "touch-hit touch-box absolute bottom-2.5 right-2.5 grid size-10 place-items-center rounded-full bg-accent text-accent-ink shadow-float transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100",
-            current ? "opacity-100" : "opacity-0",
+            "touch-hit touch-box absolute bottom-2.5 right-2.5 grid size-[44px] place-items-center rounded-full bg-panel text-fg shadow-card transition-opacity duration-motion-fast focus-visible:pointer-events-auto focus-visible:opacity-100",
+            // Điện thoại không có rê chuột: nút chỉ hiện cho cuốn đang ở trình phát, tranh bìa không bị che (soát 24-10).
+            current ? "opacity-100" : "pointer-events-none opacity-0 md:group-hover:pointer-events-auto md:group-hover:opacity-100",
           )}
         >
           {textOnly ? (
@@ -170,25 +178,23 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
             <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${book.progress.fraction * 100 / 100})` }} />
           </div>
         )}
-        {book.remote && (
-          // Dải dưới bìa, chừa chỗ nút phát bên phải: tên sách vẽ ở ĐẦU bìa, huy hiệu ở góc trên từng đè lên chữ ấy (soát UX a10). Bìa vẽ có nhãn
-          // "TẬP n" ở góc dưới trái thì huy hiệu nhích lên trên nhãn.
+        <MotionPresence open={Boolean(book.remote)}>{book.remote && (
+          // Dấu nguồn nhỏ ở góc, không lặp lại tên máy ở dòng trạng thái.
           <span
-            className={cn(
-              "pointer-events-none absolute left-2.5 inline-flex max-w-[calc(100%-4.5rem)] items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[0.625rem] font-medium text-white",
-              book.series?.part || badge ? "bottom-9" : "bottom-2.5",
-            )}
+            aria-label={remotePlace(book)}
+            className="pointer-events-none absolute right-2 top-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-md bg-panel px-2 py-1 text-xs font-medium text-fg"
           >
             <Laptop className="size-3 shrink-0" />
             <ShortName name={typeof book.remote === "object" && book.remote?.computer ? book.remote.computer : "Máy tính"} short={11} className="truncate" />
             {/* Đã tải đủ về máy này: nghe được cả khi máy kia tắt (soát a27 lỗi 8). */}
             {typeof book.remote === "object" && book.remote.downloaded && <span className="shrink-0">· Đã tải</span>}
           </span>
-        )}
+        )}</MotionPresence>
+        {extras.cover?.(book)}
       </div>
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="touch-row mt-2.5 block w-full text-left">
-        <div className={cn("line-clamp-2 text-sm font-semibold leading-snug", current && "text-accent-text")}>{book.title}</div>
-        <div className="mt-1 text-xs text-fg-2">{bookStatusText(book, speaks)}</div>
+        <div className={cn("line-clamp-2 text-sm font-medium leading-snug", current && "text-accent-text")}>{book.title}</div>
+        <div className="mt-1 truncate text-xs text-fg-2">{progressText(book, speaks)}</div>
         {/* Hai cuốn cùng tên: nhãn "Dự án" (làm trên máy này) / "Đã nhập" (mở từ file) và ngày vào thư viện để biết cuốn nào là cuốn nào
             (tác giả, nếu có, đã nằm ở dòng trên). */}
         {twin && (twinKind(book) || book.addedAt) ? (
@@ -197,6 +203,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
           </div>
         ) : null}
       </button>
+      {extras.actions?.(book)}
     </MotionRegion>
   );
 }
@@ -216,17 +223,17 @@ function ContinueCard({ book }: { book: ListenBook }) {
   const point = useResumeTarget(full ?? book, full?.chapters ?? book.chapters ?? []);
   const where = !point ? "" : playingHere ? point.chapter.title : resumeWhere(point.chapter.title, point.at);
   return (
-    <section className="flex items-center gap-4 rounded-2xl border border-line bg-panel p-4 shadow-card sm:gap-5 sm:p-5">
+    <section className="flex items-center gap-4 sm:gap-6" aria-label="Đang nghe">
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={`Mở ${book.title}`}>
-        <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-20 sm:w-28" />
+        <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-20 !aspect-[2/3] !rounded-xl sm:w-28" />
       </button>
       <div className="min-w-0 flex-1">
-        <div className="text-xs font-semibold uppercase tracking-[0.08em] text-accent-text">Đang nghe dở</div>
-        <h2 className="mt-1 line-clamp-2 text-base font-semibold sm:text-lg">{book.title}</h2>
+        <div className="text-xs font-medium uppercase tracking-[0.06em] text-fg-2">Đang nghe</div>
+        <h2 className="mt-2 line-clamp-2 text-lg font-bold sm:text-2xl">{book.title}</h2>
         {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
-        <MotionRegion as="p" className="tabular mt-0.5 text-sm text-fg-2">
+        <MotionRegion as="p" className="tabular mt-1 truncate text-sm text-fg-2">
           {where}
-          {current ? (playingHere ? " · đang phát" : " · đang tạm dừng") : last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
+          {current ? (playingHere ? " · đang phát" : " · tạm dừng") : last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
         </MotionRegion>
         <MotionRegion as="p" className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks)}</MotionRegion>
         <Progress value={book.progress.fraction} size="xs" className="mt-3 max-w-md" label="Đã nghe" />
@@ -240,7 +247,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
         type="button"
         onClick={() => (current ? player.toggle() : void playBook(book))}
         aria-label={playingHere ? `Tạm dừng ${book.title}` : `Nghe tiếp ${book.title}${where ? `, ${where}` : ""}`}
-        className="grid size-14 shrink-0 place-items-center rounded-full bg-accent text-accent-ink shadow-card transition-transform hover:scale-105"
+        className="grid size-14 shrink-0 place-items-center rounded-full bg-accent text-accent-ink transition-transform duration-motion-fast active:scale-[0.97]"
       >
         <MotionRegion as="span" motionKey={playingHere} className="inline-grid size-6 place-items-center">
           {playingHere ? (
@@ -297,18 +304,18 @@ function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book
       type="button"
       onClick={() => onOpen?.(book)}
       disabled={!onOpen}
-      className="flex items-center gap-3 rounded-xl border border-dashed border-line-strong bg-panel p-3 text-left hover:border-accent disabled:hover:border-line-strong"
+      className="flex items-center gap-3 py-3 text-left"
     >
       <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
       <MotionRegion as="span" className="min-w-0" motionKey={[book.title, status]}>
         <span className="block truncate text-sm font-semibold">{book.title}</span>
-        <span className="block text-xs text-fg-2">{status}</span>
+        <span className="block truncate text-xs text-fg-2">{status}</span>
       </MotionRegion>
     </button>
   );
 }
 
-const SHELF_GRID = "grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-6";
+const SHELF_GRID = "grid grid-cols-2 gap-x-[16px] gap-y-[32px] sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-[24px]";
 /** Thư viện vài trăm cuốn: dựng từng khối 60 cuốn gần màn hình (shared/Windowed). 60 chia hết cho 2-6 cột: mỗi khối là một lưới
  *  cùng cột, hàng cuối của khối không hụt giữa chừng. */
 const SHELF_BLOCK = 60;
@@ -344,70 +351,61 @@ function badgesOf(items: { book: ListenBook; volume: number | null; unit: string
   return badges;
 }
 
-/** Một nguồn cấu trúc cho cả rendering và identity; thay IDs trong cùng kệ để presence lo. */
+/** Gom theo bộ nhưng giữ vị trí của cuốn đầu tiên trong thứ tự đang chọn. */
 function librarySections(books: ListenBook[], grouped: boolean) {
   const places = seriesIndex(books);
-  const groups = new Map<string, { book: ListenBook; volume: number | null; unit: string; name: string }[]>();
+  const groups = new Map<string, ListenBook[]>();
   for (const book of books) {
-    const { key: series, series: name, volume, unit } = places.get(book.id)!;
-    const key = volume === null ? `\u0000${book.id}` : series;
-    groups.set(key, [...(groups.get(key) ?? []), { book, volume, unit, name }]);
+    const place = places.get(book.id)!;
+    const key = grouped && place.volume !== null ? place.key : `book:${book.id}`;
+    groups.set(key, [...(groups.get(key) ?? []), book]);
   }
-  const series = [...groups.entries()]
-    .filter(([key, items]) => grouped && !key.startsWith("\u0000") && items.length > 1)
-    .map(([key, items]) => [key, [...items].sort((a, b) => (a.volume ?? 0) - (b.volume ?? 0))] as const);
-  const singles = books.filter((book) => !series.some(([, items]) => items.some((item) => item.book.id === book.id)));
-  return [
-    ...series.map(([key, items]) => ({ key, label: items[0].name, items: items.map((item) => item.book), badges: badgesOf(items) })),
-    ...(singles.length ? [{ key: "singles", label: series.length ? "Sách khác" : "", items: singles, badges: undefined }] : []),
-  ];
+  return [...groups.entries()].map(([key, members]) => {
+    const items = [...members].sort((a, b) => (places.get(a.id)!.volume ?? 0) - (places.get(b.id)!.volume ?? 0));
+    return { key, label: places.get(items[0].id)!.series, items,
+      badges: badgesOf(items.map(book => ({ book, ...places.get(book.id)! }))) };
+  });
 }
 
-/** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
+/** Một bìa cho cả bộ; điện thoại mở bảng đáy, máy tính mở hộp giữa màn. */
+function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySections>[number]; twins: Set<string>; phone: boolean }) {
+  const extras = useContext(BookExtrasContext);
+  const [open, setOpen] = useState(false);
+  const trigger = <button type="button" aria-label={`Mở bộ ${item.label}`} aria-haspopup="dialog" onClick={() => setOpen(true)} className="group block w-full text-left">
+    {/* Bìa trước cùng khung với một cuốn lẻ (đỉnh, đáy, tên thẳng hàng với ô bên cạnh); hai tờ sau ló lên phía trên, hẹp dần. */}
+    <div className="relative">
+      <div aria-hidden className="absolute inset-x-4 -top-3 bottom-0 rounded-xl bg-line" />
+      <div aria-hidden className="absolute inset-x-2 -top-1.5 bottom-0 rounded-xl bg-sunken" />
+      <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-xl" />
+      {item.items.some(book => book.remote) && <span aria-label="Có sách trên máy khác" className="absolute right-2 top-2 rounded-md bg-panel p-1.5 text-fg"><Laptop className="size-3" /></span>}
+      {extras.seriesCover?.(item.items)}
+    </div>
+    <span className="mt-2.5 block line-clamp-2 text-sm font-medium leading-snug">{item.label}</span>
+    <span className="mt-1 block text-xs text-fg-2">{item.items.length} tập</span>
+  </button>;
+  const content = open && <Shelf books={item.items} badges={item.badges} twins={twins} />;
+  return <MotionRegion motionKey={[item.label, item.items.map(book => book.id), item.items[0].cover?.url, item.items.some(book => book.remote)]}>
+    {phone ? <Sheet open={open} onOpenChange={setOpen} title={item.label} trigger={trigger}>
+      <div className="px-2 pb-4 pt-4">{content}</div>
+    </Sheet> : <>{trigger}<Dialog open={open} onOpenChange={setOpen} title={item.label}>{content}</Dialog></>}
+  </MotionRegion>;
+}
+
+/** Lưới luôn mở; presence giữ các ô và Windowed giữ thư viện dài. */
 export function SeriesShelves({ books, twins, memory, grouped = true }: { books: ListenBook[]; twins: Set<string>; memory?: string; grouped?: boolean }) {
-  const box = useRef<HTMLDivElement>(null);
-  const cancelFold = useRef<(() => void) | undefined>(undefined);
-  useEffect(() => () => cancelFold.current?.(), []);
-  const keepFoldScroll = (event: React.MouseEvent<HTMLDivElement>) => {
-    const button = (event.target as Element).closest<HTMLButtonElement>("button[aria-expanded][aria-controls]");
-    const node = box.current;
-    if (!node || !button || !node.contains(button)) return;
-    cancelFold.current?.();
-    if (button.getAttribute("aria-expanded") !== "true") return;
-    const scroller = scrollParent(node);
-    const top = scroller.scrollTop;
-    const anchor = scroller.style.overflowAnchor;
-    scroller.style.overflowAnchor = "none";
-    // Giữ đủ nền tới đáy khung nhìn: trình duyệt không clamp chỗ cuộn khi nhóm cuối khép.
-    // Khoảng trống thuộc kệ, không kéo dài thẻ trắng của nhóm.
-    const viewTop = isPage(scroller) ? 0 : scroller.getBoundingClientRect().top;
-    const viewHeight = isPage(scroller) ? window.innerHeight : scroller.clientHeight;
-    node.style.minHeight = `${Math.max(0, viewHeight + viewTop - node.getBoundingClientRect().top)}px`;
-    if (memory) saveScroll(memory, { scrollTop: top });
-    let moved = false;
-    const move = () => { moved = true; };
-    for (const type of ["wheel", "touchmove", "keydown"]) scroller.addEventListener(type, move, { passive: true });
-    const clean = () => {
-      scroller.style.overflowAnchor = anchor;
-      for (const type of ["wheel", "touchmove", "keydown"]) scroller.removeEventListener(type, move);
-    };
-    const cancel = afterScrollLayout(scroller, () => {
-      if (!moved) scroller.scrollTop = top;
-      clean();
-    });
-    cancelFold.current = () => { cancel(); clean(); };
-  };
+  const narrow = useMediaQuery("(max-width: 767px)");
+  const coarse = useMediaQuery("(pointer: coarse)");
   const sections = librarySections(books, grouped);
-  const rows = useListPresence(sections, (section) => section.key);
-  return <div ref={box} onClickCapture={keepFoldScroll} className="mt-6 space-y-10">{rows.map(({ key, item, state, ref }) => (
-    <section key={key} ref={ref} aria-label={item.label || "Sách lẻ"} className="motion-row" data-state={state} inert={state === "exit"}><div>
-      {grouped && (item.label || item.items.length > 4) ? (
-        <Fold storageKey={`library.series.${key}`} title={item.label || "Sách lẻ"} summary={`${item.items.length} cuốn`}>
-          <Shelf books={item.items} badges={item.badges} twins={twins} memory={memory && `${memory}.${key}`} />
-        </Fold>
-      ) : <Shelf books={item.items} badges={item.badges} twins={twins} memory={memory && `${memory}.${key}`} />}
-    </div></section>
-  ))}</div>;
+  const rows = useListPresence(sections, section => section.key);
+  return <div role="list" aria-label="Sách" className="mt-8">
+    <Windowed memory={memory} items={rows} block={SHELF_BLOCK} estimate={130} className={SHELF_GRID} alwaysBlocks
+      row={({ key, item, state, ref }, index) => <div key={key} ref={ref} role="listitem" className="motion-row" data-state={state} inert={state === "exit"}>
+        <div className={index < SHELF_BLOCK ? "rise-in" : undefined} style={{ "--i": index } as CSSProperties}>
+          {item.items.length > 1 ? <SeriesTile item={item} twins={twins} phone={narrow || coarse} /> :
+            <BookTile book={item.items[0]} badge={item.badges.get(item.items[0].id)} twin={twins.has(item.items[0].id)} />}
+        </div>
+      </div>} />
+  </div>;
 }
 
 const EMPTY_TEXT: Record<Filter, string> = {
@@ -422,7 +420,12 @@ export function LibraryScreen({
   header,
   recap,
   onOpenUpcoming,
+  bookExtras = {},
+  additionalBooks = [],
 }: {
+  bookExtras?: BookExtras;
+  /** Danh mục máy ghép có thể về trước gói nghe trực tiếp; vẫn cho tải cuốn ấy. */
+  additionalBooks?: ListenBook[];
   empty?: ReactNode;
   header?: ReactNode;
   recap?: ReactNode;
@@ -430,12 +433,20 @@ export function LibraryScreen({
   onOpenUpcoming?: (book: ListenBook) => void;
 }) {
   const libraryQuery = useListenLibrary();
-  const { data: allBooks, isLoading } = libraryQuery;
+  const { isLoading } = libraryQuery;
+  const allBooks = useMemo(() => {
+    if (!additionalBooks.length) return libraryQuery.data;
+    const known = new Set((libraryQuery.data ?? []).map(book => book.id));
+    return [...(libraryQuery.data ?? []), ...additionalBooks.filter(book => !known.has(book.id))];
+  }, [libraryQuery.data, additionalBooks]);
   // Sách chỉ có chữ chưa có chương nghe được nhưng đã ở trong thư viện (đọc được ngay): không phải sách "sắp có".
   const books = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable > 0 || book.stage === "text"), [allBooks]);
   const upcoming = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable === 0 && book.stage !== "text") ?? [], [allBooks]);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
+  useBackLayer(searchOpen, () => { setSearchOpen(false); setQuery(""); });
   const [sort, setSort] = useState<LibrarySort>(loadLibrarySort);
   const container = useRef<HTMLDivElement | null>(null);
   const memory = query.trim() ? undefined : `library.${filter}.${sort}`;
@@ -460,32 +471,28 @@ export function LibraryScreen({
   const libraryRows = useListPresence(books ?? [], (book) => book.id);
   const upcomingRows = useListPresence(upcoming, (book) => book.id);
   const noResultsTitle = query ? `Không tìm thấy sách nào khớp “${query}”` : "Không có sách ở đây";
-  const grouped = filter === "all" && !folded;
-  const shelvesKey = JSON.stringify(librarySections(shown, grouped).map(section => [section.key, Boolean(grouped && (section.label || section.items.length > 4))]));
+  const grouped = true;
+
   return (
-    <div ref={container} className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
+    <BookExtrasContext.Provider value={bookExtras}>
+    <div ref={container} className="library-screen mx-auto max-w-[1180px] px-[20px] pb-16 pt-6 sm:px-[40px] sm:pt-9">
       {/* Hai nút cạnh tiêu đề không được bóp tiêu đề thành "Thư / viện" ở 390 px (soát UX 05-10): tiêu đề giữ một dòng, nút xuống dưới. */}
-      <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
-        <div className="shrink-0">
-          <h1 className="whitespace-nowrap text-2xl font-bold tracking-tight sm:text-[1.75rem]">Thư viện</h1>
-          <MotionRegion as="p" motionKey={books?.length ?? 0} className="mt-1 text-sm text-fg-2">{books?.length ? `${books.length} cuốn` : ""}</MotionRegion>
+      <header>
+        {/* Nút nằm trên CÙNG dòng tiêu đề, căn giữa theo dòng ấy (không lơ lửng giữa tiêu đề và số cuốn). */}
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+          <h1 className="shrink-0 whitespace-nowrap text-2xl font-bold tracking-tight sm:text-[2rem]">Thư viện</h1>
+          {/* Thư viện trống: nút giữa màn (`empty`) là lời mời chính - nút thứ hai cùng tên ở đầu trang chỉ lặp lại (soát UX a9). */}
+          {/* -mr bù đệm ngang của nút ghost (px-3.5, trừ phần thừa bên phải của nét chữ) + p-1 giữ chỗ vòng tiêu điểm: chữ "Thêm sách" thẳng mép phải với nút phát và kính lúp bên dưới. */}
+          <MotionPresence open={Boolean(books?.length || upcoming.length)} className="-my-1 -ml-1 -mr-[17px]" bodyClassName="p-1">{header}</MotionPresence>
         </div>
-        {/* Thư viện trống: nút giữa màn (`empty`) là lời mời chính - nút thứ hai cùng tên ở đầu trang chỉ lặp lại (soát UX a9). */}
-        <MotionPresence open={Boolean(books?.length || upcoming.length)} className="-m-1" bodyClassName="p-1">{header}</MotionPresence>
+        <MotionRegion as="p" motionKey={allBooks?.length ?? 0} className="mt-1 text-sm text-fg-2">{allBooks?.length ? `${allBooks.length} cuốn` : ""}</MotionRegion>
       </header>
       {recap}
-      {upcomingRows.length > 0 && (
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {upcomingRows.map(({ key, item, state, ref }) => (
-            <div key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div><UpcomingCard book={item} onOpen={onOpenUpcoming} /></div></div>
-          ))}
-        </div>
-      )}
       <LoadingCrossfade loading={isLoading} placeholder={
-        <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-7 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-6">
+        <div className="mt-8 grid grid-cols-2 gap-x-[16px] gap-y-[32px] sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-[24px]">
           {Array.from({ length: 6 }, (_, index) => (
             <div key={index}>
-              <Skeleton className="aspect-square w-full rounded-lg" />
+              <Skeleton className="aspect-[2/3] w-full rounded-xl" />
               <Skeleton className="mt-3 h-4 w-3/4" />
             </div>
           ))}
@@ -504,73 +511,45 @@ export function LibraryScreen({
       ) : (
         <>
           <MotionPresence open={Boolean(listening)}>{listening && (
-            <MotionRegion motionKey={listening.id} className="mt-6">
+            <MotionRegion motionKey={listening.id} className="mt-[32px] sm:mt-[48px]">
               <ContinueCard book={listening} />
             </MotionRegion>
           )}</MotionPresence>
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-            <Segmented<Filter>
-              label="Lọc sách"
-              // Điện thoại: mỗi nút lọc đủ 48 px để chạm; cả thanh trải hết bề ngang, các nút chia đều - chữ to (cỡ chữ hệ thống 1,3) không bị cắt "Nghe xong".
-              // Chữ to hơn nữa (cỡ chữ trình duyệt 32 px, soát uxfix32) thì nhãn xuống dòng trong nút thay vì đè lên nút bên cạnh.
-              className="max-sm:flex max-sm:w-full"
-              itemClassName="max-sm:h-auto max-sm:min-h-[48px] max-sm:min-w-0 max-sm:flex-1 max-sm:px-1 max-sm:whitespace-normal"
-              value={filter}
-              onChange={setFilter}
-              options={[
-                { value: "all", label: "Tất cả" },
-                { value: "listening", label: "Đang nghe" },
-                { value: "new", label: "Chưa nghe" },
-                { value: "finished", label: "Nghe xong" },
-              ]}
-            />
-            <label className="flex items-center gap-2 text-sm text-fg-2 max-sm:w-full">
-              <span className="shrink-0">Xếp theo</span>
-              <select
-                value={sort}
-                onChange={(event) => {
-                  if (!isLibrarySort(event.target.value)) return;
-                  setSort(event.target.value);
-                  saveLibrarySort(event.target.value);
-                }}
-                className="h-9 min-w-0 flex-1 rounded-lg border border-line bg-panel px-2 text-sm text-fg outline-none focus:border-focus max-sm:h-[48px]"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="relative max-sm:w-full">
-              <span className="sr-only">Tìm sách</span>
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-3" />
-              <input
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Tìm sách"
-                title="Tên sách hay giọng kể - gõ không dấu cũng được"
-                className="touch-row h-9 w-full rounded-lg border border-line bg-panel pl-9 pr-9 text-sm outline-none placeholder:text-fg-3 focus:border-focus sm:w-80 [&::-webkit-search-cancel-button]:hidden"
-              />
-                <button
-                  type="button"
-                  onClick={() => setQuery("")}
-                  aria-label="Xoá ô tìm"
-                  inert={!query}
-                  aria-hidden={!query}
-                  style={{ opacity: query ? 1 : 0, pointerEvents: query ? undefined : "none" }}
-                  className="absolute right-1 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-md text-fg-3 transition-opacity duration-motion-fast hover:bg-hover hover:text-fg"
-                >
-                  <X className="size-4" />
-                </button>
-            </label>
+          <div className="mt-8 flex items-center gap-2 sm:mt-12 sm:gap-4">
+            <div role="group" aria-label="Lọc sách" className="flex min-w-0 flex-1 gap-5 overflow-x-auto sm:gap-6">
+              {([{ value: "all", label: "Tất cả" }, { value: "listening", label: "Nghe dở" }, { value: "new", label: "Chưa nghe" }, { value: "finished", label: "Xong" }] as const).map(option => <button
+                key={option.value} type="button" aria-label={option.value === "finished" ? "Nghe xong" : option.label} aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
+                className={cn("min-h-[44px] shrink-0 border-b-2 text-xs font-medium transition-colors duration-motion-fast sm:text-sm", filter === option.value ? "border-accent text-accent-text" : "border-transparent text-fg-2 hover:text-fg")}>
+                {option.label}
+              </button>)}
+            </div>
+            <DropdownMenu.Root>
+              <DropdownMenu.Trigger asChild><button type="button" aria-label="Xếp theo" title={`Xếp theo: ${SORT_OPTIONS.find(option => option.value === sort)?.label}`} className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1 text-xs text-fg-2 sm:text-sm">
+                <ArrowDownWideNarrow className="size-5 sm:size-4" /><span className="max-sm:sr-only">Xếp theo</span>
+              </button></DropdownMenu.Trigger>
+              <DropdownMenu.Portal><DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-44 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+                <DropdownMenu.RadioGroup value={sort} onValueChange={value => { const next = value as LibrarySort; setSort(next); saveLibrarySort(next); }}>
+                  {SORT_OPTIONS.map(option => <DropdownMenu.RadioItem key={option.value} value={option.value} className="flex min-h-[44px] cursor-default items-center rounded-lg px-3 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text">{option.label}</DropdownMenu.RadioItem>)}
+                </DropdownMenu.RadioGroup>
+              </DropdownMenu.Content></DropdownMenu.Portal>
+            </DropdownMenu.Root>
+            <button type="button" aria-label="Tìm sách" aria-expanded={searchOpen} onClick={() => { setSearchOpen(value => !value); if (searchOpen) setQuery(""); else requestAnimationFrame(() => searchInput.current?.focus()); }} className="-mr-3.5 grid size-[44px] shrink-0 place-items-center rounded-lg text-fg-2">
+              {/* -mr-3.5: vùng chạm 44 px giữ nguyên, nét kính lúp chạm đúng mép phải nội dung. */}
+              <Search className="size-5" />
+            </button>
           </div>
+          <Collapse open={searchOpen}>
+            <label className="relative mt-3 block">
+              <span className="sr-only">Tìm sách</span>
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-2" />
+              <input ref={searchInput} aria-label="Tìm sách" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Tên sách, tác giả, giọng" title="Gõ không dấu cũng được" className="h-[44px] w-full rounded-lg bg-sunken pl-10 pr-11 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden" />
+              <button type="button" onClick={() => { if (query) setQuery(""); else setSearchOpen(false); }} aria-label={query ? "Xoá ô tìm" : "Đóng tìm kiếm"} className="absolute right-0 top-0 grid size-[44px] place-items-center text-fg-2"><X className="size-4" /></button>
+            </label>
+          </Collapse>
           {/* Chỉ fade kết quả: header/tiếp tục nghe/controls giữ một cây. Ảnh theo scrollMemory trước paint. */}
           <MotionRegion followScroll fadeThrough motionKey={[filter, sort, folded, shown.map(book => book.id), !shown.length && noResultsTitle]}>
-            {/* Chỉ reset khi đổi cấu trúc kệ/Fold: tránh hàng exit đổi bố cục rồi chồng ảnh.
-                Cùng cấu trúc giữ node, focus và Windowed; presence lo IDs vào/ra. */}
-            <SeriesShelves key={shelvesKey} books={shown} twins={twins} memory={memory} grouped={grouped} />
+            {/* Kết quả rỗng không giữ lại bìa exit dưới ảnh cũ. Còn sách thì giữ node, focus và Windowed. */}
+            <SeriesShelves key={shown.length ? "books" : "empty"} books={shown} twins={twins} memory={memory} grouped={grouped} />
             <MotionPresence open={!shown.length}>
               {!shown.length && <EmptyState icon={Search} title={noResultsTitle} className="mt-4">
                 {query ? "Thử tên sách hoặc tác giả khác." : EMPTY_TEXT[filter]}
@@ -581,6 +560,14 @@ export function LibraryScreen({
       )}
       </MotionRegion>
       </LoadingCrossfade>
+      {upcomingRows.length > 0 && (
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {upcomingRows.map(({ key, item, state, ref }) => (
+            <div key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div><UpcomingCard book={item} onOpen={onOpenUpcoming} /></div></div>
+          ))}
+        </div>
+      )}
     </div>
+    </BookExtrasContext.Provider>
   );
 }

@@ -1,4 +1,4 @@
-import { click, type } from "./actions";
+import { click, find, type } from "./actions";
 import type { Scenario } from "./state";
 
 // Danh mục phòng trưng bày. Mỗi mục = một URL hash ổn định (#/<platform>/<tên>) -> một trang của app thật (`route`, router hash của app)
@@ -49,11 +49,8 @@ const playerOpen = async () => {
 
 const PHONE: Omit<Entry, "platform">[] = [
   { id: "phone/library-full", group: "Thư viện", title: "Thư viện đủ sách", route: "/" },
-  { id: "phone/library-shelves", group: "Thư viện", title: "Thư viện, mở các kệ", route: "/", act: async () => {
-    await click(/^Thành Phố Sương Mù\s*3 cuốn/);
-    await click(/^Sách khác/);
-  } },
-  { id: "phone/library-search", group: "Thư viện", title: "Tìm sách (không dấu)", route: "/", act: () => type("Tìm sách", "suong mu") },
+  { id: "phone/library-shelves", group: "Thư viện", title: "Mở bộ sách", route: "/", act: () => click("Mở bộ Thành Phố Sương Mù").then(() => undefined) },
+  { id: "phone/library-search", group: "Thư viện", title: "Tìm sách (không dấu)", route: "/", act: async () => { await click("Tìm sách"); await type("Tìm sách", "suong mu"); } },
   { id: "phone/library-morning", group: "Thư viện", title: "Buổi sáng: thẻ “Tối qua”", route: "/", clock: MORNING, scenario: { night: true } },
   { id: "phone/library-empty", group: "Thư viện", title: "Thư viện rỗng", route: "/", scenario: { library: "empty", paired: false } },
   { id: "phone/library-loading", group: "Thư viện", title: "Đang tải thư viện", route: "/", scenario: { library: "loading" } },
@@ -90,18 +87,22 @@ const PHONE: Omit<Entry, "platform">[] = [
   } },
   { id: "phone/reader", group: "Đọc theo", title: "Đọc theo chương đang nghe", route: "/book/suong-mu-2/read/4" },
   { id: "phone/reader-text", group: "Đọc theo", title: "Chế độ đọc sách chữ", route: "/book/gac-xep/read/2" },
-  { id: "phone/add-book-1", group: "Thêm sách", title: "Thêm sách · bước 1: chọn file", route: "/", act: () => click("Thêm sách từ file…").then(() => undefined) },
+  { id: "phone/add-book-1", group: "Thêm sách", title: "Thêm sách · bước 1: chọn file", route: "/", act: () => click("Thêm sách").then(() => undefined) },
   { id: "phone/add-book-2", group: "Thêm sách", title: "Thêm sách · bước 2: xem trước", route: "/", act: async () => {
-    await click("Thêm sách từ file…");
+    await click("Thêm sách");
     await click(/^Chọn file/);
   } },
   { id: "phone/add-book-3", group: "Thêm sách", title: "Thêm sách · bước 3: đã thêm (toast)", route: "/", act: async () => {
-    await click("Thêm sách từ file…");
+    await click("Thêm sách");
     await click(/^Chọn file/);
     await click("Thêm vào thư viện");
   } },
-  { id: "phone/devices", group: "Tải sách", title: "Tải sách từ máy tính (đã ghép)", route: "/devices" },
-  { id: "phone/devices-unpaired", group: "Tải sách", title: "Tải sách (chưa ghép máy tính)", route: "/devices", scenario: { paired: false } },
+  { id: "phone/devices", group: "Cài đặt", title: "Thiết bị (đã ghép)", route: "/settings/devices" },
+  { id: "phone/devices-unpaired", group: "Cài đặt", title: "Thiết bị (chưa ghép)", route: "/settings/devices", scenario: { paired: false } },
+  { id: "phone/studio", group: "Studio", title: "Studio từ xa", route: "/studio" },
+  { id: "phone/studio-empty", group: "Studio", title: "Studio chưa ghép máy", route: "/studio", scenario: { paired: false } },
+  { id: "phone/library-remote", group: "Thư viện", title: "Sách máy kia trong lưới", route: "/", act: async () => { document.querySelector('[aria-label="Mở Đường Về Làng Mây"]')?.scrollIntoView({ block: "center" }); } },
+  { id: "phone/library-download", group: "Thư viện", title: "Tiến độ trên bìa", route: "/", act: async () => { if (find("Tải")) await click("Tải"); document.querySelector('[aria-label="Mở Đường Về Làng Mây"]')?.scrollIntoView({ block: "center" }); } },
   { id: "phone/settings", group: "Cài đặt", title: "Cài đặt (gốc)", route: "/settings" },
   ...(["voice", "listen", "sleep", "look", "advanced"] as const).map((group): Omit<Entry, "platform"> => ({
     id: `phone/settings-${group}`,
@@ -113,11 +114,9 @@ const PHONE: Omit<Entry, "platform">[] = [
 
 const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/library-full", group: "Thư viện", title: "Thư viện đủ sách", route: "/" },
-  { id: "desktop/library-shelves", group: "Thư viện", title: "Thư viện, mở các kệ", route: "/", act: async () => {
-    await click(/^Thành Phố Sương Mù\s*3 cuốn/);
-    await click(/^Sách khác/);
-  } },
-  { id: "desktop/library-search", group: "Thư viện", title: "Tìm sách (không dấu)", route: "/", act: () => type("Tìm sách", "hai dang") },
+  { id: "desktop/library-remote", group: "Thư viện", title: "Sách từ máy ghép", route: "/", scenario: { remoteBooks: true }, act: async () => { document.querySelector('[aria-label="Mở Đường Về Làng Mây"]')?.scrollIntoView({ block: "center" }); } },
+  { id: "desktop/library-shelves", group: "Thư viện", title: "Mở bộ sách", route: "/", act: () => click("Mở bộ Thành Phố Sương Mù").then(() => undefined) },
+  { id: "desktop/library-search", group: "Thư viện", title: "Tìm sách (không dấu)", route: "/", act: async () => { await click("Tìm sách"); await type("Tìm sách", "hai dang"); } },
   { id: "desktop/library-empty", group: "Thư viện", title: "Thư viện rỗng", route: "/", scenario: { library: "empty", projects: "empty" } },
   { id: "desktop/library-loading", group: "Thư viện", title: "Đang tải thư viện", route: "/", scenario: { library: "loading" } },
   { id: "desktop/library-error", group: "Thư viện", title: "Lỗi đọc thư viện", route: "/", scenario: { library: "error" } },
@@ -139,14 +138,14 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/player-speed", group: "Trình phát", title: "Tốc độ đọc", route: "/", act: () => click(/^Tốc độ đọc/).then(() => undefined) },
   { id: "desktop/reader", group: "Đọc theo", title: "Đọc theo chương đang nghe", route: "/book/suong-mu-2/read/4" },
   { id: "desktop/reader-text", group: "Đọc theo", title: "Chế độ đọc sách chữ", route: "/book/gac-xep/read/2" },
-  { id: "desktop/add-book-1", group: "Thêm sách", title: "Thêm sách · bước 1: chọn file", route: "/", act: () => click("Thêm sách từ file…").then(() => undefined) },
+  { id: "desktop/add-book-1", group: "Thêm sách", title: "Thêm sách · bước 1: chọn file", route: "/", act: () => click("Thêm sách").then(() => undefined) },
   { id: "desktop/add-book-2", group: "Thêm sách", title: "Thêm sách · bước 2: xem trước", route: "/", act: async () => {
-    await click("Thêm sách từ file…");
+    await click("Thêm sách");
     await type("Đường dẫn file hay thư mục", "D:/Truyện/Tiệm sách trên gác xép.epub");
     await click("Mở");
   } },
   { id: "desktop/add-book-3", group: "Thêm sách", title: "Thêm sách · bước 3: đã thêm (toast)", route: "/", act: async () => {
-    await click("Thêm sách từ file…");
+    await click("Thêm sách");
     await type("Đường dẫn file hay thư mục", "D:/Truyện/Tiệm sách trên gác xép.epub");
     await click("Mở");
     await click("Thêm vào thư viện");

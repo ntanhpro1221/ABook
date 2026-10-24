@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import { dismissTopLayer } from "@/android/backLayers";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { LibraryScreen } from "./LibraryScreen";
@@ -34,15 +35,16 @@ afterEach(async () => { await act(() => root.unmount()); vi.runAllTimers(); vi.u
 it.each(["filter", "sort", "search"])("%s fades results without copying library header, continue card or controls", async change => {
   await act(() => root.render(<MemoryRouter><LibraryScreen /></MemoryRouter>));
   await act(() => {
-    if (change === "filter") [...main.querySelectorAll("button")].find(b => b.textContent === "Nghe xong")!.click();
+    if (change === "filter") [...main.querySelectorAll("button")].find(b => b.getAttribute("aria-label") === "Nghe xong")!.click();
     else if (change === "sort") {
-      const select = main.querySelector("select")!; select.value = "author"; select.dispatchEvent(new Event("change", { bubbles: true }));
+      main.querySelector<HTMLButtonElement>('[aria-label="Xếp theo"]')!.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0, pointerType: "mouse", isPrimary: true }));
     } else {
       const input = main.querySelector("input")!;
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, "nothing matches");
       input.dispatchEvent(new Event("input", { bubbles: true }));
     }
   });
+  if (change === "sort") await act(() => { [...document.querySelectorAll<HTMLElement>('[role="menuitemradio"]')].find(item => item.textContent === "Tác giả")!.click(); });
   const images = [...document.querySelectorAll<HTMLElement>(".motion-snapshot")];
   expect(images.length).toBeGreaterThan(0);
   for (const image of images) {
@@ -69,7 +71,7 @@ it("V6 header action có khoảng trống cho focus ring bên trong Collapse", a
   const button = [...main.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "Thêm sách")!;
   button.focus(); expect(document.activeElement).toBe(button);
   const flow = button.closest(".motion-flow")!;
-  expect(flow.classList.contains("-m-1")).toBe(true);
+  expect(["-my-1", "-ml-1", "-mr-[17px]"].every(name => flow.classList.contains(name))).toBe(true);
   expect(flow.querySelector(".motion-collapse > .flow-root")!.classList.contains("p-1")).toBe(true);
 });
 
@@ -128,26 +130,43 @@ it("same-structure membership changes keep row presence and fade the result regi
   await act(() => vi.advanceTimersByTime(500)); expect(tile.isConnected).toBe(false);
 });
 
-it.each([false, true])("gập nhóm cuối giữ chỗ cuộn, chỉ nhường khi người nghe tự cuộn=%s", async moved => {
-  localStorage.setItem("abook.fold.library.series.singles", "1");
-  Object.defineProperty(main, "clientHeight", { configurable: true, value: 600 });
-  await draw(); await act(() => vi.advanceTimersByTime(500));
-  const group = main.querySelector<HTMLElement>('section[aria-label="Sách lẻ"]')!;
-  const shelves = group.parentElement!;
-  vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(function(this: HTMLElement) {
-    const top = this === shelves ? -500 : 0;
-    return { top, left: 0, bottom: top + 200, right: 300, height: 200, width: 300, x: 0, y: top, toJSON() {} };
-  });
-  main.scrollTop = 500; main.dispatchEvent(new Event("scroll"));
-  const button = group.querySelector<HTMLButtonElement>("button[aria-expanded]")!;
-  await act(() => button.click());
-  expect(group.querySelector(".motion-collapse")?.getAttribute("data-state")).toBe("closed");
-  expect(shelves.style.minHeight).toBe("1100px");
-  expect(main.style.overflowAnchor).toBe("none");
-  if (moved) main.dispatchEvent(new Event("wheel"));
-  main.scrollTop = moved ? 300 : 0;
-  await act(() => vi.advanceTimersByTime(50));
-  expect(main.scrollTop).toBe(moved ? 300 : 500);
-  expect(main.style.overflowAnchor).toBe("");
-  expect(group.style.minHeight).toBe("");
+it("bìa bộ luôn mở, chạm mở các tập và Back đóng hộp trước khi rời thư viện", async () => {
+  state.books = [1, 2, 3].map(volume => ({ ...state.books[0], id: String(volume), title: `Truyện thử · Tập ${volume}` }));
+  await draw();
+  expect(main.querySelectorAll('[role="listitem"]')).toHaveLength(1);
+  const cover = main.querySelector<HTMLButtonElement>('[aria-label="Mở bộ Truyện thử"]')!;
+  expect(cover).not.toBeNull();
+  expect(cover.querySelectorAll('.absolute.inset-x-4.-top-3, .absolute.inset-x-2[class~="-top-1.5"]')).toHaveLength(2);
+  expect(main.querySelector('button[aria-controls]')).toBeNull();
+  await act(() => cover.click());
+  expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  expect(document.querySelectorAll('[role="dialog"] [role="listitem"]')).toHaveLength(3);
+  await act(() => { expect(dismissTopLayer()).toBe(true); });
+  await act(() => vi.advanceTimersByTime(500));
+  expect(document.querySelector('[role="dialog"][data-state="open"]')).toBeNull();
+  expect(main.querySelector('[aria-label="Mở bộ Truyện thử"]')).toBe(cover);
+});
+
+it("sách máy kia có dấu nguồn nhỏ trên góc bìa", async () => {
+  state.books = [{ ...state.books[0], remote: { computer: "Máy phòng khách" } }];
+  await draw();
+  const mark = main.querySelector('[aria-label="Trên Máy phòng khách"]')!;
+  expect(mark.textContent).toContain("Máy phòng");
+  expect(mark.className).toContain("top-2");
+  expect(mark.className).toContain("right-2");
+});
+
+it("Back khép tìm kiếm có chuyển động, giữ trang và lưới", async () => {
+  await draw();
+  await act(() => main.querySelector<HTMLButtonElement>('[aria-label="Tìm sách"]')!.click());
+  expect(main.querySelector('[aria-label="Tìm sách"]')?.getAttribute("aria-expanded")).toBe("true");
+  await search("Book");
+  await act(() => main.querySelector<HTMLButtonElement>('[aria-label="Xoá ô tìm"]')!.click());
+  expect(main.querySelector<HTMLInputElement>("input")!.value).toBe("");
+  expect(main.querySelector('[aria-label="Tìm sách"]')?.getAttribute("aria-expanded")).toBe("true");
+  await search("Book");
+  await act(() => { expect(dismissTopLayer()).toBe(true); });
+  expect(main.querySelector('[aria-label="Tìm sách"]')?.getAttribute("aria-expanded")).toBe("false");
+  expect(main.querySelector<HTMLInputElement>("input")!.value).toBe("");
+  expect(main.querySelector("input")!.closest(".motion-collapse")?.getAttribute("data-state")).toBe("closed");
 });

@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, expect, it, vi } from "vitest";
 
-// Màn "Tải sách": hàng cập nhật tên (soát a97 V1) và dung lượng có hàng xoá cho phần tải dở (V6). Plugin native và danh sách thư viện là bản giả.
+// Mục "Thiết bị": hàng cập nhật tên (soát a97 V1) và dung lượng có hàng xoá cho phần tải dở (V6). Plugin native và danh sách thư viện là bản giả.
 const hooks = vi.hoisted(() => ({ books: [] as unknown[], progress: {} as Record<string, unknown> }));
 vi.mock("./plugins", () => ({ EbookLibrary: {}, EbookPlayer: {}, ReadAloud: {} }));
 vi.mock("@/listen/source", async (original) => ({ ...(await original<object>()), useListenLibrary: () => ({ data: hooks.books }) }));

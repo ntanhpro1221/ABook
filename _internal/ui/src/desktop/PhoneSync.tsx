@@ -186,7 +186,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="min-w-0">
             <p className="text-sm font-semibold">Mã ghép thiết bị</p>
-            <p className="mt-2 text-[0.8125rem] text-fg-2">Trên máy kia: Tải sách → chọn {sync.name} → nhập mã.</p>
+            <p className="mt-2 text-[0.8125rem] text-fg-2">Trên máy kia: Cài đặt › Thiết bị → chọn {sync.name} → nhập mã.</p>
             <MoreInfo label="Cách dùng mã" className="mt-2">
               Mã dùng một lần để máy kia nghe thư viện này.
               {sync.addresses.length > 0 && <span className="block">Địa chỉ: <Where sync={sync} scheme={false} /></span>}

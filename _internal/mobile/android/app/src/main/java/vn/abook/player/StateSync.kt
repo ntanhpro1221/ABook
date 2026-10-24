@@ -15,7 +15,7 @@ import java.util.UUID
  * trình phát gốc (Playback): trước đây trình phát chỉ lưu chỗ nghe trên điện thoại, máy tính không bao giờ biết.
  *
  * Trình phát đẩy ngay khi dừng, còn đang phát thì tối đa mỗi phút một lần. Không có mạng thì im lặng - cuốn ấy vào [pending] và được đẩy
- * ngay khi nối lại được máy giữ sách ([flushPending]: mở Thư viện / Tải sách, vòng điều khiển từ xa) chứ không chờ lần dừng sau (soát a68 lỗi 9:
+ * ngay khi nối lại được máy giữ sách ([flushPending]: mở Thư viện / Thiết bị, vòng điều khiển từ xa) chứ không chờ lần dừng sau (soát a68 lỗi 9:
  * chỗ nghe lúc mất mạng không về máy tính, máy tính mở lại chỗ cũ rồi kéo điện thoại về đó). Mỗi phần của hồ sơ mang mốc thời gian, gộp lúc nào
  * cũng đúng: bên nghe sau thắng.
  */

@@ -90,13 +90,14 @@ it("thẻ giọng thật fade chọn/bỏ chọn và nghe thử", async () => {
   await render(view(false)); expect(old()).not.toBeNull();
 });
 
-it("thư viện nhiều bộ: mỗi bộ là Fold đóng; tìm kiếm vẫn cho thấy kết quả trực tiếp", async () => {
+it("thư viện nhiều bộ: luôn hiện một bìa mỗi bộ, chạm mở tập", async () => {
   const books = Array.from({ length: 8 }, (_, i) => book(String(i), `Bộ ${String.fromCharCode(65 + i)} · Tập 1`, 1)).flatMap((b, i) => [b, { ...b, id: `${i}-2`, title: b.title.replace("Tập 1", "Tập 2") }]);
   await render(<SeriesShelves books={books} twins={new Set()} />);
-  const controls = [...host.querySelectorAll<HTMLButtonElement>("button[aria-expanded]")]; expect(controls.length).toBeGreaterThan(6);
-  expect(controls.every(b => b.getAttribute("aria-expanded") === "false" && body(b).hasAttribute("inert"))).toBe(true);
-  await act(() => controls[0].click()); expect(body(controls[0]).hasAttribute("inert")).toBe(false);
-  await render(<SeriesShelves books={books.slice(0, 1)} twins={new Set()} grouped={false} />); expect(host.querySelector("button[aria-expanded]")).toBeNull();
+  const controls = [...host.querySelectorAll<HTMLButtonElement>('button[aria-haspopup="dialog"]')];
+  expect(controls).toHaveLength(8);
+  expect(host.querySelector('button[aria-expanded]')).toBeNull();
+  await act(() => controls[0].click());
+  expect(document.querySelector('[role="dialog"] [role="list"]')?.textContent).toContain("Tập 2");
 });
 
 it("trang sách dài: nhóm chương gập, mở lại giữ thao tác đúng chương", async () => {

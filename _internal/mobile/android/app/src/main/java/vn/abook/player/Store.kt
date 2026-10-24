@@ -1668,7 +1668,7 @@ object Store {
         runCatching { writeAtomic(File(workingRoot, "sizes.json"), text) }
     }
 
-    /** Cỡ từng cuốn trên máy (mã cuốn -> byte) để màn "Tải sách" xếp cuốn nào chiếm nhiều nhất; tổng của chúng là cỡ cả thư viện. */
+    /** Cỡ từng cuốn trên máy (mã cuốn -> byte) để mục "Thiết bị" xếp cuốn nào chiếm nhiều nhất; tổng của chúng là cỡ cả thư viện. */
     fun bookSizes(): Map<String, Long> =
         bookFolders().associate { it.name to bookBytes(it) }.also { saveSizes() }
 }
