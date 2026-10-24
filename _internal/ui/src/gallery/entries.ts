@@ -48,6 +48,12 @@ const MORNING = Date.UTC(2026, 9, 25, 0, 20); // 7:20 sáng 25-10, giờ Việt 
 const playerOpen = async () => {
   await click("Mở màn hình đang nghe");
 };
+// Máy tính: sách chữ giọng Edge hỏi đồng ý gửi chữ ra ngoài trước lần nghe đầu.
+const desktopTextMore = async () => {
+  await click(/^Nghe/, document.querySelector("main")!);
+  await click("Nghe", document.querySelector('[role="dialog"]')!);
+  await click("Thêm tuỳ chọn");
+};
 const textPlayerMore = async () => {
   await click(/^Nghe/, document.querySelector("main")!);
   await playerOpen(); await click("Thêm tuỳ chọn");
@@ -172,6 +178,12 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   } },
   { id: "desktop/player-more", group: "Trình phát", title: "Menu “…” của thanh phát", route: "/", act: () => click("Thêm tuỳ chọn").then(() => undefined) },
   { id: "desktop/player-speed", group: "Trình phát", title: "Tốc độ đọc", route: "/", act: () => click(/^Tốc độ đọc/).then(() => undefined) },
+  { id: "desktop/player-voice", group: "Trình phát", title: "Hộp giọng đọc", route: "/book/gac-xep", act: async () => {
+    await desktopTextMore(); await click(/^Giọng đọc:/);
+  } },
+  { id: "desktop/player-music", group: "Trình phát", title: "Hộp nhạc nền", route: "/book/gac-xep", act: async () => {
+    await desktopTextMore(); await click("Nhạc nền");
+  } },
   { id: "desktop/player-full-speed", group: "Trình phát", title: "Tốc độ ở màn nghe", route: "/", act: async () => {
     await playerOpen(); await click(/^Tốc độ đọc/, document.querySelector('.now-playing')!);
   } },
