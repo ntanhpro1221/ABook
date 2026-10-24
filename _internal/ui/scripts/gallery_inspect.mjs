@@ -1,0 +1,189 @@
+#!/usr/bin/env node
+// Soi chi tiết mọi mục gallery bằng hình học DOM; ảnh cắt phóng 4 lần qua CDP, không thêm dependency.
+// node scripts/gallery_inspect.mjs --out ../../inspect --theme both [--browser PATH] [--only phone/player]
+// Cùng --browser --out --only --theme --base --dist --timeout với gallery_shots.
+// Default gate: audited rules 4,5,6,8. --fail-on none is advisory; a list replaces defaults.
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { parseArgs, findBrowser, serve, launch, connect, evaluate, waitUntil, openPage, escapeHtml as esc } from "./gallery_browser.mjs";
+import { createInspectorHelpers, inspectPage } from "./gallery_inspect_helpers.mjs";
+import { sourceIndex, deduplicate } from "./gallery_inspect_report.mjs";
+
+export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY"];
+// Empty-output rules have no measurable gallery precision; keep them advisory.
+export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY"];
+export function gateRules(value) {
+  return value === undefined ? [...DEFAULT_FAIL_ON] : value.length === 1 && value[0].toUpperCase() === "NONE" ? [] : value.map(normalizeRule);
+}
+export function normalizeRule(value) {
+  const key = value.trim().toUpperCase().replaceAll("_", " ");
+  const numbered = /^RULE([1-9])$/.exec(key);
+  const rule = numbered ? RULES[Number(numbered[1]) - 1] : RULES.find((r) => r === key || r.replaceAll(" ", "-") === key);
+  if (!rule) throw new Error(`Quy tắc lạ: ${value}. Chọn ${RULES.join(", ")}`);
+  return rule;
+}
+
+export const inspectionExpression = (phone) => `(${inspectPage.toString()})(${JSON.stringify({ phone })}, (${createInspectorHelpers.toString()})())`;
+
+export async function settle(cdp, session, timeout) {
+  await evaluate(cdp, session, `(async () => {
+    await document.fonts.ready;
+    for (const weight of [400,500,600,700]) {
+      await document.fonts.load(weight + ' 14px "Be Vietnam Pro"', 'Tiếng Việt Đặng Ánh 0123456789');
+      await document.fonts.load(weight + ' 14px "Be Vietnam Pro Digits"', '0123456789');
+    }
+    // Spinner/skeleton chạy vô hạn không bao giờ kết thúc: giữ khung hiện tại rồi huỷ chuyển động để đo tĩnh.
+    window.__inspectFrozenAnimations ??= [];
+    window.__inspectFreezeInfinite = () => { for (const a of document.getAnimations()) {
+      if (a.effect?.getComputedTiming().endTime === Infinity) {
+        window.__inspectFrozenAnimations.push({ name: a.animationName ?? a.id, time: a.currentTime });
+        a.pause();
+        try { a.commitStyles(); } catch { /* Hiệu ứng không hỗ trợ commitStyles vẫn có thể huỷ. */ }
+        a.cancel();
+      }
+    } };
+    window.__inspectFreezeInfinite();
+    window.__inspectStillSince = 0;
+    return true;
+  })()`);
+  await waitUntil(cdp, session, `(() => {
+    // Dữ liệu giả có thể retry sau ready: spinner mới cũng phải đứng yên, không chỉ loạt đầu.
+    window.__inspectFreezeInfinite();
+    const still = document.fonts.status === "loaded" && document.getAnimations().every(a => a.playState === "finished" || a.playState === "idle");
+    if (!still) { window.__inspectStillSince = 0; return false; }
+    window.__inspectStillSince ||= performance.now();
+    return performance.now() - window.__inspectStillSince >= 300;
+  })()`, timeout, "phông chữ và chuyển động");
+  await evaluate(cdp, session, "new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve(true))))");
+}
+
+export function cropClip(rects, viewport) {
+  const area = createInspectorHelpers().union(rects);
+  const x = Math.max(0, Math.floor(area.x - 8)), y = Math.max(0, Math.floor(area.y - 8));
+  const right = Math.min(viewport.width, Math.ceil(area.x + area.width + 8));
+  const bottom = Math.min(viewport.height, Math.ceil(area.y + area.height + 8));
+  return { x, y, width: Math.max(1, right - x), height: Math.max(1, bottom - y), scale: 4 };
+}
+
+export function captureCrops(cdp, session, out, stem, viewport) {
+  const cache = new Map();
+  return async (rects) => {
+    const clip = cropClip(rects, viewport);
+    clip.scale /= viewport.deviceScale ?? 1;
+    const key = JSON.stringify(clip);
+    if (cache.has(key)) return cache.get(key);
+    const file = `crops/${stem}-${String(cache.size + 1).padStart(4, "0")}.png`;
+    cache.set(key, file);
+    const { data } = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false, clip }, session);
+    writeFileSync(path.join(out, file), Buffer.from(data, "base64"));
+    return file;
+  };
+}
+
+const sheetStyle = `body{font:14px/1.5 system-ui;margin:20px;background:#eee;color:#181818}a{color:#174ba2}code{overflow-wrap:anywhere}img{display:block;max-width:100%;height:auto;image-rendering:auto}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;align-items:start}figure{margin:0;padding:12px;background:white;border:1px solid #bbb;overflow:auto}figcaption{margin-top:10px;overflow-wrap:anywhere}.wide img{max-width:none}summary{cursor:pointer;font-weight:bold}`;
+const html = (title, body) => `<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(title)}</title><style>${sheetStyle}</style><body>${body}</body></html>`;
+
+function writeSheet(out, story) {
+  writeFileSync(path.join(out, story.sheet), html(`${story.id} · ${story.theme}`, `<a href="../index.html">← Phát hiện</a><h1>${esc(story.id)} · ${story.theme}</h1><p>${story.contacts.length} điều khiển / SVG · ảnh gốc phóng 4×; bấm ảnh để xem nguyên cỡ.</p><label><input type="checkbox" onchange="document.body.classList.toggle('wide',this.checked)"> Hiện nguyên cỡ phóng đại</label><div class="grid">${story.contacts.map((c) => `<figure><a href="../${c.crop}"><img loading="lazy" src="../${c.crop}" alt="${esc(c.text)}"></a><figcaption>${esc(c.text)} · ${c.kind}<br><code>${esc(c.selector)}</code><br>${c.rect.width.toFixed(1)}×${c.rect.height.toFixed(1)} CSS px</figcaption></figure>`).join("")}</div>`));
+}
+
+export function writeOutputs(out, report) {
+  writeFileSync(path.join(out, "findings.json"), JSON.stringify(report, null, 2));
+  if (report.distinctDefects) writeFileSync(path.join(out, "distinct-defects.json"), JSON.stringify(report.distinctDefects, null, 2));
+  const list = RULES.map((rule) => {
+    const findings = report.findings.filter((f) => f.rule === rule);
+    const groups = [...new Set(findings.map((f) => f.story))];
+    return `<section><h2>${esc(rule)} (${findings.length})</h2>${groups.map((id) => `<details><summary>${esc(id)} (${findings.filter((f) => f.story === id).length})</summary><div class="grid">${findings.filter((f) => f.story === id).map((f) => `<figure id="${f.id}"><a href="${f.crop}"><img loading="lazy" src="${f.crop}" alt="${esc(f.text)}"></a><figcaption><b>${f.id} · ${f.theme}</b><br>${esc(f.text)}<br><code>${esc(f.selector)}</code>${f.referenceValue !== undefined ? `<br>Hàng ${f.rowIndex} / mốc ${f.referenceRowIndex} · ${esc(f.metric)}: ${f.value.toFixed(3)} / ${f.referenceValue.toFixed(3)} px · Δ ${f.delta.toFixed(3)} px` : f.metric ? `<br>${esc(f.metric)}: ${f.value.toFixed(3)} px` : ""}${f.ratio ? `<br>Tương phản ${f.ratio}:1 / ${f.threshold}:1` : ""}<br><a href="${report.stories.find((s) => s.id === id && s.theme === f.theme)?.sheet}">Bảng chi tiết</a></figcaption></figure>`).join("")}</div></details>`).join("")}</section>`;
+  }).join("");
+  writeFileSync(path.join(out, "index.html"), html("ABook · soi chi tiết gallery", `<h1>ABook · soi chi tiết gallery</h1><p>${report.stories.length} lượt · ${report.findings.length} phát hiện · ${report.errors.length} lỗi chạy · ${esc(report.created)}</p><p>Ảnh cắt CDP scale:4, lề 8 CSS px; bấm ảnh để xem nguyên cỡ. Phát hiện hình học cần được duyệt qua ảnh.</p><p>${RULES.map((r) => `${esc(r)}: ${report.counts[r]}`).join(" · ")}</p><details><summary>Bảng điều khiển / biểu tượng (${report.stories.length})</summary><ul>${report.stories.map((s) => `<li><a href="${s.sheet}">${esc(s.id)} · ${s.theme}</a> (${s.contacts.length})${s.error ? ` · ${esc(s.error)}` : ""}</li>`).join("")}</ul></details>${report.errors.length ? `<pre>${esc(JSON.stringify(report.errors, null, 2))}</pre>` : ""}${list}`));
+}
+
+export async function main(argv = process.argv.slice(2)) {
+  const args = parseArgs(["--theme", "both", ...argv]);
+  if (args.help || !args.out) {
+    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...]\nDefault --fail-on: rule4,rule5,rule6,rule8 (reviewed gallery precision >=90%; see fixtures/gallery-inspect-precision.md)");
+    return !args.help ? 2 : 0;
+  }
+  if (!["light", "dark", "both"].includes(args.theme)) throw new Error("--theme phải là light, dark hoặc both");
+  if (args.base && !["127.0.0.1", "localhost", "[::1]"].includes(new URL(args.base).hostname)) throw new Error("Chỉ được dùng --base cục bộ");
+  const failOn = gateRules(args.failOn);
+  const out = path.resolve(args.out);
+  for (const dir of [out, path.join(out, "crops"), path.join(out, "contacts")]) mkdirSync(dir, { recursive: true });
+  const report = { created: new Date().toISOString(), rules: RULES, counts: {}, settings: { phone: "412x915 @2x", desktop: "1440x900 @1x", cropScale: 4, themes: args.theme }, stories: [], findings: [], errors: [] };
+  let local, browser, cdp;
+  try {
+    local = args.base ? null : await serve(args.dist);
+    const base = args.base ?? local.base;
+    const executable = findBrowser(args.browser);
+    browser = await launch(executable, { preserveProfile: true });
+    cdp = await connect(browser.endpoint);
+    const index = await openPage(cdp, { width: 1280, height: 800, scale: 1, mobile: false, theme: "light" });
+    await cdp.send("Page.navigate", { url: `${base}#/` }, index.sessionId);
+    await waitUntil(cdp, index.sessionId, "Array.isArray(window.__galleryEntries)", args.timeout, "danh mục");
+    const entries = (await evaluate(cdp, index.sessionId, "window.__galleryEntries")).filter((e) => !args.only || args.only.some((p) => e.id.includes(p)));
+    if (!entries.length) throw new Error("Không có story khớp --only");
+    await cdp.send("Target.closeTarget", { targetId: index.targetId });
+    const themes = args.theme === "both" ? ["light", "dark"] : [args.theme];
+    console.log(`${entries.length} mục × ${themes.length} chủ đề · ${executable}`);
+    for (const entry of entries) for (const theme of themes) {
+      const mobile = entry.platform === "phone";
+      const width = mobile ? 412 : 1440, height = mobile ? 915 : 900;
+      const page = await openPage(cdp, { width, height, scale: mobile ? 2 : 1, mobile, theme });
+      const stem = `${entry.id.replaceAll("/", "__")}-${theme}`;
+      const story = { ...entry, theme, sheet: `contacts/${stem}.html`, contacts: [], overlays: [] };
+      const started = performance.now();
+      try {
+        await cdp.send("Page.navigate", { url: `${base}?frame=${encodeURIComponent(entry.id)}&theme=${theme}` }, page.sessionId);
+        await waitUntil(cdp, page.sessionId, "Boolean(window.__gallery?.ready)", args.timeout, entry.id);
+        await settle(cdp, page.sessionId, args.timeout);
+        const gallery = await evaluate(cdp, page.sessionId, "window.__gallery");
+        if (gallery.errors.length || gallery.missing.length) throw new Error(JSON.stringify(gallery));
+        let result;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          result = await evaluate(cdp, page.sessionId, inspectionExpression(mobile));
+          if (result.metrics.animations.every((s) => s === "finished" || s === "idle")) break;
+          await settle(cdp, page.sessionId, args.timeout);
+        }
+        if (result.metrics.animations.some((s) => s !== "finished" && s !== "idle")) throw new Error("Chuyển động vẫn chưa đứng yên lúc đo");
+        story.metrics = result.metrics;
+        story.siblingGroups = result.siblingGroups;
+        story.frozenAnimations = await evaluate(cdp, page.sessionId, "window.__inspectFrozenAnimations");
+        story.overlays = result.overlays;
+        const crop = captureCrops(cdp, page.sessionId, out, stem, { width, height, deviceScale: mobile ? 2 : 1 });
+        for (const finding of result.findings) {
+          finding.id = `F${String(report.findings.length + 1).padStart(5, "0")}`;
+          finding.story = entry.id; finding.theme = theme;
+          finding.crop = await crop(finding.rects);
+          report.findings.push(finding);
+        }
+        for (const contact of result.contacts) story.contacts.push({ ...contact, crop: await crop([contact.rect]) });
+        story.findingCount = result.findings.length;
+        console.log(`ok ${entry.id} (${theme}) · ${result.findings.length} phát hiện · ${story.contacts.length} chi tiết · ${((performance.now() - started) / 1000).toFixed(1)}s`);
+      } catch (error) {
+        story.error = error.message;
+        report.errors.push({ story: entry.id, theme, error: error.message });
+        console.error(`!! ${entry.id} (${theme}): ${error.message}`);
+      } finally {
+        await cdp.send("Target.closeTarget", { targetId: page.targetId }).catch(() => undefined);
+        report.stories.push(story);
+        writeSheet(out, story);
+        report.counts = Object.fromEntries(RULES.map((r) => [r, report.findings.filter((f) => f.rule === r).length]));
+        writeOutputs(out, report);
+      }
+    }
+  } finally {
+    cdp?.close();
+    try { await browser?.close(); } finally { local?.server.close(); }
+  }
+  report.settings.failOn = failOn;
+  report.settings.gateEvidence = "uicheck139c/result.md; rules without gallery positives remain advisory";
+  report.distinctDefects = deduplicate(report.findings, sourceIndex(path.resolve(import.meta.dirname, "../src")));
+  writeOutputs(out, report);
+  console.log(`${report.findings.length} phát hiện; ${report.errors.length} lỗi chạy → ${path.join(out, "index.html")}`);
+  return report.errors.length ? 2 : failOn.some((r) => report.counts[r] > 0) ? 1 : 0;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main().then((code) => { process.exitCode = code; }).catch((error) => { console.error(error.stack); process.exitCode = 2; });
+}

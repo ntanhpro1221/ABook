@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="vi"><meta charset="utf-8"><title>Đối chứng hàng lặp và cỡ nét biểu tượng</title>
+<style>
+body{margin:24px;font:14px "Be Vietnam Pro",sans-serif;color:#222;background:white}
+section{display:inline-block;vertical-align:top;margin-right:28px;width:270px}
+ul{list-style:none;padding:0;margin:0}li{margin:0}
+button{display:flex;align-items:center;gap:10px;width:250px;height:44px;border:0;padding:8px;background:#eee;color:inherit;font:inherit;text-align:left}
+svg{flex-shrink:0;width:18px;height:18px;fill:currentColor}
+.small{width:12px;height:12px}
+.slot{display:grid;place-items:center;width:18px;height:18px;flex-shrink:0}
+.narrow{width:12px}.bars{display:flex;gap:2px;width:18px;height:12px}.bars i{display:block;flex-shrink:0;width:3px;height:12px;background:currentColor}
+</style><body>
+<section><h2>Hộp 18 / 12 px</h2><ul id="unequal-boxes">
+<li><button><svg viewBox="0 0 18 18"><rect width="18" height="18"/></svg><span>Đang chạy</span></button></li>
+<li><button><svg class="small" viewBox="0 0 18 18"><rect width="18" height="18"/></svg><span>Đang chờ</span></button></li>
+</ul></section>
+<section><h2>Hộp đều, nét khác</h2><ul id="unequal-ink">
+<li><button><span class="slot" aria-hidden="true"><svg viewBox="0 0 18 18"><rect width="18" height="18"/></svg></span><span>Đang chạy</span></button></li>
+<li><button><span class="slot" aria-hidden="true"><svg viewBox="0 0 18 18"><rect x="3" y="3" width="12" height="12"/></svg></span><span>Đang chờ</span></button></li>
+</ul></section>
+<section><h2>Đã căn đều 18 px</h2><ul id="equal-icons">
+<li><button><svg viewBox="0 0 18 18"><rect width="18" height="18"/></svg><span>Đang chạy</span></button></li>
+<li><button><svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="9"/></svg><span>Đang chờ</span></button></li>
+</ul></section>
+<section><h2>Khe lệch 3,5 px</h2><ul id="unequal-gap">
+<li><button><svg viewBox="0 0 18 18"><rect width="18" height="18"/></svg><span>Đang chạy</span></button></li>
+<li><button style="gap:13.5px"><svg viewBox="0 0 18 18"><rect width="18" height="18"/></svg><span>Đang chờ</span></button></li>
+</ul></section>
+<section><h2>Nét tràn hộp vào chữ</h2><ul id="overflow-icons">
+<li><button style="gap:0"><span class="slot narrow" aria-hidden="true"><span class="bars"><i></i><i></i><i></i><i></i></span></span><span>Đang chạy</span></button></li>
+<li><button style="gap:0"><span class="slot narrow" aria-hidden="true"><svg class="small" viewBox="0 0 18 18"><rect width="18" height="18"/></svg></span><span>Đang chờ</span></button></li>
+</ul></section>
+</body></html>

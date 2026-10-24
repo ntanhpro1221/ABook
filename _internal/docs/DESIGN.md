@@ -216,3 +216,4 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 2. Đếm lại số chạm các luồng ở mục 2 bị ảnh hưởng - không dài thêm.
 3. Mỗi màn: đúng một nút chính; không thẻ lồng thẻ; nhãn 1-4 chữ; không thứ gì hiện/ẩn cứng; Back đóng lớp trên cùng.
 4. Test DOM cho chuyển động/Back như hiện có; bản phát hành đính kèm bộ ảnh mọi màn.
+5. chạy gallery_inspect, không còn phát hiện thật ở các quy tắc 1-3.
