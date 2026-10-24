@@ -29,8 +29,8 @@ export function StudioScreen() {
               <div className="min-w-0 flex-1"><div className="truncate text-base font-medium">{item.name}</div>
                 <MotionRegion as="p" className="mt-1 truncate text-sm text-fg-2">{item.listenOnly ? "Bật Điều khiển từ xa trên máy tính." : "Tạo sách nói từ xa"}</MotionRegion>
               </div>
-              {/* -mr-3 bù phần đệm của nút ghost: chữ thẳng mép phải với công tắc ở hàng dưới. */}
-              <Button variant="ghost" disabled={item.listenOnly} className="-mr-3" onClick={() => void openStudioComputer(item)}>Mở Studio</Button>
+              {/* -mr-3.5 bù đúng phần đệm px-3.5 của nút ghost cỡ md: chữ thẳng mép phải với công tắc ở hàng dưới. */}
+              <Button variant="ghost" disabled={item.listenOnly} className="-mr-3.5" onClick={() => void openStudioComputer(item)}>Mở Studio</Button>
             </div>
           </li>)}
             <li><StudioAlertsRow icon={Bell} /></li>

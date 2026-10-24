@@ -11,7 +11,7 @@ export function StateStories({ state }: { state: StateStory }) {
   const [playing, setPlaying] = useState(false);
   return <div className="flex h-full flex-col">
     <OfflineStrip offline={state === "offline" && !ready} />
-    <main className="mx-auto w-full max-w-4xl p-5 md:p-10">
+    <main className="page-x mx-auto w-full max-w-4xl py-5 md:py-10">
       <h1 className="mb-8 text-2xl font-bold">Thư viện</h1>
       <MotionRegion motionKey={[state, ready]}>
         {state === "skeleton" ? <ContentSkeleton shape="covers" count={4} label="Đang tải sách" />
