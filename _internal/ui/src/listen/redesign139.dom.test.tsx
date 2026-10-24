@@ -119,8 +119,8 @@ it("trình phát: đúng 5 nút chính + 4 nút phụ có nhãn; việc khác n�
   await press(named("Thêm tuỳ chọn", screen)!);
   const more = document.querySelector<HTMLElement>("[data-player-more]")!;
   expect(more.textContent).toContain("Âm lượng");
-  expect(more.textContent).toContain("Danh sách dấu trang");
-  expect(more.textContent).toContain("Quay lại chỗ vừa nghe");
+  expect(more.textContent).toContain("Dấu trang");
+  expect(more.textContent).toContain("Về chỗ vừa nghe");
   // Đáy: một nút "Đọc theo" rộng cả hàng.
   expect([...screen.querySelectorAll("button")].filter((button) => button.textContent === "Đọc theo")).toHaveLength(1);
 });

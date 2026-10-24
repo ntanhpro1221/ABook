@@ -523,12 +523,13 @@ export function AddBookDialog({
   const label = queue && currentId !== null ? queueLabel(queue, currentId) : "";
   const rest = queue && currentId !== null ? waitingAfter(queue, currentId).length : 0;
 
+
   return (
-    <Dialog
+    <Dialog phoneSheet
       open={open}
       onOpenChange={close}
-      width="max-w-2xl"
-      title={preview && label ? `${label} - Thêm sách từ file` : "Thêm sách từ file"}
+      width="max-w-[560px]"
+      title={preview && label ? `${label} · Thêm sách` : "Thêm sách"}
       description={
         queue && !preview
           ? summaryText(summarize(queue))
@@ -584,8 +585,8 @@ export function AddBookDialog({
           )}
         </div>
       ) : !preview ? (
-        <div>
-          <div className="flex flex-wrap gap-2">
+        <div className="add-book-choose">
+          <div className="add-book-pick flex flex-wrap gap-2">
             {importer.choose && (
               <>
                 <Button variant="primary" icon={busy === "reading" ? Loader2 : FileText} disabled={busy !== null} onClick={() => void choose("file")}>
@@ -795,6 +796,7 @@ export function AddBookDialog({
               </Button>
             )}
           </div>
+
         </div>
       )}
     </MotionRegion></Dialog>
