@@ -355,7 +355,7 @@ export function PhoneSync() {
           </Dialog>
           </Fold>
           <div>
-            <h3 className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-3">Thiết bị đã ghép</h3>
+            <h3 className="label-section text-fg-2">Thiết bị đã ghép</h3>
             {deviceRows.length === 0 ? (
               // Người mới chưa có app trên điện thoại: nói chỗ lấy (chữ chọn được, không phải liên kết - trong cửa sổ app một
               // liên kết có thể điều hướng chính cửa sổ).

@@ -230,7 +230,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
       </button>
       {/* Màn rộng: cột chữ giới hạn 28rem để nút phát đứng ngay cạnh thanh tiến độ, không trôi ra mép màn. */}
       <div className="min-w-0 flex-1 sm:max-w-md">
-        <div className="text-xs font-medium uppercase tracking-[0.06em] text-fg-2">Đang nghe</div>
+        <div className="label-section text-fg-2">Đang nghe</div>
         <h2 className="mt-2 line-clamp-2 text-lg font-bold sm:text-2xl">{displayTitle(book.title)}</h2>
         {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
         <MotionRegion as="p" className="tabular mt-1 truncate text-sm text-fg-2">
