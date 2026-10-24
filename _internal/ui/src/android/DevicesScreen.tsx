@@ -234,7 +234,7 @@ function PairPanel() {
               </div>
             </div>
           ) : paired === null ? (
-            <button ref={btButton} type="button" onClick={() => void startBluetooth()} className="touch-hit flex items-center gap-1.5 text-sm font-medium text-accent-text">
+            <button ref={btButton} type="button" onClick={() => void startBluetooth()} className="touch-hit -ml-1 flex items-center gap-1.5 text-sm font-medium text-accent-text">
               {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Dùng Bluetooth
             </button>
           ) : paired.length ? (

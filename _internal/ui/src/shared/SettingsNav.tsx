@@ -88,8 +88,9 @@ export function GroupHeader({ id, back = true }: { id: SettingsGroupId; back?: b
   const leave = useLeaveSettingsGroup();
   return (
     <div className="flex items-center gap-1">
+      {/* Nét mũi tên thẳng mép nội dung: hộp 35 px (chuột) thì nét cách mép hộp 14,5 px, hộp chạm 48 px (touch-box) thì 21 px. */}
       {back && (
-        <button type="button" onClick={leave} aria-label="Về Cài đặt" className="touch-box -ml-2.5 grid size-10 place-items-center rounded-lg text-fg-2 hover:bg-hover">
+        <button type="button" onClick={leave} aria-label="Về Cài đặt" className="touch-box -ml-[14.5px] grid size-10 max-sm:-ml-6 pointer-coarse:-ml-6 place-items-center rounded-lg text-fg-2 hover:bg-hover">
           <ChevronLeft className="size-5" />
         </button>
       )}
