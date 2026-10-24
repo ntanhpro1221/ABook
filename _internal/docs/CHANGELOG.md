@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.138] - 2026-10-24
+
 ### Sửa lỗi
 - Giữ đúng phần chương đang xem khi sang file kế; Thư viện đổi số đếm, thông báo và kết quả mượt, giữ chỗ đang chọn; bước Thêm sách chỉ nhận thao tác khi đã hiện.
 - Điện thoại: chia sẻ chẩn đoán chỉ đọc, không còn ghi đè hay sửa file chia sẻ; app mở lạnh nhiều lần liền không khởi tạo dữ liệu hai lần.
