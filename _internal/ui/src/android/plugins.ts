@@ -14,6 +14,7 @@ import type { ImportResult } from "@/studio/musicLocal";
 import type { VieneuChoiceId, VieneuStatus } from "@/listen/vieneuModule";
 import type { VoiceSpeedChoice, VoiceSpeedStatus } from "@/listen/voiceSpeed";
 import type { DiagnosticsReport } from "@/shared/diagnostics";
+import type { HapticEffect } from "@/shared/feedback";
 
 // Hai plugin native của app Android (mobile/android/app/src/main/java/vn/abook/player):
 //  EbookPlayer  - lõi phát Media3: hàng đợi chương, hẹn giờ ngủ, lắc để nghe thêm, nhật ký đêm.
@@ -85,6 +86,8 @@ export interface EbookPlayerPlugin {
   /** `segment` + `word` (chương đọc to): native vào đúng mốc chữ ấy, kể cả đoạn chưa tạo tiếng - thắng `seconds`. */
   jumpTo(options: { chapterId: number; seconds: number; segment?: number; word?: number }): Promise<NativeState>;
   getState(): Promise<NativeState>;
+  /** Rung phản hồi của giao diện (Haptics.kt; shared/feedback.ts chọn hằng số theo DESIGN.md 5.4). Máy chưa có hằng số ấy thì lấy hằng số cũ hơn hay im. */
+  haptic(options: { effect: HapticEffect }): Promise<void>;
   addBookmark(options: { note: string; index?: number; quote?: string; anchor?: import("@/listen/readingAnchor").ReadingAnchor }): Promise<Bookmark>;
   setSleep(options: { mode: "off" | "minutes" | "chapter"; minutes?: number }): Promise<NativeState>;
   extendSleep(options: { minutes?: number }): Promise<NativeState>;

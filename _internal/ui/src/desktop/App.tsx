@@ -27,6 +27,8 @@ import { MissingLibrary } from "@/shared/MissingLibrary";
 import { MotionHashRouter } from "@/shared/MotionRouter";
 import { withViewTransition } from "@/shared/motion";
 import { setLetterShortcuts } from "@/shared/letterShortcuts";
+import { configureFeedback } from "@/shared/feedback";
+import { applyReadingSurface, readingSurfaceOr } from "@/shared/readingSurface";
 import { setExternalOpener } from "@/shared/openExternal";
 import { toastRemoved } from "@/shared/trashUndo";
 import { homePage, LISTEN_ONLY_EVENT, listenOnlyLine, listenOnlyOwner, peerPage } from "@/shared/peerStudio";
@@ -555,6 +557,9 @@ export function App() {
   useTheme(preferences?.theme ?? info?.theme);
   // Cài đặt › Phím tắt: bộ bắt phím của trình phát, Việc cần duyệt, Cần nghe lại đọc cờ này lúc có phím.
   useEffect(() => setLetterShortcuts(preferences?.letterShortcuts !== false), [preferences?.letterShortcuts]);
+  // Cài đặt › Giao diện: tiếng chạm (máy tính không rung) và nền vùng đọc theo.
+  useEffect(() => configureFeedback({ sounds: preferences?.touchSounds !== false, haptics: false, haptic: null }), [preferences?.touchSounds]);
+  useEffect(() => applyReadingSurface(readingSurfaceOr(preferences?.readingSurface)), [preferences?.readingSurface]);
   // Chương có audio phát bằng <audio>; chương chỉ-có-chữ ("Nghe ngay") đi qua bộ máy đọc to (listen/readAloud.ts).
   const engine = useMemo(() => new RoutedEngine(new WebAudioEngine()), []);
   // Màn hẹp (Studio từ xa trên điện thoại): thông báo ở đầu màn như app Android - ở đáy nó đè trình phát nhỏ và thanh

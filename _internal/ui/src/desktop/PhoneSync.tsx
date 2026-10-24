@@ -1,6 +1,7 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
+import { feedback } from "@/shared/feedback";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ShieldAlert, Smartphone } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -161,7 +162,11 @@ export function Switch({
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       checked={checked}
-      onCheckedChange={(value) => { if (!ariaDisabled) onCheckedChange(value); }}
+      onCheckedChange={(value) => {
+        if (ariaDisabled) return;
+        feedback("toggle");
+        onCheckedChange(value);
+      }}
       disabled={disabled}
       aria-disabled={ariaDisabled || undefined}
       className="touch-hit relative inline-flex h-6 w-11 shrink-0 items-center rounded-full bg-switch-off transition-[color,background-color,opacity] duration-motion-fast focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 aria-disabled:opacity-50 data-[state=checked]:bg-focus"

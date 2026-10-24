@@ -71,7 +71,7 @@ export function Button({
       aria-busy={loading || undefined}
       onClick={busyClick(loading, onClick)}
       className={cn(
-        "inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] transition-[background-color,color,border-color,outline-color,box-shadow,transform,opacity] duration-motion-fast active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45 aria-disabled:active:scale-100",
+        "inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] press transition-[background-color,color,border-color,outline-color,box-shadow,transform,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45",
         VARIANTS[variant],
         SIZES[size],
         // Màn hẹp / cảm ứng: nút 28-38 px nới vùng chạm theo chiều dọc lên 40 px (touch-reach trong styles.css; soát UX 29-09 và a14: "Sửa",
@@ -142,7 +142,7 @@ export function IconButton({
         type="button"
         aria-label={label}
         className={cn(
-          "inline-flex shrink-0 items-center justify-center rounded-lg transition-[color,background-color,outline-color,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-40",
+          "press inline-flex shrink-0 items-center justify-center rounded-lg transition-[color,background-color,outline-color,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-40",
           tone === "ghost" ? "text-fg-2 hover:bg-hover hover:text-fg" : "bg-panel-2 text-fg hover:bg-hover",
           box,
           reach,

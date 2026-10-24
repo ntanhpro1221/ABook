@@ -38,88 +38,90 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 /*
-  Bảng màu: phòng thu ban đêm. Nền than xanh, một màu nhấn hổ phách ấm như đèn ON AIR / kim VU
-  dùng cho hành động chính và tiến độ đang chạy. Xanh lá = nghe được/xong, đỏ = lỗi, xám = dừng.
-  Mọi màu đi qua token; giao diện sáng định nghĩa lại token chứ không lật ngược máy móc.
+  Bảng màu "phòng nghe ấm" (docs/DESIGN.md 5.1): nền ấm như giấy, mực gần đen hơi nâu, một màu nhấn đồng thau cho hành động chính và
+  tiến độ; màu trạng thái trầm. Mọi màu đi qua token; giao diện sáng định nghĩa lại token chứ không lật ngược máy móc.
+  Mọi cặp chữ/nền có tỉ lệ tương phản kiểm bằng shared/palette.test.ts (cả hai giao diện) - đổi một giá trị thì chạy lại test ấy.
 */
 :root {
-  --bg: #f4f5f7;
-  --bg-sunken: #eceef2;
+  --bg: #f5f3ef;
+  --bg-sunken: #ece9e3;
   --panel: #ffffff;
-  --panel-2: #f7f8fa;
-  --hover: #eef0f4;
-  --line: #e2e5ea;
-  --line-strong: #cfd4db;
+  --panel-2: #faf9f6;
+  --hover: #efece6;
+  --line: #e3dfd7;
+  --line-strong: #d3cdc2;
   /* Viền NÚT và Ô NHẬP (WCAG 1.4.11: ranh giới của điều khiển >= 3:1 với nền; soát UX a20: --line 1,16:1 nên nút phụ, ô nhập, thẻ
-     bấm được gần như vô hình trên nền sáng). 3,2:1 trên --bg, 3,5:1 trên --panel. --line giữ nguyên cho đường kẻ và viền thẻ
+     bấm được gần như vô hình trên nền sáng). --line giữ nguyên cho đường kẻ và viền thẻ
      (trang trí, không cần). */
-  --control-line: #808a98;
-  --control-line-strong: #6b7685;
+  --control-line: #857e72;
+  --control-line-strong: #6f685d;
   /* Rãnh công tắc đang tắt: >= 3:1 trên nền sáng (soát UX 29-09: line-strong chỉ 1,4:1, công tắc tắt gần như vô hình). */
-  --switch-off: #808a98;
+  --switch-off: #857e72;
   /* Vòng tiêu điểm, viền thẻ đang chọn, công tắc bật (WCAG 1.4.11 / 2.4.7: >= 3:1 với mọi nền; soát a31 K3/C4/C5: --accent #e39a2d chỉ
-     2,1-2,4:1 trên nền sáng). 3,7-4,6:1 trên --bg/--panel/--hover/--accent-soft. --accent giữ cho nút chính, tiến độ, trang trí. */
-  --focus: #a8650d;
-  --text: #14181d;
-  --text-2: #4f5965;
-  /* chữ phụ, cảnh báo, thông tin: >= 4,6:1 cả trên --bg-sunken / --hover / --accent-soft (soát a67: 4,1-4,5:1 trên các nền ấy) */
-  --text-3: #626b76;
-  --accent: #e39a2d;
-  --accent-hover: #d18a1f;
+     2,1-2,4:1 trên nền sáng). --accent giữ cho nút chính, tiến độ, trang trí. */
+  --focus: #a0600c;
+  --text: #1a1814;
+  --text-2: #5e5950;
+  /* chữ phụ, cảnh báo, thông tin: >= 4,5:1 cả trên --bg-sunken / --hover / --accent-soft (soát a67) */
+  --text-3: #67615a;
+  /* Mực mờ (DESIGN 5.1): CHỈ icon phụ / chữ >= 18px (>= 3:1). Chữ thường dùng --text-3 trở lên. */
+  --fg-3: #8a8478;
+  --accent: #d4912b;
+  --accent-hover: #c2821f;
   --accent-ink: #1d1304;
-  --accent-text: #93560a;
-  --accent-soft: #fbeedb;
-  --success: #117654; /* pill "Hoàn tất" (chữ trên --success-soft) 4,09:1 -> 4,85:1 (soát UX a17); tối: 5,9-7,0:1 sẵn */
+  --accent-text: #8a5309;
+  --accent-soft: #f7ead5;
+  --success: #2d7957; /* cả chữ trên --success-soft (pill "Hoàn tất", soát UX a17) */
   --success-soft: #dff3ea;
-  --danger: #b33030; /* chữ trên --danger-soft 4,29:1 -> 5,12:1 (soát UX a17) */
+  --danger: #b23b33; /* cả chữ trên --danger-soft (soát UX a17) */
   --danger-soft: #fbe4e4;
   --warning: #955f11;
   --warning-soft: #fcf1dc;
   --info: #3666c7;
   --info-soft: #e3ebfb;
   --nav-active: #ffffff;
-  --nav-active-ring: rgb(20 24 29 / 0.08);
+  --nav-active-ring: rgb(26 24 20 / 0.08);
   --read-along: color-mix(in oklab, var(--accent) 26%, transparent);
   --read-along-word: color-mix(in oklab, var(--accent) 62%, transparent);
   --avatar-bg-l: 0.93;
   --avatar-fg-l: 0.43;
   --shadow: 0 1px 2px rgb(20 24 29 / 0.06), 0 8px 24px -12px rgb(20 24 29 / 0.16);
   --shadow-lg: 0 24px 64px -24px rgb(20 24 29 / 0.35);
-  --scrim: rgb(15 18 22 / 0.45);
+  --scrim: rgb(20 17 13 / 0.45);
   color-scheme: light;
 }
 
 [data-theme="dark"] {
-  --bg: #0e1115;
-  --bg-sunken: #0a0c0f;
-  --panel: #151a20;
-  --panel-2: #1a2028;
-  --hover: #1f262f;
-  --line: #252d37;
-  --line-strong: #333d49;
-  /* tối: viền nút và ô nhập >= 3:1 (soát a31 C3: --line #252d37 chỉ 1,36:1, ô nhập gần như vô hình): 3,3:1 trên --hover, 3,8:1 trên
-     --panel, 4,1:1 trên --bg. Rãnh công tắc tắt cũng vậy (C5: #4b5563 chỉ 2,3:1). */
-  --control-line: #6b7685;
-  --control-line-strong: #808a98;
-  --switch-off: #6b7685;
-  --focus: #f2a93f; /* = --accent: 7,6-9,8:1 trên nền tối */
-  --text: #e9ecf0;
-  --text-2: #a3acb7;
-  --text-3: #8a94a1;
-  --accent: #f2a93f;
-  --accent-hover: #ffba5a;
+  --bg: #121110;
+  --bg-sunken: #0c0b0a;
+  --panel: #1b1a18;
+  --panel-2: #201e1b;
+  --hover: #252320;
+  --line: #2e2b27;
+  --line-strong: #3d3934;
+  /* tối: viền nút và ô nhập >= 3:1 (soát a31 C3: --line #252d37 chỉ 1,36:1, ô nhập gần như vô hình). Rãnh công tắc tắt cũng vậy (C5: #4b5563 chỉ 2,3:1). */
+  --control-line: #75706a;
+  --control-line-strong: #8c867c;
+  --switch-off: #75706a;
+  --focus: #e9a945; /* = --accent */
+  --text: #ece8e1;
+  --text-2: #a8a196;
+  --text-3: #958e83;
+  --fg-3: #7a746a;
+  --accent: #e9a945;
+  --accent-hover: #f4b85c;
   --accent-ink: #1b1204;
-  --accent-text: #f5b65a;
-  --accent-soft: rgb(242 169 63 / 0.13);
-  --success: #43c496;
-  --success-soft: rgb(67 196 150 / 0.13);
-  --danger: #f06b6b;
-  --danger-soft: rgb(240 107 107 / 0.13);
+  --accent-text: #f0b961;
+  --accent-soft: rgb(233 169 69 / 0.14);
+  --success: #5cc596;
+  --success-soft: rgb(92 197 150 / 0.13);
+  --danger: #ef7b70;
+  --danger-soft: rgb(239 123 112 / 0.13);
   --warning: #e8b64c;
   --warning-soft: rgb(232 182 76 / 0.13);
   --info: #6f9bf5;
   --info-soft: rgb(111 155 245 / 0.13);
-  --nav-active: #1f262f;
+  --nav-active: #252320;
   --nav-active-ring: transparent;
   --read-along: color-mix(in oklab, var(--accent) 22%, transparent);
   --read-along-word: color-mix(in oklab, var(--accent) 50%, transparent);
@@ -127,7 +129,7 @@
   --avatar-fg-l: 0.84;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 10px 30px -14px rgb(0 0 0 / 0.7);
   --shadow-lg: 0 30px 80px -20px rgb(0 0 0 / 0.75);
-  --scrim: rgb(4 6 8 / 0.62);
+  --scrim: rgb(6 5 4 / 0.62);
   color-scheme: dark;
 }
 
@@ -146,6 +148,7 @@
   --color-fg: var(--text);
   --color-fg-2: var(--text-2);
   --color-fg-3: var(--text-3);
+  --color-fg-faint: var(--fg-3);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
@@ -420,6 +423,57 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   }
 }
 
+/* Mặt đọc theo (DESIGN 5.1; Cài đặt > Giao diện > "Nền đọc", shared/readingSurface.ts đặt data-surface lên <html>): Giấy / Ngà / Đêm, hay
+   Tự động = Giấy ở giao diện sáng, Đêm ở giao diện tối. Chỉ vùng chữ đọc theo đổi nền; chữ, chữ phụ, chữ nhấn và nền gợi ý trong vùng ấy theo
+   mặt đọc để đủ tương phản (shared/palette.test.ts). Đổi mặt thì mờ chéo màu theo --motion-slow. */
+:root {
+  --read-bg: #fbfaf7;
+  --read-fg: #1b1a17;
+  --read-fg-2: #5e5950;
+  --read-accent-text: #8a5309;
+  --read-scheme: light;
+}
+[data-theme="dark"] {
+  --read-bg: #121110;
+  --read-fg: #d9d3c8;
+  --read-fg-2: #a8a196;
+  --read-accent-text: #f0b961;
+  --read-scheme: dark;
+}
+:root[data-surface="paper"] {
+  --read-bg: #fbfaf7;
+  --read-fg: #1b1a17;
+  --read-fg-2: #5e5950;
+  --read-accent-text: #8a5309;
+  --read-scheme: light;
+}
+:root[data-surface="ivory"] {
+  --read-bg: #f3ead8;
+  --read-fg: #3b2f1e;
+  --read-fg-2: #5c4d36;
+  --read-accent-text: #7a4806;
+  --read-scheme: light;
+}
+:root[data-surface="night"] {
+  --read-bg: #121110;
+  --read-fg: #d9d3c8;
+  --read-fg-2: #a8a196;
+  --read-accent-text: #f0b961;
+  --read-scheme: dark;
+}
+.reading-surface {
+  --text: var(--read-fg);
+  --text-2: var(--read-fg-2);
+  --text-3: var(--read-fg-2);
+  --accent-text: var(--read-accent-text);
+  --hover: color-mix(in oklab, var(--read-fg) 7%, var(--read-bg));
+  --accent-soft: color-mix(in oklab, var(--accent) 16%, var(--read-bg));
+  background-color: var(--read-bg);
+  color: var(--read-fg);
+  color-scheme: var(--read-scheme);
+  transition: background-color var(--motion-slow) var(--ease-standard), color var(--motion-slow) var(--ease-standard);
+}
+
 /* Mọi câu của văn bản đọc theo (ReadAlongText): nền trong suốt sẵn, nên câu đang đọc / đã nghe / được chọn đổi nền, màu chữ, màu gạch chân
    đều mờ dần - không bật tắt cứng. Chỉ màu: không đổi bố cục, chương dài không phải dàn trang lại. */
 [data-sentence] {
@@ -494,6 +548,13 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
     --motion-slow: 160ms;
     --motion-slow-out: 110ms;
   }
+}
+
+/* Phản hồi chạm (DESIGN 5.2): nhấn = thu 0,97 trong --motion-fast-out (90 ms), thả = về trong --motion-fast (120 ms) theo transition sẵn
+   có của phần tử (phải có `scale` trong danh sách, như Button). Đường cong standard - không nảy, không vượt đích. Giảm chuyển động: không thu. */
+.press:active:not(:disabled, [aria-disabled="true"]) {
+  scale: calc(1 - 0.03 * var(--motion-amount));
+  transition-duration: var(--motion-fast-out);
 }
 
 @theme inline {
