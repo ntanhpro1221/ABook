@@ -4,7 +4,7 @@ import { Loader2, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { latestRequest, wasAborted } from "@/shared/latestRequest";
-import { Button, Dialog } from "@/shared/ui";
+import { Button, ContentSkeleton, Dialog, EmptyState, InlineError } from "@/shared/ui";
 import { api, ApiError } from "@/studio/api";
 
 /** Tên nguồn bìa như người đọc biết (máy chủ trả tên hàm: "google_books"). */
@@ -46,6 +46,7 @@ export function CoverSearchDialog({
   onChosen,
   doneNote,
   onBusy,
+  onChooseFile,
 }: {
   bookId: string;
   defaultQuery: string;
@@ -54,6 +55,7 @@ export function CoverSearchDialog({
   onChosen: () => void;
   doneNote?: string;
   onBusy?: (busy: boolean) => void;
+  onChooseFile: () => void;
 }) {
   const [query, setQuery] = useState(defaultQuery);
   const searches = useRef(latestRequest());
@@ -63,9 +65,6 @@ export function CoverSearchDialog({
   const search = useMutation({
     mutationFn: (q: string) =>
       api<CoverSearchResult>(`/api/books/${bookId}/cover/search?q=${encodeURIComponent(q)}`, { signal: searches.current.next() }),
-    onError: (error: Error) => {
-      if (!wasAborted(error)) toast.error("Chưa tìm được bìa", { description: error.message });
-    },
   });
   const choose = useMutation({
     mutationFn: (found: FoundCover) =>
@@ -74,11 +73,6 @@ export function CoverSearchDialog({
       onChosen();
       onOpenChange(false);
       toast.success("Đã đặt ảnh bìa", doneNote ? { description: doneNote } : undefined);
-    },
-    onError: (error: Error) => {
-      // Bị huỷ (đóng hộp) hay bị bìa đặt sau lấn (máy chủ trả 409): người dùng đã tự quyết, không báo lỗi.
-      if (wasAborted(error) || (error instanceof ApiError && error.status === 409)) return;
-      toast.error("Chưa đặt được ảnh này", { description: error.message });
     },
   });
   useEffect(() => {
@@ -107,8 +101,8 @@ export function CoverSearchDialog({
     <Dialog
       open={open}
       onOpenChange={changeOpen}
-      title="Tìm ảnh bìa trên mạng"
-      description="Từ iTunes, Open Library và Google Books. Truyện mạng dịch thường không có ở đó - khi ấy dùng ảnh có sẵn trên máy."
+      title="Tìm ảnh bìa"
+      description="Bạn chọn ảnh từ các nguồn sách hoặc trên máy."
       width="max-w-3xl"
     ><MotionRegion>
       <form
@@ -132,7 +126,9 @@ export function CoverSearchDialog({
       </form>
       <div className="mt-4 max-h-[55vh] overflow-y-auto">
         {search.isPending ? (
-          <p className="py-10 text-center text-sm text-fg-2">Đang hỏi các nguồn…</p>
+          <ContentSkeleton shape="covers" count={4} label="Đang tìm ảnh bìa" />
+        ) : search.isError && !wasAborted(search.error) ? (
+          <InlineError message="Bạn hãy kiểm tra kết nối rồi tìm lại ảnh bìa." onRetry={() => search.mutate(query)} />
         ) : results.length ? (
           <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
             {results.map((found) => (
@@ -163,10 +159,11 @@ export function CoverSearchDialog({
               </button>
             ))}
           </div>
-        ) : search.data ? (
-          <p className="py-10 text-center text-sm text-fg-2">Không thấy bìa nào. Thử tên tiếng Anh, bỏ số tập, hoặc dùng ảnh có sẵn trên máy.</p>
+        ) : search.data && !failed.length ? (
+          <EmptyState icon={Search} title="Bạn hãy chọn ảnh trên máy" className="py-8" action={<Button onClick={() => { changeOpen(false); onChooseFile(); }}>Chọn ảnh</Button>} />
         ) : null}
-        {failed.length > 0 && <p className="mt-3 text-xs text-fg-3">{failedSourcesNote(failed)}</p>}
+        {failed.length > 0 && <InlineError message="Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa." onRetry={() => search.mutate(query)} />}
+        {choose.isError && !wasAborted(choose.error) && !(choose.error instanceof ApiError && choose.error.status === 409) && <InlineError message="Bạn hãy kiểm tra kết nối rồi đặt lại ảnh bìa." onRetry={() => { if (choose.variables) choose.mutate(choose.variables); }} />}
       </div>
     </MotionRegion></Dialog>
   );

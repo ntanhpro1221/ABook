@@ -1,6 +1,6 @@
-import { Clapperboard, Download, Library, Pause, Plus, Settings } from "lucide-react";
+import { Clapperboard, Clock, Download, Library, Pause, Settings } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router";
+import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
 import { useNowPlaying } from "@/listen/player";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
@@ -14,13 +14,13 @@ import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
-import { Progress, Vu } from "@/shared/ui";
+import { ContentSkeleton, InlineError, OfflineStrip, Progress, Vu } from "@/shared/ui";
 import { useAppInfo, useLibrary } from "@/studio/data";
 import { usePrecastInvites } from "@/studio/PrecastReview";
 import { PeerBar } from "./PeerBar";
 import { HandOffButton, RemoteBars, ThisPlayerReporter } from "./RemotePhone";
 
-// Máy tính = phía Nghe (giống hệt trình phát Android) + Studio sản xuất. Thanh bên tách hai khu rõ ràng.
+// Cùng ba điểm đến với điện thoại; dự án đang làm nằm ngay dưới Studio.
 
 function Brand() {
   return (
@@ -38,34 +38,26 @@ function Brand() {
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div className="mt-6">
-      <div className="mb-1.5 px-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">{title}</div>
-      <div className="space-y-0.5">{children}</div>
-    </div>
-  );
-}
-
-const NAV = "flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm transition-[background-color,color,box-shadow] duration-(--motion-medium) ease-standard";
-const NAV_ACTIVE = "bg-nav-active font-semibold text-fg shadow-[0_0_0_1px_var(--nav-active-ring)] [&>svg]:text-accent-text";
+const NAV = "sidebar-link flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm";
+const NAV_ACTIVE = "bg-accent-soft font-medium text-accent-text";
 const NAV_IDLE = "font-medium text-fg-2 hover:bg-hover hover:text-fg";
 
-/** Mục thanh bên sáng cả khi đang ở trang con của nó (trang sách thuộc Thư viện, trang dự án thuộc Dự án). */
+/** Mục thanh bên sáng cả khi ở trang con: sách thuộc Thư viện, dự án thuộc Studio. */
 function NavItem({ to, icon: Icon, match, children }: { to: string; icon: typeof Library; match: (path: string) => boolean; children: ReactNode }) {
   const { pathname } = useLocation();
   const { setExpanded } = useNowPlaying();
   const active = match(pathname);
   return (
-    <NavLink
+    <Link
       to={to}
+      data-sidebar-top
       onClick={() => setExpanded(false)}
       aria-current={active ? "page" : undefined}
       className={cn(NAV, active ? NAV_ACTIVE : NAV_IDLE)}
     >
       <Icon className="glyph" />
       {children}
-    </NavLink>
+    </Link>
   );
 }
 
@@ -75,7 +67,7 @@ function TabItem({ to, icon: Icon, match, children }: { to: string; icon: typeof
   const { setExpanded } = useNowPlaying();
   const active = match(pathname);
   return (
-    <NavLink
+    <Link
       to={to}
       onClick={() => setExpanded(false)}
       aria-current={active ? "page" : undefined}
@@ -87,42 +79,47 @@ function TabItem({ to, icon: Icon, match, children }: { to: string; icon: typeof
       {/* Tab vừa chọn: biểu tượng nhún nhẹ lên (transform), màu chuyển dần - không đổi màu tức thì. */}
       <Icon className={cn("motion-tab-icon size-5 transition-transform duration-(--motion-medium) ease-decelerate", active && "-translate-y-px scale-110")} />
       <span className="truncate">{children}</span>
-    </NavLink>
+    </Link>
   );
 }
 
 export function Producing() {
   const { pathname } = useLocation();
-  const { data } = useLibrary({ live: pathname.startsWith("/studio") });
+  const { data, isLoading, isError, refetch } = useLibrary({ live: pathname.startsWith("/studio") });
   const navigate = useNavigate();
+  const { setExpanded } = useNowPlaying();
   usePrecastInvites(data?.books);
-  const live = (data?.books ?? []).filter((book) => book.running || book.starting);
+  const live = (data?.books ?? []).filter((book) => book.running || book.starting || book.queuePosition != null)
+    .sort((a, b) => (a.queuePosition ?? 0) - (b.queuePosition ?? 0));
   return (
-    <MotionRegion className="mt-2 space-y-1">
-      <AnimatedRows items={live} keyOf={(book) => book.id}>{(book) => (
+    <MotionRegion className="ml-3 space-y-1" motionKey={[isLoading, isError && !data, live.length > 3]}>
+      {isLoading ? <ContentSkeleton count={2} label="Đang tải tiến độ" className="px-2 py-3" /> : isError && !data ? <InlineError message="Bạn hãy thử tải lại tiến độ." onRetry={() => void refetch()} /> : null}
+      <AnimatedRows className="mt-2" items={live.slice(0, 3)} keyOf={(book) => book.id}>{(book) => (
         <button
           key={book.id}
           type="button"
-          onClick={() => navigate(`/studio/${book.id}`)}
-          className="flex w-full items-center gap-2.5 rounded-lg p-2 text-left hover:bg-hover"
+          onClick={() => { setExpanded(false); navigate(`/studio/${book.id}`); }}
+          aria-current={pathname === `/studio/${book.id}` ? "page" : undefined}
+          className={cn("sidebar-link flex w-full items-center gap-2.5 rounded-lg p-2 text-left hover:bg-hover", pathname === `/studio/${book.id}` ? "bg-accent-soft text-accent-text" : "text-fg-2")}
         >
           <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-md" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 truncate text-xs font-medium">
-              <MotionRegion as="span" className="grid size-3 shrink-0 place-items-center">{book.paused || book.stopping ? (
+              <MotionRegion as="span" className="flex size-3 shrink-0 items-center justify-center">{book.queuePosition != null ? <Clock className="size-3" aria-label={`Đang chờ ${book.queuePosition}`} /> : book.paused || book.stopping ? (
                 <Pause className="size-3 shrink-0 text-warning" aria-label={book.stopping ? "Đang dừng" : "Đang tạm dừng"} />
               ) : (
-                <Vu className="h-2 text-accent" />
+                <Vu className="h-2.5 gap-px text-accent [&>span]:w-[2px]" />
               )}</MotionRegion>
               <span className="truncate">{book.title}</span>
             </div>
             <div className="mt-1 flex items-center gap-2">
-              <Progress value={book.progress.overall} running={!book.paused && !book.stopping} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />
-              <MotionRegion as="span" motionKey={book.starting ? "starting" : formatPercent(book.progress.overall)} className="tabular text-[0.6875rem] text-fg-2">{book.starting ? "…" : formatPercent(book.progress.overall)}</MotionRegion>
+              <Progress value={book.progress.overall} tone={book.queuePosition != null ? "muted" : "accent"} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />
+              <MotionRegion as="span" motionKey={book.queuePosition ?? (book.starting ? "starting" : formatPercent(book.progress.overall))} className="tabular w-8 shrink-0 text-right text-[0.6875rem] text-fg-2">{book.queuePosition != null ? "Chờ" : book.starting ? "…" : formatPercent(book.progress.overall)}</MotionRegion>
             </div>
           </div>
         </button>
       )}</AnimatedRows>
+      <MotionPresence open={live.length > 3}><NavLink to="/studio" className="sidebar-link flex min-h-8 items-center px-2 text-xs text-accent-text" onClick={() => setExpanded(false)}>Xem tất cả</NavLink></MotionPresence>
     </MotionRegion>
   );
 }
@@ -158,6 +155,31 @@ const TITLES: [RegExp, string][] = [
   [/^\/studio$/, "Studio"],
   [/^\/settings/, "Cài đặt"],
 ];
+
+export function DesktopSidebar({ listenOnly = false }: { listenOnly?: boolean }) {
+  return (
+    <aside className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex">
+      <Brand />
+      <nav aria-label="Điều hướng chính" className="mt-8 space-y-2">
+        <NavItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>
+          Thư viện
+        </NavItem>
+        <MotionPresence open={!listenOnly}>
+          <NavItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio")}>
+            Studio
+          </NavItem>
+          <Producing />
+        </MotionPresence>
+      </nav>
+      <div className="mt-auto pt-8">
+        <UpdateNotice />
+        <NavItem to="/settings" icon={Settings} match={(path) => path.startsWith("/settings")}>
+          Cài đặt
+        </NavItem>
+      </div>
+    </aside>
+  );
+}
 
 export function Shell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
@@ -205,34 +227,9 @@ export function Shell({ children }: { children: ReactNode }) {
         </button>
       )}
       <ShortcutsHost remote={remote} />
-      <aside className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex">
-        <Brand />
-        <nav aria-label="Điều hướng">
-          <Section title="Nghe">
-            <NavItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>
-              Thư viện
-            </NavItem>
-          </Section>
-          <MotionPresence open={!listenOnly}>
-            <Section title="Studio">
-              <NavItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio") && path !== "/studio/new"}>
-                Dự án
-              </NavItem>
-              <NavItem to="/studio/new" icon={Plus} match={(path) => path === "/studio/new"}>
-                Tạo sách nói
-              </NavItem>
-              <Producing />
-            </Section>
-          </MotionPresence>
-        </nav>
-        <div className="mt-auto">
-          <UpdateNotice />
-          <NavItem to="/settings" icon={Settings} match={(path) => path.startsWith("/settings")}>
-            Cài đặt
-          </NavItem>
-        </div>
-      </aside>
+      <DesktopSidebar listenOnly={listenOnly} />
       <div className="relative flex min-w-0 flex-1 flex-col">
+        <OfflineStrip />
         <PeerBar />
         <main ref={main} tabIndex={-1} className="page-motion min-h-0 flex-1 overflow-y-auto outline-none" inert={expanded}>
           {children}
@@ -249,15 +246,10 @@ export function Shell({ children }: { children: ReactNode }) {
           <TabItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>
             Thư viện
           </TabItem>
-          <MotionRegion className={cn("flex min-w-0 overflow-hidden transition-[flex-grow] duration-(--motion-medium) [&>a]:flex-1", listenOnly ? "flex-[0]" : "flex-[2]")} motionKey={listenOnly}>
+          <MotionRegion className={cn("flex min-w-0 overflow-hidden transition-[flex-grow] duration-(--motion-medium) [&>a]:flex-1", listenOnly ? "flex-[0]" : "flex-1")} motionKey={listenOnly}>
           {!listenOnly && (
-            <TabItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio") && path !== "/studio/new"}>
-              Dự án
-            </TabItem>
-          )}
-          {!listenOnly && (
-            <TabItem to="/studio/new" icon={Plus} match={(path) => path === "/studio/new"}>
-              Tạo sách
+            <TabItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio")}>
+              Studio
             </TabItem>
           )}
           </MotionRegion>

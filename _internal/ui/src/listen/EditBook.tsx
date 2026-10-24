@@ -3,7 +3,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { useMotionState } from "@/shared/motion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { ChevronDown, FileDown, Globe, ImagePlus, Loader2, Music2, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
+import { ChevronDown, FileDown, Globe, ImagePlus, Music2, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -15,7 +15,7 @@ import { holderName } from "@/shared/editsSync";
 import { fileName, formatClock } from "@/shared/format";
 import { levelOptions, levelText } from "@/shared/musicLevels";
 import { Switch } from "@/desktop/PhoneSync";
-import { Button, Dialog, Segmented } from "@/shared/ui";
+import { Button, Dialog, Segmented, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
 import { MyMusicSection, SwapTrack } from "./MyMusic";
@@ -169,7 +169,8 @@ export function MusicSection({ book }: { book: ListenBook }) {
   useBackLayer(swapping !== null, () => setSwapping(null), swapBox, swapButton);
   const { view, change } = useBookMusic(book.id, () => setSwapping(null));
   const { data, isLoading } = view;
-  if (isLoading || !data) return <MotionRegion as="p" className="text-sm text-fg-2">Đang đọc nhạc nền…</MotionRegion>;
+  if (view.isError && !data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy thử tải lại nhạc nền của cuốn này." onRetry={() => void view.refetch()} /></MotionRegion>;
+  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton label="Đang tải nhạc nền" /></MotionRegion>;
   if (!data.hasMusic) {
     return <MotionRegion as="p" className="text-sm text-fg-2">Người làm sách không gắn nhạc nền cho cuốn này.</MotionRegion>;
   }
@@ -430,9 +431,7 @@ export function EditBookDialog({
                 </Button>
               )}
               {setCover.isPending && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-fg-2">
-                  <Loader2 className="size-3.5 animate-spin" /> Đang đặt ảnh…
-                </span>
+                <ContentSkeleton count={1} label="Đang đặt ảnh bìa" />
               )}
             </div>
             <input
@@ -455,6 +454,7 @@ export function EditBookDialog({
           onOpenChange={setSearching}
           onChosen={() => refreshAfterEdit(client, book.id)}
           onBusy={setChoosingCover}
+          onChooseFile={() => file.current?.click()}
         />
         {book.stage !== "text" && (
         <Section title="Nhạc nền" fold="edit-book.music">

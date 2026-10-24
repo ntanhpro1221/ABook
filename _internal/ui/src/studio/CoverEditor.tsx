@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Globe, ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { Globe, ImagePlus, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { seriesOf } from "@/listen/model";
@@ -8,6 +8,7 @@ import { cn } from "@/shared/cn";
 import { CoverSearchDialog } from "@/shared/CoverSearch";
 import type { CoverImage } from "@/shared/cover";
 import { useMediaQuery } from "@/shared/media";
+import { Skeleton } from "@/shared/ui";
 import { api, type BookSummary } from "./api";
 
 // Ảnh bìa thật cho một cuốn (webui/covers.py): chọn file, kéo thả ảnh vào bìa, hoặc dán (Ctrl+V) khi đang ở trang
@@ -103,7 +104,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
       >
         <BookCover title={book.title} part={book.series?.part} size={narrow ? "sm" : "lg"} image={book.cover} className="w-24 sm:w-44" />
           <div aria-hidden={!busy} className={cn("pointer-events-none absolute inset-0 grid place-items-center rounded-lg bg-black/40 text-white transition-opacity duration-motion-fast", busy ? "opacity-100" : "opacity-0")}>
-            <Loader2 className="size-6 animate-spin" />
+            <Skeleton className="h-full w-full" />
           </div>
       </div>
       <div className="mt-2 flex items-center gap-1">
@@ -147,6 +148,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
         onOpenChange={setSearching}
         onChosen={refresh}
         onBusy={setChoosing}
+        onChooseFile={() => input.current?.click()}
         doneNote="Điện thoại nhận ảnh mới ở lần đồng bộ sau."
       />
       <input

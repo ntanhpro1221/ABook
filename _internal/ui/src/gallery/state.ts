@@ -12,6 +12,9 @@ export interface Scenario {
   playing: boolean;
   /** Studio: lỗi / rỗng ở danh sách dự án. */
   projects: "full" | "empty" | "loading";
+  /** Dự án chờ và lỗi/đang tải của từng vùng, hoàn toàn cục bộ. */
+  queued?: boolean;
+  requests?: Record<string, "loading" | "error">;
 }
 
 export const DEFAULT_SCENARIO: Scenario = { library: "full", paired: true, night: false, playing: true, projects: "full" };
