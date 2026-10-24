@@ -34,7 +34,8 @@ export interface ChapterChoice {
 }
 
 /** `titleFirst`: tên chương làm dòng chính, dòng đầu của chương ở dòng phụ khi khác ("Thêm sách từ file…": tên ấy là tên sẽ lưu).
- *  `choice`: mỗi hàng có ô chọn và tên bấm để sửa. Tên dài xuống dòng (tối đa 2 dòng), không cắt một dòng như trước. */
+ *  `choice`: mỗi hàng có ô chọn và tên bấm để sửa. Tên dài xuống dòng (tối đa 2 dòng), không cắt một dòng như trước. Ô chọn, số và
+ *  số chữ đứng ngang dòng tên (canh đầu hàng, chữ nhỏ hạ 2 px cho chung chân chữ với tên), không trôi giữa khối khi hàng có dòng phụ. */
 export function ChapterPreview({ chapters, className, titleFirst = false, choice }: {
   chapters: PreviewChapter[];
   className?: string;
@@ -60,6 +61,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
     box.current?.querySelector<HTMLElement>(`[data-rename="${returnTo.current}"]`)?.focus();
     returnTo.current = null;
   }, [editing]);
+  const digits = String(chapters.length).length;
   return (
     <MotionRegion as="div" elementRef={box} className={cn("overflow-hidden rounded-xl border border-line bg-panel", className)}>
     <div ref={scroller} style={fade} className="max-h-[320px] overflow-y-auto overscroll-contain">
@@ -78,13 +80,13 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
           <div
             key={index}
             className={cn(
-              "grid items-center gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0",
-              choice ? "grid-cols-[20px_28px_minmax(0,1fr)_64px] sm:grid-cols-[20px_36px_minmax(0,1fr)_90px]" : "grid-cols-[40px_minmax(0,1fr)_90px]",
+              "grid items-start gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0",
+              choice ? "grid-cols-[20px_auto_minmax(0,1fr)_64px] sm:grid-cols-[20px_auto_minmax(0,1fr)_90px]" : "grid-cols-[auto_minmax(0,1fr)_90px]",
             )}
           >
             {choice && (
               // Ô chọn 14 px: nhãn bao ngoài nới vùng chạm lên 40 px ở màn hẹp / cảm ứng (touch-hit), bấm vào vùng nới cũng tích / bỏ tích.
-              <label className="touch-hit grid size-5 place-items-center">
+              <label className="touch-hit mt-[1.25px] grid size-5 place-items-center">
                 <input
                   type="checkbox"
                   checked={on}
@@ -95,7 +97,9 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                 />
               </label>
             )}
-            <span className="tabular text-xs text-fg-2">{position + 1}</span>
+            {/* Cột số rộng đúng số chữ số của số lớn nhất, canh phải: khoảng tới ô chọn và tới tên chương như nhau ở mọi hàng (cột 36 px canh
+                trái để "1" cách tên 34 px mà cách ô chọn 12 px). */}
+            <span className="tabular text-right text-xs leading-5 pt-[2px] text-fg-2" style={{ width: `${digits}ch` }}>{position + 1}</span>
             <div className="min-w-0">
               {choice && editing === index ? (
                 <input
@@ -127,10 +131,13 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
                   disabled={choice.disabled}
                   onClick={() => setEditing(index)}
                   title="Bấm để đổi tên chương"
-                  className="touch-hit group flex w-full items-start gap-1.5 rounded text-left text-sm font-medium hover:text-accent-text focus-visible:outline-2 focus-visible:outline-focus"
+                  className="touch-hit group block w-full rounded text-left text-sm font-medium hover:text-accent-text focus-visible:outline-2 focus-visible:outline-focus"
                 >
-                  <span className="line-clamp-2 min-w-0 break-words">{title}</span>
-                  <Pencil className="mt-0.5 size-3 shrink-0 text-fg-3 group-hover:text-accent-text" aria-hidden />
+                  {/* Bút nằm ngay sau chữ cuối, kể cả khi tên xuống dòng (đặt cạnh khối chữ thì tên hai dòng đẩy bút ra tận mép phải). */}
+                  <span className="line-clamp-2 break-words">
+                    {title}
+                    <Pencil className="ml-1.5 inline size-3 align-[-0.0625rem] text-fg-3 group-hover:text-accent-text" aria-hidden />
+                  </span>
                 </button>
               ) : (
                 <div className="line-clamp-2 break-words text-sm font-medium">{title}</div>
@@ -143,7 +150,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
               )}
             </div>
             <div className="tabular text-right text-xs text-fg-2">
-              <div>{formatNumber(chapter.words)} chữ</div>
+              <div className="pt-[2px] leading-5">{formatNumber(chapter.words)} chữ</div>
               {chapter.chars > 0 && <div className="text-fg-3">{formatNumber(chapter.chars)} ký tự</div>}
             </div>
           </div>
