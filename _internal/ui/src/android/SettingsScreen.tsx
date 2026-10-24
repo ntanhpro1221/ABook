@@ -99,13 +99,15 @@ function NotificationRow() {
     document.addEventListener("visibilitychange", check);
     return () => document.removeEventListener("visibilitychange", check);
   }, []);
-  if (state === "granted") return null;
+  // Cho phép xong quay lại app (hay vừa bị tắt ở Cài đặt Android): dòng khép / mở tại chỗ, không bật tắt cứng.
   return (
-    <SettingsRow label="Thông báo" hint={NOTIFICATION_ROW_HINT}>
-      <Button size="sm" onClick={() => void openNotificationSettings().catch(() => undefined)}>
-        Cho phép
-      </Button>
-    </SettingsRow>
+    <MotionPresence open={state !== "granted"}>
+      <SettingsRow label="Thông báo" hint={NOTIFICATION_ROW_HINT}>
+        <Button size="sm" onClick={() => void openNotificationSettings().catch(() => undefined)}>
+          Cho phép
+        </Button>
+      </SettingsRow>
+    </MotionPresence>
   );
 }
 
@@ -273,11 +275,15 @@ function LookGroup({ settings, change }: { settings: PlayerSettings; change: Cha
 /** Bản lưu cũ app đang giữ hộ (lần lưu hỏng giữa chừng): chỉ hiện khi có file, đứng đầu Nâng cao vì là thứ có thể mất nếu không để ý. */
 function OldSavesBlock() {
   const { data } = useOldSaves();
-  if (!data?.length) return null;
+  // Lưu ra / xoá hết bản cũ: cả khối khép lại (MotionPresence giữ hình cuối), không biến mất cứng. `first:mt-6`: khối đứng một mình trong vỏ.
   return (
-    <SettingsBlock title={`Bản lưu cũ (${data.length})`} id="old-saves">
-      <OldSavesList files={data} />
-    </SettingsBlock>
+    <MotionPresence open={Boolean(data?.length)}>
+      {data?.length ? (
+        <SettingsBlock title={`Bản lưu cũ (${data.length})`} id="old-saves" className="first:mt-6">
+          <OldSavesList files={data} />
+        </SettingsBlock>
+      ) : null}
+    </MotionPresence>
   );
 }
 
@@ -350,15 +356,17 @@ function AdvancedGroup({ version, update }: { version: string | null; update: Re
     <>
       <OldSavesBlock />
       {/* Điện thoại không tự cập nhật như app Windows: báo bản mới trên GitHub, mời tải APK (updates.ts). */}
-      {update && (
-        <SettingsBlock title="Cập nhật">
-          <SettingsRow label={`Có bản mới ${update.version}`} hint="Cài đè; sách và chỗ đang nghe giữ nguyên.">
-            <Button size="sm" variant="primary" icon={Download} onClick={() => void openRelease(update.apk ?? update.page)}>
-              Tải
-            </Button>
-          </SettingsRow>
-        </SettingsBlock>
-      )}
+      <MotionPresence open={Boolean(update)}>
+        {update && (
+          <SettingsBlock title="Cập nhật" className="first:mt-6">
+            <SettingsRow label={`Có bản mới ${update.version}`} hint="Cài đè; sách và chỗ đang nghe giữ nguyên.">
+              <Button size="sm" variant="primary" icon={Download} onClick={() => void openRelease(update.apk ?? update.page)}>
+                Tải
+              </Button>
+            </SettingsRow>
+          </SettingsBlock>
+        )}
+      </MotionPresence>
       <SettingsBlock title="Bộ nhớ">
         <div className="px-4 py-3.5">
           <ReadAloudStorage api={{ usage: () => ReadAloud.cacheUsage(), clear: () => ReadAloud.cacheClear() }} />
@@ -422,8 +430,11 @@ export function SettingsScreen() {
   return (
     <div className="px-4 pb-10 pt-4">
       <h1 className="text-2xl font-bold tracking-tight">Cài đặt</h1>
-      {oldSaves && oldSaves.length > 0 && <RootNotice tone="warning" text={`Bản lưu cũ (${oldSaves.length}) - cần lưu ra`} />}
-      {update && <RootNotice tone="accent" text={`Có bản mới ${update.version}`} />}
+      {/* Lời báo trên trang gốc tới sau một lượt hỏi (bản lưu cũ, bản mới): mở ra tại chỗ, không đẩy danh sách nhóm xuống tức thì. */}
+      <MotionPresence open={Boolean(oldSaves?.length)}>
+        {oldSaves?.length ? <RootNotice tone="warning" text={`Bản lưu cũ (${oldSaves.length}) - cần lưu ra`} /> : null}
+      </MotionPresence>
+      <MotionPresence open={Boolean(update)}>{update && <RootNotice tone="accent" text={`Có bản mới ${update.version}`} />}</MotionPresence>
       <SettingsList rows={rows} className="mt-5" />
     </div>
   );
