@@ -417,7 +417,7 @@ export function LibraryScreen({
   const libraryRows = useListPresence(books ?? [], (book) => book.id);
   const upcomingRows = useListPresence(upcoming, (book) => book.id);
   return (
-    <MotionRegion as="div" elementRef={container} className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
+    <div ref={container} className="mx-auto max-w-[1180px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
       {/* Hai nút cạnh tiêu đề không được bóp tiêu đề thành "Thư / viện" ở 390 px (soát UX 05-10): tiêu đề giữ một dòng, nút xuống dưới. */}
       <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
         <div className="shrink-0">
@@ -518,15 +518,20 @@ export function LibraryScreen({
                 </button>
             </label>
           </div>
-          <SeriesShelves books={shown} twins={twins} memory={memory} grouped={filter === "all" && !folded} />
-          <MotionPresence open={!shown.length}>
-            {!shown.length && <EmptyState icon={Search} title={query ? `Không tìm thấy sách nào khớp “${query}”` : "Không có sách ở đây"} className="mt-4">
-              {query ? "Thử tên sách hoặc tác giả khác." : EMPTY_TEXT[filter]}
-            </EmptyState>}
-          </MotionPresence>
+          {/* Chỉ fade kết quả: header/tiếp tục nghe/controls giữ một cây. Ảnh theo scrollMemory trước paint. */}
+          <MotionRegion followScroll fadeThrough motionKey={[filter, sort, folded, shown.map(book => book.id)]}>
+            {/* Snapshot giữ cây cũ. Reset presence của bộ kết quả mới để hàng exit cũ
+                không đổi từ Fold sang lưới phẳng rồi chồng thêm lên ảnh đang mờ. */}
+            <SeriesShelves key={JSON.stringify([filter, sort, folded])} books={shown} twins={twins} memory={memory} grouped={filter === "all" && !folded} />
+            <MotionPresence open={!shown.length}>
+              {!shown.length && <EmptyState icon={Search} title={query ? `Không tìm thấy sách nào khớp “${query}”` : "Không có sách ở đây"} className="mt-4">
+                {query ? "Thử tên sách hoặc tác giả khác." : EMPTY_TEXT[filter]}
+              </EmptyState>}
+            </MotionPresence>
+          </MotionRegion>
         </>
       )}
       </LoadingCrossfade>
-    </MotionRegion>
+    </div>
   );
 }

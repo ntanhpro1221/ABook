@@ -166,7 +166,7 @@ export function removeMotionSnapshot(clone: HTMLElement | undefined): void {
   else clone.remove();
 }
 
-export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocument = document, floorZ = 51, host?: HTMLElement, deferOverlap = false): HTMLElement | undefined {
+export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocument = document, floorZ = 51, host?: HTMLElement, deferOverlap = false, followScroll = false): HTMLElement | undefined {
   if (!doc.body || doc.visibilityState === "hidden") return;
   const bounds = target.getBoundingClientRect();
   if (!bounds.width || !bounds.height) return;
@@ -200,9 +200,47 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
   const hasSnapshots = Boolean(target.querySelector?.(".motion-snapshot"));
   const originalNodes = [target, ...target.querySelectorAll<HTMLElement>("*")].filter(node => !hasSnapshots || !node.closest(".motion-snapshot"));
   const clonedNodes = [clone, ...clone.querySelectorAll<HTMLElement>("*")];
+  // Absolute snapshots form a new formatting context: a child's collapsed margin
+  // would otherwise reappear INSIDE the image (e.g. AddBook's first QueueList).
+  if (computed.display === "block" && computed.overflow === "visible") {
+    for (const [first, image, edge, margin] of [
+      [target.firstElementChild, clone.firstElementChild, "top", "marginTop"],
+      [target.lastElementChild, clone.lastElementChild, "bottom", "marginBottom"],
+    ] as const) {
+      let child = first, copy = image;
+      while (child && copy) {
+        const style = getComputedStyle(child);
+        if (style.position === "absolute" || style.position === "fixed" || style.float !== "none" ||
+          Math.abs(child.getBoundingClientRect()[edge] - bounds[edge]) >= 1) break;
+        if (parseFloat(style[margin]) > 0) (copy as HTMLElement).style[margin] = "0px";
+        if (style.display !== "block" || style.overflow !== "visible") break;
+        child = edge === "top" ? child.firstElementChild : child.lastElementChild;
+        copy = edge === "top" ? copy.firstElementChild : copy.lastElementChild;
+      }
+    }
+  }
+  // cloneNode không sao chép lựa chọn sống của select (cả multiple / selectedIndex=-1).
+  originalNodes.forEach((node, index) => {
+    const copy = clonedNodes[index];
+    if (node.tagName === "SELECT") {
+      const select = node as HTMLSelectElement, image = copy as HTMLSelectElement;
+      Array.from(select.options).forEach((option, at) => { image.options[at].selected = option.selected; });
+      if (!select.multiple) image.selectedIndex = select.selectedIndex;
+    }
+    // Hàng content-visibility:auto ngoài màn đo lại bằng intrinsic size khi clone.
+    // Đóng băng chiều cao cũ để giữ đúng chương đang nhìn trong khung cuộn con.
+    if (node.classList?.contains("[content-visibility:auto]") || node.style?.contentVisibility === "auto") {
+      const style = getComputedStyle(node);
+      copy.style.contentVisibility = "visible";
+      copy.style.containIntrinsicSize = "none";
+      const chrome = style.boxSizing === "border-box" ? 0 : ["paddingTop", "paddingBottom", "borderTopWidth", "borderBottomWidth"]
+        .reduce((sum, key) => sum + (parseFloat(style[key as "paddingTop"]) || 0), 0);
+      copy.style.height = `${parseFloat(style.height) + chrome || node.getBoundingClientRect().height}px`;
+      copy.style.boxSizing = "border-box";
+    }
+  });
   (host ?? doc.body).append(clone);
-  // Không đo tổ tiên/đăng ký listener ở trang: giữ nguyên ảnh fixed theo viewport qua fade.
-  const stopTracking = host ? trackSurfaceSnapshot(target, clone, bounds, host) : undefined;
+  const stopTracking = trackSurfaceSnapshot(target, clone, bounds, host, followScroll);
   originalNodes.forEach((node, index) => {
     if (node.scrollTop) clonedNodes[index].scrollTop = node.scrollTop;
     if (node.scrollLeft) clonedNodes[index].scrollLeft = node.scrollLeft;
@@ -226,9 +264,9 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
   return settleMotionSnapshot(target, clone);
 }
 
-function trackSurfaceSnapshot(target: HTMLElement, clone: HTMLElement, bounds: DOMRect, host: HTMLElement): () => void {
+function trackSurfaceSnapshot(target: HTMLElement, clone: HTMLElement, bounds: DOMRect, host?: HTMLElement, followScroll = false): (() => void) | undefined {
   // Host có thể là menu tĩnh trong popper transform: offsetParent sau append mới là containing block.
-  const containingBlock = (clone.offsetParent as HTMLElement | null) ?? host;
+  const containingBlock = host ? (clone.offsetParent as HTMLElement | null) ?? host : undefined;
   const hostBounds = containingBlock?.getBoundingClientRect();
   const scaleX = containingBlock?.offsetWidth ? hostBounds!.width / containingBlock.offsetWidth : 1;
   const scaleY = containingBlock?.offsetHeight ? hostBounds!.height / containingBlock.offsetHeight : 1;
@@ -237,21 +275,55 @@ function trackSurfaceSnapshot(target: HTMLElement, clone: HTMLElement, bounds: D
   clone.style.width = `${bounds.width / scaleX}px`;
   clone.style.height = `${bounds.height / scaleY}px`;
   // Ảnh nằm trên surface nhưng vẫn phải cắt ở các khung cuộn của nội dung gốc.
-  const ancestors: { node: HTMLElement; x: number; y: number; sx: number; sy: number; clipX: boolean; clipY: boolean }[] = [];
+  const ancestors: { node: HTMLElement; x: number; y: number; maxX: number; maxY: number; dx: number; dy: number; ignoredX: number; ignoredY: number; sx: number; sy: number; clipX: boolean; clipY: boolean }[] = [];
   for (let node = target.parentElement; node; node = node.parentElement) {
     const style = getComputedStyle(node), rect = node.getBoundingClientRect();
     ancestors.push({ node, x: node.scrollLeft, y: node.scrollTop,
+      maxX: Math.max(0, node.scrollWidth - node.clientWidth), maxY: Math.max(0, node.scrollHeight - node.clientHeight),
+      dx: 0, dy: 0, ignoredX: 0, ignoredY: 0,
       sx: node.offsetWidth ? rect.width / node.offsetWidth : 1, sy: node.offsetHeight ? rect.height / node.offsetHeight : 1,
       clipX: /auto|scroll|hidden|clip/.test(style.overflowX || style.overflow),
       clipY: /auto|scroll|hidden|clip/.test(style.overflowY || style.overflow) });
     if (node === host) break;
   }
+  if (!host && !ancestors.some(item => item.clipX || item.clipY)) return;
+  // Chỉ phần đã nhìn thấy lúc chụp được vẽ; hộp lớn lên không lộ chương cũ khác.
+  const initialClip = { left: 0, top: 0, right: 0, bottom: 0 };
+  if (host) for (const item of ancestors) {
+    // Hidden/clip often belongs to an opening Fold: its clip must grow with it.
+    const style = getComputedStyle(item.node);
+    if (!/auto|scroll|overlay/.test(style.overflowY || style.overflow) && !/auto|scroll|overlay/.test(style.overflowX || style.overflow)) continue;
+    const rect = item.node.getBoundingClientRect();
+    if (item.clipX) {
+      initialClip.left = Math.max(initialClip.left, rect.left + item.node.clientLeft * item.sx - bounds.left);
+      initialClip.right = Math.max(initialClip.right, bounds.right - rect.left - (item.node.clientLeft + item.node.clientWidth) * item.sx);
+    }
+    if (item.clipY) {
+      initialClip.top = Math.max(initialClip.top, rect.top + item.node.clientTop * item.sy - bounds.top);
+      initialClip.bottom = Math.max(initialClip.bottom, bounds.bottom - rect.top - (item.node.clientTop + item.node.clientHeight) * item.sy);
+    }
+  }
   const place = () => {
     let dx = 0, dy = 0;
     // Containing block và tổ tiên của nó tự cuộn ảnh. Menu static trong popper thì không:
     // containing block nằm ngoài menu, nên vẫn phải trừ delta cuộn của chính menu.
-    for (const item of ancestors) if (item.node !== containingBlock && !item.node.contains(containingBlock)) {
-      dx += (item.node.scrollLeft - item.x) * item.sx; dy += (item.node.scrollTop - item.y) * item.sy;
+    for (const item of ancestors) {
+      const x = item.node.scrollLeft, y = item.node.scrollTop;
+      const maxX = Math.max(0, item.node.scrollWidth - item.node.clientWidth), maxY = Math.max(0, item.node.scrollHeight - item.node.clientHeight);
+      // Clamp do nội dung co không phải người dùng cuộn. Trang opt-in theo cả restore.
+      const clampX = Boolean(host) && maxX < item.maxX && item.x > maxX && Math.abs(x - maxX) < 1;
+      const clampY = Boolean(host) && maxY < item.maxY && item.y > maxY && Math.abs(y - maxY) < 1;
+      item.dx += clampX ? 0 : x - item.x; item.dy += clampY ? 0 : y - item.y;
+      item.ignoredX += clampX ? x - item.x : 0; item.ignoredY += clampY ? y - item.y : 0;
+      if (host || followScroll) {
+        if (!containingBlock || (item.node !== containingBlock && !item.node.contains(containingBlock))) {
+          dx += item.dx * item.sx; dy += item.dy * item.sy;
+        } else {
+          // Khung chứa tự trừ scroll thật; bù riêng phần clamp đã bỏ qua.
+          dx -= item.ignoredX * item.sx; dy -= item.ignoredY * item.sy;
+        }
+      }
+      item.x = x; item.y = y; item.maxX = maxX; item.maxY = maxY;
     }
     clone.style.left = `${left - dx / scaleX}px`; clone.style.top = `${top - dy / scaleY}px`;
     if (!ancestors.some(item => item.clipX || item.clipY)) return;
@@ -259,7 +331,8 @@ function trackSurfaceSnapshot(target: HTMLElement, clone: HTMLElement, bounds: D
     const image = clone.getBoundingClientRect();
     const sx = image.width ? image.width / (bounds.width / scaleX) : scaleX;
     const sy = image.height ? image.height / (bounds.height / scaleY) : scaleY;
-    let l = image.left, t = image.top, r = image.right, b = image.bottom;
+    let l = image.left + initialClip.left * sx / scaleX, t = image.top + initialClip.top * sy / scaleY,
+      r = image.right - initialClip.right * sx / scaleX, b = image.bottom - initialClip.bottom * sy / scaleY;
     for (const item of ancestors) {
       if (!item.clipX && !item.clipY) continue;
       const rect = item.node.getBoundingClientRect();

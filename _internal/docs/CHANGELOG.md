@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+- Giữ đúng phần chương đang xem khi sang file kế; đổi lọc/xếp Thư viện mờ đúng vùng, không chồng thanh điều khiển hay tràn xuống thanh phát.
+
 ## [0.4.137] - 2026-10-24
 
 ### Sửa lỗi
