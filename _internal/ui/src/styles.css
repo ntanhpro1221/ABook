@@ -354,14 +354,17 @@ select[class~="border-line"] {
  * 1rem vẫn 16 px), còn rlh (chiều cao dòng của gốc, html line-height 1.5) thì có. Cỡ chữ 100 % đúng như cũ (18 / 22 px); to nhất bằng ô nút chứa nó
  * (size-9; glyph-20 trong size-11) để không tràn sang nút bên cạnh. Máy tính đổi cỡ chữ trình duyệt thì rem và rlh cùng giãn. */
 @utility glyph {
+  --icon-w: clamp(1.125rem, 0.75rlh, 1.96875rem);
   width: clamp(1.125rem, 0.75rlh, 1.96875rem);
   height: clamp(1.125rem, 0.75rlh, 1.96875rem);
 }
 @utility glyph-20 {
+  --icon-w: clamp(1.25rem, 0.8333rlh, 2.40625rem);
   width: clamp(1.25rem, 0.8333rlh, 2.40625rem);
   height: clamp(1.25rem, 0.8333rlh, 2.40625rem);
 }
 @utility glyph-22 {
+  --icon-w: clamp(1.375rem, 0.9167rlh, 2.25rem);
   width: clamp(1.375rem, 0.9167rlh, 2.25rem);
   height: clamp(1.375rem, 0.9167rlh, 2.25rem);
 }
@@ -939,6 +942,8 @@ select[class~="border-line"] {
   margin-inline-end: calc(var(--icon-w) * (1 - var(--ink-r, 1)) / 24);
 }
 .book-action-menu [role="menuitem"] > svg:first-child { --icon-w: 20px; }
+/* Icon cuối hàng mà ô icon đã đứng sát mép nội dung: đẩy mực - không phải ô - ra đúng mép (ô 14 px; glyph tự ghi --icon-w). */
+.ink-end { translate: calc(var(--icon-w, 14px) * var(--ink-r, 1) / 24) 0; }
 .book-action-sheet .sheet-body > [data-radix-popper-content-wrapper] {
   position: static !important;
   transform: none !important;

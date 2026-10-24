@@ -141,7 +141,7 @@ export function ChapterRow({
                 aria-label={`Tuỳ chọn ${chapter.fullTitle}`}
                 className="grid size-8 place-items-center rounded-md text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px] max-sm:justify-items-end"
               >
-                <MoreHorizontal className="size-4" />
+                <MoreHorizontal className="ink-end size-4" />
               </button>
             </DropdownMenu.Trigger>
             <DropdownMenu.Portal>
