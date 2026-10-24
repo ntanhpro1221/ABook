@@ -11,6 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Màu ấm như giấy cho cả app; chọn nền đọc Giấy, Ngà hay Đêm; tiếng chạm khẽ (tự im khi đang nghe) và rung nhẹ trên điện thoại, tắt được ở Cài đặt › Giao diện.
 
 ### Giao diện
+- Tên sách không còn ngắt dòng ngay ở dấu "·"; ở trang sách thanh đáy điện thoại vẫn tô Thư viện; màn Thiết bị trên điện thoại dựng hai khối giống nhau, liên kết chữ cùng một kiểu và dễ chạm hơn.
 - Cài đặt trên điện thoại và máy tính chia nhóm bằng khoảng trắng, các hàng và nút căn thẳng mép; lựa chọn đang dùng rõ hơn, núm công tắc nằm gọn trong rãnh ở cả giao diện sáng và tối.
 - Thanh bên gọn còn Thư viện, Studio và Cài đặt; dự án đang chạy/chờ có tiến độ, vùng tải dùng khung chờ, lỗi có thử lại và mất mạng hiện dải nhỏ.
 - Thư viện mở lưới bìa và gom bộ sách; điện thoại có tab Studio, sách máy kia ở Thư viện và ghép máy trong Cài đặt › Thiết bị.

@@ -1,7 +1,7 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { type LucideIcon, Bluetooth, CheckCircle2, Copy, Download, HardDrive, Laptop, Link2, Loader2, Pencil, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi, X } from "lucide-react";
+import { type LucideIcon, Bluetooth, CheckCircle2, Copy, Download, HardDrive, Keyboard, Laptop, Link2, Loader2, Pencil, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -43,12 +43,13 @@ function ComputerIntro() {
         <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text">
           <Laptop className="size-5" />
         </div>
-        <h2 className="font-semibold">Studio trên máy tính</h2>
+        {/* Cùng dựng như khối "Nối máy tính" bên dưới: tên + một dòng phụ cạnh biểu tượng (soát OPPO 25-10: khối này để dòng phụ dưới biểu tượng). */}
+        <div>
+          <h2 className="font-semibold">Studio trên máy tính</h2>
+          <p className="text-fg-2">Tạo sách nói rồi nghe ở đây.</p>
+        </div>
       </div>
-      <p className="mt-3 text-pretty text-fg-2">
-        Tạo sách nói rồi nghe ở đây.
-      </p>
-      <p className="mt-2 text-fg-2">ABook cho Windows:</p>
+      <p className="mt-4 text-fg-2">ABook cho Windows:</p>
       <p className="mt-1 select-text break-all font-medium text-fg">{DESKTOP_RELEASES.replace("https://", "")}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button size="sm" variant="secondary" icon={Copy} onClick={copy}>
@@ -160,7 +161,7 @@ function PairPanel() {
     <MotionRegion as="div" className="space-y-5">
       <div className="py-4">
         <div className="flex items-center gap-3">
-          <div className="grid size-11 place-items-center rounded-xl bg-accent-soft text-accent-text">
+          <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text">
             <Wifi className="size-5" />
           </div>
           <div>
@@ -169,7 +170,7 @@ function PairPanel() {
           </div>
         </div>
         <ol className="mt-4 space-y-1.5 text-sm text-fg-2">
-          <li>1. Máy tính: Cài đặt › Thiết bị › bật “{SYNC_SWITCH_LABEL}” › “Ghép thiết bị mới”.</li>
+          <li>1. Máy tính: Cài đặt › Thiết bị › bật <span className="whitespace-nowrap">“{SYNC_SWITCH_LABEL}”</span> › “Ghép thiết bị mới”.</li>
           <li>2. Chọn máy tính dưới đây, nhập mã 6 số.</li>
         </ol>
       </div>
@@ -178,7 +179,7 @@ function PairPanel() {
         <div>
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm font-semibold">Máy tính tìm thấy</span>
-            <button type="button" onClick={() => discover.mutate()} className="flex items-center gap-1.5 text-sm text-accent-text">
+            <button type="button" onClick={() => discover.mutate()} className="touch-hit flex items-center gap-1.5 text-sm font-medium text-accent-text">
               {discover.isPending ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />} Tìm lại
             </button>
           </div>
@@ -233,7 +234,7 @@ function PairPanel() {
               </div>
             </div>
           ) : paired === null ? (
-            <button ref={btButton} type="button" onClick={() => void startBluetooth()} className="flex items-center gap-1.5 text-sm font-medium text-accent-text">
+            <button ref={btButton} type="button" onClick={() => void startBluetooth()} className="touch-hit flex items-center gap-1.5 text-sm font-medium text-accent-text">
               {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Dùng Bluetooth
             </button>
           ) : paired.length ? (
@@ -266,8 +267,9 @@ function PairPanel() {
         </div>
       )}
 
-      <button type="button" onClick={() => withViewTransition(() => { setManualNow((value) => !value); setTarget(null); })} className="text-sm font-medium text-fg-2 underline underline-offset-4">
-        {manual ? "Tự tìm máy tính" : "Nhập địa chỉ máy tính"}
+      <button type="button" onClick={() => withViewTransition(() => { setManualNow((value) => !value); setTarget(null); })} className="touch-hit flex items-center gap-1.5 text-sm font-medium text-accent-text">
+        {/* Cùng một kiểu liên kết với "Dùng Bluetooth" (soát 24-10 T15: một hổ phách có biểu tượng, một xám gạch chân). */}
+        {manual ? <Search className="size-4" /> : <Keyboard className="size-4" />} {manual ? "Tự tìm máy tính" : "Nhập địa chỉ máy tính"}
       </button>
       {manual && (
         <input
