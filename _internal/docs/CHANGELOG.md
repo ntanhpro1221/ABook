@@ -7,6 +7,14 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+- Trang sách gọn lại: một nút chính “Nghe tiếp · Chương N” (hay “Nghe”), dưới là một hàng Đọc · Tìm · Từ đầu · Thêm; mọi việc khác nằm trong “Thêm”.
+- Danh sách chương, nhân vật phẳng, không còn khung lồng khung; sách không chia phần thì chương hiện thẳng dưới tab.
+- Màn Đang nghe: bìa lớn, nền nhuốm màu bìa, nút phát tròn màu nhấn giữa 5 nút; hàng Tốc độ · Hẹn giờ · Dấu trang · Chương; “Đọc theo” ở đáy.
+- Nhạc nền, giọng đọc, âm lượng, danh sách dấu trang, quay lại chỗ vừa nghe và phát trên thiết bị khác vào menu “…”.
+- Thanh phát máy tính còn tối đa 6 nút: lùi · phát · tới, tốc độ, âm lượng, “…”.
+- Màn đọc: chữ 20 px, giãn dòng 1,7; thanh đầu chỉ còn nút về và tên chương, không đè lên chữ; thanh điều khiển dưới mờ đi khi bạn cuộn đọc, chạm là hiện lại.
+
 ### Sửa lỗi
 - Back đóng mọi thông báo đang hiện (kể cả lời mời bật thông báo) rồi mới về trang trước; menu đang khép không chặn chạm bên dưới; đóng nhóm Cài đặt quay đúng một bước.
 - Nội dung đổi trong hộp không còn hai lớp chữ chồng nhau; phần trống mờ dần thay vì biến mất; danh sách dấu trang trống hiện mượt; viền chọn ở đầu Thư viện không bị cắt.
