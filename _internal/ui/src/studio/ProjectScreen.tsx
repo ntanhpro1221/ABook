@@ -1209,7 +1209,7 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
           <button
             type="button"
             data-active={inMore || undefined}
-            className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-2 text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[active]:border-accent data-[active]:text-fg data-[state=open]:text-fg sm:px-3"
+            className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[active]:border-accent data-[active]:text-fg data-[state=open]:text-fg"
           >
             <TabLabel count={moreCount}>
               <MotionRegion as="span" motionKey={inMore ? tab : "more"}>{inMore ? TAB_LABEL[tab] : "Thêm"}</MotionRegion>

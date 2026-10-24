@@ -8,7 +8,7 @@ import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, ContentSkeleton, Dialog, EmptyState, InlineError, Kbd, Segmented } from "@/shared/ui";
+import { Button, ContentSkeleton, Dialog, EmptyState, FilterRow, InlineError, Kbd, Segmented } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { retryUnlessGone } from "./polling";
@@ -1263,7 +1263,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       {atReview > 0 && (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
           <span className="min-w-0 text-pretty">
-            {atReview} việc về giọng, cách đọc tên và người nói ở các chương đầu đang nằm ở “Duyệt trước khi thu” - duyệt ở đó, không hiện lặp ở đây.
+            {atReview} việc của các chương đầu đang chờ ở “Duyệt trước khi thu”.
           </span>
           {onOpenPrecast && (
             <Button size="sm" variant="secondary" onClick={onOpenPrecast}>
@@ -1273,8 +1273,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
         </div>
       )}
       <div className="mt-4">
-        <Segmented<WorkKind | "all">
-          wrap
+        <FilterRow<WorkKind | "all">
           label="Loại việc"
           value={active}
           onChange={(value) => {
@@ -1289,8 +1288,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       </div>
       {active !== "all" && <BulkKeep bookId={bookId} kind={active} items={items} />}
       <p className="mt-2 hidden flex-wrap items-center gap-1.5 text-xs text-fg-3 md:flex">
-        Bàn phím: <Kbd>J</Kbd> <Kbd>K</Kbd> chọn thẻ · <Kbd>1</Kbd>–<Kbd>9</Kbd> bấm lựa chọn thứ N của thẻ (đếm từ trái sang) ·{" "}
-        <Kbd>Esc</Kbd> bỏ chọn
+        <Kbd>J</Kbd> <Kbd>K</Kbd> chọn thẻ · <Kbd>1–9</Kbd> chọn đáp án · <Kbd>Esc</Kbd> bỏ chọn
       </p>
       <AnimatedRows as="ol" className="mt-3 space-y-3" items={items.slice(0, shown)} keyOf={(item) => item.key}>
         {(item, _index, state) => (
