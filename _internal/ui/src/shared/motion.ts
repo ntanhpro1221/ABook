@@ -136,6 +136,17 @@ export function fallbackSnapshot(doc: TransitionDocument, nav: NavMotion): void 
 const snapshotCleanups = new WeakMap<HTMLElement, () => void>();
 const snapshotPlacements = new WeakMap<HTMLElement, () => void>();
 const snapshotTargets = new Map<HTMLElement, HTMLElement>();
+// Chỉ ảnh trong surface theo layout/clip. Một rAF chung, sống tối đa tới timer gỡ ảnh cuối.
+const surfacePlacements = new Set<() => void>();
+let surfaceFrame: number | undefined;
+function scheduleSurfaceFrame(): void {
+  if (surfaceFrame !== undefined || !surfacePlacements.size) return;
+  surfaceFrame = requestAnimationFrame(() => {
+    surfaceFrame = undefined;
+    for (const place of surfacePlacements) place();
+    scheduleSurfaceFrame();
+  });
+}
 /** Chỉ nhận quyền vẽ sau khi vùng đã xác nhận đổi nội dung. Ảnh cha dự phòng có thể bị bỏ sau commit. */
 export function settleMotionSnapshot(target: HTMLElement, clone: HTMLElement | undefined): HTMLElement | undefined {
   if (!clone || !snapshotCleanups.has(clone)) return clone;
@@ -177,18 +188,47 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
   // Các biến màu được giữ trước khi đổi theme, ảnh cũ không đổi màu theo ảnh mới.
   const computed = getComputedStyle(target);
   // Header thường kế thừa font từ h2/h3; ảnh được đưa ra surface nên phải giữ kiểu chữ ấy.
-  for (const name of ["font", "line-height", "letter-spacing", "word-spacing", "color", "text-align", "text-transform", "white-space", "direction"]) {
+  // Edge có thể trả shorthand `font` rỗng khi CSS dùng font-feature-settings.
+  for (const name of ["font-size", "font-family", "font-weight", "font-style", "font-stretch", "font-variant", "font-feature-settings", "font-variation-settings",
+    "line-height", "letter-spacing", "word-spacing", "color", "text-align", "text-transform", "white-space", "direction"]) {
     const value = computed.getPropertyValue(name);
     if (value) clone.style.setProperty(name, value);
   }
   clone.style.zIndex = String(Math.max(floorZ, (parseInt(computed.zIndex) || 0) + 1));
   for (const name of computed) if (name.startsWith("--")) clone.style.setProperty(name, computed.getPropertyValue(name));
   clone.style.backgroundColor = computed.backgroundColor === "rgba(0, 0, 0, 0)" ? computed.getPropertyValue("--bg") : computed.backgroundColor;
-  const originalNodes = [target, ...target.querySelectorAll<HTMLElement>("*")].filter(node => !node.closest?.(".motion-snapshot"));
+  const hasSnapshots = Boolean(target.querySelector?.(".motion-snapshot"));
+  const originalNodes = [target, ...target.querySelectorAll<HTMLElement>("*")].filter(node => !hasSnapshots || !node.closest(".motion-snapshot"));
   const clonedNodes = [clone, ...clone.querySelectorAll<HTMLElement>("*")];
   (host ?? doc.body).append(clone);
+  // Không đo tổ tiên/đăng ký listener ở trang: giữ nguyên ảnh fixed theo viewport qua fade.
+  const stopTracking = host ? trackSurfaceSnapshot(target, clone, bounds, host) : undefined;
+  originalNodes.forEach((node, index) => {
+    if (node.scrollTop) clonedNodes[index].scrollTop = node.scrollTop;
+    if (node.scrollLeft) clonedNodes[index].scrollLeft = node.scrollLeft;
+  });
+  const timer = window.setTimeout(() => removeMotionSnapshot(clone), MOTION.fastOut + 80);
+  const onEnd = (event: Event) => {
+    if (event.target !== clone) return;
+    removeMotionSnapshot(clone);
+  };
+  snapshotCleanups.set(clone, () => {
+    window.clearTimeout(timer);
+    clone.removeEventListener?.("animationend", onEnd);
+    snapshotCleanups.delete(clone);
+    snapshotPlacements.delete(clone);
+    if (snapshotTargets.get(target) === clone) snapshotTargets.delete(target);
+    stopTracking?.();
+    clone.remove();
+  });
+  clone.addEventListener("animationend", onEnd);
+  if (deferOverlap) { snapshotPlacements.get(clone)?.(); return clone; }
+  return settleMotionSnapshot(target, clone);
+}
+
+function trackSurfaceSnapshot(target: HTMLElement, clone: HTMLElement, bounds: DOMRect, host: HTMLElement): () => void {
   // Host có thể là menu tĩnh trong popper transform: offsetParent sau append mới là containing block.
-  const containingBlock = host ? (clone.offsetParent as HTMLElement | null) ?? host : undefined;
+  const containingBlock = (clone.offsetParent as HTMLElement | null) ?? host;
   const hostBounds = containingBlock?.getBoundingClientRect();
   const scaleX = containingBlock?.offsetWidth ? hostBounds!.width / containingBlock.offsetWidth : 1;
   const scaleY = containingBlock?.offsetHeight ? hostBounds!.height / containingBlock.offsetHeight : 1;
@@ -206,11 +246,11 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
       clipY: /auto|scroll|hidden|clip/.test(style.overflowY || style.overflow) });
     if (node === host) break;
   }
-  const viewportScroll = !host && ![target, ...ancestors.map(item => item.node)].some(node => getComputedStyle(node).position === "fixed");
-  const pageX = window.scrollX, pageY = window.scrollY;
   const place = () => {
-    let dx = viewportScroll ? window.scrollX - pageX : 0, dy = viewportScroll ? window.scrollY - pageY : 0;
-    for (const item of ancestors) if (item.node !== host && item.node !== target.ownerDocument?.scrollingElement) {
+    let dx = 0, dy = 0;
+    // Containing block và tổ tiên của nó tự cuộn ảnh. Menu static trong popper thì không:
+    // containing block nằm ngoài menu, nên vẫn phải trừ delta cuộn của chính menu.
+    for (const item of ancestors) if (item.node !== containingBlock && !item.node.contains(containingBlock)) {
       dx += (item.node.scrollLeft - item.x) * item.sx; dy += (item.node.scrollTop - item.y) * item.sy;
     }
     clone.style.left = `${left - dx / scaleX}px`; clone.style.top = `${top - dy / scaleY}px`;
@@ -234,29 +274,18 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
   // Scroll không bubble; capture theo cả khung đang cuộn trong lúc ảnh mờ đi.
   target.ownerDocument?.addEventListener?.("scroll", place, true);
   window.addEventListener?.("scroll", place);
-  originalNodes.forEach((node, index) => {
-    if (node.scrollTop) clonedNodes[index].scrollTop = node.scrollTop;
-    if (node.scrollLeft) clonedNodes[index].scrollLeft = node.scrollLeft;
-  });
-  const timer = window.setTimeout(() => removeMotionSnapshot(clone), MOTION.fastOut + 80);
-  const onEnd = (event: Event) => {
-    if (event.target !== clone) return;
-    removeMotionSnapshot(clone);
-  };
-  snapshotCleanups.set(clone, () => {
-    window.clearTimeout(timer);
-    clone.removeEventListener?.("animationend", onEnd);
-    snapshotCleanups.delete(clone);
-    snapshotPlacements.delete(clone);
-    if (snapshotTargets.get(target) === clone) snapshotTargets.delete(target);
+  snapshotPlacements.set(clone, place);
+  surfacePlacements.add(place);
+  scheduleSurfaceFrame(); // Sau commit và layout effect của Collapse, rồi theo resize trong suốt fade.
+  return () => {
+    surfacePlacements.delete(place);
+    if (!surfacePlacements.size && surfaceFrame !== undefined) {
+      cancelAnimationFrame(surfaceFrame);
+      surfaceFrame = undefined;
+    }
     target.ownerDocument?.removeEventListener?.("scroll", place, true);
     window.removeEventListener?.("scroll", place);
-    clone.remove();
-  });
-  snapshotPlacements.set(clone, place);
-  clone.addEventListener("animationend", onEnd);
-  if (deferOverlap) { place(); return clone; }
-  return settleMotionSnapshot(target, clone);
+  };
 }
 
 /** Đang có một View Transition do app mở (đổi trang, Đang nghe, đổi giao diện). */
