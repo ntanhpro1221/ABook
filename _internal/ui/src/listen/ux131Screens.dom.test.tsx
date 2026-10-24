@@ -99,10 +99,24 @@ it("thư viện nhiều bộ: mỗi bộ là Fold đóng; tìm kiếm vẫn cho 
   await render(<SeriesShelves books={books.slice(0, 1)} twins={new Set()} grouped={false} />); expect(host.querySelector("button[aria-expanded]")).toBeNull();
 });
 
+/** Sách hai phần (8 + 4 chương): danh sách chương gom theo phần, mỗi phần một khối gấp được. */
+const parted = () => {
+  const b = book("book", "Truyện thử", 12);
+  const part = (n: number, chapters: [number, number]) => ({ part: n, title: `Truyện thử · Phần ${n}`, chapters, duration: 60, narrator: "" });
+  return { ...b, parts: [part(1, [1, 8]), part(2, [9, 12])] } as ListenBook;
+};
+
+it("trang sách một phần: danh sách chương phẳng, không gấp trong khối lặp tên tab", async () => {
+  await render(<ChapterGroups book={book()} onDone={() => {}} />);
+  expect(host.querySelector("button[aria-controls]")).toBeNull();
+  expect(host.textContent).not.toContain("Danh sách chương");
+  expect(host.querySelector('[data-chapter="1"]')?.closest("[inert]")).toBeNull();
+});
+
 it("trang sách dài: nhóm chương gập, mở lại giữ thao tác đúng chương", async () => {
-  const b = book(), done = vi.fn();
+  const b = parted(), done = vi.fn();
   await render(<ChapterGroups book={b} onDone={done} />);
-  const control = fold("Danh sách chương"); expect(body(control).hasAttribute("inert")).toBe(true);
+  const control = fold("Phần 1"); expect(body(control).hasAttribute("inert")).toBe(true);
   await act(() => control.click()); expect(body(control).hasAttribute("inert")).toBe(false);
   await act(() => host.querySelector<HTMLButtonElement>('[aria-label="Nghe Chương 1"]')!.click());
   expect(state.player.play).toHaveBeenCalledWith(b, b.chapters, 1, 0, undefined);
@@ -202,20 +216,20 @@ it("chất lượng: ba lựa chọn ngắn; chi tiết chọn hiện trong mộ
 
 
 it("V1: chương giữa nhóm dài mở mặc định và không inert; quay lại vẫn mở", async () => {
-  const b = book();
+  const b = parted();
   const view = () => <ChapterGroups book={b} currentChapter={5} onDone={() => {}} />;
   await render(view());
-  expect(fold("Danh sách chương").getAttribute("aria-expanded")).toBe("true");
+  expect(fold("Phần 1").getAttribute("aria-expanded")).toBe("true");
   expect(host.querySelector('[data-chapter="5"]')?.closest("[inert]")).toBeNull();
   await render(<div>Màn đọc</div>); await render(view());
-  expect(fold("Danh sách chương").getAttribute("aria-expanded")).toBe("true");
+  expect(fold("Phần 1").getAttribute("aria-expanded")).toBe("true");
   expect(host.querySelector('[data-chapter="5"]')).not.toBeNull();
 });
 
 it("V1: giữ lựa chọn gấp, đầu nhóm chỉ Đang nghe; mở xong hoạt ảnh mới cuộn", async () => {
   localStorage.setItem("abook.fold.book.book.chapters.0", "0");
-  await render(<ChapterGroups book={book()} currentChapter={5} onDone={() => {}} />);
-  const control = fold("Danh sách chương");
+  await render(<ChapterGroups book={parted()} currentChapter={5} onDone={() => {}} />);
+  const control = fold("Phần 1");
   expect(control.textContent).toContain("Đang nghe");
   expect(body(control).hasAttribute("inert")).toBe(true);
   const row = host.querySelector<HTMLElement>('[data-chapter="5"]')!;

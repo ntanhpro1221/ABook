@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import * as Popover from "@radix-ui/react-popover";
 import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { toast } from "@/shared/toast";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { cn } from "@/shared/cn";
@@ -10,7 +10,7 @@ import { useMediaQuery } from "@/shared/media";
 import { usePageTitle } from "@/shared/title";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
 import { FindInBook } from "./FindInBook";
-import { chapterToFollow, firstVisibleIndex } from "./follow";
+import { chapterToFollow, firstVisibleIndex, SCROLL_KEYS } from "./follow";
 import { chapterOpenProblem, readerHint } from "./labels";
 import { usePlayer } from "./player";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
@@ -35,8 +35,10 @@ interface ReaderPrefs {
 
 const PREFS_KEY = "abook-reader";
 const SIZES = [16, 18, 20, 22, 24];
-const LEADINGS = [1.6, 1.8, 2];
-/** Điện thoại: nút trên thanh đầu đủ 48 px để chạm. */
+const LEADINGS = [1.5, 1.7, 1.9];
+/** Chữ đọc theo mặc định: 20 px / 1,7 (docs/DESIGN.md 5.5). */
+const DEFAULT_PREFS: ReaderPrefs = { size: 20, leading: 1.7 };
+/** Điện thoại: nút của thanh điều khiển đủ 48 px để chạm. */
 const TOUCH = "max-sm:size-[48px]";
 /** Thanh nổi dưới đáy màn đọc: không chiếm chỗ (cao 0, nội dung neo lên từ mép dưới) - nổi trong khoảng đáy để trống của bài (pb-40)
  *  thay vì đẩy bài dài thêm lúc hiện ra. Hiện ra khi đang ở cuối chương thì thẻ "Chương tiếp theo" vẫn nằm trên nó (soát a26 L9). */
@@ -45,9 +47,9 @@ const FLOATING_BODY = "absolute inset-x-0 bottom-0 flex";
 
 function loadPrefs(): ReaderPrefs {
   try {
-    return { size: 19, leading: 1.8, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") };
+    return { ...DEFAULT_PREFS, ...JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") };
   } catch {
-    return { size: 19, leading: 1.8 };
+    return DEFAULT_PREFS;
   }
 }
 
@@ -92,6 +94,8 @@ export function ReaderScreen(edit: SentenceEditing) {
   const [prefs, setPrefs] = useState<ReaderPrefs>(loadPrefs);
   const [current, setCurrent] = useState(0);
   const [finding, setFinding] = useState(false);
+  // Thanh điều khiển dưới đáy mờ đi khi người đọc tự cuộn (L7), chạm vào trang là hiện lại.
+  const [controls, setControls] = useState(true);
   const container = useRef<HTMLDivElement | null>(null);
   const saveTimer = useRef<number | undefined>(undefined);
   const restored = useRef("");
@@ -297,76 +301,85 @@ export function ReaderScreen(edit: SentenceEditing) {
     const next = chapters[index + step];
     if (next) navigate(`/book/${id}/read/${next.id}`, { replace: true });
   };
+  // Chỉ THAO TÁC cuộn của người (lăn, vuốt, phím cuộn) làm thanh mờ đi - trang tự cuộn theo giọng thì thanh vẫn đứng yên.
+  const scrollInput = {
+    ...follow.input,
+    onWheel: () => { follow.input.onWheel(); setControls(false); },
+    onTouchMove: () => { follow.input.onTouchMove(); setControls(false); },
+    onKeyDown: (event: ReactKeyboardEvent<HTMLDivElement>) => {
+      follow.input.onKeyDown(event);
+      if (SCROLL_KEYS.has(event.key)) setControls(false);
+    },
+    onClick: () => setControls(true),
+  };
   const hint = readerHint({ textOnly, canSpeak, timed: script.timed, tapped: Boolean(prefs.tapped), coarse, wish: lineEdit?.mode === "wish", readings: readingEdit || lineEdit?.mode === "wish" });
   const name = chapter.subtitle || chapter.title;
+  const bar = (
+    <div role="toolbar" aria-label="Điều khiển đọc" data-reader-controls className="pointer-events-auto mx-auto flex items-center gap-1 rounded-2xl bg-panel px-2 py-1.5 shadow-float">
+      <IconButton label="Chương trước" icon={ChevronLeft} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
+      <IconButton label="Tìm trong sách" icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
+      {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
+      {canListen && (
+        <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="mx-1 max-sm:h-11">
+          Nghe từ đây
+        </Button>
+      )}
+      <Popover.Root>
+        <Popover.Trigger asChild>
+          <button type="button" aria-label="Cỡ chữ và giãn dòng" className={cn("grid size-9 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
+            <Type className="glyph" />
+          </button>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 w-64 rounded-xl border border-line bg-panel p-3 shadow-float">
+            <div className="text-xs font-medium text-fg-2">Cỡ chữ</div>
+            <div role="group" aria-label="Cỡ chữ" className="mt-1.5 grid grid-cols-5 gap-1">
+              {SIZES.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  aria-pressed={prefs.size === size}
+                  aria-label={`Cỡ chữ ${size}`}
+                  onClick={() => setPrefs({ ...prefs, size })}
+                  className={cn("h-9 rounded-lg max-sm:h-[48px]", prefs.size === size ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
+                  style={{ fontSize: Math.round(size * 0.75) }}
+                >
+                  A
+                </button>
+              ))}
+            </div>
+            <div className="mt-3 text-xs font-medium text-fg-2">Giãn dòng</div>
+            <div className="mt-1.5 grid grid-cols-3 gap-1">
+              {LEADINGS.map((leading) => (
+                <button
+                  key={leading}
+                  type="button"
+                  aria-pressed={prefs.leading === leading}
+                  onClick={() => setPrefs({ ...prefs, leading })}
+                  className={cn("tabular h-9 rounded-lg text-sm max-sm:h-[48px]", prefs.leading === leading ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
+                >
+                  {leading.toLocaleString("vi-VN")}
+                </button>
+              ))}
+            </div>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+      <IconButton label="Chương sau" icon={ChevronRight} disabled={index >= chapters.length - 1} onClick={() => go(1)} className={TOUCH} />
+    </div>
+  );
 
   return (
     <div className="motion-reveal flex h-full flex-col">
-      <header ref={header} className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg/95 px-3 backdrop-blur max-sm:h-auto max-sm:flex-wrap max-sm:gap-y-0 sm:px-6">
+      {/* Thanh đầu chỉ có nút về + tên chương, nền đặc, đứng NGOÀI khung cuộn: không bao giờ đè lên chữ. Mọi điều khiển khác ở thanh dưới. */}
+      <header ref={header} data-reader-header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg px-3 sm:px-6">
         <IconButton label="Về trang sách" icon={ArrowLeft} onClick={() => navigate(`/book/${id}`)} className={TOUCH} />
-        {/* Điện thoại: sáu nút đã chiếm gần hết bề ngang, tên chương bị cụt còn vài chữ - tên xuống hàng riêng dưới các nút (soát UX a11). */}
-        <div className="min-w-0 flex-1 max-sm:order-last max-sm:basis-full max-sm:px-1 max-sm:pb-2">
-          <div className="truncate text-sm font-semibold">{name}</div>
-          {/* Tên chương đã ở dòng trên: dòng dưới chỉ thêm "Chương 3" khi dòng trên là tên riêng của chương. */}
-          <div className="truncate text-xs text-fg-2">{chapter.subtitle ? `${book.title} · ${chapter.title}` : book.title}</div>
-        </div>
-        <IconButton label="Chương trước" icon={ChevronLeft} disabled={index <= 0} onClick={() => go(-1)} className={cn(TOUCH, "max-sm:ml-auto")} />
-        <IconButton label="Chương sau" icon={ChevronRight} disabled={index >= chapters.length - 1} onClick={() => go(1)} className={TOUCH} />
-        <IconButton label="Tìm trong sách" icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
-        <Popover.Root>
-          <Popover.Trigger asChild>
-            <button type="button" aria-label="Cỡ chữ và giãn dòng" className={cn("grid size-9 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
-              <Type className="glyph" />
-            </button>
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Content align="end" sideOffset={8} className="z-50 w-64 rounded-xl border border-line bg-panel p-3 shadow-float">
-              <div className="text-xs font-medium text-fg-2">Cỡ chữ</div>
-              <div role="group" aria-label="Cỡ chữ" className="mt-1.5 grid grid-cols-5 gap-1">
-                {SIZES.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    aria-pressed={prefs.size === size}
-                    aria-label={`Cỡ chữ ${size}`}
-                    onClick={() => setPrefs({ ...prefs, size })}
-                    className={cn("h-9 rounded-lg max-sm:h-[48px]", prefs.size === size ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
-                    style={{ fontSize: Math.round(size * 0.75) }}
-                  >
-                    A
-                  </button>
-                ))}
-              </div>
-              <div className="mt-3 text-xs font-medium text-fg-2">Giãn dòng</div>
-              <div className="mt-1.5 grid grid-cols-3 gap-1">
-                {LEADINGS.map((leading) => (
-                  <button
-                    key={leading}
-                    type="button"
-                    aria-pressed={prefs.leading === leading}
-                    onClick={() => setPrefs({ ...prefs, leading })}
-                    className={cn("tabular h-9 rounded-lg text-sm max-sm:h-[48px]", prefs.leading === leading ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
-                  >
-                    {leading.toLocaleString("vi-VN")}
-                  </button>
-                ))}
-              </div>
-            </Popover.Content>
-          </Popover.Portal>
-        </Popover.Root>
-        {canListen && (
-          <>
-            {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
-            <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="max-sm:hidden">
-              Nghe từ đây
-            </Button>
-            {/* Điện thoại: cùng việc, chỉ còn biểu tượng - trước đây nút ẩn hẳn và chỉ còn cách đoán là chạm vào câu. */}
-            <IconButton label="Nghe từ đây" icon={Headphones} tone="solid" onClick={listenHere} className={cn("sm:hidden", TOUCH)} />
-          </>
-        )}
+        <h2 className="min-w-0 flex-1 truncate text-base font-semibold" title={chapter.subtitle ? `${chapter.title} · ${name}` : name}>
+          <MotionRegion as="span" motionKey={chapterId} className="block truncate">{name}</MotionRegion>
+        </h2>
       </header>
 
-      <div ref={container} onScroll={onScroll} {...follow.input} className="relative min-h-0 flex-1 overflow-y-auto">
+      <div ref={container} onScroll={onScroll} {...scrollInput} data-reader-scroll className="relative min-h-0 flex-1 overflow-y-auto">
         {/* Hộp (Radix) mở / đóng thì đặt lên body pointer-events:none và biến --removed-body-scroll-bar-size (khoá cuộn) - cả hai đều
             kế thừa, chương 1,5 triệu chữ phải tính lại kiểu chữ của mọi câu: ~400 ms mỗi lần mở / đóng ô "Tìm trong sách" (soát uxfix30).
             Giá trị riêng ở đây chặn thay đổi lan xuống; lớp phủ của hộp vẫn che trang nên bấm ra ngoài vẫn không tới chữ. */}
@@ -393,7 +406,7 @@ export function ReaderScreen(edit: SentenceEditing) {
             <button
               type="button"
               onClick={() => go(1)}
-              className="mt-12 flex w-full items-center justify-between rounded-2xl border border-line bg-panel px-5 py-4 text-left text-base hover:border-accent"
+              className="mt-12 flex w-full items-center justify-between gap-4 border-t border-line py-5 text-left text-base transition-colors duration-motion-fast hover:text-accent-text"
             >
               <span>
                 <span className="block text-xs text-fg-2">Chương tiếp theo</span>
@@ -408,7 +421,9 @@ export function ReaderScreen(edit: SentenceEditing) {
         <MotionRegion motionKey="floating" className={FLOATING}>
           <div className={cn(FLOATING_BODY, "flex-col items-center")}>
             <MotionPresence open={Boolean(menu.bar)} className="w-full">{menu.bar}</MotionPresence>
-            <MotionPresence open={selected === null && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
+            <MotionPresence open={selected === null && follow.showJump}><JumpToPlaying onClick={follow.jump} className="mb-2" /></MotionPresence>
+            {/* Đang chọn câu thì thanh việc của câu thay chỗ thanh này. */}
+            <MotionPresence open={controls && !menu.bar}>{bar}</MotionPresence>
           </div>
         </MotionRegion>
       </div>
@@ -417,5 +432,6 @@ export function ReaderScreen(edit: SentenceEditing) {
     </div>
   );
   };
-  return <LoadingCrossfade loading={!book || isLoading} placeholder={placeholder} className="h-full"><MotionRegion>{content()}</MotionRegion></LoadingCrossfade>;
+  // Cả chuỗi khung cao đúng bằng màn: chỉ khung chữ cuộn, thanh đầu và thanh dưới đứng yên (trước đây cả trang cuộn, thanh đầu trong suốt đè lên chữ).
+  return <LoadingCrossfade loading={!book || isLoading} placeholder={placeholder} className="h-full grid-rows-[minmax(0,1fr)] [&>.motion-loading-content]:h-full"><MotionRegion className="h-full">{content()}</MotionRegion></LoadingCrossfade>;
 }

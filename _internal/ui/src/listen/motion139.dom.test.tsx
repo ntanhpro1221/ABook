@@ -173,10 +173,13 @@ it("V1 / V2 / W1 màn Đang nghe: phát / dừng không mờ chéo cả màn; ti
   await render(<NowPlaying mobile />);
   expect(button("Tạm dừng (chạm bìa)")).not.toBeNull();
   expect(animated((element) => element === screen)).toHaveLength(0); // W1
-  // V1: chương có audio -> dòng "Đã nghe …% cả cuốn" hiện dần trong vùng riêng.
+  // V1: chương có audio -> dòng "Đã nghe …% cả cuốn" (đầu menu "…") hiện dần trong vùng riêng.
+  const more = button("Thêm tuỳ chọn");
+  await act(() => { more.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0 })); more.click(); });
+  animate.mockClear();
   player({ playing: true });
   await render(<NowPlaying mobile />);
-  const line = [...host.querySelectorAll<HTMLElement>("p")].find((element) => /cả cuốn|phần đã có/.test(element.textContent ?? ""))!;
+  const line = [...document.querySelectorAll<HTMLElement>("[data-player-more] p")].find((element) => /cả cuốn|phần đã có/.test(element.textContent ?? ""))!;
   expect(line).toBeTruthy();
   expect(animated((element) => element === line)).toHaveLength(1);
   expect(animated((element) => element === screen)).toHaveLength(0);

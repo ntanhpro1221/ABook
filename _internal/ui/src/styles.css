@@ -673,6 +673,16 @@ details[open]:not([data-motion="closing"]) > summary .fold-chevron {
   pointer-events: none;
 }
 
+/* Màn "Đang nghe": nền pha màu chủ đạo của bìa vào --bg, 10 % (sáng) / 16 % (tối) - mỗi cuốn một không khí (docs/DESIGN.md 5.1). Đổi cuốn thì
+   nền mờ chéo sang màu mới. --cover-tint đặt tại chỗ (PlayerViews.NowPlaying, màu đã lọc). */
+.now-playing-tint {
+  background-color: color-mix(in oklab, var(--cover-tint, var(--bg)) 10%, var(--bg));
+  transition: background-color var(--motion-slow) var(--ease-standard);
+}
+[data-theme="dark"] .now-playing-tint {
+  background-color: color-mix(in oklab, var(--cover-tint, var(--bg)) 16%, var(--bg));
+}
+
 /* Màn "Đang nghe" khi không có View Transitions (đường dự phòng): trượt lên từ đáy. */
 .now-playing {
   --enter-y: calc(24px * var(--motion-amount));

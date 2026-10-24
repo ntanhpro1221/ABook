@@ -18,6 +18,7 @@ import {
   Loader2,
   Maximize2,
   Moon,
+  MoreHorizontal,
   Music2,
   Pause,
   Pencil,
@@ -37,7 +38,7 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ComponentProps, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -72,6 +73,7 @@ import { askOnlineConsent, onlineConsentGiven, pickVoiceWithConsent, spokenVoice
 import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
 import { ADD_MUSIC_LABEL, shortPlaylistLabel } from "./playlistBed";
 import { openExternal } from "@/shared/openExternal";
+import { ACTION_BUTTON, ACTION_GLYPH, ACTION_LABEL, ActionButton, actionTone } from "./ActionButton";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
 import { SuggestionsButton } from "./ReadingSuggestions";
 import { useSentenceMenu, type SentenceEditing } from "./SentenceMenu";
@@ -172,14 +174,14 @@ function SeekBar({ large = false }: { large?: boolean }) {
         disabled={!duration}
       >
         <Slider.Track className={cn("relative grow overflow-hidden rounded-full bg-line-strong", large ? "h-1.5" : "h-1")}>
-          <Slider.Range className="absolute h-full rounded-full bg-fg group-hover:bg-accent" />
+          <Slider.Range className={cn("absolute h-full rounded-full", large ? "bg-accent" : "bg-fg group-hover:bg-accent")} />
         </Slider.Track>
         <Slider.Thumb
           aria-label="Vị trí trong chương"
           aria-valuetext={`${spokenClock(clamped)} trên ${spokenClock(duration)}`}
           className={cn(
-            "block rounded-full bg-fg shadow transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
-            large ? "size-4 opacity-100" : "size-3 opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
+            "block rounded-full shadow transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+            large ? "size-4 bg-accent opacity-100" : "size-3 bg-fg opacity-0 group-hover:opacity-100 focus-visible:opacity-100",
           )}
         />
       </Slider.Root>
@@ -220,7 +222,8 @@ function useSpeaking(): boolean {
   return queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
 }
 
-function Transport({ large = false }: { large?: boolean }) {
+/** `chapters`: kèm hai nút chương trước / sau (màn Đang nghe: 5 nút); thanh phát máy tính chỉ giữ lùi · phát · tới (docs/DESIGN.md mục 6). */
+function Transport({ large = false, chapters = true }: { large?: boolean; chapters?: boolean }) {
   const { playing, buffering, toggle, skip, next, previous, queue, track } = usePlayer();
   const speaking = useSpeaking();
   const [hasNext, hasLater] = useMemo(() => {
@@ -231,8 +234,8 @@ function Transport({ large = false }: { large?: boolean }) {
   const size = large ? "lg" : "sm";
   const waiting = buffering && playing;
   return (
-    <MotionRegion as="div" className={cn("flex items-center", large ? "gap-4 sm:gap-6" : "gap-1")}>
-      <IconButton label={withShortcut("Chương trước", "Shift+←")} icon={SkipBack} size={size} className="touch-box" onClick={previous} {...keepFocus} />
+    <MotionRegion as="div" data-player-transport className={cn("flex items-center", large ? "w-full max-w-sm justify-between" : "gap-1")}>
+      {chapters && <IconButton label={withShortcut("Chương trước", "Shift+←")} icon={SkipBack} size={size} className="touch-box" onClick={previous} {...keepFocus} />}
       <IconButton label={withShortcut(`Lùi ${SKIP_SECONDS} giây`, "←")} icon={Back15} size={size} className="touch-box" onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
       <button
         type="button"
@@ -244,25 +247,26 @@ function Transport({ large = false }: { large?: boolean }) {
         aria-keyshortcuts={SHORTCUTS ? "Space" : undefined}
         data-player-toggle
         className={cn(
-          "grid place-items-center rounded-full bg-fg text-bg shadow-card transition-transform hover:scale-105 active:scale-95",
-          large ? "size-16" : "size-10",
+          // Nhấn = thu 0,97 (docs/DESIGN.md 5.2), không nảy. Màn Đang nghe: nút tròn 72 px màu nhấn - nút chính duy nhất của màn.
+          "grid shrink-0 place-items-center rounded-full shadow-card transition-[transform,background-color] duration-motion-fast active:scale-[0.97]",
+          large ? "size-[72px] bg-accent text-accent-ink hover:bg-accent-hover" : "size-10 bg-fg text-bg",
         )}
       >
         {waiting ? (
-          <Loader2 className={cn("animate-spin", large ? "size-7" : "size-5")} />
+          <Loader2 className={cn("animate-spin", large ? "size-8" : "size-5")} />
         ) : playing ? (
           <span key="pause" className="icon-pop">
-            <Pause className={large ? "size-7" : "size-5"} fill="currentColor" strokeWidth={0} />
+            <Pause className={large ? "size-8" : "size-5"} fill="currentColor" strokeWidth={0} />
           </span>
         ) : (
           <span key="play" className="icon-pop">
-            <Play className={cn(large ? "size-7" : "size-5", "translate-x-[1px]")} fill="currentColor" strokeWidth={0} />
+            <Play className={cn(large ? "size-8" : "size-5", "translate-x-[1px]")} fill="currentColor" strokeWidth={0} />
           </span>
         )}
       </button>
       <IconButton label={withShortcut(`Tới ${SKIP_SECONDS} giây`, "→")} icon={Forward15} size={size} className="touch-box" onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
       {/* Còn chương sau mà chưa có audio: nút vẫn bấm được và nói vì sao (player.step báo + đường đọc chữ); chỉ chương cuối mới mờ. */}
-      <IconButton
+      {chapters && <IconButton
         label={nextChapterLabel(hasNext, hasLater)}
         icon={SkipForward}
         size={size}
@@ -270,7 +274,7 @@ function Transport({ large = false }: { large?: boolean }) {
         onClick={next}
         disabled={!hasLater}
         {...keepFocus}
-      />
+      />}
     </MotionRegion>
   );
 }
@@ -287,8 +291,19 @@ function MenuShell({
   dialogLabel,
   open,
   onOpenChange,
+  look = "chip",
+  caption,
+  icon: RowIcon,
+  side,
 }: {
   trigger: ReactNode;
+  /** Kiểu nút mở: "chip" (thanh phát máy tính), "action" (nút phụ có nhãn của màn Đang nghe - `caption` là nhãn dưới), "row" (một dòng trong
+   *  menu "…" - `caption` là tên dòng, `trigger` là giá trị đứng bên phải). */
+  look?: "chip" | "action" | "row";
+  caption?: ReactNode;
+  /** Biểu tượng đầu dòng của kiểu "row". */
+  icon?: typeof Gauge;
+  side?: "top" | "bottom";
   /** Nút đổi theo một lựa chọn chỉ có số ("1,5×"): số không vào dấu đổi nội dung của MotionRegion, nên đưa lựa chọn làm khoá chuyển cảnh. */
   triggerKey?: unknown;
   label: string;
@@ -314,18 +329,25 @@ function MenuShell({
             aria-label={label}
             {...keepFocus}
             className={cn(
-              // Điện thoại (màn "Đang nghe"): đủ 48 px để chạm.
-              "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]",
-              active ? "text-accent-text" : "text-fg-2",
+              look === "action"
+                ? ACTION_BUTTON
+                : look === "row"
+                  ? "flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-sm text-fg hover:bg-hover max-sm:min-h-[48px]"
+                  : // Điện thoại (màn "Đang nghe"): đủ 48 px để chạm.
+                    "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]",
+              look !== "row" && actionTone(active),
             )}
           >
+            {look === "row" && <span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span>}
             {/* Mọi nút menu (tốc độ, nhạc, giọng, hẹn giờ, loa / TV) đổi biểu tượng / chữ theo trạng thái: một chỗ mờ chéo cho cả năm. */}
-            <MotionRegion as="span" motionKey={triggerKey} className="inline-flex items-center gap-1">{trigger}</MotionRegion>
+            <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("tabular min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
+            {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
           </button>
         </Popover.Trigger>
       </Tooltip>
       <Popover.Portal>
         <Popover.Content
+          side={side}
           sideOffset={8}
           collisionPadding={12}
           // Esc hay chọn xong: Radix tự trả tiêu điểm về nút mở (bấm ra ngoài thì không) - trước đây chặn nên rơi về BODY (soát a31 K1). Mở
@@ -352,10 +374,22 @@ function MenuShell({
   );
 }
 
-export function SpeedMenu() {
+type MenuLook = "chip" | "action" | "row";
+
+export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
   const { rate, setRate } = usePlayer();
   return (
-    <MenuShell label={speedButtonLabel(rate)} dialogLabel="Tốc độ đọc" active={rate !== 1} triggerKey={rate} focusSelector="[data-current-choice]" trigger={<><Gauge className="size-4" />{speedLabel(rate)}</>}>
+    <MenuShell
+      label={speedButtonLabel(rate)}
+      dialogLabel="Tốc độ đọc"
+      active={rate !== 1}
+      triggerKey={rate}
+      focusSelector="[data-current-choice]"
+      look={look}
+      caption="Tốc độ"
+      // Nút có nhãn của màn Đang nghe: chính con số là biểu tượng ("1,15×"), nhãn "Tốc độ" ở dưới.
+      trigger={look === "action" ? speedLabel(rate) : <><Gauge className="size-4" />{speedLabel(rate)}</>}
+    >
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Tốc độ đọc · nhớ riêng cho cuốn này</div>
       <div className="grid grid-cols-3 gap-1 p-1">
         {SPEEDS.map((speed) => (
@@ -390,14 +424,14 @@ export function SpeedMenu() {
 /** Nhạc nền ở trình phát. Chương chỉ-có-chữ ("Nghe ngay"): một danh sách phát cho cả cuốn, "Nhạc của tôi" hay tắt - cùng lựa chọn với
  *  menu của sách (PlaylistChoice.tsx), lưu vào phần sửa của sách. Chương có audio của sách nói có nhạc người làm sách gắn: bật/tắt và mức
  *  (cùng lệnh với hộp "Sửa sách"); sách không gắn nhạc thì không hiện nút. */
-export function MusicMenu() {
+export function MusicMenu({ look = "chip" }: { look?: MenuLook }) {
   const { track, queue } = usePlayer();
   const speaking = Boolean(track) && queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
   // Một vỏ cho cả hai loại chương (và lúc chưa có gì): đổi component không dựng lại nút trần mà mờ chéo. Vùng con tự lo cùng một cuốn đổi
   // trạng thái, nên vỏ chỉ chuyển cảnh khi đổi cuốn / loại chương.
   return (
     <MotionRegion as="span" motionKey={[track?.bookId ?? null, speaking]} className="inline-flex">
-      {track && (speaking ? <MusicMenuFor bookId={track.bookId} /> : <PackagedMusicMenu bookId={track.bookId} />)}
+      {track && (speaking ? <MusicMenuFor bookId={track.bookId} look={look} /> : <PackagedMusicMenu bookId={track.bookId} look={look} />)}
     </MotionRegion>
   );
 }
@@ -431,18 +465,22 @@ export function LevelButtons({ level, disabled, onChange }: { level: number; dis
   );
 }
 
-function PackagedMusicMenu({ bookId }: { bookId: string }) {
+function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook }) {
   const { view, change } = useBookMusic(bookId);
   const { musicBroken: broken } = usePlayer();
   const music = view.data;
   const id = `player-music-${bookId}`;
   // Gốc luôn là một MotionRegion: nhạc tải xong / gỡ nhạc thì nút hiện / ẩn dần, không thay gốc MotionRegion <-> MenuShell.
   return (
-    <MotionRegion as="span" className="inline-flex">{music?.hasMusic && <MenuShell
+    <MotionRegion as="span" className={look === "row" ? "flex" : "inline-flex"}>{music?.hasMusic && <MenuShell
       label="Nhạc nền"
       active={music.enabled}
       width="w-64"
-      trigger={
+      look={look}
+      caption="Nhạc nền"
+      icon={Music2}
+      triggerKey={look === "row" ? music.enabled : undefined}
+      trigger={look === "row" ? (music.enabled ? "Bật" : "Tắt") :
         // Tắt: gạch chéo trên nốt nhạc (lucide không có biểu tượng "nhạc tắt").
         <span className="relative">
           <Music2 className="size-4" />
@@ -466,7 +504,7 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
   );
 }
 
-function MusicMenuFor({ bookId }: { bookId: string }) {
+function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
   const { options, chosen, label, playing, scene, error, loading, choose, busy, levelDb, setLevel, levelBusy, canImport, addMusic } = usePlaylistChoice(bookId);
   const { musicOffline, musicBroken, musicLoading } = usePlayer();
   const waiting = busy || musicLoading;
@@ -475,7 +513,13 @@ function MusicMenuFor({ bookId }: { bookId: string }) {
       label="Nhạc nền"
       tooltip={waiting ? "Đang chuẩn bị nhạc nền…" : playing ? `Nhạc nền: ${shortPlaylistLabel(label)} - bấm để chọn nhạc khác` : "Nhạc nền - bấm để chọn nhạc"}
       active={playing || waiting}
-      trigger={<>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Music2 className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
+      look={look}
+      caption="Nhạc nền"
+      icon={Music2}
+      triggerKey={look === "row" ? [waiting, playing, label] : undefined}
+      trigger={look === "row"
+        ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : "Tắt"}</span>)
+        : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Music2 className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
     ><MotionRegion>
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>
@@ -564,7 +608,7 @@ type VoiceMenuScope = "bar" | "screen";
 /** Thanh gọn không có menu giọng: bấm nút ở đó mở màn "Đang nghe" rồi menu của màn ấy mở ngay khi dựng xong. */
 let voiceMenuWaiting: VoiceMenuScope | null = null;
 
-export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
+export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuScope; look?: MenuLook }) {
   const [menuOpen, setMenuOpen] = useState(false);
   // Mở từ lời báo lỗi giọng ("Chọn giọng khác"): chọn xong là đọc tiếp bằng giọng mới, như nút "Đọc bằng …" (soát a67: lời báo mất mà không phát gì).
   const fromAlert = useRef(false);
@@ -604,8 +648,14 @@ export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
         if (!open) fromAlert.current = false;
         setMenuOpen(open);
       }}
+      look={look}
+      caption="Giọng đọc"
+      icon={AudioLines}
+      triggerKey={look === "row" ? current?.id : undefined}
       // Tên giọng hiện cả trên điện thoại: người nghe thấy ngay giọng nào đang đọc, không chỉ một biểu tượng.
-      trigger={<><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[75rem]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
+      trigger={look === "row"
+        ? <span className="block max-w-32 truncate">{current ? spokenVoiceName(current.name) : ""}</span>
+        : <><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[75rem]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
       width="w-80 max-w-[calc(100vw-1.5rem)]"
     ><MotionRegion>
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Giọng đọc · nhớ riêng cho cuốn này</div>
@@ -683,7 +733,7 @@ export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
     </MotionRegion></MenuShell>
   );
   };
-  return <MotionRegion as="span" className="inline-flex">{menu()}</MotionRegion>;
+  return <MotionRegion as="span" className={look === "row" ? "flex" : "inline-flex"}>{menu()}</MotionRegion>;
 }
 
 /** Trạng thái "Làm trước" (một việc cho cả máy): hỏi lại thường xuyên khi đang làm. Điện thoại còn đẩy tiến độ vào cùng khoá (android/readAloud.ts). */
@@ -840,14 +890,15 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
   );
 }
 
-export function SleepMenu() {
+export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
   const { sleep, setSleep, extendSleep, options, sleepStoppedAt, lastSleepMinutes, track } = usePlayer();
   // Thẻ "Tối qua" chỉ đáng nhắc khi người nghe đã từng có đêm nào được ghi lại (chưa có thì nhắc là nhắc một thứ họ chưa thấy bao giờ).
   const hadNight = Boolean(useLastNight().data);
   const now = useTicker(sleep.kind === "minutes" && sleep.since !== null);
   const recentlyStopped = sleep.kind === "off" && sleepStoppedAt !== null && now - sleepStoppedAt < 30 * 60_000;
   return (
-    <MotionRegion><SleepPicker
+    <MotionRegion as={look === "chip" ? "div" : "span"} className={look === "row" ? "flex" : look === "action" ? "inline-flex" : undefined}><SleepPicker
+      look={look}
       sleep={sleep}
       now={now}
       disabled={!track}
@@ -920,7 +971,9 @@ function SleepPicker({
   onSet,
   idle = null,
   note,
+  look = "chip",
 }: {
+  look?: MenuLook;
   sleep: SleepMode;
   now: number;
   /** Thiết bị đang phát (loa / TV): tên đi vào nhãn đọc màn hình. */
@@ -945,12 +998,17 @@ function SleepPicker({
       active={active}
       width="w-64"
       focusSelector="[data-current-choice]"
-      trigger={
+      look={look}
+      icon={Moon}
+      // Nút có nhãn: đang hẹn thì nhãn dưới là thời gian còn lại ("12 phút"), mờ chéo khi đổi.
+      caption={look === "row" ? "Hẹn giờ tắt" : active ? sleepButtonLabel(sleep, now) : "Hẹn giờ"}
+      triggerKey={look === "row" ? active && sleepButtonLabel(sleep, now) : undefined}
+      trigger={look === "row" ? (active ? sleepButtonLabel(sleep, now) : "Tắt") :
         <>
           <SleepRing fraction={sleep.kind === "minutes" && sleep.minutes > 0 && left !== null ? left / (sleep.minutes * 60_000) : null}>
-            <Moon className="size-4" />
+            <Moon className={look === "action" ? "size-5" : "size-4"} />
           </SleepRing>
-          {active && <span className="tabular">{sleepButtonLabel(sleep, now)}</span>}
+          {active && look === "chip" && <span className="tabular">{sleepButtonLabel(sleep, now)}</span>}
         </>
       }
     ><MotionRegion>
@@ -1052,7 +1110,7 @@ function SleepPicker({
   );
 }
 
-function VolumeControl() {
+function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
   const { volume, setVolume } = usePlayer();
   const Icon = volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
   const remembered = useRef(volume || 0.9);
@@ -1086,6 +1144,16 @@ function VolumeControl() {
       />
     </Slider.Root>
   );
+  // Một dòng trong menu "…" của màn Đang nghe: tên + nút tắt tiếng + thanh trượt, không thêm bảng nổi nào.
+  if (look === "row") {
+    return (
+      <div className="flex min-h-10 items-center gap-2 px-2 text-sm max-sm:min-h-[48px]">
+        <span className="min-w-0 flex-1">Âm lượng</span>
+        <IconButton label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} icon={Icon} size="sm" onClick={toggleMute} />
+        {slider("flex w-28")}
+      </div>
+    );
+  }
   if (!wide) {
     return (
       <Popover.Root><MotionRegion>
@@ -1170,7 +1238,7 @@ export function useAddBookmark() {
 
 function BookmarkButton() {
   const add = useAddBookmark();
-  return <IconButton label={withShortcut("Thêm dấu trang", "B")} icon={BookmarkPlus} size="sm" className="max-sm:size-[48px]" {...keepFocus} onClick={() => void add()} />;
+  return <ActionButton label="Dấu trang" aria-label={withShortcut("Thêm dấu trang", "B")} icon={BookmarkPlus} {...keepFocus} onClick={() => void add()} />;
 }
 
 /** Phím B: một chỗ lắng nghe duy nhất (thanh phát luôn có mặt khi đang nghe). */
@@ -1454,6 +1522,68 @@ function FollowRecord() {
   return null;
 }
 
+// ---- Menu "…" của trình phát -----------------------------------------------------------------------------
+
+const MENU_ROW = "flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-sm text-fg hover:bg-hover disabled:opacity-40 disabled:hover:bg-transparent max-sm:min-h-[48px]";
+
+/** Một việc trong menu "…": chọn là làm và đóng menu. */
+function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: typeof Gauge }) {
+  return (
+    <Popover.Close asChild>
+      <button type="button" className={MENU_ROW} {...keepFocus} {...rest}>
+        <Icon className="size-4 shrink-0 text-fg-2" />
+        <span className="min-w-0 flex-1 truncate">{children}</span>
+      </button>
+    </Popover.Close>
+  );
+}
+
+/** "…" của trình phát: mọi việc ít dùng (nhạc nền, giọng, âm lượng, gợi ý, phát trên máy khác...) nằm trong một bảng, hàng chính chỉ giữ việc
+ *  hay dùng (docs/DESIGN.md mục 4.3). Menu Giọng đọc nằm trong bảng này: "Chọn giọng khác" ở lời báo lỗi giọng mở bảng trước, menu giọng mở ngay
+ *  khi dựng (voiceMenuWaiting). */
+function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const openRef = useRef(open);
+  openRef.current = open;
+  useEffect(() => {
+    if (voiceMenuWaiting === scope) setOpen(true);
+    const onOpen = (event: Event) => {
+      // Bảng đang mở thì menu giọng trong đó tự nghe sự kiện này.
+      if ((event as CustomEvent<VoiceMenuScope>).detail !== scope || openRef.current) return;
+      voiceMenuWaiting = scope;
+      setOpen(true);
+    };
+    window.addEventListener(OPEN_VOICE_MENU_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_VOICE_MENU_EVENT, onOpen);
+  }, [scope]);
+  return (
+    <MenuShell
+      label="Thêm tuỳ chọn"
+      trigger={<MoreHorizontal className="glyph" />}
+      width="w-72 max-w-[calc(100vw-1.5rem)]"
+      // Mở ra: tiêu điểm vào chính bảng, không vào nút đầu tiên - nút đầu bật chú thích và trông như "đang chọn".
+      focusSelector="[data-player-more]"
+      open={open}
+      onOpenChange={(value) => {
+        if (!value && voiceMenuWaiting === scope) voiceMenuWaiting = null;
+        setOpen(value);
+      }}
+    >
+      <div data-player-more tabIndex={-1} className="flex flex-col gap-0.5 outline-none">{children}</div>
+    </MenuShell>
+  );
+}
+
+/** Một dòng có tên cho nút riêng của nền / tính năng (gợi ý đọc, phát trên thiết bị khác): nút đứng bên phải; nút không có thì cả dòng không chiếm chỗ. */
+function MenuSlot({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex min-h-10 items-center gap-3 rounded-lg pl-2 text-sm text-fg max-sm:min-h-[48px] [&:not(:has(button))]:hidden">
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+      {children}
+    </div>
+  );
+}
+
 // ---- Thanh phát nhỏ ------------------------------------------------------------------------------------
 
 /** `extra`: nút riêng của từng nền, đặt trước nhóm nút phải (máy tính: "Phát trên điện thoại"). */
@@ -1467,9 +1597,10 @@ export function PlayerBar({
   notices?: boolean;
   extra?: ReactNode;
 }) {
-  const { track, close, playing, buffering, toggle } = usePlayer();
+  const { track, close, playing, buffering, toggle, next, previous } = usePlayer();
   const { expanded, setExpanded } = useNowPlaying();
   const speaking = useSpeaking();
+  const addBookmark = useAddBookmark();
   useContinueIntoNextPart();
   useWarmVoice(track?.bookId); // trình phát mở lại với cuốn đang dở: nạp sẵn model giọng trên máy
   const content = () => {
@@ -1554,19 +1685,24 @@ export function PlayerBar({
           </div>
         </button>
         <div className="flex w-full flex-col items-center gap-0.5 @max-[48rem]:col-span-2 @max-[48rem]:row-start-2">
-          <Transport />
+          <Transport chapters={false} />
           <SeekBar />
         </div>
-        <div className="flex min-w-0 items-center justify-end gap-0.5 whitespace-nowrap @max-[48rem]:col-start-2 @max-[48rem]:row-start-1 @max-[48rem]:flex-wrap">
-          {extra}
-          <MusicMenu />
-          <VoiceMenu />
+        {/* Tối đa 6 điều khiển (docs/DESIGN.md mục 6): lùi · phát · tới ở giữa; tốc độ · âm lượng · "…" bên phải - còn lại vào "…". */}
+        <div className="flex min-w-0 items-center justify-end gap-0.5 whitespace-nowrap @max-[48rem]:col-start-2 @max-[48rem]:row-start-1">
           <SpeedMenu />
-          <SleepMenu />
-          <BookmarkButton />
           <VolumeControl />
-          <IconButton label="Mở màn hình đang nghe" icon={Maximize2} size="sm" onClick={() => setExpanded(true)} {...keepFocus} />
-          <IconButton label="Đóng trình phát" icon={X} size="sm" onClick={close} {...keepFocus} />
+          <MoreMenu scope="bar">
+            <SleepMenu look="row" />
+            <MenuRow icon={BookmarkPlus} aria-keyshortcuts={SHORTCUTS ? "B" : undefined} onClick={() => void addBookmark()}>Thêm dấu trang</MenuRow>
+            <MenuRow icon={SkipBack} aria-keyshortcuts={SHORTCUTS ? "Shift+ArrowLeft" : undefined} onClick={previous}>Chương trước</MenuRow>
+            <MenuRow icon={SkipForward} aria-keyshortcuts={SHORTCUTS ? "Shift+ArrowRight" : undefined} onClick={next}>Chương sau</MenuRow>
+            <MusicMenu look="row" />
+            <VoiceMenu look="row" />
+            <MenuRow icon={Maximize2} onClick={() => setExpanded(true)}>Mở màn hình đang nghe</MenuRow>
+            <MenuRow icon={X} onClick={close}>Đóng trình phát</MenuRow>
+            <MenuSlot label="Phát trên thiết bị khác">{extra}</MenuSlot>
+          </MoreMenu>
         </div>
       </div>
     </section>
@@ -1613,7 +1749,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   return (
     <MotionRegion as="div" className="relative h-full">
       <div ref={container} onScroll={follow.onScroll} {...follow.input} className="h-full overflow-y-auto px-6 py-8 sm:px-10">
-        <div className="mx-auto max-w-[62ch] text-[1.0625rem] leading-[1.75]">
+        <div className="mx-auto max-w-[68ch] text-[1.25rem] leading-[1.7]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải "chưa có audio". */}
           {!script.timed && current?.state !== "text" && (
             <p className="mb-5 rounded-lg bg-hover px-4 py-3 text-sm text-fg-2">Chương này chưa có audio hoàn chỉnh - đang hiện văn bản, chưa đọc theo được.</p>
@@ -1677,9 +1813,10 @@ export function ChapterPanel() {
             disabled={!canPlay(chapter)}
             aria-current={current ? "true" : undefined}
             onClick={() => jumpTo(chapter.id)}
+            // Hàng đang phát: chữ màu nhấn, không tô nền cả hàng (docs/DESIGN.md mục 6).
             className={cn(
               "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-motion-fast",
-              current ? "bg-accent-soft" : canPlay(chapter) && "hover:bg-hover",
+              canPlay(chapter) && "hover:bg-hover",
             )}
           >
             <MotionRegion as="span" className="inline-grid h-4 w-5 shrink-0 place-items-center">
@@ -1915,7 +2052,7 @@ function initialPanel(): Panel {
 }
 
 /** Tiến độ cả cuốn (phần đã có audio): "Đã nghe 42% cả cuốn · còn khoảng 2 giờ 32 phút ở tốc độ 1,5×". */
-function BookProgressLine() {
+function BookProgressLine({ className }: { className?: string }) {
   const { queue, track, rate, atEnd } = usePlayer();
   const tens = useClock((time) => Math.floor(time / 10));
   const { before, total } = useMemo(() => {
@@ -1938,7 +2075,7 @@ function BookProgressLine() {
   const text = shown ? bookProgressText({ whole, heard, total, rate, speed: speedLabel(rate), finished }) : "";
   // Số chạy theo đồng hồ không chuyển cảnh; hiện / ẩn dòng, đổi lời (cả cuốn / phần đã có / đã nghe hết, phút -> giờ) và đổi tốc độ thì mờ chéo.
   return (
-    <MotionRegion as="p" motionKey={[rate, text.replace(/\d[\d\s.,:%–/\-]*/g, "#")]} className="tabular mt-1 text-xs text-fg-2 empty:mt-0">
+    <MotionRegion as="p" motionKey={[rate, text.replace(/\d[\d\s.,:%–/\-]*/g, "#")]} className={cn("tabular text-xs text-fg-2", className)}>
       {text}
     </MotionRegion>
   );
@@ -2077,9 +2214,9 @@ function CoverToggle({ title, image }: { title: string; image: ComponentProps<ty
       type="button"
       onClick={toggle}
       aria-label={`${toggleLabel(playing, buffering, speaking)} (chạm bìa)`}
-      className="size-[min(300px,100cqw,100cqh)] shrink-0 rounded-lg transition-transform active:scale-[0.98]"
+      className="size-[min(320px,100cqw,100cqh)] shrink-0 rounded-xl transition-transform duration-motion-fast active:scale-[0.97]"
     >
-      <BookCover title={title} image={image} size="xl" className="cover-morph w-full" />
+      <BookCover title={title} image={image} size="xl" className="cover-morph w-full rounded-xl shadow-float" />
     </button>
   );
 }
@@ -2087,6 +2224,7 @@ function CoverToggle({ title, image }: { title: string; image: ComponentProps<ty
 export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean; actions?: ReactNode; edit?: SentenceEditing }) {
   const { track, sleep, fading, canGoBack, goBack } = usePlayer();
   const { expanded, setExpanded } = useNowPlaying();
+  const navigate = useNavigate();
   const [panel, setPanelState] = useState<Panel>(initialPanel);
   const [showPanel, setShowPanelNow] = useState(!mobile);
   // Bìa <-> bảng (Đọc theo / Chương / Dấu trang) và đổi bảng: mờ chéo qua một View Transition (a120), không thay chỗ tức thì.
@@ -2217,7 +2355,24 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
     </div>
   );
 
+  // Điện thoại: "Đọc theo" mở màn đọc của chương đang nghe - cả màn cho chữ, thanh điều khiển tự mờ khi cuộn đọc (L7). Máy tính: bảng bên phải.
+  const readAlong = () => {
+    if (!track) return;
+    if (!mobile) return selectPanel("text");
+    setExpanded(false);
+    navigate(`/book/${track.bookId}/read/${track.chapterId}`);
+  };
+  // Điện thoại: bảng Chương / Dấu trang thay chỗ bìa; bấm lại nút ấy (hay Back) là về bìa.
+  const togglePanel = (value: Panel) => {
+    if (mobile && showPanel && panel === value) setShowPanel(false);
+    else selectPanel(value);
+  };
+  const shown = (value: Panel) => showPanel && panel === value;
+
   if ((!open && !presence.mounted) || !track) return <MotionRegion />;
+  // Mỗi cuốn một không khí: màu chủ đạo của bìa (máy chủ tính sẵn, đã lọc), không có thì màu của bìa vẽ từ tên - pha 10 % / 16 % vào nền
+  // (styles.css .now-playing-tint, docs/DESIGN.md 5.1); đổi cuốn thì nền mờ chéo sang màu mới.
+  const tint = { "--cover-tint": coverColor(track.bookCover?.color) || coverStyle(track.bookTitle).from } as CSSProperties;
   return (
     <MotionRegion as="section"
       elementRef={section}
@@ -2225,83 +2380,97 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       inert={!open}
       aria-hidden={!open || undefined}
       onAnimationEnd={presence.onAnimationEnd}
-      className={cn("now-playing now-playing-vt absolute inset-0 z-30 flex bg-bg", mobile && "flex-col")}
+      className={cn("now-playing now-playing-vt now-playing-tint absolute inset-0 z-30 flex", mobile && "flex-col")}
+      style={tint}
       // Mở ra thì đây là nội dung chính: <main> của trang nằm dưới đã khoá (inert) và ra khỏi cây trợ năng - phím "tới vùng chính" của
       // trình đọc màn hình phải tới đây (soát a31 A3). role thay vì thẻ <main>: tài liệu chỉ được có một thẻ <main>.
       role="main"
       aria-label="Đang nghe"
     >
       <aside
-        // Cửa sổ vừa (~900px): cột trái 400px chỉ chừa ~270px cho đọc theo - co về 320px dưới lg (soát UX 29-09).
         className={cn(
-          "flex shrink-0 flex-col bg-panel",
-          // Điện thoại xoay ngang chỉ cao ~360px: cả cột không vừa, phần dưới (tốc độ / hẹn giờ / nhạc / dấu trang, tab Đọc theo / Chương)
-          // bị cắt không cuộn tới được (soát UX a9) - cho cả cột cuộn dọc. Màn dọc đủ chỗ nên không có gì để cuộn.
-          mobile ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 pb-6 pt-3" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
+          "flex shrink-0 flex-col",
+          // Điện thoại xoay ngang chỉ cao ~360px: cả cột không vừa - cho cả cột cuộn dọc (soát UX a9). Màn dọc đủ chỗ nên không có gì để cuộn.
+          // Cửa sổ vừa (~900px): cột trái co về 320px dưới lg (soát UX 29-09).
+          mobile ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-2" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
         )}
-        // Mỗi cuốn một sắc: màu chủ đạo của ảnh bìa thật (máy chủ tính sẵn), không có thì màu của bìa vẽ từ tên.
-        // Nhạt dần trước khi tới chữ và nút, nên không đụng tới độ tương phản của chúng.
-        style={{
-          backgroundImage: `linear-gradient(180deg, color-mix(in oklab, ${coverColor(track.bookCover?.color) || coverStyle(track.bookTitle).from} 42%, transparent) 0%, transparent 58%)`,
-        }}
       >
+        {/* Thanh đầu: thu nhỏ · ĐANG NGHE · "…" - không gì khác. */}
         <div className="grid grid-cols-[1fr_auto_1fr] items-center">
           <IconButton label={withShortcut("Thu nhỏ", "Esc")} icon={ChevronDown} className="touch-box justify-self-start" onClick={() => setExpanded(false)} />
-          <span className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">Đang nghe</span>
-          <div className="flex items-center justify-self-end">
-            <MotionRegion as="span" className="inline-flex">{canGoBack && <IconButton label="Quay lại chỗ vừa nghe" icon={Undo2} onClick={goBack} />}</MotionRegion>
-            {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
-            {!COARSE && <IconButton label="Phím tắt (?)" icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts} {...keepFocus} />}
+          <span className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-2">Đang nghe</span>
+          <div className="justify-self-end">
+            <MoreMenu scope="screen">
+              <BookProgressLine className="mb-1 border-b border-line px-2 pb-2 pt-1" />
+              <MusicMenu look="row" />
+              <VoiceMenu scope="screen" look="row" />
+              <VolumeControl look="row" />
+              <MenuRow icon={BookmarkIcon} onClick={() => selectPanel("bookmarks")}>Danh sách dấu trang</MenuRow>
+              {canGoBack && <MenuRow icon={Undo2} onClick={goBack}>Quay lại chỗ vừa nghe</MenuRow>}
+              {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
+              {!COARSE && <MenuRow icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts}>Phím tắt</MenuRow>}
+              <MenuSlot label="Gợi ý cho phần đọc"><SuggestionsButton bookId={track.bookId} className="max-sm:size-[48px]" /></MenuSlot>
+              <MenuSlot label="Phát trên thiết bị khác">{actions}</MenuSlot>
+            </MoreMenu>
           </div>
         </div>
         {mobile && showPanel ? (
-          <div key="panel" data-motion-content className="motion-reveal -mx-6 mt-2 min-h-56 flex-1 border-y border-line">{panelBody}</div>
+          <div key="panel" data-motion-content className="motion-reveal -mx-5 mt-2 flex min-h-56 flex-1 flex-col">
+            <div className="flex shrink-0 items-center justify-between px-5 pb-1">
+              <span className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-2">{panel === "bookmarks" ? "Dấu trang" : "Chương"}</span>
+              <IconButton label="Về bìa sách" icon={X} size="sm" onClick={() => setShowPanel(false)} />
+            </div>
+            <div className="min-h-0 flex-1 border-y border-line">{panelBody}</div>
+          </div>
         ) : (
-          // Bìa vuông, to nhất 300px nhưng co theo chỗ còn lại của khung (cả chiều cao): cqw/cqh là cỡ của chính khung này (container-type:size) - nút bìa
-          // w-full max-w-[300px] cũ không co theo chiều cao nên đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10).
+          // Bìa vuông, to nhất 320px nhưng co theo chỗ còn lại của khung (cả chiều cao): cqw/cqh là cỡ của chính khung này (container-type:size) -
+          // nút bìa không co theo chiều cao thì đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10).
           <div key="cover" data-motion-content className="motion-reveal mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
             {/* Chạm bìa để phát/dừng (SABP): mục tiêu lớn nhất màn hình, dễ trúng khi đang nằm và mắt nhắm mắt mở. */}
             <CoverToggle title={track.bookTitle} image={track.bookCover} />
           </div>
         )}
-        <div className="mt-5 w-full text-center">
-          <h2 className="truncate text-lg font-semibold" title={track.chapterTitle}>
+        <div className="mt-6 w-full min-w-0">
+          <h2 className="truncate text-xl font-bold leading-snug" title={track.chapterTitle}>
             <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block truncate">{track.chapterTitle}</MotionRegion>
           </h2>
           <p className="mt-0.5 truncate text-sm text-fg-2">
             <TrackSubtitle />
           </p>
-          <BookProgressLine />
           <MusicCreditLine />
         </div>
         <div className="mt-5 w-full">
           <SeekBar large />
         </div>
+        {/* Một hàng 5 nút: chương trước · lùi 15 · phát · tới 15 · chương sau. */}
         <div className="mt-3 flex justify-center">
           <Transport large />
         </div>
-        {/* Hai nhóm xuống dòng theo nhóm, không theo từng nút: nhãn tốc độ / hẹn giờ / tên giọng làm hàng dài hơn màn thì trước đây nút cuối (phát trên
-            loa / TV) rơi lẻ một mình ở hàng dưới (soát UX a9). */}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-          <div className="flex items-center justify-center gap-1">
-            <MusicMenu />
-            <VoiceMenu scope="screen" />
-            <SpeedMenu />
-            <SleepMenu />
-          </div>
-          <div className="flex items-center justify-center gap-1">
-            <BookmarkButton />
-            <SuggestionsButton bookId={track.bookId} className="max-sm:size-[48px]" />
-            <VolumeControl />
-            {actions}
-          </div>
+        {/* Một hàng 4 nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. */}
+        <div role="group" aria-label="Điều khiển phụ" data-player-secondary className="mt-5 flex items-start justify-between">
+          <SpeedMenu look="action" />
+          <SleepMenu look="action" />
+          <BookmarkButton />
+          <ActionButton icon={ListOrdered} label="Chương" aria-pressed={shown("chapters")} active={shown("chapters")} {...keepFocus} onClick={() => togglePanel("chapters")} />
         </div>
         {/* Đang nhỏ dần thì "Sắp tắt…" đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
         <MotionPresence open={sleep.kind === "chapter" && !fading}><p className="mt-2 text-center text-xs text-fg-2">Sẽ dừng khi hết chương này.</p></MotionPresence>
         <FadingNotice className="mt-3" />
         <PlayerAlert className="mt-3" overlay />
         <CaughtUpNotice />
-        {mobile && <div className="mt-4 flex justify-center">{panelTabs}</div>}
+        <button
+          type="button"
+          onClick={readAlong}
+          aria-pressed={mobile ? undefined : shown("text")}
+          {...keepFocus}
+          className={cn(
+            "mt-5 flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-hover text-sm font-medium transition-[transform,color,background-color] duration-motion-fast hover:bg-line active:scale-[0.97]",
+            !mobile && shown("text") ? "text-accent-text" : "text-fg",
+          )}
+        >
+          <Text className="size-4" />
+          Đọc theo
+        </button>
       </aside>
       {!mobile && (
         <div className="flex min-w-0 flex-1 flex-col">
