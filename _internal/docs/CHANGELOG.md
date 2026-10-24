@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.136] - 2026-10-24
+
 ### Giao diện
 - Tiêu đề hộp đổi mượt; Back đóng chú thích trước, giữ hộp bên dưới.
 - Nhớ chỗ bạn vừa cuộn khi rời trang; lời nhắc “Sửa câu này” rõ việc hơn.
