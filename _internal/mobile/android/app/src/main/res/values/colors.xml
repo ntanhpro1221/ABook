@@ -4,7 +4,7 @@
          thanh điều hướng, màn chờ và nền cửa sổ đều lấy app_bg nên khớp màu nền ở cả hai giao diện. -->
     <color name="app_bg">#f5f3ef</color>
     <color name="app_text">#1a1814</color>
-    <color name="app_text_secondary">#5e5950</color>
+    <color name="app_text_secondary">#4f4a43</color>
     <color name="colorPrimary">#d4912b</color>
     <color name="colorPrimaryDark">#8a5309</color>
     <color name="colorAccent">#d4912b</color>
