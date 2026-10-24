@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { MotionPresence } from "@/shared/MotionPresence";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Clapperboard, Cpu, Download, LoaderCircle, Square, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -319,8 +320,8 @@ export function StudioSettings() {
       }
     };
     return (
-      <MotionRegion as="div" className="mb-6 max-w-xl">
-        <h3 className="text-sm font-semibold">Studio trên máy này</h3>
+      <MotionRegion as="div" className="max-w-xl py-3.5">
+        <h3 className="text-[0.9375rem] font-medium">Studio trên máy này</h3>
         <p className="mt-1 text-sm">{status.running ? "Đang cài." : "Chưa cài."}</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{STUDIO_NEEDS}</p>
         <p className={cn("mt-1 text-[0.8125rem] leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>
@@ -360,7 +361,7 @@ export function StudioSettings() {
     }
   };
   return (
-    <MotionRegion as="div" className="mb-6">
+    <MotionRegion as="div">
       <SettingsRow label="Studio trên máy này" hint={<>
         <p>Đã cài{status.gpu ? ` · ${status.gpu.name}` : ""}</p>
         <p className="mt-1 break-all">{status.root}</p>
@@ -378,9 +379,10 @@ export function StudioSettings() {
           .
         </p>
       )}
-      <p className="mt-2 text-xs leading-relaxed text-fg-2 text-pretty">
-        Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài.
-      </p>
+      {/* Hậu quả của việc gỡ chỉ cần lúc đang xác nhận - không treo thường trực dưới nút. */}
+      <MotionPresence open={armed}>
+        <p className="pb-3 text-xs leading-snug text-fg-2 text-pretty">Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài.</p>
+      </MotionPresence>
     </MotionRegion>
   );
 }

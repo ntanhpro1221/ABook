@@ -390,14 +390,9 @@ function StudioGroup({ info }: { info: AppInfo | undefined }) {
   const installed = Boolean(info?.studio?.installed);
   return (
     <>
-      <SettingsBlock>
-        {/* Trạng thái Studio (đã cài / chưa cài + Gỡ hay Cài) ở đầu nhóm; chưa cài thì các tuỳ chọn dưới vẫn xem và chỉnh được, có một dòng nói rõ. */}
-        <div className="py-3.5">
-          <StudioSettings />
-        </div>
-      </SettingsBlock>
-      <MotionPresence open={!installed}><p className="mt-4 text-[0.8125rem] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p></MotionPresence>
-      <SettingsBlock>
+      {/* Trạng thái Studio (đã cài / chưa cài + Gỡ hay Cài) ở đầu nhóm cùng việc của riêng máy này; chưa cài thì các tuỳ chọn vẫn xem và chỉnh được, có một dòng nói rõ. */}
+      <SettingsBlock title="Máy này" id="machine">
+        <StudioSettings />
         <SettingsRow label={<span id="pause-on-battery-name">Tạm dừng dùng pin</span>} hint={<span id="pause-on-battery-hint">Cắm sạc lại thì tự làm tiếp đúng chỗ.</span>}>
           <Switch
             id="pause-on-battery"
@@ -408,24 +403,17 @@ function StudioGroup({ info }: { info: AppInfo | undefined }) {
           />
         </SettingsRow>
       </SettingsBlock>
+      <MotionPresence open={!installed}><p className="mt-2 text-[0.8125rem] text-fg-2">Tuỳ chọn ở trang này dùng khi đã cài Studio.</p></MotionPresence>
       <SettingsBlock title="Sách mới" fold="studio.new-book">
         <NewBookDefaults />
         <div className="py-3.5">
           <BookTemplates />
         </div>
       </SettingsBlock>
-      <SharedReadingsBlock />
-    </>
-  );
-}
-
-function SharedReadingsBlock() {
-  return (
-    <SettingsBlock>
-      <div className="py-3.5">
+      <SettingsBlock title="Cách đọc chung" fold="studio.shared-readings">
         <SharedReadingsSettings />
-      </div>
-    </SettingsBlock>
+      </SettingsBlock>
+    </>
   );
 }
 

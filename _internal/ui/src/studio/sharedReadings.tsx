@@ -1,5 +1,4 @@
 import { MotionRegion } from "@/shared/MotionRegion";
-import { Fold } from "@/shared/Collapse";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpenCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -40,6 +39,8 @@ export function useSharedEntry(surface: string, reading?: string | null, enabled
   );
 }
 
+const SEARCH_FROM = 8;
+
 /** Cài đặt → Studio: xem, thêm, bỏ cách đọc chung. */
 export function SharedReadingsSettings() {
   const client = useQueryClient();
@@ -69,9 +70,12 @@ export function SharedReadingsSettings() {
   const entries = data?.entries ?? [];
   const filtered = entries.filter((entry) => `${entry.surface} ${entry.spokenForm}`.toLocaleLowerCase("vi").includes(filter.toLocaleLowerCase("vi")));
   return (
-    <MotionRegion><Fold flat storageKey="studio.shared-readings" title="Cách đọc chung" summary={`${entries.length} tên`} bodyClassName="pb-3">
-      <input aria-label="Tìm cách đọc" value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm" placeholder="Tìm tên…" />
-      <p className="mt-0.5 text-[0.8125rem] text-fg-2 text-pretty">Sửa cách đọc một tên một lần, sách mới tự dùng.</p>
+    // Nằm trong khối gập "Cách đọc chung" của Cài đặt › Studio: lời dẫn trước, ô tìm chỉ khi danh sách đủ dài để cần tìm.
+    <MotionRegion as="div" className="py-3">
+      <p className="text-[0.8125rem] text-fg-2 text-pretty">Sửa cách đọc một tên một lần, sách mới tự dùng.</p>
+      {entries.length > SEARCH_FROM && (
+        <input aria-label="Tìm cách đọc" value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-8 w-full rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus" placeholder="Tìm tên…" />
+      )}
       {entries.length > 0 && (
         <ul className="mt-2 divide-y divide-line">
           {filtered.slice(0, shown).map((entry) => (
@@ -123,7 +127,7 @@ export function SharedReadingsSettings() {
         </Button>
       </form>
       {problem && <p className="mt-1 text-[0.8125rem] text-danger">{problem}</p>}
-    </Fold></MotionRegion>
+    </MotionRegion>
   );
 }
 
