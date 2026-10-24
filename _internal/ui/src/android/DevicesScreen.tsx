@@ -1,7 +1,7 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bluetooth, CheckCircle2, ChevronRight, Copy, Download, FileAudio, HardDrive, Laptop, Link2, Loader2, Pencil, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi, X } from "lucide-react";
+import { type LucideIcon, Bluetooth, CheckCircle2, Copy, Download, HardDrive, Laptop, Link2, Loader2, Pencil, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -9,15 +9,13 @@ import { useBackLayer } from "@/shared/backStack";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
-import { Button, Dialog, EmptyState, Progress } from "@/shared/ui";
+import { Button, Dialog, Progress } from "@/shared/ui";
 import { useUnpair } from "@/shared/useUnpair";
 import { BackgroundNote } from "./BackgroundNote";
 import { BLUETOOTH_DENIED, BLUETOOTH_REASON, bluetoothStep } from "./bluetoothPermission";
 import { connectionRoute } from "@/shared/connectionRoute";
 import { useDownloadProgress } from "./downloads";
-import { pickBookFile } from "./imports";
 import { hasNewAudio, hasNewMeta, hasNewWords } from "./bookUpdates";
-import { OpenStudioButton, useStudioComputers } from "./StudioOpen";
 import { openRelease } from "./UpdateNotice";
 import { isDownloading, storedEntries, useStorage, type RemovableFromPhone, type StoredFolder } from "./storage";
 import { ErrorDetails } from "@/shared/ErrorDetails";
@@ -28,8 +26,7 @@ import { useListPresence, withViewTransition } from "@/shared/motion";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { EbookLibrary, type DownloadEvent, type RemoteBook, type ShareStatus } from "./plugins";
 
-// "Tải sách": lấy sách từ máy tính qua Wi-Fi. Ghép nối một lần bằng mã 6 số hiện trong Cài đặt của máy tính;
-// sau đó chỉ cần mở màn hình này để thấy sách mới và chương mới.
+// Cài đặt › Thiết bị: ghép máy, chia sẻ, chẩn đoán và dung lượng. Sách của máy đã ghép nằm trong Thư viện.
 
 /** Trang tải ABook cho máy tính (chữ chép được; lõi native chỉ mở địa chỉ bắt đầu bằng ".../ABook/" - LibraryPlugin.openRelease). */
 export const DESKTOP_RELEASES = "https://github.com/ntanhpro1221/ABook/releases";
@@ -41,17 +38,17 @@ function ComputerIntro() {
       .writeText(DESKTOP_RELEASES)
       .then(() => toast.success("Đã chép địa chỉ"), () => toast.error("Chưa chép được - giữ ngón tay lên địa chỉ để chọn rồi chép"));
   return (
-    <div className="rounded-2xl border border-line bg-panel p-5 text-sm">
+    <div className="text-sm">
       <div className="flex items-center gap-3">
         <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text">
           <Laptop className="size-5" />
         </div>
-        <h2 className="font-semibold">Có thêm máy tính thì sao?</h2>
+        <h2 className="font-semibold">Studio trên máy tính</h2>
       </div>
       <p className="mt-3 text-pretty text-fg-2">
-        Máy tính có Studio làm sách nói nhiều giọng, rồi gửi sang đây để nghe.
+        Tạo sách nói rồi nghe ở đây.
       </p>
-      <p className="mt-2 text-fg-2">Tải ABook cho máy tính (Windows) ở:</p>
+      <p className="mt-2 text-fg-2">ABook cho Windows:</p>
       <p className="mt-1 select-text break-all font-medium text-fg">{DESKTOP_RELEASES.replace("https://", "")}</p>
       <div className="mt-3 flex flex-wrap gap-2">
         <Button size="sm" variant="secondary" icon={Copy} onClick={copy}>
@@ -161,14 +158,14 @@ function PairPanel() {
   const ready = (target || address.includes(".")) && code.replace(/\D/g, "").length === 6;
   return (
     <MotionRegion as="div" className="space-y-5">
-      <div className="rounded-2xl border border-line bg-panel p-5">
+      <div className="py-4">
         <div className="flex items-center gap-3">
           <div className="grid size-11 place-items-center rounded-xl bg-accent-soft text-accent-text">
             <Wifi className="size-5" />
           </div>
           <div>
-            <h2 className="font-semibold">Đã có ABook trên máy tính? Kết nối</h2>
-            <p className="text-sm text-fg-2">Điện thoại và máy tính cần cùng một mạng Wi-Fi.</p>
+            <h2 className="font-semibold">Nối máy tính</h2>
+            <p className="text-sm text-fg-2">Cho hai máy cùng Wi-Fi.</p>
           </div>
         </div>
         <ol className="mt-4 space-y-1.5 text-sm text-fg-2">
@@ -300,7 +297,7 @@ function PairPanel() {
   );
 }
 
-export function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; progress?: DownloadEvent; onDownload: () => void }) {
+export function RemoteRow({ book, progress, onDownload, compact = false }: { book: RemoteBook; progress?: DownloadEvent; onDownload: () => void; compact?: boolean }) {
   const newChapters = book.downloaded ? book.chaptersAvailable - book.localChapters : 0;
   const newCover = book.downloaded && (book.cover?.version ?? 0) !== (book.localCoverVersion ?? 0);
   const newWords = hasNewWords(book);
@@ -312,9 +309,9 @@ export function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; pr
   // Huỷ dừng thật ở khối kế (LibraryPlugin.cancelDownload); phần đã về giữ lại, bấm Tải lần sau là tải tiếp.
   const cancel = () => void EbookLibrary.cancelDownload({ bookId: book.id }).catch((error) => toastNativeError("Chưa huỷ được", error));
   return (
-    <MotionRegion as="div" className="flex items-center gap-3 py-3">
-      <BookCover title={book.title} size="sm" className="size-14" />
-      <div className="min-w-0 flex-1">
+    <MotionRegion as="div" className={compact ? "flex min-h-11 flex-wrap items-center justify-between gap-1" : "flex items-center gap-3 py-3"}>
+      {!compact && <BookCover title={book.title} size="sm" className="size-14" />}
+      {!compact && <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{book.title}</div>
         <div className="text-xs text-fg-2">
           {book.chaptersAvailable}/{book.chaptersTotal} chương · {formatLength(book.duration)}
@@ -331,7 +328,7 @@ export function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; pr
             valueText={progress?.total ? `đã tải ${percent}%, ${formatSize(progress.done ?? 0)} trên ${formatSize(progress.total)}` : `đã tải ${percent}%`}
           />
         )}
-      </div>
+      </div>}
       {downloading ? (
         <div className="flex shrink-0 items-center gap-1">
           <span className="tabular w-10 text-right text-xs font-semibold text-accent-text" aria-hidden>
@@ -341,7 +338,7 @@ export function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; pr
             type="button"
             onClick={cancel}
             aria-label={`Huỷ tải ${book.title}`}
-            className="grid size-10 place-items-center rounded-full text-fg-2"
+            className="grid size-[44px] place-items-center rounded-full text-fg-2"
           >
             <X className="size-4" />
           </button>
@@ -351,7 +348,7 @@ export function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; pr
           <CheckCircle2 className="size-4" /> Đã tải
         </span>
       ) : (
-        <Button size="sm" variant={book.downloaded ? "secondary" : "primary"} icon={Download} onClick={onDownload}>
+        <Button size="sm" variant={compact ? "ghost" : book.downloaded ? "secondary" : "primary"} icon={Download} onClick={onDownload}>
           {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : newAudio ? "Cập nhật bản thu" : newCover ? "Cập nhật bìa" : newMeta ? "Cập nhật tên" : "Cập nhật chữ"}
         </Button>
       )}
@@ -361,7 +358,8 @@ export function RemoteRow({ book, progress, onDownload }: { book: RemoteBook; pr
 
 // Báo về điện thoại khi máy tính sản xuất có tin (StudioAlerts.kt): sách xong, dừng vì lỗi, có việc mới cần duyệt.
 // Cần công tắc Studio từ xa trên máy tính và quyền điều khiển sản xuất cho điện thoại này - như chính trang Studio.
-function StudioAlertsRow() {
+// Có `icon`: hàng nằm trong danh sách máy của màn Studio - cùng cột icon, cỡ chữ và khoảng đệm với các hàng máy ở trên.
+export function StudioAlertsRow({ icon: Icon }: { icon?: LucideIcon } = {}) {
   const client = useQueryClient();
   const state = useQuery({ queryKey: ["studio-alerts"], queryFn: () => EbookLibrary.studioAlerts() });
   const change = useMutation({
@@ -375,20 +373,21 @@ function StudioAlertsRow() {
   });
   const enabled = state.data?.enabled ?? false;
   return (
-    <div className="mt-3 flex items-center justify-between gap-4 rounded-2xl border border-line bg-panel px-4 py-3.5">
-      <div className="min-w-0">
-        <div className="text-[0.9375rem] font-medium">Báo khi sách xong hay có việc cần duyệt</div>
-        <div className="mt-0.5 text-xs leading-snug text-fg-2">
+    <div className={cn("flex items-center", Icon ? "gap-3 py-4" : "mt-6 justify-between gap-4 py-3.5")}>
+      {Icon && <Icon className="size-5 shrink-0 text-fg-2" />}
+      <div className="min-w-0 flex-1">
+        <div className={Icon ? "truncate text-base font-medium" : "text-[0.9375rem] font-medium"}>Báo từ Studio</div>
+        <MotionRegion className={Icon ? "mt-1 truncate text-sm text-fg-2" : "mt-0.5 truncate text-xs leading-snug text-fg-2"}>
           {enabled && state.data && !state.data.permitted
             ? "Android đang chặn thông báo của ABook."
-            : "Điện thoại hỏi máy tính mỗi 15 phút và mỗi lần mở app."}
-        </div>
+            : "Sách xong hoặc có việc cần bạn."}
+        </MotionRegion>
       </div>
       <Switch.Root
         checked={enabled}
         disabled={change.isPending || state.isLoading}
         onCheckedChange={(value) => change.mutate(value)}
-        aria-label="Báo khi sách xong hay có việc cần duyệt"
+        aria-label="Báo từ Studio"
         className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
       >
         <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
@@ -422,7 +421,6 @@ function pinChanged(error: unknown): error is Error {
 // hay một máy tính nữa. Sách của chúng nghe thẳng được trong Thư viện ("Trên <tên>") và tải về như sách máy tính.
 function PeersPanel() {
   const client = useQueryClient();
-  const progress = useDownloadProgress();
   const libraries = useQuery({ queryKey: ["peer-libraries"], queryFn: () => EbookLibrary.peerLibraries(), retry: 0 });
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
   const [open, setOpen] = useState(false);
@@ -500,11 +498,11 @@ function PeersPanel() {
         </Button>
       </div>
       <p className="mt-1 text-xs leading-snug text-fg-2">
-        Điện thoại hay máy tính khác; sách của chúng hiện trong Thư viện.
+        Sách máy kia hiện trong Thư viện.
       </p>
       {/* Khung ghép mở / khép có chuyển động (shared/Collapse) thay vì bật tắt. */}
       <Collapse open={open} className="pt-3">
-        <div className="space-y-3 rounded-2xl border border-line bg-panel p-4">
+        <div className="space-y-3 py-4">
           {bonded === null ? (
             <button type="button" onClick={() => bluetooth.mutate()} className="flex items-center gap-1.5 text-sm font-medium text-accent-text">
               {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Ghép Bluetooth
@@ -578,7 +576,7 @@ function PeersPanel() {
         </div>
       </Collapse>
       {peers.map((peer) => (
-        <div key={peer.key} className="mt-4 rounded-2xl border border-line bg-panel p-4">
+        <div key={peer.key} className="mt-4 py-4">
           <div className="flex items-center gap-3">
             <Smartphone className="size-5 text-fg-2" />
             <div className="min-w-0 flex-1">
@@ -604,18 +602,7 @@ function PeersPanel() {
               Thôi ghép
             </button>
           </div>
-          <div className="mt-2 divide-y divide-line">
-            {peer.books.map((book) => (
-              <RemoteRow
-                key={book.id}
-                book={book}
-                progress={progress[book.id]}
-                onDownload={() =>
-                  void EbookLibrary.download({ bookId: book.id, source: peer.key, remoteId: book.remoteId }).catch(() => undefined)
-                }
-              />
-            ))}
-          </div>
+
         </div>
       ))}
       {unpair.dialog}
@@ -668,7 +655,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
   const explainButton = useRef<HTMLButtonElement>(null);
   useBackLayer(explain && !enabled, () => setExplain(false), explainBox, explainButton);
   return (
-    <MotionRegion as="section" className={bare ? "pt-4" : "mt-8 rounded-2xl border border-line bg-panel p-4"} aria-labelledby="share-title">
+    <MotionRegion as="section" className={bare ? "pt-4" : "mt-8 py-4"} aria-labelledby="share-title">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
           <h2 id="share-title" className="text-[0.9375rem] font-medium">Cho máy khác nghe thư viện này</h2>
@@ -745,11 +732,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
           </dl>
           {/* Địa chỉ và vân tay chứng chỉ (64 chữ số hex) là thứ để dò khi máy kia không tự thấy điện thoại: người nghe bình thường không cần,
               nên gập lại (soát UX a9). */}
-          <details className="group text-sm">
-            <summary className="flex min-h-9 cursor-pointer list-none items-center gap-1.5 text-fg-2 [&::-webkit-details-marker]:hidden">
-              <ChevronRight className="size-4 transition-transform group-open:rotate-90" aria-hidden />
-              Chi tiết
-            </summary>
+          <Fold storageKey="devices.share.details" title="Chi tiết" heading="h3" className="rounded-none border-0 bg-transparent" bodyClassName="px-0">
             <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pl-5">
               <dt className="text-fg-2">Địa chỉ</dt>
               <dd className="tabular break-all">
@@ -762,7 +745,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
                 </>
               )}
             </dl>
-          </details>
+          </Fold>
           {pairing && left > 0 ? (
             <div className="rounded-xl bg-accent-soft p-4 text-center">
               <div className="text-xs text-fg-2">Nhập mã này trên máy kia</div>
@@ -897,7 +880,7 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
         </p>
       )}
       {rows.length > 0 && (
-        <ul className="mt-3 divide-y divide-line rounded-2xl border border-line bg-panel">
+        <ul className="mt-3 divide-y divide-line">
           {rows.map(({ key, state, ref, item: { id, title, bytes, kind } }) => {
             const busy = isDownloading(progress[id]);
             return (
@@ -940,8 +923,6 @@ export function DevicesScreen() {
     if (remote.dataUpdatedAt) void client.invalidateQueries({ queryKey: ["connection"] });
   }, [client, remote.dataUpdatedAt]);
   const storage = useStorage();
-  const progress = useDownloadProgress();
-  const studioComputers = useStudioComputers();
   // Cùng khoá với SharePanel: chỉ để ghi dòng tóm tắt của khối gập "Điện thoại này".
   const share = useQuery({ queryKey: ["share"], queryFn: () => EbookLibrary.shareStatus() });
 
@@ -958,13 +939,7 @@ export function DevicesScreen() {
   const failure = remote.isError ? nativeError(remote.error) : null;
 
   return (
-    <MotionRegion as="div" className="px-4 pb-8 pt-4">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Tải sách</h1>
-        <Button size="sm" variant="secondary" icon={FileAudio} onClick={() => void pickBookFile()}>
-          Mở file sách
-        </Button>
-      </div>
+    <MotionRegion as="div" className="pb-8 pt-4">
       <div className="mt-5">
         {!connection.data?.paired ? (
           <>
@@ -972,12 +947,10 @@ export function DevicesScreen() {
             <div className="mt-5">
               <PairPanel />
             </div>
-            {/* Chưa ghép máy tính chính mà đã ghép máy tính khác (Peers): Studio của máy ấy vẫn mở được từ đây. */}
-            <OpenStudioButton computers={studioComputers} className="mt-3 w-full" />
           </>
         ) : (
           <>
-            <div className="flex items-center gap-3 rounded-2xl border border-line bg-panel p-4">
+            <div className="flex items-center gap-3 py-4">
               <Laptop className="size-5 text-fg-2" />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold">
@@ -1014,30 +987,8 @@ export function DevicesScreen() {
                 </MoreInfo>
               </div>
             )}
-            {/* Studio từ xa: điện thoại không sản xuất, nhưng điều khiển được việc sản xuất của máy tính - hỏi máy nào khi ghép nhiều máy tính. */}
-            <OpenStudioButton computers={studioComputers} className="mt-3 w-full" />
-            <StudioAlertsRow />
-            <div className="mt-5 divide-y divide-line">
-              {/* Đã thôi ghép: danh sách cũ còn trong bộ đệm mà nút Tải không còn tác dụng - ẩn tới khi ghép lại. */}
-              {unpairedHere ? null : remote.data?.books.length ? (
-                remote.data.books.map((book) => (
-                  <RemoteRow
-                    key={book.id}
-                    book={book}
-                    progress={progress[book.id]}
-                    onDownload={() => void EbookLibrary.download({ bookId: book.id }).catch(() => undefined)}
-                  />
-                ))
-              ) : remote.isLoading ? (
-                <p className="py-6 text-center text-sm text-fg-2">Đang lấy danh sách sách…</p>
-              ) : remote.isError ? null : (
-                <EmptyState icon={Download} title="Máy tính chưa có sách nghe được" className="py-8">
-                  Sách hiện ở đây ngay khi chương đầu tiên được thu xong trên máy tính.
-                </EmptyState>
-              )}
-            </div>
             <button type="button" onClick={() => setConfirmUnpair(true)} className="mt-6 flex items-center gap-2 text-sm text-fg-2">
-              <Unplug className="size-4" /> Ngắt kết nối với máy tính này
+              <Unplug className="size-4" /> Ngắt kết nối
             </button>
             <Dialog
               open={confirmUnpair}
@@ -1070,7 +1021,7 @@ export function DevicesScreen() {
         title="Điện thoại này"
         summary={[connection.data?.deviceName, share.data?.running ? "đang cho máy khác nghe" : "không chia sẻ"].filter(Boolean).join(" · ")}
         icon={<Smartphone className="size-5" />}
-        className="mt-8"
+        className="mt-8 rounded-none border-0 bg-transparent"
       >
         <DeviceNameRow bare />
         <SharePanel bare />
@@ -1081,7 +1032,7 @@ export function DevicesScreen() {
           title="Dung lượng trên máy"
           summary={`Sách ${formatSize(storage.data.bytes)} · còn trống ${formatSize(storage.data.free)}`}
           icon={<HardDrive className="size-5" />}
-          className="mt-3"
+          className="mt-3 rounded-none border-0 bg-transparent"
         >
           <StoragePanel storage={storage.data} names={new Map((remote.data?.books ?? []).map((book) => [book.id, book.title]))} bare />
         </Fold>

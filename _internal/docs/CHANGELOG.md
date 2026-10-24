@@ -9,6 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Giao diện
 - Thanh bên gọn còn Thư viện, Studio và Cài đặt; dự án đang chạy/chờ có tiến độ, vùng tải dùng khung chờ, lỗi có thử lại và mất mạng hiện dải nhỏ.
+- Thư viện mở lưới bìa và gom bộ sách; điện thoại có tab Studio, sách máy kia ở Thư viện và ghép máy trong Cài đặt › Thiết bị.
 
 ### Sửa lỗi
 - Back đóng mọi thông báo đang hiện (kể cả lời mời bật thông báo) rồi mới về trang trước; menu đang khép không chặn chạm bên dưới; đóng nhóm Cài đặt quay đúng một bước.

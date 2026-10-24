@@ -1,6 +1,6 @@
 import { App as CapacitorApp } from "@capacitor/app";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Download, Library, Settings, Trash2 } from "lucide-react";
+import { Clapperboard, Download, Library, Link2, Settings, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -25,7 +25,8 @@ import { cn } from "@/shared/cn";
 import { UNDO_SECONDS, toastRemoved } from "@/shared/trashUndo";
 import { Button, Dialog, EmptyState, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
 import { androidSource } from "./androidSource";
-import { DevicesScreen } from "./DevicesScreen";
+import { LibraryDownloads } from "./LibraryDownloads";
+import { StudioScreen } from "./StudioScreen";
 import { AudiobookPhoneDialogHost, ExportAudiobookMenuItem, watchAudiobookExports } from "./ExportAudiobook";
 import { ExportM4bMenuItem, M4bMusicDialogHost, watchM4bExports } from "./ExportM4b";
 import { ExportMp3MenuItem, Mp3MusicDialogHost, watchMp3Exports } from "./ExportMp3";
@@ -97,7 +98,7 @@ function Tab({ to, icon: Icon, label }: { to: string; icon: typeof Library; labe
       className={({ isActive }) =>
         cn(
           "flex flex-1 flex-col items-center justify-center gap-1 text-[0.6875rem] font-medium transition-colors duration-(--motion-medium) ease-standard",
-          isActive ? "text-accent-text" : "text-fg-3",
+          isActive ? "text-accent-text" : "text-fg-2",
         )
       }
     >
@@ -134,12 +135,12 @@ function MobileShell({ children }: { children: ReactNode }) {
       </div>
       <nav
         inert={expanded}
-        className="flex h-16 shrink-0 border-t border-line bg-panel"
+        className="flex h-16 shrink-0 border-t border-line bg-bg"
         style={{ paddingBottom: "env(safe-area-inset-bottom)", boxSizing: "content-box" }}
         aria-label="Điều hướng"
       >
         <Tab to="/" icon={Library} label="Thư viện" />
-        <Tab to="/devices" icon={Download} label="Tải sách" />
+        <Tab to="/studio" icon={Clapperboard} label="Studio" />
         <Tab to="/settings" icon={Settings} label="Cài đặt" />
       </nav>
       <NowPlaying mobile actions={<PhoneHandOffButton />} />
@@ -158,28 +159,28 @@ function EmptyLibrary() {
         <div className="flex flex-col items-center gap-2">
           {/* Người mới thường có sẵn một file truyện mà chưa có ABook trên máy tính: nghe ngay là việc chính (soát UX a7, như máy tính). */}
           <AddBookButton variant="primary" size="lg" />
-          <Button variant="secondary" icon={Download} onClick={() => navigate("/devices")}>
-            Tải từ máy tính
+          <Button variant="ghost" icon={Link2} onClick={() => navigate("/settings/devices")}>
+            Nối máy
           </Button>
         </div>
       }
     >
-      Thêm truyện hoặc tải từ máy tính.
+      Thêm sách của bạn để bắt đầu nghe.
     </EmptyState>
   );
 }
 
 function LibraryPage() {
   useOldSaveNotice();
-  return <LibraryScreen empty={<EmptyLibrary />} header={<AddBookButton />} recap={<MorningRecap className="mt-5" />} />;
+  return <LibraryDownloads>{(bookExtras, additionalBooks) => <LibraryScreen bookExtras={bookExtras} additionalBooks={additionalBooks} empty={<EmptyLibrary />} header={<AddBookButton />} recap={<MorningRecap className="mt-5" />} />}</LibraryDownloads>;
 }
 
-/** Sách đang nghe thẳng từ máy tính: tải hẳn về để nghe cả khi không có mạng (tiến độ hiện ở tab Tải sách). */
+/** Sách đang nghe thẳng từ máy tính: tải hẳn về để nghe cả khi không có mạng (tiến độ hiện trên bìa ở Thư viện). */
 function DownloadMenuItem({ book }: { book: ListenBook }) {
   return (
     <DropdownMenu.Item
       onSelect={() => {
-        toast("Đang tải về máy", { description: "Xem tiến độ ở tab Tải sách" });
+        toast("Đang tải về máy", { description: "Xem tiến độ trên bìa ở Thư viện" });
         void EbookLibrary.download({ bookId: book.id }).catch((error: Error) => toast.error("Không tải được", { description: error.message }));
       }}
       className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
@@ -224,7 +225,7 @@ function RemoveFromPhoneHost() {
     try {
       const { undo } = await EbookLibrary.deleteBook({ id: book.id });
       setBook(null);
-      // Xoá từ danh sách dung lượng ở màn "Tải sách" thì ở lại đó; chỉ rời trang của chính cuốn vừa xoá.
+      // Xoá từ danh sách dung lượng ở Cài đặt › Thiết bị thì ở lại đó; chỉ rời trang của chính cuốn vừa xoá.
       if (location.pathname.startsWith(`/book/${book.id}`)) navigate("/", { replace: true });
       void client.invalidateQueries();
       // "Hoàn tác" (TrashPending.kt): cuốn nằm chờ vài chục giây rồi mới xoá hẳn - điện thoại không có Thùng rác.
@@ -332,7 +333,7 @@ export function AndroidApp() {
                     }
                   />
                   <Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} />
-                  <Route path="/devices" element={<DevicesScreen />} />
+                  <Route path="/studio" element={<StudioScreen />} />
                   <Route path="/settings/:group?" element={<SettingsScreen key={synced} />} />
                 </Routes>
               </MobileShell>

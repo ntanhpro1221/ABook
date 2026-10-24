@@ -4,8 +4,10 @@
 export interface Scenario {
   /** Thư viện: đủ sách, rỗng, đang tải mãi, hay lỗi. */
   library: "full" | "empty" | "loading" | "error";
-  /** Điện thoại đã ghép máy tính chưa (tab Tải sách). */
+  /** Điện thoại đã ghép máy tính chưa (Cài đặt › Thiết bị). */
   paired: boolean;
+  /** Máy tính cũng có sách của thiết bị ghép trong Thư viện. */
+  remoteBooks: boolean;
   /** Có đêm hẹn giờ ngủ để hiện thẻ "Tối qua". */
   night: boolean;
   /** Bấm phát thì phát (false: giữ ở trạng thái tạm dừng). */
@@ -17,7 +19,7 @@ export interface Scenario {
   requests?: Record<string, "loading" | "error">;
 }
 
-export const DEFAULT_SCENARIO: Scenario = { library: "full", paired: true, night: false, playing: true, projects: "full" };
+export const DEFAULT_SCENARIO: Scenario = { library: "full", paired: true, remoteBooks: false, night: false, playing: true, projects: "full" };
 
 export const galleryState = {
   scenario: { ...DEFAULT_SCENARIO } as Scenario,

@@ -2,6 +2,11 @@
 
 Ngày cập nhật: 2026-10-24
 
+Đợt lib139, worktree `D:/Novels/ABook_lib139`, nhánh `dev/lib139`, nền `0bec019f`: Thư viện mở lưới bìa 2:3, gom bộ thành bìa chồng; điện thoại chuyển sang Thư viện · Studio · Cài đặt, đưa tải/cập nhật sách lên bìa và ghép máy vào Cài đặt › Thiết bị.
+
+- `npx tsc -p tsconfig.json --noEmit`: 0 lỗi. Vitest toàn bộ, tối đa 2 worker: **2073 passed, 0 failed, 1 skipped**, **270 file** (269 passed, 1 skipped). Skip corpus PDF có sẵn. DOM kiểm bìa bộ/Back, dấu nguồn, ba tab, Studio rỗng/mở máy, đường Thiết bị hai chạm, tải từ điện thoại ghép và danh mục chưa có gói nghe trực tiếp; test tương phản hai chủ đề đạt AA.
+- Pytest `tests/test_webui_listen_and_sync.py`, CUDA tắt, `-p no:cacheprovider -rf -q`: **32 passed**. Python và Kotlin chỉ đổi chú thích chỉ đường; hash khoá trước/sau giữ `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886` (danh sách đọc trực tiếp: 41 mục). Không sửa primitive chuyển động, không cài dependency, không commit. Ảnh Edge trước/sau: 166/176 ảnh, 0 lỗi ở hai bộ cuối; đã đóng Edge gallery. Báo cáo nằm ở scratchpad `codex/lib139/result.md`; chưa kiểm thiết bị Android thật.
+
 Đợt shell139, nhánh `dev/shell139`: thanh bên ba điểm đến, tối đa ba dự án đang chạy/chờ; skeleton theo nội dung, lỗi tại chỗ có thử lại, dải mất mạng giữ nội dung. Thêm 21 test DOM chuyên biệt và 27 mục gallery, kiểm tra trạng thái tải/lỗi ở màn thật; thử lại thực sự gọi truy vấn, hàng dự án ra có inert và dải mất mạng khép bằng presence. `npx tsc -p tsconfig.json --noEmit`: 0 lỗi; `npx vitest run --maxWorkers=2`: **2105 passed, 1 skipped**, **269 file passed, 1 skipped**. Skip có sẵn cần corpus PDF. Ảnh sáng/tối và danh sách các vị trí giữ nguyên ở scratchpad `codex/shell139/result.md`; không sửa Python/runtime, không cài dependency, không commit.
 
 Đợt fix139, worktree `D:/Novels/ABook_fix139`, nhánh `dev/fix139`, nền `8a76056e` (0.4.138): xác minh chín finding UI; sửa CAO1/CAO2/CAO3/V5/V6/V7/V8/L9. V4 đã có Back stack và 6 test DOM xanh ở nền nên giữ nguyên. Chuyển 18 caller toast sang wrapper chung; Back chỉ nhận đã đóng khi thật sự gỡ toast. Giữ lịch sử nhóm Cài đặt, focus khi lưu lịch đêm, focus ring và các chuyển động exit/empty/badge.

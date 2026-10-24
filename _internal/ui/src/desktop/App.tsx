@@ -495,10 +495,7 @@ function LibraryRoute() {
       <LibraryScreen
         empty={<EmptyLibrary />}
         header={
-          <div className="flex flex-wrap justify-end gap-2">
-            <AddBookButton onBookFile={openBookPath} />
-            <OpenBookFileButton />
-          </div>
+          <AddBookButton onBookFile={openBookPath} />
         }
         recap={<MorningRecap className="mt-6" />}
         onOpenUpcoming={info?.listenOnly ? undefined : (book) => navigate(`/studio/${book.id}`)}

@@ -1,4 +1,4 @@
-// Quyền "Thiết bị ở gần" (Bluetooth) của màn "Tải sách": nói vì sao cần TRƯỚC khi Android hỏi, và khi người dùng đã từ chối hẳn (hộp xin của
+// Quyền "Thiết bị ở gần" (Bluetooth) của mục "Thiết bị": nói vì sao cần TRƯỚC khi Android hỏi, và khi người dùng đã từ chối hẳn (hộp xin của
 // Android không hiện nữa) thì chỉ đường tới Cài đặt thay vì một lời báo lỗi lặp lại mỗi lần bấm (soát a66: ngõ cụt).
 
 /** Trạng thái quyền như Capacitor báo (LibraryPlugin.bluetoothPermission). */

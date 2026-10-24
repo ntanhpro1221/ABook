@@ -4,7 +4,7 @@ import { toast } from "@/shared/toast";
 import { errorDescription } from "./nativeError";
 import { EbookLibrary, type DownloadEvent } from "./plugins";
 
-// Tiến độ tải sách, nghe ở CẤP APP chứ không ở màn "Tải sách": trước đây listener nằm trong màn ấy, rời màn giữa
+// Tiến độ tải sách, nghe ở CẤP APP chứ không ở mục "Thiết bị": trước đây listener nằm trong màn ấy, rời màn giữa
 // chừng là lỡ sự kiện "xong" - thư viện không làm mới (bìa/chương mới chỉ hiện sau ~30 giây hoặc mở lại app) và mất
 // luôn thông báo "Đã tải xong" (27-09, thấy trên máy ảo khi cập nhật ảnh bìa).
 
@@ -33,6 +33,7 @@ export function watchDownloads(client: QueryClient): () => void {
     if (event.finished) {
       toast.success("Đã tải xong", { description: "Sách đã có trong Thư viện, nghe được cả khi không có mạng." });
       void client.invalidateQueries({ queryKey: ["remote"] });
+      void client.invalidateQueries({ queryKey: ["peer-libraries"] });
       void client.invalidateQueries({ queryKey: ["listen"] });
       void client.invalidateQueries({ queryKey: ["storage"] });
     }

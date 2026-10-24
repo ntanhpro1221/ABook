@@ -4,7 +4,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { useMotionState } from "@/shared/motion";
 import { useListPresence } from "@/shared/motion";
 import { useQueryClient } from "@tanstack/react-query";
-import { BookOpen, BookPlus, Check, CircleAlert, Copy, FileText, Folder, Loader2, Minus } from "lucide-react";
+import { BookOpen, BookPlus, Check, CircleAlert, Copy, FileText, Folder, Loader2, Minus, Plus } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
@@ -83,8 +83,8 @@ export function AddBookButton({
   if (!source.textImport) return null;
   return (
     <>
-      <Button variant={variant} size={size} icon={BookPlus} className="touch-row" onClick={() => setOpen(true)}>
-        Thêm sách từ file…
+      <Button variant={variant === "secondary" ? "ghost" : variant} size={size} icon={Plus} className="touch-row" onClick={() => setOpen(true)}>
+        Thêm sách
       </Button>
       <AddBookDialog open={open} onOpenChange={setOpen} onBookFile={onBookFile} />
     </>

@@ -115,7 +115,7 @@ object StudioLink {
         if (key == MAIN) Peers.Link(SyncLink.base(context), SyncLink.token(context)).takeIf { SyncLink.paired(context) }
         else Peers.link(context, key)?.takeIf { known(key, SyncLink.paired(context), Peers.all(context)) }
 
-    /** Tên máy tính `key` như người dùng thấy ở màn Tải sách. */
+    /** Tên máy tính `key` như người dùng thấy ở Cài đặt › Thiết bị. */
     fun name(context: Context, key: String): String =
         computers(SyncLink.paired(context), SyncLink.prefs(context).getString("name", "").orEmpty(), Peers.all(context))
             .firstOrNull { it.key == key }?.name ?: "Máy tính"

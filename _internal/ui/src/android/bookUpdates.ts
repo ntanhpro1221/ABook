@@ -5,7 +5,7 @@ export function hasNewAudio(book: Pick<RemoteBook, "downloaded" | "audioVersion"
 }
 
 /** Sách đã tải mà máy tính vừa đổi riêng tên / tác giả / người đọc / tên chương (dấu `metaVersion`): điện thoại tự lấy phần mô tả mới khi mở Thư viện hay
- *  Tải sách; còn thấy khác (mất mạng giữa chừng) thì hàng sách có nút cập nhật. Máy tính cũ không gửi dấu thì không bao giờ có gì mới. */
+ *  Thư viện; còn thấy khác (mất mạng giữa chừng) thì hàng sách có nút cập nhật. Máy tính cũ không gửi dấu thì không bao giờ có gì mới. */
 export function hasNewMeta(book: Pick<RemoteBook, "downloaded" | "metaVersion" | "localMetaVersion">): boolean {
   return book.downloaded && Boolean(book.metaVersion) && book.metaVersion !== (book.localMetaVersion ?? "");
 }

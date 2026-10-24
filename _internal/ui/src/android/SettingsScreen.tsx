@@ -23,9 +23,10 @@ import { OldSavesList } from "./OldSaves";
 import { useOldSaves } from "./oldSaveList";
 import { openRelease } from "./UpdateNotice";
 import { useAppUpdate } from "./updates";
+import { DevicesScreen } from "./DevicesScreen";
 
-// Cài đặt của điện thoại (chủ app 23-10: "như lạc vào ma trận"): trang gốc là danh sách 5 nhóm, mỗi nhóm một màn con /settings/<nhóm>
-// (shared/SettingsNav.tsx). Cùng cây nhóm với máy tính; điện thoại không có nhóm Thiết bị (tab "Tải sách") và Studio.
+// Cài đặt của điện thoại (chủ app 23-10: "như lạc vào ma trận"): trang gốc là danh sách 6 nhóm, mỗi nhóm một màn con /settings/<nhóm>
+// (shared/SettingsNav.tsx). Cùng cây nhóm với máy tính; Thiết bị ở đây, Studio là tab riêng.
 
 /** Giọng đọc của "Nghe ngay" trên điện thoại: lõi native đọc (plugin ReadAloud); khóa lưu mã hoá bằng Android Keystore (OnlineKeys.kt). */
 const phoneVoices: VoiceSettingsApi = {
@@ -54,7 +55,7 @@ const phoneVoiceSpeed: VoiceSpeedBackend = {
 };
 
 /** Nhóm có mặt trên điện thoại, theo thứ tự của SETTINGS_GROUPS. */
-export const PHONE_GROUPS: readonly SettingsGroupId[] = ["voice", "listen", "sleep", "look", "advanced"];
+export const PHONE_GROUPS: readonly SettingsGroupId[] = ["voice", "listen", "sleep", "look", "devices", "advanced"];
 
 type Change = (patch: Partial<PlayerSettings>) => void;
 
@@ -410,12 +411,13 @@ export function SettingsScreen() {
   const active = isSettingsGroup(group) && PHONE_GROUPS.includes(group) ? group : null;
   if (active) {
     return (
-      <div className="px-4 pb-10 pt-3">
+      <div className="px-[20px] pb-10 pt-3">
         <GroupHeader id={active} />
         {active === "voice" && <VoiceGroup />}
         {active === "listen" && <ListenGroup settings={settings} change={change} />}
         {active === "sleep" && <SleepGroup settings={settings} change={change} />}
         {active === "look" && <LookGroup settings={settings} change={change} />}
+        {active === "devices" && <DevicesScreen />}
         {active === "advanced" && <AdvancedGroup version={current} update={update} />}
       </div>
     );
@@ -425,17 +427,18 @@ export function SettingsScreen() {
     { id: "listen", summary: `${settings.autoRewind !== false ? "Tự lùi" : "Không tự lùi"} · ${settings.autoMusic !== false ? "nhạc tự chọn" : "không nhạc nền"}` },
     { id: "sleep", summary: sleepSummary(settings.sleepSchedule, settings.safetyStopHours) },
     { id: "look", summary: themeSummary(settings.theme, "Tự động") },
+    { id: "devices", summary: "Nối máy · chia sẻ · dung lượng" },
     { id: "advanced", summary: current ? `Phiên bản ${current}` : undefined },
   ];
   return (
-    <div className="px-4 pb-10 pt-4">
+    <div className="px-[20px] pb-10 pt-4">
       <h1 className="text-2xl font-bold tracking-tight">Cài đặt</h1>
       {/* Lời báo trên trang gốc tới sau một lượt hỏi (bản lưu cũ, bản mới): mở ra tại chỗ, không đẩy danh sách nhóm xuống tức thì. */}
       <MotionPresence open={Boolean(oldSaves?.length)}>
         {oldSaves?.length ? <RootNotice tone="warning" text={`Bản lưu cũ (${oldSaves.length}) - cần lưu ra`} /> : null}
       </MotionPresence>
       <MotionPresence open={Boolean(update)}>{update && <RootNotice tone="accent" text={`Có bản mới ${update.version}`} />}</MotionPresence>
-      <SettingsList rows={rows} className="mt-5" />
+      <SettingsList rows={rows} className="mt-5 rounded-none border-0 bg-transparent" />
     </div>
   );
 }

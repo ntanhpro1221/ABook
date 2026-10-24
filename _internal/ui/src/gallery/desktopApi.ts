@@ -177,7 +177,7 @@ const listenLibrary = () => {
   const mode = galleryState.scenario.library;
   if (mode === "loading") return never();
   if (mode === "error") throw fail(500, "Không đọc được thư viện: ổ D: chưa sẵn sàng.");
-  return mode === "empty" ? [] : BOOKS.filter((item) => !item.streamed).map((item) => listenBook(item, false));
+  return mode === "empty" ? [] : BOOKS.filter((item) => !item.streamed || galleryState.scenario.remoteBooks).map((item) => listenBook(item, false));
 };
 
 function moduleStatus() {
