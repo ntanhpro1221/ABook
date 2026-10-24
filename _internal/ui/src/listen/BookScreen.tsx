@@ -1086,7 +1086,8 @@ export function BookScreen({
             </Button>
           )}
           {/* Hàng phụ: luôn cùng bốn chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe). */}
-          <div role="group" aria-label="Việc với sách" data-book-secondary className="slot-row items-start [--slot:1.4rlh]">
+          {/* Đầu trái là "Đọc" (24,8 px) hay "Tìm" (22,1 px), đầu phải "Thêm" (33 px): mỗi đầu một --slot để cả hai sát mép nút chính. */}
+          <div role="group" aria-label="Việc với sách" data-book-secondary className={cn("slot-row items-start [--slot:1.4rlh]", listenFirst || caughtUp ? "[--slot-start:1.0333rlh]" : "[--slot-start:0.9208rlh]")}>
             {/* Nhãn luôn một chữ "Đọc" (hàng cách đều theo tâm, nhãn đầu mút sát mép - "Đọc tiếp" dài gấp đôi sẽ lòi ra); "tiếp" nói cho trình đọc màn hình. */}
             {(listenFirst || caughtUp) && <ActionButton icon={BookOpen} label="Đọc" aria-label={readLabel === "Đọc" ? undefined : readLabel} onClick={read} />}
             <ActionButton icon={Search} label="Tìm" aria-label="Tìm chữ trong sách" disabled={!chapters.length} onClick={() => setFinding(true)} />
