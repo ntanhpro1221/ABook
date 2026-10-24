@@ -37,10 +37,11 @@ import {
   Button,
   Dialog,
   EmptyState,
+  FilterRow,
   Progress,
-  Segmented,
   Skeleton,
   StatusPill,
+  TabLabel,
   Tabs,
   TabsContent,
   TabsList,
@@ -1109,7 +1110,7 @@ function ActivityView({ book }: { book: BookSummary }) {
   return (
     <MotionRegion as="div" className="mt-5">
       <div className="flex items-center justify-between">
-        <Segmented
+        <FilterRow
           label="Kiểu nhật ký"
           value={mode}
           onChange={setMode}
@@ -1150,7 +1151,8 @@ function ActivityView({ book }: { book: BookSummary }) {
               <ol className="relative space-y-1 border-l border-line pl-5">
                 {group.items.map((item) => (
                   <li key={item.id} className="relative py-1.5 text-sm">
-                    <span className={cn("absolute -left-[25px] top-[13px] size-2 rounded-full ring-4 ring-bg", LEVEL_DOT[item.level] ?? "bg-fg-3")} />
+                    {/* Chấm đứng đúng TRÊN vạch: tâm chấm = tâm vạch (mép trái ol + 0,5 px): li bắt đầu sau vạch 1 px + lề pl-5 (5 đơn vị), nửa chấm = 1 đơn vị, nên lùi 6 đơn vị + 0,5 px; tâm dọc = tâm dòng chữ đầu (top-3.5). */}
+                    <span className={cn("absolute -left-[calc(var(--spacing)*6+0.5px)] top-3.5 size-2 rounded-full ring-4 ring-bg", LEVEL_DOT[item.level] ?? "bg-fg-3")} />
                     <span className="tabular mr-3 text-xs text-fg-3">{formatTime(item.at).split(" · ")[0]}</span>
                     <span className={cn(item.level === "warning" && "text-fg", item.level === "info" && "text-fg-2")}>{item.text}</span>
                   </li>
@@ -1209,10 +1211,9 @@ export function ProjectTabBar({ tab, onTab, precast, counts }: {
             data-active={inMore || undefined}
             className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent px-2 text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[active]:border-accent data-[active]:text-fg data-[state=open]:text-fg sm:px-3"
           >
-            <MotionRegion as="span" motionKey={inMore ? tab : "more"}>{inMore ? TAB_LABEL[tab] : "Thêm"}</MotionRegion>
-            <MotionRegion as="span" className="inline-flex" motionKey={moreCount ?? null}>{moreCount !== undefined && (
-              <span className="tabular rounded-full bg-hover px-1.5 py-px text-[0.6875rem] font-semibold text-fg-2">{moreCount}</span>
-            )}</MotionRegion>
+            <TabLabel count={moreCount}>
+              <MotionRegion as="span" motionKey={inMore ? tab : "more"}>{inMore ? TAB_LABEL[tab] : "Thêm"}</MotionRegion>
+            </TabLabel>
             <ChevronDown className="fold-chevron size-3.5 text-fg-3" aria-hidden />
           </button>
         </DropdownMenu.Trigger>
