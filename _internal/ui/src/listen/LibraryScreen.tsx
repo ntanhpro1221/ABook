@@ -227,7 +227,8 @@ function ContinueCard({ book }: { book: ListenBook }) {
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={`Mở ${book.title}`}>
         <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-20 !aspect-[2/3] !rounded-xl sm:w-28" />
       </button>
-      <div className="min-w-0 flex-1">
+      {/* Màn rộng: cột chữ giới hạn 28rem để nút phát đứng ngay cạnh thanh tiến độ, không trôi ra mép màn. */}
+      <div className="min-w-0 flex-1 sm:max-w-md">
         <div className="text-xs font-medium uppercase tracking-[0.06em] text-fg-2">Đang nghe</div>
         <h2 className="mt-2 line-clamp-2 text-lg font-bold sm:text-2xl">{book.title}</h2>
         {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
@@ -236,7 +237,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
           {current ? (playingHere ? " · đang phát" : " · tạm dừng") : last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
         </MotionRegion>
         <MotionRegion as="p" className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks)}</MotionRegion>
-        <Progress value={book.progress.fraction} size="xs" className="mt-3 max-w-md" label="Đã nghe" />
+        <Progress value={book.progress.fraction} size="xs" className="mt-3" label="Đã nghe" />
       </div>
       <MotionRegion className="shrink-0" motionKey={book.progress.caughtUp && !current}>
       {book.progress.caughtUp && !current ? (
