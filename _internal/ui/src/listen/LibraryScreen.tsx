@@ -470,8 +470,13 @@ export function LibraryScreen({
       ),
     [books, filter, folded, sort],
   );
+  // Cuốn đang làm ở máy khác cũng theo ô tìm và bộ lọc (chưa nghe được nên chỉ thuộc "Tất cả" / "Chưa nghe") - từng hiện mãi dưới kết quả tìm.
+  const upcomingShown = useMemo(
+    () => upcoming.filter((book) => (filter === "all" || filter === "new") && bookMatchesQuery(book, folded)),
+    [upcoming, filter, folded],
+  );
   const libraryRows = useListPresence(books ?? [], (book) => book.id);
-  const upcomingRows = useListPresence(upcoming, (book) => book.id);
+  const upcomingRows = useListPresence(upcomingShown, (book) => book.id);
   const noResultsTitle = query ? `Không tìm thấy sách nào khớp “${query}”` : "Không có sách ở đây";
   const grouped = true;
 
@@ -487,7 +492,10 @@ export function LibraryScreen({
           {/* -mr bù đệm ngang của nút ghost (px-3.5, trừ phần thừa bên phải của nét chữ) + p-1 giữ chỗ vòng tiêu điểm: chữ "Thêm sách" thẳng mép phải với nút phát và kính lúp bên dưới. */}
           <MotionPresence open={Boolean(books?.length || upcoming.length)} className="-my-1 -ml-1 -mr-[17px]" bodyClassName="p-1">{header}</MotionPresence>
         </div>
-        <MotionRegion as="p" motionKey={allBooks?.length ?? 0} className="mt-1 text-sm text-fg-2">{allBooks?.length ? `${allBooks.length} cuốn` : ""}</MotionRegion>
+        <MotionRegion as="p" motionKey={folded ? `${shown.length + upcomingShown.length}/${allBooks?.length ?? 0}` : allBooks?.length ?? 0} className="mt-1 text-sm text-fg-2">
+          {/* Đang tìm: nói số cuốn khớp, không phải cả thư viện (soát 24-10 T08 - từng ghi "11 cuốn" trên một kết quả). */}
+          {!allBooks?.length ? "" : folded ? `${shown.length + upcomingShown.length} trong ${allBooks.length} cuốn` : `${allBooks.length} cuốn`}
+        </MotionRegion>
       </header>
       {recap}
       <LoadingCrossfade loading={isLoading} placeholder={
