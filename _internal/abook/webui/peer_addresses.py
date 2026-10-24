@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ipaddress
+import math
 from typing import Any
 
 LIMIT = 8
@@ -57,18 +58,38 @@ def discovery_endpoint(host: str, raw_port: Any, *, advertised: bool = True) -> 
 
 
 def migrate(entry: dict[str, Any]) -> bool:
-    """One-time upgrade; host/port remain pairing details, never an ongoing route fallback."""
-    if "addresses" in entry:
-        return False
-    host = str(entry.get("host") or "")
-    address = valid(endpoint(host, int(entry.get("port") or 47630))) if not host.startswith("bt:") else None
-    entry["addresses"] = [{"address": address, "lastSuccess": 0}] if address else []
-    return True
+    """Normalize every read; legacy host/port are used only when addresses is absent."""
+    missing = "addresses" not in entry
+    old = entry.get("addresses")
+    if missing:
+        host = entry.get("host")
+        address = discovery_endpoint(host, entry.get("port", 47630), advertised=False) if isinstance(host, str) and not host.startswith("bt:") else None
+        old = [{"address": address, "lastSuccess": 0}] if address else []
+    clean = records(old)
+    changed = missing or entry["addresses"] != clean
+    entry["addresses"] = clean
+    return changed
+
+
+def records(values: Any) -> list[dict[str, Any]]:
+    """Strict JSON records, finite nonnegative successes, canonical dedup and cap."""
+    merged = {}
+    for item in values if isinstance(values, list) else []:
+        if not isinstance(item, dict) or not (address := valid(item.get("address"))):
+            continue
+        at = item.get("lastSuccess", 0)
+        try:
+            if isinstance(at, bool) or not isinstance(at, (int, float)) or at < 0 or not math.isfinite(at):
+                continue
+        except OverflowError:
+            continue
+        if address not in merged or at > merged[address]["lastSuccess"]:
+            merged[address] = {"address": address, "lastSuccess": at}
+    return sorted(merged.values(), key=lambda item: -item["lastSuccess"])[:LIMIT]
 
 
 def ordered(entry: dict[str, Any]) -> list[str]:
-    return list(dict.fromkeys(clean for item in sorted(entry.get("addresses", []), key=lambda item: -item.get("lastSuccess", 0))
-                              if (clean := valid(item.get("address")))))
+    return [item["address"] for item in records(entry.get("addresses"))]
 
 
 def candidates(values):
@@ -81,7 +102,7 @@ def learn(entry: dict[str, Any], values: Any, seen: str, *, success: str = "", a
         return False
     old = entry.get("addresses", [])
     merged = {}
-    for item in old:
+    for item in records(old):
         if isinstance(item, dict) and (clean := valid(item.get("address"))):
             previous = merged.get(clean)
             if previous is None or item.get("lastSuccess", 0) > previous["lastSuccess"]:

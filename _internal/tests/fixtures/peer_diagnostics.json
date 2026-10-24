@@ -1,4 +1,11 @@
 [
+  {"message": "java.net.ConnectException: failed to connect to private-phone.local/192.168.1.8 (port 47630)", "hidden": "private-phone", "kept": "(port 47630)"},
+  {"message": "connect private-phone.local/[fd00::7]:47630 failed", "hidden": "private-phone"},
+  {"message": "connect private-phone.local/2001:db8::7 failed", "hidden": "private-phone"},
+  {"message": "GET https://private-phone.local/sync/v1/library", "hidden": "private-phone", "kept": "/sync/v1/library"},
+  {"message": "GET http://private-phone/sync", "hidden": "private-phone", "kept": "/sync"},
+  {"message": "GET https://private-phone.local:47630/sync", "hidden": "private-phone"},
+  {"message": "2026-10-23T12:02:24-04:00 failed private-phone.local/192.168.1.8 at vn.abook.Playback.run(Playback.kt:306)", "hidden": "private-phone", "kept": "(Playback.kt:306)"},
   {
     "message": "\"address\":\"private-phone:47630\"",
     "hidden": "private-phone"

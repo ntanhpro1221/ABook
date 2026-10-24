@@ -23,11 +23,27 @@ object Peers {
 
     /** key -> {name, addresses: [{address,lastSuccess}], host/port (pairing details), token, fingerprint, kind, pairedAt}. */
     @Synchronized
-    fun all(context: Context): JSONObject {
-        val peers = runCatching { JSONObject(prefs(context).getString("peers", "{}") ?: "{}") }.getOrDefault(JSONObject())
+    fun all(context: Context): JSONObject = readPrefs(prefs(context))
+
+    @Synchronized internal fun readPrefs(prefs: android.content.SharedPreferences): JSONObject {
+        val raw = prefs.all["peers"] ?: "{}"
+        val parsed = runCatching { JSONObject(raw as String) }
+        val peers = parsed.getOrDefault(JSONObject())
         var changed = false
-        for (key in peers.keys()) if (PeerAddresses.migrate(peers.getJSONObject(key))) changed = true
-        if (changed) save(context, peers)
+        var damaged = parsed.isFailure
+        for (key in peers.keys().asSequence().toList()) {
+            val peer = peers.optJSONObject(key)
+            if (peer == null) { peers.remove(key); changed = true; damaged = true; continue }
+            val hadAddresses = peer.has("addresses")
+            val normalized = PeerAddresses.migrate(peer)
+            changed = changed || normalized
+            damaged = damaged || (hadAddresses && normalized)
+            if (normalized && PeerAddresses.ordered(peer).isEmpty() && PeerRouting.bluetooth(peer).isBlank()) {
+                peers.remove(key); changed = true; damaged = true
+            }
+        }
+        if (damaged) PeerRouting.preserve(prefs, "peers", raw)
+        if (changed || damaged) check(prefs.edit().putString("peers", peers.toString()).commit()) { "Chưa lưu được danh sách máy đã ghép" }
         return peers
     }
 

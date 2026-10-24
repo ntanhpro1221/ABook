@@ -200,7 +200,7 @@ def test_a_read_only_folder_is_named_not_dumped(tmp_path: Path) -> None:
 
     error = PermissionError(13, "Permission denied", str(tmp_path / "Truyện hay" / "names.json.part"))
     text = humanize.write_error(error)
-    assert "Truyện hay" in text and "chỉ đọc" in text and "Cài đặt" in text
+    assert "Truyện hay" in text and "Không có quyền ghi" in text and "chọn thư mục khác trong Cài đặt" in text
     assert str(tmp_path) not in text and "Errno" not in text
 
 
@@ -376,7 +376,8 @@ def test_a_held_preferences_file_is_never_overwritten(tmp_path: Path, monkeypatc
     path.write_bytes(original)
     held = _Held(monkeypatch, path)
     preferences = Preferences(path)
-    assert any("đang bị một chương trình khác giữ" in item["text"] for item in notices.NOTICES.all())
+    assert any(item["kind"] == "saving-blocked" and "bị khoá" in item["text"] and "chưa lưu" in item["text"]
+               and "thử lại" in item["text"] for item in notices.NOTICES.all())
     with pytest.raises(OSError, match="thử lại"):
         preferences.update({"theme": "light"})
     assert path.open("rb").read() == original

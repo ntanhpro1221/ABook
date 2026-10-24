@@ -60,6 +60,28 @@ def test_the_archive_is_pinned_and_only_the_member_is_taken() -> None:
     assert ffmpeg_setup.pin() == ffmpeg_setup.WHEEL.sha256
 
 
+@pytest.mark.parametrize("stamp", [None, "old-export-pin", "current", "invalid-utf8"])
+def test_export_reports_own_stamp_and_updates_only_after_click(bare_machine, monkeypatch, stamp):
+    bare_machine.mkdir(parents=True)
+    (bare_machine / "ffmpeg.exe").write_bytes(b"MZ old ffmpeg")
+    if stamp == "invalid-utf8":
+        (bare_machine / "installed.sha256").write_bytes(b"\xff")
+    elif stamp is not None:
+        (bare_machine / "installed.sha256").write_text(ffmpeg_setup.pin() if stamp == "current" else stamp, encoding="utf-8")
+    calls = []
+    monkeypatch.setattr(studio_setup, "download", _fake_download(calls))
+    monkeypatch.setattr(ffmpeg_setup, "_state", {"downloading": False, "done": 0, "total": 0, "error": ""})
+    ffmpeg_setup.configure(bare_machine)
+    status = ffmpeg_setup.status()
+    assert status["ready"]
+    assert status["outdated"] == (stamp != "current")
+    assert calls == [], "opening Export must never download in the background"
+    ffmpeg_setup.start()
+    ffmpeg_setup.join(10)
+    assert len(calls) == (0 if stamp == "current" else 1)
+    assert not ffmpeg_setup.status()["outdated"]
+
+
 def test_an_exe_already_downloaded_is_registered_at_startup(bare_machine: Path) -> None:
     (bare_machine).mkdir(parents=True)
     (bare_machine / "ffmpeg.exe").write_bytes(b"MZ")

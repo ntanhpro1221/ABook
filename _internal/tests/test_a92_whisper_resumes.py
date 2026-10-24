@@ -95,7 +95,7 @@ def test_a_server_that_ignores_range_restarts_cleanly_and_a_wrong_hash_is_refuse
 
     bad = _setup(tmp_path / "bad", monkeypatch, FakeNetwork())
     bad._whisper_pin = lambda: URL.replace(DIGEST, "0" * 64)  # type: ignore[method-assign]
-    with pytest.raises(SetupError, match="không đúng bản đã ghim"):
+    with pytest.raises(SetupError, match="tải về sai bản, đã xoá.*Cài tiếp để tải lại"):
         bad._fetch_whisper_checkpoint()
     assert not _checkpoint(bad).exists()
 
