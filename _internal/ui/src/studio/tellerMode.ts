@@ -26,15 +26,16 @@ export interface TellerModeView {
   editableHere?: boolean;
 }
 
-export const TELLER_TITLE = "Ngôi tôi tự kể";
+// "Ngôi tôi" là thuật ngữ - soát 24-10 T18: khó hiểu. Nói việc nghe thấy: nhân vật xưng "tôi" tự đọc lời kể của mình.
+export const TELLER_TITLE = "Nhân vật tự kể";
 
 /** Câu thay cho nút đổi ở nơi không đổi được (điện thoại mở file dự án). */
 export const TELLER_ELSEWHERE = "Đổi ở máy tính có Studio (cần thu lại).";
 
 export function tellerHint(on: boolean): string {
   return on
-    ? "Lời kể ngôi tôi đọc bằng giọng của họ."
-    : "Mặc định: giọng dẫn kể, nhân vật đọc lời thoại.";
+    ? "Nhân vật xưng “tôi” đọc cả lời kể bằng giọng mình."
+    : "Giọng dẫn đọc lời kể; nhân vật chỉ đọc lời thoại.";
 }
 
 /** Có cần hỏi lại trước khi đổi không: chỉ khi đã có câu thu sẽ bị bỏ. */

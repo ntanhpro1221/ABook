@@ -35,8 +35,8 @@ describe("needsConfirm", () => {
 
 describe("tellerHint", () => {
   it("mô tả cả hai trạng thái", () => {
-    expect(tellerHint(false)).toContain("Mặc định");
+    expect(tellerHint(false)).toContain("Giọng dẫn đọc lời kể");
     expect(tellerHint(false)).not.toContain("cùng giới");
-    expect(tellerHint(true)).toContain("đọc bằng giọng của họ");
+    expect(tellerHint(true)).toContain("xưng “tôi”");
   });
 });
