@@ -909,7 +909,7 @@ export function BookScreen({
   });
 
   const placeholder = (
-      <div className="mx-auto max-w-[1180px] px-4 pt-6 sm:px-10">
+      <div className="page-x mx-auto max-w-[1180px] pt-6">
         <Skeleton className="h-5 w-24" />
         <div className="mt-6 flex gap-6"><Skeleton className="size-36 rounded-lg" /><div className="flex-1 space-y-3 pt-3"><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-1/3" /></div></div>
       </div>
@@ -992,7 +992,7 @@ export function BookScreen({
   };
 
   return (
-    <div className="motion-reveal mx-auto max-w-[1180px] px-4 pb-16 pt-5 sm:px-10 sm:pt-7">
+    <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16 pt-5 sm:pt-7">
       <button type="button" onClick={() => navigate("/")} className="touch-hit touch-row inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Thư viện
       </button>
