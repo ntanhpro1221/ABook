@@ -2,6 +2,11 @@
 
 Ngày cập nhật: 2026-10-24
 
+Đợt kt138, worktree `D:/Novels/ABook_kt138`, nhánh `dev/kt138`, nền `85c2790f` (0.4.137): sửa r136 M3/L1. Chẩn đoán share chỉ đọc/validate, không init Store/Remote/server, không tạo bản corrupt; kho lạnh báo chưa sẵn. Reader cho writer vẫn giữ bản hỏng rồi từ chối ghi. Store/LibraryServer serialize init, ghim filesDir canonical đầu tiên, từ chối thư mục khác bằng log; root/context chỉ công bố sau recovery.
+
+- Đỏ: nền cộng test và seam quan sát recovery, **1749 JUnit, 7 FAILED, 0 errors, 7 skipped**. Sau sửa và thêm ca A/B đồng thời, recovery lỗi/retry, socket sống và staging/rekey khi mở lại: **1753 JUnit, 0 FAILED, 0 errors, 7 skipped** (1746 passed), **13/13 test chẩn đoán/init xanh**. BackupRulesTest chuyển phép kiểm chuỗi source sang kiểm đường dẫn share.json thực, 5/5 xanh; quy tắc backup giữ nguyên.
+- Lệnh: `gradlew.bat testDebugUnitTest --max-workers=4 --offline -x :capacitor-android:bundleLibRuntimeToJarDebug -x :capacitor-app:bundleLibRuntimeToJarDebug`, JAVA_HOME Android Studio jbr, ANDROID_HOME SDK hiện có, ActiveProcessorCount=4. Mọi lượt giữ khoá chung đúng điều kiện HOLD_MAYAO và trả GRADLE_LEAD_BUSY vào `_dup`, kể cả lượt lỗi. Không GPU, không npm install, không sửa capacitor.settings.gradle, không commit. Hash khoá trước/sau: `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`. Bảng file:dòng, XML và log ở scratchpad `fixkt/result.md`. Chưa chạy thiết bị Android thật.
+
 Đợt fix137, cây `ABook_rel135`, nền `fe359786` (0.4.136): sửa snapshot MotionRegion lệch trong hộp/bảng có translate/transform. Ảnh cũ dùng toạ độ containing block thực, bù border/scale/scroll, cắt theo khung cuộn và cập nhật clip sau commit; giữ font tiêu đề, fade, inert và lớp xếp chồng. Khử ảnh cha/con sau xác nhận nội dung đổi để không mất fade của vùng con.
 
 - Vitest toàn bộ: **1877 passed, 0 failed, 1 skipped**, **254 file** (253 passed, 1 skipped), tối đa 2 worker; đủ **15/15 file `*.dom.test.tsx`, 100 test DOM xanh**. Skip duy nhất là corpus PDF cục bộ tuỳ chọn. `tsc -p tsconfig.json`: **0 lỗi**. Test mới: 6 ca đỏ trên mã cũ → 10/10 xanh sau bổ sung ca nested/clip/font.

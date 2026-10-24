@@ -264,12 +264,7 @@ object Diagnostics {
             .associateWith { event.get(it).toString() }
     }
 
-    internal fun share(context: Context): JSONObject {
-        LibraryServer.init(context) // Chuẩn bị share.json trước devices(); không bật máy chủ.
-        val devices = LibraryServer.devices()
-        return JSONObject().put("running", LibraryServer.running()).put("pairedDevices", devices.length())
-            .put("lastError", LibraryServer.lastError)
-    }
+    internal fun share(context: Context): JSONObject = LibraryServer.diagnostics(context)
 
     /** Đuôi logcat của chính tiến trình này; lỗi (máy chặn) thì ném - [assemble] bỏ phần này. */
     private fun logcat(lines: Int): JSONArray {
