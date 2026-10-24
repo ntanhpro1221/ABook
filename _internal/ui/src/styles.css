@@ -387,6 +387,44 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   height: auto;
   min-height: 1.5rem;
 }
+/* Bố cục thông báo (soát 24-10 V14): chữ chiếm trọn bề ngang (nút hành động chung hàng từng ép chữ còn cột 166 px, xuống 3 dòng), nút xuống
+ * hàng riêng căn mép phải; biểu tượng cao đúng một dòng nên thẳng dòng tiêu đề; ✕ nằm trong góc, nét chữ thập thẳng mép chữ (nút 20 px,
+ * nét 12 px giữa nút -> lùi 4 px), không treo đè viền. */
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  row-gap: 0.75rem;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-icon] {
+  height: 1lh;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-content] {
+  flex: 1 1 calc(100% - 2rem);
+  min-width: 0;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"]:has([data-close-button]) [data-content] {
+  padding-right: 1.5rem;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-content] + [data-button] {
+  margin-left: auto;
+}
+/* sonner cho MỌI nút margin-left: auto - trên hàng riêng hai nút sẽ chia đôi khoảng trống; nút sau chỉ cách nút trước bằng gap. */
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button] + [data-button] {
+  margin-left: 0;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-close-button] {
+  left: auto;
+  right: 0.75rem;
+  top: 1rem;
+  height: 1lh;
+  transform: none;
+  border: 0;
+  background: transparent;
+  border-radius: 0.375rem;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-close-button]:hover {
+  background: var(--hover);
+}
 [data-sonner-toaster] {
   transition: bottom var(--motion-medium) var(--ease-standard), top var(--motion-medium) var(--ease-standard);
   --width: min(22.25rem, calc(100vw - 2rem)) !important;

@@ -706,7 +706,7 @@ export function App() {
             // tối ở giao diện tối (soát UX 29-09).
             actionButton: "!bg-accent !text-accent-ink !font-semibold !rounded-lg",
             cancelButton: "!bg-hover !text-fg !rounded-lg",
-            closeButton: "!bg-panel !border-line !text-fg-2",
+            closeButton: "!text-fg-2",
           },
         }}
       />
