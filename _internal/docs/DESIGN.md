@@ -205,22 +205,3 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 2. Đếm lại số chạm các luồng ở mục 2 bị ảnh hưởng - không dài thêm.
 3. Mỗi màn: đúng một nút chính; không thẻ lồng thẻ; nhãn 1-4 chữ; không thứ gì hiện/ẩn cứng; Back đóng lớp trên cùng.
 4. Test DOM cho chuyển động/Back như hiện có; bản phát hành đính kèm bộ ảnh mọi màn.
-
-## 9. Ngôn ngữ giao diện
-
-Chủ sách 24-10: "app đa ngôn ngữ, hiện tại tiếng anh và tiếng việt. mặc định tiếng anh".
-
-- **Hai ngôn ngữ: English (`en`) và Tiếng Việt (`vi`). Mặc định `en`** cho mọi lần cài mới, không đoán theo ngôn ngữ máy.
-  Đổi ở Cài đặt › Giao diện › Ngôn ngữ; tên lựa chọn luôn viết bằng chính ngôn ngữ ấy ("English", "Tiếng Việt").
-- **Chỉ giao diện đổi**: nội dung truyện, tên nhân vật, tên giọng đọc, cách đọc tiếng Việt giữ nguyên. Tính năng riêng cho
-  tiếng Việt (cách đọc tên, chuẩn hoá chữ) vẫn hiện ở bản tiếng Anh, chỉ nhãn được dịch.
-- **Một nguồn chữ**: mọi chữ người dùng thấy đi qua `t("vùng.khoá", {biến})` (ui/src/i18n). Từ điển chia theo vùng
-  (`common`, `listen`, `studio`, `desktop`, `android`, `settings`) để nhiều người sửa song song không đụng nhau; `en` là
-  gốc, `vi` phải đủ khoá (tsc báo thiếu). Số nhiều qua `Intl.PluralRules`; số, giờ, ngày qua `Intl` theo ngôn ngữ
-  ("1.15×" / "1,15×"). Không ghép câu từ mảnh; cả câu là một khoá có biến.
-- **Văn phong**: tiếng Anh ngắn, chữ hoa đầu câu (sentence case), nhãn 1-4 từ như tiếng Việt; tiếng Việt xưng "bạn".
-- **Đổi ngôn ngữ**: cả app mờ ra rồi mờ vào (150/220 ms), không thay chữ cứng; `<html lang>` theo ngôn ngữ.
-- **Ngoài giao diện web**: máy chủ Python trả lời theo `Accept-Language` của giao diện; Android (thông báo, trình phát
-  trên màn khoá) theo ngôn ngữ app chọn, không theo máy; Tauri (khay, hộp chọn file) cũng vậy.
-- **Kiểm**: `node scripts/i18n_check.mjs` đếm chữ tiếng Việt còn nằm trong mã (ngoài từ điển, bỏ chú thích và test);
-  sau đợt quét, con số này phải về 0 và thành cổng test.
