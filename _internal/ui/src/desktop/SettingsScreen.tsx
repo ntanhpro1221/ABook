@@ -540,17 +540,20 @@ export function SettingsScreen() {
     </>
   );
   if (wide) {
-    // Hai cột: /settings mở sẵn nhóm đầu; đổi nhóm thay chỗ trong lịch sử như đổi tab.
+    // Hai cột: /settings mở sẵn nhóm đầu; đổi nhóm thay chỗ trong lịch sử như đổi tab. Hai tiêu đề khác cỡ chung một hàng lưới,
+    // canh theo chân chữ (canh đỉnh để chân chữ lệch 3 px).
     const shown = active ?? groups[0];
     return (
-      <div className="settings-page page-x mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-8 pb-16 pt-9">
+      <div className="settings-page page-x mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-x-8 pb-16 pt-9">
+        <h1 className="self-baseline text-[1.75rem] font-bold tracking-tight">Cài đặt</h1>
+        <div className="min-w-0 max-w-[760px] self-baseline">
+          <GroupHeader id={shown} back={false} />
+        </div>
         <div>
-          <h1 className="text-[1.75rem] font-bold tracking-tight">Cài đặt</h1>
           {notices}
           <SettingsList rows={rows} current={shown} className="mt-5" />
         </div>
-        <div className="min-w-0 max-w-[760px] pt-1 settings-detail">
-          <GroupHeader id={shown} back={false} />
+        <div className="min-w-0 max-w-[760px]">
           <GroupBody id={shown} info={info} touchOnly={touchOnly} />
         </div>
       </div>
@@ -558,14 +561,14 @@ export function SettingsScreen() {
   }
   if (active) {
     return (
-      <div className="settings-page mx-auto max-w-[760px] px-4 pb-16 pt-4 sm:px-10 sm:pt-7">
+      <div className="settings-page page-x mx-auto max-w-[760px] pb-16 pt-4 sm:pt-7">
         <GroupHeader id={active} />
         <GroupBody id={active} info={info} touchOnly={touchOnly} />
       </div>
     );
   }
   return (
-    <div className="settings-page mx-auto max-w-[760px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
+    <div className="settings-page page-x mx-auto max-w-[760px] pb-16 pt-6 sm:pt-9">
       <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">Cài đặt</h1>
       {notices}
       <SettingsList rows={rows} className="mt-5" />

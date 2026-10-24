@@ -506,7 +506,7 @@ export function SourceStep({
                     problem ? "border-danger" : "border-line",
                   )}
                 />
-                <Button type="submit" disabled={!cleanPath(typed) || scanning}>
+                <Button type="submit" className="h-10 min-h-10" disabled={!cleanPath(typed) || scanning}>
                   Lấy chương
                 </Button>
               </form>
@@ -1866,7 +1866,7 @@ export function NewProjectScreen() {
   };
 
   return (
-    <div className="mx-auto max-w-[920px] px-4 pb-16 pt-6 sm:px-10 sm:pt-9">
+    <div className="page-x mx-auto max-w-[920px] pb-16 pt-6 sm:pt-9">
       <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>

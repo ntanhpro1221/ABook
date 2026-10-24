@@ -385,7 +385,7 @@ export function EditBookDialog({
               onChange={(event) => setTitle(event.target.value)}
               className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
             />
-            <Button type="submit" variant="primary" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>
+            <Button type="submit" variant="primary" className="h-10 min-h-10" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>
               Lưu tên
             </Button>
           </form>
@@ -408,7 +408,7 @@ export function EditBookDialog({
                 onChange={(event) => setAuthor(event.target.value)}
                 className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
               />
-              <Button type="submit" variant="primary" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>
+              <Button type="submit" variant="primary" className="h-10 min-h-10" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>
                 Lưu tác giả
               </Button>
             </form>
