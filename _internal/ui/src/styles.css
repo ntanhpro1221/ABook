@@ -841,7 +841,7 @@ select[class~="border-line"] {
 .player-sheet [data-player-menu-row] > span:first-child > svg { width: 20px; height: 20px; }
 .chapter-sheet [role="tabpanel"] > div { padding-inline: 0; }
 .chapter-sheet button[data-current] { min-height: 48px; padding: 12px 0; gap: 12px; }
-.chapter-sheet button[data-current] > span:first-child { width: 20px; }
+.chapter-sheet button[data-current] > span:first-child { width: 20px; margin-left: -2.5px; }
 .chapter-sheet button[data-current] > span:first-child svg { width: 20px; height: 20px; }
 [data-menu-slot] button {
   width: 48px;

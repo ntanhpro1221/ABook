@@ -1806,7 +1806,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   if (!script) return <MotionRegion />;
   return (
     <MotionRegion as="div" className="relative h-full">
-      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface h-full overflow-y-auto px-[20px] py-8 sm:px-10">
+      <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface h-full overflow-y-auto px-[20px] py-8 sm:px-[31.5px]">
         <div className="mx-auto max-w-[68ch] text-[1.25rem] leading-[1.7]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải "chưa có audio". */}
           {!script.timed && current?.state !== "text" && (
@@ -1879,7 +1879,8 @@ export function ChapterPanel() {
               canPlay(chapter) && "hover:bg-hover",
             )}
           >
-            <MotionRegion as="span" className="inline-grid h-4 w-5 shrink-0 place-items-center">
+            {/* Cột dấu kéo ra 3,5 px: mực ✓ (3/24 trong ô 14 px, giữa cột 17,5 px) đứng đúng mép chữ của bảng. */}
+            <MotionRegion as="span" className="-ml-[3.5px] inline-grid h-4 w-5 shrink-0 place-items-center">
               {current && playing ? (
                 <Vu className="h-3 text-accent" />
               ) : done ? (
@@ -2097,10 +2098,11 @@ function BookmarkPanel({ editingId, setEditingId }: { editingId: string | null; 
 }
 
 type Panel = "text" | "chapters" | "bookmarks";
-const PANELS: { value: Panel; label: string; icon: typeof Text }[] = [
-  { value: "text", label: "Đọc theo", icon: Text },
-  { value: "chapters", label: "Chương", icon: ListOrdered },
-  { value: "bookmarks", label: "Dấu trang", icon: BookmarkIcon },
+/** `ink`: mực icon bắt đầu bao nhiêu phần 24 trong ô icon - tab kéo icon ra chừng ấy để mực đứng đúng mép chữ của bảng bên dưới. */
+const PANELS: { value: Panel; label: string; icon: typeof Text; ink: number }[] = [
+  { value: "text", label: "Đọc theo", icon: Text, ink: 2 },
+  { value: "chapters", label: "Chương", icon: ListOrdered, ink: 3 },
+  { value: "bookmarks", label: "Dấu trang", icon: BookmarkIcon, ink: 4 },
 ];
 const PANEL_KEY = "abook-now-playing-panel";
 
@@ -2405,7 +2407,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
               selected ? "bg-hover text-fg" : "text-fg-2 hover:text-fg",
             )}
           >
-            <item.icon className="size-4" />
+            <item.icon className="size-4" style={{ marginLeft: `${(-item.ink * 14) / 24}px` }} />
             {/* Cột phải hẹp (cửa sổ ~768 px: hai cột + thanh bên chỉ chừa ~210 px) thì chỉ còn biểu tượng, chữ giữ cho trình đọc màn hình. */}
             <span className="@max-[20rem]:sr-only">{item.label}</span>
           </button>
@@ -2537,7 +2539,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       </Sheet>}
       {!mobile && (
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="@container flex h-14 shrink-0 items-center overflow-hidden border-b border-line px-3 lg:px-6">{panelTabs}</div>
+          <div className="@container flex h-14 shrink-0 items-center overflow-hidden border-b border-line px-3 sm:px-6">{panelTabs}</div>
           <div className="min-h-0 flex-1">{panelBody}</div>
         </div>
       )}
