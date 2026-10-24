@@ -71,7 +71,10 @@ function voiceMeta(voice: VoiceOption, withGender = false): string {
   const parts = voice.description ? [voice.description] : [voice.region ? `Miền ${voice.region}` : "", voice.style];
   // Chất giọng của máy khác đã mở đầu bằng giới ("Nữ · Trưởng thành"): không nói hai lần.
   const about = [withGender && !voice.description ? voice.genderLabel : "", ...parts].filter(Boolean).join(" · ");
-  return `${about} · ${voice.takenNote ?? (voice.takenBy?.length ? takenText(voice.takenBy) : sharedText(voice, voice.current))}`;
+  // Giọng đang dùng không ai dùng chung: nút "Đang dùng" bên phải đã nói, dòng phụ không nhắc lại "đang đọc cho người này".
+  const alone = voice.current && !voice.sharedWith.length && !voice.otherUsers;
+  const use = voice.takenNote ?? (voice.takenBy?.length ? takenText(voice.takenBy) : alone ? "" : sharedText(voice, voice.current));
+  return [about, use].filter(Boolean).join(" · ");
 }
 
 /** Tên nhóm của một máy đọc, và - khi máy chưa có giọng ấy - lời nhắn + nút tải (tiến độ hỏi lại mỗi giây). */
@@ -141,7 +144,7 @@ export function PreviewButton({ voice }: { voice: VoiceOption }) {
       aria-label={active ? "Dừng nghe thử" : `Nghe thử giọng ${voice.name}`}
       className={cn(
         "grid size-9 shrink-0 place-items-center rounded-full border transition-colors",
-        active ? "border-accent bg-accent text-accent-ink" : "border-line text-fg-2 hover:border-line-strong hover:text-fg",
+        active ? "border-accent bg-accent text-accent-ink" : "border-line text-fg-2 hover:border-line-strong hover:text-fg in-[.bg-accent-soft]:border-line-strong",
       )}
     >
       <MotionRegion as="span" className="grid size-4 place-items-center">{active && clip.loading ? <Loader2 className="size-4 animate-spin" /> : active ? <Vu className="h-3" /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
@@ -333,7 +336,8 @@ export function VoicePicker({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className={cn("font-medium", voice.takenBy?.length && "text-fg-2")}>{voice.name}</span>
-                    {voice.current && <span className="rounded-full bg-panel px-2 py-px text-[0.6875rem] font-medium text-accent-text">Đang dùng</span>}
+                    {/* Viên "Đang dùng" chỉ khi nút bên phải là "Giữ giọng này"; còn lại nút đã nói đúng chữ ấy (soát 25-10: nói hai lần một hàng). */}
+                    {voice.current && data.pending && <span className="rounded-full bg-panel px-2 py-px text-[0.6875rem] font-medium text-accent-text">Đang dùng</span>}
                     {voice.pending && !voice.current && (
                       <span className="rounded-full bg-warning-soft px-2 py-px text-[0.6875rem] font-medium text-warning">Chờ áp dụng</span>
                     )}
