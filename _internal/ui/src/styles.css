@@ -787,6 +787,158 @@ select[class~="border-line"] {
   margin-top: 2px;
 }
 .book-action-menu [role="menuitem"] > span { min-width: 0; }
+/* Mực hình học của icon lucide (getBBox từng nét + nửa nét, ô 24): --ink-l / --ink-r = khoảng trống từ mép ô tới mực, đơn vị 1/24
+   ô. Không ghi = 1 (nét 2 chạm khung 22). Dùng để đặt mực - không phải ô - đúng chỗ. */
+.lucide-laptop { --ink-l: 1.5; }
+.lucide-arrow-down-wide-narrow,
+.lucide-bell,
+.lucide-captions,
+.lucide-download,
+.lucide-git-merge,
+.lucide-headphones,
+.lucide-image-plus,
+.lucide-list-music,
+.lucide-loader-circle,
+.lucide-maximize-2,
+.lucide-moon,
+.lucide-moon-star,
+.lucide-refresh-cw,
+.lucide-rotate-ccw,
+.lucide-rotate-ccw-clock,
+.lucide-rotate-cw,
+.lucide-save,
+.lucide-scissors,
+.lucide-search,
+.lucide-settings,
+.lucide-share-2,
+.lucide-skip-back,
+.lucide-skip-forward,
+.lucide-sliders-horizontal,
+.lucide-square,
+.lucide-text-align-start,
+.lucide-trash,
+.lucide-upload { --ink-l: 2; }
+.lucide-list-ordered { --ink-l: 2.5; }
+.lucide-arrow-right-left,
+.lucide-book-audio,
+.lucide-book-plus,
+.lucide-check,
+.lucide-clipboard-check,
+.lucide-clipboard-list,
+.lucide-ellipsis,
+.lucide-file-down,
+.lucide-file-text,
+.lucide-library,
+.lucide-music-2,
+.lucide-shield-alert,
+.lucide-shield-check,
+.lucide-speaker,
+.lucide-spell-check,
+.lucide-timer-reset,
+.lucide-type,
+.lucide-undo-2,
+.lucide-user-round { --ink-l: 3; }
+.lucide-mic-vocal { --ink-l: 3.75; }
+.lucide-arrow-left,
+.lucide-arrow-right,
+.lucide-bookmark,
+.lucide-bookmark-plus,
+.lucide-hourglass,
+.lucide-mic,
+.lucide-minus,
+.lucide-pause,
+.lucide-pin,
+.lucide-play,
+.lucide-plus,
+.lucide-smartphone { --ink-l: 4; }
+.lucide-chevron-down,
+.lucide-ear,
+.lucide-lightbulb,
+.lucide-x { --ink-l: 5; }
+.lucide-bluetooth { --ink-l: 6; }
+.lucide-chevron-left,
+.lucide-chevron-right { --ink-l: 8; }
+.lucide-laptop,
+.lucide-volume-x { --ink-r: 1.5; }
+.lucide-arrow-down-wide-narrow,
+.lucide-bell,
+.lucide-captions,
+.lucide-clapperboard,
+.lucide-download,
+.lucide-git-merge,
+.lucide-headphones,
+.lucide-list-music,
+.lucide-list-ordered,
+.lucide-loader-circle,
+.lucide-maximize-2,
+.lucide-mic-vocal,
+.lucide-moon,
+.lucide-play,
+.lucide-refresh-cw,
+.lucide-rotate-ccw,
+.lucide-rotate-ccw-clock,
+.lucide-rotate-cw,
+.lucide-save,
+.lucide-search,
+.lucide-settings,
+.lucide-share-2,
+.lucide-skip-back,
+.lucide-skip-forward,
+.lucide-sliders-horizontal,
+.lucide-square,
+.lucide-text-align-start,
+.lucide-trash,
+.lucide-upload { --ink-r: 2; }
+.lucide-arrow-right-left,
+.lucide-book-audio,
+.lucide-book-plus,
+.lucide-check,
+.lucide-clipboard-check,
+.lucide-clipboard-list,
+.lucide-ellipsis,
+.lucide-file-down,
+.lucide-file-headphone,
+.lucide-file-text,
+.lucide-library,
+.lucide-scissors,
+.lucide-shield-alert,
+.lucide-shield-check,
+.lucide-speaker,
+.lucide-spell-check,
+.lucide-timer-reset,
+.lucide-type,
+.lucide-undo-2,
+.lucide-user-round { --ink-r: 3; }
+.lucide-arrow-left,
+.lucide-arrow-right,
+.lucide-bookmark,
+.lucide-bookmark-plus,
+.lucide-ear,
+.lucide-hourglass,
+.lucide-mic,
+.lucide-minus,
+.lucide-music-2,
+.lucide-pause,
+.lucide-pin,
+.lucide-plus,
+.lucide-smartphone { --ink-r: 4; }
+.lucide-chevron-down,
+.lucide-lightbulb,
+.lucide-x { --ink-r: 5; }
+.lucide-bluetooth,
+.lucide-volume-1 { --ink-r: 6; }
+.lucide-chevron-left,
+.lucide-chevron-right { --ink-r: 8; }
+/* Icon đầu dòng menu (máy tính 14 px, bảng trượt 20 px): khoảng mực icon -> chữ bằng nhau mọi dòng (như icon nét 2 rộng nhất); chữ đứng
+   yên nhờ bù lại bên phải. Glyph hẹp (+, ←) vì thế lùi vào trong ô thay vì dạt xa chữ. */
+[role="menuitem"] > svg:first-child,
+[data-player-menu-row] > svg:first-child,
+[data-player-menu-row] > span:first-child > svg:first-child {
+  --icon-w: 14px;
+  margin-inline-start: calc(var(--icon-w) * (var(--ink-r, 1) - 1) / 24);
+  margin-inline-end: calc(var(--icon-w) * (1 - var(--ink-r, 1)) / 24);
+}
+.book-action-menu [role="menuitem"] > svg:first-child { --icon-w: 20px; }
 .book-action-sheet .sheet-body > [data-radix-popper-content-wrapper] {
   position: static !important;
   transform: none !important;
@@ -838,7 +990,7 @@ select[class~="border-line"] {
 .player-sheet [data-player-menu-row] { min-height: 48px; padding-inline: 0; gap: 12px; }
 .player-sheet [data-player-menu-row] > span:first-child { gap: 12px; }
 .player-sheet [data-player-menu-row] > svg,
-.player-sheet [data-player-menu-row] > span:first-child > svg { width: 20px; height: 20px; }
+.player-sheet [data-player-menu-row] > span:first-child > svg { --icon-w: 20px; width: 20px; height: 20px; }
 .chapter-sheet [role="tabpanel"] > div { padding-inline: 0; }
 .chapter-sheet button[data-current] { min-height: 48px; padding: 12px 0; gap: 12px; }
 .chapter-sheet button[data-current] > span:first-child { width: 20px; margin-left: -2.5px; }
