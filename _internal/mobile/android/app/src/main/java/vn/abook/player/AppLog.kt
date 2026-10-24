@@ -55,6 +55,10 @@ object AppLog {
         """(?=[a-z0-9_.-]*[a-z_-])[a-z0-9_-]+(?:\.[a-z0-9_-]+)*\.?:\d{1,5}\b)""")
     private val rawHost = Regex("""(?i)(\b(?:host|hostname|address)["']?\s*[:=]\s*)(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s,;}\]]+)""")
     private val dnsError = Regex("""(?i)(\b(?:unable to resolve host\s+|UnknownHostException:\s*(?!Unable\b)))["']?[^\s"':,;]+["']?""")
+    private val urlAuthority = Regex("""(?i)\b((?:https?|wss?)://)[^/\s?#"'<>]+""")
+    private val socketHost = Regex(
+        """(?i)(?<![\w./\\-])(?=[a-z0-9_.-]*[a-z_-])[a-z0-9_-]+(?:\.[a-z0-9_-]+)*\.?""" +
+        """(?=/\[?(?:(?:\d{1,3}\.){3}\d{1,3}|[0-9a-f:]*:[0-9a-f:.]+))""")
     private val sourceLocation = Regex("""(?i)\.(?:kt|java|py|tsx?|jsx?|cs):""")
 
     private fun hideAddressLists(text: String): String {
@@ -160,6 +164,8 @@ object AppLog {
         var text = hideAddressLists(message)
         text = rawHost.replace(text) { it.groupValues[1] + "<địa chỉ>" }
         text = dnsError.replace(text) { it.groupValues[1] + "<địa chỉ>" }
+        text = urlAuthority.replace(text) { it.groupValues[1] + "<địa chỉ>" }
+        text = socketHost.replace(text, "<địa chỉ>")
         // Private paths keep only their source basename and line; protect that span until paths.replace below.
         val sourceSpans = paths.findAll(text).mapNotNull { path ->
             sourceFile.find(path.value)?.let { source ->

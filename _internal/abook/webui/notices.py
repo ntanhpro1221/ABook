@@ -86,7 +86,7 @@ READ_PAUSE_SECONDS = 0.2
 
 
 def unreadable(what: str) -> None:
-    NOTICES.add(f"{what} bị khoá; tạm dùng mặc định và chờ đọc được mới lưu.", kind="saving-blocked")
+    NOTICES.add(f"{what} bị khoá; tạm dùng mặc định và chưa lưu — bạn chờ một lát rồi thử lại.", kind="saving-blocked")
 
 
 def read_json(path: Path, what: str, valid: Callable[[Any], bool] = lambda _data: True) -> Any:

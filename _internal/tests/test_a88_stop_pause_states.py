@@ -223,7 +223,7 @@ def test_the_desktop_is_told_once_when_a_book_pauses_for_the_battery(studio, mon
     _write_state(paths, "running", pause_reason="battery", battery_pause=True)
 
     app._precast_tick(now=0.0)
-    assert len(toasts) == 1 and "pin" in toasts[0][0] and "Cắm sạc" in toasts[0][1]
+    assert len(toasts) == 1 and "pin" in toasts[0][0] and "cắm sạc" in toasts[0][1] and "Tiếp tục" in toasts[0][1]
     app._precast_tick(now=5.0)
     assert len(toasts) == 1, "một lần mỗi lần dừng"
 

@@ -38,4 +38,4 @@ def test_review_rows_show_unverifiable_lines_by_default_without_the_phantom_tran
     assert {item["stableId"] for item in view["items"]} == set(codes)
     assert all(item["kind"] == "unverified" and item["heard"] == "" for item in view["items"])
     assert view["counts"]["unverified"] == 3 and view["pending"] == 3
-    assert "không kiểm được" in reviews.REASONS["unverified"]
+    assert "chưa kiểm được" in reviews.REASONS["unverified"] and "nghe lại bằng tai" in reviews.REASONS["unverified"]

@@ -301,6 +301,8 @@ def judge_parts(components: list[Component], stamp: dict[str, str]) -> dict[str,
             judged[part.id] = "current"
         elif not part.present:
             judged[part.id] = "missing"
+        elif part.id == "ffmpeg":
+            judged[part.id] = "current" if ffmpeg_setup.current() else "outdated"
         elif (part.id == "libs" and part.id not in stamp) or (part.id in stamp and stamp[part.id] != part.pin):
             judged[part.id] = "outdated"
         else:

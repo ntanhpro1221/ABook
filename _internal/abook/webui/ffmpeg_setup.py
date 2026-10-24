@@ -83,6 +83,24 @@ def pin() -> str:
     return WHEEL.sha256
 
 
+def current() -> bool:
+    """Downloaded tool matches its own install stamp, independent of music/module.json."""
+    return external() or _installed_current()
+
+
+def _installed_current() -> bool:
+    if not downloaded() or _folder is None:
+        return False
+    try:
+        return (_folder / "installed.sha256").read_text(encoding="utf-8") == pin()
+    except (OSError, UnicodeError):
+        return False
+
+
+def outdated() -> bool:
+    return downloaded() and not current()
+
+
 def cannot_download() -> str:
     """Rỗng nếu tải được; không thì lý do (tiếng Việt) để báo người dùng."""
     if os.environ.get(ENV_DOWNLOAD, "1") == "0":
@@ -101,7 +119,7 @@ def install(progress: Callable[[int, int], None], cancelled: Callable[[], bool] 
     with destination_lock(_folder / "install"):
         stamp = _folder / "installed.sha256"
         exe = _folder / EXE_NAME
-        if exe.is_file() and stamp.is_file() and stamp.read_text(encoding="utf-8") == pin():
+        if _installed_current():
             io_utils.use_downloaded_ffmpeg(exe)
             progress(WHEEL.size, WHEEL.size)
             return exe
@@ -139,17 +157,18 @@ def status() -> dict[str, object]:
     with _lock:
         state = dict(_state)
     ok = ready()
-    return {"ready": ok, "downloading": bool(state["downloading"]), "done": state["done"], "total": state["total"], "error": state["error"],
+    behind = outdated()
+    return {"ready": ok, "outdated": behind, "downloading": bool(state["downloading"]), "done": state["done"], "total": state["total"], "error": state["error"],
             "errorDetail": state.get("error_detail", "") if state["error"] else "",
             "retrying": bool(state["downloading"]) and studio_setup.retrying(_thread),
-            "bytes": WHEEL.size, "blocked": "" if ok else cannot_download()}
+            "bytes": WHEEL.size, "blocked": "" if ok and not behind else cannot_download()}
 
 
 def start() -> None:
-    """Bắt đầu tải ở luồng nền (không làm gì nếu đã có ffmpeg hay đang tải). Không tải được thì `error` ghi lý do."""
+    """Người dùng bấm tải/cập nhật; bản đã đúng pin hay đang tải thì không làm gì."""
     global _thread
     with _lock:
-        if ready() or _state["downloading"]:
+        if (ready() and not outdated()) or _state["downloading"]:
             return
         reason_blocked = cannot_download()
         if reason_blocked:

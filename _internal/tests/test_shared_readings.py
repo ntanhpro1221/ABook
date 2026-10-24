@@ -105,7 +105,7 @@ def test_a_fix_marked_for_every_book_lands_in_the_shared_list(tmp_path: Path) ->
         # Soát UX a25 T2: cách đọc không bao giờ được dùng - giao diện tắt nút Lưu, API cũng từ chối bằng cùng lời.
         status, data, _ = _request(server.port, "POST", f"/api/books/{created['id']}/pronunciation",
                                    body={"surface": "Mở/đóng", "spokenForm": "mở hoặc đóng"}, headers=headers)
-        assert status == 400 and "không bao giờ được dùng" in json.loads(data)["error"]
+        assert status == 400 and "ngăn áp cách đọc" in json.loads(data)["error"] and "Chữ đem đọc" in json.loads(data)["error"]
         status, data, _ = _request(server.port, "POST", "/api/readings", body={"surface": "Nasdell", "remove": True},
                                    headers=headers)
         assert status == 200 and json.loads(data) == {"removed": True}

@@ -80,6 +80,8 @@ Không đổi sang phân tích cuốn chiếu nếu người dùng chưa thay đ
   Chỉ học địa chỉ từ TLS khớp vân tay đã ghim (discovery chỉ là gợi ý); thử đường trước HTTP, không replay POST khi chưa biết kết quả.
   Chọn TLS gộp theo identity, cache lỗi 2 giây (xoá khi đổi mạng/discover đã xác thực), tối đa 2 tác vụ I/O mỗi peer và 32 peer giữ trong bộ chọn;
   DNS kẹt giữ slot của chính peer đó, không xếp hàng vô hạn hay chặn peer khác. Đường ưu tiên đi trước 150 ms; đủ ngân sách hai lane cho cả 8 địa chỉ (tối đa 6,15 giây).
+  Biên đọc chuẩn hoá từng record địa chỉ, bỏ kiểu sai và dấu giờ không hữu hạn/âm, gộp trùng trước trần 8; giữ bản dữ liệu hỏng trước ghi phần hợp lệ và báo ghép lại máy không còn địa chỉ.
+  Discovery Android thu tối đa 64 gợi ý UDP mỗi lượt trước xác minh TLS; bộ xác minh chung tối đa 2 I/O và 16 tác vụ chờ, quá trần thì bỏ gợi ý, không chặn vòng nhận UDP.
   Đường file gói qua kiểm tra từ vựng chung hai nền trước canonical/resolve/stat (cấm UNC, drive/ADS, backslash, tầng rỗng/dot,
   tên thiết bị Windows, hậu tố chấm/khoảng trắng), rồi kiểm containment theo thành phần. Manifest mạng phải qua cùng gate trước ghi.
 - Cổng sync: desktop tối đa 32 kết nối/8 mỗi nguồn, keep-alive rỗi 30 giây; Android 8 worker/6 mỗi nguồn,
