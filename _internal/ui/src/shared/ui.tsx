@@ -11,6 +11,7 @@ import { MotionRegion } from "./MotionRegion";
 import { MotionPresence } from "./MotionPresence";
 import { useBackLayer } from "./backStack";
 import { useMediaQuery } from "./media";
+import { useScrollFadeOn } from "./scrollFade";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
@@ -594,6 +595,9 @@ export function Dialog({
     if (open) opener.current = lastFocus;
   }, [open]);
   const phone = useMediaQuery("(max-width: 640px)");
+  // Thân cuộn mờ ở mép còn nội dung (DESIGN 4.5: không gì cụt cứng) - hộp dài như bộ sách nhiều tập không giấu hàng cuối không dấu hiệu.
+  const [body, setBody] = useState<HTMLDivElement | null>(null);
+  const fade = useScrollFadeOn(body);
   if (phone && phoneSheet) return <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description}>{children}</Sheet>;
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -647,7 +651,7 @@ export function Dialog({
             </DialogPrimitive.Close>
           </div>
           {/* Hộp cao hơn màn (điện thoại, cửa sổ thấp) thì nội dung cuộn trong hộp, nút Đóng ở đầu luôn thấy được (soát UX a15). */}
-          <div className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">{shown.children}</div>
+          <div ref={setBody} style={fade} className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">{shown.children}</div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
@@ -690,6 +694,8 @@ export function Sheet({
   const start = useRef<number | null>(null);
   const [drag, setDrag] = useState(0);
   const [surface, setSurface] = useState<HTMLDivElement | null>(null);
+  const [body, setBody] = useState<HTMLDivElement | null>(null);
+  const fade = useScrollFadeOn(body);
   const closeSheet = useRef(onOpenChange);
   closeSheet.current = onOpenChange;
   useEffect(() => {
@@ -786,7 +792,7 @@ export function Sheet({
             </DialogPrimitive.Close>
           </div>
           </div>
-          <div className="sheet-body -mx-[20px] min-h-0 min-w-0 overflow-y-auto overscroll-contain px-[20px]">
+          <div ref={setBody} style={fade} className="sheet-body -mx-[20px] min-h-0 min-w-0 overflow-y-auto overscroll-contain px-[20px]">
             {shown.description && <DialogPrimitive.Description className="mb-3 text-pretty text-sm text-fg-2"><MotionRegion as="span" className="block" motionKey={typeof shown.description === "string" ? shown.description : undefined}>{shown.description}</MotionRegion></DialogPrimitive.Description>}
             {shown.children}
           </div>

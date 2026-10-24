@@ -9,10 +9,19 @@ export function scrollFadeMask(edges: { top: boolean; bottom: boolean }, size = 
 }
 
 export function useScrollFade(ref: RefObject<HTMLElement | null>, size = 36): CSSProperties | undefined {
+  const [element, setElement] = useState<HTMLElement | null>(null);
+  useEffect(() => setElement(ref.current), [ref]);
+  return useScrollFadeOn(element, size);
+}
+
+/** Như `useScrollFade` cho khung chỉ có sau khi mở (thân hộp thoại / bảng đáy trong Portal): nhận chính phần tử qua ref gọi lại (`ref={setBody}`). */
+export function useScrollFadeOn(element: HTMLElement | null, size = 36): CSSProperties | undefined {
   const [edges, setEdges] = useState({ top: false, bottom: false });
   useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
+    if (!element) {
+      setEdges((old) => (old.top || old.bottom ? { top: false, bottom: false } : old));
+      return;
+    }
     const update = () => {
       const top = element.scrollTop > 2;
       const bottom = element.scrollTop + element.clientHeight < element.scrollHeight - 2;
@@ -30,7 +39,7 @@ export function useScrollFade(ref: RefObject<HTMLElement | null>, size = 36): CS
       observer?.disconnect();
       mutations?.disconnect();
     };
-  }, [ref]);
+  }, [element]);
   const mask = scrollFadeMask(edges, size);
   return mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined;
 }
