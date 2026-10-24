@@ -24,6 +24,24 @@ afterEach(async () => {
 });
 const snapshots = () => [...document.querySelectorAll<HTMLElement>(".motion-snapshot")];
 
+it.each([false, true])("a resizing dialog fades old text out before new text enters (reduced=%s)", async reduced => {
+  vi.spyOn(window, "matchMedia").mockReturnValue({ matches: reduced } as MediaQueryList);
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (this: HTMLElement) {
+    return rect(40, 60, 240, this.textContent === "Old long preview" ? 400 : 100);
+  });
+  const render = (text: string) => act(() => root.render(<MotionRegion fadeThrough motionKey={text}>{text}</MotionRegion>));
+  await render("Old long preview"); await render("Loading next");
+  const box = mount.firstElementChild as HTMLElement;
+  const call = vi.mocked(box.animate).mock.calls.at(-1)!;
+  const duration = reduced ? MOTION.fast : MOTION.medium;
+  const frames = call[0] as Keyframe[];
+  expect(frames[0].opacity).toBe(0);
+  expect(frames[1]).toMatchObject({ opacity: 0, offset: MOTION.fastOut / duration });
+  expect(frames.at(-1)?.opacity).toBe(1);
+  expect(call[1]).toMatchObject({ duration, easing: "linear" });
+  expect(snapshots()[0].textContent).toBe("Old long preview");
+});
+
 it.each(["dialog", "sheet"])("%s: snapshot uses the host padding coordinates, including border, scale and scroll", async kind => {
   const render = (text: string) => act(() => root.render(
     <div data-host role={kind === "page" ? undefined : "dialog"} data-state="open"
@@ -155,7 +173,7 @@ it("a snapshot portaled to the surface follows inner scroll and clips at the ori
   expect(clone.style.top).toBe("10px"); // Detached images no longer subscribe to scroll.
 });
 
-it("page regions inside positioned, clipped ancestors use body fixed overlays without scroll listeners", async () => {
+it("page regions use fixed viewport coordinates and keep the ancestor clip during scroll", async () => {
   const render = (text: string) => act(() => root.render(
     <div style={{ position: "relative", overflow: "auto", height: 70 }}>
       <MotionRegion motionKey={text} style={{ position: "sticky", top: 0 }}>{text}</MotionRegion>
@@ -169,11 +187,11 @@ it("page regions inside positioned, clipped ancestors use body fixed overlays wi
   const clone = snapshots()[0];
   expect(clone.parentElement).toBe(document.body);
   expect(clone.style.position).toBe("fixed");
-  expect(clone.style.clipPath).toBe("");
+  expect(clone.style.clipPath).toBe("inset(0px 0px 0px 0px)");
   host.scrollTop = 20; host.dispatchEvent(new Event("scroll"));
   expect(clone.style.top).toBe("48px");
-  expect(documentAdd.mock.calls.filter(([type]) => type === "scroll")).toHaveLength(0);
-  expect(windowAdd.mock.calls.filter(([type]) => type === "scroll")).toHaveLength(0);
+  expect(documentAdd.mock.calls.filter(([type]) => type === "scroll")).toHaveLength(1);
+  expect(windowAdd.mock.calls.filter(([type]) => type === "scroll")).toHaveLength(1);
 });
 
 it.each([false, true])("menu scroll is compensated only when its containing block does not already scroll with it (positioned=%s)", async positioned => {
