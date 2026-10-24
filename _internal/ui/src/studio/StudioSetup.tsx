@@ -365,7 +365,7 @@ export function StudioSettings() {
         <p>Đã cài{status.gpu ? ` · ${status.gpu.name}` : ""}</p>
         <p className="mt-1 break-all">{status.root}</p>
       </>}>
-        <Button variant={armed ? "danger" : "secondary"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
+        <Button size="sm" variant={armed ? "danger" : "secondary"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
           {busy ? "Đang gỡ…" : armed ? "Xác nhận gỡ" : "Gỡ Studio"}
         </Button>
       </SettingsRow>
