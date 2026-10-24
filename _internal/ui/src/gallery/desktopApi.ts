@@ -33,7 +33,7 @@ function chapterRows(item: GalleryBook): Chapter[] {
     const recorded = chapter.available ? segments : working ? Math.round(segments * 0.4) : 0;
     return {
       id: chapter.id,
-      index,
+      index: index + 1, // chapter_index thật đánh từ 1 (text_processing.build_chapter_manifest)
       title: chapter.title,
       displayTitle: chapter.title,
       subtitle: chapter.subtitle,

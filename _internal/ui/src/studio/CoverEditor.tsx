@@ -116,7 +116,8 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
           aria-label={book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}
           className="touch-box inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-[0.8125rem] font-medium text-fg-2 hover:bg-hover hover:text-fg disabled:opacity-50 max-sm:!justify-start max-sm:px-0"
         >
-          <ImagePlus className="size-4" /> <span className="max-sm:hidden">{book.cover ? "Đổi ảnh bìa" : "Đặt ảnh bìa"}</span>
+          <ImagePlus className="size-4" /> {/* Hai chữ, không xuống dòng: nút đứng dưới bìa 154 px cạnh hai nút biểu tượng ("Đổi ảnh bìa" gãy dòng đè lên dòng gợi ý, soát 24-10). */}
+          <span className="whitespace-nowrap max-sm:hidden">{book.cover ? "Đổi bìa" : "Đặt bìa"}</span>
         </button>
         <button
           type="button"
