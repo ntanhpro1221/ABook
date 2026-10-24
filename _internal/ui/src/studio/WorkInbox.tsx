@@ -8,7 +8,7 @@ import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog, EmptyState, Kbd, Segmented } from "@/shared/ui";
+import { Button, ContentSkeleton, Dialog, EmptyState, InlineError, Kbd, Segmented } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { retryUnlessGone } from "./polling";
@@ -1203,7 +1203,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
   const lists = useRef<WorkLists | null>(null);
   useCardFocus(lists, INBOX_ENDS);
   const refetchInterval = useProducingRefetch(bookId);
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["work", bookId],
     queryFn: () => api<WorkView>(`/api/books/${bookId}/work`),
     refetchInterval,
@@ -1224,7 +1224,8 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
     // setKind chỉ ghi state + gọi onKind - không cần gắn lại.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, kind, inPrecast]);
-  if (isLoading || !data) return <MotionRegion as="div" className="mt-6 text-sm text-fg-2">Đang tìm những chỗ máy chưa chắc…</MotionRegion>;
+  if (error && !data) return <MotionRegion fadeThrough><InlineError className="mt-6" message="Bạn hãy kiểm tra kết nối rồi tải lại việc cần duyệt." onRetry={() => void refetch()} /></MotionRegion>;
+  if (isLoading || !data) return <MotionRegion fadeThrough><ContentSkeleton shape="cards" className="mt-6" label="Đang tải việc duyệt" /></MotionRegion>;
   if (!data.items.length) {
     return (
       <MotionRegion><EmptyState icon={AudioLines} title="Không còn việc duyệt" className="py-10">

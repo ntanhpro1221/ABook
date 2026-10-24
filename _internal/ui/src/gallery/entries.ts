@@ -1,5 +1,6 @@
 import { click, type } from "./actions";
 import type { Scenario } from "./state";
+import type { StateStory } from "./StateStories";
 
 // Danh mục phòng trưng bày. Mỗi mục = một URL hash ổn định (#/<platform>/<tên>) -> một trang của app thật (`route`, router hash của app)
 // trên dữ liệu giả (`scenario`), rồi vài thao tác như người dùng (`act`) để tới đúng trạng thái cần chụp. Thêm mục: thêm một dòng ở đây.
@@ -16,6 +17,7 @@ export interface Entry {
   /** Trang của app (router hash của app), vd "/book/suong-mu-2". */
   route: string;
   scenario?: Partial<Scenario>;
+  showcase?: StateStory;
   /** Giờ của đồng hồ giả (ms) nếu khác mặc định. */
   clock?: number;
   /** Tuỳ chọn trình phát của điện thoại (android/settings.ts), thêm vào cạnh chủ đề. */
@@ -180,6 +182,22 @@ const DESKTOP: Omit<Entry, "platform">[] = [
 export const ENTRIES: Entry[] = [
   ...PHONE.map((item) => ({ ...item, platform: "phone" as const })),
   ...DESKTOP.map((item) => ({ ...item, platform: "desktop" as const })),
+  ...(["phone", "desktop"] as const).flatMap(platform => (["skeleton", "empty", "error", "offline"] as const).map((showcase): Entry => ({
+    id: `${platform}/state-${showcase}`, platform, group: "Trạng thái", title: ({ skeleton: "Khung chờ", empty: "Chưa có nội dung", error: "Lỗi tại chỗ", offline: "Mất mạng" })[showcase], route: "/", showcase,
+  }))),
+  { id: "desktop/sidebar-running", platform: "desktop", group: "Thanh bên", title: "Dự án chạy và chờ", route: "/studio", scenario: { queued: true } },
+  { id: "desktop/offline-library", platform: "desktop", group: "Trạng thái", title: "Mất mạng, giữ thư viện", route: "/", act: async () => { window.dispatchEvent(new Event("offline")); } },
+  { id: "phone/offline-library", platform: "phone", group: "Trạng thái", title: "Mất mạng, giữ thư viện", route: "/", act: async () => { window.dispatchEvent(new Event("offline")); } },
+  ...(["loading", "error"] as const).flatMap(state => ([
+    ["work", "Việc cần duyệt", "/studio/dong-ho-cat?tab=work", "/api/books/dong-ho-cat/work"],
+    ["review", "Câu cần nghe", "/studio/dong-ho-cat?tab=review", "/api/books/dong-ho-cat/review"],
+    ["precast", "Lượt duyệt", "/studio/dong-ho-cat?tab=precast", "/api/books/dong-ho-cat/precast"],
+    ["script", "Kịch bản", "/studio/dong-ho-cat?tab=script", "/api/books/dong-ho-cat/casting"],
+    ["music", "Nhạc nền", "/studio/dong-ho-cat?tab=music", "/api/books/dong-ho-cat/music"],
+    ["devices", "Thiết bị", "/settings/devices", "/api/computers"],
+    ["voice", "Giọng đọc", "/settings/voice", "/api/readaloud/voices"],
+    ["app", "Mở ABook", "/", "/api/app"],
+  ] as const).map(([id, title, route, path]): Entry => ({ id: `desktop/${id}-${state}`, platform: "desktop", group: "Trạng thái", title: `${title} · ${state === "loading" ? "đang tải" : "lỗi"}`, route, scenario: { requests: { [path]: state } } }))),
 ];
 
 export function entry(id: string): Entry | undefined {

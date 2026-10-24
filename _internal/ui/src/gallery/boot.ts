@@ -28,6 +28,7 @@ export function installPlatform(platform: "phone" | "desktop", clock?: number): 
 }
 
 export function prepare(entry: Entry, theme: Theme): void {
+  window.dispatchEvent(new Event("online"));
   resetData();
   galleryState.scenario = { ...DEFAULT_SCENARIO, ...entry.scenario };
   galleryState.missing.clear();

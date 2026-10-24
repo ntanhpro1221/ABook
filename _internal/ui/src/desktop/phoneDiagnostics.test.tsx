@@ -23,7 +23,7 @@ const report: DiagnosticsReport = {
 
 describe("hộp Chẩn đoán điện thoại", () => {
   it("hiện bản app, Android, pin, mạng, việc nền, lần chết gần nhất và nhật ký cuộn được", () => {
-    const html = renderToStaticMarkup(<DiagnosticsBody report={report} />);
+    const html = renderToStaticMarkup(<DiagnosticsBody onRetry={vi.fn()} report={report} />);
     for (const text of ["0.4.133 (4133)", "OPPO CPH2573 · Android 14", "41% · đang sạc", "di động + VPN", "1 đang chạy", "CRASH (văng)", "lỗi phát", "dòng thứ hai"]) {
       expect(html).toContain(text);
     }
@@ -33,15 +33,15 @@ describe("hộp Chẩn đoán điện thoại", () => {
 
   it("không với tới điện thoại: câu của máy chủ kèm cách khắc phục (bật chia sẻ, cùng mạng)", () => {
     const error = new ApiError(502, "Không kết nối được máy Pixel");
-    const html = renderToStaticMarkup(<DiagnosticsBody error={error} />);
+    const html = renderToStaticMarkup(<DiagnosticsBody onRetry={vi.fn()} error={error} />);
     expect(html).toContain("Không kết nối được máy Pixel");
     expect(html).toContain("Cho máy khác nghe thư viện này");
     expect(html).toContain("Tailscale");
   });
 
   it("đang tải: khung chờ; chưa có gì thì không hiện gì", () => {
-    expect(renderToStaticMarkup(<DiagnosticsBody loading />)).not.toBe("");
-    expect(renderToStaticMarkup(<DiagnosticsBody />).replace(/<[^>]+>/g, "")).toBe("");
+    expect(renderToStaticMarkup(<DiagnosticsBody onRetry={vi.fn()} loading />)).not.toBe("");
+    expect(renderToStaticMarkup(<DiagnosticsBody onRetry={vi.fn()} />).replace(/<[^>]+>/g, "")).toBe("");
   });
 });
 

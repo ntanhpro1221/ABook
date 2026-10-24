@@ -33,6 +33,21 @@ export function galleryCases(platform: Platform): void {
         expect(galleryState.errors).toEqual([]);
         expect([...galleryState.missing]).toEqual([]);
         expect(container.textContent?.trim().length).toBeGreaterThan(0);
+        // Mục trạng thái phải tới đúng màn, không chỉ dựng được vỏ app.
+        if (entry.scenario?.requests) {
+          const states = Object.values(entry.scenario.requests);
+          if (states.includes("loading")) {
+            expect(container.querySelector(".motion-skeleton")).not.toBeNull();
+            expect(container.querySelector("main .animate-spin")).toBeNull();
+          }
+          if (states.includes("error")) {
+            expect(container.querySelector('[role="alert"]')?.textContent).toContain("Thử lại");
+          }
+        }
+        if (entry.id.endsWith("offline-library")) {
+          expect(container.querySelector('[role="status"]')?.textContent).toContain("Mất mạng");
+          expect(container.querySelector("main button")).not.toBeNull();
+        }
       } finally {
         unmount();
         container.remove();
