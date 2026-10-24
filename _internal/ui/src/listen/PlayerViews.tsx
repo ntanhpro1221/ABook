@@ -2064,8 +2064,9 @@ function BookmarkPanel({ editingId, setEditingId }: { editingId: string | null; 
         <p className="mt-1 text-sm text-fg-2">Bấm biểu tượng dấu trang (hoặc phím B) khi nghe tới đoạn muốn quay lại.</p>
       </div>
   ) : null;
+  // Điện thoại (bảng trượt, đã có lề 20 px): khung lùi ra đúng đệm của dòng để chữ đứng mép 20 px, nền rê tràn ra ngoài chữ.
   return (
-    <MotionRegion as="div" className="h-full overflow-y-auto px-3 py-4 sm:px-6">
+    <MotionRegion as="div" className="h-full overflow-y-auto py-4 max-sm:-mx-3 sm:px-6">
       <BookmarkList
         empty={empty}
         bookId={track.bookId}
