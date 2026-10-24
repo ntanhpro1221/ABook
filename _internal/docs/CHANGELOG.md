@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Mới
+- Màu ấm như giấy cho cả app; chọn nền đọc Giấy, Ngà hay Đêm; tiếng chạm khẽ (tự im khi đang nghe) và rung nhẹ trên điện thoại, tắt được ở Cài đặt › Giao diện.
+
 ### Sửa lỗi
 - Back đóng mọi thông báo đang hiện (kể cả lời mời bật thông báo) rồi mới về trang trước; menu đang khép không chặn chạm bên dưới; đóng nhóm Cài đặt quay đúng một bước.
 - Nội dung đổi trong hộp không còn hai lớp chữ chồng nhau; phần trống mờ dần thay vì biến mất; danh sách dấu trang trống hiện mượt; viền chọn ở đầu Thư viện không bị cắt.

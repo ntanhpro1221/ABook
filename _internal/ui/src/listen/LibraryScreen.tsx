@@ -20,6 +20,7 @@ import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, resumeTar
 import { usePlayer, type WordTarget } from "./player";
 import { useClock } from "./clock";
 import { useListenBook, useListenLibrary, useReadAloudVoices, useSource } from "./source";
+import { feedback, withFeedback } from "@/shared/feedback";
 
 type Filter = "all" | "listening" | "new" | "finished";
 
@@ -151,7 +152,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
         <button
           type="button"
           aria-label={textOnly ? `Đọc ${book.title}` : playingHere ? `Tạm dừng ${book.title}` : book.stage === "text" ? `Nghe ngay ${book.title}` : `Nghe ${book.title}`}
-          onClick={() => (textOnly ? navigate(`/book/${book.id}/read`) : current ? player.toggle() : void playBook(book))}
+          onClick={() => (textOnly ? navigate(`/book/${book.id}/read`) : (feedback("playPause"), current ? player.toggle() : void playBook(book)))}
           className={cn(
             "touch-hit touch-box absolute bottom-2.5 right-2.5 grid size-10 place-items-center rounded-full bg-accent text-accent-ink shadow-float transition-opacity duration-150 group-hover:opacity-100 focus-visible:opacity-100 max-md:opacity-100",
             current ? "opacity-100" : "opacity-0",
@@ -238,7 +239,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
       ) : (
       <button
         type="button"
-        onClick={() => (current ? player.toggle() : void playBook(book))}
+        onClick={withFeedback("playPause", () => (current ? player.toggle() : void playBook(book)))}
         aria-label={playingHere ? `Tạm dừng ${book.title}` : `Nghe tiếp ${book.title}${where ? `, ${where}` : ""}`}
         className="grid size-14 shrink-0 place-items-center rounded-full bg-accent text-accent-ink shadow-card transition-transform hover:scale-105"
       >

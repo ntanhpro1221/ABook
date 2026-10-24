@@ -37,6 +37,7 @@ import { caughtUpDetail } from "./labels";
 import { reportSaveFailure } from "./saveFailure";
 import { ProgressOutbox } from "./progressOutbox";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
+import { feedback, setBookPlaying } from "@/shared/feedback";
 import { withViewTransition } from "@/shared/motion";
 
 export type { SleepMode, SleepRequest } from "./sleep";
@@ -203,6 +204,8 @@ export function useNowPlaying() {
 
 export const SPEEDS = [0.75, 0.9, 1, 1.1, 1.2, 1.3, 1.5, 1.75, 2, 2.5, 3];
 export const SKIP_SECONDS = 15;
+/** Báo hẹn giờ ngủ sắp tắt trước chừng này (DESIGN 5.3). */
+const SLEEP_WARN_MS = 30_000;
 const SAVE_EVERY_MS = 10_000;
 /** Nghe tiếp chờ chỗ nghe mới nhất tối đa chừng này (máy chủ đổi chỗ nghe với máy kia trong 1,5 giây, máy kia tắt thì thôi). */
 const FRESH_SPOT_MS = 1600;
@@ -406,6 +409,10 @@ export function PlayerProvider({
     if (force) refreshLists(current.bookId);
     return writing;
   }, [engine, native, progressOutbox, refreshLists]);
+
+  // Tiếng chạm của giao diện im khi sách đang phát (shared/feedback.ts, DESIGN 5.3).
+  useEffect(() => setBookPlaying(playing), [playing]);
+  const sleepWarned = useRef(false);
 
   useEffect(() => {
     if (native) return;
@@ -1651,6 +1658,11 @@ export function PlayerProvider({
       if (mode.kind === "minutes" && left <= 0) {
         stopBySleep();
         return;
+      }
+      // 30 giây trước khi tắt: một nốt trầm (DESIGN 5.3; tiếng duy nhất kêu cả khi đang phát). Thêm giờ quá mốc thì báo lại được.
+      if (mode.kind === "minutes") {
+        if (left <= SLEEP_WARN_MS && !sleepWarned.current) feedback("sleepWarn");
+        sleepWarned.current = left <= SLEEP_WARN_MS;
       }
       const fadeMs = options.fadeSeconds * 1000;
       if (left < fadeMs) {

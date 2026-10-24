@@ -1,5 +1,7 @@
 import { DEFAULT_EXTEND_MINUTES, DEFAULT_FADE_SECONDS, EXTEND_CHOICES, FADE_CHOICES, SAFETY_STOP_CHOICES, choiceOr, cleanSleepSchedule } from "@/listen/sleep";
 import { withViewTransition } from "@/shared/motion";
+import { configureFeedback } from "@/shared/feedback";
+import { applyReadingSurface, readingSurfaceOr, type ReadingSurface } from "@/shared/readingSurface";
 import { EbookLibrary, EbookPlayer } from "./plugins";
 
 // Tuỳ chọn của trình phát trên điện thoại. Lưu trong WebView (localStorage) và đẩy phần native cần biết xuống
@@ -26,6 +28,12 @@ export interface PlayerSettings {
   sleepSchedule: { from: string; to: string; minutes: number } | null;
   /** Máy tự chọn nhạc nền cho sách chỉ có chữ chưa chọn nhạc (mặc định bật; Playlists.autoEnabled). */
   autoMusic: boolean;
+  /** "Âm thanh chạm" (Giao diện; shared/feedback.ts): tiếng khẽ khi chọn, tự im khi đang nghe. */
+  touchSounds: boolean;
+  /** "Rung" (Giao diện): rung phản hồi theo hằng số của hệ điều hành (Haptics.kt). */
+  haptics: boolean;
+  /** "Nền đọc" (Giao diện; shared/readingSurface.ts). */
+  readingSurface: ReadingSurface;
   /** Lần đổi cuối trong Cài đặt (ms; 0 = chưa đổi lần nào): so với dấu native nhớ để biết bản nào mới hơn (`syncSettings`). */
   savedAt: number;
 }
@@ -43,6 +51,9 @@ export const DEFAULT_SETTINGS: PlayerSettings = {
   safetyStopHours: 2,
   sleepSchedule: null,
   autoMusic: true,
+  touchSounds: true,
+  haptics: true,
+  readingSurface: "auto",
   savedAt: 0,
 };
 
@@ -69,6 +80,9 @@ export function normalizeSettings(raw: unknown): PlayerSettings {
     safetyStopHours: choiceOr(given.safetyStopHours, SAFETY_STOP_CHOICES, DEFAULT_SETTINGS.safetyStopHours),
     sleepSchedule: cleanSleepSchedule(given.sleepSchedule),
     autoMusic: flag(given.autoMusic, DEFAULT_SETTINGS.autoMusic),
+    touchSounds: flag(given.touchSounds, DEFAULT_SETTINGS.touchSounds),
+    haptics: flag(given.haptics, DEFAULT_SETTINGS.haptics),
+    readingSurface: readingSurfaceOr(given.readingSurface, DEFAULT_SETTINGS.readingSurface),
     savedAt: typeof stamp === "number" && Number.isFinite(stamp) && stamp > 0 ? stamp : 0,
   };
 }
@@ -131,6 +145,12 @@ export async function pushSettings(settings: PlayerSettings): Promise<void> {
     settingsStamp: settings.savedAt,
     autoMusic: settings.autoMusic !== false,
   }).catch(() => undefined);
+}
+
+/** Tiếng chạm, rung và nền đọc theo tuỳ chọn: lúc mở app và mỗi lần đổi. Chỉ ở WebView - lõi native không cần nhớ. */
+export function applySenses(settings: PlayerSettings): void {
+  configureFeedback({ sounds: settings.touchSounds, haptics: settings.haptics, haptic: (effect) => EbookPlayer.haptic({ effect }) });
+  applyReadingSurface(settings.readingSurface);
 }
 
 /** `animate`: người dùng vừa đổi (hay hệ thống tự chuyển sáng/tối khi app đang mở) - cả màn mờ chéo sang giao diện mới thay vì đổi màu
