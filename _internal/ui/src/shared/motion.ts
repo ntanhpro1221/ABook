@@ -268,13 +268,21 @@ export function presenceMounted(open: boolean, mounted: boolean, exitDone: boole
 export function useMotionState<T>(initial: T | (() => T)) {
   const [value, set] = useState(initial);
   const current = useRef(value);
+  const applied = useRef(value);
+  const pending = useRef(false);
   const generation = useRef(0);
   const update = useCallback((next: SetStateAction<T>, animate: boolean) => {
     const resolved = typeof next === "function" ? (next as (previous: T) => T)(current.current) : next;
-    if (Object.is(current.current, resolved)) return;
+    if (animate ? Object.is(current.current, resolved) : Object.is(applied.current, resolved) && !pending.current) return;
     current.current = resolved;
     const version = ++generation.current;
-    const apply = () => { if (version === generation.current) set(typeof resolved === "function" ? () => resolved : resolved); };
+    pending.current = animate;
+    const apply = () => {
+      if (version !== generation.current) return;
+      pending.current = false;
+      applied.current = resolved;
+      set(typeof resolved === "function" ? () => resolved : resolved);
+    };
     if (animate) withViewTransition(apply);
     else apply();
   }, []);
