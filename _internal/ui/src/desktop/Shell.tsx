@@ -38,12 +38,14 @@ function Brand() {
   );
 }
 
-const NAV = "sidebar-link flex h-10 items-center gap-3 rounded-lg px-2.5 text-sm";
+const NAV = "sidebar-link flex h-10 items-center gap-3 rounded-lg px-2 text-sm";
 const NAV_ACTIVE = "bg-accent-soft font-medium text-accent-text";
 const NAV_IDLE = "font-medium text-fg-2 hover:bg-hover hover:text-fg";
 
-/** Mục thanh bên sáng cả khi ở trang con: sách thuộc Thư viện, dự án thuộc Studio. */
-function NavItem({ to, icon: Icon, match, children }: { to: string; icon: typeof Library; match: (path: string) => boolean; children: ReactNode }) {
+/** Mục thanh bên sáng cả khi ở trang con: sách thuộc Thư viện, dự án thuộc Studio. `ink`: mực icon bắt đầu bao nhiêu phần 24 trong ô
+ *  (đo getBBox: Library 3, Clapperboard 1,03, Settings 2,04) - icon kéo ra chừng ấy để mực mọi mục thẳng mép logo, chữ vẫn chung một cột. */
+function NavItem({ to, icon: Icon, ink, match, children }: { to: string; icon: typeof Library; ink: number; match: (path: string) => boolean; children: ReactNode }) {
+  const shift = `calc(clamp(1.125rem, 0.75rlh, 1.96875rem) * ${ink} / 24)`;
   const { pathname } = useLocation();
   const { setExpanded } = useNowPlaying();
   const active = match(pathname);
@@ -55,7 +57,7 @@ function NavItem({ to, icon: Icon, match, children }: { to: string; icon: typeof
       aria-current={active ? "page" : undefined}
       className={cn(NAV, active ? NAV_ACTIVE : NAV_IDLE)}
     >
-      <Icon className="glyph" />
+      <Icon className="glyph" style={{ marginLeft: `calc(-1 * ${shift})`, marginRight: shift }} />
       {children}
     </Link>
   );
@@ -161,11 +163,11 @@ export function DesktopSidebar({ listenOnly = false }: { listenOnly?: boolean })
     <aside className="hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex">
       <Brand />
       <nav aria-label="Điều hướng chính" className="mt-8 space-y-2">
-        <NavItem to="/" icon={Library} match={(path) => path === "/" || path.startsWith("/book/")}>
+        <NavItem to="/" icon={Library} ink={3} match={(path) => path === "/" || path.startsWith("/book/")}>
           Thư viện
         </NavItem>
         <MotionPresence open={!listenOnly}>
-          <NavItem to="/studio" icon={Clapperboard} match={(path) => path.startsWith("/studio")}>
+          <NavItem to="/studio" icon={Clapperboard} ink={1.03} match={(path) => path.startsWith("/studio")}>
             Studio
           </NavItem>
           <Producing />
@@ -173,7 +175,7 @@ export function DesktopSidebar({ listenOnly = false }: { listenOnly?: boolean })
       </nav>
       <div className="mt-auto pt-8">
         <UpdateNotice />
-        <NavItem to="/settings" icon={Settings} match={(path) => path.startsWith("/settings")}>
+        <NavItem to="/settings" icon={Settings} ink={2.04} match={(path) => path.startsWith("/settings")}>
           Cài đặt
         </NavItem>
       </div>

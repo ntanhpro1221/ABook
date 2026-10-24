@@ -340,6 +340,8 @@ const ROUTES: [string, RegExp, Handler][] = [
     { id: "azure", name: "Microsoft Azure", limits: { max_chars: 3000, free: "500.000 ký tự / tháng", timings: "exact", region: true }, hasKey: false, masked: "", region: "", valid: false, voices: 0 },
   ]],
   ["GET", /^\/api\/readaloud\/cache$/, () => ({ book: 0, total: 148_000_000 })],
+  // Đọc to sách chữ: phòng trưng bày không có tiếng - đoạn đầu cứ "đang tải" (trình phát mở như thật, không báo lỗi giọng).
+  ["POST", /^\/api\/readaloud\/clip$/, () => never()],
   ["GET", /^\/api\/sync$/, () => ({
     enabled: true, wanted: true, error: "", name: "Máy tính phòng khách", port: 47630, addresses: ["192.168.1.20"], awayAddresses: [], pairing: null,
     pairingBlocked: false, fingerprint: "3F2A 9C1B 77D0 E4A5", remoteStudio: false, bluetooth: null,
