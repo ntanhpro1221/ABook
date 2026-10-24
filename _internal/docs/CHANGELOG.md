@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Mới
+- Màu ấm như giấy cho cả app; chọn nền đọc Giấy, Ngà hay Đêm; tiếng chạm khẽ (tự im khi đang nghe) và rung nhẹ trên điện thoại, tắt được ở Cài đặt › Giao diện.
+
 ### Giao diện
 - Thanh bên gọn còn Thư viện, Studio và Cài đặt; dự án đang chạy/chờ có tiến độ, vùng tải dùng khung chờ, lỗi có thử lại và mất mạng hiện dải nhỏ.
 - Thư viện mở lưới bìa và gom bộ sách; điện thoại có tab Studio, sách máy kia ở Thư viện và ghép máy trong Cài đặt › Thiết bị.

@@ -167,7 +167,7 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
           type="button"
           onClick={() => send({ action: "toggle" })}
           aria-label={state.playing ? `Tạm dừng trên ${remote.name}` : `Phát tiếp trên ${remote.name}`}
-          className="grid size-10 place-items-center rounded-full bg-fg text-bg active:scale-95"
+          className="grid size-10 place-items-center rounded-full bg-fg text-bg transition-transform press"
         >
           {state.buffering && state.playing ? (
             <Loader2 className="size-4 animate-spin" />
