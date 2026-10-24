@@ -11,6 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Màu ấm như giấy cho cả app; chọn nền đọc Giấy, Ngà hay Đêm; tiếng chạm khẽ (tự im khi đang nghe) và rung nhẹ trên điện thoại, tắt được ở Cài đặt › Giao diện.
 
 ### Giao diện
+- Trình phát và dấu trang dễ đọc hơn, chỉ nhắc tên khi đổi người nói; thẻ buổi sáng, menu sách và hẹn giờ căn thẳng hàng, các nút trên điện thoại dễ chạm hơn.
 - Tên sách không còn ngắt dòng ngay ở dấu "·"; ở trang sách thanh đáy điện thoại vẫn tô Thư viện; màn Thiết bị trên điện thoại dựng hai khối giống nhau, liên kết chữ cùng một kiểu và dễ chạm hơn.
 - Menu sách, thêm sách và các bảng chọn của trình phát trượt từ đáy điện thoại, vuốt xuống để đóng; tốc độ đang dùng luôn được chọn, nút hẹn giờ dễ chạm; bảng tốc độ và hẹn giờ không che nút phát.
 - Cài đặt trên điện thoại và máy tính chia nhóm bằng khoảng trắng, các hàng và nút căn thẳng mép; lựa chọn đang dùng rõ hơn, núm công tắc nằm gọn trong rãnh ở cả giao diện sáng và tối.

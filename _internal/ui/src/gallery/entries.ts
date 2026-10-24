@@ -142,6 +142,7 @@ const PHONE: Omit<Entry, "platform">[] = [
 
 const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/library-full", group: "Thư viện", title: "Thư viện đủ sách", route: "/" },
+  { id: "desktop/library-morning", group: "Thư viện", title: "Buổi sáng: thẻ “Tối qua”", route: "/", clock: MORNING, scenario: { night: true } },
   { id: "desktop/library-remote", group: "Thư viện", title: "Sách từ máy ghép", route: "/", scenario: { remoteBooks: true }, act: async () => { document.querySelector('[aria-label="Mở Đường Về Làng Mây"]')?.scrollIntoView({ block: "center" }); } },
   { id: "desktop/library-shelves", group: "Thư viện", title: "Mở bộ sách", route: "/", act: () => click("Mở bộ Thành Phố Sương Mù").then(() => undefined) },
   { id: "desktop/library-search", group: "Thư viện", title: "Tìm sách (không dấu)", route: "/", act: async () => { await click("Tìm sách"); await type("Tìm sách", "hai dang"); } },
