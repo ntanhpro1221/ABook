@@ -685,9 +685,9 @@ export function SourceStep({
                   )}
                   <div
                     role="listitem"
-                    className="group grid grid-cols-[40px_minmax(0,1fr)_90px_36px] items-center gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0"
+                    className="group grid grid-cols-[auto_minmax(0,1fr)_90px_36px] items-center gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0"
                   >
-                    <span className="tabular text-xs text-fg-2">
+                    <span className="tabular text-right text-xs text-fg-2" style={{ width: `${String(files.length).length}ch` }}>
                       {part >= 0 && <span className="sr-only">Phần {part + 1} bắt đầu. </span>}
                       {index + 1}
                     </span>
