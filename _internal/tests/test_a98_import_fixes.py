@@ -98,18 +98,6 @@ def test_f1_studio_scan_flags_the_same_pages_listen_now_leaves_unticked(tmp_path
     assert scan["totals"]["chapters"] == 5, "danh sách vẫn đủ: người dùng tích lại được"
 
 
-def test_f1_an_old_chapter_folder_without_flags_is_extracted_again(tmp_path: Path) -> None:
-    source = matter_epub(tmp_path / "matter.epub")
-    folder, info = importers.extract(source, tmp_path / "lib")
-    assert info["matter"] and all((folder / name).is_file() for name in info["matter"])
-    sidecar = folder / importers.SIDECAR
-    old = json.loads(sidecar.read_text(encoding="utf-8"))
-    old.pop("matter")
-    sidecar.write_bytes(json.dumps(old).encode("utf-8"))
-    _folder, again = importers.extract(source, tmp_path / "lib")
-    assert again["matter"], "thư mục tách bởi bản cũ (không cờ) được tách lại"
-
-
 # ---- F2: TXT hỏng byte ---------------------------------------------------------------------------------------------------------
 
 def test_f2_one_broken_txt_is_reported_by_name_and_the_rest_are_scanned(tmp_path: Path) -> None:

@@ -66,11 +66,12 @@ class TwoDevicesTest {
     @Test
     fun `cuon cho day nho ca khi app mo lai`() {
         val file = File(BookEditsFixtures.tempDir("abook-pending"), "state-pending.json")
-        PendingPushes(file).add("b1")
-        PendingPushes(file).add("b2")
-        PendingPushes(file).add("b1")
+        val body = JSONObject().put("record", "r-1")
+        PendingPushes(file).add("b1", body)
+        PendingPushes(file).add("b2", body)
+        val latest = PendingPushes(file).add("b1", body)
         assertEquals(setOf("b1", "b2"), PendingPushes(file).ids())
-        PendingPushes(file).remove("b1")
+        PendingPushes(file).ack("b1", "r-1", latest.getString("revision"))
         assertEquals(setOf("b2"), PendingPushes(file).ids())
     }
 

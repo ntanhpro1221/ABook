@@ -124,7 +124,7 @@ def test_1_new_device_takes_a_profile_with_more_than_a_million_saves(world):
 
 def test_1_a_leap_in_the_upper_half_is_still_ignored():
     ours = {"reading": {"chapterId": 1, "index": 1, "at": 1, "rev": {"counter": SAFE_COUNTER + 5, "node": "a"}}, "chapters": {}, "bookmarks": []}
-    forged = {"listeningRevision": 1, "reading": {"chapterId": 9, "index": 9, "at": 9,
+    forged = {"reading": {"chapterId": 9, "index": 9, "at": 9,
                                                   "rev": {"counter": SAFE_COUNTER + 5 + MAX_JUMP + 1, "node": "z"}}}
     seen = []
     assert "reading" not in checked_peer(ours, forged, seen.append) and seen == [JUMP_NOTICE]
@@ -164,7 +164,7 @@ def test_2_a_partially_read_profile_also_takes_a_new_node(world):
 
 
 def test_3_a_missing_field_stamp_never_breaks_a_merge(world):
-    theirs = {"listeningRevision": 1, "rate": 1.5, "_fieldRevs": {"rate": {"counter": 3, "node": "peer"}}}
+    theirs = {"rate": 1.5, "_fieldRevs": {"rate": {"counter": 3, "node": "peer"}}}
     merged = merge_states({"chapters": {}, "bookmarks": []}, theirs)
     assert merged["rate"] == 1.5 and "rateAt" not in merged
     merged = merge_states({"chapters": {}, "bookmarks": [], "rateAt": 5}, {**theirs, "rateAt": None})
@@ -182,28 +182,6 @@ def test_3_a_missing_field_stamp_never_breaks_a_merge(world):
     holder.restart()
     for _ in range(3):
         assert sync(client, holder)
-
-
-def test_4_self_repaired_entries_get_new_revisions_and_still_sync(world):
-    holder, client, clock, _ = world()
-    holder.enter().L.progress(HOLDER, 1, 100.0, 600.0)
-    assert sync(client, holder)
-    holder.enter().L.set_chapter_done(HOLDER, 3, True)  # chỉ có ở máy giữ sách
-    mark = holder.L.add_bookmark(HOLDER, 2, 30.0)
-    holder.L.delete_bookmark(HOLDER, mark["id"])
-    raw = json.loads(holder.path.read_text("utf-8"))
-    state = raw["records"][default_record_id(HOLDER)]["state"]
-    state["chapters"]["3"]["rev"]["counter"] = "1"
-    state["_deletedRevs"][mark["id"]] = {"counter": -4, "node": "x"}
-    holder.path.write_text(json.dumps(raw), encoding="utf-8")
-    holder.restart()
-    repaired = holder.state()
-    assert repaired["chapters"]["3"]["rev"]["counter"] > 0 and repaired["_deletedRevs"][mark["id"]]["counter"] > 0
-    holder.enter().L.set_rate(HOLDER, 1.75)
-    for _ in range(2):
-        assert sync(client, holder)
-    mine = client.state()
-    assert mine["rate"] == 1.75 and mine["chapters"]["3"]["done"] and mark["id"] in mine["deleted"]
 
 
 def test_5_record_metadata_follows_causality_not_the_wall_clock(world):

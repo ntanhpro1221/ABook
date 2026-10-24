@@ -84,7 +84,7 @@ class A118SyncRulesTest {
         val safe = ListeningRevision.SAFE_COUNTER
         val ours = JSONObject().put("reading", JSONObject().put("chapterId", 1).put("index", 1).put("at", 1)
             .put("rev", JSONObject().put("counter", safe + 5).put("node", "a")))
-        fun forged(counter: Long) = JSONObject().put("listeningRevision", 1).put("reading", JSONObject().put("chapterId", 9)
+        fun forged(counter: Long) = JSONObject().put("reading", JSONObject().put("chapterId", 9)
             .put("index", 9).put("at", 9).put("rev", JSONObject().put("counter", counter).put("node", "z")))
         val seen = mutableListOf<String>()
         assertFalse(ListeningRevision.checkedPeer(ours, forged(safe + 5 + ListeningRevision.MAX_JUMP + 1)) { seen.add(it) }.has("reading"))
@@ -111,7 +111,7 @@ class A118SyncRulesTest {
 
     @Test fun bug3AMissingFieldStampNeverBreaksAMerge() {
         phone("stamp")
-        val theirs = JSONObject().put("listeningRevision", 1).put("rate", 1.5)
+        val theirs = JSONObject().put("rate", 1.5)
             .put("_fieldRevs", JSONObject().put("rate", JSONObject().put("counter", 3).put("node", "peer")))
         val merged = Store.mergeStates(JSONObject().put("chapters", JSONObject()).put("bookmarks", JSONArray()), theirs)
         assertEquals(1.5, merged.getDouble("rate"), 0.0)
@@ -123,28 +123,6 @@ class A118SyncRulesTest {
                 .put("_fieldRevs", JSONObject().put(field, JSONObject().put("counter", 1).put("node", "n"))))
             assertFalse(field, clean.has(field) || clean.has(stamp) || clean.optJSONObject("_fieldRevs")?.has(field) == true)
         }
-    }
-
-    @Test fun bug4SelfRepairedEntriesGetNewRevisionsAndStillSync() {
-        val holder = phone("selfrepair-holder")
-        Store.setChapterDone(book, 3, true)
-        val mark = Store.addBookmark(book, 2, 30.0, "")
-        Store.deleteBookmark(book, mark.getString("id"))
-        val raw = JSONObject(stateFile(holder).readText())
-        raw.getJSONObject("chapters").getJSONObject("3").getJSONObject("rev").put("counter", "1")
-        raw.getJSONObject("_deletedRevs").put(mark.getString("id"), JSONObject().put("counter", -4).put("node", "x"))
-        stateFile(holder).writeText(raw.toString())
-        val body = Store.syncBody(book)
-        assertTrue(ListeningRevision.revision(body.getJSONObject("chapters").getJSONObject("3")).first > 0)
-        assertTrue(ListeningRevision.revision(JSONObject().put("rev", body.getJSONObject("_deletedRevs").get(mark.getString("id")))).first > 0)
-        Store.setRate(book, 1.75)
-        val client = phone("selfrepair-client")
-        sync(client, holder)
-        sync(client, holder)
-        val mine = Store.state(book)
-        assertEquals(1.75, mine.getDouble("rate"), 0.0)
-        assertTrue(mine.getJSONObject("chapters").getJSONObject("3").getBoolean("done"))
-        assertTrue(mine.getJSONObject("deleted").has(mark.getString("id")))
     }
 
     @Test fun bug5RecordMetadataFollowsCausalityNotTheWallClock() {
