@@ -365,11 +365,8 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
 function DevicesGroup() {
   return (
     <>
-      <SettingsBlock title="Thiết bị" id="phone">
-        <div className="py-3.5">
-          <PhoneSync />
-        </div>
-      </SettingsBlock>
+      {/* Tự dựng hai khối "Máy này" và "Thiết bị đã ghép". */}
+      <PhoneSync />
       <SettingsBlock title="Máy tính khác" id="computers">
         <div className="py-3.5">
           <OtherComputers />
