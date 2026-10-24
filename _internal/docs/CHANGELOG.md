@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+- Studio: danh sách dự án thành bảng gọn (tên · trạng thái · tiến độ · cập nhật), không còn khung lồng khung; "Mở dự án có sẵn", "Mở thư mục" và việc hiếm khác vào menu "…".
+- Trang dự án: đúng một nút chính theo trạng thái (Bắt đầu / Tạm dừng / Tiếp tục / Nghe trong Thư viện…), mọi việc khác vào "…"; năm tab hay dùng, Kịch bản, Nhật ký và Duyệt trước khi thu vào "Thêm".
+- Tạo sách nói một trang: chọn file rồi bấm "Bắt đầu"; giọng kể, chất lượng và cách bắt đầu gập dưới "Tuỳ chọn".
+
 ### Sửa lỗi
 - Back đóng mọi thông báo đang hiện (kể cả lời mời bật thông báo) rồi mới về trang trước; menu đang khép không chặn chạm bên dưới; đóng nhóm Cài đặt quay đúng một bước.
 - Nội dung đổi trong hộp không còn hai lớp chữ chồng nhau; phần trống mờ dần thay vì biến mất; danh sách dấu trang trống hiện mượt; viền chọn ở đầu Thư viện không bị cắt.
