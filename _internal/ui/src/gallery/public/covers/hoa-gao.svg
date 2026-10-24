@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900" viewBox="0 0 600 900">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a3b2e"/><stop offset="1" stop-color="#2e110c"/></linearGradient></defs>
+<rect width="600" height="900" fill="url(#g)"/>
+<path d="M300 690 L300 470 M300 540 L230 470 M300 510 L380 440" stroke="#ffe3d6" stroke-width="14" stroke-linecap="round" opacity=".5"/><circle cx="230" cy="462" r="18" fill="#ff5a3c" opacity=".85"/><circle cx="380" cy="432" r="20" fill="#ff5a3c" opacity=".85"/><circle cx="300" cy="455" r="16" fill="#ff5a3c" opacity=".85"/><circle cx="262" cy="500" r="12" fill="#ff5a3c" opacity=".85"/><circle cx="345" cy="480" r="13" fill="#ff5a3c" opacity=".85"/><circle cx="410" cy="470" r="11" fill="#ff5a3c" opacity=".85"/><circle cx="205" cy="505" r="10" fill="#ff5a3c" opacity=".85"/>
+<ellipse cx="200" cy="560" rx="260" ry="40" fill="#fff" opacity=".07"/><ellipse cx="420" cy="620" rx="260" ry="40" fill="#fff" opacity=".07"/><ellipse cx="260" cy="700" rx="260" ry="40" fill="#fff" opacity=".07"/><ellipse cx="380" cy="760" rx="260" ry="40" fill="#fff" opacity=".07"/>
+<text x="300" y="130" text-anchor="middle" font-family="Georgia, serif" font-size="56" letter-spacing="6" fill="#ffe3d6">MÙA HOA GẠO</text>
+<text x="300" y="200" text-anchor="middle" font-family="Georgia, serif" font-size="56" letter-spacing="6" fill="#ffe3d6">BÊN SÔNG</text>
+<text x="300" y="830" text-anchor="middle" font-family="Georgia, serif" font-size="30" letter-spacing="8" fill="#ffe3d6" opacity=".8"></text>
+</svg>
