@@ -55,8 +55,8 @@ export class MotionRegion extends Component<Props> {
     const surface = box.closest('[data-state="open"]:is([role="dialog"], [role="alertdialog"], [role="menu"], [role="listbox"])');
     const floorZ = surface ? Math.max(51, (parseInt(getComputedStyle(surface).zIndex) || 50) + 1) : 39;
     // Chọn host TRƯỚC khi đo/đặt ảnh: fixed dùng toạ độ viewport sẽ lệch khi đưa vào surface có transform.
-    // Giữ ảnh trong stacking context gốc; vùng trang dùng offsetParent để theo cả cuộn của khung.
-    const host = surface !== box ? surface ?? box.offsetParent : box.offsetParent;
+    // Vùng trang giữ ảnh fixed trên body; chỉ surface cần hệ toạ độ cục bộ.
+    const host = surface ? (surface !== box ? surface : box.offsetParent) : undefined;
     const clone = captureMotionSnapshot(box, box.ownerDocument, floorZ, host && host !== box.ownerDocument.body ? host as HTMLElement : undefined, true);
     const computed = box.style ? getComputedStyle(box) : undefined;
     return { clone, signature: motionSignature(box), height: box.getBoundingClientRect().height, display: computed?.display,
