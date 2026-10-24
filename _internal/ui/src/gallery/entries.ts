@@ -169,6 +169,7 @@ const DESKTOP: Omit<Entry, "platform">[] = [
     group: "Cài đặt",
     title: `Cài đặt › ${SETTINGS_LABELS[group]}`,
     route: `/settings/${group}`,
+    scenario: { installedStudio: true },
   })),
   { id: "desktop/studio-projects", group: "Studio", title: "Danh sách dự án", route: "/studio" },
   { id: "desktop/studio-projects-empty", group: "Studio", title: "Chưa có dự án", route: "/studio", scenario: { projects: "empty", library: "empty" } },

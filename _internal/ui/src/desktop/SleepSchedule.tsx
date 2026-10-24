@@ -33,7 +33,7 @@ export function SleepSchedule() {
       <Switch id="sleep-schedule" label="Lịch đêm" checked={Boolean(schedule)} ariaDisabled={!data || draft !== null} onCheckedChange={(on) => change(on ? DEFAULT_SCHEDULE : null)} />
     </SettingsRow>
     <MotionPresence open={Boolean(schedule)}>
-      {schedule && <div className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm">
+      {schedule && <div className="flex flex-wrap items-center gap-2 py-3 text-sm">
         <TimeSelect ariaDisabled={draft !== null} label="Từ" value={schedule.from} onChange={(from) => change({ ...schedule, from })} className="h-9 rounded-lg border border-line bg-panel px-2" />
         <span className="text-fg-2">đến</span>
         <TimeSelect ariaDisabled={draft !== null} label="Đến" value={schedule.to} onChange={(to) => change({ ...schedule, to })} className="h-9 rounded-lg border border-line bg-panel px-2" />

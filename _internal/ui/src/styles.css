@@ -57,7 +57,8 @@
   --control-line-strong: #6f685d;
   /* Rãnh công tắc đang tắt: >= 3:1 trên nền sáng (soát UX 29-09: line-strong chỉ 1,4:1, công tắc tắt gần như vô hình). */
   --switch-off: #857e72;
-  /* Vòng tiêu điểm, viền thẻ đang chọn, công tắc bật (WCAG 1.4.11 / 2.4.7: >= 3:1 với mọi nền; soát a31 K3/C4/C5: --accent #e39a2d chỉ
+  --switch-on: var(--accent);
+  /* Vòng tiêu điểm và viền điều khiển đang chọn (WCAG 1.4.11 / 2.4.7: >= 3:1 với mọi nền; soát a31 K3/C4/C5: --accent #e39a2d chỉ
      2,1-2,4:1 trên nền sáng). --accent giữ cho nút chính, tiến độ, trang trí. */
   --focus: #a0600c;
   --text: #1a1814;
@@ -144,6 +145,7 @@
   --color-control: var(--control-line);
   --color-control-strong: var(--control-line-strong);
   --color-switch-off: var(--switch-off);
+  --color-switch-on: var(--switch-on);
   --color-focus: var(--focus);
   --color-fg: var(--text);
   --color-fg-2: var(--text-2);
@@ -991,9 +993,61 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
   details[data-motion="opening"] > :not(summary) { animation: fade-in var(--motion-fast) linear; }
   details[data-motion="closing"] > :not(summary) { animation: fade-out var(--motion-fast) linear both; }
   .motion-tab-icon { transform: none; translate: none !important; scale: none !important; transition-property: opacity; }
-  .motion-switch-thumb { transform: none; translate: none !important; scale: none !important; position: relative; left: 2px; transition-property: opacity; animation: fade-in-off var(--motion-fast) linear; }
-  .motion-switch-thumb[data-state="checked"] { left: 22px; animation: fade-in var(--motion-fast) linear; }
+  .motion-switch-thumb { transform: none; translate: none !important; scale: none !important; left: var(--switch-inset); transition-property: opacity; animation: fade-in-off var(--motion-fast) linear; }
+  .motion-switch-thumb[data-state="checked"] { left: calc(var(--switch-width) - var(--switch-knob) - var(--switch-inset)); animation: fade-in var(--motion-fast) linear; }
 }
+
+/* Một hình học cho cả cỡ chữ và chế độ chuyển động: núm luôn lọt trong rãnh, cách đều hai mép gần nhất. */
+.ui-switch {
+  --switch-width: 2.75rem;
+  --switch-height: 1.5rem;
+  --switch-knob: 1.25rem;
+  --switch-inset: 0.125rem;
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  width: var(--switch-width);
+  height: var(--switch-height);
+  border-radius: 999px;
+  background: var(--switch-off);
+  transition: background-color var(--motion-fast), opacity var(--motion-fast);
+}
+.ui-switch[data-state="checked"] { background: var(--switch-on); }
+.ui-switch-large {
+  --switch-width: 3rem;
+  --switch-height: 1.75rem;
+  --switch-knob: 1.5rem;
+}
+.ui-switch > .motion-switch-thumb {
+  position: absolute;
+  top: var(--switch-inset);
+  left: 0;
+  width: var(--switch-knob);
+  height: var(--switch-knob);
+  border-radius: 999px;
+  background: white;
+  transform: translateX(var(--switch-inset));
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+.ui-switch > .motion-switch-thumb[data-state="checked"] {
+  transform: translateX(calc(var(--switch-width) - var(--switch-knob) - var(--switch-inset)));
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-switch > .motion-switch-thumb {
+    transform: none;
+    left: var(--switch-inset);
+    transition-property: opacity;
+  }
+  .ui-switch > .motion-switch-thumb[data-state="checked"] { transform: none; left: calc(var(--switch-width) - var(--switch-knob) - var(--switch-inset)); }
+}
+
+.settings-row:has(> .settings-row-control > [role="radiogroup"]) { grid-template-columns: minmax(0, 1fr); }
+.settings-row-control { display: flex; align-items: center; justify-content: flex-end; }
+.settings-row-control > [role="radiogroup"] { display: flex; width: 100%; }
+.settings-row-control > [role="radiogroup"] > button { flex: 1; min-width: 0; }
+/* Nút chữ ở cuối hàng có vùng chạm rộng hơn chữ: bù phần đệm để chữ kết thúc đúng mép nội dung. */
+.settings-page .settings-row-control > button[data-variant="ghost"],
+.settings-page .settings-edge-action { margin-right: calc(var(--spacing) * -3); }
 
 @keyframes fade-in-off { from { opacity: 0; } to { opacity: 1; } }
 

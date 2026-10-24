@@ -70,9 +70,9 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
         onChange(value);
       }}
       aria-label={label}
-      className="relative h-7 w-12 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
+      className="ui-switch ui-switch-large"
     >
-      <Switch.Thumb className="motion-switch-thumb block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+      <Switch.Thumb className="motion-switch-thumb" />
     </Switch.Root>
   );
 }
@@ -80,7 +80,7 @@ function Toggle({ label, checked, onChange }: { label: string; checked: boolean;
 function VoiceGroup() {
   return (
     <SettingsBlock>
-      <div className="px-4 py-3.5">
+      <div className="py-3.5">
         <VoiceSettings
           api={phoneVoices}
           deviceHint="Điện thoại chưa có giọng tiếng Việt. Cài ở Cài đặt điện thoại › Chuyển văn bản thành giọng nói."
@@ -122,8 +122,8 @@ function ListenGroup({ settings, change }: { settings: PlayerSettings; change: C
     <>
       <SettingsBlock>
         <NotificationRow />
-        <SettingsRow label="Tự lùi khi nghe lại" hint="Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây).">
-          <Toggle label="Tự lùi khi nghe lại" checked={settings.autoRewind !== false} onChange={(value) => change({ autoRewind: value })} />
+        <SettingsRow label="Tự lùi" hint="Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây).">
+          <Toggle label="Tự lùi" checked={settings.autoRewind !== false} onChange={(value) => change({ autoRewind: value })} />
         </SettingsRow>
         <SettingsRow label="Nút tai nghe lùi/tới" hint="Tắt thì nút Trước/Sau chuyển chương.">
           <Toggle label="Nút tai nghe lùi/tới" checked={settings.headsetSkips !== false} onChange={(value) => change({ headsetSkips: value })} />
@@ -134,7 +134,7 @@ function ListenGroup({ settings, change }: { settings: PlayerSettings; change: C
         <SettingsRow label={AUTO_MUSIC_LABEL} hint={AUTO_MUSIC_HINT}>
           <Toggle label={AUTO_MUSIC_LABEL} checked={settings.autoMusic !== false} onChange={(value) => change({ autoMusic: value })} />
         </SettingsRow>
-        <div className="px-4 py-3.5">
+        <div className="py-3.5">
           <MyMusicSection />
         </div>
       </SettingsBlock>
@@ -169,7 +169,7 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
         {/* Ba ô chọn giờ / số phút cao tối thiểu 48 dp như mọi đích chạm khác của Android (soát a100 T2). */}
         <MotionPresence open={Boolean(settings.sleepSchedule)}>
         {settings.sleepSchedule && (
-          <div className="flex flex-wrap items-center gap-2 px-4 py-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2 py-3 text-sm">
             <TimeSelect
               label="Từ"
               value={settings.sleepSchedule.from}
@@ -350,11 +350,11 @@ export function AboutBlock({ version }: { version: string | null }) {
       <Sheet
         open={open}
         onOpenChange={setOpen}
-        title="Thành phần bên thứ ba"
+        title="Thành phần sử dụng"
         trigger={
-          <button type="button" className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left">
+          <button type="button" className="flex w-full items-center justify-between gap-4 py-3 text-left">
             <span className="min-w-0">
-              <span className="block text-[0.9375rem] font-medium [overflow-wrap:anywhere]">Thành phần bên thứ ba</span>
+              <span className="block text-[0.9375rem] font-medium [overflow-wrap:anywhere]">Thành phần sử dụng</span>
             </span>
             <ChevronRight className="size-5 shrink-0 text-fg-3" />
           </button>
@@ -383,7 +383,7 @@ function AdvancedGroup({ version, update }: { version: string | null; update: Re
         )}
       </MotionPresence>
       <SettingsBlock title="Bộ nhớ">
-        <div className="px-4 py-3.5">
+        <div className="py-3.5">
           <ReadAloudStorage api={{ usage: () => ReadAloud.cacheUsage(), clear: () => ReadAloud.cacheClear() }} />
         </div>
       </SettingsBlock>
@@ -401,7 +401,7 @@ function RootNotice({ text, tone }: { text: string; tone: "warning" | "accent" }
   return (
     <Link
       to={settingsPath("advanced")}
-      className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-sm font-medium hover:bg-hover"
+      className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel py-3 text-sm font-medium hover:bg-hover"
     >
       {tone === "warning" ? <TriangleAlert className="size-5 shrink-0 text-warning" /> : <Download className="size-5 shrink-0 text-accent-text" />}
       <span className="min-w-0 flex-1">{text}</span>
@@ -426,7 +426,7 @@ export function SettingsScreen() {
   const active = isSettingsGroup(group) && PHONE_GROUPS.includes(group) ? group : null;
   if (active) {
     return (
-      <div className="px-[20px] pb-10 pt-3">
+      <div className="settings-page px-[20px] pb-10 pt-3">
         <GroupHeader id={active} />
         {active === "voice" && <VoiceGroup />}
         {active === "listen" && <ListenGroup settings={settings} change={change} />}
@@ -446,14 +446,14 @@ export function SettingsScreen() {
     { id: "advanced", summary: current ? `Phiên bản ${current}` : undefined },
   ];
   return (
-    <div className="px-[20px] pb-10 pt-4">
+    <div className="settings-page px-[20px] pb-10 pt-4">
       <h1 className="text-2xl font-bold tracking-tight">Cài đặt</h1>
       {/* Lời báo trên trang gốc tới sau một lượt hỏi (bản lưu cũ, bản mới): mở ra tại chỗ, không đẩy danh sách nhóm xuống tức thì. */}
       <MotionPresence open={Boolean(oldSaves?.length)}>
         {oldSaves?.length ? <RootNotice tone="warning" text={`Bản lưu cũ (${oldSaves.length}) - cần lưu ra`} /> : null}
       </MotionPresence>
       <MotionPresence open={Boolean(update)}>{update && <RootNotice tone="accent" text={`Có bản mới ${update.version}`} />}</MotionPresence>
-      <SettingsList rows={rows} className="mt-5 rounded-none border-0 bg-transparent" />
+      <SettingsList rows={rows} className="mt-5" />
     </div>
   );
 }

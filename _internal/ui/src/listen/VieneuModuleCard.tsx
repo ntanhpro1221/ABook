@@ -86,7 +86,7 @@ export function LocalVoiceModules({
   const { data: supertonicStatus } = useQuery({ queryKey: ["readaloud", SUPERTONIC_COPY.key], queryFn: () => supertonic.status() });
   const { advice, preselectSupertonic } = moduleAdvice(vieneuStatus, supertonicStatus);
   return (
-    <Fold storageKey="voice.modules" title="Bộ giọng" summary={moduleActivity(vieneuStatus, supertonicStatus)} bodyClassName="space-y-5 px-3 pb-3">
+    <Fold flat storageKey="voice.modules" title="Bộ giọng" summary={moduleActivity(vieneuStatus, supertonicStatus)} bodyClassName="space-y-5 pb-3">
       {advice && <p className="max-w-xl text-[0.8125rem] text-fg-2 text-pretty">{advice}</p>}
       <div id="vieneu-module" className="scroll-mt-4">
         <VieneuModuleCard backend={vieneu} onChanged={onChanged} />
@@ -221,7 +221,7 @@ export function VieneuModuleCard({
   const metered = canPick && missing.length > 0 ? meteredNotice(status, bytes) : null;
   const spoken = vieneuSpoken(shown, copy);
   return (
-    <MotionRegion as="div" {...follow} elementRef={followRef} className="max-w-xl space-y-3">
+    <MotionRegion as="div" {...follow} elementRef={followRef} className="space-y-3">
       <h3 tabIndex={-1} data-focus-fallback className="text-sm font-semibold">{copy.title}</h3>
       {/* Lỗi tải: không ở đầu thẻ mà ngay trên nút Thử lại, nơi người dùng đang nhìn (soát a66) - xem dưới cùng. */}
       {!failed && (
@@ -242,16 +242,16 @@ export function VieneuModuleCard({
           )}
         </div>
       )}
-      <ul className="divide-y divide-line rounded-xl border border-line">
+      <ul className="divide-y divide-line">
         {status.choices.map((choice, index) => {
           const on = picked.includes(choice.id);
           const id = `${ids}-${index}`;
           return (
             <li key={choice.id}>
-              <label className={cn("flex items-start gap-3 px-3 py-2.5", canPick && !choice.installed ? "cursor-pointer" : "cursor-default")}>
+              <label className={cn("flex items-center gap-3 py-2.5", canPick && !choice.installed ? "cursor-pointer" : "cursor-default")}>
                 <input
                   type="checkbox"
-                  className="mt-1 size-4 accent-[var(--accent)]"
+                  className="size-4 shrink-0 accent-[var(--accent)]"
                   checked={choice.installed || on}
                   disabled={!canPick || choice.installed}
                   onChange={(event) => toggle(choice.id, event.target.checked)}
@@ -267,11 +267,11 @@ export function VieneuModuleCard({
                   </span>
                   <span id={`${id}-detail`} className="mt-0.5 block text-[0.8125rem] text-fg-2 text-pretty">{choice.detail}</span>
                 </span>
-                <span id={`${id}-size`} className="shrink-0 pt-0.5 text-xs text-fg-2">
+                <span id={`${id}-size`} className="shrink-0 text-xs text-fg-2">
                   {choice.installed ? "Đã có" : (downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) > 0 ? formatSize(downloading ? (sizes.current[choice.id] ?? choice.bytes) : choice.bytes) : "Đã có sẵn"}
                 </span>
                 {choice.removable && backend.remove && canPick && (
-                  <Button size="sm" variant="ghost" className="-my-1 shrink-0" loading={busy} onClick={(event) => { event.preventDefault(); if (choice.installed) ask(choice.id, choice.label); else void remove(choice.id); }}>
+                  <Button size="sm" variant="ghost" className="settings-edge-action -my-1 shrink-0" loading={busy} onClick={(event) => { event.preventDefault(); if (choice.installed) ask(choice.id, choice.label); else void remove(choice.id); }}>
                     {choice.installed ? "Gỡ" : "Xoá phần đã tải"}
                   </Button>
                 )}

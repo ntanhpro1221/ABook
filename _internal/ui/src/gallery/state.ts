@@ -16,6 +16,8 @@ export interface Scenario {
   projects: "full" | "empty" | "loading";
   /** Dự án chờ và lỗi/đang tải của từng vùng, hoàn toàn cục bộ. */
   queued?: boolean;
+  /** App Windows đóng gói đã cài Studio (khác bản dev dùng runtime cạnh mã nguồn). */
+  installedStudio?: boolean;
   requests?: Record<string, "loading" | "error">;
 }
 

@@ -31,7 +31,7 @@ export interface VoiceSpeedStatus {
   voices: VoiceSpeedVoice[];
 }
 
-export const VOICE_SPEED_TITLE = "Tốc độ giọng trên máy";
+export const VOICE_SPEED_TITLE = "Tốc độ đọc";
 
 export const VOICE_SPEED_OPTIONS: { value: VoiceSpeedChoice; label: string }[] = [
   { value: "auto", label: "Tự động" },

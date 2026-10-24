@@ -59,7 +59,7 @@ beforeEach(() => {
   });
 });
 
-const rewindSwitch = (tree: unknown) => walk(group(tree), (node) => node.props?.label === "Tự lùi khi nghe lại" && typeof node.props?.onChange === "function")[0];
+const rewindSwitch = (tree: unknown) => walk(group(tree), (node) => node.props?.label === "Tự lùi" && typeof node.props?.onChange === "function")[0];
 
 describe("SettingsScreen (điện thoại)", () => {
   it("lịch đêm hỏng trong kho không làm màn Cài đặt ném lỗi: về không có lịch", () => {
