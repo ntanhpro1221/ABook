@@ -372,7 +372,7 @@ function MenuShell({
   };
   const button = <button ref={triggerRef} type="button" aria-label={label} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
-        ? "flex min-h-12 w-full items-center gap-3 rounded-lg px-2 text-left text-sm text-fg hover:bg-hover"
+        ? MENU_ROW
         : "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
       {look === "row" && <span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span>}
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("tabular min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
@@ -411,7 +411,8 @@ function MenuShell({
           )}
         >
           {children}
-          {footer}
+          {/* Nút đặc của bảng đứng thẳng mép chữ (px-2) như các nút trong bảng; chỉ nền dòng mới tràn ra mép p-1.5. */}
+          {footer && <div className="px-2">{footer}</div>}
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
@@ -436,7 +437,7 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
       trigger={look === "action" ? speedLabel(rate) : <><Gauge className="size-4" />{speedLabel(rate)}</>}
     >
       <MenuNote title="Tốc độ đọc">nhớ riêng cho cuốn này</MenuNote>
-      <div className="grid grid-cols-3 gap-1 p-1">
+      <div className={cn("grid grid-cols-3 gap-1", MENU_LIST)}>
         {speeds.map((speed) => (
           <Popover.Close asChild key={speed}>
             <button
@@ -488,7 +489,7 @@ export function LevelButtons({ level, disabled, onChange }: { level: number; dis
   return (
     <>
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Mức nhạc dưới giọng đọc</div>
-      <div className="flex flex-col gap-0.5 p-1">
+      <div className={cn("flex flex-col gap-0.5", MENU_LIST)}>
         {levelOptions(level).map(([value, name]) => (
           <button
             key={value}
@@ -570,7 +571,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
       width="w-72"
     ><MotionRegion>
       <MenuNote title="Nhạc nền">nhớ riêng cho cuốn này</MenuNote>
-      <div role="group" aria-label="Danh sách nhạc nền" className="flex min-h-0 flex-col gap-0.5 overflow-y-auto p-1">
+      <div role="group" aria-label="Danh sách nhạc nền" className={cn("flex min-h-0 flex-col gap-0.5 overflow-y-auto", MENU_LIST)}>
         {options.map((option) => (
           <Popover.Close asChild key={JSON.stringify(option.id)}>
             <button
@@ -708,7 +709,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
     ><MotionRegion>
       <MenuNote title="Giọng đọc">nhớ riêng cho cuốn này</MenuNote>
       {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; "Thử" dùng cùng cách nghe thử. */}
-      <ScrollHint className="min-h-0 flex-1 overflow-y-auto p-1">
+      <ScrollHint className={cn("min-h-0 flex-1 overflow-y-auto", MENU_LIST)}>
         {groupedVoices(voices).map((group) => (
           <div key={group.provider} role="group" aria-label={group.title} className="mb-1.5">
             <div className="label-section px-2 pb-0.5 pt-1 text-fg-3">{group.title}</div>
@@ -771,7 +772,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
         type="button"
         onClick={() => openVoiceSettings()}
         data-sheet-choice
-        className="flex min-h-9 w-full items-center rounded-lg px-3 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[48px]"
+        className="flex min-h-9 w-full items-center rounded-lg px-2 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[48px]"
       >
         Thêm giọng…
       </button>
@@ -1097,7 +1098,7 @@ function SleepPicker({
         idle
       )}
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? "Đặt lại" : "Dừng phát sau"}</div>
-      <div className="grid grid-cols-4 gap-1 p-1">
+      <div className={cn("grid grid-cols-4 gap-1", MENU_LIST)}>
         {SLEEP_CHOICES.map((minutes) => (
           <Popover.Close asChild key={minutes}>
             <button
@@ -1117,12 +1118,13 @@ function SleepPicker({
           </Popover.Close>
         ))}
       </div>
-      <div className="flex items-center gap-1 px-1 pb-1 max-sm:-mx-[16px]">
+      {/* Máy tính: nút 30 px, nền rê tràn tới mép nền dòng như danh sách, mực −/+ (4/24 trong ô 24 px) đứng đúng mép chữ. */}
+      <div className="flex items-center gap-1 pb-1 max-sm:-mx-[16px]">
         <button
           type="button"
           aria-label="Bớt 5 phút"
           onClick={() => setCustom((value) => Math.max(5, value - 5))}
-          className="grid size-[48px] shrink-0 place-items-center rounded-lg hover:bg-hover"
+          className="grid size-[30px] shrink-0 place-items-center rounded-lg hover:bg-hover max-sm:size-[48px]"
         >
           <Minus className="size-[24px]" />
         </button>
@@ -1133,13 +1135,13 @@ function SleepPicker({
           type="button"
           aria-label="Thêm 5 phút"
           onClick={() => setCustom((value) => Math.min(240, value + 5))}
-          className="grid size-[48px] shrink-0 place-items-center rounded-lg hover:bg-hover"
+          className="grid size-[30px] shrink-0 place-items-center rounded-lg hover:bg-hover max-sm:size-[48px]"
         >
           <Plus className="size-[24px]" />
         </button>
 
       </div>
-      <div className="px-1 pb-1">
+      <div className="px-2 pb-1">
         <Popover.Close asChild>
           <button
             type="button"
@@ -1573,6 +1575,9 @@ function FollowRecord() {
 
 // ---- Menu "…" của trình phát -----------------------------------------------------------------------------
 
+/** Khung danh sách trong menu nổi: tràn hết lề p-1.5 của bảng để nền chọn của dòng đứng cùng chỗ với nút cấp bảng ("Thêm giọng…") và chữ dòng
+ *  (px-2) thẳng chữ ghi chú của bảng; còn 5,25 px cho khung tiêu điểm. Bảng trượt điện thoại đặt lại lề theo lớp p-1 (styles.css). */
+const MENU_LIST = "p-1 -mx-1.5 px-1.5";
 const MENU_ROW = "flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-sm text-fg hover:bg-hover disabled:opacity-40 disabled:hover:bg-transparent max-sm:min-h-[48px]";
 
 /** Một việc trong menu "…": chọn là làm và đóng menu. */
