@@ -8,6 +8,7 @@ import { cn } from "@/shared/cn";
 import { scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { MotionRegion } from "./MotionRegion";
+import { useBackLayer } from "./backStack";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
@@ -170,14 +171,19 @@ function quietFocus(event: FocusEvent<HTMLElement>) {
 }
 
 export function Tooltip({ label, children, side = "top" }: { label: ReactNode; children: ReactNode; side?: "top" | "bottom" | "left" | "right" }) {
+  const [open, setOpen] = useState(false);
+  const content = useRef<HTMLDivElement>(null);
+  // Tooltip có state instant-open/delayed-open riêng: Back đóng trực tiếp, không gửi Esc xuống hộp phía dưới.
+  useBackLayer(open && Boolean(label), () => setOpen(false), content);
   if (!label) return <>{children}</>;
   return (
-    <TooltipPrimitive.Root>
+    <TooltipPrimitive.Root open={open} onOpenChange={setOpen}>
       <TooltipPrimitive.Trigger asChild onFocus={quietFocus}>
         {children}
       </TooltipPrimitive.Trigger>
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
+          ref={content}
           side={side}
           sideOffset={6}
           className="motion-tooltip z-50 max-w-72 rounded-md bg-fg px-2.5 py-1.5 text-xs font-medium text-bg shadow-float"
@@ -600,10 +606,12 @@ export function Dialog({
         >
           <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
             <div>
-              <DialogPrimitive.Title className="text-lg font-semibold">{shown.title}</DialogPrimitive.Title>
-              {shown.description && (
-                <DialogPrimitive.Description className="mt-1 text-sm text-fg-2">{shown.description}</DialogPrimitive.Description>
-              )}
+              <DialogPrimitive.Title className="text-lg font-semibold">
+                <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{shown.title}</MotionRegion>
+              </DialogPrimitive.Title>
+              <DialogPrimitive.Description className="text-sm text-fg-2">
+                <MotionRegion as="span" className={shown.description ? "mt-1 block" : "block"} motionKey={typeof shown.description === "string" || typeof shown.description === "number" ? shown.description : undefined}>{shown.description}</MotionRegion>
+              </DialogPrimitive.Description>
             </div>
             <DialogPrimitive.Close asChild>
               <button aria-label="Đóng" className={CLOSE_BUTTON}>
@@ -656,7 +664,9 @@ export function Sheet({
         >
           <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-line-strong" aria-hidden />
           <div className="flex items-center justify-between gap-3 px-1.5">
-            <DialogPrimitive.Title className="text-sm font-semibold">{shown.title}</DialogPrimitive.Title>
+            <DialogPrimitive.Title className="text-sm font-semibold">
+              <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{shown.title}</MotionRegion>
+            </DialogPrimitive.Title>
             <DialogPrimitive.Close asChild>
               <button aria-label="Đóng" className={CLOSE_BUTTON}>
                 <X className="size-5" />

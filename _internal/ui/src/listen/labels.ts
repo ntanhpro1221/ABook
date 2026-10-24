@@ -120,7 +120,7 @@ export function readerHint(state: {
   if (!state.timed) return "Chưa có audio; bạn vẫn đọc được chữ.";
   if (state.tapped) return null;
   const reading = state.readings ? ` ${state.coarse ? "Giữ chữ" : "Bấm chuột phải vào chữ"} để sửa cách đọc.` : "";
-  return `${verb} chữ để nghe từ đó.${state.wish ? " Chọn “Sửa câu này” để sửa." : ""}${reading}`;
+  return `${verb} chữ để nghe từ đó.${state.wish ? " “Sửa câu này”: đổi người nói, cách đọc hoặc thu lại." : ""}${reading}`;
 }
 
 /** "Chương 1" không gãy dòng giữa chữ và số (thẻ hẹp ở 1280 px từng gãy "từ Chương / 1"): dấu cách không ngắt thay cho dấu cách thường. */

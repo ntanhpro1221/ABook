@@ -8,6 +8,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 ### Giao diện
+- Tiêu đề hộp đổi mượt; Back đóng chú thích trước, giữ hộp bên dưới.
+- Nhớ chỗ bạn vừa cuộn khi rời trang; lời nhắc “Sửa câu này” rõ việc hơn.
 - Hiệu năng, Bộ nhớ và lời nhắc màn đọc gọn hơn; chi tiết lỗi chẩn đoán có phần mở rộng riêng.
 - Biểu tượng, số đếm và nhãn nút đổi mượt hơn; thông báo nhập PDF ngắn và đồng nhất trên máy tính, điện thoại.
 - Gấp bộ sách, nhóm chương/nhân vật, các bước Studio và chi tiết tạo sách để trang gọn hơn.

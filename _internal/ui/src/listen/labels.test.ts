@@ -93,6 +93,12 @@ describe("lời nhắc màn đọc", () => {
     expect(readerHint({ ...audio, tapped: true })).toBeNull();
     expect(readerHint({ ...audio, timed: false })).toContain("Chưa có audio");
   });
+
+  it("quyền sửa câu: nhắc đúng người nói, cách đọc và thu lại", () => {
+    const audio = { ...base, textOnly: false, canSpeak: false, timed: true, wish: true };
+    expect(readerHint(audio)).toBe("Bấm chữ để nghe từ đó. “Sửa câu này”: đổi người nói, cách đọc hoặc thu lại.");
+    expect(readerHint({ ...audio, wish: false })).not.toContain("Sửa câu này");
+  });
 });
 
 describe("dòng dưới tên cuốn trong 'Nghe cuốn khác'", () => {

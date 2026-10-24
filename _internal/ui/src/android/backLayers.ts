@@ -9,7 +9,7 @@ import { topBackLayer, type BackLayer } from "@/shared/backStack";
 import { backOrder } from "@/shared/backOrder";
 import { dismissToastElement } from "@/shared/toast";
 
-/** Vai trò ARIA của nội dung các lớp Radix chặn thao tác phía dưới; tooltip cố ý không có trong đây. */
+/** Vai trò ARIA của các lớp Radix có data-state="open"; Tooltip đăng ký BackLayer và đóng trực tiếp. */
 const LAYER_ROLES = new Set(["dialog", "alertdialog", "menu", "listbox"]);
 
 type LayerElement = { getAttribute(name: string): string | null; contains?(other: unknown): boolean; getAnimations?(): { finish(): void }[] };

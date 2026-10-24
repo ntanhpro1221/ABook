@@ -2,6 +2,11 @@
 
 Ngày cập nhật: 2026-10-24
 
+Đợt fix136b, cây `ABook_rel135` trên `dev/rel135`: sửa M1/M2/M4/L2/L3 của rà r136. Header Dialog/Sheet chuyển động cục bộ và giữ ARIA; Back đóng tooltip trực tiếp, không phát Esc xuống hộp. Setter không VT thắng cả yêu cầu VT cùng giá trị đang chờ; chỗ tự cuộn được lưu trước lượt phục hồi muộn; hint sửa câu nêu rõ việc làm được.
+
+- Vitest toàn bộ: **1859 passed, 0 failed, 1 skipped**, **253 file** (252 passed, 1 skipped), tối đa 2 worker. Đủ **14/14 file `*.dom.test.tsx`, 82 test DOM xanh**; skip duy nhất là corpus PDF cục bộ tuỳ chọn. `tsc -p tsconfig.json`: **0 lỗi**.
+- Có log đỏ → xanh từng mục trong scratchpad `fix136b`; hash trước/sau giữ `c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886`. Không Git ghi, không cài/cập nhật dependency, không dùng GPU. Kiểm DOM với happy-dom, chưa nghiệm thu chuột/chạm trên trình duyệt hay điện thoại thật. Chi tiết file:dòng và lệnh kiểm: `fix136b/result.md`.
+
 Đợt fix136, cây `ABook_rel135` trên `dev/rel135`: sửa bốn mục emu135. Reset Thêm sách và đóng Đổi bài dùng chuyển động cục bộ, không mở View Transition toàn trang; hook bỏ cập nhật bằng nhau và bảo vệ callback đến muộn. Hiệu năng chỉ tóm tắt lựa chọn, Bộ nhớ/hint ngắn hơn. Chẩn đoán khởi tạo dữ liệu chia sẻ trước đọc, phân biệt lỗi thu thập/lỗi phát, chi tiết kỹ thuật nằm sau phần mở rộng.
 
 - Vitest toàn bộ: **1842 passed, 0 failed, 1 skipped**, **250 file** (249 passed, 1 skipped), gồm `*.dom.test.tsx`, tối đa 2 worker; skip corpus PDF tuỳ chọn có sẵn. `tsc -p tsconfig.json`: **0 lỗi**. Pytest 4 file diagnostics/voice_speed, CUDA tắt, `-p no:cacheprovider -rf`: **75 passed**.
