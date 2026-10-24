@@ -416,6 +416,15 @@ export function ReaderScreen(edit: SentenceEditing) {
             </button>
           )}
         </article>
+        {/* Chữ mờ dần dưới thanh nổi thay vì lộ nửa dòng giữa thanh và trình phát nhỏ (soát T11); ẩn thanh thì cũng tắt dần. */}
+        <div
+          aria-hidden
+          data-reader-fade
+          className={cn(
+            "pointer-events-none sticky bottom-0 -mt-28 h-28 bg-gradient-to-t from-[var(--read-bg)] from-40% to-transparent transition-opacity duration-motion-slow",
+            controls || menu.bar ? "opacity-100" : "opacity-0",
+          )}
+        />
         {/* Thanh chọn câu / "Tới câu đang nghe" hiện / ẩn dần. Vùng con có khoá cố định: chúng không làm vùng của cả màn (MotionRegion dưới cùng)
             thấy "nội dung đổi" mà mờ chéo cả chương mỗi lần chọn câu (W2). */}
         <MotionRegion motionKey="floating" className={FLOATING}>
