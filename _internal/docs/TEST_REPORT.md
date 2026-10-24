@@ -913,3 +913,11 @@ Bắt buộc smoke test một chapter 2.000–5.000 từ trước khi chạy boo
 - Bổ sung 4 test DOM happy-dom: mở chương giữa nhóm dài/quay lại, gấp đã lưu và cuộn sau hoạt ảnh, đợi layout/huỷ, cảnh báo giọng khi Fold lưu đóng. Các test chữ được cập nhật.
 - Hash trước/sau: c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886.
 - Không cài dependency, không Git ghi, không GPU/Gradle. Dùng loader happy-dom sẵn có từ scratchpad/ux131; chưa kiểm giao diện trên thiết bị thật.
+
+## 24-10-2026 — Sửa F1/F2 của lượt rà r136b (fix136c)
+
+- F1: tooltip đóng dở được Back kết thúc animation/chờ Radix nhả lớp trước Esc cho Dialog/Menu phía dưới; tooltip có inert và pointer-events:none khi đóng, giữ nguyên fade. Ba ca DOM đỏ trước sửa, xanh sau sửa; nhóm Back liên quan 27/27 test đạt.
+- F2: useScrollMemory lấy mẫu trong listener scroll, cleanup flush mẫu thay vì đọc layout mới đã clamp/reset. Kiểm đổi key/nội dung co cho element/window, key mới/null, mẫu cuộn thật 900, về 0, trước RAF/animation.finished. Bốn ca đỏ trước sửa, xanh sau sửa; nhóm cuộn liên quan 15/15 test đạt.
+- Vitest toàn UI: 253 file được thu thập, 252 file đạt / 0 lỗi / 1 bỏ qua; 1867 test đạt / 0 lỗi / 1 bỏ qua, 80,55 s, 1 worker. Đối chiếu inventory: đủ 14/14 file *.dom.test.tsx, không file hay test DOM nào bị bỏ qua. File bỏ qua là pdfPages.corpus.test.ts (corpus PDF cục bộ).
+- `tsc -p tsconfig.json`: exit 0, không lỗi; `git diff --check`: exit 0. Không chạy pytest/Gradle/GPU, không cài/cập nhật dependency, không Git ghi.
+- Hash khoá trước/sau: c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886. Log đỏ/xanh, toàn bộ test và inventory ở scratchpad/fix136c ngoài cây. Test happy-dom dùng geometry/WAAPI mô phỏng; chưa kiểm browser/thiết bị thật.

@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { Dialog, Tooltip, TooltipProvider } from "./ui";
 import { backLayerCount } from "./backStack";
@@ -62,4 +63,45 @@ it("Browser Back có tooltip khôi phục history slot, không đổi trang hay 
   expect(document.querySelector('[role="dialog"][data-state="open"]')).not.toBeNull();
   expect(guard("POP", 2, 2)).toBe(true); // POP bù không đóng tiếp dialog.
   expect(document.querySelector('[role="dialog"][data-state="open"]')).not.toBeNull();
+});
+
+// Từ r136b/review-evidence.test.tsx F1: giữ Presence/Radix thật, đổi sang hành vi đúng.
+function TipLayer({ kind }: { kind: "dialog" | "menu" }) {
+  const [open, setOpen] = useState(true);
+  const tip = <Tooltip label="Giải thích"><button id="help">Trợ giúp</button></Tooltip>;
+  return <TooltipProvider delayDuration={0}>{kind === "dialog"
+    ? <Dialog open={open} onOpenChange={setOpen} title="Hộp"><button>Đầu</button>{tip}</Dialog>
+    : <DropdownMenu.Root open={open} onOpenChange={setOpen}>
+      <DropdownMenu.Trigger>Menu</DropdownMenu.Trigger>
+      <DropdownMenu.Portal><DropdownMenu.Content>{tip}<DropdownMenu.Item>Mục</DropdownMenu.Item></DropdownMenu.Content></DropdownMenu.Portal>
+    </DropdownMenu.Root>}</TooltipProvider>;
+}
+
+it.each(["dialog", "menu"] as const)("Back lần hai khi tooltip đang fade đóng lớp %s bên dưới", async kind => {
+  await act(() => root.render(<TipLayer kind={kind} />));
+  await act(() => document.getElementById("help")!.focus());
+  expect(backLayerCount()).toBe(1);
+  await act(() => { expect(dismissTopLayer()).toBe(true); });
+  expect(backLayerCount()).toBe(0);
+  const tooltip = document.querySelector<HTMLElement>('.motion-tooltip[data-state="closed"]')!;
+  expect(tooltip).not.toBeNull(); // Back đầu vẫn giữ fade, chưa animationend.
+  expect(document.querySelector(`[role="${kind}"][data-state="open"]`)).not.toBeNull();
+  const finish = vi.fn(() => tooltip.dispatchEvent(new AnimationEvent("animationend", { animationName: "exit", bubbles: true })));
+  vi.spyOn(tooltip, "getAnimations").mockReturnValue([{ finish }] as unknown as Animation[]);
+  const waits: (() => void)[] = [];
+  await act(() => { expect(dismissTopLayer(document, undefined, undefined, step => waits.push(step))).toBe(true); });
+  // WAAPI finish nhả Presence; nhịp sau mới gửi Esc cho lớp dưới.
+  await act(() => { waits.shift()?.(); });
+  expect(document.querySelector(`[role="${kind}"][data-state="open"]`)).toBeNull();
+  expect(finish).toHaveBeenCalledOnce();
+});
+
+it("tooltip đang fade đóng có inert và không chặn chạm", async () => {
+  await act(() => root.render(<Page dialog />));
+  await act(() => document.getElementById("help")!.focus());
+  await act(() => { dismissTopLayer(); });
+  const tooltip = document.querySelector<HTMLElement>('.motion-tooltip[data-state="closed"]')!;
+  expect(tooltip).not.toBeNull();
+  expect(tooltip.hasAttribute("inert")).toBe(true);
+  expect(tooltip.style.pointerEvents).toBe("none");
 });

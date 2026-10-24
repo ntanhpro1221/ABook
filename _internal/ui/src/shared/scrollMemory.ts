@@ -87,8 +87,7 @@ export function useScrollMemory(key: string | null, ref: RefObject<HTMLElement |
     const scroller = scrollParent(node);
     const target: EventTarget = isPage(scroller) ? window : scroller;
     let alive = true;
-    let restored = false;
-    let scrolled = false;
+    let sample: { scrollTop: number } | undefined;
     let settled: number | undefined;
     let cancelLayout: (() => void) | undefined;
     // Sau mọi layout effect của lần dựng này: vỏ app (usePageEnter) đưa trang mới về đầu trong effect của chính nó, chạy SAU effect
@@ -99,21 +98,26 @@ export function useScrollMemory(key: string | null, ref: RefObject<HTMLElement |
       restoreScroll(key, scroller, firstNow.current);
       settled = scroller.scrollTop;
       cancelLayout = afterScrollLayout(scroller, () => {
-        if (!scrolled && scroller.scrollTop === settled) restoreScroll(key, scroller, firstNow.current);
-        restored = true;
+        if (!sample && scroller.scrollTop === settled) {
+          restoreScroll(key, scroller, firstNow.current);
+          settled = scroller.scrollTop;
+        }
       });
     });
     // Scroll do restore đầu (có thể bị clamp khi Fold chưa mở hết) không ghi đè đích đã nhớ.
-    // Khác vị trí ấy là bạn đã tự cuộn: giữ ngay, kể cả khi rời trang trước RAF/animation.finished.
+    // Chỉ lấy mẫu trong listener còn sở hữu layout của key này, kể cả trước RAF/animation.finished.
     const save = () => {
-      if (settled !== undefined && scroller.scrollTop !== settled) scrolled = true;
-      if (restored || scrolled) saveScroll(key, scroller);
+      const scrollTop = scroller.scrollTop;
+      if (settled === undefined || (!sample && scrollTop === settled)) return;
+      sample = { scrollTop };
+      saveScroll(key, sample);
     };
     target.addEventListener("scroll", save, { passive: true });
     return () => {
       alive = false;
       cancelLayout?.();
-      save(); // Sự kiện scroll có thể vẫn đang chờ khi trang bị gỡ.
+      // DOM có thể đã đổi nội dung và clamp/reset scroller: flush mẫu cũ, không đọc lại layout mới.
+      if (sample) saveScroll(key, sample);
       target.removeEventListener("scroll", save);
     };
   }, [key, ref]);
