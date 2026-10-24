@@ -270,7 +270,7 @@ function FoldedSection({ title, hint, children, storageKey }: { title: string; h
       <h3 className="m-0 text-sm font-semibold">
         <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)} className="touch-row -mx-1 flex w-[calc(100%+0.5rem)] items-center justify-between gap-2 rounded-lg px-1 py-1.5 text-left hover:bg-hover">
           {title}
-          <ChevronDown className="fold-chevron size-4 shrink-0 text-fg-3" aria-hidden />
+          <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
         </button>
       </h3>
       <Collapse open={open} id={id}>
@@ -383,9 +383,9 @@ export function EditBookDialog({
               maxLength={160}
               aria-label="Tên sách"
               onChange={(event) => setTitle(event.target.value)}
-              className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
+              className="touch-box h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
             />
-            <Button type="submit" variant="primary" className="h-10 min-h-10" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>
+            <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>
               Lưu tên
             </Button>
           </form>
@@ -406,9 +406,9 @@ export function EditBookDialog({
                 aria-label="Tác giả"
                 placeholder="Không rõ tác giả"
                 onChange={(event) => setAuthor(event.target.value)}
-                className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
+                className="touch-box h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
               />
-              <Button type="submit" variant="primary" className="h-10 min-h-10" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>
+              <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>
                 Lưu tác giả
               </Button>
             </form>
@@ -418,7 +418,7 @@ export function EditBookDialog({
           {/* flex-wrap: ở 375 px cột nút (rộng ~190 px) không vừa cạnh bìa 112 px - xuống dưới bìa thay vì tràn khỏi hộp (soát UX a17). */}
           <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
             <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} className="w-28 shrink-0" />
-            <div className="flex min-w-0 max-w-full flex-col items-start gap-1">
+            <div className="flex min-w-0 max-w-full flex-col items-stretch gap-1">
               <Button variant="outline" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
                 {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
               </Button>
