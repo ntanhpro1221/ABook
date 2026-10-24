@@ -246,7 +246,7 @@ export function ReaderScreen(edit: SentenceEditing) {
   }, [book, isLoading]);
 
   const placeholder = (
-      <div className="mx-auto max-w-[68ch] space-y-4 px-6 pt-10">
+      <div className="mx-auto max-w-[68ch] space-y-4 px-[20px] pt-10">
         <Skeleton className="h-8 w-2/3" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-11/12" />
@@ -372,8 +372,9 @@ export function ReaderScreen(edit: SentenceEditing) {
   return (
     <div className="motion-reveal flex h-full flex-col">
       {/* Thanh đầu chỉ có nút về + tên chương, nền đặc, đứng NGOÀI khung cuộn: không bao giờ đè lên chữ. Mọi điều khiển khác ở thanh dưới. */}
-      <header ref={header} data-reader-header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg px-3 sm:px-6">
-        <IconButton label="Về trang sách" icon={ArrowLeft} onClick={() => navigate(`/book/${id}`)} className={TOUCH} />
+      <header ref={header} data-reader-header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg page-x">
+        {/* Nét mũi tên (không phải hộp nút) đứng trên lề màn như mép chữ bên dưới: bù phần đệm của nút 36 / 48 px (soát 25-10: lệch 7,5 px). */}
+        <IconButton label="Về trang sách" icon={ArrowLeft} onClick={() => navigate(`/book/${id}`)} className={cn(TOUCH, "-ml-[10px] max-sm:-ml-[18px]")} />
         <h2 className="min-w-0 flex-1 truncate text-base font-semibold" title={chapter.subtitle ? `${chapter.title} · ${name}` : name}>
           <MotionRegion as="span" motionKey={chapterId} className="block truncate">{name}</MotionRegion>
         </h2>
@@ -384,7 +385,7 @@ export function ReaderScreen(edit: SentenceEditing) {
             kế thừa, chương 1,5 triệu chữ phải tính lại kiểu chữ của mọi câu: ~400 ms mỗi lần mở / đóng ô "Tìm trong sách" (soát uxfix30).
             Giá trị riêng ở đây chặn thay đổi lan xuống; lớp phủ của hộp vẫn che trang nên bấm ra ngoài vẫn không tới chữ. */}
         <article
-          className="pointer-events-auto mx-auto max-w-[68ch] px-6 pb-40 pt-8 [--removed-body-scroll-bar-size:0px]"
+          className="pointer-events-auto mx-auto max-w-[68ch] px-[20px] pb-40 pt-8 [--removed-body-scroll-bar-size:0px]"
           style={{ fontSize: prefs.size, lineHeight: prefs.leading }}
         >
           {hint && (
