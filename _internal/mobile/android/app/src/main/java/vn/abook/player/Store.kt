@@ -23,20 +23,50 @@ import kotlin.concurrent.thread
 object Store {
     private const val DONE_TAIL_SECONDS = 20.0
     private val unpreservedData = linkedSetOf<String>()
+    // The Store monitor protects init and its private recovery root. Public root is assigned last.
+    private var initFilesDir: File? = null
+    private var initializingRoot: File? = null
+    @Volatile
     lateinit var root: File
         private set
 
-    fun init(context: Context) {
-        if (!::root.isInitialized) {
-            root = File(context.filesDir, "library").apply { mkdirs() }
-            // Mở file sách bị cắt giữa chừng (app bị giết, máy tắt): bản đang giải / bản cũ chờ xoá nằm lại trong books/.
-            // Đổi tên trả lại ngay (rẻ); xoá thì ở nền - danh sách sách không bao giờ thấy chúng (bookFolders).
-            val stale = recoverStaging()
-            recoverRekeys()
-            BookSave.recover(OldSaves.dir(context.filesDir))
-            if (stale.isNotEmpty()) thread(name = "abook-staging-sweep", isDaemon = true) { stale.forEach { it.deleteRecursively() } }
-        }
+    // Recovery re-enters Store under its monitor; other threads can only see the completed root.
+    private val workingRoot: File
+        get() = if (Thread.holdsLock(this)) initializingRoot ?: root else root
+
+    /** Recovery boundary; JVM tests can hold a cold open at this point. */
+    internal var initRecovery: (File) -> List<File> = { filesDir ->
+        val stale = recoverStaging()
+        recoverRekeys()
+        BookSave.recover(OldSaves.dir(filesDir))
+        stale
     }
+
+    @Synchronized
+    fun init(context: Context): Boolean {
+        val directory = context.filesDir.canonicalFile
+        if (initFilesDir != null && initFilesDir != directory ||
+            ::root.isInitialized && root.canonicalFile.parentFile != directory) {
+            AppLog.w("Store", "Bỏ qua init: thư mục khác với kho đã chọn.")
+            return false
+        }
+        // Pin the first directory even if recovery fails; retries must use the same directory.
+        initFilesDir = directory
+        if (::root.isInitialized) return true
+        val candidate = File(directory, "library").apply { mkdirs() }
+        initializingRoot = candidate
+        val stale = try {
+            initRecovery(directory).also { root = candidate }
+        } finally {
+            initializingRoot = null
+        }
+        if (stale.isNotEmpty()) thread(name = "abook-staging-sweep", isDaemon = true) { stale.forEach { it.deleteRecursively() } }
+        return true
+    }
+
+    @Synchronized
+    internal fun isReadyFor(filesDir: File): Boolean =
+        ::root.isInitialized && root.canonicalFile.parentFile == filesDir.canonicalFile
 
     internal fun requireBookId(id: String): String {
         require(id.isNotEmpty() && id.length <= 200 && id.all { it.code < 128 && it.isLetterOrDigit() || it == '_' || it == '-' } &&
@@ -48,7 +78,7 @@ object Store {
 
     fun bookDir(id: String): File {
         requireBookId(id)
-        val books = File(root, "books").canonicalFile
+        val books = File(workingRoot, "books").canonicalFile
         val dir = File(books, id).canonicalFile
         require(dir.parentFile == books) { "Thư mục sách nằm ngoài thư viện của bạn." }
         return dir
@@ -57,7 +87,7 @@ object Store {
     /** Thư mục của từng cuốn trong books/ - trừ thư mục tạm tên bắt đầu bằng "." (bản đang giải `.<mã>.<số>.part`, bản cũ
      *  chờ xoá `.<mã>.<số>.old` của BookFileImport): bị cắt giữa chừng thì chúng có book.json mà không phải một cuốn. */
     fun bookFolders(): List<File> =
-        File(root, "books").listFiles()?.filter { it.isDirectory && !it.name.startsWith(".") } ?: emptyList()
+        File(workingRoot, "books").listFiles()?.filter { it.isDirectory && !it.name.startsWith(".") } ?: emptyList()
 
     private val STAGING = Regex("""\.(.+)\.\d+\.(part|old)""")
     const val STAGING_MAX_AGE_MS = 60 * 60 * 1000L
@@ -69,7 +99,7 @@ object Store {
     @Synchronized
     fun recoverStaging(now: Long = System.currentTimeMillis()): List<File> {
         val stale = ArrayList<File>()
-        for (dir in File(root, "books").listFiles()?.filter { it.isDirectory && it.name.startsWith(".") } ?: emptyList()) {
+        for (dir in File(workingRoot, "books").listFiles()?.filter { it.isDirectory && it.name.startsWith(".") } ?: emptyList()) {
             val match = STAGING.matchEntire(dir.name) ?: continue
             if (match.groupValues[2] == "old") {
                 val home = runCatching { deletableBookDir(match.groupValues[1]) }.getOrNull()
@@ -297,7 +327,7 @@ object Store {
     }
 
     private fun noticeRows(): JSONArray {
-        val file = File(root, "data-notices.json")
+        val file = File(workingRoot, "data-notices.json")
         if (!file.exists()) return JSONArray()
         try {
             val rows = JSONObject(file.readText(Charsets.UTF_8)).getJSONArray("notices")
@@ -316,15 +346,15 @@ object Store {
 
     @Synchronized
     internal fun addDataNotice(text: String) {
-        if (!::root.isInitialized) return
+        if (!::root.isInitialized && initializingRoot == null) return
         pendingDataNotices.add(text)
         pendingDataNoticeTimes.putIfAbsent(text, System.currentTimeMillis())
         try {
             val rows = noticeRows()
-            val times = runCatching { JSONObject(File(root, "data-notices.json").readText()).optJSONObject("times") }.getOrNull() ?: JSONObject()
+            val times = runCatching { JSONObject(File(workingRoot, "data-notices.json").readText()).optJSONObject("times") }.getOrNull() ?: JSONObject()
             for (notice in pendingDataNotices) if ((0 until rows.length()).none { rows.optString(it) == notice }) rows.put(notice)
             for ((notice, at) in pendingDataNoticeTimes) if (!times.has(notice)) times.put(notice, at)
-            writeAtomic(File(root, "data-notices.json"), JSONObject().put("notices", rows).put("times", times).toString())
+            writeAtomic(File(workingRoot, "data-notices.json"), JSONObject().put("notices", rows).put("times", times).toString())
             pendingDataNotices.clear()
             pendingDataNoticeTimes.clear()
         } catch (_: Exception) {
@@ -346,9 +376,9 @@ object Store {
     /** Read-only diagnostics snapshot. No repair, writer or profile-content reads. */
     @Synchronized
     internal fun dataDiagnostics(): JSONObject {
-        if (!::root.isInitialized) return JSONObject()
+        check(::root.isInitialized) { "Kho chưa sẵn." }
         val now = System.currentTimeMillis()
-        val file = File(root, "data-notices.json")
+        val file = File(workingRoot, "data-notices.json")
         val saved = runCatching { if (file.exists()) JSONObject(file.readText(Charsets.UTF_8)) else JSONObject() }
         val source = saved.getOrNull() ?: JSONObject()
         val rows = source.optJSONArray("notices") ?: JSONArray()
@@ -404,7 +434,7 @@ object Store {
         return target
     }
 
-    private val recordsFile get() = File(root, "records.json")
+    private val recordsFile get() = File(workingRoot, "records.json")
     private var recordsCache: JSONObject? = null
 
     fun isRecordId(value: String) = RECORD_ID.matches(value)
@@ -441,13 +471,13 @@ object Store {
     /** Bản cũ state/<mã sách>.json: giữ nguồn tới khi bảng liên kết đã commit để restart làm tiếp được. */
     private fun upgradeStates(): JSONObject {
         val book = JSONObject().put("version", 2).put("records", JSONObject()).put("links", JSONObject())
-        val sources = File(root, "state").listFiles()?.filter {
+        val sources = File(workingRoot, "state").listFiles()?.filter {
             it.isFile && it.name.endsWith(".json") && !RECORD_ID.matches(it.name.removeSuffix(".json"))
         } ?: emptyList()
         for (file in sources) {
             val bookId = file.name.removeSuffix(".json")
             val record = defaultRecordId(bookId)
-            val target = File(root, "state/$record.json")
+            val target = File(workingRoot, "state/$record.json")
             writeAtomic(target, file.readBytes())
             check(target.isFile) { "Không lưu được hồ sơ nghe của bạn" }
             book.getJSONObject("records").put(record, JSONObject().put("name", DEFAULT_RECORD_NAME).put("createdAt", now()).put("nameAt", 0.0))
@@ -487,7 +517,7 @@ object Store {
         return record
     }
 
-    private fun recordFile(record: String) = File(root, "state/$record.json")
+    private fun recordFile(record: String) = File(workingRoot, "state/$record.json")
 
     private fun stateFile(bookId: String) = recordFile(activeRecord(bookId))
 
@@ -1051,13 +1081,13 @@ object Store {
      * keeps every (counter, node) unique (a118 bug 2, Python Listening._fresh_node).
      */
     private fun freshRevisionNode() {
-        val file = File(root, "listening-node.json")
+        val file = File(workingRoot, "listening-node.json")
         val node = UUID.randomUUID().toString().replace("-", "")
         unsavedNode = try { writeAtomic(file, JSONObject().put("node", node).toString()); null } catch (_: Exception) { file to node }
     }
 
     private fun revisionNode(): String {
-        val file = File(root, "listening-node.json")
+        val file = File(workingRoot, "listening-node.json")
         unsavedNode?.takeIf { it.first == file }?.let { return it.second }
         val saved = readJson(file)
         if (ListeningRevision.revision(JSONObject().put("rev", JSONObject().put("counter", 1).put("node", saved?.opt("node")))).first > 0)
@@ -1316,7 +1346,7 @@ object Store {
             "mã sách không hợp lệ"
         }
         val dir = bookDir(id).canonicalFile
-        require(dir.parentFile == File(root, "books").canonicalFile) { "thư mục sách nằm ngoài thư viện" }
+        require(dir.parentFile == File(workingRoot, "books").canonicalFile) { "thư mục sách nằm ngoài thư viện" }
         return dir
     }
 
@@ -1360,7 +1390,7 @@ object Store {
         if (id.isNotEmpty() && !bookDir(id).exists()) forgetPrints(id)
     }
 
-    private fun trash() = TrashPending(root)
+    private fun trash() = TrashPending(workingRoot)
 
     // ---- một cuốn, hai đường đến -----------------------------------------------------------------------------
     //
@@ -1369,7 +1399,7 @@ object Store {
     // băm) là cùng một cuốn. Sổ của app `prints.json` - nằm NGOÀI thư mục sách - ghi cỡ + mã băm các chương đã biết của
     // từng cuốn, và cuốn nào mở từ file mà chưa gắn với cuốn nào của máy tính.
 
-    private val printsFile get() = File(root, "prints.json")
+    private val printsFile get() = File(workingRoot, "prints.json")
 
     private fun printsBook(): JSONObject =
         readJson(printsFile) ?: JSONObject()
@@ -1402,7 +1432,7 @@ object Store {
     /** (mã sách, đường dẫn trong sách) nếu `file` là file của một cuốn trong thư viện (không kể `.part` đang tải); ngoài ra null. */
     private fun located(file: File): Pair<String, String>? {
         if (!::root.isInitialized || file.name.endsWith(".part")) return null
-        val books = File(root, "books").canonicalFile
+        val books = File(workingRoot, "books").canonicalFile
         val path = file.canonicalFile
         if (!path.path.startsWith(books.path.trimEnd(File.separatorChar) + File.separator)) return null
         val parts = path.relativeTo(books).invariantSeparatorsPath.split('/')
@@ -1592,7 +1622,7 @@ object Store {
         beginRekey(oldId, newId, adopt = false)
     }
 
-    private val rekeyJournal get() = File(root, "rekey_journal.json")
+    private val rekeyJournal get() = File(workingRoot, "rekey_journal.json")
 
     private fun beginRekey(oldId: String, newId: String, adopt: Boolean) {
         deletableBookDir(oldId)
@@ -1678,11 +1708,11 @@ object Store {
     }
 
     private fun loadSizes() {
-        if (sizesFrom == root) return
+        if (sizesFrom == workingRoot) return
         sizes.clear()
         sizesDirty = false
-        sizesFrom = root
-        val saved = runCatching { JSONObject(File(root, "sizes.json").readText(Charsets.UTF_8)) }.getOrNull() ?: return
+        sizesFrom = workingRoot
+        val saved = runCatching { JSONObject(File(workingRoot, "sizes.json").readText(Charsets.UTF_8)) }.getOrNull() ?: return
         for (id in saved.keys()) {
             val entry = saved.optJSONObject(id) ?: continue
             sizes[id] = entry.optString("stamp") to entry.optLong("bytes")
@@ -1697,7 +1727,7 @@ object Store {
             sizesDirty = false
             JSONObject().also { all -> sizes.forEach { (id, entry) -> all.put(id, JSONObject().put("stamp", entry.first).put("bytes", entry.second)) } }.toString()
         }
-        runCatching { writeAtomic(File(root, "sizes.json"), text) }
+        runCatching { writeAtomic(File(workingRoot, "sizes.json"), text) }
     }
 
     /** Cỡ từng cuốn trên máy (mã cuốn -> byte) để màn "Tải sách" xếp cuốn nào chiếm nhiều nhất; tổng của chúng là cỡ cả thư viện. */

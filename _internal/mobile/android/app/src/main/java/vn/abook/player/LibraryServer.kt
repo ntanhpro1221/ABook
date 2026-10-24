@@ -94,7 +94,7 @@ object LibraryServer {
         private set
     var lastError = ""
         private set
-    private var appContext: Context? = null
+    @Volatile private var appContext: Context? = null
 
     /** Tên Bluetooth của điện thoại (BluetoothLink.adapterName); test JVM thay bằng giá trị giả. */
     internal var bluetoothNameSource: () -> String = { appContext?.let(BluetoothLink::adapterName).orEmpty() }
@@ -104,11 +104,30 @@ object LibraryServer {
         Diagnostics.collect(appContext ?: throw IllegalStateException("Chưa khởi động"), lines)
     }
 
-    fun init(context: Context) {
-        Store.init(context)
-        Remote.init(context.applicationContext)
-        appContext = context.applicationContext
-        if (!::devicesFile.isInitialized) devicesFile = File(context.filesDir, "share.json")
+    @Synchronized
+    fun init(context: Context): Boolean {
+        val directory = context.filesDir.canonicalFile
+        if (::devicesFile.isInitialized && devicesFile.parentFile != directory) {
+            AppLog.w("Share", "Bỏ qua init: thư mục khác với máy chủ đã chọn.")
+            return false
+        }
+        if (!Store.init(context)) return false
+        if (appContext != null) return true
+        val app = context.applicationContext
+        Remote.init(app)
+        devicesFile = File(directory, "share.json")
+        appContext = app // Publish after Store recovery and all sharing fields are ready.
+        return true
+    }
+
+    /** Read-only snapshot: no Store/server init, no corrupt backup, no state publication. */
+    @Synchronized
+    internal fun diagnostics(context: Context): JSONObject {
+        val directory = context.filesDir.canonicalFile
+        check(Store.isReadyFor(directory)) { "Kho chưa sẵn." }
+        check(!::devicesFile.isInitialized || devicesFile.parentFile == directory) { "Chia sẻ chưa sẵn cho kho này." }
+        val devices = readDevices(File(directory, "share.json")).getJSONObject("devices")
+        return JSONObject().put("running", running()).put("pairedDevices", devices.length()).put("lastError", lastError)
     }
 
     fun name(): String = appContext?.let(DeviceName::of) ?: "Điện thoại"
@@ -132,7 +151,7 @@ object LibraryServer {
     /** Bật máy chủ (idempotent). Cổng bận: báo lỗi đọc được, không bật nửa vời. */
     @Synchronized
     fun start(context: Context) {
-        init(context)
+        if (!init(context)) return
         // Bluetooth trước, và cả khi cổng Wi-Fi đã chạy: lần gọi sau khi vừa cho quyền / bật Bluetooth phải mở được nó.
         // Không mở được thì chỉ ghi lý do (BluetoothShare.status), cổng Wi-Fi vẫn chạy.
         runCatching { BluetoothShare.start(context) }
@@ -286,7 +305,20 @@ object LibraryServer {
         return entry
     }
 
-    private fun readDevices(): JSONObject {
+    private class CorruptDevices(val text: String, cause: Exception) : java.io.IOException(
+        "Danh sách máy ghép hỏng; giữ bản cũ — bạn khôi phục bản sao trước khi đổi ghép.", cause)
+
+    /** Writer path: preserve the original bytes independently, then fail closed. */
+    private fun readDevices(): JSONObject = try {
+        readDevices(devicesFile)
+    } catch (error: CorruptDevices) {
+        val copy = File(devicesFile.path + ".corrupt-${hash(error.text)}")
+        if (!copy.exists()) Store.writeAtomic(copy, error.text)
+        throw error
+    }
+
+    /** Validate without any writes; diagnostics must use this overload. */
+    private fun readDevices(devicesFile: File): JSONObject {
         if (!devicesFile.exists()) return JSONObject().put("devices", JSONObject())
         val text = try { devicesFile.readText(Charsets.UTF_8) } catch (error: Exception) {
             throw java.io.IOException("Không đọc được danh sách máy đã ghép; bạn hãy thử lại. Dữ liệu cũ vẫn được giữ.", error)
@@ -305,10 +337,7 @@ object LibraryServer {
             }
             return data
         } catch (error: Exception) {
-            // Sao lưu, giữ nguyên file gốc để mọi writer tiếp theo vẫn fail-closed.
-            val copy = File(devicesFile.path + ".corrupt-${hash(text)}")
-            if (!copy.exists()) Store.writeAtomic(copy, text)
-            throw java.io.IOException("Danh sách máy ghép hỏng; giữ bản cũ — bạn khôi phục bản sao trước khi đổi ghép.", error)
+            throw CorruptDevices(text, error)
         }
     }
 
