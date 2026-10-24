@@ -1349,7 +1349,7 @@ export function ProjectScreen() {
     <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16 pt-7">
       {/* Mực mũi tên bắt đầu 2,33 px trong ô 14 px: lùi chừng ấy cho thẳng mép chữ bên dưới. */}
       <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-        <ArrowLeft className="-ml-[2.33px] size-4" /> Studio
+        <ArrowLeft className="ink-start size-4" /> Studio
       </button>
       {failure === "stale" && !isListenOnly(error) && (
         <div role="status" className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm">
@@ -1433,7 +1433,7 @@ export function ProjectScreen() {
         <TabsPanels value={tab}>
         {from && FROM_LABEL[from] && tab !== from && (
           <button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-            <ArrowLeft className="-ml-[2.33px] size-4" /> Về màn trước
+            <ArrowLeft className="ink-start size-4" /> Về màn trước
           </button>
         )}
         <TabsContent value="chapters">
