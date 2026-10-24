@@ -78,10 +78,10 @@ describe("Cài đặt trên điện thoại: không tràn ngang", () => {
     expect(hint![1]).toMatch(/\[overflow-wrap:anywhere\]/);
   });
 
-  it("hàng Thành phần bên thứ ba có chữ co lại được", () => {
+  it("hàng Thành phần sử dụng có chữ co lại được", () => {
     const html = render(<AboutBlock version="0.0.0" />);
-    expect(opening(html, "button", "Thành phần bên thứ ba")).toMatch(/\bmin-w-0\b|\bflex\b/);
-    expect(html).toMatch(/<span class="[^"]*\bmin-w-0\b[^"]*"><span class="[^"]*\[overflow-wrap:anywhere\][^"]*">Thành phần bên thứ ba/);
+    expect(opening(html, "button", "Thành phần sử dụng")).toMatch(/\bmin-w-0\b|\bflex\b/);
+    expect(html).toMatch(/<span class="[^"]*\bmin-w-0\b[^"]*"><span class="[^"]*\[overflow-wrap:anywhere\][^"]*">Thành phần sử dụng/);
   });
 });
 

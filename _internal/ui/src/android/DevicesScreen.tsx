@@ -388,9 +388,9 @@ export function StudioAlertsRow({ icon: Icon }: { icon?: LucideIcon } = {}) {
         disabled={change.isPending || state.isLoading}
         onCheckedChange={(value) => change.mutate(value)}
         aria-label="Báo từ Studio"
-        className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
+        className="ui-switch ui-switch-large"
       >
-        <Switch.Thumb className="block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+        <Switch.Thumb className="motion-switch-thumb" />
       </Switch.Root>
     </div>
   );
@@ -417,7 +417,7 @@ function pinChanged(error: unknown): error is Error {
   return error instanceof Error && (error as Error & { code?: string }).code === "PIN_CHANGED";
 }
 
-// Thiết bị ghép ngoài máy tính chính (Peers.kt - mạng trạm bước 2): điện thoại khác bật "Cho máy khác nghe thư viện này",
+// Thiết bị ghép ngoài máy tính chính (Peers.kt - mạng trạm bước 2): điện thoại khác bật "Chia sẻ thư viện",
 // hay một máy tính nữa. Sách của chúng nghe thẳng được trong Thư viện ("Trên <tên>") và tải về như sách máy tính.
 function PeersPanel() {
   const client = useQueryClient();
@@ -658,7 +658,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
     <MotionRegion as="section" className={bare ? "pt-4" : "mt-8 py-4"} aria-labelledby="share-title">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <h2 id="share-title" className="text-[0.9375rem] font-medium">Cho máy khác nghe thư viện này</h2>
+          <h2 id="share-title" className="text-[0.9375rem] font-medium">Chia sẻ thư viện</h2>
           <p className="mt-0.5 text-xs leading-snug text-fg-2">
             Máy đã ghép nghe được sách bạn thêm từ file, không cần chép sang.
           </p>
@@ -668,10 +668,10 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
           checked={enabled}
           disabled={run.isPending || status.isLoading}
           onCheckedChange={(value) => (value ? void turnOn() : run.mutate(() => EbookLibrary.setShare({ enabled: false })))}
-          aria-label="Cho máy khác nghe thư viện này"
-          className="relative h-7 w-12 shrink-0 rounded-full bg-switch-off transition-colors data-[state=checked]:bg-focus"
+          aria-label="Chia sẻ thư viện"
+          className="ui-switch ui-switch-large"
         >
-          <Switch.Thumb className="motion-switch-thumb block size-6 translate-x-0.5 rounded-full bg-white shadow transition-transform data-[state=checked]:translate-x-[22px]" />
+          <Switch.Thumb className="motion-switch-thumb" />
         </Switch.Root>
       </div>
       {explain && !enabled && (
@@ -732,7 +732,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
           </dl>
           {/* Địa chỉ và vân tay chứng chỉ (64 chữ số hex) là thứ để dò khi máy kia không tự thấy điện thoại: người nghe bình thường không cần,
               nên gập lại (soát UX a9). */}
-          <Fold storageKey="devices.share.details" title="Chi tiết" heading="h3" className="rounded-none border-0 bg-transparent" bodyClassName="px-0">
+          <Fold flat storageKey="devices.share.details" title="Chi tiết" heading="h3" className="rounded-none border-0 bg-transparent" bodyClassName="px-0">
             <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pl-5">
               <dt className="text-fg-2">Địa chỉ</dt>
               <dd className="tabular break-all">
@@ -827,11 +827,11 @@ function DeviceNameRow({ bare = false }: { bare?: boolean }) {
         <Smartphone className="size-5 shrink-0 text-fg-2" />
         <div className="min-w-0 flex-1">
           <div id="device-name-title" className="text-xs text-fg-2">
-            Tên điện thoại này (máy khác thấy)
+            Tên điện thoại
           </div>
           <div className="truncate font-medium">{name}</div>
         </div>
-        <Button size="sm" variant="ghost" icon={Pencil} onClick={() => setDraft(name)}>
+        <Button size="sm" variant="ghost" className="settings-edge-action" icon={Pencil} onClick={() => setDraft(name)}>
           Đổi tên
         </Button>
       </div>
@@ -885,7 +885,7 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
             const busy = isDownloading(progress[id]);
             return (
               <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
-              <div className="flex items-center gap-3 px-4 py-2.5">
+              <div className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm">{title}</div>
                   {kind === "partial" && <div className="text-xs text-fg-3">{busy ? "Đang tải" : "Phần đã tải, chưa thành sách trên máy"}</div>}
@@ -896,7 +896,7 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
                   disabled={busy}
                   aria-label={kind === "book" ? `Xoá ${title} khỏi điện thoại` : `Xoá phần đã tải của ${title}`}
                   onClick={() => window.dispatchEvent(new CustomEvent<RemovableFromPhone>("abook-remove-from-phone", { detail: { id, title, partial: kind === "partial" } }))}
-                  className="grid size-9 shrink-0 place-items-center rounded-full text-fg-2 disabled:opacity-40"
+                  className="-mr-2.5 grid size-9 shrink-0 place-items-center rounded-full text-fg-2 disabled:opacity-40"
                 >
                   <Trash2 className="size-4" />
                 </button>
@@ -973,7 +973,7 @@ export function DevicesScreen() {
                 )}
                 <Fingerprint value={connection.data.fingerprint} />
               </div>
-              <button type="button" aria-label="Làm mới" onClick={() => void remote.refetch()} className="grid size-10 place-items-center rounded-full text-fg-2">
+              <button type="button" aria-label="Làm mới" onClick={() => void remote.refetch()} className="-mr-3 grid size-10 place-items-center rounded-full text-fg-2">
                 <RefreshCw className={cn("size-4", remote.isFetching && "animate-spin")} />
               </button>
             </div>
@@ -1016,7 +1016,7 @@ export function DevicesScreen() {
       </div>
       <PeersPanel />
       {/* Phần ít dùng gập lại, nhớ gấp / mở trên máy này (a120 - chủ app: "foldout chúng lại… chứ để hết một trang dài ơi là dài"). */}
-      <Fold
+      <Fold flat
         storageKey="devices.this"
         title="Điện thoại này"
         summary={[connection.data?.deviceName, share.data?.running ? "đang cho máy khác nghe" : "không chia sẻ"].filter(Boolean).join(" · ")}
@@ -1027,7 +1027,7 @@ export function DevicesScreen() {
         <SharePanel bare />
       </Fold>
       {storage.data && (
-        <Fold
+        <Fold flat
           storageKey="devices.storage"
           title="Dung lượng trên máy"
           summary={`Sách ${formatSize(storage.data.bytes)} · còn trống ${formatSize(storage.data.free)}`}

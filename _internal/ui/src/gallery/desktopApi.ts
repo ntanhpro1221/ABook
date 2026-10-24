@@ -137,7 +137,7 @@ export function preferences(): Preferences {
     volume: 0.9,
     sleepFadeSeconds: 30,
     sleepExtendMinutes: 10,
-    safetyStopHours: 4,
+    safetyStopHours: 2,
     sleepSchedule: null,
     pauseOnBattery: true,
     autoMusic: true,
@@ -160,7 +160,7 @@ function appInfo(): AppInfo {
     remote: false,
     update: null,
     canCheckUpdate: true,
-    studio: null,
+    studio: galleryState.scenario.installedStudio ? { installed: true } : null,
     capabilities: { toolchain: true, workshop: true, link: false, sync: false, local: true },
     libraryRoot: prefs.libraryRoot,
     theme: prefs.theme,
@@ -168,7 +168,7 @@ function appInfo(): AppInfo {
     volume: 0.9,
     sleepFadeSeconds: 30,
     sleepExtendMinutes: 10,
-    safetyStopHours: 4,
+    safetyStopHours: 2,
     sleepSchedule: null,
     notices: [],
     libraryMoveRecovery: null,
@@ -269,6 +269,11 @@ function casting(item: GalleryBook, chapterId: number) {
 
 const ROUTES: [string, RegExp, Handler][] = [
   ["GET", /^\/api\/app$/, () => appInfo()],
+  ["GET", /^\/api\/studio\/setup$/, () => ({
+    installed: true, outdated: [], damaged: [], running: false, step: null, steps: [],
+    progress: null, detail: "", error: null, root: "D:/ABook/Studio",
+    gpu: { name: "NVIDIA GeForce RTX 5060 Laptop GPU", vram: 8 * 1024 ** 3 },
+  })],
   ["GET", /^\/api\/preferences$/, () => preferences()],
   ["PUT", /^\/api\/preferences$/, (_, body) => ({ ...preferences(), ...body })],
   ["GET", /^\/api\/listen\/library$/, () => listenLibrary()],
@@ -417,6 +422,10 @@ export function installDesktopApi(): void {
   const real = globalThis.fetch.bind(globalThis);
   globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     const path = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+    // Phòng trưng bày không hỏi bản phát hành thật: ảnh và test phải độc lập với mạng / hạn mức GitHub.
+    if (path === "https://api.github.com/repos/ntanhpro1221/ABook/releases/latest") {
+      return new Response(JSON.stringify({ tag_name: "v0.4.138", html_url: "https://github.com/ntanhpro1221/ABook/releases/tag/v0.4.138", assets: [] }), { status: 200, headers: { "Content-Type": "application/json" } });
+    }
     const local = path.replace(/^https?:\/\/[^/]+/, "");
     if (!local.startsWith("/api/")) return real(input, init);
     const method = (init?.method ?? "GET").toUpperCase();
