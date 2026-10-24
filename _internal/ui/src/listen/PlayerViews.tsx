@@ -302,6 +302,14 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
 }
 
 const PlayerSheetSpace = createContext<(id: string, height: number) => void>(() => {});
+/** Bảng đang mở dạng bảng trượt (điện thoại): tiêu đề bảng đã nói tên menu, dòng ghi chú khỏi lặp lại. */
+const InPlayerSheet = createContext(false);
+
+/** Dòng ghi chú đầu menu: hộp nổi (máy tính) không có tiêu đề nên kèm tên menu; bảng trượt có tiêu đề rồi thì chỉ ghi chú. */
+function MenuNote({ title, children }: { title: string; children: string }) {
+  const inSheet = useContext(InPlayerSheet);
+  return <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{inSheet ? children.charAt(0).toUpperCase() + children.slice(1) : `${title} · ${children}`}</div>;
+}
 
 function MenuShell({
   trigger,
@@ -373,7 +381,7 @@ function MenuShell({
   if (phone) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <Sheet open={isOpen} onOpenChange={changeOpen} title={dialogLabel ?? label} trigger={button}
       focusSelector={focusSelector} onKeyDown={menuArrowKeys} footer={footer} onHeightChange={reserveHeight} className="player-sheet">
-      {children}
+      <InPlayerSheet.Provider value>{children}</InPlayerSheet.Provider>
     </Sheet>
   </Popover.Root>;
   return (
@@ -427,7 +435,7 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
       // Nút có nhãn của màn Đang nghe: chính con số là biểu tượng ("1,15×"), nhãn "Tốc độ" ở dưới.
       trigger={look === "action" ? speedLabel(rate) : <><Gauge className="size-4" />{speedLabel(rate)}</>}
     >
-      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Tốc độ đọc · nhớ riêng cho cuốn này</div>
+      <MenuNote title="Tốc độ đọc">nhớ riêng cho cuốn này</MenuNote>
       <div className="grid grid-cols-3 gap-1 p-1">
         {speeds.map((speed) => (
           <Popover.Close asChild key={speed}>
@@ -561,7 +569,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
         : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Music2 className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
     ><MotionRegion>
-      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Nhạc nền · nhớ riêng cho cuốn này</div>
+      <MenuNote title="Nhạc nền">nhớ riêng cho cuốn này</MenuNote>
       <div role="group" aria-label="Danh sách nhạc nền" className="flex min-h-0 flex-col gap-0.5 overflow-y-auto p-1">
         {options.map((option) => (
           <Popover.Close asChild key={JSON.stringify(option.id)}>
@@ -569,6 +577,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
               type="button"
               disabled={option.disabled}
               aria-pressed={option.id === chosen}
+              data-sheet-choice
               onClick={() => choose(option.id)}
               className={cn(
                 "flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm hover:bg-hover disabled:opacity-50",
@@ -581,7 +590,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
         ))}
         {canImport && (
           <Popover.Close asChild>
-            <button type="button" onClick={() => void addMusic()} className="flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm text-fg hover:bg-hover">
+            <button type="button" data-sheet-choice onClick={() => void addMusic()} className="flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm text-fg hover:bg-hover">
               <Plus className="size-4 shrink-0" />
               {ADD_MUSIC_LABEL}
             </button>
@@ -697,7 +706,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
         : <><AudioLines className="size-4" /><span className="max-w-24 truncate @max-[75rem]:hidden">{current ? spokenVoiceName(current.name) : ""}</span></>}
       width="w-80 max-w-[calc(100vw-1.5rem)]"
     ><MotionRegion>
-      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Giọng đọc · nhớ riêng cho cuốn này</div>
+      <MenuNote title="Giọng đọc">nhớ riêng cho cuốn này</MenuNote>
       {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; "Thử" dùng cùng cách nghe thử. */}
       <ScrollHint className="min-h-0 flex-1 overflow-y-auto p-1">
         {groupedVoices(voices).map((group) => (
@@ -710,7 +719,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                   const selected = voice.id === current?.id;
                   const playing = sample.playing === voice.id;
                   return (
-                    <div key={voice.id} className="flex items-center gap-1">
+                    <div key={voice.id} data-sheet-choice data-sheet-current={selected ? "" : undefined} className="flex items-center gap-1">
                       <Popover.Close asChild>
                         <button
                           type="button"
@@ -740,6 +749,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                         <button
                           type="button"
                           data-arrow-side
+                          data-voice-try
                           onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}
                           aria-label={`${playing ? "Dừng" : "Thử"} giọng ${voice.name}`}
                           className="touch-box inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium text-fg-2 hover:bg-hover hover:text-fg max-sm:h-[48px]"
@@ -760,6 +770,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
       <button
         type="button"
         onClick={() => openVoiceSettings()}
+        data-sheet-choice
         className="flex min-h-9 w-full items-center rounded-lg px-3 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[48px]"
       >
         Thêm giọng…
@@ -2053,8 +2064,9 @@ function BookmarkPanel({ editingId, setEditingId }: { editingId: string | null; 
         <p className="mt-1 text-sm text-fg-2">Bấm biểu tượng dấu trang (hoặc phím B) khi nghe tới đoạn muốn quay lại.</p>
       </div>
   ) : null;
+  // Điện thoại (bảng trượt, đã có lề 20 px): khung lùi ra đúng đệm của dòng để chữ đứng mép 20 px, nền rê tràn ra ngoài chữ.
   return (
-    <MotionRegion as="div" className="h-full overflow-y-auto px-3 py-4 sm:px-6">
+    <MotionRegion as="div" className="h-full overflow-y-auto py-4 max-sm:-mx-3 sm:px-6">
       <BookmarkList
         empty={empty}
         bookId={track.bookId}

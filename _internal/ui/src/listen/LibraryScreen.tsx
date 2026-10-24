@@ -388,7 +388,7 @@ function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySec
   const content = open && <Shelf books={item.items} badges={item.badges} twins={twins} />;
   return <MotionRegion motionKey={[item.label, item.items.map(book => book.id), item.items[0].cover?.url, item.items.some(book => book.remote)]}>
     {phone ? <Sheet open={open} onOpenChange={setOpen} title={item.label} trigger={trigger}>
-      <div className="px-2 pb-4 pt-4">{content}</div>
+      <div className="pb-4 pt-4">{content}</div>
     </Sheet> : <>{trigger}<Dialog open={open} onOpenChange={setOpen} title={item.label}>{content}</Dialog></>}
   </MotionRegion>;
 }

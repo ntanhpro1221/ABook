@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useListPresence } from "@/shared/motion";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
@@ -981,22 +981,23 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
             type="button"
             onClick={onPlay}
             aria-label={current && player.playing ? `Tạm dừng ${chapter.displayTitle}` : `Nghe ${chapter.displayTitle}`}
-            className="touch-hit relative -ml-[9px] grid size-8 place-items-center rounded-full text-fg-2 hover:bg-panel hover:text-fg"
+            className="touch-hit relative -ml-[9px] grid h-8 min-w-8 items-center justify-items-start rounded-full px-[9px] text-fg-2 hover:bg-panel hover:text-fg"
           >
+            {/* Mực của Play / Pause bắt đầu 3,5 px trong ô 14 px: đặt ở 5,5 px để mực đứng đúng chỗ chữ số (đệm 9 px). */}
             {current && player.playing ? (
               <>
                 <Vu className="h-3 text-accent transition-opacity duration-motion-fast group-hover:opacity-0" />
-                <Pause className="absolute size-4 opacity-0 transition-opacity duration-motion-fast group-hover:opacity-100" fill="currentColor" strokeWidth={0} />
+                <Pause className="absolute left-[5.5px] top-1/2 size-4 -translate-y-1/2 opacity-0 transition-opacity duration-motion-fast group-hover:opacity-100" fill="currentColor" strokeWidth={0} />
               </>
             ) : (
               <>
-                <span className={cn("tabular text-xs text-fg-3 transition-opacity duration-motion-fast group-hover:opacity-0", chapter.index === 1 && "-translate-x-[2px]")}>{chapter.index}</span>
-                <Play className="absolute size-4 translate-x-[1px] opacity-0 transition-opacity duration-motion-fast group-hover:opacity-100" fill="currentColor" strokeWidth={0} />
+                <span className="tabular w-[var(--chapter-number)] text-left text-xs text-fg-3 transition-opacity duration-motion-fast group-hover:opacity-0">{chapter.index}</span>
+                <Play className="absolute left-[5.5px] top-1/2 size-4 -translate-y-1/2 opacity-0 transition-opacity duration-motion-fast group-hover:opacity-100" fill="currentColor" strokeWidth={0} />
               </>
             )}
           </button>
         ) : (
-          <span className={cn("tabular w-[14px] text-center text-xs text-fg-3", chapter.index === 1 && "-translate-x-[2px]")}>{chapter.index}</span>
+          <span className="tabular w-[var(--chapter-number)] text-xs text-fg-3">{chapter.index}</span>
         )}
       </div>
       <div role="cell" className="min-w-0">
@@ -1044,16 +1045,17 @@ export function ChapterList({ book, chapters }: { book: BookSummary; chapters: C
     // Bảng ARIA đủ phần (soát a31 A4): hàng tiêu đề là columnheader, mỗi ô của hàng chương là cell - trình đọc màn hình đọc "Trạng thái:
     // Đang thu âm" khi đi theo cột, thay vì chuỗi chữ rời. Hàng tiêu đề là hàng 1, nên hàng chương đánh số từ 2.
     // Phẳng ngay dưới tab "Chương" - không gấp trong một khung "Danh sách chương" lặp lại tên tab (như trang sách, soát 24-10).
-    // Lề âm bù đệm của dòng; số chương căn giữa trên ô 14 px của biểu tượng phát (nút phát lùi 9 px), "…" bù nửa nền thừa: cột đầu và cột cuối
-    // thẳng mép nội dung như tab phía trên (soát 24-10).
+    // Lề âm bù đệm của dòng; số chương căn trái trong ô rộng đúng số chữ số của chương cuối (nút phát lùi 9 px), "…" bù nửa nền thừa: cột
+    // đầu và cột cuối thẳng mép nội dung như tab phía trên (soát 24-10). Căn giữa thì "10" lấn 3,5 px ra ngoài mép mà "1" thì không (25-10).
     <div className="-mx-2 mt-2">
-    <div ref={table} role="table" aria-label="Danh sách chương" aria-rowcount={chapters.length + 1}>
+    <div ref={table} role="table" aria-label="Danh sách chương" aria-rowcount={chapters.length + 1}
+      style={{ "--chapter-number": `${String(chapters.length).length}ch` } as CSSProperties}>
       <div
         role="row"
         aria-rowindex={1}
         className="grid h-9 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-center gap-3 border-b border-line mx-2 label-section text-fg-2"
       >
-        <span role="columnheader" className="w-[14px] text-center">
+        <span role="columnheader">
           <span aria-hidden>#</span>
           <span className="sr-only">Số chương</span>
         </span>
@@ -1345,8 +1347,9 @@ export function ProjectScreen() {
 
   return (
     <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16 pt-7">
-      <button type="button" onClick={() => navigate("/studio")} className="touch-hit -ml-[2.333px] inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-        <ArrowLeft className="size-4" /> Studio
+      {/* Mực mũi tên bắt đầu 2,33 px trong ô 14 px: lùi chừng ấy cho thẳng mép chữ bên dưới. */}
+      <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+        <ArrowLeft className="-ml-[2.33px] size-4" /> Studio
       </button>
       {failure === "stale" && !isListenOnly(error) && (
         <div role="status" className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm">
@@ -1430,7 +1433,7 @@ export function ProjectScreen() {
         <TabsPanels value={tab}>
         {from && FROM_LABEL[from] && tab !== from && (
           <button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-            <ArrowLeft className="size-4" /> Về màn trước
+            <ArrowLeft className="-ml-[2.33px] size-4" /> Về màn trước
           </button>
         )}
         <TabsContent value="chapters">

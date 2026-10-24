@@ -71,6 +71,7 @@ export function Button({
     <button
       type={type}
       data-variant={variant}
+      data-size={size}
       disabled={loading ? undefined : disabled}
       aria-disabled={loading || undefined}
       aria-busy={loading || undefined}
@@ -644,8 +645,9 @@ export function Dialog({
                 <MotionRegion as="span" className={shown.description ? "mt-1 block" : "block"} motionKey={typeof shown.description === "string" || typeof shown.description === "number" ? shown.description : undefined}>{shown.description}</MotionRegion>
               </DialogPrimitive.Description>
             </div>
+            {/* Mực của ✕ dừng 5/24 ô biểu tượng trước mép ô (3,65 px ở 17,5 px): lề phải bù thêm chừng ấy cho mực thẳng mép nội dung. */}
             <DialogPrimitive.Close asChild>
-              <button aria-label="Đóng" className={CLOSE_BUTTON}>
+              <button aria-label="Đóng" className={cn(CLOSE_BUTTON, "-mr-[16.9px] pointer-coarse:-mr-[18.9px]")}>
                 <X className="size-5" />
               </button>
             </DialogPrimitive.Close>
