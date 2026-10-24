@@ -15,7 +15,7 @@ plan (`music_scenes._durations`), trình phát co giãn theo các mốc `firstSe
 
 Học sinh là NN-lite (`music_nnlite`, 2 MB đóng sẵn trong app, SPEC_nnlite_app): ranh cảnh LB + chỉnh V/E/T quanh mức chương LVJ; nếu model ấy không nạp
 được thì bỏ bước ấy (đường "N0": `book_scenes(scripts, None, None, None)` -> `music_plan.build`). Studio (`music_plan.build`) cũng dùng NN-lite qua cùng hàm
-`music_nnlite.chapter_scenes`, chỉ khác là không có ranh LB.
+`music_nnlite.chapter_scenes`, cả ranh LB.
 Khoá đệm ghi học sinh nào đã dùng (`student_tag`), nên model đổi thì các chương chưa nghe dựng lại.
 
 Dựng nền: `Builder` chạy MỘT luồng, chương đang nghe trước rồi vài chương kế; hỏi cue của chương chưa dựng xong thì
