@@ -7,14 +7,21 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+- Biểu tượng, số đếm và nhãn nút đổi mượt hơn; thông báo nhập PDF ngắn và đồng nhất trên máy tính, điện thoại.
+- Gấp bộ sách, nhóm chương/nhân vật, các bước Studio và chi tiết tạo sách để trang gọn hơn.
+
+## [0.4.135] - 2026-10-24
+
+### Sửa lỗi
+- Máy tính và điện thoại: nút trong hộp thoại và bảng trượt bấm/chạm được trở lại (ở 0.4.134, chạm vào nút làm hộp đóng luôn, ví dụ không chọn được file sách).
+
 ## [0.4.134] - 2026-10-24
 
 ### Kết nối
 - Máy đã ghép nhớ tối đa 8 địa chỉ tới nhau (Wi-Fi nhà, Tailscale...) và tự chọn đường đang thông.
 
 ### Giao diện
-- Biểu tượng, số đếm và nhãn nút đổi mượt hơn; thông báo nhập PDF ngắn và đồng nhất trên máy tính, điện thoại.
-- Gấp bộ sách, nhóm chương/nhân vật, các bước Studio và chi tiết tạo sách để trang gọn hơn.
 - Máy tính và điện thoại: thông báo ngắn hơn, giữ cùng lời cho cùng lỗi.
 - Phán quyết nghe gắn đúng câu khi duyệt nhanh; Back đóng từng bước đang mở. Nhóm giọng, màn tạo sách và thư viện gọn hơn, cập nhật trạng thái có chuyển cảnh mượt.
 - Cài đặt gọn lại thành 7 nhóm (Giọng đọc, Nghe, Hẹn giờ ngủ, Giao diện, Thiết bị, Studio, Nâng cao), mỗi nhóm một màn riêng có dòng tóm tắt giá trị hiện tại; điện thoại có 5 nhóm, máy tính màn rộng hiện hai cột. Mục hiếm dùng và kỹ thuật chuyển vào Nâng cao.

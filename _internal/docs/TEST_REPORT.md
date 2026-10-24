@@ -2,6 +2,8 @@
 
 Ngày cập nhật: 2026-10-24
 
+Đợt hot135 trên `dev/hot135`, nền `bcdc4ff7` (0.4.134): kiểm máy ảo Android (AVD riêng, emulator-5580) thấy chạm nút trong hộp Thêm sách làm hộp đóng; Chromium máy tính cho cùng kết quả (`elementFromPoint` ở nút trả `HTML`, hộp `pointer-events: none`). Nguyên nhân: Radix đặt `pointer-events: auto` cho hộp/nền rồi trải `style` của ta đè, khoá `pointerEvents: undefined` xoá mất `auto`. Test DOM mới (Dialog + Sheet đang mở giữ `auto`) đỏ trên mã cũ, xanh sau sửa. Vitest toàn bộ **1787 passed, 0 failed, 1 skipped**; `tsc` 0 lỗi. Hash khoá giữ `c9176123`.
+
 Đợt ux131, cây `ABook_ux131`, nhánh `dev/ux131`, nền `2805d419`: bổ sung chuyển động cho nhãn nút, trạng thái, số đếm, huy hiệu bìa, nghe thử, hàng nhập sách và sidebar; gấp nhóm thư viện/chương/nhân vật, các bước Studio và phần chi tiết tạo sách. Rút chữ giao diện, đồng nhất lỗi PDF giữa TypeScript/Python/Kotlin qua fixture. Có **29 test Vitest mới**, gồm **26 test DOM component thật** và 3 test chữ/hợp đồng.
 
 - Vitest toàn bộ: **1814 passed, 0 failed, 1 skipped**, 247 file; tối đa 2 worker. Skip sẵn có là corpus PDF cục bộ tuỳ chọn. `tsc -p tsconfig.json`: **0 lỗi**.
