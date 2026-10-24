@@ -184,6 +184,8 @@ export function Tooltip({ label, children, side = "top" }: { label: ReactNode; c
       <TooltipPrimitive.Portal>
         <TooltipPrimitive.Content
           ref={content}
+          inert={!open}
+          style={open ? undefined : CLOSING}
           side={side}
           sideOffset={6}
           className="motion-tooltip z-50 max-w-72 rounded-md bg-fg px-2.5 py-1.5 text-xs font-medium text-bg shadow-float"

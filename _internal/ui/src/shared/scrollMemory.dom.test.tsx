@@ -37,13 +37,71 @@ it.each(["trước RAF", "trước animation.finished"])("rời trang %s sau t�
   expect(scroller.scrollTop).toBe(750);
 });
 
-it("cleanup flush chỗ tự cuộn khi sự kiện scroll chưa được phát", async () => {
+it("cleanup không suy ra tự cuộn từ vị trí live khi chưa có sự kiện scroll", async () => {
   saveScroll("book.test", { scrollTop: 400 });
   await act(() => root.render(<Page />));
   scroller.scrollTop = 900;
   await act(() => root.render(null));
   const next = { scrollTop: 0 }; restoreScroll("book.test", next);
-  expect(next.scrollTop).toBe(900);
+  expect(next.scrollTop).toBe(400);
+});
+
+// Từ r136b/review-evidence.test.tsx F2: happy-dom không tính layout, getter mô phỏng clamp sau commit DOM.
+it.each(["element", "window"] as const)("đổi key/nội dung co giữ mẫu cũ, khung %s", async kind => {
+  const area = kind === "element" ? scroller : document.documentElement;
+  if (kind === "window") scroller.style.overflowY = "visible";
+  let position = 0;
+  Object.defineProperty(area, "scrollTop", {
+    configurable: true,
+    get() { return position = Math.min(position, host.querySelector('[data-long="true"]') ? 2000 : 0); },
+    set(value) { position = value; },
+  });
+  function KeyPage({ memory, long }: { memory: string | null; long: boolean }) {
+    const ref = useRef<HTMLDivElement>(null);
+    useScrollMemory(memory, ref);
+    return <div ref={ref} data-long={String(long)}>Rows</div>;
+  }
+  try {
+    for (const nextKey of ["new", null]) {
+      for (const userScroll of [false, true]) {
+        saveScroll("old", { scrollTop: userScroll ? 400 : 900 });
+        await act(() => root.render(<KeyPage memory="old" long />));
+        if (userScroll) {
+          area.scrollTop = 900;
+          (kind === "window" ? window : area).dispatchEvent(new Event("scroll"));
+        }
+        expect(area.scrollTop).toBe(900);
+        await act(() => root.render(<KeyPage memory={nextKey} long={false} />));
+        const saved = { scrollTop: -1 }; restoreScroll("old", saved);
+        expect(saved.scrollTop).toBe(900);
+        await act(() => root.render(null));
+      }
+    }
+  } finally {
+    Reflect.deleteProperty(area, "scrollTop");
+  }
+});
+
+it.each(["element", "window"] as const)("tự cuộn thật về 0 rồi rời lưu 0, khung %s", async kind => {
+  const area = kind === "element" ? scroller : document.documentElement;
+  if (kind === "window") scroller.style.overflowY = "visible";
+  saveScroll("book.test", { scrollTop: 900 });
+  await act(() => root.render(<Page />));
+  area.scrollTop = 0;
+  (kind === "window" ? window : area).dispatchEvent(new Event("scroll"));
+  await act(() => root.render(null));
+  const saved = { scrollTop: -1 }; restoreScroll("book.test", saved);
+  expect(saved.scrollTop).toBe(0);
+});
+
+it("cleanup flush mẫu scroll cuối, không đọc vị trí live đã đổi sau sự kiện", async () => {
+  saveScroll("book.test", { scrollTop: 400 });
+  await act(() => root.render(<Page />));
+  scroller.scrollTop = 750; scroller.dispatchEvent(new Event("scroll"));
+  scroller.scrollTop = 0; // Layout/reset trước cleanup, chưa có scroll mới của trang cũ.
+  await act(() => root.render(null));
+  const saved = { scrollTop: -1 }; restoreScroll("book.test", saved);
+  expect(saved.scrollTop).toBe(750);
 });
 
 it("tự cuộn rồi về vị trí ban đầu: không phục hồi lại chỗ cuộn giữa", async () => {

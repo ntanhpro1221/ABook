@@ -36,7 +36,11 @@ export function hasOpenLayer(doc: LayerDocument = document): boolean {
 /** Lớp Radix đã đóng mà còn trong trang để chạy hiệu ứng đóng (a120). Trong lúc ấy Radix vẫn coi nó là lớp "cao nhất": một Esc gửi cho hộp bên
  *  dưới sẽ bị bỏ qua - Back bấm nhanh hai lần (đóng menu rồi đóng hộp) mất lần thứ hai. */
 export function closingLayers(doc: LayerDocument = document): LayerElement[] {
-  return Array.from(doc.querySelectorAll('[data-state="closed"]')).filter((element) => LAYER_ROLES.has(element.getAttribute("role") ?? ""));
+  return Array.from(doc.querySelectorAll('[data-state="closed"]')).filter((element) => {
+    const role = element.getAttribute("role") ?? "";
+    // Tooltip mở đóng trực tiếp qua BackLayer, nhưng Presence đóng dở vẫn giữ lớp nhận Esc của Radix.
+    return LAYER_ROLES.has(role) || role === "tooltip";
+  });
 }
 
 /** Gửi Esc cho lớp trên cùng; có lớp đang đóng dở thì chờ nó rời trang (tối đa `limit` ms - hiệu ứng đóng dài nhất 200 ms) rồi mới gửi. */
