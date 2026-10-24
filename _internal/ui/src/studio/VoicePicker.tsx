@@ -319,7 +319,7 @@ export function VoicePicker({
             </p>
             {tryVoice.note}
           </div>
-          <div className="mt-3 max-h-[min(60vh,460px)] overflow-y-auto pr-1">
+          <div className="-mr-1 mt-3 max-h-[min(60vh,460px)] overflow-y-auto pr-1">
             {groups.map((group, index) => (
               <Fold key={group.engine} storageKey={`voice-picker.${group.engine}`} title={groupLabels[index]} summary={`${group.voices.length} giọng`} defaultOpen={groups.length === 1} bodyClassName="px-2 pb-2">
                 {groups.length > 1 || group.engine !== "vieneu" ? (
