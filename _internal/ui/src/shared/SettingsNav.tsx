@@ -4,6 +4,8 @@
 import { AudioLines, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clapperboard, Headphones, MonitorSmartphone, MoonStar, Palette, Wrench, type LucideIcon } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
+import { MotionRegion } from "./MotionRegion";
+import { AnimatedRows } from "./MotionPresence";
 import { cn } from "./cn";
 import { Collapse, useFold } from "./Collapse";
 
@@ -44,8 +46,8 @@ export function SettingsList({ rows, current, className }: { rows: readonly Grou
   const replace = current !== undefined;
   const shown = SETTINGS_GROUPS.filter((group) => rows.some((row) => row.id === group.id));
   return (
-    <nav aria-label="Nhóm cài đặt" className={cn("divide-y divide-line overflow-hidden rounded-2xl border border-line bg-panel", className)}>
-      {shown.map(({ id, label, icon: Icon }) => {
+    <nav aria-label="Nhóm cài đặt" className={cn("overflow-hidden rounded-2xl border border-line bg-panel", className)}>
+      <AnimatedRows as="ul" className="divide-y divide-line" items={shown} keyOf={group => group.id}>{({ id, label, icon: Icon }) => {
         const summary = rows.find((row) => row.id === id)?.summary;
         return (
           <NavLink
@@ -59,12 +61,12 @@ export function SettingsList({ rows, current, className }: { rows: readonly Grou
             <Icon className="size-5 shrink-0 text-fg-2" strokeWidth={1.9} aria-hidden />
             <span className="min-w-0 flex-1">
               <span className="block text-[0.9375rem] font-medium">{label}</span>
-              {summary && <span className="block truncate text-xs text-fg-2">{summary}</span>}
+              <MotionRegion as="span" motionKey={summary ?? ""} className="block truncate text-xs text-fg-2">{summary}</MotionRegion>
             </span>
             <ChevronRight className="size-4 shrink-0 text-fg-3" aria-hidden />
           </NavLink>
         );
-      })}
+      }}</AnimatedRows>
     </nav>
   );
 }

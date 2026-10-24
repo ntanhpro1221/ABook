@@ -1,3 +1,5 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { MotionPresence } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { Clapperboard, Compass, FileAudio, Headphones, Laptop, Trash2 } from "lucide-react";
@@ -90,11 +92,11 @@ function EmptyLibrary() {
   // thêm file được thì Studio vẫn là nút chính.
   const canAdd = Boolean(useSource().textImport);
   const openBookPath = useOpenBookPath();
-  if (library?.rootMissing) return <MissingLibrary root={library.root} className="mt-12 rounded-2xl border border-dashed border-line" />;
+  if (library?.rootMissing) return <MotionRegion><MissingLibrary root={library.root} className="mt-12 rounded-2xl border border-dashed border-line" /></MotionRegion>;
   return (
-    <EmptyState
+    <MotionRegion><EmptyState
       icon={Headphones}
-      title="Chưa có sách để nghe"
+      title="Chưa có sách"
       className="mt-12 rounded-2xl border border-dashed border-line"
       action={
         <div className="flex flex-wrap justify-center gap-2">
@@ -107,7 +109,7 @@ function EmptyLibrary() {
       }
     >
       Thêm truyện hoặc tạo sách nói.
-    </EmptyState>
+    </EmptyState></MotionRegion>
   );
 }
 
@@ -225,14 +227,14 @@ interface OpenedBook {
 }
 
 const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, [string, string | undefined]> = {
-  new: ["Đã thêm sách vào thư viện", "Sách đã chép vào thư viện - xoá file gốc cũng không sao."],
-  existing: ["Cuốn này đã có trong thư viện", undefined],
-  updated: ["Đã cập nhật bản sách", "Chỗ đang nghe, dấu trang và chỉnh sửa của bạn vẫn giữ nguyên."],
-  older: ["File này cũ hơn bản bạn đang có", "Bạn muốn thay bản đang có bằng file này?"],
-  conflict: ["File này có bản thu khác", "Chưa rõ bản nào mới hơn. Bạn muốn thay bản đang có bằng file này?"],
-  repaired: ["Đã chép bù các file bị mất của cuốn này", "Chỗ đang nghe, dấu trang vẫn giữ nguyên."],
-  project: ["Đây là sách do Studio máy này làm", "Mở đúng cuốn ấy, không chép thêm bản nào."],
-  studio: ["Đã mở dự án vào Studio", "Dự án đã chép vào thư viện Studio - xoá file gốc cũng không sao."],
+  new: ["Đã thêm sách", "Sách đã chép vào thư viện - xoá file gốc cũng không sao."],
+  existing: ["Sách đã có", undefined],
+  updated: ["Đã cập nhật", "Chỗ đang nghe, dấu trang và chỉnh sửa của bạn vẫn giữ nguyên."],
+  older: ["Bản sách cũ hơn", "Bạn muốn thay bản đang có bằng file này?"],
+  conflict: ["Bản thu khác", "Chưa rõ bản mới hơn; thay bản đang có bằng file này?"],
+  repaired: ["Đã khôi phục file", "Chỗ đang nghe, dấu trang vẫn giữ nguyên."],
+  project: ["Sách của Studio", "Mở đúng cuốn ấy, không chép thêm bản nào."],
+  studio: ["Đã mở dự án", "Dự án đã chép vào thư viện Studio - xoá file gốc cũng không sao."],
 };
 
 /** Thư viện mà một file sách vừa mở làm đổi: thư viện Studio (dự án) hay thư viện nghe. */
@@ -479,7 +481,7 @@ function PeerTrouble({ error, retry }: { error: unknown; retry: () => void }) {
       className="mt-24"
       action={<Button onClick={() => window.location.assign(homePage(window.location.search))}>Về máy này</Button>}
     >
-      {silent ? "Studio tự mở khi máy ấy trả lời lại." : null}
+      <MotionRegion as="span">{silent ? "Studio tự mở khi máy ấy trả lời lại." : null}</MotionRegion>
     </EmptyState>
   );
 }
@@ -510,17 +512,17 @@ function LibraryRoute() {
 function StudioClosed({ children }: { children: ReactNode }) {
   const { data: info } = useAppInfo();
   const navigate = useNavigate();
-  if (!info?.listenOnly) return <>{children}</>;
+  if (!info?.listenOnly) return <MotionRegion motionKey="open">{children}</MotionRegion>;
   // Cùng một câu ở mọi nơi mở Studio của máy khác: app máy tính (`peer`), trình duyệt và app điện thoại (`machine`).
   return (
-    <EmptyState
+    <MotionRegion motionKey="closed"><EmptyState
       icon={Clapperboard}
       title={listenOnlyLine(listenOnlyOwner(info))}
       className="mt-24"
       action={<Button onClick={() => navigate("/")}>Về Thư viện</Button>}
     >
       Sách của máy ấy vẫn nghe được ở Thư viện.
-    </EmptyState>
+    </EmptyState></MotionRegion>
   );
 }
 
@@ -560,8 +562,7 @@ export function App() {
   // Màn hẹp (Studio từ xa trên điện thoại): thông báo ở đầu màn như app Android - ở đáy nó đè trình phát nhỏ và thanh
   // điều hướng suốt 8 giây của nút "Hoàn tác" (soát UX 30-09).
   const narrow = useMediaQuery("(max-width: 639px)");
-  // Hộp thoại đang mở: thông báo (nhất là cái có nút "Ở lại đây") lên đầu màn, khỏi đè nút chính của hộp ở góc dưới
-  // (soát UX 02-10: "Thiết bị khác đã nghe tới chỗ khác" che "Xuất" và "Chọn").
+  // Trên điện thoại, hộp thoại đổi khoảng cách đáy; CSS tween offset để toast không nhảy.
   const modalOpen = useModalOpen();
   useFocusClearOfToasts();
   // Cửa sổ app Windows không mở được liên kết ngoài tự thân: nhờ máy chủ mở bằng trình duyệt mặc định (chỉ ở app đóng gói có hộp thoại).
@@ -574,11 +575,11 @@ export function App() {
     () => (info?.remote ? { ...httpSource, readAloudVoices: undefined } : { ...httpSource, textImport: desktopTextImport(Boolean(info?.dialogs)) }),
     [info?.remote, info?.dialogs],
   );
-  if (!info && error && currentPeer()) return <PeerTrouble error={error} retry={retry} />;
-  if (info && !info.remote && !voiceReady && preferencesError) return <EmptyState icon={Laptop} title="Chưa đọc được cài đặt" action={<Button onClick={() => void reloadPreferences()}>Thử lại</Button>}>Bạn hãy thử lại để nạp giọng mặc định trước khi nghe.</EmptyState>;
-  if (!info || (!info.remote && !voiceReady)) return <div className="grid h-full place-items-center text-fg-3">Đang mở ABook…</div>;
+  if (!info && error && currentPeer()) return <MotionRegion motionKey="peer-error"><PeerTrouble error={error} retry={retry} /></MotionRegion>;
+  if (info && !info.remote && !voiceReady && preferencesError) return <MotionRegion motionKey="preferences-error"><EmptyState icon={Laptop} title="Chưa đọc cài đặt" action={<Button onClick={() => void reloadPreferences()}>Thử lại</Button>}>Bạn hãy thử lại để nạp giọng mặc định trước khi nghe.</EmptyState></MotionRegion>;
+  if (!info || (!info.remote && !voiceReady)) return <MotionRegion motionKey="loading" className="grid h-full place-items-center text-fg-3">Đang mở ABook…</MotionRegion>;
   return (
-    <TooltipProvider delayDuration={350} skipDelayDuration={150}>
+    <MotionRegion motionKey="ready" className="h-full" fadeThrough><TooltipProvider delayDuration={350} skipDelayDuration={150}>
       <SourceProvider source={source}>
         <PlayerProvider
           engine={engine}
@@ -605,7 +606,7 @@ export function App() {
               {!info.remote && <ExportJobHost kind="projectfile" />}
               {!info.remote && <AudiobookDialogHost />}
               <Shell>
-                {!info.remote && info.libraryMoveRecovery && <LibraryMoveRecovery recovery={info.libraryMoveRecovery} />}
+                <MotionPresence open={Boolean(!info.remote && info.libraryMoveRecovery)}>{info.libraryMoveRecovery && <LibraryMoveRecovery recovery={info.libraryMoveRecovery} />}</MotionPresence>
                 <Routes>
                   <Route path="/" element={<LibraryRoute />} />
                   <Route
@@ -681,12 +682,8 @@ export function App() {
         </PlayerProvider>
       </SourceProvider>
       <Toaster
-        // Góc trên bên phải: nút chính của các trang Studio nằm ở giữa / bên trái và thanh dưới (thanh phát, thanh Tạo sách) ở đáy -
-        // thông báo ở góc dưới phải từng che nút "Tiếp tục" / "Tạo" ngay sau khi bấm (soát UX a8 05-10, mục 22).
-        // Màn hẹp (Studio từ xa trên điện thoại): đầu trang dự án là chỗ nhìn trạng thái và nút chính - thông báo nằm đáy, trên
-        // thanh dưới (soát UX a8 07-10: thông báo đè đầu trang). Có hộp thoại mở thì ở trên như cũ, trừ màn hẹp: hộp gần kín màn nên thông
-        // báo ở trên đè tiêu đề + nút Đóng của hộp (soát UX a17, thẻ tiến độ xuất) - xuống đáy sát mép, không có thanh dưới nào che.
-        position={modalOpen && !narrow ? "top-center" : narrow ? "bottom-center" : "top-right"}
+        // Giữ góc khi mở hộp; màn hẹp đặt trên thanh phát và thanh điều hướng.
+        position={narrow ? "bottom-center" : "top-right"}
         offset={{ top: "var(--toast-top, 16px)", right: 16, left: narrow ? 16 : 96, bottom: modalOpen && narrow ? 16 : "var(--toast-bottom, 96px)" }}
         // Dưới 600 px sonner bỏ `offset` mà dùng `mobileOffset` (mặc định 16 px) - thông báo từng đè lên thanh tab dưới ở 390 px.
         mobileOffset={{ top: "var(--toast-top, 16px)", right: 16, left: 16, bottom: modalOpen ? 16 : "var(--toast-bottom, 96px)" }}
@@ -710,6 +707,6 @@ export function App() {
           },
         }}
       />
-    </TooltipProvider>
+    </TooltipProvider></MotionRegion>
   );
 }

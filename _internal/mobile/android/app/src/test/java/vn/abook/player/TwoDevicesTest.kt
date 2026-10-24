@@ -29,7 +29,7 @@ class TwoDevicesTest {
         assertTrue(NetErrors.unpaired(IOException("x", NetErrors.Refused(401, "Thiết bị chưa ghép nối"))))
         assertFalse(NetErrors.unpaired(NetErrors.Refused(404, "Không có sách này")))
         val message = NetErrors.message(NetErrors.Kind.UNREACHABLE, "máy tính NGDtuanh-Lecoo")
-        assertEquals("Chưa nối được máy tính NGDtuanh-Lecoo — bạn mở ABook, kiểm tra cùng Wi-Fi và bật “Cho phép thiết bị khác kết nối qua Wi-Fi”.", message)
+        assertEquals("Chưa nối được máy tính NGDtuanh-Lecoo — bạn mở ABook, kiểm tra cùng Wi-Fi và bật “Kết nối Wi-Fi”.", message)
         assertFalse(message.contains("Failed to connect"))
         assertEquals("IOException: wrapped (SocketTimeoutException: timeout)", NetErrors.technical(IOException("wrapped", SocketTimeoutException("timeout"))))
     }

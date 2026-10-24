@@ -41,16 +41,16 @@ const render = (book: unknown) => renderToStaticMarkup(<ExportDialog book={book 
 it("a text-only project can be exported as .abook, and the dialog says it carries the text", () => {
   state.kind = "abook";
   const html = render(textOnly(2));
-  expect(html).toMatch(/<button(?![^>]*disabled)[^>]*>Chọn nơi lưu và xuất<\/button>/);
+  expect(html).toMatch(/<button(?![^>]*disabled)[^>]*>Lưu và xuất<\/button>/);
   expect(html).toContain("chỉ mang chữ");
 });
 
 it("a project with no chapters at all still cannot be exported as .abook", () => {
   state.kind = "abook";
-  expect(render(textOnly(0))).toMatch(/<button[^>]*disabled=""[^>]*>Chọn nơi lưu và xuất<\/button>/);
+  expect(render(textOnly(0))).toMatch(/<button[^>]*disabled=""[^>]*>Lưu và xuất<\/button>/);
 });
 
 it("MP3 stays blocked while no chapter has audio", () => {
   state.kind = "mp3";
-  expect(render(textOnly(2))).toMatch(/<button[^>]*disabled=""[^>]*>Chọn nơi lưu và xuất<\/button>/);
+  expect(render(textOnly(2))).toMatch(/<button[^>]*disabled=""[^>]*>Lưu và xuất<\/button>/);
 });

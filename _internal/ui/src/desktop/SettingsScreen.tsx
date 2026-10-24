@@ -1,3 +1,5 @@
+import { MotionRegion } from "@/shared/MotionRegion";
+import { MotionPresence } from "@/shared/MotionPresence";
 import { SleepSchedule } from "./SleepSchedule";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Download, FolderOpen, Monitor, Moon, Sun } from "lucide-react";
@@ -136,7 +138,7 @@ function UpdateRow({ update, current }: { update: { version: string; notes: stri
       </p>
       {update.notes && <p className="mt-2 whitespace-pre-line text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
       <Button className="mt-3" icon={Download} disabled={busy} onClick={() => void install()}>
-        {busy ? "Đang tải bản mới…" : "Cập nhật và mở lại"}
+        {busy ? "Đang tải bản mới…" : "Cập nhật ABook"}
       </Button>
     </div>
   );
@@ -173,7 +175,7 @@ function UpdateCheck({ current }: { current: string }) {
   return (
     <SettingsRow
       label={current ? `ABook ${current}` : "Bản mới"}
-      hint={line && <span className={cn(line.tone === "error" && "text-danger")} role="status">{line.text}</span>}
+      hint={<MotionRegion as="span" motionKey={line?.text ?? ""}>{line && <span className={cn(line.tone === "error" && "text-danger")} role="status">{line.text}</span>}</MotionRegion>}
     >
       <Button size="sm" variant="secondary" disabled={checking} onClick={() => void check()}>
         {checking ? "Đang kiểm tra…" : "Kiểm tra bản mới"}
@@ -188,9 +190,9 @@ function ThirdPartyButton() {
   return (
     <>
       <Button className={WRAP_LABEL} size="sm" variant="secondary" onClick={() => setOpen(true)}>
-        Thành phần bên thứ ba
+        Thành phần sử dụng
       </Button>
-      <Dialog open={open} onOpenChange={setOpen} title="Thành phần bên thứ ba" width="max-w-2xl">
+      <Dialog open={open} onOpenChange={setOpen} title="Thành phần sử dụng" width="max-w-2xl">
         <div className="mt-3 max-h-[65vh] select-text overflow-y-auto pr-1">{open && <ThirdPartyList />}</div>
       </Dialog>
     </>
@@ -203,7 +205,7 @@ function VoiceGroup() {
       <div className="px-4 py-3.5">
         <VoiceSettings
           api={desktopVoices}
-          deviceHint="Windows chưa có giọng tiếng Việt. Cài ở Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."
+          deviceHint="Cài giọng tiếng Việt tại Cài đặt Windows › Thời gian và ngôn ngữ › Giọng nói."
           modules={(reload) => (
             <>
               <LocalVoiceModules onChanged={reload} />
@@ -222,8 +224,8 @@ function ListenGroup() {
   return (
     <>
       <SettingsBlock>
-        <SettingsRow label="Tự lùi khi nghe lại" hint="Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây).">
-          <Switch id="auto-rewind" label="Tự lùi khi nghe lại" checked={preferences?.autoRewind !== false} onCheckedChange={(value) => update({ autoRewind: value })} />
+        <SettingsRow label="Tự lùi" hint="Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây).">
+          <Switch id="auto-rewind" label="Tự lùi" checked={preferences?.autoRewind !== false} onCheckedChange={(value) => update({ autoRewind: value })} />
         </SettingsRow>
       </SettingsBlock>
       {/* "Nhạc của tôi" là kho chung mọi cuốn: ở đây, không chỉ trong hộp "Sửa sách" của từng cuốn. */}
@@ -369,7 +371,7 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
 function DevicesGroup() {
   return (
     <>
-      <SettingsBlock title="Điện thoại và thiết bị" id="phone">
+      <SettingsBlock title="Thiết bị" id="phone">
         <div className="px-4 py-3.5">
           <PhoneSync />
         </div>
@@ -403,7 +405,7 @@ function StudioGroup({ info }: { info: AppInfo | undefined }) {
           <StudioSettings />
         </div>
       </SettingsBlock>
-      {!installed && <p className="mt-4 px-1 text-[0.8125rem] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p>}
+      <MotionPresence open={!installed}><p className="mt-4 px-1 text-[0.8125rem] text-fg-2">Các tuỳ chọn dưới đây dùng khi đã cài Studio.</p></MotionPresence>
       <SettingsBlock>
         <SettingsRow label={<span id="pause-on-battery-name">Dừng khi dùng pin</span>} hint={<span id="pause-on-battery-hint">Cắm sạc lại thì tự làm tiếp đúng chỗ.</span>}>
           <Switch
@@ -450,7 +452,7 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
   };
   return (
     <>
-      {!info?.listenOnly && (
+      <MotionPresence open={!info?.listenOnly}>
         <SettingsBlock title="Thư viện" id="library">
           <div className="flex flex-wrap items-center gap-2 px-4 py-3">
             <div className="flex h-10 min-w-0 flex-1 basis-48 items-center gap-2 rounded-lg bg-sunken px-3 text-sm text-fg-2">
@@ -464,10 +466,10 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
             )}
           </div>
         </SettingsBlock>
-      )}
+      </MotionPresence>
       {!remote && (info?.update || info?.canCheckUpdate) && (
         <SettingsBlock title="Cập nhật" id="update">
-          {info.update ? <UpdateRow update={info.update} current={info.version} /> : <UpdateCheck current={info.version} />}
+          <MotionRegion>{info.update ? <UpdateRow update={info.update} current={info.version} /> : <UpdateCheck current={info.version} />}</MotionRegion>
         </SettingsBlock>
       )}
       {!remote && (
@@ -516,8 +518,7 @@ function GroupBody({ id, info, touchOnly }: { id: SettingsGroupId; info: AppInfo
 function RemoteNote({ listenOnly }: { listenOnly: boolean }) {
   return (
     <p className="mt-3 text-[0.8125rem] text-fg-2 text-pretty">
-      Đang dùng ABook của máy tính qua mạng; phần lớn cài đặt đổi trên máy ấy.
-      {listenOnly && " Muốn làm sách từ đây: bật “Điều khiển sản xuất” trên máy tính."}
+      {listenOnly ? "Bật Điều khiển sản xuất trên máy tính để làm sách từ xa." : "Cài đặt chính nằm trên máy tính đang kết nối."}
     </p>
   );
 }
@@ -550,13 +551,13 @@ export function SettingsScreen() {
   const notices = (
     <>
       {info?.remote && <RemoteNote listenOnly={Boolean(info.listenOnly)} />}
-      {info?.update && !info.remote && !wide && (
+      <MotionPresence open={Boolean(info?.update && !info.remote && !wide)}>{info?.update && !info.remote && !wide && (
         <Link to={settingsPath("advanced")} className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel px-4 py-3 text-sm font-medium hover:bg-hover">
           <Download className="size-5 shrink-0 text-accent-text" />
           <span className="min-w-0 flex-1">Có ABook {info.update.version}</span>
           <ChevronRight className="size-4 shrink-0 text-fg-3" />
         </Link>
-      )}
+      )}</MotionPresence>
     </>
   );
   if (wide) {

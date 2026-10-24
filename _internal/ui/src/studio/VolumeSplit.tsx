@@ -134,9 +134,7 @@ export function VolumeSplit({
         </Button>
       </div>
       <p className="mt-1 text-fg-2">
-        Mỗi phần là một sách trong Dự án: phần 1 như sách thường, phần sau nối tiếp, xếp hàng sau phần trước. Đổi “từ chương” để
-        dời chỗ cắt.
-        {parts.length === 1 && ` Hiện mới có một phần - điền chương mà phần 2 bắt đầu (từ chương 2 đến chương ${total}) ở ô dưới rồi bấm Thêm.`}
+        Mỗi phần thành một sách nối tiếp; chọn chương bắt đầu để chia.
       </p>
       <ol className="mt-3 divide-y divide-line rounded-lg border border-line">
         {parts.map((part, index) => (
@@ -153,7 +151,7 @@ export function VolumeSplit({
               </div>
               {foldersIn(files.slice(part.start - 1, part.end)) > 1 && (
                 // Dây chuyền xếp chương theo TÊN file: chương của hai thư mục trong một tập thì xen nhau (máy chủ từ chối khi tạo).
-                <div className="text-xs text-warning">Gồm chương của nhiều thư mục - thứ tự đọc có thể lệch. Dời chỗ cắt về ranh giới giữa hai thư mục.</div>
+                <div className="text-xs text-warning">Dời chỗ cắt về ranh giới thư mục để giữ thứ tự đọc.</div>
               )}
             </div>
             <label className="flex items-center gap-2 text-fg-2">
@@ -199,8 +197,9 @@ function AddCut({ starts, total, onAdd }: { starts: number[]; total: number; onA
     if (ok) setText("");
   };
   return (
+    <MotionRegion>
     <div className="mt-3 flex flex-wrap items-center gap-2 text-fg-2">
-      <span>Thêm chỗ cắt: phần mới bắt đầu từ chương</span>
+      <span>Cắt từ chương</span>
       <input
         value={text}
         inputMode="numeric"
@@ -231,5 +230,6 @@ function AddCut({ starts, total, onAdd }: { starts: number[]; total: number; onA
         </span>
       )}
     </div>
+    </MotionRegion>
   );
 }

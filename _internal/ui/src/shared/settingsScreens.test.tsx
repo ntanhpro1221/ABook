@@ -44,7 +44,7 @@ describe("Cài đặt", () => {
     const advanced = wrap(<SettingsAt group="advanced" screen={<SettingsScreen />} />);
     expect(sections(advanced).about).toBe("Giới thiệu");
     expect(advanced).toMatch(/<section[^>]*id="about"[^>]*><h2[^>]*><button[^>]*aria-expanded="false"/); // a120: gập sẵn, vẫn dựng trong trang
-    expect(advanced).toContain("Thành phần bên thứ ba");
+    expect(advanced).toContain("Thành phần sử dụng");
   });
 
   it("máy tính: Giao diện có công tắc phím một chữ cái, tên ngắn và mô tả đọc riêng (soát a31: 2.1.4, tên công tắc 300+ chữ)", async () => {
@@ -59,12 +59,12 @@ describe("Cài đặt", () => {
     expect(wrap(<SettingsAt group="listen" screen={<SettingsScreen />} />)).toMatch(/<button[^>]*id="auto-music"[^>]*aria-describedby="auto-music-hint"/);
   });
 
-  it("máy tính có công tắc Tự lùi khi nghe lại như điện thoại (soát a100 T1), mô tả đúng luật lùi", async () => {
+  it("máy tính có công tắc Tự lùi như điện thoại (soát a100 T1), mô tả đúng luật lùi", async () => {
     const { SettingsScreen } = await import("@/desktop/SettingsScreen");
     const html = wrap(<SettingsAt group="listen" screen={<SettingsScreen />} />);
     const control = html.match(/<button[^>]*id="auto-rewind"[^>]*>/)?.[0] ?? "";
     expect(control).toContain('role="switch"');
-    expect(control).toContain('aria-label="Tự lùi khi nghe lại"');
+    expect(control).toContain('aria-label="Tự lùi"');
     expect(control).toContain('aria-checked="true"'); // mặc định bật
     expect(html).toContain("Nghỉ quá 30 giây thì lùi 5 giây");
     expect(html).not.toContain("Luôn bật");

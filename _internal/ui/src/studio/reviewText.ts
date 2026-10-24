@@ -12,7 +12,7 @@ export function matchPhrase(percent: string): string {
 
 /** Chữ của nút / ô sửa cách máy đọc một câu (không đụng chữ của sách) - "chữ đem đọc" là tiếng của người làm máy. */
 export function spokenEditLabel(twins: number): string {
-  return `Sửa cách máy đọc câu này${twins > 0 ? ` (còn ${twins} câu giống hệt)` : ""}`;
+  return twins > 0 ? `Sửa ${twins + 1} câu` : "Sửa cách đọc";
 }
 
 /** Dòng phím tắt chỉ có nghĩa khi đang nghe liền: ngoài lúc ấy O / R không làm gì nên không hiện. */

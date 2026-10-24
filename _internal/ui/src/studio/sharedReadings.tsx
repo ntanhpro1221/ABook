@@ -148,7 +148,7 @@ export function SharedReadingsOffer({ bookId }: { bookId: string }) {
     onError: (error: Error) => toast.error("Chưa dùng được cách đọc chung", { description: error.message }),
   });
   const entries = data?.entries ?? [];
-  if (!entries.length) return null;
+  if (!entries.length) return <MotionRegion />;
   // Cách cuốn đang đọc (nếu có) bên cạnh cách chung - người dùng thấy cái gì sẽ đổi thành cái gì.
   const shown = entries
     .slice(0, 3)
@@ -159,6 +159,7 @@ export function SharedReadingsOffer({ bookId }: { bookId: string }) {
     )
     .join(", ");
   return (
+    <MotionRegion>
     <div className="mt-3 flex max-w-2xl flex-wrap items-center gap-3 rounded-xl bg-info-soft px-3 py-2 text-sm">
       <span className="min-w-0 flex-1 text-pretty">
         Cách đọc chung khác cách cuốn này đang đọc: {shown}
@@ -168,5 +169,6 @@ export function SharedReadingsOffer({ bookId }: { bookId: string }) {
         Dùng {entries.length} cách đọc chung
       </Button>
     </div>
+    </MotionRegion>
   );
 }

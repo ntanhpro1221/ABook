@@ -342,7 +342,7 @@ function ResumeAnalysisDialog({ book, open, onOpenChange, onRedo, onResume }: {
   onResume: () => void;
 }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title="Tiếp tục phân tích đang dở?">
+    <Dialog open={open} onOpenChange={onOpenChange} title="Tiếp tục phân tích?">
       <div className="mb-5 flex gap-3 rounded-xl bg-warning-soft p-4 text-sm leading-relaxed text-fg">
         <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
         <div className="text-pretty">
@@ -376,7 +376,7 @@ function ResumeAnalysisDialog({ book, open, onOpenChange, onRedo, onResume }: {
             onRedo();
           }}
         >
-          Làm lại phân tích từ đầu
+          Phân tích lại
         </Button>
       </div>
     </Dialog>
@@ -392,9 +392,9 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      title={inAnalysis ? "Dừng giữa lúc phân tích truyện?" : "Dừng tạo sách nói?"}
+      title={inAnalysis ? "Dừng phân tích?" : "Dừng thu âm?"}
       description={
-        // Không nêu tên nút làm tiếp: sau khi dừng nó là "Tiếp tục tạo", "Bắt đầu tạo sách nói" hay "Áp dụng N thay đổi"
+        // Không nêu tên nút làm tiếp: sau khi dừng nó là "Tiếp tục tạo", "Bắt đầu thu" hay "Áp dụng N thay đổi"
         // tuỳ sách đã tới đâu (soát UX 30-09). Đang tạm dừng thì nói Dừng khác Tạm dừng ở chỗ nào.
         inAnalysis
           ? undefined
@@ -403,6 +403,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
             : "Mọi chương và câu đã xong được giữ nguyên - làm tiếp lúc nào cũng được, từ đúng chỗ dừng."
       }
     >
+      <MotionRegion>
       {inAnalysis && (
         <div className="mb-5 flex gap-3 rounded-xl bg-warning-soft p-4 text-sm leading-relaxed text-fg">
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
@@ -440,6 +441,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
           {inAnalysis ? "Vẫn dừng" : "Dừng"}
         </Button>
       </div>
+      </MotionRegion>
     </Dialog>
   );
 }
@@ -538,6 +540,7 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
       title={`Xoá dự án “${book.title}”?`}
       description="Cả thư mục dự án vào Thùng rác của Windows, khôi phục được. File truyện gốc và sách đã xuất giữ nguyên."
     >
+      <MotionRegion>
       {/* Studio từ xa không nhận đường dẫn trên máy tính (soát a27 lỗi 10). */}
       {book.path && <p className="break-all rounded-lg bg-panel-2 px-3 py-2 text-xs text-fg-2">{book.path}</p>}
       {busy && <p className="mt-3 text-sm text-warning">Sách đang chạy - dừng sách trước rồi mới xoá được.</p>}
@@ -559,6 +562,7 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
           Chuyển vào Thùng rác
         </Button>
       </div>
+      </MotionRegion>
     </Dialog>
   );
 }
@@ -680,8 +684,8 @@ export function Actions({ book }: { book: BookSummary }) {
       {book.queuePosition ? (
         <>
           <span className="inline-flex h-11 items-center gap-2 rounded-xl bg-warning-soft px-4 text-sm font-medium text-warning">
-            Đang xếp hàng · thứ {book.queuePosition} - tự bắt đầu khi cuốn đang chạy xong
-            {book.seedPending ? ", rồi mang giọng và cách đọc tên từ phần trước" : ""}
+            Chờ lượt {book.queuePosition}
+            <span className="sr-only">Tự chạy khi cuốn trước xong{book.seedPending ? ", giữ giọng và cách đọc tên" : ""}.</span>
           </span>
           <Button variant="ghost" size="lg" onClick={() => leaveQueue.mutate({ id: book.id })}>
             Bỏ xếp hàng
@@ -706,7 +710,7 @@ export function Actions({ book }: { book: BookSummary }) {
                 Đang dừng…
               </Button>
               <p className="basis-full text-pretty text-sm text-fg-2">
-                Dừng ở chỗ an toàn kế (có thể vài phút). Việc đã xong giữ nguyên.
+                Dừng ở checkpoint kế, giữ phần đã xong; có thể mất vài phút.
               </p>
             </>
           ) : book.paused ? (
@@ -741,7 +745,7 @@ export function Actions({ book }: { book: BookSummary }) {
       ) : book.phase === "idle" ? (
         <>
           <Button variant="primary" size="lg" icon={Wand2} loading={start.isPending} onClick={() => begin(book.id)}>
-            Bắt đầu tạo sách nói
+            Bắt đầu thu
           </Button>
           {/* Chưa chạy bước nào: chọn lại chương, giọng kể, chất lượng, "tôi" (soát UX a5 01-10, #4). Cài đặt khoá theo sách
               nên là tạo lại - trình tạo điền sẵn mọi lựa chọn cũ, cuốn cũ vào Thùng rác khi cuốn mới tạo xong. */}
@@ -760,15 +764,14 @@ export function Actions({ book }: { book: BookSummary }) {
         // lại trước khi chạy (ResumeAnalysisDialog). Làm lại = dự án mới thay bản dở; Studio từ xa cũng làm được (gửi `redoOf`, máy tính tự tìm chương nguồn).
         <>
           <Button variant="primary" size="lg" icon={RotateCcw} onClick={() => navigate(`/studio/new?redo=${book.id}`)}>
-            Làm lại phân tích từ đầu
+            Phân tích lại
           </Button>
           <Button variant="outline" size="lg" icon={Play} loading={start.isPending} onClick={() => setConfirmResume(true)}>
             Tiếp tục
           </Button>
           <p className="basis-full text-pretty text-sm text-fg-2">
             Phân tích đã dừng giữa chừng
-            {book.segments.total ? ` (còn ${formatNumber(book.segments.pending ?? book.segments.total - book.segments.analyzed)}/${formatNumber(book.segments.total)} câu chưa phân tích)` : ""}.
- Làm lại từ đầu cho kết quả như chạy liền một mạch (bản dở được cất đi); “Tiếp tục” vẫn chạy được nhưng {ANALYSIS_CUT_COST}.
+            {book.segments.total ? ` (còn ${formatNumber(book.segments.pending ?? book.segments.total - book.segments.analyzed)}/${formatNumber(book.segments.total)} câu chưa phân tích)` : ""}; phân tích lại để giữ kết quả liền mạch, tiếp tục thì {ANALYSIS_CUT_COST}.
           </p>
         </>
       ) : book.phase !== "done" ? (
@@ -795,7 +798,7 @@ export function Actions({ book }: { book: BookSummary }) {
       ) : null}
       {next > 0 && (
         <Button variant="secondary" size="lg" icon={BookPlus} onClick={() => navigate(`/studio/new?continue=${book.id}`)}>
-          Làm tiếp cuốn này · {next} chương mới
+          Thêm {next} chương
         </Button>
       )}
       {/* Hai nút biểu tượng đi thành một cụm: màn hẹp xuống dòng thì xuống cùng nhau, không để "…" đứng một mình một hàng.
@@ -1353,7 +1356,7 @@ export function ProjectScreen() {
         <div role="status" className="mt-4 flex gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm">
           <CircleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
           <span className="text-pretty">
-            Một phần của trang này chưa tải được: {sideError} Máy thử lại thưa dần; làm mới trang để thử ngay.
+            Chưa tải được {sideError}; tự thử lại, hoặc làm mới trang.
           </span>
         </div>
       )}
@@ -1381,7 +1384,7 @@ export function ProjectScreen() {
         </TabsList>
         {from && FROM_LABEL[from] && tab !== from && (
           <button type="button" onClick={back} className="touch-hit mt-4 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-            <ArrowLeft className="size-4" /> Về {FROM_LABEL[from]}
+            <ArrowLeft className="size-4" /> Về màn trước
           </button>
         )}
         <TabsContent value="chapters">

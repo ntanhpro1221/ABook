@@ -1,5 +1,6 @@
 import { MotionRegion } from "@/shared/MotionRegion";
-import { Fold } from "@/shared/Collapse";
+import { MotionPresence } from "@/shared/MotionPresence";
+import { Collapse, Fold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
 import {
   AlertTriangle,
@@ -84,7 +85,7 @@ import { VolumeSplit } from "@/studio/VolumeSplit";
 import { inOrder, ranges, startNumbers, volumeTitles } from "@/studio/volumes";
 
 const STEPS = [
-  { title: "Nội dung", hint: "TXT, EPUB, DOCX hay PDF" },
+  { title: "Nội dung", hint: "TXT/EPUB/DOCX/PDF" },
   { title: "Giọng kể", hint: "Người dẫn truyện" },
   { title: "Chất lượng", hint: "Nhanh hay kỹ" },
   { title: "Xác nhận", hint: "Xem lại và tạo" },
@@ -528,7 +529,7 @@ export function SourceStep({
               onClick={() => setAdvanced(true)}
               className="mt-5 text-[0.8125rem] text-fg-2 underline-offset-2 hover:text-fg hover:underline"
             >
-              Nâng cao: dán đường dẫn của một thư mục trên máy tính
+              Dán đường dẫn
             </button>
           ) : (
             <>
@@ -573,7 +574,7 @@ export function SourceStep({
                       className="flex w-full items-center gap-2 rounded-lg border border-accent/50 bg-panel px-3 py-2 text-left font-medium text-fg hover:border-accent"
                     >
                       <Layers className="size-4 shrink-0 text-accent-text" />
-                      <span className="min-w-0">Dùng cả {problem.subfolders.length} thư mục - mỗi thư mục một tập</span>
+                      <span className="min-w-0">Chọn {problem.subfolders.length} tập</span>
                     </button>
                   )}
                   {problem.subfolders.slice(0, 8).map((folder) => (
@@ -625,7 +626,7 @@ export function SourceStep({
               <Info className="mt-0.5 size-4 shrink-0 text-info" />
               <p className="min-w-0 text-pretty">
                 {replaces.restart ? "Đang làm lại phân tích của " : "Đang sửa thiết lập của "}
-                <span className="font-semibold">“{replaces.title}”</span>: lựa chọn cũ đã điền sẵn. Tạo xong, bản cũ vào Thùng rác.
+                <span className="font-semibold">“{replaces.title}”</span>: đã điền thiết lập cũ; tạo xong sẽ đưa bản cũ vào Thùng rác.
               </p>
             </div>
           )}
@@ -814,7 +815,7 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
               Sẽ bỏ {formatNumber(dropped)} {creditKind({ ...credits, head: drop.head ? credits.head : 0, tail: drop.tail ? credits.tail : 0 })} khỏi phần đọc
             </p>
             <p className="mt-1 break-words text-fg-2">
-              Những dòng ấy không được đọc và không hiện khi đọc theo. File truyện giữ nguyên.
+              Chỉ bỏ khỏi phần đọc, giữ nguyên file truyện.
             </p>
           </>
         ) : (
@@ -824,8 +825,7 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
             </p>
             <p className="mt-1 break-words text-fg-2">
               {quoted}
-              {credits.lines > credits.examples.length ? " và các dòng khác" : ""}. Hiện máy vẫn đọc chúng như lời kể - file truyện
-              không bị sửa. Bỏ chúng khỏi phần đọc?
+              {credits.lines > credits.examples.length ? "…" : ""} — chọn bỏ nếu không muốn đọc.
             </p>
           </>
         )}
@@ -848,15 +848,15 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
           {both ? (
             <>
               <Button size="sm" variant={drop.head ? "ghost" : "secondary"} aria-pressed={drop.head} onClick={() => onChange({ ...drop, head: !drop.head })}>
-                {drop.head ? "Đọc lại dòng đầu chương" : `Bỏ ${formatNumber(credits.head)} dòng đầu chương`}
+                {drop.head ? "Giữ dòng đầu" : `Bỏ ${formatNumber(credits.head)} dòng`}
               </Button>
               <Button size="sm" variant={drop.tail ? "ghost" : "secondary"} aria-pressed={drop.tail} onClick={() => onChange({ ...drop, tail: !drop.tail })}>
-                {drop.tail ? "Đọc lại dòng cuối chương" : `Bỏ ${formatNumber(credits.tail)} dòng cuối chương`}
+                {drop.tail ? "Giữ dòng cuối" : `Bỏ ${formatNumber(credits.tail)} dòng`}
               </Button>
             </>
           ) : dropped ? (
             <Button size="sm" variant="ghost" onClick={() => onChange(KEEP_CREDITS)}>
-              Thôi, cứ đọc như file truyện
+              Giữ nguyên chữ
             </Button>
           ) : (
             <Button size="sm" variant="secondary" onClick={() => onChange({ head: credits.head > 0, tail: credits.tail > 0 })}>
@@ -910,11 +910,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
       <div className="min-w-0 flex-1">
         <p className="font-semibold">Gợi ý: “{file.name}” có vẻ chứa cả {formatNumber(outcome.chapters)} chương</p>
         <p className="mt-1 break-words text-fg-2">
-          Máy thấy các tiêu đề {quoted}
-          {plan.chapters > plan.titles.length + (plan.preamble ? 1 : 0) ? " và các tiêu đề sau" : ""}. Hiện cả file được làm thành MỘT chương - một file
-          audio dài, không chuyển chương được. Tách theo các tiêu đề ấy?
-          {plan.preamble ? " Chữ trước tiêu đề đầu vào chương “Mở đầu” (bỏ chọn được sau)." : ""}{" "}
-          File gốc giữ nguyên.
+          Tách theo {quoted}{plan.chapters > plan.titles.length ? "…" : ""}, giữ file gốc{plan.preamble ? " và chữ mở đầu" : ""}.
         </p>
         <div className="mt-2.5">
           <Button
@@ -946,24 +942,19 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
         </p>
         {seed.clickedTitle && (
           <p className="mt-0.5 text-fg-2">
-            Mở từ “{seed.clickedTitle}”, nhưng cuốn đã có tới “{seed.latestTitle ?? seed.title}” - phần mới nối sau phần ấy,
-            không làm lại chương đã có.
+            Nối sau “{seed.latestTitle ?? seed.title}”, giữ {carriedText(seed.carries)}.
           </p>
         )}
-        <p className="mt-0.5 text-fg-2">
-          Mang theo {carriedText(seed.carries)}: nhân vật đã gặp giữ nguyên giọng, tên đọc như phần trước.
-        </p>
+        {!seed.clickedTitle && <p className="mt-0.5 text-fg-2">Giữ {carriedText(seed.carries)}, giọng và cách đọc tên.</p>}
         {/* Khung "chưa có chương mới" tắt ngay khi đã chọn / thêm được file (soát UX a6 01-10, B5: vẫn hiện sau khi đã có). */}
         {seed.empty && !hasFiles && (
           <p className="mt-1 text-fg-2">
             {seed.folder ? (
               <>
-                Thư mục <span className="break-all font-medium text-fg">{seed.folder}</span> chưa có file chương nào sau{" "}
-                {seed.lastChapter || "chương cuối của phần trước"} - thêm file chương mới vào đó rồi mở lại “Làm tiếp”, hoặc
-                chọn các file chương mới ở dưới.
+                Chọn file mới sau {seed.lastChapter || "chương cuối phần trước"} ở dưới.
               </>
             ) : (
-              "Chưa có chương mới sau phần trước. Thêm file vào thư mục, hay chọn file ở dưới."
+              "Chọn file chương mới ở dưới."
             )}
           </p>
         )}
@@ -1526,6 +1517,7 @@ function ConfirmStep({
           ([["Thời gian làm", `chưa đo cho chế độ này - ngắn hơn “Chất lượng cao” (dưới ${formatLength(guess.totalHigh)}, số tham khảo)`]] as [string, string][])),
   ];
   return (
+    <MotionRegion>
     <div>
       <h2 className="text-xl font-semibold">Xem lại</h2>
       {unfit && <NoStudioHere fit={unfit} className="mt-4" />}
@@ -1555,8 +1547,7 @@ function ConfirmStep({
         <div className="mt-3 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
           <Info className="mt-0.5 size-4 shrink-0 text-info" />
           <p className="text-pretty">
-            Phân tích làm lại từ đầu, như một cuốn mới. Bản dở “{restart.title}” vào Thùng rác khi cuốn mới tạo xong (bìa đi
-            theo); file truyện gốc không bị đụng.
+            Tạo cuốn mới từ đầu, giữ bìa và file gốc; bản dở “{restart.title}” vào Thùng rác.
           </p>
         </div>
       )}
@@ -1564,8 +1555,7 @@ function ConfirmStep({
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line bg-panel p-4 text-sm">
           <Sparkles className="size-4 shrink-0 text-accent-text" />
           <p className="min-w-0 flex-1 text-pretty">
-            Còn một gợi ý chưa áp: {formatNumber(credits.lines)} {creditWhere(credits)} sẽ vẫn được đọc như lời kể.
-            Đổi sau khi đã phân tích là đổi cả quyển, nên chọn ngay bây giờ.
+            Còn {formatNumber(credits.lines)} {creditWhere(credits)} được đọc; hãy chọn trước khi phân tích.
           </p>
           <Button variant="secondary" size="sm" onClick={onReview}>
             Xem gợi ý
@@ -1583,29 +1573,30 @@ function ConfirmStep({
         />
         <span>
           <span id="start-now-name" className="block text-sm font-medium">Bắt đầu tạo ngay</span>
-          <span id="start-now-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
+          <MotionRegion as="span" id="start-now-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
             {unfit
               ? "Tắt vì máy này không làm sách nói được (lý do ở đầu trang)."
               : noStudio
               ? "Chưa có Studio: sách được tạo và chờ cài xong."
               : startNow
-              ? "Chạy nền, đóng cửa sổ vẫn tiếp. Chương nào xong nghe được ngay."
+              ? "Chạy nền; nghe được ngay từng chương đã xong."
               : "Tạo nhưng chưa chạy; bắt đầu ở trang dự án khi sẵn sàng."}
-          </span>
+          </MotionRegion>
         </span>
       </label>
       <label className="mt-3 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="precast-wait">
         <Switch id="precast-wait" labelledBy="precast-wait-name" describedBy="precast-wait-hint" checked={precastWait} onCheckedChange={setPrecastWait} />
         <span>
           <span id="precast-wait-name" className="block text-sm font-medium">Duyệt trước khi thu</span>
-          <span id="precast-wait-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
+          <MotionRegion as="span" id="precast-wait-hint" className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
             {precastWait
               ? "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”."
               : "Phân tích xong thì thu luôn; duyệt lúc nào cũng được."}
-          </span>
+          </MotionRegion>
         </span>
       </label>
     </div>
+    </MotionRegion>
   );
 }
 
@@ -1944,8 +1935,8 @@ export function NewProjectScreen() {
       <button type="button" onClick={() => navigate("/studio")} className="inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
         <ArrowLeft className="size-4" /> Studio
       </button>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[1.75rem]">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</h1>
-      {draft.seed && (
+      <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[1.75rem]"><MotionRegion as="span">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</MotionRegion></h1>
+      <MotionPresence open={Boolean(draft.seed)}>{draft.seed && (
         <SeedBanner
           seed={draft.seed}
           hasFiles={(rawScan?.files.length ?? 0) > 0}
@@ -1960,11 +1951,11 @@ export function NewProjectScreen() {
             });
           }}
         />
-      )}
+      )}</MotionPresence>
       <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:gap-10">
         <aside className="shrink-0 lg:w-56">
           <StepRail step={step} allowed={allowed} onGo={go} />
-          {(draft.paths.length > 0 || draft.title) && (
+          <Collapse open={Boolean(draft.paths.length > 0 || draft.title)}>
             <button
               type="button"
               onClick={() => {
@@ -1976,9 +1967,9 @@ export function NewProjectScreen() {
               }}
               className="touch-row mt-4 px-2.5 text-[0.8125rem] text-fg-2 hover:text-fg"
             >
-              Bắt đầu lại từ đầu
+              Bắt đầu lại
             </button>
-          )}
+          </Collapse>
         </aside>
         <section className="min-w-0 flex-1">
           {/* Mẫu thiết lập chỉ cho sách mới: "Làm tiếp cuốn này" theo phần trước. */}
@@ -2117,7 +2108,7 @@ export function NewProjectScreen() {
               </Button>
             ) : (
               <span className="flex min-w-0 items-center gap-3">
-                {unfit && <span className="min-w-0 text-right text-[0.8125rem] text-fg-2 text-pretty">Máy này không làm sách nói được</span>}
+                <MotionPresence open={Boolean(unfit)}><span className="min-w-0 text-right text-[0.8125rem] text-fg-2 text-pretty">Máy thiếu cấu hình</span></MotionPresence>
                 <Button variant="primary" icon={draft.startNow && !noStudio ? Wand2 : Mic} loading={create.isPending || gate.reading} disabled={gate.disabled} onClick={submit}>
                   {gate.label ?? (draft.startNow && !noStudio ? "Tạo và bắt đầu" : "Tạo sách")}
                 </Button>

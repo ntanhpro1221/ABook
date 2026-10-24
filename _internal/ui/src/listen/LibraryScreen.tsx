@@ -10,7 +10,7 @@ import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { ShortName } from "@/shared/ShortName";
 import { Windowed } from "@/shared/Windowed";
-import { useScrollMemory } from "@/shared/scrollMemory";
+import { afterScrollLayout, isPage, saveScroll, scrollParent, useScrollMemory } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
 import { EmptyState, failedEmpty, heardBarProps, LoadError, Progress, Segmented, Skeleton } from "@/shared/ui";
@@ -360,9 +360,41 @@ function librarySections(books: ListenBook[], grouped: boolean) {
 
 /** Sách cùng bộ đứng cạnh nhau theo số tập; sách lẻ ở cuối. Chỉ gom khi không lọc, không tìm. */
 export function SeriesShelves({ books, twins, memory, grouped = true }: { books: ListenBook[]; twins: Set<string>; memory?: string; grouped?: boolean }) {
+  const box = useRef<HTMLDivElement>(null);
+  const cancelFold = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => () => cancelFold.current?.(), []);
+  const keepFoldScroll = (event: React.MouseEvent<HTMLDivElement>) => {
+    const button = (event.target as Element).closest<HTMLButtonElement>("button[aria-expanded][aria-controls]");
+    const node = box.current;
+    if (!node || !button || !node.contains(button)) return;
+    cancelFold.current?.();
+    if (button.getAttribute("aria-expanded") !== "true") return;
+    const scroller = scrollParent(node);
+    const top = scroller.scrollTop;
+    const anchor = scroller.style.overflowAnchor;
+    scroller.style.overflowAnchor = "none";
+    // Giữ đủ nền tới đáy khung nhìn: trình duyệt không clamp chỗ cuộn khi nhóm cuối khép.
+    // Khoảng trống thuộc kệ, không kéo dài thẻ trắng của nhóm.
+    const viewTop = isPage(scroller) ? 0 : scroller.getBoundingClientRect().top;
+    const viewHeight = isPage(scroller) ? window.innerHeight : scroller.clientHeight;
+    node.style.minHeight = `${Math.max(0, viewHeight + viewTop - node.getBoundingClientRect().top)}px`;
+    if (memory) saveScroll(memory, { scrollTop: top });
+    let moved = false;
+    const move = () => { moved = true; };
+    for (const type of ["wheel", "touchmove", "keydown"]) scroller.addEventListener(type, move, { passive: true });
+    const clean = () => {
+      scroller.style.overflowAnchor = anchor;
+      for (const type of ["wheel", "touchmove", "keydown"]) scroller.removeEventListener(type, move);
+    };
+    const cancel = afterScrollLayout(scroller, () => {
+      if (!moved) scroller.scrollTop = top;
+      clean();
+    });
+    cancelFold.current = () => { cancel(); clean(); };
+  };
   const sections = librarySections(books, grouped);
   const rows = useListPresence(sections, (section) => section.key);
-  return <div className="mt-6 space-y-10">{rows.map(({ key, item, state, ref }) => (
+  return <div ref={box} onClickCapture={keepFoldScroll} className="mt-6 space-y-10">{rows.map(({ key, item, state, ref }) => (
     <section key={key} ref={ref} aria-label={item.label || "Sách lẻ"} className="motion-row" data-state={state} inert={state === "exit"}><div>
       {grouped && (item.label || item.items.length > 4) ? (
         <Fold storageKey={`library.series.${key}`} title={item.label || "Sách lẻ"} summary={`${item.items.length} cuốn`}>

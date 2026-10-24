@@ -947,3 +947,12 @@ Bắt buộc smoke test một chapter 2.000–5.000 từ trước khi chạy boo
 - Median capture danh sách Windowed (15 mẫu/loại/revision): 200 sách (60 hàng mounted) 5.5→4.9ms; 3000 chương (80 hàng mounted) 5.1→4.9ms, so với trước d3224daf. Median toàn commit tương ứng 7.9→7.2ms và 6.9→7.7ms; mẫu hữu hạn, không kết luận tăng tốc toàn ứng dụng.
 - Vitest toàn UI: đủ 254 file, 253 đạt / 0 lỗi / 1 bỏ qua; 1884 test đạt / 0 lỗi / 1 bỏ qua (corpus PDF cục bộ). Đủ 15/15 file *.dom.test.tsx, không test DOM bị bỏ qua; tối đa 2 worker, affinity 4 CPU, 43.10s. Tsc -p tsconfig.json: 0 lỗi, exit 0. Hash khoá trước/sau c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886.
 - Không Git ghi, không npm install/update, không GPU/Gradle/backend. Edge chỉ dùng profile/PID riêng, đã đóng và xoá profile bằng Python đường tuyệt đối. capacitor.settings.gradle khớp HEAD, không bị sửa. Bằng chứng chi tiết và lệnh tái lập ở scratchpad/fix137b ngoài cây; chưa kiểm Android/WebView thật.
+
+
+## 24-10-2026 — studio139: chuyển động Studio/desktop và emu138
+
+- Đối chiếu part_D1/D2/E tại code hiện tại: sửa 49 mục VỪA/THẤP; giữ CAO PartLinks và toàn bộ internals MotionRegion/motion. Form inline dùng Collapse/region; trạng thái hộp, menu, toast và query tới sau giữ vùng chuyển động; lỗi chương dùng Radix Popover có Back. Nhãn và mô tả chính rút gọn.
+- emu138: chân hộp thêm sách sticky trong vùng cuộn; không autofocus ô chữ khi any-pointer:coarse; gập nhóm thư viện giữ nền kệ đủ cao và chỗ cuộn, nhường thao tác cuộn mới.
+- Thêm 21 ca DOM (17 ở hai file studio139 mới, 4 ở AddBook/LibraryScreen); tổng inventory 21 file DOM, không skip DOM. Full npx vitest run: 259 file đạt / 1 file bỏ qua, 1944 test đạt / 1 bỏ qua; tổng 260 file / 1945 test, 0 lỗi, 6,54 s. Skip có sẵn là corpus PDF cục bộ. npx tsc -p tsconfig.json --noEmit: exit 0.
+- Đồng bộ nhãn Kết nối Wi-Fi với remote_books.SYNC_SWITCH; pytest tests/test_sync_switch_label.py: 1 đạt. QUALITY_IMPLEMENTATION_FILES đọc từ code có 41 mục; hash trước/sau c91761232204fedd1052a507682d1eacf53c20275e1b81389a819b4b39de9886. Không đổi dependency/runtime, không mạng, không Git ghi.
+- Bằng chứng và trạng thái từng finding ở scratchpad/codex/studio139/result.md, log tsc.log/vitest.log cùng thư mục task. DOM dùng geometry/WAAPI mô phỏng; chưa chạy emulator hoặc đo frame trên thiết bị thật.

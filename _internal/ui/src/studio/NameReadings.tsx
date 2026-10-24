@@ -118,7 +118,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
         </span>
       </h3>
       <p className="mt-1 max-w-prose text-sm text-fg-2">
-        Tên riêng máy đọc thế nào. Nghe câu mẫu, sai thì sửa ngay trên dòng - câu đã thu có tên ấy sẽ được thu lại.
+        Nghe và sửa cách đọc tên; câu đã thu có tên ấy sẽ thu lại.
       </p>
       <SharedReadingsOffer bookId={bookId} />
       <AddAnyWord bookId={bookId} open={adding} onOpenChange={setAdding} />
@@ -159,7 +159,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
       )}
       {!found.length && !addable && typed && (
         <p className="mt-3 text-sm text-fg-2">
-          Không có tên nào khớp “{typed}”. Muốn dạy máy đọc một chữ hay ký hiệu khác, dùng “Thêm cách đọc cho từ bất kỳ” ở trên (một chữ liền nhau, không có khoảng trắng).
+          Không khớp “{typed}”; dùng “Thêm cách đọc” cho một từ khác.
         </p>
       )}
       {found.length > limit && (
@@ -174,24 +174,24 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
   );
 }
 
-/** "Thêm cách đọc cho từ bất kỳ": tên nhân vật đã có dòng sẵn, còn chữ khác máy đọc sai ("TP.HCM", "Mr.", một chữ viết tắt) thì gõ vào đây - cách đọc
+/** "Thêm cách đọc": tên nhân vật đã có dòng sẵn, còn chữ khác máy đọc sai ("TP.HCM", "Mr.", một chữ viết tắt) thì gõ vào đây - cách đọc
  *  ghi cho cả cuốn, đi đúng đường của cách đọc tên (POST /pronunciation). Gõ xong thấy ngay chữ ấy có bao nhiêu câu và bao nhiêu câu đã thu phải thu lại. */
 function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const [word, setWord] = useState("");
   const typed = word.trim();
   if (!open) {
     return (
-      <Button size="sm" variant="ghost" className="mt-2" icon={Plus} onClick={() => onOpenChange(true)}>
-        Thêm cách đọc cho từ bất kỳ
-      </Button>
+      <MotionRegion><Button size="sm" variant="ghost" className="mt-2" icon={Plus} onClick={() => onOpenChange(true)}>
+        Thêm cách đọc
+      </Button></MotionRegion>
     );
   }
   const single = /^\S{1,80}$/u.test(typed);
   return (
-    <div className="mt-3 max-w-xl rounded-xl border border-line bg-panel p-3" data-add-any-word>
+    <MotionRegion><div className="mt-3 max-w-xl rounded-xl border border-line bg-panel p-3" data-add-any-word>
       <div className="flex items-center justify-between gap-2">
         <label htmlFor="add-any-word" className="text-sm font-medium">
-          Chữ hay ký hiệu máy đọc sai
+          Chữ đọc sai
         </label>
         <button
           type="button"
@@ -216,7 +216,7 @@ function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: bool
         className="mt-1.5 h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
       />
       <p className="mt-1.5 text-xs text-fg-2">
-        Một chữ liền nhau (không có khoảng trắng); đúng chữ ấy ở mọi chỗ trong cuốn sẽ đọc theo cách bạn gõ. Chữ trong sách giữ nguyên.
+        Nhập một từ liền để đổi cách đọc cả cuốn, giữ chữ gốc.
       </p>
       {typed && !single && <p className="mt-1.5 text-xs text-warning">Gõ một chữ liền nhau, không có khoảng trắng.</p>}
       {single && (
@@ -224,7 +224,7 @@ function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: bool
           <ReadingRow key={typed} bookId={bookId} item={{ surface: typed, spoken: "", byListener: false, lines: 0, requested: null, example: null }} fresh />
         </ul>
       )}
-    </div>
+    </div></MotionRegion>
   );
 }
 
@@ -297,7 +297,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
         <EditReading bookId={bookId} item={item} onDone={() => setEditing(false)} fresh={fresh} reach={fresh ? reach : undefined} />
       ) : (
         <Button ref={editButton} size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`${fresh ? "Thêm" : "Sửa"} cách đọc ${item.surface}`}>
-          {fresh ? `Thêm cách đọc cho “${item.surface}”` : "Sửa"}
+          {fresh ? `Đọc “${item.surface}”` : "Sửa"}
         </Button>
       )}
     </MotionRegion>

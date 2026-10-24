@@ -7,7 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { api } from "@/studio/api";
 import { cn } from "@/shared/cn";
-import { MoreInfo } from "@/shared/SettingsNav";
 import { formatFingerprint, formatRelative } from "@/shared/format";
 import { peerPage } from "@/shared/peerStudio";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
@@ -327,14 +326,7 @@ export function OtherComputers() {
           </ul>
         </div>
       )}
-      <MoreInfo label="Cách ghép">
-        <ul className="list-disc space-y-1 pl-4">
-          <li>Máy tính kia: Cài đặt › Thiết bị › bật “{SYNC_SWITCH_LABEL}” › “Ghép thiết bị mới” để lấy mã 6 số và địa chỉ.</li>
-          <li>Điện thoại: Tải sách › bật “Cho máy khác nghe thư viện này” › “Ghép máy mới”.</li>
-          <li>Khác Wi-Fi: ghép Bluetooth trong Cài đặt Windows trước, hay dùng mạng riêng ảo.</li>
-          <li>Ghép một chiều: máy này nghe sách của máy kia. Máy kia thấy máy này là “{data.name}”.</li>
-        </ul>
-      </MoreInfo>
+      <p className="text-xs text-fg-2">Máy kia: Cài đặt → Thiết bị → bật “{SYNC_SWITCH_LABEL}” để lấy mã; ghép một chiều để nghe thư viện của máy ấy.</p>
       </Fold>
       {unpair.dialog}
       {lastDiagnosing.current && <PhoneDiagnostics computer={lastDiagnosing.current} open={diagnosing !== null} onOpenChange={(open) => !open && setDiagnosing(null)} />}
@@ -372,10 +364,10 @@ export function BluetoothFallback({
       </Tooltip>
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
-          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Khi Wi-Fi không tới được, đi Bluetooth qua</DropdownMenu.Label>
+          <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Đường Bluetooth</DropdownMenu.Label>
           {!devices.length && (
             <p className="px-2 py-1.5 text-xs text-fg-3">
-              Chưa có thiết bị Bluetooth nào. Ghép trong Cài đặt Windows trước.
+              Ghép thiết bị trong Cài đặt Windows trước.
             </p>
           )}
           {devices.map((device) => (

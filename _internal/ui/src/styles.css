@@ -358,6 +358,7 @@ textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   min-height: 1.5rem;
 }
 [data-sonner-toaster] {
+  transition: bottom var(--motion-medium) var(--ease-standard), top var(--motion-medium) var(--ease-standard);
   --width: min(22.25rem, calc(100vw - 2rem)) !important;
 }
 

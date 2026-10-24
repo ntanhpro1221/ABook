@@ -30,7 +30,7 @@ export function LibraryMoveRecovery({ recovery }: { recovery: LibraryMoveRecover
   };
   return <div role="alert" className="m-4 space-y-3 rounded-xl border border-line bg-panel p-4 text-sm">
     <p>{recovery.message}</p>
-    <p>Bạn hãy kiểm tra hai đường dẫn trước khi chọn. Hoàn tất dùng thư viện sau khi chuyển; quay lui dùng thư viện trước khi chuyển. Bỏ qua giữ thư viện hiện tại và hồ sơ hiện tại. Nhật ký gốc vẫn được giữ để bạn kiểm tra lại.</p>
+    <p>Kiểm tra đường dẫn: hoàn tất dùng thư viện sau, quay lui dùng thư viện trước, bỏ qua giữ hiện tại; nhật ký được giữ.</p>
     <div className="flex flex-wrap items-center gap-2">
       <label className="min-w-0 flex-1">Trước khi chuyển<input aria-label="Thư viện trước khi chuyển" className="w-full rounded border border-line bg-sunken p-2" value={oldRoot} onChange={(e) => setOldRoot(e.target.value)} disabled={busy} /></label>
       <Button disabled={busy} onClick={() => void choose("old")}>Chọn thư mục trước</Button>
@@ -38,9 +38,9 @@ export function LibraryMoveRecovery({ recovery }: { recovery: LibraryMoveRecover
       <Button disabled={busy} onClick={() => void choose("new")}>Chọn thư mục sau</Button>
     </div>
     <div className="flex flex-wrap gap-2">
-      <Button disabled={busy} onClick={() => void resolve("finish")}>Hoàn tất chuyển thư viện</Button>
+      <Button disabled={busy} onClick={() => void resolve("finish")}>Hoàn tất chuyển</Button>
       <Button disabled={busy} variant="secondary" onClick={() => void resolve("rollback")}>Quay lui</Button>
-      <Button disabled={busy} variant="secondary" onClick={() => void resolve("ignore")}>Bỏ qua lần chuyển này</Button>
+      <Button disabled={busy} variant="secondary" onClick={() => void resolve("ignore")}>Bỏ qua</Button>
     </div>
   </div>;
 }

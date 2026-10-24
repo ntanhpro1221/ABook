@@ -74,22 +74,23 @@ export function usePairedComputers(enabled: boolean): { id: string; name: string
 export const STUDIO_WHAT = "Studio biến truyện chữ thành sách nói.";
 // Thời gian một chương: số đo của dây chuyền trên card 8 GB của máy thử, phân tích + thu (docs/ANALYSIS_RESEARCH.md, mục máy Mac mini).
 export const STUDIO_NEEDS =
-  "Cần card NVIDIA từ 8 GB, tải ~25 GB, trống 35 GB. Mỗi chương ~7-10 phút.";
+  "NVIDIA từ 8 GB · tải ~25 GB · trống 35 GB · ~7–10 phút/chương.";
 
-/** Máy này không làm sách nói được: nói thật, và nếu đã ghép máy tính khác thì mời tạo ở đó (Studio của máy ấy mở ngay trong app này -
+/** Máy thiếu cấu hình: nói thật, và nếu đã ghép máy tính khác thì mời tạo ở đó (Studio của máy ấy mở ngay trong app này -
  *  webui/peer_studio.py). Không mời "tạo rồi chờ cài xong": dự án ấy sẽ không bao giờ chạy trên máy này (soát a64). */
 export function NoStudioHere({ fit, className }: { fit: StudioFit; className?: string }) {
   const remote = Boolean(useAppInfo().data?.remote);
   const peers = usePairedComputers(!remote);
   return (
-    <section aria-label="Máy này không làm sách nói được" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
+    <MotionRegion>
+    <section aria-label="Máy thiếu cấu hình" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
       <Cpu className="mt-0.5 size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1 basis-[16rem]">
-        <p className="font-semibold text-pretty">{noStudioLine(fit.reason ?? "")}</p>
+        <p className="font-semibold text-pretty">Máy thiếu cấu hình</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
-          {peers.length
-            ? "Tạo trên máy tính đã ghép có Studio; sách xong nghe ở cả hai máy."
-            : "Có máy khác có card NVIDIA? Cài Studio ở đó rồi ghép (Cài đặt › Thiết bị)."}
+          {noStudioLine(fit.reason ?? "").replace(/\.$/, "")}; {peers.length
+            ? "tạo trên máy đã ghép có Studio, sách xong nghe ở cả hai máy."
+            : "cài Studio trên máy khác rồi ghép tại Cài đặt → Thiết bị."}
         </p>
       </div>
       {peers.length > 0 && (
@@ -102,6 +103,7 @@ export function NoStudioHere({ fit, className }: { fit: StudioFit; className?: s
         </div>
       )}
     </section>
+    </MotionRegion>
   );
 }
 
@@ -114,17 +116,16 @@ export function StudioInstallNotice({ className }: { className?: string }) {
   const navigate = useNavigate();
   const studio = useStudioMissing();
   const fit = useStudioFit();
-  if (!studio.missing) return null;
-  if (fit?.level === "no") return <NoStudioHere fit={fit} className={className} />;
+  if (!studio.missing) return <MotionRegion />;
+  if (fit?.level === "no") return <MotionRegion><NoStudioHere fit={fit} className={className} /></MotionRegion>;
   return (
+    <MotionRegion>
     <section aria-label="Cần Studio" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
       <Cpu className="mt-0.5 size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1">
-        <p className="font-semibold">{studio.repair ? "Studio mất một phần, cần sửa trước khi làm sách" : studio.update ? "Studio cần cập nhật trước khi làm sách" : "Máy này chưa cài Studio"}</p>
+        <p className="font-semibold">{studio.repair ? "Cần sửa Studio" : studio.update ? "Studio cần cập nhật" : "Chưa cài Studio"}</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
-          {studio.update ? "" : `${STUDIO_WHAT} ${STUDIO_NEEDS} `}
-          {fit ? `${fit.line} ` : ""}
-          Vẫn tạo dự án được: dự án chờ tới khi {studio.repair ? "sửa" : studio.update ? "cập nhật" : "cài"} xong, các bước đã chọn ở đây được giữ nguyên.
+          Dự án giữ thiết lập và chờ Studio sẵn sàng.
         </p>
       </div>
       {!info?.remote && (
@@ -133,6 +134,7 @@ export function StudioInstallNotice({ className }: { className?: string }) {
         </Button>
       )}
     </section>
+    </MotionRegion>
   );
 }
 
@@ -192,12 +194,10 @@ export function StudioSetupCard({ className }: { className?: string }) {
           </h2>
           <p className="mt-1 max-w-2xl text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
             {repair
-              ? `Studio thiếu ${damaged.join(", ")} (file bị xoá hay hỏng).${
-                  stale.length > 0 ? ` Cần cập nhật ${stale.join(", ")}.` : ""
-                } Sửa chỉ tải lại phần ấy; sách giữ nguyên.`
+              ? `Tải lại ${[...damaged, ...stale].join(", ")}; sách giữ nguyên.`
               : update
-              ? `Cần bản mới của ${status.outdated.join(", ")}. Chỉ tải lại phần ấy; sách giữ nguyên.`
-              : `${STUDIO_WHAT} ${STUDIO_NEEDS} Đứt giữa chừng thì bấm lại là làm tiếp.`}
+              ? `Cập nhật ${status.outdated.join(", ")}; sách giữ nguyên.`
+              : `${STUDIO_NEEDS}`}
           </p>
           {fit && (
             <p className={cn("mt-2 max-w-2xl text-[0.8125rem] leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>
@@ -373,11 +373,10 @@ export function StudioSettings() {
       )}
       <p className="mt-1 break-all text-[0.8125rem] text-fg-2">{status.root}</p>
       <Button className="mt-3" variant={armed ? "danger" : "secondary"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
-        {busy ? "Đang gỡ…" : armed ? "Bấm lần nữa để gỡ" : "Gỡ Studio"}
+        {busy ? "Đang gỡ…" : armed ? "Xác nhận gỡ" : "Gỡ Studio"}
       </Button>
       <p className="mt-2 text-xs leading-relaxed text-fg-2 text-pretty">
-        Gỡ là xoá thư viện và model (15-20 GB). Sách đã làm, chỗ đang nghe và dữ liệu app giữ nguyên; cuốn đang làm dở
-        phải làm lại từ đầu sau khi cài lại.
+        Xoá runtime/model (15–20 GB), giữ sách và hồ sơ; cuốn đang làm phải làm lại sau khi cài.
       </p>
     </MotionRegion>
   );

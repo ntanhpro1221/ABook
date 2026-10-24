@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
 import { GitMerge, Search } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -87,8 +88,8 @@ export function MergeDialog({
       open={person !== null}
       onOpenChange={(open) => !open && close()}
       width="max-w-lg"
-      title={`Gộp ${name} vào người khác`}
-      description={`Khi máy tách một người thành hai tên. Mọi câu của ${name} sẽ đọc bằng giọng người bạn chọn, và các phần sau của truyện cũng hiểu hai tên là một.`}
+      title="Gộp nhân vật"
+      description={`Mọi câu của ${name} và các phần sau dùng người bạn chọn.`}
     >
       <label className="relative block">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-fg-3" />
@@ -101,6 +102,7 @@ export function MergeDialog({
           className="h-9 w-full rounded-lg border border-line bg-bg pl-8 pr-2.5 text-sm outline-none focus-visible:border-focus"
         />
       </label>
+      <MotionRegion motionKey={[others.map(other => other.name), !others.length && query]}>
       <ul className="mt-2 max-h-64 overflow-y-auto rounded-xl border border-line" role="listbox" aria-label="Gộp vào ai">
         {others.length ? (
           others.map((other) => (
@@ -111,7 +113,7 @@ export function MergeDialog({
                 aria-selected={into?.name === other.name}
                 onClick={() => setInto(other)}
                 className={cn(
-                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm",
+                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors duration-motion-fast",
                   into?.name === other.name ? "bg-accent-soft" : "hover:bg-hover",
                 )}
               >
@@ -128,6 +130,8 @@ export function MergeDialog({
           <li className="px-3 py-3 text-sm text-fg-2">Không có ai khớp “{query}”.</li>
         )}
       </ul>
+      </MotionRegion>
+      <MotionRegion>
       {person && into && (
         <p className="mt-3 text-sm text-pretty">
           {formatNumber(person.lines)} câu của <span className="font-semibold">{name}</span> thành của{" "}
@@ -135,6 +139,7 @@ export function MergeDialog({
           {into.pendingVoice?.preset ? " (giọng vừa chọn, chờ áp dụng)" : ""}.
         </p>
       )}
+      </MotionRegion>
       <div className="mt-5 dialog-actions">
         <Button variant="ghost" onClick={close}>
           Thôi

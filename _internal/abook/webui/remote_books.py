@@ -518,7 +518,7 @@ class Endpoint(NamedTuple):
 
 
 # Tên công tắc ở Cài đặt của máy kia - đúng chuỗi của ui/src/shared/syncSwitch.ts (tests/test_sync_switch_label.py giữ hai bên không lệch).
-SYNC_SWITCH = "Cho phép thiết bị khác kết nối qua Wi-Fi"
+SYNC_SWITCH = "Kết nối Wi-Fi"
 UNREACHABLE = f"Chưa nối được máy kia — bạn mở ABook, kiểm tra cùng Wi-Fi và bật “{SYNC_SWITCH}”."
 UNREACHABLE_BLUETOOTH = ("Chưa nối được Bluetooth — bạn bật ABook, Bluetooth và đưa hai máy lại gần.")
 
