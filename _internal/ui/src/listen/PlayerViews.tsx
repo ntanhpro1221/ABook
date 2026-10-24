@@ -37,7 +37,7 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -277,6 +277,7 @@ function Transport({ large = false }: { large?: boolean }) {
 
 function MenuShell({
   trigger,
+  triggerKey,
   label,
   tooltip,
   children,
@@ -288,6 +289,8 @@ function MenuShell({
   onOpenChange,
 }: {
   trigger: ReactNode;
+  /** Nút đổi theo một lựa chọn chỉ có số ("1,5×"): số không vào dấu đổi nội dung của MotionRegion, nên đưa lựa chọn làm khoá chuyển cảnh. */
+  triggerKey?: unknown;
   label: string;
   /** Chú thích khi rê chuột / tiêu điểm vào nút, nếu muốn nói nhiều hơn tên nút (mặc định = tên nút). */
   tooltip?: string;
@@ -316,7 +319,8 @@ function MenuShell({
               active ? "text-accent-text" : "text-fg-2",
             )}
           >
-            {trigger}
+            {/* Mọi nút menu (tốc độ, nhạc, giọng, hẹn giờ, loa / TV) đổi biểu tượng / chữ theo trạng thái: một chỗ mờ chéo cho cả năm. */}
+            <MotionRegion as="span" motionKey={triggerKey} className="inline-flex items-center gap-1">{trigger}</MotionRegion>
           </button>
         </Popover.Trigger>
       </Tooltip>
@@ -351,7 +355,7 @@ function MenuShell({
 export function SpeedMenu() {
   const { rate, setRate } = usePlayer();
   return (
-    <MenuShell label={speedButtonLabel(rate)} dialogLabel="Tốc độ đọc" active={rate !== 1} focusSelector="[data-current-choice]" trigger={<><Gauge className="size-4" />{speedLabel(rate)}</>}>
+    <MenuShell label={speedButtonLabel(rate)} dialogLabel="Tốc độ đọc" active={rate !== 1} triggerKey={rate} focusSelector="[data-current-choice]" trigger={<><Gauge className="size-4" />{speedLabel(rate)}</>}>
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Tốc độ đọc · nhớ riêng cho cuốn này</div>
       <div className="grid grid-cols-3 gap-1 p-1">
         {SPEEDS.map((speed) => (
@@ -388,9 +392,14 @@ export function SpeedMenu() {
  *  (cùng lệnh với hộp "Sửa sách"); sách không gắn nhạc thì không hiện nút. */
 export function MusicMenu() {
   const { track, queue } = usePlayer();
-  if (!track) return null;
-  const speaking = queue.find((chapter) => chapter.id === track.chapterId)?.state === "text";
-  return speaking ? <MusicMenuFor bookId={track.bookId} /> : <PackagedMusicMenu bookId={track.bookId} />;
+  const speaking = Boolean(track) && queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
+  // Một vỏ cho cả hai loại chương (và lúc chưa có gì): đổi component không dựng lại nút trần mà mờ chéo. Vùng con tự lo cùng một cuốn đổi
+  // trạng thái, nên vỏ chỉ chuyển cảnh khi đổi cuốn / loại chương.
+  return (
+    <MotionRegion as="span" motionKey={[track?.bookId ?? null, speaking]} className="inline-flex">
+      {track && (speaking ? <MusicMenuFor bookId={track.bookId} /> : <PackagedMusicMenu bookId={track.bookId} />)}
+    </MotionRegion>
+  );
 }
 
 /** "Mức nhạc dưới giọng đọc": các mức (shared/musicLevels.ts), mức hiện tại có dấu, lời kèm mức (nếu có) chữ nhỏ cạnh tên. Chung cho nhạc
@@ -426,10 +435,10 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
   const { view, change } = useBookMusic(bookId);
   const { musicBroken: broken } = usePlayer();
   const music = view.data;
-  if (!music?.hasMusic) return <MotionRegion />;
   const id = `player-music-${bookId}`;
+  // Gốc luôn là một MotionRegion: nhạc tải xong / gỡ nhạc thì nút hiện / ẩn dần, không thay gốc MotionRegion <-> MenuShell.
   return (
-    <MenuShell
+    <MotionRegion as="span" className="inline-flex">{music?.hasMusic && <MenuShell
       label="Nhạc nền"
       active={music.enabled}
       width="w-64"
@@ -453,7 +462,7 @@ function PackagedMusicMenu({ bookId }: { bookId: string }) {
         <LevelButtons level={music.levelDb} disabled={!music.enabled || change.isPending} onChange={(levelDb) => change.mutate({ levelDb })} />
       </div>
       <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{music.project ? "Nhạc của cuốn này. Đổi ở đây là đổi luôn trong Studio." : "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."}</p>
-    </MotionRegion></MenuShell>
+    </MotionRegion></MenuShell>}</MotionRegion>
   );
 }
 
@@ -541,11 +550,10 @@ function ScrollHint({ className, children }: { className: string; children: Reac
       <div ref={box} onScroll={measure} className={className}>
         {children}
       </div>
-      {more && (
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 flex h-12 items-end justify-center bg-gradient-to-t from-panel via-panel/80 to-transparent pb-1">
-          <span className="rounded-full bg-panel px-2.5 py-0.5 text-[0.6875rem] font-medium text-fg-2 ring-1 ring-line">Kéo xuống còn giọng khác</span>
-        </div>
-      )}
+      {/* Luôn dựng, chỉ đổi độ mờ: cuộn tới đáy thì dòng nhắc mờ đi, không bật tắt cứng. */}
+      <div aria-hidden="true" className={cn("pointer-events-none absolute inset-x-0 bottom-0 flex h-12 items-end justify-center bg-gradient-to-t from-panel via-panel/80 to-transparent pb-1 transition-opacity duration-motion-fast", more ? "opacity-100" : "opacity-0")}>
+        <span className="rounded-full bg-panel px-2.5 py-0.5 text-[0.6875rem] font-medium text-fg-2 ring-1 ring-line">Kéo xuống còn giọng khác</span>
+      </div>
     </div>
   );
 }
@@ -581,7 +589,9 @@ export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
   const speaking = queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
   const sample = useVoiceSample((voiceId, text) => source.readAloudSample!(voiceId, text));
   const openVoiceSettings = useOpenVoiceSettings();
-  if (!track || !speaking || !voices?.length) return <MotionRegion />;
+  // Gốc luôn là một MotionRegion (sang chương có audio / hết giọng thì nút mờ đi), không đổi gốc MotionRegion <-> MenuShell.
+  const menu = () => {
+  if (!track || !speaking || !voices?.length) return null;
   const current = resolveVoice(voices, chosen);
   return (
     <MenuShell
@@ -672,6 +682,8 @@ export function VoiceMenu({ scope = "bar" }: { scope?: VoiceMenuScope }) {
       {source.readAloudCache && <ReadAloudCache bookId={track.bookId} />}
     </MotionRegion></MenuShell>
   );
+  };
+  return <MotionRegion as="span" className="inline-flex">{menu()}</MotionRegion>;
 }
 
 /** Trạng thái "Làm trước" (một việc cho cả máy): hỏi lại thường xuyên khi đang làm. Điện thoại còn đẩy tiến độ vào cùng khoá (android/readAloud.ts). */
@@ -1370,7 +1382,8 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
     </div>
   );
   };
-  return <MotionPresence open={Boolean(error || notice)}>{content()}</MotionPresence>;
+  // Lỗi <-> lời nhắn, hay đổi lời báo khi khối đang hiện: mờ chéo bên trong (MotionPresence chỉ lo hiện / ẩn cả khối).
+  return <MotionPresence open={Boolean(error || notice)}><MotionRegion>{content()}</MotionRegion></MotionPresence>;
 }
 
 function CompactProgress() {
@@ -1485,7 +1498,7 @@ export function PlayerBar({
           >
             <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} className={cn("size-11", !expanded && "cover-morph")} />
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold">{track.chapterTitle}</div>
+              <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
               <div className="truncate text-xs text-fg-2">
                 <TrackSubtitle />
               </div>
@@ -1534,7 +1547,7 @@ export function PlayerBar({
         >
           <BookCover title={track.bookTitle} image={track.bookCover} size="sm" label={false} className={cn("size-12", !expanded && "cover-morph")} />
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold">{track.chapterTitle}</div>
+            <MotionRegion motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="truncate text-sm font-semibold">{track.chapterTitle}</MotionRegion>
             <div className="truncate text-xs text-fg-2">
               <TrackSubtitle />
             </div>
@@ -1624,15 +1637,12 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
           />
         </div>
       </div>
-      {menu.bar ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-5 flex justify-center px-3">{menu.bar}</div>
-      ) : (
-        follow.showJump && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-5 flex justify-center">
-            <JumpToPlaying onClick={follow.jump} />
-          </div>
-        )
-      )}
+      {/* Thanh việc của câu / nút "Tới câu đang nghe" hiện / ẩn dần (MotionPresence). Vùng con có khoá cố định: chúng không làm vùng của cả bài
+          thấy "nội dung đổi" mà mờ chéo cả văn bản mỗi lần chọn câu hay cuộn khỏi câu đang nghe (W2). */}
+      <MotionRegion motionKey="floating" className="pointer-events-none absolute inset-x-0 bottom-5 flex flex-col items-center">
+        <MotionPresence open={Boolean(menu.bar)} className="w-full px-3">{menu.bar}</MotionPresence>
+        <MotionPresence open={!menu.bar && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
+      </MotionRegion>
       {menu.dialogs}
     </MotionRegion>
   );
@@ -1652,21 +1662,23 @@ export function ChapterPanel() {
     const current = scroller?.querySelector<HTMLElement>("[data-current=true]");
     if (scroller && current) reveal(scroller, current);
   }, []);
+  // Chương mới thu xong / gỡ khỏi hàng nghe: hàng mở ra hay khép lại tại chỗ (useListPresence), không nhảy cả danh sách.
+  const rows = useListPresence(queue, (chapter) => String(chapter.id));
   return (
     <div ref={container} className="h-full overflow-y-auto px-3 py-4 sm:px-6">
-      <Windowed items={queue} estimate={60} keep={queue.findIndex((chapter) => chapter.id === track?.chapterId)} row={(chapter) => {
+      <Windowed items={rows} estimate={60} keep={rows.findIndex((row) => row.item.id === track?.chapterId)} row={({ key, item: chapter, state, ref }) => {
         const current = chapter.id === track?.chapterId;
         const done = book?.state.chapters[String(chapter.id)]?.done;
         return (
+          <div key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
           <button
-            key={chapter.id}
             type="button"
             data-current={current}
             disabled={!canPlay(chapter)}
             aria-current={current ? "true" : undefined}
             onClick={() => jumpTo(chapter.id)}
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left",
+              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-motion-fast",
               current ? "bg-accent-soft" : canPlay(chapter) && "hover:bg-hover",
             )}
           >
@@ -1678,19 +1690,21 @@ export function ChapterPanel() {
               ) : <span aria-hidden />}
             </MotionRegion>
             <span className="min-w-0 flex-1">
-              <span className={cn("block truncate text-sm font-medium", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
+              <span className={cn("block truncate text-sm font-medium transition-colors duration-motion-fast", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
                 {chapter.subtitle || chapter.title}
               </span>
-              <span className="tabular block truncate text-xs text-fg-2">
+              {/* Dòng phụ đổi khi chương thu xong ("Đang thu âm…" -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
+              <MotionRegion as="span" className="tabular block truncate text-xs text-fg-2">
                 {chapter.subtitle ? `${chapter.title} · ` : ""}
                 {chapter.available
                   ? formatLength(chapter.duration)
                   : chapter.state === "text"
                     ? textChapterLine(Boolean(chapter.speech), voice)
                     : chapterStatusLabel(Boolean(book?.producing))}
-              </span>
+              </MotionRegion>
             </span>
           </button>
+          </div>
         );
       }} />
     </div>
@@ -1916,14 +1930,17 @@ function BookProgressLine() {
     }
     return { before: heardBefore, total: sum };
   }, [queue, track?.chapterId]);
-  if (!track || total <= 0) return null;
+  const shown = Boolean(track) && total > 0;
   const heard = Math.min(total, before + tens * 10);
   // Sách chưa thu xong: "Cả cuốn 99%" đọc như sắp hết truyện (soát UX 29-09) - đó là phần đã có.
   const whole = queue.every((chapter) => chapter.available);
+  const finished = atEnd === "finished";
+  const text = shown ? bookProgressText({ whole, heard, total, rate, speed: speedLabel(rate), finished }) : "";
+  // Số chạy theo đồng hồ không chuyển cảnh; hiện / ẩn dòng, đổi lời (cả cuốn / phần đã có / đã nghe hết, phút -> giờ) và đổi tốc độ thì mờ chéo.
   return (
-    <p className="tabular mt-1 text-xs text-fg-2">
-      {bookProgressText({ whole, heard, total, rate, speed: speedLabel(rate), finished: atEnd === "finished" })}
-    </p>
+    <MotionRegion as="p" motionKey={[rate, text.replace(/\d[\d\s.,:%–/\-]*/g, "#")]} className="tabular mt-1 text-xs text-fg-2 empty:mt-0">
+      {text}
+    </MotionRegion>
   );
 }
 
@@ -2050,9 +2067,25 @@ function CaughtUpNotice() {
 
 /** `actions`: nút riêng của từng nền ở hàng nút dưới thanh tua (điện thoại: "Phát trên <máy tính>"). */
 /** `edit`: sửa được gì ở tab "Đọc theo" (như màn đọc của cùng thiết bị - SentenceMenu.SentenceEditing). */
-export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean; actions?: ReactNode; edit?: SentenceEditing }) {
-  const { track, sleep, fading, canGoBack, goBack, playing, buffering, toggle } = usePlayer();
+/** Bìa to của màn "Đang nghe" là nút phát / dừng. Component riêng: nhãn đổi theo mỗi lần phát / dừng không làm cả màn (một MotionRegion)
+ *  thấy "nội dung đổi" và mờ chéo theo (W1). */
+function CoverToggle({ title, image }: { title: string; image: ComponentProps<typeof BookCover>["image"] }) {
+  const { playing, buffering, toggle } = usePlayer();
   const speaking = useSpeaking();
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={`${toggleLabel(playing, buffering, speaking)} (chạm bìa)`}
+      className="size-[min(300px,100cqw,100cqh)] shrink-0 rounded-lg transition-transform active:scale-[0.98]"
+    >
+      <BookCover title={title} image={image} size="xl" className="cover-morph w-full" />
+    </button>
+  );
+}
+
+export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean; actions?: ReactNode; edit?: SentenceEditing }) {
+  const { track, sleep, fading, canGoBack, goBack } = usePlayer();
   const { expanded, setExpanded } = useNowPlaying();
   const [panel, setPanelState] = useState<Panel>(initialPanel);
   const [showPanel, setShowPanelNow] = useState(!mobile);
@@ -2216,7 +2249,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
           <IconButton label={withShortcut("Thu nhỏ", "Esc")} icon={ChevronDown} className="touch-box justify-self-start" onClick={() => setExpanded(false)} />
           <span className="text-xs font-semibold uppercase tracking-[0.08em] text-fg-2">Đang nghe</span>
           <div className="flex items-center justify-self-end">
-            {canGoBack && <IconButton label="Quay lại chỗ vừa nghe" icon={Undo2} onClick={goBack} />}
+            <MotionRegion as="span" className="inline-flex">{canGoBack && <IconButton label="Quay lại chỗ vừa nghe" icon={Undo2} onClick={goBack} />}</MotionRegion>
             {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
             {!COARSE && <IconButton label="Phím tắt (?)" icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts} {...keepFocus} />}
           </div>
@@ -2228,18 +2261,13 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
           // w-full max-w-[300px] cũ không co theo chiều cao nên đè lên "ĐANG NGHE" khi cửa sổ thấp (soát UX 05-10).
           <div key="cover" data-motion-content className="motion-reveal mt-4 flex min-h-16 min-w-0 flex-1 items-center justify-center [container-type:size]">
             {/* Chạm bìa để phát/dừng (SABP): mục tiêu lớn nhất màn hình, dễ trúng khi đang nằm và mắt nhắm mắt mở. */}
-            <button
-              type="button"
-              onClick={toggle}
-              aria-label={`${toggleLabel(playing, buffering, speaking)} (chạm bìa)`}
-              className="size-[min(300px,100cqw,100cqh)] shrink-0 rounded-lg transition-transform active:scale-[0.98]"
-            >
-              <BookCover title={track.bookTitle} image={track.bookCover} size="xl" className="cover-morph w-full" />
-            </button>
+            <CoverToggle title={track.bookTitle} image={track.bookCover} />
           </div>
         )}
         <div className="mt-5 w-full text-center">
-          <h2 className="truncate text-lg font-semibold" title={track.chapterTitle}>{track.chapterTitle}</h2>
+          <h2 className="truncate text-lg font-semibold" title={track.chapterTitle}>
+            <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block truncate">{track.chapterTitle}</MotionRegion>
+          </h2>
           <p className="mt-0.5 truncate text-sm text-fg-2">
             <TrackSubtitle />
           </p>
@@ -2269,7 +2297,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
           </div>
         </div>
         {/* Đang nhỏ dần thì "Sắp tắt…" đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
-        {sleep.kind === "chapter" && !fading && <p className="mt-2 text-center text-xs text-fg-2">Sẽ dừng khi hết chương này.</p>}
+        <MotionPresence open={sleep.kind === "chapter" && !fading}><p className="mt-2 text-center text-xs text-fg-2">Sẽ dừng khi hết chương này.</p></MotionPresence>
         <FadingNotice className="mt-3" />
         <PlayerAlert className="mt-3" overlay />
         <CaughtUpNotice />

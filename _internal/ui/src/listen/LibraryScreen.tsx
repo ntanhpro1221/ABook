@@ -223,16 +223,18 @@ function ContinueCard({ book }: { book: ListenBook }) {
       <div className="min-w-0 flex-1">
         <div className="text-xs font-semibold uppercase tracking-[0.08em] text-accent-text">Đang nghe dở</div>
         <h2 className="mt-1 line-clamp-2 text-base font-semibold sm:text-lg">{book.title}</h2>
-        <p className="tabular mt-0.5 text-sm text-fg-2">
+        {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
+        <MotionRegion as="p" className="tabular mt-0.5 text-sm text-fg-2">
           {where}
           {current ? (playingHere ? " · đang phát" : " · đang tạm dừng") : last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
-        </p>
-        <p className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks)}</p>
+        </MotionRegion>
+        <MotionRegion as="p" className="mt-0.5 text-sm text-fg-2">{bookStatusText(book, speaks)}</MotionRegion>
         <Progress value={book.progress.fraction} size="xs" className="mt-3 max-w-md" label="Đã nghe" />
       </div>
+      <MotionRegion className="shrink-0" motionKey={book.progress.caughtUp && !current}>
       {book.progress.caughtUp && !current ? (
         // Đã nghe hết phần đã có: nút phát lớn chỉ phát 0 giây rồi báo hết - nói thẳng đang chờ chương mới (soát UX 29-09).
-        <span className="shrink-0 rounded-full bg-hover px-3 py-1.5 text-xs font-medium text-fg-2">Chờ chương mới</span>
+        <span className="block rounded-full bg-hover px-3 py-1.5 text-xs font-medium text-fg-2">Chờ chương mới</span>
       ) : (
       <button
         type="button"
@@ -240,13 +242,16 @@ function ContinueCard({ book }: { book: ListenBook }) {
         aria-label={playingHere ? `Tạm dừng ${book.title}` : `Nghe tiếp ${book.title}${where ? `, ${where}` : ""}`}
         className="grid size-14 shrink-0 place-items-center rounded-full bg-accent text-accent-ink shadow-card transition-transform hover:scale-105"
       >
-        {playingHere ? (
-          <Pause className="size-6" fill="currentColor" strokeWidth={0} />
-        ) : (
-          <Play className="size-6 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
-        )}
+        <MotionRegion as="span" motionKey={playingHere} className="inline-grid size-6 place-items-center">
+          {playingHere ? (
+            <Pause className="size-6" fill="currentColor" strokeWidth={0} />
+          ) : (
+            <Play className="size-6 translate-x-[1px]" fill="currentColor" strokeWidth={0} />
+          )}
+        </MotionRegion>
       </button>
       )}
+      </MotionRegion>
     </section>
   );
 }
@@ -454,6 +459,8 @@ export function LibraryScreen({
           ))}
         </div>
       }>
+      {/* Lỗi / trống / có sách thay nhau (mạng về, sách đầu tiên vào thư viện): mờ hẳn qua, không thay cả trang tức thì. */}
+      <MotionRegion fadeThrough motionKey={failedEmpty(libraryQuery) ? "error" : !libraryRows.length ? (upcoming.length ? "upcoming" : "empty") : "books"}>
       {failedEmpty(libraryQuery) ? (
         <LoadError what="thư viện" error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
       ) : !libraryRows.length ? (
@@ -540,6 +547,7 @@ export function LibraryScreen({
           </MotionRegion>
         </>
       )}
+      </MotionRegion>
       </LoadingCrossfade>
     </div>
   );
