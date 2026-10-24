@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Sửa lỗi
+- Trình phát, đọc theo, bìa sách, tab và Cài đặt không còn đổi chữ hay hiện / ẩn cứng: tên chương, bìa, nút menu, câu và chữ đang đọc, thẻ Đang nghe dở, lời báo đều mờ chéo hoặc trượt mượt.
+
 ## [0.4.138] - 2026-10-24
 
 ### Sửa lỗi
