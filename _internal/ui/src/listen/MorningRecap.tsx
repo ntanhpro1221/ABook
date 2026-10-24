@@ -191,7 +191,7 @@ export function MorningRecap({ className }: { className?: string }) {
         })}
       </ol>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => void resume(suggested.chapterId, suggested.seconds)}
