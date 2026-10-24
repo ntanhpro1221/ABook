@@ -205,6 +205,14 @@
     text-wrap: balance;
     letter-spacing: -0.01em;
   }
+  /* Không để một chữ rớt dòng một mình ("ở tốc độ / 1,15×", "chưa / nghe" - soát 24-10 V06); thuộc tính kế thừa nên đặt một lần ở body. */
+  body {
+    text-wrap: pretty;
+  }
+  /* Thân chương dài hàng nghìn đoạn: bố cục chữ thường, nhanh hơn. */
+  .reading-surface {
+    text-wrap: wrap;
+  }
   button {
     cursor: default;
   }
