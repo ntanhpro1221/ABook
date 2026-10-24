@@ -808,7 +808,8 @@ select[class~="border-line"] {
 .player-sheet .sheet-body button { min-height: 48px; }
 .sheet-surface [data-add-book-actions] > button:first-child { margin-left: calc(var(--spacing) * -3.5); }
 .sheet-surface .dialog-actions > button { min-height: 48px; }
-.sheet-surface [data-sheet-grip] button { margin-right: -14px; }
+/* Nút 48 px, ✕ 20 px ở giữa: 14 px đệm + 5/24 x 20 px lề trong của mực ✕ - mực đứng đúng mép nội dung 20 px. */
+.sheet-surface [data-sheet-grip] button { margin-right: -18.17px; }
 .player-sheet .sheet-body [class~="px-2"],
 .player-sheet .sheet-body [class~="px-1"] { padding-inline: 0; }
 /* Khung cuộn của danh sách (p-1) tràn ra 12 px mỗi bên, chữ vẫn ở mép 20 px: khung cuộn cắt mọi thứ tràn ngang, nên nền chọn tràn của dòng
