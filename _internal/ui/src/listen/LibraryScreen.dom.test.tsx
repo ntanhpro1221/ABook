@@ -170,3 +170,18 @@ it("Back khép tìm kiếm có chuyển động, giữ trang và lưới", async
   expect(main.querySelector<HTMLInputElement>("input")!.value).toBe("");
   expect(main.querySelector("input")!.closest(".motion-collapse")?.getAttribute("data-state")).toBe("closed");
 });
+
+it("tìm sách: dòng đếm nói số cuốn khớp, cuốn đang làm ở máy khác cũng theo ô tìm", async () => {
+  state.books = [...state.books, { ...state.books[0], id: "far", title: "Mười Hai Bức Thư", chaptersAvailable: 0, producing: true }];
+  await draw();
+  expect(main.querySelector("header p")?.textContent).toBe("7 cuốn");
+  expect(main.textContent).toContain("Mười Hai Bức Thư");
+  await search("book 3");
+  await act(() => vi.runAllTimers());
+  expect(main.querySelector("header p")?.textContent).toBe("1 trong 7 cuốn");
+  expect(main.textContent).not.toContain("Mười Hai Bức Thư");
+  await search("muoi hai");
+  await act(() => vi.runAllTimers());
+  expect(main.querySelector("header p")?.textContent).toBe("1 trong 7 cuốn");
+  expect(main.textContent).toContain("Mười Hai Bức Thư");
+});
