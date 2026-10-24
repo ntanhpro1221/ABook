@@ -109,7 +109,8 @@ export function AddBookDialog({
   const client = useQueryClient();
   const navigate = useNavigate();
   const [choice, setChoice] = useState<ImportChoice | null>(null);
-  const [preview, setPreview] = useMotionState<ImportPreview | null>(null);
+  // Các bước con do MotionRegion trong hộp chuyển động; reset khi đóng không chụp cả nền trang.
+  const [preview, , setPreview] = useMotionState<ImportPreview | null>(null);
   const [title, setTitle] = useState("");
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState<"reading" | "adding" | null>(null);
@@ -126,7 +127,7 @@ export function AddBookDialog({
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [working, setWorking] = useState("");
   // Hộp hỏi trong hộp thoại khi hàng còn sách chưa thêm: "close" = Esc / bấm ra ngoài, "again" = nút "Chọn lại" (cả hai bỏ cả hàng).
-  const [confirmLeave, setConfirmLeave] = useMotionState<"close" | "again" | null>(null);
+  const [confirmLeave, , setConfirmLeave] = useMotionState<"close" | "again" | null>(null);
   const setQueue = (next: QueueItem[] | null) => {
     queueRef.current = next;
     setQueueState(next);

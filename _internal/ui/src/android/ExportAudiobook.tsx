@@ -199,11 +199,11 @@ export function AudiobookPhoneDialogHost() {
   const [book, setBook] = useState<ListenBook | null>(null);
   const [busy, setBusy] = useState(false);
   // Ô "Kèm nhạc nền" theo lượt ước đầu (mặc định của cuốn); người dùng đổi ô thì ước lại (chương làm sẵn, đoạn phải đọc lại theo lựa chọn nhạc).
-  const [state, setState] = useMotionState<AudiobookPhonePlan["music"]>(undefined);
+  const [state, setState, resetState] = useMotionState<AudiobookPhonePlan["music"]>(undefined);
   const { data: voices } = useReadAloudVoices();
   useEffect(() => {
     const listener = (event: Event) => {
-      setState(undefined); // ô của cuốn trước không áp sang cuốn này
+      resetState(undefined); // ô của cuốn trước không áp sang cuốn này; hộp tự có chuyển động mở.
       setBook((event as CustomEvent<ListenBook>).detail);
     };
     window.addEventListener(OPEN_AUDIOBOOK_EVENT, listener);
@@ -224,8 +224,8 @@ export function AudiobookPhoneDialogHost() {
   });
   const shown = plan.data?.music;
   useEffect(() => {
-    if (shown && (shown.available !== state?.available || shown.enabled !== state?.enabled)) setState(shown);
-  }, [shown, state]);
+    if (book && shown && (shown.available !== state?.available || shown.enabled !== state?.enabled)) setState(shown);
+  }, [book, shown, state, setState]);
 
   const start = async () => {
     if (!book || !voice) return;

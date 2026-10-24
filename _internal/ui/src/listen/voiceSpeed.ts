@@ -39,6 +39,11 @@ export const VOICE_SPEED_OPTIONS: { value: VoiceSpeedChoice; label: string }[] =
   { value: "fast", label: "Nhanh hơn" },
 ];
 
+/** Tóm tắt Hiệu năng chỉ nhắc lựa chọn hiện tại; giải thích nằm trong thân gập. */
+export function voiceSpeedLabel(choice: VoiceSpeedChoice): string {
+  return VOICE_SPEED_OPTIONS.find(option => option.value === choice)!.label;
+}
+
 const DESCRIPTION: Record<VoiceSpeedChoice, string> = {
   auto: "Máy kịp thì đọc bản hay nhất.",
   quality: "Luôn đọc bản hay nhất; máy chậm có thể phải chờ.",

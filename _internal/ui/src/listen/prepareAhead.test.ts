@@ -68,7 +68,7 @@ describe("máy tính: ước trước khi làm trước và bản đọc đã l�
 
 describe("Cài đặt > Giọng đọc: bản đọc đã làm của cả máy", () => {
   it("nói bản đọc chiếm bao nhiêu và hỏi lại trước khi dọn", () => {
-    expect(storageLabel({ total: 0 })).toBe("Chưa có bản đọc nào được lưu trên máy này.");
+    expect(storageLabel({ total: 0 })).toBe("Chưa có bản đọc đã lưu.");
     expect(storageLabel({ total: 12 * 1024 * 1024 })).toMatch(/^Bản đọc đã làm chiếm .*MB.* trên máy này\.$/);
     expect(clearStorageQuestion({ total: 12 * 1024 * 1024 })).toMatch(/^Dọn .*MB.* bản đọc đã làm của mọi cuốn\?/);
   });

@@ -67,6 +67,14 @@ describe("sách chỉ có chữ", () => {
 describe("lời nhắc màn đọc", () => {
   const base = { textOnly: true, canSpeak: true, timed: false, tapped: false, coarse: false, wish: false };
 
+  it("không lặp trạng thái chỉ có chữ, vẫn hướng dẫn đầy đủ chuột phải", () => {
+    for (const canSpeak of [true, false]) for (const tapped of [true, false]) {
+      expect(readerHint({ ...base, canSpeak, tapped })?.toLowerCase()).not.toContain("chỉ có chữ");
+    }
+    expect(readerHint({ ...base, readings: true })).toContain("Bấm chuột phải vào chữ để sửa cách đọc.");
+    expect(readerHint({ ...base, canSpeak: false })).toBe("Máy này chưa có giọng đọc.");
+  });
+
   it("bấm với chuột, chạm với màn cảm ứng", () => {
     expect(tapVerb(false)).toBe("Bấm");
     expect(tapVerb(true)).toBe("Chạm");

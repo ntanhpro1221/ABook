@@ -113,7 +113,7 @@ export function readerHint(state: {
 }): string | null {
   const verb = tapVerb(state.coarse);
   if (state.textOnly) {
-    if (!state.canSpeak) return `${textBookLine(false)}.`;
+    if (!state.canSpeak) return "Máy này chưa có giọng đọc.";
     const reading = state.readings ? ` ${state.coarse ? "Giữ chữ" : "Bấm chuột phải vào chữ"} để sửa cách đọc.` : "";
     return state.tapped ? `Nghe bằng giọng đọc.${reading}` : `${verb} chữ để nghe từ đó.${reading}`;
   }

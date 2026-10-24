@@ -6,6 +6,14 @@ import { workProgressRows, type DiagnosticsReport } from "./diagnostics";
 const job = (progress: Record<string, string>, id = "private-worker-id") => ({ id, state: "RUNNING", tags: ["BookDownloadWorker"], attempts: 0, stopReason: 0, progress });
 
 describe("chi tiết chẩn đoán dùng chung", () => {
+  it("lỗi thu thập chỉ nói ngắn ở tóm tắt, chi tiết nằm trong phần mở rộng", () => {
+    const html = renderToStaticMarkup(<DiagnosticsView report={{ share: { error: "UninitializedPropertyAccessException: devicesFile" }, playback: { error: "" } }} />);
+    expect(html.match(/<dl[^>]*>[\s\S]*?<\/dl>/)![0]).not.toContain("UninitializedPropertyAccessException");
+    expect(html).toContain("Chi tiết kỹ thuật");
+    expect(html).toContain("UninitializedPropertyAccessException: devicesFile");
+    expect(html).toContain("chưa mở cuốn nào");
+    expect(html).toContain("inert");
+  });
   it("hiện tiến độ và pha riêng từng việc; tiến độ mới làm màn hình đổi", () => {
     const report: DiagnosticsReport = { work: [job({ done: "3", total: "10", phase: "download" }), { ...job({ done: "0", total: "2", phase: "encode" }, "second"), tags: ["M4bExportWorker"] }] };
     const html = renderToStaticMarkup(<DiagnosticsView report={report} />);

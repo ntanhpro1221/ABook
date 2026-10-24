@@ -1,0 +1,8 @@
+[
+  {"name":"idle empty error","report":{"playback":{"error":""}},"summary":{"Đang nghe":"chưa mở cuốn nào"},"details":[]},
+  {"name":"idle blank error","report":{"playback":{"error":"  \t\n"}},"summary":{"Đang nghe":"chưa mở cuốn nào"},"details":[]},
+  {"name":"playing empty error","report":{"playback":{"bookTitle":"Truyện thử","chapterId":2,"position":65,"playing":true,"error":""}},"summary":{"Đang nghe":"Truyện thử · chương 2 · 1 phút 5 giây · đang phát"},"details":[]},
+  {"name":"playing with playback error","report":{"playback":{"bookTitle":"Truyện thử","playing":false,"error":"PlaybackException: decoder failed"}},"summary":{"Đang nghe":"Truyện thử · tạm dừng · có lỗi phát"},"details":[{"label":"playback","value":"PlaybackException: decoder failed"}]},
+  {"name":"collection failure with other healthy sections","report":{"playback":{"error":"","playing":false},"share":{"collectionFailed":true,"error":"UninitializedPropertyAccessException: devicesFile not initialized"},"battery":{"percent":50}},"summary":{"Đang nghe":"chưa mở cuốn nào","Cho máy khác nghe thư viện":"không đọc được","Pin":"50%"},"details":[{"label":"share","value":"UninitializedPropertyAccessException: devicesFile not initialized"}]},
+  {"name":"legacy collection failure","report":{"playback":{"error":"IllegalStateException: unavailable"}},"summary":{"Đang nghe":"không đọc được"},"details":[{"label":"playback","value":"IllegalStateException: unavailable"}]}
+]

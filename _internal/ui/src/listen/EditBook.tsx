@@ -163,7 +163,7 @@ export function useBookMusic(bookId: string, onChanged?: () => void) {
 /** Nhạc nền của cuốn nhập từ file: người làm sách đã gắn sẵn - người nghe bật/tắt, chỉnh mức, cho im lặng từng đoạn, và đổi một đoạn
  *  sang bài trong "Nhạc của tôi" (bài ấy đi cùng file sách khi lưu). */
 export function MusicSection({ book }: { book: ListenBook }) {
-  const [swapping, setSwapping] = useMotionState<string | null>(null); // khoá đoạn đang mở "Đổi bài"
+  const [swapping, , setSwapping] = useMotionState<string | null>(null); // MotionRegion giữ chuyển động cục bộ khi đóng "Đổi bài".
   const swapBox = useRef<HTMLDivElement>(null);
   const swapButton = useRef<HTMLButtonElement>(null);
   useBackLayer(swapping !== null, () => setSwapping(null), swapBox, swapButton);
