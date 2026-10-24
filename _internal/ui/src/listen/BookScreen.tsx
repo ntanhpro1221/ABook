@@ -996,7 +996,7 @@ export function BookScreen({
       {/* Bìa · tên · tác giả · giọng · thời lượng · tiến độ mảnh; dưới là MỘT nút chính và một hàng nút phụ cùng kiểu (docs/DESIGN.md mục 7).
           Điện thoại: hàng nút trải hết bề ngang dưới bìa; máy tính: nằm dưới tên, cạnh bìa. */}
       <header className="mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7">
-        <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-24 sm:row-span-2 sm:w-44" />
+        <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-28 sm:row-span-2 sm:w-44" />
         <div className="min-w-0">
           <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[1.875rem]">{displayTitle(book.title)}</h1>
           <p className="tabular mt-1.5 text-sm text-fg-2">
