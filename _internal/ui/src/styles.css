@@ -63,7 +63,7 @@
      2,1-2,4:1 trên nền sáng). --accent giữ cho nút chính, tiến độ, trang trí. */
   --focus: #a0600c;
   --text: #1a1814;
-  --text-2: #5e5950;
+  --text-2: #4f4a43;
   /* chữ phụ, cảnh báo, thông tin: >= 4,5:1 cả trên --bg-sunken / --hover / --accent-soft (soát a67) */
   --text-3: #67615a;
   /* Mực mờ (DESIGN 5.1): CHỈ icon phụ / chữ >= 18px (>= 3:1). Chữ thường dùng --text-3 trở lên. */
@@ -115,7 +115,7 @@
   --switch-off: #75706a;
   --focus: #e9a945; /* = --accent */
   --text: #ece8e1;
-  --text-2: #a8a196;
+  --text-2: #bab3a8;
   --text-3: #a0998e;
   --fg-3: #7a746a;
   --accent: #e9a945;

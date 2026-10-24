@@ -89,7 +89,7 @@ Bộ hiện có (xám lạnh #f4f5f7 + hổ phách) chỉnh lại có chủ đí
 | `--bg-sunken` mặt chìm | #ece9e3 | #0c0b0a | ô nhập, rãnh thanh tiến độ |
 | `--line` vạch | #e3dfd7 | #2e2b27 | vạch chia hàng |
 | `--text` mực | #1a1814 | #ece8e1 | chữ chính, icon chính |
-| `--text-2` mực phụ (Tailwind `fg-2`) | #5e5950 | #a8a196 | chữ phụ (≥ 4,5:1 trên nền) |
+| `--text-2` mực phụ (Tailwind `fg-2`) | #4f4a43 | #bab3a8 | chữ phụ (≥ 4,5:1 trên nền); cách --text-3 rõ một bậc |
 | `--text-3` mực ba (Tailwind `fg-3`) | #67615a | #a0998e | chữ phụ bậc ba, cả trên `--bg-sunken` / các lớp `*-soft` (≥ 4,5:1) |
 | `--fg-3` mực mờ (Tailwind `fg-faint`) | #8a8478 | #7a746a | chỉ icon phụ / chữ ≥ 18px (≥ 3:1) |
 | `--accent` đồng thau | #d4912b | #e9a945 | nút chính, thanh tiến độ, tab đang chọn |
