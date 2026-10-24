@@ -256,7 +256,9 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
   const size = large ? "lg" : "sm";
   const waiting = buffering && playing;
   return (
-    <MotionRegion as="div" data-player-transport className={cn(large ? "slot-row w-full max-w-sm [--slot:clamp(1.25rem,0.8333rlh,2.40625rem)]" : "flex items-center gap-1")}>
+    <MotionRegion as="div" data-player-transport className={cn(large ? "slot-row w-full max-w-sm [--slot:clamp(1.25rem,0.8333rlh,2.40625rem)]" : "flex items-center gap-1",
+      // Mực ⏮ / ⏭ cách mép ô icon 4/24: hai đầu lùi ít hơn chừng ấy để mực thẳng mép bìa và thanh tua.
+      large && chapters && "[--slot-end:calc(var(--slot)*16/24)] [--slot-start:calc(var(--slot)*16/24)]")}>
       {chapters && <IconButton label={withShortcut("Chương trước", "Shift+←")} icon={SkipBack} size={size} className="touch-box" onClick={previous} {...keepFocus} />}
       <IconButton label={withShortcut(`Lùi ${SKIP_SECONDS} giây`, "←")} icon={large ? Back15 : Back15Mini} size={size} className="touch-box" onClick={() => skip(-SKIP_SECONDS)} {...keepFocus} />
       <button
@@ -308,7 +310,7 @@ const InPlayerSheet = createContext(false);
 /** Dòng ghi chú đầu menu: hộp nổi (máy tính) không có tiêu đề nên kèm tên menu; bảng trượt có tiêu đề rồi thì chỉ ghi chú. */
 function MenuNote({ title, children }: { title: string; children: string }) {
   const inSheet = useContext(InPlayerSheet);
-  return <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{inSheet ? children.charAt(0).toUpperCase() + children.slice(1) : `${title} · ${children}`}</div>;
+  return <div className="text-balance px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{inSheet ? children.charAt(0).toUpperCase() + children.slice(1) : `${title} · ${children}`}</div>;
 }
 
 function MenuShell({
@@ -411,8 +413,9 @@ function MenuShell({
           )}
         >
           {children}
-          {/* Nút đặc của bảng đứng thẳng mép chữ (px-2) như các nút trong bảng; chỉ nền dòng mới tràn ra mép p-1.5. */}
-          {footer && <div className="px-2">{footer}</div>}
+          {/* Nút đặc của bảng đứng thẳng mép chữ (px-2) như các nút trong bảng; chỉ nền dòng mới tràn ra mép p-1.5. Cách dòng trên 10,5 px
+              (pt-2 + pb-1 của dòng ấy) như khoảng giữa các khối khác của bảng. */}
+          {footer && <div className="px-2 pt-2">{footer}</div>}
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
@@ -1052,7 +1055,7 @@ function SleepPicker({
       width="w-64"
       footer={<Popover.Close asChild><button type="button" disabled={disabled}
         onClick={() => onSet({ kind: "minutes", minutes: custom })}
-        className="min-h-[48px] w-full rounded-lg bg-accent text-sm font-semibold text-accent-ink disabled:opacity-40">Đặt {custom} phút</button></Popover.Close>}
+        className="h-9 w-full rounded-lg bg-accent text-sm font-semibold text-accent-ink disabled:opacity-40 max-sm:h-[48px]">Đặt {custom} phút</button></Popover.Close>}
       focusSelector="[data-current-choice]"
       look={look}
       icon={Moon}
@@ -1830,6 +1833,8 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
       </div>
       {/* Thanh việc của câu / nút "Tới câu đang nghe" hiện / ẩn dần (MotionPresence). Vùng con có khoá cố định: chúng không làm vùng của cả bài
           thấy "nội dung đổi" mà mờ chéo cả văn bản mỗi lần chọn câu hay cuộn khỏi câu đang nghe (W2). */}
+      {/* Mép trên mờ dần (cao bằng lề py-8): chữ cuộn lên không bị cắt ngang để lại chân chữ dưới thanh tab. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[var(--read-bg)] from-40% to-transparent" />
       <MotionRegion motionKey="floating" className="pointer-events-none absolute inset-x-0 bottom-5 flex flex-col items-center">
         <MotionPresence open={Boolean(menu.bar)} className="w-full px-3">{menu.bar}</MotionPresence>
         <MotionPresence open={!menu.bar && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
@@ -2456,8 +2461,9 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
           mobile ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-[20px] pb-6 pt-2" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
         )}
       >
-        {/* Thanh đầu: thu nhỏ · ĐANG NGHE · "…" - không gì khác. Cùng --slot với hàng phát: nút thu nhỏ / "…" thẳng tâm nút chương trước / sau. */}
-        <div className="slot-row [--slot:clamp(1.25rem,0.8333rlh,2.40625rem)]">
+        {/* Thanh đầu: thu nhỏ · ĐANG NGHE · "…" - không gì khác. Mực hai đầu đứng đúng mép cột (bìa, thanh tua): mực ⌄ bắt đầu 5/24 trong ô
+            icon (glyph), mực "…" dừng 3/24 trước mép phải - mỗi đầu lùi ít hơn chừng ấy. */}
+        <div className="slot-row [--g:clamp(1.125rem,0.75rlh,1.96875rem)] [--slot-end:calc(var(--g)*18/24)] [--slot-start:calc(var(--g)*14/24)]">
           <IconButton label={withShortcut("Thu nhỏ", "Esc")} icon={ChevronDown} className="touch-box" onClick={() => setExpanded(false)} />
           <span className="label-section text-fg-2">Đang nghe</span>
           <div>
@@ -2499,8 +2505,9 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
         <div className="mt-3 flex justify-center">
           <Transport large />
         </div>
-        {/* Một hàng 4 nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. */}
-        <div role="group" aria-label="Điều khiển phụ" data-player-secondary className="slot-row mt-5 items-start [--slot:1.9rlh]">
+        {/* Một hàng 4 nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. Hai đầu = bề rộng nhãn đầu mút ("Tốc độ" 41,8 px, "Chương" 46,2 px
+            ở rlh 24 px) để chữ chạm đúng mép cột. */}
+        <div role="group" aria-label="Điều khiển phụ" data-player-secondary className="slot-row mt-5 items-start [--slot-end:1.925rlh] [--slot-start:1.742rlh] [--slot:1.9rlh]">
           <SpeedMenu look="action" />
           <SleepMenu look="action" />
           <BookmarkButton />
