@@ -70,6 +70,8 @@
   --text-3: #67615a;
   /* Mực mờ (DESIGN 5.1): CHỈ icon phụ / chữ >= 18px (>= 3:1). Chữ thường dùng --text-3 trở lên. */
   --fg-3: #8a8478;
+  /* Mũi tên của ô chọn: chính ChevronDown của lucide, màu --fg-3 (như mũi tên gập). */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8478' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --accent: #d4912b;
   --accent-hover: #c2821f;
   --accent-ink: #1d1304;
@@ -120,6 +122,7 @@
   --text-2: #bab3a8;
   --text-3: #a0998e;
   --fg-3: #7a746a;
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a746a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   --accent: #e9a945;
   --accent-hover: #f4b85c;
   --accent-ink: #1b1204;
@@ -279,6 +282,17 @@ input[class~="border-line"]:not(:focus):not(:focus-visible),
 select[class~="border-line"]:not(:focus):not(:focus-visible),
 textarea[class~="border-line"]:not(:focus):not(:focus-visible) {
   border-color: var(--control-line);
+}
+
+/* Ô chọn: mũi tên gốc của trình duyệt (tam giác đen đặc, mỗi máy một kiểu) đổi thành chevron 14 px nét 2 như nút gập; danh sách xổ
+   vẫn là của hệ thống. Ngoài lớp như trên để lề phải thắng px-* của từng ô. */
+select[class~="border-line"] {
+  appearance: none;
+  padding-right: 32px;
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px 14px;
 }
 
 /* Mục menu (Radix) đang chọn bằng bàn phím: chỉ nền --hover (1,1:1 trên nền sáng) thì không thấy mình đang ở mục nào. Radix dồn tiêu điểm vào
