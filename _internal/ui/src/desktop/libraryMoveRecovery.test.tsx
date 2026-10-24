@@ -27,7 +27,7 @@ const flush = async () => { for (let i = 0; i < 15; i++) await Promise.resolve()
 beforeEach(() => { vi.clearAllMocks(); h.api.mockResolvedValue({}); });
 
 it.each([
-  ["Hoàn tất chuyển thư viện", "finish"], ["Quay lui", "rollback"], ["Bỏ qua lần chuyển này", "ignore"],
+  ["Hoàn tất chuyển", "finish"], ["Quay lui", "rollback"], ["Bỏ qua", "ignore"],
 ])("%s gửi lựa chọn rõ ràng và cả hai đường dẫn", async (label, action) => {
   const button = mount().find((n) => n.props?.children === label)!;
   (button.props!.onClick as () => void)();

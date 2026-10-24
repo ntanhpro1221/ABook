@@ -8,10 +8,10 @@ import { pickFolder, useAppInfo } from "@/studio/data";
 
 /** Cài đặt → Chẩn đoán: "Gửi nhật ký" của chính máy tính - gói .zip (thông tin máy, phiên bản, đuôi nhật ký của app) ghi vào thư mục bạn chọn để bạn
  *  tự gửi cho người sửa lỗi. App không gửi gì đi (webui/diagnostics.py). */
-export const OWN_DIAGNOSTICS_HINT = "Lưu nhật ký thành file; bạn tự gửi đi. Xem lại trước khi gửi.";
+export const OWN_DIAGNOSTICS_HINT = "Xem lại trước khi gửi; bạn tự gửi đi.";
 /** Quyền riêng tư của gói nhật ký: gập sau "Tìm hiểu thêm". */
 export const OWN_DIAGNOSTICS_MORE =
-  "Gồm phiên bản, hệ điều hành, các dòng nhật ký gần nhất và tên máy bạn đã ghép. App che các dạng khoá, mã ghép, đường dẫn riêng, địa chỉ IP nhận ra được.";
+  "Gồm thông tin máy và nhật ký gần nhất; tự che khoá, mã ghép, đường dẫn và IP nhận ra được.";
 
 export function OwnDiagnostics() {
   const { data: info } = useAppInfo();

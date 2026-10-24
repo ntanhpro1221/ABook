@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useMotionState } from "@/shared/motion";
 import { AlertTriangle, BookAudio, CheckCircle2, FileAudio, FolderArchive, FolderDown, FolderOpen, RefreshCw } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,8 +48,8 @@ type SeriesResult = {
 };
 
 const KINDS: { value: Kind; title: string; detail: string; icon: typeof FolderDown }[] = [
-  { value: "mp3", title: "Thư mục MP3", detail: "Mỗi chương một file, có tên sách, tên chương, bìa - nghe bằng mọi trình phát.", icon: FolderDown },
-  { value: "abook", title: "File .abook", detail: "Cả cuốn trong một file: bìa, chữ đọc theo, nhân vật - mở bằng ABook ở máy khác.", icon: FileAudio },
+  { value: "mp3", title: "Thư mục MP3", detail: "Mỗi chương một file có tên và bìa.", icon: FolderDown },
+  { value: "abook", title: "File .abook", detail: "Một file chứa cả sách, mở bằng ABook.", icon: FileAudio },
   {
     // Cùng đường với mục "Xuất M4B cho app sách nói" ở menu Thư viện (desktop/ExportBookFileJob.tsx): việc nền, báo tiến độ ngoài hộp.
     value: "m4b",
@@ -353,8 +354,9 @@ export function ExportDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange} width="max-w-lg" title={`Xuất “${book.title}”`}
       description={wholeSeries ? `Các chương nghe được của cả ${parts.length} phần sẽ vào bản xuất.` : `${formatNumber(selectedCount)} chương sẽ vào bản xuất.`}>
+      <MotionRegion fadeThrough>
       {busy ? (
-        <div className="py-2" role="status">
+        <MotionRegion className="py-2" role="status" motionKey={[cancelling, Boolean(downloading), Boolean(packing), packShown?.title, packShown?.fraction === null]}>
           {packShown && !downloading && packShown.fraction !== null ? (
             <Progress value={packShown.fraction} size="md" label={packShown.title} />
           ) : (
@@ -369,11 +371,11 @@ export function ExportDialog({
           </p>
           <p className="mt-1 text-sm text-fg-2 text-pretty">
             {downloading
-              ? "Nhạc nền chưa có trên máy nên phải tải về để đóng kèm vào file - bài nào xong rồi lần sau không phải tải lại. "
+              ? "Tải nhạc còn thiếu; "
               : countText
-                ? `${countText}. `
+                ? `${countText}; `
                 : ""}
-            Sách dài thì có thể mất vài phút. Đóng hộp này cũng được - việc vẫn chạy và báo khi xong.
+            đóng hộp vẫn xuất nền và báo khi xong.
           </p>
           <div className="mt-5 dialog-actions">
             {packing && (
@@ -385,7 +387,7 @@ export function ExportDialog({
               Đóng, cứ để chạy
             </Button>
           </div>
-        </div>
+        </MotionRegion>
       ) : finished ? (
         <div className="py-2">
           <p className="flex items-center gap-2 text-sm font-semibold">
@@ -484,8 +486,8 @@ export function ExportDialog({
           </div>
           <p className="mt-2 text-sm text-fg-2 text-pretty">
             {layout === "single"
-              ? "Cả bộ trong một file .abook: nghe liền từ phần này sang phần khác, chỉ cần chép một file sang máy khác."
-              : "Mỗi phần là một file .abook riêng, cùng nằm trong một thư mục của bộ."}
+              ? "Cả bộ trong một file .abook, nghe nối tiếp các phần."
+              : "Mỗi phần một file, cùng thư mục của bộ."}
           </p>
         </>
       )}
@@ -497,8 +499,8 @@ export function ExportDialog({
       <p className="mt-3 text-sm text-fg-2 text-pretty">{savePlace}</p>
       {kind === "abook" && bytes > 0 && (
         <p className="mt-2 text-sm text-fg-2">
-          Cỡ ước tính: khoảng {formatSize(bytes)}.
-          {musicPending > 0 && ` Còn ${musicPending} bài nhạc nền chưa tải về máy - khi xuất sẽ tải và cộng thêm.`}
+          Cỡ ước tính: khoảng {formatSize(bytes)}
+          {musicPending > 0 && `; cộng thêm ${musicPending} bài nhạc khi xuất.`}
         </p>
       )}
       {needsFfmpeg && ffmpeg.data && (
@@ -514,25 +516,25 @@ export function ExportDialog({
       {kind === "abook" &&
         (info?.remote ? (
           <p className="mt-3">
-            <OnComputerOnly verb="Thêm chữ sáng theo giọng đọc" />
+            <OnComputerOnly verb="Chữ sáng theo giọng" />
           </p>
         ) : (
           <WordTimingsRow bookId={book.id} running={Boolean(book.running)} />
         ))}
       {wholeSeries && kind === "mp3" && (
-        <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần một thư mục con (“Phần 1 - …”, “Phần 2 - …”), cùng nằm trong một thư mục của bộ.</p>
+        <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần một thư mục con trong thư mục của bộ.</p>
       )}
       {staleExports.length > 0 && <div className="mt-3 space-y-2 rounded-xl bg-warning-soft p-3 text-sm">
-        <p className="font-semibold">Bạn có bản xuất đã cũ sau khi sửa và thu lại:</p>
+        <p className="font-semibold">Bản xuất đã cũ</p>
         {staleExports.map((item) => <div key={item.target}>
           <p className="break-all">{item.target} · {item.changed.length} chương đã đổi</p>
-          <Button size="sm" variant="secondary" onClick={() => { setKind(item.kind as Kind); setScope("part"); setChangedOnly(item.kind === "mp3"); }}>Xuất lại {item.kind === "m4b" ? "cả file M4B" : item.kind === "mp3" ? "các chương đã đổi" : "file sách"}</Button>
+          <Button size="sm" variant="secondary" onClick={() => { setKind(item.kind as Kind); setScope("part"); setChangedOnly(item.kind === "mp3"); }}>{item.kind === "m4b" ? "Xuất lại M4B" : item.kind === "mp3" ? "Xuất chương đổi" : "Xuất file sách"}</Button>
           {item.kind === "m4b" && <p>M4B gộp cả cuốn: bạn cần dựng lại cả file và thay bản đã chép hoặc gửi.</p>}
         </div>)}
       </div>}
       {kind === "mp3" && !wholeSeries && changedChapters.length > 0 && <label className="mt-3 flex items-center gap-2 text-sm">
         <input type="checkbox" checked={changedOnly} onChange={(event) => setChangedOnly(event.target.checked)} />
-        Chỉ xuất {changedChapters.length} chương đã đổi (giữ số chương trong sách)
+        Xuất {changedChapters.length} chương đổi
       </label>}
       {(warnings.length > 0 || (!whole && Boolean(book.pendingChanges))) && (
         <div className="mt-3 space-y-1.5 rounded-xl bg-warning-soft p-3 text-sm">
@@ -566,11 +568,12 @@ export function ExportDialog({
           disabled={whole ? Boolean(book.running) : needsFfmpeg || (!wholeSeries && !ready && !textOnly)}
           onClick={() => void run()}
         >
-          {info?.dialogs ? "Chọn nơi lưu và xuất" : "Xuất"}
+          {info?.dialogs ? "Lưu và xuất" : "Xuất"}
         </Button>
       </div>
       </>
       )}
+      </MotionRegion>
     </Dialog>
   );
 }

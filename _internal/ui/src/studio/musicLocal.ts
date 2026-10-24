@@ -207,9 +207,9 @@ export function autoLabel(track: Pick<LocalTrack, "analysed" | "vocalsLikely" | 
 
 /** Nút đổi công tắc tự chọn của bài: chữ trên nút và giá trị `auto` gửi đi (null = về mặc định). */
 export function autoSwitch(track: Pick<LocalTrack, "analysed" | "vocalsLikely" | "auto">): { text: string; next: "on" | "off" | null } {
-  if (track.auto === "off") return { text: "Cho máy tự chọn lại", next: null };
-  if (track.auto === "on") return { text: "Thôi, không cho máy tự chọn", next: null };
-  return hasVocals(track) ? { text: "Vẫn cho máy tự chọn", next: "on" } : { text: "Đừng tự chọn bài này", next: "off" };
+  if (track.auto === "off") return { text: "Tự chọn lại", next: null };
+  if (track.auto === "on") return { text: "Theo mặc định", next: null };
+  return hasVocals(track) ? { text: "Cho tự chọn", next: "on" } : { text: "Tắt tự chọn", next: "off" };
 }
 
 /** Trạng thái phân tích, nói bằng điều người nghe thấy (không nói model nào). */

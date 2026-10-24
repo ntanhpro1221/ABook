@@ -44,8 +44,8 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
   if (status.ready && !status.outdated) return <MotionRegion />;
   return (
     <MotionRegion as="div" className="rounded-lg border border-line bg-panel-2 p-3 text-sm" role="group" aria-label="Công cụ ghép âm thanh">
-      <p className="font-medium">{status.outdated ? "Công cụ ghép âm thanh cần cập nhật" : remote ? "Máy tính chưa có công cụ ghép âm thanh" : "Máy chưa có công cụ ghép âm thanh"}</p>
-      <p className="mt-0.5 text-fg-2">{status.outdated ? "Có bản mới để ghép lời đọc thành file MP3 / M4B" : "Cần nó để ghép lời đọc thành file MP3 / M4B. Tải một lần, dùng mãi"} (khoảng {formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
+      <p className="font-medium">{status.outdated ? "Cập nhật công cụ" : remote ? "Thiếu công cụ ghép" : "Thiếu công cụ ghép"}</p>
+      <p className="mt-0.5 text-fg-2">{status.outdated ? "Có bản mới để ghép lời đọc thành file MP3 / M4B" : "Tải một lần để ghép MP3 / M4B"} (khoảng {formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
       {status.downloading ? (
         <div className="mt-2 flex items-center gap-3">
           <Progress value={ffmpegPercent(status) / 100} size="sm" running label="Đang tải công cụ ghép âm thanh" />
@@ -96,7 +96,7 @@ export interface AudiobookFormProps {
 export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg, onDownload, onStopDownload, music = false, onMusic }: AudiobookFormProps) {
   const notice = voice ? wholeBookNotice(voice) : "";
   return (
-    <div className="flex flex-col gap-4">
+    <MotionRegion className="flex flex-col gap-4">
       <div role="radiogroup" aria-label="Kiểu file" onKeyDown={radioGroupKeys(FORMATS, format, onFormat)} className="grid gap-2 sm:grid-cols-2">
         {FORMAT_CHOICES.map((choice, index) => (
           <button
@@ -143,9 +143,9 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
       {ffmpeg && <FfmpegNeeded status={ffmpeg} onDownload={onDownload} onStop={onStopDownload} />}
 
       <p className="text-xs text-fg-3">
-        Chạy nền, bạn cứ nghe. Huỷ thì phần đã làm được giữ.
+        Chạy nền; huỷ vẫn giữ phần đã làm.
       </p>
-    </div>
+    </MotionRegion>
   );
 }
 

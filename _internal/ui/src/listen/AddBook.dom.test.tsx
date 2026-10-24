@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { AddBookDialog } from "./AddBook";
 
-const importer = vi.hoisted(() => ({ preview: vi.fn(), discard: vi.fn(async () => {}), choose: vi.fn(), chooseMany: vi.fn() }));
+const importer = vi.hoisted(() => ({ typedPath: true, preview: vi.fn(), discard: vi.fn(async () => {}), choose: vi.fn(), chooseMany: vi.fn() }));
 vi.mock("./source", () => ({ useSource: () => ({ textImport: importer }) }));
 let root: Root, host: HTMLDivElement, client: QueryClient;
 let start: ReturnType<typeof vi.fn>;
@@ -67,4 +67,32 @@ for (const preview of [false, true]) for (const method of ["X", "Escape"]) it(`c
   expect(start).not.toHaveBeenCalled();
   expect(document.querySelector('[role="dialog"][data-state="open"]')).toBeNull();
   if (preview) expect(importer.discard).toHaveBeenCalledWith({ ref: "a.txt", name: "a.txt" });
+});
+
+it.each([false, true])("hàng ba cuốn giữ chân hộp và tôn trọng cảm ứng=%s khi chuyển cuốn", async touch => {
+  Reflect.deleteProperty(document, "startViewTransition");
+  vi.spyOn(window, "matchMedia").mockImplementation(query => ({ matches: query === "(any-pointer: coarse)" && touch, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }) as unknown as MediaQueryList);
+  importer.chooseMany.mockResolvedValue(["a", "b", "c"].map(name => ({ name: `${name}.txt`, choice: { ref: `${name}.txt`, name: `${name}.txt` } })));
+  importer.preview.mockImplementation(async (choice: { ref: string }) => ({ title: choice.ref, chapters: Array.from({ length: 20 }, (_, i) => ({ index: i + 1, title: `Chương ${i + 1}`, words: 100 })), notes: [] }));
+  const finish = () => act(() => {
+    for (const result of vi.mocked(HTMLElement.prototype.animate).mock.results) (result.value as Animation).onfinish?.(new Event("finish") as AnimationPlaybackEvent);
+  });
+  await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><Book /></MemoryRouter></QueryClientProvider>));
+  const path = document.querySelector<HTMLInputElement>('[role="dialog"] input[data-autofocus]');
+  expect(Boolean(path)).toBe(!touch);
+  await act(async () => [...document.querySelectorAll("button")].find(button => button.textContent === "Chọn file sách")!.click());
+  for (const name of ["a.txt", "b.txt", "c.txt"]) {
+    await finish();
+    const dialog = document.querySelector('[role="dialog"]')!;
+    const title = dialog.querySelector<HTMLInputElement>('input[placeholder="Tên hiển thị trong thư viện"]')!;
+    expect(title.value).toBe(name);
+    expect(document.activeElement === title).toBe(!touch);
+    const footer = dialog.querySelector<HTMLElement>("[data-add-book-actions]")!;
+    expect(footer.classList.contains("sticky")).toBe(true);
+    expect(footer.classList.contains("bottom-0")).toBe(true);
+    expect(footer.textContent).toContain("Thêm vào thư viện");
+    const scroller = footer.closest<HTMLElement>(".overflow-y-auto");
+    expect(scroller).not.toBeNull(); expect(dialog.contains(scroller)).toBe(true);
+    if (name !== "c.txt") await act(async () => [...footer.querySelectorAll("button")].find(button => button.textContent === "Bỏ cuốn này")!.click());
+  }
 });

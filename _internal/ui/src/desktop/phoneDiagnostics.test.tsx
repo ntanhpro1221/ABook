@@ -35,7 +35,7 @@ describe("hộp Chẩn đoán điện thoại", () => {
     const error = new ApiError(502, "Pixel: điện thoại cần bản ABook mới hơn (bản này chưa biết gửi nhật ký chẩn đoán)", { reason: "needs-newer" });
     expect(failureView(error).title).toBe(NEEDS_NEWER_TITLE);
     const html = renderToStaticMarkup(<DiagnosticsBody error={error} />);
-    expect(html).toContain("Điện thoại cần bản ABook mới hơn");
+    expect(html).toContain("Cần cập nhật ABook");
     expect(html).toContain("Cập nhật ABook trên điện thoại");
     expect(html).not.toContain("Tailscale");
     expect(html).toContain('role="alert"');
@@ -45,7 +45,7 @@ describe("hộp Chẩn đoán điện thoại", () => {
     const error = new ApiError(502, "Không kết nối được máy Pixel");
     const html = renderToStaticMarkup(<DiagnosticsBody error={error} />);
     expect(html).toContain("Không kết nối được máy Pixel");
-    expect(html).toContain("Cho máy khác nghe thư viện này");
+    expect(html).toContain("bật chia sẻ thư viện");
     expect(html).toContain("Tailscale");
   });
 

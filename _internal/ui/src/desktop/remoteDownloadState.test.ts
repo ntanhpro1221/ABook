@@ -52,9 +52,9 @@ describe("tải sách của máy khác về máy này", () => {
   });
 
   it("đứt ngay từ đầu (0%): không nói “phần đã tải vẫn giữ” và menu vẫn là “Tải về máy”", () => {
-    const note = downloadNote(status({ state: "failed", error: "Không kết nối được máy Phòng khách - máy tắt, khác mạng hay chưa bật “Cho phép thiết bị khác kết nối qua Wi-Fi”" }), "Phòng khách")!;
+    const note = downloadNote(status({ state: "failed", error: "Không kết nối được máy Phòng khách - máy tắt, khác mạng hay chưa bật “Kết nối Wi-Fi”" }), "Phòng khách")!;
     expect(note.title).toBe("Chưa tải xong về máy (0%)");
-    expect(note.detail).toBe("Không kết nối được máy Phòng khách - máy tắt, khác mạng hay chưa bật “Cho phép thiết bị khác kết nối qua Wi-Fi”.");
+    expect(note.detail).toBe("Không kết nối được máy Phòng khách - máy tắt, khác mạng hay chưa bật “Kết nối Wi-Fi”.");
     expect(downloadMenuLabel(status({ state: "failed", filesDone: 1 }), "").label).toBe("Tải về máy");
   });
 

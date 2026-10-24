@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
 
@@ -73,18 +74,18 @@ export function useAvailableModelNames(): string[] | undefined {
 /** Ô chọn ở bước Chất lượng; không có model nào khác mặc định (hay Ollama tắt) thì không hiện gì - không có gì để chọn. */
 export function AnalysisModelPicker({ value, onChange }: { value: string; onChange: (model: string) => void }) {
   const { data } = useAnalysisModels();
-  if (!data) return null;
+  if (!data) return <MotionRegion />;
   const others = data.models.filter((model) => modelLabel(model.name) !== modelLabel(data.default));
-  if (!others.length) return null;
+  if (!others.length) return <MotionRegion />;
   const defaultSize = data.models.find((model) => modelLabel(model.name) === modelLabel(data.default))?.size ?? 0;
   return (
+    <MotionRegion>
     <details className="group mt-8 max-w-2xl" open={Boolean(value)}>
       <summary className="cursor-pointer text-sm font-medium text-fg-2 hover:text-fg">
-        Nâng cao: bộ phân tích truyện{value ? ` - bản thử nghiệm` : ""}
+        Bộ phân tích truyện
       </summary>
       <p className="mt-2 text-[0.8125rem] text-fg-2 text-pretty">
-        Bộ phân tích đoán ai nói câu nào, cảm xúc ra sao. Không chắc thì để mặc định - bản khác chỉ dùng cho cuốn này, khi muốn thử một
-        bản mới trên sách thật.
+        Chỉ chọn bản khác khi muốn thử trên cuốn này.
       </p>
       <label htmlFor="analysis-model" className="sr-only">
         Bộ phân tích truyện
@@ -112,5 +113,6 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
       </p>
       <p className="mt-1 text-xs text-fg-3 break-all">Tên kỹ thuật: {modelLabel(value || data.default)}</p>
     </details>
+    </MotionRegion>
   );
 }

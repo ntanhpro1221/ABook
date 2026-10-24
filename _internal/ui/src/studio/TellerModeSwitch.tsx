@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mic2 } from "lucide-react";
 import { useState } from "react";
@@ -10,7 +11,7 @@ import { pollDelay, retryUnlessGone } from "./polling";
 import { costText, needsConfirm, TELLER_ELSEWHERE, TELLER_TITLE, tellerHint, type TellerModeView } from "./tellerMode";
 
 /** Sách đang chạy: Tạm dừng chưa đủ (máy vẫn giữ sách), phải “Dừng”. Dừng lúc này an toàn vì công tắc chỉ mở sau khi máy đã đọc hiểu xong truyện. */
-const BUSY_NOTE = "Sách đang chạy - bấm “Dừng” rồi hãy đổi (Tạm dừng chưa đủ). Dừng lúc này không làm sách thành một quyển khác; đổi xong bấm “Tiếp tục”.";
+const BUSY_NOTE = "Dừng sau phân tích để đổi, rồi Tiếp tục; Tạm dừng chưa đủ.";
 
 /** Công tắc "Người kể xưng “tôi” tự kể chuyện" của một cuốn (webui/teller_mode.py), dưới hàng "Người kể chuyện" của tab Nhân vật.
  *  Mặc định tắt. Sách đã có bản thu thì bật / tắt hiện trước số câu phải thu lại và chờ bạn xác nhận; sách đang chạy thì phải bấm “Dừng” trước
@@ -43,7 +44,7 @@ export function TellerModeSwitch({ book, className }: { book: BookSummary; class
       toast.error("Chưa đổi được", { description: error.message });
     },
   });
-  if (!data?.available) return null;
+  if (!data?.available) return <MotionRegion />;
   const on = data.mode === "teller";
   const busy = Boolean(data.castLocked && (book.running || book.starting));
   const readOnly = data.editableHere === false;  // điện thoại mở file dự án: xem được, đổi ở máy tính có Studio
@@ -54,22 +55,22 @@ export function TellerModeSwitch({ book, className }: { book: BookSummary; class
     else save.mutate({ mode, recorded: data.plan?.recorded ?? 0 });
   };
   return (
-    <>
+    <MotionRegion>
       <label htmlFor={id} className={cn("mt-3 flex items-start gap-3 rounded-xl border border-line bg-panel p-4 text-left", className)}>
         <Switch id={id} labelledBy={`${id}-name`} describedBy={`${id}-hint`} checked={on} disabled={save.isPending || busy || readOnly} onCheckedChange={change} />
         <span>
           <span id={`${id}-name`} className="block text-sm font-medium text-fg">{TELLER_TITLE}</span>
-          <span id={`${id}-hint`} className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
+          <MotionRegion as="span" id={`${id}-hint`} className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
             {readOnly ? tellerHint(on) : busy ? BUSY_NOTE : tellerHint(on)}
             {readOnly && ` ${TELLER_ELSEWHERE}`}
-            {!readOnly && !busy && data.castLocked && !needsConfirm(data) && !on && " Chưa câu nào bị ảnh hưởng đã được thu nên đổi không tốn gì."}
-          </span>
+            {!readOnly && !busy && data.castLocked && !needsConfirm(data) && !on && ""}
+          </MotionRegion>
         </span>
       </label>
       <Dialog
         open={asking !== null}
         onOpenChange={(open) => !open && setAsking(null)}
-        title={asking === "teller" ? "Cho người kể “tôi” tự kể chuyện?" : "Trả câu kể về giọng dẫn?"}
+        title={asking === "teller" ? "Bật giọng tự kể?" : "Dùng giọng dẫn?"}
         description={costText(data.plan, asking === "teller")}
       >
         <div className="mt-5 dialog-actions">
@@ -81,6 +82,6 @@ export function TellerModeSwitch({ book, className }: { book: BookSummary; class
           </Button>
         </div>
       </Dialog>
-    </>
+    </MotionRegion>
   );
 }
