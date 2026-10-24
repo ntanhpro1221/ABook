@@ -401,17 +401,20 @@ const Chunk = memo(function Chunk({ chunk, ...props }: { chunk: ChunkItems } & M
   );
 });
 
-type ParagraphItems = { key: number; first: number; last: number; items: { index: number; segment: ScriptSegment }[] };
+type ParagraphItems = { key: number; first: number; last: number; items: { index: number; segment: ScriptSegment; showSpeaker: boolean }[] };
 
 /** Câu của chương gom theo đoạn (số `paragraph` liền nhau), kèm chỉ số câu đầu / cuối của đoạn. */
 function paragraphsOf(script: Script): ParagraphItems[] {
   const paragraphs: ParagraphItems[] = [];
   script.segments.forEach((segment, index) => {
+    const previous = script.segments[index - 1];
+    const isSpeech = (item: ScriptSegment | undefined) => item?.kind === "dialogue" || item?.kind === "thought";
+    const showSpeaker = isSpeech(segment) && (!isSpeech(previous) || previous?.speaker !== segment.speaker);
     const last = paragraphs[paragraphs.length - 1];
     if (last && last.key === segment.paragraph) {
-      last.items.push({ index, segment });
+      last.items.push({ index, segment, showSpeaker });
       last.last = index;
-    } else paragraphs.push({ key: segment.paragraph, first: index, last: index, items: [{ index, segment }] });
+    } else paragraphs.push({ key: segment.paragraph, first: index, last: index, items: [{ index, segment, showSpeaker }] });
   });
   return paragraphs;
 }
@@ -457,7 +460,7 @@ const Paragraph = memo(function Paragraph({
       tappable && "cursor-pointer",
       segment.kind === "thought" && "italic",
       index === playing && "read-along-active",
-      heard >= 0 && index < heard && "text-fg-2",
+      heard >= 0 && index < heard && segment.kind !== "heading" && "text-fg-2",
       // Câu đang chọn: gạch chân màu nhấn - khung bao từng dòng của câu dài thành nhiều ô rời, và gạch chân không lẫn với nền của câu đang phát.
       index === selected && "decoration-accent",
     ),
@@ -475,10 +478,10 @@ const Paragraph = memo(function Paragraph({
   const sceneBreak = paragraph.items.length === 1 && (first.segment.sceneBreak || SCENE_BREAK.test(first.segment.text));
   return (
     <p className={sceneBreak ? "pl-[0.3em] text-center tracking-[0.3em] text-fg-2" : "text-pretty"}>
-      {paragraph.items.map(({ index, segment }) => (
+      {paragraph.items.map(({ index, segment, showSpeaker }) => (
         <span key={index}>
-          {speakers && segment.speaker && (segment.kind === "dialogue" || segment.kind === "thought") && (
-            <span className="mr-1.5 inline-block -translate-y-px rounded bg-accent-soft px-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-accent-text">
+          {speakers && segment.speaker && showSpeaker && (
+            <span className="mr-1.5 inline-block text-xs font-medium text-fg-2">
               {segment.speaker}
             </span>
           )}

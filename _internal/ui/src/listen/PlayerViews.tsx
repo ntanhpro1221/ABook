@@ -204,24 +204,23 @@ function SeekBar({ large = false }: { large?: boolean }) {
 
 // ---- Nút điều khiển ------------------------------------------------------------------------------------
 
-// Vẽ riêng, không đè chữ lên RotateCcw/RotateCw: vòng mũi tên chừa khe ở đầu, mũi tên nằm ngoài vòng, số nằm gọn trong
-// lòng vòng bằng <text> cùng hệ toạ độ - chữ co giãn theo biểu tượng, không bao giờ chạm nét (chủ sách 24-10: số 15 đè lên vòng).
+// Cung mũi tên ở trên, số 15 ở dưới: chữ vẫn >= 12 px trong ô glyph 18 px, không chạm nét mũi tên.
 function skipIcon(forward: boolean) {
   return function SkipGlyph({ className, strokeWidth = 1.9 }: { className?: string; strokeWidth?: number }) {
     return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" aria-hidden className={cn("size-6 shrink-0", className)}>
-        <g transform={forward ? "matrix(-1 0 0 1 24 0)" : undefined}>
-          <path d="M12 3.5A8.5 8.5 0 1 1 5.04 7.12" />
-          <path d="M13.4 1.3 11 3.5l2.4 2.2" />
+        <g transform={forward ? undefined : "matrix(-1 0 0 1 24 0)"}>
+          <path d="M3 11a9 9 0 0 1 17-4" />
+          <path d="M20 3v4h-4" />
         </g>
         <text
           x="12"
-          y="12.6"
+          y="16"
           textAnchor="middle"
           dominantBaseline="central"
           fill="currentColor"
           stroke="none"
-          fontSize="8.5"
+          fontSize="16"
           fontWeight="600"
           letterSpacing="-0.2"
           style={{ fontFamily: "inherit", fontVariantNumeric: "tabular-nums" }}
@@ -702,7 +701,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
       <ScrollHint className="min-h-0 flex-1 overflow-y-auto p-1">
         {groupedVoices(voices).map((group) => (
           <div key={group.provider} role="group" aria-label={group.title} className="mb-1.5">
-            <div className="px-2 pb-0.5 pt-1 text-[0.6875rem] font-semibold uppercase tracking-wider text-fg-3">{group.title}</div>
+            <div className="label-section px-2 pb-0.5 pt-1 text-fg-3">{group.title}</div>
             {voiceSections(group.voices).map((section) => (
               <div key={section.label ?? ""}>
                 {section.label && <div className="px-2 pb-0.5 pt-1 text-xs font-medium text-fg-2">{section.label}</div>}
@@ -742,7 +741,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                           data-arrow-side
                           onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}
                           aria-label={`${playing ? "Dừng" : "Thử"} giọng ${voice.name}`}
-                          className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium text-fg-2 hover:bg-hover hover:text-fg max-sm:h-[48px]"
+                          className="touch-box inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium text-fg-2 hover:bg-hover hover:text-fg max-sm:h-[48px]"
                         >
                           {sample.loading === voice.id ? <Loader2 className="size-3.5 animate-spin" /> : playing ? <Square className="size-3.5" /> : <Play className="size-3.5" />}
                           {playing ? "Dừng" : "Thử"}
@@ -1106,7 +1105,7 @@ function SleepPicker({
           </Popover.Close>
         ))}
       </div>
-      <div className="flex items-center gap-1 px-1 pb-1">
+      <div className="flex items-center gap-1 px-1 pb-1 max-sm:-mx-[16px]">
         <button
           type="button"
           aria-label="Bớt 5 phút"
@@ -1396,7 +1395,7 @@ function TrackSubtitle() {
   return (
     <MotionRegion>
       {purpose === "review" && (
-        <span className="mr-1.5 inline-block rounded bg-info-soft px-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-info">Nghe kiểm</span>
+        <span className="mr-1.5 inline-block rounded bg-info-soft px-1.5 text-xs font-medium text-info">Nghe kiểm</span>
       )}
       {preparing ? PREPARING_VOICE : atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : track.bookTitle}
     </MotionRegion>
@@ -1925,9 +1924,9 @@ function BookmarkRow({
     });
   };
   return (
-    <MotionRegion as="div" className="group rounded-lg px-3 py-2.5 hover:bg-hover">
+    <MotionRegion as="div" className="group/bookmark rounded-lg px-3 py-2.5 hover:bg-hover">
       <div className="flex items-start gap-2">
-        <button type="button" onClick={() => onJump(mark)} className="min-w-0 flex-1 text-left">
+        <button type="button" onClick={() => onJump(mark)} className="touch-hit min-w-0 flex-1 text-left">
           <span className="block truncate text-sm font-medium">{chapter ? chapter.subtitle || chapter.title : "Chương đã bị gỡ"}</span>
           <span className="tabular block text-xs text-fg-2">
             {chapter?.subtitle ? `${chapter.title} · ` : ""}
@@ -1937,10 +1936,10 @@ function BookmarkRow({
           </span>
           {quote && <span className="mt-1 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(quote)}”</span>}
         </button>
-        {/* Biểu tượng thùng rác thẳng mép phải như "…" của hàng chương (soát 24-10): điện thoại dồn biểu tượng về mép phải nền chạm 48 px
-            (bút theo cùng để khoảng hai biểu tượng giữ nguyên), máy tính bù nửa phần nền thừa của nút 28 px. */}
-        <IconButton ref={editButton} label="Sửa ghi chú" icon={Pencil} size="sm" className="max-sm:!justify-end" onClick={() => editing ? cancelEdit() : onEdit(true)} />
-        <IconButton label="Xoá dấu trang" icon={Trash2} size="sm" className="max-sm:!justify-end sm:-mr-[5px]" onClick={remove} />
+        <div className="flex shrink-0 gap-2 transition-opacity duration-motion-fast [@media(hover:hover)_and_(pointer:fine)]:opacity-0 group-hover/bookmark:opacity-100 group-focus-within/bookmark:opacity-100">
+          <IconButton ref={editButton} label="Sửa ghi chú" icon={Pencil} size="sm" className="max-sm:!justify-end" onClick={() => editing ? cancelEdit() : onEdit(true)} />
+          <IconButton label="Xoá dấu trang" icon={Trash2} size="sm" className="max-sm:!justify-end sm:-mr-[5px]" onClick={remove} />
+        </div>
       </div>
       {editing ? (
         <form
@@ -1967,17 +1966,17 @@ function BookmarkRow({
               }}
               placeholder="Ghi chú cho dấu trang này"
               aria-label="Ghi chú"
-              className="h-9 min-w-0 flex-1 rounded-md border border-line bg-bg px-2 text-sm outline-none focus:border-focus"
+              className="touch-box h-9 min-w-0 flex-1 rounded-md border border-line bg-bg px-2 text-sm outline-none focus:border-focus"
             />
-            <button type="submit" className="rounded-md bg-accent px-3 text-sm font-medium text-accent-ink">
+            <button type="submit" className="touch-box rounded-md bg-accent px-3 text-sm font-medium text-accent-ink">
               Lưu
             </button>
-            <button type="button" className="rounded-md px-3 text-sm text-fg-2 hover:bg-hover" onClick={cancelEdit}>Huỷ</button>
+            <button type="button" className="touch-box rounded-md px-3 text-sm text-fg-2 hover:bg-hover" onClick={cancelEdit}>Huỷ</button>
           </div>
           <div className="tabular text-right text-[0.6875rem] text-fg-2">{note.length}/500</div>
         </form>
       ) : mark.note ? (
-        <p className="mt-1.5 whitespace-pre-wrap rounded-md bg-sunken px-2.5 py-1.5 text-sm text-fg-2">{mark.note}</p>
+        <p className="mt-1.5 w-fit max-w-full whitespace-pre-wrap break-words py-1.5 text-sm text-fg-2">{mark.note}</p>
       ) : null}
     </MotionRegion>
   );
@@ -2021,7 +2020,7 @@ export function BookmarkList({
   // Thêm / xoá dấu trang: hàng mở ra hay khép lại tại chỗ (shared/motion.ts useListPresence), không nhảy cả danh sách.
   const rows = useListPresence(sorted, bookmarkKey);
   return (
-    <><MotionPresence open={!rows.length && Boolean(empty)}>{empty}</MotionPresence><ul className="space-y-1">
+    <><MotionPresence open={!rows.length && Boolean(empty)}>{empty}</MotionPresence><ul className="space-y-1 sm:max-w-[68ch]">
       {rows.map(({ key, item: mark, state, ref }) => (
         <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
           <BookmarkRow
@@ -2413,7 +2412,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   const shown = (value: Panel) => showPanel && panel === value;
 
   if ((!open && !presence.mounted) || !track) return <MotionRegion />;
-  // Mỗi cuốn một không khí: màu chủ đạo của bìa (máy chủ tính sẵn, đã lọc), không có thì màu của bìa vẽ từ tên - pha 10 % / 16 % vào nền
+  // Mỗi cuốn một không khí: màu chủ đạo của bìa (máy chủ tính sẵn, đã lọc), không có thì màu của bìa vẽ từ tên - pha 6 % / 12 % vào nền
   // (styles.css .now-playing-tint, docs/DESIGN.md 5.1); đổi cuốn thì nền mờ chéo sang màu mới.
   const tint = { "--cover-tint": coverColor(track.bookCover?.color) || coverStyle(track.bookTitle).from } as CSSProperties;
   return (
@@ -2436,13 +2435,13 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
           "flex shrink-0 flex-col",
           // Điện thoại xoay ngang chỉ cao ~360px: cả cột không vừa - cho cả cột cuộn dọc (soát UX a9). Màn dọc đủ chỗ nên không có gì để cuộn.
           // Cửa sổ vừa (~900px): cột trái co về 320px dưới lg (soát UX 29-09).
-          mobile ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-6 pt-2" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
+          mobile ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-[20px] pb-6 pt-2" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
         )}
       >
         {/* Thanh đầu: thu nhỏ · ĐANG NGHE · "…" - không gì khác. */}
         <div className="slot-row [--slot:clamp(1.125rem,0.75rlh,1.96875rem)]">
           <IconButton label={withShortcut("Thu nhỏ", "Esc")} icon={ChevronDown} className="touch-box" onClick={() => setExpanded(false)} />
-          <span className="text-xs font-semibold uppercase tracking-[0.06em] text-fg-2">Đang nghe</span>
+          <span className="label-section text-fg-2">Đang nghe</span>
           <div>
             <MoreMenu scope="screen">
               <BookProgressLine className="mb-1 border-b border-line px-2 pb-2 pt-1" />
@@ -2500,7 +2499,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
           aria-pressed={mobile ? undefined : shown("text")}
           {...keepFocus}
           className={cn(
-            "mt-5 flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-hover text-sm font-medium transition-[transform,color,background-color] duration-motion-fast hover:bg-line active:scale-[0.97]",
+            "touch-hit mt-5 flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-hover text-sm font-medium transition-[transform,color,background-color] duration-motion-fast hover:bg-line active:scale-[0.97]",
             !mobile && shown("text") ? "text-accent-text" : "text-fg",
           )}
         >

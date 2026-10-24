@@ -1,4 +1,6 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { MotionPresence } from "@/shared/MotionPresence";
+import { Button } from "@/shared/ui";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Hand, Moon, Play, Smartphone, TimerReset, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -148,7 +150,7 @@ export function MorningRecap({ className }: { className?: string }) {
 
   return (
     <MotionRegion as="section" className={cn("relative overflow-hidden rounded-2xl border border-line bg-panel p-4 shadow-card sm:p-5", className)} aria-label={sessionLabel(session.endedAt)}>
-      <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="absolute right-[2px] top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
+      <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="touch-hit absolute right-[2px] top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
         <X className="size-4" />
       </button>
       <div className="flex items-center gap-2 pr-11 label-section text-accent-text">
@@ -158,11 +160,11 @@ export function MorningRecap({ className }: { className?: string }) {
 
       {/* Nét ✕ và chữ "Tìm đúng câu" bù đệm nút (right-[2px], -mr-4) để chạm đúng mép chữ như giờ của các mốc. */}
       {/* Các mốc là hàng phẳng trong thẻ (không thẻ lồng thẻ - soát 24-10 V04): mốc gợi ý nổi bằng biểu tượng + tên màu nhấn, không khung. */}
-      <ol className="mt-3 grid gap-x-6 gap-y-1 lg:grid-cols-2">
+      <ol className="mt-3 grid min-w-0 grid-cols-1 gap-x-6 gap-y-1 lg:grid-cols-2">
         {markers.map((marker) => {
           const sentence = sentenceAt(scripts.data?.[marker.chapterId], marker.seconds);
           return (
-            <li key={marker.key}>
+            <li key={marker.key} className="min-w-0">
               <button
                 type="button"
                 onClick={() => void resume(marker.chapterId, marker.seconds)}
@@ -176,10 +178,10 @@ export function MorningRecap({ className }: { className?: string }) {
                     <span className={cn("text-sm font-semibold", marker.suggested && "text-accent-text")}>{marker.label}</span>
                     <span className="tabular shrink-0 text-xs text-fg-2">{timeOf(marker.at)}</span>
                   </span>
-                  <span className="block text-xs text-fg-2">{marker.hint}</span>
-                  <span className="tabular flex gap-1.5 text-xs text-fg-2">
+                  <span className="block truncate text-xs text-fg-2">{marker.hint}</span>
+                  <span className="tabular flex min-w-0 text-xs text-fg-2">
                     <span className="min-w-0 truncate">{marker.chapterTitle}</span>
-                    <span className="shrink-0">{formatClock(marker.seconds)}</span>
+                    <span className="shrink-0 whitespace-pre">{` · ${formatClock(marker.seconds)}`}</span>
                   </span>
                   {sentence && <span className="mt-1.5 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}
                 </span>
@@ -193,19 +195,19 @@ export function MorningRecap({ className }: { className?: string }) {
         <button
           type="button"
           onClick={() => void resume(suggested.chapterId, suggested.seconds)}
-          className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 font-semibold text-accent-ink sm:flex-none"
+          className="touch-box flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-accent px-4 font-semibold text-accent-ink sm:flex-none"
         >
-          <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe tiếp từ {sentenceAt(script, suggested.seconds) ? "câu này" : formatClock(suggested.seconds)}
+          <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe từ đây
         </button>
         {script?.timed && (
-          <button type="button" onClick={() => setScrubbing((value) => !value)} className="-mr-4 h-11 rounded-xl px-4 text-sm font-medium text-fg-2 transition-colors hover:bg-hover hover:text-fg">
+          <Button variant="ghost" size="lg" onClick={() => setScrubbing((value) => !value)} className="touch-box -mr-4 rounded-lg px-4 text-sm" aria-expanded={scrubbing}>
             {scrubbing ? "Thu gọn" : "Tìm đúng câu"}
-          </button>
+          </Button>
         )}
       </div>
 
-      {scrubbing && script?.timed && (
-        // Vạch trên đúng mép chữ; vùng cuộn nới 7 px mỗi bên để nền khi rê của hàng (-mx-2) không bị cắt / sinh cuộn ngang.
+      <MotionPresence open={scrubbing && Boolean(script?.timed)}>
+        {/* Vạch trên đúng mép chữ; vùng cuộn nới 7 px mỗi bên để hàng không bị cắt hay sinh cuộn ngang. */}
         <div className="mt-4 border-t border-line"><div className="-mx-2 max-h-80 overflow-y-auto px-2">
           <p className="sticky top-0 z-[1] bg-panel py-2 text-xs text-fg-2">Chọn câu cuối cùng còn nhớ:</p>
           {scrub.map(group => <section key={group.chapterId} aria-label={group.title}>
@@ -217,13 +219,13 @@ export function MorningRecap({ className }: { className?: string }) {
               onClick={() => void resume(group.chapterId, segment.start ?? 0)}
               className="-mx-2 block w-[calc(100%+14px)] rounded-lg px-2 py-2.5 text-left text-[0.9375rem] leading-snug hover:bg-hover active:bg-hover"
             >
-              {segment.speaker && <span className="mr-1.5 text-[0.6875rem] font-semibold uppercase text-accent-text">{segment.speaker}</span>}
+              {segment.speaker && <span className="mr-1.5 text-xs font-medium text-fg-2">{segment.speaker}</span>}
               {segment.text}
             </button>
             ))}
           </section>)}
         </div></div>
-      )}
+      </MotionPresence>
     </MotionRegion>
   );
 }
