@@ -1,10 +1,11 @@
 import { formatSize } from "./format";
 
 // Bản chẩn đoán của điện thoại (mobile/.../Diagnostics.kt) - máy tính đọc qua `GET /api/remote/<mã>/diagnostics`, điện thoại tự xem ở Cài đặt → Chẩn đoán.
-// Mọi phần đều tuỳ chọn: một phần lỗi thì phần ấy là `{ error }` còn cả bản vẫn ra, và bản app cũ thiếu phần mới.
+// Mọi phần đều tuỳ chọn. Lỗi thu thập mới có collectionFailed; bản cũ chỉ có { error } vẫn đọc được.
 
 export interface DiagnosticsFailure {
   error: string;
+  collectionFailed?: boolean;
 }
 type Part<T> = (T & Partial<DiagnosticsFailure>) | DiagnosticsFailure;
 
@@ -62,8 +63,20 @@ export function workProgressRows(report: DiagnosticsReport): DiagnosticsRow[] {
 }
 
 function failed(part: unknown): string | null {
-  const error = part && typeof part === "object" && !Array.isArray(part) ? (part as Partial<DiagnosticsFailure>).error : undefined;
-  return typeof error === "string" ? `không đọc được (${error})` : null;
+  if (!part || typeof part !== "object" || Array.isArray(part)) return null;
+  const { error, collectionFailed } = part as Partial<DiagnosticsFailure>;
+  if (typeof error !== "string" || !error.trim()) return null;
+  // Playback.state luôn có error: lỗi phát vẫn là trạng thái đã thu được, không phải lỗi thu thập.
+  if (!collectionFailed && ["bookId", "bookTitle", "playing", "position"].some(key => key in part)) return null;
+  return "không đọc được";
+}
+
+/** Nguyên văn kỹ thuật chỉ để trong phần mở rộng; không đưa vào các dòng tóm tắt. */
+export function failureDetails(report: DiagnosticsReport): DiagnosticsRow[] {
+  return Object.entries(report).flatMap(([label, part]) => {
+    const error = part && typeof part === "object" && !Array.isArray(part) ? (part as Partial<DiagnosticsFailure>).error : undefined;
+    return typeof error === "string" && error.trim() ? [{ label, value: error.trim() }] : [];
+  });
 }
 
 const yes = (value: boolean | undefined) => (value ? "có" : "không");
@@ -122,7 +135,7 @@ export function summaryRows(report: DiagnosticsReport): DiagnosticsRow[] {
     const playback = report.playback as { bookTitle?: string; chapterId?: number; position?: number; playing?: boolean; error?: string };
     if (!playback.bookTitle) return "chưa mở cuốn nào";
     const place = typeof playback.position === "number" ? ` · ${Math.floor(playback.position / 60)} phút ${Math.floor(playback.position % 60)} giây` : "";
-    return `${playback.bookTitle}${playback.chapterId !== undefined ? ` · chương ${playback.chapterId}` : ""}${place} · ${playback.playing ? "đang phát" : "tạm dừng"}${playback.error ? ` · lỗi: ${playback.error}` : ""}`;
+    return `${playback.bookTitle}${playback.chapterId !== undefined ? ` · chương ${playback.chapterId}` : ""}${place} · ${playback.playing ? "đang phát" : "tạm dừng"}${playback.error?.trim() ? " · có lỗi phát" : ""}`;
   });
   add("Việc nền", report.work, () => {
     const work = Array.isArray(report.work) ? report.work : [];

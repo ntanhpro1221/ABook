@@ -8,8 +8,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 ### Giao diện
+- Hiệu năng, Bộ nhớ và lời nhắc màn đọc gọn hơn; chi tiết lỗi chẩn đoán có phần mở rộng riêng.
 - Biểu tượng, số đếm và nhãn nút đổi mượt hơn; thông báo nhập PDF ngắn và đồng nhất trên máy tính, điện thoại.
 - Gấp bộ sách, nhóm chương/nhân vật, các bước Studio và chi tiết tạo sách để trang gọn hơn.
+
+### Sửa lỗi
+- Đóng Thêm sách giữ nền đúng lớp; chẩn đoán Android đọc được máy đã ghép và không báo lỗi khi trình phát bình thường.
 
 ## [0.4.135] - 2026-10-24
 

@@ -81,7 +81,7 @@ export function clearCacheQuestion(usage: ReadAloudCacheUsage): string {
 
 /** Cài đặt > Giọng đọc: bản đọc đã làm của cả máy nặng bao nhiêu ("Bản đọc đã làm chiếm 148 MB trên máy này."). */
 export function storageLabel(usage: Pick<ReadAloudCacheUsage, "total">): string {
-  return usage.total > 0 ? `Bản đọc đã làm chiếm ${formatSize(usage.total)} trên máy này.` : "Chưa có bản đọc nào được lưu trên máy này.";
+  return usage.total > 0 ? `Bản đọc đã làm chiếm ${formatSize(usage.total)} trên máy này.` : "Chưa có bản đọc đã lưu.";
 }
 
 /** Câu hỏi lại trước khi dọn bản đọc của cả máy. */

@@ -1,4 +1,5 @@
-import { emptyLogNote, logLines, summaryRows, workProgressRows, type DiagnosticsReport } from "./diagnostics";
+import { emptyLogNote, failureDetails, logLines, summaryRows, workProgressRows, type DiagnosticsReport } from "./diagnostics";
+import { MoreInfo } from "./SettingsNav";
 
 /** Bản chẩn đoán của điện thoại cho người đọc: tóm tắt từng mục rồi nhật ký cuộn được (dòng mới nhất ở cuối, cuộn sẵn xuống đó). Dùng chung hộp
  *  "Chẩn đoán" của máy tính và màn Cài đặt → Chẩn đoán của điện thoại. */
@@ -6,6 +7,7 @@ export function DiagnosticsView({ report }: { report: DiagnosticsReport }) {
   const rows = [...summaryRows(report), ...workProgressRows(report)];
   const app = logLines(report, "log");
   const cat = logLines(report, "logcat");
+  const errors = failureDetails(report);
   return (
     <div className="space-y-4">
       {rows.length > 0 && (
@@ -18,6 +20,9 @@ export function DiagnosticsView({ report }: { report: DiagnosticsReport }) {
           ))}
         </dl>
       )}
+      {errors.length > 0 && <MoreInfo label="Chi tiết kỹ thuật">
+        <pre className="max-h-72 select-text overflow-auto whitespace-pre-wrap [overflow-wrap:anywhere]">{errors.map(row => `${row.label}: ${row.value}`).join("\n")}</pre>
+      </MoreInfo>}
       <LogBox title={`Nhật ký của ABook (${app.length} dòng)`} lines={app} empty={emptyLogNote(report, "log")} open />
       {(cat.length > 0 || report.logcat !== undefined) && <LogBox title={`Nhật ký hệ thống của app (${cat.length} dòng)`} lines={cat} empty={emptyLogNote(report, "logcat")} />}
       {report.truncated && <p className="text-xs text-fg-3">Nhật ký dài nên đã cắt bớt phần cũ nhất.</p>}
