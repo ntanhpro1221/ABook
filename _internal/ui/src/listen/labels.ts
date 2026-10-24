@@ -14,6 +14,12 @@ export function unquoted(sentence: string): string {
   return sentence.replace(/^[\s“"«「『]+|[\s”"»」』]+$/g, "");
 }
 
+/** Khoảng sau nhãn người nói. Dấu mở câu (“ « — …) không có lề trái trong mặt chữ, nên cùng 5,25 px thì nhãn gần như dính dấu
+ *  (đo 4 px mực so với 7 px khi câu mở bằng chữ): câu mở bằng dấu được thêm cho bằng mắt. */
+export function speakerGap(sentence: string): string {
+  return /^[“"«「『‘'—–-]/.test(sentence) ? "mr-[8px]" : "mr-1.5";
+}
+
 /** Chỗ nghe tiếp: "Chương 3 · 12:04" - cùng một dạng ở thẻ "Đang nghe dở" của Thư viện và nút chính của trang sách. */
 export function resumeWhere(chapterTitle: string, seconds: number): string {
   return chapterTitle ? `${chapterTitle} · ${formatClock(seconds)}` : formatClock(seconds);

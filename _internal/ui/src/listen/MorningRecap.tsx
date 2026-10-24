@@ -9,7 +9,7 @@ import { formatClock } from "@/shared/format";
 import { usePlayListenBook } from "./LibraryScreen";
 import type { NightEvent, NightSession, Script } from "./model";
 import { heardSinceNight } from "./night";
-import { unquoted } from "./labels";
+import { speakerGap, unquoted } from "./labels";
 import { sentenceAt } from "./PlayerViews";
 import { chapterScriptQuery, isMissing, useLastNight, useListenBook, useSource } from "./source";
 
@@ -219,7 +219,7 @@ export function MorningRecap({ className }: { className?: string }) {
               onClick={() => void resume(group.chapterId, segment.start ?? 0)}
               className="-mx-2 block w-[calc(100%+14px)] rounded-lg px-2 py-2.5 text-left text-[0.9375rem] leading-snug hover:bg-hover active:bg-hover"
             >
-              {segment.speaker && <span className="mr-1.5 text-xs font-medium text-fg-2">{segment.speaker}</span>}
+              {segment.speaker && <span className={cn(speakerGap(segment.text), "text-xs font-medium text-fg-2")}>{segment.speaker}</span>}
               {segment.text}
             </button>
             ))}
