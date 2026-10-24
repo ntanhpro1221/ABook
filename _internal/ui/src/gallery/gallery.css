@@ -1,0 +1,109 @@
+/* Vỏ của phòng trưng bày (mục lục + khung xem). Không dùng styles.css của app: vỏ không được đổi giao diện của app trong khung. */
+:root {
+  --g-bg: #f4f5f7;
+  --g-panel: #ffffff;
+  --g-fg: #1b1f24;
+  --g-muted: #5d6673;
+  --g-line: #d9dde3;
+  --g-accent: #2563eb;
+  color-scheme: light;
+}
+:root[data-gallery-theme="dark"] {
+  --g-bg: #0e1115;
+  --g-panel: #161a20;
+  --g-fg: #e7eaee;
+  --g-muted: #9aa3ad;
+  --g-line: #2a3038;
+  --g-accent: #7aa7ff;
+  color-scheme: dark;
+}
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  background: var(--g-bg);
+  color: var(--g-fg);
+  font: 14px/1.5 system-ui, "Segoe UI", sans-serif;
+}
+a {
+  color: var(--g-accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+code {
+  font-size: 12px;
+  color: var(--g-muted);
+}
+.g-muted {
+  color: var(--g-muted);
+  font-weight: normal;
+}
+.g-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--g-line);
+  background: var(--g-panel);
+}
+.g-bar h1 {
+  margin: 0;
+  font-size: 18px;
+}
+.g-spacer {
+  flex: 1;
+}
+.g-switch {
+  display: inline-flex;
+  border: 1px solid var(--g-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.g-switch a {
+  padding: 2px 10px;
+}
+.g-switch a[aria-current="true"] {
+  background: var(--g-accent);
+  color: var(--g-panel);
+}
+.g-index section {
+  padding: 8px 16px 24px;
+}
+.g-index h2 {
+  font-size: 16px;
+  margin: 16px 0 8px;
+}
+.g-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 12px;
+}
+.g-group {
+  background: var(--g-panel);
+  border: 1px solid var(--g-line);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.g-group h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+.g-group ul {
+  margin: 0;
+  padding-left: 18px;
+}
+.g-stage {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+.g-stage iframe {
+  flex: none;
+  border: 1px solid var(--g-line);
+  border-radius: 12px;
+  background: var(--g-panel);
+}
