@@ -233,7 +233,7 @@ function Row({
       )}
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className={cn("rounded-md px-1.5 py-0.5 font-semibold", KIND_TONE[item.kind])}>{KIND_LABEL[item.kind]}</span>
+          <span className={cn("rounded-md px-[7px] py-0.5 font-semibold", KIND_TONE[item.kind])}>{KIND_LABEL[item.kind]}</span>
           {/* Một span, một chỗ ghép " · ": khoảng trắng hai bên mọi dấu chấm giữa luôn đều nhau. */}
           <span
             className="tabular text-fg-2"

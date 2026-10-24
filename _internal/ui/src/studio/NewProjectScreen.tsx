@@ -1973,7 +1973,7 @@ export function NewProjectScreen() {
                   <span className="block text-[0.9375rem] font-medium">Tuỳ chọn</span>
                   <MotionRegion as="span" motionKey={optionsSummary} className="block truncate text-xs text-fg-2">{optionsSummary}</MotionRegion>
                 </span>
-                <ChevronDown className="fold-chevron size-4 shrink-0 text-fg-3" aria-hidden />
+                <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
               </button>
               <Collapse open={optionsOpen} id="new-project-options">
                 <div className="space-y-12 pb-4 pt-4">

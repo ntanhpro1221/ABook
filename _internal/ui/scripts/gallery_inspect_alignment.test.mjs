@@ -48,3 +48,12 @@ describe("baseline, visible control boxes, inline ink on Edge in both themes and
     }
   });
 });
+
+it("catches a 1.5px total spread even when every gap is within 1px of the middle", async () => {
+  const results = await layoutFixtures({ fixture: "inline-gap-spread.html" });
+  for (const r of results) {
+    const findings = r.findings.filter(f => f.metric === "ink-inline-text-gap");
+    expect(findings).toHaveLength(1);
+    expect(findings[0].delta).toBeCloseTo(1.5);
+  }
+}, 60000);
