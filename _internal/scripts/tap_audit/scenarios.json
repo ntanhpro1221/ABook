@@ -4,7 +4,8 @@
     "path": "#/",
     "steps": [
       {
-        "text": "Thêm sách từ file"
+        "text": "Thêm sách",
+        "exact": true
       }
     ],
     "probe": {
@@ -12,7 +13,8 @@
       "type": "input"
     },
     "background": {
-      "text": "Thêm sách từ file"
+      "text": "Thêm sách",
+      "exact": true
     }
   },
   {
@@ -36,11 +38,11 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "text": "Tuỳ chọn khác",
+        "text": "Thêm việc với sách",
         "exact": true
       },
       {
-        "text": "Sửa tên, tác giả, bìa"
+        "text": "Sửa thông tin"
       }
     ],
     "probe": {
@@ -48,7 +50,7 @@
       "type": "input"
     },
     "background": {
-      "text": "Tuỳ chọn khác",
+      "text": "Thêm việc với sách",
       "exact": true
     }
   },
@@ -68,7 +70,7 @@
       "type": "input"
     },
     "background": {
-      "text": "Tuỳ chọn khác",
+      "text": "Thêm việc với sách",
       "exact": true
     }
   },
@@ -77,11 +79,11 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "text": "Tuỳ chọn khác",
+        "text": "Thêm việc với sách",
         "exact": true
       },
       {
-        "text": "Nghe lại từ đầu (hồ sơ mới)"
+        "text": "Hồ sơ mới"
       }
     ],
     "probe": {
@@ -89,7 +91,7 @@
       "type": "input"
     },
     "background": {
-      "text": "Tuỳ chọn khác",
+      "text": "Thêm việc với sách",
       "exact": true
     }
   },
@@ -98,7 +100,7 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "text": "Tuỳ chọn khác",
+        "text": "Thêm việc với sách",
         "exact": true
       },
       {
@@ -110,7 +112,7 @@
       "type": "input"
     },
     "background": {
-      "text": "Tuỳ chọn khác",
+      "text": "Thêm việc với sách",
       "exact": true
     }
   },
@@ -119,7 +121,7 @@
     "path": "#/book/{listen}",
     "steps": [
       {
-        "text": "Tuỳ chọn khác",
+        "text": "Thêm việc với sách",
         "exact": true
       },
       {
@@ -133,7 +135,7 @@
       "closes": true
     },
     "background": {
-      "text": "Tuỳ chọn khác",
+      "text": "Thêm việc với sách",
       "exact": true
     }
   },
