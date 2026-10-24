@@ -424,7 +424,7 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun discover(call: PluginCall) = background(call) {
         val found = JSArray()
-        val seen = mutableSetOf<String>()
+        val hints = DiscoveryHints { hint -> PeerRouting.discovered(context, hint.host, hint.port, hint.claimed) }
         val own = LibraryServer.addresses().toSet() + "127.0.0.1"
         DatagramSocket().use { socket ->
             socket.broadcast = true
@@ -447,8 +447,7 @@ class LibraryPlugin : Plugin() {
                     if (host in own && reply.optInt("port") == LibraryServer.PORT) continue
                     val address = PeerAddresses.discoveryEndpoint(host, reply.opt("port")) ?: continue
                     val port = PeerAddresses.split(address).second
-                    if (reply.optString("app") == "abook" && seen.add(address)) {
-                        PeerRouting.discovered(context, host, port, reply.optString("fingerprint"))
+                    if (reply.optString("app") == "abook" && hints.add(host, port, reply.optString("fingerprint"))) {
                         found.put(JSObject().put("host", host).put("port", port).put("name", reply.optString("name"))
                             .put("kind", reply.optString("kind", "computer")))
                     }
@@ -458,6 +457,7 @@ class LibraryPlugin : Plugin() {
                 }
             }
         }
+        hints.finish()
         call.resolve(JSObject().put("computers", found))
     }
 

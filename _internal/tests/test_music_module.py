@@ -88,6 +88,23 @@ def _names(parts: list[dict[str, Any]]) -> dict[str, str]:
     return {part["id"]: part["state"] for part in parts}
 
 
+def test_export_only_ffmpeg_stamp_controls_music_update_without_module_stamp(machine, tmp_path):
+    folder = tmp_path / "tools" / "ffmpeg"
+    folder.mkdir(parents=True)
+    (folder / "ffmpeg.exe").write_bytes(b"MZ old")
+    (folder / "installed.sha256").write_text("old-export-pin", encoding="utf-8")
+    ffmpeg_setup.configure(folder)
+    assert music_module._read_stamp() == {}
+    assert _names(music_module.status()["parts"])["ffmpeg"] == "outdated"
+    music_module.start()
+    music_module.join(10)
+    assert "bộ đọc nhạc (ffmpeg)" in machine.calls
+    assert _names(music_module.status()["parts"])["ffmpeg"] == "current"
+    # The ffmpeg-owned stamp wins even if the music module stamp is old.
+    music_module._write_stamp({"ffmpeg": "obsolete"})
+    assert _names(music_module.status()["parts"])["ffmpeg"] == "current"
+
+
 def _all_downloads(machine: Machine) -> list[str]:
     return sorted(machine.calls)
 

@@ -8,7 +8,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 ### Kết nối
-- Máy đã ghép nhớ mọi đường tới nhau (Wi-Fi nhà, Tailscale...) và tự chọn đường đang thông.
+- Máy đã ghép nhớ tối đa 8 địa chỉ tới nhau (Wi-Fi nhà, Tailscale...) và tự chọn đường đang thông.
 
 ### Giao diện
 - Máy tính và điện thoại: thông báo ngắn hơn, giữ cùng lời cho cùng lỗi.

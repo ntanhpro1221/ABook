@@ -47,6 +47,10 @@ _DNS_ENDPOINT = re.compile(
 _HOST_FIELD = re.compile(r"(?i)^(?:host|hostname|address)$")
 _RAW_HOST = re.compile(r'''(?i)(\b(?:host|hostname|address)["']?\s*[:=]\s*)(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s,;}\]]+)''')
 _DNS_ERROR = re.compile(r'''(?i)(\b(?:unable to resolve host\s+|UnknownHostException:\s*(?!Unable\b)))["']?[^\s"':,;]+["']?''')
+_URL_AUTHORITY = re.compile(r'''(?i)\b((?:https?|wss?)://)[^/\s?#"'<>]+''')
+_SOCKET_HOST = re.compile(
+    r"(?i)(?<![\w./\\-])(?=[a-z0-9_.-]*[a-z_-])[a-z0-9_-]+(?:\.[a-z0-9_-]+)*\.?"
+    r"(?=/\[?(?:(?:\d{1,3}\.){3}\d{1,3}|[0-9a-f:]*:[0-9a-f:.]+))")
 
 
 def _hide_address_lists(text: str) -> str:
@@ -86,6 +90,8 @@ def redact(text: str) -> str:
     text = _hide_address_lists(text)
     text = _RAW_HOST.sub(r"\1<địa chỉ>", text)
     text = _DNS_ERROR.sub(r"\1<địa chỉ>", text)
+    text = _URL_AUTHORITY.sub(r"\1<địa chỉ>", text)
+    text = _SOCKET_HOST.sub("<địa chỉ>", text)
     # Private paths keep only their source basename and line. Preserve that span until hide_path runs below.
     source_spans = [(path.start() + source.start(), path.start() + source.end())
                     for path in _PATHS.finditer(text) if (source := _SOURCE_FILE.search(path.group()))]

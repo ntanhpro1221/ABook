@@ -74,6 +74,9 @@ băm trong `webui/studio_setup.py`):
 - Capacitor (MIT).
 - AndroidX Media3 - ExoPlayer, MediaSession, datasource, cache (Apache-2.0); các thư viện AndroidX khác (Apache-2.0).
 - Kotlin và Guava (Apache-2.0).
+- Tink Android 1.24.0 (Google, Apache-2.0): kiểm chữ ký Ed25519 của danh mục nhạc và cấu hình từ xa (`Signatures.kt`).
+  Artifact `com.google.crypto.tink:tink-android:1.24.0`; phiên bản, giấy phép và nguồn đối chiếu từ POM đi kèm JAR dùng khi dựng app.
+  [Mã nguồn](https://github.com/tink-crypto/tink-java), [giấy phép Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0).
 - ONNX Runtime 1.30.0 (Microsoft, MIT): phần Java API (`ai.onnxruntime.*`) chép nguyên từ `onnxruntime-android-1.30.0-sources.jar` vào
   `app/src/main/java/ai/onnxruntime` (giữ đầu giấy phép MIT của từng file; chỉ `OnnxRuntime.java` sửa chỗ nạp thư viện). Hai thư viện native
   (`libonnxruntime.so`, `libonnxruntime4j_jni.so`) KHÔNG nằm trong APK: tải cùng "Gói nhạc" khi người dùng bấm, lấy từ AAR chính thức trên

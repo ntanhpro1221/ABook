@@ -39,15 +39,15 @@ def test_two_callers_share_one_ffmpeg_download(tmp_path, monkeypatch):
     entered, release, second_started = threading.Event(), threading.Event(), threading.Event()
     calls, errors, results = [], [], []
 
-    def download(_item, target, *_):
+    def install(*_):
         calls.append("download")
         entered.set()
         assert release.wait(5)
-        with zipfile.ZipFile(target, "w") as bundle:
-            bundle.writestr(ff.MEMBER, b"fake exe")
+        target = tmp_path / ff.EXE_NAME
+        target.write_bytes(b"fake exe")
         return target
 
-    monkeypatch.setattr(studio, "download", download)
+    monkeypatch.setattr(ff, "_install", install)
     monkeypatch.setattr(ff.io_utils, "use_downloaded_ffmpeg", lambda _: None)
 
     def run(second=False):

@@ -4,25 +4,81 @@ import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 
+internal data class DiscoveryHint(val host: String, val port: Int, val claimed: String)
+
+/** Shared admission: at most two I/O jobs and sixteen queued hints across all discoveries. */
+internal class DiscoveryAdmission : java.io.Closeable {
+    private val pool = java.util.concurrent.ThreadPoolExecutor(2, 2, 0L, java.util.concurrent.TimeUnit.MILLISECONDS,
+        java.util.concurrent.ArrayBlockingQueue<Runnable>(16),
+        { task -> Thread(task, "peer-discovery-tls").apply { isDaemon = true } })
+
+    fun submit(task: () -> Unit): Boolean = try {
+        pool.execute { runCatching(task).onFailure { AppLog.w("PeerRouting", "Chưa xác minh được địa chỉ tìm thấy", it) } }
+        true
+    } catch (_: java.util.concurrent.RejectedExecutionException) { false }
+
+    override fun close() { pool.shutdownNow() }
+}
+
+/** Bounded discovery batch; receive loop owns collection, routing owns verification. */
+internal class DiscoveryHints(private val admission: DiscoveryAdmission = PeerRouting.discoveryAdmission,
+                              private val verify: (DiscoveryHint) -> Unit) {
+    private val hints = linkedMapOf<String, DiscoveryHint>()
+    private var finished = false
+    fun add(host: String, port: Int, claimed: String): Boolean {
+        val address = PeerAddresses.endpoint(host, port)
+        if (finished || address in hints || hints.size >= 64) return false
+        val hint = DiscoveryHint(host, port, claimed)
+        hints[address] = hint
+        return true
+    }
+    fun finish() {
+        if (finished) return
+        finished = true
+        for (hint in hints.values) if (hint.claimed.isNotBlank()) admission.submit { verify(hint) }
+        hints.clear()
+    }
+}
+
 /** The same route store and verified TLS selection for sync, peers, downloads and diagnostics. */
 internal object PeerRouting {
+    internal val discoveryAdmission = DiscoveryAdmission()
     fun main(context: Context): JSONObject = mainPrefs(SyncLink.prefs(context))
 
     @Synchronized fun mainPrefs(prefs: android.content.SharedPreferences): JSONObject {
-        val peer = JSONObject().put("host", prefs.getString("host", "")).put("port", prefs.getInt("port", 47630))
-            .put("fingerprint", prefs.getString("fingerprint", "")).put("token", prefs.getString("token", ""))
-            .put("bt", prefs.getString("bt", ""))
-        if (prefs.contains("addresses")) peer.put("addresses", JSONArray(prefs.getString("addresses", "[]") ?: "[]"))
-        else {
-            PeerAddresses.migrate(peer)
-            val legacy = runCatching { JSONArray(prefs.getString("lan", "[]") ?: "[]") }.getOrDefault(JSONArray())
+        val values = prefs.all
+        val peer = JSONObject().put("host", values["host"] as? String ?: "").put("port", values["port"] ?: 47630)
+            .put("fingerprint", values["fingerprint"] as? String ?: "").put("token", values["token"] as? String ?: "")
+            .put("bt", values["bt"] as? String ?: "")
+        val hasAddresses = values.containsKey("addresses")
+        val original = if (hasAddresses) runCatching { JSONArray(values["addresses"] as String) }.getOrNull() else null
+        if (hasAddresses) peer.put("addresses", original ?: JSONObject.NULL)
+        PeerAddresses.migrate(peer)
+        if (!hasAddresses) {
+            val legacy = runCatching { JSONArray(values["lan"] as String) }.getOrDefault(JSONArray())
             val values = JSONArray(PeerAddresses.ordered(peer)) // preserve the original paired host as the first item
-            val legacyPort = prefs.getInt("lanPort", 47630).takeIf { it in 1..65535 } ?: 47630
-            for (i in 0 until legacy.length()) values.put(PeerAddresses.endpoint(legacy.optString(i), legacyPort))
+            val legacyPort = prefs.all["lanPort"] ?: 47630
+            for (i in 0 until legacy.length()) (legacy.opt(i) as? String)?.let { host ->
+                PeerAddresses.discoveryEndpoint(host, legacyPort)?.let(values::put)
+            }
             PeerAddresses.learn(peer, values, peer.optString("fingerprint"))
-            prefs.edit().putString("addresses", peer.getJSONArray("addresses").toString()).remove("lan").remove("lanPort").commit()
+        }
+        val clean = peer.getJSONArray("addresses").toString()
+        val badPort = values.containsKey("port") && (values["port"] !is Int || (values["port"] as Int) !in 1..65535)
+        val damaged = (hasAddresses && (original == null || original.toString() != clean)) || badPort ||
+            (!hasAddresses && peer.optString("token").isNotBlank() && PeerAddresses.ordered(peer).isEmpty() && bluetooth(peer).isBlank())
+        if (damaged) preserve(prefs, "routes", JSONObject(values).toString())
+        if (!hasAddresses || values["addresses"] != clean || damaged) {
+            val port = values["port"]?.toString()?.toIntOrNull()?.takeIf { it in 1..65535 } ?: 47630
+            check(prefs.edit().putString("addresses", clean).putInt("port", port).remove("lan").remove("lanPort").commit()) { "Chưa lưu được địa chỉ máy đã ghép" }
         }
         return peer
+    }
+
+    internal fun preserve(prefs: android.content.SharedPreferences, key: String, raw: Any) {
+        val copy = "$key.corrupt-${System.currentTimeMillis()}-${java.util.UUID.randomUUID()}"
+        check(prefs.edit().putString(copy, raw.toString()).commit()) { "Chưa giữ được bản dữ liệu máy đã ghép" }
+        Store.addDataNotice("Địa chỉ máy đã ghép bị hỏng; đã giữ bản cũ ở $copy — bạn ghép lại máy không còn địa chỉ.")
     }
 
     fun bluetooth(peer: JSONObject): String = peer.optString("host").let { if (it.startsWith("bt:")) it.removePrefix("bt:") else peer.optString("bt") }
@@ -30,7 +86,7 @@ internal object PeerRouting {
     /** Cached, non-blocking choice for UI callers. Network workers resolve it before HTTP. */
     fun base(context: Context, peer: JSONObject): String {
         val choice = Route.pick(PeerAddresses.ordered(peer), bluetooth(peer))
-        return choice.lan?.let { "https://$it" } ?: BluetoothLink.base(context, choice.bluetooth ?: throw IllegalStateException("Bạn chưa ghép máy này"))
+        return choice.lan?.let { "https://$it" } ?: BluetoothLink.base(context, choice.bluetooth ?: throw IllegalStateException("Máy đã ghép chưa có địa chỉ; bạn hãy ghép lại"))
     }
 
     private fun find(context: Context, token: String): Pair<String?, JSONObject>? {

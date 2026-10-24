@@ -361,7 +361,7 @@ def test_a_volume_spanning_two_folders_with_the_same_file_names_is_refused_befor
     # Cắt giữa Tập 2: tập 1 có "001.txt" của hai thư mục - dây chuyền xếp theo tên file nên chúng sẽ xen nhau.
     status, data = _call(server, "POST", "/api/books", {
         "paths": files, "title": "Lệch", "profile": "fast", "narrator": "", "firstPerson": "", "volumeStarts": [1, 6]})
-    assert status == 400 and "thứ tự đọc" in data["error"], data
+    assert status == 400 and "xếp xen chương" in data["error"] and "cắt ở ranh thư mục" in data["error"], data
     assert len(app.library.projects()) == before, "không tạo gì"
 
     # Cắt đúng ranh giới thư mục thì được.

@@ -53,6 +53,7 @@ export const MUSIC_MIX_HINT = "Nhạc được trộn thẳng vào file, không 
 /** Công cụ ghép âm thanh (ffmpeg): tải riêng khi máy chưa có (GET/POST /api/ffmpeg). */
 export interface FfmpegStatus {
   ready: boolean;
+  outdated?: boolean;
   downloading: boolean;
   done: number;
   total: number;

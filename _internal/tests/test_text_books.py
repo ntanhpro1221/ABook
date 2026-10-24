@@ -527,7 +527,7 @@ def test_unreadable_input_is_refused_in_words_the_user_can_act_on(tmp_path: Path
     from abook.webui.server import ApiError
 
     studio = _app(tmp_path / "studio", tmp_path / "thu_vien")
-    with pytest.raises(ApiError, match="ảnh chụp"):
+    with pytest.raises(ApiError, match="PDF chưa có chữ.*nhận dạng chữ.*TXT/DOCX"):
         studio.preview_text_book(str(IMPORTS / "scan.pdf"))
     with pytest.raises(ApiError, match="Không thấy file"):
         studio.add_text_book(str(tmp_path / "khong_co.epub"))

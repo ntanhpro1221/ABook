@@ -111,9 +111,23 @@ class Computers:
             data = None
         if isinstance(data, dict) and isinstance(data.get("computers"), dict):
             changed = False
-            for entry in data["computers"].values():
-                if isinstance(entry, dict):
-                    changed = peer_addresses.migrate(entry) or changed
+            damaged = False
+            for key, entry in list(data["computers"].items()):
+                if not isinstance(entry, dict):
+                    del data["computers"][key]
+                    changed = damaged = True
+                    continue
+                had_addresses = "addresses" in entry
+                normalized = peer_addresses.migrate(entry)
+                changed = normalized or changed
+                damaged = (had_addresses and normalized) or damaged
+                if normalized and not peer_addresses.ordered(entry) and not _bluetooth_of(entry):
+                    del data["computers"][key]
+                    changed = damaged = True
+            if damaged:
+                kept = self.path.with_name(f"{self.path.name}.hong-{time.strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(4)}")
+                atomic_write_bytes(kept, raw)
+                self.broken = kept.name
             if changed:
                 self._write(data)
             return data
@@ -151,7 +165,19 @@ class Computers:
         with self._lock:
             data = self._read()
             if computer in data["computers"]:
-                data["computers"][computer].update(fields)
+                entry = data["computers"][computer]
+                entry.update(fields)
+                # Explicit address changes must update routing history too.
+                # Empty history remains authoritative at the read boundary.
+                if "host" in fields or "port" in fields:
+                    host = entry.get("host")
+                    target = (peer_addresses.discovery_endpoint(host, entry.get("port"), advertised=False)
+                              if isinstance(host, str) else None)
+                    if target:
+                        history = peer_addresses.records(entry.get("addresses"))
+                        entry["addresses"] = ([next((item for item in history if item["address"] == target),
+                                                     {"address": target, "lastSuccess": 0})]
+                                              + [item for item in history if item["address"] != target])[:peer_addresses.LIMIT]
                 self._write(data)
 
     def learn(self, computer: str, values: Any, seen: str, *, success: str = "") -> None:
@@ -670,6 +696,21 @@ def _quiet_now(computer: str) -> bool:
         return time.monotonic() - _quiet.get(computer, -QUIET_SECONDS) < QUIET_SECONDS
 
 
+class _HandshakeTimeout(TimeoutError):
+    """TCP connected, but the quick TLS probe ran out of time."""
+
+
+class _ProbeContext:
+    def __init__(self, context: Any) -> None:
+        self.context = context
+
+    def wrap_socket(self, sock: Any, server_hostname: str | None = None) -> Any:
+        try:
+            return self.context.wrap_socket(sock, server_hostname=server_hostname)
+        except TimeoutError as error:
+            raise _HandshakeTimeout(str(error)) from error
+
+
 def _dial(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.PinnedHTTPSConnection:
     """Nối + bắt tay + kiểm vân tay, CHƯA gửi byte nào. `wake`: máy kia có thể đang ngủ - xem `_Wait`."""
     if endpoint.fingerprint == "":
@@ -679,6 +720,8 @@ def _dial(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.Pinn
     if wait is not None:
         connection.handshake_budget = wait.limit
         connection._context = _WakingContext(connection._context, wait)  # type: ignore[attr-defined] - SSLContext của http.client
+    else:
+        connection._context = _ProbeContext(connection._context)
     try:
         connection.connect()
         if endpoint.target:
@@ -695,11 +738,16 @@ def _dial(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.Pinn
 
 def _connect(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.PinnedHTTPSConnection:
     """Select pinned TLS before HTTP; share failures/selection, never requests or sockets."""
+    sleepy: list[Endpoint] = []
+
     def dial(target: str) -> tls.PinnedHTTPSConnection:
         host, port = peer_addresses.split(target)
         candidate = endpoint._replace(host=host, port=port, target=target, alternatives=())
         try:
             connection = _dial(candidate, min(timeout, route.PROBE_SECONDS), wake=False)
+        except _HandshakeTimeout:
+            sleepy.append(candidate)
+            raise
         except (OSError, tls.PinError):
             route.mark_down(target)
             raise
@@ -714,6 +762,7 @@ def _connect(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.P
 
     def selected(connection, target):
         try:
+            _ROUTES.invalidate((endpoint.fingerprint or "", endpoint.computer or endpoint.fingerprint or endpoint.target))
             if endpoint.computer and _COMPUTERS is not None:
                 _COMPUTERS.note(endpoint.computer, connectedVia=target)
             return connection
@@ -736,6 +785,8 @@ def _connect(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.P
 
     targets = (endpoint.target, *endpoint.alternatives)
     identity = (endpoint.fingerprint or "", endpoint.computer or endpoint.fingerprint or endpoint.target)
+    if wake:
+        _ROUTES.invalidate(identity)  # A quick question's failure must not suppress a wake attempt.
     try:
         # Interface enumeration is local only; changing Wi-Fi/VPN invalidates the short failure cache.
         import psutil
@@ -746,6 +797,11 @@ def _connect(endpoint: Endpoint, timeout: float, *, wake: bool = False) -> tls.P
     except tls.PinError:
         raise
     except OSError:
+        # Fast selection is complete. Only a route whose TCP connected may spend
+        # the cancellable wake budget; HTTP still waits for pinned TLS.
+        if wake and sleepy:
+            candidate = sleepy[0]
+            return selected(_dial(candidate, timeout, wake=True), candidate.target)
         if not endpoint.fallback:
             if endpoint.computer:
                 _look_for_bluetooth(endpoint.computer)

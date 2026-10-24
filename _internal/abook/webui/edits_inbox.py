@@ -586,7 +586,7 @@ def _retract(project: Path, device: str, retractions: dict[str, dict[str, float]
             except sqlite3.Error:  # không hỏi được sổ: rút luôn (yêu cầu đã áp thì bỏ khỏi file cũng không đổi gì trong sách)
                 applied = False
             if applied:
-                refused.append(conflict("retract", key, "", f"{_WISH_WHAT[section]} đã áp vào sách — bạn đổi lại trên máy giữ sách."))
+                refused.append(conflict("retract", key, "", f"{_WISH_WHAT[section]} đã áp vào sách, không rút được — bạn đổi lại trên máy giữ sách."))
                 continue
             withdrawn += len(cancelled.withdraw_folded(project, section, [key], stamp, now=time.time()))
     if ledger:

@@ -8,6 +8,19 @@ import org.junit.Test
 class PeerAddressesTest {
     private val pin = "ab".repeat(32)
 
+    @Test fun malformedReadContractUsesSharedFixture() {
+        val rows = JSONArray(java.io.File("../../../tests/fixtures/peer_addresses_malformed.json").readText())
+        for (i in 0 until rows.length()) {
+            val row = rows.getJSONObject(i)
+            val peer = row.getJSONObject("entry")
+            PeerAddresses.migrate(peer)
+            val expected = row.getJSONArray("expected").let { array -> (0 until array.length()).map { array.getString(it) } }
+            assertEquals(row.getString("name"), expected, PeerAddresses.ordered(peer))
+            assertFalse(PeerAddresses.migrate(peer))
+            assertTrue(peer.getJSONArray("addresses").length() <= 8)
+        }
+    }
+
     @Test fun mappedIpv6UsesEmbeddedIpv4ScopeFromSharedFixture() {
         val rows = JSONArray(java.io.File("../../../tests/fixtures/peer_addresses.json").readText())
         val peer = JSONObject().put("fingerprint", pin).put("addresses", JSONArray())

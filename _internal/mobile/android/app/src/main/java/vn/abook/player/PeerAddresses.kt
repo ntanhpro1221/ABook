@@ -55,17 +55,36 @@ internal object PeerAddresses {
     }
 
     fun migrate(peer: JSONObject): Boolean {
-        if (peer.has("addresses")) return false
-        val host = peer.optString("host")
-        val address = if (host.startsWith("bt:")) null else valid(endpoint(host, peer.optInt("port", 47630)))
-        peer.put("addresses", JSONArray().apply { if (address != null) put(JSONObject().put("address", address).put("lastSuccess", 0)) })
-        return true
+        val missing = !peer.has("addresses")
+        val before = peer.opt("addresses")?.toString()
+        if (missing) {
+            val host = peer.opt("host") as? String ?: ""
+            val address = if (host.startsWith("bt:")) null else {
+                val port = (if (peer.has("port")) peer.opt("port") else 47630)?.toString()?.toIntOrNull()
+                port?.let { valid(endpoint(host, it)) }
+            }
+            peer.put("addresses", JSONArray().apply { if (address != null) put(JSONObject().put("address", address).put("lastSuccess", 0)) })
+        }
+        peer.put("addresses", records(peer.optJSONArray("addresses")))
+        return missing || before != peer.getJSONArray("addresses").toString()
     }
 
-    fun ordered(peer: JSONObject): List<String> {
-        val array = peer.optJSONArray("addresses") ?: return emptyList()
-        return (0 until array.length()).mapNotNull { array.optJSONObject(it) }
-            .sortedByDescending { it.optDouble("lastSuccess", 0.0) }.mapNotNull { valid(it.optString("address")) }.distinct()
+    private fun records(array: JSONArray?): JSONArray {
+        val merged = linkedMapOf<String, JSONObject>()
+        if (array != null) for (i in 0 until array.length()) {
+            val item = array.optJSONObject(i) ?: continue
+            val address = (item.opt("address") as? String)?.let { valid(it) } ?: continue
+            val raw = if (item.has("lastSuccess")) item.opt("lastSuccess") else 0
+            val at = (raw as? Number)?.toDouble() ?: continue
+            if (!at.isFinite() || at < 0) continue
+            if (merged[address] == null || at > merged.getValue(address).getDouble("lastSuccess"))
+                merged[address] = JSONObject().put("address", address).put("lastSuccess", at)
+        }
+        return JSONArray(merged.values.sortedByDescending { it.getDouble("lastSuccess") }.take(LIMIT))
+    }
+
+    fun ordered(peer: JSONObject): List<String> = records(peer.optJSONArray("addresses")).let { array ->
+        (0 until array.length()).map { array.getJSONObject(it).getString("address") }
     }
 
     fun learn(peer: JSONObject, values: JSONArray?, seen: String, success: String = "", at: Double = System.currentTimeMillis() / 1000.0,
@@ -73,7 +92,7 @@ internal object PeerAddresses {
         if (seen.isBlank() || !seen.equals(peer.optString("fingerprint"), ignoreCase = true) || !seen.equals(claimed, true)) return false
         val before = peer.optJSONArray("addresses")?.toString() ?: "[]"
         val merged = linkedMapOf<String, JSONObject>()
-        val old = peer.optJSONArray("addresses") ?: JSONArray()
+        val old = records(peer.optJSONArray("addresses"))
         for (i in 0 until old.length()) old.optJSONObject(i)?.let { item -> valid(item.optString("address"))?.let { address ->
             val atOld = item.optDouble("lastSuccess", 0.0)
             if (merged[address] == null || atOld > merged.getValue(address).optDouble("lastSuccess", 0.0))

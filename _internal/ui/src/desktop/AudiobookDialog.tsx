@@ -41,11 +41,11 @@ const FORMATS = FORMAT_CHOICES.map((choice) => choice.id);
 
 /** Khối "máy chưa có ffmpeg": mời tải, hiện tiến độ tải, báo lỗi. `remote`: đang ở máy khác điều khiển máy tính - công cụ nằm ở máy tính, tải ở đó. */
 export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { status: FfmpegStatus; onDownload: () => void; onStop: () => void; remote?: boolean }) {
-  if (status.ready) return <MotionRegion />;
+  if (status.ready && !status.outdated) return <MotionRegion />;
   return (
     <MotionRegion as="div" className="rounded-lg border border-line bg-panel-2 p-3 text-sm" role="group" aria-label="Công cụ ghép âm thanh">
-      <p className="font-medium">{remote ? "Máy tính chưa có công cụ ghép âm thanh" : "Máy chưa có công cụ ghép âm thanh"}</p>
-      <p className="mt-0.5 text-fg-2">Cần nó để ghép lời đọc thành file MP3 / M4B. Tải một lần, dùng mãi (khoảng {formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
+      <p className="font-medium">{status.outdated ? "Công cụ ghép âm thanh cần cập nhật" : remote ? "Máy tính chưa có công cụ ghép âm thanh" : "Máy chưa có công cụ ghép âm thanh"}</p>
+      <p className="mt-0.5 text-fg-2">{status.outdated ? "Có bản mới để ghép lời đọc thành file MP3 / M4B" : "Cần nó để ghép lời đọc thành file MP3 / M4B. Tải một lần, dùng mãi"} (khoảng {formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
       {status.downloading ? (
         <div className="mt-2 flex items-center gap-3">
           <Progress value={ffmpegPercent(status) / 100} size="sm" running label="Đang tải công cụ ghép âm thanh" />
@@ -56,7 +56,7 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
         </div>
       ) : remote ? (
         <p className="mt-2">
-          <OnComputerOnly verb="Tải công cụ ghép âm thanh" />
+          <OnComputerOnly verb={status.outdated ? "Cập nhật công cụ ghép âm thanh" : "Tải công cụ ghép âm thanh"} />
         </p>
       ) : status.blocked ? (
         <p className="mt-2 text-warning">{status.blocked}</p>
@@ -64,7 +64,7 @@ export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { s
         <div className="mt-2 flex items-center gap-3">
           {/* Lời lỗi nói "bấm Thử lại" (studio_setup.download_failure): nút mang đúng tên ấy. */}
           <Button size="sm" onClick={onDownload}>
-            {status.error ? "Thử lại" : "Tải công cụ"}
+            {status.error ? "Thử lại" : status.outdated ? "Cập nhật công cụ" : "Tải công cụ"}
           </Button>
           {status.error && (
             <div className="text-xs text-danger">

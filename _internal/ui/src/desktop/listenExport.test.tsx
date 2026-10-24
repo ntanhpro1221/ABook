@@ -217,6 +217,9 @@ describe("the dialog body", () => {
   it("invites to download ffmpeg when it is missing, and shows the progress while it comes", () => {
     expect(form({ ffmpeg: ffmpegReady })).not.toContain("Tải công cụ");
     expect(form({ ffmpeg: ffmpegMissing })).toContain("Tải công cụ");
+    const update = form({ ffmpeg: { ...ffmpegReady, outdated: true } });
+    expect(update).toContain("Công cụ ghép âm thanh cần cập nhật");
+    expect(update).toContain("Cập nhật công cụ");
     const downloading = renderToString(
       <FfmpegNeeded status={{ ...ffmpegMissing, downloading: true, done: 40, total: 160 }} onDownload={noop} onStop={noop} />,
     );

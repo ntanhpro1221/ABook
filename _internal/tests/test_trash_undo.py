@@ -267,7 +267,7 @@ def test_a_project_in_a_series_is_not_restored_under_another_name(studio, recycl
     original.mkdir()
     (original / "new.txt").write_text("keep", encoding="utf-8")
     status, data = _call(server, "POST", f"/api/trash/{token}/undo")
-    assert status == 409 and "nhiều phần" in data["error"] and "Hoàn tác" in data["error"], data
+    assert status == 409 and "Trùng tên trong bộ" in data["error"] and "dời cuốn mới" in data["error"] and "Hoàn tác" in data["error"], data
     assert (original / "new.txt").read_text(encoding="utf-8") == "keep"
     assert not original.with_name(original.name + " (2)").exists()
     [held] = _pending(original.parent)

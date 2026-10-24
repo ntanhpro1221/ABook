@@ -1,0 +1,26 @@
+[
+  {"name":"null legacy port", "entry":{"host":"phone.local","port":null}, "expected":[]},
+  {"name":"null success", "entry":{"addresses":[{"address":"10.0.0.1:47630","lastSuccess":null}]}, "expected":[]},
+  {"name":"nonfinite numeric exponent", "entry":{"addresses":[{"address":"10.0.0.1:47630","lastSuccess":1e400}]}, "expected":[]},
+  {"name":"read cap keeps newest eight", "entry":{"addresses":[
+    {"address":"10.0.0.1:47630","lastSuccess":1}, {"address":"10.0.0.2:47630","lastSuccess":2},
+    {"address":"10.0.0.3:47630","lastSuccess":3}, {"address":"10.0.0.4:47630","lastSuccess":4},
+    {"address":"10.0.0.5:47630","lastSuccess":5}, {"address":"10.0.0.6:47630","lastSuccess":6},
+    {"address":"10.0.0.7:47630","lastSuccess":7}, {"address":"10.0.0.8:47630","lastSuccess":8},
+    {"address":"10.0.0.9:47630","lastSuccess":9}, {"address":"10.0.0.10:47630","lastSuccess":10}
+  ]}, "expected":["10.0.0.10:47630","10.0.0.9:47630","10.0.0.8:47630","10.0.0.7:47630","10.0.0.6:47630","10.0.0.5:47630","10.0.0.4:47630","10.0.0.3:47630"]},
+  {"name":"invalid legacy port", "entry":{"host":"phone.local","port":"invalid"}, "expected":[]},
+  {"name":"boolean legacy port", "entry":{"host":"phone.local","port":true}, "expected":[]},
+  {"name":"fractional legacy port", "entry":{"host":"phone.local","port":47630.5}, "expected":[]},
+  {"name":"null list", "entry":{"addresses":null}, "expected":[]},
+  {"name":"string list", "entry":{"addresses":"broken"}, "expected":[]},
+  {"name":"object list", "entry":{"addresses":{}}, "expected":[]},
+  {"name":"non objects", "entry":{"addresses":["192.168.1.8:47630",null,42]}, "expected":[]},
+  {"name":"bad success", "entry":{"addresses":[{"address":"192.168.1.8:47630","lastSuccess":"today"}]}, "expected":[]},
+  {"name":"numeric string success", "entry":{"addresses":[{"address":"192.168.1.8:47630","lastSuccess":"42"}]}, "expected":[]},
+  {"name":"negative success", "entry":{"addresses":[{"address":"192.168.1.8:47630","lastSuccess":-1}]}, "expected":[]},
+  {"name":"boolean success", "entry":{"addresses":[{"address":"192.168.1.8:47630","lastSuccess":true}]}, "expected":[]},
+  {"name":"mixed valid and invalid", "entry":{"addresses":[null,{"address":"10.0.0.2:47630","lastSuccess":4},{"address":"10.0.0.1:47630"},{"address":3},{"address":"bad:99999"}]}, "expected":["10.0.0.2:47630","10.0.0.1:47630"]},
+  {"name":"canonical dedup", "entry":{"addresses":[{"address":"PHONE.local.:47630","lastSuccess":1},{"address":"phone.local:47630","lastSuccess":3},{"address":"10.0.0.2:47630","lastSuccess":2}]}, "expected":["phone.local:47630","10.0.0.2:47630"]},
+  {"name":"no legacy fallback", "entry":{"host":"old.local","port":47630,"addresses":[]}, "expected":[]}
+]

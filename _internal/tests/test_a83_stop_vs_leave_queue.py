@@ -36,7 +36,7 @@ def test_leave_queue_never_stops_a_book_that_already_started(book) -> None:
     with pytest.raises(ApiError) as caught:
         app.leave_queue(bid)
     assert caught.value.status == 409
-    assert "đã bắt đầu chạy" in caught.value.message
+    assert "Sách đã chạy" in caught.value.message and "Tạm dừng" in caught.value.message and "trang sách" in caught.value.message
     assert app.runner.running(project)
 
 

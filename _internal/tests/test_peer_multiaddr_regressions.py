@@ -132,7 +132,7 @@ def test_f4_structured_host_fields_are_hidden_recursively():
 @pytest.mark.parametrize("stage", ["learn", "note"])
 def test_f5_persistence_failure_closes_before_socket_handoff(monkeypatch, stage):
     closed = []
-    connection = SimpleNamespace(sock=None, peer_fingerprint=PIN, connect=lambda: None, close=lambda: closed.append(True))
+    connection = SimpleNamespace(sock=None, _context=None, peer_fingerprint=PIN, connect=lambda: None, close=lambda: closed.append(True))
     def fail(*args, **kwargs):
         raise PermissionError("computers.json locked")
     store = SimpleNamespace(learn=fail if stage == "learn" else lambda *a, **k: None,

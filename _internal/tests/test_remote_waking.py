@@ -103,11 +103,19 @@ def _refresh_in_background(tmp_path: Path, computers: Computers, *, asked: bool 
     return worker, result
 
 
-def test_a_sleeping_phone_is_waited_for_and_said_so(library, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+@pytest.mark.parametrize("multiaddr", [False, True, "cached-failure"])
+def test_a_sleeping_phone_is_waited_for_and_said_so(library, tmp_path: Path, monkeypatch, multiaddr) -> None:  # noqa: F811
     monkeypatch.setattr(remote_books, "WAKE_WIFI_SECONDS", 20)
     sync, frozen, computers, computer = _paired_over_wifi(library, tmp_path)
+    if multiaddr:
+        computers.note(computer, addresses=[{"address": f"127.0.0.1:{frozen.port}", "lastSuccess": 1},
+                                             {"address": f"127.0.0.2:{frozen.port}", "lastSuccess": 0}])
+        assert not computers.get(computer).get("bt")
     try:
         frozen.freeze()
+        if multiaddr == "cached-failure":
+            with pytest.raises(OSError):
+                remote_books._connect(remote_books._base(computers.get(computer)), .05)
         worker, result = _refresh_in_background(tmp_path, computers)
         assert _eventually(lambda: "waking" in _view(computers, computer)), "Wi-Fi đã nối mà chưa bắt tay: đang ngủ"
         waking = _view(computers, computer)["waking"]
@@ -143,9 +151,14 @@ def test_waiting_runs_out_with_a_plain_message_and_wifi_is_not_blamed(library, t
         sync.stop()
 
 
-def test_the_listener_can_stop_waiting(library, tmp_path: Path, monkeypatch) -> None:  # noqa: F811
+@pytest.mark.parametrize("multiaddr", [False, True])
+def test_the_listener_can_stop_waiting(library, tmp_path: Path, monkeypatch, multiaddr) -> None:  # noqa: F811
     monkeypatch.setattr(remote_books, "WAKE_WIFI_SECONDS", 60)
     sync, frozen, computers, computer = _paired_over_wifi(library, tmp_path)
+    if multiaddr:
+        computers.note(computer, addresses=[{"address": f"127.0.0.1:{frozen.port}", "lastSuccess": 1},
+                                             {"address": f"127.0.0.2:{frozen.port}", "lastSuccess": 0}])
+        assert not computers.get(computer).get("bt")
     try:
         frozen.freeze()
         worker, result = _refresh_in_background(tmp_path, computers)

@@ -160,7 +160,7 @@ WITHDRAW_APPLIED = {
     "speakers": "Đã áp vào sách — bạn đổi người nói ở tab Kịch bản.",
     "pronunciations": "Máy vừa đưa cách đọc này vào sách nên không hoàn tác được nữa.",
     "voices": "Đã áp vào sách — bạn đổi giọng ở tab Nhân vật.",
-    "lines": "Đã áp vào sách — bạn sửa cách đọc câu ở tab Kịch bản.",
+    "lines": "Đã áp vào sách, không hoàn tác được — bạn sửa cách đọc câu ở tab Kịch bản.",
 }
 
 SPEAKER_PROBLEMS = {
@@ -255,7 +255,7 @@ class TrackTooBig(OSError):
 
 
 
-HELD_TEXT = ("Sổ làm việc đang bị khoá — bạn chờ một lát rồi bấm Thử lại")
+HELD_TEXT = ("Sổ làm việc đang bị chương trình khác khoá — bạn chờ một lát rồi bấm Thử lại")
 
 
 def broken_reason(error: Exception) -> str:
