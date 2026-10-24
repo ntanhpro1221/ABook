@@ -192,14 +192,27 @@ function EntryView({ entry }: { entry: Entry }) {
 
 const entryKey = (entry: Entry) => (entry.kind === "book" ? entry.book.id : `series:${entry.name}`);
 
-/** Khung chờ đúng hình một hàng của bảng (DESIGN.md mục 2: không vòng xoay giữa màn). */
+/** Đầu bảng: cùng một hàng khi đang tải và khi đã có dự án - khung chờ đứng đúng chỗ các hàng thật, tải xong không nhảy. */
+function TableHead() {
+  return (
+    <div className={cn("hidden gap-x-4 border-b border-line px-3 pb-2 label-section text-fg-2 md:grid", COLUMNS)}>
+      <span />
+      <span>Dự án</span>
+      <span>Trạng thái</span>
+      <span>Tiến độ</span>
+      <span className="hidden text-right xl:block">Cập nhật</span>
+    </div>
+  );
+}
+
+/** Khung chờ đúng hình một hàng của bảng (DESIGN.md mục 2: không vòng xoay giữa màn): hai vạch đứng trong hai hộp dòng của tên và dòng phụ. */
 function RowSkeleton() {
   return (
     <div className={cn("grid items-center gap-x-4 px-3 py-2.5", COLUMNS)}>
       <Skeleton className="size-10 rounded-lg" />
-      <div className="space-y-1.5">
-        <Skeleton className="h-4 w-1/2" />
-        <Skeleton className="h-3 w-1/3" />
+      <div>
+        <div className="flex h-6 items-center"><Skeleton className="h-4 w-1/2" /></div>
+        <div className="flex h-[1.21875rem] items-center"><Skeleton className="h-3 w-1/3" /></div>
       </div>
       <Skeleton className="hidden h-6 w-28 rounded-full md:block" />
       <Skeleton className="hidden h-1.5 w-full md:block" />
@@ -280,10 +293,13 @@ export function ProjectsScreen() {
       <StudioSetupCard className="mt-8" />
 
       {isLoading ? (
-        <div className="mt-8" aria-hidden>
-          {Array.from({ length: 5 }, (_, index) => (
-            <RowSkeleton key={index} />
-          ))}
+        <div className="-mx-3 mt-8" aria-hidden>
+          <TableHead />
+          <div className="divide-y divide-line">
+            {Array.from({ length: 5 }, (_, index) => (
+              <RowSkeleton key={index} />
+            ))}
+          </div>
         </div>
       ) : failedEmpty({ isError: libraryQuery.isError, data: data?.books }) ? (
         <LoadError what="danh sách dự án" error={libraryQuery.error} onRetry={() => void libraryQuery.refetch()} className="mt-12" />
@@ -301,13 +317,7 @@ export function ProjectsScreen() {
       ) : (
         // Lề âm bù đệm của dòng: bìa thẳng mép tiêu đề, cột cuối thẳng mép phải; nền rê chuột và vạch kẻ tràn ra lề.
         <section className="-mx-3 mt-8" aria-label="Dự án">
-          <div className={cn("hidden gap-x-4 border-b border-line px-3 pb-2 label-section text-fg-2 md:grid", COLUMNS)}>
-            <span />
-            <span>Dự án</span>
-            <span>Trạng thái</span>
-            <span>Tiến độ</span>
-            <span className="hidden text-right xl:block">Cập nhật</span>
-          </div>
+          <TableHead />
           <AnimatedRows items={entries} keyOf={entryKey} className="divide-y divide-line">
             {(entry) => <EntryView entry={entry} />}
           </AnimatedRows>
