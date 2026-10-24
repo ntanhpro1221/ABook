@@ -1867,8 +1867,9 @@ export function NewProjectScreen() {
 
   return (
     <div className="page-x mx-auto max-w-[920px] pb-16 pt-6 sm:pt-9">
+      {/* Mực mũi tên bắt đầu 2,33 px trong ô 14 px: lùi chừng ấy cho thẳng mép chữ bên dưới. */}
       <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-        <ArrowLeft className="size-4" /> Studio
+        <ArrowLeft className="-ml-[2.33px] size-4" /> Studio
       </button>
       <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[2rem]"><MotionRegion as="span">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</MotionRegion></h1>
       <MotionPresence open={Boolean(draft.seed)}>{draft.seed && (

@@ -66,8 +66,15 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
         width: (m.actualBoundingBoxLeft + m.actualBoundingBoxRight) * scale,
         height: (m.actualBoundingBoxAscent + m.actualBoundingBoxDescent) * scale };
     }
-    const first = glyph(chars[0]), last = glyph(chars.at(-1));
+    let first = glyph(chars[0]), last = glyph(chars.at(-1));
     if (!first || !last) continue;
+    // Số tabular thẳng cột theo ô chữ số chứ không theo mực ("1" có lề trái rộng hơn "2"): đo mép bằng ô.
+    if (/tabular-nums/.test(s.fontVariantNumeric) && /^\d+$/.test(run.node.textContent.trim())) {
+      const range = document.createRange(); range.selectNodeContents(run.node);
+      const box = range.getBoundingClientRect();
+      first = { ...first, x: box.x, width: first.x + first.width - box.x };
+      last = { ...last, width: box.right - last.x };
+    }
     // Chỉ so cạnh phải khi chữ nằm trên một dòng; dòng cuối xuống hàng không phải mép cột.
     const singleLine = Math.abs(first.y - last.y) < Number.parseFloat(s.fontSize);
     inkTexts.push({ ...run, ink: union([first, last]), first, last, singleLine, control: owner(run.element) });
