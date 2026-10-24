@@ -490,7 +490,7 @@ export function LibraryScreen({
           <h1 className="shrink-0 whitespace-nowrap text-2xl font-bold tracking-tight sm:text-[2rem]">Thư viện</h1>
           {/* Thư viện trống: nút giữa màn (`empty`) là lời mời chính - nút thứ hai cùng tên ở đầu trang chỉ lặp lại (soát UX a9). */}
           {/* -mr bù đệm ngang của nút ghost (px-3.5, trừ phần thừa bên phải của nét chữ) + p-1 giữ chỗ vòng tiêu điểm: chữ "Thêm sách" thẳng mép phải với nút phát và kính lúp bên dưới. */}
-          <MotionPresence open={Boolean(books?.length || upcoming.length)} className="-my-1 -ml-1 -mr-[17px]" bodyClassName="p-1">{header}</MotionPresence>
+          <MotionPresence open={Boolean(books?.length || upcoming.length)} className="-my-1 -ml-1 -mr-[16px]" bodyClassName="p-1">{header}</MotionPresence>
         </div>
         <MotionRegion as="p" motionKey={folded ? `${shown.length + upcomingShown.length}/${allBooks?.length ?? 0}` : allBooks?.length ?? 0} className="mt-1 text-sm text-fg-2">
           {/* Đang tìm: nói số cuốn khớp, không phải cả thư viện (soát 24-10 T08 - từng ghi "11 cuốn" trên một kết quả). */}
@@ -543,8 +543,8 @@ export function LibraryScreen({
                 </DropdownMenu.RadioGroup>
               </DropdownMenu.Content></DropdownMenu.Portal>
             </DropdownMenu.Root>
-            <button type="button" aria-label="Tìm sách" aria-expanded={searchOpen} onClick={() => { setSearchOpen(value => !value); if (searchOpen) setQuery(""); else requestAnimationFrame(() => searchInput.current?.focus()); }} className="-mr-3.5 grid size-[44px] shrink-0 place-items-center rounded-lg text-fg-2">
-              {/* -mr-3.5: vùng chạm 44 px giữ nguyên, nét kính lúp chạm đúng mép phải nội dung. */}
+            <button type="button" aria-label="Tìm sách" aria-expanded={searchOpen} onClick={() => { setSearchOpen(value => !value); if (searchOpen) setQuery(""); else requestAnimationFrame(() => searchInput.current?.focus()); }} className="-mr-[14.71px] grid size-[44px] shrink-0 place-items-center rounded-lg text-fg-2">
+              {/* Vùng chạm 44 px giữ nguyên, mực kính lúp (lề phải 2/24 của ô 17,5 px) chạm đúng mép phải nội dung: (44 - 17,5) / 2 + 17,5 x 2 / 24 = 14,71 px. */}
               <Search className="size-5" />
             </button>
           </div>

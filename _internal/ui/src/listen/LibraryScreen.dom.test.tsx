@@ -71,7 +71,7 @@ it("V6 header action có khoảng trống cho focus ring bên trong Collapse", a
   const button = [...main.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "Thêm sách")!;
   button.focus(); expect(document.activeElement).toBe(button);
   const flow = button.closest(".motion-flow")!;
-  expect(["-my-1", "-ml-1", "-mr-[17px]"].every(name => flow.classList.contains(name))).toBe(true);
+  expect(["-my-1", "-ml-1", "-mr-[16px]"].every(name => flow.classList.contains(name))).toBe(true);
   expect(flow.querySelector(".motion-collapse > .flow-root")!.classList.contains("p-1")).toBe(true);
 });
 
