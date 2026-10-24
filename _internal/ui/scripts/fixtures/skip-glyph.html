@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="vi"><meta charset="utf-8"><title>Đối chứng glyph 15 giây</title>
+<style>
+/* Chép markup glyph cũ từ 0bec019f: relative inline-grid scale-[1.2], SVG RotateCcw size-full và span absolute inset-0.
+   CSS tường minh tương ứng utility để fixture không phụ thuộc Tailwind có quét lớp cũ hay không. */
+body{margin:32px;font-family:"Be Vietnam Pro",sans-serif;color:#222;background:#fff}
+section{display:inline-flex;flex-direction:column;align-items:center;gap:24px;margin-right:72px;padding:24px}
+button{display:grid;place-items:center;width:48px;height:48px;background:#fff;color:inherit;border:1px solid #aaa}
+.old{position:relative;display:inline-grid;place-items:center;transform:scale(1.2);width:24px;height:24px}
+.old svg{width:100%;height:100%}
+.old .digits{position:absolute;inset:0;display:grid;place-items:center;padding-top:1px;font-size:10px;font-weight:700;line-height:1;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.new{width:24px;height:24px;flex-shrink:0}
+</style><body>
+<section id="old-case"><p>Glyph cũ · 0bec019f</p><button aria-label="Lùi 15 giây (cũ)"><span class="old"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11a9 9 0 1 1 9 9 9.75 9.75 0 0 1-6.74-2.74L3 14"/><path d="M3 3v8h8"/></svg><span class="digits">15</span></span></button></section>
+<section id="new-case"><p>Glyph mới · 398db035</p><button aria-label="Lùi 15 giây (mới)"><svg class="new" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g><path d="M12 3.5A8.5 8.5 0 1 1 5.04 7.12"/><path d="M13.4 1.3 11 3.5l2.4 2.2"/></g><text x="12" y="12.6" text-anchor="middle" dominant-baseline="central" fill="currentColor" stroke="none" font-size="8.5" font-weight="600" letter-spacing="-0.2" style="font-family:inherit;font-variant-numeric:tabular-nums">15</text></svg></button></section>
+</body></html>
