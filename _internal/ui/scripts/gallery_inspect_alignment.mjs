@@ -93,6 +93,8 @@ export function inspectAlignment({ all, texts, css, rect, visible, selector, add
       .filter((el) => visible(el, rect(el.getBoundingClientRect())) && !el.parentElement.closest('[data-player-menu-row]'));
     const groups = new Map();
     for (const el of rows) {
+      // Dòng có nhãn + lời giải thích tự cao theo số dòng thực; không ép nó bằng hàng một dòng hay một lời giải thích ngắn hơn.
+      if (el.querySelector('span.block + span.block')) continue;
       const key = el.hasAttribute("data-player-menu-row") ? "player-row" : el.getAttribute("role");
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push({ el, box: rect(el.getBoundingClientRect()) });

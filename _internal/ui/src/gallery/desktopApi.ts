@@ -391,6 +391,7 @@ const ROUTES: [string, RegExp, Handler][] = [
   })],
   ["GET", /^\/api\/export-jobs$/, () => ({ jobs: [] })],
   ["GET", /^\/api\/remote$/, () => ({ phones: [] })],
+  ["POST", /^\/api\/cast\/scan$/, () => ({ ok: true })],
   ["POST", /^\/api\/player\/report$/, () => ({ commands: [], idle: true })],
   ["GET", /^\/api\/host\/opened$/, () => ({ opened: [] })],
 ];

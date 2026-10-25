@@ -872,7 +872,8 @@ select[class~="border-line"] {
   min-height: 48px;
   height: auto;
   gap: 12px;
-  padding: 4px 0;
+  margin-inline: -6px;
+  padding: 4px 6px;
   align-items: center;
   line-height: 24px;
 }
@@ -884,6 +885,8 @@ select[class~="border-line"] {
 /* Dòng menu ở đây canh giữa: icon canh giữa không mang lề trên. Icon tự canh đầu (self-start, dòng có chú thích) giữ mt-line-icon. */
 .book-action-menu [role="menuitem"] > svg:not(.self-start) { margin-top: 0; }
 .book-action-menu [role="menuitem"] > span { min-width: 0; }
+/* Ghi chú dùng lề của menu nổi trên máy tính; Sheet đã có lề trang nên bỏ đệm lặp ở bước con. */
+.book-action-sheet .book-action-menu [data-menu-note] { padding-inline: 0; }
 /* Mực hình học của icon lucide (getBBox từng nét + nửa nét, ô 24): --ink-l / --ink-r = khoảng trống từ mép ô tới mực, đơn vị 1/24
    ô. Không ghi = 1 (nét 2 chạm khung 22). Dùng để đặt mực - không phải ô - đúng chỗ. */
 .lucide-laptop { --ink-l: 1.5; }

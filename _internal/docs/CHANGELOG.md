@@ -13,6 +13,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Giao diện
 
+- Ô chọn trải hết cột như ô nhập; tiến độ tải sách và menu con thẳng mép; tiêu đề màn con hiện đủ chữ, bộ sách bỏ dải trống phía trên bìa.
+- Mở thư viện trên điện thoại không còn chờ ảnh ở xa dưới vùng cuộn hay hiệu ứng khung chờ đang khép.
 - Tiêu đề các phần và mục gập mở thống nhất; hẹn giờ dùng lựa chọn chữ gọn, thanh đọc và kịch bản dùng cùng biểu tượng chuyển chương.
 - Thông báo gọn với tối đa một nút; phần giải thích dài mở trong Chi tiết, chuyển chỗ nghe có nút Quay lại, lời báo lỗi xuống dòng cân đối hơn trên điện thoại.
 

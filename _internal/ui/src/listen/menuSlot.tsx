@@ -1,4 +1,5 @@
 import { Cast } from "lucide-react";
+import { submenuOffsets } from "@/shared/menuPosition";
 import { createContext, useContext, useMemo, type ButtonHTMLAttributes, type ReactNode, type Ref } from "react";
 
 /** Nút điều khiển không giữ focus sau cú bấm chuột: Space sau đó vẫn là phát/tạm dừng, không lặp lại nút vừa bấm. */
@@ -10,14 +11,12 @@ export const MENU_ROW = "flex min-h-10 w-full items-center gap-3 rounded-lg px-2
  *  thẳng mép menu cha - trước đây hộp con mở lên trên nút, chồng lên menu cha với mép trái lệch 1175 / 1153 / 1126 / 1181 (soát 25-10 C8). Nút mở là CẢ DÒNG
  *  nên số đo đúng cả khi hộp bị lật sang phải. Không có menu cha (nút đứng ngoài "…") thì null: hộp con mở như cũ. */
 export type BesideParent = { side: "left"; align: "start" | "end"; sideOffset: number; alignOffset: number };
-export function besideParentMenu(trigger: Element | null, gap = 8): BesideParent | null {
+export function besideParentMenu(trigger: Element | null): BesideParent | null {
   const parent = trigger?.closest<HTMLElement>('[role="dialog"][data-side]');
   if (!trigger || !parent) return null;
-  const row = trigger.getBoundingClientRect();
-  const box = parent.getBoundingClientRect();
   const up = parent.dataset.side === "top";
-  // floating-ui đảo dấu alignOffset ở căn "end": dương là đẩy lên.
-  return { side: "left", align: up ? "end" : "start", sideOffset: Math.round(row.left - box.left + gap), alignOffset: Math.round(up ? row.bottom - box.bottom : box.top - row.top) };
+  const align = up ? "end" : "start";
+  return { side: "left", align, ...submenuOffsets(trigger, "left", align)! };
 }
 
 /** Một dòng có tên cho nút riêng của nền / tính năng (gợi ý đọc, phát trên thiết bị khác): MenuSlot giữ chỗ và nói tên + biểu tượng của dòng, nút con
@@ -51,4 +50,3 @@ export function SlotFace({ value, ref, ...rest }: ButtonHTMLAttributes<HTMLButto
     </button>
   );
 }
-

@@ -129,7 +129,16 @@ const HIDES_PAGE = typeof CSS !== "undefined" && typeof CSS.supports === "functi
 /** Trang đầu còn đang dựng không (khung chờ, ảnh chưa tải); dựng xong thì cho mọi hoạt ảnh hữu hạn đang chạy tới trạng thái cuối và vẫn tính là bận
  *  một nhịp - kết thúc hoạt ảnh có thể mở hoạt ảnh kế (animationend). */
 export function settleLaunch(page: HTMLElement | null): boolean {
-  if (!page || page.querySelector(".motion-loading-placeholder") !== null || Array.from(page.querySelectorAll("img")).some((image) => !image.complete)) return true;
+  if (!page || page.querySelector('.motion-loading-placeholder:not([data-state="closed"])') !== null) return true;
+  const frame = page.getBoundingClientRect();
+  // Bìa lười dưới vùng cuộn chưa được trình duyệt tải: đợi chúng thì thư viện dài luôn chạm hạn 3,5 s.
+  if (Array.from(page.querySelectorAll("img")).some((image) => {
+    if (image.complete) return false;
+    const box = image.getBoundingClientRect();
+    return box.width > 0 && box.height > 0 && box.bottom > Math.max(0, frame.top) && box.top < Math.min(innerHeight, frame.bottom)
+      && box.right > Math.max(0, frame.left) && box.left < Math.min(innerWidth, frame.right);
+  })) return true;
+  // Khung chờ đã khép cũng cần được finish: đợi nó gỡ trước sẽ lại chờ animationend bị màn chờ giữ đứng.
   const moving = (document.getAnimations?.() ?? []).filter((animation) => animation.playState === "running" && animation.effect?.getComputedTiming().endTime !== Infinity);
   moving.forEach((animation) => animation.finish());
   return moving.length > 0;

@@ -187,6 +187,7 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
             />
             <span className="text-fg-2">hẹn</span>
             <Select
+              inline
               aria-label="Số phút hẹn"
               value={settings.sleepSchedule.minutes}
               onChange={(event) => change({ sleepSchedule: { ...settings.sleepSchedule!, minutes: Number(event.target.value) } })}

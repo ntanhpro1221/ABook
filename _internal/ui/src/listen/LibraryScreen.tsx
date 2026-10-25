@@ -374,10 +374,8 @@ function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySec
   const extras = useContext(BookExtrasContext);
   const [open, setOpen] = useState(false);
   const trigger = <button type="button" aria-label={`Mở bộ ${item.label}`} aria-haspopup="dialog" onClick={() => setOpen(true)} className="group block w-full text-left">
-    {/* Bìa trước cùng khung với một cuốn lẻ (đỉnh, đáy, tên thẳng hàng với ô bên cạnh); hai tờ sau ló lên phía trên, hẹp dần. */}
+    {/* Số tập dưới bìa đã phân biệt bộ sách; bỏ hai tờ trống nhô lên từng trông như dải báo mạng bị mất chữ. */}
     <div className="relative">
-      <div aria-hidden className="absolute inset-x-4 -top-3 bottom-0 rounded-xl bg-line" />
-      <div aria-hidden className="absolute inset-x-2 -top-1.5 bottom-0 rounded-xl bg-sunken" />
       <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-xl" />
       {extras.seriesCover?.(item.items)}
     </div>
