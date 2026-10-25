@@ -251,4 +251,11 @@ describe.skipIf(!browserAvailable)("nút trong suốt: mép chung của cột", 
       expect(marks("mark-pass")).toHaveLength(0);
     }
   });
+  it("nút cùng tên với một tab đang thấy thì báo; nút khác tên thì không", () => {
+    for (const result of edgeResults) {
+      const dup = (id) => result.findings.filter((f) => f.metric === "control-duplicates-tab" && f.selector.startsWith(`#${id} >`));
+      expect(dup("tabdup-off")).toHaveLength(1);
+      expect(dup("tabdup-pass")).toHaveLength(0);
+    }
+  });
 });

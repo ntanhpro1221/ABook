@@ -736,6 +736,18 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     add("CLIPPED TEXT", cut, cut.textContent, [box],
       { metric: "choice-label-truncated", value: cut.clientWidth, referenceValue: cut.scrollWidth, delta: cut.clientWidth - cut.scrollWidth, tolerance: 1, reason: "the label of a choice is cut with an ellipsis; a choice must be readable in full (wrap it)" });
   }
+  // Nút lặp một tab đang thấy trên cùng màn ("Chương" / "Đọc theo" ở cột trái trình phát máy tính, ngay cạnh hai tab cùng tên - audit140 D11):
+  // hai đường cho một việc trên cùng một màn là thừa; tab đã nói đủ.
+  const controlName = (el) => (el.textContent || el.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim();
+  const tabs = all.filter((e) => e.matches('[role="tab"]') && shownChain(e) && visible(e, rect(e.getBoundingClientRect())));
+  for (const tab of tabs) {
+    const name = controlName(tab);
+    if (!name) continue;
+    const twin = all.find((e) => e !== tab && e.matches(controlSelector) && !e.closest('[role="tablist"]') && controlName(e) === name && shownChain(e) && visible(e, rect(e.getBoundingClientRect())));
+    if (!twin) continue;
+    add("REPEATED LABEL", twin, name, [rect(twin.getBoundingClientRect()), rect(tab.getBoundingClientRect())],
+      { metric: "control-duplicates-tab", otherSelector: selector(tab), reason: "a control repeats a visible tab of the same screen; the tab already does it" });
+  }
   // Lớp chồng lớp: hộp thoại mở đè lên hộp thoại khác (Sửa sách -> Tìm ảnh bìa, audit140 V9) hay bảng nổi che menu vừa mở nó (Nhạc nền đè menu
   // trình phát, C8). Bước kế tiếp đi trong cùng lớp (trượt sang bước có "Quay lại") hoặc mở bên cạnh menu. Menu/danh sách chọn bên trong hộp
   // thoại vẫn được; menu con nằm cạnh menu cha (chạm nhau vài px) cũng được.
