@@ -96,7 +96,7 @@ export function RemoteDownloadStatus({ book }: { book: ListenBook }) {
       {note.action && (
         <Button
           size="sm"
-          variant="secondary"
+          variant="ghost"
           className="mt-2"
           icon={note.action === "cancel" ? Square : Download}
           loading={busy}

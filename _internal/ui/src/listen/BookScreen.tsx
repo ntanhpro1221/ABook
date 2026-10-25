@@ -256,8 +256,8 @@ export function SampleButton({ id, url, label }: { id: string; url: string; labe
         aria-label={active ? "Dừng nghe thử" : label}
         onClick={() => clip.toggle(id, url)}
         className={cn(
-          "touch-hit grid size-9 shrink-0 place-items-center rounded-full border transition-colors",
-          active ? "border-accent bg-accent text-accent-ink" : "border-line text-fg-2 hover:border-line-strong hover:text-fg",
+          "touch-hit grid size-9 shrink-0 place-items-center rounded-full transition-colors",
+          active ? "text-accent-text" : "text-fg-2 hover:bg-hover hover:text-fg",
         )}
       >
         <MotionRegion as="span" className="grid size-4 place-items-center">{active && clip.loading ? <Loader2 className="size-4 animate-spin" /> : active ? <Vu className="h-3" /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
@@ -699,7 +699,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className="mt-3 inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border border-line px-3 text-xs text-fg-2 hover:bg-hover hover:text-fg"
+            className="mt-3 inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border-line px-3 text-xs text-fg-2 hover:bg-hover hover:text-fg"
           >
             <UserRound className="size-3.5 shrink-0" />
             <span className="shrink-0">Hồ sơ nghe:</span>

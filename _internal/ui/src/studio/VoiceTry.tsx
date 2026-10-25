@@ -85,8 +85,8 @@ export function useVoiceTry(bookId: string): {
           aria-label={label}
           title={label}
           className={cn(
-            "touch-hit grid size-9 shrink-0 place-items-center rounded-full border transition-colors disabled:opacity-40",
-            playing ? "border-accent bg-accent text-accent-ink" : "border-line text-fg-2 hover:border-line-strong hover:text-fg in-[.bg-accent-soft]:border-line-strong",
+            "touch-hit grid size-9 shrink-0 place-items-center rounded-full transition-colors disabled:opacity-40",
+            playing ? "text-accent-text" : "text-fg-2 hover:bg-hover hover:text-fg in-[.bg-accent-soft]:border-line-strong",
           )}
         >
           <MotionRegion as="span" className="inline-grid size-4 place-items-center">{loading ? <Loader2 className="size-4 animate-spin" /> : playing ? <Vu className="h-3" /> : <BookOpenText className="size-4" />}</MotionRegion>
@@ -95,7 +95,7 @@ export function useVoiceTry(bookId: string): {
     return (
       <Button
         size="sm"
-        variant="secondary"
+        variant="ghost"
         type="button"
         loading={asking === key}
         disabled={disabled || (asking !== null && asking !== key)}

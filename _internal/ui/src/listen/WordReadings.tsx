@@ -176,8 +176,8 @@ export function WordReadingDialog({ bookId, word, sentence, wordIndex, onClose }
                     setJoining(false);
                   }}
                   className={cn(
-                    "inline-flex h-8 items-center rounded-full border px-2.5 text-sm pointer-coarse:h-10",
-                    picked && at >= picked.from && at <= picked.to ? "border-accent bg-accent-soft text-accent-text" : "border-line hover:bg-hover",
+                    "touch-row inline-flex min-h-10 items-center px-2.5 text-sm",
+                    picked && at >= picked.from && at <= picked.to ? "text-accent-text underline underline-offset-4" : "text-fg-2 hover:bg-hover",
                   )}
                 >
                   {token.core}

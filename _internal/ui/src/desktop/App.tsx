@@ -416,7 +416,7 @@ export function useOpenBookPath() {
 }
 
 /** "Mở file sách": hộp chọn file của Windows (chỉ có trong cửa sổ app), nhập vào thư viện, mở trang sách. */
-function OpenBookFileButton({ variant = "secondary" }: { variant?: "secondary" | "ghost" }) {
+function OpenBookFileButton({ variant = "ghost" }: { variant?: "ghost" }) {
   const { data: info } = useAppInfo();
   const opened = useOpenedBook();
   const [busy, setBusy] = useState(false);

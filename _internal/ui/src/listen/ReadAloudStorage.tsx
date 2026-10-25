@@ -64,10 +64,10 @@ export function ReadAloudStorage({ api }: { api: ReadAloudStorageApi }) {
       <SettingsRow label="Bản đọc đã làm" hint={<>
         {/* Trạng thái luôn nằm dưới tên (cả khi trống): không đặt chữ nhỏ vào ô nút bên phải, lệch chân chữ với tên (máy dò BASELINE 25-10). */}
         <p>{storageLabel(usage)}</p>
-        <MoreInfo className="mt-1">Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống.</MoreInfo>
       </>}>
         {usage.total > 0 && <Button size="sm" onClick={() => setAsking(true)}>Dọn bản đọc</Button>}
       </SettingsRow>
+      <MoreInfo>Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống.</MoreInfo>
       <ClearDialog open={asking && usage.total > 0} onOpenChange={setAsking} usage={usage} busy={busy} onClear={() => void clear()} />
     </MotionRegion>
   );

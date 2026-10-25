@@ -49,7 +49,7 @@ export function WordTimingsRow({ bookId, running }: { bookId: string; running: b
         <span className="block font-semibold">Chữ sáng</span>
         <span className="block text-fg-2 text-pretty">{note}</span>
       </span>
-      <Button size="sm" variant="secondary" loading={busy} disabled={running || (lines > 0 && aligned === lines && !finished)} onClick={() => start.mutate()}>
+      <Button size="sm" variant="ghost" loading={busy} disabled={running || (lines > 0 && aligned === lines && !finished)} onClick={() => start.mutate()}>
         Thêm chữ sáng
       </Button>
     </MotionRegion>

@@ -3,10 +3,10 @@ import { cn } from "./cn";
 
 const ACTIVE = '[aria-checked="true"], [aria-pressed="true"], [aria-selected="true"], [data-state="active"]';
 
-/** Ô sáng / gạch chân của mục đang chọn LƯỚT từ mục cũ sang mục mới, không bật/tắt tại chỗ (chủ sách 23-10, 25-10: "tuyệt đối không thích bật tắt").
- *  Đặt làm con của khung `relative` chứa các mục (hàng tab, hàng lọc, Segmented); tự tìm mục đang chọn, đo vị trí theo khung, dời bằng transform.
- *  Lần đặt đầu (mở trang, khung vừa hiện) không lướt - chỉ lướt khi người dùng đổi mục. `line`: gạch chân 2 px ở đáy mục; `pill`: phủ cả mục. */
-export function SlidingIndicator({ variant, className }: { variant: "line" | "pill"; className?: string }) {
+/** Gạch chân của mục đang chọn LƯỚT từ mục cũ sang mục mới, không bật/tắt tại chỗ (chủ sách 23-10, 25-10: "tuyệt đối không thích bật tắt").
+ *  Đặt làm con của khung `relative` chứa các mục (hàng tab, hàng lọc, ChoiceRow); tự tìm mục đang chọn, đo vị trí theo khung, dời bằng transform.
+ *  Lần đặt đầu (mở trang, khung vừa hiện) không lướt - chỉ lướt khi người dùng đổi mục; gạch chân 2 px ở đáy mục. */
+export function SlidingIndicator({ variant, className }: { variant: "line"; className?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
     const bar = ref.current;
@@ -21,11 +21,11 @@ export function SlidingIndicator({ variant, className }: { variant: "line" | "pi
       for (const child of Array.from(host.children)) if (child !== bar && !items.has(child)) { items.add(child); resize?.observe(child); }
       const active = Array.from(host.querySelectorAll<HTMLElement>(ACTIVE)).find((element) => element !== bar && element.offsetParent === host);
       if (!active || !active.offsetWidth) { bar.style.opacity = "0"; placed = false; return; }
-      const height = variant === "line" ? 2 : active.offsetHeight;
-      const top = variant === "line" ? active.offsetTop + active.offsetHeight - 2 : active.offsetTop;
+      const height = 2;
+      const top = active.offsetTop + active.offsetHeight - 2;
       // Gạch chân dài đúng bằng chữ khi mục rộng hơn chữ (tab chia đều trên điện thoại): đo phần tử [data-indicator-target] trong mục.
       // Dùng offset (không dùng getBoundingClientRect) để không lệch khi cả trang đang phóng / trượt vào.
-      const target = variant === "line" ? active.querySelector<HTMLElement>("[data-indicator-target]") : null;
+      const target = active.querySelector<HTMLElement>("[data-indicator-target]");
       const inner = target && target.offsetParent === active ? target : null;
       if (!placed) bar.style.transition = "none";
       bar.style.transform = `translate(${active.offsetLeft + (inner?.offsetLeft ?? 0)}px, ${top}px)`;
@@ -49,7 +49,7 @@ export function SlidingIndicator({ variant, className }: { variant: "line" | "pi
       data-sliding-indicator={variant}
       className={cn(
         "pointer-events-none absolute left-0 top-0 opacity-0 transition-[transform,width,height,opacity] duration-motion-medium ease-standard motion-reduce:transition-[opacity]",
-        variant === "line" ? "bg-accent" : "rounded-md bg-accent",
+        "bg-accent",
         className,
       )}
     />

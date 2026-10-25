@@ -138,7 +138,7 @@ export function UpdateNotice() {
         setExpanded(false);
         navigate("/settings/advanced");
       }}
-      className="mb-2 flex w-full items-center gap-2.5 rounded-lg border border-line bg-panel p-2.5 text-left hover:bg-hover"
+      className="mb-2 flex w-full items-center gap-2.5 py-2.5 text-left hover:bg-hover"
     >
       <Download className="size-4 shrink-0 text-accent-text" />
       <span className="min-w-0 flex-1">

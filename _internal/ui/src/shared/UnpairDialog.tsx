@@ -35,7 +35,7 @@ export function UnpairDialog({
       </div>
       <MotionRegion className="mt-5 flex flex-col gap-2">
         {copy?.send && (
-          <Button variant={copy.sendPrimary ? "primary" : "secondary"} loading={busy === "send"} disabled={busy !== null} onClick={() => onChoose("send")}>
+          <Button variant={copy.sendPrimary ? "primary" : "ghost"} loading={busy === "send"} disabled={busy !== null} onClick={() => onChoose("send")}>
             {copy.send}
           </Button>
         )}
