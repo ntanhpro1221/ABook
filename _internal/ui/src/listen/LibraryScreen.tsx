@@ -179,8 +179,10 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
           )}
         </button>
         {book.progress.fraction > 0 && !book.progress.finished && (
-          <div {...heardBarProps(book.progress.fraction)} className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-cover-overlay">
-            <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${book.progress.fraction * 100 / 100})` }} />
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg">
+            <div {...heardBarProps(book.progress.fraction)} className="absolute inset-x-0 bottom-0 h-1 bg-cover-overlay">
+              <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${book.progress.fraction * 100 / 100})` }} />
+            </div>
           </div>
         )}
         <MotionPresence open={Boolean(book.remote)}>{book.remote && (
