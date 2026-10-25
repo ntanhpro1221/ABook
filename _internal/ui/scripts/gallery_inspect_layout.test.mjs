@@ -204,3 +204,22 @@ describe.skipIf(!browserAvailable)("fixture lớp nổi chồng nhau", () => {
     }
   });
 });
+
+describe.skipIf(!browserAvailable)("nút trong suốt: mép chung của cột", () => {
+  let edgeResults;
+  beforeAll(async () => { edgeResults = await layoutFixtures({ fixture: "edge-actions.html" }); }, 60000);
+  it("nút trong suốt xếp chồng lệch mép trái mực thì báo; cùng canh trái thì không", () => {
+    for (const result of edgeResults) {
+      const stack = (id) => result.findings.filter((f) => f.metric === "stacked-controls-left" && f.selector.startsWith(`#${id} >`));
+      expect(stack("stackcol-off")).toHaveLength(1);
+      expect(stack("stackcol-pass")).toHaveLength(0);
+    }
+  });
+  it("nút cuối hàng chạm mép bằng ô mà mực thụt khi cột đã có mép phải chung thì báo; bù đệm thì không", () => {
+    for (const result of edgeResults) {
+      const trail = (id) => result.findings.filter((f) => f.metric === "trailing-control-inset" && f.selector.startsWith(`#${id} >`));
+      expect(trail("trail-off")).toHaveLength(1);
+      expect(trail("trail-pass")).toHaveLength(0);
+    }
+  });
+});

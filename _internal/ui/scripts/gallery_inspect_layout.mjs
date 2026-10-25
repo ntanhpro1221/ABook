@@ -640,6 +640,44 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       break;
     }
   }
+  // Nút trong suốt xếp chồng trong một cột (Sửa sách: "Chọn ảnh bìa…" / "Tìm bìa…"): không có nền để làm mốc, nên mực của chúng phải chung
+  // mép trái. Kéo giãn từng nút rồi canh giữa chữ làm icon lệch nhau theo độ dài nhãn (soát 25-10). Nút có nền/viền (chân hộp thoại) không tính.
+  for (const parent of all) {
+    const ps = css(parent);
+    if (!/flex/.test(ps.display) || !ps.flexDirection.startsWith("column")) continue;
+    const stack = [...parent.children].filter((c) => c.matches(controlSelector) && visible(c, rect(c.getBoundingClientRect())));
+    if (stack.length < 2 || stack.length !== [...parent.children].filter((c) => visible(c, rect(c.getBoundingClientRect()))).length) continue;
+    if (stack.some((c) => !transparent(css(c).backgroundColor) || Number.parseFloat(css(c).borderLeftWidth) > 0 && css(c).borderLeftStyle !== "none")) continue;
+    const inks = stack.map((c) => ({ c, ink: controlInk(c) })).filter((s) => s.ink);
+    if (inks.length < 2) continue;
+    const xs = inks.map((s) => s.ink.x), low = Math.min(...xs), high = Math.max(...xs);
+    if (high - low <= 1.01) continue;
+    const worst = inks.find((s) => s.ink.x === high), best = inks.find((s) => s.ink.x === low);
+    add("INK EDGE", worst.c, worst.c.textContent, [worst.ink, best.ink],
+      { metric: "stacked-controls-left", value: high, referenceValue: low, delta: high - low, tolerance: 1, otherSelector: selector(best.c), reason: "transparent controls stacked in one column start their ink at different x" });
+  }
+  // Nút trong suốt cuối hàng mà ô của nó chạm mép phải hàng nhưng mực thụt vào >= 6 px ("Ghép thiết bị", nút chép ở Thiết bị điện thoại):
+  // chỉ báo khi trong cùng cột có mực khác chạm đúng mép ấy, tức cột đã có mép phải chung mà nút này bỏ lỡ.
+  for (const el of all.filter((e) => e.matches(controlSelector) && shownChain(e))) {
+    const box = visible(el, rect(el.getBoundingClientRect()));
+    if (!box || !transparent(css(el).backgroundColor) || el.closest('nav,[role="tablist"],[role="menu"],[role="listbox"],[role="dialog"]')) continue;
+    const row = el.parentElement, rs = row && css(row);
+    if (!row || !/flex/.test(rs.display) || rs.flexDirection.startsWith("column") || row.lastElementChild !== el) continue;
+    const rb = rect(row.getBoundingClientRect()), inner = right(rb) - Number.parseFloat(rs.paddingRight) - Number.parseFloat(rs.borderRightWidth);
+    const ink = controlInk(el);
+    if (!ink || Math.abs(right(box) - inner) > 1.01 || inner - right(ink) < 5.99) continue;
+    // Cột = tổ tiên cao nhất còn chung mép phải trong (cả trang Thiết bị, không chỉ mục chứa nút).
+    let column = null;
+    for (let p = row.parentElement; p && p !== document.body; p = p.parentElement) {
+      const s = css(p), pr = right(rect(p.getBoundingClientRect())) - Number.parseFloat(s.paddingRight) - Number.parseFloat(s.borderRightWidth);
+      if (Math.abs(pr - inner) > 1.01) break;
+      column = p;
+      if (/auto|scroll/.test(s.overflowY)) break;
+    }
+    if (!column || !inkTexts.some((t) => column.contains(t.element) && !row.contains(t.element) && Math.abs(right(t.last) - inner) <= 1.01)) continue;
+    add("INK EDGE", el, el.textContent || el.getAttribute("aria-label") || "svg", [ink, { x: inner, y: ink.y, width: 1, height: ink.height }],
+      { metric: "trailing-control-inset", value: right(ink), referenceValue: inner, delta: right(ink) - inner, tolerance: 1, listSelector: selector(column), reason: "trailing transparent control's hit box meets the row edge but its ink stops short of the column's shared right edge" });
+  }
   // Lớp chồng lớp: hộp thoại mở đè lên hộp thoại khác (Sửa sách -> Tìm ảnh bìa, audit140 V9) hay bảng nổi che menu vừa mở nó (Nhạc nền đè menu
   // trình phát, C8). Bước kế tiếp đi trong cùng lớp (trượt sang bước có "Quay lại") hoặc mở bên cạnh menu. Menu/danh sách chọn bên trong hộp
   // thoại vẫn được; menu con nằm cạnh menu cha (chạm nhau vài px) cũng được.
