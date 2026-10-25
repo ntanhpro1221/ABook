@@ -126,17 +126,25 @@ const HAND_OFF = <PhoneHandOffButton />;
  *  rẻ cỡ 2 ms, còn inert phải tính lại style cả cây trang (25-70 ms ở 6x chậm). Cuộn giữ nguyên khi mở lại. WebView cũ không có thì quay về inert. */
 const HIDES_PAGE = typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("content-visibility", "hidden");
 
+/** Trang đầu còn đang dựng không (khung chờ, ảnh chưa tải); dựng xong thì cho mọi hoạt ảnh hữu hạn đang chạy tới trạng thái cuối và vẫn tính là bận
+ *  một nhịp - kết thúc hoạt ảnh có thể mở hoạt ảnh kế (animationend). */
+export function settleLaunch(page: HTMLElement | null): boolean {
+  if (!page || page.querySelector(".motion-loading-placeholder") !== null || Array.from(page.querySelectorAll("img")).some((image) => !image.complete)) return true;
+  const moving = (document.getAnimations?.() ?? []).filter((animation) => animation.playState === "running" && animation.effect?.getComputedTiming().endTime !== Infinity);
+  moving.forEach((animation) => animation.finish());
+  return moving.length > 0;
+}
+
 /** Mở app: báo màn chờ Android (MainActivity) mờ đi khi trang đầu đã dựng xong và ĐỨNG YÊN - hết khung chờ, ảnh đã tải, không còn hoạt ảnh
- *  hữu hạn nào chạy (nội dung mọc / hiện dần) - để màn chờ lộ ra giao diện hoàn chỉnh thay vì cả chuỗi dựng (chủ sách 25-10). Tối đa 3,5 s. */
+ *  hữu hạn nào chạy (nội dung mọc / hiện dần) - để màn chờ lộ ra giao diện hoàn chỉnh thay vì cả chuỗi dựng (chủ sách 25-10). Tối đa 3,5 s.
+ *  Màn chờ chặn WebView vẽ khung hình nên hoạt ảnh đứng ở 0 tới khi nó tắt: chờ chúng chạy xong là chờ nhau tới hết hạn (đo OPPO 26-10: mọi
+ *  lần mở mất 3,5 s thay vì ~1 s). Trang đã có dữ liệu thì cho các hoạt ảnh hữu hạn tới ngay trạng thái cuối - không ai thấy chúng sau màn chờ. */
 function useLaunchReady(main: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const start = performance.now();
     let timer = 0;
     const check = () => {
-      const page = main.current;
-      const busy = !page || page.querySelector(".motion-loading-placeholder") !== null
-        || Array.from(page.querySelectorAll("img")).some((image) => !image.complete)
-        || (document.getAnimations?.() ?? []).some((animation) => animation.playState === "running" && animation.effect?.getComputedTiming().endTime !== Infinity);
+      const busy = settleLaunch(main.current);
       if (busy && performance.now() - start < 3500) { timer = window.setTimeout(check, 80); return; }
       requestAnimationFrame(() => requestAnimationFrame(() => void EbookLibrary.appReady?.()?.catch(() => undefined)));
     };
