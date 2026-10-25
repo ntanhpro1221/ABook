@@ -21,9 +21,11 @@ it("hàng exit không chiếm chỉ số dữ liệu: B vẫn 0 khi A đang ra",
 });
 
 it("thẻ chuyển nhóm: bản exit bỏ ID và ARIA định danh, bản sống giữ ID duy nhất", () => {
-  const tree = WorkCards({ book: { id: "b" } as BookSummary, items: [{ key: "A", kind: "audio", title: "A", examples: [], affected: 1, current: "" } as unknown as WorkItem], onOpenReview: vi.fn() });
-  const list = tree.props.children;
-  const card = list.props.children[0] as ReactElement<{ exiting?: boolean }>;
+  const item = { key: "A", kind: "audio", title: "A", examples: [], affected: 1, current: "" } as unknown as WorkItem;
+  const tree = WorkCards({ book: { id: "b" } as BookSummary, items: [item], onOpenReview: vi.fn() });
+  // Provider > khung data-motion-live > AnimatedRows (thẻ rời danh sách khép tại chỗ): lấy thẻ từ hàm dựng hàng.
+  const rows = tree.props.children.props.children;
+  const card = rows.props.children(item, 0, "idle") as ReactElement<{ exiting?: boolean }>;
   const html = renderToStaticMarkup(<>{cloneElement(card, { exiting: true })}{card}</>);
   expect(html.match(/id="work-A"/g)).toHaveLength(1);
   expect(html.match(/id="work-A-title"/g)).toHaveLength(1);
