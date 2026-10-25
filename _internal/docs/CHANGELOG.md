@@ -15,6 +15,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Lúc mở app hay vừa có dữ liệu, các phần của trang hiện ngay tại chỗ, không còn mọc cao dần đẩy lưới bìa xuống (nút "Thêm sách", thẻ Nghe tiếp, dòng danh sách). Quay lại tab Studio trên điện thoại không còn nháy khung chờ.
 - Khung chờ chỉ hiện khi phải chờ quá 0,2 giây, ở mọi trang và cả lúc đổi trang; dữ liệu tới nhanh thì hiện thẳng nội dung, không còn chớp khung xám.
 - Trên điện thoại, nội dung và Đang nghe không còn nằm dưới tai thỏ hay thanh điều hướng của hệ thống.
+- Menu "…" của sách trên điện thoại: "Nhạc nền" mở ngay trong bảng, trượt sang một bước có nút "Quay lại"; Back lần đầu chỉ quay về danh sách.
+- Thêm một lượt "không bật tắt cứng" khắp app: lỗi, danh sách trống, dữ liệu tới muộn, hàng thêm/bớt trong Studio, danh sách thiết bị và dấu chọn đều mờ hay mở ra tại chỗ; đổi bộ lọc thì nội dung cũ đứng yên tới khi có nội dung mới thay vì biến mất; nút phát / dừng đổi biểu tượng không còn nảy.
+- Các bảng trên điện thoại thẳng một cột: mức nhạc, danh sách nhạc nền (mô tả dài ngắn cao bằng nhau), nút chân bảng Giọng đọc, lưới tốc độ và hẹn giờ; hàng Tốc độ · Hẹn giờ · Dấu trang · Chương và hàng Đọc · Tìm · Từ đầu · Thêm thẳng mép bìa; dấu › cuối dòng thẳng mép phải; màn đọc và chữ đọc theo mờ dần ở cả hai đầu khi cuộn.
 - Mở và đóng Đang nghe trên điện thoại mượt hơn, không còn hiện lại Thư viện một khung rồi mờ vào lần hai.
 - Tab trang sách trên điện thoại chia đều bề ngang, chữ căn giữa; hàng lọc thiếu vài px thì tự co khoảng cách thay vì phải cuộn ("Xong" không còn bị che); thanh tiến độ trên bìa bo đúng theo góc bìa.
 - Đổi tab, bộ lọc hay lựa chọn: gạch chân / ô sáng lướt từ mục cũ sang mục mới, nội dung trượt sang theo hướng mục vừa chọn (Thư viện, trang sách, Đang nghe, Studio, Cài đặt, màn đọc). Nút chọn giờ tự tắt thấp gọn hơn; các mục gập trong Cài đặt nối liền như một danh sách; hàng lọc Thư viện không còn cắt chữ "Xong" khi chữ hệ thống to.
