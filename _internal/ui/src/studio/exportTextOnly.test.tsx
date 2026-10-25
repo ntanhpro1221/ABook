@@ -17,7 +17,8 @@ vi.mock("@/studio/data", () => ({
   pickFolder: vi.fn(),
 }));
 vi.mock("@/shared/ui", () => ({
-  Dialog: ({ children }: any) => <div>{children}</div>,
+  Dialog: ({ children, footer }: any) => <div>{children}{footer}</div>,
+  DialogActions: ({ children }: any) => <div>{children}</div>,
   Button: ({ children, disabled, icon, loading, variant, ...rest }: any) => (
     <button disabled={disabled} {...rest}>
       {children}

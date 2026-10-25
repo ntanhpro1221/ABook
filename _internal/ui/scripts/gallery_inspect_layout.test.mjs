@@ -62,6 +62,12 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       expect(at(result, "gap-pass", "ink-icon-text-gap")).toHaveLength(0);
     }
   });
+  it("mực icon bị cắt ở mép cuộn không tạo chênh gap giả; gap sai của icon nguyên vẹn vẫn bị bắt", () => {
+    for (const result of results) {
+      expect(at(result, "gap-clipped", "ink-icon-text-gap")).toHaveLength(0);
+      expect(at(result, "gap", "ink-icon-text-gap")).toHaveLength(1);
+    }
+  });
   it("bắt nhịp 20 / 8, bỏ đầu/cuối là header", () => {
     for (const result of results) {
       expect(at(result, "rhythm", "vertical-gap")).toHaveLength(1);

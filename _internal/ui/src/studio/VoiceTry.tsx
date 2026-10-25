@@ -86,7 +86,7 @@ export function useVoiceTry(bookId: string): {
           title={label}
           className={cn(
             "touch-hit grid size-9 shrink-0 place-items-center rounded-full transition-colors disabled:opacity-40",
-            playing ? "text-accent-text" : "text-fg-2 hover:bg-hover hover:text-fg in-[.bg-accent-soft]:border-line-strong",
+            playing ? "text-accent-text" : "text-fg-2 hover:bg-hover hover:text-fg",
           )}
         >
           <MotionRegion as="span" className="inline-grid size-4 place-items-center">{loading ? <Loader2 className="size-4 animate-spin" /> : playing ? <Vu className="h-3" /> : <BookOpenText className="size-4" />}</MotionRegion>

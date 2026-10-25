@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { useMediaQuery } from "@/shared/media";
-import { Button, Dialog, ChoiceRow, WRAP_LABEL } from "@/shared/ui";
+import { Select, Button, Dialog, ChoiceRow, WRAP_LABEL } from "@/shared/ui";
 import { ScreenHeader } from "@/shared/ScreenHeader";
 import { GroupHeader, isSettingsGroup, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
 import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
@@ -71,12 +71,12 @@ export function desktopGroups(info: AppInfo | undefined, touchOnly: boolean): Se
 function NewBookDefaults() {
   const { data: preferences, update } = usePreferences();
   const { data: voices } = useVoices();
-  const selectClass = "h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus";
+  const selectClass = "w-full";
   return (
     <div className="grid gap-3 py-3 sm:grid-cols-2">
       <label htmlFor="new-book-narrator" className="block">
         <span className="block text-sm font-medium">Giọng kể</span>
-        <select
+        <Select
           id="new-book-narrator"
           className={cn(selectClass, "mt-1")}
           value={preferences?.newBookNarrator ?? ""}
@@ -88,11 +88,11 @@ function NewBookDefaults() {
               {voice.name} · {voice.gender}, miền {voice.region}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label htmlFor="new-book-profile" className="block">
         <span className="block text-sm font-medium">Chất lượng</span>
-        <select
+        <Select
           id="new-book-profile"
           className={cn(selectClass, "mt-1")}
           value={preferences?.newBookProfile ?? "high_quality"}
@@ -103,7 +103,7 @@ function NewBookDefaults() {
               {PROFILE_LABEL[value]}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
     </div>
   );

@@ -33,7 +33,7 @@ it("vuốt tay nắm: dưới ngưỡng giữ bảng, huỷ cử chỉ trả v�
   expect(dialog()?.style.transform).toBe("translateY(50px)");
   await act(() => grip.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true })));
   expect(dialog()?.style.transform).toBe("");
-  expect(document.querySelector(".sheet-footer")?.parentElement).toBe(dialog());
+  expect(document.querySelector(".surface-footer")?.parentElement).toBe(dialog());
   await act(() => {
     grip.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, clientY: 10 }));
     grip.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, clientY: 74 }));

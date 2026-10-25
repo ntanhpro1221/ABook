@@ -8,6 +8,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 ### Giao diện
+- Ô chọn cùng kích thước trên máy tính và điện thoại; hàng đang chọn dùng chữ nhấn và dấu tích, hàng đang phát giữ vạch tiến độ mảnh.
+- Bảng điện thoại thống nhất tay nắm đóng và nút ở chân bảng luôn thấy; các quyết định duyệt nổi rõ hơn liên kết mở ngữ cảnh.
 - Cài đặt dùng hàng mở rộng thống nhất, lựa chọn chữ gạch chân và nút chữ gọn; các cột thẳng mép trên máy tính.
 - Thiết bị dùng danh sách phẳng, hướng dẫn ghép ngắn hơn và liên kết tải dễ mở hoặc chép; nút phụ bỏ viền trên cả điện thoại, máy tính và Studio.
 - Hàng nút dưới tên sách và dưới Đang nghe: biểu tượng luôn nằm ngay giữa trên nhãn của nó, nút đầu và cuối hàng không còn lệch ra mép.

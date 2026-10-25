@@ -11,7 +11,7 @@ import { cn } from "@/shared/cn";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { RowBoundary } from "@/shared/RowBoundary";
 import { etaOf, formatPercent, formatRelative } from "@/shared/format";
-import { Button, Dialog, EmptyState, failedEmpty, IconButton, LoadError, Progress, Skeleton, StatusPill } from "@/shared/ui";
+import { DialogActions, Button, Dialog, EmptyState, failedEmpty, IconButton, LoadError, Progress, Skeleton, StatusPill } from "@/shared/ui";
 import { ScreenHeader } from "@/shared/ScreenHeader";
 import { DotJoin } from "@/shared/DotJoin";
 import { MissingLibrary } from "@/shared/MissingLibrary";
@@ -85,20 +85,20 @@ function BrokenRow({ book, local }: { book: BookSummary; local: boolean }) {
           <OnComputerOnly verb="Khôi phục hoặc xoá" />
         )}
       </div>
-      <Dialog
-        open={asking}
-        onOpenChange={setAsking}
-        title={`Khôi phục “${book.title}” từ bản sao cũ?`}
-        description="Việc làm sau lần nâng cấp phải làm lại; chương đã thu và bản hỏng vẫn được giữ."
-      >
-        <div className="mt-5 dialog-actions">
+      <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setAsking(false)}>
             Để sau
           </Button>
           <Button variant="primary" icon={History} loading={restore.isPending} onClick={() => restore.mutate()}>
             Khôi phục
           </Button>
-        </div>
+        </DialogActions>}
+        open={asking}
+        onOpenChange={setAsking}
+        title={`Khôi phục “${book.title}” từ bản sao cũ?`}
+        description="Việc làm sau lần nâng cấp phải làm lại; chương đã thu và bản hỏng vẫn được giữ."
+      >
+
       </Dialog>
     </div>
   );

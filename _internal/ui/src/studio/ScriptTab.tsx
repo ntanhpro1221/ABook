@@ -15,7 +15,7 @@ import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { useMediaQuery } from "@/shared/media";
-import { Button, EmptyState, FilterRow, IconButton, Kbd, ChoiceRow, Sheet, Skeleton, ContentSkeleton, InlineError } from "@/shared/ui";
+import { SelectionMark, Button, EmptyState, FilterRow, IconButton, Kbd, ChoiceRow, Sheet, Skeleton, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
 import { UNDO_MS, optimistic, undoAction, undoSteps, usePendingNote } from "./decisions";
@@ -623,7 +623,8 @@ export function DeliveryMenu({
         <div>
           <div className="mb-1.5 label-section text-fg-2">Ai nói?</div>
           {picked ? (
-            <div className="flex items-center gap-2 rounded-lg border border-accent bg-accent-soft px-2.5 py-1.5 text-sm text-accent-text">
+            <div className="flex items-center gap-2 rounded-lg border border-accent px-2.5 py-1.5 text-sm text-accent-text">
+              <SelectionMark selected />
               <span className="min-w-0 flex-1 truncate font-medium">
                 {picked.label}
                 {picked.newGender ? " · người mới" : ""}
@@ -1031,8 +1032,8 @@ function ScriptRow({
       onClick={speech ? (event) => (event.shiftKey ? onExtend() : onActivate()) : undefined}
       className={cn(
         "group transition-[background-color,box-shadow,opacity] duration-motion-fast grid grid-cols-[calc(var(--spacing)*7)_minmax(0,1fr)] gap-x-2 gap-y-1 rounded-lg px-2 py-1.5 outline-none lg:grid-cols-[10rem_calc(var(--spacing)*7)_minmax(0,1fr)]",
-        active && "bg-hover",
-        selected && "bg-accent-soft ring-1 ring-inset ring-accent/40",
+        active && !selected && "bg-hover",
+        selected && "text-accent-text",
         speech && "focus-visible:ring-2 focus-visible:ring-focus",
         context && "opacity-45",
         marks?.length && !selected && (markNow ? "ring-2 ring-inset ring-warning/60" : "ring-1 ring-inset ring-warning/25"),
@@ -1065,8 +1066,9 @@ function ScriptRow({
         )}
       </div>
       <div className="flex min-w-0 flex-wrap items-start gap-x-2 gap-y-0.5">
+      <SelectionMark selected={selected} className="mt-1" />
       <div className="min-w-0 max-w-[44rem] flex-1 basis-[min(100%,16rem)]">
-        <p className={cn("text-[0.9375rem] leading-relaxed", speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
+        <p className={cn("text-[0.9375rem] leading-relaxed", selected ? "text-accent-text" : speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
           {line.kind === "thought" && <span className="mr-1.5 rounded bg-hover px-1.5 py-px align-[1px] text-[0.6875rem] font-medium not-italic text-fg-2">nghĩ</span>}
           {marks?.length ? (
             splitByRanges(line.text, marks).map(([part, hit], index) =>
@@ -1410,7 +1412,7 @@ function ChapterScriptView({
     // motionKey: hàng vào / ra tự khép / mở tại chỗ (LineRows), vùng chỉ trượt khi đổi bộ lọc / người nói - không mờ cả danh sách mỗi lần gán.
     <MotionRegion slideIndex={FILTERS.indexOf(filter)} motionKey={[filter, who]}>
       <MotionPresence open={selected.length > 1}>
-        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-accent-soft px-3 py-1.5 text-[0.8125rem]" role="status">
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-3 py-1.5 text-[0.8125rem]" role="status">
           <span className="font-semibold">Đang chọn {selected.length} câu</span>
           <span className="text-fg-2">- phím số hay chọn người ở một câu trong nhóm gán cả {selected.length} câu · Esc bỏ chọn</span>
           {(() => {

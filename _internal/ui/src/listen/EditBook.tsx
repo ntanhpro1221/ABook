@@ -15,7 +15,7 @@ import { holderName } from "@/shared/editsSync";
 import { formatClock } from "@/shared/format";
 import { levelOptions, levelText } from "@/shared/musicLevels";
 import { Switch } from "@/desktop/PhoneSync";
-import { Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
+import { DialogActions, Select, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
 import { MyMusicSection, SwapTrack } from "./MyMusic";
@@ -187,17 +187,17 @@ export function MusicSection({ book }: { book: ListenBook }) {
         </div>
         <label className="text-sm">
           <span className="block text-fg-2">Mức nhạc dưới giọng đọc</span>
-          <select
+          <Select
             value={String(data.levelDb)}
             onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
-            className="mt-1 h-9 rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
+            className="mt-1"
           >
             {levelOptions(data.levelDb).map(([value, label]) => (
               <option key={value} value={String(value)}>
                 {levelText(value, label)}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       </div>
       <ul className={cn("max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line", !data.enabled && "opacity-50")}>
@@ -525,6 +525,7 @@ export function chapterShownName(chapter: Pick<ListenChapter, "title" | "fullTit
  *  MỘT tên - dòng đầu chương, không tách nhãn / tên: một ô "Tên chương" điền sẵn tên đang thấy, lưu thì tên mới thay hẳn (cùng lệnh PUT,
  *  nhãn = tên mới, tên phụ trống). Sách Studio giữ hai ô. */
 export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBook; chapter: ListenChapter | null; onClose: () => void }) {
+  const dialogForm1 = useId();
   const client = useQueryClient();
   const single = book.stage === "text" && !book.capabilities?.workshop;
   const [label, setLabel] = useState("");
@@ -544,14 +545,24 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
     onError: (error: Error) => toast.error("Chưa đổi được tên chương", { description: error.message }),
   });
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+          <Button type="button" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ revert: true })}>
+            Về tên gốc
+          </Button>
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Thôi
+          </Button>
+          <Button type="submit" form={dialogForm1} variant="primary" loading={save.isPending} disabled={!label.trim()}>
+            Lưu
+          </Button>
+        </DialogActions>}
       open={chapter !== null}
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
       title="Đổi tên chương"
       description="Chỉ đổi cái tên hiện trên màn hình - audio không đổi."
     >
-      <form
+      <form id={dialogForm1}
         className="space-y-3"
         onSubmit={(event) => {
           event.preventDefault();
@@ -579,17 +590,7 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
             />
           </label>
         )}
-        <div className="dialog-actions pt-2">
-          <Button type="button" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ revert: true })}>
-            Về tên gốc
-          </Button>
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Thôi
-          </Button>
-          <Button type="submit" variant="primary" loading={save.isPending} disabled={!label.trim()}>
-            Lưu
-          </Button>
-        </div>
+
       </form>
     </Dialog>
   );
@@ -661,7 +662,19 @@ export function SaveAsDialog({
   const [kind, setKind] = useMotionState<SaveKind>(book.projectFile ? "abookproj" : "abook");
   const [folder, setFolder] = useState<string | null>(null);
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          Thôi
+        </Button>
+        <Button
+          variant="primary"
+          icon={FileDown}
+          loading={busy}
+          onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then(() => onOpenChange(false))}
+        >
+          Lưu
+        </Button>
+      </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-md"
@@ -698,19 +711,7 @@ export function SaveAsDialog({
         </div>
       )}
       {pickFolder && <p className="mt-2 text-xs text-fg-3">Đã có file cùng tên trong thư mục ấy thì file mới thêm số (2) ở cuối tên - không đè lên file cũ.</p>}
-      <div className="mt-5 dialog-actions">
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Thôi
-        </Button>
-        <Button
-          variant="primary"
-          icon={FileDown}
-          loading={busy}
-          onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then(() => onOpenChange(false))}
-        >
-          Lưu
-        </Button>
-      </div>
+
     </Dialog>
   );
 }

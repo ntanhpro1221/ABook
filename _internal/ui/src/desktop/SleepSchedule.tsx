@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "@/shared/toast";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { SettingsRow } from "@/shared/SettingsNav";
-import { TimeSelect } from "@/shared/ui";
+import { Select, TimeSelect } from "@/shared/ui";
 import { usePreferences } from "@/studio/data";
 import type { Preferences } from "@/studio/api";
 import { Switch } from "./PhoneSync";
@@ -34,16 +34,16 @@ export function SleepSchedule() {
     </SettingsRow>
     <MotionPresence open={Boolean(schedule)}>
       {schedule && <div className="flex flex-wrap items-center gap-2 py-3 text-sm">
-        <TimeSelect ariaDisabled={draft !== null} label="Từ" value={schedule.from} onChange={(from) => change({ ...schedule, from })} className="h-9 rounded-lg border border-line bg-panel px-2" />
+        <TimeSelect ariaDisabled={draft !== null} label="Từ" value={schedule.from} onChange={(from) => change({ ...schedule, from })} />
         <span className="text-fg-2">đến</span>
-        <TimeSelect ariaDisabled={draft !== null} label="Đến" value={schedule.to} onChange={(to) => change({ ...schedule, to })} className="h-9 rounded-lg border border-line bg-panel px-2" />
+        <TimeSelect ariaDisabled={draft !== null} label="Đến" value={schedule.to} onChange={(to) => change({ ...schedule, to })} />
         <span className="text-fg-2">hẹn</span>
-        <select aria-label="Số phút hẹn" value={schedule.minutes} aria-disabled={draft !== null || undefined}
+        <Select aria-label="Số phút hẹn" value={schedule.minutes} aria-disabled={draft !== null || undefined}
           onPointerDown={(event) => { if (draft !== null) event.preventDefault(); }}
           onKeyDown={(event) => { if (draft !== null && event.key !== "Tab") event.preventDefault(); }}
-          onChange={(event) => change({ ...schedule, minutes: Number(event.target.value) })} className="h-9 rounded-lg border border-line bg-panel px-2 aria-disabled:opacity-50">
+          onChange={(event) => change({ ...schedule, minutes: Number(event.target.value) })} className="aria-disabled:opacity-50">
           {[15, 30, 45, 60].map((minutes) => <option key={minutes} value={minutes}>{minutes} phút</option>)}
-        </select>
+        </Select>
       </div>}
     </MotionPresence>
   </>;

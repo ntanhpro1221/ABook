@@ -3,10 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const h = vi.hoisted(() => ({ dialog: null as null | { open: boolean; onOpenChange: (open: boolean) => void; title: unknown; description: unknown } }));
 vi.mock("@/shared/ui", () => ({
+  DialogActions: ({ children }: { children: unknown }) => <div>{children as never}</div>,
   Button: ({ children, onClick, disabled }: { children: unknown; onClick?: () => void; disabled?: boolean }) => <button disabled={disabled} onClick={onClick}>{children as never}</button>,
-  Dialog: (props: NonNullable<typeof h.dialog> & { children: unknown }) => {
+  Dialog: (props: NonNullable<typeof h.dialog> & { children?: unknown; footer?: unknown }) => {
     h.dialog = props;
-    return <div data-dialog={String(props.open)}>{props.children as never}</div>;
+    return <div data-dialog={String(props.open)}>{props.children as never}{props.footer as never}</div>;
   },
 }));
 import { ClearDialog } from "./ReadAloudStorage";
