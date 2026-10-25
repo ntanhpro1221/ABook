@@ -44,7 +44,9 @@ export function galleryCases(platform: Platform): void {
           expect(document.querySelector('[data-current-choice][aria-pressed="true"]')?.textContent).toBe("1,15×");
         }
         if (entry.id === "desktop/settings-studio") {
-          expect([...container.querySelectorAll("h1")].at(-1)?.textContent).toBe("Studio");
+          // Hai cột: "Cài đặt" là tiêu đề màn (h1), tên nhóm đang mở là tiêu đề cột phải (h2).
+          expect(container.querySelector("h1")?.textContent).toBe("Cài đặt");
+          expect(container.querySelector(".settings-page h2")?.textContent).toBe("Studio");
           expect(container.textContent).toContain("Tạm dừng dùng pin");
           expect(container.textContent).toContain("Sách mới");
           expect(container.textContent).toContain("Cách đọc chung");

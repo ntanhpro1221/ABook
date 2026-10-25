@@ -22,6 +22,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Menu "…" của trình phát: mỗi dòng chỉ một biểu tượng (Âm lượng, Thiết bị phát không còn hai loa / hai nút cast), việc khác nhau dùng biểu tượng khác nhau ("Đổi tên hồ sơ…" không còn trùng bút chì với "Sửa thông tin"); mục con trên máy tính mở thẳng mép với menu cha thay vì đè lệch lên.
 - Chữ trong màn đọc và "Đọc theo" không còn dài gần 90 ký tự mỗi dòng: cột chữ giữ khoảng 66 ký tự ở mọi cỡ chữ, dễ đọc hơn trên màn rộng.
 - Nhãn chữ hoa chỉ còn tên nhóm ngắn ("Edge", "Giọng của máy", "Tối qua"); phần mô tả ("trực tuyến, miễn phí", "không cần mạng", tên sách) xuống chữ thường nhỏ. Dòng dung lượng bản đọc không còn rớt "141 MB)." xuống dòng riêng.
+- Đầu màn thống nhất: đổi tab Thư viện · Studio · Cài đặt thì tiêu đề không còn nhảy; mọi màn con có cùng một nút ← thẳng mép nội dung, tiêu đề sát sau; dải mất mạng, màn lỗi và Studio trống thẳng lề, không còn lặp "Chưa có dự án".
 
 ## [0.4.139] - 2026-10-25
 

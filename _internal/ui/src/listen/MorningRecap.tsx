@@ -169,14 +169,17 @@ export function MorningRecap({ className }: { className?: string }) {
           const sentence = sentenceAt(scripts.data?.[marker.chapterId], marker.seconds);
           return (
             <li key={marker.key} className="min-w-0">
+              {/* data-recap-marker: như dòng menu, khoảng mực biểu tượng -> chữ bằng nhau mọi mốc (trăng khuyết nét tràn phải hơn bàn tay,
+                  điện thoại 1,6 px - soát 25-10), styles.css. */}
               <button
                 type="button"
+                data-recap-marker=""
                 onClick={() => void resume(marker.chapterId, marker.seconds)}
                 className={cn(
                   "-mx-2 flex h-full w-[calc(100%+14px)] gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-hover",
                 )}
               >
-                <marker.icon className={cn("mt-0.5 size-4 shrink-0", marker.key === "touch" && "-translate-x-px", marker.suggested ? "text-accent-text" : "text-fg-2")} />
+                <marker.icon className={cn("mt-0.5 size-4 shrink-0", marker.suggested ? "text-accent-text" : "text-fg-2")} />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline justify-between gap-2">
                     <span className={cn("text-sm font-semibold", marker.suggested && "text-accent-text")}>{marker.label}</span>
