@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import { App as CapacitorApp } from "@capacitor/app";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Clapperboard, Download, Headphones, Library, Link2, Settings, Trash2 } from "lucide-react";
@@ -237,7 +238,8 @@ function RemoveFromPhoneMenuItem({ book }: { book: ListenBook }) {
       <Trash2 className="size-4" />
       <span className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
         <span data-menu-label>Xoá khỏi điện thoại…</span>
-        {bytes !== undefined && <span className="shrink-0 text-xs text-fg-2">Chiếm {formatSize(bytes)}</span>}
+        {/* Cỡ về sau khi menu đã mở: dòng phụ hiện dần tại chỗ, không bật ra. */}
+        <MotionRegion as="span" motionKey={bytes !== undefined} className="shrink-0 text-xs text-fg-2">{bytes !== undefined ? `Chiếm ${formatSize(bytes)}` : null}</MotionRegion>
       </span>
     </DropdownMenu.Item>
   );
@@ -376,7 +378,8 @@ export function AndroidApp() {
                   />
                   <Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} />
                   <Route path="/studio" element={<StudioScreen />} />
-                  <Route path="/settings/:group?" element={<SettingsScreen key={synced} />} />
+                  {/* Đồng bộ tuỳ chọn với native xong lúc đang mở Cài đặt: màn dựng lại với giá trị mới (key) - mờ qua một lần, không thay cứng. */}
+                  <Route path="/settings/:group?" element={<MotionRegion motionKey={synced}><SettingsScreen key={synced} /></MotionRegion>} />
                 </Routes>
               </MobileShell>
             </MotionHashRouter>

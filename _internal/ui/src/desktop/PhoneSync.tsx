@@ -187,7 +187,9 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
     const minutes = Math.floor(secondsLeft / 60);
     const seconds = String(secondsLeft % 60).padStart(2, "0");
     return (
-      <MotionRegion as="div" className="rounded-xl border border-accent/35 bg-accent-soft p-5" aria-live="polite">
+      // Ba pha (mã / mã bị khoá / nút) dùng chung một vùng khoá theo pha: khung cũ (viền, nền, đệm) nằm trong ảnh mờ ra, không đổi cứng;
+      // đồng hồ đếm ngược không làm vùng mờ lại.
+      <MotionRegion as="div" motionKey="code" className="rounded-xl border border-accent/35 bg-accent-soft p-5" aria-live="polite">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="min-w-0">
             <p className="text-sm font-semibold">Mã ghép thiết bị</p>
@@ -226,7 +228,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
   }
   if (sync.pairingBlocked) {
     return (
-      <MotionRegion as="div" className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4">
+      <MotionRegion as="div" motionKey="blocked" className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4">
         <ShieldAlert className="mt-0.5 glyph shrink-0 text-warning" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">Mã bị khoá</p>
@@ -241,7 +243,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
     );
   }
   return (
-    <MotionRegion><Button icon={Smartphone} onClick={onPair} loading={busy}>
+    <MotionRegion motionKey="idle"><Button icon={Smartphone} onClick={onPair} loading={busy}>
       Ghép thiết bị mới
     </Button></MotionRegion>
   );
@@ -269,8 +271,9 @@ export function PhoneSync() {
     if (added) toast.success(`Đã ghép ${added.name}`, { description: "Thiết bị này giờ tải được sách và đồng bộ chỗ đang nghe." });
   }, [sync]);
 
-  if (error && !sync) return <SettingsBlock title="Máy này" id="phone"><MotionRegion fadeThrough className="py-3.5"><InlineError message="Bạn hãy thử tải lại cài đặt kết nối." onRetry={() => void refetch()} /></MotionRegion></SettingsBlock>;
-  if (!sync) return <SettingsBlock title="Máy này" id="phone"><MotionRegion fadeThrough className="py-3.5"><ContentSkeleton count={2} label="Đang tải kết nối" /></MotionRegion></SettingsBlock>;
+  // Khung chờ / lỗi và nội dung có CÙNG gốc (vùng ngoài cùng bên dưới): tải xong thì mờ qua, không gỡ cả cây làm khung chờ mất cứng.
+  if (error && !sync) return <MotionRegion as="div" className="motion-reveal"><SettingsBlock title="Máy này" id="phone"><MotionRegion fadeThrough className="py-3.5"><InlineError message="Bạn hãy thử tải lại cài đặt kết nối." onRetry={() => void refetch()} /></MotionRegion></SettingsBlock></MotionRegion>;
+  if (!sync) return <MotionRegion as="div" className="motion-reveal"><SettingsBlock title="Máy này" id="phone"><MotionRegion fadeThrough className="py-3.5"><ContentSkeleton count={2} label="Đang tải kết nối" /></MotionRegion></SettingsBlock></MotionRegion>;
   const wanted = toggle.isPending ? Boolean(toggle.variables) : sync.wanted;
   const failing = sync.wanted && !sync.enabled;
   const studioWanted = studio.isPending ? Boolean(studio.variables) : sync.remoteStudio;

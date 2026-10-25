@@ -2,6 +2,8 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Clapperboard, Laptop } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
+import { cn } from "@/shared/cn";
+import { MotionPresence } from "@/shared/MotionPresence";
 import type { ListenBook } from "@/listen/model";
 import { Button, Dialog } from "@/shared/ui";
 import { EbookLibrary, type StudioComputer } from "./plugins";
@@ -134,25 +136,23 @@ export function StudioChip({ book, computers = [] }: { book: ListenBook; compute
   if (!book.studio) return null;
   const holder = computers.find((computer) => computer.holdsBook);
   const blocked = holder ? holder.listenOnly === true : computers.length > 0 && openable(computers).length === 0;
-  if (blocked) {
-    const reason = studioListenOnlyLine(holder ? [holder.name] : computers.map((computer) => computer.name));
-    return (
-      <>
-        <button type="button" disabled title={reason} className="font-semibold opacity-60">
-          Mở Studio
-        </button>
-        <span className="basis-full text-pretty font-normal text-fg-2">{reason}</span>
-      </>
-    );
-  }
+  const reason = blocked ? studioListenOnlyLine(holder ? [holder.name] : computers.map((computer) => computer.name)) : "";
+  // Danh sách máy về muộn: cùng một nút đổi độ mờ (không thay nút này bằng nút khác), dòng lý do mở / khép tại chỗ.
   return (
-    <button
-      type="button"
-      onClick={() => void EbookLibrary.openStudio({ book: book.id }).catch((error: Error) => toast.error(error.message))}
-      className="touch-hit font-semibold underline underline-offset-2"
-    >
-      Mở Studio
-    </button>
+    <>
+      <button
+        type="button"
+        disabled={blocked}
+        title={reason || undefined}
+        onClick={() => void EbookLibrary.openStudio({ book: book.id }).catch((error: Error) => toast.error(error.message))}
+        className={cn("touch-hit font-semibold transition-opacity duration-motion-fast", blocked ? "opacity-60" : "underline underline-offset-2")}
+      >
+        Mở Studio
+      </button>
+      <MotionPresence className="basis-full" open={blocked}>
+        <span className="text-pretty font-normal text-fg-2">{reason}</span>
+      </MotionPresence>
+    </>
   );
 }
 

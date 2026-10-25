@@ -1050,6 +1050,24 @@ select[class~="border-line"] {
   margin-right: calc((clamp(1.125rem, 0.75rlh, 1.96875rem) - 48px) / 2 - clamp(1.125rem, 0.75rlh, 1.96875rem) * var(--slot-ink) / 24);
 }
 [data-menu-slot] > :last-child:has(.lucide-lightbulb) { --slot-ink: 5; }
+/* Dòng có tên trong menu "…" (PlayerViews MenuSlot): chưa có nút thì gập hẳn (kể cả khe gap-0.5 của cột), nút tới muộn thì mở ra dần - không
+   bật tắt. Lần dựng đầu đã có nút thì đứng yên (transition không chạy lúc dựng). WebView không tween được hàng lưới thì đổi thẳng như trước. */
+.menu-slot {
+  display: grid;
+  grid-template-rows: 0fr;
+  margin-top: calc(var(--spacing) * -0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: grid-template-rows var(--motion-medium-out) var(--ease-accelerate), margin-top var(--motion-medium-out) var(--ease-accelerate), opacity var(--motion-fast-out) linear, visibility 0s linear var(--motion-medium-out);
+}
+.menu-slot > div { min-height: 0; overflow: clip; overflow-clip-margin: 6px; }
+.menu-slot:has(button) {
+  grid-template-rows: 1fr;
+  margin-top: 0;
+  opacity: 1;
+  visibility: visible;
+  transition: grid-template-rows var(--motion-medium) var(--ease-standard), margin-top var(--motion-medium) var(--ease-standard), opacity var(--motion-medium) var(--ease-standard), visibility 0s;
+}
 [data-radix-popper-content-wrapper] > [role="dialog"]:has(> [data-player-more]) {
   padding: 20px;
 }
@@ -1240,6 +1258,7 @@ details[open]:not([data-motion="closing"]) > summary .fold-chevron {
 }
 .indeterminate-bar {
   animation: indeterminate 1.4s ease-in-out infinite;
+  transition: background-color var(--motion-medium) var(--ease-standard);
 }
 
 /* Cột VU nhảy khi đang thu/đang phát. */
@@ -1305,6 +1324,14 @@ body:has([role="dialog"][data-state="open"]) .page-motion { margin-bottom: -8px;
     justify-content: center;
   }
 }
+/* Mép mờ báo còn tab ngoài mép: bề rộng là biến có kiểu nên chuyển dần theo --motion-fast khi cuộn tới / rời đầu hàng (TabsList đặt giá trị). */
+@property --tab-fade-l { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --tab-fade-r { syntax: "<length>"; inherits: false; initial-value: 0px; }
+.tab-row-fade {
+  mask-image: linear-gradient(to right, transparent, black var(--tab-fade-l), black calc(100% - var(--tab-fade-r)), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black var(--tab-fade-l), black calc(100% - var(--tab-fade-r)), transparent);
+  transition: --tab-fade-l var(--motion-fast) var(--ease-standard), --tab-fade-r var(--motion-fast) var(--ease-standard);
+}
 
 /* Mở/đóng "Đang nghe": màn trượt lên từ đáy và hiện dần (nền phía dưới mờ khuất theo), đóng thì trượt xuống; bìa bay giữa thanh phát và màn lớn.
    Chỉ MỘT phần tử mang mỗi tên ở mỗi trạng thái: bìa nhỏ bỏ tên khi màn lớn đang mở. */
@@ -1346,12 +1373,18 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 .motion-loading { display: grid; }
 .motion-loading > * { grid-area: 1 / 1; min-width: 0; }
 .motion-loading-placeholder[data-state="closed"] { pointer-events: none; }
+/* Nội dung cũ khi khoá truy vấn đổi (LoadingCrossfade): đứng yên đúng chừng khung chờ còn chờ, rồi mờ đi khi khung chờ hiện lên - không bị gỡ cứng. */
+.motion-loading-content[data-state="closed"] {
+  pointer-events: none;
+  animation: fade-out var(--motion-medium-out) linear var(--loading-patience) both;
+}
 /* Chờ ngắn thì khung chờ không bao giờ hiện (LOADING_PATIENCE trong MotionPresence.tsx - đổi một chỗ thì đổi cả hai). */
 .motion-loading-placeholder.motion-panel[data-state="open"] { animation-delay: var(--loading-patience); }
 .motion-progress {
   width: 100%;
   transform-origin: left;
-  transition: transform var(--motion-medium) var(--ease-standard);
+  /* Đổi màu (đang chạy -> xong / lỗi / mờ) chuyển dần cùng nhịp, không nhảy. */
+  transition: transform var(--motion-medium) var(--ease-standard), background-color var(--motion-medium) var(--ease-standard);
 }
 
 /* Tab trong trang (Radix Tabs) đổi bằng state, không qua đường dẫn: nội dung tab mới hiện dần. */
@@ -1366,18 +1399,6 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
   animation: motion-enter var(--motion-slow) var(--ease-standard) backwards;
   animation-delay: calc(min(var(--i, 0), 10) * 28ms);
 }
-/* Biểu tượng đổi trạng thái (phát <-> dừng): nhún nhẹ khi hiện. */
-@keyframes icon-pop {
-  from {
-    opacity: 0;
-    transform: scale(calc(1 - 0.4 * var(--motion-amount))) rotate(calc(-12deg * var(--motion-amount)));
-  }
-}
-.icon-pop {
-  display: inline-grid;
-  animation: icon-pop var(--motion-medium) cubic-bezier(0.2, 0, 0, 1.3);
-}
-
 @media (prefers-reduced-motion: reduce) {
   /* Bìa bay: chỉ còn hiện/mờ chéo (ảnh chụp không dịch chỗ). */
   ::view-transition-group(*) {

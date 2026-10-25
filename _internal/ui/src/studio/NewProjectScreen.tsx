@@ -1,5 +1,6 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
+import { useListPresence, type PresentRow } from "@/shared/motion";
 import { Collapse, Fold, useFold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
 import {
@@ -23,7 +24,7 @@ import {
   Upload,
   Wand2,
 } from "lucide-react";
-import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { Switch } from "@/desktop/PhoneSync";
@@ -415,7 +416,7 @@ export function SourceStep({
           }}
         >
           <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent-text">
-            {scanning || uploading ? <Loader2 className="size-7 animate-spin" /> : <FolderInput className="size-7" strokeWidth={1.75} />}
+            <MotionRegion as="span" className="inline-grid place-items-center">{scanning || uploading ? <Loader2 className="size-7 animate-spin" /> : <FolderInput className="size-7" strokeWidth={1.75} />}</MotionRegion>
           </div>
           <p className="mt-4 font-medium">
             {scanning
@@ -671,25 +672,28 @@ export function SourceStep({
           {/* Danh sách thật cho trình đọc màn hình ("danh sách 12 mục", soát a31 A4); vạch "Phần N" chỉ để nhìn - lời của nó đọc ở đầu mục. */}
           <Fold storageKey="new-project.chapters" title="Danh sách chương" summary={`${files.length} chương`} defaultOpen={files.length <= 4} className="mt-3" heading="h3">
           <div className="overflow-hidden rounded-xl border border-line bg-panel">
-          <div ref={setChapterList} style={chapterFade} role="list" aria-label="Các chương sẽ làm" className="max-h-[340px] overflow-y-auto overscroll-contain">
-            {files.map((file, index) => {
+          {/* data-motion-live: vùng cả bước không mờ lại khi bỏ / thêm chương - hàng tự khép / mở tại chỗ (useListPresence), thanh cuộn đứng yên. */}
+          <div ref={setChapterList} style={chapterFade} role="list" aria-label="Các chương sẽ làm" data-motion-live="" className="max-h-[340px] overflow-y-auto overscroll-contain">
+            <ChapterRows files={files}>
+            {({ key, item: file, state, ref }) => {
+              const index = files.findIndex((item) => item.path === key);
               // Chia phần: một vạch "Phần N bắt đầu" trước chương đầu mỗi phần - khỏi phải đối số chương với ô "từ chương" ở trên.
-              const part = splitting && volumeStarts && volumeStarts.length > 1 ? volumeStarts.indexOf(index + 1) : -1;
+              const part = splitting && volumeStarts && volumeStarts.length > 1 && index >= 0 ? volumeStarts.indexOf(index + 1) : -1;
               return (
-                <Fragment key={file.path}>
-                  {part >= 0 && (
+                <div key={key} ref={ref} role="listitem" className="motion-row border-b border-line last:border-b-0" data-state={state} inert={state === "exit"}>
+                  <div>
+                  <MotionPresence open={part >= 0}>
                     <div aria-hidden className="flex items-center gap-2 border-b border-accent/30 bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-text">
                       <Layers className="size-3.5 shrink-0" />
                       <span className="min-w-0 truncate">Phần {part + 1} bắt đầu</span>
                     </div>
-                  )}
+                  </MotionPresence>
                   <div
-                    role="listitem"
-                    className="group grid grid-cols-[auto_minmax(0,1fr)_90px_36px] items-center gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0"
+                    className="group grid grid-cols-[auto_minmax(0,1fr)_90px_36px] items-center gap-2 px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto]"
                   >
                     <span className="tabular text-right text-xs text-fg-2" style={{ width: `${String(files.length).length}ch` }}>
                       {part >= 0 && <span className="sr-only">Phần {part + 1} bắt đầu. </span>}
-                      {index + 1}
+                      {index >= 0 ? index + 1 : ""}
                     </span>
                     <div className="min-w-0">
                       <div className="truncate text-sm font-medium">{file.firstLine || file.title}</div>
@@ -709,9 +713,11 @@ export function SourceStep({
                       <Trash2 className="size-4" />
                     </button>
                   </div>
-                </Fragment>
+                  </div>
+                </div>
               );
-            })}
+            }}
+            </ChapterRows>
           </div>
           </div>
           </Fold>
@@ -726,6 +732,12 @@ export function SourceStep({
       )}
     </MotionRegion>
   );
+}
+
+/** Hàng chương ở bước Nguồn: bỏ chương / "N chương đầu" / Hoàn tác khép / mở hàng tại chỗ (DESIGN 5.2). */
+function ChapterRows({ files, children }: { files: ScannedFile[]; children: (row: PresentRow<ScannedFile> & { ref?: (element: HTMLElement | null) => void }) => ReactNode }) {
+  const rows = useListPresence(files, (file) => file.path);
+  return <>{rows.map(children)}</>;
 }
 
 /** "Chương 768" từ dòng đầu file ("Chương 768 - Mô hình…"), không thì tên file - cho dải chương ở bước xác nhận. */
@@ -1978,7 +1990,8 @@ export function NewProjectScreen() {
               <Collapse open={optionsOpen} id="new-project-options">
                 <div className="space-y-12 pb-4 pt-4">
                   {/* Mẫu thiết lập chỉ cho sách mới: "Làm tiếp cuốn này" theo phần trước. */}
-                  {!draft.seed && <TemplateBar draft={draft} onPick={pickTemplate} narratorAuto={autoNarrator} />}
+                  {/* "Bỏ nối tiếp" / "Hoàn tác": thanh mẫu mở / khép tại chỗ; khoảng cách 48 px nằm trong phần khép (không nhảy khi gỡ). */}
+                  <MotionPresence open={!draft.seed} className="mb-0!" bodyClassName="pb-12"><TemplateBar draft={draft} onPick={pickTemplate} narratorAuto={autoNarrator} /></MotionPresence>
                   <VoiceStep
                     narrator={draft.narrator}
                     setNarrator={(narrator) => update({ narrator, narratorPicked: true })}

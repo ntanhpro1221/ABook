@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { letterShortcutsOn, useLetterShortcuts } from "@/shared/letterShortcuts";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { Dialog, Kbd } from "@/shared/ui";
 
 // Phím tắt của máy tính: MỘT danh sách cho Cài đặt › Phím tắt và cho hộp mở bằng phím "?" (hay nút "Phím tắt" ở màn Đang nghe).
@@ -31,8 +32,9 @@ export const LETTER_SHORTCUTS_HINT =
  *  `inSettings`: danh sách nằm ngay dưới công tắc trong Cài đặt › Giao diện - không trỏ về chính trang ấy (soát 24-10 T18). */
 export function ShortcutList({ remote = false, inSettings = false }: { remote?: boolean; inSettings?: boolean }) {
   const letters = useLetterShortcuts();
+  // Bật / tắt "Phím tắt chữ" ngay trên danh sách: hậu tố "(đang tắt)", gạch ngang và câu cuối mờ qua (state riêng - vùng cha không thấy).
   return (
-    <>
+    <MotionRegion motionKey={letters}>
       <dl className={inSettings ? "space-y-2.5 text-sm" : "max-w-md space-y-2.5 text-sm"}>
         {SHORTCUTS.map(([keys, label, letter]) => (
           <div key={label} className="flex items-center justify-between gap-4">
@@ -53,7 +55,7 @@ export function ShortcutList({ remote = false, inSettings = false }: { remote?: 
           : `Phím một chữ cái đang tắt${remote || inSettings ? "" : " (bật ở Cài đặt › Giao diện)"}. Space, mũi tên, Esc vẫn chạy.`}
       </p>
       )}
-    </>
+    </MotionRegion>
   );
 }
 

@@ -1,4 +1,6 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { toggleDetails, type DetailsLike } from "@/shared/motion";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
 
@@ -80,7 +82,7 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
   const defaultSize = data.models.find((model) => modelLabel(model.name) === modelLabel(data.default))?.size ?? 0;
   return (
     <MotionRegion>
-    <details className="group mt-8 max-w-2xl" open={Boolean(value)}>
+    <OpenWith open={Boolean(value)}>
       <summary className="cursor-pointer text-sm font-medium text-fg-2 hover:text-fg">
         Bộ phân tích truyện
       </summary>
@@ -112,7 +114,20 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
           : "Mặc định: máy đề xuất cho hầu hết các truyện, không cần chỉnh gì."}
       </p>
       <p className="mt-1 text-xs text-fg-3 break-all">Tên kỹ thuật: {modelLabel(value || data.default)}</p>
-    </details>
+    </OpenWith>
     </MotionRegion>
   );
+}
+
+/** <details> mở theo giá trị (chọn mẫu ở TemplateBar đặt / bỏ model) mà không qua bấm: mở / gập bằng toggleDetails như khi bấm (installDetailsMotion
+ *  chỉ bắt cú bấm), không đổi thuộc tính `open` cứng. Lúc dựng thì mở sẵn theo giá trị, không chuyển động. */
+function OpenWith({ open, children }: { open: boolean; children: ReactNode }) {
+  const box = useRef<HTMLDetailsElement>(null);
+  const [initial] = useState(open);
+  useEffect(() => {
+    const details = box.current;
+    if (!details || details.dataset.motion || details.open === open) return;
+    toggleDetails(details as unknown as DetailsLike);
+  }, [open]);
+  return <details ref={box} className="group mt-8 max-w-2xl" open={initial}>{children}</details>;
 }

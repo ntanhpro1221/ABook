@@ -1,5 +1,6 @@
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Link2, RotateCcw, Smartphone, X } from "lucide-react";
 import { useState } from "react";
@@ -153,8 +154,11 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
           <MoreInfo label="Đã áp dụng">Tên sách, bìa, tên nhân vật, tên chương và nhạc nền đã áp ngay. Yêu cầu trong hàng chờ chưa thu lại; khôi phục việc bỏ qua ở “Đã bỏ qua”.</MoreInfo>
         </div>
       )}
-      {data.devices.map((device) => (
-        <div key={device.id} className="mt-3">
+      {/* Áp dụng / Bỏ qua / Khôi phục: hàng (và cả máy khi hết việc) khép / mở tại chỗ; data-motion-live - cả khung không mờ lại theo từng hàng. */}
+      <div data-motion-live="">
+      <AnimatedRows items={data.devices} keyOf={(device) => device.id}>
+      {(device) => (
+        <div className="pt-3">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="min-w-0 flex-1 truncate text-sm font-medium">
               {device.name} <span className="font-normal text-fg-3">· gửi {formatWhen(device.at)}</span>
@@ -166,11 +170,11 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
               Bỏ qua tất cả
             </Button>
           </div>
-          <ul className="mt-2 divide-y divide-line overflow-hidden rounded-xl border border-line">
-            {device.items.map((item) => {
+          <AnimatedRows className="mt-2 divide-y divide-line overflow-hidden rounded-xl border border-line" items={device.items} keyOf={(item) => item.id}>
+            {(item) => {
               const Icon = item.kind === "alias" ? Link2 : (KIND_ICON[item.kind] ?? Check);
               return (
-                <li key={item.id} className="flex items-start gap-3 px-3 py-2 text-sm">
+                <MotionRegion className="flex items-start gap-3 px-3 py-2 text-sm">
                   <Icon className="mt-0.5 size-4 shrink-0 text-fg-3" />
                   <span className="min-w-0 flex-1 text-pretty">
                     {item.label}
@@ -179,38 +183,44 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
                   </span>
                   <IconButton size="sm" icon={Check} label="Áp dụng việc này" className="-my-1.5" disabled={busy !== null} onClick={() => void decide("apply", device, item)} />
                   <IconButton size="sm" icon={X} label="Bỏ qua việc này" className="-my-1.5 -mr-1.5" disabled={busy !== null} onClick={() => void decide("skip", device, item)} />
-                </li>
+                </MotionRegion>
               );
-            })}
-          </ul>
+            }}
+          </AnimatedRows>
         </div>
-      ))}
-      {(data.skipped?.length ?? 0) > 0 && (
+      )}
+      </AnimatedRows>
+      </div>
+      <MotionPresence open={(data.skipped?.length ?? 0) > 0}>
         <details className="mt-3 text-sm text-fg-2">
           <summary className="cursor-pointer select-none">Đã bỏ qua ({data.skipped.reduce((sum, device) => sum + device.items.length, 0)})</summary>
-          {data.skipped.map((device) => (
-            <div key={device.id} className="mt-2">
+          <div data-motion-live="">
+          <AnimatedRows items={data.skipped ?? []} keyOf={(device) => device.id}>
+          {(device) => (
+            <div className="pt-2">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-fg">{device.name}</h3>
                 <Button size="sm" variant="ghost" icon={RotateCcw} disabled={busy !== null} onClick={() => void decide("restore", device)}>
                   Khôi phục tất cả
                 </Button>
               </div>
-              <ul className="mt-1 divide-y divide-line overflow-hidden rounded-xl border border-line">
-                {device.items.map((item) => (
-                  <li key={item.id} className="flex items-start gap-3 px-3 py-2 text-sm">
+              <AnimatedRows className="mt-1 divide-y divide-line overflow-hidden rounded-xl border border-line" items={device.items} keyOf={(item) => item.id}>
+                {(item) => (
+                  <div className="flex items-start gap-3 px-3 py-2 text-sm">
                     <span className="min-w-0 flex-1 text-pretty">
                       {item.label}
                       {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}
                     </span>
                     <IconButton size="sm" icon={RotateCcw} label="Khôi phục việc này" className="-my-1.5 -mr-1.5" disabled={busy !== null} onClick={() => void decide("restore", device, item)} />
-                  </li>
-                ))}
-              </ul>
+                  </div>
+                )}
+              </AnimatedRows>
             </div>
-          ))}
+          )}
+          </AnimatedRows>
+          </div>
         </details>
-      )}
+      </MotionPresence>
       {data.recent.length > 0 && (
         <details className="mt-3 text-sm text-fg-2">
           <summary className="cursor-pointer select-none">Gửi gần đây ({data.recent.length})</summary>
