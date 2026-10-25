@@ -31,7 +31,9 @@ internal object ListeningSchema {
         for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) {
             // Value + stamp + revision are one unit (Python clean_state): a broken part drops all three and the other device resends
             // it - keeping the value and revision without the stamp broke every merge on the peer (a118 bug 3).
-            val brokenRev = raw.optJSONObject("_fieldRevs")?.has(field) == true && state.optJSONObject("_fieldRevs")?.has(field) != true
+            // One rule: a field that still has a value but no revision in the filtered table is broken - also when `_fieldRevs` itself had the wrong type (replaced by {}).
+            val hasRev = state.optJSONObject("_fieldRevs")?.has(field) == true
+            val brokenRev = raw.optJSONObject("_fieldRevs")?.has(field) == true && !hasRev || state.has(field) && !hasRev
             if (raw.has(field) && !state.has(field) || raw.has(stamp) && !state.has(stamp) || brokenRev) {
                 state.remove(field)
                 state.remove(stamp)
@@ -62,10 +64,9 @@ internal object ListeningSchema {
         for (key in listOf("chapters", "bookmarks")) if (!raw.has(key)) state.remove(key)
         if (state.has("deleted")) {
             val deleted = numericMap(state.optJSONObject("deleted"))
-            // A deletion whose revision was just filtered out goes too, for the same reason as a row.
-            raw.optJSONObject("_deletedRevs")?.let { revs ->
-                for (key in revs.keys()) if (state.optJSONObject("_deletedRevs")?.has(key) != true) deleted.remove(key)
-            }
+            // A deletion with no revision left in the filtered table (broken revision, or `_deletedRevs` itself the wrong type) goes too, for the same reason as a row.
+            val revs = state.optJSONObject("_deletedRevs")
+            for (key in deleted.keys().asSequence().toList()) if (revs?.has(key) != true) deleted.remove(key)
             state.put("deleted", deleted)
         }
         if (state.has("sessions")) {

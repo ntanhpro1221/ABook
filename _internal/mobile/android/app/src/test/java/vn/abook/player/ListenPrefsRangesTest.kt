@@ -53,7 +53,10 @@ class ListenPrefsRangesTest {
         else -> error(key)
     }
 
-    private fun natively() = choices.keys().asSequence().filter { it != "theme" }.toList()
+    /** Khoá WebView áp; native chỉ nhớ rồi trả lại ([ListenPrefs.stored]) - có test riêng, không có "điều lõi đang dùng". */
+    private val rememberedOnly = setOf("theme", "readingSurface")
+
+    private fun natively() = choices.keys().asSequence().filter { it !in rememberedOnly }.toList()
 
     private fun values(key: String): List<Any> = choices.getJSONObject(key).getJSONArray("values").let { array -> (0 until array.length()).map { array.get(it) } }
 
@@ -110,6 +113,8 @@ class ListenPrefsRangesTest {
             "flipToPause" -> Motion.flipEnabled
             "headsetSkips" -> Playback.headsetSkips
             "autoRewind" -> Playback::class.java.getDeclaredField("autoRewind").also { it.isAccessible = true }.getBoolean(Playback)
+            // Tiếng chạm và rung do WebView áp: native chỉ nhớ rồi trả lại.
+            "touchSounds", "haptics" -> ListenPrefs.stored().getBoolean(key)
             else -> error(key)
         }
         for (key in booleans.keys()) {
@@ -188,5 +193,32 @@ class ListenPrefsRangesTest {
         ListenPrefs.apply(JSONObject("""{"theme":"dark"}"""))
         ListenPrefs.apply(JSONObject("""{"autoRewind":false}"""))
         assertEquals("lần đẩy không mang theme không làm mất theme đã nhớ", "dark", ListenPrefs.stored().getString("theme"))
+    }
+
+    @Test fun theReadingSurfaceAndTheTwoFeedbackSwitchesAreRememberedAndHandedBackInsideTheirTable() {
+        val surfaces = values("readingSurface")
+        for (surface in surfaces) {
+            ListenPrefs.apply(JSONObject("{\"readingSurface\":${literal(surface)}}"))
+            assertEquals("readingSurface=$surface", surface, ListenPrefs.stored().getString("readingSurface"))
+        }
+        for (bad in listOf("\"purple\"", "5", "null", "true", "[]")) {
+            ListenPrefs.apply(JSONObject("{\"readingSurface\":\"night\"}"))
+            ListenPrefs.apply(JSONObject("{\"readingSurface\":$bad}"))
+            assertEquals("readingSurface=$bad", default("readingSurface"), ListenPrefs.stored().getString("readingSurface"))
+        }
+        for (key in listOf("touchSounds", "haptics")) {
+            assertTrue("$key phải nằm trong bảng chung", booleans.has(key))
+            for (wanted in listOf(true, false)) {
+                ListenPrefs.apply(JSONObject("{\"$key\":$wanted}"))
+                assertEquals("$key=$wanted", wanted, ListenPrefs.stored().getBoolean(key))
+            }
+            ListenPrefs.apply(JSONObject("{\"$key\":\"yes\"}"))
+            assertEquals("$key sai kiểu về mặc định", booleans.getBoolean(key), ListenPrefs.stored().getBoolean(key))
+        }
+        ListenPrefs.apply(JSONObject("""{"readingSurface":"ivory","touchSounds":false,"haptics":false}"""))
+        ListenPrefs.apply(JSONObject("""{"autoRewind":false}"""))
+        val kept = ListenPrefs.stored()
+        assertEquals("lần đẩy không mang ba khoá không làm mất chúng", Triple("ivory", false, false),
+            Triple(kept.getString("readingSurface"), kept.getBoolean("touchSounds"), kept.getBoolean("haptics")))
     }
 }
