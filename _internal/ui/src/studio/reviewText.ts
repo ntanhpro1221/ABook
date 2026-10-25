@@ -10,6 +10,11 @@ export function matchPhrase(percent: string): string {
   return `máy nghe lại khớp ${percent} với chữ của câu`;
 }
 
+/** Bản ngắn của matchPhrase cho dòng "Máy nghe ra": đứng ngay cạnh điều máy nghe được nên không cần nói lại "với chữ của câu" (đó là tooltip). */
+export function matchShort(percent: string): string {
+  return `khớp ${percent}`;
+}
+
 /** Chữ của nút / ô sửa cách máy đọc một câu (không đụng chữ của sách) - "chữ đem đọc" là tiếng của người làm máy. */
 export function spokenEditLabel(twins: number): string {
   return twins > 0 ? `Sửa ${twins + 1} câu` : "Sửa cách đọc";

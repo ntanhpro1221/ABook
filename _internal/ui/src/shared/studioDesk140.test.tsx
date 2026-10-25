@@ -42,7 +42,11 @@ describe("FilterRow", () => {
     expect(group).not.toMatch(/\bborder\b|bg-panel|rounded/);
     // Gạch chân là một vạch chung LƯỚT giữa các mục (SlidingIndicator), không bật viền dưới của từng mục.
     expect(html).toMatch(/data-sliding-indicator="line"[^>]*bg-accent/);
-    expect(html).toMatch(/border-b-2 border-transparent[^"]*text-accent-text/);
+    // Mục đang chọn: chữ thường (text-fg) như tab trang - hổ phách chỉ ở vạch, không ở chữ (một kiểu cho cả tab lẫn bộ lọc).
+    const [selected, other] = html.match(/<button[^>]*role="radio"[^>]*>/g)!;
+    expect(selected).toMatch(/border-b-2 border-transparent[^"]* text-fg"/);
+    expect(selected).not.toMatch(/text-accent-text|text-fg-2/);
+    expect(other).toMatch(/ text-fg-2/);
     expect(html).not.toMatch(/border-accent/);
   });
 });
