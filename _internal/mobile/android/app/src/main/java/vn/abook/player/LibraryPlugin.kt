@@ -156,6 +156,13 @@ class LibraryPlugin : Plugin() {
     @PluginMethod
     fun info(call: PluginCall) = call.resolve(JSObject().put("root", Store.root.absolutePath))
 
+    /** Trang đầu đã dựng xong và đứng yên: màn chờ lúc mở app được mờ đi (MainActivity). */
+    @PluginMethod
+    fun appReady(call: PluginCall) {
+        LaunchSplash.ready = true
+        call.resolve()
+    }
+
     // ---- mở file sách (.abook) -------------------------------------------------------------------------------
 
     /**

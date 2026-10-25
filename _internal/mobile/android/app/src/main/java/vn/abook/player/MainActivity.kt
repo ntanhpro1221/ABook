@@ -6,28 +6,32 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
-import android.webkit.WebView
 import android.widget.Toast
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.getcapacitor.BridgeActivity
-import com.getcapacitor.WebViewListener
 import vn.abook.player.readaloud.ReadAloudPlugin
 import kotlin.math.roundToInt
 
 /** WebView text zoom (percent) for a system font scale: 1.3 -> 130. */
 internal fun textZoomFor(fontScale: Float): Int = (fontScale * 100).roundToInt().coerceIn(50, 300)
 
-private const val SPLASH_MAX_MS = 1500L
-private const val SPLASH_FADE_MS = 220L
+private const val SPLASH_MAX_MS = 4000L
+private const val SPLASH_FADE_MS = 300L
+
+/** Trang web đầu tiên đã dựng xong (LibraryPlugin.appReady) - màn chờ được mờ đi. */
+internal object LaunchSplash {
+    @Volatile var ready = false
+}
 
 class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        // Mở app (chủ sách 25-10: "giao diện hiện ra từ hư không"): màn chờ giữ tới khi trang web tải xong (tối đa 1,5 s) rồi MỜ đi, giao diện
-        // web bên dưới tự hiện dần (#root trong styles.css) - không có khung nền trống, không có gì bật ra.
+        // Mở app (chủ sách 25-10: "giao diện hiện ra từ hư không"): màn chờ giữ tới khi trang đầu đã dựng xong và đứng yên - hết khung chờ,
+        // hết hoạt ảnh bố cục (web gọi EbookLibrary.appReady, android/App.tsx useLaunchReady; tối đa 4 s) - rồi MỜ đi, để lộ giao diện hoàn
+        // chỉnh. Tắt ngay khi trang vừa tải thì người dùng thấy cả chuỗi dựng: thân trống -> khung chờ -> nội dung mọc dần.
         val splash = installSplashScreen()
         val started = SystemClock.uptimeMillis()
-        var webReady = false
-        splash.setKeepOnScreenCondition { !webReady && SystemClock.uptimeMillis() - started < SPLASH_MAX_MS }
+        LaunchSplash.ready = false
+        splash.setKeepOnScreenCondition { !LaunchSplash.ready && SystemClock.uptimeMillis() - started < SPLASH_MAX_MS }
         splash.setOnExitAnimationListener { screen ->
             screen.view.animate().alpha(0f).setDuration(SPLASH_FADE_MS).withEndAction { screen.remove() }.start()
         }
@@ -35,9 +39,6 @@ class MainActivity : BridgeActivity() {
         registerPlugin(LibraryPlugin::class.java)
         registerPlugin(ReadAloudPlugin::class.java)
         super.onCreate(savedInstanceState)
-        bridge.addWebViewListener(object : WebViewListener() {
-            override fun onPageLoaded(webView: WebView) { webReady = true }
-        })
         testOverLock(intent)
         if (savedInstanceState == null) open(intent)
     }
