@@ -395,6 +395,25 @@ export function StatusPill({
   );
 }
 
+const STATUS_INK: Record<Tone, string> = {
+  accent: "text-accent-text",
+  success: "text-success",
+  danger: "text-danger",
+  warning: "text-warning",
+  muted: "text-fg-2",
+};
+
+/** Trạng thái dạng CHỮ (không viên thuốc): đứng trong một dòng thông tin ("Đang thu âm · 24 chương · 2 giờ 33 phút") - viên thuốc nằm trên tiêu đề
+ *  làm tiêu đề lệch dòng theo trạng thái. Cùng tên màu với StatusPill (tone), `live` thêm vạch nhạc đang chạy. */
+export function StatusText({ label, tone, live = false, className }: { label: string; tone: Tone; live?: boolean; className?: string }) {
+  return (
+    <MotionRegion as="span" motionKey={[label, tone, live]} className={cn("inline-flex items-center gap-1.5 whitespace-nowrap font-medium transition-colors duration-motion-fast", STATUS_INK[tone], className)}>
+      {live && <Vu className="h-2.5" />}
+      {label}
+    </MotionRegion>
+  );
+}
+
 // ---- Tab --------------------------------------------------------------------------------------------------
 
 export const Tabs = TabsPrimitive.Root;
@@ -1114,7 +1133,7 @@ export function FilterRow<T extends string>({
           onClick={() => onChange(option.value)}
           className={cn(
             "touch-row h-9 shrink-0 whitespace-nowrap border-b-2 border-transparent text-sm font-medium transition-colors duration-motion-medium",
-            value === option.value ? "text-accent-text" : "text-fg-2 hover:text-fg",
+            value === option.value ? "text-fg" : "text-fg-2 hover:text-fg",
           )}
         >
           {option.label}

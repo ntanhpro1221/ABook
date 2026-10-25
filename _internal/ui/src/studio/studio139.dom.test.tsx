@@ -117,7 +117,7 @@ it("công tắc tự kể xuất hiện sau query và fade lời hướng dẫn 
   await draw(<TellerModeSwitch book={book} />); const region = host.firstElementChild;
   await act(() => client.setQueryData(["narrator-mode", "b"], { available: true, mode: "narrator", castLocked: false }));
   await act(() => vi.advanceTimersByTime(1)); animated(region); await finish();
-  const hint = host.querySelector('[id$="-hint"]');
+  const hint = host.querySelector(".settings-row-label"); // lời giải thích nằm trong vùng chữ của hàng cài đặt
   await act(() => client.setQueryData(["narrator-mode", "b"], { available: true, mode: "teller", castLocked: false }));
   await act(() => vi.advanceTimersByTime(1)); animated(hint);
 });

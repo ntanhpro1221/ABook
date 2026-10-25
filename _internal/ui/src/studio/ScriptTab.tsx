@@ -255,9 +255,11 @@ export function visibleLines(lines: Line[], filter: Filter, who: string | null):
   return out;
 }
 
+// Chỉ ghi điều KHÁC giữa các chương: số câu nói gần như chương nào cũng có (chữ giống nhau trên mọi hàng thì không ghi trên hàng nào, soát 25-10),
+// nên chỉ chương không có câu nói nào mới ghi "chỉ lời kể", rồi tới chỗ nghi và việc đã quyết.
 function chapterExtras(chapter: ChapterEntry): string {
   return [
-    chapter.speech ? `${formatNumber(chapter.speech)} câu nói` : "chỉ lời kể",
+    chapter.speech ? "" : "chỉ lời kể",
     chapter.hints ? `${chapter.hints} chỗ nghi` : "",
     chapter.decided ? `${chapter.decided} đã quyết` : "",
   ]
