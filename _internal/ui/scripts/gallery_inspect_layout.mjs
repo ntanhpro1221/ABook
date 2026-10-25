@@ -632,7 +632,9 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
   }
   // Mục điều hướng đang mở (aria-current="page"): nền trung tính + chữ đậm màu thường (DESIGN 6 "Điều hướng"). Chữ hổ phách dành cho
   // lựa chọn trong danh sách chọn; ở điều hướng nó đọc như một lựa chọn đã bấm (thanh bên, danh sách nhóm Cài đặt - soát 25-10).
-  for (const el of all.filter((e) => e.matches('[aria-current="page"]') && shownChain(e))) {
+  // Thanh tab đáy điện thoại giữ quy ước nền tảng (tab đang mở tô màu nhấn) - DESIGN 3.
+  const bottomTabBar = (el) => { const nav = el.closest("nav"); const box = nav && nav.getBoundingClientRect(); return Boolean(box) && box.bottom >= innerHeight - 2 && box.width >= innerWidth * 0.9; };
+  for (const el of all.filter((e) => e.matches('[aria-current="page"]') && shownChain(e) && !bottomTabBar(e))) {
     const probe = document.createElement("span");
     probe.style.color = "var(--accent-text)";
     el.append(probe);

@@ -59,6 +59,7 @@ Hai nền tảng cùng một mô hình; khác nhau ở bố cục, không ở ch
 Điện thoại: thanh tab đáy 3 mục **Thư viện · Studio · Cài đặt** (bỏ tab "Tải sách": sách máy kia vào Thư viện, ghép máy vào
 Cài đặt > Thiết bị, nút Studio vào tab Studio). Máy tính: thanh bên **Thư viện · Studio** (+ danh sách dự án đang chạy rút
 gọn dưới Studio) và **Cài đặt** ở đáy; không nhóm tiêu đề "NGHE / STUDIO" thừa.
+Tab đang mở của thanh tab đáy điện thoại: icon + chữ hổ phách (quy ước nền tảng). Mọi điều hướng khác theo mục "Điều hướng" ở §6.
 
 ## 4. Nguyên tắc
 
