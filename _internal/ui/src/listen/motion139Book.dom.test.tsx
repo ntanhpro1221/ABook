@@ -42,6 +42,8 @@ const chapter = (id: number) => ({ id, index: id - 1, subtitle: "", title: `Chư
 const book = (id = "book", title = "Truyện thử", count = 8) => ({ id, title, narrator: "Giọng thử", duration: 60 * count, chaptersTotal: count, chaptersAvailable: count, complete: true, producing: false, updatedAt: null,
   state: { chapters: {}, bookmarks: [] }, progress: { heardSeconds: 0, totalSeconds: 60 * count, fraction: 0, chaptersDone: 0, finished: false }, chapters: Array.from({ length: count }, (_, i) => chapter(i + 1)) }) as ListenBook;
 
+/** Trang đã đứng yên (qua cửa sổ ổn định của motion.ts pageSettling): hàng thêm sau lúc này mới mở ra. */
+const settled = () => { vi.spyOn(performance, "now").mockReturnValue(performance.now() + 1000); };
 const wait = (ms: number) => act(() => new Promise<void>((done) => setTimeout(done, ms)));
 
 it("V8 lịch sử: đang tải là khung chờ (không 'Chưa có lịch sử nghe'), tới nơi thì khung chờ mờ ra", async () => {
@@ -63,6 +65,7 @@ it("V17 trang sách: chương mới về / bị gỡ mở ra / khép lại tại
   const b = book("book", "Truyện thử", 3);
   const view = (chapters: ListenChapter[]) => <ChapterGroups book={{ ...b, chapters }} onDone={() => {}} />;
   await render(view(b.chapters!));
+  settled();
   await render(view([...b.chapters!, chapter(4)]));
   expect(host.querySelector('[data-chapter="4"]')?.getAttribute("data-state")).toBe("enter");
   expect(host.querySelector('[data-chapter="4"]')?.classList.contains("motion-row")).toBe(true);
@@ -77,6 +80,7 @@ it("V17 Studio: dòng chương thêm / bớt mở ra / khép lại tại chỗ",
   const b = { id: "p", title: "Sách", running: false } as BookSummary;
   const row = (id: number) => ({ id, index: id, displayTitle: `Chương ${id}`, status: "pending", statusLabel: "Chờ", segments: { total: 10, finished: 0, analyzed: 0, recorded: 0, failed: 0, warnings: 0 }, playable: false, seconds: 0 }) as Chapter;
   await render(<ChapterList book={b} chapters={[row(1), row(2)]} />);
+  settled();
   await render(<ChapterList book={b} chapters={[row(1), row(2), row(3)]} />);
   const added = [...host.querySelectorAll<HTMLElement>(".motion-row")].find((element) => element.textContent?.includes("Chương 3"))!;
   expect(added.getAttribute("data-state")).toBe("enter");

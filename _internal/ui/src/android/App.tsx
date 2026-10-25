@@ -135,7 +135,7 @@ function useLaunchReady(main: RefObject<HTMLElement | null>) {
       const page = main.current;
       const busy = !page || page.querySelector(".motion-loading-placeholder") !== null
         || Array.from(page.querySelectorAll("img")).some((image) => !image.complete)
-        || document.getAnimations().some((animation) => animation.playState === "running" && animation.effect?.getComputedTiming().endTime !== Infinity);
+        || (document.getAnimations?.() ?? []).some((animation) => animation.playState === "running" && animation.effect?.getComputedTiming().endTime !== Infinity);
       if (busy && performance.now() - start < 3500) { timer = window.setTimeout(check, 80); return; }
       requestAnimationFrame(() => requestAnimationFrame(() => void EbookLibrary.appReady?.()?.catch(() => undefined)));
     };

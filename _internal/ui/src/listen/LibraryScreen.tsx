@@ -2,7 +2,7 @@ import { MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useRowFade } from "@/shared/scrollFade";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
-import { Collapse } from "@/shared/Collapse";
+import { ArrivalScope, Collapse } from "@/shared/Collapse";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useBackLayer } from "@/shared/backStack";
 import { useMediaQuery } from "@/shared/media";
@@ -492,6 +492,8 @@ export function LibraryScreen({
 
   return (
     <BookExtrasContext.Provider value={bookExtras}>
+    {/* Cả trang biết lượt sách đầu về: nút "Thêm sách" ở đầu trang hiện tại chỗ cùng lưới, không mọc ra đẩy lưới xuống. */}
+    <ArrivalScope loading={isLoading}>
     <div ref={container} className="library-screen page-x mx-auto max-w-[1180px] pb-16 pt-6 sm:pt-9">
       {/* Hai nút cạnh tiêu đề không được bóp tiêu đề thành "Thư / viện" ở 390 px (soát UX 05-10): tiêu đề giữ một dòng, nút xuống dưới. */}
       <header>
@@ -500,11 +502,13 @@ export function LibraryScreen({
           <h1 className="shrink-0 whitespace-nowrap text-2xl font-bold tracking-tight sm:text-[2rem]">Thư viện</h1>
           {/* Thư viện trống: nút giữa màn (`empty`) là lời mời chính - nút thứ hai cùng tên ở đầu trang chỉ lặp lại (soát UX a9). */}
           {/* -mr bù đệm ngang của nút ghost (px-3.5, trừ phần thừa bên phải của nét chữ) + p-1 giữ chỗ vòng tiêu điểm: chữ "Thêm sách" thẳng mép phải với nút phát và kính lúp bên dưới. */}
-          <MotionPresence open={Boolean(books?.length || upcoming.length)} className="-my-1 -ml-1 -mr-[16px]" bodyClassName="p-1">{header}</MotionPresence>
+          {/* Giữ chỗ từ đầu, chỉ mờ vào khi có sách: dòng tiêu đề không cao thêm lúc sách về (đo 25-10: lưới trôi 8 px khi mở app). */}
+          {header && <div className="motion-hold -my-1 -ml-1 -mr-[16px] p-1" data-state={books?.length || upcoming.length ? "open" : "closed"} inert={!(books?.length || upcoming.length)}>{header}</div>}
         </div>
         <MotionRegion as="p" motionKey={folded ? `${shown.length + upcomingShown.length}/${allBooks?.length ?? 0}` : allBooks?.length ?? 0} className="mt-1 text-sm text-fg-2">
           {/* Đang tìm: nói số cuốn khớp, không phải cả thư viện (soát 24-10 T08 - từng ghi "11 cuốn" trên một kết quả). */}
-          {!allBooks?.length ? "" : folded ? `${shown.length + upcomingShown.length} trong ${allBooks.length} cuốn` : `${allBooks.length} cuốn`}
+          {/* Chưa có số: giữ một dòng trống, số tới không làm đầu trang cao thêm đẩy lưới xuống. */}
+          {!allBooks?.length ? " " : folded ? `${shown.length + upcomingShown.length} trong ${allBooks.length} cuốn` : `${allBooks.length} cuốn`}
         </MotionRegion>
       </header>
       {recap}
@@ -590,6 +594,7 @@ export function LibraryScreen({
         </div>
       )}
     </div>
+    </ArrivalScope>
     </BookExtrasContext.Provider>
   );
 }

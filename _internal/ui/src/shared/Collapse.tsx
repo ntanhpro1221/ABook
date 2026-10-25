@@ -4,8 +4,18 @@
 import { ChevronDown } from "lucide-react";
 import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "./cn";
-import { EASE, MOTION, pageEntering, prefersReducedMotion } from "./motion";
+import { EASE, MOTION, markArrival, pageSettling, prefersReducedMotion } from "./motion";
 import { MotionRegion } from "./MotionRegion";
+
+/** Bọc phần trang phụ thuộc một lượt tải (thường là cả trang, để đầu trang ngoài LoadingCrossfade cũng tính). Lượt dữ liệu đầu về thì mở
+ *  cửa sổ ổn định (motion.ts pageSettling): thứ tới cùng lượt ấy hiện tại chỗ, không mọc từ 0 (đo 25-10: lưới Thư viện trôi 110 px trong
+ *  90 ms lúc mở app trên máy tính). Đánh dấu ngay lúc dựng, trước khi con dựng. */
+export function ArrivalScope({ loading, children }: { loading: boolean; children: ReactNode }) {
+  const was = useRef(loading);
+  if (was.current && !loading) markArrival();
+  useLayoutEffect(() => { was.current = loading; });
+  return children;
+}
 
 /** Thân gấp / mở. Gập thì ra khỏi Tab và trình đọc màn hình (inert ngay, visibility khi khép xong) - vẫn dựng sẵn để mở ra không chờ. */
 export function Collapse({ open, id, children, className, appear = false, onOpened }: { onOpened?: (element: HTMLElement) => void; open: boolean; id?: string; children: ReactNode; className?: string; appear?: boolean }) {
@@ -14,7 +24,7 @@ export function Collapse({ open, id, children, className, appear = false, onOpen
   const previous = useRef(open);
   // Nội dung có sẵn lúc trang mới vào (quay lại Thư viện đã có sách) không mọc từ 0: khung trang đang hiện vào rồi, mọc thêm là trang cao
   // dần và chỗ cuộn trôi (video 25-10 "mở tab thư viện bị giật"). Chỉ nội dung tới SAU lúc ấy mới mở ra.
-  const from = useRef<number | null>(appear && open && !pageEntering() ? 0 : null);
+  const from = useRef<number | null>(appear && open && !pageSettling() ? 0 : null);
   const opened = useRef(onOpened);
   opened.current = onOpened;
   if (previous.current !== open) {

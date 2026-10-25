@@ -12,6 +12,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Giao diện
 - Đổi trang mượt hơn: trang cũ mờ đi ngay khi bấm, trang mới hiện vào theo hướng; không còn khựng một nhịp rồi mới chuyển, quay lại Thư viện không còn trang cao dần và nhảy chỗ cuộn. Đổi tab trong trang sách không còn mờ cả màn hình. Mở app: giao diện hiện dần, màn chờ điện thoại mờ đi thay vì biến mất.
+- Lúc mở app hay vừa có dữ liệu, các phần của trang hiện ngay tại chỗ, không còn mọc cao dần đẩy lưới bìa xuống (nút "Thêm sách", thẻ Nghe tiếp, dòng danh sách). Quay lại tab Studio trên điện thoại không còn nháy khung chờ.
 - Mở và đóng Đang nghe trên điện thoại mượt hơn, không còn hiện lại Thư viện một khung rồi mờ vào lần hai.
 - Tab trang sách trên điện thoại chia đều bề ngang, chữ căn giữa; hàng lọc thiếu vài px thì tự co khoảng cách thay vì phải cuộn ("Xong" không còn bị che); thanh tiến độ trên bìa bo đúng theo góc bìa.
 - Đổi tab, bộ lọc hay lựa chọn: gạch chân / ô sáng lướt từ mục cũ sang mục mới, nội dung trượt sang theo hướng mục vừa chọn (Thư viện, trang sách, Đang nghe, Studio, Cài đặt, màn đọc). Nút chọn giờ tự tắt thấp gọn hơn; các mục gập trong Cài đặt nối liền như một danh sách; hàng lọc Thư viện không còn cắt chữ "Xong" khi chữ hệ thống to.

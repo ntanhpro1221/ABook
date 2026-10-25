@@ -216,6 +216,7 @@ export const ebookLibrary: NativeImpl = {
   remoteLibrary: () => ({ name: "Máy tính phòng khách", books: BOOKS.filter((item) => !item.imported).map((item) => remoteBook(item, !item.streamed)) }),
   peers: () => ({ peers: [] }),
   peerLibraries: (): { peers: PeerLibrary[] } => ({ peers: [] }),
+  appReady: () => undefined,
   discover: () => ({ computers: computer() ? [] : [{ host: "192.168.1.20", port: 47630, name: "Máy tính phòng khách", kind: "computer" }] }),
   shareStatus: share,
   setShare: share,

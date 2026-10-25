@@ -66,13 +66,13 @@ const search = (text: string) => act(() => {
   input.dispatchEvent(new Event("input", { bubbles: true }));
 });
 
-it("V6 header action có khoảng trống cho focus ring bên trong Collapse", async () => {
+it("V6 header action giữ chỗ sẵn, có khoảng trống cho focus ring", async () => {
   await draw();
   const button = [...main.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "Thêm sách")!;
   button.focus(); expect(document.activeElement).toBe(button);
-  const flow = button.closest(".motion-flow")!;
-  expect(["-my-1", "-ml-1", "-mr-[16px]"].every(name => flow.classList.contains(name))).toBe(true);
-  expect(flow.querySelector(".motion-collapse > .flow-root")!.classList.contains("p-1")).toBe(true);
+  const slot = button.closest(".motion-hold")!;
+  expect(["-my-1", "-ml-1", "-mr-[16px]", "p-1"].every(name => slot.classList.contains(name))).toBe(true);
+  expect(slot.getAttribute("data-state")).toBe("open");
 });
 
 it("the last book leaves an animated header count and exiting actions", async () => {
@@ -80,7 +80,7 @@ it("the last book leaves an animated header count and exiting actions", async ()
   const count = main.querySelector("header p")!;
   vi.mocked(HTMLElement.prototype.animate).mockClear();
   state.books = []; await draw();
-  const exit = main.querySelector('header .motion-panel[data-state="closed"]');
+  const exit = main.querySelector('header .motion-hold[data-state="closed"]');
   expect(exit?.textContent).toContain("Thêm sách");
   expect(exit?.hasAttribute("inert")).toBe(true);
   expect(vi.mocked(HTMLElement.prototype.animate).mock.contexts).toContain(count);
