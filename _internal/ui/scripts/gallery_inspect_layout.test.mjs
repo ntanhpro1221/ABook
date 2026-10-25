@@ -144,6 +144,13 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       expect(nav("nav-accent-pass")).toHaveLength(0);
     }
   });
+  it("hàng vẽ cùng icon ở đầu hàng và trên nút của hàng thì báo; nút chỉ có chữ thì không", () => {
+    for (const result of results) {
+      const twice = (id) => result.findings.filter((f) => f.metric === "row-icon-twice" && f.selector.startsWith(`#${id} >`));
+      expect(twice("row-icon")).toHaveLength(1);
+      expect(twice("row-icon-pass")).toHaveLength(0);
+    }
+  });
   it("tiêu đề trong tab lặp tên tab đang chọn thì báo; tiêu đề khác thì không", () => {
     for (const result of results) {
       const repeated = (id) => result.findings.filter((f) => f.rule === "REPEATED LABEL" && f.selector.startsWith(`#${id} >`));

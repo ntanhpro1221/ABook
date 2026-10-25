@@ -615,6 +615,31 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     add("REPEATED LABEL", b.el, b.el.textContent, [rect(a.el.getBoundingClientRect()), rect(b.el.getBoundingClientRect())],
       { metric: "label-names-two-actions", otherSelector: selector(a.el), reason: "two visible controls share a label but carry different icons, so one label names two actions" });
   }
+  // Một hàng không vẽ cùng một icon hai lần: icon đầu hàng lặp lại trên nút của chính hàng ấy (thư mục trước đường dẫn + thư mục trên
+  // "Đổi thư mục", loa ở nhãn + loa trên nút - audit140 P9). Chỉ so với icon trang trí (không nằm trong nút khác) để dãy thẻ cùng nút không bị tính.
+  const svgSignature = (svg) => [...svg.querySelectorAll("path,rect,circle,ellipse,line,polyline,polygon")].map((p) => p.outerHTML.replace(/\s(class|style)="[^"]*"/g, "")).join("");
+  const twiceRows = new Set();
+  for (const el of all.filter((e) => e.matches(controlSelector) && shownChain(e) && !e.closest('[aria-hidden="true"],[inert]'))) {
+    const mine = [...el.querySelectorAll("svg")].filter((svg) => owner(svg) === el && visible(svg, rect(svg.getBoundingClientRect())));
+    if (!mine.length) continue;
+    let row = el.parentElement;
+    for (let depth = 0; row && depth < 3 && !(css(row).display.includes("flex") && !css(row).flexDirection.startsWith("column")); depth++) row = row.parentElement;
+    if (!row || !css(row).display.includes("flex") || css(row).flexDirection.startsWith("column") || twiceRows.has(row)) continue;
+    for (const svg of mine) {
+      const signature = svgSignature(svg), own = rect(svg.getBoundingClientRect());
+      if (!signature) continue;
+      const twin = [...row.querySelectorAll("svg")].find((other) => {
+        if (other === svg || el.contains(other) || other.closest(controlSelector) || svgSignature(other) !== signature || !shownChain(other)) return false;
+        const box = visible(other, rect(other.getBoundingClientRect()));
+        return box && Math.min(box.y + box.height, own.y + own.height) - Math.max(box.y, own.y) > own.height / 2;
+      });
+      if (!twin) continue;
+      twiceRows.add(row);
+      add("REPEATED LABEL", el, el.textContent || el.getAttribute("aria-label") || "svg", [rect(twin.getBoundingClientRect()), own],
+        { metric: "row-icon-twice", otherSelector: selector(twin), reason: "one row draws the same icon twice, so the icon no longer tells its parts apart" });
+      break;
+    }
+  }
   // Lớp chồng lớp: hộp thoại mở đè lên hộp thoại khác (Sửa sách -> Tìm ảnh bìa, audit140 V9) hay bảng nổi che menu vừa mở nó (Nhạc nền đè menu
   // trình phát, C8). Bước kế tiếp đi trong cùng lớp (trượt sang bước có "Quay lại") hoặc mở bên cạnh menu. Menu/danh sách chọn bên trong hộp
   // thoại vẫn được; menu con nằm cạnh menu cha (chạm nhau vài px) cũng được.
