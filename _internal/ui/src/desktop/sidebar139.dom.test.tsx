@@ -32,8 +32,9 @@ it.each(["/", "/book/a", "/studio/new", "/settings/devices"])("ba điểm đến
   expect(links.map(link => link.getAttribute("href"))).toEqual(["/", "/studio", "/settings"]);
   const active = path.startsWith("/studio") ? "Studio" : path.startsWith("/settings") ? "Cài đặt" : "Thư viện";
   expect(links.filter(link => link.getAttribute("aria-current") === "page").map(link => link.textContent)).toEqual([active]);
-  expect(links.find(link => link.textContent === active)?.className).toContain("text-accent-text");
-  expect(links.find(link => link.textContent === active)?.querySelector("svg.lucide-check.opacity-100")).not.toBeNull();
+  // Điều hướng: nền trung tính + chữ đậm thường, không dấu tích (dấu tích là của danh sách chọn).
+  expect(links.find(link => link.textContent === active)?.className).toContain("bg-hover font-semibold text-fg");
+  expect(host.querySelector("aside svg.lucide-check, nav svg.lucide-check")).toBeNull();
   expect(host.querySelector(".bg-accent-soft")).toBeNull();
   expect(host.textContent).not.toMatch(/Nghe|Dự án|Tạo sách nói/);
   expect(links[2].parentElement?.className).toContain("mt-auto");

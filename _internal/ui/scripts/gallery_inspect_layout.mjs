@@ -431,6 +431,24 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     if (Math.abs(delta) > 1.01) add("INK EDGE", el, el.textContent, [icon, label], { metric: "stacked-icon-center", value: icon.x + icon.width / 2, referenceValue: label.x + label.width / 2,
       delta, tolerance: 1, reason: "icon above a label is not centred on that label" });
   }
+  // Nút canh giữa (ô hẹn giờ, ô tốc độ): phần mực THẤY ĐƯỢC phải đứng giữa ô. Dấu tích ẩn (opacity 0) giữ chỗ trước nhãn từng đẩy chữ "5 phút"
+  // lệch phải 8 px (soát 141) - mắt không thấy dấu nhưng thấy chữ lệch. Đo theo vùng trong (bỏ padding + viền).
+  for (const el of all) {
+    if (!el.matches(controlSelector) || hidden(el)) continue;
+    const s = css(el);
+    const centred = /flex/.test(s.display) ? s.justifyContent === "center" && s.flexDirection.startsWith("row") : s.textAlign === "center";
+    if (!centred) continue;
+    const labels = inkTexts.filter((t) => t.control === el && t.singleLine).map((t) => t.ink);
+    if (!labels.length) continue;
+    const icons = [...el.querySelectorAll("svg")].filter((svg) => owner(svg) === el && !hidden(svg) && css(svg).position !== "absolute").map(iconInk).filter(Boolean);
+    const ink = union([...labels, ...icons]), box = rect(el.getBoundingClientRect());
+    const left = box.x + Number.parseFloat(s.paddingLeft) + Number.parseFloat(s.borderLeftWidth), inner = box.width - Number.parseFloat(s.paddingLeft) - Number.parseFloat(s.paddingRight)
+      - Number.parseFloat(s.borderLeftWidth) - Number.parseFloat(s.borderRightWidth);
+    if (!(inner > 0) || ink.width > inner - 4) continue;
+    const delta = ink.x + ink.width / 2 - (left + inner / 2);
+    if (Math.abs(delta) > 1.51) add("INK EDGE", el, el.textContent, [box, ink], { metric: "centred-ink-off-centre", value: ink.x + ink.width / 2, referenceValue: left + inner / 2,
+      delta, tolerance: 1.5, reason: "a centred control's visible ink is off its centre" });
+  }
   // Nhãn inline + câu: so nét cuối nhãn với glyph đầu câu (kể cả dấu “), không so hộp span.
   const inlineSlots = new Map();
   for (let i = 1; i < inkTexts.length; i++) {

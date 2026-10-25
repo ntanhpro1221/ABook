@@ -123,6 +123,13 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       expect(Number.isFinite(covered("cover")[0]?.value)).toBe(true); // index.html in value cho mọi phát hiện có metric
     }
   });
+  it("nút canh giữa có dấu ẩn giữ chỗ đẩy chữ lệch tâm thì báo; dấu đặt tuyệt đối hay hiện thật thì không", () => {
+    for (const result of results) {
+      const off = (id) => result.findings.filter((f) => f.metric === "centred-ink-off-centre" && f.selector.startsWith(`#${id} >`));
+      expect(off("centre-off")).toHaveLength(1);
+      expect(off("centre-pass")).toHaveLength(0);
+    }
+  });
   it("tiêu đề trong tab lặp tên tab đang chọn thì báo; tiêu đề khác thì không", () => {
     for (const result of results) {
       const repeated = (id) => result.findings.filter((f) => f.rule === "REPEATED LABEL" && f.selector.startsWith(`#${id} >`));
