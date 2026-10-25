@@ -7,6 +7,7 @@ import { cn } from "./cn";
 import { useMediaQuery } from "./media";
 import { MotionRegion } from "./MotionRegion";
 import { Sheet } from "./ui";
+import { submenuOffsets } from "./menuPosition";
 
 // Trên điện thoại menu là một Sheet: menu con (Radix Sub) neo ngang bên cạnh mục mở nó nên rơi gần hết ra ngoài mép màn, và Esc/Back của Radix
 // đóng cả menu lẫn Sheet. Ở đây menu con là MỘT BƯỚC ngay trong Sheet: danh sách chính trượt đi, bước con trượt vào từ phải, nút "Quay lại" ở đầu
@@ -68,17 +69,30 @@ export function ActionSubmenu({ id, label, trigger, itemClassName, children }: {
   children: ReactNode;
 }) {
   const { phone } = useContext(StepContext);
-  if (!phone) {
-    return <DropdownMenu.Sub>
-      <DropdownMenu.SubTrigger className={itemClassName}>{trigger}</DropdownMenu.SubTrigger>
+  if (!phone) return <DesktopSubmenu trigger={trigger} itemClassName={itemClassName}>{children}</DesktopSubmenu>;
+  return <PhoneSubmenu id={id} label={label} trigger={trigger} itemClassName={itemClassName}>{children}</PhoneSubmenu>;
+}
+
+function DesktopSubmenu({ trigger, itemClassName, children }: { trigger: ReactNode; itemClassName?: string; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const [align, setAlign] = useState<"start" | "end">("start");
+  const [offsets, setOffsets] = useState({ sideOffset: 8, alignOffset: 0 });
+  return <DropdownMenu.Sub open={open} onOpenChange={next => {
+      if (next) {
+        const edge = ref.current?.closest('[role="menu"][data-side]')?.getAttribute("data-side") === "top" ? "end" : "start";
+        setAlign(edge); setOffsets(submenuOffsets(ref.current, "right", edge) ?? { sideOffset: 8, alignOffset: 0 });
+      }
+      setOpen(next);
+    }}>
+      <DropdownMenu.SubTrigger ref={ref} className={itemClassName}>{trigger}</DropdownMenu.SubTrigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.SubContent sideOffset={4} collisionPadding={12} className="z-50 max-h-[70vh] w-72 overflow-y-auto rounded-xl border border-line bg-panel p-1.5 shadow-float">
+        {/* Bỏ giới hạn theo dòng neo: menu con cần chạm mép bảng cha, kể cả khi dòng neo ở cuối bảng. */}
+        <DropdownMenu.SubContent {...offsets} align={align} sticky="always" data-submenu-trigger={ref.current?.id} collisionPadding={12} className="z-50 max-h-[70vh] w-72 overflow-y-auto rounded-xl border border-line bg-panel p-1.5 shadow-float">
           {children}
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
     </DropdownMenu.Sub>;
-  }
-  return <PhoneSubmenu id={id} label={label} trigger={trigger} itemClassName={itemClassName}>{children}</PhoneSubmenu>;
 }
 
 function PhoneSubmenu({ id, label, trigger, itemClassName, children }: { id: string; label: string; trigger: ReactNode; itemClassName?: string; children: ReactNode }) {
@@ -105,7 +119,7 @@ function Step({ label, itemClassName, children }: { label: string; itemClassName
     <DropdownMenu.Item ref={back} className={itemClassName} onSelect={(event) => { event.preventDefault(); go(null); }}>
       <ChevronLeft className="size-4" />
       <span className="flex-1">Quay lại</span>
-      <span className="max-w-44 truncate text-xs text-fg-2">{label}</span>
+      <span className="max-w-[45%] text-right text-xs text-fg-2 [overflow-wrap:anywhere]">{label}</span>
     </DropdownMenu.Item>
     <DropdownMenu.Separator className="my-1 h-px bg-line" />
     {children}

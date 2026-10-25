@@ -49,6 +49,16 @@ export function crossFrameTitles(stories) {
   }
   for (const samples of groups.values()) {
     if (samples.length < 2) continue;
+    // Đúng chân chữ mà sai cỡ/y vẫn là đầu màn khác; so cả hình học và kiểu chữ, dung sai 1 CSS px.
+    for (const metric of ['screen-title-top', 'screen-title-size']) {
+      const values = samples.map(sample => ({ ...sample, value: metric === 'screen-title-top' ? sample.rect?.y - sample.frameTop : Number.parseFloat(sample.fontSize) })).filter(sample => Number.isFinite(sample.value));
+      if (values.length < 2) continue;
+      const reference = [...values].sort((a,b) => a.value-b.value)[Math.floor((values.length-1)/2)];
+      for (const sample of values) if (Math.abs(sample.value-reference.value) > 1.01) findings.push({ rule: 'RHYTHM', metric, story: sample.story.id, theme: sample.story.theme,
+        selector: sample.selector, context: sample.context, text: sample.text, crop: sample.crop, rects: [sample.rect], value: sample.value, referenceValue: reference.value,
+        delta: sample.value-reference.value, tolerance: 1, referenceStory: reference.story.id, referenceSelector: reference.selector, referenceCrop: reference.crop,
+        reason: 'Screen title y and font size must match on the same platform' });
+    }
     const sorted = [...samples].sort((a, b) => a.value - b.value);
     const reference = createLayoutHelpers().majority(samples, 1) ?? sorted[Math.floor((sorted.length - 1) / 2)];
     for (const sample of samples) if (Math.abs(sample.value - reference.value) > 1.01) {
