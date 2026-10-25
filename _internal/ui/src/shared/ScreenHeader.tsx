@@ -35,10 +35,10 @@ export function ScreenHeader({ title, back, subtitle, subtitleKey, actions, clas
           không bóp tiêu đề thành hai dòng ở màn hẹp: tiêu đề giữ một dòng, nút xuống dưới (soát UX 05-10). */}
       <div className="flex min-h-[48px] flex-wrap items-center justify-between gap-x-4 gap-y-3 sm:min-h-[40px]">
         {(back || title !== undefined) && (
-          <div className={cn("flex items-center", back ? "min-w-0" : "shrink-0")}>
+          <div className={cn("flex items-center", back ? "min-w-0 flex-1" : "shrink-0")}>
             {back && <BackButton label={back.label} onClick={back.onClick} />}
             {title !== undefined && (
-              <h1 data-screen-title={back ? "child" : "root"} className={cn(SCREEN_TITLE, "leading-[32px] sm:leading-[40px]", back ? "min-w-0 truncate" : "whitespace-nowrap")}>
+              <h1 data-screen-title={back ? "child" : "root"} className={cn(SCREEN_TITLE, "leading-[32px] sm:leading-[40px]", back ? "min-w-0 [overflow-wrap:anywhere]" : "whitespace-nowrap")}>
                 {title}
               </h1>
             )}
