@@ -17,9 +17,9 @@ import { useRowFade, useScrollFadeOn } from "./scrollFade";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
-/** Giữ menu gốc của hệ thống; cỡ nội tại tính theo lựa chọn dài nhất, chỉ co khi hết bề ngang. */
-export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { ref?: Ref<HTMLSelectElement> }) {
-  return <select {...props} className={cn("shared-select max-w-full min-w-0 rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus disabled:opacity-50 aria-disabled:opacity-50", className)} />;
+/** Ô chọn trải hết cột như ô nhập; chỉ hàng giờ/phút đặt `inline` để các mảnh của một giá trị đứng cạnh nhau. */
+export function Select({ className, inline, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { ref?: Ref<HTMLSelectElement>; inline?: boolean }) {
+  return <select {...props} data-select-layout={inline ? "inline" : "column"} className={cn("shared-select max-w-full min-w-0 rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus disabled:opacity-50 aria-disabled:opacity-50", inline ? "w-auto" : "w-full", className)} />;
 }
 
 /** Dấu chọn giữ nguyên chỗ khi đổi mục; chỉ độ mờ đổi, không làm hàng nhảy ngang. Luôn đứng ĐẦU dòng của danh sách chọn (DESIGN 6; luật
@@ -1069,7 +1069,7 @@ export function TimeSelect({
 }) {
   const options = QUARTERS.includes(value) ? QUARTERS : [...QUARTERS, value].sort();
   return (
-    <Select aria-label={label} value={value} disabled={disabled} aria-disabled={ariaDisabled || undefined}
+    <Select inline aria-label={label} value={value} disabled={disabled} aria-disabled={ariaDisabled || undefined}
       onPointerDown={(event) => { if (ariaDisabled) event.preventDefault(); }}
       onKeyDown={(event) => { if (ariaDisabled && event.key !== "Tab") event.preventDefault(); }}
       onChange={(event) => { if (!ariaDisabled) onChange(event.target.value); }} className={cn("tabular aria-disabled:opacity-50", className)}>

@@ -143,6 +143,8 @@ export function CoverSearchPanel({
                 <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-hover">
                   <img
                     src={found.thumb}
+                    width={2}
+                    height={3}
                     alt=""
                     loading="lazy"
                     className="size-full object-cover"
