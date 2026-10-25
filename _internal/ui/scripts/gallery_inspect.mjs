@@ -14,15 +14,15 @@ import { inspectAlignment } from "./gallery_inspect_alignment.mjs";
 import { inspectTapReach } from "./gallery_inspect_tap.mjs";
 import { inspectEdges } from "./gallery_inspect_edges.mjs";
 
-export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH"];
+export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT"];
 // Gate đã có fixture hai phía; quy tắc 16–17 dùng cả đối chứng gallery gốc (rules144).
-export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH"];
+export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT"];
 export function gateRules(value) {
   return value === undefined ? [...DEFAULT_FAIL_ON] : value.length === 1 && value[0].toUpperCase() === "NONE" ? [] : value.map(normalizeRule);
 }
 export function normalizeRule(value) {
   const key = value.trim().toUpperCase().replaceAll("_", " ");
-  const numbered = /^RULE([1-9]|1[0-7])$/.exec(key);
+  const numbered = /^RULE([1-9]|1[0-9])$/.exec(key);
   const rule = numbered ? RULES[Number(numbered[1]) - 1] : RULES.find((r) => r === key || r.replaceAll(" ", "-") === key);
   if (!rule) throw new Error(`Quy tắc lạ: ${value}. Chọn ${RULES.join(", ")}`);
   return rule;
@@ -79,7 +79,9 @@ export function captureCrops(cdp, session, out, stem, viewport, { nearest = fals
     if (cache.has(key)) return cache.get(key);
     const file = `crops/${stem}-${String(cache.size + 1).padStart(4, "0")}.png`;
     cache.set(key, file);
-    let { data } = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false, clip }, session);
+    let data;
+    try { ({ data } = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false, clip }, session)); }
+    catch (error) { throw new Error(`${error.message} · clip ${key}`); }
     if (nearest) data = await evaluate(cdp, session, `(async () => {
       const img = new Image(); img.src = ${JSON.stringify(`data:image/png;base64,${data}`)}; await img.decode();
       const canvas = document.createElement('canvas'); canvas.width = img.width * 4; canvas.height = img.height * 4;
@@ -99,13 +101,16 @@ function writeSheet(out, story) {
   writeFileSync(path.join(out, story.sheet), html(`${story.id} · ${story.theme}`, `<a href="../index.html">← Phát hiện</a><h1>${esc(story.id)} · ${story.theme}</h1><p>${story.contacts.length} điều khiển / SVG · ảnh gốc phóng 4×; bấm ảnh để xem nguyên cỡ.</p>${toastDetails}<label><input type="checkbox" onchange="document.body.classList.toggle('wide',this.checked)"> Hiện nguyên cỡ phóng đại</label><div class="grid">${story.contacts.map((c) => `<figure><a href="../${c.crop}"><img loading="lazy" src="../${c.crop}" alt="${esc(c.text)}"></a><figcaption>${esc(c.text)} · ${c.kind}<br><code>${esc(c.selector)}</code><br>${c.rect.width.toFixed(1)}×${c.rect.height.toFixed(1)} CSS px</figcaption></figure>`).join("")}</div>`));
 }
 
+// Một luật thiếu số không được làm đổ cả trang báo cáo (LINE BREAK/COVERED TEXT từng làm vậy ở lượt đầu).
+const num = (value) => (Number.isFinite(value) ? value.toFixed(3) : "–");
+
 export function writeOutputs(out, report) {
   writeFileSync(path.join(out, "findings.json"), JSON.stringify(report, null, 2));
   if (report.distinctDefects) writeFileSync(path.join(out, "distinct-defects.json"), JSON.stringify(report.distinctDefects, null, 2));
   const list = RULES.map((rule) => {
     const findings = report.findings.filter((f) => f.rule === rule);
     const groups = [...new Set(findings.map((f) => f.story))];
-    return `<section><h2>${esc(rule)} (${findings.length})</h2>${groups.map((id) => `<details><summary>${esc(id)} (${findings.filter((f) => f.story === id).length})</summary><div class="grid">${findings.filter((f) => f.story === id).map((f) => `<figure id="${f.id}"><a href="${f.crop}"><img loading="lazy" src="${f.crop}" alt="${esc(f.text)}"></a><figcaption><b>${f.id} · ${f.theme}</b><br>${esc(f.text)}<br><code>${esc(f.selector)}</code>${f.rule === "TAP REACH" ? `<br>pe: ${esc(f.pointerEvents)} · trúng: <code>${esc(f.hitSelector ?? "null")}</code> · ${esc(f.hitText ?? "")}` : ""}${f.otherSelector || f.referenceSelector ? `<br>↔ <code>${esc(f.otherSelector ?? f.referenceSelector)}</code>` : ""}${f.fontSizes ? `<br>Cỡ chữ: ${f.fontSizes.join(" / ")} px` : ""}${f.topDelta !== undefined ? `<br>Δ trên / dưới: ${f.topDelta.toFixed(3)} / ${f.bottomDelta.toFixed(3)} px` : ""}${f.referenceValue !== undefined ? `<br>${f.rowIndex !== undefined ? `Hàng ${f.rowIndex} / mốc ${f.referenceRowIndex} · ` : ""}${esc(f.metric)}: ${f.value.toFixed(3)} / ${f.referenceValue.toFixed(3)} px · Δ ${f.delta.toFixed(3)} px` : f.metric ? `<br>${esc(f.metric)}: ${f.value.toFixed(3)} px` : ""}${f.referenceStory ? `<br>Mốc: <a href="${esc(f.referenceCrop)}">${esc(f.referenceStory)}</a>` : ""}${f.ratio ? `<br>Tương phản ${f.ratio}:1 / ${f.threshold}:1` : ""}<br><a href="${report.stories.find((s) => s.id === id && s.theme === f.theme)?.sheet}">Bảng chi tiết</a></figcaption></figure>`).join("")}</div></details>`).join("")}</section>`;
+    return `<section><h2>${esc(rule)} (${findings.length})</h2>${groups.map((id) => `<details><summary>${esc(id)} (${findings.filter((f) => f.story === id).length})</summary><div class="grid">${findings.filter((f) => f.story === id).map((f) => `<figure id="${f.id}"><a href="${f.crop}"><img loading="lazy" src="${f.crop}" alt="${esc(f.text)}"></a><figcaption><b>${f.id} · ${f.theme}</b><br>${esc(f.text)}<br><code>${esc(f.selector)}</code>${f.rule === "TAP REACH" ? `<br>pe: ${esc(f.pointerEvents)} · trúng: <code>${esc(f.hitSelector ?? "null")}</code> · ${esc(f.hitText ?? "")}` : ""}${f.otherSelector || f.referenceSelector ? `<br>↔ <code>${esc(f.otherSelector ?? f.referenceSelector)}</code>` : ""}${f.fontSizes ? `<br>Cỡ chữ: ${f.fontSizes.join(" / ")} px` : ""}${f.topDelta !== undefined ? `<br>Δ trên / dưới: ${num(f.topDelta)} / ${num(f.bottomDelta)} px` : ""}${f.referenceValue !== undefined ? `<br>${f.rowIndex !== undefined ? `Hàng ${f.rowIndex} / mốc ${f.referenceRowIndex} · ` : ""}${esc(f.metric)}: ${num(f.value)} / ${num(f.referenceValue)} px · Δ ${num(f.delta)} px` : f.metric ? `<br>${esc(f.metric)}: ${num(f.value)} px` : ""}${f.referenceStory ? `<br>Mốc: <a href="${esc(f.referenceCrop)}">${esc(f.referenceStory)}</a>` : ""}${f.ratio ? `<br>Tương phản ${f.ratio}:1 / ${f.threshold}:1` : ""}<br><a href="${report.stories.find((s) => s.id === id && s.theme === f.theme)?.sheet}">Bảng chi tiết</a></figcaption></figure>`).join("")}</div></details>`).join("")}</section>`;
   }).join("");
   writeFileSync(path.join(out, "index.html"), html("ABook · soi chi tiết gallery", `<h1>ABook · soi chi tiết gallery</h1><p>${report.stories.length} lượt · ${report.findings.length} phát hiện · ${report.errors.length} lỗi chạy · ${esc(report.created)}</p><p>Ảnh cắt lề 8 CSS px: quy tắc cũ dùng CDP scale:4; INK EDGE/RHYTHM/BASELINE/CONTROL HEIGHT/FILL INSET phóng 4× nearest-neighbour từ raster CSS. Bấm ảnh để xem nguyên cỡ; phát hiện hình học cần được duyệt qua ảnh.</p><p>${RULES.map((r) => `${esc(r)}: ${report.counts[r]}`).join(" · ")}</p><details><summary>Bảng điều khiển / biểu tượng (${report.stories.length})</summary><ul>${report.stories.map((s) => `<li><a href="${s.sheet}">${esc(s.id)} · ${s.theme}</a> (${s.contacts.length})${s.error ? ` · ${esc(s.error)}` : ""}</li>`).join("")}</ul></details>${report.errors.length ? `<pre>${esc(JSON.stringify(report.errors, null, 2))}</pre>` : ""}${list}`));
 }
@@ -113,7 +118,7 @@ export function writeOutputs(out, report) {
 export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(["--theme", "both", ...argv]);
   if (args.help || !args.out) {
-    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule17]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11,rule12,rule13,rule15,rule16,rule17 (rules142/report.md; Studio included)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. rule12 BASELINE: >1 px alphabetic baseline delta. rule13 CONTROL HEIGHT: >1 px visible height/top/bottom or same-role menu-row delta. rule14 FILL INSET: <6 px ink padding, or selected fill ends >8 px before its row control. rule15 TAP REACH: enabled visible controls in the last leaf layer/main must restore pointer events and hit inside that layer. rule16 FOCUS RING CLIPPED: 4 px outline extent, 0.5 px tolerance; skip partially scrolled controls and honor overflow-clip-margin. rule17 CORNER MISMATCH: coincident corners within 1 px, CSS-scaled radius deficit >1 px, unless rounded ancestor clips. Use --fail-on none for advisory output.");
+    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule19]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11,rule12,rule13,rule15,rule16,rule17,rule18,rule19 (rules142/report.md; Studio included)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. rule12 BASELINE: >1 px alphabetic baseline delta. rule13 CONTROL HEIGHT: >1 px visible height/top/bottom or same-role menu-row delta. rule14 FILL INSET: <6 px ink padding, or selected fill ends >8 px before its row control. rule15 TAP REACH: enabled visible controls in the last leaf layer/main must restore pointer events and hit inside that layer. rule16 FOCUS RING CLIPPED: 4 px outline extent, 0.5 px tolerance; skip partially scrolled controls and honor overflow-clip-margin. rule17 CORNER MISMATCH: coincident corners within 1 px, CSS-scaled radius deficit >1 px, unless rounded ancestor clips. rule18 LINE BREAK: a middle-dot separator that ends or begins a line (half a font size of vertical offset). rule19 COVERED TEXT: a solid absolutely placed layer painted over text of the same frame, aria-hidden text included. Use --fail-on none for advisory output.");
     return !args.help ? 2 : 0;
   }
   if (!["light", "dark", "both"].includes(args.theme)) throw new Error("--theme phải là light, dark hoặc both");

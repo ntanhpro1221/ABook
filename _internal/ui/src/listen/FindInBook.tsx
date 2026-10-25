@@ -140,7 +140,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
             if (next < 0) event.currentTarget.parentElement?.querySelector<HTMLElement>("input")?.focus();
             else buttons[Math.min(next, buttons.length - 1)]?.focus();
           }}
-          className="-mx-2 mt-2 max-h-[min(55dvh,28rem)] divide-y divide-line overflow-y-auto overscroll-contain"
+          className="rows-inset -mx-2 mt-2 max-h-[min(55dvh,28rem)] overflow-y-auto overscroll-contain [--rows-inset:0.5rem]"
         >
           {hits.map((hit) => (
             <li key={`${hit.chapterId}:${hit.sentence}`}>

@@ -38,6 +38,7 @@ import { latestReading } from "./readingPosition";
 import { moreMenuHasItems } from "./bookMenu";
 import { withFeedback } from "@/shared/feedback";
 import { ActionButton } from "./ActionButton";
+import { DotJoin } from "@/shared/DotJoin";
 
 const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
@@ -836,21 +837,6 @@ export interface EditingOptions {
   /** Studio từ xa (remote_studio.ALLOWED): chỉ những sửa chỉ-là-chữ / ảnh bìa / nhạc nền / tên nhân vật chạy được trên máy tính; lưu thành file,
    *  gửi về, việc chờ Studio, file dự án đều là việc của chính máy tính - không hiện ở đây. */
   remote?: string;
-}
-
-/** Các mẩu nối bằng " · ", chỉ xuống dòng ở dấu nối: "16 chương ·" / "7 giờ 37 phút", không "… 7 giờ" / "37 phút" hay một chữ "nghe" rớt dòng
- *  (soát 24-10). Mẩu đầu (tên tác giả, có thể dài) vẫn được ngắt bên trong. */
-function DotJoin({ parts }: { parts: (string | false | null | undefined)[] }) {
-  return (
-    <>
-      {parts.filter(Boolean).map((part, index) => (
-        <Fragment key={index}>
-          {index > 0 && " · "}
-          {index > 0 ? <span className="whitespace-nowrap">{part}</span> : part}
-        </Fragment>
-      ))}
-    </>
-  );
 }
 
 export function BookScreen({

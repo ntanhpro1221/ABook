@@ -73,12 +73,10 @@ it("V8 lưới nút trong bảng trượt: một luật cho mọi mức bọc; b
   for (const cell of sheet.querySelectorAll(".grid")) expect(cell.matches(grids[0][0])).toBe(true); // cả khi bọc một div (MotionRegion) lẫn không
 });
 
-it("V5 hàng nút phụ: biểu tượng của hai nút đầu mút sát mép ngoài, mực kéo ra đúng mép (theo --ink-l / --ink-r)", () => {
+it("C1 hàng nút phụ: không luật nào kéo riêng biểu tượng đầu mút ra khỏi chỗ giữa trên nhãn", () => {
+  // 25-10 V5 kéo biểu tượng "Đọc" / "Thêm" ra mép ngoài ô nút: mực lòi 9 px khỏi lề và tách khỏi nhãn (audit140 C1).
   const joined = rules.map(([selector, body]) => `${selector} {${body}}`).join("\n");
-  expect(joined).toMatch(/\[data-player-secondary\][^{]*:first-child > :first-child \{[^}]*align-self: flex-start/);
-  expect(joined).toMatch(/\[data-player-secondary\][^{]*:last-child > :first-child \{[^}]*align-self: flex-end/);
-  expect(joined).toMatch(/:first-child > :first-child svg \{[^}]*var\(--ink-l, 1\)/);
-  expect(joined).toMatch(/:last-child > :first-child svg \{[^}]*var\(--ink-r, 1\)/);
+  expect(joined).not.toMatch(/\[data-(player|book)-secondary\]/);
 });
 
 it("V7 chevron cuối dòng: mọi ChevronRight đứng cuối dòng có ink-end (mực thẳng mép nội dung)", () => {
