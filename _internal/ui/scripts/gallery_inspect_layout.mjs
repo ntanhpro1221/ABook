@@ -383,6 +383,19 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       }
     }
   }
+  // Nút xếp dọc (biểu tượng trên, nhãn dưới - ActionButton): ô biểu tượng phải nằm giữa nhãn. Kéo riêng biểu tượng đầu mút ra mép từng làm mực
+  // lòi khỏi lề và tách khỏi nhãn (audit140 C1). So ô svg chứ không mực: glyph lệch tâm (RotateCcw) vẫn đúng chỗ.
+  for (const el of all) {
+    if (!el.matches(controlSelector)) continue;
+    const svgs = [...el.querySelectorAll("svg")].filter((svg) => owner(svg) === el && !hidden(svg));
+    const labels = inkTexts.filter((t) => t.control === el && t.singleLine);
+    if (svgs.length !== 1 || labels.length !== 1) continue;
+    const icon = rect(svgs[0].getBoundingClientRect()), label = labels[0].ink;
+    if (!icon.width || icon.y + icon.height > label.y + 1 || Math.min(right(icon), right(label)) - Math.max(icon.x, label.x) <= 0) continue;
+    const delta = icon.x + icon.width / 2 - (label.x + label.width / 2);
+    if (Math.abs(delta) > 1.01) add("INK EDGE", el, el.textContent, [icon, label], { metric: "stacked-icon-center", value: icon.x + icon.width / 2, referenceValue: label.x + label.width / 2,
+      delta, tolerance: 1, reason: "icon above a label is not centred on that label" });
+  }
   // Nhãn inline + câu: so nét cuối nhãn với glyph đầu câu (kể cả dấu “), không so hộp span.
   const inlineSlots = new Map();
   for (let i = 1; i < inkTexts.length; i++) {
@@ -415,6 +428,88 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     if (high.value - low.value > 1.01 && samples.every((s) => Math.abs(s.value - reference.value) <= 1.01)) add("INK EDGE", high.element, high.scope.textContent,
       [high.rect, low.rect], { metric: "ink-inline-text-gap", value: high.value, referenceValue: low.value, delta: high.value - low.value, tolerance: 1,
         listSelector: selector(high.scope), otherSelector: selector(high.next), referenceSelector: selector(low.element), reason: "repeated inline ink gaps span more than 1 px" });
+  }
+  // Vạch chia 1 px trong khối lùi lề âm (-mx-3 để nền rê chuột tràn lề): vạch phải thụt theo nội dung, không thò ra ngoài cột của khung chứa
+  // (DESIGN 5.5; audit140 C3: bảng Studio thò 10 px mỗi bên). Hộp có viền bốn phía là vật thể riêng - bỏ qua.
+  for (const el of all) {
+    const s = css(el);
+    const top = Number.parseFloat(s.borderTopWidth) > 0 && !transparent(s.borderTopColor) && s.borderTopStyle !== "none";
+    const bottom = Number.parseFloat(s.borderBottomWidth) > 0 && !transparent(s.borderBottomColor) && s.borderBottomStyle !== "none";
+    if (!(top || bottom) || Number.parseFloat(s.borderLeftWidth) > 0 || Number.parseFloat(s.borderRightWidth) > 0) continue;
+    const box = rect(el.getBoundingClientRect());
+    if (!box.width || !visible(el, box)) continue;
+    let bleed = null;
+    for (let p = el, depth = 0; p && p.parentElement && depth < 4; p = p.parentElement, depth++) {
+      const ps = css(p);
+      if (Number.parseFloat(ps.marginLeft) < -0.5 || Number.parseFloat(ps.marginRight) < -0.5) { bleed = p; break; }
+    }
+    if (!bleed) continue;
+    const frame = bleed.parentElement, fs = css(frame), fb = rect(frame.getBoundingClientRect());
+    const left = fb.x + Number.parseFloat(fs.paddingLeft) + Number.parseFloat(fs.borderLeftWidth), rightEdge = right(fb) - Number.parseFloat(fs.paddingRight) - Number.parseFloat(fs.borderRightWidth);
+    const over = Math.max(left - box.x, right(box) - rightEdge);
+    if (over > 1.01) add("INK EDGE", el, el.textContent, [box, { x: left, y: box.y, width: rightEdge - left, height: 1 }],
+      { metric: "hairline-overhang", value: over, referenceValue: 0, delta: over, tolerance: 1, listSelector: selector(bleed), reason: "a 1 px divider in a negative-margin block runs past its frame's content column" });
+  }
+  // Dấu nối "·" đứng cuối dòng ("Giọng Ngọc Lan ·") hay đầu dòng ("· 4 giờ 40 phút") - audit140 C7. Dấu có thể nằm trong text node riêng
+  // (DotJoin cũ) nên so với glyph liền trước / liền sau theo thứ tự tài liệu, chỉ trong cùng một khối chữ.
+  const block = (el) => { let p = el; while (p && css(p).display.startsWith("inline")) p = p.parentElement; return p; };
+  const charRect = (node, index) => { const range = document.createRange(); range.setStart(node, index); range.setEnd(node, index + 1); const box = [...range.getClientRects()].find((r) => r.width > 0); return box ? rect(box) : null; };
+  const glyphs = [];
+  for (const run of inkTexts) {
+    if (!run.node.textContent.includes("·") && !/^\s|\s$/.test(run.node.textContent)) { glyphs.push({ run, index: -1 }); continue; }
+    for (let i = 0; i < run.node.textContent.length; i++) if (run.node.textContent[i].trim()) glyphs.push({ run, index: i, dot: run.node.textContent[i] === "·" });
+  }
+  for (let i = 0; i < glyphs.length; i++) {
+    const g = glyphs[i];
+    if (!g.dot) continue;
+    const here = charRect(g.run.node, g.index), size = Number.parseFloat(css(g.run.element).fontSize);
+    if (!here) continue;
+    const near = (o) => { if (!o || block(o.run.element) !== block(g.run.element)) return null; return o.index < 0 ? (o === glyphs[i - 1] ? o.run.last : o.run.first) : charRect(o.run.node, o.index); };
+    const before = near(glyphs[i - 1]), after = near(glyphs[i + 1]);
+    const ends = after && after.y > here.y + size / 2, starts = before && before.y < here.y - size / 2;
+    if (ends || starts) add("LINE BREAK", g.run.element, block(g.run.element)?.textContent ?? g.run.node.textContent, [here, ends ? after : before],
+      { metric: ends ? "separator-ends-line" : "separator-starts-line", value: here.y, referenceValue: (ends ? after : before).y, delta: here.y - (ends ? after : before).y, tolerance: size / 2,
+        reason: ends ? "a middle dot separator hangs at the end of a line" : "a middle dot separator begins a line" });
+  }
+  // Lớp nền đặc đặt tuyệt đối (nhãn, huy hiệu) che chữ trong cùng khung, kể cả chữ vẽ aria-hidden như tên trên bìa vẽ - audit140 V8: nhãn
+  // "Máy phòng khách" che tên sách; TEXT-OVER-TEXT bỏ qua vì nhãn có nền riêng còn chữ bìa aria-hidden. Không dùng visible()/elementFromPoint:
+  // nhãn thường pointer-events-none. Lớp nổi (dialog, menu, thông báo) là fixed nên không vào đây; nền chuyển màu (mờ mép cuộn) không tính.
+  const shownChain = (el) => { for (let p = el; p; p = p.parentElement) { const s = css(p); if (s.display === "none" || s.visibility !== "visible" || Number(s.opacity) === 0 || p.hidden) return false; } return true; };
+  const zOf = (el) => Number.parseInt(css(el).zIndex, 10) || 0;
+  const paintsAbove = (overlay, textEl, frame) => {
+    let p = textEl;
+    while (p && p !== frame && css(p).position === "static") p = p.parentElement;
+    if (!p || p === frame) return zOf(overlay) >= 0;
+    if (zOf(overlay) !== zOf(p)) return zOf(overlay) > zOf(p);
+    return !overlay.contains(p) && Boolean(p.compareDocumentPosition(overlay) & Node.DOCUMENT_POSITION_FOLLOWING);
+  };
+  for (const el of all) {
+    const s = css(el);
+    if (s.position !== "absolute" || transparent(s.backgroundColor) || !shownChain(el)) continue;
+    const box = rect(el.getBoundingClientRect());
+    if (box.width < 2 || box.height < 2) continue;
+    const frame = el.offsetParent ?? el.parentElement;
+    if (!frame) continue;
+    // Phủ quá nửa khung (Đang nghe toàn màn trên máy tính) là một lớp, không phải nhãn đặt lên nội dung.
+    const frameBox = rect(frame.getBoundingClientRect());
+    if (box.width * box.height >= 0.5 * frameBox.width * frameBox.height) continue;
+    const walker = document.createTreeWalker(frame, NodeFilter.SHOW_TEXT);
+    let hit = null;
+    for (let node = walker.nextNode(); node && !hit; node = walker.nextNode()) {
+      const host = node.parentElement;
+      if (!node.textContent.trim() || el.contains(host) || !shownChain(host) || !paintsAbove(el, host, frame)) continue;
+      for (let i = 0; i < node.textContent.length && !hit; i++) {
+        if (!node.textContent[i].trim()) continue;
+        const range = document.createRange(); range.setStart(node, i); range.setEnd(node, i + 1);
+        const glyph = [...range.getClientRects()].find((r) => r.width > 0);
+        if (!glyph) continue;
+        // Bỏ phần đệm ascent/descent của hộp dòng: chỉ thân chữ mới tính là bị che.
+        const ink = { x: glyph.x, y: glyph.y + glyph.height * 0.2, width: glyph.width, height: glyph.height * 0.6 };
+        if (Math.min(right(ink), right(box)) - Math.max(ink.x, box.x) > 1 && Math.min(ink.y + ink.height, box.y + box.height) - Math.max(ink.y, box.y) > 1) hit = { host, ink };
+      }
+    }
+    if (hit) add("COVERED TEXT", el, `${el.textContent || el.getAttribute("aria-label") || ""} ↔ ${hit.host.textContent}`, [box, hit.ink],
+      { metric: "overlay-covers-text", value: Math.min(right(hit.ink), right(box)) - Math.max(hit.ink.x, box.x), otherSelector: selector(hit.host), reason: "an absolutely placed solid layer is painted over text in the same frame" });
   }
   // Khung có header trang + các section là cùng một họ nội dung. Dialog và trang đang cuộn không so với trang gốc.
   let firstBlock = null;

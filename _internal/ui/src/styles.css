@@ -962,13 +962,24 @@ select[class~="border-line"] {
 .ink-end-icon svg { translate: calc(var(--icon-w, 14px) * var(--ink-r, 1) / 24) 0; }
 /* Icon đầu dòng đứng ở mép cột chữ: kéo mực ra đúng mép, chữ theo sau dời cùng (khoảng icon - chữ giữ nguyên). */
 .ink-start { margin-inline-start: calc(var(--icon-w, 14px) * var(--ink-l, 1) / -24); }
-/* Hàng nút phụ có nhãn (slot-row + ActionButton: Tốc độ · Hẹn giờ · Dấu trang · Chương, Đọc · Tìm · Từ đầu · Thêm): hai nút đầu mút đặt biểu tượng
-   sát MÉP ngoài của ô nút (nhãn vẫn nằm trong ô, vùng chạm không đổi) rồi kéo mực ra đúng mép - mực biểu tượng thẳng mép bìa / nút chính chứ không
-   thụt theo bề rộng nhãn (soát 25-10 V5: 6 và 15,6 px). Ô biểu tượng bỏ min-width để ôm đúng nét; nét 5 = 17,5 px (size-5). */
-:is([data-player-secondary], [data-book-secondary]) > :first-child > :first-child { align-self: flex-start; min-width: 0; }
-:is([data-player-secondary], [data-book-secondary]) > :last-child > :first-child { align-self: flex-end; min-width: 0; }
-:is([data-player-secondary], [data-book-secondary]) > :first-child > :first-child svg { --icon-w: calc(var(--spacing) * 5); translate: calc(var(--icon-w) * var(--ink-l, 1) / -24) 0; }
-:is([data-player-secondary], [data-book-secondary]) > :last-child > :first-child svg { --icon-w: calc(var(--spacing) * 5); translate: calc(var(--icon-w) * var(--ink-r, 1) / 24) 0; }
+/* Danh sách lùi lề âm để nền rê chuột tràn ra lề (-mx-3 + px-3 ở dòng): vạch chia giữa các dòng vẫn thụt theo nội dung (DESIGN 5.5) - vẽ bằng ảnh
+   nền 1 px rộng đúng cột nội dung thay cho divide-y (vạch của divide-y tràn cùng lề âm: bảng Studio thò 10 px mỗi bên, audit140 C3).
+   --rows-inset = độ lùi âm của danh sách. */
+.rows-inset > * + * {
+  background-image: linear-gradient(var(--line), var(--line));
+  background-size: calc(100% - 2 * var(--rows-inset, 0.75rem)) 1px;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+/* DotJoin (shared/DotJoin.tsx): mẩu nối bằng "·", xuống dòng giữa hai mẩu; dấu là lớp giả trước mỗi mẩu, hàng lùi trái một dấu và khung cắt phần
+   lùi - dấu của mẩu mở đầu dòng nằm ngoài khung nên không có dấu treo cuối dòng hay đứng đầu dòng. --dot-w = bề rộng " · " của chữ thường. */
+.dot-join { --dot-w: 0.8em; display: block; overflow-x: clip; }
+.dot-join > span { display: flex; flex-wrap: wrap; align-items: baseline; margin-inline-start: calc(-1 * var(--dot-w)); }
+.dot-join > span > span { min-width: 0; }
+.dot-join > span > span::before { content: "·" / ""; display: inline-block; width: var(--dot-w); text-align: center; }
+/* Hàng nút phụ có nhãn (slot-row + ActionButton: Tốc độ · Hẹn giờ · Dấu trang · Chương, Đọc · Tìm · Từ đầu · Thêm): biểu tượng luôn nằm giữa ngay
+   trên nhãn của nó; slot-row đặt khối nhìn thấy của hai nút đầu mút (nhãn rộng hơn biểu tượng) thẳng mép. Từng kéo riêng biểu tượng đầu mút ra mép
+   ngoài ô nút (25-10 V5) - mực lòi 9 px khỏi lề và tách khỏi nhãn (soát audit140 C1); không làm lại. */
 .book-action-sheet .sheet-body > [data-radix-popper-content-wrapper] {
   position: static !important;
   transform: none !important;

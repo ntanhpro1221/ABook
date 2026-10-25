@@ -147,13 +147,13 @@ it("bìa bộ luôn mở, chạm mở các tập và Back đóng hộp trước 
   expect(main.querySelector('[aria-label="Mở bộ Truyện thử"]')).toBe(cover);
 });
 
-it("sách máy kia có dấu nguồn nhỏ trên góc bìa", async () => {
+it("sách máy kia có dấu máy tính đầu dòng trạng thái, không đè lên bìa (audit140 V8)", async () => {
   state.books = [{ ...state.books[0], remote: { computer: "Máy phòng khách" } }];
   await draw();
   const mark = main.querySelector('[aria-label="Trên Máy phòng khách"]')!;
-  expect(mark.textContent).toContain("Máy phòng");
-  expect(mark.className).toContain("top-2");
-  expect(mark.className).toContain("right-2");
+  expect(mark.tagName.toLowerCase()).toBe("svg");
+  expect(mark.parentElement!.textContent).not.toBe("");
+  expect(main.querySelector(".absolute.top-2")).toBeNull();
 });
 
 it("Back khép tìm kiếm có chuyển động, giữ trang và lưới", async () => {
