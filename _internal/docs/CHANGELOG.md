@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.139] - 2026-10-25
+
 ### Mới
 - Màu ấm như giấy cho cả app; chọn nền đọc Giấy, Ngà hay Đêm; tiếng chạm khẽ (tự im khi đang nghe) và rung nhẹ trên điện thoại, tắt được ở Cài đặt › Giao diện.
 
