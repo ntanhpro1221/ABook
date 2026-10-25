@@ -1,9 +1,9 @@
 import { DisclosureRow } from "@/shared/DisclosureRow";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, KeyRound, Play, Square, Trash2 } from "lucide-react";
+import { KeyRound, Play, Square, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Button, radioGroupKeys, radioTabIndex, ContentSkeleton, InlineError } from "@/shared/ui";
+import { Button, radioGroupKeys, radioTabIndex, ContentSkeleton, InlineError, SelectionMark } from "@/shared/ui";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { Collapse, Fold, useFold } from "@/shared/Collapse";
 import { cn } from "@/shared/cn";
@@ -319,9 +319,9 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                             className="touch-row flex min-w-0 flex-1 items-center gap-2.5 text-left"
                           >
                             <span className="flex size-5 shrink-0 text-accent-text">
-                              <Check className={cn("ink-start [--icon-w:17.5px] size-5 shrink-0 transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0")} />
+                              <SelectionMark selected={selected} className="ink-start [--icon-w:17.5px] size-5" />
                             </span>
-                            <span className="min-w-0 truncate text-sm font-medium">{shown}</span>
+                            <span className="min-w-0 text-pretty text-sm font-medium [overflow-wrap:anywhere]">{shown}</span>
                             {genderLabel(voice.gender) && <span className="shrink-0 text-xs text-fg-2">{genderLabel(voice.gender)}</span>}
                             {selected && <span className="shrink-0 text-xs text-accent-text">Mặc định</span>}
                           </button>

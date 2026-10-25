@@ -520,7 +520,7 @@ export function LevelButtons({ level, disabled, onChange }: { level: number; dis
             )}
           >
             {/* Menu không đóng khi chọn mức: dấu ✓ mờ qua, nền đổi dần - không nhảy cứng. */}
-            <Check aria-hidden className={cn("size-4 shrink-0 text-accent-text transition-opacity duration-motion-fast", value === level ? "opacity-100" : "opacity-0")} />
+            <SelectionMark selected={value === level} />
             {name}
             {LEVEL_NOTES[value] && <span className="text-xs font-normal text-fg-2">{LEVEL_NOTES[value]}</span>}
           </button>
@@ -769,10 +769,10 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                             selected ? "font-semibold text-accent-text" : "text-fg",
                           )}
                         >
+                          <SelectionMark selected={selected} />
                           {/* Tên giọng xuống dòng, không cắt "…": menu 252 px từng còn "An (Windo…" - chọn mà không đọc đủ tên (luật choice-label-truncated). */}
                           <span className="min-w-0 text-pretty [overflow-wrap:anywhere]">{shown}</span>
                           {genderLabel(voice.gender) && <span className="shrink-0 text-xs font-normal text-fg-2">{genderLabel(voice.gender)}</span>}
-                          <SelectionMark selected={selected} className="ml-auto" />
                         </button>
                       </Popover.Close>
                       {source.readAloudSample && (
@@ -1123,7 +1123,7 @@ function SleepPicker({
       )}
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? "Đặt lại" : "Dừng phát sau"}</div>
       {/* MỘT cách chọn (soát 140 V3): bấm một mức là đặt, ô đang hẹn luôn sáng (chữ nhấn + dấu tích). Máy tính hai cột: mục này còn mở ngay
-          trong menu "…" rộng 252 px, ba cột thì nhãn + dấu tích chật. Điện thoại ba cột: sáu mức thành hai hàng đều. */}
+          trong menu "…" rộng 280 px, ba cột thì nhãn + dấu tích chật. Điện thoại ba cột: sáu mức thành hai hàng đều. */}
       <div className={cn("grid grid-cols-2 gap-1 max-sm:grid-cols-3", MENU_LIST)}>
         {[...SLEEP_CHOICES.map((minutes) => ({ key: String(minutes), label: `${minutes} phút`, request: { kind: "minutes", minutes } as SleepRequest,
           current: sleep.kind === "minutes" && sleep.minutes === minutes })),
@@ -1537,7 +1537,8 @@ function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactN
     <MenuShell
       label="Thêm tuỳ chọn"
       trigger={<MoreHorizontal className="glyph" />}
-      width="w-72 max-w-[calc(100vw-1.5rem)]"
+      // 20rem (280 px máy tính): 252 px làm tên lựa chọn gãy dòng ("Nhạc của tôi", "An (Windows)") và ghi chú đầu mục gãy đôi.
+      width="w-80 max-w-[calc(100vw-1.5rem)]"
       // Mở ra: tiêu điểm vào chính bảng, không vào nút đầu tiên - nút đầu bật chú thích và trông như "đang chọn".
       focusSelector="[data-player-more]"
       open={open}

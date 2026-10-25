@@ -3,7 +3,7 @@ import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold } from "@/shared/Collapse";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bluetooth, Check, Clapperboard, Laptop, Moon, Radar, RefreshCw, Smartphone, Stethoscope, Unplug } from "lucide-react";
+import { Bluetooth, Clapperboard, Laptop, Moon, Radar, RefreshCw, Smartphone, Stethoscope, Unplug } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { api } from "@/studio/api";
@@ -11,7 +11,7 @@ import { cn } from "@/shared/cn";
 import { formatFingerprint, formatRelative } from "@/shared/format";
 import { peerPage } from "@/shared/peerStudio";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
-import { Button, ContentSkeleton, IconButton, InlineError, Tooltip } from "@/shared/ui";
+import { Button, ContentSkeleton, IconButton, InlineError, SelectionMark, Tooltip } from "@/shared/ui";
 import type { UnsentEdits } from "@/shared/unpair";
 import { useUnpair } from "@/shared/useUnpair";
 import { bluetoothAddress, deviceKindLabel, isBluetoothHost, routeLine, wakingLine, type PairedDevice, type Waking } from "./computerRoutes";
@@ -378,10 +378,11 @@ export function BluetoothFallback({
           )}
           {devices.map((device) => (
             <DropdownMenu.Item key={device.address} onSelect={() => onChoose(device.address)} className={MENU_ITEM}>
-              <span className="min-w-0 flex-1 truncate">
+              <SelectionMark selected={device.address === current} />
+              <span className="min-w-0 flex-1 text-pretty [overflow-wrap:anywhere]">
                 {device.name} <span className="text-fg-3">· {deviceKindLabel(device.kind)}</span>
+                {device.address === current && <span className="sr-only">, đang chọn</span>}
               </span>
-              {device.address === current && <Check className="size-4 shrink-0 text-accent-text" aria-label="đang chọn" />}
             </DropdownMenu.Item>
           ))}
           <DropdownMenu.Item disabled={!current} onSelect={() => onChoose("")} className={cn(MENU_ITEM, "text-fg-2")}>

@@ -18,7 +18,7 @@ import { useListPresence } from "@/shared/motion";
 import { Windowed } from "@/shared/Windowed";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { toneLabel } from "./voiceTone";
-import { DialogActions, Select, Button, Dialog, EmptyState, heardBarProps, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
+import { DialogActions, Select, SelectionMark, Button, Dialog, EmptyState, heardBarProps, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
@@ -696,9 +696,9 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
                 }}
                 className={cn(MENU_ITEM, "h-auto py-1.5")}
               >
-                <Check className={cn("size-4 shrink-0", record.active ? "opacity-100" : "opacity-0")} />
+                <SelectionMark selected={record.active} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate">{record.name}</span>
+                  <span className="block text-pretty [overflow-wrap:anywhere]">{record.name}</span>
                   <span className="block text-xs text-fg-3">
                     {record.last
                       ? `${book.chapters?.find((chapter) => chapter.id === record.last!.chapterId)?.title ?? "Chương"} · ${formatClock(record.last.seconds)} · `
