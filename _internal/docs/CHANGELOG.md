@@ -14,6 +14,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Giao diện
 
+- Menu xếp sách của Thư viện và menu chọn chương của Kịch bản đánh dấu mục đang chọn bằng dấu tích đầu dòng như mọi danh sách chọn, thay vì chỉ đổi màu chữ.
 - Tiêu đề các phần và mục gập mở thống nhất; hẹn giờ dùng lựa chọn chữ gọn, thanh đọc và kịch bản dùng cùng biểu tượng chuyển chương.
 - Thông báo gọn với tối đa một nút; phần giải thích dài mở trong Chi tiết, chuyển chỗ nghe có nút Quay lại, lời báo lỗi xuống dòng cân đối hơn trên điện thoại.
 
