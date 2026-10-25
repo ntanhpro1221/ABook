@@ -31,6 +31,21 @@ export function phaseTone(phase: Phase, running: boolean): Tone {
   return "muted";
 }
 
+/** Chỗ trong hàng chờ nói bằng "còn mấy việc trước" - "thứ 6" đọc thành "thứ Sáu" (ngày trong tuần) bằng tiếng Việt (soát 25-10). `position` đếm từ 1. */
+export function queueLabel(position: number): string {
+  return position <= 1 ? "Sắp tới lượt" : `Còn ${position - 1} việc trước`;
+}
+
+/** Nhãn + màu + "đang chạy" của trạng thái một dự án - MỘT nơi cho dòng thông tin đầu trang dự án và bảng dự án (soát UX a8 05-10: cùng trạng thái = cùng chữ, cùng màu). */
+export function projectStatus(book: BookSummary): { label: string; tone: Tone; live: boolean } {
+  const running = book.running || book.starting;
+  return {
+    label: book.queuePosition ? queueLabel(book.queuePosition) : book.starting ? "Đang khởi động" : book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel,
+    tone: book.queuePosition || book.paused || book.stopping ? "warning" : phaseTone(book.phase, running),
+    live: running && !book.paused && !book.stopping,
+  };
+}
+
 // Nhịp hỏi server: sách đang chạy thì 2 giây (thanh tiến độ phải sống), không thì thưa hẳn.
 const LIVE_MS = 2000;
 const IDLE_MS = 15000;

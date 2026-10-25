@@ -1,5 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 import { formatClock, formatLength, formatPercent } from "@/shared/format";
+import type { ListenChapter } from "./model";
 
 // Nhãn của phần Nghe mà nhiều màn phải nói GIỐNG nhau (soát UX "Nghe ngay" 03-10): một chỗ chọn chữ, mỗi màn chỉ gọi. Nói theo cái người
 // nghe nhận ra (chương, giờ, giọng nào đang đọc), không theo trạng thái bên trong (clip đã đọc sẵn chưa, kịch bản đã có mốc chưa).
@@ -85,11 +86,15 @@ export function textBookLine(speaks: boolean): string {
   return speaks ? "Chỉ có chữ · nghe bằng giọng đọc" : "Chỉ có chữ · máy này chưa có giọng đọc";
 }
 
-/** Dòng phụ của một chương chỉ có chữ trong danh sách chương: tên giọng đang đọc cuốn ("Hoài My (Edge)"; giọng của máy thì "Giọng đọc của máy").
- *  Cố định: không đổi sang độ dài khi giọng máy đã đọc một phần - độ dài ấy là ước, đổi theo giọng và theo phần đã đọc sẵn, nên nhãn nhảy qua lại
- *  làm người nghe tưởng chương vừa đổi. Tiến độ nghe đã có thanh riêng. */
-export function textChapterLine(speaks: boolean, voice = ""): string {
-  return speaks ? voice || "Giọng đọc của máy" : "Chỉ có chữ";
+export function chapterStatusLabel(producing: boolean): string {
+  return producing ? "Đang thu âm…" : "Chưa có audio";
+}
+
+/** Dòng phụ của một chương trong danh sách: "Chương 3 · 26 phút". Chương chỉ có chữ không có gì riêng để nói (giọng đọc là của cả cuốn và đã ở đầu
+ *  trang sách; chữ giống nhau trên mọi hàng thì không ghi trên hàng nào), nên chỉ còn số chương khi tên chương đã là tên riêng. */
+export function chapterSubline(chapter: Pick<ListenChapter, "title" | "subtitle" | "available" | "duration" | "state">, producing: boolean): string {
+  const tail = chapter.available ? formatLength(chapter.duration) : chapter.state === "text" ? "" : chapterStatusLabel(producing);
+  return [chapter.subtitle ? chapter.title : "", tail].filter(Boolean).join(" · ");
 }
 
 /** "Bấm" với chuột, "Chạm" với màn cảm ứng. */

@@ -178,9 +178,9 @@ it("nhắc cập nhật sidebar vào/đổi phiên bản/ra đều có presence"
 });
 
 it("Studio gập các bước; tiến độ và lỗi khởi động ở ngoài phần gập", async () => {
-  const b = { id: "p", phase: "analysis", statusLabel: "Đang phân tích", running: true, castLocked: true, progress: { overall: .2, analysis: .4, synthesis: 0 }, eta: null, startError: "Hết chỗ trống" } as BookSummary;
+  const b = { id: "p", phase: "analysis", statusLabel: "Đang phân tích", running: true, castLocked: true, progress: { overall: .2, analysis: .4, synthesis: 0 }, eta: null, startError: "Hết chỗ trống", settings: {} } as BookSummary;
   await render(<ProductionPanel book={b} />); const control = fold("Các bước");
-  expect(body(control).hasAttribute("inert")).toBe(true); expect(host.textContent).toContain("20% tổng");
+  expect(body(control).hasAttribute("inert")).toBe(true); expect(host.textContent).not.toContain("20% tổng"); // phần trăm tổng đã lên đầu trang (HeaderProgress)
   const alert = host.querySelector('[role="alert"]')!; expect(alert.closest("[inert]")).toBeNull();
   await act(() => control.click()); expect(body(control).hasAttribute("inert")).toBe(false);
 });

@@ -1,4 +1,4 @@
-import { MoreInfo } from "@/shared/SettingsNav";
+import { MoreInfo, SettingsRow } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -77,19 +77,22 @@ export function PrecastWaitSwitch({ book, className }: { book: BookSummary; clas
   const passed = Boolean(book.precast?.announcedAt);
   const id = `precast-wait-${book.id}`;
   return (
-    <MotionRegion as="label" htmlFor={id} className={cn("flex items-start gap-3 rounded-xl border border-line bg-panel p-4", className)}>
-      <Switch id={id} labelledBy={`${id}-name`} describedBy={`${id}-hint`} checked={wait} disabled={save.isPending} onCheckedChange={(value) => save.mutate(value)} />
-      <span>
-        <span id={`${id}-name`} className="block text-sm font-medium">Duyệt trước khi thu</span>
-        <span id={`${id}-hint`} className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
-          {passed
-            ? "Phân tích đã xong. Muốn dừng thì bấm “Tạm dừng”."
-            : wait
-              ? "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”."
-              : "Phân tích xong thì thu luôn; duyệt lúc nào cũng được."}
-        </span>
-      </span>
-    </MotionRegion>
+    <div className={className}>
+      <SettingsRow
+        label={<span id={`${id}-name`}>Duyệt trước khi thu</span>}
+        hint={
+          <span id={`${id}-hint`}>
+            {passed
+              ? "Phân tích đã xong. Muốn dừng thì bấm “Tạm dừng”."
+              : wait
+                ? "Dừng sau phân tích để bạn duyệt, rồi bấm “Thu âm”."
+                : "Phân tích xong thì thu luôn; duyệt lúc nào cũng được."}
+          </span>
+        }
+      >
+        <Switch id={id} labelledBy={`${id}-name`} describedBy={`${id}-hint`} checked={wait} disabled={save.isPending} onCheckedChange={(value) => save.mutate(value)} />
+      </SettingsRow>
+    </div>
   );
 }
 
@@ -104,7 +107,7 @@ function Intro({ book, view }: { book: BookSummary; view: PrecastView }) {
       </p>
       <MoreInfo label="Khi áp dụng">{freeNote(view)}</MoreInfo>
       {/* Công tắc chỉ có nghĩa trước mốc (Studio mở màn này cả khi chưa kịp báo, vd app đóng lúc phân tích xong). */}
-      <MotionPresence open={!book.precast?.announcedAt && !view.recordedChapters}><PrecastWaitSwitch book={book} className="mt-4 border-none bg-panel-2" /></MotionPresence>
+      <MotionPresence open={!book.precast?.announcedAt && !view.recordedChapters}><PrecastWaitSwitch book={book} className="mt-2" /></MotionPresence>
     </>
   );
 }
@@ -190,32 +193,29 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
         )}
       </div>
 
-      <ol className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Các bước duyệt">
+      {/* Bốn bước: hàng chữ có số/dấu tích, bước đang mở có gạch chân hổ phách như tab - không bốn thẻ viền (DESIGN 4). */}
+      <ol className="mt-5 flex flex-wrap gap-x-6 border-b border-line max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-4" aria-label="Các bước duyệt">
         {PRECAST_STEPS.map((value, position) => {
           const Icon = STEP_ICON[value];
           const active = value === step;
           return (
-            <li key={value}>
+            <li key={value} className="min-w-0">
               <button
                 type="button"
                 aria-current={active ? "step" : undefined}
                 onClick={() => setStep(value)}
                 className={cn(
                   // h-full: thẻ "Xong" không có dòng phụ vẫn cao bằng ba thẻ cạnh (soát 24-10 T19).
-                  "flex h-full w-full items-center gap-2.5 rounded-xl border p-3 text-left transition-colors",
-                  active ? "border-accent/40 bg-accent-soft" : "border-line bg-panel hover:bg-hover",
+                  "touch-row -mb-px flex h-full w-full items-center gap-2.5 border-b-2 py-2.5 text-left transition-colors",
+                  active ? "border-accent" : "border-transparent hover:text-fg",
                 )}
               >
-                <span
-                  className={cn(
-                    "grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold transition-colors",
-                    position < index ? "bg-success text-success-ink" : active ? "bg-accent text-accent-ink" : "bg-hover text-fg-3",
-                  )}
-                >
-                  <MotionRegion as="span" className="grid place-items-center">{position < index ? <Check className="size-4" strokeWidth={3} /> : <Icon className="size-3.5" />}</MotionRegion>
-                </span>
+                {/* Biểu tượng trơn (không vòng): mực của nó thẳng mép cột chữ ở bước đầu (ink-start). Xong = dấu tích xanh, đang mở = hổ phách. */}
+                <MotionRegion as="span" className={cn("grid shrink-0 place-items-center transition-colors", position < index ? "text-success" : active ? "text-accent-text" : "text-fg-3")}>
+                  {position < index ? <Check className="ink-start size-4" strokeWidth={2.5} /> : <Icon className="ink-start size-4" />}
+                </MotionRegion>
                 <span className="min-w-0">
-                  <span className="block text-sm font-semibold leading-tight">{STEP_TITLE[value]}</span>
+                  <span className={cn("block text-sm font-medium leading-tight", active ? "text-fg" : "text-fg-2")}>{STEP_TITLE[value]}</span>
                   {counts[value] && <span className="tabular block truncate text-xs text-fg-2">{counts[value]}</span>}
                 </span>
               </button>
@@ -270,8 +270,8 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                 : "Xem và sửa cách đọc từng tên ở danh sách dưới."}
             </p>
             <MotionPresence open={nameCards.length > 0}><WorkCards {...cards} items={nameCards} /></MotionPresence>
-            <details className="mt-6 rounded-xl border border-line px-4 py-3">
-              <summary className="cursor-pointer text-sm font-medium text-fg-2">Cách đọc tên</summary>
+            <details className="mt-6 border-t border-line">
+              <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Cách đọc tên</summary>
               <NameReadings bookId={book.id} />
             </details>
           </>

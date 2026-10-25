@@ -930,7 +930,8 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       tabIndex={-1}
       aria-labelledby={exiting ? undefined : `work-${item.key}-title`}
       aria-current={active ? "true" : undefined}
-      className={cn("scroll-mt-24 rounded-xl border bg-panel p-4 transition-[border-color,box-shadow] duration-motion-fast", active ? "border-focus ring-1 ring-focus" : "border-line")}
+      // Hàng, không thẻ viền: vạch chia mảnh giữa các việc (rows-inset của danh sách); việc đang chọn (J / K) nền nhạt như dòng đang chọn ở Kịch bản.
+      className={cn("scroll-mt-24 rounded-lg px-3 py-4 transition-colors duration-motion-fast", active && "bg-hover")}
     >
       <MotionRegion>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -1144,7 +1145,7 @@ export function WorkCards({ book, items, onOpenReview, onOpenScript, onOpenNames
       {/* Mỗi lựa chọn là một thẻ rời danh sách: khép tại chỗ như hộp việc chính (WorkInboxBody), không mất cứng. data-motion-live: vùng của
           bước duyệt bên ngoài không mờ lại cả trang theo từng thẻ. */}
       <div data-motion-live="">
-      <AnimatedRows as="ol" className="mt-3 space-y-3" items={items} keyOf={(item) => item.key}>
+      <AnimatedRows as="ol" className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]" items={items} keyOf={(item) => item.key}>
         {(item, _index, state) => (
           <Card as="div" bookId={book.id} item={item} exiting={state === "exit"} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
         )}
@@ -1296,7 +1297,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       </p>
       {/* Đổi loại việc: cả danh sách trượt theo hướng mục vừa chọn; danh sách mới dựng lại từ đầu, không lẫn thẻ cũ đang mờ ra. */}
       <MotionRegion motionKey={active} slideIndex={active === "all" ? 0 : kinds.indexOf(active) + 1}>
-      <AnimatedRows key={active} as="ol" className="mt-3 space-y-3" items={items.slice(0, shown)} keyOf={(item) => item.key}>
+      <AnimatedRows key={active} as="ol" className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]" items={items.slice(0, shown)} keyOf={(item) => item.key}>
         {(item, _index, state) => (
           <Card as="div" key={item.key} bookId={bookId} item={item} exiting={state === "exit"} active={state !== "exit" && item.key === keys.current.items[at ?? -1]?.key} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
         )}
@@ -1316,35 +1317,35 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       </MotionPresence>
       {/* Ba nhóm phụ: thẻ vào / ra (Hoàn tác, quyết thêm) khép / mở tại chỗ. data-motion-live: vùng cả hộp không mờ lại theo từng thẻ. */}
       <MotionPresence open={decided.length > 0}>
-        <details className="mt-6 rounded-xl border border-line px-4 py-3">
+        <details className="mt-6 border-t border-line">
           <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">
             {waiting === decided.length ? `Đã quyết, chờ áp dụng · ${decided.length} việc` : `Đã quyết · ${decided.length} việc (${waiting} thay đổi chờ áp dụng)`}
           </summary>
           <div data-motion-live="">
-          <AnimatedRows as="ol" className="mt-3 space-y-3" items={decided} keyOf={(item) => item.key}>
+          <AnimatedRows as="ol" className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]" items={decided} keyOf={(item) => item.key}>
             {(item, _index, state) => <Card as="div" bookId={bookId} item={item} exiting={state === "exit"} onOpenReview={onOpenReview} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />}
           </AnimatedRows>
           </div>
         </details>
       </MotionPresence>
       <MotionPresence open={later.length > 0}>
-        <details className="mt-4 rounded-xl border border-line px-4 py-3">
+        <details className="mt-4 border-t border-line">
           <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Chờ phân tích lại</summary>
           <p className="mt-2 max-w-3xl text-pretty text-xs text-fg-2">
             Chỉ áp khi phân tích lại; không chặn sách chạy tiếp.
           </p>
           <div data-motion-live="">
-          <AnimatedRows as="ol" className="mt-3 space-y-3" items={later} keyOf={(item) => item.key}>
+          <AnimatedRows as="ol" className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]" items={later} keyOf={(item) => item.key}>
             {(item, _index, state) => <Card as="div" bookId={bookId} item={item} exiting={state === "exit"} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />}
           </AnimatedRows>
           </div>
         </details>
       </MotionPresence>
       <MotionPresence open={redo.length > 0}>
-        <details className="mt-4 rounded-xl border border-line px-4 py-3">
+        <details className="mt-4 border-t border-line">
           <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Đã ghi</summary>
           <div data-motion-live="">
-          <AnimatedRows as="ol" className="mt-3 space-y-3" items={redo} keyOf={(item) => item.key}>
+          <AnimatedRows as="ol" className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]" items={redo} keyOf={(item) => item.key}>
             {(item, _index, state) => <Card as="div" bookId={bookId} item={item} exiting={state === "exit"} onOpenReview={onOpenReview} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />}
           </AnimatedRows>
           </div>

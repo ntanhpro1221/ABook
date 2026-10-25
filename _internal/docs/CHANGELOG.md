@@ -14,6 +14,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thư viện: sách ở máy khác hiện dấu máy tính nhỏ đầu dòng trạng thái, không còn nhãn đè lên tên sách trên bìa.
 - Tab Nhân vật (trang sách và Studio): nhóm người có lời thoại đổi tên thành "Vai chính", đi cặp với "Vai phụ", không lặp lại tên tab.
 - Sửa sách: "Tìm bìa…" giờ là một bước ngay trong hộp, có nút quay về "Sửa sách" (Back cũng về), không mở hộp thứ hai chồng lên. Máy soát giao diện thêm luật bắt hộp thoại hay lớp nổi đè lên nhau.
+- Studio, đầu trang dự án: tên đứng đúng một chỗ ở mọi trạng thái, một dòng thông tin (trạng thái · số chương · độ dài) và thanh tiến độ mảnh; chi tiết như giọng kể, chất lượng, ngày tạo nằm trong "Chi tiết" ở menu "…". Hàng chương chỉ có dấu khi cần chú ý (hết "Đã xong" ở từng hàng), hàng chờ nói "Còn 5 việc trước".
+- Studio: Nhạc nền và công tắc "Nhân vật tự kể", "Duyệt trước khi thu" là các hàng cài đặt với công tắc bên phải (không còn thẻ viền); Nhật ký là một danh sách với nút "Chi tiết kỹ thuật" thay tab lồng; tab và bộ lọc cùng một kiểu chọn. Hàng "Cần nghe lại" đặt câu lên trước, "Máy nghe ra" chỉ hiện khi khác câu, Ổn / Cần thu lại là hai nút chính. Chữ giống nhau ở mọi hàng (giọng đọc ở từng chương, "N câu nói", tên model phân tích) chỉ còn nói một lần hoặc không nói.
 
 ## [0.4.139] - 2026-10-25
 
