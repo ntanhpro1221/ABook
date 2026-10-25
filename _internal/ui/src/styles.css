@@ -306,10 +306,12 @@ select[class~="border-line"] {
 
 /* Cùng chiều cao nút; px giữ đúng cỡ điều khiển khi cỡ chữ gốc của app thay đổi. */
 .shared-select { height: 40px; min-height: 40px; }
-.shared-button { min-height: 40px; }
+/* --button-h: chiều cao nút chung, cho chữ / icon cần canh theo hàng có nút (InlineError). */
+:root { --button-h: 40px; }
+.shared-button { min-height: var(--button-h); }
 @media (max-width: 640px), (pointer: coarse) {
+  :root { --button-h: 48px; }
   .shared-select { height: 48px; min-height: 48px; }
-  .shared-button { min-height: 48px; }
 }
 
 /* Mục menu (Radix) đang chọn bằng bàn phím: chỉ nền --hover (1,1:1 trên nền sáng) thì không thấy mình đang ở mục nào. Radix dồn tiêu điểm vào
@@ -868,8 +870,9 @@ select[class~="border-line"] {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-  margin-top: 0;
 }
+/* Dòng menu ở đây canh giữa: icon canh giữa không mang lề trên. Icon tự canh đầu (self-start, dòng có chú thích) giữ mt-line-icon. */
+.book-action-menu [role="menuitem"] > svg:not(.self-start) { margin-top: 0; }
 .book-action-menu [role="menuitem"] > span { min-width: 0; }
 /* Mực hình học của icon lucide (getBBox từng nét + nửa nét, ô 24): --ink-l / --ink-r = khoảng trống từ mép ô tới mực, đơn vị 1/24
    ô. Không ghi = 1 (nét 2 chạm khung 22). Dùng để đặt mực - không phải ô - đúng chỗ. */
@@ -1577,9 +1580,18 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 .settings-edge-action[data-size="md"] { margin-right: calc(var(--spacing) * -3.5); }
 .settings-page .settings-row-control > button[data-variant="ghost"][data-size="lg"],
 .settings-edge-action[data-size="lg"] { margin-right: calc(var(--spacing) * -5); }
+/* Đối xứng ở đầu hàng: nút ghost đứng đầu một cột chữ bù đệm trái, icon kéo mực ra đúng mép (như .ink-start) - mực thẳng mép chữ của cột
+   ("Tải" dưới thẻ sách cạnh "Đã tải", soát 25-10; máy dò leading-control-inset). */
+.edge-start-action { margin-left: calc(var(--spacing) * -3); }
+.edge-start-action[data-size="md"] { margin-left: calc(var(--spacing) * -3.5); }
+.edge-start-action[data-size="lg"] { margin-left: calc(var(--spacing) * -5); }
+.edge-start-action > svg:first-child { margin-inline-start: calc(var(--icon-w, 14px) * var(--ink-l, 1) / -24); }
 
 @keyframes fade-in-off { from { opacity: 0; } to { opacity: 1; } }
 
+/* Icon đầu một khối chữ canh đầu (cỡ = --icon-w, mặc định 1rem) (items-start / self-start): đứng giữa DÒNG ĐẦU theo chiều cao dòng thật (1lh), không đặt cứng mt-0.5
+   giả định một cỡ chữ (máy dò icon-off-first-line, soát 25-10). */
+@utility mt-line-icon { margin-top: calc((1lh - var(--icon-w, 1rem)) / 2); }
 @utility duration-motion-fast { transition-duration: var(--motion-fast); }
 @utility duration-motion-medium { transition-duration: var(--motion-medium); }
 @utility duration-motion-slow { transition-duration: var(--motion-slow); }

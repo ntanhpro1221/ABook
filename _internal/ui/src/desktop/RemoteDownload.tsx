@@ -64,7 +64,7 @@ export function RemoteDownloadMenuItem({ book }: { book: ListenBook }) {
   const Icon = status?.state === "running" ? Square : status?.state === "done" ? CircleCheck : Download;
   return (
     <DropdownMenu.Item disabled={disabled || busy} onSelect={status?.state === "running" ? cancel : start} className={MENU_ITEM}>
-      <MotionRegion as="span"><Icon className="mt-0.5 size-4 shrink-0" /></MotionRegion>
+      <MotionRegion as="span"><Icon className="mt-line-icon size-4 shrink-0" /></MotionRegion>
       <MotionRegion as="span" className="min-w-0" motionKey={[label, hint]}>
         <span className="block">{label}</span>
         <span className="block text-xs text-fg-3">{hint}</span>

@@ -1812,7 +1812,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
         <>
           {!data.castReady && (
             <p className="mt-4 flex items-start gap-2 rounded-xl bg-info-soft p-3 text-sm text-fg">
-              <Clock className="mt-0.5 size-4 shrink-0 text-info" />
+              <Clock className="mt-line-icon size-4 shrink-0 text-info" />
               Sửa người nói được sau bước phân vai.
             </p>
           )}

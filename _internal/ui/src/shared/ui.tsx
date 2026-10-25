@@ -905,10 +905,12 @@ export function ContentSkeleton({ shape = "rows", count = 3, label = "Đang tả
 export function InlineError({ message, onRetry, className, open }: { message: string; onRetry: () => void; className?: string; open?: boolean }) {
   if (open !== undefined) return <MotionPresence open={open}><InlineError message={message} onRetry={onRetry} className={className} /></MotionPresence>;
   // Nút đứng ngay sau câu (màn rộng không đẩy nó ra mép phải); màn hẹp xuống dòng thì thẳng mép với chữ - -ml bù phần đệm của nút ghost.
+  // Câu đệm trên dưới cho dòng đầu đứng giữa chiều cao nút (--button-h), icon đứng giữa dòng ấy - cả khi câu gãy dòng hay nút xuống dòng
+  // (từng là mt-[3px] theo chữ trần: hàng cao bằng nút đẩy chữ xuống, icon treo trên dòng - soát 25-10, máy dò icon-off-first-line).
   return <MotionRegion role="alert" motionKey={message} className={cn("motion-reveal flex items-start gap-3 py-3 text-sm", className)}>
-    <AlertTriangle aria-hidden className="ink-start mt-[3px] size-4 shrink-0 text-danger" />
-    <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-      <p className="measure min-w-0 text-pretty text-fg-2">{message}</p>
+    <AlertTriangle aria-hidden className="ink-start mt-[calc((var(--button-h)-1rem)/2)] size-4 shrink-0 text-danger" />
+    <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-1">
+      <p className="measure min-w-0 py-[calc((var(--button-h)-1lh)/2)] text-pretty text-fg-2">{message}</p>
       <Button variant="ghost" size="sm" icon={RotateCw} className="-ml-3" onClick={onRetry}>Thử lại</Button>
     </div>
   </MotionRegion>;

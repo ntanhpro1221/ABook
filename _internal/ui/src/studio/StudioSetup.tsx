@@ -86,7 +86,7 @@ export function NoStudioHere({ fit, className }: { fit: StudioFit; className?: s
   return (
     <MotionRegion>
     <section aria-label="Máy thiếu cấu hình" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
-      <Cpu className="mt-0.5 size-4 shrink-0 text-warning" />
+      <Cpu className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1 basis-[16rem]">
         <p className="font-semibold text-pretty">Máy thiếu cấu hình</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">
@@ -123,7 +123,7 @@ export function StudioInstallNotice({ className }: { className?: string }) {
   return (
     <MotionRegion>
     <section aria-label="Cần Studio" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
-      <Cpu className="mt-0.5 size-4 shrink-0 text-warning" />
+      <Cpu className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">{studio.repair ? "Cần sửa Studio" : studio.update ? "Studio cần cập nhật" : "Chưa cài Studio"}</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">

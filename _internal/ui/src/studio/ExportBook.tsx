@@ -465,7 +465,7 @@ export function ExportDialog({
               kind === value ? "text-accent-text" : "text-fg-2 hover:bg-hover",
             )}
           >
-            <Icon className="mt-0.5 size-4 shrink-0 text-accent-text" />
+            <Icon className="mt-line-icon size-4 shrink-0 text-accent-text" />
             <span className="min-w-0">
               <span className="block font-semibold">{title}</span>
               <span className="block text-fg-2">{detail}</span>
@@ -564,7 +564,7 @@ export function ExportDialog({
         <div className="mt-3 space-y-1.5 rounded-xl bg-warning-soft p-3 text-sm">
           {warnings.map((line) => (
             <p key={line} className="flex items-start gap-2">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+              <AlertTriangle className="mt-line-icon size-4 shrink-0 text-warning" />
               <span className="text-pretty">{line}</span>
             </p>
           ))}

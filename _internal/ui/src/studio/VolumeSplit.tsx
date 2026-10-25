@@ -95,7 +95,7 @@ export function VolumeSplit({
     const shown = proposal.volumes.slice(0, 4);
     return (
       <MotionRegion as="div" className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
-        <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
+        <Sparkles className="mt-line-icon size-4 shrink-0 text-accent-text" />
         <div className="min-w-0 flex-1">
           <p className="font-semibold">Chia {proposal.volumes.length} phần?</p>
           <p className="mt-1 text-fg-2">Nối các phần, giữ giọng và cách đọc tên.</p>

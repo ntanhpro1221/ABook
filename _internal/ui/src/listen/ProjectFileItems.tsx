@@ -59,7 +59,7 @@ function NeedStudioItem({ title, phoneNote }: { title: string; phoneNote: string
 function DisabledNeedItem({ title, note }: { title: string; note: string }) {
   return (
     <DropdownMenu.Item disabled className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}>
-      <Wrench className="mt-0.5 size-4 shrink-0" />
+      <Wrench className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">{title}</span>
         <span className="block text-xs text-fg-3">{note}</span>
@@ -74,7 +74,7 @@ function DesktopNeedStudioItem({ title, note }: { title: string; note: string })
   if (!studio.missing) return <DisabledNeedItem title={title} note={note} />;
   return (
     <DropdownMenu.Item onSelect={() => navigate("/studio")} className={cn(MENU_ITEM, "h-auto items-start py-1.5")}>
-      <Wrench className="mt-0.5 size-4 shrink-0" />
+      <Wrench className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">{title}</span>
         <span className="block text-xs text-fg-3">
@@ -110,7 +110,7 @@ export function TextBookItems({ book }: { book: ListenBook }) {
       onSelect={() => void build()}
       className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}
     >
-      <Hammer className="mt-0.5 size-4 shrink-0" />
+      <Hammer className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0">
         <span className="block">Tạo sách nói</span>
         <span className="block text-xs text-fg-3">{TEXT_BOOK_COST}</span>
@@ -146,7 +146,7 @@ export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews:
           onSelect={() => void build()}
           className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}
         >
-          <Hammer className="mt-0.5 size-4 shrink-0" />
+          <Hammer className="mt-line-icon size-4 shrink-0" />
           <span className="min-w-0">
             <span className="block">Dựng xưởng</span>
             <span className="block text-xs text-fg-3">{WORKSHOP_COST}</span>
