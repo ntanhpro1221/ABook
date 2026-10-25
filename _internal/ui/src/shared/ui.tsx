@@ -468,6 +468,7 @@ export function TabsList({ children, className, label }: { children: ReactNode; 
         ref={list}
         aria-label={label}
         style={style}
+        data-tab-row=""
         className={cn("relative flex gap-5 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none] sm:gap-6", className)}
       >
         <SlidingIndicator variant="line" />
@@ -493,6 +494,7 @@ export function TabsList({ children, className, label }: { children: ReactNode; 
 }
 
 // Không đệm ngang: chữ tab đầu thẳng mép nội dung (bìa, nút chính) và gạch chân dài đúng bằng chữ, như hàng lọc Thư viện (soát 24-10).
+// Điện thoại, hàng 2-4 tab: tab chia đều bề ngang, chữ căn giữa (Material "fixed tabs" - chủ sách 25-10) - xem [data-tab-row] trong styles.css.
 export function TabsTrigger({ value, children, count }: { value: string; children: ReactNode; count?: number }) {
   return (
     <TabsPrimitive.Trigger
@@ -508,7 +510,7 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
  *  để số không lệch dòng với tên ở chỗ nào. Số là chữ trơn `--text-2`, không viên thuốc. */
 export function TabLabel({ count, children }: { count?: number; children: ReactNode }) {
   return (
-    <span className="inline-flex items-baseline gap-1.5">
+    <span data-indicator-target="" className="inline-flex items-baseline gap-1.5">
       {children}
       {/* Số đếm dính vào tên khi đọc ("Chương6") - trình đọc màn hình nghe "Chương, 6 mục" (soát a67). */}
       <MotionRegion as="span" className="inline-flex" motionKey={count ?? null}>{count !== undefined && (
@@ -1083,9 +1085,10 @@ export function FilterRow<T extends string>({
   const [row, setRow] = useState<HTMLDivElement | null>(null);
   const fade = useRowFade(row);
   return (
-    <div ref={setRow} style={fade} role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys(values, value, onChange)} className={cn("relative flex max-w-full gap-5 overflow-x-auto [scrollbar-width:none] sm:gap-6", className)}>
+    <div ref={setRow} style={fade} role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys(values, value, onChange)} className={cn("relative flex max-w-full overflow-x-auto [scrollbar-width:none]", className)}>
       <SlidingIndicator variant="line" />
-      {options.map((option, index) => (
+      {options.map((option, index) => [
+        index > 0 && <RowGap key={`gap-${option.value}`} />,
         <button
           key={option.value}
           type="button"
@@ -1099,8 +1102,14 @@ export function FilterRow<T extends string>({
           )}
         >
           {option.label}
-        </button>
-      ))}
+        </button>,
+      ])}
     </div>
   );
+}
+
+/** Khoảng giữa các mục của hàng lọc / hàng tab: 20 px (24 px từ `sm`) nhưng CO được tới 8 px khi hàng gần đủ chỗ - thiếu vài px không biến cả
+ *  hàng thành thanh cuộn (chủ sách 25-10: "chỉ có một chút xíu content thôi cũng thành scroll"). Thật sự không vừa thì mới cuộn + mờ mép. */
+export function RowGap({ className }: { className?: string }) {
+  return <span aria-hidden className={cn("w-5 min-w-2 shrink sm:w-6", className)} />;
 }
