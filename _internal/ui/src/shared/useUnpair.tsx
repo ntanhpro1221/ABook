@@ -23,17 +23,14 @@ export function useUnpair<T>(options: {
   const [busy, setBusy] = useState<UnpairChoice | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const announce = (target: T, unsent: UnsentEdits | null) => {
-    const done = unpairDone(options.name(target), unsent);
-    toast.success(done.title, { description: done.description });
-  };
+  const announce = (target: T) => toast.success(unpairDone(options.name(target)));
 
   const start = async (target: T) => {
     try {
       const unsent = await options.unsent(target);
       if (unpairCopy(options.name(target), options.self, unsent, true) === null) {
         await options.run(target, null);
-        announce(target, unsent);
+        announce(target);
         return;
       }
       setError(null);
@@ -49,7 +46,7 @@ export function useUnpair<T>(options: {
     setError(null);
     try {
       await options.run(asking.target, choice);
-      announce(asking.target, asking.unsent);
+      announce(asking.target);
       setAsking(null);
     } catch (problem) {
       setError((problem as Error).message);

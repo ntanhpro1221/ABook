@@ -6,7 +6,7 @@ vi.mock("react", async (original) => ({ ...await original<typeof import("react")
 vi.mock("react-router", async (original) => ({ ...await original<typeof import("react-router")>(), useNavigate: () => mocks.navigate }));
 vi.mock("@tanstack/react-query", async (original) => ({ ...await original<typeof import("@tanstack/react-query")>(), useQueryClient: () => ({ invalidateQueries: mocks.invalidate }) }));
 vi.mock("@/studio/api", async (original) => ({ ...await original<typeof import("@/studio/api")>(), api: mocks.api }));
-vi.mock("sonner", async (original) => ({ ...await original<typeof import("sonner")>(), toast: Object.assign(vi.fn(), { success: mocks.success, error: mocks.error, warning: mocks.warning }) }));
+vi.mock("sonner", async (original) => ({ ...await original<typeof import("sonner")>(), toast: Object.assign(vi.fn(), { message: vi.fn(), success: mocks.success, error: mocks.error, warning: mocks.warning }) }));
 
 it("hỏi trước khi thay bằng file cũ và chỉ gửi xác nhận khi bạn chọn thay", async () => {
   vi.clearAllMocks();
@@ -15,9 +15,9 @@ it("hỏi trước khi thay bằng file cũ và chỉ gửi xác nhận khi bạ
   await useOpenBookPath()("old.abook");
   expect(mocks.navigate).not.toHaveBeenCalled();
   expect(mocks.api).toHaveBeenCalledTimes(1);
-  expect(mocks.warning).toHaveBeenCalledWith("Bản sách cũ hơn", expect.any(Object));
+  expect(mocks.warning).toHaveBeenCalledWith("File này cũ hơn bản đang có", expect.any(Object));
   const options = mocks.warning.mock.calls[0][1];
-  options.cancel.onClick();
+  expect(options.cancel).toBeUndefined();
   expect(mocks.api).toHaveBeenCalledTimes(1);
   mocks.api.mockResolvedValueOnce({ id: "book", how: "updated" });
   options.action.onClick();

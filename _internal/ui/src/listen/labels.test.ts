@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookProgressText, caughtUpDetail, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel, unquoted } from "./labels";
+import { bookProgressText, caughtUpDetail, caughtUpLine, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel, unquoted } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -124,6 +124,7 @@ describe("sách chưa đủ chương mà không máy nào thu", () => {
     expect(caughtUpDetail(true)).toContain("khi máy làm xong");
     expect(caughtUpDetail(false)).not.toContain("máy làm xong");
     expect(caughtUpDetail()).toBe("Các chương sau chưa có audio.");
+    expect(caughtUpLine()).toBe("Đã nghe hết phần đã có - các chương sau chưa có audio");
   });
 
   it("dòng trạng thái cho số chương đã thu, không nói việc thu đang dừng", () => {

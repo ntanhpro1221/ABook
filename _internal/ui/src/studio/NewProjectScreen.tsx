@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { Switch } from "@/desktop/PhoneSync";
 import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
@@ -308,7 +308,7 @@ export function SourceStep({
       // File đã tới máy tính thì giữ (huỷ hay hỏng giữa chừng cũng vậy): người dùng làm tiếp được, và nói rõ đã gửi bao nhiêu.
       if (result.paths.length) (append ? onAddFiles : onPaths)(result.paths);
       if (result.error) toast.error("Không gửi hết các chương", { description: `${result.error.message} ${sendSummary(result)}` });
-      else if (result.cancelled) toast(result.sent ? "Đã dừng gửi" : "Đã huỷ gửi", { description: sendSummary(result) });
+      else if (result.cancelled) toast(result.sent ? `Đã dừng gửi - ${sendSummary(result)}` : "Đã huỷ gửi");
     } finally {
       sending.current = null;
       setStopping(false);
@@ -1702,8 +1702,7 @@ export function NewProjectScreen() {
     setDraft(apply);
     // Áp mẫu ghi đè giọng / chất lượng / chờ duyệt bạn vừa chọn: nói đã đổi gì và cho trả lại (soát UX a32).
     if (changed.length) {
-      toast.success(`Đã áp ${template ? `mẫu “${template.name}”` : "lựa chọn mặc định"}`, {
-        description: `Đổi: ${changed.join(", ")}.`,
+      toast.success(`Đã áp ${template ? `mẫu “${template.name}”` : "lựa chọn mặc định"}: đổi ${changed.join(", ")}`, {
         action: { label: "Hoàn tác", onClick: () => setDraft((current) => ({ ...current, ...before })) },
         duration: 8000,
       });
@@ -1830,41 +1829,20 @@ export function NewProjectScreen() {
       {
         onSuccess: (result) => {
           saveDraft(null);
-          const shared = result.sharedReadings ?? [];
-          const readings = shared.length
-            ? `Dùng ${shared.length} cách đọc chung (${shared.slice(0, 3).join(", ")}${shared.length > 3 ? ", …" : ""}).`
-            : "";
-          const starting = noStudio
-            ? "Dự án chờ tới khi Studio cài xong - rồi bấm “Bắt đầu tạo sách nói” ở trang dự án."
-            : !draft.startNow
-            ? ""
-            : result.queued
-              ? `Đang có cuốn khác chạy - sách này vào hàng chờ (thứ ${result.queued}), tự bắt đầu khi cuốn ấy xong.`
-              : "Đang khởi động - theo dõi tiến trình ngay trên trang sách.";
           const volumes = result.parts?.length ?? 0;
-          toast.success(
-            result.unchanged
-              ? "Không có thiết lập nào thay đổi"
+          // MỘT dòng: trang dự án (mở ngay sau đây) nói tiến trình; chỉ hàng chờ nằm trong câu, và việc Studio chưa cài xong là cảnh báo cùng dòng.
+          const queued = draft.startNow && !noStudio && result.queued ? ` - vào hàng chờ (thứ ${result.queued})` : "";
+          toastDone(
+            (result.unchanged
+              ? "Không có thiết lập nào thay đổi - giữ nguyên sách cũ"
               : volumes > 1
                 ? `Đã tạo ${volumes} phần`
                 : draft.replaces?.restart
                   ? "Đã làm lại sách từ đầu"
                   : draft.replaces
                     ? "Đã tạo lại sách với thiết lập mới"
-                    : "Đã tạo sách",
-            {
-              description:
-                [
-                  result.unchanged ? "Giữ nguyên sách cũ." : "",
-                  starting,
-                  volumes > 1 && draft.startNow && !noStudio ? "Phần sau tự bắt đầu khi phần trước xong, mang giọng và cách đọc tên sang." : "",
-                  volumes > 1 && (!draft.startNow || noStudio) ? "Bắt đầu phần 1 thì các phần sau tự xếp hàng." : "",
-                  readings,
-                  draft.replaces && !result.unchanged && !result.replaceError ? "Bản cũ đã vào Thùng rác." : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ") || undefined,
-            },
+                    : "Đã tạo sách") + queued,
+            noStudio ? "Dự án chờ tới khi Studio cài xong, rồi bấm “Bắt đầu tạo sách nói” ở trang dự án." : undefined,
           );
           if (result.replaceError) toast.warning("Bản cũ vẫn còn trong Dự án", { description: result.replaceError });
           navigate(`/studio/${result.id}`, { replace: true });
@@ -1892,8 +1870,7 @@ export function NewProjectScreen() {
             // Bỏ nối tiếp = phân vai lại từ đầu, giọng lệch phần trước: một cú bấm lỡ tay phải lấy lại được (soát UX 29-09).
             const previous = draft.seed;
             update({ seed: undefined });
-            toast("Đã bỏ nối tiếp", {
-              description: "Sách này sẽ phân vai lại từ đầu - nhân vật có thể mang giọng khác phần trước.",
+            toast("Đã bỏ nối tiếp - sách sẽ phân vai lại từ đầu", {
               duration: 10000,
               action: { label: "Hoàn tác", onClick: () => update({ seed: previous }) },
             });
@@ -1961,9 +1938,7 @@ export function NewProjectScreen() {
                 );
                 const plan = scan?.files.find((file) => samePath(file.path, path))?.split;
                 const chapters = plan ? splitOutcome(plan, draft.title).chapters : undefined;
-                toast.success(chapters ? `Đã tách thành ${formatNumber(chapters)} chương` : "Đã tách thành các chương", {
-                  description: "File gốc vẫn giữ nguyên.",
-                });
+                toast.success(chapters ? `Đã tách thành ${formatNumber(chapters)} chương` : "Đã tách thành các chương");
               } catch (error) {
                 toast.error("Không tách được", { description: (error as Error).message });
               }

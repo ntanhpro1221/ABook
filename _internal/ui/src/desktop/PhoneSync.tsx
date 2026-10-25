@@ -96,7 +96,7 @@ function useSync() {
     // Thôi ghép xong nói một câu (soát a68 lỗi 15): dòng thiết bị biến mất không đủ để biết đã xong và hệ quả là gì.
     onSuccess: (data, { name }) => {
       onSuccess(data);
-      toast.success(`Đã thôi ghép ${name}`, { description: "Sách đã tải vẫn nghe được." });
+      toast.success(`Đã thôi ghép ${name}`);
     },
     onError,
   });
@@ -268,7 +268,7 @@ export function PhoneSync() {
     const previous = known.current;
     known.current = new Set(sync.devices.map((device) => device.id));
     const added = previous ? sync.devices.find((device) => !previous.has(device.id)) : undefined;
-    if (added) toast.success(`Đã ghép ${added.name}`, { description: "Thiết bị này giờ tải được sách và đồng bộ chỗ đang nghe." });
+    if (added) toast.success(`Đã ghép ${added.name}`);
   }, [sync]);
 
   // Khung chờ / lỗi và nội dung có CÙNG gốc (vùng ngoài cùng bên dưới): tải xong thì mờ qua, không gỡ cả cây làm khung chờ mất cứng.
@@ -279,7 +279,7 @@ export function PhoneSync() {
   const studioWanted = studio.isPending ? Boolean(studio.variables) : sync.remoteStudio;
 
   return (
-    // Hai khối cài đặt như mọi trang: "Máy này" (mọi thứ của chính máy tính) rồi "Thiết bị đã ghép" - cùng nhãn mục, cùng khoảng
+    // Hai khối cài đặt như mọi trang: "Máy này" (mọi thứ của chính máy tính) rồi "Máy đã ghép" - cùng nhãn mục, cùng khoảng
     // cách giữa khối (trước đây danh sách thiết bị là tiêu đề con bên trong, sát hàng trên 17 px, và "Kết nối" rơi xuống dưới nó).
     <MotionRegion as="div" className="motion-reveal">
       <SettingsBlock title="Máy này" id="phone">
@@ -388,7 +388,7 @@ export function PhoneSync() {
       </div>
       </SettingsBlock>
       {sync.enabled && (
-        <SettingsBlock title="Thiết bị đã ghép" id="paired">
+        <SettingsBlock title="Máy đã ghép" id="paired">
           <div className="py-3.5">
             {deviceRows.length === 0 ? (
               // Người mới chưa có app trên điện thoại: nói chỗ lấy (chữ chọn được, không phải liên kết - trong cửa sổ app một

@@ -251,7 +251,7 @@ export function ReaderScreen(edit: SentenceEditing) {
   }, [book, isLoading]);
 
   const placeholder = (
-      <div className="mx-auto max-w-[68ch] space-y-4 px-[20px] pt-10">
+      <div className="mx-auto max-w-[calc(31em+40px)] space-y-4 px-[20px] pt-10" style={{ fontSize: prefs.size }}>
         <Skeleton className="h-8 w-2/3" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-11/12" />
@@ -408,7 +408,7 @@ export function ReaderScreen(edit: SentenceEditing) {
         </h2>
       </header>
 
-      <div ref={container} onScroll={onScroll} {...scrollInput} data-reader-scroll className="reading-surface relative min-h-0 flex-1 overflow-y-auto">
+      <div ref={container} onScroll={onScroll} {...scrollInput} data-reader-scroll data-overlay="Thanh nổi trên chữ đang mờ dần ở mép dưới" className="reading-surface relative min-h-0 flex-1 overflow-y-auto">
         {/* Mép trên mờ dần như mép dưới (soát 25-10 V6): chữ cuộn lên không bị cắt ngang dưới thanh đầu. Dính mép trên, cao bằng lề pt-8 của bài và
             lùi lại bằng đúng chừng ấy (-mb-8) nên không chiếm chỗ; chưa cuộn thì chỉ phủ lên phần lề trống nên chẳng thấy. */}
         <div aria-hidden data-reader-fade-top className="pointer-events-none sticky top-0 z-[1] -mb-8 h-8 bg-gradient-to-b from-[var(--read-bg)] from-40% to-transparent" />
@@ -417,7 +417,7 @@ export function ReaderScreen(edit: SentenceEditing) {
             Giá trị riêng ở đây chặn thay đổi lan xuống; lớp phủ của hộp vẫn che trang nên bấm ra ngoài vẫn không tới chữ. */}
         <article
           ref={article}
-          className="pointer-events-auto mx-auto max-w-[68ch] px-[20px] pb-40 pt-8 [--removed-body-scroll-bar-size:0px]"
+          className="pointer-events-auto mx-auto max-w-[calc(31em+40px)] px-[20px] pb-40 pt-8 [--removed-body-scroll-bar-size:0px]"
           style={{ fontSize: prefs.size, lineHeight: prefs.leading }}
         >
           <MotionPresence open={Boolean(hint)}>

@@ -4,8 +4,6 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { lineEditing } from "@/shared/capabilities";
-import { excerpt } from "@/shared/format";
-import { Button, Dialog } from "@/shared/ui";
 import { useAppInfo } from "@/studio/data";
 import { canEditBook } from "./EditBook";
 import { lineToEdit, type LineToEdit } from "./follow";
@@ -16,6 +14,7 @@ import { useListenMutations } from "./source";
 import { reportWriteFailure } from "./recordWrites";
 import { makeAnchor } from "./readingAnchor";
 import { WordReadingDialog } from "./WordReadings";
+import { keepFocus } from "./menuSlot";
 
 // Chọn một câu của văn bản đọc theo rồi làm gì với nó - MỘT chỗ cho màn Đọc (ReaderScreen) và tab "Đọc theo" của màn "Đang nghe" (PlayerViews):
 // nghe từ câu ấy, đặt dấu trang, chép, sửa cách đọc một từ (cuốn chỉ có chữ), sửa câu này (cuốn có audio). Giữ ngón tay / bấm chuột phải vào
@@ -33,49 +32,6 @@ export interface SentenceEditing {
 // Thanh nổi dưới câu đang chọn: điện thoại chỉ còn biểu tượng cho nút phụ (nhãn vẫn cho trình đọc màn hình) để cả thanh nằm MỘT hàng, không che chữ đang đọc.
 const BAR_LABEL = "max-sm:sr-only";
 const BAR_BUTTON = "inline-flex min-h-[48px] items-center gap-2 rounded-full bg-panel px-4 py-2.5 text-sm font-semibold shadow-float ring-1 ring-line disabled:opacity-60";
-const keepFocus = { onMouseDown: (event: { preventDefault: () => void }) => event.preventDefault() };
-
-/** Ghi chú cho dấu trang vừa đặt (nút "Ghi chú" trên thông báo "Đã đặt dấu trang"). */
-function BookmarkNoteDialog({ bookId, mark, onClose }: { bookId: string; mark: { id: string; quote: string } | null; onClose: () => void }) {
-  const mutations = useListenMutations(bookId);
-  const [note, setNote] = useState("");
-  useEffect(() => setNote(""), [mark]);
-  const save = () =>
-    mutations.updateBookmark.mutate(
-      { id: mark!.id, note: note.trim() },
-      { onSuccess: onClose, onError: (error) => reportWriteFailure(error, "Chưa lưu được ghi chú") },
-    );
-  return (
-    <Dialog open={mark !== null} onOpenChange={(open) => !open && onClose()} width="max-w-md" title="Ghi chú cho dấu trang" description={mark ? `“${excerpt(mark.quote)}”` : undefined}>
-      <form
-        className="space-y-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (note.trim()) save();
-        }}
-      >
-        <textarea
-          autoFocus
-          value={note}
-          maxLength={500}
-          rows={3}
-          onChange={(event) => setNote(event.target.value)}
-          aria-label="Ghi chú"
-          placeholder="vd Đoạn hay, nghe lại"
-          className="w-full rounded-lg border border-line bg-bg px-3 py-2 text-sm outline-none focus:border-focus"
-        />
-        <div className="flex justify-end gap-2">
-          <Button size="sm" variant="ghost" type="button" onClick={onClose}>
-            Thôi
-          </Button>
-          <Button size="sm" variant="primary" type="submit" disabled={!note.trim()} loading={mutations.updateBookmark.isPending}>
-            Lưu ghi chú
-          </Button>
-        </div>
-      </form>
-    </Dialog>
-  );
-}
 
 /** Câu đang chọn và mọi việc làm được với nó. Đổi chương (hay cuốn) thì bỏ câu / chữ đang chọn - câu số 3 của chương trước không phải câu số 3
  *  của chương này (soát a70). `onListen`: nghe từ một câu (nút "Nghe từ câu này"). */
@@ -125,7 +81,6 @@ export function useSentenceMenu({
   const [selectedWord, setSelectedWord] = useState(-1);
   // Hộp "Sửa câu này" giữ đúng câu đã mở (chương + bản chữ lúc mở), không theo giọng sang chương sau (follow.lineToEdit).
   const [editingLine, setEditingLine] = useState<LineToEdit<Script> | null>(null);
-  const [noting, setNoting] = useState<{ id: string; quote: string } | null>(null);
   const editable = Boolean(lineEdit || readingEdit);
 
   useEffect(() => {
@@ -169,15 +124,13 @@ export function useSentenceMenu({
         onSuccess: (mark) => {
           select(null);
           if (mark.existing) {
-            toast("Đã có dấu trang ở câu này", { id: "bookmark-existing", description: excerpt(segment.text) });
+            toast("Đã có dấu trang ở câu này", { id: "bookmark-existing" });
             return;
           }
           toast.success("Đã đặt dấu trang", {
             id: "bookmark",
             duration: 8000,
-            description: excerpt(segment.text),
-            action: { label: "Ghi chú", onClick: () => setNoting({ id: mark.id, quote: segment.text }) },
-            cancel: { label: "Hoàn tác", onClick: () => mutations.deleteBookmark.mutate(mark.id) },
+            action: { label: "Hoàn tác", onClick: () => mutations.deleteBookmark.mutate(mark.id) },
           });
         },
         onError: (error) => reportWriteFailure(error, "Chưa đặt được dấu trang"),
@@ -189,7 +142,7 @@ export function useSentenceMenu({
     void navigator.clipboard.writeText(text).then(
       () => {
         select(null);
-        toast.success("Đã chép câu", { id: "copied", description: excerpt(text) });
+        toast.success("Đã chép câu", { id: "copied" });
       },
       () => toast.error("Chưa chép được"),
     );
@@ -276,7 +229,6 @@ export function useSentenceMenu({
           }}
         />
       )}
-      <BookmarkNoteDialog bookId={bookId} mark={noting} onClose={() => setNoting(null)} />
     </>
   );
 

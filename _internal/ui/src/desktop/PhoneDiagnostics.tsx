@@ -52,8 +52,8 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
       if (info?.dialogs) {
         const target = await pickFolder("Chọn nơi lưu nhật ký", "").catch(() => null);
         if (!target) return;
-        const done = await api<{ name: string; folder: string }>(`/api/remote/${computer.id}/diagnostics/save`, { method: "POST", body: { lines: SAVE_LINES, target } });
-        toast.success("Đã lưu nhật ký", { description: done.name });
+        await api<{ name: string; folder: string }>(`/api/remote/${computer.id}/diagnostics/save`, { method: "POST", body: { lines: SAVE_LINES, target } });
+        toast.success("Đã lưu nhật ký");
       } else {
         // Trình duyệt: không có hộp chọn thư mục - tải về qua thanh tải của trình duyệt.
         const full = await api<DiagnosticsReport>(`/api/remote/${computer.id}/diagnostics?lines=${SAVE_LINES}`);

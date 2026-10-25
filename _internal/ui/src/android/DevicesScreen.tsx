@@ -370,7 +370,7 @@ export function StudioAlertsRow({ icon: Icon }: { icon?: LucideIcon } = {}) {
     onSuccess: (data) => {
       client.setQueryData(["studio-alerts"], data);
       if (data.enabled && !data.permitted) toast.error("Android chưa cho ABook đăng thông báo", { description: "Bật lại trong Cài đặt của máy > Ứng dụng > ABook > Thông báo." });
-      else if (data.enabled) toast.success("Sẽ báo khi sách xong hay có việc cần duyệt", { description: "Máy tính cần bật “Điều khiển từ xa”." });
+      else if (data.enabled) toast.success("Sẽ báo khi sách xong hay cần duyệt");
     },
     onError: (error: Error) => toast.error("Chưa đổi được", { description: error.message }),
   });
@@ -938,7 +938,7 @@ export function DevicesScreen() {
   const unpair = async (announce: boolean) => {
     await EbookLibrary.unpair();
     void client.invalidateQueries({ queryKey: ["connection"] });
-    if (announce) toast.success(`Đã bỏ ghép với ${computerName}`, { description: "Sách đã tải về vẫn ở điện thoại và nghe được." });
+    if (announce) toast.success(`Đã bỏ ghép với ${computerName}`);
   };
   // Máy tính trả 401: nó đã thôi ghép điện thoại này - không phải tắt máy hay khác Wi-Fi (soát a68 lỗi 5). "Ghép lại" quên mã cũ rồi mở hộp
   // ghép với sẵn địa chỉ máy tính (PairPanel).

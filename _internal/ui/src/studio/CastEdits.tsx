@@ -7,7 +7,7 @@ import type { CastMember } from "@/listen/model";
 import { formatNumber } from "@/shared/format";
 import { Button, Dialog, Segmented } from "@/shared/ui";
 import { api } from "./api";
-import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied, WAITING_STUDIO } from "./decisions";
+import { refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
 import { voiceToUse } from "./MergePeople";
 
 // Tab Nhân vật: "Đổi tên" và "Đổi giới tính" của một người.
@@ -40,9 +40,7 @@ export function RenamePersonDialog({
       });
       refreshAfterDecision(client, bookId);
       onSaved?.();
-      toast.success(answer.renamed ? `Đã đổi tên thành ${cleanName(answer.name)}` : `Đã trở về tên gốc: ${cleanName(answer.name)}`, {
-        description: "Chỉ đổi tên hiện ra; giọng và audio giữ nguyên.",
-      });
+      toast.success(answer.renamed ? `Đã đổi tên thành ${cleanName(answer.name)}` : `Đã trở về tên gốc: ${cleanName(answer.name)}`);
       onClose();
     } catch (error) {
       toast.error("Chưa đổi được tên", { description: (error as Error).message });
@@ -115,7 +113,6 @@ export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved
   onSaved?: () => void;
 }) {
   const client = useQueryClient();
-  const when = useWhenApplied(bookId);
   const current = shownGender(person);
   const [choice, setChoice] = useState<Gender | null>(null);
   const [busy, setBusy] = useState(false);
@@ -134,9 +131,6 @@ export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved
       onSaved?.();
       const label = choice === "female" ? "nữ" : "nam";
       toast.success(`Đã ghi: ${name} là nhân vật ${label}`, {
-        description: waiting
-          ? WAITING_STUDIO
-          : `${recorded ? "Nếu giọng đang đọc chưa hợp giới này, các câu đã thu của người ấy sẽ được thu lại bằng giọng mới. " : ""}${when}`,
         action: undoAction(client, bookId, "voice", [{ character: person.name, requestedAt, keep: false }], `${name} trở lại như trước khi đổi giới tính.`),
         duration: UNDO_MS,
       });

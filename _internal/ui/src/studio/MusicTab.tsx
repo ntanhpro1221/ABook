@@ -350,9 +350,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
     onSuccess: (view) => {
       refresh(view);
       setRemoving(null);
-      toast("Đã xoá khỏi Nhạc của tôi", {
-        description: "Sách đã xuất vẫn giữ bản của bài này. Đoạn đang ghim bài ấy trên máy này sẽ dùng bài khác ở lần dựng sau.",
-      });
+      toast("Đã xoá khỏi Nhạc của tôi");
     },
     onError: (error: Error) => toast.error("Không xoá được bài này", { description: error.message }),
   });
@@ -562,7 +560,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
     onSuccess: (result) => {
       // Máy chủ dừng ở khúc kế (một phần giây): ẩn dòng tiến độ ngay thay vì đợi lần hỏi sau.
       client.setQueryData(key, { ...result, download: undefined });
-      toast("Đã dừng tải nhạc nền", { description: "Bài chưa tải sẽ được tải khi bạn nghe tới đoạn ấy." });
+      toast("Đã dừng tải nhạc nền");
     },
     onError: (error: Error) => toast.error("Không dừng được việc tải nhạc", { description: error.message }),
   });
@@ -587,8 +585,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
       { ban: [link] },
       {
         onSuccess: () =>
-          toast(`Đã bỏ bài này cho cả cuốn (đang dùng ở ${used} đoạn)`, {
-            description: label,
+          toast(`Đã bỏ “${label}” cho cả cuốn (đang dùng ở ${used} đoạn)`, {
             action: { label: "Hoàn tác", onClick: () => change.mutate({ unban: [link] }) },
           }),
       },

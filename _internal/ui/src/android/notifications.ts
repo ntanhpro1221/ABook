@@ -43,7 +43,7 @@ export const NOTIFICATION_ROW_HINT = "Đang tắt: không báo khi sách xong. N
 export async function offerNotificationAccess(
   api: NotificationApi = EbookPlayer,
   notify: (message: string, allow: () => void) => void = (message, allow) =>
-    void toast(message, { id: "notification-access", duration: 20_000, action: { label: "Cho phép", onClick: allow }, cancel: { label: "Để sau", onClick: () => undefined } }),
+    void toast(message, { id: "notification-access", duration: 20_000, action: { label: "Cho phép", onClick: allow } }),
   memory: Memory | null = browserMemory(),
 ): Promise<boolean> {
   try {

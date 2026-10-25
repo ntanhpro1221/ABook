@@ -12,7 +12,6 @@ import {
   Bookmark as BookmarkIcon,
   BookmarkPlus,
   Check,
-  Cast,
   ChevronDown,
   Gauge,
   Keyboard,
@@ -40,7 +39,7 @@ import {
   VolumeX,
   X,
 } from "lucide-react";
-import { createContext, memo, useContext, useDeferredValue, useId, useCallback, useEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ComponentProps, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { createContext, memo, useContext, useDeferredValue, useId, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ButtonHTMLAttributes, type ComponentProps, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -59,10 +58,10 @@ import { COARSE, EXTEND_GESTURE } from "./extendGesture";
 import { openShortcuts } from "./Shortcuts";
 import { useBookMusic } from "./EditBook";
 import { bookmarkReadPath, canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContinue, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
-import { EDIT_BOOKMARK_EVENT, SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
+import { SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
 import { SLEEP_CHOICES, sleepButtonLabel, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
-import { genderLabel, groupedVoices, voiceSections } from "./voiceGroups";
+import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGroups";
 import { revealVoiceSettings } from "./voiceSettingsLink";
 import { VieneuDownload } from "./VieneuDownload";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, unusableVoiceMessage, voiceCaption } from "./readAloudVoice";
@@ -77,6 +76,7 @@ import { ADD_MUSIC_LABEL, shortPlaylistLabel } from "./playlistBed";
 import { openExternal } from "@/shared/openExternal";
 import { ACTION_BUTTON, ACTION_GLYPH, ACTION_LABEL, ActionButton, actionTone } from "./ActionButton";
 import { JumpToPlaying, ReadAlongText, useFollowVoice, useListenFrom, usePlayingSentence } from "./ReadAlongText";
+import { besideParentMenu, keepFocus, MENU_ROW, MenuSlot, type BesideParent } from "./menuSlot";
 import { SuggestionsButton } from "./ReadingSuggestions";
 import { useSentenceMenu, type SentenceEditing } from "./SentenceMenu";
 import { sentenceIndexAt } from "./words";
@@ -99,8 +99,6 @@ export function voiceButtonLabel(name: string | undefined): string {
   return name ? `Giọng đọc: ${spokenVoiceName(name)}` : "Giọng đọc";
 }
 
-/** Nút điều khiển không giữ focus sau cú bấm chuột: Space sau đó vẫn là phát/tạm dừng, không lặp lại nút vừa bấm. */
-const keepFocus = { onMouseDown: (event: { preventDefault: () => void }) => event.preventDefault() };
 
 function useTicker(active: boolean, every = 1000): number {
   const [now, setNow] = useState(() => Date.now());
@@ -368,6 +366,11 @@ function MenuShell({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [popoverOffset, setPopoverOffset] = useState(8);
   const isOpen = open ?? localOpen;
+  // Dòng trong menu "…" (máy tính): hộp con mở CẠNH menu cha, mép đáy/đỉnh thẳng mép menu cha - không chồng lên nó. Đo lúc mở (cả khi do bên ngoài mở).
+  const [beside, setBeside] = useState<BesideParent | null>(null);
+  useLayoutEffect(() => {
+    if (isOpen && look === "row" && !phone) setBeside(besideParentMenu(triggerRef.current));
+  }, [isOpen, look, phone]);
   const changeOpen = (next: boolean) => {
     if (next && !phone && look === "action") {
       const button = triggerRef.current;
@@ -395,9 +398,10 @@ function MenuShell({
       <Tooltip label={tooltip ?? label}><Popover.Trigger asChild>{button}</Popover.Trigger></Tooltip>
       <Popover.Portal>
         <Popover.Content
-          side={side ?? "top"}
-          align={look === "action" ? "start" : "end"}
-          sideOffset={popoverOffset}
+          side={beside?.side ?? side ?? "top"}
+          align={beside?.align ?? (look === "action" ? "start" : "end")}
+          sideOffset={beside?.sideOffset ?? popoverOffset}
+          alignOffset={beside?.alignOffset}
           collisionPadding={12}
           // Esc hay chọn xong: Radix tự trả tiêu điểm về nút mở (bấm ra ngoài thì không) - trước đây chặn nên rơi về BODY (soát a31 K1). Mở
           // bằng chuột thì nút không bật chú thích (Tooltip quietFocus).
@@ -725,8 +729,12 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
       {/* Cùng nhóm, cùng tên giọng với Cài đặt › Giọng đọc; "Thử" dùng cùng cách nghe thử. */}
       <ScrollHint className={cn("min-h-0 flex-1 overflow-y-auto", MENU_LIST)}>
         {groupedVoices(voices).map((group) => (
-          <div key={group.provider} role="group" aria-label={group.title} className="mb-1.5">
-            <div className="label-section px-2 pb-0.5 pt-1 text-fg-3">{group.title}</div>
+          <div key={group.provider} role="group" aria-label={groupLabel(group)} className="mb-1.5">
+            {/* Nhãn HOA chỉ tên nhóm (≤ 3 chữ, DESIGN 5.5); phần mô tả cùng hàng, chữ thường 12 px. */}
+            <div className="flex flex-wrap items-baseline justify-between gap-x-2 px-2 pb-0.5 pt-1">
+              <span className="label-section text-fg-3">{group.title}</span>
+              {group.detail && <span className="text-xs text-fg-3">{group.detail}</span>}
+            </div>
             {voiceSections(group.voices).map((section) => (
               <div key={section.label ?? ""}>
                 {section.label && <div className="px-2 pb-0.5 pt-1 text-xs font-medium text-fg-2">{section.label}</div>}
@@ -1212,11 +1220,13 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
   // Một dòng trong menu "…" của màn Đang nghe: tên + nút tắt tiếng + thanh trượt, không thêm bảng nổi nào.
   if (look === "row") {
     return (
-      <div data-volume-row data-player-menu-row className="flex min-h-10 items-center gap-3 px-2 text-sm max-sm:min-h-[48px]">
-        <Volume2 className="size-4 shrink-0 text-fg-2" />
-        <span className="min-w-0 flex-1">Âm lượng</span>
-        <IconButton label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} icon={Icon} size="sm" onClick={toggleMute} />
-        {slider("flex w-28")}
+      <div data-volume-row className="flex min-h-10 items-center gap-1 max-sm:min-h-[48px]">
+        {/* Một biểu tượng cho cả dòng: loa đổi theo mức, bấm tên để tắt / bật tiếng; thanh trượt bên phải chỉnh mức (trước đây loa đầu dòng + loa ở nút tắt tiếng). */}
+        <button type="button" data-player-menu-row aria-label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} className={cn(MENU_ROW, "min-w-0 flex-1")} {...keepFocus} onClick={toggleMute}>
+          <Icon className="size-4 shrink-0 text-fg-2" />
+          <span className="min-w-0 flex-1 truncate">Âm lượng</span>
+        </button>
+        <span className="flex shrink-0 px-2">{slider("flex w-28")}</span>
       </div>
     );
   }
@@ -1272,24 +1282,17 @@ export function useAddBookmark() {
     }
     if (mark.existing) {
       toast.dismiss("bookmark");
-      toast("Đã có dấu trang ở chỗ này", { id: "bookmark-existing", description: formatClock(mark.seconds), position });
+      toast(`Đã có dấu trang ở ${formatClock(mark.seconds)}`, { id: "bookmark-existing", position });
       return;
     }
     feedback("confirm");
-    toast.success("Đã thêm dấu trang", {
+    // MỘT dòng + MỘT nút (DESIGN 6): giờ ghi trong dấu trang (đã làm tròn ở nơi lưu) - cùng con số danh sách dấu trang hiện, không đọc lại đồng hồ phát;
+    // ghi chú thêm sau ở danh sách Dấu trang.
+    toast.success(`Đã thêm dấu trang · ${formatClock(mark.seconds)}`, {
       id: "bookmark",
       position,
       duration: 8000,
-      // Giờ ghi trong dấu trang (đã làm tròn ở nơi lưu) - cùng con số danh sách dấu trang hiện, không đọc lại đồng hồ phát.
-      description: `${track.chapterTitle} · ${formatClock(mark.seconds)}`,
       action: {
-        label: "Ghi chú",
-        onClick: () => {
-          setExpanded(true);
-          window.setTimeout(() => window.dispatchEvent(new CustomEvent(EDIT_BOOKMARK_EVENT, { detail: mark.id })), 50);
-        },
-      },
-      cancel: {
         label: "Hoàn tác",
         onClick: () => {
           // dấu vừa đặt vào hồ sơ của phiên phát: hoàn tác cũng vào đúng hồ sơ ấy
@@ -1548,12 +1551,10 @@ function FurtherElsewhere() {
     asked.current = key;
     const chapter = queue.find((item) => item.id === last.chapterId);
     if (!chapter || !canPlay(chapter)) return;
-    toast("Thiết bị khác đã nghe tới chỗ khác", {
+    toast(`Máy khác đã nghe tới ${chapter.title} · ${formatClock(last.seconds)}`, {
       id: "further-elsewhere",
       duration: 20_000,
-      description: `${chapter.title} · ${formatClock(last.seconds)} (${formatWhen(last.at)})`,
       action: { label: "Nghe tiếp từ đó", onClick: () => jumpTo(last.chapterId, last.seconds) },
-      cancel: { label: "Ở lại đây", onClick: () => undefined },
     });
   }, [active, jumpTo, last, playing, positionStamp, purpose, queue, readClock, track]);
   return null;
@@ -1580,7 +1581,7 @@ function FollowRecord() {
         const chosen = fresh.records?.find((record) => record.active);
         if (!chosen || chosen.id === held) return;
         return switchRecord(bookId, async () => undefined).then(() =>
-          toast(`Đang dùng hồ sơ nghe “${chosen.name}”`, { description: "Vừa chọn trên thiết bị khác." }),
+          toast(`Đang dùng hồ sơ nghe “${chosen.name}” - vừa chọn ở máy khác`),
         );
       })
       .catch(() => undefined);
@@ -1596,7 +1597,6 @@ const MENU_LIST = "p-1 -mx-1.5 px-1.5";
 /** Dòng lựa chọn có dấu ✓ / + đầu dòng (danh sách nhạc, mức nhạc): MỘT cấu trúc, kèm `data-sheet-choice` - bảng trượt điện thoại chuẩn hoá icon 20 px,
  *  khoảng 12 px, nền chọn tràn lề (styles.css); dòng tự chế thiếu thuộc tính này thì cột chữ lệch khỏi các dòng còn lại. */
 const CHOICE_ROW = "flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm transition-colors duration-motion-fast hover:bg-hover";
-const MENU_ROW = "flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-sm text-fg hover:bg-hover disabled:opacity-40 disabled:hover:bg-transparent max-sm:min-h-[48px]";
 
 /** Một việc trong menu "…": chọn là làm và đóng menu. */
 function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: typeof Gauge }) {
@@ -1643,22 +1643,6 @@ function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactN
     >
       <div data-player-more tabIndex={-1} className="flex flex-col gap-0.5 outline-none">{children}</div>
     </MenuShell>
-  );
-}
-
-/** Một dòng có tên cho nút riêng của nền / tính năng (gợi ý đọc, phát trên thiết bị khác): nút đứng bên phải; nút không có thì cả dòng không chiếm chỗ.
- *  Nút con tự lấy dữ liệu và có thể tới muộn lúc menu đang mở: dòng mở / khép bằng chiều cao + độ mờ (.menu-slot trong styles.css), không bật tắt. */
-function MenuSlot({ label, children, icon: Icon = Cast }: { label: string; children: ReactNode; icon?: typeof Cast }) {
-  return (
-    <div className="menu-slot">
-      <div>
-        <div data-player-menu-row data-menu-slot className="flex min-h-10 items-center gap-3 rounded-lg pl-2 text-sm text-fg max-sm:min-h-[48px]">
-          <Icon className="size-4 shrink-0 text-fg-2" />
-          <span className="min-w-0 flex-1 truncate">{label}</span>
-          {children}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -1827,7 +1811,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   return (
     <MotionRegion as="div" className="relative h-full">
       <div ref={container} onScroll={follow.onScroll} {...follow.input} className="reading-surface h-full overflow-y-auto px-[20px] py-8 sm:px-[31.5px]">
-        <div className="mx-auto max-w-[68ch] text-[1.25rem] leading-[1.7]">
+        <div className="measure mx-auto text-[1.25rem] leading-[1.7]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải "chưa có audio". */}
           {!script.timed && current?.state !== "text" && (
             <p className="mb-5 rounded-lg bg-hover px-4 py-3 text-sm text-fg-2">Chương này chưa có audio hoàn chỉnh - đang hiện văn bản, chưa đọc theo được.</p>
@@ -2065,7 +2049,7 @@ export function BookmarkList({
   // Thêm / xoá dấu trang: hàng mở ra hay khép lại tại chỗ (shared/motion.ts useListPresence), không nhảy cả danh sách.
   const rows = useListPresence(sorted, bookmarkKey);
   return (
-    <><MotionPresence open={!rows.length && Boolean(empty)}>{empty}</MotionPresence><ul className="space-y-1 sm:max-w-[68ch]">
+    <><MotionPresence open={!rows.length && Boolean(empty)}>{empty}</MotionPresence><ul className="measure space-y-1">
       {rows.map(({ key, item: mark, state, ref }) => (
         <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
           <BookmarkRow
@@ -2192,7 +2176,7 @@ function useContinueIntoNextPart() {
     if (continued.current === track.bookId) return;
     continued.current = track.bookId;
     // Phần sau chưa đặt tốc độ riêng thì nghe tiếp đúng tốc độ phần trước (soát a26 L3).
-    toast(`Nghe tiếp ${nextLabel(part.title)}`, { description: "Hết phần trước - phần sau nối liền như một cuốn." });
+    toast(`Nghe tiếp ${nextLabel(part.title)}`);
     void playBook(part, undefined, undefined, { rate });
   }, [atEnd, track, next, playBook, rate]);
 }
@@ -2512,16 +2496,6 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       opener.current?.focus?.();
     };
   }, [open]);
-
-  useEffect(() => {
-    const onEdit = (event: Event) => {
-      setPanel("bookmarks");
-      setShowPanel(true);
-      setEditingId(String((event as CustomEvent).detail));
-    };
-    window.addEventListener(EDIT_BOOKMARK_EVENT, onEdit);
-    return () => window.removeEventListener(EDIT_BOOKMARK_EVENT, onEdit);
-  }, []);
 
   // Esc đóng màn này ở MỌI chỗ đang có tiêu điểm (soát UX 29-09: bấm vào chỗ trống, tiêu điểm về trang, Esc không ăn - mà
   // Cài đặt ghi "Dùng được ở mọi màn hình"). Một lần Esc đóng một lớp: menu, popover hay hộp thoại đang mở thì chỉ đóng nó.

@@ -229,6 +229,7 @@ describe("MP3 export", () => {
       kind: "success",
       title: "Đã xuất MP3",
       description: "Truyện X · 12 file · 3 đoạn thiếu nhạc vì chưa tải được bài · ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên",
+      note: "3 đoạn thiếu nhạc vì chưa tải được bài · ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên",
       place: "D:/x/Truyện X",
     });
     const series: ExportJob = { state: "done", id: "b", result: { folder: "D:/x/Bộ", files: 5, parts: [{}, {}], skipped: [{ part: 2 }] } };
@@ -259,6 +260,7 @@ describe("project file export (.abookproj)", () => {
       kind: "success",
       title: "Đã gói dự án",
       description: "Truyện.abookproj · 2 MB · 2 file nguồn chương đã bị dời hay xoá nên không có trong gói",
+      note: "2 file nguồn chương đã bị dời hay xoá nên không có trong gói",
       place: "D:/x/Truyện.abookproj",
     });
     expect(jobView({ state: "cancelled" }, 0, false, PROJECT_FILE_COPY)).toMatchObject({ kind: "info", title: "Đã huỷ xuất" });

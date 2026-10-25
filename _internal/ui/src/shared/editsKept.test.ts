@@ -36,7 +36,7 @@ describe("file sách có bài nhạc nền hỏng (soát a26 L4)", () => {
 
 describe("mở lại file cùng âm thanh nhưng đổi tên (soát a81 lỗi 15)", () => {
   it("nói tên trong file không được lấy và đổi tên ở đâu", () => {
-    expect(otherTitleNote("Tên mới")).toBe("Tên trong file là “Tên mới”, khác tên đang dùng - bạn có thể đổi tên trong Sửa sách.");
+    expect(otherTitleNote("Tên mới")).toBe("Tên trong file là “Tên mới”, khác tên đang dùng.");
   });
   it("không nói gì khi tên như nhau", () => {
     expect(otherTitleNote(undefined)).toBeNull();

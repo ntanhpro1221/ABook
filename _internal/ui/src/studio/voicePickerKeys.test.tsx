@@ -39,7 +39,7 @@ vi.mock("@/shared/ui", async (original) => ({
   Dialog: ({ children }: { children: React.ReactNode }) => <div>{children}</div>, // Dialog thật vẽ vào cổng, không có khi vẽ chuỗi
 }));
 vi.mock("./data", () => ({ useAppInfo: () => ({ data: { remote: false } }) }));
-vi.mock("./decisions", () => ({ refreshAfterDecision: vi.fn(), UNDO_MS: 1, undoAction: vi.fn(), useWhenApplied: () => "" }));
+vi.mock("./decisions", () => ({ refreshAfterDecision: vi.fn(), UNDO_MS: 1, undoAction: vi.fn() }));
 vi.mock("./VoiceTry", () => ({
   useVoiceTry: () => ({
     note: null,

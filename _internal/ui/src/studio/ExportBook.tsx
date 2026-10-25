@@ -5,7 +5,7 @@ import { useMotionState } from "@/shared/motion";
 import { AlertTriangle, BookAudio, CheckCircle2, FileAudio, FolderArchive, FolderDown, FolderOpen, RefreshCw } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { listenOnlyOwner } from "@/shared/peerStudio";
@@ -250,10 +250,11 @@ export function ExportDialog({
           : await packBookFile(book.id, { target, series: wholeSeries, ...(wholeSeries ? { single: layout === "single" } : {}) },
                                () => followPacking("bookfile") as Promise<Packed>, attach);
       const lost = "missingSources" in result ? (result.missingSources?.length ?? 0) : 0;
-      const skipped = result.skipped?.length ? ` · chưa có chương nào nên bỏ qua: ${result.skipped.map((part) => `Phần ${part.part}`).join(", ")}` : "";
+      const skippedNote = result.skipped?.length ? `chưa có chương nào nên bỏ qua: ${result.skipped.map((part) => `Phần ${part.part}`).join(", ")}` : "";
+      const skipped = skippedNote ? ` · ${skippedNote}` : "";
+      const lostNote = lost ? `${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "";
       // `file` chỉ có khi cả bộ (hay một phần) nằm trong MỘT file; cả bộ mỗi phần một file thì có `parts` mà không có `file`.
       const single = "file" in result && typeof result.file === "string";
-      const filePath = single ? String((result as { file?: string }).file) : "";
       const title = result.parts
         ? single
           ? `Đã xuất cả bộ ${result.parts.length} phần trong một file sách`
@@ -269,16 +270,15 @@ export function ExportDialog({
           ? exportedOnComputer(computer, perPart ? "" : single ? fileName(result.file as string) : fileName(result.folder ?? ""), [perPart ? "mỗi phần một file .abook riêng" : "", single ? formatSize(result.size ?? 0) : ""].filter(Boolean).join(" · "))
           : placeText) +
         skipped +
-        (lost ? ` · ${lost} file nguồn chương đã bị dời hay xoá nên không có trong gói` : "");
+        (lostNote ? ` · ${lostNote}` : "");
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (openRef.current) {
         setFinished({ title, detail, folder: result.folder });
       } else {
-        toast.success(title, {
+        // MỘT dòng + nút “Mở thư mục” (chỗ file nằm); thiếu gì (phần bỏ qua, nguồn chương) thì cảnh báo với đúng phần thiếu. Studio từ xa: file nằm ở máy tính.
+        toastDone(info?.remote ? exportedOnComputer(computer, "") : title, [skippedNote, lostNote].filter(Boolean).join(" · ") || undefined, {
           id: pending ?? undefined,
-          // Thông báo chỉ nói tên file khi cả bộ nằm trong một file; đường đầy đủ hiện khi rê chuột.
-          description: filePath ? <span title={filePath}>{detail.replace(filePath, fileName(filePath))}</span> : detail,
           action: info?.remote ? undefined : { label: "Mở thư mục", onClick: () => revealFolder(result.folder) },
         });
       }
@@ -287,8 +287,7 @@ export function ExportDialog({
       const pending = loadingToast.current;
       loadingToast.current = null;
       if (error instanceof PackCancelled || (error instanceof ApiError && error.detail.reason === "cancelled")) {
-        const left = `Chưa có file ${kind === "abookproj" ? "dự án" : "sách"} nào được ghi.`;
-        toast.info("Đã huỷ xuất", { id: pending ?? undefined, description: left, duration: 6000 });
+        toast.info("Đã huỷ xuất", { id: pending ?? undefined, duration: 6000 });
       } else if (kind === "abookproj") {
         const shown = packError((error as Error).message);
         toast.error(SAVING[kind][2], {

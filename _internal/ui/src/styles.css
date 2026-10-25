@@ -453,6 +453,26 @@ select[class~="border-line"] {
 [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-content] + [data-button] {
   margin-left: auto;
 }
+/* Thông báo MỘT dòng (không có dòng mô tả; DESIGN 6): nút hành động nằm CÙNG hàng với chữ, không xuống hàng riêng làm toast cao gấp đôi. Thông báo
+ * dựng mô tả ở dạng phần tử rỗng (export) gắn thêm lớp toast-one-line. ✕ ở góc phải: chừa chỗ để nút không đè lên. */
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"]:is(:not(:has([data-description])), .toast-one-line) {
+  align-items: center;
+  row-gap: 0;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"]:is(:not(:has([data-description])), .toast-one-line) [data-content] {
+  flex-basis: 8rem;
+  padding-right: 0;
+}
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"]:is(:not(:has([data-description])), .toast-one-line):has([data-close-button]) {
+  padding-right: 2.5rem;
+}
+/* Lỗi / cảnh báo giữ MỘT dòng mô tả ngắn: lời máy chủ trả dài thì cắt ở hai dòng (đủ chữ nằm ở chỗ người dùng đang xem), không kéo toast cao tới nửa màn. */
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"]:is([data-type="error"], [data-type="warning"]) [data-description] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
 /* sonner cho MỌI nút margin-left: auto - trên hàng riêng hai nút sẽ chia đôi khoảng trống; nút sau chỉ cách nút trước bằng gap. */
 [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-button] + [data-button] {
   margin-left: 0;
@@ -541,6 +561,12 @@ select[class~="border-line"] {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+/* Độ dài dòng chữ đọc (DESIGN 5.5 / 7: ≤ 68 ký tự). `68ch` là bề rộng chữ số "0" (≈ 0,615 em ở Be Vietnam Pro) nên cho 87-90 ký tự thật mỗi
+   dòng; chữ Việt trung bình ≈ 0,46 em (đo thật: 33 em ra 71) -> 31 em ≈ 66 ký tự, ở mọi cỡ chữ người đọc chọn. Phần tử có đệm ngang thì cộng đệm vào (calc(31em + …)). */
+@utility measure {
+  max-width: 31em;
 }
 
 /* Lề màn (DESIGN 5.5: điện thoại 20, máy tính 40). Viết bằng px: thang khoảng cách của app là 3,5 px nên px-4 / px-10 ra 14 / 35 -
@@ -1060,18 +1086,6 @@ select[class~="border-line"] {
 .chapter-sheet button[data-current] { min-height: 48px; padding: 12px 0; gap: 12px; }
 .chapter-sheet button[data-current] > span:first-child { width: 20px; margin-left: -2.5px; }
 .chapter-sheet button[data-current] > span:first-child svg { width: 20px; height: 20px; }
-[data-menu-slot] button {
-  width: 48px;
-  min-width: 48px;
-}
-/* Nút cuối của dòng có tên (Thiết bị phát): mực icon đứng đúng mép phải chữ của các dòng khác (lề px-2 = 7 px), không sát mép menu.
-   Mực dừng --slot-ink/24 trong ô icon (Cast, MonitorSmartphone 1; Lightbulb 5) - kéo ra thêm chừng ấy. */
-[data-menu-slot] { padding-right: 7px; }
-[data-menu-slot] > :last-child {
-  --slot-ink: 1;
-  margin-right: calc((clamp(1.125rem, 0.75rlh, 1.96875rem) - 48px) / 2 - clamp(1.125rem, 0.75rlh, 1.96875rem) * var(--slot-ink) / 24);
-}
-[data-menu-slot] > :last-child:has(.lucide-lightbulb) { --slot-ink: 5; }
 /* Dòng có tên trong menu "…" (PlayerViews MenuSlot): chưa có nút thì gập hẳn (kể cả khe gap-0.5 của cột), nút tới muộn thì mở ra dần - không
    bật tắt. Lần dựng đầu đã có nút thì đứng yên (transition không chạy lúc dựng). WebView không tween được hàng lưới thì đổi thẳng như trước. */
 .menu-slot {

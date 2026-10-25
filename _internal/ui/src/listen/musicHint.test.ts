@@ -38,8 +38,8 @@ describe("nhắc một lần khi nhạc nền theo cảnh kêu lần đầu", ()
   });
 
   it("lời nhắc nói với người nghe: nhạc đổi theo cảnh và chọn nhạc khác ở đâu", () => {
-    expect(SCENE_MUSIC_HINT.title).toContain("đổi theo cảnh");
-    expect(SCENE_MUSIC_HINT.description).toMatch(/^Bạn .*Nhạc nền/);
+    expect(SCENE_MUSIC_HINT).toContain("đổi theo cảnh");
+    expect(SCENE_MUSIC_HINT).toMatch(/chọn ở nút Nhạc nền/);
   });
 });
 

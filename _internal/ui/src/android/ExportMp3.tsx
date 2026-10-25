@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { FolderDown } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import type { MusicExportState } from "@/desktop/listenExport";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
 import type { ListenBook } from "@/listen/model";
@@ -51,11 +51,8 @@ export async function exportMp3(book: ListenBook, pick = false, chapterIds?: num
       const history = await EbookLibrary.exportHistory({ bookId: book.id }).catch(() => ({ exports: [] }));
       const changed = [...new Set(history.exports.filter((item) => item.kind === "mp3").flatMap((item) => item.changed))];
       if (changed.length) {
-        toast("Bản MP3 bạn đã xuất có chương đã đổi", {
-          description: "Bạn muốn xuất riêng các chương đã đổi hay cả cuốn?", duration: Infinity,
-          action: { label: `Chỉ ${changed.length} chương đổi`, onClick: () => void exportMp3(book, pick, changed, music) },
-          cancel: { label: "Xuất cả cuốn", onClick: () => void exportMp3(book, pick, [], music) },
-        });
+        // Câu hỏi hai lựa chọn: hộp nhỏ (Mp3ChangedDialog), không phải thông báo (một dòng + tối đa một nút).
+        window.dispatchEvent(new CustomEvent<Mp3ChangedDetail>(OPEN_MP3_CHANGED_EVENT, { detail: { book, pick, changed, music } }));
         return;
       }
     }
@@ -72,18 +69,18 @@ export async function exportMp3(book: ListenBook, pick = false, chapterIds?: num
 }
 
 /** Lời của thông báo "xong": nói chỗ lưu (thư mục) trước, rồi mới tới lưu ý còn chương chưa làm xong. */
-export function finishedToast(event: Pick<Mp3ExportEvent, "files" | "chaptersTotal" | "folder" | "uri" | "selection" | "mixed" | "musicMissing">): { title: string; description: string; uri?: string } {
+export function finishedToast(event: Pick<Mp3ExportEvent, "files" | "chaptersTotal" | "folder" | "uri" | "selection" | "musicMissing">): { title: string; note: string; uri?: string } {
   const files = event.files ?? 0;
-  const where = event.folder ? `Lưu ở ${event.folder}.` : "";
   const partial = !event.selection && files < (event.chaptersTotal ?? 0) ? "Các chương chưa làm xong sẽ không có trong bản xuất." : "";
-  const format = event.mixed ? "Các chương có nhạc nền là file .m4a." : "";
   const lost = event.musicMissing ? `${event.musicMissing} đoạn thiếu nhạc vì chưa tải được bài.` : "";
-  return { title: `Đã xuất ${files} chương`, description: [where, format, partial, lost].filter(Boolean).join(" "), uri: event.uri || undefined };
+  // MỘT dòng: có nút "Mở thư mục" thì nút dẫn tới chỗ lưu; thiếu nút thì chỗ lưu nằm ngay trong dòng. `note`: riêng lưu ý (thiếu chương / nhạc) - có thì cảnh báo.
+  const where = !event.uri && event.folder ? ` vào ${event.folder}` : "";
+  return { title: `Đã xuất ${files} chương${where}`, note: [partial, lost].filter(Boolean).join(" "), uri: event.uri || undefined };
 }
 
 async function openFolder(uri: string, folder: string) {
   const opened = await EbookLibrary.openFolder({ uri }).then((reply) => reply.opened, () => false);
-  if (!opened) toast("Máy không mở được thư mục", { description: folder ? `Mở app Tệp rồi vào ${folder}.` : "Mở app Tệp rồi vào thư mục đã chọn." });
+  if (!opened) toast.warning(folder ? `Máy không mở được thư mục - mở app Tệp rồi vào ${folder}` : "Máy không mở được thư mục - mở app Tệp rồi vào thư mục đã chọn");
 }
 
 /** Theo dõi các lượt xuất từ lúc app mở (App.tsx): tiến độ, xong, dừng, lỗi - kể cả lượt đã chạy từ trước lúc giao diện mở lại (exportJobs). */
@@ -98,15 +95,14 @@ export function watchMp3Exports(): () => void {
     if (event.finished) {
       runs.delete(event.bookId);
       const done = finishedToast(event);
-      toast.success(done.title, {
+      toastDone(done.title, done.note || undefined, {
         id,
-        description: done.description,
-        // Chỗ lưu nằm ngay trong thông báo; nút mở app Tệp tới đúng thư mục ấy (máy không mở được thì nói đường đi bằng chữ).
+        // Nút mở app Tệp tới đúng thư mục đã lưu (máy không mở được thì nói đường đi bằng chữ); không có nút thì chỗ lưu nằm trong lưu ý.
         action: done.uri ? { label: "Mở thư mục", onClick: () => void openFolder(done.uri!, event.folder ?? "") } : undefined,
       });
     } else if (event.stopped) {
       runs.delete(event.bookId);
-      toast("Đã dừng xuất", { id, description: `Đã xuất ${event.files ?? 0} chương${current.folder ? ` · ${current.folder}` : ""}`, action: undefined });
+      toast(`Đã dừng xuất - ${event.files ?? 0} chương đã ghi`, { id, action: undefined });
     } else if (event.error) {
       runs.delete(event.bookId);
       toast.error("Không xuất được", { id, description: event.error, action: undefined });
@@ -136,6 +132,16 @@ export async function chooseMp3(book: ListenBook) {
   else void exportMp3(book);
 }
 
+/** Hộp hỏi "chỉ các chương đã đổi hay cả cuốn" khi bản MP3 đã xuất trước đây có chương đã đổi. */
+export const OPEN_MP3_CHANGED_EVENT = "abook-phone-mp3-changed-dialog";
+
+export interface Mp3ChangedDetail {
+  book: ListenBook;
+  pick: boolean;
+  changed: number[];
+  music: boolean;
+}
+
 export interface Mp3DialogDetail {
   book: ListenBook;
   state: MusicExportState;
@@ -155,6 +161,34 @@ export function Mp3MusicForm({ music, onMusic, chapters }: { music: boolean; onM
   );
 }
 
+/** Hộp hỏi xuất riêng các chương đã đổi hay cả cuốn; đóng hộp (Để sau / Back) thì không xuất gì. */
+function Mp3ChangedDialog() {
+  const [open, setOpen] = useState<Mp3ChangedDetail | null>(null);
+  useEffect(() => {
+    const listener = (event: Event) => setOpen((event as CustomEvent<Mp3ChangedDetail>).detail);
+    window.addEventListener(OPEN_MP3_CHANGED_EVENT, listener);
+    return () => window.removeEventListener(OPEN_MP3_CHANGED_EVENT, listener);
+  }, []);
+  const choose = (ids: number[]) => {
+    if (!open) return;
+    setOpen(null);
+    void exportMp3(open.book, open.pick, ids, open.music);
+  };
+  return (
+    <Dialog open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title="Có chương đã đổi" width="max-w-md">
+      <p className="text-sm text-fg-2">Bản MP3 bạn xuất trước đây có {open?.changed.length ?? 0} chương đã đổi từ đó. Xuất riêng các chương ấy, hay cả cuốn?</p>
+      <div className="mt-5 dialog-actions">
+        <Button variant="ghost" onClick={() => choose([])}>
+          Cả cuốn
+        </Button>
+        <Button variant="primary" onClick={() => choose(open?.changed ?? [])}>
+          {`Chỉ ${open?.changed.length ?? 0} chương đổi`}
+        </Button>
+      </div>
+    </Dialog>
+  );
+}
+
 /** Hộp nhỏ của "Xuất MP3" cho cuốn có nhạc nền (App.tsx): ô "Kèm nhạc nền" (mặc định theo công tắc Nhạc nền của cuốn) + "Bắt đầu". */
 export function Mp3MusicDialogHost() {
   const [open, setOpen] = useState<Mp3DialogDetail | null>(null);
@@ -170,17 +204,20 @@ export function Mp3MusicDialogHost() {
     void exportMp3(open.book, false, undefined, music);
   };
   return (
-    <Dialog open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title={`Xuất MP3 “${open?.book.title ?? ""}”`} width="max-w-md">
-      <Mp3MusicForm music={music} onMusic={setMusic} chapters={open?.book.chaptersAvailable ?? 0} />
-      <div className="mt-5 dialog-actions">
-        <Button variant="ghost" onClick={() => setOpen(null)}>
-          Để sau
-        </Button>
-        <Button variant="primary" icon={FolderDown} onClick={start}>
-          Bắt đầu
-        </Button>
-      </div>
-    </Dialog>
+    <>
+      <Dialog open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title={`Xuất MP3 “${open?.book.title ?? ""}”`} width="max-w-md">
+        <Mp3MusicForm music={music} onMusic={setMusic} chapters={open?.book.chaptersAvailable ?? 0} />
+        <div className="mt-5 dialog-actions">
+          <Button variant="ghost" onClick={() => setOpen(null)}>
+            Để sau
+          </Button>
+          <Button variant="primary" icon={FolderDown} onClick={start}>
+            Bắt đầu
+          </Button>
+        </div>
+      </Dialog>
+      <Mp3ChangedDialog />
+    </>
   );
 }
 

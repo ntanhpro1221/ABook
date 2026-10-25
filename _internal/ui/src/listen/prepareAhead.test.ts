@@ -22,9 +22,9 @@ const chapter = (id: number, state: "text" | null = "text"): ListenChapter =>
 
 describe("bản đọc đã làm (máy tính)", () => {
   it("nói bao nhiêu của cuốn này và cả máy", () => {
-    expect(cacheLabel({ book: 12.3 * 1024 ** 2, total: 148 * 1024 ** 2 })).toBe("Đã lưu 12 MB bản đọc của cuốn này (cả máy: 148 MB).");
-    expect(cacheLabel({ book: 0, total: 3 * 1024 ** 3 })).toBe("Cuốn này chưa lưu bản đọc nào (cả máy: 3 GB).");
-    expect(cacheLabel({ book: 0, total: 0 })).toBe("Cuốn này chưa lưu bản đọc nào (cả máy: chưa có).");
+    expect(cacheLabel({ book: 12.3 * 1024 ** 2, total: 148 * 1024 ** 2 })).toBe("Cuốn này 12 MB · cả máy 148 MB");
+    expect(cacheLabel({ book: 0, total: 3 * 1024 ** 3 })).toBe("Cuốn này chưa có · cả máy 3 GB");
+    expect(cacheLabel({ book: 0, total: 0 })).toBe("Chưa lưu bản đọc nào.");
   });
 
   it("hỏi lại trước khi xoá, nói điều sẽ xảy ra", () => {

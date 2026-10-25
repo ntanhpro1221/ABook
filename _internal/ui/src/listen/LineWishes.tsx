@@ -2,7 +2,7 @@ import { withViewTransition } from "@/shared/motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Clock, MessageSquareQuote, RefreshCw, Type, UserRound, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { useBackLayer } from "@/shared/backStack";
 import { cn } from "@/shared/cn";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
@@ -169,13 +169,12 @@ function wordsOf(text: string): string[] {
   return out;
 }
 
-function WordView({ bookId, text, names, need, promise, later, onWithdraw, onBack, initial = null }: {
+function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initial = null }: {
   bookId: string;
   text: string;
   names: NameWish[];
   need: string;
   /** Lời hứa sau khi ghi (decisions.waitingStudio) và vế "thu lại khi nào" (decisions.retakeWhen) - cùng một ý ở hộp và ở thông báo. */
-  promise: string;
   later: string;
   /** Bỏ cách đọc đang chờ của một từ. */
   onWithdraw: (name: NameWish) => void;
@@ -247,7 +246,6 @@ function WordView({ bookId, text, names, need, promise, later, onWithdraw, onBac
             item={{ surface: word, spoken: "", byListener: false, lines: 0, requested: pending?.spokenForm ?? null, example: null }}
             fresh={!pending}
             waiting={need}
-            waitingNote={promise}
             aloud={aloud}
             reach={reach?.surface === word ? reach : undefined}
             onDone={() => setWord(null)}
@@ -346,7 +344,6 @@ export function LineWishDialog({
       const was = Object.values(elsewhere ?? {});
       if (was.length) warnElsewhere(1, was[0] ? (people.here.concat(people.others).find((item) => item.value === was[0])?.label ?? was[0]) : "", action.onClick);
       toast.success(`Đã ghi: câu này của ${person.label}`, {
-        description: promise,
         action,
         duration: UNDO_MS,
       });
@@ -369,7 +366,6 @@ export function LineWishDialog({
         warnElsewhere(1, elsewhere.delivery ? deliveryWords(elsewhere.delivery) : "", theirs ? takeTheirs : undefined);
       }
       toast.success("Đã ghi cách đọc câu này", {
-        description: promise,
         action: answer.requestedAt ? undoLineFix(client, book.id, ref, answer) : undefined,
         duration: UNDO_MS,
       });
@@ -395,7 +391,6 @@ export function LineWishDialog({
         );
       }
       toast.success("Đã ghi: thu lại câu này", {
-        description: promise,
         action: {
           label: "Hoàn tác",
           onClick: () =>
@@ -403,7 +398,7 @@ export function LineWishDialog({
               .then((answer) => {
                 done();
                 // Câu đã gửi sang máy giữ sách rồi: chỉ nhờ được máy ấy rút lại - nói đúng điều đó, đừng làm như đã xong.
-                if (answer?.sent) toast.success(...undoToast(false, true));
+                if (answer?.sent) toastDone(...undoToast(false, true));
               })
               .catch((error: Error) => toast.error("Không hoàn tác được", { description: error.message })),
         },
@@ -552,7 +547,6 @@ export function LineWishDialog({
               text={line.text}
               names={wishes?.pronunciations ?? []}
               need={need}
-              promise={promise}
               later={retakeWhen(holder)}
               onWithdraw={withdrawName}
               onBack={() => {

@@ -1,4 +1,4 @@
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { moveBookStorage } from "@/shared/bookStorage";
 import { api } from "@/studio/api";
 
@@ -16,47 +16,30 @@ export function restoredMessage(title: string, result: Partial<Pick<Restored, "t
   return result.renamed && result.title ? `Đã khôi phục “${title}” vào thư mục “${result.title}”` : `Đã khôi phục “${title}”`;
 }
 
-/** Lời dưới "Đã khôi phục": vì sao cuốn về dưới tên khác; cuốn từng xếp hàng chờ thì nói rõ là hàng chờ không tự xếp lại. */
+/** Lưu ý của "Đã khôi phục" (khôi phục thiếu gì đó thì thành cảnh báo): thư viện có hai cuốn trùng tên (tên mới đã nằm trong chữ chính); chỗ nghe / dấu trang
+ *  chưa mang theo; cuốn từng xếp hàng chờ thì hàng chờ không tự xếp lại. */
 export function restoredNote(result: Partial<Pick<Restored, "renamed" | "wasQueued" | "dataLeft">>): string | undefined {
   const notes = [
-    result.renamed ? "Chỗ cũ đã có một cuốn cùng tên, nên thư viện sẽ hiện hai cuốn trùng tên - bạn có thể đổi tên một cuốn cho dễ phân biệt." : "",
-    result.dataLeft ? "Chưa mang theo được chỗ đang nghe và dấu trang của cuốn này." : "",
-    result.wasQueued ? "Cuốn này đã bị bỏ khỏi hàng chờ làm sách - bấm Bắt đầu nếu muốn xếp lại." : "",
+    result.renamed ? "Thư viện có hai cuốn trùng tên." : "",
+    result.dataLeft ? "Chưa mang theo chỗ nghe và dấu trang." : "",
+    result.wasQueued ? "Chưa xếp lại hàng chờ làm sách." : "",
   ].filter(Boolean);
   return notes.length ? notes.join(" ") : undefined;
-}
-
-/** Cuốn đi đâu sau hạn Hoàn tác: máy tính - Thùng rác của Windows (khôi phục từ đó được); điện thoại không có Thùng rác - xoá hẳn. */
-export type RemovedTo = "bin" | "gone";
-
-/** Lời dưới toast xoá: `note` là điều riêng của từng nơi (file gốc không bị đụng...), phần sau hạn thì theo `to`. */
-export function removedDescription(note: string, hasUndo: boolean, to: RemovedTo = "bin"): string {
-  const after =
-    to === "gone"
-      ? hasUndo
-        ? `Hoàn tác được trong ${UNDO_SECONDS} giây; sau đó cuốn bị xoá hẳn khỏi điện thoại.`
-        : "Cuốn đã bị xoá hẳn khỏi điện thoại."
-      : hasUndo
-        ? `Hoàn tác được trong ${UNDO_SECONDS} giây; sau đó cuốn nằm trong Thùng rác của Windows, khôi phục từ đó được.`
-        : "Cuốn đã vào Thùng rác của Windows, khôi phục từ đó được.";
-  return [note, after].filter(Boolean).join(" ");
 }
 
 /**
  * Báo đã xoá một sách / dự án (`message`: "Đã xoá dự án “X”"). Nơi xoá trả `undo` (mã hoàn tác) thì toast có nút "Hoàn tác" trong
  * `UNDO_TOAST_MS`; các lần xoá dùng chung một toast, mỗi mã giữ hạn riêng. Bấm hoàn tác mọi mã còn hạn rồi tải lại danh sách.
  * Không có mã (máy tính: thư mục khác ổ với thư
- * viện, vào Thùng rác ngay; điện thoại: xoá thẳng) thì chỉ báo. `restore` thay đường hoàn tác qua máy chủ (điện thoại gọi plugin);
- * `to` nói cuốn đi đâu sau hạn.
+ * viện, vào Thùng rác ngay; điện thoại: xoá thẳng) thì chỉ báo. `restore` thay đường hoàn tác qua máy chủ (điện thoại gọi plugin).
+ * Thông báo là MỘT dòng + nút Hoàn tác: cuốn đi đâu sau hạn đã nói ở hộp xác nhận trước khi xoá.
  */
 type RemovedOptions = {
   message: string;
   title: string;
   undo?: string;
-  note: string;
   onRestored: () => void;
   restore?: (token: string) => Promise<unknown>;
-  to?: RemovedTo;
 };
 
 const pending = new Map<string, RemovedOptions & { expires: number }>();
@@ -84,7 +67,6 @@ function showPending(): void {
   timer = setTimeout(showPending, firstExpiry - now);
   toast.success(items.length === 1 ? last.message : `Đã bỏ ${items.length} cuốn`, {
     id,
-    description: items.length === 1 ? removedDescription(last.note, true, last.to) : `Bạn có thể hoàn tác mỗi cuốn trong ${UNDO_SECONDS} giây kể từ lúc bỏ.`,
     duration: firstExpiry - now,
     // Gạt / đóng toast = không hoàn tác những cuốn ấy: lần bỏ sau không gộp chúng vào "Đã bỏ N cuốn" và Hoàn tác không trả chúng về.
     onDismiss: () => {
@@ -110,7 +92,7 @@ function showPending(): void {
               pending.delete(token);
               const restored = (result ?? {}) as Partial<Restored>;
               if (restored.oldId && restored.newId) moveBookStorage(restored.oldId, restored.newId);
-              toast.success(restoredMessage(item.title, restored), { description: restoredNote(restored) });
+              toastDone(restoredMessage(item.title, restored), restoredNote(restored));
               item.onRestored();
             } catch (error) {
               toast.error("Chưa hoàn tác được", { description: (error as Error).message });
@@ -128,13 +110,11 @@ function showPending(): void {
 }
 
 export function toastRemoved(options: RemovedOptions): void {
-  const { message, undo, note, to } = options;
+  const { message, undo } = options;
   if (undo) {
     pending.set(undo, { ...options, expires: Date.now() + UNDO_TOAST_MS });
     showPending();
     return;
   }
-  toast.success(message, {
-    description: removedDescription(note, Boolean(undo), to),
-  });
+  toast.success(message);
 }

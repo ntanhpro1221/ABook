@@ -13,11 +13,11 @@ import { formatNumber, shownReading } from "@/shared/format";
 import { Button } from "@/shared/ui";
 import { api, suggestionOf, urls } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
-import { neverText, reachSaved, reachSummary, useReach, type Reach } from "./readingReach";
+import { neverText, reachSummary, useReach, type Reach } from "./readingReach";
 import { SharedReadingsOffer, useSharedEntry } from "./sharedReadings";
 import { scrollMotion } from "@/shared/motion";
 import { useTryReading } from "./TryReading";
-import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied, WAITING_STUDIO } from "./decisions";
+import { refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
 import { warnElsewhere } from "./elsewhere";
 
 // Tab Nhân vật, mục "Cách đọc tên" (webui/name_readings.py): mọi tên riêng máy đọc thế nào - kể cả tên máy chắc và cách
@@ -360,7 +360,7 @@ export function NameInLine({ bookId, item }: { bookId: string; item: NameReading
 /** `waiting`: cuốn không có xưởng (file .abook) - chỉ ghi ý muốn chờ Studio; giá trị là lý do chưa nghe thử / chưa dùng chung được
  *  (nút và ô vẫn hiện, mờ đi kèm lý do). */
 /** `aloud`: trang nghe, cuốn chưa có xưởng (`waiting`) - "Nghe thử" bằng giọng đọc của máy (listen/readings.ts). */
-export function EditReading({ bookId, item, onDone, fresh, waiting, waitingNote = WAITING_STUDIO, aloud, reach }: {
+export function EditReading({ bookId, item, onDone, fresh, waiting, aloud, reach }: {
   bookId: string;
   item: NameReading;
   onDone: () => void;
@@ -368,14 +368,11 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, waitingNote 
   /** Chữ vừa gõ để thêm: nó chạm tới những câu nào (đã đo lúc gõ) - thông báo sau khi lưu nói đúng số ấy. */
   reach?: Reach;
   waiting?: string;
-  /** Lời hứa sau khi ghi ở cuốn chờ Studio (decisions.waitingStudio). */
-  waitingNote?: string;
   aloud?: ReadAloudTry;
 }) {
   const editBox = useRef<HTMLDivElement>(null);
   useBackLayer(true, onDone, editBox);
   const client = useQueryClient();
-  const when = useWhenApplied(bookId);
   // Ô sửa hiện như dòng bên cạnh (“Rên-ta-rô”, chữ đầu mỗi từ viết hoa - soát UX 30-09); lưu mà chỉ khác hoa thường thì
   // gửi đúng cách đang lưu (`asStored`), không thành một thay đổi bắt thu lại các câu.
   const [value, setValue] = useState(shownReading(item.requested ?? item.spoken ?? ""));
@@ -412,13 +409,11 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, waitingNote 
         const back = undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, keep: false }], `“${item.surface}” trở lại cách đọc máy kia đã ghi.`);
         warnElsewhere(1, elsewhere.spokenForm ? `“${elsewhere.spokenForm}”` : "", back.onClick);
       }
-      const shared = everywhere ? " Đã thêm vào cách đọc chung - sách mới có tên này tự dùng." : "";
       onDone();
       const keep = spokenForm === item.spoken;
       if (waiting) {
         // Đúng chữ người nghe gõ - không viết hoa từng chữ như dòng cách đọc tên ("Mở Hoặc Đóng" - soát UX a24).
       toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
-          description: waitingNote,
           action: undoAction(client, bookId, "pronunciation", [{ surface: item.surface, requestedAt, keep: false }], `Đã bỏ cách đọc vừa ghi cho “${item.surface}”.`),
           duration: UNDO_MS,
         });
@@ -441,18 +436,13 @@ export function EditReading({ bookId, item, onDone, fresh, waiting, waitingNote 
         duration: UNDO_MS,
       };
       if (keep) {
-        toast.success(`Giữ cách đọc “${shownReading(spokenForm)}”`, { description: `Không phải thu lại câu nào.${shared}`, ...undo });
+        toast.success(`Giữ cách đọc “${shownReading(spokenForm)}”`, { ...undo });
         return;
       }
       // Đúng chữ người nghe gõ - không viết hoa từng chữ như dòng cách đọc tên ("Mở Hoặc Đóng" - soát UX a24).
       toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
         // Tên chưa có câu nào trong phần này (vừa thêm): không có gì để thu lại - nói đúng điều ấy (soát UX 29-09).
         // Câu mẫu là câu ĐÃ THU nếu có (name_readings.py) - mẫu chưa thu nghĩa là chưa thu câu nào có tên này (soát UX a23).
-        description: reach
-          ? `${reachSaved(reach, when)}${shared}`
-          : item.lines
-          ? `${item.example?.hasAudio ? "Các câu đã thu có tên này sẽ được thu lại." : "Các câu có tên này chưa thu nên không phải thu lại."} ${when}${shared}`
-          : `Phần này chưa có câu nào có tên này - cách đọc sẽ được dùng khi tên xuất hiện.${shared}`,
         ...undo,
       });
     },

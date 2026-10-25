@@ -13,7 +13,7 @@ import { Button, Dialog, Progress, Segmented, Skeleton, Vu, InlineError } from "
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { api, urls } from "./api";
 import { useAppInfo } from "./data";
-import { refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
+import { refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
 import { voiceWas, warnElsewhere } from "./elsewhere";
 import { modulePercent } from "./musicLocal";
 import { groupByEngine, moduleNote, plainGroupLabels, sharedText, takenText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
@@ -179,7 +179,6 @@ export function VoicePicker({
     clip.stop();
     onClose();
   };
-  const when = useWhenApplied(bookId);
   // Tên như tiêu đề hộp ("Oliver"), không phải khoá sổ in hoa ("OLIVER") - soát UX 30-09.
   const name = person?.displayName || data?.character.label || "";
   const narrator = data?.character.value === "NARRATOR";
@@ -201,7 +200,6 @@ export function VoicePicker({
       // Dòng nhân vật hiện "Chờ áp dụng" ngay (store.pending_voices), không đợi lần làm mới sau 60 giây.
       refreshAfterDecision(client, bookId);
       const character = data!.character;
-      const who = narrator ? "người kể" : "người ấy";
       const undo = undoAction(
         client,
         bookId,
@@ -214,7 +212,6 @@ export function VoicePicker({
       if (elsewhere) warnElsewhere(1, voiceWas(elsewhere), undo.onClick);
       // Chọn nhầm giọng trong danh sách dài: "Hoàn tác" như thẻ giọng trong hộp việc (studio/decisions.ts).
       toast.success(`Đã ghi: ${name} đọc bằng giọng ${voice.name}${withGender ? ` và là ${GENDER_WORD[voice.gender]}` : ""}`, {
-        description: `${data!.rerecord?.lines ? `Thu lại ${formatNumber(data!.rerecord.lines)} câu đã thu của ${who} bằng giọng mới.` : `Chưa câu nào của ${who} được thu nên không phải thu lại gì.`} ${when}`,
         action: undo,
         duration: UNDO_MS,
       });
@@ -231,9 +228,7 @@ export function VoicePicker({
       }),
     onSuccess: (_answer, pending) => {
       refreshAfterDecision(client, bookId);
-      toast.success(pending.name ? `Đã bỏ lựa chọn ${pending.name}` : "Đã bỏ lựa chọn giọng", {
-        description: `Giọng của ${name} trở lại như trước khi chọn.`,
-      });
+      toast.success(pending.name ? `Đã bỏ lựa chọn ${pending.name}` : "Đã bỏ lựa chọn giọng");
       close();
     },
     onError: (failure: Error) => toast.error("Chưa bỏ được lựa chọn", { description: failure.message }),

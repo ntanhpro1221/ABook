@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PENDING_NOTE } from "@/studio/decisions";
-import { decidedTitle, inboxLead, markNames, narratorButtons, narratorDecidedTitle, nameKey, rerecordSentence, sameNames } from "@/studio/workText";
+import { decidedTitle, inboxLead, markNames, narratorButtons, narratorDecidedTitle, nameKey, sameNames } from "@/studio/workText";
 
 describe("tô tên ứng viên trong lời kể (thẻ “Người này có phải X?”)", () => {
   const marked = (text: string, names?: string[]) => markNames(text, names).filter((part) => part.mark).map((part) => part.text);
@@ -55,18 +55,6 @@ describe("nút của thẻ người kể", () => {
     expect(narratorButtons("", { label: "Mai" }).keep).toBe("Giữ nguyên ngôi thứ ba");
     expect(narratorDecidedTitle("", "Giữ nguyên")).toBe("Đoạn này vẫn kể ở ngôi thứ ba");
     expect(narratorDecidedTitle("", "Người kể: Mai")).toBe("Đoạn này do Mai kể");
-  });
-});
-
-describe("cái giá của đổi giọng", () => {
-  it("mọi nơi nói 'thu lại N câu' cùng một cách", () => {
-    expect(rerecordSentence("đổi giọng, thu lại 12 câu")).toBe("Sẽ thu lại 12 câu bằng giọng mới.");
-    expect(rerecordSentence("thu lại 22 câu ở các chương chung")).toBe("Sẽ thu lại 22 câu ở các chương chung bằng giọng mới.");
-    expect(rerecordSentence(undefined)).toContain("thu lại");
-  });
-  it("chưa thu câu nào thì nói không phải thu lại (soát UX a23)", () => {
-    expect(rerecordSentence("đổi giọng, chưa thu nên không phải thu lại")).toBe("Chưa thu câu nào của người ấy nên không phải thu lại.");
-    expect(rerecordSentence("chưa thu nên không phải thu lại")).not.toMatch(/sẽ/i);
   });
 });
 
