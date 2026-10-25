@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold } from "@/shared/Collapse";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -154,15 +155,18 @@ export function OtherComputers() {
   const unpaired = devices.filter((device) => !pairedAddresses.has(device.address));
   return (
     <MotionRegion as="div" className="motion-reveal space-y-4">
-      {data.broken && (
+      <MotionPresence open={Boolean(data.broken)}>
         <p className="text-sm text-warning" role="status">
           {data.broken}
         </p>
-      )}
-      {data.computers.length > 0 && (
-        <ul className="divide-y divide-line">
-          {data.computers.map((computer) => (
-            <li key={computer.id}>
+      </MotionPresence>
+      {/* Ghép / thôi ghép: hàng mở / khép tại chỗ như PhoneSync; đổi trong hàng (đang chờ, lỗi) thì hàng tự mờ qua. data-motion-live: cả
+          khối không mờ lại theo từng hàng. */}
+      <MotionPresence open={data.computers.length > 0}>
+        <div data-motion-live="">
+        <AnimatedRows className="divide-y divide-line" items={data.computers} keyOf={(computer) => computer.id}>
+          {(computer) => (
+            <MotionRegion>
               <Fold flat storageKey={`other-computers.${computer.id}`} title={computer.name} heading="h3" summary={computer.waking ? "Đang chờ" : computer.error ? "Cần kiểm tra" : "Đã ghép"} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
               <Laptop className="size-5 shrink-0 text-fg-2" />
               <div className="min-w-0 flex-1">
@@ -231,10 +235,11 @@ export function OtherComputers() {
               </Button>
               </div>
               </Fold>
-            </li>
-          ))}
-        </ul>
-      )}
+            </MotionRegion>
+          )}
+        </AnimatedRows>
+        </div>
+      </MotionPresence>
       <Fold flat storageKey="other-computers.pair" title="Ghép máy" summary="Nghe sách của máy tính khác" bodyClassName="space-y-3 pb-3">
       <div className="space-y-2">
         <Button variant="secondary" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>

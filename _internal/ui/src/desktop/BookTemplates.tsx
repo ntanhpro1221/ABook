@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { useBackLayer } from "@/shared/backStack";
 import { useRef, useState } from "react";
 import { toast } from "@/shared/toast";
@@ -61,9 +62,11 @@ export function BookTemplates() {
       {!templates.length ? (
         <p className="mt-2 text-[0.8125rem] text-fg-3">Chưa có mẫu nào.</p>
       ) : (
-        <ul className="mt-2 divide-y divide-line rounded-lg border border-line">
-          {templates.map((template) => (
-            <li key={template.name} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2">
+        // Xoá / Hoàn tác một mẫu: hàng khép / mở tại chỗ; đổi tên <-> hàng thường thì hàng tự mờ qua. data-motion-live: cả vùng không mờ theo từng hàng.
+        <div data-motion-live="">
+        <AnimatedRows className="mt-2 divide-y divide-line rounded-lg border border-line" items={templates} keyOf={(template) => template.name}>
+          {(template) => (
+            <MotionRegion motionKey={renaming === template.name} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2">
               {renaming === template.name ? (
                 <form
                   ref={renameBox}
@@ -94,7 +97,7 @@ export function BookTemplates() {
                   <Button size="sm" variant="ghost" onClick={() => setRenaming(null)}>
                     Huỷ
                   </Button>
-                  {problem && <p role="alert" className="basis-full text-[0.8125rem] text-danger">{problem}</p>}
+                  <MotionPresence className="basis-full" open={Boolean(problem)}><p role="alert" className="text-[0.8125rem] text-danger">{problem}</p></MotionPresence>
                 </form>
               ) : (
                 <>
@@ -120,9 +123,10 @@ export function BookTemplates() {
                   </Button>
                 </>
               )}
-            </li>
-          ))}
-        </ul>
+            </MotionRegion>
+          )}
+        </AnimatedRows>
+        </div>
       )}
     </MotionRegion>
   );
