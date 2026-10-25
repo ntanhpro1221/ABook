@@ -125,6 +125,15 @@ it("trình phát: đúng 5 nút chính + 4 nút phụ có nhãn; việc khác n�
   expect([...screen.querySelectorAll("button")].filter((button) => button.textContent === "Đọc theo")).toHaveLength(1);
 });
 
+it("trình phát điện thoại: lớp phủ inset-0 tự chừa biên an toàn - nút đầu không nằm dưới thanh trạng thái (soát máy ảo C1)", async () => {
+  state.expanded = true;
+  await render(<NowPlaying mobile />);
+  const screen = host.querySelector<HTMLElement>("section[role=main]")!;
+  for (const edge of ["pt-[env(safe-area-inset-top)]", "pl-[env(safe-area-inset-left)]", "pr-[env(safe-area-inset-right)]", "pb-[env(safe-area-inset-bottom)]"]) {
+    expect(screen.classList).toContain(edge);
+  }
+});
+
 const script = { timed: true, segments: Array.from({ length: 30 }, (_, i) => ({ text: `Câu số ${i + 1}.`, start: i * 3, speaker: "", kind: "narration" })) } as unknown as Script;
 const reader = () => render(<Routes><Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} /></Routes>, "/book/a/read/1");
 

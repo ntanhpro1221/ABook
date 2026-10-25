@@ -160,7 +160,9 @@ function MobileShell({ children }: { children: ReactNode }) {
   usePageFocus(main, pageFocusKey(pathname));
   useLaunchReady(main);
   return (
-    <div className="relative flex h-full flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+    // Biên an toàn là padding của khung này: lớp phủ absolute inset-0 (màn "Đang nghe") vẫn phủ cả phần padding, nên nó tự chừa biên
+    // (PlayerViews SAFE_FRAME). Trái / phải: tai thỏ khi xoay ngang.
+    <div className="relative flex h-full flex-col" style={{ paddingTop: "env(safe-area-inset-top)", paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
       {/* Màn "Đang nghe" phủ kín: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}
       <main ref={main} inert={covered && !HIDES_PAGE} data-covered={covered && HIDES_PAGE ? "" : undefined} className="page-motion min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
       <div className="contents" inert={covered}>
@@ -386,8 +388,9 @@ export function AndroidApp() {
         // Vuốt ngang như snackbar; giữ cả hướng dọc khi thông báo ở đầu màn.
         swipeDirections={["left", "right", "top", "bottom"]}
         // Màn đọc: thông báo nằm dưới thanh đầu (ReaderScreen đặt --toast-top) - không che nút "Nghe từ đây" (soát a70).
-        mobileOffset={{ top: "var(--toast-top, 16px)", right: 16, left: 16, bottom: 16 }}
-        offset={{ top: "var(--toast-top, 24px)" }}
+        // Mặc định cộng biên an toàn: WebView vẽ tràn viền, 16px từ mép trên là nằm dưới thanh trạng thái.
+        mobileOffset={{ top: "var(--toast-top, calc(env(safe-area-inset-top) + 16px))", right: 16, left: 16, bottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+        offset={{ top: "var(--toast-top, calc(env(safe-area-inset-top) + 24px))" }}
         // Nhãn trọn của vùng thông báo: mặc định sonner nối thêm phím tắt "alt+T" - vô nghĩa trên điện thoại (TalkBack đọc ra, soát a66).
         customAriaLabel="Thông báo"
         // Radix tắt chuột của mọi thứ ngoài hộp thoại đang mở: không có dòng này nút trong thông báo không bấm được.
