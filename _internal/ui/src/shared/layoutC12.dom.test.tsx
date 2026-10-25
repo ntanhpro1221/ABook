@@ -22,13 +22,17 @@ it("ô chọn trường chiếm cột; bộ giờ/phút dùng chiều rộng c�
   expect(time.dataset.selectLayout).toBe("inline"); expect(time.classList.contains("w-auto")).toBe(true);
 });
 
-it("phần trăm tải gọn đứng đầu cột, hàng thiết bị vẫn có ô số canh phải", async () => {
+// Soát ảnh 4x 26-10: thẻ đang tải hiện "Tải · 42%" trên bìa VÀ "42%" dưới tên - một thông tin hai chỗ. Dưới bìa chỉ còn nút Huỷ thẳng mép như nút Tải.
+it("dưới bìa đang tải chỉ có nút Huỷ (tiến độ ở bìa), hàng thiết bị giữ ô số canh phải", async () => {
   const book = { id: "a", title: "Sách A", chaptersAvailable: 5, chaptersTotal: 5, duration: 300 };
   const progress = { bookId: "a", total: 100, done: 42 };
-  await act(() => root.render(<><RemoteRow compact book={book as never} progress={progress as never} onDownload={() => {}} /><RemoteRow book={book as never} progress={progress as never} onDownload={() => {}} /></>));
-  const [compact, row] = host.querySelectorAll("[data-remote-progress]");
-  expect(compact.textContent?.trim()).toBe("42%"); expect(compact.classList.contains("text-left")).toBe(true);
-  expect(compact.classList.contains("w-10")).toBe(false); expect(row.classList.contains("text-right")).toBe(true);
+  await act(() => root.render(<><div data-case="compact"><RemoteRow compact book={book as never} progress={progress as never} onDownload={() => {}} /></div><div data-case="row"><RemoteRow book={book as never} progress={progress as never} onDownload={() => {}} /></div></>));
+  const compact = host.querySelector('[data-case="compact"]')!, row = host.querySelector('[data-case="row"]')!;
+  expect(compact.textContent).not.toContain("%");
+  const cancel = compact.querySelector<HTMLButtonElement>('button[aria-label="Huỷ tải Sách A"]')!;
+  expect(cancel.textContent?.trim()).toBe("Huỷ"); expect(cancel.classList.contains("edge-start-action")).toBe(true);
+  expect(row.querySelector("[data-remote-progress]")?.textContent?.trim()).toBe("42%");
+  expect(row.querySelector("[data-remote-progress]")?.classList.contains("text-right")).toBe(true);
 });
 
 it("ảnh chính và nền mờ đều giữ kích thước trước khi tải", async () => {

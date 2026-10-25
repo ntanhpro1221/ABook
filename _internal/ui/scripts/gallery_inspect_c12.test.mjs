@@ -14,13 +14,13 @@ it('cùng chân chữ vẫn bắt tiêu đề sai y hoặc cỡ quá 1 px', () =
 describe.skipIf(!browserAvailable)('c12: kiểm hình học trường nhập và menu trên Edge', () => {
   let results;
   beforeAll(async () => { results = await layoutFixtures({ fixture:'layout-c12.html' }); },60000);
-  it('bắt đúng select nửa cột, nút viền, ảnh thiếu cỡ, phần trăm thụt và menu lệch', () => {
+  it('bắt đúng select nửa cột, nút viền, ảnh thiếu cỡ, số lặp trong thẻ và menu lệch', () => {
     for(const r of results) {
       const ids = metric => r.findings.filter(f=>f.metric===metric).map(f=>f.selector);
       expect(ids('select-column-width')).toEqual(['#select-bad']);
       expect(ids('outlined-button')).toEqual(['#outline-bad']);
       expect(ids('image-dimensions')).toEqual(['#image-bad']);
-      expect(ids('remote-status-inset')).toEqual(['#remote-bad']);
+      expect(ids('repeated-value')).toEqual(['#tile-bad']);
       expect(ids('submenu-gap')).toEqual(['#submenu-bad']);
       expect(ids('submenu-align')).toEqual(['#submenu-bad']);
       expect(ids('toast-lines')).toEqual([]);
