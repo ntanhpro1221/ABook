@@ -1,3 +1,4 @@
+import { MotionRegion } from "./MotionRegion";
 import { useEffect, useState } from "react";
 import { loadThirdParty, parseThirdParty, type ThirdPartySection } from "./thirdParty";
 
@@ -49,7 +50,10 @@ export function ThirdPartyList() {
       alive = false;
     };
   }, []);
-  if (sections === null) return <p className="py-4 text-sm text-fg-2">Đang mở danh sách…</p>;
-  if (!sections.length) return <p className="py-4 text-sm text-fg-2">Chưa mở được danh sách.</p>;
-  return <ThirdPartySections sections={sections} />;
+  // "Đang mở danh sách…" -> danh sách / lỗi: mờ qua theo pha trong hộp đang mở, không đổi cứng.
+  return (
+    <MotionRegion motionKey={sections === null ? "loading" : sections.length ? "list" : "error"}>
+      {sections === null ? <p className="py-4 text-sm text-fg-2">Đang mở danh sách…</p> : !sections.length ? <p className="py-4 text-sm text-fg-2">Chưa mở được danh sách.</p> : <ThirdPartySections sections={sections} />}
+    </MotionRegion>
+  );
 }

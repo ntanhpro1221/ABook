@@ -20,17 +20,20 @@ export function UnpairDialog({
 }) {
   return (
     <Dialog open={copy !== null} onOpenChange={(open) => !open && !busy && onCancel()} title={copy?.title ?? ""}>
+      {/* Máy kia bật / tắt lúc hộp đang mở (`reachable` đổi copy): chữ và nút mờ qua tại chỗ, không đổi cứng. */}
       <div className="space-y-2 text-sm leading-snug text-fg-2">
-        {copy?.lines.map((line) => (
-          <p key={line}>{line}</p>
-        ))}
+        <MotionRegion className="space-y-2">
+          {copy?.lines.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </MotionRegion>
         <MotionPresence open={Boolean(error)}>{error && (
           <MotionRegion as="p" role="alert" className="text-danger">
             {error}
           </MotionRegion>
         )}</MotionPresence>
       </div>
-      <div className="mt-5 flex flex-col gap-2">
+      <MotionRegion className="mt-5 flex flex-col gap-2">
         {copy?.send && (
           <Button variant={copy.sendPrimary ? "primary" : "secondary"} loading={busy === "send"} disabled={busy !== null} onClick={() => onChoose("send")}>
             {copy.send}
@@ -43,7 +46,7 @@ export function UnpairDialog({
         <Button variant={copy?.send && !copy.sendPrimary ? "primary" : "ghost"} disabled={busy !== null} onClick={onCancel}>
           {copy?.cancel}
         </Button>
-      </div>
+      </MotionRegion>
     </Dialog>
   );
 }
