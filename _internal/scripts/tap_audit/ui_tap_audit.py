@@ -259,6 +259,8 @@ async def scenario(c,base,s,inject):
                 if inject: await c.evaluate("__tapLayer.style.pointerEvents='none';true")
             else:
                 check(mode+' layer remains open',remains)
+                # Mục con mở tại chỗ trong menu (set140): chọn xong thì mục con khép, menu cha ở lại - mở lại mục con cho lượt chạm.
+                for step in s.get('inlineReopen',[]): await c.step(step)
         await c.close_layers()
         check('layer closed',await c.evaluate('!__tapLayer.isConnected || __tapLayer.dataset.state==="closed" || !tapAudit.visible(__tapLayer)'))
         body=await c.evaluate('getComputedStyle(document.body).pointerEvents')
