@@ -17,7 +17,7 @@ import {
   Mic2,
   MoreHorizontal,
   Pause,
-  Pencil,
+  TextCursorInput,
   Play,
   SlidersHorizontal,
   RefreshCw,
@@ -533,7 +533,6 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
         message: `Đã xoá dự án “${book.title}”`,
         title: book.title,
         undo: result.undo,
-        note: "File truyện gốc không bị đụng.",
         onRestored: () => {
           void client.invalidateQueries({ queryKey: ["library"] });
           void client.invalidateQueries({ queryKey: ["listen"] });
@@ -623,7 +622,7 @@ export function ProjectMenu({ book, rename = true, className, children }: { book
                 <DropdownMenu.Separator className="my-1 h-px bg-line" />
               </>
             )}
-            {rename && <MenuItem icon={Pencil} onSelect={() => setDialog("rename")}>Đổi tên…</MenuItem>}
+            {rename && <MenuItem icon={TextCursorInput} onSelect={() => setDialog("rename")}>Đổi tên…</MenuItem>}
             {/* Truyện dài làm nhiều đợt: phần mới giữ giọng, cách đọc tên, ghim của phần này (continuation.py). Dự án chưa
                 phân tích câu nào thì không có gì để mang theo - mờ kèm lý do thay vì dẫn tới một phần mới trống (soát UX 29-09). */}
             {/* Dự án hỏng (`broken`) không có `segments` và không có gì để mang theo: chỉ còn xoá. */}
@@ -880,11 +879,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
   const retake = useMutation({
     mutationFn: () => api<{ lines: number }>(`/api/books/${book.id}/chapters/${chapter.id}/retake`, { method: "POST" }),
     onSuccess: ({ lines }) => {
-      toast.success(`Đã ghi: thu lại ${lines} câu của ${chapter.displayTitle}`, {
-        description: book.running
-          ? "Thu lại từ chương sau. Bỏ được ở “Thay đổi chờ áp”."
-          : "Bấm “Áp dụng thay đổi” ở đầu trang để thu. Bỏ được trong hộp ấy.",
-      });
+      toast.success(`Đã ghi: thu lại ${lines} câu của ${chapter.displayTitle}`);
       void client.invalidateQueries({ queryKey: ["book", book.id] });
       void client.invalidateQueries({ queryKey: ["library"] });
     },

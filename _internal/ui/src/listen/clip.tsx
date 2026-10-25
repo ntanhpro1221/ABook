@@ -89,7 +89,7 @@ export function ClipProvider({ children, onStart }: { children: ReactNode; onSta
     setLoading(false);
     // Một id: sự kiện `error` và `play()` bị từ chối có thể cùng báo một lần bấm - hai toast giống hệt (soát UX 29-09). Không
     // hứa "sách vẫn phát tiếp": lúc bấm sách có thể đang dừng.
-    toast("Chưa nghe thử được", { id: "clip-failed", description: "Câu mẫu này chưa có bản thu." });
+    toast.warning("Chưa nghe thử được", { id: "clip-failed", description: "Câu mẫu này chưa có bản thu." });
   }, []);
 
   const toggle = useCallback((id: string, source: string | ClipSource) => {

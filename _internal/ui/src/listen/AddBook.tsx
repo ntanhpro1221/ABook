@@ -59,9 +59,6 @@ import {
 // Ba bước trong một hộp: chọn → xem danh sách chương (và gợi ý của máy) → thêm. Máy tính và điện thoại dùng chung; chỗ khác nhau
 // (bộ chọn, ai đọc file) nằm ở `source.textImport`.
 
-/** Dòng dưới toast "Đã thêm sách": sách chỉ có chữ đọc được ngay, nghe bằng giọng đọc - không nói "chưa có âm thanh" (nghe như không nghe được). */
-const READY_NOTE = "Đọc được ngay; bấm Nghe ngay để nghe.";
-
 function cleanPath(value: string): string {
   return value.trim().replace(/^["']+|["']+$/g, "").trim();
 }
@@ -301,7 +298,6 @@ export function AddBookDialog({
     clear();
     onOpenChange(false);
     (summary.added || summary.opened ? toast.success : toast)(summaryText(summary), {
-      description: summary.added ? READY_NOTE : undefined,
       action: known ? { label: "Mở cuốn đó", onClick: () => navigate(`/book/${known}`) } : undefined,
     });
     if (added.length === 1 && added[0].bookId && summary.opened === 0) navigate(`/book/${added[0].bookId}`);
@@ -460,9 +456,7 @@ export function AddBookDialog({
         return;
       }
       if (added.how !== "existing") feedback("confirm");
-      toast.success(added.how === "existing" ? "Cuốn này đã có trong thư viện" : "Đã thêm sách vào thư viện", {
-        description: added.how === "existing" ? undefined : READY_NOTE,
-      });
+      toast.success(added.how === "existing" ? "Cuốn này đã có trong thư viện" : "Đã thêm sách vào thư viện");
       clear(); // bản tạm đã dùng xong (native tự dọn)
       onOpenChange(false);
       navigate(`/book/${added.id}`);

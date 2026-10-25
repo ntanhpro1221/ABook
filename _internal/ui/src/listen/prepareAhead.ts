@@ -68,10 +68,11 @@ export interface ReadAloudCacheUsage {
   total: number;
 }
 
-/** Dòng nói bản đọc đã làm nặng bao nhiêu: "Đã lưu 12 MB bản đọc của cuốn này (cả máy: 148 MB)." */
+/** Dòng nói bản đọc đã làm nặng bao nhiêu: "Cuốn này 12 MB · cả máy 148 MB". Ngắn một dòng, số và đơn vị dính liền (NBSP) - không rớt "141 MB)." xuống dòng riêng. */
 export function cacheLabel(usage: ReadAloudCacheUsage): string {
-  const whole = usage.total > 0 ? `cả máy: ${formatSize(usage.total)}` : "cả máy: chưa có";
-  return usage.book > 0 ? `Đã lưu ${formatSize(usage.book)} bản đọc của cuốn này (${whole}).` : `Cuốn này chưa lưu bản đọc nào (${whole}).`;
+  if (usage.book <= 0 && usage.total <= 0) return "Chưa lưu bản đọc nào.";
+  const size = (bytes: number) => formatSize(bytes).replace(" ", " ");
+  return `${usage.book > 0 ? `Cuốn này ${size(usage.book)}` : "Cuốn này chưa có"} · cả máy ${usage.total > 0 ? size(usage.total) : "chưa có"}`;
 }
 
 /** Câu hỏi lại trước khi xoá bản đọc của cuốn: nói điều người nghe sẽ thấy sau đó. */

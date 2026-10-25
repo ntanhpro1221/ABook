@@ -153,12 +153,10 @@ export function useStart() {
     onSuccess: (book, id) => {
       refresh(id);
       if (book.queuePosition) {
-        toast("Đã xếp hàng", {
-          description: "Một cuốn khác đang chạy - cuốn này tự bắt đầu khi cuốn kia xong (app cần đang mở).",
-        });
+        toast("Đã xếp hàng - tự bắt đầu khi cuốn đang chạy xong (cần mở app)");
         return;
       }
-      toast.success("Đang khởi động", { description: "Sách chạy nền - đóng cửa sổ cũng không dừng." });
+      toast.success("Đang khởi động");
     },
     onError: (error: Error) => toast.error("Không bắt đầu được", { description: error.message }),
   });
@@ -175,11 +173,7 @@ export function useStop() {
       api<BookSummary>(`/api/books/${id}/stop`, { method: "POST" }),
     onSuccess: (book, { paused }) => {
       adopt(book);
-      toast("Đang dừng", {
-        description: paused
-          ? "Sách dừng hẳn và nhả bộ nhớ card đồ hoạ; mọi thứ đã xong được giữ nguyên."
-          : "Sách sẽ dừng ở chỗ an toàn kế tiếp (lúc phân tích có thể mất vài phút); mọi thứ đã xong được giữ nguyên.",
-      });
+      toast(paused ? "Đang dừng hẳn - mọi thứ đã xong được giữ nguyên" : "Sẽ dừng ở chỗ an toàn kế tiếp - mọi thứ đã xong được giữ nguyên");
     },
     // Sách đã tự dừng / tiến trình đã chết trước khi bấm: làm mới để nút đổi sang trạng thái thật.
     onError: (error: Error, { id }) => {
@@ -198,7 +192,7 @@ export function useLeaveQueue() {
     mutationFn: ({ id }: { id: string }) => api<BookSummary>(`/api/books/${id}/dequeue`, { method: "POST" }),
     onSuccess: (_book, { id }) => {
       refresh(id);
-      toast("Đã bỏ xếp hàng", { description: "Cuốn này không tự bắt đầu nữa." });
+      toast("Đã bỏ xếp hàng - cuốn này không tự bắt đầu nữa");
     },
     onError: (error: Error, { id }) => {
       refresh(id);

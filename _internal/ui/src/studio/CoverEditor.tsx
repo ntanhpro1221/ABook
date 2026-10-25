@@ -52,7 +52,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
       api<{ cover: CoverImage | null }>(`/api/books/${book.id}/cover`, { method: "PUT", body: { image: await readAsDataUrl(file) } }),
     onSuccess: () => {
       refresh();
-      toast.success("Đã đặt ảnh bìa", { description: "Điện thoại nhận ảnh mới ở lần đồng bộ sau." });
+      toast.success("Đã đặt ảnh bìa");
     },
     onError: (error: Error) => toast.error("Chưa đặt được ảnh bìa", { description: error.message }),
   });
@@ -60,7 +60,7 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
     mutationFn: () => api(`/api/books/${book.id}/cover`, { method: "DELETE" }),
     onSuccess: () => {
       refresh();
-      toast.success("Đã bỏ ảnh bìa", { description: "Sách dùng lại bìa vẽ từ tên." });
+      toast.success("Đã bỏ ảnh bìa");
     },
     onError: (error: Error) => toast.error("Chưa bỏ được ảnh bìa", { description: error.message }),
   });
@@ -151,7 +151,6 @@ export function CoverEditor({ book }: { book: BookSummary & { cover?: CoverImage
         onChosen={refresh}
         onBusy={setChoosing}
         onChooseFile={() => input.current?.click()}
-        doneNote="Điện thoại nhận ảnh mới ở lần đồng bộ sau."
       />
       <input
         ref={input}

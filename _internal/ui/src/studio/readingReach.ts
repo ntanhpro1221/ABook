@@ -60,9 +60,3 @@ export function reachSummary(reach: Reach, later?: string): string {
   const blocked = reach.blocked ? ` (${reach.blocked} câu khác không dùng được vì ký hiệu)` : "";
   return `${reach.reached} câu có chữ này · ${cost}${where(reach)}${blocked}`;
 }
-
-/** Vế "câu đã thu thì thu lại" của thông báo sau khi lưu, theo số đo thật. */
-export function reachSaved(reach: Reach, when: string): string {
-  if (!reach.lines) return "Phần này chưa có câu nào có chữ này - cách đọc sẽ được dùng khi chữ xuất hiện.";
-  return `${reach.recorded ? `${reach.recorded} câu đã thu có chữ này sẽ được thu lại.` : "Các câu có chữ này chưa thu nên không phải thu lại."} ${when}`;
-}

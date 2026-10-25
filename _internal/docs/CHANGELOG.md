@@ -7,6 +7,12 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+- Thông báo ngắn lại: một dòng và tối đa một nút ("Hoàn tác" hay "Mở"), không còn dòng phụ lặp ý hay ba hàng cao gần nửa màn; thông báo lỗi vẫn giữ một dòng nói rõ lý do. Trên điện thoại thông báo nằm dưới thanh trạng thái, không che đầu tên sách.
+- Menu "…" của trình phát: mỗi dòng chỉ một biểu tượng (Âm lượng, Thiết bị phát không còn hai loa / hai nút cast), việc khác nhau dùng biểu tượng khác nhau ("Đổi tên hồ sơ…" không còn trùng bút chì với "Sửa thông tin"); mục con trên máy tính mở thẳng mép với menu cha thay vì đè lệch lên.
+- Chữ trong màn đọc và "Đọc theo" không còn dài gần 90 ký tự mỗi dòng: cột chữ giữ khoảng 66 ký tự ở mọi cỡ chữ, dễ đọc hơn trên màn rộng.
+- Nhãn chữ hoa chỉ còn tên nhóm ngắn ("Edge", "Giọng của máy", "Tối qua"); phần mô tả ("trực tuyến, miễn phí", "không cần mạng", tên sách) xuống chữ thường nhỏ. Dòng dung lượng bản đọc không còn rớt "141 MB)." xuống dòng riêng.
+
 ## [0.4.139] - 2026-10-25
 
 ### Mới

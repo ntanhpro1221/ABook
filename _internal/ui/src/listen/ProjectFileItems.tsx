@@ -26,7 +26,7 @@ export const WORKSHOP_COST =
 
 /** “Dựng xưởng” / “Tạo sách nói”: một dự án Studio mới từ cuốn đang nghe / đọc (`POST /api/books/<mã>/workshop`, workshop.py).
  *  `done` nói điều đã mang sang, theo loại cuốn. */
-function useBuildProject(book: ListenBook, done: (made: { chapters: number; voices: number }) => { title: string; description: string }) {
+function useBuildProject(book: ListenBook, done: (made: { chapters: number; voices: number }) => string) {
   const navigate = useNavigate();
   const client = useQueryClient();
   const [building, setBuilding] = useState(false);
@@ -36,9 +36,7 @@ function useBuildProject(book: ListenBook, done: (made: { chapters: number; voic
       const made = await api<{ id: string; chapters: number; voices: number }>(`/api/books/${book.id}/workshop`, { method: "POST", body: {} });
       void client.invalidateQueries({ queryKey: ["library"] });
       void client.invalidateQueries({ queryKey: ["listen"] });
-      const said = done(made);
-      toast.success(said.title, {
-        description: said.description,
+      toast.success(done(made), {
         action: { label: "Mở dự án", onClick: () => navigate(`/studio/${made.id}`) },
       });
     } catch (error) {
@@ -95,10 +93,7 @@ export const TEXT_BOOK_COST =
 /** Mục menu của sách chỉ có chữ (nhập từ EPUB / DOCX / PDF / TXT): “Tạo sách nói” (máy có Studio) hay mở dự án đã làm. */
 export function TextBookItems({ book }: { book: ListenBook }) {
   const navigate = useNavigate();
-  const { build, building } = useBuildProject(book, (made) => ({
-    title: "Đã tạo dự án Studio",
-    description: `${made.chapters} chương. Chưa chạy gì - mở dự án để chọn giọng và bắt đầu.`,
-  }));
+  const { build, building } = useBuildProject(book, (made) => `Đã tạo dự án Studio · ${made.chapters} chương`);
   if (book.stage !== "text") return null;
   const toolchain = Boolean(book.capabilities?.toolchain);
   if (book.studioProject) {
@@ -128,10 +123,7 @@ export function TextBookItems({ book }: { book: ListenBook }) {
 export function ProjectFileItems({ book, onViews }: { book: ListenBook; onViews: () => void }) {
   const info = book.projectFile;
   const navigate = useNavigate();
-  const { build, building } = useBuildProject(book, (made) => ({
-    title: "Đã dựng xưởng",
-    description: `${made.chapters} chương, ${made.voices} giọng nhân vật đã gieo. Chưa chạy gì - mở dự án để bắt đầu.`,
-  }));
+  const { build, building } = useBuildProject(book, (made) => `Đã dựng xưởng · ${made.chapters} chương, ${made.voices} giọng`);
   if (!info) return null;
   const pending = info.workshop === "pending";
   const toolchain = Boolean(book.capabilities?.toolchain);

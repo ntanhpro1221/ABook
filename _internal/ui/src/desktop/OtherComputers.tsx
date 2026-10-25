@@ -96,7 +96,7 @@ export function OtherComputers() {
       done(view);
       setAddress("");
       setCode("");
-      toast.success(name ? `Đã ghép ${name}` : "Đã ghép", { description: "Sách của máy ấy đã có trong Thư viện." });
+      toast.success(name ? `Đã ghép ${name}` : "Đã ghép");
     },
     onError: (error: Error) => toast.error("Chưa ghép được", { description: error.message }),
   });

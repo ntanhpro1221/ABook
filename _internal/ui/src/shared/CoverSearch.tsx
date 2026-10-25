@@ -34,7 +34,6 @@ export function failedSourcesNote(failed: string[]): string {
  * "Tìm bìa trên mạng": iTunes, Open Library, Google Books theo tên bộ truyện. Truyện mạng dịch thường không có trên các nguồn này,
  * nên chỉ là gợi ý - người dùng chọn, không bao giờ tự đặt. Máy tính hỏi qua server (webui/cover_search.py), điện thoại qua lõi
  * native (CoverSearch.kt); ảnh được chọn thì `PUT /cover {url}` và nơi nhận tự tải, chỉ từ các nguồn đã cho phép.
- * `doneNote`: dòng mô tả của thông báo "Đã đặt ảnh bìa" (Studio: điện thoại nhận ảnh ở lần đồng bộ sau).
  * `onBusy`: đang đặt ảnh đã chọn (trang chủ coi như đang bận, không cho đặt bìa khác chen vào). Đóng hộp thì huỷ yêu cầu còn chạy:
  * lời đáp về muộn không hiện đè lên, ảnh chọn xong mà bị bỏ không đè lên bìa người dùng đặt sau (máy chủ cũng kiểm thứ tự).
  */
@@ -44,7 +43,6 @@ export function CoverSearchDialog({
   open,
   onOpenChange,
   onChosen,
-  doneNote,
   onBusy,
   onChooseFile,
 }: {
@@ -53,7 +51,6 @@ export function CoverSearchDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onChosen: () => void;
-  doneNote?: string;
   onBusy?: (busy: boolean) => void;
   onChooseFile: () => void;
 }) {
@@ -72,7 +69,7 @@ export function CoverSearchDialog({
     onSuccess: () => {
       onChosen();
       onOpenChange(false);
-      toast.success("Đã đặt ảnh bìa", doneNote ? { description: doneNote } : undefined);
+      toast.success("Đã đặt ảnh bìa");
     },
   });
   useEffect(() => {
