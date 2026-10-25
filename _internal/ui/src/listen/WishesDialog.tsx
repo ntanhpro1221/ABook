@@ -52,7 +52,7 @@ export function WishesDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      width="max-w-xl"
+      width="max-w-[560px]"
       title={syncs ? "Việc chờ gửi" : "Việc chờ Studio"}
       description={
         syncs

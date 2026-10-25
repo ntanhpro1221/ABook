@@ -263,7 +263,7 @@ export function VoicePicker({
           ? `${formatNumber(data.character.lines)} câu ở ${data.character.chapters} chương · đang đọc bằng ${data.current || "chưa có giọng"}`
           : undefined
       }
-      width="max-w-xl"
+      width="max-w-[560px]"
     ><MotionRegion>
       {isLoading ? (
         <div className="space-y-2">

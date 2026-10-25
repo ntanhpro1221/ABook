@@ -194,7 +194,7 @@ function ThirdPartyButton() {
       <Button className={WRAP_LABEL} size="sm" variant="secondary" onClick={() => setOpen(true)}>
         Thành phần sử dụng
       </Button>
-      <Dialog open={open} onOpenChange={setOpen} title="Thành phần sử dụng" width="max-w-2xl">
+      <Dialog open={open} onOpenChange={setOpen} title="Thành phần sử dụng" width="max-w-[560px]">
         <div className="mt-3 max-h-[65vh] select-text overflow-y-auto pr-1">{open && <ThirdPartyList />}</div>
       </Dialog>
     </>

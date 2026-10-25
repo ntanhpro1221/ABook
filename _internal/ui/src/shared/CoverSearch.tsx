@@ -176,7 +176,7 @@ export function CoverSearchPanel({
  * (EditBook), không phải hộp thứ hai đè lên (audit140 V9). */
 export function CoverSearchDialog({ open, onOpenChange, ...panel }: Omit<Parameters<typeof CoverSearchPanel>[0], "active" | "onClose"> & { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange} title={COVER_SEARCH_TITLE} description={COVER_SEARCH_NOTE} width="max-w-3xl">
+    <Dialog open={open} onOpenChange={onOpenChange} title={COVER_SEARCH_TITLE} description={COVER_SEARCH_NOTE} width="max-w-[560px]">
       <CoverSearchPanel {...panel} active={open} onClose={() => onOpenChange(false)} />
     </Dialog>
   );
