@@ -18,7 +18,8 @@ export function DisclosureRow({ title, summary, icon, expanded, controls, onClic
     <ChevronRight className={cn("disclosure-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3", expanded && "rotate-90")} aria-hidden />
   </>;
   // Mục đang mở của danh sách nhóm là điều hướng (DESIGN 6 "Điều hướng"): nền trung tính nhạt + chữ đậm màu thường, như thanh bên.
-  const rowClass = cn("disclosure-row relative flex min-h-[3.5rem] w-full items-center gap-3.5 py-1.5 text-left transition-colors hover:bg-hover", current && "bg-hover text-fg", className);
+  // Nền (rê chuột, đang mở) tràn 12 px ra hai bên để chữ và icon không dính mép nền; chữ vẫn đứng đúng cột (máy dò FILL INSET).
+  const rowClass = cn("disclosure-row relative -mx-3 flex min-h-[3.5rem] w-[calc(100%+1.5rem)] items-center gap-3.5 rounded-lg px-3 py-1.5 text-left transition-colors hover:bg-hover", current && "bg-hover text-fg", className);
   return to !== undefined ? <Link to={to} replace={replace} state={state} aria-current={current ? "page" : undefined} className={rowClass}>{body}</Link>
     : <button {...rest} ref={ref} type="button" aria-expanded={expanded} aria-controls={controls} onClick={onClick} className={rowClass}>{body}</button>;
 }
