@@ -19,21 +19,19 @@ type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
 // ---- Nút --------------------------------------------------------------------------------------------------
 
-type Variant = "primary" | "secondary" | "ghost" | "danger" | "outline";
+type Variant = "primary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 const VARIANTS: Record<Variant, string> = {
   primary: "bg-accent text-accent-ink hover:bg-accent-hover [box-shadow:inset_0_1px_0_var(--button-shine)]",
-  secondary: "bg-panel-2 text-fg border border-control hover:bg-hover hover:border-control-strong",
-  outline: "text-fg border border-control-strong hover:bg-hover",
-  ghost: "text-fg-2 hover:bg-hover hover:text-fg",
+  ghost: "text-accent-text hover:bg-hover",
   danger: "bg-danger-soft text-danger hover:bg-danger hover:text-danger-ink",
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-8 min-h-8 px-3 text-[0.8125rem] gap-1.5 rounded-lg",
-  md: "h-9 min-h-9 px-3.5 text-sm gap-2 rounded-lg",
-  lg: "h-11 min-h-11 px-5 text-[0.9375rem] gap-2 rounded-xl",
+  sm: "h-10 min-h-10 px-3 text-[0.8125rem] gap-1.5 rounded-lg",
+  md: "h-10 min-h-10 px-3.5 text-sm gap-2 rounded-lg",
+  lg: "h-10 min-h-10 px-5 text-[0.9375rem] gap-2 rounded-xl",
 };
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -58,7 +56,7 @@ export function busyClick<E extends { preventDefault: () => void }>(loading: boo
 export const WRAP_LABEL = "h-auto max-w-full whitespace-normal py-1 leading-snug text-center [overflow-wrap:anywhere]";
 
 export function Button({
-  variant = "secondary",
+  variant = "ghost",
   size = "md",
   icon: Icon,
   loading,
@@ -716,7 +714,6 @@ export function Sheet({
   onKeyDown,
   className,
   onHeightChange,
-  away = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -730,9 +727,6 @@ export function Sheet({
   onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
   className?: string;
   onHeightChange?: (height: number) => void;
-  /** Bảng con mở từ một dòng của bảng này đang thay chỗ: bảng này mờ lùi xuống, trơ, nền tối nhường cho bảng con - chỉ một bảng trên màn (soát 140
-   *  STACKED LAYERS). Bảng con đóng (cả Back) thì bảng này trở lại đúng chỗ, vẫn đang mở. */
-  away?: boolean;
 }) {
   useArrivalOnOpen(open);
   const lastContent = useRef({ title, children, description, footer });
@@ -782,24 +776,21 @@ export function Sheet({
     if (!open || !onHeightChange) return;
     const element = surface;
     if (!element) return;
-    // Đang nhường chỗ cho bảng con: không giữ chỗ trên màn (trình phát chừa chỗ theo bảng đang thấy).
-    if (away) { onHeightChange(0); return; }
     const update = () => onHeightChange(element.getBoundingClientRect().height);
     update();
     const observer = new ResizeObserver(update); observer.observe(element);
     return () => { observer.disconnect(); onHeightChange(0); };
-  }, [open, onHeightChange, surface, away]);
+  }, [open, onHeightChange, surface]);
   useLayoutEffect(() => { if (open) opener.current = lastFocus; }, [open]);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay inert={!open} data-away={away || undefined} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
+        <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
         <DialogPrimitive.Content
           {...(!shown.description ? { "aria-describedby": undefined } : {})}
           ref={setSurface}
-          inert={!open || away}
-          data-away={away || undefined}
+          inert={!open}
           style={!open ? CLOSING : drag ? { transform: `translateY(${drag}px)`, animation: "none", transition: "none" } : undefined}
           onCloseAutoFocus={(event) => {
             if (keepNewLayerFocus(event)) return;
@@ -1062,7 +1053,7 @@ export function TimeSelect({
   );
 }
 
-export function Segmented<T extends string>({
+export function ChoiceRow<T extends string>({
   value,
   onChange,
   options,
@@ -1088,9 +1079,9 @@ export function Segmented<T extends string>({
       role="radiogroup"
       aria-label={label}
       onKeyDown={radioGroupKeys(values, value, onChange)}
-      className={cn("relative flex-wrap gap-0.5 rounded-lg border border-line bg-panel-2 p-0.5", wrap ? "flex" : "inline-flex max-w-full", className)}
+      className={cn("choice-row relative max-w-full flex-wrap gap-x-[24px] gap-y-1", wrap ? "flex" : "inline-flex max-w-full", className)}
     >
-      <SlidingIndicator variant="pill" />
+      <SlidingIndicator variant="line" />
       {options.map((option, index) => (
         <button
           key={option.value}
@@ -1100,19 +1091,41 @@ export function Segmented<T extends string>({
           tabIndex={radioTabIndex(values, value, index)}
           onClick={() => onChange(option.value)}
           className={cn(
-            "touch-reach relative h-7 whitespace-nowrap rounded-md px-3 text-[0.8125rem] font-medium transition-colors duration-motion-medium max-sm:h-[36px] pointer-coarse:h-[36px] pointer-coarse:min-w-[48px]",
-            value === option.value ? "text-accent-ink" : "text-fg-2 hover:text-fg",
+            "touch-hit touch-row relative min-h-10 whitespace-nowrap border-b-2 border-transparent text-sm font-medium transition-colors duration-motion-medium",
+            value === option.value ? "text-accent-text" : "text-fg-2 hover:text-fg",
             itemClassName,
           )}
         >
-          {option.label}
+          <ChoiceLabel text={option.label} />
         </button>
       ))}
     </div>
   );
 }
 
-/** Hàng lọc: chữ trơn, mục đang chọn có gạch chân hổ phách (DESIGN 6 "Bộ lọc") - không hộp segmented. Cùng nghĩa radiogroup như `Segmented`
+/** Mép nét chữ, kể cả dấu nhô của “ữ”, quyết định khoảng nhìn thấy giữa hai lựa chọn. */
+function ChoiceLabel({ text }: { text: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = () => {
+      const context = document.createElement("canvas").getContext("2d");
+      if (!context) return;
+      const s = getComputedStyle(el);
+      context.font = `${s.fontStyle} ${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;
+      const m = context.measureText(text);
+      el.style.marginInlineStart = `${m.actualBoundingBoxLeft}px`;
+      el.style.marginInlineEnd = `${m.actualBoundingBoxRight - m.width}px`;
+    };
+    measure();
+    document.fonts?.addEventListener("loadingdone", measure);
+    return () => document.fonts?.removeEventListener("loadingdone", measure);
+  }, [text]);
+  return <span ref={ref} className="block">{text}</span>;
+}
+
+/** Hàng lọc: chữ trơn, mục đang chọn có gạch chân hổ phách (DESIGN 6 "Bộ lọc") - không hộp segmented. Cùng nghĩa radiogroup như `ChoiceRow`
  *  (mũi tên đổi mục, tiêu điểm vào đúng mục đang chọn). Khoảng cách như hàng lọc Thư viện: 20 px, 24 px từ `sm`. */
 export function FilterRow<T extends string>({
   value,
@@ -1147,7 +1160,7 @@ export function FilterRow<T extends string>({
             value === option.value ? "text-fg" : "text-fg-2 hover:text-fg",
           )}
         >
-          {option.label}
+          <ChoiceLabel text={option.label} />
         </button>,
       ])}
     </div>

@@ -1,8 +1,9 @@
+import { DisclosureRow } from "@/shared/DisclosureRow";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown, KeyRound, Play, Square, Trash2 } from "lucide-react";
+import { Check, KeyRound, Play, Square, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { Button, StatusPill, radioGroupKeys, radioTabIndex, ContentSkeleton, InlineError } from "@/shared/ui";
+import { Button, radioGroupKeys, radioTabIndex, ContentSkeleton, InlineError } from "@/shared/ui";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { Collapse, Fold, useFold } from "@/shared/Collapse";
 import { cn } from "@/shared/cn";
@@ -171,26 +172,15 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       onChanged();
     }
   };
-  const status = info.valid ? <StatusPill tone="success" label={`Dùng được · ${info.voices} giọng`} /> : info.hasKey ? <StatusPill tone="warning" label="Chưa dùng được" /> : null;
+  const status = info.valid ? `Dùng được · ${info.voices} giọng` : info.hasKey ? "Chưa dùng được" : undefined;
   return (
     <MotionRegion as="div" className="py-3" data-provider={info.id}>
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((now) => !now)}
-        className="touch-hit flex w-full flex-wrap items-center justify-between gap-2 text-left"
-      >
-        <span className="flex items-center gap-1.5 text-sm font-semibold">
-          <ChevronDown className={cn("fold-chevron size-4 shrink-0 text-fg-3 transition-transform", !open && "-rotate-90")} aria-hidden />
-          {info.name}
-        </span>
-        {status}
-      </button>
-      {open && <div>
+      <DisclosureRow title={info.name} summary={status} expanded={open} onClick={() => setOpen((now) => !now)} />
+      <Collapse open={open}>
       <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">
         {info.limits.free}. {info.limits.timings === "exact" ? "Tô đúng từng chữ đang đọc." : "Tô từng chữ đang đọc theo ước lượng."}
       </p>
-      <MoreInfo label="Lấy khoá ở đâu?" className="mt-1">{KEY_HELP[info.id]}</MoreInfo>
+      <MoreInfo label="Nhận khoá" className="mt-1">{KEY_HELP[info.id]}</MoreInfo>
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         <label className="min-w-0 flex-1 basis-56">
           <span className="sr-only">Khóa {info.name}</span>
@@ -216,7 +206,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
             />
           </label>
         )}
-        <Button size="md" variant="outline" loading={busy === "save"} disabled={Boolean(busy) || (!key.trim() && !regionChanged)} onClick={() => void save()}>
+        <Button size="md" variant="ghost" loading={busy === "save"} disabled={Boolean(busy) || (!key.trim() && !regionChanged)} onClick={() => void save()}>
           Lưu
         </Button>
         <Button size="md" icon={KeyRound} loading={busy === "check"} disabled={Boolean(busy) || (!info.hasKey && !key.trim())} onClick={() => void check()}>
@@ -229,7 +219,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
         )}
       </div>
       {result && <p className={cn("mt-2 text-[0.8125rem] text-pretty", result.ok ? "text-success" : "text-danger")} role="status">{result.text}</p>}
-      </div>}
+      </Collapse>
     </MotionRegion>
   );
 }
@@ -328,8 +318,8 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                             }}
                             className="touch-row flex min-w-0 flex-1 items-center gap-2.5 text-left"
                           >
-                            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border transition-colors duration-motion-fast", selected ? "border-accent bg-accent text-accent-ink" : "border-line-strong")}>
-                              <Check className={cn("size-3 transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0")} strokeWidth={3} />
+                            <span className="flex size-5 shrink-0 text-accent-text">
+                              <Check className={cn("ink-start [--icon-w:17.5px] size-5 shrink-0 transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0")} />
                             </span>
                             <span className="min-w-0 truncate text-sm font-medium">{shown}</span>
                             {genderLabel(voice.gender) && <span className="shrink-0 text-xs text-fg-2">{genderLabel(voice.gender)}</span>}
@@ -368,16 +358,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
       {providers.length > 0 && (
         <div>
           {/* Hiếm dùng: gấp sẵn, nhớ lựa chọn; số khoá luôn thấy ở đầu mục. */}
-          <button
-            type="button"
-            aria-expanded={keysShown}
-            onClick={() => setKeysOpen(!keysOpen)}
-            className="touch-hit flex w-full items-center justify-between gap-2 text-left"
-          >
-            <h3 className="text-sm font-semibold">Khoá trực tuyến</h3>
-            {providers.some((info) => info.hasKey) && <span className="ml-auto text-xs text-fg-2">{providers.filter((info) => info.hasKey).length} khoá</span>}
-            <ChevronDown className={cn("ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3 transition-transform", !keysShown && "-rotate-90 [--ink-r:8]")} aria-hidden />
-          </button>
+          <DisclosureRow title="Khoá trực tuyến" summary={providers.some((info) => info.hasKey) ? `${providers.filter((info) => info.hasKey).length} khoá` : undefined} expanded={keysShown} onClick={() => setKeysOpen(!keysOpen)} />
           <Collapse open={keysShown}>
               <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">Chữ của sách gửi tới dịch vụ ấy; có thể bị tính tiền.</p>
               <MoreInfo className="mt-1">

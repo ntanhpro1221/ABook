@@ -8,7 +8,7 @@ import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, ContentSkeleton, Dialog, EmptyState, FilterRow, InlineError, Kbd, Segmented } from "@/shared/ui";
+import { Button, ContentSkeleton, Dialog, EmptyState, FilterRow, InlineError, Kbd, ChoiceRow } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { retryUnlessGone } from "./polling";
@@ -226,12 +226,12 @@ function Example({ bookId, example, picked, onPick }: { bookId: string; example:
           type="button"
           onClick={() => clip.toggle(id, urls.sample(bookId, example.segmentId))}
           aria-label={playing ? "Dừng" : `Nghe câu: ${example.text}`}
-          className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-hover text-fg-2 hover:text-fg"
+          className="mt-0.5 grid size-[32px] shrink-0 place-items-center rounded-full bg-hover text-fg-2 hover:text-fg"
         >
           <MotionRegion as="span" className="grid size-3.5 place-items-center">{playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
         </button>
       ) : (
-        <span className="mt-0.5 size-7 shrink-0" aria-hidden />
+        <span className="mt-0.5 size-[32px] shrink-0" aria-hidden />
       )}
       <div className="min-w-0">
         {example.before && <p className="line-clamp-2 text-fg-3" aria-label="Câu liền trước">{example.before}</p>}
@@ -353,7 +353,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           if (typed) save.mutate(typed);
         }}
       >
-        <Button data-choice size="sm" variant="secondary" disabled={save.isPending} onClick={() => save.mutate(item.current)}>
+        <Button data-choice size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate(item.current)}>
           Đúng rồi, giữ “{item.current}”
         </Button>
         <label htmlFor={inputId} className="text-xs text-fg-2">
@@ -529,7 +529,7 @@ function SpeakerFix({
       {item.allLines && item.lines && onScope && (
         <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-fg-2">
           <span>Đổi người nói cho</span>
-          <Segmented<Scope>
+          <ChoiceRow<Scope>
             label="Đổi người nói cho những câu nào"
             value={scope}
             onChange={onScope}
@@ -552,9 +552,9 @@ function SpeakerFix({
           <Button data-choice
             key={choice.value}
             size="sm"
-            // Đã quyết thì tô lựa chọn của người nghe, không phải gợi ý đầu của máy.
-            variant={(item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed" && item.suggested !== false)
-              ? "primary" : "secondary"}
+            // Gạch chân lựa chọn, để nút thực hiện vẫn là điểm nhấn duy nhất.
+            variant="ghost"
+            className={cn("border-b-2 rounded-none transition-colors", (item.requested ? [choice.name, choice.label].includes(item.requested) : index === 0 && item.kind !== "unnamed" && item.suggested !== false) ? "border-accent" : "border-transparent")}
             aria-pressed={item.requested ? [choice.name, choice.label].includes(item.requested) : undefined}
             disabled={busy || none}
             onClick={() => save.mutate({ speaker: choice.value })}
@@ -569,7 +569,7 @@ function SpeakerFix({
         )}
         {/* Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng. */}
         {item.newPerson && (
-          <Button data-choice size="sm" variant="secondary" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
+          <Button data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
             {item.newPersonLabel ?? `Tạo nhân vật`}
           </Button>
         )}
@@ -603,7 +603,7 @@ function SpeakerFix({
           {moreChoices.length > 0 && (
             <div className="flex w-full flex-wrap items-center gap-1.5" role="group" aria-label="Những người khác trong sách">
               {moreChoices.map((choice) => (
-                <Button key={choice.value} size="sm" variant="secondary" disabled={busy || none} onClick={() => save.mutate({ speaker: choice.value })}>
+                <Button key={choice.value} size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: choice.value })}>
                   {choice.label}
                 </Button>
               ))}
@@ -630,7 +630,7 @@ function SpeakerFix({
             <Button
               key={gender}
               size="sm"
-              variant="secondary"
+              variant="ghost"
               disabled={!name.trim() || busy || none}
               aria-label={`Lưu người nói mới, giới: ${label.toLowerCase()}`}
               onClick={() => save.mutate({ speaker: name.trim(), newGender: gender })}
@@ -689,10 +689,10 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
         </p>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
-        <Button data-choice size="sm" variant={item.requested === buttons.accepted ? "primary" : "secondary"} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
+        <Button data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === buttons.accepted ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
           {buttons.accept}
         </Button>
-        <Button data-choice size="sm" variant={item.requested === "Giữ nguyên" ? "primary" : "ghost"} disabled={save.isPending} onClick={() => save.mutate({ action: "keep" })}>
+        <Button data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === "Giữ nguyên" ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "keep" })}>
           {buttons.keep}
         </Button>
         <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} onClick={() => setChoosing((value) => !value)}>
@@ -702,7 +702,7 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       <Collapse open={choosing}>
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           {section.choices.map((choice) => (
-            <Button key={choice.value} size="sm" variant="secondary" disabled={save.isPending} onClick={() => save.mutate({ action: "choose", narrator: choice.value })}>
+            <Button key={choice.value} size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate({ action: "choose", narrator: choice.value })}>
               {choice.label}
             </Button>
           ))}
@@ -741,7 +741,7 @@ function RefusedFix({ bookId, item }: { bookId: string; item: WorkItem }) {
     onError: (error: Error) => toast.error("Chưa bỏ được", { description: error.message }),
   });
   return (
-    <Button size="sm" variant="secondary" className="mt-3" loading={drop.isPending} onClick={() => drop.mutate()}>
+    <Button size="sm" variant="ghost" className="mt-3" loading={drop.isPending} onClick={() => drop.mutate()}>
       Bỏ yêu cầu này
     </Button>
   );
@@ -801,7 +801,8 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
           <div key={`${choice.character}-${choice.label}`} className="flex flex-col items-start gap-0.5">
             <Button data-choice
               size="sm"
-              variant={(item.requested ? [choice.done, choice.label].includes(item.requested) : choice.recommended) ? "primary" : "secondary"}
+              variant="ghost"
+              className={cn("border-b-2 rounded-none transition-colors", (item.requested ? [choice.done, choice.label].includes(item.requested) : choice.recommended) ? "border-accent" : "border-transparent")}
               disabled={save.isPending}
               onClick={() =>
                 save.mutate({
@@ -933,7 +934,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
         </span>
       </MotionRegion>
       {item.kind === "audio" ? (
-        <Button size="sm" variant="secondary" icon={AudioLines} className="mt-3" onClick={() => onOpenReview(item.key)}>
+        <Button size="sm" variant="ghost" icon={AudioLines} className="mt-3" onClick={() => onOpenReview(item.key)}>
           Nghe lại
         </Button>
       ) : item.kind === "pronunciation" && item.surface ? (
@@ -945,7 +946,7 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       ) : item.kind === "voice-wish" ? (
         <div className="flex flex-wrap items-end gap-2">
           {item.pickVoice && onPickVoice && (
-            <Button size="sm" variant="secondary" className="mt-3" onClick={() => onPickVoice(item.pickVoice!)}>
+            <Button size="sm" variant="ghost" className="mt-3" onClick={() => onPickVoice(item.pickVoice!)}>
               Chọn giọng khác…
             </Button>
           )}
@@ -1253,7 +1254,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
             {atReview} việc của các chương đầu đang chờ ở “Duyệt trước khi thu”.
           </span>
           {onOpenPrecast && (
-            <Button size="sm" variant="secondary" onClick={onOpenPrecast}>
+            <Button size="sm" variant="ghost" onClick={onOpenPrecast}>
               Mở màn duyệt
             </Button>
           )}
@@ -1286,7 +1287,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       </AnimatedRows>
       </MotionRegion>
       <MotionPresence open={items.length > shown}>
-        <Button variant="secondary" size="sm" className="mt-4" onClick={() => setShown(shown + PAGE)}>
+        <Button variant="ghost" size="sm" className="mt-4" onClick={() => setShown(shown + PAGE)}>
           Xem thêm {Math.min(PAGE, items.length - shown)} việc
         </Button>
       </MotionPresence>

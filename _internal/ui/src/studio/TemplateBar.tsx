@@ -4,7 +4,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { BookmarkPlus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
-import { Button, Segmented } from "@/shared/ui";
+import { Button, ChoiceRow } from "@/shared/ui";
 import { useAvailableModelNames } from "@/studio/AnalysisModelPicker";
 import { useBookTemplateOp, usePreferences, useVoices } from "@/studio/data";
 import {
@@ -95,7 +95,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="text-sm font-medium">Mẫu thiết lập</span>
         {templates.length > 0 && (
-          <Segmented<string>
+          <ChoiceRow<string>
             label="Mẫu thiết lập"
             wrap
             value={active?.name ?? ""}

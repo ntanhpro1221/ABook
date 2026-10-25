@@ -201,8 +201,8 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
               aria-pressed={word === item}
               onClick={() => setWord(word === item ? null : item)}
               className={cn(
-                "inline-flex h-8 items-center gap-1 rounded-full border px-2.5 text-sm transition-colors duration-motion-medium pointer-coarse:h-10",
-                word === item ? "border-accent bg-accent-soft text-accent-text" : "border-line hover:bg-hover",
+                "touch-row inline-flex min-h-10 items-center gap-1 px-2.5 text-sm transition-colors duration-motion-medium",
+                word === item ? "text-accent-text underline underline-offset-4" : "text-fg-2 hover:bg-hover",
               )}
             >
               {waiting && <Clock className="size-3" />}

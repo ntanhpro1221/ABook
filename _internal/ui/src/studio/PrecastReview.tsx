@@ -292,7 +292,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
         {step === "done" && (
           <EmptyState icon={ClipboardCheck} title="Xong lượt duyệt" className="py-10" action={
             <div className="flex flex-wrap justify-center gap-2">
-              <Button variant={book.precast?.held ? "ghost" : "secondary"} size="lg" onClick={open.onClose}>
+              <Button variant="ghost" size="lg" onClick={open.onClose}>
                 Về danh sách chương
               </Button>
             </div>
@@ -365,7 +365,7 @@ export function PrecastBanner({ book, onOpen }: { book: BookSummary; onOpen: () 
       </div>
       {/* Chờ duyệt: nút "Thu âm" đã là nút chính ở đầu trang (ProjectScreen Actions) - dải này chỉ mời duyệt, không thêm nút thứ hai. */}
       <div className="flex gap-2">
-        <Button variant={held ? "secondary" : "primary"} onClick={onOpen}>
+        <Button variant={held ? "ghost" : "primary"} onClick={onOpen}>
           Duyệt ngay
         </Button>
       </div>

@@ -3,7 +3,7 @@ import { Fold } from "@/shared/Collapse";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
-import { Button, Segmented } from "@/shared/ui";
+import { Button, ChoiceRow } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { formatSize } from "@/studio/musicLocal";
 import { desktopSupertonic, useModuleStatus, type VieneuBackend } from "./VieneuModuleCard";
@@ -75,7 +75,7 @@ export function VoiceSpeedSetting({
   return (
     <MotionRegion><Fold flat storageKey="voice.performance" title="Hiệu năng" summary={voiceSpeedLabel(status.choice)} bodyClassName="space-y-2 pb-3">
       <h3 id={`${id}-title`} className="text-sm font-semibold">{VOICE_SPEED_TITLE}</h3>
-      <Segmented
+      <ChoiceRow
         value={status.choice}
         onChange={(choice) => void (busy || choose(choice))}
         options={VOICE_SPEED_OPTIONS}
@@ -90,7 +90,7 @@ export function VoiceSpeedSetting({
             <li key={voice.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8125rem] text-pretty">
               <span className="min-w-0 flex-1">{voiceSpeedLine(voice, status.choice)}</span>
               {needsFastDownload(voice) && (
-                <Button size="sm" variant="secondary" loading={downloading} disabled={working} onClick={() => void download(voice)}>
+                <Button size="sm" variant="ghost" loading={downloading} disabled={working} onClick={() => void download(voice)}>
                   {`Tải (${formatSize(voice.fastBytes)})`}
                 </Button>
               )}

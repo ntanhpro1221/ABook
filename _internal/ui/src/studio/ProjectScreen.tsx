@@ -193,7 +193,7 @@ function StartError({ book }: { book: BookSummary }) {
       <CircleAlert className="mt-0.5 size-4 shrink-0" />
       <span className="min-w-0 flex-1">Không khởi động được: {book.startError}</span>
       {!book.starting && !book.running && (
-        <Button variant="secondary" size="sm" icon={RotateCcw} loading={start.isPending} onClick={() => start.mutate(book.id)}>
+        <Button variant="ghost" size="sm" icon={RotateCcw} loading={start.isPending} onClick={() => start.mutate(book.id)}>
           Thử lại
         </Button>
       )}
@@ -386,7 +386,7 @@ function ResumeAnalysisDialog({ book, open, onOpenChange, onRedo, onResume }: {
           Để sau
         </Button>
         <Button
-          variant="outline"
+          variant="ghost"
           icon={Play}
           onClick={() => {
             onOpenChange(false);
@@ -1363,7 +1363,7 @@ export function ProjectScreen() {
         className="mt-20"
         action={
           <div className="flex flex-wrap justify-center gap-2">
-            <Button variant="secondary" loading={isFetching} onClick={() => void refetch()}>
+            <Button variant="ghost" loading={isFetching} onClick={() => void refetch()}>
               Thử lại
             </Button>
             <Button onClick={() => navigate("/studio")}>Về Studio</Button>
@@ -1397,7 +1397,7 @@ export function ProjectScreen() {
           <span className="min-w-0 flex-1 text-pretty">
             {isOffline(error) ? "Mất kết nối tới ABook, đang thử lại…" : `Chưa tải lại được sách: ${failureText(error)} Đang thử lại…`}
           </span>
-          <Button size="sm" variant="secondary" loading={isFetching} onClick={() => void refetch()}>
+          <Button size="sm" variant="ghost" loading={isFetching} onClick={() => void refetch()}>
             Thử lại
           </Button>
         </div>

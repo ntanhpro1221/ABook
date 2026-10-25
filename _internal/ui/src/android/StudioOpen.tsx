@@ -106,7 +106,7 @@ export function OpenStudioButton({ computers, className }: { computers: StudioCo
   if (openable(computers).length === 0) {
     return (
       <>
-        <Button variant="secondary" icon={Clapperboard} className={className} disabled>
+        <Button variant="ghost" icon={Clapperboard} className={className} disabled>
           Mở Studio
         </Button>
         <p className="mt-1.5 text-pretty text-xs text-fg-2">{studioListenOnlyLine(computers.map((computer) => computer.name))}</p>
@@ -119,7 +119,7 @@ export function OpenStudioButton({ computers, className }: { computers: StudioCo
   };
   return (
     <>
-      <Button variant="secondary" icon={Clapperboard} className={className} onClick={() => void startStudio(setChoices)}>
+      <Button variant="ghost" icon={Clapperboard} className={className} onClick={() => void startStudio(setChoices)}>
         Mở Studio
       </Button>
       <Dialog open={choices.length > 0} onOpenChange={(open) => !open && setChoices([])} title="Mở Studio của máy nào?">

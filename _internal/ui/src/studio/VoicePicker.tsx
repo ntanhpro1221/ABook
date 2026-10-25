@@ -9,7 +9,7 @@ import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog, Progress, Segmented, Skeleton, Vu, InlineError } from "@/shared/ui";
+import { Button, Dialog, Progress, ChoiceRow, Skeleton, Vu, InlineError } from "@/shared/ui";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { api, urls } from "./api";
 import { useAppInfo } from "./data";
@@ -114,7 +114,7 @@ function EngineHeader({ engine, label, status, onReady }: { engine: string; labe
           (remote ? (
             <OnComputerOnly verb="Tải giọng" />
           ) : (
-            <Button size="sm" variant="secondary" loading={start.isPending} onClick={() => start.mutate()}>
+            <Button size="sm" variant="ghost" loading={start.isPending} onClick={() => start.mutate()}>
               {current.state === "error" ? "Thử lại" : current.damaged ? "Sửa giọng" : "Tải giọng"}
             </Button>
           ))}
@@ -145,8 +145,8 @@ export function PreviewButton({ voice }: { voice: VoiceOption }) {
       onClick={() => clip.toggle(id, urls.voice(voice.key))}
       aria-label={active ? "Dừng nghe thử" : `Nghe thử giọng ${voice.name}`}
       className={cn(
-        "grid size-9 shrink-0 place-items-center rounded-full border transition-colors",
-        active ? "border-accent bg-accent text-accent-ink" : "border-line text-fg-2 hover:border-line-strong hover:text-fg in-[.bg-accent-soft]:border-line-strong",
+        "grid size-9 shrink-0 place-items-center rounded-full transition-colors",
+        active ? "text-accent-text" : "text-fg-2 hover:bg-hover hover:text-fg in-[.bg-accent-soft]:border-line-strong",
       )}
     >
       <MotionRegion as="span" className="grid size-4 place-items-center">{active && clip.loading ? <Loader2 className="size-4 animate-spin" /> : active ? <Vu className="h-3" /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
@@ -275,7 +275,7 @@ export function VoicePicker({
               <span className="text-pretty">
                 Chờ áp dụng: đổi sang <span className="font-medium">{data.pending.name || "giọng khác"}</span>
               </span>
-              <Button size="sm" variant="secondary" loading={keep.isPending} disabled={save.isPending} onClick={() => keep.mutate(data.pending!)}>
+              <Button size="sm" variant="ghost" loading={keep.isPending} disabled={save.isPending} onClick={() => keep.mutate(data.pending!)}>
                 Giữ {data.current || "giọng đang dùng"}
               </Button>
             </div>
@@ -296,7 +296,7 @@ export function VoicePicker({
               </div>
             </div>
           )}
-          <Segmented<GenderFilter>
+          <ChoiceRow<GenderFilter>
             label="Lọc giọng theo giới"
             value={shown}
             onChange={setGender}
@@ -348,14 +348,14 @@ export function VoicePicker({
                 </div>
                 {voice.current && data.pending ? (
                   // Đã chọn giọng khác mà chưa vào sách: giọng đang dùng chọn lại được - là bỏ lựa chọn kia.
-                  <Button size="sm" variant="secondary" className={ACTION_WIDTH} loading={keep.isPending} disabled={save.isPending} onClick={() => keep.mutate(data.pending!)}>
+                  <Button size="sm" variant="ghost" className={ACTION_WIDTH} loading={keep.isPending} disabled={save.isPending} onClick={() => keep.mutate(data.pending!)}>
                     Giữ giọng này
                   </Button>
                 ) : (
                   <Button
                     size="sm"
                     className={ACTION_WIDTH}
-                    variant={voice.suggested && !voice.current && !voice.pending ? "primary" : "secondary"}
+                    variant={voice.suggested && !voice.current && !voice.pending ? "primary" : "ghost"}
                     disabled={voice.current || voice.pending || !voice.installed || Boolean(voice.takenBy?.length) || save.isPending || keep.isPending}
                     onClick={() => choose(voice)}
                   >

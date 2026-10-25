@@ -86,7 +86,7 @@ it('dấu trang mang câu trích để khôi phục sau khi bỏ dòng trước 
 });
 it('năm nút cỡ chữ có nhãn số riêng',()=>{
   const {tree}=mount();
-  const sizes=walk(tree,n=>n.type==='button' && n.props.children==='A');
+  const sizes=walk(tree,n=>n.type==='button' && /^Cỡ chữ \d+$/.test(n.props['aria-label']??''));
   expect(sizes).toHaveLength(5);
   expect(sizes.map(n=>n.props['aria-label']??n.props.children)).toEqual([16,18,20,22,24].map(size=>`Cỡ chữ ${size}`));
 });
