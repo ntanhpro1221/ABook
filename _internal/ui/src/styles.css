@@ -1028,6 +1028,9 @@ select[class~="border-line"] {
 .ink-end-icon svg { translate: calc(var(--icon-w, 14px) * var(--ink-r, 1) / 24) 0; }
 /* Icon đầu dòng đứng ở mép cột chữ: kéo mực ra đúng mép, chữ theo sau dời cùng (khoảng icon - chữ giữ nguyên). */
 .ink-start { margin-inline-start: calc(var(--icon-w, 14px) * var(--ink-l, 1) / -24); }
+/* Như .ink-start nhưng chỉ dời mực (translate): chữ theo sau đứng yên, nên các liên kết icon + chữ xếp chồng vừa chung mép mực vừa chung mép chữ
+   dù glyph hẹp rộng khác nhau ("Dùng Bluetooth" / "Nhập địa chỉ máy tính", 25-10). */
+.ink-start-shift { translate: calc(var(--icon-w, 14px) * var(--ink-l, 1) / -24) 0; }
 /* Danh sách lùi lề âm để nền rê chuột tràn ra lề (-mx-3 + px-3 ở dòng): vạch chia giữa các dòng vẫn thụt theo nội dung (DESIGN 5.5) - vẽ bằng ảnh
    nền 1 px rộng đúng cột nội dung thay cho divide-y (vạch của divide-y tràn cùng lề âm: bảng Studio thò 10 px mỗi bên, audit140 C3).
    --rows-inset = độ lùi âm của danh sách. */
@@ -1565,14 +1568,15 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 .settings-block[data-fold] + .settings-block[data-fold] { margin-top: 0; border-top: 1px solid var(--line); }
 .settings-row-control > [role="radiogroup"] { display: flex; width: 100%; }
 
-/* Nút chữ ở cuối hàng có vùng chạm rộng hơn chữ: bù phần đệm để chữ kết thúc đúng mép nội dung. */
+/* Nút chữ ở cuối hàng có vùng chạm rộng hơn chữ: bù phần đệm để chữ kết thúc đúng mép nội dung. `settings-edge-action` dùng được mọi trang
+   (Thiết bị điện thoại "Ghép thiết bị"), không chỉ trong .settings-page. */
 .settings-page .settings-row-control > button[data-variant="ghost"],
-.settings-page .settings-edge-action { margin-right: calc(var(--spacing) * -3); }
+.settings-edge-action { margin-right: calc(var(--spacing) * -3); }
 /* Bù đúng đệm ngang của từng cỡ nút (sm px-3, md px-3.5, lg px-5): chữ của nút ghost thẳng mép phải với công tắc / chữ hàng khác. */
 .settings-page .settings-row-control > button[data-variant="ghost"][data-size="md"],
-.settings-page .settings-edge-action[data-size="md"] { margin-right: calc(var(--spacing) * -3.5); }
+.settings-edge-action[data-size="md"] { margin-right: calc(var(--spacing) * -3.5); }
 .settings-page .settings-row-control > button[data-variant="ghost"][data-size="lg"],
-.settings-page .settings-edge-action[data-size="lg"] { margin-right: calc(var(--spacing) * -5); }
+.settings-edge-action[data-size="lg"] { margin-right: calc(var(--spacing) * -5); }
 
 @keyframes fade-in-off { from { opacity: 0; } to { opacity: 1; } }
 

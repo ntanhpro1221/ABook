@@ -229,7 +229,7 @@ export function PairPanel() {
             </div>
           ) : paired === null ? (
             <button ref={btButton} type="button" onClick={() => void startBluetooth()} className="touch-hit flex items-center gap-1.5 text-sm font-medium text-accent-text">
-              <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />}</MotionRegion> Dùng Bluetooth
+              <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="ink-start-shift size-4 [--icon-w:16px]" />}</MotionRegion> Dùng Bluetooth
             </button>
           ) : paired.length ? (
             <div className="space-y-2">
@@ -262,7 +262,7 @@ export function PairPanel() {
 
       <button type="button" onClick={() => withViewTransition(() => { setManualNow((value) => !value); setTarget(null); })} className="touch-hit flex items-center gap-1.5 text-sm font-medium text-accent-text">
         {/* Cùng một kiểu liên kết với "Dùng Bluetooth" (soát 24-10 T15: một hổ phách có biểu tượng, một xám gạch chân). */}
-        {manual ? <Search className="size-4" /> : <Keyboard className="size-4" />} {manual ? "Tự tìm máy tính" : "Nhập địa chỉ máy tính"}
+        {manual ? <Search className="ink-start-shift size-4 [--icon-w:16px]" /> : <Keyboard className="ink-start-shift size-4 [--icon-w:16px]" />} {manual ? "Tự tìm máy tính" : "Nhập địa chỉ máy tính"}
       </button>
       {manual && (
         <input
@@ -489,7 +489,7 @@ function PeersPanel() {
         <h2 id="peers-title" className="font-semibold">
           Thiết bị khác
         </h2>
-        <Button size="sm" variant="ghost" icon={Link2} onClick={() => { setOpen((value) => !value); if (!open) discover.mutate(); }}>
+        <Button size="sm" variant="ghost" icon={Link2} className="settings-edge-action" onClick={() => { setOpen((value) => !value); if (!open) discover.mutate(); }}>
           Ghép thiết bị
         </Button>
       </div>
