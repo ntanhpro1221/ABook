@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+- Hàng nút dưới tên sách và dưới Đang nghe: biểu tượng luôn nằm ngay giữa trên nhãn của nó, nút đầu và cuối hàng không còn lệch ra mép.
+- Vạch chia giữa các dòng (bảng dự án Studio, kết quả Tìm trong sách) thụt theo chữ, không còn thò ra ngoài khung hai bên.
+- Dấu "·" giữa các mẩu thông tin (tác giả · giọng · số chương · thời lượng) không còn treo cuối dòng hay đứng đầu dòng; dòng dài xuống hàng giữa hai mẩu. Tên sách có sẵn dấu "·" trong tiêu đề hộp thoại cũng không bị ngắt ngay ở dấu.
+
 ## [0.4.139] - 2026-10-25
 
 ### Mới

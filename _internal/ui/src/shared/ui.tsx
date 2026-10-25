@@ -7,6 +7,7 @@ import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, Re
 import { cn } from "@/shared/cn";
 import { markArrival, scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
+import { keepDots } from "./DotJoin";
 import { MotionRegion } from "./MotionRegion";
 import { MotionPresence } from "./MotionPresence";
 import { SlidingIndicator } from "./SlidingIndicator";
@@ -660,10 +661,10 @@ export function Dialog({
           <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
             <div>
               <DialogPrimitive.Title className="text-lg font-semibold">
-                <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{shown.title}</MotionRegion>
+                <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{keepDots(shown.title)}</MotionRegion>
               </DialogPrimitive.Title>
               <DialogPrimitive.Description className="text-sm text-fg-2">
-                <MotionRegion as="span" className={shown.description ? "mt-1 block" : "block"} motionKey={typeof shown.description === "string" || typeof shown.description === "number" ? shown.description : undefined}>{shown.description}</MotionRegion>
+                <MotionRegion as="span" className={shown.description ? "mt-1 block" : "block"} motionKey={typeof shown.description === "string" || typeof shown.description === "number" ? shown.description : undefined}>{keepDots(shown.description)}</MotionRegion>
               </DialogPrimitive.Description>
             </div>
             {/* Mực của ✕ dừng 5/24 ô biểu tượng trước mép ô (3,65 px ở 17,5 px): lề phải bù thêm chừng ấy cho mực thẳng mép nội dung. */}
@@ -808,7 +809,7 @@ export function Sheet({
           <div data-sheet-handle className="mx-auto mb-3 h-[4px] w-[40px] rounded-full bg-line-strong" aria-hidden />
           <div className="flex items-center justify-between gap-3">
             <DialogPrimitive.Title className="text-sm font-semibold">
-              <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{shown.title}</MotionRegion>
+              <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{keepDots(shown.title)}</MotionRegion>
             </DialogPrimitive.Title>
             <DialogPrimitive.Close asChild>
               <button aria-label="Đóng" className={cn(CLOSE_BUTTON, "-mr-3")}>
@@ -819,7 +820,7 @@ export function Sheet({
           </div>
           <div ref={setBody} style={fade} className="sheet-body -mx-[20px] min-h-0 min-w-0 overflow-y-auto overscroll-contain px-[20px]">
             {/* Mô tả / chân bảng hiện / ẩn lúc bảng đang mở: mở / khép tại chỗ (lúc mở bảng thì đứng yên cùng bảng - useArrivalOnOpen). */}
-            <MotionPresence open={Boolean(shown.description)}><DialogPrimitive.Description className="mb-3 text-pretty text-sm text-fg-2"><MotionRegion as="span" className="block" motionKey={typeof shown.description === "string" ? shown.description : undefined}>{shown.description}</MotionRegion></DialogPrimitive.Description></MotionPresence>
+            <MotionPresence open={Boolean(shown.description)}><DialogPrimitive.Description className="mb-3 text-pretty text-sm text-fg-2"><MotionRegion as="span" className="block" motionKey={typeof shown.description === "string" ? shown.description : undefined}>{keepDots(shown.description)}</MotionRegion></DialogPrimitive.Description></MotionPresence>
             {shown.children}
           </div>
           <MotionPresence open={Boolean(shown.footer)} className="sheet-footer shrink-0" bodyClassName="border-t border-line pt-4">{shown.footer}</MotionPresence>

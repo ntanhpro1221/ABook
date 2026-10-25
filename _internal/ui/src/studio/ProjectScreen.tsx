@@ -974,7 +974,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
       onDoubleClick={onPlay}
       className={cn(
         "group grid h-14 grid-cols-[40px_minmax(0,1fr)_auto_32px] lg:grid-cols-[48px_minmax(0,1fr)_150px_110px_96px_32px] items-baseline gap-3 rounded-lg px-2 text-sm",
-        current ? "bg-accent-soft" : "hover:bg-hover",
+        current ? "text-accent-text" : "hover:bg-hover",
       )}
     >
       <div role="cell" className="flex">

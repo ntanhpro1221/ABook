@@ -61,6 +61,43 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       expect(at(result, "words-even", "horizontal-ink-gap")).toHaveLength(0);
     }
   });
+  it("vạch chia trong khối lề âm thò ra ngoài cột khung chứa thì báo; thụt lại thì không", () => {
+    for (const result of results) {
+      expect(at(result, "hair", "hairline-overhang")).toHaveLength(1);
+      expect(at(result, "hair", "hairline-overhang")[0].delta).toBeCloseTo(12, 0);
+      expect(at(result, "hair-pass", "hairline-overhang")).toHaveLength(0);
+    }
+  });
+  it("dấu nối · cuối dòng hay đầu dòng thì báo; giữa dòng thì không", () => {
+    for (const result of results) {
+      const dots = (id) => result.findings.filter((f) => f.rule === "LINE BREAK" && (f.selector === `#${id}` || f.selector.startsWith(`#${id} >`)));
+      expect(dots("dots-end").map((f) => f.metric)).toEqual(["separator-ends-line"]);
+      expect(dots("dots-start").map((f) => f.metric)).toEqual(["separator-starts-line"]);
+      expect(dots("dots-pass")).toHaveLength(0);
+      // Hộp phải là số thường: DOMRect qua returnByValue thành {} và ảnh cắt hỏng cả khung.
+      for (const f of dots("dots-end")) {
+        for (const r of f.rects) expect(Number.isFinite(r.x + r.y + r.width + r.height)).toBe(true);
+        expect(Number.isFinite(f.delta)).toBe(true); // index.html in Δ cho mọi phát hiện có referenceValue
+      }
+    }
+  });
+  it("nút xếp dọc: biểu tượng lệch khỏi giữa nhãn thì báo; nằm giữa thì không", () => {
+    for (const result of results) {
+      const at2 = (id) => result.findings.filter((f) => f.selector.startsWith(`#${id} >`) && f.metric === "stacked-icon-center");
+      expect(at2("stack")).toHaveLength(1);
+      expect(at2("stack-pass")).toHaveLength(0);
+    }
+  });
+  it("nhãn nền đặc đè chữ bìa (kể cả aria-hidden) thì báo; đặt chỗ trống hay vẽ dưới chữ thì không", () => {
+    for (const result of results) {
+      const covered = (id) => result.findings.filter((f) => f.rule === "COVERED TEXT" && f.selector.startsWith(`#${id} >`));
+      expect(covered("cover")).toHaveLength(1);
+      expect(covered("cover-pass")).toHaveLength(0);
+      expect(covered("cover-under")).toHaveLength(0);
+      expect(covered("cover-layer")).toHaveLength(0);
+      expect(Number.isFinite(covered("cover")[0]?.value)).toBe(true); // index.html in value cho mọi phát hiện có metric
+    }
+  });
   it("thẻ có viền tạo cột riêng; nút giữa toàn hàng không phải cạnh cột", () => {
     for (const result of results) {
       expect(at(result, "panel", "ink-left")).toHaveLength(0);

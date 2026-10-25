@@ -13,7 +13,6 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState, type R
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
-import { ShortName } from "@/shared/ShortName";
 import { Windowed } from "@/shared/Windowed";
 import { useScrollMemory } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
@@ -155,7 +154,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
   const textOnly = book.stage === "text" && !speaks;
   return (
     <MotionRegion as="div" className="group">
-      <div className="relative" data-overlay="Huy hiệu máy tính trên bìa sách">
+      <div className="relative">
         {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
         <button type="button" tabIndex={-1} onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
           <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full !aspect-[2/3] !rounded-xl" />
@@ -187,23 +186,15 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
             </div>
           </div>
         )}
-        <MotionPresence open={Boolean(book.remote)}>{book.remote && (
-          // Dấu nguồn nhỏ ở góc, không lặp lại tên máy ở dòng trạng thái.
-          <span
-            aria-label={remotePlace(book)}
-            className="pointer-events-none absolute right-2 top-2 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-md bg-panel px-2 py-1 text-xs font-medium text-fg"
-          >
-            <Laptop className="size-3 shrink-0" />
-            <ShortName name={typeof book.remote === "object" && book.remote?.computer ? book.remote.computer : "Máy tính"} short={11} className="truncate" />
-            {/* Đã tải đủ về máy này: nghe được cả khi máy kia tắt (soát a27 lỗi 8). */}
-            {typeof book.remote === "object" && book.remote.downloaded && <span className="shrink-0">· Đã tải</span>}
-          </span>
-        )}</MotionPresence>
         {extras.cover?.(book)}
       </div>
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="touch-row mt-2.5 block w-full text-left">
         <div className={cn("line-clamp-2 text-sm font-medium leading-snug", current && "text-accent-text")}>{displayTitle(book.title)}</div>
-        <div className="mt-1 truncate text-xs text-fg-2">{progressText(book, speaks)}</div>
+        {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8). */}
+        <div className="mt-1 flex items-center gap-1 text-xs text-fg-2">
+          {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? `${remotePlace(book)}, đã tải về máy này` : remotePlace(book)} className="size-3 shrink-0" />}
+          <span className="min-w-0 truncate">{progressText(book, speaks)}</span>
+        </div>
         {/* Hai cuốn cùng tên: nhãn "Dự án" (làm trên máy này) / "Đã nhập" (mở từ file) và ngày vào thư viện để biết cuốn nào là cuốn nào
             (tác giả, nếu có, đã nằm ở dòng trên). */}
         {twin && (twinKind(book) || book.addedAt) ? (
@@ -387,11 +378,13 @@ function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySec
       <div aria-hidden className="absolute inset-x-4 -top-3 bottom-0 rounded-xl bg-line" />
       <div aria-hidden className="absolute inset-x-2 -top-1.5 bottom-0 rounded-xl bg-sunken" />
       <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-xl" />
-      {item.items.some(book => book.remote) && <span aria-label="Có sách trên máy khác" className="absolute right-2 top-2 rounded-md bg-panel p-1.5 text-fg"><Laptop className="size-3" /></span>}
       {extras.seriesCover?.(item.items)}
     </div>
     <span className="mt-2.5 block line-clamp-2 text-sm font-medium leading-snug">{item.label}</span>
-    <span className="mt-1 block text-xs text-fg-2">{item.items.length} tập</span>
+    <span className="mt-1 flex items-center gap-1 text-xs text-fg-2">
+      {item.items.some(book => book.remote) && <Laptop role="img" aria-label="Có sách trên máy khác" className="size-3 shrink-0" />}
+      {item.items.length} tập
+    </span>
   </button>;
   const content = open && <Shelf books={item.items} badges={item.badges} twins={twins} />;
   return <MotionRegion motionKey={[item.label, item.items.map(book => book.id), item.items[0].cover?.url, item.items.some(book => book.remote)]}>

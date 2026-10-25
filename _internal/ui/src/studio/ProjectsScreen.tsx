@@ -197,7 +197,7 @@ const entryKey = (entry: Entry) => (entry.kind === "book" ? entry.book.id : `ser
 /** Đầu bảng: cùng một hàng khi đang tải và khi đã có dự án - khung chờ đứng đúng chỗ các hàng thật, tải xong không nhảy. */
 function TableHead() {
   return (
-    <div className={cn("hidden gap-x-4 border-b border-line px-3 pb-2 label-section text-fg-2 md:grid", COLUMNS)}>
+    <div className={cn("mx-3 hidden gap-x-4 border-b border-line pb-2 label-section text-fg-2 md:grid", COLUMNS)}>
       <span />
       <span>Dự án</span>
       <span>Trạng thái</span>
@@ -297,7 +297,7 @@ export function ProjectsScreen() {
       {isLoading ? (
         <div className="-mx-3 mt-8" aria-hidden>
           <TableHead />
-          <div className="divide-y divide-line">
+          <div className="rows-inset">
             {Array.from({ length: 5 }, (_, index) => (
               <RowSkeleton key={index} />
             ))}
@@ -320,7 +320,7 @@ export function ProjectsScreen() {
         // Lề âm bù đệm của dòng: bìa thẳng mép tiêu đề, cột cuối thẳng mép phải; nền rê chuột và vạch kẻ tràn ra lề.
         <section className="-mx-3 mt-8" aria-label="Dự án">
           <TableHead />
-          <AnimatedRows items={entries} keyOf={entryKey} className="divide-y divide-line">
+          <AnimatedRows items={entries} keyOf={entryKey} className="rows-inset">
             {(entry) => <EntryView entry={entry} />}
           </AnimatedRows>
         </section>
