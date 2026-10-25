@@ -1,7 +1,7 @@
 import { ActionMenu } from "@/shared/ActionMenu";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
-import { LoadingCrossfade } from "@/shared/MotionPresence";
+import { AnimatedRows, LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
@@ -480,16 +480,21 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
       </div>
       {narratorNote && <div className="mt-2 text-xs text-fg-2">{narratorNote}</div>}
       <Fold storageKey={`book.${bookId}.cast`} title="Nhân vật" summary={`${cast.characters.length} người có lời thoại`} defaultOpen={cast.characters.length <= 4} heading="h3" flat className="mt-4">
-      <div className="grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">
-        {cast.characters
-          .filter((person) => later || !reached || !person.firstChapter || reached.has(person.firstChapter))
-          .map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}
+      {/* "Hiện / Ẩn chương sau": người của các chương sau mở / khép tại chỗ (hàng tự mờ khi đổi giọng - PersonRow là một vùng), không mờ cả tab. */}
+      <div data-motion-live="">
+      <AnimatedRows
+        className="grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3"
+        items={cast.characters.filter((person) => later || !reached || !person.firstChapter || reached.has(person.firstChapter))}
+        keyOf={(person) => person.name}
+      >
+        {(person) => <PersonRow bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />}
+      </AnimatedRows>
       </div>
-      {reached && ahead(cast.characters, reached) > 0 && (
+      <MotionPresence open={Boolean(reached && ahead(cast.characters, reached) > 0)}>
         <button type="button" onClick={() => setLater((value) => !value)} className="touch-row mt-3 text-sm font-medium text-fg-2 hover:text-fg">
-          {later ? "Ẩn chương sau" : "Hiện chương sau"} · {ahead(cast.characters, reached)} người
+          <MotionRegion as="span">{later ? "Ẩn chương sau" : "Hiện chương sau"} · {reached ? ahead(cast.characters, reached) : 0} người</MotionRegion>
         </button>
-      )}
+      </MotionPresence>
       </Fold>
       {cast.extras.length > 0 && (
         <Fold storageKey={`book.${bookId}.extras`} title="Vai phụ" summary={`${cast.extras.length} người trong một cảnh`} heading="h3" flat className="mt-4">
@@ -567,11 +572,14 @@ export function HistoryTab({ book }: { book: ListenBook }) {
       <p className="text-sm text-fg-2">
         7 ngày qua: <span className="font-semibold text-fg">{formatLength(week)}</span> nghe cuốn này.
       </p>
-      {[...groups.entries()].map(([day, items]) => (
-        <Fold key={day} storageKey={`book.${book.id}.history.${day}`} title={day} summary={`${items.length} lượt nghe`} className="mt-3" heading="h3" flat>
-          <ul className="mt-2 divide-y divide-line">
-            {items.map((item) => (
-              <li key={item.id} className="flex items-center gap-3 py-2.5">
+      {/* Nhóm ngày / lượt nghe mới thêm khi đang mở tab: mở ra tại chỗ (vùng ngoài chỉ khoá "có / không có"). */}
+      <AnimatedRows items={[...groups.entries()]} keyOf={([day]) => day}>
+      {([day, items]) => (
+        <div className="pt-3">
+        <Fold storageKey={`book.${book.id}.history.${day}`} title={day} summary={`${items.length} lượt nghe`} heading="h3" flat>
+          <AnimatedRows className="mt-2 divide-y divide-line" items={items} keyOf={(item) => String(item.id)}>
+            {(item) => (
+              <div className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="tabular text-sm font-medium">
                     {/* Cùng phút thì một mốc giờ, không "13:57-13:57" (soát UX 29-09). */}
@@ -586,11 +594,13 @@ export function HistoryTab({ book }: { book: ListenBook }) {
                 <Button size="sm" variant="ghost" icon={Play} onClick={() => void playBook(book, item.to.chapterId, item.to.seconds)}>
                   Nghe tiếp từ {formatClock(item.to.seconds)}
                 </Button>
-              </li>
-            ))}
-          </ul>
+              </div>
+            )}
+          </AnimatedRows>
         </Fold>
-      ))}
+        </div>
+      )}
+      </AnimatedRows>
     </div>
   );
   };
@@ -624,10 +634,10 @@ export function singleRecordActions(book: ListenBook): { key: string; label: str
 function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string; onChange: (target: { id: string; title: string }) => void }) {
   const { data, isLoading } = useListenLibrary();
   const others = (data ?? []).filter((item) => item.id !== book.id);
-  if (isLoading) return <p className="text-sm text-fg-2">Đang mở thư viện…</p>;
-  if (!others.length) return <p className="text-sm text-fg-2">Thư viện chưa có cuốn nào khác.</p>;
+  // Ba trạng thái (đang mở thư viện / chưa có cuốn nào khác / ô chọn) mờ qua tại chỗ trong hộp đang mở.
   return (
-    <select
+    <MotionRegion motionKey={isLoading ? "loading" : others.length ? "list" : "empty"}>
+    {isLoading ? <p className="text-sm text-fg-2">Đang mở thư viện…</p> : !others.length ? <p className="text-sm text-fg-2">Thư viện chưa có cuốn nào khác.</p> : <select
       aria-label="Chuyển sang cuốn"
       autoFocus
       value={value}
@@ -645,7 +655,8 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
           {item.title}
         </option>
       ))}
-    </select>
+    </select>}
+    </MotionRegion>
   );
 }
 

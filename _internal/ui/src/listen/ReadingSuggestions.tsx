@@ -4,6 +4,8 @@ import { useState } from "react";
 import { toast } from "@/shared/toast";
 import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
+import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { Button, Dialog, IconButton } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { useAppInfo } from "@/studio/data";
@@ -168,30 +170,34 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
   const suggestions = useBookSuggestions(book.id);
   const [open, setOpen] = useState(false);
   const { groups, pending, dismiss } = suggestions;
-  if (!groups.length) return null;
   const quiet = !pending && !groups.some((group) => group.skipped);
-  if (quiet && !open) {
-    return (
-      <button type="button" onClick={() => setOpen(true)} className="mt-3 text-left text-xs font-medium text-accent-text hover:underline">
-        Xem lại gợi ý cho phần đọc
-      </button>
-    );
-  }
+  // Khối tự lấy dữ liệu nên tự mang chuyển động (vùng cha không thấy truy vấn này): có / không gợi ý mở / khép tại chỗ, đổi thẻ <-> dòng
+  // "Xem lại gợi ý" mờ qua.
   return (
-    <section className="mt-4 max-w-xl rounded-xl border border-line bg-hover p-3 text-left">
-      <h2 className="text-sm font-medium">
-        Gợi ý cho phần đọc{pending ? ` · ${pending} chưa áp` : ""}
-      </h2>
-      <SuggestionsBody bookId={book.id} suggestions={suggestions} />
-      {pending > 0 && (
-        <Button size="sm" variant="ghost" className="mt-2" onClick={() => {
-          dismiss();
-          setOpen(false);
-        }}>
-          Bỏ qua gợi ý - giữ sách như cũ
-        </Button>
-      )}
-    </section>
+    <MotionPresence open={groups.length > 0}>
+      <MotionRegion motionKey={quiet && !open ? "quiet" : "card"}>
+        {quiet && !open ? (
+          <button type="button" onClick={() => setOpen(true)} className="mt-3 text-left text-xs font-medium text-accent-text hover:underline">
+            Xem lại gợi ý cho phần đọc
+          </button>
+        ) : (
+          <section className="mt-4 max-w-xl rounded-xl border border-line bg-hover p-3 text-left">
+            <h2 className="text-sm font-medium">
+              <MotionRegion as="span">Gợi ý cho phần đọc{pending ? ` · ${pending} chưa áp` : ""}</MotionRegion>
+            </h2>
+            <SuggestionsBody bookId={book.id} suggestions={suggestions} />
+            <MotionPresence open={pending > 0}>
+              <Button size="sm" variant="ghost" className="mt-2" onClick={() => {
+                dismiss();
+                setOpen(false);
+              }}>
+                Bỏ qua gợi ý - giữ sách như cũ
+              </Button>
+            </MotionPresence>
+          </section>
+        )}
+      </MotionRegion>
+    </MotionPresence>
   );
 }
 
@@ -207,7 +213,8 @@ export function SuggestionsButton({ bookId, className }: { bookId: string; class
       <IconButton label={label} icon={Lightbulb} size="sm" className={className} onClick={() => setOpen(true)} />
       <Dialog open={open} onOpenChange={setOpen} title="Gợi ý cho phần đọc">
         <SuggestionsBody bookId={bookId} suggestions={suggestions} />
-        <div className="mt-5 dialog-actions">
+        {/* Tích hết dòng lúc hộp còn mở: "Bỏ qua gợi ý" rời hàng nút bằng mờ qua, không mất cứng. */}
+        <MotionRegion className="mt-5 dialog-actions">
           {pending > 0 && (
             <Button variant="ghost" onClick={() => {
               dismiss();
@@ -219,7 +226,7 @@ export function SuggestionsButton({ bookId, className }: { bookId: string; class
           <Button variant="secondary" onClick={() => setOpen(false)}>
             Đóng
           </Button>
-        </div>
+        </MotionRegion>
       </Dialog>
     </>
   );
