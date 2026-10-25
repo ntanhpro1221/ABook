@@ -75,11 +75,11 @@ export function PendingList({
 }) {
   const rows = useListPresence(items, (item) => `${item.section}:${item.key}`);
   return (
-    <ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line">
+    <ul className="max-h-72 divide-y divide-line overflow-y-auto">
       {rows.map(({ item, key, state, ref }) => {
         const Icon = KIND_ICON[item.kind] ?? RefreshCw;
         return (
-          <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex items-start gap-3 px-3 py-2 text-sm">
+          <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex items-start gap-3 py-2 text-sm">
             <Icon className="mt-line-icon size-4 shrink-0 text-fg-3" />
             <span className="min-w-0 flex-1 text-pretty">
               {item.label}

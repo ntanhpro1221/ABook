@@ -189,7 +189,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
     return (
       // Ba pha (mã / mã bị khoá / nút) dùng chung một vùng khoá theo pha: khung cũ (viền, nền, đệm) nằm trong ảnh mờ ra, không đổi cứng;
       // đồng hồ đếm ngược không làm vùng mờ lại.
-      <MotionRegion as="div" motionKey="code" className="rounded-xl border border-accent/35 p-5" aria-live="polite">
+      <MotionRegion as="div" motionKey="code" className="py-5" aria-live="polite">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="min-w-0">
             <p className="text-sm font-semibold">Mã ghép thiết bị</p>
@@ -228,7 +228,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
   }
   if (sync.pairingBlocked) {
     return (
-      <MotionRegion as="div" motionKey="blocked" className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4">
+      <MotionRegion as="div" motionKey="blocked" className="flex items-start gap-3 py-4">
         <ShieldAlert className="mt-0.5 glyph shrink-0 text-warning" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">Mã bị khoá</p>
@@ -308,7 +308,7 @@ export function PhoneSync() {
 
       {sync.enabled && (
         <>
-          <Fold flat storageKey="phone-sync.pair" title="Ghép thiết bị" summary={sync.pairing ? "Đang hiện mã ghép" : "Điện thoại, máy tính bảng"} defaultOpen={Boolean(sync.pairing)} bodyClassName="pb-3">
+          <Fold storageKey="phone-sync.pair" title="Ghép thiết bị" summary={sync.pairing ? "Đang hiện mã ghép" : "Điện thoại, máy tính bảng"} defaultOpen={Boolean(sync.pairing)} bodyClassName="pb-3">
           <PairingPanel
             sync={sync}
             busy={pair.isPending}
@@ -316,7 +316,7 @@ export function PhoneSync() {
             onCancel={() => cancel.mutate()}
           />
           </Fold>
-          <Fold flat storageKey="phone-sync.permissions" title="Quyền điều khiển" summary={studioWanted ? "Đang bật" : "Đang tắt"} bodyClassName="pb-3">
+          <Fold storageKey="phone-sync.permissions" title="Quyền điều khiển" summary={studioWanted ? "Đang bật" : "Đang tắt"} bodyClassName="pb-3">
           <div className="flex items-center justify-between gap-6">
             <label htmlFor="remote-studio" className="min-w-0 cursor-pointer">
               <span className="block text-sm font-medium">Điều khiển từ xa</span>
@@ -362,7 +362,7 @@ export function PhoneSync() {
 
           </Dialog>
           </Fold>
-          <Fold flat storageKey="phone-sync.connection" title="Kết nối" summary="Địa chỉ và Bluetooth" bodyClassName="space-y-2 pb-3">
+          <Fold storageKey="phone-sync.connection" title="Kết nối" summary="Địa chỉ và Bluetooth" bodyClassName="space-y-2 pb-3">
           {sync.bluetooth && (
             <p className="text-xs text-fg-3">
               {sync.bluetooth.running
@@ -374,7 +374,7 @@ export function PhoneSync() {
           )}
           {sync.addresses.length > 0 && (
             <p className="text-xs text-fg-3">
-              Điện thoại không thấy máy này? Chọn “Nhập địa chỉ máy tính” rồi gõ{" "}
+              Điện thoại không thấy máy này? Chọn “Nhập địa chỉ” rồi gõ{" "}
               <Where sync={sync} scheme={false} />.
             </p>
           )}
@@ -403,7 +403,7 @@ export function PhoneSync() {
                 {deviceRows.map(({ key, state, item: device, ref }) => (
                   // Điện thoại hẹp + công tắc "Điều khiển sản xuất": hàng tự xuống dòng thay vì bóp tên máy còn "NGDtuanh-…".
                   <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
-                  <Fold flat storageKey={`phone-sync.device.${device.id}`} title={device.name} summary={`Lần cuối ${formatRelative(device.lastSeen)}`} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
+                  <Fold storageKey={`phone-sync.device.${device.id}`} title={device.name} summary={`Lần cuối ${formatRelative(device.lastSeen)}`} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
                     <Smartphone className="glyph shrink-0 text-fg-3" />
                     <div className="min-w-0 flex-1 basis-44">
                       <div className="truncate text-sm font-medium">{device.name}</div>

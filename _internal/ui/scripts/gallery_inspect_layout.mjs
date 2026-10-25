@@ -327,7 +327,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       el.matches('svg,svg *,input,textarea,select,option,main,aside,header,footer,[role="dialog"],[role="menu"],[role="listbox"],.sheet-surface') ||
       el.querySelector('img,canvas') || el.closest('[data-overlay]')) continue;
     // Tô từ trong câu văn liên tục không tạo một hộp nội dung riêng.
-    if (s.display === "inline" && el.parentElement?.closest('p,[data-sentence]')) continue;
+    if (s.display === "inline" && (el.matches('mark') || el.parentElement?.closest('p,[data-sentence]'))) continue;
     const ownTexts = inkTexts.filter((t) => el.contains(t.element) && !t.element.closest('svg'));
     if (!ownTexts.length || box.height > 150) continue;
     const ink = leading(el);

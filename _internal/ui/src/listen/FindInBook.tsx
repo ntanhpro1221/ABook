@@ -55,6 +55,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
   const [progress, setProgress] = useState<BookSearch | null>(null);
   const cache = useRef(new Map<number, FoldedChapter>());
   const results = useRef<HTMLUListElement | null>(null);
+  const search = useRef<HTMLInputElement | null>(null);
   const bookId = book.id;
   const chapterList = book.chapters ?? [];
 
@@ -106,6 +107,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-3" />
         <input
+          ref={search}
           data-autofocus
           type="search"
           value={query}
@@ -122,14 +124,14 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           placeholder="Chữ hay câu cần tìm…"
           autoComplete="off"
           enterKeyHint="search"
-          className="h-11 w-full rounded-xl border border-line bg-bg pl-9 pr-3 text-base outline-none focus:border-focus"
+          className="touch-box h-11 w-full rounded-lg border border-line bg-bg pl-9 pr-3 text-base outline-none focus:border-focus"
         />
       </div>
       <p role="status" className="mt-2 text-xs text-fg-2">
         {status}
       </p>
       {hits.length > 0 && (
-        <ul
+        <div data-list-edges="book-search"><ul
           ref={results}
           onKeyDown={(event) => {
             const step = event.key === "ArrowDown" ? 1 : event.key === "ArrowUp" ? -1 : 0;
@@ -137,14 +139,14 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
             const buttons = [...event.currentTarget.querySelectorAll<HTMLElement>("button")];
             const next = buttons.indexOf(document.activeElement as HTMLElement) + step;
             event.preventDefault();
-            if (next < 0) event.currentTarget.parentElement?.querySelector<HTMLElement>("input")?.focus();
+            if (next < 0) search.current?.focus();
             else buttons[Math.min(next, buttons.length - 1)]?.focus();
           }}
-          className="rows-inset -mx-2 mt-2 max-h-[min(55dvh,28rem)] overflow-y-auto overscroll-contain [--rows-inset:calc(var(--spacing)*2)]"
+          className="rows-inset -mx-3 mt-2 max-h-[min(55dvh,28rem)] overflow-y-auto overscroll-contain px-1.5 py-1.5 [--rows-inset:calc(var(--spacing)*1.5)]"
         >
           {hits.map((hit) => (
             <li key={`${hit.chapterId}:${hit.sentence}`}>
-              <button type="button" onClick={() => pick(hit)} className="block w-full rounded-lg px-2 py-2.5 text-left hover:bg-hover">
+              <button type="button" onClick={() => pick(hit)} className="block w-full rounded-lg px-1.5 py-2.5 text-left hover:bg-hover">
                 <span className="block truncate text-xs font-medium text-fg-2">{labels.get(hit.chapterId)}</span>
                 <span className="mt-0.5 block text-sm leading-relaxed">
                   <Excerpt snippet={hit.snippet} />
@@ -152,7 +154,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
               </button>
             </li>
           ))}
-        </ul>
+        </ul></div>
       )}
     </MotionRegion></Dialog>
   );

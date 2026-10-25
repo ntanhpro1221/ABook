@@ -52,10 +52,10 @@ export async function startStudio(choose: (computers: StudioComputer[]) => void)
 /** Các máy tính để chọn, mỗi máy một dòng có tên. */
 export function ComputerList({ computers, onPick }: { computers: StudioComputer[]; onPick: (computer: StudioComputer) => void }) {
   return (
-    <ul className="divide-y divide-line rounded-xl border border-line">
+    <ul className="divide-y divide-line">
       {computers.map((computer) => (
         <li key={computer.key}>
-          <button type="button" onClick={() => onPick(computer)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
+          <button type="button" onClick={() => onPick(computer)} className="flex w-full items-center gap-3 py-3 text-left">
             <Laptop className="size-5 shrink-0 text-fg-2" aria-hidden />
             <span className="min-w-0 flex-1 truncate font-medium">{computer.name}</span>
           </button>

@@ -139,7 +139,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
   };
 
   return (
-    <MotionRegion as="section" aria-label="Yêu cầu thiết bị" className="mb-5 rounded-2xl border border-line bg-panel p-4">
+    <MotionRegion as="section" aria-label="Yêu cầu thiết bị" className="mb-5 py-4">
       <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
         <Smartphone className="size-4 text-fg-3" /> Yêu cầu thiết bị{data.waiting ? ` (${data.waiting} việc chờ duyệt)` : ""}
       </h2>
@@ -165,11 +165,11 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
               Bỏ qua tất cả
             </Button>
           </div>
-          <AnimatedRows className="mt-2 divide-y divide-line overflow-hidden rounded-xl border border-line" items={device.items} keyOf={(item) => item.id}>
+          <AnimatedRows className="mt-2 divide-y divide-line overflow-hidden" items={device.items} keyOf={(item) => item.id}>
             {(item) => {
               const Icon = item.kind === "alias" ? Link2 : (KIND_ICON[item.kind] ?? Check);
               return (
-                <MotionRegion className="flex items-start gap-3 px-3 py-2 text-sm">
+                <MotionRegion className="flex items-start gap-3 py-2 text-sm">
                   <Icon className="mt-line-icon size-4 shrink-0 text-fg-3" />
                   <span className="min-w-0 flex-1 text-pretty">
                     {item.label}
@@ -199,9 +199,9 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
                   Khôi phục tất cả
                 </Button>
               </div>
-              <AnimatedRows className="mt-1 divide-y divide-line overflow-hidden rounded-xl border border-line" items={device.items} keyOf={(item) => item.id}>
+              <AnimatedRows className="mt-1 divide-y divide-line overflow-hidden" items={device.items} keyOf={(item) => item.id}>
                 {(item) => (
-                  <div className="flex items-start gap-3 px-3 py-2 text-sm">
+                  <div className="flex items-start gap-3 py-2 text-sm">
                     <span className="min-w-0 flex-1 text-pretty">
                       {item.label}
                       {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}

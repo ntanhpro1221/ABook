@@ -232,9 +232,9 @@ export function BookReadingsSection({ bookId }: { bookId: string }) {
     return <MotionRegion as="p" className="text-xs text-fg-2">Chưa có từ nào. Ở màn đọc, giữ (hay bấm chuột phải) vào một từ đọc sai rồi chọn cách đọc.</MotionRegion>;
   }
   return (
-    <MotionRegion as="ul" elementRef={editBox} className="divide-y divide-line rounded-lg border border-line">
+    <MotionRegion as="ul" elementRef={editBox} className="divide-y divide-line">
       {list.map((item) => (
-        <li key={item.surface} className="px-3 py-2">
+        <li key={item.surface} className="py-2">
           <div className="flex items-center gap-2">
             <span className="min-w-0 flex-1 truncate text-sm">
               <span className="font-semibold">{item.surface}</span>

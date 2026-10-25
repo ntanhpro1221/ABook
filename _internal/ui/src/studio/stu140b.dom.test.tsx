@@ -106,7 +106,7 @@ it("hàng đợi nói còn mấy việc trước, không nói 'thứ N'", () => 
 it("chi tiết dự án: giọng kể, model phân tích, ngày tạo - phần kỹ thuật không còn ở đầu trang", async () => {
   const detailed = book({ settings: { analyzer: "qwen3.5:9b", profileLabel: "Cân bằng" } as BookSummary["settings"], createdAt: 1_790_000_000 } as unknown as Partial<BookSummary>);
   const lines = projectDetails(detailed);
-  expect(lines.some((line) => /qwen|9b/i.test(line))).toBe(true);
+  expect(lines.some((line) => /qwen|9b/i.test(line))).toBe(false);
   expect(lines).toContain("Cân bằng");
   await draw(<ProjectInfoDialog book={detailed} open onOpenChange={() => undefined} />);
   expect(document.body.textContent).toContain("Chi tiết dự án");

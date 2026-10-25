@@ -131,7 +131,7 @@ function SpokenEditor({
   };
   return (
     <form
-      className="mt-2 rounded-lg border border-line bg-panel p-2.5"
+      className="mt-2 py-2.5"
       onSubmit={(event) => {
         event.preventDefault();
         void save([item]);
@@ -483,7 +483,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         </div>
       )}
       {data.redoChapters.length > 0 && (
-        <div className="mt-3 rounded-xl bg-danger-soft px-4 py-2.5 text-sm text-danger">
+        <div className="mt-3 py-2.5 text-sm text-danger">
           <p>{data.redoChapters.length} chương chờ thu lại; sửa chữ ở Kịch bản.</p>
           <MoreInfo>Chạy tiếp hoặc Áp dụng thay đổi để thu lại.</MoreInfo>
         </div>

@@ -21,6 +21,10 @@ beforeEach(()=>{
 afterEach(()=>vi.useRealTimers());
 function buttons(){let tree:any;function Probe(){tree=MorningRecap({});return null;}renderToString(<Probe/>);return nodes(tree,n=>n.type==='button');}
 function choices(){return buttons().map(n=>n.props.children).filter(x=>typeof x==='object'&&Array.isArray(x)).flat().filter(x=>typeof x==='string'&&x.startsWith('Câu '));}
+it('nhắc nghe nằm trên nền trang, không khung hay bóng',()=>{
+  let tree:any;function Probe(){tree=MorningRecap({});return null;}renderToString(<Probe/>);
+  expect(tree.props.className).not.toMatch(/\bborder\b|bg-panel|shadow-card/);
+});
 it('qua ranh giới chương: đủ câu đề xuất, cuối chương trước và đầu chương sau',()=>{
   expect(choices()).toContain('Câu 10 chương 1');
   expect(choices()).toContain('Câu 30 chương 1');

@@ -112,6 +112,20 @@ it("bộ phân tích đến muộn và đổi lựa chọn dùng cùng vùng chu
   await draw(<AnalysisModelPicker value="other" onChange={vi.fn()} />); animated(region);
 });
 
+it("bộ phân tích chỉ hiện nhãn dễ đọc, giữ khoá trong giá trị gửi máy chủ", async () => {
+  client.setQueryData(["analysis-models"], { default: "base", models: [{ name: "qwen3.5:9b", size: 5e9, parameters: "9b" }], reachable: true });
+  const change = vi.fn();
+  await draw(<AnalysisModelPicker value="qwen3.5:9b" onChange={change} />); await finish();
+  expect(host.textContent).not.toMatch(/qwen|9b|Tên kỹ thuật/);
+  expect(host.textContent).toContain("9 tỉ tham số");
+  expect(host.querySelector<HTMLSelectElement>('select')?.value).toBe("qwen3.5:9b");
+  await act(() => {
+    const select = host.querySelector<HTMLSelectElement>('select')!;
+    select.value = ""; select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  expect(change).toHaveBeenCalledWith("");
+});
+
 it("công tắc tự kể xuất hiện sau query và fade lời hướng dẫn khi mode đổi", async () => {
   client.setQueryData(["narrator-mode", "b"], { available: false });
   await draw(<TellerModeSwitch book={book} />); const region = host.firstElementChild;

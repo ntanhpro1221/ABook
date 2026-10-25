@@ -914,8 +914,8 @@ function Card({ bookId, item, onOpenReview, onOpenScript, onOpenNames, onPickVoi
       tabIndex={-1}
       aria-labelledby={exiting ? undefined : `work-${item.key}-title`}
       aria-current={active ? "true" : undefined}
-      // Hàng, không thẻ viền: vạch chia mảnh giữa các việc (rows-inset của danh sách); việc đang chọn (J / K) nền nhạt như dòng đang chọn ở Kịch bản.
-      className={cn("scroll-mt-24 rounded-lg px-3 py-4 transition-colors duration-motion-fast", active && "bg-hover")}
+      // Việc đang duyệt nổi ở tên; không thêm mặt thẻ cho từng hàng.
+      className={cn("scroll-mt-24 px-3 py-4 transition-colors duration-motion-fast", active && "[&_h3]:text-accent-text")}
     >
       <MotionRegion>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -1249,7 +1249,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
         {inboxLead(book)}
       </p>
       {atReview > 0 && (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/30 px-4 py-3 text-sm">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
           <span className="min-w-0 text-pretty">
             {atReview} việc của các chương đầu đang chờ ở “Duyệt trước khi thu”.
           </span>

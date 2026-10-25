@@ -189,7 +189,7 @@ function StartError({ book }: { book: BookSummary }) {
   const start = useStart();
   if (!book.startError) return null;
   return (
-    <div role="alert" className="mt-3 flex flex-wrap items-start gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
+    <div role="alert" className="mt-3 flex flex-wrap items-start gap-2 py-3 text-sm text-danger">
       <CircleAlert className="mt-line-icon size-4 shrink-0" />
       <span className="min-w-0 flex-1">Không khởi động được: {book.startError}</span>
       {!book.starting && !book.running && (
@@ -206,7 +206,7 @@ function LastError({ raw, redo = false }: { raw: string; redo?: boolean }) {
   const studio = useAppInfo().data?.studio;
   const shown = friendlyError(raw, Boolean(studio), redo, Boolean(studio?.damagedSteps?.includes("llm")));
   return (
-    <div className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
+    <div className="mt-3 flex gap-2 py-3 text-sm text-danger">
       <CircleAlert className="mt-line-icon size-4 shrink-0" />
       <div className="min-w-0">
         <p>
@@ -236,7 +236,7 @@ export function RunEnd({ end, redo }: { end: NonNullable<BookSummary["runEnd"]>;
         ? "Lần chạy trước dừng vì sự cố."
         : shown.summary;
   return (
-    <MotionRegion as="div" role="alert" className="mt-3 flex gap-2 rounded-xl bg-danger-soft px-4 py-3 text-sm text-danger">
+    <MotionRegion as="div" role="alert" className="mt-3 flex gap-2 py-3 text-sm text-danger">
       <CircleAlert className="mt-line-icon size-4 shrink-0" />
       <div className="min-w-0">
         <p>
@@ -306,7 +306,7 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
   return (
     <MotionRegion as="section" className="mt-6">
       {live && book.logLost && (
-        <p role="status" className="mb-3 flex gap-2 rounded-xl bg-warning-soft px-4 py-2 text-sm text-warning">
+        <p role="status" className="mb-3 flex gap-2 py-2 text-sm text-warning">
           <CircleAlert className="mt-line-icon size-4 shrink-0" />
           <span>
             Sách vẫn đang chạy bình thường, nhưng nhật ký làm sách không ghi được ({book.logLost.lines} dòng đã bỏ) - thường do phần mềm diệt virus,
@@ -314,7 +314,7 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
           </span>
         </p>
       )}
-      <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={stepSummary} heading="h3" flat>
+      <Fold storageKey={`project.${book.id}.steps`} title="Các bước" summary={stepSummary} heading="h3">
       <div className="flex flex-col gap-6 sm:flex-row sm:gap-8">
         <Step
           index={1}
@@ -371,7 +371,7 @@ function ResumeAnalysisDialog({ book, open, onOpenChange, onRedo, onResume }: {
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange} title="Tiếp tục phân tích?">
-      <div className="mb-5 flex gap-3 rounded-xl bg-warning-soft p-4 text-sm leading-relaxed text-fg">
+      <div className="mb-5 flex gap-3 py-4 text-sm leading-relaxed text-fg">
         <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
         <div className="text-pretty">
           <p>
@@ -433,7 +433,7 @@ function StopDialog({ book, open, onOpenChange }: { book: BookSummary; open: boo
     >
       <MotionRegion>
       {inAnalysis && (
-        <div className="mb-5 flex gap-3 rounded-xl bg-warning-soft p-4 text-sm leading-relaxed text-fg">
+        <div className="mb-5 flex gap-3 py-4 text-sm leading-relaxed text-fg">
           <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" />
           <div className="text-pretty">
             <p>
@@ -587,7 +587,7 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
     >
       <MotionRegion>
       {/* Studio từ xa không nhận đường dẫn trên máy tính (soát a27 lỗi 10). */}
-      {book.path && <p className="break-all rounded-lg bg-panel-2 px-3 py-2 text-xs text-fg-2">{book.path}</p>}
+      {book.path && <p className="break-all py-2 text-xs text-fg-2">{book.path}</p>}
       {busy && <p className="mt-3 text-sm text-warning">Sách đang chạy - dừng sách trước rồi mới xoá được.</p>}
 
       </MotionRegion>
@@ -1071,8 +1071,8 @@ export function ChapterList({ book, chapters }: { book: BookSummary; chapters: C
     // Phẳng ngay dưới tab "Chương" - không gấp trong một khung "Danh sách chương" lặp lại tên tab (như trang sách, soát 24-10).
     // Lề âm bù đệm của dòng; số chương căn trái trong ô rộng đúng số chữ số của chương cuối (nút phát lùi 9 px), "…" bù nửa nền thừa: cột
     // đầu và cột cuối thẳng mép nội dung như tab phía trên (soát 24-10). Căn giữa thì "10" lấn 3,5 px ra ngoài mép mà "1" thì không (25-10).
-    <div className="-mx-2 mt-2">
-    <div ref={table} role="table" aria-label="Danh sách chương" aria-rowcount={chapters.length + 1}
+    <div data-list-edges="studio-chapters" className="mt-2">
+    <div ref={table} role="table" className="-mx-2" aria-label="Danh sách chương" aria-rowcount={chapters.length + 1}
       style={{ "--chapter-number": `${String(chapters.length).length}ch` } as CSSProperties}>
       <div
         role="row"
@@ -1159,7 +1159,7 @@ function ActivityView({ book }: { book: BookSummary }) {
           Diễn biến sẽ hiện ở đây khi sách bắt đầu chạy.
         </EmptyState>
       ) : mode === "technical" ? (
-        <div className="mt-4 max-h-[560px] overflow-auto rounded-xl border border-line bg-sunken p-3 font-mono text-[0.75rem] leading-relaxed">
+        <div className="mt-4 max-h-[560px] overflow-auto py-3 font-mono text-[0.75rem] leading-relaxed">
           <LogRows items={data ?? []}>
             {(item) => (
               <div className="flex gap-3 whitespace-pre-wrap break-words">
@@ -1393,7 +1393,7 @@ export function ProjectScreen() {
       {/* Nút ← chung của màn con (ScreenHeader) đứng riêng một hàng: tên dự án nằm cạnh bìa bên dưới. */}
       <ScreenHeader back={{ label: "Về Studio", onClick: () => navigate("/studio") }} />
       {failure === "stale" && !isListenOnly(error) && (
-        <div role="status" className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm">
+        <div role="status" className="mt-4 flex flex-wrap items-center gap-2 py-3 text-sm">
           <CircleAlert className="size-4 shrink-0 text-warning" />
           <span className="min-w-0 flex-1 text-pretty">
             {isOffline(error) ? "Mất kết nối tới ABook, đang thử lại…" : `Chưa tải lại được sách: ${failureText(error)} Đang thử lại…`}
@@ -1429,7 +1429,7 @@ export function ProjectScreen() {
       )}
 
       {sideError && failure !== "stale" && (
-        <div role="status" className="mt-4 flex gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm">
+        <div role="status" className="mt-4 flex gap-2 py-3 text-sm">
           <CircleAlert className="mt-line-icon size-4 shrink-0 text-warning" />
           <span className="text-pretty">
             Chưa tải được {sideError}; tự thử lại, hoặc làm mới trang.

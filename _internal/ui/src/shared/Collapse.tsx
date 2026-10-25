@@ -110,7 +110,6 @@ export function Fold({
   heading = "h2",
   className,
   bodyClassName,
-  flat,
   onOpened,
   children,
 }: {
@@ -122,8 +121,6 @@ export function Fold({
   heading?: "h2" | "h3";
   className?: string;
   bodyClassName?: string;
-  /** Không khung: đầu mục và nội dung thẳng mép nội dung của trang (mục nằm trong một tab đã phẳng - không khung lồng khung). */
-  flat?: boolean;
   onOpened?: (element: HTMLElement) => void;
   children: ReactNode;
 }) {
@@ -131,11 +128,11 @@ export function Fold({
   const id = useId();
   const Heading = heading;
   return (
-    <section className={cn("min-w-0", !flat && "rounded-2xl border border-line bg-panel", className)}>
+    <section className={cn("min-w-0", className)}>
       <Heading className="m-0">
-        <DisclosureRow title={title} summary={summary} icon={icon} expanded={open} controls={id} onClick={() => setOpen(!open)} className={flat ? undefined : "px-4"} />
+        <DisclosureRow title={title} summary={summary} icon={icon} expanded={open} controls={id} onClick={() => setOpen(!open)} />
       </Heading>
-      <Collapse open={open} onOpened={onOpened} id={id} className={cn(flat ? "pb-2" : "px-4 pb-4", bodyClassName)}>
+      <Collapse open={open} onOpened={onOpened} id={id} className={cn("pb-2", bodyClassName)}>
         {children}
       </Collapse>
     </section>
