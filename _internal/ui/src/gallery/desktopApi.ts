@@ -326,6 +326,9 @@ const ROUTES: [string, RegExp, Handler][] = [
   ["GET", /^\/api\/books\/([^/]+)\/(bookfile|m4b|mp3|projectfile)-job$/, () => ({ state: "idle" })],
   ["GET", /^\/api\/listen\/books\/([^/]+)\/audiobook$/, () => ({ state: "idle" })],
   ["GET", /^\/api\/music\/playlists$/, () => ({ playlists: [], mine: 0, error: "" })],
+  // Hộp chọn của cửa sổ app (Tauri): trả một file / thư mục tự đặt, hay không gì khi kịch bản là bạn huỷ.
+  ["POST", /^\/api\/dialog\/files$/, () => ({ paths: galleryState.scenario.pickCancelled ? [] : ["D:/Truyện/Tiệm sách trên gác xép.epub"] })],
+  ["POST", /^\/api\/dialog\/folder$/, () => ({ path: galleryState.scenario.pickCancelled ? null : "D:/Truyện/Tiệm sách trên gác xép" })],
   ["POST", /^\/api\/listen\/import\/preview$/, () => importPreview()],
   ["POST", /^\/api\/listen\/import$/, () => ({ id: "gac-xep", how: "new", chapters: 7 })],
   // Cài đặt.

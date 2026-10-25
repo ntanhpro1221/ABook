@@ -119,14 +119,10 @@ const PHONE: Omit<Entry, "platform">[] = [
   } },
   { id: "phone/reader", group: "Đọc theo", title: "Đọc theo chương đang nghe", route: "/book/suong-mu-2/read/4" },
   { id: "phone/reader-text", group: "Đọc theo", title: "Chế độ đọc sách chữ", route: "/book/gac-xep/read/2" },
-  { id: "phone/add-book-1", group: "Thêm sách", title: "Thêm sách · bước 1: chọn file", route: "/", act: () => click("Thêm sách").then(() => undefined) },
-  { id: "phone/add-book-2", group: "Thêm sách", title: "Thêm sách · bước 2: xem trước", route: "/", act: async () => {
+  { id: "phone/add-book-1", group: "Thêm sách", title: "Thêm sách · huỷ bộ chọn", route: "/", scenario: { pickCancelled: true }, act: () => click("Thêm sách").then(() => undefined) },
+  { id: "phone/add-book-2", group: "Thêm sách", title: "Thêm sách · xem trước", route: "/", act: () => click("Thêm sách").then(() => undefined) },
+  { id: "phone/add-book-3", group: "Thêm sách", title: "Thêm sách · đã thêm (toast)", route: "/", act: async () => {
     await click("Thêm sách");
-    await click(/^Chọn file/);
-  } },
-  { id: "phone/add-book-3", group: "Thêm sách", title: "Thêm sách · bước 3: đã thêm (toast)", route: "/", act: async () => {
-    await click("Thêm sách");
-    await click(/^Chọn file/);
     await click("Thêm vào thư viện");
   } },
   { id: "phone/devices", group: "Cài đặt", title: "Thiết bị (đã ghép)", route: "/settings/devices" },
@@ -195,16 +191,10 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   } },
   { id: "desktop/reader", group: "Đọc theo", title: "Đọc theo chương đang nghe", route: "/book/suong-mu-2/read/4" },
   { id: "desktop/reader-text", group: "Đọc theo", title: "Chế độ đọc sách chữ", route: "/book/gac-xep/read/2" },
-  { id: "desktop/add-book-1", group: "Thêm sách", title: "Thêm sách · bước 1: chọn file", route: "/", act: () => click("Thêm sách").then(() => undefined) },
-  { id: "desktop/add-book-2", group: "Thêm sách", title: "Thêm sách · bước 2: xem trước", route: "/", act: async () => {
+  { id: "desktop/add-book-1", group: "Thêm sách", title: "Thêm sách · huỷ bộ chọn", route: "/", scenario: { pickCancelled: true }, act: () => click("Thêm sách").then(() => undefined) },
+  { id: "desktop/add-book-2", group: "Thêm sách", title: "Thêm sách · xem trước", route: "/", act: () => click("Thêm sách").then(() => undefined) },
+  { id: "desktop/add-book-3", group: "Thêm sách", title: "Thêm sách · đã thêm (toast)", route: "/", act: async () => {
     await click("Thêm sách");
-    await type("Đường dẫn file hay thư mục", "D:/Truyện/Tiệm sách trên gác xép.epub");
-    await click("Mở");
-  } },
-  { id: "desktop/add-book-3", group: "Thêm sách", title: "Thêm sách · bước 3: đã thêm (toast)", route: "/", act: async () => {
-    await click("Thêm sách");
-    await type("Đường dẫn file hay thư mục", "D:/Truyện/Tiệm sách trên gác xép.epub");
-    await click("Mở");
     await click("Thêm vào thư viện");
   } },
   { id: "desktop/settings", group: "Cài đặt", title: "Cài đặt (gốc)", route: "/settings" },

@@ -7,6 +7,10 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+
+- Thêm sách và Dự án mới mở thẳng hộp chọn file, bớt một chạm; huỷ hộp chọn thì vẫn còn chọn thư mục, dán đường dẫn hay kéo thả.
+
 ## [0.4.145] - 2026-10-26
 
 ### Điện thoại

@@ -25,7 +25,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router";
 import { toast, toastDone } from "@/shared/toast";
 import { Switch } from "@/desktop/PhoneSync";
 import { useClip } from "@/listen/clip";
@@ -213,6 +213,9 @@ function cleanPath(value: string): string {
 
 // ---- Nguồn -----------------------------------------------------------------------------------------------------
 
+/** Mở trình tạo sách từ nút "Dự án mới" / "Tạo sách nói": trang mở luôn hộp chọn file (SourceStep). */
+export const PICK_SOURCE = { state: { pick: true } };
+
 export function SourceStep({
   scan,
   title,
@@ -336,6 +339,18 @@ export function SourceStep({
     if (chosen.length) (append ? onAddFiles : onPaths)(chosen);
   };
   const files = scan?.files ?? [];
+  // DESIGN.md §2 L10 (Studio -> Dự án mới -> chọn file -> Bắt đầu, ≤ 3 chạm): tới từ nút "Dự án mới" thì mở luôn hộp chọn file của app - thư
+  // mục, dán đường dẫn, kéo thả vẫn nằm ngay trang này khi bạn huỷ. Một lần: xoá dấu khỏi lịch sử để Back / tải lại không mở lại hộp.
+  const location = useLocation();
+  const navigate = useNavigate();
+  const pickOnOpen = (location.state as { pick?: boolean } | null)?.pick === true;
+  const pickedOnOpen = useRef(false);
+  useEffect(() => {
+    if (!pickOnOpen || !info || pickedOnOpen.current) return;
+    pickedOnOpen.current = true;
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+    if (info.dialogs && !files.length) void chooseFiles(false);
+  }, [pickOnOpen, info]); // eslint-disable-line react-hooks/exhaustive-deps
   // Cửa sổ app: vỏ Tauri nuốt sự kiện thả của HTML5 và phát `abook-drag` kèm đường dẫn thật (như Thư viện) - nghe nó để khung nét đứt nhận file.
   const dropTarget = useRef({ files: files.length, onPaths, onAddFiles });
   dropTarget.current = { files: files.length, onPaths, onAddFiles };
