@@ -163,7 +163,8 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       if (/flex/.test(ps.display) && !ps.flexDirection.startsWith("column") || /grid/.test(ps.display) && ps.gridTemplateColumns.split(" ").length > 1) continue;
       for (const side of ["left", "right"]) {
         if (foundSides.has(side) || !aligned(el, side, current.parentElement)) continue;
-        const refs = inkTexts.filter((t) => !t.control && parent.contains(t.element) && branch(t.element, parent) !== current && aligned(t.element, side, parent))
+        // Mép phải: nút chữ cuối hàng của các hàng khác cũng là mốc - một cột chỉ có nút ở mép phải (Cài đặt > Nâng cao) vẫn có mép chung.
+        const refs = inkTexts.filter((t) => (!t.control || side === "right" && t.control !== el) && parent.contains(t.element) && branch(t.element, parent) !== current && aligned(t.element, side, parent))
           .filter((t) => side === "left" || t.singleLine)
           .map((t) => ({ ...t, value: side === "left" ? t.first.x : right(t.last), branch: branch(t.element, parent) }));
         // Mốc cùng cạnh của flow; không so nút ở giữa với cột bên cạnh.
@@ -628,6 +629,19 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     if (w <= 8 || hgt <= 8) continue;
     add("STACKED LAYERS", b.el, `${a.el.getAttribute("aria-label") || a.el.textContent?.slice(0, 40) || a.role} ↔ ${b.el.getAttribute("aria-label") || b.el.textContent?.slice(0, 40) || b.role}`,
       [a.box, b.box], { metric: dialogs ? "dialog-over-dialog" : "layer-over-menu", value: Math.min(w, hgt), otherSelector: selector(a.el), reason: "one floating layer is drawn over another instead of replacing it or opening beside it" });
+  }
+  // Mục điều hướng đang mở (aria-current="page"): nền trung tính + chữ đậm màu thường (DESIGN 6 "Điều hướng"). Chữ hổ phách dành cho
+  // lựa chọn trong danh sách chọn; ở điều hướng nó đọc như một lựa chọn đã bấm (thanh bên, danh sách nhóm Cài đặt - soát 25-10).
+  for (const el of all.filter((e) => e.matches('[aria-current="page"]') && shownChain(e))) {
+    const probe = document.createElement("span");
+    probe.style.color = "var(--accent-text)";
+    el.append(probe);
+    const accent = css(probe).color;
+    probe.remove();
+    if (!getComputedStyle(el).getPropertyValue("--accent-text").trim()) continue;
+    const hit = inkTexts.find((t) => el.contains(t.element) && css(t.element).color === accent);
+    if (hit) add("NAV ACCENT", el, el.textContent, [rect(el.getBoundingClientRect()), hit.ink],
+      { metric: "nav-current-accent", reason: "current navigation item uses the accent text colour reserved for picked choices" });
   }
   // Khung có header trang + các section là cùng một họ nội dung. Dialog và trang đang cuộn không so với trang gốc.
   let firstBlock = null;
