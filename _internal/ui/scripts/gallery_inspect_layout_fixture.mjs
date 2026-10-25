@@ -12,7 +12,7 @@ export async function layoutFixtures({ browser: executable, out, fixture = "ink-
     cdp = await connect(browser.endpoint);
     for (const phone of [false, true]) for (const theme of ["light", "dark"]) {
       // Cao hơn màn thật: bộ mẫu dài, mẫu nằm dưới mép khung nhìn thì bị coi là không thấy và không được đo.
-      const viewport = { width: phone ? 412 : 1440, height: 1600, deviceScale: phone ? 2 : 1 };
+      const viewport = { width: phone ? 412 : 1440, height: 2400, deviceScale: phone ? 2 : 1 };
       const page = await openPage(cdp, { ...viewport, scale: viewport.deviceScale, mobile: phone, theme });
       const { frameTree } = await cdp.send("Page.getFrameTree", {}, page.sessionId);
       const html = readFileSync(new URL(`./fixtures/${fixture}`, import.meta.url), "utf8")

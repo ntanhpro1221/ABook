@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { beforeAll, describe, expect, it } from "vitest";
-import { createLayoutHelpers, crossFrameRhythm } from "./gallery_inspect_layout.mjs";
+import { createLayoutHelpers, crossFrameRhythm, crossFrameTitles } from "./gallery_inspect_layout.mjs";
 import { layoutFixtures } from "./gallery_inspect_layout_fixture.mjs";
 import { browserAvailable } from "./gallery_browser.mjs";
 import { normalizeRule } from "./gallery_inspect.mjs";
@@ -17,6 +17,23 @@ describe("đa số và nhịp giữa frame", () => {
     const frame = (id, y, extra = {}) => ({ id, platform: "phone", theme: "light", group: "Cài đặt", layout: { firstBlock: { family: "settings-block", rect: { x: 20, y, width: 372, height: 100 }, selector: "section", context: [], text: "Nhóm", crop: `${id}.png` } }, ...extra });
     const result = crossFrameRhythm([frame("a", 95), frame("b", 95), frame("c", 96), frame("d", 103), frame("e", 120, { theme: "dark" }), frame("f", 99, { platform: "desktop" }), frame("g", 40, { group: "Studio" })]);
     expect(result).toHaveLength(1); expect(result[0]).toMatchObject({ story: "d", value: 103, referenceValue: 95, delta: 8, crop: "d.png", referenceCrop: "a.png" });
+  });
+});
+
+describe("chân chữ tiêu đề màn giữa frame", () => {
+  const frame = (id, baseline, extra = {}) => ({ id, platform: "phone", theme: "light", group: "Thư viện", layout: { screenTitle: { baseline, kind: "root", selector: "h1", rect: { x: 20, y: baseline - 24, width: 120, height: 32 }, context: [], text: id, crop: `${id}.png` } }, ...extra });
+  it("so mọi màn cùng platform và theme, không theo nhóm gallery; dung sai 1 px", () => {
+    const result = crossFrameTitles([frame("library", 45), frame("library-search", 45), frame("studio", 46, { group: "Studio" }), frame("settings", 40, { group: "Cài đặt" }),
+      frame("dark", 54, { theme: "dark" }), frame("desktop", 64, { platform: "desktop" }), frame("broken", 30, { error: "x" })]);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({ rule: "RHYTHM", metric: "screen-title-baseline", story: "settings", value: 40, referenceValue: 45, delta: -5, crop: "settings.png", referenceCrop: "library.png" });
+  });
+  it("không có đa số thì lấy trung vị làm mốc: ba màn gốc ba chân chữ đều bị bắt", () => {
+    const result = crossFrameTitles([frame("library", 54, { group: "Thư viện" }), frame("studio", 46, { group: "Studio" }), frame("settings", 40, { group: "Cài đặt" })]);
+    expect(result.map((f) => [f.story, f.referenceStory])).toEqual([["library", "studio"], ["settings", "studio"]]);
+  });
+  it("một khung thì không có gì để so", () => {
+    expect(crossFrameTitles([frame("library", 54)])).toEqual([]);
   });
 });
 
@@ -103,6 +120,14 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       const repeated = (id) => result.findings.filter((f) => f.rule === "REPEATED LABEL" && f.selector.startsWith(`#${id} >`));
       expect(repeated("tabs")).toHaveLength(1);
       expect(repeated("tabs-pass")).toHaveLength(0);
+    }
+  });
+  it("tiêu đề màn: bỏ h1 trong nội dung, đo chân chữ của h1 đầu màn tính từ mép trên main (dải phía trên không tính)", () => {
+    for (const result of results) {
+      const title = result.layout.screenTitle;
+      expect(title).toMatchObject({ text: "Thư viện", kind: "unmarked", fontSize: "24px", frameTop: 24 });
+      // Arial / Liberation Sans 24/32: nửa khoảng dòng 2,6 + ascent 21,7 dưới mép trên dòng (đệm trên 12).
+      expect(Math.abs(title.baseline - (title.rect.y - title.frameTop + 12 + 24.3))).toBeLessThan(1.5);
     }
   });
   it("thẻ có viền tạo cột riêng; nút giữa toàn hàng không phải cạnh cột", () => {

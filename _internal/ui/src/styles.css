@@ -590,6 +590,27 @@ select[class~="border-line"] {
   }
 }
 
+/* Nút ← của đầu màn (shared/ScreenHeader): ô 40 px (chuột) / 48 px (chạm), mũi tên 20 px. Lùi trái đúng --back-lead (mép ô -> nét ArrowLeft, mực
+   cách mép glyph 4/24) cho NÉT mũi tên thẳng mép nội dung, ô tràn vào lề màn; lùi phải phần ô sau nét trừ 8 px: tiêu đề sát sau nét mũi tên
+   (soát 25-10: mũi tên x=22, tiêu đề x=51 trong khi lề 20). Chuột: mũi tên giữa ô. Chạm: ô chỉ tràn 16 px vào lề 20 - còn 4 px cho vòng tiêu điểm
+   (2 + 2) không bị mép khung cuộn cắt -, mũi tên lệch trái trong ô. Ô không cao hơn hàng tiêu đề (48 / 40) nên không đẩy chân chữ. */
+@utility back-button {
+  --back-box: 40px;
+  --back-lead: calc((var(--back-box) - 20px) / 2 + 20px * 4 / 24);
+  display: flex;
+  flex: none;
+  align-items: center;
+  width: var(--back-box);
+  height: var(--back-box);
+  padding-inline-start: calc(var(--back-lead) - 20px * 4 / 24);
+  margin-inline-start: calc(var(--back-lead) * -1);
+  margin-inline-end: calc(var(--back-lead) + 20px * 16 / 24 - var(--back-box) + 8px);
+  @media (pointer: coarse), (max-width: 40rem) {
+    --back-box: 48px;
+    --back-lead: 16px;
+  }
+}
+
 /* Mặt đọc theo (DESIGN 5.1; Cài đặt > Giao diện > "Nền đọc", shared/readingSurface.ts đặt data-surface lên <html>): Giấy / Ngà / Đêm, hay
    Tự động = Giấy ở giao diện sáng, Đêm ở giao diện tối. Chỉ vùng chữ đọc theo đổi nền; chữ, chữ phụ, chữ nhấn, màu nhấn, vòng tiêu điểm và
    lớp tô câu / chữ đang đọc trong vùng ấy theo MẶT ĐỌC chứ không theo giao diện của app (Đêm trong app sáng vẫn là chữ sáng trên nền tối với
@@ -992,7 +1013,8 @@ select[class~="border-line"] {
    yên nhờ bù lại bên phải. Glyph hẹp (+, ←) vì thế lùi vào trong ô thay vì dạt xa chữ. */
 [role="menuitem"] > svg:first-child,
 [data-player-menu-row] > svg:first-child,
-[data-player-menu-row] > span:first-child > svg:first-child {
+[data-player-menu-row] > span:first-child > svg:first-child,
+[data-recap-marker] > svg:first-child {
   --icon-w: 14px;
   margin-inline-start: calc(var(--icon-w) * (var(--ink-r, 1) - 1) / 24);
   margin-inline-end: calc(var(--icon-w) * (1 - var(--ink-r, 1)) / 24);

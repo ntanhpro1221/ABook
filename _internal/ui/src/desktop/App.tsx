@@ -571,8 +571,10 @@ export function App() {
     [info?.remote, info?.dialogs],
   );
   if (!info && error && currentPeer()) return <MotionRegion motionKey="peer-error"><PeerTrouble error={error} retry={retry} /></MotionRegion>;
-  if (!info && error) return <MotionRegion motionKey="app-error" className="p-10"><OfflineStrip /><InlineError message="Bạn hãy mở lại ABook rồi thử kết nối lại." onRetry={retry} /></MotionRegion>;
-  if (info && !info.remote && !voiceReady && preferencesError) return <MotionRegion motionKey="preferences-error" className="p-10"><InlineError message="Bạn hãy thử tải lại cài đặt giọng đọc." onRetry={() => void reloadPreferences()} /></MotionRegion>;
+  // Màn lỗi trước khi có app: dải mất mạng tràn cả bề ngang (không nằm trong lề), lời lỗi thẳng lề màn (page-x 20 / 40) - p-10 cũ là 35 px
+  // vì thang khoảng cách 3,5 px, dải mạng thụt vào trong lề (soát 25-10).
+  if (!info && error) return <MotionRegion motionKey="app-error"><OfflineStrip /><InlineError message="Bạn hãy mở lại ABook rồi thử kết nối lại." onRetry={retry} className="page-x py-[32px]" /></MotionRegion>;
+  if (info && !info.remote && !voiceReady && preferencesError) return <MotionRegion motionKey="preferences-error"><InlineError message="Bạn hãy thử tải lại cài đặt giọng đọc." onRetry={() => void reloadPreferences()} className="page-x py-[32px]" /></MotionRegion>;
   if (!info || (!info.remote && !voiceReady)) return <MotionRegion motionKey="loading" className="h-full"><OfflineStrip /><div className="flex h-full gap-10 p-10"><ContentSkeleton count={3} className="hidden w-44 md:block" label="Đang tải điều hướng" /><ContentSkeleton shape="covers" count={5} className="flex-1 self-start" label="Đang mở ABook" /></div></MotionRegion>;
   return (
     <MotionRegion motionKey="ready" className="h-full" fadeThrough><TooltipProvider delayDuration={350} skipDelayDuration={150}>

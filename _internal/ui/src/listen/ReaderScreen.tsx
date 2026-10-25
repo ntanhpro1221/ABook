@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import * as Popover from "@radix-ui/react-popover";
-import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
+import { ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import { toast } from "@/shared/toast";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
@@ -11,6 +11,7 @@ import { useMediaQuery } from "@/shared/media";
 import { usePageTitle } from "@/shared/title";
 import { useLayoutChangeFade } from "@/shared/motion";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
+import { BackButton } from "@/shared/ScreenHeader";
 import { FindInBook } from "./FindInBook";
 import { chapterToFollow, firstVisibleIndex, SCROLL_KEYS } from "./follow";
 import { chapterOpenProblem, readerHint } from "./labels";
@@ -401,9 +402,9 @@ export function ReaderScreen(edit: SentenceEditing) {
   return (
     <div className="motion-reveal flex h-full flex-col">
       {/* Thanh đầu chỉ có nút về + tên chương, nền đặc, đứng NGOÀI khung cuộn: không bao giờ đè lên chữ. Mọi điều khiển khác ở thanh dưới. */}
-      <header ref={header} data-reader-header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-line bg-bg page-x">
-        {/* Nét mũi tên (không phải hộp nút) đứng trên lề màn như mép chữ bên dưới: bù phần đệm của nút 36 / 48 px (soát 25-10: lệch 7,5 px). */}
-        <IconButton label="Về trang sách" icon={ArrowLeft} onClick={() => navigate(`/book/${id}`)} className={cn(TOUCH, "-ml-[10px] max-sm:-ml-[18px]")} />
+      <header ref={header} data-reader-header className="sticky top-0 z-10 flex h-14 shrink-0 items-center border-b border-line bg-bg page-x">
+        {/* Cùng nút ← với mọi màn con (ScreenHeader): nét mũi tên đứng trên lề màn như mép chữ bên dưới, tên chương sát sau. */}
+        <BackButton label="Về trang sách" onClick={() => navigate(`/book/${id}`)} />
         <h2 className="min-w-0 flex-1 truncate text-base font-semibold" title={chapter.subtitle ? `${chapter.title} · ${name}` : name}>
           <MotionRegion as="span" motionKey={chapterId} className="block truncate">{name}</MotionRegion>
         </h2>

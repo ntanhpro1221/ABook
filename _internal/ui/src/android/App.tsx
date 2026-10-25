@@ -190,7 +190,7 @@ function EmptyLibrary() {
     <EmptyState
       icon={Headphones} // như máy tính: biểu tượng nói "nghe", không phải "tải xuống" (việc ở đây là thêm file - soát 24-10 T05)
       title="Chưa có sách trên máy"
-      className="mt-10"
+      className="mt-12" // cùng khoảng dưới đầu màn với mọi màn trống (máy tính, Studio)
       action={
         <div className="flex flex-col items-center gap-2">
           {/* Người mới thường có sẵn một file truyện mà chưa có ABook trên máy tính: nghe ngay là việc chính (soát UX a7, như máy tính). */}

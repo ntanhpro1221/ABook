@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { FolderOpen, History, MoreHorizontal, Plus, RotateCw } from "lucide-react";
+import { Clapperboard, FolderOpen, History, MoreHorizontal, Plus, RotateCw } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
@@ -11,7 +11,8 @@ import { cn } from "@/shared/cn";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { RowBoundary } from "@/shared/RowBoundary";
 import { etaOf, formatPercent, formatRelative } from "@/shared/format";
-import { Button, Dialog, failedEmpty, IconButton, LoadError, Progress, Skeleton, StatusPill } from "@/shared/ui";
+import { Button, Dialog, EmptyState, failedEmpty, IconButton, LoadError, Progress, Skeleton, StatusPill } from "@/shared/ui";
+import { ScreenHeader } from "@/shared/ScreenHeader";
 import { MissingLibrary } from "@/shared/MissingLibrary";
 import { api, type BookSummary } from "./api";
 import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook, useReveal } from "./data";
@@ -273,11 +274,11 @@ export function ProjectsScreen() {
   };
 
   return (
-    <MotionRegion as="div" className="page-x mx-auto max-w-[1180px] pb-16 pt-9">
+    <MotionRegion as="div" className="page-x mx-auto max-w-[1180px] pb-16">
       {/* Nút đầu trang cùng hàng (căn giữa) với tiêu đề, biểu tượng cuối thẳng mép phải bảng - như đầu trang Thư viện (soát 24-10). */}
-      <header>
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-          <h1 className="text-[1.75rem] font-bold tracking-tight md:text-[2rem]">Studio</h1>
+      <ScreenHeader
+        title="Studio"
+        actions={
           <div className={cn("-my-1 flex items-center gap-1", info?.dialogs ? "-mr-[6.75px] pointer-coarse:-mr-[15px] max-sm:-mr-[15px]" : "-mr-3.5")}>
             <MotionPresence open={!empty}>
               <Button variant="ghost" icon={Plus} onClick={() => navigate("/studio/new")}>
@@ -286,11 +287,10 @@ export function ProjectsScreen() {
             </MotionPresence>
             {info?.dialogs && <StudioMenu onOpenExisting={() => void openExisting()} />}
           </div>
-        </div>
-        <MotionRegion as="p" className="mt-1 text-sm text-fg-2">
-          {isLoading ? " " : books.length ? `${books.length} dự án` : "Chưa có dự án"}
-        </MotionRegion>
-      </header>
+        }
+        // Rỗng: lời giữa trang đã nói "Chưa có dự án" - dòng phụ giữ một dòng trống như Thư viện, không lặp lại (soát 25-10).
+        subtitle={books.length ? `${books.length} dự án` : "\u00a0"}
+      />
 
       <StudioSetupCard className="mt-8" />
 
@@ -308,14 +308,12 @@ export function ProjectsScreen() {
       ) : data?.rootMissing ? (
         <MissingLibrary root={data.root} className="mt-12" />
       ) : !books.length ? (
-        // Rỗng: một câu + một nút dẫn tới việc tạo (DESIGN.md mục 2), không khung, không minh hoạ.
-        <div className="motion-reveal mt-20 flex flex-col items-center text-center">
-          <p className="text-base font-medium">Chưa có dự án</p>
-          <p className="mt-1 text-sm text-fg-2">Biến một truyện thành sách nói nhiều giọng.</p>
-          <Button variant="primary" size="lg" icon={Plus} className="mt-6" onClick={() => navigate("/studio/new")}>
-            Dự án mới
-          </Button>
-        </div>
+        // Rỗng: một câu + một nút dẫn tới việc tạo (DESIGN.md mục 2), không khung.
+        // Cùng EmptyState và cùng khoảng cách dưới đầu màn với Thư viện trống (soát 25-10: hai màn trống hai kiểu, hai độ cao).
+        <EmptyState icon={Clapperboard} title="Chưa có dự án" className="mt-12"
+          action={<Button variant="primary" size="lg" icon={Plus} onClick={() => navigate("/studio/new")}>Dự án mới</Button>}>
+          Biến một truyện thành sách nói nhiều giọng.
+        </EmptyState>
       ) : (
         // Lề âm bù đệm của dòng: bìa thẳng mép tiêu đề, cột cuối thẳng mép phải; nền rê chuột và vạch kẻ tràn ra lề.
         <section className="-mx-3 mt-8" aria-label="Dự án">

@@ -1,10 +1,11 @@
 // Khung Cài đặt dùng chung hai nền (chủ app 23-10: "trong setting tôi như lạc vào một cái ma trận"): trang gốc là danh sách ngắn các nhóm
 // (biểu tượng + tên + một dòng giá trị hiện tại), mỗi nhóm một màn con `/settings/<nhóm>` - route thật nên Back của điện thoại, vuốt cạnh và
 // nút ← cùng về trang gốc. Không có cấp thứ ba. Cây nhóm và lý do: SETTINGS_MAP (a119).
-import { AudioLines, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clapperboard, Headphones, MonitorSmartphone, MoonStar, Palette, Wrench, type LucideIcon } from "lucide-react";
+import { AudioLines, ChevronDown, ChevronRight, CircleHelp, Clapperboard, Headphones, MonitorSmartphone, MoonStar, Palette, Wrench, type LucideIcon } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router";
 import { MotionRegion } from "./MotionRegion";
+import { ScreenHeader } from "./ScreenHeader";
 import { AnimatedRows } from "./MotionPresence";
 import { cn } from "./cn";
 import { Collapse, useFold } from "./Collapse";
@@ -83,20 +84,12 @@ export function useLeaveSettingsGroup(): () => void {
   };
 }
 
-/** Đầu màn con: nút ← và tên nhóm. `back={false}`: máy tính hai cột, danh sách nhóm đã ở bên trái. */
+/** Đầu màn con: nút ← và tên nhóm (ScreenHeader). `back={false}`: máy tính hai cột - danh sách nhóm đã ở bên trái, tên nhóm là tiêu đề của
+ *  cột phải (h2, cỡ 24), canh chân chữ với tiêu đề "Cài đặt" bên trái. */
 export function GroupHeader({ id, back = true }: { id: SettingsGroupId; back?: boolean }) {
   const leave = useLeaveSettingsGroup();
-  return (
-    <div className="flex items-center gap-1">
-      {/* Nét mũi tên thẳng mép nội dung: hộp 35 px (chuột) thì nét cách mép hộp 14,5 px, hộp chạm 48 px (touch-box) thì 21 px. */}
-      {back && (
-        <button type="button" onClick={leave} aria-label="Về Cài đặt" className="touch-box -ml-[14.5px] grid size-10 max-sm:-ml-6 pointer-coarse:-ml-6 place-items-center rounded-lg text-fg-2 hover:bg-hover">
-          <ChevronLeft className="size-5" />
-        </button>
-      )}
-      <h1 className="text-2xl font-bold tracking-tight">{groupLabel(id)}</h1>
-    </div>
-  );
+  if (!back) return <h2 className="text-2xl font-bold tracking-tight">{groupLabel(id)}</h2>;
+  return <ScreenHeader back={{ label: "Về Cài đặt", onClick: leave }} title={groupLabel(id)} />;
 }
 
 /** Khối phẳng trong màn con: khoảng trắng + tiêu đề nhỏ. `fold` (khoá nhớ): khối ít dùng trong một nhóm dài gập lại sau tiêu đề bấm được (a120 - chủ app: nhiều

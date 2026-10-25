@@ -8,6 +8,7 @@ import { Link, useParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { useMediaQuery } from "@/shared/media";
 import { Button, Dialog, Segmented, WRAP_LABEL } from "@/shared/ui";
+import { ScreenHeader } from "@/shared/ScreenHeader";
 import { GroupHeader, isSettingsGroup, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
 import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
@@ -542,8 +543,8 @@ export function SettingsScreen() {
     // canh theo chân chữ (canh đỉnh để chân chữ lệch 3 px).
     const shown = active ?? groups[0];
     return (
-      <div className="settings-page page-x mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-x-8 pb-16 pt-9">
-        <h1 className="self-baseline text-[1.75rem] font-bold tracking-tight">Cài đặt</h1>
+      <div className="settings-page page-x mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-x-8 pb-16">
+        <ScreenHeader title="Cài đặt" className="self-baseline" />
         <div className="min-w-0 max-w-[760px] self-baseline">
           <GroupHeader id={shown} back={false} />
         </div>
@@ -559,15 +560,15 @@ export function SettingsScreen() {
   }
   if (active) {
     return (
-      <div className="settings-page page-x mx-auto max-w-[760px] pb-16 pt-4 sm:pt-7">
+      <div className="settings-page page-x mx-auto max-w-[760px] pb-16">
         <GroupHeader id={active} />
         <GroupBody id={active} info={info} touchOnly={touchOnly} />
       </div>
     );
   }
   return (
-    <div className="settings-page page-x mx-auto max-w-[760px] pb-16 pt-6 sm:pt-9">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">Cài đặt</h1>
+    <div className="settings-page page-x mx-auto max-w-[760px] pb-16">
+      <ScreenHeader title="Cài đặt" />
       {notices}
       <SettingsList rows={rows} className="mt-5" />
     </div>
