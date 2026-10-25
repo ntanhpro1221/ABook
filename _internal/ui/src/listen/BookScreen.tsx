@@ -25,10 +25,10 @@ import { useClip } from "./clip";
 import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
-import { bookmarkReadPath, canPlay, chapterHeard, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
+import { canPlay, chapterHeard, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
 import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine } from "./labels";
 import { usePlayer } from "./player";
-import { BookmarkList, usePreparedChapters } from "./PlayerViews";
+import { usePreparedChapters } from "./PlayerViews";
 import { EditsNoticesBanner, EditsSyncBanner, LocalEditsBanner, SendEditsItem } from "./SendEdits";
 import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
@@ -217,32 +217,6 @@ function ChapterGroupList({ book, chapters, heading, memory, currentChapter, onD
         )}
       />
     </div>
-  );
-}
-
-function BookmarksTab({ book }: { book: ListenBook }) {
-  const playBook = usePlayListenBook();
-  const navigate = useNavigate();
-  const empty = !book.state.bookmarks.length ? (
-      <EmptyState icon={BookOpenText} title="Chưa có dấu trang" className="mt-2">
-        Bấm biểu tượng dấu trang (phím B) khi nghe, hay chọn một câu khi đọc.
-      </EmptyState>
-  ) : null;
-  return (
-    <MotionRegion as="div" className="mt-3 -mx-3">
-      <BookmarkList
-        empty={empty}
-        bookId={book.id}
-        chapters={book.chapters ?? []}
-        marks={book.state.bookmarks}
-        onJump={(mark) => {
-          // Dấu có câu/anchor mở vị trí chữ; dấu cũ chỉ có giây dùng đường nghe dự phòng.
-          const path = bookmarkReadPath(book.id, mark);
-          if (path) navigate(path);
-          else void playBook(book, mark.chapterId, mark.seconds);
-        }}
-      />
-    </MotionRegion>
   );
 }
 
@@ -508,7 +482,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
   );
 }
 
-const TABS = ["chapters", "bookmarks", "history", "cast"] as const;
+const TABS = ["chapters", "history", "cast"] as const;
 
 function dayLabel(epoch: number): string {
   const date = new Date(epoch * 1000);
@@ -678,7 +652,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
     if (dialog.kind === "create") switchTo(() => mutations.createRecord.mutateAsync(name), `Hồ sơ mới “${name || "không tên"}” - nghe từ chương đầu`, true);
     if (dialog.kind === "rename" && name) void done("Đã đổi tên hồ sơ")(mutations.renameRecord.mutateAsync({ recordId: active.id, name }));
     if (dialog.kind === "delete") switchTo(() => mutations.removeRecord.mutateAsync(active.id), `Đã xoá hồ sơ “${active.name}”`);
-    // Bản làm lại của cùng truyện, hay lỡ nghe nhầm cuốn: hồ sơ (chỗ nghe, dấu trang, lịch sử) sang cuốn kia, thành hồ sơ đang dùng ở đó.
+    // Bản làm lại của cùng truyện, hay lỡ nghe nhầm cuốn: hồ sơ (chỗ nghe, lịch sử) sang cuốn kia, thành hồ sơ đang dùng ở đó.
     const target = dialog.target;
     if (dialog.kind === "move" && target) {
       void player
@@ -710,7 +684,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         <DropdownMenu.Portal>
           <DropdownMenu.Content align="start" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain w-72 rounded-xl border border-line bg-panel p-1.5 shadow-float">
             <p className="px-2 pb-1.5 pt-1 text-xs text-fg-2">
-              Mỗi hồ sơ giữ chỗ nghe, dấu trang, lịch sử riêng.
+              Mỗi hồ sơ giữ chỗ nghe, lịch sử riêng.
             </p>
             {records.map((record) => (
               <DropdownMenu.Item
@@ -765,11 +739,11 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
           dialog?.kind === "create"
             ? "Hồ sơ mới nghe từ đầu; hồ sơ cũ vẫn giữ nguyên."
             : dialog?.kind === "move"
-              ? `Chỗ nghe, dấu trang, lịch sử đi theo hồ sơ sang cuốn kia.${
+              ? `Chỗ nghe, lịch sử đi theo hồ sơ sang cuốn kia.${
                   records.length > 1 ? " Cuốn này chuyển sang hồ sơ nghe gần nhất còn lại." : " Cuốn này sẽ như chưa nghe lần nào."
                 }`
             : dialog?.kind === "delete"
-              ? `Chỗ nghe, dấu trang, lịch sử của hồ sơ này mất hẳn trên mọi máy. Sách giữ nguyên${
+              ? `Chỗ nghe, lịch sử của hồ sơ này mất hẳn trên mọi máy. Sách giữ nguyên${
                   records.length > 1 ? " - cuốn chuyển sang hồ sơ nghe gần nhất còn lại." : "; đây là hồ sơ duy nhất nên cuốn sẽ như chưa nghe lần nào."
                 }`
               : undefined
@@ -1151,16 +1125,12 @@ export function BookScreen({
       <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-8">
         <TabsList label="Mục của sách">
           <TabsTrigger value="chapters" count={chapters.length}>Chương</TabsTrigger>
-          <TabsTrigger value="bookmarks" count={book.state.bookmarks.length || undefined}>Dấu trang</TabsTrigger>
           <TabsTrigger value="history">Lịch sử</TabsTrigger>
           {!textOnly && <TabsTrigger value="cast">Nhân vật</TabsTrigger>}
         </TabsList>
         <TabsPanels value={tab}>
         <TabsContent value="chapters" className="mt-2" ref={chapterList}>
           <ChapterGroups book={book} currentChapter={point?.chapter.id} onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })} onRename={editable ? setRenamingChapter : undefined} prepared={prepared} />
-        </TabsContent>
-        <TabsContent value="bookmarks">
-          <BookmarksTab book={book} />
         </TabsContent>
         <TabsContent value="history">
           <HistoryTab book={book} />

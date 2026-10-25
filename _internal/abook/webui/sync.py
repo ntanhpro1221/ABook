@@ -1307,10 +1307,7 @@ class SyncHandler(BaseHTTPRequestHandler):
             elif method == "POST" and match.group(2) == "state":
                 body = self._body()
                 record = body.get("record")
-                # "deleted" vừa là cờ trong lời đáp vừa là bia mộ dấu trang trong trạng thái: dạng dict là bia mộ, giữ lại
-                # (Store.kt cũng giữ như thế) - bỏ đi thì dấu trang xoá trên điện thoại sống lại ở đây.
-                state = trusted_state({key: value for key, value in body.items()
-                                       if key not in SYNC_KEYS or (key == "deleted" and isinstance(value, dict))},
+                state = trusted_state({key: value for key, value in body.items() if key not in SYNC_KEYS},
                                       self.app.chapter_lengths(project))
                 if isinstance(record, str) and RECORD_ID.fullmatch(record):
                     # điện thoại biết hồ sơ: gộp đúng hồ sơ ấy (webui/listening.py merge_record)
@@ -1350,7 +1347,7 @@ class SyncHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         self._route("POST")
 
-    # Chỉ Studio từ xa dùng ba phương thức này (sửa dấu trang, đặt bìa, audio hỏi trước kích thước).
+    # Chỉ Studio từ xa dùng ba phương thức này (sửa hồ sơ nghe, đặt bìa, audio hỏi trước kích thước).
     def do_PUT(self) -> None:  # noqa: N802
         self._route("PUT")
 

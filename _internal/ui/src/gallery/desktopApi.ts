@@ -1,4 +1,3 @@
-import type { Bookmark } from "@/listen/model";
 import type { ActivityItem, AppInfo, BookSummary, Cast as StudioCast, Chapter, Phase, Preferences, Voice } from "@/studio/api";
 import { BOOKS, bookCast, chapterScript, chapterText, findBook, importPreview, lastNight, listenBook, sessions, type GalleryBook } from "./data";
 import { NOW_SECONDS } from "./clock";
@@ -325,12 +324,6 @@ const ROUTES: [string, RegExp, Handler][] = [
   ["GET", /^\/api\/books\/([^/]+)\/(bookfile|m4b|mp3|projectfile)-job$/, () => ({ state: "idle" })],
   ["GET", /^\/api\/listen\/books\/([^/]+)\/audiobook$/, () => ({ state: "idle" })],
   ["GET", /^\/api\/music\/playlists$/, () => ({ playlists: [], mine: 0, error: "" })],
-  ["POST", /^\/api\/listen\/books\/([^/]+)\/bookmarks$/, (match, body): Bookmark => {
-    const item = book(match[1]);
-    const mark: Bookmark = { id: `bm${item.state.bookmarks.length + 1}`, chapterId: Number(body.chapterId), seconds: Number(body.seconds), note: String(body.note ?? ""), at: NOW_SECONDS, createdAt: NOW_SECONDS };
-    item.state = { ...item.state, bookmarks: [...item.state.bookmarks, mark] };
-    return mark;
-  }],
   ["POST", /^\/api\/listen\/import\/preview$/, () => importPreview()],
   ["POST", /^\/api\/listen\/import$/, () => ({ id: "gac-xep", how: "new", chapters: 7 })],
   // Cài đặt.

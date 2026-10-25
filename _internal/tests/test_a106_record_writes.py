@@ -1,4 +1,4 @@
-"""Bốn việc ghi còn lại của người nghe (a106): đánh dấu chương đã nghe, đánh dấu cả cuốn, sửa ghi chú, xoá dấu trang ghi vào HỒ SƠ ĐÃ
+"""Hai việc ghi còn lại của người nghe (a106): đánh dấu chương đã nghe, đánh dấu cả cuốn ghi vào HỒ SƠ ĐÃ
 CHỐT lúc việc bắt đầu (`record`), không phải hồ sơ đang dùng lúc yêu cầu tới - cửa sổ khác vừa đổi hồ sơ thì không ghi nhầm người.
 Ca dùng chung với test JVM (A106RecordWritesTest.kt) ở tests/fixtures/records/writes.json."""
 from __future__ import annotations
@@ -32,7 +32,7 @@ def build(path: Path) -> Listening:
 
 def projection(store: Listening, key: str) -> dict:
     state = store._data["records"][IDS[key]]["state"]
-    return json.loads(json.dumps({name: state.get(name) for name in ("chapters", "bookmarks", "finished", "deleted")}))
+    return json.loads(json.dumps({name: state.get(name) for name in ("chapters", "finished")}))
 
 
 def snapshot(store: Listening) -> dict:
@@ -44,12 +44,8 @@ def apply_op(store: Listening, op: dict) -> None:
     kind = op["kind"]
     if kind == "chapterDone":
         store.set_chapter_done(BOOK, op["chapterId"], op["done"], record)
-    elif kind == "finished":
-        store.set_finished(BOOK, op["finished"], record)
-    elif kind == "updateBookmark":
-        store.update_bookmark(BOOK, op["markId"], op["note"], record)
     else:
-        store.delete_bookmark(BOOK, op["markId"], record)
+        store.set_finished(BOOK, op["finished"], record)
 
 
 def check_applied(before: dict, after: dict, op: dict) -> None:
@@ -59,14 +55,8 @@ def check_applied(before: dict, after: dict, op: dict) -> None:
         chapter = after["chapters"][str(op["chapterId"])]
         assert chapter["done"] is op["done"]
         assert chapter["heard"] == (before["chapters"][str(op["chapterId"])]["heard"] if op["done"] else 0.0)
-    elif kind == "finished":
-        assert after["finished"] is op["finished"]
-    elif kind == "updateBookmark":
-        for was, now in zip(before["bookmarks"], after["bookmarks"], strict=True):
-            assert now["note"] == (op["note"] if was["id"] == op["markId"] else was["note"])
     else:
-        assert [mark["id"] for mark in after["bookmarks"]] == [mark["id"] for mark in before["bookmarks"] if mark["id"] != op["markId"]]
-        assert op["markId"] in (after.get("deleted") or {})
+        assert after["finished"] is op["finished"]
 
 
 @pytest.mark.parametrize("case", sorted(FIXTURE["cases"]))
@@ -99,31 +89,15 @@ def test_endpoints_pass_the_record_the_window_holds(tmp_path: Path) -> None:
     a = IDS["a"]
     server.Handler.post_chapter_done(handler(store, {"done": True, "record": a}), {}, BOOK, "3")
     server.Handler.post_finished(handler(store, {"finished": True, "record": a}), {}, BOOK)
-    server.Handler.put_bookmark(handler(store, {"note": "sửa", "record": a}), {}, BOOK, "aaaaaaaaaaaa")
     state = store._data["records"][a]["state"]
-    assert state["chapters"]["3"]["done"] is True and state["finished"] is True and state["bookmarks"][0]["note"] == "sửa"
+    assert state["chapters"]["3"]["done"] is True and state["finished"] is True
     b = store._data["records"][IDS["b"]]["state"]
-    assert b["chapters"]["3"]["done"] is False and "finished" not in b and b["bookmarks"][0]["note"] == "của B"
-    delete = handler(store, {"record": a})
-    server.Handler.delete_bookmark(delete, {}, BOOK, "aaaaaaaaaaaa")
-    assert store._data["records"][a]["state"]["bookmarks"] == [] and len(b["bookmarks"]) == 1
-    assert delete.synced[-1].get("record") == a
-
-
-def test_delete_bookmark_takes_the_record_from_the_query_when_the_body_is_empty(tmp_path: Path) -> None:
-    """DELETE thường không có thân: lời gọi mang hồ sơ ở `?record=`."""
-    store = build(tmp_path / "listen.json")
-    window = handler(store, {}, {"record": [IDS["a"]]})
-    server.Handler.delete_bookmark(window, {"record": [IDS["a"]]}, BOOK, "aaaaaaaaaaaa")
-    assert store._data["records"][IDS["a"]]["state"]["bookmarks"] == []
-    assert len(store._data["records"][IDS["b"]]["state"]["bookmarks"]) == 1
+    assert b["chapters"]["3"]["done"] is False and "finished" not in b
 
 
 @pytest.mark.parametrize("call,body,args", [
     (server.Handler.post_chapter_done, {"done": True}, ("3",)),
     (server.Handler.post_finished, {"finished": True}, ()),
-    (server.Handler.put_bookmark, {"note": "x"}, ("aaaaaaaaaaaa",)),
-    (server.Handler.delete_bookmark, {}, ("aaaaaaaaaaaa",)),
 ])
 def test_endpoints_refuse_a_gone_record_with_409_and_write_nothing(call, body, args, tmp_path: Path) -> None:
     store = build(tmp_path / "listen.json")

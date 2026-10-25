@@ -33,7 +33,7 @@ def test_the_book_voice_travels_with_the_listening_record_and_the_later_choice_w
     # Điện thoại gửi giọng kèm `_fieldRevs.voice`, như Store.kt; bản cũ mang phiên bản thấp hơn của máy tính, bản mới mang phiên bản cao hơn.
     mine = computer["_fieldRevs"]["voice"]
     assert mine["counter"] >= 2
-    older = {"chapters": {}, "bookmarks": [], "voice": "vieneu:Ái Hân", "voiceAt": computer["voiceAt"] - 60,
+    older = {"chapters": {}, "voice": "vieneu:Ái Hân", "voiceAt": computer["voiceAt"] - 60,
              "_fieldRevs": {"voice": {"counter": mine["counter"] - 1, "node": "phone"}}}
     newer = {**older, "voiceAt": computer["voiceAt"] + 60, "_fieldRevs": {"voice": {"counter": mine["counter"] + 1, "node": "phone"}}}
     assert merge_states(computer, older)["voice"] == "edge:vi-VN-NamMinhNeural"
@@ -47,8 +47,8 @@ def test_a_place_heard_offline_wins_when_the_phone_comes_back() -> None:
     # Hợp đồng phiên bản (Lamport): chỗ nghe mới hơn là chỗ mang phiên bản cao hơn (điện thoại nghe tiếp sau khi đã thấy chỗ của máy tính),
     # không phải giờ tường muộn hơn. Mọi mục gửi đi mang `rev` như Store.kt.
     now = time.time()
-    computer = {"last": {"chapterId": 726, "seconds": 691.0, "at": now - 600, "rev": {"counter": 4, "node": "pc"}}, "chapters": {}, "bookmarks": []}
-    phone = {"last": {"chapterId": 727, "seconds": 17.0, "at": now - 60, "rev": {"counter": 5, "node": "phone"}}, "chapters": {}, "bookmarks": []}
+    computer = {"last": {"chapterId": 726, "seconds": 691.0, "at": now - 600, "rev": {"counter": 4, "node": "pc"}}, "chapters": {}}
+    phone = {"last": {"chapterId": 727, "seconds": 17.0, "at": now - 60, "rev": {"counter": 5, "node": "phone"}}, "chapters": {}}
     assert merge_states(computer, phone)["last"]["chapterId"] == 727
     assert merge_states(phone, computer)["last"]["chapterId"] == 727, "máy tính không kéo điện thoại về chỗ cũ"
     # Đồng hồ điện thoại chạy chậm hơn máy tính: phiên bản vẫn thắng.
@@ -97,10 +97,10 @@ def test_over_the_wire_the_phone_renames_itself_and_a_foreign_place_is_refused(l
 
         identifier = book["id"]
         # Hợp đồng phiên bản (Lamport): thân điện thoại gửi mang `rev` từng mục (Store.syncBody), không thì máy tính từ chối 400.
-        foreign = {"last": {"chapterId": 1, "seconds": 812.4, "at": time.time(), "rev": {"counter": 1, "node": "phone"}}, "chapters": {}, "bookmarks": []}
+        foreign = {"last": {"chapterId": 1, "seconds": 812.4, "at": time.time(), "rev": {"counter": 1, "node": "phone"}}, "chapters": {}}
         status, _data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=foreign)
         assert status == 200 and "last" not in listening.get(identifier), "chỗ nghe vượt độ dài chương không vào hồ sơ"
-        good = {"last": {"chapterId": 1, "seconds": 5.0, "at": time.time(), "rev": {"counter": 2, "node": "phone"}}, "chapters": {}, "bookmarks": []}
+        good = {"last": {"chapterId": 1, "seconds": 5.0, "at": time.time(), "rev": {"counter": 2, "node": "phone"}}, "chapters": {}}
         _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=good)
         assert listening.get(identifier)["last"]["seconds"] == 5.0
     finally:

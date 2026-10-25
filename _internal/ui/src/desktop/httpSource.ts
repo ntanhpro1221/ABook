@@ -1,6 +1,6 @@
 import type { MusicCues } from "@/listen/musicBed";
 import type { PlaylistQueue } from "@/listen/playlistBed";
-import type { Bookmark, Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
+import type { Cast, ListenBook, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "@/listen/model";
 import type { ListenSource, SearchText } from "@/listen/source";
 import type { EditsSyncState } from "@/shared/editsSync";
 import { itemFromPath } from "@/listen/importQueue";
@@ -260,18 +260,6 @@ export const httpSource: ListenSource = {
   },
   setRate: async (bookId, rate, record) => {
     await api(`/api/listen/books/${bookId}/rate`, { method: "POST", body: { rate, record } });
-  },
-  addBookmark: (bookId, chapterId, seconds, note, record, sentence) =>
-    api<Bookmark>(`/api/listen/books/${bookId}/bookmarks`, { method: "POST", body: { chapterId, seconds, note, record, ...sentence } }),
-  updateBookmark: async (bookId, id, note, record) => {
-    await api(`/api/listen/books/${bookId}/bookmarks/${id}`, { method: "PUT", body: { note, record } });
-  },
-  deleteBookmark: async (bookId, id, record) => {
-    // DELETE không mang thân: hồ sơ đi ở `?record=`
-    await api(`/api/listen/books/${bookId}/bookmarks/${id}${record ? `?record=${encodeURIComponent(record)}` : ""}`, { method: "DELETE" });
-  },
-  restoreBookmark: async (bookId, mark) => {
-    await api(`/api/listen/books/${bookId}/bookmarks/restore`, { method: "POST", body: mark });
   },
   lastNight: () => api<{ bookId: string; night: NightSession } | null>("/api/listen/night"),
   dismissNight: async (bookId, id) => {

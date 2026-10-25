@@ -56,9 +56,7 @@ def items(state: dict):
         if isinstance(state.get(key), dict):
             yield state[key]
     yield from state.get("chapters", {}).values()
-    yield from state.get("bookmarks", [])
-    for key in ("_fieldRevs", "_deletedRevs"):
-        yield from ({"rev": value} for value in state.get(key, {}).values())
+    yield from ({"rev": value} for value in state.get("_fieldRevs", {}).values())
 
 
 META_REVS = (("records", ("nameRev", "movedRev")), ("links", ("activeRev",)))
@@ -147,28 +145,21 @@ def checked_peer(ours: dict, incoming: dict, notify) -> dict:
         if state.get(key) is not None and not accept(state[key]):
             state.pop(key)
     state["chapters"] = {k: v for k, v in (state.get("chapters") or {}).items() if accept(v)}
-    state["bookmarks"] = [v for v in (state.get("bookmarks") or []) if accept(v)]
     for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
         if field in state and not accept({"rev": state.get("_fieldRevs", {}).get(field)}):
             state.pop(field)
             state.pop(stamp, None)
-    for key in list(state.get("deleted") or {}):
-        if not accept({"rev": state.get("_deletedRevs", {}).get(key)}):
-            state["deleted"].pop(key)
     # Raw _clock/_epoch, or orphan revision maps, are never evidence of edits.
     state.pop("_clock", None)
     state.pop("_epoch", None)
     state["_fieldRevs"] = {key: incoming["_fieldRevs"][key] for key in ("rate", "finished", "voice")
                            if key in state and key in incoming.get("_fieldRevs", {})}
-    state["_deletedRevs"] = {key: incoming["_deletedRevs"][key] for key in state.get("deleted", {})}
     return state
 
 
 def require_peer_revisions(payload: dict) -> None:
     """Preflight the entire exchange before record deletions or other side effects."""
-    fields = {key: payload[key] for key in ("last", "reading", "chapters", "bookmarks", "rate", "finished", "voice", "_fieldRevs", "_deletedRevs") if key in payload}
-    if isinstance(payload.get("deleted"), dict):
-        fields["deleted"] = payload["deleted"]
+    fields = {key: payload[key] for key in ("last", "reading", "chapters", "rate", "finished", "voice", "_fieldRevs") if key in payload}
     try:
         checked_peer({}, fields, lambda _text: None)
     except ValueError as error:

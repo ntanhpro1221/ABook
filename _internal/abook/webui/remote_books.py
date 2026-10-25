@@ -4,7 +4,7 @@ Máy này ghép với cổng đồng bộ của máy kia bằng đúng mã 6 s�
 máy kia như những cuốn "đã nhập" ảo: `<thư viện>/Trên máy khác/<máy>/<sách>/book.json` là manifest máy kia phục vụ cho
 điện thoại (`sync.manifest`) kèm mục `package.remote`. File - chương, văn bản đọc theo, nhân vật, câu mẫu - được tải từ máy
 kia LẦN ĐẦU có người mở tới rồi giữ lại (`fetch`), hay cả cuốn một lượt khi người dùng bấm "Tải về máy" (`Downloads`). Nhờ
-vậy mọi thứ phía Nghe đã làm cho sách nhập từ file (chương, đọc theo, dấu trang, hồ sơ nghe, hẹn giờ) dùng nguyên được, và phần
+vậy mọi thứ phía Nghe đã làm cho sách nhập từ file (chương, đọc theo, hồ sơ nghe, hẹn giờ) dùng nguyên được, và phần
 đã tải vẫn nghe được khi máy kia đã tắt.
 
 Cuốn của một MÁY TÍNH đã ghép sửa được ở máy này như cuốn điện thoại tải từ máy tính: lớp sửa (book_edits.py) nằm trong thư mục
@@ -218,7 +218,7 @@ class Computers:
             # Ghép lại cùng một máy thì thay chỗ cũ: sách đã tải và chỗ nghe giữ nguyên. Máy được nhận ra bằng vân tay chứng chỉ
             # (đổi IP <-> tên .local <-> Tailscale vẫn là máy ấy: địa chỉ/mã mới ghi đè vào dòng cũ), rồi mới đến cùng địa chỉ.
             # Máy đã từng thôi ghép (cùng vân tay chứng chỉ, dù đổi địa chỉ) lấy lại mã cũ: mã sách ở máy này theo mã ấy, nên chỗ
-            # nghe và dấu trang của các cuốn ấy hiện lại, không mất khi ghép lại.
+            # nghe của các cuốn ấy hiện lại, không mất khi ghép lại.
             former = data.get("former", {}).pop(seen, None)
             key = (next((existing for existing, entry in data["computers"].items()
                          if str(entry.get("fingerprint") or "").lower() == seen), None)

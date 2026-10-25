@@ -152,14 +152,14 @@ def _app(tmp_path: Path, root: Path) -> App:
     return App(preferences=preferences, runner=FakeRunner(), token="t", listening=Listening(tmp_path / "prefs" / "listening.json"))
 
 
-def test_moving_the_library_keeps_places_and_bookmarks(tmp_path: Path) -> None:
+def test_moving_the_library_keeps_places_and_rate(tmp_path: Path) -> None:
     root = tmp_path / "thu_vien"
     root.mkdir()
     project = make_project(root)
     app = _app(tmp_path, root)
     old = book_id(project)
     app.listening.progress(old, 1, 17.5, 100.0)
-    app.listening.add_bookmark(old, 1, 12.0, "đoạn hay")
+    app.listening.set_rate(old, 1.25)
     app.preferences.remember_position(old, 1, 17.5, 100.0)
     moved = tmp_path / "thu_vien_moi"
     root.rename(moved)
@@ -175,7 +175,7 @@ def test_moving_the_library_keeps_places_and_bookmarks(tmp_path: Path) -> None:
     new = book_id(moved / project.name)
     assert new != old
     state = app.listening.get(new)
-    assert state["last"]["seconds"] == 17.5 and state["bookmarks"][0]["note"] == "đoạn hay"
+    assert state["last"]["seconds"] == 17.5 and state["rate"] == 1.25
     assert app.preferences.get()["positions"][new]["seconds"] == 17.5
 
 
@@ -208,7 +208,7 @@ def test_a_read_only_folder_is_named_not_dumped(tmp_path: Path) -> None:
 
 
 def _other_process(folder: str) -> None:
-    Listening(Path(folder) / "listening.json").add_bookmark("b" * 24, 3, 64.0, "của B")
+    Listening(Path(folder) / "listening.json").set_rate("b" * 24, 1.5)
     Preferences(Path(folder) / "preferences.json").update({"volume": 0.3})
 
 
@@ -221,11 +221,11 @@ def test_two_processes_on_one_profile_keep_both_changes(tmp_path: Path) -> None:
     process.start()
     process.join(60)
     assert process.exitcode == 0
-    listening.progress("a" * 24, 3, 100.0, 200.0)  # bên A ghi sau: không được đè dấu trang của B
+    listening.progress("a" * 24, 3, 100.0, 200.0)  # bên A ghi sau: không được đè tốc độ của B
     preferences.update({"playbackRate": 1.25})
     again = Listening(tmp_path / "listening.json")
     assert again.get("a" * 24)["last"]["seconds"] == 100.0
-    assert again.get("b" * 24)["bookmarks"][0]["note"] == "của B"
+    assert again.get("b" * 24)["rate"] == 1.5
     stored = Preferences(tmp_path / "preferences.json").get()
     assert (stored["theme"], stored["volume"], stored["playbackRate"]) == ("light", 0.3, 1.25)
     assert os.path.exists(tmp_path / "listening.json.lock")

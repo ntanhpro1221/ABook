@@ -3,7 +3,7 @@ import { cn } from "@/shared/cn";
 import { MotionRegion } from "@/shared/MotionRegion";
 
 // Nút phụ có nhãn (docs/DESIGN.md mục 6b): biểu tượng trơn ở trên, nhãn nhỏ ở dưới - MỘT kiểu cho hàng phụ của trang sách (Đọc · Tìm · Từ đầu ·
-// Thêm) và của trình phát (Tốc độ · Hẹn giờ · Dấu trang · Chương). Không viền, không nền: chỉ nền nhạt khi rê / chạm, thu 0,97 khi nhấn.
+// Thêm) và của trình phát (Tốc độ · Hẹn giờ · Chương). Không viền, không nền: chỉ nền nhạt khi rê / chạm, thu 0,97 khi nhấn.
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 

@@ -40,7 +40,7 @@ afterEach(async () => { await act(() => root.unmount()); client.clear(); documen
 const render = async (node: ReactNode) => { await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><TooltipProvider>{node}</TooltipProvider></MemoryRouter></QueryClientProvider>)); };
 const chapter = (id: number) => ({ id, index: id - 1, subtitle: "", title: `Chương ${id}`, fullTitle: `Chương ${id}`, duration: 60, available: true }) as ListenChapter;
 const book = (id = "book", title = "Truyện thử", count = 8) => ({ id, title, narrator: "Giọng thử", duration: 60 * count, chaptersTotal: count, chaptersAvailable: count, complete: true, producing: false, updatedAt: null,
-  state: { chapters: {}, bookmarks: [] }, progress: { heardSeconds: 0, totalSeconds: 60 * count, fraction: 0, chaptersDone: 0, finished: false }, chapters: Array.from({ length: count }, (_, i) => chapter(i + 1)) }) as ListenBook;
+  state: { chapters: {} }, progress: { heardSeconds: 0, totalSeconds: 60 * count, fraction: 0, chaptersDone: 0, finished: false }, chapters: Array.from({ length: count }, (_, i) => chapter(i + 1)) }) as ListenBook;
 
 /** Trang đã đứng yên (qua cửa sổ ổn định của motion.ts pageSettling): hàng thêm sau lúc này mới mở ra. */
 const settled = () => { vi.spyOn(performance, "now").mockReturnValue(performance.now() + 1000); };

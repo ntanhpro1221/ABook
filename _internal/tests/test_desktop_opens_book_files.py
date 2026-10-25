@@ -252,15 +252,14 @@ def test_a_series_file_plays_on_another_computer_part_by_part(tmp_path: Path) ->
         (1, "Truyện X · Phần 1", [100001, 100002]), (2, "Truyện X · Phần 2", [200001, 200002])]
     assert [(c["id"], c["part"], c["available"]) for c in view["chapters"]] == [
         (100001, 1, True), (100002, 1, False), (200001, 2, True), (200002, 2, False)]
-    # Dấu trang ở phần 2 trỏ về đúng chương của phần 2: audio, chữ đọc theo, câu mẫu đều tìm được bằng mã chung.
-    app.listening.add_bookmark(opened["id"], 200001, 12.0, "chỗ ở phần hai")
+    # Chỗ nghe ở phần 2 trỏ về đúng chương của phần 2: audio, chữ đọc theo, câu mẫu đều tìm được bằng mã chung.
     app.listening.progress(opened["id"], 200001, 5.0, 10.0)
     folder = app.library.resolve_listenable(opened["id"])
     assert packages.chapter_file(folder, 200001) == folder / "chapters" / "2" / "00001_645.mp3"
     assert packages.chapter_file(folder, 100001).read_bytes() != packages.chapter_file(folder, 200001).read_bytes()
     assert packages.script(folder, 200001)["chapterId"] == 200001
     assert packages.sample_file(folder, 1) is not None and packages.cast(folder)["characters"][0]["parts"] == [1, 2]
-    assert app.listen_book(opened["id"])["state"]["bookmarks"][0]["chapterId"] == 200001
+    assert app.listen_book(opened["id"])["state"]["last"]["chapterId"] == 200001
     server = Server(app, port=0).start()
     try:
         status, data, _ = _request(server.port, "GET", f"/media/books/{opened['id']}/chapters/200001", headers=TOKEN)
@@ -272,7 +271,7 @@ def test_a_series_file_plays_on_another_computer_part_by_part(tmp_path: Path) ->
 
 
 def test_a_longer_series_file_replaces_the_book_and_the_listening_survives(tmp_path: Path) -> None:
-    """Máy sản xuất làm thêm phần 3 rồi xuất lại cả bộ: mở file mới thay cuốn đã nhập tại chỗ; chỗ đang nghe và dấu trang
+    """Máy sản xuất làm thêm phần 3 rồi xuất lại cả bộ: mở file mới thay cuốn đã nhập tại chỗ; chỗ đang nghe và chương đã nghe
     ở phần 1, 2 vẫn nguyên vì mã chương chung của bộ không đổi khi thêm phần."""
     from tests.test_export_series import _part
 
@@ -281,7 +280,7 @@ def test_a_longer_series_file_replaces_the_book_and_the_listening_survives(tmp_p
     app = _app(tmp_path, tmp_path / "thu_vien_nguoi_nghe")
     first = app.open_book_file(str(short))
     app.listening.progress(first["id"], 200001, 7.0, 10.0)
-    app.listening.add_bookmark(first["id"], 100001, 3.0, "đầu truyện")
+    app.listening.set_chapter_done(first["id"], 100001, True)
     third = _part(tmp_path, library, "p3", "Truyện X · Phần 3", projects[1])
     (third / "output" / "chapters" / "00001_645.mp3").write_bytes(b"ID3" + b"\3" * 300)
     longer = bookfile.pack_series([*projects, third], tmp_path / "bo3.abook")
@@ -292,7 +291,7 @@ def test_a_longer_series_file_replaces_the_book_and_the_listening_survives(tmp_p
     view = app.listen_book(first["id"])
     assert [c["id"] for c in view["chapters"] if c["available"]] == [100001, 200001, 300001]
     assert view["state"]["last"] == {**view["state"]["last"], "chapterId": 200001, "seconds": 7.0}
-    assert [m["chapterId"] for m in view["state"]["bookmarks"]] == [100001]
+    assert view["state"]["chapters"]["100001"]["done"] is True
     assert app.open_book_file(str(short))["how"] == "older", "bản ít phần hơn hỏi trước, không đè bản đủ"
 
 

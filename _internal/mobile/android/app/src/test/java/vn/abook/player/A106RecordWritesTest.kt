@@ -12,7 +12,7 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Bốn việc ghi còn lại của người nghe (đánh dấu chương, đánh dấu cả cuốn, sửa / xoá dấu trang) ghi vào HỒ SƠ ĐÃ CHỐT lúc việc bắt đầu,
+ * Hai việc ghi còn lại của người nghe (đánh dấu chương, đánh dấu cả cuốn) ghi vào HỒ SƠ ĐÃ CHỐT lúc việc bắt đầu,
  * không phải hồ sơ đang dùng lúc ghi tới (soát a106). Bộ ca dùng chung với pytest (tests/fixtures/records/writes.json,
  * tests/test_a106_record_writes.py - webui/listening.py).
  */
@@ -58,7 +58,7 @@ class A106RecordWritesTest {
 
     private fun projection(key: String): String {
         val state = stateOf(key)
-        return listOf("chapters", "bookmarks", "finished", "deleted").joinToString("|") { "$it=${state.opt(it)}" }
+        return listOf("chapters", "finished").joinToString("|") { "$it=${state.opt(it)}" }
     }
 
     private fun snapshot(): Map<String, String> = fixture.getJSONObject("setup").getJSONObject("records").keys().asSequence().associateWith(::projection)
@@ -68,8 +68,7 @@ class A106RecordWritesTest {
         when (op.getString("kind")) {
             "chapterDone" -> Store.setChapterDone(book, op.getInt("chapterId"), op.getBoolean("done"), record)
             "finished" -> Store.setFinished(book, op.getBoolean("finished"), record)
-            "updateBookmark" -> Store.updateBookmark(book, op.getString("markId"), op.getString("note"), record)
-            else -> Store.deleteBookmark(book, op.getString("markId"), record)
+            else -> fail("việc ghi lạ: ${op.getString("kind")}")
         }
     }
 
@@ -83,21 +82,7 @@ class A106RecordWritesTest {
                 assertEquals(if (op.getBoolean("done")) was else 0.0, chapter.getDouble("heard"), 0.0)
             }
             "finished" -> assertEquals(op.getBoolean("finished"), after.getBoolean("finished"))
-            "updateBookmark" -> {
-                val marks = after.getJSONArray("bookmarks")
-                val old = before.getJSONArray("bookmarks")
-                assertEquals(old.length(), marks.length())
-                for (index in 0 until marks.length()) {
-                    val mark = marks.getJSONObject(index)
-                    val want = if (mark.getString("id") == op.getString("markId")) op.getString("note") else old.getJSONObject(index).getString("note")
-                    assertEquals(want, mark.getString("note"))
-                }
-            }
-            else -> {
-                val marks = after.getJSONArray("bookmarks")
-                assertTrue((0 until marks.length()).none { marks.getJSONObject(it).getString("id") == op.getString("markId") })
-                assertTrue(after.getJSONObject("deleted").has(op.getString("markId")))
-            }
+            else -> fail("việc ghi lạ: ${op.getString("kind")}")
         }
     }
 

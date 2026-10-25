@@ -16,7 +16,7 @@
         "book": "sach-moi",
         "body": {
           "record": "r-000000000000000b", "recordName": "Con", "nameAt": 1.0, "activeAt": 2000.0, "movedAt": 2000.0,
-          "deletedRecords": {}, "last": {"chapterId": 7, "seconds": 55.0, "at": 1900.0, "rev": {"counter": 1, "node": "phone"}}, "chapters": {}, "bookmarks": []
+          "deletedRecords": {}, "last": {"chapterId": 7, "seconds": 55.0, "at": 1900.0, "rev": {"counter": 1, "node": "phone"}}, "chapters": {}
         }
       },
       "reply": {"record": "r-000000000000000b", "book": "sach-moi", "movedAt": 2000.0,
@@ -38,7 +38,7 @@
         "book": "sach-cu",
         "body": {
           "record": "r-000000000000000b", "recordName": "Con", "nameAt": 1.0, "activeAt": 1500.0, "movedAt": 1000.0,
-          "deletedRecords": {}, "last": {"chapterId": 2, "seconds": 9.0, "at": 2500.0, "rev": {"counter": 1, "node": "phone"}}, "chapters": {}, "bookmarks": []
+          "deletedRecords": {}, "last": {"chapterId": 2, "seconds": 9.0, "at": 2500.0, "rev": {"counter": 1, "node": "phone"}}, "chapters": {}
         }
       },
       "reply": {"record": "r-000000000000000b", "book": "sach-moi", "movedAt": 3000.0,

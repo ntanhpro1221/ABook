@@ -1,6 +1,6 @@
 import { toast } from "@/shared/toast";
 import type { EngineEvent, NativeEngine, NativeQueue, TrackInfo } from "@/listen/engine";
-import type { Bookmark, BookmarkSentence, ListenBook } from "@/listen/model";
+import type { ListenBook } from "@/listen/model";
 import type { MusicCredit } from "@/listen/musicBed";
 import type { SleepMode, SleepRequest } from "@/listen/sleep";
 import { chapterFiles, chapterTextEntry } from "./androidSource";
@@ -170,10 +170,6 @@ export class NativeAudioEngine implements NativeEngine {
 
   extendSleep(minutes?: number): void {
     void EbookPlayer.extendSleep({ minutes }).then((state) => this.receive(state));
-  }
-
-  addBookmark(note: string, sentence?: BookmarkSentence): Promise<Bookmark> {
-    return EbookPlayer.addBookmark({ note, ...(sentence ?? {}) });
   }
 
   get sleep(): SleepMode {

@@ -66,7 +66,7 @@ class StoreRecordSyncTest {
 
     /** Lời đáp của máy tính: đúng các khoá bộ ví dụ nói, cộng trạng thái nghe đã gộp. */
     private fun reply(spec: JSONObject): JSONObject = JSONObject(spec.getJSONObject("reply").toString())
-        .put("chapters", JSONObject()).put("bookmarks", JSONArray())
+        .put("chapters", JSONObject())
 
     @Test
     fun a_move_on_the_phone_is_sent_with_its_time_and_kept_after_the_reply() {
@@ -118,7 +118,7 @@ class StoreRecordSyncTest {
 
         // máy tính đời trước: không có movedAt, vẫn nói hồ sơ ở cuốn cũ
         Store.applySync("sach-moi", JSONObject().put("record", b).put("book", "sach-cu")
-            .put("chapters", JSONObject()).put("bookmarks", JSONArray()), idle)
+            .put("chapters", JSONObject()), idle)
 
         assertLinks(spec.getJSONObject("phoneAfter"))
     }
@@ -134,7 +134,7 @@ class StoreRecordSyncTest {
             .put("active", JSONObject().put("record", b).put("at", 9_999_999_999.0))
             .put("records", JSONArray().put(JSONObject().put("id", a).put("movedAt", 0.0))
                 .put(JSONObject().put("id", b).put("movedAt", 1000.0)))
-            .put("chapters", JSONObject()).put("bookmarks", JSONArray()), idle)
+            .put("chapters", JSONObject()), idle)
 
         assertLinks(spec.getJSONObject("phoneAfter"))
         assertEquals(a, active("sach-cu"))

@@ -64,16 +64,14 @@ class A118SyncRulesTest {
     @Test fun bug1NewDeviceTakesAProfileWithMoreThanAMillionSaves() {
         val holder = phone("holder")
         Store.activeRecord(book)
-        stateFile(holder).writeText(JSONObject().put("chapters", JSONObject()).put("bookmarks", JSONArray()).put("_clock", 1_200_000).toString())
+        stateFile(holder).writeText(JSONObject().put("chapters", JSONObject()).put("_clock", 1_200_000).toString())
         Store.progress(book, 3, 300.0, 600.0)
         Store.setRate(book, 1.25)
-        val mark = Store.addBookmark(book, 3, 120.0, "quan trọng")
         val client = phone("client")
         sync(client, holder)
         val mine = Store.state(book)
         assertEquals(1.25, mine.getDouble("rate"), 0.0)
         assertEquals(3, mine.getJSONObject("last").getInt("chapterId"))
-        assertEquals(mark.getString("id"), mine.getJSONArray("bookmarks").getJSONObject(0).getString("id"))
         Store.progress(book, 4, 50.0, 600.0)
         sync(client, holder)
         use(holder)
@@ -113,7 +111,7 @@ class A118SyncRulesTest {
         phone("stamp")
         val theirs = JSONObject().put("rate", 1.5)
             .put("_fieldRevs", JSONObject().put("rate", JSONObject().put("counter", 3).put("node", "peer")))
-        val merged = Store.mergeStates(JSONObject().put("chapters", JSONObject()).put("bookmarks", JSONArray()), theirs)
+        val merged = Store.mergeStates(JSONObject().put("chapters", JSONObject()), theirs)
         assertEquals(1.5, merged.getDouble("rate"), 0.0)
         assertFalse(merged.has("rateAt"))
         val nulled = Store.mergeStates(JSONObject().put("rateAt", 5), JSONObject(theirs.toString()).put("rateAt", JSONObject.NULL))
@@ -130,32 +128,23 @@ class A118SyncRulesTest {
         val clean = ListeningSchema.state(JSONObject()
             .put("chapters", JSONObject().put("1", JSONObject().put("heard", 5).put("duration", 9).put("at", 1).put("rev", rev(-3, "x")))
                 .put("2", JSONObject().put("heard", 1).put("at", 1).put("rev", rev(2, "n"))))
-            .put("bookmarks", JSONArray().put(JSONObject().put("id", "a").put("chapterId", 1).put("seconds", 2).put("rev", rev(-3, "x"))))
             .put("last", JSONObject().put("chapterId", 1).put("seconds", 3).put("rev", rev(-3, "x")))
-            .put("rate", 1.2).put("rateAt", 5).put("_fieldRevs", JSONObject().put("rate", rev(-3, "x")))
-            .put("deleted", JSONObject().put("b", 4)).put("_deletedRevs", JSONObject().put("b", rev(-3, "x"))))
+            .put("rate", 1.2).put("rateAt", 5).put("_fieldRevs", JSONObject().put("rate", rev(-3, "x"))))
         assertEquals(listOf("2"), clean.getJSONObject("chapters").keys().asSequence().toList())
-        assertEquals(0, clean.getJSONArray("bookmarks").length())
         assertFalse(clean.has("last") || clean.has("rate") || clean.has("rateAt"))
-        assertEquals(0, clean.getJSONObject("deleted").length())
         assertTrue(ListeningRevision.checkedPeer(JSONObject(), clean) {}.getJSONObject("chapters").has("2"))
     }
 
     @Test fun aRevisionTableOfTheWrongTypeDropsWhatItShouldHaveVersioned() {
-        // `_fieldRevs` / `_deletedRevs` itself the wrong type is replaced by {}: the value / tombstone has no revision left, so it goes like a broken one.
+        // `_fieldRevs` itself the wrong type is replaced by {}: the value has no revision left, so it goes like a broken one.
         for (table in listOf<Any>(JSONArray().put(JSONObject()), "x", 5, JSONObject.NULL)) {
             val rate = ListeningSchema.state(JSONObject().put("rate", 1.2).put("rateAt", 5).put("_fieldRevs", table))
             assertFalse(rate.has("rate") || rate.has("rateAt"))
             assertEquals(0, rate.getJSONObject("_fieldRevs").length())
-            val deleted = ListeningSchema.state(JSONObject().put("deleted", JSONObject().put("b", 4)).put("_deletedRevs", table))
-            assertEquals(0, deleted.getJSONObject("deleted").length())
-            assertEquals(0, ListeningRevision.checkedPeer(JSONObject(), deleted) {}.getJSONObject("deleted").length())
         }
         val ok = JSONObject().put("counter", 2).put("node", "n")
-        val kept = ListeningSchema.state(JSONObject().put("rate", 1.2).put("rateAt", 5).put("_fieldRevs", JSONObject().put("rate", ok))
-            .put("deleted", JSONObject().put("b", 4)).put("_deletedRevs", JSONObject().put("b", ok)))
+        val kept = ListeningSchema.state(JSONObject().put("rate", 1.2).put("rateAt", 5).put("_fieldRevs", JSONObject().put("rate", ok)))
         assertEquals(1.2, kept.getDouble("rate"), 0.0)
-        assertTrue(kept.getJSONObject("deleted").has("b"))
     }
 
     @Test fun bug5RecordMetadataFollowsCausalityNotTheWallClock() {
@@ -195,22 +184,5 @@ class A118SyncRulesTest {
             assertEquals(row.getString("name"), row.getBoolean("newer"), newer)
             assertEquals(row.getString("name"), row.optBoolean("notice", false), seen.isNotEmpty())
         }
-    }
-
-    @Test fun bug6UndoingABookmarkDeleteKeepsTheTombstoneAndConverges() {
-        val holder = phone("undo-holder")
-        val mark = Store.addBookmark(book, 1, 30.0, "")
-        Store.deleteBookmark(book, mark.getString("id"))
-        val client = phone("undo-client")
-        sync(client, holder)
-        use(holder)
-        Store.restoreBookmark(book, mark)
-        repeat(3) { sync(client, holder) }
-        val states = listOf(holder, client).map { use(it); Store.state(book) }
-        for (state in states) {
-            assertEquals(mark.getString("id"), state.getJSONArray("bookmarks").getJSONObject(0).getString("id"))
-            assertEquals(listOf(mark.getString("id")), state.getJSONObject("deleted").keys().asSequence().toList())
-        }
-        assertTrue(StrictJson.equal(states[0].getJSONObject("_deletedRevs"), states[1].getJSONObject("_deletedRevs")))
     }
 }

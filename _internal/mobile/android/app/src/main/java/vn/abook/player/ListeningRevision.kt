@@ -1,6 +1,5 @@
 package vn.abook.player
 
-import org.json.JSONArray
 import org.json.JSONObject
 
 /** Shared bounded clock contract with Python and readingPosition.ts. */
@@ -40,8 +39,7 @@ internal object ListeningRevision {
     private fun items(state: JSONObject): List<JSONObject> = buildList {
         for (key in listOf("last", "reading")) state.optJSONObject(key)?.let { add(it) }
         state.optJSONObject("chapters")?.let { rows -> for (key in rows.keys()) rows.optJSONObject(key)?.let { add(it) } }
-        state.optJSONArray("bookmarks")?.let { rows -> for (i in 0 until rows.length()) rows.optJSONObject(i)?.let { add(it) } }
-        for (field in listOf("_fieldRevs", "_deletedRevs")) state.optJSONObject(field)?.let { rows ->
+        state.optJSONObject("_fieldRevs")?.let { rows ->
             for (key in rows.keys()) add(JSONObject().put("rev", rows.opt(key)))
         }
     }
@@ -133,25 +131,12 @@ internal object ListeningRevision {
             if (accept(item)) chapters.put(key, item)
         } }
         state.put("chapters", chapters)
-        val marks = JSONArray()
-        state.optJSONArray("bookmarks")?.let { rows -> for (i in 0 until rows.length()) {
-            val item = rows.optJSONObject(i)
-            if (accept(item)) marks.put(item)
-        } }
-        state.put("bookmarks", marks)
         val fields = JSONObject()
         for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) if (state.has(field)) {
             val rev = state.optJSONObject("_fieldRevs")?.opt(field)
             if (accept(JSONObject().put("rev", rev))) fields.put(field, rev) else { state.remove(field); state.remove(stamp) }
         }
         state.put("_fieldRevs", fields)
-        val gone = JSONObject()
-        val goneRevs = JSONObject()
-        state.optJSONObject("deleted")?.let { rows -> for (key in rows.keys()) {
-            val rev = state.optJSONObject("_deletedRevs")?.opt(key)
-            if (accept(JSONObject().put("rev", rev))) { gone.put(key, rows.get(key)); goneRevs.put(key, rev) }
-        } }
-        state.put("deleted", gone).put("_deletedRevs", goneRevs)
         state.remove("_clock")
         state.remove("_epoch")
         return state

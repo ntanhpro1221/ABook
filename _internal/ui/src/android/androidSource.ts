@@ -38,7 +38,7 @@ function toListenBook(book: LocalBook, withChapters: boolean): ListenBook {
     ...(chapter.skip?.length ? { skip: chapter.skip } : {}),
   }));
   const textOnly = chapters.length > 0 && chapters.every((chapter) => chapter.state === "text");
-  const state: ListeningState = { ...book.state, chapters: book.state?.chapters ?? {}, bookmarks: book.state?.bookmarks ?? [] };
+  const state: ListeningState = { ...book.state, chapters: book.state?.chapters ?? {} };
   return {
     id: book.id,
     title: book.title,
@@ -198,15 +198,8 @@ export const androidSource: ListenSource = {
   setFinished: (id, finished, record) => EbookLibrary.setFinished({ id, finished, record }),
   setRate: (id, rate, record) => EbookLibrary.setRate({ id, rate, record }),
   setVoice: (id, voice, record) => EbookLibrary.setVoice({ id, voice, record }),
-  addBookmark: (id, chapterId, seconds, note, record, sentence) => EbookLibrary.addBookmark({ id, chapterId, seconds, note, ...sentence, record }),
   refreshListening: async (id) => {
     await EbookLibrary.syncState({ id });
-  },
-  updateBookmark: (id, markId, note, record) => EbookLibrary.updateBookmark({ id, markId, note, record }),
-  deleteBookmark: (id, markId, record) => EbookLibrary.deleteBookmark({ id, markId, record }),
-  restoreBookmark: async (id, mark) => {
-    // Hoàn tác đúng ID và lúc đặt dấu gốc; lõi gỡ bia mộ để đồng bộ không xoá dấu lần nữa.
-    await EbookLibrary.restoreBookmark({ id, mark });
   },
   async sessions(bookId) {
     const book = await EbookLibrary.book({ id: bookId });

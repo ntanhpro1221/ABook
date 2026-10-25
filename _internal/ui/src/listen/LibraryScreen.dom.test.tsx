@@ -25,7 +25,7 @@ beforeEach(() => {
   vi.spyOn(HTMLElement.prototype, "animate").mockImplementation(() => ({ cancel: vi.fn(), onfinish: null, finished: Promise.resolve() }) as unknown as Animation);
   state.books = Array.from({ length: 6 }, (_, i) => ({
     id: String(i), title: "Book " + i, duration: 600, narrator: "", chaptersTotal: 1, chaptersAvailable: 1,
-    complete: true, producing: false, updatedAt: null, state: { chapters: {}, bookmarks: [] },
+    complete: true, producing: false, updatedAt: null, state: { chapters: {} },
     progress: { heardSeconds: 0, totalSeconds: 600, fraction: 0, chaptersDone: 0, finished: false },
   } as ListenBook));
   main = document.createElement("main"); main.style.overflowY = "auto"; document.body.append(main); root = createRoot(main);

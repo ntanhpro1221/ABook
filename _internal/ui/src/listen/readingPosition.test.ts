@@ -16,7 +16,7 @@ it("chỗ đọc và câu trích đi theo đoạn sau khi bỏ dòng trước đ
   expect(readingIndex(after, { index: 999 })).toBe(2);
 });
 
-it("câu trích dấu trang rút gọn và gộp khoảng trắng vẫn tìm đúng đoạn", () => {
+it("câu trích rút gọn và gộp khoảng trắng vẫn tìm đúng đoạn", () => {
   const script = textScript(1, "", "Đoạn đầu.\n\nTrời   đã sáng, và sương còn phủ kín cánh đồng làng này.\n\nĐoạn cuối.");
   expect(readingIndex(script, { index: 2, quote: "Trời đã sáng, và sương…" })).toBe(1);
 });

@@ -26,16 +26,16 @@ MOVE_SYNC = json.loads((Path(__file__).parent / "fixtures" / "listening_records"
 def test_one_book_many_records_each_with_its_own_place(tmp_path: Path) -> None:
     listening = Listening(tmp_path / "listening.json")
     listening.progress("sach", 1, 300.0, 1000.0)
-    listening.add_bookmark("sach", 1, 120.0, "của bố")
+    listening.set_rate("sach", 1.5)
     first = listening.records("sach")[0]["id"]
 
     second = listening.create_record("sach", "Con")
-    assert listening.get("sach")["bookmarks"] == [] and "last" not in listening.get("sach"), "hồ sơ mới nghe từ đầu"
+    assert "rate" not in listening.get("sach") and "last" not in listening.get("sach"), "hồ sơ mới nghe từ đầu"
     listening.progress("sach", 2, 40.0, 1000.0)
 
     assert listening.activate("sach", first)
     assert listening.get("sach")["last"]["chapterId"] == 1
-    assert [mark["note"] for mark in listening.get("sach")["bookmarks"]] == ["của bố"]
+    assert listening.get("sach")["rate"] == 1.5
     assert listening.activate("sach", second["id"])
     assert listening.get("sach")["last"]["chapterId"] == 2
     assert [(record["name"], record["active"]) for record in listening.records("sach")] == [
@@ -120,7 +120,7 @@ def test_missing_revisions_are_rejected_without_creating_a_record(tmp_path: Path
 
 def _listening_from(path: Path, side: dict) -> Listening:
     """Sổ nghe của máy tính dựng từ một phía của bộ ví dụ: liên kết sách - hồ sơ + lúc chuyển của từng hồ sơ."""
-    records = {record: {"name": name, "createdAt": 0.0, "nameAt": 0.0, "state": {"chapters": {}, "bookmarks": []},
+    records = {record: {"name": name, "createdAt": 0.0, "nameAt": 0.0, "state": {"chapters": {}},
                         **({"movedAt": side["movedAt"][record]} if record in side["movedAt"] else {})}
                for record, name in MOVE_SYNC["names"].items()}
     path.write_text(json.dumps({"version": 2, "records": records, "links": side["links"], "deleted": {}}), encoding="utf-8")
@@ -176,7 +176,7 @@ def test_a_phone_move_reaches_the_computer_through_sync(library, tmp_path: Path)
         token = json.loads(data)["token"]
         moved = time.time() + 5
         body = {"record": record, "recordName": DEFAULT_RECORD_NAME, "nameAt": 0.0, "activeAt": moved, "movedAt": moved,
-                "deletedRecords": {}, "chapters": {}, "bookmarks": []}
+                "deletedRecords": {}, "chapters": {}}
 
         status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{book_id(other)}/state", token, body=body)
 
@@ -184,32 +184,6 @@ def test_a_phone_move_reaches_the_computer_through_sync(library, tmp_path: Path)
         assert status == 200 and (reply["book"], reply["movedAt"]) == (book_id(other), moved)
         assert listening.book_of(record) == book_id(other) and listening.records(book_id(project)) == []
         assert listening.get(book_id(other))["last"]["seconds"] == 30.0 and "movedAt" not in listening.get(book_id(other))
-    finally:
-        server.stop()
-
-
-def test_a_bookmark_deleted_on_the_phone_is_deleted_here_through_sync(library, tmp_path: Path) -> None:  # noqa: F811 - fixture
-    """`deleted` trong thân yêu cầu là bia mộ dấu trang (dict), không phải cờ đồng bộ: cổng thật phải chuyển nó tới merge."""
-    lib, project, listening = library
-    book = book_id(project)
-    mark = listening.add_bookmark(book, 1, 12.0, note="chỗ hay")
-    record = listening.records(book)[0]["id"]
-    devices = Devices(tmp_path / "devices.json")
-    server = SyncServer(SyncApp(lib, listening, devices, "Máy thử"), host="127.0.0.1", port=0).start()
-    try:
-        code = devices.start_pairing()["code"]
-        _status, data, _ = _sync_request(server.port, "POST", "/sync/v1/pair", body={"code": code, "device": "Pixel"})
-        token = json.loads(data)["token"]
-        body = {"record": record, "recordName": DEFAULT_RECORD_NAME, "nameAt": 0.0, "activeAt": 0.0, "movedAt": 0.0,
-                "deletedRecords": {}, "chapters": {}, "bookmarks": [], "deleted": {mark["id"]: time.time() + 5},
-                "_clock": mark["rev"]["counter"] + 1,
-                "_deletedRevs": {mark["id"]: {"counter": mark["rev"]["counter"] + 1, "node": "phone"}}}
-
-        status, _data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{book}/state", token, body=body)
-
-        assert status == 200
-        assert listening.get(book)["bookmarks"] == [], "dấu trang điện thoại đã xoá không được sống lại ở máy tính"
-        assert mark["id"] in listening.get(book)["deleted"]
     finally:
         server.stop()
 
@@ -297,17 +271,15 @@ def test_both_devices_share_one_default_record_per_book(tmp_path: Path) -> None:
     """Hồ sơ "Mặc định" mang mã suy từ mã sách ở mọi máy: máy tính và điện thoại cùng nghe một cuốn là MỘT hồ sơ -
     đồng bộ gộp vào nhau, không tách đôi chỗ nghe."""
     desktop = Listening(tmp_path / "listening.json")
-    mark = desktop.add_bookmark("sach", 1, 5.0)
+    desktop.set_chapter_done("sach", 1, True)
     [record] = desktop.records("sach")
     assert record["id"] == default_record_id("sach")
 
-    phone_state = {"bookmarks": [{"id": "m-dien-thoai", "chapterId": 2, "seconds": 9.0, "note": "", "at": 2.0,
-                                  "rev": {"counter": 2, "node": "phone"}}],
-                   "chapters": {}}
+    phone_state = {"chapters": {"2": {"heard": 9.0, "done": False, "at": 2.0, "rev": {"counter": 2, "node": "phone"}}}}
     reply = desktop.merge_record("sach", default_record_id("sach"), phone_state)
 
     assert len(desktop.records("sach")) == 1 and reply["record"] == record["id"]
-    assert {item["id"] for item in desktop.get("sach")["bookmarks"]} == {mark["id"], "m-dien-thoai"}
+    assert set(desktop.get("sach")["chapters"]) == {"1", "2"}
     fresh = Listening(tmp_path / "moi.json")
     fresh.progress("sach-moi", 1, 3.0, 100.0)
     assert fresh.records("sach-moi")[0]["id"] == default_record_id("sach-moi")
@@ -352,8 +324,8 @@ def test_a_deleted_record_stays_deleted_on_every_device(tmp_path: Path) -> None:
 
 
 def test_the_player_writes_into_the_record_it_is_playing(tmp_path: Path) -> None:
-    """Máy khác đổi hồ sơ đang dùng giữa lúc máy này đang phát: chỗ nghe, phiên nghe, dấu trang của trình phát vẫn vào
-    hồ sơ nó đang phát, không rơi sang hồ sơ mới; hồ sơ ấy bị xoá thì lần lưu bị bỏ (dấu trang thì vào hồ sơ đang dùng)."""
+    """Máy khác đổi hồ sơ đang dùng giữa lúc máy này đang phát: chỗ nghe, phiên nghe, tốc độ của trình phát vẫn vào
+    hồ sơ nó đang phát, không rơi sang hồ sơ mới; hồ sơ ấy bị xoá thì lần lưu bị bỏ."""
     listening = Listening(tmp_path / "listening.json")
     listening.progress("sach", 3, 100.0, 1000.0)
     playing = listening.records("sach")[0]["id"]
@@ -363,19 +335,17 @@ def test_the_player_writes_into_the_record_it_is_playing(tmp_path: Path) -> None
     listening.progress("sach", 3, 160.0, 1000.0, record=playing)
     listening.add_session("sach", {"id": "phien1", "listened": 60, "from": {"chapterId": 3, "seconds": 100},
                                    "to": {"chapterId": 3, "seconds": 160}}, record=playing)
-    listening.add_bookmark("sach", 3, 150.0, "hay", record=playing)
+    listening.set_rate("sach", 1.5, record=playing)
     assert "last" not in listening.get("sach"), "hồ sơ mới chọn trên máy khác không bị đè"
     assert listening.activate("sach", playing)
     held = listening.get("sach")
     assert held["last"]["seconds"] == 160.0 and [item["id"] for item in held["sessions"]] == ["phien1"]
-    assert [mark["note"] for mark in held["bookmarks"]] == ["hay"]
+    assert held["rate"] == 1.5
 
     assert listening.delete_record(playing)
     listening.progress("sach", 3, 200.0, 1000.0, record=playing)
     listening.add_session("sach", {"id": "phien2", "listened": 40}, record=playing)
     assert "last" not in listening.get("sach") and not listening.get("sach").get("sessions"), "hồ sơ đã xoá: bỏ lần ghi"
-    assert listening.add_bookmark("sach", 3, 210.0, "vẫn giữ", record=playing)["note"] == "vẫn giữ"
-    assert [mark["note"] for mark in listening.get("sach")["bookmarks"]] == ["vẫn giữ"]
     assert playing not in json.dumps(listening.records("sach")), "không sống lại"
 
 

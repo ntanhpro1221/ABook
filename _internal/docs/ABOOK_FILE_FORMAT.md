@@ -64,7 +64,7 @@ older apps still open it.
   must not contain a part folder; a reader treats such an entry as an unknown name.
 - **Chapter ids.** The id of a chapter is `part * 100000 + id inside the part` (part 2, chapter 1: `200001`). It is the
   `id` in `book.json`, the `<n>` of `scripts/<n>.json`, the `chapterId` inside that script, the key of the `music.chapters`
-  object, and what a listener's position and bookmarks refer to. Adding a part later never changes an existing id, so
+  object, and what a listener's position refers to. Adding a part later never changes an existing id, so
   listening data survives re-opening a longer file of the same series. Every chapter also has `part`.
 - **`parts`.** A top-level array in `book.json`, in reading order: `{part, title, chapters: [firstId, lastId], duration,
   narrator}`. `title` is the series title with the suffix ` · Phần N` ("Part N"); `duration` is in seconds. Parts that had
@@ -172,7 +172,7 @@ additive: the format version does not change, a reader that does not know `words
 - Reject a `package.version` greater than the version the reader supports (currently 5), and tell the user to update.
 - Reject a chapter whose `file` or `text` names an entry that is not in the package.
 - Check that the destination has room for the whole book before extracting, and extract and hash in one pass.
-- Nothing inside the file is executed. The file carries no listening data (position, bookmarks, history) and no
+- Nothing inside the file is executed. The file carries no listening data (position, history) and no
   identifier of the person or device that made it.
 
 ## Security considerations

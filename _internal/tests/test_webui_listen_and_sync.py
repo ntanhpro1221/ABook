@@ -131,24 +131,18 @@ def test_listening_to_the_last_seconds_marks_the_chapter_heard(tmp_path: Path) -
 
 def test_merging_two_devices_keeps_the_newest_of_each_part() -> None:
     desktop = {"last": {"chapterId": 1, "seconds": 50, "at": 100}, "chapters": {"1": {"heard": 50, "done": False, "at": 100}},
-               "bookmarks": [{"id": "a", "chapterId": 1, "seconds": 10, "note": "", "at": 90}],
                "rate": 1.0, "rateAt": 10}
     phone = {"last": {"chapterId": 2, "seconds": 5, "at": 200}, "chapters": {"2": {"heard": 5, "done": False, "at": 200}},
-             "bookmarks": [{"id": "b", "chapterId": 2, "seconds": 3, "note": "hay", "at": 150}],
-             "deleted": {"a": 180}, "rate": 1.5, "rateAt": 20}
+             "rate": 1.5, "rateAt": 20}
     for state, node, counter in ((desktop, "desktop", 1), (phone, "phone", 2)):
         rev = {"counter": counter, "node": node}
         state["last"]["rev"] = rev
         for item in state["chapters"].values():
             item["rev"] = rev
-        for item in state["bookmarks"]:
-            item["rev"] = rev
         state["_fieldRevs"] = {"rate": rev}
-        state["_deletedRevs"] = {key: rev for key in state.get("deleted", {})}
     merged = merge_states(desktop, phone)
     assert merged["last"]["chapterId"] == 2
     assert set(merged["chapters"]) == {"1", "2"}
-    assert [mark["id"] for mark in merged["bookmarks"]] == ["b"], "dấu trang xoá trên điện thoại phải biến mất ở máy tính"
     assert merged["rate"] == 1.5
 
 
@@ -181,21 +175,6 @@ def test_listening_again_after_the_end_resumes_where_it_stopped() -> None:
     assert book_progress(marked_after, chapters)["finished"], "tự đánh dấu nghe xong SAU lần nghe ấy thì tôn trọng"
     listened_after_mark = {**marked_after, "finishedAt": 400}
     assert not book_progress(listened_after_mark, chapters)["finished"]
-
-
-def test_two_bookmarks_at_the_same_spot_are_one(tmp_path: Path) -> None:
-    listening = Listening(tmp_path / "listening.json")
-    first = listening.add_bookmark("b", 3, 64.0)
-    again = listening.add_bookmark("b", 3, 67.5, "đoạn hay")
-    assert again["id"] == first["id"] and again["existing"]
-    assert [mark["note"] for mark in listening.get("b")["bookmarks"]] == ["đoạn hay"]
-    other = listening.add_bookmark("b", 3, 80.0)
-    assert other["id"] != first["id"] and not other.get("existing")
-    listening.delete_bookmark("b", first["id"])
-    listening.restore_bookmark("b", first)
-    state = listening.get("b")
-    # bia mộ ở lại (soát a118 lỗi 6): dấu hoàn tác sống nhờ phiên bản mới hơn nó
-    assert first["id"] in [mark["id"] for mark in state["bookmarks"]] and first["id"] in state["deleted"]
 
 
 def test_last_night_is_the_newest_undismissed_night(tmp_path: Path) -> None:
@@ -340,7 +319,7 @@ def test_a_paired_phone_downloads_a_book_and_syncs_its_place(library, tmp_path: 
         assert status == 404, "chỉ phát file có trong gói"
         status, data, _ = _sync_request(server.port, "GET", f"/sync/v1/books/{identifier}/files/scripts/1.json", token)
         assert json.loads(data)["segments"][0]["kind"] == "heading"
-        phone_state = {"last": {"chapterId": 1, "seconds": 4.2, "at": time.time(), "rev": {"counter": 1, "node": "phone"}}, "chapters": {}, "bookmarks": []}  # chương 1 dài 9,7 giây
+        phone_state = {"last": {"chapterId": 1, "seconds": 4.2, "at": time.time(), "rev": {"counter": 1, "node": "phone"}}, "chapters": {}}  # chương 1 dài 9,7 giây
         status, data, _ = _sync_request(server.port, "POST", f"/sync/v1/books/{identifier}/state", token, body=phone_state)
         assert status == 200 and listening.get(identifier)["last"]["seconds"] == 4.2
         legacy = {"last": {"chapterId": 1, "seconds": 7, "at": time.time() + 10}}

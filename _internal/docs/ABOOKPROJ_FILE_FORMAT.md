@@ -118,7 +118,7 @@ The file is a ZIP of audio, images, text and an SQLite database. Risks are those
 check), alias tricks (an alias must name a real entry of the same bytes, so it can only repeat data already in the file)
 and malformed media or database files. The database is opened only by the application's own code with fixed queries; it
 holds no executable content and is not attached to other databases. The file can contain the full text of the book being
-produced and the original folder paths of the computer that packed it; it carries no listening data (position, bookmarks,
+produced and the original folder paths of the computer that packed it; it carries no listening data (position,
 history).
 
 ## Versioning

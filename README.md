@@ -10,7 +10,7 @@ Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ c
 ## Tính năng chính
 
 - **Nghe**: thư viện xếp theo bộ truyện, văn bản chạy theo lời đọc, chế độ đọc sách, ảnh bìa (tìm bìa trên mạng khi bạn
-  bấm), hẹn giờ ngủ, dấu trang, lịch sử nghe, xuất MP3 có tag. Một cuốn có thể có nhiều hồ sơ nghe: mỗi người trong
+  bấm), hẹn giờ ngủ, lịch sử nghe, xuất MP3 có tag. Một cuốn có thể có nhiều hồ sơ nghe: mỗi người trong
   nhà một chỗ nghe riêng, hay nghe lại từ đầu mà vẫn giữ lần trước.
 - **Nghe ngay mọi cuốn sách**: thêm file EPUB, Word, PDF có chữ hay thư mục `.txt` vào Thư viện (máy tính và điện thoại) rồi
   bấm **"Nghe ngay"** - máy đọc to từng đoạn, chữ đang đọc sáng lên như "Đọc to" của Edge, bấm vào chữ nào là đọc từ chữ ấy, tắt
@@ -35,7 +35,7 @@ Chỉ khi bạn chọn một giọng trực tuyến cho "Nghe ngay" thì chữ c
   luôn nằm dưới giọng đọc; tab **Nhạc nền** cho đổi bài, ghim, im lặng một đoạn hay tắt hẳn. Nhạc đi theo file sách
   `.abook`, nghe trên máy tính lẫn điện thoại.
 - **Mọi máy trong nhà làm việc cùng nhau**: điện thoại nghe thẳng thư viện máy tính không cần tải (hoặc tải về nghe khi
-  không có mạng); chỗ đang nghe và dấu trang đi hai chiều; thấy và điều khiển máy khác đang phát, **"Nghe ở đây"** chuyển
+  không có mạng); chỗ đang nghe đi hai chiều; thấy và điều khiển máy khác đang phát, **"Nghe ở đây"** chuyển
   sang máy mình đúng chương, đúng giây. Nối qua Wi-Fi, hoặc Bluetooth khi không chung Wi-Fi - điện thoại tự chọn đường.
   Máy tính nghe được thư viện của máy tính khác; điện thoại nghe được thư viện của điện thoại khác.
 - **Nghe trong trình duyệt** của iPhone, iPad, TV hay máy bất kỳ: mở `https://<tên hoặc địa chỉ máy tính>:47630` (trình

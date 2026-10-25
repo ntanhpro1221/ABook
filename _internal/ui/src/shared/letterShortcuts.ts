@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 
-// Phím tắt MỘT CHỮ CÁI của máy tính (B, M, [ ], ? ở trình phát; J/K/1-9 ở Việc cần duyệt; O/R ở Cần nghe lại) tắt được ở Cài đặt › Phím tắt
+// Phím tắt MỘT CHỮ CÁI của máy tính (M, [ ], ? ở trình phát; J/K/1-9 ở Việc cần duyệt; O/R ở Cần nghe lại) tắt được ở Cài đặt › Phím tắt
 // (WCAG 2.1.4, soát a31): người dùng phần mềm nhập bằng giọng nói hay bàn phím dính lỡ "gõ" một chữ là app làm việc ấy. Mặc định bật như
 // trước. Space, mũi tên, Esc và phím có Ctrl / Alt không thuộc nhóm này - vẫn chạy. Máy tính đọc cài đặt đã lưu (desktop/App.tsx); điện thoại
 // không có bàn phím - không có công tắc, cờ luôn bật mà cũng không có phím nào bấm.

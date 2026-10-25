@@ -31,16 +31,14 @@ class A110UserDataTest {
         assertTrue(Store.dataNotices().length() > 0)
     }
 
-    @Test fun badChaptersAndOneBookmarkDoNotLoseReadableBookmarks() {
+    @Test fun badChaptersDoNotLoseTheReadablePosition() {
         val record = Store.activeRecord("book")
-        Store.addBookmark("book", 1, 10.0, "keep me")
+        Store.saveReading("book", 1, 100, 100.0)
         val file = File(root, "state/$record.json")
-        val raw = JSONObject(file.readText()).put("chapters", JSONArray())
-        raw.getJSONArray("bookmarks").put("not-a-bookmark")
-        file.writeText(raw.toString())
+        file.writeText(JSONObject(file.readText()).put("chapters", JSONArray()).toString())
         val bytes = file.readBytes()
         Store.progress("book", 1, 600.0, 1000.0)
-        assertEquals("keep me", Store.state("book").getJSONArray("bookmarks").getJSONObject(0).getString("note"))
+        assertEquals(100, Store.state("book").getJSONObject("reading").getInt("index"))
         assertTrue(file.parentFile!!.listFiles()!!.any { it.name.startsWith(file.name + ".corrupt-") && it.readBytes().contentEquals(bytes) })
     }
 
@@ -63,14 +61,14 @@ class A110UserDataTest {
         assertTrue(JSONObject(file.readText()).getJSONObject("records").has(record))
     }
 
-    @Test fun failedNoticeStillExposesBookmarksAndAllowsPreservedStateToSave() {
+    @Test fun failedNoticeStillExposesTheReadingPositionAndAllowsPreservedStateToSave() {
         val record = Store.activeRecord("book")
-        Store.addBookmark("book", 1, 10.0, "precious")
+        Store.saveReading("book", 1, 100, 100.0)
         val file = File(root, "state/$record.json")
         file.writeText(JSONObject(file.readText()).put("chapters", JSONArray()).toString())
         val original = file.readBytes()
         File(root, "data-notices.json").mkdirs()
-        assertEquals("precious", Store.state("book").getJSONArray("bookmarks").getJSONObject(0).getString("note"))
+        assertEquals(100, Store.state("book").getJSONObject("reading").getInt("index"))
         Store.progress("book", 1, 600.0, 1000.0)
         assertTrue(file.parentFile!!.listFiles()!!.any { it.name.startsWith(file.name + ".corrupt-") && it.readBytes().contentEquals(original) })
         assertEquals(600.0, Store.state("book").getJSONObject("last").getDouble("seconds"), 0.0)
@@ -84,8 +82,8 @@ class A110UserDataTest {
     }
 
     @Test fun versionedMergeIgnoresAnOldFutureClock() {
-        val ours = JSONObject("""{"last":{"chapterId":1,"seconds":600,"at":1999913600,"rev":{"counter":2,"node":"phone"}},"chapters":{},"bookmarks":[],"_clock":2}""")
-        val old = JSONObject("""{"last":{"chapterId":1,"seconds":10,"at":2000000000,"rev":{"counter":1,"node":"desktop"}},"chapters":{},"bookmarks":[],"_clock":1}""")
+        val ours = JSONObject("""{"last":{"chapterId":1,"seconds":600,"at":1999913600,"rev":{"counter":2,"node":"phone"}},"chapters":{},"_clock":2}""")
+        val old = JSONObject("""{"last":{"chapterId":1,"seconds":10,"at":2000000000,"rev":{"counter":1,"node":"desktop"}},"chapters":{},"_clock":1}""")
         assertEquals(600.0, Store.mergeStates(ours, old).getJSONObject("last").getDouble("seconds"), 0.0)
         assertEquals(600.0, Store.mergeStates(old, ours).getJSONObject("last").getDouble("seconds"), 0.0)
     }

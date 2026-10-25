@@ -23,11 +23,11 @@ describe("phím tắt một chữ cái", () => {
     expect(html).toContain("Space, mũi tên, Esc vẫn chạy");
   });
 
-  it("tắt: bộ bắt phím đọc cờ lúc có phím, hộp Phím tắt đánh dấu B / M / [ ] / ? là đang tắt", () => {
+  it("tắt: bộ bắt phím đọc cờ lúc có phím, hộp Phím tắt đánh dấu M / [ ] / ? là đang tắt", () => {
     setLetterShortcuts(false);
     expect(letterShortcutsOn()).toBe(false);
     const html = renderToString(<ShortcutList />);
-    expect(html.match(/\(đang tắt\)/g)).toHaveLength(4);
+    expect(html.match(/\(đang tắt\)/g)).toHaveLength(3);
     expect(html).toContain("Space, mũi tên, Esc vẫn chạy");
   });
 });

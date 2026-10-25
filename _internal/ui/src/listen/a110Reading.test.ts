@@ -50,7 +50,7 @@ it("bản đã đồng bộ mới hơn thắng bản dự phòng có giờ tươ
 });
 
 it("nghe lại sau khi chỉnh giờ lùi không bị kẹt ở đã nghe xong", () => {
-  const state = { chapters: {}, bookmarks: [], finished: true, finishedAt: 200, _fieldRevs: { finished: { counter: 1, node: "desktop" } },
+  const state = { chapters: {}, finished: true, finishedAt: 200, _fieldRevs: { finished: { counter: 1, node: "desktop" } },
     last: { chapterId: 1, seconds: 10, at: 100, rev: { counter: 2, node: "desktop" } } };
   expect(bookProgress(state, [{ id: 1, duration: 1000 } as ListenChapter]).rewound).toBe(true);
 });

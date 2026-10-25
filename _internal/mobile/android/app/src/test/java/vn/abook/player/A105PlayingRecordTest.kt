@@ -41,7 +41,7 @@ class A105PlayingRecordTest {
 
     private fun lastSeconds(record: String): Double? = Store.readJson(File(root, "state/$record.json"))?.optJSONObject("last")?.optDouble("seconds")
 
-    private fun tombstone(record: String) = JSONObject().put("record", b).put("book", "sach").put("chapters", JSONObject()).put("bookmarks", JSONArray())
+    private fun tombstone(record: String) = JSONObject().put("record", b).put("book", "sach").put("chapters", JSONObject())
         .put("deletedRecords", JSONObject().put(record, 99.0)).put("active", JSONObject().put("record", b).put("at", 0.0))
 
     @Test
@@ -62,12 +62,6 @@ class A105PlayingRecordTest {
         assertEquals(80.0, lastSeconds(b)!!, 0.0)
         assertNull(Store.state("sach").opt("rate"))
         assertNull(Store.state("sach").optJSONArray("sessions"))
-        try {
-            Store.addBookmark("sach", 1, 5.0, "x", recordId = a)
-            fail("dấu trang vào hồ sơ đã xoá phải bị từ chối")
-        } catch (expected: IllegalStateException) {
-            assertTrue(Store.state("sach").getJSONArray("bookmarks").length() == 0)
-        }
     }
 
     @Test
@@ -102,7 +96,7 @@ class A105PlayingRecordTest {
         val gone = mutableListOf<Set<String>>()
 
         Store.mergeRecord("sach", JSONObject().put("record", b).put("recordName", "b").put("nameAt", 0.0).put("activeAt", 0.0).put("movedAt", 0.0)
-            .put("deletedRecords", JSONObject().put(a, 50.0)).put("chapters", JSONObject()).put("bookmarks", JSONArray())) { gone.add(it) }
+            .put("deletedRecords", JSONObject().put(a, 50.0)).put("chapters", JSONObject())) { gone.add(it) }
 
         assertEquals(listOf(setOf(a)), gone)
         assertEquals(b, Store.knownActiveRecord("sach"))

@@ -14,7 +14,7 @@ function native(id: string, title: string, at: number | null, extra = {}) {
   return {
     id, title, narrator: "Đức Trí", chaptersTotal: 1, chaptersAvailable: 1, complete: true,
     chapters: [{ id: 1, index: 1, title: "Chương 1", fullTitle: "Chương 1", duration: 100, available: true, file: "chapters/1.mp3" }],
-    state: { ...(at === null ? {} : { last: { chapterId: 1, seconds: 10, at } }), chapters: {}, bookmarks: [] },
+    state: { ...(at === null ? {} : { last: { chapterId: 1, seconds: 10, at } }), chapters: {} },
     ...extra,
   };
 }

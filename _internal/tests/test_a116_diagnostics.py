@@ -33,7 +33,7 @@ def test_shared_private_paths_and_source_frames(case):
 def test_bundle_includes_recovery_metadata_without_profile_contents(tmp_path):
     notices.NOTICES.clear()
     path = tmp_path / "listening.json"
-    path.write_text('{"book":{"chapters":[],"bookmarks":[],"private":"PROFILE-CONTENT"}}', encoding="utf-8")
+    path.write_text('{"book":{"chapters":[],"private":"PROFILE-CONTENT"}}', encoding="utf-8")
     Listening(path)
     notices.NOTICES.add("must not export this notice content", kind="saving-blocked")
     info = diagnostics.machine_info("test", tmp_path)

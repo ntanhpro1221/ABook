@@ -80,7 +80,6 @@ const PHONE: Omit<Entry, "platform">[] = [
     await click("Thêm việc với sách");
     await click(/^Xoá khỏi điện thoại/);
   } },
-  { id: "phone/book-bookmarks", group: "Trang sách", title: "Tab Dấu trang", route: "/book/suong-mu-2", act: () => click(/^Dấu trang, \d+ mục/).then(() => undefined) },
   { id: "phone/book-history", group: "Trang sách", title: "Tab Lịch sử nghe", route: "/book/suong-mu-2", act: () => click("Lịch sử").then(() => undefined) },
   { id: "phone/book-cast", group: "Trang sách", title: "Tab Nhân vật", route: "/book/suong-mu-2", act: () => click("Nhân vật").then(() => undefined) },
   { id: "phone/book-text", group: "Trang sách", title: "Sách chỉ có chữ (EPUB)", route: "/book/gac-xep" },
@@ -102,9 +101,6 @@ const PHONE: Omit<Entry, "platform">[] = [
   } },
   { id: "phone/player-sleep-active", group: "Trình phát", title: "Hẹn giờ đang bật", route: "/", act: async () => {
     await playerOpen(); await click(/^Hẹn giờ tắt/); await click("15 phút"); await click(/^Hẹn giờ tắt/);
-  } },
-  { id: "phone/player-bookmarks", group: "Trình phát", title: "Bảng dấu trang", route: "/", act: async () => {
-    await playerOpen(); await click("Thêm tuỳ chọn"); await click("Dấu trang", document.querySelector("[data-player-more]")!);
   } },
   { id: "phone/player-text-more", group: "Trình phát", title: "Tuỳ chọn sách chữ", route: "/book/gac-xep", act: textPlayerMore },
   { id: "phone/player-music", group: "Trình phát", title: "Bảng nhạc nền", route: "/book/gac-xep", act: async () => {
@@ -159,7 +155,6 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/library-error", group: "Thư viện", title: "Lỗi đọc thư viện", route: "/", scenario: { library: "error" } },
   { id: "desktop/book", group: "Trang sách", title: "Trang sách đang nghe dở", route: "/book/suong-mu-2" },
   { id: "desktop/book-menu", group: "Trang sách", title: "Menu của trang sách", route: "/book/suong-mu-2", act: () => click("Thêm việc với sách").then(() => undefined) },
-  { id: "desktop/book-bookmarks", group: "Trang sách", title: "Tab Dấu trang", route: "/book/suong-mu-2", act: () => click(/^Dấu trang, \d+ mục/).then(() => undefined) },
   { id: "desktop/book-history", group: "Trang sách", title: "Tab Lịch sử nghe", route: "/book/suong-mu-2", act: () => click("Lịch sử").then(() => undefined) },
   { id: "desktop/book-cast", group: "Trang sách", title: "Tab Nhân vật", route: "/book/suong-mu-2", act: () => click("Nhân vật").then(() => undefined) },
   { id: "desktop/book-text", group: "Trang sách", title: "Sách chỉ có chữ (EPUB)", route: "/book/gac-xep" },
@@ -168,17 +163,11 @@ const DESKTOP: Omit<Entry, "platform">[] = [
     await click("Thêm việc với sách");
     await click(/^Xoá khỏi thư viện/);
   } },
-  { id: "desktop/toast", group: "Thông báo", title: "Thông báo (toast) sau khi đặt dấu trang", route: "/", act: async () => {
-    await click("Thêm tuỳ chọn");
-    await click(/^Thêm dấu trang/);
-  } },
+  { id: "desktop/toast", group: "Thông báo", title: "Thông báo (toast) “Đang nghe lại từ đầu”", route: "/book/suong-mu-2", act: () => click(/^Nghe lại từ đầu/).then(() => undefined) },
   { id: "desktop/player-playing", group: "Trình phát", title: "Thanh phát đang phát", route: "/", act: () => click("Phát").then(() => undefined) },
   { id: "desktop/player-full", group: "Trình phát", title: "Màn Đang nghe (toàn màn)", route: "/", act: playerOpen },
   { id: "desktop/player-full-chapters", group: "Trình phát", title: "Màn Đang nghe · tab Chương", route: "/", act: async () => {
     await playerOpen(); await click(/^Chương$/, document.querySelector('[role="tablist"]')!);
-  } },
-  { id: "desktop/player-full-bookmarks", group: "Trình phát", title: "Màn Đang nghe · tab Dấu trang", route: "/", act: async () => {
-    await playerOpen(); await click(/^Dấu trang$/, document.querySelector('[role="tablist"]')!);
   } },
   { id: "desktop/player-sleep", group: "Trình phát", title: "Hẹn giờ ngủ", route: "/", act: async () => {
     await click("Thêm tuỳ chọn");

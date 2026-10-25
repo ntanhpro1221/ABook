@@ -20,30 +20,28 @@ def isolated(tmp_path, monkeypatch):
     notices.NOTICES.clear()
 
 
-@pytest.mark.parametrize("broken", ["state", "chapters", "bookmark", "links"])
+@pytest.mark.parametrize("broken", ["state", "chapters", "links"])
 def test_f1_nested_damage_keeps_original_and_readable_parts(tmp_path, broken):
     path = tmp_path / "listening.json"
     saved = listening.Listening(path)
-    mark = saved.add_bookmark("book", 1, 10, "keep me")
-    saved.add_bookmark("other", 2, 20, "other record")
+    saved.set_rate("book", 1.5)
+    saved.set_rate("other", 1.25)
     raw = json.loads(path.read_text("utf-8"))
     record = raw["records"][raw["links"]["book"]["active"]]
     if broken == "state":
         record["state"] = []
     elif broken == "chapters":
         record["state"]["chapters"] = []
-    elif broken == "bookmark":
-        record["state"]["bookmarks"].append("not-a-bookmark")
     else:
         raw["links"]["book"]["records"].append({"bad": "id"})
     original = json.dumps(raw).encode()
     path.write_bytes(original)
     reopened = listening.Listening(path)
-    assert reopened.get("other")["bookmarks"][0]["note"] == "other record"
+    assert reopened.get("other")["rate"] == 1.25
     assert isinstance(reopened.get("book")["chapters"], dict)
     if broken != "state":
-        assert reopened.get("book")["bookmarks"][0]["id"] == mark["id"]
-    reopened.add_bookmark("book", 3, 50, "new")
+        assert reopened.get("book")["rate"] == 1.5
+    reopened.set_rate("book", 2.0)
     assert any(p.read_bytes() == original for p in tmp_path.glob("listening.json.hong-*"))
     assert notices.NOTICES.all()
 
@@ -55,23 +53,23 @@ def test_f1_cannot_preserve_means_cannot_write(tmp_path, monkeypatch):
     monkeypatch.setattr(notices, "keep_broken", lambda *a, **kw: None)
     saved = listening.Listening(path)
     with pytest.raises(OSError):
-        saved.add_bookmark("book", 1, 10)
+        saved.set_rate("book", 1.5)
     assert path.read_bytes() == original
 
 
 def test_f1_readable_subset_still_available_when_backup_cannot_be_written(tmp_path, monkeypatch):
     path = tmp_path / "listening.json"
     saved = listening.Listening(path)
-    saved.add_bookmark("book", 1, 10, "precious")
+    saved.set_rate("book", 1.5)
     raw = json.loads(path.read_text("utf-8"))
     next(iter(raw["records"].values()))["state"]["chapters"] = []
     path.write_text(json.dumps(raw), encoding="utf-8")
     original = path.read_bytes()
     monkeypatch.setattr(notices, "keep_broken", lambda *a, **kw: None)
     reopened = listening.Listening(path)
-    assert reopened.get("book")["bookmarks"][0]["note"] == "precious"
+    assert reopened.get("book")["rate"] == 1.5
     with pytest.raises(notices.Unreadable):
-        reopened.add_bookmark("book", 2, 30)
+        reopened.set_rate("book", 2.0)
     assert path.read_bytes() == original
 
 
@@ -82,7 +80,7 @@ def test_f1_damaged_profile_does_not_hide_a_healthy_book_in_real_shelf(tmp_path)
     (book / "book.json").write_text(json.dumps({"title": "A book", "package": {}, "chapters": []}), encoding="utf-8")
     value = library.book_id(book)
     saved = listening.Listening(tmp_path / "listening.json")
-    saved.add_bookmark(value, 1, 10, "kept")
+    saved.set_rate(value, 1.5)
     raw = json.loads(saved.path.read_text("utf-8"))
     next(iter(raw["records"].values()))["state"] = []
     saved.path.write_text(json.dumps(raw), encoding="utf-8")
@@ -114,9 +112,9 @@ def test_f2_unread_journal_retried_even_with_same_stamp(tmp_path, still_locked):
         assert reopened.get("book")["last"]["seconds"] == 10
         if still_locked:
             with pytest.raises(OSError, match="thử lại"):
-                reopened.add_bookmark("book", 1, 40)
+                reopened.set_rate("book", 2.0)
     assert journal.read_bytes() == original
-    reopened.add_bookmark("book", 1, 40)
+    reopened.set_rate("book", 2.0)
     assert listening.Listening(path).get("book")["last"]["seconds"] == 600
     assert notices.NOTICES.all()
 
@@ -172,7 +170,7 @@ def test_f2_real_windows_read_lock_keeps_latest_committed_progress(tmp_path):
         assert reopened.get("book")["last"]["seconds"] == 10
     finally:
         assert close(handle)
-    reopened.add_bookmark("book", 1, 30, "after release")
+    reopened.set_rate("book", 2.0)
     assert listening.Listening(saved.path).get("book")["last"]["seconds"] == 600
     assert notices.NOTICES.all()
 
@@ -276,7 +274,7 @@ def test_f5_root_change_recovers_after_listening_save_fails(tmp_path, restart, f
     pref.update({"libraryRoot": str(oldroot)})
     saved = listening.Listening(tmp_path / "listening.json")
     oldid = library.book_id(book)
-    mark = saved.add_bookmark(oldid, 1, 30, "precious note")
+    saved.set_rate(oldid, 1.5)
     pref.remember_position(oldid, 1, 30, 1000)
     oldroot.rename(newroot)
     newid = library.book_id(newroot / packages.IMPORTED_FOLDER / "my-book")
@@ -302,7 +300,7 @@ def test_f5_root_change_recovers_after_listening_save_fails(tmp_path, restart, f
     reopened._recover_library_move()
     handler.app = reopened
     Handler.put_preferences(handler, {})
-    assert reopened.listening.get(newid)["bookmarks"][0]["id"] == mark["id"]
+    assert reopened.listening.get(newid)["rate"] == 1.5
     assert reopened.preferences.get()["libraryRoot"] == str(newroot)
     assert newid in reopened.preferences.get()["positions"]
     assert not intent_path.exists()
