@@ -381,7 +381,7 @@ export function ExportDialog({
           </p>
           <div className="mt-5 dialog-actions">
             {packing && (
-              <Button variant="secondary" disabled={cancelling} onClick={cancelPacking}>
+              <Button variant="ghost" disabled={cancelling} onClick={cancelPacking}>
                 Huỷ xuất
               </Button>
             )}
@@ -399,7 +399,7 @@ export function ExportDialog({
           <p className="mt-2 break-all rounded-xl bg-sunken p-3 text-sm text-fg-2">{finished.detail}</p>
           <div className="mt-5 dialog-actions">
             {!info?.remote && (
-              <Button variant="secondary" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>
+              <Button variant="ghost" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>
                 Mở thư mục
               </Button>
             )}
@@ -412,12 +412,12 @@ export function ExportDialog({
       <>
       {parts.length > 1 && !whole && kind !== "m4b" && (
         <div
-          className="relative mb-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm"
+          className="relative mb-3 flex flex-wrap gap-6 text-sm"
           role="radiogroup"
           aria-label="Phạm vi bản xuất"
           onKeyDown={radioGroupKeys(scopeValues, scope, setScope)}
         >
-          <SlidingIndicator variant="pill" className="rounded-lg bg-panel shadow-sm" />
+          <SlidingIndicator variant="line" />
           {(
             [
               ["part", "Phần này"],
@@ -431,15 +431,15 @@ export function ExportDialog({
               aria-checked={scope === value}
               tabIndex={radioTabIndex(scopeValues, scope, index)}
               onClick={() => setScope(value)}
-              className={cn("relative rounded-lg px-3 py-1.5 font-medium transition-colors duration-motion-medium", scope === value ? "" : "text-fg-2")}
+              className={cn("relative min-h-10 border-b-2 border-transparent font-medium transition-colors duration-motion-medium", scope === value ? "" : "text-fg-2")}
             >
               {label}
             </button>
           ))}
         </div>
       )}
-      <div className="relative grid gap-2" role="radiogroup" aria-label="Kiểu bản xuất" onKeyDown={radioGroupKeys(kindValues, kind, setKind)}>
-        <SlidingIndicator variant="pill" className="rounded-xl border border-focus bg-accent-soft" />
+      <div className="relative grid divide-y divide-line" role="radiogroup" aria-label="Kiểu bản xuất" onKeyDown={radioGroupKeys(kindValues, kind, setKind)}>
+        <SlidingIndicator variant="line" />
         {kinds.map(({ value, title, detail, icon: Icon }, index) => (
           <button
             key={value}
@@ -449,8 +449,8 @@ export function ExportDialog({
             tabIndex={radioTabIndex(kindValues, kind, index)}
             onClick={() => setKind(value)}
             className={cn(
-              "relative flex items-start gap-3 rounded-xl border p-3 text-left text-sm transition-colors duration-motion-medium",
-              kind === value ? "border-transparent" : "border-line hover:bg-hover",
+              "relative flex min-h-10 items-start gap-3 py-3 text-left text-sm transition-colors duration-motion-medium",
+              kind === value ? "text-accent-text" : "text-fg-2 hover:bg-hover",
             )}
           >
             <Icon className="mt-0.5 size-4 shrink-0 text-accent-text" />
@@ -464,12 +464,12 @@ export function ExportDialog({
       {wholeSeries && kind === "abook" && (
         <>
           <div
-            className="relative mt-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm"
+            className="relative mt-3 flex flex-wrap gap-6 text-sm"
             role="radiogroup"
             aria-label="Cách chia file"
             onKeyDown={radioGroupKeys(layoutValues, layout, setLayout)}
           >
-            <SlidingIndicator variant="pill" className="rounded-lg bg-panel shadow-sm" />
+            <SlidingIndicator variant="line" />
             {(
               [
                 ["single", "Một file"],
@@ -483,7 +483,7 @@ export function ExportDialog({
                 aria-checked={layout === value}
                 tabIndex={radioTabIndex(layoutValues, layout, index)}
                 onClick={() => setLayout(value)}
-                className={cn("relative rounded-lg px-3 py-1.5 font-medium transition-colors duration-motion-medium", layout === value ? "" : "text-fg-2")}
+                className={cn("relative min-h-10 border-b-2 border-transparent font-medium transition-colors duration-motion-medium", layout === value ? "" : "text-fg-2")}
               >
                 {label}
               </button>
@@ -537,7 +537,7 @@ export function ExportDialog({
         <AnimatedRows items={staleExports} keyOf={(item) => item.target}>
         {(item) => <div className="space-y-2 pt-2">
           <p className="break-all">{item.target} · {item.changed.length} chương đã đổi</p>
-          <Button size="sm" variant="secondary" onClick={() => { setKind(item.kind as Kind); setScope("part"); setChangedOnly(item.kind === "mp3"); }}>{item.kind === "m4b" ? "Xuất lại M4B" : item.kind === "mp3" ? "Xuất chương đổi" : "Xuất file sách"}</Button>
+          <Button size="sm" variant="ghost" onClick={() => { setKind(item.kind as Kind); setScope("part"); setChangedOnly(item.kind === "mp3"); }}>{item.kind === "m4b" ? "Xuất lại M4B" : item.kind === "mp3" ? "Xuất chương đổi" : "Xuất file sách"}</Button>
           {item.kind === "m4b" && <p>M4B gộp cả cuốn: bạn cần dựng lại cả file và thay bản đã chép hoặc gửi.</p>}
         </div>}
         </AnimatedRows>
@@ -562,7 +562,7 @@ export function ExportDialog({
               <span className="min-w-0 flex-1 text-pretty">
                 Còn {book.pendingChanges} thay đổi chưa áp - bản xuất đọc như TRƯỚC khi sửa.
               </span>
-              <Button size="sm" variant="secondary" icon={RefreshCw} onClick={() => { onOpenChange(false); onApplyFirst(); }}>
+              <Button size="sm" variant="ghost" icon={RefreshCw} onClick={() => { onOpenChange(false); onApplyFirst(); }}>
                 Áp dụng trước
               </Button>
             </div>

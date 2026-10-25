@@ -83,7 +83,7 @@ export function VieneuDownload({ button, onOpenSettings }: { button: string; onO
             data-focus-next
             onClick={busyClick(busy, () => void start(missing))}
             onMouseDown={(event) => event.preventDefault()}
-            className="min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover aria-disabled:opacity-60 max-sm:min-h-[48px]"
+            className="min-h-[40px] shrink-0 rounded-lg px-3 text-sm font-medium text-accent-text hover:bg-hover aria-disabled:opacity-60 max-sm:min-h-[48px]"
           >
             {failed ? "Thử lại" : bytes > 0 ? `${button} (${formatSize(bytes)})` : button}
           </button>

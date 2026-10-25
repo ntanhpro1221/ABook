@@ -70,11 +70,11 @@ export { isBookFile };
 
 /** Nút mở hộp "Thêm sách từ file…"; không hiện khi nguồn này không nhập được (`source.textImport` trống). */
 export function AddBookButton({
-  variant = "secondary",
+  variant = "ghost",
   size,
   onBookFile,
 }: {
-  variant?: "secondary" | "ghost" | "primary";
+  variant?: "ghost" | "primary";
   size?: "sm" | "md" | "lg";
   /** Chọn hay dán một file .abook / .abookproj: mở nó (máy có đường mở file sách) thay vì báo "chưa đọc được". */
   onBookFile?: (path: string, session?: ReadSession) => Promise<void | boolean>;
@@ -84,7 +84,7 @@ export function AddBookButton({
   if (!source.textImport) return null;
   return (
     <>
-      <Button variant={variant === "secondary" ? "ghost" : variant} size={size} icon={Plus} className="touch-row" onClick={() => setOpen(true)}>
+      <Button variant={variant} size={size} icon={Plus} className="touch-row" onClick={() => setOpen(true)}>
         Thêm sách
       </Button>
       <AddBookDialog open={open} onOpenChange={setOpen} onBookFile={onBookFile} />
@@ -618,9 +618,9 @@ export function AddBookDialog({
                 aria-label="Đường dẫn file hay thư mục"
                 aria-describedby={importer.choose ? undefined : "typed-path-hint"}
                 placeholder={importer.choose ? "…hoặc dán đường dẫn" : "Dán đường dẫn file hay thư mục"}
-                className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus"
+                className="h-[40px] min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none placeholder:text-fg-3 focus:border-focus"
               />
-              <Button type="submit" className="h-10 min-h-10" disabled={!cleanPath(typed) || busy !== null} loading={busy === "reading" && !importer.choose}>
+              <Button type="submit" className="-mr-3.5 h-10 min-h-10" disabled={!cleanPath(typed) || busy !== null} loading={busy === "reading" && !importer.choose}>
                 Mở
               </Button>
             </form>

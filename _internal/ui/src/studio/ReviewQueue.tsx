@@ -166,7 +166,7 @@ function SpokenEditor({
           Lưu
         </Button>
         {twins.length > 0 && (
-          <Button size="sm" variant="secondary" disabled={busy} onClick={() => void save([item, ...twins])}>
+          <Button size="sm" variant="ghost" disabled={busy} onClick={() => void save([item, ...twins])}>
             Lưu {twins.length + 1} câu
           </Button>
         )}
@@ -491,11 +491,11 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       {playableCount > 1 && (
         <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
           {continuous ? (
-            <Button size="sm" variant="secondary" icon={Square} onClick={() => { setContinuous(false); clip.stop(); }}>
+            <Button size="sm" variant="ghost" className="-ml-3" icon={Square} onClick={() => { setContinuous(false); clip.stop(); }}>
               Dừng nghe liền
             </Button>
           ) : (
-            <Button size="sm" variant="secondary" icon={ListMusic} onClick={() => { setContinuous(true); playAt(0); }}>
+            <Button size="sm" variant="ghost" className="-ml-3" icon={ListMusic} onClick={() => { setContinuous(true); playAt(0); }}>
               Nghe liền {playableCount} câu
             </Button>
           )}
@@ -544,7 +544,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
         </div>
       )}
       {hasNextPage && (
-        <Button className="mt-4" variant="secondary" disabled={isFetchingNextPage} onClick={() => void fetchNextPage()}>
+        <Button className="mt-4" variant="ghost" disabled={isFetchingNextPage} onClick={() => void fetchNextPage()}>
           {isFetchingNextPage ? "Đang tải…" : `Tải tiếp · còn ${pages?.pages.at(-1)?.remaining ?? 0} câu`}
         </Button>
       )}

@@ -310,6 +310,7 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
 const PlayerSheetSpace = createContext<(id: string, height: number) => void>(() => {});
 /** Bảng đang mở dạng bảng trượt (điện thoại): tiêu đề bảng đã nói tên menu, dòng ghi chú khỏi lặp lại. */
 const InPlayerSheet = createContext(false);
+const InPlayerMenu = createContext(false);
 
 /** Dòng ghi chú đầu menu: hộp nổi (máy tính) không có tiêu đề nên kèm tên menu; bảng trượt có tiêu đề rồi thì chỉ ghi chú. */
 function MenuNote({ title, children }: { title: string; children: string }) {
@@ -317,7 +318,7 @@ function MenuNote({ title, children }: { title: string; children: string }) {
   return <div className="text-balance px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{inSheet ? children.charAt(0).toUpperCase() + children.slice(1) : `${title} · ${children}`}</div>;
 }
 
-function MenuShell({
+export function MenuShell({
   trigger,
   triggerKey,
   label,
@@ -361,6 +362,8 @@ function MenuShell({
   onOpenChange?: (open: boolean) => void;
 }) {
   const phone = useMediaQuery("(max-width: 640px)");
+  const inline = useContext(InPlayerMenu);
+  const inlineRef = useRef<HTMLDivElement>(null);
   const reserve = useContext(PlayerSheetSpace);
   const sheetId = useId();
   const reserveHeight = useCallback((height: number) => reserve(sheetId, height), [reserve, sheetId]);
@@ -376,7 +379,9 @@ function MenuShell({
     }
     (onOpenChange ?? setLocalOpen)(next);
   };
-  const button = <button ref={triggerRef} type="button" aria-label={label} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
+  // Bảng con trong “…” mở ngay trong luồng: một Sheet duy nhất, Back khép mục con trước.
+  useBackLayer(inline && isOpen, () => changeOpen(false), inlineRef, triggerRef);
+  const button = <button ref={triggerRef} type="button" aria-label={label} aria-expanded={inline ? isOpen : undefined} aria-controls={inline ? sheetId : undefined} onClick={inline ? () => changeOpen(!isOpen) : undefined} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
         ? MENU_ROW
         : "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
@@ -384,10 +389,16 @@ function MenuShell({
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("tabular min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
     </button>;
+  if (inline) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
+    <div ref={inlineRef} data-player-inline>
+      {button}
+      <Collapse open={isOpen} id={sheetId} className="pb-2">{children}{footer}</Collapse>
+    </div>
+  </Popover.Root>;
   if (phone) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <Sheet open={isOpen} onOpenChange={changeOpen} title={dialogLabel ?? label} trigger={button}
       focusSelector={focusSelector} onKeyDown={menuArrowKeys} footer={footer} onHeightChange={reserveHeight} className="player-sheet">
-      <InPlayerSheet.Provider value>{children}</InPlayerSheet.Provider>
+      <InPlayerMenu.Provider value><InPlayerSheet.Provider value>{children}</InPlayerSheet.Provider></InPlayerMenu.Provider>
     </Sheet>
   </Popover.Root>;
   return (
@@ -416,7 +427,7 @@ function MenuShell({
             width,
           )}
         >
-          {children}
+          <InPlayerMenu.Provider value>{children}</InPlayerMenu.Provider>
           {/* Nút đặc của bảng đứng thẳng mép chữ (px-2) như các nút trong bảng; chỉ nền dòng mới tràn ra mép p-1.5. Cách dòng trên 10,5 px
               (pt-2 + pb-1 của dòng ấy) như khoảng giữa các khối khác của bảng. */}
           {footer && <div className="px-2 pt-2">{footer}</div>}
@@ -1451,7 +1462,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
   if (error) {
     const current = voices && track ? resolveVoice(voices, chosenVoice(track.bookId, track.recordId)) : undefined;
     const local = stuck && voices ? localVoiceFor(voices, current) : undefined;
-    const button = "min-h-9 shrink-0 rounded-lg bg-panel px-3 text-xs font-semibold ring-1 ring-line hover:bg-hover max-sm:min-h-[48px]";
+    const button = "min-h-[40px] shrink-0 rounded-lg px-3 text-sm font-medium text-accent-text hover:bg-hover max-sm:min-h-[48px]";
     return (
       <div key={errorRepeat} role="alert" className={cn("motion-appear flex items-start gap-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
         <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
@@ -2557,8 +2568,8 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
     event.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
   };
   const panelTabs = (
-    <div role="tablist" aria-label="Bảng" onKeyDown={onTabKeys} className="relative flex min-w-0 gap-1">
-      <SlidingIndicator variant="pill" className="rounded-lg bg-hover" />
+    <div role="tablist" aria-label="Bảng" onKeyDown={onTabKeys} className="relative flex min-w-0 gap-4">
+      <SlidingIndicator variant="line" />
       {PANELS.map((item) => {
         const selected = panel === item.value && showPanel;
         return (
@@ -2576,13 +2587,13 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
               else selectPanel(item.value);
             }}
             className={cn(
-              "touch-row relative inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors duration-motion-medium",
+              "touch-row relative inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap px-3 text-sm font-medium transition-colors duration-motion-medium",
               selected ? "text-fg" : "text-fg-2 hover:text-fg",
             )}
           >
             <item.icon className="size-4" style={{ marginLeft: `${(-item.ink * 14) / 24}px` }} />
             {/* Cột phải hẹp (cửa sổ ~768 px: hai cột + thanh bên chỉ chừa ~210 px) thì chỉ còn biểu tượng, chữ giữ cho trình đọc màn hình. */}
-            <span className="@max-[20rem]:sr-only">{item.label}</span>
+            <span data-indicator-target className="@max-[20rem]:sr-only">{item.label}</span>
           </button>
         );
       })}

@@ -41,7 +41,7 @@ vi.mock("@/shared/ui", () => ({
     }
     return <button disabled={p.disabled}>{p.children as React.ReactNode}</button>;
   },
-  LiveText: () => null, Segmented: () => null, Vu: () => null, radioGroupKeys: () => null, radioTabIndex: () => 0,
+  LiveText: () => null, ChoiceRow: () => null, Vu: () => null, radioGroupKeys: () => null, radioTabIndex: () => 0,
 }));
 vi.mock("@/studio/data", () => ({
   pickFiles: vi.fn(), pickFolder: vi.fn(), usePreferences: () => ({ data: {} }), useAppInfo: () => ({ data: { dialogs: true } }),

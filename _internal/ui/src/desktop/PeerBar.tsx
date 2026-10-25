@@ -52,7 +52,7 @@ export function PeerBar() {
     >
       <Laptop className="size-4 shrink-0 text-fg-2" aria-hidden />
       <MotionRegion as="span" className="min-w-0 flex-1 text-pretty">{peerBarLine(info.peer.name, { silent, listenOnly: info.listenOnly })}</MotionRegion>
-      <Button size="sm" variant="secondary" onClick={() => window.location.assign(homePage(window.location.search))}>
+      <Button size="sm" variant="ghost" onClick={() => window.location.assign(homePage(window.location.search))}>
         Về máy này
       </Button>
     </div>
