@@ -80,7 +80,7 @@ export function PendingList({
         const Icon = KIND_ICON[item.kind] ?? RefreshCw;
         return (
           <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex items-start gap-3 px-3 py-2 text-sm">
-            <Icon className="mt-0.5 size-4 shrink-0 text-fg-3" />
+            <Icon className="mt-line-icon size-4 shrink-0 text-fg-3" />
             <span className="min-w-0 flex-1 text-pretty">
               {item.label}
               {item.chapter && <span className="text-fg-3"> · {item.chapter}</span>}

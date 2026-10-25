@@ -681,6 +681,51 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     add("INK EDGE", el, el.textContent || el.getAttribute("aria-label") || "svg", [ink, { x: inner, y: ink.y, width: 1, height: ink.height }],
       { metric: "trailing-control-inset", value: right(ink), referenceValue: inner, delta: right(ink) - inner, tolerance: 1, listSelector: selector(column), reason: "trailing transparent control's hit box meets the row edge but its ink stops short of the column's shared right edge" });
   }
+  // Đầu hàng, đối xứng với luật trên: nút trong suốt đứng đầu hàng, ô chạm mép trái cột nhưng mực thụt vào >= 6 px ("Tải" dưới thẻ sách của
+  // máy tính trong Thư viện điện thoại, lùi 10,5 px so với tên sách / "Đã tải" - soát 25-10).
+  for (const el of all.filter((e) => e.matches(controlSelector) && shownChain(e))) {
+    const box = visible(el, rect(el.getBoundingClientRect()));
+    if (!box || !transparent(css(el).backgroundColor) || el.closest('nav,[role="tablist"],[role="menu"],[role="listbox"],[role="dialog"]')) continue;
+    const row = el.parentElement, rs = row && css(row);
+    if (!row || !/flex/.test(rs.display) || rs.flexDirection.startsWith("column") || [...row.children].find((c) => visible(c, rect(c.getBoundingClientRect()))) !== el) continue;
+    const rb = rect(row.getBoundingClientRect()), inner = rb.x + Number.parseFloat(rs.paddingLeft) + Number.parseFloat(rs.borderLeftWidth);
+    const ink = controlInk(el);
+    if (!ink || Math.abs(box.x - inner) > 1.01 || ink.x - inner < 5.99) continue;
+    let column = null;
+    for (let p = row.parentElement; p && p !== document.body; p = p.parentElement) {
+      const s = css(p), pl = rect(p.getBoundingClientRect()).x + Number.parseFloat(s.paddingLeft) + Number.parseFloat(s.borderLeftWidth);
+      if (Math.abs(pl - inner) > 1.01) break;
+      column = p;
+      if (/auto|scroll/.test(s.overflowY)) break;
+    }
+    if (!column || !inkTexts.some((t) => column.contains(t.element) && !row.contains(t.element) && Math.abs(t.first.x - inner) <= 1.01)) continue;
+    add("INK EDGE", el, el.textContent || el.getAttribute("aria-label") || "svg", [ink, { x: inner, y: ink.y, width: 1, height: ink.height }],
+      { metric: "leading-control-inset", value: ink.x, referenceValue: inner, delta: ink.x - inner, tolerance: 1, listSelector: selector(column), reason: "leading transparent control's hit box meets the row edge but its ink starts inside the column's shared left edge" });
+  }
+  // Icon đầu dòng canh đầu (items-start / self-start) cạnh một khối chữ: tâm icon phải trùng tâm DÒNG ĐẦU của chữ. Icon cảnh báo của InlineError
+  // đặt mt-[3px] theo dòng chữ trần, nhưng chữ nằm trong hàng cao bằng nút "Thử lại" nên bị đẩy xuống - icon treo trên dòng (soát 25-10).
+  for (const svg of all.filter((e) => e.localName === "svg" && !hidden(e))) {
+    const parent = svg.parentElement, ps = parent && css(parent);
+    if (!parent || !/flex/.test(ps.display) || ps.flexDirection.startsWith("column")) continue;
+    const align = css(svg).alignSelf === "auto" ? ps.alignItems : css(svg).alignSelf;
+    if (!/^(flex-)?start$/.test(align)) continue;
+    const ib = visible(svg, rect(svg.getBoundingClientRect()));
+    if (!ib || ib.height > 28) continue;
+    let next = svg.nextElementSibling;
+    while (next && !visible(next, rect(next.getBoundingClientRect()))) next = next.nextElementSibling;
+    if (!next) continue;
+    const walker = document.createTreeWalker(next, NodeFilter.SHOW_TEXT, { acceptNode: (n) => n.textContent.trim() && !n.parentElement.closest("svg,button,[role=button],a") ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT });
+    const node = walker.nextNode();
+    if (!node) continue;
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    const line = [...range.getClientRects()].find((r) => r.width > 0.5);
+    if (!line) continue;
+    const delta = ib.y + ib.height / 2 - (line.top + line.height / 2);
+    if (Math.abs(delta) <= 1.51) continue;
+    add("INK EDGE", svg, next.textContent, [ib, rect(line)],
+      { metric: "icon-off-first-line", value: ib.y + ib.height / 2, referenceValue: line.top + line.height / 2, delta, tolerance: 1.5, otherSelector: selector(node.parentElement), reason: "a top-aligned leading icon is not centred on the first line of the text beside it" });
+  }
   // Dòng menu (menu "…" của trình phát, menu Radix): mọi dòng trọn bề ngang, giá trị bên phải cùng một mép. Vỏ flex ngang quanh dòng gập làm dòng co
   // theo chữ - "Tắt" dừng ở 345, "Tiếng Việt" ở 292 trong bảng rộng tới 392 (soát 25-10). Cụm = dòng + các anh em đứng sau (thanh âm lượng).
   const menuRows = all.filter((el) => el.matches('[data-player-menu-row],[role="menuitem"]') && shownChain(el))

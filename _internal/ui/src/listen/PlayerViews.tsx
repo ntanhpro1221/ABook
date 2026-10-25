@@ -1362,7 +1362,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
     const button = "min-h-[40px] shrink-0 rounded-lg px-3 text-sm font-medium text-accent-text hover:bg-hover max-sm:min-h-[48px]";
     return (
       <div key={errorRepeat} role="alert" className={cn("motion-appear flex items-start gap-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
-        <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
+        <TriangleAlert className="mt-line-icon size-4 shrink-0 text-danger" />
         {/* Lời báo + cụm nút xuống hàng khi hẹp; nút ✕ đứng riêng ở góc trên phải nên không thêm hàng nào và không bao giờ trôi xuống dưới cụm nút. */}
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
           <span className="min-w-0 flex-1 basis-[14rem]">{stuck && current ? (offline ? noOfflineMessage : unusableVoiceMessage)(spokenVoiceName(current.name)) : error}</span>
