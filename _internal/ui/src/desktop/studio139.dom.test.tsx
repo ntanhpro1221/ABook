@@ -107,7 +107,9 @@ it("toast xuất giữ node khi tiến độ, huỷ, kết quả đổi và Back
     await act(() => startExport("mp3", { id: "b", chapters: 3, target: "" }));
     await act(() => vi.advanceTimersByTime(50));
     const toastNode = document.querySelector<HTMLElement>("[data-sonner-toast]")!;
-    expect(toastNode).not.toBeNull(); expect(toastNode.textContent).toContain("Huỷ"); await finish();
+    expect(toastNode).not.toBeNull(); expect(toastNode.textContent).toContain("Chi tiết"); await finish();
+    await act(() => [...toastNode.querySelectorAll("button")].find(button => button.textContent === "Chi tiết")!.click());
+    expect(toastNode.textContent).toContain("Huỷ");
     await act(() => [...toastNode.querySelectorAll("button")].find(button => button.textContent === "Huỷ")!.click());
     await act(() => vi.advanceTimersByTime(50));
     expect(toastNode.textContent).toContain("Đang dừng");

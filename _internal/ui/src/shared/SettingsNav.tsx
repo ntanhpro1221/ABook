@@ -10,6 +10,7 @@ import { ScreenHeader } from "./ScreenHeader";
 import { AnimatedRows } from "./MotionPresence";
 import { cn } from "./cn";
 import { Collapse, useFold } from "./Collapse";
+import { SectionHeading } from "./SectionHeading";
 
 export type SettingsGroupId = "voice" | "listen" | "sleep" | "look" | "devices" | "studio" | "advanced";
 
@@ -85,7 +86,7 @@ export function SettingsBlock({ title, id, children, className, fold }: { title?
   if (fold && title) return <FoldedBlock title={title} id={id} storageKey={fold} className={className}>{children}</FoldedBlock>;
   return (
     <section data-list-edges="settings-block" id={id} className={cn("settings-block mt-8", className)}>
-      {title && <h2 className="label-section mb-2 text-fg-2">{title}</h2>}
+      {title && <SectionHeading>{title}</SectionHeading>}
       <div className="divide-y divide-line">{children}</div>
     </section>
   );
@@ -96,7 +97,7 @@ function FoldedBlock({ title, id, children, className, storageKey }: { title: st
   const bodyId = useId();
   return (
     <section data-list-edges="settings-block" id={id} data-fold="" className={cn("settings-block mt-8", className)}>
-      <h2><DisclosureRow title={title} expanded={open} controls={bodyId} onClick={() => setOpen(!open)} /></h2>
+      <h2><DisclosureRow section title={title} expanded={open} controls={bodyId} onClick={() => setOpen(!open)} /></h2>
       <Collapse open={open} id={bodyId}>
         <div className="divide-y divide-line">{children}</div>
       </Collapse>
