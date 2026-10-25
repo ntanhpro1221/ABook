@@ -571,7 +571,7 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
 }
 
 function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
-  const { options, chosen, label, playing, scene, error, loading, choose, busy, levelDb, setLevel, levelBusy, canImport, addMusic } = usePlaylistChoice(bookId);
+  const { options, chosen, label, playing, known, scene, error, loading, choose, busy, levelDb, setLevel, levelBusy, canImport, addMusic } = usePlaylistChoice(bookId);
   const { musicOffline, musicBroken, musicLoading } = usePlayer();
   const waiting = busy || musicLoading;
   return (
@@ -582,9 +582,9 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
       look={look}
       caption="Nhạc nền"
       icon={EighthNote}
-      triggerKey={look === "row" ? [waiting, playing, label] : undefined}
+      triggerKey={look === "row" ? [waiting, playing, label, known] : undefined}
       trigger={look === "row"
-        ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : "Tắt"}</span>)
+        ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : known ? "Tắt" : ""}</span>)
         : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <EighthNote className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
     ><MotionRegion>

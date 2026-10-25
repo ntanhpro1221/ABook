@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Điện thoại
 
 - Mở app nhanh hơn khoảng 2 giây: màn chờ không còn đợi những hiệu ứng hiện dần mà nó đang che (đo trên máy thật: 4,2-4,9 s còn khoảng 2,2 s).
+- Nút Nhạc nền của trình phát không còn thoáng hiện "Tắt" lúc vừa mở khi cuốn đang có nhạc.
 
 ### Giao diện
 

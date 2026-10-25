@@ -122,6 +122,8 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
     chosen,
     label: playlistLabel(current.data, menu.data),
     playing: playlistPlaying(current.data),
+    /** Đã biết nhạc của cuốn (chưa tải xong thì chưa nói "Tắt" - soát điện thoại 26-10: hiện "Tắt" 300 ms rồi đổi thành "Theo cảnh"). */
+    known: current.data !== undefined,
     /** Nhạc của cuốn đang theo cảnh (người nghe chọn "Theo cảnh" hay để máy chọn). */
     scene: current.data?.playlist === SCENE_PLAYLIST,
     error: menu.data?.error || current.data?.error || "",
