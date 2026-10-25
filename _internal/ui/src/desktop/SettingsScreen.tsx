@@ -453,9 +453,7 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
       )}
       {!remote && (
         <SettingsBlock title="Bộ nhớ">
-          <div className="py-3.5">
-            <ReadAloudStorage api={{ usage: () => httpSource.readAloudCacheTotal!(), clear: () => httpSource.readAloudCacheClearAll!() }} />
-          </div>
+          <ReadAloudStorage api={{ usage: () => httpSource.readAloudCacheTotal!(), clear: () => httpSource.readAloudCacheClearAll!() }} />
         </SettingsBlock>
       )}
       {!remote && (

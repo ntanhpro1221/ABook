@@ -1,4 +1,4 @@
-import { click, find, type } from "./actions";
+import { click, find, type, waitFor } from "./actions";
 import type { Scenario } from "./state";
 import type { StateStory } from "./StateStories";
 
@@ -47,6 +47,8 @@ const MORNING = Date.UTC(2026, 9, 25, 0, 20); // 7:20 sáng 25-10, giờ Việt 
 
 const playerOpen = async () => {
   await click("Mở màn hình đang nghe");
+  // Màn mở qua View Transition dựng ruột sau một nhịp: các bước sau tìm trong nó, chờ nó có mặt (lỗi chạy chập chờn 25-10).
+  await waitFor(() => document.querySelector(".now-playing"), "màn Đang nghe");
 };
 // Máy tính: sách chữ giọng Edge hỏi đồng ý gửi chữ ra ngoài trước lần nghe đầu.
 const desktopTextMore = async () => {

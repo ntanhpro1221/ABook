@@ -161,9 +161,17 @@ export function inspectPage({ phone = false } = {}, h, layoutInspector) {
   }
   function background(el) {
     const layers = [];
+    const box = el.getBoundingClientRect(), cx = box.left + box.width / 2, cy = box.top + box.height / 2;
     for (let p = el; p; p = p.parentElement) {
       const s = css(p);
       if (s.backgroundImage !== "none") return null;
+      // Lớp nền trượt của nhóm chọn (SlidingIndicator) là con của p vẽ dưới chữ, trên nền của p: chữ mục đang chọn nằm trên nó.
+      const slide = p === el ? null : [...p.children].find((child) => child.matches("[data-sliding-indicator]") && (() => { const r = child.getBoundingClientRect(); return cx >= r.left && cx <= r.right && cy >= r.top && cy <= r.bottom; })());
+      if (slide) {
+        const under = color(css(slide).backgroundColor);
+        layers.push(under);
+        if (under[3] >= 0.999) break;
+      }
       const rgba = color(s.backgroundColor);
       layers.push(rgba);
       if (rgba[3] >= 0.999) break;

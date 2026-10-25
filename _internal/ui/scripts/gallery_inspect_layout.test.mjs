@@ -50,6 +50,7 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       expect(at(result, "rhythm", "vertical-gap")).toHaveLength(1);
       expect(at(result, "rhythm", "vertical-gap")[0]).toMatchObject({ value: 20, referenceValue: 8, delta: 12 });
       expect(at(result, "rhythm-pass", "vertical-gap")).toHaveLength(0);
+      expect(at(result, "fold-run", "vertical-gap")).toHaveLength(0);
     }
   });
   it("thẻ có viền tạo cột riêng; nút giữa toàn hàng không phải cạnh cột", () => {
