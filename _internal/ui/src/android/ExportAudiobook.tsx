@@ -257,7 +257,7 @@ export function AudiobookPhoneDialogHost() {
       onOpenChange={(open) => !open && setBook(null)}
       title={`Xuất sách nói “${book?.title ?? ""}”`}
       description="Để nghe ở app sách nói khác, trên xe hơi hay máy khác."
-      width="max-w-xl"
+      width="max-w-[560px]"
     >
       <AudiobookPhoneForm voice={voice} plan={plan.data} planError={plan.error ? (plan.error as Error).message : ""} music={music} onMusic={setMusic} />
       <div className="mt-5 dialog-actions">

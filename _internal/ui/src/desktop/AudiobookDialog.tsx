@@ -214,7 +214,7 @@ export function AudiobookDialogHost() {
       onOpenChange={(open) => !open && setBook(null)}
       title={`Xuất sách nói “${book?.title ?? ""}”`}
       description="Đọc cả cuốn thành file âm thanh, nghe ở máy khác."
-      width="max-w-xl"
+      width="max-w-[560px]"
     >
       <AudiobookForm
         format={format}

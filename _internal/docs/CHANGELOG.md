@@ -14,6 +14,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Thư viện: sách ở máy khác hiện dấu máy tính nhỏ đầu dòng trạng thái, không còn nhãn đè lên tên sách trên bìa.
 - Tab Nhân vật (trang sách và Studio): nhóm người có lời thoại đổi tên thành "Vai chính", đi cặp với "Vai phụ", không lặp lại tên tab.
 - Sửa sách: "Tìm bìa…" giờ là một bước ngay trong hộp, có nút quay về "Sửa sách" (Back cũng về), không mở hộp thứ hai chồng lên. Máy soát giao diện thêm luật bắt hộp thoại hay lớp nổi đè lên nhau.
+- Máy tính: mọi hộp thoại rộng tối đa 560 px như chuẩn thiết kế (chọn giọng, tìm trong sách, xuất sách nói, thành phần sử dụng...).
 
 ## [0.4.139] - 2026-10-25
 

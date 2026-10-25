@@ -211,7 +211,7 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      width="max-w-xl"
+      width="max-w-[560px]"
       title="Việc của xưởng"
       description="Ảnh chụp lúc người làm sách đóng gói file - chỉ để xem. Muốn sửa thì mở file bằng Studio."
     >

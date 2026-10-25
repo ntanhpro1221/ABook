@@ -155,7 +155,7 @@ export function ApplyChangesDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      width="max-w-xl"
+      width="max-w-[560px]"
       title={running ? `${count} thay đổi đang chờ áp` : `Áp dụng ${count} thay đổi?`}
       description={
         running
