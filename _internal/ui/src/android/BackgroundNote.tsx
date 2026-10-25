@@ -68,7 +68,7 @@ interface NoteWords {
 export function BackgroundNoteView({ status, onOpen = () => void openBackgroundSettings(), note = EXPORT_NOTE, action = EXPORT_ACTION }: { status: BackgroundStatus | undefined; onOpen?: () => void } & NoteWords) {
   if (!status || status.backgroundAllowed) return <MotionRegion />;
   return (
-    <MotionRegion as="div" role="note" className="mt-2 rounded-lg border border-line bg-hover/40 p-2.5">
+    <MotionRegion as="div" role="note" className="mt-2 py-2.5">
       <p className="text-xs leading-snug text-fg-2">{note}</p>
       <Button size="sm" variant="ghost" icon={BatteryCharging} className="mt-1 h-auto min-h-8 justify-start whitespace-normal py-1.5 text-left" onClick={onOpen}>
         {action}

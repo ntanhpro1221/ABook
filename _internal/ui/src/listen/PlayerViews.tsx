@@ -1359,7 +1359,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
     const local = stuck && voices ? localVoiceFor(voices, current) : undefined;
     const button = "min-h-[40px] shrink-0 rounded-lg px-3 text-sm font-medium text-accent-text hover:bg-hover max-sm:min-h-[48px]";
     return (
-      <div key={errorRepeat} role="alert" className={cn("motion-appear flex items-start gap-3 rounded-xl bg-danger-soft px-3 py-2 text-sm text-fg", className)}>
+      <div key={errorRepeat} role="alert" className={cn("motion-appear flex items-start gap-3 py-2 text-sm text-fg", className)}>
         <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
         {/* Lời báo + cụm nút xuống hàng khi hẹp; nút ✕ đứng riêng ở góc trên phải nên không thêm hàng nào và không bao giờ trôi xuống dưới cụm nút. */}
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2">
@@ -1416,7 +1416,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
   }
   if (!notice) return null;
   return (
-    <div role="status" className={cn("flex items-center gap-3 rounded-xl bg-hover px-3 py-2 text-sm text-fg-2", className)}>
+    <div role="status" className={cn("flex items-center gap-3 py-2 text-sm text-fg-2", className)}>
       <AudioLines className="size-4 shrink-0" />
       <span className="min-w-0 flex-1">{notice}</span>
     </div>
@@ -1713,7 +1713,7 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
         <div className="measure mx-auto text-[1.25rem] leading-[1.7]">
           {/* Chương giọng máy đọc chưa có mốc chỉ trong lúc chờ đoạn đầu - không phải "chưa có audio". */}
           {!script.timed && current?.state !== "text" && (
-            <p className="mb-5 rounded-lg bg-hover px-4 py-3 text-sm text-fg-2">Chương này chưa có audio hoàn chỉnh - đang hiện văn bản, chưa đọc theo được.</p>
+            <p className="mb-5 py-3 text-sm text-fg-2">Chương này chưa có audio hoàn chỉnh - đang hiện văn bản, chưa đọc theo được.</p>
           )}
           <ReadAlongText
             script={script}
@@ -1762,7 +1762,7 @@ export function ChapterPanel() {
   // Chương mới thu xong / gỡ khỏi hàng nghe: hàng mở ra hay khép lại tại chỗ (useListPresence), không nhảy cả danh sách.
   const rows = useListPresence(queue, (chapter) => String(chapter.id));
   return (
-    <div ref={container} className="h-full overflow-y-auto px-3 py-4 sm:px-6">
+    <div data-list-edges="player-chapters" ref={container} className="h-full overflow-y-auto px-3 py-4 sm:px-6">
       <Windowed items={rows} estimate={60} keep={rows.findIndex((row) => row.item.id === track?.chapterId)} row={({ key, item: chapter, state, ref }) => {
         const current = chapter.id === track?.chapterId;
         const done = book?.state.chapters[String(chapter.id)]?.done;
@@ -1963,7 +1963,7 @@ function CaughtUpNotice() {
   }
   if (atEnd !== "caughtUp") return null;
   return (
-    <p className="mt-3 rounded-xl bg-hover px-3 py-2 text-center text-sm text-fg-2">
+    <p className="mt-3 py-2 text-center text-sm text-fg-2">
       Đã nghe hết phần đã có. {caughtUpDetail()}
     </p>
   );

@@ -77,7 +77,7 @@ import {
   type Picked,
   type UploadProgress,
 } from "@/studio/upload";
-import { AnalysisModelPicker, analysisChoiceLabel, modelLabel, useAnalysisModels, useAvailableModelNames } from "@/studio/AnalysisModelPicker";
+import { AnalysisModelPicker, analysisChoiceLabel, useAnalysisModels, useAvailableModelNames } from "@/studio/AnalysisModelPicker";
 import { DEFAULT_LABEL, applyTemplate, changedChoices, templateChoices, type BookTemplate, type Profile } from "@/studio/bookTemplates";
 import { NoStudioHere, StudioInstallNotice, useStudioFit, useStudioGpu } from "@/studio/StudioSetup";
 import { estimate, lengthRange, matchesMeasured, timeBasis } from "@/studio/timeEstimate";
@@ -576,7 +576,7 @@ export function SourceStep({
             )}
           </label>
           {replaces && (
-            <div className="mt-4 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
+            <div className="mt-4 flex gap-3 py-4 text-sm">
               <Info className="mt-0.5 size-4 shrink-0 text-info" />
               <p className="min-w-0 text-pretty">
                 {replaces.restart ? "Đang làm lại phân tích của " : "Đang sửa thiết lập của "}
@@ -585,7 +585,7 @@ export function SourceStep({
             </div>
           )}
           {scan?.existing && scan.existing.some((project) => project.id !== replaces?.id) && (
-            <div className="mt-4 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
+            <div className="mt-4 flex gap-3 py-4 text-sm">
               <Info className="mt-0.5 size-4 shrink-0 text-info" />
               <div className="min-w-0">
                 <p className="font-semibold">Truyện này đã có dự án</p>
@@ -671,7 +671,7 @@ export function SourceStep({
           )}
           {/* Danh sách thật cho trình đọc màn hình ("danh sách 12 mục", soát a31 A4); vạch "Phần N" chỉ để nhìn - lời của nó đọc ở đầu mục. */}
           <Fold storageKey="new-project.chapters" title="Danh sách chương" summary={`${files.length} chương`} defaultOpen={files.length <= 4} className="mt-3" heading="h3">
-          <div className="overflow-hidden rounded-xl border border-line bg-panel">
+          <div className="overflow-hidden">
           {/* data-motion-live: vùng cả bước không mờ lại khi bỏ / thêm chương - hàng tự khép / mở tại chỗ (useListPresence), thanh cuộn đứng yên. */}
           <div ref={setChapterList} style={chapterFade} role="list" aria-label="Các chương sẽ làm" data-motion-live="" className="max-h-[340px] overflow-y-auto overscroll-contain">
             <ChapterRows files={files}>
@@ -775,7 +775,7 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
   const dropped = droppedLines(credits, drop);
   const both = credits.head > 0 && credits.tail > 0;
   return (
-    <MotionRegion as="div" className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
+    <MotionRegion as="div" className="mt-4 flex gap-3 py-4 text-sm">
       <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         {dropped ? (
@@ -799,7 +799,7 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
           </>
         )}
         {all && (
-          <div className="mt-2 overflow-hidden rounded-lg bg-hover/50">
+          <div className="mt-2 overflow-hidden">
           <ul ref={setList} style={fade} className="max-h-64 space-y-1 overflow-y-auto overscroll-contain p-2 text-xs text-fg-2" aria-label="Mọi dòng gợi ý theo chương">
             {creditRows(files, chapterLabel).map((row, index) => (
               <li key={`${index}-${row.chapter}`} className="break-words">
@@ -849,7 +849,7 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
 function ChapterNumberWarning({ issues, suggestsSplit }: { issues: string[]; suggestsSplit?: boolean }) {
   if (!issues.length) return null;
   return (
-    <div className="mt-4 flex gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm">
+    <div className="mt-4 flex gap-3 py-4 text-sm">
       <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
       <div className="min-w-0">
         <p className="font-semibold">Số chương có chỗ lạ - xem lại trước khi tạo</p>
@@ -876,7 +876,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
   // Chữ dẫn chỉ là một dòng tên truyện: trùng Tên sách thì nó là tên sách (không thành chương "Mở đầu" 4 chữ); khác thì chữ vẫn ở lại.
   const outcome = splitOutcome(plan, title);
   return (
-    <div className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
+    <div className="mt-4 flex gap-3 py-4 text-sm">
       <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">Gợi ý: “{file.name}” có vẻ chứa cả {formatNumber(outcome.chapters)} chương</p>
@@ -905,7 +905,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
 function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean; onDrop: () => void }) {
   return (
     // Điện thoại: nút bỏ nối tiếp xuống dưới đoạn chữ - đứng bên phải thì ép chữ thành cột ~180 px, dài 11 dòng (soát UX 29-09).
-    <MotionRegion as="div" className="mt-5 flex flex-wrap gap-3 rounded-xl border border-accent/30 p-4 text-sm sm:flex-nowrap">
+    <MotionRegion as="div" className="mt-5 flex flex-wrap gap-3 py-4 text-sm sm:flex-nowrap">
       <Layers className="mt-0.5 size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">
@@ -931,7 +931,7 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
         )}
         {seed.analysisModelMissing && (
           <p className="mt-1 text-warning">
-            Thiếu bộ phân tích “{modelLabel(seed.analysisModelMissing)}”; đổi bộ có thể đổi phân vai. Chọn lại ở Chất lượng.
+            Thiếu bộ phân tích của phần trước; đổi bộ có thể đổi phân vai. Chọn lại ở Chất lượng.
           </p>
         )}
         {!seed.analyzed && (
@@ -1100,7 +1100,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
     );
   }
   return (
-    <MotionRegion as="section" aria-labelledby="first-person-title" className="mt-5 max-w-2xl rounded-2xl border border-line bg-panel p-4 sm:p-5">
+    <MotionRegion as="section" aria-labelledby="first-person-title" className="mt-5 max-w-2xl py-4 sm:py-5">
       <h3 id="first-person-title" className="font-semibold">“Tôi” là ai?</h3>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
         Tên người kể giúp phân vai đúng lời thoại.
@@ -1153,7 +1153,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
           <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">
             Chưa rõ thì máy đoán. Lời dẫn dùng giọng cùng giới người kể.
           </p>
-          <label className="mt-3 flex items-start gap-3 rounded-xl border border-line bg-panel p-4" htmlFor="teller-mode">
+          <label className="mt-3 flex items-start gap-3 py-4" htmlFor="teller-mode">
             <Switch id="teller-mode" labelledBy="teller-mode-name" describedBy="teller-mode-hint" checked={Boolean(tellerMode)} onCheckedChange={onTellerMode} />
             <span>
               <span id="teller-mode-name" className="block text-sm font-medium">{TELLER_TITLE}</span>

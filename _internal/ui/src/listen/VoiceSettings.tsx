@@ -285,7 +285,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
           // giọng mặc định nằm ở nhóm khác). Nút "Thử giọng" chỉ vào vòng Tab ở đúng giọng ấy - 27 giọng không thành 27 điểm Tab.
           const ids = voiceSections(list).flatMap((section) => section.voices.map(({ voice }) => voice.id));
           return (
-            <Fold flat key={provider} storageKey={`voice.provider.${provider}`} title={heading} summary={`${detail ? `${detail} · ` : ""}${list.length} giọng${current?.provider === provider ? " · đang dùng" : ""}`} bodyClassName="pb-3">
+            <Fold key={provider} storageKey={`voice.provider.${provider}`} title={heading} summary={`${detail ? `${detail} · ` : ""}${list.length} giọng${current?.provider === provider ? " · đang dùng" : ""}`} bodyClassName="pb-3">
               {/* Thẻ tải giọng và dòng gợi ý đứng NGOÀI nhóm radio: nhóm giọng rỗng không được nhận phím của thẻ tốc độ nằm trong nó (soát a100 V1). */}
               {!list.length && <p className={cn("text-pretty", "py-1 text-[0.8125rem] text-fg-2")}>{deviceHint}</p>}
               {list.length > 0 && (

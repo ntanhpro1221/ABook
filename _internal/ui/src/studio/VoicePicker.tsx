@@ -271,7 +271,7 @@ export function VoicePicker({
       ) : (
         <>
           {data.pending && (
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-warning-soft px-3 py-2 text-sm">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
               <span className="text-pretty">
                 Chờ áp dụng: đổi sang <span className="font-medium">{data.pending.name || "giọng khác"}</span>
               </span>
@@ -282,7 +282,7 @@ export function VoicePicker({
           )}
           {data.rerecord && <p className="mb-2 text-sm text-pretty text-fg-2">{rerecordText(name, data.rerecord)}</p>}
           {crossing && (
-            <div ref={crossingBox} role="alert" className="mb-3 rounded-xl bg-warning-soft px-3 py-2 text-sm">
+            <div ref={crossingBox} role="alert" className="mb-3 py-2 text-sm">
               <p className="text-pretty">
                 {name} đang là {GENDER_WORD[data.character.gender as Gender]} - giọng {crossing.name} là giọng {GENDER_WORD[crossing.gender]}. Đổi cả giới của {name} thành {GENDER_WORD[crossing.gender]}?
               </p>

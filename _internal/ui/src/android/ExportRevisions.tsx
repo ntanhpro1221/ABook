@@ -11,7 +11,7 @@ export function ExportRevisionNotice({ book }: { book: ListenBook }) {
     queryFn: () => EbookLibrary.exportHistory({ bookId: book.id }), refetchInterval: 5000 });
   const stale = (history.data?.exports ?? []).filter((item) => item.changed.length);
   if (!stale.length) return <MotionRegion />;
-  return <MotionRegion as="div" className="my-3 space-y-2 rounded-xl bg-warning-soft p-3 text-sm">
+  return <MotionRegion as="div" className="my-3 space-y-2 py-3 text-sm">
     <p className="font-semibold">Bạn có bản xuất đã cũ sau khi sửa và thu lại.</p>
     {stale.map((item) => <div key={item.target}>
       <p className="break-all">{item.target} · {item.changed.length} chương đã đổi</p>

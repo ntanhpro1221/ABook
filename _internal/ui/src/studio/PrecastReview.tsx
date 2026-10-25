@@ -357,7 +357,7 @@ export function usePrecastInvites(books: BookSummary[] | undefined) {
 export function PrecastBanner({ book, onOpen }: { book: BookSummary; onOpen: () => void }) {
   const held = Boolean(book.precast?.held);
   return (
-    <div className={cn("mt-6 flex flex-wrap items-center gap-3 rounded-xl border p-4", held ? "border-warning/40 bg-warning-soft" : "border-accent/30")}>
+    <div className="mt-6 flex flex-wrap items-center gap-3 py-4">
       <ClipboardCheck className={cn("size-5 shrink-0", held ? "text-warning" : "text-accent-text")} />
       <div className="min-w-0 flex-1 text-sm">
         <div className="font-semibold">{held ? "Phân tích xong - sách đang chờ bạn duyệt" : "Phân tích xong - duyệt trước khi thu?"}</div>

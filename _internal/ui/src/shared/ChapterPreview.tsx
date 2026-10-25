@@ -63,8 +63,9 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
   }, [editing]);
   const digits = String(chapters.length).length;
   return (
-    <MotionRegion as="div" elementRef={box} className={cn("overflow-hidden rounded-xl border border-line bg-panel", className)}>
-    <div ref={scroller} style={fade} className="max-h-[320px] overflow-y-auto overscroll-contain">
+    <MotionRegion as="div" elementRef={box} className={cn("-mx-1.5", className)}>
+    {/* Nới mép cắt cho vòng tiêu điểm; đệm trả hàng và vạch chia về đúng cột chữ. */}
+    <div data-list-edges="chapter-preview" ref={scroller} style={fade} className="max-h-[320px] overflow-y-auto overscroll-contain px-1.5">
       {chapters.map((chapter, position) => {
         const index = chapter.index ?? position + 1;
         const on = choice ? choice.picked.has(index) : true;
@@ -80,7 +81,7 @@ export function ChapterPreview({ chapters, className, titleFirst = false, choice
           <div
             key={index}
             className={cn(
-              "grid items-start gap-2 border-b border-line px-3 py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0",
+              "grid items-start gap-2 border-b border-line py-2 [contain-intrinsic-size:auto_48px] [content-visibility:auto] last:border-b-0",
               choice ? "grid-cols-[20px_auto_minmax(0,1fr)_64px] sm:grid-cols-[20px_auto_minmax(0,1fr)_90px]" : "grid-cols-[auto_minmax(0,1fr)_90px]",
             )}
           >

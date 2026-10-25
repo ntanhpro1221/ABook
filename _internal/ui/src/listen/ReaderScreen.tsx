@@ -420,7 +420,7 @@ export function ReaderScreen(edit: SentenceEditing) {
           style={{ fontSize: prefs.size, lineHeight: prefs.leading }}
         >
           <MotionPresence open={Boolean(hint)}>
-            <p className={cn("mb-6 text-sm leading-relaxed text-fg-2", (textOnly || !script.timed) && "rounded-lg bg-hover px-4 py-3")}>{hint}</p>
+            <p className="mb-6 text-sm leading-relaxed text-fg-2">{hint}</p>
           </MotionPresence>
           <ReadAlongText
             script={script}

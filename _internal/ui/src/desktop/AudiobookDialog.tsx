@@ -44,7 +44,7 @@ const FORMATS = FORMAT_CHOICES.map((choice) => choice.id);
 export function FfmpegNeeded({ status, onDownload, onStop, remote = false }: { status: FfmpegStatus; onDownload: () => void; onStop: () => void; remote?: boolean }) {
   if (status.ready && !status.outdated) return <MotionRegion />;
   return (
-    <MotionRegion as="div" className="rounded-lg border border-line bg-panel-2 p-3 text-sm" role="group" aria-label="Công cụ ghép âm thanh">
+    <MotionRegion as="div" className="py-3 text-sm" role="group" aria-label="Công cụ ghép âm thanh">
       <p className="font-medium">{status.outdated ? "Cập nhật công cụ" : remote ? "Thiếu công cụ ghép" : "Thiếu công cụ ghép"}</p>
       <p className="mt-0.5 text-fg-2">{status.outdated ? "Có bản mới để ghép lời đọc thành file MP3 / M4B" : "Tải một lần để ghép MP3 / M4B"} (khoảng {formatSize(status.bytes).replace(" ", "\u00a0")}).</p>
       {status.downloading ? (
@@ -137,7 +137,7 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
       {plan?.music?.available && onMusic && <MusicMixOption checked={music} onChange={onMusic} />}
 
       {notice && (
-        <p role="note" className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
+        <p role="note" className="py-3 text-sm">
           {notice}
         </p>
       )}

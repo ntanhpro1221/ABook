@@ -86,7 +86,7 @@ export function LocalVoiceModules({
   const { data: supertonicStatus } = useQuery({ queryKey: ["readaloud", SUPERTONIC_COPY.key], queryFn: () => supertonic.status() });
   const { advice, preselectSupertonic } = moduleAdvice(vieneuStatus, supertonicStatus);
   return (
-    <Fold flat storageKey="voice.modules" title="Bộ giọng" summary={moduleActivity(vieneuStatus, supertonicStatus)} bodyClassName="space-y-5 pb-3">
+    <Fold storageKey="voice.modules" title="Bộ giọng" summary={moduleActivity(vieneuStatus, supertonicStatus)} bodyClassName="space-y-5 pb-3">
       {advice && <p className="max-w-xl text-[0.8125rem] text-fg-2 text-pretty">{advice}</p>}
       <div id="vieneu-module" className="scroll-mt-4">
         <VieneuModuleCard backend={vieneu} onChanged={onChanged} />
@@ -304,7 +304,7 @@ export function VieneuModuleCard({
       )}
       {metered && <p className="text-[0.8125rem] text-fg-2 text-pretty">{metered}</p>}
       {suggestion && (
-        <div className="rounded-xl border border-warning/40 bg-warning-soft px-3 py-2.5 text-[0.8125rem] text-pretty">
+        <div className="py-2.5 text-[0.8125rem] text-pretty">
           <p>{suggestion.message}</p>
           <Button size="sm" variant="ghost" className="mt-2" loading={busy} onClick={() => void switchTo()}>
             {suggestion.action}
