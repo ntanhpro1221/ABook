@@ -124,6 +124,18 @@ it("trình phát: đúng 5 nút chính + 4 nút phụ có nhãn; việc khác n�
   expect([...screen.querySelectorAll("button")].filter((button) => button.textContent === "Đọc theo")).toHaveLength(1);
 });
 
+it("trình phát máy tính: 'Chương' và 'Đọc theo' chỉ là tab của bảng bên phải, cột trái không lặp lại (audit140 D11)", async () => {
+  state.expanded = true;
+  await render(<NowPlaying />);
+  const screen = host.querySelector<HTMLElement>("section[role=main]")!;
+  const secondary = screen.querySelector("[data-player-secondary]")!;
+  expect([...secondary.querySelectorAll("button")].map((button) => button.textContent)).toEqual(["1,15×Tốc độ", "Hẹn giờ"]);
+  for (const label of ["Chương", "Đọc theo"]) {
+    const twins = [...screen.querySelectorAll("button")].filter((button) => button.textContent === label);
+    expect(twins.map((button) => button.getAttribute("role"))).toEqual(["tab"]);
+  }
+});
+
 it("trình phát điện thoại: lớp phủ inset-0 tự chừa biên an toàn - nút đầu không nằm dưới thanh trạng thái (soát máy ảo C1)", async () => {
   state.expanded = true;
   await render(<NowPlaying mobile />);
