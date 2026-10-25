@@ -545,7 +545,7 @@ export function LibraryScreen({
               <SlidingIndicator variant="line" />
               {LIBRARY_FILTER_OPTIONS.map((option, index) => [index > 0 && <RowGap key={`gap-${option.value}`} className="w-4" />, <button
                 key={option.value} type="button" aria-label={option.value === "finished" ? "Nghe xong" : option.label} aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
-                className={cn("touch-box min-h-[44px] shrink-0 border-b-2 border-transparent text-xs font-medium transition-colors duration-motion-medium first:text-left sm:text-sm", filter === option.value ? "text-accent-text" : "text-fg-2 hover:text-fg")}>
+                className={cn("touch-hit min-h-[44px] shrink-0 border-b-2 border-transparent text-xs font-medium transition-colors duration-motion-medium sm:text-sm", filter === option.value ? "text-accent-text" : "text-fg-2 hover:text-fg")}>
                 {option.label}
               </button>])}
             </div>

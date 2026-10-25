@@ -53,6 +53,14 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       expect(at(result, "fold-run", "vertical-gap")).toHaveLength(0);
     }
   });
+  it("hàng nút chữ: hộp chạm căn giữa chữ ngắn làm lệch khoảng thì báo; gap đều hay tab chia đều thì không", () => {
+    for (const result of results) {
+      expect(at(result, "words", "horizontal-ink-gap")).toHaveLength(1);
+      expect(at(result, "words", "horizontal-ink-gap")[0].values).toHaveLength(3);
+      expect(at(result, "words-pass", "horizontal-ink-gap")).toHaveLength(0);
+      expect(at(result, "words-even", "horizontal-ink-gap")).toHaveLength(0);
+    }
+  });
   it("thẻ có viền tạo cột riêng; nút giữa toàn hàng không phải cạnh cột", () => {
     for (const result of results) {
       expect(at(result, "panel", "ink-left")).toHaveLength(0);
