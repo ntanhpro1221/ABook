@@ -347,9 +347,6 @@ export function usePrecastInvites(books: BookSummary[] | undefined) {
       toast(book.precast?.held ? `“${book.title}” đang chờ bạn duyệt` : `“${book.title}” đã phân tích xong`, {
         id: `precast-${book.id}`,
         duration: 30_000,
-        description: book.precast?.held
-          ? "Sách tạm dừng trước khi thu. Xem giọng, cách đọc tên và người nói rồi bấm “Thu âm”."
-          : "Duyệt giọng, cách đọc tên và người nói trước khi thu - sửa bây giờ thì không phải thu lại.",
         action: { label: "Duyệt", onClick: () => navigate(`/studio/${book.id}?tab=precast`) },
       });
     }

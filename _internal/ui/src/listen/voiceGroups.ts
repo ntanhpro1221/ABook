@@ -5,13 +5,18 @@ import { KEYED_PROVIDERS } from "./readAloudVoice";
 // Gom theo mô-đun: tiêu đề nhóm một lần, mỗi giọng chỉ còn tên của nó. Tên đầy đủ vẫn dùng ở chỗ khác (trình phát, nhãn đọc màn hình).
 
 /** Các nhóm giọng theo nhà cung cấp, đúng thứ tự và tên ở Cài đặt › Giọng đọc (trình phát chọn giọng cũng nhóm như vậy). */
-export const VOICE_GROUPS: { provider: string; title: string }[] = [
-  { provider: "edge", title: "Edge · trực tuyến, miễn phí" },
-  ...Object.entries(KEYED_PROVIDERS).map(([provider, name]) => ({ provider, title: `${name} · dùng khóa của bạn` })),
-  { provider: "vieneu", title: "VieNeu · trên máy này, không cần mạng" },
-  { provider: "supertonic", title: "Supertonic · trên máy này, không cần mạng" },
-  { provider: "device", title: "Giọng của máy · không cần mạng" },
+export const VOICE_GROUPS: { provider: string; title: string; detail?: string }[] = [
+  { provider: "edge", title: "Edge", detail: "trực tuyến, miễn phí" },
+  ...Object.entries(KEYED_PROVIDERS).map(([provider, name]) => ({ provider, title: name, detail: "dùng khóa của bạn" })),
+  { provider: "vieneu", title: "VieNeu", detail: "trên máy này, không cần mạng" },
+  { provider: "supertonic", title: "Supertonic", detail: "trên máy này, không cần mạng" },
+  { provider: "device", title: "Giọng của máy", detail: "không cần mạng" },
 ];
+
+/** Tên nhóm đọc trọn cho trình đọc màn hình: "Edge · trực tuyến, miễn phí". Nhãn nhìn thấy chỉ lấy `title` (ngắn, hoa), `detail` xuống chữ thường. */
+export function groupLabel(group: { title: string; detail?: string }): string {
+  return group.detail ? `${group.title} · ${group.detail}` : group.title;
+}
 
 /** "Nữ" / "Nam"; không biết thì rỗng. */
 export function genderLabel(gender?: string): string {
@@ -19,7 +24,7 @@ export function genderLabel(gender?: string): string {
 }
 
 /** Các giọng có trong danh sách, chia theo nhóm của Cài đặt (nhóm rỗng bỏ qua); giọng của nhà cung cấp lạ gom vào "Khác" ở cuối. */
-export function groupedVoices(voices: ReadAloudVoice[]): { provider: string; title: string; voices: ReadAloudVoice[] }[] {
+export function groupedVoices(voices: ReadAloudVoice[]): { provider: string; title: string; detail?: string; voices: ReadAloudVoice[] }[] {
   const groups = VOICE_GROUPS.map((group) => ({ ...group, voices: voices.filter((voice) => voice.provider === group.provider) }));
   const known = new Set(VOICE_GROUPS.map((group) => group.provider));
   const other = voices.filter((voice) => !known.has(voice.provider));

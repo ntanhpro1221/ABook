@@ -26,7 +26,7 @@ export function OwnDiagnostics() {
         target = picked;
       }
       const done = await api<{ name: string; folder: string }>("/api/diagnostics/save", { method: "POST", body: target ? { target } : {} });
-      toast.success("Đã lưu gói nhật ký", { description: `${done.name}${done.folder ? ` - trong ${done.folder}` : ""}` });
+      toast.success(done.folder ? `Đã lưu gói nhật ký trong ${done.folder}` : "Đã lưu gói nhật ký");
     } catch (error) {
       toast.error("Chưa lưu được gói nhật ký", { description: (error as Error).message });
     } finally {

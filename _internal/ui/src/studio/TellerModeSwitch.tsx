@@ -36,7 +36,7 @@ export function TellerModeSwitch({ book, className }: { book: BookSummary; class
       setAsking(null);
       // Chỉ nhắc thu lại khi có bản thu bị bỏ (số báo trước lúc đổi); chưa thu câu nào thì máy cứ thu theo giọng mới, không có gì "lại".
       if (view.castLocked && view.mode === "teller" && view.applied) {
-        toast.success("Đã đổi", { description: recorded > 0 ? "Bấm “Tiếp tục” để thu lại những câu đổi giọng." : "Những câu đổi giọng sẽ được thu bằng giọng mới." });
+        toast.success(recorded > 0 ? "Đã đổi - bấm “Tiếp tục” để thu lại những câu đổi giọng" : "Đã đổi - những câu đổi giọng sẽ được thu bằng giọng mới");
       }
     },
     onError: (error: Error) => {

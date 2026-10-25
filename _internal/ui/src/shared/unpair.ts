@@ -30,13 +30,9 @@ export interface UnpairCopy {
   cancel: string;
 }
 
-/** Lời báo (toast) sau khi gỡ ghép - cả khi không phải hỏi gì: máy đã rời Thư viện, và chỗ nghe còn giữ nếu có. */
-export function unpairDone(device: string, unsent: UnsentEdits | null | undefined): { title: string; description: string } {
-  const places = unsent?.cache?.places ?? 0;
-  return {
-    title: `Đã thôi ghép ${device}`,
-    description: `Sách của máy ấy không còn trong Thư viện.${places > 0 ? " Chỗ nghe và dấu trang vẫn giữ - ghép lại là nghe tiếp được." : ""}`,
-  };
+/** Lời báo (toast) sau khi gỡ ghép - cả khi không phải hỏi gì. MỘT dòng: sách của máy ấy rời Thư viện và chỗ nghe còn giữ đã nói ở hộp hỏi (`unpairCopy`). */
+export function unpairDone(device: string): string {
+  return `Đã thôi ghép ${device}`;
 }
 
 /** `self`: máy đang cầm sửa ("điện thoại" hay "máy tính"); `reachable`: máy kia đang trả lời. `null` khi không còn gì để mất - gỡ như thường. */

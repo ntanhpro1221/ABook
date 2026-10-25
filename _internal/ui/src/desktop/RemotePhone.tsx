@@ -8,6 +8,7 @@ import { noteCastHasNoMusic } from "@/listen/castMusic";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
 import { Back15, Forward15, RemoteSleepMenu } from "@/listen/PlayerViews";
+import { besideParentMenu, SlotFace, useMenuSlot, type BesideParent } from "@/listen/menuSlot";
 import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, type RemoteSleep, type RemoteSleepCommand } from "@/listen/sleep";
 import { useListenBook, useSource } from "@/listen/source";
 import { BookCover } from "@/shared/BookCover";
@@ -358,6 +359,13 @@ export function HandOffButton({ className }: { className?: string }) {
   const client = useQueryClient();
   const [searching, setSearching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Trong dòng "Thiết bị phát" của menu "…": nút là cả dòng (một biểu tượng, giá trị chữ bên phải), danh sách mở cạnh menu cha (PlayerViews SlotFace / besideParentMenu).
+  const slot = useMenuSlot();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [beside, setBeside] = useState<BesideParent | null>(null);
+  useLayoutEffect(() => {
+    if (menuOpen && slot) setBeside(besideParentMenu(triggerRef.current));
+  }, [menuOpen, slot]);
   const track = player.track;
   const book = useListenBook(track?.bookId);
   // Máy đã ghép chỉ phát được sách của CHÍNH nó - cuốn ảo "Trên <máy ấy>" - host đổi mã cuốn sang mã của máy kia.
@@ -402,9 +410,11 @@ export function HandOffButton({ className }: { className?: string }) {
   };
   if (targets.length === 1 && !menuOpen) {
     const [only] = targets;
+    const label = `Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`;
+    if (slot) return <MotionRegion as="span" className="block"><SlotFace aria-label={label} value={only.name} onClick={() => handOff(only)} /></MotionRegion>;
     return (
       <MotionRegion as="span"><IconButton
-        label={`Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`}
+        label={label}
         icon={only.via === "cast" ? Cast : MonitorSmartphone}
         size="sm"
         className={cn(className)}
@@ -413,7 +423,7 @@ export function HandOffButton({ className }: { className?: string }) {
     );
   }
   return (
-    <MotionRegion as="span">
+    <MotionRegion as="span" className={slot ? "block" : undefined}>
     <DropdownMenu.Root
       open={menuOpen}
       onOpenChange={(open) => {
@@ -421,6 +431,9 @@ export function HandOffButton({ className }: { className?: string }) {
         if (open && !searching) rescan();
       }}
     >
+      {slot ? (
+        <DropdownMenu.Trigger asChild><SlotFace ref={triggerRef} aria-label="Phát trên máy khác" value="Chọn" /></DropdownMenu.Trigger>
+      ) : (
       <Tooltip label="Phát trên máy khác">
         <DropdownMenu.Trigger
           aria-label="Phát trên máy khác"
@@ -432,8 +445,9 @@ export function HandOffButton({ className }: { className?: string }) {
           <Cast className="glyph" strokeWidth={2} />
         </DropdownMenu.Trigger>
       </Tooltip>
+      )}
       <DropdownMenu.Portal>
-        <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
+        <DropdownMenu.Content side={beside?.side ?? "top"} align={beside?.align ?? "end"} sideOffset={beside?.sideOffset ?? 8} alignOffset={beside?.alignOffset} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
           <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Phát trên</DropdownMenu.Label>
           {/* Không có máy nào: nói rõ thay vì để nút biến mất (TV tắt, khác mạng - người dùng không biết đang tìm hay đã hết). */}
           {!targets.length && (

@@ -23,7 +23,7 @@ export function useUnmerge(bookId: string) {
     },
     onSuccess: (_done, person) => {
       refreshAfterDecision(client, bookId);
-      toast.success(`Đã bỏ gộp ${person.displayName}`, { description: "Các câu của người này trở lại như trước, không còn chờ gộp." });
+      toast.success(`Đã bỏ gộp ${person.displayName}`);
     },
     onError: (error: Error) => toast.error("Chưa bỏ gộp được", { description: error.message }),
   });

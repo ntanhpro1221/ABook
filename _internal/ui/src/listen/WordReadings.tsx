@@ -63,9 +63,8 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
       { surface, spoken },
       {
         onSuccess: () => {
-          toast.success(spoken ? `“${surface}” sẽ đọc là “${cleanSpoken(spoken)}”` : `“${surface}” đọc lại như chữ trong sách`, {
+          toast.success(spoken ? `“${surface}” sẽ đọc là “${cleanSpoken(spoken)}” từ đoạn sau` : `“${surface}” đọc lại như chữ trong sách từ đoạn sau`, {
             id: "reading-saved",
-            description: "Đã đổi cách đọc cho cả cuốn - áp dụng từ đoạn sau.",
             duration: UNDO_MS,
             action: {
               label: "Hoàn tác",
@@ -73,7 +72,7 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
                 save.mutate(
                   { surface, spoken: current },
                   {
-                    onSuccess: () => toast.success("Đã hoàn tác", { id: "reading-saved", description: current ? `“${surface}” lại đọc là “${current}”` : `“${surface}” lại đọc như chữ trong sách` }),
+                    onSuccess: () => toast.success(current ? `Đã hoàn tác: “${surface}” lại đọc là “${current}”` : `Đã hoàn tác: “${surface}” lại đọc như chữ trong sách`, { id: "reading-saved" }),
                     onError: (error) => toast.error("Không hoàn tác được", { description: (error as Error).message }),
                   },
                 ),

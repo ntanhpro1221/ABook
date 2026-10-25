@@ -863,7 +863,7 @@ export function InlineError({ message, onRetry, className, open }: { message: st
   return <MotionRegion role="alert" motionKey={message} className={cn("motion-reveal flex items-start gap-3 py-3 text-sm", className)}>
     <AlertTriangle aria-hidden className="ink-start mt-[3px] size-4 shrink-0 text-danger" />
     <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-      <p className="min-w-0 max-w-[60ch] text-pretty text-fg-2">{message}</p>
+      <p className="measure min-w-0 text-pretty text-fg-2">{message}</p>
       <Button variant="ghost" size="sm" icon={RotateCw} className="-ml-3" onClick={onRetry}>Thử lại</Button>
     </div>
   </MotionRegion>;

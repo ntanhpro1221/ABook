@@ -62,12 +62,9 @@ describe("tình trạng gửi phần sửa về máy tính", () => {
   });
 
   it("thông báo sau khi gửi không lặp lời dặn của dòng tình trạng", () => {
-    expect(sentToast({ pending: 0, last: { state: "sent", at: 1, applied: 2 } }, "Lecoo")).toEqual({
-      title: "Đã gửi về Lecoo",
-      description: "2 thay đổi đã áp ngay trên Lecoo",
-    });
+    expect(sentToast({ pending: 0, last: { state: "sent", at: 1, applied: 2 } }, "Lecoo")).toEqual({ title: "Đã gửi về Lecoo" });
     const left = sentToast({ pending: 1, last: { state: "sent", at: 1 } }, "Lecoo");
-    expect(left.description).toBe("Còn 1 thay đổi chưa gửi được - sẽ thử lại khi tới được Lecoo.");
-    expect(left.description).not.toMatch(/Tự gửi khi/);
+    expect(left.note).toBe("Còn 1 thay đổi chưa gửi được - sẽ thử lại khi tới được Lecoo.");
+    expect(left.note).not.toMatch(/Tự gửi khi/);
   });
 });

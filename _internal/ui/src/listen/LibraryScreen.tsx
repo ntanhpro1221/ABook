@@ -19,7 +19,7 @@ import { useScrollMemory } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
 import { Dialog, EmptyState, failedEmpty, heardBarProps, LoadError, Progress, RowGap, Sheet, Skeleton } from "@/shared/ui";
-import { caughtUpDetail, displayTitle, resumeWhere } from "./labels";
+import { caughtUpLine, displayTitle, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, type LibrarySort } from "./librarySort";
 import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, resumeTarget, seriesIndex, twinBookIds, twinKind, volumeBadge, type ListenBook, type ListenChapter } from "./model";
 import { usePlayer, type WordTarget } from "./player";
@@ -102,7 +102,7 @@ export function usePlayListenBook() {
       return;
     }
     if (full.progress.caughtUp) {
-      toast("Đã nghe hết phần đã có", { description: caughtUpDetail(full.producing) });
+      toast(caughtUpLine(full.producing));
       return;
     }
     const point = resumePoint(full, chapters);

@@ -42,7 +42,7 @@ function sessionLabel(endedAt: number | null | undefined): string {
   const ended = new Date(endedAt * 1000);
   const now = new Date();
   const today = ended.toDateString() === now.toDateString();
-  return today && ended.getHours() >= 5 ? "Lần hẹn giờ vừa rồi" : "Tối qua";
+  return today && ended.getHours() >= 5 ? "Vừa hẹn giờ" : "Tối qua";
 }
 
 function timeOf(at: number): string {
@@ -154,8 +154,11 @@ export function MorningRecap({ className }: { className?: string }) {
       <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="touch-hit absolute right-[2px] top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
         <X className="size-4" />
       </button>
-      <div className="flex items-center gap-2 pr-11 label-section text-accent-text">
-        <Moon className="size-3.5 shrink-0" /> {sessionLabel(session.endedAt)} · {session.bookTitle}
+      {/* Nhãn HOA chỉ ≤ 3 chữ (DESIGN 5.5): tên sách xuống chữ thường 12 px, cắt bằng dấu ba chấm - không thành một dòng HOA dài. */}
+      <div className="flex items-center gap-2 pr-11 text-accent-text">
+        <Moon className="size-3.5 shrink-0" />
+        <span className="label-section shrink-0">{sessionLabel(session.endedAt)}</span>
+        <span className="min-w-0 truncate text-xs font-medium text-fg-2">· {session.bookTitle}</span>
       </div>
       <h2 className="mt-1.5 pr-11 text-lg font-semibold leading-snug">Nghe tới đâu rồi thiếp đi?</h2>
 

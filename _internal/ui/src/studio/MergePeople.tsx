@@ -9,18 +9,11 @@ import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
 import { api } from "./api";
-import { WAITING_STUDIO, useWhenApplied } from "./decisions";
 import { nameKey, sameNames } from "./workText";
 
 // Tab Nhân vật: "Gộp vào…" (soát UX a6 01-10: máy tách một người thành hai - tên đầy đủ và tên gọi, có chức danh và không -
 // mà Studio chỉ sửa được từng câu). Máy chủ chuyển mọi câu nói của người này sang người kia và ghi bí danh để phần sau
 // của cuốn tự hiểu (POST /characters/merge). Không áp ngay: như mọi sửa khác, áp theo trạng thái sách (decisions.ts).
-
-/** Lời báo sau khi gộp: nói khi nào máy áp theo đúng trạng thái sách (`when`, useWhenApplied - như tab Kịch bản) thay vì luôn
- *  mời bấm "Áp dụng thay đổi", nút chỉ có khi sách đã xong (soát UX a23 B5); thu lại chỉ khi người ấy đã có câu được thu. */
-export function mergedDescription(when: string, recorded: number): string {
-  return `Các phần sau của truyện cũng hiểu hai tên là một người.${recorded ? " Câu đã thu sẽ được thu lại bằng giọng người ấy." : ""} ${when}`;
-}
 
 /** Giọng người ấy SẼ đọc: giọng người nghe vừa chọn mà chưa áp, nếu có (soát UX a23 B4: hộp Gộp nói giọng cũ). */
 export function voiceToUse(member: Pick<CastMember, "voice" | "pendingVoice">): string {
@@ -32,7 +25,6 @@ export function MergeDialog({
   person,
   people,
   onClose,
-  waiting = false,
   onSaved,
 }: {
   bookId: string;
@@ -40,12 +32,10 @@ export function MergeDialog({
   people: CastMember[];
   onClose: () => void;
   /** Cuốn không có xưởng (file .abook): chỉ ghi ý muốn chờ Studio. */
-  waiting?: boolean;
   /** Làm mới thêm các màn của trang nghe (số thay đổi chưa lưu). */
   onSaved?: () => void;
 }) {
   const client = useQueryClient();
-  const when = useWhenApplied(bookId);
   const [query, setQuery] = useState("");
   const [into, setInto] = useState<CastMember | null>(null);
   const [busy, setBusy] = useState(false);
@@ -70,9 +60,7 @@ export function MergeDialog({
         method: "POST",
         body: { from: person.name, into: into.name },
       });
-      toast.success(`Đã ghi: ${lines} câu của ${cleanName(person.displayName)} là của ${cleanName(into.displayName)}`, {
-        description: waiting ? WAITING_STUDIO : mergedDescription(when, person.recorded ?? 0),
-      });
+      toast.success(`Đã ghi: ${lines} câu của ${cleanName(person.displayName)} là của ${cleanName(into.displayName)}`);
       void client.invalidateQueries();
       onSaved?.();
       close();

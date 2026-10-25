@@ -76,9 +76,8 @@ describe("xuất MP3 kèm nhạc nền", () => {
     expect(text(off)).not.toContain("cắm sạc");
   });
 
-  it("thông báo xong: nói chỗ lưu, rồi định dạng .m4a của chương có nhạc, rồi đoạn thiếu nhạc", () => {
-    expect(finishedToast({ files: 12, chaptersTotal: 12, folder: "Music/Truyện", mixed: true, musicMissing: 2 }).description)
-      .toBe("Lưu ở Music/Truyện. Các chương có nhạc nền là file .m4a. 2 đoạn thiếu nhạc vì chưa tải được bài.");
-    expect(finishedToast({ files: 12, chaptersTotal: 12, folder: "Music/Truyện" }).description).toBe("Lưu ở Music/Truyện.");
+  it("thông báo xong: đoạn thiếu nhạc là lưu ý, đủ cả thì không có lưu ý", () => {
+    expect(finishedToast({ files: 12, chaptersTotal: 12, folder: "Music/Truyện", musicMissing: 2 }).note).toBe("2 đoạn thiếu nhạc vì chưa tải được bài.");
+    expect(finishedToast({ files: 12, chaptersTotal: 12, folder: "Music/Truyện" }).note).toBe("");
   });
 });

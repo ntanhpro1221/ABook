@@ -45,7 +45,7 @@ describe("xuất MP3/M4B đang chạy nền khi giao diện mở lại", () => {
       description: expect.objectContaining({ props: expect.objectContaining({ shown: "3/10 chương · vào Music/Sách" }) }),
     }));
     library.handlers.get("mp3Export")!({ bookId: "b1", run: "w1", finished: true, files: 10, chaptersTotal: 10, folder: "Music/Sách" });
-    expect(toasts.success).toHaveBeenCalledWith("Đã xuất 10 chương", expect.objectContaining({ id: "mp3-export-b1" }));
+    expect(toasts.success).toHaveBeenCalledWith("Đã xuất 10 chương vào Music/Sách", expect.objectContaining({ id: "mp3-export-b1" }));
   });
 
   it("MP3: tin tới trước khi trả lời của việc nền về vẫn không bị bỏ", async () => {
@@ -55,7 +55,7 @@ describe("xuất MP3/M4B đang chạy nền khi giao diện mở lại", () => {
     emit({ bookId: "b1", run: "w1", done: 4, total: 10 });
     expect(toasts.loading).toHaveBeenCalledTimes(1);
     emit({ bookId: "b1", run: "w1", finished: true, files: 10, chaptersTotal: 10, folder: "Music/Sách" });
-    expect(toasts.success).toHaveBeenCalledWith("Đã xuất 10 chương", expect.anything());
+    expect(toasts.success).toHaveBeenCalledWith("Đã xuất 10 chương vào Music/Sách", expect.anything());
   });
 
   it("MP3: tin của lượt cũ không đè lên lượt đang theo dõi", async () => {

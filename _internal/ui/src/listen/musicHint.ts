@@ -4,10 +4,7 @@ import { toast } from "@/shared/toast";
 // Nhớ trên máy (localStorage); không đọc / ghi được thì cứ nhắc mỗi phiên một lần - không để lỗi bộ nhớ chặn trình phát.
 
 export const SCENE_MUSIC_HINT_KEY = "abook:scene-music-hint";
-export const SCENE_MUSIC_HINT = {
-  title: "Nhạc nền đổi theo cảnh",
-  description: "Bạn muốn nhạc khác thì chọn ở nút Nhạc nền (hình nốt nhạc).",
-} as const;
+export const SCENE_MUSIC_HINT = "Nhạc nền đổi theo cảnh - muốn nhạc khác thì chọn ở nút Nhạc nền";
 
 type Store = Pick<Storage, "getItem" | "setItem">;
 
@@ -51,7 +48,7 @@ export function tellSceneMusic(busy: () => boolean = priorityShowing, show: () =
 }
 
 function showSceneMusicHint(): void {
-  toast(SCENE_MUSIC_HINT.title, { id: "scene-music-hint", duration: 12_000, description: SCENE_MUSIC_HINT.description });
+  toast(SCENE_MUSIC_HINT, { id: "scene-music-hint", duration: 12_000 });
 }
 
 /** Kiểm thử: quên mọi nhắc nhở của phiên. */

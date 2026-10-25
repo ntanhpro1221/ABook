@@ -129,9 +129,7 @@ function SpokenEditor({
       for (const line of lines) {
         await api(`/api/books/${bookId}/line`, { method: "POST", body: { stableId: line.stableId, textSha256: line.textSha256, spoken } });
       }
-      toast.success(lines.length > 1 ? `Đã ghi cách đọc cho ${lines.length} câu` : "Đã ghi cách đọc câu này", {
-        description: "Chữ của sách giữ nguyên; câu được thu lại bằng chữ mới.",
-      });
+      toast.success(lines.length > 1 ? `Đã ghi cách đọc cho ${lines.length} câu` : "Đã ghi cách đọc câu này");
       onDone(spoken);
     } catch (error) {
       toast.error("Chưa ghi được", { description: (error as Error).message });

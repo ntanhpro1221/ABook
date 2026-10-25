@@ -19,7 +19,7 @@ import { useMediaQuery } from "@/shared/media";
 import { Button, EmptyState, FilterRow, IconButton, Kbd, Segmented, Sheet, Skeleton, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
-import { UNDO_MS, optimistic, undoAction, undoSteps, usePendingNote, useWhenApplied } from "./decisions";
+import { UNDO_MS, optimistic, undoAction, undoSteps, usePendingNote } from "./decisions";
 import { seenDelivery, seenFor, theirDelivery, verdictWord, warnElsewhere, type SeenDelivery } from "./elsewhere";
 import { findRanges, splitByRanges, wrapIndex } from "./scriptFind";
 
@@ -287,7 +287,6 @@ function useUndoStack(): UndoStack {
 /** `nameOf`: tên hiện của một người nói từ mã của họ (để báo "trước đó đang là …"). */
 function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => boolean) => void, nameOf: (value: string) => string) {
   const client = useQueryClient();
-  const when = useWhenApplied(bookId);
   return useMutation({
     mutationFn: ({ lines, value, newGender }: { lines: Line[]; value: string; label: string; newGender?: Person["newGender"] }) =>
       api<{ lines: number; speaker: string; requestedAt: number; elsewhere?: Record<string, string> }>(`/api/books/${bookId}/speaker`, {
@@ -341,16 +340,12 @@ function useAssign(bookId: string, chapterId: number, onUndoable: (undo: () => b
       const undo = { action: { label: action.label, onClick: run }, duration: UNDO_MS };
       if (keep) {
         toast.success(recorded > 1 ? `Đã xác nhận ${recorded} câu của ${label}` : `Đã xác nhận: câu này của ${line.label}`, {
-          description: "Máy sẽ không hỏi lại những câu này.",
           ...undo,
         });
         return;
       }
       toast.success(recorded > 1 ? `Đã ghi: ${recorded} câu của ${label}` : `Đã ghi: câu này của ${label}`, {
         // Chỉ câu đã thu mới phải thu lại - sách chưa thu thì không hứa điều ấy (soát UX a23).
-        description: `${
-          lines.some((item) => item.hasAudio) ? "Câu đã thu sẽ được thu lại bằng giọng của người ấy." : "Câu chưa thu nên không phải thu lại."
-        } ${when}`,
         ...undo,
       });
     },
@@ -409,7 +404,6 @@ function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => 
       const replaced = Object.values(elsewhere);
       if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? nameOf(replaced[0]) : "", run);
       toast.success(`Đã xác nhận ${count} câu là đúng`, {
-        description: "Máy sẽ không hỏi lại những câu này và học từ chúng.",
         action: { label: action.label, onClick: run },
         duration: UNDO_MS,
       });
@@ -426,7 +420,6 @@ function useConfirmChapter(bookId: string, onUndoable: (undo: () => boolean) => 
  *  verdict redo -> overrides.json `retakes`), một lần bấm một mốc. Chỉ câu ĐÃ THU mới có gì để thu lại - câu chưa thu bị bỏ qua và nói rõ. */
 function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => boolean) => void) {
   const client = useQueryClient();
-  const when = useWhenApplied(bookId);
   const body = (verdict: "redo" | null, lines: Line[]) => ({
     verdict,
     chapterId,
@@ -463,7 +456,7 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
     },
     onSuccess: (answer) => {
       warn(answer);
-      toast.success("Đã bỏ yêu cầu thu lại", { description: "Câu giữ nguyên bản thu hiện có." });
+      toast.success("Đã bỏ yêu cầu thu lại");
     },
     onError: (error: Error, _lines, context) => {
       context?.restore();
@@ -487,14 +480,13 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
         if (used) return false;
         used = true;
         void api(`/api/books/${bookId}/review`, { method: "POST", body: body(null, lines) })
-          .then(() => toast.success("Đã hoàn tác", { description: lines.length > 1 ? `${lines.length} câu không phải thu lại nữa.` : "Câu này không phải thu lại nữa." }))
+          .then(() => toast.success(lines.length > 1 ? `Đã hoàn tác: ${lines.length} câu không phải thu lại nữa` : "Đã hoàn tác: câu này không phải thu lại nữa"))
           .catch((error: Error) => toast.error("Không hoàn tác được", { description: error.message }))
           .finally(refresh);
         return true;
       };
       onUndoable(run);
       toast.success(lines.length > 1 ? `Đã ghi: thu lại ${lines.length} câu` : "Đã ghi: thu lại câu này", {
-        description: `Đọc lại một lần khác, giọng như cũ. ${when}`,
         action: { label: "Hoàn tác", onClick: run },
         duration: UNDO_MS,
       });
@@ -510,7 +502,6 @@ function useRetake(bookId: string, chapterId: number, onUndoable: (undo: () => b
 
 function useLineFix(bookId: string, chapterId: number) {
   const client = useQueryClient();
-  const when = useWhenApplied(bookId);
   const refresh = () => {
     void client.invalidateQueries({ queryKey: ["casting", bookId] });
     void client.invalidateQueries({ queryKey: ["work", bookId] });
@@ -549,7 +540,6 @@ function useLineFix(bookId: string, chapterId: number) {
       }
       // Hoàn tác như người nói / cách đọc tên / giọng: bấm nhầm một loại đoạn hay một chữ đem đọc thì rút được (soát a89 V7).
       toast.success("Đã ghi cách đọc câu này", {
-        description: `${line.hasAudio ? "Câu đã thu sẽ được thu lại." : "Câu chưa thu nên không phải thu lại."} ${when}`,
         action: answer.requestedAt ? undoLineFix(client, bookId, line, answer) : undefined,
         duration: UNDO_MS,
       });
@@ -630,7 +620,7 @@ export function DeliveryMenu({
       </div>
       {needsSpeaker && (
         <div>
-          <div className="mb-1.5 label-section text-fg-2">Ai nói câu này?</div>
+          <div className="mb-1.5 label-section text-fg-2">Ai nói?</div>
           {picked ? (
             <div className="flex items-center gap-2 rounded-lg border border-accent bg-accent-soft px-2.5 py-1.5 text-sm text-accent-text">
               <span className="min-w-0 flex-1 truncate font-medium">
@@ -712,7 +702,7 @@ export function DeliveryMenu({
           Nhân vật) - tách khỏi nút "Lưu cách đọc" vốn chỉ cho riêng câu này. */}
       {names.length > 0 && (
         <Fold storageKey="delivery.names" title="Tên trong câu" summary={`${names.length} tên`} bodyClassName="px-3 pb-3"><div data-names-section>
-          <div className="mb-1.5 label-section text-fg-2">Sửa tên cả cuốn</div>
+          <div className="mb-1.5 label-section text-fg-2">Tên cả cuốn</div>
           <div className="space-y-2">
             {names.map((item) => (
               <NameInLine key={item.surface} bookId={bookId} item={item} />
@@ -756,7 +746,7 @@ function DeliveryChip({
   // Esc / bấm ra ngoài khi còn lựa chọn chưa lưu: bảng đóng và lựa chọn mất - nói ra thay vì lặng lẽ (soát UX a23).
   const dismiss = (next: boolean) => {
     if (!next && dirty.current) {
-      toast("Chưa lưu cách đọc của câu này", { description: "Lựa chọn vừa rồi đã bỏ. Mở lại và bấm “Lưu cho câu này” để giữ." });
+      toast.warning("Chưa lưu cách đọc của câu này", { description: "Lựa chọn vừa rồi đã bỏ. Mở lại và bấm “Lưu cho câu này” để giữ." });
     }
     dirty.current = false;
     onOpenChange(next);
@@ -918,7 +908,7 @@ export function SpeakerMenu({
             )}
             {script.cast.length > 0 && (
               <>
-                <div className="px-2 pb-1 pt-1.5 label-section text-fg-2">Nói trong chương này</div>
+                <div className="px-2 pb-1 pt-1.5 label-section text-fg-2">Trong chương này</div>
                 {script.cast.map((person, index) => item(person, index < HOTKEYS ? index + 1 : undefined))}
               </>
             )}
@@ -1303,7 +1293,7 @@ function ChapterScriptView({
       // Lần đã hoàn tác bằng nút trên thông báo thì bỏ qua, lấy lần trước nữa; hết thì nói ra thay vì im lặng (soát UX a23).
       let undone = false;
       while (!undone && undos.current.length) undone = undos.current.pop()!();
-      if (!undone) toast("Không còn gì để hoàn tác", { description: "Ctrl+Z hoàn tác các lần gán người nói vừa làm ở tab này." });
+      if (!undone) toast("Không còn gì để hoàn tác");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -1375,9 +1365,7 @@ function ChapterScriptView({
     const lines = group.filter((item) => item.hasAudio && item.retake !== "pending");
     if (!lines.length) {
       const recorded = group.some((item) => item.hasAudio);
-      toast(recorded ? "Câu này đã xin thu lại" : "Chưa thu câu này nên chưa có gì để thu lại", {
-        description: recorded ? "Máy sẽ thu khi áp dụng thay đổi." : "Câu sẽ được thu lần đầu khi sách làm tới đó.",
-      });
+      toast(recorded ? "Câu này đã xin thu lại - máy thu khi áp dụng thay đổi" : "Chưa thu câu này nên chưa có gì để thu lại - sẽ thu lần đầu khi sách làm tới đó");
       return;
     }
     retake.ask.mutate(lines);
