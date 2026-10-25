@@ -1,3 +1,4 @@
+import { ActionSubmenu } from "@/shared/ActionMenu";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -162,39 +163,39 @@ export function playlistNote(error: string, scene = false): string {
   return scene ? "Nhạc nằm dưới giọng đọc và đổi theo từng cảnh của truyện." : "Nhạc nằm dưới giọng đọc và nghe tiếp qua các chương.";
 }
 
-/** Mục "Nhạc nền" trong menu của sách chỉ có chữ: menu con với các lựa chọn. */
+/** Mục "Nhạc nền" trong menu của sách chỉ có chữ: menu con với các lựa chọn (điện thoại: một bước trong Sheet, xem ActionMenu.tsx). */
 export function PlaylistSubmenu({ bookId }: { bookId: string }) {
   const { options, chosen, label, scene, error, loading, loadFailed, retry, choose, canImport, addMusic } = usePlaylistChoice(bookId);
   return (
-    <DropdownMenu.Sub>
-      <DropdownMenu.SubTrigger className={MENU_ITEM}>
+    <ActionSubmenu
+      id="music"
+      label="Nhạc nền"
+      itemClassName={MENU_ITEM}
+      trigger={<>
         <Music2 className="size-4" />
         <span className="flex-1">Nhạc nền</span>
         <span className="max-w-44 truncate text-xs text-fg-2" title={label}>{shortPlaylistLabel(label)}</span>
         <ChevronRight className="size-4 text-fg-2" />
-      </DropdownMenu.SubTrigger>
-      <DropdownMenu.Portal>
-        <DropdownMenu.SubContent sideOffset={4} collisionPadding={12} className="z-50 max-h-[70vh] w-72 overflow-y-auto rounded-xl border border-line bg-panel p-1.5 shadow-float">
-          {options.map((option) => (
-            <DropdownMenu.Item
-              key={JSON.stringify(option.id)}
-              disabled={option.disabled}
-              onSelect={() => choose(option.id)}
-              className={cn(MENU_ITEM, "h-auto min-h-9 py-1.5 data-[disabled]:opacity-50", option.id === chosen && "font-semibold")}
-            >
-              <PlaylistOptionLabel option={option} chosen={option.id === chosen} />
-            </DropdownMenu.Item>
-          ))}
-          {canImport && (
-            <DropdownMenu.Item onSelect={() => void addMusic()} className={cn(MENU_ITEM, "h-auto min-h-9 py-1.5")}>
-              <Plus className="size-4 shrink-0" />
-              {ADD_MUSIC_LABEL}
-            </DropdownMenu.Item>
-          )}
-          <MotionRegion motionKey={[loading, loadFailed]}>{loading ? <ContentSkeleton count={2} label="Đang tải danh sách" className="p-2" /> : loadFailed ? <InlineError message="Bạn hãy thử tải lại danh sách nhạc." onRetry={retry} /> : null}</MotionRegion>
-          <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error, scene)}</p>
-        </DropdownMenu.SubContent>
-      </DropdownMenu.Portal>
-    </DropdownMenu.Sub>
+      </>}
+    >
+      {options.map((option) => (
+        <DropdownMenu.Item
+          key={JSON.stringify(option.id)}
+          disabled={option.disabled}
+          onSelect={() => choose(option.id)}
+          className={cn(MENU_ITEM, "h-auto min-h-9 py-1.5 data-[disabled]:opacity-50", option.id === chosen && "font-semibold")}
+        >
+          <PlaylistOptionLabel option={option} chosen={option.id === chosen} />
+        </DropdownMenu.Item>
+      ))}
+      {canImport && (
+        <DropdownMenu.Item onSelect={() => void addMusic()} className={cn(MENU_ITEM, "h-auto min-h-9 py-1.5")}>
+          <Plus className="size-4 shrink-0" />
+          {ADD_MUSIC_LABEL}
+        </DropdownMenu.Item>
+      )}
+      <MotionRegion motionKey={[loading, loadFailed]}>{loading ? <ContentSkeleton count={2} label="Đang tải danh sách" className="p-2" /> : loadFailed ? <InlineError message="Bạn hãy thử tải lại danh sách nhạc." onRetry={retry} /> : null}</MotionRegion>
+      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error, scene)}</p>
+    </ActionSubmenu>
   );
 }
