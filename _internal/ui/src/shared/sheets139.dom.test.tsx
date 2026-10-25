@@ -75,3 +75,26 @@ it("vuốt nội dung chỉ đóng khi vùng cuộn đã ở đầu", async () =
   await act(() => { touch("touchstart", 0); touch("touchmove", 90); touch("touchend", 90); }); await wait();
   expect(dialog()).toBeNull();
 });
+
+// Soát 140 STACKED LAYERS: bảng con mở từ một dòng của bảng cha (Thêm tuỳ chọn › Nhạc nền) không chồng lên - bảng cha nhường chỗ (away): trơ, không
+// giữ chỗ trên màn, nền tối nhường; bảng con đóng (Back) thì bảng cha trở lại, vẫn mở.
+function Stepped() {
+  const [child, setChild] = useState(false);
+  const heights: number[] = [];
+  return <Sheet open onOpenChange={() => undefined} title="Thêm tuỳ chọn" away={child} onHeightChange={(height) => heights.push(height)}>
+    <Sheet open={child} onOpenChange={setChild} title="Nhạc nền" trigger={<button>Nhạc nền</button>}><p>Để máy chọn</p></Sheet>
+  </Sheet>;
+}
+it("bảng cha nhường chỗ khi bảng con mở, trở lại khi Back đóng bảng con", async () => {
+  await act(() => root.render(<Stepped />)); await wait();
+  const parent = () => [...document.querySelectorAll<HTMLElement>('[role="dialog"]')].find((el) => el.textContent?.includes("Thêm tuỳ chọn"))!;
+  expect(parent().hasAttribute("data-away")).toBe(false);
+  await act(() => [...document.querySelectorAll("button")].find((b) => b.textContent === "Nhạc nền")!.click()); await wait();
+  expect(parent().hasAttribute("data-away")).toBe(true);
+  expect(parent().inert).toBe(true);
+  expect(document.querySelectorAll(".motion-scrim[data-away]")).toHaveLength(1);
+  await act(async () => { expect(dismissTopLayer()).toBe(true); }); await wait();
+  expect(parent().getAttribute("data-state")).toBe("open");
+  expect(parent().hasAttribute("data-away")).toBe(false);
+  expect(parent().inert).toBe(false);
+});
