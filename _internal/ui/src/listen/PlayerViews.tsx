@@ -43,7 +43,7 @@ import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
 import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, musicCreditText, musicNeedsModifiedNote, spokenClock } from "@/shared/format";
-import { announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
+import { SelectionMark, announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/PhoneSync";
 import { LEVEL_NOTES, levelOptions } from "@/shared/musicLevels";
 import { useClock, useClockReader, useDuration, usePlaybackSecond } from "./clock";
@@ -465,11 +465,11 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
               aria-pressed={speed === rate}
               data-current-choice={speed === rate ? "" : undefined}
               className={cn(
-                "tabular touch-row h-9 rounded-lg text-sm hover:bg-hover",
-                speed === rate ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
+                "tabular touch-row inline-flex h-9 items-center justify-center gap-1 rounded-lg text-sm hover:bg-hover",
+                speed === rate ? "font-semibold text-accent-text" : "text-fg",
               )}
             >
-              {speedLabel(speed)}
+              <SelectionMark selected={speed === rate} className="size-3" />{speedLabel(speed)}
             </button>
           </Popover.Close>
         ))}
@@ -515,7 +515,7 @@ export function LevelButtons({ level, disabled, onChange }: { level: number; dis
             onClick={() => onChange(value)}
             className={cn(
               CHOICE_ROW, "disabled:hover:bg-transparent",
-              value === level ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
+              value === level ? "font-semibold text-accent-text" : "text-fg",
             )}
           >
             {/* Menu không đóng khi chọn mức: dấu ✓ mờ qua, nền đổi dần - không nhảy cứng. */}
@@ -599,7 +599,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
               onClick={() => choose(option.id)}
               className={cn(
                 CHOICE_ROW, "disabled:opacity-50",
-                option.id === chosen ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
+                option.id === chosen ? "font-semibold text-accent-text" : "text-fg",
               )}
             >
               <PlaylistOptionLabel option={option} chosen={option.id === chosen} />
@@ -765,11 +765,12 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                           }}
                           className={cn(
                             "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-sm transition-colors duration-motion-fast hover:bg-hover max-sm:min-h-[48px]",
-                            selected ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
+                            selected ? "font-semibold text-accent-text" : "text-fg",
                           )}
                         >
                           <span className="truncate">{shown}</span>
                           {genderLabel(voice.gender) && <span className="shrink-0 text-xs font-normal text-fg-2">{genderLabel(voice.gender)}</span>}
+                          <SelectionMark selected={selected} className="ml-auto" />
                         </button>
                       </Popover.Close>
                       {source.readAloudSample && (
@@ -996,7 +997,7 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
               <button
                 type="button"
                 onClick={withFeedback("toggle", () => setSleep({ kind: "minutes", minutes: lastSleepMinutes }))}
-                className="mt-2 h-9 w-full rounded-lg bg-accent-soft text-sm font-semibold text-accent-text"
+                className="mt-2 h-9 w-full rounded-lg text-sm font-semibold text-accent-text"
               >
                 Bật lại {lastSleepMinutes} phút
               </button>
@@ -1103,7 +1104,7 @@ function SleepPicker({
               <button
                 type="button"
                 onClick={onExtend}
-                className="h-9 flex-1 rounded-lg bg-accent-soft text-sm font-semibold text-accent-text hover:brightness-95"
+                className="h-9 flex-1 rounded-lg text-sm font-semibold text-accent-text hover:brightness-95"
               >
                 +{extendMinutes} phút
               </button>
@@ -1119,10 +1120,9 @@ function SleepPicker({
         idle
       )}
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? "Đặt lại" : "Dừng phát sau"}</div>
-      {/* MỘT cách chọn (soát 140 V3): bấm một mức là đặt - không còn bộ −/+ và nút "Đặt N phút" song song với các ô, ô đang hẹn luôn sáng. Sáu mức ba
-          cột hai hàng, "Hết chương này" trải cả hàng, cùng kiểu. Ba cột vì mục này cũng mở ngay trong menu "…" rộng 252 px: bốn cột thì chữ sát mép ô.
-          Ô có nền nhạt: mép ô (không phải chữ giữa ô) đứng trên lề bảng. */}
-      <div className={cn("grid grid-cols-3 gap-1", MENU_LIST)}>
+      {/* MỘT cách chọn (soát 140 V3): bấm một mức là đặt, ô đang hẹn luôn sáng (chữ nhấn + dấu tích). Máy tính hai cột: mục này còn mở ngay
+          trong menu "…" rộng 252 px, ba cột thì nhãn + dấu tích chật. Điện thoại ba cột: sáu mức thành hai hàng đều. */}
+      <div className={cn("grid grid-cols-2 gap-1 max-sm:grid-cols-3", MENU_LIST)}>
         {[...SLEEP_CHOICES.map((minutes) => ({ key: String(minutes), label: `${minutes} phút`, request: { kind: "minutes", minutes } as SleepRequest,
           current: sleep.kind === "minutes" && sleep.minutes === minutes })),
           { key: "chapter", label: "Hết chương này", request: { kind: "chapter" } as SleepRequest, current: sleep.kind === "chapter" }].map((choice) => (
@@ -1134,12 +1134,12 @@ function SleepPicker({
               aria-pressed={choice.current}
               data-current-choice={choice.current ? "" : undefined}
               className={cn(
-                "tabular touch-row h-9 rounded-lg text-sm disabled:opacity-40",
-                choice.key === "chapter" && "col-span-3",
-                choice.current ? "bg-accent-soft font-semibold text-accent-text" : "bg-hover hover:bg-line",
+                "tabular touch-row inline-flex h-9 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-sm disabled:opacity-40",
+                choice.key === "chapter" && "col-span-2 max-sm:col-span-3",
+                choice.current ? "font-semibold text-accent-text" : "bg-hover hover:bg-line",
               )}
             >
-              {choice.label}
+              <SelectionMark selected={choice.current} className="size-3" />{choice.label}
             </button>
           </Popover.Close>
         ))}
@@ -1258,7 +1258,7 @@ function FadingNotice({ className }: { className?: string }) {
   const content = () => {
   if (!fading) return null;
   return (
-    <div className={cn("motion-appear flex items-center gap-3 rounded-xl bg-accent-soft px-3 py-2 text-sm text-accent-text", className)} role="status">
+    <div className={cn("motion-appear flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-accent-text", className)} role="status">
       <Moon className="size-4 shrink-0" />
       <span className="min-w-0 flex-1">Sắp tắt · {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút</span>
       <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-accent-ink">
@@ -1941,7 +1941,7 @@ function CaughtUpNotice() {
   const content = () => {
   if (atEnd === "finished" && next) {
     return (
-      <div className="motion-appear mt-3 rounded-xl bg-accent-soft px-3 py-2.5 text-center text-sm">
+      <div className="motion-appear mt-3 rounded-xl px-3 py-2.5 text-center text-sm">
         <div className="text-fg">Đã nghe hết cuốn này.</div>
         <button type="button" onClick={() => void playBook(next)} className="mt-1.5 font-semibold text-accent-text underline underline-offset-2">
           Nghe tiếp {nextLabel(next.title)}
@@ -1952,7 +1952,7 @@ function CaughtUpNotice() {
   }
   if (atEnd === "finished") {
     return (
-      <div className="motion-appear mt-3 rounded-xl bg-accent-soft px-3 py-2.5 text-center text-sm">
+      <div className="motion-appear mt-3 rounded-xl px-3 py-2.5 text-center text-sm">
         <div className="text-fg">Đã nghe hết sách.</div>
         <button type="button" onClick={restart} className="mt-1.5 min-h-[48px] font-semibold text-accent-text underline underline-offset-2">
           Nghe lại từ đầu

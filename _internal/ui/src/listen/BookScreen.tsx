@@ -5,7 +5,7 @@ import { AnimatedRows, LoadingCrossfade, MotionPresence } from "@/shared/MotionP
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, TextCursorInput, Trash2, UserRound } from "lucide-react";
-import { Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+import { useId, Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -18,7 +18,7 @@ import { useListPresence } from "@/shared/motion";
 import { Windowed } from "@/shared/Windowed";
 import { formatClock, formatLength, formatNumber } from "@/shared/format";
 import { toneLabel } from "./voiceTone";
-import { Button, Dialog, EmptyState, heardBarProps, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
+import { DialogActions, Select, Button, Dialog, EmptyState, heardBarProps, IconButton, Progress, Skeleton, Tabs, TabsContent, TabsList, TabsPanels, TabsTrigger, Tooltip, Vu } from "@/shared/ui";
 import { GenderDialog, RenamePersonDialog } from "@/studio/CastEdits";
 import { MergeDialog } from "@/studio/MergePeople";
 import { useClip } from "./clip";
@@ -605,7 +605,7 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
   // Ba trạng thái (đang mở thư viện / chưa có cuốn nào khác / ô chọn) mờ qua tại chỗ trong hộp đang mở.
   return (
     <MotionRegion motionKey={isLoading ? "loading" : others.length ? "list" : "empty"}>
-    {isLoading ? <p className="text-sm text-fg-2">Đang mở thư viện…</p> : !others.length ? <p className="text-sm text-fg-2">Thư viện chưa có cuốn nào khác.</p> : <select
+    {isLoading ? <p className="text-sm text-fg-2">Đang mở thư viện…</p> : !others.length ? <p className="text-sm text-fg-2">Thư viện chưa có cuốn nào khác.</p> : <Select
       aria-label="Chuyển sang cuốn"
       autoFocus
       value={value}
@@ -613,7 +613,7 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
         const chosen = others.find((item) => item.id === event.target.value);
         if (chosen) onChange({ id: chosen.id, title: chosen.title });
       }}
-      className="h-10 rounded-lg border border-line bg-panel px-2 text-sm outline-none focus:border-focus"
+
     >
       <option value="" disabled>
         Chọn cuốn…
@@ -623,7 +623,7 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
           {item.title}
         </option>
       ))}
-    </select>}
+    </Select>}
     </MotionRegion>
   );
 }
@@ -635,6 +635,7 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
  * (soát UX 03-10) - vì thế trang sách giữ `dialog`, menu ấy mở được cùng hộp.
  */
 function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: RecordDialog; setDialog: Dispatch<SetStateAction<RecordDialog>> }) {
+  const dialogForm1 = useId();
   const source = useSource();
   const player = usePlayer();
   const navigate = useNavigate();
@@ -723,7 +724,18 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
       )}
-      <Dialog phoneSheet
+      <Dialog footer={<DialogActions>
+            <Button type="button" variant="ghost" onClick={() => setDialog(null)}>
+              Huỷ
+            </Button>
+            <Button
+              type="submit" form={dialogForm1}
+              variant={dialog?.kind === "delete" ? "danger" : "primary"}
+              disabled={(dialog?.kind === "rename" && !dialog.name.trim()) || (dialog?.kind === "move" && !dialog.target)}
+            >
+              {dialog?.kind === "create" ? "Tạo và nghe từ đầu" : dialog?.kind === "delete" ? "Xoá hồ sơ" : dialog?.kind === "move" ? "Chuyển" : "Lưu"}
+            </Button>
+          </DialogActions>}
         open={dialog !== null}
         onOpenChange={(open) => !open && setDialog(null)}
         title={
@@ -750,7 +762,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         }
         width="max-w-md"
       >
-        <form
+        <form id={dialogForm1}
           onSubmit={(event) => {
             event.preventDefault();
             submit();
@@ -777,18 +789,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               className="touch-box h-10 rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
             />
           )}
-          <div className="dialog-actions">
-            <Button type="button" variant="ghost" onClick={() => setDialog(null)}>
-              Huỷ
-            </Button>
-            <Button
-              type="submit"
-              variant={dialog?.kind === "delete" ? "danger" : "primary"}
-              disabled={(dialog?.kind === "rename" && !dialog.name.trim()) || (dialog?.kind === "move" && !dialog.target)}
-            >
-              {dialog?.kind === "create" ? "Tạo và nghe từ đầu" : dialog?.kind === "delete" ? "Xoá hồ sơ" : dialog?.kind === "move" ? "Chuyển" : "Lưu"}
-            </Button>
-          </div>
+
         </form>
       </Dialog>
     </>

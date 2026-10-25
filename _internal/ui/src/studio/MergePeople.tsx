@@ -7,7 +7,7 @@ import { cleanName } from "@/listen/BookScreen";
 import { voiceName, type CastMember } from "@/listen/model";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog } from "@/shared/ui";
+import { DialogActions, SelectionMark, Button, Dialog } from "@/shared/ui";
 import { api } from "./api";
 import { nameKey, sameNames } from "./workText";
 
@@ -72,7 +72,14 @@ export function MergeDialog({
   };
   const name = person ? cleanName(person.displayName) : "";
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+        <Button variant="ghost" onClick={close}>
+          Thôi
+        </Button>
+        <Button variant="primary" icon={GitMerge} disabled={!into} loading={busy} onClick={() => void merge()}>
+          Gộp
+        </Button>
+      </DialogActions>}
       open={person !== null}
       onOpenChange={(open) => !open && close()}
       width="max-w-lg"
@@ -102,10 +109,10 @@ export function MergeDialog({
                 onClick={() => setInto(other)}
                 className={cn(
                   "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors duration-motion-fast",
-                  into?.name === other.name ? "bg-accent-soft" : "hover:bg-hover",
+                  into?.name === other.name ? "text-accent-text" : "hover:bg-hover",
                 )}
               >
-                <span className="min-w-0 flex-1 truncate font-medium">{cleanName(other.displayName)}</span>
+                <SelectionMark selected={into?.name === other.name} /><span className="min-w-0 flex-1 truncate font-medium">{cleanName(other.displayName)}</span>
                 <span className="shrink-0 text-xs text-fg-3">
                   {voiceToUse(other)}
                   {other.pendingVoice?.preset ? " (chờ áp dụng)" : ""} · {formatNumber(other.lines)} câu
@@ -128,14 +135,7 @@ export function MergeDialog({
         </p>
       )}
       </MotionRegion>
-      <div className="mt-5 dialog-actions">
-        <Button variant="ghost" onClick={close}>
-          Thôi
-        </Button>
-        <Button variant="primary" icon={GitMerge} disabled={!into} loading={busy} onClick={() => void merge()}>
-          Gộp
-        </Button>
-      </div>
+
     </Dialog>
   );
 }

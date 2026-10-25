@@ -683,7 +683,7 @@ export function SourceStep({
                 <div key={key} ref={ref} role="listitem" className="motion-row border-b border-line last:border-b-0" data-state={state} inert={state === "exit"}>
                   <div>
                   <MotionPresence open={part >= 0}>
-                    <div aria-hidden className="flex items-center gap-2 border-b border-accent/30 bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-text">
+                    <div aria-hidden className="flex items-center gap-2 border-b border-accent/30 px-3 py-1.5 text-xs font-semibold text-accent-text">
                       <Layers className="size-3.5 shrink-0" />
                       <span className="min-w-0 truncate">Phần {part + 1} bắt đầu</span>
                     </div>
@@ -905,7 +905,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
 function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean; onDrop: () => void }) {
   return (
     // Điện thoại: nút bỏ nối tiếp xuống dưới đoạn chữ - đứng bên phải thì ép chữ thành cột ~180 px, dài 11 dòng (soát UX 29-09).
-    <MotionRegion as="div" className="mt-5 flex flex-wrap gap-3 rounded-xl border border-accent/30 bg-accent-soft p-4 text-sm sm:flex-nowrap">
+    <MotionRegion as="div" className="mt-5 flex flex-wrap gap-3 rounded-xl border border-accent/30 p-4 text-sm sm:flex-nowrap">
       <Layers className="mt-0.5 size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">

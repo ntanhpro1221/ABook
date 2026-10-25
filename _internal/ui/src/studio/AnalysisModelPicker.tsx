@@ -1,3 +1,4 @@
+import { Select } from "@/shared/ui";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { toggleDetails, type DetailsLike } from "@/shared/motion";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -92,11 +93,11 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
       <label htmlFor="analysis-model" className="sr-only">
         Bộ phân tích truyện
       </label>
-      <select
+      <Select
         id="analysis-model"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="mt-2 h-9 w-full max-w-lg rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
+        className="mt-2 w-full max-w-lg"
       >
         <option value="">Mặc định của ABook (khuyên dùng)</option>
         <optgroup label="Bản khác (thử nghiệm)">
@@ -106,7 +107,7 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
             </option>
           ))}
         </optgroup>
-      </select>
+      </Select>
       {/* Tên kỹ thuật (tag trong Ollama) chỉ ở chú thích nhỏ, cho người cần biết đúng bản nào. */}
       <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">
         {value

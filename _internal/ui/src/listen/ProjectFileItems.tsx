@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
-import { Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
+import { DialogActions, Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { useStudioMissing } from "@/studio/data";
 import { isOpenWork } from "@/studio/WorkInbox";
@@ -200,7 +200,11 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
     enabled: open && available.length > 0,
   });
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          Đóng
+        </Button>
+      </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-[560px]"
@@ -215,11 +219,7 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
         {tab === "casting" && <CastingList data={data as CastingSnapshot | undefined} />}
         {tab === "names" && <NamesList data={data as NamesSnapshot | undefined} />}
       </MotionRegion>
-      <div className="mt-4 dialog-actions">
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Đóng
-        </Button>
-      </div>
+
     </Dialog>
   );
 }

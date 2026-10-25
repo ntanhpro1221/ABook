@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { toast } from "@/shared/toast";
-import { Button, Dialog } from "@/shared/ui";
+import { DialogActions, Button, Dialog } from "@/shared/ui";
 import { MoreInfo, SettingsRow } from "@/shared/SettingsNav";
 import { PREPARE_STATUS_KEY, clearStorageQuestion, storageLabel, type ReadAloudCacheUsage } from "./prepareAhead";
 import { READINGS_CHANGED_EVENT, type ReadingsChanged } from "./readAloud";
@@ -21,15 +21,15 @@ export const STORAGE_KEY = ["readaloud", "storage"] as const;
 /** Hộp hỏi lại trước khi dọn. Đang dọn thì chưa đóng được (Esc, bấm ra ngoài, "Giữ lại" đều bị bỏ qua) - xong hàm gọi sẽ tự đóng. */
 export function ClearDialog({ open, onOpenChange, usage, busy, onClear }: { open: boolean; onOpenChange: (open: boolean) => void; usage: ReadAloudCacheUsage; busy: boolean; onClear: () => void }) {
   return (
-    <Dialog open={open} onOpenChange={(next) => (busy ? undefined : onOpenChange(next))} title="Dọn bản đọc đã làm" description={clearStorageQuestion(usage)}>
-      <div className="dialog-actions">
+    <Dialog footer={<DialogActions>
         <Button variant="ghost" disabled={busy} onClick={() => onOpenChange(false)}>
           Giữ lại
         </Button>
         <Button variant="danger" loading={busy} onClick={onClear}>
           Dọn
         </Button>
-      </div>
+      </DialogActions>} open={open} onOpenChange={(next) => (busy ? undefined : onOpenChange(next))} title="Dọn bản đọc đã làm" description={clearStorageQuestion(usage)}>
+
     </Dialog>
   );
 }
