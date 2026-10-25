@@ -63,7 +63,13 @@ it("nội dung có sẵn lúc trang vào không mọc từ 0; nội dung tới s
   await act(() => root.render(<Collapse open appear><p>Tất cả</p></Collapse>));
   expect(animate).not.toHaveBeenCalled();
   finishers[0](); await left; enterPage(doc);
-  await act(() => root.render(<><Collapse open appear><p>Tất cả</p></Collapse><Collapse key="late" open appear><p>Mới</p></Collapse></>));
+  // Tới ngay lúc trang đang hiện vào: cũng hiện tại chỗ.
+  await act(() => root.render(<><Collapse open appear><p>Tất cả</p></Collapse><Collapse key="soon" open appear><p>Kèm trang</p></Collapse></>));
+  expect(animate).not.toHaveBeenCalled();
+  // Tới sau khi trang đã đứng yên: mở ra.
+  const later = performance.now() + 1000;
+  vi.spyOn(performance, "now").mockReturnValue(later);
+  await act(() => root.render(<><Collapse open appear><p>Tất cả</p></Collapse><Collapse key="soon" open appear><p>Kèm trang</p></Collapse><Collapse key="late" open appear><p>Mới</p></Collapse></>));
   expect(animate).toHaveBeenCalledTimes(1);
   await act(() => root.unmount()); host.remove();
   Reflect.deleteProperty(HTMLElement.prototype, "animate");
