@@ -25,7 +25,7 @@ function touch(item: GalleryBook, change: (state: ListeningState) => ListeningSt
 
 // --- Trình phát ---------------------------------------------------------------------------------------------------------
 
-const player: NativeState = {
+const idle = (): NativeState => ({
   bookId: "",
   bookTitle: "",
   chapterId: null,
@@ -36,7 +36,13 @@ const player: NativeState = {
   buffering: false,
   rate: 1,
   sleep: { mode: "off" },
-};
+});
+const player: NativeState = idle();
+
+/** Mỗi mục trưng bày bắt đầu với trình phát nghỉ: test DOM dựng nhiều mục trong một trang, cuốn vừa phát ở mục trước không lọt sang mục sau. */
+export function resetPlayer(): void {
+  Object.assign(player, idle());
+}
 
 function chapterOf(bookId: string, chapterId: number | null) {
   return findBook(bookId)?.chapters.find((chapter) => chapter.id === chapterId);
@@ -238,6 +244,7 @@ export const ebookLibrary: NativeImpl = {
   },
   // "Thêm sách từ file…": hộp chọn file của hệ thống trả một file EPUB tự đặt; xem trước đọc nó thành mục lục.
   pickSource: (options) => {
+    if (galleryState.scenario.pickCancelled) return { picked: false };
     const file = { ref: "content://gallery/tiem-sach-tren-gac-xep.epub", name: "Tiệm sách trên gác xép.epub" };
     return options.multiple ? { picked: true, items: [file] } : { picked: true, ...file };
   },

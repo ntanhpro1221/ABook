@@ -35,7 +35,7 @@ it("multi-file step changes keep hidden AddBook controls inert then restore titl
   importer.chooseMany.mockResolvedValue(["a", "b"].map(name => ({ name: `${name}.txt`, choice: { ref: `${name}.txt`, name: `${name}.txt` } })));
   importer.preview.mockImplementation(async (choice: { ref: string }) => ({ title: choice.ref === "a.txt" ? "Sách một" : "Sách hai", chapters: [{ index: 1, title: "Chương 1", words: 100 }], notes: [] }));
   await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><Book /></MemoryRouter></QueryClientProvider>));
-  await act(async () => [...document.querySelectorAll("button")].find(b => b.textContent === "Chọn file sách")!.click());
+  await act(async () => {}); // mở hộp là mở luôn bộ chọn file (L1)
   const skip = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b => b.textContent?.includes("Bỏ cuốn này") && !b.closest(".motion-snapshot"))!;
   const body = document.querySelector<HTMLInputElement>('[role="dialog"] input[placeholder="Tên hiển thị trong thư viện"]')!.closest<HTMLElement>("[data-motion-region]")!;
   expect(body).not.toBeNull();
@@ -58,7 +58,7 @@ it("cuốn đã có trong hàng chờ: nút chính ở cuối chân hộp", asyn
   importer.chooseMany.mockResolvedValue(["a", "b"].map(name => ({ name: `${name}.txt`, choice: { ref: `${name}.txt`, name: `${name}.txt` } })));
   importer.preview.mockResolvedValue({ title: "Sách thử", chapters: [{ index: 1, title: "Chương 1", words: 100 }], notes: [], existing: { id: "old", title: "Sách đã có" } });
   await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><Book /></MemoryRouter></QueryClientProvider>));
-  await act(async () => [...document.querySelectorAll("button")].find(button => button.textContent === "Chọn file sách")!.click());
+  await act(async () => {}); // mở hộp là mở luôn bộ chọn file (L1)
   const footer = document.querySelector(".surface-footer [data-add-book-actions]")!;
   expect(footer.lastElementChild?.textContent).toBe("Bỏ cuốn này");
   expect(footer.lastElementChild?.getAttribute("data-variant")).toBe("primary");
@@ -66,6 +66,7 @@ it("cuốn đã có trong hàng chờ: nút chính ở cuối chân hộp", asyn
 });
 
 for (const preview of [false, true]) for (const method of ["X", "Escape"]) it(`closing AddBook via ${method} never starts a global transition, preview=${preview}`, async () => {
+  importer.chooseMany.mockResolvedValue([]); // bộ chọn tự mở bị huỷ: hộp ở bước chọn
   importer.preview.mockResolvedValue({ title: "Sách thử", chapters: [{ index: 1, title: "Chương 1", words: 100 }], notes: [] });
   await act(async () => root.render(<QueryClientProvider client={client}><MemoryRouter><Book initial={preview ? { ref: "a.txt", name: "a.txt" } : undefined} /></MemoryRouter></QueryClientProvider>));
   expect(document.querySelector('[role="dialog"][data-state="open"]')).not.toBeNull();
@@ -89,9 +90,7 @@ it.each([false, true])("hàng ba cuốn giữ chân hộp và tôn trọng cảm
     for (const result of vi.mocked(HTMLElement.prototype.animate).mock.results) (result.value as Animation).onfinish?.(new Event("finish") as AnimationPlaybackEvent);
   });
   await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><Book /></MemoryRouter></QueryClientProvider>));
-  const path = document.querySelector<HTMLInputElement>('[role="dialog"] input[data-autofocus]');
-  expect(Boolean(path)).toBe(!touch);
-  await act(async () => [...document.querySelectorAll("button")].find(button => button.textContent === "Chọn file sách")!.click());
+  await act(async () => {}); // mở hộp là mở luôn bộ chọn file (L1)
   for (const name of ["a.txt", "b.txt", "c.txt"]) {
     await finish();
     const dialog = document.querySelector('[role="dialog"]')!;
@@ -105,4 +104,25 @@ it.each([false, true])("hàng ba cuốn giữ chân hộp và tôn trọng cảm
     expect(scroller).toBeNull();
     if (name !== "c.txt") await act(async () => [...footer.querySelectorAll("button")].find(button => button.textContent === "Bỏ cuốn này")!.click());
   }
+});
+
+it.each([false, true])("mở hộp là mở luôn bộ chọn file một lần, huỷ thì còn các lối khác, cảm ứng=%s", async touch => {
+  vi.spyOn(window, "matchMedia").mockImplementation(query => ({ matches: query === "(any-pointer: coarse)" && touch, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }) as unknown as MediaQueryList);
+  importer.chooseMany.mockResolvedValue([]);
+  let setOpen: (open: boolean) => void = () => undefined;
+  function Toggle() {
+    const [open, change] = useState(true);
+    setOpen = change;
+    return <AddBookDialog open={open} onOpenChange={change} />;
+  }
+  await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><Toggle /></MemoryRouter></QueryClientProvider>));
+  await act(async () => {});
+  expect(importer.chooseMany).toHaveBeenCalledTimes(1);
+  const labels = [...document.querySelectorAll('[role="dialog"] button')].map(button => button.textContent);
+  expect(labels).toEqual(expect.arrayContaining(["Chọn file sách", "Chọn thư mục TXT"]));
+  expect(Boolean(document.querySelector('[role="dialog"] input[data-autofocus]'))).toBe(!touch);
+  await act(async () => setOpen(false));
+  await act(async () => setOpen(true));
+  await act(async () => {});
+  expect(importer.chooseMany).toHaveBeenCalledTimes(2);
 });

@@ -163,6 +163,17 @@ export function AddBookDialog({
     initialRead.current = initial;
     void readInitial.current?.(initial);
   }, [open, initial]);
+  // DESIGN.md §2 L1 (Thêm sách -> chọn file -> xác nhận -> Nghe, ≤ 4 chạm): mở hộp là mở luôn bộ chọn file của hệ thống - bước chọn của hộp
+  // (thư mục TXT, dán đường dẫn) nằm sau làm lối khác khi bạn huỷ bộ chọn, không bắt bấm thêm "Chọn file sách". Mỗi lần mở một lần.
+  const pickOnOpen = useRef<(() => void) | null>(null);
+  const pickedOnOpen = useRef(false);
+  useEffect(() => {
+    if (!open) pickedOnOpen.current = false;
+    else if (!initial && !pickedOnOpen.current) {
+      pickedOnOpen.current = true;
+      pickOnOpen.current?.();
+    }
+  }, [open, initial]);
   // Hộp bị gỡ khỏi trang (rời màn hình) cũng bỏ lần đọc dở. Quên thứ chọn sẵn đã đọc: StrictMode (android/main.tsx) gỡ rồi gắn lại ngay,
   // lần gắn lại phải đọc lại file chia sẻ thay vì để nó mất theo lần đọc vừa huỷ.
   useEffect(() => () => {
@@ -406,6 +417,7 @@ export function AddBookDialog({
       if (session.active() && !(error instanceof ReadCancelled)) fail(error);
     }
   };
+  pickOnOpen.current = importer.choose ? () => void choose("file") : null;
   // "Chọn lại" sau khi đã chọn file: mở thẳng bộ chọn file (thư mục nếu lần trước chọn thư mục) thay vì quay về hộp rồi bắt bấm thêm một lần
   // nữa (soát UX a9). Máy tính (có ô dán đường dẫn) thì về bước chọn như cũ.
   const chooseAgain = () => {

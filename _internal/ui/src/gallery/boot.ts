@@ -2,7 +2,7 @@ import { installCapacitor } from "./capacitor";
 import { installClock } from "./clock";
 import { installDesktopApi } from "./desktopApi";
 import { installFakeAudio } from "./fakeAudio";
-import { capacitorApp, ebookLibrary, ebookPlayer, readAloud } from "./phoneNative";
+import { capacitorApp, ebookLibrary, ebookPlayer, readAloud, resetPlayer } from "./phoneNative";
 import { resetData } from "./data";
 import { DEFAULT_SCENARIO, galleryState } from "./state";
 import type { Entry, Theme } from "./entries";
@@ -30,6 +30,7 @@ export function installPlatform(platform: "phone" | "desktop", clock?: number): 
 export function prepare(entry: Entry, theme: Theme): void {
   window.dispatchEvent(new Event("online"));
   resetData();
+  resetPlayer();
   galleryState.scenario = { ...DEFAULT_SCENARIO, ...entry.scenario };
   galleryState.missing.clear();
   galleryState.errors.length = 0;
