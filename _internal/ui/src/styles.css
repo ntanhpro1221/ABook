@@ -962,6 +962,13 @@ select[class~="border-line"] {
 .ink-end-icon svg { translate: calc(var(--icon-w, 14px) * var(--ink-r, 1) / 24) 0; }
 /* Icon đầu dòng đứng ở mép cột chữ: kéo mực ra đúng mép, chữ theo sau dời cùng (khoảng icon - chữ giữ nguyên). */
 .ink-start { margin-inline-start: calc(var(--icon-w, 14px) * var(--ink-l, 1) / -24); }
+/* Hàng nút phụ có nhãn (slot-row + ActionButton: Tốc độ · Hẹn giờ · Dấu trang · Chương, Đọc · Tìm · Từ đầu · Thêm): hai nút đầu mút đặt biểu tượng
+   sát MÉP ngoài của ô nút (nhãn vẫn nằm trong ô, vùng chạm không đổi) rồi kéo mực ra đúng mép - mực biểu tượng thẳng mép bìa / nút chính chứ không
+   thụt theo bề rộng nhãn (soát 25-10 V5: 6 và 15,6 px). Ô biểu tượng bỏ min-width để ôm đúng nét; nét 5 = 17,5 px (size-5). */
+:is([data-player-secondary], [data-book-secondary]) > :first-child > :first-child { align-self: flex-start; min-width: 0; }
+:is([data-player-secondary], [data-book-secondary]) > :last-child > :first-child { align-self: flex-end; min-width: 0; }
+:is([data-player-secondary], [data-book-secondary]) > :first-child > :first-child svg { --icon-w: calc(var(--spacing) * 5); translate: calc(var(--icon-w) * var(--ink-l, 1) / -24) 0; }
+:is([data-player-secondary], [data-book-secondary]) > :last-child > :first-child svg { --icon-w: calc(var(--spacing) * 5); translate: calc(var(--icon-w) * var(--ink-r, 1) / 24) 0; }
 .book-action-sheet .sheet-body > [data-radix-popper-content-wrapper] {
   position: static !important;
   transform: none !important;
@@ -980,8 +987,9 @@ select[class~="border-line"] {
   /* Menu (không modal) gắn lớp Radix TRƯỚC hộp Sheet chứa nó nên bị gán pointer-events: none - mục nào cũng không chạm được. */
   pointer-events: auto !important;
 }
-.player-sheet .sheet-body > div > .grid,
-.player-sheet .sheet-body > .grid { padding-inline: 0; gap: 8px; }
+/* Lưới nút (tốc độ, phút hẹn giờ) ở MỌI mức bọc (MotionRegion hay không): ô đứng đúng cột nội dung. Margin âm và padding của khung p-1
+   đi cùng nhau - bỏ padding mà còn margin âm thì lưới lùi ra ngoài cột 12 px mỗi bên (soát 25-10 V8). */
+.player-sheet .sheet-body .grid[class~="p-1"] { margin-inline: 0; padding-inline: 0; gap: 8px; }
 .player-sheet .sheet-body button { min-height: 48px; }
 .sheet-surface [data-add-book-actions] > button:first-child { margin-left: calc(var(--spacing) * -3.5); }
 .sheet-surface .dialog-actions > button { min-height: 48px; }
@@ -989,6 +997,9 @@ select[class~="border-line"] {
 .sheet-surface [data-sheet-grip] button { margin-right: -18.17px; }
 .player-sheet .sheet-body [class~="px-2"],
 .player-sheet .sheet-body [class~="px-1"] { padding-inline: 0; }
+/* Margin âm đi cùng cặp padding vừa bỏ (nút chân bảng -ml-2 px-2 ...): bỏ một nửa thì nút lệch trái 7 px khỏi cột chữ (soát 25-10 V4). */
+.player-sheet .sheet-body [class~="px-2"]:is([class~="-mx-2"], [class~="-ml-2"], [class~="-mr-2"]),
+.player-sheet .sheet-body [class~="px-1"]:is([class~="-mx-1"], [class~="-ml-1"], [class~="-mr-1"]) { margin-inline: 0; }
 /* Khung cuộn của danh sách (p-1) tràn ra 12 px mỗi bên, chữ vẫn ở mép 20 px: khung cuộn cắt mọi thứ tràn ngang, nên nền chọn tràn của dòng
    bên trong cần chỗ ngay trong khung. */
 .player-sheet .sheet-body [class~="p-1"] { margin-inline: -12px; padding-inline: 12px; }

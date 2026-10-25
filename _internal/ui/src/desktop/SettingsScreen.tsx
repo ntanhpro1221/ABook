@@ -532,7 +532,7 @@ export function SettingsScreen() {
         <Link to={settingsPath("advanced")} className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel py-3 text-sm font-medium hover:bg-hover">
           <Download className="size-5 shrink-0 text-accent-text" />
           <span className="min-w-0 flex-1">Có ABook {info.update.version}</span>
-          <ChevronRight className="size-4 shrink-0 text-fg-3" />
+          <ChevronRight className="ink-end size-4 shrink-0 text-fg-3" />
         </Link>
       )}</MotionPresence>
     </>

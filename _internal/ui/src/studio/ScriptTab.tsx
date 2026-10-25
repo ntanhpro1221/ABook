@@ -1558,7 +1558,7 @@ export function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: 
       )}
       {script.next !== null && (
         <button type="button" onClick={onNext} className="touch-row inline-flex items-center gap-1 text-sm font-medium text-fg-2 hover:text-fg">
-          Chương sau <ChevronRight className="size-4" />
+          Chương sau <ChevronRight className="ink-end size-4" />
         </button>
       )}
     </MotionRegion>
