@@ -311,7 +311,7 @@ describe("quy tắc 8–9 trong bộ soi DOM hoàn chỉnh", () => {
   });
 });
 
-it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..21; từ chối tên sai", () => {
+it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..22; từ chối tên sai", () => {
   expect(normalizeRule("rule1")).toBe("TEXT-OVER-GRAPHIC");
   expect(normalizeRule("CLIPPED_TEXT")).toBe("CLIPPED TEXT");
   expect(normalizeRule("touch-target")).toBe("TOUCH TARGET");
@@ -330,6 +330,7 @@ it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..21
   expect(normalizeRule("rule19")).toBe("COVERED TEXT");
   expect(normalizeRule("rule20")).toBe("REPEATED LABEL");
   expect(normalizeRule("rule21")).toBe("STACKED LAYERS");
-  expect(() => normalizeRule("rule22")).toThrow("Quy tắc lạ");
+  expect(normalizeRule("rule22")).toBe("NAV ACCENT");
+  expect(() => normalizeRule("rule23")).toThrow("Quy tắc lạ");
   expect(() => normalizeRule("typo")).toThrow("Quy tắc lạ");
 });

@@ -130,6 +130,20 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       expect(off("centre-pass")).toHaveLength(0);
     }
   });
+  it("nút chữ cuối hàng thụt khỏi mép phải mà các nút cùng cột đều chạm thì báo; cùng chạm mép thì không", () => {
+    for (const result of results) {
+      const inset = (id) => result.findings.filter((f) => f.metric === "ink-right" && f.selector.startsWith(`#${id} >`));
+      expect(inset("edge-act")).toHaveLength(1);
+      expect(inset("edge-act-pass")).toHaveLength(0);
+    }
+  });
+  it("mục điều hướng đang mở tô chữ hổ phách thì báo; nền trung tính + chữ đậm thường thì không", () => {
+    for (const result of results) {
+      const nav = (id) => result.findings.filter((f) => f.rule === "NAV ACCENT" && f.selector.startsWith(`#${id} >`));
+      expect(nav("nav-accent")).toHaveLength(1);
+      expect(nav("nav-accent-pass")).toHaveLength(0);
+    }
+  });
   it("tiêu đề trong tab lặp tên tab đang chọn thì báo; tiêu đề khác thì không", () => {
     for (const result of results) {
       const repeated = (id) => result.findings.filter((f) => f.rule === "REPEATED LABEL" && f.selector.startsWith(`#${id} >`));

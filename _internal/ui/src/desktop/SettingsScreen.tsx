@@ -439,7 +439,7 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
               <span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
             </div>
             {info?.dialogs && (
-              <Button size="sm" variant="ghost" icon={FolderOpen} className={cn("touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>
+              <Button size="sm" variant="ghost" className={cn("settings-edge-action touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>
                 Đổi thư mục
               </Button>
             )}

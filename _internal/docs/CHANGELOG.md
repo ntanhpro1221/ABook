@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Giao diện
 
 - Biểu tượng nốt nhạc có nét bo tròn hơn; trình đọc màn hình nhận đúng trạng thái mở/đóng của bảng tuỳ chọn trình phát.
+- Cài đặt trên máy tính: nhóm đang mở sáng nền nhẹ, chữ đậm như thanh bên; nút "Đổi thư mục" thẳng mép với các nút khác.
 
 ## [0.4.141] - 2026-10-25
 
