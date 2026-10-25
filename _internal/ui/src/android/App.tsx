@@ -297,7 +297,7 @@ function RemoveFromPhoneHost() {
       description={
         book?.partial
           ? `${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Phần tải dở; lần sau tải lại từ đầu, sách vẫn ở máy tính. Hoàn tác được trong ${UNDO_SECONDS} giây.`
-          : `${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Xoá hẳn khỏi điện thoại; Hoàn tác được trong ${UNDO_SECONDS} giây. Sách từ máy đã ghép thì tải lại được.`
+          : `${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Xoá hẳn khỏi điện thoại. Hoàn tác được trong ${UNDO_SECONDS} giây. Sách từ máy đã ghép thì tải lại được.`
       }
     >
 

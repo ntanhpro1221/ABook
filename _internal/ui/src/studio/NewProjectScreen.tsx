@@ -1,4 +1,6 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SectionHeading } from "@/shared/SectionHeading";
+import { DisclosureRow } from "@/shared/DisclosureRow";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { useListPresence, type PresentRow } from "@/shared/motion";
 import { Collapse, Fold, useFold } from "@/shared/Collapse";
@@ -6,7 +8,6 @@ import { MoreInfo } from "@/shared/SettingsNav";
 import {
   AlertTriangle,
   Check,
-  ChevronDown,
   FileText,
   Folder,
   FolderInput,
@@ -382,7 +383,7 @@ export function SourceStep({
           />
         </>
       )}
-      <h2 className="text-xl font-semibold">Nguồn truyện</h2>
+      <SectionHeading>Nguồn truyện</SectionHeading>
       <p className="mt-1 text-sm text-fg-2">Chọn TXT, EPUB, Word hoặc PDF có chữ.</p>
       <Fold storageKey="new-project.formats" title="Định dạng" className="mt-3" heading="h3"><ul className="list-disc space-y-1 pl-5 text-sm text-fg-2">
         <li>Mỗi file TXT là một chương, xếp theo tên file (2 đứng trước 10).</li>
@@ -1223,7 +1224,7 @@ export function VoiceStep({
   };
   return (
     <MotionRegion as="div">
-      <h2 className="text-xl font-semibold">Giọng kể</h2>
+      <SectionHeading>Giọng kể</SectionHeading>
       <p className="mt-1 max-w-2xl text-sm text-fg-2 text-pretty">
         Giọng đọc lời dẫn. Nhân vật được trao giọng riêng sau.
       </p>
@@ -1321,7 +1322,7 @@ export function QualityStep({
   const chosen = PROFILES.find((option) => option.value === profile)!;
   return (
     <div>
-      <h2 className="text-xl font-semibold">Chất lượng</h2>
+      <SectionHeading>Chất lượng</SectionHeading>
       <p className="mt-1 text-sm text-fg-2 text-pretty">
         Không đổi được sau khi tạo, để mọi chương đọc giống nhau.
       </p>
@@ -1944,20 +1945,7 @@ export function NewProjectScreen() {
               chương - trước đó chưa có gì để chọn. */}
           <MotionPresence open={ready}>
             <section className="mt-8 border-t border-line">
-              <button
-                type="button"
-                aria-expanded={optionsOpen}
-                aria-controls="new-project-options"
-                onClick={() => setOptionsOpen(!optionsOpen)}
-                className="flex min-h-14 w-full items-center gap-3 py-3 text-left"
-              >
-                <SlidersHorizontal className="size-4 shrink-0 text-fg-2" aria-hidden />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[0.9375rem] font-medium">Tuỳ chọn</span>
-                  <MotionRegion as="span" motionKey={optionsSummary} className="block truncate text-xs text-fg-2">{optionsSummary}</MotionRegion>
-                </span>
-                <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
-              </button>
+              <h2><DisclosureRow section title="Tuỳ chọn" summary={optionsSummary} icon={<SlidersHorizontal className="size-4" />} expanded={optionsOpen} controls="new-project-options" onClick={() => setOptionsOpen(!optionsOpen)} /></h2>
               <Collapse open={optionsOpen} id="new-project-options">
                 <div className="space-y-12 pb-4 pt-4">
                   {/* Mẫu thiết lập chỉ cho sách mới: "Làm tiếp cuốn này" theo phần trước. */}

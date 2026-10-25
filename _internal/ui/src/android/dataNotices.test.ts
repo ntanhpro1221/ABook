@@ -1,3 +1,5 @@
+// Kiểm lệnh gốc; trình bày và Back của toast kiểm riêng trong layoutC11.dom.test.tsx.
+vi.mock("@/shared/ToastDetails", () => ({ prepareToast: (args: unknown[]) => args }));
 import { afterEach, expect, it, vi } from "vitest";
 const h = vi.hoisted(() => ({ warning: vi.fn() }));
 vi.mock("sonner", () => ({ toast: { warning: h.warning } }));

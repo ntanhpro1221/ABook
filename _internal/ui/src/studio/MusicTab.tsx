@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SectionHeading } from "@/shared/SectionHeading";
 import { useBackLayer } from "@/shared/backStack";
 import { MoreInfo, SettingsRow } from "@/shared/SettingsNav";
 import { Switch } from "@/desktop/PhoneSync";
@@ -288,7 +289,7 @@ function Alternatives({
         <p className="text-fg-2">Không còn bài nào khác trong danh mục đủ hợp đoạn này.</p>
       )}
       <div>
-        <h4 className="font-medium">Nhạc của tôi</h4>
+        <SectionHeading as="h4">Nhạc của tôi</SectionHeading>
         {mine.length ? (
           <ul className="mt-1 space-y-1">
             {mine.map((item) => (

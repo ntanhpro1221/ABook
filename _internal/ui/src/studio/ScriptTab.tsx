@@ -6,7 +6,7 @@ import { Fold } from "@/shared/Collapse";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { AlertTriangle, BookOpenText, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Pause, Play, RefreshCw, Search, X } from "lucide-react";
+import { AlertTriangle, BookOpenText, Check, ChevronDown, SkipBack, SkipForward, Clock, Pause, Play, RefreshCw, Search, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
@@ -1533,7 +1533,7 @@ export function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: 
       )}
       {script.next !== null && (
         <button type="button" onClick={onNext} className="touch-row inline-flex items-center gap-1 text-sm font-medium text-fg-2 hover:text-fg">
-          Chương sau <ChevronRight className="ink-end size-4" />
+          Chương sau <SkipForward className="ink-end size-4" />
         </button>
       )}
     </MotionRegion>
@@ -1718,8 +1718,8 @@ export function ScriptTab({ bookId }: { bookId: string }) {
         {/* Tên chương (menu của app, không ô chọn gốc) rồi chương trước · sau. Chữ tên chương đứng đúng mép nội dung (nút lùi lề bằng đệm của nó). */}
         <div className="flex w-full min-w-0 items-center sm:w-auto sm:max-w-full">
           <ChapterMenu chapters={chapters} chapterId={chapterId} narrow={narrow} onPick={go} />
-          <IconButton label="Chương trước" icon={ChevronLeft} disabled={!data?.previous} onClick={() => go(data?.previous ?? null)} />
-          <IconButton label="Chương sau" icon={ChevronRight} disabled={!data?.next} onClick={() => go(data?.next ?? null)} />
+          <IconButton label="Chương trước" icon={SkipBack} disabled={!data?.previous} onClick={() => go(data?.previous ?? null)} />
+          <IconButton label="Chương sau" icon={SkipForward} disabled={!data?.next} onClick={() => go(data?.next ?? null)} />
         </div>
         {narrow && entry && <MotionRegion as="p" className="w-full text-xs text-fg-3">{chapterExtras(entry)}</MotionRegion>}
         <div className="relative flex h-9 w-full items-center rounded-lg border border-line bg-panel focus-within:border-focus sm:w-60">

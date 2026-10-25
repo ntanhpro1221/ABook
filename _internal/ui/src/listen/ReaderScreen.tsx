@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import * as Popover from "@radix-ui/react-popover";
-import { ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
+import { ArrowRight, BookOpenText, SkipBack, SkipForward, Headphones, Search, Type } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import { toast } from "@/shared/toast";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
@@ -340,7 +340,7 @@ export function ReaderScreen(edit: SentenceEditing) {
   // Điện thoại: thanh trải đúng lề trang 20 px như chữ phía trên, các nút dàn đều (trước đây hộp co theo nút, thụt 34 px - soát 140 V13).
   const bar = (
     <div role="toolbar" aria-label="Điều khiển đọc" data-reader-controls className="pointer-events-auto mx-auto flex max-w-[calc(100vw-16px)] items-center gap-1 rounded-2xl bg-panel px-2 py-1.5 shadow-float max-sm:w-[calc(100vw-40px)] max-sm:justify-between">
-      <IconButton label="Chương trước" icon={ChevronLeft} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
+      <IconButton label="Chương trước" icon={SkipBack} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
       <IconButton label="Tìm trong sách" icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
       {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
       {canListen && (
@@ -392,7 +392,7 @@ export function ReaderScreen(edit: SentenceEditing) {
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
-      <IconButton label="Chương sau" icon={ChevronRight} disabled={index >= chapters.length - 1} onClick={() => go(1)} className={TOUCH} />
+      <IconButton label="Chương sau" icon={SkipForward} disabled={index >= chapters.length - 1} onClick={() => go(1)} className={TOUCH} />
     </div>
   );
 

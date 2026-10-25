@@ -668,7 +668,7 @@ export function Dialog({
           inert={!open}
           style={open ? undefined : CLOSING}
           className={cn(
-            "motion-dialog fixed left-[calc(50%+(env(safe-area-inset-left)-env(safe-area-inset-right))/2)] top-[calc(50%+(env(safe-area-inset-top)-env(safe-area-inset-bottom))/2)] z-50 w-[calc(100%-2rem-env(safe-area-inset-left)-env(safe-area-inset-right))] -translate-x-1/2 -translate-y-1/2 flex max-h-[min(90dvh,calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col rounded-[20px] border border-line bg-panel p-6 shadow-float focus:outline-none",
+            "motion-dialog fixed left-[calc(50%+(env(safe-area-inset-left)-env(safe-area-inset-right))/2)] top-[calc(50%+(env(safe-area-inset-top)-env(safe-area-inset-bottom))/2)] z-50 w-[calc(100%-2rem-env(safe-area-inset-left)-env(safe-area-inset-right))] -translate-x-1/2 -translate-y-1/2 flex max-h-[min(90dvh,calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col rounded-[20px] border border-line bg-panel p-[24px] shadow-float focus:outline-none",
             width,
           )}
           onInteractOutside={keepOpenForToasts}
@@ -693,7 +693,7 @@ export function Dialog({
         >
           <div className="mb-4 flex shrink-0 items-start justify-between gap-4">
             <div>
-              <DialogPrimitive.Title className="text-lg font-semibold">
+              <DialogPrimitive.Title data-surface-title className="text-lg font-bold">
                 <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{keepDots(shown.title)}</MotionRegion>
               </DialogPrimitive.Title>
               <DialogPrimitive.Description className="text-sm text-fg-2">
@@ -857,7 +857,7 @@ export function Sheet({
             </button>
           </DialogPrimitive.Close>
           <div className="flex items-center justify-between gap-3">
-            <DialogPrimitive.Title className="text-sm font-semibold">
+            <DialogPrimitive.Title data-surface-title className="text-lg font-bold">
               <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{keepDots(shown.title)}</MotionRegion>
             </DialogPrimitive.Title>
           </div>
@@ -910,7 +910,7 @@ export function InlineError({ message, onRetry, className, open }: { message: st
   return <MotionRegion role="alert" motionKey={message} className={cn("motion-reveal flex items-start gap-3 py-3 text-sm", className)}>
     <AlertTriangle aria-hidden className="ink-start mt-[calc((var(--button-h)-1rem)/2)] size-4 shrink-0 text-danger" />
     <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-1">
-      <p className="measure min-w-0 py-[calc((var(--button-h)-1lh)/2)] text-pretty text-fg-2">{message}</p>
+      <p className="measure min-w-0 py-[calc((var(--button-h)-1lh)/2)] text-balance text-fg-2">{message}</p>
       <Button variant="ghost" size="sm" icon={RotateCw} className="-ml-3" onClick={onRetry}>Thử lại</Button>
     </div>
   </MotionRegion>;
@@ -1121,7 +1121,7 @@ export function ChoiceRow<T extends string>({
           onClick={() => onChange(option.value)}
           className={cn(
             "touch-hit touch-row relative min-h-10 whitespace-nowrap border-b-2 border-transparent text-sm font-medium transition-colors duration-motion-medium",
-            value === option.value ? "text-accent-text" : "text-fg-2 hover:text-fg",
+            value === option.value ? "font-bold text-fg" : "text-fg-2 hover:text-fg",
             itemClassName,
           )}
         >

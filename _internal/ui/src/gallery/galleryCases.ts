@@ -90,6 +90,38 @@ export function galleryCases(platform: Platform): void {
         }
         if (entry.id.endsWith('/reader') || entry.id.endsWith('/reader-text')) {
           expect(container.querySelector('[data-reader-controls]')?.classList.contains('bg-panel')).toBe(true);
+          expect(container.querySelector('[data-reader-controls] [aria-label="Chương trước"] .lucide-skip-back')).not.toBeNull();
+          expect(container.querySelector('[data-reader-controls] [aria-label="Chương sau"] .lucide-skip-forward')).not.toBeNull();
+        }
+        // C11: tiêu đề phần đứng riêng / gập mở cùng token; hàng điều hướng vẫn là hàng danh sách.
+        for (const title of document.querySelectorAll('[data-section-title]')) expect(title.classList.contains('section-title')).toBe(true);
+        for (const group of document.querySelectorAll('.choice-row')) {
+          const selected = group.querySelector('[aria-checked="true"]');
+          if (selected) { expect(selected.classList.contains('text-fg')).toBe(true); expect(selected.classList.contains('text-accent-text')).toBe(false); }
+        }
+        if (/player-(?:full-)?sleep(?:-active)?$/.test(entry.id)) {
+          const choices = [...document.querySelectorAll<HTMLButtonElement>('[data-choice-grid="sleep"] button')];
+          expect(choices).toHaveLength(7);
+          expect(choices.every(el => !/(?:^|\s)bg-|\bborder\b/.test(el.className))).toBe(true);
+          expect(document.querySelector('input[type="number"]')).toBeNull();
+          if (entry.id.endsWith('sleep-active')) expect(choices.find(el => el.getAttribute('aria-pressed') === 'true')?.textContent).toBe('15 phút');
+        }
+        if (entry.id === 'desktop/toast') {
+          const toast = document.querySelector('[data-sonner-toast]')!;
+          expect(toast.querySelector('[data-description]')).toBeNull();
+          expect(toast.querySelectorAll('[data-button]')).toHaveLength(1);
+          expect(toast.querySelector('[data-button]')?.textContent).toBe('Quay lại');
+        }
+        if (entry.id.endsWith('/toast-error') || entry.id.endsWith('/toast-error-details')) {
+          const toast = document.querySelector('[data-sonner-toast]')!;
+          expect(toast.querySelector('[data-description]')).toBeNull();
+          expect(toast.querySelectorAll('[data-button]')).toHaveLength(1);
+          if (entry.id.endsWith('-details')) {
+            const region = document.querySelector('[role="region"][aria-label="Chi tiết thông báo"]');
+            expect(region?.textContent).toContain('kiểm tra kết nối');
+            expect(region?.querySelector('button')?.textContent).toBe('Thử lại');
+            expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(0);
+          }
         }
         // D2: trạng thái rỗng chỉ nói "chưa có" một lần (phụ đề đầu trang từng lặp lại tiêu đề).
         if (entry.id === "desktop/studio-projects-empty") expect(text.split("Chưa có dự án").length - 1).toBe(1);

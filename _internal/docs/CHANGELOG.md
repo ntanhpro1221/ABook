@@ -9,6 +9,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Giao diện
 
+- Tiêu đề các phần và mục gập mở thống nhất; hẹn giờ dùng lựa chọn chữ gọn, thanh đọc và kịch bản dùng cùng biểu tượng chuyển chương.
+- Thông báo gọn với tối đa một nút; phần giải thích dài mở trong Chi tiết, chuyển chỗ nghe có nút Quay lại, lời báo lỗi xuống dòng cân đối hơn trên điện thoại.
 - Bảng Thêm tuỳ chọn của trình phát: Nhạc nền và Giọng đọc trải hết bề ngang, giá trị bên phải ("Tắt", tên giọng) cùng một mép với các dòng khác; trên máy tính dòng Giọng đọc không còn tràn ra ngoài menu.
 - Tên trong mọi danh sách chọn (giọng, hồ sơ người nghe, thiết bị Bluetooth) hiện đủ, xuống dòng thay vì bị cắt "…"; dấu tích luôn đứng đầu dòng; menu "…" của trình phát máy tính rộng hơn để "Nhạc của tôi" và tên giọng không gãy dòng.
 - Màn Đang nghe trên máy tính: bỏ nút "Chương" và "Đọc theo" ở cột trái vì đã là hai tab của bảng bên phải.

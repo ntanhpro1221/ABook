@@ -1124,7 +1124,7 @@ function SleepPicker({
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? "Đặt lại" : "Dừng phát sau"}</div>
       {/* MỘT cách chọn (soát 140 V3): bấm một mức là đặt, ô đang hẹn luôn sáng (chữ nhấn + dấu tích). Máy tính hai cột: mục này còn mở ngay
           trong menu "…" rộng 280 px, ba cột thì nhãn + dấu tích chật. Điện thoại ba cột: sáu mức thành hai hàng đều. */}
-      <div className={cn("grid grid-cols-2 gap-1 max-sm:grid-cols-3", MENU_LIST)}>
+      <div data-choice-grid="sleep" className={cn("grid grid-cols-2 gap-1 max-sm:grid-cols-3", MENU_LIST)}>
         {[...SLEEP_CHOICES.map((minutes) => ({ key: String(minutes), label: `${minutes} phút`, request: { kind: "minutes", minutes } as SleepRequest,
           current: sleep.kind === "minutes" && sleep.minutes === minutes })),
           { key: "chapter", label: "Hết chương này", request: { kind: "chapter" } as SleepRequest, current: sleep.kind === "chapter" }].map((choice) => (
@@ -1136,9 +1136,9 @@ function SleepPicker({
               aria-pressed={choice.current}
               data-current-choice={choice.current ? "" : undefined}
               className={cn(
-                "tabular touch-row inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg px-2 text-sm disabled:opacity-40",
+                "tabular touch-row inline-flex h-9 items-center justify-center whitespace-nowrap px-2 text-sm transition-colors duration-motion-medium disabled:opacity-40",
                 choice.key === "chapter" && "col-span-2 max-sm:col-span-3",
-                choice.current ? "bg-hover font-semibold text-accent-text" : "bg-hover hover:bg-line",
+                choice.current ? "font-semibold text-accent-text" : "hover:bg-hover",
               )}
             >
               {choice.label}

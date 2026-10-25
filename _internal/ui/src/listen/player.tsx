@@ -572,14 +572,12 @@ export function PlayerProvider({
     if (history.length > HISTORY) history.shift();
     setCanGoBack(true);
     const sameChapter = from.chapterId === to.chapterId;
-    const title = refs.current.queue.find((chapter) => chapter.id === from.chapterId)?.title ?? "";
-    toast(note ?? `Đã tới ${sameChapter ? formatClock(to.seconds) : refs.current.queue.find((c) => c.id === to.chapterId)?.title ?? ""}`, {
+    toast(note ? "Đã tới câu chọn" : `Đã tới ${sameChapter ? formatClock(to.seconds) : "chương mới"}`, {
       id: "jump",
       duration: 8000,
-      // Tên chương cũ nằm ở dòng mô tả, không ở nhãn nút: nhãn dài chiếm hết bề ngang toast trên điện thoại, chữ của toast bị bóp còn vài ký tự một hàng (soát UX a11).
-      ...(sameChapter ? {} : { description: `Chỗ cũ: ${title} · ${formatClock(from.seconds)}` }),
+      // Vị trí đã hiện trong trình phát; thông báo chỉ xác nhận và giữ MỘT đường quay về.
       action: {
-        label: sameChapter ? `Quay lại ${formatClock(from.seconds)}` : "Quay lại chỗ cũ",
+        label: "Quay lại",
         onClick: () => goBackRef.current(),
       },
     });

@@ -3,12 +3,14 @@ import { useBackLayer } from "@/shared/backStack";
 import { useMotionState } from "@/shared/motion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, FileDown, Globe, ImagePlus, EighthNote, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
+import { ArrowLeft, FileDown, Globe, ImagePlus, EighthNote, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { toast, toastDone } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { Collapse, useFold } from "@/shared/Collapse";
+import { DisclosureRow } from "@/shared/DisclosureRow";
+import { SectionHeading } from "@/shared/SectionHeading";
 import { COVER_SEARCH_NOTE, COVER_SEARCH_TITLE, CoverSearchPanel } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { holderName } from "@/shared/editsSync";
@@ -255,7 +257,7 @@ function Section({ title, hint, children, fold }: { title: string; hint?: string
   if (fold) return <FoldedSection title={title} hint={hint} storageKey={fold}>{children}</FoldedSection>;
   return (
     <section className="border-t border-line pt-4 first:border-t-0 first:pt-0">
-      <h3 className="text-sm font-semibold">{title}</h3>
+      <SectionHeading as="h3">{title}</SectionHeading>
       {hint && <p className="mb-2 text-xs text-fg-2">{hint}</p>}
       {children && <div className={hint ? undefined : "mt-2"}>{children}</div>}
     </section>
@@ -267,11 +269,8 @@ function FoldedSection({ title, hint, children, storageKey }: { title: string; h
   const id = useId();
   return (
     <section className="border-t border-line pt-2 first:border-t-0 first:pt-0">
-      <h3 className="m-0 text-sm font-semibold">
-        <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)} className="touch-row -mx-1 flex w-[calc(100%+0.5rem)] items-center justify-between gap-2 rounded-lg px-1 py-1.5 text-left hover:bg-hover">
-          {title}
-          <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
-        </button>
+      <h3 className="m-0">
+        <DisclosureRow section title={title} expanded={open} controls={id} onClick={() => setOpen(!open)} />
       </h3>
       <Collapse open={open} id={id}>
         {hint && <p className="mb-2 text-xs text-fg-2">{hint}</p>}
