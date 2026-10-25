@@ -150,7 +150,9 @@ export function PlaylistOptionLabel({ option, chosen }: { option: PlaylistOption
       <Check aria-hidden className={cn("size-4 shrink-0 text-accent-text transition-opacity duration-motion-fast", chosen ? "opacity-100" : "opacity-0")} />
       <span className="min-w-0 flex-1">
         <span className="block text-pretty">{option.label}</span>
-        {option.description && <span className="block text-pretty text-xs font-normal text-fg-3">{option.description}</span>}
+        {/* Mô tả luôn chừa chỗ hai dòng (đơn vị lh nên chữ hệ thống to thì chỗ chừa to theo; dòng thứ ba vẫn mở thêm, không cắt chữ): mô tả
+            ngắn / dài xuống dòng khác nhau không làm các dòng của danh sách cao thấp khác nhau (59 / 48 dp - soát 25-10 V3). */}
+        {option.description && <span className="block min-h-[2lh] text-pretty text-xs font-normal text-fg-3">{option.description}</span>}
       </span>
       {option.hint && <span className="shrink-0 text-xs font-normal text-fg-2">{option.hint}</span>}
     </>
@@ -176,7 +178,7 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
         <Music2 className="size-4" />
         <span className="flex-1">Nhạc nền</span>
         <span className="max-w-44 truncate text-xs text-fg-2" title={label}>{shortPlaylistLabel(label)}</span>
-        <ChevronRight className="size-4 text-fg-2" />
+        <ChevronRight className="ink-end size-4 text-fg-2" />
       </>}
     >
       {/* Hàng thật về sau khung chờ / đổi danh sách: mờ qua cả nhóm, cao đổi dần. */}

@@ -503,9 +503,10 @@ export function LevelButtons({ level, disabled, onChange }: { level: number; dis
             type="button"
             disabled={disabled}
             aria-pressed={value === level}
+            data-sheet-choice
             onClick={() => onChange(value)}
             className={cn(
-              "flex h-9 items-center gap-2 rounded-lg px-2 text-left text-sm transition-colors duration-motion-fast hover:bg-hover disabled:hover:bg-transparent",
+              CHOICE_ROW, "disabled:hover:bg-transparent",
               value === level ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
             )}
           >
@@ -589,7 +590,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
               data-sheet-choice
               onClick={() => choose(option.id)}
               className={cn(
-                "flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm hover:bg-hover disabled:opacity-50",
+                CHOICE_ROW, "disabled:opacity-50",
                 option.id === chosen ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
               )}
             >
@@ -599,7 +600,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
         ))}
         {canImport && (
           <Popover.Close asChild>
-            <button type="button" data-sheet-choice onClick={() => void addMusic()} className="flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm text-fg hover:bg-hover">
+            <button type="button" data-sheet-choice onClick={() => void addMusic()} className={cn(CHOICE_ROW, "text-fg")}>
               <Plus className="size-4 shrink-0" />
               {ADD_MUSIC_LABEL}
             </button>
@@ -634,9 +635,12 @@ function useOpenVoiceSettings() {
 function ScrollHint({ className, children }: { className: string; children: ReactNode }) {
   const box = useRef<HTMLDivElement | null>(null);
   const [more, setMore] = useState(false);
+  const [above, setAbove] = useState(false);
   const measure = useCallback(() => {
     const element = box.current;
-    if (element) setMore(element.scrollHeight - element.scrollTop - element.clientHeight > 8);
+    if (!element) return;
+    setMore(element.scrollHeight - element.scrollTop - element.clientHeight > 8);
+    setAbove(element.scrollTop > 2);
   }, []);
   useEffect(() => {
     measure();
@@ -651,6 +655,8 @@ function ScrollHint({ className, children }: { className: string; children: Reac
       <div ref={box} onScroll={measure} className={className}>
         {children}
       </div>
+      {/* Mép trên mờ dần khi đã cuộn xuống (như mép dưới có dòng nhắc): dòng giọng không bị cắt ngang ở mép khung. */}
+      <div aria-hidden="true" className={cn("pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-panel to-transparent transition-opacity duration-motion-fast", above ? "opacity-100" : "opacity-0")} />
       {/* Luôn dựng, chỉ đổi độ mờ: cuộn tới đáy thì dòng nhắc mờ đi, không bật tắt cứng. */}
       <div aria-hidden="true" className={cn("pointer-events-none absolute inset-x-0 bottom-0 flex h-12 items-end justify-center bg-gradient-to-t from-panel via-panel/80 to-transparent pb-1 transition-opacity duration-motion-fast", more ? "opacity-100" : "opacity-0")}>
         <span className="rounded-full bg-panel px-2.5 py-0.5 text-[0.6875rem] font-medium text-fg-2 ring-1 ring-line">Kéo xuống còn giọng khác</span>
@@ -1587,6 +1593,9 @@ function FollowRecord() {
 /** Khung danh sách trong menu nổi: tràn hết lề p-1.5 của bảng để nền chọn của dòng đứng cùng chỗ với nút cấp bảng ("Thêm giọng…") và chữ dòng
  *  (px-2) thẳng chữ ghi chú của bảng; còn 5,25 px cho khung tiêu điểm. Bảng trượt điện thoại đặt lại lề theo lớp p-1 (styles.css). */
 const MENU_LIST = "p-1 -mx-1.5 px-1.5";
+/** Dòng lựa chọn có dấu ✓ / + đầu dòng (danh sách nhạc, mức nhạc): MỘT cấu trúc, kèm `data-sheet-choice` - bảng trượt điện thoại chuẩn hoá icon 20 px,
+ *  khoảng 12 px, nền chọn tràn lề (styles.css); dòng tự chế thiếu thuộc tính này thì cột chữ lệch khỏi các dòng còn lại. */
+const CHOICE_ROW = "flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm transition-colors duration-motion-fast hover:bg-hover";
 const MENU_ROW = "flex min-h-10 w-full items-center gap-3 rounded-lg px-2 text-left text-sm text-fg hover:bg-hover disabled:opacity-40 disabled:hover:bg-transparent max-sm:min-h-[48px]";
 
 /** Một việc trong menu "…": chọn là làm và đóng menu. */
@@ -1846,6 +1855,8 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
           thấy "nội dung đổi" mà mờ chéo cả văn bản mỗi lần chọn câu hay cuộn khỏi câu đang nghe (W2). */}
       {/* Mép trên mờ dần (cao bằng lề py-8): chữ cuộn lên không bị cắt ngang để lại chân chữ dưới thanh tab. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-[var(--read-bg)] from-40% to-transparent" />
+      {/* Mép dưới mờ dần cùng cỡ (lề py-8 phía dưới chữ cuối nên hết chương thì không thấy): chữ không bị cắt ngang sát đáy khung. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[var(--read-bg)] from-40% to-transparent" />
       <MotionRegion motionKey="floating" className="pointer-events-none absolute inset-x-0 bottom-5 flex flex-col items-center">
         <MotionPresence open={Boolean(menu.bar)} className="w-full px-3">{menu.bar}</MotionPresence>
         <MotionPresence open={!menu.bar && follow.showJump}><JumpToPlaying onClick={follow.jump} /></MotionPresence>
