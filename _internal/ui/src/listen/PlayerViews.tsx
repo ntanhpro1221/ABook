@@ -1279,7 +1279,7 @@ export function useAddBookmark() {
 
 function BookmarkButton() {
   const add = useAddBookmark();
-  return <ActionButton label="Dấu trang" aria-label={withShortcut("Thêm dấu trang", "B")} icon={BookmarkPlus} {...keepFocus} onClick={() => void add()} />;
+  return <ActionButton label="Đánh dấu" aria-label={withShortcut("Thêm dấu trang", "B")} icon={BookmarkPlus} {...keepFocus} onClick={() => void add()} />;
 }
 
 /** Phím B: một chỗ lắng nghe duy nhất (thanh phát luôn có mặt khi đang nghe). */
