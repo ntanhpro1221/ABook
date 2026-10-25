@@ -2321,7 +2321,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
         plain && "motion-reveal",
         // Điện thoại xoay ngang chỉ cao ~360px: cả cột không vừa - cho cả cột cuộn dọc (soát UX a9). Màn dọc đủ chỗ nên không có gì để cuộn.
         // Cửa sổ vừa (~900px): cột trái co về 320px dưới lg (soát UX 29-09).
-        mobile ? "min-h-0 flex-1 overflow-y-auto overscroll-contain px-[20px] pb-6 pt-2" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
+        mobile ? "player-controls-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-[20px] pb-6 pt-2" : "w-[320px] border-r border-line px-6 pb-8 pt-5 lg:w-[400px] lg:px-8",
       )}
     >
       {/* Thanh đầu: thu nhỏ · ĐANG NGHE · "…" - không gì khác. Mực hai đầu đứng đúng mép cột (bìa, thanh tua): mực ⌄ bắt đầu 5/24 trong ô
@@ -2610,7 +2610,8 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       // Ruột dựng sau vỏ (điện thoại) và cột có thể đổi theo trạng thái phát: "đổi nội dung" của cả màn không được chụp mờ chéo - mỗi vùng con (tên chương,
       // tiến độ, lời báo...) có MotionRegion riêng. Chỉ đổi cuốn thì cả màn mờ chéo sang cuốn mới.
       motionKey={track.bookId}
-      className={cn("now-playing now-playing-tint absolute inset-0 z-30 flex", !plain && "now-playing-vt", mobile && "flex-col transition-[height] duration-motion-medium")}
+      // Màn điện thoại thuộc viewport: gutter cuộn không được làm document rộng ra rồi khiến Radix bù scrollbar giả.
+      className={cn("now-playing now-playing-tint inset-0 z-30 flex", mobile ? "fixed flex-col transition-[height] duration-motion-medium" : "absolute", !plain && "now-playing-vt")}
       style={{ ...tint, ...(mobile ? { height: `calc(100% - ${sheetHeight}px)` } : {}) }}
       // Mở ra thì đây là nội dung chính: <main> của trang nằm dưới đã khoá (inert) và ra khỏi cây trợ năng - phím "tới vùng chính" của
       // trình đọc màn hình phải tới đây (soát a31 A3). role thay vì thẻ <main>: tài liệu chỉ được có một thẻ <main>.
