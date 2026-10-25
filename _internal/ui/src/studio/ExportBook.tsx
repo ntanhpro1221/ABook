@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { useMotionState } from "@/shared/motion";
 import { AlertTriangle, BookAudio, CheckCircle2, FileAudio, FolderArchive, FolderDown, FolderOpen, RefreshCw } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -410,11 +411,12 @@ export function ExportDialog({
       <>
       {parts.length > 1 && !whole && kind !== "m4b" && (
         <div
-          className="mb-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm"
+          className="relative mb-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm"
           role="radiogroup"
           aria-label="Phạm vi bản xuất"
           onKeyDown={radioGroupKeys(scopeValues, scope, setScope)}
         >
+          <SlidingIndicator variant="pill" className="rounded-lg bg-panel shadow-sm" />
           {(
             [
               ["part", "Phần này"],
@@ -428,14 +430,15 @@ export function ExportDialog({
               aria-checked={scope === value}
               tabIndex={radioTabIndex(scopeValues, scope, index)}
               onClick={() => setScope(value)}
-              className={cn("rounded-lg px-3 py-1.5 font-medium", scope === value ? "bg-panel shadow-sm" : "text-fg-2")}
+              className={cn("relative rounded-lg px-3 py-1.5 font-medium transition-colors duration-motion-medium", scope === value ? "" : "text-fg-2")}
             >
               {label}
             </button>
           ))}
         </div>
       )}
-      <div className="grid gap-2" role="radiogroup" aria-label="Kiểu bản xuất" onKeyDown={radioGroupKeys(kindValues, kind, setKind)}>
+      <div className="relative grid gap-2" role="radiogroup" aria-label="Kiểu bản xuất" onKeyDown={radioGroupKeys(kindValues, kind, setKind)}>
+        <SlidingIndicator variant="pill" className="rounded-xl border border-focus bg-accent-soft" />
         {kinds.map(({ value, title, detail, icon: Icon }, index) => (
           <button
             key={value}
@@ -445,8 +448,8 @@ export function ExportDialog({
             tabIndex={radioTabIndex(kindValues, kind, index)}
             onClick={() => setKind(value)}
             className={cn(
-              "flex items-start gap-3 rounded-xl border p-3 text-left text-sm",
-              kind === value ? "border-focus bg-accent-soft" : "border-line hover:bg-hover",
+              "relative flex items-start gap-3 rounded-xl border p-3 text-left text-sm transition-colors duration-motion-medium",
+              kind === value ? "border-transparent" : "border-line hover:bg-hover",
             )}
           >
             <Icon className="mt-0.5 size-4 shrink-0 text-accent-text" />
@@ -460,11 +463,12 @@ export function ExportDialog({
       {wholeSeries && kind === "abook" && (
         <>
           <div
-            className="mt-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm"
+            className="relative mt-3 grid grid-cols-2 gap-1 rounded-xl bg-sunken p-1 text-sm"
             role="radiogroup"
             aria-label="Cách chia file"
             onKeyDown={radioGroupKeys(layoutValues, layout, setLayout)}
           >
+            <SlidingIndicator variant="pill" className="rounded-lg bg-panel shadow-sm" />
             {(
               [
                 ["single", "Một file"],
@@ -478,7 +482,7 @@ export function ExportDialog({
                 aria-checked={layout === value}
                 tabIndex={radioTabIndex(layoutValues, layout, index)}
                 onClick={() => setLayout(value)}
-                className={cn("rounded-lg px-3 py-1.5 font-medium", layout === value ? "bg-panel shadow-sm" : "text-fg-2")}
+                className={cn("relative rounded-lg px-3 py-1.5 font-medium transition-colors duration-motion-medium", layout === value ? "" : "text-fg-2")}
               >
                 {label}
               </button>

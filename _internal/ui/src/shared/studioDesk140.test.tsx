@@ -40,8 +40,10 @@ describe("FilterRow", () => {
   it("chữ gạch chân hổ phách, không khung viền / nền hộp", () => {
     const group = html.match(/<div role="radiogroup"[^>]*>/)![0];
     expect(group).not.toMatch(/\bborder\b|bg-panel|rounded/);
-    expect(html).toMatch(/border-b-2[^"]*border-accent text-accent-text/);
-    expect(html).toMatch(/border-b-2[^"]*border-transparent/);
+    // Gạch chân là một vạch chung LƯỚT giữa các mục (SlidingIndicator), không bật viền dưới của từng mục.
+    expect(html).toMatch(/data-sliding-indicator="line"[^>]*bg-accent/);
+    expect(html).toMatch(/border-b-2 border-transparent[^"]*text-accent-text/);
+    expect(html).not.toMatch(/border-accent/);
   });
 });
 
