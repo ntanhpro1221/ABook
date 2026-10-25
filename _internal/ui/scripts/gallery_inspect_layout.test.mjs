@@ -60,6 +60,8 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       expect(at(result, "gap", "ink-icon-text-gap")).toHaveLength(1);
       expect(at(result, "gap", "ink-icon-text-gap")[0].delta).toBeCloseTo(4, 1);
       expect(at(result, "gap-pass", "ink-icon-text-gap")).toHaveLength(0);
+      // Hàng cuối bị mép khung cắt ngang icon (nét phải khuất hẳn): không đo icon dở - từng báo nhầm hàng chương sát thanh phát.
+      expect(at(result, "gap-clipped", "ink-icon-text-gap")).toHaveLength(0);
     }
   });
   it("bắt nhịp 20 / 8, bỏ đầu/cuối là header", () => {

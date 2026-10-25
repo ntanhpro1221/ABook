@@ -14,7 +14,7 @@ export type SleepMode =
   | { kind: "minutes"; minutes: number; leftMs: number; since: number | null }
   | { kind: "chapter" };
 
-export const SLEEP_CHOICES = [5, 10, 15, 20, 30, 45, 60, 90];
+export const SLEEP_CHOICES = [5, 10, 15, 30, 45, 60];
 export const DEFAULT_FADE_SECONDS = 30;
 export const DEFAULT_EXTEND_MINUTES = 10;
 const FADE_FLOOR_DB = -40;
