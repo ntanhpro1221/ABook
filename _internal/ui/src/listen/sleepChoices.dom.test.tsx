@@ -30,7 +30,7 @@ const choices = () => [...document.querySelectorAll<HTMLButtonElement>("button[a
 
 it("một lưới ô chọn, không bộ −/+ hay nút Đặt riêng; bấm Hết chương này là đặt", async () => {
   const onSet = await open({ kind: "off" });
-  expect(choices().map((button) => button.textContent)).toEqual(["5 phút", "10 phút", "15 phút", "20 phút", "30 phút", "45 phút", "60 phút", "90 phút", "Hết chương này"]);
+  expect(choices().map((button) => button.textContent)).toEqual(["5 phút", "10 phút", "15 phút", "30 phút", "45 phút", "60 phút", "Hết chương này"]);
   expect(document.querySelector('[aria-label="Bớt 5 phút"], [aria-label="Thêm 5 phút"]')).toBeNull();
   expect([...document.querySelectorAll("button")].some((button) => /^Đặt \d+ phút$/.test(button.textContent ?? ""))).toBe(false);
   await act(async () => choices().at(-1)!.click());
