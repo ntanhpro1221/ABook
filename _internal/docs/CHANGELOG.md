@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.141] - 2026-10-25
+
 ### Giao diện
 
 - Bỏ tính năng dấu trang (nút Đánh dấu, tab Dấu trang ở trang sách và màn Đang nghe, mục trong menu câu, phím B).
