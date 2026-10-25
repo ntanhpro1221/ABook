@@ -149,6 +149,20 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
   });
 });
 
+describe.skipIf(!browserAvailable)("giá trị đang chọn trong popup", () => {
+  let choiceResults;
+  beforeAll(async () => { choiceResults = await layoutFixtures({ fixture: "selected-choice.html" }); }, 60000);
+  it("chỉ cho phép nút mở lặp giá trị đang chọn trong popup có quan hệ ARIA của nó", () => {
+    for (const result of choiceResults) {
+      const repeated = (id) => result.findings.filter((f) => f.rule === "REPEATED LABEL" && f.selector.startsWith(`#${id} >`));
+      expect(repeated("selected-popup")).toHaveLength(0);
+      for (const id of ["unselected-popup", "closed-popup", "unrelated-popup", "plain-container"]) {
+        expect(repeated(id).map((f) => f.metric)).toEqual(["label-names-two-actions"]);
+      }
+    }
+  });
+});
+
 // Lớp nổi nằm ở file riêng: role="dialog" trong bộ mẫu chung làm các luật khác coi cả trang là lớp dưới.
 describe.skipIf(!browserAvailable)("fixture lớp nổi chồng nhau", () => {
   let layerResults;

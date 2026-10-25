@@ -574,8 +574,17 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
   const labelled = all.filter((el) => el.matches(controlSelector) && shownChain(el) && !el.closest('[aria-hidden="true"],[inert]') && rect(el.getBoundingClientRect()).width > 0)
     .map((el) => ({ el, label: labelOf(el.textContent ?? ""), icon: iconSignature(el) })).filter((c) => c.label && c.icon);
   const sameLabel = new Set();
+  // Giá trị trên nút mở được lặp ở lựa chọn đang chọn trong CHÍNH popup nó điều khiển.
+  // Chỉ miễn khi có đủ quan hệ ARIA và trạng thái chọn; nhãn trùng của hai hành động khác vẫn báo.
+  const showsSelectedChoice = (trigger, choice) => trigger.getAttribute("aria-expanded") === "true"
+    && choice.matches('[aria-pressed="true"],[aria-selected="true"],[aria-checked="true"]')
+    && (trigger.getAttribute("aria-controls") ?? "").split(/\s+/).some((id) => {
+      const popup = document.getElementById(id);
+      return popup?.matches('[role="dialog"],[role="listbox"],[role="menu"]') && popup.contains(choice);
+    });
   for (const [i, a] of labelled.entries()) for (const b of labelled.slice(i + 1)) {
     if (a.label !== b.label || a.icon === b.icon || a.el.contains(b.el) || b.el.contains(a.el) || sameLabel.has(a.label)) continue;
+    if (showsSelectedChoice(a.el, b.el) || showsSelectedChoice(b.el, a.el)) continue;
     sameLabel.add(a.label);
     add("REPEATED LABEL", b.el, b.el.textContent, [rect(a.el.getBoundingClientRect()), rect(b.el.getBoundingClientRect())],
       { metric: "label-names-two-actions", otherSelector: selector(a.el), reason: "two visible controls share a label but carry different icons, so one label names two actions" });

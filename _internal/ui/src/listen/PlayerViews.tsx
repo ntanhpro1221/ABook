@@ -18,7 +18,7 @@ import {
   Maximize2,
   Moon,
   MoreHorizontal,
-  Music2,
+  EighthNote,
   Pause,
   Play,
   Plus,
@@ -377,7 +377,7 @@ export function MenuShell({
   };
   // Bảng con trong “…” mở ngay trong luồng: một Sheet duy nhất, Back khép mục con trước.
   useBackLayer(inline && isOpen, () => changeOpen(false), inlineRef, triggerRef);
-  const button = <button ref={triggerRef} type="button" aria-label={label} aria-expanded={inline ? isOpen : undefined} aria-controls={inline ? sheetId : undefined} onClick={inline ? () => changeOpen(!isOpen) : undefined} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
+  const button = <button ref={triggerRef} type="button" aria-label={label} {...(inline ? { "aria-expanded": isOpen, "aria-controls": sheetId } : {})} onClick={inline ? () => changeOpen(!isOpen) : undefined} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
         ? MENU_ROW
         : "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
@@ -543,12 +543,12 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
 
       look={look}
       caption="Nhạc nền"
-      icon={Music2}
+      icon={EighthNote}
       triggerKey={look === "row" ? music.enabled : undefined}
       trigger={look === "row" ? (music.enabled ? "Bật" : "Tắt") :
         // Tắt: gạch chéo trên nốt nhạc (lucide không có biểu tượng "nhạc tắt").
         <span className="relative">
-          <Music2 className="size-4" />
+          <EighthNote className="size-4" />
           {!music.enabled && <span aria-hidden="true" className="absolute left-1/2 top-1/2 h-0.5 w-5 -translate-x-1/2 -translate-y-1/2 rotate-45 rounded-full bg-current" />}
         </span>
       }
@@ -580,11 +580,11 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
       active={playing || waiting}
       look={look}
       caption="Nhạc nền"
-      icon={Music2}
+      icon={EighthNote}
       triggerKey={look === "row" ? [waiting, playing, label] : undefined}
       trigger={look === "row"
         ? (waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <span className="block max-w-32 truncate">{playing ? shortPlaylistLabel(label) : "Tắt"}</span>)
-        : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <Music2 className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
+        : <>{waiting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : <EighthNote className="size-4" />}<span className="max-w-40 truncate max-sm:hidden @max-[83rem]:hidden" title={playing ? label : undefined}>{playing ? shortPlaylistLabel(label) : ""}</span></>}
       width="w-72"
     ><MotionRegion>
       <MenuNote title="Nhạc nền">nhớ riêng cho cuốn này</MenuNote>

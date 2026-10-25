@@ -3,7 +3,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { useMotionState } from "@/shared/motion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, FileDown, Globe, ImagePlus, Music2, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
+import { ArrowLeft, ChevronDown, FileDown, Globe, ImagePlus, EighthNote, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { toast, toastDone } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
@@ -463,7 +463,7 @@ export function EditBookDialog({
             <div className="flex flex-wrap items-center gap-3 text-sm text-fg-2">
               <span>Cuốn này có xưởng - nhạc nền chỉnh đầy đủ (chọn bài, im lặng từng đoạn) ở Studio.</span>
               {onOpenStudio && (
-                <Button size="sm" variant="ghost" icon={Music2} onClick={onOpenStudio}>
+                <Button size="sm" variant="ghost" icon={EighthNote} onClick={onOpenStudio}>
                   Mở tab Nhạc nền
                 </Button>
               )}

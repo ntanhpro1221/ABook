@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { useListPresence } from "@/shared/motion";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Music2, Pin, Trash2, Upload } from "lucide-react";
+import { EighthNote, Pin, Trash2, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { useBackLayer } from "@/shared/backStack";
 import { MoreInfo } from "@/shared/SettingsNav";
@@ -152,13 +152,13 @@ export function MyMusicSection() {
       <p className="text-xs text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
       <MoreInfo label="Nhạc riêng">{MY_MUSIC_HELP}</MoreInfo>
       {!canImport && <p className="text-xs text-fg-2">Nhập và xoá nhạc làm trên máy tính chủ sách.</p>}
-      <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={Music2} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>
+      <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : canImport && !tracks.length ? <EmptyState icon={EighthNote} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>
       {!!rows.length && (
         <ul className="divide-y divide-line">
           {rows.map(({ item: track, key, state, ref }) => (
             <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
               <span className="min-w-0 flex-1 break-words">
-                <Music2 className="mr-1.5 inline size-4 text-accent-text" />
+                <EighthNote className="mr-1.5 inline size-4 text-accent-text" />
                 {track.title}
                 {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
                 {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
