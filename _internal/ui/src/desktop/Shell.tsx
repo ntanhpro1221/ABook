@@ -1,6 +1,6 @@
 import { Clapperboard, Clock, Download, Library, Pause, Settings } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useRestoreLastListening } from "@/listen/LibraryScreen";
 import { useNowPlaying } from "@/listen/player";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
