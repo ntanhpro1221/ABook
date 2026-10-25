@@ -185,12 +185,11 @@ export function PairPanel() {
                     "flex min-h-[3.5rem] w-full items-center gap-3 border-b border-line py-3 text-left hover:bg-hover",
                   )}
                 >
-                  <Laptop className="size-5 text-fg-2" />
+                  <SelectionMark selected={target?.host === computer.host} />
                   <span className="flex-1">
                     <span className="block font-medium">{computer.name}</span>
                     <span className="block text-xs text-fg-2">{computer.host}</span>
                   </span>
-                  <SelectionMark selected={target?.host === computer.host} />
                 </button>
               ))}
             </div>
@@ -239,12 +238,11 @@ export function PairPanel() {
                     "flex min-h-[3.5rem] w-full items-center gap-3 border-b border-line py-3 text-left hover:bg-hover",
                   )}
                 >
-                  <Bluetooth className="size-5 text-fg-2" />
+                  <SelectionMark selected={target?.host === `bt:${device.address}`} />
                   <span className="flex-1">
                     <span className="block font-medium">{device.name}</span>
                     <span className="block text-xs text-fg-2">Qua Bluetooth{device.abook ? " · có ABook" : ""}</span>
                   </span>
-                  <SelectionMark selected={target?.host === `bt:${device.address}`} />
                 </button>
               ))}
             </div>
@@ -512,12 +510,11 @@ function PeersPanel() {
                     "flex min-h-[3.5rem] w-full items-center gap-3 border-b border-line py-3 text-left hover:bg-hover",
                   )}
                 >
-                  <Bluetooth className="size-5 text-fg-2" />
+                  <SelectionMark selected={address === `bt:${device.address}`} />
                   <span className="flex-1">
                     <span className="block font-medium">{device.name}</span>
                     <span className="block text-xs text-fg-2">Qua Bluetooth · {device.kind === "phone" ? "điện thoại" : "máy tính"}</span>
                   </span>
-                  <SelectionMark selected={address === `bt:${device.address}`} />
                 </button>
               ))}
             </div>
