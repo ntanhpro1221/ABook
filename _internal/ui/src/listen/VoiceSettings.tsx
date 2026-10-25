@@ -283,7 +283,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
 
   return (
     <MotionRegion as="div" className="grid grid-cols-[minmax(0,1fr)] gap-5">
-      {loadError && <InlineError message="Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc." onRetry={() => void load()} />}
+      <InlineError open={Boolean(loadError)} message="Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc." onRetry={() => void load()} />
       {current && <p className="text-sm font-medium">Đang dùng: {current.name}</p>}
       {voices === null && !loadError && <ContentSkeleton label="Đang tải giọng đọc" />}
       {voices &&
@@ -329,8 +329,8 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                             }}
                             className="touch-row flex min-w-0 flex-1 items-center gap-2.5 text-left"
                           >
-                            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border", selected ? "border-accent bg-accent text-accent-ink" : "border-line-strong")}>
-                              {selected && <Check className="size-3" strokeWidth={3} />}
+                            <span className={cn("grid size-5 shrink-0 place-items-center rounded-full border transition-colors duration-motion-fast", selected ? "border-accent bg-accent text-accent-ink" : "border-line-strong")}>
+                              <Check className={cn("size-3 transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0")} strokeWidth={3} />
                             </span>
                             <span className="min-w-0 truncate text-sm font-medium">{shown}</span>
                             {genderLabel(voice.gender) && <span className="shrink-0 text-xs text-fg-2">{genderLabel(voice.gender)}</span>}

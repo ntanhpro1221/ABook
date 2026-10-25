@@ -577,22 +577,23 @@ export function LibraryScreen({
             {/* Kết quả rỗng không giữ lại bìa exit dưới ảnh cũ. Còn sách thì giữ node, focus và Windowed. */}
             <SeriesShelves key={shown.length ? "books" : "empty"} books={shown} twins={twins} memory={memory} grouped={grouped} />
             <MotionPresence open={!shown.length}>
-              {!shown.length && <EmptyState icon={Search} title={noResultsTitle} className="mt-4">
+              <EmptyState icon={Search} title={noResultsTitle} className="mt-4">
                 {query ? "Thử tên sách hoặc tác giả khác." : EMPTY_TEXT[filter]}
-              </EmptyState>}
+              </EmptyState>
             </MotionPresence>
           </MotionRegion>
         </>
       )}
       </MotionRegion>
       </LoadingCrossfade>
-      {upcomingRows.length > 0 && (
+      {/* Khung (cả lề 24 px) khép cùng hàng cuối (cả khối thu lại một lần), mở cùng hàng đầu - không gắn / gỡ cứng quanh các hàng. */}
+      <MotionPresence open={upcomingRows.some((row) => row.state !== "exit")}>
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {upcomingRows.map(({ key, item, state, ref }) => (
             <div key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}><div><UpcomingCard book={item} onOpen={onOpenUpcoming} /></div></div>
           ))}
         </div>
-      )}
+      </MotionPresence>
     </div>
     </ArrivalScope>
     </BookExtrasContext.Provider>

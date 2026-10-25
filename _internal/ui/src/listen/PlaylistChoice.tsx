@@ -145,7 +145,8 @@ type AddNotice = ReturnType<typeof addMusicOutcome>;
 export function PlaylistOptionLabel({ option, chosen }: { option: PlaylistOption; chosen: boolean }) {
   return (
     <>
-      <Check className={cn("size-4 shrink-0", chosen ? "text-accent-text" : "invisible")} />
+      {/* Dấu chọn luôn chiếm chỗ, chỉ mờ vào / ra (menu còn mở khi chọn): không nhảy cứng. */}
+      <Check aria-hidden className={cn("size-4 shrink-0 text-accent-text transition-opacity duration-motion-fast", chosen ? "opacity-100" : "opacity-0")} />
       <span className="min-w-0 flex-1">
         <span className="block text-pretty">{option.label}</span>
         {option.description && <span className="block text-pretty text-xs font-normal text-fg-3">{option.description}</span>}
@@ -175,16 +176,19 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
       </DropdownMenu.SubTrigger>
       <DropdownMenu.Portal>
         <DropdownMenu.SubContent sideOffset={4} collisionPadding={12} className="z-50 max-h-[70vh] w-72 overflow-y-auto rounded-xl border border-line bg-panel p-1.5 shadow-float">
+          {/* Hàng thật về sau khung chờ / đổi danh sách: mờ qua cả nhóm, cao đổi dần. */}
+          <MotionRegion motionKey={options.map((option) => JSON.stringify(option.id))}>
           {options.map((option) => (
             <DropdownMenu.Item
               key={JSON.stringify(option.id)}
               disabled={option.disabled}
               onSelect={() => choose(option.id)}
-              className={cn(MENU_ITEM, "h-auto min-h-9 py-1.5 data-[disabled]:opacity-50", option.id === chosen && "font-semibold")}
+              className={cn(MENU_ITEM, "h-auto min-h-9 py-1.5 transition-colors duration-motion-fast data-[disabled]:opacity-50", option.id === chosen && "font-semibold")}
             >
               <PlaylistOptionLabel option={option} chosen={option.id === chosen} />
             </DropdownMenu.Item>
           ))}
+          </MotionRegion>
           {canImport && (
             <DropdownMenu.Item onSelect={() => void addMusic()} className={cn(MENU_ITEM, "h-auto min-h-9 py-1.5")}>
               <Plus className="size-4 shrink-0" />
@@ -192,7 +196,7 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
             </DropdownMenu.Item>
           )}
           <MotionRegion motionKey={[loading, loadFailed]}>{loading ? <ContentSkeleton count={2} label="Đang tải danh sách" className="p-2" /> : loadFailed ? <InlineError message="Bạn hãy thử tải lại danh sách nhạc." onRetry={retry} /> : null}</MotionRegion>
-          <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error, scene)}</p>
+          <MotionRegion as="p" className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error, scene)}</MotionRegion>
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
     </DropdownMenu.Sub>
