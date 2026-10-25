@@ -130,7 +130,7 @@ export function Fold({
   return (
     <section className={cn("min-w-0", className)}>
       <Heading className="m-0">
-        <DisclosureRow title={title} summary={summary} icon={icon} expanded={open} controls={id} onClick={() => setOpen(!open)} />
+        <DisclosureRow section title={title} summary={summary} icon={icon} expanded={open} controls={id} onClick={() => setOpen(!open)} />
       </Heading>
       <Collapse open={open} onOpened={onOpened} id={id} className={cn("pb-2", bodyClassName)}>
         {children}

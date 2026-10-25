@@ -1,3 +1,5 @@
+// Kiểm lệnh gốc; trình bày và Back của toast kiểm riêng trong layoutC11.dom.test.tsx.
+vi.mock("@/shared/ToastDetails", () => ({ prepareToast: (args: unknown[]) => args }));
 import { renderToString } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ListenBook } from "@/listen/model";

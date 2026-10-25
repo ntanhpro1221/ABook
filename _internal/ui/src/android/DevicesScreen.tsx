@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SectionHeading } from "@/shared/SectionHeading";
 import { MotionPresence } from "@/shared/MotionPresence";
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -43,7 +44,7 @@ export function ComputerIntro() {
       <div className="flex min-h-[3.5rem] items-center gap-3 py-3">
         <Laptop className="size-5 shrink-0 text-fg-2" />
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-medium">Studio máy tính</h2>
+          <SectionHeading>Studio máy tính</SectionHeading>
           <p className="text-sm text-fg-2">Tạo sách nói rồi nghe ở đây.</p>
         </div>
       </div>
@@ -159,7 +160,7 @@ export function PairPanel() {
             <Wifi className="size-5" />
           </div>
           <div>
-            <h2 className="text-base font-medium">Nối máy tính</h2>
+            <SectionHeading>Nối máy tính</SectionHeading>
             <p className="text-sm text-fg-2">Cùng Wi-Fi, mở Thiết bị trên máy tính.</p>
           </div>
         </div>
@@ -185,12 +186,12 @@ export function PairPanel() {
                     "flex min-h-[3.5rem] w-full items-center gap-3 border-b border-line py-3 text-left hover:bg-hover",
                   )}
                 >
+                  <SelectionMark selected={target?.host === computer.host} />
                   <Laptop className="size-5 text-fg-2" />
                   <span className="flex-1">
                     <span className="block font-medium">{computer.name}</span>
                     <span className="block text-xs text-fg-2">{computer.host}</span>
                   </span>
-                  <SelectionMark selected={target?.host === computer.host} />
                 </button>
               ))}
             </div>
@@ -239,12 +240,12 @@ export function PairPanel() {
                     "flex min-h-[3.5rem] w-full items-center gap-3 border-b border-line py-3 text-left hover:bg-hover",
                   )}
                 >
+                  <SelectionMark selected={target?.host === `bt:${device.address}`} />
                   <Bluetooth className="size-5 text-fg-2" />
                   <span className="flex-1">
                     <span className="block font-medium">{device.name}</span>
                     <span className="block text-xs text-fg-2">Qua Bluetooth{device.abook ? " · có ABook" : ""}</span>
                   </span>
-                  <SelectionMark selected={target?.host === `bt:${device.address}`} />
                 </button>
               ))}
             </div>
@@ -484,9 +485,9 @@ function PeersPanel() {
     <MotionRegion as="section" className="mt-8" aria-labelledby="peers-title">
       <div className="flex items-center justify-between gap-3">
         {/* Cùng bậc với các tiêu đề mục khác của trang ("Studio trên máy tính", "Nối máy tính", "Máy tính tìm thấy"). */}
-        <h2 id="peers-title" className="font-semibold">
+        <SectionHeading id="peers-title">
           Thiết bị khác
-        </h2>
+        </SectionHeading>
         <Button size="sm" variant="ghost" icon={Link2} className="settings-edge-action" onClick={() => { setOpen((value) => !value); if (!open) discover.mutate(); }}>
           Ghép thiết bị
         </Button>
@@ -512,12 +513,12 @@ function PeersPanel() {
                     "flex min-h-[3.5rem] w-full items-center gap-3 border-b border-line py-3 text-left hover:bg-hover",
                   )}
                 >
+                  <SelectionMark selected={address === `bt:${device.address}`} />
                   <Bluetooth className="size-5 text-fg-2" />
                   <span className="flex-1">
                     <span className="block font-medium">{device.name}</span>
                     <span className="block text-xs text-fg-2">Qua Bluetooth · {device.kind === "phone" ? "điện thoại" : "máy tính"}</span>
                   </span>
-                  <SelectionMark selected={address === `bt:${device.address}`} />
                 </button>
               ))}
             </div>
@@ -650,7 +651,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
     <MotionRegion as="section" className={bare ? "pt-4" : "mt-8 py-4"} aria-labelledby="share-title">
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <h2 id="share-title" className="text-[0.9375rem] font-medium">Chia sẻ thư viện</h2>
+          <SectionHeading id="share-title">Chia sẻ thư viện</SectionHeading>
           <p className="mt-0.5 text-xs leading-snug text-fg-2">
             Máy đã ghép nghe được sách bạn thêm từ file, không cần chép sang.
           </p>

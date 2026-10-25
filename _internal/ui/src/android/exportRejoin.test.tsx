@@ -1,3 +1,5 @@
+// Kiểm lệnh gốc; trình bày và Back của toast kiểm riêng trong layoutC11.dom.test.tsx.
+vi.mock("@/shared/ToastDetails", () => ({ prepareToast: (args: unknown[]) => args }));
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Giao diện được dựng lại (vuốt app khỏi Recents, WebView tải lại) trong lúc việc xuất MP3 / M4B của WorkManager vẫn chạy: tiến độ và tin xong / lỗi
