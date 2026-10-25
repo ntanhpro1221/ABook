@@ -1,7 +1,7 @@
 import { useRef, type ReactNode } from "react";
 import { cn } from "./cn";
 import { usePresence, useListPresence } from "./motion";
-import { Collapse } from "./Collapse";
+import { ArrivalScope, Collapse } from "./Collapse";
 import type { RowState } from "./motion";
 
 /** Dùng cho danh sách hữu hạn đã phân trang; không đưa cả kho sách vào DOM thay cho Windowed. */
@@ -26,8 +26,8 @@ export function LoadingCrossfade({ loading, placeholder, children, className }: 
   // Chỉ hiện dần sau khi khung chờ thật sự đã hiện. Dữ liệu có sẵn từ lần trước thì nội dung đứng yên cùng trang, không hiện dần lần nữa.
   const waited = useRef(loading);
   if (loading) waited.current = true;
-  return <div className={cn("motion-loading", className)}>
+  return <ArrivalScope loading={loading}><div className={cn("motion-loading", className)}>
     {presence.mounted && <div className="motion-loading-placeholder motion-panel" data-state={presence.state} inert={!loading} aria-hidden={!loading || undefined} onAnimationEnd={presence.onAnimationEnd}>{placeholder}</div>}
     {!loading && <div className={cn("motion-loading-content", waited.current && "motion-reveal")}>{children}</div>}
-  </div>;
+  </div></ArrivalScope>;
 }

@@ -45,6 +45,21 @@ export function pageEntering(): boolean {
   return entering !== null;
 }
 
+let settleUntil = 0;
+const clock = () => (typeof performance === "undefined" ? Date.now() : performance.now());
+
+/** Mở cửa sổ "đang ổn định": trang vừa hiện vào, mở app, hay lượt dữ liệu đầu vừa về (ArrivalScope). */
+export function markArrival(ms: number = MOTION.slow): void {
+  settleUntil = Math.max(settleUntil, clock() + ms);
+}
+
+/** Trang đang vào hay vừa vào / dữ liệu đầu vừa về: thứ tới lúc này (thẻ, dòng danh sách, khối cài đặt) hiện tại chỗ cùng trang, không mọc
+ *  cao dần đẩy phần dưới xuống (máy dò dịch bố cục 25-10: lưới Thư viện trôi 110 px lúc mở app, thẻ buổi sáng đẩy lưới 261 px). Thứ tới SAU
+ *  cửa sổ này (người dùng thêm sách, mở mục) vẫn mở ra có chuyển động. */
+export function pageSettling(): boolean {
+  return entering !== null || clock() < settleUntil;
+}
+
 /** Mờ trang hiện tại đi rồi mới đổi. Đang mờ dở (bấm liên tiếp) thì dùng lại lần mờ ấy - lần đổi cuối cùng thắng. */
 export function leavePage(nav: NavMotion, doc: TransitionDocument | undefined = browserDocument()): Promise<void> {
   const page = pageSurface(doc);
@@ -74,10 +89,9 @@ export function enterPage(doc: TransitionDocument | undefined = browserDocument(
   for (const animation of page.getAnimations?.({ subtree: true }) ?? []) if (justEntering(animation)) animation.finish();
   const reduced = prefersReducedMotion();
   const from = reduced ? "none" : nav === "through" ? "scale(0.97)" : `translateX(${nav === "back" ? -32 : 32}px)`;
-  page.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], {
-    duration: reduced ? MOTION.fast : nav === "through" ? MOTION.medium : MOTION.slow,
-    easing: EASE.decelerate,
-  });
+  const duration = reduced ? MOTION.fast : nav === "through" ? MOTION.medium : MOTION.slow;
+  markArrival(duration);
+  page.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], { duration, easing: EASE.decelerate });
 }
 
 /** Hoạt ảnh hiện vào vừa bắt đầu ở nhịp này: hữu hạn, ngắn, chưa chạy. Vòng lặp (khung chờ nhấp nháy) và hoạt ảnh dài (đếm ngược) giữ nguyên. */
@@ -97,6 +111,7 @@ export function usePageEnter(ref: RefObject<HTMLElement | null>, key: string, { 
     if (resetScroll) element?.scrollTo?.({ top: 0 });
     if (!element || typeof element.animate !== "function") return;
     if (pageEntering() || viewTransitionRunning()) return;
+    markArrival();
     const shift = prefersReducedMotion() ? 0 : 8;
     element.animate(
       [
@@ -665,7 +680,9 @@ export function useListPresence<T>(items: readonly T[], keyOf: (item: T) => stri
   const [seen, setSeen] = useState(keys);
   if (seen !== keys) {
     setSeen(keys);
-    setRows((shown) => mergeRows(shown, items, keyOf));
+    // Hàng tới cùng trang / lượt dữ liệu đầu đứng yên tại chỗ; hàng thêm sau đó mới mở ra.
+    const settling = pageSettling();
+    setRows((shown) => mergeRows(shown, items, keyOf, settling));
   }
   const moving = rows.some((row) => row.state !== "idle");
   useEffect(() => {

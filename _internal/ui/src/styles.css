@@ -1126,6 +1126,17 @@ select[class~="border-line"] {
   transition: opacity var(--motion-fast-out) linear, visibility 0s linear var(--motion-medium-out);
 }
 .motion-flow { min-height: 0; }
+/* Ô giữ chỗ: luôn chiếm chỗ trong bố cục, chỉ mờ vào / ra tại chỗ. Cho thứ cạnh tiêu đề tới cùng dữ liệu (nút "Thêm sách"): hiện ra không
+   làm dòng tiêu đề cao thêm, không đẩy lưới bên dưới. */
+.motion-hold {
+  opacity: 1;
+  transition: opacity var(--motion-medium) var(--ease-standard), visibility 0s;
+}
+.motion-hold[data-state="closed"] {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--motion-fast-out) linear, visibility 0s linear var(--motion-fast-out);
+}
 /* Mũi tên của mục gấp/mở (<details> và Collapse) xoay theo, không nhảy. */
 .fold-chevron {
   transition: transform var(--motion-medium) var(--ease-standard);
