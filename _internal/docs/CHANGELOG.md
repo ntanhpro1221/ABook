@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.146] - 2026-10-26
+
 ### Điện thoại
 
 - Mở, thu nhỏ màn Đang nghe, xếp sách và mở trang đọc ít khựng hơn; giữ nguyên các chuyển động.
