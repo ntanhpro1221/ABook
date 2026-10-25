@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { LoadingCrossfade } from "@/shared/MotionPresence";
 import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, Save } from "lucide-react";
 import { useState } from "react";
@@ -26,12 +27,12 @@ export function failureView(error: unknown): { title: string; help: string } {
 }
 
 export function DiagnosticsBody({ report, error, loading, onRetry }: { report?: DiagnosticsReport; error?: unknown; loading?: boolean; onRetry: () => void }) {
-  if (loading && !report) return <ContentSkeleton shape="cards" count={2} label="Đang tải chẩn đoán" />;
   const failure = error ? failureView(error) : null;
-  return <MotionRegion>
-    {failure && <InlineError message={`${failure.title} ${failure.help || "Bạn hãy thử tải lại chẩn đoán."}`} onRetry={onRetry} />}
+  // Khung chờ -> báo cáo / lỗi: mờ chéo (LoadingCrossfade), không cắt cứng; lỗi hiện / ẩn mở / khép tại chỗ.
+  return <LoadingCrossfade loading={Boolean(loading && !report)} placeholder={<ContentSkeleton shape="cards" count={2} label="Đang tải chẩn đoán" />}><MotionRegion>
+    <InlineError open={Boolean(failure)} message={failure ? `${failure.title} ${failure.help || "Bạn hãy thử tải lại chẩn đoán."}` : ""} onRetry={onRetry} />
     {report && <DiagnosticsView report={report} />}
-  </MotionRegion>;
+  </MotionRegion></LoadingCrossfade>;
 }
 
 export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: { id: string; name: string }; open: boolean; onOpenChange: (open: boolean) => void }) {
