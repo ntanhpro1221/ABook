@@ -614,7 +614,7 @@ export function Dialog({
           inert={!open}
           style={open ? undefined : CLOSING}
           className={cn(
-            "motion-dialog fixed left-1/2 top-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 flex max-h-[90dvh] flex-col rounded-[20px] border border-line bg-panel p-6 shadow-float focus:outline-none",
+            "motion-dialog fixed left-[calc(50%+(env(safe-area-inset-left)-env(safe-area-inset-right))/2)] top-[calc(50%+(env(safe-area-inset-top)-env(safe-area-inset-bottom))/2)] z-50 w-[calc(100%-2rem-env(safe-area-inset-left)-env(safe-area-inset-right))] -translate-x-1/2 -translate-y-1/2 flex max-h-[min(90dvh,calc(100dvh-2rem-env(safe-area-inset-top)-env(safe-area-inset-bottom)))] flex-col rounded-[20px] border border-line bg-panel p-6 shadow-float focus:outline-none",
             width,
           )}
           onInteractOutside={keepOpenForToasts}
@@ -770,7 +770,7 @@ export function Sheet({
           // Đóng (Esc, nút Đóng, chạm nền): Radix tự trả tiêu điểm về nút mở (Trigger) - trước đây chặn việc ấy nên tiêu điểm rơi về BODY (soát a31 K1).
           onEscapeKeyDown={onEscapeKeyDown}
           onInteractOutside={keepOpenForToasts}
-          className={cn("motion-sheet sheet-surface fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] min-w-0 flex-col overflow-hidden rounded-t-[20px] bg-panel px-[20px] pb-[max(env(safe-area-inset-bottom),20px)] shadow-float focus:outline-none", className)}
+          className={cn("motion-sheet sheet-surface fixed inset-x-0 bottom-0 z-50 flex max-h-[min(85dvh,calc(100dvh-env(safe-area-inset-top)-0.5rem))] min-w-0 flex-col overflow-hidden rounded-t-[20px] bg-panel pl-[max(env(safe-area-inset-left),20px)] pr-[max(env(safe-area-inset-right),20px)] pb-[max(env(safe-area-inset-bottom),20px)] shadow-float focus:outline-none", className)}
         >
           <div data-sheet-grip className="shrink-0 touch-none pb-3 pt-3"
             onPointerDown={(event) => {
