@@ -1,6 +1,0 @@
-{
-  "mark": {"id":"abcdef012345","chapterId":2,"seconds":64,"note":"Ghi chú cũ","at":10,"rev":{"counter":1,"node":"fixture"},"createdAt":5,"index":7,"quote":"Câu bảy."},
-  "deletedAt": 20,
-  "deletedRev": {"counter":2,"node":"fixture"},
-  "remoteEdit": {"id":"abcdef012345","chapterId":2,"seconds":64,"note":"Máy kia sửa","at":25,"rev":{"counter":2,"node":"fixture"},"createdAt":5,"index":7,"quote":"Câu bảy."}
-}

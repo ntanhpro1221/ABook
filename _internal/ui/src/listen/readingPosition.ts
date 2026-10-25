@@ -68,7 +68,7 @@ export function latestReading(book: ListenBook | undefined): ReadingPosition | u
   return latest && book.chapters?.some((chapter) => chapter.id === latest.chapterId) ? latest : undefined;
 }
 
-/** Anchor thắng chỉ số; câu trích của dấu trang tìm đoạn gần chỉ số cũ nhất. Không sửa chữ truyện. */
+/** Anchor thắng chỉ số; câu trích tìm đoạn gần chỉ số cũ nhất. Không sửa chữ truyện. */
 export function readingIndex(script: Script, place: Pick<ReadingPosition, "index" | "anchor" | "quote">): number {
   const paragraphs = script.segments.map((segment) => segment.text);
   const anchored = restoreAnchor(paragraphs, place.anchor);

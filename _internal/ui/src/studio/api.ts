@@ -360,7 +360,7 @@ export interface Preferences {
   newBookProfile?: string;
   /** Mẫu thiết lập có tên cho sách mới (studio/bookTemplates.ts), tối đa 20. */
   bookTemplates?: BookTemplate[];
-  /** Phím tắt một chữ cái (B, M, [ ], ?, J/K/1-9, O/R) - mặc định bật (shared/letterShortcuts.ts). */
+  /** Phím tắt một chữ cái (M, [ ], ?, J/K/1-9, O/R) - mặc định bật (shared/letterShortcuts.ts). */
   letterShortcuts?: boolean;
   /** Tạm dừng rồi nghe tiếp thì lùi vài giây - mặc định bật, theo máy này (listen/sleep.ts rewindAfter). */
   autoRewind?: boolean;

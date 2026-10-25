@@ -8,7 +8,7 @@ phần tiêu thụ *"để phần tiêu thụ sẽ có sự đồng nhất với
 
 | khu | ở đâu | làm gì |
 |---|---|---|
-| **Nghe** | máy tính **và** Android, cùng một mã React (`ui/src/listen`) | thư viện, trang sách, trình phát, đọc theo, dấu trang, nhân vật |
+| **Nghe** | máy tính **và** Android, cùng một mã React (`ui/src/listen`) | thư viện, trang sách, trình phát, đọc theo, nhân vật |
 | **Studio** | chỉ máy tính (`ui/src/studio`) | dự án, trình tạo 4 bước, tiến trình sản xuất, nhật ký |
 
 Phía Nghe không biết dữ liệu đến từ đâu: nó nói chuyện với `ListenSource` (`ui/src/listen/source.tsx`) và phát
@@ -33,7 +33,7 @@ Nghe (máy tính + Android):
   đêm; tự lùi theo độ dài lần dừng (0/10/30 giây); "Quay lại chỗ vừa nghe" sau cú nhảy xa; hỏi khi thiết bị khác đã
   nghe xa hơn; tiến độ cả cuốn; nghe xong một tập thì mời tập kế.
 - Chế độ đọc (`/book/:id/read/:chapterId`): đọc cả chương chưa thu âm, nhớ chỗ đọc, "Nghe từ đây" đúng câu.
-- Dấu trang kèm câu văn, gộp dấu trùng, hoàn tác khi xoá; phím Space/←/→/Shift/B/M/[ ]/Esc.
+- Phím tắt: Space/←/→/Shift/M/[ ]/Esc.
 
 Studio (máy tính):
 - Trình tạo 4 bước: bước nằm trong URL, nháp giữ khi rời trang, gợi ý thư mục con, ước lượng thời gian đo trên máy
@@ -99,7 +99,7 @@ Studio (máy tính):
 Capacitor bọc giao diện Nghe; mọi thứ phải chạy khi tắt màn hình nằm ở native (WebView bị treo lúc đó):
 
 - `Playback.kt` + `PlaybackService.kt` (Media3 1.11.1): cả cuốn là một hàng đợi, lưu vị trí mỗi 5 giây, tự lùi
-  khi nghe lại, thông báo + màn hình khoá (lùi 15 / tới 15 / dấu trang / +10 phút khi đang hẹn giờ), nút tai
+  khi nghe lại, thông báo + màn hình khoá (lùi 15 / tới 15 / +10 phút khi đang hẹn giờ), nút tai
   nghe, dừng khi rút tai nghe, tiếp tục phát sau khi khởi động lại máy.
 - `SleepTimer.kt`: phút hoặc hết chương, nhỏ dần 30 giây, **lắc máy để nghe thêm** (và để phát tiếp trong 2 phút
   sau khi đã tự dừng), rung xác nhận.
@@ -107,9 +107,9 @@ Capacitor bọc giao diện Nghe; mọi thứ phải chạy khi tắt màn hình
   lần cuối chạm/lắc máy, lúc điện thoại bắt đầu nằm yên (cảm biến), lúc tự dừng - mỗi mốc kèm câu văn đang đọc.
 - `PlayerWidget.kt`: widget trình phát thu nhỏ (nhỏ: bìa + phát; lớn: chương, tiến độ, lùi/phát/tới, hẹn giờ).
 - `LibraryPlugin.kt` + `webui/sync.py`: tìm máy tính bằng UDP broadcast, ghép nối bằng mã 6 số một lần, tải gói
-  sách (tải tiếp được), đồng bộ trạng thái nghe hai chiều (mới-hơn-thắng, dấu trang xoá có tombstone).
+  sách (tải tiếp được), đồng bộ trạng thái nghe hai chiều (mới-hơn-thắng).
 - `Streaming.kt` (stream play): sách trên máy tính CHƯA tải cũng nằm trong Thư viện điện thoại (nhãn "Máy tính") và dùng
-  được đầy đủ - chương, đọc theo, chế độ đọc, nhân vật + câu mẫu, dấu trang, lịch sử, tốc độ, hẹn giờ. Chương nào đã có
+  được đầy đủ - chương, đọc theo, chế độ đọc, nhân vật + câu mẫu, lịch sử, tốc độ, hẹn giờ. Chương nào đã có
   file thì phát file, chưa có thì ExoPlayer phát thẳng `/sync/v1/books/<id>/files/...` (mang mã thiết bị, bộ đệm đĩa
   1 GB, khoá đệm kèm kích thước chương để chương thu lại không phát nhầm bản cũ). Gói sách cất ở `stream.json` (không
   bao giờ bị tính là đã tải); văn bản, dàn nhân vật, câu mẫu, bìa lấy theo nhu cầu và nằm đúng chỗ của sách đã tải, nên

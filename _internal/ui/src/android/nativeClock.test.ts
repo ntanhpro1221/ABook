@@ -1,11 +1,10 @@
 ﻿import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { wordIndexAt, sentenceIndexAt } from '@/listen/words';
 import { sleepLeftMs } from '@/listen/sleep';
-const h = vi.hoisted(() => ({ listener: null as any, addBookmark: vi.fn().mockResolvedValue({}) }));
+const h = vi.hoisted(() => ({ listener: null as any }));
 vi.mock('@/android/plugins', () => ({ EbookPlayer: {
   addListener: vi.fn((_kind, listener) => { h.listener=listener; return Promise.resolve({remove(){}}); }),
   getState: vi.fn(() => new Promise(()=>{})),
-  addBookmark: h.addBookmark,
 } }));
 vi.mock('@/android/androidSource', () => ({ chapterFiles: new Map(), chapterTextEntry: ()=>'texts/1.txt' }));
 vi.mock('@/android/notifications', () => ({ offerNotificationAccess: vi.fn() }));
@@ -47,11 +46,3 @@ it('counts sleep only when native counting is true',()=>{
  h.listener({...base,playing:false}); vi.advanceTimersByTime(400); expect(sleepLeftMs(engine.sleep,Date.now())).toBe(60000);
 });
 
-it('bookmark bridge omits absent sentence fields so native can capture them',async()=>{
- const engine=new NativeAudioEngine();
- await engine.addBookmark('');
- expect(Object.keys(h.addBookmark.mock.lastCall![0])).toEqual(['note']);
- const sentence={index:2,quote:'Chosen sentence',anchor:{segment:2,charOffset:4,textHash:'fnv1a64:0000000000000000'}};
- await engine.addBookmark('note',sentence);
- expect(h.addBookmark).toHaveBeenLastCalledWith({note:'note',...sentence});
-});

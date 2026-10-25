@@ -646,12 +646,6 @@ object ReadAloud {
         return ReadingAnchor.make(chap.paragraphs, segment, word.coerceAtMost((WordTokens.count(text) - 1).coerceAtLeast(0)))
     }
 
-    fun bookmark(): JSONObject? {
-        if (!active) return null
-        val chap = chapterIndexNow()?.let { chaps[it] } ?: return null
-        return TextBookmark.from(chap.paragraphs, anchor())
-    }
-
     /**
      * Mốc `clipMs` của đoạn đang phát, đổi sang đồng hồ ảo của chương (ms); đang chờ đọc đoạn thì là chỗ sẽ bắt đầu. null nếu không ở chương chữ. Cũng dùng cho
      * mốc đã đệm tới (thanh tiến độ ở thông báo / màn hình khoá - PlaybackService).

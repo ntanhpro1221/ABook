@@ -69,7 +69,7 @@ class LibraryPlugin : Plugin() {
     private val streams = Executors.newSingleThreadExecutor()
     // Nhập nhạc của tôi: giải mã từng bản để đo độ to nên lâu - không được chặn hàng `io` của thư viện.
     private val musicImports = Executors.newSingleThreadExecutor()
-    // Nhập file sách (.abook / .abookproj): chép + băm + giải nén vài GB mất phút - không được chặn hàng `io` (tiến độ nghe, thư viện, dấu trang
+    // Nhập file sách (.abook / .abookproj): chép + băm + giải nén vài GB mất phút - không được chặn hàng `io` (tiến độ nghe, thư viện
     // xếp hàng sau nó; app bị giết giữa chừng thì mất chỗ nghe). Một luồng riêng: hai lần nhập không giải nén chồng nhau.
     private val bookImports = Executors.newSingleThreadExecutor()
     private val prefs by lazy { SyncLink.prefs(context) }
@@ -1835,41 +1835,6 @@ class LibraryPlugin : Plugin() {
         val record = call.getString("record")
         if (record != null && !Store.holds(id, record)) return@background call.reject(RECORD_GONE)
         Store.setVoice(id, call.getString("voice") ?: "", record)
-        call.resolve()
-        runCatching { StateSync.pushNow(context, id, record) }
-    }
-
-    @PluginMethod
-    fun addBookmark(call: PluginCall) = background(call) {
-        val mark = Store.addBookmark(call.getString("id")!!, call.getInt("chapterId")!!, call.getDouble("seconds") ?: 0.0, call.getString("note") ?: "",
-            call.getInt("index"), call.getString("quote") ?: "", call.getDouble("createdAt"), call.getString("record"), call.getObject("anchor"))
-        call.resolve(JSObject.fromJSONObject(mark))
-        // Bookmarks reach the computer like the listening position does (a70: a bookmark set in the reader never left the phone).
-        runCatching { StateSync.pushNow(context, call.getString("id")!!, call.getString("record")) }
-    }
-
-    @PluginMethod
-    fun restoreBookmark(call: PluginCall) = background(call) {
-        val id = call.getString("id")!!
-        val mark = Store.restoreBookmark(id, call.getObject("mark")!!)
-        call.resolve(JSObject.fromJSONObject(mark))
-        runCatching { pushState(id) }
-    }
-
-    @PluginMethod
-    fun updateBookmark(call: PluginCall) = background(call) {
-        val id = call.getString("id")!!
-        val record = call.getString("record")
-        Store.updateBookmark(id, call.getString("markId")!!, call.getString("note") ?: "", record)
-        call.resolve()
-        runCatching { StateSync.pushNow(context, id, record) }
-    }
-
-    @PluginMethod
-    fun deleteBookmark(call: PluginCall) = background(call) {
-        val id = call.getString("id")!!
-        val record = call.getString("record")
-        Store.deleteBookmark(id, call.getString("markId")!!, record)
         call.resolve()
         runCatching { StateSync.pushNow(context, id, record) }
     }

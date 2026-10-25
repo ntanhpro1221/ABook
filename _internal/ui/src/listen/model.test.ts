@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookMatchesQuery, bookmarkReadPath, chaptersByPart, continuingPart, foldVietnamese, listeningBook, newerElsewhere, otherBooksToHear, partHeading, partToContinue, resumePoint, resumeTarget, seriesIndex, seriesOf, startingRate, twinBookIds, twinKind, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
+import { bookMatchesQuery, chaptersByPart, continuingPart, foldVietnamese, listeningBook, newerElsewhere, otherBooksToHear, partHeading, partToContinue, resumePoint, resumeTarget, seriesIndex, seriesOf, startingRate, twinBookIds, twinKind, volumeBadge, type BookPart, type ListenBook, type ListenChapter } from "./model";
 
 describe("seriesOf", () => {
   it("reads the volume and the word the book uses for it", () => {
@@ -271,18 +271,6 @@ describe("otherBooksToHear", () => {
   });
 });
 
-describe("bookmarkReadPath", () => {
-  it("opens the reader on the sentence a reader bookmark points to; a player bookmark has no sentence", () => {
-    const path = bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 12, quote: "Trời đã sáng." });
-    const url = new URL(path!, "http://local");
-    expect(url.pathname).toBe("/book/b1/read/3");
-    expect(url.searchParams.get("at")).toBe("12");
-    expect(url.searchParams.get("quote")).toBe("Trời đã sáng.");
-    expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 0, note: "", at: 1, index: 0, quote: "" })).toBe("/book/b1/read/3?at=0");
-    expect(bookmarkReadPath("b1", { id: "m", chapterId: 3, seconds: 64, note: "", at: 1 })).toBeNull();
-  });
-});
-
 describe("twinBookIds", () => {
   it("marks books that share a title (ignoring case, accents and spacing) and leaves the others alone", () => {
     const twins = twinBookIds([
@@ -304,7 +292,7 @@ describe("twinKind", () => {
 });
 
 describe("nghe nối sang phần sau (soát a26 L1, L3)", () => {
-  const part = (title: string, rate?: number) => ({ id: title, title, state: { chapters: {}, bookmarks: [], ...(rate ? { rate } : {}) } }) as unknown as ListenBook;
+  const part = (title: string, rate?: number) => ({ id: title, title, state: { chapters: {}, ...(rate ? { rate } : {}) } }) as unknown as ListenBook;
 
   it("hết phần thì nối sang phần sau - lời hết sách không còn đúng", () => {
     expect(partToContinue("finished", part("Truyện · Phần 2"))?.id).toBe("Truyện · Phần 2");

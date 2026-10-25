@@ -10,7 +10,7 @@ import {SourceProvider,chapterScriptQuery} from '@/listen/source';
 import {PlayerProvider,usePlayer} from '@/listen/player';
 import {textScript} from '@/listen/textScript';
 const chapters=[1,2].map(id=>({id,index:id,title:`Chương ${id}`,fullTitle:`Chương ${id}`,subtitle:'',duration:id===1?100:0,available:id===1}));
-const book={id:'b',title:'Sách',narrator:'Giọng',complete:false,chapters,state:{chapters:{},bookmarks:[]}} as any;
+const book={id:'b',title:'Sách',narrator:'Giọng',complete:false,chapters,state:{chapters:{}}} as any;
 beforeEach(()=>{
   h.effects=[];h.fresh={...book,complete:true,chapters:chapters.map(c=>({...c,available:true,duration:100}))};
   vi.stubGlobal('window',Object.assign(new EventTarget(),{location:{href:'http://localhost/',search:''}}));

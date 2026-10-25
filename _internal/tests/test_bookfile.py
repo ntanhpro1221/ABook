@@ -45,20 +45,20 @@ def test_one_file_carries_the_whole_book_and_the_phone_layout(tmp_path: Path) ->
 
 
 def test_the_file_never_carries_anyones_listening(tmp_path: Path) -> None:
-    """Chỗ đang nghe, dấu trang, lịch sử là của người nghe trên máy này - không đi theo file sang người khác."""
+    """Chỗ đang nghe, tốc độ, lịch sử là của người nghe trên máy này - không đi theo file sang người khác."""
     project = make_project(tmp_path)
     listening = Listening(tmp_path / "listening.json")
     identifier = book_id(project)
     listening.progress(identifier, 1, 42.5, 60.0)
-    listening.add_bookmark(identifier, 1, 10.0, "chỗ bí mật")
+    listening.set_rate(identifier, 1.37)
     listening.set_chapter_done(identifier, 1, True)
-    assert listening.get(identifier)["bookmarks"], "máy này có chỗ đang nghe và dấu trang"
+    assert listening.get(identifier)["rate"] == 1.37, "máy này có chỗ đang nghe và tốc độ"
 
     path = bookfile.pack(project, tmp_path / f"sach{bookfile.EXTENSION}")
 
     with zipfile.ZipFile(path) as archive:
         everything = "".join(archive.read(name).decode("utf-8") for name in archive.namelist() if name.endswith(".json"))
-    assert "42.5" not in everything and "bí mật" not in everything and '"done": true' not in everything
+    assert "42.5" not in everything and "1.37" not in everything and '"done": true' not in everything
 
 
 def test_the_book_carries_no_id_of_any_app(tmp_path: Path) -> None:

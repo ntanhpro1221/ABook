@@ -21,12 +21,12 @@ internal object ListeningSchema {
         val state = fields(raw, listOf("updatedAt", "rate", "rateAt", "finishedAt", "voiceAt", "_clock"), listOf("voice"), listOf("finished"))
         if (state.has("_clock") && !ListeningRevision.validNumber(state.opt("_clock"))) state.remove("_clock")
         if (state.has("_epoch") && !ListeningRevision.validEpoch(state.opt("_epoch"))) state.remove("_epoch")
-        for (key in listOf("_fieldRevs", "_deletedRevs")) if (state.has(key)) {
+        if (state.has("_fieldRevs")) {
             val clean = JSONObject()
-            state.optJSONObject(key)?.let { rows -> for (id in rows.keys()) {
+            state.optJSONObject("_fieldRevs")?.let { rows -> for (id in rows.keys()) {
                 if (ListeningRevision.revision(JSONObject().put("rev", rows.opt(id))).first > 0) clean.put(id, rows.get(id))
             } }
-            state.put(key, clean)
+            state.put("_fieldRevs", clean)
         }
         for ((field, stamp) in listOf("rate" to "rateAt", "finished" to "finishedAt", "voice" to "voiceAt")) {
             // Value + stamp + revision are one unit (Python clean_state): a broken part drops all three and the other device resends
@@ -53,22 +53,7 @@ internal object ListeningSchema {
             }
         }
         state.put("chapters", chapters)
-        val marks = JSONArray()
-        state.optJSONArray("bookmarks")?.let { rows ->
-            for (i in 0 until rows.length()) rows.optJSONObject(i)?.let {
-                if (it.opt("id") is String && number(it.opt("chapterId")) && number(it.opt("seconds")) && revised(it))
-                    marks.put(fields(it, listOf("seconds", "at", "createdAt", "index"), listOf("note", "quote")))
-            }
-        }
-        state.put("bookmarks", marks)
-        for (key in listOf("chapters", "bookmarks")) if (!raw.has(key)) state.remove(key)
-        if (state.has("deleted")) {
-            val deleted = numericMap(state.optJSONObject("deleted"))
-            // A deletion with no revision left in the filtered table (broken revision, or `_deletedRevs` itself the wrong type) goes too, for the same reason as a row.
-            val revs = state.optJSONObject("_deletedRevs")
-            for (key in deleted.keys().asSequence().toList()) if (revs?.has(key) != true) deleted.remove(key)
-            state.put("deleted", deleted)
-        }
+        if (!raw.has("chapters")) state.remove("chapters")
         if (state.has("sessions")) {
             val sessions = JSONArray()
             state.optJSONArray("sessions")?.let { rows ->

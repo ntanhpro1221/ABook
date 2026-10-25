@@ -6,12 +6,12 @@ import { coverArtwork, type CoverImage } from "@/shared/cover";
 import { formatClock } from "@/shared/format";
 import { Clock, ClockContext } from "./clock";
 import { isNative, type AudioEngine } from "./engine";
-import { anchorOf, makeAnchor, type ReadingAnchor } from "./readingAnchor";
+import { anchorOf, type ReadingAnchor } from "./readingAnchor";
 import { tellSceneMusic } from "./musicHint";
 import { MUSIC_CHANGED_ALL, MUSIC_CHANGED_EVENT, MusicBed, NextChapterWarm, type MusicCredit } from "./musicBed";
 import { SceneCues, isSceneCues, sceneRetryDelay } from "./sceneCues";
 import { nextPlaylistBed, PlaylistClock, PlaylistDriver, type PlaylistBedState } from "./playlistBed";
-import { canPlay, newerElsewhere, resumePoint, startingRate, type Bookmark, type BookmarkSentence, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
+import { canPlay, newerElsewhere, resumePoint, startingRate, type ListenBook, type ListenChapter, type NightPosition, type Script } from "./model";
 import { NightRecorder } from "./night";
 import { leftWithPeer, watchUntilBack } from "./peerBack";
 import {
@@ -32,7 +32,6 @@ import { askOnlineConsent, needsOnlineConsent } from "./onlineConsent";
 import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useSource } from "./source";
 import { publishTrackMetadata, useTrackMetadata } from "./trackMetadata";
-import { sentenceIndexAt } from "./words";
 import { caughtUpLine } from "./labels";
 import { reportSaveFailure } from "./saveFailure";
 import { ProgressOutbox } from "./progressOutbox";
@@ -44,7 +43,7 @@ export type { SleepMode, SleepRequest } from "./sleep";
 
 // Trình phát sách nói - chung cho máy tính và Android. Hành vi theo chuẩn Audible / Apple Books / Smart AudioBook
 // Player: nhớ vị trí và tốc độ từng cuốn, tự sang chương kế, hẹn giờ ngủ nhỏ dần và gia hạn được, tự lùi khi nghe
-// lại theo độ dài lần dừng, "quay lại chỗ vừa nghe" sau mỗi cú nhảy xa, dấu trang một chạm, phím tắt, nút media.
+// lại theo độ dài lần dừng, "quay lại chỗ vừa nghe" sau mỗi cú nhảy xa, phím tắt, nút media.
 //
 // Bộ máy web (máy tính): trình phát tự lo hàng đợi, hẹn giờ, nhật ký đêm, lưu vị trí.
 // Bộ máy native (Android): lõi Media3 lo hết những việc đó - trình phát chỉ chuyển lệnh và phản chiếu trạng thái.
@@ -173,7 +172,6 @@ interface PlayerActions {
   setVolume: (volume: number) => void;
   setSleep: (request: SleepRequest) => void;
   extendSleep: (minutes?: number) => void;
-  addBookmark: (note?: string) => Promise<Bookmark | null>;
   close: () => void;
   /** Đổi hồ sơ nghe của một cuốn (`change` gọi máy chủ); cuốn đang nạp thì trình phát theo sang hồ sơ mới.
    *  `startOver`: xong thì phát từ chương đầu (nghe lại từ đầu bằng hồ sơ mới). */
@@ -227,7 +225,7 @@ const SAVE_EVERY_MS = 10_000;
 const FRESH_SPOT_MS = 1600;
 /** Lời nhắn (notice) tự ẩn sau chừng này. */
 const NOTICE_MS = 12_000;
-/** Nhảy xa hơn chừng này (tua, chương, dấu trang) thì mời "quay lại chỗ vừa nghe". */
+/** Nhảy xa hơn chừng này (tua, chương) thì mời "quay lại chỗ vừa nghe". */
 const JUMP_SECONDS = 30;
 const HISTORY = 5;
 /** Nhạc theo cảnh dựng nền (music_nnscene.py): hỏi lại mốc của chương chưa dựng xong mỗi chừng này, tối đa chừng ấy lần (~2 phút). */
@@ -333,7 +331,6 @@ export function PlayerProvider({
     rate: defaultRate,
     defaultRate,
     history: [] as { chapterId: number; seconds: number }[],
-    bookmarking: false,
     muted: 0,
     stamp: 0,
     /** Chỗ lần gần nhất đã lưu (hay vừa nạp từ chỗ đã lưu) - đổi hồ sơ mà trình phát chưa nhúc nhích thì khỏi lưu lại. */
@@ -1067,7 +1064,7 @@ export function PlayerProvider({
     const current = refs.current.track;
     if (!current) return;
     const from = engine.time;
-    // Tua (về đầu chương bằng Home, "Nghe từ đây", dấu trang) sau khi đã nghe hết: bỏ dòng "Đã nghe hết phần đã có" - soát UX
+    // Tua (về đầu chương bằng Home, "Nghe từ đây") sau khi đã nghe hết: bỏ dòng "Đã nghe hết phần đã có" - soát UX
     // 29-09: dòng ấy còn nguyên trong lúc chương đang phát lại ở 4:52, tới khi tải lại trang.
     setAtEnd("none");
     engine.seek(seconds);
@@ -1261,29 +1258,6 @@ export function PlayerProvider({
     night.extend(minutes, position());
     toast.success(`Nghe thêm ${minutes} phút`, { id: "sleep-extend", duration: 2500 });
   }, [applySleep, endFade, engine, native, night, options.extendMinutes, position]);
-
-  const addBookmark = useCallback(async (note = "") => {
-    const current = refs.current.track;
-    if (!current || refs.current.bookmarking) return null;
-    refs.current.bookmarking = true;
-    try {
-      // Chương đọc to (Nghe ngay): dấu đặt từ trình phát cũng giữ câu đang đọc + câu trích như dấu đặt ở màn đọc - chương chữ không có kịch bản
-      // audio để dòng dấu trang tự tìm câu theo giờ (soát a70).
-      const script = client.getQueryData<Script>(["listen", "script", current.bookId, current.chapterId, "text"]);
-      const index = script?.timed ? sentenceIndexAt(script.segments.map((segment) => segment.start ?? 0), engine.time) : -1;
-      const sentence: BookmarkSentence | undefined = script && index >= 0
-        ? { index, quote: script.segments[index].text, anchor: makeAnchor(script.segments.map((segment) => segment.text), index, 0) } : undefined;
-      // Không có kịch bản: để native tự chốt câu và chữ đang đọc, không gửi câu rỗng.
-      const mark = native
-        ? await native.addBookmark(note, sentence)
-        : await source.addBookmark(current.bookId, current.chapterId, engine.time, note ?? "", current.recordId, sentence);
-      night.touch("bookmark", position(), true);
-      refreshLists(current.bookId);
-      return mark;
-    } finally {
-      refs.current.bookmarking = false;
-    }
-  }, [client, engine, native, night, position, refreshLists, source]);
 
   const close = useCallback(() => {
     if (!native) publishTrackMetadata(null);
@@ -1797,7 +1771,7 @@ export function PlayerProvider({
       if (target.closest('[role="menu"],[role="listbox"],[role="dialog"]')) return;
       const widget = target.closest('[role="slider"],[role="tab"],[role="radio"],[role="option"],[role="menuitem"]');
       const keyboardFocused = target !== document.body && keyboardNavigation;
-      // Phím một chữ cái (B, M, [ ]) tắt ở Cài đặt › Phím tắt (WCAG 2.1.4); Space và mũi tên vẫn chạy.
+      // Phím một chữ cái (M, [ ]) tắt ở Cài đặt › Phím tắt (WCAG 2.1.4); Space và mũi tên vẫn chạy.
       if (event.key.length === 1 && event.key !== " " && !letterShortcutsOn()) return;
       switch (event.key) {
         case " ": {
@@ -1817,11 +1791,6 @@ export function PlayerProvider({
           else skip(forward ? SKIP_SECONDS : -SKIP_SECONDS);
           break;
         }
-        case "b":
-        case "B":
-          event.preventDefault();
-          window.dispatchEvent(new CustomEvent("abook:bookmark"));
-          break;
         case "m":
         case "M":
           event.preventDefault();
@@ -1903,10 +1872,10 @@ export function PlayerProvider({
     track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
     canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading,
     play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart, setRate, setVolume, setSleep,
-    extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues,
+    extendSleep, close, switchRecord, positionStamp, setContinues,
   }), [track, queue, playing, buffering, rate, volume, sleep, fading, sleepStoppedAt, lastSleepMinutes, purpose, atEnd,
     canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart,
-    setRate, setVolume, setSleep, extendSleep, addBookmark, close, switchRecord, positionStamp, setContinues]);
+    setRate, setVolume, setSleep, extendSleep, close, switchRecord, positionStamp, setContinues]);
 
   // Mở/đóng "Đang nghe" qua View Transitions: màn trượt lên từ đáy (đóng thì trượt xuống), bìa ở thanh phát bay lên thành bìa lớn
   // (và bay về) - xem .now-playing-vt / .cover-morph trong styles.css. Xin giảm chuyển động: chỉ còn hiện / mờ (CSS). Không có API

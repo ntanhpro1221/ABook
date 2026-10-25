@@ -48,7 +48,6 @@ class A105HostRecordsTest {
             records.put(id(key), meta)
             val state = JSONObject(item.getJSONObject("state").toString())
             if (!state.has("chapters")) state.put("chapters", JSONObject())
-            if (!state.has("bookmarks")) state.put("bookmarks", JSONArray())
             File(root, "state/${id(key)}.json").writeText(state.toString())
         }
         val links = JSONObject()
@@ -79,10 +78,6 @@ class A105HostRecordsTest {
         if (expect.has("book")) assertEquals(expect.getString("book"), reply.getString("book"))
         if (expect.has("deleted")) assertEquals(expect.getBoolean("deleted"), reply.optBoolean("deleted"))
         if (expect.has("lastSeconds")) assertEquals(expect.getDouble("lastSeconds"), reply.getJSONObject("last").getDouble("seconds"), 0.0)
-        if (expect.has("bookmarkNotes")) {
-            val notes = reply.getJSONArray("bookmarks").let { marks -> (0 until marks.length()).map { marks.getJSONObject(it).getString("note") } }
-            assertEquals(list(expect.getJSONArray("bookmarkNotes")), notes)
-        }
         if (expect.has("recordName")) assertEquals(expect.getString("recordName"), reply.getString("recordName"))
         if (expect.has("movedAt")) assertEquals(expect.getDouble("movedAt"), reply.getDouble("movedAt"), 0.0)
         if (expect.has("activeRecord")) assertEquals(id(expect.getString("activeRecord")), reply.getJSONObject("active").getString("record"))
@@ -113,12 +108,6 @@ class A105HostRecordsTest {
         assertEquals(list(expect.getJSONArray("deleted")).map(::id).sorted(), saved.getJSONObject("deleted").keys().asSequence().toList().sorted())
         expect.optJSONObject("lastSeconds")?.let { seconds ->
             for (key in seconds.keys()) assertEquals(seconds.getDouble(key), lastSeconds(id(key))!!, 0.0)
-        }
-        expect.optJSONObject("bookmarkNotes")?.let { notes ->
-            for (key in notes.keys()) {
-                val marks = Store.readJson(File(root, "state/${id(key)}.json"))?.optJSONArray("bookmarks") ?: JSONArray()
-                assertEquals(list(notes.getJSONArray(key)), (0 until marks.length()).map { marks.getJSONObject(it).getString("note") })
-            }
         }
     }
 

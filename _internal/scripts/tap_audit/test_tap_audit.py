@@ -12,16 +12,15 @@ from ui_tap_audit import CDP, free_port, load_scenarios, result_status
 
 def test_repository_scenarios():
     specs = load_scenarios(Path(__file__).with_name('scenarios.json'))
-    assert len(specs) == 24
+    assert len(specs) == 21
     assert any(s.get('viewport') == [1280, 900] for s in specs)
     assert any('{listen}' in s['path'] for s in specs)
     assert any('{studio}' in s['path'] for s in specs)
     assert any('{profiles}' in s['path'] for s in specs)
-    for name in ('Speed', 'Sleep timer', 'More options', 'Voice', 'Background music'):
+    for name in ('Speed', 'Sleep timer', 'Voice', 'Background music'):
         for platform in ('mobile', 'desktop'):
             scenario = next(s for s in specs if s['name'] == f'Player {platform} - {name}')
             assert scenario['probe']['expect']
-    assert any(s['name'] == 'Player mobile - Bookmarks' for s in specs)
     assert any(s['name'] == 'Player mobile - Chapters' for s in specs)
 
 
