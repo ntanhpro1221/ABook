@@ -173,7 +173,7 @@ const stoppingNote = (copy: ExportCopy) => copy.stopping ?? STOPPING.note;
 const NO_ACTION = { action: undefined } as const;
 
 /** Cùng một kiểu toast suốt vòng đời (cùng nút DOM khi đổi từ đang làm sang xong / lỗi): chữ, biểu tượng và nút giữ vùng fade riêng.
- *  MỘT dòng + tối đa MỘT nút (DESIGN 6): chỉ "đang làm" (tiến độ), "cảnh báo" (xong mà thiếu gì đó) và "lỗi" mang dòng mô tả; "xong" và "đã dừng" chỉ còn tiêu đề.
+ *  MỘT dòng + tối đa MỘT nút (DESIGN 6): tiến độ / cảnh báo / lỗi đưa lời dài vào Chi tiết; "xong" và "đã dừng" chỉ còn tiêu đề.
  *  `hint`: đường đầy đủ của file, hiện khi rê chuột lên tiêu đề. */
 type ExportToastKind = "loading" | "success" | "warning" | "info" | "error";
 const say = toast.message as unknown as (message: ReactNode, data?: ToastOptions) => string | number; // toast.message nhận cả mô tả; kiểu hẹp của nó chặn nhầm, nên chỉ `described` dưới đây được đưa vào
@@ -190,7 +190,7 @@ function exportToast(kind: ExportToastKind, title: string, options: {
     ...rest,
     className: described && description ? undefined : "toast-one-line",
     icon: null,
-    description: <MotionRegion>{described ? description : undefined}</MotionRegion>,
+    description: described && description ? <MotionRegion>{description}</MotionRegion> : undefined,
     action: <MotionRegion as="span" motionKey={options.action?.label ?? ""}>{options.action &&
       <Button data-button="" size="sm" variant="primary" onClick={options.action.onClick}>{options.action.label}</Button>}
     </MotionRegion>,

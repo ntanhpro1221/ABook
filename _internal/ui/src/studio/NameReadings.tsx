@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SectionHeading } from "@/shared/SectionHeading";
 import { useBackLayer } from "@/shared/backStack";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCachedBook } from "./data";
@@ -111,12 +112,12 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
   const counted = data.items.filter((item) => item.lines > 0).length;
   return (
     <MotionRegion as="section" className="mt-8" aria-labelledby="name-readings-title">
-      <h3 id="name-readings-title" className="scroll-mt-16 text-sm font-semibold">
+      <SectionHeading as="h3" id="name-readings-title" className="scroll-mt-16">
         Cách đọc tên{" "}
         <span className="font-normal text-fg-2">
           · {analyzed ? `${formatNumber(counted)} tên trong phần này` : "chưa phân tích - tên hiện ra sau bước ấy"}
         </span>
-      </h3>
+      </SectionHeading>
       <p className="mt-1 max-w-prose text-sm text-fg-2">
         Nghe và sửa cách đọc tên; câu đã thu có tên ấy sẽ thu lại.
       </p>

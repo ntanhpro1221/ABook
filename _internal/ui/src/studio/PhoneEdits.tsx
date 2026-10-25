@@ -1,5 +1,6 @@
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SectionHeading } from "@/shared/SectionHeading";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Link2, RotateCcw, Smartphone, X } from "lucide-react";
@@ -140,9 +141,9 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
 
   return (
     <MotionRegion as="section" aria-label="Yêu cầu thiết bị" className="mb-5 py-4">
-      <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
+      <SectionHeading className="gap-2">
         <Smartphone className="size-4 text-fg-3" /> Yêu cầu thiết bị{data.waiting ? ` (${data.waiting} việc chờ duyệt)` : ""}
-      </h2>
+      </SectionHeading>
       {data.devices.length > 0 && (
         <div className="mt-1 text-sm text-fg-2">
           <p>Áp dụng để đưa vào hàng chờ; bỏ qua vẫn khôi phục được.</p>
