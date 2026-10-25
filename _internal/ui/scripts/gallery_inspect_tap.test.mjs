@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { launch, findBrowser, connect, openPage, evaluate } from "./gallery_browser.mjs";
+import { browserAvailable, launch, findBrowser, connect, openPage, evaluate } from "./gallery_browser.mjs";
 import { inspectTapReach } from "./gallery_inspect_tap.mjs";
 import { normalizeRule, DEFAULT_FAIL_ON } from "./gallery_inspect.mjs";
 
@@ -46,7 +46,7 @@ describe("TAP REACH trên Edge thật", () => {
     expect(normalizeRule("rule15")).toBe("TAP REACH");
     expect(DEFAULT_FAIL_ON).toContain("TAP REACH");
   });
-  it("đối chứng hai phía và từng ngoại lệ", async () => {
+  it.skipIf(!browserAvailable)("đối chứng hai phía và từng ngoại lệ", async () => {
     const browser = await launch(findBrowser(), { preserveProfile: true });
     let cdp;
     const results = [];

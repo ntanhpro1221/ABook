@@ -1183,13 +1183,13 @@ const TAB_LABEL: Record<string, string> = {
   activity: "Nhật ký",
 };
 
-/** Năm tab hiện thẳng, theo tần suất: Chương (nghe kiểm, thu lại), Việc cần duyệt và Cần nghe lại (hai hộp việc dây chuyền chờ bạn),
- *  Nhân vật (đổi giọng - việc hay làm nhất sau phân vai), Nhạc nền. Còn lại vào "Thêm" (DESIGN.md mục 4.3, 7). */
 /** Tab nằm trong "Thêm" không có nút tab riêng (aria-labelledby của Radix trỏ vào id không có): bảng tự mang tên. */
 function moreTabName(key: string) {
   return { "aria-label": TAB_LABEL[key], "aria-labelledby": undefined };
 }
 
+/** Năm tab hiện thẳng, theo tần suất: Chương (nghe kiểm, thu lại), Việc cần duyệt và Cần nghe lại (hai hộp việc dây chuyền chờ bạn),
+ *  Nhân vật (đổi giọng - việc hay làm nhất sau phân vai), Nhạc nền. Còn lại vào "Thêm" (DESIGN.md mục 4.3, 7). */
 export const MAIN_TABS = ["chapters", "work", "review", "cast", "music"] as const;
 
 /** Hàng tab của dự án. "Duyệt trước khi thu" chỉ có trong một khoảng ngắn (sau phân tích, trước khi thu) và đã có dải mời ở đầu
