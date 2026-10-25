@@ -9,6 +9,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Điện thoại
 
+- Mở, thu nhỏ màn Đang nghe, xếp sách và mở trang đọc ít khựng hơn; giữ nguyên các chuyển động.
 - Mở danh sách con trong bảng của trình phát (như Giọng đọc) mượt hơn: màn Đang nghe chỉ co lại một lần khi bảng đã đứng, không đổi cỡ theo từng khung hình.
 - Mở thư viện trên điện thoại không còn chờ ảnh ở xa dưới vùng cuộn hay hiệu ứng khung chờ đang khép.
 

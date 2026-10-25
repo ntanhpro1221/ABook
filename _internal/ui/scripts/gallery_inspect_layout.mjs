@@ -769,13 +769,17 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
   // (soát 25-10). Dấu đang ẩn (mờ 0) vẫn giữ chỗ nên vẫn đo; chỉ cần hàng hiện.
   for (const mark of all.filter((e) => e.matches("[data-selection-mark]"))) {
     // Phạm vi = khối gần nhất có chữ: hàng bảng nhiều cột (Kịch bản Studio: người nói | nút nghe | dấu + câu) chỉ xét cột của dấu.
-    const hasText = (p) => [...p.querySelectorAll("*")].some((c) => !c.closest("svg") && [...c.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
+    const hasText = (p) => [p, ...p.querySelectorAll("*")].some((c) => !c.closest("svg") && [...c.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
     let row = mark.parentElement;
     while (row && row !== document.body && !hasText(row)) row = row.parentElement;
     if (!row || row === document.body || !shownChain(row)) continue;
     const mb = rect(mark.getBoundingClientRect());
-    const first = [...row.querySelectorAll("*")].filter((c) => !c.closest("svg") && [...c.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
-      .map((c) => ({ c, b: visible(c, rect(c.getBoundingClientRect())) })).filter((t) => t.b).sort((a, b) => a.b.x - b.b.x)[0];
+    // Nhãn có thể là text node ngay sau SVG (menu xếp sách); đo chữ, không lấy hộp hàng chứa luôn dấu làm mép chữ.
+    const first = [row, ...row.querySelectorAll("*")].filter((c) => !c.closest("svg")).flatMap((c) => [...c.childNodes]
+      .filter((n) => n.nodeType === 3 && n.textContent.trim()).map((n) => {
+        const range = document.createRange(); range.selectNodeContents(n);
+        return { c, b: visible(c, rect(range.getBoundingClientRect())) };
+      })).filter((t) => t.b).sort((a, b) => a.b.x - b.b.x)[0];
     if (!first || first.b.x >= mb.x - 1) continue;
     add("SIBLING CONSISTENCY", mark, row.textContent, [mb, first.b],
       { metric: "check-mark-trailing", value: mb.x, referenceValue: first.b.x, delta: mb.x - first.b.x, tolerance: 1, otherSelector: selector(first.c), reason: "a pick list's check mark must lead the row, before its label" });
