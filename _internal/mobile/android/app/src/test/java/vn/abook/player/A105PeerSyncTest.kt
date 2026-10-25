@@ -41,7 +41,7 @@ class A105PeerSyncTest {
     private fun ids(book: String) = Store.records(book).let { list -> (0 until list.length()).map { list.getJSONObject(it).getString("id") } }
 
     private fun reply(record: String, book: String, movedAt: Double = 0.0) = JSONObject().put("record", record).put("book", book)
-        .put("movedAt", movedAt).put("chapters", JSONObject()).put("bookmarks", JSONArray())
+        .put("movedAt", movedAt).put("chapters", JSONObject())
         .put("active", JSONObject().put("record", record).put("at", 0.0))
 
     @Test

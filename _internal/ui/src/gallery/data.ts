@@ -1,4 +1,4 @@
-import type { Bookmark, Cast, CastMember, ListenBook, ListenChapter, ListeningSession, ListeningState, NightSession, Script, ScriptSegment, SeriesLink } from "@/listen/model";
+import type { Cast, CastMember, ListenBook, ListenChapter, ListeningSession, ListeningState, NightSession, Script, ScriptSegment, SeriesLink } from "@/listen/model";
 import type { LocalBook, ManifestChapter } from "@/android/plugins";
 import type { ImportPreview, ImportPreviewChapter } from "@/listen/textImport";
 import { bookProgress, textBookProgress } from "@/android/progress";
@@ -70,7 +70,6 @@ function listening(book: { chapters: GalleryChapter[] }, done: number, seconds: 
   if (current && seconds > 0) chapterStates[String(current.id)] = { heard: seconds, done: false, duration: current.duration, at };
   return {
     chapters: chapterStates,
-    bookmarks: [],
     ...(current ? { last: { chapterId: current.id, seconds, at } } : {}),
     updatedAt: at,
     ...extra,
@@ -117,7 +116,7 @@ const fog2: GalleryBook = {
 const fog3: GalleryBook = {
   id: "suong-mu-3", title: "Thành Phố Sương Mù · Tập 3", author: "Lâm Hạ Vy", narrator: "Ngọc Lan", chapters: fog3Chapters,
   cover: { file: "covers/suong-mu-3.svg", color: "#2f5d58" }, addedAt: ago(2 * DAY),
-  state: { chapters: {}, bookmarks: [] },
+  state: { chapters: {} },
 };
 
 const lighthouse: GalleryBook = {
@@ -142,29 +141,24 @@ const hourglass: GalleryBook = {
 
 const stars: GalleryBook = {
   id: "vi-sao-lac", title: "Bản Đồ Những Vì Sao Lạc", author: "Vũ Hoàng Nam", narrator: "Tuấn Kiệt", chapters: starsChapters, producing: true,
-  pauseReason: "battery", eta: { phase: "synthesis", seconds: 9 * HOUR }, addedAt: ago(8 * DAY), state: { chapters: {}, bookmarks: [] },
+  pauseReason: "battery", eta: { phase: "synthesis", seconds: 9 * HOUR }, addedAt: ago(8 * DAY), state: { chapters: {} },
 };
 
 const attic: GalleryBook = {
   id: "gac-xep", title: "Tiệm Sách Trên Gác Xép", author: "Hà Thanh Tâm", narrator: "", chapters: atticChapters, imported: true, addedAt: ago(6 * DAY),
-  state: { chapters: {}, bookmarks: [], reading: { chapterId: 2, index: 4, at: ago(3 * DAY) } as ListeningState["reading"], updatedAt: ago(3 * DAY) },
+  state: { chapters: {}, reading: { chapterId: 2, index: 4, at: ago(3 * DAY) } as ListeningState["reading"], updatedAt: ago(3 * DAY) },
 };
 
 const cloud: GalleryBook = {
   id: "lang-may", title: "Đường Về Làng Mây", author: "Lò Văn Sơn", narrator: "Mai Anh", chapters: cloudChapters, addedAt: ago(DAY), streamed: true,
-  state: { chapters: {}, bookmarks: [] },
+  state: { chapters: {} },
 };
 
 const winter: GalleryBook = {
   id: "thu-mua-dong", title: "Mười Hai Bức Thư Gửi Mùa Đông", author: "Kiều Bích Ngọc", narrator: "Thu Hà", chapters: winterChapters, producing: true,
-  eta: { phase: "analysis", seconds: 50 * 60 }, addedAt: ago(HOUR), state: { chapters: {}, bookmarks: [] },
+  eta: { phase: "analysis", seconds: 50 * 60 }, addedAt: ago(HOUR), state: { chapters: {} },
 };
 
-fog2.state.bookmarks = [
-  { id: "bm1", chapterId: 2, seconds: 512, note: "Lần đầu nhắc tới tháp chuông", at: ago(3 * DAY), createdAt: ago(3 * DAY), index: 11,
-    quote: "Ba mươi năm rồi tôi mới thấy lại nó." },
-  { id: "bm2", chapterId: 4, seconds: 300, note: "", at: ago(50 * 60), createdAt: ago(50 * 60), index: 7, quote: "Cô xoè bàn tay." },
-] satisfies Bookmark[];
 fog2.series = null;
 
 export const BOOKS: GalleryBook[] = [fog2, lighthouse, hourglass, kapok, stars, attic, fog3, fog1, family, cloud, winter];

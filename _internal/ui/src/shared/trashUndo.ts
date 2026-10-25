@@ -16,12 +16,12 @@ export function restoredMessage(title: string, result: Partial<Pick<Restored, "t
   return result.renamed && result.title ? `Đã khôi phục “${title}” vào thư mục “${result.title}”` : `Đã khôi phục “${title}”`;
 }
 
-/** Lưu ý của "Đã khôi phục" (khôi phục thiếu gì đó thì thành cảnh báo): thư viện có hai cuốn trùng tên (tên mới đã nằm trong chữ chính); chỗ nghe / dấu trang
+/** Lưu ý của "Đã khôi phục" (khôi phục thiếu gì đó thì thành cảnh báo): thư viện có hai cuốn trùng tên (tên mới đã nằm trong chữ chính); chỗ nghe
  *  chưa mang theo; cuốn từng xếp hàng chờ thì hàng chờ không tự xếp lại. */
 export function restoredNote(result: Partial<Pick<Restored, "renamed" | "wasQueued" | "dataLeft">>): string | undefined {
   const notes = [
     result.renamed ? "Thư viện có hai cuốn trùng tên." : "",
-    result.dataLeft ? "Chưa mang theo chỗ nghe và dấu trang." : "",
+    result.dataLeft ? "Chưa mang theo chỗ nghe." : "",
     result.wasQueued ? "Chưa xếp lại hàng chờ làm sách." : "",
   ].filter(Boolean);
   return notes.length ? notes.join(" ") : undefined;

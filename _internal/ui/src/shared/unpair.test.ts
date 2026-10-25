@@ -61,7 +61,7 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
     expect(copy.discard).toBe("Thôi ghép");
     expect(copy.lines[0]).toContain("3 cuốn của Máy bàn sẽ rời Thư viện");
     expect(copy.lines[0]).toContain("đã tải về máy tính này sẽ bị xoá");
-    expect(copy.lines[1]).toContain("Chỗ nghe và dấu trang của 2 cuốn vẫn giữ");
+    expect(copy.lines[1]).toContain("Chỗ nghe của 2 cuốn vẫn giữ");
   });
 
   it("không có gì để mất thì gỡ như thường; lời báo sau khi gỡ chỉ MỘT dòng", () => {

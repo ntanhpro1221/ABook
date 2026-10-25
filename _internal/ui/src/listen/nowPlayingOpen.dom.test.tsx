@@ -59,9 +59,9 @@ const player = (patch: Record<string, unknown> = {}) => {
     track: { bookId: "a", chapterId: 1, chapterTitle: "Chương 1", bookTitle: "Sách A", recordId: undefined },
     queue: [chapter(1), chapter(2)], playing: false, buffering: false, rate: 1, volume: 0.9, atEnd: null, purpose: "listen",
     sleep: { kind: "off" }, fading: false, options: { extendMinutes: 10 }, error: "", errorRepeat: 0, notice: "", canGoBack: false, wantsPlay: false,
-    musicBroken: false, musicOffline: false, musicLoading: false, bookmarks: [], toggle: vi.fn(), close: vi.fn(), skip: vi.fn(), next: vi.fn(), previous: vi.fn(),
+    musicBroken: false, musicOffline: false, musicLoading: false, toggle: vi.fn(), close: vi.fn(), skip: vi.fn(), next: vi.fn(), previous: vi.fn(),
     setRate: vi.fn(), setVolume: vi.fn(), jumpTo: vi.fn(), goBack: vi.fn(), resume: vi.fn(), retry: vi.fn(), dismissError: vi.fn(), setSleep: vi.fn(), extendSleep: vi.fn(),
-    positionStamp: () => 0, switchRecord: vi.fn(), setContinues: vi.fn(), addBookmark: vi.fn(), pause: vi.fn(), play: vi.fn(), seek: vi.fn(),
+    positionStamp: () => 0, switchRecord: vi.fn(), setContinues: vi.fn(), pause: vi.fn(), play: vi.fn(), seek: vi.fn(),
     ...patch,
   };
 };

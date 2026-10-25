@@ -48,16 +48,16 @@ import { ReaderScreen } from "./ReaderScreen";
 let root: Root, host: HTMLDivElement, client: QueryClient, clock: Clock;
 const chapter = (id: number, extra: Partial<ListenChapter> = {}) => ({ id, index: id - 1, subtitle: "", title: `Chương ${id}`, fullTitle: `Chương ${id}`, duration: 600, available: true, ...extra }) as ListenChapter;
 const listenBook = (extra: Partial<ListenBook> = {}) => ({ id: "a", title: "Sách A", author: "Tác giả", narrator: "Ngọc Lan", duration: 3000, chaptersTotal: 5, chaptersAvailable: 5, complete: true, producing: false, updatedAt: null,
-  state: { chapters: {}, bookmarks: [] }, progress: { heardSeconds: 0, totalSeconds: 3000, fraction: 0, chaptersDone: 0, finished: false },
+  state: { chapters: {} }, progress: { heardSeconds: 0, totalSeconds: 3000, fraction: 0, chaptersDone: 0, finished: false },
   chapters: [1, 2, 3, 4, 5].map((id) => chapter(id)), ...extra }) as ListenBook;
 const player = (patch: Record<string, unknown> = {}) => {
   state.player = {
     track: { bookId: "a", chapterId: 1, chapterTitle: "Chương 1", bookTitle: "Sách A", recordId: undefined },
     queue: [chapter(1), chapter(2)], playing: false, buffering: false, rate: 1.15, volume: 0.9, atEnd: null, purpose: "listen",
     sleep: { kind: "off" }, fading: false, options: { extendMinutes: 10, fadeSeconds: 10 }, error: "", errorRepeat: 0, notice: "", canGoBack: true, wantsPlay: false,
-    musicBroken: false, musicOffline: false, musicLoading: false, bookmarks: [], toggle: vi.fn(), close: vi.fn(), skip: vi.fn(), next: vi.fn(), previous: vi.fn(),
+    musicBroken: false, musicOffline: false, musicLoading: false, toggle: vi.fn(), close: vi.fn(), skip: vi.fn(), next: vi.fn(), previous: vi.fn(),
     setRate: vi.fn(), setVolume: vi.fn(), jumpTo: vi.fn(), goBack: vi.fn(), resume: vi.fn(), retry: vi.fn(), dismissError: vi.fn(), setSleep: vi.fn(), extendSleep: vi.fn(),
-    positionStamp: () => 0, switchRecord: vi.fn(), setContinues: vi.fn(), addBookmark: vi.fn(), pause: vi.fn(), play: vi.fn(), seek: vi.fn(),
+    positionStamp: () => 0, switchRecord: vi.fn(), setContinues: vi.fn(), pause: vi.fn(), play: vi.fn(), seek: vi.fn(),
     sleepStoppedAt: null, lastSleepMinutes: 20,
     ...patch,
   };
@@ -94,7 +94,7 @@ it("trang sách: đúng một nút chính - 'Nghe' khi chưa nghe, 'Nghe tiếp 
   await book();
   expect(primaries()).toHaveLength(1);
   expect(primaries()[0].textContent).toBe("Nghe");
-  state.book = listenBook({ state: { chapters: { "3": { heard: 120, done: false } }, bookmarks: [], last: { chapterId: 3, seconds: 120, at: 1 } }, progress: { heardSeconds: 1320, totalSeconds: 3000, fraction: 0.44, chaptersDone: 2, finished: false } } as Partial<ListenBook>);
+  state.book = listenBook({ state: { chapters: { "3": { heard: 120, done: false } }, last: { chapterId: 3, seconds: 120, at: 1 } }, progress: { heardSeconds: 1320, totalSeconds: 3000, fraction: 0.44, chaptersDone: 2, finished: false } } as Partial<ListenBook>);
   await book();
   expect(primaries()).toHaveLength(1);
   expect(primaries()[0].textContent).toBe("Nghe tiếp · Chương 3");
@@ -112,14 +112,13 @@ it("trình phát: đúng 5 nút chính + 4 nút phụ có nhãn; việc khác n�
   expect(transport.querySelector<HTMLButtonElement>("[data-player-toggle]")!.className).toContain("size-[72px]");
   const secondary = screen.querySelector("[data-player-secondary]")!;
   const labels = [...secondary.querySelectorAll("button")].map((button) => button.textContent);
-  expect(labels).toEqual(["1,15×Tốc độ", "Hẹn giờ", "Đánh dấu", "Chương"]);
+  expect(labels).toEqual(["1,15×Tốc độ", "Hẹn giờ", "Chương"]);
   // Màn chính không còn âm lượng, quay lại chỗ vừa nghe, nhạc / giọng: chỉ thấy trong "…".
   expect(named("Quay lại chỗ vừa nghe", screen)).toBeNull();
   expect(screen.textContent).not.toContain("Âm lượng");
   await press(named("Thêm tuỳ chọn", screen)!);
   const more = document.querySelector<HTMLElement>("[data-player-more]")!;
   expect(more.textContent).toContain("Âm lượng");
-  expect(more.textContent).toContain("Dấu trang");
   expect(more.textContent).toContain("Về chỗ vừa nghe");
   // Đáy: một nút "Đọc theo" rộng cả hàng.
   expect([...screen.querySelectorAll("button")].filter((button) => button.textContent === "Đọc theo")).toHaveLength(1);

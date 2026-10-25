@@ -32,7 +32,7 @@ trong book.json. Chi tiết: docs/ABOOK_FILE_FORMAT.md.
 
 Đường dẫn giữ y như gói điện thoại đang tải, nên nhập một file chỉ là giải nén vào chỗ sách tải về.
 
-KHÔNG chứa dữ liệu nghe (chỗ đang nghe, dấu trang, lịch sử) và KHÔNG mang mã sách nào (chủ sách 27-09: sách và dữ
+KHÔNG chứa dữ liệu nghe (chỗ đang nghe, lịch sử) và KHÔNG mang mã sách nào (chủ sách 27-09: sách và dữ
 liệu nghe độc lập, không biết đến mã; app giữ liên kết giữa chúng) - kể cả mục `series` của gói điện thoại, vì nó mang mã
 của máy làm ra file. Muốn biết hai file có phải cùng một lần sản xuất, app so mã băm audio từng chương
 (`fingerprints.py`) - chính mã băm dùng để kiểm file hỏng, không phải thêm gì.

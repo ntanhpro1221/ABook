@@ -81,7 +81,7 @@ def roundtrip(value):
 def sync(client: Machine, holder: Machine) -> bool:
     body = roundtrip(client.enter().L.sync_request(client.book, HOLDER, None))
     holder.enter()
-    state = {k: v for k, v in body.items() if k not in SYNC_KEYS or (k == "deleted" and isinstance(v, dict))}
+    state = {k: v for k, v in body.items() if k not in SYNC_KEYS}
     deleted = body.get("deletedRecords")
     reply = roundtrip(holder.L.merge_record(  # tham số như sync.py
         holder.book, body["record"], state, name=str(body.get("recordName") or ""),
@@ -112,10 +112,9 @@ def test_1_new_device_takes_a_profile_with_more_than_a_million_saves(world):
         holder.L._save()
     holder.L.progress(HOLDER, 3, 300.0, 600.0)
     holder.L.set_rate(HOLDER, 1.25)
-    mark = holder.L.add_bookmark(HOLDER, 3, 120.0, note="quan trọng")
     assert sync(client, holder)
     mine = client.state()
-    assert mine["rate"] == 1.25 and mine["last"]["chapterId"] == 3 and [m["id"] for m in mine["bookmarks"]] == [mark["id"]]
+    assert mine["rate"] == 1.25 and mine["last"]["chapterId"] == 3
     assert JUMP_NOTICE not in notes
     client.enter().L.progress(client.book, 4, 50.0, 600.0)
     sync(client, holder)
@@ -123,7 +122,7 @@ def test_1_new_device_takes_a_profile_with_more_than_a_million_saves(world):
 
 
 def test_1_a_leap_in_the_upper_half_is_still_ignored():
-    ours = {"reading": {"chapterId": 1, "index": 1, "at": 1, "rev": {"counter": SAFE_COUNTER + 5, "node": "a"}}, "chapters": {}, "bookmarks": []}
+    ours = {"reading": {"chapterId": 1, "index": 1, "at": 1, "rev": {"counter": SAFE_COUNTER + 5, "node": "a"}}, "chapters": {}}
     forged = {"reading": {"chapterId": 9, "index": 9, "at": 9,
                                                   "rev": {"counter": SAFE_COUNTER + 5 + MAX_JUMP + 1, "node": "z"}}}
     seen = []
@@ -165,12 +164,12 @@ def test_2_a_partially_read_profile_also_takes_a_new_node(world):
 
 def test_3_a_missing_field_stamp_never_breaks_a_merge(world):
     theirs = {"rate": 1.5, "_fieldRevs": {"rate": {"counter": 3, "node": "peer"}}}
-    merged = merge_states({"chapters": {}, "bookmarks": []}, theirs)
+    merged = merge_states({"chapters": {}}, theirs)
     assert merged["rate"] == 1.5 and "rateAt" not in merged
-    merged = merge_states({"chapters": {}, "bookmarks": [], "rateAt": 5}, {**theirs, "rateAt": None})
+    merged = merge_states({"chapters": {}, "rateAt": 5}, {**theirs, "rateAt": None})
     assert merged["rate"] == 1.5 and "rateAt" not in merged
     for field, stamp in (("rate", "rateAt"), ("voice", "voiceAt"), ("finished", "finishedAt")):
-        broken = {"chapters": {}, "bookmarks": [], field: {"rate": 1.5, "voice": "edge:x", "finished": True}[field], stamp: None,
+        broken = {"chapters": {}, field: {"rate": 1.5, "voice": "edge:x", "finished": True}[field], stamp: None,
                   "_fieldRevs": {field: {"counter": 1, "node": "n"}}}
         clean = clean_state(broken)
         assert field not in clean and stamp not in clean and field not in clean["_fieldRevs"], "bỏ cả bộ ba"
@@ -187,26 +186,22 @@ def test_3_a_missing_field_stamp_never_breaks_a_merge(world):
 def test_3_a_broken_row_revision_drops_the_row_so_the_peer_resends_it():
     bad, ok = {"counter": -3, "node": "x"}, {"counter": 2, "node": "n"}
     clean = clean_state({"chapters": {"1": {"heard": 5, "duration": 9, "at": 1, "rev": bad}, "2": {"heard": 1, "at": 1, "rev": ok}},
-                         "bookmarks": [{"id": "a", "chapterId": 1, "seconds": 2, "rev": bad}],
                          "last": {"chapterId": 1, "seconds": 3, "rev": bad}, "rate": 1.2, "rateAt": 5,
-                         "_fieldRevs": {"rate": bad}, "deleted": {"b": 4}, "_deletedRevs": {"b": bad}})
-    assert list(clean["chapters"]) == ["2"] and clean["bookmarks"] == [] and "last" not in clean
-    assert "rate" not in clean and "rateAt" not in clean and clean["deleted"] == {}
+                         "_fieldRevs": {"rate": bad}})
+    assert list(clean["chapters"]) == ["2"] and "last" not in clean
+    assert "rate" not in clean and "rateAt" not in clean
     assert checked_peer({}, clean, lambda _text: None)["chapters"] == {"2": {"heard": 1, "at": 1, "rev": ok}}
 
 
 def test_3_a_revision_table_of_the_wrong_type_drops_what_it_should_have_versioned():
-    # Chính `_fieldRevs` / `_deletedRevs` sai kiểu: bị thay bằng {} nên giá trị / dấu xoá không còn phiên bản - bỏ như phiên bản hỏng, không để máy kia từ chối mãi.
+    # Chính `_fieldRevs` sai kiểu: bị thay bằng {} nên giá trị không còn phiên bản - bỏ như phiên bản hỏng, không để máy kia từ chối mãi.
     for table in ([{}], "x", 5, None):
         clean = clean_state({"rate": 1.2, "rateAt": 5, "_fieldRevs": table})
         assert "rate" not in clean and "rateAt" not in clean and clean["_fieldRevs"] == {}
         assert checked_peer({}, clean, lambda _text: None)["chapters"] == {}
-        clean = clean_state({"deleted": {"b": 4}, "_deletedRevs": table})
-        assert clean["deleted"] == {}
-        assert checked_peer({}, clean, lambda _text: None)["deleted"] == {}
     ok = {"counter": 2, "node": "n"}
-    clean = clean_state({"rate": 1.2, "rateAt": 5, "_fieldRevs": {"rate": ok}, "deleted": {"b": 4}, "_deletedRevs": {"b": ok}})
-    assert clean["rate"] == 1.2 and clean["deleted"] == {"b": 4}
+    clean = clean_state({"rate": 1.2, "rateAt": 5, "_fieldRevs": {"rate": ok}})
+    assert clean["rate"] == 1.2
 
 
 def test_5_record_metadata_follows_causality_not_the_wall_clock(world):
@@ -237,19 +232,3 @@ def test_5_shared_metadata_order_fixture(case):
     assert meta_newer(case["data"], case["theirs"].get("rev"), case["theirs"]["at"], case["ours"].get("rev"), case["ours"]["at"],
                       seen.append) is case["newer"]
     assert bool(seen) is case.get("notice", False)
-
-
-def test_6_undoing_a_bookmark_delete_keeps_the_tombstone_and_converges(world):
-    holder, client, _, _ = world()
-    mark = holder.enter().L.add_bookmark(HOLDER, 1, 30.0)
-    holder.L.delete_bookmark(HOLDER, mark["id"])
-    sync(client, holder)
-    holder.enter().L.restore_bookmark(HOLDER, mark)
-    for _ in range(3):
-        sync(client, holder)
-    for machine in (holder, client):
-        state = machine.state()
-        assert [m["id"] for m in state["bookmarks"]] == [mark["id"]]
-        assert set(state["deleted"]) == {mark["id"]} and set(state["_deletedRevs"]) == {mark["id"]}
-    assert holder.state()["_deletedRevs"] == client.state()["_deletedRevs"]
-    assert merge_states(holder.state(), client.state())["bookmarks"] == merge_states(client.state(), holder.state())["bookmarks"]

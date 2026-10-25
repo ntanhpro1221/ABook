@@ -2,15 +2,12 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { Collapse } from "@/shared/Collapse";
-import { Capacitor } from "@capacitor/core";
 import * as Popover from "@radix-ui/react-popover";
 import { coverColor, coverStyle } from "@/shared/cover";
 import * as Slider from "@radix-ui/react-slider";
-import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AudioLines,
-  Bookmark as BookmarkIcon,
-  BookmarkPlus,
   Check,
   ChevronDown,
   Gauge,
@@ -23,14 +20,12 @@ import {
   MoreHorizontal,
   Music2,
   Pause,
-  Pencil,
   Play,
   Plus,
   SkipBack,
   SkipForward,
   Square,
   Text,
-  Trash2,
   TriangleAlert,
   Undo2,
   Volume1,
@@ -47,7 +42,7 @@ import { reveal } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
-import { MUSIC_MODIFIED_NOTE, excerpt, formatClock, formatWhen, licenseLabel, musicCreditText, musicNeedsModifiedNote, spokenClock } from "@/shared/format";
+import { MUSIC_MODIFIED_NOTE, formatClock, licenseLabel, musicCreditText, musicNeedsModifiedNote, spokenClock } from "@/shared/format";
 import { announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/PhoneSync";
 import { LEVEL_NOTES, levelOptions } from "@/shared/musicLevels";
@@ -56,7 +51,7 @@ import { usePlayListenBook, useNextVolume } from "./LibraryScreen";
 import { COARSE, EXTEND_GESTURE } from "./extendGesture";
 import { openShortcuts } from "./Shortcuts";
 import { useBookMusic } from "./EditBook";
-import { bookmarkReadPath, canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContinue, seriesOf, type Bookmark, type ListenChapter, type Script } from "./model";
+import { canPlay, continuingPart, newerElsewhere, otherBooksToHear, partToContinue, seriesOf, type Script } from "./model";
 import { SKIP_SECONDS, SPEEDS, useNowPlaying, usePlayer, type PlayerValue } from "./player";
 import { SLEEP_CHOICES, sleepButtonLabel, sleepExtended, sleepLabel, sleepLeftMs, sleepSpoken, type SleepMode, type SleepRequest } from "./sleep";
 import { useVoiceSample } from "./VoiceSettings";
@@ -64,7 +59,7 @@ import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGr
 import { revealVoiceSettings } from "./voiceSettingsLink";
 import { VieneuDownload } from "./VieneuDownload";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, unusableVoiceMessage, voiceCaption } from "./readAloudVoice";
-import { bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel, unquoted } from "./labels";
+import { bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel } from "./labels";
 import { useAfter } from "@/shared/useAfter";
 import { useBackLayer } from "@/shared/backStack";
 import { MOTION, usePresence, useListPresence, withViewTransition } from "@/shared/motion";
@@ -81,8 +76,7 @@ import { useSentenceMenu, type SentenceEditing } from "./SentenceMenu";
 import { sentenceIndexAt } from "./words";
 import { cacheLabel, canPrepare, clearCacheQuestion, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import { READINGS_CHANGED_EVENT, type ReadAloudVoice, type ReadingsChanged } from "./readAloud";
-import { chapterScriptQuery, useWarmVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource, useChosenVoice } from "./source";
-import { isRecordGone, RECORD_GONE_MESSAGE, reportWriteFailure } from "./recordWrites";
+import { chapterScriptQuery, useWarmVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useReadAloudVoices, useSource, useChosenVoice } from "./source";
 import { crossedSeekMark, feedback, withFeedback } from "@/shared/feedback";
 
 export function speedLabel(rate: number): string {
@@ -1230,69 +1224,6 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
   )}</MotionRegion>;
 }
 
-/** Thêm dấu trang kèm thông báo có "Ghi chú" và "Hoàn tác". Dấu trùng chỗ (±5 giây) không tạo thêm. */
-export function useAddBookmark() {
-  const { addBookmark, track } = usePlayer();
-  const { expanded, setExpanded } = useNowPlaying();
-  const source = useSource();
-  const client = useQueryClient();
-  const phoneLayout = useMediaQuery("(max-width: 767px)");
-  // Màn "Đang nghe" mở: thông báo ở góc trên phải từng che đúng tab "Dấu trang" (soát UX a16) - xuống đáy, dưới bảng. Bố cục điện thoại (dưới 768 px) thì tab nằm ở đáy: thông báo ở đầu màn. App Android giữ chỗ cũ.
-  const position = expanded && !Capacitor.isNativePlatform() ? (phoneLayout ? "top-center" : "bottom-right") : undefined;
-  return useCallback(async () => {
-    if (!track) return;
-    let failure: unknown;
-    const mark = await addBookmark().catch((error: unknown) => {
-      failure = error;
-      return null;
-    });
-    if (!mark) {
-      if (isRecordGone(failure)) toast.error(RECORD_GONE_MESSAGE, { id: "record-gone", position });
-      else toast.error("Chưa thêm được dấu trang", { position });
-      feedback("reject");
-      return;
-    }
-    if (mark.existing) {
-      toast.dismiss("bookmark");
-      toast(`Đã có dấu trang ở ${formatClock(mark.seconds)}`, { id: "bookmark-existing", position });
-      return;
-    }
-    feedback("confirm");
-    // MỘT dòng + MỘT nút (DESIGN 6): giờ ghi trong dấu trang (đã làm tròn ở nơi lưu) - cùng con số danh sách dấu trang hiện, không đọc lại đồng hồ phát;
-    // ghi chú thêm sau ở danh sách Dấu trang.
-    toast.success(`Đã thêm dấu trang · ${formatClock(mark.seconds)}`, {
-      id: "bookmark",
-      position,
-      duration: 8000,
-      action: {
-        label: "Hoàn tác",
-        onClick: () => {
-          // dấu vừa đặt vào hồ sơ của phiên phát: hoàn tác cũng vào đúng hồ sơ ấy
-          void source.deleteBookmark(track.bookId, mark.id, track.recordId).then(() => {
-            void client.invalidateQueries({ queryKey: ["listen", "book", track.bookId] });
-          }).catch((error: unknown) => reportWriteFailure(error, "Chưa hoàn tác được dấu trang"));
-        },
-      },
-    });
-  }, [addBookmark, client, position, setExpanded, source, track]);
-}
-
-function BookmarkButton() {
-  const add = useAddBookmark();
-  return <ActionButton label="Đánh dấu" aria-label={withShortcut("Thêm dấu trang", "B")} icon={BookmarkPlus} {...keepFocus} onClick={() => void add()} />;
-}
-
-/** Phím B: một chỗ lắng nghe duy nhất (thanh phát luôn có mặt khi đang nghe). */
-function BookmarkShortcut() {
-  const add = useAddBookmark();
-  useEffect(() => {
-    const onShortcut = () => void add();
-    window.addEventListener("abook:bookmark", onShortcut);
-    return () => window.removeEventListener("abook:bookmark", onShortcut);
-  }, [add]);
-  return null;
-}
-
 /** Vòng đếm ngược quanh biểu tượng hẹn giờ: phần còn lại của khoảng đã đặt, liếc là biết sắp tắt chưa. */
 function SleepRing({ fraction, children }: { fraction: number | null; children: ReactNode }) {
   if (fraction === null) return <>{children}</>;
@@ -1634,7 +1565,6 @@ export function PlayerBar({
   const { track, close, playing, buffering, toggle, next, previous } = usePlayer();
   const { expanded, setExpanded, plain } = useNowPlaying();
   const speaking = useSpeaking();
-  const addBookmark = useAddBookmark();
   useContinueIntoNextPart();
   useWarmVoice(track?.bookId); // trình phát mở lại với cuốn đang dở: nạp sẵn model giọng trên máy
   const content = () => {
@@ -1645,7 +1575,6 @@ export function PlayerBar({
         <CompactProgress />
         {notices && (
           <>
-            <BookmarkShortcut />
             <FurtherElsewhere />
             <FollowRecord />
           </>
@@ -1690,7 +1619,6 @@ export function PlayerBar({
   }
   return (
     <section aria-label="Trình phát" className="@container relative z-20 shrink-0 border-t border-line bg-panel">
-      <BookmarkShortcut />
       <FurtherElsewhere />
       <FollowRecord />
       <FadingNotice className="mx-4 mt-2" />
@@ -1728,7 +1656,6 @@ export function PlayerBar({
           <VolumeControl />
           <MoreMenu scope="bar">
             <SleepMenu look="row" />
-            <MenuRow icon={BookmarkPlus} aria-keyshortcuts={SHORTCUTS ? "B" : undefined} onClick={() => void addBookmark()}>Thêm dấu trang</MenuRow>
             <MenuRow icon={SkipBack} aria-keyshortcuts={SHORTCUTS ? "Shift+ArrowLeft" : undefined} onClick={previous}>Chương trước</MenuRow>
             <MenuRow icon={SkipForward} aria-keyshortcuts={SHORTCUTS ? "Shift+ArrowRight" : undefined} onClick={next}>Chương sau</MenuRow>
             <MusicMenu look="row" />
@@ -1878,207 +1805,18 @@ export function ChapterPanel() {
   );
 }
 
-// ---- Dấu trang (dùng chung cho màn Đang nghe và trang sách) ------------------------------------------------
-
-function BookmarkRow({
-  bookId,
-  mark,
-  chapter,
-  quote,
-  editing,
-  onEdit,
-  onJump,
-}: {
-  bookId: string;
-  mark: Bookmark;
-  chapter: ListenChapter | undefined;
-  quote: string | null;
-  editing: boolean;
-  onEdit: (editing: boolean) => void;
-  onJump: (mark: Bookmark) => void;
-}) {
-  const mutations = useListenMutations(bookId);
-  const [note, setNote] = useState(mark.note);
-  useEffect(() => setNote(mark.note), [mark.note]);
-  const editBox = useRef<HTMLFormElement>(null);
-  const editButton = useRef<HTMLButtonElement>(null);
-  const cancelEdit = () => { setNote(mark.note); onEdit(false); };
-  useBackLayer(editing, cancelEdit, editBox, editButton);
-  useEffect(() => { if (!editing) setNote(mark.note); }, [editing, mark.note]);
-  const remove = () => {
-    mutations.deleteBookmark.mutate(mark.id, {
-      onSuccess: () =>
-        toast("Đã xoá dấu trang", {
-          id: `bookmark-${mark.id}`,
-          duration: 8000,
-          action: { label: "Hoàn tác", onClick: () => mutations.restoreBookmark.mutate(mark) },
-        }),
-    });
-  };
-  return (
-    <MotionRegion as="div" className="group/bookmark rounded-lg px-3 py-2.5 hover:bg-hover">
-      <div className="flex items-start gap-2">
-        <button type="button" onClick={() => onJump(mark)} className="touch-hit min-w-0 flex-1 text-left">
-          <span className="block truncate text-sm font-medium">{chapter ? chapter.subtitle || chapter.title : "Chương đã bị gỡ"}</span>
-          <span className="tabular block text-xs text-fg-2">
-            {chapter?.subtitle ? `${chapter.title} · ` : ""}
-            {/* Chương chưa có audio (sách chỉ có chữ): giờ phút vô nghĩa với người đọc - chỉ có câu chữ. */}
-            {chapter?.available === false && mark.index !== undefined ? "" : `${formatClock(mark.seconds)} · `}
-            {formatWhen(mark.createdAt ?? mark.at)}
-          </span>
-          {quote && <span className="mt-1 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(quote)}”</span>}
-        </button>
-        <div className="flex shrink-0 gap-2 transition-opacity duration-motion-fast [@media(hover:hover)_and_(pointer:fine)]:opacity-0 group-hover/bookmark:opacity-100 group-focus-within/bookmark:opacity-100">
-          <IconButton ref={editButton} label="Sửa ghi chú" icon={Pencil} size="sm" className="max-sm:!justify-end" onClick={() => editing ? cancelEdit() : onEdit(true)} />
-          <IconButton label="Xoá dấu trang" icon={Trash2} size="sm" className="ink-end-icon max-sm:!justify-end sm:-mr-[5px]" onClick={remove} />
-        </div>
-      </div>
-      {editing ? (
-        <form
-          ref={editBox}
-          className="mt-2 space-y-1"
-          onSubmit={(event) => {
-            event.preventDefault();
-            mutations.updateBookmark.mutate({ id: mark.id, note });
-            onEdit(false);
-          }}
-        >
-          <div className="flex gap-2">
-            <input
-              autoFocus
-              value={note}
-              maxLength={500}
-              onChange={(event) => setNote(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  cancelEdit();
-                }
-              }}
-              placeholder="Ghi chú cho dấu trang này"
-              aria-label="Ghi chú"
-              className="touch-box h-9 min-w-0 flex-1 rounded-md border border-line bg-bg px-2 text-sm outline-none focus:border-focus"
-            />
-            <button type="submit" className="touch-box rounded-md bg-accent px-3 text-sm font-medium text-accent-ink">
-              Lưu
-            </button>
-            <button type="button" className="touch-box rounded-md px-3 text-sm text-fg-2 hover:bg-hover" onClick={cancelEdit}>Huỷ</button>
-          </div>
-          <div className="tabular text-right text-[0.6875rem] text-fg-2">{note.length}/500</div>
-        </form>
-      ) : mark.note ? (
-        <p className="mt-1.5 w-fit max-w-full whitespace-pre-wrap break-words py-1.5 text-sm text-fg-2">{mark.note}</p>
-      ) : null}
-    </MotionRegion>
-  );
-}
-
-/** Dấu trang - mới nhất lên đầu, mỗi dấu kèm câu văn ở chỗ đó để nhận ra mà không cần nhớ giây. */
-const bookmarkKey = (mark: Bookmark) => mark.id;
-
-export function BookmarkList({
-  bookId,
-  chapters,
-  marks,
-  onJump,
-  editingId,
-  setEditingId,
-  empty,
-}: {
-  bookId: string;
-  chapters: ListenChapter[];
-  marks: Bookmark[];
-  onJump: (mark: Bookmark) => void;
-  editingId?: string | null;
-  setEditingId?: (id: string | null) => void;
-  empty?: ReactNode;
-}) {
-  const source = useSource();
-  const [localEditing, setLocalEditing] = useState<string | null>(null);
-  const editing = editingId !== undefined ? editingId : localEditing;
-  const setEditing = setEditingId ?? setLocalEditing;
-  const sorted = useMemo(() => [...marks].sort((a, b) => (b.createdAt ?? b.at) - (a.createdAt ?? a.at)), [marks]);
-  const chapterIds = useMemo(() => [...new Set(sorted.map((mark) => mark.chapterId))], [sorted]);
-  const scripts = useQueries({
-    queries: chapterIds.map((chapterId) => ({
-      queryKey: ["listen", "script", bookId, chapterId],
-      queryFn: () => source.script(bookId, chapterId),
-      staleTime: Infinity,
-      enabled: chapters.some((chapter) => chapter.id === chapterId && chapter.available),
-    })),
-  });
-  const scriptOf = (chapterId: number) => scripts[chapterIds.indexOf(chapterId)]?.data as Script | undefined;
-  // Thêm / xoá dấu trang: hàng mở ra hay khép lại tại chỗ (shared/motion.ts useListPresence), không nhảy cả danh sách.
-  const rows = useListPresence(sorted, bookmarkKey);
-  return (
-    <><MotionPresence open={!rows.length && Boolean(empty)}>{empty}</MotionPresence><ul className="measure space-y-1">
-      {rows.map(({ key, item: mark, state, ref }) => (
-        <li key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
-          <BookmarkRow
-            bookId={bookId}
-            mark={mark}
-            chapter={chapters.find((chapter) => chapter.id === mark.chapterId)}
-            quote={mark.quote || sentenceAt(scriptOf(mark.chapterId), mark.seconds)}
-            editing={state !== "exit" && editing === mark.id}
-            onEdit={(value) => setEditing(value ? mark.id : null)}
-            onJump={onJump}
-          />
-        </li>
-      ))}
-    </ul></>
-  );
-}
-
-function BookmarkPanel({ editingId, setEditingId }: { editingId: string | null; setEditingId: (id: string | null) => void }) {
-  const { track, queue, jumpTo } = usePlayer();
-  const { setExpanded } = useNowPlaying();
-  const navigate = useNavigate();
-  const { data: book } = useListenBook(track?.bookId);
-  const marks = book?.state.bookmarks ?? [];
-  if (!track) return <MotionRegion />;
-  const empty = !marks.length ? (
-      <div className="flex h-full flex-col items-center justify-center px-8 text-center">
-        <BookmarkIcon className="size-8 text-fg-3" />
-        <p className="mt-3 font-medium">Chưa có dấu trang</p>
-        <p className="mt-1 text-sm text-fg-2">Bấm biểu tượng dấu trang (hoặc phím B) khi nghe tới đoạn muốn quay lại.</p>
-      </div>
-  ) : null;
-  // Điện thoại (bảng trượt, đã có lề 20 px): khung lùi ra đúng đệm của dòng để chữ đứng mép 20 px, nền rê tràn ra ngoài chữ.
-  return (
-    <MotionRegion as="div" className="h-full overflow-y-auto py-4 max-sm:-mx-3 sm:px-6">
-      <BookmarkList
-        empty={empty}
-        bookId={track.bookId}
-        chapters={queue}
-        marks={marks}
-        onJump={(mark) => {
-          const path = bookmarkReadPath(track.bookId, mark);
-          if (path) {
-            setExpanded(false);
-            navigate(path);
-          } else jumpTo(mark.chapterId, mark.seconds, mark.note.trim() ? `Đã tới dấu trang “${excerpt(mark.note)}”` : undefined);
-        }}
-        editingId={editingId}
-        setEditingId={setEditingId}
-      />
-    </MotionRegion>
-  );
-}
-
-type Panel = "text" | "chapters" | "bookmarks";
+type Panel = "text" | "chapters";
 /** `ink`: mực icon bắt đầu bao nhiêu phần 24 trong ô icon - tab kéo icon ra chừng ấy để mực đứng đúng mép chữ của bảng bên dưới. */
 const PANELS: { value: Panel; label: string; icon: typeof Text; ink: number }[] = [
   { value: "text", label: "Đọc theo", icon: Text, ink: 2 },
   { value: "chapters", label: "Chương", icon: ListOrdered, ink: 3 },
-  { value: "bookmarks", label: "Dấu trang", icon: BookmarkIcon, ink: 4 },
 ];
 const PANEL_KEY = "abook-now-playing-panel";
 
 function initialPanel(): Panel {
   try {
     const stored = localStorage.getItem(PANEL_KEY);
-    if (stored === "text" || stored === "chapters" || stored === "bookmarks") return stored;
+    if (stored === "text" || stored === "chapters") return stored;
   } catch {
     /* không có bộ nhớ trình duyệt */
   }
@@ -2265,7 +2003,6 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
   actions,
   selected,
   onCollapse,
-  onSelect,
   onToggle,
   onReadAlong,
 }: {
@@ -2276,7 +2013,6 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
   actions?: ReactNode;
   selected: Panel | null;
   onCollapse: () => void;
-  onSelect: (value: Panel) => void;
   onToggle: (value: Panel) => void;
   onReadAlong: () => void;
 }) {
@@ -2303,7 +2039,6 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
             <MusicMenu look="row" />
             <VoiceMenu scope="screen" look="row" />
             <VolumeControl look="row" />
-            <MenuRow icon={BookmarkIcon} onClick={() => onSelect("bookmarks")}>Dấu trang</MenuRow>
             {canGoBack && <MenuRow icon={Undo2} onClick={goBack}>Về chỗ vừa nghe</MenuRow>}
             {/* Máy có bàn phím: gợi ý phím tắt (cùng hộp với phím ?). Màn cảm ứng không có phím để gõ. */}
             {!COARSE && <MenuRow icon={Keyboard} aria-keyshortcuts="?" onClick={openShortcuts}>Phím tắt</MenuRow>}
@@ -2336,12 +2071,11 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
       <div className="mt-3 flex justify-center">
         <Transport large />
       </div>
-      {/* Một hàng 4 nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. Hai đầu = bề rộng nhãn đầu mút ("Tốc độ" 41,8 px, "Chương" 46,2 px
+      {/* Một hàng 3 nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. Hai đầu = bề rộng nhãn đầu mút ("Tốc độ" 41,8 px, "Chương" 46,2 px
           ở rlh 24 px) để chữ chạm đúng mép cột. */}
       <div role="group" aria-label="Điều khiển phụ" data-player-secondary className="slot-row mt-5 items-start [--slot-end:1.925rlh] [--slot-start:1.742rlh] [--slot:1.9rlh]">
         <SpeedMenu look="action" />
         <SleepMenu look="action" />
-        <BookmarkButton />
         <ActionButton icon={ListOrdered} label="Chương" aria-pressed={selected === "chapters"} active={selected === "chapters"} {...keepFocus} onClick={() => onToggle("chapters")} />
       </div>
       {/* Đang nhỏ dần thì "Sắp tắt…" đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
@@ -2407,9 +2141,8 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   const navigate = useNavigate();
   const [panel, setPanelState] = useState<Panel>(initialPanel);
   const [showPanel, setShowPanelNow] = useState(!mobile);
-  // Bìa <-> bảng (Đọc theo / Chương / Dấu trang) và đổi bảng: mờ chéo qua một View Transition (a120), không thay chỗ tức thì.
+  // Bìa <-> bảng (Đọc theo / Chương) và đổi bảng: mờ chéo qua một View Transition (a120), không thay chỗ tức thì.
   const setShowPanel = (value: boolean) => withViewTransition(() => setShowPanelNow(value));
-  const [editingId, setEditingId] = useState<string | null>(null);
   const section = useRef<HTMLElement | null>(null);
   const opener = useRef<HTMLElement | null>(null);
   const open = expanded && Boolean(track);
@@ -2530,7 +2263,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
     // Đổi bảng: bảng cũ trượt ra, bảng mới trượt vào từ phía tab vừa chọn (cùng nhịp với ô sáng của hàng tab).
     <MotionRegion motionKey={panel} slideIndex={PANELS.findIndex((item) => item.value === panel)} className="h-full">
       <div role="tabpanel" id={`now-panel-${panel}`} aria-labelledby={`now-tab-${panel}`} key={panel} data-motion-content className="h-full">
-        {panel === "text" ? <ReadAlong edit={edit} /> : panel === "chapters" ? <ChapterPanel /> : <BookmarkPanel editingId={editingId} setEditingId={setEditingId} />}
+        {panel === "text" ? <ReadAlong edit={edit} /> : <ChapterPanel />}
       </div>
     </MotionRegion>
   );
@@ -2542,13 +2275,12 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
     setExpanded(false);
     navigate(`/book/${track.bookId}/read/${track.chapterId}`);
   };
-  // Điện thoại: bảng Chương / Dấu trang thay chỗ bìa; bấm lại nút ấy (hay Back) là về bìa.
+  // Điện thoại: bảng Chương thay chỗ bìa; bấm lại nút ấy (hay Back) là về bìa.
   const togglePanel = (value: Panel) => {
     if (mobile && showPanel && panel === value) setShowPanel(false);
     else selectPanel(value);
   };
   const collapse = useStable(() => setExpanded(false));
-  const selectStable = useStable(selectPanel);
   const toggleStable = useStable(togglePanel);
   const readAlongStable = useStable(readAlong);
 
@@ -2576,8 +2308,8 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       role="main"
       aria-label="Đang nghe"
     >
-      {fill && <NowPlayingColumn player={player} mobile={mobile} plain={Boolean(plain)} actions={actions} selected={showPanel ? panel : null} onCollapse={collapse} onSelect={selectStable} onToggle={toggleStable} onReadAlong={readAlongStable} />}
-      {fill && mobile && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title={panel === "bookmarks" ? "Dấu trang" : "Chương"} className={panel === "chapters" ? "chapter-sheet" : undefined}>
+      {fill && <NowPlayingColumn player={player} mobile={mobile} plain={Boolean(plain)} actions={actions} selected={showPanel ? panel : null} onCollapse={collapse} onToggle={toggleStable} onReadAlong={readAlongStable} />}
+      {fill && mobile && <Sheet open={open && showPanel} onOpenChange={setShowPanel} title="Chương" className={panel === "chapters" ? "chapter-sheet" : undefined}>
         <div className="h-[55dvh] min-h-0">{panelBody}</div>
       </Sheet>}
       {fill && !mobile && (
