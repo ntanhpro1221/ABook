@@ -2074,31 +2074,29 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
       <div className="mt-3 flex justify-center">
         <Transport large />
       </div>
-      {/* Một hàng 3 nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. Hai đầu = bề rộng nhãn đầu mút ("Tốc độ" 41,8 px, "Chương" 46,2 px
-          ở rlh 24 px) để chữ chạm đúng mép cột. */}
-      <div role="group" aria-label="Điều khiển phụ" data-player-secondary className="slot-row mt-5 items-start [--slot-end:1.925rlh] [--slot-start:1.742rlh] [--slot:1.9rlh]">
+      {/* Một hàng nút phụ có nhãn; mọi việc khác ở "…" trên thanh đầu. Hai đầu = bề rộng nhãn đầu mút ("Tốc độ" 41,8 px, "Chương" 46,2 px,
+          "Hẹn giờ" 44,6 px ở rlh 24 px) để chữ chạm đúng mép cột. Máy tính: "Chương" và "Đọc theo" đã là hai tab của bảng bên phải - không lặp ở cột này. */}
+      <div role="group" aria-label="Điều khiển phụ" data-player-secondary className={cn("slot-row mt-5 items-start [--slot-start:1.742rlh] [--slot:1.9rlh]", mobile ? "[--slot-end:1.925rlh]" : "[--slot-end:1.859rlh]")}>
         <SpeedMenu look="action" />
         <SleepMenu look="action" />
-        <ActionButton icon={ListOrdered} label="Chương" aria-pressed={selected === "chapters"} active={selected === "chapters"} {...keepFocus} onClick={() => onToggle("chapters")} />
+        {mobile && <ActionButton icon={ListOrdered} label="Chương" aria-pressed={selected === "chapters"} active={selected === "chapters"} {...keepFocus} onClick={() => onToggle("chapters")} />}
       </div>
       {/* Đang nhỏ dần thì "Sắp tắt…" đã nói thay - hai dòng cùng lúc ở chương rất ngắn đọc như mâu thuẫn. */}
       <MotionPresence open={sleep.kind === "chapter" && !fading}><p className="mt-2 text-center text-xs text-fg-2">Sẽ dừng khi hết chương này.</p></MotionPresence>
       <FadingNotice className="mt-3" />
       <PlayerAlert className="mt-3" overlay />
       <CaughtUpNotice />
-      <button
-        type="button"
-        onClick={onReadAlong}
-        aria-pressed={mobile ? undefined : selected === "text"}
-        {...keepFocus}
-        className={cn(
-          "touch-hit mt-5 flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-hover text-sm font-medium transition-[transform,color,background-color] duration-motion-fast hover:bg-line active:scale-[0.97]",
-          !mobile && selected === "text" ? "text-accent-text" : "text-fg",
-        )}
-      >
-        <Text className="size-4" />
-        Đọc theo
-      </button>
+      {mobile && (
+        <button
+          type="button"
+          onClick={onReadAlong}
+          {...keepFocus}
+          className="touch-hit mt-5 flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-hover text-sm font-medium text-fg transition-[transform,color,background-color] duration-motion-fast hover:bg-line active:scale-[0.97]"
+        >
+          <Text className="size-4" />
+          Đọc theo
+        </button>
+      )}
     </aside>
   );
 });
