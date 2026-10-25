@@ -154,7 +154,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
       {/* Kết quả tìm có vùng riêng, khoá theo các tên đang hiện: gõ thêm chữ mà kết quả không đổi thì đứng yên; đổi thì mờ qua một lần. */}
       <MotionRegion motionKey={[found.slice(0, limit).map((item) => item.surface), addable, Boolean(typed) && !found.length, found.length > limit, data.unseen > 0 && !typed]}>
       {(found.length > 0 || addable) && (
-        <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-panel">
+        <ul className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]">
           {found.slice(0, limit).map((item) => (
             <ReadingRow key={item.surface} bookId={bookId} item={item} />
           ))}

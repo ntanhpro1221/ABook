@@ -1,13 +1,14 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "@/shared/backStack";
-import { MoreInfo } from "@/shared/SettingsNav";
+import { MoreInfo, SettingsRow } from "@/shared/SettingsNav";
+import { Switch } from "@/desktop/PhoneSync";
 import { MY_MUSIC_HELP } from "./musicLocal";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold, Collapse } from "@/shared/Collapse";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Ban, Download, Music2, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX, Volume2 } from "lucide-react";
+import { Ban, Download, Music2, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
@@ -358,28 +359,25 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
   });
   const tracks = data?.tracks ?? [];
   return (
-    <MotionRegion as="section" elementRef={removeBox} className="space-y-3 rounded-xl border border-line bg-panel p-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h3 className="text-sm font-semibold">Nhạc của tôi{canImport && tracks.length ? ` (${tracks.length})` : ""}</h3>
-        {canImport && (
-          <Button size="sm" variant="secondary" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()}>
-            {progress ? `Đang nhập ${progress.done}/${progress.total}…` : "Nhập nhạc của tôi…"}
-          </Button>
-        )}
-      </div>
+    <MotionRegion as="section" elementRef={removeBox} className="space-y-3">
       <p className="text-sm text-fg-2 text-pretty">{MY_MUSIC_INTRO}</p>
       <MoreInfo label="Nhạc riêng">{MY_MUSIC_HELP}</MoreInfo>
       {!canImport && (
         <p className="text-sm text-fg-2">Nhập/xoá trên máy chủ; ở đây dùng “Đổi bài” để ghim nhạc.</p>
+      )}
+      {canImport && tracks.length > 0 && (
+        <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()} className="-ml-3">
+          {progress ? `Đang nhập ${progress.done}/${progress.total}…` : "Nhập nhạc của tôi…"}
+        </Button>
       )}
       <MotionPresence open={canImport && !!tracks.length}><MusicModuleNotice view={data} queryKey={key} /></MotionPresence>
       {canImport && <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : !tracks.length ? <EmptyState icon={Music2} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>}
       {/* Xoá / nhập bài: hàng khép / mở tại chỗ (DESIGN 5.2); data-motion-live - cả khung không mờ lại theo từng hàng. */}
       <MotionPresence open={!!tracks.length}>
         <div data-motion-live="">
-        <AnimatedRows className="divide-y divide-line rounded-lg border border-line" items={tracks} keyOf={(track: LocalTrack) => track.link}>
+        <AnimatedRows className="divide-y divide-line" items={tracks} keyOf={(track: LocalTrack) => track.link}>
           {(track: LocalTrack) => (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
               <span className="min-w-0 flex-1 break-words">
                 <Music2 className="mr-1.5 inline size-4 text-accent-text" />
                 {track.title}
@@ -441,8 +439,7 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
   const running = Boolean(moods?.running) || compute.isPending;
   const percent = data.progress && data.progress.total > 0 ? Math.round((data.progress.done * 100) / data.progress.total) : null;
   return (
-    <MotionRegion as="section" className="space-y-2 rounded-xl border border-line bg-panel p-4">
-      <h3 className="text-sm font-semibold">Nhạc theo ngữ cảnh</h3>
+    <MotionRegion as="section" className="space-y-2">
       <p className="text-sm text-fg-2 text-pretty">
         Hiểu ngữ cảnh để chọn nhạc; ~1 phút mỗi giờ sách.
       </p>
@@ -610,56 +607,58 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
 
   return (
     <MotionRegion as="div" className="mt-6 space-y-6">
-      <section className="flex flex-wrap items-end gap-4 rounded-xl border border-line bg-panel p-4">
-        <Button
-          variant={overrides.enabled ? "primary" : "secondary"}
-          icon={overrides.enabled ? Volume2 : VolumeX}
-          loading={change.isPending}
-          aria-pressed={overrides.enabled}
-          onClick={() => change.mutate({ enabled: !overrides.enabled })}
-        >
-          {overrides.enabled ? "Nhạc nền đang bật" : "Nhạc nền đang tắt"}
-        </Button>
-        <label className="min-w-0 basis-full text-sm sm:basis-auto">
-          <span className="block text-fg-2">Thể loại truyện</span>
-          <span className="block text-xs text-fg-2">Chưa chọn thì nhạc lấy từ mọi thể loại</span>
-          <select
-            id="music-genre"
-            value={overrides.genre ?? ""}
-            title={genreName || "Chưa chọn"}
-            onChange={(event) => change.mutate({ genre: event.target.value || null })}
-            // Rộng vừa tên thể loại dài nhất ("Dị giới / kỳ ảo phương Tây (…)") - không cắt chữ; hẹp màn thì thôi ở bề ngang ô.
-            className="mt-1 h-9 w-full max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-auto sm:min-w-64"
+      {/* Cài đặt nhạc của cuốn: một hàng một việc, công tắc / ô chọn bên phải như trang Cài đặt - không khung bao (DESIGN 4, 6). */}
+      <section className="flex flex-wrap items-end gap-x-4">
+        <div className="basis-full divide-y divide-line">
+          <SettingsRow label={<span id="music-enabled-name">Nhạc nền</span>} hint={<span id="music-enabled-hint">{overrides.enabled ? "Đang bật cho cuốn này." : "Đang tắt: các đoạn dưới đây sẽ không phát."}</span>}>
+            <Switch id="music-enabled" labelledBy="music-enabled-name" describedBy="music-enabled-hint" checked={overrides.enabled} disabled={change.isPending} onCheckedChange={(enabled) => change.mutate({ enabled })} />
+          </SettingsRow>
+          <SettingsRow
+            label={<label htmlFor="music-genre">Thể loại truyện</label>}
+            hint={
+              <>
+                Chưa chọn thì nhạc lấy từ mọi thể loại
+                {genreName.length > 28 && <span className="mt-0.5 block sm:hidden">{genreName}</span>}
+              </>
+            }
           >
-            <option value="">Chưa chọn</option>
-            {genres.map(([value, genre]) => (
-              <option key={value} value={value}>
-                {genre.vi}
-              </option>
-            ))}
-          </select>
-          {genreName.length > 28 && <span className="mt-1 block text-xs text-fg-2 sm:hidden">{genreName}</span>}
-        </label>
-        <label className="min-w-0 basis-full text-sm sm:basis-auto">
-          <span className="block text-fg-2">Mức nhạc dưới giọng đọc</span>
-          <span className="block text-xs text-fg-2">Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ</span>
-          <select
-            id="music-level"
-            value={String(overrides.levelDb)}
-            onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
-            className="mt-1 h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-60"
-          >
-            {LEVELS.map(([value, label]) => (
-              <option key={value} value={String(value)}>
-                {levelText(value, label)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Button variant="ghost" icon={RefreshCw} loading={rebuild.isPending} onClick={() => rebuild.mutate()}>
-          {rebuild.isPending ? "Đang chọn lại…" : "Chọn lại nhạc"}
-        </Button>
-        <MotionPresence className="basis-full" open={change.isPending || rebuild.isPending}>
+            <select
+              id="music-genre"
+              value={overrides.genre ?? ""}
+              title={genreName || "Chưa chọn"}
+              onChange={(event) => change.mutate({ genre: event.target.value || null })}
+              // Rộng vừa tên thể loại dài nhất ("Dị giới / kỳ ảo phương Tây (…)") - không cắt chữ; hẹp màn thì thôi ở bề ngang ô.
+              className="h-9 w-40 max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-auto sm:min-w-64"
+            >
+              <option value="">Chưa chọn</option>
+              {genres.map(([value, genre]) => (
+                <option key={value} value={value}>
+                  {genre.vi}
+                </option>
+              ))}
+            </select>
+          </SettingsRow>
+          <SettingsRow label={<label htmlFor="music-level">Mức nhạc dưới giọng đọc</label>} hint="Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ">
+            <select
+              id="music-level"
+              value={String(overrides.levelDb)}
+              onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
+              className="h-9 w-40 rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-60"
+            >
+              {LEVELS.map(([value, label]) => (
+                <option key={value} value={String(value)}>
+                  {levelText(value, label)}
+                </option>
+              ))}
+            </select>
+          </SettingsRow>
+          <SettingsRow label="Bài cho từng đoạn" hint="Máy chọn lại theo thể loại và mức nhạc ở trên.">
+            <Button variant="ghost" icon={RefreshCw} loading={rebuild.isPending} onClick={() => rebuild.mutate()} className="-mr-3.5">
+              {rebuild.isPending ? "Đang chọn lại…" : "Chọn lại nhạc"}
+            </Button>
+          </SettingsRow>
+        </div>
+        <MotionPresence className="mt-2 basis-full" open={change.isPending || rebuild.isPending}>
           <p role="status" className="text-sm text-fg-2">
             {rebuild.isPending || change.variables?.genre !== undefined ? REBUILDING : SAVING}
           </p>
@@ -696,11 +695,11 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         </MotionPresence>
       </section>
 
-      <Fold storageKey="studio.music.moods" title="Nhạc theo ngữ cảnh" heading="h3">
+      <Fold flat storageKey="studio.music.moods" title="Nhạc theo ngữ cảnh" heading="h3">
         <MoodsPanel bookId={bookId} moods={data.moods} onCompute={(view) => client.setQueryData(key, view)} />
       </Fold>
 
-      <Fold storageKey="studio.music.local" title="Nhạc của tôi" heading="h3">
+      <Fold flat storageKey="studio.music.local" title="Nhạc của tôi" heading="h3">
         <MyMusic bookId={bookId} previewing={preview.playing} onPreview={preview.toggle} />
       </Fold>
 
@@ -712,14 +711,14 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         <p className="text-sm text-fg-2">Chưa có đoạn nào - nhạc nền dựng sau khi sách đã phân tích.</p>
       ) : (
         [...byChapter.entries()].map(([chapterId, scenes]) => (
-          <Fold key={chapterId} storageKey={`studio.music.${bookId}.${chapterId}`} title={chapterTitle(chapterId)} summary={`${scenes.length}`} heading="h3" className={overrides.enabled ? undefined : "opacity-50"}>
-            <ul className="divide-y divide-line rounded-xl border border-line">
+          <Fold flat key={chapterId} storageKey={`studio.music.${bookId}.${chapterId}`} title={chapterTitle(chapterId)} summary={`${scenes.length}`} heading="h3" className={overrides.enabled ? undefined : "opacity-50"}>
+            <ul className="divide-y divide-line">
               {scenes.map((scene, index) => {
                 const track = scene.link ? plan.tracks[scene.link] : undefined;
                 const follows = isContinuation(scene);
                 const swap = swapButton(scene);
                 return (
-                  <li key={scene.key} className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 px-3 text-sm", follows ? "py-1.5" : "py-2.5")}>
+                  <li key={scene.key} className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm", follows ? "py-1.5" : "py-2.5")}>
                     <span className="tabular w-28 shrink-0 text-fg-2">
                       {/* Các đoạn nối liền: đoạn này hết ở đúng chỗ đoạn sau bắt đầu (cùng cách làm tròn). */}
                       {formatClock(scene.start)}–{formatClock(scenes[index + 1]?.start ?? scene.end)}
