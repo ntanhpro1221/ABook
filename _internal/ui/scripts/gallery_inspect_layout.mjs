@@ -363,6 +363,25 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
         [sample.previousRect, sample.rect], { metric: "vertical-gap", value: sample.value, referenceValue: reference.value, delta: sample.value - reference.value, tolerance: 2,
           listSelector: selector(parent), referenceSelector: selector(reference.element), previousSelector: selector(sample.previous), reason: "gap differs from same-role sibling majority" });
     }
+    // Hàng nút chữ trơn (bộ lọc, tab chữ) xếp bằng gap: khoảng giữa nét chữ liền nhau phải đều. Hộp chạm tối thiểu căn giữa chữ ngắn làm
+    // khoảng nhìn thấy lệch (Thư viện "Tất cả · Nghe dở · Chưa nghe · Xong", 25-10). Tab chia đều bề ngang thì khoảng theo độ dài chữ - bỏ qua.
+    const flow = css(parent);
+    const words = children.filter((el) => el.matches(controlSelector) && !el.querySelector("svg") && inkTexts.some((t) => t.control === el && t.singleLine));
+    if (words.length >= 3 && /flex/.test(flow.display) && !flow.flexDirection.startsWith("column") && !/space-|stretch/.test(flow.justifyContent)) {
+      const boxes = words.map((el) => rect(el.getBoundingClientRect()));
+      const sameLine = boxes.every((b, i) => !i || (b.x >= right(boxes[i - 1]) - 1 && Math.min(b.y + b.height, boxes[i - 1].y + boxes[i - 1].height) - Math.max(b.y, boxes[i - 1].y) > b.height / 2));
+      const equalWidths = boxes.every((b) => Math.abs(b.width - boxes[0].width) <= 1);
+      if (sameLine && !equalWidths) {
+        const inks = words.map(controlInk);
+        const spans = inks.slice(1).map((ink, i) => ({ element: words[i + 1], previous: words[i], value: ink.x - right(inks[i]), rect: ink, previousRect: inks[i] }));
+        const sorted = spans.map((s) => s.value).sort((a, b) => a - b), median = sorted[Math.floor((sorted.length - 1) / 2)];
+        const worst = [...spans].sort((a, b) => Math.abs(b.value - median) - Math.abs(a.value - median))[0];
+        rhythms.push({ selector: selector(parent), role: "word-row", values: spans.map((s) => s.value) });
+        if (sorted.at(-1) - sorted[0] > 2.01) add("RHYTHM", worst.element, parent.textContent, [worst.previousRect, worst.rect],
+          { metric: "horizontal-ink-gap", value: worst.value, referenceValue: median, delta: worst.value - median, tolerance: 2, values: spans.map((s) => s.value),
+            listSelector: selector(parent), previousSelector: selector(worst.previous), reason: "visible gaps between text controls in one row differ" });
+      }
+    }
   }
   // Nhãn inline + câu: so nét cuối nhãn với glyph đầu câu (kể cả dấu “), không so hộp span.
   const inlineSlots = new Map();
