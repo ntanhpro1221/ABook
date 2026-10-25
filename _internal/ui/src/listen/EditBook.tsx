@@ -441,14 +441,14 @@ export function EditBookDialog({
             <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} className="w-28 shrink-0" />
             {/* Nút chữ xếp chồng canh trái chung một mép (icon thẳng hàng); kéo giãn thì chữ canh giữa từng nút, lệch nhau (soát 25-10). */}
             <div className="flex min-w-0 max-w-full flex-col items-start gap-1">
-              <Button variant="ghost" className="justify-start" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
+              <Button variant="ghost" className="justify-start text-left" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
                 {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
               </Button>
-              <Button ref={searchOpener} variant="ghost" className="justify-start" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
+              <Button ref={searchOpener} variant="ghost" className="justify-start text-left" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
                 Tìm bìa…
               </Button>
               {book.cover && (
-                <Button variant="ghost" className="justify-start" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>
+                <Button variant="ghost" className="justify-start text-left" icon={Trash2} disabled={busy} onClick={() => removeCover.mutate()}>
                   Bỏ ảnh bìa
                 </Button>
               )}
