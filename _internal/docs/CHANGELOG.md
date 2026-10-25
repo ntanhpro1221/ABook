@@ -15,7 +15,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Dấu "·" giữa các mẩu thông tin (tác giả · giọng · số chương · thời lượng) không còn treo cuối dòng hay đứng đầu dòng; dòng dài xuống hàng giữa hai mẩu. Tên sách có sẵn dấu "·" trong tiêu đề hộp thoại cũng không bị ngắt ngay ở dấu.
 - Thư viện: sách ở máy khác hiện dấu máy tính nhỏ đầu dòng trạng thái, không còn nhãn đè lên tên sách trên bìa.
 - Tab Nhân vật (trang sách và Studio): nhóm người có lời thoại đổi tên thành "Vai chính", đi cặp với "Vai phụ", không lặp lại tên tab.
-- Sửa sách: "Tìm bìa…" giờ là một bước ngay trong hộp, có nút quay về "Sửa sách" (Back cũng về), không mở hộp thứ hai chồng lên. Máy soát giao diện thêm luật bắt hộp thoại hay lớp nổi đè lên nhau.
+- Sửa sách: "Tìm bìa…" giờ là một bước ngay trong hộp, có nút quay về "Sửa sách" (Back cũng về), không mở hộp thứ hai chồng lên.
 - Máy tính: mọi hộp thoại rộng tối đa 560 px như chuẩn thiết kế (chọn giọng, tìm trong sách, xuất sách nói, thành phần sử dụng...).
 - Màn đọc trên điện thoại: thanh điều khiển dưới trải thẳng lề chữ, chữ phía trên mờ hẳn trước khi chạm thanh, không còn lộ qua hai góc.
 - Hẹn giờ tắt: một cách chọn duy nhất - bấm một mức (5, 10, 15, 30, 45 hay 60 phút) hay "Hết chương này" là đặt, mức đang hẹn sáng lên; bỏ bộ −/+ và nút "Đặt … phút" riêng. Bảng thấp hơn nên trên điện thoại vẫn thấy hàng tốc độ và hẹn giờ phía sau.
