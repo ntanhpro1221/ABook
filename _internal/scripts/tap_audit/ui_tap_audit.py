@@ -56,25 +56,27 @@ def limit_cpu():
     if hasattr(os,'sched_getaffinity'):
         cpus=sorted(os.sched_getaffinity(0))[:4];os.sched_setaffinity(0,cpus);return cpus
 
-CONTROLS = 'button,a[href],input,[role=button],[role=menuitem],[role=option],[role=tab],[role=switch],[role=checkbox],textarea,select'
+CONTROLS = 'button,a[href],input,[role=button],[role=menuitem],[role=menuitemcheckbox],[role=menuitemradio],[role=option],[role=tab],[role=switch],[role=checkbox],[role=radio],[role=slider],textarea,select'
 JS = r'''(() => {
  const controls = CONTROLS;
- const visible = e => {const r=e.getBoundingClientRect(),s=getComputedStyle(e);return r.width>0&&r.height>0&&s.visibility!=='hidden'&&s.display!=='none'&&s.opacity!=='0'&&r.left+r.width/2>=0&&r.top+r.height/2>=0&&r.left+r.width/2<innerWidth&&r.top+r.height/2<innerHeight&&!e.closest('[inert]')};
+ const visible = e => {const r=e.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;let opacity=1;for(let p=e;p;p=p.parentElement){const s=getComputedStyle(p);opacity*=Number(s.opacity);if(s.visibility!=='visible'||s.display==='none'||opacity<.05||p.inert)return false;if(p!==e){const b=p.getBoundingClientRect();if(/auto|scroll/.test(s.overflowY)&&(y<b.top||y>=b.bottom)||/auto|scroll/.test(s.overflowX)&&(x<b.left||x>=b.right))return false;}}return r.width>0&&r.height>0&&x>=0&&y>=0&&x<innerWidth&&y<innerHeight};
  const label = e => e.getAttribute('aria-label')||e.textContent.trim().replace(/\s+/g,' ').slice(0,110)||e.getAttribute('placeholder')||e.tagName;
  const layers = () => [...document.querySelectorAll('[role=dialog],[role=alertdialog],[role=menu],[role=listbox]')].filter(visible).filter(e=>e.getAttribute('data-state')!=='closed');
- const top = () => layers().sort((a,b)=>(parseInt(getComputedStyle(a).zIndex)||0)-(parseInt(getComputedStyle(b).zIndex)||0)).at(-1);
+ const top = () => {const all=layers();return all.filter(e=>!all.some(other=>e!==other&&e.contains(other))).at(-1)};
  const find = (spec,root=document,offscreen=false) => [...root.querySelectorAll(spec.selector||controls)].filter(e=>offscreen ? e.getClientRects().length>0&&!e.closest('[inert]') : visible(e)).find(e=>!spec.text || (spec.exact ? label(e)===spec.text : label(e).includes(spec.text)));
  const inspect = e => {const r=e.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2,h=document.elementFromPoint(x,y),anc=[];for(let p=e;p;p=p.parentElement)if(getComputedStyle(p).pointerEvents==='none')anc.push(p.tagName+(p.id?'#'+p.id:'')+(p.getAttribute('role')?'[role='+p.getAttribute('role')+']':''));
  // Radix intentionally locks BODY but restores pointer-events:auto on modal content.
  // Record EVERY ancestor; ancestors outside the current layer are not blockers when
  // the layer explicitly restores hit testing. The elementFromPoint check is decisive.
- const layer=e.closest('[role=dialog],[role=alertdialog],[role=menu],[role=listbox]');let blocked=[];for(let p=e;p;p=p.parentElement){if(getComputedStyle(p).pointerEvents==='none')blocked.push(p.tagName);if(p===layer)break;}
- return {label:label(e),tag:e.tagName,disabled:e.matches(':disabled')||e.hasAttribute('data-disabled')||e.getAttribute('aria-disabled')==='true',x,y,hit:!!h&&(h===e||e.contains(h)),hitElement:h?label(h):null,pointerEvents:getComputedStyle(e).pointerEvents,noneAncestors:anc,blockedInLayer:blocked};};
+ // Con có pointer-events:auto vẫn nhận chạm trong cha pointer-events:none; hit-test xác nhận đường thật.
+ const blocked=getComputedStyle(e).pointerEvents==='none'?[e.tagName]:[];
+ const toast=h?.closest('[data-sonner-toast]');const close=toast?.querySelector('[data-close-button]');const cr=close?.getBoundingClientRect();
+ return {label:label(e),tag:e.tagName,disabled:e.matches(':disabled')||e.hasAttribute('data-disabled')||e.getAttribute('aria-disabled')==='true',x,y,hit:!!h&&(h===e||e.contains(h)),hitElement:h?label(h):null,pointerEvents:getComputedStyle(e).pointerEvents,noneAncestors:anc,blockedInLayer:blocked,hitToast:!!toast,toastClose:cr?{x:cr.left+cr.width/2,y:cr.top+cr.height/2}:null};};
  window.tapAudit={visible,label,layers,top,find,inspect,controls};return true;
 })()'''.replace('CONTROLS', json.dumps(CONTROLS))
 
 class CDP:
-    def __init__(self, ws): self.ws,self.seq = ws,0
+    def __init__(self, ws): self.ws,self.seq,self.toast_dismissals = ws,0,[]
     async def call(self, method, **params):
         self.seq+=1; ident=self.seq
         await self.ws.send(json.dumps(dict(id=ident,method=method,params=params)))
@@ -97,6 +99,7 @@ class CDP:
     async def point(self, p, touch=False):
         if touch:
             await self.call('Input.dispatchTouchEvent',type='touchStart',touchPoints=[dict(x=p['x'],y=p['y'],id=1)])
+            await asyncio.sleep(.06)
             await self.call('Input.dispatchTouchEvent',type='touchEnd',touchPoints=[])
         else:
             await self.call('Input.dispatchMouseEvent',type='mouseMoved',x=p['x'],y=p['y'])
@@ -111,13 +114,37 @@ class CDP:
             await self.settle()
         for _ in range(30):
             p=await self.evaluate(f'(()=>{{const e={expr};return e?tapAudit.inspect(e):null}})()')
-            if p: return p
+            if p:
+                # Chỉ trang thường được thông báo tạm che. Trong bảng đang mở phải báo lỗi thiết kế.
+                if not p['hit'] and p.get('hitToast') and not await self.evaluate('!!tapAudit.top()'):
+                    close=p.get('toastClose')
+                    if close:
+                        # Xác nhận nút ✕ thật sự nhận chạm, rồi dùng CDP như người dùng.
+                        reachable=await self.evaluate(f'!!document.elementFromPoint({close["x"]},{close["y"]})?.closest("[data-close-button]")')
+                        if not reachable: return p
+                        await self.point(close,touch=await self.evaluate('innerWidth<600'))
+                        self.toast_dismissals.append(dict(target=p['label'],method='close button',point=close))
+                        await self.settle()
+                    else:
+                        self.toast_dismissals.append(dict(target=p['label'],method='wait for expiry'))
+                        for _ in range(100):
+                            await asyncio.sleep(.1)
+                            p=await self.evaluate(f'(()=>{{const e={expr};return e?tapAudit.inspect(e):null}})()')
+                            if not p or not p.get('hitToast'): break
+                    continue
+                return p
             await asyncio.sleep(.1)
         raise RuntimeError('visible target missing: '+json.dumps(spec,ensure_ascii=False))
     async def step(self,spec):
         p=await self.select(spec)
         if not p['hit'] or p['blockedInLayer'] or p['disabled']: raise RuntimeError('opening step cannot receive pointer: '+str(p))
-        await self.point(p);await self.settle()
+        await self.point(p,touch=await self.evaluate('innerWidth<600'));await self.settle()
+
+    async def close_layers(self):
+        for _ in range(8):
+            if not await self.evaluate('!!tapAudit.top()'): return
+            await self.key('Escape');await self.settle()
+        raise RuntimeError('layers did not close after Escape')
 
 def free_port():
     with socket.socket() as s: s.bind(('127.0.0.1',0));return s.getsockname()[1]
@@ -132,6 +159,7 @@ def load_scenarios(path):
         for key in ('exact','closes'):
             if key in value and not isinstance(value[key],bool): raise ValueError(key+' must be boolean')
         if 'type' in value and value['type']!='input': raise ValueError('unsupported probe type')
+        if 'expect' in value and (not isinstance(value['expect'],str) or not value['expect']): raise ValueError('expect must be an expression')
     for spec in specs:
         if not isinstance(spec,dict): raise ValueError('scenario must be an object')
         name=spec.get('name')
@@ -140,6 +168,10 @@ def load_scenarios(path):
         if not isinstance(spec.get('path'),str) or not spec['path'].startswith('#/'): raise ValueError('hash route required')
         if not isinstance(spec.get('steps'),list) or not spec['steps']: raise ValueError('opening steps required')
         for value in [*spec['steps'],spec.get('probe'),spec.get('background')]: target(value)
+        if 'touchProbe' in spec: target(spec['touchProbe'])
+        if 'reopenSteps' in spec:
+            if not isinstance(spec['reopenSteps'],list) or not spec['reopenSteps']: raise ValueError('reopening steps required')
+            for value in spec['reopenSteps']: target(value)
         viewport=spec.get('viewport',[412,915])
         if not isinstance(viewport,list) or len(viewport)!=2 or any(type(n) is not int or n<=0 for n in viewport):
             raise ValueError('viewport must contain two positive integers')
@@ -157,6 +189,7 @@ def result_status(results):
 
 async def scenario(c,base,s,inject):
     report=dict(name=s['name'],checks=[],elements=[],openingLayers=[])
+    c.toast_dismissals=[]
     def check(name,ok,**evidence): report['checks'].append(dict(name=name,pass_=bool(ok),**evidence))
     try:
         w,h=s.get('viewport',[412,915])
@@ -178,24 +211,26 @@ async def scenario(c,base,s,inject):
         check('layer opened',layer is not None,layer=layer)
         if not layer: raise RuntimeError('no open top layer')
         if inject:
-            injected=await c.evaluate("(()=>{const e=tapAudit.top();if(getComputedStyle(document.body).pointerEvents!=='none')return false;e.style.pointerEvents='none';return true})()")
+            injected=await c.evaluate("(()=>{const e=tapAudit.top();e.style.pointerEvents='none';return getComputedStyle(e).pointerEvents==='none'})()")
             report['injected']=injected
-            check('fault injection precondition: body locked',injected)
+            check('fault injection applied',injected,bodyLocked=layer['body']=='none')
         report['elements']=await c.evaluate("[...__tapLayer.querySelectorAll(tapAudit.controls)].filter(tapAudit.visible).map(tapAudit.inspect)")
         check('nonempty control coverage',len(report['elements'])>0)
         for e in report['elements']:
             # Disabled controls intentionally have pointer-events:none; report, do not activate.
             e['status']='SKIP_DISABLED' if e['disabled'] else 'PASS' if e['hit'] and not e['blockedInLayer'] else 'FAIL'
-        safe=s['probe']
         for touch in (False,True):
+            safe=s.get('touchProbe',s['probe']) if touch else s['probe']
             mode='touch' if touch else 'mouse'
             if not await c.evaluate('__tapLayer.isConnected && tapAudit.visible(__tapLayer) && __tapLayer.dataset.state!=="closed"'):
                 # A blocked tap can fall through to the scrim and dismiss the modal.
                 # Reopen to test the other input modality independently, still via coordinates.
-                for step in s['steps']: await c.step(step)
+                await c.close_layers()
+                for step in s.get('reopenSteps',s['steps']): await c.step(step)
                 await c.evaluate('window.__tapLayer=tapAudit.top();true')
                 if inject: await c.evaluate("__tapLayer.style.pointerEvents='none';true")
             p=await c.select(safe,within=True)
+            check(mode+' probe center reaches control',p['hit'] and not p['blockedInLayer'] and not p['disabled'],element=p)
             await c.evaluate("(()=>{window.__tapEvents=[];for(const t of ['pointerdown','click','touchstart'])__tapLayer.addEventListener(t,e=>__tapEvents.push({type:t,trusted:e.isTrusted,target:tapAudit.label(e.target)}),{once:true});return true})()")
             await c.point(p,touch=touch);await c.settle()
             ev=await c.evaluate('__tapEvents')
@@ -207,23 +242,31 @@ async def scenario(c,base,s,inject):
                 await c.call('Input.insertText',text='abc')
                 value=await c.evaluate(f'(()=>{{const e=tapAudit.find({json.dumps(safe,ensure_ascii=False)},__tapLayer);return e?.value}})()')
                 check(mode+' insertText value',value=='abc',value=value)
+            if safe.get('expect'):
+                effect=False
+                for _ in range(30):
+                    effect=await c.evaluate(safe['expect'])
+                    if effect: break
+                    await asyncio.sleep(.1)
+                check(mode+' action changed UI state',effect,expression=safe['expect'])
             remains=await c.evaluate('__tapLayer.isConnected && tapAudit.visible(__tapLayer) && __tapLayer.dataset.state!=="closed"')
             if safe.get('closes'):
-                check(mode+' cancel closes confirmation',not remains)
-                check(mode+' cancel releases body lock',await c.evaluate('getComputedStyle(document.body).pointerEvents!=="none"'))
+                check(mode+' action closes layer',not remains)
                 # Reopen with real coordinate clicks so touch and final Escape are also tested.
-                for step in s['steps']: await c.step(step)
+                await c.close_layers()
+                for step in s.get('reopenSteps',s['steps']): await c.step(step)
                 await c.evaluate('window.__tapLayer=tapAudit.top();true')
                 if inject: await c.evaluate("__tapLayer.style.pointerEvents='none';true")
             else:
                 check(mode+' layer remains open',remains)
-        await c.key('Escape');await c.settle()
+        await c.close_layers()
         check('layer closed',await c.evaluate('!__tapLayer.isConnected || __tapLayer.dataset.state==="closed" || !tapAudit.visible(__tapLayer)'))
         body=await c.evaluate('getComputedStyle(document.body).pointerEvents')
         check('body pointer lock released',body!='none',pointerEvents=body)
         p=await c.select(s['background'])
         check('background center reaches control',p['hit'] and not p['blockedInLayer'],element=p)
     except Exception as e: check('execution',False,error=str(e))
+    report['toastDismissals']=c.toast_dismissals
     report['status']='PASS' if all(x['pass_'] for x in report['checks']) and all(e['status']!='FAIL' for e in report['elements']) else 'FAIL'
     return report
 
@@ -289,7 +332,7 @@ def main():
     p.add_argument('--edge')
     p.add_argument('--json',action='store_true',help='emit JSON only on stdout')
     p.add_argument('--output',help='also save JSON report')
-    p.add_argument('--inject-fault',action='store_true',help='negative control: pointer-events:none on top layer while body locked')
+    p.add_argument('--inject-fault',action='store_true',help='negative control: pointer-events:none on every top layer, including nonmodal popovers')
     p.add_argument('--only',help='scenario name substring')
     args=p.parse_args()
     try: payload=asyncio.run(run(args))
