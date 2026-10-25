@@ -64,9 +64,9 @@ export function BookTemplates() {
       ) : (
         // Xoá / Hoàn tác một mẫu: hàng khép / mở tại chỗ; đổi tên <-> hàng thường thì hàng tự mờ qua. data-motion-live: cả vùng không mờ theo từng hàng.
         <div data-motion-live="">
-        <AnimatedRows className="mt-2 divide-y divide-line rounded-lg border border-line" items={templates} keyOf={(template) => template.name}>
+        <AnimatedRows className="mt-2 divide-y divide-line" items={templates} keyOf={(template) => template.name}>
           {(template) => (
-            <MotionRegion motionKey={renaming === template.name} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2">
+            <MotionRegion motionKey={renaming === template.name} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-2">
               {renaming === template.name ? (
                 <form
                   ref={renameBox}

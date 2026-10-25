@@ -59,7 +59,7 @@ it("hàng máy tìm thấy giữ quét lại, Bluetooth, nhập tay và gửi m�
   expect(h.discover).toHaveBeenCalledTimes(2);
   await act(() => button("Dùng Bluetooth").click()); await wait();
   expect(h.bluetooth).toHaveBeenCalledOnce();
-  await act(() => button("Nhập địa chỉ máy tính").click()); await wait();
+  await act(() => button("Nhập địa chỉ").click()); await wait();
   const address = document.querySelector<HTMLInputElement>('input[inputmode="url"]')!;
   expect(address.classList.contains("device-input")).toBe(true);
   await input(address, "192.168.1.30:47631");

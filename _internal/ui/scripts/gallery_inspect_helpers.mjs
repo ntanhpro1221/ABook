@@ -435,6 +435,9 @@ export function inspectPage({ phone = false } = {}, h, layoutInspector) {
     const runs = texts.filter((t) => row.contains(t.element) && !t.element.closest('svg,[data-overlay],[aria-hidden="true"]'));
     const nodes = new Set();
     for (const run of runs) {
+      // Tô đậm/tô từ trong câu liên tục không tạo thêm cột căn lề.
+      if (run.element.matches('mark,strong,em,b,i') && css(run.element).display === 'inline'
+        && [...run.element.parentElement.childNodes].some(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim())) continue;
       if (nodes.has(run.element)) continue;
       nodes.add(run.element);
       // React commonly emits separate text nodes for a prefix, interpolated number and

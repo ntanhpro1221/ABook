@@ -183,7 +183,7 @@ export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared
             <Fold key={group.heading ?? index} storageKey={`book.${book.id}.chapters.${index}`} title={group.heading || "Danh sách chương"} summary={`${group.chapters.length} chương${group.chapters.some(chapter => chapter.id === currentChapter) ? " · Đang nghe" : ""}`} defaultOpen={group.chapters.length <= 4 || group.chapters.some(chapter => chapter.id === currentChapter)} onOpened={(element) => {
               const row = element.querySelector(`[data-chapter="${CSS.escape(String(currentChapter))}"]`);
               if (row && !row.closest("[inert]")) reveal(scrollParent(row), row);
-            }} heading="h3" flat className="mt-3">
+            }} heading="h3" className="mt-3">
               <ChapterGroupList book={book} chapters={group.chapters} heading={group.heading} memory={`book.${book.id}.${index}`} currentChapter={currentChapter} onDone={onDone} onRename={onRename} prepared={prepared} />
             </Fold>
           ))}</>;
@@ -447,7 +447,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
         {onPickNarrator && <IconButton label="Đổi giọng người kể" icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}
       </div>
       {narratorNote && <div className="mt-2 text-xs text-fg-2">{narratorNote}</div>}
-      <Fold storageKey={`book.${bookId}.cast`} title="Vai chính" summary={`${cast.characters.length} người có lời thoại`} defaultOpen={cast.characters.length <= 4} heading="h3" flat className="mt-4">
+      <Fold storageKey={`book.${bookId}.cast`} title="Vai chính" summary={`${cast.characters.length} người có lời thoại`} defaultOpen={cast.characters.length <= 4} heading="h3" className="mt-4">
       {/* "Hiện / Ẩn chương sau": người của các chương sau mở / khép tại chỗ (hàng tự mờ khi đổi giọng - PersonRow là một vùng), không mờ cả tab. */}
       <div data-motion-live="">
       <AnimatedRows
@@ -465,14 +465,14 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
       </MotionPresence>
       </Fold>
       {cast.extras.length > 0 && (
-        <Fold storageKey={`book.${bookId}.extras`} title="Vai phụ" summary={`${cast.extras.length} người trong một cảnh`} heading="h3" flat className="mt-4">
+        <Fold storageKey={`book.${bookId}.extras`} title="Vai phụ" summary={`${cast.extras.length} người trong một cảnh`} heading="h3" className="mt-4">
           <div className="grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">{cast.extras.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onMerge={onMerge} onUnmerge={onUnmerge} onRename={onRename} onGender={onGender} waiting={waiting} />)}</div>
         </Fold>
       )}
       {/* Phần nối tiếp: dàn mang sang chưa nói ở phần này (soát UX a6 01-10, B2 - tab từng ghi "Chưa có dàn"). Mở sẵn khi chưa ai
           nói câu nào - lúc ấy đây là cả dàn. */}
       {carriedPeople.length > 0 && (
-        <Fold storageKey={`book.${bookId}.carried`} title="Từ phần trước" summary={`${carriedPeople.length} người chưa xuất hiện`} defaultOpen={!cast.characters.length && carriedPeople.length <= 4} heading="h3" flat className="mt-4">
+        <Fold storageKey={`book.${bookId}.carried`} title="Từ phần trước" summary={`${carriedPeople.length} người chưa xuất hiện`} defaultOpen={!cast.characters.length && carriedPeople.length <= 4} heading="h3" className="mt-4">
             <div className="mt-3 grid gap-x-8 sm:grid-cols-2 xl:grid-cols-3">
               {carriedPeople.map((person) => <PersonRow key={person.name} bookId={bookId} person={person} onPickVoice={onPickVoice} onRename={onRename} onGender={onGender} />)}
             </div>
@@ -544,7 +544,7 @@ export function HistoryTab({ book }: { book: ListenBook }) {
       <AnimatedRows items={[...groups.entries()]} keyOf={([day]) => day}>
       {([day, items]) => (
         <div className="pt-3">
-        <Fold storageKey={`book.${book.id}.history.${day}`} title={day} summary={`${items.length} lượt nghe`} heading="h3" flat>
+        <Fold storageKey={`book.${book.id}.history.${day}`} title={day} summary={`${items.length} lượt nghe`} heading="h3">
           <AnimatedRows className="mt-2 divide-y divide-line" items={items} keyOf={(item) => String(item.id)}>
             {(item) => (
               <div className="flex items-center gap-3 py-2.5">

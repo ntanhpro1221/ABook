@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><style>
+body{font:16px Arial;margin:24px;background:#fff;color:#111}section{margin-bottom:24px}.card{border:1px solid #888;border-radius:12px;padding:16px}.line{border-bottom:1px solid #888;padding:8px 0}.fill{background:#ddd;padding:8px}.bleed{margin:0 -8px}.field{display:flex;border:1px solid #888;border-radius:8px;height:40px}input{min-width:0}button{border:1px solid #888;border-radius:8px;padding:8px}
+</style>
+<section class="card" id="nested-bad"><div class="card">Carte dans carte</div></section>
+<section role="dialog" aria-label="Dialog" class="card" id="dialog-bad"><div class="card">Carte dans dialogue</div></section>
+<section role="dialog" aria-label="Dialog" class="card" id="dialog-good"><div>Section plane</div><div class="field"><input aria-label="Champ"></div><button>Bouton</button></section>
+<section class="card" id="single-good">Surface indépendante</section>
+<section data-list-edges="bad" id="list-bad"><div class="line bleed">Vạch thừa</div><button class="fill bleed" style="width:calc(100% + 16px)">Nền thừa</button></section>
+<section data-list-edges="good" id="list-good"><div class="line">Vạch gọn</div><button class="fill" style="width:100%">Nền gọn</button></section>
+<ul id="inline-good"><li>Câu có <mark style="padding:0 2px">từ</mark> được tô.</li><li>Một câu dài hơn có <mark style="padding:0 2px">từ</mark> được tô.</li></ul>
