@@ -25,6 +25,9 @@ describe.skipIf(!browserAvailable)("vòng tiêu điểm và góc bo trên Edge, 
       expect(at(r, "ring-cut", "FOCUS RING CLIPPED")[0]).toMatchObject({ ring: 4, cut: ["left", "top", "bottom"] });
       for (const id of ["ring-room", "ring-clip", "ring-scroll", "ring-negative", "ring-disabled", "ring-border-box", "ring-border-out"]) expect(at(r, id, "FOCUS RING CLIPPED"), id).toHaveLength(0);
       expect(at(r, "ring-small-margin", "FOCUS RING CLIPPED")).toHaveLength(1);
+      // Sát mép cuộn mà còn cuộn tiếp được: bỏ qua; cuộn hết rồi mà vòng vẫn vượt mép: vẫn bắt.
+      expect(at(r, "ring-scroll-edge", "FOCUS RING CLIPPED")).toHaveLength(0);
+      expect(at(r, "ring-scroll-end", "FOCUS RING CLIPPED")).toHaveLength(1);
     }
   });
   it("clip-margin theo hộp được chỉ định và không áp dụng cho auto", () => {
