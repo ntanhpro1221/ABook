@@ -31,6 +31,19 @@ it("máy tính: lựa chọn trong mục con khép mục con, giữ bảng cha v
 });
 afterEach(async () => { await act(() => root.unmount()); document.body.replaceChildren(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 const wait = () => act(() => new Promise(resolve => setTimeout(resolve, 40)));
+it.each([false, true])("nút mở giữ quan hệ ARIA do Radix cung cấp, điện thoại=%s", async (phone) => {
+  vi.stubGlobal("matchMedia", () => ({ matches: phone, addEventListener() {}, removeEventListener() {} }));
+  await act(() => root.render(<TooltipProvider><MenuShell label="Tốc độ đọc" trigger="1×"><button>Chọn tốc độ</button></MenuShell></TooltipProvider>));
+  const trigger = document.querySelector<HTMLButtonElement>('[aria-label="Tốc độ đọc"]')!;
+  expect(trigger.getAttribute("aria-expanded")).toBe("false");
+  await act(() => trigger.click()); await wait();
+  expect(trigger.getAttribute("aria-expanded")).toBe("true");
+  const popup = document.getElementById(trigger.getAttribute("aria-controls")!);
+  expect(popup?.getAttribute("role")).toBe("dialog");
+  expect(popup?.textContent).toContain("Chọn tốc độ");
+  await act(() => { expect(dismissTopLayer()).toBe(true); }); await wait();
+  expect(trigger.getAttribute("aria-expanded")).toBe("false");
+});
 it("mục con trong bảng trình phát mở tại chỗ; Back khép con rồi mới khép bảng", async () => {
   await act(() => root.render(<MenuShell label="Thêm tuỳ chọn" trigger="…"><MenuShell label="Nhạc nền" caption="Nhạc nền" trigger="Tắt" look="row"><button>Nhạc của tôi</button></MenuShell></MenuShell>));
   await act(() => document.querySelector<HTMLButtonElement>('[aria-label="Thêm tuỳ chọn"]')!.click()); await wait();

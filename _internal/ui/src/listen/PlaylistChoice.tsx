@@ -2,7 +2,7 @@ import { ActionSubmenu } from "@/shared/ActionMenu";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronRight, Music2, Plus } from "lucide-react";
+import { Check, ChevronRight, EighthNote, Plus } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { spokenProgress } from "@/shared/progressSpeech";
@@ -174,7 +174,7 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
       label="Nhạc nền"
       itemClassName={MENU_ITEM}
       trigger={<>
-        <Music2 className="size-4" />
+        <EighthNote className="size-4" />
         <span className="flex-1">Nhạc nền</span>
         <span className="max-w-44 truncate text-xs text-fg-2" title={label}>{shortPlaylistLabel(label)}</span>
         <ChevronRight className="ink-end size-4 text-fg-2" />
