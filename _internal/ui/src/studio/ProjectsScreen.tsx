@@ -122,7 +122,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
   ].filter(Boolean);
   return (
     // Nút "…" nằm NGOÀI nút của dòng (nút lồng nút không hợp lệ), đè lên cột cuối mà dòng chừa sẵn.
-    <MotionRegion motionKey="row" className="group relative">
+    <MotionRegion motionKey="row" className="project-row group relative">
       <button
         type="button"
         onClick={() => navigate(`/studio/${book.id}`)}
@@ -159,7 +159,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
           )}
         </MotionRegion>
         <div
-          className={cn("tabular hidden text-right text-xs transition-opacity duration-motion-fast group-focus-within:opacity-0 group-hover:opacity-0 group-has-[[data-state=open]]:opacity-0 xl:block text-fg-2")}
+          className={cn("project-updated tabular hidden text-right text-xs transition-opacity duration-motion-fast group-focus-within:opacity-0 group-hover:opacity-0 xl:block text-fg-2")}
         >
           {/* Trạng thái đã ở cột Trạng thái - cột này chỉ nói lúc nào (soát 24-10: "đang chạy" lặp lại "Đang thu âm"). */}
           {live ? "vừa xong" : formatRelative(book.updatedAt)}

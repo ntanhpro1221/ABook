@@ -80,6 +80,15 @@ it('năm nút cỡ chữ có nhãn số riêng',()=>{
   expect(sizes).toHaveLength(5);
   expect(sizes.map(n=>n.props['aria-label']??n.props.children)).toEqual([16,18,20,22,24].map(size=>`Cỡ chữ ${size}`));
 });
+it('vị trí thông báo chỉ đổi style của toaster, không lan biến qua html xuống cả chương',()=>{
+  const style={getPropertyValue:()=>'',setProperty:vi.fn(),removeProperty:vi.fn()};
+  Object.assign(document,{querySelectorAll:()=>[{style}]});
+  const {tree}=mount();
+  walk(tree,n=>n.type==='header')[0].props.ref.current={getBoundingClientRect:()=>({bottom:56})};
+  const cleanup=h.effects.find(e=>e.run.toString().includes('--toast-top')).run();
+  expect(style.setProperty).toHaveBeenCalledWith('--toast-top','64px');
+  cleanup();expect(style.removeProperty).toHaveBeenCalledWith('--toast-top');
+});
 
 it('ẩn trang và pagehide flush ngay chỗ vừa cuộn, lỗi giữ pending và thử lại',async()=>{
   h.source.saveReading.mockRejectedValueOnce(new Error('không ghi được'));
