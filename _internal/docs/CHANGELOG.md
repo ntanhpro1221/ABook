@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.143] - 2026-10-26
+
 ### Giao diện
 
 - Bảng Thêm tuỳ chọn của trình phát: Nhạc nền và Giọng đọc trải hết bề ngang, giá trị bên phải ("Tắt", tên giọng) cùng một mép với các dòng khác; trên máy tính dòng Giọng đọc không còn tràn ra ngoài menu.
