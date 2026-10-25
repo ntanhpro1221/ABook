@@ -124,6 +124,12 @@ export function sentenceAt(script: Script | undefined, seconds: number): string 
 
 // Thanh tua / âm lượng nhỏ chỉ cao 14 px: vùng bấm nới (::after của chính thanh - bấm vào đó là bấm vào thanh) thành 24 px, phần lớn
 // dồn xuống dưới để không lấn nút phát ngay bên trên (soát a31, 2.5.8).
+/** Màn "Đang nghe" là lớp absolute inset-0: nó phủ cả phần padding biên an toàn của khung cha (android/App.tsx), nên tự chừa biên - nền màu
+ *  bìa vẫn tràn dưới thanh trạng thái, còn nút thì không (soát máy ảo C1: nút "…" nằm dưới thanh trạng thái). Bảng trượt đang mở đã
+ *  chừa biên dưới (Sheet), nên khi ấy khỏi chừa lần nữa. */
+const SAFE_FRAME = "pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]";
+const SAFE_BOTTOM = "pb-[env(safe-area-inset-bottom)]";
+
 const SLIDER_REACH = "after:absolute after:inset-x-0 after:top-[-3px] after:bottom-[-7px] after:content-['']";
 
 function SeekBar({ large = false }: { large?: boolean }) {
@@ -2611,7 +2617,7 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
       // tiến độ, lời báo...) có MotionRegion riêng. Chỉ đổi cuốn thì cả màn mờ chéo sang cuốn mới.
       motionKey={track.bookId}
       // Màn điện thoại thuộc viewport: gutter cuộn không được làm document rộng ra rồi khiến Radix bù scrollbar giả.
-      className={cn("now-playing now-playing-tint inset-0 z-30 flex", mobile ? "fixed flex-col transition-[height] duration-motion-medium" : "absolute", !plain && "now-playing-vt")}
+      className={cn("now-playing now-playing-tint inset-0 z-30 flex", SAFE_FRAME, sheetHeight === 0 && SAFE_BOTTOM, mobile ? "fixed flex-col transition-[height] duration-motion-medium" : "absolute", !plain && "now-playing-vt")}
       style={{ ...tint, ...(mobile ? { height: `calc(100% - ${sheetHeight}px)` } : {}) }}
       // Mở ra thì đây là nội dung chính: <main> của trang nằm dưới đã khoá (inert) và ra khỏi cây trợ năng - phím "tới vùng chính" của
       // trình đọc màn hình phải tới đây (soát a31 A3). role thay vì thẻ <main>: tài liệu chỉ được có một thẻ <main>.
