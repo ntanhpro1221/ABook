@@ -405,6 +405,9 @@ export function ReaderScreen(edit: SentenceEditing) {
       </header>
 
       <div ref={container} onScroll={onScroll} {...scrollInput} data-reader-scroll className="reading-surface relative min-h-0 flex-1 overflow-y-auto">
+        {/* Mép trên mờ dần như mép dưới (soát 25-10 V6): chữ cuộn lên không bị cắt ngang dưới thanh đầu. Dính mép trên, cao bằng lề pt-8 của bài và
+            lùi lại bằng đúng chừng ấy (-mb-8) nên không chiếm chỗ; chưa cuộn thì chỉ phủ lên phần lề trống nên chẳng thấy. */}
+        <div aria-hidden data-reader-fade-top className="pointer-events-none sticky top-0 z-[1] -mb-8 h-8 bg-gradient-to-b from-[var(--read-bg)] from-40% to-transparent" />
         {/* Hộp (Radix) mở / đóng thì đặt lên body pointer-events:none và biến --removed-body-scroll-bar-size (khoá cuộn) - cả hai đều
             kế thừa, chương 1,5 triệu chữ phải tính lại kiểu chữ của mọi câu: ~400 ms mỗi lần mở / đóng ô "Tìm trong sách" (soát uxfix30).
             Giá trị riêng ở đây chặn thay đổi lan xuống; lớp phủ của hộp vẫn che trang nên bấm ra ngoài vẫn không tới chữ. */}

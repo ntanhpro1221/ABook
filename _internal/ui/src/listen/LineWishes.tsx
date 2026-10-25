@@ -149,7 +149,7 @@ function MenuRow({ icon: Icon, title, note, disabled, onClick, trailing }: { ico
         <span className="block text-sm font-medium">{title}</span>
         <span className="block text-xs text-fg-2">{note}</span>
       </span>
-      {trailing !== undefined ? trailing : disabled ? null : <ChevronRight className="mt-0.5 size-4 shrink-0 text-fg-3" />}
+      {trailing !== undefined ? trailing : disabled ? null : <ChevronRight className="ink-end mt-0.5 size-4 shrink-0 text-fg-3" />}
     </button>
   );
 }
