@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpenCheck, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -76,10 +77,11 @@ export function SharedReadingsSettings() {
       {entries.length > SEARCH_FROM && (
         <input aria-label="Tìm cách đọc" value={filter} onChange={(event) => { setFilter(event.target.value); setShown(12); }} className="mt-2 h-8 w-full rounded-lg border border-line bg-panel px-2.5 text-sm outline-none focus-visible:border-focus" placeholder="Tìm tên…" />
       )}
-      {entries.length > 0 && (
-        <ul className="mt-2 divide-y divide-line">
-          {filtered.slice(0, shown).map((entry) => (
-            <li key={entry.surface} className="flex items-center gap-3 py-1.5 text-sm">
+      {/* Lọc / bỏ / thêm: hàng khép / mở tại chỗ; data-motion-live - khối không mờ lại cả theo từng phím gõ. */}
+      <div data-motion-live="">
+        <AnimatedRows className="mt-2 divide-y divide-line" items={filtered.slice(0, shown)} keyOf={(entry) => entry.surface}>
+          {(entry) => (
+            <div className="flex items-center gap-3 py-1.5 text-sm">
               <span className="min-w-0 flex-1 truncate">
                 <span className="font-medium">{entry.surface}</span> <span className="text-fg-3">→</span> “{shownReading(entry.spokenForm)}”
                 {entry.from && <span className="text-xs text-fg-3"> · từ {entry.from}</span>}
@@ -89,11 +91,11 @@ export function SharedReadingsSettings() {
                 icon={Trash2}
                 onClick={() => save.mutate({ surface: entry.surface, remove: true })}
               />
-            </li>
-          ))}
-        </ul>
-      )}
-      {filtered.length > shown && <Button size="sm" variant="ghost" onClick={() => setShown(shown + 12)}>Xem thêm</Button>}
+            </div>
+          )}
+        </AnimatedRows>
+      </div>
+      <MotionPresence open={filtered.length > shown}><Button size="sm" variant="ghost" onClick={() => setShown(shown + 12)}>Xem thêm</Button></MotionPresence>
       <form
         className="mt-2 flex flex-wrap items-center gap-2"
         onSubmit={(event) => {
