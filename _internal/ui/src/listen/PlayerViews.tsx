@@ -465,11 +465,11 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
               aria-pressed={speed === rate}
               data-current-choice={speed === rate ? "" : undefined}
               className={cn(
-                "tabular touch-row inline-flex h-9 items-center justify-center gap-1 rounded-lg text-sm hover:bg-hover",
+                "tabular touch-row relative inline-flex h-9 items-center justify-center rounded-lg text-sm hover:bg-hover",
                 speed === rate ? "font-semibold text-accent-text" : "text-fg",
               )}
             >
-              <SelectionMark selected={speed === rate} className="size-3" />{speedLabel(speed)}
+              <SelectionMark selected={speed === rate} className="absolute left-2 size-3" />{speedLabel(speed)}
             </button>
           </Popover.Close>
         ))}
@@ -1134,12 +1134,12 @@ function SleepPicker({
               aria-pressed={choice.current}
               data-current-choice={choice.current ? "" : undefined}
               className={cn(
-                "tabular touch-row inline-flex h-9 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-sm disabled:opacity-40",
+                "tabular touch-row relative inline-flex h-9 items-center justify-center whitespace-nowrap rounded-lg px-2 text-sm disabled:opacity-40",
                 choice.key === "chapter" && "col-span-2 max-sm:col-span-3",
-                choice.current ? "font-semibold text-accent-text" : "bg-hover hover:bg-line",
+                choice.current ? "bg-hover font-semibold text-accent-text" : "bg-hover hover:bg-line",
               )}
             >
-              <SelectionMark selected={choice.current} className="size-3" />{choice.label}
+              <SelectionMark selected={choice.current} className="absolute left-2.5 size-3" />{choice.label}
             </button>
           </Popover.Close>
         ))}
