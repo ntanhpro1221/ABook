@@ -563,6 +563,19 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
         { metric: "heading-repeats-tab", otherSelector: selector(tab), reason: "a heading inside a tab repeats the selected tab's label" });
     }
   }
+  // Cùng một nhãn, hai việc: nút "Dấu trang" ở hàng chính thêm dấu trang còn mục "Dấu trang" trong menu mở danh sách (soát 140). Hai nút cùng hiện
+  // một chữ mà biểu tượng khác nhau là hai hành động - người nghe không phân biệt được. Nút lặp theo hàng (cùng biểu tượng) không tính.
+  const iconSignature = (el) => [...el.querySelectorAll("svg")].filter((svg) => owner(svg) === el)
+    .map((svg) => [...svg.querySelectorAll("path,rect,circle,ellipse,line,polyline,polygon")].map((p) => p.outerHTML.replace(/\s(class|style)="[^"]*"/g, "")).join("")).join("|");
+  const labelled = all.filter((el) => el.matches(controlSelector) && shownChain(el) && rect(el.getBoundingClientRect()).width > 0)
+    .map((el) => ({ el, label: labelOf(el.textContent ?? ""), icon: iconSignature(el) })).filter((c) => c.label && c.icon);
+  const sameLabel = new Set();
+  for (const [i, a] of labelled.entries()) for (const b of labelled.slice(i + 1)) {
+    if (a.label !== b.label || a.icon === b.icon || a.el.contains(b.el) || b.el.contains(a.el) || sameLabel.has(a.label)) continue;
+    sameLabel.add(a.label);
+    add("REPEATED LABEL", b.el, b.el.textContent, [rect(a.el.getBoundingClientRect()), rect(b.el.getBoundingClientRect())],
+      { metric: "label-names-two-actions", otherSelector: selector(a.el), reason: "two visible controls share a label but carry different icons, so one label names two actions" });
+  }
   // Lớp chồng lớp: hộp thoại mở đè lên hộp thoại khác (Sửa sách -> Tìm ảnh bìa, audit140 V9) hay bảng nổi che menu vừa mở nó (Nhạc nền đè menu
   // trình phát, C8). Bước kế tiếp đi trong cùng lớp (trượt sang bước có "Quay lại") hoặc mở bên cạnh menu. Menu/danh sách chọn bên trong hộp
   // thoại vẫn được; menu con nằm cạnh menu cha (chạm nhau vài px) cũng được.

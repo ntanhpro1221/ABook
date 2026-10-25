@@ -112,7 +112,7 @@ it("trình phát: đúng 5 nút chính + 4 nút phụ có nhãn; việc khác n�
   expect(transport.querySelector<HTMLButtonElement>("[data-player-toggle]")!.className).toContain("size-[72px]");
   const secondary = screen.querySelector("[data-player-secondary]")!;
   const labels = [...secondary.querySelectorAll("button")].map((button) => button.textContent);
-  expect(labels).toEqual(["1,15×Tốc độ", "Hẹn giờ", "Dấu trang", "Chương"]);
+  expect(labels).toEqual(["1,15×Tốc độ", "Hẹn giờ", "Đánh dấu", "Chương"]);
   // Màn chính không còn âm lượng, quay lại chỗ vừa nghe, nhạc / giọng: chỉ thấy trong "…".
   expect(named("Quay lại chỗ vừa nghe", screen)).toBeNull();
   expect(screen.textContent).not.toContain("Âm lượng");
