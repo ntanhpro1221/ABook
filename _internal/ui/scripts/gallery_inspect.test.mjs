@@ -110,6 +110,34 @@ describe("glyph và data-overlay trong DOM", () => {
   });
 });
 
+describe("phần tử không được vẽ", () => {
+  it("bỏ qua con cháu của content-visibility: hidden (trang dưới màn Đang nghe), vẫn bắt chữ bị cắt ở nơi được vẽ", () => {
+    document.body.innerHTML = '<div id="covered"><p class="clip">Chương 7 · Giọng đọc của máy</p></div><div id="open"><p class="clip">Chương 7 · Giọng đọc của máy</p></div>';
+    const covered = document.querySelector("#covered");
+    const box = (el) => ({ x: 10, y: el.closest("#covered") ? 10 : 60, width: 100, height: 20 });
+    for (const el of document.body.querySelectorAll("*")) {
+      vi.spyOn(el, "getBoundingClientRect").mockReturnValue(box(el));
+      if (el.matches(".clip")) for (const [key, value] of Object.entries({ scrollWidth: 160, clientWidth: 100, scrollHeight: 20, clientHeight: 20 })) Object.defineProperty(el, key, { configurable: true, value });
+    }
+    vi.spyOn(Range.prototype, "getClientRects").mockImplementation(function () {
+      const el = this.startContainer.parentElement;
+      return el?.matches(".clip") ? [{ x: 10, y: box(el).y, width: 160, height: 20 }] : [];
+    });
+    vi.spyOn(document, "elementFromPoint").mockImplementation((x, y) => document.querySelector(y < 40 ? "#covered .clip" : "#open .clip"));
+    const base = { display: "block", visibility: "visible", opacity: "1", overflowX: "visible", overflowY: "visible", backgroundImage: "none", backgroundColor: "white", color: "black", fontSize: "14px", fontWeight: "400", transform: "none", scale: "none", content: "none", strokeWidth: "1.9px", contentVisibility: "visible" };
+    vi.stubGlobal("getComputedStyle", (el) => el === covered ? { ...base, contentVisibility: "hidden" } : el.matches?.(".clip") ? { ...base, overflowX: "hidden" } : base);
+    vi.stubGlobal("DOMMatrix", class { c = 0; d = 1; });
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ clearRect() {}, fillRect() {}, getImageData: () => ({ data: [255, 255, 255, 255] }) });
+    Object.defineProperty(document, "fonts", { configurable: true, value: [] });
+    Object.defineProperty(document, "getAnimations", { configurable: true, value: () => [] });
+    let result;
+    try { result = inspectPage({}, h); } finally { Reflect.deleteProperty(document, "fonts"); Reflect.deleteProperty(document, "getAnimations"); }
+    const clipped = result.findings.filter((f) => f.rule === "CLIPPED TEXT");
+    expect(clipped.some((f) => f.selector.startsWith("#open"))).toBe(true);
+    expect(clipped.filter((f) => f.selector.startsWith("#covered"))).toHaveLength(0);
+  });
+});
+
 describe("so sánh hàng lặp với dung sai 1 CSS px", () => {
   it("ignores floating point residue but preserves a real >1 px drift", () => {
     expect(h.siblingDifferences([{ value: 18 }, { value: 16.999 }])).toEqual([]);
