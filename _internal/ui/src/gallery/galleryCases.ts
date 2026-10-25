@@ -37,7 +37,7 @@ export function galleryCases(platform: Platform): void {
         expect(galleryState.errors, galleryState.errors.join("\n")).toEqual([]);
         expect([...galleryState.missing]).toEqual([]);
         expect(container.textContent?.trim().length).toBeGreaterThan(0);
-        if (platform === "phone" && /\/(book-menu|book-confirm-remove|add-book-[12]|player-(sleep|sleep-active|speed|more|chapters|bookmarks))$/.test(entry.id)) {
+        if (platform === "phone" && /\/(book-menu|book-confirm-remove|add-book-[12]|player-(sleep|sleep-active|speed|more|chapters))$/.test(entry.id)) {
           expect(document.querySelector('.motion-sheet[data-state="open"] [data-sheet-handle]')).not.toBeNull();
         }
         if (entry.id.endsWith("player-speed") || entry.id.endsWith("player-full-speed")) {

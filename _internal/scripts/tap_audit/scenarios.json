@@ -257,39 +257,6 @@
     ]
   },
   {
-    "name": "Player mobile - More options",
-    "path": "#/book/{listen}",
-    "steps": [
-      {
-        "selector": "[data-book-primary]"
-      },
-      {
-        "text": "Mở màn hình đang nghe",
-        "exact": true
-      },
-      {
-        "text": "Thêm tuỳ chọn",
-        "exact": true
-      }
-    ],
-    "probe": {
-      "text": "Dấu trang",
-      "exact": true,
-      "closes": true,
-      "expect": "[...document.querySelectorAll('[role=dialog] h2')].some(e=>e.textContent==='Dấu trang')"
-    },
-    "background": {
-      "text": "Thêm tuỳ chọn",
-      "exact": true
-    },
-    "reopenSteps": [
-      {
-        "text": "Thêm tuỳ chọn",
-        "exact": true
-      }
-    ]
-  },
-  {
     "name": "Player mobile - Voice",
     "path": "#/book/{listen}",
     "steps": [
@@ -472,39 +439,6 @@
     ]
   },
   {
-    "name": "Player desktop - More options",
-    "path": "#/book/{listen}",
-    "steps": [
-      {
-        "selector": "[data-book-primary]"
-      },
-      {
-        "text": "Thêm tuỳ chọn",
-        "exact": true
-      }
-    ],
-    "probe": {
-      "text": "Thêm dấu trang",
-      "exact": true,
-      "closes": true,
-      "expect": "[...document.querySelectorAll('[data-sonner-toast]')].some(e=>e.textContent.includes('dấu trang'))"
-    },
-    "background": {
-      "text": "Mở màn hình đang nghe",
-      "exact": true
-    },
-    "viewport": [
-      1280,
-      900
-    ],
-    "reopenSteps": [
-      {
-        "text": "Thêm tuỳ chọn",
-        "exact": true
-      }
-    ]
-  },
-  {
     "name": "Player desktop - Voice",
     "path": "#/book/{listen}",
     "steps": [
@@ -598,51 +532,6 @@
         "exact": true
       }
     ]
-  },
-  {
-    "name": "Player mobile - Bookmarks",
-    "path": "#/book/{listen}",
-    "steps": [
-      {
-        "selector": "[data-book-primary]"
-      },
-      {
-        "text": "Mở màn hình đang nghe",
-        "exact": true
-      },
-      {
-        "text": "Thêm tuỳ chọn",
-        "exact": true
-      },
-      {
-        "text": "Dấu trang",
-        "exact": true
-      }
-    ],
-    "probe": {
-      "text": "Sửa ghi chú",
-      "exact": true,
-      "expect": "!!__tapLayer.querySelector('input[aria-label=\"Ghi chú\"]')"
-    },
-    "background": {
-      "text": "Thêm tuỳ chọn",
-      "exact": true
-    },
-    "reopenSteps": [
-      {
-        "text": "Thêm tuỳ chọn",
-        "exact": true
-      },
-      {
-        "text": "Dấu trang",
-        "exact": true
-      }
-    ],
-    "touchProbe": {
-      "text": "Huỷ",
-      "exact": true,
-      "expect": "!__tapLayer.querySelector('input[aria-label=\"Ghi chú\"]')"
-    }
   },
   {
     "name": "Player mobile - Chapters",

@@ -12,7 +12,7 @@ export interface UnsentEdits {
   sendable: boolean;
   /** Máy kia trả lời NGAY lúc hỏi (máy tính hỏi thật qua GET .../unsent); không có thì dùng trạng thái đã biết của danh sách máy. */
   reachable?: boolean;
-  /** Cái máy này sẽ quên khi thôi ghép: số cuốn của máy kia, byte đã tải về, số cuốn đang có chỗ nghe / dấu trang (những chỗ ấy giữ lại). */
+  /** Cái máy này sẽ quên khi thôi ghép: số cuốn của máy kia, byte đã tải về, số cuốn đang có chỗ nghe (những chỗ ấy giữ lại). */
   cache?: { books: number; bytes: number; places: number };
 }
 
@@ -44,7 +44,7 @@ export function unpairCopy(device: string, self: "điện thoại" | "máy tính
   if (cache) {
     const downloaded = cache.bytes > 0 ? `, và ${cache.bytes < 1024 ** 2 ? "dưới 1 MB" : formatSize(cache.bytes)} đã tải về ${self} này sẽ bị xoá` : "";
     lines.push(`${cache.books} cuốn của ${device} sẽ rời Thư viện${downloaded}.`);
-    if (cache.places > 0) lines.push(`Chỗ nghe và dấu trang của ${cache.places} cuốn vẫn giữ - ghép lại đúng ${device} là nghe tiếp được.`);
+    if (cache.places > 0) lines.push(`Chỗ nghe của ${cache.places} cuốn vẫn giữ - ghép lại đúng ${device} là nghe tiếp được.`);
   }
   let send: string | null = null;
   const up = unsent.reachable ?? reachable;

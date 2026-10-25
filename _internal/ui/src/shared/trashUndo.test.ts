@@ -203,7 +203,7 @@ it("cuốn về dưới mã mới thì những gì máy này nhớ theo mã sác
   } finally {
     delete (globalThis as { localStorage?: Storage }).localStorage;
   }
-  expect(restoredNote({ renamed: true, dataLeft: true })).toContain("Chưa mang theo chỗ nghe và dấu trang");
+  expect(restoredNote({ renamed: true, dataLeft: true })).toContain("Chưa mang theo chỗ nghe");
 });
 
 it("gạt toast hay hết mục thì lần bỏ kế hiện dưới mã mới (Sonner còn giữ toast đang thoát)", () => {

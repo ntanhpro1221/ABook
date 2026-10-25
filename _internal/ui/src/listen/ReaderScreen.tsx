@@ -110,7 +110,7 @@ export function ReaderScreen(edit: SentenceEditing) {
 
   const listeningHere = player.track?.bookId === id && player.track.chapterId === chapterId;
   const playingIndex = usePlayingSentence(script, listeningHere);
-  // Mở đúng một câu được yêu cầu (?at=, từ dấu trang / tìm kiếm): đứng yên ở đó, chưa theo giọng; còn lại thì đi theo giọng ngay.
+  // Mở đúng một câu được yêu cầu (?at=, từ tìm kiếm): đứng yên ở đó, chưa theo giọng; còn lại thì đi theo giọng ngay.
   const follow = useFollowVoice(container, playingIndex, { initial: params.get("at") === null, resetKey: `${id}:${chapterId}`, smooth: player.playing });
 
   // Giọng tự sang chương kế (hay người bấm "Chương sau" ở trình phát) khi màn đọc đang mở đúng chương đang nghe: màn đọc đi theo sang
@@ -153,10 +153,8 @@ export function ReaderScreen(edit: SentenceEditing) {
     if (restored.current.startsWith(`${owner}:${location.key}:${textHash}:`) && touched.current === owner) return;
     restored.current = key;
     const requested = params.get("at");
-    let anchor: ReadingPosition["anchor"];
-    try { anchor = JSON.parse(params.get("anchor") ?? "null") ?? undefined; } catch { /* Liên kết cũ: dùng câu trích và chỉ số. */ }
     const saved = reading?.chapterId === chapterId ? reading : undefined;
-    const target = readingIndex(script, requested !== null ? { index: Number(requested), quote: params.get("quote") ?? undefined, anchor }
+    const target = readingIndex(script, requested !== null ? { index: Number(requested) }
       : playingIndex >= 0 ? { index: playingIndex } : saved ?? { index: 0 });
     window.requestAnimationFrame(() => {
       // Đầu chương: về đầu trang, không cuộn tới câu đầu - dòng nhắc đứng TRƯỚC câu ấy và từng bị cuộn khuất ngay lúc mở (soát UX 29-09).
@@ -230,7 +228,7 @@ export function ReaderScreen(edit: SentenceEditing) {
     };
   }, [id, record, chapterId, flushReading]);
 
-  // Thông báo (Hoàn tác, dấu trang...) nằm dưới thanh đầu của màn đọc, không che nút "Nghe từ đây" ở góc trên (soát a70): vị trí trên của vùng
+  // Thông báo (Hoàn tác...) nằm dưới thanh đầu của màn đọc, không che nút "Nghe từ đây" ở góc trên (soát a70): vị trí trên của vùng
   // thông báo theo mép dưới thanh đầu (App đọc --toast-top).
   const header = useRef<HTMLElement | null>(null);
   // Đổi cỡ chữ / giãn dòng: cả chương dàn lại - khung chữ hiện dần từ 55 % thay vì nhảy (không chụp ảnh cả chương dài như MotionRegion).
@@ -301,7 +299,7 @@ export function ReaderScreen(edit: SentenceEditing) {
     }
     listen(visibleSentence(container.current));
   };
-  // Câu nào cũng chọn được: ít nhất có "Đặt dấu trang ở câu này" (sách chỉ có chữ, máy không có giọng cũng đặt được).
+  // Câu nào cũng chọn được: ít nhất có "Chép" (sách chỉ có chữ, máy không có giọng cũng chép được).
   const selectable = true;
   const go = (step: 1 | -1) => {
     const next = chapters[index + step];

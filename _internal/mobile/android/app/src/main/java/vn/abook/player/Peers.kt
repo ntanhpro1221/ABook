@@ -101,7 +101,7 @@ object Peers {
     }
 
     /** Vân tay -> mã của thiết bị đã thôi ghép: ghép lại đúng máy ấy (dù đổi địa chỉ) lấy lại mã cũ, nên mã sách cục bộ ([localId]) và chỗ
-     *  nghe / dấu trang gắn với nó hiện lại, không mất khi ghép lại. */
+     *  nghe gắn với nó hiện lại, không mất khi ghép lại. */
     @Synchronized
     private fun takeFormer(context: Context, fingerprint: String): String? {
         val former = runCatching { JSONObject(prefs(context).getString("former", "{}") ?: "{}") }.getOrDefault(JSONObject())

@@ -608,7 +608,7 @@ class App:
 
     def adopt_moved_library(self, old_root: Path) -> dict[str, str]:
         """Người dùng trỏ thư viện sang thư mục khác - thường là CHÍNH thư viện cũ đã chuyển chỗ / đổi tên (soát a28 lỗi 2). Mã sách là HMAC
-        của đường dẫn nên mọi cuốn mang mã mới, chỗ nghe / dấu trang / lịch sử mồ côi. Cuốn ở cùng đường tương đối dưới thư viện cũ có dữ
+        của đường dẫn nên mọi cuốn mang mã mới, chỗ nghe / lịch sử mồ côi. Cuốn ở cùng đường tương đối dưới thư viện cũ có dữ
         liệu nghe theo mã cũ: đổi khoá sang mã mới. Chỉ khi chỗ cũ ĐÃ TRỐNG (thư viện thật sự dời đi): cuốn cũ
         còn nằm nguyên chỗ cũ nghĩa là thư viện kia vẫn đó (đổi sang thư viện khác, hay bản sao) - tên thư mục trùng không chứng minh cùng
         nội dung, hồ sơ nghe ở lại mã cũ (soát a97 C1). Trả {mã cũ: mã mới}."""
@@ -1441,7 +1441,7 @@ class App:
         """"Hoàn tác" một lần xoá: thư mục về đường gốc hoặc tên anh em còn trống, thư viện thấy lại. Hàng chờ KHÔNG được xếp lại - ghi trong lời
         báo (`wasQueued`) để người dùng tự xếp nếu muốn.
 
-        Tên anh em là một mã sách khác (mã = đường dẫn): chỗ nghe, dấu trang, hồ sơ, tốc độ, giọng và lượt xuất dở đi theo cuốn sang mã mới - cuốn
+        Tên anh em là một mã sách khác (mã = đường dẫn): chỗ nghe, hồ sơ, tốc độ, giọng và lượt xuất dở đi theo cuốn sang mã mới - cuốn
         đang chiếm đường gốc (ra đời sau lần xoá) không giữ dữ liệu của cuốn đã xoá. Cuốn chiếm chỗ có trước - xoá "X", thêm "X" mới, xoá
         luôn nó rồi hoàn tác cả hai (cũ trước): "X" cũ về chỗ mình - thì dữ liệu theo mã ấy là của nó, không chuyển. Dự án nằm trong một chuỗi phần (`continues.json` trỏ tới / từ nó) thì không đổi
         tên được: phần sau sẽ nối nhầm sang cuốn đang chiếm chỗ - từ chối như trước, người dùng bỏ cuốn kia rồi hoàn tác."""
@@ -1481,7 +1481,7 @@ class App:
     def _adopt_restored_id(self, old: str, new: str) -> bool:
         """Cuốn vừa hoàn tác về tên anh em: dữ liệu nghe và lượt xuất dở theo mã cũ (đường gốc) sang mã mới. False khi dữ liệu nghe không
         chuyển được (file đang bị giữ...): thư mục đã về và mã hoàn tác đã dùng, nên vẫn là hoàn tác xong - không văng thành lỗi mà bấm lại
-        chỉ gặp "hết thời gian". Hồ sơ nghe (chỗ nghe, dấu trang) chuyển trước chỗ nghe kiểu cũ: hỏng giữa chừng thì phần chính đã đi."""
+        chỉ gặp "hết thời gian". Hồ sơ nghe (chỗ nghe) chuyển trước chỗ nghe kiểu cũ: hỏng giữa chừng thì phần chính đã đi."""
         try:
             self._rename_book_ids({old: new}, ".pre-undo.bak", fresh_backup=True)
         except Exception:  # noqa: BLE001 - cuốn đã về rồi; dữ liệu ở lại mã cũ, ghi lại để biết
@@ -3507,13 +3507,13 @@ class App:
         books = [{"title": item["title"], "changes": item["changes"]} for item in remote_books.unsent_edits(self.library.root, computer)]
         sendable = entry.get("kind") == "computer"
         view: dict[str, Any] = {"books": books, "changes": sum(item["changes"] for item in books), "sendable": sendable}
-        # Cái máy này sẽ quên khi thôi ghép (hộp xác nhận nói rõ): số cuốn, MB đã tải, số cuốn đang có chỗ nghe / dấu trang (giữ lại -
+        # Cái máy này sẽ quên khi thôi ghép (hộp xác nhận nói rõ): số cuốn, MB đã tải, số cuốn đang có chỗ nghe (giữ lại -
         # ghép lại đúng máy ấy là hiện lại, xem Computers.pair).
         cached = remote_books.cached_books(self.library.root, computer)
         places = 0
         for item in cached:
             state = self.listening.get(book_id(item["package"]))
-            if state.get("chapters") or state.get("bookmarks"):
+            if state.get("chapters"):
                 places += 1
         view["cache"] = {"books": len(cached), "bytes": sum(item["bytes"] for item in cached), "places": places}
         if books and sendable:
@@ -5952,47 +5952,6 @@ class Handler(BaseHTTPRequestHandler):
         self.app.sync_remote_state(value, wait=False, record=_held_record(body))
         self._send_json(HTTPStatus.OK, {"ok": True})
 
-    def post_bookmark(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._listenable(value)
-        body = self._body()
-        self.app.sync_remote_state(value, wait=False, record=_held_record(body))
-        mark = self.app.listening.add_bookmark(
-            value, int(body.get("chapterId", 0)), float(body.get("seconds", 0)), str(body.get("note", "")),
-            record=_held_record(body), index=body["index"] if isinstance(body.get("index"), int) else None,
-            quote=str(body.get("quote") or ""), anchor=body.get("anchor"),
-        )
-        self._send_json(HTTPStatus.CREATED, mark)
-
-    def put_bookmark(self, _query: dict[str, list[str]], value: str, mark: str) -> None:
-        self.app._listenable(value)
-        body = self._body()
-        self.app.sync_remote_state(value, wait=False, record=_held_record(body))
-        try:
-            self.app.listening.update_bookmark(value, mark, str(body.get("note", "")), _held_record(body))
-        except RecordGone as error:
-            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
-        self._send_json(HTTPStatus.OK, {"ok": True})
-
-    def delete_bookmark(self, query: dict[str, list[str]], value: str, mark: str) -> None:
-        self.app._listenable(value)
-        # DELETE thường không có thân: hồ sơ đi ở `?record=` (thân JSON, nếu có, thắng).
-        body = self._body()
-        record = _held_record(body) or _held_record({"record": (query.get("record") or [None])[0]})
-        self.app.sync_remote_state(value, wait=False, record=record)
-        try:
-            self.app.listening.delete_bookmark(value, mark, record)
-        except RecordGone as error:
-            raise ApiError(HTTPStatus.CONFLICT, str(error)) from error
-        self._send_json(HTTPStatus.OK, {"ok": True})
-
-    def post_bookmark_restore(self, _query: dict[str, list[str]], value: str) -> None:
-        self.app._listenable(value)
-        self.app.sync_remote_state(value, wait=False)
-        body = self._body()
-        if not re.fullmatch(r"[0-9a-f]{6,40}", str(body.get("id", ""))):
-            raise ApiError(HTTPStatus.BAD_REQUEST, "Dấu trang không hợp lệ")
-        self._send_json(HTTPStatus.OK, self.app.listening.restore_bookmark(value, body))
-
     # ---- hồ sơ nghe: độc lập với sách, app giữ liên kết (webui/listening.py) ----------------------------------------
 
     def _own_record(self, value: str, record: str) -> None:
@@ -6857,10 +6816,6 @@ ROUTES: list[Route] = [
     ("POST", re.compile(LISTEN + r"/finished"), Handler.post_finished),
     ("POST", re.compile(LISTEN + r"/rate"), Handler.post_rate),
     ("POST", re.compile(LISTEN + r"/voice"), Handler.post_listen_voice),
-    ("POST", re.compile(LISTEN + r"/bookmarks"), Handler.post_bookmark),
-    ("PUT", re.compile(LISTEN + r"/bookmarks/([0-9a-f]+)"), Handler.put_bookmark),
-    ("DELETE", re.compile(LISTEN + r"/bookmarks/([0-9a-f]+)"), Handler.delete_bookmark),
-    ("POST", re.compile(LISTEN + r"/bookmarks/restore"), Handler.post_bookmark_restore),
     ("GET", re.compile(LISTEN + r"/records"), Handler.get_records),
     ("POST", re.compile(LISTEN + r"/records"), Handler.post_record),
     ("POST", re.compile(LISTEN + r"/records/(r-[0-9a-f]{16})/activate"), Handler.post_record_activate),

@@ -5,19 +5,18 @@
     "other_person_is_not_overwritten": {
       "host": {
         "records": {"b": {"name": "Bố", "nameAt": 5.0, "movedAt": 0.0,
-                         "state": {"last": {"chapterId": 1, "seconds": 100.0, "at": 1000.0, "rev": {"counter": 1000, "node": "fixture"}},
-                                   "bookmarks": [{"id": "aaaaaaaaaaaa", "chapterId": 1, "seconds": 90.0, "note": "Ghi chú riêng của bố", "at": 1000.0, "rev": {"counter": 1000, "node": "fixture"}}]}}},
+                         "state": {"last": {"chapterId": 1, "seconds": 100.0, "at": 1000.0, "rev": {"counter": 1000, "node": "fixture"}}}}},
         "links": {"sach": {"records": ["b"], "active": "b", "activeAt": 1500.0}},
         "deleted": {}
       },
       "request": {"book": "sach", "body": {"record": "a", "recordName": "Con", "nameAt": 10.0, "activeAt": 0.0, "movedAt": 0.0,
                                            "deletedRecords": {}, "last": {"chapterId": 1, "seconds": 600.0, "at": 2000.0, "rev": {"counter": 2000, "node": "fixture"}},
-                                           "chapters": {}, "bookmarks": []}},
+                                           "chapters": {}}},
       "expect": {
-        "reply": {"record": "a", "book": "sach", "lastSeconds": 600.0, "bookmarkNotes": [], "recordName": "Con",
+        "reply": {"record": "a", "book": "sach", "lastSeconds": 600.0, "recordName": "Con",
                   "activeRecord": "b", "activeStateLastSeconds": 100.0, "recordIds": ["a", "b"]},
         "after": {"links": {"sach": {"records": ["b", "a"], "active": "b"}}, "names": {"a": "Con", "b": "Bố"}, "deleted": [],
-                  "lastSeconds": {"a": 600.0, "b": 100.0}, "bookmarkNotes": {"a": [], "b": ["Ghi chú riêng của bố"]}}
+                  "lastSeconds": {"a": 600.0, "b": 100.0}}
       }
     },
     "later_rename_wins_older_does_not": {
@@ -28,7 +27,7 @@
         "deleted": {}
       },
       "request": {"book": "sach", "body": {"record": "a", "recordName": "Đổi tên", "nameAt": 50.0, "activeAt": 0.0, "movedAt": 0.0,
-                                           "deletedRecords": {}, "chapters": {}, "bookmarks": []}},
+                                           "deletedRecords": {}, "chapters": {}}},
       "expect": {
         "reply": {"record": "a", "book": "sach", "recordName": "Đổi tên", "activeRecord": "b", "recordIds": ["a", "b"]},
         "after": {"links": {"sach": {"records": ["a", "b"], "active": "b"}}, "names": {"a": "Đổi tên", "b": "Cùng tên"}, "deleted": []}
@@ -41,7 +40,7 @@
         "deleted": {}
       },
       "request": {"book": "sach", "body": {"record": "a", "recordName": "Tên cũ", "nameAt": 20.0, "activeAt": 0.0, "movedAt": 0.0,
-                                           "deletedRecords": {}, "chapters": {}, "bookmarks": []}},
+                                           "deletedRecords": {}, "chapters": {}}},
       "expect": {
         "reply": {"record": "a", "book": "sach", "recordName": "Tên mới"},
         "after": {"links": {"sach": {"records": ["a"], "active": "a"}}, "names": {"a": "Tên mới"}, "deleted": []}
@@ -56,7 +55,7 @@
       },
       "request": {"book": "sach", "body": {"record": "a", "recordName": "Mặc định", "nameAt": 0.0, "activeAt": 0.0, "movedAt": 0.0,
                                            "deletedRecords": {"b": 99.0}, "last": {"chapterId": 1, "seconds": 30.0, "at": 2000.0, "rev": {"counter": 2000, "node": "fixture"}},
-                                           "chapters": {}, "bookmarks": []}},
+                                           "chapters": {}}},
       "expect": {
         "reply": {"record": "a", "book": "sach", "lastSeconds": 30.0, "recordIds": ["a"], "tombstones": ["b"], "activeRecord": "a"},
         "after": {"links": {"sach": {"records": ["a"], "active": "a"}}, "names": {"a": "Mặc định"}, "deleted": ["b"], "lastSeconds": {"a": 30.0}}
@@ -70,7 +69,7 @@
       },
       "request": {"book": "sach", "body": {"record": "b", "recordName": "Con", "nameAt": 0.0, "activeAt": 0.0, "movedAt": 0.0,
                                            "deletedRecords": {}, "last": {"chapterId": 1, "seconds": 900.0, "at": 2000.0, "rev": {"counter": 2000, "node": "fixture"}},
-                                           "chapters": {}, "bookmarks": []}},
+                                           "chapters": {}}},
       "expect": {
         "reply": {"record": "b", "deleted": true, "tombstones": ["b"]},
         "after": {"links": {"sach": {"records": ["a"], "active": "a"}}, "names": {"a": "Mặc định"}, "deleted": ["b"]}
@@ -85,7 +84,7 @@
       },
       "request": {"book": "sach-moi", "body": {"record": "b", "recordName": "Con", "nameAt": 0.0, "activeAt": 2000.0, "movedAt": 2000.0,
                                                "deletedRecords": {}, "last": {"chapterId": 7, "seconds": 55.0, "at": 1900.0, "rev": {"counter": 1900, "node": "fixture"}},
-                                               "chapters": {}, "bookmarks": []}},
+                                               "chapters": {}}},
       "expect": {
         "reply": {"record": "b", "book": "sach-moi", "movedAt": 2000.0, "activeRecord": "b", "lastSeconds": 55.0},
         "after": {"links": {"sach-cu": {"records": ["a"], "active": "a"}, "sach-moi": {"records": ["b"], "active": "b"}},

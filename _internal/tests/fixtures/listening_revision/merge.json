@@ -1,38 +1,26 @@
 [
   {
     "name": "old future clock cannot undo later audio position",
-    "ours": {"last":{"chapterId":1,"seconds":10,"at":2000000000,"rev":{"counter":1,"node":"desktop"}},"chapters":{},"bookmarks":[],"_clock":1},
-    "theirs": {"last":{"chapterId":1,"seconds":600,"at":1999913600,"rev":{"counter":2,"node":"phone"}},"chapters":{},"bookmarks":[],"_clock":2},
+    "ours": {"last":{"chapterId":1,"seconds":10,"at":2000000000,"rev":{"counter":1,"node":"desktop"}},"chapters":{},"_clock":1},
+    "theirs": {"last":{"chapterId":1,"seconds":600,"at":1999913600,"rev":{"counter":2,"node":"phone"}},"chapters":{},"_clock":2},
     "field": "last", "expected": {"chapterId":1,"seconds":600,"at":1999913600,"rev":{"counter":2,"node":"phone"}}, "clock": 2
   },
   {
     "name": "concurrent reading converges by node rather than clock",
-    "ours": {"reading":{"chapterId":1,"index":10,"at":2000000000,"rev":{"counter":3,"node":"a"}},"chapters":{},"bookmarks":[],"_clock":3},
-    "theirs": {"reading":{"chapterId":2,"index":100,"at":10,"rev":{"counter":3,"node":"z"}},"chapters":{},"bookmarks":[],"_clock":3},
+    "ours": {"reading":{"chapterId":1,"index":10,"at":2000000000,"rev":{"counter":3,"node":"a"}},"chapters":{},"_clock":3},
+    "theirs": {"reading":{"chapterId":2,"index":100,"at":10,"rev":{"counter":3,"node":"z"}},"chapters":{},"_clock":3},
     "field": "reading", "expected": {"chapterId":2,"index":100,"at":10,"rev":{"counter":3,"node":"z"}}, "clock": 3
   },
   {
     "name": "clock rollback and chapter undone on the other device",
-    "ours": {"chapters":{"1":{"heard":10,"done":true,"at":2000000000,"rev":{"counter":8,"node":"desktop"}}},"bookmarks":[],"_clock":8},
-    "theirs": {"chapters":{"1":{"heard":0,"done":false,"at":100,"rev":{"counter":9,"node":"phone"}}},"bookmarks":[],"_clock":9},
+    "ours": {"chapters":{"1":{"heard":10,"done":true,"at":2000000000,"rev":{"counter":8,"node":"desktop"}}},"_clock":8},
+    "theirs": {"chapters":{"1":{"heard":0,"done":false,"at":100,"rev":{"counter":9,"node":"phone"}}},"_clock":9},
     "field": "chapters", "expected": {"1":{"heard":0,"done":false,"at":100,"rev":{"counter":9,"node":"phone"}}}, "clock": 9
   },
   {
     "name": "voice edit after clock rollback wins",
-    "ours": {"voice":"old","voiceAt":2000000000,"_fieldRevs":{"voice":{"counter":1,"node":"desktop"}},"chapters":{},"bookmarks":[],"_clock":1},
-    "theirs": {"voice":"new","voiceAt":100,"_fieldRevs":{"voice":{"counter":2,"node":"phone"}},"chapters":{},"bookmarks":[],"_clock":2},
+    "ours": {"voice":"old","voiceAt":2000000000,"_fieldRevs":{"voice":{"counter":1,"node":"desktop"}},"chapters":{},"_clock":1},
+    "theirs": {"voice":"new","voiceAt":100,"_fieldRevs":{"voice":{"counter":2,"node":"phone"}},"chapters":{},"_clock":2},
     "field": "voice", "expected": "new", "clock": 2
-  },
-  {
-    "name": "bookmark deleted after clock rollback stays deleted",
-    "ours": {"chapters":{},"bookmarks":[{"id":"mark","chapterId":1,"seconds":10,"note":"keep","at":2000000000,"rev":{"counter":1,"node":"desktop"}}],"_clock":1},
-    "theirs": {"chapters":{},"bookmarks":[],"deleted":{"mark":100},"_deletedRevs":{"mark":{"counter":2,"node":"phone"}},"_clock":2},
-    "field": "bookmarks", "expected": [], "clock": 2
-  },
-  {
-    "name": "undo after clock rollback restores bookmark",
-    "ours": {"chapters":{},"bookmarks":[],"deleted":{"mark":2000000000},"_deletedRevs":{"mark":{"counter":2,"node":"desktop"}},"_clock":2},
-    "theirs": {"chapters":{},"bookmarks":[{"id":"mark","chapterId":1,"seconds":10,"note":"restored","at":100,"rev":{"counter":3,"node":"phone"}}],"_clock":3},
-    "field": "bookmarks", "expected": [{"id":"mark","chapterId":1,"seconds":10,"note":"restored","at":100,"rev":{"counter":3,"node":"phone"}}], "clock": 3
   }
 ]

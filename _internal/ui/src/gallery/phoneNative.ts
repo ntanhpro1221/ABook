@@ -1,4 +1,4 @@
-import type { Bookmark, ListeningState } from "@/listen/model";
+import type { ListeningState } from "@/listen/model";
 import type { NativeState, PeerLibrary, RemoteBook, ShareStatus } from "@/android/plugins";
 import type { VieneuStatus } from "@/listen/vieneuModule";
 import { emitNative, type NativeImpl } from "./capacitor";
@@ -93,12 +93,6 @@ export const ebookPlayer: NativeImpl = {
     changed({ sleep: { ...player.sleep, mode: "minutes", remaining: (player.sleep.remaining ?? 0) + (Number(options.minutes) || 10) * 60 } }),
   // Phòng trưng bày không rung (shared/feedback.ts).
   haptic: () => undefined,
-  addBookmark: (options): Bookmark => {
-    const item = book(player.bookId);
-    const mark: Bookmark = { id: `bm${Date.now()}`, chapterId: player.chapterId ?? 1, seconds: player.position, note: String(options.note ?? ""), at: NOW_SECONDS, createdAt: NOW_SECONDS };
-    touch(item, (state) => ({ ...state, bookmarks: [...state.bookmarks, mark] }));
-    return mark;
-  },
   lastNight: () => ({ session: galleryState.scenario.night ? lastNight() : null }),
   dismissLastNight: () => undefined,
   listenPrefs: () => ({}),
@@ -196,14 +190,6 @@ export const ebookLibrary: NativeImpl = {
   setRate: (options) => void touch(book(options.id), (state) => ({ ...state, rate: Number(options.rate) })),
   setVoice: () => undefined,
   syncState: (options) => book(options.id).state,
-  addBookmark: (options): Bookmark => {
-    const mark: Bookmark = { id: `bm${Date.now()}`, chapterId: Number(options.chapterId), seconds: Number(options.seconds), note: String(options.note ?? ""), at: NOW_SECONDS };
-    touch(book(options.id), (state) => ({ ...state, bookmarks: [...state.bookmarks, mark] }));
-    return mark;
-  },
-  updateBookmark: () => undefined,
-  deleteBookmark: (options) => void touch(book(options.id), (state) => ({ ...state, bookmarks: state.bookmarks.filter((mark) => mark.id !== options.markId) })),
-  restoreBookmark: (options) => options.mark,
   storage: () => ({
     bytes: onPhone().reduce((sum, item) => sum + (localBook(item).bytes ?? 0), 0),
     free: 21_400_000_000,

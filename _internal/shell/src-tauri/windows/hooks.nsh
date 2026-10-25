@@ -57,7 +57,7 @@ FunctionEnd
 
 ; Gỡ là gỡ hết (chủ sách 28-09: "phụ thuộc nằm hoàn toàn bên trong app, gỡ thì gỡ hết"). Mọi thứ app tải thêm nằm trong
 ; %LOCALAPPDATA%\ABook\Studio (Python, thư viện, Ollama riêng + model, Git, cache) và bộ nhớ đệm WebView2 nằm trong
-; %LOCALAPPDATA%\<mã app> - cả hai LUÔN xoá. Dữ liệu cá nhân (%LOCALAPPDATA%\ABook: chỗ đang nghe, dấu trang, thiết bị
+; %LOCALAPPDATA%\<mã app> - cả hai LUÔN xoá. Dữ liệu cá nhân (%LOCALAPPDATA%\ABook: chỗ đang nghe, thiết bị
 ; đã ghép, tuỳ chọn; cùng cách sắp cửa sổ ở %APPDATA%\<mã app>) chỉ xoá khi người dùng tích ô "xoá dữ liệu" của bộ gỡ - gỡ nhầm rồi cài lại không mất chỗ đang nghe.
 ; Thư viện sách (thư mục người dùng chọn) không bao giờ bị đụng.
 

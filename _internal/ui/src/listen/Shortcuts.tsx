@@ -17,7 +17,6 @@ const SHORTCUTS: [ReactNode, string, boolean][] = [
   [<Kbd key="space">Space</Kbd>, "Phát / tạm dừng", false],
   [<><Kbd>←</Kbd> <Kbd>→</Kbd></>, "Lùi / tới 15 giây", false],
   [<><Kbd>Shift</Kbd> + <Kbd>←</Kbd> <Kbd>→</Kbd></>, "Chương trước / sau", false],
-  [<Kbd key="b">B</Kbd>, "Thêm dấu trang", true],
   [<Kbd key="m">M</Kbd>, "Tắt / bật tiếng", true],
   [<><Kbd>[</Kbd> <Kbd>]</Kbd></>, "Giảm / tăng tốc độ đọc", true],
   [<Kbd key="esc">Esc</Kbd>, "Thu nhỏ màn hình đang nghe", false],
@@ -50,7 +49,7 @@ export function ShortcutList({ remote = false, inSettings = false }: { remote?: 
       <p className="mt-3 max-w-md text-[0.8125rem] text-fg-2 text-pretty">
         {letters
           ? remote
-            ? "Phím một chữ cái: B, M, [ ], ?, và J, K, 1–9, O, R ở Studio."
+            ? "Phím một chữ cái: M, [ ], ?, và J, K, 1–9, O, R ở Studio."
             : "Tắt phím một chữ cái ở Cài đặt › Giao diện."
           : `Phím một chữ cái đang tắt${remote || inSettings ? "" : " (bật ở Cài đặt › Giao diện)"}. Space, mũi tên, Esc vẫn chạy.`}
       </p>

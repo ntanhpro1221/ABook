@@ -75,10 +75,10 @@ def test_another_process_changing_the_profile_does_not_lose_the_place(tmp_path: 
     mine, path = _started(tmp_path)
     mine.progress("sach", 3, 50.0, 1300.0, session_id="tab-1", revision=1)
     other = Listening(path)  # tiến trình khác (CLI, bản app thứ hai) cùng hồ sơ
-    other.add_bookmark("sach", 3, 49.0, "đoạn hay")
+    other.set_rate("sach", 1.5)
     mine.progress("sach", 3, 90.0, 1300.0, session_id="tab-1", revision=2)
     merged = Listening(path).get("sach")
-    assert merged["last"]["seconds"] == 90.0 and [mark["note"] for mark in merged["bookmarks"]] == ["đoạn hay"]
+    assert merged["last"]["seconds"] == 90.0 and merged["rate"] == 1.5
     other.progress("sach", 3, 120.0, 1300.0)
     assert Listening(path).get("sach")["last"]["seconds"] == 120.0
 

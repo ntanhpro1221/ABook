@@ -36,16 +36,15 @@ def meta_revisions(row: dict, *keys: str) -> dict:
 
 def clean_state(raw: Any) -> dict:
     if not isinstance(raw, dict):
-        return {"chapters": {}, "bookmarks": []}
+        return {"chapters": {}}
     state = fields(raw, ("updatedAt", "rate", "rateAt", "finishedAt", "voiceAt", "_clock"), ("voice",), ("finished",))
     if "_clock" in state and (type(state["_clock"]) is not int or not 0 <= state["_clock"] <= MAX_COUNTER):
         state.pop("_clock")
     if "_epoch" in state and not valid_epoch(state["_epoch"]):
         state.pop("_epoch")
-    for key in ("_fieldRevs", "_deletedRevs"):
-        if key in state:
-            rows = state[key]
-            state[key] = {k: v for k, v in rows.items() if revision({"rev": v})[0]} if isinstance(rows, dict) else {}
+    if "_fieldRevs" in state:
+        rows = state["_fieldRevs"]
+        state["_fieldRevs"] = {k: v for k, v in rows.items() if revision({"rev": v})[0]} if isinstance(rows, dict) else {}
     for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
         # Giá trị + mốc giờ + phiên bản là một bộ: một phần hỏng thì bỏ cả bộ (máy kia gửi lại bản đủ) - trước đây giữ giá trị và phiên
         # bản mà mất mốc, máy kia gộp văng lỗi ở mọi lần đồng bộ (soát a118 lỗi 3).
@@ -70,19 +69,8 @@ def clean_state(raw: Any) -> dict:
     state["chapters"] = {key: kept for key, item in (chapters.items() if isinstance(chapters, dict) else [])
                          if isinstance(item, dict)
                          and (kept := revisions(fields(item, ("heard", "duration", "at"), booleans=("done",)))) is not None}
-    marks = state.get("bookmarks", [])
-    state["bookmarks"] = [kept for item in (marks if isinstance(marks, list) else [])
-                          if isinstance(item, dict) and isinstance(item.get("id"), str)
-                          and number(item.get("chapterId")) and number(item.get("seconds"))
-                          and (kept := revisions(fields(item, ("seconds", "at", "createdAt", "index"), ("note", "quote")))) is not None]
-    for key in ("chapters", "bookmarks"):
-        if key not in raw:
-            state.pop(key, None)
-    for key in ("deleted",):
-        if key in state:
-            state[key] = {k: v for k, v in state[key].items() if number(v)} if isinstance(state[key], dict) else {}
-            # Dấu xoá không còn phiên bản trong bảng đã lọc (phiên bản hỏng, hay chính `_deletedRevs` sai kiểu) cũng bỏ, cùng lý do như hàng.
-            state[key] = {k: v for k, v in state[key].items() if k in state.get("_deletedRevs", {})}
+    if "chapters" not in raw:
+        state.pop("chapters", None)
     if "sessions" in state:
         state["sessions"] = [fields(v, ("startedAt", "endedAt", "listened"))
                              for v in (state["sessions"] if isinstance(state["sessions"], list) else [])
