@@ -43,3 +43,30 @@ export function useScrollFadeOn(element: HTMLElement | null, size = 36): CSSProp
   const mask = scrollFadeMask(edges, size);
   return mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined;
 }
+
+/** Như `useScrollFade` cho hàng cuộn NGANG (hàng lọc Thư viện, `FilterRow`): mục cuối không bao giờ bị cắt cứng ở mép khi chữ hệ thống to
+ *  (soát 25-10: "Xong" cụt ở cỡ chữ 115 %) - mép nào còn mục bị che thì mờ dần, như hàng tab. Nghe cả cỡ từng mục: chữ to ra không đổi cỡ khung.
+ *  Nhận chính phần tử qua ref gọi lại (`ref={setRow}`): hàng có thể chỉ hiện sau khi tải xong. */
+export function useRowFade(element: HTMLElement | null, size = 24): CSSProperties | undefined {
+  const [edges, setEdges] = useState({ left: false, right: false });
+  useEffect(() => {
+    if (!element) return;
+    const update = () => {
+      const left = element.scrollLeft > 2;
+      const right = element.scrollLeft + element.clientWidth < element.scrollWidth - 2;
+      setEdges((old) => (old.left === left && old.right === right ? old : { left, right }));
+    };
+    update();
+    element.addEventListener("scroll", update, { passive: true });
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
+    observer?.observe(element);
+    for (const child of Array.from(element.children)) observer?.observe(child);
+    return () => {
+      element.removeEventListener("scroll", update);
+      observer?.disconnect();
+    };
+  }, [element]);
+  if (!element || (!edges.left && !edges.right)) return undefined;
+  const mask = `linear-gradient(to right, ${edges.left ? `transparent, black ${size}px` : "black"}, ${edges.right ? `black calc(100% - ${size}px), transparent` : "black"})`;
+  return { maskImage: mask, WebkitMaskImage: mask };
+}

@@ -1,5 +1,7 @@
 import { MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { useRowFade } from "@/shared/scrollFade";
+import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { Collapse } from "@/shared/Collapse";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useBackLayer } from "@/shared/backStack";
@@ -26,6 +28,8 @@ import { useListenBook, useListenLibrary, useReadAloudVoices, useSource } from "
 import { feedback, withFeedback } from "@/shared/feedback";
 
 type Filter = "all" | "listening" | "new" | "finished";
+const LIBRARY_FILTER_OPTIONS = [{ value: "all", label: "Tất cả" }, { value: "listening", label: "Nghe dở" }, { value: "new", label: "Chưa nghe" }, { value: "finished", label: "Xong" }] as const;
+const LIBRARY_FILTERS: Filter[] = LIBRARY_FILTER_OPTIONS.map(option => option.value);
 
 /** Hành động riêng của nền tảng đi cùng bìa, kể cả khi mở bộ sách. */
 type BookExtras = { actions?: (book: ListenBook) => ReactNode; cover?: (book: ListenBook) => ReactNode; seriesCover?: (books: ListenBook[]) => ReactNode };
@@ -445,6 +449,8 @@ export function LibraryScreen({
   const books = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable > 0 || book.stage === "text"), [allBooks]);
   const upcoming = useMemo(() => allBooks?.filter((book) => book.chaptersAvailable === 0 && book.stage !== "text") ?? [], [allBooks]);
   const [filter, setFilter] = useState<Filter>("all");
+  const [filterRow, setFilterRow] = useState<HTMLDivElement | null>(null);
+  const filterFade = useRowFade(filterRow);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
@@ -525,11 +531,13 @@ export function LibraryScreen({
               <ContinueCard book={listening} />
             </MotionRegion>
           )}</MotionPresence>
+          {/* Khe lọc 14 px trên điện thoại: vừa cả bốn mục ở cỡ chữ hệ thống 115 % ("Xong" từng cụt ở mép); to hơn nữa thì hàng cuộn, mép mờ. */}
           <div className="mt-8 flex items-center gap-2 sm:mt-12 sm:gap-4">
-            <div role="group" aria-label="Lọc sách" className="flex min-w-0 flex-1 gap-5 overflow-x-auto sm:gap-6">
-              {([{ value: "all", label: "Tất cả" }, { value: "listening", label: "Nghe dở" }, { value: "new", label: "Chưa nghe" }, { value: "finished", label: "Xong" }] as const).map(option => <button
+            <div ref={setFilterRow} style={filterFade} role="group" aria-label="Lọc sách" className="relative flex min-w-0 flex-1 gap-4 overflow-x-auto [scrollbar-width:none] sm:gap-6">
+              <SlidingIndicator variant="line" />
+              {LIBRARY_FILTER_OPTIONS.map(option => <button
                 key={option.value} type="button" aria-label={option.value === "finished" ? "Nghe xong" : option.label} aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
-                className={cn("touch-box min-h-[44px] shrink-0 border-b-2 text-xs font-medium transition-colors duration-motion-fast first:text-left sm:text-sm", filter === option.value ? "border-accent text-accent-text" : "border-transparent text-fg-2 hover:text-fg")}>
+                className={cn("touch-box min-h-[44px] shrink-0 border-b-2 border-transparent text-xs font-medium transition-colors duration-motion-medium first:text-left sm:text-sm", filter === option.value ? "text-accent-text" : "text-fg-2 hover:text-fg")}>
                 {option.label}
               </button>)}
             </div>
@@ -557,7 +565,7 @@ export function LibraryScreen({
             </label>
           </Collapse>
           {/* Chỉ fade kết quả: header/tiếp tục nghe/controls giữ một cây. Ảnh theo scrollMemory trước paint. */}
-          <MotionRegion followScroll fadeThrough motionKey={[filter, sort, folded, shown.map(book => book.id), !shown.length && noResultsTitle]}>
+          <MotionRegion followScroll fadeThrough slideIndex={LIBRARY_FILTERS.indexOf(filter)} motionKey={[filter, sort, folded, shown.map(book => book.id), !shown.length && noResultsTitle]}>
             {/* Kết quả rỗng không giữ lại bìa exit dưới ảnh cũ. Còn sách thì giữ node, focus và Windowed. */}
             <SeriesShelves key={shown.length ? "books" : "empty"} books={shown} twins={twins} memory={memory} grouped={grouped} />
             <MotionPresence open={!shown.length}>

@@ -1300,6 +1300,8 @@ html[data-vt] .now-playing { animation: none; }
   pointer-events: none;
 }
 .motion-snapshot { animation: fade-out var(--motion-fast-out) linear both !important; }
+/* Ảnh cũ trượt theo tab (MotionRegion slideIndex): chuyển động do WAAPI lo, không fade đè. */
+.motion-snapshot[data-motion-slide] { animation: none !important; }
 [data-motion-region]:empty:not([data-motion-exit]) { display: none; }
 details[data-motion-fallback="1"][data-motion="opening"] > :not(summary) { animation: fade-in var(--motion-fast) linear; }
 details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { animation: fade-out var(--motion-fast) linear both; }
@@ -1419,6 +1421,9 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 
 .settings-row:has(> .settings-row-control > [role="radiogroup"]) { grid-template-columns: minmax(0, 1fr); }
 .settings-row-control { display: flex; align-items: center; justify-content: flex-end; }
+/* Khối gập nối ngay sau một khối là hàng tiếp theo của danh sách: vạch chia mảnh, không 28 px trống trước từng tiêu đề - hai tiêu đề gập
+ * đang đóng từng cách nhau 83 px, trôi giữa khoảng trống (chủ sách 25-10). Hàng tiêu đề tự cao 48 px (cảm ứng) / 40 px nên đủ thoáng. */
+.settings-block + .settings-block[data-fold] { margin-top: 0; border-top: 1px solid var(--line); }
 .settings-row-control > [role="radiogroup"] { display: flex; width: 100%; }
 .settings-row-control > [role="radiogroup"] > button { flex: 1; min-width: 0; }
 /* Nút chữ ở cuối hàng có vùng chạm rộng hơn chữ: bù phần đệm để chữ kết thúc đúng mép nội dung. */

@@ -9,9 +9,10 @@ import { scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { MotionRegion } from "./MotionRegion";
 import { MotionPresence } from "./MotionPresence";
+import { SlidingIndicator } from "./SlidingIndicator";
 import { useBackLayer } from "./backStack";
 import { useMediaQuery } from "./media";
-import { useScrollFadeOn } from "./scrollFade";
+import { useRowFade, useScrollFadeOn } from "./scrollFade";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
@@ -395,9 +396,17 @@ export const Tabs = TabsPrimitive.Root;
 export const TabsContent = TabsPrimitive.Content;
 
 /** Bao các TabsContent của một hàng tab: Radix gỡ bảng cũ ngay khi đổi tab - không có vỏ chung thì bảng mới thay tức thì và chiều cao trang
- *  nhảy. Một MotionRegion khoá theo tab: bảng cũ mờ ra, bảng mới hiện vào, chiều cao chuyển dần. */
+ *  nhảy. Một MotionRegion khoá theo tab: bảng cũ trượt ra, bảng mới trượt vào từ phía tab vừa chọn (thứ tự đọc từ hàng tab của cùng Tabs), chiều cao chuyển dần. */
 export function TabsPanels({ value, children, className }: { value: string; children: ReactNode; className?: string }) {
-  return <MotionRegion motionKey={value} fadeThrough className={className}>{children}</MotionRegion>;
+  const box = useRef<HTMLElement | null>(null);
+  return <MotionRegion elementRef={box} motionKey={value} slideIndex={tabIndex(box.current, value)} fadeThrough className={className}>{children}</MotionRegion>;
+}
+
+/** Vị trí của tab `value` trong hàng tab của Tabs gần nhất (Radix đặt id nút tab là `<gốc>-trigger-<value>`). */
+function tabIndex(panels: HTMLElement | null, value: string): number | undefined {
+  const tabs = panels?.closest("[data-orientation]")?.querySelectorAll<HTMLElement>('[role="tab"]');
+  const index = tabs ? Array.from(tabs).findIndex((tab) => tab.id.endsWith(`-trigger-${value}`)) : -1;
+  return index < 0 ? undefined : index;
 }
 
 const FADE = 36;
@@ -459,8 +468,9 @@ export function TabsList({ children, className, label }: { children: ReactNode; 
         ref={list}
         aria-label={label}
         style={style}
-        className={cn("flex gap-5 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none] sm:gap-6", className)}
+        className={cn("relative flex gap-5 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none] sm:gap-6", className)}
       >
+        <SlidingIndicator variant="line" />
         {children}
       </TabsPrimitive.List>
       {/* Mũi tên báo còn tab ngoài mép (mọi cỡ màn: chuột bấm được; bàn phím đã có phím mũi tên của hàng tab). */}
@@ -487,7 +497,7 @@ export function TabsTrigger({ value, children, count }: { value: string; childre
   return (
     <TabsPrimitive.Trigger
       value={value}
-      className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors hover:text-fg data-[state=active]:border-accent data-[state=active]:text-fg"
+      className="touch-row relative -mb-px inline-flex h-11 shrink-0 items-center whitespace-nowrap border-b-2 border-transparent text-sm font-medium text-fg-2 transition-colors duration-motion-medium hover:text-fg data-[state=active]:text-fg"
     >
       <TabLabel count={count}>{children}</TabLabel>
     </TabsPrimitive.Trigger>
@@ -1030,8 +1040,9 @@ export function Segmented<T extends string>({
       role="radiogroup"
       aria-label={label}
       onKeyDown={radioGroupKeys(values, value, onChange)}
-      className={cn("flex-wrap gap-0.5 rounded-lg border border-line bg-panel-2 p-0.5", wrap ? "flex" : "inline-flex max-w-full", className)}
+      className={cn("relative flex-wrap gap-0.5 rounded-lg border border-line bg-panel-2 p-0.5", wrap ? "flex" : "inline-flex max-w-full", className)}
     >
+      <SlidingIndicator variant="pill" />
       {options.map((option, index) => (
         <button
           key={option.value}
@@ -1041,8 +1052,8 @@ export function Segmented<T extends string>({
           tabIndex={radioTabIndex(values, value, index)}
           onClick={() => onChange(option.value)}
           className={cn(
-            "touch-row h-7 whitespace-nowrap rounded-md px-3 text-[0.8125rem] font-medium transition-colors pointer-coarse:min-w-[48px]",
-            value === option.value ? "bg-accent text-accent-ink" : "text-fg-2 hover:text-fg",
+            "touch-reach relative h-7 whitespace-nowrap rounded-md px-3 text-[0.8125rem] font-medium transition-colors duration-motion-medium max-sm:h-[36px] pointer-coarse:h-[36px] pointer-coarse:min-w-[48px]",
+            value === option.value ? "text-accent-ink" : "text-fg-2 hover:text-fg",
             itemClassName,
           )}
         >
@@ -1069,8 +1080,11 @@ export function FilterRow<T extends string>({
   className?: string;
 }) {
   const values = options.map((option) => option.value);
+  const [row, setRow] = useState<HTMLDivElement | null>(null);
+  const fade = useRowFade(row);
   return (
-    <div role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys(values, value, onChange)} className={cn("flex max-w-full gap-5 overflow-x-auto [scrollbar-width:none] sm:gap-6", className)}>
+    <div ref={setRow} style={fade} role="radiogroup" aria-label={label} onKeyDown={radioGroupKeys(values, value, onChange)} className={cn("relative flex max-w-full gap-5 overflow-x-auto [scrollbar-width:none] sm:gap-6", className)}>
+      <SlidingIndicator variant="line" />
       {options.map((option, index) => (
         <button
           key={option.value}
@@ -1080,8 +1094,8 @@ export function FilterRow<T extends string>({
           tabIndex={radioTabIndex(values, value, index)}
           onClick={() => onChange(option.value)}
           className={cn(
-            "touch-row h-9 shrink-0 whitespace-nowrap border-b-2 text-sm font-medium transition-colors duration-motion-fast",
-            value === option.value ? "border-accent text-accent-text" : "border-transparent text-fg-2 hover:text-fg",
+            "touch-row h-9 shrink-0 whitespace-nowrap border-b-2 border-transparent text-sm font-medium transition-colors duration-motion-medium",
+            value === option.value ? "text-accent-text" : "text-fg-2 hover:text-fg",
           )}
         >
           {option.label}

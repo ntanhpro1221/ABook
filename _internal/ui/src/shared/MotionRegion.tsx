@@ -1,5 +1,5 @@
 import { Component, createElement, createRef, isValidElement, type ElementType, type HTMLAttributes, type ReactNode, type Ref } from "react";
-import { captureMotionSnapshot, removeMotionSnapshot, settleMotionSnapshot, EASE, MOTION, prefersReducedMotion, viewTransitionRunning } from "./motion";
+import { captureMotionSnapshot, holdMotionSnapshot, removeMotionSnapshot, settleMotionSnapshot, EASE, MOTION, prefersReducedMotion, viewTransitionRunning } from "./motion";
 
 /** Bỏ clock/%/giá trị ô nhập khỏi dấu đổi nội dung. Tiến độ vẫn chạy bằng Progress, không chụp lại theo từng tick. */
 export function motionSignature(element: HTMLElement): string {
@@ -17,7 +17,9 @@ export function motionSignature(element: HTMLElement): string {
   return parts.join("|");
 }
 
-type Props = HTMLAttributes<HTMLElement> & { as?: "div" | "section" | "ul" | "ol" | "p" | "span" | "li" | "label" | "button"; htmlFor?: string; type?: "button" | "submit" | "reset"; disabled?: boolean; children?: ReactNode; motionKey?: unknown; elementRef?: Ref<HTMLElement>; followScroll?: boolean; fadeThrough?: boolean };
+type Props = HTMLAttributes<HTMLElement> & { as?: "div" | "section" | "ul" | "ol" | "p" | "span" | "li" | "label" | "button"; htmlFor?: string; type?: "button" | "submit" | "reset"; disabled?: boolean; children?: ReactNode; motionKey?: unknown; elementRef?: Ref<HTMLElement>; followScroll?: boolean; fadeThrough?: boolean;
+  /** Thứ tự của mục đang chọn trong hàng tab/lọc điều khiển vùng này: đổi sang mục bên phải thì nội dung trượt vào từ phải, bên trái thì từ trái. */
+  slideIndex?: number };
 type Snapshot = { clone?: HTMLElement; signature: string; height: number; display?: string; margins?: [number, number]; focus?: HTMLElement } | null;
 
 /** So sánh cây React trước commit: polling/đồng hồ/ô nhập không được clone cả vùng DOM mỗi nhịp.
@@ -70,7 +72,7 @@ export class MotionRegion extends Component<Props> {
       margins: [parseFloat(computed?.marginTop ?? "0") || 0, parseFloat(computed?.marginBottom ?? "0") || 0],
       focus };
   }
-  componentDidUpdate(_previous: Props, _state: unknown, snapshot: Snapshot) {
+  componentDidUpdate(previous: Props, _state: unknown, snapshot: Snapshot) {
     const box = this.box.current;
     if (!box || !snapshot) {
       if (this.clearExit) { ++this.generation; this.animation?.cancel(); this.clearExit?.(); }
@@ -86,6 +88,8 @@ export class MotionRegion extends Component<Props> {
     const generation = ++this.generation;
     const to = box.getBoundingClientRect().height;
     const empty = !box.children.length && !box.textContent;
+    const slide = !empty && this.clone && !prefersReducedMotion() && typeof previous.slideIndex === "number" && typeof this.props.slideIndex === "number"
+      ? Math.sign(this.props.slideIndex - previous.slideIndex) : 0;
     if (empty && snapshot.height > 0) {
       const { height, overflow, display, marginTop, marginBottom } = box.style;
       box.setAttribute("data-motion-exit", "");
@@ -103,13 +107,13 @@ export class MotionRegion extends Component<Props> {
         this.clearExit = undefined;
       };
     }
-    const finish = () => { if (generation === this.generation) { this.clearHidden?.(); this.clearExit?.(); } };
-    const duration = prefersReducedMotion() ? MOTION.fast : MOTION.medium;
-    const through = this.props.fadeThrough && Math.abs(to - snapshot.height) > 1;
+    const finish = () => { restore?.(); if (generation === this.generation) { this.clearHidden?.(); this.clearExit?.(); } };
+    const duration = slide ? MOTION.slow : prefersReducedMotion() ? MOTION.fast : MOTION.medium;
+    const through = !slide && this.props.fadeThrough && Math.abs(to - snapshot.height) > 1;
     // Cây mới chỉ hiện khi ảnh cũ đã mờ hết (fastOut) - hiện sớm hơn là hai lớp chữ chồng nhau ~60-100 ms (emu138 VỪA 1).
     // Reduced vẫn có đủ thời gian fade vào, không tween chiều cao.
     const revealAt = Math.min(MOTION.fastOut, duration * .75);
-    const frames: Keyframe[] = empty ? [{ opacity: 1 }, { opacity: 0 }] : through
+    let frames: Keyframe[] = empty ? [{ opacity: 1 }, { opacity: 0 }] : through
       ? [{ opacity: 0, offset: 0 }, { opacity: 0, offset: revealAt / duration }, { opacity: 1, offset: 1 }]
       : [{ opacity: 0.45 }, { opacity: 1 }];
     if (!prefersReducedMotion() && Math.abs(to - snapshot.height) > 1) {
@@ -118,6 +122,8 @@ export class MotionRegion extends Component<Props> {
         if (snapshot.margins?.[index]) { frames[0][name] = `${snapshot.margins[index]}px`; frames[frames.length - 1][name] = "0px"; }
       }
     }
+    let restore: (() => void) | undefined;
+    if (slide && this.clone) ({ frames, restore } = this.slideFrames(box, this.clone, slide, frames, duration));
     this.animation = box.animate?.(frames, { duration, easing: through ? "linear" : EASE.standard }) ?? null;
     if (this.animation) {
       this.animation.onfinish = finish;
@@ -128,6 +134,27 @@ export class MotionRegion extends Component<Props> {
       const target = snapshot.focus.isConnected ? snapshot.focus : box.querySelector<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]');
       target?.focus({ preventScroll: true });
     }
+  }
+  /** Đổi tab: ảnh cũ trượt hẳn ra phía bên kia, cây mới trượt vào từ phía mục vừa chọn - như lật trang, cùng một nhịp (chủ sách 25-10:
+   *  "phần content ở dưới phải lướt sang thế chỗ"). Cả hai bị cắt trong khung của vùng, không tràn ra lề hay tạo cuộn ngang. */
+  private slideFrames(box: HTMLElement, clone: HTMLElement, slide: number, frames: Keyframe[], duration: number) {
+    const width = box.getBoundingClientRect().width;
+    const cut = (left: number, right: number) => `inset(-100vh ${right}px -100vh ${left}px)`;
+    holdMotionSnapshot(clone, duration + 80);
+    clone.animate?.([
+      { transform: "translateX(0px)", clipPath: cut(0, 0) },
+      { transform: `translateX(${-slide * width}px)`, clipPath: slide > 0 ? cut(width, 0) : cut(0, width) },
+    ], { duration, easing: EASE.standard, fill: "forwards" });
+    const sliding: Keyframe[] = [
+      { transform: `translateX(${slide * width}px)`, clipPath: slide > 0 ? cut(0, width) : cut(width, 0) },
+      { transform: "translateX(0px)", clipPath: cut(0, 0) },
+    ];
+    if (frames[0].height !== undefined) { sliding[0].height = frames[0].height; sliding[1].height = frames[frames.length - 1].height; }
+    // Phần trượt ngoài khung vẫn tính vào vùng cuộn của tổ tiên: chặn ngang ở cha trong lúc trượt, trả lại khi xong.
+    const parents = [box.parentElement, clone.parentElement === box.ownerDocument.body ? null : clone.parentElement].filter((parent): parent is HTMLElement => Boolean(parent));
+    const kept = parents.map((parent) => parent.style.overflowX);
+    for (const parent of parents) parent.style.overflowX = "clip";
+    return { frames: sliding, restore: () => parents.forEach((parent, index) => { parent.style.overflowX = kept[index]; }) };
   }
   private hideUntilReveal(box: HTMLElement, previousFocus: HTMLElement | undefined, animation: Animation, revealAt: number) {
     const doc = box.ownerDocument;
@@ -172,7 +199,7 @@ export class MotionRegion extends Component<Props> {
   }
   componentWillUnmount() { ++this.generation; this.animation?.cancel(); this.clearHidden?.(false); this.clearExit?.(); removeMotionSnapshot(this.clone); }
   render() {
-    const { as: Tag = "div", motionKey: _key, elementRef, followScroll: _followScroll, fadeThrough: _fadeThrough, ...props } = this.props;
+    const { as: Tag = "div", motionKey: _key, elementRef, followScroll: _followScroll, fadeThrough: _fadeThrough, slideIndex: _slideIndex, ...props } = this.props;
     return createElement(Tag as ElementType, { ...props, ref: (element: HTMLElement | null) => {
       this.box.current = element;
       if (typeof elementRef === "function") elementRef(element);

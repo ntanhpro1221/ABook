@@ -116,8 +116,8 @@ function FoldedBlock({ title, id, children, className, storageKey }: { title: st
   const [open, setOpen] = useFold(`settings.${storageKey}`);
   const bodyId = useId();
   return (
-    <section id={id} className={cn("settings-block mt-8", className)}>
-      <h2 className="label-section mb-2 text-fg-2">
+    <section id={id} data-fold="" className={cn("settings-block mt-8", className)}>
+      <h2 className="label-section text-fg-2">
         <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)} className="touch-row -mx-2 flex w-[calc(100%+var(--spacing)*4)] items-center justify-between gap-2 rounded-lg px-2 py-1 text-left uppercase hover:bg-hover">
           {title}
           <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0" aria-hidden />

@@ -1290,11 +1290,14 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
       <p className="mt-2 hidden flex-wrap items-center gap-1.5 text-xs text-fg-3 md:flex">
         <Kbd>J</Kbd> <Kbd>K</Kbd> chọn thẻ · <Kbd>1–9</Kbd> chọn đáp án · <Kbd>Esc</Kbd> bỏ chọn
       </p>
-      <AnimatedRows as="ol" className="mt-3 space-y-3" items={items.slice(0, shown)} keyOf={(item) => item.key}>
+      {/* Đổi loại việc: cả danh sách trượt theo hướng mục vừa chọn; danh sách mới dựng lại từ đầu, không lẫn thẻ cũ đang mờ ra. */}
+      <MotionRegion motionKey={active} slideIndex={active === "all" ? 0 : kinds.indexOf(active) + 1}>
+      <AnimatedRows key={active} as="ol" className="mt-3 space-y-3" items={items.slice(0, shown)} keyOf={(item) => item.key}>
         {(item, _index, state) => (
           <Card as="div" key={item.key} bookId={bookId} item={item} exiting={state === "exit"} active={state !== "exit" && item.key === keys.current.items[at ?? -1]?.key} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
         )}
       </AnimatedRows>
+      </MotionRegion>
       {items.length > shown && (
         <Button variant="secondary" size="sm" className="mt-4" onClick={() => setShown(shown + PAGE)}>
           Xem thêm {Math.min(PAGE, items.length - shown)} việc

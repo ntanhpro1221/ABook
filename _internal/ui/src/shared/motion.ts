@@ -135,6 +135,7 @@ export function fallbackSnapshot(doc: TransitionDocument, nav: NavMotion): void 
 /** Ảnh tĩnh của một vùng trước React commit. Dùng chung cho VT fallback và nội dung cập nhật bất đồng bộ. */
 const snapshotCleanups = new WeakMap<HTMLElement, () => void>();
 const snapshotPlacements = new WeakMap<HTMLElement, () => void>();
+const snapshotLife = new WeakMap<HTMLElement, (ms: number) => void>();
 const snapshotTargets = new Map<HTMLElement, HTMLElement>();
 // Chỉ ảnh trong surface theo layout/clip. Một rAF chung, sống tối đa tới timer gỡ ảnh cuối.
 const surfacePlacements = new Set<() => void>();
@@ -158,6 +159,11 @@ export function settleMotionSnapshot(target: HTMLElement, clone: HTMLElement | u
   }
   snapshotTargets.set(target, clone);
   return clone;
+}
+/** Ảnh cũ do người gọi tự chuyển động (trượt ngang của tab): bỏ fade CSS mặc định, giữ ảnh đủ lâu cho hoạt ảnh ấy. */
+export function holdMotionSnapshot(clone: HTMLElement, ms: number): void {
+  clone.setAttribute("data-motion-slide", "");
+  snapshotLife.get(clone)?.(ms);
 }
 export function removeMotionSnapshot(clone: HTMLElement | undefined): void {
   if (!clone) return;
@@ -253,7 +259,8 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
     if (node.scrollTop) clonedNodes[index].scrollTop = node.scrollTop;
     if (node.scrollLeft) clonedNodes[index].scrollLeft = node.scrollLeft;
   });
-  const timer = window.setTimeout(() => removeMotionSnapshot(clone), MOTION.fastOut + 80);
+  let timer = window.setTimeout(() => removeMotionSnapshot(clone), MOTION.fastOut + 80);
+  snapshotLife.set(clone, (ms) => { window.clearTimeout(timer); timer = window.setTimeout(() => removeMotionSnapshot(clone), ms); });
   const onEnd = (event: Event) => {
     if (event.target !== clone) return;
     removeMotionSnapshot(clone);

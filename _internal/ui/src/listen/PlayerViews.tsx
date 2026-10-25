@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { Collapse } from "@/shared/Collapse";
 import { Capacitor } from "@capacitor/core";
@@ -2385,7 +2386,8 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
     event.currentTarget.querySelectorAll<HTMLElement>('[role="tab"]')[next]?.focus();
   };
   const panelTabs = (
-    <div role="tablist" aria-label="Bảng" onKeyDown={onTabKeys} className="flex min-w-0 gap-1">
+    <div role="tablist" aria-label="Bảng" onKeyDown={onTabKeys} className="relative flex min-w-0 gap-1">
+      <SlidingIndicator variant="pill" className="rounded-lg bg-hover" />
       {PANELS.map((item) => {
         const selected = panel === item.value && showPanel;
         return (
@@ -2403,8 +2405,8 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
               else selectPanel(item.value);
             }}
             className={cn(
-              "touch-row inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors",
-              selected ? "bg-hover text-fg" : "text-fg-2 hover:text-fg",
+              "touch-row relative inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition-colors duration-motion-medium",
+              selected ? "text-fg" : "text-fg-2 hover:text-fg",
             )}
           >
             <item.icon className="size-4" style={{ marginLeft: `${(-item.ink * 14) / 24}px` }} />
@@ -2417,9 +2419,12 @@ export function NowPlaying({ mobile = false, actions, edit }: { mobile?: boolean
   );
 
   const panelBody = (
-    <div role="tabpanel" id={`now-panel-${panel}`} aria-labelledby={`now-tab-${panel}`} key={panel} data-motion-content className="motion-reveal h-full">
-      {panel === "text" ? <ReadAlong edit={edit} /> : panel === "chapters" ? <ChapterPanel /> : <BookmarkPanel editingId={editingId} setEditingId={setEditingId} />}
-    </div>
+    // Đổi bảng: bảng cũ trượt ra, bảng mới trượt vào từ phía tab vừa chọn (cùng nhịp với ô sáng của hàng tab).
+    <MotionRegion motionKey={panel} slideIndex={PANELS.findIndex((item) => item.value === panel)} className="h-full">
+      <div role="tabpanel" id={`now-panel-${panel}`} aria-labelledby={`now-tab-${panel}`} key={panel} data-motion-content className="h-full">
+        {panel === "text" ? <ReadAlong edit={edit} /> : panel === "chapters" ? <ChapterPanel /> : <BookmarkPanel editingId={editingId} setEditingId={setEditingId} />}
+      </div>
+    </MotionRegion>
   );
 
   // Điện thoại: "Đọc theo" mở màn đọc của chương đang nghe - cả màn cho chữ, thanh điều khiển tự mờ khi cuộn đọc (L7). Máy tính: bảng bên phải.

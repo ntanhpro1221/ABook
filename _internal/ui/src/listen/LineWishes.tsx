@@ -200,7 +200,7 @@ function WordView({ bookId, text, names, need, promise, later, onWithdraw, onBac
               aria-pressed={word === item}
               onClick={() => setWord(word === item ? null : item)}
               className={cn(
-                "inline-flex h-8 items-center gap-1 rounded-full border px-2.5 text-sm pointer-coarse:h-10",
+                "inline-flex h-8 items-center gap-1 rounded-full border px-2.5 text-sm transition-colors duration-motion-medium pointer-coarse:h-10",
                 word === item ? "border-accent bg-accent-soft text-accent-text" : "border-line hover:bg-hover",
               )}
             >

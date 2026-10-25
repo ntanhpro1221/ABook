@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { useMotionState } from "@/shared/motion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Headphones } from "lucide-react";
@@ -97,7 +98,8 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
   const notice = voice ? wholeBookNotice(voice) : "";
   return (
     <MotionRegion className="flex flex-col gap-4">
-      <div role="radiogroup" aria-label="Kiểu file" onKeyDown={radioGroupKeys(FORMATS, format, onFormat)} className="grid gap-2 sm:grid-cols-2">
+      <div role="radiogroup" aria-label="Kiểu file" onKeyDown={radioGroupKeys(FORMATS, format, onFormat)} className="relative grid gap-2 sm:grid-cols-2">
+        <SlidingIndicator variant="pill" className="rounded-lg border border-focus bg-accent/10" />
         {FORMAT_CHOICES.map((choice, index) => (
           <button
             key={choice.id}
@@ -107,8 +109,8 @@ export function AudiobookForm({ format, onFormat, voice, plan, planError, ffmpeg
             tabIndex={radioTabIndex(FORMATS, format, index)}
             onClick={() => onFormat(choice.id)}
             className={cn(
-              "rounded-lg border p-3 text-left transition-colors",
-              format === choice.id ? "border-focus bg-accent/10" : "border-line hover:bg-hover",
+              "relative rounded-lg border p-3 text-left transition-colors duration-motion-medium",
+              format === choice.id ? "border-transparent" : "border-line hover:bg-hover",
             )}
           >
             <span className="block text-sm font-medium">{choice.label}</span>

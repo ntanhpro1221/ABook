@@ -1,5 +1,6 @@
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { Fold } from "@/shared/Collapse";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
@@ -156,6 +157,7 @@ interface Contents {
 }
 
 export type Filter = "all" | "speech" | "doubt";
+const FILTERS: Filter[] = ["all", "speech", "doubt"];
 
 /** Ô tìm chữ: chữ đang gõ và chỗ khớp đang đứng (số thứ tự; chuyển vòng). */
 interface FindState {
@@ -648,7 +650,8 @@ export function DeliveryMenu({
       {line.emotion !== null && (
         <div>
           <div className="mb-1.5 label-section text-fg-2">Cảm xúc</div>
-          <div className="grid grid-cols-3 gap-1">
+          <div className="relative grid grid-cols-3 gap-1">
+            <SlidingIndicator variant="pill" className="rounded-lg bg-accent-soft ring-1 ring-accent/40" />
             {EMOTIONS.map(([value, label]) => (
               <button
                 key={value}
@@ -656,8 +659,8 @@ export function DeliveryMenu({
                 aria-pressed={emotion === value}
                 onClick={() => setEmotion(value)}
                 className={cn(
-                  "h-8 rounded-lg px-1 text-xs font-medium",
-                  emotion === value ? "bg-accent-soft text-accent-text ring-1 ring-accent/40" : "text-fg-2 hover:bg-hover",
+                  "relative h-8 rounded-lg px-1 text-xs font-medium transition-colors duration-motion-medium",
+                  emotion === value ? "text-accent-text" : "text-fg-2 hover:bg-hover",
                 )}
               >
                 {label}
@@ -1432,7 +1435,7 @@ function ChapterScriptView({
     );
   }
   return (
-    <MotionRegion>
+    <MotionRegion slideIndex={FILTERS.indexOf(filter)}>
       {selected.length > 1 && (
         <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-accent-soft px-3 py-1.5 text-[0.8125rem]" role="status">
           <span className="font-semibold">Đang chọn {selected.length} câu</span>

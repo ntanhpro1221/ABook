@@ -1123,6 +1123,7 @@ function ActivityView({ book }: { book: BookSummary }) {
         />
         <span className="text-xs text-fg-3">{data ? `${data.length} mục gần nhất` : ""}</span>
       </div>
+      <MotionRegion motionKey={[mode, isLoading, groups.length > 0]} slideIndex={mode === "story" ? 0 : 1}>
       {isLoading ? (
         <div className="mt-6 space-y-3">
           {Array.from({ length: 6 }, (_, index) => (
@@ -1164,6 +1165,7 @@ function ActivityView({ book }: { book: BookSummary }) {
           ))}
         </div>
       )}
+      </MotionRegion>
     </MotionRegion>
   );
 }
