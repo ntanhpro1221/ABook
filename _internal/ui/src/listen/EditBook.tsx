@@ -361,7 +361,7 @@ export function EditBookDialog({
     <Dialog
       open={open}
       onOpenChange={onOpenChange}
-      width="max-w-xl"
+      width="max-w-[560px]"
       title={searching ? COVER_SEARCH_TITLE : "Sửa sách"}
       description={
         searching

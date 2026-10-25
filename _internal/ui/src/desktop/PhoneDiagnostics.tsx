@@ -72,7 +72,7 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
       onOpenChange={onOpenChange}
       title={`Chẩn đoán ${computer.name}`}
       description="Nhật ký có tên sách; thông tin riêng được che nhưng hãy xem lại trước khi gửi."
-      width="max-w-2xl"
+      width="max-w-[560px]"
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
