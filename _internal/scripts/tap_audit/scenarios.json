@@ -181,5 +181,539 @@
     "background": {
       "text": "Tuỳ chọn dự án Tap Studio Fixture"
     }
+  },
+  {
+    "name": "Player mobile - Speed",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Mở màn hình đang nghe",
+        "exact": true
+      },
+      {
+        "text": "Tốc độ đọc"
+      }
+    ],
+    "probe": {
+      "text": "1,3×",
+      "exact": true,
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&e.getAttribute('aria-label')?.includes('Tốc độ đọc: 1,3'))"
+    },
+    "background": {
+      "text": "Thêm tuỳ chọn",
+      "exact": true
+    },
+    "touchProbe": {
+      "text": "1,5×",
+      "exact": true,
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&e.getAttribute('aria-label')?.includes('Tốc độ đọc: 1,5'))"
+    },
+    "reopenSteps": [
+      {
+        "text": "Tốc độ đọc"
+      }
+    ]
+  },
+  {
+    "name": "Player mobile - Sleep timer",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Mở màn hình đang nghe",
+        "exact": true
+      },
+      {
+        "text": "Hẹn giờ"
+      }
+    ],
+    "probe": {
+      "text": "15 phút",
+      "exact": true,
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/15 phút/.test(e.getAttribute('aria-label')||''))"
+    },
+    "background": {
+      "text": "Thêm tuỳ chọn",
+      "exact": true
+    },
+    "touchProbe": {
+      "text": "30 phút",
+      "exact": true,
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/30 phút/.test(e.getAttribute('aria-label')||''))"
+    },
+    "reopenSteps": [
+      {
+        "text": "Hẹn giờ"
+      }
+    ]
+  },
+  {
+    "name": "Player mobile - More options",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Mở màn hình đang nghe",
+        "exact": true
+      },
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      }
+    ],
+    "probe": {
+      "text": "Dấu trang",
+      "exact": true,
+      "closes": true,
+      "expect": "[...document.querySelectorAll('[role=dialog] h2')].some(e=>e.textContent==='Dấu trang')"
+    },
+    "background": {
+      "text": "Thêm tuỳ chọn",
+      "exact": true
+    },
+    "reopenSteps": [
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      }
+    ]
+  },
+  {
+    "name": "Player mobile - Voice",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Mở màn hình đang nghe",
+        "exact": true
+      },
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Giọng đọc"
+      }
+    ],
+    "probe": {
+      "text": "Giọng thử B",
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>e.getAttribute('aria-label')==='Giọng đọc: Giọng thử B')"
+    },
+    "background": {
+      "text": "Thêm tuỳ chọn",
+      "exact": true
+    },
+    "touchProbe": {
+      "text": "Giọng thử A",
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>e.getAttribute('aria-label')==='Giọng đọc: Giọng thử A')"
+    },
+    "reopenSteps": [
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Giọng đọc"
+      }
+    ]
+  },
+  {
+    "name": "Player mobile - Background music",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Mở màn hình đang nghe",
+        "exact": true
+      },
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Nhạc nền",
+        "exact": true
+      }
+    ],
+    "probe": {
+      "text": "Tắt",
+      "exact": true,
+      "closes": true,
+      "expect": "!document.querySelector('[role=dialog][aria-label=\"Nhạc nền\"]')"
+    },
+    "background": {
+      "text": "Thêm tuỳ chọn",
+      "exact": true
+    },
+    "reopenSteps": [
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Nhạc nền",
+        "exact": true
+      }
+    ]
+  },
+  {
+    "name": "Player desktop - Speed",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Tốc độ đọc"
+      }
+    ],
+    "probe": {
+      "text": "1,3×",
+      "exact": true,
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&e.getAttribute('aria-label')?.includes('Tốc độ đọc: 1,3'))"
+    },
+    "background": {
+      "text": "Mở màn hình đang nghe",
+      "exact": true
+    },
+    "touchProbe": {
+      "text": "1,5×",
+      "exact": true,
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&e.getAttribute('aria-label')?.includes('Tốc độ đọc: 1,5'))"
+    },
+    "viewport": [
+      1280,
+      900
+    ],
+    "reopenSteps": [
+      {
+        "text": "Tốc độ đọc"
+      }
+    ]
+  },
+  {
+    "name": "Player desktop - Sleep timer",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Hẹn giờ"
+      }
+    ],
+    "probe": {
+      "text": "15 phút",
+      "exact": true,
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/15 phút/.test(e.getAttribute('aria-label')||''))"
+    },
+    "background": {
+      "text": "Mở màn hình đang nghe",
+      "exact": true
+    },
+    "touchProbe": {
+      "text": "30 phút",
+      "exact": true,
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.visible(e)&&/30 phút/.test(e.getAttribute('aria-label')||''))"
+    },
+    "viewport": [
+      1280,
+      900
+    ],
+    "reopenSteps": [
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Hẹn giờ"
+      }
+    ]
+  },
+  {
+    "name": "Player desktop - More options",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      }
+    ],
+    "probe": {
+      "text": "Thêm dấu trang",
+      "exact": true,
+      "closes": true,
+      "expect": "[...document.querySelectorAll('[data-sonner-toast]')].some(e=>e.textContent.includes('dấu trang'))"
+    },
+    "background": {
+      "text": "Mở màn hình đang nghe",
+      "exact": true
+    },
+    "viewport": [
+      1280,
+      900
+    ],
+    "reopenSteps": [
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      }
+    ]
+  },
+  {
+    "name": "Player desktop - Voice",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Giọng đọc"
+      }
+    ],
+    "probe": {
+      "text": "Giọng thử B",
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>e.getAttribute('aria-label')==='Giọng đọc: Giọng thử B')"
+    },
+    "background": {
+      "text": "Mở màn hình đang nghe",
+      "exact": true
+    },
+    "touchProbe": {
+      "text": "Giọng thử A",
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>e.getAttribute('aria-label')==='Giọng đọc: Giọng thử A')"
+    },
+    "viewport": [
+      1280,
+      900
+    ],
+    "reopenSteps": [
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Giọng đọc"
+      }
+    ]
+  },
+  {
+    "name": "Player desktop - Background music",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Nhạc nền",
+        "exact": true
+      }
+    ],
+    "probe": {
+      "text": "Tắt",
+      "exact": true,
+      "closes": true,
+      "expect": "!document.querySelector('[role=dialog][aria-label=\"Nhạc nền\"]')"
+    },
+    "background": {
+      "text": "Mở màn hình đang nghe",
+      "exact": true
+    },
+    "viewport": [
+      1280,
+      900
+    ],
+    "reopenSteps": [
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Nhạc nền",
+        "exact": true
+      }
+    ]
+  },
+  {
+    "name": "Player mobile - Bookmarks",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Mở màn hình đang nghe",
+        "exact": true
+      },
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Dấu trang",
+        "exact": true
+      }
+    ],
+    "probe": {
+      "text": "Sửa ghi chú",
+      "exact": true,
+      "expect": "!!__tapLayer.querySelector('input[aria-label=\"Ghi chú\"]')"
+    },
+    "background": {
+      "text": "Thêm tuỳ chọn",
+      "exact": true
+    },
+    "reopenSteps": [
+      {
+        "text": "Thêm tuỳ chọn",
+        "exact": true
+      },
+      {
+        "text": "Dấu trang",
+        "exact": true
+      }
+    ],
+    "touchProbe": {
+      "text": "Huỷ",
+      "exact": true,
+      "expect": "!__tapLayer.querySelector('input[aria-label=\"Ghi chú\"]')"
+    }
+  },
+  {
+    "name": "Player mobile - Chapters",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "[data-book-primary]"
+      },
+      {
+        "text": "Mở màn hình đang nghe",
+        "exact": true
+      },
+      {
+        "text": "Chương",
+        "exact": true
+      }
+    ],
+    "probe": {
+      "text": "Chương 2",
+      "expect": "[...__tapLayer.querySelectorAll('button[aria-current=true]')].some(e=>e.textContent.includes('Chương 2'))"
+    },
+    "background": {
+      "text": "Thêm tuỳ chọn",
+      "exact": true
+    },
+    "touchProbe": {
+      "text": "Chương 1",
+      "expect": "[...__tapLayer.querySelectorAll('button[aria-current=true]')].some(e=>e.textContent.includes('Chương 1'))"
+    },
+    "reopenSteps": [
+      {
+        "text": "Chương",
+        "exact": true
+      }
+    ]
+  },
+  {
+    "name": "Listen mobile - Chapter options",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "selector": "button[aria-label^='Tuỳ chọn Ch']"
+      }
+    ],
+    "probe": {
+      "text": "Đổi tên chương",
+      "closes": true,
+      "expect": "!!tapAudit.top()?.querySelector('input')"
+    },
+    "background": {
+      "text": "Thêm việc với sách",
+      "exact": true
+    }
+  },
+  {
+    "name": "Listen mobile - Delete book confirmation",
+    "path": "#/book/{listen}",
+    "steps": [
+      {
+        "text": "Thêm việc với sách",
+        "exact": true
+      },
+      {
+        "text": "Xoá khỏi thư viện…",
+        "exact": true
+      }
+    ],
+    "probe": {
+      "text": "Để sau",
+      "exact": true,
+      "closes": true
+    },
+    "background": {
+      "text": "Thêm việc với sách",
+      "exact": true
+    }
+  },
+  {
+    "name": "Listen mobile - Listening profile picker",
+    "path": "#/book/{profiles}",
+    "steps": [
+      {
+        "text": "Hồ sơ nghe:"
+      }
+    ],
+    "probe": {
+      "text": "Mặc định",
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.label(e).startsWith('Hồ sơ nghe:')&&tapAudit.label(e).includes('Mặc định'))"
+    },
+    "background": {
+      "text": "Thêm việc với sách",
+      "exact": true
+    },
+    "touchProbe": {
+      "text": "Hồ sơ thử thứ hai",
+      "closes": true,
+      "expect": "[...document.querySelectorAll('button')].some(e=>tapAudit.label(e).startsWith('Hồ sơ nghe:')&&tapAudit.label(e).includes('Hồ sơ thử thứ hai'))"
+    }
   }
 ]

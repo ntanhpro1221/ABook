@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
+import { useToastClearance } from "@/shared/toastClearance";
 import { toast } from "@/shared/toast";
 import type { ListenBook } from "@/listen/model";
 import { EbookLibrary } from "./plugins";
@@ -283,6 +284,7 @@ function ClipBridge({ children }: { children: ReactNode }) {
 export function AndroidApp() {
   const engine = useMemo(() => new NativeAudioEngine(), []);
   useFocusClearOfToasts();
+  useToastClearance();
   // Lần đồng bộ tuỳ chọn với native xong (mới hơn bản WebView thì lấy của native): hiện lại các màn đọc tuỳ chọn lúc dựng (soát a100 T3).
   const [synced, setSynced] = useState(0);
   useEffect(() => {
@@ -353,6 +355,8 @@ export function AndroidApp() {
       </SourceProvider>
       <Toaster
         position="top-center"
+        // Vuốt ngang như snackbar; giữ cả hướng dọc khi thông báo ở đầu màn.
+        swipeDirections={["left", "right", "top", "bottom"]}
         // Màn đọc: thông báo nằm dưới thanh đầu (ReaderScreen đặt --toast-top) - không che nút "Nghe từ đây" (soát a70).
         mobileOffset={{ top: "var(--toast-top, 16px)", right: 16, left: 16, bottom: 16 }}
         offset={{ top: "var(--toast-top, 24px)" }}
