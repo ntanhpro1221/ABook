@@ -122,7 +122,7 @@ export function Producing() {
           </div>
         </button>
       )}</AnimatedRows>
-      <MotionPresence open={live.length > 3}><NavLink to="/studio" className="sidebar-link flex min-h-8 items-center px-2 text-xs text-accent-text" onClick={() => setExpanded(false)}>Xem tất cả</NavLink></MotionPresence>
+      <MotionPresence open={live.length > 3}><Link to="/studio" className="sidebar-link flex min-h-8 items-center px-2 text-xs text-accent-text" onClick={() => setExpanded(false)}>Xem tất cả</Link></MotionPresence>
     </MotionRegion>
   );
 }
