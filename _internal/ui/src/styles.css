@@ -1253,6 +1253,18 @@ details[open]:not([data-motion="closing"]) > summary .fold-chevron {
 .page-motion[data-covered] {
   content-visibility: hidden;
 }
+/* Hàng tab trong trang (shared/ui.tsx TabsList) trên điện thoại, 2-4 tab: chia đều bề ngang, chữ căn giữa (Material "fixed tabs", chủ sách 25-10
+   "căn giữa có chuẩn hơn không?"); gạch chân vẫn dài đúng bằng chữ (SlidingIndicator đo [data-indicator-target]). Từ 5 tab: cuộn ngang như cũ. */
+@media (width < 40rem) {
+  [data-tab-row]:not(:has(> [role="tab"]:nth-of-type(5))) {
+    column-gap: 0;
+  }
+  [data-tab-row]:not(:has(> [role="tab"]:nth-of-type(5))) > [role="tab"] {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+}
+
 /* Mở/đóng "Đang nghe": màn trượt lên từ đáy và hiện dần (nền phía dưới mờ khuất theo), đóng thì trượt xuống; bìa bay giữa thanh phát và màn lớn.
    Chỉ MỘT phần tử mang mỗi tên ở mỗi trạng thái: bìa nhỏ bỏ tên khi màn lớn đang mở. */
 .now-playing-vt {

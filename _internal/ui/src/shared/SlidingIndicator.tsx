@@ -23,9 +23,13 @@ export function SlidingIndicator({ variant, className }: { variant: "line" | "pi
       if (!active || !active.offsetWidth) { bar.style.opacity = "0"; placed = false; return; }
       const height = variant === "line" ? 2 : active.offsetHeight;
       const top = variant === "line" ? active.offsetTop + active.offsetHeight - 2 : active.offsetTop;
+      // Gạch chân dài đúng bằng chữ khi mục rộng hơn chữ (tab chia đều trên điện thoại): đo phần tử [data-indicator-target] trong mục.
+      // Dùng offset (không dùng getBoundingClientRect) để không lệch khi cả trang đang phóng / trượt vào.
+      const target = variant === "line" ? active.querySelector<HTMLElement>("[data-indicator-target]") : null;
+      const inner = target && target.offsetParent === active ? target : null;
       if (!placed) bar.style.transition = "none";
-      bar.style.transform = `translate(${active.offsetLeft}px, ${top}px)`;
-      bar.style.width = `${active.offsetWidth}px`;
+      bar.style.transform = `translate(${active.offsetLeft + (inner?.offsetLeft ?? 0)}px, ${top}px)`;
+      bar.style.width = `${inner?.offsetWidth ?? active.offsetWidth}px`;
       bar.style.height = `${height}px`;
       bar.style.opacity = "1";
       if (!placed) { void bar.offsetWidth; bar.style.transition = ""; placed = true; }

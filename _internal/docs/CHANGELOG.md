@@ -11,6 +11,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Màu ấm như giấy cho cả app; chọn nền đọc Giấy, Ngà hay Đêm; tiếng chạm khẽ (tự im khi đang nghe) và rung nhẹ trên điện thoại, tắt được ở Cài đặt › Giao diện.
 
 ### Giao diện
+- Đổi trang mượt hơn: trang cũ mờ đi ngay khi bấm, trang mới hiện vào theo hướng; không còn khựng một nhịp rồi mới chuyển, quay lại Thư viện không còn trang cao dần và nhảy chỗ cuộn. Đổi tab trong trang sách không còn mờ cả màn hình. Mở app: giao diện hiện dần, màn chờ điện thoại mờ đi thay vì biến mất.
+- Mở và đóng Đang nghe trên điện thoại mượt hơn, không còn hiện lại Thư viện một khung rồi mờ vào lần hai.
+- Tab trang sách trên điện thoại chia đều bề ngang, chữ căn giữa; hàng lọc thiếu vài px thì tự co khoảng cách thay vì phải cuộn ("Xong" không còn bị che); thanh tiến độ trên bìa bo đúng theo góc bìa.
 - Đổi tab, bộ lọc hay lựa chọn: gạch chân / ô sáng lướt từ mục cũ sang mục mới, nội dung trượt sang theo hướng mục vừa chọn (Thư viện, trang sách, Đang nghe, Studio, Cài đặt, màn đọc). Nút chọn giờ tự tắt thấp gọn hơn; các mục gập trong Cài đặt nối liền như một danh sách; hàng lọc Thư viện không còn cắt chữ "Xong" khi chữ hệ thống to.
 - Studio căn thẳng chân chữ trong bảng chương; ô nhập và nút bên cạnh cao đều, mũi tên cuối hàng thẳng mép, nhãn người nói và các thẻ nhỏ có khoảng đệm đều hơn.
 - Căn đều nét biểu tượng với chữ trong menu sách, thẻ buổi sáng; nút Bluetooth và nút quay lại Cài đặt thẳng mép nội dung, vẫn dễ chạm.
