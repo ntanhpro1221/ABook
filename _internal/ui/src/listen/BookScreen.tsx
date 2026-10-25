@@ -4,12 +4,13 @@ import { Fold } from "@/shared/Collapse";
 import { AnimatedRows, LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
+import { SCREEN_TITLE, ScreenHeader } from "@/shared/ScreenHeader";
 import { syncsToComputer } from "@/shared/capabilities";
 import { usePageTitle } from "@/shared/title";
 import { reveal, scrollParent, useScrollMemory } from "@/shared/scrollMemory";
@@ -920,9 +921,10 @@ export function BookScreen({
   });
 
   const placeholder = (
-      <div className="page-x mx-auto max-w-[1180px] pt-6">
-        <Skeleton className="h-5 w-24" />
-        <div className="mt-6 flex gap-6"><Skeleton className="size-36 rounded-lg" /><div className="flex-1 space-y-3 pt-3"><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-1/3" /></div></div>
+      <div className="page-x mx-auto max-w-[1180px]">
+        {/* Cùng đầu màn với trang đã tải: nút ← bấm được ngay, bìa không nhảy khi dữ liệu về. */}
+        <ScreenHeader back={{ label: "Về Thư viện", onClick: () => navigate("/") }} />
+        <div className="mt-5 flex gap-6"><Skeleton className="size-36 rounded-lg" /><div className="flex-1 space-y-3 pt-3"><Skeleton className="h-7 w-2/3" /><Skeleton className="h-4 w-1/3" /></div></div>
       </div>
   );
   const content = () => {
@@ -1003,17 +1005,15 @@ export function BookScreen({
   };
 
   return (
-    <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16 pt-5 sm:pt-7">
-      {/* Mực mũi tên bắt đầu 2,33 px trong ô 14 px: lùi chừng ấy cho thẳng mép chữ bên dưới. */}
-      <button type="button" onClick={() => navigate("/")} className="touch-hit touch-row inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-        <ArrowLeft className="ink-start size-4" /> Thư viện
-      </button>
+    <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16">
+      {/* Nút ← chung của màn con (ScreenHeader) đứng riêng một hàng: tên sách nằm cạnh bìa bên dưới. */}
+      <ScreenHeader back={{ label: "Về Thư viện", onClick: () => navigate("/") }} />
       {/* Bìa · tên · tác giả · giọng · thời lượng · tiến độ mảnh; dưới là MỘT nút chính và một hàng nút phụ cùng kiểu (docs/DESIGN.md mục 7).
           Điện thoại: hàng nút trải hết bề ngang dưới bìa; máy tính: nằm dưới tên, cạnh bìa. */}
       <header className="mt-5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-4 sm:gap-x-7">
         <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} playing={listening && player.playing} className="w-28 sm:row-span-2 sm:w-44" />
         <div className="min-w-0">
-          <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-[1.875rem]">{displayTitle(book.title)}</h1>
+          <h1 data-content-title="" className={cn(SCREEN_TITLE, "leading-tight")}>{displayTitle(book.title)}</h1>
           <p className="tabular mt-1.5 text-sm text-fg-2">
             <DotJoin
               parts={[

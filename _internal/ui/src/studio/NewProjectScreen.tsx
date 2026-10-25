@@ -5,7 +5,6 @@ import { Collapse, Fold, useFold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
 import {
   AlertTriangle,
-  ArrowLeft,
   Check,
   ChevronDown,
   FileText,
@@ -31,6 +30,7 @@ import { Switch } from "@/desktop/PhoneSync";
 import { useClip } from "@/listen/clip";
 import { useSource } from "@/listen/source";
 import { cn } from "@/shared/cn";
+import { ScreenHeader } from "@/shared/ScreenHeader";
 import { usePageTitle } from "@/shared/title";
 import { useScrollFadeOn } from "@/shared/scrollFade";
 import { formatLength, formatNumber } from "@/shared/format";
@@ -1878,12 +1878,8 @@ export function NewProjectScreen() {
   };
 
   return (
-    <div className="page-x mx-auto max-w-[920px] pb-16 pt-6 sm:pt-9">
-      {/* Mực mũi tên bắt đầu 2,33 px trong ô 14 px: lùi chừng ấy cho thẳng mép chữ bên dưới. */}
-      <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-        <ArrowLeft className="ink-start size-4" /> Studio
-      </button>
-      <h1 className="mt-4 text-2xl font-bold tracking-tight sm:text-[2rem]"><MotionRegion as="span">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</MotionRegion></h1>
+    <div className="page-x mx-auto max-w-[920px] pb-16">
+      <ScreenHeader back={{ label: "Về Studio", onClick: () => navigate("/studio") }} title={<MotionRegion as="span">{draft.seed ? "Làm tiếp cuốn này" : "Tạo sách nói"}</MotionRegion>} />
       <MotionPresence open={Boolean(draft.seed)}>{draft.seed && (
         <SeedBanner
           seed={draft.seed}
