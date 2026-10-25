@@ -1,4 +1,6 @@
 import { useMotionState } from "@/shared/motion";
+import { MotionPresence } from "@/shared/MotionPresence";
+import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { Headphones } from "lucide-react";
@@ -159,7 +161,8 @@ export function AudiobookPhoneForm({ voice, plan, planError, music = false, onMu
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-fg-2">Máy đọc cả cuốn rồi ghép thành MỘT file M4B có mục lục chương: app nghe sách nói nào cũng mở được, nhớ chỗ nghe dở.</p>
-      <div className="text-sm">
+      {/* Ước tính về muộn ("Đang tính độ dài…" -> số liệu, làm tiếp, chỗ trống): mờ qua tại chỗ, cao đổi dần - như hai form nhạc. */}
+      <MotionRegion className="text-sm">
         {voice ? (
           <p>
             Giọng đọc: <span className="font-medium">{voiceCaption(voice)}</span>
@@ -173,19 +176,19 @@ export function AudiobookPhoneForm({ voice, plan, planError, music = false, onMu
         </p>
         {plan && resumeText(plan) && <p className="mt-1 text-fg-2">{resumeText(plan)}</p>}
         {plan && plan.chapters > 0 && <p className="mt-1 text-fg-3">{spaceText(plan)}</p>}
-      </div>
-      {plan?.music?.available && onMusic && (
-        <div className="flex flex-col gap-1">
+      </MotionRegion>
+      <MotionPresence open={Boolean(plan?.music?.available && onMusic)}>
+        {plan && onMusic && <MotionRegion className="flex flex-col gap-1">
           <MusicMixOption checked={music} onChange={onMusic} />
           {rereadText(plan) && <p className="pl-6.5 text-xs text-warning">{rereadText(plan)}</p>}
           {hint && <p className="pl-6.5 text-xs text-fg-3">{hint}</p>}
-        </div>
-      )}
-      {notice && (
+        </MotionRegion>}
+      </MotionPresence>
+      <MotionPresence open={Boolean(notice)}>
         <p role="note" className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
           {notice}
         </p>
-      )}
+      </MotionPresence>
       <p className="text-xs text-fg-3">
         Xuất chạy nền, nhường lúc nghe; dừng rồi làm tiếp được.
       </p>
