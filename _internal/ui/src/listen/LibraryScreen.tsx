@@ -537,7 +537,8 @@ export function LibraryScreen({
                 {option.label}
               </button>])}
             </div>
-            <DropdownMenu.Root>
+            {/* Xếp sách không khoá trang: modal đổi pointer-events/biến cuộn trên body, tính lại style mọi bìa. */}
+            <DropdownMenu.Root modal={false}>
               <DropdownMenu.Trigger asChild><button type="button" aria-label="Xếp theo" title={`Xếp theo: ${SORT_OPTIONS.find(option => option.value === sort)?.label}`} className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1 text-xs text-fg-2 sm:text-sm">
                 <ArrowDownWideNarrow className="size-5 sm:size-4" /><span className="max-sm:sr-only">Xếp theo</span>
               </button></DropdownMenu.Trigger>

@@ -1,6 +1,12 @@
 # Test report
 
-Ngày cập nhật: 2026-10-25
+Ngày cập nhật: 2026-10-26
+
+Đợt c13, worktree `D:/Novels/ABook_c13`, nhánh `dev/c13`, nền `472abf80`: giới hạn selector `:has` của hàng dự án, chỉ đánh dấu tiêu điểm trên phần tử đang nhận, menu xếp sách không khoá body, vị trí thông báo của màn đọc chỉ đặt biến trên toaster. Giữ mọi chuyển động và thời lượng. Thêm bộ đo CDP `gallery_jank.mjs` (412×915, DPR 2,625, CPU 6×), trace và stack/elementCount; thêm retry khoá file cổng Edge và sửa phép đo nhãn text node trần của bộ soi, có đối chứng dấu đặt sai vẫn bị bắt.
+
+- TypeScript: **0 lỗi**. Vitest cuối: **2491 passed, 0 failed, 1 skipped**, **313 file** (312 passed, 1 skipped); thêm **16 test**. Skip có sẵn cần corpus PDF. Contrast: **94 nhóm, 2744 cặp, 0 nhóm không đạt**.
+- 5 lượt mỗi thao tác, p99 trung vị trước → sau: mở Đang nghe **122,2 → 61,1 ms**, thu nhỏ **155,6 → 83,4 ms**, mở menu xếp sách **338,8 → 83,3 ms**, đóng menu **122,3 → 44,5 ms**, mở màn đọc **222,2 → 138,7 ms**. Máy đo gần 180 Hz; không coi đây là số đo OPPO. Mở đầu màn đọc vẫn còn tác vụ bố cục lớn, khoảng mẫu còn chồng nhau; các thử nghiệm không thắng vùng nhiễu đã hoàn tác.
+- Gate tập trung **30 khung, 0 phát hiện / 0 lỗi**; menu xếp sách đang mở trên điện thoại/máy tính, sáng/tối **4/4 sạch**; lượt toàn bộ **290/290 khung, 0 phát hiện / 0 lỗi**. Báo cáo, mọi mẫu và các thử nghiệm hoàn tác ở scratchpad `codex/c13/report.md`. Không sửa audio/Python/runtime/Kotlin, không dùng adb/thiết bị, không commit/push.
 
 Đợt npm141, worktree `D:/Novels/ABook_npm141`, nhánh `dev/npm141`, nền `d692fc39`: nâng 16 dependency UI và 4 dependency mobile trong range semver cũ, đổi Music2 sang EighthNote. Sửa MenuShell không ghi đè quan hệ ARIA của Radix bằng props undefined; bộ soi chỉ cho phép lặp giá trị đang chọn khi nút mở liên kết đúng popup bằng aria-controls.
 
