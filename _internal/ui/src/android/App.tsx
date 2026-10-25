@@ -16,7 +16,7 @@ import type { ImportChoice } from "@/listen/textImport";
 import { LibraryScreen, useRestoreLastListening } from "@/listen/LibraryScreen";
 import { ReaderScreen } from "@/listen/ReaderScreen";
 import { NowPlaying, PlayerBar } from "@/listen/PlayerViews";
-import { PlayerProvider, useNowPlaying, usePlayer } from "@/listen/player";
+import { PlayerProvider, useCoveredAfterOpen, useNowPlaying, usePlayer } from "@/listen/player";
 import { SourceProvider } from "@/listen/source";
 import { pageFocusKey, usePageEnter, usePageFocus } from "@/shared/motion";
 import { watchDownloads, watchEditsSync } from "./downloads";
@@ -118,9 +118,17 @@ function Tab({ to, icon: Icon, label, also }: { to: string; icon: typeof Library
   );
 }
 
+/** Một phần tử cố định (không tạo mới mỗi lần MobileShell vẽ) để cột của màn Đang nghe (memo) không vẽ lại khi mở / đóng màn. */
+const HAND_OFF = <PhoneHandOffButton />;
+
+/** WebView có content-visibility: trang bên dưới màn Đang nghe bị bỏ qua hẳn (không tính style/bố cục, không focus, ra khỏi cây trợ năng) - đổi cờ này
+ *  rẻ cỡ 2 ms, còn inert phải tính lại style cả cây trang (25-70 ms ở 6x chậm). Cuộn giữ nguyên khi mở lại. WebView cũ không có thì quay về inert. */
+const HIDES_PAGE = typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("content-visibility", "hidden");
+
 function MobileShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { expanded, setExpanded } = useNowPlaying();
+  const covered = useCoveredAfterOpen(expanded); // inert của trang bên dưới đợi màn Đang nghe trượt xong (một lần tính lại style cả trang giữa lúc trượt là giật)
   useRestoreLastListening();
   const expandedNow = useRef(expanded);
   expandedNow.current = expanded;
@@ -134,12 +142,12 @@ function MobileShell({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex h-full flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       {/* Màn "Đang nghe" phủ kín: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}
-      <main ref={main} inert={expanded} className="page-motion min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
-      <div className="contents" inert={expanded}>
+      <main ref={main} inert={covered && !HIDES_PAGE} data-covered={covered && HIDES_PAGE ? "" : undefined} className="page-motion min-h-0 flex-1 overflow-y-auto overscroll-contain">{children}</main>
+      <div className="contents" inert={covered}>
         <RemotePlayerBars localBar={<PlayerBar compact />} />
       </div>
       <nav
-        inert={expanded}
+        inert={covered}
         className="flex h-16 shrink-0 border-t border-line bg-bg"
         style={{ paddingBottom: "env(safe-area-inset-bottom)", boxSizing: "content-box" }}
         aria-label="Điều hướng"
@@ -148,7 +156,7 @@ function MobileShell({ children }: { children: ReactNode }) {
         <Tab to="/studio" icon={Clapperboard} label="Studio" />
         <Tab to="/settings" icon={Settings} label="Cài đặt" />
       </nav>
-      <NowPlaying mobile actions={<PhoneHandOffButton />} />
+      <NowPlaying mobile actions={HAND_OFF} />
     </div>
   );
 }
@@ -309,7 +317,7 @@ export function AndroidApp() {
   return (
     <TooltipProvider delayDuration={500}>
       <SourceProvider source={androidSource}>
-        <PlayerProvider engine={engine} keyboard={false} fadeSeconds={loadSettings().sleepFadeSeconds} extendMinutes={loadSettings().sleepExtendMinutes}>
+        <PlayerProvider engine={engine} keyboard={false} plainOpen fadeSeconds={loadSettings().sleepFadeSeconds} extendMinutes={loadSettings().sleepExtendMinutes}>
           <ClipBridge>
             <MotionHashRouter>
               <BackButton />

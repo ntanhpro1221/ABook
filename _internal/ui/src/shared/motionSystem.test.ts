@@ -134,11 +134,12 @@ describe("navMotion: hướng chuyển trang", () => {
     expect(navMotion("PUSH", { ...at("/studio/new", 1), search: "?step=1" }, { ...at("/studio/new", 2), search: "?step=2" })).toBe("forward");
     expect(navMotion("POP", { ...at("/studio/new", 2), search: "?step=2" }, { ...at("/studio/new", 1), search: "?step=1" })).toBe("back");
   });
-  it("mở sâu hơn = tới; Back = lùi; thay chỗ (?tab=, nhóm cài đặt ở hai cột) = mờ qua", () => {
+  it("mở sâu hơn = tới; Back = lùi; thay chỗ khác trang (nhóm cài đặt ở hai cột) = mờ qua; chỉ đổi ?tab= = trang đứng yên", () => {
     expect(navMotion("PUSH", at("/", 0), at("/book/a", 1))).toBe("forward");
     expect(navMotion("POP", at("/book/a", 1), at("/", 0))).toBe("back");
     expect(navMotion("POP", at("/", 0), at("/book/a", 1))).toBe("forward"); // nút Tới của trình duyệt
-    expect(navMotion("REPLACE", at("/book/a", 1), at("/book/a", 1))).toBe("through");
+    expect(navMotion("REPLACE", at("/book/a", 1), at("/book/a", 1))).toBe("none");
+    expect(navMotion("REPLACE", at("/settings/voice", 1), at("/settings/gestures", 1))).toBe("through");
     expect(navMotion("PUSH", at("/settings", 1), at("/settings/voice", 2))).toBe("forward");
     expect(navMotion("POP", at("/settings/voice", 2), at("/settings", 1))).toBe("back");
   });

@@ -4,7 +4,7 @@
 import { ChevronDown } from "lucide-react";
 import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "./cn";
-import { EASE, MOTION, prefersReducedMotion } from "./motion";
+import { EASE, MOTION, pageEntering, prefersReducedMotion } from "./motion";
 import { MotionRegion } from "./MotionRegion";
 
 /** Thân gấp / mở. Gập thì ra khỏi Tab và trình đọc màn hình (inert ngay, visibility khi khép xong) - vẫn dựng sẵn để mở ra không chờ. */
@@ -12,7 +12,9 @@ export function Collapse({ open, id, children, className, appear = false, onOpen
   const box = useRef<HTMLDivElement>(null);
   const animation = useRef<Animation | null>(null);
   const previous = useRef(open);
-  const from = useRef<number | null>(appear && open ? 0 : null);
+  // Nội dung có sẵn lúc trang mới vào (quay lại Thư viện đã có sách) không mọc từ 0: khung trang đang hiện vào rồi, mọc thêm là trang cao
+  // dần và chỗ cuộn trôi (video 25-10 "mở tab thư viện bị giật"). Chỉ nội dung tới SAU lúc ấy mới mở ra.
+  const from = useRef<number | null>(appear && open && !pageEntering() ? 0 : null);
   const opened = useRef(onOpened);
   opened.current = onOpened;
   if (previous.current !== open) {

@@ -8,6 +8,7 @@ vi.mock("react", async (original) => ({
   useRef: (value: unknown) => ({ current: value }),
   useCallback: (callback: unknown) => callback,
   useEffect: () => undefined,
+  useDeferredValue: (value: unknown) => value,
 }));
 vi.mock("react-router", async (original) => ({
   ...await original<typeof import("react-router")>(),
