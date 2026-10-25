@@ -186,7 +186,7 @@ giống app hệ thống; không tự chế chuỗi rung dài.
   `screen-title-baseline`). Màn con: một kiểu nút ← (`BackButton`), nét mũi tên thẳng mép nội dung, tiêu đề sát sau, vùng chạm 48 / 40.
 - **Hàng danh sách**: trái biểu tượng/bìa nhỏ hay trạng thái, giữa tên (16) + phụ (14, `--fg-2`), phải một hành động hay "…".
   Hàng đang phát: chữ hổ phách + vạch tiến độ mảnh, không tô nền cả hàng.
-  Hàng đang chọn trong danh sách CHỌN (giọng, tốc độ, mức hẹn giờ): chữ hổ phách + dấu tích. Ô chọn canh giữa: dấu tích đặt tuyệt đối ở mép trái, nhãn vẫn đứng giữa ô.
+  Hàng đang chọn trong danh sách CHỌN (giọng, gộp người, câu đã chọn): chữ hổ phách + dấu tích. Ô chọn dạng lưới (tốc độ, mức hẹn giờ): ô đang chọn chữ hổ phách đậm, không dấu tích - ô hẹp, dấu tích đè hay đẩy chữ lệch tâm.
 - **Điều hướng** (thanh bên máy tính): mục đang mở = nền trung tính nhạt + chữ đậm màu thường; không dấu tích, không nền hổ phách.
 - **Lưới bìa**: bìa 2:3, bo 12, tên dưới bìa tối đa 2 dòng, phụ một dòng. Điện thoại 2-3 cột, máy tính tự giãn 160-200 px.
 - **Bộ lọc**: hàng chữ có gạch chân hổ phách (không hộp segmented); "Xếp theo" là menu nhỏ, không select toàn chiều rộng;
