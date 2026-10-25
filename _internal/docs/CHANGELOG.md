@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.140] - 2026-10-25
+
 ### Giao diện
 - Cài đặt dùng hàng mở rộng thống nhất, lựa chọn chữ gạch chân và nút chữ gọn; các cột thẳng mép trên máy tính.
 - Thiết bị dùng danh sách phẳng, hướng dẫn ghép ngắn hơn và liên kết tải dễ mở hoặc chép; nút phụ bỏ viền trên cả điện thoại, máy tính và Studio.
