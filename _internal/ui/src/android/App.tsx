@@ -1,7 +1,7 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import { App as CapacitorApp } from "@capacitor/app";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Clapperboard, Download, Headphones, Library, Link2, Settings, Trash2 } from "lucide-react";
+import { Clapperboard, Download, Headphones, Library, Link2, Settings, Smartphone, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
@@ -216,7 +216,7 @@ function DownloadMenuItem({ book }: { book: ListenBook }) {
   return (
     <DropdownMenu.Item
       onSelect={() => {
-        toast("Đang tải về máy", { description: "Xem tiến độ trên bìa ở Thư viện" });
+        toast("Đang tải về máy", { duration: 3000 });
         void EbookLibrary.download({ bookId: book.id }).catch((error: Error) => toast.error("Không tải được", { description: error.message }));
       }}
       className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover"
@@ -235,7 +235,7 @@ function RemoveFromPhoneMenuItem({ book }: { book: ListenBook }) {
       onSelect={() => window.dispatchEvent(new CustomEvent<RemovableFromPhone>("abook-remove-from-phone", { detail: { id: book.id, title: book.title } }))}
       className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-danger outline-none data-[highlighted]:bg-hover"
     >
-      <Trash2 className="size-4" />
+      <Smartphone className="size-4" />
       <span className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
         <span data-menu-label>Xoá khỏi điện thoại…</span>
         {/* Cỡ về sau khi menu đã mở: dòng phụ hiện dần tại chỗ, không bật ra. */}
@@ -273,8 +273,6 @@ function RemoveFromPhoneHost() {
         message: book.partial ? `Đã xoá phần đã tải của “${book.title}”` : `Đã xoá “${book.title}” khỏi điện thoại`,
         title: book.title,
         undo: undo ?? undefined,
-        note: "",
-        to: "gone",
         restore: (token) => EbookLibrary.undoDelete({ token }),
         onRestored: () => void client.invalidateQueries(),
       });

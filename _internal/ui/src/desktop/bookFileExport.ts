@@ -142,6 +142,8 @@ export type JobView =
       kind: "loading" | "success" | "error" | "info";
       title: string;
       description: string;
+      /** Xong mà thiếu gì đó (chương, nhạc, nguồn, bìa): riêng phần lưu ý của `description` - thông báo nói nó bằng cảnh báo, còn "xong" trơn chỉ một dòng. */
+      note?: string;
       /** Đường đầy đủ của file vừa xuất: để ở gợi ý khi rê chuột, thông báo chỉ nói tên file. */
       place?: string;
       /** Việc báo được tiến độ: thanh phần trăm (0-1) dưới dòng mô tả. */
@@ -243,10 +245,13 @@ export function jobView(job: ExportJob, chapters = 0, announce = false, copy: Ex
     const { file, folder } = job.result;
     const count = job.result.files ?? job.result.parts?.length;
     const partsNote = !file && job.result.files !== undefined && job.result.parts ? `${job.result.parts.length} phần` : ""; // MP3 cả bộ: file đếm theo chương, phần đếm riêng
-    const details = [partsNote, !file && count ? `${count} file` : "", skippedPartsNote(job.result), job.result.size ? formatSize(job.result.size) : "", missingChaptersNote(job.result), missingSourcesNote(job.result), musicMissingNote(job.result),
+    // `note`: riêng phần LƯU Ý (thiếu chương / nhạc / nguồn / bìa) - thông báo "xong" chỉ một dòng, lưu ý đổi thành cảnh báo (toastDone).
+    const skipped = skippedPartsNote(job.result);
+    const lacks = [missingChaptersNote(job.result), missingSourcesNote(job.result), musicMissingNote(job.result),
       job.result.coverBroken ? "ảnh bìa của sách bị hỏng nên dùng bìa vẽ từ tên" : ""].filter(Boolean);
+    const details = [partsNote, !file && count ? `${count} file` : "", skipped, job.result.size ? formatSize(job.result.size) : "", ...lacks].filter(Boolean);
     const place = file ?? folder ?? "";
-    return { kind: "success", title: copy.done, description: [fileName(place), ...details].filter(Boolean).join(" · "), ...(fileName(place) !== place ? { place } : {}) };
+    return { kind: "success", title: copy.done, description: [fileName(place), ...details].filter(Boolean).join(" · "), ...(skipped || lacks.length ? { note: [skipped, ...lacks].filter(Boolean).join(" · ") } : {}), ...(fileName(place) !== place ? { place } : {}) };
   }
   if (job.state === "error") return { kind: "error", title: copy.failed, description: copy.explain ? copy.explain(job.error ?? "") : (job.error ?? "") };
   return { kind: "none" };

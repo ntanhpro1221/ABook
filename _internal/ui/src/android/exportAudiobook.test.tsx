@@ -202,7 +202,7 @@ describe("theo dõi việc nền", () => {
     await watch();
     emit({ bookId: "b1", run: "r1", phase: "voice", chapter: 1, chapters: 2, percent: 10 });
     emit({ bookId: "b1", run: "r1", finished: true, name: "S.m4b", size: 1048576, chapters: 2, chaptersTotal: 2, uri: "content://x/1" });
-    expect(toasts.success).toHaveBeenCalledWith("Đã xuất sách nói", expect.objectContaining({ id: "audiobook-export-b1", description: "S.m4b · 1 MB" }));
+    expect(toasts.success).toHaveBeenCalledWith("Đã xuất sách nói", expect.objectContaining({ id: "audiobook-export-b1", action: expect.objectContaining({ label: "Mở" }) }));
     toasts.success.mock.calls[0][1].action.onClick();
     expect(library.openFile).toHaveBeenCalledWith({ uri: "content://x/1" });
   });
@@ -211,7 +211,7 @@ describe("theo dõi việc nền", () => {
     await watch();
     emit({ bookId: "b1", run: "r1", phase: "voice", chapter: 1, chapters: 2, percent: 10 });
     emit({ bookId: "b1", run: "r1", stopped: true });
-    expect(toasts).toHaveBeenCalledWith("Đã dừng xuất sách nói", expect.objectContaining({ description: "Phần đã làm được giữ - xuất lại để làm tiếp từ đó." }));
+    expect(toasts).toHaveBeenCalledWith("Đã dừng xuất sách nói", expect.objectContaining({ id: "audiobook-export-b1" }));
     emit({ bookId: "b2", run: "r9", error: "Hết chỗ trống" });
     expect(toasts.error).toHaveBeenCalledWith("Không xuất được sách nói", expect.objectContaining({ description: "Hết chỗ trống" }));
   });

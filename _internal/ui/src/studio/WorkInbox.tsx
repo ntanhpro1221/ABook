@@ -14,10 +14,10 @@ import { ReadingProblem } from "./ReadingProblem";
 import { retryUnlessGone } from "./polling";
 import { useTryReading } from "./TryReading";
 import { isOpenWork } from "./precast";
-import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction, useWhenApplied } from "./decisions";
+import { applyWhen, PENDING_NOTE, refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
 import { seenFor, warnElsewhere } from "./elsewhere";
 import { examplesPage, keepRequests, moreText, pickedLines, pickNote, toggleLine, type LineRef, type SpeakerRequest } from "./minorGroups";
-import { decidedTitle, inboxLead, markNames, midSentence, narratorButtons, rerecordSentence, sentence } from "./workText";
+import { decidedTitle, inboxLead, markNames, midSentence, narratorButtons, sentence } from "./workText";
 import { useProducingRefetch } from "./liveRefresh";
 import { useCardFocus, type CardFocusEnds } from "./useCardFocus";
 import type { WorkLists } from "./workFocus";
@@ -277,7 +277,6 @@ function personOf(item: WorkItem, value: string): string {
 function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item: WorkItem; onOpenNames?: (name: string) => void }) {
   const client = useQueryClient();
   const pending = useContext(PendingHint);
-  const when = useWhenApplied(bookId);
   const [value, setValue] = useState(item.requested ?? item.current);
   // Lỗi nằm ngay dưới ô nhập, không chỉ trong toast 4 giây (soát UX 29-09: "Hên-kơ" bị từ chối mà không biết sửa chỗ nào).
   const [problem, setProblem] = useState("");
@@ -305,11 +304,10 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
       if (elsewhere?.spokenForm !== undefined) warnElsewhere(1, elsewhere.spokenForm ? `“${elsewhere.spokenForm}”` : "", action.onClick);
       // Giữ đúng cách máy đang đọc thì không có gì để thu lại - soát UX 29-09: báo "sẽ thu lại" làm người nghe hoảng.
       if (keep) {
-        toast.success(`Giữ cách đọc “${spokenForm}”`, { description: "Không phải thu lại câu nào.", action, duration: UNDO_MS });
+        toast.success(`Giữ cách đọc “${spokenForm}”`, { action, duration: UNDO_MS });
         return;
       }
       toast.success(`Đã ghi: “${item.surface}” đọc là “${spokenForm}”`, {
-        description: `Các câu có tên này sẽ được thu lại. ${when}`,
         action,
         duration: UNDO_MS,
       });
@@ -427,7 +425,6 @@ function SpeakerFix({
   const client = useQueryClient();
   const lines = picked ?? (scope === "all" && item.allLines ? item.allLines : item.lines);
   const pending = useContext(PendingHint);
-  const when = useWhenApplied(bookId);
   // "Người khác…": người nói chưa có trong lựa chọn - kể cả người máy CHƯA TỪNG gán câu nào (linh thể nói trong 『』):
   // gõ tên + chọn giới, dây chuyền tạo người ấy và cấp giọng riêng như bước phân vai.
   const [creating, setCreating] = useState(false);
@@ -468,7 +465,6 @@ function SpeakerFix({
       if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? personOf(item, replaced[0]) : "", undo.action?.onClick);
       if (keep) {
         toast.success(item.keepLabel ? `Đã ghi: ${item.keepLabel}` : `Giữ nguyên: ${which} của ${midSentence(item.current)}`, {
-          description: "Việc này sẽ không hiện lại.",
           ...undo,
         });
         return;
@@ -476,13 +472,6 @@ function SpeakerFix({
       const choice = item.choices?.find((option) => option.value === speaker);
       const label = choice?.name ?? choice?.label ?? speaker;
       toast.success(`Đã ghi: ${which} của ${midSentence(label)}`, {
-        description:
-          `Câu đã thu sẽ được thu lại bằng giọng của người ấy. ${when}` +
-          (alias && item.kind === "bracket"
-            ? " Lời trong 『』 ở các chương và các phần sau của cuốn cũng tự về người này."
-            : alias
-              ? ` Các phần sau của cuốn cũng tự hiểu “${item.subject ?? item.current}” là ${label}.`
-              : ""),
         ...undo,
       });
     },
@@ -508,7 +497,6 @@ function SpeakerFix({
       const action = undoAction(client, bookId, "speaker", made, "Thẻ hỏi lại như trước khi bấm.");
       if (replaced.length) warnElsewhere(replaced.length, replaced[0] ? personOf(item, replaced[0]) : "", action.onClick);
       toast.success(`Đã ghi: ${item.keepLabel ?? "Giữ nguyên"}`, {
-        description: "Không câu nào phải thu lại; việc này sẽ không hiện lại.",
         action,
         duration: UNDO_MS,
       });
@@ -683,7 +671,6 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             ? `Đã ghi: đoạn này do ${section.heading?.narrator === narrator ? section.heading.label : narrator} kể`
             : `Đã ghi: đoạn này không phải ${item.current} kể`,
         {
-          description: section.appliesNote || "Phần chưa phân tích sẽ theo lựa chọn này.",
           action: undoAction(client, bookId, "narrator-section", [where], back),
           duration: UNDO_MS,
         },
@@ -749,7 +736,7 @@ function RefusedFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       }),
     onSuccess: () => {
       refreshAfterDecision(client, bookId);
-      toast.success("Đã bỏ yêu cầu này", { description: "Sách giữ nguyên như trước khi bạn yêu cầu." });
+      toast.success("Đã bỏ yêu cầu này");
     },
     onError: (error: Error) => toast.error("Chưa bỏ được", { description: error.message }),
   });
@@ -765,7 +752,6 @@ function RefusedFix({ bookId, item }: { bookId: string; item: WorkItem }) {
 function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
   const client = useQueryClient();
   const pending = useContext(PendingHint);
-  const when = useWhenApplied(bookId);
   const save = useMutation({
     mutationFn: async ({ requests }: { requests: Omit<VoiceChoice, "label" | "note" | "done" | "recommended">[]; label: string; keep: boolean; note?: string }) => {
       const made: { character: string; requestedAt: number }[] = [];
@@ -775,7 +761,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       }
       return made;
     },
-    onSuccess: (made, { label, keep, note }) => {
+    onSuccess: (made, { label, keep }) => {
       refreshAfterDecision(client, bookId);
       // Nói cụ thể điều gì trở lại, như thẻ cách đọc và thẻ người nói (soát UX 30-09: "Thẻ hỏi lại như trước khi bấm").
       const heard = item.current === "Giọng nam" || item.current === "Giọng nữ" ? item.current.toLowerCase() : "giọng đang có";
@@ -791,15 +777,12 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
               : "Thẻ hỏi lại như trước khi bấm.";
       const undo = { action: undoAction(client, bookId, "voice", made.map((decision) => ({ ...decision, keep })), back), duration: UNDO_MS };
       if (keep) {
-        toast.success(`Đã ghi: ${label}`, { description: "Việc này sẽ không hiện lại.", ...undo });
+        toast.success(`Đã ghi: ${label}`, { ...undo });
         return;
       }
       // Lựa chọn nói trước cái giá ("giữ giọng đang đọc" / "đổi giọng, thu lại N câu") - thông báo nói đúng cái giá ấy, không
       // rào "nếu giọng phải đổi" khi giọng giữ nguyên (soát UX 29-09).
       toast.success(`Đã ghi: ${label}`, {
-        description: note?.startsWith("giữ giọng")
-          ? "Giọng đang đọc giữ nguyên - không phải thu lại câu nào."
-          : `${rerecordSentence(note)} ${when}`,
         ...undo,
       });
     },
@@ -1072,7 +1055,6 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
       const action = undoAction(client, bookId, pronunciation ? "pronunciation" : "speaker", decisions, `${done} thẻ trở lại chờ duyệt.`);
       if (replaced.length) warnElsewhere(replaced.length, replaced[0], action.onClick);
       toast.success(`Đã giữ như máy đang làm cho ${done} thẻ`, {
-        description: "Không câu nào phải thu lại; máy sẽ không hỏi lại những thẻ này.",
         action,
         duration: UNDO_MS,
       });

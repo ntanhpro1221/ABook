@@ -7,7 +7,7 @@ import { toast } from "@/shared/toast";
 import { shownReading } from "@/shared/format";
 import { Button, IconButton } from "@/shared/ui";
 import { api } from "./api";
-import { refreshAfterDecision, useApplyWhen, useWhenApplied } from "./decisions";
+import { refreshAfterDecision } from "./decisions";
 
 // Cách đọc dùng chung cho mọi sách (webui/shared_readings.py): sửa một tên một lần, sách MỚI có tên ấy tự dùng (lúc tạo),
 // sách có sẵn thì bấm "Dùng cách đọc chung". Mọi mục đi đúng đường của một lần sửa tay - dây chuyền áp ở ranh giới chương.
@@ -57,14 +57,12 @@ export function SharedReadingsSettings() {
     onSuccess: (_answer, body) => {
       void client.invalidateQueries({ queryKey: ["shared-readings"] });
       if (body.remove) {
-        toast.success(`Đã bỏ “${body.surface}” khỏi cách đọc chung`, { description: "Các sách đã nhận cách đọc này giữ nguyên." });
+        toast.success(`Đã bỏ “${body.surface}” khỏi cách đọc chung`);
         return;
       }
       setSurface("");
       setSpoken("");
-      toast.success(`“${body.surface}” đọc là “${shownReading(body.spokenForm ?? "")}” cho mọi sách`, {
-        description: "Sách có sẵn: tab Nhân vật › Cách đọc tên.",
-      });
+      toast.success(`“${body.surface}” đọc là “${shownReading(body.spokenForm ?? "")}” cho mọi sách`);
     },
     onError: (error: Error) => setProblem(error.message),
   });
@@ -136,8 +134,6 @@ export function SharedReadingsSettings() {
 /** Tab Nhân vật → Cách đọc tên của một cuốn: cách đọc chung có tên trong cuốn này mà cuốn đang đọc khác - một nút dùng hết. */
 export function SharedReadingsOffer({ bookId }: { bookId: string }) {
   const client = useQueryClient();
-  const when = useWhenApplied(bookId);
-  const stage = useApplyWhen(bookId);
   const { data } = useQuery({
     queryKey: ["shared-readings", bookId],
     queryFn: () => api<{ entries: SharedReading[] }>(`/api/books/${bookId}/shared-readings`),
@@ -148,8 +144,7 @@ export function SharedReadingsOffer({ bookId }: { bookId: string }) {
       refreshAfterDecision(client, bookId);
       void client.invalidateQueries({ queryKey: ["shared-readings", bookId] });
       // Sách chưa thu câu nào (chưa bắt đầu, đang phân tích) thì không có gì để "thu lại" (soát UX 01-10).
-      const redo = stage === "start" || stage === "cast" ? "" : `${applied.length === 1 ? "Câu có tên này" : "Các câu có những tên này"} sẽ được thu lại. `;
-      toast.success(`Đã dùng ${applied.length} cách đọc chung`, { description: `${redo}${when}` });
+      toast.success(`Đã dùng ${applied.length} cách đọc chung`);
     },
     onError: (error: Error) => toast.error("Chưa dùng được cách đọc chung", { description: error.message }),
   });

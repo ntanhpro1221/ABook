@@ -22,7 +22,7 @@ export function DropToAdd({ onBookFile }: { onBookFile?: (path: string, session?
       hover: (on) => setHovering(on && !dialogOpen()),
       drop: (items) => {
         if (!items.length) return;
-        if (dialogOpen()) toast("Đang có một hộp mở", { description: "Đóng nó rồi thả lại file nhé." });
+        if (dialogOpen()) toast("Đóng hộp đang mở rồi thả lại file nhé");
         else setDropped(items);
       },
     });

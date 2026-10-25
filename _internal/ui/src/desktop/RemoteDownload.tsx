@@ -34,7 +34,7 @@ function useRemoteDownload(book: ListenBook) {
     mutationFn: () => api<RemoteDownload>(`/api/listen/books/${book.id}/download`, { method: "POST" }),
     onSuccess: (status) => {
       client.setQueryData(key, status);
-      toast("Đang tải về máy", { description: "Xem tiến độ ngay dưới tên sách" });
+      toast("Đang tải về máy");
     },
     onError: (error: Error) => toast.error("Không tải được", { description: error.message }),
   });
@@ -47,7 +47,7 @@ function useRemoteDownload(book: ListenBook) {
   useEffect(() => {
     const now = query.data?.state;
     if (previous.current === "running" && now === "done") {
-      toast.success(`Đã tải “${book.title}” về máy`, { description: `Nghe được cả khi ${computerOf(book) || "máy kia"} tắt` });
+      toast.success(`Đã tải “${book.title}” về máy`);
     } else if (previous.current === "running" && now === "failed") {
       const kept = (query.data?.bytesDone ?? 0) > 0 ? " Phần đã tải vẫn giữ trên máy này." : "";
       toast.error("Chưa tải xong về máy", { description: `${endSentence(query.data?.error || `${computerOf(book) || "Máy kia"} không trả lời`)}${kept}` });

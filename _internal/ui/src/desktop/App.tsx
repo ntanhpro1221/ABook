@@ -6,7 +6,7 @@ import { Clapperboard, Compass, FileAudio, Headphones, Laptop, Trash2 } from "lu
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Route, Routes, useNavigate } from "react-router";
 import { Toaster } from "sonner";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { BookScreen } from "@/listen/BookScreen";
 import { ClipProvider } from "@/listen/clip";
 import { WebAudioEngine } from "@/listen/engine";
@@ -152,11 +152,6 @@ function RemoveImportedMenuItem({ book }: { book: ListenBook }) {
   );
 }
 
-/** Sách chỉ có chữ (EPUB / TXT / DOCX / PDF) và sách đóng gói .abook bỏ khỏi thư viện thì khác nhau ở điều người dùng cần biết sau đó: file gốc thế nào, lấy lại cách nào. */
-function removedNote(book: ListenBook): string {
-  return book.stage === "text" ? "File gốc của bạn không bị đụng." : "Mở lại file .abook là nhập lại.";
-}
-
 function removeAsk(book: ListenBook): string {
   return book.stage === "text"
     ? "Sách vào Thùng rác, khôi phục được. File gốc giữ nguyên."
@@ -189,7 +184,6 @@ function RemoveImportedHost() {
         message: `Đã bỏ “${book.title}” khỏi thư viện`,
         title: book.title,
         undo: result.undo,
-        note: removedNote(book),
         onRestored: () => void client.invalidateQueries({ queryKey: ["listen"] }),
       });
     } catch (error) {
@@ -240,15 +234,16 @@ interface OpenedBook {
   file?: string;
 }
 
-const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, [string, string | undefined]> = {
-  new: ["Đã thêm sách", "Sách đã chép vào thư viện - xoá file gốc cũng không sao."],
-  existing: ["Sách đã có", undefined],
-  updated: ["Đã cập nhật", "Chỗ đang nghe, dấu trang và chỉnh sửa của bạn vẫn giữ nguyên."],
-  older: ["Bản sách cũ hơn", "Bạn muốn thay bản đang có bằng file này?"],
-  conflict: ["Bản thu khác", "Chưa rõ bản mới hơn; thay bản đang có bằng file này?"],
-  repaired: ["Đã khôi phục file", "Chỗ đang nghe, dấu trang vẫn giữ nguyên."],
-  project: ["Sách của Studio", "Mở đúng cuốn ấy, không chép thêm bản nào."],
-  studio: ["Đã mở dự án", "Dự án đã chép vào thư viện Studio - xoá file gốc cũng không sao."],
+// Thông báo mở file = MỘT dòng (DESIGN 6): chỉ cái vừa xảy ra; "xoá file gốc cũng không sao"... là điều người dùng không cần được nhắc mỗi lần mở.
+const OPENED_SAID: Record<NonNullable<OpenedBook["how"]>, string> = {
+  new: "Đã thêm sách",
+  existing: "Sách đã có",
+  updated: "Đã cập nhật",
+  older: "File này cũ hơn bản đang có",
+  conflict: "File này có bản thu khác",
+  repaired: "Đã khôi phục file",
+  project: "Sách của Studio",
+  studio: "Đã mở dự án",
 };
 
 /** Thư viện mà một file sách vừa mở làm đổi: thư viện Studio (dự án) hay thư viện nghe. */
@@ -265,13 +260,13 @@ function useOpenedBook() {
       }
       if (!result.id) return false;
       if (result.how === "older" || result.how === "conflict") {
-        const [title, description] = OPENED_SAID[result.how];
-        toast.warning(title, { description, duration: Infinity,
+        // Hai lựa chọn là "Thay bằng file này" (nút) và giữ bản đang có (đóng thông báo): không cần nút thứ hai.
+        toast.warning(OPENED_SAID[result.how], { description: "Chỉnh sửa và chỗ nghe của bạn vẫn được giữ.", duration: Infinity,
           action: { label: "Thay bằng file này", onClick: () => {
             void api<OpenedBook>("/api/listen/open-book-file", { method: "POST", body: { path: result.source, allowOlder: true } })
               .then((next) => { void client.invalidateQueries({ queryKey: ["listen"] }); navigate(`/book/${next.id}`); toast.success("Đã thay bản sách, giữ chỉnh sửa và chỗ nghe của bạn"); })
               .catch((error: Error) => toast.error("Chưa thay được sách", { description: error.message }));
-          } }, cancel: { label: "Giữ bản đang có", onClick: () => undefined } });
+          } } });
         return true;
       }
       if (result.how === "studio") {
@@ -279,18 +274,14 @@ function useOpenedBook() {
         navigate(`/studio/${result.id}`);
         if (result.edits) offerFold(client, result.id, result.edits); // file dự án đã được sửa ở máy khác (điện thoại)
         const lost = result.missingSources ?? 0;
-        toast.success(OPENED_SAID.studio[0], {
-          description: lost
-            ? `Thiếu ${lost} file nguồn chương (đã bị dời ở máy gói) - nghe, xem, xuất vẫn được; thu lại chương ấy thì cần chép nguồn vào.`
-            : OPENED_SAID.studio[1],
-        });
+        toastDone(OPENED_SAID.studio, lost ? `Thiếu ${lost} file nguồn chương - thu lại chương ấy thì cần chép nguồn vào.` : undefined);
         return true;
       }
       void client.invalidateQueries(openedLibrary(result));
       navigate(`/book/${result.id}`);
-      const [said, description] = OPENED_SAID[result.how ?? "new"];
-      const note = workshopMergeNote(result.workshop) ?? mergeNote(result) ?? otherTitleNote(result.otherTitle) ?? description;
-      toast.success(keptEditsTitle(result.merge?.kept) ?? said, { description: [note, brokenMusicNote(result.brokenMusic)].filter(Boolean).join(" ") || undefined });
+      // Việc đã gộp / giữ nằm ngay trong câu; tên khác hay nhạc hỏng (mở được nhưng thiếu gì đó) là cảnh báo cùng dòng ấy.
+      const title = workshopMergeNote(result.workshop) ?? keptEditsTitle(result.merge?.kept) ?? mergedTitle(result) ?? OPENED_SAID[result.how ?? "new"];
+      toastDone(title, [otherTitleNote(result.otherTitle), brokenMusicNote(result.brokenMusic)].filter(Boolean).join(" ") || undefined);
       if (result.how === "project" && result.edits) offerFold(client, result.id, result.edits);
       return true;
     },
@@ -298,14 +289,10 @@ function useOpenedBook() {
   );
 }
 
-/** File đã sửa mở vào cuốn có sẵn trên máy: nói thay đổi nào được lấy từ file và chỗ nào hai bên khác nhau (phần "giữ nguyên N
- *  chỉnh sửa của bạn" đã nằm ở tiêu đề - keptEditsTitle). Không nói gì khi file không mang thay đổi. */
-function mergeNote(result: OpenedBook): string | undefined {
-  const merge = result.merge;
-  if (!merge || (!merge.adopted && !merge.conflicts)) return undefined;
-  const taken = merge.adopted ? `Đã lấy ${merge.adopted} thay đổi từ file.` : "";
-  const conflict = merge.conflicts ? ` Chỗ hai bên khác nhau thì theo máy này (${merge.conflicts}).` : "";
-  return `${taken}${conflict}`.trim();
+/** File đã sửa mở vào cuốn có sẵn trên máy: nói bao nhiêu thay đổi được lấy từ file (phần "giữ nguyên N chỉnh sửa của bạn" ở keptEditsTitle). Không nói gì khi file không mang thay đổi. */
+function mergedTitle(result: OpenedBook): string | undefined {
+  const adopted = result.merge?.adopted;
+  return adopted ? `Đã lấy ${adopted} thay đổi từ file` : undefined;
 }
 
 /** File `.abook` mang thay đổi của người nghe, mở ra đúng dự án của máy này: hỏi có áp vào dự án không - thông báo có nút,
@@ -316,8 +303,8 @@ function offerFold(client: QueryClient, id: string, edits: number) {
     void client.invalidateQueries({ queryKey: ["book", id] });
     void client.invalidateQueries({ queryKey: ["listen"] });
   };
+  // Chưa áp gì cho tới khi bấm; để thông báo trôi đi thì phần chờ vẫn nằm đó (một nút duy nhất - không nút "Bỏ qua").
   toast(`${edits} thay đổi trong file - áp vào dự án?`, {
-    description: "Sửa tên, bìa, nhạc nền và việc ghi cho Studio. Chưa áp gì khi bạn chưa đồng ý.",
     duration: 30000,
     action: {
       label: "Áp vào dự án",
@@ -325,15 +312,10 @@ function offerFold(client: QueryClient, id: string, edits: number) {
         void api<{ applied: number; skipped: number; requests?: number }>(`/api/books/${id}/edits/fold`, { method: "POST", body: {} })
           .then((report) => {
             refresh();
-            const asked = report.requests ? `${report.requests} việc đã vào danh sách chờ áp dụng của dự án. ` : "";
-            const lost = report.skipped ? `${report.skipped} thay đổi không còn chỗ trong dự án nên bỏ qua.` : "";
-            toast.success(`Đã áp ${report.applied} thay đổi vào dự án`, { description: `${asked}${lost}`.trim() || undefined });
+            const asked = report.requests ? `, ${report.requests} việc chờ làm` : "";
+            toastDone(`Đã áp ${report.applied} thay đổi vào dự án${asked}`, report.skipped ? `${report.skipped} thay đổi không còn chỗ trong dự án nên bỏ qua.` : undefined);
           })
           .catch((error: Error) => toast.error("Chưa áp được thay đổi", { description: error.message })),
-    },
-    cancel: {
-      label: "Bỏ qua",
-      onClick: () => void api(`/api/books/${id}/edits`, { method: "DELETE" }).then(refresh).catch(() => undefined),
     },
   });
 }

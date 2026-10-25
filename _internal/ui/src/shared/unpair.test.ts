@@ -64,9 +64,8 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
     expect(copy.lines[1]).toContain("Chỗ nghe và dấu trang của 2 cuốn vẫn giữ");
   });
 
-  it("không có gì để mất thì gỡ như thường; lời báo sau khi gỡ nhắc chỗ nghe còn giữ", () => {
+  it("không có gì để mất thì gỡ như thường; lời báo sau khi gỡ chỉ MỘT dòng", () => {
     expect(unpairCopy("Máy bàn", "máy tính", { books: [], changes: 0, sendable: true, cache: { books: 0, bytes: 0, places: 0 } }, true)).toBeNull();
-    expect(unpairDone("Máy bàn", { books: [], changes: 0, sendable: true, cache: { books: 1, bytes: 0, places: 1 } }).description).toContain("Chỗ nghe và dấu trang vẫn giữ");
-    expect(unpairDone("Máy bàn", null).description).not.toContain("vẫn giữ");
+    expect(unpairDone("Máy bàn")).toBe("Đã thôi ghép Máy bàn");
   });
 });
