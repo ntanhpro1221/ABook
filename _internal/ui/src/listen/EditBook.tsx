@@ -439,7 +439,8 @@ export function EditBookDialog({
           {/* flex-wrap: ở 375 px cột nút (rộng ~190 px) không vừa cạnh bìa 112 px - xuống dưới bìa thay vì tràn khỏi hộp (soát UX a17). */}
           <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
             <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} className="w-28 shrink-0" />
-            <div className="flex min-w-0 max-w-full flex-col items-stretch gap-1">
+            {/* Nút chữ xếp chồng canh trái chung một mép (icon thẳng hàng); kéo giãn thì chữ canh giữa từng nút, lệch nhau (soát 25-10). */}
+            <div className="flex min-w-0 max-w-full flex-col items-start gap-1">
               <Button variant="ghost" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
                 {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
               </Button>

@@ -50,7 +50,8 @@ export function ComputerIntro() {
       <div className="flex min-h-[3.5rem] items-center gap-3 border-t border-line py-2">
         <Download className="size-5 shrink-0 text-fg-2" />
         <a href={DESKTOP_RELEASES} className="flex min-h-[48px] min-w-0 flex-1 items-center text-left text-base font-medium text-accent-text" onClick={(event) => { event.preventDefault(); void openRelease(DESKTOP_RELEASES); }}>Tải ABook Windows</a>
-        <IconButton label="Chép địa chỉ" icon={Copy} onClick={copy} />
+        {/* Nút icon cuối hàng: bù nửa phần ô rộng hơn icon để mực chạm mép cột như mọi hàng (ô chạm 48 px trên cảm ứng). */}
+        <IconButton label="Chép địa chỉ" icon={Copy} className="ink-end-icon -mr-2.5 pointer-coarse:-mr-4" onClick={copy} />
       </div>
     </div>
   );
@@ -227,7 +228,7 @@ export function PairPanel() {
               </div>
             </div>
           ) : paired === null ? (
-            <button ref={btButton} type="button" onClick={() => void startBluetooth()} className="touch-hit -ml-1 flex items-center gap-1.5 text-sm font-medium text-accent-text">
+            <button ref={btButton} type="button" onClick={() => void startBluetooth()} className="touch-hit flex items-center gap-1.5 text-sm font-medium text-accent-text">
               <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />}</MotionRegion> Dùng Bluetooth
             </button>
           ) : paired.length ? (
