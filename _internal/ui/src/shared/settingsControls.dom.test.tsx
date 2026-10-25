@@ -40,7 +40,7 @@ it("lựa chọn chữ giữ click, mũi tên, Home/End và một điểm Tab; k
 });
 
 it("Fold và khối Settings dùng cùng hàng, gập mở qua Collapse và nhớ trạng thái", async () => {
-  await act(() => root.render(<><Fold flat storageKey="test.unified" title="Nhạc của tôi" summary="0 bài">Nội dung</Fold><SettingsBlock title="Chẩn đoán" fold="test.diagnostics">Nhật ký</SettingsBlock><MoreInfo>Giải thích</MoreInfo></>));
+  await act(() => root.render(<><Fold storageKey="test.unified" title="Nhạc của tôi" summary="0 bài">Nội dung</Fold><SettingsBlock title="Chẩn đoán" fold="test.diagnostics">Nhật ký</SettingsBlock><MoreInfo>Giải thích</MoreInfo></>));
   const rows = Array.from(document.querySelectorAll<HTMLButtonElement>(".disclosure-row"));
   expect(rows).toHaveLength(3);
   expect(rows[0].className).toBe(rows[1].className);

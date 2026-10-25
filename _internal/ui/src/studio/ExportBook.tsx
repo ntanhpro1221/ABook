@@ -417,7 +417,7 @@ export function ExportDialog({
             <CheckCircle2 className="size-4 shrink-0 text-success" />
             {finished.title}
           </p>
-          <p className="mt-2 break-all rounded-xl bg-sunken p-3 text-sm text-fg-2">{finished.detail}</p>
+          <p className="mt-2 break-all py-3 text-sm text-fg-2">{finished.detail}</p>
 
         </div>
       ) : (
@@ -543,7 +543,7 @@ export function ExportDialog({
       )}
       {/* Hỏi lại mỗi 5 giây: xuất lại xong thì hàng khép tại chỗ, hết hàng thì cả khung khép - không mất cứng. */}
       <MotionPresence open={staleExports.length > 0}>
-      <div className="mt-3 rounded-xl bg-warning-soft p-3 text-sm">
+      <div className="mt-3 py-3 text-sm">
         <p className="font-semibold">Bản xuất đã cũ</p>
         <div data-motion-live="">
         <AnimatedRows items={staleExports} keyOf={(item) => item.target}>
@@ -561,7 +561,7 @@ export function ExportDialog({
         Xuất {changedChapters.length} chương đổi
       </label>}
       {(warnings.length > 0 || (!whole && Boolean(book.pendingChanges))) && (
-        <div className="mt-3 space-y-1.5 rounded-xl bg-warning-soft p-3 text-sm">
+        <div className="mt-3 space-y-1.5 py-3 text-sm">
           {warnings.map((line) => (
             <p key={line} className="flex items-start gap-2">
               <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />

@@ -28,7 +28,7 @@ export function LibraryMoveRecovery({ recovery }: { recovery: LibraryMoveRecover
     } catch (error) { toast.error((error as Error).message); }
     finally { setBusy(false); }
   };
-  return <div role="alert" className="m-4 space-y-3 rounded-xl border border-line bg-panel p-4 text-sm">
+  return <div role="alert" className="m-4 space-y-3 py-4 text-sm">
     <p>{recovery.message}</p>
     <p>Kiểm tra đường dẫn: hoàn tất dùng thư viện sau, quay lui dùng thư viện trước, bỏ qua giữ hiện tại; nhật ký được giữ.</p>
     <div className="flex flex-wrap items-center gap-2">

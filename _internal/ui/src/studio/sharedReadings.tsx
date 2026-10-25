@@ -161,7 +161,7 @@ export function SharedReadingsOffer({ bookId }: { bookId: string }) {
     .join(", ");
   return (
     <MotionRegion>
-    <div className="mt-3 flex max-w-2xl flex-wrap items-center gap-3 rounded-xl bg-info-soft px-3 py-2 text-sm">
+    <div className="mt-3 flex max-w-2xl flex-wrap items-center gap-3 py-2 text-sm">
       <span className="min-w-0 flex-1 text-pretty">
         Cách đọc chung khác cách cuốn này đang đọc: {shown}
         {entries.length > 3 ? `, và ${entries.length - 3} tên khác` : ""}

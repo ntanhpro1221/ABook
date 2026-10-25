@@ -1,8 +1,8 @@
-/** Tên model phân tích cho người dùng: "abook-analyzer:v4" -> "Model phân tích bản 4". Model khác (tự chọn ở Cài đặt) giữ tên của nó. */
+/** Tên dễ đọc; khoá kỹ thuật chỉ dùng gửi máy chủ, không đưa vào lời giải thích. */
 export function analyzerLabel(model: string): string {
   const name = model.replace(/:latest$/, "");
   const own = /^abook-analyzer:v(\d+)$/.exec(name);
-  return own ? `Model phân tích bản ${own[1]}` : `Phân tích bằng ${name}`;
+  return own ? `Bộ phân tích bản ${own[1]}` : "Bộ phân tích tuỳ chọn";
 }
 
 /** Giọng kể ở dòng thông tin đầu trang dự án: đang chờ đổi thì giọng SẼ dùng + "(chờ áp dụng)", không phải giọng cũ như chưa có

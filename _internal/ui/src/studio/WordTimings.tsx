@@ -43,7 +43,7 @@ export function WordTimingsRow({ bookId, running }: { bookId: string; running: b
   else if (finished) note = "Xong - file sách của dự án đã được làm lại kèm chữ sáng theo giọng đọc.";
   else if (lines > 0) note = `${formatNumber(aligned)}/${formatNumber(lines)} câu đã có chữ sáng theo giọng đọc.`;
   return (
-    <MotionRegion as="div" className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-line p-3 text-sm">
+    <MotionRegion as="div" className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 py-3 text-sm">
       <Captions className="size-4 shrink-0 text-accent-text" />
       <span className="min-w-0 flex-1 basis-48">
         <span className="block font-semibold">Chữ sáng</span>

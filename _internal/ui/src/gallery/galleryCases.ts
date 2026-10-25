@@ -53,6 +53,44 @@ export function galleryCases(platform: Platform): void {
         }
         // Soát Studio 25-10 (stu140b): mỗi điều dưới đây là một LOẠI lỗi đã sửa ở thành phần chung - giữ cho khỏi quay lại.
         const text = container.textContent ?? "";
+        // C10: nhóm trong hộp đã có mặt nổi, không dựng thêm khung.
+        const nestedCards = [...document.querySelectorAll<HTMLElement>('.border')].filter(el =>
+          /\brounded-(lg|xl|2xl)\b/.test(el.className) && !el.matches('button,a,input,select,textarea,[role="menu"],[role="tooltip"]')
+          && !el.classList.contains('h-9') && !el.classList.contains('h-10') && !el.querySelector('input:not([type="checkbox"]):not([type="radio"])')
+          && el.parentElement?.closest('[role="dialog"],.border.rounded-xl,.border.rounded-2xl'));
+        expect(nestedCards.map(el => el.outerHTML.slice(0, 200))).toEqual([]);
+        if (entry.id.includes('/library-')) {
+          const hero = container.querySelector('[aria-label="Đang nghe"]');
+          expect(hero?.querySelector('.sm\\:max-w-md') ?? null).toBeNull();
+        }
+        if (entry.id.endsWith('/library-morning')) {
+          const recap = container.querySelector('[aria-label="Ẩn thẻ này"]')?.closest('section');
+          expect(recap?.className).not.toMatch(/\bborder\b|bg-panel|shadow-card/);
+        }
+        if (entry.id === 'phone/devices-unpaired') {
+          expect(container.querySelector('main ol')).toBeNull();
+          const install = [...container.querySelectorAll('button')].find(el => el.textContent?.includes('Cài trên máy tính'));
+          expect(install?.getAttribute('aria-expanded')).toBe('false');
+          expect([...container.querySelectorAll('button.bg-accent')].filter(el => !el.closest('[inert]')).map(el => el.textContent?.trim())).toEqual(['Kết nối']);
+          const { click } = await import('./actions');
+          await click('Cài trên máy tính');
+          expect(install?.getAttribute('aria-expanded')).toBe('true');
+          expect(container.querySelector('a[href*="releases"]')?.closest('[inert]')).toBeNull();
+        }
+        if (entry.id.endsWith('/book-find-results')) {
+          const buttons = document.querySelectorAll<HTMLElement>('[data-list-edges="book-search"] button');
+          expect(buttons.length).toBeGreaterThan(1);
+          const input = document.querySelector<HTMLInputElement>('input[type="search"]')!;
+          const { key } = await import('./actions');
+          input.focus(); await key('ArrowDown');
+          expect(document.activeElement).toBe(buttons[0]);
+          await key('ArrowDown'); expect(document.activeElement).toBe(buttons[1]);
+          await key('ArrowUp'); await key('ArrowUp');
+          expect(document.activeElement).toBe(input);
+        }
+        if (entry.id.endsWith('/reader') || entry.id.endsWith('/reader-text')) {
+          expect(container.querySelector('[data-reader-controls]')?.classList.contains('bg-panel')).toBe(true);
+        }
         // D2: trạng thái rỗng chỉ nói "chưa có" một lần (phụ đề đầu trang từng lặp lại tiêu đề).
         if (entry.id === "desktop/studio-projects-empty") expect(text.split("Chưa có dự án").length - 1).toBe(1);
         // V10: tên giọng / engine / model không lặp ở từng hàng chương của sách chữ, và không hiện trên đầu trang dự án.

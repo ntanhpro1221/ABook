@@ -150,7 +150,7 @@ export function MorningRecap({ className }: { className?: string }) {
   });
 
   return (
-    <MotionRegion as="section" className={cn("relative rounded-2xl border border-line bg-panel p-4 shadow-card sm:p-5", className)} aria-label={sessionLabel(session.endedAt)}>
+    <MotionRegion as="section" className={cn("relative py-4 sm:py-5", className)} aria-label={sessionLabel(session.endedAt)}>
       <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="touch-hit absolute right-[2px] top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
         <X className="size-4" />
       </button>
@@ -216,7 +216,7 @@ export function MorningRecap({ className }: { className?: string }) {
       <MotionPresence open={scrubbing && Boolean(script?.timed)}>
         {/* Vạch trên đúng mép chữ; vùng cuộn nới 7 px mỗi bên để hàng không bị cắt hay sinh cuộn ngang. */}
         <div className="mt-4 border-t border-line"><div className="-mx-2 max-h-80 overflow-y-auto px-2">
-          <p className="sticky top-0 z-[1] bg-panel py-2 text-xs text-fg-2">Chọn câu cuối cùng còn nhớ:</p>
+          <p className="sticky top-0 z-[1] bg-bg py-2 text-xs text-fg-2">Chọn câu cuối cùng còn nhớ:</p>
           {scrub.map(group => <section key={group.chapterId} aria-label={group.title}>
             <h3 className="pb-1 pt-3 text-xs font-semibold text-fg-2">{group.title}</h3>
             {group.segments.map((segment) => (

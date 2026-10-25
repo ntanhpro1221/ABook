@@ -314,12 +314,12 @@ export function ProjectsScreen() {
         </EmptyState>
       ) : (
         // Lề âm bù đệm của dòng: bìa thẳng mép tiêu đề, cột cuối thẳng mép phải; nền rê chuột và vạch kẻ tràn ra lề.
-        <section className="-mx-3 mt-8" aria-label="Dự án">
+        <section data-list-edges="studio-projects" className="mt-8" aria-label="Dự án"><div className="-mx-3">
           <TableHead />
           <AnimatedRows items={entries} keyOf={entryKey} className="rows-inset [--rows-inset:calc(var(--spacing)*3)]">
             {(entry) => <EntryView entry={entry} />}
           </AnimatedRows>
-        </section>
+        </div></section>
       )}
     </MotionRegion>
   );

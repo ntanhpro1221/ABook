@@ -139,7 +139,7 @@ export function MyMusicSection() {
   const tracks = data?.tracks ?? [];
   const rows = useListPresence(tracks, (track) => track.link);
   return (
-    <MotionRegion><Fold flat storageKey="my-music.library" title="Nhạc của tôi" summary={`${tracks.length} bài`} bodyClassName="space-y-2">
+    <MotionRegion><Fold storageKey="my-music.library" title="Nhạc của tôi" summary={`${tracks.length} bài`} bodyClassName="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-sm font-medium">Nhạc của tôi{tracks.length ? ` (${tracks.length})` : ""}</h3>
         {canImport && (

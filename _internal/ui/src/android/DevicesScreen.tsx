@@ -10,7 +10,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
-import { DialogActions, Button, Dialog, IconButton, Progress } from "@/shared/ui";
+import { DialogActions, Button, Dialog, IconButton, Progress, SelectionMark } from "@/shared/ui";
 import { useUnpair } from "@/shared/useUnpair";
 import { BackgroundNote } from "./BackgroundNote";
 import { BLUETOOTH_DENIED, BLUETOOTH_REASON, bluetoothStep } from "./bluetoothPermission";
@@ -64,7 +64,7 @@ export function PairPanel() {
   const [manual, setManualNow] = useState(false);
   // Tự tìm <-> nhập địa chỉ: mờ chéo cả khung (View Transition), không thay chỗ tức thì.
   const setManual = (value: boolean) => withViewTransition(() => setManualNow(value));
-  // Khung "Nhập địa chỉ máy tính": Back của điện thoại quay về tự tìm máy, chưa rời trang.
+  // Nhập tay: Back quay về tự tìm máy, chưa rời trang.
   useBackLayer(manual, () => setManual(false));
   const [address, setAddress] = useState("");
   const [code, setCode] = useState("");
@@ -151,22 +151,18 @@ export function PairPanel() {
   }, [lastAddress]);
   const ready = (target || address.includes(".")) && code.replace(/\D/g, "").length === 6;
   return (
-    <MotionRegion as="div" className="space-y-5">
-      <div className="py-4">
+    <MotionRegion as="div" className="space-y-3">
+      <div className="pb-1">
         <div className="flex items-center gap-3">
           <div className="flex shrink-0 items-center text-fg-2">
             <Wifi className="size-5" />
           </div>
           <div>
             <h2 className="text-base font-medium">Nối máy tính</h2>
-            <p className="text-sm text-fg-2">Cho hai máy cùng Wi-Fi.</p>
+            <p className="text-sm text-fg-2">Cùng Wi-Fi, mở Thiết bị trên máy tính.</p>
           </div>
         </div>
-        <ol className="mt-4 space-y-1.5 text-sm text-fg-2">
-          <li>1. Trên máy tính, mở Thiết bị trong Cài đặt.</li>
-          <li>2. Bật “{SYNC_SWITCH_LABEL}”, chọn ghép thiết bị.</li>
-          <li>3. Chọn máy dưới đây, nhập mã 6 số.</li>
-        </ol>
+        <MoreInfo label="Cách lấy mã">Trong Cài đặt › Thiết bị của máy tính, bật “{SYNC_SWITCH_LABEL}” rồi chọn ghép thiết bị để lấy mã 6 số.</MoreInfo>
       </div>
 
       {!manual && (
@@ -193,7 +189,7 @@ export function PairPanel() {
                     <span className="block font-medium">{computer.name}</span>
                     <span className="block text-xs text-fg-2">{computer.host}</span>
                   </span>
-                  <CheckCircle2 aria-hidden className={cn("size-5 shrink-0 text-accent-text transition-opacity duration-motion-fast", target?.host === computer.host ? "opacity-100" : "opacity-0")} />
+                  <SelectionMark selected={target?.host === computer.host} />
                 </button>
               ))}
             </div>
@@ -247,7 +243,7 @@ export function PairPanel() {
                     <span className="block font-medium">{device.name}</span>
                     <span className="block text-xs text-fg-2">Qua Bluetooth{device.abook ? " · có ABook" : ""}</span>
                   </span>
-                  <CheckCircle2 aria-hidden className={cn("size-5 shrink-0 text-accent-text transition-opacity duration-motion-fast", target?.host === `bt:${device.address}` ? "opacity-100" : "opacity-0")} />
+                  <SelectionMark selected={target?.host === `bt:${device.address}`} />
                 </button>
               ))}
             </div>
@@ -261,7 +257,7 @@ export function PairPanel() {
 
       <button type="button" onClick={() => withViewTransition(() => { setManualNow((value) => !value); setTarget(null); })} className="touch-hit flex items-center gap-1.5 text-sm font-medium text-accent-text">
         {/* Cùng một kiểu liên kết với "Dùng Bluetooth" (soát 24-10 T15: một hổ phách có biểu tượng, một xám gạch chân). */}
-        {manual ? <Search className="size-4" /> : <Keyboard className="size-4" />} {manual ? "Tự tìm máy tính" : "Nhập địa chỉ máy tính"}
+        {manual ? <Search className="size-4" /> : <Keyboard className="size-4" />} {manual ? "Tự tìm máy tính" : "Nhập địa chỉ"}
       </button>
       {manual && (
         <input
@@ -518,7 +514,7 @@ function PeersPanel() {
                     <span className="block font-medium">{device.name}</span>
                     <span className="block text-xs text-fg-2">Qua Bluetooth · {device.kind === "phone" ? "điện thoại" : "máy tính"}</span>
                   </span>
-                  <CheckCircle2 aria-hidden className={cn("size-5 shrink-0 text-accent-text transition-opacity duration-motion-fast", address === `bt:${device.address}` ? "opacity-100" : "opacity-0")} />
+                  <SelectionMark selected={address === `bt:${device.address}`} />
                 </button>
               ))}
             </div>
@@ -725,7 +721,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
           </dl>
           {/* Địa chỉ và vân tay chứng chỉ (64 chữ số hex) là thứ để dò khi máy kia không tự thấy điện thoại: người nghe bình thường không cần,
               nên gập lại (soát UX a9). */}
-          <Fold flat storageKey="devices.share.details" title="Chi tiết" heading="h3" className="rounded-none border-0 bg-transparent" bodyClassName="px-0">
+          <Fold storageKey="devices.share.details" title="Chi tiết" heading="h3" className="rounded-none border-0 bg-transparent" bodyClassName="px-0">
             <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 pl-5">
               <dt className="text-fg-2">Địa chỉ</dt>
               <dd className="tabular break-all">
@@ -817,7 +813,7 @@ function DeviceNameRow({ bare = false }: { bare?: boolean }) {
   // Tự lấy dữ liệu nên tự mang chuyển động: tên về muộn thì khối mở ra, đổi tên thì chữ mờ qua - không bật vào / thay cứng.
   return (
     <MotionPresence open={Boolean(name)}>
-    <section className={bare ? "" : "mt-8 rounded-2xl border border-line bg-panel px-4 py-3.5"} aria-labelledby="device-name-title">
+    <section className={bare ? "" : "mt-8 py-3.5"} aria-labelledby="device-name-title">
       <div className="flex items-center gap-3">
         <Smartphone className="size-5 shrink-0 text-fg-2" />
         <div className="min-w-0 flex-1">
@@ -936,14 +932,14 @@ export function DevicesScreen() {
   const failure = remote.isError ? nativeError(remote.error) : null;
 
   return (
-    <MotionRegion as="div" className="pb-8 pt-4">
+    <MotionRegion as="div" data-list-edges="devices" className="pb-8 pt-4">
       <div className="mt-5">
         {!connection.data?.paired ? (
           <>
-            <ComputerIntro />
-            <div className="mt-5">
-              <PairPanel />
-            </div>
+            <PairPanel />
+            <Fold storageKey="devices.install" title="Cài trên máy tính" className="mt-4">
+              <ComputerIntro />
+            </Fold>
           </>
         ) : (
           <>
@@ -1014,18 +1010,18 @@ export function DevicesScreen() {
       </div>
       <PeersPanel />
       {/* Phần ít dùng gập lại, nhớ gấp / mở trên máy này (a120 - chủ app: "foldout chúng lại… chứ để hết một trang dài ơi là dài"). */}
-      <Fold flat
+      <Fold
         storageKey="devices.this"
         title="Điện thoại này"
         summary={[connection.data?.deviceName, share.data?.running ? "đang cho máy khác nghe" : "không chia sẻ"].filter(Boolean).join(" · ")}
-        icon={<Smartphone className="size-5" />}
+        icon={<Smartphone className="ink-start size-5 [--icon-w:calc(var(--spacing)*5)]" />}
         className="mt-8 rounded-none border-0 bg-transparent"
       >
         <DeviceNameRow bare />
         <SharePanel bare />
       </Fold>
       {storage.data && (
-        <Fold flat
+        <Fold
           storageKey="devices.storage"
           title="Dung lượng trên máy"
           summary={`Sách ${formatSize(storage.data.bytes)} · còn trống ${formatSize(storage.data.free)}`}

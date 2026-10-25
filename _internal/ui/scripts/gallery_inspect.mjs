@@ -13,22 +13,23 @@ import { createLayoutHelpers, inspectLayout, crossFrameRhythm, crossFrameTitles 
 import { inspectAlignment } from "./gallery_inspect_alignment.mjs";
 import { inspectTapReach } from "./gallery_inspect_tap.mjs";
 import { inspectEdges } from "./gallery_inspect_edges.mjs";
+import { inspectFrames } from "./gallery_inspect_frames.mjs";
 
-export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS"];
+export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS", "NESTED CARD"];
 // Gate đã có fixture hai phía; quy tắc 16–17 dùng cả đối chứng gallery gốc (rules144).
-export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS"];
+export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS", "NESTED CARD"];
 export function gateRules(value) {
   return value === undefined ? [...DEFAULT_FAIL_ON] : value.length === 1 && value[0].toUpperCase() === "NONE" ? [] : value.map(normalizeRule);
 }
 export function normalizeRule(value) {
   const key = value.trim().toUpperCase().replaceAll("_", " ");
-  const numbered = /^RULE([1-9]|1[0-9]|2[01])$/.exec(key);
+  const numbered = /^RULE([1-9]|1[0-9]|2[0-2])$/.exec(key);
   const rule = numbered ? RULES[Number(numbered[1]) - 1] : RULES.find((r) => r === key || r.replaceAll(" ", "-") === key);
   if (!rule) throw new Error(`Quy tắc lạ: ${value}. Chọn ${RULES.join(", ")}`);
   return rule;
 }
 
-export const inspectionExpression = (phone) => `(${inspectPage.toString()})(${JSON.stringify({ phone })}, (${createInspectorHelpers.toString()})(), (context) => ({ ...(${inspectLayout.toString()})(context, (${createLayoutHelpers.toString()})()), ...(${inspectAlignment.toString()})(context), ...(${inspectTapReach.toString()})(context), ...(${inspectEdges.toString()})(context) }))`;
+export const inspectionExpression = (phone) => `(${inspectPage.toString()})(${JSON.stringify({ phone })}, (${createInspectorHelpers.toString()})(), (context) => ({ ...(${inspectLayout.toString()})(context, (${createLayoutHelpers.toString()})()), ...(${inspectAlignment.toString()})(context), ...(${inspectTapReach.toString()})(context), ...(${inspectEdges.toString()})(context), ...(${inspectFrames.toString()})(context) }))`;
 
 export async function settle(cdp, session, timeout) {
   await evaluate(cdp, session, `(async () => {

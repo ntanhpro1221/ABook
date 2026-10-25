@@ -692,11 +692,11 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         </MotionPresence>
       </section>
 
-      <Fold flat storageKey="studio.music.moods" title="Nhạc theo ngữ cảnh" heading="h3">
+      <Fold storageKey="studio.music.moods" title="Nhạc theo ngữ cảnh" heading="h3">
         <MoodsPanel bookId={bookId} moods={data.moods} onCompute={(view) => client.setQueryData(key, view)} />
       </Fold>
 
-      <Fold flat storageKey="studio.music.local" title="Nhạc của tôi" heading="h3">
+      <Fold storageKey="studio.music.local" title="Nhạc của tôi" heading="h3">
         <MyMusic bookId={bookId} previewing={preview.playing} onPreview={preview.toggle} />
       </Fold>
 
@@ -708,7 +708,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         <p className="text-sm text-fg-2">Chưa có đoạn nào - nhạc nền dựng sau khi sách đã phân tích.</p>
       ) : (
         [...byChapter.entries()].map(([chapterId, scenes]) => (
-          <Fold flat key={chapterId} storageKey={`studio.music.${bookId}.${chapterId}`} title={chapterTitle(chapterId)} summary={`${scenes.length}`} heading="h3" className={overrides.enabled ? undefined : "opacity-50"}>
+          <Fold key={chapterId} storageKey={`studio.music.${bookId}.${chapterId}`} title={chapterTitle(chapterId)} summary={`${scenes.length}`} heading="h3" className={overrides.enabled ? undefined : "opacity-50"}>
             <ul className="divide-y divide-line">
               {scenes.map((scene, index) => {
                 const track = scene.link ? plan.tracks[scene.link] : undefined;
@@ -772,7 +772,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         onBan={scene.link ? () => ban(scene.link!, trackLabel(scene.link!, track)) : undefined}
                       />}
                     </span>
-                    <div ref={swapping === scene.key ? swapBox : undefined} className="basis-full"><Collapse open={swapping === scene.key} className="rounded-lg bg-sunken p-2.5 text-sm">
+                    <div ref={swapping === scene.key ? swapBox : undefined} className="basis-full"><Collapse open={swapping === scene.key} className="py-2.5 text-sm">
                       <MotionPresence open={swapping === scene.key}>
                         <Alternatives
                           bookId={bookId}

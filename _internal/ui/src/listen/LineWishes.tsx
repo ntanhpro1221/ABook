@@ -213,7 +213,7 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
       </div>
       {/* Chạm chip từ: khung sửa mở ra; đổi sang từ khác thì mờ qua; chạm lại thì khép (không bật tắt). */}
       <MotionPresence open={Boolean(word)}>
-        <MotionRegion motionKey={word} className="rounded-xl border border-line p-3" data-name-editor>
+        <MotionRegion motionKey={word} className="py-3" data-name-editor>
           <MotionRegion className="mb-2 text-sm">
             <span className="font-semibold">{word}</span>
             {pending && (
@@ -434,7 +434,7 @@ export function LineWishDialog({
         <div ref={body} className="max-h-[68dvh] space-y-3 overflow-y-auto overscroll-contain pr-0.5">
           <LineQuote line={line} />
           {!identified && (
-            <p className="rounded-lg bg-hover px-3 py-2 text-sm text-fg-2">
+            <p className="py-2 text-sm text-fg-2">
               File sách này làm bằng ABook bản cũ nên chưa ghi được việc riêng cho từng câu (người nói, cách đọc câu, thu lại). Sửa cách đọc một từ vẫn
               được; muốn sửa từng câu, làm lại file bằng ABook mới.
             </p>
@@ -445,7 +445,7 @@ export function LineWishDialog({
             <>
               {/* Hộp không đóng khi bấm "Bỏ": hàng khép tại chỗ, khối khép khi hết việc, câu chốt mờ qua (soát chuyển động 139). */}
               <MotionPresence open={items.length > 0}>
-                <div className="rounded-xl bg-info-soft px-3 py-2 text-sm" role="status">
+                <div className="py-2 text-sm" role="status">
                   <p className="flex items-center gap-1.5 font-medium">
                     <Clock className="size-4 shrink-0 text-info" /> Đang chờ máy làm sách
                   </p>

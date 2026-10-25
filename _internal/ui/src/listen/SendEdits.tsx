@@ -68,7 +68,7 @@ export function LocalEditsBanner({ book }: { book: ListenBook }) {
   const note = localEditsNote(book.capabilities);
   if (!note || !book.edits) return <MotionRegion />;
   return (
-    <MotionRegion as="div" role="status" className="mt-2 max-w-md rounded-xl bg-info-soft px-3 py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
+    <MotionRegion as="div" role="status" className="mt-2 max-w-md py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
       <p className="inline-flex items-center gap-1.5 font-medium">
         <Smartphone className="size-3.5 shrink-0" /> {book.edits} thay đổi chỉ có trên điện thoại này
       </p>
@@ -93,7 +93,7 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
   const items = book.editsNotices ?? [];
   if (!items.length) return <MotionRegion />;
   return (
-    <MotionRegion as="div" role="status" className="mt-2 max-w-md rounded-xl bg-info-soft px-3 py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
+    <MotionRegion as="div" role="status" className="mt-2 max-w-md py-2 text-xs text-info max-sm:mx-auto max-sm:text-left">
       <p className="inline-flex items-center gap-1.5 font-medium">
         <Smartphone className="size-3.5 shrink-0" /> Máy đã ghép vừa đổi phần bạn đã đặt
       </p>

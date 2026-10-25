@@ -330,6 +330,7 @@ it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..21
   expect(normalizeRule("rule19")).toBe("COVERED TEXT");
   expect(normalizeRule("rule20")).toBe("REPEATED LABEL");
   expect(normalizeRule("rule21")).toBe("STACKED LAYERS");
-  expect(() => normalizeRule("rule22")).toThrow("Quy tắc lạ");
+    expect(normalizeRule("rule22")).toBe("NESTED CARD");
+    expect(() => normalizeRule("rule23")).toThrow("Quy tắc lạ");
   expect(() => normalizeRule("typo")).toThrow("Quy tắc lạ");
 });

@@ -7,6 +7,11 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+
+- Thư viện, Studio và Cài đặt gọn hơn với các mục phẳng, vạch chia thẳng lề; nút nghe tiếp nằm đúng mép trang và thông tin chung không lặp trên từng hàng.
+- Thiết bị trên điện thoại đưa việc kết nối lên trước, gập hướng dẫn và phần cài trên máy tính; các lựa chọn phân tích dùng tên dễ hiểu.
+
 ## [0.4.141] - 2026-10-25
 
 ### Giao diện

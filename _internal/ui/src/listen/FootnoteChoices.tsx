@@ -47,7 +47,7 @@ export function FootnoteChoices({
   const { title, example } = footnoteSummary(offer);
   const notes = (on: boolean, kind: Exclude<FootnoteNotes, "">) => onChange({ ...value, notes: on ? kind : "" });
   return (
-    <div className="mt-3 rounded-xl border border-line bg-hover p-3" data-testid="footnote-choices">
+    <div className="mt-3 py-3" data-testid="footnote-choices">
       <p className="text-xs font-medium">{title} - ABook không tự bỏ hay sửa chữ của truyện</p>
       {example && <p className="mt-0.5 text-xs text-fg-2">{example}</p>}
       <div className="mt-2 space-y-1">

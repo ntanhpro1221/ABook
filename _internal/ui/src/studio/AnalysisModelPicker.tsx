@@ -23,7 +23,7 @@ interface AnalysisModels {
   reachable: boolean;
 }
 
-/** Tên model như người đọc thấy: bỏ đuôi ":latest" (Ollama tự thêm). */
+/** Chuẩn hoá khoá để đối chiếu các bản đã có trên máy. */
 export const modelLabel = (name: string) => name.replace(/:latest$/, "");
 
 const gigabytes = (bytes: number) => `${(bytes / 1e9).toFixed(1).replace(".", ",")} GB`;
@@ -46,16 +46,16 @@ export function modelHint(model: AnalysisModel, defaultSize = 0): string {
   return parts.join(" · ");
 }
 
-/** Dòng trong danh sách "bản khác": nói nặng nhẹ (người chọn cần biết trước), tên kỹ thuật ở cuối để phân biệt các bản cùng cỡ. */
+/** Nói cỡ và bộ nhớ cần dùng; khoá model chỉ là giá trị của lựa chọn. */
 export function experimentalLabel(model: AnalysisModel, defaultSize = 0): string {
   const hint = modelHint(model, defaultSize);
-  return `Bản thử nghiệm${hint ? ` · ${hint}` : ""} (${modelLabel(model.name)})`;
+  return `Bản thử nghiệm${hint ? ` · ${hint}` : ""}`;
 }
 
-/** Bước xác nhận: bộ phân tích nào sẽ đọc hiểu truyện, nói bằng lời người nghe hiểu (tên kỹ thuật chỉ khi là bản thử nghiệm). */
+/** Bước xác nhận dùng tên dễ đọc; khoá model chỉ gửi máy chủ. */
 export function analysisChoiceLabel(chosen: string, seedModel?: string): string {
   return chosen
-    ? `Bản thử nghiệm “${modelLabel(chosen)}” (${seedModel === chosen ? "như phần trước" : "chỉ cuốn này"})`
+    ? `Bản thử nghiệm (${seedModel === chosen ? "như phần trước" : "chỉ cuốn này"})`
     : "Mặc định của ABook";
 }
 
@@ -101,20 +101,18 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
       >
         <option value="">Mặc định của ABook (khuyên dùng)</option>
         <optgroup label="Bản khác (thử nghiệm)">
-          {others.map((model) => (
+          {others.map((model, index) => (
             <option key={model.name} value={model.name}>
-              {experimentalLabel(model, defaultSize)}
+              {index + 1}. {experimentalLabel(model, defaultSize)}
             </option>
           ))}
         </optgroup>
       </Select>
-      {/* Tên kỹ thuật (tag trong Ollama) chỉ ở chú thích nhỏ, cho người cần biết đúng bản nào. */}
       <p className="mt-1.5 text-[0.8125rem] text-fg-2 text-pretty">
         {value
           ? "Bản thử nghiệm: chưa được kiểm trên nhiều truyện, kết quả có thể kém hơn mặc định."
           : "Mặc định: máy đề xuất cho hầu hết các truyện, không cần chỉnh gì."}
       </p>
-      <p className="mt-1 text-xs text-fg-3 break-all">Tên kỹ thuật: {modelLabel(value || data.default)}</p>
     </OpenWith>
     </MotionRegion>
   );
