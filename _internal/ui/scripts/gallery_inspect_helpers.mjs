@@ -76,7 +76,7 @@ export function inspectPage({ phone = false } = {}, h, layoutInspector) {
   function hidden(el) {
     for (let p = el; p; p = p.parentElement) {
       const s = css(p);
-      if (s.display === "none" || s.visibility !== "visible" || Number(s.opacity) === 0 || p.hidden || /^rect\(0px[, ]+0px[, ]+0px[, ]+0px\)$/.test(s.clip) || /^inset\(50%\)/.test(s.clipPath)) return true;
+      if (s.display === "none" || s.visibility !== "visible" || Number(s.opacity) === 0 || p.hidden || p !== el && s.contentVisibility === "hidden" || /^rect\(0px[, ]+0px[, ]+0px[, ]+0px\)$/.test(s.clip) || /^inset\(50%\)/.test(s.clipPath)) return true;
     }
     return false;
   }
@@ -86,6 +86,8 @@ export function inspectPage({ phone = false } = {}, h, layoutInspector) {
     for (let p = el; p && clipped; p = p.parentElement) {
       const s = css(p);
       if (s.display === "none" || s.visibility !== "visible" || Number(s.opacity) === 0 || p.hidden) return null;
+      // content-visibility: hidden (trang bị màn Đang nghe phủ - android/App.tsx data-covered): con cháu không được vẽ, kích thước đo được là cũ.
+      if (p !== el && s.contentVisibility === "hidden") return null;
       // sr-only dùng clip/clip-path: chữ vẫn có Range nhưng không có pixel nào được vẽ.
       if (/^rect\(0px[, ]+0px[, ]+0px[, ]+0px\)$/.test(s.clip) || /^inset\(50%\)/.test(s.clipPath)) return null;
       if (p !== document.body && p !== document.documentElement) {
