@@ -6,7 +6,7 @@ import { Check, Link2, RotateCcw, Smartphone, X } from "lucide-react";
 import { useState } from "react";
 import { toast, toastDone } from "@/shared/toast";
 import { formatWhen } from "@/shared/format";
-import { Button, Dialog, IconButton } from "@/shared/ui";
+import { DialogActions, Button, Dialog, IconButton } from "@/shared/ui";
 import { KIND_ICON } from "./ApplyChanges";
 import { api } from "./api";
 import { UNDO_MS } from "./decisions";
@@ -233,14 +233,7 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
           </ul>
         </details>
       )}
-      <Dialog
-        open={confirmSkipAll !== null}
-        onOpenChange={(open) => !open && setConfirmSkipAll(null)}
-        width="max-w-md"
-        title={`Bỏ qua mọi việc từ ${confirmSkipAll?.name ?? "máy này"}?`}
-        description={`Bỏ ${confirmSkipAll?.items.length ?? 0} việc khỏi hàng chờ, khôi phục được ở “Đã bỏ qua”.`}
-      >
-        <div className="dialog-actions">
+      <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setConfirmSkipAll(null)}>
             Thôi
           </Button>
@@ -254,7 +247,14 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
           >
             Bỏ qua tất cả
           </Button>
-        </div>
+        </DialogActions>}
+        open={confirmSkipAll !== null}
+        onOpenChange={(open) => !open && setConfirmSkipAll(null)}
+        width="max-w-md"
+        title={`Bỏ qua mọi việc từ ${confirmSkipAll?.name ?? "máy này"}?`}
+        description={`Bỏ ${confirmSkipAll?.items.length ?? 0} việc khỏi hàng chờ, khôi phục được ở “Đã bỏ qua”.`}
+      >
+
       </Dialog>
     </MotionRegion>
   );

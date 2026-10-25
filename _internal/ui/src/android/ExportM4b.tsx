@@ -9,7 +9,7 @@ import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { Button, Dialog } from "@/shared/ui";
+import { DialogActions, Button, Dialog } from "@/shared/ui";
 import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
 import { chargerHint } from "./ExportAudiobook";
 import { isEnded, noteEnded, rejoinExports } from "./exportJobs";
@@ -154,16 +154,16 @@ export function M4bMusicDialogHost() {
     void exportM4b(open.book, music);
   };
   return (
-    <Dialog open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title={`Xuất M4B “${open?.book.title ?? ""}”`} width="max-w-md">
-      <M4bMusicForm music={music} onMusic={setMusic} chapters={open?.book.chaptersAvailable ?? 0} />
-      <div className="mt-5 dialog-actions">
+    <Dialog footer={<DialogActions>
         <Button variant="ghost" onClick={() => setOpen(null)}>
           Để sau
         </Button>
         <Button variant="primary" icon={BookAudio} onClick={start}>
           Bắt đầu
         </Button>
-      </div>
+      </DialogActions>} open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title={`Xuất M4B “${open?.book.title ?? ""}”`} width="max-w-md">
+      <M4bMusicForm music={music} onMusic={setMusic} chapters={open?.book.chaptersAvailable ?? 0} />
+
     </Dialog>
   );
 }

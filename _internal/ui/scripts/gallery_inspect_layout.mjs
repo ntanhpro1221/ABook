@@ -355,6 +355,9 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       if (boxes.some((b, i) => i && b.y < boxes[i - 1].y + boxes[i - 1].height - 1)) continue;
       const slots = new Map();
       for (const row of siblings) for (const svg of row.querySelectorAll("svg")) {
+        // Icon bị mép cuộn / thanh phát che một phần không còn đủ mực để so gap với hàng nguyên vẹn.
+        const full = rect(svg.getBoundingClientRect()), shown = visible(svg, full, true);
+        if (!shown || ["x", "y", "width", "height"].some((key) => Math.abs(shown[key] - full[key]) > 0.5)) continue;
         const icon = iconInk(svg);
         if (!icon || icon.width > 32 || icon.height > 32) continue;
         const next = inkTexts.filter((t) => row.contains(t.element) && t.first.x >= right(icon) - 1 && t.first.y < icon.y + icon.height + 4 && t.first.y + t.first.height > icon.y - 4)

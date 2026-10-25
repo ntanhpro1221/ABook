@@ -5,10 +5,10 @@ import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { feedback } from "@/shared/feedback";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ShieldAlert, Smartphone } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useId, useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { api } from "@/studio/api";
-import { Button, ContentSkeleton, Dialog, InlineError } from "@/shared/ui";
+import { DialogActions, Button, ContentSkeleton, Dialog, InlineError } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { useListPresence } from "@/shared/motion";
 import { formatDate, formatRelative } from "@/shared/format";
@@ -189,7 +189,7 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
     return (
       // Ba pha (mã / mã bị khoá / nút) dùng chung một vùng khoá theo pha: khung cũ (viền, nền, đệm) nằm trong ảnh mờ ra, không đổi cứng;
       // đồng hồ đếm ngược không làm vùng mờ lại.
-      <MotionRegion as="div" motionKey="code" className="rounded-xl border border-accent/35 bg-accent-soft p-5" aria-live="polite">
+      <MotionRegion as="div" motionKey="code" className="rounded-xl border border-accent/35 p-5" aria-live="polite">
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="min-w-0">
             <p className="text-sm font-semibold">Mã ghép thiết bị</p>
@@ -217,12 +217,12 @@ function PairingContent({ sync, onPair, onCancel, busy }: { sync: SyncView; onPa
         </div>
         {/* Dòng vân tay dài (64 ký tự): để NGOÀI hàng hướng dẫn / mã, không thì nó chiếm hết bề rộng và đẩy mã xuống dưới. */}
         {sync.fingerprint && <p className="mt-3 break-all text-xs text-fg-3" title="Đối chiếu vân tay với máy kia">Vân tay: {sync.fingerprint}</p>}
-        <div className="mt-4 dialog-actions">
+        <DialogActions>
           {/* Chỉ huỷ mã đang hiện, không gỡ thiết bị nào - "Huỷ ghép" dễ hiểu thành gỡ thiết bị (soát UX 29-09). */}
           <Button size="sm" variant="ghost" onClick={onCancel}>
             Huỷ mã này
           </Button>
-        </div>
+        </DialogActions>
       </MotionRegion>
     );
   }
@@ -253,6 +253,7 @@ const NO_DEVICES: SyncDevice[] = [];
 
 /** Mục "Điện thoại" trong Cài đặt: bật đồng bộ, ghép nối bằng mã 6 số, quản lý điện thoại đã ghép. */
 export function PhoneSync() {
+  const dialogForm1 = useId();
   const { data: sync, error, refetch, toggle, pair, cancel, revoke, rename, studio, deviceStudio } = useSync();
   const [removing, setRemoving] = useState<SyncDevice | null>(null);
   const [renaming, setRenaming] = useState<{ id: string; draft: string } | null>(null);
@@ -338,13 +339,7 @@ export function PhoneSync() {
               onCheckedChange={(value) => (value ? setConfirmStudio(true) : studio.mutate(false))}
             />
           </div>
-          <Dialog
-            open={confirmStudio}
-            onOpenChange={setConfirmStudio}
-            title="Bật Studio từ xa?"
-            description="Bật quyền riêng cho từng thiết bị để mở Studio trong trình duyệt."
-          >
-            <div className="dialog-actions">
+          <Dialog footer={<DialogActions>
               <Button variant="ghost" onClick={() => setConfirmStudio(false)}>
                 Để sau
               </Button>
@@ -358,7 +353,13 @@ export function PhoneSync() {
               >
                 Cho phép
               </Button>
-            </div>
+            </DialogActions>}
+            open={confirmStudio}
+            onOpenChange={setConfirmStudio}
+            title="Bật Studio từ xa?"
+            description="Bật quyền riêng cho từng thiết bị để mở Studio trong trình duyệt."
+          >
+
           </Dialog>
           </Fold>
           <Fold flat storageKey="phone-sync.connection" title="Kết nối" summary="Địa chỉ và Bluetooth" bodyClassName="space-y-2 pb-3">
@@ -436,13 +437,7 @@ export function PhoneSync() {
         </SettingsBlock>
       )}
 
-      <Dialog
-        open={removing !== null}
-        onOpenChange={(open) => !open && setRemoving(null)}
-        title={`Thôi ghép ${removing?.name ?? "thiết bị"}?`}
-        description="Dừng tải và đồng bộ; giữ sách đã tải."
-      >
-        <div className="dialog-actions">
+      <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setRemoving(null)}>
             Để nguyên
           </Button>
@@ -455,15 +450,28 @@ export function PhoneSync() {
           >
             Thôi ghép
           </Button>
-        </div>
+        </DialogActions>}
+        open={removing !== null}
+        onOpenChange={(open) => !open && setRemoving(null)}
+        title={`Thôi ghép ${removing?.name ?? "thiết bị"}?`}
+        description="Dừng tải và đồng bộ; giữ sách đã tải."
+      >
+
       </Dialog>
-      <Dialog
+      <Dialog footer={<DialogActions>
+            <Button type="button" variant="ghost" onClick={() => setRenaming(null)}>
+              Để nguyên
+            </Button>
+            <Button type="submit" form={dialogForm1} variant="primary" disabled={!renaming?.draft.trim()} loading={rename.isPending}>
+              Lưu
+            </Button>
+          </DialogActions>}
         open={renaming !== null}
         onOpenChange={(open) => !open && setRenaming(null)}
         title="Đổi tên thiết bị"
         description="Tên hiện ở danh sách thiết bị đã ghép của máy này."
       >
-        <form
+        <form id={dialogForm1}
           onSubmit={(event) => {
             event.preventDefault();
             if (!renaming?.draft.trim()) return;
@@ -478,14 +486,7 @@ export function PhoneSync() {
             aria-label="Tên thiết bị"
             className="h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm outline-none focus:border-focus"
           />
-          <div className="dialog-actions">
-            <Button type="button" variant="ghost" onClick={() => setRenaming(null)}>
-              Để nguyên
-            </Button>
-            <Button type="submit" variant="primary" disabled={!renaming?.draft.trim()} loading={rename.isPending}>
-              Lưu
-            </Button>
-          </div>
+
         </form>
       </Dialog>
     </MotionRegion>

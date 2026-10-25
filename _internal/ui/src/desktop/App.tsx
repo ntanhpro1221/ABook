@@ -21,7 +21,7 @@ import { ReaderScreen } from "@/listen/ReaderScreen";
 import { readerEditing } from "./readerEditing";
 import { PlayerProvider, usePlayer } from "@/listen/player";
 import { SourceProvider, useSource } from "@/listen/source";
-import { Button, ContentSkeleton, Dialog, EmptyState, InlineError, OfflineStrip, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
+import { DialogActions, Button, ContentSkeleton, Dialog, EmptyState, InlineError, OfflineStrip, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
 import { useMediaQuery } from "@/shared/media";
 import { useToastClearance } from "@/shared/toastClearance";
 import type { ListenBook } from "@/listen/model";
@@ -193,20 +193,20 @@ function RemoveImportedHost() {
     }
   };
   return (
-    <Dialog
-      open={book !== null}
-      onOpenChange={(open) => !open && setBook(null)}
-      title={`Bỏ “${book?.title ?? ""}” khỏi thư viện?`}
-      description={book ? removeAsk(book) : ""}
-    >
-      <div className="dialog-actions">
+    <Dialog footer={<DialogActions>
         <Button variant="ghost" onClick={() => setBook(null)}>
           Để sau
         </Button>
         <Button variant="danger" icon={Trash2} loading={busy} onClick={() => void remove()}>
           Xoá khỏi thư viện
         </Button>
-      </div>
+      </DialogActions>}
+      open={book !== null}
+      onOpenChange={(open) => !open && setBook(null)}
+      title={`Bỏ “${book?.title ?? ""}” khỏi thư viện?`}
+      description={book ? removeAsk(book) : ""}
+    >
+
     </Dialog>
   );
 }
