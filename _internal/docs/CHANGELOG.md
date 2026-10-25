@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.145] - 2026-10-26
+
 ### Điện thoại
 
 - Mở danh sách con trong bảng của trình phát (như Giọng đọc) mượt hơn: màn Đang nghe chỉ co lại một lần khi bảng đã đứng, không đổi cỡ theo từng khung hình.
