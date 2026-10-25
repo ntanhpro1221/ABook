@@ -138,6 +138,32 @@ describe("phần tử không được vẽ", () => {
   });
 });
 
+describe("nhãn nối đuôi chữ trong hàng lặp", () => {
+  function run(html, boxes) {
+    document.body.innerHTML = html;
+    for (const el of document.body.querySelectorAll("*")) vi.spyOn(el, "getBoundingClientRect").mockReturnValue(boxes(el));
+    vi.spyOn(Range.prototype, "getClientRects").mockImplementation(function () { const el = this.startContainer.parentElement; return el?.matches("span") ? [boxes(el)] : []; });
+    vi.spyOn(document, "elementFromPoint").mockImplementation((x, y) => [...document.querySelectorAll("span")].find((el) => { const b = boxes(el); return x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height; }) ?? document.body);
+    const base = { display: "block", visibility: "visible", opacity: "1", overflowX: "visible", overflowY: "visible", backgroundImage: "none", backgroundColor: "white", color: "black", fontSize: "14px", fontWeight: "400", transform: "none", scale: "none", content: "none", strokeWidth: "1.9px", contentVisibility: "visible", textAlign: "start", flexDirection: "row", justifyContent: "normal", alignItems: "normal", flexGrow: "0" };
+    vi.stubGlobal("getComputedStyle", (el) => el.matches?.(".row") ? { ...base, display: "flex" } : el.matches?.("span") ? { ...base, display: "inline" } : base);
+    vi.stubGlobal("DOMMatrix", class { c = 0; d = 1; });
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ clearRect() {}, fillRect() {}, getImageData: () => ({ data: [255, 255, 255, 255] }) });
+    Object.defineProperty(document, "fonts", { configurable: true, value: [] });
+    Object.defineProperty(document, "getAnimations", { configurable: true, value: () => [] });
+    try { return inspectPage({}, h).findings.filter((f) => f.rule === "SIBLING CONSISTENCY" && f.metric === "text-left"); } finally { Reflect.deleteProperty(document, "fonts"); Reflect.deleteProperty(document, "getAnimations"); }
+  }
+  const html = '<ul><li><div class="row"><span class="name">Ông Tư</span><span class="tag">Nam</span></div></li><li><div class="row"><span class="name">Bà Ba Hoa</span><span class="tag">Nữ</span></div></li></ul>';
+  const rowY = (el) => el.closest("li") === document.querySelectorAll("li")[0] ? 10 : 50;
+  it("mép trái nhãn sau tên dài ngắn khác nhau không phải lỗi", () => {
+    const boxes = (el) => el.matches(".tag") ? { x: el.closest("li") === document.querySelectorAll("li")[0] ? 70 : 100, y: rowY(el), width: 20, height: 16 } : el.matches(".name") ? { x: 10, y: rowY(el), width: el.textContent.length * 6, height: 16 } : el.matches("li,.row") ? { x: 0, y: rowY(el), width: 300, height: 30 } : { x: 0, y: 0, width: 400, height: 400 };
+    expect(run(html, boxes)).toHaveLength(0);
+  });
+  it("chữ đầu hàng lệch cột vẫn bị bắt", () => {
+    const boxes = (el) => el.matches(".name") ? { x: el.closest("li") === document.querySelectorAll("li")[0] ? 10 : 16, y: rowY(el), width: 40, height: 16 } : el.matches(".tag") ? { x: 90, y: rowY(el), width: 20, height: 16 } : el.matches("li,.row") ? { x: 0, y: rowY(el), width: 300, height: 30 } : { x: 0, y: 0, width: 400, height: 400 };
+    expect(run(html, boxes).length).toBeGreaterThan(0);
+  });
+});
+
 describe("so sánh hàng lặp với dung sai 1 CSS px", () => {
   it("ignores floating point residue but preserves a real >1 px drift", () => {
     expect(h.siblingDifferences([{ value: 18 }, { value: 16.999 }])).toEqual([]);
