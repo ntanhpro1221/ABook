@@ -648,7 +648,8 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     const stack = [...parent.children].filter((c) => c.matches(controlSelector) && visible(c, rect(c.getBoundingClientRect())));
     if (stack.length < 2 || stack.length !== [...parent.children].filter((c) => visible(c, rect(c.getBoundingClientRect()))).length) continue;
     if (stack.some((c) => !transparent(css(c).backgroundColor) || Number.parseFloat(css(c).borderLeftWidth) > 0 && css(c).borderLeftStyle !== "none")) continue;
-    const inks = stack.map((c) => ({ c, ink: controlInk(c) })).filter((s) => s.ink);
+    // Mép chữ, không mép mực cả nút: dấu tích chỉ hiện ở hàng đang chọn (Nhạc nền "Để máy chọn" / "Tắt") là chủ ý, chữ vẫn chung mép.
+    const inks = stack.map((c) => ({ c, ink: inkTexts.find((t) => c.contains(t.element))?.first ?? controlInk(c) })).filter((s) => s.ink);
     if (inks.length < 2) continue;
     const xs = inks.map((s) => s.ink.x), low = Math.min(...xs), high = Math.max(...xs);
     if (high - low <= 1.01) continue;

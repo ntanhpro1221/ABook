@@ -230,7 +230,8 @@ export function SampleButton({ id, url, label }: { id: string; url: string; labe
         aria-label={active ? "Dừng nghe thử" : label}
         onClick={() => clip.toggle(id, url)}
         className={cn(
-          "touch-hit grid size-9 shrink-0 place-items-center rounded-full transition-colors",
+          // Cuối hàng: bù nửa phần ô 36 px rộng hơn icon 16 px để mực ▶ chạm mép cột như chữ các hàng khác (máy dò trailing-control-inset).
+          "touch-hit -mr-2.5 grid size-9 shrink-0 place-items-center rounded-full transition-colors",
           active ? "text-accent-text" : "text-fg-2 hover:bg-hover hover:text-fg",
         )}
       >
