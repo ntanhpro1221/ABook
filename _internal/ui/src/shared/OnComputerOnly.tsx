@@ -1,5 +1,6 @@
 import { Monitor } from "lucide-react";
 import { cn } from "@/shared/cn";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { listenOnlyOwner, onComputerLine } from "@/shared/peerStudio";
 import { useAppInfo } from "@/studio/data";
 
@@ -17,7 +18,8 @@ export function OnComputerOnly({ verb = "Làm", className }: { verb?: string; cl
   return (
     <span className={cn("inline-flex max-w-full items-center gap-1.5 rounded-full bg-sunken px-2.5 py-1 text-xs text-fg-2", className)}>
       <Monitor className="size-3.5 shrink-0" aria-hidden />
-      <span className="min-w-0 text-pretty">{onComputerLine(verb, name)}</span>
+      {/* Tên máy về sau ("máy tính" -> tên thật, useAppInfo của riêng khối này): chữ mờ qua, không thay cứng. */}
+      <MotionRegion as="span" className="min-w-0 text-pretty">{onComputerLine(verb, name)}</MotionRegion>
     </span>
   );
 }

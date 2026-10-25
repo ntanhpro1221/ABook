@@ -5,7 +5,7 @@ import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, RotateCw, WifiOff, X
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, ReactNode, Ref } from "react";
 import { cn } from "@/shared/cn";
-import { scrollMotion } from "@/shared/motion";
+import { markArrival, scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { MotionRegion } from "./MotionRegion";
 import { MotionPresence } from "./MotionPresence";
@@ -197,7 +197,8 @@ export function Tooltip({ label, children, side = "top" }: { label: ReactNode; c
           sideOffset={6}
           className="motion-tooltip z-50 max-w-72 rounded-md bg-fg px-2.5 py-1.5 text-xs font-medium text-bg shadow-float"
         >
-          {label}
+          {/* Nhãn đổi lúc chú giải đang mở ("Nghe" -> "Dừng"): chữ mờ qua, không thay cứng. */}
+          <MotionRegion as="span" className="block">{label}</MotionRegion>
         </TooltipPrimitive.Content>
       </TooltipPrimitive.Portal>
     </TooltipPrimitive.Root>
@@ -250,6 +251,8 @@ export function Progress({
       aria-valuetext={indeterminate ? undefined : valueText}
       className={cn("relative w-full overflow-hidden rounded-full bg-line", height, className)}
     >
+      {/* Đổi kiểu thanh (chạy qua lại <-> phần trăm) mờ qua; đổi màu (tone) chuyển dần (.motion-progress / .indeterminate-bar) - không nhảy. */}
+      <MotionRegion motionKey={indeterminate} className="h-full w-full">
       {indeterminate ? (
         <div className={cn("indeterminate-bar h-full w-2/5 rounded-full", BAR[tone])} />
       ) : (
@@ -258,6 +261,7 @@ export function Progress({
           style={{ transform: `scaleX(${clamped})` }}
         />
       )}
+      </MotionRegion>
     </div>
   );
 }
@@ -455,12 +459,8 @@ export function TabsList({ children, className, label }: { children: ReactNode; 
     const next = revealedScroll(active.offsetLeft, active.offsetWidth, element.scrollLeft, element.clientWidth, FADE);
     if (next !== null) element.scrollLeft = next;
   });
-  const mask = edges.left || edges.right
-    ? `linear-gradient(to right, ${edges.left ? `transparent, black ${FADE}px` : "black"}, ${
-        edges.right ? `black calc(100% - ${FADE}px), transparent` : "black"
-      })`
-    : undefined;
-  const style: CSSProperties | undefined = mask ? { maskImage: mask, WebkitMaskImage: mask } : undefined;
+  // Mép mờ đổi bề rộng 0 <-> FADE bằng biến CSS có kiểu (@property --tab-fade-* trong styles.css) nên trượt dần, không bật cứng.
+  const style = { "--tab-fade-l": `${edges.left ? FADE : 0}px`, "--tab-fade-r": `${edges.right ? FADE : 0}px` } as CSSProperties;
   const nudge = (direction: -1 | 1) => list.current?.scrollBy({ left: direction * list.current.clientWidth * 0.7, behavior: scrollMotion() });
   return (
     <div className="relative">
@@ -469,26 +469,23 @@ export function TabsList({ children, className, label }: { children: ReactNode; 
         aria-label={label}
         style={style}
         data-tab-row=""
-        className={cn("relative flex gap-5 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none] sm:gap-6", className)}
+        className={cn("tab-row-fade relative flex gap-5 overflow-x-auto overflow-y-hidden border-b border-line [scrollbar-width:none] sm:gap-6", className)}
       >
         <SlidingIndicator variant="line" />
         {children}
       </TabsPrimitive.List>
       {/* Mũi tên báo còn tab ngoài mép (mọi cỡ màn: chuột bấm được; bàn phím đã có phím mũi tên của hàng tab). */}
-      {edges.left && (
-        <button type="button" tabIndex={-1} aria-label="Xem các tab trước" onClick={() => nudge(-1)} className="absolute left-0 top-0 grid h-11 w-9 place-items-center text-fg-2 hover:text-fg">
-          <span className="grid size-6 place-items-center rounded-full border border-line bg-panel-2 shadow-sm">
-            <ChevronLeft className="size-3.5" />
-          </span>
-        </button>
-      )}
-      {edges.right && (
-        <button type="button" tabIndex={-1} aria-label="Xem các tab sau" onClick={() => nudge(1)} className="absolute right-0 top-0 grid h-11 w-9 place-items-center text-fg-2 hover:text-fg">
-          <span className="grid size-6 place-items-center rounded-full border border-line bg-panel-2 shadow-sm">
-            <ChevronRight className="size-3.5" />
-          </span>
-        </button>
-      )}
+      {/* Luôn dựng, chỉ mờ vào / ra tại chỗ (.motion-hold): cuộn vài px không làm mũi tên bật ra cứng. */}
+      <button type="button" tabIndex={-1} aria-label="Xem các tab trước" aria-hidden={!edges.left || undefined} data-state={edges.left ? "open" : "closed"} onClick={() => nudge(-1)} className="motion-hold absolute left-0 top-0 grid h-11 w-9 place-items-center text-fg-2 hover:text-fg">
+        <span className="grid size-6 place-items-center rounded-full border border-line bg-panel-2 shadow-sm">
+          <ChevronLeft className="size-3.5" />
+        </span>
+      </button>
+      <button type="button" tabIndex={-1} aria-label="Xem các tab sau" aria-hidden={!edges.right || undefined} data-state={edges.right ? "open" : "closed"} onClick={() => nudge(1)} className="motion-hold absolute right-0 top-0 grid h-11 w-9 place-items-center text-fg-2 hover:text-fg">
+        <span className="grid size-6 place-items-center rounded-full border border-line bg-panel-2 shadow-sm">
+          <ChevronRight className="size-3.5" />
+        </span>
+      </button>
     </div>
   );
 }
@@ -582,6 +579,16 @@ function keepNewLayerFocus(event: Event): boolean {
   return true;
 }
 
+/** Hộp / bảng vừa mở: thứ dựng cùng nó (MotionPresence đang mở, hàng danh sách) đứng tại chỗ cùng hộp đang hiện vào, không mọc từ 0 bên trong
+ *  (motion.ts pageSettling, như trang mới vào). Thứ tới SAU lúc ấy (lỗi, hàng mới) vẫn mở ra có chuyển động. Đánh dấu lúc dựng, trước khi con dựng. */
+function useArrivalOnOpen(open: boolean) {
+  const was = useRef(false);
+  if (open && !was.current) markArrival();
+  useLayoutEffect(() => {
+    was.current = open;
+  });
+}
+
 export function Dialog({
   open,
   onOpenChange,
@@ -599,6 +606,7 @@ export function Dialog({
   width?: string;
   phoneSheet?: boolean;
 }) {
+  useArrivalOnOpen(open);
   // Nhớ phần tử đang giữ con trỏ lúc hộp mở (trước khi Radix chuyển con trỏ vào hộp) để trả về khi đóng.
   const opener = useRef<Element | null>(null);
   const lastContent = useRef({ title, description, children });
@@ -702,6 +710,7 @@ export function Sheet({
   className?: string;
   onHeightChange?: (height: number) => void;
 }) {
+  useArrivalOnOpen(open);
   const lastContent = useRef({ title, children, description, footer });
   if (open) lastContent.current = { title, children, description, footer };
   const shown = open ? { title, children, description, footer } : lastContent.current;
@@ -809,10 +818,11 @@ export function Sheet({
           </div>
           </div>
           <div ref={setBody} style={fade} className="sheet-body -mx-[20px] min-h-0 min-w-0 overflow-y-auto overscroll-contain px-[20px]">
-            {shown.description && <DialogPrimitive.Description className="mb-3 text-pretty text-sm text-fg-2"><MotionRegion as="span" className="block" motionKey={typeof shown.description === "string" ? shown.description : undefined}>{shown.description}</MotionRegion></DialogPrimitive.Description>}
+            {/* Mô tả / chân bảng hiện / ẩn lúc bảng đang mở: mở / khép tại chỗ (lúc mở bảng thì đứng yên cùng bảng - useArrivalOnOpen). */}
+            <MotionPresence open={Boolean(shown.description)}><DialogPrimitive.Description className="mb-3 text-pretty text-sm text-fg-2"><MotionRegion as="span" className="block" motionKey={typeof shown.description === "string" ? shown.description : undefined}>{shown.description}</MotionRegion></DialogPrimitive.Description></MotionPresence>
             {shown.children}
           </div>
-          {shown.footer && <div className="sheet-footer shrink-0 border-t border-line pt-4">{shown.footer}</div>}
+          <MotionPresence open={Boolean(shown.footer)} className="sheet-footer shrink-0" bodyClassName="border-t border-line pt-4">{shown.footer}</MotionPresence>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
@@ -844,8 +854,11 @@ export function ContentSkeleton({ shape = "rows", count = 3, label = "Đang tả
   </MotionRegion>;
 }
 
-/** Lỗi ở ngay vùng bị ảnh hưởng; nội dung đã có vẫn dùng được. */
-export function InlineError({ message, onRetry, className }: { message: string; onRetry: () => void; className?: string }) {
+/** Lỗi ở ngay vùng bị ảnh hưởng; nội dung đã có vẫn dùng được. `open`: chỗ gọi hiện / ẩn lỗi theo điều kiện - truyền điều kiện vào đây
+ *  thay vì dựng / gỡ cả phần tử theo điều kiện ấy, để lỗi mở / khép tại chỗ (MotionPresence) chứ không bật tắt (soát chuyển động 139; motionLint.test.ts
+ *  chặn kiểu viết cũ). */
+export function InlineError({ message, onRetry, className, open }: { message: string; onRetry: () => void; className?: string; open?: boolean }) {
+  if (open !== undefined) return <MotionPresence open={open}><InlineError message={message} onRetry={onRetry} className={className} /></MotionPresence>;
   // Nút đứng ngay sau câu (màn rộng không đẩy nó ra mép phải); màn hẹp xuống dòng thì thẳng mép với chữ - -ml bù phần đệm của nút ghost.
   return <MotionRegion role="alert" motionKey={message} className={cn("motion-reveal flex items-start gap-3 py-3 text-sm", className)}>
     <AlertTriangle aria-hidden className="ink-start mt-[3px] size-4 shrink-0 text-danger" />
@@ -886,15 +899,17 @@ export function EmptyState({
   action?: ReactNode;
   className?: string;
 }) {
+  // Tự là một vùng: đổi tiêu đề / lời / nút lúc đang hiện (tìm chữ khác, lọc khác) mờ qua tại chỗ, không đổi cứng; hiện / ẩn cả khối thì chỗ
+  // gọi bọc MotionPresence (motionLint.test.ts).
   return (
-    <div className={cn("motion-reveal flex flex-col items-center px-6 py-14 text-center", className)}>
+    <MotionRegion className={cn("motion-reveal flex flex-col items-center px-6 py-14 text-center", className)}>
       <div className="mb-4 grid size-14 place-items-center rounded-2xl bg-accent-soft text-accent-text">
         <Icon className="size-7" strokeWidth={1.75} />
       </div>
       <h3 className="text-base font-semibold">{title}</h3>
       {children && <p className="mt-1.5 max-w-md text-sm leading-relaxed text-fg-2">{children}</p>}
       {action && <div className="mt-5">{action}</div>}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -904,8 +919,8 @@ export function failedEmpty(query: { isError: boolean; data?: readonly unknown[]
   return query.isError && !query.data?.length;
 }
 
-export function LoadError({ what, onRetry, className }: { what: string; error?: unknown; onRetry: () => void; className?: string }) {
-  return <InlineError message={`Chưa tải được ${what}; bạn hãy kiểm tra kết nối rồi thử lại.`} onRetry={onRetry} className={className} />;
+export function LoadError({ what, onRetry, className, open }: { what: string; error?: unknown; onRetry: () => void; className?: string; open?: boolean }) {
+  return <InlineError message={`Chưa tải được ${what}; bạn hãy kiểm tra kết nối rồi thử lại.`} onRetry={onRetry} className={className} open={open} />;
 }
 
 export function Kbd({ children }: { children: ReactNode }) {
