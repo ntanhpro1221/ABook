@@ -31,14 +31,14 @@ export function watchDownloads(client: QueryClient): () => void {
   const handle = EbookLibrary.addListener("download", (event) => {
     publish(event);
     if (event.finished) {
-      toast.success("Đã tải xong", { description: "Sách đã có trong Thư viện, nghe được cả khi không có mạng." });
+      toast.success("Đã tải xong - nghe được cả khi không có mạng");
       void client.invalidateQueries({ queryKey: ["remote"] });
       void client.invalidateQueries({ queryKey: ["peer-libraries"] });
       void client.invalidateQueries({ queryKey: ["listen"] });
       void client.invalidateQueries({ queryKey: ["storage"] });
     }
     if (event.error) toast.error("Tải bị gián đoạn", { description: errorDescription(event.error, event.technical) });
-    if (event.cancelled) toast("Đã huỷ tải", { description: "Phần đã tải được giữ lại - bấm Tải lần sau là tải tiếp." });
+    if (event.cancelled) toast("Đã huỷ tải - lần sau tải tiếp từ chỗ dở");
   });
   return () => void handle.then((listener) => listener.remove());
 }

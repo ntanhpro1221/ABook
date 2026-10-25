@@ -3,7 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CircleAlert, Laptop, Loader2, Send, Smartphone, Undo2, X } from "lucide-react";
 import { useState } from "react";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { localEditsNote } from "@/shared/capabilities";
 import { cn } from "@/shared/cn";
@@ -33,7 +33,7 @@ export function useSendEdits(book: ListenBook) {
     onSuccess: (state) => {
       refreshAfterEdit(client, book.id);
       const done = sentToast(state, where);
-      toast.success(done.title, { description: done.description, duration: 8000 });
+      toastDone(done.title, done.note, { duration: 8000 });
     },
     onError: (error: Error) => {
       refreshAfterEdit(client, book.id);
@@ -86,7 +86,7 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
       api(`/api/books/${book.id}/edits-notices/${verb}`, { method: "POST", body: { id: notice?.id ?? "" } }),
     onSuccess: (_reply, { verb }) => {
       refreshAfterEdit(client, book.id);
-      if (verb === "undo") toast.success("Đã đặt lại bản của máy này", { description: "Lần sau máy kia nhận sách sẽ nhận bản này." });
+      if (verb === "undo") toast.success("Đã đặt lại bản của máy này");
     },
     onError: (error: Error) => toast.error("Chưa làm được", { description: error.message }),
   });

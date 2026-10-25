@@ -8,6 +8,7 @@ import { noteCastHasNoMusic } from "@/listen/castMusic";
 import { useClockReader } from "@/listen/clock";
 import { usePlayer } from "@/listen/player";
 import { Back15, Forward15, RemoteSleepMenu } from "@/listen/PlayerViews";
+import { SlotFace, useMenuSlot } from "@/listen/menuSlot";
 import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode } from "@/listen/sleep";
 import { useSource } from "@/listen/source";
 import { formatClock } from "@/shared/format";
@@ -260,6 +261,8 @@ export function PhoneHandOffButton() {
   const client = useQueryClient();
   const [searching, setSearching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Trong dòng "Thiết bị phát" của menu "…": nút là cả dòng (một biểu tượng, giá trị chữ bên phải) - PlayerViews SlotFace.
+  const slot = useMenuSlot();
   const track = player.track;
   // Một vỏ cho mọi nhánh (chưa có gì / một nút / menu): số nơi phát đổi thì nút mờ chéo, không thay gốc MotionRegion <-> Button <-> DropdownMenu.
   const content = () => {
@@ -299,8 +302,10 @@ export function PhoneHandOffButton() {
   };
   if (targets.length === 1 && !menuOpen) {
     const [only] = targets;
+    const label = `Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`;
+    if (slot) return <SlotFace aria-label={label} value={only.name} onClick={() => void handOff(only)} />;
     return (
-      <IconButton label={`Phát trên ${only.name}${protocolLabel(only) ? ` (${protocolLabel(only)})` : ""}`} icon={only.via === "cast" ? Cast : KIND_ICONS[only.kind] ?? Smartphone}
+      <IconButton label={label} icon={only.via === "cast" ? Cast : KIND_ICONS[only.kind] ?? Smartphone}
         size="sm" onClick={() => void handOff(only)} />
     );
   }
@@ -312,12 +317,16 @@ export function PhoneHandOffButton() {
         if (open && !searching) rescan();
       }}
     >
+      {slot ? (
+        <DropdownMenu.Trigger asChild><SlotFace aria-label="Phát trên thiết bị khác" value="Chọn" /></DropdownMenu.Trigger>
+      ) : (
       <DropdownMenu.Trigger
         aria-label="Phát trên thiết bị khác"
         className="touch-box inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 active:bg-hover data-[state=open]:bg-hover data-[state=open]:text-fg"
       >
         <Cast className="glyph" strokeWidth={2} />
       </DropdownMenu.Trigger>
+      )}
       <DropdownMenu.Portal>
         <DropdownMenu.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-[calc(100vw-24px)] rounded-xl border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
           <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Phát trên</DropdownMenu.Label>
@@ -357,5 +366,5 @@ export function PhoneHandOffButton() {
     </DropdownMenu.Root>
   );
   };
-  return <MotionRegion as="span" className="inline-flex">{content()}</MotionRegion>;
+  return <MotionRegion as="span" className={slot ? "flex" : "inline-flex"}>{content()}</MotionRegion>;
 }

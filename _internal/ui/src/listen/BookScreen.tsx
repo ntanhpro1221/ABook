@@ -4,7 +4,7 @@ import { Fold } from "@/shared/Collapse";
 import { AnimatedRows, LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, Trash2, UserRound } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, AudioLines, BookOpen, BookOpenText, Check, CheckCheck, ChevronDown, CircleDashed, CloudDownload, FileDown, GitMerge, History, Hourglass, Laptop, Loader2, MoreHorizontal, Pause, Pencil, Play, Plus, RotateCcw, Save, Search, Share2, SlidersHorizontal, TextCursorInput, Trash2, UserRound } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
@@ -162,7 +162,7 @@ export function ChapterRow({
                 )}
                 {onRename && (
                   <DropdownMenu.Item onSelect={() => onRename(chapter)} className={MENU_ITEM}>
-                    <Pencil className="size-4" /> Đổi tên chương…
+                    <TextCursorInput className="size-4" /> Đổi tên chương…
                   </DropdownMenu.Item>
                 )}
               </DropdownMenu.Content>
@@ -397,7 +397,7 @@ export function PersonRow({
                 )}
                 {onRename && (
                   <DropdownMenu.Item onSelect={() => onRename(person)} className={MENU_ITEM}>
-                    <Pencil className="size-4" /> Đổi tên
+                    <TextCursorInput className="size-4" /> Đổi tên
                   </DropdownMenu.Item>
                 )}
                 {onGender && person.voice && person.lines > 0 && (
@@ -625,7 +625,7 @@ export function singleRecordActions(book: ListenBook): { key: string; label: str
   return [
     { key: "create", label: "Hồ sơ mới", icon: Plus, dialog: newRecordDialog(book) },
     { key: "move", label: "Chuyển hồ sơ", icon: ArrowRightLeft, dialog: { kind: "move", name } },
-    { key: "rename", label: "Đổi tên hồ sơ…", icon: Pencil, dialog: { kind: "rename", name } },
+    { key: "rename", label: "Đổi tên hồ sơ…", icon: TextCursorInput, dialog: { kind: "rename", name } },
     { key: "delete", label: "Xoá hồ sơ…", icon: Trash2, dialog: { kind: "delete", name }, danger: true },
   ];
 }
@@ -743,7 +743,7 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               <Plus className="size-4" /> Hồ sơ mới
             </DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "rename", name: active.name })} className={MENU_ITEM}>
-              <Pencil className="size-4" /> Đổi tên hồ sơ này…
+              <TextCursorInput className="size-4" /> Đổi tên hồ sơ này…
             </DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "move", name: active.name })} className={MENU_ITEM}>
               <ArrowRightLeft className="size-4" /> Chuyển sang cuốn khác…
@@ -996,7 +996,6 @@ export function BookScreen({
       toast("Đang nghe lại từ đầu", {
         // Có nút thao tác: đủ lâu để kịp bấm (mặc định 4 giây quá ngắn - soát UX 29-09).
         duration: 8000,
-        description: `Chỗ cũ: ${before.chapter.title} · ${formatClock(before.at)}`,
         action: { label: "Quay lại chỗ cũ", onClick: () => void playBook(book, before.chapter.id, before.at) },
       });
     }
@@ -1220,7 +1219,6 @@ export function BookScreen({
                 person={mergingPerson}
                 people={castView?.characters ?? []}
                 onClose={() => setMergingPerson(null)}
-                waiting
                 onSaved={() => refreshAfterEdit(client, book.id)}
               />
               <WishesDialog bookId={book.id} count={book.edits ?? 0} open={wishesOpen} onOpenChange={setWishesOpen} syncs={syncs} />

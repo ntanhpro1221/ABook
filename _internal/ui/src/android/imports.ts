@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { feedback } from "@/shared/feedback";
 import type { ImportChoice } from "@/listen/textImport";
 import { brokenMusicNote, keptEditsTitle } from "@/shared/editsKept";
@@ -28,18 +28,18 @@ export function watchImports(client: QueryClient, open: (bookId: string) => void
     const bookId = event.bookId;
     if (event.how === "older" || event.how === "conflict") {
       toast.warning(event.how === "older" ? "File này cũ hơn bản bạn đang có" : "File này có bản thu khác", {
-        description: "Bạn muốn thay bản đang có bằng file này? Chỉnh sửa và chỗ nghe của bạn vẫn được giữ.", duration: Infinity,
+        description: "Chỉnh sửa và chỗ nghe của bạn vẫn được giữ.", duration: Infinity,
         action: { label: "Thay bằng file này", onClick: () => {
           void EbookLibrary.confirmOlderImport({ source: event.source! }).catch((error: Error) => toast.error("Chưa thay được sách", { description: error.message }));
-        } }, cancel: { label: "Giữ bản đang có", onClick: () => undefined },
+        } },
       });
       return;
     }
     void client.invalidateQueries({ queryKey: ["listen"] });
     void client.invalidateQueries({ queryKey: ["storage"] });
     feedback("confirm");
-    toast.success(keptEditsTitle(event.keptEdits) ?? "Đã thêm sách vào Thư viện", {
-      description: [event.title, brokenMusicNote(event.brokenMusic)].filter(Boolean).join(" · ") || undefined,
+    // Một dòng: tên sách nằm ngay trong câu; bài nhạc hỏng (sách vẫn mở) là cảnh báo cùng dòng ấy.
+    toastDone(keptEditsTitle(event.keptEdits) ?? (event.title ? `Đã thêm “${event.title}”` : "Đã thêm sách vào Thư viện"), brokenMusicNote(event.brokenMusic) ?? undefined, {
       action: { label: "Mở sách", onClick: () => open(bookId) },
     });
   });

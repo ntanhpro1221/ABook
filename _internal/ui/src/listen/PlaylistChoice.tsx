@@ -64,10 +64,9 @@ export function usePlaylistChoice(bookId: string, enabled = true) {
       } else {
         // Để máy chọn: lời đáp của server đã là màn của máy chọn - nói máy chọn gì.
         const auto = autoPlaylistName(view, menu.data);
-        toast(playlist === null ? "Nhạc nền: để máy chọn" : `Nhạc nền: ${playlistLabel(view, menu.data)}`, {
+        toast(playlist === null ? `Nhạc nền: để máy chọn${auto ? ` - ${auto}` : ""}` : `Nhạc nền: ${playlistLabel(view, menu.data)}`, {
           id: "playlist-choice",
           duration: 2500,
-          description: auto ? `Máy chọn: ${auto}` : undefined,
         });
       }
       client.setQueryData(key, view);

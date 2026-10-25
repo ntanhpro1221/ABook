@@ -17,7 +17,7 @@ import {
   onlineNotice,
   resolveVoice,
 } from "./readAloudVoice";
-import { genderLabel, VOICE_GROUPS, voiceSections } from "./voiceGroups";
+import { genderLabel, groupLabel, VOICE_GROUPS, voiceSections } from "./voiceGroups";
 import { spokenVoiceName } from "./onlineConsent";
 
 // Cài đặt › Giọng đọc (máy tính và điện thoại dùng chung): giọng mặc định của "Nghe ngay", nghe thử từng giọng, gợi ý giọng nam / nữ, câu nói
@@ -287,8 +287,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
       {current && <p className="text-sm font-medium">Đang dùng: {current.name}</p>}
       {voices === null && !loadError && <ContentSkeleton label="Đang tải giọng đọc" />}
       {voices &&
-        VOICE_GROUPS.map(({ provider, title }) => {
-          const [heading, detail] = title.split(" · ");
+        VOICE_GROUPS.map(({ provider, title: heading, detail }) => {
           const list = voices.filter((voice) => voice.provider === provider);
           if (!list.length && provider !== "device") return null;
           const notice = provider === "edge" ? ONLINE_NOTICE : list[0] ? onlineNotice(list[0]) : "";
@@ -302,7 +301,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
               {list.length > 0 && (
               <div
                 role="radiogroup"
-                aria-label={title}
+                aria-label={groupLabel({ title: heading, detail })}
                 onKeyDown={radioGroupKeys(ids, current?.id ?? "", (id) => {
                   chooseDefaultVoice(id);
                   setChosen(id);

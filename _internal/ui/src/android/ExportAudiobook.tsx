@@ -5,7 +5,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { Headphones } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { jobView, type ExportJob } from "@/desktop/bookFileExport";
 import { AUDIOBOOK_COPY, planText, resumeText, wholeBookNotice } from "@/desktop/listenExport";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
@@ -104,16 +104,15 @@ export function watchAudiobookExports(): () => void {
       const view = finishedView(event);
       const uri = event.uri;
       if (view.kind === "success") {
-        toast.success(view.title, {
+        toastDone(view.title, view.note, {
           id,
-          description: view.description,
           duration: 20000,
           action: uri
             ? {
                 label: "Mở",
                 onClick: () =>
                   void EbookLibrary.openFile({ uri }).then((result) => {
-                    if (!result.opened) toast("Không mở được từ đây", { description: "Mở file ở nơi bạn đã lưu bằng app Tệp hay app nghe sách nói." });
+                    if (!result.opened) toast.warning("Không mở được từ đây - mở file bằng app Tệp");
                   }),
               }
             : undefined,
@@ -121,7 +120,7 @@ export function watchAudiobookExports(): () => void {
       }
     } else if (event.stopped) {
       runs.delete(event.bookId);
-      toast(AUDIOBOOK_COPY.stopped, { id, description: AUDIOBOOK_COPY.stoppedNote, action: undefined });
+      toast(AUDIOBOOK_COPY.stopped, { id, action: undefined });
     } else if (event.error) {
       runs.delete(event.bookId);
       toast.error(AUDIOBOOK_COPY.failed, { id, description: event.error, action: undefined });

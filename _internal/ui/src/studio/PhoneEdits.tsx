@@ -4,12 +4,12 @@ import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Link2, RotateCcw, Smartphone, X } from "lucide-react";
 import { useState } from "react";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { formatWhen } from "@/shared/format";
 import { Button, Dialog, IconButton } from "@/shared/ui";
 import { KIND_ICON } from "./ApplyChanges";
 import { api } from "./api";
-import { UNDO_MS, useWhenApplied } from "./decisions";
+import { UNDO_MS } from "./decisions";
 import { pollDelay, retryUnlessGone } from "./polling";
 
 // Hộp thư thay đổi từ điện thoại (docs/EDITING.md, P2b; webui/edits_inbox.py). Điện thoại đã ghép gửi phần sửa của cuốn về máy tính:
@@ -90,13 +90,12 @@ export function describePush(push: RecentPush): string {
   return `${push.name} · ${formatWhen(push.at)}: ${parts.join(", ") || "không có gì mới"}`;
 }
 
-/** Lời dưới toast "Áp dụng" một việc từ hộp thư: điều đã xảy ra, rồi lúc nào máy làm (`when` = `useWhenApplied`: sách đang chạy thì máy tự áp từ
- *  chương sau - không có nút "Áp dụng thay đổi" nào để bấm; soát a83 B12). */
-export function applyNote({ skipped, held, dropped = [] }: { skipped: number; held: number; dropped?: string[] }, when: string): string {
+/** Lời cảnh báo của toast "Áp dụng" một việc từ hộp thư: việc nào không còn khớp (bị bỏ qua) và việc nào vẫn chờ bạn chọn. Không có gì để cảnh báo thì không gọi. */
+export function applyNote({ skipped, held, dropped = [] }: { skipped: number; held: number; dropped?: string[] }): string {
   // Nói rõ việc nào không áp được (câu đã đổi chữ, người chưa có giọng...), không chỉ một con số.
   const which = dropped.length ? `: ${dropped.slice(0, 3).join("; ")}${dropped.length > 3 ? `; và ${dropped.length - 3} việc nữa` : ""}` : "";
   return [
-    skipped ? `${skipped} việc không còn khớp với sách nên bị bỏ qua${which}.` : `Chưa thu lại gì. ${when}`,
+    skipped ? `${skipped} việc không còn khớp với sách nên bị bỏ qua${which}.` : "",
     held ? `${held} việc máy này đã đổi khác sau đó vẫn chờ bạn chọn từng việc.` : "",
   ]
     .filter(Boolean)
@@ -105,7 +104,6 @@ export function applyNote({ skipped, held, dropped = [] }: { skipped: number; he
 
 export function PhoneEdits({ bookId }: { bookId: string }) {
   const client = useQueryClient();
-  const when = useWhenApplied(bookId);
   const { data } = useInbox(bookId);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmSkipAll, setConfirmSkipAll] = useState<InboxDevice | null>(null);
@@ -122,15 +120,12 @@ export function PhoneEdits({ bookId }: { bookId: string }) {
         const made = reply.requests ?? 0;
         const skipped = reply.skipped ?? 0;
         const held = reply.held ?? 0;
-        toast.success(made ? `Đã ghi ${made} việc vào “Áp dụng thay đổi”` : "Không có việc nào ghi được", {
-          description: applyNote({ skipped, held, dropped: (reply.dropped ?? []).map((row) => row.label) }, when),
-        });
+        toastDone(made ? `Đã ghi ${made} việc vào “Áp dụng thay đổi”` : "Không có việc nào ghi được", skipped || held ? applyNote({ skipped, held, dropped: (reply.dropped ?? []).map((row) => row.label) }) : undefined);
       } else if (verb === "restore") {
-        toast.success("Đã khôi phục", { description: "Việc này chờ bạn quyết lại ở trên." });
+        toast.success("Đã khôi phục");
       } else {
         // Bỏ qua không mất hẳn: việc nằm ở khay “Đã bỏ qua” và bấm Khôi phục ngay trên thông báo được.
         toast("Đã bỏ qua", {
-          description: "Không có gì thay đổi trong sách. Bạn khôi phục lại được ở mục “Đã bỏ qua” bên dưới.",
           duration: UNDO_MS,
           action: { label: "Khôi phục", onClick: () => void decide("restore", device, item) },
         });

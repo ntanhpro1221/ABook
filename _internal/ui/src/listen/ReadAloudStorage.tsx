@@ -49,7 +49,7 @@ export function ReadAloudStorage({ api }: { api: ReadAloudStorageApi }) {
       void client.invalidateQueries({ queryKey: PREPARE_STATUS_KEY });
       void client.invalidateQueries({ queryKey: ["readaloud", "cache"] });
       window.dispatchEvent(new CustomEvent<ReadingsChanged>(READINGS_CHANGED_EVENT, { detail: { bookId: "", surfaces: [], all: true } }));
-      toast.success("Đã dọn bản đọc đã làm", { description: "Sách và chỗ đang nghe không đổi; đoạn nào nghe tới thì máy đọc lại." });
+      toast.success("Đã dọn bản đọc đã làm");
       // Dọn xong thì nút "Dọn bản đọc đã làm" biến mất (không còn gì để dọn): con trỏ về lại mục này thay vì rơi về BODY khi hộp đóng.
       window.setTimeout(() => region.current?.focus(), 60);
     } catch (error) {

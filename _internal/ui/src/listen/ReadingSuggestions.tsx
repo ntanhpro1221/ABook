@@ -11,6 +11,7 @@ import { api } from "@/studio/api";
 import { useAppInfo } from "@/studio/data";
 import { refreshAfterEdit } from "./EditBook";
 import type { ListenBook } from "./model";
+import { SlotFace, useMenuSlot } from "./menuSlot";
 import { usePlayer } from "./player";
 
 // Gợi ý của bộ nhập sách cho phần ĐỌC (dòng ghi công của người dịch / biên tập ở đầu chương, lời xin ủng hộ / nguồn ở cuối chương): người nghe chọn bỏ dòng nào khỏi phần
@@ -204,13 +205,16 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
 /** Nút ở trình phát (soát a70: gợi ý chỉ có ở trang sách): cuốn đang phát có gợi ý thì mở được hộp gợi ý ngay tại đây. */
 export function SuggestionsButton({ bookId, className }: { bookId: string; className?: string }) {
   const [open, setOpen] = useState(false);
+  const slot = useMenuSlot();
   const suggestions = useBookSuggestions(bookId);
   const { groups, pending, dismiss } = suggestions;
   if (!groups.length) return null;
   const label = pending ? `Gợi ý cho phần đọc (${pending} chưa áp)` : "Gợi ý cho phần đọc";
   return (
     <>
-      <IconButton label={label} icon={Lightbulb} size="sm" className={className} onClick={() => setOpen(true)} />
+      {slot
+        ? <SlotFace aria-label={label} value={pending ? `${pending} chưa áp` : "Xem"} onClick={() => setOpen(true)} />
+        : <IconButton label={label} icon={Lightbulb} size="sm" className={className} onClick={() => setOpen(true)} />}
       <Dialog open={open} onOpenChange={setOpen} title="Gợi ý cho phần đọc">
         <SuggestionsBody bookId={bookId} suggestions={suggestions} />
         {/* Tích hết dòng lúc hộp còn mở: "Bỏ qua gợi ý" rời hàng nút bằng mờ qua, không mất cứng. */}

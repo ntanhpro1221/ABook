@@ -70,11 +70,11 @@ export function editsSyncNote(state: EditsSyncState | null | undefined, where = 
   return { tone: "sent", title: `Đã gửi về ${where} ${formatWhen(last.at)}`.trim(), lines };
 }
 
-/** Thông báo ngay sau khi bấm Gửi: nói điều vừa xảy ra, không lặp lời dặn "tự gửi khi..." của dòng tình trạng (soát UX a11). */
-export function sentToast(state: EditsSyncState, where = "máy tính"): { title: string; description?: string } {
-  const description =
-    state.pending > 0
-      ? `Còn ${state.pending} thay đổi chưa gửi được - sẽ thử lại khi tới được ${where}.`
-      : editsSyncNote({ ...state, pending: 0 }, where)?.lines.join(" · ") || undefined;
-  return { title: `Đã gửi về ${where}`, description };
+/** Thông báo ngay sau khi bấm Gửi: MỘT dòng - "Đã gửi về X"; chi tiết đã áp / đang chờ nằm ở dòng tình trạng của sách (`editsSyncNote`). Còn thay đổi chưa gửi được
+ *  thì `note` nói điều ấy (cảnh báo cùng dòng). */
+export function sentToast(state: EditsSyncState, where = "máy tính"): { title: string; note?: string } {
+  return {
+    title: `Đã gửi về ${where}`,
+    note: state.pending > 0 ? `Còn ${state.pending} thay đổi chưa gửi được - sẽ thử lại khi tới được ${where}.` : undefined,
+  };
 }
