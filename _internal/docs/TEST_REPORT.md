@@ -1,6 +1,12 @@
 # Test report
 
-Ngày cập nhật: 2026-10-24
+Ngày cập nhật: 2026-10-25
+
+Đợt npm141, worktree `D:/Novels/ABook_npm141`, nhánh `dev/npm141`, nền `d692fc39`: nâng 16 dependency UI và 4 dependency mobile trong range semver cũ, đổi Music2 sang EighthNote. Sửa MenuShell không ghi đè quan hệ ARIA của Radix bằng props undefined; bộ soi chỉ cho phép lặp giá trị đang chọn khi nút mở liên kết đúng popup bằng aria-controls.
+
+- TypeScript: **0 lỗi**. Vitest trước nâng: **2423 passed, 0 failed, 1 skipped**; sau sửa: **2426 passed, 0 failed, 1 skipped**, **302 file** (301 passed, 1 skipped). Thêm 2 ca ARIA desktop/điện thoại và 1 ca fixture trình duyệt gồm một đối chứng đúng, bốn đối chứng sai ở hai khổ/hai theme; nhóm hồi quy liên quan **25/25 passed**.
+- Gradle `testDebugUnitTest assembleDebug`: **BUILD SUCCESSFUL**, trước/sau đều **1743 test**, **1736 passed, 0 failures, 0 errors, 7 skipped**, 232 suite. Contrast trước/sau: **94 nhóm, 2744 cặp, 0 nhóm không đạt**. Audit production UI **0 → 0**, mobile **3 moderate → 3 moderate**. Log, số gallery/tap và APK nằm trong thư mục task `codex/npm141/report.md`; không sửa Python, không dùng adb/thiết bị, không commit.
+- Gallery đủ **270/270 lượt** sáng/tối: trước nâng **2 REPEATED LABEL**, sau sửa ARIA và bộ soi **0 phát hiện, 0 lỗi chạy**; đối chứng bộ soi mới trên bundle cũ vẫn báo 2 lỗi. Tap audit trước/sau **21/21 PASS**; chèn lỗi trước/sau **exit 1, 0/21 PASS**.
 
 Đợt lib139, worktree `D:/Novels/ABook_lib139`, nhánh `dev/lib139`, nền `0bec019f`: Thư viện mở lưới bìa 2:3, gom bộ thành bìa chồng; điện thoại chuyển sang Thư viện · Studio · Cài đặt, đưa tải/cập nhật sách lên bìa và ghép máy vào Cài đặt › Thiết bị.
 
