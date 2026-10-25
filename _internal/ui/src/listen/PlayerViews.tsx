@@ -20,7 +20,6 @@ import {
   Loader2,
   Maximize2,
   Moon,
-  Minus,
   MoreHorizontal,
   Music2,
   Pause,
@@ -978,7 +977,6 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
       sleep={sleep}
       now={now}
       disabled={!track}
-      customStart={lastSleepMinutes || 20}
       extendMinutes={options.extendMinutes}
       onExtend={() => extendSleep()}
       onSet={setSleep}
@@ -1023,7 +1021,6 @@ export function RemoteSleepMenu({ sleep, name, onSet }: { sleep: SleepMode; name
       sleep={sleep}
       now={now}
       name={name}
-      customStart={20}
       extendMinutes={options.extendMinutes}
       onExtend={() => {
         const longer = sleepExtended(sleep, options.extendMinutes, sleep.kind === "minutes" && sleep.since !== null, now);
@@ -1041,7 +1038,6 @@ function SleepPicker({
   now,
   name,
   disabled = false,
-  customStart,
   extendMinutes,
   idle = null,
   note,
@@ -1054,7 +1050,6 @@ function SleepPicker({
   /** Thiết bị đang phát (loa / TV): tên đi vào nhãn đọc màn hình. */
   name?: string;
   disabled?: boolean;
-  customStart: number;
   extendMinutes: number;
   onExtend: () => void;
   onSet: (request: SleepRequest) => void;
@@ -1065,7 +1060,6 @@ function SleepPicker({
   // Chọn mức / thêm giờ là việc người nghe vừa làm: tiếng chạm + rung (DESIGN 5.3/5.4). Hẹn giờ tự tắt thì không đi qua đây.
   const onExtend = withFeedback("toggle", handlers.onExtend);
   const onSet = withFeedback("toggle", handlers.onSet);
-  const [custom, setCustom] = useState(customStart);
   const active = sleep.kind !== "off";
   const left = sleepLeftMs(sleep, now);
   const spoken = active ? sleepSpoken(sleep, now) : "Hẹn giờ tắt";
@@ -1074,10 +1068,7 @@ function SleepPicker({
       label={name ? `${spoken} trên ${name}` : spoken}
       dialogLabel={name ? `Hẹn giờ tắt trên ${name}` : "Hẹn giờ tắt"}
       active={active}
-      width="w-64"
-      footer={<Popover.Close asChild><button type="button" disabled={disabled}
-        onClick={() => onSet({ kind: "minutes", minutes: custom })}
-        className="h-9 w-full rounded-lg bg-accent text-sm font-semibold text-accent-ink disabled:opacity-40 max-sm:h-[48px]">Đặt {custom} phút</button></Popover.Close>}
+      width="w-[300px]"
       focusSelector="[data-current-choice]"
       look={look}
       icon={Moon}
@@ -1123,60 +1114,29 @@ function SleepPicker({
         idle
       )}
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? "Đặt lại" : "Dừng phát sau"}</div>
+      {/* MỘT cách chọn (soát 140 V3): bấm một mức là đặt - không còn bộ −/+ và nút "Đặt N phút" song song với các ô, ô đang hẹn luôn sáng. Tám mức đủ hai
+          hàng, "Hết chương này" là ô thứ chín trải cả hàng, cùng kiểu. Ô có nền nhạt: mép ô (không phải chữ giữa ô) đứng trên lề bảng. */}
       <div className={cn("grid grid-cols-4 gap-1", MENU_LIST)}>
-        {SLEEP_CHOICES.map((minutes) => (
-          <Popover.Close asChild key={minutes}>
+        {[...SLEEP_CHOICES.map((minutes) => ({ key: String(minutes), label: `${minutes} phút`, request: { kind: "minutes", minutes } as SleepRequest,
+          current: sleep.kind === "minutes" && sleep.minutes === minutes })),
+          { key: "chapter", label: "Hết chương này", request: { kind: "chapter" } as SleepRequest, current: sleep.kind === "chapter" }].map((choice) => (
+          <Popover.Close asChild key={choice.key}>
             <button
               type="button"
               disabled={disabled}
-              onClick={() => onSet({ kind: "minutes", minutes })}
-              aria-label={`${minutes} phút`}
-              aria-pressed={sleep.kind === "minutes" && sleep.minutes === minutes}
-              data-current-choice={sleep.kind === "minutes" && sleep.minutes === minutes ? "" : undefined}
+              onClick={() => onSet(choice.request)}
+              aria-pressed={choice.current}
+              data-current-choice={choice.current ? "" : undefined}
               className={cn(
-                "tabular touch-row h-9 rounded-lg text-sm hover:bg-hover disabled:opacity-40",
-                sleep.kind === "minutes" && sleep.minutes === minutes && "bg-accent-soft font-semibold text-accent-text",
+                "tabular touch-row h-9 rounded-lg text-sm disabled:opacity-40",
+                choice.key === "chapter" && "col-span-4",
+                choice.current ? "bg-accent-soft font-semibold text-accent-text" : "bg-hover hover:bg-line",
               )}
             >
-              {minutes}′
+              {choice.label}
             </button>
           </Popover.Close>
         ))}
-      </div>
-      {/* Máy tính: nút 30 px, nền rê tràn tới mép nền dòng như danh sách, mực −/+ (4/24 trong ô 24 px) đứng đúng mép chữ. */}
-      <div className="flex items-center gap-1 pb-1 max-sm:-mx-[16px]">
-        <button
-          type="button"
-          aria-label="Bớt 5 phút"
-          onClick={() => setCustom((value) => Math.max(5, value - 5))}
-          className="grid size-[30px] shrink-0 place-items-center rounded-lg hover:bg-hover max-sm:size-[48px]"
-        >
-          <Minus className="size-[24px]" />
-        </button>
-        <span className="tabular flex-1 text-center text-sm font-medium" aria-live="polite">
-          {custom} phút
-        </span>
-        <button
-          type="button"
-          aria-label="Thêm 5 phút"
-          onClick={() => setCustom((value) => Math.min(240, value + 5))}
-          className="grid size-[30px] shrink-0 place-items-center rounded-lg hover:bg-hover max-sm:size-[48px]"
-        >
-          <Plus className="size-[24px]" />
-        </button>
-
-      </div>
-      <div className="px-2 pb-1">
-        <Popover.Close asChild>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onSet({ kind: "chapter" })}
-            className="h-9 w-full rounded-lg bg-hover text-sm font-medium hover:bg-line disabled:opacity-40"
-          >
-            Hết chương này
-          </button>
-        </Popover.Close>
       </div>
       <p className="px-2 pb-1 pt-2 text-xs leading-snug text-fg-2">{note}</p>
     </MotionRegion></MenuShell>

@@ -29,8 +29,12 @@ export function inspectEdges({ all, css, rect, hidden, selector, add }) {
           + (s.overflowClipMargin.includes('border-box') ? Number.parseFloat(s[`border${edge[0].toUpperCase() + edge.slice(1)}Width`]) : 0)
           - (s.overflowClipMargin.includes('content-box') ? Number.parseFloat(s[`padding${edge[0].toUpperCase() + edge.slice(1)}`]) : 0);
         if (overflow === 'visible') continue;
-        if (r[low] - ring < p[low] - edgeExtra(low) - tolerance) cut.push(low);
-        if (r[high] + ring > p[high] + edgeExtra(high) + tolerance) cut.push(high);
+        // Mép khung cuộn mà phía ấy còn nội dung cuộn tới: hàng đang lấp ló ở mép cuộn, không phải vòng bị cắt (soát 140 V3: "Đọc theo" sát đáy
+        // trình phát co lại sau bảng hẹn giờ). Tab tới thì scroll-padding của khung cuộn chừa chỗ cho vòng.
+        const scrollable = /auto|scroll/.test(overflow);
+        const pos = axis === 'X' ? a.scrollLeft : a.scrollTop, room = axis === 'X' ? a.scrollWidth - a.clientWidth : a.scrollHeight - a.clientHeight;
+        if (r[low] - ring < p[low] - edgeExtra(low) - tolerance && !(scrollable && pos > 0.5)) cut.push(low);
+        if (r[high] + ring > p[high] + edgeExtra(high) + tolerance && !(scrollable && room - pos > 0.5)) cut.push(high);
       }
       if (cut.length) {
         add('FOCUS RING CLIPPED', el, label(el), [rect(r)], { ring, cut, otherSelector: selector(a), overflow: `${s.overflowX}/${s.overflowY}`, reason: 'Vòng tiêu điểm vượt mép cắt của tổ tiên', clipClasses: [...a.classList] });
