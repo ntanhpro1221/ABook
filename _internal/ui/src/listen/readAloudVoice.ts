@@ -1,7 +1,7 @@
 import { toast } from "@/shared/toast";
 import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { VOICE_CHANGED_EVENT, isTransientClipError, type ClipFetcher, type ClipOptions, type ReadAloudClip, type ReadAloudVoice } from "./readAloud";
-import { onlineConsentGiven } from "./onlineConsent";
+import { onlineConsentGiven, spokenVoiceName } from "./onlineConsent";
 import type { ListenSource } from "./source";
 
 // Giọng đọc của "Nghe ngay": nhớ lựa chọn theo từng cuốn (+ một lựa chọn chung cho cuốn mới), chọn giọng mặc định, và bọc việc lấy clip với hai
@@ -236,17 +236,11 @@ export function runsOnThisMachine(voice: Pick<ReadAloudVoice, "online"> | undefi
   return voice !== undefined && !voice.online;
 }
 
-/** Giọng đang đọc cuốn này, viết cho người nghe thấy ở Thư viện: "Đức Trí (VieNeu)", "Hoài My (Edge)"; giọng của máy (hay chưa biết) thì "Giọng đọc của máy" (như Cài đặt). */
+/** Giọng đang đọc, viết cho người nghe: "Đức Trí", "Hoài My" - tên người, không kèm tên bộ máy đọc (Edge, VieNeu, Supertonic là chuyện kỹ thuật, soát 25-10);
+ *  giọng của máy (hay chưa biết) thì "Giọng đọc của máy" (như Cài đặt). */
 export function voiceCaption(voice: ReadAloudVoice | undefined): string {
   if (!voice || voice.provider === "device") return "Giọng đọc của máy";
-  if (/\([^)]*\)\s*$/.test(voice.name)) return voice.name;
-  const maker = voice.provider === "edge" ? "Edge" : voice.provider === "vieneu" ? "VieNeu" : voice.provider === "supertonic" ? "Supertonic" : KEYED_PROVIDERS[voice.provider];
-  return maker ? `${voice.name} (${maker})` : voice.name;
-}
-
-/** Tên giọng đang đọc cuốn `bookId` (giọng đã chọn cho cuốn, không thì mặc định của máy); "" khi máy chưa báo giọng nào. */
-export function bookVoiceCaption(voices: ReadAloudVoice[] | undefined, bookId: string): string {
-  return voices?.length ? voiceCaption(resolveVoice(voices, chosenVoice(bookId))) : "";
+  return spokenVoiceName(voice.name);
 }
 
 let fellBack = false; // lời nhắn rơi sang giọng máy: một lần cho cả phiên, không mỗi chương một lần

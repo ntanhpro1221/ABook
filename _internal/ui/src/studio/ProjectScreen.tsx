@@ -1,6 +1,7 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import { Fold } from "@/shared/Collapse";
 import { MoreInfo } from "@/shared/SettingsNav";
+import { DotJoin } from "@/shared/DotJoin";
 import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import {
   AlertTriangle,
@@ -9,6 +10,7 @@ import {
   BookPlus,
   Headphones,
   Check,
+  Info,
   ChevronDown,
   CircleAlert,
   Download,
@@ -37,10 +39,10 @@ import {
   Button,
   Dialog,
   EmptyState,
-  FilterRow,
   Progress,
   Skeleton,
   StatusPill,
+  StatusText,
   TabLabel,
   Tabs,
   TabsContent,
@@ -58,7 +60,7 @@ import { Windowed } from "@/shared/Windowed";
 import { useScrollMemory } from "@/shared/scrollMemory";
 import { toastRemoved } from "@/shared/trashUndo";
 import {
-  phaseTone,
+  projectStatus,
   useActivity,
   useAppInfo,
   useBook,
@@ -72,7 +74,6 @@ import {
   useStop,
 } from "@/studio/data";
 import {
-  formatClock,
   formatDate,
   etaOf,
   formatLength,
@@ -82,7 +83,8 @@ import {
   formatTime,
 } from "@/shared/format";
 import { CastList } from "@/listen/BookScreen";
-import { analyzerLabel, narratorLabel } from "./analyzerLabel";
+import { analyzerLabel } from "./analyzerLabel";
+import { ProjectInfoDialog } from "./ProjectInfo";
 import { ApplyChangesDialog } from "./ApplyChanges";
 import { useUnmerge } from "./useUnmerge";
 import { CoverEditor } from "./CoverEditor";
@@ -269,26 +271,40 @@ function NarratorNote({ book }: { book: BookSummary }) {
   return <>Đổi được giọng kể khi máy phân vai xong (ngay sau bước phân tích truyện).</>;
 }
 
+/** Dòng nói còn bao lâu của cả lượt làm sách (hay vì sao đang đứng); "" khi không có gì để nói. */
+function progressNote(book: BookSummary): string {
+  const live = book.running || book.starting;
+  // Giữ chờ duyệt (precast.held) cũng là `paused` nhưng là đợi người nghe, không phải ai bấm Tạm dừng (soát UX a23: "47% tổng"
+  // đứng yên không nói vì sao). Tạm dừng thường (pin, người bấm) đã nói ở trạng thái đầu trang - không nói lại ở đây (soát 24-10 T19).
+  return book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "") : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
+}
+
+/** Tiến độ cả sách ở đầu trang dự án: thanh mảnh + phần trăm, kèm còn bao lâu (soát 25-10: trước là chữ "45% tổng" không có thanh, cách hàng tab một
+ *  khoảng khác mọi màn). Sách chưa chạy / đã xong không có gì để đo - khối khép lại. */
+export function HeaderProgress({ book }: { book: BookSummary }) {
+  const running = (book.running || book.starting) && !book.paused && !book.stopping;
+  const note = progressNote(book);
+  return (
+    <MotionPresence open={book.phase !== "done" && book.phase !== "idle"}>
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+        <div className="flex min-w-0 flex-1 basis-48 items-center gap-3 sm:max-w-xs">
+          <Progress value={book.progress.overall} running={running} tone={running ? "accent" : "muted"} size="xs" label="Tiến độ cả sách" />
+          <span className="tabular w-10 shrink-0 text-right text-sm font-medium">{formatPercent(book.progress.overall)}</span>
+        </div>
+        {note && <span className="text-sm text-fg-2">{note}</span>}
+      </div>
+    </MotionPresence>
+  );
+}
+
 export function ProductionPanel({ book }: { book: BookSummary }) {
   const [analysis, casting, synthesis] = stepStates(book);
   const live = book.running || book.starting;
-  // Giữ chờ duyệt (precast.held) cũng là `paused` nhưng là đợi người nghe, không phải ai bấm Tạm dừng (soát UX a23: "47% tổng"
-  // đứng yên không nói vì sao).
-  // Tạm dừng thường (pin, người bấm) đã nói ở viên trạng thái đầu trang và dòng hành động - không nói lại ở đây (soát 24-10 T19: "máy đang
-  // chạy pin" lặp 3-4 lần một màn).
-  const eta = book.stopping ? "đang dừng" : book.paused ? (book.precast?.held ? "chờ bạn duyệt rồi bấm Thu âm" : "") : etaOf(book) ?? (live ? "đang ước tính thời gian…" : "");
   // Dòng phụ "Các bước" nói bước đang tới - cả khi đang tạm dừng; lý do dừng đã ở trên.
   const current = [analysis, casting, synthesis].findIndex((state) => state === "active" || state === "paused");
   const stepSummary = current >= 0 ? ["Phân tích truyện", "Phân vai", "Thu âm và kiểm tra"][current] : book.statusLabel;
   return (
-    <MotionRegion as="section" className="mt-8">
-      <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-base font-semibold">Tiến trình</h2>
-        <div className="tabular text-sm text-fg-2">
-          {formatPercent(book.progress.overall)} tổng
-          {eta && <span className="text-fg-3"> · {eta}</span>}
-        </div>
-      </div>
+    <MotionRegion as="section" className="mt-6">
       {live && book.logLost && (
         <p role="status" className="mb-3 flex gap-2 rounded-xl bg-warning-soft px-4 py-2 text-sm text-warning">
           <CircleAlert className="mt-0.5 size-4 shrink-0" />
@@ -308,7 +324,9 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
           detail={
             book.speakerPass?.active
               ? `Xác định người nói từng câu: ${book.speakerPass.done}/${book.speakerPass.total} chương.`
-              : "Đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu."
+              : book.settings.analyzer
+                ? `Đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu. ${analyzerLabel(book.settings.analyzer)}.`
+                : "Đọc cả truyện để nhận ra lời thoại, ai đang nói và cảm xúc từng câu."
           }
           progress={book.progress.analysis}
         />
@@ -330,7 +348,7 @@ export function ProductionPanel({ book }: { book: BookSummary }) {
       </div>
       </Fold>
       {/* Trước mốc phân tích xong: đặt sẵn "Chờ tôi duyệt trước khi thu" cho cuốn này (webui/precast.py). */}
-      {!book.castLocked && book.precast && <PrecastWaitSwitch book={book} className="mt-3" />}
+      {!book.castLocked && book.precast && <PrecastWaitSwitch book={book} className="mt-2" />}
       <StartError book={book} />
       {book.lastError && book.phase === "error" && <LastError raw={book.lastError} redo={asksBeforeResume(book)} />}
       {book.runEnd && !book.running && !book.starting && !(book.lastError && book.phase === "error") && (
@@ -709,6 +727,7 @@ export function Actions({ book }: { book: BookSummary }) {
   const [confirmApply, setConfirmApply] = useState(false);
   const [confirmResume, setConfirmResume] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [details, setDetails] = useState(false);
   const live = book.running;
   const leaveQueue = useLeaveQueue();
   const pause = usePause();
@@ -766,7 +785,9 @@ export function Actions({ book }: { book: BookSummary }) {
         {next > 0 && <MenuItem icon={BookPlus} onSelect={() => navigate(`/studio/new?continue=${book.id}`)}>Thêm {next} chương</MenuItem>}
         {/* Mở thư mục chỉ có trên máy tính. */}
         {!remote && <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>Mở thư mục</MenuItem>}
+        <MenuItem icon={Info} onSelect={() => setDetails(true)}>Chi tiết</MenuItem>
       </ProjectMenu>
+      <ProjectInfoDialog book={book} open={details} onOpenChange={setDetails} />
       {/* key: chuyển Phần 1 -> Phần 2 là một hộp mới - không mang `busy`, nút Huỷ, kết quả của cuốn trước sang cuốn này. */}
       <ExportDialog key={book.id} book={book} open={exporting} onOpenChange={setExporting} onApplyFirst={() => setConfirmApply(true)} />
       <MotionRegion as="div" className="basis-full text-pretty text-sm text-fg-2">
@@ -862,12 +883,13 @@ function PartLinks({ id }: { id: string }) {
 
 // ---- Chương ------------------------------------------------------------------------------------------------
 
-function chapterTone(chapter: Chapter) {
-  // Soát UX a6 01-10: "Mất file audio" mang màu "xong" trong khi đầu trang tô cam cùng chuyện ấy.
-  if (chapter.status === "completed") return chapter.statusLabel === "Mất file audio" ? ("warning" as const) : ("success" as const);
-  if (chapter.status === "failed") return "danger" as const;
-  if (chapter.status === "synthesizing" || chapter.status === "verifying") return "accent" as const;
-  return "muted" as const;
+/** Dấu nhỏ trên một hàng chương, hay null. Xong (và chờ tới lượt) là mặc định: 30 viên "Đã xong" xếp cột là nhiễu che mất chương thật sự cần để ý, nên
+ *  chỉ chương LỆCH khỏi mặc định mới có dấu - mất file audio, lỗi, cần xem lại, chờ thu lại theo sửa của bạn (soát 25-10). Chương đang thu có thanh riêng. */
+export function chapterMark(chapter: Pick<Chapter, "status" | "statusLabel" | "redo">): { label: string; tone: "warning" | "danger" | "muted" } | null {
+  if (chapter.statusLabel === "Mất file audio") return { label: chapter.statusLabel, tone: "warning" }; // soát UX a6 01-10: cùng màu cam với đầu trang
+  if (chapter.status === "completed" && !chapter.redo) return null;
+  if (chapter.status === "pending" || chapter.status === "analyzed" || chapter.status === "synthesizing" || chapter.status === "verifying") return null;
+  return { label: chapter.statusLabel, tone: chapter.status === "failed" ? "danger" : chapter.status === "warning" ? "warning" : "muted" };
 }
 
 // Menu "…" của một chương (soát UX a5/a6 01-10: trên bảng chương chỉ nghe được - muốn đọc kịch bản chương ấy, hay thu lại
@@ -957,6 +979,7 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
   const playChapter = usePlayChapter();
   const current = player.track?.bookId === book.id && player.track.chapterId === chapter.id;
   const working = chapter.status === "synthesizing" || chapter.status === "verifying";
+  const mark = chapterMark(chapter);
   const recorded = chapter.segments.total ? chapter.segments.finished / chapter.segments.total : 0;
   const onPlay = () => {
     if (!chapter.playable) return;
@@ -1015,8 +1038,10 @@ function ChapterRow({ book, chapter, rowIndex }: { book: BookSummary; chapter: C
               {chapter.segments.finished}/{chapter.segments.total}
             </span>
           </div>
+        ) : mark ? (
+          <StatusPill label={mark.label} tone={mark.tone} />
         ) : (
-          <StatusPill label={chapter.statusLabel} tone={chapterTone(chapter)} />
+          <span className="sr-only">{chapter.statusLabel}</span>
         )}
       </div>
       <div role="cell" className="tabular hidden text-right text-xs text-fg-2 lg:block">
@@ -1067,12 +1092,12 @@ export function ChapterList({ book, chapters }: { book: BookSummary; chapters: C
         </span>
       </div>
       {/* Dự án vài nghìn chương: chỉ dựng các dòng gần màn hình (shared/Windowed). */}
-      <div role="rowgroup" className="mt-1 space-y-px">
+      <div role="rowgroup" className="mt-1">
         <Windowed
           items={rows}
           estimate={50}
           memory={`project.${book.id}`}
-          className="space-y-px"
+          className="rows-inset [--rows-inset:calc(var(--spacing)*2)]"
           row={({ key, item: chapter, state, ref }) => (
             <div key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
               <ChapterRow book={book} chapter={chapter} rowIndex={(positions.get(chapter.id) ?? 0) + 2} />
@@ -1109,17 +1134,17 @@ function ActivityView({ book }: { book: BookSummary }) {
   }, [data]);
   return (
     <MotionRegion as="div" className="mt-5">
-      <div className="flex items-center justify-between">
-        <FilterRow
-          label="Kiểu nhật ký"
-          value={mode}
-          onChange={setMode}
-          options={[
-            { value: "story", label: "Diễn biến" },
-            { value: "technical", label: "Chi tiết kỹ thuật" },
-          ]}
-        />
-        <span className="text-xs text-fg-3">{data ? `${data.length} mục gần nhất` : ""}</span>
+      {/* MỘT danh sách: diễn biến là mặc định, chi tiết kỹ thuật là phần mở thêm của chính nó - không tab lồng trong tab (DESIGN 6). */}
+      <div className="flex items-center justify-between gap-3">
+        <MotionRegion as="span" className="text-xs text-fg-2">{data ? `${data.length} mục gần nhất` : ""}</MotionRegion>
+        <button
+          type="button"
+          aria-pressed={mode === "technical"}
+          onClick={() => setMode(mode === "technical" ? "story" : "technical")}
+          className="touch-row -mr-2 inline-flex items-center rounded-lg px-2 text-xs font-medium text-accent-text hover:underline"
+        >
+          {mode === "technical" ? "Ẩn chi tiết kỹ thuật" : "Chi tiết kỹ thuật"}
+        </button>
       </div>
       <MotionRegion motionKey={[mode, isLoading, groups.length > 0]} slideIndex={mode === "story" ? 0 : 1}>
       {isLoading ? (
@@ -1351,15 +1376,16 @@ export function ProjectScreen() {
   }
 
   const { book, chapters } = data;
-  const live = book.running || book.starting;
+  const status = projectStatus(book);
+  // MỘT dòng cho người nghe: trạng thái · số chương · độ dài (+ việc cần để ý). Giọng kể, chất lượng, model, ngày tạo, lần nghe cuối ở "Chi tiết" trong "…" -
+  // dòng 12-13 mẩu từng làm đầu trang nặng, và viên trạng thái trên tiêu đề làm tiêu đề lệch 2 px giữa các trạng thái (soát 25-10).
   const meta = [
-    `${book.chapters.total} chương`,
-    narratorLabel(book.settings),
-    book.settings.profileLabel,
-    // Model đã phân tích cuốn này - đổi model mặc định thì biết cuốn nào làm bằng model cũ.
-    book.settings.analyzer && analyzerLabel(book.settings.analyzer),
-    book.createdAt && `Tạo ${formatDate(book.createdAt)}`,
-  ].filter(Boolean);
+    <StatusText key="status" label={status.label} tone={status.tone} live={status.live} />,
+    book.phase !== "done" && book.chapters.total ? `${book.chapters.completed}/${book.chapters.total} chương` : `${book.chapters.total} chương`,
+    book.audioSeconds > 0 && formatLength(book.audioSeconds),
+    book.chapters.missingAudio ? <span key="missing" className="font-medium text-warning">{book.chapters.missingAudio} chương mất file audio</span> : false,
+    book.chapters.redo ? `${book.chapters.redo} chương chờ thu lại` : false,
+  ];
 
   return (
     <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16">
@@ -1383,37 +1409,10 @@ export function ProjectScreen() {
         <CoverEditor book={book} />
         <div className="contents sm:block sm:min-w-0 sm:flex-1 sm:pt-1">
           <div className="min-w-0 sm:contents">
-          <StatusPill
-            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
-            tone={book.paused || book.stopping ? "warning" : phaseTone(book.phase, live)}
-            live={live && !book.paused && !book.stopping}
-          />
-          <h1 data-content-title="" className={cn(SCREEN_TITLE, "mt-3 leading-tight")}>{book.title}</h1>
-          {/* Điện thoại: một dòng gọn (số chương) + "Chi tiết" gập - giọng kể, chất lượng, model, ngày tạo từng chiếm 3 dòng đầu
-              trang (soát UX a8 07-10). */}
-          <p className="mt-2 text-sm text-fg-2">
-            {meta[0]}
-            <span className="max-sm:hidden">{meta.slice(1).map((part) => ` · ${part}`)}</span>
-          </p>
-          {meta.length > 1 && (
-            <details className="mt-1 text-sm text-fg-2 sm:hidden">
-              <summary className="touch-hit cursor-pointer text-fg-3">Chi tiết</summary>
-              <p className="mt-1">{meta.slice(1).join(" · ")}</p>
-            </details>
-          )}
+          <h1 data-content-title="" className={cn(SCREEN_TITLE, "leading-tight")}>{book.title}</h1>
+          <DotJoin className="tabular mt-2 text-sm text-fg-2" parts={meta} />
           <PartLinks id={book.id} />
-          {book.phase === "done" || book.audioSeconds > 0 ? (
-            <p className="tabular mt-1 text-sm text-fg-2">
-              {formatLength(book.audioSeconds)} audio · {book.chapters.completed - (book.chapters.missingAudio ?? 0)}/{book.chapters.total} chương nghe được
-              {book.chapters.missingAudio ? (
-                <span className="font-medium text-warning"> · {book.chapters.missingAudio} chương mất file audio</span>
-              ) : null}
-              {book.chapters.redo ? <span> · {book.chapters.redo} chương chờ thu lại theo sửa của bạn</span> : null}
-              {book.position && (
-                <span className="text-fg-3 max-sm:hidden"> · lần nghe cuối {formatRelative(book.position.at)} ở {formatClock(book.position.seconds)}</span>
-              )}
-            </p>
-          ) : null}
+          <HeaderProgress book={book} />
           </div>
           <div className="col-span-2 sm:col-auto sm:mt-6">
             <Actions book={book} />
@@ -1436,7 +1435,7 @@ export function ProjectScreen() {
           </span>
         </div>
       )}
-      <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-9">
+      <Tabs value={tab} onValueChange={(value) => setParams({ tab: value }, { replace: true })} className="mt-8">
         <ProjectTabBar
           tab={tab}
           onTab={(value) => setParams({ tab: value }, { replace: true })}

@@ -189,7 +189,8 @@ giống app hệ thống; không tự chế chuỗi rung dài.
   Hàng đang phát: chữ hổ phách + vạch tiến độ mảnh, không tô nền cả hàng.
 - **Lưới bìa**: bìa 2:3, bo 12, tên dưới bìa tối đa 2 dòng, phụ một dòng. Điện thoại 2-3 cột, máy tính tự giãn 160-200 px.
 - **Bộ lọc**: hàng chữ có gạch chân hổ phách (không hộp segmented); "Xếp theo" là menu nhỏ, không select toàn chiều rộng;
-  Tìm là icon mở rộng thành ô. Trong code: `FilterRow` (shared/ui.tsx) - mọi bộ lọc hai-ba mục trong tab (Kịch bản, Cần nghe lại, Nhật ký) dùng nó, không `Segmented`.
+  Tìm là icon mở rộng thành ô. Trong code: `FilterRow` (shared/ui.tsx) - mọi bộ lọc hai-ba mục trong tab (Kịch bản, Cần nghe lại, Việc cần duyệt) dùng nó, không `Segmented`. Một tab không chứa tab / bộ lọc thứ hai chỉ để đổi kiểu xem cùng một danh sách (Nhật ký: danh sách diễn biến + nút "Chi tiết kỹ thuật" mở thêm).
+- **Mục đang chọn của tab và bộ lọc**: cùng một kiểu - chữ `--text` đậm màu thường + gạch chân hổ phách; hổ phách chỉ ở gạch, không ở chữ (soát 25-10: tab chữ tối, bộ lọc chữ hổ phách trông như hai app).
 - **Tab trong trang**: chữ + gạch chân, số đếm nhỏ cạnh: số trơn `--text-2` 12 px thẳng đường chân chữ với tên tab (`TabLabel`), không viên thuốc, cả điện thoại lẫn máy tính, cả nút "Thêm". Nội dung tab không lặp lại tên tab làm tiêu đề.
 - **Danh sách cuộn trong khung** (chương khi thêm sách): mép dưới mờ dần khi còn hàng chưa thấy, mép trên mờ khi đã cuộn (`useScrollFade`); hàng không bao giờ cụt cứng ở mép khung.
 - **Bảng trượt / hộp thoại**: điện thoại = bảng trượt từ đáy có tay nắm; máy tính = hộp giữa màn rộng ≤ 560. Nút chính ở

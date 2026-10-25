@@ -23,6 +23,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Chữ trong màn đọc và "Đọc theo" không còn dài gần 90 ký tự mỗi dòng: cột chữ giữ khoảng 66 ký tự ở mọi cỡ chữ, dễ đọc hơn trên màn rộng.
 - Nhãn chữ hoa chỉ còn tên nhóm ngắn ("Edge", "Giọng của máy", "Tối qua"); phần mô tả ("trực tuyến, miễn phí", "không cần mạng", tên sách) xuống chữ thường nhỏ. Dòng dung lượng bản đọc không còn rớt "141 MB)." xuống dòng riêng.
 - Đầu màn thống nhất: đổi tab Thư viện · Studio · Cài đặt thì tiêu đề không còn nhảy; mọi màn con có cùng một nút ← thẳng mép nội dung, tiêu đề sát sau; dải mất mạng, màn lỗi và Studio trống thẳng lề, không còn lặp "Chưa có dự án".
+- Studio, đầu trang dự án: tên đứng đúng một chỗ ở mọi trạng thái, một dòng thông tin (trạng thái · số chương · độ dài) và thanh tiến độ mảnh; chi tiết như giọng kể, chất lượng, ngày tạo nằm trong "Chi tiết" ở menu "…". Hàng chương chỉ có dấu khi cần chú ý (hết "Đã xong" ở từng hàng), hàng chờ nói "Còn 5 việc trước".
+- Studio: Nhạc nền và công tắc "Nhân vật tự kể", "Duyệt trước khi thu" là các hàng cài đặt với công tắc bên phải (không còn thẻ viền); Nhật ký là một danh sách với nút "Chi tiết kỹ thuật" thay tab lồng; tab và bộ lọc cùng một kiểu chọn. Hàng "Cần nghe lại" đặt câu lên trước, "Máy nghe ra" chỉ hiện khi khác câu, Ổn / Cần thu lại là hai nút chính. Chữ giống nhau ở mọi hàng (giọng đọc ở từng chương, "N câu nói", tên model phân tích) chỉ còn nói một lần hoặc không nói.
 
 ## [0.4.139] - 2026-10-25
 
