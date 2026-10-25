@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "@/shared/toast";
 import { useBackLayer } from "@/shared/backStack";
 import { cn } from "@/shared/cn";
+import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
+import { MotionRegion } from "@/shared/MotionRegion";
 import { studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { holderName } from "@/shared/editsSync";
 import { Button, Dialog } from "@/shared/ui";
@@ -210,9 +212,10 @@ function WordView({ bookId, text, names, need, promise, later, onWithdraw, onBac
           );
         })}
       </div>
-      {word && (
-        <div className="rounded-xl border border-line p-3" data-name-editor>
-          <div className="mb-2 text-sm">
+      {/* Chạm chip từ: khung sửa mở ra; đổi sang từ khác thì mờ qua; chạm lại thì khép (không bật tắt). */}
+      <MotionPresence open={Boolean(word)}>
+        <MotionRegion motionKey={word} className="rounded-xl border border-line p-3" data-name-editor>
+          <MotionRegion className="mb-2 text-sm">
             <span className="font-semibold">{word}</span>
             {pending && (
               <span className="text-xs font-medium text-accent-text">
@@ -230,13 +233,15 @@ function WordView({ bookId, text, names, need, promise, later, onWithdraw, onBac
                 <X className="size-3" /> Bỏ
               </button>
             )}
-          </div>
-          {reach?.surface === word && (
-            <p className={cn("tabular mb-2 text-xs", reach.blocked ? "text-warning" : "text-fg-2")} data-reading-reach>
-              {reachSummary(reach, later)}
-            </p>
-          )}
-          <EditReading
+          </MotionRegion>
+          <MotionPresence open={Boolean(reach && reach.surface === word)}>
+            {reach && (
+              <p className={cn("tabular mb-2 text-xs", reach.blocked ? "text-warning" : "text-fg-2")} data-reading-reach>
+                {reachSummary(reach, later)}
+              </p>
+            )}
+          </MotionPresence>
+          {word && <EditReading
             key={word}
             bookId={bookId}
             item={{ surface: word, spoken: "", byListener: false, lines: 0, requested: pending?.spokenForm ?? null, example: null }}
@@ -246,9 +251,9 @@ function WordView({ bookId, text, names, need, promise, later, onWithdraw, onBac
             aloud={aloud}
             reach={reach?.surface === word ? reach : undefined}
             onDone={() => setWord(null)}
-          />
-        </div>
-      )}
+          />}
+        </MotionRegion>
+      </MotionPresence>
       <Button size="sm" variant="ghost" icon={ChevronLeft} onClick={onBack}>
         Quay lại
       </Button>
@@ -443,14 +448,15 @@ export function LineWishDialog({
           <div key={view} className={cn("space-y-3", moved && "motion-step")} data-direction={view === "menu" ? "back" : undefined}>
           {view === "menu" && (
             <>
-              {items.length > 0 && (
+              {/* Hộp không đóng khi bấm "Bỏ": hàng khép tại chỗ, khối khép khi hết việc, câu chốt mờ qua (soát chuyển động 139). */}
+              <MotionPresence open={items.length > 0}>
                 <div className="rounded-xl bg-info-soft px-3 py-2 text-sm" role="status">
                   <p className="flex items-center gap-1.5 font-medium">
                     <Clock className="size-4 shrink-0 text-info" /> Đang chờ máy làm sách
                   </p>
-                  <ul className="mt-1 space-y-1">
-                    {items.map((item) => (
-                      <li key={item.key} className="flex items-center gap-2 text-fg-2">
+                  <AnimatedRows items={items} keyOf={(item) => item.key} className="mt-1">
+                    {(item) => (
+                      <div className="flex items-center gap-2 pb-1 text-fg-2">
                         <span className="min-w-0 flex-1 text-pretty">{item.text}</span>
                         {item.name && (
                           <button
@@ -478,16 +484,16 @@ export function LineWishDialog({
                             <X className="size-3" /> Bỏ
                           </button>
                         )}
-                      </li>
-                    ))}
-                  </ul>
+                      </div>
+                    )}
+                  </AnimatedRows>
                   {/* Chỉ có việc đã ở máy giữ sách (đặt ở đó): không có gì "đã gửi" từ máy này - chỉ nói khi nào giọng đổi. */}
-                  <p className="mt-1.5 text-xs text-fg-2">
+                  <MotionRegion as="p" className="mt-0.5 text-xs text-fg-2">
                     {holder && items.every((item) => item.held) ? `Giọng đọc chưa đổi: Studio sẽ thu lại ${retakeWhen(holder)}.` : promise}
-                  </p>
+                  </MotionRegion>
                 </div>
-              )}
-              <div>
+              </MotionPresence>
+              <MotionRegion>
                 <MenuRow
                   icon={UserRound}
                   title={line.kind === "thought" ? "Ai nghĩ câu này" : "Ai nói câu này"}
@@ -519,7 +525,7 @@ export function LineWishDialog({
                   onClick={() => retake.mutate()}
                   trailing={null}
                 />
-              </div>
+              </MotionRegion>
             </>
           )}
           {view === "speaker" && (

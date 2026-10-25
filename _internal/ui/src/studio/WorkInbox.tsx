@@ -1,5 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
-import { AnimatedRows } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Collapse } from "@/shared/Collapse";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AudioLines, Check, Pause, Play, RotateCcw, Search, UserPlus } from "lucide-react";
@@ -1141,11 +1141,15 @@ export function WorkCards({ book, items, onOpenReview, onOpenScript, onOpenNames
 }) {
   return (
     <PendingHint.Provider value={PENDING_NOTE[applyWhen(book)]}>
-      <ol className="mt-3 space-y-3">
-        {items.map((item) => (
-          <Card key={item.key} bookId={book.id} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
-        ))}
-      </ol>
+      {/* Mỗi lựa chọn là một thẻ rời danh sách: khép tại chỗ như hộp việc chính (WorkInboxBody), không mất cứng. data-motion-live: vùng của
+          bước duyệt bên ngoài không mờ lại cả trang theo từng thẻ. */}
+      <div data-motion-live="">
+      <AnimatedRows as="ol" className="mt-3 space-y-3" items={items} keyOf={(item) => item.key}>
+        {(item, _index, state) => (
+          <Card as="div" bookId={book.id} item={item} exiting={state === "exit"} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
+        )}
+      </AnimatedRows>
+      </div>
     </PendingHint.Provider>
   );
 }
@@ -1298,53 +1302,54 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
         )}
       </AnimatedRows>
       </MotionRegion>
-      {items.length > shown && (
+      <MotionPresence open={items.length > shown}>
         <Button variant="secondary" size="sm" className="mt-4" onClick={() => setShown(shown + PAGE)}>
           Xem thêm {Math.min(PAGE, items.length - shown)} việc
         </Button>
-      )}
-      {!open.length && atReview === 0 && (
+      </MotionPresence>
+      <MotionPresence open={!open.length && atReview === 0}>
         <p id="work-end" tabIndex={-1} className="mt-4 text-sm text-fg-2">
           {later.length > 0
             ? "Không còn việc nào sửa được ngay - những việc bên dưới chỉ có tác dụng khi làm lại phân tích từ đầu."
             : `Mọi việc đã có quyết định${decided.length > 0 ? ` - ${hint}` : ""}.`}
         </p>
-      )}
-      {decided.length > 0 && (
+      </MotionPresence>
+      {/* Ba nhóm phụ: thẻ vào / ra (Hoàn tác, quyết thêm) khép / mở tại chỗ. data-motion-live: vùng cả hộp không mờ lại theo từng thẻ. */}
+      <MotionPresence open={decided.length > 0}>
         <details className="mt-6 rounded-xl border border-line px-4 py-3">
           <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">
             {waiting === decided.length ? `Đã quyết, chờ áp dụng · ${decided.length} việc` : `Đã quyết · ${decided.length} việc (${waiting} thay đổi chờ áp dụng)`}
           </summary>
-          <ol className="mt-3 space-y-3">
-            {decided.map((item) => (
-              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
-            ))}
-          </ol>
+          <div data-motion-live="">
+          <AnimatedRows as="ol" className="mt-3 space-y-3" items={decided} keyOf={(item) => item.key}>
+            {(item, _index, state) => <Card as="div" bookId={bookId} item={item} exiting={state === "exit"} onOpenReview={onOpenReview} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />}
+          </AnimatedRows>
+          </div>
         </details>
-      )}
-      {later.length > 0 && (
+      </MotionPresence>
+      <MotionPresence open={later.length > 0}>
         <details className="mt-4 rounded-xl border border-line px-4 py-3">
           <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Chờ phân tích lại</summary>
           <p className="mt-2 max-w-3xl text-pretty text-xs text-fg-2">
             Chỉ áp khi phân tích lại; không chặn sách chạy tiếp.
           </p>
-          <ol className="mt-3 space-y-3">
-            {later.map((item) => (
-              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
-            ))}
-          </ol>
+          <div data-motion-live="">
+          <AnimatedRows as="ol" className="mt-3 space-y-3" items={later} keyOf={(item) => item.key}>
+            {(item, _index, state) => <Card as="div" bookId={bookId} item={item} exiting={state === "exit"} onOpenReview={onOpenReview} onOpenScript={onOpenScript} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />}
+          </AnimatedRows>
+          </div>
         </details>
-      )}
-      {redo.length > 0 && (
+      </MotionPresence>
+      <MotionPresence open={redo.length > 0}>
         <details className="mt-4 rounded-xl border border-line px-4 py-3">
           <summary className="touch-reach cursor-pointer text-sm font-medium text-fg-2">Đã ghi</summary>
-          <ol className="mt-3 space-y-3">
-            {redo.map((item) => (
-              <Card key={item.key} bookId={bookId} item={item} onOpenReview={onOpenReview} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />
-            ))}
-          </ol>
+          <div data-motion-live="">
+          <AnimatedRows as="ol" className="mt-3 space-y-3" items={redo} keyOf={(item) => item.key}>
+            {(item, _index, state) => <Card as="div" bookId={bookId} item={item} exiting={state === "exit"} onOpenReview={onOpenReview} onOpenNames={onOpenNames} onPickVoice={onPickVoice} />}
+          </AnimatedRows>
+          </div>
         </details>
-      )}
+      </MotionPresence>
     </MotionRegion>
   );
 }

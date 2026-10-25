@@ -54,7 +54,7 @@ export function SendEditsItem({ book }: { book: ListenBook }) {
       onSelect={send}
       className={cn(MENU_ITEM, "h-auto items-start py-1.5 data-[disabled]:opacity-60")}
     >
-      {busy ? <Loader2 className="mt-0.5 size-4 shrink-0 animate-spin" /> : <Send className="mt-0.5 size-4 shrink-0" />}
+      <MotionRegion as="span" className="mt-0.5 inline-grid shrink-0 place-items-center">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}</MotionRegion>
       <span className="min-w-0">
         <span className="block">{busy ? "Đang gửi…" : pending ? `Gửi về ${where} (${pending} thay đổi)` : `Gửi về ${where}`}</span>
         {!busy && !pending && <span className="block text-xs text-fg-3">Chưa có thay đổi nào chờ gửi</span>}

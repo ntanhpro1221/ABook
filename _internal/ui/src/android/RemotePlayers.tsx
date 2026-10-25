@@ -188,7 +188,7 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
         {remote.known && (
           <button type="button" onClick={() => void listenHere()} disabled={moving}
             className="h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-fg active:bg-hover disabled:opacity-50">
-            {moving ? <Loader2 className="size-4 animate-spin" /> : "Nghe ở đây"}
+            <MotionRegion as="span" className="inline-grid place-items-center">{moving ? <Loader2 className="size-4 animate-spin" /> : "Nghe ở đây"}</MotionRegion>
           </button>
         )}
         <button type="button" aria-label="Ẩn" onClick={onDismiss} className="grid size-9 place-items-center rounded-full text-fg-2 active:bg-hover">
@@ -335,7 +335,7 @@ export function PhoneHandOffButton() {
                 }}
                 className="flex h-11 cursor-default items-center gap-2 rounded-lg px-2 text-sm text-accent-text outline-none data-[disabled]:text-fg-3 data-[highlighted]:bg-hover"
               >
-                {searching ? <Loader2 className="size-4 shrink-0 animate-spin" /> : <RefreshCw className="size-4 shrink-0" />}
+                <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{searching ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}</MotionRegion>
                 Tìm lại
               </DropdownMenu.Item>
             </>

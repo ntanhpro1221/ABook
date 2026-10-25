@@ -167,8 +167,8 @@ export function CoverSearchDialog({
         ) : search.data && !failed.length ? (
           <EmptyState icon={Search} title="Bạn hãy chọn ảnh trên máy" className="py-8" action={<Button onClick={() => { changeOpen(false); onChooseFile(); }}>Chọn ảnh</Button>} />
         ) : null}
-        {failed.length > 0 && <InlineError message="Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa." onRetry={() => search.mutate(query)} />}
-        {choose.isError && !wasAborted(choose.error) && !(choose.error instanceof ApiError && choose.error.status === 409) && <InlineError message="Bạn hãy kiểm tra kết nối rồi đặt lại ảnh bìa." onRetry={() => { if (choose.variables) choose.mutate(choose.variables); }} />}
+        <InlineError open={failed.length > 0} message="Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa." onRetry={() => search.mutate(query)} />
+        <InlineError open={choose.isError && !wasAborted(choose.error) && !(choose.error instanceof ApiError && choose.error.status === 409)} message="Bạn hãy kiểm tra kết nối rồi đặt lại ảnh bìa." onRetry={() => { if (choose.variables) choose.mutate(choose.variables); }} />
       </div>
     </MotionRegion></Dialog>
   );

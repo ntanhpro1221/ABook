@@ -123,7 +123,11 @@ Token có sẵn (`shared/motion.ts` = `--motion-*` trong `styles.css`): nhanh 12
   ô lớn); bìa ở Thư viện bay vào vị trí bìa ở trang sách. View Transitions khi WebView có, không thì mờ qua.
 - **Danh sách**: thêm/xoá hàng mở/khép tại chỗ (useListPresence), hàng khác trượt theo, không nhảy.
 - **Phản hồi chạm**: nhấn = thu 0,97 + tối nền 6 % trong 90 ms, thả = về trong 120 ms; nút phát đổi icon phát/dừng bằng mờ
-  chéo + thu/phóng nhẹ. Không nảy, không vượt đích - sang trọng là dứt khoát.
+  chéo tại chỗ. Không nảy, không vượt đích - sang trọng là dứt khoát (mọi `cubic-bezier` giữ tung độ trong [0, 1]).
+- **Ai đổi thì người ấy mang chuyển động** (soát 139): `MotionRegion` chỉ thấy cây React truyền vào nó, nên thành phần tự lấy dữ liệu
+  (truy vấn, state riêng) tự bọc `MotionPresence` / `MotionRegion` của mình. Hiện / ẩn = `MotionPresence` (lỗi: `open` của
+  `InlineError` / `LoadError`), không `{điều kiện && <…>}` trần; vùng có `motionKey` thì thứ đứng ngoài khoá cần vùng riêng; danh sách
+  dùng useListPresence, vùng lớn quanh nó mang `data-motion-live` để không mờ cả khối theo từng hàng (`shared/motionLint.test.ts`).
 - **Câu đang đọc**: dải tô nhạt trượt sang câu kế (120 ms), từ đang đọc tô đậm hơn; tự cuộn mềm giữ câu ở 1/3 trên màn.
 - **Đang tải**: khung xám đúng hình nội dung, nhịp mờ 0,6 <-> 1 chu kỳ 1,6 s; không vòng xoay giữa màn, không ánh lấp lánh.
 - **Chỉ animate transform/opacity** (và chiều cao trong Collapse/MotionRegion); 60 fps trên máy Android tầm trung.

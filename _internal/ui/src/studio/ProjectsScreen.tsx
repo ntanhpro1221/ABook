@@ -108,7 +108,8 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
   // Dự án hỏng: khôi phục / mở thư mục / xoá chỉ trên máy này. Dự án bình thường: menu nào cũng hiện, Studio từ xa chỉ thay dòng Xoá bằng lý do.
   const local = !useAppInfo().data?.remote;
   const live = book.running || book.starting;
-  if (book.broken) return <BrokenRow book={book} local={local} />;
+  // Hàng hỏng <-> thường (sau "Thử lại"): cùng một vùng ở cả hai nhánh, khoá theo loại hàng - mờ qua, không thay cứng.
+  if (book.broken) return <MotionRegion motionKey="broken"><BrokenRow book={book} local={local} /></MotionRegion>;
   const detail =
     book.phase !== "done" && book.eta && live ? etaOf(book, true) : `${book.chapters.completed}/${book.chapters.total} chương`;
   const needs = [
@@ -117,7 +118,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
   ].filter(Boolean);
   return (
     // Nút "…" nằm NGOÀI nút của dòng (nút lồng nút không hợp lệ), đè lên cột cuối mà dòng chừa sẵn.
-    <div className="group relative">
+    <MotionRegion motionKey="row" className="group relative">
       <button
         type="button"
         onClick={() => navigate(`/studio/${book.id}`)}
@@ -139,7 +140,8 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
             live={live && !book.paused && !book.stopping}
           />
         </div>
-        <div className="col-start-2 min-w-0 md:col-start-auto">
+        {/* Ô tiến độ: số (chữ số) đổi không mờ; xong <-> đang làm, nhãn việc còn lại hiện / mất (0 -> N) thì mờ qua tại chỗ. */}
+        <MotionRegion motionKey={[book.phase === "done", Boolean(book.pendingChanges), Boolean(book.chapters.redo), Boolean(book.chapters.missingAudio)]} className="col-start-2 min-w-0 md:col-start-auto">
           {book.phase === "done" ? (
             <span className="text-xs text-fg-2">
               {detail}
@@ -155,7 +157,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
               <div className="mt-1 line-clamp-2 text-xs text-fg-2">{detail}</div>
             </>
           )}
-        </div>
+        </MotionRegion>
         <div
           className={cn("tabular hidden text-right text-xs transition-opacity duration-motion-fast group-focus-within:opacity-0 group-hover:opacity-0 group-has-[[data-state=open]]:opacity-0 xl:block text-fg-2")}
         >
@@ -171,7 +173,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
           {local && <MenuItem icon={FolderOpen} onSelect={() => reveal.mutate(book.id)}>Mở thư mục</MenuItem>}
         </ProjectMenu>
       </div>
-    </div>
+    </MotionRegion>
   );
 }
 

@@ -20,7 +20,8 @@ vi.mock("react/jsx-dev-runtime", async (original) => {
   return {
     ...real,
     jsxDEV: (type: unknown, props: any, ...rest: unknown[]) => {
-      if (type === "button" && props?.children === "Nghe ở đây") h.listen = props.onClick;
+      // Nhãn nằm trong MotionRegion (chữ <-> vòng chờ mờ qua tại chỗ).
+      if (type === "button" && (props?.children === "Nghe ở đây" || props?.children?.props?.children === "Nghe ở đây")) h.listen = props.onClick;
       return (real.jsxDEV as any)(type, props, ...rest);
     },
   };

@@ -277,7 +277,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
                 aria-label="Nghe trên máy này"
                 className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-xs font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
-                {moving ? <Loader2 className="size-4 animate-spin" /> : <Laptop className="size-4" />}
+                <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{moving ? <Loader2 className="size-4 animate-spin" /> : <Laptop className="size-4" />}</MotionRegion>
                 <span className="hidden lg:inline">Nghe trên máy này</span>
               </button>
             </Tooltip>
@@ -450,7 +450,7 @@ export function HandOffButton({ className }: { className?: string }) {
                 }}
                 className={cn(MENU_ITEM, "text-accent-text data-[disabled]:text-fg-3")}
               >
-                {searching ? <Loader2 className="size-4 shrink-0 animate-spin" /> : <RefreshCw className="size-4 shrink-0" />}
+                <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{searching ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}</MotionRegion>
                 Tìm lại
               </DropdownMenu.Item>
             </>

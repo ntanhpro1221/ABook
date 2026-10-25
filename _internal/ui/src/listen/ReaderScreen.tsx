@@ -9,6 +9,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from "react-rout
 import { cn } from "@/shared/cn";
 import { useMediaQuery } from "@/shared/media";
 import { usePageTitle } from "@/shared/title";
+import { useLayoutChangeFade } from "@/shared/motion";
 import { Button, EmptyState, IconButton, Skeleton } from "@/shared/ui";
 import { FindInBook } from "./FindInBook";
 import { chapterToFollow, firstVisibleIndex, SCROLL_KEYS } from "./follow";
@@ -231,6 +232,9 @@ export function ReaderScreen(edit: SentenceEditing) {
   // Thông báo (Hoàn tác, dấu trang...) nằm dưới thanh đầu của màn đọc, không che nút "Nghe từ đây" ở góc trên (soát a70): vị trí trên của vùng
   // thông báo theo mép dưới thanh đầu (App đọc --toast-top).
   const header = useRef<HTMLElement | null>(null);
+  // Đổi cỡ chữ / giãn dòng: cả chương dàn lại - khung chữ hiện dần từ 55 % thay vì nhảy (không chụp ảnh cả chương dài như MotionRegion).
+  const article = useRef<HTMLElement | null>(null);
+  useLayoutChangeFade(article, `${prefs.size}:${prefs.leading}`);
   useEffect(() => {
     const root = document.documentElement;
     const place = () => {
@@ -409,12 +413,13 @@ export function ReaderScreen(edit: SentenceEditing) {
             kế thừa, chương 1,5 triệu chữ phải tính lại kiểu chữ của mọi câu: ~400 ms mỗi lần mở / đóng ô "Tìm trong sách" (soát uxfix30).
             Giá trị riêng ở đây chặn thay đổi lan xuống; lớp phủ của hộp vẫn che trang nên bấm ra ngoài vẫn không tới chữ. */}
         <article
+          ref={article}
           className="pointer-events-auto mx-auto max-w-[68ch] px-[20px] pb-40 pt-8 [--removed-body-scroll-bar-size:0px]"
           style={{ fontSize: prefs.size, lineHeight: prefs.leading }}
         >
-          {hint && (
+          <MotionPresence open={Boolean(hint)}>
             <p className={cn("mb-6 text-sm leading-relaxed text-fg-2", (textOnly || !script.timed) && "rounded-lg bg-hover px-4 py-3")}>{hint}</p>
-          )}
+          </MotionPresence>
           <ReadAlongText
             script={script}
             playingIndex={playingIndex}
@@ -457,7 +462,8 @@ export function ReaderScreen(edit: SentenceEditing) {
             <MotionPresence open={Boolean(menu.bar)} className="w-full">{menu.bar}</MotionPresence>
             <MotionPresence open={selected === null && follow.showJump}><JumpToPlaying onClick={follow.jump} className="mb-2" /></MotionPresence>
             {/* Đang chọn câu thì thanh việc của câu thay chỗ thanh này. */}
-            <MotionPresence open={controls && !menu.bar}>{bar}</MotionPresence>
+            {/* Vùng có khoá riêng: "Nghe từ đây" tới / đi (giọng máy sẵn sàng muộn) mờ qua cả thanh, không bật vào đẩy các nút khác. */}
+            <MotionPresence open={controls && !menu.bar}><MotionRegion motionKey={canListen}>{bar}</MotionRegion></MotionPresence>
           </div>
         </MotionRegion>
       </div>

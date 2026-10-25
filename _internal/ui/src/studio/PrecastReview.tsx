@@ -1,5 +1,6 @@
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { MotionPresence } from "@/shared/MotionPresence";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ClipboardCheck, MessageSquareQuote, SpellCheck, Users } from "lucide-react";
 import { useEffect, useMemo, useRef } from "react";
@@ -103,7 +104,7 @@ function Intro({ book, view }: { book: BookSummary; view: PrecastView }) {
       </p>
       <MoreInfo label="Khi áp dụng">{freeNote(view)}</MoreInfo>
       {/* Công tắc chỉ có nghĩa trước mốc (Studio mở màn này cả khi chưa kịp báo, vd app đóng lúc phân tích xong). */}
-      {!book.precast?.announcedAt && !view.recordedChapters && <PrecastWaitSwitch book={book} className="mt-4 border-none bg-panel-2" />}
+      <MotionPresence open={!book.precast?.announcedAt && !view.recordedChapters}><PrecastWaitSwitch book={book} className="mt-4 border-none bg-panel-2" /></MotionPresence>
     </>
   );
 }
@@ -207,11 +208,11 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
               >
                 <span
                   className={cn(
-                    "grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold",
+                    "grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold transition-colors",
                     position < index ? "bg-success text-success-ink" : active ? "bg-accent text-accent-ink" : "bg-hover text-fg-3",
                   )}
                 >
-                  {position < index ? <Check className="size-4" strokeWidth={3} /> : <Icon className="size-3.5" />}
+                  <MotionRegion as="span" className="grid place-items-center">{position < index ? <Check className="size-4" strokeWidth={3} /> : <Icon className="size-3.5" />}</MotionRegion>
                 </span>
                 <span className="min-w-0">
                   <span className="block text-sm font-semibold leading-tight">{STEP_TITLE[value]}</span>
@@ -252,14 +253,13 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                 </div>
               ))}
             </div>
-            {castCards.length > 0 && (
-              <>
+            {/* Quyết xong thẻ cuối: cả nhóm khép lại, không mất cứng giữa lúc thẻ đang khép. */}
+            <MotionPresence open={castCards.length > 0}>
                 <h3 className="mt-6 text-sm font-semibold">
                   Máy chưa chắc <span className="font-normal text-fg-2">· {castCards.length} việc về người và giọng</span>
                 </h3>
                 <WorkCards {...cards} items={castCards} />
-              </>
-            )}
+            </MotionPresence>
           </>
         )}
         {step === "names" && (
@@ -269,7 +269,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                 ? `Nghe và sửa ${nameCards.length} cách đọc tên, tên kém chắc ở trên.`
                 : "Xem và sửa cách đọc từng tên ở danh sách dưới."}
             </p>
-            {nameCards.length > 0 && <WorkCards {...cards} items={nameCards} />}
+            <MotionPresence open={nameCards.length > 0}><WorkCards {...cards} items={nameCards} /></MotionPresence>
             <details className="mt-6 rounded-xl border border-line px-4 py-3">
               <summary className="cursor-pointer text-sm font-medium text-fg-2">Cách đọc tên</summary>
               <NameReadings bookId={book.id} />
@@ -286,7 +286,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                   : "Đã thu mọi chương"}{" "}
               các chương sau xem ở Việc cần duyệt.
             </p>
-            {lineCards.length > 0 && <WorkCards {...cards} items={lineCards} />}
+            <MotionPresence open={lineCards.length > 0}><WorkCards {...cards} items={lineCards} /></MotionPresence>
           </>
         )}
         {step === "done" && (
