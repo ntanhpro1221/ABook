@@ -431,23 +431,30 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     if (Math.abs(delta) > 1.01) add("INK EDGE", el, el.textContent, [icon, label], { metric: "stacked-icon-center", value: icon.x + icon.width / 2, referenceValue: label.x + label.width / 2,
       delta, tolerance: 1, reason: "icon above a label is not centred on that label" });
   }
-  // Nút canh giữa (ô hẹn giờ, ô tốc độ): phần mực THẤY ĐƯỢC phải đứng giữa ô. Dấu tích ẩn (opacity 0) giữ chỗ trước nhãn từng đẩy chữ "5 phút"
-  // lệch phải 8 px (soát 141) - mắt không thấy dấu nhưng thấy chữ lệch. Đo theo vùng trong (bỏ padding + viền).
+  // Nút canh giữa: phần THẤY ĐƯỢC phải đứng giữa vùng trong của nút. Dấu tích ẩn (opacity 0) giữ chỗ trước nhãn từng đẩy chữ "5 phút" lệch phải
+  // 8 px (soát 141) - mắt không thấy dấu nhưng thấy chữ lệch. Đo hộp các con trực tiếp đang hiện (không mực: icon tam giác Play tự lệch quang học);
+  // con đặt tuyệt đối (icon ghim mép trái ở chân bảng điện thoại) không tính.
   for (const el of all) {
     if (!el.matches(controlSelector) || hidden(el)) continue;
     const s = css(el);
     const centred = /flex/.test(s.display) ? s.justifyContent === "center" && s.flexDirection.startsWith("row") : s.textAlign === "center";
     if (!centred) continue;
-    const labels = inkTexts.filter((t) => t.control === el && t.singleLine).map((t) => t.ink);
-    if (!labels.length) continue;
-    const icons = [...el.querySelectorAll("svg")].filter((svg) => owner(svg) === el && !hidden(svg) && css(svg).position !== "absolute").map(iconInk).filter(Boolean);
-    const ink = union([...labels, ...icons]), box = rect(el.getBoundingClientRect());
+    const parts = [...el.childNodes].flatMap((node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (!node.textContent.trim()) return [];
+        const range = document.createRange(); range.selectNodeContents(node); return [rect(range.getBoundingClientRect())];
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE || hidden(node) || /absolute|fixed/.test(css(node).position)) return [];
+      const r = rect(node.getBoundingClientRect()); return r.width > 0 && r.height > 0 ? [r] : [];
+    });
+    if (!parts.length || !inkTexts.some((t) => t.control === el)) continue;
+    const content = union(parts), box = rect(el.getBoundingClientRect());
     const left = box.x + Number.parseFloat(s.paddingLeft) + Number.parseFloat(s.borderLeftWidth), inner = box.width - Number.parseFloat(s.paddingLeft) - Number.parseFloat(s.paddingRight)
       - Number.parseFloat(s.borderLeftWidth) - Number.parseFloat(s.borderRightWidth);
-    if (!(inner > 0) || ink.width > inner - 4) continue;
-    const delta = ink.x + ink.width / 2 - (left + inner / 2);
-    if (Math.abs(delta) > 1.51) add("INK EDGE", el, el.textContent, [box, ink], { metric: "centred-ink-off-centre", value: ink.x + ink.width / 2, referenceValue: left + inner / 2,
-      delta, tolerance: 1.5, reason: "a centred control's visible ink is off its centre" });
+    if (!(inner > 0) || content.width > inner - 2) continue;
+    const delta = content.x + content.width / 2 - (left + inner / 2);
+    if (Math.abs(delta) > 1.01) add("INK EDGE", el, el.textContent, [box, content], { metric: "centred-ink-off-centre", value: content.x + content.width / 2, referenceValue: left + inner / 2,
+      delta, tolerance: 1, reason: "a centred control's visible content is off its centre" });
   }
   // Nhãn inline + câu: so nét cuối nhãn với glyph đầu câu (kể cả dấu “), không so hộp span.
   const inlineSlots = new Map();
