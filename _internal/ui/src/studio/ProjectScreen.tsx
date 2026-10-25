@@ -835,9 +835,10 @@ function PartLinks({ id }: { id: string }) {
   const parts = useParts(id).data?.parts ?? [];
   const navigate = useNavigate();
   const here = parts.find((part) => part.current);
-  if (parts.length < 2 || !here) return null;
+  // Tự lấy dữ liệu nên tự mang chuyển động: dòng tới sau tiêu đề mở ra, không bật vào đẩy hàng nút và tab xuống.
   return (
-    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-fg-2">
+    <MotionPresence open={parts.length >= 2 && Boolean(here)}>
+    {here && <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-fg-2">
       <span className="font-medium text-fg">
         Phần {here.part}/{parts.length}
       </span>
@@ -854,7 +855,8 @@ function PartLinks({ id }: { id: string }) {
             {part.part > here.part ? " →" : ""}
           </button>
         ))}
-    </p>
+    </p>}
+    </MotionPresence>
   );
 }
 
@@ -1136,31 +1138,34 @@ function ActivityView({ book }: { book: BookSummary }) {
         </EmptyState>
       ) : mode === "technical" ? (
         <div className="mt-4 max-h-[560px] overflow-auto rounded-xl border border-line bg-sunken p-3 font-mono text-[0.75rem] leading-relaxed">
-          {(data ?? []).map((item) => (
-            <div key={item.id} className="flex gap-3 whitespace-pre-wrap break-words">
-              <span className="shrink-0 text-fg-3">{formatTime(item.at)}</span>
-              <span className={cn("shrink-0", item.level === "error" ? "text-danger" : item.level === "warning" ? "text-warning" : "text-fg-3")}>
-                {item.code}
-              </span>
-              <span className="text-fg-2">{item.text}</span>
-            </div>
-          ))}
+          <LogRows items={data ?? []}>
+            {(item) => (
+              <div className="flex gap-3 whitespace-pre-wrap break-words">
+                <span className="shrink-0 text-fg-3">{formatTime(item.at)}</span>
+                <span className={cn("shrink-0", item.level === "error" ? "text-danger" : item.level === "warning" ? "text-warning" : "text-fg-3")}>
+                  {item.code}
+                </span>
+                <span className="text-fg-2">{item.text}</span>
+              </div>
+            )}
+          </LogRows>
         </div>
       ) : (
         <div className="mt-4 space-y-6">
           {groups.map((group) => (
             <section key={group.day}>
               <h4 className="label-section mb-2 text-fg-2">{group.day}</h4>
-              <ol className="relative space-y-1 border-l border-line pl-5">
-                {group.items.map((item) => (
-                  <li key={item.id} className="relative py-1.5 text-sm">
-                    {/* Chấm đứng đúng TRÊN vạch: tâm chấm = tâm vạch (mép trái ol + 0,5 px): li bắt đầu sau vạch 1 px + lề pl-5 (5 đơn vị), nửa chấm = 1 đơn vị, nên lùi 6 đơn vị + 0,5 px; tâm dọc = tâm dòng chữ đầu (top-3.5). */}
-                    <span className={cn("absolute -left-[calc(var(--spacing)*6+0.5px)] top-3.5 size-2 rounded-full ring-4 ring-bg", LEVEL_DOT[item.level] ?? "bg-fg-3")} />
+              {/* Hàng lùi sang trái 8 đơn vị (rồi đệm lại) để chấm nằm TRONG hộp hàng: hàng mới mở ra (cắt chiều cao) không cắt mất chấm. */}
+              <LogRows as="ol" items={group.items} className="relative space-y-1 border-l border-line pl-5" rowClassName="-ml-8">
+                {(item) => (
+                  <div className="relative py-1.5 pl-8 text-sm">
+                    {/* Chấm đứng đúng TRÊN vạch: tâm chấm = tâm vạch (mép trái ol + 0,5 px): nội dung bắt đầu sau vạch 1 px + lề pl-5 (5 đơn vị), nửa chấm = 1 đơn vị, nên lùi 6 đơn vị + 0,5 px tính từ chữ - tức 2 đơn vị - 0,5 px từ mép hộp hàng (đã lùi 8); tâm dọc = tâm dòng chữ đầu (top-3.5). */}
+                    <span className={cn("absolute left-[calc(var(--spacing)*2-0.5px)] top-3.5 size-2 rounded-full ring-4 ring-bg", LEVEL_DOT[item.level] ?? "bg-fg-3")} />
                     <span className="tabular mr-3 text-xs text-fg-3">{formatTime(item.at).split(" · ")[0]}</span>
                     <span className={cn(item.level === "warning" && "text-fg", item.level === "info" && "text-fg-2")}>{item.text}</span>
-                  </li>
-                ))}
-              </ol>
+                  </div>
+                )}
+              </LogRows>
             </section>
           ))}
         </div>
@@ -1168,6 +1173,13 @@ function ActivityView({ book }: { book: BookSummary }) {
       </MotionRegion>
     </MotionRegion>
   );
+}
+
+/** Mục nhật ký mới (sách đang chạy, hỏi lại theo nhịp) mở ra tại chỗ thay vì bật vào đẩy cả bảng; vùng ngoài khoá theo kiểu / pha. */
+function LogRows<T extends { id: string | number }>({ items, children, className, rowClassName, as: List = "div" }: { items: readonly T[]; children: (item: T) => ReactNode; className?: string; rowClassName?: string; as?: "div" | "ol" }) {
+  const rows = useListPresence(items, (item) => String(item.id));
+  const Row = List === "ol" ? "li" : "div";
+  return <List className={className}>{rows.map(({ key, item, state, ref }) => <Row key={key} ref={ref} className={cn("motion-row", rowClassName)} data-state={state} inert={state === "exit"}><div>{children(item)}</div></Row>)}</List>;
 }
 
 // ---- Trang -----------------------------------------------------------------------------------------------------------

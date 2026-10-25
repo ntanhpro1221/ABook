@@ -138,17 +138,21 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
           spellCheck={false}
           className="h-9 w-full rounded-lg border border-line bg-panel pl-8 pr-8 text-sm outline-none focus-visible:border-focus [&::-webkit-search-cancel-button]:hidden"
         />
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery("")}
-            aria-label="Xoá ô tìm"
-            className="absolute right-1.5 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-fg-3 hover:text-fg"
-          >
-            <X className="size-3.5" />
-          </button>
-        )}
+        {/* Luôn dựng, chỉ mờ vào / ra tại chỗ (.motion-hold): gõ chữ đầu / xoá hết không làm cả mục mờ lại. */}
+        <button
+          type="button"
+          onClick={() => setQuery("")}
+          aria-label="Xoá ô tìm"
+          aria-hidden={!query || undefined}
+          tabIndex={query ? undefined : -1}
+          data-state={query ? "open" : "closed"}
+          className="motion-hold absolute right-1.5 top-1/2 grid size-6 -translate-y-1/2 place-items-center rounded-md text-fg-3 hover:text-fg"
+        >
+          <X className="size-3.5" />
+        </button>
       </div>
+      {/* Kết quả tìm có vùng riêng, khoá theo các tên đang hiện: gõ thêm chữ mà kết quả không đổi thì đứng yên; đổi thì mờ qua một lần. */}
+      <MotionRegion motionKey={[found.slice(0, limit).map((item) => item.surface), addable, Boolean(typed) && !found.length, found.length > limit, data.unseen > 0 && !typed]}>
       {(found.length > 0 || addable) && (
         <ul className="mt-3 divide-y divide-line rounded-xl border border-line bg-panel">
           {found.slice(0, limit).map((item) => (
@@ -170,6 +174,7 @@ export function NameReadings({ bookId, focus = false, name = "" }: { bookId: str
       {data.unseen > 0 && !typed && (
         <p className="mt-2 text-xs text-fg-3">{formatNumber(data.unseen)} tên khác của cuốn không có câu nào trong phần này.</p>
       )}
+      </MotionRegion>
     </MotionRegion>
   );
 }
@@ -261,7 +266,7 @@ function ReadingRow({ bookId, item, fresh = false }: { bookId: string; item: Nam
           title={`${example.chapterTitle} · câu ${example.seq}`}
           className="grid size-8 shrink-0 place-items-center rounded-full bg-hover text-fg-2 hover:text-fg"
         >
-          {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+          <MotionRegion as="span" className="grid size-3.5 place-items-center">{playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
         </button>
       ) : (
         <span className="size-8 shrink-0" aria-hidden />

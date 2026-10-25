@@ -1,12 +1,14 @@
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { MotionPresence } from "@/shared/MotionPresence";
+import { useListPresence, type PresentRow } from "@/shared/motion";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { Fold } from "@/shared/Collapse";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { AlertTriangle, BookOpenText, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, Pause, Play, RefreshCw, Search, X } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
 import { useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { hueOf } from "@/listen/BookScreen";
@@ -996,7 +998,6 @@ function ScriptRow({
   marks,
   markNow = false,
   context,
-  gap,
   menuOpen,
   onMenu,
   onActivate,
@@ -1020,7 +1021,6 @@ function ScriptRow({
   marks?: [number, number][];
   markNow?: boolean;
   context: boolean;
-  gap: boolean;
   menuOpen: boolean;
   onMenu: (open: boolean) => void;
   onActivate: () => void;
@@ -1035,7 +1035,7 @@ function ScriptRow({
   /** "Thu lại câu này" (chỉ câu đã thu) và bỏ yêu cầu ấy khi còn chờ. */
   onRetake: () => void;
   onCancelRetake: () => void;
-  rowRef: (element: HTMLLIElement | null) => void;
+  rowRef: (element: HTMLElement | null) => void;
 }) {
   const clip = useClip();
   const id = `script-${line.segmentId}`;
@@ -1043,7 +1043,7 @@ function ScriptRow({
   const speech = isSpeech(line);
   const suggested = line.hint?.suggest ? [...script.cast, ...script.others].find((person) => person.value === line.hint?.suggest) : undefined;
   return (
-    <MotionRegion as="li"
+    <MotionRegion as="div"
       elementRef={rowRef}
       data-line={line.stableId}
       tabIndex={speech ? (active ? 0 : -1) : undefined}
@@ -1056,7 +1056,6 @@ function ScriptRow({
       onClick={speech ? (event) => (event.shiftKey ? onExtend() : onActivate()) : undefined}
       className={cn(
         "group transition-[background-color,box-shadow,opacity] duration-motion-fast grid grid-cols-[calc(var(--spacing)*7)_minmax(0,1fr)] gap-x-2 gap-y-1 rounded-lg px-2 py-1.5 outline-none lg:grid-cols-[10rem_calc(var(--spacing)*7)_minmax(0,1fr)]",
-        gap && "mt-2",
         active && "bg-hover",
         selected && "bg-accent-soft ring-1 ring-inset ring-accent/40",
         speech && "focus-visible:ring-2 focus-visible:ring-focus",
@@ -1086,7 +1085,7 @@ function ScriptRow({
             aria-label={playing ? "Dừng" : `Nghe câu: ${line.text}`}
             className="grid size-7 place-items-center rounded-full text-fg-3 hover:bg-panel hover:text-fg"
           >
-            {playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+            <MotionRegion as="span" className="grid size-3.5 place-items-center">{playing ? <Pause className="size-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
           </button>
         )}
       </div>
@@ -1260,7 +1259,7 @@ function ChapterScriptView({
   const anchor = useRef<string | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
   const [delivery, setDelivery] = useState<string | null>(null);
-  const rows = useRef(new Map<string, HTMLLIElement>());
+  const rows = useRef(new Map<string, HTMLElement>());
 
   // Câu hiện ra theo bộ lọc; "Máy nghi" giữ câu nói liền trước mỗi chỗ nghi làm ngữ cảnh (mờ).
   const shown = useMemo(() => visibleLines(script.lines, filter, who), [script.lines, filter, who]);
@@ -1435,8 +1434,9 @@ function ChapterScriptView({
     );
   }
   return (
-    <MotionRegion slideIndex={FILTERS.indexOf(filter)}>
-      {selected.length > 1 && (
+    // motionKey: hàng vào / ra tự khép / mở tại chỗ (LineRows), vùng chỉ trượt khi đổi bộ lọc / người nói - không mờ cả danh sách mỗi lần gán.
+    <MotionRegion slideIndex={FILTERS.indexOf(filter)} motionKey={[filter, who]}>
+      <MotionPresence open={selected.length > 1}>
         <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg bg-accent-soft px-3 py-1.5 text-[0.8125rem]" role="status">
           <span className="font-semibold">Đang chọn {selected.length} câu</span>
           <span className="text-fg-2">- phím số hay chọn người ở một câu trong nhóm gán cả {selected.length} câu · Esc bỏ chọn</span>
@@ -1458,14 +1458,18 @@ function ChapterScriptView({
             );
           })()}
         </p>
-      )}
+      </MotionPresence>
       <ol aria-label={`Kịch bản ${script.title}`} aria-multiselectable onKeyDown={onKeyDown} className="-mx-2 mt-3">
-      {shown.map(({ line, context }, index) => {
+      {/* Hàng rời / vào danh sách (gán câu sang người khác khi đang lọc theo người nói) khép / mở tại chỗ; đổi chương hay bộ lọc thì dựng
+          lại từ đầu (key) - cả danh sách trượt theo vùng cha, không từng hàng. */}
+      <LineRows key={`${script.chapterId}|${filter}|${who ?? ""}`} items={shown}>
+      {({ key, item: { line, context }, state, ref }) => {
+        const index = shown.findIndex((entry) => entry.line.stableId === key);
         const before = shown[index - 1]?.line;
         const gap = index > 0 && (filter === "doubt" ? !context && !shown[index - 1]?.context && before?.seq !== line.seq - 1 : line.paragraph !== before?.paragraph);
         return (
+          <li key={key} ref={ref} className={cn("motion-row", gap && "mt-2")} data-state={state} inert={state === "exit"}>
           <ScriptRow
-            key={line.stableId}
             bookId={bookId}
             line={line}
             script={script}
@@ -1474,7 +1478,6 @@ function ChapterScriptView({
             marks={matches.get(line.stableId)}
             markNow={line.stableId === nowMatch}
             context={context}
-            gap={gap}
             menuOpen={menu === line.stableId}
             onMenu={(open) => {
               if (!open) return backTo(line);
@@ -1511,19 +1514,30 @@ function ChapterScriptView({
               else rows.current.delete(line.stableId);
             }}
           />
+          </li>
         );
-      })}
+      }}
+      </LineRows>
       </ol>
     </MotionRegion>
   );
 }
 
-function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: string; script: ChapterScript; onNext: () => void; onUndoable: (undo: () => boolean) => void }) {
+type ShownLine = ReturnType<typeof visibleLines>[number];
+
+/** Hàng của danh sách câu qua useListPresence (hàng ra giữ dữ liệu cuối của nó, khép lại rồi mới gỡ). */
+function LineRows({ items, children }: { items: ShownLine[]; children: (row: PresentRow<ShownLine> & { ref?: (element: HTMLElement | null) => void }) => ReactNode }) {
+  const rows = useListPresence(items, (entry) => entry.line.stableId);
+  return <>{rows.map(children)}</>;
+}
+
+export function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: string; script: ChapterScript; onNext: () => void; onUndoable: (undo: () => boolean) => void }) {
   const confirm = useConfirmChapter(bookId, onUndoable, (value) => nameOf(script, value));
   const open = script.lines.filter((line) => line.editable && !line.wish && !line.hint);
   const doubtful = script.lines.filter((line) => line.editable && !line.wish && line.hint).length;
+  // Vùng riêng: vùng chương bên ngoài có motionKey cố định, không thấy "Duyệt N câu" đổi thành dòng chữ (soát chuyển động 139, 1.3).
   return (
-    <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
+    <MotionRegion className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
       {script.castReady && open.length > 0 ? (
         <div className="min-w-0">
           <Button size="sm" variant="secondary" icon={Check} loading={confirm.isPending} onClick={() => confirm.mutate(open)}>
@@ -1547,7 +1561,7 @@ function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: string;
           Chương sau <ChevronRight className="size-4" />
         </button>
       )}
-    </div>
+    </MotionRegion>
   );
 }
 
@@ -1717,11 +1731,11 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       <p className="max-w-3xl text-sm text-fg-2">
         Bấm tên để đổi người nói; dấu vàng là câu cần xem.
       </p>
-      {data && data.lines.length > 0 && !data.lines.some((line) => line.hasAudio) && (
+      <MotionPresence open={Boolean(data && data.lines.length > 0 && !data.lines.some((line) => line.hasAudio))}>
         <p className="mt-1 max-w-3xl text-sm text-fg-2">
           Thu xong chương sẽ nghe lại được từng câu.
         </p>
-      )}
+      </MotionPresence>
       {/* Chương + chú giải người nói DÍNH khi cuộn (soát UX a6 01-10: cuộn xuống giữa chương là quên phím 4 là ai, muốn sang
           chương sau phải cuộn ngược lên đầu). */}
       <div className="sticky top-0 z-10 -mx-2 mt-2 flex flex-col gap-2 bg-bg/95 px-2 pb-2 pt-2 backdrop-blur">
@@ -1732,7 +1746,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           <IconButton label="Chương trước" icon={ChevronLeft} disabled={!data?.previous} onClick={() => go(data?.previous ?? null)} />
           <IconButton label="Chương sau" icon={ChevronRight} disabled={!data?.next} onClick={() => go(data?.next ?? null)} />
         </div>
-        {narrow && entry && <p className="w-full text-xs text-fg-3">{chapterExtras(entry)}</p>}
+        {narrow && entry && <MotionRegion as="p" className="w-full text-xs text-fg-3">{chapterExtras(entry)}</MotionRegion>}
         <div className="relative flex h-9 w-full items-center rounded-lg border border-line bg-panel focus-within:border-focus sm:w-60">
           <Search className="pointer-events-none ml-2.5 size-4 shrink-0 text-fg-3" aria-hidden />
           <input
@@ -1756,11 +1770,10 @@ export function ScriptTab({ bookId }: { bookId: string }) {
             spellCheck={false}
             className="h-full min-w-0 flex-1 bg-transparent px-2 text-sm text-fg outline-none placeholder:text-fg-3 [&::-webkit-search-cancel-button]:hidden"
           />
-          {find.text.trim() && (
-            <span className="tabular mr-2 shrink-0 text-xs text-fg-2" role="status" aria-live="polite">
-              {found ? `${wrapIndex(find.at, found) + 1}/${found}` : "Không có"}
-            </span>
-          )}
+          {/* Ô đếm hiện / ẩn và "k/n" <-> "Không có" mờ qua tại chỗ; số đổi thì không mờ. */}
+          <MotionRegion as="span" motionKey={!find.text.trim() ? "" : found ? "n" : "none"} className="tabular mr-2 shrink-0 text-xs text-fg-2" role="status" aria-live="polite">
+            {find.text.trim() ? (found ? `${wrapIndex(find.at, found) + 1}/${found}` : "Không có") : null}
+          </MotionRegion>
         </div>
         <FilterRow<Filter>
           label="Hiện câu nào"
@@ -1775,8 +1788,9 @@ export function ScriptTab({ bookId }: { bookId: string }) {
         />
       </div>
       {/* Chú giải người nói: cùng mép trái với thanh công cụ và hàng chữ (chip lùi 4 px để vòng chữ cái đầu chạm mép), cùng nhịp 8 px. */}
+      {/* Chip thêm / bớt (gán câu cho người chưa có trong chú giải) mờ qua cả hàng, cao đổi dần nếu hàng xuống dòng. */}
       {data && (people.length > 0 || unnamed > 0) && (
-        <div className="-ml-1 flex flex-wrap items-center gap-1" role="group" aria-label="Người nói trong chương - bấm để chỉ xem câu của họ, bấm lại để xem tất cả">
+        <MotionRegion motionKey={[...people.map((person) => person.value), unnamed > 0]} className="-ml-1 flex flex-wrap items-center gap-1" role="group" aria-label="Người nói trong chương - bấm để chỉ xem câu của họ, bấm lại để xem tất cả">
           {[...people.map((person, index) => ({ person, badge: index < HOTKEYS ? String(index + 1) : "" })), ...(unnamed > 0 ? [{ person: { value: UNNAMED, label: "Chưa rõ", lines: unnamed }, badge: "?" }] : [])].map(
             ({ person, badge }) => (
               <button
@@ -1804,7 +1818,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
               <X className="size-3" /> Xem tất cả
             </button>
           )}
-        </div>
+        </MotionRegion>
       )}
       {data?.castReady && people.length > 0 && (
         <MoreInfo label="Phím tắt" className="hidden md:block">

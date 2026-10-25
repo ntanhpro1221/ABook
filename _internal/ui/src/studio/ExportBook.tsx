@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { useMotionState } from "@/shared/motion";
 import { AlertTriangle, BookAudio, CheckCircle2, FileAudio, FolderArchive, FolderDown, FolderOpen, RefreshCw } from "lucide-react";
@@ -528,14 +529,21 @@ export function ExportDialog({
       {wholeSeries && kind === "mp3" && (
         <p className="mt-3 text-sm text-fg-2 text-pretty">Mỗi phần một thư mục con trong thư mục của bộ.</p>
       )}
-      {staleExports.length > 0 && <div className="mt-3 space-y-2 rounded-xl bg-warning-soft p-3 text-sm">
+      {/* Hỏi lại mỗi 5 giây: xuất lại xong thì hàng khép tại chỗ, hết hàng thì cả khung khép - không mất cứng. */}
+      <MotionPresence open={staleExports.length > 0}>
+      <div className="mt-3 rounded-xl bg-warning-soft p-3 text-sm">
         <p className="font-semibold">Bản xuất đã cũ</p>
-        {staleExports.map((item) => <div key={item.target}>
+        <div data-motion-live="">
+        <AnimatedRows items={staleExports} keyOf={(item) => item.target}>
+        {(item) => <div className="space-y-2 pt-2">
           <p className="break-all">{item.target} · {item.changed.length} chương đã đổi</p>
           <Button size="sm" variant="secondary" onClick={() => { setKind(item.kind as Kind); setScope("part"); setChangedOnly(item.kind === "mp3"); }}>{item.kind === "m4b" ? "Xuất lại M4B" : item.kind === "mp3" ? "Xuất chương đổi" : "Xuất file sách"}</Button>
           {item.kind === "m4b" && <p>M4B gộp cả cuốn: bạn cần dựng lại cả file và thay bản đã chép hoặc gửi.</p>}
-        </div>)}
-      </div>}
+        </div>}
+        </AnimatedRows>
+        </div>
+      </div>
+      </MotionPresence>
       {kind === "mp3" && !wholeSeries && changedChapters.length > 0 && <label className="mt-3 flex items-center gap-2 text-sm">
         <input type="checkbox" checked={changedOnly} onChange={(event) => setChangedOnly(event.target.checked)} />
         Xuất {changedChapters.length} chương đổi

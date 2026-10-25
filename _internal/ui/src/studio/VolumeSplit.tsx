@@ -1,5 +1,6 @@
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { AnimatedRows } from "@/shared/MotionPresence";
 import { Layers, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/shared/cn";
@@ -136,13 +137,16 @@ export function VolumeSplit({
       <p className="mt-1 text-fg-2">
         Mỗi phần thành một sách nối tiếp; chọn chương bắt đầu để chia.
       </p>
-      <ol className="mt-3 divide-y divide-line rounded-lg border border-line">
-        {parts.map((part, index) => (
-          <li key={part.start} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_auto_90px_32px]">
+      {/* Thêm / bỏ chỗ cắt: hàng của phần mở / khép tại chỗ (useListPresence), không mờ cả khung; đổi trong hàng thì hàng tự mờ qua.
+          Hàng đang khép giữ số phần / tên cuối của nó. */}
+      <div data-motion-live="">
+      <AnimatedRows as="ol" className="mt-3 divide-y divide-line rounded-lg border border-line" items={parts.map((part, index) => ({ ...part, index, title: titles[index] }))} keyOf={(part) => String(part.start)}>
+        {({ index, title, ...part }) => (
+          <MotionRegion className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_auto_90px_32px]">
             <div className="min-w-0">
               {/* Phần 1 giữ nguyên tên sách (là sách thường, như máy chủ đặt) - nên nói ra nó là phần 1; các phần sau đã có "· Phần N" trong tên. */}
               <div className="truncate font-medium max-sm:whitespace-normal max-sm:break-words">
-                {titles[index]}
+                {title}
                 {index === 0 && <span className="ml-2 text-xs font-normal text-fg-3">phần 1</span>}
               </div>
               <div className="truncate text-xs text-fg-2">
@@ -170,7 +174,7 @@ export function VolumeSplit({
             {index > 0 ? (
               <button
                 type="button"
-                aria-label={`Bỏ chỗ cắt trước ${titles[index]}`}
+                aria-label={`Bỏ chỗ cắt trước ${title}`}
                 title="Gộp vào phần trước"
                 onClick={() => commit(removeStart(starts, index))}
                 className="grid size-8 place-items-center rounded-md text-fg-2 hover:bg-hover hover:text-danger"
@@ -180,9 +184,10 @@ export function VolumeSplit({
             ) : (
               <span />
             )}
-          </li>
-        ))}
-      </ol>
+          </MotionRegion>
+        )}
+      </AnimatedRows>
+      </div>
       <AddCut starts={starts} total={total} onAdd={(number) => commit(addStart(starts, number, total))} />
     </MotionRegion>
   );
