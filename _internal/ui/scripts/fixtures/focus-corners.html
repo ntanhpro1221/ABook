@@ -1,0 +1,26 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>
+*{box-sizing:border-box}body{margin:24px;font:14px/1.5 Arial}section{margin-bottom:20px}button{border:0;height:32px;background:#eee;color:#111}button:focus-visible{outline:2px solid blue;outline-offset:2px}
+.row{display:flex;width:240px;overflow-x:auto;scrollbar-width:none}.room{padding:4px;margin:-4px}.clip{overflow:clip;overflow-clip-margin:4px;width:240px}.scroll{width:120px;overflow:auto}.wide{width:300px;flex-shrink:0}.cover{position:relative;width:120px;height:100px}.image{display:block;width:100%;height:100%;border-radius:8px;background:#345}.bar{position:absolute;left:0;right:0;bottom:0;height:4px;border-radius:0 0 8px 8px;background:#d90}.mask{pointer-events:none;position:absolute;inset:0;overflow:hidden;border-radius:8px}.fill{position:absolute;inset:0;background:#d90}.rounded{border-radius:8px}.ellipse{border-radius:20px / 10px}
+</style><body>
+<section id="ring-cut" class="row"><button>Lọc sách</button></section>
+<section id="ring-room" class="row room"><button>Lọc sách</button></section>
+<section id="ring-clip" class="clip"><button>Lọc sách</button></section>
+<section id="ring-scroll" class="scroll"><div style="display:flex;width:300px"><button style="flex-shrink:0">Đã cuộn khuất</button></div></section>
+<section id="ring-small-margin" class="clip" style="overflow-clip-margin:2px"><button>Lọc sách</button></section>
+<section id="ring-negative" class="row"><span tabindex="-2">Không nhận Tab</span></section>
+<section id="ring-disabled" class="row"><button disabled>Không khả dụng</button></section>
+<section id="ring-border-box" class="clip" style="border:4px solid #333;overflow-clip-margin:border-box"><button>Lọc sách</button></section>
+<section id="ring-content-box" class="clip" style="padding:8px;overflow-clip-margin:content-box 0px"><button>Lọc sách</button></section>
+<section id="ring-auto-margin" class="row" style="overflow-clip-margin:100px"><button>Lọc sách</button></section>
+<section id="ring-border-out" class="row" style="height:32.5px;border-bottom:1px solid #333"><button style="height:32.5px">Tràn vào viền, không trọn padding box</button></section>
+<section id="corner-old" class="cover"><button class="image" tabindex="-1">Bìa</button><div class="bar"></div></section>
+<section id="corner-new" class="cover"><button class="image" tabindex="-1">Bìa</button><div class="mask"><div class="bar"></div></div></section>
+<section id="corner-ancestor" class="cover rounded"><div class="fill"></div></section>
+<section id="corner-equal" class="cover rounded"><div class="fill rounded"></div></section>
+<section id="corner-transparent" class="cover rounded"><div class="fill" style="background:transparent"></div></section>
+<section id="corner-offset" class="cover rounded"><div class="fill" style="inset:3px"></div></section>
+<section id="corner-ellipse" class="cover ellipse"><div class="fill" style="border-radius:20px / 5px"></div></section>
+<section id="corner-tolerance" class="cover rounded"><div class="fill" style="border-radius:7px"></div></section>
+<section id="corner-hidden" class="cover rounded" style="overflow:hidden"><div class="fill"></div></section>
+<script>document.querySelector('#ring-scroll').scrollLeft=16;</script>
+</body></html>

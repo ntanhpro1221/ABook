@@ -368,7 +368,7 @@ export function EditBookDialog({
             : "Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
       }
     ><MotionRegion>
-      <div className="max-h-[68vh] space-y-4 overflow-y-auto pr-1">
+      <div className="focus-scroll max-h-[68vh] space-y-4 overflow-y-auto pr-1">
         <Section title="Tên sách">
           <form
             className="flex gap-2"

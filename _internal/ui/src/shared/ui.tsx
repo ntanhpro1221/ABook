@@ -666,7 +666,7 @@ export function Dialog({
             </DialogPrimitive.Close>
           </div>
           {/* Hộp cao hơn màn (điện thoại, cửa sổ thấp) thì nội dung cuộn trong hộp, nút Đóng ở đầu luôn thấy được (soát UX a15). */}
-          <div ref={setBody} style={fade} className="-mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">{shown.children}</div>
+          <div ref={setBody} style={fade} className="dialog-body -mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">{shown.children}</div>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
@@ -782,7 +782,7 @@ export function Sheet({
           // Đóng (Esc, nút Đóng, chạm nền): Radix tự trả tiêu điểm về nút mở (Trigger) - trước đây chặn việc ấy nên tiêu điểm rơi về BODY (soát a31 K1).
           onEscapeKeyDown={onEscapeKeyDown}
           onInteractOutside={keepOpenForToasts}
-          className={cn("motion-sheet sheet-surface fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] min-w-0 flex-col overflow-hidden rounded-t-[20px] bg-panel px-[20px] pb-[max(env(safe-area-inset-bottom),20px)] shadow-float focus:outline-none", className)}
+          className={cn("motion-sheet sheet-surface fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] min-w-0 flex-col rounded-t-[20px] bg-panel px-[20px] pb-[max(env(safe-area-inset-bottom),20px)] shadow-float focus:outline-none", className)}
         >
           <div data-sheet-grip className="shrink-0 touch-none pb-3 pt-3"
             onPointerDown={(event) => {

@@ -63,8 +63,12 @@ Ra `findings.json` (phát hiện, rect CSS, phông thực nạp, vùng bấm, t�
 Ảnh điện thoại @2x có 8 điểm ảnh/CSS px sau phóng 4 lần; máy tính @1x có 4. Mở ảnh gốc hoặc bật nguyên cỡ trên bảng chi tiết.
 Đây là bộ tìm ứng viên: SVG khác mục đích/độ ưu tiên và chữ disabled vẫn có thể cần được loại khi duyệt ảnh.
 
-Mặc định mã thoát 0 dù có phát hiện; `--fail-on` nhận tên quy tắc (tên có dấu cách cần quote), dạng gạch dưới/gạch nối,
-hoặc `rule1`…`rule7`, mã thoát 1 khi có quy tắc được chọn vi phạm. Lỗi tải story/chụp ảnh là 2, luôn ghi riêng để không tạo lượt xanh giả.
+`--fail-on` nhận tên quy tắc (tên có dấu cách cần quote), dạng gạch dưới/gạch nối hoặc `rule1`…`rule17`;
+mặc định chặn các quy tắc đã kiểm sạch trong `DEFAULT_FAIL_ON`, dùng `--fail-on none` để chỉ báo cáo.
+Mã thoát 1 khi có quy tắc được chọn vi phạm. Lỗi tải story/chụp ảnh là 2, luôn ghi riêng để không tạo lượt xanh giả.
+Quy tắc 16 `FOCUS RING CLIPPED`: vòng 2 px + offset 2 px, dung sai hình học 0,5 px; bỏ điều khiển cuộn khuất một phần,
+tôn trọng `overflow-clip-margin` của `overflow:clip`. Quy tắc 17 `CORNER MISMATCH`: góc lớp phủ tuyệt đối trùng góc hộp bo trong 1 px,
+bán kính đã co theo CSS nhỏ hơn quá 1 px, không có tổ tiên cắt theo cùng góc bo. Fixture `focus-corners.html` kiểm cả markup cũ và wrapper mới.
 Fixture riêng dựng lại glyph HTML của `0bec019f` cạnh SVG mới `398db035`, dùng phông gallery thật và chính bộ đo trên Edge;
 không checkout/sửa component sản phẩm. Có unit test hình học và DOM ở `scripts/gallery_inspect.test.mjs`.
 
