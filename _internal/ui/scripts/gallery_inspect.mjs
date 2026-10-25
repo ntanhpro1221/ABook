@@ -9,7 +9,7 @@ import { pathToFileURL } from "node:url";
 import { parseArgs, findBrowser, serve, launch, connect, evaluate, waitUntil, openPage, escapeHtml as esc } from "./gallery_browser.mjs";
 import { createInspectorHelpers, inspectPage } from "./gallery_inspect_helpers.mjs";
 import { sourceIndex, deduplicate } from "./gallery_inspect_report.mjs";
-import { createLayoutHelpers, inspectLayout, crossFrameRhythm } from "./gallery_inspect_layout.mjs";
+import { createLayoutHelpers, inspectLayout, crossFrameRhythm, crossFrameTitles } from "./gallery_inspect_layout.mjs";
 import { inspectAlignment } from "./gallery_inspect_alignment.mjs";
 import { inspectTapReach } from "./gallery_inspect_tap.mjs";
 import { inspectEdges } from "./gallery_inspect_edges.mjs";
@@ -167,6 +167,7 @@ export async function main(argv = process.argv.slice(2)) {
         const inkCrop = captureCrops(cdp, page.sessionId, out, `${stem}-ink`, { width, height, deviceScale: mobile ? 2 : 1 }, { nearest: true });
         for (const item of story.tapToastOcclusions) item.crop = await crop([item.rect]);
         if (story.layout?.firstBlock) story.layout.firstBlock.crop = await inkCrop([story.layout.firstBlock.rect]);
+        if (story.layout?.screenTitle) story.layout.screenTitle.crop = await inkCrop([story.layout.screenTitle.rect]);
         for (const finding of result.findings) {
           finding.id = `F${String(report.findings.length + 1).padStart(5, "0")}`;
           finding.story = entry.id; finding.theme = theme;
@@ -192,7 +193,7 @@ export async function main(argv = process.argv.slice(2)) {
     cdp?.close();
     try { await browser?.close(); } finally { local?.server.close(); }
   }
-  for (const finding of crossFrameRhythm(report.stories)) {
+  for (const finding of [...crossFrameRhythm(report.stories), ...crossFrameTitles(report.stories)]) {
     finding.id = `F${String(report.findings.length + 1).padStart(5, "0")}`;
     report.findings.push(finding);
     report.stories.find((s) => s.id === finding.story && s.theme === finding.theme).findingCount++;

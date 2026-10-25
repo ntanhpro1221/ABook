@@ -36,6 +36,33 @@ export function crossFrameRhythm(stories) {
   return findings;
 }
 
+// Chân chữ tiêu đề màn giữa mọi khung cùng nền tảng và theme (không theo nhóm gallery: Thư viện, Studio, Cài đặt, màn con đều chung một đầu màn
+// - shared/ScreenHeader). Không có đa số tuyệt đối thì lấy trung vị làm mốc: hai màn gốc lệch nhau vẫn bị bắt, không im lặng vì hoà.
+export function crossFrameTitles(stories) {
+  const groups = new Map(), findings = [];
+  for (const story of stories) {
+    const title = story.layout?.screenTitle;
+    if (!title || story.error) continue;
+    const key = JSON.stringify([story.platform, story.theme]);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ story, ...title, value: title.baseline });
+  }
+  for (const samples of groups.values()) {
+    if (samples.length < 2) continue;
+    const sorted = [...samples].sort((a, b) => a.value - b.value);
+    const reference = createLayoutHelpers().majority(samples, 1) ?? sorted[Math.floor((sorted.length - 1) / 2)];
+    for (const sample of samples) if (Math.abs(sample.value - reference.value) > 1.01) {
+      findings.push({ rule: "RHYTHM", story: sample.story.id, theme: sample.story.theme,
+        selector: sample.selector, context: sample.context, text: sample.text, crop: sample.crop,
+        rects: [sample.rect], metric: "screen-title-baseline", value: sample.value,
+        referenceValue: reference.value, delta: sample.value - reference.value, tolerance: 1,
+        referenceStory: reference.story.id, referenceSelector: reference.selector, referenceCrop: reference.crop,
+        reason: "screen title baseline differs from other screens on the same platform" });
+    }
+  }
+  return findings;
+}
+
 // Nhúng vào trang bằng toString; các helper DOM được truyền từ inspector hiện tại.
 export function inspectLayout({ all, texts, css, rect, union, visible, hidden, selector, add, shape, childPath }, h) {
   const { majority } = h;
@@ -428,5 +455,33 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
         context: [{ tag: first.localName, classes: [...first.classList], data: {} }] };
     }
   }
-  return { columns, gaps, rhythms, fills, firstBlock };
+  // Tiêu đề màn (h1 đầu tiên đang thấy, chưa cuộn, không bị lớp khác phủ): chân chữ phải trùng giữa mọi màn cùng nền tảng - đổi tab đáy thì tiêu đề
+  // không nhảy (soát 25-10: Thư viện / Studio / Cài đặt điện thoại 54 / 46 / 40). Tiêu đề nằm trong nội dung (tên sách cạnh bìa: data-content-title)
+  // và tiêu đề chương trong bài đọc (article) không phải đầu màn.
+  let screenTitle = null;
+  if (!all.some((e) => e.matches('[role="dialog"],[role="alertdialog"]') && visible(e, rect(e.getBoundingClientRect())))) {
+    const heading = [...document.querySelectorAll("h1")].find((el) => !el.closest("[data-content-title],article") && visible(el, rect(el.getBoundingClientRect())));
+    const scrolled = (el) => (document.scrollingElement?.scrollTop ?? 0) > 0 || (() => { for (let p = el.parentElement; p; p = p.parentElement) if (p.scrollTop > 0) return true; return false; })();
+    const walker = heading && document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
+    let node = walker?.nextNode();
+    while (node && !node.textContent.trim()) node = walker.nextNode();
+    if (node && !scrolled(heading)) {
+      const at = node.textContent.search(/\S/), s = css(node.parentElement);
+      const range = document.createRange(); range.setStart(node, at); range.setEnd(node, at + 1);
+      const r = range.getBoundingClientRect();
+      ctx.font = `${s.fontStyle} ${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;
+      const m = ctx.measureText(node.textContent[at]), total = m.fontBoundingBoxAscent + m.fontBoundingBoxDescent;
+      const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      if (total > 0 && r.height > 0 && top && (heading.contains(top) || top.contains(heading))) {
+        const box = rect(heading.getBoundingClientRect());
+        // Tính từ mép trên vùng nội dung của main: dải mất mạng / máy ghép nằm trong luồng phía trên đẩy cả trang xuống, đầu màn vẫn đúng chỗ
+        // của nó; main lùi lên chừa chỗ vòng tiêu điểm (-mt-8px pt-8px) không làm đầu màn lệch.
+        const main = heading.closest("main"), mainStyle = main && css(main);
+        const frameTop = main ? main.getBoundingClientRect().top + Number.parseFloat(mainStyle.borderTopWidth) + Number.parseFloat(mainStyle.paddingTop) : 0;
+        screenTitle = { baseline: r.y + m.fontBoundingBoxAscent * (r.height / total) - frameTop, frameTop, kind: heading.dataset.screenTitle ?? "unmarked", fontSize: s.fontSize,
+          selector: selector(heading), rect: box, text: heading.textContent.trim().slice(0, 160), context: [{ tag: "h1", classes: [...heading.classList], data: { ...heading.dataset } }] };
+      }
+    }
+  }
+  return { columns, gaps, rhythms, fills, firstBlock, screenTitle };
 }

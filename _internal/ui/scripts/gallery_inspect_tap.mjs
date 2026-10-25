@@ -25,16 +25,16 @@ export function inspectTapReach({ css, rect, selector, add }) {
     if (!shown(el) || el.matches(":disabled,[disabled],[data-disabled]") || el.closest('[inert],[aria-disabled="true"]') || el.getAttribute("tabindex") === "-1" && !el.matches(controls)) continue;
     const box = el.getBoundingClientRect(), x = box.left + box.width / 2, y = box.top + box.height / 2;
     if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) continue;
-    // Chỉ miễn vùng cuộn thuộc lớp này; không bỏ qua lớp bị scrim che.
+    // Chỉ miễn vùng cuộn thuộc lớp này; không bỏ qua lớp bị scrim che. Xét MỌI vùng cuộn tổ tiên trong lớp: hàng lọc cuộn ngang nằm trong trang
+    // cuộn dọc, tâm đã khuất dưới mép trang (dưới thanh tab) là hàng cần cuộn tới - từng chỉ xét vùng gần nhất (chính hàng lọc) rồi dừng.
     let clipped = false;
-    for (let p = el.parentElement; p && scope.contains(p); p = p.parentElement) {
+    for (let p = el.parentElement; p && scope.contains(p) && !clipped; p = p.parentElement) {
       const s = css(p), r = p.getBoundingClientRect();
       const scrollX = /auto|scroll/.test(s.overflowX), scrollY = /auto|scroll/.test(s.overflowY);
       if (scrollX || scrollY) {
         // Tâm sát mép client trong 2 px cũng là hàng cần cuộn tới (kể cả vạch tiến độ đè 1–2 px).
         clipped = scrollX && (x <= r.left + p.clientLeft + 2 || x >= r.left + p.clientLeft + p.clientWidth - 2)
           || scrollY && (y <= r.top + p.clientTop + 2 || y >= r.top + p.clientTop + p.clientHeight - 2);
-        break;
       }
     }
     if (clipped) continue;

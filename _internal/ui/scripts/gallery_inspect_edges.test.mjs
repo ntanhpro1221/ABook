@@ -27,6 +27,13 @@ describe.skipIf(!browserAvailable)("vòng tiêu điểm và góc bo trên Edge, 
       expect(at(r, "ring-small-margin", "FOCUS RING CLIPPED")).toHaveLength(1);
     }
   });
+  it("vùng cuộn còn cuộn tiếp về phía mép thì không báo; mép hết cuộn vẫn báo", () => {
+    for (const r of results) {
+      for (const id of ["ring-scrolled-top", "ring-scrolled-bottom"]) expect(at(r, id, "FOCUS RING CLIPPED"), id).toHaveLength(0);
+      expect(at(r, "ring-edge-top", "FOCUS RING CLIPPED")).toHaveLength(1);
+      expect(at(r, "ring-edge-top", "FOCUS RING CLIPPED")[0]).toMatchObject({ cut: ["top"] });
+    }
+  });
   it("clip-margin theo hộp được chỉ định và không áp dụng cho auto", () => {
     for (const r of results) {
       expect(at(r, "ring-content-box", "FOCUS RING CLIPPED")).toHaveLength(1);

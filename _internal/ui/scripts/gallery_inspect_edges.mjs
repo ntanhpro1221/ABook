@@ -22,15 +22,19 @@ export function inspectEdges({ all, css, rect, hidden, selector, add }) {
       if (!inside) { if (/auto|scroll/.test(s.overflowX + s.overflowY)) break; continue; }
       const margin = Number.parseFloat(s.overflowClipMargin.match(/[\d.]+px/)?.[0]) || 0;
       const cut = [];
+      // Vùng cuộn (auto/scroll) còn cuộn tiếp được về phía mép ấy: nhận tiêu điểm thì trình duyệt cuộn nút vào khung, vòng không bị cắt - nút chỉ
+      // tình cờ đứng sát mép lúc chụp (tab dưới đầu trang đã cuộn, hàng cuối trên thanh phát). Mép không cuộn qua được mới là lỗi.
+      const further = { left: a.scrollLeft > 0.5, right: a.scrollLeft + a.clientWidth < a.scrollWidth - 0.5, top: a.scrollTop > 0.5, bottom: a.scrollTop + a.clientHeight < a.scrollHeight - 0.5 };
       for (const [axis, low, high] of [['X', 'left', 'right'], ['Y', 'top', 'bottom']]) {
         const overflow = s[`overflow${axis}`];
+        const scrolls = /auto|scroll/.test(overflow);
         // Clip-margin có thể tính từ border-box/content-box; scroll/hidden không dùng nó.
         const edgeExtra = (edge) => overflow !== 'clip' ? 0 : margin
           + (s.overflowClipMargin.includes('border-box') ? Number.parseFloat(s[`border${edge[0].toUpperCase() + edge.slice(1)}Width`]) : 0)
           - (s.overflowClipMargin.includes('content-box') ? Number.parseFloat(s[`padding${edge[0].toUpperCase() + edge.slice(1)}`]) : 0);
         if (overflow === 'visible') continue;
-        if (r[low] - ring < p[low] - edgeExtra(low) - tolerance) cut.push(low);
-        if (r[high] + ring > p[high] + edgeExtra(high) + tolerance) cut.push(high);
+        if (r[low] - ring < p[low] - edgeExtra(low) - tolerance && !(scrolls && further[low])) cut.push(low);
+        if (r[high] + ring > p[high] + edgeExtra(high) + tolerance && !(scrolls && further[high])) cut.push(high);
       }
       if (cut.length) {
         add('FOCUS RING CLIPPED', el, label(el), [rect(r)], { ring, cut, otherSelector: selector(a), overflow: `${s.overflowX}/${s.overflowY}`, reason: 'Vòng tiêu điểm vượt mép cắt của tổ tiên', clipClasses: [...a.classList] });

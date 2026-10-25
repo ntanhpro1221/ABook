@@ -880,8 +880,12 @@ export function OfflineStrip({ offline: forced, message = "Mất mạng · Bạn
     return () => { window.removeEventListener("offline", lost); window.removeEventListener("online", back); };
   }, []);
   return <MotionPresence open={forced ?? offline} className="shrink-0">
-    <div role="status" className="flex items-center gap-2 border-b border-line bg-warning-soft px-5 py-2 text-xs text-fg-2">
-      <WifiOff aria-hidden className="size-3.5 shrink-0" /><span>{message}</span>
+    {/* Nền tràn cả bề ngang, chữ thẳng lề nội dung của trang bên dưới (page-x, khung 1180 như Thư viện / Studio) - từng bắt đầu ở 17,5 px
+        (máy tính x=254 trong khi lề nội dung 288, soát 25-10). */}
+    <div role="status" className="border-b border-line bg-warning-soft py-2 text-xs text-fg-2">
+      <div className="page-x mx-auto flex max-w-[1180px] items-center gap-2">
+        <WifiOff aria-hidden className="ink-start size-3.5 shrink-0 [--icon-w:calc(var(--spacing)*3.5)]" /><span>{message}</span>
+      </div>
     </div>
   </MotionPresence>;
 }
