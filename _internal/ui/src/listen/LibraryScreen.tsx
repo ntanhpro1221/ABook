@@ -18,7 +18,7 @@ import { Windowed } from "@/shared/Windowed";
 import { useScrollMemory } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
-import { Dialog, EmptyState, failedEmpty, heardBarProps, LoadError, Progress, RowGap, Sheet, Skeleton } from "@/shared/ui";
+import { Dialog, EmptyState, failedEmpty, heardBarProps, LoadError, Progress, RowGap, SelectionMark, Sheet, Skeleton } from "@/shared/ui";
 import { caughtUpLine, displayTitle, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, type LibrarySort } from "./librarySort";
 import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, resumeTarget, seriesIndex, twinBookIds, twinKind, volumeBadge, type ListenBook, type ListenChapter } from "./model";
@@ -545,7 +545,7 @@ export function LibraryScreen({
               </button></DropdownMenu.Trigger>
               <DropdownMenu.Portal><DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-44 rounded-xl border border-line bg-panel p-1.5 shadow-float">
                 <DropdownMenu.RadioGroup value={sort} onValueChange={value => { const next = value as LibrarySort; setSort(next); saveLibrarySort(next); }}>
-                  {SORT_OPTIONS.map(option => <DropdownMenu.RadioItem key={option.value} value={option.value} className="flex min-h-[44px] cursor-default items-center rounded-lg px-3 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text">{option.label}</DropdownMenu.RadioItem>)}
+                  {SORT_OPTIONS.map(option => <DropdownMenu.RadioItem key={option.value} value={option.value} className="flex min-h-[44px] cursor-default items-center gap-3 rounded-lg px-3 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"><SelectionMark selected={sort === option.value} />{option.label}</DropdownMenu.RadioItem>)}
                 </DropdownMenu.RadioGroup>
               </DropdownMenu.Content></DropdownMenu.Portal>
             </DropdownMenu.Root>

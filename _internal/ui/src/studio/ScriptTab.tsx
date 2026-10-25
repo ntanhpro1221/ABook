@@ -1587,11 +1587,8 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
                 value={String(chapter.chapterId)}
                 className="flex min-h-9 cursor-default items-center gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"
               >
-                <span className="grid size-4 shrink-0 place-items-center" aria-hidden>
-                  <DropdownMenu.ItemIndicator>
-                    <Check className="size-4" />
-                  </DropdownMenu.ItemIndicator>
-                </span>
+                {/* Dấu chọn chung: luôn giữ chỗ, mờ vào / ra (ItemIndicator gắn / gỡ cứng). */}
+                <SelectionMark selected={chapter.chapterId === chapterId} />
                 <span className="min-w-0 flex-1 truncate">{chapterLabel(chapter)}</span>
                 {!narrow && <span className="shrink-0 text-xs text-fg-2">{chapterExtras(chapter)}</span>}
               </DropdownMenu.RadioItem>
