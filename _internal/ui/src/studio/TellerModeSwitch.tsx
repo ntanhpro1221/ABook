@@ -4,6 +4,7 @@ import { Mic2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "@/shared/toast";
 import { Switch } from "@/desktop/PhoneSync";
+import { SettingsRow } from "@/shared/SettingsNav";
 import { cn } from "@/shared/cn";
 import { Button, Dialog } from "@/shared/ui";
 import { api, type BookSummary } from "./api";
@@ -56,17 +57,20 @@ export function TellerModeSwitch({ book, className }: { book: BookSummary; class
   };
   return (
     <MotionRegion>
-      <label htmlFor={id} className={cn("mt-3 flex items-start gap-3 rounded-xl border border-line bg-panel p-4 text-left", className)}>
-        <Switch id={id} labelledBy={`${id}-name`} describedBy={`${id}-hint`} checked={on} disabled={save.isPending || busy || readOnly} onCheckedChange={change} />
-        <span>
-          <span id={`${id}-name`} className="block text-sm font-medium text-fg">{TELLER_TITLE}</span>
-          <MotionRegion as="span" id={`${id}-hint`} className="mt-0.5 block text-[0.8125rem] leading-relaxed text-fg-2">
-            {readOnly ? tellerHint(on) : busy ? BUSY_NOTE : tellerHint(on)}
-            {readOnly && ` ${TELLER_ELSEWHERE}`}
-            {!readOnly && !busy && data.castLocked && !needsConfirm(data) && !on && ""}
-          </MotionRegion>
-        </span>
-      </label>
+      {/* Một hàng cài đặt như trang Cài đặt: tên và lời giải thích bên trái, công tắc bên phải - không khung bao. */}
+      <div className={cn("mt-3 border-t border-line", className)}>
+        <SettingsRow
+          label={<span id={`${id}-name`}>{TELLER_TITLE}</span>}
+          hint={
+            <span id={`${id}-hint`}>
+              {readOnly ? tellerHint(on) : busy ? BUSY_NOTE : tellerHint(on)}
+              {readOnly && ` ${TELLER_ELSEWHERE}`}
+            </span>
+          }
+        >
+          <Switch id={id} labelledBy={`${id}-name`} describedBy={`${id}-hint`} checked={on} disabled={save.isPending || busy || readOnly} onCheckedChange={change} />
+        </SettingsRow>
+      </div>
       <Dialog
         open={asking !== null}
         onOpenChange={(open) => !open && setAsking(null)}

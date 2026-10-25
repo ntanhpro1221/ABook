@@ -26,15 +26,15 @@ import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
 import { bookmarkReadPath, canPlay, chapterHeard, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
-import { displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine, textChapterLine } from "./labels";
+import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine } from "./labels";
 import { usePlayer } from "./player";
-import { BookmarkList, chapterStatusLabel, usePreparedChapters } from "./PlayerViews";
+import { BookmarkList, usePreparedChapters } from "./PlayerViews";
 import { EditsNoticesBanner, EditsSyncBanner, LocalEditsBanner, SendEditsItem } from "./SendEdits";
 import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
-import { useBookVoice, useCast, useListenBook, useListenLibrary, useListenMutations, useSource, useWarmVoice } from "./source";
+import { useCast, useListenBook, useListenLibrary, useListenMutations, useSource, useWarmVoice } from "./source";
 import { latestReading } from "./readingPosition";
 import { moreMenuHasItems } from "./bookMenu";
 import { withFeedback } from "@/shared/feedback";
@@ -49,14 +49,11 @@ export function ChapterRow({
   onDone,
   onRename,
   prepared = false,
-  voice = "",
 }: {
   book: ListenBook;
   chapter: ListenChapter;
   /** "Làm trước" đã đọc sẵn chương này bằng giọng của cuốn: nghe ngay, không cần mạng hay chờ. */
   prepared?: boolean;
-  /** Tên giọng đang đọc cuốn (useBookVoice) - dòng phụ của chương chỉ-có-chữ nói đúng giọng ấy. */
-  voice?: string;
   onDone: (chapterId: number, done: boolean) => void;
   /** Sách sửa được trên máy này (shared/capabilities.ts): "Đổi tên chương…" - cái tên hiện trên màn hình, không đổi audio. */
   onRename?: (chapter: ListenChapter) => void;
@@ -114,13 +111,9 @@ export function ChapterRow({
         <div className={cn("truncate text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
           {name}
         </div>
-        <div className="tabular truncate text-xs text-fg-2">
-          {chapter.subtitle ? `${chapter.title} · ` : ""}
-          {chapter.available
-            ? formatLength(chapter.duration)
-            : chapter.state === "text"
-              ? textChapterLine(Boolean(chapter.speech), voice)
-              : chapterStatusLabel(book.producing)}
+        {/* min-h 1rem (= một dòng text-xs): dòng phụ luôn giữ chỗ - chương có audio rồi hàng không cao thêm, và mọi hàng cùng nhịp. */}
+        <div className="tabular min-h-[1rem] truncate text-xs text-fg-2">
+          {chapterSubline(chapter, book.producing)}
           {prepared && (
             <span className="ml-1.5 inline-flex items-center gap-0.5 rounded bg-accent-soft px-1 align-[1px] text-[0.6875rem] font-medium text-accent-text">
               <CloudDownload className="size-3" aria-hidden />
@@ -176,31 +169,31 @@ export function ChapterRow({
   );
 }
 
-export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared, voice = "" }: {
+export function ChapterGroups({ book, currentChapter, onDone, onRename, prepared }: {
   book: ListenBook; currentChapter?: number; onDone: (chapterId: number, done: boolean) => void;
-  onRename?: (chapter: ListenChapter) => void; prepared?: Set<number>; voice?: string;
+  onRename?: (chapter: ListenChapter) => void; prepared?: Set<number>;
 }) {
   const chapters = book.chapters ?? [];
   const groups = chaptersByPart(chapters, book.parts);
   // Sách không chia phần: một danh sách phẳng ngay dưới tab - không gấp trong một khối "Danh sách chương" lặp lại tên tab.
   if (groups.length === 1 && !groups[0].heading) {
-    return <div className="mt-2"><ChapterGroupList book={book} chapters={groups[0].chapters} memory={`book.${book.id}.0`} currentChapter={currentChapter} onDone={onDone} onRename={onRename} prepared={prepared} voice={voice} /></div>;
+    return <div className="mt-2"><ChapterGroupList book={book} chapters={groups[0].chapters} memory={`book.${book.id}.0`} currentChapter={currentChapter} onDone={onDone} onRename={onRename} prepared={prepared} /></div>;
   }
   return <>{groups.map((group, index) => (
             <Fold key={group.heading ?? index} storageKey={`book.${book.id}.chapters.${index}`} title={group.heading || "Danh sách chương"} summary={`${group.chapters.length} chương${group.chapters.some(chapter => chapter.id === currentChapter) ? " · Đang nghe" : ""}`} defaultOpen={group.chapters.length <= 4 || group.chapters.some(chapter => chapter.id === currentChapter)} onOpened={(element) => {
               const row = element.querySelector(`[data-chapter="${CSS.escape(String(currentChapter))}"]`);
               if (row && !row.closest("[inert]")) reveal(scrollParent(row), row);
             }} heading="h3" flat className="mt-3">
-              <ChapterGroupList book={book} chapters={group.chapters} heading={group.heading} memory={`book.${book.id}.${index}`} currentChapter={currentChapter} onDone={onDone} onRename={onRename} prepared={prepared} voice={voice} />
+              <ChapterGroupList book={book} chapters={group.chapters} heading={group.heading} memory={`book.${book.id}.${index}`} currentChapter={currentChapter} onDone={onDone} onRename={onRename} prepared={prepared} />
             </Fold>
           ))}</>;
 }
 
 /** Sách vài nghìn chương: chỉ dựng các chương gần màn hình (shared/Windowed); chương đang nghe luôn có sẵn. Chương mới về (sách đang
  *  thu) hay bị gỡ: hàng mở ra / khép lại tại chỗ (useListPresence, như kệ sách của thư viện), không nhảy cả danh sách. */
-function ChapterGroupList({ book, chapters, heading, memory, currentChapter, onDone, onRename, prepared, voice }: {
+function ChapterGroupList({ book, chapters, heading, memory, currentChapter, onDone, onRename, prepared }: {
   book: ListenBook; chapters: ListenChapter[]; heading?: string | null; memory: string; currentChapter?: number;
-  onDone: (chapterId: number, done: boolean) => void; onRename?: (chapter: ListenChapter) => void; prepared?: Set<number>; voice: string;
+  onDone: (chapterId: number, done: boolean) => void; onRename?: (chapter: ListenChapter) => void; prepared?: Set<number>;
 }) {
   const rows = useListPresence(chapters, (chapter) => String(chapter.id));
   const positions = useMemo(() => new Map(chapters.map((chapter, index) => [chapter.id, index + 1])), [chapters]);
@@ -219,7 +212,6 @@ function ChapterGroupList({ book, chapters, heading, memory, currentChapter, onD
               onDone={(chapterId, done) => onDone(chapterId, done)}
               onRename={onRename}
               prepared={chapter.state === "text" && prepared?.has(chapter.id)}
-              voice={voice}
             />
           </div>
         )}
@@ -885,7 +877,6 @@ export function BookScreen({
   const saver = useSaveBook(book ?? ({ id: id ?? "" } as ListenBook));
   const sharer = useShareBook(book ?? ({ id: id ?? "" } as ListenBook));
   // Chương đã "Làm trước" (điện thoại, PrepareAhead.kt): dấu "Đã làm sẵn" ở danh sách chương.
-  const voice = useBookVoice(id);
   useWarmVoice(id); // giọng trên máy: nạp sẵn model lúc mở trang sách, bấm phát không phải chờ
   const prepared = usePreparedChapters(id ?? "", Boolean(book?.chapters?.some((chapter) => chapter.state === "text" && chapter.speech)));
   // Điện thoại: mở sách là hỏi máy tính đã ghép bản mới nhất của hồ sơ nghe (chỗ nghe, tên, hồ sơ vừa chọn bên ấy) -
@@ -1166,7 +1157,7 @@ export function BookScreen({
         </TabsList>
         <TabsPanels value={tab}>
         <TabsContent value="chapters" className="mt-2" ref={chapterList}>
-          <ChapterGroups book={book} currentChapter={point?.chapter.id} onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })} onRename={editable ? setRenamingChapter : undefined} prepared={prepared} voice={voice} />
+          <ChapterGroups book={book} currentChapter={point?.chapter.id} onDone={(chapterId, done) => mutations.chapterDone.mutate({ chapterId, done })} onRename={editable ? setRenamingChapter : undefined} prepared={prepared} />
         </TabsContent>
         <TabsContent value="bookmarks">
           <BookmarksTab book={book} />

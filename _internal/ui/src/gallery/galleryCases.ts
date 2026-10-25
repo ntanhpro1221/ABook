@@ -51,6 +51,24 @@ export function galleryCases(platform: Platform): void {
           expect(container.textContent).toContain("Sách mới");
           expect(container.textContent).toContain("Cách đọc chung");
         }
+        // Soát Studio 25-10 (stu140b): mỗi điều dưới đây là một LOẠI lỗi đã sửa ở thành phần chung - giữ cho khỏi quay lại.
+        const text = container.textContent ?? "";
+        // D2: trạng thái rỗng chỉ nói "chưa có" một lần (phụ đề đầu trang từng lặp lại tiêu đề).
+        if (entry.id === "desktop/studio-projects-empty") expect(text.split("Chưa có dự án").length - 1).toBe(1);
+        // V10: tên giọng / engine / model không lặp ở từng hàng chương của sách chữ, và không hiện trên đầu trang dự án.
+        if (entry.id.endsWith("/book-text")) expect(text).not.toMatch(/\(Edge\)|VieNeu|Giọng đọc của máy/);
+        // Phần gập (inert) là chi tiết kỹ thuật được phép giữ tên model; phần đang nhìn thấy thì không.
+        if (entry.id.startsWith("desktop/studio-project")) {
+          const shown = container.cloneNode(true) as HTMLElement;
+          for (const folded of shown.querySelectorAll("[inert]")) folded.remove();
+          expect(shown.textContent).not.toMatch(/qwen|Phân tích bằng/i);
+        }
+        // D12: tab Nhạc nền là các hàng cài đặt (không thẻ viền), Nhật ký không tab lồng.
+        if (entry.id === "desktop/studio-music") {
+          expect(container.querySelector("section.rounded-xl, section.rounded-2xl")).toBeNull();
+          expect(container.querySelector(".settings-row [role=switch]")).not.toBeNull();
+        }
+        if (entry.id === "desktop/studio-activity") expect(container.querySelector('[role="radiogroup"][aria-label="Kiểu nhật ký"]')).toBeNull();
         // Mục trạng thái phải tới đúng màn, không chỉ dựng được vỏ app.
         if (entry.scenario?.requests) {
           const states = Object.values(entry.scenario.requests);

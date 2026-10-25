@@ -10,7 +10,7 @@ import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
 import type { ChapterText } from "./bookSearch";
 import { timedTextScript, VOICE_CHANGED_EVENT, type ClipOptions, type ReadAloudClip, type ReadAloudTimings, type ReadAloudVoice } from "./readAloud";
-import { bookVoiceCaption, chosenVoice, resolveVoice, runsOnThisMachine, voicesOf } from "./readAloudVoice";
+import { chosenVoice, resolveVoice, runsOnThisMachine, voicesOf } from "./readAloudVoice";
 import { retryChapterText } from "./labels";
 import type { VieneuBackend } from "./VieneuModuleCard";
 import type { PreparePlan, PrepareRequest, PrepareStatus, ReadAloudCacheUsage } from "./prepareAhead";
@@ -422,9 +422,3 @@ export function useWarmVoice(bookId: string | undefined): void {
   }, [source, id]);
 }
 
-/** Tên giọng đang đọc cuốn `bookId` ("Hoài My (Edge)", "Giọng đọc của máy"); "" khi máy chưa báo giọng nào. Đổi giọng giữa chừng thì cập nhật ngay. */
-export function useBookVoice(bookId: string | undefined): string {
-  const voices = useReadAloudVoices().data;
-  useVoiceChanged();
-  return bookId ? bookVoiceCaption(voices, bookId) : "";
-}

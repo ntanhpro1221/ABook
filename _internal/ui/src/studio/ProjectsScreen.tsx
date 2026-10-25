@@ -13,9 +13,10 @@ import { RowBoundary } from "@/shared/RowBoundary";
 import { etaOf, formatPercent, formatRelative } from "@/shared/format";
 import { Button, Dialog, EmptyState, failedEmpty, IconButton, LoadError, Progress, Skeleton, StatusPill } from "@/shared/ui";
 import { ScreenHeader } from "@/shared/ScreenHeader";
+import { DotJoin } from "@/shared/DotJoin";
 import { MissingLibrary } from "@/shared/MissingLibrary";
 import { api, type BookSummary } from "./api";
-import { phaseTone, pickFolder, useAppInfo, useLibrary, useOpenBook, useReveal } from "./data";
+import { pickFolder, projectStatus, useAppInfo, useLibrary, useOpenBook, useReveal } from "./data";
 import { MenuItem, ProjectMenu } from "./ProjectScreen";
 import { StudioSetupCard } from "./StudioSetup";
 import { groupParts, splitLive, type Entry } from "./projectGroups";
@@ -111,6 +112,7 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
   const live = book.running || book.starting;
   // Hàng hỏng <-> thường (sau "Thử lại"): cùng một vùng ở cả hai nhánh, khoá theo loại hàng - mờ qua, không thay cứng.
   if (book.broken) return <MotionRegion motionKey="broken"><BrokenRow book={book} local={local} /></MotionRegion>;
+  const status = projectStatus(book);
   const detail =
     book.phase !== "done" && book.eta && live ? etaOf(book, true) : `${book.chapters.completed}/${book.chapters.total} chương`;
   const needs = [
@@ -129,17 +131,13 @@ function ProjectRowBody({ book }: { book: BookSummary }) {
         <div className="min-w-0">
           <div className="truncate font-medium">{book.title}</div>
           <div className="truncate text-[0.8125rem] text-fg-2">
-            {book.settings.narrator ? `Giọng kể ${book.settings.narrator} · ` : ""}
-            {book.settings.profileLabel}
+            {/* Chất lượng "Cân bằng" là mặc định của gần mọi dự án: chữ giống nhau trên mọi hàng thì chỉ ghi ở hàng KHÁC (soát 25-10). */}
+            <DotJoin parts={[book.settings.narrator && `Giọng kể ${book.settings.narrator}`, book.settings.profile !== "balanced" && book.settings.profileLabel]} />
           </div>
         </div>
         <div className="col-start-2 md:col-start-auto">
-          <StatusPill
-            label={book.queuePosition ? `Xếp hàng · thứ ${book.queuePosition}` : book.starting ? "Đang khởi động" : book.precast?.held ? "Chờ bạn duyệt" : book.statusLabel}
-            // Cùng trạng thái = cùng màu với chip ở trang dự án (soát UX a8 05-10); việc còn lại của sách xong nói ở cột tiến độ.
-            tone={book.queuePosition || book.paused || book.stopping ? "warning" : phaseTone(book.phase, live)}
-            live={live && !book.paused && !book.stopping}
-          />
+          {/* Xong là mặc định, không đeo nhãn trên mọi hàng; chỉ dự án chưa xong mới có viên trạng thái (cùng chữ, cùng màu với đầu trang dự án). */}
+          {book.phase === "done" && !book.queuePosition ? <span className="sr-only">{status.label}</span> : <StatusPill label={status.label} tone={status.tone} live={status.live} />}
         </div>
         {/* Ô tiến độ: số (chữ số) đổi không mờ; xong <-> đang làm, nhãn việc còn lại hiện / mất (0 -> N) thì mờ qua tại chỗ. */}
         <MotionRegion motionKey={[book.phase === "done", Boolean(book.pendingChanges), Boolean(book.chapters.redo), Boolean(book.chapters.missingAudio)]} className="col-start-2 min-w-0 md:col-start-auto">
@@ -297,7 +295,7 @@ export function ProjectsScreen() {
       {isLoading ? (
         <div className="-mx-3 mt-8" aria-hidden>
           <TableHead />
-          <div className="rows-inset">
+          <div className="rows-inset [--rows-inset:calc(var(--spacing)*3)]">
             {Array.from({ length: 5 }, (_, index) => (
               <RowSkeleton key={index} />
             ))}
@@ -318,7 +316,7 @@ export function ProjectsScreen() {
         // Lề âm bù đệm của dòng: bìa thẳng mép tiêu đề, cột cuối thẳng mép phải; nền rê chuột và vạch kẻ tràn ra lề.
         <section className="-mx-3 mt-8" aria-label="Dự án">
           <TableHead />
-          <AnimatedRows items={entries} keyOf={entryKey} className="rows-inset">
+          <AnimatedRows items={entries} keyOf={entryKey} className="rows-inset [--rows-inset:calc(var(--spacing)*3)]">
             {(entry) => <EntryView entry={entry} />}
           </AnimatedRows>
         </section>

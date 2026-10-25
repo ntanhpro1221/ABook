@@ -7,7 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { useClip, type ClipSource } from "@/listen/clip";
 import { cn } from "@/shared/cn";
-import { formatPercent, joinParts } from "@/shared/format";
+import { formatPercent } from "@/shared/format";
+import { DotJoin } from "@/shared/DotJoin";
 import { Button, EmptyState, FilterRow, Kbd, Vu, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, urls } from "./api";
 import { useCachedBook } from "./data";
@@ -16,7 +17,7 @@ import { useProducingRefetch } from "./liveRefresh";
 import { usePendingNote } from "./decisions";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
 import { verdictWord, warnElsewhere } from "./elsewhere";
-import { matchPhrase, notRecordedYet, shortcutHint, spokenEditLabel } from "./reviewText";
+import { matchPhrase, matchShort, notRecordedYet, shortcutHint, spokenEditLabel } from "./reviewText";
 
 // "Cần nghe lại": câu mà khâu tự kiểm tra không chắc (webui/reviews.py). Nghe từng câu, bấm Ổn hoặc Cần thu lại.
 // "Cần thu lại" ghi một yêu cầu cho dây chuyền (overrides.json `retakes`): câu được thu lại bằng hạt giống MỚI ở lần chạy
@@ -69,23 +70,14 @@ interface ReviewView {
   remaining: number;
 }
 
-const KIND_LABEL: Record<Kind, string> = {
-  failed: "Hỏng",
-  unverified: "Chưa kiểm được",
-  "name-low": "Tên riêng lệch nhiều",
-  // Câu lệch không vì tên riêng (soát UX a24): không gọi là "tên riêng".
-  "text-low": "Đọc lệch nhiều",
-  name: "Tên riêng lệch ít",
-  text: "Đọc lệch ít",
-};
-
-const KIND_TONE: Record<Kind, string> = {
-  failed: "bg-danger-soft text-danger",
-  unverified: "bg-warning-soft text-warning",
-  "name-low": "bg-info-soft text-info",
-  "text-low": "bg-info-soft text-info",
-  name: "bg-hover text-fg-2",
-  text: "bg-hover text-fg-2",
+// Mức nặng nói bằng MÀU CHỮ của dòng lý do, không bằng viên chữ riêng: hỏng và chưa kiểm được cần để ý, lệch nhẹ thì chỉ là chữ phụ (soát 25-10).
+const KIND_INK: Record<Kind, string> = {
+  failed: "text-danger",
+  unverified: "text-warning",
+  "name-low": "text-fg-2",
+  "text-low": "text-fg-2",
+  name: "text-fg-2",
+  text: "text-fg-2",
 };
 
 export function useReviewCount(bookId: string) {
@@ -204,7 +196,7 @@ function Row({
   return (
     <Tag
       data-review-row={item.stableId}
-      className={cn("grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-3 rounded-xl px-3 py-3 transition-[opacity,background-color] duration-motion-fast", handled(item) && !editing ? "opacity-70" : "hover:bg-hover")}
+      className={cn("grid grid-cols-[40px_minmax(0,1fr)] items-start gap-x-3 gap-y-1 rounded-lg px-3 py-3 transition-[opacity,background-color] duration-motion-fast sm:grid-cols-[40px_minmax(0,1fr)_auto]", handled(item) && !editing ? "opacity-70" : "hover:bg-hover")}
     >
       {source ? (
         <button
@@ -230,24 +222,17 @@ function Row({
         </span>
       )}
       <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className={cn("rounded-md px-[7px] py-0.5 font-semibold", KIND_TONE[item.kind])}>{KIND_LABEL[item.kind]}</span>
-          {/* Một span, một chỗ ghép " · ": khoảng trắng hai bên mọi dấu chấm giữa luôn đều nhau. */}
-          <span
-            className="tabular text-fg-2"
-            title={item.similarity !== null ? "Máy nghe lại bản thu và so với chữ của câu: 100% là nghe ra đúng từng chữ" : undefined}
-          >
-            {joinParts([item.chapterTitle, item.speaker, item.similarity !== null && matchPhrase(formatPercent(item.similarity))])}
-          </span>
-        </div>
-        <p className="mt-1 text-[0.9375rem] leading-snug">{item.text}</p>
-        {item.heard && (
+        {/* Câu trước, rồi MỘT dòng nói vì sao nó ở đây (lý do · chương). Lý do mang màu mức nặng, không còn viên chữ riêng. */}
+        <p className="text-base leading-snug">{item.text}</p>
+        <DotJoin className="mt-1 text-xs text-fg-2" parts={[<span key="reason" className={KIND_INK[item.kind]}>{item.reason}</span>, item.chapterTitle]} />
+        {/* Máy nghe ra đúng chữ thì không có gì để so - chỉ hiện khi KHÁC câu (soát 25-10). */}
+        {item.heard && !sameText(item.heard, item.text) && (
           <p className="mt-1 text-[0.8125rem] leading-snug text-fg-2">
             <Ear className="mr-1 inline size-3.5 -translate-y-px" />
             Máy nghe ra: “{item.heard}”
+            {item.similarity !== null && <span className="tabular text-fg-3" title={matchPhrase(formatPercent(item.similarity))}> · {matchShort(formatPercent(item.similarity))}</span>}
           </p>
         )}
-        <p className="mt-1 text-xs text-fg-2">{item.reason}</p>
         {!source && <p className="mt-1 text-xs text-fg-2">{unplayable}.</p>}
         {item.pendingSpoken !== null ? (
           <p className="mt-1 flex items-start gap-1.5 text-xs text-fg-2">
@@ -275,50 +260,43 @@ function Row({
             }}
           />
         ) : (
-          item.textSha256 && (
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="mt-1.5 mr-3 inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline"
-            >
-              <PenLine className="size-3.5" /> {spokenEditLabel(twins.length)}
-            </button>
-          )
+          // Việc phụ của câu: cùng kiểu chữ với hai phán quyết (chữ nhấn, không nền), nhỏ hơn và nằm cùng một hàng.
+          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+            {item.textSha256 && (
+              <button type="button" onClick={() => setEditing(true)} className="touch-hit inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline">
+                <PenLine className="size-3.5" /> {spokenEditLabel(twins.length)}
+              </button>
+            )}
+            {onOpenScript && (item.verdict === "redo" || item.kind === "failed") && (
+              <button type="button" onClick={() => onOpenScript(item.chapterId, item.stableId)} className="touch-hit inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline">
+                <FileText className="size-3.5" /> Mở Kịch bản
+              </button>
+            )}
+          </div>
         )}
         </MotionRegion>
-        {onOpenScript && (item.verdict === "redo" || item.kind === "failed") && (
-          <button
-            type="button"
-            onClick={() => onOpenScript(item.chapterId, item.stableId)}
-            className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline"
-          >
-            <FileText className="size-3.5" /> Mở Kịch bản
-          </button>
-        )}
       </div>
-      {/* Một kiểu nút cho mọi phán quyết: chữ trơn (ghost), không viền; đã chọn thì nền nhạt cùng sắc trạng thái. Nút cuối kéo lề -12 px
-          để chữ của nó thẳng mép phải nội dung (nút ghost đệm 12 px mỗi bên). */}
-      <div className="-mr-3 flex gap-1">
+      {/* Hai phán quyết là việc CHÍNH của hàng: cùng kiểu chữ nhấn với việc phụ nhưng lớn hơn (14 px, cao 36 px); đã chọn thì nền nhạt cùng sắc trạng thái.
+          Điện thoại: xuống dưới câu, thẳng mép chữ; máy tính: bên phải, nút cuối kéo lề -12 px để chữ thẳng mép phải nội dung. */}
+      <div className="col-start-2 -ml-3.5 flex gap-1 sm:col-start-3 sm:row-start-1 sm:ml-0 sm:-mr-3">
         {/* Không có gì để nghe thì không phán "Ổn" được - chỉ còn thu lại (soát UX 29-09). */}
         {source && (
           <Button
             variant="ghost"
-            size="sm"
             icon={Check}
             aria-pressed={item.verdict === "ok"}
             onClick={() => onVerdict(item.verdict === "ok" ? null : "ok")}
-            className={item.verdict === "ok" ? "bg-success-soft text-success hover:bg-success-soft hover:text-success" : undefined}
+            className={item.verdict === "ok" ? "bg-success-soft text-success hover:bg-success-soft hover:text-success" : "text-accent-text hover:text-accent-text"}
           >
             Ổn
           </Button>
         )}
         <Button
           variant="ghost"
-          size="sm"
           icon={RotateCcw}
           aria-pressed={item.verdict === "redo"}
           onClick={() => onVerdict(item.verdict === "redo" ? null : "redo")}
-          className={item.verdict === "redo" ? "bg-danger-soft text-danger hover:bg-danger-soft hover:text-danger" : undefined}
+          className={item.verdict === "redo" ? "bg-danger-soft text-danger hover:bg-danger-soft hover:text-danger" : "text-accent-text hover:text-accent-text"}
         >
           {source ? "Cần thu lại" : "Thu lại câu này"}
         </Button>
@@ -512,7 +490,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
       )}
         {/* Đổi bộ lọc: cả danh sách trượt theo hướng mục vừa chọn; danh sách mới dựng lại từ đầu, không lẫn hàng cũ đang mờ ra. */}
         <MotionRegion motionKey={filter} slideIndex={filter === "todo" ? 0 : 1}>
-        <AnimatedRows key={filter} className="-mx-3 mt-3 space-y-1" items={items} keyOf={(item) => item.stableId}>
+        <AnimatedRows key={filter} className="rows-inset -mx-3 mt-3 [--rows-inset:calc(var(--spacing)*3)]" items={items} keyOf={(item) => item.stableId}>
           {(item) => (
             <Row as="div"
               key={item.stableId}

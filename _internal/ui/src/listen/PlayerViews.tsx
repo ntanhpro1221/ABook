@@ -47,7 +47,7 @@ import { reveal } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { APP_TITLE } from "@/shared/title";
 import { useMediaQuery } from "@/shared/media";
-import { MUSIC_MODIFIED_NOTE, excerpt, formatClock, formatLength, formatWhen, licenseLabel, musicCreditText, musicNeedsModifiedNote, spokenClock } from "@/shared/format";
+import { MUSIC_MODIFIED_NOTE, excerpt, formatClock, formatWhen, licenseLabel, musicCreditText, musicNeedsModifiedNote, spokenClock } from "@/shared/format";
 import { announce, busyClick, heardBarProps, IconButton, menuArrowKeys, Sheet, Tooltip, useFocusFollows, Vu } from "@/shared/ui";
 import { Switch } from "@/desktop/PhoneSync";
 import { LEVEL_NOTES, levelOptions } from "@/shared/musicLevels";
@@ -64,7 +64,7 @@ import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGr
 import { revealVoiceSettings } from "./voiceSettingsLink";
 import { VieneuDownload } from "./VieneuDownload";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, unusableVoiceMessage, voiceCaption } from "./readAloudVoice";
-import { bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, textChapterLine, toggleLabel, unquoted } from "./labels";
+import { bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel, unquoted } from "./labels";
 import { useAfter } from "@/shared/useAfter";
 import { useBackLayer } from "@/shared/backStack";
 import { MOTION, usePresence, useListPresence, withViewTransition } from "@/shared/motion";
@@ -81,7 +81,7 @@ import { useSentenceMenu, type SentenceEditing } from "./SentenceMenu";
 import { sentenceIndexAt } from "./words";
 import { cacheLabel, canPrepare, clearCacheQuestion, planLabel, PREPARE_STATUS_KEY, prepareIntro, prepareLabel, readyChapterIds, upcomingTextChapters, type PrepareStatus } from "./prepareAhead";
 import { READINGS_CHANGED_EVENT, type ReadAloudVoice, type ReadingsChanged } from "./readAloud";
-import { chapterScriptQuery, useBookVoice, useWarmVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource, useChosenVoice } from "./source";
+import { chapterScriptQuery, useWarmVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useListenMutations, useReadAloudVoices, useSource, useChosenVoice } from "./source";
 import { isRecordGone, RECORD_GONE_MESSAGE, reportWriteFailure } from "./recordWrites";
 import { crossedSeekMark, feedback, withFeedback } from "@/shared/feedback";
 
@@ -1820,14 +1820,10 @@ function ReadAlong({ edit }: { edit?: SentenceEditing }) {
   );
 }
 
-export function chapterStatusLabel(producing: boolean): string {
-  return producing ? "Đang thu âm…" : "Chưa có audio";
-}
 
 export function ChapterPanel() {
   const { track, queue, jumpTo, playing } = usePlayer();
   const { data: book } = useListenBook(track?.bookId);
-  const voice = useBookVoice(track?.bookId);
   const container = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const scroller = container.current;
@@ -1869,12 +1865,7 @@ export function ChapterPanel() {
               </span>
               {/* Dòng phụ đổi khi chương thu xong ("Đang thu âm…" -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
               <MotionRegion as="span" className="tabular block truncate text-xs text-fg-2">
-                {chapter.subtitle ? `${chapter.title} · ` : ""}
-                {chapter.available
-                  ? formatLength(chapter.duration)
-                  : chapter.state === "text"
-                    ? textChapterLine(Boolean(chapter.speech), voice)
-                    : chapterStatusLabel(Boolean(book?.producing))}
+                {chapterSubline(chapter, Boolean(book?.producing))}
               </MotionRegion>
             </span>
           </button>

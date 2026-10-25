@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bookProgressText, caughtUpDetail, caughtUpLine, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, textChapterLine, toggleLabel, unquoted } from "./labels";
+import { bookProgressText, chapterSubline, caughtUpDetail, caughtUpLine, chapterOpenProblem, retryChapterText, keepTogether, nextChapterLabel, otherBookLine, partialBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, primaryListenLabel, readerHint, resumeWhere, tapVerb, textBookLine, toggleLabel, unquoted } from "./labels";
 
 const fresh = { playingHere: false, finished: false, point: { title: "Chương 1", at: 0 }, heard: 0, textOnly: false };
 
@@ -59,8 +59,6 @@ describe("sách chỉ có chữ", () => {
   it("một dòng nhất quán, không 'chưa có âm thanh' cạnh nút Nghe ngay", () => {
     expect(textBookLine(true)).toBe("Chỉ có chữ · nghe bằng giọng đọc");
     expect(textBookLine(false)).toBe("Chỉ có chữ · máy này chưa có giọng đọc");
-    expect(textChapterLine(true)).toBe("Giọng đọc của máy");
-    expect(textChapterLine(false)).toBe("Chỉ có chữ");
   });
 });
 
@@ -133,11 +131,20 @@ describe("sách chưa đủ chương mà không máy nào thu", () => {
   });
 });
 
-describe("giọng ghi dưới mỗi chương chỉ có chữ", () => {
-  it("nói đúng giọng đang đọc cuốn, không cứng 'Giọng đọc của máy'", () => {
-    expect(textChapterLine(true, "Hoài My (Edge)")).toBe("Hoài My (Edge)");
-    expect(textChapterLine(true, "")).toBe("Giọng đọc của máy");
-    expect(textChapterLine(false, "Hoài My (Edge)")).toBe("Chỉ có chữ");
+describe("dòng phụ của chương", () => {
+  const chapter = { title: "Chương 8", subtitle: "", available: false, duration: 0, state: "text" as const };
+
+  it("chương chỉ có chữ không ghi giọng hay tên bộ máy: chữ giống nhau trên mọi hàng thì không ghi trên hàng nào", () => {
+    expect(chapterSubline(chapter, false)).toBe("");
+    expect(chapterSubline({ ...chapter, subtitle: "Mùi giấy cũ", title: "Chương 4" }, false)).toBe("Chương 4");
+    expect(chapterSubline(chapter, false)).not.toMatch(/Edge|VieNeu|Giọng đọc/);
+  });
+
+  it("chương có audio nói độ dài, chương chưa có nói đang thu hay chưa có", () => {
+    const audio = { ...chapter, state: null };
+    expect(chapterSubline({ ...audio, available: true, duration: 1560, subtitle: "Mùi giấy cũ", title: "Chương 4" }, false)).toBe("Chương 4 · 26 phút");
+    expect(chapterSubline(audio, true)).toBe("Đang thu âm…");
+    expect(chapterSubline(audio, false)).toBe("Chưa có audio");
   });
 });
 
