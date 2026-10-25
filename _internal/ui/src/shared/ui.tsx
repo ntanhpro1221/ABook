@@ -102,7 +102,7 @@ export function Button({
       ) : Icon ? (
         <Icon className={size === "lg" ? "glyph" : "size-4"} strokeWidth={2} />
       ) : loading !== undefined ? <span /> : null}</MotionRegion>
-      <MotionRegion as="span" className="inline-flex min-w-0 items-center justify-center gap-2" motionKey={typeof children === "string" || typeof children === "number" ? children : undefined}>{children}</MotionRegion>
+      <MotionRegion as="span" className="inline-flex min-w-0 items-center gap-2" motionKey={typeof children === "string" || typeof children === "number" ? children : undefined}>{children}</MotionRegion>
     </button>
   );
 }
