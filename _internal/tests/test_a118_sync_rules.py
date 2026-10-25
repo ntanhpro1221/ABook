@@ -195,6 +195,20 @@ def test_3_a_broken_row_revision_drops_the_row_so_the_peer_resends_it():
     assert checked_peer({}, clean, lambda _text: None)["chapters"] == {"2": {"heard": 1, "at": 1, "rev": ok}}
 
 
+def test_3_a_revision_table_of_the_wrong_type_drops_what_it_should_have_versioned():
+    # Chính `_fieldRevs` / `_deletedRevs` sai kiểu: bị thay bằng {} nên giá trị / dấu xoá không còn phiên bản - bỏ như phiên bản hỏng, không để máy kia từ chối mãi.
+    for table in ([{}], "x", 5, None):
+        clean = clean_state({"rate": 1.2, "rateAt": 5, "_fieldRevs": table})
+        assert "rate" not in clean and "rateAt" not in clean and clean["_fieldRevs"] == {}
+        assert checked_peer({}, clean, lambda _text: None)["chapters"] == {}
+        clean = clean_state({"deleted": {"b": 4}, "_deletedRevs": table})
+        assert clean["deleted"] == {}
+        assert checked_peer({}, clean, lambda _text: None)["deleted"] == {}
+    ok = {"counter": 2, "node": "n"}
+    clean = clean_state({"rate": 1.2, "rateAt": 5, "_fieldRevs": {"rate": ok}, "deleted": {"b": 4}, "_deletedRevs": {"b": ok}})
+    assert clean["rate"] == 1.2 and clean["deleted"] == {"b": 4}
+
+
 def test_5_record_metadata_follows_causality_not_the_wall_clock(world):
     holder, client, clock, _ = world()
     record = default_record_id(HOLDER)

@@ -49,7 +49,9 @@ def clean_state(raw: Any) -> dict:
     for field, stamp in (("rate", "rateAt"), ("finished", "finishedAt"), ("voice", "voiceAt")):
         # Giá trị + mốc giờ + phiên bản là một bộ: một phần hỏng thì bỏ cả bộ (máy kia gửi lại bản đủ) - trước đây giữ giá trị và phiên
         # bản mà mất mốc, máy kia gộp văng lỗi ở mọi lần đồng bộ (soát a118 lỗi 3).
-        broken_rev = isinstance(raw.get("_fieldRevs"), dict) and field in raw["_fieldRevs"] and field not in state.get("_fieldRevs", {})
+        # Một luật: trường còn giá trị mà bảng phiên bản đã lọc không có phiên bản cho nó là hỏng - gồm cả khi chính `_fieldRevs` sai kiểu (bị thay bằng {}).
+        revs = state.get("_fieldRevs", {})
+        broken_rev = (isinstance(raw.get("_fieldRevs"), dict) and field in raw["_fieldRevs"] and field not in revs) or (field in state and field not in revs)
         if (field in raw and field not in state) or (stamp in raw and stamp not in state) or broken_rev:
             state.pop(field, None)
             state.pop(stamp, None)
@@ -79,10 +81,8 @@ def clean_state(raw: Any) -> dict:
     for key in ("deleted",):
         if key in state:
             state[key] = {k: v for k, v in state[key].items() if number(v)} if isinstance(state[key], dict) else {}
-            # Dấu xoá mất phiên bản (phiên bản hỏng vừa bị lọc) cũng bỏ, cùng lý do như hàng.
-            raw_revs = raw.get("_deletedRevs")
-            if isinstance(raw_revs, dict):
-                state[key] = {k: v for k, v in state[key].items() if k not in raw_revs or k in state.get("_deletedRevs", {})}
+            # Dấu xoá không còn phiên bản trong bảng đã lọc (phiên bản hỏng, hay chính `_deletedRevs` sai kiểu) cũng bỏ, cùng lý do như hàng.
+            state[key] = {k: v for k, v in state[key].items() if k in state.get("_deletedRevs", {})}
     if "sessions" in state:
         state["sessions"] = [fields(v, ("startedAt", "endedAt", "listened"))
                              for v in (state["sessions"] if isinstance(state["sessions"], list) else [])

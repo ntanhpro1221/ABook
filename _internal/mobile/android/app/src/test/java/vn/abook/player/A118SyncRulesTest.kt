@@ -141,6 +141,23 @@ class A118SyncRulesTest {
         assertTrue(ListeningRevision.checkedPeer(JSONObject(), clean) {}.getJSONObject("chapters").has("2"))
     }
 
+    @Test fun aRevisionTableOfTheWrongTypeDropsWhatItShouldHaveVersioned() {
+        // `_fieldRevs` / `_deletedRevs` itself the wrong type is replaced by {}: the value / tombstone has no revision left, so it goes like a broken one.
+        for (table in listOf<Any>(JSONArray().put(JSONObject()), "x", 5, JSONObject.NULL)) {
+            val rate = ListeningSchema.state(JSONObject().put("rate", 1.2).put("rateAt", 5).put("_fieldRevs", table))
+            assertFalse(rate.has("rate") || rate.has("rateAt"))
+            assertEquals(0, rate.getJSONObject("_fieldRevs").length())
+            val deleted = ListeningSchema.state(JSONObject().put("deleted", JSONObject().put("b", 4)).put("_deletedRevs", table))
+            assertEquals(0, deleted.getJSONObject("deleted").length())
+            assertEquals(0, ListeningRevision.checkedPeer(JSONObject(), deleted) {}.getJSONObject("deleted").length())
+        }
+        val ok = JSONObject().put("counter", 2).put("node", "n")
+        val kept = ListeningSchema.state(JSONObject().put("rate", 1.2).put("rateAt", 5).put("_fieldRevs", JSONObject().put("rate", ok))
+            .put("deleted", JSONObject().put("b", 4)).put("_deletedRevs", JSONObject().put("b", ok)))
+        assertEquals(1.2, kept.getDouble("rate"), 0.0)
+        assertTrue(kept.getJSONObject("deleted").has("b"))
+    }
+
     @Test fun bug5RecordMetadataFollowsCausalityNotTheWallClock() {
         val holder = phone("meta-holder")
         val record = Store.activeRecord(book)
