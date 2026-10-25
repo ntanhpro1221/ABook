@@ -122,6 +122,8 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       const repeated = (id) => result.findings.filter((f) => f.rule === "REPEATED LABEL" && f.selector.startsWith(`#${id} >`));
       expect(repeated("tabs")).toHaveLength(1);
       expect(repeated("tabs-pass")).toHaveLength(0);
+      expect(repeated("dup-action").map((f) => f.metric)).toEqual(["label-names-two-actions"]);
+      expect(repeated("dup-action-pass")).toHaveLength(0);
     }
   });
   it("tiêu đề màn: bỏ h1 trong nội dung, đo chân chữ của h1 đầu màn tính từ mép trên main (dải phía trên không tính)", () => {
