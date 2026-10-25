@@ -262,6 +262,10 @@
     outline: 2px solid var(--focus);
     outline-offset: 2px;
   }
+  /* Tab tới một nút đang lấp ló ở mép khung cuộn: trình duyệt cuộn chừa đủ chỗ cho vòng (2 + 2 px) thay vì dừng nút sát mép cắt (soát 140 V3). */
+  .overflow-auto, .overflow-y-auto, .overflow-x-auto {
+    scroll-padding: 6px;
+  }
   /* Tiêu điểm do app đặt ngay sau một lần chạm / bấm chuột (tiêu đề trang mới, nút X của hộp): không khung - ô nhập vẫn giữ (ui.tsx ghi data-input). */
   html[data-input="pointer"] :focus-visible:not(input, textarea, select, [contenteditable]) {
     outline: none;
