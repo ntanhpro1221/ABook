@@ -98,6 +98,13 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
       expect(Number.isFinite(covered("cover")[0]?.value)).toBe(true); // index.html in value cho mọi phát hiện có metric
     }
   });
+  it("tiêu đề trong tab lặp tên tab đang chọn thì báo; tiêu đề khác thì không", () => {
+    for (const result of results) {
+      const repeated = (id) => result.findings.filter((f) => f.rule === "REPEATED LABEL" && f.selector.startsWith(`#${id} >`));
+      expect(repeated("tabs")).toHaveLength(1);
+      expect(repeated("tabs-pass")).toHaveLength(0);
+    }
+  });
   it("thẻ có viền tạo cột riêng; nút giữa toàn hàng không phải cạnh cột", () => {
     for (const result of results) {
       expect(at(result, "panel", "ink-left")).toHaveLength(0);
