@@ -108,6 +108,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
   }
   function iconInk(svg) {
     if (iconCache.has(svg)) return iconCache.get(svg);
+    let partial = false;
     const pieces = [...svg.querySelectorAll("path,rect,circle,ellipse,line,polyline,polygon,use")].flatMap((p) => {
       if (hidden(p)) return [];
       const s = css(p), stroke = s.stroke !== "none" && Number(s.strokeOpacity) > 0 ? Number.parseFloat(s.strokeWidth) / 2 : 0;
@@ -121,10 +122,14 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
           .map(([x, y]) => ({ x: m.a * x + m.c * y + m.e, y: m.b * x + m.d * y + m.f, width: 0, height: 0 }));
         const box = union(points);
         if (nonScaling) { box.x -= stroke; box.y -= stroke; box.width += 2 * stroke; box.height += 2 * stroke; }
-        return [visible(svg, box, true)].filter(Boolean);
+        const shown = visible(svg, box, true);
+        // Nét bị mép cuộn / lớp phủ cắt mất (một phần hay cả nét): hộp mực còn lại không phải hình của icon - đo nó thì khoảng icon-chữ sai (hàng chương lấp ló
+        // dưới thanh phát, soát 140). Cả icon không đo được.
+        if (!shown || Math.abs(shown.width - box.width) > 0.5 || Math.abs(shown.height - box.height) > 0.5) partial = true;
+        return [shown].filter(Boolean);
       } catch { return []; }
     });
-    const result = union(pieces); iconCache.set(svg, result); return result;
+    const result = partial ? null : union(pieces); iconCache.set(svg, result); return result;
   }
   function controlInk(el) {
     const pieces = inkTexts.filter((t) => t.control === el).map((t) => t.ink);

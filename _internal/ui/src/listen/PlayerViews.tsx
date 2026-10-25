@@ -1125,9 +1125,10 @@ function SleepPicker({
         idle
       )}
       <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">{active ? "Đặt lại" : "Dừng phát sau"}</div>
-      {/* MỘT cách chọn (soát 140 V3): bấm một mức là đặt - không còn bộ −/+ và nút "Đặt N phút" song song với các ô, ô đang hẹn luôn sáng. Tám mức đủ hai
-          hàng, "Hết chương này" là ô thứ chín trải cả hàng, cùng kiểu. Ô có nền nhạt: mép ô (không phải chữ giữa ô) đứng trên lề bảng. */}
-      <div className={cn("grid grid-cols-4 gap-1", MENU_LIST)}>
+      {/* MỘT cách chọn (soát 140 V3): bấm một mức là đặt - không còn bộ −/+ và nút "Đặt N phút" song song với các ô, ô đang hẹn luôn sáng. Sáu mức ba
+          cột hai hàng, "Hết chương này" trải cả hàng, cùng kiểu. Ba cột vì mục này cũng mở ngay trong menu "…" rộng 252 px: bốn cột thì chữ sát mép ô.
+          Ô có nền nhạt: mép ô (không phải chữ giữa ô) đứng trên lề bảng. */}
+      <div className={cn("grid grid-cols-3 gap-1", MENU_LIST)}>
         {[...SLEEP_CHOICES.map((minutes) => ({ key: String(minutes), label: `${minutes} phút`, request: { kind: "minutes", minutes } as SleepRequest,
           current: sleep.kind === "minutes" && sleep.minutes === minutes })),
           { key: "chapter", label: "Hết chương này", request: { kind: "chapter" } as SleepRequest, current: sleep.kind === "chapter" }].map((choice) => (
@@ -1140,7 +1141,7 @@ function SleepPicker({
               data-current-choice={choice.current ? "" : undefined}
               className={cn(
                 "tabular touch-row h-9 rounded-lg text-sm disabled:opacity-40",
-                choice.key === "chapter" && "col-span-4",
+                choice.key === "chapter" && "col-span-3",
                 choice.current ? "bg-accent-soft font-semibold text-accent-text" : "bg-hover hover:bg-line",
               )}
             >
