@@ -512,7 +512,9 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
           <MoreInfo>Chạy tiếp hoặc Áp dụng thay đổi để thu lại.</MoreInfo>
         </div>
       )}
-        <AnimatedRows className="-mx-3 mt-3 space-y-1" items={items} keyOf={(item) => item.stableId}>
+        {/* Đổi bộ lọc: cả danh sách trượt theo hướng mục vừa chọn; danh sách mới dựng lại từ đầu, không lẫn hàng cũ đang mờ ra. */}
+        <MotionRegion motionKey={filter} slideIndex={filter === "todo" ? 0 : 1}>
+        <AnimatedRows key={filter} className="-mx-3 mt-3 space-y-1" items={items} keyOf={(item) => item.stableId}>
           {(item) => (
             <Row as="div"
               key={item.stableId}
@@ -529,6 +531,7 @@ export function ReviewQueue({ bookId, onOpenScript }: { bookId: string; onOpenSc
             />
           )}
         </AnimatedRows>
+        </MotionRegion>
       {!items.length && (
         <div data-review-row={EMPTY} tabIndex={-1} className="rounded-xl outline-none">
           <EmptyState icon={ShieldCheck} title={filter === "todo" ? (unrecorded ? "Chưa có bản thu" : "Đã xem hết") : "Chưa đánh dấu câu nào"} className="mt-4">

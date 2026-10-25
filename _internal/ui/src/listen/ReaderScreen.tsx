@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import * as Popover from "@radix-ui/react-popover";
 import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
@@ -337,7 +338,8 @@ export function ReaderScreen(edit: SentenceEditing) {
         <Popover.Portal>
           <Popover.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 w-64 rounded-xl border border-line bg-panel p-3 shadow-float">
             <div className="text-xs font-medium text-fg-2">Cỡ chữ</div>
-            <div role="group" aria-label="Cỡ chữ" className="mt-1.5 grid grid-cols-5 gap-1">
+            <div role="group" aria-label="Cỡ chữ" className="relative mt-1.5 grid grid-cols-5 gap-1">
+              <SlidingIndicator variant="pill" className="rounded-lg bg-accent-soft" />
               {SIZES.map((size) => (
                 <button
                   key={size}
@@ -345,7 +347,7 @@ export function ReaderScreen(edit: SentenceEditing) {
                   aria-pressed={prefs.size === size}
                   aria-label={`Cỡ chữ ${size}`}
                   onClick={() => setPrefs({ ...prefs, size })}
-                  className={cn("h-9 rounded-lg max-sm:h-[48px]", prefs.size === size ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
+                  className={cn("relative h-9 rounded-lg transition-colors duration-motion-medium max-sm:h-[48px]", prefs.size === size ? "font-semibold text-accent-text" : "hover:bg-hover")}
                   style={{ fontSize: Math.round(size * 0.75) }}
                 >
                   A
@@ -353,14 +355,15 @@ export function ReaderScreen(edit: SentenceEditing) {
               ))}
             </div>
             <div className="mt-3 text-xs font-medium text-fg-2">Giãn dòng</div>
-            <div className="mt-1.5 grid grid-cols-3 gap-1">
+            <div className="relative mt-1.5 grid grid-cols-3 gap-1">
+              <SlidingIndicator variant="pill" className="rounded-lg bg-accent-soft" />
               {LEADINGS.map((leading) => (
                 <button
                   key={leading}
                   type="button"
                   aria-pressed={prefs.leading === leading}
                   onClick={() => setPrefs({ ...prefs, leading })}
-                  className={cn("tabular h-9 rounded-lg text-sm max-sm:h-[48px]", prefs.leading === leading ? "bg-accent-soft font-semibold text-accent-text" : "hover:bg-hover")}
+                  className={cn("tabular relative h-9 rounded-lg text-sm transition-colors duration-motion-medium max-sm:h-[48px]", prefs.leading === leading ? "font-semibold text-accent-text" : "hover:bg-hover")}
                 >
                   {leading.toLocaleString("vi-VN")}
                 </button>

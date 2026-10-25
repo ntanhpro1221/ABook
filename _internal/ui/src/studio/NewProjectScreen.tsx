@@ -1107,7 +1107,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
               aria-pressed={value === name}
               onClick={() => onChange(value === name ? "" : name)}
               className={cn(
-                "rounded-full border px-3 py-1.5 text-sm font-medium",
+                "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-motion-medium",
                 value === name ? "border-accent bg-accent/10 text-accent-text" : "border-line text-fg hover:border-fg-3",
               )}
             >
