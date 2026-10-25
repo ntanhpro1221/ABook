@@ -61,7 +61,8 @@ describe("Cài đặt trên máy tính: không tràn ngang ở 320 px / chữ 32
   });
 
   it("nút Thành phần sử dụng xuống dòng", () => {
-    expectWraps(opening(html, "button", "Thành phần sử dụng"));
+    expect(opening(html, "button", "Thành phần sử dụng")).toContain("disclosure-row");
+    expect(html).toMatch(/class="[^"]*\[overflow-wrap:anywhere\][^"]*">Thành phần sử dụng/);
   });
 
   it("liên kết github cắt đúng chỗ thay vì đẩy trang rộng ra", () => {

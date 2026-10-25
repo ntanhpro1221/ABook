@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { renderToString } from "react-dom/server";
 import { beforeAll, describe, expect, it } from "vitest";
 import { loadThirdParty, parseThirdParty } from "./thirdParty";
+import { TooltipProvider } from "./ui";
 import { SettingsAt } from "./settingsAt";
 
 // Cài đặt máy tính và điện thoại: mục "Nhạc nền" ("Nhạc của tôi" chung mọi cuốn - trước chỉ có trong hộp "Sửa sách") và "Giới thiệu"
@@ -25,7 +26,7 @@ beforeAll(() => {
 });
 
 function wrap(children: ReactNode) {
-  return renderToString(<QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>);
+  return renderToString(<QueryClientProvider client={new QueryClient()}><TooltipProvider>{children}</TooltipProvider></QueryClientProvider>);
 }
 
 /** Các mục `<section id>` + chữ của tiêu đề `h2` (khối gập - a120 - thì tiêu đề nằm trong nút gập / mở bên trong h2). */
@@ -88,7 +89,7 @@ describe("Cài đặt", () => {
 
 describe("cây Cài đặt (chủ app 23-10: không còn là ma trận)", () => {
   /** Tên các nhóm trên trang gốc, theo thứ tự. */
-  const groupNames = (html: string) => [...html.matchAll(/<a[^>]*href="[^"]*\/settings\/([a-z]+)"[^>]*>[\s\S]*?<span class="block text-\[0.9375rem\][^"]*">([^<]+)</g)].map((match) => [match[1], match[2]]);
+  const groupNames = (html: string) => [...html.matchAll(/<a[^>]*href="[^"]*\/settings\/([a-z]+)"[^>]*>[\s\S]*?<span class="block text-base[^"]*">([^<]+)</g)].map((match) => [match[1], match[2]]);
 
   it("trang gốc điện thoại: 6 nhóm, mỗi nhóm một dòng, đúng thứ tự dùng nhiều trước", async () => {
     const { SettingsScreen } = await import("@/android/SettingsScreen");

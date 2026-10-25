@@ -35,7 +35,7 @@ import { usePageTitle } from "@/shared/title";
 import { useScrollFadeOn } from "@/shared/scrollFade";
 import { formatLength, formatNumber } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { Button, LiveText, Segmented, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { Button, LiveText, ChoiceRow, Vu, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import type { ContinuationPlan, FirstPersonHint, ScannedFile, ScanResult, Voice } from "@/studio/api";
 import {
   pickFiles,
@@ -525,7 +525,7 @@ export function SourceStep({
                     <button
                       type="button"
                       onClick={() => onPaths(problem.subfolders)}
-                      className="flex w-full items-center gap-2 rounded-lg border border-accent/50 bg-panel px-3 py-2 text-left font-medium text-fg hover:border-accent"
+                      className="flex min-h-10 w-full items-center gap-2 py-2 text-left font-medium text-accent-text hover:bg-hover"
                     >
                       <Layers className="size-4 shrink-0 text-accent-text" />
                       <span className="min-w-0">Chọn {problem.subfolders.length} tập</span>
@@ -537,7 +537,7 @@ export function SourceStep({
                       type="button"
                       title={isSourceRef(folder) ? sourceName(folder) : folder}
                       onClick={() => onPaths([folder])}
-                      className="flex w-full items-center gap-2 truncate rounded-lg border border-line bg-panel px-3 py-2 text-left text-fg hover:border-accent"
+                      className="flex min-h-10 w-full items-center gap-2 truncate py-2 text-left text-accent-text hover:bg-hover"
                     >
                       <Folder className="size-4 shrink-0 text-fg-2" />
                       {/* Tên thư mục đứng trước: hai thư mục "Tập 1", "Tập 2" cùng một đường dẫn dài thì đuôi bị cắt nhìn y hệt nhau. */}
@@ -656,7 +656,7 @@ export function SourceStep({
           {total > CHAPTER_LIMITS[0] && !splitting && (
             <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-fg-2">
               <span>Đợt này làm</span>
-              <Segmented<string>
+              <ChoiceRow<string>
                 label="Đợt này làm bao nhiêu chương"
                 wrap
                 value={limit ? String(limit) : "all"}
@@ -818,10 +818,10 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
         <div className="mt-2.5 flex flex-wrap gap-2">
           {both ? (
             <>
-              <Button size="sm" variant={drop.head ? "ghost" : "secondary"} aria-pressed={drop.head} onClick={() => onChange({ ...drop, head: !drop.head })}>
+              <Button size="sm" variant="ghost" aria-pressed={drop.head} onClick={() => onChange({ ...drop, head: !drop.head })}>
                 {drop.head ? "Giữ dòng đầu" : `Bỏ ${formatNumber(credits.head)} dòng`}
               </Button>
-              <Button size="sm" variant={drop.tail ? "ghost" : "secondary"} aria-pressed={drop.tail} onClick={() => onChange({ ...drop, tail: !drop.tail })}>
+              <Button size="sm" variant="ghost" aria-pressed={drop.tail} onClick={() => onChange({ ...drop, tail: !drop.tail })}>
                 {drop.tail ? "Giữ dòng cuối" : `Bỏ ${formatNumber(credits.tail)} dòng`}
               </Button>
             </>
@@ -830,7 +830,7 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
               Giữ nguyên chữ
             </Button>
           ) : (
-            <Button size="sm" variant="secondary" onClick={() => onChange({ head: credits.head > 0, tail: credits.tail > 0 })}>
+            <Button size="sm" variant="ghost" onClick={() => onChange({ head: credits.head > 0, tail: credits.tail > 0 })}>
               Bỏ khỏi phần đọc
             </Button>
           )}
@@ -886,7 +886,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
         <div className="mt-2.5">
           <Button
             size="sm"
-            variant="secondary"
+            variant="ghost"
             icon={busy ? Loader2 : Scissors}
             disabled={busy}
             onClick={() => {
@@ -969,8 +969,8 @@ export function VoiceCard({
   return (
     <div
       className={cn(
-        "relative flex items-center gap-3 rounded-xl border bg-panel p-3.5 transition-colors",
-        selected ? "border-focus ring-1 ring-focus" : "border-line hover:border-line-strong",
+        "relative flex items-center gap-3 border-b border-line py-3.5 transition-colors",
+        selected ? "text-accent-text" : "text-fg",
       )}
     >
       <button
@@ -981,7 +981,7 @@ export function VoiceCard({
         // Trên lớp phủ bấm-để-chọn của thẻ (after:inset-0): nghe thử không đổi giọng đang chọn (soát UX a5 01-10).
         className={cn(
           "relative z-10 grid size-10 shrink-0 place-items-center rounded-full transition-colors",
-          playing ? "bg-accent text-accent-ink" : "bg-hover text-fg hover:bg-line",
+          playing ? "text-accent-text" : "text-fg-2 hover:bg-hover",
         )}
       >
         <MotionRegion as="span" className="grid size-4 place-items-center">{playing ? <Vu className="h-3" /> : <Play className="size-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
@@ -1006,7 +1006,7 @@ export function VoiceCard({
         )}
       </button>
       <MotionRegion as="span" className="grid size-6 shrink-0 place-items-center" aria-hidden>
-        {selected ? <span className="grid size-6 place-items-center rounded-full bg-accent text-accent-ink"><Check className="size-3.5" strokeWidth={3} /></span> : <span />}
+        {selected ? <span className="grid size-6 place-items-center text-accent-text"><Check className="size-3.5" strokeWidth={3} /></span> : <span />}
       </MotionRegion>
     </div>
   );
@@ -1119,8 +1119,8 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
               aria-pressed={value === name}
               onClick={() => onChange(value === name ? "" : name)}
               className={cn(
-                "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors duration-motion-medium",
-                value === name ? "border-accent bg-accent/10 text-accent-text" : "border-line text-fg hover:border-fg-3",
+                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-motion-medium",
+                value === name ? "text-accent-text underline underline-offset-4" : "text-fg-2 hover:bg-hover",
               )}
             >
               {name}
@@ -1140,7 +1140,7 @@ function FirstPersonQuestion({ paths, seedFrom, value, onChange, gender, onGende
       </label>
       {value.trim() && (
         <div className="mt-3">
-          <Segmented
+          <ChoiceRow
             label="Người kể là"
             value={gender ?? "unknown"}
             onChange={(next) => onGender(next === "male" || next === "female" ? next : undefined)}
@@ -1259,12 +1259,12 @@ export function VoiceStep({
       )}
       <Fold storageKey="new-project.voices" title="Đổi giọng" summary={narrator || "Chọn một giọng"} defaultOpen={!narrator} className="mt-4" heading="h3">
       <div className="flex flex-wrap items-center gap-3">
-        <Segmented label="Giới tính" value={gender} onChange={setGender} options={[
+        <ChoiceRow label="Giới tính" value={gender} onChange={setGender} options={[
           { value: "all", label: "Mọi giọng" },
           { value: "Nam", label: "Giọng nam" },
           { value: "Nữ", label: "Giọng nữ" },
         ]} />
-        <Segmented label="Miền" value={region} onChange={setRegion} options={[
+        <ChoiceRow label="Miền" value={region} onChange={setRegion} options={[
           { value: "all", label: "Mọi miền" },
           { value: "Bắc", label: "Miền Bắc" },
           { value: "Nam", label: "Miền Nam" },
@@ -1329,7 +1329,7 @@ export function QualityStep({
         role="radiogroup"
         aria-label="Chất lượng"
         onKeyDown={radioGroupKeys(PROFILE_VALUES, profile, setProfile)}
-        className="mt-6 grid gap-4 lg:grid-cols-3"
+        className="mt-6 grid divide-y divide-line"
       >
         {PROFILES.map((option, index) => {
           const selected = option.value === profile;
@@ -1342,18 +1342,18 @@ export function QualityStep({
               tabIndex={radioTabIndex(PROFILE_VALUES, profile, index)}
               onClick={() => setProfile(option.value)}
               className={cn(
-                "relative flex flex-col rounded-2xl border bg-panel p-5 text-left transition-colors",
-                selected ? "border-focus ring-1 ring-focus" : "border-line hover:border-line-strong",
+                "relative flex flex-col border-b border-line py-4 text-left transition-colors",
+                selected ? "text-accent-text" : "text-fg",
               )}
             >
               {option.value === "high_quality" && (
-                <span className="absolute -top-2.5 left-4 inline-flex items-center gap-1 rounded-full bg-accent px-2 py-0.5 text-[0.6875rem] font-semibold text-accent-ink">
+                <span className="mb-2 inline-flex items-center gap-1 text-xs font-medium text-fg-2">
                   <Sparkles className="size-3" /> Nên dùng
                 </span>
               )}
               <div className="flex items-center justify-between">
                 <span className="text-base font-semibold">{option.title}</span>
-                <MotionRegion as="span" className="grid size-6 place-items-center" aria-hidden>{selected ? <span className="grid size-6 place-items-center rounded-full bg-accent text-accent-ink"><Check className="size-3.5" strokeWidth={3} /></span> : <span />}</MotionRegion>
+                <MotionRegion as="span" className="grid size-6 place-items-center" aria-hidden>{selected ? <span className="grid size-6 place-items-center text-accent-text"><Check className="size-3.5" strokeWidth={3} /></span> : <span />}</MotionRegion>
               </div>
               <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-fg-2">
                 <Gauge className="size-3.5" /> {option.pace}

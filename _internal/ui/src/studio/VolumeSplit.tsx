@@ -106,7 +106,7 @@ export function VolumeSplit({
             {" "}Chưa chia thì cả truyện là một sách. Mỗi phần tự bắt đầu sau phần trước; bạn sửa chỗ cắt bằng số chương.
           </MoreInfo>
           <div className="mt-2.5 flex gap-2">
-            <Button size="sm" variant="secondary" icon={Layers} onClick={() => onChange(proposal.volumes.map((volume) => volume.startPath))}>
+            <Button size="sm" variant="ghost" icon={Layers} onClick={() => onChange(proposal.volumes.map((volume) => volume.startPath))}>
               Chia thành nhiều phần
             </Button>
           </div>
@@ -226,7 +226,7 @@ function AddCut({ starts, total, onAdd }: { starts: number[]; total: number; onA
           bad ? "border-danger" : "border-line",
         )}
       />
-      <Button size="sm" variant="secondary" icon={Plus} disabled={!text.trim()} onClick={add}>
+      <Button size="sm" variant="ghost" icon={Plus} disabled={!text.trim()} onClick={add}>
         Thêm
       </Button>
       {bad && (

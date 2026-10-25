@@ -137,6 +137,19 @@ it("trình phát điện thoại: lớp phủ inset-0 tự chừa biên an toàn
 const script = { timed: true, segments: Array.from({ length: 30 }, (_, i) => ({ text: `Câu số ${i + 1}.`, start: i * 3, speaker: "", kind: "narration" })) } as unknown as Script;
 const reader = () => render(<Routes><Route path="/book/:id/read/:chapterId?" element={<ReaderScreen />} /></Routes>, "/book/a/read/1");
 
+it("màn đọc: cỡ chữ và giãn dòng giữ lựa chọn, gạch chân và áp ngay vào bài", async () => {
+  player({ track: null }); state.book = listenBook(); state.script = script;
+  await reader(); await press(named("Cỡ chữ và giãn dòng")!);
+  const sizes = document.querySelector('[role="group"][aria-label="Cỡ chữ"]')!;
+  expect([...sizes.querySelectorAll("button")].map(button => button.textContent)).toEqual(["16", "18", "20", "22", "24"]);
+  expect(sizes.querySelector('[data-sliding-indicator="line"]')).not.toBeNull();
+  await press(named("Cỡ chữ 24")!);
+  expect(host.querySelector("article")!.style.fontSize).toBe("24px");
+  expect(named("Cỡ chữ 24")!.getAttribute("aria-pressed")).toBe("true");
+  await press([...document.querySelectorAll<HTMLButtonElement>('button[aria-pressed]')].find(button => button.textContent === "1,9")!);
+  expect(host.querySelector("article")!.style.lineHeight).toBe("1.9");
+});
+
 it("màn đọc: thanh đầu chỉ có nút về + tên chương, nền đặc, đứng ngoài khung cuộn chữ", async () => {
   player({ track: null });
   state.book = listenBook(); state.script = script;

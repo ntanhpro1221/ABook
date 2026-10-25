@@ -10,7 +10,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
-import { Button, Dialog, Progress } from "@/shared/ui";
+import { Button, Dialog, IconButton, Progress } from "@/shared/ui";
 import { useUnpair } from "@/shared/useUnpair";
 import { BackgroundNote } from "./BackgroundNote";
 import { BLUETOOTH_DENIED, BLUETOOTH_REASON, bluetoothStep } from "./bluetoothPermission";
@@ -33,38 +33,30 @@ import { EbookLibrary, type DownloadEvent, type RemoteBook, type ShareStatus } f
 export const DESKTOP_RELEASES = "https://github.com/ntanhpro1221/ABook/releases";
 
 /** Mở đầu cho người chỉ có điện thoại (soát a66): máy tính thêm được gì và lấy ABook máy tính ở đâu - rồi mới tới các bước ghép nối. */
-function ComputerIntro() {
+export function ComputerIntro() {
   const copy = () =>
     void navigator.clipboard
       .writeText(DESKTOP_RELEASES)
       .then(() => toast.success("Đã chép địa chỉ"), () => toast.error("Chưa chép được - giữ ngón tay lên địa chỉ để chọn rồi chép"));
   return (
-    <div className="text-sm">
-      <div className="flex items-center gap-3">
-        <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text">
-          <Laptop className="size-5" />
-        </div>
-        {/* Cùng dựng như khối "Nối máy tính" bên dưới: tên + một dòng phụ cạnh biểu tượng (soát OPPO 25-10: khối này để dòng phụ dưới biểu tượng). */}
-        <div>
-          <h2 className="font-semibold">Studio trên máy tính</h2>
-          <p className="text-fg-2">Tạo sách nói rồi nghe ở đây.</p>
+    <div>
+      <div className="flex min-h-[3.5rem] items-center gap-3 py-3">
+        <Laptop className="size-5 shrink-0 text-fg-2" />
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base font-medium">Studio máy tính</h2>
+          <p className="text-sm text-fg-2">Tạo sách nói rồi nghe ở đây.</p>
         </div>
       </div>
-      <p className="mt-4 text-fg-2">ABook cho Windows:</p>
-      <p className="mt-1 select-text break-all font-medium text-fg">{DESKTOP_RELEASES.replace("https://", "")}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <Button size="sm" variant="secondary" icon={Copy} onClick={copy}>
-          Chép địa chỉ
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => void openRelease(DESKTOP_RELEASES)}>
-          Mở trang tải
-        </Button>
+      <div className="flex min-h-[3.5rem] items-center gap-3 border-t border-line py-2">
+        <Download className="size-5 shrink-0 text-fg-2" />
+        <a href={DESKTOP_RELEASES} className="flex min-h-[48px] min-w-0 flex-1 items-center text-left text-base font-medium text-accent-text" onClick={(event) => { event.preventDefault(); void openRelease(DESKTOP_RELEASES); }}>Tải ABook Windows</a>
+        <IconButton label="Chép địa chỉ" icon={Copy} onClick={copy} />
       </div>
     </div>
   );
 }
 
-function PairPanel() {
+export function PairPanel() {
   const client = useQueryClient();
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
   const [computers, setComputers] = useState<{ host: string; port: number; name: string }[] | null>(null);
@@ -162,17 +154,18 @@ function PairPanel() {
     <MotionRegion as="div" className="space-y-5">
       <div className="py-4">
         <div className="flex items-center gap-3">
-          <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text">
+          <div className="flex shrink-0 items-center text-fg-2">
             <Wifi className="size-5" />
           </div>
           <div>
-            <h2 className="font-semibold">Nối máy tính</h2>
+            <h2 className="text-base font-medium">Nối máy tính</h2>
             <p className="text-sm text-fg-2">Cho hai máy cùng Wi-Fi.</p>
           </div>
         </div>
         <ol className="mt-4 space-y-1.5 text-sm text-fg-2">
-          <li>1. Máy tính: Cài đặt › Thiết bị › bật <span className="whitespace-nowrap">“{SYNC_SWITCH_LABEL}”</span> › “Ghép thiết bị mới”.</li>
-          <li>2. Chọn máy tính dưới đây, nhập mã 6 số.</li>
+          <li>1. Trên máy tính, mở Thiết bị trong Cài đặt.</li>
+          <li>2. Bật “{SYNC_SWITCH_LABEL}”, chọn ghép thiết bị.</li>
+          <li>3. Chọn máy dưới đây, nhập mã 6 số.</li>
         </ol>
       </div>
 
@@ -192,8 +185,7 @@ function PairPanel() {
                   type="button"
                   onClick={() => setTarget(computer)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border p-3.5 text-left",
-                    target?.host === computer.host ? "border-focus bg-accent-soft" : "border-line bg-panel",
+                    "flex min-h-[3.5rem] w-full items-center gap-3 border-b border-line py-3 text-left hover:bg-hover",
                   )}
                 >
                   <Laptop className="size-5 text-fg-2" />
@@ -206,7 +198,7 @@ function PairPanel() {
               ))}
             </div>
           ) : (
-            <p className="rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
+            <p className="py-3 text-sm text-fg-2">
               {discover.isPending ? "Đang tìm trong mạng Wi-Fi…" : "Chưa thấy máy tính nào. Kiểm tra máy tính đã bật kết nối, hoặc nhập địa chỉ."}
             </p>
           )}
@@ -216,7 +208,7 @@ function PairPanel() {
       {!manual && (
         <div>
           {paired === null && btAsk ? (
-            <div ref={btBox} className="space-y-3 rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
+            <div ref={btBox} className="space-y-3 py-3 text-sm text-fg-2">
               <p className="text-pretty">{btAsk === "explain" ? BLUETOOTH_REASON : BLUETOOTH_DENIED}</p>
               {btAsk === "explain" && <MoreInfo label="Quyền Bluetooth">Chỉ tìm máy đã ghép Bluetooth để nhận sách; ABook không dò hay kết nối thiết bị khác.</MoreInfo>}
               <div className="flex flex-wrap gap-2">
@@ -247,8 +239,7 @@ function PairPanel() {
                   type="button"
                   onClick={() => setTarget({ host: `bt:${device.address}`, port: 0, name: device.name })}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border p-3.5 text-left",
-                    target?.host === `bt:${device.address}` ? "border-focus bg-accent-soft" : "border-line bg-panel",
+                    "flex min-h-[3.5rem] w-full items-center gap-3 border-b border-line py-3 text-left hover:bg-hover",
                   )}
                 >
                   <Bluetooth className="size-5 text-fg-2" />
@@ -261,7 +252,7 @@ function PairPanel() {
               ))}
             </div>
           ) : (
-            <p className="rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
+            <p className="py-3 text-sm text-fg-2">
               Chưa có máy tính ghép Bluetooth. Ghép ở Cài đặt Android › Bluetooth rồi thử lại.
             </p>
           )}
@@ -278,7 +269,7 @@ function PairPanel() {
           onChange={(event) => setAddress(event.target.value)}
           inputMode="url"
           placeholder="Ví dụ 192.168.1.20:47630"
-          className="h-12 w-full rounded-xl border border-line bg-panel px-4 text-base outline-none focus:border-focus"
+          className="device-input w-full px-3 text-base"
         />
       )}
 
@@ -290,7 +281,7 @@ function PairPanel() {
           inputMode="numeric"
           autoComplete="one-time-code"
           placeholder="••••••"
-          className="tabular mt-1.5 h-14 w-full rounded-xl border border-line bg-panel text-center text-2xl font-semibold tracking-[0.5em] outline-none focus:border-focus"
+          className="device-input tabular mt-1.5 w-full text-center text-xl font-medium tracking-[0.5em]"
         />
       </label>
       <Button variant="primary" size="lg" className="w-full" disabled={!ready} loading={pair.isPending} onClick={() => pair.mutate()}>
@@ -351,7 +342,7 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
           <CheckCircle2 className="ink-start size-4" /> Đã tải
         </span>
       ) : (
-        <Button size="sm" variant={compact ? "ghost" : book.downloaded ? "secondary" : "primary"} icon={Download} onClick={onDownload}>
+        <Button size="sm" variant={compact ? "ghost" : book.downloaded ? "ghost" : "primary"} icon={Download} onClick={onDownload}>
           {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : newAudio ? "Cập nhật bản thu" : newCover ? "Cập nhật bìa" : newMeta ? "Cập nhật tên" : "Cập nhật chữ"}
         </Button>
       )}
@@ -497,7 +488,7 @@ function PeersPanel() {
         <h2 id="peers-title" className="font-semibold">
           Thiết bị khác
         </h2>
-        <Button size="sm" variant="secondary" icon={Link2} onClick={() => { setOpen((value) => !value); if (!open) discover.mutate(); }}>
+        <Button size="sm" variant="ghost" icon={Link2} onClick={() => { setOpen((value) => !value); if (!open) discover.mutate(); }}>
           Ghép thiết bị
         </Button>
       </div>
@@ -519,8 +510,7 @@ function PeersPanel() {
                   type="button"
                   onClick={() => setAddress(`bt:${device.address}`)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border p-3 text-left",
-                    address === `bt:${device.address}` ? "border-focus bg-accent-soft" : "border-line",
+                    "flex min-h-[3.5rem] w-full items-center gap-3 border-b border-line py-3 text-left hover:bg-hover",
                   )}
                 >
                   <Bluetooth className="size-5 text-fg-2" />
@@ -545,8 +535,7 @@ function PeersPanel() {
                   type="button"
                   onClick={() => setAddress(`${item.host}:${item.port}`)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border p-3 text-left",
-                    address === `${item.host}:${item.port}` ? "border-focus bg-accent-soft" : "border-line",
+                    "flex min-h-[3.5rem] w-full items-center gap-3 border-b border-line py-3 text-left hover:bg-hover",
                   )}
                 >
                   {item.kind === "phone" ? <Smartphone className="size-5 text-fg-2" /> : <Laptop className="size-5 text-fg-2" />}
@@ -565,14 +554,14 @@ function PeersPanel() {
             onChange={(event) => setAddress(event.target.value)}
             inputMode="url"
             placeholder="Địa chỉ, ví dụ 192.168.1.25:47630"
-            className="h-11 w-full rounded-xl border border-line bg-panel px-3 text-base outline-none focus:border-focus"
+            className="device-input w-full px-3 text-base"
           />
           <input
             value={code}
             onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
             inputMode="numeric"
             placeholder="Mã 6 số"
-            className="tabular h-11 w-full rounded-xl border border-line bg-panel px-3 text-center text-lg tracking-[0.3em] outline-none focus:border-focus"
+            className="device-input tabular w-full px-3 text-center text-lg tracking-[0.3em]"
           />
           <Button variant="primary" className="w-full" disabled={!ready} loading={pair.isPending} onClick={() => pair.mutate()}>
             Ghép
@@ -596,7 +585,7 @@ function PeersPanel() {
               </div>
               {peer.error && !peer.pinChanged && <ErrorDetails technical={peer.technical} className="text-fg-2" />}
               {peer.unpaired && (
-                <Button size="sm" variant="secondary" icon={Link2} className="mt-2" onClick={() => void repair(peer)}>
+                <Button size="sm" variant="ghost" icon={Link2} className="mt-2" onClick={() => void repair(peer)}>
                   Ghép lại
                 </Button>
               )}
@@ -679,7 +668,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
         </Switch.Root>
       </div>
       {explain && !enabled && (
-        <div ref={explainBox} className="mt-3 space-y-3 rounded-xl bg-hover px-4 py-3 text-sm text-fg-2">
+        <div ref={explainBox} className="mt-3 space-y-3 py-3 text-sm text-fg-2">
           <p className="text-pretty">
             Khi chia sẻ, ABook giữ một thông báo nhỏ để chạy tiếp lúc tắt màn hình.
           </p>
@@ -751,7 +740,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
             </dl>
           </Fold>
           {pairing && left > 0 ? (
-            <div className="rounded-xl bg-accent-soft p-4 text-center">
+            <div className="py-4 text-center">
               <div className="text-xs text-fg-2">Nhập mã này trên máy kia</div>
               <div className="tabular mt-1 text-3xl font-bold tracking-[0.3em]">{pairing.code}</div>
               <div className="tabular mt-1 text-xs text-fg-2">
@@ -763,7 +752,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
               </button>
             </div>
           ) : (
-            <Button variant="secondary" className="w-full" icon={Link2} onClick={() => run.mutate(() => EbookLibrary.sharePair())}>
+            <Button variant="ghost" className="w-full" icon={Link2} onClick={() => run.mutate(() => EbookLibrary.sharePair())}>
               Ghép máy mới
             </Button>
           )}
@@ -853,7 +842,7 @@ function DeviceNameRow({ bare = false }: { bare?: boolean }) {
             value={draft ?? ""}
             onChange={(event) => setDraft(event.target.value.slice(0, 60))}
             aria-label="Tên điện thoại"
-            className="h-12 w-full rounded-xl border border-line bg-panel px-4 text-base outline-none focus:border-focus"
+            className="device-input w-full px-3 text-base"
           />
           <div className="dialog-actions">
             <Button type="button" variant="ghost" onClick={() => setDraft(null)}>
@@ -974,7 +963,7 @@ export function DevicesScreen() {
                 </div>
                 {remote.isError && !unpairedHere && !pinChanged(remote.error) && <ErrorDetails technical={failure?.technical} className="text-fg-2" />}
                 {unpairedHere && (
-                  <Button size="sm" variant="secondary" icon={Link2} className="mt-2" onClick={() => void unpair(false)}>
+                  <Button size="sm" variant="ghost" icon={Link2} className="mt-2" onClick={() => void unpair(false)}>
                     Ghép lại
                   </Button>
                 )}
@@ -987,9 +976,9 @@ export function DevicesScreen() {
             {/* Như Cài đặt → Điện thoại và thiết bị của máy tính (chủ sách 29-09: khác mạng có dùng được không): app không cần gì
                 riêng - mạng riêng ảo cho máy tính một địa chỉ tới được, và điện thoại học địa chỉ ấy mỗi lần liệt kê sách. */}
             {remote.isError && !pinChanged(remote.error) && !unpairedHere && (
-              <div className="mt-2 px-1 text-xs leading-snug text-fg-2">
+              <div className="mt-2 text-xs leading-snug text-fg-2">
                 Sách đã tải vẫn nghe được khi ra ngoài.
-                <MoreInfo label="Nghe từ máy tính khi ở ngoài?">
+                <MoreInfo label="Nghe khi ra ngoài">
                   Cho hai máy vào cùng một mạng riêng ảo (Tailscale, ZeroTier, NetBird, WireGuard), rồi mở mục này một lần khi còn ở nhà.
                 </MoreInfo>
               </div>

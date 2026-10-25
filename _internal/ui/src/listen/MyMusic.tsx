@@ -84,7 +84,7 @@ export function SwapTrack({
             </div>
             {mineNote(item) && <div className="text-xs text-fg-2">{mineNote(item)}</div>}
           </div>
-          <Button size="sm" variant="secondary" icon={Pin} disabled={busy} loading={choosing === item.link} onClick={() => onChoose(item.link)}>
+          <Button size="sm" variant="ghost" icon={Pin} disabled={busy} loading={choosing === item.link} onClick={() => onChoose(item.link)}>
             Chọn
           </Button>
         </li>
@@ -143,7 +143,7 @@ export function MyMusicSection() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-sm font-medium">Nhạc của tôi{tracks.length ? ` (${tracks.length})` : ""}</h3>
         {canImport && (
-          <Button size="sm" variant="secondary" icon={Upload} className={WRAP_LABEL} loading={Boolean(progress)} onClick={() => void importFiles()}>
+          <Button size="sm" variant="ghost" icon={Upload} className={WRAP_LABEL} loading={Boolean(progress)} onClick={() => void importFiles()}>
             {progress ? `Đang nhập ${progress.done}/${progress.total}…` : "Nhập nhạc của tôi…"}
           </Button>
         )}
@@ -173,7 +173,7 @@ export function MyMusicSection() {
               {canImport &&
                 (removing === track.link ? (
                   <span ref={removeBox} className="flex shrink-0 gap-1">
-                    <Button size="sm" variant="secondary" icon={Trash2} aria-label={`Xoá khỏi kho: ${track.title}`} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
+                    <Button size="sm" variant="ghost" icon={Trash2} aria-label={`Xoá khỏi kho: ${track.title}`} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
                       Xoá khỏi kho
                     </Button>
                     <Button size="sm" variant="ghost" aria-label={`Giữ lại: ${track.title}`} disabled={remove.isPending} onClick={() => setRemoving(null)}>

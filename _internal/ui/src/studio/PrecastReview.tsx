@@ -202,14 +202,14 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
                 onClick={() => setStep(value)}
                 className={cn(
                   // h-full: thẻ "Xong" không có dòng phụ vẫn cao bằng ba thẻ cạnh (soát 24-10 T19).
-                  "flex h-full w-full items-center gap-2.5 rounded-xl border p-3 text-left transition-colors",
-                  active ? "border-accent/40 bg-accent-soft" : "border-line bg-panel hover:bg-hover",
+                  "flex h-full w-full items-center gap-2.5 py-3 text-left transition-colors hover:bg-hover",
+                  active ? "text-accent-text" : "text-fg-2",
                 )}
               >
                 <span
                   className={cn(
-                    "grid size-7 shrink-0 place-items-center rounded-full text-xs font-bold transition-colors",
-                    position < index ? "bg-success text-success-ink" : active ? "bg-accent text-accent-ink" : "bg-hover text-fg-3",
+                    "grid size-4 shrink-0 place-items-center text-xs font-bold transition-colors",
+                    position < index ? "text-success" : active ? "text-accent-text" : "text-fg-2",
                   )}
                 >
                   <MotionRegion as="span" className="grid place-items-center">{position < index ? <Check className="size-4" strokeWidth={3} /> : <Icon className="size-3.5" />}</MotionRegion>
@@ -292,7 +292,7 @@ export function PrecastReview({ book, step: stepParam, onStep: setStep, ...open 
         {step === "done" && (
           <EmptyState icon={ClipboardCheck} title="Xong lượt duyệt" className="py-10" action={
             <div className="flex flex-wrap justify-center gap-2">
-              <Button variant={book.precast?.held ? "ghost" : "secondary"} size="lg" onClick={open.onClose}>
+              <Button variant="ghost" size="lg" onClick={open.onClose}>
                 Về danh sách chương
               </Button>
             </div>
@@ -368,7 +368,7 @@ export function PrecastBanner({ book, onOpen }: { book: BookSummary; onOpen: () 
       </div>
       {/* Chờ duyệt: nút "Thu âm" đã là nút chính ở đầu trang (ProjectScreen Actions) - dải này chỉ mời duyệt, không thêm nút thứ hai. */}
       <div className="flex gap-2">
-        <Button variant={held ? "secondary" : "primary"} onClick={onOpen}>
+        <Button variant={held ? "ghost" : "primary"} onClick={onOpen}>
           Duyệt ngay
         </Button>
       </div>

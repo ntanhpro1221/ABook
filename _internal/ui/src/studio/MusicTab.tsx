@@ -223,7 +223,7 @@ function TrackRow({
             {previewing === item.link ? "Dừng nghe" : "Nghe thử"}
           </Button>
         )}
-        <Button size="sm" variant="secondary" icon={Pin} disabled={busy} loading={choosing === item.link}
+        <Button size="sm" variant="ghost" icon={Pin} disabled={busy} loading={choosing === item.link}
           onClick={() => onChoose(item.link)}>
           {choosing === item.link ? "Đang đổi…" : "Chọn"}
         </Button>
@@ -362,7 +362,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="text-sm font-semibold">Nhạc của tôi{canImport && tracks.length ? ` (${tracks.length})` : ""}</h3>
         {canImport && (
-          <Button size="sm" variant="secondary" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()}>
+          <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()}>
             {progress ? `Đang nhập ${progress.done}/${progress.total}…` : "Nhập nhạc của tôi…"}
           </Button>
         )}
@@ -394,7 +394,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
                 </Button>
                 {removing === track.link ? (
                   <>
-                    <Button size="sm" variant="secondary" icon={Trash2} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
+                    <Button size="sm" variant="ghost" icon={Trash2} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
                       Xoá khỏi kho
                     </Button>
                     <Button size="sm" variant="ghost" disabled={remove.isPending} onClick={() => setRemoving(null)}>
@@ -448,7 +448,7 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
       </p>
       {data.installed ? (
         <div className="flex flex-wrap items-center gap-3">
-          <Button size="sm" variant="secondary" icon={RefreshCw} loading={running} onClick={() => compute.mutate()}>
+          <Button size="sm" variant="ghost" icon={RefreshCw} loading={running} onClick={() => compute.mutate()}>
             {running ? "Đang đọc không khí…" : "Đọc lại ngữ cảnh"}
           </Button>
           {moods?.error && <span className="text-sm text-warning">{moods.error}</span>}
@@ -457,7 +457,7 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
         <p className="text-sm">Đang tải phần đọc không khí{percent !== null ? ` - ${percent}%` : "…"}</p>
       ) : data.downloadable && !info?.remote ? (
         <div className="flex flex-wrap items-center gap-3">
-          <Button size="sm" variant="secondary" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>
+          <Button size="sm" variant="ghost" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>
             Tải thêm (3,2 GB)
           </Button>
           {data.error && <span className="text-sm text-warning">{data.error}</span>}
@@ -612,7 +612,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
     <MotionRegion as="div" className="mt-6 space-y-6">
       <section className="flex flex-wrap items-end gap-4 rounded-xl border border-line bg-panel p-4">
         <Button
-          variant={overrides.enabled ? "primary" : "secondary"}
+          variant={overrides.enabled ? "primary" : "ghost"}
           icon={overrides.enabled ? Volume2 : VolumeX}
           loading={change.isPending}
           aria-pressed={overrides.enabled}
@@ -629,7 +629,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
             title={genreName || "Chưa chọn"}
             onChange={(event) => change.mutate({ genre: event.target.value || null })}
             // Rộng vừa tên thể loại dài nhất ("Dị giới / kỳ ảo phương Tây (…)") - không cắt chữ; hẹp màn thì thôi ở bề ngang ô.
-            className="mt-1 h-9 w-full max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-auto sm:min-w-64"
+            className="mt-1 h-[40px] w-full max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-auto sm:min-w-64"
           >
             <option value="">Chưa chọn</option>
             {genres.map(([value, genre]) => (
@@ -647,7 +647,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
             id="music-level"
             value={String(overrides.levelDb)}
             onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
-            className="mt-1 h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-60"
+            className="mt-1 h-[40px] w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-60"
           >
             {LEVELS.map(([value, label]) => (
               <option key={value} value={String(value)}>

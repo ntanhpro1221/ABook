@@ -98,7 +98,7 @@ export function useTryReading({
       button: (
         <Button
           size="sm"
-          variant="secondary"
+          variant="ghost"
           type="button"
           disabled={disabled || !spoken}
           loading={check.isPending || aloud.loading(surface, spoken)}
@@ -119,7 +119,7 @@ export function useTryReading({
   const button = (
     <Button
       size="sm"
-      variant="secondary"
+      variant="ghost"
       type="button"
       disabled={disabled || !spoken || Boolean(unavailable)}
       loading={ask.isPending}
@@ -148,7 +148,7 @@ export function useTryReading({
     <MotionRegion as="p" role="status" className={cn("mt-1.5 text-xs", refusal && !ask.isPending ? "text-warning" : "text-fg-3")}>
       {status}
       {needsStudio && refusal && !remote && studio.missing && (
-        <Button size="sm" variant="secondary" type="button" icon={Download} className="ml-2 align-middle" onClick={() => navigate("/studio")}>
+        <Button size="sm" variant="ghost" type="button" icon={Download} className="ml-2 align-middle" onClick={() => navigate("/studio")}>
           {studio.action}
         </Button>
       )}

@@ -15,7 +15,7 @@ import { holderName } from "@/shared/editsSync";
 import { fileName, formatClock } from "@/shared/format";
 import { levelOptions, levelText } from "@/shared/musicLevels";
 import { Switch } from "@/desktop/PhoneSync";
-import { Button, Dialog, Segmented, ContentSkeleton, InlineError } from "@/shared/ui";
+import { Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { MUSIC_CHANGED_EVENT } from "./musicBed";
 import { MyMusicSection, SwapTrack } from "./MyMusic";
@@ -404,7 +404,7 @@ export function EditBookDialog({
               maxLength={160}
               aria-label="Tên sách"
               onChange={(event) => setTitle(event.target.value)}
-              className="touch-box h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
+              className="touch-box h-[40px] min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
             />
             <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={rename.isPending} disabled={!title.trim() || title.trim() === book.title}>
               Lưu tên
@@ -427,7 +427,7 @@ export function EditBookDialog({
                 aria-label="Tác giả"
                 placeholder="Không rõ tác giả"
                 onChange={(event) => setAuthor(event.target.value)}
-                className="touch-box h-10 min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
+                className="touch-box h-[40px] min-w-0 flex-1 rounded-lg border border-line bg-bg px-3 text-sm outline-none focus:border-focus"
               />
               <Button type="submit" variant="primary" className="touch-box h-10 min-h-10 max-sm:min-h-[48px] pointer-coarse:min-h-[48px]" loading={changeAuthor.isPending} disabled={!authorSaveable(author, book.author)}>
                 Lưu tác giả
@@ -440,10 +440,10 @@ export function EditBookDialog({
           <div className="flex flex-wrap items-start gap-x-4 gap-y-3">
             <BookCover title={book.title} part={book.series?.part} size="lg" image={book.cover} className="w-28 shrink-0" />
             <div className="flex min-w-0 max-w-full flex-col items-stretch gap-1">
-              <Button variant="outline" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
+              <Button variant="ghost" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
                 {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
               </Button>
-              <Button ref={searchOpener} variant="outline" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
+              <Button ref={searchOpener} variant="ghost" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
                 Tìm bìa…
               </Button>
               {book.cover && (
@@ -463,7 +463,7 @@ export function EditBookDialog({
             <div className="flex flex-wrap items-center gap-3 text-sm text-fg-2">
               <span>Cuốn này có xưởng - nhạc nền chỉnh đầy đủ (chọn bài, im lặng từng đoạn) ở Studio.</span>
               {onOpenStudio && (
-                <Button size="sm" variant="outline" icon={Music2} onClick={onOpenStudio}>
+                <Button size="sm" variant="ghost" icon={Music2} onClick={onOpenStudio}>
                   Mở tab Nhạc nền
                 </Button>
               )}
@@ -494,7 +494,7 @@ export function EditBookDialog({
                 </Button>
               </div>
             ) : (
-              <Button ref={revertButton} variant="outline" onClick={() => setConfirmRevert(true)}>
+              <Button ref={revertButton} variant="ghost" className="-ml-3.5" onClick={() => setConfirmRevert(true)}>
                 Bỏ mọi thay đổi…
               </Button>
             )}
@@ -669,7 +669,7 @@ export function SaveAsDialog({
       title="Lưu thành…"
       description="Lưu cuốn này kèm những thay đổi của bạn thành một file mới. File gốc không bị đụng tới."
     >
-      <Segmented<SaveKind>
+      <ChoiceRow<SaveKind>
         value={kind}
         onChange={setKind}
         label="Loại file"
@@ -692,7 +692,7 @@ export function SaveAsDialog({
       )}
       {pickFolder && (
         <div className="mt-3 flex items-center gap-2 text-sm">
-          <Button variant="outline" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>
+          <Button variant="ghost" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>
             Chọn thư mục…
           </Button>
           <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? "Mặc định: thư mục Đã xuất"}</MotionRegion>
