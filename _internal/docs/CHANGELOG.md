@@ -7,6 +7,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+### Giao diện
+- Đầu màn thống nhất: đổi tab Thư viện · Studio · Cài đặt thì tiêu đề không còn nhảy; mọi màn con có cùng một nút ← thẳng mép nội dung, tiêu đề sát sau; dải mất mạng, màn lỗi và Studio trống thẳng lề, không còn lặp "Chưa có dự án".
+
 ## [0.4.139] - 2026-10-25
 
 ### Mới

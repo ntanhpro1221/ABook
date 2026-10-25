@@ -51,6 +51,7 @@ import {
 } from "@/shared/ui";
 import { api, type BookSummary, type Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
+import { SCREEN_TITLE, ScreenHeader } from "@/shared/ScreenHeader";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { usePageTitle } from "@/shared/title";
 import { Windowed } from "@/shared/Windowed";
@@ -1306,9 +1307,10 @@ export function ProjectScreen() {
   };
 
   const placeholder = (
-      <div className="page-x mx-auto max-w-[1180px] pt-9">
-        <Skeleton className="h-5 w-24" />
-        <div className="mt-6 flex gap-7">
+      <div className="page-x mx-auto max-w-[1180px]">
+        {/* Cùng đầu màn với trang đã tải: nút ← bấm được ngay, bìa không nhảy khi dữ liệu về. */}
+        <ScreenHeader back={{ label: "Về Studio", onClick: () => navigate("/studio") }} />
+        <div className="mt-5 flex gap-7">
           <Skeleton className="size-44 rounded-lg" />
           <div className="flex-1 space-y-3 pt-4">
             <Skeleton className="h-8 w-2/3" />
@@ -1365,11 +1367,9 @@ export function ProjectScreen() {
   ].filter(Boolean);
 
   return (
-    <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16 pt-7">
-      {/* Mực mũi tên bắt đầu 2,33 px trong ô 14 px: lùi chừng ấy cho thẳng mép chữ bên dưới. */}
-      <button type="button" onClick={() => navigate("/studio")} className="touch-hit inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
-        <ArrowLeft className="ink-start size-4" /> Studio
-      </button>
+    <div className="motion-reveal page-x mx-auto max-w-[1180px] pb-16">
+      {/* Nút ← chung của màn con (ScreenHeader) đứng riêng một hàng: tên dự án nằm cạnh bìa bên dưới. */}
+      <ScreenHeader back={{ label: "Về Studio", onClick: () => navigate("/studio") }} />
       {failure === "stale" && !isListenOnly(error) && (
         <div role="status" className="mt-4 flex flex-wrap items-center gap-2 rounded-xl bg-warning-soft px-4 py-3 text-sm">
           <CircleAlert className="size-4 shrink-0 text-warning" />
@@ -1393,7 +1393,7 @@ export function ProjectScreen() {
             tone={book.paused || book.stopping ? "warning" : phaseTone(book.phase, live)}
             live={live && !book.paused && !book.stopping}
           />
-          <h1 className="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-[2rem]">{book.title}</h1>
+          <h1 data-content-title="" className={cn(SCREEN_TITLE, "mt-3 leading-tight")}>{book.title}</h1>
           {/* Điện thoại: một dòng gọn (số chương) + "Chi tiết" gập - giọng kể, chất lượng, model, ngày tạo từng chiếm 3 dòng đầu
               trang (soát UX a8 07-10). */}
           <p className="mt-2 text-sm text-fg-2">

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { Button, EmptyState, LoadError, Skeleton } from "@/shared/ui";
 import { LoadingCrossfade } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
+import { ScreenHeader } from "@/shared/ScreenHeader";
 import { useListPresence } from "@/shared/motion";
 import { StudioAlertsRow } from "./DevicesScreen";
 import { openStudioComputer, useStudioComputersQuery } from "./StudioOpen";
@@ -14,8 +15,8 @@ export function StudioScreen() {
   const computers = query.data?.computers ?? [];
   const failed = query.isError && !computers.length;
   const rows = useListPresence(computers, computer => computer.key);
-  return <div className="px-[20px] pb-10 pt-6">
-    <h1 className="text-2xl font-bold tracking-tight">Studio</h1>
+  return <div className="px-[20px] pb-10">
+    <ScreenHeader title="Studio" />
     <LoadingCrossfade loading={query.isLoading} placeholder={<div className="mt-8 space-y-4"><Skeleton className="h-14 w-full" /><Skeleton className="h-14 w-full" /></div>}>
       <MotionRegion fadeThrough motionKey={failed ? "error" : computers.length ? "computers" : "empty"}>
         {failed ? <LoadError what="Studio" error={query.error} onRetry={() => void query.refetch()} className="mt-8" /> : !computers.length ? <EmptyState

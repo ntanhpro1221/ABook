@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { Button, Segmented, Sheet, TimeSelect } from "@/shared/ui";
 import { GroupHeader, isSettingsGroup, MoreInfo, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
+import { ScreenHeader } from "@/shared/ScreenHeader";
 import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
 import { ThirdPartyList } from "@/shared/ThirdPartyList";
 import { MyMusicSection } from "@/listen/MyMusic";
@@ -424,7 +425,7 @@ export function SettingsScreen() {
   const active = isSettingsGroup(group) && PHONE_GROUPS.includes(group) ? group : null;
   if (active) {
     return (
-      <div className="settings-page px-[20px] pb-10 pt-3">
+      <div className="settings-page px-[20px] pb-10">
         <GroupHeader id={active} />
         {active === "voice" && <VoiceGroup />}
         {active === "listen" && <ListenGroup settings={settings} change={change} />}
@@ -444,8 +445,8 @@ export function SettingsScreen() {
     { id: "advanced", summary: current ? `Phiên bản ${current}` : undefined },
   ];
   return (
-    <div className="settings-page px-[20px] pb-10 pt-4">
-      <h1 className="text-2xl font-bold tracking-tight">Cài đặt</h1>
+    <div className="settings-page px-[20px] pb-10">
+      <ScreenHeader title="Cài đặt" />
       {/* Lời báo trên trang gốc tới sau một lượt hỏi (bản lưu cũ, bản mới): mở ra tại chỗ, không đẩy danh sách nhóm xuống tức thì. */}
       <MotionPresence open={Boolean(oldSaves?.length)}>
         {oldSaves?.length ? <RootNotice tone="warning" text={`Bản lưu cũ (${oldSaves.length}) - cần lưu ra`} /> : null}

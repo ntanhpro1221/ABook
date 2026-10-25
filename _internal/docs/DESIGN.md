@@ -182,6 +182,9 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 
 - **Nút**: (a) chính - nền hổ phách, cao 48 / 40, chữ ≤ 3 từ; (b) phụ - icon trơn 44 / 36 kèm nhãn nhỏ dưới (điện thoại)
   hay tooltip (máy tính); (c) chữ - màu `--accent-text`. Không kiểu thứ tư (không nút viền bo tròn lẻ loi).
+- **Đầu màn**: mọi màn gốc và màn con dùng `ScreenHeader` (shared/ScreenHeader.tsx) - đệm trên 12 / 32, hàng tiêu đề cao 48 / 40, tiêu đề 24 /
+  32, dòng phụ ngay dưới, nút phải căn giữa hàng; chân chữ tiêu đề trùng nhau giữa các màn cùng nền tảng (gallery_inspect: RHYTHM
+  `screen-title-baseline`). Màn con: một kiểu nút ← (`BackButton`), nét mũi tên thẳng mép nội dung, tiêu đề sát sau, vùng chạm 48 / 40.
 - **Hàng danh sách**: trái biểu tượng/bìa nhỏ hay trạng thái, giữa tên (16) + phụ (14, `--fg-2`), phải một hành động hay "…".
   Hàng đang phát: chữ hổ phách + vạch tiến độ mảnh, không tô nền cả hàng.
 - **Lưới bìa**: bìa 2:3, bo 12, tên dưới bìa tối đa 2 dòng, phụ một dòng. Điện thoại 2-3 cột, máy tính tự giãn 160-200 px.
