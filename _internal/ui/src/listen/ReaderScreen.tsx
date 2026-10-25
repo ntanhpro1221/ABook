@@ -235,17 +235,32 @@ export function ReaderScreen(edit: SentenceEditing) {
   const article = useRef<HTMLElement | null>(null);
   useLayoutChangeFade(article, `${prefs.size}:${prefs.leading}`);
   useEffect(() => {
-    const root = document.documentElement;
+    // Biến trên html lan xuống mọi câu: chỉ vùng thông báo cần đổi chỗ, không dàn lại cả chương sau phép đo.
+    const toasters = new Set<HTMLElement>();
+    let top = "";
+    const apply = () => {
+      if (!top) return;
+      for (const toaster of document.querySelectorAll<HTMLElement>("[data-sonner-toaster]")) {
+        toasters.add(toaster);
+        if (toaster.style.getPropertyValue("--toast-top") !== top) toaster.style.setProperty("--toast-top", top);
+      }
+    };
     const place = () => {
       const bottom = header.current?.getBoundingClientRect().bottom;
-      if (bottom) root.style.setProperty("--toast-top", `${Math.round(bottom + 8)}px`);
+      if (bottom) { top = `${Math.round(bottom + 8)}px`; apply(); }
     };
     place();
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(place);
     if (header.current) observer?.observe(header.current);
+    // Sonner có thể dựng thêm vùng khi thông báo chọn vị trí khác, hoặc thay vùng sau khi xoay màn.
+    const added = typeof MutationObserver === "undefined" ? null : new MutationObserver(records => {
+      if (records.some(record => [...record.addedNodes].some(node => node instanceof Element && (node.matches("[data-sonner-toaster]") || node.querySelector("[data-sonner-toaster]"))))) apply();
+    });
+    added?.observe(document.body, { childList: true, subtree: true });
     return () => {
       observer?.disconnect();
-      root.style.removeProperty("--toast-top");
+      added?.disconnect();
+      for (const toaster of toasters) toaster.style.removeProperty("--toast-top");
     };
   }, [book, isLoading]);
 

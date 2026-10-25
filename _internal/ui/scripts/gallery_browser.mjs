@@ -83,6 +83,15 @@ export function serve(root) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Edge vừa tạo file nhưng Windows còn giữ khoá ghi; tồn tại chưa có nghĩa là đọc được ngay. */
+export function readDevToolsPort(portFile, read = readFileSync) {
+  try { return read(portFile, "utf8").trim().split("\n"); }
+  catch (error) {
+    if (["EBUSY", "EACCES", "EPERM", "ENOENT"].includes(error.code)) return [];
+    throw error;
+  }
+}
+
 /** Mở trình duyệt headless với cổng gỡ lỗi do nó tự chọn (đọc từ DevToolsActivePort trong thư mục hồ sơ tạm). */
 export async function launch(executable, { preserveProfile = false } = {}) {
   const profile = mkdtempSync(path.join(tmpdir(), "abook-gallery-"));
@@ -141,9 +150,11 @@ else: raise RuntimeError('Hồ sơ trình duyệt vẫn bị khoá: ' + root)
       await sleep(100);
     }
     let lines = [];
+    const readingSince = Date.now();
     while (lines.length < 2) {
       if (child.exitCode !== null) throw new Error("Trình duyệt đóng trước khi ghi đủ cổng CDP");
-      lines = readFileSync(portFile, "utf8").trim().split("\n");
+      if (Date.now() - readingSince > 20000) throw new Error("Hết giờ đọc cổng CDP của trình duyệt");
+      lines = readDevToolsPort(portFile);
       if (lines.length < 2) await sleep(50);
     }
     const endpoint = `ws://127.0.0.1:${lines[0].trim()}${lines[1].trim()}`;
