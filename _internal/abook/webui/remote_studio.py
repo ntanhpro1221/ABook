@@ -51,7 +51,7 @@ _BOOK = r"/api/books/[A-Za-z0-9_-]+"
 _LISTEN = r"/api/listen/books/[A-Za-z0-9_-]+"
 _RECORD = _LISTEN + r"/records/r-[0-9a-f]{16}"
 _MEDIA = r"/media/books/[A-Za-z0-9_-]+"
-# Phần Nghe: thư viện nghe, trình phát, chỗ nghe, dấu trang, hồ sơ nghe, đọc theo (chữ chương), dàn nhân vật và câu
+# Phần Nghe: thư viện nghe, trình phát, chỗ nghe, hồ sơ nghe, đọc theo (chữ chương), dàn nhân vật và câu
 # mẫu, audio, bìa - đúng những gì app điện thoại đã có qua /sync/v1, nên mọi thiết bị đã ghép đều được (chế độ chỉ
 # nghe). Không có gì của Studio.
 LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compile(pattern)) for method, pattern in (
@@ -63,10 +63,6 @@ LISTEN_ROUTES: tuple[tuple[str, re.Pattern[str]], ...] = tuple((method, re.compi
     ("POST", _LISTEN + r"/chapters/\d+/done"),
     ("POST", _LISTEN + r"/finished"),
     ("POST", _LISTEN + r"/rate"),
-    ("POST", _LISTEN + r"/bookmarks"),
-    ("PUT", _LISTEN + r"/bookmarks/[0-9a-f]+"),
-    ("DELETE", _LISTEN + r"/bookmarks/[0-9a-f]+"),
-    ("POST", _LISTEN + r"/bookmarks/restore"),
     ("GET", _LISTEN + r"/records"),
     ("POST", _LISTEN + r"/records"),
     ("POST", _RECORD + r"/activate"),

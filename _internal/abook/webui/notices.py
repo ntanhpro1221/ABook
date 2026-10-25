@@ -1,7 +1,7 @@
 """Lời báo lúc mở app, và file trạng thái hỏng thì GIỮ LẠI chứ không đè (soát a28).
 
 Một file trạng thái của người dùng (tuỳ chọn, hồ sơ nghe, thiết bị đã ghép, khoá mã sách...) đọc lỗi thì trước đây app im lặng dùng mặc
-định và lần ghi kế ĐÈ lên - chỗ nghe, dấu trang, cài đặt mất hẳn. Giờ: đổi tên bản hỏng thành `<tên>.hong-<YYYYmmdd-HHMMSS>` cạnh đó, ghi
+định và lần ghi kế ĐÈ lên - chỗ nghe, cài đặt mất hẳn. Giờ: đổi tên bản hỏng thành `<tên>.hong-<YYYYmmdd-HHMMSS>` cạnh đó, ghi
 một dòng vào `NOTICES` (cái gì, đã giữ bản cũ ở đâu), rồi mới dùng mặc định. Giao diện lấy các dòng ấy qua `/api/app` (`notices`) và báo
 một lần lúc mở.
 """

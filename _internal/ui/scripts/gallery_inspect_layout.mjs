@@ -563,7 +563,7 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
         { metric: "heading-repeats-tab", otherSelector: selector(tab), reason: "a heading inside a tab repeats the selected tab's label" });
     }
   }
-  // Cùng một nhãn, hai việc: nút "Dấu trang" ở hàng chính thêm dấu trang còn mục "Dấu trang" trong menu mở danh sách (soát 140). Hai nút cùng hiện
+  // Cùng một nhãn, hai việc (soát 140): hai nút cùng hiện
   // một chữ mà biểu tượng khác nhau là hai hành động - người nghe không phân biệt được. Nút lặp theo hàng (cùng biểu tượng) không tính.
   const iconSignature = (el) => [...el.querySelectorAll("svg")].filter((svg) => owner(svg) === el)
     .map((svg) => [...svg.querySelectorAll("path,rect,circle,ellipse,line,polyline,polygon")].map((p) => p.outerHTML.replace(/\s(class|style)="[^"]*"/g, "")).join("")).join("|");

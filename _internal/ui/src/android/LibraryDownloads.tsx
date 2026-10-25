@@ -42,7 +42,7 @@ export function LibraryDownloads({ children }: { children: (extras: Extras, book
     id: book.id, title: book.title, narrator: book.narrator, duration: book.duration,
     chaptersTotal: book.chaptersTotal, chaptersAvailable: book.chaptersAvailable,
     complete: book.complete, producing: Boolean(book.producing), updatedAt: book.updatedAt,
-    state: { chapters: {}, bookmarks: [] },
+    state: { chapters: {} },
     progress: { heardSeconds: 0, totalSeconds: book.duration, fraction: 0, chaptersDone: 0, finished: false },
     remote: { computer: book.sourceName, downloaded: book.downloaded },
   })), [catalog]);

@@ -7,7 +7,7 @@ const chapters = [
   { id: 2, duration: 600 },
 ] as ListenChapter[];
 const done = { "1": { heard: 600, done: true }, "2": { heard: 600, done: true } } as unknown as ListeningState["chapters"];
-const state = (extra: Partial<ListeningState>): ListeningState => ({ chapters: done, bookmarks: [], ...extra });
+const state = (extra: Partial<ListeningState>): ListeningState => ({ chapters: done, ...extra });
 
 describe("bookProgress", () => {
   it("nghe hết rồi quay lại nghe chương 1: đang nghe lại, tiến độ theo chỗ đang nghe", () => {
@@ -27,7 +27,7 @@ describe("bookProgress", () => {
 
 describe("textBookProgress", () => {
   const text = [{ id: 1, duration: 0 }, { id: 2, duration: 0 }, { id: 3, duration: 0 }, { id: 4, duration: 0 }] as ListenChapter[];
-  const record = (chapters: Record<string, unknown>) => ({ chapters, bookmarks: [] }) as unknown as ListeningState;
+  const record = (chapters: Record<string, unknown>) => ({ chapters }) as unknown as ListeningState;
 
   it("sách chữ chưa nghe gì: 0; nghe xong chương và đang đọc dở chương kế: có tiến độ theo chương", () => {
     expect(textBookProgress(record({}), text).fraction).toBe(0);

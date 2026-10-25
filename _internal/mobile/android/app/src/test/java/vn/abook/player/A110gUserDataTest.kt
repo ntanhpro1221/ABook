@@ -25,11 +25,10 @@ class A110gUserDataTest {
         assertTrue(Store.dataNotices().toString().contains("Phiên bản đồng bộ"))
         Store.progress("book", 1, 600.0, 1000.0)
         Store.saveReading("book", 1, 100)
-        Store.addBookmark("book", 1, 600.0, note = "")
     }
 
     @Test fun ceilingRollsEpochAndPreservesOtherFields() {
-        val state = JSONObject("""{"_clock":1099511627776,"chapters":{},"bookmarks":[]}""")
+        val state = JSONObject("""{"_clock":1099511627776,"chapters":{}}""")
         val rev = ListeningRevision.advance(state, "phone")
         assertEquals("1", rev.getString("epoch"))
         assertEquals(1L, rev.getLong("counter"))
@@ -38,12 +37,11 @@ class A110gUserDataTest {
         assertTrue(ListeningRevision.newer(JSONObject().put("rev", rev), JSONObject("""{"rev":{"counter":1099511627776,"node":"old"}}""")))
     }
 
-    @Test fun missingRevisionIsRejectedBeforeAnyStateChangeAndNoteEditsAdvance() {
-        val mark = Store.addBookmark("book", 1, 10.0, "first")
+    @Test fun missingRevisionIsRejectedBeforeAnyStateChangeAndEditsAdvance() {
+        Store.saveReading("book", 1, 100, 100.0)
         val before = Store.state("book").toString()
         for (body in listOf(
             """{"last":{"chapterId":1,"seconds":600,"at":200}}""",
-            """{"deleted":{"m":200}}""",
             """{"rate":1.5,"rateAt":200}"""
         )) {
             val failure = runCatching { Store.mergeRemote("book", JSONObject(body)) }.exceptionOrNull()
@@ -51,9 +49,9 @@ class A110gUserDataTest {
             assertEquals(ListeningRevision.MISSING_REVISION, failure?.message)
             assertEquals(before, Store.state("book").toString())
         }
-        val counter = mark.getJSONObject("rev").getLong("counter")
-        Store.updateBookmark("book", mark.getString("id"), "changed")
-        assertTrue(Store.state("book").getJSONArray("bookmarks").getJSONObject(0).getJSONObject("rev").getLong("counter") > counter)
+        val counter = Store.state("book").getJSONObject("reading").getJSONObject("rev").getLong("counter")
+        Store.saveReading("book", 1, 200, 200.0)
+        assertTrue(Store.state("book").getJSONObject("reading").getJSONObject("rev").getLong("counter") > counter)
     }
 
     @Test fun clonedLibraryWithoutInstallIdentityConvergesBothWays() {
@@ -76,7 +74,7 @@ class A110gUserDataTest {
 
     @Test fun corruptNoticeFileDoesNotHideBooksOrPreventStateRepair() {
         val record = Store.activeRecord("book")
-        Store.addBookmark("book", 1, 10.0, "kept")
+        Store.saveReading("book", 1, 100, 100.0)
         val file = File(root, "state/$record.json")
         file.writeText(JSONObject(file.readText()).put("chapters", JSONArray()).toString())
         val original = file.readBytes()
@@ -85,7 +83,7 @@ class A110gUserDataTest {
         val noticeBytes = notice.readBytes()
         Store.progress("book", 1, 600.0, 1000.0)
         assertTrue(Store.dataNotices().length() > 0)
-        assertEquals("kept", Store.state("book").getJSONArray("bookmarks").getJSONObject(0).getString("note"))
+        assertEquals(100, Store.state("book").getJSONObject("reading").getInt("index"))
         assertTrue(root.listFiles()!!.any { it.name.startsWith("data-notices.json.corrupt-") && it.readBytes().contentEquals(noticeBytes) })
         assertTrue(file.parentFile!!.listFiles()!!.any { it.name.startsWith(file.name + ".corrupt-") && it.readBytes().contentEquals(original) })
         val blocked = Store::class.java.getDeclaredField("unpreservedData").apply { isAccessible = true }.get(null) as Set<*>

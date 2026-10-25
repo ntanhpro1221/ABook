@@ -600,18 +600,6 @@ object Playback {
         emit("rate")
     }
 
-    /** Dấu sách chữ không kèm câu (player chưa mở chữ / phiên media): chốt câu và anchor từ ReadAloud. */
-    fun addBookmark(note: String, index: Int? = null, quote: String = "", anchor: JSONObject? = null): JSONObject? {
-        val chapter = currentChapter ?: return null
-        val sentence = if (chapter.isText && index == null) ReadAloud.bookmark() else null
-        val mark = Store.addBookmark(bookId, chapter.id, positionSeconds, note, index ?: sentence?.optInt("index"),
-            sentence?.optString("quote") ?: quote, recordId = recordId.ifEmpty { null }, anchor = anchor ?: sentence?.optJSONObject("anchor"))
-        Bedtime.interaction("bookmark")
-        emit("bookmark")
-        pushHeld(force = true)
-        return mark
-    }
-
     /** `rewind` null: lần `configure` này không mang `autoRewind` (đổi giọng...) - giữ nguyên lựa chọn đang có (soát a77 #7). */
     fun configure(rewind: Boolean?) {
         if (rewind != null) autoRewind = rewind

@@ -38,7 +38,7 @@ import vn.abook.player.readaloud.ReadAloud
  * Dịch vụ phát nền: giữ ExoPlayer sống khi tắt màn hình, hiện điều khiển ở thanh thông báo và màn hình khoá,
  * nhận nút tai nghe/Bluetooth, tự dừng khi rút tai nghe hoặc có cuộc gọi (audio focus).
  *
- * Thanh thông báo: lùi 15 giây · phát/dừng · tới 15 giây; mở rộng thêm chương trước / chương sau, "dấu trang" và - khi đang hẹn giờ ngủ - "+10 phút".
+ * Thanh thông báo: lùi 15 giây · phát/dừng · tới 15 giây; mở rộng thêm chương trước / chương sau và - khi đang hẹn giờ ngủ - "+10 phút".
  *
  * Là MediaLibraryService: Android Auto và trình duyệt media của hệ thống duyệt được thư viện trên máy (LibraryTree:
  * sách -> chương) và chọn phát ngay trên màn hình xe.
@@ -62,7 +62,6 @@ class PlaybackService : MediaLibraryService() {
             DefaultLoadControl.DEFAULT_MIN_BUFFER_MS, DefaultLoadControl.DEFAULT_MAX_BUFFER_MS, STREAM_START_BUFFER_MS, STREAM_REBUFFER_MS,
         ).build()
 
-        val BOOKMARK = SessionCommand("vn.abook.BOOKMARK", Bundle.EMPTY)
         val SLEEP_PLUS = SessionCommand("vn.abook.SLEEP_PLUS", Bundle.EMPTY)
         // Chương trước/sau là lệnh riêng của app: Trước/Sau của phiên media (tai nghe, xe, đồng hồ) là lùi/tới 15 giây (HeadsetSkips).
         val PREVIOUS_CHAPTER = SessionCommand("vn.abook.PREVIOUS_CHAPTER", Bundle.EMPTY)
@@ -167,8 +166,6 @@ class PlaybackService : MediaLibraryService() {
                 .setSessionCommand(PREVIOUS_CHAPTER).setDisplayName("Chương trước").setSlots(CommandButton.SLOT_OVERFLOW).build(),
             CommandButton.Builder(CommandButton.ICON_NEXT)
                 .setSessionCommand(NEXT_CHAPTER).setDisplayName("Chương sau").setSlots(CommandButton.SLOT_OVERFLOW).build(),
-            CommandButton.Builder(CommandButton.ICON_BOOKMARK_UNFILLED)
-                .setSessionCommand(BOOKMARK).setDisplayName("Thêm dấu trang").setSlots(CommandButton.SLOT_OVERFLOW).build(),
         )
         return list
     }
@@ -253,9 +250,9 @@ class PlaybackService : MediaLibraryService() {
 
     private inner class Callback : MediaLibrarySession.Callback {
         override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo): MediaSession.ConnectionResult {
-            // Lệnh thư viện (duyệt cây) cho Android Auto và trình duyệt media của hệ thống, cộng các nút riêng của app (dấu trang, +10 phút, chương trước/sau).
+            // Lệnh thư viện (duyệt cây) cho Android Auto và trình duyệt media của hệ thống, cộng các nút riêng của app (+10 phút, chương trước/sau).
             val commands = MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
-                .add(BOOKMARK).add(SLEEP_PLUS).add(PREVIOUS_CHAPTER).add(NEXT_CHAPTER).build()
+                .add(SLEEP_PLUS).add(PREVIOUS_CHAPTER).add(NEXT_CHAPTER).build()
             return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                 .setAvailableSessionCommands(commands)
                 .setMediaButtonPreferences(buttons())
@@ -367,7 +364,6 @@ class PlaybackService : MediaLibraryService() {
             args: Bundle,
         ): ListenableFuture<SessionResult> {
             when (customCommand.customAction) {
-                BOOKMARK.customAction -> Playback.addBookmark("")
                 SLEEP_PLUS.customAction -> SleepTimer.extend()
                 PREVIOUS_CHAPTER.customAction -> Playback.previous()
                 NEXT_CHAPTER.customAction -> Playback.next()

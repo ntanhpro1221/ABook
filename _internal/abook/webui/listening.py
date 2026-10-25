@@ -9,19 +9,17 @@ sơ gắn với đúng một sách, mỗi sách có một hồ sơ đang dùng. 
      "links": {"<mã sách của app>": {"records": ["<mã hồ sơ>", ...], "active": "<mã hồ sơ>"}}}
 
 `state` của một hồ sơ - cùng hình dạng với trạng thái trình phát Android giữ, để hai bên đồng bộ được với nhau
-(`merge`: mỗi mục mang mốc thời gian, mục mới hơn thắng; dấu trang hợp theo id):
+(`merge`: mỗi mục mang mốc thời gian, mục mới hơn thắng):
 
         "last": {"chapterId": 3, "seconds": 812.4, "at": 1790...},
         "chapters": {"3": {"heard": 812.4, "done": false, "at": ...}},
         "rate": 1.25,
         "voice": "edge:vi-VN-NamMinhNeural", "voiceAt": ...,   # giọng Nghe ngay riêng của cuốn (rỗng = giọng mặc định của máy)
         "finished": false,
-        "bookmarks": [{"id": "...", "chapterId": 3, "seconds": 64.0, "note": "", "at": ..., "createdAt": ...,
-                       "index": 12, "quote": "Trời đã sáng."}],   # at = lần đổi cuối (gộp hai máy), createdAt = lúc đặt (hiện)
         "night": {"id": "...", "startedAt": ..., "endedAt": ..., "events": [...], "timeline": [...]},
         "updatedAt": ...
 
-Mọi hàm nhận MÃ SÁCH (progress, add_bookmark...) làm việc trên hồ sơ đang dùng của sách ấy - nơi gọi không phải biết
+Mọi hàm nhận MÃ SÁCH (progress, set_rate...) làm việc trên hồ sơ đang dùng của sách ấy - nơi gọi không phải biết
 có hồ sơ. Bản lưu cũ ({mã sách: state}) được chuyển sang khi mở: mỗi sách một hồ sơ "Mặc định".
 
 `night` là nhật ký của lần nghe có hẹn giờ ngủ gần nhất (thiết bị nào cũng được): lúc hẹn giờ, những lần chạm, lúc
@@ -51,26 +49,8 @@ from .listening_revision import (advance, adopt_meta, clock, epoch, observe, che
 # Nghe tới cách cuối chương dưới 20 giây là coi như nghe xong chương (đoạn cuối thường là khoảng lặng + lời
 # chuyển chương, người nghe hay bấm sang chương kế trước khi nó hết).
 DONE_TAIL_SECONDS = 20.0
-# Hai dấu trang cùng chương cách nhau không quá chừng này là một: bấm hai lần liền (hay Space lặp lại nút vừa
-# bấm) không được đẻ ra dấu trùng.
-BOOKMARK_MERGE_SECONDS = 5.0
-BOOKMARK_QUOTE_CHARS = 60  # ~60 chữ đầu câu của dấu trang đặt ở màn đọc
 
 
-def _stamp(value: Any) -> bool:
-    """Một mốc giờ dùng được (số dương, không phải bool)."""
-    return isinstance(value, (int, float)) and not isinstance(value, bool) and value > 0
-
-
-def bookmark_quote(text: Any) -> str:
-    """Đầu câu cho dòng dấu trang: gộp khoảng trắng, cắt ở ranh giới từ quanh `BOOKMARK_QUOTE_CHARS` ký tự, thêm "…" khi có cắt.
-    Bản Kotlin: Store.bookmarkQuote."""
-    clean = " ".join(str(text or "").split())
-    if len(clean) <= BOOKMARK_QUOTE_CHARS:
-        return clean
-    cut = clean[:BOOKMARK_QUOTE_CHARS]
-    space = cut.rfind(" ")
-    return (cut[:space] if space > BOOKMARK_QUOTE_CHARS // 2 else cut).rstrip(" ,.;:!?…-—") + "…"
 # Thẻ "Tối qua" chỉ nói về đêm vừa rồi: nhật ký cũ hơn chừng này thì thôi.
 NIGHT_RECENT_SECONDS = 20 * 3600
 NIGHT_MAX_POINTS = 480
@@ -97,7 +77,7 @@ def listening_path() -> Path:
 
 
 def _empty_state() -> dict[str, Any]:
-    return {"chapters": {}, "bookmarks": []}
+    return {"chapters": {}}
 
 
 def _new_record_id() -> str:
@@ -234,7 +214,6 @@ class Listening:
             return
         entry = record.setdefault("state", _empty_state())
         entry.setdefault("chapters", {})
-        entry.setdefault("bookmarks", [])
         last = entry.get("last")
         candidate = {"at": item["now"], "rev": item.get("rev")}
         if isinstance(last, dict) and not newer(candidate, last):
@@ -255,9 +234,9 @@ class Listening:
 
     def _read(self) -> Any:
         """Bản lưu trên đĩa; chưa có: None. Hỏng (cắt nửa, rỗng, sai hình dạng - soát a28 lỗi 1): giữ bản hỏng + báo (notices), rồi None -
-        trước đây app im lặng coi như chưa nghe gì và lần ghi kế ĐÈ mất hết chỗ nghe, dấu trang."""
+        trước đây app im lặng coi như chưa nghe gì và lần ghi kế ĐÈ mất hết chỗ nghe."""
         from .listening_schema import clean_profiles
-        what = "Hồ sơ nghe (chỗ nghe dở, dấu trang)"
+        what = "Hồ sơ nghe (chỗ nghe dở)"
         existed = self.path.exists()
         raw = notices.read_json(self.path, what, lambda value: isinstance(value, dict))
         if raw is None:
@@ -336,7 +315,6 @@ class Listening:
             link["active"] = record_id
         state = record.setdefault("state", _empty_state())
         state.setdefault("chapters", {})
-        state.setdefault("bookmarks", [])
         return state
 
     def _book(self, book: str) -> dict[str, Any]:
@@ -359,7 +337,6 @@ class Listening:
             return self._book(book)
         state = self._data["records"][record].setdefault("state", _empty_state())
         state.setdefault("chapters", {})
-        state.setdefault("bookmarks", [])
         return state
 
     def _named(self, book: str, record: str | None) -> dict[str, Any]:
@@ -370,7 +347,6 @@ class Listening:
             raise RecordGone("Hồ sơ nghe này đã bị xoá hoặc chuyển sang cuốn khác. Bạn hãy nạp lại sách.")
         state = self._data["records"][record].setdefault("state", _empty_state())
         state.setdefault("chapters", {})
-        state.setdefault("bookmarks", [])
         return state
 
     def active_record(self, book: str) -> str | None:
@@ -683,90 +659,6 @@ class Listening:
             entry.setdefault("_fieldRevs", {})["voice"] = advance(entry, self._node())
             self._save()
 
-    def add_bookmark(self, book: str, chapter_id: int, seconds: float, note: str = "",
-                     record: str | None = None, index: int | None = None, quote: str = "",
-                     anchor: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Dấu trang mới - hoặc dấu đã có ngay chỗ ấy (±5 giây cùng chương; dấu đặt ở màn đọc: cùng câu), kèm cờ `existing`.
-        Đặt từ trình phát thì vào hồ sơ đang phát (`record`, xem `_held`); hồ sơ ấy vừa bị xoá thì vào hồ sơ đang dùng - người
-        nghe đã bấm. `index` + `quote`: dấu đặt ở màn đọc trỏ tới CÂU (thứ tự câu trong chương, như `?at=`) và giữ ~60 chữ đầu
-        câu, để dòng dấu trang nói câu chữ ấy kể cả chương chưa có audio (`seconds` khi đó là 0)."""
-        now = time.time()
-        mark = {"id": uuid.uuid4().hex[:12], "chapterId": int(chapter_id), "seconds": round(float(seconds), 1),
-                "note": note.strip()[:500], "at": now, "createdAt": now}
-        from .reading_anchor import validated
-        if clean := validated(anchor):
-            mark["anchor"] = clean
-        if index is not None and int(index) >= 0:
-            mark["index"] = int(index)
-            mark["quote"] = bookmark_quote(quote)
-        with self._changing():
-            entry = self._held(book, record) or self._book(book)
-            for current in entry["bookmarks"]:
-                if int(current.get("chapterId", -1)) != mark["chapterId"]:
-                    continue
-                same = (current.get("index") == mark["index"] if "index" in mark
-                        else abs(float(current.get("seconds", 0.0)) - mark["seconds"]) <= BOOKMARK_MERGE_SECONDS)
-                if same:
-                    if mark["note"] and not current.get("note"):
-                        current["note"] = mark["note"]
-                        current.setdefault("createdAt", current.get("at") or mark["at"])
-                        current["at"] = entry["updatedAt"] = mark["at"]
-                        current["rev"] = advance(entry, self._node())
-                        self._save()
-                    return {**current, "existing": True}
-            mark["rev"] = advance(entry, self._node())
-            entry["bookmarks"].append(mark)
-            entry["updatedAt"] = mark["at"]
-            self._save()
-        return mark
-
-    def update_bookmark(self, book: str, mark_id: str, note: str, record: str | None = None) -> None:
-        """Sửa ghi chú: `at` (mốc gộp hai máy) thành lúc sửa để bản vừa sửa thắng bản cũ của máy kia (soát a70); `createdAt` giữ lúc
-        đặt dấu - điều dòng dấu trang hiện. `record`: hồ sơ của màn đang sửa (xem `_named`)."""
-        with self._changing():
-            entry = self._named(book, record)
-            now = time.time()
-            for mark in entry["bookmarks"]:
-                if mark["id"] == mark_id:
-                    mark["note"] = note.strip()[:500]
-                    mark.setdefault("createdAt", mark.get("at") or now)
-                    mark["at"] = now
-                    mark["rev"] = advance(entry, self._node())
-            entry["updatedAt"] = now
-            self._save()
-
-    def delete_bookmark(self, book: str, mark_id: str, record: str | None = None) -> None:
-        with self._changing():
-            entry = self._named(book, record)
-            entry["bookmarks"] = [mark for mark in entry["bookmarks"] if mark["id"] != mark_id]
-            entry.setdefault("deleted", {})[mark_id] = time.time()
-            entry.setdefault("_deletedRevs", {})[mark_id] = advance(entry, self._node())
-            entry["updatedAt"] = time.time()
-            self._save()
-
-    def restore_bookmark(self, book: str, mark: dict[str, Any]) -> dict[str, Any]:
-        """Hoàn tác xoá: đặt lại đúng dấu cũ (cùng id) với phiên bản mới hơn tombstone - lệnh xoá đã kịp sang máy kia cũng không xoá lại
-        nó khi gộp (merge_states); `createdAt` giữ lúc đặt dấu gốc, không thành "vừa xong" (soát a70). Tombstone ở lại: gỡ nó ở đây mà máy
-        kia còn giữ thì tập tombstone hai máy không bao giờ khớp (soát a118 lỗi 6)."""
-        with self._changing():
-            entry = self._book(book)
-            now = time.time()
-            created = mark.get("createdAt") if _stamp(mark.get("createdAt")) else mark.get("at")
-            restored = {"id": str(mark["id"])[:40], "chapterId": int(mark["chapterId"]),
-                        "seconds": round(float(mark["seconds"]), 1), "note": str(mark.get("note", ""))[:500],
-                        "at": now, "createdAt": float(created) if _stamp(created) and float(created) <= now else now}
-            if isinstance(mark.get("index"), int) and not isinstance(mark["index"], bool) and mark["index"] >= 0:
-                restored["index"] = mark["index"]
-                restored["quote"] = bookmark_quote(mark.get("quote"))
-            from .reading_anchor import validated
-            if clean := validated(mark.get("anchor")):
-                restored["anchor"] = clean
-            restored["rev"] = advance(entry, self._node())
-            entry["bookmarks"] = [item for item in entry["bookmarks"] if item["id"] != restored["id"]] + [restored]
-            entry["updatedAt"] = restored["at"]
-            self._save()
-            return restored
-
     def add_session(self, book: str, session: dict[str, Any], record: str | None = None) -> None:
         """Một phiên nghe (bấm phát tới lúc dừng): giờ, thiết bị, từ đâu tới đâu - cho tab "Lịch sử" và thống kê;
         vào đúng hồ sơ đã phát phiên ấy (`record`, xem `_held`)."""
@@ -866,7 +758,7 @@ class Listening:
 
     def merge(self, book: str, incoming: dict[str, Any]) -> dict[str, Any]:
         """Gộp trạng thái từ thiết bị khác (điện thoại) vào hồ sơ đang dùng của `book`. Mỗi phần mang mốc thời gian
-        riêng, bên mới hơn thắng; dấu trang hợp theo id, dấu trang đã xoá ở một bên (tombstone) thì xoá ở cả hai."""
+        riêng, bên mới hơn thắng."""
         require_peer_revisions(incoming)
         with self._changing():
             entry = self._book(book)
@@ -1005,7 +897,7 @@ class Listening:
                 self._save()
                 return False
             entry = self._data["records"][record]
-            incoming = {key: value for key, value in reply.items() if key not in SYNC_KEYS or (key == "deleted" and isinstance(value, dict))}
+            incoming = {key: value for key, value in reply.items() if key not in SYNC_KEYS}
             state = entry.setdefault("state", _empty_state())
             merged = merge_states(state, incoming)
             state.clear()
@@ -1061,7 +953,7 @@ class Listening:
                 if chosen != record and isinstance(reply.get("activeState"), dict):
                     other = self._data["records"][chosen].setdefault("state", _empty_state())
                     merged_other = merge_states(other, {key: value for key, value in reply["activeState"].items()
-                                                         if key not in SYNC_KEYS or (key == "deleted" and isinstance(value, dict))})
+                                                         if key not in SYNC_KEYS})
                     other.clear()
                     other.update(merged_other)
             self._save()
@@ -1209,7 +1101,6 @@ def merge_states(ours: dict[str, Any], theirs: dict[str, Any]) -> dict[str, Any]
     theirs = checked_peer(ours, theirs, notices.NOTICES.add)
     result = json.loads(json.dumps(ours))
     result.setdefault("chapters", {})
-    result.setdefault("bookmarks", [])
     if theirs.get("last") and newer(theirs["last"], result.get("last")):
         result["last"] = theirs["last"]
     if theirs.get("reading") and newer(theirs["reading"], result.get("reading")):
@@ -1230,26 +1121,6 @@ def merge_states(ours: dict[str, Any], theirs: dict[str, Any]) -> dict[str, Any]
                 result.pop(stamp, None)
             if their_stamp["rev"]:
                 result.setdefault("_fieldRevs", {})[field] = their_stamp["rev"]
-    # Dấu trang: hợp theo id, bản sửa sau thắng (bằng nhau thì giữ bản ở đây); bia mộ chỉ xoá dấu không đổi gì sau lúc xoá - dấu được
-    # Hoàn tác (mốc mới hơn) sống lại ở cả hai máy (soát a70). Hai bên cùng xoá một dấu: giữ lúc xoá sau.
-    deleted = dict(result.get("deleted") or {})
-    deleted_revs = dict(result.get("_deletedRevs") or {})
-    for key, stamp in (theirs.get("deleted") or {}).items():
-        rev = theirs.get("_deletedRevs", {}).get(key)
-        if newer({"at": stamp, "rev": rev}, {"at": deleted.get(key, 0), "rev": deleted_revs.get(key)}):
-            deleted[key] = stamp
-            if rev:
-                deleted_revs[key] = rev
-    marks = {mark["id"]: mark for mark in result["bookmarks"]}
-    for mark in theirs.get("bookmarks") or []:
-        current = marks.get(mark["id"])
-        if newer(mark, current):
-            marks[mark["id"]] = mark
-    alive = [mark for mark in marks.values() if newer(mark, {"at": deleted.get(mark["id"], 0), "rev": deleted_revs.get(mark["id"])})]
-    result["bookmarks"] = sorted(alive, key=lambda mark: mark.get("createdAt") or mark.get("at") or 0)
-    result["deleted"] = deleted
-    if deleted_revs:
-        result["_deletedRevs"] = deleted_revs
     sessions = {item["id"]: item for item in result.get("sessions") or [] if isinstance(item, dict) and item.get("id")}
     for item in theirs.get("sessions") or []:
         if isinstance(item, dict) and item.get("id"):

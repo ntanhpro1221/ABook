@@ -43,38 +43,6 @@ export interface BookPart {
   narrator: string;
 }
 
-export interface Bookmark {
-  id: string;
-  chapterId: number;
-  seconds: number;
-  note: string;
-  /** Lần đổi cuối (sửa ghi chú, hoàn tác xoá) - mốc gộp hai máy. */
-  at: number;
-  /** Lúc đặt dấu - điều dòng dấu trang hiện (dấu cũ không có thì dùng `at`). */
-  createdAt?: number;
-  /** Vị trí câu của dấu sách chữ, đặt từ màn đọc hoặc trình phát. */
-  index?: number;
-  quote?: string;
-  anchor?: import("./readingAnchor").ReadingAnchor;
-  /** Máy chủ trả về dấu đã có ngay chỗ ấy (±5 giây, hay cùng câu) thay vì tạo dấu trùng. */
-  existing?: boolean;
-}
-
-/** Mở dấu có vị trí chữ trong màn đọc; dấu cũ chỉ có giây dùng đường nghe dự phòng. */
-export function bookmarkReadPath(bookId: string, mark: Bookmark): string | null {
-  const index = mark.anchor?.segment ?? mark.index;
-  return typeof index === "number" && Number.isInteger(index) && index >= 0
-    ? `/book/${bookId}/read/${mark.chapterId}?${new URLSearchParams({ at: String(index), ...(mark.quote ? { quote: mark.quote } : {}),
-        ...(mark.anchor ? { anchor: JSON.stringify(mark.anchor) } : {}) })}` : null;
-}
-
-/** Câu mà dấu trang đặt ở màn đọc trỏ tới. */
-export interface BookmarkSentence {
-  index: number;
-  quote: string;
-  anchor?: import("./readingAnchor").ReadingAnchor;
-}
-
 export interface ChapterState {
   heard: number;
   done: boolean;
@@ -95,7 +63,6 @@ export interface ListeningState {
   finished?: boolean;
   /** Lúc tự đánh dấu (chưa) nghe xong - nghe tiếp sau mốc này nghĩa là đang nghe lại. */
   finishedAt?: number;
-  bookmarks: Bookmark[];
   /** Chỗ đọc dở ở chế độ đọc (câu thứ `index` của chương). */
   reading?: import("./readingPosition").ReadingPosition;
   updatedAt?: number;

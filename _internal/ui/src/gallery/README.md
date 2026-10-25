@@ -90,8 +90,8 @@ không checkout/sửa component sản phẩm. Có unit test hình học và DOM 
 Thêm một dòng vào `PHONE` hay `DESKTOP` trong `entries.ts`:
 
 ```ts
-{ id: "phone/book-bookmarks", group: "Trang sách", title: "Tab Dấu trang", route: "/book/suong-mu-2",
-  scenario: { library: "full" }, act: () => click(/^Dấu trang, \d+ mục/).then(() => undefined) },
+{ id: "phone/book-history", group: "Trang sách", title: "Tab Lịch sử nghe", route: "/book/suong-mu-2",
+  scenario: { library: "full" }, act: () => click("Lịch sử").then(() => undefined) },
 ```
 
 - `id`: phần sau `#/`, ổn định (là tên file ảnh). Tiền tố `phone/` hay `desktop/`.

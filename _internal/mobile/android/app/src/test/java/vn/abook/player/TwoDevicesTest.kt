@@ -85,8 +85,8 @@ class TwoDevicesTest {
 
     @Test
     fun `giong rieng cua cuon theo ho so nghe, ben chon sau thang`() {
-        val phone = JSONObject("""{"chapters":{},"bookmarks":[],"voice":"vieneu:Ái Hân","voiceAt":100.0,"_fieldRevs":{"voice":{"counter":2,"node":"phone"}}}""")
-        val computer = JSONObject("""{"chapters":{},"bookmarks":[],"voice":"edge:vi-VN-NamMinhNeural","voiceAt":200.0,"_fieldRevs":{"voice":{"counter":3,"node":"computer"}}}""")
+        val phone = JSONObject("""{"chapters":{},"voice":"vieneu:Ái Hân","voiceAt":100.0,"_fieldRevs":{"voice":{"counter":2,"node":"phone"}}}""")
+        val computer = JSONObject("""{"chapters":{},"voice":"edge:vi-VN-NamMinhNeural","voiceAt":200.0,"_fieldRevs":{"voice":{"counter":3,"node":"computer"}}}""")
         assertEquals("edge:vi-VN-NamMinhNeural", Store.mergeStates(phone, computer).getString("voice"))
         val older = JSONObject(computer.toString()).put("voiceAt", 50.0).put("_fieldRevs", JSONObject("""{"voice":{"counter":1,"node":"computer"}}"""))
         assertEquals("vieneu:Ái Hân", Store.mergeStates(phone, older).getString("voice"))

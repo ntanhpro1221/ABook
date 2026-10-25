@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from "react";
 import { toast } from "@/shared/toast";
 import { isRecordGone, RECORD_GONE_MESSAGE, shownRecord } from "./recordWrites";
-import type { Bookmark, BookmarkSentence, Cast, ListenBook, ListenChapter, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
+import type { Cast, ListenBook, ListenChapter, ListeningRecord, ListeningSession, ListeningState, NightSession, Script } from "./model";
 import type { EditsSyncState } from "@/shared/editsSync";
 import type { TextImport } from "./textImport";
 import { textScript } from "./textScript";
@@ -97,13 +97,8 @@ export interface ListenSource {
   setRate(bookId: string, rate: number, record?: string): Promise<void>;
   /** Giọng Nghe ngay riêng của cuốn vào hồ sơ nghe - đi sang máy kia như tốc độ (soát a68 lỗi 8). */
   setVoice?(bookId: string, voice: string, record?: string): Promise<void>;
-  addBookmark(bookId: string, chapterId: number, seconds: number, note: string, record?: string, sentence?: BookmarkSentence): Promise<Bookmark>;
   /** Hỏi thiết bị kia bản mới nhất của hồ sơ nghe đang dùng (điện thoại hỏi máy tính đã ghép); máy tính là nơi giữ. */
   refreshListening?(bookId: string): Promise<void>;
-  updateBookmark(bookId: string, id: string, note: string, record?: string): Promise<void>;
-  deleteBookmark(bookId: string, id: string, record?: string): Promise<void>;
-  /** Hoàn tác xoá dấu trang. */
-  restoreBookmark(bookId: string, mark: Bookmark): Promise<void>;
   /** Đêm gần nhất có hẹn giờ ngủ (cho thẻ "Tối qua"). */
   lastNight(): Promise<{ bookId: string; night: NightSession } | null>;
   dismissNight(bookId: string, nightId: string | undefined): Promise<void>;
@@ -342,26 +337,6 @@ export function useListenMutations(bookId: string) {
       mutationFn: (finished: boolean) => source.setFinished(bookId, finished, shown()),
       onSuccess: refresh,
       onError: failed,
-    }),
-    addBookmark: useMutation({
-      mutationFn: ({ chapterId, seconds, note, sentence }: { chapterId: number; seconds: number; note: string; sentence?: BookmarkSentence }) =>
-        source.addBookmark(bookId, chapterId, seconds, note, shown(), sentence),
-      onSuccess: refresh,
-      onError: failed,
-    }),
-    updateBookmark: useMutation({
-      mutationFn: ({ id, note }: { id: string; note: string }) => source.updateBookmark(bookId, id, note, shown()),
-      onSuccess: refresh,
-      onError: failed,
-    }),
-    deleteBookmark: useMutation({
-      mutationFn: (id: string) => source.deleteBookmark(bookId, id, shown()),
-      onSuccess: refresh,
-      onError: failed,
-    }),
-    restoreBookmark: useMutation({
-      mutationFn: (mark: Bookmark) => source.restoreBookmark(bookId, mark),
-      onSuccess: refresh,
     }),
     createRecord: useMutation({
       mutationFn: (name: string) => source.records!.create(bookId, name),

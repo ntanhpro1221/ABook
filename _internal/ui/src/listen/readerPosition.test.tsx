@@ -1,7 +1,6 @@
 import { renderToString } from 'react-dom/server';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { textScript } from '@/listen/textScript';
-import { bookmarkReadPath } from '@/listen/model';
 
 const h = vi.hoisted(() => ({ effects: [] as any[], book: null as any, script: null as any,
   chapterParam: '1' as string | undefined, params: new URLSearchParams(), source: {} as any,
@@ -50,7 +49,7 @@ beforeEach(()=>{
   vi.stubGlobal('window',Object.assign(new EventTarget(),{setTimeout,clearTimeout,setInterval,clearInterval,requestAnimationFrame:(f:any)=>{f();return 1;}}));
   vi.stubGlobal('document',Object.assign(new EventTarget(),{visibilityState:'visible'}));
   h.source={saveReading:vi.fn().mockResolvedValue(undefined)};
-  h.book={id:'b',title:'Sách',chapters:[1,2,3,4].map(id=>({id,title:`Chương ${id}`,state:'text'})),state:{chapters:{},bookmarks:[]}};
+  h.book={id:'b',title:'Sách',chapters:[1,2,3,4].map(id=>({id,title:`Chương ${id}`,state:'text'})),state:{chapters:{}}};
   h.script=textScript(1,'Chương 1',Array.from({length:60},(_,i)=>`Đoạn ${i}`).join('\n\n'));
 });
 afterEach(()=>{vi.useRealTimers();vi.unstubAllGlobals();});
@@ -74,15 +73,6 @@ it('bản local mới hơn thắng reading cũ của nguồn',()=>{
   const {box}=mount();
   h.effects.find(e=>e.run.toString().includes('restored.current')).run();
   expect(box.querySelector).toHaveBeenCalledWith('[data-index="50"]');
-});
-it('dấu trang mang câu trích để khôi phục sau khi bỏ dòng trước đó',()=>{
-  const text='Chương 1\n\nTrans: Lan\n\nCâu bạn đánh dấu.\n\nCâu kế tiếp.';
-  const before=textScript(1,'Chương 1',text);
-  const mark={id:'m',chapterId:1,seconds:0,index:2,quote:before.segments[2].text,note:'',at:1};
-  const after=textScript(1,'Chương 1',text,['Trans: Lan']);
-  expect(new URL(bookmarkReadPath('b',mark)!, 'http://local').searchParams.get('quote')).toBe(mark.quote);
-  expect(after.segments[mark.index].text).toBe('Câu kế tiếp.');
-  expect(after.segments[mark.index].text).not.toBe(mark.quote);
 });
 it('năm nút cỡ chữ có nhãn số riêng',()=>{
   const {tree}=mount();
@@ -149,12 +139,4 @@ it('ACK từ epoch trước không xác nhận nhầm counter trùng trong epoch
   await vi.advanceTimersByTimeAsync(0);
   expect(JSON.parse(localStorage.getItem('abook-reading-b#default')!).pending).toBe(true);
   cleanup();
-});
-
-it('ReaderScreen dùng câu trích để mở đúng đoạn của dấu trang đã dịch chỉ số',()=>{
-  h.script=textScript(1,'Chương 1','Chương 1\n\nTrans: Lan\n\nCâu đã đánh dấu.\n\nCâu sau.',['Trans: Lan']);
-  h.params=new URLSearchParams({at:'2',quote:'Câu đã đánh dấu.'});
-  const {box}=mount();
-  h.effects.find(e=>e.run.toString().includes('restored.current')).run();
-  expect(box.querySelector).toHaveBeenCalledWith('[data-index="1"]');
 });

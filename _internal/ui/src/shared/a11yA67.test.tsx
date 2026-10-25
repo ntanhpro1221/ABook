@@ -99,8 +99,8 @@ describe("tên đọc được", () => {
 
   it("phím tắt chỉ nói khi máy có bàn phím (máy tính)", async () => {
     const { nextChapterLabel, withShortcut } = await import("@/listen/labels");
-    expect(withShortcut("Thêm dấu trang", "B", true)).toBe("Thêm dấu trang (B)");
-    expect(withShortcut("Thêm dấu trang", "B", false)).toBe("Thêm dấu trang");
+    expect(withShortcut("Tắt tiếng", "M", true)).toBe("Tắt tiếng (M)");
+    expect(withShortcut("Tắt tiếng", "M", false)).toBe("Tắt tiếng");
     expect(nextChapterLabel(true, true, false)).toBe("Chương sau");
   });
 });

@@ -165,12 +165,6 @@ class PlayerPlugin : Plugin() {
     fun getState(call: PluginCall) = Playback.onMain { call.resolve(JSObject.fromJSONObject(Playback.state())) }
 
     @PluginMethod
-    fun addBookmark(call: PluginCall) = withService {
-        val mark = Playback.addBookmark(call.getString("note") ?: "", call.getInt("index"), call.getString("quote") ?: "", call.getObject("anchor"))
-        if (mark == null) call.reject("chưa phát gì") else call.resolve(JSObject.fromJSONObject(mark))
-    }
-
-    @PluginMethod
     fun setSleep(call: PluginCall) = act(call) {
         when (call.getString("mode")) {
             "minutes" -> SleepTimer.setMinutes(call.getInt("minutes") ?: 30)

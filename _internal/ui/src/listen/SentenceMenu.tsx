@@ -1,5 +1,5 @@
 import { useBackLayer } from "@/shared/backStack";
-import { BookmarkPlus, Copy, Pencil, Play, X } from "lucide-react";
+import { Copy, Pencil, Play, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
@@ -10,14 +10,11 @@ import { lineToEdit, type LineToEdit } from "./follow";
 import { LineWishDialog, useWishes, WaitingMark } from "./LineWishes";
 import { canTeachWords, wordOf } from "./readings";
 import type { ListenBook, ListenChapter, Script, ScriptSegment } from "./model";
-import { useListenMutations } from "./source";
-import { reportWriteFailure } from "./recordWrites";
-import { makeAnchor } from "./readingAnchor";
 import { WordReadingDialog } from "./WordReadings";
 import { keepFocus } from "./menuSlot";
 
 // Chọn một câu của văn bản đọc theo rồi làm gì với nó - MỘT chỗ cho màn Đọc (ReaderScreen) và tab "Đọc theo" của màn "Đang nghe" (PlayerViews):
-// nghe từ câu ấy, đặt dấu trang, chép, sửa cách đọc một từ (cuốn chỉ có chữ), sửa câu này (cuốn có audio). Giữ ngón tay / bấm chuột phải vào
+// nghe từ câu ấy, chép, sửa cách đọc một từ (cuốn chỉ có chữ), sửa câu này (cuốn có audio). Giữ ngón tay / bấm chuột phải vào
 // một chữ mở thẳng việc sửa chữ ấy; loại sách không sửa được chữ thì chọn câu (thanh có "Chép" thay cho menu chép của hệ thống).
 
 /** Màn đọc / trình phát được sửa gì ở thiết bị này. `editing`: false ở thiết bị điều khiển từ xa (sửa từng câu / mở Studio không có ở đó).
@@ -53,7 +50,6 @@ export function useSentenceMenu({
   canListen: boolean;
   onListen: (sentence: number) => void;
 }) {
-  const mutations = useListenMutations(bookId);
   const chapterId = chapter?.id ?? 0;
   // Chương chỉ có chữ (sách nhập từ EPUB / DOCX / PDF / TXT, chưa có audio): đọc được, không sửa từng câu; máy có giọng thì giọng máy đọc.
   const textOnly = chapter?.state === "text";
@@ -113,30 +109,6 @@ export function useSentenceMenu({
     select(sentence, word);
   };
 
-  // Dấu trang theo câu: giữ vị trí câu + ~60 chữ đầu câu; chương có audio thì thêm giờ bắt đầu câu để trình phát cũng tới được.
-  const bookmarkSentence = (sentence: number) => {
-    const segment = script?.segments[sentence];
-    if (!segment) return;
-    mutations.addBookmark.mutate(
-      { chapterId, seconds: segment.start ?? 0, note: "", sentence: { index: sentence, quote: segment.text,
-        anchor: makeAnchor(script!.segments.map((part) => part.text), sentence, 0) } },
-      {
-        onSuccess: (mark) => {
-          select(null);
-          if (mark.existing) {
-            toast("Đã có dấu trang ở câu này", { id: "bookmark-existing" });
-            return;
-          }
-          toast.success("Đã đặt dấu trang", {
-            id: "bookmark",
-            duration: 8000,
-            action: { label: "Hoàn tác", onClick: () => mutations.deleteBookmark.mutate(mark.id) },
-          });
-        },
-        onError: (error) => reportWriteFailure(error, "Chưa đặt được dấu trang"),
-      },
-    );
-  };
   const copySentence = (sentence: number) => {
     const text = script?.segments[sentence]?.text ?? "";
     void navigator.clipboard.writeText(text).then(
@@ -165,9 +137,6 @@ export function useSentenceMenu({
               <span className="max-sm:hidden">Nghe từ câu này</span>
             </button>
           )}
-          <button type="button" onClick={() => bookmarkSentence(selected)} {...keepFocus} className={BAR_BUTTON}>
-            <BookmarkPlus className="size-4" /> <span className={BAR_LABEL}>Đặt dấu trang</span>
-          </button>
           {readingEdit && (
             <button
               type="button"

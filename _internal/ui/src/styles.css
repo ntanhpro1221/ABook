@@ -391,7 +391,7 @@ select[class~="border-line"] {
   /* Hai đầu khác bề rộng ("Đọc" hẹp hơn "Thêm"): --slot-start / --slot-end riêng, không thì đầu hẹp thụt khỏi mép. */
   padding-left: calc(var(--slot-start, var(--slot)) / 2);
   padding-right: calc(var(--slot-end, var(--slot)) / 2);
-  /* Rãnh 0 cho con cỡ min-content - nhãn hai chữ ("Dấu trang") sẽ gãy dòng; giữ cỡ tự nhiên. */
+  /* Rãnh 0 cho con cỡ min-content - nhãn hai chữ ("Hẹn giờ") sẽ gãy dòng; giữ cỡ tự nhiên. */
   & > * {
     width: max-content;
   }
@@ -909,7 +909,6 @@ select[class~="border-line"] {
 .lucide-mic-vocal { --ink-l: 3.75; }
 .lucide-arrow-left,
 .lucide-arrow-right,
-.lucide-bookmark,
 .lucide-bookmark-plus,
 .lucide-hourglass,
 .lucide-mic,
@@ -979,7 +978,6 @@ select[class~="border-line"] {
 .lucide-user-round { --ink-r: 3; }
 .lucide-arrow-left,
 .lucide-arrow-right,
-.lucide-bookmark,
 .lucide-bookmark-plus,
 .lucide-ear,
 .lucide-hourglass,
@@ -1029,7 +1027,7 @@ select[class~="border-line"] {
 .dot-join > span { display: flex; flex-wrap: wrap; align-items: baseline; margin-inline-start: calc(-1 * var(--dot-w)); }
 .dot-join > span > span { min-width: 0; }
 .dot-join > span > span::before { content: "·" / ""; display: inline-block; width: var(--dot-w); text-align: center; }
-/* Hàng nút phụ có nhãn (slot-row + ActionButton: Tốc độ · Hẹn giờ · Dấu trang · Chương, Đọc · Tìm · Từ đầu · Thêm): biểu tượng luôn nằm giữa ngay
+/* Hàng nút phụ có nhãn (slot-row + ActionButton: Tốc độ · Hẹn giờ · Chương, Đọc · Tìm · Từ đầu · Thêm): biểu tượng luôn nằm giữa ngay
    trên nhãn của nó; slot-row đặt khối nhìn thấy của hai nút đầu mút (nhãn rộng hơn biểu tượng) thẳng mép. Từng kéo riêng biểu tượng đầu mút ra mép
    ngoài ô nút (25-10 V5) - mực lòi 9 px khỏi lề và tách khỏi nhãn (soát audit140 C1); không làm lại. */
 .book-action-sheet .sheet-body > [data-radix-popper-content-wrapper] {

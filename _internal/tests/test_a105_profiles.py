@@ -28,7 +28,6 @@ def host_from(spec: dict, path: Path) -> Listening:
     store = Listening(path)
     for key, item in spec["records"].items():
         record = {"name": item["name"], "createdAt": 0.0, "nameAt": item["nameAt"], "state": item["state"] | {"chapters": {}}}
-        record["state"].setdefault("bookmarks", [])
         if item.get("movedAt"):
             record["movedAt"] = item["movedAt"]
         store._data["records"][IDS[key]] = record
@@ -68,8 +67,6 @@ def check_after(store: Listening, expect: dict) -> None:
     assert sorted(store._data["deleted"]) == sorted(IDS[key] for key in expect["deleted"])
     for key, seconds in expect.get("lastSeconds", {}).items():
         assert state_of(store, IDS[key])["last"]["seconds"] == seconds
-    for key, notes in expect.get("bookmarkNotes", {}).items():
-        assert [mark["note"] for mark in state_of(store, IDS[key])["bookmarks"]] == notes
 
 
 def check_reply(reply: dict, expect: dict) -> None:
@@ -80,8 +77,6 @@ def check_reply(reply: dict, expect: dict) -> None:
         assert reply["deleted"] is expect["deleted"]
     if "lastSeconds" in expect:
         assert reply["last"]["seconds"] == expect["lastSeconds"]
-    if "bookmarkNotes" in expect:
-        assert [mark["note"] for mark in reply["bookmarks"]] == expect["bookmarkNotes"]
     if "recordName" in expect:
         assert reply["recordName"] == expect["recordName"]
     if "movedAt" in expect:
@@ -122,12 +117,11 @@ def paired_computer(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, sender: Lis
                            listening=sender, _state_synced={})
 
 
-def test_computer_sync_keeps_two_people_apart_and_brings_back_only_ones_own_bookmarks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_computer_sync_keeps_two_people_apart(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     sender = Listening(tmp_path / "sender.json")
     receiver = Listening(tmp_path / "receiver.json")
     other = receiver.create_record(BOOK, "B")["id"]
     receiver.progress(BOOK, 1, 100, 1000, record=other)
-    receiver.add_bookmark(BOOK, 1, 90, "Ghi chu rieng cua B")
     mine = sender.create_record(BOOK, "A")["id"]
     sender.progress(BOOK, 1, 600, 1000, record=mine)
     # Hợp đồng phiên bản (Lamport): hai lần chọn đồng thời xếp theo (counter, node) ngẫu nhiên, không theo giờ tường. "Người chọn sau" là người
@@ -150,8 +144,6 @@ def test_computer_sync_keeps_two_people_apart_and_brings_back_only_ones_own_book
     assert state_of(receiver, other)["last"]["seconds"] == 100, "hồ sơ của người kia ở máy giữ sách không bị đè"
     assert receiver.active_record(BOOK) == mine, "người chọn sau (phiên bản cao hơn) thắng, như điện thoại"
     assert state_of(receiver, mine)["last"]["seconds"] == 600
-    assert state_of(receiver, other)["bookmarks"][0]["note"] == "Ghi chu rieng cua B"
-    assert state_of(sender, mine)["bookmarks"] == [], "dấu trang của B không chảy sang A"
     assert state_of(sender, mine)["last"]["seconds"] == 600
 
 

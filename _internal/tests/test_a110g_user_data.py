@@ -27,13 +27,13 @@ def test_r1_peer_cannot_poison_clock_and_saves_keep_working(tmp_path, counter):
     for store in (saved, listening.Listening(saved.path)):
         store.progress("book", 1, 600, 1000)
         store.set_reading("book", 1, 100)
-        store.add_bookmark("book", 1, 600)
+        store.set_rate("book", 1.5)
     assert listening.Listening(saved.path).get("book")["last"]["seconds"] == 600
 
 
 def test_r1_ceiling_rolls_epoch_and_replays_without_losing_other_fields(tmp_path):
     saved = listening.Listening(tmp_path / "listening.json")
-    mark = saved.add_bookmark("book", 1, 10, "kept")
+    saved.set_rate("book", 1.5)
     raw = json.loads(saved.path.read_text("utf-8"))
     next(iter(raw["records"].values()))["state"]["_clock"] = CAP
     saved.path.write_text(json.dumps(raw), encoding="utf-8")
@@ -41,7 +41,7 @@ def test_r1_ceiling_rolls_epoch_and_replays_without_losing_other_fields(tmp_path
     saved.progress("book", 1, 600, 1000)
     state = listening.Listening(saved.path).get("book")
     assert state["last"]["rev"] == {"epoch": "1", "counter": 1, "node": saved._node()}
-    assert state["bookmarks"][0]["id"] == mark["id"]
+    assert state["rate"] == 1.5
     saved.set_reading("book", 1, 100)
     assert saved.get("book")["reading"]["rev"]["counter"] == 2
     assert saved.get("book")["reading"]["rev"]["epoch"] == "1"
@@ -51,8 +51,7 @@ def test_r1_ceiling_rolls_epoch_and_replays_without_losing_other_fields(tmp_path
     {"last": {"chapterId": 1, "seconds": 600, "at": 200}},
     {"reading": {"chapterId": 1, "index": 100, "at": 200}},
     {"chapters": {"1": {"heard": 600, "at": 200}}},
-    {"bookmarks": [{"id": "m", "chapterId": 1, "seconds": 20, "note": "changed", "at": 200}]},
-    {"deleted": {"m": 200}}, {"rate": 1.5, "rateAt": 200},
+    {"rate": 1.5, "rateAt": 200},
 ])
 def test_r2_missing_revision_is_rejected_atomically(tmp_path, peer):
     saved = listening.Listening(tmp_path / "listening.json")
@@ -63,12 +62,12 @@ def test_r2_missing_revision_is_rejected_atomically(tmp_path, peer):
     assert saved.path.read_bytes() == original
 
 
-def test_r2_note_edit_advances_revision(tmp_path):
+def test_r2_field_edit_advances_revision(tmp_path):
     saved = listening.Listening(tmp_path / "listening.json")
-    mark = saved.add_bookmark("book", 1, 10, "first")
-    old = copy.deepcopy(mark["rev"])
-    saved.update_bookmark("book", mark["id"], "changed")
-    assert saved.get("book")["bookmarks"][0]["rev"]["counter"] > old["counter"]
+    saved.set_rate("book", 1.25)
+    old = copy.deepcopy(saved.get("book")["_fieldRevs"]["rate"])
+    saved.set_rate("book", 1.5)
+    assert saved.get("book")["_fieldRevs"]["rate"]["counter"] > old["counter"]
 
 
 def test_r3_clone_library_has_separate_install_identity_and_converges(tmp_path, monkeypatch):
@@ -88,10 +87,10 @@ def test_r3_clone_library_has_separate_install_identity_and_converges(tmp_path, 
     assert listening.merge_states(a, b)["reading"] == listening.merge_states(b, a)["reading"]
 
 
-def test_r4_constructor_reads_after_lock_and_keeps_committed_bookmark(tmp_path):
+def test_r4_constructor_reads_after_lock_and_keeps_committed_change(tmp_path):
     path = tmp_path / "listening.json"
     store = listening.Listening(path)
-    store.add_bookmark("book", 1, 10, "initial")
+    store.set_rate("book", 1.5)
     raw = json.loads(path.read_text("utf-8"))
     next(iter(raw["records"].values()))["state"]["chapters"] = []
     path.write_text(json.dumps(raw), encoding="utf-8")
@@ -105,7 +104,7 @@ def test_r4_constructor_reads_after_lock_and_keeps_committed_bookmark(tmp_path):
             injected = True
             with patch.object(listening, "file_lock", lock), patch.object(listening.notices, "read_json", read):
                 other = listening.Listening(path)
-                other.add_bookmark("book", 1, 20, "committed-by-other-writer")
+                other.set_voice("book", "edge:committed-by-other-writer")
         with lock(target, **kwargs):
             held = True
             try:
@@ -118,13 +117,13 @@ def test_r4_constructor_reads_after_lock_and_keeps_committed_bookmark(tmp_path):
         return read(target, *args, **kwargs)
     with patch.object(listening, "file_lock", acquire), patch.object(listening.notices, "read_json", checked_read):
         opened = listening.Listening(path)
-    assert [m["note"] for m in opened.get("book")["bookmarks"]] == ["initial", "committed-by-other-writer"]
+    assert (opened.get("book")["rate"], opened.get("book")["voice"]) == (1.5, "edge:committed-by-other-writer")
 
 
 def test_r4_constructor_snapshot_stamp_cannot_hide_a_writer_after_unlock(tmp_path):
     path = tmp_path / "listening.json"
     original = listening.Listening(path)
-    original.add_bookmark("book", 1, 10, "initial")
+    original.set_rate("book", 1.5)
     lock = listening.file_lock
     injected = False
     @contextmanager
@@ -136,11 +135,12 @@ def test_r4_constructor_snapshot_stamp_cannot_hide_a_writer_after_unlock(tmp_pat
             injected = True
             with patch.object(listening, "file_lock", lock):
                 other = listening.Listening(path)
-                other.add_bookmark("book", 1, 20, "after-unlock")
+                other.set_voice("book", "edge:after-unlock")
     with patch.object(listening, "file_lock", acquire):
         opened = listening.Listening(path)
-    opened.add_bookmark("book", 1, 30, "ours")
-    assert [m["note"] for m in listening.Listening(path).get("book")["bookmarks"]] == ["initial", "after-unlock", "ours"]
+    opened.set_finished("book", True)
+    state = listening.Listening(path).get("book")
+    assert (state["rate"], state["voice"], state["finished"]) == (1.5, "edge:after-unlock", True)
 
 
 @pytest.mark.parametrize("case", json.loads((FIXTURES / "malformed.json").read_text("utf-8")), ids=lambda c: c["name"])
@@ -236,7 +236,7 @@ def test_r7_recovery_rekeys_profiles_and_survives_a_failed_commit(tmp_path, acti
     prefs = library.Preferences(tmp_path / "preferences.json")
     prefs.update({"libraryRoot": str(source)})
     saved = listening.Listening(tmp_path / "listening.json")
-    mark = saved.add_bookmark(before, 1, 30, "precious")
+    saved.set_rate(before, 1.5)
     prefs.remember_position(before, 1, 30, 1000)
     source.rename(target)
     after = library.book_id(target / packages.IMPORTED_FOLDER / "book")
@@ -252,5 +252,5 @@ def test_r7_recovery_rekeys_profiles_and_survives_a_failed_commit(tmp_path, acti
     app._recover_library_move()
     assert not app._library_move_path().exists()
     assert app.library.root == target
-    assert saved.get(after)["bookmarks"][0]["id"] == mark["id"]
+    assert saved.get(after)["rate"] == 1.5
     assert after in prefs.get()["positions"]

@@ -10,7 +10,7 @@ export function folderName(path: string): string {
 }
 
 /** Thư mục thư viện người dùng chọn không còn (ổ rời rút ra, bị đổi tên / chuyển chỗ khi app đang chạy - soát a28 lỗi 6): nói thẳng thay vì
- *  một thư viện trống im lặng. Chọn lại thư mục (kể cả chỗ mới của chính nó) thì chỗ nghe, dấu trang đi theo sách. */
+ *  một thư viện trống im lặng. Chọn lại thư mục (kể cả chỗ mới của chính nó) thì chỗ nghe đi theo sách. */
 export function MissingLibrary({ root, className }: { root: string; className?: string }) {
   const navigate = useNavigate();
   // Studio từ xa: thư mục thư viện là của máy tính (đường dẫn không tới thiết bị này, cài đặt không đổi được từ đây).

@@ -14,7 +14,7 @@ Một người nghe sách nói tiếng Việt, chủ yếu trên điện thoại
 PDF) hoặc sách nói `.abook`. Máy tính có thể dựng sách nói bằng Studio (lâu, chạy nền). Việc theo tần suất:
 
 1. **Nghe tiếp** cuốn đang nghe (mỗi ngày, nhiều lần) - phải nhanh nhất.
-2. Điều khiển khi đang nghe: tua, chương, tốc độ, hẹn giờ ngủ, dấu trang, đọc theo chữ.
+2. Điều khiển khi đang nghe: tua, chương, tốc độ, hẹn giờ ngủ, đọc theo chữ.
 3. Chọn cuốn khác trong thư viện.
 4. Thêm sách (file mới, hay sách từ máy kia).
 5. Tạo sách nói từ truyện (Studio) và theo dõi tiến độ; sửa cách đọc / ai nói khi cần.
@@ -33,7 +33,6 @@ Mỗi luồng có: điểm vào, các bước, số chạm đích, trạng thái
 | L3 | Mở trình phát | 1 | chạm thanh phát thu nhỏ -> trình phát trượt lên; vuốt xuống / Back để thu |
 | L4 | Nhảy chương | 2 | trình phát -> "Chương" -> chạm chương |
 | L5 | Hẹn giờ ngủ / tốc độ | 2 | trình phát -> nút -> chọn mức (bảng trượt, Back đóng) |
-| L6 | Dấu trang | 1 | trình phát -> nút dấu trang; toast có "Hoàn tác" |
 | L7 | Đọc theo chữ | 1 | trình phát -> "Đọc theo"; thanh điều khiển tự mờ khi đọc, chạm hiện lại |
 | L8 | Chọn cuốn khác | 2 | Thư viện -> chạm bìa (vào trang sách) -> "Nghe" ; hay chạm giữ bìa -> phát ngay |
 | L9 | Sách ở máy kia | 2 | máy đã ghép: sách máy kia nằm NGAY trong Thư viện (dấu nhỏ "Trên máy tính"), chạm là nghe (stream) hay tải; chưa ghép: Cài đặt > Thiết bị > Nối máy (một lần) |
@@ -142,7 +141,7 @@ App nghe sách: âm thanh giao diện KHÔNG bao giờ trộn vào lời đọc.
 - **Bộ tiếng** (ngắn ≤ 250 ms, mềm, cùng một âm sắc "đồng thau gõ nhẹ", tự tổng hợp bằng mã - Web Audio / Android AudioTrack -
   không file thu âm, không giấy phép ngoài; mức −24 dB so với lời đọc):
   - *chạm* (tick rất khẽ): chỉ cho công tắc, chọn mức tốc độ/hẹn giờ; KHÔNG cho mọi nút.
-  - *xác nhận* (hai nốt đi lên, quãng ba): đặt dấu trang, thêm sách xong, ghép máy xong.
+  - *xác nhận* (hai nốt đi lên, quãng ba): thêm sách xong, ghép máy xong.
   - *xong việc* (ba nốt): sách nói Studio làm xong (máy tính phát; điện thoại qua thông báo).
   - *hẹn giờ* (một nốt trầm, 30 giây trước khi tắt, rồi lời đọc nhỏ dần 10 giây).
   - Lỗi: không tiếng - dùng chữ + rung.
@@ -161,7 +160,7 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 | đổi mức tốc độ, hẹn giờ, công tắc | SEGMENT_TICK (API 34+), không có thì CLOCK_TICK | |
 | chạm giữ (menu bìa, sửa câu) | LONG_PRESS | |
 | vuốt đóng trình phát / bảng trượt qua ngưỡng | GESTURE_THRESHOLD_ACTIVATE (34+) / bỏ qua | |
-| đặt dấu trang, thêm sách xong | CONFIRM (30+) | |
+| thêm sách xong | CONFIRM (30+) | |
 | lỗi cần người dùng làm gì | REJECT (30+) | |
 
 - Không rung: hẹn giờ ngủ tắt (người có thể đã ngủ), tiến độ chạy, sự kiện nền, cuộn đọc.
@@ -205,10 +204,10 @@ giống app hệ thống; không tự chế chuỗi rung dài.
   chữ + "Xếp theo" + Tìm. Lưới bìa luôn MỞ (bộ sách nhiều tập gom thành một bìa xếp chồng, chạm mở bộ) - không kệ thu gọn
   che hết bìa. Sách máy kia có dấu nguồn nhỏ góc bìa.
 - **Trang sách**: bìa + tên + tác giả · giọng · thời lượng + tiến độ mảnh; MỘT nút chính "Nghe tiếp · Chương 4" (hay
-  "Nghe"); hàng phụ cùng kiểu: Đọc · Tìm · Từ đầu · Thêm(…). Tab Chương / Dấu trang / Lịch sử / Nhân vật; danh sách phẳng.
+  "Nghe"); hàng phụ cùng kiểu: Đọc · Tìm · Từ đầu · Thêm(…). Tab Chương / Lịch sử / Nhân vật; danh sách phẳng.
 - **Trình phát đầy đủ**: thanh đầu: thu nhỏ · "ĐANG NGHE" · "…"; bìa lớn; tên chương (20) + tên sách; thanh tiến độ + thời gian;
-  hàng điều khiển 5 nút (chương trước · lùi 15 · phát tròn 72 · tới 15 · chương sau); hàng phụ 4 nút có nhãn (Tốc độ · Hẹn giờ ·
-  Dấu trang · Chương); đáy: một nút "Đọc theo" rộng cả hàng. Mọi việc khác (nhạc nền, giọng, âm lượng, danh sách dấu trang, quay
+  hàng điều khiển 5 nút (chương trước · lùi 15 · phát tròn 72 · tới 15 · chương sau); hàng phụ 3 nút có nhãn (Tốc độ · Hẹn giờ ·
+  Chương); đáy: một nút "Đọc theo" rộng cả hàng. Mọi việc khác (nhạc nền, giọng, âm lượng, quay
   lại chỗ vừa nghe, gợi ý, phát trên thiết bị khác) ở "…" của thanh đầu - "Thêm" ở thanh đầu chứ không chiếm một ô hàng phụ, để
   "Chương" (L4) còn 2 chạm. Điện thoại: "Đọc theo" mở màn đọc của chương đang nghe. Máy tính: trình phát bên trái, đọc theo bên phải.
 - **Đọc theo**: chữ 20/1.7, rộng ≤ 68 ký tự; đầu màn chỉ nút về + tên chương (nền đặc, không chồng lên chữ); thanh dưới mờ
