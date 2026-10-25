@@ -14,7 +14,7 @@ import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
-import { SelectionMark, ContentSkeleton, InlineError, OfflineStrip, Progress, Vu } from "@/shared/ui";
+import { ContentSkeleton, InlineError, OfflineStrip, Progress, Vu } from "@/shared/ui";
 import { useAppInfo, useLibrary } from "@/studio/data";
 import { usePrecastInvites } from "@/studio/PrecastReview";
 import { PeerBar } from "./PeerBar";
@@ -39,7 +39,8 @@ function Brand() {
 }
 
 const NAV = "sidebar-link flex h-10 items-center gap-3 rounded-lg px-2 text-sm";
-const NAV_ACTIVE = "font-medium text-accent-text";
+// Mục đang mở: nền trung tính nhạt + chữ đậm thường (DESIGN 6 "Điều hướng"). Không dấu tích - dấu tích là của lựa chọn trong danh sách chọn.
+const NAV_ACTIVE = "bg-hover font-semibold text-fg";
 const NAV_IDLE = "font-medium text-fg-2 hover:bg-hover hover:text-fg";
 
 /** Mục thanh bên sáng cả khi ở trang con: sách thuộc Thư viện, dự án thuộc Studio. `ink`: mực icon bắt đầu bao nhiêu phần 24 trong ô
@@ -58,7 +59,7 @@ function NavItem({ to, icon: Icon, ink, match, children }: { to: string; icon: t
       className={cn(NAV, active ? NAV_ACTIVE : NAV_IDLE)}
     >
       <Icon className="glyph" style={{ marginLeft: `calc(-1 * ${shift})`, marginRight: shift }} />
-      {children}<SelectionMark selected={active} className="ml-auto" />
+      {children}
     </Link>
   );
 }
@@ -102,9 +103,9 @@ export function Producing() {
           type="button"
           onClick={() => { setExpanded(false); navigate(`/studio/${book.id}`); }}
           aria-current={pathname === `/studio/${book.id}` ? "page" : undefined}
-          className={cn("sidebar-link flex w-full items-center gap-2.5 rounded-lg p-2 text-left hover:bg-hover", pathname === `/studio/${book.id}` ? "text-accent-text" : "text-fg-2")}
+          className={cn("sidebar-link flex w-full items-center gap-2.5 rounded-lg p-2 text-left hover:bg-hover", pathname === `/studio/${book.id}` ? "bg-hover text-fg" : "text-fg-2")}
         >
-          <SelectionMark selected={pathname === `/studio/${book.id}`} /><BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-md" />
+          <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-md" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 truncate text-xs font-medium">
               <MotionRegion as="span" className="flex size-3 shrink-0 items-center justify-center">{book.queuePosition != null ? <Clock className="size-3" aria-label={`Đang chờ ${book.queuePosition}`} /> : book.paused || book.stopping ? (
