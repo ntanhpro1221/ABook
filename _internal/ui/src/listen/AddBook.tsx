@@ -186,6 +186,8 @@ export function AddBookDialog({
   };
   const clear = () => {
     reads.current.cancel();
+    // Đóng hộp / chọn lại đã bỏ bản chép: "Thử lại" sau đó không được đọc lại cuốn cũ.
+    lastRead.current = null;
     setBusy(null);
     clearPreview();
     setTyped("");
@@ -257,8 +259,8 @@ export function AddBookDialog({
       await loadPreview(picked, session);
     } catch (error) {
       void importer.discard?.(picked).catch(() => undefined);
-      // Bản chép đã bỏ (điện thoại xoá thư mục chép): "Thử lại" phải chọn lại file, không đọc lại chỗ không còn. Đường dẫn gõ tay thì đọc lại được.
-      if (importer.choose && lastRead.current === picked) lastRead.current = null;
+      // Bản chép đã bỏ thật (điện thoại xoá thư mục chép): "Thử lại" phải chọn lại file, không đọc lại chỗ không còn. Máy tính không chép (không discard) nên đọc lại đúng đường dẫn.
+      if (importer.discard && lastRead.current === picked) lastRead.current = null;
       if (error instanceof ReadCancelled) return;
       fail(error);
       setChoice(null);
@@ -633,7 +635,7 @@ export function AddBookDialog({
           {busy === "reading" && <ContentSkeleton shape="cards" count={2} label="Đang đọc file sách" className="mt-4" />}
           {problem && (
             <div className="mt-3">
-              <InlineError message={problem} onRetry={() => { if (lastRead.current) void read(lastRead.current); else void choose("file"); }} />
+              <InlineError message={problem} onRetry={() => { if (lastRead.current) void read(lastRead.current); else void choose(lastKind.current); }} />
               {technical && <ErrorDetails technical={technical} />}
             </div>
           )}

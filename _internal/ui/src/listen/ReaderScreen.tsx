@@ -3,7 +3,7 @@ import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { LoadingCrossfade, MotionPresence } from "@/shared/MotionPresence";
 import * as Popover from "@radix-ui/react-popover";
 import { ArrowLeft, ArrowRight, BookOpenText, ChevronLeft, ChevronRight, Headphones, Search, Type } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent as ReactTouchEvent, type WheelEvent as ReactWheelEvent } from "react";
 import { toast } from "@/shared/toast";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { cn } from "@/shared/cn";
@@ -303,16 +303,32 @@ export function ReaderScreen(edit: SentenceEditing) {
     if (next) navigate(`/book/${id}/read/${next.id}`, { replace: true });
   };
   // Chỉ THAO TÁC cuộn của người (lăn, vuốt, phím cuộn) làm thanh mờ đi - trang tự cuộn theo giọng thì thanh vẫn đứng yên.
+  // Sự kiện nổi từ hộp cỡ chữ (portal) không chạm trang; từ chính thanh thì trang vẫn cuộn (thanh nằm trong khung cuộn) nên vẫn tắt
+  // theo giọng như mọi lần cuộn tay, chỉ không gỡ thanh đang giữ con trỏ. Tab gọi thanh lại.
+  const origin = (target: EventTarget) => {
+    const el = target as HTMLElement;
+    return el.closest?.("[data-radix-popper-content-wrapper]") ? "popover" : el.closest?.("[data-reader-controls]") ? "bar" : "page";
+  };
   const scrollInput = {
     ...follow.input,
-    onWheel: () => { follow.input.onWheel(); setControls(false); },
-    onTouchMove: () => { follow.input.onTouchMove(); setControls(false); },
+    onWheel: (event: ReactWheelEvent<HTMLDivElement>) => {
+      const from = origin(event.target);
+      if (from === "popover") return;
+      follow.input.onWheel();
+      if (from === "page") setControls(false);
+    },
+    onTouchMove: (event: ReactTouchEvent<HTMLDivElement>) => {
+      const from = origin(event.target);
+      if (from === "popover") return;
+      follow.input.onTouchMove();
+      if (from === "page") setControls(false);
+    },
     onKeyDown: (event: ReactKeyboardEvent<HTMLDivElement>) => {
-      // Phím trên chính thanh hay hộp cỡ chữ (nổi qua portal) không phải cuộn trang: không gỡ thanh đang giữ con trỏ. Tab gọi thanh lại.
-      if ((event.target as HTMLElement).closest?.("[data-reader-controls],[data-radix-popper-content-wrapper]")) return;
+      const from = origin(event.target);
+      if (from === "popover") return;
       if (event.key === "Tab") { setControls(true); return; }
       follow.input.onKeyDown(event);
-      if (SCROLL_KEYS.has(event.key)) setControls(false);
+      if (from === "page" && SCROLL_KEYS.has(event.key)) setControls(false);
     },
     onClick: () => setControls(true),
   };
@@ -325,13 +341,14 @@ export function ReaderScreen(edit: SentenceEditing) {
       {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
       {canListen && (
         // Thanh rộng ~345 px với nhãn: màn dưới 380 px (hay chữ hệ thống 130 % trên máy 360 px) chỉ còn icon - nhãn vẫn đọc cho trình đọc màn hình.
-        <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="mx-1 max-sm:h-11 max-[379px]:px-3">
-          <span className="max-[379px]:sr-only">Nghe từ đây</span>
+        // Chữ hệ thống phóng to (textZoom Android không đổi bề rộng màn) thì nút này co, nhãn cắt "…" - các nút khác đứng yên trong thanh.
+        <Button size="sm" variant="primary" icon={Headphones} onMouseDown={(event) => event.preventDefault()} onClick={listenHere} className="mx-1 min-w-0 max-sm:h-11 max-[379px]:px-3">
+          <span className="min-w-0 truncate max-[379px]:sr-only">Nghe từ đây</span>
         </Button>
       )}
       <Popover.Root>
         <Popover.Trigger asChild>
-          <button type="button" aria-label="Cỡ chữ và giãn dòng" className={cn("grid size-9 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
+          <button type="button" aria-label="Cỡ chữ và giãn dòng" className={cn("grid size-9 shrink-0 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg", TOUCH)}>
             <Type className="glyph" />
           </button>
         </Popover.Trigger>

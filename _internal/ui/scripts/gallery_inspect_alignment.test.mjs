@@ -50,7 +50,7 @@ describe.skipIf(!browserAvailable)("baseline, visible control boxes, inline ink 
   });
 });
 
-it("catches a 1.5px total spread even when every gap is within 1px of the middle", async () => {
+it.skipIf(!browserAvailable)("catches a 1.5px total spread even when every gap is within 1px of the middle", async () => {
   const results = await layoutFixtures({ fixture: "inline-gap-spread.html" });
   for (const r of results) {
     const findings = r.findings.filter(f => f.metric === "ink-inline-text-gap");
