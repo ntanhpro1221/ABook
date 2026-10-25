@@ -18,7 +18,7 @@ import { Windowed } from "@/shared/Windowed";
 import { useScrollMemory } from "@/shared/scrollMemory";
 import { cn } from "@/shared/cn";
 import { formatLength, formatLengthUp, formatWhen } from "@/shared/format";
-import { Dialog, EmptyState, failedEmpty, heardBarProps, LoadError, Progress, Sheet, Skeleton } from "@/shared/ui";
+import { Dialog, EmptyState, failedEmpty, heardBarProps, LoadError, Progress, RowGap, Sheet, Skeleton } from "@/shared/ui";
 import { caughtUpDetail, displayTitle, resumeWhere } from "./labels";
 import { loadLibrarySort, saveLibrarySort, SORT_OPTIONS, sortBooks, type LibrarySort } from "./librarySort";
 import { bookMatchesQuery, foldVietnamese, listeningBook, resumePoint, resumeTarget, seriesIndex, twinBookIds, twinKind, volumeBadge, type ListenBook, type ListenChapter } from "./model";
@@ -179,8 +179,12 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
           )}
         </button>
         {book.progress.fraction > 0 && !book.progress.finished && (
-          <div {...heardBarProps(book.progress.fraction)} className="absolute inset-x-0 bottom-0 h-1 overflow-hidden rounded-b-lg bg-cover-overlay">
-            <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${book.progress.fraction * 100 / 100})` }} />
+          // Thanh cắt theo ĐÚNG khung bo của bìa (lớp phủ cùng rounded-lg): tự bo góc thì thanh cao 4 px chỉ bo được 4 px, lệch với góc 8 px
+          // của bìa thành khe hở ở mép dưới (chủ sách 25-10).
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg">
+            <div {...heardBarProps(book.progress.fraction)} className="absolute inset-x-0 bottom-0 h-1 bg-cover-overlay">
+              <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${book.progress.fraction * 100 / 100})` }} />
+            </div>
           </div>
         )}
         <MotionPresence open={Boolean(book.remote)}>{book.remote && (
@@ -533,13 +537,13 @@ export function LibraryScreen({
           )}</MotionPresence>
           {/* Khe lọc 14 px trên điện thoại: vừa cả bốn mục ở cỡ chữ hệ thống 115 % ("Xong" từng cụt ở mép); to hơn nữa thì hàng cuộn, mép mờ. */}
           <div className="mt-8 flex items-center gap-2 sm:mt-12 sm:gap-4">
-            <div ref={setFilterRow} style={filterFade} role="group" aria-label="Lọc sách" className="relative flex min-w-0 flex-1 gap-4 overflow-x-auto [scrollbar-width:none] sm:gap-6">
+            <div ref={setFilterRow} style={filterFade} role="group" aria-label="Lọc sách" className="relative flex min-w-0 flex-1 overflow-x-auto [scrollbar-width:none]">
               <SlidingIndicator variant="line" />
-              {LIBRARY_FILTER_OPTIONS.map(option => <button
+              {LIBRARY_FILTER_OPTIONS.map((option, index) => [index > 0 && <RowGap key={`gap-${option.value}`} className="w-4" />, <button
                 key={option.value} type="button" aria-label={option.value === "finished" ? "Nghe xong" : option.label} aria-pressed={filter === option.value} onClick={() => setFilter(option.value)}
                 className={cn("touch-box min-h-[44px] shrink-0 border-b-2 border-transparent text-xs font-medium transition-colors duration-motion-medium first:text-left sm:text-sm", filter === option.value ? "text-accent-text" : "text-fg-2 hover:text-fg")}>
                 {option.label}
-              </button>)}
+              </button>])}
             </div>
             <DropdownMenu.Root>
               <DropdownMenu.Trigger asChild><button type="button" aria-label="Xếp theo" title={`Xếp theo: ${SORT_OPTIONS.find(option => option.value === sort)?.label}`} className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1 text-xs text-fg-2 sm:text-sm">
