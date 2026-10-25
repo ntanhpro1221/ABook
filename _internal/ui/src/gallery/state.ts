@@ -19,6 +19,8 @@ export interface Scenario {
   /** App Windows đóng gói đã cài Studio (khác bản dev dùng runtime cạnh mã nguồn). */
   installedStudio?: boolean;
   requests?: Record<string, "loading" | "error">;
+  /** Hộp chọn file của hệ thống: bạn huỷ - hộp Thêm sách / trình tạo sách hiện bước chọn của nó (thư mục, dán đường dẫn) làm lối khác. */
+  pickCancelled?: boolean;
 }
 
 export const DEFAULT_SCENARIO: Scenario = { library: "full", paired: true, remoteBooks: false, night: false, playing: true, projects: "full" };

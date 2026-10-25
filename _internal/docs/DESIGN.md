@@ -41,6 +41,9 @@ Mỗi luồng có: điểm vào, các bước, số chạm đích, trạng thái
 | L12 | Sửa cách đọc / ai nói | 2 | đang đọc theo -> chạm giữ câu -> sửa -> ghi vào hàng chờ Studio (mọi player đều sửa được) |
 | L13 | Cài đặt | ≤ 2 cấp | Cài đặt -> nhóm -> mục. Không cấp ba |
 
+Số chạm do máy đếm (`ui/src/gallery/flowTaps.phone.dom.test.tsx`, `flowTaps.desktop.dom.test.tsx`): mỗi cú bấm trong app một chạm, mỗi lần mở
+hộp chọn file của hệ thống cũng một chạm. Hộp hỏi trước lần đầu gửi chữ tới giọng trực tuyến là quyết định quyền riêng tư, tính riêng.
+
 Trạng thái chung cho mọi luồng: **đang tải** = khung xám mờ đúng hình nội dung (không xoay vòng giữa màn); **rỗng** = một
 câu + một nút dẫn tới việc tạo nội dung; **lỗi** = tại chỗ, một câu nói cách sửa + "Thử lại"; **mất mạng** = dải mảnh đầu
 màn, nội dung đã có vẫn dùng được. Không bao giờ hộp thoại chặn cho lỗi không cần quyết định.

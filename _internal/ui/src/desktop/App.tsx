@@ -39,7 +39,7 @@ import { watchUntilBack } from "@/listen/peerBack";
 import { api, ApiError, currentPeer, type AppInfo } from "@/studio/api";
 import { pickFolder, useAppInfo, useLibrary, usePreferences } from "@/studio/data";
 import { LibraryMoveRecovery } from "./LibraryMoveRecovery";
-import { NewProjectScreen } from "@/studio/NewProjectScreen";
+import { NewProjectScreen, PICK_SOURCE } from "@/studio/NewProjectScreen";
 import { ProjectScreen } from "@/studio/ProjectScreen";
 import { ProjectsScreen } from "@/studio/ProjectsScreen";
 import { desktopTextImport, httpSource } from "./httpSource";
@@ -107,13 +107,13 @@ function EmptyLibrary() {
           {canAdd ? (
             <AddBookButton variant="primary" size="lg" onBookFile={openBookPath} />
           ) : (
-            <Button variant="primary" size="lg" icon={Clapperboard} onClick={() => navigate("/studio/new")}>
+            <Button variant="primary" size="lg" icon={Clapperboard} onClick={() => navigate("/studio/new", PICK_SOURCE)}>
               Tạo sách nói
             </Button>
           )}
           <div className="flex flex-wrap justify-center gap-1">
             {canAdd && (
-              <Button variant="ghost" icon={Clapperboard} className="touch-row" onClick={() => navigate("/studio/new")}>
+              <Button variant="ghost" icon={Clapperboard} className="touch-row" onClick={() => navigate("/studio/new", PICK_SOURCE)}>
                 Tạo sách nói
               </Button>
             )}

@@ -20,6 +20,7 @@ import { pickFolder, projectStatus, useAppInfo, useLibrary, useOpenBook, useReve
 import { MenuItem, ProjectMenu } from "./ProjectScreen";
 import { StudioSetupCard } from "./StudioSetup";
 import { groupParts, splitLive, type Entry } from "./projectGroups";
+import { PICK_SOURCE } from "./NewProjectScreen";
 
 // Studio: nơi làm sách. Danh sách là bảng công việc gọn - tên · trạng thái · tiến độ · cập nhật (DESIGN.md mục 7) - chứ không
 // phải kệ sách (kệ sách là của phía Nghe). Bảng phẳng: vạch mảnh giữa các hàng, không khung; việc hiếm của một hàng ở "…".
@@ -279,7 +280,7 @@ export function ProjectsScreen() {
         actions={
           <div className={cn("-my-1 flex items-center gap-1", info?.dialogs ? "-mr-[6.75px] pointer-coarse:-mr-[15px] max-sm:-mr-[15px]" : "-mr-3.5")}>
             <MotionPresence open={!empty}>
-              <Button variant="ghost" icon={Plus} onClick={() => navigate("/studio/new")}>
+              <Button variant="ghost" icon={Plus} onClick={() => navigate("/studio/new", PICK_SOURCE)}>
                 Dự án mới
               </Button>
             </MotionPresence>
@@ -309,7 +310,7 @@ export function ProjectsScreen() {
         // Rỗng: một câu + một nút dẫn tới việc tạo (DESIGN.md mục 2), không khung.
         // Cùng EmptyState và cùng khoảng cách dưới đầu màn với Thư viện trống (soát 25-10: hai màn trống hai kiểu, hai độ cao).
         <EmptyState icon={Clapperboard} title="Chưa có dự án" className="mt-12"
-          action={<Button variant="primary" size="lg" icon={Plus} onClick={() => navigate("/studio/new")}>Dự án mới</Button>}>
+          action={<Button variant="primary" size="lg" icon={Plus} onClick={() => navigate("/studio/new", PICK_SOURCE)}>Dự án mới</Button>}>
           Biến một truyện thành sách nói nhiều giọng.
         </EmptyState>
       ) : (

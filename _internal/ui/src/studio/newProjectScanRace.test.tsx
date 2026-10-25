@@ -28,7 +28,7 @@ vi.mock("react", async (original) => {
     },
   };
 });
-vi.mock("react-router", () => ({ Link: () => null, useNavigate: () => vi.fn(), useSearchParams: () => [new URLSearchParams(), vi.fn()] }));
+vi.mock("react-router", () => ({ Link: () => null, useNavigate: () => vi.fn(), useSearchParams: () => [new URLSearchParams(), vi.fn()], useLocation: () => ({ pathname: "/studio/new", search: "", state: null }) }));
 vi.mock("@/desktop/PhoneSync", () => ({ Switch: () => null }));
 vi.mock("@/listen/clip", () => ({ useClip: () => ({}) }));
 vi.mock("@/listen/source", () => ({ useSource: () => ({}) }));
