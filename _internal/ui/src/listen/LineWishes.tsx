@@ -146,12 +146,12 @@ function MenuRow({ icon: Icon, title, note, disabled, onClick, trailing }: { ico
       onClick={onClick}
       className="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-hover disabled:cursor-default disabled:opacity-60 disabled:hover:bg-transparent"
     >
-      <Icon className="mt-0.5 size-4 shrink-0 text-fg-2" />
+      <Icon className="mt-line-icon size-4 shrink-0 text-fg-2" />
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{title}</span>
         <span className="block text-xs text-fg-2">{note}</span>
       </span>
-      {trailing !== undefined ? trailing : disabled ? null : <ChevronRight className="ink-end mt-0.5 size-4 shrink-0 text-fg-3" />}
+      {trailing !== undefined ? trailing : disabled ? null : <ChevronRight className="ink-end mt-line-icon size-4 shrink-0 text-fg-3" />}
     </button>
   );
 }

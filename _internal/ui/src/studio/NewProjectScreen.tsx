@@ -577,7 +577,7 @@ export function SourceStep({
           </label>
           {replaces && (
             <div className="mt-4 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
-              <Info className="mt-0.5 size-4 shrink-0 text-info" />
+              <Info className="mt-line-icon size-4 shrink-0 text-info" />
               <p className="min-w-0 text-pretty">
                 {replaces.restart ? "Đang làm lại phân tích của " : "Đang sửa thiết lập của "}
                 <span className="font-semibold">“{replaces.title}”</span>: đã điền thiết lập cũ; tạo xong sẽ đưa bản cũ vào Thùng rác.
@@ -586,7 +586,7 @@ export function SourceStep({
           )}
           {scan?.existing && scan.existing.some((project) => project.id !== replaces?.id) && (
             <div className="mt-4 flex gap-3 rounded-xl border border-info/40 bg-info-soft p-4 text-sm">
-              <Info className="mt-0.5 size-4 shrink-0 text-info" />
+              <Info className="mt-line-icon size-4 shrink-0 text-info" />
               <div className="min-w-0">
                 <p className="font-semibold">Truyện này đã có dự án</p>
                 <ul className="mt-1 space-y-1">
@@ -776,7 +776,7 @@ function CreditSuggestion({ files, drop, onChange }: { files: ScannedFile[]; dro
   const both = credits.head > 0 && credits.tail > 0;
   return (
     <MotionRegion as="div" className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
-      <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
+      <Sparkles className="mt-line-icon size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         {dropped ? (
           <>
@@ -850,7 +850,7 @@ function ChapterNumberWarning({ issues, suggestsSplit }: { issues: string[]; sug
   if (!issues.length) return null;
   return (
     <div className="mt-4 flex gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm">
-      <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+      <AlertTriangle className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0">
         <p className="font-semibold">Số chương có chỗ lạ - xem lại trước khi tạo</p>
         <ul className="mt-1 list-disc space-y-0.5 pl-4 text-fg-2">
@@ -877,7 +877,7 @@ function SplitSuggestion({ file, title, onSplit }: { file: ScannedFile; title: s
   const outcome = splitOutcome(plan, title);
   return (
     <div className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
-      <Sparkles className="mt-0.5 size-4 shrink-0 text-accent-text" />
+      <Sparkles className="mt-line-icon size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">Gợi ý: “{file.name}” có vẻ chứa cả {formatNumber(outcome.chapters)} chương</p>
         <p className="mt-1 break-words text-fg-2">
@@ -906,7 +906,7 @@ function SeedBanner({ seed, hasFiles, onDrop }: { seed: Seed; hasFiles: boolean;
   return (
     // Điện thoại: nút bỏ nối tiếp xuống dưới đoạn chữ - đứng bên phải thì ép chữ thành cột ~180 px, dài 11 dòng (soát UX 29-09).
     <MotionRegion as="div" className="mt-5 flex flex-wrap gap-3 rounded-xl border border-accent/30 p-4 text-sm sm:flex-nowrap">
-      <Layers className="mt-0.5 size-4 shrink-0 text-accent-text" />
+      <Layers className="mt-line-icon size-4 shrink-0 text-accent-text" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">
           Phần {seed.part} của “{seed.title}”
@@ -1542,12 +1542,12 @@ function StartNotes({ restart, noStudio, unfit, analysis }: { restart?: { title:
       {unfit && <NoStudioHere fit={unfit} />}
       {restart && (
         <p className="flex gap-2 text-pretty">
-          <Info className="mt-0.5 size-4 shrink-0 text-info" />
+          <Info className="mt-line-icon size-4 shrink-0 text-info" />
           <span>Tạo cuốn mới từ đầu, giữ bìa và file gốc; bản dở “{restart.title}” vào Thùng rác.</span>
         </p>
       )}
       <div className="flex gap-2 text-pretty">
-        <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" />
+        <AlertTriangle className="mt-line-icon size-4 shrink-0 text-warning" />
         <div>
           Đang phân tích mà cần nghỉ, hãy dùng Tạm dừng.{" "}
           <MoreInfo label="Vì sao?">

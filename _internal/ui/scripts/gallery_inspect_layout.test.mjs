@@ -258,4 +258,18 @@ describe.skipIf(!browserAvailable)("nút trong suốt: mép chung của cột", 
       expect(dup("tabdup-pass")).toHaveLength(0);
     }
   });
+  it("nút trong suốt đầu hàng: ô chạm mép cột mà mực thụt vào thì báo; bù đệm cho mực chạm mép thì không", () => {
+    for (const result of edgeResults) {
+      const lead = (id) => result.findings.filter((f) => f.metric === "leading-control-inset" && f.selector.startsWith(`#${id} >`));
+      expect(lead("lead-off")).toHaveLength(1);
+      expect(lead("lead-pass")).toHaveLength(0);
+    }
+  });
+  it("icon canh đầu lệch tâm dòng chữ đầu thì báo; đúng tâm dòng đầu thì không", () => {
+    for (const result of edgeResults) {
+      const off = (id) => result.findings.filter((f) => f.metric === "icon-off-first-line" && f.selector.startsWith(`#${id} >`));
+      expect(off("iconline-off")).toHaveLength(1);
+      expect(off("iconline-pass")).toHaveLength(0);
+    }
+  });
 });

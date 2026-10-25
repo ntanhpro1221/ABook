@@ -97,7 +97,7 @@ function ExportJobMenuItem({ book, kind, icon: Icon, label }: { book: ListenBook
       onSelect={() => void run()}
       className="flex h-auto cursor-default items-center gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
-      <Icon className="mt-0.5 size-4 shrink-0 self-start" />
+      <Icon className="mt-line-icon size-4 shrink-0 self-start" />
       <span className="min-w-0">
         <span className="block">{label}</span>
         <MotionRegion as="span" className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>
@@ -135,7 +135,7 @@ export function AudiobookMenuItem({ book }: { book: ListenBook }) {
       onSelect={() => window.dispatchEvent(new CustomEvent<ListenBook>(OPEN_AUDIOBOOK_EVENT, { detail: book }))}
       className="flex h-auto cursor-default items-center gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
-      <Headphones className="mt-0.5 size-4 shrink-0 self-start" />
+      <Headphones className="mt-line-icon size-4 shrink-0 self-start" />
       <span className="min-w-0">
         <span className="block">Xuất sách nói…</span>
         <MotionRegion as="span" className="block text-pretty text-xs text-fg-3" title={lastExportPlace(job)}>

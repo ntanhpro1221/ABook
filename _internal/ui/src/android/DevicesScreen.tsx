@@ -303,8 +303,10 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
   const percent = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
   // Huỷ dừng thật ở khối kế (LibraryPlugin.cancelDownload); phần đã về giữ lại, bấm Tải lần sau là tải tiếp.
   const cancel = () => void EbookLibrary.cancelDownload({ bookId: book.id }).catch((error) => toastNativeError("Chưa huỷ được", error));
+  // Gọn (dưới thẻ sách ở Thư viện): hàng cao bằng nút để "Đã tải" và "Tải" của hai thẻ cạnh nhau cùng một dòng; nút ghost bù đệm trái
+  // (edge-start-action) để mực thẳng mép tên sách như "Đã tải" (máy dò leading-control-inset).
   return (
-    <MotionRegion as="div" className={compact ? "flex min-h-11 flex-wrap items-center justify-between gap-1" : "flex items-center gap-3 py-3"}>
+    <MotionRegion as="div" className={compact ? "flex min-h-[var(--button-h)] flex-wrap items-center justify-between gap-1" : "flex items-center gap-3 py-3"}>
       {!compact && <BookCover title={book.title} size="sm" className="size-14" />}
       {!compact && <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{book.title}</div>
@@ -343,7 +345,7 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
           <CheckCircle2 className="ink-start size-4" /> Đã tải
         </span>
       ) : (
-        <Button size="sm" variant={compact ? "ghost" : book.downloaded ? "ghost" : "primary"} icon={Download} onClick={onDownload}>
+        <Button size="sm" variant={compact ? "ghost" : book.downloaded ? "ghost" : "primary"} icon={Download} className={compact ? "edge-start-action" : undefined} onClick={onDownload}>
           {!book.downloaded ? "Tải" : newChapters > 0 ? `+${newChapters} chương` : newAudio ? "Cập nhật bản thu" : newCover ? "Cập nhật bìa" : newMeta ? "Cập nhật tên" : "Cập nhật chữ"}
         </Button>
       )}
