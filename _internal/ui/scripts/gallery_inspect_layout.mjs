@@ -564,10 +564,11 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     }
   }
   // Cùng một nhãn, hai việc: nút "Dấu trang" ở hàng chính thêm dấu trang còn mục "Dấu trang" trong menu mở danh sách (soát 140). Hai nút cùng hiện
-  // một chữ mà biểu tượng khác nhau là hai hành động - người nghe không phân biệt được. Nút lặp theo hàng (cùng biểu tượng) không tính.
+  // một chữ mà biểu tượng khác nhau là hai hành động - người nghe không phân biệt được. Nút lặp theo hàng (cùng biểu tượng) không tính;
+  // nút của màn nằm dưới hộp thoại (aria-hidden / inert, nút Tìm của trang sách sau hộp Tìm ảnh bìa) cũng không.
   const iconSignature = (el) => [...el.querySelectorAll("svg")].filter((svg) => owner(svg) === el)
     .map((svg) => [...svg.querySelectorAll("path,rect,circle,ellipse,line,polyline,polygon")].map((p) => p.outerHTML.replace(/\s(class|style)="[^"]*"/g, "")).join("")).join("|");
-  const labelled = all.filter((el) => el.matches(controlSelector) && shownChain(el) && rect(el.getBoundingClientRect()).width > 0)
+  const labelled = all.filter((el) => el.matches(controlSelector) && shownChain(el) && !el.closest('[aria-hidden="true"],[inert]') && rect(el.getBoundingClientRect()).width > 0)
     .map((el) => ({ el, label: labelOf(el.textContent ?? ""), icon: iconSignature(el) })).filter((c) => c.label && c.icon);
   const sameLabel = new Set();
   for (const [i, a] of labelled.entries()) for (const b of labelled.slice(i + 1)) {
