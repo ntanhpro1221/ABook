@@ -1,7 +1,7 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { latestRequest, wasAborted } from "@/shared/latestRequest";
 import { Button, ContentSkeleton, Dialog, EmptyState, InlineError } from "@/shared/ui";
@@ -91,9 +91,12 @@ export function CoverSearchDialog({
     }
     onOpenChange(next);
   };
-  useEffect(() => {
-    // Hộp không bị gỡ khi đóng: lỗi đặt bìa của lần mở trước không được hiện lại cạnh kết quả mới.
+  useLayoutEffect(() => {
+    // Hộp không bị gỡ khi đóng: lỗi đặt bìa của lần mở trước không được hiện lại cạnh kết quả mới - gỡ trước khi vẽ, không chớp một khung.
     if (open) choose.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+  useEffect(() => {
     if (open && !search.data && !search.isPending) search.mutate(query);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);

@@ -290,13 +290,18 @@ it("C5 hiệu năng: câu 5.000 chữ - dựng và 50 nhịp sang chữ kế tro
   await render(readAlong(script, 1));
   const mounted = performance.now() - start;
   expect(host.querySelectorAll('[data-index="1"] .read-along-word')).toHaveLength(5000);
+  // Đếm thay đổi DOM chứ không đo giờ: giờ đồng hồ chập chờn theo tải máy (cả bộ test chạy song song thì đỏ, chạy riêng thì xanh).
+  // Hồi quy cỡ bậc (dựng lại cả 5.000 span mỗi nhịp) làm số này lên hàng nghìn; một nhịp đúng chỉ đổi lớp vài chữ.
+  let touched = 0;
+  const watch = new MutationObserver((records) => { touched += records.length; });
+  watch.observe(host, { subtree: true, childList: true, attributes: true, characterData: true });
   const ticks = performance.now();
   for (let step = 1; step <= 50; step++) await act(() => clock.set(1.0 + step * 0.1));
   const perTick = (performance.now() - ticks) / 50;
+  watch.disconnect();
   expect(host.querySelector('[data-index="1"] .is-lit')?.textContent).toBe("chữ50");
-  console.info(`[C5] 5.000 chữ: dựng ${mounted.toFixed(0)} ms, mỗi nhịp sang chữ ${perTick.toFixed(1)} ms (happy-dom)`);
-  // happy-dom chậm hơn trình duyệt nhiều lần; ngân sách rộng chỉ để bắt hồi quy cỡ bậc (vd dựng lại cả 5.000 span mỗi nhịp).
-  expect(perTick).toBeLessThan(250);
+  console.info(`[C5] 5.000 chữ: dựng ${mounted.toFixed(0)} ms, mỗi nhịp sang chữ ${perTick.toFixed(1)} ms, ${(touched / 50).toFixed(1)} thay đổi DOM (happy-dom)`);
+  expect(touched / 50).toBeLessThan(50);
 });
 
 it("C6 / V9 thư viện: thẻ Đang nghe mờ chéo chữ, icon và cụm nút; lỗi / trống / có sách mờ hẳn qua", async () => {
