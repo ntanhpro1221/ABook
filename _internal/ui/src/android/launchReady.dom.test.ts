@@ -32,4 +32,31 @@ describe("settleLaunch (màn chờ mở app)", () => {
     expect(settleLaunch(page)).toBe(false);
     list = [];
   });
+
+  it("khung chờ đang thoát được kết thúc, không đợi animationend mới xét hoạt ảnh", () => {
+    const page = document.createElement("main");
+    page.innerHTML = '<div class="motion-loading-placeholder" data-state="closed"></div>';
+    const exit = fakeAnimation(150);
+    (document as { getAnimations?: unknown }).getAnimations = () => [exit];
+    expect(settleLaunch(page)).toBe(true);
+    expect(exit.finish).toHaveBeenCalledOnce();
+    expect(settleLaunch(page)).toBe(false);
+  });
+
+  it("chỉ đợi ảnh trong phần trang đang thấy; ảnh lười dưới vùng cuộn hay bị ẩn không giữ màn chờ", () => {
+    const page = document.createElement("main"), image = document.createElement("img");
+    page.append(image);
+    Object.defineProperty(image, "complete", { value: false });
+    const box = (y: number, width = 100) => ({ x: 20, y, left: 20, top: y, right: 20 + width, bottom: y + 150, width, height: 150, toJSON() {} });
+    page.getBoundingClientRect = () => ({ ...box(0, 412), bottom: 800, height: 800 });
+    image.getBoundingClientRect = () => box(20);
+    expect(settleLaunch(page)).toBe(true);
+    image.loading = "lazy";
+    image.getBoundingClientRect = () => box(10000);
+    expect(settleLaunch(page)).toBe(false);
+    image.getBoundingClientRect = () => box(20, 0);
+    expect(settleLaunch(page)).toBe(false);
+    image.getBoundingClientRect = () => box(-200);
+    expect(settleLaunch(page)).toBe(false);
+  });
 });

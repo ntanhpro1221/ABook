@@ -174,6 +174,12 @@ const DESKTOP: Omit<Entry, "platform">[] = [
     await click(/^Hẹn giờ tắt/);
   } },
   { id: "desktop/player-more", group: "Trình phát", title: "Menu “…” của thanh phát", route: "/", act: () => click("Thêm tuỳ chọn").then(() => undefined) },
+  { id: "desktop/player-devices", group: "Trình phát", title: "Menu thiết bị phát", route: "/", act: async () => {
+    await click("Thêm tuỳ chọn"); await click("Phát trên máy khác");
+  } },
+  { id: "desktop/book-record-move", group: "Trang sách", title: "Chuyển hồ sơ", route: "/book/suong-mu-2", act: async () => {
+    await click("Thêm việc với sách"); await click("Chuyển hồ sơ");
+  } },
   { id: "desktop/player-speed", group: "Trình phát", title: "Tốc độ đọc", route: "/", act: () => click(/^Tốc độ đọc/).then(() => undefined) },
   { id: "desktop/player-voice", group: "Trình phát", title: "Hộp giọng đọc", route: "/book/gac-xep", act: async () => {
     await desktopTextMore(); await click(/^Giọng đọc:/);
@@ -243,6 +249,9 @@ export const ENTRIES: Entry[] = [
     },
   }))),
   ...(["phone", "desktop"] as const).flatMap(platform => ([
+    { id: `${platform}/book-music-menu`, platform, group: "Trang sách", title: "Menu con Nhạc nền", route: "/book/gac-xep", act: async () => {
+      await click("Thêm việc với sách"); await click(/^Nhạc nền/);
+    } },
     { id: `${platform}/book-find-results`, platform, group: "Trang sách", title: "Tìm chữ trong sách", route: "/book/suong-mu-2", act: async () => {
       await click("Tìm chữ trong sách"); await type("Chữ hay câu cần tìm", "chiếc");
       await waitFor(() => document.querySelector('[data-list-edges="book-search"] button'), "kết quả tìm chữ");

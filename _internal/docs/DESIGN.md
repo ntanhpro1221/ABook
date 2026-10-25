@@ -189,7 +189,8 @@ giống app hệ thống; không tự chế chuỗi rung dài.
   Hàng đang phát: chữ hổ phách + vạch tiến độ mảnh, không tô nền cả hàng.
   Hàng đang chọn trong danh sách CHỌN (giọng, gộp người, câu đã chọn): chữ hổ phách + dấu tích ĐẦU dòng (`SelectionMark`, luôn giữ chỗ, mờ vào / ra; máy dò SIBLING CONSISTENCY check-mark-trailing). Ô chọn dạng lưới (tốc độ, mức hẹn giờ): ô đang chọn chữ hổ phách đậm, không dấu tích - ô hẹp, dấu tích đè hay đẩy chữ lệch tâm.
 - **Điều hướng** (thanh bên máy tính, danh sách nhóm Cài đặt hai cột): mục đang mở = nền trung tính nhạt + chữ đậm màu thường; không dấu tích, không nền hổ phách, không chữ hổ phách (máy dò rule22 NAV ACCENT).
-- **Dòng menu** (menu "…", bảng Thêm tuỳ chọn): mọi dòng trọn bề ngang menu, giá trị bên phải ("Tắt", tên giọng) cùng một mép; dòng mở ra tại chỗ không co theo chữ, không bị danh sách con đẩy tràn (máy dò INK EDGE menu-row-short). **Nhãn của lựa chọn** không bao giờ cắt "…" - xuống dòng (máy dò CLIPPED TEXT choice-label-truncated).
+- **Dòng menu** (menu "…", bảng Thêm tuỳ chọn): mọi dòng trọn bề ngang menu, giá trị bên phải ("Tắt", tên giọng) cùng một mép; dòng mở ra tại chỗ không co theo chữ, không bị danh sách con đẩy tràn (máy dò INK EDGE menu-row-short). Menu con nổi cách mép ngoài bảng cha 8 px, thẳng đỉnh (bảng mở xuống) hay đáy (bảng mở lên); chỉ dịch khi cần tránh mép màn. **Nhãn của lựa chọn** không bao giờ cắt "…" - xuống dòng (máy dò CLIPPED TEXT choice-label-truncated).
+- **Ô chọn**: trải hết cột nội dung như ô nhập; các mảnh giờ/phút của một giá trị trong hàng lịch đêm giữ chiều rộng nội tại.
 - **Nút chữ đầu hàng** (nút ghost đứng đầu một cột chữ, "Tải" dưới thẻ sách): bù đệm trái bằng `edge-start-action` để mực thẳng mép chữ của cột (máy dò INK EDGE leading-control-inset). **Icon cạnh khối chữ canh đầu** đứng giữa DÒNG ĐẦU: `mt-line-icon` (theo 1lh), không đặt cứng mt-0.5; hàng có nút thì dòng đầu đứng giữa chiều cao nút `--button-h` (InlineError) (máy dò INK EDGE icon-off-first-line).
 - **Nút chữ cuối hàng** chạm mép phải của cột như mọi nút cùng cột (bù đệm bằng `settings-edge-action`); không lặp icon đã có ở đầu hàng (máy dò INK EDGE ink-right, REPEATED LABEL row-icon-twice).
 - **Lưới bìa**: bìa 2:3, bo 12, tên dưới bìa tối đa 2 dòng, phụ một dòng. Điện thoại 2-3 cột, máy tính tự giãn 160-200 px.
@@ -207,7 +208,7 @@ giống app hệ thống; không tự chế chuỗi rung dài.
 ## 7. Từng màn (đích)
 
 - **Thư viện**: tiêu đề "Thư viện" + số cuốn; phải: "Thêm sách" (icon +, phụ). Hàng "Đang nghe" lớn không khung. Hàng bộ lọc
-  chữ + "Xếp theo" + Tìm. Lưới bìa luôn MỞ (bộ sách nhiều tập gom thành một bìa xếp chồng, chạm mở bộ) - không kệ thu gọn
+  chữ + "Xếp theo" + Tìm. Lưới bìa luôn MỞ (bộ sách nhiều tập gom thành một bìa kèm số tập, chạm mở bộ) - không kệ thu gọn
   che hết bìa. Sách máy kia có dấu nguồn nhỏ góc bìa.
 - **Trang sách**: bìa + tên + tác giả · giọng · thời lượng + tiến độ mảnh; MỘT nút chính "Nghe tiếp · Chương 4" (hay
   "Nghe"); hàng phụ cùng kiểu: Đọc · Tìm · Từ đầu · Thêm(…). Tab Chương / Lịch sử / Nhân vật; danh sách phẳng.

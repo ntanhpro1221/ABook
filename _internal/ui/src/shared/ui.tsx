@@ -5,7 +5,7 @@ import { AlertTriangle, Check, ChevronLeft, ChevronRight, Loader2, RotateCw, Wif
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, HTMLAttributes, ReactNode, Ref, SelectHTMLAttributes } from "react";
 import { cn } from "@/shared/cn";
-import { markArrival, scrollMotion } from "@/shared/motion";
+import { MOTION, markArrival, scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { keepDots } from "./DotJoin";
 import { MotionRegion } from "./MotionRegion";
@@ -17,9 +17,9 @@ import { useRowFade, useScrollFadeOn } from "./scrollFade";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
 
-/** Giữ menu gốc của hệ thống; cỡ nội tại tính theo lựa chọn dài nhất, chỉ co khi hết bề ngang. */
-export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { ref?: Ref<HTMLSelectElement> }) {
-  return <select {...props} className={cn("shared-select max-w-full min-w-0 rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus disabled:opacity-50 aria-disabled:opacity-50", className)} />;
+/** Ô chọn trải hết cột như ô nhập; chỉ hàng giờ/phút đặt `inline` để các mảnh của một giá trị đứng cạnh nhau. */
+export function Select({ className, inline, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { ref?: Ref<HTMLSelectElement>; inline?: boolean }) {
+  return <select {...props} data-select-layout={inline ? "inline" : "column"} className={cn("shared-select max-w-full min-w-0 rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus disabled:opacity-50 aria-disabled:opacity-50", inline ? "w-auto" : "w-full", className)} />;
 }
 
 /** Dấu chọn giữ nguyên chỗ khi đổi mục; chỉ độ mờ đổi, không làm hàng nhảy ngang. Luôn đứng ĐẦU dòng của danh sách chọn (DESIGN 6; luật
@@ -803,10 +803,13 @@ export function Sheet({
     if (!open || !onHeightChange) return;
     const element = surface;
     if (!element) return;
+    // Bảng đổi cao liên tục (danh sách con mở / khép) thì chỉ báo khi đã đứng: mỗi lần báo là cả màn bên dưới đổi cỡ (soát điện thoại 26-10: báo mỗi
+    // khung = tác vụ 111 ms, giật 22 % khung khi mở danh sách Giọng đọc).
+    let settle = 0;
     const update = () => onHeightChange(element.getBoundingClientRect().height);
     update();
-    const observer = new ResizeObserver(update); observer.observe(element);
-    return () => { observer.disconnect(); onHeightChange(0); };
+    const observer = new ResizeObserver(() => { window.clearTimeout(settle); settle = window.setTimeout(update, MOTION.medium); }); observer.observe(element);
+    return () => { observer.disconnect(); window.clearTimeout(settle); onHeightChange(0); };
   }, [open, onHeightChange, surface]);
   useLayoutEffect(() => { if (open) opener.current = lastFocus; }, [open]);
   return (
@@ -1069,7 +1072,7 @@ export function TimeSelect({
 }) {
   const options = QUARTERS.includes(value) ? QUARTERS : [...QUARTERS, value].sort();
   return (
-    <Select aria-label={label} value={value} disabled={disabled} aria-disabled={ariaDisabled || undefined}
+    <Select inline aria-label={label} value={value} disabled={disabled} aria-disabled={ariaDisabled || undefined}
       onPointerDown={(event) => { if (ariaDisabled) event.preventDefault(); }}
       onKeyDown={(event) => { if (ariaDisabled && event.key !== "Tab") event.preventDefault(); }}
       onChange={(event) => { if (!ariaDisabled) onChange(event.target.value); }} className={cn("tabular aria-disabled:opacity-50", className)}>
