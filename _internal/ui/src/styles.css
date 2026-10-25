@@ -465,9 +465,16 @@ select[class~="border-line"] {
 [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-close-button]:hover {
   background: var(--hover);
 }
-[data-sonner-toaster] {
-  transition: bottom var(--motion-medium) var(--ease-standard), top var(--motion-medium) var(--ease-standard);
+/* Thêm thuộc tính vị trí để thắng stylesheet Sonner chèn sau lúc mount (nó chỉ tween transform). */
+[data-sonner-toaster][data-y-position] {
+  translate: 0 var(--toast-shift, 0px);
+  transition: bottom var(--motion-medium) var(--ease-standard), top var(--motion-medium) var(--ease-standard), translate var(--motion-medium) var(--ease-standard), opacity var(--motion-fast) linear;
   --width: min(22.25rem, calc(100vw - 2rem)) !important;
+}
+/* Không có khoảng trống ngoài hộp: tạm mờ thông báo; hook cũng đặt inert để không giữ vùng chạm vô hình. */
+[data-sonner-toaster][data-toast-obscured="true"] { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toaster][data-y-position] { transition: opacity var(--motion-fast) linear; }
 }
 
 /* Thông báo của sonner: sonner tự tắt viền tiêu điểm (outline: none, ngoài mọi layer nên thắng :focus-visible chung) - người đi bằng phím
