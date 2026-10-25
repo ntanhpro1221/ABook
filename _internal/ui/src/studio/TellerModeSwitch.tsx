@@ -6,7 +6,7 @@ import { toast } from "@/shared/toast";
 import { Switch } from "@/desktop/PhoneSync";
 import { SettingsRow } from "@/shared/SettingsNav";
 import { cn } from "@/shared/cn";
-import { Button, Dialog } from "@/shared/ui";
+import { DialogActions, Button, Dialog } from "@/shared/ui";
 import { api, type BookSummary } from "./api";
 import { pollDelay, retryUnlessGone } from "./polling";
 import { costText, needsConfirm, TELLER_ELSEWHERE, TELLER_TITLE, tellerHint, type TellerModeView } from "./tellerMode";
@@ -71,20 +71,20 @@ export function TellerModeSwitch({ book, className }: { book: BookSummary; class
           <Switch id={id} labelledBy={`${id}-name`} describedBy={`${id}-hint`} checked={on} disabled={save.isPending || busy || readOnly} onCheckedChange={change} />
         </SettingsRow>
       </div>
-      <Dialog
-        open={asking !== null}
-        onOpenChange={(open) => !open && setAsking(null)}
-        title={asking === "teller" ? "Bật giọng tự kể?" : "Dùng giọng dẫn?"}
-        description={costText(data.plan, asking === "teller")}
-      >
-        <div className="mt-5 dialog-actions">
+      <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setAsking(null)}>
             Thôi
           </Button>
           <Button variant="primary" icon={Mic2} loading={save.isPending} onClick={() => asking && save.mutate({ mode: asking, recorded: data.plan?.recorded ?? 0 })}>
             {asking === "teller" ? "Bật và thu lại" : "Tắt và thu lại"}
           </Button>
-        </div>
+        </DialogActions>}
+        open={asking !== null}
+        onOpenChange={(open) => !open && setAsking(null)}
+        title={asking === "teller" ? "Bật giọng tự kể?" : "Dùng giọng dẫn?"}
+        description={costText(data.plan, asking === "teller")}
+      >
+
       </Dialog>
     </MotionRegion>
   );

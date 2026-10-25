@@ -9,7 +9,7 @@ import { useClip, type ClipSource } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatPercent } from "@/shared/format";
 import { DotJoin } from "@/shared/DotJoin";
-import { Button, EmptyState, FilterRow, Kbd, Vu, ContentSkeleton, InlineError } from "@/shared/ui";
+import { DecisionButton, Button, EmptyState, FilterRow, Kbd, Vu, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, urls } from "./api";
 import { useCachedBook } from "./data";
 import { retryUnlessGone } from "./polling";
@@ -260,15 +260,15 @@ function Row({
             }}
           />
         ) : (
-          // Việc phụ của câu: cùng kiểu chữ với hai phán quyết (chữ nhấn, không nền), nhỏ hơn và nằm cùng một hàng.
+          // Mở ngữ cảnh dùng mực phụ để hai nút phán quyết giữ vai trò chính.
           <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
             {item.textSha256 && (
-              <button type="button" onClick={() => setEditing(true)} className="touch-hit inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline">
+              <button type="button" onClick={() => setEditing(true)} className="touch-hit inline-flex items-center gap-1 text-xs font-medium text-fg-2 hover:text-fg hover:underline">
                 <PenLine className="size-3.5" /> {spokenEditLabel(twins.length)}
               </button>
             )}
             {onOpenScript && (item.verdict === "redo" || item.kind === "failed") && (
-              <button type="button" onClick={() => onOpenScript(item.chapterId, item.stableId)} className="touch-hit inline-flex items-center gap-1 text-xs font-medium text-accent-text hover:underline">
+              <button type="button" onClick={() => onOpenScript(item.chapterId, item.stableId)} className="touch-hit inline-flex items-center gap-1 text-xs font-medium text-fg-2 hover:text-fg hover:underline">
                 <FileText className="size-3.5" /> Mở Kịch bản
               </button>
             )}
@@ -276,12 +276,12 @@ function Row({
         )}
         </MotionRegion>
       </div>
-      {/* Hai phán quyết là việc CHÍNH của hàng: cùng kiểu chữ nhấn với việc phụ nhưng lớn hơn (14 px, cao 36 px); đã chọn thì nền nhạt cùng sắc trạng thái.
+      {/* Hai phán quyết là việc chính của hàng: có biểu tượng, cao bằng điều khiển; đã chọn thì mang sắc trạng thái.
           Điện thoại: xuống dưới câu, thẳng mép chữ; máy tính: bên phải, nút cuối kéo lề -12 px để chữ thẳng mép phải nội dung. */}
       <div className="col-start-2 -ml-3.5 flex gap-1 sm:col-start-3 sm:row-start-1 sm:ml-0 sm:-mr-3">
         {/* Không có gì để nghe thì không phán "Ổn" được - chỉ còn thu lại (soát UX 29-09). */}
         {source && (
-          <Button
+          <DecisionButton
             variant="ghost"
             icon={Check}
             aria-pressed={item.verdict === "ok"}
@@ -289,9 +289,9 @@ function Row({
             className={item.verdict === "ok" ? "bg-success-soft text-success hover:bg-success-soft hover:text-success" : "text-accent-text hover:text-accent-text"}
           >
             Ổn
-          </Button>
+          </DecisionButton>
         )}
-        <Button
+        <DecisionButton
           variant="ghost"
           icon={RotateCcw}
           aria-pressed={item.verdict === "redo"}
@@ -299,7 +299,7 @@ function Row({
           className={item.verdict === "redo" ? "bg-danger-soft text-danger hover:bg-danger-soft hover:text-danger" : "text-accent-text hover:text-accent-text"}
         >
           {source ? "Cần thu lại" : "Thu lại câu này"}
-        </Button>
+        </DecisionButton>
       </div>
     </Tag>
   );

@@ -72,7 +72,7 @@ describe("SettingsScreen (điện thoại)", () => {
     h.store.set(KEY, JSON.stringify({ sleepSchedule: { from: "22:00", to: "06:00", minutes: 30 } }));
     const selects = [...html("sleep").matchAll(/<select[^>]*>/g)].map((match) => match[0]);
     expect(selects).toHaveLength(3);
-    for (const select of selects) expect(select).toContain("min-h-[48px]");
+    for (const select of selects) expect(select).toContain("shared-select");
   });
 
   it("đổi tuỳ chọn thì lưu và không báo lỗi", () => {

@@ -40,4 +40,10 @@ it("một lưới ô chọn, không bộ −/+ hay nút Đặt riêng; bấm H�
 it("ô đang hẹn sáng, kể cả Hết chương này", async () => {
   await open({ kind: "chapter" });
   expect(choices().filter((button) => button.getAttribute("aria-pressed") === "true").map((button) => button.textContent)).toEqual(["Hết chương này"]);
+  for (const button of choices()) {
+    expect(button.classList.contains("bg-accent-soft")).toBe(false);
+    const selected = button.getAttribute("aria-pressed") === "true";
+    expect(button.querySelector(".lucide-check")?.classList.contains("opacity-100")).toBe(selected);
+    expect(button.classList.contains("text-accent-text")).toBe(selected);
+  }
 });

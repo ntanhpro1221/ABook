@@ -13,7 +13,7 @@ import { ChapterPreview } from "@/shared/ChapterPreview";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { formatNumber } from "@/shared/format";
-import { Button, ContentSkeleton, Dialog, InlineError } from "@/shared/ui";
+import { DialogActions, Button, ContentSkeleton, Dialog, InlineError } from "@/shared/ui";
 import {
   addRest,
   advanceQueue,
@@ -520,10 +520,43 @@ export function AddBookDialog({
   const known = existing ?? sameSource;
   const label = queue && currentId !== null ? queueLabel(queue, currentId) : "";
   const rest = queue && currentId !== null ? waitingAfter(queue, currentId).length : 0;
-
+  // Cuốn đã có: bỏ qua là việc chính, đứng cuối chân hộp ở cả hai nền tảng.
+  const skipAction = queue && <Button variant={known ? "primary" : "ghost"} disabled={busy !== null} onClick={skipCurrent}>Bỏ cuốn này</Button>;
 
   return (
-    <Dialog phoneSheet
+    <Dialog footer={queue && !preview ? (busy === null && (<DialogActions>
+              <Button variant="primary" onClick={() => close(false)}>
+                Xong
+              </Button>
+            </DialogActions>)) : (!preview ? (null) : (<DialogActions data-add-book-actions>
+            <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>
+              Chọn lại
+            </Button>
+            {!known && skipAction}
+            {rest > 0 && (
+              <Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => void addAll()}>
+                Thêm phần còn lại
+              </Button>
+            )}
+            {known ? (
+              <>
+                <Button icon={Copy} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy !== null} onClick={() => void add(true)}>
+                  {existing ? "Thêm bản riêng" : "Vẫn thêm bản mới"}
+                </Button>
+                {/* Trong hàng, "Mở cuốn đó" bỏ dở các cuốn sau: ở đó nút chính là "Bỏ cuốn này" (cuốn này đã có rồi). */}
+                {!queue && (
+                  <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(known.id)}>
+                    Mở cuốn đó
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy === "reading"} onClick={() => void add()}>
+                Thêm vào thư viện
+              </Button>
+            )}
+            {known && skipAction}
+          </DialogActions>))}
       open={open}
       onOpenChange={close}
       width="max-w-[560px]"
@@ -574,13 +607,7 @@ export function AddBookDialog({
             <ContentSkeleton count={1} label="Đang đọc file tiếp" />
           )}
           <QueueList items={queue} currentId={currentId} working={working} tall />
-          {busy === null && (
-            <div className="mt-5 dialog-actions">
-              <Button variant="primary" onClick={() => close(false)}>
-                Xong
-              </Button>
-            </div>
-          )}
+
         </div>
       ) : !preview ? (
         <div className="add-book-choose">
@@ -753,7 +780,7 @@ export function AddBookDialog({
             </Fold>
           )}
           {known && (
-            <p role="status" className="mt-3 rounded-xl border border-line bg-accent-soft p-3 text-sm text-accent-text">
+            <p role="status" className="mt-3 rounded-xl border border-line p-3 text-sm text-accent-text">
               {existing
                 ? `Cuốn này đã có trong thư viện: “${existing.title}”.`
                 : `Bạn đã thêm file này thành “${sameSource!.title}” (${sameSource!.chapters} chương).`}
@@ -762,38 +789,7 @@ export function AddBookDialog({
           {busy === "adding" && working && queue && (
             <ContentSkeleton className="mt-3" count={1} label={`Đang thêm ${working}`} />
           )}
-          <div className="sticky bottom-0 z-10 mt-5 flex flex-wrap justify-end gap-2 border-t border-line bg-panel py-3" data-add-book-actions>
-            <Button variant="ghost" disabled={busy !== null} onClick={chooseAgain}>
-              Chọn lại
-            </Button>
-            {queue && (
-              <Button variant={known ? "primary" : "ghost"} disabled={busy !== null} onClick={skipCurrent}>
-                Bỏ cuốn này
-              </Button>
-            )}
-            {rest > 0 && (
-              <Button disabled={!title.trim() || nothingPicked || busy !== null} loading={busy === "adding"} onClick={() => void addAll()}>
-                Thêm phần còn lại
-              </Button>
-            )}
-            {known ? (
-              <>
-                <Button icon={Copy} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy !== null} onClick={() => void add(true)}>
-                  {existing ? "Thêm bản riêng" : "Vẫn thêm bản mới"}
-                </Button>
-                {/* Trong hàng, "Mở cuốn đó" bỏ dở các cuốn sau: ở đó nút chính là "Bỏ cuốn này" (cuốn này đã có rồi). */}
-                {!queue && (
-                  <Button variant="primary" icon={BookOpen} disabled={busy !== null} onClick={() => openExisting(known.id)}>
-                    Mở cuốn đó
-                  </Button>
-                )}
-              </>
-            ) : (
-              <Button variant="primary" icon={BookPlus} loading={busy === "adding"} disabled={!title.trim() || nothingPicked || busy === "reading"} onClick={() => void add()}>
-                Thêm vào thư viện
-              </Button>
-            )}
-          </div>
+
 
         </div>
       )}

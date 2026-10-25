@@ -15,7 +15,7 @@ import { cn } from "@/shared/cn";
 import { MUSIC_MODIFIED_NOTE, formatClock, musicCreditText, musicNeedsModifiedNote } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
 import { MUSIC_LEVELS as LEVELS, levelText } from "@/shared/musicLevels";
-import { Button, IconButton, LiveText, Progress, ContentSkeleton, InlineError, EmptyState } from "@/shared/ui";
+import { Select, Button, IconButton, LiveText, Progress, ContentSkeleton, InlineError, EmptyState } from "@/shared/ui";
 import { api, mediaUrl } from "./api";
 import { useAppInfo } from "./data";
 import { importMusic } from "./musicImport";
@@ -619,13 +619,13 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
               </>
             }
           >
-            <select
+            <Select
               id="music-genre"
               value={overrides.genre ?? ""}
               title={genreName || "Chưa chọn"}
               onChange={(event) => change.mutate({ genre: event.target.value || null })}
               // Rộng vừa tên thể loại dài nhất ("Dị giới / kỳ ảo phương Tây (…)") - không cắt chữ; hẹp màn thì thôi ở bề ngang ô.
-              className="h-9 w-40 max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-auto sm:min-w-64"
+              className="max-w-full sm:w-auto sm:min-w-64"
             >
               <option value="">Chưa chọn</option>
               {genres.map(([value, genre]) => (
@@ -633,21 +633,21 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                   {genre.vi}
                 </option>
               ))}
-            </select>
+            </Select>
           </SettingsRow>
           <SettingsRow label={<label htmlFor="music-level">Mức nhạc dưới giọng đọc</label>} hint="Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ">
-            <select
+            <Select
               id="music-level"
               value={String(overrides.levelDb)}
               onChange={(event) => change.mutate({ levelDb: Number(event.target.value) })}
-              className="h-9 w-40 rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus sm:w-60"
+
             >
               {LEVELS.map(([value, label]) => (
                 <option key={value} value={String(value)}>
                   {levelText(value, label)}
                 </option>
               ))}
-            </select>
+            </Select>
           </SettingsRow>
           <SettingsRow label="Bài cho từng đoạn" hint="Máy chọn lại theo thể loại và mức nhạc ở trên.">
             <Button variant="ghost" icon={RefreshCw} loading={rebuild.isPending} onClick={() => rebuild.mutate()} className="-mr-3.5">

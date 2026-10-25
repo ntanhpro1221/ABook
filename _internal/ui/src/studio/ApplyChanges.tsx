@@ -5,7 +5,7 @@ import { AudioLines, BookOpenCheck, Mic2, RefreshCw, UserRound, X } from "lucide
 import { useState, type ReactNode } from "react";
 import { toast } from "@/shared/toast";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog, IconButton } from "@/shared/ui";
+import { DialogActions, Button, Dialog, IconButton } from "@/shared/ui";
 import { api } from "./api";
 import { useVoiceTry } from "./VoiceTry";
 import { estimateText, type VoiceRequest } from "./voiceTryText";
@@ -152,7 +152,23 @@ export function ApplyChangesDialog({
   const chapters = data?.chapters ?? [];
   const shownChapters = chapters.slice(0, 4).join(", ") + (chapters.length > 4 ? `, và ${chapters.length - 4} chương khác` : "");
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          {running ? "Đóng" : "Để sau"}
+        </Button>
+        {!running && (
+          <Button
+            variant="primary"
+            icon={RefreshCw}
+            onClick={() => {
+              onOpenChange(false);
+              onApply();
+            }}
+          >
+            Áp dụng
+          </Button>
+        )}
+      </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-[560px]"
@@ -187,23 +203,7 @@ export function ApplyChangesDialog({
           </p>
         </>
       )}
-      <div className="mt-5 dialog-actions">
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          {running ? "Đóng" : "Để sau"}
-        </Button>
-        {!running && (
-          <Button
-            variant="primary"
-            icon={RefreshCw}
-            onClick={() => {
-              onOpenChange(false);
-              onApply();
-            }}
-          >
-            Áp dụng
-          </Button>
-        )}
-      </div>
+
     </MotionRegion></Dialog>
   );
 }

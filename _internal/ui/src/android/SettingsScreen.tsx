@@ -5,7 +5,7 @@ import { Download, TriangleAlert } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { Button, ChoiceRow, Sheet, TimeSelect } from "@/shared/ui";
+import { Select, Button, ChoiceRow, Sheet, TimeSelect } from "@/shared/ui";
 import { GroupHeader, isSettingsGroup, MoreInfo, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
 import { ScreenHeader } from "@/shared/ScreenHeader";
 import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
@@ -176,28 +176,28 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
               label="Từ"
               value={settings.sleepSchedule.from}
               onChange={(value) => change({ sleepSchedule: { ...settings.sleepSchedule!, from: value } })}
-              className="min-h-[48px] rounded-lg border border-line bg-bg px-2"
+
             />
             <span className="text-fg-2">đến</span>
             <TimeSelect
               label="Đến"
               value={settings.sleepSchedule.to}
               onChange={(value) => change({ sleepSchedule: { ...settings.sleepSchedule!, to: value } })}
-              className="min-h-[48px] rounded-lg border border-line bg-bg px-2"
+
             />
             <span className="text-fg-2">hẹn</span>
-            <select
+            <Select
               aria-label="Số phút hẹn"
               value={settings.sleepSchedule.minutes}
               onChange={(event) => change({ sleepSchedule: { ...settings.sleepSchedule!, minutes: Number(event.target.value) } })}
-              className="min-h-[48px] rounded-lg border border-line bg-bg px-2"
+
             >
               {[15, 30, 45, 60].map((minutes) => (
                 <option key={minutes} value={minutes}>
                   {minutes} phút
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
         </MotionPresence>
