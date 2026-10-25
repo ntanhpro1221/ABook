@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 
 /** Mọi tệp .tsx của app (không test, không gallery). */
@@ -15,7 +16,7 @@ function sources(dir: string): string[] {
 // luôn giữ chỗ và mờ vào / ra - không chỉ đổi màu chữ, không ItemIndicator (gắn / gỡ cứng).
 it("mọi DropdownMenu.RadioItem có SelectionMark, không dùng ItemIndicator", () => {
   const missing: string[] = [];
-  for (const file of sources(join(__dirname, ".."))) {
+  for (const file of sources(fileURLToPath(new URL("..", import.meta.url)))) {
     const text = readFileSync(file, "utf8");
     if (text.includes("DropdownMenu.ItemIndicator")) missing.push(`${file}: ItemIndicator`);
     for (const match of text.matchAll(/<DropdownMenu\.RadioItem\b[\s\S]*?<\/DropdownMenu\.RadioItem>/g)) {
