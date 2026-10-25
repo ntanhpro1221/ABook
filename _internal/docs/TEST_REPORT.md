@@ -2,6 +2,12 @@
 
 Ngày cập nhật: 2026-10-26
 
+Đợt c14, worktree `D:/Novels/ABook_c14`, nhánh `dev/c14`, nền `3195a78c`: dùng chung bộ đặt vị trí thông báo trên vùng Sonner, bỏ biến `--toast-bottom` ở HTML của thanh điện thoại từ xa; policy chặn ghi biến style ở gốc. Thêm 6 test, mở rộng test đổi chiều cao thanh đầu màn đọc. Trace View Transition máy tính chỉ invalidation `.now-playing-vt`, giữ nguyên. Các thử nghiệm hoãn đo / nạp font màn đọc đều có dải p99 mở đầu chồng baseline nên hoàn tác; không tuyên bố đã sửa lần mở đầu. Báo cáo và đủ mẫu trước/sau ở scratchpad `codex/c14/report.md`.
+
+- TypeScript: **0 lỗi**. Vitest toàn bộ: **2521 passed, 0 failed, 1 skipped**, **317 file** (316 passed, 1 skipped); nhóm tập trung **17/17 passed**. Skip corpus PDF có sẵn. Contrast: **94 nhóm, 2744 cặp, 0 nhóm không đạt**.
+- Bộ đo trước/sau reader **10 + 10 mẫu**, baseline bổ sung **35 mẫu**, lượt cuối đủ sáu nhóm **45 mẫu**. p99 trung vị mở đầu màn đọc **427,5 → 422,8 ms**, mở nóng (4 lần lặp) **200,0 → 210,5 ms**; các dải vẫn chồng nhau. **26/26 asset JS/CSS** bản đo khớp gallery cuối.
+- Inspector sáng/tối: nhóm tập trung **30/30 khung**, lượt cuối toàn bộ **290/290 khung**, **0 phát hiện / 0 lỗi chạy**, exit 0. Không đổi luật hay dung sai bộ soi, không chạy cùng Vitest. Không sửa audio/Python/Kotlin, không dùng adb/thiết bị, không commit/push.
+
 Đợt c13, worktree `D:/Novels/ABook_c13`, nhánh `dev/c13`, nền `472abf80`: giới hạn selector `:has` của hàng dự án, chỉ đánh dấu tiêu điểm trên phần tử đang nhận, menu xếp sách không khoá body, vị trí thông báo của màn đọc chỉ đặt biến trên toaster. Giữ mọi chuyển động và thời lượng. Thêm bộ đo CDP `gallery_jank.mjs` (412×915, DPR 2,625, CPU 6×), trace và stack/elementCount; thêm retry khoá file cổng Edge và sửa phép đo nhãn text node trần của bộ soi, có đối chứng dấu đặt sai vẫn bị bắt.
 
 - TypeScript: **0 lỗi**. Vitest cuối: **2491 passed, 0 failed, 1 skipped**, **313 file** (312 passed, 1 skipped); thêm **16 test**. Skip có sẵn cần corpus PDF. Contrast: **94 nhóm, 2744 cặp, 0 nhóm không đạt**.
