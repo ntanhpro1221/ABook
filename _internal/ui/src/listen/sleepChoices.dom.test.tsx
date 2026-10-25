@@ -43,7 +43,7 @@ it("ô đang hẹn sáng, kể cả Hết chương này", async () => {
   for (const button of choices()) {
     expect(button.classList.contains("bg-accent-soft")).toBe(false);
     const selected = button.getAttribute("aria-pressed") === "true";
-    expect(button.querySelector(".lucide-check")?.classList.contains("opacity-100")).toBe(selected);
+    expect(button.querySelector(".lucide-check")).toBeNull(); // ô hẹp: dấu tích đẩy chữ lệch tâm (soát 141), ô chọn chỉ đổi chữ
     expect(button.classList.contains("text-accent-text")).toBe(selected);
   }
 });
