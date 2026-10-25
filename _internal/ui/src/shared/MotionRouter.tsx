@@ -1,10 +1,10 @@
 // HashRouter có chuyển trang (a120 - chủ app: "đóng mở các màn hình… quá xấu, thậm chí là không có"). Như HashRouter của react-router (cùng
-// lịch sử hash, cùng `idx` trong history.state mà android/backLayers đọc), chỉ khác: mỗi lần đổi trang chạy trong một View Transition -
-// trang cũ lùi sang một bên và mờ, trang mới tới từ phía kia (sâu vào / lùi ra), hay mờ qua (ngang hàng: tab, nhóm cài đặt). Router khai báo
-// (HashRouter) không nhận `viewTransition` - chỉ router dữ liệu có. Không có API thì đổi thẳng và usePageEnter làm hiện dần như trước.
+// lịch sử hash, cùng `idx` trong history.state mà android/backLayers đọc), chỉ khác: mỗi lần đổi trang, khung nội dung mờ đi trước
+// (leavePage), trang mới dựng trong lúc khuất rồi hiện vào từ phía kia (sâu vào / lùi ra) hay mờ qua (ngang hàng: tab dưới, nhóm cài đặt)
+// - enterPage. Không qua View Transition: chụp cả tài liệu làm điện thoại đứng hình trước khi chuyển (xem shared/motion.ts).
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Router, UNSAFE_createHashHistory, type Location, type NavigationType } from "react-router";
-import { navMotion, withViewTransition } from "./motion";
+import { enterPage, leavePage, navMotion } from "./motion";
 import { installBackOrder } from "./backOrder";
 import { dismissTopLayer } from "@/android/backLayers";
 
@@ -34,6 +34,7 @@ export function MotionHashRouter({ children }: { children: ReactNode }) {
   const history = historyRef.current;
   const [state, setState] = useState<RouterState>({ action: history.action, location: history.location });
   const now = useRef({ pathname: history.location.pathname, search: history.location.search, idx: historyIndex() });
+  const latest = useRef(0);
   const guard = useRef<ReturnType<typeof layerHistoryGuard> | null>(null);
   guard.current ??= layerHistoryGuard(() => dismissTopLayer(), (delta) => history.go(delta));
   useLayoutEffect(() => {
@@ -54,12 +55,15 @@ export function MotionHashRouter({ children }: { children: ReactNode }) {
         if (guard.current?.(action, now.current.idx, to.idx)) return;
         const nav = navMotion(action, now.current, to);
         now.current = to;
-        const update = () => setState({ action, location });
+        // Bấm liên tiếp: mọi lần chờ cùng một lần mờ và chỉ lần cuối được áp - lần cũ xong muộn không đè vị trí mới hơn.
+        const id = ++latest.current;
+        const update = () => { if (id === latest.current) setState({ action, location }); };
         if (nav === "none") update();
-        else withViewTransition(update, nav);
+        else void leavePage(nav).then(update);
       }),
     [history],
   );
+  useLayoutEffect(() => enterPage(), [state]);
   return (
     <Router location={state.location} navigationType={state.action} navigator={history}>
       {children}

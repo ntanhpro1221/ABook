@@ -38,7 +38,7 @@ import { reportSaveFailure } from "./saveFailure";
 import { ProgressOutbox } from "./progressOutbox";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
 import { feedback, setBookPlaying } from "@/shared/feedback";
-import { withViewTransition } from "@/shared/motion";
+import { MOTION, withViewTransition } from "@/shared/motion";
 
 export type { SleepMode, SleepRequest } from "./sleep";
 
@@ -187,7 +187,7 @@ interface PlayerActions {
 export type PlayerValue = PlayerState & PlayerActions;
 
 const PlayerContext = createContext<PlayerValue | null>(null);
-const NowPlayingContext = createContext<{ expanded: boolean; setExpanded: (expanded: boolean) => void } | null>(null);
+const NowPlayingContext = createContext<{ expanded: boolean; setExpanded: (expanded: boolean) => void; plain?: boolean } | null>(null);
 
 export function usePlayer(): PlayerValue {
   const value = useContext(PlayerContext);
@@ -200,6 +200,22 @@ export function useNowPlaying() {
   const value = useContext(NowPlayingContext);
   if (!value) throw new Error("useNowPlaying ngoài PlayerProvider");
   return value;
+}
+
+/** Trang nằm dưới màn "Đang nghe" chỉ bị khoá (inert) khi màn đã trượt lên xong, và mở khoá ngay khi bắt đầu đóng. Khoá/mở khoá inert
+ *  tính lại style cả cây trang bên dưới (đo 25-70 ms ở 6x chậm): làm cùng lúc màn đang trượt thì vỡ khung. Trong ~300 ms trượt, màn phủ
+ *  lên nên chạm không lọt xuống; phím Tab đã được đưa vào màn (NowPlaying focus). */
+export function useCoveredAfterOpen(expanded: boolean): boolean {
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!expanded) {
+      setSettled(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setSettled(true), MOTION.slow + 80);
+    return () => window.clearTimeout(timer);
+  }, [expanded]);
+  return expanded && settled;
 }
 
 export const SPEEDS = [0.75, 0.9, 1, 1.1, 1.2, 1.3, 1.5, 1.75, 2, 2.5, 3];
@@ -244,6 +260,7 @@ export function PlayerProvider({
   safetyStopHours = 2,
   sleepSchedule = null,
   autoRewind = true,
+  plainOpen = false,
 }: {
   engine: AudioEngine;
   children: ReactNode;
@@ -255,6 +272,9 @@ export function PlayerProvider({
   safetyStopHours?: number;
   sleepSchedule?: SleepSchedule | null;
   autoRewind?: boolean;
+  /** Mở / đóng "Đang nghe" chỉ bằng hoạt ảnh CSS (trượt + mờ, chạy trên GPU), không qua View Transition: điện thoại (WebView tầm trung) - một chuyển
+   *  cảnh RỖNG đã chiếm khung 70-140 ms vì phải chụp và dọn cả tài liệu (đo 6x chậm, docs/DESIGN.md 5.2 "60 fps"). Đổi lại bìa không bay. */
+  plainOpen?: boolean;
 }) {
   const source = useSource();
   const client = useQueryClient();
@@ -1896,16 +1916,17 @@ export function PlayerProvider({
 
   // Mở/đóng "Đang nghe" qua View Transitions: màn trượt lên từ đáy (đóng thì trượt xuống), bìa ở thanh phát bay lên thành bìa lớn
   // (và bay về) - xem .now-playing-vt / .cover-morph trong styles.css. Xin giảm chuyển động: chỉ còn hiện / mờ (CSS). Không có API
-  // (trình duyệt cũ) thì đổi thẳng, màn mở vẫn trượt lên bằng hoạt ảnh CSS .now-playing.
+  // (trình duyệt cũ) thì đổi thẳng, màn mở vẫn trượt lên bằng hoạt ảnh CSS .now-playing. `plainOpen` (điện thoại): luôn đường CSS.
   const expandedNow = useRef(expanded);
   expandedNow.current = expanded;
   const setExpandedAnimated = useCallback((value: boolean) => {
     // Không đổi gì thì không chạy View Transition rỗng: mục thanh bên gọi setExpanded(false) mỗi lần bấm, và một chuyển
     // cảnh rỗng khi cửa sổ không được vẽ (thu nhỏ, ẩn) bị trình duyệt huỷ thành lỗi console (soát UX 29-09).
     if (expandedNow.current === value) return;
-    withViewTransition(() => setExpanded(value));
-  }, []);
-  const nowPlaying = useMemo(() => ({ expanded, setExpanded: setExpandedAnimated }), [expanded, setExpandedAnimated]);
+    if (plainOpen) setExpanded(value);
+    else withViewTransition(() => setExpanded(value));
+  }, [plainOpen]);
+  const nowPlaying = useMemo(() => ({ expanded, setExpanded: setExpandedAnimated, plain: plainOpen }), [expanded, setExpandedAnimated, plainOpen]);
 
   return (
     <ClockContext.Provider value={clock}>

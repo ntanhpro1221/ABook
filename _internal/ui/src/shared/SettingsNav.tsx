@@ -149,7 +149,7 @@ export function MoreInfo({ children, label = "Tìm hiểu thêm", className }: {
   const [open, setOpen] = useState(false);
   const id = useId();
   return (
-    <div className={className}>
+    <div data-more-info="" className={className}>
       <button
         type="button"
         aria-expanded={open}

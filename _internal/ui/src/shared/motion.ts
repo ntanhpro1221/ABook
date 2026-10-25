@@ -29,8 +29,57 @@ export function scrollMotion(animate = true): ScrollBehavior {
   return animate && !prefersReducedMotion() ? "smooth" : "auto";
 }
 
-// Chuyển trang khi KHÔNG có View Transitions (MotionHashRouter lo phần có): nội dung mới hiện dần và nhích lên. Dùng Web Animations trên
-// chính khung nội dung nên KHÔNG dựng lại trang (key theo đường dẫn sẽ làm mất trạng thái, cuộn, ô đang gõ). Xin giảm chuyển động: chỉ hiện dần.
+// Đổi trang (MotionHashRouter): KHÔNG qua View Transition - trên WebView điện thoại một chuyển cảnh rỗng đã chiếm khung 70-140 ms
+// để chụp cả tài liệu, cộng thời gian dựng trang mới là màn đứng ~170 ms rồi mới mờ (video chủ sách 25-10 "mở tab thư viện bị giật").
+// Thay vào đó: khung nội dung `.page-motion` mờ đi ngay khi bấm (chỉ opacity/transform - chạy trên GPU), trang mới dựng trong lúc khung
+// đã khuất, rồi hiện vào theo hướng (sâu vào / lùi ra / ngang hàng). Thanh tab, thanh phát đứng yên. Xin giảm chuyển động: chỉ mờ / hiện.
+let leaving: Promise<void> | null = null;
+let entering: NavMotion | null = null;
+
+function pageSurface(doc: TransitionDocument | undefined): HTMLElement | null {
+  return doc?.querySelector?.<HTMLElement>(".page-motion") ?? null;
+}
+
+/** Trang mới đang vào (từ lúc bấm tới khi hiện xong khung đầu): nội dung có sẵn của nó không tự mọc / trượt riêng - khung trang đã lo. */
+export function pageEntering(): boolean {
+  return entering !== null;
+}
+
+/** Mờ trang hiện tại đi rồi mới đổi. Đang mờ dở (bấm liên tiếp) thì dùng lại lần mờ ấy - lần đổi cuối cùng thắng. */
+export function leavePage(nav: NavMotion, doc: TransitionDocument | undefined = browserDocument()): Promise<void> {
+  const page = pageSurface(doc);
+  if (nav === "none" || !page || typeof page.animate !== "function" || doc?.visibilityState === "hidden") return Promise.resolve();
+  entering = nav;
+  if (leaving) return leaving;
+  const shift = prefersReducedMotion() || nav === "through" ? 0 : nav === "back" ? 12 : -12;
+  const animation = page.animate([{ opacity: 1, transform: "none" }, { opacity: 0, transform: shift ? `translateX(${shift}px)` : "none" }], {
+    duration: MOTION.fastOut,
+    easing: EASE.accelerate,
+    fill: "forwards",
+  });
+  leaving = animation.finished.then(() => undefined, () => undefined).then(() => {
+    leaving = null;
+  });
+  return leaving;
+}
+
+/** Sau commit của trang mới (layout effect của router, trước khi vẽ): bỏ lớp mờ của lần rời và cho trang hiện vào. */
+export function enterPage(doc: TransitionDocument | undefined = browserDocument()): void {
+  const nav = entering;
+  entering = null;
+  const page = pageSurface(doc);
+  if (!nav || !page || typeof page.animate !== "function") return;
+  for (const animation of page.getAnimations?.() ?? []) animation.cancel();
+  const reduced = prefersReducedMotion();
+  const from = reduced ? "none" : nav === "through" ? "scale(0.97)" : `translateX(${nav === "back" ? -32 : 32}px)`;
+  page.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], {
+    duration: reduced ? MOTION.fast : nav === "through" ? MOTION.medium : MOTION.slow,
+    easing: EASE.decelerate,
+  });
+}
+
+// Lần đầu dựng khung (mở app) không đi qua router: khung nội dung hiện dần và nhích lên. Dùng Web Animations trên chính khung nên KHÔNG
+// dựng lại trang (key theo đường dẫn sẽ làm mất trạng thái, cuộn, ô đang gõ). Đổi trang thì router (leavePage / enterPage) lo.
 export function usePageEnter(ref: RefObject<HTMLElement | null>, key: string, { resetScroll = true } = {}) {
   useLayoutEffect(() => {
     const element = ref.current;
@@ -38,8 +87,7 @@ export function usePageEnter(ref: RefObject<HTMLElement | null>, key: string, { 
     // mở ở 67px, chế độ Đọc ở 115px dưới header).
     if (resetScroll) element?.scrollTo?.({ top: 0 });
     if (!element || typeof element.animate !== "function") return;
-    // Đổi trang này đi qua View Transition: ảnh chụp đã chuyển cả vùng - thêm hoạt ảnh ở đây là hiện dần hai lần.
-    if (viewTransitionRunning()) return;
+    if (pageEntering() || viewTransitionRunning()) return;
     const shift = prefersReducedMotion() ? 0 : 8;
     element.animate(
       [
@@ -462,9 +510,10 @@ export function withViewTransition(
 /** Hướng đổi trang theo hành động của Router và vị trí trong lịch sử: PUSH = sâu vào; POP về chỗ thấp hơn = lùi ra; REPLACE (tab, nhóm cài
  *  đặt ở hai cột, ?tab=) = ngang hàng. Cùng trang chỉ đổi ?/# bằng PUSH / POP (tìm, chọn mục) thì không chuyển vùng trang. */
 export function navMotion(action: "PUSH" | "POP" | "REPLACE", from: { pathname: string; idx: number; search?: string }, to: { pathname: string; idx: number; search?: string }): NavMotion {
-  if (action === "REPLACE") return "through";
   if (from.pathname === to.pathname && new URLSearchParams(from.search).get("step") !== new URLSearchParams(to.search).get("step")) return to.idx < from.idx ? "back" : "forward";
+  // Cùng trang, chỉ đổi ?tab= / tham số: trang đứng yên, vùng nội dung tự trượt (TabsPanels) - không mờ cả màn hình.
   if (from.pathname === to.pathname) return "none";
+  if (action === "REPLACE") return "through";
   // Giữa hai mục gốc (tab dưới / thanh bên: Thư viện, Tải sách, Studio, Cài đặt) là ngang hàng, không phải sâu vào.
   if (depth(from.pathname) <= 1 && depth(to.pathname) <= 1) return "through";
   if (action === "PUSH") return "forward";
