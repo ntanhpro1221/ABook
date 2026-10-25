@@ -11,6 +11,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Biểu tượng nốt nhạc có nét bo tròn hơn; trình đọc màn hình nhận đúng trạng thái mở/đóng của bảng tuỳ chọn trình phát.
 - Cài đặt trên máy tính: nhóm đang mở sáng nền nhẹ, chữ đậm như thanh bên; nút "Đổi thư mục" thẳng mép với các nút khác.
+- Căn mép đồng loạt: nút cuối hàng (Ghép thiết bị, nút chép, nút nghe thử ở Nhân vật) chạm đúng mép cột; nút Chọn ảnh bìa / Tìm bìa chung một mép; liên kết Dùng Bluetooth và Nhập địa chỉ máy tính thẳng hàng.
 
 ## [0.4.141] - 2026-10-25
 
