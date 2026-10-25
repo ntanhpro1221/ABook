@@ -25,7 +25,7 @@ import { watchReadAloud } from "./readAloud";
 import { watchImports } from "./imports";
 import { cn } from "@/shared/cn";
 import { UNDO_SECONDS, toastRemoved } from "@/shared/trashUndo";
-import { Button, Dialog, EmptyState, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
+import { DialogActions, Button, Dialog, EmptyState, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
 import { androidSource } from "./androidSource";
 import { LibraryDownloads } from "./LibraryDownloads";
 import { StudioScreen } from "./StudioScreen";
@@ -283,8 +283,14 @@ function RemoveFromPhoneHost() {
     }
   };
   return (
-    <Dialog
-      phoneSheet
+    <Dialog footer={<DialogActions>
+        <Button variant="ghost" onClick={() => setBook(null)}>
+          Để sau
+        </Button>
+        <Button variant="danger" icon={Trash2} loading={busy} onClick={() => void remove()}>
+          {book?.partial ? "Xoá phần đã tải" : "Xoá khỏi điện thoại"}
+        </Button>
+      </DialogActions>}
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
       title={book?.partial ? `Xoá phần đã tải của “${book.title}”?` : `Xoá “${book?.title ?? ""}” khỏi điện thoại?`}
@@ -294,14 +300,7 @@ function RemoveFromPhoneHost() {
           : `${bytes !== undefined ? `Lấy lại ${formatSize(bytes)}. ` : ""}Xoá hẳn khỏi điện thoại; Hoàn tác được trong ${UNDO_SECONDS} giây. Sách từ máy đã ghép thì tải lại được.`
       }
     >
-      <div className="dialog-actions">
-        <Button variant="ghost" onClick={() => setBook(null)}>
-          Để sau
-        </Button>
-        <Button variant="danger" icon={Trash2} loading={busy} onClick={() => void remove()}>
-          {book?.partial ? "Xoá phần đã tải" : "Xoá khỏi điện thoại"}
-        </Button>
-      </div>
+
     </Dialog>
   );
 }

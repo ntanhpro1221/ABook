@@ -31,11 +31,11 @@ import {
 } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useId, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useListPresence } from "@/shared/motion";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "@/shared/toast";
-import {
+import { DialogActions,
   Button,
   Dialog,
   EmptyState,
@@ -50,7 +50,7 @@ import {
   TabsPanels,
   TabsTrigger,
   Vu,
-} from "@/shared/ui";
+ } from "@/shared/ui";
 import { api, type BookSummary, type Chapter } from "@/studio/api";
 import { cn } from "@/shared/cn";
 import { SCREEN_TITLE, ScreenHeader } from "@/shared/ScreenHeader";
@@ -478,6 +478,7 @@ const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 te
 
 // Đổi tên chỉ đổi tên HIỆN (store.TITLE_FILE): thư mục dự án và sổ của dây chuyền giữ nguyên, nên làm được cả lúc chạy.
 function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const dialogForm1 = useId();
   const client = useQueryClient();
   const [title, setTitle] = useState(book.title);
   useEffect(() => {
@@ -496,13 +497,20 @@ function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
   });
   const typed = title.trim();
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Huỷ
+          </Button>
+          <Button type="submit" form={dialogForm1} variant="primary" loading={rename.isPending} disabled={!typed || typed === book.title}>
+            Đổi tên
+          </Button>
+        </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
       title="Đổi tên sách"
       description="Tên mới hiện ở thư viện, điện thoại và file xuất."
     >
-      <form
+      <form id={dialogForm1}
         onSubmit={(event) => {
           event.preventDefault();
           if (typed && typed !== book.title) rename.mutate(typed);
@@ -520,14 +528,7 @@ function RenameDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
           autoComplete="off"
           className="mt-1.5 h-10 w-full rounded-lg border border-line bg-panel px-3 text-sm text-fg outline-none focus-visible:border-focus"
         />
-        <div className="mt-5 dialog-actions">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Huỷ
-          </Button>
-          <Button type="submit" variant="primary" loading={rename.isPending} disabled={!typed || typed === book.title}>
-            Đổi tên
-          </Button>
-        </div>
+
       </form>
     </Dialog>
   );
@@ -561,17 +562,7 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
     onError: (error: Error) => toast.error("Chưa xoá được", { description: error.message }),
   });
   return (
-    <Dialog
-      open={open}
-      onOpenChange={onOpenChange}
-      title={`Xoá dự án “${book.title}”?`}
-      description="Cả thư mục dự án vào Thùng rác của Windows, khôi phục được. File truyện gốc và sách đã xuất giữ nguyên."
-    >
-      <MotionRegion>
-      {/* Studio từ xa không nhận đường dẫn trên máy tính (soát a27 lỗi 10). */}
-      {book.path && <p className="break-all rounded-lg bg-panel-2 px-3 py-2 text-xs text-fg-2">{book.path}</p>}
-      {busy && <p className="mt-3 text-sm text-warning">Sách đang chạy - dừng sách trước rồi mới xoá được.</p>}
-      <div className="mt-5 dialog-actions">
+    <Dialog footer={<DialogActions>
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
           Để sau
         </Button>
@@ -588,7 +579,17 @@ function DeleteDialog({ book, open, onOpenChange }: { book: BookSummary; open: b
         >
           Chuyển vào Thùng rác
         </Button>
-      </div>
+      </DialogActions>}
+      open={open}
+      onOpenChange={onOpenChange}
+      title={`Xoá dự án “${book.title}”?`}
+      description="Cả thư mục dự án vào Thùng rác của Windows, khôi phục được. File truyện gốc và sách đã xuất giữ nguyên."
+    >
+      <MotionRegion>
+      {/* Studio từ xa không nhận đường dẫn trên máy tính (soát a27 lỗi 10). */}
+      {book.path && <p className="break-all rounded-lg bg-panel-2 px-3 py-2 text-xs text-fg-2">{book.path}</p>}
+      {busy && <p className="mt-3 text-sm text-warning">Sách đang chạy - dừng sách trước rồi mới xoá được.</p>}
+
       </MotionRegion>
     </Dialog>
   );
@@ -944,15 +945,7 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
-      <Dialog
-        open={confirm}
-        onOpenChange={setConfirm}
-        title={`Thu lại cả ${chapter.displayTitle}?`}
-        description={`Thu lại ${recorded} câu; giọng giữ nguyên, cách nói đổi.`}
-      >
-        <Button variant="ghost" onClick={() => { setConfirm(false); setParams({ tab: "script", chapter: String(chapter.id) }); }}>Sửa chữ</Button>
-        <MoreInfo label="Thu lại chương">Dùng hạt giống mới cho cả chương. Sai người nói hoặc chữ thì sửa Kịch bản trước; thu lại cùng chữ không chữa được.</MoreInfo>
-        <div className="mt-5 dialog-actions">
+      <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setConfirm(false)}>
             Thôi
           </Button>
@@ -967,7 +960,15 @@ function ChapterMenu({ book, chapter, onPlay }: { book: BookSummary; chapter: Ch
           >
             Thu lại {recorded} câu
           </Button>
-        </div>
+        </DialogActions>}
+        open={confirm}
+        onOpenChange={setConfirm}
+        title={`Thu lại cả ${chapter.displayTitle}?`}
+        description={`Thu lại ${recorded} câu; giọng giữ nguyên, cách nói đổi.`}
+      >
+        <Button variant="ghost" onClick={() => { setConfirm(false); setParams({ tab: "script", chapter: String(chapter.id) }); }}>Sửa chữ</Button>
+        <MoreInfo label="Thu lại chương">Dùng hạt giống mới cho cả chương. Sai người nói hoặc chữ thì sửa Kịch bản trước; thu lại cùng chữ không chữa được.</MoreInfo>
+
       </Dialog>
     </>
   );

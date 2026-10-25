@@ -220,7 +220,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
   };
 
   return (
-    <MotionRegion as="section" aria-label={`Đang phát trên ${phone.name}`} className="relative z-20 shrink-0 border-t border-line bg-accent-soft/60">
+    <MotionRegion as="section" aria-label={`Đang phát trên ${phone.name}`} className="relative z-20 shrink-0 border-t border-line bg-panel">
       <div
         className="absolute inset-x-0 top-0 h-[2px] bg-accent motion-progress"
         style={{ transform: `scaleX(${share / 100})` }}

@@ -15,7 +15,7 @@ import { chosenVoice, resolveVoice, voiceCaption } from "@/listen/readAloudVoice
 import { useReadAloudVoices } from "@/listen/source";
 import { coverArtwork } from "@/shared/cover";
 import { formatSize } from "@/shared/format";
-import { Button, Dialog } from "@/shared/ui";
+import { DialogActions, Button, Dialog } from "@/shared/ui";
 import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
 import { isEnded, noteEnded, rejoinExports } from "./exportJobs";
 import { EbookLibrary, type AudiobookExportEvent, type AudiobookPhonePlan } from "./plugins";
@@ -251,7 +251,14 @@ export function AudiobookPhoneDialogHost() {
     }
   };
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+        <Button variant="ghost" onClick={() => setBook(null)}>
+          Để sau
+        </Button>
+        <Button variant="primary" icon={Headphones} loading={busy} disabled={!voice || !plan.data || plan.data.chapters === 0 || Boolean(plan.error)} onClick={() => void start()}>
+          Bắt đầu
+        </Button>
+      </DialogActions>}
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
       title={`Xuất sách nói “${book?.title ?? ""}”`}
@@ -259,14 +266,7 @@ export function AudiobookPhoneDialogHost() {
       width="max-w-[560px]"
     >
       <AudiobookPhoneForm voice={voice} plan={plan.data} planError={plan.error ? (plan.error as Error).message : ""} music={music} onMusic={setMusic} />
-      <div className="mt-5 dialog-actions">
-        <Button variant="ghost" onClick={() => setBook(null)}>
-          Để sau
-        </Button>
-        <Button variant="primary" icon={Headphones} loading={busy} disabled={!voice || !plan.data || plan.data.chapters === 0 || Boolean(plan.error)} onClick={() => void start()}>
-          Bắt đầu
-        </Button>
-      </div>
+
     </Dialog>
   );
 }

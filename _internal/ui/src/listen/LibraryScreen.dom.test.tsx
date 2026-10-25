@@ -108,11 +108,19 @@ it("no-results wording fades when raw query changes case", async () => {
 });
 
 it("identical search membership retains the focused tile and Windowed blocks", async () => {
+  // Hình học đã giả lập ở trên: cố định luôn CSS của ảnh chuyển cảnh. Happy DOM tính lại style lười cho >4.000 nút;
+  // dưới tải việc ấy tranh với timeout thật 5 s, dù đồng hồ giả và mọi act đã xong đúng thứ tự.
+  const layout = document.createElement("div").style;
+  Object.assign(layout, { display: "block", position: "static", overflow: "visible" });
+  vi.spyOn(window, "getComputedStyle").mockImplementation(element => element === main ? main.style : layout);
   state.books = Array.from({ length: 200 }, (_, i) => ({ ...state.books[0], id: String(i), title: `Book ${i}` }));
   await draw(); await search("B"); await act(() => vi.advanceTimersByTime(500));
   const tile = main.querySelector('[role="listitem"]')!;
   const button = tile.querySelector<HTMLElement>("button[tabindex]")!; await act(() => button.focus());
   const blocks = [...main.querySelectorAll('[role="list"] > div')];
+  expect(main.querySelectorAll("[data-block]")).toHaveLength(4);
+  expect(main.querySelectorAll("[data-filled]")).toHaveLength(2);
+  expect(main.querySelectorAll('[role="listitem"]')).toHaveLength(120);
   await search("Bo");
   expect(tile.isConnected).toBe(true); expect(document.activeElement).toBe(button);
   expect(blocks.every(block => block.isConnected)).toBe(true);
