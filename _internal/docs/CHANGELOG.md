@@ -10,7 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Giao diện
 
 - Bảng Thêm tuỳ chọn của trình phát: Nhạc nền và Giọng đọc trải hết bề ngang, giá trị bên phải ("Tắt", tên giọng) cùng một mép với các dòng khác; trên máy tính dòng Giọng đọc không còn tràn ra ngoài menu.
-- Tên giọng trong menu giọng hiện đủ (xuống dòng) thay vì bị cắt "…".
+- Tên trong mọi danh sách chọn (giọng, hồ sơ người nghe, thiết bị Bluetooth) hiện đủ, xuống dòng thay vì bị cắt "…"; dấu tích luôn đứng đầu dòng; menu "…" của trình phát máy tính rộng hơn để "Nhạc của tôi" và tên giọng không gãy dòng.
 
 ## [0.4.142] - 2026-10-25
 
