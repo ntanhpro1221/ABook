@@ -14,15 +14,15 @@ import { inspectAlignment } from "./gallery_inspect_alignment.mjs";
 import { inspectTapReach } from "./gallery_inspect_tap.mjs";
 import { inspectEdges } from "./gallery_inspect_edges.mjs";
 
-export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL"];
+export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS"];
 // Gate đã có fixture hai phía; quy tắc 16–17 dùng cả đối chứng gallery gốc (rules144).
-export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL"];
+export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH", "FOCUS RING CLIPPED", "CORNER MISMATCH", "LINE BREAK", "COVERED TEXT", "REPEATED LABEL", "STACKED LAYERS"];
 export function gateRules(value) {
   return value === undefined ? [...DEFAULT_FAIL_ON] : value.length === 1 && value[0].toUpperCase() === "NONE" ? [] : value.map(normalizeRule);
 }
 export function normalizeRule(value) {
   const key = value.trim().toUpperCase().replaceAll("_", " ");
-  const numbered = /^RULE([1-9]|1[0-9]|20)$/.exec(key);
+  const numbered = /^RULE([1-9]|1[0-9]|2[01])$/.exec(key);
   const rule = numbered ? RULES[Number(numbered[1]) - 1] : RULES.find((r) => r === key || r.replaceAll(" ", "-") === key);
   if (!rule) throw new Error(`Quy tắc lạ: ${value}. Chọn ${RULES.join(", ")}`);
   return rule;
@@ -118,7 +118,7 @@ export function writeOutputs(out, report) {
 export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(["--theme", "both", ...argv]);
   if (args.help || !args.out) {
-    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule20]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11,rule12,rule13,rule15,rule16,rule17,rule18,rule19,rule20 (rules142/report.md; Studio included)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. rule12 BASELINE: >1 px alphabetic baseline delta. rule13 CONTROL HEIGHT: >1 px visible height/top/bottom or same-role menu-row delta. rule14 FILL INSET: <6 px ink padding, or selected fill ends >8 px before its row control. rule15 TAP REACH: enabled visible controls in the last leaf layer/main must restore pointer events and hit inside that layer. rule16 FOCUS RING CLIPPED: 4 px outline extent, 0.5 px tolerance; skip partially scrolled controls and honor overflow-clip-margin. rule17 CORNER MISMATCH: coincident corners within 1 px, CSS-scaled radius deficit >1 px, unless rounded ancestor clips. rule18 LINE BREAK: a middle-dot separator that ends or begins a line (half a font size of vertical offset). rule19 COVERED TEXT: a solid absolutely placed layer painted over text of the same frame, aria-hidden text included. rule20 REPEATED LABEL: a heading inside a tab panel that repeats the selected tab label. Use --fail-on none for advisory output.");
+    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule21]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11,rule12,rule13,rule15,rule16,rule17,rule18,rule19,rule20,rule21 (rules142/report.md; Studio included)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. rule12 BASELINE: >1 px alphabetic baseline delta. rule13 CONTROL HEIGHT: >1 px visible height/top/bottom or same-role menu-row delta. rule14 FILL INSET: <6 px ink padding, or selected fill ends >8 px before its row control. rule15 TAP REACH: enabled visible controls in the last leaf layer/main must restore pointer events and hit inside that layer. rule16 FOCUS RING CLIPPED: 4 px outline extent, 0.5 px tolerance; skip partially scrolled controls and honor overflow-clip-margin. rule17 CORNER MISMATCH: coincident corners within 1 px, CSS-scaled radius deficit >1 px, unless rounded ancestor clips. rule18 LINE BREAK: a middle-dot separator that ends or begins a line (half a font size of vertical offset). rule19 COVERED TEXT: a solid absolutely placed layer painted over text of the same frame, aria-hidden text included. rule20 REPEATED LABEL: a heading inside a tab panel that repeats the selected tab label. rule21 STACKED LAYERS: a dialog over another dialog, or any layer over a menu, overlapping by more than 8 px. Use --fail-on none for advisory output.");
     return !args.help ? 2 : 0;
   }
   if (!["light", "dark", "both"].includes(args.theme)) throw new Error("--theme phải là light, dark hoặc both");

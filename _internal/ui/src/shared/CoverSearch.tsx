@@ -38,11 +38,11 @@ export function failedSourcesNote(failed: string[]): string {
  * `onBusy`: đang đặt ảnh đã chọn (trang chủ coi như đang bận, không cho đặt bìa khác chen vào). Đóng hộp thì huỷ yêu cầu còn chạy:
  * lời đáp về muộn không hiện đè lên, ảnh chọn xong mà bị bỏ không đè lên bìa người dùng đặt sau (máy chủ cũng kiểm thứ tự).
  */
-export function CoverSearchDialog({
+export function CoverSearchPanel({
   bookId,
   defaultQuery,
-  open,
-  onOpenChange,
+  active,
+  onClose,
   onChosen,
   doneNote,
   onBusy,
@@ -50,13 +50,15 @@ export function CoverSearchDialog({
 }: {
   bookId: string;
   defaultQuery: string;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  /** Đang hiện (hộp mở / bước đang đứng): lần đầu hiện thì tự tìm theo tên sách. */
+  active: boolean;
+  onClose: () => void;
   onChosen: () => void;
   doneNote?: string;
   onBusy?: (busy: boolean) => void;
   onChooseFile: () => void;
 }) {
+  const open = active;
   const [query, setQuery] = useState(defaultQuery);
   const searches = useRef(latestRequest());
   const choices = useRef(latestRequest());
@@ -71,7 +73,7 @@ export function CoverSearchDialog({
       api(`/api/books/${bookId}/cover`, { method: "PUT", body: { url: found.url }, signal: choices.current.next() }),
     onSuccess: () => {
       onChosen();
-      onOpenChange(false);
+      onClose();
       toast.success("Đã đặt ảnh bìa", doneNote ? { description: doneNote } : undefined);
     },
   });
@@ -84,13 +86,15 @@ export function CoverSearchDialog({
     const pending = [searches.current, choices.current];
     return () => pending.forEach((request) => request.cancel());
   }, []);
-  const changeOpen = (next: boolean) => {
-    if (!next) {
-      searches.current.cancel();
-      choices.current.cancel();
-    }
-    onOpenChange(next);
+  const close = () => {
+    searches.current.cancel();
+    choices.current.cancel();
+    onClose();
   };
+  useEffect(() => {
+    // Hộp đóng hay rời bước bằng Back / ✕: lượt tìm và lượt đặt bìa đang bay không được về sau đó.
+    if (!active) { searches.current.cancel(); choices.current.cancel(); }
+  }, [active]);
   useLayoutEffect(() => {
     // Hộp không bị gỡ khi đóng: lỗi đặt bìa của lần mở trước không được hiện lại cạnh kết quả mới - gỡ trước khi vẽ, không chớp một khung.
     if (open) choose.reset();
@@ -103,13 +107,7 @@ export function CoverSearchDialog({
   const results = (search.data?.results ?? []).filter((found) => !broken.has(found.thumb));
   const failed = search.data?.failed ?? [];
   return (
-    <Dialog
-      open={open}
-      onOpenChange={changeOpen}
-      title="Tìm ảnh bìa"
-      description="Bạn chọn ảnh từ các nguồn sách hoặc trên máy."
-      width="max-w-3xl"
-    ><MotionRegion>
+    <MotionRegion>
       <form
         className="flex gap-2"
         onSubmit={(event) => {
@@ -165,11 +163,24 @@ export function CoverSearchDialog({
             ))}
           </div>
         ) : search.data && !failed.length ? (
-          <EmptyState icon={Search} title="Bạn hãy chọn ảnh trên máy" className="py-8" action={<Button onClick={() => { changeOpen(false); onChooseFile(); }}>Chọn ảnh</Button>} />
+          <EmptyState icon={Search} title="Bạn hãy chọn ảnh trên máy" className="py-8" action={<Button onClick={() => { close(); onChooseFile(); }}>Chọn ảnh</Button>} />
         ) : null}
         <InlineError open={failed.length > 0} message="Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa." onRetry={() => search.mutate(query)} />
         <InlineError open={choose.isError && !wasAborted(choose.error) && !(choose.error instanceof ApiError && choose.error.status === 409)} message="Bạn hãy kiểm tra kết nối rồi đặt lại ảnh bìa." onRetry={() => { if (choose.variables) choose.mutate(choose.variables); }} />
       </div>
-    </MotionRegion></Dialog>
+    </MotionRegion>
   );
 }
+
+/** Tìm ảnh bìa trong hộp riêng - chỉ cho nơi không đứng trong một hộp khác (Studio). Trong hộp "Sửa sách" nó là một bước của chính hộp ấy
+ * (EditBook), không phải hộp thứ hai đè lên (audit140 V9). */
+export function CoverSearchDialog({ open, onOpenChange, ...panel }: Omit<Parameters<typeof CoverSearchPanel>[0], "active" | "onClose"> & { open: boolean; onOpenChange: (open: boolean) => void }) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange} title={COVER_SEARCH_TITLE} description={COVER_SEARCH_NOTE} width="max-w-3xl">
+      <CoverSearchPanel {...panel} active={open} onClose={() => onOpenChange(false)} />
+    </Dialog>
+  );
+}
+
+export const COVER_SEARCH_TITLE = "Tìm ảnh bìa";
+export const COVER_SEARCH_NOTE = "Bạn chọn ảnh từ các nguồn sách hoặc trên máy.";

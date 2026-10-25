@@ -13,6 +13,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Dấu "·" giữa các mẩu thông tin (tác giả · giọng · số chương · thời lượng) không còn treo cuối dòng hay đứng đầu dòng; dòng dài xuống hàng giữa hai mẩu. Tên sách có sẵn dấu "·" trong tiêu đề hộp thoại cũng không bị ngắt ngay ở dấu.
 - Thư viện: sách ở máy khác hiện dấu máy tính nhỏ đầu dòng trạng thái, không còn nhãn đè lên tên sách trên bìa.
 - Tab Nhân vật (trang sách và Studio): nhóm người có lời thoại đổi tên thành "Vai chính", đi cặp với "Vai phụ", không lặp lại tên tab.
+- Sửa sách: "Tìm bìa…" giờ là một bước ngay trong hộp, có nút quay về "Sửa sách" (Back cũng về), không mở hộp thứ hai chồng lên. Máy soát giao diện thêm luật bắt hộp thoại hay lớp nổi đè lên nhau.
 
 ## [0.4.139] - 2026-10-25
 

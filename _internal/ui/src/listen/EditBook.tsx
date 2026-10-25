@@ -3,13 +3,13 @@ import { useBackLayer } from "@/shared/backStack";
 import { useMotionState } from "@/shared/motion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { ChevronDown, FileDown, Globe, ImagePlus, Music2, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
+import { ArrowLeft, ChevronDown, FileDown, Globe, ImagePlus, Music2, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { Collapse, useFold } from "@/shared/Collapse";
-import { CoverSearchDialog } from "@/shared/CoverSearch";
+import { COVER_SEARCH_NOTE, COVER_SEARCH_TITLE, CoverSearchPanel } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { holderName } from "@/shared/editsSync";
 import { fileName, formatClock } from "@/shared/format";
@@ -306,6 +306,9 @@ export function EditBookDialog({
   const revertButton = useRef<HTMLButtonElement>(null);
   useBackLayer(open && confirmRevert, () => setConfirmRevert(false), revertBox, revertButton);
   const [searching, setSearching] = useState(false);
+  const searchBack = useRef<HTMLButtonElement>(null);
+  const searchOpener = useRef<HTMLButtonElement>(null);
+  useBackLayer(open && searching, () => setSearching(false), searchBack, searchOpener);
   // Mở hộp: nạp lại cả hai ô. Lưu một ô (hộp ở nguyên) chỉ nạp ô ấy - chữ gõ dở ở ô kia không mất (soát UX a17).
   useEffect(() => {
     if (open) {
@@ -359,15 +362,33 @@ export function EditBookDialog({
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-xl"
-      title="Sửa sách"
+      title={searching ? COVER_SEARCH_TITLE : "Sửa sách"}
       description={
-        computer
+        searching
+          ? COVER_SEARCH_NOTE
+          : computer
           ? `Đổi có hiệu lực ngay trên máy tính ${computer} - audio và chữ của người làm sách giữ nguyên.`
           : syncsToComputer(book.capabilities)
             ? `Đổi có hiệu lực ngay trên máy này và được gửi về ${holderName(book.remote)} khi kết nối - audio và chữ của người làm sách giữ nguyên.`
             : "Đổi có hiệu lực ngay và chỉ trên máy này - audio và chữ của người làm sách giữ nguyên."
       }
-    ><MotionRegion>
+    >{/* Tìm bìa là MỘT BƯỚC của hộp này (trượt sang, có "Quay lại", Back cũng về), không phải hộp thứ hai đè lên (audit140 V9). */}
+    <MotionRegion motionKey={searching}>{searching ? (
+      <div>
+        <button ref={searchBack} type="button" onClick={() => setSearching(false)} className="touch-hit touch-row mb-3 inline-flex items-center gap-1.5 text-sm text-fg-2 hover:text-fg">
+          <ArrowLeft className="ink-start size-4" /> Sửa sách
+        </button>
+        <CoverSearchPanel
+          bookId={book.id}
+          defaultQuery={seriesOf(book.title).series || book.title}
+          active={open && searching}
+          onClose={() => setSearching(false)}
+          onChosen={() => refreshAfterEdit(client, book.id)}
+          onBusy={setChoosingCover}
+          onChooseFile={() => file.current?.click()}
+        />
+      </div>
+    ) : (
       <div className="focus-scroll max-h-[68vh] space-y-4 overflow-y-auto pr-1">
         <Section title="Tên sách">
           <form
@@ -422,7 +443,7 @@ export function EditBookDialog({
               <Button variant="outline" icon={ImagePlus} disabled={busy} onClick={() => file.current?.click()}>
                 {book.cover ? "Đổi ảnh bìa…" : "Chọn ảnh bìa…"}
               </Button>
-              <Button variant="outline" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
+              <Button ref={searchOpener} variant="outline" icon={Globe} disabled={busy} onClick={() => setSearching(true)}>
                 Tìm bìa…
               </Button>
               {book.cover && (
@@ -434,28 +455,8 @@ export function EditBookDialog({
                 <ContentSkeleton count={1} label="Đang đặt ảnh bìa" />
               )}
             </div>
-            <input
-              ref={file}
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"
-              className="hidden"
-              onChange={(event) => {
-                const picked = event.target.files?.[0];
-                event.target.value = "";
-                if (picked) setCover.mutate(picked);
-              }}
-            />
           </div>
         </Section>
-        <CoverSearchDialog
-          bookId={book.id}
-          defaultQuery={seriesOf(book.title).series || book.title}
-          open={searching}
-          onOpenChange={setSearching}
-          onChosen={() => refreshAfterEdit(client, book.id)}
-          onBusy={setChoosingCover}
-          onChooseFile={() => file.current?.click()}
-        />
         {book.stage !== "text" && (
         <Section title="Nhạc nền" fold="edit-book.music">
           {workshop ? (
@@ -500,7 +501,18 @@ export function EditBookDialog({
           </Section>
         )}
       </div>
-    </MotionRegion></Dialog>
+    )}</MotionRegion>
+    <input
+      ref={file}
+      type="file"
+      accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"
+      className="hidden"
+      onChange={(event) => {
+        const picked = event.target.files?.[0];
+        event.target.value = "";
+        if (picked) setCover.mutate(picked);
+      }}
+    /></Dialog>
   );
 }
 

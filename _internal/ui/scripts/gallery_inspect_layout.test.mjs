@@ -112,3 +112,17 @@ describe.skipIf(!browserAvailable)("fixture HTML trên Edge, hai theme và hai k
     }
   });
 });
+
+// Lớp nổi nằm ở file riêng: role="dialog" trong bộ mẫu chung làm các luật khác coi cả trang là lớp dưới.
+describe.skipIf(!browserAvailable)("fixture lớp nổi chồng nhau", () => {
+  let layerResults;
+  beforeAll(async () => { layerResults = await layoutFixtures({ fixture: "layers.html" }); }, 60000);
+  it("hộp thoại đè hộp thoại hay lớp đè menu thì báo; menu trong hộp thoại và menu con cạnh menu cha thì không", () => {
+    for (const result of layerResults) {
+      const stacked = (id) => result.findings.filter((f) => f.rule === "STACKED LAYERS" && f.selector.startsWith(`#${id} >`));
+      expect(stacked("stacked").map((f) => f.metric)).toEqual(["dialog-over-dialog"]);
+      expect(stacked("stacked-menu").map((f) => f.metric)).toEqual(["layer-over-menu"]);
+      expect(stacked("stacked-pass")).toHaveLength(0);
+    }
+  });
+});

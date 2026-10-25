@@ -531,6 +531,21 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
         { metric: "heading-repeats-tab", otherSelector: selector(tab), reason: "a heading inside a tab repeats the selected tab's label" });
     }
   }
+  // Lớp chồng lớp: hộp thoại mở đè lên hộp thoại khác (Sửa sách -> Tìm ảnh bìa, audit140 V9) hay bảng nổi che menu vừa mở nó (Nhạc nền đè menu
+  // trình phát, C8). Bước kế tiếp đi trong cùng lớp (trượt sang bước có "Quay lại") hoặc mở bên cạnh menu. Menu/danh sách chọn bên trong hộp
+  // thoại vẫn được; menu con nằm cạnh menu cha (chạm nhau vài px) cũng được.
+  const layers = all.filter((el) => /^(dialog|alertdialog|menu)$/.test(el.getAttribute("role") ?? "") && shownChain(el))
+    .map((el) => ({ el, role: el.getAttribute("role"), box: rect(el.getBoundingClientRect()) })).filter((l) => l.box.width > 0 && l.box.height > 0);
+  for (let i = 0; i < layers.length; i++) for (let j = i + 1; j < layers.length; j++) {
+    const a = layers[i], b = layers[j];
+    if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
+    const dialogs = a.role !== "menu" && b.role !== "menu", overMenu = a.role === "menu" || b.role === "menu";
+    if (!dialogs && !overMenu) continue;
+    const w = Math.min(right(a.box), right(b.box)) - Math.max(a.box.x, b.box.x), hgt = Math.min(a.box.y + a.box.height, b.box.y + b.box.height) - Math.max(a.box.y, b.box.y);
+    if (w <= 8 || hgt <= 8) continue;
+    add("STACKED LAYERS", b.el, `${a.el.getAttribute("aria-label") || a.el.textContent?.slice(0, 40) || a.role} ↔ ${b.el.getAttribute("aria-label") || b.el.textContent?.slice(0, 40) || b.role}`,
+      [a.box, b.box], { metric: dialogs ? "dialog-over-dialog" : "layer-over-menu", value: Math.min(w, hgt), otherSelector: selector(a.el), reason: "one floating layer is drawn over another instead of replacing it or opening beside it" });
+  }
   // Khung có header trang + các section là cùng một họ nội dung. Dialog và trang đang cuộn không so với trang gốc.
   let firstBlock = null;
   if (!all.some((e) => e.matches('[role="dialog"],[role="alertdialog"]') && visible(e, rect(e.getBoundingClientRect())))) {
