@@ -45,15 +45,32 @@ def main():
         raise RuntimeError(f'Built UI missing: {static}; build ui with Vite first')
     extra={'static_dir':static}
     app=App(preferences=preferences,runner=actions.FakeRunner(),token=None,version='dev',**extra)
+    # Giọng giả chỉ mở được giao diện; tuyệt đối không gọi máy đọc hay mạng thật.
+    from abook.readaloud.model import VoiceError
+    app.readaloud.voices=lambda: [dict(id=f'windows:tap-{key}',name=f'Giọng thử {key}',provider='windows',online=False,
+                                     default=key=='A',language='vi-VN',gender='female',gain_db=0) for key in ('A','B')]
+    app.readaloud.preload=lambda *_args,**_kwargs: False
+    def no_audio(*_args,**_kwargs):
+        raise VoiceError('Dữ liệu thử giao diện không tạo âm thanh.', 'offline')
+    app.readaloud.clip=no_audio
     server=Server(app,port=args.port).start()
     try:
         with httpx.Client(base_url=server.url,trust_env=False,timeout=30) as http:
-            source=root/'chapter.txt'
-            source.write_text('Chapter 1\n\nA quiet morning. This book is synthetic UI test data.\n\nEveryone reads a book.\n',encoding='utf-8')
+            chapters=root/'chapters'
+            chapters.mkdir()
+            source=chapters/'chapter1.txt'
+            source.write_text('Chương 1\n\nBuổi sáng thử nghiệm. Đây là dữ liệu giả để kiểm giao diện.\n\nMột trang sách mẫu.\n',encoding='utf-8')
+            (chapters/'chapter2.txt').write_text('Chương 2\n\nBuổi chiều thử nghiệm. Đây là chương thứ hai của dữ liệu giả.\n',encoding='utf-8')
             def post(path,body):
                 r=http.post(path,json=body);r.raise_for_status();return r.json()
-            listen=post('/api/listen/import',{'path':str(source),'title':'Tap Audit Fixture'})['id']
+            listen=post('/api/listen/import',{'path':str(chapters),'title':'Tap Audit Fixture'})['id']
             post(f'/api/listen/books/{listen}/reading',{'chapterId':1,'index':0})
+            post(f'/api/listen/books/{listen}/bookmarks',{'chapterId':1,'seconds':0,'index':0,'note':'Ghi chú thử nghiệm','quote':'Buổi sáng thử nghiệm.'})
+            profile_source=root/'profiles.txt'
+            profile_source.write_text('Chương hồ sơ\n\nDữ liệu giả dành riêng cho chọn hồ sơ nghe.\n',encoding='utf-8')
+            profiles=post('/api/listen/import',{'path':str(profile_source),'title':'Tap Profiles Fixture'})['id']
+            post(f'/api/listen/books/{profiles}/reading',{'chapterId':1,'index':0})
+            post(f'/api/listen/books/{profiles}/records',{'name':'Hồ sơ thử thứ hai'})
             voice=http.get('/api/voices').json()[0]['name']
             studio=post('/api/books',{'paths':[str(source)],'title':'Tap Studio Fixture','profile':'high_quality','narrator':voice,'firstPerson':'','start':False})['id']
             library=http.get('/api/library').json()
@@ -67,7 +84,7 @@ def main():
                 conn.execute("UPDATE chapters SET total_segments=1,status='analyzed' WHERE id=1")
             template=(Path(__file__).resolve().parent/'scenarios.json').read_text(encoding='utf-8')
             scenario_path=root/'scenarios.json'
-            scenario_path.write_text(template.replace('{listen}',listen).replace('{studio}',studio),encoding='utf-8')
+            scenario_path.write_text(template.replace('{listen}',listen).replace('{studio}',studio).replace('{profiles}',profiles),encoding='utf-8')
             metadata=dict(url=server.url,listen=listen,studio=studio,scenarios=str(scenario_path),pid=os.getpid(),repo=str(repo),static=str(app.static_dir) if hasattr(app,'static_dir') else str(repo/'_internal/abook/webui/static'))
             (root/'ready.json').write_text(json.dumps(metadata,indent=2),encoding='utf-8')
             print(json.dumps(metadata),flush=True)

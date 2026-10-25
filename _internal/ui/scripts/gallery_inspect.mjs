@@ -11,22 +11,23 @@ import { createInspectorHelpers, inspectPage } from "./gallery_inspect_helpers.m
 import { sourceIndex, deduplicate } from "./gallery_inspect_report.mjs";
 import { createLayoutHelpers, inspectLayout, crossFrameRhythm } from "./gallery_inspect_layout.mjs";
 import { inspectAlignment } from "./gallery_inspect_alignment.mjs";
+import { inspectTapReach } from "./gallery_inspect_tap.mjs";
 
-export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET"];
+export const RULES = ["TEXT-OVER-GRAPHIC", "TEXT-OVER-TEXT", "CLIPPED TEXT", "SMALL TEXT", "TOUCH TARGET", "CONTRAST", "ICON SIZE MISMATCH", "SIBLING CONSISTENCY", "OPTICAL SIZE CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "FILL INSET", "TAP REACH"];
 // rules142: gallery đủ cả Studio, hai chủ đề; BASELINE/CONTROL HEIGHT không còn lỗi thật.
-export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT"];
+export const DEFAULT_FAIL_ON = ["SMALL TEXT", "TOUCH TARGET", "CONTRAST", "SIBLING CONSISTENCY", "INK EDGE", "RHYTHM", "BASELINE", "CONTROL HEIGHT", "TAP REACH"];
 export function gateRules(value) {
   return value === undefined ? [...DEFAULT_FAIL_ON] : value.length === 1 && value[0].toUpperCase() === "NONE" ? [] : value.map(normalizeRule);
 }
 export function normalizeRule(value) {
   const key = value.trim().toUpperCase().replaceAll("_", " ");
-  const numbered = /^RULE([1-9]|1[0-4])$/.exec(key);
+  const numbered = /^RULE([1-9]|1[0-5])$/.exec(key);
   const rule = numbered ? RULES[Number(numbered[1]) - 1] : RULES.find((r) => r === key || r.replaceAll(" ", "-") === key);
   if (!rule) throw new Error(`Quy tắc lạ: ${value}. Chọn ${RULES.join(", ")}`);
   return rule;
 }
 
-export const inspectionExpression = (phone) => `(${inspectPage.toString()})(${JSON.stringify({ phone })}, (${createInspectorHelpers.toString()})(), (context) => ({ ...(${inspectLayout.toString()})(context, (${createLayoutHelpers.toString()})()), ...(${inspectAlignment.toString()})(context) }))`;
+export const inspectionExpression = (phone) => `(${inspectPage.toString()})(${JSON.stringify({ phone })}, (${createInspectorHelpers.toString()})(), (context) => ({ ...(${inspectLayout.toString()})(context, (${createLayoutHelpers.toString()})()), ...(${inspectAlignment.toString()})(context), ...(${inspectTapReach.toString()})(context) }))`;
 
 export async function settle(cdp, session, timeout) {
   await evaluate(cdp, session, `(async () => {
@@ -93,7 +94,8 @@ const sheetStyle = `body{font:14px/1.5 system-ui;margin:20px;background:#eee;col
 const html = (title, body) => `<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(title)}</title><style>${sheetStyle}</style><body>${body}</body></html>`;
 
 function writeSheet(out, story) {
-  writeFileSync(path.join(out, story.sheet), html(`${story.id} · ${story.theme}`, `<a href="../index.html">← Phát hiện</a><h1>${esc(story.id)} · ${story.theme}</h1><p>${story.contacts.length} điều khiển / SVG · ảnh gốc phóng 4×; bấm ảnh để xem nguyên cỡ.</p><label><input type="checkbox" onchange="document.body.classList.toggle('wide',this.checked)"> Hiện nguyên cỡ phóng đại</label><div class="grid">${story.contacts.map((c) => `<figure><a href="../${c.crop}"><img loading="lazy" src="../${c.crop}" alt="${esc(c.text)}"></a><figcaption>${esc(c.text)} · ${c.kind}<br><code>${esc(c.selector)}</code><br>${c.rect.width.toFixed(1)}×${c.rect.height.toFixed(1)} CSS px</figcaption></figure>`).join("")}</div>`));
+  const toastDetails = (story.tapToastOcclusions ?? []).map(item => `<p>Thông báo tạm che trang (không tính phát hiện): ${esc(item.text)} <code>${esc(item.selector)}</code> · pe: ${esc(item.pointerEvents)} · trúng <code>${esc(item.hitSelector)}</code> · toast <code>${esc(item.toastSelector)}</code> · <a href="../${esc(item.crop)}">Ảnh 4×</a></p>`).join("");
+  writeFileSync(path.join(out, story.sheet), html(`${story.id} · ${story.theme}`, `<a href="../index.html">← Phát hiện</a><h1>${esc(story.id)} · ${story.theme}</h1><p>${story.contacts.length} điều khiển / SVG · ảnh gốc phóng 4×; bấm ảnh để xem nguyên cỡ.</p>${toastDetails}<label><input type="checkbox" onchange="document.body.classList.toggle('wide',this.checked)"> Hiện nguyên cỡ phóng đại</label><div class="grid">${story.contacts.map((c) => `<figure><a href="../${c.crop}"><img loading="lazy" src="../${c.crop}" alt="${esc(c.text)}"></a><figcaption>${esc(c.text)} · ${c.kind}<br><code>${esc(c.selector)}</code><br>${c.rect.width.toFixed(1)}×${c.rect.height.toFixed(1)} CSS px</figcaption></figure>`).join("")}</div>`));
 }
 
 export function writeOutputs(out, report) {
@@ -102,7 +104,7 @@ export function writeOutputs(out, report) {
   const list = RULES.map((rule) => {
     const findings = report.findings.filter((f) => f.rule === rule);
     const groups = [...new Set(findings.map((f) => f.story))];
-    return `<section><h2>${esc(rule)} (${findings.length})</h2>${groups.map((id) => `<details><summary>${esc(id)} (${findings.filter((f) => f.story === id).length})</summary><div class="grid">${findings.filter((f) => f.story === id).map((f) => `<figure id="${f.id}"><a href="${f.crop}"><img loading="lazy" src="${f.crop}" alt="${esc(f.text)}"></a><figcaption><b>${f.id} · ${f.theme}</b><br>${esc(f.text)}<br><code>${esc(f.selector)}</code>${f.otherSelector || f.referenceSelector ? `<br>↔ <code>${esc(f.otherSelector ?? f.referenceSelector)}</code>` : ""}${f.fontSizes ? `<br>Cỡ chữ: ${f.fontSizes.join(" / ")} px` : ""}${f.topDelta !== undefined ? `<br>Δ trên / dưới: ${f.topDelta.toFixed(3)} / ${f.bottomDelta.toFixed(3)} px` : ""}${f.referenceValue !== undefined ? `<br>${f.rowIndex !== undefined ? `Hàng ${f.rowIndex} / mốc ${f.referenceRowIndex} · ` : ""}${esc(f.metric)}: ${f.value.toFixed(3)} / ${f.referenceValue.toFixed(3)} px · Δ ${f.delta.toFixed(3)} px` : f.metric ? `<br>${esc(f.metric)}: ${f.value.toFixed(3)} px` : ""}${f.referenceStory ? `<br>Mốc: <a href="${esc(f.referenceCrop)}">${esc(f.referenceStory)}</a>` : ""}${f.ratio ? `<br>Tương phản ${f.ratio}:1 / ${f.threshold}:1` : ""}<br><a href="${report.stories.find((s) => s.id === id && s.theme === f.theme)?.sheet}">Bảng chi tiết</a></figcaption></figure>`).join("")}</div></details>`).join("")}</section>`;
+    return `<section><h2>${esc(rule)} (${findings.length})</h2>${groups.map((id) => `<details><summary>${esc(id)} (${findings.filter((f) => f.story === id).length})</summary><div class="grid">${findings.filter((f) => f.story === id).map((f) => `<figure id="${f.id}"><a href="${f.crop}"><img loading="lazy" src="${f.crop}" alt="${esc(f.text)}"></a><figcaption><b>${f.id} · ${f.theme}</b><br>${esc(f.text)}<br><code>${esc(f.selector)}</code>${f.rule === "TAP REACH" ? `<br>pe: ${esc(f.pointerEvents)} · trúng: <code>${esc(f.hitSelector ?? "null")}</code> · ${esc(f.hitText ?? "")}` : ""}${f.otherSelector || f.referenceSelector ? `<br>↔ <code>${esc(f.otherSelector ?? f.referenceSelector)}</code>` : ""}${f.fontSizes ? `<br>Cỡ chữ: ${f.fontSizes.join(" / ")} px` : ""}${f.topDelta !== undefined ? `<br>Δ trên / dưới: ${f.topDelta.toFixed(3)} / ${f.bottomDelta.toFixed(3)} px` : ""}${f.referenceValue !== undefined ? `<br>${f.rowIndex !== undefined ? `Hàng ${f.rowIndex} / mốc ${f.referenceRowIndex} · ` : ""}${esc(f.metric)}: ${f.value.toFixed(3)} / ${f.referenceValue.toFixed(3)} px · Δ ${f.delta.toFixed(3)} px` : f.metric ? `<br>${esc(f.metric)}: ${f.value.toFixed(3)} px` : ""}${f.referenceStory ? `<br>Mốc: <a href="${esc(f.referenceCrop)}">${esc(f.referenceStory)}</a>` : ""}${f.ratio ? `<br>Tương phản ${f.ratio}:1 / ${f.threshold}:1` : ""}<br><a href="${report.stories.find((s) => s.id === id && s.theme === f.theme)?.sheet}">Bảng chi tiết</a></figcaption></figure>`).join("")}</div></details>`).join("")}</section>`;
   }).join("");
   writeFileSync(path.join(out, "index.html"), html("ABook · soi chi tiết gallery", `<h1>ABook · soi chi tiết gallery</h1><p>${report.stories.length} lượt · ${report.findings.length} phát hiện · ${report.errors.length} lỗi chạy · ${esc(report.created)}</p><p>Ảnh cắt lề 8 CSS px: quy tắc cũ dùng CDP scale:4; INK EDGE/RHYTHM/BASELINE/CONTROL HEIGHT/FILL INSET phóng 4× nearest-neighbour từ raster CSS. Bấm ảnh để xem nguyên cỡ; phát hiện hình học cần được duyệt qua ảnh.</p><p>${RULES.map((r) => `${esc(r)}: ${report.counts[r]}`).join(" · ")}</p><details><summary>Bảng điều khiển / biểu tượng (${report.stories.length})</summary><ul>${report.stories.map((s) => `<li><a href="${s.sheet}">${esc(s.id)} · ${s.theme}</a> (${s.contacts.length})${s.error ? ` · ${esc(s.error)}` : ""}</li>`).join("")}</ul></details>${report.errors.length ? `<pre>${esc(JSON.stringify(report.errors, null, 2))}</pre>` : ""}${list}`));
 }
@@ -110,7 +112,7 @@ export function writeOutputs(out, report) {
 export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(["--theme", "both", ...argv]);
   if (args.help || !args.out) {
-    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule14]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11,rule12,rule13 (rules142/report.md; Studio included)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. rule12 BASELINE: >1 px alphabetic baseline delta. rule13 CONTROL HEIGHT: >1 px visible height/top/bottom or same-role menu-row delta. rule14 FILL INSET: <6 px ink padding, or selected fill ends >8 px before its row control. Use --fail-on none for advisory output.");
+    console.log("node scripts/gallery_inspect.mjs --out DIR [--browser PATH] [--only A,B] [--theme light|dark|both] [--base URL] [--dist DIR] [--fail-on none|rule1,rule2,...,rule15]\nDefault --fail-on: rule4,rule5,rule6,rule8,rule10,rule11,rule12,rule13,rule15 (rules142/report.md; Studio included)\nrule10 INK EDGE: 2..20 px edges; >1 px icon/text gaps. rule11 RHYTHM: >2 px sibling gaps; >1 px first-block tops. rule12 BASELINE: >1 px alphabetic baseline delta. rule13 CONTROL HEIGHT: >1 px visible height/top/bottom or same-role menu-row delta. rule14 FILL INSET: <6 px ink padding, or selected fill ends >8 px before its row control. rule15 TAP REACH: enabled visible controls in the last leaf layer/main must restore pointer events and hit inside that layer. Use --fail-on none for advisory output.");
     return !args.help ? 2 : 0;
   }
   if (!["light", "dark", "both"].includes(args.theme)) throw new Error("--theme phải là light, dark hoặc both");
@@ -157,10 +159,12 @@ export async function main(argv = process.argv.slice(2)) {
         story.metrics = result.metrics;
         story.siblingGroups = result.siblingGroups;
         story.layout = result.layout;
+        story.tapToastOcclusions = result.layout?.tapToastOcclusions ?? [];
         story.frozenAnimations = await evaluate(cdp, page.sessionId, "window.__inspectFrozenAnimations");
         story.overlays = result.overlays;
         const crop = captureCrops(cdp, page.sessionId, out, stem, { width, height, deviceScale: mobile ? 2 : 1 });
         const inkCrop = captureCrops(cdp, page.sessionId, out, `${stem}-ink`, { width, height, deviceScale: mobile ? 2 : 1 }, { nearest: true });
+        for (const item of story.tapToastOcclusions) item.crop = await crop([item.rect]);
         if (story.layout?.firstBlock) story.layout.firstBlock.crop = await inkCrop([story.layout.firstBlock.rect]);
         for (const finding of result.findings) {
           finding.id = `F${String(report.findings.length + 1).padStart(5, "0")}`;

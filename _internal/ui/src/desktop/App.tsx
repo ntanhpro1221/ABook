@@ -22,7 +22,8 @@ import { readerEditing } from "./readerEditing";
 import { PlayerProvider, usePlayer } from "@/listen/player";
 import { SourceProvider, useSource } from "@/listen/source";
 import { Button, ContentSkeleton, Dialog, EmptyState, InlineError, OfflineStrip, TooltipProvider, useFocusClearOfToasts } from "@/shared/ui";
-import { useMediaQuery, useModalOpen } from "@/shared/media";
+import { useMediaQuery } from "@/shared/media";
+import { useToastClearance } from "@/shared/toastClearance";
 import type { ListenBook } from "@/listen/model";
 import { brokenMusicNote, keptEditsTitle, otherTitleNote, workshopMergeNote } from "@/shared/editsKept";
 import { MissingLibrary } from "@/shared/MissingLibrary";
@@ -575,8 +576,7 @@ export function App() {
   // Màn hẹp (Studio từ xa trên điện thoại): thông báo ở đầu màn như app Android - ở đáy nó đè trình phát nhỏ và thanh
   // điều hướng suốt 8 giây của nút "Hoàn tác" (soát UX 30-09).
   const narrow = useMediaQuery("(max-width: 639px)");
-  // Trên điện thoại, hộp thoại đổi khoảng cách đáy; CSS tween offset để toast không nhảy.
-  const modalOpen = useModalOpen();
+  useToastClearance();
   useFocusClearOfToasts();
   // Cửa sổ app Windows không mở được liên kết ngoài tự thân: nhờ máy chủ mở bằng trình duyệt mặc định (chỉ ở app đóng gói có hộp thoại).
   useEffect(() => {
@@ -696,11 +696,13 @@ export function App() {
         </PlayerProvider>
       </SourceProvider>
       <Toaster
+        // Cửa sổ hẹp dùng cảm ứng cũng vuốt ngang được, kể cả toast đổi góc theo màn nghe.
+        swipeDirections={["left", "right", "top", "bottom"]}
         // Giữ góc khi mở hộp; màn hẹp đặt trên thanh phát và thanh điều hướng.
         position={narrow ? "bottom-center" : "top-right"}
-        offset={{ top: "var(--toast-top, 16px)", right: 16, left: narrow ? 16 : 96, bottom: modalOpen && narrow ? 16 : "var(--toast-bottom, 96px)" }}
+        offset={{ top: "var(--toast-top, 16px)", right: 16, left: narrow ? 16 : 96, bottom: "var(--toast-bottom, 96px)" }}
         // Dưới 600 px sonner bỏ `offset` mà dùng `mobileOffset` (mặc định 16 px) - thông báo từng đè lên thanh tab dưới ở 390 px.
-        mobileOffset={{ top: "var(--toast-top, 16px)", right: 16, left: 16, bottom: modalOpen ? 16 : "var(--toast-bottom, 96px)" }}
+        mobileOffset={{ top: "var(--toast-top, 16px)", right: 16, left: 16, bottom: "var(--toast-bottom, 96px)" }}
         visibleToasts={2}
         // Thông báo vài giây che chữ thẻ bên dưới (soát UX a13 #17): nút ✕ để đọc xong là gạt đi ngay, không phải chờ hết hạn.
         closeButton
