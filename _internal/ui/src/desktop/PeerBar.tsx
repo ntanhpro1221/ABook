@@ -46,15 +46,18 @@ export function PeerBar() {
     <div
       role="status"
       className={cn(
-        "transition-colors duration-(--motion-medium) flex shrink-0 items-center gap-3 border-b border-line px-4 py-2 text-sm max-sm:flex-wrap",
+        "transition-colors duration-(--motion-medium) shrink-0 border-b border-line py-2 text-sm",
         silent || info.listenOnly ? "bg-warning-soft text-fg" : "bg-info-soft text-fg",
       )}
     >
-      <Laptop className="size-4 shrink-0 text-fg-2" aria-hidden />
-      <MotionRegion as="span" className="min-w-0 flex-1 text-pretty">{peerBarLine(info.peer.name, { silent, listenOnly: info.listenOnly })}</MotionRegion>
-      <Button size="sm" variant="secondary" onClick={() => window.location.assign(homePage(window.location.search))}>
-        Về máy này
-      </Button>
+      {/* Như dải mất mạng: nền tràn cả bề ngang, nội dung thẳng lề trang bên dưới (page-x, khung 1180) - từng thụt 14 px (soát 25-10). */}
+      <div className="page-x mx-auto flex max-w-[1180px] items-center gap-3 max-sm:flex-wrap">
+        <Laptop className="ink-start size-4 shrink-0 text-fg-2" aria-hidden />
+        <MotionRegion as="span" className="min-w-0 flex-1 text-pretty">{peerBarLine(info.peer.name, { silent, listenOnly: info.listenOnly })}</MotionRegion>
+        <Button size="sm" variant="secondary" onClick={() => window.location.assign(homePage(window.location.search))}>
+          Về máy này
+        </Button>
+      </div>
     </div>
   );
   };

@@ -28,6 +28,11 @@ const cases = [
     `<main><div style="height:${height}px;overflow:auto"><div style="height:75px"></div><button>Hàng bị che</button><div style="height:200px"></div></div></main><div style="position:fixed;left:20px;right:20px;top:119px;height:100px;background:white">Thanh phát</div>`,
     height <= 101 ? 0 : 1,
   ]),
+  ...[[124, 0], [96, 1]].map(([center, count]) => [
+    `hàng cuộn ngang trong trang cuộn dọc, tâm ${center > 120 ? "dưới" : "trong"} mép trang, thanh cố định che`,
+    `<main style="height:100px;overflow:auto"><div style="height:${center - 44}px"></div><div style="display:flex;overflow-x:auto"><button>Lọc</button></div><div style="height:200px"></div></main><div style="position:fixed;left:0;right:0;top:${center > 120 ? 120 : 80}px;height:200px;background:white">Thanh tab</div>`,
+    count,
+  ]),
   ["toast che nút trang thường: chỉ ghi chi tiết", '<main><button>Nền</button></main><div data-sonner-toast style="position:fixed;inset:20px;background:white">Thông báo</div>', 0, undefined, 1],
   ["div thường che nút vẫn lỗi", '<main><button>Nền</button></main><div style="position:fixed;inset:20px;background:white">Khung thường</div>', 1],
   ...["dialog", "alertdialog", "menu", "listbox"].map((role) => [
