@@ -12,8 +12,10 @@ import { Sheet } from "./ui";
 // đóng cả menu lẫn Sheet. Ở đây menu con là MỘT BƯỚC ngay trong Sheet: danh sách chính trượt đi, bước con trượt vào từ phải, nút "Quay lại" ở đầu
 // đưa về (trượt từ trái). Máy tính vẫn dùng menu con nổi của Radix. Nơi gọi chỉ dùng <ActionSubmenu> trong <ActionMenu>.
 
-type StepApi = { phone: boolean; step: string | null; host: HTMLElement | null; go: (step: string | null) => void };
-const StepContext = createContext<StepApi>({ phone: false, step: null, host: null, go: () => undefined });
+// `keyboard`: lần chuyển bước vừa rồi đến từ phím (Enter/Esc) - chỉ khi ấy tiêu điểm mới vào một mục (mục có tiêu điểm được tô như đang chọn);
+// chạm thì tiêu điểm vào khung của bước/danh sách, vẫn trong Sheet cho trình đọc màn hình mà không tô mục nào.
+type StepApi = { phone: boolean; step: string | null; host: HTMLElement | null; keyboard: { current: boolean }; go: (step: string | null) => void };
+const StepContext = createContext<StepApi>({ phone: false, step: null, host: null, keyboard: { current: false }, go: () => undefined });
 
 /** Cùng các mục Radix: điện thoại dùng Sheet, máy tính neo menu vào nút mở. */
 export function ActionMenu({ trigger, children, title }: { trigger: ReactNode; children: ReactNode; title: string }) {
@@ -24,6 +26,7 @@ export function ActionMenu({ trigger, children, title }: { trigger: ReactNode; c
   const [direction, setDirection] = useState<"forward" | "back" | null>(null);
   const [host, setHost] = useState<HTMLElement | null>(null);
   const hostRef = useRef<HTMLElement | null>(null);
+  const keyboard = useRef(false);
   const attach = useCallback((element: HTMLElement | null) => { hostRef.current = element; setHost(element); }, []);
   const go = useCallback((next: string | null) => { setDirection(next === null ? "back" : "forward"); setStep(next); }, []);
   // Mở lại thì về danh sách chính; đóng thì giữ nguyên để Sheet đang trượt xuống không đổi nội dung giữa chừng.
@@ -34,17 +37,19 @@ export function ActionMenu({ trigger, children, title }: { trigger: ReactNode; c
   const content = <DropdownMenu.Content aria-label={title} align="end" sideOffset={6} collisionPadding={12}
     className="book-action-menu z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] min-w-56 max-w-[min(22rem,calc(100vw-24px))] overflow-y-auto overscroll-contain rounded-[20px] bg-panel p-3 shadow-float"
     onEscapeKeyDown={escape}
+    onPointerDownCapture={() => { keyboard.current = false; }}
+    onKeyDownCapture={() => { keyboard.current = true; }}
     onCloseAutoFocus={phone ? event => event.preventDefault() : undefined}>
     {phone
       // MotionRegion lo chiều cao Sheet đổi theo bước (co/giãn êm); danh sách và bước con cùng ở đây, cái nào không phải bước hiện tại thì `hidden`
       // (hiện lại là .motion-step chạy lại). Danh sách KHÔNG gỡ khỏi cây: <ActionSubmenu> còn đó để đẩy bước con vào ô `host`.
       ? <MotionRegion motionKey={step}>
-        <div hidden={step !== null} inert={step !== null} data-action-list className={cn(direction === "back" && "motion-step")} data-direction="back">{children}</div>
-        <div ref={attach} hidden={step === null} inert={step === null} data-action-step={step ?? ""} className="motion-step" />
+        <div tabIndex={-1} hidden={step !== null} inert={step !== null} data-action-list className={cn("outline-none", direction === "back" && "motion-step")} data-direction="back">{children}</div>
+        <div ref={attach} tabIndex={-1} hidden={step === null} inert={step === null} data-action-step={step ?? ""} className="motion-step outline-none" />
       </MotionRegion>
       : children}
   </DropdownMenu.Content>;
-  return <StepContext.Provider value={{ phone, step, host, go }}>
+  return <StepContext.Provider value={{ phone, step, host, keyboard, go }}>
     <DropdownMenu.Root modal={!phone} open={open} onOpenChange={change}>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
       {phone ? <Sheet open={open} onOpenChange={change} title={title} className="book-action-sheet" onEscapeKeyDown={escape}>{content}</Sheet> : <DropdownMenu.Portal>{content}</DropdownMenu.Portal>}
@@ -77,13 +82,13 @@ export function ActionSubmenu({ id, label, trigger, itemClassName, children }: {
 }
 
 function PhoneSubmenu({ id, label, trigger, itemClassName, children }: { id: string; label: string; trigger: ReactNode; itemClassName?: string; children: ReactNode }) {
-  const { step, host, go } = useContext(StepContext);
+  const { step, host, keyboard, go } = useContext(StepContext);
   const active = step === id;
   const opener = useRef<HTMLDivElement>(null);
   const was = useRef(false);
-  // Về danh sách chính thì tiêu điểm trả lại đúng mục vừa mở (mục ấy vừa hiện lại).
+  // Về danh sách chính thì tiêu điểm trả lại đúng mục vừa mở (mục ấy vừa hiện lại) - chạm thì trả về khung danh sách.
   useEffect(() => {
-    if (was.current && !active) opener.current?.focus({ preventScroll: true });
+    if (was.current && !active) (keyboard.current ? opener.current : opener.current?.closest<HTMLElement>("[data-action-list]"))?.focus({ preventScroll: true });
     was.current = active;
   }, [active]);
   return <>
@@ -93,9 +98,9 @@ function PhoneSubmenu({ id, label, trigger, itemClassName, children }: { id: str
 }
 
 function Step({ label, itemClassName, children }: { label: string; itemClassName?: string; children: ReactNode }) {
-  const { go } = useContext(StepContext);
+  const { host, keyboard, go } = useContext(StepContext);
   const back = useRef<HTMLDivElement>(null);
-  useEffect(() => { back.current?.focus({ preventScroll: true }); }, []);
+  useEffect(() => { (keyboard.current ? back.current : host)?.focus({ preventScroll: true }); }, [host, keyboard]);
   return <>
     <DropdownMenu.Item ref={back} className={itemClassName} onSelect={(event) => { event.preventDefault(); go(null); }}>
       <ChevronLeft className="size-4" />

@@ -81,7 +81,7 @@ it("Back đầu về danh sách chính khi Sheet còn mở; Back thứ hai đón
   expect(list()?.classList.contains("motion-step")).toBe(true); // về từ trái
   expect(stepHost()?.hidden).toBe(true);
   expect(stepHost()?.childElementCount).toBe(0);
-  expect(document.activeElement).toBe(item("Nhạc nền")); // tiêu điểm về đúng mục vừa mở
+  expect(document.activeElement).toBe(list()); // mở bằng chạm: tiêu điểm về khung danh sách, không tô mục nào
   await act(() => { expect(dismissTopLayer()).toBe(true); }); await wait();
   expect(dialog()).toBeNull();
 });
@@ -134,4 +134,19 @@ it("máy tính giữ menu con nổi của Radix, không dựng bước trong She
   await act(() => { item("Nhạc nền")!.click(); }); await wait();
   expect(document.querySelectorAll('[role="menu"]').length).toBe(2);
   expect(item("Quay lại")).toBeUndefined();
+});
+
+it("điện thoại: chạm mở bước thì không mục nào bị tô; mở bằng phím thì tiêu điểm vào Quay lại và trả về Nhạc nền", async () => {
+  await openBookMenu();
+  await act(() => { item("Nhạc nền")!.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0 })); item("Nhạc nền")!.click(); }); await wait();
+  expect(document.activeElement).toBe(stepHost());
+  expect(document.querySelector("[data-highlighted]")).toBeNull();
+  await act(() => item("Quay lại")!.click()); await wait();
+  expect(document.activeElement).toBe(list());
+
+  await act(() => { item("Nhạc nền")!.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true })); }); await wait();
+  expect(stepHost()?.hidden).toBe(false);
+  expect(document.activeElement?.textContent).toContain("Quay lại");
+  await escape(); await wait();
+  expect(document.activeElement?.textContent).toContain("Nhạc nền");
 });
