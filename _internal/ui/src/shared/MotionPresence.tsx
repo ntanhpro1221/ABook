@@ -1,6 +1,10 @@
 import { useRef, type ReactNode } from "react";
 import { cn } from "./cn";
 import { usePresence, useListPresence } from "./motion";
+
+/** Khớp animation-delay của .motion-loading-placeholder trong styles.css. */
+export const LOADING_PATIENCE = 200;
+const now = () => (typeof performance === "undefined" ? Date.now() : performance.now());
 import { ArrivalScope, Collapse } from "./Collapse";
 import type { RowState } from "./motion";
 
@@ -26,8 +30,21 @@ export function LoadingCrossfade({ loading, placeholder, children, className }: 
   // Chỉ hiện dần sau khi khung chờ thật sự đã hiện. Dữ liệu có sẵn từ lần trước thì nội dung đứng yên cùng trang, không hiện dần lần nữa.
   const waited = useRef(loading);
   if (loading) waited.current = true;
+  // Khung chờ chỉ hiện khi chờ lâu hơn LOADING_PATIENCE (CSS .motion-loading-placeholder trễ đúng chừng ấy): dữ liệu về sớm thì nó chưa
+  // từng hiện, nên gỡ luôn không mờ ra - không có nhịp xám chớp rồi mờ sang nội dung (máy ảo 25-10: tab Studio lần đầu).
+  // Chốt ngay lúc hết chờ (không tính lại mỗi lần vẽ: khung đang khép mà hiện lại sẽ chớp đúng nhịp phải tránh).
+  const since = useRef(loading ? now() : 0);
+  const skip = useRef(false);
+  if (loading) {
+    if (!since.current) since.current = now();
+    skip.current = false;
+  } else if (since.current) {
+    skip.current = now() - since.current < LOADING_PATIENCE;
+    since.current = 0;
+  }
+  const unseen = !loading && skip.current;
   return <ArrivalScope loading={loading}><div className={cn("motion-loading", className)}>
-    {presence.mounted && <div className="motion-loading-placeholder motion-panel" data-state={presence.state} inert={!loading} aria-hidden={!loading || undefined} onAnimationEnd={presence.onAnimationEnd}>{placeholder}</div>}
+    {presence.mounted && !unseen && <div className="motion-loading-placeholder motion-panel" data-state={presence.state} inert={!loading} aria-hidden={!loading || undefined} onAnimationEnd={presence.onAnimationEnd}>{placeholder}</div>}
     {!loading && <div className={cn("motion-loading-content", waited.current && "motion-reveal")}>{children}</div>}
   </div></ArrivalScope>;
 }

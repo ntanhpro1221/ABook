@@ -97,6 +97,8 @@ export function enterPage(doc: TransitionDocument | undefined = browserDocument(
 /** Hoạt ảnh hiện vào vừa bắt đầu ở nhịp này: hữu hạn, ngắn, chưa chạy. Vòng lặp (khung chờ nhấp nháy) và hoạt ảnh dài (đếm ngược) giữ nguyên. */
 function justEntering(animation: globalThis.Animation): boolean {
   const timing = animation.effect?.getComputedTiming?.();
+  // Hoạt ảnh trễ có chủ ý (khung chờ chỉ hiện khi chờ lâu - LOADING_PATIENCE) không được ép xong: ép là hiện ngay thứ đáng lẽ chưa hiện.
+  if (Number(animation.effect?.getTiming?.().delay ?? 0) > 0) return false;
   if (!timing || timing.iterations === Infinity || typeof timing.endTime !== "number" || timing.endTime > MOTION.slow * 2) return false;
   return Number(animation.currentTime ?? 0) < MOTION.fast / 2;
 }
