@@ -266,8 +266,8 @@
   .overflow-auto, .overflow-y-auto, .overflow-x-auto {
     scroll-padding: 6px;
   }
-  /* Tiêu điểm do app đặt ngay sau một lần chạm / bấm chuột (tiêu đề trang mới, nút X của hộp): không khung - ô nhập vẫn giữ (ui.tsx ghi data-input). */
-  html[data-input="pointer"] :focus-visible:not(input, textarea, select, [contenteditable]) {
+  /* Tiêu điểm do mã đặt sau chạm chỉ giấu vòng của chính nút ấy; ô nhập và bàn phím vẫn giữ vòng. */
+  [data-pointer-focus]:focus-visible:not(input, textarea, select, [contenteditable]) {
     outline: none;
   }
   * {
@@ -1394,6 +1394,8 @@ details[open]:not([data-motion="closing"]) > summary .fold-chevron {
 .page-motion {
   view-transition-name: page;
 }
+/* group-has qua :is của Tailwind làm đổi data-state ở bất cứ đâu cũng tính lại cả BODY; neo :has vào đúng hàng. */
+.project-row:has([data-state="open"]) .project-updated { opacity: 0; }
 .page-motion:has(.settings-page, [data-reader-scroll]),
 body:has([role="dialog"][data-state="open"]) .page-motion {
   /* Chỉ nới ngang về trái: tràn mép phải viewport làm Radix tính nhầm bề rộng scrollbar khi khoá nền. */

@@ -60,6 +60,16 @@ it.each(["filter", "sort", "search"])("%s fades results without copying library 
 });
 
 const draw = () => act(() => root.render(<MemoryRouter><LibraryScreen header={<button>Thêm sách</button>} /></MemoryRouter>));
+it("xếp sách mở không khoá body; chọn vẫn đổi thứ tự và khép bằng chuyển động", async () => {
+  await draw();
+  await act(() => main.querySelector<HTMLButtonElement>('[aria-label="Xếp theo"]')!.dispatchEvent(new PointerEvent("pointerdown", { bubbles:true,button:0,pointerType:"mouse",isPrimary:true })));
+  expect(document.querySelector('[role="menu"][data-state="open"]')).not.toBeNull();
+  expect(document.body.style.pointerEvents).not.toBe("none");
+  expect(document.body.hasAttribute("data-scroll-locked")).toBe(false);
+  await act(() => [...document.querySelectorAll<HTMLElement>('[role="menuitemradio"]')].find(item => item.textContent === "Tác giả")!.click());
+  expect(main.querySelector('[aria-label="Xếp theo"]')?.getAttribute("title")).toBe("Xếp theo: Tác giả");
+  expect(document.querySelector('[role="menu"][data-state="open"]')).toBeNull();
+});
 const search = (text: string) => act(() => {
   const input = main.querySelector("input")!;
   Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(input, text);
