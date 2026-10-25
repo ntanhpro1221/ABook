@@ -8,7 +8,7 @@ export function MatterSuggestion({ files, keep, onKeep }: { files: ScannedFile[]
   if (!rows.length) return null;
   const kept = new Set(keep);
   return (
-    <div className="mt-4 rounded-xl border border-line bg-panel p-4 text-sm">
+    <div className="mt-4 py-4 text-sm">
       <p className="font-semibold">{formatNumber(rows.length)} trang phụ chưa chọn</p>
       <p className="mt-1 text-fg-2">
         Bìa, bản quyền, mục lục hay trang tên sách nằm trong file sách. Máy chưa chọn chúng vì nghe lên không phải truyện - tích trang nào bạn muốn nghe.

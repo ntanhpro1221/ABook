@@ -3,11 +3,11 @@ import { analyzerLabel, narratorLabel } from "./analyzerLabel";
 
 describe("analyzerLabel", () => {
   it("model của app nói bằng số bản, không lộ tên kỹ thuật", () => {
-    expect(analyzerLabel("abook-analyzer:v4")).toBe("Model phân tích bản 4");
+    expect(analyzerLabel("abook-analyzer:v4")).toBe("Bộ phân tích bản 4");
   });
-  it("model khác giữ tên, bỏ :latest", () => {
-    expect(analyzerLabel("qwen3:8b")).toBe("Phân tích bằng qwen3:8b");
-    expect(analyzerLabel("custom:latest")).toBe("Phân tích bằng custom");
+  it("model tuỳ chọn không lộ khoá kỹ thuật", () => {
+    expect(analyzerLabel("qwen3:8b")).toBe("Bộ phân tích tuỳ chọn");
+    expect(analyzerLabel("custom:latest")).toBe("Bộ phân tích tuỳ chọn");
   });
 });
 

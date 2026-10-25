@@ -91,7 +91,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
   };
 
   return (
-    <MotionRegion as="div" className="mb-6 rounded-xl border border-line bg-panel px-4 py-3">
+    <MotionRegion as="div" className="mb-6 py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="text-sm font-medium">Mẫu thiết lập</span>
         {templates.length > 0 && (
@@ -126,7 +126,7 @@ export function TemplateBar({ draft, onPick, narratorAuto = false }: {
         <p className="mt-2 text-[0.8125rem] text-fg-2">Bấm lại mẫu “{active.name}” để khôi phục thiết lập đã lưu.</p>
       )}
       {lostVoice && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingVoiceNote(lostVoice)}</p>}
-      {lostModel && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingModelNote(lostModel)}</p>}
+      {lostModel && <p className="mt-2 text-[0.8125rem] text-fg-2">{missingModelNote()}</p>}
       {!templates.length && !saving && (
         <p className="mt-2 text-[0.8125rem] text-fg-2">Lưu các lựa chọn dưới đây thành mẫu để dùng lại cho những cuốn sau.</p>
       )}

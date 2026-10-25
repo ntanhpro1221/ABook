@@ -73,7 +73,7 @@ export function VoiceSpeedSetting({
     }
   };
   return (
-    <MotionRegion><Fold flat storageKey="voice.performance" title="Hiệu năng" summary={voiceSpeedLabel(status.choice)} bodyClassName="space-y-2 pb-3">
+    <MotionRegion><Fold storageKey="voice.performance" title="Hiệu năng" summary={voiceSpeedLabel(status.choice)} bodyClassName="space-y-2 pb-3">
       <h3 id={`${id}-title`} className="text-sm font-semibold">{VOICE_SPEED_TITLE}</h3>
       <ChoiceRow
         value={status.choice}

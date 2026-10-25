@@ -200,10 +200,10 @@ export function MusicSection({ book }: { book: ListenBook }) {
           </Select>
         </label>
       </div>
-      <ul className={cn("max-h-72 divide-y divide-line overflow-y-auto rounded-xl border border-line", !data.enabled && "opacity-50")}>
+      <ul className={cn("max-h-72 divide-y divide-line overflow-y-auto", !data.enabled && "opacity-50")}>
         {data.cues.map((cue) => (
           <li key={cue.key}>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
               <div className="min-w-[9rem] flex-1">
                 <div className={cn("truncate text-sm", cue.silenced && "text-fg-3 line-through")}>{cue.title || "Nhạc nền"}</div>
                 <div className="tabular truncate text-xs text-fg-2">

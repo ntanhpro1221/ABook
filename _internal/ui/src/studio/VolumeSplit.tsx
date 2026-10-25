@@ -94,7 +94,7 @@ export function VolumeSplit({
     }
     const shown = proposal.volumes.slice(0, 4);
     return (
-      <MotionRegion as="div" className="mt-4 flex gap-3 rounded-xl border border-line bg-panel p-4 text-sm">
+      <MotionRegion as="div" className="mt-4 flex gap-3 py-4 text-sm">
         <Sparkles className="mt-line-icon size-4 shrink-0 text-accent-text" />
         <div className="min-w-0 flex-1">
           <p className="font-semibold">Chia {proposal.volumes.length} phần?</p>
@@ -125,7 +125,7 @@ export function VolumeSplit({
     return true;
   };
   return (
-    <MotionRegion as="section" aria-labelledby="volumes-title" className="mt-4 rounded-xl border border-accent/40 bg-panel p-4 text-sm">
+    <MotionRegion as="section" aria-labelledby="volumes-title" className="mt-4 py-4 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 id="volumes-title" className="flex items-center gap-2 font-semibold">
           <Layers className="size-4 text-accent-text" /> {parts.length > 1 ? `Chia thành ${parts.length} phần` : "Chia thành mấy phần?"}
@@ -140,9 +140,9 @@ export function VolumeSplit({
       {/* Thêm / bỏ chỗ cắt: hàng của phần mở / khép tại chỗ (useListPresence), không mờ cả khung; đổi trong hàng thì hàng tự mờ qua.
           Hàng đang khép giữ số phần / tên cuối của nó. */}
       <div data-motion-live="">
-      <AnimatedRows as="ol" className="mt-3 divide-y divide-line rounded-lg border border-line" items={parts.map((part, index) => ({ ...part, index, title: titles[index] }))} keyOf={(part) => String(part.start)}>
+      <AnimatedRows as="ol" className="mt-3 divide-y divide-line" items={parts.map((part, index) => ({ ...part, index, title: titles[index] }))} keyOf={(part) => String(part.start)}>
         {({ index, title, ...part }) => (
-          <MotionRegion className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 px-3 py-2 sm:grid-cols-[minmax(0,1fr)_auto_90px_32px]">
+          <MotionRegion className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 py-2 sm:grid-cols-[minmax(0,1fr)_auto_90px_32px]">
             <div className="min-w-0">
               {/* Phần 1 giữ nguyên tên sách (là sách thường, như máy chủ đặt) - nên nói ra nó là phần 1; các phần sau đã có "· Phần N" trong tên. */}
               <div className="truncate font-medium max-sm:whitespace-normal max-sm:break-words">

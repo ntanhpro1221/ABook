@@ -85,7 +85,7 @@ export function NoStudioHere({ fit, className }: { fit: StudioFit; className?: s
   const peers = usePairedComputers(!remote);
   return (
     <MotionRegion>
-    <section aria-label="Máy thiếu cấu hình" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
+    <section aria-label="Máy thiếu cấu hình" className={cn("flex flex-wrap items-start gap-3 py-4 text-sm", className)}>
       <Cpu className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1 basis-[16rem]">
         <p className="font-semibold text-pretty">Máy thiếu cấu hình</p>
@@ -122,7 +122,7 @@ export function StudioInstallNotice({ className }: { className?: string }) {
   if (fit?.level === "no") return <MotionRegion><NoStudioHere fit={fit} className={className} /></MotionRegion>;
   return (
     <MotionRegion>
-    <section aria-label="Cần Studio" className={cn("flex flex-wrap items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm", className)}>
+    <section aria-label="Cần Studio" className={cn("flex flex-wrap items-start gap-3 py-4 text-sm", className)}>
       <Cpu className="mt-line-icon size-4 shrink-0 text-warning" />
       <div className="min-w-0 flex-1">
         <p className="font-semibold">{studio.repair ? "Cần sửa Studio" : studio.update ? "Studio cần cập nhật" : "Chưa cài Studio"}</p>
@@ -184,7 +184,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
   const fit = !status.installed ? studioFit(status.gpu) : null;
   const unfit = fit?.level === "no" && !status.running;
   return (
-    <MotionRegion as="section" className={cn("rounded-2xl border border-line bg-panel p-5 sm:p-6", className)} aria-labelledby="studio-setup-title">
+    <MotionRegion as="section" className={cn("py-5 sm:py-6", className)} aria-labelledby="studio-setup-title">
       {/* Màn hẹp: chữ chiếm cả hàng, nút xuống dưới - không ép chữ thành cột hẹp cạnh nút (soát a64, 390 px). */}
       <div className="flex flex-wrap items-start gap-4">
         <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text">
@@ -235,13 +235,13 @@ export function StudioSetupCard({ className }: { className?: string }) {
       </div>
 
       {status.leftover && !status.running && (
-        <p role="status" className="mt-4 rounded-lg bg-warning-soft px-3 py-2 text-[0.8125rem] leading-relaxed text-pretty">
+        <p role="status" className="mt-4 py-2 text-[0.8125rem] leading-relaxed text-pretty">
           {leftoverLine(status.leftover)}
         </p>
       )}
 
       {status.error && !status.running && !status.leftover && (
-        <div role="alert" className="mt-4 rounded-lg bg-danger-soft px-3 py-2 text-[0.8125rem] leading-relaxed text-danger">
+        <div role="alert" className="mt-4 py-2 text-[0.8125rem] leading-relaxed text-danger">
           <p>{friendlySetupError(status.error).summary}</p>
           {friendlySetupError(status.error).detail && (
             <details className="mt-1 text-xs">

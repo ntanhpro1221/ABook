@@ -331,6 +331,7 @@ it("tên quy tắc cho --fail-on dùng được tên, dấu gạch và rule1..22
   expect(normalizeRule("rule20")).toBe("REPEATED LABEL");
   expect(normalizeRule("rule21")).toBe("STACKED LAYERS");
   expect(normalizeRule("rule22")).toBe("NAV ACCENT");
-  expect(() => normalizeRule("rule23")).toThrow("Quy tắc lạ");
+  expect(normalizeRule("rule23")).toBe("NESTED CARD");
+  expect(() => normalizeRule("rule24")).toThrow("Quy tắc lạ");
   expect(() => normalizeRule("typo")).toThrow("Quy tắc lạ");
 });

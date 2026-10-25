@@ -167,7 +167,7 @@ export function OtherComputers() {
         <AnimatedRows className="divide-y divide-line" items={data.computers} keyOf={(computer) => computer.id}>
           {(computer) => (
             <MotionRegion>
-              <Fold flat storageKey={`other-computers.${computer.id}`} title={computer.name} heading="h3" summary={computer.waking ? "Đang chờ" : computer.error ? "Cần kiểm tra" : "Đã ghép"} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
+              <Fold storageKey={`other-computers.${computer.id}`} title={computer.name} heading="h3" summary={computer.waking ? "Đang chờ" : computer.error ? "Cần kiểm tra" : "Đã ghép"} bodyClassName="flex flex-wrap items-center gap-3 pb-3">
               <Laptop className="size-5 shrink-0 text-fg-2" />
               <div className="min-w-0 flex-1">
                 {computer.waking ? (
@@ -240,7 +240,7 @@ export function OtherComputers() {
         </AnimatedRows>
         </div>
       </MotionPresence>
-      <Fold flat storageKey="other-computers.pair" title="Ghép máy" summary="Nghe sách của máy tính khác" bodyClassName="space-y-3 pb-3">
+      <Fold storageKey="other-computers.pair" title="Ghép máy" summary="Nghe sách của máy tính khác" bodyClassName="space-y-3 pb-3">
       <div className="space-y-2">
         <Button variant="ghost" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>
           Tìm máy trong mạng

@@ -182,7 +182,7 @@ export function BookSuggestions({ book }: { book: ListenBook }) {
             Xem lại gợi ý cho phần đọc
           </button>
         ) : (
-          <section className="mt-4 max-w-xl rounded-xl border border-line bg-hover p-3 text-left">
+          <section className="mt-4 max-w-xl py-3 text-left">
             <h2 className="text-sm font-medium">
               <MotionRegion as="span">Gợi ý cho phần đọc{pending ? ` · ${pending} chưa áp` : ""}</MotionRegion>
             </h2>

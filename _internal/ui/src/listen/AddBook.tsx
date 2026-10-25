@@ -574,7 +574,7 @@ export function AddBookDialog({
           ref={confirmBox}
           role="alertdialog"
           aria-label={confirmLeave === "again" ? "Chọn lại khi còn sách chưa thêm" : "Đóng khi còn sách chưa thêm"}
-          className="mb-4 rounded-xl border border-warning/40 bg-warning-soft p-3.5"
+          className="mb-4 py-3.5"
         >
           <p className="text-sm font-medium">
             {confirmLeave === "again"
@@ -702,7 +702,7 @@ export function AddBookDialog({
             )}
           </div>
           {preview.splitOffer ? (
-            <label className="mt-3 flex items-start gap-2.5 rounded-xl border border-line bg-hover p-3 text-sm">
+            <label className="mt-3 flex items-start gap-2.5 py-3 text-sm">
               <input
                 type="checkbox"
                 checked={split}
@@ -780,7 +780,7 @@ export function AddBookDialog({
             </Fold>
           )}
           {known && (
-            <p role="status" className="mt-3 rounded-xl border border-line p-3 text-sm text-accent-text">
+            <p role="status" className="mt-3 py-3 text-sm text-accent-text">
               {existing
                 ? `Cuốn này đã có trong thư viện: “${existing.title}”.`
                 : `Bạn đã thêm file này thành “${sameSource!.title}” (${sameSource!.chapters} chương).`}
@@ -810,7 +810,7 @@ export function QueueList({ items, currentId, working = "", tall }: { items: Que
   const rows = useListPresence(items, (item) => String(item.id));
   const focus = queueFocus(items, currentId, working);
   return (
-    <ul aria-label="Các file đã chọn" className={cn("mt-3 space-y-1.5 overflow-y-auto rounded-xl border border-line bg-hover p-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
+    <ul aria-label="Các file đã chọn" className={cn("mt-3 space-y-1.5 overflow-y-auto py-2.5 text-xs", tall ? "max-h-72" : "max-h-36")}>
       {rows.map(({ item, key, state, ref }) => {
         const current = item.state === "waiting" && item.id === focus.id;
         let mark: ReactNode = <span className="block size-3 rounded-full border border-line-strong" />;

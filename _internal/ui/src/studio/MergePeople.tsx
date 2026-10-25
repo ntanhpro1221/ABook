@@ -98,7 +98,7 @@ export function MergeDialog({
         />
       </label>
       <MotionRegion motionKey={[others.map(other => other.name), !others.length && query]}>
-      <ul className="mt-2 max-h-64 overflow-y-auto rounded-xl border border-line" role="listbox" aria-label="Gộp vào ai">
+      <ul className="mt-2 max-h-64 overflow-y-auto" role="listbox" aria-label="Gộp vào ai">
         {others.length ? (
           others.map((other) => (
             <li key={other.name}>

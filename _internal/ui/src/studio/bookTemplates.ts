@@ -57,8 +57,8 @@ export function missingVoiceNote(voice: string): string {
 }
 
 /** Lời nhắc khi áp mẫu mà bỏ qua model của nó. */
-export function missingModelNote(model: string): string {
-  return `Model ${modelKey(model)} trong mẫu không còn trên máy - giữ model đang chọn.`;
+export function missingModelNote(): string {
+  return "Bộ phân tích trong mẫu không còn trên máy - giữ bộ đang chọn.";
 }
 
 export function cleanName(value: string): string {

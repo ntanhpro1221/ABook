@@ -193,7 +193,7 @@ function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: bool
   }
   const single = /^\S{1,80}$/u.test(typed);
   return (
-    <MotionRegion><div className="mt-3 max-w-xl rounded-xl border border-line bg-panel p-3" data-add-any-word>
+    <MotionRegion><div className="mt-3 max-w-xl py-3" data-add-any-word>
       <div className="flex items-center justify-between gap-2">
         <label htmlFor="add-any-word" className="text-sm font-medium">
           Chữ đọc sai
@@ -225,7 +225,7 @@ function AddAnyWord({ bookId, open, onOpenChange }: { bookId: string; open: bool
       </p>
       {typed && !single && <p className="mt-1.5 text-xs text-warning">Gõ một chữ liền nhau, không có khoảng trắng.</p>}
       {single && (
-        <ul className="mt-2 divide-y divide-line rounded-lg border border-line">
+        <ul className="mt-2 divide-y divide-line">
           <ReadingRow key={typed} bookId={bookId} item={{ surface: typed, spoken: "", byListener: false, lines: 0, requested: null, example: null }} fresh />
         </ul>
       )}

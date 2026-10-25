@@ -188,7 +188,7 @@ describe("a template model the machine no longer has", () => {
     const applied = applyTemplate(draft(), ln, undefined, ["qwen3.5:9b"]);
     expect(isModified(applied, ln)).toBe(true);
     expect(isModified(applied, ln, ["qwen3.5:9b"])).toBe(false);
-    expect(missingModelNote("qwen3:8b:latest")).toBe("Model qwen3:8b trong mẫu không còn trên máy - giữ model đang chọn.");
+    expect(missingModelNote()).toBe("Bộ phân tích trong mẫu không còn trên máy - giữ bộ đang chọn.");
   });
 });
 
