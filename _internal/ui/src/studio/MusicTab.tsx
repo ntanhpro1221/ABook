@@ -8,7 +8,7 @@ import { Fold, Collapse } from "@/shared/Collapse";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { Ban, Download, Music2, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX } from "lucide-react";
+import { Ban, Download, EighthNote, MoreHorizontal, Pin, PinOff, Play, RefreshCw, Shuffle, Square, Trash2, Upload, VolumeX } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { MUSIC_CHANGED_EVENT } from "@/listen/musicBed";
 import { cn } from "@/shared/cn";
@@ -211,7 +211,7 @@ function TrackRow({
   return (
     <li className="flex flex-wrap items-center gap-x-3 gap-y-1">
       <span className="min-w-0 flex-1 break-words">
-        <Music2 className="mr-1.5 inline size-4 text-fg-2" />
+        <EighthNote className="mr-1.5 inline size-4 text-fg-2" />
         {item.title || "Bài nhạc"}
         {item.creator && <span className="text-fg-2"> · {item.creator}</span>}
         {item.duration ? <span className="tabular text-fg-2"> · {formatClock(item.duration)}</span> : null}
@@ -369,7 +369,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
         </Button>
       )}
       <MotionPresence open={canImport && !!tracks.length}><MusicModuleNotice view={data} queryKey={key} /></MotionPresence>
-      {canImport && <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : !tracks.length ? <EmptyState icon={Music2} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>}
+      {canImport && <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : !tracks.length ? <EmptyState icon={EighthNote} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>}
       {/* Xoá / nhập bài: hàng khép / mở tại chỗ (DESIGN 5.2); data-motion-live - cả khung không mờ lại theo từng hàng. */}
       <MotionPresence open={!!tracks.length}>
         <div data-motion-live="">
@@ -377,7 +377,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
           {(track: LocalTrack) => (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
               <span className="min-w-0 flex-1 break-words">
-                <Music2 className="mr-1.5 inline size-4 text-accent-text" />
+                <EighthNote className="mr-1.5 inline size-4 text-accent-text" />
                 {track.title}
                 {track.creator && <span className="text-fg-2"> · {track.creator}</span>}
                 {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
@@ -742,7 +742,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
                         <span className="text-fg-2">{CONTINUED_NOTE}</span>
                       ) : scene.link ? (
                         <>
-                          <Music2 className="mr-1.5 inline size-4 text-accent-text" />
+                          <EighthNote className="mr-1.5 inline size-4 text-accent-text" />
                           {track?.title ?? "Bài nhạc"}
                           {track?.creator && <span className="text-fg-2"> · {track.creator}</span>}
                           {track?.source === "local" && (
