@@ -44,7 +44,9 @@ it("Fold và khối Settings dùng cùng hàng, gập mở qua Collapse và nh�
   const rows = Array.from(document.querySelectorAll<HTMLButtonElement>(".disclosure-row"));
   expect(rows).toHaveLength(3);
   expect(rows[0].className).toBe(rows[1].className);
-  expect(rows[0].className).toBe(rows[2].className);
+  expect(rows[0].hasAttribute("data-section-heading")).toBe(true);
+  expect(rows[1].hasAttribute("data-section-heading")).toBe(true);
+  expect(rows[2].hasAttribute("data-section-heading")).toBe(false); // lời giải thích là hàng danh sách, không phải tiêu đề phần
   const body = document.getElementById(rows[0].getAttribute("aria-controls")!)!;
   expect(body.hasAttribute("inert")).toBe(true);
   await act(() => rows[0].click());
