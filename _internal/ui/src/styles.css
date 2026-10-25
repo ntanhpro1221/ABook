@@ -699,6 +699,8 @@ select[class~="border-line"] {
   /* Đổi trang, tấm trượt, màn Đang nghe */
   --motion-slow: 300ms;
   --motion-slow-out: 200ms;
+  /* Khung chờ chỉ hiện khi chờ lâu hơn chừng này (shared/MotionPresence.tsx LOADING_PATIENCE): dữ liệu về sớm thì không có nhịp xám. */
+  --loading-patience: 200ms;
   /* Material 3: standard (chuyển trong màn), emphasized decelerate (vào), emphasized accelerate (ra) */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
@@ -1114,11 +1116,12 @@ select[class~="border-line"] {
   --enter-y: calc(4px * var(--motion-amount));
   animation: motion-enter var(--motion-medium) var(--ease-decelerate) backwards;
 }
-/* Khung chờ tự nó cũng hiện dần (sau 120 ms: dữ liệu về nhanh thì không nháy khung chờ chút nào). */
+/* Khung chờ tự nó cũng hiện dần, sau --loading-patience: dữ liệu về nhanh thì không nháy khung chờ chút nào (enterPage không ép xong
+   hoạt ảnh có delay - motion.ts justEntering). */
 .motion-skeleton {
   animation:
-    fade-in var(--motion-medium) linear var(--motion-fast) backwards,
-    skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) calc(var(--motion-fast) + var(--motion-medium)) infinite;
+    fade-in var(--motion-medium) linear var(--loading-patience) backwards,
+    skeleton-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) calc(var(--loading-patience) + var(--motion-medium)) infinite;
 }
 @keyframes skeleton-pulse {
   50% {
@@ -1343,6 +1346,8 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 .motion-loading { display: grid; }
 .motion-loading > * { grid-area: 1 / 1; min-width: 0; }
 .motion-loading-placeholder[data-state="closed"] { pointer-events: none; }
+/* Chờ ngắn thì khung chờ không bao giờ hiện (LOADING_PATIENCE trong MotionPresence.tsx - đổi một chỗ thì đổi cả hai). */
+.motion-loading-placeholder.motion-panel[data-state="open"] { animation-delay: var(--loading-patience); }
 .motion-progress {
   width: 100%;
   transform-origin: left;
@@ -1511,7 +1516,7 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 /* Khung chờ xám, nhịp 1,6 giây; giữ quy tắc giảm chuyển động ở trên. */
 @media (prefers-reduced-motion: no-preference) {
   .motion-skeleton {
-    animation: fade-in var(--motion-medium) linear var(--motion-fast) backwards, state-skeleton-pulse 1.6s ease-in-out calc(var(--motion-fast) + var(--motion-medium)) infinite;
+    animation: fade-in var(--motion-medium) linear var(--loading-patience) backwards, state-skeleton-pulse 1.6s ease-in-out calc(var(--loading-patience) + var(--motion-medium)) infinite;
   }
 }
 @keyframes state-skeleton-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .6; } }

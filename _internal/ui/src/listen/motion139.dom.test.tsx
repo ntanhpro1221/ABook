@@ -302,7 +302,7 @@ it("C5 hiệu năng: câu 5.000 chữ - dựng và 50 nhịp sang chữ kế tro
   expect(host.querySelector('[data-index="1"] .is-lit')?.textContent).toBe("chữ50");
   console.info(`[C5] 5.000 chữ: dựng ${mounted.toFixed(0)} ms, mỗi nhịp sang chữ ${perTick.toFixed(1)} ms, ${(touched / 50).toFixed(1)} thay đổi DOM (happy-dom)`);
   expect(touched / 50).toBeLessThan(50);
-});
+}, 30000); // dựng 5.000 chữ trong happy-dom ~1 giây, cả bộ test chạy song song thì lâu hơn hạn mặc định 5 giây
 
 it("C6 / V9 thư viện: thẻ Đang nghe mờ chéo chữ, icon và cụm nút; lỗi / trống / có sách mờ hẳn qua", async () => {
   const book = listenBook("a", "Sách A", { state: { chapters: {}, bookmarks: [], last: { chapterId: 1, seconds: 30, at: Date.now() / 1000 } } as unknown as ListenBook["state"] });

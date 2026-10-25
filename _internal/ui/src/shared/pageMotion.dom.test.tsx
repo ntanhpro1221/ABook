@@ -75,12 +75,13 @@ it("nội dung có sẵn lúc trang vào không mọc từ 0; nội dung tới s
   Reflect.deleteProperty(HTMLElement.prototype, "animate");
 });
 
-it("thứ dựng cùng trang mới (hiện dần, dòng nhô lên) đi theo chuyển cảnh trang; vòng lặp, việc dài và việc đã chạy giữ nguyên", async () => {
+it("thứ dựng cùng trang mới (hiện dần, dòng nhô lên) đi theo chuyển cảnh trang; vòng lặp, việc dài, việc đã chạy và việc trễ có chủ ý giữ nguyên", async () => {
   const { finishers, doc } = fakePage();
   const finished: string[] = [];
-  const child = (name: string, iterations: number, endTime: number, currentTime: number) =>
-    ({ effect: { getComputedTiming: () => ({ iterations, endTime }) }, currentTime, cancel() {}, finish: () => finished.push(name) });
-  const children = [child("hiện dần", 1, 220, 0), child("dòng nhô", 1, 300, 0), child("nhấp nháy", Infinity, 1200, 0), child("đếm ngược", 1, 60000, 0), child("đang chạy", 1, 220, 150)];
+  const child = (name: string, iterations: number, endTime: number, currentTime: number, delay = 0) =>
+    ({ effect: { getComputedTiming: () => ({ iterations, endTime }), getTiming: () => ({ delay }) }, currentTime, cancel() {}, finish: () => finished.push(name) });
+  const children = [child("hiện dần", 1, 220, 0), child("dòng nhô", 1, 300, 0), child("nhấp nháy", Infinity, 1200, 0), child("đếm ngược", 1, 60000, 0), child("đang chạy", 1, 220, 150),
+    child("khung chờ trễ", 1, 420, 0, 200)];
   const page = (doc as unknown as { querySelector: () => { getAnimations: (options?: { subtree?: boolean }) => unknown[] } }).querySelector();
   const own = page.getAnimations;
   page.getAnimations = (options) => (options?.subtree ? children : own());
