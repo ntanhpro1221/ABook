@@ -76,10 +76,10 @@ export function PhoneDiagnostics({ computer, open, onOpenChange }: { computer: {
     >
       <div className="space-y-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="secondary" icon={RefreshCw} loading={query.isFetching} onClick={() => void query.refetch()}>
+          <Button size="sm" variant="ghost" icon={RefreshCw} loading={query.isFetching} onClick={() => void query.refetch()}>
             Làm mới
           </Button>
-          <Button size="sm" variant="secondary" icon={Save} loading={saving} disabled={Boolean(query.error)} onClick={() => void save()}>
+          <Button size="sm" variant="ghost" icon={Save} loading={saving} disabled={Boolean(query.error)} onClick={() => void save()}>
             Lưu nhật ký
           </Button>
         </div>

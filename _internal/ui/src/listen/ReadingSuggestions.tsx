@@ -223,7 +223,7 @@ export function SuggestionsButton({ bookId, className }: { bookId: string; class
               Bỏ qua gợi ý
             </Button>
           )}
-          <Button variant="secondary" onClick={() => setOpen(false)}>
+          <Button variant="ghost" onClick={() => setOpen(false)}>
             Đóng
           </Button>
         </MotionRegion>

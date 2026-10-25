@@ -23,7 +23,7 @@ export function ReadingProblem({
         {problem}
       </p>
       {suggestion && (
-        <Button size="sm" variant="secondary" type="button" className="mt-1.5" onClick={() => onUse(suggestion)}>
+        <Button size="sm" variant="ghost" type="button" className="mt-1.5" onClick={() => onUse(suggestion)}>
           Dùng “{suggestion}”
         </Button>
       )}

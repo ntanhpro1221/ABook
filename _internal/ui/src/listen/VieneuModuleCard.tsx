@@ -306,7 +306,7 @@ export function VieneuModuleCard({
       {suggestion && (
         <div className="rounded-xl border border-warning/40 bg-warning-soft px-3 py-2.5 text-[0.8125rem] text-pretty">
           <p>{suggestion.message}</p>
-          <Button size="sm" variant="secondary" className="mt-2" loading={busy} onClick={() => void switchTo()}>
+          <Button size="sm" variant="ghost" className="mt-2" loading={busy} onClick={() => void switchTo()}>
             {suggestion.action}
           </Button>
         </div>
@@ -320,12 +320,12 @@ export function VieneuModuleCard({
       {canPick && !status.restart && (
         <div className="flex flex-wrap items-center gap-2">
           {status.state === "outdated" && (
-            <Button size="sm" variant="secondary" loading={busy} onClick={() => void run(() => backend.start())}>
+            <Button size="sm" variant="ghost" loading={busy} onClick={() => void run(() => backend.start())}>
               {`Cập nhật (${formatSize(status.outdatedBytes)})`}
             </Button>
           )}
           {missing.length > 0 && (
-            <Button size="sm" variant={status.state === "missing" ? "primary" : "secondary"} data-focus-next loading={busy} onClick={() => void run(() => backend.start(missing))}>
+            <Button size="sm" variant={status.state === "missing" ? "primary" : "ghost"} data-focus-next loading={busy} onClick={() => void run(() => backend.start(missing))}>
               {failed ? "Thử lại" : bytes > 0 ? `Tải (${formatSize(bytes)})` : "Dùng"}
             </Button>
           )}

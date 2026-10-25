@@ -60,7 +60,7 @@ async function main() {
   try {
     local = args.base ? null : await serve(args.dist);
     const base = args.base ?? local.base;
-    browser = await launch(executable);
+    browser = await launch(executable, { preserveProfile: true });
     cdp = await connect(browser.endpoint);
     // Danh mục: trang mục lục đặt window.__galleryEntries.
     const index = await openPage(cdp, { width: 1280, height: 800, scale: 1, mobile: false, theme: "light" });

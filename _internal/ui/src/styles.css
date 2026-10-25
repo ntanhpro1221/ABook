@@ -1511,7 +1511,7 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 /* Chỉ mục gập nối mục gập: mục gập đầu tiên sau một khối thường vẫn cách khối ấy như mọi khối (máy dò RHYTHM 25-10: "Chẩn đoán" dính đáy "Bộ nhớ"). */
 .settings-block[data-fold] + .settings-block[data-fold] { margin-top: 0; border-top: 1px solid var(--line); }
 .settings-row-control > [role="radiogroup"] { display: flex; width: 100%; }
-.settings-row-control > [role="radiogroup"] > button { flex: 1; min-width: 0; }
+
 /* Nút chữ ở cuối hàng có vùng chạm rộng hơn chữ: bù phần đệm để chữ kết thúc đúng mép nội dung. */
 .settings-page .settings-row-control > button[data-variant="ghost"],
 .settings-page .settings-edge-action { margin-right: calc(var(--spacing) * -3); }
@@ -1566,3 +1566,16 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 @media (prefers-reduced-motion: reduce) {
   .sidebar-link:active { transform: none; }
 }
+
+/* Cùng chiều cao trong hàng thao tác; chữ lớn vẫn cho nút tự nở. */
+button[data-variant] { min-height: 2.5rem; height: auto; }
+@media (max-width: 639px), (pointer: coarse) { button[data-variant] { min-height: 3rem; } }
+.disclosure-chevron { transition: rotate var(--motion-fast) var(--ease-standard); }
+@media (prefers-reduced-motion: reduce) { .disclosure-chevron { rotate: none; transition-property: opacity; } }
+
+.device-input { min-height: 3rem; border: 0; border-radius: .5rem; background: var(--bg-sunken); color: var(--text); }
+.device-input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* Mục con vẫn cuộn trong cùng bảng; dành nửa màn cho các nút phát đang nghe. */
+.player-sheet:has([data-player-inline]) { max-height: 50dvh; }
+.player-sheet [data-player-inline] [data-sheet-choice],
+.player-sheet [data-player-inline] [data-sheet-current] { background: transparent; }

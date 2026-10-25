@@ -34,14 +34,16 @@ export function OwnDiagnostics() {
     }
   };
   return (
+    <div>
     <div className="flex items-center justify-between gap-6">
       <div className="min-w-0 text-[0.8125rem] text-fg-2 text-pretty">
         {OWN_DIAGNOSTICS_HINT}
-        <MoreInfo className="mt-1">{OWN_DIAGNOSTICS_MORE}</MoreInfo>
       </div>
-      <Button size="sm" variant="secondary" icon={Save} loading={busy} onClick={() => void send()} className="shrink-0">
+      <Button size="sm" variant="ghost" icon={Save} loading={busy} onClick={() => void send()} className="shrink-0">
         Gửi nhật ký
       </Button>
+    </div>
+    <MoreInfo>{OWN_DIAGNOSTICS_MORE}</MoreInfo>
     </div>
   );
 }

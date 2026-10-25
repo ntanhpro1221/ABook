@@ -8,6 +8,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 ### Giao diện
+- Cài đặt dùng hàng mở rộng thống nhất, lựa chọn chữ gạch chân và nút chữ gọn; các cột thẳng mép trên máy tính.
+- Thiết bị dùng danh sách phẳng, hướng dẫn ghép ngắn hơn và liên kết tải dễ mở hoặc chép; nút phụ bỏ viền trên cả điện thoại, máy tính và Studio.
 - Hàng nút dưới tên sách và dưới Đang nghe: biểu tượng luôn nằm ngay giữa trên nhãn của nó, nút đầu và cuối hàng không còn lệch ra mép.
 - Vạch chia giữa các dòng (bảng dự án Studio, kết quả Tìm trong sách) thụt theo chữ, không còn thò ra ngoài khung hai bên.
 - Dấu "·" giữa các mẩu thông tin (tác giả · giọng · số chương · thời lượng) không còn treo cuối dòng hay đứng đầu dòng; dòng dài xuống hàng giữa hai mẩu. Tên sách có sẵn dấu "·" trong tiêu đề hộp thoại cũng không bị ngắt ngay ở dấu.

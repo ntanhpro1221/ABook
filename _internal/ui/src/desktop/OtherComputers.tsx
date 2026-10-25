@@ -242,7 +242,7 @@ export function OtherComputers() {
       </MotionPresence>
       <Fold flat storageKey="other-computers.pair" title="Ghép máy" summary="Nghe sách của máy tính khác" bodyClassName="space-y-3 pb-3">
       <div className="space-y-2">
-        <Button variant="secondary" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>
+        <Button variant="ghost" icon={Radar} loading={discover.isPending} onClick={() => discover.mutate()}>
           Tìm máy trong mạng
         </Button>
         {discover.data &&
@@ -308,7 +308,7 @@ export function OtherComputers() {
             className="tabular mt-1 block h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
-        <Button type="submit" size="md" variant="secondary" loading={pair.isPending} disabled={!address.trim() || code.replace(/\D/g, "").length !== 6}>
+        <Button type="submit" size="md" variant="ghost" loading={pair.isPending} disabled={!address.trim() || code.replace(/\D/g, "").length !== 6}>
           Kết nối
         </Button>
       </form>
