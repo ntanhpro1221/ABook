@@ -7,6 +7,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ## [Chưa phát hành]
 
+## [0.4.142] - 2026-10-25
+
 ### Giao diện
 
 - Biểu tượng nốt nhạc có nét bo tròn hơn; trình đọc màn hình nhận đúng trạng thái mở/đóng của bảng tuỳ chọn trình phát.
