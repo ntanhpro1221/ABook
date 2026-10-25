@@ -459,7 +459,9 @@ export function inspectPage({ phone = false } = {}, h, layoutInspector) {
       // Centered labels vary with content length. Compare their center, not their left edge.
       const metric = alignedRight ? "text-right" : align === "center" ? "text-center" : "text-left";
       const rowBox = rect(row.getBoundingClientRect());
-      put(`${key}:${metric}`, run.element, box, metric, (alignedRight ? box.x + box.width : align === "center" ? box.x + box.width / 2 : box.x) - rowBox.x);
+      // Nhãn nối đuôi một đoạn chữ trong cùng hàng flex (tên · "Nam"): mép trái theo độ dài chữ đứng trước, không phải một cột phải thẳng.
+      const followsText = metric === "text-left" && parent && previous?.nodeType === Node.ELEMENT_NODE && !previous.matches(iconSelector) && previous.textContent.trim();
+      if (!followsText) put(`${key}:${metric}`, run.element, box, metric, (alignedRight ? box.x + box.width : align === "center" ? box.x + box.width / 2 : box.x) - rowBox.x);
       if (!parent || previous?.nodeType !== Node.ELEMENT_NODE) continue;
       // Icon dẫn tới chữ đầu của nhánh theo sau nó, không tới mọi nhãn/metadata trong nhánh ấy.
       if (runs.find((t) => branch === t.node || branch.contains(t.element))?.node !== run.node) continue;
