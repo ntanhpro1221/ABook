@@ -490,9 +490,10 @@ export function MusicMenu({ look = "chip" }: { look?: MenuLook }) {
   const { track, queue } = usePlayer();
   const speaking = Boolean(track) && queue.find((chapter) => chapter.id === track?.chapterId)?.state === "text";
   // Một vỏ cho cả hai loại chương (và lúc chưa có gì): đổi component không dựng lại nút trần mà mờ chéo. Vùng con tự lo cùng một cuốn đổi
-  // trạng thái, nên vỏ chỉ chuyển cảnh khi đổi cuốn / loại chương.
+  // trạng thái, nên vỏ chỉ chuyển cảnh khi đổi cuốn / loại chương. Kiểu dòng: vỏ grid một cột minmax(0,1fr) (không flex ngang, không cột auto) để dòng đúng bề ngang menu - không co theo chữ, không bị danh sách con đẩy tràn -, giá trị bên
+  // phải cùng mép với các dòng khác (luật menu-row-short).
   return (
-    <MotionRegion as="span" motionKey={[track?.bookId ?? null, speaking]} className="inline-flex">
+    <MotionRegion as="span" motionKey={[track?.bookId ?? null, speaking]} className={look === "row" ? "grid grid-cols-[minmax(0,1fr)]" : "inline-flex"}>
       {track && (speaking ? <MusicMenuFor bookId={track.bookId} look={look} /> : <PackagedMusicMenu bookId={track.bookId} look={look} />)}
     </MotionRegion>
   );
@@ -536,7 +537,7 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
   const id = `player-music-${bookId}`;
   // Gốc luôn là một MotionRegion: nhạc tải xong / gỡ nhạc thì nút hiện / ẩn dần, không thay gốc MotionRegion <-> MenuShell.
   return (
-    <MotionRegion as="span" className={look === "row" ? "flex" : "inline-flex"}>{music?.hasMusic && <MenuShell
+    <MotionRegion as="span" className={look === "row" ? "grid grid-cols-[minmax(0,1fr)]" : "inline-flex"}>{music?.hasMusic && <MenuShell
       label="Nhạc nền"
       active={music.enabled}
       width="w-64"
@@ -764,11 +765,12 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                             });
                           }}
                           className={cn(
-                            "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-sm transition-colors duration-motion-fast hover:bg-hover max-sm:min-h-[48px]",
+                            "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm transition-colors duration-motion-fast hover:bg-hover max-sm:min-h-[48px]",
                             selected ? "font-semibold text-accent-text" : "text-fg",
                           )}
                         >
-                          <span className="truncate">{shown}</span>
+                          {/* Tên giọng xuống dòng, không cắt "…": menu 252 px từng còn "An (Windo…" - chọn mà không đọc đủ tên (luật choice-label-truncated). */}
+                          <span className="min-w-0 text-pretty [overflow-wrap:anywhere]">{shown}</span>
                           {genderLabel(voice.gender) && <span className="shrink-0 text-xs font-normal text-fg-2">{genderLabel(voice.gender)}</span>}
                           <SelectionMark selected={selected} className="ml-auto" />
                         </button>
@@ -814,7 +816,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
     </MotionRegion></MenuShell>
   );
   };
-  return <MotionRegion as="span" className={look === "row" ? "flex" : "inline-flex"}>{menu()}</MotionRegion>;
+  return <MotionRegion as="span" className={look === "row" ? "grid grid-cols-[minmax(0,1fr)]" : "inline-flex"}>{menu()}</MotionRegion>;
 }
 
 /** Trạng thái "Làm trước" (một việc cho cả máy): hỏi lại thường xuyên khi đang làm. Điện thoại còn đẩy tiến độ vào cùng khoá (android/readAloud.ts). */
@@ -978,7 +980,7 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
   const now = useTicker(sleep.kind === "minutes" && sleep.since !== null);
   const recentlyStopped = sleep.kind === "off" && sleepStoppedAt !== null && now - sleepStoppedAt < 30 * 60_000;
   return (
-    <MotionRegion as={look === "chip" ? "div" : "span"} className={look === "row" ? "flex" : look === "action" ? "inline-flex" : undefined}><SleepPicker
+    <MotionRegion as={look === "chip" ? "div" : "span"} className={look === "row" ? "grid grid-cols-[minmax(0,1fr)]" : look === "action" ? "inline-flex" : undefined}><SleepPicker
       look={look}
       sleep={sleep}
       now={now}

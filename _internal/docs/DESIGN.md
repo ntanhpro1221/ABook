@@ -189,6 +189,7 @@ giống app hệ thống; không tự chế chuỗi rung dài.
   Hàng đang phát: chữ hổ phách + vạch tiến độ mảnh, không tô nền cả hàng.
   Hàng đang chọn trong danh sách CHỌN (giọng, gộp người, câu đã chọn): chữ hổ phách + dấu tích. Ô chọn dạng lưới (tốc độ, mức hẹn giờ): ô đang chọn chữ hổ phách đậm, không dấu tích - ô hẹp, dấu tích đè hay đẩy chữ lệch tâm.
 - **Điều hướng** (thanh bên máy tính, danh sách nhóm Cài đặt hai cột): mục đang mở = nền trung tính nhạt + chữ đậm màu thường; không dấu tích, không nền hổ phách, không chữ hổ phách (máy dò rule22 NAV ACCENT).
+- **Dòng menu** (menu "…", bảng Thêm tuỳ chọn): mọi dòng trọn bề ngang menu, giá trị bên phải ("Tắt", tên giọng) cùng một mép; dòng mở ra tại chỗ không co theo chữ, không bị danh sách con đẩy tràn (máy dò INK EDGE menu-row-short). **Nhãn của lựa chọn** không bao giờ cắt "…" - xuống dòng (máy dò CLIPPED TEXT choice-label-truncated).
 - **Nút chữ cuối hàng** chạm mép phải của cột như mọi nút cùng cột (bù đệm bằng `settings-edge-action`); không lặp icon đã có ở đầu hàng (máy dò INK EDGE ink-right, REPEATED LABEL row-icon-twice).
 - **Lưới bìa**: bìa 2:3, bo 12, tên dưới bìa tối đa 2 dòng, phụ một dòng. Điện thoại 2-3 cột, máy tính tự giãn 160-200 px.
 - **Bộ lọc**: hàng chữ có gạch chân hổ phách (không hộp segmented); "Xếp theo" là menu nhỏ, không select toàn chiều rộng;

@@ -222,4 +222,19 @@ describe.skipIf(!browserAvailable)("nút trong suốt: mép chung của cột", 
       expect(trail("trail-pass")).toHaveLength(0);
     }
   });
+  it("dòng menu co theo chữ (vỏ flex ngang) thì báo; vỏ grid một cột trọn bề ngang thì không", () => {
+    for (const result of edgeResults) {
+      const rows = (id) => result.findings.filter((f) => f.metric === "menu-row-short" && f.selector.startsWith(`#${id} >`));
+      expect(rows("menu-off")).toHaveLength(1);
+      expect(rows("menu-pass")).toHaveLength(0);
+    }
+  });
+  it("nhãn lựa chọn bị cắt '…' thì báo; xuống dòng, hay chữ cắt không phải lựa chọn thì không", () => {
+    for (const result of edgeResults) {
+      const cut = (id) => result.findings.filter((f) => f.metric === "choice-label-truncated" && (f.selector === `#${id}` || f.selector.startsWith(`#${id} >`)));
+      expect(cut("choice-off")).toHaveLength(1);
+      expect(cut("choice-pass")).toHaveLength(0);
+      expect(cut("title-cut-pass")).toHaveLength(0);
+    }
+  });
 });
