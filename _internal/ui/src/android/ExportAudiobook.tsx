@@ -184,7 +184,7 @@ export function AudiobookPhoneForm({ voice, plan, planError, music = false, onMu
         </MotionRegion>}
       </MotionPresence>
       <MotionPresence open={Boolean(notice)}>
-        <p role="note" className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm">
+        <p role="note" className="py-3 text-sm">
           {notice}
         </p>
       </MotionPresence>

@@ -233,6 +233,10 @@ export const ENTRIES: Entry[] = [
   ...PHONE.map((item) => ({ ...item, platform: "phone" as const })),
   ...DESKTOP.map((item) => ({ ...item, platform: "desktop" as const })),
   ...(["phone", "desktop"] as const).flatMap(platform => ([
+    { id: `${platform}/book-find-results`, platform, group: "Trang sách", title: "Tìm chữ trong sách", route: "/book/suong-mu-2", act: async () => {
+      await click("Tìm chữ trong sách"); await type("Chữ hay câu cần tìm", "chiếc");
+      await waitFor(() => document.querySelector('[data-list-edges="book-search"] button'), "kết quả tìm chữ");
+    } },
     { id: `${platform}/book-edit`, platform, group: "Trang sách", title: "Sửa tên sách và tác giả", route: "/book/gac-xep", act: async () => {
       await click("Thêm việc với sách"); await click("Sửa thông tin");
     } },

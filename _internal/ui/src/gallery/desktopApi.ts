@@ -278,6 +278,8 @@ const ROUTES: [string, RegExp, Handler][] = [
   ["GET", /^\/api\/listen\/library$/, () => listenLibrary()],
   ["GET", /^\/api\/listen\/books\/([^/]+)$/, (match) => listenBook(book(match[1]), true)],
   ["GET", /^\/api\/listen\/books\/([^/]+)\/chapters\/(\d+)\/text$/, (match) => ({ text: chapterText(book(match[1]), Number(match[2])) })],
+  ["GET", /^\/api\/listen\/books\/([^/]+)\/search-texts$/, (match, _, query) => ({ chapters: (query.get("chapters") ?? "").split(",").filter(Boolean).map(Number).map(id =>
+    (query.get("text") ?? "").split(",").includes(String(id)) ? { id, text: chapterText(book(match[1]), id) } : { id, segments: chapterScript(book(match[1]), id).segments }) })],
   ["GET", /^\/api\/listen\/books\/([^/]+)\/sessions$/, (match) => sessions(book(match[1]))],
   ["POST", /^\/api\/listen\/books\/([^/]+)\/sessions$/, () => ({})],
   ["POST", /^\/api\/listen\/books\/([^/]+)\/progress\/session$/, () => ({})],

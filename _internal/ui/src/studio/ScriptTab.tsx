@@ -623,7 +623,7 @@ export function DeliveryMenu({
         <div>
           <div className="mb-1.5 label-section text-fg-2">Ai nói?</div>
           {picked ? (
-            <div className="flex items-center gap-2 rounded-lg border border-accent px-2.5 py-1.5 text-sm text-accent-text">
+            <div className="flex items-center gap-2 py-1.5 text-sm text-accent-text">
               <SelectionMark selected />
               <span className="min-w-0 flex-1 truncate font-medium">
                 {picked.label}
@@ -634,7 +634,7 @@ export function DeliveryMenu({
               </button>
             </div>
           ) : (
-            <div className="rounded-lg border border-line p-1">
+            <div className="py-1">
               <SpeakerMenu line={line} script={script} onPick={setPicked} embedded />
             </div>
           )}
@@ -795,7 +795,7 @@ function DeliveryChip({
 
 /** Tấm trượt trên điện thoại che mất đúng câu vừa chạm (soát UX 30-09) - trích lại câu ấy ở đầu tấm. */
 export function LineQuote({ line }: { line: Line }) {
-  return <p className="mx-1.5 mt-2 line-clamp-3 rounded-lg bg-hover px-3 py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
+  return <p className="mx-1.5 mt-2 line-clamp-3 py-2 text-sm leading-snug text-fg-2">{line.text}</p>;
 }
 
 /** `phone`: trong tấm trượt - ô tìm không tự bật bàn phím (bàn phím che danh sách người của chương, lối chọn chính).
@@ -1811,7 +1811,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       ) : (
         <>
           {!data.castReady && (
-            <p className="mt-4 flex items-start gap-2 rounded-xl bg-info-soft p-3 text-sm text-fg">
+            <p className="mt-4 flex items-start gap-2 py-3 text-sm text-fg">
               <Clock className="mt-line-icon size-4 shrink-0 text-info" />
               Sửa người nói được sau bước phân vai.
             </p>

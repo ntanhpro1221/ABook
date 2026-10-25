@@ -48,7 +48,7 @@ export function SettingsList({ rows, current, className }: { rows: readonly Grou
   const replace = current !== undefined;
   const shown = SETTINGS_GROUPS.filter((group) => rows.some((row) => row.id === group.id));
   return (
-    <nav aria-label="Nhóm cài đặt" className={cn("settings-nav", className)}>
+    <nav data-list-edges="settings" aria-label="Nhóm cài đặt" className={cn("settings-nav", className)}>
       <AnimatedRows as="ul" className="divide-y divide-line" items={shown} keyOf={group => group.id}>{({ id, label, icon: Icon }) => {
         const summary = rows.find((row) => row.id === id)?.summary;
         return (
@@ -84,7 +84,7 @@ export function GroupHeader({ id, back = true }: { id: SettingsGroupId; back?: b
 export function SettingsBlock({ title, id, children, className, fold }: { title?: string; id?: string; children: ReactNode; className?: string; fold?: string }) {
   if (fold && title) return <FoldedBlock title={title} id={id} storageKey={fold} className={className}>{children}</FoldedBlock>;
   return (
-    <section id={id} className={cn("settings-block mt-8", className)}>
+    <section data-list-edges="settings-block" id={id} className={cn("settings-block mt-8", className)}>
       {title && <h2 className="label-section mb-2 text-fg-2">{title}</h2>}
       <div className="divide-y divide-line">{children}</div>
     </section>
@@ -95,7 +95,7 @@ function FoldedBlock({ title, id, children, className, storageKey }: { title: st
   const [open, setOpen] = useFold(`settings.${storageKey}`);
   const bodyId = useId();
   return (
-    <section id={id} data-fold="" className={cn("settings-block mt-8", className)}>
+    <section data-list-edges="settings-block" id={id} data-fold="" className={cn("settings-block mt-8", className)}>
       <h2><DisclosureRow title={title} expanded={open} controls={bodyId} onClick={() => setOpen(!open)} /></h2>
       <Collapse open={open} id={bodyId}>
         <div className="divide-y divide-line">{children}</div>

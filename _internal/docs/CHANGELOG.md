@@ -13,6 +13,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Tên trong mọi danh sách chọn (giọng, hồ sơ người nghe, thiết bị Bluetooth) hiện đủ, xuống dòng thay vì bị cắt "…"; dấu tích luôn đứng đầu dòng; menu "…" của trình phát máy tính rộng hơn để "Nhạc của tôi" và tên giọng không gãy dòng.
 - Màn Đang nghe trên máy tính: bỏ nút "Chương" và "Đọc theo" ở cột trái vì đã là hai tab của bảng bên phải.
 - Icon cảnh báo của mọi dòng lỗi "Thử lại" và icon đầu các dòng có chú thích (xuất sách, Studio, sửa sách) đứng giữa dòng chữ đầu; nút "Tải" dưới thẻ sách của máy khác thẳng mép với tên sách và cùng dòng với "Đã tải".
+- Thư viện, Studio và Cài đặt gọn hơn với các mục phẳng, vạch chia thẳng lề; nút nghe tiếp nằm đúng mép trang và thông tin chung không lặp trên từng hàng.
+- Thiết bị trên điện thoại đưa việc kết nối lên trước, gập hướng dẫn và phần cài trên máy tính; các lựa chọn phân tích dùng tên dễ hiểu.
 
 ## [0.4.142] - 2026-10-25
 
