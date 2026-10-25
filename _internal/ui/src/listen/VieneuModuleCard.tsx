@@ -3,7 +3,7 @@ import { Fold } from "@/shared/Collapse";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useId, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
-import { Button, Dialog, LiveText, Progress, useFocusFollows } from "@/shared/ui";
+import { DialogActions, Button, Dialog, LiveText, Progress, useFocusFollows } from "@/shared/ui";
 import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { api } from "@/studio/api";
@@ -336,13 +336,7 @@ export function VieneuModuleCard({
           )}
         </div>
       )}
-      <Dialog
-        open={asking !== null}
-        onOpenChange={(open) => !open && setAsking(null)}
-        title={`Gỡ “${asking?.label ?? ""}” khỏi máy này?`}
-        description={asking?.use === undefined ? "Đang xem cuốn nào còn dùng giọng này…" : removeAsk(asking?.use ?? null)}
-      >
-        <div className="dialog-actions">
+      <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setAsking(null)}>
             Giữ lại
           </Button>
@@ -357,7 +351,13 @@ export function VieneuModuleCard({
           >
             Gỡ giọng
           </Button>
-        </div>
+        </DialogActions>}
+        open={asking !== null}
+        onOpenChange={(open) => !open && setAsking(null)}
+        title={`Gỡ “${asking?.label ?? ""}” khỏi máy này?`}
+        description={asking?.use === undefined ? "Đang xem cuốn nào còn dùng giọng này…" : removeAsk(asking?.use ?? null)}
+      >
+
       </Dialog>
     </MotionRegion>
   );

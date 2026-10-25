@@ -37,11 +37,11 @@ it("multi-file step changes keep hidden AddBook controls inert then restore titl
   await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><Book /></MemoryRouter></QueryClientProvider>));
   await act(async () => [...document.querySelectorAll("button")].find(b => b.textContent === "Chọn file sách")!.click());
   const skip = [...document.querySelectorAll<HTMLButtonElement>('[role="dialog"] button')].find(b => b.textContent?.includes("Bỏ cuốn này") && !b.closest(".motion-snapshot"))!;
-  const body = skip.closest<HTMLElement>("[data-motion-region]")!;
+  const body = document.querySelector<HTMLInputElement>('[role="dialog"] input[placeholder="Tên hiển thị trong thư viện"]')!.closest<HTMLElement>("[data-motion-region]")!;
   expect(body).not.toBeNull();
   expect(body.hasAttribute("inert")).toBe(true);
   const calls = importer.preview.mock.calls.length;
-  await act(() => skip.click()); expect(importer.preview).toHaveBeenCalledTimes(calls);
+  expect(skip.closest(".surface-footer")).not.toBeNull();
   const finish = () => {
     for (const result of vi.mocked(HTMLElement.prototype.animate).mock.results) (result.value as Animation).onfinish?.(new Event("finish") as AnimationPlaybackEvent);
   };
@@ -54,6 +54,17 @@ it("multi-file step changes keep hidden AddBook controls inert then restore titl
   expect(body.querySelector<HTMLInputElement>('input[placeholder="Tên hiển thị trong thư viện"]')?.value).toBe("Sách hai");
 });
 afterEach(async () => { await act(() => root.unmount()); client.clear(); document.body.replaceChildren(); Reflect.deleteProperty(document, "startViewTransition"); vi.restoreAllMocks(); });
+it("cuốn đã có trong hàng chờ: nút chính ở cuối chân hộp", async () => {
+  importer.chooseMany.mockResolvedValue(["a", "b"].map(name => ({ name: `${name}.txt`, choice: { ref: `${name}.txt`, name: `${name}.txt` } })));
+  importer.preview.mockResolvedValue({ title: "Sách thử", chapters: [{ index: 1, title: "Chương 1", words: 100 }], notes: [], existing: { id: "old", title: "Sách đã có" } });
+  await act(() => root.render(<QueryClientProvider client={client}><MemoryRouter><Book /></MemoryRouter></QueryClientProvider>));
+  await act(async () => [...document.querySelectorAll("button")].find(button => button.textContent === "Chọn file sách")!.click());
+  const footer = document.querySelector(".surface-footer [data-add-book-actions]")!;
+  expect(footer.lastElementChild?.textContent).toBe("Bỏ cuốn này");
+  expect(footer.lastElementChild?.getAttribute("data-variant")).toBe("primary");
+  expect(footer.querySelectorAll('[data-variant="primary"]')).toHaveLength(1);
+});
+
 for (const preview of [false, true]) for (const method of ["X", "Escape"]) it(`closing AddBook via ${method} never starts a global transition, preview=${preview}`, async () => {
   importer.preview.mockResolvedValue({ title: "Sách thử", chapters: [{ index: 1, title: "Chương 1", words: 100 }], notes: [] });
   await act(async () => root.render(<QueryClientProvider client={client}><MemoryRouter><Book initial={preview ? { ref: "a.txt", name: "a.txt" } : undefined} /></MemoryRouter></QueryClientProvider>));
@@ -88,11 +99,10 @@ it.each([false, true])("hàng ba cuốn giữ chân hộp và tôn trọng cảm
     expect(title.value).toBe(name);
     expect(document.activeElement === title).toBe(!touch);
     const footer = dialog.querySelector<HTMLElement>("[data-add-book-actions]")!;
-    expect(footer.classList.contains("sticky")).toBe(true);
-    expect(footer.classList.contains("bottom-0")).toBe(true);
+    expect(footer.closest(".surface-footer")?.parentElement).toBe(dialog);
     expect(footer.textContent).toContain("Thêm vào thư viện");
     const scroller = footer.closest<HTMLElement>(".overflow-y-auto");
-    expect(scroller).not.toBeNull(); expect(dialog.contains(scroller)).toBe(true);
+    expect(scroller).toBeNull();
     if (name !== "c.txt") await act(async () => [...footer.querySelectorAll("button")].find(button => button.textContent === "Bỏ cuốn này")!.click());
   }
 });

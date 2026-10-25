@@ -1,11 +1,11 @@
 import { MotionRegion } from "@/shared/MotionRegion";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useId, useEffect, useState } from "react";
 import { toast } from "@/shared/toast";
 import { cleanName } from "@/listen/BookScreen";
 import type { CastMember } from "@/listen/model";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog, ChoiceRow } from "@/shared/ui";
+import { DialogActions, Button, Dialog, ChoiceRow } from "@/shared/ui";
 import { api } from "./api";
 import { refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
 import { voiceToUse } from "./MergePeople";
@@ -26,6 +26,7 @@ export function RenamePersonDialog({
   /** Gọi sau khi đổi tên xong - trang nghe làm mới thư viện, chữ đọc theo, dàn nhân vật (listen/EditBook.tsx). */
   onSaved?: () => void;
 }) {
+  const dialogForm1 = useId();
   const client = useQueryClient();
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
@@ -50,14 +51,26 @@ export function RenamePersonDialog({
   };
   const name = person ? cleanName(person.displayName) : "";
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+          {person?.originalName && (
+            <Button type="button" variant="ghost" disabled={busy} onClick={() => void save("")}>
+              Về tên gốc
+            </Button>
+          )}
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Thôi
+          </Button>
+          <Button type="submit" form={dialogForm1} variant="primary" loading={busy} disabled={!value.trim()}>
+            Lưu
+          </Button>
+        </DialogActions>}
       open={person !== null}
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
       title={`Đổi tên ${name}`}
       description="Chỉ đổi tên hiển thị, giữ giọng và audio."
     >
-      <form
+      <form id={dialogForm1}
         onSubmit={(event) => {
           event.preventDefault();
           void save(value);
@@ -73,19 +86,7 @@ export function RenamePersonDialog({
           className="h-9 w-full rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus-visible:border-focus"
         />
         {person?.originalName && <p className="mt-2 text-xs text-fg-2">Tên gốc: {cleanName(person.originalName)}</p>}
-        <div className="mt-5 dialog-actions">
-          {person?.originalName && (
-            <Button type="button" variant="ghost" disabled={busy} onClick={() => void save("")}>
-              Về tên gốc
-            </Button>
-          )}
-          <Button type="button" variant="ghost" onClick={onClose}>
-            Thôi
-          </Button>
-          <Button type="submit" variant="primary" loading={busy} disabled={!value.trim()}>
-            Lưu
-          </Button>
-        </div>
+
       </form>
     </Dialog>
   );
@@ -142,7 +143,14 @@ export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved
     }
   };
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+        <Button variant="ghost" onClick={onClose}>
+          Thôi
+        </Button>
+        <Button variant="primary" loading={busy} disabled={!choice || choice === current} onClick={() => void save()}>
+          Ghi lại
+        </Button>
+      </DialogActions>}
       open={person !== null}
       onOpenChange={(open) => !open && onClose()}
       width="max-w-md"
@@ -165,14 +173,7 @@ export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved
         </p>
       )}
       </MotionRegion>
-      <div className="mt-5 dialog-actions">
-        <Button variant="ghost" onClick={onClose}>
-          Thôi
-        </Button>
-        <Button variant="primary" loading={busy} disabled={!choice || choice === current} onClick={() => void save()}>
-          Ghi lại
-        </Button>
-      </div>
+
     </Dialog>
   );
 }

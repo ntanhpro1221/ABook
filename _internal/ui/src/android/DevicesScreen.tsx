@@ -3,14 +3,14 @@ import { MotionPresence } from "@/shared/MotionPresence";
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type LucideIcon, Bluetooth, CheckCircle2, Copy, Download, HardDrive, Keyboard, Laptop, Link2, Loader2, Pencil, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useId, useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { useBackLayer } from "@/shared/backStack";
 import { cn } from "@/shared/cn";
 import { formatFingerprint, formatLength, formatSize } from "@/shared/format";
 import { SYNC_SWITCH_LABEL } from "@/shared/syncSwitch";
-import { Button, Dialog, IconButton, Progress } from "@/shared/ui";
+import { DialogActions, Button, Dialog, IconButton, Progress } from "@/shared/ui";
 import { useUnpair } from "@/shared/useUnpair";
 import { BackgroundNote } from "./BackgroundNote";
 import { BLUETOOTH_DENIED, BLUETOOTH_REASON, bluetoothStep } from "./bluetoothPermission";
@@ -772,13 +772,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
           )}
         </div>
       )}
-      <Dialog
-        open={removing !== null}
-        onOpenChange={(open) => !open && setRemoving(null)}
-        title={`Thôi ghép ${removing?.name ?? "máy này"}?`}
-        description="Máy ấy không nghe được thư viện này nữa; sách đã tải vẫn còn."
-      >
-        <div className="dialog-actions">
+      <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setRemoving(null)}>
             Để nguyên
           </Button>
@@ -791,7 +785,13 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
           >
             Thôi ghép
           </Button>
-        </div>
+        </DialogActions>}
+        open={removing !== null}
+        onOpenChange={(open) => !open && setRemoving(null)}
+        title={`Thôi ghép ${removing?.name ?? "máy này"}?`}
+        description="Máy ấy không nghe được thư viện này nữa; sách đã tải vẫn còn."
+      >
+
       </Dialog>
     </MotionRegion>
   );
@@ -799,6 +799,7 @@ export function SharePanel({ bare = false }: { bare?: boolean }) {
 
 /** Tên điện thoại này mà máy tính và các máy đã ghép thấy (soát a68 lỗi 16: "Google sdk_gphone64_x86_64"): đổi được, báo luôn cho các máy đã ghép. */
 function DeviceNameRow({ bare = false }: { bare?: boolean }) {
+  const dialogForm1 = useId();
   const client = useQueryClient();
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
   const [draft, setDraft] = useState<string | null>(null);
@@ -829,8 +830,15 @@ function DeviceNameRow({ bare = false }: { bare?: boolean }) {
           Đổi tên
         </Button>
       </div>
-      <Dialog open={draft !== null} onOpenChange={(open) => !open && setDraft(null)} title="Đổi tên điện thoại này" description="Máy tính và các máy đã ghép thấy điện thoại bằng tên này.">
-        <form
+      <Dialog footer={<DialogActions>
+            <Button type="button" variant="ghost" onClick={() => setDraft(null)}>
+              Để nguyên
+            </Button>
+            <Button type="submit" form={dialogForm1} variant="primary" disabled={!draft?.trim()} loading={rename.isPending}>
+              Lưu
+            </Button>
+          </DialogActions>} open={draft !== null} onOpenChange={(open) => !open && setDraft(null)} title="Đổi tên điện thoại này" description="Máy tính và các máy đã ghép thấy điện thoại bằng tên này.">
+        <form id={dialogForm1}
           onSubmit={(event) => {
             event.preventDefault();
             if (draft?.trim()) rename.mutate(draft.trim());
@@ -844,14 +852,7 @@ function DeviceNameRow({ bare = false }: { bare?: boolean }) {
             aria-label="Tên điện thoại"
             className="device-input w-full px-3 text-base"
           />
-          <div className="dialog-actions">
-            <Button type="button" variant="ghost" onClick={() => setDraft(null)}>
-              Để nguyên
-            </Button>
-            <Button type="submit" variant="primary" disabled={!draft?.trim()} loading={rename.isPending}>
-              Lưu
-            </Button>
-          </div>
+
         </form>
       </Dialog>
     </section>
@@ -987,13 +988,7 @@ export function DevicesScreen() {
             <button type="button" onClick={() => setConfirmUnpair(true)} className="touch-hit mt-2 flex items-center gap-3 text-sm text-fg-2">
               <Unplug className="size-5" /> Bỏ ghép
             </button>
-            <Dialog
-              open={confirmUnpair}
-              onOpenChange={setConfirmUnpair}
-              title={`Bỏ ghép với ${computerName}?`}
-              description="Sách đã tải vẫn nghe được. Muốn tải thêm thì ghép lại bằng mã mới."
-            >
-              <div className="dialog-actions">
+            <Dialog footer={<DialogActions>
                 <Button variant="ghost" onClick={() => setConfirmUnpair(false)}>
                   Để nguyên
                 </Button>
@@ -1006,7 +1001,13 @@ export function DevicesScreen() {
                 >
                   Bỏ ghép
                 </Button>
-              </div>
+              </DialogActions>}
+              open={confirmUnpair}
+              onOpenChange={setConfirmUnpair}
+              title={`Bỏ ghép với ${computerName}?`}
+              description="Sách đã tải vẫn nghe được. Muốn tải thêm thì ghép lại bằng mã mới."
+            >
+
             </Dialog>
           </>
         )}

@@ -6,7 +6,7 @@ import { BOOK_STORAGE } from "@/shared/bookStorage";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
-import { Button, Dialog, IconButton } from "@/shared/ui";
+import { DialogActions, Button, Dialog, IconButton } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { useAppInfo } from "@/studio/data";
 import { refreshAfterEdit } from "./EditBook";
@@ -215,10 +215,7 @@ export function SuggestionsButton({ bookId, className }: { bookId: string; class
       {slot
         ? <SlotFace aria-label={label} value={pending ? `${pending} chưa áp` : "Xem"} onClick={() => setOpen(true)} />
         : <IconButton label={label} icon={Lightbulb} size="sm" className={className} onClick={() => setOpen(true)} />}
-      <Dialog open={open} onOpenChange={setOpen} title="Gợi ý cho phần đọc">
-        <SuggestionsBody bookId={bookId} suggestions={suggestions} />
-        {/* Tích hết dòng lúc hộp còn mở: "Bỏ qua gợi ý" rời hàng nút bằng mờ qua, không mất cứng. */}
-        <MotionRegion className="mt-5 dialog-actions">
+      <Dialog footer={<DialogActions>
           {pending > 0 && (
             <Button variant="ghost" onClick={() => {
               dismiss();
@@ -230,7 +227,10 @@ export function SuggestionsButton({ bookId, className }: { bookId: string; class
           <Button variant="ghost" onClick={() => setOpen(false)}>
             Đóng
           </Button>
-        </MotionRegion>
+        </DialogActions>} open={open} onOpenChange={setOpen} title="Gợi ý cho phần đọc">
+        <SuggestionsBody bookId={bookId} suggestions={suggestions} />
+        {/* Tích hết dòng lúc hộp còn mở: "Bỏ qua gợi ý" rời hàng nút bằng mờ qua, không mất cứng. */}
+
       </Dialog>
     </>
   );

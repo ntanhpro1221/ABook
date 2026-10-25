@@ -9,7 +9,7 @@ import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog, Progress, ChoiceRow, Skeleton, Vu, InlineError } from "@/shared/ui";
+import { SelectionMark, Button, Dialog, Progress, ChoiceRow, Skeleton, Vu, InlineError } from "@/shared/ui";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
 import { api, urls } from "./api";
 import { useAppInfo } from "./data";
@@ -146,7 +146,7 @@ export function PreviewButton({ voice }: { voice: VoiceOption }) {
       aria-label={active ? "Dừng nghe thử" : `Nghe thử giọng ${voice.name}`}
       className={cn(
         "grid size-9 shrink-0 place-items-center rounded-full transition-colors",
-        active ? "text-accent-text" : "text-fg-2 hover:bg-hover hover:text-fg in-[.bg-accent-soft]:border-line-strong",
+        active ? "text-accent-text" : "text-fg-2 hover:bg-hover hover:text-fg ",
       )}
     >
       <MotionRegion as="span" className="grid size-4 place-items-center">{active && clip.loading ? <Loader2 className="size-4 animate-spin" /> : active ? <Vu className="h-3" /> : <Play className="size-3.5 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}</MotionRegion>
@@ -322,7 +322,7 @@ export function VoicePicker({
                 ) : null}
                 <ul className="space-y-1">
             {group.voices.map((voice) => (
-              <li key={voice.key} className={cn("flex items-center gap-3 rounded-xl px-2 py-2", voice.current ? "bg-accent-soft" : "hover:bg-hover")}>
+              <li key={voice.key} className={cn("flex items-center gap-3 rounded-xl px-2 py-2", voice.current ? "text-accent-text" : "hover:bg-hover")}>
                 <PreviewButton voice={voice} />
                 {data.tryLine &&
                   tryVoice.button({ character: data.character.value, preset: voice.key }, voice.name, {
@@ -332,7 +332,7 @@ export function VoicePicker({
                   })}
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className={cn("font-medium", voice.takenBy?.length && "text-fg-2")}>{voice.name}</span>
+                    <SelectionMark selected={voice.current} /><span className={cn("font-medium", voice.current ? "text-accent-text" : voice.takenBy?.length && "text-fg-2")}>{voice.name}</span>
                     {/* Viên "Đang dùng" chỉ khi nút bên phải là "Giữ giọng này"; còn lại nút đã nói đúng chữ ấy (soát 25-10: nói hai lần một hàng). */}
                     {voice.current && data.pending && <span className="rounded-full bg-panel px-2 py-px text-[0.6875rem] font-medium text-accent-text">Đang dùng</span>}
                     {voice.pending && !voice.current && (

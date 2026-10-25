@@ -8,7 +8,7 @@ import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { Button, Dialog } from "@/shared/ui";
+import { DialogActions, Button, Dialog } from "@/shared/ui";
 import { BackgroundNote, ExportProgressText } from "./BackgroundNote";
 import { chargerHint } from "./ExportAudiobook";
 import { progressText } from "./ExportM4b";
@@ -175,16 +175,16 @@ function Mp3ChangedDialog() {
     void exportMp3(open.book, open.pick, ids, open.music);
   };
   return (
-    <Dialog open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title="Có chương đã đổi" width="max-w-md">
-      <p className="text-sm text-fg-2">Bản MP3 bạn xuất trước đây có {open?.changed.length ?? 0} chương đã đổi từ đó. Xuất riêng các chương ấy, hay cả cuốn?</p>
-      <div className="mt-5 dialog-actions">
+    <Dialog footer={<DialogActions>
         <Button variant="ghost" onClick={() => choose([])}>
           Cả cuốn
         </Button>
         <Button variant="primary" onClick={() => choose(open?.changed ?? [])}>
           {`Chỉ ${open?.changed.length ?? 0} chương đổi`}
         </Button>
-      </div>
+      </DialogActions>} open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title="Có chương đã đổi" width="max-w-md">
+      <p className="text-sm text-fg-2">Bản MP3 bạn xuất trước đây có {open?.changed.length ?? 0} chương đã đổi từ đó. Xuất riêng các chương ấy, hay cả cuốn?</p>
+
     </Dialog>
   );
 }
@@ -205,16 +205,16 @@ export function Mp3MusicDialogHost() {
   };
   return (
     <>
-      <Dialog open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title={`Xuất MP3 “${open?.book.title ?? ""}”`} width="max-w-md">
-        <Mp3MusicForm music={music} onMusic={setMusic} chapters={open?.book.chaptersAvailable ?? 0} />
-        <div className="mt-5 dialog-actions">
+      <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setOpen(null)}>
             Để sau
           </Button>
           <Button variant="primary" icon={FolderDown} onClick={start}>
             Bắt đầu
           </Button>
-        </div>
+        </DialogActions>} open={open !== null} onOpenChange={(next) => !next && setOpen(null)} title={`Xuất MP3 “${open?.book.title ?? ""}”`} width="max-w-md">
+        <Mp3MusicForm music={music} onMusic={setMusic} chapters={open?.book.chaptersAvailable ?? 0} />
+
       </Dialog>
       <Mp3ChangedDialog />
     </>

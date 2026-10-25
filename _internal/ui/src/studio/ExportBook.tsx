@@ -12,7 +12,7 @@ import { listenOnlyOwner } from "@/shared/peerStudio";
 import { coverArtwork } from "@/shared/cover";
 import { fileName, formatNumber, formatSize } from "@/shared/format";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { Button, Dialog, LiveText, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { DialogActions, Button, Dialog, LiveText, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { FfmpegNeeded } from "@/desktop/AudiobookDialog";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
 import { exportedOnComputer } from "@/desktop/bookFileExport";
@@ -353,7 +353,38 @@ export function ExportDialog({
   const scopeValues: Scope[] = ["part", "series"];
   const layoutValues: Layout[] = ["single", "perPart"];
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange} width="max-w-lg" title={`Xuất “${book.title}”`}
+    <Dialog footer={busy ? (<DialogActions>
+            {packing && (
+              <Button variant="ghost" disabled={cancelling} onClick={cancelPacking}>
+                Huỷ xuất
+              </Button>
+            )}
+            <Button variant="ghost" onClick={() => handleOpenChange(false)}>
+              Đóng, cứ để chạy
+            </Button>
+          </DialogActions>) : (finished ? (<DialogActions>
+            {!info?.remote && (
+              <Button variant="ghost" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>
+                Mở thư mục
+              </Button>
+            )}
+            <Button variant="primary" onClick={() => handleOpenChange(false)}>
+              Xong
+            </Button>
+          </DialogActions>) : (<DialogActions>
+        <Button variant="ghost" onClick={() => handleOpenChange(false)}>
+          Thôi
+        </Button>
+        <Button
+          variant="primary"
+          icon={KINDS.find((item) => item.value === kind)?.icon ?? FolderDown}
+          loading={busy}
+          disabled={whole ? Boolean(book.running) : needsFfmpeg || (!wholeSeries && !ready && !textOnly)}
+          onClick={() => void run()}
+        >
+          {info?.dialogs ? "Lưu và xuất" : "Xuất"}
+        </Button>
+      </DialogActions>))} open={open} onOpenChange={handleOpenChange} width="max-w-lg" title={`Xuất “${book.title}”`}
       description={wholeSeries ? `Các chương nghe được của cả ${parts.length} phần sẽ vào bản xuất.` : `${formatNumber(selectedCount)} chương sẽ vào bản xuất.`}>
       <MotionRegion fadeThrough>
       {busy ? (
@@ -378,16 +409,7 @@ export function ExportDialog({
                 : ""}
             đóng hộp vẫn xuất nền và báo khi xong.
           </p>
-          <div className="mt-5 dialog-actions">
-            {packing && (
-              <Button variant="ghost" disabled={cancelling} onClick={cancelPacking}>
-                Huỷ xuất
-              </Button>
-            )}
-            <Button variant="ghost" onClick={() => handleOpenChange(false)}>
-              Đóng, cứ để chạy
-            </Button>
-          </div>
+
         </MotionRegion>
       ) : finished ? (
         <div className="py-2">
@@ -396,16 +418,7 @@ export function ExportDialog({
             {finished.title}
           </p>
           <p className="mt-2 break-all rounded-xl bg-sunken p-3 text-sm text-fg-2">{finished.detail}</p>
-          <div className="mt-5 dialog-actions">
-            {!info?.remote && (
-              <Button variant="ghost" icon={FolderOpen} onClick={() => revealFolder(finished.folder)}>
-                Mở thư mục
-              </Button>
-            )}
-            <Button variant="primary" onClick={() => handleOpenChange(false)}>
-              Xong
-            </Button>
-          </div>
+
         </div>
       ) : (
       <>
@@ -568,20 +581,7 @@ export function ExportDialog({
           )}
         </div>
       )}
-      <div className="mt-5 dialog-actions">
-        <Button variant="ghost" onClick={() => handleOpenChange(false)}>
-          Thôi
-        </Button>
-        <Button
-          variant="primary"
-          icon={KINDS.find((item) => item.value === kind)?.icon ?? FolderDown}
-          loading={busy}
-          disabled={whole ? Boolean(book.running) : needsFfmpeg || (!wholeSeries && !ready && !textOnly)}
-          onClick={() => void run()}
-        >
-          {info?.dialogs ? "Lưu và xuất" : "Xuất"}
-        </Button>
-      </div>
+
       </>
       )}
       </MotionRegion>

@@ -3,7 +3,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "@/shared/toast";
-import { Button, Dialog } from "@/shared/ui";
+import { DialogActions, Button, Dialog } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { PendingList, type PendingDetails, type PendingItem } from "@/studio/ApplyChanges";
 import { refreshAfterEdit } from "./EditBook";
@@ -49,7 +49,11 @@ export function WishesDialog({
     }
   };
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+        <Button variant="ghost" onClick={() => onOpenChange(false)}>
+          Đóng
+        </Button>
+      </DialogActions>}
       open={open}
       onOpenChange={onOpenChange}
       width="max-w-[560px]"
@@ -68,11 +72,7 @@ export function WishesDialog({
       ) : (
         <p className="text-sm text-fg-2">Chưa có việc nào đang chờ.</p>
       )}
-      <div className="mt-5 dialog-actions">
-        <Button variant="ghost" onClick={() => onOpenChange(false)}>
-          Đóng
-        </Button>
-      </div>
+
     </MotionRegion></Dialog>
   );
 }

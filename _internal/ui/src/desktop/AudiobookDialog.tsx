@@ -14,7 +14,7 @@ import { cn } from "@/shared/cn";
 import { ErrorDetails } from "@/shared/ErrorDetails";
 import { formatSize } from "@/shared/format";
 import { OnComputerOnly } from "@/shared/OnComputerOnly";
-import { Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
+import { DialogActions, Button, Dialog, Progress, radioGroupKeys, radioTabIndex } from "@/shared/ui";
 import { pickFolder, useAppInfo } from "@/studio/data";
 import { RETRYING_NOTE } from "@/studio/musicLocal";
 import { OPEN_AUDIOBOOK_EVENT, startExport } from "./ExportBookFileJob";
@@ -209,7 +209,14 @@ export function AudiobookDialogHost() {
   };
   const ready = ffmpeg.data?.ready ?? false;
   return (
-    <Dialog
+    <Dialog footer={<DialogActions>
+        <Button variant="ghost" onClick={() => setBook(null)}>
+          Để sau
+        </Button>
+        <Button variant="primary" icon={Headphones} loading={busy} disabled={!voice || !ready || Boolean(plan.error)} onClick={() => void start()}>
+          Bắt đầu
+        </Button>
+      </DialogActions>}
       open={book !== null}
       onOpenChange={(open) => !open && setBook(null)}
       title={`Xuất sách nói “${book?.title ?? ""}”`}
@@ -228,14 +235,7 @@ export function AudiobookDialogHost() {
         music={music}
         onMusic={setMusic}
       />
-      <div className="mt-5 dialog-actions">
-        <Button variant="ghost" onClick={() => setBook(null)}>
-          Để sau
-        </Button>
-        <Button variant="primary" icon={Headphones} loading={busy} disabled={!voice || !ready || Boolean(plan.error)} onClick={() => void start()}>
-          Bắt đầu
-        </Button>
-      </div>
+
     </Dialog>
   );
 }

@@ -8,7 +8,7 @@ import { toast } from "@/shared/toast";
 import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
-import { Button, ContentSkeleton, Dialog, EmptyState, FilterRow, InlineError, Kbd, ChoiceRow } from "@/shared/ui";
+import { DialogActions, DecisionButton, Button, ContentSkeleton, Dialog, EmptyState, FilterRow, InlineError, Kbd, ChoiceRow } from "@/shared/ui";
 import { api, suggestionOf, urls, type BookSummary } from "./api";
 import { ReadingProblem } from "./ReadingProblem";
 import { retryUnlessGone } from "./polling";
@@ -353,9 +353,9 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
           if (typed) save.mutate(typed);
         }}
       >
-        <Button data-choice size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate(item.current)}>
+        <DecisionButton data-choice size="sm" variant="ghost" disabled={save.isPending} onClick={() => save.mutate(item.current)}>
           Đúng rồi, giữ “{item.current}”
-        </Button>
+        </DecisionButton>
         <label htmlFor={inputId} className="text-xs text-fg-2">
           hoặc đọc là
         </label>
@@ -390,7 +390,7 @@ function PronunciationFix({ bookId, item, onOpenNames }: { bookId: string; item:
         </Button>
         {/* Thẻ chỉ hỏi tên máy kém chắc; mọi tên khác (kể cả tên đã chọn) sửa ở tab Nhân vật, mục "Cách đọc tên". */}
         {onOpenNames && (
-          <Button size="sm" variant="ghost" type="button" onClick={() => onOpenNames(item.surface ?? "")}>
+          <Button size="sm" variant="ghost" type="button" className="text-fg-2 hover:text-fg" onClick={() => onOpenNames(item.surface ?? "")}>
             Mọi cách đọc tên…
           </Button>
         )}
@@ -549,7 +549,7 @@ function SpeakerFix({
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
         {shownChoices.map((choice, index) => (
-          <Button data-choice
+          <DecisionButton data-choice
             key={choice.value}
             size="sm"
             // Gạch chân lựa chọn, để nút thực hiện vẫn là điểm nhấn duy nhất.
@@ -560,40 +560,40 @@ function SpeakerFix({
             onClick={() => save.mutate({ speaker: choice.value })}
           >
             {choice.label}
-          </Button>
+          </DecisionButton>
         ))}
         {item.currentValue && (
-          <Button data-choice size="sm" variant="ghost" disabled={busy} onClick={() => save.mutate({ speaker: item.currentValue! })}>
+          <DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => save.mutate({ speaker: item.currentValue! })}>
             {item.keepLabel ?? (item.kind === "unnamed" ? "Đúng là vai phụ" : `Giữ ${item.current}`)}
-          </Button>
+          </DecisionButton>
         )}
         {/* Vai phụ ngôi ba (lính gác) không phải ai trong danh sách - cả nhóm có thể là MỘT người mới, có giọng riêng. */}
         {item.newPerson && (
-          <Button data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
+          <DecisionButton data-choice size="sm" variant="ghost" disabled={busy || none} onClick={() => save.mutate({ speaker: item.newPerson!, newGender: "unknown" })}>
             {item.newPersonLabel ?? `Tạo nhân vật`}
-          </Button>
+          </DecisionButton>
         )}
         {item.keepGroups && item.keepGroups.length > 0 && (
-          <Button data-choice size="sm" variant="ghost" disabled={busy} onClick={() => keepAll.mutate(keepRequests(item))}>
+          <DecisionButton data-choice size="sm" variant="ghost" disabled={busy} onClick={() => keepAll.mutate(keepRequests(item))}>
             {item.keepLabel ?? "Giữ nguyên"}
-          </Button>
+          </DecisionButton>
         )}
         {/* Thẻ "một người hai tên" hỏi hai tên có phải một người - chọn người thứ ba lạc chủ đề (soát UX 29-09). */}
         {item.kind !== "alias" && (
-          <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={creating} onClick={() => setCreating((value) => !value)}>
+          <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={creating} className="text-fg-2 hover:text-fg" onClick={() => setCreating((value) => !value)}>
             Người khác…
           </Button>
         )}
         {/* Thẻ chỉ gợi vài người; tab Kịch bản tìm được mọi nhân vật trong sách - mở đúng câu này ở đó (soát UX 29-09). */}
         {onOpenScript && item.lines?.length === 1 && item.examples?.[0] && (
-          <Button size="sm" variant="ghost" icon={Search} onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>
+          <Button size="sm" variant="ghost" icon={Search} className="text-fg-2 hover:text-fg" onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId)}>
             Tìm người khác…
           </Button>
         )}
         {/* Thẻ nhóm chỉ in vài câu làm ví dụ ("Hai người chung một tên" có thể 16 câu): đọc đủ ngữ cảnh ở tab Kịch bản trước khi
             quyết, mở đúng chương, tại câu đầu của nhóm. */}
         {onOpenScript && (item.lines?.length ?? 0) > (item.examples?.length ?? 0) && item.examples?.[0] && (
-          <Button size="sm" variant="ghost" icon={Search} onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId, false)}>
+          <Button size="sm" variant="ghost" icon={Search} className="text-fg-2 hover:text-fg" onClick={() => onOpenScript(item.examples![0].chapterId, item.lines![0].stableId, false)}>
             Xem {item.lines!.length} câu
           </Button>
         )}
@@ -689,13 +689,13 @@ function NarratorFix({ bookId, item }: { bookId: string; item: WorkItem }) {
         </p>
       )}
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${KIND_LABEL[item.kind]}: ${decidedTitle(item) ?? item.title}`}>
-        <Button data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === buttons.accepted ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
+        <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === buttons.accepted ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "accept" })}>
           {buttons.accept}
-        </Button>
-        <Button data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === "Giữ nguyên" ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "keep" })}>
+        </DecisionButton>
+        <DecisionButton data-choice size="sm" variant="ghost" className={cn("border-b-2 rounded-none transition-colors", item.requested === "Giữ nguyên" ? "border-accent" : "border-transparent")} disabled={save.isPending} onClick={() => save.mutate({ action: "keep" })}>
           {buttons.keep}
-        </Button>
-        <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} onClick={() => setChoosing((value) => !value)}>
+        </DecisionButton>
+        <Button size="sm" variant="ghost" icon={UserPlus} aria-expanded={choosing} className="text-fg-2 hover:text-fg" onClick={() => setChoosing((value) => !value)}>
           Người kể khác…
         </Button>
       </div>
@@ -799,7 +799,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
       <div className="flex flex-wrap items-start gap-2" role="group" aria-label="Chọn">
         {(item.voiceChoices ?? []).map((choice) => (
           <div key={`${choice.character}-${choice.label}`} className="flex flex-col items-start gap-0.5">
-            <Button data-choice
+            <DecisionButton data-choice
               size="sm"
               variant="ghost"
               className={cn("border-b-2 rounded-none transition-colors", (item.requested ? [choice.done, choice.label].includes(item.requested) : choice.recommended) ? "border-accent" : "border-transparent")}
@@ -814,12 +814,12 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
               }
             >
               {choice.label}
-            </Button>
+            </DecisionButton>
             {choice.note && <span className="px-0.5 text-[0.6875rem] text-fg-3">{choice.note}</span>}
           </div>
         ))}
         {item.keepCharacters && item.keepCharacters.length > 0 && (
-          <Button data-choice
+          <DecisionButton data-choice
             size="sm"
             variant="ghost"
             disabled={save.isPending}
@@ -832,7 +832,7 @@ function VoiceFix({ bookId, item }: { bookId: string; item: WorkItem }) {
             }
           >
             {item.keepLabel ?? "Giữ nguyên"}
-          </Button>
+          </DecisionButton>
         )}
       </div>
     </div>
@@ -1073,7 +1073,14 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
       <Button size="sm" variant="ghost" icon={Check} className="mt-3" onClick={() => setConfirm(true)}>
         Giữ {keepable.length} thẻ…
       </Button>
-      <Dialog
+      <Dialog footer={<DialogActions>
+          <Button variant="ghost" onClick={() => setConfirm(false)}>
+            Thôi
+          </Button>
+          <Button variant="primary" icon={Check} loading={busy} onClick={() => void run()}>
+            Giữ cả {keepable.length} thẻ
+          </Button>
+        </DialogActions>}
         open={confirm}
         onOpenChange={setConfirm}
         title={`Giữ cả ${keepable.length} thẻ “${KIND_LABEL[kind]}”?`}
@@ -1083,14 +1090,7 @@ function BulkKeep({ bookId, kind, items }: { bookId: string; kind: WorkKind; ite
             : "Giữ người nói, không thu lại; có thể hoàn tác."
         }
       >
-        <div className="mt-5 dialog-actions">
-          <Button variant="ghost" onClick={() => setConfirm(false)}>
-            Thôi
-          </Button>
-          <Button variant="primary" icon={Check} loading={busy} onClick={() => void run()}>
-            Giữ cả {keepable.length} thẻ
-          </Button>
-        </div>
+
       </Dialog>
     </>
   );
@@ -1249,7 +1249,7 @@ function WorkInboxBody({ book, onOpenReview, onOpenScript, onOpenNames, onPickVo
         {inboxLead(book)}
       </p>
       {atReview > 0 && (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/30 bg-accent-soft px-4 py-3 text-sm">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-accent/30 px-4 py-3 text-sm">
           <span className="min-w-0 text-pretty">
             {atReview} việc của các chương đầu đang chờ ở “Duyệt trước khi thu”.
           </span>

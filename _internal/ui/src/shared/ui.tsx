@@ -1,9 +1,9 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, RotateCw, WifiOff, X } from "lucide-react";
+import { AlertTriangle, Check, ChevronLeft, ChevronRight, Loader2, RotateCw, WifiOff, X } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, ReactNode, Ref } from "react";
+import type { ButtonHTMLAttributes, ComponentType, CSSProperties, FocusEvent, HTMLAttributes, ReactNode, Ref, SelectHTMLAttributes } from "react";
 import { cn } from "@/shared/cn";
 import { markArrival, scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
@@ -16,6 +16,16 @@ import { useMediaQuery } from "./media";
 import { useRowFade, useScrollFadeOn } from "./scrollFade";
 
 type IconType = ComponentType<{ className?: string; strokeWidth?: number }>;
+
+/** Giữ menu gốc của hệ thống; cỡ nội tại tính theo lựa chọn dài nhất, chỉ co khi hết bề ngang. */
+export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement> & { ref?: Ref<HTMLSelectElement> }) {
+  return <select {...props} className={cn("shared-select max-w-full min-w-0 rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus disabled:opacity-50 aria-disabled:opacity-50", className)} />;
+}
+
+/** Dấu chọn giữ nguyên chỗ khi đổi mục; chỉ độ mờ đổi, không làm hàng nhảy ngang. */
+export function SelectionMark({ selected, className }: { selected: boolean; className?: string }) {
+  return <Check aria-hidden className={cn("size-4 shrink-0 text-accent-text transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0", className)} />;
+}
 
 // ---- Nút --------------------------------------------------------------------------------------------------
 
@@ -77,7 +87,7 @@ export function Button({
       aria-busy={loading || undefined}
       onClick={busyClick(loading, onClick)}
       className={cn(
-        "inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] press transition-[background-color,color,border-color,outline-color,box-shadow,transform,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45",
+        "shared-button inline-flex select-none items-center justify-center whitespace-nowrap font-medium pointer-coarse:min-w-[48px] press transition-[background-color,color,border-color,outline-color,box-shadow,transform,scale,opacity] duration-motion-fast disabled:pointer-events-none disabled:opacity-45 aria-disabled:cursor-default aria-disabled:opacity-45",
         VARIANTS[variant],
         SIZES[size],
         // Màn hẹp / cảm ứng: nút 28-38 px nới vùng chạm theo chiều dọc lên 40 px (touch-reach trong styles.css; soát UX 29-09 và a14: "Sửa",
@@ -87,7 +97,7 @@ export function Button({
       )}
       {...rest}
     >
-      <MotionRegion as="span" aria-hidden className={cn("inline-grid shrink-0 place-items-center", (Icon || loading !== undefined) && (size === "lg" ? "glyph" : "size-4"))}>{loading ? (
+      <MotionRegion as="span" aria-hidden className={cn("inline-grid shrink-0 place-items-center", !Icon && loading === undefined && "hidden", (Icon || loading !== undefined) && (size === "lg" ? "glyph" : "size-4"))}>{loading ? (
         <Loader2 className="size-4 animate-spin" />
       ) : Icon ? (
         <Icon className={size === "lg" ? "glyph" : "size-4"} strokeWidth={2} />
@@ -95,6 +105,11 @@ export function Button({
       <MotionRegion as="span" className="inline-flex min-w-0 items-center justify-center gap-2" motionKey={typeof children === "string" || typeof children === "number" ? children : undefined}>{children}</MotionRegion>
     </button>
   );
+}
+
+/** Phán quyết của một hàng cần cỡ điều khiển và biểu tượng; liên kết mở ngữ cảnh dùng mực phụ. */
+export function DecisionButton({ icon = Check, ...props }: ButtonProps) {
+  return <Button {...props} data-decision icon={icon} />;
 }
 
 /** Nút thay chỗ nhau trong một khối khi việc đổi pha (Tải -> Huỷ khi bắt đầu tải, Huỷ -> Tải / Thử lại khi xong hay huỷ): nút đang giữ tiêu điểm biến
@@ -614,22 +629,22 @@ export function Dialog({
   description,
   children,
   width = "max-w-lg",
-  phoneSheet = false,
+  footer,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: ReactNode;
   description?: ReactNode;
-  children: ReactNode;
+  children?: ReactNode;
   width?: string;
-  phoneSheet?: boolean;
+  footer?: ReactNode;
 }) {
   useArrivalOnOpen(open);
   // Nhớ phần tử đang giữ con trỏ lúc hộp mở (trước khi Radix chuyển con trỏ vào hộp) để trả về khi đóng.
   const opener = useRef<Element | null>(null);
-  const lastContent = useRef({ title, description, children });
-  if (open) lastContent.current = { title, description, children };
-  const shown = open ? { title, description, children } : lastContent.current;
+  const lastContent = useRef({ title, description, children, footer });
+  if (open) lastContent.current = { title, description, children, footer };
+  const shown = open ? { title, description, children, footer } : lastContent.current;
   useLayoutEffect(() => {
     if (open) opener.current = lastFocus;
   }, [open]);
@@ -641,7 +656,7 @@ export function Dialog({
   const escapeLocal = (event: KeyboardEvent) => {
     if ((event.target as HTMLElement | null)?.closest?.("[data-escape-local]")) event.preventDefault();
   };
-  if (phone && phoneSheet) return <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description} onEscapeKeyDown={escapeLocal}>{children}</Sheet>;
+  if (phone) return <Sheet open={open} onOpenChange={onOpenChange} title={title} description={description} footer={footer} onEscapeKeyDown={escapeLocal}>{children}</Sheet>;
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal>
@@ -693,10 +708,20 @@ export function Dialog({
           </div>
           {/* Hộp cao hơn màn (điện thoại, cửa sổ thấp) thì nội dung cuộn trong hộp, nút Đóng ở đầu luôn thấy được (soát UX a15). */}
           <div ref={setBody} style={fade} className="dialog-body -mx-1 min-h-0 flex-1 overflow-y-auto overscroll-contain px-1">{shown.children}</div>
+          <SurfaceFooter>{shown.footer}</SurfaceFooter>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
   );
+}
+
+/** Chân hộp tách khỏi thân cuộn: nút luôn thấy; một bố cục cho mỗi nền tảng. */
+function SurfaceFooter({ children }: { children?: ReactNode }) {
+  return <MotionPresence open={Boolean(children)} className="surface-footer shrink-0" bodyClassName="border-t border-line pt-4 mt-4">{children}</MotionPresence>;
+}
+
+export function DialogActions({ children, className, ...props }: HTMLAttributes<HTMLElement>) {
+  return <MotionRegion {...props} data-dialog-actions className={cn("dialog-actions", className)}>{children}</MotionRegion>;
 }
 
 /** Tấm trượt từ đáy màn điện thoại, thay cho bảng nổi neo vào một nút nhỏ: trên màn hẹp bảng nổi bị ép sát mép và phải
@@ -734,6 +759,7 @@ export function Sheet({
   const shown = open ? { title, children, description, footer } : lastContent.current;
   const opener = useRef<Element | null>(null);
   const start = useRef<number | null>(null);
+  const dragged = useRef(false);
   const [drag, setDrag] = useState(0);
   const [surface, setSurface] = useState<HTMLDivElement | null>(null);
   const [body, setBody] = useState<HTMLDivElement | null>(null);
@@ -813,26 +839,26 @@ export function Sheet({
         >
           <div data-sheet-grip className="shrink-0 touch-none pb-3 pt-3"
             onPointerDown={(event) => {
-              if (event.target instanceof Element && event.target.closest("button")) return;
+              if (event.target instanceof Element && event.target.closest("button:not([data-sheet-handle])")) return;
+              dragged.current = false;
               start.current = event.clientY; event.currentTarget.setPointerCapture?.(event.pointerId);
             }}
-            onPointerMove={(event) => { if (start.current !== null) setDrag(Math.max(0, event.clientY - start.current)); }}
+            onPointerMove={(event) => { if (start.current !== null) { dragged.current ||= Math.abs(event.clientY - start.current) > 4; setDrag(Math.max(0, event.clientY - start.current)); } }}
             onPointerUp={(event) => {
               const distance = start.current === null ? 0 : event.clientY - start.current;
               start.current = null; setDrag(0);
               if (distance >= 64) onOpenChange(false);
             }}
             onPointerCancel={() => { start.current = null; setDrag(0); }}>
-          <div data-sheet-handle className="mx-auto mb-3 h-[4px] w-[40px] rounded-full bg-line-strong" aria-hidden />
+          <DialogPrimitive.Close asChild>
+            <button type="button" aria-label="Đóng" data-sheet-handle onClick={(event) => { if (dragged.current) { event.preventDefault(); dragged.current = false; } }} className="mx-auto mb-2 flex size-[48px] items-center justify-center rounded-lg">
+              <span className="h-[4px] w-[40px] rounded-full bg-line-strong" aria-hidden />
+            </button>
+          </DialogPrimitive.Close>
           <div className="flex items-center justify-between gap-3">
             <DialogPrimitive.Title className="text-sm font-semibold">
               <MotionRegion as="span" className="block" motionKey={typeof shown.title === "string" || typeof shown.title === "number" ? shown.title : undefined}>{keepDots(shown.title)}</MotionRegion>
             </DialogPrimitive.Title>
-            <DialogPrimitive.Close asChild>
-              <button aria-label="Đóng" className={cn(CLOSE_BUTTON, "-mr-3")}>
-                <X className="size-[20px]" />
-              </button>
-            </DialogPrimitive.Close>
           </div>
           </div>
           <div ref={setBody} style={fade} className="sheet-body -mx-[20px] min-h-0 min-w-0 overflow-y-auto overscroll-contain px-[20px]">
@@ -840,7 +866,7 @@ export function Sheet({
             <MotionPresence open={Boolean(shown.description)}><DialogPrimitive.Description className="mb-3 text-pretty text-sm text-fg-2"><MotionRegion as="span" className="block" motionKey={typeof shown.description === "string" ? shown.description : undefined}>{keepDots(shown.description)}</MotionRegion></DialogPrimitive.Description></MotionPresence>
             {shown.children}
           </div>
-          <MotionPresence open={Boolean(shown.footer)} className="sheet-footer shrink-0" bodyClassName="border-t border-line pt-4">{shown.footer}</MotionPresence>
+          <SurfaceFooter>{shown.footer}</SurfaceFooter>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>
@@ -1040,7 +1066,7 @@ export function TimeSelect({
 }) {
   const options = QUARTERS.includes(value) ? QUARTERS : [...QUARTERS, value].sort();
   return (
-    <select aria-label={label} value={value} disabled={disabled} aria-disabled={ariaDisabled || undefined}
+    <Select aria-label={label} value={value} disabled={disabled} aria-disabled={ariaDisabled || undefined}
       onPointerDown={(event) => { if (ariaDisabled) event.preventDefault(); }}
       onKeyDown={(event) => { if (ariaDisabled && event.key !== "Tab") event.preventDefault(); }}
       onChange={(event) => { if (!ariaDisabled) onChange(event.target.value); }} className={cn("tabular aria-disabled:opacity-50", className)}>
@@ -1049,7 +1075,7 @@ export function TimeSelect({
           {time}
         </option>
       ))}
-    </select>
+    </Select>
   );
 }
 

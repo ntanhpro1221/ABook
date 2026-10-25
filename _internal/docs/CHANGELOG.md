@@ -10,6 +10,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Giao diện
 
 - Bỏ tính năng dấu trang (nút Đánh dấu, tab Dấu trang ở trang sách và màn Đang nghe, mục trong menu câu, phím B).
+- Ô chọn cùng kích thước trên máy tính và điện thoại; hàng đang chọn dùng chữ nhấn và dấu tích, hàng đang phát giữ vạch tiến độ mảnh.
+- Bảng điện thoại thống nhất tay nắm đóng và nút ở chân bảng luôn thấy; các quyết định duyệt nổi rõ hơn liên kết mở ngữ cảnh.
 
 ## [0.4.140] - 2026-10-25
 

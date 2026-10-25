@@ -142,7 +142,7 @@ function RemotePlayerBar({ remote, receivedAt, onDismiss }: { remote: RemotePlay
   };
 
   return (
-    <MotionRegion as="section" aria-label={`Đang phát trên ${remote.name}`} className="relative shrink-0 border-t border-line bg-accent-soft/60">
+    <MotionRegion as="section" aria-label={`Đang phát trên ${remote.name}`} className="relative shrink-0 border-t border-line bg-panel">
       <div className="absolute inset-x-0 top-0 h-[2px] bg-accent motion-progress" style={{ transform: `scaleX(${share / 100})` }} aria-hidden />
       <div className="flex items-center gap-1 px-3 py-1">
         <div className="min-w-0 flex-1">

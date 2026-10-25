@@ -304,6 +304,14 @@ select[class~="border-line"] {
   background-size: 14px 14px;
 }
 
+/* Cùng chiều cao nút; px giữ đúng cỡ điều khiển khi cỡ chữ gốc của app thay đổi. */
+.shared-select { height: 40px; min-height: 40px; }
+.shared-button { min-height: 40px; }
+@media (max-width: 640px), (pointer: coarse) {
+  .shared-select { height: 48px; min-height: 48px; }
+  .shared-button { min-height: 48px; }
+}
+
 /* Mục menu (Radix) đang chọn bằng bàn phím: chỉ nền --hover (1,1:1 trên nền sáng) thì không thấy mình đang ở mục nào. Radix dồn tiêu điểm vào
    mục đang chọn, nên :focus-visible chỉ bật khi đi bằng phím - rê chuột vẫn chỉ đổi nền. Màu chữ nhấn (>= 4,5:1 cả hai giao diện). */
 [role="menuitem"]:focus-visible,
@@ -556,6 +564,14 @@ select[class~="border-line"] {
     max-width: 100%;
   }
 }
+/* Điện thoại: cùng một cột, nút chính dưới cùng. Máy tính: hàng nút ở mép phải. */
+.sheet-surface [data-dialog-actions],
+.sheet-surface .surface-footer .motion-panel > :is(div, section) {
+  display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+}
+/* Nhãn nằm đúng giữa cả khi chỉ một nút có icon; icon có ô riêng, không đẩy nhãn sang phải. */
+.sheet-surface [data-dialog-actions] > button { position: relative; width: 100%; min-height: 48px; margin-inline: 0; padding-inline: 40px; }
+.sheet-surface [data-dialog-actions] > button > [aria-hidden] { position: absolute; left: 14px; }
 /* Nút chỉ có biểu tượng đứng cạnh nhau theo chiều ngang (nới bằng ::after sẽ đè lên nhau): nâng cỡ thật lên 40 x 40 px. */
 /* Nhãn phần - kiểu chữ hoa giãn DUY NHẤT (DESIGN 5.5: 12 px, 600, +0.06em). Màu đặt riêng ở chỗ dùng (thường --fg-2). Soát 24-10 T01:
    11/12 px, giãn 0.05/0.06/0.08em, đậm 500/600 lẫn lộn giữa các màn. Chip / nhãn người nói không dùng lớp này. */
@@ -1052,10 +1068,9 @@ select[class~="border-line"] {
    đi cùng nhau - bỏ padding mà còn margin âm thì lưới lùi ra ngoài cột 12 px mỗi bên (soát 25-10 V8). */
 .player-sheet .sheet-body .grid[class~="p-1"] { margin-inline: 0; padding-inline: 0; gap: 8px; }
 .player-sheet .sheet-body button { min-height: 48px; }
-.sheet-surface [data-add-book-actions] > button:first-child { margin-left: calc(var(--spacing) * -3.5); }
 .sheet-surface .dialog-actions > button { min-height: 48px; }
-/* Nút 48 px, ✕ 20 px ở giữa: 14 px đệm + 5/24 x 20 px lề trong của mực ✕ - mực đứng đúng mép nội dung 20 px. */
-.sheet-surface [data-sheet-grip] button { margin-right: -18.17px; }
+/* Tay nắm là nút đóng duy nhất của bảng đáy, nằm giữa khung. */
+.sheet-surface [data-sheet-handle] { margin-inline: auto; }
 .player-sheet .sheet-body [class~="px-2"],
 .player-sheet .sheet-body [class~="px-1"] { padding-inline: 0; }
 /* Margin âm đi cùng cặp padding vừa bỏ (nút chân bảng -ml-2 px-2 ...): bỏ một nửa thì nút lệch trái 7 px khỏi cột chữ (soát 25-10 V4). */
@@ -1074,8 +1089,8 @@ select[class~="border-line"] {
 [data-sheet-choice] > svg.lucide-plus { margin-left: -2.33px; }
 .player-sheet .sheet-body [data-sheet-choice] > svg.lucide-check { margin-left: -2.5px; }
 .player-sheet .sheet-body [data-sheet-choice] > svg.lucide-plus { margin-left: -3.33px; }
-/* Giọng đang chọn (mọi nơi): nền chọn phủ cả dòng gồm nút "Thử", không dừng giữa hàng. */
-[data-sheet-current] { border-radius: var(--radius-lg); background: var(--color-accent-soft); }
+/* Giọng đang chọn: nhấn chữ; dấu chọn ở hàng, không tô nền cả dòng. */
+[data-sheet-current] { color: var(--accent-text); }
 [data-sheet-current] > button { background: transparent; }
 .player-sheet .sheet-body [data-sheet-current] > button { background: transparent; }
 .player-sheet .sheet-body [data-voice-try] { justify-content: flex-end; }
