@@ -1014,7 +1014,25 @@ select[class~="border-line"] {
 .player-sheet [data-player-menu-row] > span:first-child { gap: 12px; }
 .player-sheet [data-player-menu-row] > svg,
 .player-sheet [data-player-menu-row] > span:first-child > svg { --icon-w: 20px; width: 20px; height: 20px; }
-.chapter-sheet [role="tabpanel"] > div { padding-inline: 0; }
+.chapter-sheet [role="tabpanel"] > div { margin-inline: -4px; padding-inline: 4px; }
+/* overflow-x:auto cũng biến overflow-y thành auto: chừa vòng ở cả bốn mép, bù margin để chữ không dời. */
+[class~="overflow-x-auto"] { margin: -4px; padding: 4px; max-width: calc(100% + 8px); }
+/* Hàng lọc ở cuối thanh công cụ vẫn phải hút khoảng trống bên trái. */
+@media (min-width: 40rem) { [class~="overflow-x-auto"][class~="sm:ml-auto"] { margin-left: auto; } }
+[role="tablist"][class~="overflow-x-auto"] { border-bottom-color: transparent; padding-bottom: 5px; margin-bottom: -5px; }
+[role="tablist"][class~="overflow-x-auto"]::after {
+  content: ""; position: absolute; left: 4px; right: 4px; bottom: 5px; border-bottom: 1px solid var(--line); pointer-events: none;
+}
+/* Phần thân dùng chung: thêm đệm dọc bằng đúng margin âm, chiều cao nội dung không đổi. */
+.sheet-body, .dialog-body { margin-block: -4px; padding-block: 4px; }
+/* Nút mở section tràn khỏi cột 3,5–4,5 px: cần cả phần tràn ấy và vòng 4 px ở hai lớp cuộn lồng nhau. */
+.dialog-body { margin-inline: calc(var(--spacing) * -1 - 8px); padding-inline: calc(var(--spacing) + 8px); }
+.focus-scroll { margin: -4px -8px; padding: 4px calc(var(--spacing) + 8px) 4px 8px; }
+.voice-picker-scroll { margin-top: calc(var(--spacing) * 3 - 4px); margin-right: calc(var(--spacing) * -1 - 8px); }
+.player-controls-scroll { margin-inline: -4px; padding-inline: 24px; }
+/* Nền hàng chọn vẫn tràn 12 px; chỉ dời mép cửa sổ cuộn ra thêm 4 px. */
+.player-sheet .sheet-body [class~="p-1"][class~="overflow-y-auto"] { margin-inline: -16px; padding-inline: 16px; }
+[class~="overflow-y-auto"][class~="p-1"] { margin-block: -1px; padding-block: calc(var(--spacing) + 1px); }
 .chapter-sheet button[data-current] { min-height: 48px; padding: 12px 0; gap: 12px; }
 .chapter-sheet button[data-current] > span:first-child { width: 20px; margin-left: -2.5px; }
 .chapter-sheet button[data-current] > span:first-child svg { width: 20px; height: 20px; }
@@ -1249,6 +1267,15 @@ details[open]:not([data-motion="closing"]) > summary .fold-chevron {
 .page-motion {
   view-transition-name: page;
 }
+.page-motion:has(.settings-page, [data-reader-scroll]),
+body:has([role="dialog"][data-state="open"]) .page-motion {
+  /* Chỉ nới ngang về trái: tràn mép phải viewport làm Radix tính nhầm bề rộng scrollbar khi khoá nền. */
+  margin: -8px 0 0 -8px;
+  padding: 8px 0 0 8px;
+  scroll-padding-block: 8px 0;
+}
+/* Nền bị dialog khoá có thể đã tự cuộn nút mở tới sát đáy; nới đáy lúc ấy, không nới vùng chạm xuống dưới thanh phát của trang thường. */
+body:has([role="dialog"][data-state="open"]) .page-motion { margin-bottom: -8px; padding-bottom: 8px; scroll-padding-bottom: 8px; }
 /* Điện thoại: trang bị màn Đang nghe phủ kín (android/App.tsx MobileShell, HIDES_PAGE) - bỏ qua hẳn thay cho inert. */
 .page-motion[data-covered] {
   content-visibility: hidden;
