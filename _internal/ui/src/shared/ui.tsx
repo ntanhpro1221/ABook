@@ -697,6 +697,7 @@ export function Sheet({
   onKeyDown,
   className,
   onHeightChange,
+  away = false,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -710,6 +711,9 @@ export function Sheet({
   onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
   className?: string;
   onHeightChange?: (height: number) => void;
+  /** Bảng con mở từ một dòng của bảng này đang thay chỗ: bảng này mờ lùi xuống, trơ, nền tối nhường cho bảng con - chỉ một bảng trên màn (soát 140
+   *  STACKED LAYERS). Bảng con đóng (cả Back) thì bảng này trở lại đúng chỗ, vẫn đang mở. */
+  away?: boolean;
 }) {
   useArrivalOnOpen(open);
   const lastContent = useRef({ title, children, description, footer });
@@ -759,21 +763,24 @@ export function Sheet({
     if (!open || !onHeightChange) return;
     const element = surface;
     if (!element) return;
+    // Đang nhường chỗ cho bảng con: không giữ chỗ trên màn (trình phát chừa chỗ theo bảng đang thấy).
+    if (away) { onHeightChange(0); return; }
     const update = () => onHeightChange(element.getBoundingClientRect().height);
     update();
     const observer = new ResizeObserver(update); observer.observe(element);
     return () => { observer.disconnect(); onHeightChange(0); };
-  }, [open, onHeightChange, surface]);
+  }, [open, onHeightChange, surface, away]);
   useLayoutEffect(() => { if (open) opener.current = lastFocus; }, [open]);
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay inert={!open} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
+        <DialogPrimitive.Overlay inert={!open} data-away={away || undefined} style={open ? undefined : CLOSING} className="motion-scrim fixed inset-0 z-40 bg-scrim" />
         <DialogPrimitive.Content
           {...(!shown.description ? { "aria-describedby": undefined } : {})}
           ref={setSurface}
-          inert={!open}
+          inert={!open || away}
+          data-away={away || undefined}
           style={!open ? CLOSING : drag ? { transform: `translateY(${drag}px)`, animation: "none", transition: "none" } : undefined}
           onCloseAutoFocus={(event) => {
             if (keepNewLayerFocus(event)) return;

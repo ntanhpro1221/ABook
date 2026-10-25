@@ -307,6 +307,9 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
 const PlayerSheetSpace = createContext<(id: string, height: number) => void>(() => {});
 /** Bảng đang mở dạng bảng trượt (điện thoại): tiêu đề bảng đã nói tên menu, dòng ghi chú khỏi lặp lại. */
 const InPlayerSheet = createContext(false);
+/** Điện thoại: bảng (MenuShell) cho các dòng con biết khi một bảng con mở từ chúng - bảng cha mờ lùi xuống (Sheet away) thay vì để bảng con chồng
+ *  lên (soát 140 STACKED LAYERS: "Thêm tuỳ chọn" › Nhạc nền / Giọng đọc). */
+const SheetAway = createContext<((away: boolean) => void) | null>(null);
 
 /** Dòng ghi chú đầu menu: hộp nổi (máy tính) không có tiêu đề nên kèm tên menu; bảng trượt có tiêu đề rồi thì chỉ ghi chú. */
 function MenuNote({ title, children }: { title: string; children: string }) {
@@ -365,6 +368,13 @@ function MenuShell({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [popoverOffset, setPopoverOffset] = useState(8);
   const isOpen = open ?? localOpen;
+  const [childAway, setChildAway] = useState(false);
+  const stepAway = useContext(SheetAway);
+  useEffect(() => {
+    if (!phone || look !== "row" || !stepAway) return;
+    stepAway(isOpen);
+    return () => stepAway(false);
+  }, [phone, look, stepAway, isOpen]);
   // Dòng trong menu "…" (máy tính): hộp con mở CẠNH menu cha, mép đáy/đỉnh thẳng mép menu cha - không chồng lên nó. Đo lúc mở (cả khi do bên ngoài mở).
   const [beside, setBeside] = useState<BesideParent | null>(null);
   useLayoutEffect(() => {
@@ -388,8 +398,8 @@ function MenuShell({
     </button>;
   if (phone) return <Popover.Root open={isOpen} onOpenChange={changeOpen}>
     <Sheet open={isOpen} onOpenChange={changeOpen} title={dialogLabel ?? label} trigger={button}
-      focusSelector={focusSelector} onKeyDown={menuArrowKeys} footer={footer} onHeightChange={reserveHeight} className="player-sheet">
-      <InPlayerSheet.Provider value>{children}</InPlayerSheet.Provider>
+      focusSelector={focusSelector} onKeyDown={menuArrowKeys} footer={footer} onHeightChange={reserveHeight} className="player-sheet" away={childAway}>
+      <InPlayerSheet.Provider value><SheetAway.Provider value={setChildAway}>{children}</SheetAway.Provider></InPlayerSheet.Provider>
     </Sheet>
   </Popover.Root>;
   return (
