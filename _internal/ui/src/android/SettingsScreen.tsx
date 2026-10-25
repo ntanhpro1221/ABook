@@ -1,10 +1,11 @@
+import { DisclosureRow } from "@/shared/DisclosureRow";
 import { MotionPresence } from "@/shared/MotionPresence";
 import * as Switch from "@radix-ui/react-switch";
-import { ChevronRight, Download, TriangleAlert } from "lucide-react";
+import { Download, TriangleAlert } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
-import { Button, Segmented, Sheet, TimeSelect } from "@/shared/ui";
+import { useParams } from "react-router";
+import { Button, ChoiceRow, Sheet, TimeSelect } from "@/shared/ui";
 import { GroupHeader, isSettingsGroup, MoreInfo, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
 import { ScreenHeader } from "@/shared/ScreenHeader";
 import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
@@ -148,7 +149,7 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
     <>
       <SettingsBlock>
         <SettingsRow label="Tự tắt" hint="Không chạm máy chừng này thì nhỏ dần rồi dừng.">
-          <Segmented
+          <ChoiceRow
             label="Tự tắt"
             value={String(settings.safetyStopHours)}
             onChange={(value) => change({ safetyStopHours: Number(value) })}
@@ -209,7 +210,7 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
         {settings.shakeToExtend && (
           <>
             <SettingsRow label="Khi lắc" hint="Đặt lại: hẹn giờ quay về từ đầu.">
-              <Segmented
+              <ChoiceRow
                 label="Khi lắc"
                 value={settings.shakeAction ?? "extend"}
                 onChange={(value) => change({ shakeAction: value })}
@@ -220,7 +221,7 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
               />
             </SettingsRow>
             <SettingsRow label="Độ nhạy">
-              <Segmented
+              <ChoiceRow
                 label="Độ nhạy lắc"
                 value={settings.shakeSensitivity ?? "normal"}
                 onChange={(value) => change({ shakeSensitivity: value })}
@@ -240,7 +241,7 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
       </SettingsBlock>
       <SettingsBlock title="Khi sắp tắt" fold="sleep.ending">
         <SettingsRow label="Mỗi lần thêm">
-          <Segmented
+          <ChoiceRow
             label="Mỗi lần thêm"
             value={String(settings.sleepExtendMinutes)}
             onChange={(value) => change({ sleepExtendMinutes: Number(value) })}
@@ -248,7 +249,7 @@ function SleepGroup({ settings, change }: { settings: PlayerSettings; change: Ch
           />
         </SettingsRow>
         <SettingsRow label="Nhỏ dần">
-          <Segmented
+          <ChoiceRow
             label="Nhỏ dần"
             value={String(settings.sleepFadeSeconds)}
             onChange={(value) => change({ sleepFadeSeconds: Number(value) })}
@@ -264,7 +265,7 @@ function LookGroup({ settings, change }: { settings: PlayerSettings; change: Cha
   return (
     <SettingsBlock>
       <SettingsRow label="Màu">
-        <Segmented
+        <ChoiceRow
           label="Màu"
           value={settings.theme}
           onChange={(value) => change({ theme: value })}
@@ -276,7 +277,7 @@ function LookGroup({ settings, change }: { settings: PlayerSettings; change: Cha
         />
       </SettingsRow>
       <SettingsRow label="Nền đọc" hint="Nền của chữ khi đọc theo.">
-        <Segmented label="Nền đọc" value={settings.readingSurface} onChange={(value) => change({ readingSurface: value })} options={READING_SURFACES} />
+        <ChoiceRow label="Nền đọc" value={settings.readingSurface} onChange={(value) => change({ readingSurface: value })} options={READING_SURFACES} />
       </SettingsRow>
       <SettingsRow label="Âm thanh chạm" hint={TOUCH_SOUNDS_HINT}>
         <Toggle label="Âm thanh chạm" checked={settings.touchSounds} onChange={(value) => change({ touchSounds: value })} />
@@ -308,16 +309,17 @@ function DiagnosticsBlock() {
   const diagnostics = useDiagnostics();
   return (
     <SettingsBlock title="Chẩn đoán" id="diagnostics" fold="advanced.diagnostics">
-      <SettingsRow label="Nhật ký" hint={<>{DIAGNOSTICS_HINT}<MoreInfo className="mt-1">{DIAGNOSTICS_MORE}</MoreInfo></>}>
+      <SettingsRow label="Nhật ký" hint={DIAGNOSTICS_HINT}>
         <Sheet open={diagnostics.open} onOpenChange={diagnostics.changeOpen} title="Nhật ký của ABook" trigger={<Button size="sm">Xem</Button>}>
           <div className="space-y-3 px-1.5 pb-3 pt-3">
-            <Button size="sm" variant="secondary" loading={diagnostics.loading} onClick={() => void diagnostics.load()}>
+            <Button size="sm" variant="ghost" loading={diagnostics.loading} onClick={() => void diagnostics.load()}>
               Làm mới
             </Button>
             <DiagnosticsPanel report={diagnostics.report} error={diagnostics.error} loading={diagnostics.loading} />
           </div>
         </Sheet>
       </SettingsRow>
+      <MoreInfo>{DIAGNOSTICS_MORE}</MoreInfo>
       <SettingsRow label="Gửi nhật ký" hint={SEND_HINT}>
         <Button size="sm" loading={diagnostics.sending} onClick={() => void diagnostics.send()}>
           Gửi
@@ -353,12 +355,7 @@ export function AboutBlock({ version }: { version: string | null }) {
         onOpenChange={setOpen}
         title="Thành phần sử dụng"
         trigger={
-          <button type="button" className="flex w-full items-center justify-between gap-4 py-3 text-left">
-            <span className="min-w-0">
-              <span className="block text-[0.9375rem] font-medium [overflow-wrap:anywhere]">Thành phần sử dụng</span>
-            </span>
-            <ChevronRight className="ink-end size-5 shrink-0 text-fg-3 [--icon-w:17.5px]" />
-          </button>
+          <DisclosureRow title="Thành phần sử dụng" />
         }
       >
         <div className="px-1.5 pt-3">{open && <ThirdPartyList />}</div>
@@ -398,14 +395,7 @@ export const SAVE_FAILED = "Chưa lưu được thay đổi. Lần mở sau bạ
 /** Dòng cảnh báo trên trang gốc (bản lưu cũ, bản mới): chỉ là lối tắt vào Nâng cao, không phải mục thứ hai. */
 function RootNotice({ text, tone }: { text: string; tone: "warning" | "accent" }) {
   return (
-    <Link
-      to={settingsPath("advanced")}
-      className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel py-3 text-sm font-medium hover:bg-hover"
-    >
-      {tone === "warning" ? <TriangleAlert className="size-5 shrink-0 text-warning" /> : <Download className="size-5 shrink-0 text-accent-text" />}
-      <span className="min-w-0 flex-1">{text}</span>
-      <ChevronRight className="ink-end size-4 shrink-0 text-fg-3" />
-    </Link>
+    <DisclosureRow to={settingsPath("advanced")} className="mt-4" title={text} icon={tone === "warning" ? <TriangleAlert className="size-5 text-warning" /> : <Download className="size-5 text-accent-text" />} />
   );
 }
 

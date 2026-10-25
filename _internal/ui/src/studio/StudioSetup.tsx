@@ -98,7 +98,7 @@ export function NoStudioHere({ fit, className }: { fit: StudioFit; className?: s
       {peers.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {peers.map((peer) => (
-            <Button key={peer.id} variant="secondary" size="sm" icon={Clapperboard} onClick={() => window.location.assign(peerPage(window.location.search, peer.id, "/studio/new"))}>
+            <Button key={peer.id} variant="ghost" size="sm" icon={Clapperboard} onClick={() => window.location.assign(peerPage(window.location.search, peer.id, "/studio/new"))}>
               Tạo trên {peer.name}
             </Button>
           ))}
@@ -131,7 +131,7 @@ export function StudioInstallNotice({ className }: { className?: string }) {
         </p>
       </div>
       {!info?.remote && (
-        <Button variant="secondary" size="sm" icon={Download} onClick={() => navigate("/studio")}>
+        <Button variant="ghost" size="sm" icon={Download} onClick={() => navigate("/studio")}>
           {studio.action}
         </Button>
       )}
@@ -328,7 +328,7 @@ export function StudioSettings() {
           {fit.level === "no" ? noStudioLine(fit.reason ?? "") : fit.line}
         </p>
         {status.running ? (
-          <Button className="mt-3" variant="secondary" onClick={() => navigate("/studio")}>
+          <Button className="mt-3" variant="ghost" onClick={() => navigate("/studio")}>
             Xem tiến độ cài
           </Button>
         ) : fit.level === "no" ? (
@@ -366,7 +366,7 @@ export function StudioSettings() {
         <p>Đã cài{status.gpu ? ` · ${status.gpu.name}` : ""}</p>
         <p className="mt-1 break-all">{status.root}</p>
       </>}>
-        <Button size="sm" variant={armed ? "danger" : "secondary"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
+        <Button size="sm" variant={armed ? "danger" : "ghost"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
           {busy ? "Đang gỡ…" : armed ? "Xác nhận gỡ" : "Gỡ Studio"}
         </Button>
       </SettingsRow>

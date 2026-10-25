@@ -39,8 +39,8 @@ export function LibraryMoveRecovery({ recovery }: { recovery: LibraryMoveRecover
     </div>
     <div className="flex flex-wrap gap-2">
       <Button disabled={busy} onClick={() => void resolve("finish")}>Hoàn tất chuyển</Button>
-      <Button disabled={busy} variant="secondary" onClick={() => void resolve("rollback")}>Quay lui</Button>
-      <Button disabled={busy} variant="secondary" onClick={() => void resolve("ignore")}>Bỏ qua</Button>
+      <Button disabled={busy} variant="ghost" onClick={() => void resolve("rollback")}>Quay lui</Button>
+      <Button disabled={busy} variant="ghost" onClick={() => void resolve("ignore")}>Bỏ qua</Button>
     </div>
   </div>;
 }

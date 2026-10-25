@@ -122,7 +122,7 @@ export function SharedReadingsSettings() {
           spellCheck={false}
           className="h-8 w-56 max-w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
         />
-        <Button size="sm" variant="secondary" type="submit" loading={save.isPending} disabled={!surface.trim() || !spoken.trim()}>
+        <Button size="sm" variant="ghost" type="submit" loading={save.isPending} disabled={!surface.trim() || !spoken.trim()}>
           Thêm
         </Button>
       </form>
@@ -166,7 +166,7 @@ export function SharedReadingsOffer({ bookId }: { bookId: string }) {
         Cách đọc chung khác cách cuốn này đang đọc: {shown}
         {entries.length > 3 ? `, và ${entries.length - 3} tên khác` : ""}
       </span>
-      <Button size="sm" variant="secondary" icon={BookOpenCheck} loading={apply.isPending} onClick={() => apply.mutate()}>
+      <Button size="sm" variant="ghost" icon={BookOpenCheck} loading={apply.isPending} onClick={() => apply.mutate()}>
         Dùng {entries.length} cách đọc chung
       </Button>
     </div>

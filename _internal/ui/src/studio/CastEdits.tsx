@@ -5,7 +5,7 @@ import { toast } from "@/shared/toast";
 import { cleanName } from "@/listen/BookScreen";
 import type { CastMember } from "@/listen/model";
 import { formatNumber } from "@/shared/format";
-import { Button, Dialog, Segmented } from "@/shared/ui";
+import { Button, Dialog, ChoiceRow } from "@/shared/ui";
 import { api } from "./api";
 import { refreshAfterDecision, UNDO_MS, undoAction } from "./decisions";
 import { voiceToUse } from "./MergePeople";
@@ -150,7 +150,7 @@ export function GenderDialog({ bookId, person, onClose, waiting = false, onSaved
       description={current ? `Hiện đang là nhân vật ${current === "female" ? "nữ" : "nam"}.` : "Máy chưa xác định được giới của người này."}
     >
       <MotionRegion>
-      <Segmented<Gender> value={(choice ?? "") as Gender} onChange={setChoice} options={GENDERS} label="Giới tính" />
+      <ChoiceRow<Gender> value={(choice ?? "") as Gender} onChange={setChoice} options={GENDERS} label="Giới tính" />
       {waiting && <p className="mt-3 text-sm text-pretty">Giọng đọc của {name} chưa đổi ngay - Studio sẽ làm khi bạn mở file này ở máy có Studio.</p>}
       {/* Chưa có câu nào được thu: vẫn nói giọng sẽ đổi - đổi giới là đổi giọng (soát UX a23: hộp không nói). */}
       {!waiting && recorded === 0 && person && choice && choice !== current && (

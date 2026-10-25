@@ -2,7 +2,6 @@ import { MoreInfo } from "@/shared/SettingsNav";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { useListPresence, type PresentRow } from "@/shared/motion";
-import { SlidingIndicator } from "@/shared/SlidingIndicator";
 import { Fold } from "@/shared/Collapse";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Popover from "@radix-ui/react-popover";
@@ -16,7 +15,7 @@ import { useClip } from "@/listen/clip";
 import { cn } from "@/shared/cn";
 import { formatNumber } from "@/shared/format";
 import { useMediaQuery } from "@/shared/media";
-import { Button, EmptyState, FilterRow, IconButton, Kbd, Segmented, Sheet, Skeleton, ContentSkeleton, InlineError } from "@/shared/ui";
+import { Button, EmptyState, FilterRow, IconButton, Kbd, ChoiceRow, Sheet, Skeleton, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api, urls } from "./api";
 import { NameInLine, useNamesInLine } from "./NameReadings";
 import { UNDO_MS, optimistic, undoAction, undoSteps, usePendingNote } from "./decisions";
@@ -618,7 +617,7 @@ export function DeliveryMenu({
       {/* Mục tên nằm cuối bảng, dưới nếp cuộn - chỉ lối xuống đó ngay đầu bảng (soát UX 29-09). */}
       <div>
         <div className="mb-1.5 label-section text-fg-2">Loại đoạn</div>
-        <Segmented label="Loại đoạn" value={kind} onChange={setKind} options={KINDS} />
+        <ChoiceRow label="Loại đoạn" value={kind} onChange={setKind} options={KINDS} />
       </div>
       {needsSpeaker && (
         <div>
@@ -644,29 +643,13 @@ export function DeliveryMenu({
       {line.emotion !== null && (
         <div>
           <div className="mb-1.5 label-section text-fg-2">Cảm xúc</div>
-          <div className="relative grid grid-cols-3 gap-1">
-            <SlidingIndicator variant="pill" className="rounded-lg bg-accent-soft ring-1 ring-accent/40" />
-            {EMOTIONS.map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={emotion === value}
-                onClick={() => setEmotion(value)}
-                className={cn(
-                  "relative h-8 rounded-lg px-1 text-xs font-medium transition-colors duration-motion-medium",
-                  emotion === value ? "text-accent-text" : "text-fg-2 hover:bg-hover",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
+          <ChoiceRow wrap label="Cảm xúc" value={emotion} onChange={setEmotion} options={EMOTIONS.map(([value, label]) => ({ value, label }))} />
         </div>
       )}
       {line.intensity !== null && (
         <div>
           <div className="mb-1.5 label-section text-fg-2">Mức</div>
-          <Segmented
+          <ChoiceRow
             label="Mức"
             value={String(level)}
             onChange={(value) => setLevel(Number(value))}
@@ -892,7 +875,7 @@ export function SpeakerMenu({
                     key={gender}
                     type="button"
                     onClick={() => onPick({ value: query.trim(), label: query.trim(), lines: 0, newGender: gender })}
-                    className="h-8 flex-1 rounded-lg border border-line text-xs font-medium text-fg-2 hover:bg-hover"
+                    className="min-h-10 flex-1 rounded-lg text-xs font-medium text-accent-text hover:bg-hover"
                   >
                     {label}
                   </button>
@@ -1133,7 +1116,7 @@ function ScriptRow({
               <button
                 type="button"
                 onClick={() => onPick(suggested)}
-                className="rounded-md border border-warning/40 px-1.5 py-0.5 font-medium text-warning hover:bg-warning-soft"
+                className="rounded-md px-1.5 py-0.5 font-medium text-warning hover:bg-warning-soft"
               >
                 Gán cho {suggested.label}
               </button>
@@ -1530,7 +1513,7 @@ export function ChapterFooter({ bookId, script, onNext, onUndoable }: { bookId: 
     <MotionRegion className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
       {script.castReady && open.length > 0 ? (
         <div className="min-w-0">
-          <Button size="sm" variant="secondary" icon={Check} loading={confirm.isPending} onClick={() => confirm.mutate(open)}>
+          <Button size="sm" variant="ghost" icon={Check} loading={confirm.isPending} onClick={() => confirm.mutate(open)}>
             Duyệt {open.length} câu
           </Button>
           <p className="mt-1 text-xs text-fg-3">

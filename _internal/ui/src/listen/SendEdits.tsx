@@ -101,13 +101,13 @@ export function EditsNoticesBanner({ book }: { book: ListenBook }) {
         {items.map((notice) => (
           <li key={notice.id} className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="min-w-0 flex-1 text-pretty">{notice.label}</span>
-            <Button size="sm" variant="secondary" icon={Undo2} disabled={act.isPending} onClick={() => act.mutate({ verb: "undo", notice })}>
+            <Button size="sm" variant="ghost" icon={Undo2} disabled={act.isPending} onClick={() => act.mutate({ verb: "undo", notice })}>
               Đặt lại bản của máy này
             </Button>
           </li>
         ))}
       </ul>
-      <Button size="sm" variant="secondary" className="mt-2" icon={X} disabled={act.isPending} onClick={() => act.mutate({ verb: "dismiss" })}>
+      <Button size="sm" variant="ghost" className="mt-2" icon={X} disabled={act.isPending} onClick={() => act.mutate({ verb: "dismiss" })}>
         Đã hiểu
       </Button>
     </MotionRegion>
@@ -167,12 +167,12 @@ export function EditsSyncBanner({ book }: { book: ListenBook }) {
         </p>
       ))}
       {available && book.editsSync && book.editsSync.pending > 0 && (
-        <Button size="sm" variant="secondary" className="mt-2" icon={Send} loading={busy} onClick={send}>
+        <Button size="sm" variant="ghost" className="mt-2" icon={Send} loading={busy} onClick={send}>
           Gửi về {where}
         </Button>
       )}
       {note.tone === "sent" && (
-        <Button size="sm" variant="secondary" className="mt-2" icon={X} onClick={dismiss}>
+        <Button size="sm" variant="ghost" className="mt-2" icon={X} onClick={dismiss}>
           Đã hiểu
         </Button>
       )}

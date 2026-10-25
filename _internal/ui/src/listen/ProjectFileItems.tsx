@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
-import { Button, Dialog, Segmented, ContentSkeleton, InlineError } from "@/shared/ui";
+import { Button, Dialog, ChoiceRow, ContentSkeleton, InlineError } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { useStudioMissing } from "@/studio/data";
 import { isOpenWork } from "@/studio/WorkInbox";
@@ -207,7 +207,7 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
       title="Việc của xưởng"
       description="Ảnh chụp lúc người làm sách đóng gói file - chỉ để xem. Muốn sửa thì mở file bằng Studio."
     >
-      {available.length > 1 && <Segmented<Tab> value={tab} onChange={setTab} label="Màn" options={available} />}
+      {available.length > 1 && <ChoiceRow<Tab> value={tab} onChange={setTab} label="Màn" options={available} />}
       {/* Khung chờ / lỗi / đổi màn: mờ qua (fadeThrough) theo khoá màn + pha tải, không đổi cứng trong hộp đang mở. */}
       <MotionRegion fadeThrough motionKey={[tab, isLoading, Boolean(error && !data)]} className="mt-3 max-h-[50vh] overflow-y-auto text-sm">
         {isLoading ? <ContentSkeleton label="Đang tải việc xưởng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại việc của xưởng." onRetry={() => void refetch()} /> : null}

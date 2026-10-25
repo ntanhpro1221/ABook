@@ -47,7 +47,7 @@ describe("Fold nhớ gấp / mở theo từng khối", () => {
     expect(html).toMatch(/<button[^>]*aria-expanded="false"[^>]*aria-controls="[^"]+"/);
     expect(html).toContain("Sách 2 GB · còn trống 10 GB");
     expect(html).toContain('data-state="closed"');
-    expect(html).toContain("fold-chevron");
+    expect(html).toContain("disclosure-chevron");
   });
 });
 

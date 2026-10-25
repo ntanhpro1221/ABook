@@ -1,9 +1,10 @@
+import { DisclosureRow } from "./DisclosureRow";
 // Khung Cài đặt dùng chung hai nền (chủ app 23-10: "trong setting tôi như lạc vào một cái ma trận"): trang gốc là danh sách ngắn các nhóm
 // (biểu tượng + tên + một dòng giá trị hiện tại), mỗi nhóm một màn con `/settings/<nhóm>` - route thật nên Back của điện thoại, vuốt cạnh và
 // nút ← cùng về trang gốc. Không có cấp thứ ba. Cây nhóm và lý do: SETTINGS_MAP (a119).
-import { AudioLines, ChevronDown, ChevronRight, CircleHelp, Clapperboard, Headphones, MonitorSmartphone, MoonStar, Palette, Wrench, type LucideIcon } from "lucide-react";
+import { AudioLines, CircleHelp, Clapperboard, Headphones, MonitorSmartphone, MoonStar, Palette, Wrench, type LucideIcon } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
-import { NavLink, useLocation, useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { MotionRegion } from "./MotionRegion";
 import { ScreenHeader } from "./ScreenHeader";
 import { AnimatedRows } from "./MotionPresence";
@@ -51,22 +52,7 @@ export function SettingsList({ rows, current, className }: { rows: readonly Grou
       <AnimatedRows as="ul" className="divide-y divide-line" items={shown} keyOf={group => group.id}>{({ id, label, icon: Icon }) => {
         const summary = rows.find((row) => row.id === id)?.summary;
         return (
-          <NavLink
-            key={id}
-            to={settingsPath(id)}
-            replace={replace}
-            state={{ settingsList: !replace || Boolean(location.state?.settingsList) }}
-            aria-current={id === current ? "page" : undefined}
-            className={cn("relative -mx-2 flex min-h-[3.5rem] items-center gap-3.5 rounded-lg px-2 py-2.5 transition-colors hover:bg-hover", id === current && "bg-accent-soft text-accent-text")}
-          >
-            <Icon className={cn("size-5 shrink-0", id === current ? "text-accent-text" : "text-fg-2")} strokeWidth={1.9} aria-hidden />
-            <span className="min-w-0 flex-1">
-              <span className="block text-[0.9375rem] font-medium">{label}</span>
-              {/* Giá trị hiện tại đổi (chọn giọng khác, bật / tắt tự lùi) hay mới có (phiên bản): mờ chéo, không thay chữ cứng. */}
-              <MotionRegion as="span" motionKey={summary ?? ""} className="block truncate text-xs text-fg-2">{summary}</MotionRegion>
-            </span>
-            <ChevronRight className="ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
-          </NavLink>
+          <DisclosureRow key={id} to={settingsPath(id)} replace={replace} state={{ settingsList: !replace || Boolean(location.state?.settingsList) }} current={id === current} title={label} summary={summary} icon={<Icon className="size-5" strokeWidth={1.9} />} />
         );
       }}</AnimatedRows>
     </nav>
@@ -110,12 +96,7 @@ function FoldedBlock({ title, id, children, className, storageKey }: { title: st
   const bodyId = useId();
   return (
     <section id={id} data-fold="" className={cn("settings-block mt-8", className)}>
-      <h2 className="label-section text-fg-2">
-        <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen(!open)} className="touch-row -mx-2 flex w-[calc(100%+var(--spacing)*4)] items-center justify-between gap-2 rounded-lg px-2 py-1 text-left uppercase hover:bg-hover">
-          {title}
-          <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0" aria-hidden />
-        </button>
-      </h2>
+      <h2><DisclosureRow title={title} expanded={open} controls={bodyId} onClick={() => setOpen(!open)} /></h2>
       <Collapse open={open} id={bodyId}>
         <div className="divide-y divide-line">{children}</div>
       </Collapse>
@@ -143,16 +124,7 @@ export function MoreInfo({ children, label = "Tìm hiểu thêm", className }: {
   const id = useId();
   return (
     <div data-more-info="" className={className}>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls={id}
-        onClick={() => setOpen((now) => !now)}
-        className="touch-hit inline-flex items-center gap-1 text-xs font-medium text-accent-text"
-      >
-        <CircleHelp className="size-3.5" aria-hidden />
-        {label}
-      </button>
+      <DisclosureRow title={label} icon={<CircleHelp className="size-5" />} expanded={open} controls={id} onClick={() => setOpen((now) => !now)} />
       <Collapse open={open} id={id} className="pt-1 text-xs leading-snug text-fg-2 text-pretty">
         {children}
       </Collapse>

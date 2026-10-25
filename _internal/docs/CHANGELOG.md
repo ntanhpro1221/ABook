@@ -8,6 +8,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ## [Chưa phát hành]
 
 ### Giao diện
+- Cài đặt dùng hàng mở rộng thống nhất, lựa chọn chữ gạch chân và nút chữ gọn; các cột thẳng mép trên máy tính.
+- Thiết bị dùng danh sách phẳng, hướng dẫn ghép ngắn hơn và liên kết tải dễ mở hoặc chép; nút phụ bỏ viền trên cả điện thoại, máy tính và Studio.
 - Hàng nút dưới tên sách và dưới Đang nghe: biểu tượng luôn nằm ngay giữa trên nhãn của nó, nút đầu và cuối hàng không còn lệch ra mép.
 - Vạch chia giữa các dòng (bảng dự án Studio, kết quả Tìm trong sách) thụt theo chữ, không còn thò ra ngoài khung hai bên.
 - Dấu "·" giữa các mẩu thông tin (tác giả · giọng · số chương · thời lượng) không còn treo cuối dòng hay đứng đầu dòng; dòng dài xuống hàng giữa hai mẩu. Tên sách có sẵn dấu "·" trong tiêu đề hộp thoại cũng không bị ngắt ngay ở dấu.
@@ -17,7 +19,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Máy tính: mọi hộp thoại rộng tối đa 560 px như chuẩn thiết kế (chọn giọng, tìm trong sách, xuất sách nói, thành phần sử dụng...).
 - Màn đọc trên điện thoại: thanh điều khiển dưới trải thẳng lề chữ, chữ phía trên mờ hẳn trước khi chạm thanh, không còn lộ qua hai góc.
 - Hẹn giờ tắt: một cách chọn duy nhất - bấm một mức (5 đến 90 phút) hay "Hết chương này" là đặt, mức đang hẹn sáng lên; bỏ bộ −/+ và nút "Đặt … phút" riêng. Bảng thấp hơn nên trên điện thoại vẫn thấy hàng tốc độ và hẹn giờ phía sau.
-- Điện thoại: chọn Nhạc nền hay Giọng đọc trong "Thêm tuỳ chọn" không còn mở bảng thứ hai chồng lên; bảng tuỳ chọn mờ lùi xuống nhường chỗ và trở lại khi bạn đóng bảng con hay bấm Back.
+- Trình phát: chọn Nhạc nền hay Giọng đọc trong "Thêm tuỳ chọn" mở ngay tại chỗ trong bảng ấy (trượt xuống), không còn bảng thứ hai chồng lên; Back khép mục con trước rồi mới khép bảng.
 - Thông báo ngắn lại: một dòng và tối đa một nút ("Hoàn tác" hay "Mở"), không còn dòng phụ lặp ý hay ba hàng cao gần nửa màn; thông báo lỗi vẫn giữ một dòng nói rõ lý do. Trên điện thoại thông báo nằm dưới thanh trạng thái, không che đầu tên sách.
 - Menu "…" của trình phát: mỗi dòng chỉ một biểu tượng (Âm lượng, Thiết bị phát không còn hai loa / hai nút cast), việc khác nhau dùng biểu tượng khác nhau ("Đổi tên hồ sơ…" không còn trùng bút chì với "Sửa thông tin"); mục con trên máy tính mở thẳng mép với menu cha thay vì đè lệch lên.
 - Chữ trong màn đọc và "Đọc theo" không còn dài gần 90 ký tự mỗi dòng: cột chữ giữ khoảng 66 ký tự ở mọi cỡ chữ, dễ đọc hơn trên màn rộng.

@@ -1,11 +1,10 @@
 // Mục gấp / mở có chuyển động (a120). Chủ app 23-10: "cài đặt hay gì đó mà trong nó có nhiều đầu mục quá thì foldout chúng lại… chứ để hết
 // một trang dài ơi là dài" - và không chỗ nào bật tắt cứng. `Collapse`: phần thân kéo cao / khép lại (styles.css .motion-collapse, lưới 0fr <-> 1fr,
 // không đo chiều cao). `Fold`: một khối có đầu bấm được (tên + một dòng tóm tắt + mũi tên), nhớ gấp / mở theo từng khối trên máy này.
-import { ChevronDown } from "lucide-react";
+import { DisclosureRow } from "./DisclosureRow";
 import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cn } from "./cn";
 import { EASE, MOTION, markArrival, pageSettling, prefersReducedMotion } from "./motion";
-import { MotionRegion } from "./MotionRegion";
 
 /** Bọc phần trang phụ thuộc một lượt tải (thường là cả trang, để đầu trang ngoài LoadingCrossfade cũng tính). Lượt dữ liệu đầu về thì mở
  *  cửa sổ ổn định (motion.ts pageSettling): thứ tới cùng lượt ấy hiện tại chỗ, không mọc từ 0 (đo 25-10: lưới Thư viện trôi 110 px trong
@@ -134,21 +133,7 @@ export function Fold({
   return (
     <section className={cn("min-w-0", !flat && "rounded-2xl border border-line bg-panel", className)}>
       <Heading className="m-0">
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={id}
-          onClick={() => setOpen(!open)}
-          // Phẳng: bù đúng hai phần đệm theo --spacing để chữ và mũi tên thẳng mép.
-          className={cn("flex min-h-[3.5rem] items-center gap-3 py-2.5 text-left transition-colors hover:bg-hover", flat ? "-mx-2 w-[calc(100%+var(--spacing)*4)] rounded-lg px-2" : "w-full rounded-2xl px-4")}
-        >
-          {icon && <span className="shrink-0 text-fg-2" aria-hidden>{icon}</span>}
-          <span className="min-w-0 flex-1">
-            <span className="block text-[0.9375rem] font-medium">{title}</span>
-            <MotionRegion as="span" motionKey={typeof summary === "string" || typeof summary === "number" ? summary : undefined} className="block truncate text-xs font-normal text-fg-2">{summary}</MotionRegion>
-          </span>
-          <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
-        </button>
+        <DisclosureRow title={title} summary={summary} icon={icon} expanded={open} controls={id} onClick={() => setOpen(!open)} className={flat ? undefined : "px-4"} />
       </Heading>
       <Collapse open={open} onOpened={onOpened} id={id} className={cn(flat ? "pb-2" : "px-4 pb-4", bodyClassName)}>
         {children}

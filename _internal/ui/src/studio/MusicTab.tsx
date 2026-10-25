@@ -224,7 +224,7 @@ function TrackRow({
             {previewing === item.link ? "Dừng nghe" : "Nghe thử"}
           </Button>
         )}
-        <Button size="sm" variant="secondary" icon={Pin} disabled={busy} loading={choosing === item.link}
+        <Button size="sm" variant="ghost" icon={Pin} disabled={busy} loading={choosing === item.link}
           onClick={() => onChoose(item.link)}>
           {choosing === item.link ? "Đang đổi…" : "Chọn"}
         </Button>
@@ -390,7 +390,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
                 </Button>
                 {removing === track.link ? (
                   <>
-                    <Button size="sm" variant="secondary" icon={Trash2} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
+                    <Button size="sm" variant="ghost" icon={Trash2} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
                       Xoá khỏi kho
                     </Button>
                     <Button size="sm" variant="ghost" disabled={remove.isPending} onClick={() => setRemoving(null)}>
@@ -443,7 +443,7 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
       </p>
       {data.installed ? (
         <div className="flex flex-wrap items-center gap-3">
-          <Button size="sm" variant="secondary" icon={RefreshCw} loading={running} onClick={() => compute.mutate()}>
+          <Button size="sm" variant="ghost" icon={RefreshCw} loading={running} onClick={() => compute.mutate()}>
             {running ? "Đang đọc không khí…" : "Đọc lại ngữ cảnh"}
           </Button>
           {moods?.error && <span className="text-sm text-warning">{moods.error}</span>}
@@ -452,7 +452,7 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
         <p className="text-sm">Đang tải phần đọc không khí{percent !== null ? ` - ${percent}%` : "…"}</p>
       ) : data.downloadable && !info?.remote ? (
         <div className="flex flex-wrap items-center gap-3">
-          <Button size="sm" variant="secondary" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>
+          <Button size="sm" variant="ghost" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>
             Tải thêm (3,2 GB)
           </Button>
           {data.error && <span className="text-sm text-warning">{data.error}</span>}

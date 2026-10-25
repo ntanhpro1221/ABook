@@ -78,11 +78,11 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
           {action && (
             <div className="flex flex-wrap items-center gap-2">
               {action === "install" ? (
-                <Button size="sm" variant="secondary" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/module")}>
+                <Button size="sm" variant="ghost" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/module")}>
                   {failed ? "Thử lại" : module.stopped ? `Tải lại (${formatSize(module.outdatedBytes ?? module.total)})` : updating ? `Cập nhật (${formatSize(module.outdatedBytes ?? module.total)})` : `Tải (${formatSize(module.total)})`}
                 </Button>
               ) : (
-                <Button size="sm" variant="secondary" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/reanalyse")}>
+                <Button size="sm" variant="ghost" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/reanalyse")}>
                   {`Phân tích ${stale} bài`}
                 </Button>
               )}
@@ -114,7 +114,7 @@ export function MusicModuleNotice({ view, queryKey }: { view: LocalMusicView | u
           )}
           {precise.state !== "downloading" && (
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="sm" variant="secondary" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/precise", { enabled: precise.state !== "ready" })}>
+              <Button size="sm" variant="ghost" className={WRAP} loading={starting} onClick={() => void post("/api/music/local/precise", { enabled: precise.state !== "ready" })}>
                 {precise.state === "error" ? "Thử lại" : precise.state === "missing" ? `Tải tiếp (${formatSize(precise.bytes)})` : precise.state === "ready" ? "Tắt đo cảm xúc" : precise.present ? "Bật đo cảm xúc" : `Tải (${formatSize(precise.bytes)})`}
               </Button>
               {precise.removable && (

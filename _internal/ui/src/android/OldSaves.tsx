@@ -23,7 +23,7 @@ export function OldSaveDeleteDialog({ file, busy, onConfirm, onCancel }: { file:
       width="max-w-sm"
     >
       <div className="flex justify-end gap-2">
-        <Button variant="secondary" onClick={onCancel} disabled={busy}>
+        <Button variant="ghost" onClick={onCancel} disabled={busy}>
           Giữ lại
         </Button>
         <Button variant="danger" icon={Trash2} loading={busy} onClick={onConfirm}>
@@ -85,10 +85,10 @@ export function OldSavesList({ files }: { files: OldSave[] }) {
             </div>
           </div>
           <div className="ml-auto flex gap-2">
-            <Button size="sm" variant="secondary" icon={Download} onClick={() => void exportOldSave(file)}>
+            <Button size="sm" variant="ghost" icon={Download} onClick={() => void exportOldSave(file)}>
               Lưu ra…
             </Button>
-            <Button size="sm" variant="secondary" icon={Trash2} onClick={() => setAsking(file)}>
+            <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setAsking(file)}>
               Xoá…
             </Button>
           </div>

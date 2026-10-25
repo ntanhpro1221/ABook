@@ -1,13 +1,14 @@
+import { DisclosureRow } from "@/shared/DisclosureRow";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { SleepSchedule } from "./SleepSchedule";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronRight, Download, FolderOpen } from "lucide-react";
+import { Download, FolderOpen } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import { toast } from "@/shared/toast";
 import { useMediaQuery } from "@/shared/media";
-import { Button, Dialog, Segmented, WRAP_LABEL } from "@/shared/ui";
+import { Button, Dialog, ChoiceRow, WRAP_LABEL } from "@/shared/ui";
 import { ScreenHeader } from "@/shared/ScreenHeader";
 import { GroupHeader, isSettingsGroup, SettingsBlock, SettingsList, SettingsRow, settingsPath, type GroupRow, type SettingsGroupId } from "@/shared/SettingsNav";
 import { sleepSummary, themeSummary } from "@/shared/settingsSummary";
@@ -180,7 +181,7 @@ function UpdateCheck({ current }: { current: string }) {
       label={current ? `ABook ${current}` : "Bản mới"}
       hint={<MotionRegion as="span" motionKey={line?.text ?? ""}>{line && <span className={cn(line.tone === "error" && "text-danger")} role="status">{line.text}</span>}</MotionRegion>}
     >
-      <Button size="sm" variant="secondary" disabled={checking} onClick={() => void check()}>
+      <Button size="sm" variant="ghost" disabled={checking} onClick={() => void check()}>
         {checking ? "Đang kiểm tra…" : "Kiểm tra bản mới"}
       </Button>
     </SettingsRow>
@@ -192,9 +193,7 @@ function ThirdPartyButton() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <Button className={WRAP_LABEL} size="sm" variant="secondary" onClick={() => setOpen(true)}>
-        Thành phần sử dụng
-      </Button>
+      <DisclosureRow title="Thành phần sử dụng" onClick={() => setOpen(true)} />
       <Dialog open={open} onOpenChange={setOpen} title="Thành phần sử dụng" width="max-w-[560px]">
         <div className="mt-3 max-h-[65vh] select-text overflow-y-auto pr-1">{open && <ThirdPartyList />}</div>
       </Dialog>
@@ -268,7 +267,7 @@ function SleepGroup() {
   return (
     <SettingsBlock>
       <SettingsRow label="Tự tắt" hint="Không ai chạm máy chừng này thì nhỏ dần rồi dừng.">
-        <Segmented<"0" | "1" | "2" | "3">
+        <ChoiceRow<"0" | "1" | "2" | "3">
           label="Tự tắt"
           value={String(preferences?.safetyStopHours ?? 2) as "0" | "1" | "2" | "3"}
           onChange={(value) => update({ safetyStopHours: Number(value) })}
@@ -282,7 +281,7 @@ function SleepGroup() {
       </SettingsRow>
       <SleepSchedule />
       <SettingsRow label="Mỗi lần nghe thêm" hint={`Lúc đang nhỏ dần: ${EXTEND_GESTURE}.`}>
-        <Segmented<"5" | "10" | "15">
+        <ChoiceRow<"5" | "10" | "15">
           label="Số phút nghe thêm"
           value={extend}
           onChange={(value) => update({ sleepExtendMinutes: Number(value) })}
@@ -294,7 +293,7 @@ function SleepGroup() {
         />
       </SettingsRow>
       <SettingsRow label="Nhỏ dần">
-        <Segmented<"10" | "30" | "60">
+        <ChoiceRow<"10" | "30" | "60">
           label="Độ dài nhỏ dần"
           value={fade}
           onChange={(value) => update({ sleepFadeSeconds: Number(value) })}
@@ -316,10 +315,10 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
       {!remote && (
         <SettingsBlock>
           <SettingsRow label="Màu">
-            <Segmented label="Màu" value={preferences?.theme ?? "system"} onChange={(theme) => update({ theme })} options={[...THEMES]} />
+            <ChoiceRow label="Màu" value={preferences?.theme ?? "system"} onChange={(theme) => update({ theme })} options={[...THEMES]} />
           </SettingsRow>
           <SettingsRow label="Nền đọc" hint="Nền của chữ khi đọc theo.">
-            <Segmented<ReadingSurface>
+            <ChoiceRow<ReadingSurface>
               label="Nền đọc"
               value={readingSurfaceOr(preferences?.readingSurface)}
               onChange={(readingSurface) => update({ readingSurface })}
@@ -440,7 +439,7 @@ export function AdvancedGroup({ info }: { info: AppInfo | undefined }) {
               <span className="truncate" title={preferences?.libraryRoot}>{preferences?.libraryRoot}</span>
             </div>
             {info?.dialogs && (
-              <Button size="sm" variant="secondary" icon={FolderOpen} className={cn("touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>
+              <Button size="sm" variant="ghost" icon={FolderOpen} className={cn("touch-row", WRAP_LABEL)} onClick={() => void changeLibrary()}>
                 Đổi thư mục
               </Button>
             )}
@@ -530,11 +529,7 @@ export function SettingsScreen() {
     <>
       {info?.remote && <RemoteNote listenOnly={Boolean(info.listenOnly)} />}
       <MotionPresence open={Boolean(info?.update && !info.remote && !wide)}>{info?.update && !info.remote && !wide && (
-        <Link to={settingsPath("advanced")} className="mt-4 flex items-center gap-3 rounded-2xl border border-line bg-panel py-3 text-sm font-medium hover:bg-hover">
-          <Download className="size-5 shrink-0 text-accent-text" />
-          <span className="min-w-0 flex-1">Có ABook {info.update.version}</span>
-          <ChevronRight className="ink-end size-4 shrink-0 text-fg-3" />
-        </Link>
+        <DisclosureRow to={settingsPath("advanced")} className="mt-4" title={`Có ABook ${info.update.version}`} icon={<Download className="size-5 text-accent-text" />} />
       )}</MotionPresence>
     </>
   );
@@ -545,14 +540,14 @@ export function SettingsScreen() {
     return (
       <div className="settings-page page-x mx-auto grid max-w-[1180px] grid-cols-[260px_minmax(0,1fr)] gap-x-8 pb-16">
         <ScreenHeader title="Cài đặt" className="self-baseline" />
-        <div className="min-w-0 max-w-[760px] self-baseline">
+        <div className="min-w-0 self-baseline">
           <GroupHeader id={shown} back={false} />
         </div>
         <div>
           {notices}
           <SettingsList rows={rows} current={shown} className="mt-5" />
         </div>
-        <div className="min-w-0 max-w-[760px]">
+        <div className="min-w-0">
           <GroupBody id={shown} info={info} touchOnly={touchOnly} />
         </div>
       </div>

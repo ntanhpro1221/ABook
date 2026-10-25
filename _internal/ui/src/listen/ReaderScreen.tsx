@@ -359,10 +359,10 @@ export function ReaderScreen(edit: SentenceEditing) {
           </button>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 w-64 rounded-xl border border-line bg-panel p-3 shadow-float">
+          <Popover.Content side="top" align="end" sideOffset={8} collisionPadding={12} className="z-50 w-[288px] max-w-[calc(100vw-24px)] rounded-xl border border-line bg-panel p-3 shadow-float">
             <div className="text-xs font-medium text-fg-2">Cỡ chữ</div>
             <div role="group" aria-label="Cỡ chữ" className="relative mt-1.5 grid grid-cols-5 gap-1">
-              <SlidingIndicator variant="pill" className="rounded-lg bg-accent-soft" />
+              <SlidingIndicator variant="line" />
               {SIZES.map((size) => (
                 <button
                   key={size}
@@ -370,25 +370,24 @@ export function ReaderScreen(edit: SentenceEditing) {
                   aria-pressed={prefs.size === size}
                   aria-label={`Cỡ chữ ${size}`}
                   onClick={() => setPrefs({ ...prefs, size })}
-                  className={cn("relative h-9 rounded-lg transition-colors duration-motion-medium max-sm:h-[48px]", prefs.size === size ? "font-semibold text-accent-text" : "hover:bg-hover")}
-                  style={{ fontSize: Math.round(size * 0.75) }}
+                  className={cn("tabular relative h-9 min-w-[48px] text-left text-sm font-medium transition-colors duration-motion-medium max-sm:h-[48px]", prefs.size === size ? "text-accent-text" : "hover:bg-hover")}
                 >
-                  A
+                  <span data-indicator-target className="inline-block">{size}</span>
                 </button>
               ))}
             </div>
             <div className="mt-3 text-xs font-medium text-fg-2">Giãn dòng</div>
             <div className="relative mt-1.5 grid grid-cols-3 gap-1">
-              <SlidingIndicator variant="pill" className="rounded-lg bg-accent-soft" />
+              <SlidingIndicator variant="line" />
               {LEADINGS.map((leading) => (
                 <button
                   key={leading}
                   type="button"
                   aria-pressed={prefs.leading === leading}
                   onClick={() => setPrefs({ ...prefs, leading })}
-                  className={cn("tabular relative h-9 rounded-lg text-sm transition-colors duration-motion-medium max-sm:h-[48px]", prefs.leading === leading ? "font-semibold text-accent-text" : "hover:bg-hover")}
+                  className={cn("tabular relative h-9 text-left text-sm transition-colors duration-motion-medium max-sm:h-[48px]", prefs.leading === leading ? "font-semibold text-accent-text" : "hover:bg-hover")}
                 >
-                  {leading.toLocaleString("vi-VN")}
+                  <span data-indicator-target className="inline-block">{leading.toLocaleString("vi-VN")}</span>
                 </button>
               ))}
             </div>
