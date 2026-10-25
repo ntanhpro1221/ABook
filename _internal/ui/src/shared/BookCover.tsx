@@ -156,11 +156,13 @@ function PhotoCover({
     <>
       {!square && (
         // Nền mờ cần một bản ảnh thứ hai (cùng địa chỉ nên trình duyệt chỉ tải một lần); lười như ảnh chính - kệ 160 bìa không tải cả 320 ảnh ngay lúc vẽ.
-        <img src={image.url} alt="" draggable={false} loading="lazy" decoding="async" className={cn("absolute inset-0 size-full scale-125 object-cover blur-xl transition-opacity duration-motion-medium", shown ? "opacity-60" : "opacity-0")} />
+        <img src={image.url} width={image.width ?? 1} height={image.height ?? 1} alt="" draggable={false} loading="lazy" decoding="async" className={cn("absolute inset-0 size-full scale-125 object-cover blur-xl transition-opacity duration-motion-medium", shown ? "opacity-60" : "opacity-0")} />
       )}
       <img
         ref={main}
         src={image.url}
+        width={image.width ?? 1}
+        height={image.height ?? 1}
         alt=""
         draggable={false}
         loading="lazy"

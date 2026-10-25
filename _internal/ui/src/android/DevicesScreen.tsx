@@ -301,7 +301,7 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
   // Gọn (dưới thẻ sách ở Thư viện): hàng cao bằng nút để "Đã tải" và "Tải" của hai thẻ cạnh nhau cùng một dòng; nút ghost bù đệm trái
   // (edge-start-action) để mực thẳng mép tên sách như "Đã tải" (máy dò leading-control-inset).
   return (
-    <MotionRegion as="div" className={compact ? "flex min-h-[var(--button-h)] flex-wrap items-center justify-between gap-1" : "flex items-center gap-3 py-3"}>
+    <MotionRegion as="div" data-remote-status={compact ? "compact" : undefined} className={compact ? "flex min-h-[var(--button-h)] flex-wrap items-center justify-between gap-1" : "flex items-center gap-3 py-3"}>
       {!compact && <BookCover title={book.title} size="sm" className="size-14" />}
       {!compact && <div className="min-w-0 flex-1">
         <div className="truncate font-semibold">{book.title}</div>
@@ -323,7 +323,8 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
       </div>}
       {downloading ? (
         <div className="flex shrink-0 items-center gap-1">
-          <span className="tabular w-10 text-right text-xs font-semibold text-accent-text" aria-hidden>
+          {/* Dưới bìa, số đứng đầu cột như Tải / Đã tải; ô canh phải chỉ dành cho hàng thiết bị có bìa bên trái. */}
+          <span data-remote-progress className={cn("tabular text-xs font-semibold text-accent-text", compact ? "text-left" : "w-10 text-right")} aria-hidden>
             {percent}%
           </span>
           <button
