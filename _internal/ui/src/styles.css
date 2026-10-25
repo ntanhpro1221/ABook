@@ -793,6 +793,18 @@ select[class~="border-line"] {
 .motion-scrim[data-state="closed"] {
   animation: fade-out var(--motion-medium-out) linear both;
 }
+/* Bảng nhường chỗ cho bảng con mở từ một dòng của nó (Sheet away): mờ lùi xuống rồi ẩn hẳn; nền tối của nó mờ đi vì bảng con có nền riêng. Bảng
+   con đóng thì đi ngược lại. Ẩn (visibility) chờ hết lúc mờ, hiện lại thì ngay. */
+.motion-scrim { transition: opacity var(--motion-medium) var(--ease-standard); }
+.motion-scrim[data-away] { opacity: 0; }
+.sheet-surface { transition: opacity var(--motion-medium) var(--ease-standard), translate var(--motion-medium) var(--ease-standard), visibility 0s; }
+.sheet-surface[data-away] {
+  opacity: 0;
+  translate: 0 calc(24px * var(--motion-amount));
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--motion-medium) var(--ease-standard), translate var(--motion-medium) var(--ease-standard), visibility 0s linear var(--motion-medium);
+}
 
 /* Hộp thoại: nổi lên từ dưới một chút và phóng từ 96 %. Vị trí giữa màn đặt bằng thuộc tính `translate` của Tailwind - không đụng `transform`. */
 .motion-dialog {
