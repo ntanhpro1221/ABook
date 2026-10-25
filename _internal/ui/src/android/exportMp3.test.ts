@@ -5,19 +5,20 @@ import { finishedToast } from "./ExportMp3";
 
 describe("thông báo xuất MP3 xong", () => {
   it("xuất riêng chương đổi không bị báo nhầm là chương chưa làm xong", () => {
-    expect(finishedToast({ files: 2, chaptersTotal: 5, folder: "Music/Sách", selection: true }).description).toBe("Lưu ở Music/Sách.");
+    expect(finishedToast({ files: 2, chaptersTotal: 5, folder: "Music/Sách", selection: true }).note).toBe("");
   });
   it("nói thư mục đã lưu", () => {
     expect(finishedToast({ files: 12, chaptersTotal: 12, folder: "Music/Sách thử", uri: "content://x/tree/y/document/z" })).toEqual({
       title: "Đã xuất 12 chương",
-      description: "Lưu ở Music/Sách thử.",
+      note: "",
       uri: "content://x/tree/y/document/z",
     });
   });
 
-  it("chương chưa làm xong: vẫn nói chỗ lưu trước, rồi mới tới lưu ý", () => {
+  it("không có nút mở thư mục thì chỗ lưu nằm ngay trong dòng; chương chưa làm xong là lưu ý", () => {
     const toast = finishedToast({ files: 3, chaptersTotal: 5, folder: "Music/Sách thử" });
-    expect(toast.description).toBe("Lưu ở Music/Sách thử. Các chương chưa làm xong sẽ không có trong bản xuất.");
+    expect(toast.title).toBe("Đã xuất 3 chương vào Music/Sách thử");
+    expect(toast.note).toBe("Các chương chưa làm xong sẽ không có trong bản xuất.");
     expect(toast.uri).toBeUndefined();
   });
 });

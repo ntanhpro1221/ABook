@@ -10,7 +10,7 @@ export async function noteCastHasNoMusic(client: QueryClient, bookId: string): P
   try {
     const view = musicEditView(await client.fetchQuery(musicQuery(bookId))); // dự án Studio trả {plan, overrides}: đưa về cùng dạng
     if (view.hasMusic && view.enabled) {
-      toast.info("Loa, TV chỉ phát giọng đọc", { id: "cast-no-music", description: "Nhạc nền của cuốn này chưa phát được trên loa, TV." });
+      toast.info("Loa, TV chưa phát được nhạc nền - chỉ có giọng đọc", { id: "cast-no-music" });
     }
   } catch {
     // Không đọc được nhạc của cuốn thì không có gì để báo.

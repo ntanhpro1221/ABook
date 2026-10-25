@@ -3,10 +3,10 @@ import { Collapse } from "@/shared/Collapse";
 import type { ReactNode } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookAudio, CheckCircle2, CircleAlert, FileAudio, FolderDown, Headphones, Info, Loader2, type LucideIcon } from "lucide-react";
+import { BookAudio, CheckCircle2, CircleAlert, FileAudio, FolderDown, Headphones, Info, Loader2, TriangleAlert, type LucideIcon } from "lucide-react";
 import { useCallback, useEffect, useRef } from "react";
 import { useMatch } from "react-router";
-import { toast } from "@/shared/toast";
+import { toast, type ToastOptions } from "@/shared/toast";
 import type { ListenBook } from "@/listen/model";
 import { coverArtwork } from "@/shared/cover";
 import { Button, LiveText, Progress } from "@/shared/ui";
@@ -172,18 +172,25 @@ const stoppingNote = (copy: ExportCopy) => copy.stopping ?? STOPPING.note;
  *  nên mọi lần cập nhật không có nút phải ghi `action: undefined` (soát 10-10: "Đã dừng xuất sách nói" còn nút Huỷ cũ). */
 const NO_ACTION = { action: undefined } as const;
 
-/** Cùng một kiểu toast suốt vòng đời: chữ, biểu tượng và nút giữ vùng fade riêng. */
-function exportToast(kind: "loading" | "success" | "info" | "error", title: string, options: {
-  id: string; description?: ReactNode; duration?: number;
+/** Cùng một kiểu toast suốt vòng đời (cùng nút DOM khi đổi từ đang làm sang xong / lỗi): chữ, biểu tượng và nút giữ vùng fade riêng.
+ *  MỘT dòng + tối đa MỘT nút (DESIGN 6): chỉ "đang làm" (tiến độ), "cảnh báo" (xong mà thiếu gì đó) và "lỗi" mang dòng mô tả; "xong" và "đã dừng" chỉ còn tiêu đề.
+ *  `hint`: đường đầy đủ của file, hiện khi rê chuột lên tiêu đề. */
+type ExportToastKind = "loading" | "success" | "warning" | "info" | "error";
+const say = toast.message as unknown as (message: ReactNode, data?: ToastOptions) => string | number; // toast.message nhận cả mô tả; kiểu hẹp của nó chặn nhầm, nên chỉ `described` dưới đây được đưa vào
+function exportToast(kind: ExportToastKind, title: string, options: {
+  id: string; description?: ReactNode; hint?: string; duration?: number;
   action?: { label: string; onClick: () => void };
 }) {
-  const Icon = kind === "loading" ? Loader2 : kind === "success" ? CheckCircle2 : kind === "error" ? CircleAlert : Info;
-  return toast.message(<MotionRegion as="span" motionKey={[kind, title]} className="flex items-center gap-2">
+  const Icon = kind === "loading" ? Loader2 : kind === "success" ? CheckCircle2 : kind === "error" ? CircleAlert : kind === "warning" ? TriangleAlert : Info;
+  const described = kind === "loading" || kind === "warning" || kind === "error";
+  const { hint, description, ...rest } = options;
+  return say(<MotionRegion as="span" motionKey={[kind, title]} className="flex items-center gap-2" title={hint}>
     <Icon className={kind === "loading" ? "size-4 shrink-0 animate-spin" : "size-4 shrink-0"} />{title}
   </MotionRegion>, {
-    ...options,
+    ...rest,
+    className: described && description ? undefined : "toast-one-line",
     icon: null,
-    description: <MotionRegion>{options.description}</MotionRegion>,
+    description: <MotionRegion>{described ? description : undefined}</MotionRegion>,
     action: <MotionRegion as="span" motionKey={options.action?.label ?? ""}>{options.action &&
       <Button data-button="" size="sm" variant="primary" onClick={options.action.onClick}>{options.action.label}</Button>}
     </MotionRegion>,
@@ -232,19 +239,17 @@ export function ExportJobHost({ kind }: { kind: ExportKind }) {
       }
       stopping.current.delete(id);
       if (view.kind === "info") {
-        exportToast("info", view.title, { id: toastId(kind, id), description: view.description, duration: 15000, ...NO_ACTION });
+        exportToast("info", view.title, { id: toastId(kind, id), duration: 15000, ...NO_ACTION });
         return false;
       }
       if (view.kind === "success" && job.result) {
         const folder = job.result.folder;
-        exportToast("success", view.title, {
+        // Xong trơn: một dòng; xong mà thiếu gì đó (chương, nhạc, nguồn, bìa): cảnh báo với đúng phần thiếu. Chỗ file nằm: nút “Mở thư mục”
+        // (đường đầy đủ hiện khi rê chuột lên tiêu đề); Studio từ xa thì tiêu đề nói file nằm ở máy tính nào.
+        exportToast(view.note ? "warning" : "success", remote ? exportedOnComputer(listenOnlyOwner(info ?? {}), "") : view.title, {
           id: toastId(kind, id),
-          // Thông báo chỉ nói tên file; đường đầy đủ hiện khi rê chuột (nút “Mở thư mục” đưa tới đúng chỗ).
-          description: remote
-            ? exportedOnComputer(listenOnlyOwner(info ?? {}), view.description)
-            : view.place
-              ? <span title={view.place}>{view.description}</span>
-              : view.description,
+          description: view.note,
+          hint: view.place,
           duration: 15000,
           // Studio từ xa: thư mục nằm trên máy tính, không mở được từ máy đang xem.
           action: remote ? undefined : { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }) },

@@ -19,7 +19,6 @@ export function UpdateNotice() {
     if (!update || toldAbout(update.version)) return;
     markTold(update.version);
     toast(`Có ABook ${update.version} cho điện thoại`, {
-      description: "Tải file APK rồi mở để cài đè - sách và chỗ đang nghe giữ nguyên.",
       duration: 12000,
       action: { label: "Tải", onClick: () => void openRelease(update.apk ?? update.page) },
     });

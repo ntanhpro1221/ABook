@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { neverText, reachSaved, reachSummary, type Reach } from "@/studio/readingReach";
+import { neverText, reachSummary, type Reach } from "@/studio/readingReach";
 
 const base: Reach = { surface: "TP.HCM", lines: 3, reached: 3, recorded: 2, blocked: 0, never: false, cost: "thu lại 2 câu", chapters: [], example: null };
 
@@ -11,7 +11,6 @@ describe("cách đọc cho từ bất kỳ nói trước nó chạm tới bao nh
 
   it("chưa thu câu nào thì không hứa thu lại", () => {
     expect(reachSummary({ ...base, recorded: 0 })).toContain("chưa thu câu nào nên không phải thu lại");
-    expect(reachSaved({ ...base, recorded: 0 }, "Máy áp từ chương sau.")).toBe("Các câu có chữ này chưa thu nên không phải thu lại. Máy áp từ chương sau.");
   });
 
   it("chữ chưa có câu nào, và chữ bị ký hiệu chặn, đều nói thật", () => {

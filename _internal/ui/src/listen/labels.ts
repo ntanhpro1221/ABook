@@ -140,6 +140,12 @@ export function caughtUpDetail(producing?: boolean): string {
   return producing ? "Chương tiếp theo sẽ nghe được khi máy làm xong chương ấy." : "Các chương sau chưa có audio.";
 }
 
+/** Thông báo sau khi nghe hết phần đã có: MỘT dòng - `caughtUpDetail` nối vào sau dấu gạch. */
+export function caughtUpLine(producing?: boolean): string {
+  const detail = caughtUpDetail(producing);
+  return `Đã nghe hết phần đã có - ${detail.charAt(0).toLowerCase()}${detail.slice(1).replace(/\.$/, "")}`;
+}
+
 /** Dòng trạng thái của sách chưa đủ chương mà không máy nào đang thu (điện thoại: không biết máy tính còn làm không; file .abook). */
 export function partialBookLine(available: number, total: number): string {
   return `Sách này có ${available}/${total} chương đã thu - các chương sau chưa có audio`;

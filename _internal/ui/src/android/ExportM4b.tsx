@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { BookAudio } from "lucide-react";
 import { useEffect, useState } from "react";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { jobView, M4B_COPY, type ExportJob } from "@/desktop/bookFileExport";
 import type { MusicExportState } from "@/desktop/listenExport";
 import { MusicMixOption, useMusicChoice } from "@/desktop/musicMix";
@@ -101,10 +101,10 @@ export function watchM4bExports(): () => void {
     if (event.finished) {
       runs.delete(event.bookId);
       const view = finishedView(event);
-      if (view.kind === "success") toast.success(view.title, { id, description: view.description, duration: 15000, action: undefined });
+      if (view.kind === "success") toastDone(view.title, view.note, { id, duration: 15000, action: undefined });
     } else if (event.stopped) {
       runs.delete(event.bookId);
-      toast("Đã dừng xuất M4B", { id, description: "File dở đã được xoá", action: undefined });
+      toast("Đã dừng xuất M4B - file dở đã xoá", { id, action: undefined });
     } else if (event.error) {
       runs.delete(event.bookId);
       toast.error(M4B_COPY.failed, { id, description: event.error, action: undefined });

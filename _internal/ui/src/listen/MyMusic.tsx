@@ -132,7 +132,7 @@ export function MyMusicSection() {
     onSuccess: (view) => {
       refresh(view);
       setRemoving(null);
-      toast("Đã xoá khỏi Nhạc của tôi", { description: "Sách đã chọn bài này vẫn giữ bản của nó." });
+      toast("Đã xoá khỏi Nhạc của tôi");
     },
     onError: (error: Error) => toast.error("Không xoá được bài này", { description: error.message }),
   });

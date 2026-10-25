@@ -156,7 +156,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
     if (!status) return;
     if (wasRunning.current && !status.running) {
       if (status.installed && status.outdated.length === 0) {
-        toast.success("Studio đã sẵn sàng", { description: "Giờ tạo và làm sách nói được trên máy này." });
+        toast.success("Studio đã sẵn sàng");
         void client.invalidateQueries({ queryKey: ["app"] });
       } else if (status.error) {
         toast.error("Studio chưa xong", { description: friendlySetupError(status.error).summary });
@@ -352,7 +352,7 @@ export function StudioSettings() {
     setBusy(true);
     try {
       client.setQueryData(["studio-setup"], await api<SetupStatus>("/api/studio/setup", { method: "DELETE" }));
-      toast.success("Đã gỡ Studio", { description: "Sách đã làm và chỗ đang nghe vẫn nguyên." });
+      toast.success("Đã gỡ Studio");
       void client.invalidateQueries({ queryKey: ["app"] });
     } catch (error) {
       toast.error("Chưa gỡ được Studio", { description: (error as Error).message });

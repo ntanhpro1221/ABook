@@ -5,14 +5,14 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ChevronDown, FileDown, Globe, ImagePlus, Music2, Pencil, Shuffle, Trash2, Wrench } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { BookCover } from "@/shared/BookCover";
 import { cn } from "@/shared/cn";
 import { Collapse, useFold } from "@/shared/Collapse";
 import { COVER_SEARCH_NOTE, COVER_SEARCH_TITLE, CoverSearchPanel } from "@/shared/CoverSearch";
 import { canEditLayer, editBlockedNote, studioNeed, syncsToComputer } from "@/shared/capabilities";
 import { holderName } from "@/shared/editsSync";
-import { fileName, formatClock } from "@/shared/format";
+import { formatClock } from "@/shared/format";
 import { levelOptions, levelText } from "@/shared/musicLevels";
 import { Switch } from "@/desktop/PhoneSync";
 import { Button, Dialog, Segmented, ContentSkeleton, InlineError } from "@/shared/ui";
@@ -606,10 +606,9 @@ export function useSaveBook(book: ListenBook) {
     try {
       const result = await source.saveBook(book.id, options);
       if (!result.saved) return;
-      const edits = result.edits ? `${result.edits} thay đổi của bạn nằm trong file.` : "Chưa có thay đổi nào - file giống bản gốc.";
       const folder = result.folder;
-      toast.success("Đã lưu file sách", {
-        description: result.file ? <span title={result.file}>{`${fileName(result.file)} - ${edits}`}</span> : edits,
+      // Không có thay đổi nào vẫn lưu được, nhưng file giống hệt bản gốc: nói điều đó thành cảnh báo cùng dòng.
+      toastDone("Đã lưu file sách", result.edits ? undefined : "Chưa có thay đổi nào - file giống bản gốc.", {
         duration: 8000,
         action: folder
           ? { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }).catch(() => undefined) }

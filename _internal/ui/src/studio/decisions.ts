@@ -1,6 +1,6 @@
 import { type QueryClient } from "@tanstack/react-query";
 import { useCachedBook } from "./data";
-import { toast } from "@/shared/toast";
+import { toast, toastDone } from "@/shared/toast";
 import { api, type BookSummary } from "./api";
 
 /** Thay đổi của người nghe vào sách lúc nào - lời báo chỉ nói vế đúng với sách này (soát UX 29-09: mọi thông báo nói cả
@@ -21,16 +21,6 @@ export function applyWhen(
   if (book.running || book.starting) return "running";
   return book.phase === "done" ? "done" : "paused";
 }
-
-/** Câu đứng riêng, cho thông báo - đứng sau câu nói cái giá ("Câu đã thu sẽ được thu lại."), nên không nhắc "thu lại"
- *  lần nữa; thông báo hiện trên chính trang dự án nên chỉ "đầu trang", không "trang dự án" (soát UX 30-09). */
-export const SENTENCE: Record<ApplyWhen, string> = {
-  start: "Máy dùng ngay từ khi bắt đầu làm sách.",
-  cast: "Áp dụng khi phân vai xong.",
-  running: "Máy áp từ chương sau, không phải dừng sách.",
-  done: "Bấm “Áp dụng thay đổi” ở đầu trang để đưa vào sách.",
-  paused: "Máy áp dụng khi sách làm tiếp.",
-};
 
 /** Vế sau gạch nối, cho dòng "Đã ghi … - {vế}." trên thẻ và trên câu. */
 export const PENDING_NOTE: Record<ApplyWhen, string> = {
@@ -63,10 +53,6 @@ export function retakeWhen(holder?: string | null): string {
 /** Chỉ đọc bản của trang dự án trong bộ nhớ đệm - không thêm một nhịp hỏi máy chủ. */
 export function useApplyWhen(bookId: string): ApplyWhen {
   return applyWhen(useCachedBook(bookId).data?.book);
-}
-
-export function useWhenApplied(bookId: string): string {
-  return SENTENCE[useApplyWhen(bookId)];
 }
 
 export function usePendingNote(bookId: string): string {
@@ -116,17 +102,9 @@ export function undoAction(client: QueryClient, bookId: string, endpoint: string
 export type UndoAnswer = { undone: number; restored: boolean; sent?: boolean };
 
 /** Thông báo sau khi hoàn tác - nói đúng điều đã xảy ra, không hứa hơn: lần bấm đã gửi sang máy giữ sách thì chưa chắc đã rút được. */
-export function undoToast(restored: boolean, sent: boolean, message?: string): [string, { description: string }] {
-  if (sent) {
-    return [
-      "Đã nhờ máy giữ sách rút lại",
-      { description: "Lần bấm này đã gửi sang máy giữ sách. Mình đã nhờ máy ấy rút lại; nếu nó đã đưa vào sách thì bạn sẽ thấy báo ở đây và cần chọn lại ở máy đó." },
-    ];
-  }
-  return [
-    "Đã hoàn tác",
-    { description: restored ? "Máy vừa đưa cách đọc mới vào sách, nên sẽ đọc lại theo cách cũ." : (message ?? "Việc trở lại như trước khi bấm.") },
-  ];
+export function undoToast(restored: boolean, sent: boolean, message?: string): [title: string, note?: string] {
+  if (sent) return ["Đã nhờ máy giữ sách rút lại", "Nếu máy ấy đã đưa vào sách, bạn sẽ thấy báo ở đây và cần chọn lại ở máy đó."];
+  return [restored ? "Đã hoàn tác - máy đọc lại theo cách cũ" : message ? `Đã hoàn tác. ${message}` : "Đã hoàn tác"];
 }
 
 /** `undoAction` cho lần bấm đã đi nhiều đường (sửa cách đọc câu kèm người mới: /line rồi /speaker): rút lần lượt từng bước, theo thứ tự đưa vào. */
@@ -148,7 +126,7 @@ export function undoSteps(client: QueryClient, bookId: string, steps: { endpoint
             sent ||= answer.sent === true;
             done += 1;
           }
-          toast.success(...undoToast(restored, sent, message));
+          toastDone(...undoToast(restored, sent, message));
         } catch (error) {
           // Nhiều quyết định gửi lần lượt: một cái lỗi giữa chừng thì những cái trước đã hoàn tác thật - nói đúng số.
           toast.error(done > 0 ? `Mới hoàn tác được ${done}/${steps.length} việc` : "Không hoàn tác được", { description: (error as Error).message });

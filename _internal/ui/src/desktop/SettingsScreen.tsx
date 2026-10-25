@@ -127,7 +127,7 @@ function UpdateRow({ update, current }: { update: { version: string; notes: stri
     setBusy(true);
     try {
       await api("/api/app/update", { method: "POST", body: {} });
-      toast.success(`Đang tải ABook ${update.version}`, { description: "App tự mở lại; sách và chỗ đang nghe giữ nguyên.", duration: 60_000 });
+      toast(`Đang tải ABook ${update.version} - app sẽ tự mở lại`, { duration: 60_000 });
     } catch (error) {
       setBusy(false);
       toast.error("Chưa cập nhật được", { description: (error as Error).message });
@@ -365,7 +365,7 @@ function LookGroup({ remote, touchOnly }: { remote: boolean; touchOnly: boolean 
 function DevicesGroup() {
   return (
     <>
-      {/* Tự dựng hai khối "Máy này" và "Thiết bị đã ghép". */}
+      {/* Tự dựng hai khối "Máy này" và "Máy đã ghép". */}
       <PhoneSync />
       <SettingsBlock title="Máy tính khác" id="computers">
         <div className="py-3.5">

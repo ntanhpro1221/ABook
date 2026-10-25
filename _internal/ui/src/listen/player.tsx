@@ -33,7 +33,7 @@ import { OnlineVoicePrompt } from "./OnlineVoicePrompt";
 import { chapterScriptQuery, useSource } from "./source";
 import { publishTrackMetadata, useTrackMetadata } from "./trackMetadata";
 import { sentenceIndexAt } from "./words";
-import { caughtUpDetail } from "./labels";
+import { caughtUpLine } from "./labels";
 import { reportSaveFailure } from "./saveFailure";
 import { ProgressOutbox } from "./progressOutbox";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
@@ -233,8 +233,6 @@ const HISTORY = 5;
 /** Nhạc theo cảnh dựng nền (music_nnscene.py): hỏi lại mốc của chương chưa dựng xong mỗi chừng này, tối đa chừng ấy lần (~2 phút). */
 const SCENE_POLL_MS = 1500;
 const SCENE_POLLS = 80;
-/** Sự kiện mở ô ghi chú cho một dấu trang (từ toast "Thêm dấu trang"). */
-export const EDIT_BOOKMARK_EVENT = "abook:edit-bookmark";
 
 function availableAfter(queue: ListenChapter[], chapterId: number, step: 1 | -1): ListenChapter | undefined {
   const index = queue.findIndex((chapter) => chapter.id === chapterId);
@@ -954,9 +952,9 @@ export function PlayerProvider({
     if (refs.current.expanded) return;
     toast("Đã nghe hết sách", { id: "finished", duration: 8000, action: { label: "Nghe lại từ đầu", onClick: () => restartRef.current() } });
   }, []);
-  const caughtUpToast = useCallback((description?: string) => {
+  const caughtUpToast = useCallback(() => {
     if (refs.current.expanded) return;
-    toast("Đã nghe hết phần đã có", description ? { description } : undefined);
+    toast(caughtUpLine());
   }, []);
 
   const resumeNow = useCallback(() => {
@@ -1167,7 +1165,6 @@ export function PlayerProvider({
       const waiting = direction === 1 ? queue[queue.findIndex((chapter) => chapter.id === current.chapterId) + 1] : undefined;
       if (waiting && !canPlay(waiting)) {
         toast("Chương sau chưa có audio", {
-          description: waiting.fullTitle,
           duration: 8000,
           action: { label: "Đọc chương ấy", onClick: () => { window.location.hash = `#/book/${current.bookId}/read/${waiting.id}`; } },
         });
@@ -1322,7 +1319,7 @@ export function PlayerProvider({
     if (!track || !book || track.bookId !== book.id || !leftWithPeer(book, library.data)) return;
     const computer = typeof book.remote === "object" && book.remote ? book.remote.computer : "";
     close();
-    toast.info(`“${book.title}” đã rời Thư viện`, { description: `Sách này nằm trên ${computer || "máy kia"} - đã thôi ghép nên trình phát đóng lại.` });
+    toast.info(`“${book.title}” đã rời Thư viện vì đã thôi ghép ${computer || "máy kia"}`);
   }, [close, library.data, track]);
 
   const positionStamp = useCallback(() => refs.current.stamp, []);
@@ -1544,7 +1541,7 @@ export function PlayerProvider({
         }
         const caughtUp = refs.current.book?.complete === false;
         setAtEnd(caughtUp ? "caughtUp" : "finished");
-        if (caughtUp) caughtUpToast(caughtUpDetail());
+        if (caughtUp) caughtUpToast();
         else if (refs.current.continues !== current.bookId) finishedToast();
       }),
       engine.on("recovered", () => setError("")),
@@ -1762,10 +1759,7 @@ export function PlayerProvider({
     const night_ = scheduleWindow(options.schedule);
     if (!night_ || !options.schedule || refs.current.scheduleOffFor === night_) return;
     setSleepRef.current({ kind: "minutes", minutes: options.schedule.minutes });
-    toast(`Đã tự hẹn giờ ${options.schedule.minutes} phút`, {
-      id: "sleep-schedule",
-      description: `Lịch đêm ${options.schedule.from}-${options.schedule.to}. Tắt ở nút mặt trăng nếu chưa muốn ngủ.`,
-    });
+    toast(`Lịch đêm ${options.schedule.from}-${options.schedule.to}: đã tự hẹn giờ ${options.schedule.minutes} phút`, { id: "sleep-schedule" });
   }, [native, options.schedule, playing, sleep.kind]);
 
   useEffect(() => {
