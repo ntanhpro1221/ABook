@@ -18,12 +18,6 @@ export function inspectFrames({ all, css, rect, visible, selector, add }) {
     }
     if (el.matches('img') && (!el.hasAttribute('width') || !el.hasAttribute('height')))
       add('SIBLING CONSISTENCY', el, el.getAttribute('alt'), [box], { metric: 'image-dimensions', reason: 'Images reserve their dimensions before loading' });
-    if (el.matches('[data-remote-progress]') && el.closest('[data-remote-status="compact"]')) {
-      const column = el.closest('[data-remote-status="compact"]'), start = column.getBoundingClientRect().left;
-      const range = document.createRange(); range.selectNodeContents(el);
-      const x = range.getBoundingClientRect().left;
-      if (Math.abs(x - start) > 1.01) add('INK EDGE', el, el.textContent, [box], { metric: 'remote-status-inset', value: x, referenceValue: start, delta: x - start, tolerance: 1, reason: 'Download percentage shares the card status left edge' });
-    }
     if (el.matches('[data-side="left"],[data-side="right"]') && el.matches('[role="menu"],[role="dialog"]')) {
       const trigger = el.dataset.submenuTrigger ? document.getElementById(el.dataset.submenuTrigger)
         : all.find(node => node.getAttribute('aria-controls') === el.id && el.id);
@@ -37,6 +31,25 @@ export function inspectFrames({ all, css, rect, visible, selector, add }) {
       const expected = Math.max(12, Math.min(y, innerHeight - child.height - 12));
       if (Math.abs(child.top - expected) > 1.01) add('RHYTHM', el, el.textContent, [box, rect(b)],
         { metric: 'submenu-align', value: child.top, referenceValue: expected, delta: child.top - expected, tolerance: 1, reason: 'Submenu top or bottom aligns with its parent, within viewport collisions' });
+    }
+  }
+  // Một thông tin một chỗ (soát ảnh 4x 26-10: "Tải · 42%" trên bìa và "42%" dưới tên cùng một thẻ). Cả thẻ đang ngoài vùng nhìn:
+  // lặp số là lỗi của thẻ, không phụ thuộc chỗ cuộn.
+  for (const el of all.filter(el => el.matches('[data-book-tile],li,[role="listitem"]') && !el.querySelector('[data-book-tile],li,[role="listitem"]'))) {
+    // React tách "{n}%" thành nhiều nút chữ: gộp chữ trực tiếp theo phần tử rồi mới tìm số.
+    const own = new Map();
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) if (node.parentElement) own.set(node.parentElement, (own.get(node.parentElement) ?? '') + node.textContent);
+    const seen = new Map();
+    for (const [host, text] of own) {
+      // Không dùng visible(): lớp chữ trên bìa (pointer-events none) không bao giờ là elementFromPoint nhưng vẫn hiện.
+      const r = host.getBoundingClientRect();
+      if (!r.width || !r.height || host.closest('[hidden],[inert],.sr-only') || css(host).visibility !== 'visible') continue;
+      for (const match of text.matchAll(/\d+(?:[.,]\d+)?\s?%/g)) {
+        const value = match[0].replace(/\s/g, '');
+        if (seen.has(value) && seen.get(value) !== host) add('REPEATED LABEL', el, value, [rect(el.getBoundingClientRect())], { metric: 'repeated-value', reason: 'The same figure is shown twice inside one card or row' });
+        seen.set(value, host);
+      }
     }
   }
   const sectionHeadings = [];

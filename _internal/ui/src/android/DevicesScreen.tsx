@@ -321,10 +321,12 @@ export function RemoteRow({ book, progress, onDownload, compact = false }: { boo
           />
         )}
       </div>}
-      {downloading ? (
+      {downloading && compact ? (
+        // Dưới bìa: tiến độ đã hiện trên bìa (DownloadCover, cả bìa bộ) - hàng chỉ còn việc huỷ, cùng chỗ và kiểu với nút Tải.
+        <Button size="sm" variant="ghost" icon={X} className="edge-start-action" onClick={cancel} aria-label={`Huỷ tải ${book.title}`}>Huỷ</Button>
+      ) : downloading ? (
         <div className="flex shrink-0 items-center gap-1">
-          {/* Dưới bìa, số đứng đầu cột như Tải / Đã tải; ô canh phải chỉ dành cho hàng thiết bị có bìa bên trái. */}
-          <span data-remote-progress className={cn("tabular text-xs font-semibold text-accent-text", compact ? "text-left" : "w-10 text-right")} aria-hidden>
+          <span data-remote-progress className="tabular w-10 text-right text-xs font-semibold text-accent-text" aria-hidden>
             {percent}%
           </span>
           <button

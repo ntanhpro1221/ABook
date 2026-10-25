@@ -154,7 +154,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
   const speaks = (voices.data?.length ?? 0) > 0;
   const textOnly = book.stage === "text" && !speaks;
   return (
-    <MotionRegion as="div" className="group">
+    <MotionRegion as="div" data-book-tile="" className="group">
       <div className="relative">
         {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
         <button type="button" tabIndex={-1} onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
@@ -386,7 +386,7 @@ function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySec
     </span>
   </button>;
   const content = open && <Shelf books={item.items} badges={item.badges} twins={twins} />;
-  return <MotionRegion motionKey={[item.label, item.items.map(book => book.id), item.items[0].cover?.url, item.items.some(book => book.remote)]}>
+  return <MotionRegion data-book-tile="" motionKey={[item.label, item.items.map(book => book.id), item.items[0].cover?.url, item.items.some(book => book.remote)]}>
     {phone ? <Sheet open={open} onOpenChange={setOpen} title={item.label} trigger={trigger}>
       <div className="pb-4 pt-4">{content}</div>
     </Sheet> : <>{trigger}<Dialog open={open} onOpenChange={setOpen} title={item.label}>{content}</Dialog></>}

@@ -15,6 +15,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Giao diện
 
 - Ô chọn trải hết cột như ô nhập; tiến độ tải sách và menu con thẳng mép; tiêu đề màn con hiện đủ chữ, bộ sách bỏ dải trống phía trên bìa.
+- Sách đang tải chỉ hiện tiến độ một chỗ, trên bìa; dưới tên sách là nút Huỷ ngay chỗ nút Tải.
 
 ## [0.4.144] - 2026-10-26
 
