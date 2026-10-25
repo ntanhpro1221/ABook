@@ -13,6 +13,8 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Giao diện
 - Đổi trang mượt hơn: trang cũ mờ đi ngay khi bấm, trang mới hiện vào theo hướng; không còn khựng một nhịp rồi mới chuyển, quay lại Thư viện không còn trang cao dần và nhảy chỗ cuộn. Đổi tab trong trang sách không còn mờ cả màn hình. Mở app: giao diện hiện dần, màn chờ điện thoại mờ đi thay vì biến mất.
 - Lúc mở app hay vừa có dữ liệu, các phần của trang hiện ngay tại chỗ, không còn mọc cao dần đẩy lưới bìa xuống (nút "Thêm sách", thẻ Nghe tiếp, dòng danh sách). Quay lại tab Studio trên điện thoại không còn nháy khung chờ.
+- Khung chờ chỉ hiện khi phải chờ quá 0,2 giây, ở mọi trang và cả lúc đổi trang; dữ liệu tới nhanh thì hiện thẳng nội dung, không còn chớp khung xám.
+- Trên điện thoại, nội dung và Đang nghe không còn nằm dưới tai thỏ hay thanh điều hướng của hệ thống.
 - Mở và đóng Đang nghe trên điện thoại mượt hơn, không còn hiện lại Thư viện một khung rồi mờ vào lần hai.
 - Tab trang sách trên điện thoại chia đều bề ngang, chữ căn giữa; hàng lọc thiếu vài px thì tự co khoảng cách thay vì phải cuộn ("Xong" không còn bị che); thanh tiến độ trên bìa bo đúng theo góc bìa.
 - Đổi tab, bộ lọc hay lựa chọn: gạch chân / ô sáng lướt từ mục cũ sang mục mới, nội dung trượt sang theo hướng mục vừa chọn (Thư viện, trang sách, Đang nghe, Studio, Cài đặt, màn đọc). Nút chọn giờ tự tắt thấp gọn hơn; các mục gập trong Cài đặt nối liền như một danh sách; hàng lọc Thư viện không còn cắt chữ "Xong" khi chữ hệ thống to.
@@ -55,6 +57,9 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 - Studio và các hộp trên máy tính không còn hiện / ẩn cứng: biểu mẫu mở tại chỗ trượt ra, trạng thái tải, menu và lỗi chương mờ dần; nhãn và mô tả gọn hơn; công tắc nối máy đổi tên thành "Kết nối Wi-Fi".
 - Thêm sách trên điện thoại: nút cuối hộp luôn trong tầm, bàn phím không tự bật lên; gập nhóm trong Thư viện không làm nhảy chỗ cuộn.
 - Nút lùi / tới 15 giây vẽ lại: số 15 nằm gọn trong vòng mũi tên, không còn đè lên nét.
+- Thêm sách: "Thử lại" đọc lại đúng file vừa chọn; huỷ hay xoá lựa chọn thì lần sau không còn dùng nhầm file cũ.
+- Màn đọc với chữ hệ thống to: nút Nghe co lại thay vì đẩy các nút khác ra ngoài; cuộn hay gõ phím trong menu không làm thanh điều khiển ẩn đi.
+- Đồng bộ cài đặt giữa hai máy bền hơn: mục không rõ phiên bản bị bỏ qua thay vì ghi đè; nền đọc, tiếng chạm và rung cũng được kiểm giới hạn khi đồng bộ.
 
 ### Nhạc nền
 - Studio đổi nhạc đúng chỗ cảnh đổi hơn: dùng chung cách chia cảnh với Nghe ngay (ít đoạn nhạc lệch không khí hơn, vẫn dưới 22 lần đổi bài mỗi giờ).
