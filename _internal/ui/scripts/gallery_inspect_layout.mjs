@@ -679,6 +679,31 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     add("INK EDGE", el, el.textContent || el.getAttribute("aria-label") || "svg", [ink, { x: inner, y: ink.y, width: 1, height: ink.height }],
       { metric: "trailing-control-inset", value: right(ink), referenceValue: inner, delta: right(ink) - inner, tolerance: 1, listSelector: selector(column), reason: "trailing transparent control's hit box meets the row edge but its ink stops short of the column's shared right edge" });
   }
+  // Dòng menu (menu "…" của trình phát, menu Radix): mọi dòng trọn bề ngang, giá trị bên phải cùng một mép. Vỏ flex ngang quanh dòng gập làm dòng co
+  // theo chữ - "Tắt" dừng ở 345, "Tiếng Việt" ở 292 trong bảng rộng tới 392 (soát 25-10). Cụm = dòng + các anh em đứng sau (thanh âm lượng).
+  const menuRows = all.filter((el) => el.matches('[data-player-menu-row],[role="menuitem"]') && shownChain(el))
+    .map((el) => { const menu = el.closest('[data-player-more],[role="menu"],[role="dialog"]'); let end = right(rect(el.getBoundingClientRect()));
+      for (let s = el.nextElementSibling; s; s = s.nextElementSibling) { const b = visible(s, rect(s.getBoundingClientRect())); if (b) end = Math.max(end, right(b)); }
+      return { el, menu, end, box: visible(el, rect(el.getBoundingClientRect())) }; })
+    .filter((r) => r.menu && r.box);
+  for (const row of menuRows) {
+    const peers = menuRows.filter((r) => r.menu === row.menu && r !== row), edge = Math.max(...peers.map((r) => r.end));
+    if (peers.length < 2 || edge - row.end <= 1.01) continue;
+    const best = peers.find((r) => r.end === edge);
+    add("INK EDGE", row.el, row.el.textContent || row.el.getAttribute("aria-label") || "row", [row.box, best.box],
+      { metric: "menu-row-short", value: row.end, referenceValue: edge, delta: row.end - edge, tolerance: 1, otherSelector: selector(best.el), reason: "a menu row stops short of the right edge the other rows of the same menu reach" });
+  }
+  // Nhãn của một lựa chọn bị cắt "…" ("An (Windo…" trong menu giọng, soát 25-10): chữ cắt ở chỗ khác còn chấp nhận được (tên sách dài trên thẻ),
+  // nhưng lựa chọn thì phải đọc đủ mới biết mình chọn gì - cho xuống dòng.
+  const choiceSelector = '[aria-pressed],[aria-checked],[role="option"],[role="radio"],[role="menuitemradio"],[data-sheet-choice] button';
+  for (const el of all.filter((e) => e.matches(choiceSelector) && shownChain(e))) {
+    const cut = [el, ...el.querySelectorAll("*")].find((c) => { const s = css(c); return s.textOverflow === "ellipsis" && /hidden|clip/.test(s.overflowX) && c.scrollWidth > c.clientWidth + 1 && c.textContent.trim(); });
+    if (!cut || el.closest('[role="slider"],[role="tablist"]')) continue;
+    const box = visible(cut, rect(cut.getBoundingClientRect()));
+    if (!box) continue;
+    add("CLIPPED TEXT", cut, cut.textContent, [box],
+      { metric: "choice-label-truncated", value: cut.clientWidth, referenceValue: cut.scrollWidth, delta: cut.clientWidth - cut.scrollWidth, tolerance: 1, reason: "the label of a choice is cut with an ellipsis; a choice must be readable in full (wrap it)" });
+  }
   // Lớp chồng lớp: hộp thoại mở đè lên hộp thoại khác (Sửa sách -> Tìm ảnh bìa, audit140 V9) hay bảng nổi che menu vừa mở nó (Nhạc nền đè menu
   // trình phát, C8). Bước kế tiếp đi trong cùng lớp (trượt sang bước có "Quay lại") hoặc mở bên cạnh menu. Menu/danh sách chọn bên trong hộp
   // thoại vẫn được; menu con nằm cạnh menu cha (chạm nhau vài px) cũng được.
