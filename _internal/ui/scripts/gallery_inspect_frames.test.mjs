@@ -31,7 +31,7 @@ describe.skipIf(!browserAvailable)("frames and list coverage on Edge", () => {
       expect(r.layout.sectionHeadings.map(h => h.weight)).toEqual([500, 600]);
       expect(r.findings.filter(f => f.metric === 'dialog-padding').map(f => f.selector)).toEqual(['#padding-bad']);
       expect(r.findings.filter(f => f.metric === 'toast-action-count').map(f => f.selector)).toEqual(['#toast-bad']);
-      expect(r.findings.filter(f => f.metric === 'toast-lines').map(f => f.selector)).toEqual(['#toast-bad > span']);
+      expect(r.findings.filter(f => f.metric === 'toast-lines').map(f => f.selector)).toEqual(['#toast-bad > span:nth-of-type(1)']);
     }
   });
 });

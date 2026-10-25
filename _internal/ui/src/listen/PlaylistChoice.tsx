@@ -180,7 +180,7 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
       trigger={<>
         <EighthNote className="size-4" />
         <span className="flex-1">Nhạc nền</span>
-        <span className="max-w-44 truncate text-xs text-fg-2" title={label}>{shortPlaylistLabel(label)}</span>
+        <span className="max-w-[45%] text-right text-xs text-fg-2 [overflow-wrap:anywhere]">{shortPlaylistLabel(label)}</span>
         <ChevronRight className="ink-end size-4 text-fg-2" />
       </>}
     >
@@ -204,7 +204,7 @@ export function PlaylistSubmenu({ bookId }: { bookId: string }) {
         </DropdownMenu.Item>
       )}
       <MotionRegion motionKey={[loading, loadFailed]}>{loading ? <ContentSkeleton count={2} label="Đang tải danh sách" className="p-2" /> : loadFailed ? <InlineError message="Bạn hãy thử tải lại danh sách nhạc." onRetry={retry} /> : null}</MotionRegion>
-      <MotionRegion as="p" className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error, scene)}</MotionRegion>
+      <MotionRegion as="p" data-menu-note className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error, scene)}</MotionRegion>
     </ActionSubmenu>
   );
 }

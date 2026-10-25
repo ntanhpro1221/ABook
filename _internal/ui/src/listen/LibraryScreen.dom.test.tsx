@@ -144,7 +144,8 @@ it("bìa bộ luôn mở, chạm mở các tập và Back đóng hộp trước 
   expect(main.querySelectorAll('[role="listitem"]')).toHaveLength(1);
   const cover = main.querySelector<HTMLButtonElement>('[aria-label="Mở bộ Truyện thử"]')!;
   expect(cover).not.toBeNull();
-  expect(cover.querySelectorAll('.absolute.inset-x-4.-top-3, .absolute.inset-x-2[class~="-top-1.5"]')).toHaveLength(2);
+  expect(cover.textContent).toContain("3 tập");
+  expect(cover.querySelectorAll('.absolute.inset-x-4.-top-3, .absolute.inset-x-2[class~="-top-1.5"]')).toHaveLength(0);
   expect(main.querySelector('button[aria-controls]')).toBeNull();
   await act(() => cover.click());
   expect(document.querySelector('[role="dialog"]')).not.toBeNull();

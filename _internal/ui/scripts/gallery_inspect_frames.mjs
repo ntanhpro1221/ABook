@@ -3,6 +3,42 @@ export function inspectFrames({ all, css, rect, visible, selector, add }) {
   const transparent = value => value === "transparent" || /rgba\([^)]*,\s*0\)$/.test(value);
   // Cùng token cho tiêu đề mục đứng riêng / gập mở, ở mọi frame (kể cả người dùng phóng chữ).
   const rem = Number.parseFloat(css(document.documentElement).fontSize);
+  for (const el of all) {
+    const box = visible(el, rect(el.getBoundingClientRect()));
+    if (!box) continue;
+    const s = css(el);
+    if (el.matches('button:not([role="switch"]):not([role="radio"]):not([role="checkbox"])')
+      && ['Top','Right','Bottom','Left'].every(side => Number.parseFloat(s[`border${side}Width`]) > 0 && s[`border${side}Style`] !== 'none' && !transparent(s[`border${side}Color`])))
+      add('SIBLING CONSISTENCY', el, el.textContent, [box], { metric: 'outlined-button', reason: 'Actions use plain text or a fill; borders belong to inputs' });
+    if (el.matches('select[data-select-layout="column"]')) {
+      const parent = el.parentElement, p = css(parent), b = parent.getBoundingClientRect();
+      const width = b.width - Number.parseFloat(p.paddingLeft) - Number.parseFloat(p.paddingRight) - Number.parseFloat(p.borderLeftWidth) - Number.parseFloat(p.borderRightWidth);
+      if (width - box.width > 1.01) add('SIBLING CONSISTENCY', el, el.getAttribute('aria-label') ?? el.textContent, [box],
+        { metric: 'select-column-width', value: box.width, referenceValue: width, delta: box.width - width, tolerance: 1, reason: 'Field select must span its content column' });
+    }
+    if (el.matches('img') && (!el.hasAttribute('width') || !el.hasAttribute('height')))
+      add('SIBLING CONSISTENCY', el, el.getAttribute('alt'), [box], { metric: 'image-dimensions', reason: 'Images reserve their dimensions before loading' });
+    if (el.matches('[data-remote-progress]') && el.closest('[data-remote-status="compact"]')) {
+      const column = el.closest('[data-remote-status="compact"]'), start = column.getBoundingClientRect().left;
+      const range = document.createRange(); range.selectNodeContents(el);
+      const x = range.getBoundingClientRect().left;
+      if (Math.abs(x - start) > 1.01) add('INK EDGE', el, el.textContent, [box], { metric: 'remote-status-inset', value: x, referenceValue: start, delta: x - start, tolerance: 1, reason: 'Download percentage shares the card status left edge' });
+    }
+    if (el.matches('[data-side="left"],[data-side="right"]') && el.matches('[role="menu"],[role="dialog"]')) {
+      const trigger = el.dataset.submenuTrigger ? document.getElementById(el.dataset.submenuTrigger)
+        : all.find(node => node.getAttribute('aria-controls') === el.id && el.id);
+      const parent = trigger?.closest('[role="menu"][data-side],[role="dialog"][data-side]');
+      if (!parent || parent === el) continue;
+      const b = parent.getBoundingClientRect(), child = el.getBoundingClientRect();
+      const gap = el.dataset.side === 'left' ? b.left - child.right : child.left - b.right;
+      if (b.width + child.width + 8 <= innerWidth - 24 && Math.abs(gap - 8) > 1.01)
+        add('RHYTHM', el, el.textContent, [box, rect(b)], { metric: 'submenu-gap', value: gap, referenceValue: 8, delta: gap - 8, tolerance: 1, reason: 'Submenus use the shared 8 px outer gap' });
+      const y = parent.dataset.side === 'top' ? b.bottom - child.height : b.top;
+      const expected = Math.max(12, Math.min(y, innerHeight - child.height - 12));
+      if (Math.abs(child.top - expected) > 1.01) add('RHYTHM', el, el.textContent, [box, rect(b)],
+        { metric: 'submenu-align', value: child.top, referenceValue: expected, delta: child.top - expected, tolerance: 1, reason: 'Submenu top or bottom aligns with its parent, within viewport collisions' });
+    }
+  }
   const sectionHeadings = [];
   for (const el of all.filter(el => el.hasAttribute('data-section-title'))) {
     const box = visible(el, rect(el.getBoundingClientRect()));
@@ -36,10 +72,8 @@ export function inspectFrames({ all, css, rect, visible, selector, add }) {
     if (actions > 1) add('SIBLING CONSISTENCY', el, el.textContent, [box], { metric: 'toast-action-count', value: actions, referenceValue: 1, delta: actions - 1, reason: 'A toast has at most one action' });
     const title = el.querySelector('[data-title]');
     if (title) {
-      const range = document.createRange(); range.selectNodeContents(title);
-      const lines = new Set([...range.getClientRects()].filter(r => r.width > 0 && r.height > 0).map(r => Math.round(r.y)));
-      if (lines.size > 1 || el.querySelector('[data-description]')?.textContent?.trim()) add('LINE BREAK', title, title.textContent, [rect(title.getBoundingClientRect())],
-        { metric: 'toast-lines', value: lines.size, referenceValue: 1, delta: lines.size - 1, reason: 'Toast feedback uses one short line; details open on request' });
+      if (el.querySelector('[data-description]')?.textContent?.trim()) add('LINE BREAK', title, title.textContent, [rect(title.getBoundingClientRect())],
+        { metric: 'toast-lines', reason: 'Toast titles wrap in full; extra explanation opens on request' });
     }
   }
   const control = el => el.matches('button,a,input,textarea,select,option,svg,svg *,[role="menu"],[role="menuitem"],[role="option"],[role="tooltip"]')
