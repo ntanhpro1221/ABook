@@ -310,7 +310,8 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
       { metric: "selection-fill-end", value: right(box), referenceValue: right(last.getBoundingClientRect()), delta: right(box) - right(last.getBoundingClientRect()), tolerance: 8, otherSelector: selector(last), reason: "selection fill stops before the last control of its row" });
   }
   const isHeader = (el) => el.matches('header,footer,h1,h2,h3,h4,[role="heading"]');
-  const role = (el) => el.matches(".settings-block") ? "settings-block" : el.matches('section,[role="region"]') ? "section" : el.matches('.settings-row,li,[role="listitem"],button,a,[role="menuitem"],[role="option"]') ? `row:${el.getAttribute("role") ?? el.localName}` : null;
+  // Khối gập nối khối gập là một hàng của dãy gập (vạch chia 1px, sát nhau - styles.css), không phải phần mới.
+  const role = (el) => el.matches(".settings-block[data-fold] + .settings-block[data-fold]") ? "settings-fold-run" : el.matches(".settings-block") ? "settings-block" : el.matches('section,[role="region"]') ? "section" : el.matches('.settings-row,li,[role="listitem"],button,a,[role="menuitem"],[role="option"]') ? `row:${el.getAttribute("role") ?? el.localName}` : null;
   for (const parent of all) {
     const children = [...parent.children].filter((el) => visible(el, rect(el.getBoundingClientRect())) && !isHeader(el));
     const rows = new Map();

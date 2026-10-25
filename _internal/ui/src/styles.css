@@ -1460,7 +1460,8 @@ details[data-motion-fallback="1"][data-motion="closing"] > :not(summary) { anima
 /* Nút cạnh khối chữ có "Tìm hiểu thêm" neo theo đầu khối, không canh giữa cả khối: mở giải thích ra không kéo nút trôi xuống giữa đoạn
  * giải thích (chủ sách 25-10). Mọi hàng canh giữa (SettingsRow, hàng flex của máy tính) - không riêng một chỗ. */
 .items-center:has(> * [data-more-info]) { align-items: flex-start; }
-.settings-block + .settings-block[data-fold] { margin-top: 0; border-top: 1px solid var(--line); }
+/* Chỉ mục gập nối mục gập: mục gập đầu tiên sau một khối thường vẫn cách khối ấy như mọi khối (máy dò RHYTHM 25-10: "Chẩn đoán" dính đáy "Bộ nhớ"). */
+.settings-block[data-fold] + .settings-block[data-fold] { margin-top: 0; border-top: 1px solid var(--line); }
 .settings-row-control > [role="radiogroup"] { display: flex; width: 100%; }
 .settings-row-control > [role="radiogroup"] > button { flex: 1; min-width: 0; }
 /* Nút chữ ở cuối hàng có vùng chạm rộng hơn chữ: bù phần đệm để chữ kết thúc đúng mép nội dung. */
