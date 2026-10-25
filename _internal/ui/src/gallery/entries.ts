@@ -232,6 +232,16 @@ const DESKTOP: Omit<Entry, "platform">[] = [
 export const ENTRIES: Entry[] = [
   ...PHONE.map((item) => ({ ...item, platform: "phone" as const })),
   ...DESKTOP.map((item) => ({ ...item, platform: "desktop" as const })),
+  ...(["phone", "desktop"] as const).flatMap(platform => [false, true].map(details => ({
+    id: `${platform}/toast-error${details ? "-details" : ""}`, platform, group: "Thông báo", title: details ? "Chi tiết thông báo" : "Lỗi có hướng sửa", route: "/",
+    act: async () => {
+      const { toast } = await import("@/shared/toast");
+      toast.error("Chưa tải được sách", { id: "gallery-toast-error", duration: Infinity, description: "Bạn hãy kiểm tra kết nối với máy tính rồi thử lại.",
+        action: { label: "Thử lại", onClick: () => toast.success("Đã gửi yêu cầu") } });
+      await waitFor(() => find("Chi tiết"), "thông báo lỗi");
+      if (details) await click("Chi tiết");
+    },
+  }))),
   ...(["phone", "desktop"] as const).flatMap(platform => ([
     { id: `${platform}/book-find-results`, platform, group: "Trang sách", title: "Tìm chữ trong sách", route: "/book/suong-mu-2", act: async () => {
       await click("Tìm chữ trong sách"); await type("Chữ hay câu cần tìm", "chiếc");

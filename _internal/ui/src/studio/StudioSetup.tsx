@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { SectionHeading } from "@/shared/SectionHeading";
 import { MotionPresence } from "@/shared/MotionPresence";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Clapperboard, Cpu, Download, LoaderCircle, Square, Trash2 } from "lucide-react";
@@ -321,7 +322,7 @@ export function StudioSettings() {
     };
     return (
       <MotionRegion as="div" className="max-w-xl py-3.5">
-        <h3 className="text-[0.9375rem] font-medium">Studio trên máy này</h3>
+        <SectionHeading as="h3">Studio trên máy này</SectionHeading>
         <p className="mt-1 text-sm">{status.running ? "Đang cài." : "Chưa cài."}</p>
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{STUDIO_NEEDS}</p>
         <p className={cn("mt-1 text-[0.8125rem] leading-relaxed text-pretty", fit.level === "no" ? "font-medium text-fg" : "text-fg-2")}>

@@ -445,6 +445,8 @@ select[class~="border-line"] {
   font-size: 0.75rem;
   height: auto;
   min-height: 1.5rem;
+  background: transparent;
+  color: var(--accent-text);
 }
 /* Bố cục thông báo (soát 24-10 V14): chữ chiếm trọn bề ngang (nút hành động chung hàng từng ép chữ còn cột 166 px, xuống 3 dòng), nút xuống
  * hàng riêng căn mép phải; biểu tượng cao đúng một dòng nên thẳng dòng tiêu đề; ✕ nằm trong góc, nét chữ thập thẳng mép chữ (nút 20 px,
@@ -583,6 +585,14 @@ select[class~="border-line"] {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+@utility section-title {
+  font-size: 1.125rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 /* Độ dài dòng chữ đọc (DESIGN 5.5 / 7: ≤ 68 ký tự). `68ch` là bề rộng chữ số "0" (≈ 0,615 em ở Be Vietnam Pro) nên cho 87-90 ký tự thật mỗi
