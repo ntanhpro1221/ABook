@@ -698,9 +698,9 @@ export function App() {
       <Toaster
         // Giữ góc khi mở hộp; màn hẹp đặt trên thanh phát và thanh điều hướng.
         position={narrow ? "bottom-center" : "top-right"}
-        offset={{ top: "var(--toast-top, 16px)", right: 16, left: narrow ? 16 : 96, bottom: modalOpen && narrow ? 16 : "var(--toast-bottom, 96px)" }}
+        offset={{ top: "var(--toast-top, calc(env(safe-area-inset-top) + 16px))", right: 16, left: narrow ? 16 : 96, bottom: modalOpen && narrow ? 16 : "var(--toast-bottom, 96px)" }}
         // Dưới 600 px sonner bỏ `offset` mà dùng `mobileOffset` (mặc định 16 px) - thông báo từng đè lên thanh tab dưới ở 390 px.
-        mobileOffset={{ top: "var(--toast-top, 16px)", right: 16, left: 16, bottom: modalOpen ? 16 : "var(--toast-bottom, 96px)" }}
+        mobileOffset={{ top: "var(--toast-top, calc(env(safe-area-inset-top) + 16px))", right: 16, left: 16, bottom: modalOpen ? 16 : "var(--toast-bottom, 96px)" }}
         visibleToasts={2}
         // Thông báo vài giây che chữ thẻ bên dưới (soát UX a13 #17): nút ✕ để đọc xong là gạt đi ngay, không phải chờ hết hạn.
         closeButton
