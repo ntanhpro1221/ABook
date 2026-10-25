@@ -356,7 +356,7 @@ export function AboutBlock({ version }: { version: string | null }) {
             <span className="min-w-0">
               <span className="block text-[0.9375rem] font-medium [overflow-wrap:anywhere]">Thành phần sử dụng</span>
             </span>
-            <ChevronRight className="size-5 shrink-0 text-fg-3" />
+            <ChevronRight className="ink-end size-5 shrink-0 text-fg-3 [--icon-w:17.5px]" />
           </button>
         }
       >
@@ -403,7 +403,7 @@ function RootNotice({ text, tone }: { text: string; tone: "warning" | "accent" }
     >
       {tone === "warning" ? <TriangleAlert className="size-5 shrink-0 text-warning" /> : <Download className="size-5 shrink-0 text-accent-text" />}
       <span className="min-w-0 flex-1">{text}</span>
-      <ChevronRight className="size-4 shrink-0 text-fg-3" />
+      <ChevronRight className="ink-end size-4 shrink-0 text-fg-3" />
     </Link>
   );
 }
