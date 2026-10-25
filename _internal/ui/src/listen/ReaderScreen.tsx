@@ -338,8 +338,9 @@ export function ReaderScreen(edit: SentenceEditing) {
   };
   const hint = readerHint({ textOnly, canSpeak, timed: script.timed, tapped: Boolean(prefs.tapped), coarse, wish: lineEdit?.mode === "wish", readings: readingEdit || lineEdit?.mode === "wish" });
   const name = chapter.subtitle || chapter.title;
+  // Điện thoại: thanh trải đúng lề trang 20 px như chữ phía trên, các nút dàn đều (trước đây hộp co theo nút, thụt 34 px - soát 140 V13).
   const bar = (
-    <div role="toolbar" aria-label="Điều khiển đọc" data-reader-controls className="pointer-events-auto mx-auto flex max-w-[calc(100vw-16px)] items-center gap-1 rounded-2xl bg-panel px-2 py-1.5 shadow-float">
+    <div role="toolbar" aria-label="Điều khiển đọc" data-reader-controls className="pointer-events-auto mx-auto flex max-w-[calc(100vw-16px)] items-center gap-1 rounded-2xl bg-panel px-2 py-1.5 shadow-float max-sm:w-[calc(100vw-40px)] max-sm:justify-between">
       <IconButton label="Chương trước" icon={ChevronLeft} disabled={index <= 0} onClick={() => go(-1)} className={TOUCH} />
       <IconButton label="Tìm trong sách" icon={Search} onClick={() => setFinding(true)} className={TOUCH} />
       {/* Một nhãn cố định: nút luôn nghe từ chỗ đang thấy trên màn (hay nghe tiếp câu đang nghe dở nếu nó còn trên màn). */}
@@ -449,12 +450,13 @@ export function ReaderScreen(edit: SentenceEditing) {
             </button>
           )}
         </article>
-        {/* Chữ mờ dần dưới thanh nổi thay vì lộ nửa dòng giữa thanh và trình phát nhỏ (soát T11); ẩn thanh thì cũng tắt dần. */}
+        {/* Chữ mờ dần dưới thanh nổi thay vì lộ nửa dòng giữa thanh và trình phát nhỏ (soát T11); ẩn thanh thì cũng tắt dần. Phần đặc (66 % của 144 = 95 px)
+            phủ hết thanh (đáy 24 + cao ~58) và khe trên nó: chữ không lộ qua hai góc bo của thanh (soát 140 V13). */}
         <div
           aria-hidden
           data-reader-fade
           className={cn(
-            "pointer-events-none sticky bottom-0 -mt-28 h-28 bg-gradient-to-t from-[var(--read-bg)] from-40% to-transparent transition-opacity duration-motion-slow",
+            "pointer-events-none sticky bottom-0 -mt-36 h-36 bg-gradient-to-t from-[var(--read-bg)] from-[66%] to-transparent transition-opacity duration-motion-slow",
             controls || menu.bar ? "opacity-100" : "opacity-0",
           )}
         />
