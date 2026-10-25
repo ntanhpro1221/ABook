@@ -1,4 +1,5 @@
 import { MotionRegion } from "@/shared/MotionRegion";
+import { MotionPresence } from "@/shared/MotionPresence";
 import * as Switch from "@radix-ui/react-switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type LucideIcon, Bluetooth, CheckCircle2, Copy, Download, HardDrive, Keyboard, Laptop, Link2, Loader2, Pencil, RefreshCw, Search, Smartphone, Trash2, Unplug, Wifi, X } from "lucide-react";
@@ -180,7 +181,7 @@ function PairPanel() {
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm font-semibold">Máy tính tìm thấy</span>
             <button type="button" onClick={() => discover.mutate()} className="touch-hit flex items-center gap-1.5 text-sm font-medium text-accent-text">
-              {discover.isPending ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />} Tìm lại
+              <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{discover.isPending ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}</MotionRegion> Tìm lại
             </button>
           </div>
           {computers?.length ? (
@@ -200,7 +201,7 @@ function PairPanel() {
                     <span className="block font-medium">{computer.name}</span>
                     <span className="block text-xs text-fg-2">{computer.host}</span>
                   </span>
-                  {target?.host === computer.host && <CheckCircle2 className="size-5 text-accent-text" />}
+                  <CheckCircle2 aria-hidden className={cn("size-5 shrink-0 text-accent-text transition-opacity duration-motion-fast", target?.host === computer.host ? "opacity-100" : "opacity-0")} />
                 </button>
               ))}
             </div>
@@ -235,7 +236,7 @@ function PairPanel() {
             </div>
           ) : paired === null ? (
             <button ref={btButton} type="button" onClick={() => void startBluetooth()} className="touch-hit -ml-1 flex items-center gap-1.5 text-sm font-medium text-accent-text">
-              {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Dùng Bluetooth
+              <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />}</MotionRegion> Dùng Bluetooth
             </button>
           ) : paired.length ? (
             <div className="space-y-2">
@@ -255,7 +256,7 @@ function PairPanel() {
                     <span className="block font-medium">{device.name}</span>
                     <span className="block text-xs text-fg-2">Qua Bluetooth{device.abook ? " · có ABook" : ""}</span>
                   </span>
-                  {target?.host === `bt:${device.address}` && <CheckCircle2 className="size-5 text-accent-text" />}
+                  <CheckCircle2 aria-hidden className={cn("size-5 shrink-0 text-accent-text transition-opacity duration-motion-fast", target?.host === `bt:${device.address}` ? "opacity-100" : "opacity-0")} />
                 </button>
               ))}
             </div>
@@ -508,7 +509,7 @@ function PeersPanel() {
         <div className="space-y-3 py-4">
           {bonded === null ? (
             <button type="button" onClick={() => bluetooth.mutate()} className="flex items-center gap-1.5 text-sm font-medium text-accent-text">
-              {bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />} Ghép Bluetooth
+              <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{bluetooth.isPending ? <Loader2 className="size-4 animate-spin" /> : <Bluetooth className="size-4" />}</MotionRegion> Ghép Bluetooth
             </button>
           ) : bonded.length ? (
             <div className="space-y-2">
@@ -527,7 +528,7 @@ function PeersPanel() {
                     <span className="block font-medium">{device.name}</span>
                     <span className="block text-xs text-fg-2">Qua Bluetooth · {device.kind === "phone" ? "điện thoại" : "máy tính"}</span>
                   </span>
-                  {address === `bt:${device.address}` && <CheckCircle2 className="size-5 text-accent-text" />}
+                  <CheckCircle2 aria-hidden className={cn("size-5 shrink-0 text-accent-text transition-opacity duration-motion-fast", address === `bt:${device.address}` ? "opacity-100" : "opacity-0")} />
                 </button>
               ))}
             </div>
@@ -823,8 +824,9 @@ function DeviceNameRow({ bare = false }: { bare?: boolean }) {
     onError: (error: Error) => toastNativeError("Chưa đổi được tên", error),
   });
   const name = connection.data?.deviceName ?? "";
-  if (!name) return null;
+  // Tự lấy dữ liệu nên tự mang chuyển động: tên về muộn thì khối mở ra, đổi tên thì chữ mờ qua - không bật vào / thay cứng.
   return (
+    <MotionPresence open={Boolean(name)}>
     <section className={bare ? "" : "mt-8 rounded-2xl border border-line bg-panel px-4 py-3.5"} aria-labelledby="device-name-title">
       <div className="flex items-center gap-3">
         <Smartphone className="size-5 shrink-0 text-fg-2" />
@@ -832,7 +834,7 @@ function DeviceNameRow({ bare = false }: { bare?: boolean }) {
           <div id="device-name-title" className="text-xs text-fg-2">
             Tên điện thoại
           </div>
-          <div className="truncate font-medium">{name}</div>
+          <MotionRegion className="truncate font-medium">{name}</MotionRegion>
         </div>
         <Button size="sm" variant="ghost" className="settings-edge-action" icon={Pencil} onClick={() => setDraft(name)}>
           Đổi tên
@@ -864,6 +866,7 @@ function DeviceNameRow({ bare = false }: { bare?: boolean }) {
         </form>
       </Dialog>
     </section>
+    </MotionPresence>
   );
 }
 
@@ -882,7 +885,8 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
           Sách trên máy: {formatSize(storage.bytes)} · còn trống {formatSize(storage.free)}
         </p>
       )}
-      {rows.length > 0 && (
+      {/* Khung (cả lề trên) khép lại sau khi hàng cuối khép xong / mở trước hàng đầu - không gắn / gỡ cứng. */}
+      <MotionPresence open={rows.length > 0}>
         <ul className="mt-3 divide-y divide-line">
           {rows.map(({ key, state, ref, item: { id, title, bytes, kind } }) => {
             const busy = isDownloading(progress[id]);
@@ -891,7 +895,7 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
               <div className="flex items-center gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm">{title}</div>
-                  {kind === "partial" && <div className="text-xs text-fg-3">{busy ? "Đang tải" : "Phần đã tải, chưa thành sách trên máy"}</div>}
+                  {kind === "partial" && <MotionRegion motionKey={busy} className="text-xs text-fg-3">{busy ? "Đang tải" : "Phần đã tải, chưa thành sách trên máy"}</MotionRegion>}
                 </div>
                 <div className="shrink-0 text-xs text-fg-2">{formatSize(bytes)}</div>
                 <button
@@ -908,7 +912,7 @@ export function StoragePanel({ storage, names, bare = false }: { storage: { byte
             );
           })}
         </ul>
-      )}
+      </MotionPresence>
     </section>
   );
 }

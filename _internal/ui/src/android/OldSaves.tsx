@@ -1,6 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { Download, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { useListPresence } from "@/shared/motion";
 import { toast } from "@/shared/toast";
 import { formatSize, formatWhen } from "@/shared/format";
 import { Button, Dialog } from "@/shared/ui";
@@ -69,11 +70,14 @@ export function OldSavesList({ files }: { files: OldSave[] }) {
     if (done) setAsking(null);
     void refreshOldSaves(client);
   };
+  // Xoá một bản: hàng khép tại chỗ (useListPresence) - hàng vẫn là con trực tiếp của khối cài đặt nên vạch chia giữ nguyên.
+  const rows = useListPresence(files, (file) => file.name);
   return (
     <>
       <p className="px-4 py-3 text-xs leading-snug text-fg-2">{OLD_SAVES_HINT}</p>
-      {files.map((file) => (
-        <div key={file.name} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3.5">
+      {rows.map(({ key, item: file, state, ref }) => (
+        <div key={key} ref={ref} className="motion-row" data-state={state} inert={state === "exit"}>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3.5">
           <div className="min-w-0 flex-[1_1_12rem]">
             <div className="truncate text-[0.9375rem] font-medium">{oldSaveTitle(file.name)}</div>
             <div className="mt-0.5 text-xs text-fg-2">
@@ -88,6 +92,7 @@ export function OldSavesList({ files }: { files: OldSave[] }) {
               Xoá…
             </Button>
           </div>
+        </div>
         </div>
       ))}
       <OldSaveDeleteDialog file={asking} busy={busy} onConfirm={() => void confirm()} onCancel={() => setAsking(null)} />

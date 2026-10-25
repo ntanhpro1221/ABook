@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { useBackLayer } from "@/shared/backStack";
 import { MoreInfo } from "@/shared/SettingsNav";
 import { MY_MUSIC_HELP } from "./musicLocal";
-import { MotionPresence } from "@/shared/MotionPresence";
+import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold, Collapse } from "@/shared/Collapse";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -372,12 +372,14 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
       {!canImport && (
         <p className="text-sm text-fg-2">Nhập/xoá trên máy chủ; ở đây dùng “Đổi bài” để ghim nhạc.</p>
       )}
-      {canImport && !!tracks.length && <MusicModuleNotice view={data} queryKey={key} />}
+      <MotionPresence open={canImport && !!tracks.length}><MusicModuleNotice view={data} queryKey={key} /></MotionPresence>
       {canImport && <MotionRegion motionKey={isLoading ? "loading" : error && !data ? "error" : tracks.length ? "ready" : "empty"}>{isLoading ? <ContentSkeleton count={2} label="Đang tải nhạc riêng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại nhạc của bạn." onRetry={() => void refetch()} /> : !tracks.length ? <EmptyState icon={Music2} title="Thêm nhạc của bạn" className="py-6" action={<Button icon={Upload} onClick={() => void importFiles()} loading={Boolean(progress)}>Nhập nhạc</Button>} /> : null}</MotionRegion>}
-      {!!tracks.length && (
-        <ul className="divide-y divide-line rounded-lg border border-line">
-          {tracks.map((track: LocalTrack) => (
-            <li key={track.link} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+      {/* Xoá / nhập bài: hàng khép / mở tại chỗ (DESIGN 5.2); data-motion-live - cả khung không mờ lại theo từng hàng. */}
+      <MotionPresence open={!!tracks.length}>
+        <div data-motion-live="">
+        <AnimatedRows className="divide-y divide-line rounded-lg border border-line" items={tracks} keyOf={(track: LocalTrack) => track.link}>
+          {(track: LocalTrack) => (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
               <span className="min-w-0 flex-1 break-words">
                 <Music2 className="mr-1.5 inline size-4 text-accent-text" />
                 {track.title}
@@ -385,7 +387,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
                 {track.duration ? <span className="tabular text-fg-2"> · {formatClock(track.duration)}</span> : null}
                 <AutoPickNote track={track} canOverride={canImport} onView={refresh} idleLabel={analysisLabel(track)} />
               </span>
-              <span className="flex shrink-0 gap-1">
+              <MotionRegion as="span" className="flex shrink-0 gap-1">
                 <Button size="sm" variant="ghost" icon={previewing === track.link ? Square : Play} aria-pressed={previewing === track.link}
                   onClick={() => onPreview(track.link)}>
                   {previewing === track.link ? "Dừng nghe" : "Nghe thử"}
@@ -404,11 +406,12 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
                     Xoá
                   </Button>
                 )}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+              </MotionRegion>
+            </div>
+          )}
+        </AnimatedRows>
+        </div>
+      </MotionPresence>
     </MotionRegion>
   );
 }
@@ -656,13 +659,13 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
         <Button variant="ghost" icon={RefreshCw} loading={rebuild.isPending} onClick={() => rebuild.mutate()}>
           {rebuild.isPending ? "Đang chọn lại…" : "Chọn lại nhạc"}
         </Button>
-        {(change.isPending || rebuild.isPending) && (
-          <p role="status" className="basis-full text-sm text-fg-2">
+        <MotionPresence className="basis-full" open={change.isPending || rebuild.isPending}>
+          <p role="status" className="text-sm text-fg-2">
             {rebuild.isPending || change.variables?.genre !== undefined ? REBUILDING : SAVING}
           </p>
-        )}
-        {data.download?.active && (
-          <div className="flex basis-full flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-2">
+        </MotionPresence>
+        <MotionPresence className="basis-full" open={Boolean(data.download?.active)}>
+          {data.download && <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-fg-2">
             {/* MB đổi mỗi 2 giây: trình đọc màn hình chỉ đọc mốc 25 % (soát a31 A6). */}
             <span role="status" className="min-w-0 flex-1">
               <LiveText shown={downloadText(data.download)} spoken={spokenProgress("Đang tải sẵn nhạc nền", downloadShare(data.download))} />
@@ -671,23 +674,26 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
               Huỷ tải
             </Button>
             <Progress value={downloadShare(data.download)} size="sm" label="Tải sẵn nhạc nền" className="basis-full" />
-          </div>
-        )}
-        {overrides.banned.length > 0 && (
-          <details className="basis-full text-sm">
+          </div>}
+        </MotionPresence>
+        {/* "Dùng lại": dòng khép tại chỗ; bỏ hết thì cả mục khép lại. */}
+        <MotionPresence className="basis-full" open={overrides.banned.length > 0}>
+          <details className="text-sm">
             <summary className="cursor-pointer text-fg-2">Bài đã bỏ ({overrides.banned.length})</summary>
-            <ul className="mt-2 space-y-1">
-              {overrides.banned.map((link) => (
-                <li key={link} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <div data-motion-live="">
+            <AnimatedRows className="mt-2" items={overrides.banned} keyOf={(link) => link}>
+              {(link) => (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-1">
                   <span className="min-w-0 flex-1 break-words">{trackLabel(link, data.bannedTracks?.[link] ?? plan?.tracks[link])}</span>
                   <Button size="sm" variant="ghost" disabled={change.isPending} onClick={() => change.mutate({ unban: [link] })}>
                     Dùng lại
                   </Button>
-                </li>
-              ))}
-            </ul>
+                </div>
+              )}
+            </AnimatedRows>
+            </div>
           </details>
-        )}
+        </MotionPresence>
       </section>
 
       <Fold storageKey="studio.music.moods" title="Nhạc theo ngữ cảnh" heading="h3">

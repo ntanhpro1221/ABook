@@ -1,3 +1,4 @@
+import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ClipboardList, Hammer, Wrench } from "lucide-react";
@@ -215,13 +216,13 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
       description="Ảnh chụp lúc người làm sách đóng gói file - chỉ để xem. Muốn sửa thì mở file bằng Studio."
     >
       {available.length > 1 && <Segmented<Tab> value={tab} onChange={setTab} label="Màn" options={available} />}
-      <div className="mt-3 max-h-[50vh] overflow-y-auto text-sm">
-        {isLoading && <ContentSkeleton label="Đang tải việc xưởng" />}
-        {error && !data && <InlineError message="Bạn hãy thử tải lại việc của xưởng." onRetry={() => void refetch()} />}
+      {/* Khung chờ / lỗi / đổi màn: mờ qua (fadeThrough) theo khoá màn + pha tải, không đổi cứng trong hộp đang mở. */}
+      <MotionRegion fadeThrough motionKey={[tab, isLoading, Boolean(error && !data)]} className="mt-3 max-h-[50vh] overflow-y-auto text-sm">
+        {isLoading ? <ContentSkeleton label="Đang tải việc xưởng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại việc của xưởng." onRetry={() => void refetch()} /> : null}
         {tab === "work" && <WorkList data={data as WorkSnapshot | undefined} />}
         {tab === "casting" && <CastingList data={data as CastingSnapshot | undefined} />}
         {tab === "names" && <NamesList data={data as NamesSnapshot | undefined} />}
-      </div>
+      </MotionRegion>
       <div className="mt-4 dialog-actions">
         <Button variant="ghost" onClick={() => onOpenChange(false)}>
           Đóng

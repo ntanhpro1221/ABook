@@ -361,3 +361,22 @@ it("W2 màn đọc: thanh chọn câu hiện dần ngoài vùng của cả chư�
   expect(animated((element) => element === page)).toHaveLength(0);
   expect(snapshotWith("Câu một.")).toBeUndefined();
 });
+
+it("fix139 1.2 nút phát / dừng lớn: glyph (cả vòng chờ đệm) mờ chéo trong vùng riêng của nút, không nảy (icon-pop) và không mờ cả hàng nút", async () => {
+  state.expanded = true;
+  await render(<NowPlaying mobile />);
+  const toggle = host.querySelector<HTMLButtonElement>("[data-player-toggle]")!;
+  const transport = host.querySelector<HTMLElement>("[data-player-transport]")!;
+  const glyph = toggle.querySelector<HTMLElement>("[data-motion-region]");
+  expect(glyph).not.toBeNull();
+  expect(host.querySelector(".icon-pop")).toBeNull();
+  for (const patch of [{ playing: true }, { playing: true, buffering: true }, { playing: false }]) {
+    animate.mockClear();
+    player(patch);
+    await render(<NowPlaying mobile />);
+    expect(toggle.querySelector("[data-motion-region]")).toBe(glyph);
+    expect(animated((element) => element === glyph)).toHaveLength(1);
+    expect(animated((element) => element === transport)).toHaveLength(0);
+  }
+  expect(readFileSync(`${cwd()}/src/styles.css`, "utf8")).not.toContain("icon-pop");
+});

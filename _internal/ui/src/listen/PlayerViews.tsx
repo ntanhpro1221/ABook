@@ -283,17 +283,14 @@ function Transport({ large = false, chapters = true }: { large?: boolean; chapte
           large ? "size-[72px] bg-accent text-accent-ink hover:bg-accent-hover" : "size-10 bg-fg text-bg",
         )}
       >
-        {waiting ? (
+        {/* Đổi glyph = mờ chéo tại chỗ (DESIGN 5.2), cả vòng chờ đệm; không nảy vào, không mất cứng. */}
+        <MotionRegion as="span" className="inline-grid place-items-center">{waiting ? (
           <Loader2 className={cn("animate-spin", large ? "size-8" : "size-5")} />
         ) : playing ? (
-          <span key="pause" className="icon-pop">
-            <Pause className={large ? "size-8" : "size-5"} fill="currentColor" strokeWidth={0} />
-          </span>
+          <Pause className={large ? "size-8" : "size-5"} fill="currentColor" strokeWidth={0} />
         ) : (
-          <span key="play" className="icon-pop">
-            <Play className={cn(large ? "size-8" : "size-5", "translate-x-[1px]")} fill="currentColor" strokeWidth={0} />
-          </span>
-        )}
+          <Play className={cn(large ? "size-8" : "size-5", "translate-x-[1px]")} fill="currentColor" strokeWidth={0} />
+        )}</MotionRegion>
       </button>
       <IconButton label={withShortcut(`Tới ${SKIP_SECONDS} giây`, "→")} icon={large ? Forward15 : Forward15Mini} size={size} className="touch-box" onClick={() => skip(SKIP_SECONDS)} {...keepFocus} />
       {/* Còn chương sau mà chưa có audio: nút vẫn bấm được và nói vì sao (player.step báo + đường đọc chữ); chỉ chương cuối mới mờ. */}
@@ -508,11 +505,12 @@ export function LevelButtons({ level, disabled, onChange }: { level: number; dis
             aria-pressed={value === level}
             onClick={() => onChange(value)}
             className={cn(
-              "flex h-9 items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover disabled:hover:bg-transparent",
+              "flex h-9 items-center gap-2 rounded-lg px-2 text-left text-sm transition-colors duration-motion-fast hover:bg-hover disabled:hover:bg-transparent",
               value === level ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
             )}
           >
-            <Check className={cn("size-4 shrink-0", value === level ? "text-accent-text" : "invisible")} />
+            {/* Menu không đóng khi chọn mức: dấu ✓ mờ qua, nền đổi dần - không nhảy cứng. */}
+            <Check aria-hidden className={cn("size-4 shrink-0 text-accent-text transition-opacity duration-motion-fast", value === level ? "opacity-100" : "opacity-0")} />
             {name}
             {LEVEL_NOTES[value] && <span className="text-xs font-normal text-fg-2">{LEVEL_NOTES[value]}</span>}
           </button>
@@ -748,7 +746,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                             });
                           }}
                           className={cn(
-                            "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover max-sm:min-h-[48px]",
+                            "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 text-left text-sm transition-colors duration-motion-fast hover:bg-hover max-sm:min-h-[48px]",
                             selected ? "bg-accent-soft font-semibold text-accent-text" : "text-fg",
                           )}
                         >
@@ -765,8 +763,11 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                           aria-label={`${playing ? "Dừng" : "Thử"} giọng ${voice.name}`}
                           className="touch-box inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium text-fg-2 hover:bg-hover hover:text-fg max-sm:h-[48px]"
                         >
-                          {sample.loading === voice.id ? <Loader2 className="size-3.5 animate-spin" /> : playing ? <Square className="size-3.5" /> : <Play className="size-3.5" />}
-                          {playing ? "Dừng" : "Thử"}
+                          {/* Vùng riêng cho nhãn: nghe thử chỉ mờ qua nút này, không mờ lại cả menu giọng. */}
+                          <MotionRegion as="span" className="inline-flex items-center gap-1">
+                            {sample.loading === voice.id ? <Loader2 className="size-3.5 animate-spin" /> : playing ? <Square className="size-3.5" /> : <Play className="size-3.5" />}
+                            {playing ? "Dừng" : "Thử"}
+                          </MotionRegion>
                         </button>
                       )}
                     </div>
@@ -1213,8 +1214,8 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
       </div>
     );
   }
-  if (!wide) {
-    return (
+  // Qua mốc 1280 px (kéo cửa sổ): hai bố cục mờ qua trong một vùng khoá theo bố cục, không thay cứng.
+  return <MotionRegion as="span" motionKey={wide} className="inline-flex">{!wide ? (
       <Popover.Root><MotionRegion>
         <Popover.Trigger asChild>
           <button
@@ -1233,14 +1234,12 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
           </Popover.Content>
         </Popover.Portal>
       </MotionRegion></Popover.Root>
-    );
-  }
-  return (
+    ) : (
     <MotionRegion as="div" className="flex items-center gap-1">
       <IconButton label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} icon={Icon} size="sm" {...keepFocus} onClick={toggleMute} />
       {slider("flex w-20")}
     </MotionRegion>
-  );
+  )}</MotionRegion>;
 }
 
 /** Thêm dấu trang kèm thông báo có "Ghi chú" và "Hoàn tác". Dấu trùng chỗ (±5 giây) không tạo thêm. */
@@ -1638,13 +1637,18 @@ function MoreMenu({ scope, children }: { scope: VoiceMenuScope; children: ReactN
   );
 }
 
-/** Một dòng có tên cho nút riêng của nền / tính năng (gợi ý đọc, phát trên thiết bị khác): nút đứng bên phải; nút không có thì cả dòng không chiếm chỗ. */
+/** Một dòng có tên cho nút riêng của nền / tính năng (gợi ý đọc, phát trên thiết bị khác): nút đứng bên phải; nút không có thì cả dòng không chiếm chỗ.
+ *  Nút con tự lấy dữ liệu và có thể tới muộn lúc menu đang mở: dòng mở / khép bằng chiều cao + độ mờ (.menu-slot trong styles.css), không bật tắt. */
 function MenuSlot({ label, children, icon: Icon = Cast }: { label: string; children: ReactNode; icon?: typeof Cast }) {
   return (
-    <div data-player-menu-row data-menu-slot className="flex min-h-10 items-center gap-3 rounded-lg pl-2 text-sm text-fg max-sm:min-h-[48px] [&:not(:has(button))]:hidden">
-      <Icon className="size-4 shrink-0 text-fg-2" />
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      {children}
+    <div className="menu-slot">
+      <div>
+        <div data-player-menu-row data-menu-slot className="flex min-h-10 items-center gap-3 rounded-lg pl-2 text-sm text-fg max-sm:min-h-[48px]">
+          <Icon className="size-4 shrink-0 text-fg-2" />
+          <span className="min-w-0 flex-1 truncate">{label}</span>
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
@@ -2197,8 +2201,8 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
   );
   return (
     <div className="mt-3 border-t border-accent/20 pt-2.5 text-left">
-      {others.length > 0 && (
-        <>
+      {/* Thư viện về muộn (truy vấn của riêng khối này - vùng cha không thấy): cụm "Nghe cuốn khác" mở ra, không bật cứng. */}
+      <MotionPresence open={others.length > 0}>
           <div className="px-1 pb-1 text-xs font-medium text-fg-2">Nghe cuốn khác</div>
           <ul className="space-y-1">
             {others.map((book) => (
@@ -2219,8 +2223,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
               </li>
             ))}
           </ul>
-        </>
-      )}
+      </MotionPresence>
       <button
         type="button"
         onClick={() => {
@@ -2269,7 +2272,8 @@ function CaughtUpNotice() {
     </p>
   );
   };
-  return <MotionPresence open={atEnd === "finished" || atEnd === "caughtUp"}>{content()}</MotionPresence>;
+  // Vùng bên trong: đổi chữ / nút lúc khối vẫn mở (caughtUp -> finished, useNextVolume về muộn) mờ qua tại chỗ như FadingNotice.
+  return <MotionPresence open={atEnd === "finished" || atEnd === "caughtUp"}><MotionRegion>{content()}</MotionRegion></MotionPresence>;
 }
 
 // ---- Màn hình đang nghe ------------------------------------------------------------------------------------

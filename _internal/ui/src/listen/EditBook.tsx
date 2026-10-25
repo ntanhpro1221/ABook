@@ -683,7 +683,7 @@ export function SaveAsDialog({
           <Button variant="outline" size="sm" onClick={() => void pickFolder().then((picked) => picked && setFolder(picked))}>
             Chọn thư mục…
           </Button>
-          <span className="min-w-0 truncate text-fg-2">{folder ?? "Mặc định: thư mục Đã xuất"}</span>
+          <MotionRegion as="span" motionKey={folder ?? ""} className="min-w-0 truncate text-fg-2">{folder ?? "Mặc định: thư mục Đã xuất"}</MotionRegion>
         </div>
       )}
       {pickFolder && <p className="mt-2 text-xs text-fg-3">Đã có file cùng tên trong thư mục ấy thì file mới thêm số (2) ở cuối tên - không đè lên file cũ.</p>}
