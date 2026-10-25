@@ -49,7 +49,7 @@ object LibraryServer {
     private const val PAIRING_MILLIS = 5 * 60 * 1000L
     private const val PAIRING_ATTEMPTS = 5
     private const val MAX_HEADER_BYTES = 16 * 1024
-    // Chỗ nghe của một cuốn dài (mỗi chương một mục, dấu trang) vài chục KB; ghép nối vài chục byte.
+    // Chỗ nghe của một cuốn dài (mỗi chương một mục) vài chục KB; ghép nối vài chục byte.
     private const val MAX_BODY_BYTES = 2 * 1024 * 1024
     internal const val PEER_MAX_CONNECTIONS = 8
     internal const val PEER_MAX_PER_SOURCE = 6

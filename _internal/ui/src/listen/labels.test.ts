@@ -169,7 +169,7 @@ describe("chờ giọng đọc", () => {
   });
 });
 
-describe("unquoted (soát a26 L6: dấu trang hiện ““…””)", () => {
+describe("unquoted (soát a26 L6: câu trích hiện ““…””)", () => {
   it("bỏ ngoặc của chính câu thoại trước khi bọc ngoặc trích", () => {
     expect(unquoted("“Đi thôi.”")).toBe("Đi thôi.");
     expect(unquoted("Lucien nhìn Natasha.")).toBe("Lucien nhìn Natasha.");

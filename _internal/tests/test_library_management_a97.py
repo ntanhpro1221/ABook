@@ -48,13 +48,13 @@ def test_switching_to_another_library_keeps_each_books_own_listening_state(tmp_p
     app = bare_app(tmp_path, monkeypatch, first)
     old_id, new_id = book_id(a), book_id(b)
     app.listening.progress(old_id, 1, 17.5, 100)
-    app.listening.add_bookmark(old_id, 1, 12, "Dế Mèn gặp Dế Choắt")
+    app.listening.set_rate(old_id, 1.25)
     app.preferences.remember_position(old_id, 1, 17.5, 100)
     request = SimpleNamespace(app=app, _body=lambda: {"libraryRoot": str(second)}, _send_json=lambda *args: None)
     Handler.put_preferences(request, {})
     assert store.summarize(b)["title"] == "Tắt đèn"
-    assert app.listening.get(old_id)["bookmarks"][0]["note"] == "Dế Mèn gặp Dế Choắt"
-    assert not app.listening.get(new_id).get("bookmarks") and app.listening.get(new_id).get("last") is None
+    assert app.listening.get(old_id)["rate"] == 1.25
+    assert "rate" not in app.listening.get(new_id) and app.listening.get(new_id).get("last") is None
     positions = app.preferences.get()["positions"]
     assert old_id in positions and new_id not in positions
 

@@ -15,7 +15,6 @@ it.each([
   ["B5", "../listen/EditBook.tsx", /useBackLayer\(open && confirmRevert, \(\) => setConfirmRevert\(false\), revertBox, revertButton\)/],
   ["B6", "../android/DevicesScreen.tsx", /useBackLayer\(btAsk !== null, \(\) => setBtAsk\(null\), btBox, btButton\)/],
   ["B7", "../android/DevicesScreen.tsx", /useBackLayer\(explain && !enabled, \(\) => setExplain\(false\), explainBox, explainButton\)/],
-  ["B8", "../listen/PlayerViews.tsx", /useBackLayer\(editing, cancelEdit, editBox, editButton\)/],
   ["B9", "../listen/WordReadings.tsx", /useBackLayer\(word !== null && joining, \(\) => setJoining\(false\), joinBox, joinButton\)/],
   ["B10", "./ChapterPreview.tsx", /useBackLayer\(editing !== null,[\s\S]*cancelled.current = true/],
   ["B11", "../listen/AddBook.tsx", /useBackLayer\(open && confirmLeave !== null, \(\) => setConfirmLeave\(null\), confirmBox, confirmButton\)/],

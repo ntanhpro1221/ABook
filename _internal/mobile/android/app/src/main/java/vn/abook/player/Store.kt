@@ -17,8 +17,7 @@ import kotlin.concurrent.thread
  * app giữ bảng liên kết `records.json` - một sách nhiều hồ sơ, một hồ sơ đang dùng - giống hệt máy tính
  * (abook/webui/listening.py). Mọi hàm nhận MÃ SÁCH làm việc trên hồ sơ đang dùng của sách ấy.
  *
- * Trạng thái của hồ sơ CÙNG hình dạng với máy tính để hai bên gộp được với nhau: mỗi phần mang mốc thời gian riêng,
- * dấu trang đã xoá để lại dấu vết trong "deleted".
+ * Trạng thái của hồ sơ CÙNG hình dạng với máy tính để hai bên gộp được với nhau: mỗi phần mang mốc thời gian riêng.
  */
 object Store {
     private const val DONE_TAIL_SECONDS = 20.0
@@ -219,7 +218,7 @@ object Store {
 
     /**
      * Gói sách của mọi cuốn đã tải. KHÔNG giữ khoá của Store suốt cả lượt: thư viện hàng trăm cuốn đọc + phủ lớp sửa từng gói mất hàng trăm mili giây, và
-     * trong lúc ấy mọi lần ghi (chỗ nghe, dấu trang) đứng chờ - mỗi cuốn một lần giữ khoá, ghi chen vào giữa được (soát a101 F6).
+     * trong lúc ấy mọi lần ghi (chỗ nghe) đứng chờ - mỗi cuốn một lần giữ khoá, ghi chen vào giữa được (soát a101 F6).
      */
     fun books(): List<JSONObject> {
         val prints = synchronized(this) { printsBook() }
@@ -500,8 +499,7 @@ object Store {
     private fun stateFile(bookId: String) = recordFile(activeRecord(bookId))
 
     private fun withoutSyncKeys(value: JSONObject) = JSONObject(value.toString()).also { copy ->
-        // `deleted` còn là bảng bia mộ dấu trang; chỉ cờ boolean mới là metadata xoá hồ sơ.
-        SYNC_KEYS.filterNot { it == "deleted" && copy.opt(it) is JSONObject }.forEach(copy::remove)
+        SYNC_KEYS.forEach(copy::remove)
     }
 
     /**
@@ -843,7 +841,7 @@ object Store {
     }
 
     /** Gắn hồ sơ của cuốn `bookId` sang cuốn `toBook` (vd. bản làm lại của cùng truyện), thành hồ sơ đang dùng ở đó - chỗ
-     *  nghe, dấu trang đi theo (như webui/listening.py move_record). Trả các hồ sơ còn lại của `bookId`. */
+     *  nghe đi theo (như webui/listening.py move_record). Trả các hồ sơ còn lại của `bookId`. */
     @Synchronized
     fun moveRecord(bookId: String, record: String, toBook: String): JSONArray {
         val book = recordsBook()
@@ -916,7 +914,6 @@ object Store {
         val state = if (file != null && raw != null && clean != null) repaired(file, raw, clean) else JSONObject()
         if (existed && (raw == null || raw.toString() != clean.toString())) freshRevisionNode()
         if (!state.has("chapters")) state.put("chapters", JSONObject())
-        if (!state.has("bookmarks")) state.put("bookmarks", JSONArray())
         return state
     }
 
@@ -946,19 +943,14 @@ object Store {
         }
         body.optJSONObject("activeState")?.let { validatePeerRevisions(it) }
     }
-    /** Cùng chương, cách nhau tối đa 5 giây là cùng chỗ (listening.py). */
-    private const val BOOKMARK_SAME_SECONDS = 5.0
-
     private fun stamp(value: JSONObject?, key: String = "at") = value?.optDouble(key, 0.0)?.takeIf { !it.isNaN() } ?: 0.0
 
-    /** `merge_states` của máy tính: mỗi phần mang mốc thời gian riêng, bên mới hơn thắng; dấu trang hợp theo id, dấu trang
-     *  đã xoá ở một bên (bia mộ "deleted") thì xoá ở cả hai; phiên nghe hợp theo id, giữ 200 phiên cuối; đêm nghe theo
-     *  `merge_nights`. */
+    /** `merge_states` của máy tính: mỗi phần mang mốc thời gian riêng, bên mới hơn thắng; phiên nghe hợp theo id,
+     *  giữ 200 phiên cuối; đêm nghe theo `merge_nights`. */
     fun mergeStates(ours: JSONObject, incoming: JSONObject): JSONObject {
         val theirs = ListeningRevision.checkedPeer(ours, incoming, ::addDataNotice)
         val result = JSONObject(ours.toString())
         if (result.optJSONObject("chapters") == null) result.put("chapters", JSONObject())
-        if (result.optJSONArray("bookmarks") == null) result.put("bookmarks", JSONArray())
         for (key in listOf("last", "reading")) {
             theirs.optJSONObject(key)?.let { if (ListeningRevision.newer(it, result.optJSONObject(key))) result.put(key, it) }
         }
@@ -983,32 +975,6 @@ object Store {
                 }
             }
         }
-        // Bookmarks: newer edit wins (a tie keeps ours); a tombstone only removes a mark not changed after it - an undone delete
-        // (newer `at`) comes back on both devices. Both sides deleted: keep the later stamp.
-        val deleted = JSONObject((result.optJSONObject("deleted") ?: JSONObject()).toString())
-        val deletedRevs = JSONObject((result.optJSONObject("_deletedRevs") ?: JSONObject()).toString())
-        theirs.optJSONObject("deleted")?.let { gone ->
-            for (key in gone.keys()) {
-                val rev = theirs.optJSONObject("_deletedRevs")?.optJSONObject(key)
-                if (ListeningRevision.newer(JSONObject().put("at", stamp(gone, key)).put("rev", rev),
-                        JSONObject().put("at", stamp(deleted, key)).put("rev", deletedRevs.opt(key)))) {
-                    deleted.put(key, gone.get(key))
-                    if (rev != null) deletedRevs.put(key, rev)
-                }
-            }
-        }
-        val marks = LinkedHashMap<String, JSONObject>()
-        result.getJSONArray("bookmarks").let { list -> for (i in 0 until list.length()) list.optJSONObject(i)?.let { marks[it.optString("id")] = it } }
-        (theirs.optJSONArray("bookmarks") ?: JSONArray()).let { list ->
-            for (i in 0 until list.length()) {
-                val mark = list.optJSONObject(i) ?: continue
-                if (ListeningRevision.newer(mark, marks[mark.optString("id")])) marks[mark.optString("id")] = mark
-            }
-        }
-        result.put("bookmarks", JSONArray(marks.values.filter { ListeningRevision.newer(it, JSONObject().put("at", stamp(deleted, it.optString("id"))).put("rev", deletedRevs.opt(it.optString("id")))) }
-            .sortedBy { if (it.has("createdAt")) stamp(it, "createdAt") else stamp(it) }))
-        result.put("deleted", deleted)
-        if (deletedRevs.length() > 0) result.put("_deletedRevs", deletedRevs)
         val sessions = LinkedHashMap<String, JSONObject>()
         for (source in listOf(result, theirs)) {
             val list = source.optJSONArray("sessions") ?: continue
@@ -1189,118 +1155,6 @@ object Store {
         kept.put(session)
         state.put("sessions", kept).put("updatedAt", now())
         writeAtomic(recordFile(target), state.toString())
-    }
-
-    /** `listening.bookmark_quote`: đầu câu cho dòng dấu trang - gộp khoảng trắng, cắt ở ranh giới từ quanh 60 ký tự, thêm "…" khi có cắt. */
-    fun bookmarkQuote(text: String): String {
-        val clean = text.split(Regex("\\s+")).filter { it.isNotEmpty() }.joinToString(" ")
-        if (clean.length <= 60) return clean
-        val cut = clean.take(60)
-        val space = cut.lastIndexOf(' ')
-        return (if (space > 30) cut.substring(0, space) else cut).trimEnd(' ', ',', '.', ';', ':', '!', '?', '…', '-', '—') + "…"
-    }
-
-    /** `index` + `quote`: dấu đặt ở màn đọc trỏ tới CÂU (thứ tự câu trong chương, như `?at=`) và giữ ~60 chữ đầu câu - cùng trường với
-     *  máy tính (listening.py `add_bookmark`); dấu đặt từ trình phát chỉ có hai trường này khi đang đọc to chương chữ. */
-    @Synchronized
-    fun addBookmark(id: String, chapterId: Int, seconds: Double, note: String, index: Int? = null, quote: String = "", createdAt: Double? = null,
-                    recordId: String? = null, anchor: JSONObject? = null): JSONObject {
-        val target = named(id, recordId)
-        val state = recordState(target)
-        val marks = state.getJSONArray("bookmarks")
-        val cleanNote = note.trim().take(500)
-        // Same place twice (a double tap, or the same sentence): one bookmark, flagged `existing` like the computer's add_bookmark.
-        for (i in 0 until marks.length()) {
-            val current = marks.optJSONObject(i) ?: continue
-            if (current.optInt("chapterId", -1) != chapterId) continue
-            val same = if (index != null && index >= 0) current.has("index") && current.optInt("index") == index
-                else Math.abs(current.optDouble("seconds", 0.0) - seconds) <= BOOKMARK_SAME_SECONDS
-            if (same) {
-                if (cleanNote.isNotEmpty() && current.optString("note").isEmpty()) {
-                    val at = now()
-                    if (!current.has("createdAt")) current.put("createdAt", current.optDouble("at", at))
-                    current.put("note", cleanNote).put("at", at)
-                    current.put("rev", ListeningRevision.advance(state, revisionNode()))
-                    state.put("updatedAt", at)
-                    writeAtomic(recordFile(target), state.toString())
-                }
-                return JSONObject(current.toString()).put("existing", true)
-            }
-        }
-        val at = now()
-        // `at` = last change (what a merge compares); `createdAt` = when it was set (what the list shows) - an undo keeps the original.
-        val mark = JSONObject()
-            .put("id", UUID.randomUUID().toString().replace("-", "").substring(0, 12))
-            .put("chapterId", chapterId).put("seconds", seconds).put("note", cleanNote).put("at", at)
-            .put("createdAt", createdAt?.takeIf { it > 0 && it <= at } ?: at)
-        if (index != null && index >= 0) mark.put("index", index).put("quote", bookmarkQuote(quote))
-        vn.abook.player.readaloud.ReadingAnchor.validated(anchor)?.let { mark.put("anchor", it) }
-        mark.put("rev", ListeningRevision.advance(state, revisionNode()))
-        marks.put(mark)
-        state.put("updatedAt", now())
-        writeAtomic(recordFile(target), state.toString())
-        return mark
-    }
-
-    @Synchronized
-    fun updateBookmark(id: String, markId: String, note: String, recordId: String? = null) {
-        val target = named(id, recordId)
-        val state = recordState(target)
-        val marks = state.getJSONArray("bookmarks")
-        for (index in 0 until marks.length()) {
-            val mark = marks.getJSONObject(index)
-            if (mark.optString("id") != markId) continue
-            if (!mark.has("createdAt")) mark.put("createdAt", mark.optDouble("at", now()))
-            mark.put("note", note.take(500)).put("at", now())
-            mark.put("rev", ListeningRevision.advance(state, revisionNode()))
-        }
-        state.put("updatedAt", now())
-        writeAtomic(recordFile(target), state.toString())
-    }
-
-    @Synchronized
-    fun deleteBookmark(id: String, markId: String, recordId: String? = null) {
-        val target = named(id, recordId)
-        val state = recordState(target)
-        val marks = state.getJSONArray("bookmarks")
-        val kept = JSONArray()
-        for (index in 0 until marks.length()) {
-            val mark = marks.getJSONObject(index)
-            if (mark.optString("id") != markId) kept.put(mark)
-        }
-        state.put("bookmarks", kept)
-        val deleted = state.optJSONObject("deleted") ?: JSONObject()
-        deleted.put(markId, now())
-        val revs = state.optJSONObject("_deletedRevs") ?: JSONObject().also { state.put("_deletedRevs", it) }
-        revs.put(markId, ListeningRevision.advance(state, revisionNode()))
-        state.put("deleted", deleted).put("updatedAt", now())
-        writeAtomic(recordFile(target), state.toString())
-    }
-
-    /** Hoàn tác đúng dấu cũ như listening.restore_bookmark: giữ ID/lúc đặt, phiên bản mới hơn bia mộ. Bia mộ ở lại - gỡ nó ở đây mà
-     *  máy kia còn giữ thì tập bia mộ hai máy không bao giờ khớp (soát a118 lỗi 6). */
-    @Synchronized
-    fun restoreBookmark(id: String, mark: JSONObject): JSONObject {
-        val state = recordState(knownActiveRecord(id))
-        val at = now()
-        val created = stamp(mark, "createdAt").takeIf { it > 0 } ?: stamp(mark)
-        val restored = JSONObject().put("id", mark.getString("id").take(40))
-            .put("chapterId", mark.getInt("chapterId")).put("seconds", mark.getDouble("seconds"))
-            .put("note", mark.optString("note").take(500)).put("at", at)
-            .put("createdAt", created.takeIf { it > 0 && it <= at } ?: at)
-        val index = mark.opt("index")
-        if (index is Int && index >= 0) restored.put("index", index).put("quote", bookmarkQuote(mark.optString("quote")))
-        vn.abook.player.readaloud.ReadingAnchor.validated(mark.optJSONObject("anchor"))?.let { restored.put("anchor", it) }
-        restored.put("rev", ListeningRevision.advance(state, revisionNode()))
-        val marks = state.getJSONArray("bookmarks")
-        val kept = JSONArray()
-        for (i in 0 until marks.length()) {
-            val current = marks.getJSONObject(i)
-            if (current.optString("id") != restored.getString("id")) kept.put(current)
-        }
-        state.put("bookmarks", kept.put(restored)).put("updatedAt", at)
-        save(id, state)
-        return restored
     }
 
     /** Mã sách hợp lệ để XOÁ: không rỗng, chỉ [A-Za-z0-9_-], và thư mục của nó nằm ngay trong books/. Mã rỗng là CẢ thư
@@ -1529,7 +1383,7 @@ object Store {
 
     /**
      * Cuốn mở từ file mà máy tính cho biết là cuốn `syncId` của nó (cùng audio): MỘT cuốn - thư mục đổi sang mã máy tính
-     * để chỗ nghe, dấu trang tiếp tục đồng bộ, audio đã có không phải tải lại. Hồ sơ nghe của cuốn đi theo liên kết (hồ sơ
+     * để chỗ nghe tiếp tục đồng bộ, audio đã có không phải tải lại. Hồ sơ nghe của cuốn đi theo liên kết (hồ sơ
      * không biết gì về sách, chỉ bảng liên kết đổi); hai bản đã cùng tải về thì để nguyên - không xoá gì của người nghe.
      */
     @Synchronized

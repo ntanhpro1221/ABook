@@ -262,7 +262,7 @@ def _create_exclusive(path: Path, data: bytes) -> bool:
 
 def _read_or_create_key(path: Path) -> bytes:
     """Khoá có sẵn, hay tạo mới (cùng bản sao `book_ids.key.bak`). Khoá hỏng (cắt cụt, rỗng, ký tự lạ - soát a28 lỗi 2) mà âm thầm thay
-    bằng khoá khác thì MỌI mã sách đổi: chỗ nghe, dấu trang, lịch sử mồ côi. Nên khoá hỏng được giữ lại (`notices.keep_broken`) và lấy lại
+    bằng khoá khác thì MỌI mã sách đổi: chỗ nghe, lịch sử mồ côi. Nên khoá hỏng được giữ lại (`notices.keep_broken`) và lấy lại
     từ bản sao; không có bản sao mới phải tạo khoá mới - kèm lời báo."""
     backup = path.with_name(path.name + ".bak")
     for _attempt in range(20):
@@ -288,7 +288,7 @@ def _read_or_create_key(path: Path) -> bytes:
             saved = None
         if broken and notices.keep_broken(path, "Khoá mã sách của app", then=(
                 "app lấy lại khoá từ bản sao" if saved else
-                "app phải tạo khoá mới - chỗ nghe, dấu trang đã lưu không còn gắn được với sách")) is None:
+                "app phải tạo khoá mới - chỗ nghe đã lưu không còn gắn được với sách")) is None:
             break  # không dời được file hỏng: dùng khoá suy từ đường dẫn, không đè bản hỏng
         try:
             path.parent.mkdir(parents=True, exist_ok=True)

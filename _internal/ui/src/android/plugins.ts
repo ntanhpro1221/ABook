@@ -1,5 +1,5 @@
 import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
-import type { Bookmark, BookPart, ListeningRecord, ListeningState, NightSession, SeriesLink } from "@/listen/model";
+import type { BookPart, ListeningRecord, ListeningState, NightSession, SeriesLink } from "@/listen/model";
 import type { PreparePlan, PrepareStatus } from "@/listen/prepareAhead";
 import type { MusicCredit } from "@/listen/musicBed";
 import type { RemoteSleep, RemoteSleepCommand } from "@/listen/sleep";
@@ -88,7 +88,6 @@ export interface EbookPlayerPlugin {
   getState(): Promise<NativeState>;
   /** Rung phản hồi của giao diện (Haptics.kt; shared/feedback.ts chọn hằng số theo DESIGN.md 5.4). Máy chưa có hằng số ấy thì lấy hằng số cũ hơn hay im. */
   haptic(options: { effect: HapticEffect }): Promise<void>;
-  addBookmark(options: { note: string; index?: number; quote?: string; anchor?: import("@/listen/readingAnchor").ReadingAnchor }): Promise<Bookmark>;
   setSleep(options: { mode: "off" | "minutes" | "chapter"; minutes?: number }): Promise<NativeState>;
   extendSleep(options: { minutes?: number }): Promise<NativeState>;
   configure(options: {
@@ -590,10 +589,6 @@ export interface EbookLibraryPlugin {
   setRate(options: { id: string; rate: number; record?: string }): Promise<void>;
   /** Giọng Nghe ngay riêng của cuốn ("" = giọng mặc định) - đi theo hồ sơ nghe sang máy kia (soát a68 lỗi 8). */
   setVoice(options: { id: string; voice: string; record?: string }): Promise<void>;
-  addBookmark(options: { id: string; chapterId: number; seconds: number; note: string; index?: number; quote?: string; anchor?: import("@/listen/readingAnchor").ReadingAnchor; createdAt?: number; record?: string }): Promise<Bookmark>;
-  restoreBookmark(options: { id: string; mark: Bookmark }): Promise<Bookmark>;
-  updateBookmark(options: { id: string; markId: string; note: string; record?: string }): Promise<void>;
-  deleteBookmark(options: { id: string; markId: string; record?: string }): Promise<void>;
   syncState(options: { id: string }): Promise<ListeningState>;
   createRecord(options: { id: string; name: string }): Promise<{ records: ListeningRecord[] }>;
   activateRecord(options: { id: string; record: string }): Promise<{ records: ListeningRecord[] }>;

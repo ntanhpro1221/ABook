@@ -65,7 +65,6 @@ def main():
                 r=http.post(path,json=body);r.raise_for_status();return r.json()
             listen=post('/api/listen/import',{'path':str(chapters),'title':'Tap Audit Fixture'})['id']
             post(f'/api/listen/books/{listen}/reading',{'chapterId':1,'index':0})
-            post(f'/api/listen/books/{listen}/bookmarks',{'chapterId':1,'seconds':0,'index':0,'note':'Ghi chú thử nghiệm','quote':'Buổi sáng thử nghiệm.'})
             profile_source=root/'profiles.txt'
             profile_source.write_text('Chương hồ sơ\n\nDữ liệu giả dành riêng cho chọn hồ sơ nghe.\n',encoding='utf-8')
             profiles=post('/api/listen/import',{'path':str(profile_source),'title':'Tap Profiles Fixture'})['id']

@@ -154,7 +154,7 @@ def test_a_book_restored_under_a_sibling_name_takes_its_listening_data_along(stu
     original = paths.root.resolve()
     old = book_id(original)
     app.listening.set_voice(old, "edge:vi-VN-NamMinhNeural")
-    app.listening.add_bookmark(old, 1, 12.0)
+    app.listening.set_rate(old, 1.5)
     work = listen_export.work_folder(app.export_work_dir, old)
     work.mkdir(parents=True)
     (work / "part.mp3").write_bytes(b"dang xuat")
@@ -165,9 +165,9 @@ def test_a_book_restored_under_a_sibling_name_takes_its_listening_data_along(stu
     assert status == 200 and data["renamed"] is True and data["title"] == restored.name, data
     new = book_id(restored)
     assert app.listening.get(new)["voice"] == "edge:vi-VN-NamMinhNeural"
-    assert [mark["seconds"] for mark in app.listening.get(new)["bookmarks"]] == [12.0]
-    assert old not in app.listening.books(), "cuốn đang chiếm chỗ không nhận chỗ nghe / dấu trang của cuốn đã xoá"
-    assert app.listening.get(old)["bookmarks"] == []
+    assert app.listening.get(new)["rate"] == 1.5
+    assert old not in app.listening.books(), "cuốn đang chiếm chỗ không nhận chỗ nghe / tốc độ của cuốn đã xoá"
+    assert "rate" not in app.listening.get(old)
     assert (listen_export.work_folder(app.export_work_dir, new) / "part.mp3").read_bytes() == b"dang xuat"
     assert not work.exists()
 
@@ -175,14 +175,14 @@ def test_a_book_restored_under_a_sibling_name_takes_its_listening_data_along(stu
 @pytest.mark.parametrize("order", ["oldest first", "newest first"])
 def test_undoing_two_deletions_of_one_name_moves_data_only_off_a_newer_book(studio, recycled: list[Path], order: str) -> None:  # noqa: F811
     """Xoá "X", thêm "X" mới đúng chỗ, xoá luôn nó, rồi hoàn tác cả hai: dữ liệu nghe theo mã đường gốc chỉ đi theo cuốn về "X (2)" khi
-    cuốn đang ở đường gốc ra đời SAU lần xoá cuốn ấy. Giao diện hoàn tác cũ trước: "X" cũ về chỗ mình và giữ dấu trang của nó."""
+    cuốn đang ở đường gốc ra đời SAU lần xoá cuốn ấy. Giao diện hoàn tác cũ trước: "X" cũ về chỗ mình và giữ tốc độ của nó."""
     from abook.webui.library import book_id
 
     paths, app, server, _runner = studio
     original = paths.root.resolve()
     old = book_id(original)
     (original / "which.txt").write_text("cũ", encoding="utf-8")
-    app.listening.add_bookmark(old, 1, 12.0)
+    app.listening.set_rate(old, 1.5)
     first = _delete(server, paths)
     time.sleep(0.05)  # ngày tạo thư mục theo nấc đồng hồ của hệ thống file (~16 ms)
     [held] = _pending(original.parent)
@@ -201,12 +201,12 @@ def test_undoing_two_deletions_of_one_name_moves_data_only_off_a_newer_book(stud
     if order == "oldest first":
         assert (original / "which.txt").read_text(encoding="utf-8") == "cũ", "cuốn cũ về đúng chỗ của nó"
         assert "oldId" not in later, "cuốn cũ đang ở đường gốc có trước lần xoá cuốn mới: không lấy dữ liệu của nó"
-        assert [mark["seconds"] for mark in app.listening.get(old)["bookmarks"]] == [12.0]
+        assert app.listening.get(old)["rate"] == 1.5
         assert new not in app.listening.books()
     else:
         assert (sibling / "which.txt").read_text(encoding="utf-8") == "cũ"
         assert later["oldId"] == old and later["newId"] == new, "cuốn mới ra đời sau lần xoá cuốn cũ: dữ liệu theo cuốn cũ sang tên mới"
-        assert [mark["seconds"] for mark in app.listening.get(new)["bookmarks"]] == [12.0]
+        assert app.listening.get(new)["rate"] == 1.5
         assert old not in app.listening.books()
 
 
@@ -220,7 +220,7 @@ def test_listening_data_that_cannot_be_moved_still_finishes_the_undo(studio, rec
     paths, app, server, _runner = studio
     original = paths.root.resolve()
     old = book_id(original)
-    app.listening.add_bookmark(old, 1, 7.0)
+    app.listening.set_rate(old, 1.75)
     token = _delete(server, paths)
     time.sleep(0.05)
     original.mkdir()
@@ -234,7 +234,7 @@ def test_listening_data_that_cannot_be_moved_still_finishes_the_undo(studio, rec
     assert status == 200 and data["renamed"] is True and data["dataLeft"] is True and "oldId" not in data, data
     assert (restored / "project.sqlite3").is_file() and _pending(original.parent) == []
     assert "không chuyển được dữ liệu nghe" in caplog.text
-    assert [mark["seconds"] for mark in app.listening.get(old)["bookmarks"]] == [7.0]
+    assert app.listening.get(old)["rate"] == 1.75
 
 
 def test_a_plain_undo_keeps_the_same_book_id(studio, recycled: list[Path]) -> None:  # noqa: F811
@@ -242,11 +242,11 @@ def test_a_plain_undo_keeps_the_same_book_id(studio, recycled: list[Path]) -> No
 
     paths, app, server, _runner = studio
     old = book_id(paths.root.resolve())
-    app.listening.add_bookmark(old, 1, 5.0)
+    app.listening.set_rate(old, 1.25)
     token = _delete(server, paths)
     status, data = _call(server, "POST", f"/api/trash/{token}/undo")
     assert status == 200 and data["renamed"] is False
-    assert [mark["seconds"] for mark in app.listening.get(old)["bookmarks"]] == [5.0]
+    assert app.listening.get(old)["rate"] == 1.25
 
 
 @pytest.mark.parametrize("link", ["from", "to"])

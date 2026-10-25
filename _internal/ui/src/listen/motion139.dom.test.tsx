@@ -56,15 +56,15 @@ let root: Root, host: HTMLDivElement, client: QueryClient, clock: Clock;
 let animate: ReturnType<typeof vi.spyOn>;
 const chapter = (id: number, extra: Partial<ListenChapter> = {}) => ({ id, index: id - 1, subtitle: "", title: `Chương ${id}`, fullTitle: `Chương ${id}`, duration: 600, available: true, ...extra }) as ListenChapter;
 const listenBook = (id: string, title: string, extra: Partial<ListenBook> = {}) => ({ id, title, narrator: "", duration: 600, chaptersTotal: 2, chaptersAvailable: 2, complete: true, producing: false, updatedAt: null,
-  state: { chapters: {}, bookmarks: [] }, progress: { heardSeconds: 0, totalSeconds: 600, fraction: 0.2, chaptersDone: 0, finished: false }, chapters: [chapter(1), chapter(2)], ...extra }) as ListenBook;
+  state: { chapters: {} }, progress: { heardSeconds: 0, totalSeconds: 600, fraction: 0.2, chaptersDone: 0, finished: false }, chapters: [chapter(1), chapter(2)], ...extra }) as ListenBook;
 const player = (patch: Record<string, unknown> = {}) => {
   state.player = {
     track: { bookId: "a", chapterId: 1, chapterTitle: "Chương 1", bookTitle: "Sách A", recordId: undefined },
     queue: [chapter(1), chapter(2)], playing: false, buffering: false, rate: 1, volume: 0.9, atEnd: null, purpose: "listen",
     sleep: { kind: "off" }, fading: false, options: { extendMinutes: 10 }, error: "", errorRepeat: 0, notice: "", canGoBack: false, wantsPlay: false,
-    musicBroken: false, musicOffline: false, musicLoading: false, bookmarks: [], toggle: vi.fn(), close: vi.fn(), skip: vi.fn(), next: vi.fn(), previous: vi.fn(),
+    musicBroken: false, musicOffline: false, musicLoading: false, toggle: vi.fn(), close: vi.fn(), skip: vi.fn(), next: vi.fn(), previous: vi.fn(),
     setRate: vi.fn(), setVolume: vi.fn(), jumpTo: vi.fn(), goBack: vi.fn(), resume: vi.fn(), retry: vi.fn(), dismissError: vi.fn(), setSleep: vi.fn(), extendSleep: vi.fn(),
-    positionStamp: () => 0, switchRecord: vi.fn(), setContinues: vi.fn(), addBookmark: vi.fn(), pause: vi.fn(), play: vi.fn(), seek: vi.fn(),
+    positionStamp: () => 0, switchRecord: vi.fn(), setContinues: vi.fn(), pause: vi.fn(), play: vi.fn(), seek: vi.fn(),
     ...patch,
   };
 };
@@ -305,7 +305,7 @@ it("C5 hiệu năng: câu 5.000 chữ - dựng và 50 nhịp sang chữ kế tro
 }, 30000); // dựng 5.000 chữ trong happy-dom ~1 giây, cả bộ test chạy song song thì lâu hơn hạn mặc định 5 giây
 
 it("C6 / V9 thư viện: thẻ Đang nghe mờ chéo chữ, icon và cụm nút; lỗi / trống / có sách mờ hẳn qua", async () => {
-  const book = listenBook("a", "Sách A", { state: { chapters: {}, bookmarks: [], last: { chapterId: 1, seconds: 30, at: Date.now() / 1000 } } as unknown as ListenBook["state"] });
+  const book = listenBook("a", "Sách A", { state: { chapters: {}, last: { chapterId: 1, seconds: 30, at: Date.now() / 1000 } } as unknown as ListenBook["state"] });
   state.books = [book];
   player({ track: null });
   await render(<LibraryScreen />);
