@@ -1,6 +1,6 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Clapperboard, Laptop } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "@/shared/toast";
 import type { ListenBook } from "@/listen/model";
 import { Button, Dialog } from "@/shared/ui";
@@ -72,12 +72,22 @@ export function useStudioComputers(book?: string): StudioComputer[] {
 export function useStudioComputersQuery(book?: string) {
   const connection = useQuery({ queryKey: ["connection"], queryFn: () => EbookLibrary.connection() });
   const peers = useQuery({ queryKey: ["peer-libraries"], queryFn: () => EbookLibrary.peerLibraries(), retry: 0 });
-  return useQuery({
-    queryKey: ["studio-computers", book ?? "", connection.dataUpdatedAt, peers.dataUpdatedAt],
+  // Khoá đứng yên, hỏi lại khi hai nguồn trên có lượt trả lời mới. Đưa lượt trả lời vào khoá thì mỗi lần mở tab là một khoá mới chưa có dữ
+  // liệu - tab Studio nháy khung chờ dù danh sách đã có từ lần trước.
+  const computers = useQuery({
+    queryKey: ["studio-computers", book ?? ""],
     queryFn: () => EbookLibrary.studioComputers(book ? { book } : undefined),
-    // Khoá đổi theo mỗi lượt hỏi máy ghép: giữ danh sách cũ trong lúc hỏi lại, không nháy về khung chờ (nút "Mở Studio" không biến mất dưới tay).
     placeholderData: keepPreviousData,
   });
+  const version = `${connection.dataUpdatedAt}:${peers.dataUpdatedAt}`;
+  const seen = useRef(version);
+  const { refetch } = computers;
+  useEffect(() => {
+    if (seen.current === version) return;
+    seen.current = version;
+    void refetch();
+  }, [version, refetch]);
+  return computers;
 }
 
 export async function openStudioComputer(computer: StudioComputer): Promise<void> {

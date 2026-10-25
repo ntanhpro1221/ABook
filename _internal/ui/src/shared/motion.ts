@@ -70,12 +70,21 @@ export function enterPage(doc: TransitionDocument | undefined = browserDocument(
   const page = pageSurface(doc);
   if (!nav || !page || typeof page.animate !== "function") return;
   for (const animation of page.getAnimations?.() ?? []) animation.cancel();
+  // Thứ dựng cùng trang mới (nội dung hiện dần, dòng nhô lên, khung chờ) đi theo chuyển cảnh của trang, không chồng thêm một lượt hiện của riêng nó.
+  for (const animation of page.getAnimations?.({ subtree: true }) ?? []) if (justEntering(animation)) animation.finish();
   const reduced = prefersReducedMotion();
   const from = reduced ? "none" : nav === "through" ? "scale(0.97)" : `translateX(${nav === "back" ? -32 : 32}px)`;
   page.animate([{ opacity: 0, transform: from }, { opacity: 1, transform: "none" }], {
     duration: reduced ? MOTION.fast : nav === "through" ? MOTION.medium : MOTION.slow,
     easing: EASE.decelerate,
   });
+}
+
+/** Hoạt ảnh hiện vào vừa bắt đầu ở nhịp này: hữu hạn, ngắn, chưa chạy. Vòng lặp (khung chờ nhấp nháy) và hoạt ảnh dài (đếm ngược) giữ nguyên. */
+function justEntering(animation: globalThis.Animation): boolean {
+  const timing = animation.effect?.getComputedTiming?.();
+  if (!timing || timing.iterations === Infinity || typeof timing.endTime !== "number" || timing.endTime > MOTION.slow * 2) return false;
+  return Number(animation.currentTime ?? 0) < MOTION.fast / 2;
 }
 
 // Lần đầu dựng khung (mở app) không đi qua router: khung nội dung hiện dần và nhích lên. Dùng Web Animations trên chính khung nên KHÔNG
