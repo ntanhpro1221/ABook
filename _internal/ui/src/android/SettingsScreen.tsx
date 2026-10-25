@@ -383,9 +383,7 @@ function AdvancedGroup({ version, update }: { version: string | null; update: Re
         )}
       </MotionPresence>
       <SettingsBlock title="Bộ nhớ">
-        <div className="py-3.5">
-          <ReadAloudStorage api={{ usage: () => ReadAloud.cacheUsage(), clear: () => ReadAloud.cacheClear() }} />
-        </div>
+        <ReadAloudStorage api={{ usage: () => ReadAloud.cacheUsage(), clear: () => ReadAloud.cacheClear() }} />
       </SettingsBlock>
       <DiagnosticsBlock />
       <AboutBlock version={version} />

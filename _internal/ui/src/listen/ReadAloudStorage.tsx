@@ -62,12 +62,11 @@ export function ReadAloudStorage({ api }: { api: ReadAloudStorageApi }) {
   return (
     <MotionRegion as="div" data-readaloud-storage elementRef={region} tabIndex={-1} className="outline-none">
       <SettingsRow label="Bản đọc đã làm" hint={<>
-        {usage.total > 0 && <p>{storageLabel(usage)}</p>}
+        {/* Trạng thái luôn nằm dưới tên (cả khi trống): không đặt chữ nhỏ vào ô nút bên phải, lệch chân chữ với tên (máy dò BASELINE 25-10). */}
+        <p>{storageLabel(usage)}</p>
         <MoreInfo className="mt-1">Nghe lại đoạn đã đọc xong thì không phải chờ máy đọc lại; dọn đi thì lấy lại chỗ trống.</MoreInfo>
       </>}>
-        {usage.total > 0 ? (
-          <Button size="sm" onClick={() => setAsking(true)}>Dọn bản đọc</Button>
-        ) : <p className="text-xs text-fg-2">{storageLabel(usage)}</p>}
+        {usage.total > 0 && <Button size="sm" onClick={() => setAsking(true)}>Dọn bản đọc</Button>}
       </SettingsRow>
       <ClearDialog open={asking && usage.total > 0} onOpenChange={setAsking} usage={usage} busy={busy} onClear={() => void clear()} />
     </MotionRegion>
