@@ -18,8 +18,9 @@ export function DisclosureRow({ title, summary, icon, expanded, controls, onClic
     <ChevronRight className={cn("disclosure-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3", expanded && "rotate-90")} aria-hidden />
   </>;
   // Mục đang mở của danh sách nhóm là điều hướng (DESIGN 6 "Điều hướng"): nền trung tính nhạt + chữ đậm màu thường, như thanh bên.
-  // Nền (rê chuột, đang mở) tràn 12 px ra hai bên để chữ và icon không dính mép nền; chữ vẫn đứng đúng cột (máy dò FILL INSET).
-  const rowClass = cn("disclosure-row relative -mx-3 flex min-h-[3.5rem] w-[calc(100%+1.5rem)] items-center gap-3.5 rounded-lg px-3 py-1.5 text-left transition-colors hover:bg-hover", current && "bg-hover text-fg", className);
+  // Nền (rê chuột, đang mở) vẽ ở lớp ::before tràn 12 px ra hai bên: chữ và icon không dính mép nền mà bố cục hàng không đổi - lùi lề
+  // âm trên chính hàng kéo chữ theo ở hàng có className riêng (máy dò FILL INSET, Studio 25-10).
+  const rowClass = cn("disclosure-row relative isolate flex min-h-[3.5rem] w-full items-center gap-3.5 py-1.5 text-left before:absolute before:inset-y-0 before:-inset-x-3 before:-z-10 before:rounded-lg before:transition-colors hover:before:bg-hover", current && "text-fg before:bg-hover", className);
   return to !== undefined ? <Link to={to} replace={replace} state={state} aria-current={current ? "page" : undefined} className={rowClass}>{body}</Link>
     : <button {...rest} ref={ref} type="button" aria-expanded={expanded} aria-controls={controls} onClick={onClick} className={rowClass}>{body}</button>;
 }
