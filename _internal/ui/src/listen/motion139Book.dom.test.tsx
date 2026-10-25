@@ -53,12 +53,28 @@ it("V8 lịch sử: đang tải là khung chờ (không 'Chưa có lịch sử n
   await render(<HistoryTab book={b} />);
   expect(host.textContent).not.toContain("Chưa có lịch sử nghe");
   expect(host.querySelector(".motion-loading-placeholder")).not.toBeNull();
+  // Chờ lâu hơn LOADING_PATIENCE: khung chờ đã hiện nên mờ ra (về sớm hơn thì nó chưa từng hiện và gỡ luôn - loadingCrossfade.dom.test).
+  // Chỉ nhích đồng hồ vừa đủ: cửa sổ ổn định (motion.ts, toàn cục) mở theo đồng hồ này không được trùm sang test sau.
+  vi.spyOn(performance, "now").mockReturnValue(performance.now() + 300);
   const now = Date.now() / 1000;
   await act(async () => { answer([{ id: "1", startedAt: now - 60, endedAt: now, listened: 60, from: { chapterId: 1, seconds: 0 }, to: { chapterId: 1, seconds: 60 } }]); await Promise.resolve(); });
   await wait(10);
   expect(host.textContent).toContain("1 lượt nghe");
   expect(host.querySelector(".motion-loading-content.motion-reveal")).not.toBeNull();
   expect(host.querySelector('.motion-loading-placeholder[data-state="closed"]')?.hasAttribute("inert")).toBe(true);
+});
+
+it("V8 lịch sử về ngay: không nhịp khung chờ nào, nội dung hiện dần", async () => {
+  const b = book();
+  let answer: (sessions: unknown[]) => void = () => {};
+  state.sessions = new Promise((done) => { answer = done; });
+  await render(<HistoryTab book={b} />);
+  const now = Date.now() / 1000;
+  await act(async () => { answer([{ id: "1", startedAt: now - 60, endedAt: now, listened: 60, from: { chapterId: 1, seconds: 0 }, to: { chapterId: 1, seconds: 60 } }]); await Promise.resolve(); });
+  await wait(10);
+  expect(host.textContent).toContain("1 lượt nghe");
+  expect(host.querySelector(".motion-loading-placeholder")).toBeNull();
+  expect(host.querySelector(".motion-loading-content.motion-reveal")).not.toBeNull();
 });
 
 it("V17 trang sách: chương mới về / bị gỡ mở ra / khép lại tại chỗ trong danh sách ảo hoá", async () => {
