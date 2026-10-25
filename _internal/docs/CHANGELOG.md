@@ -13,10 +13,13 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 - Mở app nhanh hơn khoảng 2 giây: màn chờ không còn đợi những hiệu ứng hiện dần mà nó đang che (đo trên máy thật: 4,2-4,9 s còn khoảng 2,2 s).
 - Nút Nhạc nền của trình phát không còn thoáng hiện "Tắt" lúc vừa mở khi cuốn đang có nhạc.
+- Mở danh sách con trong bảng của trình phát (như Giọng đọc) mượt hơn: màn Đang nghe chỉ co lại một lần khi bảng đã đứng, không đổi cỡ theo từng khung hình.
 
 ### Giao diện
 
 - Menu xếp sách của Thư viện và menu chọn chương của Kịch bản đánh dấu mục đang chọn bằng dấu tích đầu dòng như mọi danh sách chọn, thay vì chỉ đổi màu chữ.
+- Ô chọn trải hết cột như ô nhập; tiến độ tải sách và menu con thẳng mép; tiêu đề màn con hiện đủ chữ, bộ sách bỏ dải trống phía trên bìa.
+- Mở thư viện trên điện thoại không còn chờ ảnh ở xa dưới vùng cuộn hay hiệu ứng khung chờ đang khép.
 - Tiêu đề các phần và mục gập mở thống nhất; hẹn giờ dùng lựa chọn chữ gọn, thanh đọc và kịch bản dùng cùng biểu tượng chuyển chương.
 - Thông báo gọn với tối đa một nút; phần giải thích dài mở trong Chi tiết, chuyển chỗ nghe có nút Quay lại, lời báo lỗi xuống dòng cân đối hơn trên điện thoại.
 

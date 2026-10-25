@@ -7,6 +7,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { dismissTopLayer } from "@/android/backLayers";
 import { PlaylistSubmenu } from "@/listen/PlaylistChoice";
 import { ActionMenu, ActionSubmenu } from "./ActionMenu";
+import * as menuPosition from "./menuPosition";
 
 vi.mock("@/studio/api", async (original) => ({
   ...(await original<typeof import("@/studio/api")>()),
@@ -128,11 +129,14 @@ it("chọn một lựa chọn trong bước thì đóng Sheet như mục thườ
 
 it("máy tính giữ menu con nổi của Radix, không dựng bước trong Sheet", async () => {
   phone = false;
+  const offsets = vi.spyOn(menuPosition, "submenuOffsets");
   await openBookMenu();
   expect(dialog()).toBeNull();
   expect(stepHost()).toBeNull();
   await act(() => { item("Nhạc nền")!.click(); }); await wait();
   expect(document.querySelectorAll('[role="menu"]').length).toBe(2);
+  expect(offsets).toHaveBeenCalledWith(item("Nhạc nền"), "right", "start");
+  expect(document.querySelector('[data-submenu-trigger]')).not.toBeNull();
   expect(item("Quay lại")).toBeUndefined();
 });
 
