@@ -9,6 +9,7 @@ import { MOTION, markArrival, scrollMotion } from "@/shared/motion";
 import { revealedScroll, wheelScroll } from "@/shared/tabScroll";
 import { keepDots } from "./DotJoin";
 import { MotionRegion } from "./MotionRegion";
+import { installFocusModality } from "./focusModality";
 import { MotionPresence } from "./MotionPresence";
 import { SlidingIndicator } from "./SlidingIndicator";
 import { useBackLayer } from "./backStack";
@@ -590,14 +591,7 @@ export function dialogOpener(element: Element | null): Element | null {
 let lastFocus: Element | null = null;
 if (typeof document !== "undefined") {
   document.addEventListener("focusin", (event) => (lastFocus = dialogOpener(event.target instanceof Element ? event.target : null)), true);
-  // Cách người dùng vừa thao tác (chạm / chuột hay phím), ghi lên <html data-input>: app tự đặt tiêu điểm (tiêu đề trang mới - usePageFocus,
-  // nút X khi hộp mở) sau một lần CHẠM thì không vẽ khung tiêu điểm - WebView vẫn vẽ cho tiêu điểm do mã đặt (soát a66: khung quanh "Tải sách",
-  // quanh X). Đi bằng phím thì khung vẫn hiện như cũ (styles.css).
-  const mark = (input: "pointer" | "keyboard") => () => {
-    if (document.documentElement.dataset.input !== input) document.documentElement.dataset.input = input;
-  };
-  document.addEventListener("pointerdown", mark("pointer"), true);
-  document.addEventListener("keydown", mark("keyboard"), true);
+  installFocusModality(document);
 }
 
 /** Phần tử nhận lại con trỏ khi hộp đóng: chính phần tử đã mở hộp, nếu nó còn trong trang (hộp mở bằng hash hay thẻ đã gỡ thì
