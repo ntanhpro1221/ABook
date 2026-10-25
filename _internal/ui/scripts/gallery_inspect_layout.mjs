@@ -106,11 +106,13 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     const singleLine = Math.abs(first.y - last.y) < Number.parseFloat(s.fontSize);
     inkTexts.push({ ...run, ink: union([first, last]), first, last, singleLine, control: owner(run.element) });
   }
-  function iconInk(svg) {
-    if (iconCache.has(svg)) return iconCache.get(svg);
+  // reserved: đo cả khi đang mờ 0 - dấu chọn chưa bật vẫn giữ cột đầu dòng (SelectionMark), là mép mực của hàng.
+  function iconInk(svg, reserved = false) {
+    const cacheKey = reserved ? `reserved:${selector(svg)}` : svg;
+    if (iconCache.has(cacheKey)) return iconCache.get(cacheKey);
     let partial = false;
     const pieces = [...svg.querySelectorAll("path,rect,circle,ellipse,line,polyline,polygon,use")].flatMap((p) => {
-      if (hidden(p)) return [];
+      if (!reserved && hidden(p)) return [];
       const s = css(p), stroke = s.stroke !== "none" && Number(s.strokeOpacity) > 0 ? Number.parseFloat(s.strokeWidth) / 2 : 0;
       if (!stroke && (s.fill === "none" || Number(s.fillOpacity) === 0)) return [];
       try {
@@ -122,18 +124,18 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
           .map(([x, y]) => ({ x: m.a * x + m.c * y + m.e, y: m.b * x + m.d * y + m.f, width: 0, height: 0 }));
         const box = union(points);
         if (nonScaling) { box.x -= stroke; box.y -= stroke; box.width += 2 * stroke; box.height += 2 * stroke; }
-        const shown = visible(svg, box, true);
+        const shown = reserved ? box : visible(svg, box, true);
         // Nét bị mép cuộn / lớp phủ cắt mất (một phần hay cả nét): hộp mực còn lại không phải hình của icon - đo nó thì khoảng icon-chữ sai (hàng chương lấp ló
         // dưới thanh phát, soát 140). Cả icon không đo được.
         if (!shown || Math.abs(shown.width - box.width) > 0.5 || Math.abs(shown.height - box.height) > 0.5) partial = true;
         return [shown].filter(Boolean);
       } catch { return []; }
     });
-    const result = partial ? null : union(pieces); iconCache.set(svg, result); return result;
+    const result = partial ? null : union(pieces); iconCache.set(cacheKey, result); return result;
   }
   function controlInk(el) {
     const pieces = inkTexts.filter((t) => t.control === el).map((t) => t.ink);
-    for (const svg of el.querySelectorAll("svg")) if (owner(svg) === el) pieces.push(iconInk(svg));
+    for (const svg of el.querySelectorAll("svg")) if (owner(svg) === el) pieces.push(iconInk(svg, svg.hasAttribute("data-selection-mark")));
     return union(pieces.filter(Boolean));
   }
   function aligned(el, side, end) {
@@ -692,6 +694,36 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     const best = peers.find((r) => r.end === edge);
     add("INK EDGE", row.el, row.el.textContent || row.el.getAttribute("aria-label") || "row", [row.box, best.box],
       { metric: "menu-row-short", value: row.end, referenceValue: edge, delta: row.end - edge, tolerance: 1, otherSelector: selector(best.el), reason: "a menu row stops short of the right edge the other rows of the same menu reach" });
+  }
+  // Nhãn ngắn (<= 4 chữ) của một nút gãy dòng trong khi chữ phụ cạnh nó vẫn một dòng ("Nhạc của / tôi" cạnh "chưa có bài nào", "An / (Windows)"
+  // cạnh "Nam" - soát 25-10): chữ phụ phải nhường chỗ, hay khung phải đủ rộng.
+  const lineCount = (el) => { const tops = new Set(); for (const n of el.childNodes) { if (n.nodeType !== 3 || !n.textContent.trim()) continue;
+    const r = document.createRange(); r.selectNodeContents(n); for (const b of r.getClientRects()) if (b.width > 0.5) tops.add(Math.round(b.top)); } return tops.size; };
+  for (const el of all.filter((e) => e.matches(`${controlSelector},[data-sheet-choice] button`) && shownChain(e))) {
+    const leaves = [...el.querySelectorAll("*")].filter((c) => !c.closest('svg,[aria-hidden="true"]') && [...c.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && visible(c, rect(c.getBoundingClientRect())));
+    if (leaves.length < 2) continue;
+    const label = leaves[0], words = label.textContent.trim().split(/\s+/).length;
+    if (words > 4 || lineCount(label) < 2) continue;
+    const lb = rect(label.getBoundingClientRect());
+    const note = leaves.slice(1).find((c) => { const b = rect(c.getBoundingClientRect()); return lineCount(c) === 1 && b.x >= right(lb) - 1 && b.y < lb.y + lb.height && b.y + b.height > lb.y; });
+    if (!note) continue;
+    add("LINE BREAK", label, label.textContent, [lb, rect(note.getBoundingClientRect())],
+      { metric: "label-wrapped-beside-note", value: lineCount(label), referenceValue: 1, delta: lineCount(label) - 1, tolerance: 0, otherSelector: selector(note), reason: "a short control label breaks onto two lines while the secondary text beside it keeps its one line" });
+  }
+  // Dấu chọn (SelectionMark) đứng ĐẦU dòng ở mọi danh sách chọn: menu giọng từng đặt nó cuối dòng còn danh sách nhạc cạnh đó đặt đầu dòng
+  // (soát 25-10). Dấu đang ẩn (mờ 0) vẫn giữ chỗ nên vẫn đo; chỉ cần hàng hiện.
+  for (const mark of all.filter((e) => e.matches("[data-selection-mark]"))) {
+    // Phạm vi = khối gần nhất có chữ: hàng bảng nhiều cột (Kịch bản Studio: người nói | nút nghe | dấu + câu) chỉ xét cột của dấu.
+    const hasText = (p) => [...p.querySelectorAll("*")].some((c) => !c.closest("svg") && [...c.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
+    let row = mark.parentElement;
+    while (row && row !== document.body && !hasText(row)) row = row.parentElement;
+    if (!row || row === document.body || !shownChain(row)) continue;
+    const mb = rect(mark.getBoundingClientRect());
+    const first = [...row.querySelectorAll("*")].filter((c) => !c.closest("svg") && [...c.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
+      .map((c) => ({ c, b: visible(c, rect(c.getBoundingClientRect())) })).filter((t) => t.b).sort((a, b) => a.b.x - b.b.x)[0];
+    if (!first || first.b.x >= mb.x - 1) continue;
+    add("SIBLING CONSISTENCY", mark, row.textContent, [mb, first.b],
+      { metric: "check-mark-trailing", value: mb.x, referenceValue: first.b.x, delta: mb.x - first.b.x, tolerance: 1, otherSelector: selector(first.c), reason: "a pick list's check mark must lead the row, before its label" });
   }
   // Nhãn của một lựa chọn bị cắt "…" ("An (Windo…" trong menu giọng, soát 25-10): chữ cắt ở chỗ khác còn chấp nhận được (tên sách dài trên thẻ),
   // nhưng lựa chọn thì phải đọc đủ mới biết mình chọn gì - cho xuống dòng.

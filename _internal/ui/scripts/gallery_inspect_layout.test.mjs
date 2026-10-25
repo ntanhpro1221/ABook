@@ -237,4 +237,18 @@ describe.skipIf(!browserAvailable)("nút trong suốt: mép chung của cột", 
       expect(cut("title-cut-pass")).toHaveLength(0);
     }
   });
+  it("nhãn ngắn gãy dòng cạnh chữ phụ một dòng thì báo; chữ phụ nhường chỗ thì không", () => {
+    for (const result of edgeResults) {
+      const wrapped = (id) => result.findings.filter((f) => f.metric === "label-wrapped-beside-note" && f.selector.startsWith(`#${id} >`));
+      expect(wrapped("wrapnote-off")).toHaveLength(1);
+      expect(wrapped("wrapnote-pass")).toHaveLength(0);
+    }
+  });
+  it("dấu chọn đứng sau nhãn thì báo; đứng đầu dòng (kể cả đang mờ) thì không", () => {
+    for (const result of edgeResults) {
+      const marks = (id) => result.findings.filter((f) => f.metric === "check-mark-trailing" && f.selector.startsWith(`#${id} >`));
+      expect(marks("mark-off")).toHaveLength(1);
+      expect(marks("mark-pass")).toHaveLength(0);
+    }
+  });
 });

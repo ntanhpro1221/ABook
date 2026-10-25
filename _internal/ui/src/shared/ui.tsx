@@ -22,9 +22,10 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
   return <select {...props} className={cn("shared-select max-w-full min-w-0 rounded-lg border border-line bg-panel px-2.5 text-sm font-normal text-fg outline-none focus-visible:border-focus disabled:opacity-50 aria-disabled:opacity-50", className)} />;
 }
 
-/** Dấu chọn giữ nguyên chỗ khi đổi mục; chỉ độ mờ đổi, không làm hàng nhảy ngang. */
+/** Dấu chọn giữ nguyên chỗ khi đổi mục; chỉ độ mờ đổi, không làm hàng nhảy ngang. Luôn đứng ĐẦU dòng của danh sách chọn (DESIGN 6; luật
+ *  check-mark-trailing đọc `data-selection-mark`). */
 export function SelectionMark({ selected, className }: { selected: boolean; className?: string }) {
-  return <Check aria-hidden className={cn("size-4 shrink-0 text-accent-text transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0", className)} />;
+  return <Check aria-hidden data-selection-mark className={cn("size-4 shrink-0 text-accent-text transition-opacity duration-motion-fast", selected ? "opacity-100" : "opacity-0", className)} />;
 }
 
 // ---- Nút --------------------------------------------------------------------------------------------------

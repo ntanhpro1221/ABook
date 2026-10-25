@@ -2,11 +2,11 @@ import { ActionSubmenu } from "@/shared/ActionMenu";
 import { MotionRegion } from "@/shared/MotionRegion";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronRight, EighthNote, Plus } from "lucide-react";
+import { ChevronRight, EighthNote, Plus } from "lucide-react";
 import { toast } from "@/shared/toast";
 import { cn } from "@/shared/cn";
 import { spokenProgress } from "@/shared/progressSpeech";
-import { LiveText, ContentSkeleton, InlineError } from "@/shared/ui";
+import { LiveText, ContentSkeleton, InlineError, SelectionMark } from "@/shared/ui";
 import { api } from "@/studio/api";
 import { importMusic } from "@/studio/musicImport";
 import { MY_MUSIC_KEY, useCanImportMusic } from "./MyMusic";
@@ -146,14 +146,16 @@ export function PlaylistOptionLabel({ option, chosen }: { option: PlaylistOption
   return (
     <>
       {/* Dấu chọn luôn chiếm chỗ, chỉ mờ vào / ra (menu còn mở khi chọn): không nhảy cứng. */}
-      <Check aria-hidden className={cn("size-4 shrink-0 text-accent-text transition-opacity duration-motion-fast", chosen ? "opacity-100" : "opacity-0")} />
+      <SelectionMark selected={chosen} />
       <span className="min-w-0 flex-1">
         <span className="block text-pretty">{option.label}</span>
         {/* Mô tả luôn chừa chỗ hai dòng (đơn vị lh nên chữ hệ thống to thì chỗ chừa to theo; dòng thứ ba vẫn mở thêm, không cắt chữ): mô tả
             ngắn / dài xuống dòng khác nhau không làm các dòng của danh sách cao thấp khác nhau (59 / 48 dp - soát 25-10 V3). */}
         {option.description && <span className="block min-h-[2lh] text-pretty text-xs font-normal text-fg-3">{option.description}</span>}
       </span>
-      {option.hint && <span className="shrink-0 text-xs font-normal text-fg-2">{option.hint}</span>}
+      {/* Gợi ý là chữ phụ: nhường chỗ (xuống dòng) cho tên lựa chọn - "Nhạc của tôi" từng gãy thành hai dòng cạnh "chưa có bài nào" (luật
+          label-wrapped-beside-note). */}
+      {option.hint && <span className="min-w-0 max-w-[45%] text-right text-pretty text-xs font-normal text-fg-2">{option.hint}</span>}
     </>
   );
 }
