@@ -511,6 +511,26 @@ export function inspectLayout({ all, texts, css, rect, union, visible, hidden, s
     if (hit) add("COVERED TEXT", el, `${el.textContent || el.getAttribute("aria-label") || ""} ↔ ${hit.host.textContent}`, [box, hit.ink],
       { metric: "overlay-covers-text", value: Math.min(right(hit.ink), right(box)) - Math.max(hit.ink.x, box.x), otherSelector: selector(hit.host), reason: "an absolutely placed solid layer is painted over text in the same frame" });
   }
+  // Tiêu đề trong một tab lặp lại đúng tên tab đang chọn (tab "Nhân vật" mở ra nhóm gập "Nhân vật" - audit140 V2): chữ thừa, người đọc đã
+  // biết mình đang ở đâu. So mẩu chữ đầu của tiêu đề với nhãn tab, bỏ số đếm cuối ("Chương 16").
+  const labelOf = (text) => text.replace(/\s+/g, " ").trim().replace(/\s*\d+$/, "").toLocaleLowerCase("vi");
+  for (const panel of all) {
+    if (panel.getAttribute("role") !== "tabpanel" || !shownChain(panel)) continue;
+    const id = panel.getAttribute("aria-labelledby");
+    const tab = (id && document.getElementById(id)) || null;
+    if (!tab || tab.getAttribute("aria-selected") !== "true") continue;
+    const name = labelOf(tab.textContent ?? "");
+    if (!name) continue;
+    for (const heading of panel.querySelectorAll('h1,h2,h3,h4,h5,h6,[role="heading"]')) {
+      if (!shownChain(heading)) continue;
+      const walker = document.createTreeWalker(heading, NodeFilter.SHOW_TEXT);
+      let first = walker.nextNode();
+      while (first && !first.textContent.trim()) first = walker.nextNode();
+      if (!first || labelOf(first.textContent) !== name) continue;
+      add("REPEATED LABEL", first.parentElement, first.textContent, [rect(first.parentElement.getBoundingClientRect()), rect(tab.getBoundingClientRect())],
+        { metric: "heading-repeats-tab", otherSelector: selector(tab), reason: "a heading inside a tab repeats the selected tab's label" });
+    }
+  }
   // Khung có header trang + các section là cùng một họ nội dung. Dialog và trang đang cuộn không so với trang gốc.
   let firstBlock = null;
   if (!all.some((e) => e.matches('[role="dialog"],[role="alertdialog"]') && visible(e, rect(e.getBoundingClientRect())))) {

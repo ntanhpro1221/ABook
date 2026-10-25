@@ -480,7 +480,7 @@ export function CastList({ bookId, onPickVoice, onPickNarrator, onMerge, onUnmer
         {onPickNarrator && <IconButton label="Đổi giọng người kể" icon={SlidersHorizontal} size="sm" onClick={onPickNarrator} />}
       </div>
       {narratorNote && <div className="mt-2 text-xs text-fg-2">{narratorNote}</div>}
-      <Fold storageKey={`book.${bookId}.cast`} title="Nhân vật" summary={`${cast.characters.length} người có lời thoại`} defaultOpen={cast.characters.length <= 4} heading="h3" flat className="mt-4">
+      <Fold storageKey={`book.${bookId}.cast`} title="Vai chính" summary={`${cast.characters.length} người có lời thoại`} defaultOpen={cast.characters.length <= 4} heading="h3" flat className="mt-4">
       {/* "Hiện / Ẩn chương sau": người của các chương sau mở / khép tại chỗ (hàng tự mờ khi đổi giọng - PersonRow là một vùng), không mờ cả tab. */}
       <div data-motion-live="">
       <AnimatedRows
