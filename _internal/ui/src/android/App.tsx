@@ -1,7 +1,7 @@
 import { App as CapacitorApp } from "@capacitor/app";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Clapperboard, Download, Headphones, Library, Link2, Settings, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { NavLink, Route, Routes, useLocation, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
@@ -125,6 +125,25 @@ const HAND_OFF = <PhoneHandOffButton />;
  *  rẻ cỡ 2 ms, còn inert phải tính lại style cả cây trang (25-70 ms ở 6x chậm). Cuộn giữ nguyên khi mở lại. WebView cũ không có thì quay về inert. */
 const HIDES_PAGE = typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("content-visibility", "hidden");
 
+/** Mở app: báo màn chờ Android (MainActivity) mờ đi khi trang đầu đã dựng xong và ĐỨNG YÊN - hết khung chờ, ảnh đã tải, không còn hoạt ảnh
+ *  hữu hạn nào chạy (nội dung mọc / hiện dần) - để màn chờ lộ ra giao diện hoàn chỉnh thay vì cả chuỗi dựng (chủ sách 25-10). Tối đa 3,5 s. */
+function useLaunchReady(main: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const start = performance.now();
+    let timer = 0;
+    const check = () => {
+      const page = main.current;
+      const busy = !page || page.querySelector(".motion-loading-placeholder") !== null
+        || Array.from(page.querySelectorAll("img")).some((image) => !image.complete)
+        || document.getAnimations().some((animation) => animation.playState === "running" && animation.effect?.getComputedTiming().endTime !== Infinity);
+      if (busy && performance.now() - start < 3500) { timer = window.setTimeout(check, 80); return; }
+      requestAnimationFrame(() => requestAnimationFrame(() => void EbookLibrary.appReady?.()?.catch(() => undefined)));
+    };
+    timer = window.setTimeout(check, 80);
+    return () => window.clearTimeout(timer);
+  }, [main]);
+}
+
 function MobileShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
   const { expanded, setExpanded } = useNowPlaying();
@@ -139,6 +158,7 @@ function MobileShell({ children }: { children: ReactNode }) {
   // Điện thoại giữ chỗ cuộn: thư viện -> sách -> quay lại không mất chỗ đang xem.
   usePageEnter(main, pathname, { resetScroll: false });
   usePageFocus(main, pageFocusKey(pathname));
+  useLaunchReady(main);
   return (
     <div className="relative flex h-full flex-col" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       {/* Màn "Đang nghe" phủ kín: mọi thứ nằm dưới nó cũng ra khỏi cây trợ năng và Tab (inert), không chỉ khuất mắt. */}

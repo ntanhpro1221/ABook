@@ -452,6 +452,8 @@ export interface ShareStatus {
 
 export interface EbookLibraryPlugin {
   info(): Promise<{ root: string }>;
+  /** Trang đầu đã dựng xong: màn chờ lúc mở app mờ đi (MainActivity). */
+  appReady(): Promise<void>;
   discover(options: { timeoutMs?: number }): Promise<{ computers: { host: string; port: number; name: string; kind?: string }[] }>;
   shareStatus(): Promise<ShareStatus>;
   setShare(options: { enabled: boolean }): Promise<ShareStatus>;
