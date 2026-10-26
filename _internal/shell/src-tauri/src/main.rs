@@ -4,7 +4,7 @@
 //! (`abook.webui.host`) - đúng server của cửa sổ Qt. Vỏ chạy host làm tiến trình con, nói chuyện qua stdin/stdout
 //! (JSON từng dòng), mở cửa sổ ở địa chỉ host báo, mở hộp thoại Windows khi host nhờ, chuyển file `.abook` của lần mở
 //! thứ hai, tìm và cài bản mới có chữ ký khi người dùng bấm, và khi cửa sổ đóng thì dừng host. Trang web không được cấp
-//! IPC của Tauri: nó nằm ở `http://127.0.0.1`.
+//! IPC tệp của Tauri: nó nằm ở `http://127.0.0.1`; chrome chỉ cấp các thao tác cửa sổ cho đúng origin của host.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -21,6 +21,8 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, DragDropEvent, Manager, RunEvent, Url, WindowEvent};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_updater::{Update, UpdaterExt};
+
+mod chrome;
 
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
@@ -169,9 +171,10 @@ fn host_command(app: &AppHandle) -> Result<Command, String> {
 /// Thay nội dung trang đang hiện bằng một thông báo lỗi đọc được (trang chờ, hay trang của host vừa chết).
 fn show_failure(app: &AppHandle, message: &str) {
     let script = format!(
-        "document.body.innerHTML='';document.body.style.cssText='margin:0;height:100vh;display:grid;place-items:center;\
-         background:#0e1115;color:#c9d1d9;font:15px Segoe UI,sans-serif';var p=document.createElement('p');\
-         p.style.cssText='max-width:36em;line-height:1.5;padding:0 16px';p.textContent={};document.body.appendChild(p);",
+        "document.querySelectorAll('body > :not([data-loading-titlebar])').forEach(e=>e.remove());\
+         document.body.style.cssText='margin:0;height:100vh;display:grid;place-items:center;\
+         background:var(--bg);color:var(--text);font:15px Segoe UI,sans-serif';var p=document.createElement('p');\
+         p.style.cssText='max-width:36em;line-height:1.5;padding:40px 16px';p.textContent={};document.body.appendChild(p);",
         Value::from(message)
     );
     let app = app.clone();
@@ -409,7 +412,10 @@ fn pump(app: AppHandle, stdout: ChildStdout) {
         };
         if let Some(address) = message.get("ready").and_then(Value::as_str) {
             if let (Some(window), Ok(url)) = (app.get_webview_window("main"), address.parse::<Url>()) {
-                let _ = window.navigate(url);
+                match chrome::allow_host(&app, &url) {
+                    Ok(()) => { let _ = window.navigate(url); }
+                    Err(error) => show_failure(&app, &error),
+                }
             }
         } else if message.get("dialog").is_some() {
             // Hộp thoại chặn tới khi người dùng chọn xong: mỗi cái một luồng, ống vẫn được đọc tiếp.
@@ -433,6 +439,7 @@ fn pump(app: AppHandle, stdout: ChildStdout) {
 
 fn main() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![chrome::window_action])
         // Phải đăng ký đầu tiên: lần mở thứ hai thoát ngay, đường dẫn .abook của nó về cửa sổ đang chạy.
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             if let Some(window) = app.get_webview_window("main") {
@@ -457,9 +464,20 @@ fn main() {
             if let WindowEvent::DragDrop(drag) = event {
                 forward_drag_drop(window.app_handle(), drag);
             }
+            if matches!(event, WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. } | WindowEvent::Focused(_)) {
+                if let Some(webview) = window.app_handle().get_webview_window(window.label()) {
+                    let _ = webview.eval("window.dispatchEvent(new Event('abook-native-resize'))");
+                }
+            }
         })
         .setup(|app| {
             let handle = app.handle().clone();
+            app.manage(chrome::HostOrigin::default());
+            let config = app.config().app.windows.iter().find(|window| window.label == "main").expect("main config");
+            let window = tauri::WebviewWindowBuilder::from_config(app, config)?
+                .initialization_script(chrome::script(&chrome::boot_theme()))
+                .build()?;
+            chrome::install(&window).map_err(std::io::Error::other)?;
             app.manage(PendingUpdate(Mutex::new(None)));
             match host_command(&handle).and_then(|mut command| command.spawn().map_err(|error| error.to_string())) {
                 Ok(mut child) => {

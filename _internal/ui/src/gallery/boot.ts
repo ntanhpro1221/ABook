@@ -6,11 +6,13 @@ import { capacitorApp, ebookLibrary, ebookPlayer, readAloud, resetPlayer } from 
 import { resetData } from "./data";
 import { DEFAULT_SCENARIO, galleryState } from "./state";
 import type { Entry, Theme } from "./entries";
+import { chromeStateEvent, type WindowChrome } from "@/desktop/windowChrome";
 
 // Dựng thế giới giả cho một nền tảng: một lần mỗi trang (Capacitor phải có trước khi @capacitor/core nạp, và quyết định
 // "đây là app Android" cố định suốt trang). `prepare` đặt lại dữ liệu + kịch bản cho từng mục.
 
 let platformInstalled: "phone" | "desktop" | null = null;
+let galleryChrome: WindowChrome | undefined;
 
 export function installPlatform(platform: "phone" | "desktop", clock?: number): void {
   if (platformInstalled) {
@@ -28,6 +30,15 @@ export function installPlatform(platform: "phone" | "desktop", clock?: number): 
 }
 
 export function prepare(entry: Entry, theme: Theme): void {
+  if (window.__ABOOK_CHROME__ === galleryChrome) delete window.__ABOOK_CHROME__;
+  if (entry.chrome && !window.__ABOOK_CHROME__) {
+    const state = { maximized: false, focused: true, snapHovered: false, snapPressed: false };
+    galleryChrome = { state, action: action => {
+      if (action === "toggleMaximize") state.maximized = !state.maximized;
+      window.dispatchEvent(new Event(chromeStateEvent));
+    } };
+    window.__ABOOK_CHROME__ = galleryChrome;
+  }
   window.dispatchEvent(new Event("online"));
   resetData();
   resetPlayer();
