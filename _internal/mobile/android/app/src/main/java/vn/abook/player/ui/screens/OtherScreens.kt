@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -38,9 +40,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
 /** Trang sách (P0 giữ chỗ để có một màn con thật cho chuyển cảnh): bìa + tên + tác giả. Nội dung đầy đủ ở P2. */
 @Composable
-fun BookScreen(book: ListenBook, covers: CoverLoader, onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun BookScreen(book: ListenBook, covers: CoverLoader, onBack: () -> Unit, modifier: Modifier = Modifier, onEdit: (() -> Unit)? = null) {
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    Column(modifier.fillMaxSize().testTag("book_screen").padding(top = top, start = Dim.margin, end = Dim.margin)) {
+    Column(modifier.fillMaxSize().testTag("book_screen").verticalScroll(rememberScrollState()).padding(top = top, start = Dim.margin, end = Dim.margin)) {
         BackButton(onBack)
         Spacer(Modifier.height(Dim.s16))
         BookCover(book.cover, book.title, book.part, covers, 160.dp, Modifier.width(160.dp))
@@ -48,6 +50,7 @@ fun BookScreen(book: ListenBook, covers: CoverLoader, onBack: () -> Unit, modifi
         BasicText(book.title, style = Abook.type.sectionTitle, modifier = Modifier.fillMaxWidth())
         if (book.author.isNotEmpty()) BasicText(book.author, style = Abook.type.bodySmall)
         Spacer(Modifier.height(Dim.s24))
+        if (onEdit != null) vn.abook.player.ui.addbook.BookAction("Sửa sách", onEdit, Modifier.testTag("edit_book"))
         BasicText("Trang sách sắp có.", style = Abook.type.body.copy(color = Abook.colors.text2))
     }
 }

@@ -63,6 +63,28 @@ class ShellBenchmark {
     }
 
     @Test
+    fun addAndEditBackFiveTimes() = rule.measureRepeated(
+        packageName = PACKAGE, metrics = listOf(FrameTimingMetric()), iterations = 5,
+        startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
+        setupBlock = { launchLibrary() },
+    ) {
+        repeat(5) {
+            device.findObject(By.res("add_book")).click()
+            check(device.wait(Until.hasObject(By.res("add_book_screen")), 2_000))
+            device.pressBack()
+            device.waitForIdle()
+            device.findObjects(By.res("book_cell")).first().click()
+            check(device.wait(Until.hasObject(By.res("edit_book")), 2_000))
+            device.findObject(By.res("edit_book")).click()
+            check(device.wait(Until.hasObject(By.res("edit_book_screen")), 2_000))
+            device.pressBack()
+            check(device.wait(Until.hasObject(By.res("book_screen")), 2_000))
+            device.pressBack()
+            device.waitForIdle()
+        }
+    }
+
+    @Test
     fun pushAndBack() = rule.measureRepeated(
         packageName = PACKAGE, metrics = listOf(FrameTimingMetric()), iterations = 8,
         startupMode = StartupMode.WARM, compilationMode = CompilationMode.Partial(),
@@ -77,6 +99,6 @@ class ShellBenchmark {
     }
 
     private companion object {
-        const val PACKAGE = "com.ngdtuanh.abook"
+        const val PACKAGE = BuildConfig.TARGET_PACKAGE
     }
 }

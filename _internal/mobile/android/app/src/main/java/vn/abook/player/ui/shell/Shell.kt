@@ -55,7 +55,13 @@ import vn.abook.player.ui.nav.Tab
 import vn.abook.player.ui.nav.TabState
 import vn.abook.player.ui.player.MiniPlayer
 import vn.abook.player.ui.player.MiniPlayerSlot
-import vn.abook.player.ui.screens.AddBookSheet
+import vn.abook.player.ui.addbook.AddBookRoute
+import vn.abook.player.ui.addbook.ImportQueue
+import vn.abook.player.ui.addbook.ImportReviewRoute
+import vn.abook.player.ui.editbook.EditBooks
+import vn.abook.player.ui.editbook.EditBookRoute
+import vn.abook.player.ui.editbook.EditChapterRoute
+import vn.abook.player.ui.editbook.CoverCropRoute
 import vn.abook.player.ui.screens.BookScreen
 import vn.abook.player.ui.screens.LibraryActions
 import vn.abook.player.ui.screens.LibraryScreen
@@ -86,7 +92,8 @@ class ShellState(scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit = {
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, covers: CoverLoader, onFirstContent: () -> Unit = {}) {
+fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, covers: CoverLoader, onFirstContent: () -> Unit = {},
+    imports: ImportQueue? = null, editors: EditBooks? = null, demo: Boolean = false, autoPick: Boolean = false) {
     val nav = shell.nav
     val playerState by player.state.collectAsState()
     PredictiveBackHandler(enabled = nav.canPop) { events ->
@@ -110,7 +117,7 @@ fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, cover
             togglePlay = player::togglePlay,
             playNow = player::playNow,
             openNowPlaying = { openNowPlaying(shell.nav) },
-            addBook = { shell.sheets.show { dismiss -> AddBookSheet(dismiss) } },
+            addBook = { shell.nav.push(Destination.AddBook) },
         )
     }
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
@@ -119,7 +126,18 @@ fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, cover
             root = { RootTabs(shell, library, playerState, player, covers, actions) },
             screen = { destination ->
                 when (destination) {
-                    is Destination.Book -> BookScreen(destination.book, covers, onBack = nav::pop)
+                    is Destination.Book -> BookScreen(
+                        (library as? LibraryState.Ready)?.books?.firstOrNull { it.id == destination.book.id } ?: destination.book,
+                        covers, onBack = nav::pop, onEdit = { nav.push(Destination.EditBook(destination.book)) })
+                    Destination.AddBook -> if (imports != null) AddBookRoute(imports, nav::pop,
+                        { nav.push(Destination.ImportReview(it)) }, { id ->
+                            (library as? LibraryState.Ready)?.books?.firstOrNull { it.id == id }?.let { nav.push(Destination.Book(it)) }
+                        }, autoPick, active = nav.stack.top?.destination == Destination.AddBook && !nav.progress.isRunning)
+                    is Destination.ImportReview -> if (imports != null) ImportReviewRoute(imports, destination.itemId, nav::pop)
+                    is Destination.EditBook -> if (editors != null) EditBookRoute(editors.session(destination.book, demo), covers, nav::pop,
+                        { nav.push(Destination.CropCover(destination.book, it)) }, { nav.push(Destination.EditChapter(destination.book, it)) })
+                    is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop)
+                    is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop)
                     Destination.NowPlaying -> NowPlayingPlaceholder(playerState, covers, onBack = nav::pop)
                 }
             },
