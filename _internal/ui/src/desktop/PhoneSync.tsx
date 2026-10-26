@@ -93,10 +93,10 @@ function useSync() {
   const cancel = useMutation({ mutationFn: () => api<SyncView>("/api/sync/pairing", { method: "DELETE" }), onSuccess, onError });
   const revoke = useMutation({
     mutationFn: ({ id }: { id: string; name: string }) => api<SyncView>(`/api/sync/devices/${id}`, { method: "DELETE" }),
-    // Thôi ghép xong nói một câu (soát a68 lỗi 15): dòng thiết bị biến mất không đủ để biết đã xong và hệ quả là gì.
+    // Bỏ ghép xong nói một câu (soát a68 lỗi 15): dòng thiết bị biến mất không đủ để biết đã xong và hệ quả là gì.
     onSuccess: (data, { name }) => {
       onSuccess(data);
-      toast.success(`Đã thôi ghép ${name}`);
+      toast.success(`Đã bỏ ghép ${name}`);
     },
     onError,
   });
@@ -260,7 +260,7 @@ export function PhoneSync() {
   // Bật điều khiển sản xuất từ xa phải hỏi lại (soát UX 29-09): thiết bị đã ghép bắt đầu / dừng sản xuất qua http trong mạng.
   const [confirmStudio, setConfirmStudio] = useState(false);
   const known = useRef<Set<string> | null>(null);
-  // Thiết bị vừa ghép / vừa thôi ghép: hàng mở ra hay khép lại tại chỗ (shared/motion.ts useListPresence).
+  // Thiết bị vừa ghép / vừa bỏ ghép: hàng mở ra hay khép lại tại chỗ (shared/motion.ts useListPresence).
   const deviceRows = useListPresence(sync?.devices ?? NO_DEVICES, (device) => device.id);
 
   // Điện thoại vừa nhập đúng mã: nó xuất hiện trong danh sách - báo ngay, người dùng đang nhìn vào máy tính.
@@ -426,7 +426,7 @@ export function PhoneSync() {
                       Đổi tên
                     </Button>
                     <Button size="sm" variant="ghost" onClick={() => setRemoving(device)}>
-                      Thôi ghép
+                      Bỏ ghép
                     </Button>
                   </Fold>
                   </li>
@@ -439,7 +439,7 @@ export function PhoneSync() {
 
       <Dialog footer={<DialogActions>
           <Button variant="ghost" onClick={() => setRemoving(null)}>
-            Để nguyên
+            Giữ lại
           </Button>
           <Button
             variant="danger"
@@ -448,12 +448,12 @@ export function PhoneSync() {
               setRemoving(null);
             }}
           >
-            Thôi ghép
+            Bỏ ghép
           </Button>
         </DialogActions>}
         open={removing !== null}
         onOpenChange={(open) => !open && setRemoving(null)}
-        title={`Thôi ghép ${removing?.name ?? "thiết bị"}?`}
+        title={`Bỏ ghép ${removing?.name ?? "thiết bị"}?`}
         description="Dừng tải và đồng bộ; giữ sách đã tải."
       >
 

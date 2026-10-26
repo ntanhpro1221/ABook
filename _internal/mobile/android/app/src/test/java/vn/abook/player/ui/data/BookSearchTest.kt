@@ -109,7 +109,7 @@ class BookSearchTest {
         assertEquals("Gõ ít nhất 2 ký tự.", BookSearch.status("a", null))
         assertEquals("Không thấy “xyz” trong sách.", BookSearch.status("xyz", FindProgress(emptyList(), 0, 3, 3, 0, done = true)))
         assertEquals(
-            "Đang tìm: đã xem 1/3 chương, thấy 0 chỗ.",
+            "Đang tìm - đã xem 1/3 chương, thấy 0 chỗ.",
             BookSearch.status("xyz", FindProgress(emptyList(), 0, 1, 3, 0, done = false)),
         )
     }

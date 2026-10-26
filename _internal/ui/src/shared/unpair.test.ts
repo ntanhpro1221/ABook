@@ -18,11 +18,11 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
 
   it("nói số cuốn, số thay đổi và tên máy, kèm lựa chọn gửi trước khi máy kia tới được", () => {
     const copy = unpairCopy("Máy bàn", "điện thoại", two, true)!;
-    expect(copy.title).toBe("Thôi ghép Máy bàn?");
+    expect(copy.title).toBe("Bỏ ghép Máy bàn?");
     expect(copy.lines[0]).toBe("2 cuốn có 3 thay đổi chưa gửi về Máy bàn sẽ mất: “Sách một”, “Sách hai”.");
-    expect(copy.send).toBe("Gửi trước rồi thôi ghép");
-    expect(copy.discard).toBe("Vẫn thôi ghép, bỏ thay đổi");
-    expect(copy.cancel).toBe("Huỷ");
+    expect(copy.send).toBe("Gửi trước rồi bỏ ghép");
+    expect(copy.discard).toBe("Vẫn bỏ ghép, bỏ thay đổi");
+    expect(copy.cancel).toBe("Giữ lại");
   });
 
   it("máy kia tới được thì “Gửi trước” là nút chính", () => {
@@ -31,7 +31,7 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
 
   it("máy kia đang tắt thì “Gửi trước” vẫn có nhưng không là nút chính, kèm dòng nói máy ấy tắt", () => {
     const copy = unpairCopy("Máy bàn", "điện thoại", two, false)!;
-    expect(copy.send).toBe("Thử gửi trước rồi thôi ghép");
+    expect(copy.send).toBe("Thử gửi trước rồi bỏ ghép");
     expect(copy.sendPrimary).toBe(false);
     expect(copy.lines[1]).toContain("Máy bàn đang tắt");
   });
@@ -58,7 +58,7 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
     const cached: UnsentEdits = { books: [], changes: 0, sendable: true, cache: { books: 3, bytes: 5 * 1024 * 1024, places: 2 } };
     const copy = unpairCopy("Máy bàn", "máy tính", cached, true)!;
     expect(copy.send).toBeNull();
-    expect(copy.discard).toBe("Thôi ghép");
+    expect(copy.discard).toBe("Bỏ ghép");
     expect(copy.lines[0]).toContain("3 cuốn của Máy bàn sẽ rời Thư viện");
     expect(copy.lines[0]).toContain("đã tải về máy tính này sẽ bị xoá");
     expect(copy.lines[1]).toContain("Chỗ nghe của 2 cuốn vẫn giữ");
@@ -66,6 +66,6 @@ describe("gỡ ghép khi còn sửa chưa gửi", () => {
 
   it("không có gì để mất thì gỡ như thường; lời báo sau khi gỡ chỉ MỘT dòng", () => {
     expect(unpairCopy("Máy bàn", "máy tính", { books: [], changes: 0, sendable: true, cache: { books: 0, bytes: 0, places: 0 } }, true)).toBeNull();
-    expect(unpairDone("Máy bàn")).toBe("Đã thôi ghép Máy bàn");
+    expect(unpairDone("Máy bàn")).toBe("Đã bỏ ghép Máy bàn");
   });
 });

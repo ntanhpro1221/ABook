@@ -133,7 +133,7 @@ export function ChapterRow({
             <DropdownMenu.Trigger asChild>
               <button
                 type="button"
-                aria-label={`Tuỳ chọn ${chapter.fullTitle}`}
+                aria-label={`Thêm tuỳ chọn cho ${chapter.fullTitle}`}
                 className="grid size-8 place-items-center rounded-control text-fg-2 opacity-0 transition-[opacity,color,background-color] duration-motion-fast hover:bg-panel hover:text-fg group-hover:opacity-100 focus-visible:opacity-100 data-[state=open]:opacity-100 max-md:opacity-100 max-sm:size-[48px] max-sm:justify-items-end"
               >
                 <MoreHorizontal className="ink-end size-4" />
@@ -157,7 +157,7 @@ export function ChapterRow({
                 )}
                 {onRename && (
                   <DropdownMenu.Item onSelect={() => onRename(chapter)} className={MENU_ITEM}>
-                    <TextCursorInput className="size-4" /> Đổi tên chương…
+                    <TextCursorInput className="size-4" /> Đổi tên chương
                   </DropdownMenu.Item>
                 )}
               </DropdownMenu.Content>
@@ -361,7 +361,7 @@ export function PersonRow({
               <DropdownMenu.Content collisionPadding={12} align="end" sideOffset={4} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-48 rounded-cover border border-line bg-panel p-1.5 shadow-float">
                 {canMerge && (
                   <DropdownMenu.Item onSelect={() => onMerge?.(person)} className={MENU_ITEM}>
-                    <GitMerge className="size-4" /> Gộp vào người khác…
+                    <GitMerge className="size-4" /> Gộp vào người khác
                   </DropdownMenu.Item>
                 )}
                 {onRename && (
@@ -594,8 +594,8 @@ export function singleRecordActions(book: ListenBook): { key: string; label: str
   return [
     { key: "create", label: "Hồ sơ mới", icon: Plus, dialog: newRecordDialog(book) },
     { key: "move", label: "Chuyển hồ sơ", icon: ArrowRightLeft, dialog: { kind: "move", name } },
-    { key: "rename", label: "Đổi tên hồ sơ…", icon: TextCursorInput, dialog: { kind: "rename", name } },
-    { key: "delete", label: "Xoá hồ sơ…", icon: Trash2, dialog: { kind: "delete", name }, danger: true },
+    { key: "rename", label: "Đổi tên hồ sơ", icon: TextCursorInput, dialog: { kind: "rename", name } },
+    { key: "delete", label: "Xoá hồ sơ", icon: Trash2, dialog: { kind: "delete", name }, danger: true },
   ];
 }
 
@@ -606,7 +606,7 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
   // Ba trạng thái (đang mở thư viện / chưa có cuốn nào khác / ô chọn) mờ qua tại chỗ trong hộp đang mở.
   return (
     <MotionRegion motionKey={isLoading ? "loading" : others.length ? "list" : "empty"}>
-    {isLoading ? <p className="text-sm text-fg-2">Đang mở thư viện…</p> : !others.length ? <p className="text-sm text-fg-2">Thư viện chưa có cuốn nào khác.</p> : <Select
+    {isLoading ? <p className="text-sm text-fg-2">Đang mở thư viện</p> : !others.length ? <p className="text-sm text-fg-2">Thư viện chưa có cuốn nào khác.</p> : <Select
       aria-label="Chuyển sang cuốn"
       autoFocus
       value={value}
@@ -617,7 +617,7 @@ function MoveTarget({ book, value, onChange }: { book: ListenBook; value: string
 
     >
       <option value="" disabled>
-        Chọn cuốn…
+        Chọn cuốn
       </option>
       {others.map((item) => (
         <option key={item.id} value={item.id}>
@@ -713,13 +713,13 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
               <Plus className="size-4" /> Hồ sơ mới
             </DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "rename", name: active.name })} className={MENU_ITEM}>
-              <TextCursorInput className="size-4" /> Đổi tên hồ sơ này…
+              <TextCursorInput className="size-4" /> Đổi tên hồ sơ này
             </DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "move", name: active.name })} className={MENU_ITEM}>
-              <ArrowRightLeft className="size-4" /> Chuyển sang cuốn khác…
+              <ArrowRightLeft className="size-4" /> Chuyển sang cuốn khác
             </DropdownMenu.Item>
             <DropdownMenu.Item onSelect={() => setDialog({ kind: "delete", name: active.name })} className={cn(MENU_ITEM, "text-danger")}>
-              <Trash2 className="size-4" /> Xoá hồ sơ này…
+              <Trash2 className="size-4" /> Xoá hồ sơ này
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
@@ -1050,13 +1050,13 @@ export function BookScreen({
             </Button>
           )}
           {/* Hàng phụ: luôn cùng bốn chỗ, cùng thứ tự - nút chưa dùng được thì mờ đi chứ không biến mất (không nhảy chỗ khi bắt đầu nghe). */}
-          {/* Đầu trái là "Đọc" (24,8 px) hay "Tìm" (22,1 px), đầu phải "Thêm" (33 px): mỗi đầu một --slot để cả hai sát mép nút chính. */}
+          {/* Đầu trái là "Đọc" (24,8 px) hay "Tìm" (22,1 px), đầu phải "⋯" (không nhãn, chừa chỗ nhãn): mỗi đầu một --slot để cả hai sát mép nút chính. */}
           <div role="group" aria-label="Việc với sách" data-book-secondary className={cn("slot-row items-start [--slot:1.4rlh]", listenFirst || caughtUp ? "[--slot-start:1.0333rlh]" : "[--slot-start:0.9208rlh]")}>
             {/* Nhãn luôn một chữ "Đọc" (hàng cách đều theo tâm, nhãn đầu mút sát mép - "Đọc tiếp" dài gấp đôi sẽ lòi ra); "tiếp" nói cho trình đọc màn hình. */}
             {(listenFirst || caughtUp) && <ActionButton icon={BookOpen} label="Đọc" aria-label={readLabel === "Đọc" ? undefined : readLabel} onClick={read} />}
             <ActionButton icon={Search} label="Tìm" aria-label="Tìm chữ trong sách" disabled={!chapters.length} onClick={() => setFinding(true)} />
             {!textOnly || point ? <ActionButton icon={RotateCcw} label="Từ đầu" aria-label="Nghe lại từ đầu" disabled={!(started && point && !finished)} onClick={restart} /> : null}
-            {moreMenu && <ActionMenu title="Việc với sách" trigger={<ActionButton icon={MoreHorizontal} label="Thêm" aria-label="Thêm việc với sách" />}>
+            {moreMenu && <ActionMenu title="Việc với sách" trigger={<ActionButton icon={MoreHorizontal} label={<span aria-hidden className="inline-block h-3" />} aria-label="Thêm tuỳ chọn" />}>
                   {/* Một hồ sơ thì không có nút hồ sơ nghe: tạo / chuyển / đổi tên / xoá hồ sơ duy nhất nằm ở đây (soát a105 F9), dùng chung hộp thoại của RecordPicker. */}
                   {source.records && singleRecordActions(book).filter(action => !action.danger).map((action) => (
                     <DropdownMenu.Item key={action.key} onSelect={() => setRecordDialog(action.dialog)} className={MENU_ITEM}>
@@ -1087,7 +1087,7 @@ export function BookScreen({
                             <Save className="size-4" /> Lưu thay đổi
                           </DropdownMenu.Item>
                           <DropdownMenu.Item onSelect={() => setSaveAsOpen(true)} className={MENU_ITEM}>
-                            <FileDown className="size-4" /> Lưu thành…
+                            <FileDown className="size-4" /> Lưu thành
                           </DropdownMenu.Item>
                           {sharer.available && (
                             <DropdownMenu.Item
@@ -1095,7 +1095,7 @@ export function BookScreen({
                               onSelect={() => void sharer.share()}
                               className={cn(MENU_ITEM, "data-[disabled]:opacity-50")}
                             >
-                              <Share2 className="size-4" /> Chia sẻ…
+                              <Share2 className="size-4" /> Chia sẻ
                             </DropdownMenu.Item>
                           )}
                         </>

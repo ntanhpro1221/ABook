@@ -42,7 +42,7 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 
 /*
- * Các bảng trượt của Giọng đọc làm thêm: việc của một giọng đã có trên máy (kèm bước xoá), tải bằng dữ liệu di động, đồng ý gửi chữ, một khóa giọng trực tuyến
+ * Các bảng trượt của Giọng đọc làm thêm: việc của một giọng đã có trên máy (kèm bước xoá), tải bằng dữ liệu di động, đồng ý gửi chữ, một khoá giọng trực tuyến
  * (nhập, lưu, kiểm tra, xoá), xoá một bài nhạc. Mọi bước xác nhận dựng bằng [ConfirmPage] - cùng một chỗ với các bảng Thiết bị.
  */
 
@@ -76,16 +76,16 @@ private fun ModuleActions(kind: ModuleKind, choice: ModuleChoice, status: Module
         if (bench != null && status != null) Caption(VoiceText.benchmark(choice.id, bench, status.slowRtf), Modifier.padding(top = Dim.s4).testTag("module_benchmark"))
         Spacer(Modifier.height(Dim.s8))
         if (choice.installed && status?.state == ModuleState.Outdated) {
-            MenuRow("Cập nhật · ${VoiceText.size(status.outdatedBytes)}", "module_update", onClick = { voice.download(kind, null); dismiss() }) { ink -> DownloadIcon(ink) }
+            MenuRow("Cập nhật (${VoiceText.size(status.outdatedBytes)})", "module_update", onClick = { voice.download(kind, null); dismiss() }) { ink -> DownloadIcon(ink) }
         }
         if (choice.installed) {
             MenuRow(
-                if (status?.benchmarking == true) "Đang đo tốc độ" else "Đo lại tốc độ", "module_measure", unavailable = status?.benchmarking == true,
+                if (status?.benchmarking == true) "Đang đo tốc độ" else "Thử lại tốc độ", "module_measure", unavailable = status?.benchmarking == true,
                 onClick = { voice.measure(kind); dismiss() },
             ) { ink -> RestartIcon(ink) }
         }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
-        MenuRow(if (choice.installed) "Xoá khỏi máy" else "Xoá phần đã tải", "module_remove", danger = true, onClick = onRemove) { ink -> TrashIcon(ink) }
+        MenuRow(if (choice.installed) "Gỡ giọng" else "Xoá phần đã tải", "module_remove", danger = true, onClick = onRemove) { ink -> TrashIcon(ink) }
     }
 }
 
@@ -96,10 +96,10 @@ private fun ModuleRemove(kind: ModuleKind, choice: ModuleChoice, voice: VoiceSta
     var problem by remember { mutableStateOf("") }
     val installed = choice.installed
     ConfirmPage(
-        if (installed) "Xoá khỏi máy?" else "Xoá phần đã tải?", "module_remove_confirm",
+        if (installed) "Gỡ “${VoiceText.choiceTitle(choice)}” khỏi máy này?" else "Xoá phần đã tải?", "module_remove_confirm",
         listOf(if (installed) VoiceText.REMOVE_ASK else "Phần đã tải dở sẽ bị xoá khỏi máy này."), problem,
     ) {
-        DangerButton(if (working) "Đang xoá" else if (installed) "Xoá khỏi máy" else "Xoá phần đã tải", {
+        DangerButton(if (working) (if (installed) "Đang gỡ" else "Đang xoá") else if (installed) "Gỡ giọng" else "Xoá phần đã tải", {
             if (working) return@DangerButton
             working = true
             scope.launch {
@@ -156,8 +156,8 @@ private enum class KeyPage { Form, Consent, Remove }
 private enum class KeyWork { None, Saving, Checking }
 
 /**
- * Bảng của một nhà cung cấp giọng dùng khóa của bạn. "Lưu": chỉ cất khóa trên máy này. "Kiểm tra": lưu rồi gọi dịch vụ đọc thử một câu ngắn - chữ đi ra ngoài, nên lần đầu có bước
- * đồng ý. Khóa gõ vào ô chỉ đi xuống [VoiceState.saveKey]; ô để chấm, "Hiện" cho xem khi gõ; khóa đã lưu chỉ thấy dạng che.
+ * Bảng của một nhà cung cấp giọng dùng khoá của bạn. "Lưu": chỉ cất khoá trên máy này. "Kiểm tra": lưu rồi gọi dịch vụ đọc thử một câu ngắn - chữ đi ra ngoài, nên lần đầu có bước
+ * đồng ý. Khoá gõ vào ô chỉ đi xuống [VoiceState.saveKey]; ô để chấm, "Hiện" cho xem khi gõ; khoá đã lưu chỉ thấy dạng che.
  */
 @Composable
 fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
@@ -209,8 +209,8 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                     Caption(VoiceText.keyHelp(provider.id), Modifier.padding(top = Dim.s4).testTag("key_help"))
                     Spacer(Modifier.height(Dim.s16))
                     BookField(
-                        null, key, { key = it; problem = ""; verdict = "" }, "key_field", work == KeyWork.None, "Khóa ${provider.name}",
-                        placeholder = if (provider.hasKey) "${provider.masked} · dán khóa mới để đổi" else "Dán khóa",
+                        null, key, { key = it; problem = ""; verdict = "" }, "key_field", work == KeyWork.None, "Khoá ${provider.name}",
+                        placeholder = if (provider.hasKey) "${provider.masked} · dán khoá mới để đổi" else "Dán khoá của bạn",
                         masked = !revealed,
                         trailing = { TextAction(if (revealed) "Ẩn" else "Hiện", { revealed = !revealed }, "key_reveal") },
                     )
@@ -237,7 +237,7 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                     QuietButton("Kiểm tra", {
                         if (work != KeyWork.None) return@QuietButton
                         if (key.isBlank() && !provider.hasKey) {
-                            problem = "Dán khóa trước đã."
+                            problem = "Dán khoá trước đã."
                         } else if (voice.allowed(provider.id)) {
                             check()
                         } else {
@@ -246,7 +246,7 @@ fun KeySheet(initial: KeyProvider, voice: VoiceState, dismiss: () -> Unit) {
                     }, "key_check")
                     if (provider.hasKey) {
                         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(Abook.colors.line))
-                        MenuRow("Xoá khóa", "key_remove", danger = true, onClick = { page = KeyPage.Remove }) { ink -> TrashIcon(ink) }
+                        MenuRow("Xoá khoá", "key_remove", danger = true, onClick = { page = KeyPage.Remove }) { ink -> TrashIcon(ink) }
                     }
                 }
                 KeyPage.Consent -> ConsentPage("này", provider.id, allowing, onAllow = {
@@ -270,10 +270,10 @@ private fun RemoveKeyPage(provider: KeyProvider, voice: VoiceState, dismiss: () 
     var working by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
     ConfirmPage(
-        "Xoá khóa?", "key_remove_confirm",
-        listOf("Khóa ${provider.name} sẽ bị xoá khỏi máy này và các giọng của nó không còn trong danh sách."), problem,
+        "Xoá khoá?", "key_remove_confirm",
+        listOf("Khoá ${provider.name} sẽ bị xoá khỏi máy này và các giọng của nó không còn trong danh sách."), problem,
     ) {
-        DangerButton(if (working) "Đang xoá" else "Xoá khóa", {
+        DangerButton(if (working) "Đang xoá" else "Xoá khoá", {
             if (working) return@DangerButton
             working = true
             scope.launch {

@@ -33,7 +33,7 @@ class DevicesLogicTest {
         assertEquals("Đang kiểm tra", ok.copy(via = "", reach = Reach.Checking).state)
         assertEquals(DeviceText.OFFLINE, ok.copy(reach = Reach.Offline("x")).state)
         assertTrue(ok.copy(reach = Reach.Offline("x")).failed)
-        assertEquals("Máy bàn đã thôi ghép với điện thoại này", ok.copy(reach = Reach.Unpaired).state)
+        assertEquals("Máy bàn đã bỏ ghép với điện thoại này", ok.copy(reach = Reach.Unpaired).state)
         assertEquals("Chứng chỉ đã đổi", ok.copy(reach = Reach.Changed("Chứng chỉ đã đổi")).state)
         assertEquals("2 cuốn nghe được · Đang nối qua Wi-Fi nhà", ok.copy(key = "p1", books = 2).state)
     }

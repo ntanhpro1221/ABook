@@ -65,7 +65,7 @@ it("L4 nhảy chương: 2 chạm từ trình phát", async () => {
 it("L5 hẹn giờ ngủ và tốc độ: mỗi việc 2 chạm từ trình phát", async () => {
   await start("phone/player-full");
   const sleep = vi.spyOn(ebookPlayer, "setSleep"), rate = vi.spyOn(ebookPlayer, "setRate");
-  await tap("Hẹn giờ tắt");
+  await tap("Hẹn giờ ngủ");
   await tap("30 phút");
   await waitFor(() => sleep.mock.calls.length > 0, "hẹn giờ");
   expect(taps).toBe(2);

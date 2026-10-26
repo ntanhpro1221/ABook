@@ -309,7 +309,7 @@ object Playback {
         lastError = if (streamed && error != null && Pin.isCertificateProblem(error)) {
             Pin.CHANGED // máy tính đã đổi chứng chỉ: không phải Wi-Fi hỏng, người nghe phải ghép lại
         } else if (streamed && error != null && NetErrors.unpaired(error)) {
-            "${SyncLink.holderName(appContext, bookId)} đã thôi ghép — bạn ghép lại để nghe tiếp."
+            "${SyncLink.holderName(appContext, bookId)} đã bỏ ghép — bạn ghép lại để nghe tiếp."
         } else if (streamed) {
             // Phần đã đệm đã phát hết: không bỏ cuộc - hỏi lại thưa dần, máy kia trả lời là phát tiếp đúng chỗ (soát a68 lỗi 3).
             scheduleReconnect()

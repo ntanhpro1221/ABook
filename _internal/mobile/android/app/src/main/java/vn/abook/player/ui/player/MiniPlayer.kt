@@ -89,11 +89,11 @@ fun MiniPlayer(
                     drawRect(colors.accent, Offset.Zero, Size(size.width * fraction, thick))
                 }
             }
-            .testTag("mini_player"),
+            .semantics { contentDescription = "Trình phát" }.testTag("mini_player"),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            Modifier.weight(1f).heightIn(min = MiniPlayerHeight).pressable { onOpenNowPlaying() }.padding(start = Dim.s12, top = Dim.s4, bottom = Dim.s4).testTag("mini_open"),
+            Modifier.weight(1f).heightIn(min = MiniPlayerHeight).pressable { onOpenNowPlaying() }.semantics { contentDescription = "Mở màn hình đang nghe" }.padding(start = Dim.s12, top = Dim.s4, bottom = Dim.s4).testTag("mini_open"),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BookCover(state.cover, state.bookTitle, null, covers, 36.dp, sharedModifier(NowPlayingPart.Cover).width(36.dp), small = true)

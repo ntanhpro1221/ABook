@@ -314,7 +314,7 @@ private fun BookButtons(
             SecondaryButton(
                 "Từ đầu", "Nghe lại từ đầu", enabled = started && resume != null && !finished && first != null, tag = "book_restart", edge = 0, onClick = restart,
             ) { color -> RestartIcon(color) }
-            SecondaryButton("Thêm", "Thêm việc với sách", enabled = true, tag = "book_more", edge = 1, onClick = {
+            SecondaryButton("", "Thêm tuỳ chọn", enabled = true, tag = "book_more", edge = 1, onClick = {
                 sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss, music, player.music.takeIf { player.bookId == book.id }) }
             }) { color -> MoreIcon(color) }
         }
@@ -360,7 +360,7 @@ private fun ListenButton(label: String, detail: String?, playing: Boolean, resta
     }
 }
 
-/** Nút phụ (DESIGN.md §6 "Nút (b)"): biểu tượng trơn trong ô chạm 44 + nhãn nhỏ dưới. */
+/** Nút phụ (DESIGN.md §6 "Nút (b)"): biểu tượng trơn trong ô chạm 44 + nhãn nhỏ dưới. Nhãn rỗng (nút ⋯): vẫn chừa dòng nhãn để các biểu tượng thẳng hàng; tên đọc màn hình ở `description`. */
 @Composable
 private fun SecondaryButton(
     label: String,
@@ -477,7 +477,7 @@ private fun ChapterRow(
         Box(
             // Ô chạm 44 có tâm đúng tâm dòng đầu (lề trên 12 + nửa dòng 24).
             Modifier.padding(top = Dim.s12 + FirstLine / 2 - Dim.touch / 2).size(Dim.touch)
-                .pressable(onClick = onMore).semantics { contentDescription = "Tuỳ chọn ${chapter.title}" }
+                .pressable(onClick = onMore).semantics { contentDescription = "Thêm tuỳ chọn cho ${chapter.title}" }
                 .testTag("chapter_more"),
             contentAlignment = Alignment.CenterEnd,
         ) {

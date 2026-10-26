@@ -107,7 +107,7 @@ fun CreepProgress() {
     StageProgress { creep.value }
 }
 
-/** Một thiết bị đang nghe thư viện này: lần cuối thấy nó; chạm mở bảng thôi ghép. */
+/** Một thiết bị đang nghe thư viện này: lần cuối thấy nó; chạm mở bảng bỏ ghép. */
 @Composable
 fun SharerRow(sharer: Sharer, onOpen: () -> Unit) {
     val colors = Abook.colors

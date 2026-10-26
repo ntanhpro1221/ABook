@@ -368,7 +368,7 @@ export function StudioSettings() {
         <p className="mt-1 break-all">{status.root}</p>
       </>}>
         <Button size="sm" variant={armed ? "danger" : "ghost"} icon={Trash2} disabled={busy} onClick={() => void remove()}>
-          {busy ? "Đang gỡ…" : armed ? "Xác nhận gỡ" : "Gỡ Studio"}
+          {busy ? "Đang gỡ" : armed ? "Xác nhận gỡ" : "Gỡ Studio"}
         </Button>
       </SettingsRow>
       {status.outdated.length > 0 && (

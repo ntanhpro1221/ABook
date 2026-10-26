@@ -49,7 +49,7 @@ import vn.abook.player.ui.theme.ThemeReveal
 
 /**
  * Giọng đọc làm thêm trên JVM với nguồn giả: ảnh chụp (Roborazzi) từng trạng thái sáng / tối - giọng trên máy (chưa có, đang tải, lỗi, đã có, đề nghị, máy không dùng được),
- * nghe thử (đang lấy, đang phát, lỗi), khóa (chưa có, đã lưu, bảng nhập, đồng ý), Nhạc của tôi (trống, có bài, đang thêm) - kịch bản bấm thật, và luật căn hàng: nút / biểu
+ * nghe thử (đang lấy, đang phát, lỗi), khoá (chưa có, đã lưu, bảng nhập, đồng ý), Nhạc của tôi (trống, có bài, đang thêm) - kịch bản bấm thật, và luật căn hàng: nút / biểu
  * tượng đầu hàng và phần cuối hàng cùng thẳng dòng đầu của tên.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -114,7 +114,7 @@ class VoiceScreenTest {
         showVoice(dark)
         scrollTo("voice_keys")
         rule.onNodeWithTag("module_vieneu_turbo").assertIsDisplayed()
-        rule.onNodeWithText("Tải 198 MB").assertIsDisplayed()
+        rule.onNodeWithText("Tải (198 MB)").assertIsDisplayed()
         rule.onNodeWithTag("voice_keys").assertIsDisplayed()
         shot("modules_missing_${theme(dark)}")
     }
@@ -368,7 +368,7 @@ class VoiceScreenTest {
         assertFalse(source.allowed.contains("supertonic"))
     }
 
-    // ---- khóa giọng trực tuyến ----
+    // ---- khoá giọng trực tuyến ----
 
     private fun keysNone(dark: Boolean) {
         showKeys(dark)
@@ -487,15 +487,15 @@ class VoiceScreenTest {
     @Test
     fun aRefusedKeySaysSoInTheDangerColourAndCheckWithoutAKeyAsksForOne() {
         source.allowed += "fpt"
-        source.checkResult = { KeyResult(false, "Khóa FPT.AI bị từ chối (401).") }
+        source.checkResult = { KeyResult(false, "Khoá FPT.AI bị từ chối (401).") }
         showKeys(dark = true)
         tap("key_fpt")
         tap("key_check")
-        rule.onNodeWithText("Dán khóa trước đã.").assertIsDisplayed()
+        rule.onNodeWithText("Dán khoá trước đã.").assertIsDisplayed()
         rule.onNodeWithTag("key_field").performTextInput("bad-key-0000")
         rule.waitForIdle()
         tap("key_check")
-        rule.onNodeWithText("Khóa FPT.AI bị từ chối (401).").assertIsDisplayed()
+        rule.onNodeWithText("Khoá FPT.AI bị từ chối (401).").assertIsDisplayed()
         shot("key_refused_dark")
     }
 

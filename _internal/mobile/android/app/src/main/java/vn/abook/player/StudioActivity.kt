@@ -250,7 +250,7 @@ class StudioActivity : AppCompatActivity() {
         }.onFailure { asking.set(false) }
     }
 
-    /** Máy ấy lúc này: trả lời (kể cả lỗi của chính nó - trang tự nói), không trả lời, khác bản, chứng chỉ đổi, hay đã thôi ghép. */
+    /** Máy ấy lúc này: trả lời (kể cả lỗi của chính nó - trang tự nói), không trả lời, khác bản, chứng chỉ đổi, hay đã bỏ ghép. */
     private fun ask(): Answer {
         val link = StudioLink.link(this, computer) ?: return Answer.GONE
         return try {

@@ -36,7 +36,7 @@ export function useUnpair<T>(options: {
       setError(null);
       setAsking({ target, unsent });
     } catch (problem) {
-      toast.error("Chưa thôi ghép được", { description: (problem as Error).message });
+      toast.error("Chưa bỏ ghép được", { description: (problem as Error).message });
     }
   };
 

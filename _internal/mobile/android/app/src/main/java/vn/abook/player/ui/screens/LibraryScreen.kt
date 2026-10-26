@@ -66,6 +66,7 @@ import vn.abook.player.ui.components.SheetHost
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.Library
+import vn.abook.player.ui.data.LibraryFilter
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.data.ListenLogic
@@ -156,9 +157,9 @@ private fun LibraryGrid(
         if (tiles.isEmpty()) {
             item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
                 if (books.isEmpty()) Column {
-                    BasicText("Chưa có sách", style = Abook.type.sectionTitle)
-                    BasicText("Thêm sách để bắt đầu nghe.", style = Abook.type.bodySmall)
-                } else NoMatch()
+                    BasicText("Chưa có sách trên máy", style = Abook.type.sectionTitle)
+                    BasicText("Thêm sách của bạn để bắt đầu nghe.", style = Abook.type.bodySmall)
+                } else NoMatch(ui.query.trim(), ui.filter)
             }
         } else {
             items(tiles, key = { it.item.key }, contentType = { if (it.item is ShelfTile.Series) "series" else "single" }) { tile ->
@@ -173,11 +174,19 @@ private fun LibraryGrid(
 }
 
 @Composable
-private fun NoMatch() {
+private fun NoMatch(query: String, filter: LibraryFilter) {
     Column(Modifier.fillMaxWidth().padding(vertical = Dim.s32)) {
-        BasicText("Không có sách nào", style = Abook.type.sectionTitle)
+        BasicText(if (query.isEmpty()) "Không có sách ở đây" else "Không tìm thấy sách nào khớp “$query”", style = Abook.type.sectionTitle)
         Spacer(Modifier.height(Dim.s4))
-        BasicText("Thử bộ lọc hay từ khoá khác.", style = Abook.type.bodySmall)
+        BasicText(
+            if (query.isNotEmpty()) "Thử tên sách hoặc tác giả khác." else when (filter) {
+                LibraryFilter.All -> "Thư viện chưa có sách nào."
+                LibraryFilter.Listening -> "Chưa nghe dở cuốn nào - chọn một cuốn để bắt đầu."
+                LibraryFilter.New -> "Cuốn nào cũng đã được nghe ít nhất một đoạn."
+                LibraryFilter.Finished -> "Chưa có cuốn nào nghe xong."
+            },
+            style = Abook.type.bodySmall,
+        )
     }
 }
 

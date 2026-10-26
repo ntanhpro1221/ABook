@@ -42,7 +42,7 @@ it("Thiết bị ở cấp hai, tới được bằng hai chạm qua Cài đặt
   expect(window.location.hash).toBe("#/settings/devices");
   expect(document.querySelector('[aria-label="Về Cài đặt"]')).not.toBeNull();
   expect(document.body.textContent).toContain("Điện thoại này");
-  expect(document.body.textContent).toContain("Dung lượng trên máy");
+  expect(document.body.textContent).toContain("Dung lượng");
 });
 
 it("Studio rỗng có một câu và lối Nối máy tính tới Thiết bị", async () => {

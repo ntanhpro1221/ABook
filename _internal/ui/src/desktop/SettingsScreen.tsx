@@ -44,7 +44,7 @@ import { checkLine, UPDATE_CHECKED_EVENT, UPDATE_CHECK_WAIT_MS, type CheckLine, 
 
 const SOURCE_URL = "https://github.com/ntanhpro1221/ABook/";
 
-/** Giọng đọc của "Nghe ngay" trên máy tính: máy chủ cục bộ (abook/readaloud) đọc, khóa của người dùng gửi trong thân yêu cầu, chỉ nhận lại bản che. */
+/** Giọng đọc của "Nghe ngay" trên máy tính: máy chủ cục bộ (abook/readaloud) đọc, khoá của người dùng gửi trong thân yêu cầu, chỉ nhận lại bản che. */
 const desktopVoices: VoiceSettingsApi = {
   voices: () => httpSource.readAloudVoices!(),
   sample: (voice, text) => httpSource.readAloudSample!(voice, text),
@@ -142,7 +142,7 @@ function UpdateRow({ update, current }: { update: { version: string; notes: stri
       </p>
       {update.notes && <p className="mt-2 whitespace-pre-line text-[0.8125rem] leading-relaxed text-fg-2 text-pretty">{update.notes}</p>}
       <Button className="mt-3" icon={Download} disabled={busy} onClick={() => void install()}>
-        {busy ? "Đang tải bản mới…" : "Cập nhật ABook"}
+        {busy ? "Đang tải bản mới" : "Cập nhật ABook"}
       </Button>
     </div>
   );
@@ -182,7 +182,7 @@ function UpdateCheck({ current }: { current: string }) {
       hint={<MotionRegion as="span" motionKey={line?.text ?? ""}>{line && <span className={cn(line.tone === "error" && "text-danger")} role="status">{line.text}</span>}</MotionRegion>}
     >
       <Button size="sm" variant="ghost" disabled={checking} onClick={() => void check()}>
-        {checking ? "Đang kiểm tra…" : "Kiểm tra bản mới"}
+        {checking ? "Đang kiểm tra" : "Kiểm tra bản mới"}
       </Button>
     </SettingsRow>
   );

@@ -71,8 +71,8 @@ describe("Bản lưu cũ trong Cài đặt", () => {
     expect(html).toContain("Truyện dài");
     expect(html).toContain("Sách khác");
     expect(html).not.toContain("20260101-101010");
-    expect(html).toContain("Lưu ra…");
-    expect(html).toContain("Xoá…");
+    expect(html).toContain("Lưu ra");
+    expect(html).toContain("Xoá");
   });
 });
 
@@ -112,7 +112,7 @@ describe("xác nhận xoá", () => {
   });
 });
 
-describe("Lưu ra…", () => {
+describe("Lưu ra", () => {
   it("gọi hộp lưu của hệ thống; bỏ qua hộp thì im lặng", async () => {
     h.exportOldSave.mockResolvedValueOnce({ saved: true }).mockResolvedValueOnce({ saved: false });
     expect(await exportOldSave(A)).toBe(true);

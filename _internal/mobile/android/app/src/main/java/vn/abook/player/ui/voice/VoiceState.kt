@@ -52,7 +52,7 @@ data class VoiceSummary(val keys: String? = null, val music: String? = null)
 
 /**
  * Trạng thái sống của Giọng đọc làm thêm. Màn chỉ vẽ các luồng ở đây và gọi hàm ở đây; mọi việc với lõi đi qua [VoiceSource]. Tiến độ tải là một luồng riêng
- * ([progress]) để thanh tiến độ đọc nó trong pha vẽ, không dựng lại hàng mỗi nhịp. `voicesChanged`: danh sách giọng cần đọc lại (giọng vừa tải / gỡ, khóa vừa dùng được).
+ * ([progress]) để thanh tiến độ đọc nó trong pha vẽ, không dựng lại hàng mỗi nhịp. `voicesChanged`: danh sách giọng cần đọc lại (giọng vừa tải / gỡ, khoá vừa dùng được).
  */
 @Stable
 class VoiceState(
@@ -103,14 +103,14 @@ class VoiceState(
 
     // ---- mở màn ----------------------------------------------------------------------------------------------------------------
 
-    /** Mở màn Giọng đọc: đọc trạng thái hai mô-đun, các khóa, và những nhà cung cấp bạn đã đồng ý gửi chữ tới (nền, không chặn). */
+    /** Mở màn Giọng đọc: đọc trạng thái hai mô-đun, các khoá, và những nhà cung cấp bạn đã đồng ý gửi chữ tới (nền, không chặn). */
     fun openVoice() {
         for (kind in ModuleKind.entries) scope.launch { refresh(kind) }
         loadKeys()
         loadConsents()
     }
 
-    /** Những nhà cung cấp bạn đã đồng ý gửi chữ tới (màn Khóa cần biết trước khi hỏi lại đồng ý). */
+    /** Những nhà cung cấp bạn đã đồng ý gửi chữ tới (màn Khoá cần biết trước khi hỏi lại đồng ý). */
     fun loadConsents() {
         scope.launch { attempt { source.consents() }.onSuccess { consentFlow.value = it } }
     }
@@ -209,7 +209,7 @@ class VoiceState(
         attempt { source.allow(provider) }.onSuccess { consentFlow.update { it + provider } }
     }
 
-    // ---- khóa giọng trực tuyến --------------------------------------------------------------------------------------------
+    // ---- khoá giọng trực tuyến --------------------------------------------------------------------------------------------
 
     fun loadKeys() {
         scope.launch {
@@ -221,16 +221,16 @@ class VoiceState(
 
     private fun replace(provider: KeyProvider) = keyFlow.update { ui -> ui.copy(providers = ui.providers.map { if (it.id == provider.id) provider else it }) }
 
-    /** "Lưu": chỉ cất khóa trên máy này, không gửi gì ra mạng. Null = xong, khác null = câu lỗi. */
+    /** "Lưu": chỉ cất khoá trên máy này, không gửi gì ra mạng. Null = xong, khác null = câu lỗi. */
     suspend fun saveKey(provider: KeyProvider, key: String, region: String): String? {
-        if (key.isBlank() && !provider.hasKey) return "Dán khóa trước đã."
+        if (key.isBlank() && !provider.hasKey) return "Dán khoá trước đã."
         val result = attempt { source.saveKey(provider.id, key.trim(), region.trim()) }
         result.onSuccess { replace(it) }
-        return result.exceptionOrNull()?.let { message(it, "Chưa lưu được khóa") }
+        return result.exceptionOrNull()?.let { message(it, "Chưa lưu được khoá") }
     }
 
     /**
-     * "Kiểm tra": khóa vừa gõ (hay vùng vừa đổi) được lưu trước rồi mới gọi dịch vụ - như bản WebView. Dùng được thì danh sách giọng đọc lại để giọng của khóa hiện ngay;
+     * "Kiểm tra": khoá vừa gõ (hay vùng vừa đổi) được lưu trước rồi mới gọi dịch vụ - như bản WebView. Dùng được thì danh sách giọng đọc lại để giọng của khoá hiện ngay;
      * `ok` false kèm câu nói được.
      */
     suspend fun checkKey(provider: KeyProvider, key: String, region: String): KeyResult {
@@ -241,17 +241,17 @@ class VoiceState(
             checked.provider?.let(::replace)
             voicesChanged()
         }
-        return result.getOrNull() ?: KeyResult(false, message(result.exceptionOrNull(), "Chưa kiểm tra được khóa"))
+        return result.getOrNull() ?: KeyResult(false, message(result.exceptionOrNull(), "Chưa kiểm tra được khoá"))
     }
 
-    /** Xoá khóa khỏi máy này. Null = xong, khác null = câu lỗi. */
+    /** Xoá khoá khỏi máy này. Null = xong, khác null = câu lỗi. */
     suspend fun removeKey(provider: KeyProvider): String? {
         val result = attempt { source.removeKey(provider.id) }
         result.onSuccess {
             replace(it)
             voicesChanged()
         }
-        return result.exceptionOrNull()?.let { message(it, "Chưa xoá được khóa") }
+        return result.exceptionOrNull()?.let { message(it, "Chưa xoá được khoá") }
     }
 
     // ---- nghe thử ---------------------------------------------------------------------------------------------------------

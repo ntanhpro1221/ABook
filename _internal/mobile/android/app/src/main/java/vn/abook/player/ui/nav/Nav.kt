@@ -36,7 +36,7 @@ sealed interface Destination {
     @Immutable
     data class Devices(val page: DevicesPage) : Destination
 
-    /** Một màn của nhóm Giọng đọc (Khóa giọng trực tuyến) hay Nghe (Nhạc của tôi): đi từ trang nhóm, Back về lại trang ấy. */
+    /** Một màn của nhóm Giọng đọc (Khoá giọng trực tuyến) hay Nghe (Nhạc của tôi): đi từ trang nhóm, Back về lại trang ấy. */
     @Immutable
     data class Voice(val page: VoicePage) : Destination
 }

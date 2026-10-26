@@ -10,8 +10,8 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Thôi ghép một thiết bị xoá thư mục các cuốn nghe thẳng của nó - kể cả phần sửa chưa gửi (docs/EDITING.md, P2d). Phần đếm sửa chưa gửi,
- * gửi trước rồi mới gỡ, và từ chối thôi ghép khi chưa chọn bỏ (Peers.unsent / sendUnsent / refuseIfUnsent) không được để mất lặng lẽ.
+ * Bỏ ghép một thiết bị xoá thư mục các cuốn nghe thẳng của nó - kể cả phần sửa chưa gửi (docs/EDITING.md, P2d). Phần đếm sửa chưa gửi,
+ * gửi trước rồi mới gỡ, và từ chối bỏ ghép khi chưa chọn bỏ (Peers.unsent / sendUnsent / refuseIfUnsent) không được để mất lặng lẽ.
  */
 class PeersUnpairTest {
     private lateinit var root: File
@@ -59,7 +59,7 @@ class PeersUnpairTest {
         rename(one, "Tên một")
         rename(two, "Tên hai")
         rename(other, "Của máy khác")
-        // cuốn đã tải của chính thiết bị này giữ nguyên khi thôi ghép (có book.json): sửa của nó không mất nên không tính
+        // cuốn đã tải của chính thiết bị này giữ nguyên khi bỏ ghép (có book.json): sửa của nó không mất nên không tính
         val downloaded = Peers.localId("k1", "b4")
         BookEditsFixtures.copyBase(Store.bookDir(downloaded))
         File(Store.bookDir(downloaded), "book.json").writeText(BookEdits.rawBook(base).put("source", "k1").put("sourceKind", "computer").toString())
@@ -97,7 +97,7 @@ class PeersUnpairTest {
         }
         assertEquals(listOf(one, two), sent)
         assertEquals(0, Peers.unsent("k1").books.size)
-        Peers.refuseIfUnsent("k1", discard = false) // giờ thôi ghép không còn gì để mất
+        Peers.refuseIfUnsent("k1", discard = false) // giờ bỏ ghép không còn gì để mất
         assertEquals(0, BookEdits.count(BookEdits.load(Store.bookDir(one))))
     }
 
@@ -126,7 +126,7 @@ class PeersUnpairTest {
         Peers.sendUnsent("k1") { book -> EditsSync.push(book) { accepted() } }
         assertEquals(0, Peers.unsent("k1").books.size)
         assertEquals(1, BookEdits.count(BookEdits.load(Store.bookDir(id)))) // cách đọc còn đó
-        Peers.refuseIfUnsent("k1", discard = false) // thôi ghép không còn bị từ chối
+        Peers.refuseIfUnsent("k1", discard = false) // bỏ ghép không còn bị từ chối
         BookEdits.setReading(Store.bookDir(id), "Lucien", "Lu-xiên") // sửa tiếp: chỉ phần mới chưa gửi
         assertEquals(1, Peers.unsent("k1").changes)
     }

@@ -173,7 +173,7 @@ class MusicScreenTest {
         source.books.remove(demo)
         showPlayer(playerMusic = PlayerMusic.None)
         rule.onNodeWithTag("player_sheet_more").assertIsDisplayed()
-        rule.onNodeWithText("Giọng").assertIsDisplayed()
+        rule.onNodeWithText("Giọng đọc").assertIsDisplayed()
         assertTrue(rule.onAllNodesWithText("Nhạc nền").fetchSemanticsNodes().isEmpty())
     }
 

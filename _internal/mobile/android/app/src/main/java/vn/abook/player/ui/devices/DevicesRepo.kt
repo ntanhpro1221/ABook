@@ -32,7 +32,7 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
         block()
     }
 
-    /** Lỗi của lõi thành lời cho người nghe (lỗi mạng đã dịch, máy kia thôi ghép, chứng chỉ đổi). */
+    /** Lỗi của lõi thành lời cho người nghe (lỗi mạng đã dịch, máy kia bỏ ghép, chứng chỉ đổi). */
     private fun failure(error: Exception, fallback: String): DeviceFailure {
         if (error is DeviceFailure) return error
         val (message, technical) = BookDownloads.describe(error, fallback)

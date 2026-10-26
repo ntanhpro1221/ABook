@@ -224,11 +224,11 @@ class DevicesStateTest {
     @Test
     fun `a computer that forgot this phone is told apart from one that is only off`() {
         source.link = main
-        source.remoteError = DeviceFailure("đã thôi ghép", unpaired = true)
+        source.remoteError = DeviceFailure("đã bỏ ghép", unpaired = true)
         val devices = state()
         devices.openPair()
         assertEquals(Reach.Unpaired, devices.pair.value.devices.single().reach)
-        assertEquals("Máy bàn đã thôi ghép với điện thoại này", devices.pair.value.devices.single().state)
+        assertEquals("Máy bàn đã bỏ ghép với điện thoại này", devices.pair.value.devices.single().state)
     }
 
     @Test
@@ -276,7 +276,7 @@ class DevicesStateTest {
     @Test
     fun `pairing again after the computer forgot us starts from its last address`() {
         source.link = main.copy(lastAddress = "192.168.1.20:47630")
-        source.remoteError = DeviceFailure("đã thôi ghép", unpaired = true)
+        source.remoteError = DeviceFailure("đã bỏ ghép", unpaired = true)
         val devices = state()
         devices.openPair()
         devices.repair(devices.pair.value.devices.single())

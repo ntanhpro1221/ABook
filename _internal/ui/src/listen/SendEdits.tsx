@@ -56,7 +56,7 @@ export function SendEditsItem({ book }: { book: ListenBook }) {
     >
       <MotionRegion as="span" className="mt-0.5 inline-grid shrink-0 place-items-center">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}</MotionRegion>
       <span className="min-w-0">
-        <span className="block">{busy ? "Đang gửi…" : pending ? `Gửi về ${where} (${pending} thay đổi)` : `Gửi về ${where}`}</span>
+        <span className="block">{busy ? "Đang gửi" : pending ? `Gửi về ${where} (${pending} thay đổi)` : `Gửi về ${where}`}</span>
         {!busy && !pending && <span className="block text-xs text-fg-3">Chưa có thay đổi nào chờ gửi</span>}
       </span>
     </DropdownMenu.Item>

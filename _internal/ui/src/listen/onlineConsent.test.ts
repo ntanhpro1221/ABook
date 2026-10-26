@@ -32,9 +32,9 @@ describe("hỏi trước khi gửi chữ cho giọng trực tuyến", () => {
       "Giọng Hoài My là giọng Edge: chữ của đoạn đang đọc được gửi tới máy chủ Microsoft để đọc.",
     );
     expect(onlinePromptText({ name: "Ai đó", provider: "lạ" })).toContain("dịch vụ ngoài");
-    // Giọng dùng khóa của người nghe: nói cả chuyện dịch vụ có thể tính tiền vào tài khoản của họ.
+    // Giọng dùng khoá của người nghe: nói cả chuyện dịch vụ có thể tính tiền vào tài khoản của họ.
     const banMai = onlinePromptText({ name: "Ban Mai", provider: "fpt" });
-    expect(banMai).toContain("khóa FPT.AI của bạn");
+    expect(banMai).toContain("khoá FPT.AI của bạn");
     expect(banMai).toContain("tính tiền vào tài khoản của bạn");
   });
 

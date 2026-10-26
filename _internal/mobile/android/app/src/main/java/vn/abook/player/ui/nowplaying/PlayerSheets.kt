@@ -123,7 +123,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                                 model.setSleep(SleepKind.Minutes, minutes); window.closeSheet()
                             }
                         }
-                        SheetRow("Hết chương", if (state.sleep.kind == SleepKind.Chapter) "Đang chọn" else "") {
+                        SheetRow("Hết chương này", if (state.sleep.kind == SleepKind.Chapter) "Đang chọn" else "") {
                             model.setSleep(SleepKind.Chapter); window.closeSheet()
                         }
                         SheetRow("Tắt hẹn giờ", if (state.sleep.kind == SleepKind.Off) "Đang chọn" else "") {
@@ -157,7 +157,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                                 SheetRow("Nhạc nền", MusicText.value(book, ui.menu)) { deeper(PlayerSheet.Music) }
                             }
                         }
-                        SheetRow("Giọng", if (state.chapters.firstOrNull { it.id == state.chapterId }?.textPath.isNullOrEmpty()) "Giọng thu sẵn" else "Chọn giọng") {
+                        SheetRow("Giọng đọc", if (state.chapters.firstOrNull { it.id == state.chapterId }?.textPath.isNullOrEmpty()) "Giọng thu sẵn" else "Chọn giọng") {
                             deeper(PlayerSheet.Voice)
                         }
                     }
@@ -209,5 +209,5 @@ private fun SleepClock(sleep: PlayerSleep, position: PlayerPosition) {
     } }
     RollingLabel(label, Modifier.padding(bottom = 12.dp), Abook.type.screenTitle)
     if (sleep.kind == SleepKind.Minutes && !sleep.counting)
-        BasicText("Đồng hồ cũng tạm dừng.", style = Abook.type.caption)
+        BasicText("Đang tạm dừng - đồng hồ cũng dừng.", style = Abook.type.caption)
 }

@@ -10,9 +10,9 @@ const book = (names: string[]) =>
 it("một hồ sơ: menu có Đổi tên và Xoá hồ sơ, cùng hộp thoại với nút hồ sơ nghe", () => {
   const actions = singleRecordActions(book(["Mặc định"]));
   const byKey = Object.fromEntries(actions.map((action) => [action.key, action]));
-  expect(byKey.rename.label).toBe("Đổi tên hồ sơ…");
+  expect(byKey.rename.label).toBe("Đổi tên hồ sơ");
   expect(byKey.rename.dialog).toEqual({ kind: "rename", name: "Mặc định" });
-  expect(byKey.delete.label).toBe("Xoá hồ sơ…");
+  expect(byKey.delete.label).toBe("Xoá hồ sơ");
   expect(byKey.delete.dialog).toEqual({ kind: "delete", name: "Mặc định" });
   expect(byKey.delete.danger).toBe(true);
   expect(actions.map((action) => action.key)).toEqual(["create", "move", "rename", "delete"]);
