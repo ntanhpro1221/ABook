@@ -199,14 +199,17 @@ Item {
         function test_settings_data() { return sizes() }
         function test_settings(data) {
             const page = make(settingsFactory, data)
-            const a = findChild(page, "settingsAppearance")
-            const b = findChild(page, "settingsAdvanced")
+            const a = findChild(page, "settingsGroups")
+            const b = findChild(page, "settingsContent")
             if (page.width >= Theme.widthExpanded) {
-                compare(b.y, 0)
+                verify(a.visible && b.visible)
                 verify(b.x >= a.width + Theme.s32 - 1)
             } else {
-                compare(b.x, 0)
-                verify(b.y > a.height)
+                verify(a.visible && !b.visible)
+                page.active = "look"
+                wait(20)
+                verify(!a.visible && b.visible)
+                fuzzyCompare(b.x, a.x, 0.5)
             }
             const p = a.mapToItem(page, 0, 0)
             const q = b.mapToItem(page, b.width, 0)
