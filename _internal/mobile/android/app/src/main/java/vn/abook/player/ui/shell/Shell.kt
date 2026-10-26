@@ -88,6 +88,8 @@ import vn.abook.player.ui.screens.StudioScreen
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.nowplaying.NowPlayingLayer
+import vn.abook.player.ui.pip.PipContent
+import vn.abook.player.ui.pip.PipControl
 import vn.abook.player.ui.nowplaying.NowPlayingModel
 import vn.abook.player.ui.nowplaying.NowPlayingWindowState
 import vn.abook.player.ui.nowplaying.PlayerCoverProvider
@@ -132,6 +134,8 @@ fun AppShell(
     deletions: vn.abook.player.ui.data.UndoDelete? = null,
     companion: vn.abook.player.ui.devices.CompanionRepo? = null,
     askNotifications: (() -> Unit) -> Unit = { it() },
+    /** Cửa sổ nhỏ (PiP) của hệ điều hành; null = bản thử / máy không có. Đang ở PiP thì khung chỉ vẽ [PipContent]. */
+    pip: PipControl? = null,
 ) {
     val nav = shell.nav
     val playerState by player.state.collectAsState()
@@ -176,6 +180,21 @@ fun AppShell(
         { shell.sheets.show { dismiss -> vn.abook.player.ui.devices.OtherPlayersSheet(repo, player, dismiss) } }
     }
     val openPlayer = remember(window) { window::open }
+    window.miniWindow = remember(pip) { pip?.takeIf { it.available }?.let { control -> { control.enter() } } }
+    val inPip = pip?.active == true
+    // Vào PiP: đóng mọi lớp phủ như Back (bảng trượt, menu, tìm kiếm). Ra khỏi PiP (bấm vào cửa sổ nhỏ): app đầy đủ mở ở màn Đang nghe.
+    val wasInPip = remember { booleanArrayOf(false) }
+    LaunchedEffect(inPip) {
+        if (inPip) {
+            shell.sheets.dismiss()
+            window.closeSheet()
+            shell.library.closeMenu()
+            shell.library.closeSearch()
+        } else if (wasInPip[0] && playerState.hasTrack) {
+            window.open()
+        }
+        wasInPip[0] = inPip
+    }
     val bookActions = remember(shell, player, exports) {
         BookScreenActions(
             back = shell.nav::pop,
@@ -188,6 +207,10 @@ fun AppShell(
             export = { book, format -> shell.nav.push(Destination.Export(book, format)) },
             exportHint = { id -> exports?.hint(id) ?: NoExportHint },
         )
+    }
+    if (inPip) {
+        PipContent(playerState, { player.clock.positionMs.value }, covers)
+        return
     }
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
         // Cửa sổ Đang nghe nằm TRÊN cả ngăn xếp màn lẫn thanh tab; thanh phát nhỏ thật ở gốc là nguồn của chuyển động nở ra (NowPlayingSource).

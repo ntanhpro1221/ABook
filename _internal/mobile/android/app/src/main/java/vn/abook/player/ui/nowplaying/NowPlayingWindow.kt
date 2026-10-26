@@ -54,6 +54,9 @@ import vn.abook.player.ui.theme.MotionMs
 @Stable
 class NowPlayingWindowState(private val scope: CoroutineScope) {
     var otherPlayers: (() -> Unit)? = null
+
+    /** Vào cửa sổ nhỏ (PiP) ngay; null = máy / app không cho PiP thì Đang nghe không có nút "Cửa sổ mini". */
+    var miniWindow: (() -> Unit)? = null
     val transition = SeekableTransitionState(false)
     var reading by mutableStateOf(false)
     var sheet by mutableStateOf(PlayerSheet.Speed)
