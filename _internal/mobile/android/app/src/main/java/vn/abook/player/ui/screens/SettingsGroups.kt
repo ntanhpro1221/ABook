@@ -1,5 +1,12 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.Option
+import vn.abook.player.ui.components.ListSection
+import vn.abook.player.ui.components.RowLine
+import vn.abook.player.ui.components.SwitchRow
+import vn.abook.player.ui.components.ChoiceSetting
+import vn.abook.player.ui.components.ActionRow
+import vn.abook.player.ui.components.Reveal
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,18 +55,13 @@ private val FadeOptions = AppSettings.FADE_SECONDS.map { Option(it, "${it}s") }
 
 /** Lời của các hàng: cùng chữ với bản WebView (android/SettingsScreen.tsx, listen/playlistBed.ts, shared/feedback.ts, android/notifications.ts). */
 private object GroupCopy {
-    const val NOTIFY = "Đang tắt: không báo khi sách xong. Nút tạm dừng vẫn chạy."
+    const val NOTIFY = "Đang tắt"
     const val REWIND = "Nghỉ quá 30 giây thì lùi 5 giây (quá 10 phút: 10 giây)."
     const val HEADSET = "Bật: nút Trước/Sau lùi/tới 15 giây. Tắt: chuyển chương."
     const val AUTO_MUSIC = "Sách chỉ có chữ: nhạc nhẹ đổi theo cảnh."
     const val SAFETY = "Không chạm máy chừng này thì nhỏ dần rồi dừng."
-    const val SCHEDULE = "Nghe trong khung giờ này thì tự hẹn giờ."
-    const val SHAKE = "Đang hẹn giờ, lắc nhẹ hai lần để thêm giờ."
-    const val SHAKE_ACTION = "Đặt lại: hẹn giờ quay về từ đầu."
     const val FLIP = "Lật lên trong 10 phút là nghe tiếp."
-    const val SURFACE = "Nền của chữ khi đọc theo."
-    const val SOUNDS = "Tiếng khẽ khi bạn chọn. Im khi đang nghe."
-    const val HAPTICS = "Rung nhẹ khi bạn chọn hay giữ."
+    const val SOUNDS = "Im khi đang nghe."
 }
 
 /** Nghe: thông báo (chỉ khi đang tắt), tự lùi, nút tai nghe; khối Nhạc nền. */
@@ -74,7 +76,7 @@ fun ListenSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Mo
         onPauseOrDispose { }
     }
     SettingsPage(SettingsGroup.Listen.label, onBack, SettingsGroup.Listen.screenTag, modifier) {
-        SettingsBlock(first = true) {
+        ListSection(first = true) {
             Reveal(!allowed) {
                 Column {
                     ActionRow("Thông báo", "Cho phép", env.links.openNotificationSettings, "notify_allow", hint = GroupCopy.NOTIFY)
@@ -85,7 +87,7 @@ fun ListenSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Mo
             RowLine()
             SwitchRow("Nút tai nghe", settings.headsetSkips, { on -> repo.change { it.copy(headsetSkips = on) } }, "headset_skips", GroupCopy.HEADSET)
         }
-        SettingsBlock("Nhạc nền") {
+        ListSection("Nhạc nền") {
             SwitchRow("Tự chọn nhạc nền", settings.autoMusic, { on -> repo.change { it.copy(autoMusic = on) } }, "auto_music", GroupCopy.AUTO_MUSIC)
             RowLine()
             SoonRow("Nhạc của tôi", "Nhạc riêng của bạn cho mọi cuốn.", tag = "my_music")
@@ -110,7 +112,7 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
         }
     }
     SettingsPage(SettingsGroup.Sleep.label, onBack, SettingsGroup.Sleep.screenTag, modifier) {
-        SettingsBlock(first = true) {
+        ListSection(first = true) {
             ChoiceSetting(
                 "Tự tắt", SafetyOptions, SafetyOptions.first { it.value == settings.safetyStopHours },
                 { option, _ -> repo.change { it.copy(safetyStopHours = option.value) } }, "safety_stop", GroupCopy.SAFETY,
@@ -118,7 +120,7 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
             RowLine()
             SwitchRow(
                 "Lịch đêm", settings.schedule != null,
-                { on -> repo.change { it.copy(schedule = if (on) SleepSchedule.Default else null) } }, "sleep_schedule", GroupCopy.SCHEDULE,
+                { on -> repo.change { it.copy(schedule = if (on) SleepSchedule.Default else null) } }, "sleep_schedule",
             )
             Reveal(settings.schedule != null) {
                 Column(Modifier.fillMaxWidth().testTag("schedule_editor")) {
@@ -139,14 +141,14 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
                 }
             }
         }
-        SettingsBlock("Cử chỉ") {
-            SwitchRow("Lắc để nghe thêm", settings.shakeToExtend, { on -> repo.change { it.copy(shakeToExtend = on) } }, "shake", GroupCopy.SHAKE)
+        ListSection("Cử chỉ") {
+            SwitchRow("Lắc để nghe thêm", settings.shakeToExtend, { on -> repo.change { it.copy(shakeToExtend = on) } }, "shake")
             Reveal(settings.shakeToExtend) {
                 Column {
                     RowLine()
                     ChoiceSetting(
                         "Khi lắc", ShakeAction.entries, settings.shakeAction,
-                        { action, _ -> repo.change { it.copy(shakeAction = action) } }, "shake_action", GroupCopy.SHAKE_ACTION,
+                        { action, _ -> repo.change { it.copy(shakeAction = action) } }, "shake_action",
                     )
                     RowLine()
                     ChoiceSetting(
@@ -158,7 +160,7 @@ fun SleepSettings(repo: SettingsRepo, sheets: SheetHost, onBack: () -> Unit, mod
             RowLine()
             SwitchRow("Úp máy để dừng", settings.flipToPause, { on -> repo.change { it.copy(flipToPause = on) } }, "flip_pause", GroupCopy.FLIP)
         }
-        SettingsBlock("Khi sắp tắt") {
+        ListSection("Khi sắp tắt") {
             ChoiceSetting(
                 "Mỗi lần thêm", ExtendOptions, ExtendOptions.first { it.value == settings.sleepExtendMinutes },
                 { option, _ -> repo.change { it.copy(sleepExtendMinutes = option.value) } }, "sleep_extend",
@@ -217,7 +219,7 @@ fun LookSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Modi
     val settings by repo.state.collectAsState()
     val systemDark = isSystemInDarkTheme()
     SettingsPage(SettingsGroup.Look.label, onBack, SettingsGroup.Look.screenTag, modifier) {
-        SettingsBlock(first = true) {
+        ListSection(first = true) {
             ChoiceSetting(
                 "Màu", ThemeMode.entries, settings.theme,
                 { mode, at ->
@@ -229,12 +231,12 @@ fun LookSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Modi
             RowLine()
             ChoiceSetting(
                 "Nền đọc", ReadingSurface.entries, settings.readingSurface,
-                { surface, _ -> repo.change { it.copy(readingSurface = surface) } }, "reading_surface", GroupCopy.SURFACE,
+                { surface, _ -> repo.change { it.copy(readingSurface = surface) } }, "reading_surface",
             )
             RowLine()
             SwitchRow("Âm thanh chạm", settings.touchSounds, { on -> repo.change { it.copy(touchSounds = on) } }, "touch_sounds", GroupCopy.SOUNDS)
             RowLine()
-            SwitchRow("Rung", settings.haptics, { on -> repo.change { it.copy(haptics = on) } }, "haptics", GroupCopy.HAPTICS)
+            SwitchRow("Rung", settings.haptics, { on -> repo.change { it.copy(haptics = on) } }, "haptics")
         }
     }
 }
@@ -246,7 +248,7 @@ fun LookSettings(env: SettingsEnv, onBack: () -> Unit, modifier: Modifier = Modi
 @Composable
 fun DevicesSettings(onBack: () -> Unit, modifier: Modifier = Modifier) {
     SettingsPage(SettingsGroup.Devices.label, onBack, SettingsGroup.Devices.screenTag, modifier) {
-        SettingsBlock(first = true) {
+        ListSection(first = true) {
             SoonRow("Nối máy tính", "Nghe sách của máy tính, dùng Studio từ xa.", tag = "devices_pair")
             RowLine()
             SoonRow("Chia sẻ thư viện", "Máy khác trong nhà nghe sách của máy này.", tag = "devices_share")

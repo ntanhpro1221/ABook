@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -125,6 +127,20 @@ class SettingsScreenTest {
         rule.onNodeWithText("Tối").assertIsDisplayed()
         rule.onNodeWithText("Lịch đêm 22:30–06:00").assertIsDisplayed()
         shot("settings_root_dark")
+    }
+
+    /** Biểu tượng đầu hàng và mũi tên cuối hàng cùng thẳng dòng đầu của tên (đỉnh tên + 12), kể cả khi tên hay mô tả dài ra. */
+    @Test
+    fun rootRowsShareTheFirstLineCenterOnBothSides() {
+        showRoot()
+        for (group in SettingsGroup.entries) {
+            val title = rule.onNode(hasTestTag("row_title") and hasAnyAncestor(hasTestTag(group.tag)), useUnmergedTree = true).getUnclippedBoundsInRoot()
+            for (side in listOf("row_leading", "row_trailing")) {
+                val edge = rule.onNode(hasTestTag(side) and hasAnyAncestor(hasTestTag(group.tag)), useUnmergedTree = true).getUnclippedBoundsInRoot()
+                val center = (edge.top + edge.bottom) / 2
+                assertTrue("${group.tag}/$side: tâm dòng đầu ${title.top + 12.dp}, tâm ${center}", ((title.top + 12.dp) - center).value in -0.6f..0.6f)
+            }
+        }
     }
 
     // ---- mỗi nhóm, sáng và tối ----

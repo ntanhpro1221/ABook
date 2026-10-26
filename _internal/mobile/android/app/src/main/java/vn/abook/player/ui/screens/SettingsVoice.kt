@@ -1,5 +1,12 @@
 package vn.abook.player.ui.screens
 
+import vn.abook.player.ui.components.PageHeader
+import vn.abook.player.ui.components.ListSection
+import vn.abook.player.ui.components.RowLine
+import vn.abook.player.ui.components.ListRow
+import vn.abook.player.ui.components.ChoiceSetting
+import vn.abook.player.ui.components.TextAction
+import vn.abook.player.ui.components.Reveal
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -70,7 +77,7 @@ fun VoiceSettings(repo: SettingsRepo, onBack: () -> Unit, modifier: Modifier = M
         when (val list = voices) {
             VoiceList.Loading -> item(key = "loading", contentType = "loading") { VoiceSkeleton() }
             VoiceList.Failed -> item(key = "failed", contentType = "failed") {
-                SettingsRow("Chưa tải được giọng", hint = "Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc.") {
+                ListRow("Chưa tải được giọng", hint = "Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc.") {
                     TextAction("Thử lại", repo::loadVoices, "voices_retry")
                 }
             }
@@ -107,10 +114,10 @@ fun VoiceSettings(repo: SettingsRepo, onBack: () -> Unit, modifier: Modifier = M
         item(key = "speed", contentType = "speed") {
             Reveal(speed != null) {
                 val state = speed ?: return@Reveal
-                SettingsBlock("Hiệu năng") {
+                ListSection("Hiệu năng") {
                     ChoiceSetting(
                         "Tốc độ đọc", VoiceSpeedChoice.entries, state.choice,
-                        { choice, _ -> repo.chooseSpeed(choice) }, "voice_speed", hint = state.choice.sentence,
+                        { choice, _ -> repo.chooseSpeed(choice) }, "voice_speed",
                     )
                     for (line in state.lines) {
                         BasicText(line, style = Abook.type.caption.copy(color = Abook.colors.text2), modifier = Modifier.padding(top = Dim.s4))
@@ -119,7 +126,7 @@ fun VoiceSettings(repo: SettingsRepo, onBack: () -> Unit, modifier: Modifier = M
             }
         }
         item(key = "more", contentType = "more") {
-            SettingsBlock("Thêm giọng") {
+            ListSection("Thêm giọng") {
                 SoonRow("Giọng VieNeu", "Tải về máy, đọc không cần mạng.", tag = "voice_vieneu")
                 RowLine()
                 SoonRow("Giọng Supertonic", "Tải về máy, đọc không cần mạng.", tag = "voice_supertonic")

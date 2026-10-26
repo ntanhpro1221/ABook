@@ -17,12 +17,6 @@ interface BookSource {
 
     suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean)
 
-    /** Đổi tên sách: null = đã lưu, khác null = câu lỗi cho người nghe. */
-    suspend fun rename(id: String, title: String): String?
-
-    /** Đổi tác giả (trống = bỏ tên tác giả): null = đã lưu, khác null = câu lỗi. */
-    suspend fun setAuthor(id: String, author: String): String?
-
     /** Xoá khỏi máy: null = đã xoá, khác null = câu lỗi. */
     suspend fun delete(id: String): String?
 
@@ -36,8 +30,6 @@ interface BookSource {
             override suspend fun passages(id: String, chapter: ChapterLine): List<Passage>? = null
             override suspend fun setFinished(id: String, finished: Boolean) = Unit
             override suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean) = Unit
-            override suspend fun rename(id: String, title: String): String? = null
-            override suspend fun setAuthor(id: String, author: String): String? = null
             override suspend fun delete(id: String): String? = null
             override suspend fun share(id: String): Intent? = null
         }

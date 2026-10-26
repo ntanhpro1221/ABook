@@ -64,8 +64,6 @@ class BookScreenTest {
         override suspend fun passages(id: String, chapter: ChapterLine) = texts[chapter.id]
         override suspend fun setFinished(id: String, finished: Boolean) { calls += "finished $finished" }
         override suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean) { calls += "done $chapterId $done" }
-        override suspend fun rename(id: String, title: String): String? { calls += "rename $title"; return null }
-        override suspend fun setAuthor(id: String, author: String): String? { calls += "author $author"; return null }
         override suspend fun delete(id: String): String? { calls += "delete $id"; return null }
         override suspend fun share(id: String): Intent? = null
     }
@@ -73,6 +71,7 @@ class BookScreenTest {
     private val played = ArrayList<String>()
     private var toggles = 0
     private var deleted = 0
+    private val edited = ArrayList<String>()
     private val actions = BookScreenActions(
         back = {},
         playBook = { played += "book $it" },
@@ -80,6 +79,7 @@ class BookScreenTest {
         playChapter = { book, chapter, seconds -> played += "chapter $book $chapter $seconds" },
         deleted = { deleted++ },
         readAlong = { played += "read $it" },
+        edit = { edited += it.id },
     )
 
     private fun chapter(id: Int, duration: Double = 1500.0) = JSONObject().put("id", id).put("fullTitle", "Chương $id: Một cái tên chương khá dài để xuống dòng")
@@ -321,23 +321,15 @@ class BookScreenTest {
     }
 
     @Test
-    fun editSavesOnlyWhatChanged() {
+    fun editRowOpensTheEditBookScreenAndSavesNothingItself() {
         show(detail(listening()))
         rule.onNodeWithTag("book_more").performClick()
         rule.onNodeWithTag("menu_edit").performClick()
         rule.waitForIdle()
-        shot("book_edit_light")
-        rule.onNodeWithTag("edit_author").performTextReplacement("Tô  Hoài ")
-        rule.onNodeWithTag("edit_save").performClick()
-        rule.waitForIdle()
-        // Tác giả chỉ khác khoảng trắng: không lưu gì; tên không đổi: không lưu tên.
-        assertEquals(emptyList<String>(), source.calls)
-        rule.onNodeWithTag("book_more").performClick()
-        rule.onNodeWithTag("menu_edit").performClick()
-        rule.onNodeWithTag("edit_title").performTextReplacement("Tên mới")
-        rule.onNodeWithTag("edit_save").performClick()
-        rule.waitForIdle()
-        assertEquals(listOf("rename Tên mới"), source.calls)
+        // Một chỗ sửa duy nhất: bảng Thêm chỉ đẩy màn Sửa sách, không có ô nhập hay lưu nào trong bảng.
+        assertEquals(listOf("b1"), edited)
+        assertTrue(source.calls.isEmpty())
+        rule.onNodeWithTag("book_menu").assertDoesNotExist()
     }
 
     @Test

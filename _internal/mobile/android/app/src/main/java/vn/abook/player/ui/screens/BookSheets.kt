@@ -55,6 +55,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vn.abook.player.ui.components.BookOpenIcon
+import vn.abook.player.ui.components.MenuRow
 import vn.abook.player.ui.components.CheckIcon
 import vn.abook.player.ui.components.DashedCircleIcon
 import vn.abook.player.ui.components.ExportIcon
@@ -80,8 +81,8 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 import java.util.concurrent.ConcurrentHashMap
 
-/** Các trang của bảng "Thêm": danh sách việc, sửa thông tin, xác nhận xoá. Đi sâu = trượt sang trái, Back = trượt ngược lại. */
-private enum class MenuPage { Actions, Edit, Delete }
+/** Các trang của bảng "Thêm": danh sách việc, xác nhận xoá. Đi sâu = trượt sang trái, Back = trượt ngược lại. */
+private enum class MenuPage { Actions, Delete }
 
 /**
  * Bảng "Thêm" của trang sách (thay menu "…" của bản React): đã nghe xong / chưa, sửa thông tin, chia sẻ file sách, xoá khỏi máy (có bước xác nhận NGAY trong bảng);
@@ -103,8 +104,7 @@ fun BookMenuSheet(book: ListenBook, detail: BookDetail?, source: BookSource, act
         modifier = Modifier.fillMaxWidth().testTag("book_menu"),
     ) { shown ->
         when (shown) {
-            MenuPage.Actions -> MenuActions(book, detail, source, actions, dismiss, onEdit = { page = MenuPage.Edit }, onDelete = { page = MenuPage.Delete })
-            MenuPage.Edit -> EditBookPage(book, source, dismiss)
+            MenuPage.Actions -> MenuActions(book, detail, source, actions, dismiss, onEdit = { dismiss(); actions.edit(book) }, onDelete = { page = MenuPage.Delete })
             MenuPage.Delete -> DeletePage(book, source, actions, dismiss, onKeep = { page = MenuPage.Actions })
         }
     }
@@ -165,125 +165,6 @@ private fun MenuActions(
             Spacer(Modifier.height(Dim.s4))
             BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger))
         }
-    }
-}
-
-/**
- * Một dòng menu (DESIGN.md §6 "Dòng menu"): trọn bề ngang bảng, biểu tượng đầu dòng, nhãn xuống dòng khi dài (không cắt). `soon`: việc chưa làm ở giao diện native -
- * nhạt đi, nhãn "Sắp có" ở mép phải, không bấm được. `unavailable`: việc có rồi nhưng cuốn này không làm được - cũng nhạt đi, không bấm được, KHÔNG có nhãn "Sắp có".
- */
-@Composable
-private fun MenuRow(
-    label: String,
-    tag: String,
-    soon: Boolean = false,
-    unavailable: Boolean = false,
-    danger: Boolean = false,
-    onClick: () -> Unit = {},
-    icon: @Composable (Color) -> Unit,
-) {
-    val colors = Abook.colors
-    val inert = soon || unavailable
-    val ink = when {
-        inert -> colors.fg3
-        danger -> colors.danger
-        else -> colors.text
-    }
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = Dim.s48)
-            .then(if (inert) Modifier.semantics { disabled() } else Modifier.pressable(onClick = onClick))
-            .padding(vertical = Dim.s12)
-            .testTag(tag),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(Modifier.size(Dim.s24), contentAlignment = Alignment.CenterStart) { icon(ink) }
-        Spacer(Modifier.width(Dim.s12))
-        BasicText(label, style = Abook.type.body.copy(color = if (inert) colors.text2 else ink), modifier = Modifier.weight(1f))
-        if (soon) {
-            Spacer(Modifier.width(Dim.s12))
-            BasicText("Sắp có", style = Abook.type.caption)
-        }
-    }
-}
-
-/** Sửa tên sách và tác giả (lớp sửa của máy này - sách gốc không đổi). Nút chính "Lưu" ở đáy; lỗi nói ngay dưới ô. */
-@Composable
-private fun EditBookPage(book: ListenBook, source: BookSource, dismiss: () -> Unit) {
-    val colors = Abook.colors
-    val scope = rememberCoroutineScope()
-    var title by remember { mutableStateOf(book.title) }
-    var author by remember { mutableStateOf(book.author) }
-    var saving by remember { mutableStateOf(false) }
-    var problem by remember { mutableStateOf("") }
-    val save: () -> Unit = save@{
-        if (saving) return@save
-        val newTitle = tidy(title)
-        if (newTitle.isEmpty()) {
-            problem = "Tên sách không được để trống."
-            return@save
-        }
-        saving = true
-        problem = ""
-        scope.launch {
-            var error: String? = null
-            if (newTitle != tidy(book.title)) error = source.rename(book.id, newTitle)
-            if (error == null && tidy(author) != tidy(book.author)) error = source.setAuthor(book.id, tidy(author))
-            saving = false
-            problem = error.orEmpty()
-            if (error == null) dismiss()
-        }
-    }
-    Column(Modifier.fillMaxWidth().imePadding().testTag("edit_book")) {
-        BasicText("Sửa thông tin", style = Abook.type.sectionTitle)
-        Spacer(Modifier.height(Dim.s4))
-        BasicText("Chỉ đổi trên máy này của bạn - file sách gốc giữ nguyên.", style = Abook.type.bodySmall)
-        Spacer(Modifier.height(Dim.s16))
-        Field("Tên sách", title, { title = it }, "edit_title")
-        Spacer(Modifier.height(Dim.s12))
-        Field("Tác giả", author, { author = it }, "edit_author", placeholder = "Không rõ tác giả", last = true, onDone = save)
-        if (problem.isNotEmpty()) {
-            Spacer(Modifier.height(Dim.s8))
-            BasicText(problem, style = Abook.type.bodySmall.copy(color = colors.danger), modifier = Modifier.testTag("edit_problem"))
-        }
-        Spacer(Modifier.height(Dim.s24))
-        PrimaryButton(if (saving) "Đang lưu" else "Lưu", save, Modifier.fillMaxWidth().testTag("edit_save"))
-    }
-}
-
-/** Chữ người gõ như lõi làm sạch: khoảng trắng gộp một dấu cách, bỏ đầu cuối (EditBook.tsx `tidy`). */
-private fun tidy(text: String): String = text.trim().replace(Regex("\\s+"), " ")
-
-/** Ô nhập một dòng (nền chìm, bo 8, cao tối thiểu 48): nhãn nhỏ ở trên; chữ dài thì ô cao thêm, không cuộn ngang mất chữ. */
-@Composable
-private fun Field(
-    label: String,
-    value: String,
-    onChange: (String) -> Unit,
-    tag: String,
-    placeholder: String = "",
-    last: Boolean = false,
-    onDone: () -> Unit = {},
-) {
-    val colors = Abook.colors
-    Column(Modifier.fillMaxWidth()) {
-        BasicText(label, style = Abook.type.label)
-        Spacer(Modifier.height(Dim.s8))
-        BasicTextField(
-            value = value,
-            onValueChange = onChange,
-            modifier = Modifier.fillMaxWidth().heightIn(min = Dim.s48).clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bgSunken)
-                .padding(horizontal = Dim.s12, vertical = Dim.s12).testTag(tag),
-            textStyle = Abook.type.body,
-            cursorBrush = SolidColor(colors.accent),
-            keyboardOptions = KeyboardOptions(imeAction = if (last) ImeAction.Done else ImeAction.Next),
-            keyboardActions = KeyboardActions(onDone = { onDone() }),
-            decorationBox = { inner ->
-                Box(contentAlignment = Alignment.CenterStart) {
-                    if (value.isEmpty() && placeholder.isNotEmpty()) BasicText(placeholder, style = Abook.type.body.copy(color = colors.text3))
-                    inner()
-                }
-            },
-        )
     }
 }
 

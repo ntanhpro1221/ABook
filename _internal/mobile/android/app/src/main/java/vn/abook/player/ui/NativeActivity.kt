@@ -108,6 +108,7 @@ class NativeActivity : ComponentActivity() {
                     AppShell(
                         shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library,
                         nowPlaying = rememberRepoNowPlaying(player, readAlong),
+                        imports = app.imports, editors = app.editors, demo = demo, autoPick = !demo,
                     )
                 }
             }

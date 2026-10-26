@@ -28,21 +28,6 @@ object BookActions {
         return Store.readText(id, path)
     }
 
-    /** Đổi tên sách (lớp sửa, như `PUT /api/books/<mã>/title`). Trả câu lỗi cho người nghe, null khi đã lưu. */
-    fun rename(context: Context, id: String, title: String): String? =
-        studio(context, id, "/title", JSONObject().put("title", title))
-
-    /** Đổi tác giả (trống = bỏ tên tác giả). Trả câu lỗi, null khi đã lưu. */
-    fun setAuthor(context: Context, id: String, author: String): String? =
-        studio(context, id, "/author", JSONObject().put("author", author))
-
-    private fun studio(context: Context, id: String, route: String, body: JSONObject): String? {
-        val (status, reply) = LocalStudio.handle("PUT", "/api/books/$id$route", body)
-        if (status != 200) return (reply as? JSONObject)?.optString("error").orEmpty().ifEmpty { "Chưa lưu được" }
-        edited(context, id)
-        return null
-    }
-
     /** "Đã nghe xong" / "Chưa nghe xong" cả cuốn ở hồ sơ đang dùng, rồi gửi chỗ nghe cho máy đã ghép. */
     fun setFinished(context: Context, id: String, finished: Boolean): JSONObject {
         val state = Store.setFinished(id, finished)
