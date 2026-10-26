@@ -37,6 +37,25 @@ class AbookApplication : Application() {
     val settings by lazy { SettingsRepo(AndroidSettingsCore(this), uiScope, Dispatchers.IO) }
     private val uiScope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate) }
 
+    /**
+     * Ba màn Thiết bị (Nối máy tính, Chia sẻ thư viện, Dung lượng): một holder cho cả tiến trình, nên lượt tải đang chạy không mất trạng thái khi Activity dựng lại.
+     * Việc cần hệ điều hành (quyền, mở Studio) đi qua [deviceLinks] - Activity đang hiện đặt vào đó.
+     */
+    @Volatile
+    var deviceLinks = vn.abook.player.ui.devices.DeviceLinks()
+    val devices by lazy {
+        vn.abook.player.ui.devices.DevicesState(
+            vn.abook.player.ui.devices.DevicesRepo(this, library), uiScope,
+            vn.abook.player.ui.devices.DeviceLinks(
+                openStudio = { computer, path -> deviceLinks.openStudio(computer, path) },
+                openAppSettings = { deviceLinks.openAppSettings() },
+                askNearby = { result -> deviceLinks.askNearby(result) },
+                askNotifications = { then -> deviceLinks.askNotifications(then) },
+            ),
+            changed = { library.refresh() },
+        )
+    }
+
     /** Trình phát của giao diện native: chỉ lắng nghe lõi phát khi Activity hiện ([PlayerRepo.attach]). */
     val player by lazy {
         PlayerRepo(

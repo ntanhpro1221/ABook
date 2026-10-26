@@ -73,6 +73,14 @@ object BookDownloads {
 
     /** Giao diện đang mở thì nghe tin của việc nền ("download" của EbookLibrary): tiến độ, xong, huỷ, lỗi. */
     @Volatile var events: ((JSONObject) -> Unit)? = null
+
+    /** Người nghe thêm (giao diện native không có plugin): cùng tin với [events], mỗi người nghe tự gỡ bằng hàm trả về. */
+    private val listeners = java.util.concurrent.CopyOnWriteArrayList<(JSONObject) -> Unit>()
+
+    fun listen(listener: (JSONObject) -> Unit): () -> Unit {
+        listeners.add(listener)
+        return { listeners.remove(listener) }
+    }
     private val lastProgress = ConcurrentHashMap<String, JSONObject>()
 
     /** Cuốn có lượt tải (đang xếp hàng hay đang chạy) -> mã việc: không xoá thư mục của nó, không sửa book.json của nó từ chỗ khác. */
@@ -139,6 +147,7 @@ object BookDownloads {
             lastProgress[book] = safe
         }
         runCatching { events?.invoke(event) }
+        for (listener in listeners) runCatching { listener(event) }
     }
 
     internal fun diagnosticProgress(): List<JSONObject> = lastProgress.entries.mapNotNull { (book, event) ->
