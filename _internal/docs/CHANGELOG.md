@@ -10,6 +10,7 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 ### Điện thoại
 
 - Nhạc nền chuyển sang chỗ nối vòng dựng sẵn đúng lúc cả trên máy thật chậm. Đo trên OPPO: 10/10 bài đổi tiếng liền mạch, lệch dưới 1 ms. Khi chỗ nối chưa dựng kịp, nhạc quay về cách lặp thường sớm ít nhất 2 giây nên không hụt tiếng hay im.
+- Máy thiếu tài nguyên thu hồi bộ giải mã đúng lúc dựng chỗ nối vòng: nhạc nền thử dựng lại một lần thay vì bỏ chỗ nối.
 
 ## [0.4.147] - 2026-10-26
 

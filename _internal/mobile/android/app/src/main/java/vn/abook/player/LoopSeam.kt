@@ -125,6 +125,33 @@ object LoopSeam {
         }
     }
 
+    /**
+     * Tạo + cấu hình + khởi động một codec; hỏng thì luôn nhả nó. Hỏng vì IllegalStateException (gồm CodecException) thì chờ
+     * [CODEC_RETRY_PAUSE_MS] rồi thử MỘT lần nữa với codec mới; lỗi khác ném ra ngay. Máy thiếu tài nguyên có thể thu hồi codec vừa tạo (`configure() ... Released state`, PLAN_loop §45.4);
+     * trước đây lần ấy làm hỏng cả Nối và bài rơi về a87. Chỉ thử lại bước khởi động: lúc ấy chưa đọc khung nào nên nguồn còn nguyên.
+     */
+    internal fun <T> startOnce(make: () -> T, start: (T) -> Unit, release: (T) -> Unit, pauseMs: Long = CODEC_RETRY_PAUSE_MS): T {
+        val first = make()
+        try {
+            start(first)
+            return first
+        } catch (e: Throwable) {
+            release(first)
+            if (e !is IllegalStateException) throw e
+            if (pauseMs > 0) Thread.sleep(pauseMs)
+        }
+        val second = make()
+        try {
+            start(second)
+            return second
+        } catch (e: Throwable) {
+            release(second)
+            throw e
+        }
+    }
+
+    const val CODEC_RETRY_PAUSE_MS = 200L
+
     /** Nguồn khung nén cho [pump]: MediaExtractor (giải mã liền từ đầu file) hoặc danh sách khung tự quét ([decodeRegion]). */
     private interface FrameSource {
         /** Chép khung kế vào `into` (từ vị trí 0), trả cỡ; -1 = hết. */
@@ -140,9 +167,11 @@ object LoopSeam {
     private fun pump(format: MediaFormat, source: FrameSource, stopAt: Long, onPcm: (Long, ByteBuffer) -> Unit): Decoded {
         var codec: MediaCodec? = null
         try {
-            codec = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!)
-            codec.configure(format, null, null, 0)
-            codec.start()
+            codec = startOnce(
+                make = { MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME)!!) },
+                start = { it.configure(format, null, null, 0); it.start() },
+                release = { runCatching { it.release() } },
+            )
             var rate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
             var channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
             var count = 0L
