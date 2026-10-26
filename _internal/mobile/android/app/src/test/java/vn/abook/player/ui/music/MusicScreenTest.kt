@@ -59,8 +59,19 @@ class MusicScreenTest {
     private val demo = FakeNowPlayingModel.demoState().bookId
     private val source = FakeMusicSource().apply {
         books[demo] = BookMusic(MusicKind.Playlist, playlist = MusicText.SCENE, playlistAuto = true)
-        books["b1"] = BookMusic(MusicKind.Packaged, levelDb = -18.0)
+        books["b1"] = BookMusic(
+            MusicKind.Packaged, levelDb = -18.0,
+            cues = listOf(
+                MusicCue("1:0", 1, "Chương 1", 0.0, 95.0, "Rainy Night", "Kevin MacLeod"),
+                MusicCue("1:95000", 1, "Chương 1", 95.0, 260.0, "Wallpaper", "Kevin MacLeod", silenced = true),
+                MusicCue("2:0", 2, "Chương 2: Bắt đầu cuộc phiêu lưu", 0.0, 184.0, "Mưa đầu mùa", "Tôi", pinned = true),
+                MusicCue("2:184000", 2, "Chương 2: Bắt đầu cuộc phiêu lưu", 184.0, 412.0, "Peaceful Desolation", "Kevin MacLeod"),
+            ),
+        )
         menu = menu.copy(mine = 3)
+        mine += MineTrack("local:a", "Mưa đầu mùa", "Tôi", 184.0, analysed = true)
+        mine += MineTrack("local:b", "Ru con", "Hà Anh", 151.0, analysed = true, vocalsLikely = true)
+        mine += MineTrack("local:c", "Sóng", "", 95.0, analysed = false)
     }
     private val music = MusicState(source, CoroutineScope(Dispatchers.Unconfined))
     private val credit = MusicCredit(
@@ -131,6 +142,9 @@ class MusicScreenTest {
         rule.waitForIdle()
         rule.onNodeWithText("CC BY 4.0").assertIsDisplayed()
         shot("player_credit_${if (dark) "dark" else "light"}")
+        rule.onNodeWithTag("music_panel").performScrollToNode(hasTestTag("music_levels"))
+        rule.waitForIdle()
+        rule.onNodeWithTag("music_levels").captureRoboImage("src/test/snapshots/music_player_levels_${if (dark) "dark" else "light"}.png")
     }
 
     @Test fun playerMusicSheetLight() = playerMusicSheet(dark = false)
@@ -171,7 +185,7 @@ class MusicScreenTest {
         rule.onNodeWithTag("menu_music").performClick()
         rule.waitForIdle()
         rule.onNodeWithTag("music_enabled").assertIsDisplayed()
-        rule.onNodeWithText("Của sách").assertIsDisplayed()
+        rule.onNodeWithText("-18 dB (của sách)").assertIsDisplayed()
         shot("book_page_${if (dark) "dark" else "light"}")
     }
 
@@ -190,5 +204,73 @@ class MusicScreenTest {
         back()
         rule.onNodeWithTag("menu_music").assertIsDisplayed()
         rule.onNodeWithText("Tắt").assertIsDisplayed()
+    }
+
+    private fun packagedCues(dark: Boolean) {
+        val mode = if (dark) "dark" else "light"
+        showBookMenu(dark)
+        rule.onNodeWithTag("menu_music").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("music_panel").performScrollToNode(hasTestTag("music_cue_3"))
+        rule.waitForIdle()
+        rule.onNodeWithText("Chương 2: Bắt đầu cuộc phiêu lưu · 0:00 – 3:04 · Tôi · bài của bạn").assertIsDisplayed()
+        shot("book_cues_$mode")
+        rule.onNodeWithTag("music_cue_2").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("music_cue_page").assertIsDisplayed()
+        rule.onNodeWithText("Về bài gốc").assertIsDisplayed()
+        shot("cue_page_$mode")
+        rule.onNodeWithTag("music_cue_swap").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Có vẻ có lời - máy không tự chọn bài này").assertIsDisplayed()
+        shot("cue_swap_$mode")
+    }
+
+    @Test fun packagedCuesLight() = packagedCues(dark = false)
+
+    @Test fun packagedCuesDark() = packagedCues(dark = true)
+
+    @Test
+    fun aCueIsSilencedSwappedAndBackLeavesItsPageOneStepAtATime() {
+        showBookMenu()
+        rule.onNodeWithTag("menu_music").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("music_panel").performScrollToNode(hasTestTag("music_cue_1"))
+        rule.onNodeWithTag("music_cue_1").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Có nhạc").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Im lặng").assertIsDisplayed()
+        rule.onNodeWithTag("music_cue_swap").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("music_mine_2").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf("silence b1 1:95000 false", "alternatives b1 1:95000", "pin b1 1:95000 local:c"), source.calls)
+        rule.onNodeWithText("Về bài gốc").assertIsDisplayed()
+        rule.onNodeWithTag("music_cue_swap").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("music_swap").assertIsDisplayed()
+        back()
+        assertTrue("Back khép Đổi bài trước", rule.onAllNodes(hasTestTag("music_swap")).fetchSemanticsNodes().isEmpty())
+        rule.onNodeWithTag("music_cue_page").assertIsDisplayed()
+        back()
+        rule.onNodeWithTag("music_enabled").assertIsDisplayed()
+        back()
+        rule.onNodeWithTag("menu_music").assertIsDisplayed()
+    }
+
+    @Test
+    fun anEmptyStoreOffersToAddMusicRightThere() {
+        source.mine.clear()
+        showBookMenu()
+        rule.onNodeWithTag("menu_music").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("music_panel").performScrollToNode(hasTestTag("music_cue_0"))
+        rule.onNodeWithTag("music_cue_0").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("music_cue_swap").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText(MusicText.NO_MINE).assertIsDisplayed()
+        rule.onNodeWithText(MusicText.ADD_LABEL).assertIsDisplayed()
     }
 }
