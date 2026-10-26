@@ -40,6 +40,32 @@ class FakeMusicSource : MusicSource {
 
     override suspend fun enable(id: String, enabled: Boolean): BookMusic = change(id, "enable $id $enabled") { it.copy(enabled = enabled) }
 
+    /** Nhạc của tôi cho "Đổi bài": mọi bài trừ bài đang ở đoạn ấy. */
+    var mine = ArrayList<MineTrack>()
+    var alternativesError: MusicFailure? = null
+
+    override suspend fun silence(id: String, key: String, silenced: Boolean): BookMusic = change(id, "silence $id $key $silenced") { book ->
+        book.copy(cues = book.cues.map { if (it.key == key) it.copy(silenced = silenced) else it })
+    }
+
+    override suspend fun pin(id: String, key: String, link: String?): BookMusic = change(id, "pin $id $key $link") { book ->
+        val track = mine.firstOrNull { it.link == link }
+        book.copy(cues = book.cues.map { cue ->
+            when {
+                cue.key != key -> cue
+                track != null -> cue.copy(title = track.title, creator = track.creator, pinned = true, silenced = false)
+                else -> cue.copy(title = "Bài gốc", creator = "Kevin MacLeod", pinned = false)
+            }
+        })
+    }
+
+    override suspend fun alternatives(id: String, key: String): List<MineTrack> {
+        calls += "alternatives $id $key"
+        alternativesError?.let { throw it }
+        val current = books[id]?.cues?.firstOrNull { it.key == key }?.title
+        return mine.filter { it.title != current }
+    }
+
     override suspend fun importMine(uris: List<String>, progress: (done: Int, total: Int) -> Unit): MusicImported {
         calls += "import ${uris.size}"
         uris.indices.forEach { progress(it + 1, uris.size) }
