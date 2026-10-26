@@ -8,6 +8,7 @@ FocusScope {
     id: root
     readonly property bool expanded: width >= Theme.widthExpanded
     property string active: ""
+    signal studioRequested()
     readonly property real bodyWidth: Math.min(width - 2 * Theme.margin, expanded ? 1180 : 760)
     readonly property var groups: {
         // desktopGroups(info, touchOnly=false) của bản web, máy này (không điều khiển từ xa)
@@ -141,7 +142,7 @@ FocusScope {
                 width: parent.width - x
                 height: body.height
                 visible: root.shown !== ""
-                SettingsBody { id: body; width: parent.width; group: root.shown }
+                SettingsBody { id: body; width: parent.width; group: root.shown; onStudioRequested: root.studioRequested() }
             }
         }
     }
