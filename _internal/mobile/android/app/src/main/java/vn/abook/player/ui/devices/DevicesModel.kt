@@ -270,6 +270,18 @@ data class ForgetCopy(val title: String, val lines: List<String>, val send: Stri
 object DeviceText {
     const val OFFLINE = "Không kết nối được - máy đang tắt hoặc khác Wi-Fi"
 
+    /** Trang tải ABook cho máy tính (web: DESKTOP_RELEASES của android/DevicesScreen.tsx) - "Tải ABook Windows" mở nó, "Chép địa chỉ" chép nó. */
+    const val DESKTOP_RELEASES = "https://github.com/ntanhpro1221/ABook/releases"
+
+    /** Tên công tắc chia sẻ trên máy tính (web: SYNC_SWITCH_LABEL của shared/syncSwitch.ts) - lời "Cách lấy mã" gọi đúng tên ấy. */
+    const val SYNC_SWITCH_LABEL = "Kết nối Wi-Fi"
+
+    /** "Cách lấy mã": mã 6 số lấy ở đâu trên máy tính (cùng câu với PairPanel của web). */
+    const val PAIR_CODE_HELP = "Trong Cài đặt › Thiết bị của máy tính, bật “$SYNC_SWITCH_LABEL” rồi chọn ghép thiết bị để lấy mã 6 số."
+
+    /** "Nghe khi ra ngoài": máy đã ghép không trả lời vì khác mạng - app không cần gì riêng, mạng riêng ảo cho máy tính một địa chỉ tới được (web DevicesScreen). */
+    const val AWAY_HELP = "Cho hai máy vào cùng một mạng riêng ảo (Tailscale, ZeroTier, NetBird, WireGuard), rồi mở mục này một lần khi còn ở nhà."
+
     /** Cùng chữ với shared/connectionRoute.ts: nói đường nối thành công, không lộ địa chỉ. */
     fun route(address: String?): String {
         if (address.isNullOrEmpty()) return "Chưa kết nối"
