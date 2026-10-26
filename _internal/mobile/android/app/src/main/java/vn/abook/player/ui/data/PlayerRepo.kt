@@ -88,8 +88,8 @@ class PlayerClock {
     }
 }
 
-/** Một lần nạp cuốn vào trình phát: đúng tham số của [Playback.load]. */
-class LoadRequest(
+/** Một lần nạp cuốn vào trình phát: đúng tham số của [Playback.load]. `autoplay` false: nạp sẵn ở trạng thái dừng (khôi phục cuốn nghe dở lúc mở app). */
+data class LoadRequest(
     val id: String,
     val title: String,
     val narrator: String,
@@ -97,6 +97,7 @@ class LoadRequest(
     val startChapterId: Int,
     val startSeconds: Double,
     val rate: Double,
+    val autoplay: Boolean = true,
 )
 
 /** Phần lõi phát mà [PlayerRepo] cần - tách ra để thử bằng lõi giả (lõi thật: [AndroidPlaybackCore]). Mọi lệnh có thể gọi từ luồng bất kỳ. */
@@ -123,7 +124,9 @@ interface PlaybackCore {
  * ([Playback.addListener]); lệnh chuyển thẳng xuống lõi. Chỉ lắng nghe khi giao diện đang hiện ([attach] / [detach] theo vòng đời Activity) -
  * lúc ẩn (phát nền) không có gì chạy ở đây.
  *
- * `coverOf`: bìa của một cuốn (đọc đĩa - chạy ở `io`); `planOf`: chỗ nghe tiếp + hàng chương của một cuốn (đọc Store - chạy ở `io`).
+ * `coverOf`: bìa của một cuốn (đọc đĩa - chạy ở `io`); `planOf`: chỗ nghe tiếp + hàng chương của một cuốn (đọc Store - chạy ở `io`);
+ * `lastPlan`: như `planOf` cho cuốn nghe gần nhất (null: chưa nghe cuốn nào) - cuốn ấy được nạp sẵn ở trạng thái dừng khi mở app, để thanh phát nhỏ
+ * là MỘT cửa "Đang nghe" duy nhất (không có hàng "Đang nghe" thứ hai ở Thư viện).
  */
 class PlayerRepo(
     private val core: PlaybackCore,
@@ -131,6 +134,7 @@ class PlayerRepo(
     private val io: CoroutineDispatcher,
     private val coverOf: (String) -> CoverRef?,
     private val planOf: (String) -> LoadRequest?,
+    private val lastPlan: () -> LoadRequest? = { null },
 ) {
     private val flow = MutableStateFlow(PlayerState.Empty)
     val state: StateFlow<PlayerState> get() = flow
@@ -146,6 +150,18 @@ class PlayerRepo(
         attached = true
         core.addListener(listener)
         apply(core.snapshot())
+        if (!flow.value.hasTrack) restoreLast()
+    }
+
+    /**
+     * Lõi chưa giữ cuốn nào (app vừa mở): nạp cuốn nghe gần nhất ĐÚNG chỗ nghe tiếp, ở trạng thái dừng - thanh phát nhỏ hiện sẵn, bấm phát là phát đúng cuốn ấy.
+     * Cùng việc bản WebView làm khi mở lại app (Playback.load autoplay=false). Có gì khác vào lõi trong lúc đọc đĩa thì bỏ (không bao giờ đè cuốn đang có).
+     */
+    private fun restoreLast() {
+        scope.launch {
+            val request = withContext(io) { lastPlan() } ?: return@launch
+            if (attached && !flow.value.hasTrack) core.load(request.copy(autoplay = false))
+        }
     }
 
     /** Thôi theo dõi (giao diện ẩn). Trạng thái cuối giữ nguyên; [attach] lần sau làm mới nó. */
@@ -195,11 +211,6 @@ class PlayerRepo(
     fun previous() = core.previous()
     fun setRate(rate: Double) = core.setRate(rate)
     fun jumpTo(chapterId: Int, seconds: Double) = core.jumpTo(chapterId, seconds)
-
-    /** Nút phát của một cuốn (hàng "Đang nghe", ô bìa): cuốn đang ở trình phát thì phát/dừng, không thì nạp ở chỗ nghe tiếp và phát. */
-    fun togglePlay(bookId: String) {
-        if (flow.value.bookId == bookId) core.toggle() else playBook(bookId)
-    }
 
     /** Chạm giữ bìa: phát cuốn ngay. Đang ở trình phát thì phát tiếp (đã phát rồi thì để yên), không thì nạp ở chỗ nghe tiếp. */
     fun playNow(bookId: String) {
