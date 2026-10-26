@@ -51,13 +51,13 @@ fun ShareScreen(devices: DevicesState, sheets: SheetHost, onBack: () -> Unit) {
     // Mã vừa huỷ vẫn vẽ trong lúc khối khép lại (không trống trơn giữa chừng).
     val lastCode = remember { arrayOf<Code?>(null) }
     share.code?.let { lastCode[0] = it }
-    val problem = ui.problem.ifEmpty { share.error }.ifEmpty { if (share.blocked && share.code == null) "Mã đã huỷ vì nhập sai nhiều lần." else "" }
+    val problem = ui.problem.ifEmpty { share.error }.ifEmpty { if (share.blocked && share.code == null) "Nhập sai mã quá 5 lần - mã đã bị huỷ. Bấm “Ghép máy mới” để có mã khác." else "" }
     BookForm("Chia sẻ thư viện", onBack, "share_screen") {
         val list = rememberLazyListState()
         if (ui.loaded) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("share_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
             item("switch", "switch") {
                 Column(Modifier.padding(top = Dim.s8)) {
-                    SwitchRow("Cho máy khác nghe", share.running, devices::setSharing, "share_switch")
+                    SwitchRow("Cho máy khác nghe", share.running, devices::setSharing, "share_switch", hint = "Máy đã ghép nghe được sách bạn thêm từ file, không cần chép sang.")
                     Reveal(share.running) {
                         Column(Modifier.fillMaxWidth()) {
                             RowLine()

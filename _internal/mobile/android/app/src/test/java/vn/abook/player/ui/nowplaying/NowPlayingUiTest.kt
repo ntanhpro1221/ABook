@@ -173,7 +173,7 @@ class NowPlayingUiTest {
     }
     @Test fun sheetHandleReallyDragsAndCloses() {
         show(sheet = PlayerSheet.Speed)
-        assertTrue("không còn nút đóng trùng Back", rule.onAllNodesWithContentDescription("Đóng bảng").fetchSemanticsNodes().size <= 1)
+        assertTrue("không còn nút đóng trùng Back", rule.onAllNodesWithContentDescription("Đóng").fetchSemanticsNodes().size <= 1)
         rule.onNodeWithTag("player_sheet_grip").performTouchInput { swipeDown(startY = centerY, endY = centerY + 40f, durationMillis = 300) }
         rule.onNodeWithTag("player_sheet_speed").assertIsDisplayed()
         rule.onNodeWithTag("player_sheet_grip").performTouchInput { swipeDown(startY = centerY, endY = centerY + 900f, durationMillis = 200) }

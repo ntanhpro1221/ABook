@@ -50,7 +50,7 @@ async function hook() {
   return { render, resolvers, rejecters };
 }
 
-it("hai lần Thử giọng chồng nhau: chỉ giọng bấm sau cùng được phát, giọng đầu về muộn bị bỏ (a106r)", async () => {
+it("hai lần Nghe thử chồng nhau: chỉ giọng bấm sau cùng được phát, giọng đầu về muộn bị bỏ (a106r)", async () => {
   const { render, resolvers } = await hook();
   const first = render().play("A");
   const second = render().play("B");

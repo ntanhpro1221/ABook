@@ -69,12 +69,13 @@ function muted(): boolean {
   return typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mute") === "1";
 }
 
-function errorText(error: unknown): string {
-  return (error as Error)?.message || "Không làm được lúc này.";
+/** Câu lỗi cho bạn: lời của lõi, không có thì câu theo việc - cùng lời bên native (VoiceRepo.kt). */
+function errorText(error: unknown, fallback: string): string {
+  return (error as Error)?.message || fallback;
 }
 
 /** Nghe thử giọng: Cài đặt › Giọng đọc và menu giọng của trình phát dùng chung. `sample`: đọc câu mẫu bằng giọng ấy, trả địa chỉ phát được.
- *  Mỗi lần bấm "Thử giọng" / "Dừng" là một lượt mới: mẫu của lượt cũ về muộn (lấy mẫu mất vài giây) bị bỏ, không phát chồng lên giọng bấm sau, không tự phát sau khi đã bấm dừng. */
+ *  Mỗi lần bấm "Nghe thử" / "Dừng" là một lượt mới: mẫu của lượt cũ về muộn (lấy mẫu mất vài giây) bị bỏ, không phát chồng lên giọng bấm sau, không tự phát sau khi đã bấm dừng. */
 export function useVoiceSample(sample: (voiceId: string, text: string) => Promise<string>) {
   const audio = useRef<HTMLAudioElement | null>(null);
   const turn = useRef(0);
@@ -106,12 +107,17 @@ export function useVoiceSample(sample: (voiceId: string, text: string) => Promis
     } catch (error) {
       if (turn.current !== mine) return; // lượt cũ: lỗi của nó không còn ai chờ
       setPlaying("");
-      setFailed({ voice, message: errorText(error) });
+      setFailed({ voice, message: errorText(error, "Chưa nghe thử được giọng này.") });
     } finally {
       if (turn.current === mine) setLoading("");
     }
   };
   return { playing, loading, failed, play, stop };
+}
+
+/** Dòng tóm tắt của "Khoá trực tuyến": tên các nhà cung cấp đã có khoá, hay "Chưa có khoá" (VoiceText.keySummary bên native). */
+function keySummary(providers: OnlineProviderInfo[]): string {
+  return providers.filter((info) => info.hasKey).map((info) => info.name).join(" · ") || "Chưa có khoá";
 }
 
 function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: VoiceSettingsApi; onChanged: () => void }) {
@@ -133,7 +139,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       setKey("");
       setResult({ ok: true, text: "Đã lưu khoá. Bấm “Kiểm tra” để thử." });
     } catch (error) {
-      setResult({ ok: false, text: errorText(error) });
+      setResult({ ok: false, text: errorText(error, "Chưa lưu được khoá") });
     } finally {
       setBusy("");
       onChanged();
@@ -153,7 +159,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
         ? { ok: true, text: `Dùng được · ${checked.voices ?? checked.provider.voices} giọng tiếng Việt` }
         : { ok: false, text: checked.message || "Khoá chưa dùng được." });
     } catch (error) {
-      setResult({ ok: false, text: errorText(error) });
+      setResult({ ok: false, text: errorText(error, "Chưa kiểm tra được khoá") });
     } finally {
       setBusy("");
       onChanged();
@@ -166,7 +172,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       setResult(null);
       setKey("");
     } catch (error) {
-      setResult({ ok: false, text: errorText(error) });
+      setResult({ ok: false, text: errorText(error, "Chưa xoá được khoá") });
     } finally {
       setBusy("");
       onChanged();
@@ -183,7 +189,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
       <MoreInfo label="Nhận khoá" className="mt-1">{KEY_HELP[info.id]}</MoreInfo>
       <div className="mt-2.5 flex flex-wrap items-center gap-2">
         <label className="min-w-0 flex-1 basis-56">
-          <span className="sr-only">Khoá {info.name}</span>
+          <span className="sr-only">{`Khoá ${info.name}`}</span>
           <input
             type="password"
             autoComplete="off"
@@ -256,7 +262,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
       setProviders(online);
       setLoadError("");
     } catch (error) {
-      setLoadError(errorText(error));
+      setLoadError(errorText(error, "Chưa tải được giọng"));
     }
   }, [api]);
   useEffect(() => void load(), [load]);
@@ -274,7 +280,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
   return (
     <MotionRegion as="div" className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <InlineError open={Boolean(loadError)} message="Bạn hãy kiểm tra kết nối rồi tải lại giọng đọc." onRetry={() => void load()} />
-      {current && <p className="text-sm font-medium">Đang dùng: {current.name}</p>}
+      {current && <p className="text-sm font-medium">{`Đang dùng: ${current.name}`}</p>}
       {voices === null && !loadError && <ContentSkeleton label="Đang tải giọng đọc" />}
       {voices &&
         VOICE_GROUPS.map(({ provider, title: heading, detail }) => {
@@ -282,7 +288,7 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
           if (!list.length && provider !== "device") return null;
           const notice = provider === "edge" ? ONLINE_NOTICE : list[0] ? onlineNotice(list[0]) : "";
           // Thứ tự giọng như hiển thị (theo mục): mũi tên đổi chọn, cả nhóm chỉ một điểm dừng Tab (giọng đang chọn, hay giọng đầu nếu
-          // giọng mặc định nằm ở nhóm khác). Nút "Thử giọng" chỉ vào vòng Tab ở đúng giọng ấy - 27 giọng không thành 27 điểm Tab.
+          // giọng mặc định nằm ở nhóm khác). Nút "Nghe thử" chỉ vào vòng Tab ở đúng giọng ấy - 27 giọng không thành 27 điểm Tab.
           const ids = voiceSections(list).flatMap((section) => section.voices.map(({ voice }) => voice.id));
           return (
             <Fold key={provider} storageKey={`voice.provider.${provider}`} title={heading} summary={`${detail ? `${detail} · ` : ""}${list.length} giọng${current?.provider === provider ? " · đang dùng" : ""}`} bodyClassName="pb-3">
@@ -333,9 +339,9 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
                             icon={playing ? Square : Play}
                             loading={sample.loading === voice.id}
                             onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}
-                            aria-label={`${playing ? "Dừng" : "Thử"} giọng ${voice.name}`}
+                            aria-label={playing ? `Dừng nghe thử ${voice.name}` : `Nghe thử ${voice.name}`}
                           >
-                            {playing ? "Dừng" : "Thử giọng"}
+                            {playing ? "Dừng" : "Nghe thử"}
                           </Button>
                           </div>
                           {/* Lỗi nghe thử nằm ngay dưới hàng giọng vừa bấm, không ở cuối cả nhóm. */}
@@ -358,9 +364,8 @@ export function VoiceSettings({ api, deviceHint, modules }: { api: VoiceSettings
       {providers.length > 0 && (
         <div>
           {/* Hiếm dùng: gấp sẵn, nhớ lựa chọn; số khoá luôn thấy ở đầu mục. */}
-          <DisclosureRow section title="Khoá trực tuyến" summary={providers.some((info) => info.hasKey) ? `${providers.filter((info) => info.hasKey).length} khoá` : undefined} expanded={keysShown} onClick={() => setKeysOpen(!keysOpen)} />
+          <DisclosureRow section title="Khoá trực tuyến" summary={keySummary(providers)} expanded={keysShown} onClick={() => setKeysOpen(!keysOpen)} />
           <Collapse open={keysShown}>
-              <p className="mt-1 text-[0.8125rem] text-fg-2 text-pretty">Chữ của sách gửi tới dịch vụ ấy; có thể bị tính tiền.</p>
               <MoreInfo className="mt-1">
                 Khoá chỉ lưu trên máy. Dịch vụ có thể tính phí; lỗi khoá thì tạm dùng Edge hoặc giọng máy.
               </MoreInfo>

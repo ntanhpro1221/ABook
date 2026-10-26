@@ -49,7 +49,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
     val transition = updateTransition(window.sheetOpen, label = "player-sheet")
     val accent = Abook.colors.accent
     val music = model.music
-    // Tấm mở từ "Tuỳ chọn" (Giọng, Nhạc nền): Back về lại Tuỳ chọn, như một trang sâu hơn; tấm mở thẳng thì Back đóng.
+    // Tấm mở từ "Thêm tuỳ chọn" (Giọng, Nhạc nền): Back về lại tấm ấy, như một trang sâu hơn; tấm mở thẳng thì Back đóng.
     var parent by remember { mutableStateOf<PlayerSheet?>(null) }
     LaunchedEffect(window.sheetOpen) { if (!window.sheetOpen) parent = null }
     LaunchedEffect(window.sheet, window.sheetOpen, state.bookId) {
@@ -70,7 +70,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
     BoxWithConstraints(Modifier.fillMaxSize()) {
         if (transition.currentState || transition.targetState) {
             Box(Modifier.fillMaxSize().drawBehind { drawRect(Color.Black.copy(alpha = 0.24f)) }
-                .pressable(onClick = window::closeSheet).semantics { contentDescription = "Đóng bảng" })
+                .pressable(onClick = window::closeSheet).semantics { contentDescription = "Đóng" })
         }
         transition.AnimatedVisibility(
             visible = { it }, enter = slideInVertically(tween(MotionMs.SLOW)) { it },
@@ -169,7 +169,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     }
                     PlayerSheet.Music -> if (music != null) MusicPanel(music, state.bookId, state.music)
                     PlayerSheet.Voice -> {
-                        if (state.voices.isEmpty()) BasicText("Chưa có giọng cài sẵn. Bạn chọn giọng trong Cài đặt.", style = Abook.type.bodySmall)
+                        if (state.voices.isEmpty()) BasicText("Máy này chưa có giọng đọc.", style = Abook.type.bodySmall)
                         else {
                             val voiceList = rememberLazyListState()
                             LazyColumn(Modifier.fadeEdges(voiceList), state = voiceList) {
@@ -189,7 +189,7 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
 
 private fun sheetTitle(sheet: PlayerSheet) = when (sheet) {
     PlayerSheet.Speed -> "Tốc độ đọc"; PlayerSheet.Sleep -> "Hẹn giờ ngủ"; PlayerSheet.Chapters -> "Chương"
-    PlayerSheet.More -> "Tuỳ chọn"; PlayerSheet.Voice -> "Giọng đọc"; PlayerSheet.Music -> "Nhạc nền"
+    PlayerSheet.More -> "Thêm tuỳ chọn"; PlayerSheet.Voice -> "Giọng đọc"; PlayerSheet.Music -> "Nhạc nền"
 }
 
 @Composable

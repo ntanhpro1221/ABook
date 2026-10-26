@@ -77,7 +77,7 @@ class DevicesRepo(private val context: Context, private val library: vn.abook.pl
     override suspend fun unpair() = io { Devices.unpair(context) }
 
     override suspend fun remote(): RemoteLibrary = io {
-        guard("Chưa nối được máy tính") {
+        guard("Chưa nối được máy kia.") {
             val reply = RemoteBooks.library(context)
             RemoteLibrary(reply.optString("name"), DevicesJson.books(reply.getJSONArray("books"))).also { RemoteBooks.reached(context) }
         }

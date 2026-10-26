@@ -356,7 +356,7 @@ export function addMusicOutcome(result: Pick<ImportResult, "added" | "existing" 
   const description = failed.join("\n") || undefined;
   if (added.length) return { select: true, kind: failed.length ? "warning" : "success", title: `Đã thêm ${added.length} bài`, description };
   if (existing.length) return { select: true, kind: failed.length ? "warning" : "success", title: "Những bài này đã có trong Nhạc của tôi", description };
-  return { select: false, kind: "error", title: failed.length > 1 ? "Không thêm được file nào" : "Không thêm được file này", description };
+  return { select: false, kind: "error", title: "Chưa thêm được nhạc", description };
 }
 
 export const AUTO_LABEL = "Để máy chọn";

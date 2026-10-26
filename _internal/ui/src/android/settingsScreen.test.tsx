@@ -67,7 +67,7 @@ describe("SettingsScreen (điện thoại)", () => {
   it("lịch đêm hỏng trong kho không làm màn Cài đặt ném lỗi: về không có lịch", () => {
     h.store.set(KEY, JSON.stringify({ sleepSchedule: { from: { bad: 1 }, to: "06:00", minutes: 30 } }));
     expect(() => mount("sleep")).not.toThrow();
-    expect(html("sleep")).not.toContain('aria-label="Số phút hẹn"');
+    expect(html("sleep")).not.toContain('aria-label="Hẹn"');
   });
 
   it("ba ô chọn lịch đêm cao tối thiểu 48 dp", () => {

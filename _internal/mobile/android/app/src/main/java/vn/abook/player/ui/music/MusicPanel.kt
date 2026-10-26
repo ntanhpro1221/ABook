@@ -448,7 +448,7 @@ fun MusicCreditBlock(credit: MusicCredit?) {
                         else ListRow("Giấy phép") { BasicText(label, style = Abook.type.bodySmall) }
                     }
                     if (MusicText.needsModifiedNote(shown.license)) Caption(MusicText.MODIFIED_NOTE, Modifier.padding(bottom = Dim.s8))
-                    if (shown.landing.isNotEmpty()) ActionRow("Trang của bài", "Mở", { openUri(shown.landing) }, "music_landing")
+                    if (shown.landing.isNotEmpty()) ActionRow("Trang của bài nhạc", "Mở", { openUri(shown.landing) }, "music_landing")
                 }
             }
         }

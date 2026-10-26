@@ -48,7 +48,7 @@ it("Thiết bị ở cấp hai, tới được bằng hai chạm qua Cài đặt
 it("Studio rỗng có một câu và lối Nối máy tính tới Thiết bị", async () => {
   await draw("phone/studio-empty");
   expect(document.querySelector("h1")?.textContent).toBe("Studio");
-  expect(document.body.textContent).toContain("Nối máy tính của bạn để tạo sách nói.");
+  expect(document.body.textContent).toContain("Nối máy tính để làm sách nói và xem tiến độ.");
   await click("Nối máy tính");
   await waitFor(() => window.location.hash === "#/settings/devices", "đường nối máy");
 });

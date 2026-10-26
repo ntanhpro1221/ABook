@@ -248,7 +248,7 @@ private fun BookTile(
         Spacer(Modifier.height(Dim.s8))
         BasicText(title, style = Abook.type.label)
         vn.abook.player.ui.components.Reveal(series?.hasRemote ?: (lead.remote != null)) {
-            BasicText("Trên máy tính", style = Abook.type.caption)
+            BasicText(ListenLogic.remotePlace(lead), style = Abook.type.caption)
         }
         val sub = when {
             single != null && single.twin -> ListenLogic.progressText(lead)
