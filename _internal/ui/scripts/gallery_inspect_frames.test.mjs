@@ -13,6 +13,9 @@ describe.skipIf(!browserAvailable)("frames and list coverage on Edge", () => {
       expect(found.every(f => /#(nested|dialog)-bad >/.test(f.selector))).toBe(true);
     }
   });
+  it("flags a child pinned off the centre of a vertically centred row, keeps margin-offset children", () => {
+    for (const r of results) expect(r.findings.filter(f => f.rule === "CROSS CENTER").map(f => f.selector)).toEqual(["#centre-bad > span:nth-of-type(1)"]);
+  });
   it("measures every marked list and detects both divider and permanent fill overhang", () => {
     for (const r of results) {
       expect(r.layout.listEdges.map(l => l.name)).toEqual(["bad", "good"]);

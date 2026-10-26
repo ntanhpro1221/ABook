@@ -9,10 +9,16 @@ bằng chứng đo đạc của từng thay đổi dây chuyền nằm ở `VERS
 
 ### Điện thoại
 
+- Mở bảng tốc độ, hẹn giờ hay thêm tuỳ chọn trên màn Đang nghe không còn làm bìa co lại và cả màn nhảy lên; bảng chỉ trượt lên phủ trên.
+- Màn Đang nghe nở ra từ chính thanh phát nhỏ (thu nhỏ thì thu về đúng chỗ ấy); bìa, tên chương, tên sách và nút phát bay từ chỗ cũ sang chỗ mới, đổi cỡ và đổi màu dần.
+- Lướt sang tab khác: nội dung đang trượt không còn tràn đè thanh phát và thanh tab.
+
 - Mở, thu nhỏ màn Đang nghe, xếp sách và mở trang đọc ít khựng hơn; giữ nguyên các chuyển động.
 
 ### Giao diện
 
+- Bìa căn giữa theo chiều dọc ở mọi hàng (thanh phát, thư viện, thiết bị, thanh bên).
+- Bấm Nghe tiếp / Tạm dừng không còn hiện khối đen trong nút khi chữ đổi.
 - Thêm sách và Dự án mới mở thẳng hộp chọn file, bớt một chạm; huỷ hộp chọn thì vẫn còn chọn thư mục, dán đường dẫn hay kéo thả.
 
 ## [0.4.145] - 2026-10-26

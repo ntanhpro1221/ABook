@@ -8,6 +8,7 @@ vi.mock("react", async (original) => ({
   useRef: (value: unknown) => ({ current: value }),
   useCallback: (callback: unknown) => callback,
   useEffect: () => undefined,
+  useLayoutEffect: () => undefined,
   useDeferredValue: (value: unknown) => value,
 }));
 vi.mock("react-router", async (original) => ({
@@ -28,8 +29,7 @@ afterEach(() => vi.unstubAllGlobals());
 function background(color: string): string {
   state.color = color;
   vi.stubGlobal("localStorage", { getItem: () => null });
-  const provider = NowPlaying({ mobile: true }) as ReactElement<{ children: ReactElement<{ style: Record<string, string> }> }>;
-  const view = provider.props.children;
+  const view = NowPlaying({ mobile: true }) as ReactElement<{ style: Record<string, string> }>;
   return view.props.style["--cover-tint"];
 }
 

@@ -246,6 +246,35 @@ export function removeMotionSnapshot(clone: HTMLElement | undefined): void {
   else clone.remove();
 }
 
+/** Nền của ảnh cũ: đúng màu thật phía sau nó - nền của chính nó, không có thì nền của tổ tiên gần nhất (nút màu nhấn, thẻ, bảng), các lớp nền
+ *  trong suốt một phần (bg-hover) chồng lên như thật. Chủ sách 26-10 (video "Nghe tiếp" -> "Tạm dừng"): ảnh cũ trong nút màu nhấn từng lấy nền
+ *  trang (--bg), một khung đen phủ đè chữ và biểu tượng. */
+export function snapshotGround(target: Element, page: string): { layers: string[]; base: string } {
+  const layers: string[] = [];
+  for (let node: Element | null = target; node; node = node.parentElement) {
+    const color = getComputedStyle(node).backgroundColor;
+    const opacity = colorAlpha(color);
+    if (opacity === 0) continue;
+    if (opacity >= 1) return { layers, base: color };
+    layers.push(color);
+  }
+  return { layers, base: page };
+}
+
+/** Nền ảnh cũ viết ra CSS: các lớp trong suốt một phần (trên cùng trước) phủ trên màu đục. */
+export function groundCss({ layers, base }: { layers: string[]; base: string }): string {
+  return [...layers.map((layer) => `linear-gradient(${layer}, ${layer})`), base].join(", ");
+}
+
+/** Độ đục của một màu đã tính (rgb / rgba / oklch(... / a) / color(... / a)): 0 là trong suốt, 1 là đục. */
+export function colorAlpha(color: string | undefined): number {
+  if (!color || color === "transparent") return 0;
+  const commas = /^rgba\(.*,\s*([\d.]+)\)$/.exec(color);
+  const slash = /\/\s*([\d.]+)(%?)\s*\)$/.exec(color);
+  const value = commas ? Number(commas[1]) : slash ? Number(slash[1]) / (slash[2] ? 100 : 1) : 1;
+  return Number.isFinite(value) ? value : 1;
+}
+
 export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocument = document, floorZ = 51, host?: HTMLElement, deferOverlap = false, followScroll = false): HTMLElement | undefined {
   if (!doc.body || doc.visibilityState === "hidden") return;
   const bounds = target.getBoundingClientRect();
@@ -276,7 +305,10 @@ export function captureMotionSnapshot(target: HTMLElement, doc: TransitionDocume
   }
   clone.style.zIndex = String(Math.max(floorZ, (parseInt(computed.zIndex) || 0) + 1));
   for (const name of computed) if (name.startsWith("--")) clone.style.setProperty(name, computed.getPropertyValue(name));
-  clone.style.backgroundColor = computed.backgroundColor === "rgba(0, 0, 0, 0)" ? computed.getPropertyValue("--bg") : computed.backgroundColor;
+  const ground = snapshotGround(target, computed.getPropertyValue("--bg"));
+  // Phần tử tự vẽ nền bằng ảnh (bìa vẽ: gradient trong style): giữ ảnh ấy, chỉ lót màu đục bên dưới.
+  if (computed.backgroundImage !== "none") clone.style.backgroundColor = ground.base;
+  else clone.style.background = groundCss(ground);
   const hasSnapshots = Boolean(target.querySelector?.(".motion-snapshot"));
   const originalNodes = [target, ...target.querySelectorAll<HTMLElement>("*")].filter(node => !hasSnapshots || !node.closest(".motion-snapshot"));
   const clonedNodes = [clone, ...clone.querySelectorAll<HTMLElement>("*")];

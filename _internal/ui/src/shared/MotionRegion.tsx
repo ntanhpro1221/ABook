@@ -42,6 +42,12 @@ export function contentSignature(value: unknown, depth = 0): string {
 /** Crossfade đúng vùng thay đổi, giữ hình cũ (inert) qua commit, không dựng lại component/effect.
  * Height chỉ tween khi bố cục thực sự đổi; reduced chỉ fade. Ô đang gõ không bị chụp theo từng phím.
  * motionKey dùng cho vùng có tìm kiếm: chỉ đổi khi kết quả/pha đổi, không theo nội dung ô gõ. */
+/** Vết cắt của ảnh cũ / cây mới khi lướt: trái / phải theo nhịp lướt, trên / dưới giữ vết cắt theo khung cuộn ảnh đã có (`inset(t r b l)`). */
+export function slideCut(clipPath: string) {
+  const [top, , bottom] = /inset\(([\d.]+)px ([\d.]+)px ([\d.]+)px/.exec(clipPath)?.slice(1).map(Number) ?? [0, 0, 0];
+  return (left: number, right: number) => `inset(${top}px ${right}px ${bottom}px ${left}px)`;
+}
+
 export class MotionRegion extends Component<Props> {
   readonly box = createRef<HTMLElement>();
   private animation: Animation | null = null;
@@ -139,7 +145,9 @@ export class MotionRegion extends Component<Props> {
    *  "phần content ở dưới phải lướt sang thế chỗ"). Cả hai bị cắt trong khung của vùng, không tràn ra lề hay tạo cuộn ngang. */
   private slideFrames(box: HTMLElement, clone: HTMLElement, slide: number, frames: Keyframe[], duration: number) {
     const width = box.getBoundingClientRect().width;
-    const cut = (left: number, right: number) => `inset(-100vh ${right}px -100vh ${left}px)`;
+    // Trên / dưới giữ đúng vết cắt theo khung cuộn mà ảnh đã có (motion.ts trackSurfaceSnapshot): ảnh của cả danh sách dài hơn khung, cắt -100vh
+    // thì phần dưới tràn đè thanh phát và thanh điều hướng trong lúc lướt (video chủ sách 26-10 "lướt sang tab khác bị lỗi").
+    const cut = slideCut(clone.style.clipPath);
     holdMotionSnapshot(clone, duration + 80);
     clone.animate?.([
       { transform: "translateX(0px)", clipPath: cut(0, 0) },

@@ -134,5 +134,29 @@ export function inspectFrames({ all, css, rect, visible, selector, add }) {
     }
     listEdges.push({ selector: selector(list), name: list.getAttribute('data-list-edges'), left, right: end, lines, fills });
   }
+  // Quy tắc 24: hàng flex căn giữa theo chiều dọc - con thấp hơn hàng mà tự ghim lên đỉnh / xuống đáy (self-start, self-end) thì lệch khỏi tâm hàng.
+  // Chủ sách 26-10 (thanh phát): "bìa không căn giữa theo chiều dọc" - bìa mang sẵn self-start, đè items-center của mọi hàng đặt nó. So hộp lề.
+  const px = (value) => Number.parseFloat(value) || 0;
+  for (const parent of all) {
+    const s = css(parent);
+    if (!/flex/.test(s.display) || !s.flexDirection.startsWith('row') || s.flexWrap !== 'nowrap' || s.alignItems !== 'center') continue;
+    const pb = rect(parent.getBoundingClientRect());
+    const top = pb.y + px(s.borderTopWidth) + px(s.paddingTop);
+    const inner = pb.height - px(s.borderTopWidth) - px(s.paddingTop) - px(s.paddingBottom) - px(s.borderBottomWidth);
+    for (const el of parent.children) {
+      const c = css(el);
+      if (/absolute|fixed/.test(c.position) || /none|contents/.test(c.display)) continue;
+      // Icon canh dòng đầu của khối chữ nhiều dòng (`mt-line-icon`, DESIGN.md §6) đứng đầu hàng có chủ ý - INK EDGE icon-off-first-line soát nó.
+      if (el.classList.contains('mt-line-icon')) continue;
+      // Đo trên hộp thật, không trên phần còn thấy: hàng cuộn khuất một nửa không được coi là lệch tâm.
+      const box = rect(el.getBoundingClientRect());
+      if (!visible(el, box)) continue;
+      const outer = box.height + px(c.marginTop) + px(c.marginBottom);
+      if (outer >= inner - 1) continue;
+      const mid = box.y - px(c.marginTop) + outer / 2, want = top + inner / 2;
+      if (Math.abs(mid - want) > 1.01) add('CROSS CENTER', el, el.getAttribute('aria-label') ?? el.textContent, [box, pb], { metric: 'cross-axis-centre', value: mid, referenceValue: want,
+        delta: mid - want, tolerance: 1, otherSelector: selector(parent), reason: 'A child of a vertically centred row sits off the row centre (align-self overrides the row)' });
+    }
+  }
   return { listEdges, sectionHeadings };
 }
