@@ -91,8 +91,8 @@ private val NoSummary: StateFlow<VoiceSummary> = MutableStateFlow(VoiceSummary()
 
 /**
  * Giọng đọc: giọng mặc định của "Nghe ngay" (cuốn chưa chọn giọng riêng), xếp theo nơi đọc, mỗi giọng có nút nghe thử ở cuối hàng (nơi bạn đang chọn); tốc độ đọc của giọng
- * trên máy; giọng tải về máy (VieNeu, Supertonic) và khóa giọng trực tuyến. Danh sách giọng có thể dài (giọng của máy) nên cả màn là MỘT danh sách lười, mỗi giọng một mục có khoá.
- * `env.voice` null (ảnh chụp không có lõi): danh sách giọng vẫn dựng, chưa có nghe thử, giọng tải về hay khóa.
+ * trên máy; giọng tải về máy (VieNeu, Supertonic) và khoá giọng trực tuyến. Danh sách giọng có thể dài (giọng của máy) nên cả màn là MỘT danh sách lười, mỗi giọng một mục có khoá.
+ * `env.voice` null (ảnh chụp không có lõi): danh sách giọng vẫn dựng, chưa có nghe thử, giọng tải về hay khoá.
  */
 @Composable
 fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) -> Unit, onBack: () -> Unit, modifier: Modifier = Modifier) {
@@ -193,7 +193,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
             for (kind in ModuleKind.entries) moduleItems(kind, modules[kind] ?: ModuleUi(), voice, sheets)
             item(key = "keys", contentType = "keys") {
                 ListSection {
-                    DisclosureRow("Khóa giọng trực tuyến", { openVoice(VoicePage.Keys) }, "voice_keys", summary = summary.keys)
+                    DisclosureRow("Khoá trực tuyến", { openVoice(VoicePage.Keys) }, "voice_keys", summary = summary.keys)
                 }
             }
         }

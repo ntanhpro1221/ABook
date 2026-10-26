@@ -149,7 +149,7 @@ class DevicesState(
             val link = attempt { source.link() }.getOrNull() ?: return@launch
             pairFlow.update { it.copy(link = link, loaded = true) }
             if (!link.paired) {
-                // Máy tính ghép lần trước: ghép lại sau khi nó thôi ghép không phải gõ lại địa chỉ.
+                // Máy tính ghép lần trước: ghép lại sau khi nó bỏ ghép không phải gõ lại địa chỉ.
                 if (!prefilled && link.lastAddress.isNotEmpty()) pairFlow.update { it.copy(form = it.form.copy(address = link.lastAddress, manual = true)) }
                 prefilled = true
                 scan()
@@ -336,7 +336,7 @@ class DevicesState(
         return null
     }
 
-    /** "Ghép lại" một máy đã thôi ghép điện thoại này: mở khung ghép với sẵn địa chỉ của nó, chỉ còn nhập mã mới. */
+    /** "Ghép lại" một máy đã bỏ ghép điện thoại này: mở khung ghép với sẵn địa chỉ của nó, chỉ còn nhập mã mới. */
     fun repair(device: Paired) {
         scope.launch {
             if (device.main) {

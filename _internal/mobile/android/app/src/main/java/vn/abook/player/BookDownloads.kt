@@ -157,7 +157,7 @@ object BookDownloads {
     /** Lời cho người nghe + chữ gốc (chỉ khi là lỗi mạng đã dịch thành câu) - dùng chung cho lời gọi bị từ chối và sự kiện "download". */
     fun describe(error: Exception, fallback: String = error.javaClass.simpleName): Pair<String, String?> {
         if (error is Pin.ChangedException) return (error.message ?: Pin.CHANGED) to null
-        if (NetErrors.unpaired(error)) return "Máy kia đã thôi ghép — bạn ghép lại để tải và nghe sách." to null
+        if (NetErrors.unpaired(error)) return "Máy kia đã bỏ ghép — bạn ghép lại để tải và nghe sách." to null
         val kind = NetErrors.kind(error) ?: return (error.message ?: fallback) to null
         return NetErrors.message(kind) to NetErrors.technical(error)
     }
@@ -333,7 +333,7 @@ object BookDownloads {
             progress: (Long, Long) -> Unit = { _, _ -> }) {
         Store.bookDir(id) // xác minh đích trước mọi yêu cầu mạng hay ghi dữ liệu
         Store.requireBookId(remoteId ?: id)
-        val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException("Thiết bị này đã thôi ghép")
+        val link = if (source != null) Peers.link(context, source) ?: throw IllegalStateException("Thiết bị này đã bỏ ghép")
         else Peers.Link(SyncLink.base(context), SyncLink.prefs(context).getString("token", "") ?: "")
         val remote = if (source != null) remoteId ?: throw IllegalArgumentException("thiếu remoteId") else id
         if (source == null) matchImported(context) // đã mở cuốn này từ file: audio sẵn trên máy, chỉ tải phần còn thiếu

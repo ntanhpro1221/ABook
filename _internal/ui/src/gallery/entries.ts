@@ -1,4 +1,4 @@
-import { click, find, type, waitFor } from "./actions";
+import { click, clickFirst, find, type, waitFor } from "./actions";
 import type { Scenario } from "./state";
 import type { StateStory } from "./StateStories";
 
@@ -72,14 +72,14 @@ const PHONE: Omit<Entry, "platform">[] = [
   { id: "phone/library-loading", group: "Thư viện", title: "Đang tải thư viện", route: "/", scenario: { library: "loading" } },
   { id: "phone/library-error", group: "Thư viện", title: "Lỗi đọc thư viện", route: "/", scenario: { library: "error" } },
   { id: "phone/book", group: "Trang sách", title: "Trang sách đang nghe dở", route: "/book/suong-mu-2" },
-  { id: "phone/book-menu", group: "Trang sách", title: "Menu của trang sách", route: "/book/suong-mu-2", act: () => click("Thêm việc với sách").then(() => undefined) },
-  ...([['new', 'Hồ sơ mới'], ['move', 'Chuyển hồ sơ'], ['rename', 'Đổi tên hồ sơ…'], ['delete', 'Xoá hồ sơ…']] as const).map(([id, label]) => ({
+  { id: "phone/book-menu", group: "Trang sách", title: "Menu của trang sách", route: "/book/suong-mu-2", act: () => clickFirst("Thêm tuỳ chọn").then(() => undefined) },
+  ...([['new', 'Hồ sơ mới'], ['move', 'Chuyển hồ sơ'], ['rename', 'Đổi tên hồ sơ'], ['delete', 'Xoá hồ sơ']] as const).map(([id, label]) => ({
     id: `phone/book-record-${id}`, group: "Trang sách", title: label, route: "/book/suong-mu-2", act: async () => {
-      await click("Thêm việc với sách"); await click(label);
+      await clickFirst("Thêm tuỳ chọn"); await click(label);
     },
   })),
   { id: "phone/book-confirm-remove", group: "Trang sách", title: "Hộp xác nhận xoá khỏi điện thoại", route: "/book/suong-mu-2", act: async () => {
-    await click("Thêm việc với sách");
+    await clickFirst("Thêm tuỳ chọn");
     await click(/^Xoá khỏi điện thoại/);
   } },
   { id: "phone/book-history", group: "Trang sách", title: "Tab Lịch sử nghe", route: "/book/suong-mu-2", act: () => click("Lịch sử").then(() => undefined) },
@@ -88,21 +88,21 @@ const PHONE: Omit<Entry, "platform">[] = [
   { id: "phone/book-streamed", group: "Trang sách", title: "Sách trên máy tính (nghe thẳng)", route: "/book/lang-may" },
   { id: "phone/book-producing", group: "Trang sách", title: "Sách đang làm dở", route: "/book/dong-ho-cat" },
   { id: "phone/toast", group: "Thông báo", title: "Thông báo (toast) “Đang tải về máy”", route: "/book/lang-may", act: async () => {
-    await click("Thêm việc với sách");
+    await click("Thêm tuỳ chọn");
     await click("Tải về máy");
   } },
   { id: "phone/player-mini", group: "Trình phát", title: "Trình phát mini đang phát", route: "/", act: () => click("Phát", document.querySelector("main")?.nextElementSibling ?? document).then(() => undefined) },
   { id: "phone/player-full", group: "Trình phát", title: "Màn Đang nghe (toàn màn)", route: "/", act: playerOpen },
   { id: "phone/player-sleep", group: "Trình phát", title: "Bảng hẹn giờ ngủ", route: "/", act: async () => {
     await playerOpen();
-    await click(/^Hẹn giờ tắt/);
+    await click(/^Hẹn giờ ngủ/);
   } },
   { id: "phone/player-speed", group: "Trình phát", title: "Bảng tốc độ đọc", route: "/", act: async () => {
     await playerOpen();
     await click(/^Tốc độ đọc/);
   } },
   { id: "phone/player-sleep-active", group: "Trình phát", title: "Hẹn giờ đang bật", route: "/", act: async () => {
-    await playerOpen(); await click(/^Hẹn giờ tắt/); await click("15 phút"); await click(/^Hẹn giờ tắt/);
+    await playerOpen(); await click(/^Hẹn giờ ngủ/); await click("15 phút"); await click(/^Hẹn giờ ngủ/);
   } },
   { id: "phone/player-text-more", group: "Trình phát", title: "Tuỳ chọn sách chữ", route: "/book/gac-xep", act: textPlayerMore },
   { id: "phone/player-music", group: "Trình phát", title: "Bảng nhạc nền", route: "/book/gac-xep", act: async () => {
@@ -155,13 +155,13 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   { id: "desktop/library-loading", group: "Thư viện", title: "Đang tải thư viện", route: "/", scenario: { library: "loading" } },
   { id: "desktop/library-error", group: "Thư viện", title: "Lỗi đọc thư viện", route: "/", scenario: { library: "error" } },
   { id: "desktop/book", group: "Trang sách", title: "Trang sách đang nghe dở", route: "/book/suong-mu-2" },
-  { id: "desktop/book-menu", group: "Trang sách", title: "Menu của trang sách", route: "/book/suong-mu-2", act: () => click("Thêm việc với sách").then(() => undefined) },
+  { id: "desktop/book-menu", group: "Trang sách", title: "Menu của trang sách", route: "/book/suong-mu-2", act: () => clickFirst("Thêm tuỳ chọn").then(() => undefined) },
   { id: "desktop/book-history", group: "Trang sách", title: "Tab Lịch sử nghe", route: "/book/suong-mu-2", act: () => click("Lịch sử").then(() => undefined) },
   { id: "desktop/book-cast", group: "Trang sách", title: "Tab Nhân vật", route: "/book/suong-mu-2", act: () => click("Nhân vật").then(() => undefined) },
   { id: "desktop/book-text", group: "Trang sách", title: "Sách chỉ có chữ (EPUB)", route: "/book/gac-xep" },
   { id: "desktop/book-producing", group: "Trang sách", title: "Sách đang làm dở", route: "/book/dong-ho-cat" },
   { id: "desktop/book-confirm-remove", group: "Trang sách", title: "Hộp xác nhận xoá sách đã nhập", route: "/book/gac-xep", act: async () => {
-    await click("Thêm việc với sách");
+    await clickFirst("Thêm tuỳ chọn");
     await click(/^Xoá khỏi thư viện/);
   } },
   { id: "desktop/toast", group: "Thông báo", title: "Thông báo (toast) “Đang nghe lại từ đầu”", route: "/book/suong-mu-2", act: () => click(/^Nghe lại từ đầu/).then(() => undefined) },
@@ -172,14 +172,14 @@ const DESKTOP: Omit<Entry, "platform">[] = [
   } },
   { id: "desktop/player-sleep", group: "Trình phát", title: "Hẹn giờ ngủ", route: "/", act: async () => {
     await click("Thêm tuỳ chọn");
-    await click(/^Hẹn giờ tắt/);
+    await click(/^Hẹn giờ ngủ/);
   } },
   { id: "desktop/player-more", group: "Trình phát", title: "Menu “…” của thanh phát", route: "/", act: () => click("Thêm tuỳ chọn").then(() => undefined) },
   { id: "desktop/player-devices", group: "Trình phát", title: "Menu thiết bị phát", route: "/", act: async () => {
     await click("Thêm tuỳ chọn"); await click("Phát trên máy khác");
   } },
   { id: "desktop/book-record-move", group: "Trang sách", title: "Chuyển hồ sơ", route: "/book/suong-mu-2", act: async () => {
-    await click("Thêm việc với sách"); await click("Chuyển hồ sơ");
+    await clickFirst("Thêm tuỳ chọn"); await click("Chuyển hồ sơ");
   } },
   { id: "desktop/player-speed", group: "Trình phát", title: "Tốc độ đọc", route: "/", act: () => click(/^Tốc độ đọc/).then(() => undefined) },
   { id: "desktop/player-voice", group: "Trình phát", title: "Hộp giọng đọc", route: "/book/gac-xep", act: async () => {
@@ -192,7 +192,7 @@ const DESKTOP: Omit<Entry, "platform">[] = [
     await playerOpen(); await click(/^Tốc độ đọc/, document.querySelector('.now-playing')!);
   } },
   { id: "desktop/player-full-sleep", group: "Trình phát", title: "Hẹn giờ ở màn nghe", route: "/", act: async () => {
-    await playerOpen(); await click(/^Hẹn giờ tắt/, document.querySelector('.now-playing')!);
+    await playerOpen(); await click(/^Hẹn giờ ngủ/, document.querySelector('.now-playing')!);
   } },
   { id: "desktop/reader", group: "Đọc theo", title: "Đọc theo chương đang nghe", route: "/book/suong-mu-2/read/4" },
   { id: "desktop/reader-text", group: "Đọc theo", title: "Chế độ đọc sách chữ", route: "/book/gac-xep/read/2" },
@@ -245,17 +245,17 @@ export const ENTRIES: Entry[] = [
   }))),
   ...(["phone", "desktop"] as const).flatMap(platform => ([
     { id: `${platform}/book-music-menu`, platform, group: "Trang sách", title: "Menu con Nhạc nền", route: "/book/gac-xep", act: async () => {
-      await click("Thêm việc với sách"); await click(/^Nhạc nền/);
+      await clickFirst("Thêm tuỳ chọn"); await click(/^Nhạc nền/);
     } },
     { id: `${platform}/book-find-results`, platform, group: "Trang sách", title: "Tìm chữ trong sách", route: "/book/suong-mu-2", act: async () => {
       await click("Tìm chữ trong sách"); await type("Chữ hay câu cần tìm", "chiếc");
       await waitFor(() => document.querySelector('[data-list-edges="book-search"] button'), "kết quả tìm chữ");
     } },
     { id: `${platform}/book-edit`, platform, group: "Trang sách", title: "Sửa tên sách và tác giả", route: "/book/gac-xep", act: async () => {
-      await click("Thêm việc với sách"); await click("Sửa thông tin");
+      await clickFirst("Thêm tuỳ chọn"); await click("Sửa thông tin");
     } },
     { id: `${platform}/book-cover-search`, platform, group: "Trang sách", title: "Tìm ảnh bìa", route: "/book/gac-xep", scenario: { requests: { "/api/books/gac-xep/cover/search": "loading" as const } }, act: async () => {
-      await click("Thêm việc với sách"); await click("Sửa thông tin"); await click("Tìm bìa…");
+      await clickFirst("Thêm tuỳ chọn"); await click("Sửa thông tin"); await click("Tìm bìa");
     } },
   ])),
   { id: "desktop/studio-new-paste", platform: "desktop", group: "Studio", title: "Dán đường dẫn truyện", route: "/studio/new", act: async () => {

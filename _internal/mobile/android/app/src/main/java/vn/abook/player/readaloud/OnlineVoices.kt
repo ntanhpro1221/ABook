@@ -66,8 +66,8 @@ object OnlineHttp {
     fun failure(status: Int, name: String, detail: String = ""): VoiceException {
         val tail = if (detail.isNotBlank()) " (${detail.take(200)})" else ""
         return when {
-            status == 401 || status == 403 -> VoiceException("$name từ chối khóa của bạn - kiểm tra lại khóa trong Cài đặt$tail", reason = "auth")
-            status == 402 || status == 429 -> VoiceException("Khóa $name đã hết hạn mức hoặc gọi quá dày$tail", reason = "quota")
+            status == 401 || status == 403 -> VoiceException("$name từ chối khoá của bạn - kiểm tra lại khoá trong Cài đặt$tail", reason = "auth")
+            status == 402 || status == 429 -> VoiceException("Khoá $name đã hết hạn mức hoặc gọi quá dày$tail", reason = "quota")
             status >= 500 -> VoiceException("$name đang trục trặc (HTTP $status)$tail", reason = "service")
             else -> VoiceException("$name không nhận yêu cầu (HTTP $status)$tail", reason = "rejected")
         }
@@ -104,7 +104,7 @@ abstract class KeyedProvider(val keys: OnlineKeys) {
     fun voice(code: String): Voice = KeyedVoice(this, code)
 
     fun synthesize(text: String, voice: String, out: File): Clip {
-        val entry = keys.get(id)?.takeIf { it.valid } ?: throw VoiceException("Khóa $name chưa dùng được - kiểm tra lại trong Cài đặt", reason = "auth")
+        val entry = keys.get(id)?.takeIf { it.valid } ?: throw VoiceException("Khoá $name chưa dùng được - kiểm tra lại trong Cài đặt", reason = "auth")
         try {
             val (duration, boundaries) = speak(entry, text, voice, out)
             return Clip(out, duration, WordTokens.map(text, boundaries, duration), "$id:$voice")
@@ -116,7 +116,7 @@ abstract class KeyedProvider(val keys: OnlineKeys) {
 
     /** "Kiểm tra" trong Cài đặt: lấy danh sách giọng rồi đọc thử một câu thật ngắn vào `scratch`. */
     fun check(scratch: File): JSONObject {
-        val entry = keys.get(id) ?: return JSONObject().put("ok", false).put("reason", "auth").put("message", "Chưa nhập khóa.")
+        val entry = keys.get(id) ?: return JSONObject().put("ok", false).put("reason", "auth").put("message", "Chưa nhập khoá.")
         return try {
             val voices = listVoices(entry)
             if (voices.isEmpty()) throw VoiceException("Tài khoản $name này không có giọng tiếng Việt", reason = "voice")

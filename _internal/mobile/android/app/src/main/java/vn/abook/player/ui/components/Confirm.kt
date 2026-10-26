@@ -34,7 +34,7 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 
 /*
- * Bước xác nhận ngay trong bảng trượt (xoá khỏi máy, bỏ ghép, thôi ghép một máy nghe thư viện): MỘT chỗ dựng cho mọi nơi hỏi "chắc chứ?" để chúng giống hệt nhau.
+ * Bước xác nhận ngay trong bảng trượt (xoá khỏi máy, bỏ ghép, bỏ ghép một máy nghe thư viện): MỘT chỗ dựng cho mọi nơi hỏi "chắc chứ?" để chúng giống hệt nhau.
  */
 
 /**
@@ -83,7 +83,7 @@ fun deleteBookLine(title: String, holder: String?): String =
     else "“$title” sẽ bị xoá khỏi máy này. Muốn nghe lại, bạn cần thêm lại file sách."
 
 /**
- * Bước xác nhận xoá một cuốn khỏi máy - MỘT chỗ cho menu "Thêm" của trang sách và danh sách Dung lượng: nói rõ cái gì mất, nút đỏ "Xoá khỏi máy", nút chữ
+ * Bước xác nhận xoá một cuốn khỏi máy - MỘT chỗ cho menu "Thêm" của trang sách và danh sách Dung lượng: nói rõ cái gì mất, nút đỏ "Xoá khỏi điện thoại", nút chữ
  * "Giữ lại". `delete` chạy lõi (null = đã xoá, khác null = câu lỗi hiện tại chỗ); xoá xong gọi `onDeleted`.
  */
 @Composable
@@ -91,8 +91,8 @@ fun DeleteBookPage(title: String, holder: String?, delete: suspend () -> String?
     val scope = rememberCoroutineScope()
     var working by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf("") }
-    ConfirmPage("Xoá khỏi máy?", "delete_confirm", listOf(deleteBookLine(title, holder)), problem) {
-        DangerButton(if (working) "Đang xoá" else "Xoá khỏi máy", {
+    ConfirmPage(if (holder != null) "Xoá phần đã tải của “$title”?" else "Xoá “$title” khỏi điện thoại?", "delete_confirm", listOf(deleteBookLine(title, holder)), problem) {
+        DangerButton(if (working) "Đang xoá" else if (holder != null) "Xoá phần đã tải" else "Xoá khỏi điện thoại", {
             if (working) return@DangerButton
             working = true
             scope.launch {

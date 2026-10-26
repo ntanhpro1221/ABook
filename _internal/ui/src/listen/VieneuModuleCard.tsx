@@ -355,7 +355,7 @@ export function VieneuModuleCard({
         open={asking !== null}
         onOpenChange={(open) => !open && setAsking(null)}
         title={`Gỡ “${asking?.label ?? ""}” khỏi máy này?`}
-        description={asking?.use === undefined ? "Đang xem cuốn nào còn dùng giọng này…" : removeAsk(asking?.use ?? null)}
+        description={asking?.use === undefined ? "Đang xem cuốn nào còn dùng giọng này" : removeAsk(asking?.use ?? null)}
       >
 
       </Dialog>

@@ -95,7 +95,7 @@ export function MergeDialog({
           value={query}
           autoFocus
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Tìm người trong truyện…"
+          placeholder="Tìm người trong truyện"
           className="h-9 w-full rounded-control border border-line bg-bg pl-8 pr-2.5 text-sm outline-none focus-visible:border-focus"
         />
       </label>
