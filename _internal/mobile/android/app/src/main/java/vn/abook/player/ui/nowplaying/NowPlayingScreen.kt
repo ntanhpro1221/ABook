@@ -154,7 +154,7 @@ fun NowPlayingScreen(
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                     GlyphButton("Chương trước", "|‹", model::previous, Modifier.playerReveal(windowProgress))
                     GlyphButton("Lùi 15 giây", "↶15", { model.skip(-15) }, Modifier.playerReveal(windowProgress))
-                    PlayMorph(state.playing, model::toggle, windowProgress, parts.element(NowPlayingPart.Play))
+                    PlayMorph(state.playing, model::toggle, parts.element(NowPlayingPart.Play))
                     GlyphButton("Tới 15 giây", "15↷", { model.skip(15) }, Modifier.playerReveal(windowProgress))
                     GlyphButton("Chương sau", "›|", model::next, Modifier.playerReveal(windowProgress))
                 }
@@ -184,9 +184,9 @@ fun GlyphButton(label: String, glyph: String, onClick: () -> Unit, modifier: Mod
 
 @Composable
 private fun SleepAction(sleep: PlayerSleep, position: PlayerPosition, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    var label by remember(sleep) { mutableStateOf(PlayerLabels.sleep(sleep, position.realtimeMs.value)) }
+    var label by remember(sleep) { mutableStateOf(PlayerLabels.sleep(sleep, position.sleepRemainingMs.value)) }
     LaunchedEffect(sleep, position) {
-        snapshotFlow { position.realtimeMs.value / 1000 }.collect { label = PlayerLabels.sleep(sleep, it * 1000) }
+        snapshotFlow { position.sleepRemainingMs.value }.collect { label = PlayerLabels.sleep(sleep, it) }
     }
     PlayerAction("Hẹn giờ", label.takeIf { sleep.kind != SleepKind.Off } ?: "◷", onClick, modifier.testTag("player_sleep"))
 }
