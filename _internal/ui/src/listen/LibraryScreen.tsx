@@ -157,8 +157,8 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
     <MotionRegion as="div" data-book-tile="" className="group">
       <div className="relative">
         {/* Bìa và nút tên bên dưới cùng mở trang sách: bàn phím chỉ dừng ở nút tên (có chữ), bìa vẫn bấm được bằng chuột (soát UX a17: ba điểm Tab mỗi thẻ). */}
-        <button type="button" tabIndex={-1} onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-lg" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
-          <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full !aspect-[2/3] !rounded-xl" />
+        <button type="button" tabIndex={-1} onClick={() => navigate(`/book/${book.id}`)} className="block w-full rounded-control" aria-label={`Mở ${book.title}`} title={book.remote ? `${book.title} · ${remotePlace(book)}` : undefined}>
+          <BookCover title={book.title} part={book.series?.part} badge={badge} size="md" image={book.cover} playing={playingHere} className="w-full !aspect-[2/3] !rounded-cover" />
         </button>
         <button
           type="button"
@@ -179,9 +179,9 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
           )}
         </button>
         {book.progress.fraction > 0 && !book.progress.finished && (
-          // Thanh cắt theo ĐÚNG khung bo của bìa (lớp phủ cùng rounded-lg): tự bo góc thì thanh cao 4 px chỉ bo được 4 px, lệch với góc 8 px
+          // Thanh cắt theo ĐÚNG khung bo của bìa (lớp phủ cùng rounded-control): tự bo góc thì thanh cao 4 px chỉ bo được 4 px, lệch với góc 8 px
           // của bìa thành khe hở ở mép dưới (chủ sách 25-10).
-          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-control">
             <div {...heardBarProps(book.progress.fraction)} className="absolute inset-x-0 bottom-0 h-1 bg-cover-overlay">
               <div className="motion-progress h-full bg-accent" style={{ transform: `scaleX(${book.progress.fraction * 100 / 100})` }} />
             </div>
@@ -226,7 +226,7 @@ function ContinueCard({ book }: { book: ListenBook }) {
   return (
     <section className="flex items-center gap-4 sm:gap-6" aria-label="Đang nghe">
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} aria-label={`Mở ${book.title}`}>
-        <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-20 !aspect-[2/3] !rounded-xl sm:w-28" />
+        <BookCover title={book.title} part={book.series?.part} size="md" image={book.cover} playing={playingHere} className="w-20 !aspect-[2/3] !rounded-cover sm:w-28" />
       </button>
       {/* Cột chữ giãn theo lưới: mép nút phát trùng mép nội dung và nút tìm bên dưới. */}
       <div className="min-w-0 flex-1">
@@ -376,7 +376,7 @@ function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySec
   const trigger = <button type="button" aria-label={`Mở bộ ${item.label}`} aria-haspopup="dialog" onClick={() => setOpen(true)} className="group block w-full text-left">
     {/* Số tập dưới bìa đã phân biệt bộ sách; bỏ hai tờ trống nhô lên từng trông như dải báo mạng bị mất chữ. */}
     <div className="relative">
-      <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-xl" />
+      <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-cover" />
       {extras.seriesCover?.(item.items)}
     </div>
     <span className="mt-2.5 block line-clamp-2 text-sm font-medium leading-snug">{item.label}</span>
@@ -504,7 +504,7 @@ export function LibraryScreen({
         <div className="mt-8 grid grid-cols-2 gap-x-[16px] gap-y-[32px] sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-[24px]">
           {Array.from({ length: 6 }, (_, index) => (
             <div key={index}>
-              <Skeleton className="aspect-[2/3] w-full rounded-xl" />
+              <Skeleton className="aspect-[2/3] w-full rounded-cover" />
               <Skeleton className="mt-3 h-4 w-3/4" />
             </div>
           ))}
@@ -542,13 +542,13 @@ export function LibraryScreen({
               <DropdownMenu.Trigger asChild><button type="button" aria-label="Xếp theo" title={`Xếp theo: ${SORT_OPTIONS.find(option => option.value === sort)?.label}`} className="flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-1 text-xs text-fg-2 sm:text-sm">
                 <ArrowDownWideNarrow className="size-5 sm:size-4" /><span className="max-sm:sr-only">Xếp theo</span>
               </button></DropdownMenu.Trigger>
-              <DropdownMenu.Portal><DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-44 rounded-xl border border-line bg-panel p-1.5 shadow-float">
+              <DropdownMenu.Portal><DropdownMenu.Content align="end" sideOffset={4} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-44 rounded-cover border border-line bg-panel p-1.5 shadow-float">
                 <DropdownMenu.RadioGroup value={sort} onValueChange={value => { const next = value as LibrarySort; setSort(next); saveLibrarySort(next); }}>
-                  {SORT_OPTIONS.map(option => <DropdownMenu.RadioItem key={option.value} value={option.value} className="flex min-h-[44px] cursor-default items-center gap-3 rounded-lg px-3 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"><SelectionMark selected={sort === option.value} />{option.label}</DropdownMenu.RadioItem>)}
+                  {SORT_OPTIONS.map(option => <DropdownMenu.RadioItem key={option.value} value={option.value} className="flex min-h-[44px] cursor-default items-center gap-3 rounded-control px-3 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"><SelectionMark selected={sort === option.value} />{option.label}</DropdownMenu.RadioItem>)}
                 </DropdownMenu.RadioGroup>
               </DropdownMenu.Content></DropdownMenu.Portal>
             </DropdownMenu.Root>
-            <button type="button" aria-label="Tìm sách" aria-expanded={searchOpen} onClick={() => { setSearchOpen(value => !value); if (searchOpen) setQuery(""); else requestAnimationFrame(() => searchInput.current?.focus()); }} className="-mr-[14.71px] grid size-[44px] shrink-0 place-items-center rounded-lg text-fg-2">
+            <button type="button" aria-label="Tìm sách" aria-expanded={searchOpen} onClick={() => { setSearchOpen(value => !value); if (searchOpen) setQuery(""); else requestAnimationFrame(() => searchInput.current?.focus()); }} className="-mr-[14.71px] grid size-[44px] shrink-0 place-items-center rounded-control text-fg-2">
               {/* Vùng chạm 44 px giữ nguyên, mực kính lúp (lề phải 2/24 của ô 17,5 px) chạm đúng mép phải nội dung: (44 - 17,5) / 2 + 17,5 x 2 / 24 = 14,71 px. */}
               <Search className="size-5" />
             </button>
@@ -557,7 +557,7 @@ export function LibraryScreen({
             <label className="relative mt-3 block">
               <span className="sr-only">Tìm sách</span>
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-fg-2" />
-              <input ref={searchInput} aria-label="Tìm sách" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Tên sách, tác giả, giọng" title="Gõ không dấu cũng được" className="h-[44px] w-full rounded-lg bg-sunken pl-10 pr-11 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden" />
+              <input ref={searchInput} aria-label="Tìm sách" type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Tên sách, tác giả, giọng" title="Gõ không dấu cũng được" className="h-[44px] w-full rounded-control bg-sunken pl-10 pr-11 text-sm outline-none placeholder:text-fg-2 focus:ring-2 focus:ring-focus [&::-webkit-search-cancel-button]:hidden" />
               <button type="button" onClick={() => { if (query) setQuery(""); else setSearchOpen(false); }} aria-label={query ? "Xoá ô tìm" : "Đóng tìm kiếm"} className="absolute right-0 top-0 grid size-[44px] place-items-center text-fg-2"><X className="size-4" /></button>
             </label>
           </Collapse>

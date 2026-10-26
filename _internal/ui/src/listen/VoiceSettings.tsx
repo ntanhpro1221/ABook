@@ -191,7 +191,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
             value={key}
             onChange={(event) => setKey(event.target.value)}
             placeholder={info.hasKey ? `Đã lưu ${info.masked} - dán khóa mới để thay` : "Dán khóa của bạn"}
-            className="h-9 w-full rounded-lg border border-line bg-panel px-3 text-sm"
+            className="h-9 w-full rounded-control border border-line bg-panel px-3 text-sm"
           />
         </label>
         {info.limits.region && (
@@ -202,7 +202,7 @@ function KeyCard({ info, api, onChanged }: { info: OnlineProviderInfo; api: Voic
               onChange={(event) => setRegion(event.target.value)}
               placeholder="Vùng, ví dụ southeastasia"
               spellCheck={false}
-              className="h-9 w-full rounded-lg border border-line bg-panel px-3 text-sm"
+              className="h-9 w-full rounded-control border border-line bg-panel px-3 text-sm"
             />
           </label>
         )}

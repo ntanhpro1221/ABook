@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.BasicTextField
@@ -194,7 +195,7 @@ fun SearchBox(ui: LibraryUiState, modifier: Modifier = Modifier) {
                 val placeable = measurable.measure(Constraints.fixed(width, closed))
                 layout(width, closed) { placeable.place(0, 0) }
             }
-            .clip(RoundedCornerShape(Dim.touch / 2))
+            .clip(CircleShape)
             .drawBehind {
                 if (ui.search.value > 0f) drawRoundRect(colors.bgSunken, cornerRadius = CornerRadius(size.height / 2))
             },

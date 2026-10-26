@@ -13,7 +13,11 @@ import org.junit.Test
 class MusicStateTest {
     private val source = FakeMusicSource().apply {
         books["text"] = BookMusic(MusicKind.Playlist, playlist = MusicText.SCENE, playlistAuto = true)
-        books["audio"] = BookMusic(MusicKind.Packaged, levelDb = -18.0)
+        books["audio"] = BookMusic(
+            MusicKind.Packaged, levelDb = -18.0,
+            cues = listOf(MusicCue("1:0", 1, "Chương 1", 0.0, 90.0, "Bài gốc", "Kevin MacLeod"), MusicCue("1:90000", 1, "Chương 1", 90.0, 200.0, "Đêm", "Kevin MacLeod")),
+        )
+        mine += MineTrack("local:rain", "Mưa", "Tôi", 120.0, analysed = true)
     }
     private var clock = 0L
     private val music = MusicState(source, CoroutineScope(Dispatchers.Unconfined), menuTtlMs = 1_000, now = { clock })
@@ -92,5 +96,52 @@ class MusicStateTest {
         music.importMine(listOf("content://c"))
         assertEquals("kho không có bài mới thì không đổi lựa chọn", listOf("import 1"), source.calls)
         assertEquals("a.txt: không phải file nhạc", music.ui.value.problem)
+    }
+
+    @Test
+    fun `a packaged cue goes silent, takes one of my tracks and goes back`() {
+        music.open("audio")
+        music.silence("1:0", true)
+        assertTrue(music.ui.value.book!!.cues[0].silenced)
+        music.swap("1:0")
+        assertEquals(listOf("Mưa"), music.ui.value.mine?.map { it.title })
+        music.pin("1:0", "local:rain")
+        assertEquals(listOf("silence audio 1:0 true", "alternatives audio 1:0", "pin audio 1:0 local:rain"), source.calls)
+        val cue = music.ui.value.book!!.cues[0]
+        assertTrue("chọn bài cho đoạn đang im thì có nhạc lại", cue.pinned && !cue.silenced)
+        assertEquals("chọn xong thì khép Đổi bài như web", "", music.ui.value.swapKey)
+        assertEquals("", music.ui.value.choosing)
+        music.pin("1:0", null)
+        assertFalse(music.ui.value.book!!.cues[0].pinned)
+    }
+
+    @Test
+    fun `the swap list can fail, retry, and a failed pin keeps it open`() {
+        music.open("audio")
+        source.alternativesError = MusicFailure("mất")
+        music.swap("1:90000")
+        assertTrue(music.ui.value.swapFailed)
+        assertNull(music.ui.value.mine)
+        source.alternativesError = null
+        music.retrySwap()
+        assertFalse(music.ui.value.swapFailed)
+        assertEquals(1, music.ui.value.mine?.size)
+        source.changeError = MusicFailure("Bài này không còn")
+        music.pin("1:90000", "local:rain")
+        assertEquals("1:90000", music.ui.value.swapKey)
+        assertEquals("Bài này không còn", music.ui.value.problem)
+        music.open("audio")
+        assertEquals("mở lại bảng thì khép Đổi bài", "", music.ui.value.swapKey)
+    }
+
+    @Test
+    fun `adding music from the swap list refreshes it and leaves a packaged book's choice alone`() {
+        music.open("audio")
+        music.swap("1:0")
+        source.calls.clear()
+        source.mine += MineTrack("local:new", "Mới", "", 0.0, analysed = false)
+        music.importMine(listOf("content://new"))
+        assertEquals(listOf("import 1", "alternatives audio 1:0"), source.calls)
+        assertEquals(listOf("Mưa", "Mới"), music.ui.value.mine?.map { it.title })
     }
 }

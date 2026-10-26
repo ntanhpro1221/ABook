@@ -17,6 +17,12 @@ interface MusicSource {
     suspend fun choose(id: String, playlist: String?): BookMusic
     suspend fun level(id: String, levelDb: Double): BookMusic
     suspend fun enable(id: String, enabled: Boolean): BookMusic
+    /** Một đoạn nhạc gắn sẵn (`key` = MusicCue.key): im lặng / có nhạc lại. */
+    suspend fun silence(id: String, key: String, silenced: Boolean): BookMusic
+    /** Thay bài của một đoạn bằng một bài trong Nhạc của tôi (`link`), null = về bài gốc. */
+    suspend fun pin(id: String, key: String, link: String?): BookMusic
+    /** Các bài trong Nhạc của tôi đổi được cho đoạn `key` (trừ bài đang dùng). */
+    suspend fun alternatives(id: String, key: String): List<MineTrack>
     /** Thêm file vào Nhạc của tôi (hộp chọn file của hệ thống). */
     suspend fun importMine(uris: List<String>, progress: (done: Int, total: Int) -> Unit): MusicImported
 }
@@ -43,6 +49,11 @@ data class BookMusicUi(
     val done: Int = 0,
     val total: Int = 0,
     val notice: String = "",
+    /** "Đổi bài" của đoạn `swapKey`: `mine` null = đang tìm, `swapFailed` = chưa tìm được. `choosing`: bài đang được ghim (chờ lõi). */
+    val swapKey: String = "",
+    val mine: List<MineTrack>? = null,
+    val swapFailed: Boolean = false,
+    val choosing: String = "",
 )
 
 /**
@@ -64,7 +75,7 @@ class MusicState(
     fun open(bookId: String) {
         if (bookId.isEmpty()) return
         if (flow.value.bookId != bookId) flow.value = BookMusicUi(bookId = bookId, menu = flow.value.menu)
-        else flow.update { it.copy(problem = "", notice = if (it.importing) it.notice else "") }
+        else flow.update { it.copy(problem = "", notice = if (it.importing) it.notice else "", swapKey = "", mine = null, swapFailed = false) }
         readBook(bookId)
         readMenu(force = false)
     }
@@ -80,6 +91,35 @@ class MusicState(
     fun choose(playlist: String?) = change { source.choose(it, playlist) }
     fun setLevel(levelDb: Double) = change { source.level(it, levelDb) }
     fun setEnabled(enabled: Boolean) = change { source.enable(it, enabled) }
+    fun silence(key: String, silenced: Boolean) = change { source.silence(it, key, silenced) }
+
+    /** Ghim một bài cho đoạn `key` (null = về bài gốc). Xong thì khép "Đổi bài" như web. */
+    fun pin(key: String, link: String?) {
+        if (flow.value.busy) return
+        flow.update { it.copy(choosing = link.orEmpty()) }
+        change(after = { ok -> flow.update { it.copy(choosing = "", swapKey = if (ok && link != null) "" else it.swapKey) } }) {
+            source.pin(it, key, link)
+        }
+    }
+
+    /** Mở / khép "Đổi bài" của đoạn `key` ("" = khép). Mỗi lần mở tìm lại (Nhạc của tôi có thể vừa thêm bài). */
+    fun swap(key: String) {
+        flow.update { it.copy(swapKey = key, mine = null, swapFailed = false) }
+        if (key.isNotEmpty()) readMine(key)
+    }
+
+    fun retrySwap() = flow.value.swapKey.takeIf { it.isNotEmpty() }?.let(::swap)
+
+    private fun readMine(key: String) {
+        val id = flow.value.bookId
+        if (id.isEmpty()) return
+        scope.launch {
+            val result = attempt { source.alternatives(id, key) }
+            if (flow.value.bookId != id || flow.value.swapKey != key) return@launch
+            result.onSuccess { mine -> flow.update { it.copy(mine = mine, swapFailed = false) } }
+            result.onFailure { flow.update { it.copy(swapFailed = true) } }
+        }
+    }
 
     /** Thêm nhạc từ bảng: tiến độ ngay ở hàng "Thêm nhạc"; có bài trong kho thì chọn "Nhạc của tôi" cho cuốn này (sách mang theo đúng các bài đang có). */
     fun importMine(uris: List<String>) {
@@ -91,7 +131,9 @@ class MusicState(
             result.onSuccess { done ->
                 flow.update { it.copy(importing = false, notice = done.summary, problem = done.problems.joinToString("\n")) }
                 readMenu(force = true)
-                if (done.usable && flow.value.bookId == id) choose(MusicText.MINE)
+                if (flow.value.bookId != id) return@onSuccess
+                if (flow.value.swapKey.isNotEmpty()) readMine(flow.value.swapKey)
+                else if (done.usable && flow.value.book?.kind == MusicKind.Playlist) choose(MusicText.MINE)
             }
             result.onFailure { error -> flow.update { it.copy(importing = false, problem = message(error, "Chưa thêm được nhạc")) } }
         }
@@ -117,7 +159,7 @@ class MusicState(
         }
     }
 
-    private fun change(apply: suspend (String) -> BookMusic) {
+    private fun change(after: (ok: Boolean) -> Unit = {}, apply: suspend (String) -> BookMusic) {
         val id = flow.value.bookId
         if (id.isEmpty() || flow.value.busy) return
         flow.update { it.copy(busy = true, problem = "") }
@@ -126,6 +168,7 @@ class MusicState(
             if (flow.value.bookId != id) return@launch
             result.onSuccess { book -> flow.update { it.copy(busy = false, book = book) } }
             result.onFailure { error -> flow.update { it.copy(busy = false, problem = message(error, "Chưa đổi được nhạc nền")) } }
+            after(result.isSuccess)
         }
     }
 
