@@ -1003,53 +1003,8 @@
       "missing": [
         {
           "side": "web",
-          "match": "^cho\\ hai\\ máy\\ vào\\ cùng\\ một\\ mạng\\ riêng\\ ảo\\ \\(tailscale,\\ zerotier,\\ netbird,\\ wireguard\\),\\ rồi\\ mở\\ mục\\ này\\ một\\ lần\\ khi\\ còn\\ ở\\ nhà$",
-          "reason": "native chưa có mục hướng dẫn nghe khi ra ngoài (mạng riêng ảo)"
-        },
-        {
-          "side": "web",
-          "match": "^chép\\ địa\\ chỉ$",
-          "reason": "native chưa có nút chép địa chỉ của điện thoại"
-        },
-        {
-          "side": "web",
-          "match": "^cài\\ trên\\ máy\\ tính$",
-          "reason": "native chưa có chỉ dẫn cài / lấy mã trên máy tính"
-        },
-        {
-          "side": "web",
-          "match": "^cách\\ lấy\\ mã$",
-          "reason": "native chưa có chỉ dẫn cài / lấy mã trên máy tính"
-        },
-        {
-          "side": "web",
-          "match": "^cùng\\ wi\\-fi,\\ mở\\ thiết\\ bị\\ trên\\ máy\\ tính$",
-          "reason": "native chưa có chỉ dẫn cài / lấy mã trên máy tính"
-        },
-        {
-          "side": "web",
           "match": "^khi\\ chia\\ sẻ,\\ abook\\ giữ\\ một\\ thông\\ báo\\ nhỏ\\ để\\ chạy\\ tiếp\\ lúc\\ tắt\\ màn\\ hình$",
           "reason": "native xin quyền thông báo mà không giải thích trước"
-        },
-        {
-          "side": "web",
-          "match": "^nghe\\ khi\\ ra\\ ngoài$",
-          "reason": "native chưa có mục hướng dẫn nghe khi ra ngoài (mạng riêng ảo)"
-        },
-        {
-          "side": "web",
-          "match": "^sách\\ đã\\ tải\\ vẫn\\ nghe\\ được\\ khi\\ ra\\ ngoài$",
-          "reason": "native chưa có mục hướng dẫn nghe khi ra ngoài (mạng riêng ảo)"
-        },
-        {
-          "side": "web",
-          "match": "^tải\\ abook\\ windows$",
-          "reason": "native chưa có chỉ dẫn cài / lấy mã trên máy tính"
-        },
-        {
-          "side": "web",
-          "match": "^đã\\ chép\\ địa\\ chỉ$",
-          "reason": "native chưa có nút chép địa chỉ của điện thoại"
         }
       ],
       "deferred": [
@@ -1105,11 +1060,6 @@
         },
         {
           "side": "web",
-          "match": "^studio\\ máy\\ tính$",
-          "reason": "chữ trang Studio từ điện thoại khác nhau (native: OtherScreens 'Nối máy tính để làm sách nói và xem tiến độ.'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
           "match": "^sách\\ trên\\ máy$",
           "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
         },
@@ -1117,11 +1067,6 @@
           "side": "web",
           "match": "^sách\\ \\{\\}\\ ·\\ còn\\ trống\\ \\{\\}$",
           "reason": "chữ khác cho tải / dung lượng (native: 'Đang tải {}%', 'Đã dừng tải', 'Còn trống {}'); cần chọn một câu cho cả hai"
-        },
-        {
-          "side": "web",
-          "match": "^tạo\\ sách\\ nói\\ rồi\\ nghe\\ ở\\ đây$",
-          "reason": "chữ trang Studio từ điện thoại khác nhau (native: OtherScreens 'Nối máy tính để làm sách nói và xem tiến độ.'); cần chọn một câu cho cả hai"
         },
         {
           "side": "web",
@@ -1212,7 +1157,8 @@
       "web_also": [
         "listen/labels.ts",
         "listen/sleep.ts",
-        "shared/connectionRoute.ts"
+        "shared/connectionRoute.ts",
+        "shared/syncSwitch.ts"
       ]
     },
     {
@@ -1858,87 +1804,7 @@
       "missing": [
         {
           "side": "web",
-          "match": "^bạn\\ chọn\\ ảnh\\ từ\\ các\\ nguồn\\ sách\\ hoặc\\ trên\\ máy$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^bạn\\ hãy\\ chọn\\ ảnh\\ trên\\ máy$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^bạn\\ hãy\\ kiểm\\ tra\\ kết\\ nối\\ rồi\\ tìm\\ lại\\ các\\ nguồn\\ bìa$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^bạn\\ hãy\\ kiểm\\ tra\\ kết\\ nối\\ rồi\\ tìm\\ lại\\ ảnh\\ bìa$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^bạn\\ hãy\\ kiểm\\ tra\\ kết\\ nối\\ rồi\\ đặt\\ lại\\ ảnh\\ bìa$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^bấm\\ “…”\\ ở\\ dòng\\ chương\\ để\\ đổi\\ tên\\ chương$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
-        },
-        {
-          "side": "web",
-          "match": "^bấm\\ “…”\\ ở\\ dòng\\ chương\\ để\\ đổi\\ tên\\ chương,\\ “…”\\ ở\\ tab\\ nhân\\ vật\\ để\\ đổi\\ tên\\ người$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
-        },
-        {
-          "side": "web",
-          "match": "^bỏ\\ chọn\\ hết$",
-          "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
-        },
-        {
-          "side": "web",
-          "match": "^bỏ\\ hết\\ thay\\ đổi$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
-        },
-        {
-          "side": "web",
-          "match": "^bỏ\\ mọi\\ thay\\ đổi$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
-        },
-        {
-          "side": "web",
-          "match": "^bỏ\\ mọi\\ thay\\ đổi\\ \\(\\{\\}\\)$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
-        },
-        {
-          "side": "web",
-          "match": "^bỏ\\ phần\\ còn\\ lại$",
-          "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
-        },
-        {
-          "side": "web",
           "match": "^bỏ\\ và\\ chọn\\ lại$",
-          "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ bỏ\\ được\\ thay\\ đổi$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ chọn\\ chương\\ nào\\ \\-\\ tích\\ ít\\ nhất\\ một\\ chương\\ để\\ thêm\\ vào\\ thư\\ viện$",
-          "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
-        },
-        {
-          "side": "web",
-          "match": "^chưa\\ nối\\ được\\ \\{\\}\\.\\ thử\\ lại\\ hoặc\\ chọn\\ ảnh\\ trên\\ máy$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^chọn\\ hết$",
           "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
         },
         {
@@ -1948,28 +1814,13 @@
         },
         {
           "side": "web",
-          "match": "^cách\\ đọc\\ tên$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
-        },
-        {
-          "side": "web",
           "match": "^còn\\ \\{\\}\\ cuốn\\ chưa\\ thêm\\ vào\\ thư\\ viện\\.\\ chọn\\ lại\\ thì\\ các\\ cuốn\\ ấy\\ sẽ\\ không\\ được\\ thêm$",
           "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
         },
         {
           "side": "web",
-          "match": "^còn\\ \\{\\}\\ cuốn\\ chưa\\ thêm\\ vào\\ thư\\ viện\\.\\ đóng\\ bây\\ giờ\\ thì\\ các\\ cuốn\\ ấy\\ sẽ\\ không\\ được\\ thêm$",
-          "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
-        },
-        {
-          "side": "web",
-          "match": "^dạy\\ cách\\ đọc\\ từ\\ \\(thường\\ là\\ tên\\ riêng\\)\\.\\ chữ\\ giữ\\ nguyên$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
-        },
-        {
-          "side": "web",
           "match": "^google\\ books$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
+          "reason": "tên nguồn trong failedSourcesNote (shared/CoverSearch.tsx) - web không gọi hàm này; lưới kết quả cả hai bên hiện tên nguồn do lõi trả ('Google Books', 'Open Library')"
         },
         {
           "side": "web",
@@ -1979,17 +1830,7 @@
         {
           "side": "web",
           "match": "^open\\ library$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^quay\\ lại\\ thêm\\ sách$",
-          "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
-        },
-        {
-          "side": "web",
-          "match": "^sách\\ trở\\ về\\ đúng\\ như\\ người\\ làm\\ sách\\ đã\\ đóng\\ gói$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
+          "reason": "tên nguồn trong failedSourcesNote (shared/CoverSearch.tsx) - web không gọi hàm này; lưới kết quả cả hai bên hiện tên nguồn do lõi trả ('Google Books', 'Open Library')"
         },
         {
           "side": "web",
@@ -1998,58 +1839,18 @@
         },
         {
           "side": "web",
-          "match": "^thôi$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
-        },
-        {
-          "side": "web",
-          "match": "^tên\\ riêng$",
-          "reason": "native chưa có 'Bỏ mọi thay đổi' và 'Cách đọc tên' trong màn sửa sách"
-        },
-        {
-          "side": "web",
-          "match": "^tên\\ sách\\ để\\ tìm\\ bìa$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^tìm$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^tìm\\ bìa$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^tìm\\ ảnh\\ bìa$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
           "match": "^vẫn\\ thêm\\ bản\\ mới$",
-          "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ tìm\\ ảnh\\ bìa$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^đang\\ đặt\\ ảnh\\ bìa$",
-          "reason": "native chưa có tìm ảnh bìa từ nguồn sách (Google Books / Open Library) - chỉ chọn ảnh trên máy rồi cắt"
-        },
-        {
-          "side": "web",
-          "match": "^đóng\\ khi\\ còn\\ sách\\ chưa\\ thêm$",
           "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
         },
         {
           "side": "web",
           "match": "^đường\\ dẫn\\ file\\ hay\\ thư\\ mục$",
           "reason": "native chưa có: chọn hết / bỏ chọn hết chương, hỏi khi đóng giữa hàng đợi, thêm bản mới khi đã có"
+        },
+        {
+          "side": "web",
+          "match": "^chưa\\ nối\\ được\\ \\{\\}\\.\\ thử\\ lại\\ hoặc\\ chọn\\ ảnh\\ trên\\ máy$",
+          "reason": "câu của failedSourcesNote (shared/CoverSearch.tsx) - web không gọi hàm này ở đâu (bảng tìm bìa của web báo 'Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa.'); native dùng đúng câu ấy. Lead quyết: xoá hàm thừa ở web hay dùng nó cả hai bên"
         }
       ],
       "allow": [
@@ -2517,6 +2318,21 @@
           "side": "native",
           "match": "^đặt\\ lại$",
           "reason": "màn cắt ảnh bìa chỉ có ở native (web đặt ảnh bìa trực tiếp)"
+        },
+        {
+          "side": "web",
+          "match": "^bấm\\ “…”\\ ở\\ dòng\\ chương\\ để\\ đổi\\ tên\\ chương$",
+          "reason": "lời chỉ đường của hộp Sửa sách web (đổi tên chương / người qua nút “…” ở trang sách); native đổi tên chương ngay trong danh sách Chương của màn Sửa sách nên không cần câu này"
+        },
+        {
+          "side": "web",
+          "match": "^bấm\\ “…”\\ ở\\ dòng\\ chương\\ để\\ đổi\\ tên\\ chương,\\ “…”\\ ở\\ tab\\ nhân\\ vật\\ để\\ đổi\\ tên\\ người$",
+          "reason": "lời chỉ đường của hộp Sửa sách web (đổi tên chương / người qua nút “…” ở trang sách); native đổi tên chương ngay trong danh sách Chương của màn Sửa sách nên không cần câu này"
+        },
+        {
+          "side": "web",
+          "match": "^tên\\ riêng$",
+          "reason": "lời chỉ đường của hộp Sửa sách web (đổi tên chương / người qua nút “…” ở trang sách); native đổi tên chương ngay trong danh sách Chương của màn Sửa sách nên không cần câu này"
         }
       ],
       "deferred": [
@@ -2885,6 +2701,9 @@
           "match": "^đã\\ bỏ\\ qua$",
           "reason": "màn Thêm / Sửa sách: native và web diễn đạt cùng việc bằng chữ khác (hoặc bố cục khác); cần chọn một câu cho cả hai"
         }
+      ],
+      "web_also": [
+        "listen/WordReadings.tsx"
       ]
     }
   ]

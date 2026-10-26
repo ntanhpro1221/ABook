@@ -214,6 +214,112 @@ class BookFormsTest {
         assertEquals(setOf("Dịch: Nhóm Lục Bình"), source.addedChoices?.skipped)
     }
 
+    // --- Chọn hết / bỏ chọn hết chương ---
+    @Test fun pickAllAndNoneSetEveryChapterAndNothingPickedBlocksAdding() {
+        var state by mutableStateOf(ImportState(currentId = 1, preview = preview, choices = ImportLogic.defaults(preview)))
+        show { ImportReviewScreen(state, {}, { state = state.copy(choices = it(state.choices)) }, {}, {}, {}) }
+        rule.onNodeWithTag("import_review").performScrollToNode(hasTestTag("pick_all_chapters"))
+        rule.onNodeWithTag("pick_all_chapters").performClick()
+        assertEquals(setOf(1, 2, 3), state.choices.picked)
+        rule.onAllNodesWithText(ImportLogic.NOTHING_PICKED).assertCountEquals(0)
+        rule.onNodeWithTag("confirm_import").assertIsEnabled()
+        rule.onNodeWithTag("pick_no_chapters").performClick()
+        assertTrue(state.choices.picked.isEmpty())
+        // Không chương nào: nói ngay ở chân màn, "Thêm sách" không bấm được.
+        rule.onNodeWithText(ImportLogic.NOTHING_PICKED).assertIsDisplayed()
+        rule.onNodeWithTag("confirm_import").assertIsNotEnabled()
+        rule.onNodeWithTag("import_chapter_2_keep").performClick()
+        rule.onAllNodesWithText(ImportLogic.NOTHING_PICKED).assertCountEquals(0)
+        rule.onNodeWithTag("confirm_import").assertIsEnabled()
+    }
+
+    @Test fun oneChapterHasNoPickAllActions() {
+        val single = preview.copy(chapters = listOf(ImportChapter(1, "Chương 1")), suggestions = emptyList())
+        review(false, null, single, emptyMap())
+        rule.onAllNodesWithTag("pick_all_chapters").assertCountEquals(0)
+        rule.onAllNodesWithTag("pick_no_chapters").assertCountEquals(0)
+    }
+
+    @Test fun pickAllRowSharesTheChapterHeading() {
+        review(false, null)
+        rule.onNodeWithTag("import_review").performScrollToNode(hasTestTag("pick_all_chapters"))
+        val heading = rule.onNodeWithText("Chương").getUnclippedBoundsInRoot()
+        for (tag in listOf("pick_all_chapters", "pick_no_chapters")) {
+            val action = rule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+            assertEquals(tag, ((heading.top + heading.bottom) / 2).value, ((action.top + action.bottom) / 2).value, 1f)
+        }
+    }
+
+    // --- Đóng Thêm sách giữa hàng ---
+    private val waiting = ImportState(items = listOf(
+        ImportItem(1, "a", "Chuyến phà cuối ngày.epub", stage = ImportStage.Added, bookId = "a"),
+        ImportItem(2, "b", "Những ngày thơ ấu.docx", stage = ImportStage.Review),
+        ImportItem(3, "c", "Truyện ngắn", folder = true, stage = ImportStage.Waiting),
+        ImportItem(4, "d", "Số đỏ.txt", stage = ImportStage.Waiting),
+    ), currentId = 2)
+
+    private fun leaving(dark: Boolean, name: String) {
+        show(dark) { AddBookScreen(waiting, {}, {}, {}, {}, {}, {}, leaving = 3) }
+        rule.onNodeWithText("Còn 3 cuốn chưa thêm vào thư viện. Đóng bây giờ thì các cuốn ấy sẽ không được thêm.").assertIsDisplayed()
+        rule.onNodeWithTag("leave_stay").assertIsDisplayed()
+        rule.onNodeWithTag("leave_drop").assertIsDisplayed()
+        rule.onAllNodesWithTag("pick_books").assertCountEquals(0)
+        shot(name)
+    }
+    @Test fun leavingLight() = leaving(false, "add_leaving_light")
+    @Test fun leavingDark() = leaving(true, "add_leaving_dark")
+
+    private fun back() = rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+
+    @Test fun backWithSeveralBooksLeftAsksFirstAndBackAgainKeepsAdding() {
+        val source = FakeImportSource(preview)
+        val queue = ImportQueue(source, CoroutineScope(Dispatchers.Main.immediate))
+        var left = 0
+        show { AddBookRoute(queue, { left++ }, {}, {}) }
+        rule.runOnIdle { queue.enqueue(listOf("one", "two", "three")) }
+        rule.waitForIdle()
+        back()
+        rule.waitForIdle()
+        rule.onNodeWithTag("leave_confirm").assertIsDisplayed()
+        assertEquals(0, left)
+        // Back lần nữa = "Quay lại thêm sách": lời hỏi khép, hàng còn nguyên.
+        back()
+        rule.waitForIdle()
+        rule.onAllNodesWithTag("leave_confirm").assertCountEquals(0)
+        rule.onNodeWithTag("pick_books").assertIsDisplayed()
+        assertEquals(3, queue.state.value.items.size)
+        assertEquals(0, left)
+        // Nút ← hỏi y như Back; "Quay lại thêm sách" cũng khép lời hỏi.
+        rule.onNodeWithContentDescription("Quay lại").performClick()
+        rule.onNodeWithTag("leave_stay").performClick()
+        rule.waitForIdle()
+        rule.onAllNodesWithTag("leave_confirm").assertCountEquals(0)
+        assertEquals(0, left)
+        // "Bỏ phần còn lại": bản tạm của cuốn đang xem bị bỏ, hàng trống, màn đóng.
+        back()
+        rule.waitForIdle()
+        rule.onNodeWithTag("leave_drop").performClick()
+        rule.waitForIdle()
+        assertEquals(1, left)
+        assertTrue(queue.state.value.items.isEmpty())
+        assertEquals(listOf("ref1"), source.discarded)
+    }
+
+    @Test fun backWithOneBookLeftClosesWithoutAsking() {
+        val source = FakeImportSource(preview)
+        val queue = ImportQueue(source, CoroutineScope(Dispatchers.Main.immediate))
+        var left = 0
+        show { AddBookRoute(queue, { left++ }, {}, {}) }
+        rule.runOnIdle { queue.enqueue(listOf("one")) }
+        rule.waitForIdle()
+        rule.onNodeWithContentDescription("Quay lại").performClick()
+        rule.waitForIdle()
+        assertEquals(1, left)
+        rule.onAllNodesWithTag("leave_confirm").assertCountEquals(0)
+        // Một cuốn: hàng giữ nguyên như trước (Back không huỷ việc nhập).
+        assertEquals(1, queue.state.value.items.size)
+    }
+
     // --- Màn tên chương của xem trước ---
     private fun importName(dark: Boolean, name: String, names: Map<Int, String>) {
         var state by mutableStateOf(ImportState(currentId = 1, preview = preview, choices = ImportLogic.defaults(preview).copy(names = names)))
@@ -348,7 +454,253 @@ class BookFormsTest {
         rule.waitForIdle()
         shot(name)
         rule.onNodeWithTag("cover_pick").assertIsDisplayed()
+        rule.onNodeWithTag("cover_find").assertIsDisplayed()
         if (hasCover) rule.onNodeWithTag("cover_remove").assertIsDisplayed() else rule.onAllNodesWithTag("cover_remove").assertCountEquals(0)
+    }
+
+    @Test fun coverSheetFindOpensTheSearch() {
+        val sheets = SheetHost()
+        var found = 0
+        show { SheetLayer(sheets) }
+        rule.runOnIdle { sheets.show { dismiss -> CoverSheet(true, dismiss, dismiss, onFind = { dismiss(); found++ }) } }
+        rule.waitForIdle()
+        rule.onNodeWithText("Tìm bìa").performClick()
+        rule.waitForIdle()
+        assertEquals(1, found)
+        rule.onAllNodesWithTag("cover_sheet").assertCountEquals(0)
+    }
+
+    // --- Cách đọc tên / Bỏ mọi thay đổi ---
+    private fun editorScreen(snapshot: EditSnapshot, source: FakeEditSource = FakeEditSource(snapshot), dark: Boolean = false, discard: () -> Unit = {}): FakeEditSource {
+        show(dark) {
+            val scope = rememberCoroutineScope()
+            val editor = remember { BookEditor("b", source, scope) }
+            val state by editor.state.collectAsState()
+            val readings by editor.readings.collectAsState()
+            EditBookScreen(state, CoverLoader(), {}, editor::change, {}, {}, editor::send, editor::retry,
+                readings = readings, loadReadings = editor::loadReadings, setReading = editor::setReading, discard = discard)
+        }
+        // Sách đã đọc xong trước khi test đổi nguồn giả (vd cho nó hỏng).
+        rule.waitForIdle()
+        return source
+    }
+
+    private fun openReadings() {
+        rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("edit_readings"))
+        rule.onNodeWithTag("edit_readings").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("readings_section"))
+    }
+
+    @Test fun readingsFoldListsTaughtWordsAndEditsOneInPlace() {
+        val source = FakeEditSource(edit)
+        source.words["Haruto"] = "Ha-ru-tô"
+        editorScreen(edit, source)
+        rule.onAllNodesWithTag("readings_section").assertCountEquals(0)
+        openReadings()
+        rule.onNodeWithText(ReadingText.HINT).assertIsDisplayed()
+        rule.onNodeWithText("đọc là “Ha-ru-tô”").assertIsDisplayed()
+        rule.onNodeWithContentDescription("Sửa cách đọc Haruto").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("reading_save"))
+        // Chưa đổi gì: "Lưu cho cả cuốn" chưa bấm được; từ đã có cách đọc riêng thì có "Đọc như chữ trong sách".
+        rule.onNodeWithTag("reading_save").assertIsNotEnabled()
+        rule.onNodeWithText("Đọc như chữ trong sách").assertIsDisplayed()
+        rule.onNodeWithTag("reading_field").performTextReplacement("Ha-ru-to")
+        rule.onNodeWithTag("reading_save").assertIsEnabled().performClick()
+        rule.waitForIdle()
+        assertEquals("Haruto" to "Ha-ru-to", source.readingCalls.last())
+        rule.onAllNodesWithTag("reading_form").assertCountEquals(0)
+        rule.onNodeWithText("“Haruto” sẽ đọc là “Ha-ru-to” từ đoạn sau").assertExists()
+        rule.onNodeWithContentDescription("Bỏ cách đọc Haruto").performClick()
+        rule.waitForIdle()
+        assertEquals("Haruto" to "", source.readingCalls.last())
+        rule.onNodeWithText("Chưa có từ nào.").assertExists()
+    }
+
+    @Test fun readingsThatCannotLoadSayHowToRetry() {
+        val source = FakeEditSource(edit)
+        editorScreen(edit, source)
+        source.fail = true
+        openReadings()
+        rule.onNodeWithText("Bạn hãy thử tải lại danh sách cách đọc.").assertIsDisplayed()
+        source.fail = false
+        rule.onNodeWithTag("readings_problem-retry").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Chưa có từ nào.").assertExists()
+    }
+
+    @Test fun audiobooksHaveNoReadingsFold() {
+        editorScreen(edit.copy(textOnly = false))
+        rule.onAllNodesWithTag("edit_readings").assertCountEquals(0)
+    }
+
+    private fun readingsShot(dark: Boolean, name: String) {
+        val source = FakeEditSource(edit)
+        source.words["Haruto"] = "Ha-ru-tô"
+        source.words["Hạ Vy"] = "Hạ Vi"
+        editorScreen(edit, source, dark)
+        openReadings()
+        rule.onNodeWithContentDescription("Sửa cách đọc Haruto").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("reading_save"))
+        shot(name)
+    }
+    @Test @Config(sdk = [35], qualifiers = "w360dp-h1100dp-xxhdpi") fun readingsLight() = readingsShot(false, "edit_readings_light")
+    @Test @Config(sdk = [35], qualifiers = "w360dp-h1100dp-xxhdpi") fun readingsDark() = readingsShot(true, "edit_readings_dark")
+
+    @Test fun discardRowOnlyWithChangesAndAsksBeforeDiscarding() {
+        var asked = 0
+        editorScreen(edit.copy(edits = 3), discard = { asked++ })
+        rule.onNodeWithTag("edit_book_list").performScrollToNode(hasTestTag("discard_edits"))
+        rule.onNodeWithText("Bỏ mọi thay đổi (3)").assertIsDisplayed()
+        rule.onNodeWithText(ReadingText.DISCARD_HINT).assertIsDisplayed()
+        rule.onNodeWithTag("discard_edits").performClick()
+        assertEquals(1, asked)
+    }
+
+    @Test fun noChangesNoDiscardRow() {
+        editorScreen(edit.copy(edits = 0))
+        rule.onAllNodesWithTag("discard_edits").assertCountEquals(0)
+    }
+
+    private fun discardSheet(dark: Boolean, name: String?, fail: Boolean = false): Pair<FakeEditSource, BookEditor> {
+        val sheets = SheetHost()
+        val source = FakeEditSource(edit.copy(title = "Tên đã sửa", edits = 2))
+        source.original = edit
+        lateinit var editor: BookEditor
+        show(dark) {
+            val scope = rememberCoroutineScope()
+            editor = remember { BookEditor("b", source, scope) }
+            SheetLayer(sheets)
+        }
+        rule.waitForIdle()
+        source.fail = fail
+        rule.runOnIdle { sheets.show { dismiss -> DiscardSheet(editor::discardAll, dismiss) } }
+        rule.mainClock.advanceTimeBy(600)
+        rule.waitForIdle()
+        if (name != null) shot(name)
+        return source to editor
+    }
+    @Test fun discardSheetLight() { discardSheet(false, "edit_discard_light") }
+    @Test fun discardSheetDark() { discardSheet(true, "edit_discard_dark") }
+
+    @Test fun discardSheetBringsThePackagedBookBackOrKeepsAskingOnFailure() {
+        val (source, editor) = discardSheet(false, null, fail = true)
+        rule.onNodeWithTag("discard_yes").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Chưa bỏ được thay đổi").assertIsDisplayed()
+        assertEquals("Tên đã sửa", editor.state.value.saved?.title)
+        source.fail = false
+        rule.onNodeWithTag("discard_yes").performClick()
+        rule.waitForIdle()
+        assertEquals(1, source.discards)
+        assertEquals(edit.title, editor.state.value.saved?.title)
+        rule.onAllNodesWithTag("discard_confirm").assertCountEquals(0)
+    }
+
+    @Test fun discardSheetThoiClosesWithoutDiscarding() {
+        val (source, _) = discardSheet(false, null)
+        rule.onNodeWithText("Thôi").performClick()
+        rule.waitForIdle()
+        assertEquals(0, source.discards)
+        rule.onAllNodesWithTag("discard_confirm").assertCountEquals(0)
+    }
+
+    // --- Tìm ảnh bìa ---
+    private val found = listOf(
+        FoundCover("Open Library", "Chuyến phà cuối ngày", "Nguyễn Nhật Ánh", "https://covers.openlibrary.org/b/id/1-M.jpg", "https://covers.openlibrary.org/b/id/1-L.jpg"),
+        FoundCover("Google Books", "Chuyến phà cuối ngày (bản in lại có minh hoạ)", "", "https://books.google.com/t2", "https://books.google.com/f2"),
+        FoundCover("iTunes", "Chuyến phà", "", "https://is1-ssl.mzstatic.com/t3", "https://is1-ssl.mzstatic.com/f3"),
+    )
+
+    private fun coverSearch(source: FakeEditSource, dark: Boolean = false, left: () -> Unit = {}, cropped: (String) -> Unit = {}) {
+        show(dark) {
+            val scope = rememberCoroutineScope()
+            val editor = remember { BookEditor("b", source, scope) }
+            CoverSearchRoute(editor, source.snapshot.title, left, cropped)
+        }
+        rule.waitForIdle()
+    }
+
+    private fun coverResults(dark: Boolean, name: String) {
+        val source = FakeEditSource(edit)
+        source.covers = CoverResults("", found)
+        coverSearch(source, dark)
+        assertEquals(listOf("Chuyến phà cuối ngày"), source.queries)
+        rule.onNodeWithText("Tìm ảnh bìa").assertIsDisplayed()
+        rule.onNodeWithText("Bạn chọn ảnh từ các nguồn sách hoặc trên máy.").assertIsDisplayed()
+        rule.onNodeWithTag("cover_found_${found[0].url}").assertIsDisplayed()
+        shot(name)
+    }
+    @Test fun coverSearchLight() = coverResults(false, "edit_cover_search_light")
+    @Test fun coverSearchDark() = coverResults(true, "edit_cover_search_dark")
+
+    @Test fun coverSearchSearchesAVolumeByItsSeriesName() {
+        val source = FakeEditSource(edit.copy(title = "Throne of Magical Arcana · Tập 16"))
+        coverSearch(source)
+        assertEquals(listOf("Throne of Magical Arcana"), source.queries)
+    }
+
+    @Test fun choosingAFoundCoverSetsItAndLeavesOnce() {
+        val source = FakeEditSource(edit)
+        source.covers = CoverResults("", found)
+        var left = 0
+        coverSearch(source, left = { left++ })
+        rule.onNodeWithTag("cover_found_${found[1].url}").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf(found[1].url), source.chosen)
+        assertEquals(1, left)
+    }
+
+    @Test fun aFailedChoiceSaysSoAndRetriesTheSameCover() {
+        val source = FakeEditSource(edit)
+        source.covers = CoverResults("", found)
+        var left = 0
+        coverSearch(source, left = { left++ })
+        source.coverFail = true
+        rule.onNodeWithTag("cover_found_${found[0].url}").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithText("Bạn hãy kiểm tra kết nối rồi đặt lại ảnh bìa.").assertIsDisplayed()
+        assertEquals(0, left)
+        source.coverFail = false
+        rule.onNodeWithTag("cover_choose_problem-retry").performClick()
+        rule.waitForIdle()
+        assertEquals(listOf(found[0].url), source.chosen)
+        assertEquals(1, left)
+    }
+
+    private fun coverNothing(dark: Boolean, name: String?) {
+        val source = FakeEditSource(edit)
+        coverSearch(source, dark)
+        rule.onNodeWithText("Bạn hãy chọn ảnh trên máy").assertIsDisplayed()
+        rule.onNodeWithTag("cover_pick_file").assertIsDisplayed()
+        if (name != null) shot(name)
+    }
+    @Test fun coverNothingLight() = coverNothing(false, "edit_cover_search_none_light")
+    @Test fun coverNothingDark() = coverNothing(true, "edit_cover_search_none_dark")
+
+    @Test fun offlineSearchAndMissingSourcesBothOfferARetry() {
+        val source = FakeEditSource(edit)
+        source.coverFail = true
+        coverSearch(source)
+        rule.onNodeWithText("Bạn hãy kiểm tra kết nối rồi tìm lại ảnh bìa.").assertIsDisplayed()
+        source.coverFail = false
+        source.covers = CoverResults("", found.take(1), failed = listOf("google_books"))
+        rule.onNodeWithTag("cover_search_problem-retry").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("cover_found_${found[0].url}").assertIsDisplayed()
+        rule.onNodeWithText("Bạn hãy kiểm tra kết nối rồi tìm lại các nguồn bìa.").assertIsDisplayed()
+        assertEquals(2, source.queries.size)
+    }
+
+    @Test fun typingANewNameAndTappingTimSearchesAgain() {
+        val source = FakeEditSource(edit)
+        coverSearch(source)
+        rule.onNodeWithTag("cover_query").performTextReplacement("The last ferry")
+        rule.onNodeWithTag("cover_search_go").performClick()
+        rule.waitForIdle()
+        assertEquals("The last ferry", source.queries.last())
     }
     @Test fun coverSheetLight() = coverSheet(false, "edit_cover_sheet_light", true)
     @Test fun coverSheetDark() = coverSheet(true, "edit_cover_sheet_dark", true)

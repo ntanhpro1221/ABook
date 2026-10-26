@@ -1,6 +1,7 @@
 package vn.abook.player.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
@@ -15,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -39,6 +41,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.collapse
+import androidx.compose.ui.semantics.expand
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -203,6 +207,49 @@ fun DisclosureRow(
 /** Cột biểu tượng của hàng nhóm và khoảng tới chữ: vạch chia hàng thụt theo chữ (bắt đầu ở [IconSlot] + [IconGap]). */
 val IconSlot = 22.dp
 val IconGap = 14.dp
+
+/** Hàng mở / khép tại chỗ: mũi tên ">" xoay xuống khi mở (web: DisclosureRow `expanded`), trợ năng đọc được việc mở / khép. */
+private fun Modifier.toggles(open: Boolean, onToggle: () -> Unit): Modifier = semantics {
+    if (open) collapse { onToggle(); true } else expand { onToggle(); true }
+}
+
+/**
+ * Lời giải thích gập sau dấu "?" (web: MoreInfo của shared/SettingsNav.tsx): một hàng [label] ("Tìm hiểu thêm", "Cách lấy mã"...) có biểu tượng "?" và mũi
+ * tên; chạm mở câu [text] ngay dưới, trong cột
+ * chữ của hàng - không chiếm chỗ khi không cần.
+ */
+@Composable
+fun MoreInfo(label: String, text: String, tag: String, modifier: Modifier = Modifier) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    val turn by animateFloatAsState(if (open) 1f else 0f, if (open) Motion.Expand else Motion.Collapse, label = "more_info_turn")
+    ListItem(
+        label, modifier.toggles(open) { open = !open }, { open = !open }, tag, titleStyle = Abook.type.bodyStrong,
+        leading = { HelpIcon(Abook.colors.text2) }, leadingWidth = IconSlot, leadingGap = IconGap,
+        trailing = { ChevronIcon(Abook.colors.text3, turn = { turn }) },
+        below = { Reveal(open) { RowHint(text, Modifier.testTag("${tag}_text")) } },
+    )
+}
+
+/**
+ * Phần gập (web: Fold của shared/Collapse.tsx): tiêu đề phần + mũi tên, chạm mở / khép nội dung ngay dưới (mở / khép chiều cao kèm trượt). Phần ít dùng để gập, không
+ * chiếm cả trang; mở hay gập giữ qua lần xoay màn hình.
+ */
+@Composable
+fun Fold(title: String, tag: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    val turn by animateFloatAsState(if (open) 1f else 0f, if (open) Motion.Expand else Motion.Collapse, label = "fold_turn")
+    Column(modifier.fillMaxWidth()) {
+        Row(
+            Modifier.fillMaxWidth().heightIn(min = Dim.s48).pressable { open = !open }.toggles(open) { open = !open }.testTag(tag),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            BasicText(title, style = Abook.type.sectionTitle, modifier = Modifier.weight(1f))
+            Spacer(Modifier.width(Dim.s12))
+            ChevronIcon(Abook.colors.text3, turn = { turn })
+        }
+        Reveal(open) { Column(Modifier.fillMaxWidth().testTag("${tag}_body"), content = content) }
+    }
+}
 
 
 /** Hiện / ẩn một khối trong dòng chảy: mở / khép chiều cao kèm trượt dọc (NATIVE_PHONE_UI.md §4 - không mờ). */
