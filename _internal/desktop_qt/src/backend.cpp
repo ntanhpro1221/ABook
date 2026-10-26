@@ -254,6 +254,7 @@ void Backend::refreshLibrary() {
         }
         const QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
         m_library->setBooks(doc.array());
+        emit libraryFetched(doc.array());
         if (!m_libraryLoaded) {
             m_libraryLoaded = true;
             emit libraryLoadedChanged();

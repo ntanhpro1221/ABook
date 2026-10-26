@@ -6,12 +6,12 @@ import ABook
 Interactive {
     id: root
     property string text: ""
-    property string glyph: ""
+    property string icon: ""
     property string kind: "primary"     // "primary" | "text"
     readonly property bool primary: kind === "primary"
 
     implicitHeight: Theme.buttonHeight
-    implicitWidth: label.implicitWidth + (glyph ? Theme.s8 + 16 : 0) + (primary ? 2 * Theme.s24 : 2 * Theme.s12)
+    implicitWidth: label.implicitWidth + (icon ? Theme.s8 + 16 : 0) + (primary ? 2 * Theme.s24 : 2 * Theme.s12)
     opacity: enabled ? 1 : 0.45
 
     Rectangle {
@@ -30,8 +30,8 @@ Interactive {
         anchors.centerIn: parent
         spacing: Theme.s8
         Icon {
-            visible: root.glyph !== ""
-            glyph: root.glyph
+            visible: root.icon !== ""
+            name: root.icon
             size: 16
             color: root.primary ? Theme.accentInk : Theme.accentText
             anchors.verticalCenter: parent.verticalCenter

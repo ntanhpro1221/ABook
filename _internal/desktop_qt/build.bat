@@ -2,13 +2,14 @@
 rem Windows app, Qt Quick (D0). Release build into build\, copy + windeployqt into dist\.
 rem   build.bat           build
 rem   build.bat clean     remove build\ and dist\ (node fs.rmSync; the repo rules forbid rm/del/rmdir)
-rem Override with env vars: QT_ROOT (Qt >= 6.10.3 msvc2022_64), CMAKE_BIN, NINJA_BIN, VCVARS, ABOOK_PYTHON.
+rem Override with env vars: QWK_ROOT (QWindowKit, built by tools\build_qwindowkit.bat when missing), QT_ROOT (Qt >= 6.10.3 msvc2022_64), CMAKE_BIN, NINJA_BIN, VCVARS, ABOOK_PYTHON.
 setlocal
 set HERE=%~dp0
 if not defined QT_ROOT set QT_ROOT=D:\Novels\native_desk_proto\qt611\6.10.3\msvc2022_64
 if not defined CMAKE_BIN set CMAKE_BIN=D:\Novels\native_desk_proto\qt\Tools\CMake_64\bin
 if not defined NINJA_BIN set NINJA_BIN=D:\Novels\native_desk_proto\qt\Tools\Ninja
 if not defined VCVARS set VCVARS=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat
+if not defined QWK_ROOT set QWK_ROOT=D:\Novels\native_desk_proto\qwk
 if not defined ABOOK_PYTHON set ABOOK_PYTHON=D:\Novels\ABook\_internal\runtime\.venv\Scripts\python.exe
 
 if /i "%1"=="clean" (
@@ -20,6 +21,12 @@ call "%VCVARS%" >nul
 if errorlevel 1 exit /b 1
 set PATH=%CMAKE_BIN%;%NINJA_BIN%;%QT_ROOT%\bin;%PATH%
 
+rem Own title bar: QWindowKit (Apache-2.0, static). Built once into %QWK_ROOT%\inst
+if not exist "%QWK_ROOT%\inst\lib\cmake\QWindowKit\QWindowKitConfig.cmake" (
+  call "%HERE%tools\build_qwindowkit.bat"
+  if errorlevel 1 exit /b 1
+)
+
 rem Design tokens: Theme.qml must match DESIGN.md (regenerate with tools\gen_theme.py)
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\gen_theme.py" --check
 if errorlevel 1 exit /b 1
@@ -28,9 +35,21 @@ rem Owner rule: never cut the user's text (no elide / maximumLineCount / clip on
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_text_cut.py"
 if errorlevel 1 exit /b 1
 
-cmake -S "%HERE%." -B "%HERE%build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe"
+cmake -S "%HERE%." -B "%HERE%build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%;%QWK_ROOT%\inst" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe"
 if errorlevel 1 exit /b 1
 cmake --build "%HERE%build"
+if errorlevel 1 exit /b 1
+
+rem Player unit tests (QtTest with fake audio/network): red stops the build before packaging
+"%HERE%build\PlayerTests.exe"
+if errorlevel 1 exit /b 1
+"%HERE%build\ReadAlongTests.exe"
+if errorlevel 1 exit /b 1
+rem Skip-15 icon pixel check (gap between stroke and digits, ink inside the box)
+"%HERE%build\SkipGlyphTests.exe"
+if errorlevel 1 exit /b 1
+rem Sidebar collapse / expand / hover overlay (QtQuickTest with a stubbed Platform)
+"%HERE%build\sidebar_tests\SidebarTests.exe"
 if errorlevel 1 exit /b 1
 
 if not exist "%HERE%dist" mkdir "%HERE%dist"

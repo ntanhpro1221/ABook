@@ -83,7 +83,7 @@ Item {
                 MenuRow {
                     id: restart
                     width: parent.width
-                    glyph: ""
+                    icon: "refresh-cw"
                     text: "Khởi động lại"
                     onClicked: { root.close(); Backend.restart() }
                 }
@@ -91,7 +91,7 @@ Item {
                     id: log
                     y: restart.height
                     width: parent.width
-                    glyph: ""
+                    icon: "folder-open"
                     text: "Mở thư mục nhật ký"
                     onClicked: { root.close(); Platform.revealFile(Backend.logPath) }
                 }
