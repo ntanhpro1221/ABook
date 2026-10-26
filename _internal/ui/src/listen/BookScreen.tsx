@@ -25,7 +25,7 @@ import { useClip } from "./clip";
 import { FindInBook } from "./FindInBook";
 import { canEditBook, EditBlockedItem, EditBookDialog, refreshAfterEdit, RenameChapterDialog, SaveAsDialog, StudioOnlyItem, useSaveBook, useShareBook } from "./EditBook";
 import { bookStatusText, remoteUnfinishedLine, usePlayListenBook, useResumeTarget } from "./LibraryScreen";
-import { canPlay, chapterHeard, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
+import { canPlay, chapterHeard, chapterResumeAt, chaptersByPart, type CastMember, type ListenBook, type ListenChapter, voiceName } from "./model";
 import { chapterSubline, displayTitle, keepTogether, partialBookLine, primaryListenLabel, textBookLine } from "./labels";
 import { usePlayer } from "./player";
 import { usePreparedChapters } from "./PlayerViews";
@@ -34,7 +34,7 @@ import { PlaylistSubmenu } from "./PlaylistChoice";
 import { ProjectFileItems, ProjectViewsDialog, TextBookItems } from "./ProjectFileItems";
 import { BookSuggestions } from "./ReadingSuggestions";
 import { WishesDialog } from "./WishesDialog";
-import { useCast, useListenBook, useListenLibrary, useListenMutations, useSource, useWarmVoice } from "./source";
+import { isMissing, useCast, useListenBook, useListenLibrary, useListenMutations, useSource, useWarmVoice } from "./source";
 import { latestReading } from "./readingPosition";
 import { moreMenuHasItems } from "./bookMenu";
 import { withFeedback } from "@/shared/feedback";
@@ -67,7 +67,8 @@ export function ChapterRow({
   const onPlay = () => {
     if (!canPlay(chapter)) return;
     if (current) player.toggle();
-    else void playBook(book, chapter.id, heard > 0 && heard < 1 ? (book.state.chapters[String(chapter.id)]?.heard ?? 0) : 0);
+    // Cùng luật với "Nghe tiếp" (model.chapterResumeAt): còn vài giây cuối thì nghe lại từ đầu chương, không phát giây cuối rồi nhảy sang chương kế.
+    else void playBook(book, chapter.id, chapterResumeAt(book.state, chapter));
   };
   const name = chapter.subtitle || chapter.title;
   return (
@@ -108,11 +109,11 @@ export function ChapterRow({
         tabIndex={canPlay(chapter) ? -1 : undefined}
         className="touch-hit min-w-0 flex-1 text-left"
       >
-        <div className={cn("truncate text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
+        <div className={cn("break-words text-sm font-medium", current && "text-accent-text", (done || !canPlay(chapter)) && !current && "text-fg-2")}>
           {name}
         </div>
         {/* min-h 1rem (= một dòng text-xs): dòng phụ luôn giữ chỗ - chương có audio rồi hàng không cao thêm, và mọi hàng cùng nhịp. */}
-        <div className="tabular min-h-[1rem] truncate text-xs text-fg-2">
+        <div className="tabular min-h-[1rem] break-words text-xs text-fg-2">
           {chapterSubline(chapter, book.producing)}
           {prepared && (
             <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-control bg-accent-soft px-1 align-[1px] text-[0.6875rem] font-medium text-accent-text">
@@ -555,7 +556,7 @@ export function HistoryTab({ book }: { book: ListenBook }) {
                     {clockOf(item.startedAt) === clockOf(item.endedAt) ? clockOf(item.startedAt) : `${clockOf(item.startedAt)}-${clockOf(item.endedAt)}`} ·{" "}
                     {formatLength(item.listened)}
                   </div>
-                  <div className="tabular truncate text-xs text-fg-2">
+                  <div className="tabular break-words text-xs text-fg-2">
                     {titleOf(item.from.chapterId)} {formatClock(item.from.seconds)} → {titleOf(item.to.chapterId)} {formatClock(item.to.seconds)}
                   </div>
                 </div>
@@ -675,11 +676,11 @@ function RecordPicker({ book, dialog, setDialog }: { book: ListenBook; dialog: R
         <DropdownMenu.Trigger asChild>
           <button
             type="button"
-            className="mt-3 inline-flex h-8 max-w-full items-center gap-1.5 rounded-full border-line px-3 text-xs text-fg-2 hover:bg-hover hover:text-fg"
+            className="mt-3 inline-flex min-h-8 max-w-full items-center gap-1.5 rounded-full border-line px-3 py-1 text-left text-xs text-fg-2 hover:bg-hover hover:text-fg"
           >
             <UserRound className="size-3.5 shrink-0" />
             <span className="shrink-0">Hồ sơ nghe:</span>
-            <span className="truncate font-medium text-fg">{active.name}</span>
+            <span className="min-w-0 break-words font-medium text-fg">{active.name}</span>
             <ChevronDown className="size-3.5 shrink-0" />
           </button>
         </DropdownMenu.Trigger>
@@ -808,13 +809,7 @@ export interface EditingOptions {
   remote?: string;
 }
 
-export function BookScreen({
-  extraActions,
-  dangerActions,
-  studioLink,
-  notice,
-  editing = {},
-}: {
+type BookScreenProps = {
   extraActions?: (book: ListenBook) => ReactNode;
   dangerActions?: (book: ListenBook) => ReactNode;
   /** Máy tính: lối sang Studio ngay trên dòng trạng thái của sách đang làm. */
@@ -822,7 +817,16 @@ export function BookScreen({
   /** Dòng tình trạng riêng của nền tảng dưới tên sách (máy tính: tải sách của máy khác về máy). */
   notice?: (book: ListenBook) => ReactNode;
   editing?: false | EditingOptions;
-}) {
+};
+
+/** Mỗi cuốn một trang riêng: app chuyển thẳng từ /book/A sang /book/B (thông báo "Mở cuốn đó", chọn hồ sơ khác) thì hộp đang mở của A (đổi tên chương,
+ *  tìm, sửa sách) không mang sang B - đổi tên chương của A từng gửi lên B theo số chương. */
+export function BookScreen(props: BookScreenProps) {
+  const { id } = useParams();
+  return <BookPage key={id} {...props} />;
+}
+
+function BookPage({ extraActions, dangerActions, studioLink, notice, editing = {} }: BookScreenProps) {
   const { id } = useParams();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
@@ -882,7 +886,9 @@ export function BookScreen({
   );
   const content = () => {
 
-  if (error || !book) {
+  // Chỉ 404 mới là sách không còn: một lần hỏi lại hụt (máy chủ khởi động lại, mạng chớp) giữ nguyên trang đã có - không thì cả trang biến thành
+  // "Không tìm thấy" và hộp thoại đang sửa dở mất theo.
+  if (!book || isMissing(error)) {
     return (
       <EmptyState icon={BookOpenText} title="Không tìm thấy sách này" className="mt-20" action={<Button onClick={() => navigate("/")}>Về thư viện</Button>}>
         Sách có thể đã bị chuyển sang thư mục khác hoặc bị xoá khỏi thư viện.

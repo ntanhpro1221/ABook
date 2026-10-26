@@ -31,6 +31,29 @@ export function bookProgressText(state: { whole: boolean; heard: number; total: 
   return `Đã nghe ${formatPercent(state.heard / state.total)} ${scope} · ${remaining}`;
 }
 
+/** Phần audio của cả cuốn trước chương đang nghe và tổng phần audio đã có (giây) - nền cho `bookProgressText`. `inside`: chương đang nghe là một
+ *  phần của tổng ấy (có audio) - chương chỉ có chữ (giọng máy đọc) thì đồng hồ của nó không cộng vào. */
+export function bookHeardBase(
+  queue: ReadonlyArray<Pick<ListenChapter, "id" | "available" | "duration">>,
+  chapterId: number | undefined,
+): { before: number; total: number; inside: boolean } {
+  let before = 0;
+  let total = 0;
+  let reached = false;
+  let inside = false;
+  for (const chapter of queue) {
+    // Tìm chương đang nghe TRƯỚC khi bỏ chương chưa có audio: chương chỉ có chữ đang đọc mà bị bỏ qua thì mọi chương sau nó tính là đã nghe (100%).
+    if (chapter.id === chapterId) {
+      reached = true;
+      inside = chapter.available;
+    }
+    if (!chapter.available) continue;
+    if (!reached) before += chapter.duration;
+    total += chapter.duration;
+  }
+  return { before, total, inside };
+}
+
 /** Dòng dưới tên một cuốn trong danh sách mời "Nghe cuốn khác": đã nghe dở thì tiến độ (cùng lời với màn "Đang nghe"), chưa nghe thì độ dài. */
 export function otherBookLine(book: { duration: number; chaptersTotal: number; complete: boolean; progress: { heardSeconds: number; totalSeconds: number } }): string {
   const { heardSeconds, totalSeconds } = book.progress;

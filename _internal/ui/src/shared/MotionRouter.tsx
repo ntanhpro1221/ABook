@@ -40,7 +40,8 @@ export function MotionHashRouter({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     const cleanup = installBackOrder();
     const escape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
+      // Esc của bộ gõ đang soạn chữ (IME) chỉ huỷ chữ đang soạn - không đóng hộp / lớp đang mở (mất cả phần đã gõ).
+      if (event.key !== "Escape" || event.defaultPrevented || event.isComposing) return;
       if (dismissTopLayer(document, undefined, undefined, undefined, false)) {
         event.preventDefault(); event.stopImmediatePropagation();
       }
