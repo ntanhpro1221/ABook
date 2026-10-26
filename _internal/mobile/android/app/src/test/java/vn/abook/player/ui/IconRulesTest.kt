@@ -30,6 +30,7 @@ class IconRulesTest {
         "editbook/EditBookScreen.kt" to "bút trong huy hiệu tròn nhỏ trên bìa",
         "nowplaying/PlayerVisuals.kt" to "icon trình phát 24 như web",
         "screens/LibraryChrome.kt" to "dấu + cạnh chữ 'Thêm sách', X trong ô tìm",
+        "music/MusicPanel.kt" to "icon 16 trong nút chữ như nút ghost size-4 của web (Đổi bài, Chọn)",
     )
 
     private fun sources() = root.walkTopDown().filter { it.isFile && it.extension == "kt" }.map { it.relativeTo(root).invariantSeparatorsPath to it.readText() }

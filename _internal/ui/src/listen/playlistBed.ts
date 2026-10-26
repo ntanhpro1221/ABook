@@ -17,7 +17,7 @@ export const OFF_PLAYLIST = "off";
 /** `music.playlist` = "scene": nhạc đổi theo cảnh, máy tự dựng từ chữ, không cần model (máy tính: music_nnscene.py + sceneCues.ts; điện thoại: lõi native, SceneDevice.kt +
  *  SceneAnchor.kt). Là mặc định khi chưa chọn gì. Máy không báo `scene` trong menu của nó thì dòng này không hiện. */
 export const SCENE_PLAYLIST = "scene";
-export const SCENE_LABEL = "Theo cảnh (máy tự dựng)";
+export const SCENE_LABEL = "Theo cảnh";
 /** Bài không biết độ dài: khoảng mặc định trên đồng hồ (bài ngắn hơn thì lặp liền như mọi bài nhạc nền). */
 export const FALLBACK_SECONDS = 180;
 /** Bằng thời gian chuyển mờ của MusicBed: bài sau vào lúc bài trước bắt đầu mờ, bài trước tắt hẳn đúng lúc nó hết. */
@@ -336,9 +336,9 @@ function hours(minutes: number): string {
 }
 
 /** Mục thêm nhạc ở cuối menu "Nhạc nền" (chỉ khi máy nhập được nhạc). */
-export const ADD_MUSIC_LABEL = "Thêm nhạc của bạn…";
+export const ADD_MUSIC_LABEL = "Thêm nhạc của bạn";
 
-/** Lời nói khi "Nhạc của tôi" còn trống. Máy nhập được thì mục "Thêm nhạc của bạn…" ngay dưới đã là đường đi (không cần nói thêm);
+/** Lời nói khi "Nhạc của tôi" còn trống. Máy nhập được thì mục "Thêm nhạc của bạn" ngay dưới đã là đường đi (không cần nói thêm);
  *  máy không nhập được (điện thoại nghe thư viện máy tính, Studio từ xa) thì chỉ đường sang máy tính. */
 export function emptyMineHint(canImport: boolean): string | undefined {
   return canImport ? undefined : "Máy này chưa thêm nhạc được. Thêm ở ABook trên máy tính (tab Nhạc nền của Studio), bài sẽ có ở đây.";
@@ -415,7 +415,7 @@ export function playlistOptions(menu: PlaylistMenu | undefined, canImport = fals
             id: SCENE_PLAYLIST,
             label: SCENE_LABEL,
             hint: "",
-            description: "Nhạc đổi theo từng cảnh của truyện.",
+            description: "Máy tự dựng, đổi theo từng cảnh của truyện.",
           },
         ]
       : []),

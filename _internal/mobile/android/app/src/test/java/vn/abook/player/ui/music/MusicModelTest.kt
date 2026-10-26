@@ -59,7 +59,44 @@ class MusicModelTest {
         assertEquals(MusicLevels.levels, MusicLevels.options(-20.0))
         val packaged = MusicLevels.options(-18.0)
         assertEquals(listOf(-14.0, -17.0, -18.0, -20.0, -24.0, -28.0), packaged.map { it.first })
-        assertEquals("Của sách", packaged[2].second)
+        assertEquals("-18 dB (của sách)", packaged[2].second)
+        assertEquals("Vừa (mặc định)", MusicLevels.label(-20.0))
+        assertEquals("Rất nhỏ (dễ nghe lời nhất)", MusicLevels.label(-28.0))
+        assertEquals("-18,5 dB (của sách)", MusicLevels.label(-18.5))
+    }
+
+    @Test
+    fun `packaged cues read and speak like the web edit dialog`() {
+        val read = MusicJson.book(JSONObject("""{"hasMusic":true,"enabled":true,"levelDb":-18,"cues":[
+            {"key":"3:0","chapterId":3,"chapter":"Chương 1","start":0,"end":95.5,"title":"Rainy Night","creator":"Kevin MacLeod"},
+            {"key":"3:95500","chapterId":3,"chapter":"Chương 1","start":95.5,"end":200,"title":"","creator":"","silenced":true},
+            {"key":"","chapter":"không khoá"},
+            {"key":"4:0","chapterId":4,"chapter":"Chương 2","start":0,"end":60,"title":"Mưa","creator":"Tôi","pinned":true}]}"""), false)
+        assertEquals(listOf("3:0", "3:95500", "4:0"), read.cues.map { it.key })
+        val (first, quiet, mine) = read.cues
+        assertEquals("Chương 1 · 0:00 – 1:35 · Kevin MacLeod", MusicText.cueLine(first))
+        assertEquals("Nhạc nền", MusicText.cueTitle(quiet))
+        assertTrue(quiet.silenced)
+        assertEquals("Chương 2 · 0:00 – 1:00 · Tôi · bài của bạn", MusicText.cueLine(mine))
+        assertTrue(first.holds(3, 95.0))
+        assertFalse("mốc cuối thuộc đoạn sau", first.holds(3, 95.5))
+        assertEquals("Nhạc nền: Bật", MusicText.switchLabel(true))
+        assertEquals("Nhạc nền: Tắt", MusicText.switchLabel(false))
+    }
+
+    @Test
+    fun `swap choices carry the same notes as the web`() {
+        val mine = MusicJson.mine(JSONObject("""{"key":"3:0","mine":[
+            {"link":"local:a","title":"A","creator":"Ai","duration":125,"analysed":true,"fits":false},
+            {"link":"local:b","title":"B","creator":"","duration":0,"analysed":true,"vocalsLikely":true,"fits":true},
+            {"link":"local:c","title":"C","creator":"Cê","duration":61,"analysed":false},
+            {"title":"không link"}]}"""))
+        assertEquals(listOf("local:a", "local:b", "local:c"), mine.map { it.link })
+        assertEquals("Ai · 2:05", MusicText.mineLine(mine[0]))
+        assertEquals("", MusicText.mineNote(mine[0]))
+        assertEquals("", MusicText.mineLine(mine[1]))
+        assertEquals("Có vẻ có lời - máy không tự chọn bài này · Hợp không khí đoạn này", MusicText.mineNote(mine[1]))
+        assertEquals("Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được", MusicText.mineNote(mine[2]))
     }
 
     @Test

@@ -71,7 +71,7 @@ export function SwapTrack({
   if (error && !data) return <MotionRegion fadeThrough><InlineError message="Bạn hãy kiểm tra kết nối rồi tìm lại bài nhạc." onRetry={() => void refetch()} /></MotionRegion>;
   const mine = data?.mine ?? [];
   if (!mine.length) {
-    return <MotionRegion as="p" className="px-3 py-2 text-xs text-fg-2">Chưa có bài nào khác trong Nhạc của tôi - nhập nhạc của bạn ở mục “Nhạc của tôi” bên dưới.</MotionRegion>;
+    return <MotionRegion as="p" className="px-3 py-2 text-xs text-fg-2">Chưa có bài nào khác trong Nhạc của tôi.</MotionRegion>;
   }
   return (
     <MotionRegion as="ul" className="divide-y divide-line border-t border-line bg-bg/40">
