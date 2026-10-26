@@ -428,12 +428,13 @@ Item {
             compare(Api.notice, "")
             verify(!card.checking)
             DesktopApi.responses = {}
-            // thấy bản mới: mục "đã có" thay chỗ
-            replyWith("GET /api/app", () => ({status: 200, data: {version: "0.4.147", canCheckUpdate: true, update: {version: "0.4.149", notes: ""}}}))
+            // thấy bản mới: vỏ báo "found" qua kênh của nó (D3: không còn hỏi /api/app định kỳ), Main đọc lại /api/app -> mục "đã có" thay chỗ
             card.waitMs = 45000
             card.check()
-            wait(3300)
+            Api.info = {version: "0.4.147", canCheckUpdate: true, update: {version: "0.4.149", notes: ""}}
+            Backend.updateChecked({state: "found"})
             verify(!card.checking)
+            compare(card.line, null)
             verify(card.update !== null)
             compare(card.update.version, "0.4.149")
         }

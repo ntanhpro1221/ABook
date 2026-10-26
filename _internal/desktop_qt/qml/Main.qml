@@ -31,7 +31,7 @@ Window {
     Component { id: libraryScreen; LibraryScreen { fileOpening: addBook.opening; onOpenBook: (book) => stack.push(bookPage, { book: book }); onAddRequested: paths => addBook.begin(paths); onOpenFileRequested: addBook.openFile(); onStudioRequested: stack.show(1) } }
     Component { id: studioScreen; StudioScreen {} }
     Component { id: settingsScreen; SettingsScreen { onStudioRequested: stack.show(1) } }
-    Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data) } }
+    Component { id: bookPage; BookPage { onEditRequested: data => editBook.begin(data); onSaveRequested: data => saveBookAs.quick(data); onSaveAsRequested: data => saveBookAs.begin(data); onRenameRequested: (data, chapter) => renameChapter.begin(data, chapter) } }
 
     Item {
         id: shell
@@ -125,13 +125,8 @@ Window {
         Shortcut { sequences: ["Ctrl+3"]; onActivated: stack.show(2) }
         Shortcut { sequences: ["Ctrl+Left"]; enabled: Player.loaded; onActivated: Player.previous() }
         Shortcut { sequences: ["Ctrl+Right"]; enabled: Player.loaded; onActivated: Player.next() }
-        // Trình phát: Space, Left, Right khi không có ô nào đang nhận phím đó (danh sách Thư viện giữ mũi tên của nó)
-        Keys.onPressed: (event) => {
-            if (!Player.loaded || (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier))) return
-            if (event.key === Qt.Key_Space && !event.isAutoRepeat) { Player.toggle(); event.accepted = true }
-            else if (event.key === Qt.Key_Left) { Player.skip(-15); event.accepted = true }
-            else if (event.key === Qt.Key_Right) { Player.skip(15); event.accepted = true }
-        }
+        // Trình phát + "?" khi không có ô nào đang nhận phím đó (danh sách Thư viện giữ mũi tên của nó, ô nhập giữ chữ của nó)
+        Keys.onPressed: (event) => { if (keys.handle(event)) event.accepted = true }
         // Nút Back (nút bên) của chuột
         TapHandler {
             acceptedButtons: Qt.BackButton
@@ -151,22 +146,32 @@ Window {
     EditBook { id: editBook }
     EditBookRename { id: renameChapter }      // mở từ nút “…” ở dòng chương: renameChapter.begin(book, chapter)
     EditBookSaveAs { id: saveBookAs }
+    // Cài đặt › Giao diện: "Phím tắt chữ" (M, [ ], ?), "Âm thanh chạm", "Nền đọc" - có hiệu lực ngay khi đổi (desktop/App.tsx)
+    readonly property bool letterShortcuts: Api.preferences.letterShortcuts !== false
+    PlayerKeys { id: keys; letters: win.letterShortcuts; onShortcutsRequested: shortcuts.show() }
+    ShortcutsDialog { id: shortcuts; letters: win.letterShortcuts }
+    Binding { target: Feedback; property: "sounds"; value: Api.preferences.touchSounds !== false }
+    Binding { target: Theme; property: "readingSurface"; value: ["paper", "ivory", "night"].indexOf(Api.preferences.readingSurface) >= 0 ? Api.preferences.readingSurface : "auto" }
     Connections {
         target: Backend
         function onStateChanged() { if (Backend.state === Backend.Ready) { Api.bind(DesktopApi, Theme); Api.load() } }
     }
     Connections { target: Api; function onPreferencesChanged() { Player.configure(Api.preferences) } }
-    Rectangle {
+    // Sự kiện host chuyển lên vỏ (UpdateListener của desktop/App.tsx): vừa có bản mới thì đọc lại /api/app để hiện "Cập nhật ABook";
+    // tải bản mới hỏng thì nói lời vỏ đã viết sẵn
+    Connections {
+        target: Backend
+        function onHostEvent(name, detail) {
+            if (name === "abook-update") Api.call("GET", "/api/app", null, function(data, error) { if (!error) Api.info = data })
+            else if (name === "abook-update-failed") Api.notice = "Chưa tải được bản mới" + (detail ? "\n" + detail : "")
+        }
+    }
+    // Lời báo của app (Toaster của web): góc trên bên phải, cách dải tiêu đề và mép phải 16 px; trên cả hộp thoại
+    Toast {
         z: 90
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: 32
-        width: Math.min(parent.width - 80, apiNotice.implicitWidth + 32)
-        height: apiNotice.height + 24
-        visible: Api.notice !== ""
-        color: Theme.panel; radius: Theme.radiusControl; border.color: Theme.line
-        FormLabel { id: apiNotice; x: 16; y: 12; width: parent.width - 32; text: Api.notice }
-        Timer { running: Api.notice !== ""; interval: 6000; onTriggered: Api.notice = "" }
+        anchors.right: parent.right
+        anchors.rightMargin: 16
+        y: titleBar.height + 16
     }
     Connections {
         target: sidebar.chip

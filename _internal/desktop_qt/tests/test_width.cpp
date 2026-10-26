@@ -1,6 +1,7 @@
 // Actual QML screens + actual player/book/read-along, fake HTTP/audio only.
 #include "bookdetail.h"
 #include "fakes.h"
+#include "feedback.h"
 #include "music.h"
 #include "readalong.h"
 #include <QFontDatabase>
@@ -21,6 +22,16 @@ public:
     }
 };
 
+// Đường mạng giả của Player / Music / BookDetail cho bộ thử QML: đếm lời gọi (FakeNet::callsTo).
+class WidthNet : public QObject {
+    Q_OBJECT
+public:
+    explicit WidthNet(FakeNet *net) : m_net(net) {}
+    Q_INVOKABLE int count(const QString &method, const QString &suffix) const { return int(m_net->callsTo(suffix, method.toLatin1()).size()); }
+private:
+    FakeNet *m_net;
+};
+
 class WidthSetup : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
@@ -29,6 +40,8 @@ class WidthSetup : public QObject {
     std::unique_ptr<Player> player;
     std::unique_ptr<ReadAlong> read;
     std::unique_ptr<Music> music;
+    std::unique_ptr<Feedback> feedback;
+    std::unique_ptr<WidthNet> netView;
 public slots:
     void qmlEngineAvailable(QQmlEngine *engine) {
         engine->addImageProvider(QStringLiteral("cover"), new WidthCovers);
@@ -49,10 +62,16 @@ public slots:
         Player::setInstance(player.get());
         read = std::make_unique<ReadAlong>(player.get(), &net);
         music = std::make_unique<Music>(player.get(), &net, [] { return new FakeOut; });
+        feedback = std::make_unique<Feedback>([] { return new FakeOut; }, nullptr);
+        Feedback::setInstance(feedback.get());
+        QObject::connect(player.get(), &Player::playingChanged, feedback.get(), [this] { feedback->setBookPlaying(player->playing()); });
         qmlRegisterType<BookDetail>("ABook", 1, 0, "BookDetail");
         qmlRegisterSingletonInstance("ABook", 1, 0, "Player", player.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "ReadAlong", read.get());
         qmlRegisterSingletonInstance("ABook", 1, 0, "Music", music.get());
+        qmlRegisterSingletonInstance("ABook", 1, 0, "Feedback", feedback.get());
+        netView = std::make_unique<WidthNet>(&net);
+        qmlRegisterSingletonInstance("ABook", 1, 0, "WidthNet", netView.get());
         player->open(QStringLiteral("width"), 1, 0, false);
     }
 };

@@ -4,6 +4,8 @@ import ABook
 // Một hàng chương: tên và số chương ở trái, thời lượng ở cuối hàng,
 // dấu đã nghe xong, vạch tiến độ chương dở dang, chương đang phát tô màu nhấn.
 // Dùng ở trang sách, ngăn Chương và cột phải của Đang nghe khi chưa có chữ chạy theo. Bấm hàng không nghe được thì không làm gì.
+// `hasMenu` (trang sách): nút "…" ở cuối hàng (ChapterRow của listen/BookScreen.tsx) - chỉ hiện khi rê chuột vào hàng, khi có tiêu điểm hay khi
+// menu của nó đang mở; chỗ của nó luôn giữ nên hàng không xô lệch. Bấm thì `menuRequested(nút)` (bảng nổi do trang sách dựng).
 Interactive {
     id: root
     property string title: ""
@@ -14,6 +16,14 @@ Interactive {
     property bool done: false
     property bool current: false
     property real progress: 0
+    property bool hasMenu: false
+    property bool menuOpen: false
+    property string fullTitle: ""
+    signal menuRequested(Item anchor)
+    readonly property real menuWidth: hasMenu ? 32 + Theme.s4 : 0
+    // Cú bấm trúng nút "…": TapHandler của hàng cũng thấy cú bấm ấy (nút con nhận trước) - chỗ dùng bỏ qua `clicked` khi đúng (bấm "…" không
+    // phát chương). Cờ chỉ sống tới hết lượt xử lý cú bấm này.
+    property bool onMenuButton: false
     readonly property string headline: subtitle !== "" ? subtitle : title
     readonly property string detail: [subtitle !== "" ? title : "", status].filter(s => s !== "").join(" · ")
     implicitHeight: Math.max(56, Math.max(textColumn.implicitHeight, duration.implicitHeight) + 2 * Theme.s12)
@@ -44,7 +54,7 @@ Interactive {
         id: textColumn
         x: mark.x + mark.width + Theme.s12
         anchors.verticalCenter: parent.verticalCenter
-        width: parent.width - x - Theme.s12 - (duration.visible ? duration.width + Theme.s16 : 0)
+        width: parent.width - x - Theme.s12 - root.menuWidth - (duration.visible ? duration.width + Theme.s16 : 0)
         spacing: 2
         Text {
             width: parent.width
@@ -67,7 +77,7 @@ Interactive {
         id: duration
         objectName: "chapterDuration"
         visible: root.status === "" && root.length !== ""
-        x: parent.width - width - Theme.s12
+        x: parent.width - width - Theme.s12 - root.menuWidth
         anchors.verticalCenter: parent.verticalCenter
         text: root.length
         color: Theme.text3
@@ -75,13 +85,34 @@ Interactive {
         font.pixelSize: Theme.sizeCaption
         font.features: { "tnum": 1 }
     }
+    IconButton {
+        id: more
+        objectName: "chapterMore"
+        visible: root.hasMenu
+        x: parent.width - width - Theme.s8
+        anchors.verticalCenter: parent.verticalCenter
+        implicitWidth: 32
+        implicitHeight: 32
+        icon: "ellipsis"
+        iconSize: 16
+        ink: Theme.text2
+        hoverInk: Theme.text
+        Accessible.name: "Tuỳ chọn " + root.fullTitle
+        opacity: root.hovered || more.hovered || more.activeFocus || root.menuOpen ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+        onClicked: {
+            root.onMenuButton = true
+            Qt.callLater(function() { root.onMenuButton = false })
+            root.menuRequested(more)
+        }
+    }
     Rectangle {
         objectName: "chapterProgress"
         visible: root.progress > 0.01 && !root.done
         x: Theme.s12 + 20 + Theme.s12
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 4
-        width: (parent.width - x - Theme.s12) * Math.min(1, root.progress)
+        width: (parent.width - x - Theme.s12 - root.menuWidth) * Math.min(1, root.progress)
         height: 2
         radius: height / 2
         color: Theme.accent

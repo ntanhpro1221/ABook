@@ -1,4 +1,5 @@
 #include "backend.h"
+#include "hostmessage.h"
 
 #include <QJSEngine>
 #include "bench.h"
@@ -192,11 +193,22 @@ void Backend::onStdout() {
         m_buffer.remove(0, nl + 1);
         if (line.isEmpty())
             continue;
-        const QJsonObject message = QJsonDocument::fromJson(line).object();
-        const QString address = message.value(QStringLiteral("ready")).toString();
-        if (!address.isEmpty())
-            parseReady(address);
-        // Các thông điệp khác của host (hộp thoại, sự kiện) thuộc các bước sau (D2: thêm sách, chọn file).
+        const HostMessage::Message message = HostMessage::parse(line);
+        switch (message.kind) {
+        case HostMessage::Kind::Ready:
+            parseReady(message.address);
+            break;
+        case HostMessage::Kind::Event:
+            emit hostEvent(message.event, message.detail);
+            break;
+        case HostMessage::Kind::CheckUpdate:
+            // Như check_for_update(manual) của vỏ Tauri: kết quả nào cũng báo giao diện, để nút "Kiểm tra bản mới" không đứng chờ
+            emit updateChecked(HostMessage::updateCheckedWithoutUpdater());
+            break;
+        case HostMessage::Kind::InstallUpdate: // không có gói nào đã tìm thấy để cài (vỏ Qt chưa có bộ cập nhật)
+        case HostMessage::Kind::None:
+            break;
+        }
     }
 }
 

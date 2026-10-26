@@ -29,7 +29,7 @@ Popover {
                     width: (root.panelWidth - 2 * root.pad - 3 * Theme.s8) / 4
                     text: root.label(modelData)
                     selected: Math.abs(modelData - Player.rate) < 0.001
-                    onClicked: Player.setRate(modelData)
+                    onClicked: { Feedback.play("toggle"); Player.setRate(modelData) }
                 }
             }
         }
