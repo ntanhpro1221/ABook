@@ -98,7 +98,7 @@ class SettingsDataTest {
         val list = repo.voices.value as VoiceList.Ready
         assertEquals(listOf("edge", "supertonic", "device"), list.groups.map { it.provider })
         assertEquals("Hoài My", list.groups[0].voices[0].name)
-        assertEquals("Tiếng Việt (vi-vn-x-gft-local)", list.groups[2].voices[0].name)
+        assertEquals("Tiếng Việt", list.groups[2].voices[0].name)
         assertEquals("edge:vi-VN-HoaiMyNeural", list.chosen)
         repo.chooseVoice("supertonic:F1")
         assertEquals("supertonic:F1", core.default)
