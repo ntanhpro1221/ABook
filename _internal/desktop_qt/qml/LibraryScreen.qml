@@ -137,8 +137,8 @@ FocusScope {
                 width: root.coverW
                 height: skeleton.skeletonCellH
                 Rectangle { width: parent.width; height: Math.round(root.coverW * Theme.coverRatio); radius: Theme.radiusCover; color: Theme.sunken }
-                Rectangle { y: Math.round(root.coverW * Theme.coverRatio) + 14; width: parent.width * 0.85; height: 12; radius: 4; color: Theme.sunken }
-                Rectangle { y: Math.round(root.coverW * Theme.coverRatio) + 34; width: parent.width * 0.5; height: 10; radius: 4; color: Theme.sunken }
+                Rectangle { y: Math.round(root.coverW * Theme.coverRatio) + 14; width: parent.width * 0.85; height: 12; radius: Theme.radiusControl; color: Theme.sunken }
+                Rectangle { y: Math.round(root.coverW * Theme.coverRatio) + 34; width: parent.width * 0.5; height: 10; radius: Theme.radiusControl; color: Theme.sunken }
             }
         }
     }
@@ -151,7 +151,7 @@ FocusScope {
         visible: root.failed || root.libraryError || (!root.loading && root.count === 0)
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: root.failed ? "Chưa mở được ABook" : (root.libraryError ? "Chưa lấy được thư viện" : "Thư viện còn trống")
+            text: root.failed ? "Chưa mở được ABook" : (root.libraryError ? "Chưa tải được thư viện" : "Chưa có sách nào")
             color: Theme.text
             font.pixelSize: Theme.sizeSection
             font.weight: Theme.weightMedium
@@ -161,7 +161,7 @@ FocusScope {
             width: Math.min(root.width - 2 * Theme.margin, 460)
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
-            text: root.failed ? Backend.message : (root.libraryError ? Backend.library.error : "Sách bạn thêm sẽ nằm ở đây.")
+            text: root.failed ? Backend.message : (root.libraryError ? Backend.library.error : "Sách nghe được sẽ hiện ở đây.")
             color: Theme.text2
             font.pixelSize: Theme.sizeBodySmall
         }

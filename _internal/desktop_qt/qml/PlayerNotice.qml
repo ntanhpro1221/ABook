@@ -24,7 +24,7 @@ Item {
         id: pill
         width: Math.min(row.implicitWidth + 2 * Theme.s16, 560)
         height: Math.max(40, row.implicitHeight + 2 * Theme.s8)
-        radius: Math.min(20, height / 2)
+        radius: Theme.radiusCover
         color: Theme.dark ? Theme.text : "#2a2723"
         opacity: root.shown ? 1 : 0
         transform: Translate { y: root.shown ? 0 : 12 }

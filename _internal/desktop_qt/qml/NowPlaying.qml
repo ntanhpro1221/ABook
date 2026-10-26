@@ -4,7 +4,7 @@ import ABook
 // Đang nghe: phủ kín khung nội dung (thanh bên vẫn ở đó). Mở bằng cách biến thanh phát: bìa nhỏ lớn dần thành bìa lớn theo đường thẳng, phần còn lại trượt lên;
 // đóng là đúng gương (Esc, Alt+Left, nút Back của chuột đều đóng). Chỉ một tiến độ p chạy 0..1, mọi thứ là hàm của p - không có mờ thuần.
 //   Rộng (khung >= 1100 px): cột trái = bìa, tên, thanh tua, nút phát, rồi Tốc độ / Hẹn giờ / Chương / Nhạc nền; cột phải = văn bản chạy theo giọng
-//   (sách chưa có mốc thì danh sách chương). Hẹp: một cột, công tắc "Bìa / Chữ" trượt theo thứ tự.
+//   (sách chưa có mốc thì danh sách chương). Hẹp: một cột, công tắc "Bìa / Đọc theo" trượt theo thứ tự.
 Item {
     id: root
     property Item bar: null
@@ -154,14 +154,14 @@ Item {
                     x: (root.wide ? Theme.margin : root.colX) - 10
                     y: Theme.s16
                     icon: "chevron-down"
-                    tip: "Thu nhỏ  (Esc)"
+                    tip: "Thu nhỏ (Esc)"
                     onClicked: root.close()
                 }
                 PageSwitch {
                     visible: !root.wide
                     x: Math.round((root.width - width) / 2)
                     y: Theme.s16 + 2
-                    labels: ["Bìa", ReadAlong.status === "ready" && !ReadAlong.timed ? "Chương" : "Chữ"]
+                    labels: ["Bìa", ReadAlong.status === "ready" && !ReadAlong.timed ? "Chương" : "Đọc theo"]
                     index: root.page
                     onPicked: (i) => root.page = i
                 }
@@ -258,7 +258,7 @@ Item {
                         IconButton {
                             icon: "skip-back"
                             enabled: Player.loaded
-                            tip: "Chương trước  (Ctrl+←)"
+                            tip: "Chương trước (Ctrl+←)"
                             onClicked: Player.previous()
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -269,7 +269,7 @@ Item {
                             icon: "skip-forward"
                             enabled: Player.canNext
                             opacity: enabled ? 1 : 0.4
-                            tip: Player.canNext ? "Chương sau  (Ctrl+→)" : "Chưa có chương sau để nghe"
+                            tip: Player.canNext ? "Chương sau (Ctrl+→)" : "Chưa có chương sau để nghe"
                             onClicked: Player.next()
                             anchors.verticalCenter: parent.verticalCenter
                         }
@@ -285,16 +285,19 @@ Item {
                             width: chips.cellW
                             text: Player.rate === 1 ? "Tốc độ" : String(Player.rate).replace(".", ",") + "×"
                             active: Player.rate !== 1
-                            tip: "Tốc độ nghe"
+                            tip: "Tốc độ đọc"
                             onClicked: speed.toggle()
                         }
                         ControlChip {
                             id: sleepChip
                             width: chips.cellW
                             icon: "moon"
-                            text: Player.sleepKind === "minutes" ? Player.clockText(Player.clock.sleepLeft) : (Player.sleepKind === "chapter" ? "Hết chương" : "Hẹn giờ")
+                            // Nhãn trên nút có đơn vị ("14 phút", "40 giây") như web (sleepButtonLabel): "14:51" cạnh nút tốc độ trông như giờ đồng hồ
+                            text: Player.sleepKind === "minutes"
+                                ? (Player.clock.sleepLeft < 60 ? Math.max(1, Math.ceil(Player.clock.sleepLeft)) + " giây" : Math.ceil(Player.clock.sleepLeft / 60) + " phút")
+                                : (Player.sleepKind === "chapter" ? "Hết chương" : "Hẹn giờ")
                             active: Player.sleepKind !== "off"
-                            tip: "Hẹn giờ ngủ"
+                            tip: "Hẹn giờ tắt"
                             onClicked: sleep.toggle()
                         }
                         ControlChip {

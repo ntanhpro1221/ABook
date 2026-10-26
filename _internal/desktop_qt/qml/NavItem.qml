@@ -12,7 +12,7 @@ Interactive {
     readonly property real iconInset: 11     // tâm biểu tượng ở 28 = nửa dải thu gọn 56 (mục lệch lề 8)
 
     implicitHeight: Theme.buttonHeight
-    tip: shortcut ? text + "  (" + shortcut + ")" : ""
+    tip: shortcut ? text + " (" + shortcut + ")" : ""
 
     Rectangle {
         anchors.fill: parent
