@@ -14,6 +14,14 @@ import org.json.JSONObject
  * Mọi hàm đọc / ghi đĩa: gọi ở luồng nền.
  */
 object BookActions {
+    /** Native UI already waited out its undo window without touching disk. Do not start a second trash timer. */
+    fun deleteAfterUndo(context: Context, id: String) {
+        require(!BookDownloads.isActive(context, id)) { "Đang tải cuốn này, bạn huỷ tải trước" }
+        Store.deleteBook(id)
+        check(!Store.deletableBookDir(id).exists()) { "Chưa xoá được, bạn thử lại" }
+        runCatching { ListenExports.sweep(context) }
+    }
+
     /** Sau một lần sửa thành công (khác GET) qua [LocalStudio]: nhạc đang phát đọc lại lớp sửa, cuốn tải từ máy tính gửi phần sửa về sau vài giây. */
     fun edited(context: Context, id: String) {
         MusicBed.invalidate(id)

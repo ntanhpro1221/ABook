@@ -138,6 +138,7 @@ interface PlaybackCore {
     fun snapshot(): JSONObject
     fun play()
     fun pause()
+    fun close()
     fun toggle()
     fun skip(deltaSeconds: Double)
     fun seekTo(seconds: Double)
@@ -215,9 +216,10 @@ class PlayerRepo(
      * Cùng việc bản WebView làm khi mở lại app (Playback.load autoplay=false). Có gì khác vào lõi trong lúc đọc đĩa thì bỏ (không bao giờ đè cuốn đang có).
      */
     private fun restoreLast() {
+        val generation = loadGeneration
         scope.launch {
             val request = withContext(io) { lastPlan() } ?: return@launch
-            if (attached && !flow.value.hasTrack) core.load(request.copy(autoplay = false, restore = true))
+            if (attached && generation == loadGeneration && !flow.value.hasTrack) core.load(request.copy(autoplay = false, restore = true))
         }
     }
 
@@ -264,6 +266,25 @@ class PlayerRepo(
     }
 
     // ---- lệnh (chuyển thẳng xuống lõi) ----------------------------------------------------------------------
+
+    private var loadGeneration = 0
+
+    /** Invalidate in-flight plans as well as the visible player. Undo restores the row, never restarts audio. */
+    fun bookRemoved(id: String) {
+        loadGeneration++
+        if (flow.value.bookId != id) return
+        core.close()
+        queue = null
+        queueChapters = emptyList()
+        flow.value = PlayerState.Empty
+        clock.set(0, 0)
+        changes.tryEmit("closed")
+    }
+
+    fun reconcile(books: List<ListenBook>) {
+        val id = flow.value.bookId
+        if (id.isNotEmpty() && books.none { it.id == id }) bookRemoved(id)
+    }
 
     fun play() = core.play()
     fun pause() = core.pause()
@@ -318,9 +339,10 @@ class PlayerRepo(
             core.jumpTo(chapterId, seconds)
             return
         }
+        val generation = loadGeneration
         scope.launch {
             val request = withContext(io) { planAt(bookId, chapterId, seconds) } ?: return@launch
-            core.load(request)
+            if (generation == loadGeneration) core.load(request)
         }
     }
 
@@ -330,15 +352,18 @@ class PlayerRepo(
      */
     suspend fun prepare(bookId: String): Boolean {
         if (flow.value.bookId == bookId && flow.value.hasTrack) return true
+        val generation = loadGeneration
         val request = withContext(io) { planOf(bookId) } ?: return false
+        if (generation != loadGeneration) return false
         core.load(request.copy(autoplay = false))
         return withTimeoutOrNull(3_000) { flow.first { it.bookId == bookId && it.hasTrack } } != null
     }
 
     private fun playBook(bookId: String) {
+        val generation = loadGeneration
         scope.launch {
             val request = withContext(io) { planOf(bookId) } ?: return@launch
-            core.load(request)
+            if (generation == loadGeneration) core.load(request)
         }
     }
 }

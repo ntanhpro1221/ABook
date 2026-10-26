@@ -26,7 +26,7 @@ import vn.abook.player.ui.data.BookSource
  * `LibraryPlugin` chuyển tiếp cho bản WebView, không qua cầu Capacitor. Xoá khỏi máy đi qua `library` ([BookSource.delete]): đúng lõi và đúng đường
  * làm mới Thư viện của menu "Xoá khỏi máy" ở trang sách.
  */
-class DevicesRepo(private val context: Context, private val library: BookSource) : DevicesSource {
+class DevicesRepo(private val context: Context, private val library: vn.abook.player.ui.data.LibraryRepo) : DevicesSource {
     private suspend fun <T> io(block: () -> T): T = withContext(Dispatchers.IO) {
         Store.init(context)
         block()
@@ -110,10 +110,18 @@ class DevicesRepo(private val context: Context, private val library: BookSource)
         }
     }
 
-    override suspend fun streamable() = io { RemoteBooks.streamable(context); Unit }
+    override suspend fun streamable() {
+        val rows = io { RemoteBooks.streamable(context) }
+        library.acceptRemote(rows)
+    }
 
     override suspend fun download(book: RemoteBook) = io {
-        guard("Chưa tải được") { BookDownloads.start(context, book.id, book.source, book.remoteId) }
+        guard("Chưa tải được") {
+            val manifest = Store.streamManifest(book.id)
+            val source = book.source ?: manifest?.optString("source")?.takeIf { it.isNotEmpty() }
+            val remoteId = book.remoteId ?: manifest?.optString("remoteId")?.takeIf { it.isNotEmpty() }
+            BookDownloads.start(context, book.id, source, remoteId)
+        }
     }
 
     override suspend fun cancelDownload(id: String) = io { BookDownloads.cancel(context, id) }
@@ -156,7 +164,7 @@ class DevicesRepo(private val context: Context, private val library: BookSource)
 
     override suspend fun setDeviceName(name: String): String = io { Devices.setDeviceName(context, name) }
 
-    override suspend fun storage(): Storage = io { DevicesJson.storage(Devices.storage(), { Store.rawManifest(it) != null }, { SyncLink.holderName(context, it) }) }
+    override suspend fun storage(): Storage = io { DevicesJson.storage(Devices.storage(), { Store.rawManifest(it) != null }, { SyncLink.holderName(context, it) }).let { storage -> storage.copy(entries = storage.entries.filterNot { library.isHidden(it.id) }) } }
 
     override suspend fun delete(id: String): String? = library.delete(id)
 

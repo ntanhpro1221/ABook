@@ -128,6 +128,10 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                         }
                     }
                     PlayerSheet.More -> {
+                        if (window.otherPlayers != null) SheetRow("Thiết bị phát", "Chọn") {
+                            window.closeSheet()
+                            window.otherPlayers?.invoke()
+                        }
                         // Nhạc nền chỉ có một lựa chọn bật/tắt: đổi ngay tại hàng, không mở thêm một tấm chỉ chứa đúng một công tắc.
                         SheetRow("Nhạc nền", if (state.musicEnabled) "Bật" else "Tắt", role = Role.Switch) { model.setMusic(!state.musicEnabled) }
                         SheetRow("Giọng", if (state.chapters.firstOrNull { it.id == state.chapterId }?.textPath.isNullOrEmpty()) "Giọng thu sẵn" else "Chọn giọng") {

@@ -58,6 +58,7 @@ class DemoPlaybackCore : PlaybackCore {
 
     override fun play() = setPlaying(true)
     override fun pause() = setPlaying(false)
+    override fun close() = pause()
     override fun toggle() = if (playing) pause() else play()
     override fun skip(deltaSeconds: Double) = move(now() + (deltaSeconds * 1000).toLong())
     override fun seekTo(seconds: Double) = move((seconds * 1000).toLong())

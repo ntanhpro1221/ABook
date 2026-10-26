@@ -42,6 +42,7 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
     override fun snapshot(): JSONObject = Playback.state()
     override fun play() = withService { Playback.play() }
     override fun pause() = withService { Playback.pause() }
+    override fun close() = Playback.onMain { Playback.closeBook() }
     override fun toggle() = withService { Playback.toggle() }
     override fun skip(deltaSeconds: Double) = withService { Playback.skip(deltaSeconds) }
     override fun seekTo(seconds: Double) = withService { Playback.seekTo(seconds) }

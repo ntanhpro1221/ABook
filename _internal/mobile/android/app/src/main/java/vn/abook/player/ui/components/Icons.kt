@@ -73,6 +73,11 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 /** "Từ đầu" (web: RotateCcw). */
 @Composable fun RestartIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.ROTATE_CCW, color, modifier, size)
 
+@Composable fun SpeakerIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.SPEAKER, color, modifier, size)
+@Composable fun TvIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.TV, color, modifier, size)
+@Composable fun MonitorSpeakerIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.MONITOR_SPEAKER, color, modifier, size)
+@Composable fun CastIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.CAST, color, modifier, size)
+
 /** "Làm mới" (web: RefreshCw) - khác "Từ đầu". */
 @Composable fun RefreshIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.REFRESH_CW, color, modifier, size)
 

@@ -121,6 +121,9 @@ fun AppShell(
     editors: EditBooks? = null,
     demo: Boolean = false,
     autoPick: Boolean = false,
+    deletions: vn.abook.player.ui.data.UndoDelete? = null,
+    companion: vn.abook.player.ui.devices.CompanionRepo? = null,
+    askNotifications: (() -> Unit) -> Unit = { it() },
 ) {
     val nav = shell.nav
     val playerState by player.state.collectAsState()
@@ -139,14 +142,31 @@ fun AppShell(
             shell.tabs.precomposeRest()
         }
     }
-    val actions = remember(shell, player) {
+    LaunchedEffect(library, playerState.bookId) {
+        if (!demo && library is LibraryState.Ready) player.reconcile(library.books)
+    }
+    LaunchedEffect(playerState.hasTrack) {
+        if (!playerState.hasTrack && shell.window.expanded) shell.window.close()
+    }
+    LaunchedEffect(deletions) {
+        deletions?.pending?.collect { settings.devices?.openStorage() }
+    }
+    val actions = remember(shell, player, settings.devices) {
         LibraryActions(
-            openBook = { book -> shell.nav.push(Destination.Book(book)) },
+            openBook = { book ->
+                val devices = settings.devices
+                if (book.remote != null && devices != null) shell.sheets.show { dismiss ->
+                    vn.abook.player.ui.screens.RemoteBookSheet(book, devices) { dismiss(); player.playNow(book.id) }
+                } else shell.nav.push(Destination.Book(book))
+            },
             playNow = player::playNow,
             addBook = { shell.nav.push(Destination.AddBook) },
         )
     }
     val window = shell.window
+    window.otherPlayers = companion?.let { repo ->
+        { shell.sheets.show { dismiss -> vn.abook.player.ui.devices.OtherPlayersSheet(repo, player, dismiss) } }
+    }
     val openPlayer = remember(window) { window::open }
     val bookActions = remember(shell, player) {
         BookScreenActions(
@@ -163,9 +183,11 @@ fun AppShell(
         // Cửa sổ Đang nghe nằm TRÊN cả ngăn xếp màn lẫn thanh tab; thanh phát nhỏ thật ở gốc là nguồn của chuyển động nở ra (NowPlayingSource).
         PlayerCoverProvider(covers) {
             NowPlayingLayer(nowPlaying, window, sampleClock) {
+                Column(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f)) {
                 ScreenStack(
                     nav = nav,
-                    root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings) },
+                    root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer, settings, companion, askNotifications) },
                     screen = { destination ->
                         when (destination) {
                             is Destination.Book -> BookScreen(
@@ -194,8 +216,15 @@ fun AppShell(
                         }
                     },
                 )
-                SheetLayer(shell.sheets)
+                }
+                if (deletions != null) vn.abook.player.ui.components.UndoBar(deletions,
+                    backEnabled = shell.sheets.current == null && !window.expanded, aboveNavigation = !nav.canPop)
+                vn.abook.player.ui.components.Reveal(!nav.canPop) {
+                    RootPlaybackArea(shell, playerState, player, covers, openPlayer, companion)
+                }
+                }
             }
+            SheetLayer(shell.sheets)
         }
     }
 }
@@ -253,13 +282,10 @@ private fun RootTabs(
     actions: LibraryActions,
     openNowPlaying: () -> Unit,
     settings: SettingsEnv,
+    companion: vn.abook.player.ui.devices.CompanionRepo?,
+    askNotifications: (() -> Unit) -> Unit,
 ) {
     val tabs = shell.tabs
-    // Thanh phát nhỏ giữ bài cuối cùng khi thu về (không nháy nội dung rỗng giữa lúc thu lại).
-    val last = remember { arrayOf(player) }
-    if (player.hasTrack) last[0] = player
-    val clock = repo.clock
-    val position = remember(clock) { { clock.positionMs.value } }
     val backToLibrary = !shell.nav.canPop && tabs.selected == Tab.Library.ordinal
     Column(Modifier.fillMaxSize()) {
         TabHost(tabs, Modifier.weight(1f)) { tab ->
@@ -267,7 +293,9 @@ private fun RootTabs(
                 Tab.Library -> LibraryScreen(
                     library, shell.library, shell.libraryGrid, covers, shell.sheets, actions, backEnabled = backToLibrary,
                 )
-                Tab.Studio -> StudioScreen()
+                Tab.Studio -> StudioScreen(companion = companion, devices = settings.devices, askNotifications = askNotifications,
+                    openNotificationSettings = settings.links.openNotificationSettings,
+                    connect = { shell.nav.push(Destination.Devices(DevicesPage.Pair)) })
                 Tab.Settings -> SettingsScreen(
                     settings,
                     onOpen = { group -> shell.nav.push(Destination.Settings(group)) },
@@ -275,8 +303,23 @@ private fun RootTabs(
                 )
             }
         }
+    }
+}
+
+/** Persistent root footer: transient actions sit ABOVE playback and navigation, in normal layout flow. */
+@Composable
+private fun RootPlaybackArea(shell: ShellState, player: PlayerState, repo: PlayerRepo, covers: CoverLoader,
+    openNowPlaying: () -> Unit, companion: vn.abook.player.ui.devices.CompanionRepo?) {
+    val tabs = shell.tabs
+    // Thanh phát nhỏ giữ bài cuối cùng khi thu về (không nháy nội dung rỗng giữa lúc thu lại).
+    val last = remember { arrayOf(player) }
+    if (player.hasTrack) last[0] = player
+    val clock = repo.clock
+    val position = remember(clock) { { clock.positionMs.value } }
+    Column(Modifier.fillMaxWidth()) {
+        if (companion != null) vn.abook.player.ui.devices.OtherPlayersEntry(companion, shell.sheets, repo)
         if (last[0].hasTrack) {
-            MiniPlayerSlot(visible = player.hasTrack) {
+            MiniPlayerSlot(visible = player.hasTrack || shell.window.expanded) {
                 MorphingMiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = openNowPlaying)
             }
         }
