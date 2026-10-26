@@ -110,12 +110,12 @@ class NativeActivity : ComponentActivity() {
                     val shell = remember {
                         ShellState(scope) { sort -> lifecycleScope.launch(Dispatchers.IO) { prefs.setSort(sort) } }
                     }
-                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice) }
+                    val env = remember { SettingsEnv(settings, reveal, links, if (demo) null else app.devices, if (demo) null else app.voice, if (demo) null else app.music) }
                     LaunchedEffect(Unit) { shell.library.restoreSort(withContext(Dispatchers.IO) { prefs.sort() }) }
                     val state by library.state.collectAsStateWithLifecycle()
                     AppShell(
                         shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library,
-                        nowPlaying = rememberRepoNowPlaying(player, readAlong),
+                        nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music),
                         imports = app.imports, editors = app.editors, demo = demo, autoPick = !demo,
                     )
                 }
