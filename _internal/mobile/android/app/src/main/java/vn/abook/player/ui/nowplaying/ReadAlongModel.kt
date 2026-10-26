@@ -21,8 +21,8 @@ data class ReadAlongState(
 
 /** Binary searches match listen/words.ts: sentence lead 50 ms, word lead 40 ms, last word hold 400 ms. */
 object ReadAlongLookup {
-    // Java's default \\s omits NBSP, unlike JS. Unicode character class keeps identical visible tokens.
-    private val token = Regex("(?U)\\S+")
+    // JS's \S+ (words.ts), spelled out: Java's default \s omits NBSP, and (?U) / UNICODE_CHARACTER_CLASS crashes Android's ICU regex.
+    private val token = Regex("[^\\t\\n\\u000B\\f\\r \\u00A0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000\\uFEFF]+")
 
     fun sentence(paragraphs: List<ReadParagraph>, ms: Long): Int {
         var low = 0
