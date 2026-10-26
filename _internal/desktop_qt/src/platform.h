@@ -1,5 +1,5 @@
 // Những việc riêng của Windows mà QML cần: "giảm chuyển động" của hệ điều hành, đang dùng bàn phím hay chuột (để vẽ vòng tiêu điểm
-// chỉ khi dùng bàn phím), lưu cài đặt giao diện nhỏ, mở thư mục nhật ký.
+// chỉ khi dùng bàn phím), lưu cài đặt giao diện nhỏ, mở thư mục nhật ký, trả bộ nhớ về hệ điều hành khi cửa sổ thu nhỏ.
 #pragma once
 
 #include <QObject>
