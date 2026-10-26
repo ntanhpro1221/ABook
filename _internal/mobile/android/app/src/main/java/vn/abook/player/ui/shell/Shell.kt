@@ -61,6 +61,10 @@ import vn.abook.player.ui.addbook.AddBookRoute
 import vn.abook.player.ui.addbook.ImportQueue
 import vn.abook.player.ui.addbook.ImportChapterRoute
 import vn.abook.player.ui.addbook.ImportReviewRoute
+import vn.abook.player.ui.devices.DevicesPage
+import vn.abook.player.ui.devices.PairScreen
+import vn.abook.player.ui.devices.ShareScreen
+import vn.abook.player.ui.devices.StorageScreen
 import vn.abook.player.ui.editbook.EditBooks
 import vn.abook.player.ui.editbook.EditBookRoute
 import vn.abook.player.ui.editbook.EditChapterRoute
@@ -177,7 +181,16 @@ fun AppShell(
                                 { nav.push(Destination.CropCover(destination.book, it)) }, { nav.push(Destination.EditChapter(destination.book, it)) })
                             is Destination.EditChapter -> if (editors != null) EditChapterRoute(editors.session(destination.book, demo), destination.chapterId, nav::pop)
                             is Destination.CropCover -> if (editors != null) CoverCropRoute(editors.session(destination.book, demo), destination.uri, nav::pop)
-                            is Destination.Settings -> SettingsGroupScreen(destination.group, settings, shell.sheets, onBack = nav::pop)
+                            is Destination.Settings -> SettingsGroupScreen(
+                                destination.group, settings, shell.sheets, onBack = nav::pop, openDevices = { nav.push(Destination.Devices(it)) },
+                            )
+                            is Destination.Devices -> settings.devices?.let { devices ->
+                                when (destination.page) {
+                                    DevicesPage.Pair -> PairScreen(devices, shell.sheets, nav::pop)
+                                    DevicesPage.Share -> ShareScreen(devices, shell.sheets, nav::pop)
+                                    DevicesPage.Storage -> StorageScreen(devices, shell.sheets, nav::pop)
+                                }
+                            }
                         }
                     },
                 )
