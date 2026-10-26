@@ -8,10 +8,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -64,7 +61,7 @@ class ExportState(
 ) {
     private val uis = ConcurrentHashMap<String, MutableStateFlow<ExportUi>>()
     private val progresses = ConcurrentHashMap<String, MutableStateFlow<ExportProgress>>()
-    private val hints = ConcurrentHashMap<String, StateFlow<String?>>()
+    private val hints = ConcurrentHashMap<String, MutableStateFlow<String?>>()
     private val plans = ConcurrentHashMap<String, Job>()
 
     /** Mã các lượt đã báo xong / dừng / lỗi (vài chục lượt gần nhất): tin muộn của chúng, hay bản chụp việc đang chạy cũ, không dựng lại thanh tiến độ. */
@@ -86,9 +83,13 @@ class ExportState(
     fun progress(bookId: String): StateFlow<ExportProgress> = progressFlow(bookId)
 
     /** Dòng phụ của hàng xuất trong menu của cuốn: "Đang xuất · 27%", "Đã xuất xong"; null khi không có gì để nói. */
-    fun hint(bookId: String): StateFlow<String?> = hints.getOrPut(bookId) {
-        combine(flow(bookId), progressFlow(bookId)) { ui, progress -> ExportText.menuHint(ui.phase, progress.fraction) }
-            .stateIn(scope, SharingStarted.Eagerly, ExportText.menuHint(flow(bookId).value.phase, progressFlow(bookId).value.fraction))
+    fun hint(bookId: String): StateFlow<String?> = hints.getOrPut(bookId) { MutableStateFlow(hintOf(bookId)) }
+
+    private fun hintOf(bookId: String) = ExportText.menuHint(flow(bookId).value.phase, progressFlow(bookId).value.fraction)
+
+    /** Dòng phụ nối lại mỗi khi pha hay tiến độ đổi (đổi ở [edit] / [setProgress]): không giữ việc nào chạy mãi cho mỗi cuốn từng mở menu. */
+    private fun refreshHint(bookId: String) {
+        hints[bookId]?.value = hintOf(bookId)
     }
 
     private suspend fun <T> attempt(block: suspend () -> T): Result<T> = try {
@@ -101,7 +102,15 @@ class ExportState(
 
     private fun message(error: Throwable?) = error?.message?.takeIf { it.isNotBlank() } ?: "Bạn hãy thử lại."
 
-    private fun edit(bookId: String, change: (ExportUi) -> ExportUi) = flow(bookId).update(change)
+    private fun edit(bookId: String, change: (ExportUi) -> ExportUi) {
+        flow(bookId).update(change)
+        refreshHint(bookId)
+    }
+
+    private fun setProgress(bookId: String, value: ExportProgress) {
+        progressFlow(bookId).value = value
+        refreshHint(bookId)
+    }
 
     // ---- tin của lõi ----------------------------------------------------------------------------------------------------
 
@@ -117,7 +126,7 @@ class ExportState(
             event.error != null -> finish(event, ExportPhase.Failed(event.kind, event.error))
             else -> {
                 val running = phase as? ExportPhase.Running
-                if (running == null || !running.stopping) progressFlow(event.bookId).value = ExportText.progress(event)
+                if (running == null || !running.stopping) setProgress(event.bookId, ExportText.progress(event))
                 if (running == null) edit(event.bookId) { it.copy(phase = ExportPhase.Running(event.kind, event.run, folder = event.folder), problem = "") }
                 else if (running.folder == null && event.folder != null) edit(event.bookId) { it.copy(phase = running.copy(folder = event.folder)) }
             }
@@ -250,7 +259,9 @@ class ExportState(
                 // vào lại màn ([open] bỏ bước hỏi chỗ lưu) trong lúc lõi đang nhận việc.
                 val phase = flow(book.id).value.phase
                 if ((phase is ExportPhase.Starting || phase is ExportPhase.Idle) && started.run !in ended) {
-                    progressFlow(book.id).value = ExportText.starting(kind, started.chapters ?: book.chaptersAvailable.takeIf { it > 0 } ?: book.chaptersTotal)
+                    // Sách chỉ có chữ không có số chương nghe được: số chương đọc là của bản ước.
+                    val chapters = started.chapters ?: now.plan?.chapters?.takeIf { it > 0 } ?: book.chaptersAvailable.takeIf { it > 0 } ?: book.chaptersTotal
+                    setProgress(book.id, ExportText.starting(kind, chapters))
                     edit(book.id) { it.copy(phase = ExportPhase.Running(kind, started.run, folder = started.folder), problem = "") }
                 }
             } catch (cancelled: CancellationException) {
@@ -291,7 +302,7 @@ class ExportState(
         val running = flow(book.id).value.phase as? ExportPhase.Running ?: return
         if (running.stopping) return
         edit(book.id) { it.copy(phase = running.copy(stopping = true)) }
-        progressFlow(book.id).update { ExportProgress("Đang dừng", "Đang dừng", it.fraction) }
+        setProgress(book.id, ExportProgress("Đang dừng", "Đang dừng", progressFlow(book.id).value.fraction))
         scope.launch {
             attempt { source.cancel(running.kind, book.id) }.onFailure { error ->
                 edit(book.id) { it.copy(phase = running.copy(stopping = false), problem = message(error)) }

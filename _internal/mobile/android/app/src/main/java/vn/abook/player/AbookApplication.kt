@@ -63,6 +63,9 @@ class AbookApplication : Application() {
      */
     @Volatile
     var exportLinks = vn.abook.player.ui.export.ExportLinks()
+
+    /** Câu trả lời đang đợi của các hộp hệ thống Activity mở hộ (chọn thư mục, tạo file, xin quyền): sống qua lần Activity dựng lại. */
+    val answers = vn.abook.player.ui.PendingAnswers()
     val exports by lazy {
         vn.abook.player.ui.export.ExportState(
             vn.abook.player.ui.export.ExportRepo(this), uiScope,
