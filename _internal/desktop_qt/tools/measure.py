@@ -245,6 +245,20 @@ def gaps(frames: list[float], spans: list[tuple[float, float]]) -> list[float]:
     return iv
 
 
+def worst_gap(frames: list[float], anim: list[float], evs: list[tuple[float, str]], span: tuple[float, float]) -> dict:
+    """Khung trễ nhất trong một khoảng: ở đâu, nhịp luồng giao diện (afterAnimating) có trễ theo không, mốc nào ngay trước nó."""
+    inside = [f for f in frames if span[0] <= f <= span[1]]
+    if len(inside) < 2:
+        return {}
+    i = max(range(1, len(inside)), key=lambda k: inside[k] - inside[k - 1])
+    a, b = inside[i - 1], inside[i]
+    ticks = [t for t in anim if a - 50 <= t <= b + 50]
+    gui = max((ticks[k] - ticks[k - 1] for k in range(1, len(ticks))), default=float("nan"))
+    near = [(round(t - a, 1), n) for t, n in evs if a - 1500 <= t <= b + 100 and not n.startswith("count:")]
+    return {"at_ms": round(a - span[0], 1), "gap_ms": round(b - a, 1), "gui_gap_ms": round(gui, 1) if gui == gui else None,
+            "gui_ticks": len(ticks), "events": near}
+
+
 def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
     """Kịch bản "player" (BenchScenario.qml): RAM nghỉ khi có sách, khung lúc biến hình, khung khi chữ chạy theo giọng, RAM + CPU khi thu nhỏ vẫn phát."""
     got = launch(exe, env_extra, topmost)
@@ -270,6 +284,7 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
     unmorph = windows(evs, "unmorph_begin", "unmorph_end")
     follow = [(ev["follow_begin"], ev["follow_end"])]
     iv_m, iv_u, iv_f = gaps(frames, morph), gaps(frames, unmorph), gaps(frames, follow)
+    worst = worst_gap(frames, [f + off for f in d.get("anim", [])], evs, follow[0])
     idle = [m for t, m, _c in samples if ev["idle_begin"] + 1500 <= t <= ev["idle_end"]]
     follow_ram = [m for t, m, _c in samples if follow[0][0] <= t <= follow[0][1]]
     mins = [(t, m, c) for t, m, c in samples if ev["min_begin"] + 1500 <= t <= ev["min_end"]]
@@ -296,6 +311,7 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
         "unmorph_frames": len(iv_u), "unmorph_p99": pct(iv_u, .99), "unmorph_max": max(iv_u) if iv_u else float("nan"),
         "follow_frames": len(iv_f), "follow_p50": pct(iv_f, .5), "follow_p99": pct(iv_f, .99), "follow_max": max(iv_f) if iv_f else float("nan"),
         "follow_over_12": sum(1 for x in iv_f if x > 12.0),
+        "follow_worst": worst,
         "low_refresh": pct(iv_f, .5) > 11.0,
         # bộ đếm: (nhịp đồng hồ, ảnh chụp đổi, lần tính câu của ReadAlong, lần đổi câu / chữ) - hiệu giữa hai mốc
         "follow_secs": (ev["follow_end"] - ev["follow_begin"]) / 1000.0,
@@ -331,7 +347,7 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
               f"đóng p99 {r['unmorph_p99']:.1f}) | chữ chạy p50 {r['follow_p50']:.1f} p99 {r['follow_p99']:.1f} max {r['follow_max']:.1f} ms "
               f"({r['follow_frames']} khung, >12ms {r['follow_over_12']}) RAM {r['private_follow_mb']:.1f} | thu nhỏ phát: RAM {r['private_min_playing_mb']:.1f} MB "
               f"CPU {r['cpu_min_playing_pct_of_core']:.2f} % | đếm lúc chữ chạy (nhịp, ảnh chụp, tính, đổi) {r['follow_counters_delta']} trong {r['follow_secs']:.0f} s; "
-              f"thu nhỏ {r['min_counters_delta']}")
+              f"thu nhỏ {r['min_counters_delta']}\n    khựng lớn nhất {r['follow_worst']}")
         time.sleep(1.0)
     res = {"scenario": "player", "hz": refresh_hz(), "runs": good, "dropped": dropped}
     if good:

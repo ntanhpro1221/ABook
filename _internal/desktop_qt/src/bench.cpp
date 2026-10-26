@@ -35,6 +35,10 @@ QVector<QPair<double, QString>> g_events;
 constexpr int kMaxFrames = 200000;
 std::vector<double> g_frames;
 std::atomic<int> g_frameCount{0};
+// Nhịp của luồng giao diện (afterAnimating, mỗi khung một lần): khung trễ mà nhịp này đều = luồng render bị chặn; cả hai cùng trễ =
+// luồng giao diện bị chặn.
+std::vector<double> g_anim;
+std::atomic<int> g_animCount{0};
 Bench *g_bench = nullptr;
 
 // Mốc epoch của tiến trình (GetProcessTimes) - để script đo tính "từ lúc tạo tiến trình tới khung đầu".
@@ -78,6 +82,7 @@ Bench::Bench(QObject *parent) : QObject(parent) {
     g_bench = this;
     if (enabled()) {
         g_frames.resize(kMaxFrames);
+        g_anim.resize(kMaxFrames);
 #ifdef Q_OS_WIN
         SetUnhandledExceptionFilter(crashTrace);
 #endif
@@ -142,6 +147,11 @@ void Bench::attach(QQuickWindow *window) {
         if (i == 0)
             mark(QStringLiteral("first_frame"));
     }, Qt::DirectConnection);
+    connect(window, &QQuickWindow::afterAnimating, window, [] {
+        const int i = g_animCount.fetch_add(1, std::memory_order_relaxed);
+        if (i < kMaxFrames)
+            g_anim[size_t(i)] = nowMs();
+    }, Qt::DirectConnection);
 }
 
 void Bench::finish() {
@@ -167,6 +177,13 @@ void Bench::finish() {
         if (i)
             json += ',';
         json += QByteArray::number(g_frames[size_t(i)], 'f', 3);
+    }
+    json += "],\"anim\":[";
+    const int a = qMin(g_animCount.load(), kMaxFrames);
+    for (int i = 0; i < a; ++i) {
+        if (i)
+            json += ',';
+        json += QByteArray::number(g_anim[size_t(i)], 'f', 3);
     }
     json += "]}\n";
     QFile file(outPath());
