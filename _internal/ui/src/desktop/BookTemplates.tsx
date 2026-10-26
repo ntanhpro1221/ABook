@@ -89,7 +89,7 @@ export function BookTemplates() {
                     onKeyDown={(event) => {
                       if (event.key === "Escape") setRenaming(null);
                     }}
-                    className="h-8 min-w-0 flex-1 rounded-lg border border-line bg-bg px-2.5 text-sm outline-none focus:border-focus"
+                    className="h-8 min-w-0 flex-1 rounded-control border border-line bg-bg px-2.5 text-sm outline-none focus:border-focus"
                   />
                   <Button type="submit" size="sm" variant="primary" disabled={!typed.trim()}>
                     Lưu

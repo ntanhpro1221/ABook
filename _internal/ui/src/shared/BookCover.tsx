@@ -43,7 +43,7 @@ export function BookCover({
     return (
       <MotionRegion
         motionKey={motionKey}
-        className={cn("relative aspect-square shrink-0 self-start overflow-hidden rounded-lg shadow-card", className)}
+        className={cn("relative aspect-square shrink-0 self-start overflow-hidden rounded-control shadow-card", className)}
         style={{ backgroundColor: coverColor(photo.color) || "var(--color-hover)" }}
         aria-hidden
       >
@@ -69,7 +69,7 @@ export function BookCover({
   return (
     <MotionRegion
       motionKey={motionKey}
-      className={cn("@container relative aspect-square shrink-0 self-start overflow-hidden rounded-lg text-left shadow-card", className)}
+      className={cn("@container relative aspect-square shrink-0 self-start overflow-hidden rounded-control text-left shadow-card", className)}
       style={{ background: `linear-gradient(155deg, ${style.from} 0%, ${style.to} 100%)` }}
       data-overlay="Chữ bìa trên hoạ tiết sóng"
       aria-hidden
@@ -110,7 +110,7 @@ export function BookCover({
             </span>
             {sub ? (
               <span
-                className="shrink-0 self-start rounded-md px-1.5 py-0.5 font-semibold uppercase tracking-wider @max-[5.5rem]:hidden"
+                className="shrink-0 self-start rounded-control px-1.5 py-0.5 font-semibold uppercase tracking-wider @max-[5.5rem]:hidden"
                 style={{ color: style.ink, background: "rgb(0 0 0 / 0.28)", fontSize: "clamp(8px, 6cqw, 11px)" }}
               >
                 {sub}
@@ -122,7 +122,7 @@ export function BookCover({
         )}
       </div>
       <MotionRegion as="span" className="absolute bottom-1.5 right-1.5" style={{ color: style.ink }}>
-        {playing && <span className="grid place-items-center rounded-md bg-cover-overlay px-1 py-0.5"><Vu className="h-3" /></span>}
+        {playing && <span className="grid place-items-center rounded-control bg-cover-overlay px-1 py-0.5"><Vu className="h-3" /></span>}
       </MotionRegion>
     </MotionRegion>
   );
@@ -173,7 +173,7 @@ function PhotoCover({
         className={cn("relative size-full transition-opacity duration-motion-medium", square ? "object-cover" : "object-contain", shown ? "opacity-100" : "opacity-0")}
       />
       <MotionRegion as="span" className="absolute bottom-1.5 right-1.5 text-cover-ink">
-        {playing && <span className="grid place-items-center rounded-md bg-cover-overlay px-1 py-0.5"><Vu className="h-3" /></span>}
+        {playing && <span className="grid place-items-center rounded-control bg-cover-overlay px-1 py-0.5"><Vu className="h-3" /></span>}
       </MotionRegion>
     </>
   );

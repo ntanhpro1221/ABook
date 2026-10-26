@@ -32,9 +32,9 @@ export function LibraryMoveRecovery({ recovery }: { recovery: LibraryMoveRecover
     <p>{recovery.message}</p>
     <p>Kiểm tra đường dẫn: hoàn tất dùng thư viện sau, quay lui dùng thư viện trước, bỏ qua giữ hiện tại; nhật ký được giữ.</p>
     <div className="flex flex-wrap items-center gap-2">
-      <label className="min-w-0 flex-1">Trước khi chuyển<input aria-label="Thư viện trước khi chuyển" className="w-full rounded border border-line bg-sunken p-2" value={oldRoot} onChange={(e) => setOldRoot(e.target.value)} disabled={busy} /></label>
+      <label className="min-w-0 flex-1">Trước khi chuyển<input aria-label="Thư viện trước khi chuyển" className="w-full rounded-control border border-line bg-sunken p-2" value={oldRoot} onChange={(e) => setOldRoot(e.target.value)} disabled={busy} /></label>
       <Button disabled={busy} onClick={() => void choose("old")}>Chọn thư mục trước</Button>
-      <label className="min-w-0 flex-1">Sau khi chuyển<input aria-label="Thư viện sau khi chuyển" className="w-full rounded border border-line bg-sunken p-2" value={newRoot} onChange={(e) => setNewRoot(e.target.value)} disabled={busy} /></label>
+      <label className="min-w-0 flex-1">Sau khi chuyển<input aria-label="Thư viện sau khi chuyển" className="w-full rounded-control border border-line bg-sunken p-2" value={newRoot} onChange={(e) => setNewRoot(e.target.value)} disabled={busy} /></label>
       <Button disabled={busy} onClick={() => void choose("new")}>Chọn thư mục sau</Button>
     </div>
     <div className="flex flex-wrap gap-2">

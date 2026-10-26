@@ -250,7 +250,7 @@ private fun MusicSkeleton() {
         for (width in listOf(0.5f, 0.3f, 0.62f)) {
             Row(Modifier.fillMaxWidth().height(56.dp), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.size(Dim.s24 + Dim.s12, 1.dp))
-                Box(Modifier.fillMaxWidth(width).height(14.dp).clip(RoundedCornerShape(4.dp)).background(Abook.colors.bgSunken))
+                Box(Modifier.fillMaxWidth(width).height(14.dp).clip(RoundedCornerShape(Dim.radiusControl)).background(Abook.colors.bgSunken))
             }
         }
     }
