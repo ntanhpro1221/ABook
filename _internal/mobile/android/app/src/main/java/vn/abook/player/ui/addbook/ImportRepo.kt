@@ -33,7 +33,7 @@ class ImportRepo(private val context: Context) : ImportSource {
     private val pdfPages = HashMap<String, List<List<String>>>()
     private val created = HashMap<String, TextImports.Created>()
 
-    override suspend fun describe(item: ImportItem): String = withContext(Dispatchers.IO) { name(document(item)) ?: "Sách" }
+    override suspend fun describe(item: ImportItem): String = withContext(Dispatchers.IO) { name(document(item)) ?: item.name }
 
     private fun document(item: ImportItem): Uri {
         val uri = Uri.parse(item.source)
@@ -44,7 +44,7 @@ class ImportRepo(private val context: Context) : ImportSource {
         Store.init(context)
         TextImports.codec = AndroidCoverCodec
         val uri = Uri.parse(item.source)
-        val shown = name(document(item)) ?: "Sách"
+        val shown = name(document(item)) ?: item.name
         val mime = context.contentResolver.getType(document(item))
         val incoming = TextImports.incomingName(mime, shown)
         val packageFile = !item.folder && (TextImports.isAppBookFile(mime, shown) || (incoming == null &&
@@ -75,19 +75,21 @@ class ImportRepo(private val context: Context) : ImportSource {
         val book = TextImports.prepare(ref, pdfPages[ref], splitChapters = choices.split,
             footnotes = BookImport.FootnoteChoice(choices.hideMarks, choices.notes))
         val picks = BookImport.defaultPicks(book)
-        val existing = if (picks.isEmpty()) null else Store.findByChapters(TextBook.prints(BookImport.selectChapters(book, picks)))
+        val existing = (if (picks.isEmpty()) null else Store.findByChapters(TextBook.prints(BookImport.selectChapters(book, picks))))
+            ?: TextImports.sameSource(ref)
         return ImportPreview(
             book.title, book.author.orEmpty(), book.chapters.mapIndexed { index, row ->
                 ImportChapter(index + 1, row.name.ifEmpty { row.title }, !row.short && (book.keepMatter || row.matter.isEmpty()), row.matter)
             }, book.credits.map { Suggestion(it.first, it.second) }, book.notes.toList(),
             book.footnoteFound, book.footnoteMarks, book.footnoteExamples.firstOrNull()?.let { "${it.first}\n${it.second}" }.orEmpty(),
-            book.splitOffer, book.splitHeadings, existing ?: TextImports.sameSource(ref),
+            book.splitOffer, book.splitHeadings, existing,
+            existing?.let { Store.manifest(it)?.optString("title") }.orEmpty(),
         )
     }
 
     override suspend fun add(ref: String, preview: ImportPreview, choices: ImportChoices): Pair<String, Boolean> = withContext(Dispatchers.IO) {
         require(choices.title.isNotBlank()) { "Bạn hãy nhập tên sách." }
-        require(choices.title.codePointCount(0, choices.title.length) <= BookEdits.TITLE_MAX) { "Tên sách quá dài. Bạn hãy đặt tên ngắn hơn." }
+        require(choices.title.codePointCount(0, choices.title.length) <= BookEdits.TITLE_MAX) { "Tên quá dài. Bạn hãy dùng tối đa ${BookEdits.TITLE_MAX} ký tự." }
         val accepted = ImportLogic.accepted(preview, choices)
         val result = created[ref] ?: TextImports.createBook(ref, choices.title, context.cacheDir, choices.separate,
             ImportLogic.picks(preview, choices)).also { created[ref] = it }
@@ -121,7 +123,7 @@ class ImportRepo(private val context: Context) : ImportSource {
                 files += cursor.getString(1) to { context.contentResolver.openInputStream(uri) }
             }
         }
-        return TextImports.stageFolder(name(DocumentsContract.buildDocumentUriUsingTree(tree, id)) ?: "Sách", files)
+        return TextImports.stageFolder(name(DocumentsContract.buildDocumentUriUsingTree(tree, id)) ?: "File đã chọn", files)
     }
 
     private fun readPdf(file: File): List<List<String>> {

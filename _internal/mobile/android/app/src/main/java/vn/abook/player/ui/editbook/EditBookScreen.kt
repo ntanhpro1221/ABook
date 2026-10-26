@@ -73,7 +73,8 @@ fun CoverSheet(hasCover: Boolean, onPick: () -> Unit, onRemove: () -> Unit) {
 
 /**
  * Sửa sách: cùng bố cục với đầu trang sách (bìa bên trái, chữ bên phải) nhưng chữ là ô nhập. Lưu im lặng (không có chữ "Đã lưu"); chỉ khi lưu hỏng mới hiện một dòng
- * lỗi tại chỗ kèm "Thử lại". Phần sửa chờ gửi là MỘT hàng, chỉ khi có gì để gửi. Chương là danh sách hàng mở màn tên chương.
+ * lỗi tại chỗ kèm "Thử lại". Phần sửa chờ gửi là MỘT hàng, chỉ khi có gì để gửi - cùng chữ với dòng tình trạng "Gửi về máy tính" của web (SendEdits.tsx,
+ * shared/editsSync.ts). Chương là danh sách hàng mở màn tên chương.
  */
 @Composable
 fun EditBookScreen(
@@ -85,7 +86,7 @@ fun EditBookScreen(
         val draft = state.draft
         val list = rememberLazyListState()
         LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("edit_book_list"), state = list, contentPadding = PaddingValues(bottom = Dim.s32)) {
-            if (state.loading) item("loading", "state") { Caption("Đang đọc sách", Modifier.padding(top = Dim.s16)) }
+            if (state.loading) item("loading", "state") { Caption("Đang đọc", Modifier.padding(top = Dim.s16)) }
             if (book == null || draft == null) {
                 if (!state.loading) item("failed", "state") { InlineProblem(state.problem, retry, "edit_problem", Modifier.padding(top = Dim.s16)) }
             } else {
@@ -96,7 +97,8 @@ fun EditBookScreen(
                         Column(Modifier.weight(1f)) {
                             BookField("Tên sách", draft.title, { value -> change { it.copy(title = value) } }, "edit_title", !state.sending)
                             Spacer(Modifier.height(Dim.s16))
-                            BookField("Tác giả", draft.author, { value -> change { it.copy(author = value) } }, "edit_author", !state.sending)
+                            BookField("Tác giả", draft.author, { value -> change { it.copy(author = value) } }, "edit_author", !state.sending,
+                                placeholder = "Không rõ tác giả")
                         }
                     }
                 }
@@ -104,8 +106,9 @@ fun EditBookScreen(
                 if (book.sendable && (book.pending > 0 || state.sending)) item("send", "send") {
                     Column(Modifier.padding(top = Dim.sectionGap)) {
                         ActionRow(
-                            "Gửi phần sửa", if (state.sending) "Đang gửi" else "Gửi", { if (!state.sending && !state.saving) send() }, "send_edits",
-                            hint = "${book.pending} thay đổi · về ${book.holder}",
+                            "${book.pending} thay đổi đang chờ gửi về ${book.holder}", if (state.sending) "Đang gửi" else "Gửi về ${book.holder}",
+                            { if (!state.sending && !state.saving) send() }, "send_edits",
+                            hint = "Tự gửi khi tới được ${book.holder}; bấm “Gửi về ${book.holder}” để gửi ngay.",
                         )
                         if (book.syncNote.isNotEmpty()) Caption(book.syncNote, Modifier.testTag("sync_note"))
                         InlineProblem(state.sendProblem, send, "send_problem")
@@ -116,7 +119,7 @@ fun EditBookScreen(
                     Column {
                         ListItem(
                             row.shown, onClick = { chapter(row.id) }, tag = "edit_chapter_${row.id}",
-                            hint = if (row.renamed) "Gốc: ${row.original}" else null, hintColor = Abook.colors.text3, chevron = true,
+                            hint = if (row.renamed) "Tên gốc: ${row.original}" else null, hintColor = Abook.colors.text3, chevron = true,
                         )
                         RowLine()
                     }

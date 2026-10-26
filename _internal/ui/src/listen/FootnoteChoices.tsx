@@ -1,7 +1,9 @@
+import { ChoiceRow } from "@/shared/ui";
 import { footnoteSummary, type FootnoteChoice, type FootnoteNotes, type FootnoteOffer } from "./textImport";
 
-// Chú thích trong sách nhập ("Thêm sách từ file…", bước xem trước): máy nói tìm thấy gì và ĐỀ XUẤT; mặc định không tích gì, sách giữ nguyên như file.
-// Tích thì danh sách chương và chữ đổi theo (đọc lại file); bỏ tích là về như cũ. Máy tính và điện thoại dùng chung.
+// Chú thích trong sách nhập ("Thêm sách từ file…", bước xem trước): máy nói tìm thấy gì và ĐỀ XUẤT; mặc định giữ nguyên như file.
+// Đổi lựa chọn thì danh sách chương và chữ đổi theo (đọc lại file). Cùng chữ, cùng thứ tự với điện thoại (addbook/AddBookScreen.kt): "Bỏ số gọi", rồi
+// "Lời chú" chọn một trong Giữ nguyên / Cuối chương / Bỏ lời chú (một giá trị trong lõi, nên là nhóm chọn-một chứ không phải hai ô tích).
 
 function Choice({
   checked,
@@ -45,37 +47,35 @@ export function FootnoteChoices({
   onChange: (next: FootnoteChoice) => void;
 }) {
   const { title, example } = footnoteSummary(offer);
-  const notes = (on: boolean, kind: Exclude<FootnoteNotes, "">) => onChange({ ...value, notes: on ? kind : "" });
   return (
     <div className="mt-3 py-3" data-testid="footnote-choices">
-      <p className="text-xs font-medium">{title} - ABook không tự bỏ hay sửa chữ của truyện</p>
+      <p className="text-xs font-medium">{title}</p>
       {example && <p className="mt-0.5 text-xs text-fg-2">{example}</p>}
-      <div className="mt-2 space-y-1">
+      <div className="mt-2 space-y-3">
         {offer.marks > 0 && (
           <Choice
             checked={value.hideMarks}
             disabled={disabled}
             onChange={(on) => onChange({ ...value, hideMarks: on })}
-            label="Không đọc số chú thích"
-            help="Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi."
+            label="Bỏ số gọi"
+            help={`${offer.marks} số gọi trong chữ`}
           />
         )}
-        <Choice
-          checked={value.notes === "end"}
-          disabled={disabled}
-          onChange={(on) => notes(on, "end")}
-          label="Đọc lời chú ở cuối chương"
-          help="Mỗi lời chú nằm ở cuối chương có số gọi nó, kể cả khi trong sách nó nằm ở chương riêng."
-        />
-        <Choice
-          checked={value.notes === "drop"}
-          disabled={disabled}
-          onChange={(on) => notes(on, "drop")}
-          label="Bỏ lời chú"
-          help="Phần đọc không có lời chú nào. Bỏ tích để có lại."
-        />
+        {/* ChoiceRow không có trạng thái tắt: lúc đang đọc lại file, cả nhóm mờ đi và không nhận chạm / phím (như ô tích bên trên). */}
+        <div inert={disabled} className={disabled ? "opacity-60" : undefined}>
+          <p className="text-sm font-medium">Lời chú</p>
+          <ChoiceRow<FootnoteNotes>
+            value={value.notes}
+            onChange={(notes) => onChange({ ...value, notes })}
+            label="Lời chú"
+            options={[
+              { value: "", label: "Giữ nguyên" },
+              { value: "end", label: "Cuối chương" },
+              { value: "drop", label: "Bỏ lời chú" },
+            ]}
+          />
+        </div>
       </div>
-      <p className="mt-1 text-xs text-fg-2">Không tích gì thì sách giữ nguyên như trong file.</p>
     </div>
   );
 }

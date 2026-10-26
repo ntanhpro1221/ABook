@@ -15,7 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.Caption
 import vn.abook.player.ui.components.ChoiceSetting
@@ -75,7 +76,8 @@ fun AddBookRoute(queue: ImportQueue, onBack: () -> Unit, onReview: (Long) -> Uni
 }
 
 /**
- * Thêm sách. Chưa chọn gì (người dùng đã đóng hộp chọn file): một câu việc cần làm + một dòng các định dạng, "Chọn file" ở đáy, "Thư mục TXT" dưới nó.
+ * Thêm sách. Chưa chọn gì (người dùng đã đóng hộp chọn file): một dòng các định dạng (cùng chữ với lời đầu hộp Thêm sách của web), "Chọn file" ở đáy,
+ * "Thư mục TXT" dưới nó.
  * Đã chọn: mỗi file là một hàng (biểu tượng file · tên · trạng thái); hàng xong / chờ xem là CẢ hàng bấm được, hàng lỗi có "Thử lại" ở đuôi.
  */
 @Composable
@@ -90,9 +92,7 @@ fun AddBookScreen(
     }) {
         if (state.items.isEmpty()) {
             Column(Modifier.fillMaxWidth().padding(top = Dim.s16).testTag("add_empty")) {
-                BasicText("Chọn sách từ máy bạn", style = Abook.type.sectionTitle)
-                Spacer(Modifier.height(Dim.s4))
-                BasicText("EPUB, DOCX, TXT, PDF hoặc file ABook.", style = Abook.type.bodySmall)
+                BasicText("EPUB, DOCX, PDF có chữ, TXT hoặc file .abook. Chọn được nhiều file.", style = Abook.type.bodySmall)
             }
         } else {
             val list = rememberLazyListState()
@@ -150,7 +150,8 @@ private enum class NoteMode(val code: String, override val label: String) : Choi
 
 /**
  * Xem trước một cuốn: tên ở đầu, một dòng thông tin (tác giả · số chương), rồi các phần theo thứ tự việc cần quyết - gợi ý đọc, chú thích, chương. Mọi lựa chọn mặc
- * định TẮT (ABook không tự bỏ chữ của truyện). "Thêm sách" ghim ở đáy; "Bỏ cuốn này" là việc duy nhất ở cuối danh sách.
+ * định TẮT (ABook không tự bỏ chữ của truyện). "Thêm vào thư viện" ghim ở đáy; "Bỏ cuốn này" là việc duy nhất ở cuối danh sách. Cuốn đã có trong thư viện:
+ * "Bỏ cuốn này" thành nút chính ở đáy (như web) và không lặp ở cuối danh sách.
  */
 @Composable
 fun ImportReviewScreen(
@@ -160,13 +161,20 @@ fun ImportReviewScreen(
 ) {
     val preview = state.preview
     val choice = state.choices
-    BookForm("Xem trước", onBack, "import_review_screen", footer = {
+    // Cuốn đã có (và không thêm bản riêng): nút chính bỏ cuốn này, dùng cuốn có sẵn - như "Bỏ cuốn này" của hàng nhiều file trên web.
+    val known = preview?.existingId != null && !choice.separate
+    // Nhiều file: "Sách 2/5 · Xem trước" như tên hộp của web.
+    val at = state.items.indexOfFirst { it.id == state.currentId }
+    val label = if (state.items.size > 1 && at >= 0) "Sách ${at + 1}/${state.items.size}" else ""
+    val title = if (label.isEmpty()) "Xem trước" else "$label · Xem trước"
+    val adding = state.items.firstOrNull { it.id == state.currentId }?.stage == ImportStage.Adding
+    BookForm(title, onBack, "import_review_screen", footer = {
         InlineProblem(state.problem, tag = "import_problem")
         if (preview != null) PrimaryButton(
             when {
-                state.busy -> "Đang xử lý"
-                preview.existingId != null && !choice.separate -> "Dùng sách có"
-                else -> "Thêm sách"
+                state.busy -> if (adding) "Đang thêm" else "Đang đọc"
+                known -> "Bỏ cuốn này"
+                else -> "Thêm vào thư viện"
             },
             add, Modifier.fillMaxWidth().testTag("confirm_import"), enabled = !state.busy,
         )
@@ -175,7 +183,8 @@ fun ImportReviewScreen(
         if (preview != null) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("import_review"), state = list) {
             item("metadata", "metadata") {
                 Column(Modifier.padding(top = Dim.s16)) {
-                    BookField(null, choice.title, { value -> choose { it.copy(title = value) } }, "import_title", !state.busy, "Tên sách")
+                    BookField(null, choice.title, { value -> choose { it.copy(title = value) } }, "import_title", !state.busy, "Tên sách",
+                        placeholder = "Tên hiển thị trong thư viện")
                     val meta = listOfNotNull(preview.author.takeIf { it.isNotEmpty() }, "${choice.picked.size} / ${preview.chapters.size} chương")
                     Spacer(Modifier.height(Dim.s8))
                     BasicText(meta.joinToString(" · "), style = Abook.type.bodySmall, modifier = Modifier.testTag("import_meta"))
@@ -184,10 +193,11 @@ fun ImportReviewScreen(
             if (preview.existingId != null || preview.splitOffer > 0) item("options", "options") {
                 Column(Modifier.padding(top = Dim.sectionGap)) {
                     if (preview.existingId != null) SwitchRow("Thêm bản riêng", choice.separate, { choose { it.copy(separate = !it.separate) } },
-                        "separate_copy", hint = "File này đã có trong Thư viện.")
+                        "separate_copy", hint = if (preview.existingTitle.isEmpty()) "Cuốn này đã có trong thư viện"
+                        else "Cuốn này đã có trong thư viện: “${preview.existingTitle}”.")
                     if (preview.existingId != null && preview.splitOffer > 0) RowLine()
                     if (preview.splitOffer > 0) SwitchRow("Tách chương", choice.split, { revise { it.copy(split = !it.split) } },
-                        "split_chapters", hint = "Theo ${preview.splitHeadings} dòng tiêu đề trong file.")
+                        "split_chapters", hint = ImportLogic.splitHint(preview))
                 }
             }
             val groups = ImportLogic.groups(ImportLogic.forPicked(preview, choice))
@@ -197,7 +207,7 @@ fun ImportReviewScreen(
                     Column {
                         SwitchRow("Bỏ đọc dòng", group.line in choice.skipped,
                             { choose { it.copy(skipped = if (group.line in it.skipped) it.skipped - group.line else it.skipped + group.line) } },
-                            "suggestion_${group.line}", hint = "“${group.line}” · ${group.chapters.size} chương")
+                            "suggestion_${group.line}", hint = "“${group.line}” · ${ImportLogic.where(group.chapters)}")
                         RowLine()
                     }
                 }
@@ -234,10 +244,11 @@ fun ImportReviewScreen(
                     RowLine(start = 56.dp)
                 }
             }
+            if (preview.notes.isNotEmpty()) item("notes_heading", "heading") { SectionTitle("Định dạng") }
             items(preview.notes.distinct(), key = { "note_$it" }, contentType = { "note" }) { note ->
                 Caption(note, Modifier.padding(top = Dim.s12))
             }
-            item("skip", "action") {
+            if (!known) item("skip", "action") {
                 TextAction("Bỏ cuốn này", skip, "skip_book", Modifier.padding(top = Dim.s24, bottom = Dim.s16).fillMaxWidth(), align = Alignment.CenterStart)
             }
         }
@@ -255,7 +266,7 @@ private fun ChapterPickRow(title: String, kept: Boolean, hint: String?, onKeep: 
         Box(Modifier.onFirstLine()) {
             Box(
                 Modifier.size(56.dp, Dim.s48).then(if (enabled) Modifier.pressable(Role.Switch, onClick = onKeep) else Modifier)
-                    .semantics { stateDescription = if (kept) "Giữ" else "Bỏ" }.testTag("${tag}_keep"),
+                    .semantics { toggleableState = ToggleableState(kept) }.testTag("${tag}_keep"),
                 contentAlignment = Alignment.CenterStart,
             ) { Switch(kept) }
         }
