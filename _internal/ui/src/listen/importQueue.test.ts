@@ -119,6 +119,9 @@ describe("itemFromPath", () => {
     expect(itemFromPath("D:\\Truyện\\Tên truyện.epub")).toEqual({ name: "Tên truyện.epub", choice: { ref: "D:\\Truyện\\Tên truyện.epub", name: "Tên truyện.epub" } });
     for (const name of ["a.docx", "b.PDF", "c.txt", "d.abook", "e.abookproj"]) expect(itemFromPath(`/x/${name}`)).toHaveProperty("choice");
     expect(itemFromPath("D:/Truyện/Tập 1")).toHaveProperty("choice");
+    // Dấu chấm giữa tên thư mục không phải đuôi file: "Vol. 2", "Harry Potter 1. Hòn đá", "Tập 1.5" vẫn có thể là thư mục TXT.
+    for (const folder of ["D:/Truyện/Vol. 2", "D:/Truyện/Harry Potter 1. Hòn đá", "/x/Mr. Smith", "D:/Truyện/Tập 1.5"]) expect(itemFromPath(folder)).toHaveProperty("choice");
+    expect(itemFromPath("/x/sach.mobi")).toHaveProperty("error");
     const refused = itemFromPath("D:/Ảnh/bìa.JPG");
     expect(refused).toMatchObject({ name: "bìa.JPG" });
     expect((refused as { error: string }).error).toContain(".jpg");

@@ -156,11 +156,11 @@ export function MorningRecap({ className }: { className?: string }) {
       <button type="button" aria-label="Ẩn thẻ này" onClick={() => void dismiss()} className="touch-hit absolute right-[2px] top-2 grid size-9 place-items-center rounded-full text-fg-2 hover:bg-hover">
         <X className="size-4" />
       </button>
-      {/* Nhãn HOA chỉ ≤ 3 chữ (DESIGN 5.5): tên sách xuống chữ thường 12 px, cắt bằng dấu ba chấm - không thành một dòng HOA dài. */}
-      <div className="flex items-center gap-2 pr-11 text-accent-text">
-        <Moon className="size-3.5 shrink-0" />
+      {/* Nhãn HOA chỉ ≤ 3 chữ (DESIGN 5.5): tên sách xuống chữ thường 12 px - không thành một dòng HOA dài; tên dài xuống dòng, không cắt. */}
+      <div className="flex items-baseline gap-2 pr-11 text-accent-text">
+        <Moon className="size-3.5 shrink-0 self-center" />
         <span className="label-section shrink-0">{sessionLabel(session.endedAt)}</span>
-        <span className="min-w-0 truncate text-xs font-medium text-fg-2">· {session.bookTitle}</span>
+        <span className="min-w-0 break-words text-xs font-medium text-fg-2">· {session.bookTitle}</span>
       </div>
       <h2 className="mt-1.5 pr-11 text-lg font-semibold leading-snug">Nghe tới đâu rồi thiếp đi?</h2>
 
@@ -188,9 +188,9 @@ export function MorningRecap({ className }: { className?: string }) {
                     <span className="tabular shrink-0 text-xs text-fg-2">{timeOf(marker.at)}</span>
                   </span>
                   <span className="block truncate text-xs text-fg-2">{marker.hint}</span>
-                  <span className="tabular flex min-w-0 text-xs text-fg-2">
-                    <span className="min-w-0 truncate">{marker.chapterTitle}</span>
-                    <span className="shrink-0 whitespace-pre">{` · ${formatClock(marker.seconds)}`}</span>
+                  <span className="tabular block min-w-0 break-words text-xs text-fg-2">
+                    {marker.chapterTitle}
+                    <span className="whitespace-nowrap">{` · ${formatClock(marker.seconds)}`}</span>
                   </span>
                   {sentence && <span className="mt-1.5 line-clamp-2 block text-sm italic leading-snug text-fg">“{unquoted(sentence)}”</span>}
                 </span>

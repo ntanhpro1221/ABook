@@ -38,6 +38,13 @@ describe("tải sách của máy khác về máy này", () => {
     expect(downloadFraction(status({ bytesDone: 1000, filesDone: 4 }))).toBe(1);
   });
 
+  it("đã đếm đủ file và byte mà máy chủ vẫn báo đang chạy (kiểm, chuyển chỗ): chưa phải 100%, vẫn là đang tải", () => {
+    const finishing = status({ state: "running", bytesDone: 1000, filesDone: 4 });
+    expect(downloadFraction(finishing)).toBeLessThan(1);
+    expect(downloadNote(finishing, "")!.title).toBe("Đang tải về máy… 99%");
+    expect(downloadMenuLabel(finishing, "").hint).toBe("Đã tải 99%");
+  });
+
   it("không biết cỡ file: tính theo số file", () => {
     expect(downloadFraction(status({ bytes: 0, filesDone: 1 }))).toBe(0.25);
   });

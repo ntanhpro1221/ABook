@@ -85,10 +85,14 @@ function progressText(book: ListenBook, speaks: boolean): string {
   return `Còn ${formatLengthUp(left / (book.state.rate ?? 1))}`;
 }
 
+/** Lần bấm nghe gần nhất (chung cả app): lời đáp sách về muộn của lần bấm trước không được phát đè cuốn vừa chọn. */
+let latestPlay = 0;
+
 export function usePlayListenBook() {
   const source = useSource();
   const player = usePlayer();
   return async (book: ListenBook, chapterId?: number, at?: number, extra?: { word?: WordTarget; rate?: number }) => {
+    const request = ++latestPlay;
     // Cuốn đang ở trình phát: tiếp tục đúng chỗ đang phát, không nạp lại (nạp lại là lùi về điểm lưu gần nhất). player.resume hỏi lại chỗ nghe
     // trước: thiết bị khác nghe xa hơn thì tới chỗ ấy (soát a27 lỗi 2).
     if (chapterId === undefined && player.track?.bookId === book.id) {
@@ -96,6 +100,8 @@ export function usePlayListenBook() {
       return;
     }
     const full = book.chapters ? book : await source.book(book.id);
+    // Bấm A rồi B, máy chủ trả B trước A sau: A về muộn thì thôi.
+    if (request !== latestPlay) return;
     const chapters = full.chapters ?? [];
     if (chapterId !== undefined) {
       player.play(full, chapters, chapterId, at ?? 0, extra);
@@ -190,7 +196,7 @@ function BookTile({ book, badge, twin }: { book: ListenBook; badge?: string; twi
         {extras.cover?.(book)}
       </div>
       <button type="button" onClick={() => navigate(`/book/${book.id}`)} className="touch-row mt-2.5 block w-full text-left">
-        <div className={cn("line-clamp-2 text-sm font-medium leading-snug", current && "text-accent-text")}>{displayTitle(book.title)}</div>
+        <div className={cn("break-words text-sm font-medium leading-snug", current && "text-accent-text")}>{displayTitle(book.title)}</div>
         {/* Cuốn ở máy khác: dấu máy tính đầu dòng trạng thái, không đè lên bìa - nhãn góc trên từng che tên sách của bìa vẽ (audit140 V8). */}
         <div className="mt-1 flex items-center gap-1 text-xs text-fg-2">
           {book.remote && <Laptop role="img" aria-label={typeof book.remote === "object" && book.remote.downloaded ? `${remotePlace(book)}, đã tải về máy này` : remotePlace(book)} className="size-3 shrink-0" />}
@@ -231,9 +237,9 @@ function ContinueCard({ book }: { book: ListenBook }) {
       {/* Cột chữ giãn theo lưới: mép nút phát trùng mép nội dung và nút tìm bên dưới. */}
       <div className="min-w-0 flex-1">
         <div className="label-section text-fg-2">Đang nghe</div>
-        <h2 className="mt-2 line-clamp-2 text-lg font-bold sm:text-2xl">{displayTitle(book.title)}</h2>
+        <h2 className="mt-2 break-words text-lg font-bold sm:text-2xl">{displayTitle(book.title)}</h2>
         {/* Thẻ giữ khoá theo cuốn (LibraryScreen): đổi phát / tạm dừng, chương, "nghe lần cuối" ở đây tự mờ chéo; giờ chạy không tính. */}
-        <MotionRegion as="p" className="tabular mt-1 truncate text-sm text-fg-2">
+        <MotionRegion as="p" className="tabular mt-1 break-words text-sm text-fg-2">
           {where}
           {current ? (playingHere ? " · đang phát" : " · tạm dừng") : last ? ` · nghe lần cuối ${formatWhen(last.at)}` : ""}
         </MotionRegion>
@@ -310,7 +316,7 @@ function UpcomingCard({ book, onOpen: open }: { book: ListenBook; onOpen?: (book
     >
       <BookCover title={book.title} part={book.series?.part} size="sm" image={book.cover} className="size-12 opacity-80" />
       <MotionRegion as="span" className="min-w-0" motionKey={[book.title, status]}>
-        <span className="block truncate text-sm font-semibold">{book.title}</span>
+        <span className="block break-words text-sm font-semibold">{book.title}</span>
         <span className="block truncate text-xs text-fg-2">{status}</span>
       </MotionRegion>
     </button>
@@ -379,7 +385,7 @@ function SeriesTile({ item, twins, phone }: { item: ReturnType<typeof librarySec
       <BookCover title={item.label} image={item.items[0].cover} size="md" className="w-full !aspect-[2/3] !rounded-cover" />
       {extras.seriesCover?.(item.items)}
     </div>
-    <span className="mt-2.5 block line-clamp-2 text-sm font-medium leading-snug">{item.label}</span>
+    <span className="mt-2.5 block break-words text-sm font-medium leading-snug">{item.label}</span>
     <span className="mt-1 flex items-center gap-1 text-xs text-fg-2">
       {item.items.some(book => book.remote) && <Laptop role="img" aria-label="Có sách trên máy khác" className="size-3 shrink-0" />}
       {item.items.length} tập
