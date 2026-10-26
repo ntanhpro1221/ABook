@@ -36,7 +36,8 @@ import { useDefaultVoiceName, VoiceSettings, type KeyCheck, type OnlineProviderI
 import { httpSource } from "./httpSource";
 import { OtherComputers } from "./OtherComputers";
 import { OwnDiagnostics } from "./OwnDiagnostics";
-import { PhoneSync, Switch, type SyncView } from "./PhoneSync";
+import { PhoneSync, type SyncView } from "./PhoneSync";
+import { Switch } from "./Switch";
 import { checkLine, UPDATE_CHECKED_EVENT, UPDATE_CHECK_WAIT_MS, type CheckLine, type UpdateChecked } from "./updateCheck";
 import { useFadeScroller } from "@/shared/scrollFade";
 

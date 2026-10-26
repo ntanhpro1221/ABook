@@ -2,7 +2,7 @@ import { MotionRegion } from "@/shared/MotionRegion";
 import { SectionHeading } from "@/shared/SectionHeading";
 import { useBackLayer } from "@/shared/backStack";
 import { MoreInfo, SettingsRow } from "@/shared/SettingsNav";
-import { Switch } from "@/desktop/PhoneSync";
+import { Switch } from "@/desktop/Switch";
 import { MY_MUSIC_HELP } from "./musicLocal";
 import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { Fold, Collapse } from "@/shared/Collapse";
