@@ -8,6 +8,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import vn.abook.player.ui.voice.FakeVoiceSource
+import vn.abook.player.ui.voice.Fixtures
+import vn.abook.player.ui.voice.MineImports
+import vn.abook.player.ui.voice.MusicImportResult
+import vn.abook.player.ui.voice.VoiceFailure
 
 /** Nhạc nền của một cuốn với nguồn giả, phạm vi chạy ngay (Unconfined): sau mỗi lời gọi trạng thái đã xong; chỉ lần lưu bị giữ bằng cổng mới dang dở. */
 class MusicStateTest {
@@ -19,8 +24,17 @@ class MusicStateTest {
         )
         mine += MineTrack("local:rain", "Mưa", "Tôi", 120.0, analysed = true)
     }
+    /** Kho Nhạc của tôi giả: mỗi lượt thêm bài mới thì menu của nguồn nhạc nền đếm thêm (như lõi thật đọc cùng kho). */
+    private val store = FakeVoiceSource().apply {
+        importResult = { uris ->
+            source.menu = source.menu.copy(mine = source.menu.mine + uris.size)
+            MusicImportResult(uris.map { Fixtures.track(it) }, uris.size, 0, emptyList())
+        }
+    }
+    private val scope = CoroutineScope(Dispatchers.Unconfined)
+    private val imports = MineImports(store, scope)
     private var clock = 0L
-    private val music = MusicState(source, CoroutineScope(Dispatchers.Unconfined), menuTtlMs = 1_000, now = { clock })
+    private val music = MusicState(source, imports, scope, menuTtlMs = 1_000, now = { clock })
 
     @Test
     fun `opening reads the book every time and the menu once in a while`() {
@@ -85,17 +99,38 @@ class MusicStateTest {
     fun `adding music picks my music for this book when the store has tracks`() {
         music.open("text")
         music.importMine(listOf("content://a", "content://b"))
-        assertEquals(listOf("import 2", "choose text mine"), source.calls)
-        assertEquals("Đã thêm 2 bài.", music.ui.value.notice)
+        assertEquals(listOf(listOf("content://a", "content://b")), store.imported)
+        assertEquals(listOf("choose text mine"), source.calls)
+        assertEquals("Đã thêm: 2 bài mới", music.ui.value.notice)
         assertEquals(2, music.ui.value.menu?.mine)
         assertEquals(MusicText.MINE, music.ui.value.book?.playlist)
         assertFalse(music.ui.value.importing)
 
         source.calls.clear()
-        source.importResult = { MusicImported("Chưa thêm được bài nào.", listOf("a.txt: không phải file nhạc"), false) }
+        store.importResult = { MusicImportResult(emptyList(), 0, 0, listOf("a.txt: không phải file nhạc")) }
         music.importMine(listOf("content://c"))
-        assertEquals("kho không có bài mới thì không đổi lựa chọn", listOf("import 1"), source.calls)
+        assertEquals("kho không có bài mới thì không đổi lựa chọn", emptyList<String>(), source.calls)
         assertEquals("a.txt: không phải file nhạc", music.ui.value.problem)
+
+        store.importError = VoiceFailure("Bộ nhớ máy đã đầy")
+        music.importMine(listOf("content://d"))
+        assertEquals("lỗi của kho là một câu cho người dùng", "Bộ nhớ máy đã đầy", music.ui.value.problem)
+    }
+
+    @Test
+    fun `a book opened while another book adds music shares that turn but not its notice`() {
+        val gate = CompletableDeferred<Unit>()
+        store.importGate = gate
+        music.open("text")
+        music.importMine(listOf("content://a"))
+        music.open("audio")
+        assertTrue("thêm nhạc là việc của cả kho: bảng cuốn khác cũng thấy đang thêm", music.ui.value.importing)
+        music.importMine(listOf("content://b"))
+        gate.complete(Unit)
+        assertEquals("một lượt mỗi lúc", listOf(listOf("content://a")), store.imported)
+        assertFalse(music.ui.value.importing)
+        assertEquals("câu báo của cuốn kia không rơi vào bảng này", "", music.ui.value.notice)
+        assertEquals("lựa chọn của cuốn này không đổi", MusicKind.Packaged, music.ui.value.book?.kind)
     }
 
     @Test
@@ -141,7 +176,42 @@ class MusicStateTest {
         source.calls.clear()
         source.mine += MineTrack("local:new", "Mới", "", 0.0, analysed = false)
         music.importMine(listOf("content://new"))
-        assertEquals(listOf("import 1", "alternatives audio 1:0"), source.calls)
+        assertEquals(listOf("alternatives audio 1:0"), source.calls)
         assertEquals(listOf("Mưa", "Mới"), music.ui.value.mine?.map { it.title })
+    }
+}
+
+/** Cùng một kho cho hai nơi bấm: Cài đặt > Nhạc của tôi và bảng Nhạc nền thấy chung một lượt, và lượt nào xong thì cả hai đọc lại. */
+class MineImportsTest {
+    private val source = FakeMusicSource().apply { books["text"] = BookMusic(MusicKind.Playlist, playlist = MusicText.SCENE, playlistAuto = true) }
+    private val store = FakeVoiceSource()
+    private val scope = CoroutineScope(Dispatchers.Unconfined)
+    private val imports = MineImports(store, scope)
+    private val music = MusicState(source, imports, scope)
+    private val voice = vn.abook.player.ui.voice.VoiceState(store, scope, vn.abook.player.ui.voice.FakeSamplePlayer(), {}, 3_600_000, imports)
+
+    @Test
+    fun `adding from the book panel refreshes my music and blocks a second turn there`() {
+        val gate = CompletableDeferred<Unit>()
+        store.importGate = gate
+        music.open("text")
+        music.importMine(listOf("content://a"))
+        assertTrue("màn Nhạc của tôi cũng thấy đang thêm", voice.music.value.importing)
+        voice.importMusic(listOf("content://b"))
+        gate.complete(Unit)
+        assertEquals("một lượt mỗi lúc", listOf(listOf("content://a")), store.imported)
+        assertEquals("Nhạc của tôi đọc lại kho", 1, voice.music.value.tracks.size)
+        assertEquals("câu báo ở nơi đã bấm", "", voice.music.value.summary)
+        assertEquals("Đã thêm: 1 bài mới", music.ui.value.notice)
+    }
+
+    @Test
+    fun `adding from my music leaves the book panel's notice alone`() {
+        music.open("text")
+        voice.importMusic(listOf("content://a", "content://b"))
+        assertEquals("Đã thêm: 2 bài mới", voice.music.value.summary)
+        assertEquals("", music.ui.value.notice)
+        assertEquals("không đổi lựa chọn của cuốn đang mở", emptyList<String>(), source.calls)
+        assertFalse(music.ui.value.importing)
     }
 }

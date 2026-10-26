@@ -120,6 +120,18 @@ class MusicStoreTest {
     }
 
     @Test
+    fun a_second_import_leaves_the_part_another_import_is_still_writing() {
+        val folder = File(root, "files").apply { mkdirs() }
+        val leftover = File(folder, ".nhap-1.wav").apply { writeText("dư của lần nhập bị ngắt") }
+        val store = store()
+        store.importFile(tone)
+        assertFalse("dư của lần trước được dọn ở lượt nhập đầu", leftover.exists())
+        val writing = File(folder, ".nhap-2.wav").apply { writeText("lượt khác đang chép dở") }
+        store.importFile(tone)
+        assertTrue("lượt sau không xoá file tạm của lượt đang chạy", writing.exists())
+    }
+
+    @Test
     fun a_loudness_meter_that_throws_does_not_break_the_import() {
         val (track, _) = store { error("không giải mã được") }.importFile(tone)
         assertFalse(track.has("lufs"))
