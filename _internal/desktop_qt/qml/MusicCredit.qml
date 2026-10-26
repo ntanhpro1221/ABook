@@ -21,7 +21,8 @@ Item {
         function onCreditChanged() { root.refresh() }
     }
 
-    implicitHeight: shown ? body.implicitHeight : 0
+    // Cuốn có nhạc: giữ chỗ một dòng kể cả khi nhạc im (dừng nghe, đoạn không nhạc) - bìa lớn không đổi cỡ mỗi lần bấm phát / dừng.
+    implicitHeight: shown ? body.implicitHeight : (Music.hasMusic ? body.topPadding + caption.implicitHeight : 0)
     height: implicitHeight
     opacity: shown ? 1 : 0
     clip: height < body.implicitHeight

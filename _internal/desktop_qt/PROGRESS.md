@@ -141,3 +141,28 @@ Per-cue silence/swap is NOT in the web player (only Sửa sách), so not in the 
   PUT then re-ask cues, failure -> Player notice "Chưa chỉnh được nhạc nền". src/musictext.h = levels/licence/credit words from the web.
   PlayerNet::mediaUrl (HostNet adds ?t=token). FakeNet gained `answers`/`statuses`. MusicTests 37 pass (text, NextChapterWarm, Music
   with a real Player: credit, chapter switch, warm, switch off, failed change, project view).
+- m4 (26-10): the D1 bar has no extra controls by design, so music lives in Đang nghe: an icon-only ControlChip "eighth-note" after
+  Chương (square, Theme.buttonHeight; width/opacity animate in when Music.hasMusic, the three text chips share the rest; struck through
+  when off = web chip look; ControlChip gained `struck` and hides an empty text). qml/MusicPopover.qml = PackagedMusicMenu word for word
+  (header "Nhạc nền: Bật/Tắt" + new qml/Switch.qml 44x24 like .ui-switch, warnings in Theme.warning that fade/slide, "Mức nhạc dưới giọng
+  đọc" + CHOICE_ROW rows with a fading check, the panel stays open on choose, rows .5 + disabled when off/busy, the Studio/packaged note).
+  qml/MusicCredit.qml = MusicCreditLine under the narrator ("Nhạc nền: title · creator" -> animated collapse: credit text, "Giấy phép: "
+  + link, modified note, "Trang của bài nhạc"; links via Qt.openUrlExternally, text escaped, never elided; collapses on a new song; the
+  last credit is kept while it fades). DESIGN.md + gen_theme.py: --warning/--focus/--switch-off/--switch-thumb (values = styles.css;
+  palette.test.ts token list extended - not run here, no node_modules in this worktree; rows checked by hand). Merged origin/dev/native1
+  07e84542, LucidePaths.js regenerated with its generator (58 icons). Not ported (Qt plays audio books only): playlist/scene menu.
+  Shots (fixture D:/Novels/native_desk_proto/deskqt_fixture_music = audio fixture + a synthetic 40 s pad in book A; scratchpad runshot.py
+  restores listening state, window and theme each run): D:/Novels/native_desk_proto/shots/music/{dark,light}_{credit,menu,off}.png,
+  chip_4x.png - looked at: chip, strike, switch, rows, wrap all right in both themes.
+- m5 (26-10): build.bat green (MusicTests 37). measure.py --scenario player, music fixture (book A has a 40 s pad), interleaved x4
+  (results/abmusic_{d1,music}_N.json): idle with book D1 59-73 MB vs music 60-75 (same); minimised playing D1 82-84 vs music 72-90
+  (~+5 MB, the second MF engine); CPU minimised 0.4-2.8 % vs 0.4-4.8 %; morph p99 both 7-40 ms (noisy); follow p99 both 6-11 ms.
+  follow_max: D1 <= 17 ms, music 502 / 511 ms in 2 of 4 runs.
+  Found on the way, fixed in the shared part: CoverView bound sourceSize to its animated size, so every frame of a size change
+  re-decoded the cover and flashed the sunken plate (credit line appearing, window resize). Now it re-decodes after 150 ms of a stable
+  size, retainWhileLoading keeps the old picture meanwhile. MusicCredit keeps its one-line slot while the music is silent (pause,
+  stretch without a cue), so the big cover no longer resizes on every play/pause. After the fix x4 (abmusic_fix_N): follow_max 11, 529,
+  13, 12 ms - the rare stall is still there. Traced build x3 (every MfAudioOut/MusicBed/Music call > 2 ms + a 10 ms GUI watchdog):
+  engine create 5-18 ms, set source 0.5-3 ms, stop/destroy 1-5 ms, sync < 5 ms; a 300 ms GUI gap had no music call within 10 s; the
+  500 ms stall did not reproduce (max 77 ms). Cause still OPEN (not on the GUI thread from music code; next: frame-swap timeline vs
+  render thread / audio device start of the second engine).
