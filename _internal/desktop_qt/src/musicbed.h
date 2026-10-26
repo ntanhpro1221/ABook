@@ -17,6 +17,27 @@
 
 class AudioOut;
 
+/// Tải sẵn bài mốc đầu của chương kế khi chương này còn <= NEXT_CHAPTER_WARM_SECONDS (musicBed.ts NextChapterWarm): chương mới mở bằng bài
+/// đã có trong bộ đệm máy chủ.
+class NextChapterWarm {
+public:
+    /// `ask`: hỏi mốc của một chương, gọi `done` với lời đáp (nullopt = hỏi hỏng). `warm`: xin máy chủ tải sẵn một bài.
+    using Answer = std::function<void(const std::optional<MusicLogic::MusicCues> &)>;
+    NextChapterWarm(std::function<void(int chapterId, Answer done)> ask, std::function<void(const QString &)> warm, std::function<qint64()> now = {});
+
+    /// Gọi mỗi nhịp thời gian. `key`: chương đang nghe (cuốn:chương); `next`: mã chương kế (nullopt = hết cuốn); `remaining`: giây còn
+    /// lại của chương, <= 0 khi chưa biết.
+    void update(const QString &key, std::optional<int> next, double remaining);
+
+private:
+    std::function<void(int, Answer)> m_ask;
+    std::function<void(const QString &)> m_warm;
+    std::function<qint64()> m_now;
+    QSet<QString> m_done;
+    QString m_asking;
+    QHash<QString, qint64> m_retryAt;
+};
+
 class MusicBed : public QObject {
     Q_OBJECT
 public:

@@ -1,12 +1,16 @@
 // Nhạc nền: phép tính thuần (cùng fixture với máy chủ, web và Android) + MusicBed với AudioOut giả, đồng hồ giả.
 #include "fakes.h"
+#include "music.h"
 #include "musicbed.h"
 #include "musiclogic.h"
+#include "musictext.h"
+#include "player.h"
 
 #include <QFile>
 #include <QJsonDocument>
 #include <QPointer>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtTest>
 
 #include <memory>
@@ -103,6 +107,52 @@ MusicCue plain(double start, double end, const QString &link, std::optional<doub
     cue.gainDb = gainDb;
     return cue;
 }
+
+/// Lời đáp GET /api/books/<id>/music/chapters/<n> có một mốc 0-90 của bài `link`.
+QJsonObject chapterCues(const QString &link, const QString &title) {
+    const QJsonObject cue{{QStringLiteral("start"), 0}, {QStringLiteral("end"), 90}, {QStringLiteral("link"), link},
+                          {QStringLiteral("key"), QStringLiteral("1:1")}, {QStringLiteral("src"), QStringLiteral("/api/music/") + title}};
+    const QJsonObject credit{{QStringLiteral("title"), title},
+                             {QStringLiteral("creator"), QStringLiteral("Kevin MacLeod")},
+                             {QStringLiteral("attribution"), title + QStringLiteral(" by Kevin MacLeod")},
+                             {QStringLiteral("license"), QStringLiteral("by")},
+                             {QStringLiteral("licenseUrl"), QStringLiteral("https://creativecommons.org/licenses/by/4.0/")},
+                             {QStringLiteral("landing"), QStringLiteral("https://incompetech.com/x")}};
+    return {{QStringLiteral("cues"), QJsonArray{cue}}, {QStringLiteral("levelDb"), -18}, {QStringLiteral("credits"), QJsonObject{{link, credit}}}};
+}
+
+/// Player + Music thật trên AudioOut / PlayerNet giả: cuốn "a" 4 chương, nhạc người làm sách gắn ở -18 dB.
+struct BookRig {
+    BookRig() {
+        net.books.insert(QStringLiteral("a"), makeBook(QStringLiteral("a"), 4, true));
+        net.answers.insert(QStringLiteral("GET /api/books/a/music"),
+                           {{QStringLiteral("hasMusic"), true}, {QStringLiteral("enabled"), true}, {QStringLiteral("levelDb"), -18},
+                            {QStringLiteral("defaultLevelDb"), -18}});
+        for (int chapter = 1; chapter <= 4; ++chapter)
+            net.answers.insert(QStringLiteral("GET /api/books/a/music/chapters/%1").arg(chapter),
+                               chapterCues(QStringLiteral("https://x/%1").arg(chapter), QStringLiteral("Bai%1").arg(chapter)));
+        player = std::make_unique<Player>(&out, &net, dir.filePath(QStringLiteral("outbox.json")), nullptr, [] { return qint64(1800000000000); });
+        music = std::make_unique<Music>(player.get(), &net, [this] {
+            auto *voice = new FakeOut;
+            voices.append(voice);
+            return voice;
+        });
+    }
+    QStringList warmed() const {
+        const QString prefix = QStringLiteral("/api/music/warm?link=");
+        QStringList links;
+        for (const FakeNet::Call &call : net.calls)
+            if (call.method == "POST" && call.path.startsWith(prefix))
+                links << QUrl::fromPercentEncoding(call.path.mid(int(prefix.size())).toLatin1());
+        return links;
+    }
+    QTemporaryDir dir;
+    FakeOut out;
+    FakeNet net;
+    std::unique_ptr<Player> player;
+    std::unique_ptr<Music> music;
+    QVector<QPointer<FakeOut>> voices;
+};
 
 /// Đủ nhịp để một lần mờ `seconds` giây đi hết.
 int ticksFor(double seconds) {
@@ -587,6 +637,156 @@ private slots:
         QCOMPARE(rig.warmed, QStringList({QStringLiteral("https://x/b")})); // bài nằm sẵn trong sách, bài trên máy: không xin
         rig.bed->sync(5, true, true);
         QCOMPARE(rig.warmed.size(), 1); // mỗi bài một lần
+    }
+
+    // ---- chữ (trùng từng chữ với bản web) ----
+
+    void levelOptionsAddTheBookLevel() {
+        QStringList names;
+        for (const MusicText::Level &level : MusicText::levelOptions(-20))
+            names << level.name;
+        QCOMPARE(names, QStringList({QStringLiteral("To"), QStringLiteral("Hơi to"), QStringLiteral("Vừa (mặc định)"), QStringLiteral("Nhỏ"),
+                                     QStringLiteral("Rất nhỏ")}));
+        const QVector<MusicText::Level> book = MusicText::levelOptions(-18.5);
+        QCOMPARE(book.size(), 6);
+        QCOMPARE(book[2].name, QStringLiteral("-18,5 dB (của sách)"));
+        QCOMPARE(book[2].value, -18.5);
+        QCOMPARE(MusicText::levelNote(-28), QStringLiteral("dễ nghe lời nhất"));
+        QCOMPARE(MusicText::levelNote(-24), QString());
+    }
+
+    void licenseAndCreditText() {
+        QCOMPARE(MusicText::licenseLabel(QStringLiteral("by"), QStringLiteral("https://creativecommons.org/licenses/by-sa/4.0/")), QStringLiteral("CC BY-SA 4.0"));
+        QCOMPARE(MusicText::licenseLabel(QStringLiteral("cc0"), QStringLiteral("https://creativecommons.org/publicdomain/zero/1.0/")), QStringLiteral("CC0 1.0"));
+        QCOMPARE(MusicText::licenseLabel(QStringLiteral(" by-nc ")), QStringLiteral("CC BY-NC"));
+        QCOMPARE(MusicText::licenseLabel(QStringLiteral("cc0")), QStringLiteral("CC0"));
+        QCOMPARE(MusicText::licenseLabel(QStringLiteral("Riêng")), QStringLiteral("Riêng"));
+        MusicCredit credit{QStringLiteral("Bài"), QStringLiteral("Tác giả"), QStringLiteral("Bài by Tác giả"), {}, QStringLiteral("by"), {}};
+        QCOMPARE(MusicText::creditText(credit), QStringLiteral("Bài by Tác giả"));
+        credit.creator.clear();
+        QCOMPARE(MusicText::creditText(credit), QStringLiteral("Bài"));
+        credit.creator = QStringLiteral("Tác giả");
+        credit.attribution.clear();
+        QCOMPARE(MusicText::creditText(credit), QStringLiteral("Bài - Tác giả"));
+        QVERIFY(MusicText::needsModifiedNote(QStringLiteral("by")));
+        QVERIFY(!MusicText::needsModifiedNote(QStringLiteral("CC0")));
+        QVERIFY(!MusicText::needsModifiedNote(QString()));
+    }
+
+    // ---- NextChapterWarm ----
+
+    void nextChapterWarmAsksOnceNearTheEnd() {
+        qint64 clock = 1000000;
+        QList<int> asked;
+        QStringList warmed;
+        std::optional<MusicCues> answer = MusicCues{};
+        NextChapterWarm warm([&](int chapter, NextChapterWarm::Answer done) {
+            asked << chapter;
+            done(answer);
+        }, [&](const QString &link) { warmed << link; }, [&] { return clock; });
+        answer->cues = {plain(0, 50, QStringLiteral("https://x/2"))};
+        warm.update(QStringLiteral("a:1"), 2, 300);
+        warm.update(QStringLiteral("a:1"), 2, 0);
+        warm.update(QStringLiteral("a:1"), std::nullopt, 50);
+        QVERIFY(asked.isEmpty());
+        warm.update(QStringLiteral("a:1"), 2, NEXT_CHAPTER_WARM_SECONDS);
+        warm.update(QStringLiteral("a:1"), 2, 60);
+        QCOMPARE(asked, QList<int>({2}));
+        QCOMPARE(warmed, QStringList({QStringLiteral("https://x/2")}));
+        // chương kế mang bài trong gói: không xin máy chủ tải gì
+        answer->cues[0].src = QStringLiteral("/api/books/a/music/files/x.mp3");
+        warm.update(QStringLiteral("a:2"), 3, 60);
+        QCOMPARE(warmed.size(), 1);
+    }
+
+    void nextChapterWarmRetriesPendingAndStopsWithoutMusic() {
+        qint64 clock = 1000000;
+        QList<int> asked;
+        std::optional<MusicCues> answer = std::nullopt;
+        NextChapterWarm warm([&](int chapter, NextChapterWarm::Answer done) {
+            asked << chapter;
+            done(answer);
+        }, [](const QString &) {}, [&] { return clock; });
+        warm.update(QStringLiteral("a:1"), 2, 60); // hỏi hỏng
+        warm.update(QStringLiteral("a:1"), 2, 59);
+        QCOMPARE(asked.size(), 1);
+        clock += NEXT_CHAPTER_RETRY_MS;
+        answer = MusicCues{};
+        answer->pending = true;
+        warm.update(QStringLiteral("a:1"), 2, 50); // chưa dựng xong: hỏi lại sau
+        clock += NEXT_CHAPTER_RETRY_MS;
+        answer->pending = false;
+        warm.update(QStringLiteral("a:1"), 2, 40); // không nhạc: thôi hẳn
+        clock += NEXT_CHAPTER_RETRY_MS;
+        warm.update(QStringLiteral("a:1"), 2, 30);
+        QCOMPARE(asked.size(), 3);
+    }
+
+    // ---- Music: Player + MusicBed + máy chủ ----
+
+    void musicFollowsTheChapterAndShowsTheCredit() {
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QVERIFY(rig.player->playing());
+        QVERIFY(rig.music->hasMusic());
+        QVERIFY(rig.music->enabled());
+        QVERIFY(!rig.music->project());
+        QCOMPARE(rig.music->levelDb(), -18.0);
+        QCOMPARE(rig.music->levels().size(), 6);
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
+        QCOMPARE(rig.voices.size(), 1);
+        QCOMPARE(rig.voices[0]->url, QUrl(QStringLiteral("/api/music/Bai1")));
+        const QVariantMap credit = rig.music->credit();
+        QCOMPARE(credit.value(QStringLiteral("label")).toString(), QStringLiteral("Bai1 · Kevin MacLeod"));
+        QCOMPARE(credit.value(QStringLiteral("text")).toString(), QStringLiteral("Bai1 by Kevin MacLeod"));
+        QCOMPARE(credit.value(QStringLiteral("license")).toString(), QStringLiteral("CC BY 4.0"));
+        QVERIFY(credit.value(QStringLiteral("modified")).toBool());
+        // chương 100 s, còn <= 120 s: bài mốc đầu chương kế được xin tải sẵn
+        QCOMPARE(rig.warmed(), QStringList({QStringLiteral("https://x/2")}));
+        rig.player->next();
+        QCOMPARE(rig.player->chapterId(), 2);
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/2"));
+        QCOMPARE(rig.music->credit().value(QStringLiteral("label")).toString(), QStringLiteral("Bai2 · Kevin MacLeod"));
+        rig.player->close();
+        QCOMPARE(rig.music->bed()->activeLink(), QString());
+        QVERIFY(!rig.music->hasMusic());
+    }
+
+    void switchingOffAsksTheCuesAgain() {
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        QCOMPARE(rig.music->bed()->activeLink(), QStringLiteral("https://x/1"));
+        rig.net.answers.insert(QStringLiteral("PUT /api/books/a/music"),
+                               {{QStringLiteral("hasMusic"), true}, {QStringLiteral("enabled"), false}, {QStringLiteral("levelDb"), -18}});
+        rig.net.answers.insert(QStringLiteral("GET /api/books/a/music/chapters/1"), {{QStringLiteral("cues"), QJsonArray()}, {QStringLiteral("levelDb"), -18}});
+        rig.music->setEnabled(false);
+        QCOMPARE(rig.net.callsTo(QStringLiteral("/api/books/a/music"), "PUT").last().body.value(QStringLiteral("enabled")), QJsonValue(false));
+        QVERIFY(!rig.music->enabled());
+        QVERIFY(!rig.music->busy());
+        QCOMPARE(rig.music->bed()->activeLink(), QString());
+    }
+
+    void failedChangeSaysSo() {
+        BookRig rig;
+        rig.player->open(QStringLiteral("a"), -1, -1, true);
+        rig.net.answers.insert(QStringLiteral("PUT /api/books/a/music"), {});
+        rig.net.statuses.insert(QStringLiteral("PUT /api/books/a/music"), 500);
+        rig.music->setLevel(-24);
+        QCOMPARE(rig.player->notice(), QStringLiteral("Chưa chỉnh được nhạc nền"));
+        QCOMPARE(rig.music->levelDb(), -18.0);
+        QVERIFY(!rig.music->busy());
+    }
+
+    void projectViewReadsPlanAndOverrides() {
+        BookRig rig;
+        rig.net.answers.insert(QStringLiteral("GET /api/books/a/music"),
+                               {{QStringLiteral("plan"), QJsonObject{{QStringLiteral("levelDb"), -17}, {QStringLiteral("scenes"), QJsonArray{1}}}},
+                                {QStringLiteral("overrides"), QJsonObject{{QStringLiteral("levelDb"), -24}}}});
+        rig.player->open(QStringLiteral("a"), -1, -1, false);
+        QVERIFY(rig.music->project());
+        QVERIFY(rig.music->hasMusic());
+        QVERIFY(rig.music->enabled());
+        QCOMPARE(rig.music->levelDb(), -24.0);
     }
 };
 

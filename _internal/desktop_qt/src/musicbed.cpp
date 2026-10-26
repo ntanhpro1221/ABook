@@ -87,6 +87,37 @@ int MusicBed::voices() const {
     return (m_current ? 1 : 0) + int(m_fading.size()) + (m_standby ? 1 : 0);
 }
 
+// ---- NextChapterWarm ----
+
+NextChapterWarm::NextChapterWarm(std::function<void(int, Answer)> ask, std::function<void(const QString &)> warm, std::function<qint64()> now)
+    : m_ask(std::move(ask)), m_warm(std::move(warm)), m_now(std::move(now)) {
+    if (!m_now)
+        m_now = [] { return QDateTime::currentMSecsSinceEpoch(); };
+}
+
+void NextChapterWarm::update(const QString &key, std::optional<int> next, double remaining) {
+    if (!next || !(remaining > 0) || remaining > NEXT_CHAPTER_WARM_SECONDS)
+        return;
+    const QString ticket = QStringLiteral("%1>%2").arg(key).arg(*next);
+    if (m_done.contains(ticket) || !m_asking.isEmpty() || m_retryAt.value(ticket, 0) > m_now())
+        return;
+    m_asking = ticket;
+    m_ask(*next, [this, ticket](const std::optional<MusicCues> &result) {
+        if (m_asking == ticket)
+            m_asking.clear();
+        const MusicCue *first = result && !result->pending && !result->cues.isEmpty() ? &result->cues.first() : nullptr;
+        if (first) {
+            m_done.insert(ticket);
+            if (!carriedByBook(*first))
+                m_warm(first->link);
+        } else if (!result || result->pending || !result->unavailable.isEmpty()) {
+            m_retryAt.insert(ticket, m_now() + NEXT_CHAPTER_RETRY_MS);
+        } else {
+            m_done.insert(ticket); // chương kế không có nhạc
+        }
+    });
+}
+
 // ---- như musicBed.ts ----
 
 void MusicBed::warmLink(const QString &link) {
