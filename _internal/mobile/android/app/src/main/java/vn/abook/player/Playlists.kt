@@ -17,7 +17,7 @@ object Playlists {
     const val MINE = "mine"
     /** Khớp [ID] nhưng không phải mã danh sách: `music.playlist` = "off" là tắt nhạc nền. */
     const val OFF = "off"
-    /** `music.playlist` = "scene": lựa chọn "Theo cảnh (máy tự dựng)" (music_nnscene.py trên máy tính, [DeviceScenes] trên điện thoại) đi theo sách qua lớp sửa; không phải mã
+    /** `music.playlist` = "scene": lựa chọn "Theo cảnh" (music_nnscene.py trên máy tính, [DeviceScenes] trên điện thoại) đi theo sách qua lớp sửa; không phải mã
      *  danh sách của danh mục. Chưa chọn gì thì đây cũng là mặc định của sách chỉ có chữ ([sceneMode]). */
     const val SCENE = "scene"
     /** Bài không biết độ dài (thông tin danh mục thiếu): khoảng mặc định trên đồng hồ - bài vẫn lặp liền nếu ngắn hơn. */
@@ -113,7 +113,7 @@ object Playlists {
     }
 
     /**
-     * `server._scene_mode`: sách CHỈ CÓ CHỮ không mang nhạc của người làm sách (`book.music`) đang theo "Theo cảnh (máy tự dựng)" - người nghe đã chọn nó
+     * `server._scene_mode`: sách CHỈ CÓ CHỮ không mang nhạc của người làm sách (`book.music`) đang theo "Theo cảnh" - người nghe đã chọn nó
      * (`choice` = `music.playlist` của lớp sửa = "scene"), hay chưa chọn gì ("Để máy chọn", `choice` rỗng) và "Tự chọn nhạc nền" (`auto`) còn bật: đó là mặc định.
      * Đã chọn danh sách khác, "Nhạc của tôi" hay "off" thì không (luật cũ giữ nguyên). `book`: book.json nguyên văn (không phải bản đã áp lớp sửa).
      */

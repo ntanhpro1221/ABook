@@ -138,7 +138,7 @@ function SpokenEditor({
       }}
     >
       <label htmlFor={`spoken-${item.stableId}`} className="text-xs font-medium text-fg-2">
-        Máy đọc câu này thành
+        Cách đọc
       </label>
       <input
         id={`spoken-${item.stableId}`}

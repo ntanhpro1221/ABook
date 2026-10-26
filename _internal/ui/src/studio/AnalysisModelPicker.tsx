@@ -99,7 +99,7 @@ export function AnalysisModelPicker({ value, onChange }: { value: string; onChan
         onChange={(event) => onChange(event.target.value)}
         className="mt-2 w-full max-w-lg"
       >
-        <option value="">Mặc định của ABook (khuyên dùng)</option>
+        <option value="">Mặc định (khuyên dùng)</option>
         <optgroup label="Bản khác (thử nghiệm)">
           {others.map((model, index) => (
             <option key={model.name} value={model.name}>

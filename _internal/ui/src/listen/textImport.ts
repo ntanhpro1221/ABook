@@ -45,7 +45,7 @@ export interface ImportPreview {
   footnotes?: FootnoteOffer;
 }
 
-/** Chú thích máy tìm thấy trong sách. `marks`: số dấu gọi (con số ², [3]…) nằm trong chữ - 0 thì ô "Không đọc số chú thích" vô nghĩa (DOCX: số của Word không vào chữ). */
+/** Chú thích máy tìm thấy trong sách. `marks`: số dấu gọi (con số ², [3]…) nằm trong chữ - 0 thì ô "Bỏ số chú thích" vô nghĩa (DOCX: số của Word không vào chữ). */
 export interface FootnoteOffer {
   found: number;
   marks: number;

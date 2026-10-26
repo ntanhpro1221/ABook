@@ -5,7 +5,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import type { ListenBook } from "@/listen/model";
 import { levelOptions, levelText, MUSIC_LEVELS } from "./musicLevels";
 
-// Mức -28 dB kèm lời "dễ nghe lời nhất" (MIX_QA mục 7.1): người nghe thấy ngay mức nào để nghe rõ lời nhất, ở nút mức của trình phát,
+// Mức -28 dB kèm lời "rõ lời" (MIX_QA mục 7.1): người nghe thấy ngay mức nào để nghe rõ lời nhất, ở nút mức của trình phát,
 // ô chọn của hộp "Sửa sách" và ô chọn tab Nhạc nền của Studio. Dựng bằng react-dom/server như settingsScreens.test.tsx.
 
 beforeAll(() => {
@@ -21,23 +21,23 @@ function wrap(children: ReactNode, client = new QueryClient()) {
 }
 
 describe("lời kèm mức nhạc", () => {
-  it("chỉ mức -28 có lời dễ nghe lời nhất", () => {
+  it("chỉ mức -28 có lời rõ lời", () => {
     expect(MUSIC_LEVELS.map(([value, name]) => levelText(value, name))).toEqual([
       "To",
       "Hơi to",
       "Vừa (mặc định)",
       "Nhỏ",
-      "Rất nhỏ (dễ nghe lời nhất)",
+      "Rất nhỏ (rõ lời)",
     ]);
-    expect(levelOptions(-18).map(([value, name]) => levelText(value, name))).toContain("Rất nhỏ (dễ nghe lời nhất)");
+    expect(levelOptions(-18).map(([value, name]) => levelText(value, name))).toContain("Rất nhỏ (rõ lời)");
   });
 
   it("nút mức của trình phát hiện lời dưới tên mức", async () => {
     const { LevelButtons } = await import("@/listen/PlayerViews");
     const html = wrap(<LevelButtons level={-20} disabled={false} onChange={() => undefined} />);
     expect(html).toContain("Rất nhỏ");
-    expect(html).toContain("dễ nghe lời nhất");
-    expect(html.match(/dễ nghe lời nhất/g)).toHaveLength(1);
+    expect(html).toContain("rõ lời");
+    expect(html.match(/rõ lời/g)).toHaveLength(1);
   });
 
   it("ô chọn mức của hộp Sửa sách có lời", async () => {
@@ -45,6 +45,6 @@ describe("lời kèm mức nhạc", () => {
     const client = new QueryClient();
     client.setQueryData(["listen", "edit-music", "sach"], { hasMusic: true, enabled: true, levelDb: -20, defaultLevelDb: -20, cues: [] });
     const html = wrap(<MusicSection book={{ id: "sach" } as ListenBook} />, client);
-    expect(html).toMatch(/<option[^>]*value="-28"[^>]*>Rất nhỏ \(dễ nghe lời nhất\)<\/option>/);
+    expect(html).toMatch(/<option[^>]*value="-28"[^>]*>Rất nhỏ \(rõ lời\)<\/option>/);
   });
 });
