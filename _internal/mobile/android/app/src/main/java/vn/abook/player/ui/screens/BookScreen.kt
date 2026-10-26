@@ -77,6 +77,7 @@ import vn.abook.player.ui.data.CoverArt
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
+import vn.abook.player.ui.music.MusicState
 import vn.abook.player.ui.data.PlayerClock
 import vn.abook.player.ui.data.PlayerState
 import vn.abook.player.ui.motion.Motion
@@ -139,6 +140,7 @@ fun BookScreen(
     sheets: SheetHost,
     actions: BookScreenActions,
     modifier: Modifier = Modifier,
+    music: MusicState? = null,
 ) {
     val ui = remember(book.id, source) { BookUiState(book.id, source) }
     // Thư viện đọc lại (dừng phát, đánh dấu, sửa) thì trang cũng đọc lại.
@@ -167,7 +169,7 @@ fun BookScreen(
         ) {
             item(key = "head", contentType = "head") { BookHead(shown, covers) }
             item(key = "actions", contentType = "actions") {
-                BookButtons(shown, detail, player, sheets, source, actions)
+                BookButtons(shown, detail, player, sheets, source, actions, music)
             }
             // Đã đọc xong mà sách không có chương: câu ở chỗ nút chính đã nói điều ấy - không lặp lại bằng một mục "Chương 0" rỗng.
             val noChapters = ui.loaded && chapters.isNullOrEmpty()
@@ -258,6 +260,7 @@ private fun BookButtons(
     sheets: SheetHost,
     source: BookSource,
     actions: BookScreenActions,
+    music: MusicState?,
 ) {
     val haptic = LocalHapticFeedback.current
     val listening = player.bookId == book.id
@@ -311,7 +314,7 @@ private fun BookButtons(
                 "Từ đầu", "Nghe lại từ đầu", enabled = started && resume != null && !finished && first != null, tag = "book_restart", edge = 0, onClick = restart,
             ) { color -> RestartIcon(color) }
             SecondaryButton("Thêm", "Thêm việc với sách", enabled = true, tag = "book_more", edge = 1, onClick = {
-                sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss) }
+                sheets.show { dismiss -> BookMenuSheet(book, detail, source, actions, dismiss, music, player.music.takeIf { player.bookId == book.id }) }
             }) { color -> MoreIcon(color) }
         }
     }
