@@ -167,8 +167,8 @@ class NowPlayingUiTest {
         listOf("Âm lượng", "Sắp có", "Chỗ vừa nghe").forEach {
             assertTrue("còn hàng \"$it\"", rule.onAllNodesWithText(it, substring = true).fetchSemanticsNodes().isEmpty())
         }
-        rule.onNodeWithText("Nhạc nền").performClick()
-        assertTrue(model.state.value.musicEnabled)
+        // Không có nguồn nhạc (bản thử) thì không có hàng "Nhạc nền"; hàng thật và tấm của nó: MusicScreenTest.
+        assertTrue(rule.onAllNodesWithText("Nhạc nền").fetchSemanticsNodes().isEmpty())
         rule.onNodeWithTag("player_sheet_more").assertIsDisplayed()
     }
     @Test fun sheetHandleReallyDragsAndCloses() {

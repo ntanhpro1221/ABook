@@ -4,12 +4,17 @@ import android.os.SystemClock
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableLongStateOf
 import vn.abook.player.ui.data.PlayerChapter
+import vn.abook.player.ui.music.MusicState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /** Deterministic test/demo adapter. Never touches Playback, network, files or the owner's library. */
 @Stable
-class FakeNowPlayingModel(initial: NowPlayingState = demoState(), initialText: ReadAlongState = demoText()) : NowPlayingModel {
+class FakeNowPlayingModel(
+    initial: NowPlayingState = demoState(),
+    initialText: ReadAlongState = demoText(),
+    override val music: MusicState? = null,
+) : NowPlayingModel {
     private val metadata = MutableStateFlow(initial)
     override val state = metadata.asStateFlow()
     private val text = MutableStateFlow(initialText)
@@ -54,7 +59,6 @@ class FakeNowPlayingModel(initial: NowPlayingState = demoState(), initialText: R
         sleepLeft.longValue = minutes * 60_000L
         metadata.value = state.value.copy(sleep = PlayerSleep(kind, minutes, state.value.playing))
     }
-    override fun setMusic(enabled: Boolean) { metadata.value = state.value.copy(musicEnabled = enabled) }
     override fun setVoice(id: String) { metadata.value = state.value.copy(voiceId = id) }
     override suspend fun loadVoices() { actions += "loadVoices" }
     override fun setReadAlongActive(active: Boolean) {}
