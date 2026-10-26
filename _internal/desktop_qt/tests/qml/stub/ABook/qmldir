@@ -72,10 +72,27 @@ SettingsListen 1.0 ../../../../qml/SettingsListen.qml
 SettingsSleep 1.0 ../../../../qml/SettingsSleep.qml
 SettingsLook 1.0 ../../../../qml/SettingsLook.qml
 SettingsAdvanced 1.0 ../../../../qml/SettingsAdvanced.qml
+<<<<<<< HEAD
 StudioRows 1.0 ../../../../qml/StudioRows.qml
 StudioSettings 1.0 ../../../../qml/StudioSettings.qml
 BookTemplates 1.0 ../../../../qml/BookTemplates.qml
 SharedReadingsSettings 1.0 ../../../../qml/SharedReadingsSettings.qml
 NewBookDefaults 1.0 ../../../../qml/NewBookDefaults.qml
+=======
+DevicesFold 1.0 ../../../../qml/DevicesFold.qml
+DevicesToggle 1.0 ../../../../qml/DevicesToggle.qml
+DevicesRows 1.0 ../../../../qml/DevicesRows.qml
+DevicesError 1.0 ../../../../qml/DevicesError.qml
+DevicesSkeleton 1.0 ../../../../qml/DevicesSkeleton.qml
+DevicesUnpair 1.0 ../../../../qml/DevicesUnpair.qml
+DevicesLogBox 1.0 ../../../../qml/DevicesLogBox.qml
+PhoneSync 1.0 ../../../../qml/PhoneSync.qml
+PhoneSyncPairing 1.0 ../../../../qml/PhoneSyncPairing.qml
+PhoneSyncDevice 1.0 ../../../../qml/PhoneSyncDevice.qml
+PhoneDiagnostics 1.0 ../../../../qml/PhoneDiagnostics.qml
+OtherComputers 1.0 ../../../../qml/OtherComputers.qml
+OtherComputersRow 1.0 ../../../../qml/OtherComputersRow.qml
+OtherComputersBluetooth 1.0 ../../../../qml/OtherComputersBluetooth.qml
+>>>>>>> worktree-agent-ae771d37499a25abf
 singleton Api 1.0 ../../../../qml/Api.qml
 singleton DesktopApi 1.0 DesktopApi.qml
