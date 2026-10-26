@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.components.PrimaryButton
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.ListenBook
@@ -25,15 +26,17 @@ import vn.abook.player.ui.data.ListenLogic
 import vn.abook.player.ui.data.ShelfTile
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
 
 /** Bảng của một bộ nhiều tập: tên bộ + số tập, rồi từng tập (bìa nhỏ nhãn số tập, tên, trạng thái). Chạm một tập: đóng bảng và mở trang sách. */
 @Composable
 fun SeriesSheet(tile: ShelfTile.Series, covers: CoverLoader, onOpen: (ListenBook) -> Unit, dismiss: () -> Unit) {
     Column(Modifier.fillMaxWidth().testTag("series_sheet")) {
         BasicText(tile.label, style = Abook.type.sectionTitle)
-        BasicText("${tile.books.size} ${tile.unit}", style = Abook.type.bodySmall)
+        RowHint("${tile.books.size} ${tile.unit}")
         Spacer(Modifier.height(Dim.s12))
-        Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+        val scroll = rememberScrollState()
+        Column(Modifier.heightIn(max = 420.dp).fadeEdges(scroll).verticalScroll(scroll)) {
             for (book in tile.books) {
                 Row(
                     Modifier.fillMaxWidth().pressable { dismiss(); onOpen(book) }.padding(vertical = Dim.s8).testTag("series_row"),
@@ -44,7 +47,7 @@ fun SeriesSheet(tile: ShelfTile.Series, covers: CoverLoader, onOpen: (ListenBook
                     Column(Modifier.weight(1f)) {
                         BasicText(book.title, style = Abook.type.body)
                         val status = ListenLogic.progressText(book)
-                        BasicText(if (book.remote != null) "$status · ${ListenLogic.remotePlace(book)}" else status, style = Abook.type.bodySmall)
+                        RowHint(if (book.remote != null) "$status · ${ListenLogic.remotePlace(book)}" else status)
                     }
                 }
             }

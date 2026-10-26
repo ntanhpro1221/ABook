@@ -122,7 +122,7 @@ const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px
 /** "Chọn lại nhạc" (và đổi thể loại) dựng lại nhạc cả cuốn - sách 43 chương mất cỡ nửa phút: nói ra để các nút mờ không có vẻ như bị treo. */
 const REBUILDING = "Đang chọn lại nhạc, cỡ nửa phút.";
 /** Sửa một đoạn (chọn bài, ghim, im lặng, bỏ bài) chỉ mất chốc lát: chỉ báo bận nhẹ, không hứa nửa phút. */
-const SAVING = "Đang lưu lựa chọn…";
+const SAVING = "Đang lưu lựa chọn";
 
 const PREVIEW_SECONDS = 20;
 
@@ -227,7 +227,7 @@ function TrackRow({
         )}
         <Button size="sm" variant="ghost" icon={Pin} disabled={busy} loading={choosing === item.link}
           onClick={() => onChoose(item.link)}>
-          {choosing === item.link ? "Đang đổi…" : "Chọn"}
+          {choosing === item.link ? "Đang đổi" : "Chọn"}
         </Button>
       </span>
     </li>
@@ -305,8 +305,8 @@ function Alternatives({
         ) : (
           <p className="mt-1 text-fg-2">
             {info?.remote
-              ? "Chưa có bài nào. Nhập nhạc của bạn trên máy tính chủ sách."
-              : "Chưa có bài nào - bấm “Nhập nhạc của tôi…” ở đầu trang để thêm nhạc của riêng bạn."}
+              ? "Chưa có bài nào. Thêm nhạc của bạn trên máy tính chủ sách."
+              : "Chưa có bài nào - bấm “Thêm nhạc của bạn” ở đầu trang."}
           </p>
         )}
       </div>
@@ -337,7 +337,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
         setProgress({ done, total });
         if (latest) refresh(latest);
       });
-      if (error) toast.error("Đang nhập nhạc thì dừng", { description: error.message });
+      if (error) toast.error("Đang thêm nhạc thì dừng", { description: error.message });
       if (!result) return;
       const summary = importSummary(result);
       toast[summary.kind](summary.title, { description: summary.description });
@@ -366,7 +366,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
       )}
       {canImport && tracks.length > 0 && (
         <Button size="sm" variant="ghost" icon={Upload} loading={Boolean(progress)} onClick={() => void importFiles()} className="-ml-3">
-          {progress ? `Đang nhập ${progress.done}/${progress.total}…` : "Nhập nhạc của tôi…"}
+          {progress ? `Đang thêm ${progress.done}/${progress.total}` : "Thêm nhạc của bạn"}
         </Button>
       )}
       <MotionPresence open={canImport && !!tracks.length}><MusicModuleNotice view={data} queryKey={key} /></MotionPresence>
@@ -392,7 +392,7 @@ export function MyMusic({ bookId, previewing, onPreview }: { bookId: string; pre
                 {removing === track.link ? (
                   <>
                     <Button size="sm" variant="ghost" icon={Trash2} loading={remove.isPending} onClick={() => remove.mutate(track.link)}>
-                      Xoá khỏi kho
+                      Xoá bài
                     </Button>
                     <Button size="sm" variant="ghost" disabled={remove.isPending} onClick={() => setRemoving(null)}>
                       Giữ lại
@@ -445,12 +445,12 @@ function MoodsPanel({ bookId, moods, onCompute }: { bookId: string; moods?: { ru
       {data.installed ? (
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" variant="ghost" icon={RefreshCw} loading={running} onClick={() => compute.mutate()}>
-            {running ? "Đang đọc không khí…" : "Đọc lại ngữ cảnh"}
+            {running ? "Đang đọc không khí" : "Đọc lại ngữ cảnh"}
           </Button>
           {moods?.error && <span className="text-sm text-warning">{moods.error}</span>}
         </div>
       ) : data.downloading ? (
-        <p className="text-sm">Đang tải phần đọc không khí{percent !== null ? ` - ${percent}%` : "…"}</p>
+        <p className="text-sm">Đang tải phần đọc không khí{percent !== null ? ` - ${percent}%` : ""}</p>
       ) : data.downloadable && !info?.remote ? (
         <div className="flex flex-wrap items-center gap-3">
           <Button size="sm" variant="ghost" icon={Download} loading={download.isPending} onClick={() => download.mutate()}>
@@ -599,7 +599,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
   const genreName = genres.find(([value]) => value === overrides.genre)?.[1].vi ?? "";
   const byChapter = new Map<number, Scene[]>();
   for (const scene of plan?.scenes ?? []) byChapter.set(scene.chapterId, [...(byChapter.get(scene.chapterId) ?? []), scene]);
-  // Bài đang được đổi sang (nút "Chọn" của nó hiện "Đang đổi…").
+  // Bài đang được đổi sang (nút "Chọn" của nó hiện "Đang đổi").
   const pending = change.isPending ? (change.variables?.pins as Record<string, string | null> | undefined) : undefined;
   const choosing = Object.values(pending ?? {}).find((link): link is string => !!link) ?? null;
 
@@ -652,7 +652,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
           </SettingsRow>
           <SettingsRow label="Bài cho từng đoạn" hint="Máy chọn lại theo thể loại và mức nhạc ở trên.">
             <Button variant="ghost" icon={RefreshCw} loading={rebuild.isPending} onClick={() => rebuild.mutate()} className="-mr-3.5">
-              {rebuild.isPending ? "Đang chọn lại…" : "Chọn lại nhạc"}
+              {rebuild.isPending ? "Đang chọn lại" : "Chọn lại nhạc"}
             </Button>
           </SettingsRow>
         </div>

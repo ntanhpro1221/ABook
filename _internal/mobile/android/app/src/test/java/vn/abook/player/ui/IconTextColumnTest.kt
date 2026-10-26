@@ -55,7 +55,7 @@ class IconTextColumnTest {
                         ListItem("Máy tính có tên dài xuống nhiều dòng", tag = "list", hint = "Đang phát",
                             leading = { LaptopIcon(Abook.colors.text) },
                             below = { Caption("Tên chương"); Caption("1:02 · 10:00") })
-                        MenuRow("Mở Studio", "menu", unavailable = true, supporting = "Máy tính này chỉ cho nghe.") { LaptopIcon(it) }
+                        MenuRow("Mở Studio", "menu", unavailable = true, hint = "Máy tính này chỉ cho nghe.") { LaptopIcon(it) }
                     }
                 }
             }

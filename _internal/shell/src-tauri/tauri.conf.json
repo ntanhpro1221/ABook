@@ -11,13 +11,17 @@
     "windows": [
       {
         "label": "main",
+        "create": false,
+        "visible": false,
+        "decorations": false,
+        "shadow": true,
         "title": "ABook",
         "url": "index.html",
         "width": 1320,
         "height": 860,
         "minWidth": 1024,
         "minHeight": 680,
-        "backgroundColor": "#0e1115",
+        "backgroundColor": "#f5f3ef",
         "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --autoplay-policy=no-user-gesture-required"
       }
     ],

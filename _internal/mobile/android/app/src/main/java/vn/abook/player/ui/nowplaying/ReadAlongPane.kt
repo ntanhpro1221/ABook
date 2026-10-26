@@ -9,7 +9,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
@@ -18,22 +17,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.distinctUntilChanged
+import vn.abook.player.ui.components.fadeEdges
 import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
@@ -74,7 +67,7 @@ fun ReadAlongPane(
                 }
             }
             else -> LazyColumn(
-                state = list, modifier = Modifier.fillMaxSize().fadeEdges(24.dp, list).pointerInput(onTap) { detectTapGestures { onTap() } },
+                state = list, modifier = Modifier.fillMaxSize().fadeEdges(list).pointerInput(onTap) { detectTapGestures { onTap() } },
                 contentPadding = PaddingValues(top = 12.dp, bottom = third), verticalArrangement = Arrangement.spacedBy(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
@@ -117,14 +110,3 @@ fun ReadAlongPane(
         }
     }
 }
-
-/** Text scrolls out under a soft edge instead of a hard cut at the header and the seek bar - only on a side that has more to scroll. */
-private fun Modifier.fadeEdges(edge: Dp, list: LazyListState): Modifier = graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-    .drawWithContent {
-        drawContent()
-        val fraction = (edge.toPx() / size.height).coerceIn(0f, 0.5f)
-        val top = if (list.canScrollBackward) Color.Transparent else Color.Black
-        val bottom = if (list.canScrollForward) Color.Transparent else Color.Black
-        drawRect(Brush.verticalGradient(0f to top, fraction to Color.Black, 1f - fraction to Color.Black, 1f to bottom),
-            blendMode = BlendMode.DstIn)
-    }

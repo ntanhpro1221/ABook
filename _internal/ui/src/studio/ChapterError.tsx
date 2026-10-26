@@ -1,9 +1,11 @@
 import { friendlyError } from "./errorText";
 import * as Popover from "@radix-ui/react-popover";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 /** Lỗi của MỘT chương trong danh sách chương: một dòng ngắn cho người nghe (cùng `friendlyError` với khối lỗi của cả cuốn); bấm "Chi tiết"
  *  mở khung nổi có việc nên làm và nguyên văn lỗi kỹ thuật. Hàng chương cao cố định nên khung nổi, không đẩy hàng dưới. */
 export function ChapterError({ raw, studio = false }: { raw: string; studio?: boolean }) {
+  const scrollFade = useFadeScroller<HTMLParagraphElement>();
   const shown = friendlyError(raw, studio);
   return (
     <Popover.Root>
@@ -14,7 +16,7 @@ export function ChapterError({ raw, studio = false }: { raw: string; studio?: bo
       {/* Sự kiện React nổi qua portal lên hàng chương (nhấp đúp = phát): nhấp đúp chọn chữ lỗi ở đây không được phát chương. */}
       <Popover.Content aria-label="Lỗi chương" align="start" sideOffset={4} collisionPadding={12} onDoubleClick={(event) => event.stopPropagation()} className="z-50 w-[min(32rem,calc(100vw-3rem))] rounded-control border border-line bg-panel p-3 text-xs text-fg shadow-float">
         <p className="text-fg-2">{shown.hint}</p>
-        {shown.detail && <p className="mt-2 max-h-40 select-text overflow-auto break-words font-mono text-[0.6875rem] text-fg-2">{shown.detail}</p>}
+        {shown.detail && <p ref={scrollFade.ref} style={scrollFade.style} className="mt-2 max-h-40 select-text overflow-auto break-words font-mono text-[0.6875rem] text-fg-2">{shown.detail}</p>}
       </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

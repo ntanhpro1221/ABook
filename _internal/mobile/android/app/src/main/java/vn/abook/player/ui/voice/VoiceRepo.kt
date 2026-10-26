@@ -113,7 +113,7 @@ class VoiceRepo(context: Context) : VoiceSource {
 
     override suspend fun importMusic(uris: List<String>, progress: (done: Int, total: Int) -> Unit): MusicImportResult = io {
         store()
-        guard("Chưa nhập được nhạc") { MusicJson.imported(MusicImport.run(app, uris.take(MusicImport.LIMIT).map(Uri::parse), progress)) }
+        guard("Chưa thêm được nhạc") { MusicJson.imported(MusicImport.run(app, uris.take(MusicImport.LIMIT).map(Uri::parse), progress)) }
     }
 
     override suspend fun removeTrack(link: String): List<MusicTrack> = io {

@@ -18,6 +18,8 @@ export interface Entry {
   route: string;
   scenario?: Partial<Scenario>;
   showcase?: StateStory;
+  /** Exercise the real desktop titlebar through a fake window bridge, without a native app. */
+  chrome?: boolean;
   /** Giờ của đồng hồ giả (ms) nếu khác mặc định. */
   clock?: number;
   /** Tuỳ chọn trình phát của điện thoại (android/settings.ts), thêm vào cạnh chủ đề. */
@@ -141,6 +143,9 @@ const PHONE: Omit<Entry, "platform">[] = [
 ];
 
 const DESKTOP: Omit<Entry, "platform">[] = [
+  { id: "desktop/titlebar", group: "Cửa sổ", title: "Thanh cửa sổ", route: "/", chrome: true },
+  { id: "desktop/titlebar-maximized", group: "Cửa sổ", title: "Cửa sổ phóng to", route: "/", chrome: true, act: () => click("Phóng to").then(() => undefined) },
+  { id: "desktop/titlebar-collapsed", group: "Cửa sổ", title: "Thanh bên thu gọn", route: "/", chrome: true, storage: { "abook-sidebar-collapsed": "1" } },
   { id: "desktop/library-full", group: "Thư viện", title: "Thư viện đủ sách", route: "/" },
   { id: "desktop/library-morning", group: "Thư viện", title: "Buổi sáng: thẻ “Tối qua”", route: "/", clock: MORNING, scenario: { night: true } },
   { id: "desktop/library-remote", group: "Thư viện", title: "Sách từ máy ghép", route: "/", scenario: { remoteBooks: true }, act: async () => { document.querySelector('[aria-label="Mở Đường Về Làng Mây"]')?.scrollIntoView({ block: "center" }); } },

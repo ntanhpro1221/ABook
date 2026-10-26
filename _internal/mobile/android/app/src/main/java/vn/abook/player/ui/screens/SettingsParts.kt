@@ -57,6 +57,7 @@ import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
+import vn.abook.player.ui.components.fadeEdges
 
 /*
  * Khối dựng của các màn Cài đặt (shared/SettingsNav.tsx của bản WebView): khoảng trắng + tiêu đề nhỏ thay khung (DESIGN.md §4.2), hàng = tên (16) + mô tả
@@ -71,8 +72,9 @@ import vn.abook.player.ui.theme.MotionMs
 fun SettingsPage(title: String, onBack: () -> Unit, tag: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val scroll = rememberScrollState()
     Column(
-        modifier.fillMaxSize().testTag(tag).verticalScroll(rememberScrollState())
+        modifier.fillMaxSize().testTag(tag).fadeEdges(scroll).verticalScroll(scroll)
             .padding(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {
         PageHeader(title, onBack)

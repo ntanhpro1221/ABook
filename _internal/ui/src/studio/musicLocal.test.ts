@@ -64,18 +64,18 @@ describe("import summary", () => {
   it("counts new and already-present tracks and warns about the ones that could not be imported", () => {
     const summary = importSummary({ added: [track(), track({ analysed: true })], existing: [track()], failed: ["“x.txt”: định dạng lạ."] });
     expect(summary.kind).toBe("warning");
-    expect(summary.title).toBe("Đã nhập: 2 bài mới, 1 bài đã có sẵn từ trước");
+    expect(summary.title).toBe("Đã thêm: 2 bài mới, 1 bài đã có từ trước");
     expect(summary.description).toContain("x.txt");
     expect(summary.description).toContain("1 bài chưa phân tích");
   });
 
   it("is plain success when everything went in, and an error when nothing did", () => {
     expect(importSummary({ added: [track({ analysed: true })], existing: [], failed: [] })).toEqual({
-      kind: "success", title: "Đã nhập: 1 bài mới", description: undefined,
+      kind: "success", title: "Đã thêm: 1 bài mới", description: undefined,
     });
     const none = importSummary({ added: [], existing: [], failed: ["a", "b"] });
     expect(none.kind).toBe("error");
-    expect(none.title).toBe("Không nhập được file nào");
+    expect(none.title).toBe("Không thêm được file nào");
     expect(none.description).toBe("a\nb");
   });
 

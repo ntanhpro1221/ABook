@@ -36,6 +36,8 @@ import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.Choice
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 @Composable
 fun AddBookRoute(queue: ImportQueue, onBack: () -> Unit, onReview: (Long) -> Unit, onOpen: (String) -> Unit, autoPick: Boolean = false, active: Boolean = true) {
@@ -93,7 +95,8 @@ fun AddBookScreen(
                 BasicText("EPUB, DOCX, TXT, PDF hoặc file ABook.", style = Abook.type.bodySmall)
             }
         } else {
-            LazyColumn(Modifier.fillMaxSize().testTag("import_queue"), contentPadding = PaddingValues(bottom = Dim.s16)) {
+            val list = rememberLazyListState()
+            LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("import_queue"), state = list, contentPadding = PaddingValues(bottom = Dim.s16)) {
                 items(state.items, key = { it.id }, contentType = { "import" }) { item ->
                     Column(Modifier.fillMaxWidth().animateItem(fadeInSpec = null, fadeOutSpec = null).animateContentSize().testTag("import_${item.id}")) {
                         ImportRow(item, review, retry, openBook, progress)
@@ -168,7 +171,8 @@ fun ImportReviewScreen(
             add, Modifier.fillMaxWidth().testTag("confirm_import"), enabled = !state.busy,
         )
     }) {
-        if (preview != null) LazyColumn(Modifier.fillMaxSize().testTag("import_review")) {
+        val list = rememberLazyListState()
+        if (preview != null) LazyColumn(Modifier.fillMaxSize().fadeEdges(list).testTag("import_review"), state = list) {
             item("metadata", "metadata") {
                 Column(Modifier.padding(top = Dim.s16)) {
                     BookField(null, choice.title, { value -> choose { it.copy(title = value) } }, "import_title", !state.busy, "Tên sách")

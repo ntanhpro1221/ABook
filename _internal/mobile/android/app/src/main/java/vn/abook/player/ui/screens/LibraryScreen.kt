@@ -59,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.components.RemoteIcon
 import vn.abook.player.ui.components.ScreenHeader
@@ -74,6 +75,7 @@ import vn.abook.player.ui.data.ShelfTile
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.roundToInt
+import vn.abook.player.ui.components.fadeEdges
 
 /** Việc mà Thư viện nhờ nơi khác làm (mở trang sách, phát ngay, thêm sách) - tách khỏi màn để thử và để dựng ảnh chụp. */
 @Stable
@@ -142,7 +144,7 @@ private fun LibraryGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         state = grid,
-        modifier = Modifier.fillMaxSize().testTag("library_grid"),
+        modifier = Modifier.fillMaxSize().testTag("library_grid").fadeEdges(grid),
         contentPadding = PaddingValues(start = Dim.margin, end = Dim.margin, top = top, bottom = Dim.s24),
         horizontalArrangement = Arrangement.spacedBy(Dim.s12),
         verticalArrangement = Arrangement.spacedBy(Dim.s16),
@@ -158,7 +160,7 @@ private fun LibraryGrid(
             item(key = "none", span = { GridItemSpan(maxLineSpan) }, contentType = "none") {
                 if (books.isEmpty()) Column {
                     BasicText("Chưa có sách trên máy", style = Abook.type.sectionTitle)
-                    BasicText("Thêm sách của bạn để bắt đầu nghe.", style = Abook.type.bodySmall)
+                    RowHint("Thêm sách của bạn để bắt đầu nghe.")
                 } else NoMatch(ui.query.trim(), ui.filter)
             }
         } else {

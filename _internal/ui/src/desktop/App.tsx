@@ -57,7 +57,7 @@ function useTheme(theme: string | undefined) {
     const root = document.documentElement;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
-      const next = theme === "dark" || (theme !== "light" && media.matches) ? "dark" : "light";
+      const next = theme === undefined && window.__ABOOK_BOOT_THEME__ ? window.__ABOOK_BOOT_THEME__ : theme === "dark" || (theme !== "light" && media.matches) ? "dark" : "light";
       if (!applied.current || root.dataset.theme === next) root.dataset.theme = next;
       else withViewTransition(() => (root.dataset.theme = next), "none", undefined, (run) => run());
       applied.current = theme !== undefined;

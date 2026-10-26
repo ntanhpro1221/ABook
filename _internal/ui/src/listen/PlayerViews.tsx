@@ -65,7 +65,7 @@ import { useBackLayer } from "@/shared/backStack";
 import { MOTION, usePresence, useListPresence, withViewTransition } from "@/shared/motion";
 import { useRetryWhenOnline } from "./onlineRetry";
 import { askOnlineConsent, onlineConsentGiven, pickVoiceWithConsent, spokenVoiceName } from "./onlineConsent";
-import { PlaylistOptionLabel, playlistNote, usePlaylistChoice } from "./PlaylistChoice";
+import { PlaylistOptionLabel, usePlaylistChoice } from "./PlaylistChoice";
 import { ADD_MUSIC_LABEL, shortPlaylistLabel } from "./playlistBed";
 import { openExternal } from "@/shared/openExternal";
 import { ACTION_BUTTON, ACTION_GLYPH, ACTION_LABEL, ActionButton, actionTone } from "./ActionButton";
@@ -78,6 +78,7 @@ import { cacheLabel, canPrepare, clearCacheQuestion, planLabel, PREPARE_STATUS_K
 import { READINGS_CHANGED_EVENT, type ReadAloudVoice, type ReadingsChanged } from "./readAloud";
 import { chapterScriptQuery, useWarmVoice, useChapterScript, useListenBook, useListenLibrary, useLastNight, useReadAloudVoices, useSource, useChosenVoice } from "./source";
 import { crossedSeekMark, feedback, withFeedback } from "@/shared/feedback";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 export function speedLabel(rate: number): string {
   return `${rate.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}×`;
@@ -571,6 +572,7 @@ function PackagedMusicMenu({ bookId, look }: { bookId: string; look: MenuLook })
 }
 
 function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const { options, chosen, label, playing, known, scene, error, loading, choose, busy, levelDb, setLevel, levelBusy, canImport, addMusic } = usePlaylistChoice(bookId);
   const { musicOffline, musicBroken, musicLoading } = usePlayer();
   const waiting = busy || musicLoading;
@@ -589,7 +591,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
       width="w-72"
     ><MotionRegion>
       <MenuNote title="Nhạc nền">nhớ riêng cho cuốn này</MenuNote>
-      <div role="group" aria-label="Danh sách nhạc nền" className={cn("flex min-h-0 flex-col gap-0.5 overflow-y-auto", MENU_LIST)}>
+      <div ref={scrollFade.ref} style={scrollFade.style} role="group" aria-label="Danh sách nhạc nền" className={cn("flex min-h-0 flex-col gap-0.5 overflow-y-auto", MENU_LIST)}>
         {options.map((option) => (
           <Popover.Close asChild key={JSON.stringify(option.id)}>
             <button
@@ -620,7 +622,7 @@ function MusicMenuFor({ bookId, look }: { bookId: string; look: MenuLook }) {
       {/* Chỉ khi cuốn đang có nhạc: tắt nhạc thì chỉnh mức chẳng nghe thấy gì. */}
       {playing && <LevelButtons level={levelDb} disabled={levelBusy} onChange={setLevel} />}
       {playing && scene && musicBroken && <p className="px-2 pb-1 text-xs text-warning">Có bài nhạc chưa phát được, máy sẽ thử lại sau.</p>}
-      <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{playlistNote(error || musicOffline, scene)}</p>
+      {(error || musicOffline) && <p className="px-2 pb-1 pt-1.5 text-xs text-fg-2">{error || musicOffline}</p>}
     </MotionRegion></MenuShell>
   );
 }
@@ -1757,6 +1759,7 @@ export function ChapterPanel() {
   const { track, queue, jumpTo, playing } = usePlayer();
   const { data: book } = useListenBook(track?.bookId);
   const container = useRef<HTMLDivElement | null>(null);
+  const scrollFade = useFadeScroller<HTMLDivElement>(container);
   useEffect(() => {
     const scroller = container.current;
     const current = scroller?.querySelector<HTMLElement>("[data-current=true]");
@@ -1765,7 +1768,7 @@ export function ChapterPanel() {
   // Chương mới thu xong / gỡ khỏi hàng nghe: hàng mở ra hay khép lại tại chỗ (useListPresence), không nhảy cả danh sách.
   const rows = useListPresence(queue, (chapter) => String(chapter.id));
   return (
-    <div data-list-edges="player-chapters" ref={container} className="h-full overflow-y-auto px-3 py-4 sm:px-6">
+    <div data-list-edges="player-chapters" ref={scrollFade.ref} style={scrollFade.style} className="h-full overflow-y-auto px-3 py-4 sm:px-6">
       <Windowed items={rows} estimate={60} keep={rows.findIndex((row) => row.item.id === track?.chapterId)} row={({ key, item: chapter, state, ref }) => {
         const current = chapter.id === track?.chapterId;
         const done = book?.state.chapters[String(chapter.id)]?.done;
@@ -2019,10 +2022,12 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
   onToggle: (value: Panel) => void;
   onReadAlong: () => void;
 }) {
+  const scrollFade = useFadeScroller<HTMLElement>();
   const { track, sleep, fading, canGoBack, goBack } = player;
   if (!track) return null;
   return (
-    <aside
+    // Chỉ cột điện thoại cuộn (máy tính: cột cố định có viền phải - mặt nạ sẽ xoá cả viền).
+    <aside ref={mobile ? scrollFade.ref : undefined} style={mobile ? scrollFade.style : undefined}
       className={cn(
         "flex shrink-0 flex-col",
         plain && "motion-reveal",

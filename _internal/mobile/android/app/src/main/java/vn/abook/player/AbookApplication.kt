@@ -58,6 +58,24 @@ class AbookApplication : Application() {
     }
 
     /**
+     * Màn Xuất sách (MP3, M4B, sách nói): một holder cho cả tiến trình - việc xuất chạy ở WorkManager nên sống lâu hơn Activity, holder nghe tin của nó từ lúc dựng nên
+     * rời màn rồi quay lại vẫn thấy tiến độ. Việc cần hệ điều hành (chọn thư mục, tạo file, gửi) đi qua [exportLinks] - Activity đang hiện đặt vào đó.
+     */
+    @Volatile
+    var exportLinks = vn.abook.player.ui.export.ExportLinks()
+    val exports by lazy {
+        vn.abook.player.ui.export.ExportState(
+            vn.abook.player.ui.export.ExportRepo(this), uiScope,
+            vn.abook.player.ui.export.ExportLinks(
+                pickFolder = { result -> exportLinks.pickFolder(result) },
+                createFile = { title, result -> exportLinks.createFile(title, result) },
+                share = { uri, name -> exportLinks.share(uri, name) },
+                openAppSettings = { exportLinks.openAppSettings() },
+            ),
+        )
+    }
+
+    /**
      * Giọng đọc làm thêm (giọng tải về máy, khoá giọng trực tuyến, nghe thử, Nhạc của tôi): một holder cho cả tiến trình nên lượt tải giọng đang chạy không mất trạng thái khi
      * Activity dựng lại. Giọng vừa tải / gỡ, khoá vừa dùng được thì danh sách giọng của Cài đặt đọc lại.
      */

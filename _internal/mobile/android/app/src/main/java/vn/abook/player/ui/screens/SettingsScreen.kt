@@ -43,6 +43,7 @@ import vn.abook.player.ui.music.MusicState
 import vn.abook.player.ui.voice.VoiceState
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.ThemeReveal
+import vn.abook.player.ui.components.fadeEdges
 
 /** Việc Cài đặt nhờ hệ điều hành làm (mở trang khác, bảng chia sẻ): Activity cung cấp, test đưa bản giả. */
 class SettingsLinks(
@@ -77,8 +78,9 @@ fun SettingsScreen(env: SettingsEnv, onOpen: (SettingsGroup) -> Unit, modifier: 
         if (repo.voices.value is VoiceList.Loading) repo.loadVoices()
     }
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+    val scroll = rememberScrollState()
     Column(
-        modifier.fillMaxSize().testTag("settings_screen").verticalScroll(rememberScrollState())
+        modifier.fillMaxSize().testTag("settings_screen").fadeEdges(scroll).verticalScroll(scroll)
             .padding(top = top, start = Dim.margin, end = Dim.margin, bottom = Dim.s24),
     ) {
         ScreenHeader("Cài đặt")

@@ -45,16 +45,19 @@ class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.Corout
     private val flow = MutableStateFlow<LibraryState>(LibraryState.Loading)
     val state: StateFlow<LibraryState> get() = flow
 
-    /** Đọc lại danh sách (luồng nền). Lỗi đọc = danh sách rỗng, đã ghi nhật ký - không treo màn chờ. */
+    /**
+     * Đọc lại danh sách (luồng nền). Lỗi đọc, đã ghi nhật ký: lần đầu = danh sách rỗng (không treo màn chờ); đã có danh sách thì GIỮ nguyên -
+     * một lần đọc đĩa hỏng không được làm cuốn đang nghe "biến mất" (PlayerRepo.reconcile sẽ đóng nó).
+     */
     suspend fun refresh() = withContext(Dispatchers.IO) {
-        flow.value = LibraryState.Ready(
-            try {
-                readAll(context).filter { !isHidden(it.id) && (it.remote == null || remoteIds?.contains(it.id) != false) }
-            } catch (error: Exception) {
-                AppLog.w("Library", "Không đọc được thư viện: ${error.javaClass.simpleName}")
-                emptyList()
-            },
-        )
+        val books = try {
+            readAll(context).filter { !isHidden(it.id) && (it.remote == null || remoteIds?.contains(it.id) != false) }
+        } catch (error: Exception) {
+            AppLog.w("Library", "Không đọc được thư viện: ${error.javaClass.simpleName}")
+            if (flow.value is LibraryState.Ready) return@withContext
+            emptyList()
+        }
+        flow.value = LibraryState.Ready(books)
     }
 
     // ---- trang sách (BookSource): đọc / ghi qua lõi, ghi xong thì đọc lại Thư viện ----------------------------------------

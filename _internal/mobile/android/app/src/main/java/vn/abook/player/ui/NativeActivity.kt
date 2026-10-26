@@ -8,6 +8,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import vn.abook.player.StudioActivity
 import vn.abook.player.ui.devices.DeviceLinks
+import vn.abook.player.ui.export.ExportLinks
+import vn.abook.player.M4bExports
+import vn.abook.player.Mp3Exports
+import android.content.ClipData
 import android.content.ComponentCallbacks2
 import android.content.Intent
 import android.net.Uri
@@ -77,6 +81,7 @@ class NativeActivity : ComponentActivity() {
         val prefs = app.uiPrefs
         val settings = app.settings
         if (!demo) app.deviceLinks = deviceLinks
+        if (!demo) app.exportLinks = exportLinks
         // Màn chờ giữ tới khi Thư viện có nội dung VÀ đã biết giao diện sáng / tối của bạn: khung đầu đã là lưới bìa đúng màu, không phải màn trống hay
         // màn đổi màu ngay sau khi hiện. Hai lần đọc chạy song song ở luồng nền.
         splash.setKeepOnScreenCondition { library.state.value is LibraryState.Loading || !settings.loaded.value }
@@ -133,7 +138,7 @@ class NativeActivity : ComponentActivity() {
                     AppShell(
                         shell, state, player, covers, env, onFirstContent = ::onFirstContent, books = library, deletions = library.deletions, companion = if (demo) null else app.companion,
                         nowPlaying = rememberRepoNowPlaying(player, readAlong, env.music),
-                        imports = app.imports, editors = app.editors, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
+                        imports = app.imports, editors = app.editors, exports = if (demo) null else app.exports, demo = demo, askNotifications = deviceLinks.askNotifications, autoPick = !demo,
                     )
                 }
             }
@@ -173,6 +178,45 @@ class NativeActivity : ComponentActivity() {
             }
         },
     )
+
+    private var pickFolderResult: ((String?) -> Unit)? = null
+    private val pickFolder = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        pickFolderResult?.invoke(result.data?.data?.takeIf { result.resultCode == RESULT_OK }?.toString())
+        pickFolderResult = null
+    }
+    private var createFileResult: ((String?) -> Unit)? = null
+    private val createFile = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        createFileResult?.invoke(result.data?.data?.takeIf { result.resultCode == RESULT_OK }?.toString())
+        createFileResult = null
+    }
+
+    /** Cửa ra hệ điều hành của màn Xuất sách: bộ chọn thư mục MP3, hộp "tạo file" của M4B và sách nói, bảng chia sẻ file vừa xuất, trang thông tin ứng dụng. */
+    private val exportLinks = ExportLinks(
+        pickFolder = { result ->
+            pickFolderResult = result
+            pickFolder.launch(Mp3Exports.pickIntent(this))
+        },
+        createFile = { title, result ->
+            createFileResult = result
+            createFile.launch(M4bExports.createIntent(title))
+        },
+        share = ::shareExport,
+        openAppSettings = { open(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) },
+    )
+
+    /** Gửi file vừa xuất cho app khác qua bảng chia sẻ của hệ thống (quyền đọc đi kèm); máy không gửi được thì false. */
+    private fun shareExport(uri: String, name: String): Boolean = try {
+        val file = Uri.parse(uri)
+        val send = Intent(Intent.ACTION_SEND).setType(M4bExports.MIME).putExtra(Intent.EXTRA_STREAM, file).putExtra(Intent.EXTRA_TITLE, name)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        send.clipData = ClipData.newRawUri(name, file)
+        startActivity(Intent.createChooser(send, null))
+        true
+    } catch (error: ActivityNotFoundException) {
+        false
+    } catch (error: SecurityException) {
+        false
+    }
 
     /** Cửa ra hệ điều hành của Cài đặt: trang thông báo của ABook, bảng chia sẻ nhật ký, trang mã nguồn. */
     private val links = SettingsLinks(
@@ -232,6 +276,13 @@ class NativeActivity : ComponentActivity() {
         super.onTrimMemory(level)
         // Giao diện đã ẩn (phát nền): trả bộ nhớ bìa ngay (ngân sách RAM phát nền, NATIVE_PHONE_UI.md §1).
         if (level >= ComponentCallbacks2.TRIM_MEMORY_UI_HIDDEN) app.covers.trim()
+    }
+
+    override fun onDestroy() {
+        // Application sống lâu hơn Activity (phát nền sau khi bạn bấm Back): gỡ cầu nối của Activity này, không giữ cả cây Compose đã huỷ.
+        if (app.deviceLinks === deviceLinks) app.deviceLinks = DeviceLinks()
+        if (app.exportLinks === exportLinks) app.exportLinks = ExportLinks()
+        super.onDestroy()
     }
 
     companion object {

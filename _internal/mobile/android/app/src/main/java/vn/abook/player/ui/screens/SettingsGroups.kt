@@ -55,6 +55,7 @@ import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.voice.VoiceSummary
+import vn.abook.player.ui.components.fadeEdges
 
 private val SafetyOptions = AppSettings.SAFETY_HOURS.map { Option(it, if (it == 0) "Không" else "$it giờ") }
 private val ScheduleOptions = SleepSchedule.MINUTES.map { Option(it, "$it phút") }
@@ -207,7 +208,7 @@ private fun TimeSheet(title: String, value: String, onPick: (String) -> Unit) {
     Column(Modifier.fillMaxWidth().testTag("time_sheet")) {
         BasicText(title, style = Abook.type.sectionTitle)
         Spacer(Modifier.size(Dim.s8))
-        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 400.dp), state = list) {
+        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 400.dp).fadeEdges(list), state = list) {
             items(times, key = { it }, contentType = { "time" }) { time ->
                 val chosen = time == value
                 Row(

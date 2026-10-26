@@ -77,7 +77,7 @@ class MusicStoreTest {
     fun a_file_that_cannot_be_a_track_is_refused_in_the_servers_words() {
         val store = store()
         val text = File(root, "ghi chu.txt").also { it.writeText("không phải nhạc") }
-        assertEquals("“ghi chu.txt”: chưa nhập được định dạng này - dùng .mp3, .m4a, .ogg, .opus, .flac, .wav.", refused { store.importFile(text) })
+        assertEquals("“ghi chu.txt”: chưa thêm được định dạng này - dùng .mp3, .m4a, .ogg, .opus, .flac, .wav.", refused { store.importFile(text) })
         val fake = File(root, "gia.mp3").also { it.writeText("không phải nhạc") }
         assertEquals("“gia.mp3”: không đọc được như một bản nhạc.", refused { store.importFile(fake) })
         assertEquals("“mat.mp3”: không thấy file này.", refused { store.importFile(File(root, "mat.mp3")) })

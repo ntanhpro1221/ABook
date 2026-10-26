@@ -125,7 +125,7 @@ export function modulePercent(module: Pick<MusicModuleStatus, "done" | "total">)
 export function moduleLabel(module: MusicModuleStatus): string {
   if (module.state === "error") return module.error;
   if (module.state === "downloading") return module.retrying ? `${RETRYING_NOTE} (Phân tích nhạc, ${modulePercent(module)}%)` : `Đang tải Phân tích nhạc (${formatSize(module.total)}, một lần) ${modulePercent(module)}%`;
-  if (module.analysing) return "Đang phân tích nhạc đã nhập…";
+  if (module.analysing) return "Đang phân tích nhạc đã thêm";
   if (module.state === "unsupported") return module.reason ? `Máy này chưa phân tích được nhạc: ${module.reason}.` : "Máy này chưa phân tích được nhạc.";
   if (module.state === "outdated" && module.stopped)
     return `Phân tích nhạc đang tắt; tải lại ${formatSize(module.outdatedBytes ?? module.total)}. Vẫn ghim tay được.`;
@@ -156,17 +156,17 @@ export function preciseLabel(precise: PreciseMood): string {
     return `Đang tải bộ đo cảm xúc chính xác hơn (${size}, một lần) ${percent}%`;
   }
   if (precise.state === "error") return precise.error;
-  if (precise.state === "missing") return "Đã bật nhưng chưa tải xong - bài mới nhập tạm dùng số cũ.";
+  if (precise.state === "missing") return "Đã bật nhưng chưa tải xong - bài mới thêm tạm dùng số cũ.";
   if (precise.state === "ready") {
     if (precise.working) {
       return precise.pending > 0
-        ? `Đang nghe kỹ ${precise.pending} bài bạn đã nhập - bài chưa tới lượt vẫn dùng số cũ.`
-        : "Đang nghe kỹ bài vừa nhập…";
+        ? `Đang nghe kỹ ${precise.pending} bài bạn đã thêm - bài chưa tới lượt vẫn dùng số cũ.`
+        : "Đang nghe kỹ bài vừa thêm";
     }
-    return "Đang bật - bài mới nhập sẽ được nghe kỹ ngầm vài giây.";
+    return "Đang bật - bài mới thêm sẽ được nghe kỹ ngầm vài giây.";
   }
   const how = precise.present ? "Chạy" : `Tải thêm ${size} một lần, sau đó chạy`;
-  return `${precise.cancelled ? `${CANCELLED_NOTE} ` : ""}Máy nghe kỹ hơn từng bài bạn nhập để chọn nhạc nền hợp không khí truyện hơn. ${how} ngầm vài giây mỗi bài, không cần mạng.`;
+  return `${precise.cancelled ? `${CANCELLED_NOTE} ` : ""}Máy nghe kỹ hơn từng bài bạn thêm để chọn nhạc nền hợp không khí truyện hơn. ${how} ngầm vài giây mỗi bài, không cần mạng.`;
 }
 
 export interface ImportResult extends LocalMusicView {
@@ -220,7 +220,7 @@ export function analysisLabel(track: Pick<LocalTrack, "analysed">): string {
 /** Lời giới thiệu "Nhạc của tôi" - MỘT câu cho mọi nơi nói về nó (tab Nhạc nền của dự án, Cài đặt, Sửa sách), kể cả chuyện bài ghim đi cùng file
  *  sách: người dùng không phải đoán chỗ này khác chỗ kia ra sao (soát UX a8 02-10). */
 export const MY_MUSIC_INTRO =
-  "Nhập nhạc làm nền; bài đã chọn đi cùng file sách.";
+  "Thêm nhạc làm nền; bài đã chọn đi cùng file sách.";
 export const MY_MUSIC_HELP = "Nhạc được chép vào kho máy này; dùng Đổi bài để chọn cho từng đoạn. Hỗ trợ mp3, m4a, ogg, opus, flac, wav. Bài đã chọn đi cùng .abook / .abookproj, vẫn nghe được trên máy khác, không ai khác tải được. Tên bài và nghệ sĩ lấy từ file; ABook không xác nhận giấy phép.";
 
 /** Dòng chú thích của một bài trong danh sách "Đổi bài" của một đoạn: nhãn tự chọn (có vẻ có lời / bạn đã tắt), hợp không khí đoạn này, hay chưa phân tích
@@ -253,11 +253,11 @@ export function importSummary(result: Pick<ImportResult, "added" | "existing" | 
   const { added, existing, failed } = result;
   const parts: string[] = [];
   if (added.length) parts.push(`${added.length} bài mới`);
-  if (existing.length) parts.push(`${existing.length} bài đã có sẵn từ trước`);
+  if (existing.length) parts.push(`${existing.length} bài đã có từ trước`);
   if (!added.length && !existing.length) {
-    return { kind: "error", title: failed.length > 1 ? "Không nhập được file nào" : "Không nhập được file này", description: failed.join("\n") };
+    return { kind: "error", title: failed.length > 1 ? "Không thêm được file nào" : "Không thêm được file này", description: failed.join("\n") };
   }
-  const title = `Đã nhập: ${parts.join(", ")}`;
+  const title = `Đã thêm: ${parts.join(", ")}`;
   const unanalysed = added.filter((track) => !track.analysed).length;
   const notes: string[] = [];
   if (failed.length) notes.push(failed.join("\n"));

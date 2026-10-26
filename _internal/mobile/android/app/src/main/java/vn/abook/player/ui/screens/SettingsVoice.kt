@@ -6,6 +6,7 @@ import vn.abook.player.ui.components.ListRow
 import vn.abook.player.ui.components.ListItem
 import vn.abook.player.ui.components.ChoiceSetting
 import vn.abook.player.ui.components.DisclosureRow
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.RowLine
 import vn.abook.player.ui.components.SectionTitle
 import vn.abook.player.ui.components.SheetHost
@@ -78,6 +79,8 @@ import vn.abook.player.ui.voice.VoicePage
 import vn.abook.player.ui.voice.VoiceState
 import vn.abook.player.ui.voice.VoiceSummary
 import vn.abook.player.ui.voice.VoiceText
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** Máy chưa có giọng tiếng Việt của hệ điều hành (như `deviceHint` của bản WebView). */
 private const val DEVICE_HINT = "Điện thoại chưa có giọng tiếng Việt. Cài ở Cài đặt điện thoại › Chuyển văn bản thành giọng nói."
@@ -121,8 +124,10 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
 
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     val bottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val scroll = rememberLazyListState()
     LazyColumn(
-        modifier.fillMaxSize().testTag(SettingsGroup.Voice.screenTag),
+        modifier.fillMaxSize().testTag(SettingsGroup.Voice.screenTag).fadeEdges(scroll),
+        state = scroll,
         contentPadding = PaddingValues(top = top, start = Dim.margin, end = Dim.margin, bottom = bottom + Dim.s48),
     ) {
         item(key = "header", contentType = "header") { PageHeader(SettingsGroup.Voice.label, onBack) }
@@ -146,7 +151,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                         val detail = if (group.detail.isEmpty()) "${group.voices.size} giọng" else "${group.detail} · ${group.voices.size} giọng"
                         Column(Modifier.fillMaxWidth().padding(top = Dim.s24, bottom = Dim.s4)) {
                             BasicText(group.title, style = Abook.type.sectionTitle)
-                            BasicText(detail, style = Abook.type.caption.copy(color = Abook.colors.text2))
+                            RowHint(detail)
                         }
                     }
                     items(group.voices, key = { "voice:${it.id}" }, contentType = { "voice" }) { option ->
@@ -164,7 +169,7 @@ fun VoiceSettings(env: SettingsEnv, sheets: SheetHost, openVoice: (VoicePage) ->
                     item(key = "device_hint", contentType = "hint") {
                         Column(Modifier.fillMaxWidth().padding(top = Dim.s24)) {
                             BasicText("Giọng của máy", style = Abook.type.sectionTitle)
-                            BasicText(DEVICE_HINT, style = Abook.type.caption.copy(color = Abook.colors.text2))
+                            RowHint(DEVICE_HINT)
                         }
                     }
                 }
