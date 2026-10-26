@@ -72,5 +72,10 @@ SettingsListen 1.0 ../../../../qml/SettingsListen.qml
 SettingsSleep 1.0 ../../../../qml/SettingsSleep.qml
 SettingsLook 1.0 ../../../../qml/SettingsLook.qml
 SettingsAdvanced 1.0 ../../../../qml/SettingsAdvanced.qml
+StudioRows 1.0 ../../../../qml/StudioRows.qml
+StudioSettings 1.0 ../../../../qml/StudioSettings.qml
+BookTemplates 1.0 ../../../../qml/BookTemplates.qml
+SharedReadingsSettings 1.0 ../../../../qml/SharedReadingsSettings.qml
+NewBookDefaults 1.0 ../../../../qml/NewBookDefaults.qml
 singleton Api 1.0 ../../../../qml/Api.qml
 singleton DesktopApi 1.0 DesktopApi.qml
