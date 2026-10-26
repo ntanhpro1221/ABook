@@ -13,6 +13,7 @@ import { unquoted } from "./labels";
 import { SpeakerLabel } from "./SpeakerLabel";
 import { sentenceAt } from "./PlayerViews";
 import { chapterScriptQuery, isMissing, useLastNight, useListenBook, useSource } from "./source";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // "Tối qua bạn nghe tới đâu?" - thẻ buổi sáng, chung cho máy tính và điện thoại.
 //
@@ -80,6 +81,7 @@ function markersOf(session: NightSession): Marker[] {
 }
 
 export function MorningRecap({ className }: { className?: string }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const source = useSource();
   const client = useQueryClient();
   const playBook = usePlayListenBook();
@@ -215,8 +217,8 @@ export function MorningRecap({ className }: { className?: string }) {
 
       <MotionPresence open={scrubbing && Boolean(script?.timed)}>
         {/* Vạch trên đúng mép chữ; vùng cuộn nới 7 px mỗi bên để hàng không bị cắt hay sinh cuộn ngang. */}
-        <div className="mt-4 border-t border-line"><div className="-mx-2 max-h-80 overflow-y-auto px-2">
-          <p className="sticky top-0 z-[1] bg-bg py-2 text-xs text-fg-2">Chọn câu cuối cùng còn nhớ:</p>
+        {/* Lời dẫn đứng yên trên khung cuộn (không dính trong khung): mép trên mờ dần ngay dưới nó, không làm mờ chính nó. */}
+        <div className="mt-4 border-t border-line"><p className="py-2 text-xs text-fg-2">Chọn câu cuối cùng còn nhớ:</p><div ref={scrollFade.ref} style={scrollFade.style} className="-mx-2 max-h-80 overflow-y-auto px-2">
           {scrub.map(group => <section key={group.chapterId} aria-label={group.title}>
             <h3 className="pb-1 pt-3 text-xs font-semibold text-fg-2">{group.title}</h3>
             {group.segments.map((segment) => (

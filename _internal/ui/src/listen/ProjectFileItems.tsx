@@ -12,6 +12,7 @@ import { useStudioMissing } from "@/studio/data";
 import { isOpenWork } from "@/studio/WorkInbox";
 import type { ListenBook } from "./model";
 import { useSource } from "./source";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // Cuốn mở từ file dự án `.abookproj` (docs/EDITING.md, phase P3): xưởng đi theo cuốn (hay đang chờ), kèm vài bản chụp CHỈ ĐỌC của
 // các màn Studio để điện thoại / máy chưa cài Studio cho người ta xem mà không mở sổ dự án.
@@ -184,6 +185,7 @@ interface NamesSnapshot {
 
 /** Bản chụp chỉ đọc của xưởng trong file dự án: việc máy nghi ngờ, mục lục kịch bản, cách đọc tên. Không sửa được ở đây. */
 export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenBook; open: boolean; onOpenChange: (open: boolean) => void }) {
+  const scrollFade = useFadeScroller<HTMLElement>();
   const views = book.projectFile?.views ?? [];
   const tabs: { value: Tab; label: string }[] = [
     { value: "work", label: "Việc cần duyệt" },
@@ -213,7 +215,7 @@ export function ProjectViewsDialog({ book, open, onOpenChange }: { book: ListenB
     >
       {available.length > 1 && <ChoiceRow<Tab> value={tab} onChange={setTab} label="Màn" options={available} />}
       {/* Khung chờ / lỗi / đổi màn: mờ qua (fadeThrough) theo khoá màn + pha tải, không đổi cứng trong hộp đang mở. */}
-      <MotionRegion fadeThrough motionKey={[tab, isLoading, Boolean(error && !data)]} className="mt-3 max-h-[50vh] overflow-y-auto text-sm">
+      <MotionRegion elementRef={scrollFade.ref} style={scrollFade.style} fadeThrough motionKey={[tab, isLoading, Boolean(error && !data)]} className="mt-3 max-h-[50vh] overflow-y-auto text-sm">
         {isLoading ? <ContentSkeleton label="Đang tải việc xưởng" /> : error && !data ? <InlineError message="Bạn hãy thử tải lại việc của xưởng." onRetry={() => void refetch()} /> : null}
         {tab === "work" && <WorkList data={data as WorkSnapshot | undefined} />}
         {tab === "casting" && <CastingList data={data as CastingSnapshot | undefined} />}
