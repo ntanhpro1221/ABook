@@ -97,3 +97,31 @@ Chủ sách 26-10: "không chỉ bản android mà còn bản window nữa". App
 Python qua đúng HTTP API đang có (ranh giới sạch, backend không đổi). Chọn nền bằng thí nghiệm đo cùng một cảnh (lưới 200 bìa, thanh
 phát nở thành Đang nghe, tab trượt): Rust + Slint, WinUI 3 (.NET 10), Qt Quick - RAM nghỉ, mở nguội, thời gian khung, cỡ bản phân phối.
 Kết quả và lựa chọn ghi vào đây; ngân sách §1 áp tương tự (mở nguội ≤ 500 ms, khung p99 ≤ 12 ms, RAM giao diện nghỉ ≤ 60 MB).
+
+### 7.1 Kết quả đo (26-10, máy chủ sách, GPU đang chạy llama-server) và lựa chọn: Qt Quick
+
+Bản thử và số liệu thô: `D:/Novels/native_desk_proto` (`results/tables_loaded.md`, `readalong_spike.md`, `qt_pacing.md`).
+
+| | Slint 1.x Skia-GL | Qt 6.8.3 Quick | WinUI 3 .NET 10 |
+|---|---|---|---|
+| Bản phân phối | 17 MB | 34 MB | 272 MB |
+| Mở nguội | 364 ms | 354 ms | - |
+| RAM riêng (nghỉ / cảnh Đọc theo) | 40-53 MB | 28-40 MB | gấp đôi |
+| Khung p50 cảnh nặng | 5,5 ms | 5,6 ms | - |
+| CPU mỗi khung, Đọc theo | 3,5 ms | 0,5 ms | - |
+| Khung chữ từng dòng cho tô câu / từ | không có API | `QTextLayout` / `positionToRectangle` | - |
+
+- WinUI loại: bản phân phối 272 MB, RAM gấp đôi, NativeAOT văng.
+- Slint và Qt hoà về khung và mở nguội. Qt thắng ở Đọc theo: lấy được hình chữ nhật từng dòng chính xác để tô câu và từ, CPU mỗi khung thấp hơn 7 lần, RAM thấp hơn.
+- Số Qt 15,5 ms/khung đo trước đó là sai đo: cửa sổ bị một cửa sổ phóng to (Edge) che kín, Windows 11 hạ độ phân giải đồng hồ, Qt 6.8 chuyển bộ dẫn hoạt ảnh sang chế độ đồng hồ. Qt 6.10.3 hết hẳn (5/5 lần 5,6 ms khi bị che). Với 6.8.3 thì tự tắt bằng `SetProcessInformation(ProcessPowerThrottling, IGNORE_TIMER_RESOLUTION)` cho riêng tiến trình.
+
+**Chọn: Qt Quick (QML + C++), Qt ≥ 6.10.3, backend mặc định (D3D11, vòng render luồng riêng, flip model).** Không đặt QSG_RHI_BACKEND, không dùng vòng basic. Liên kết động các DLL Qt (LGPL) và ghi vào THIRD_PARTY. Đo khung luôn ghi cửa sổ trên cùng và bỏ lượt bị che.
+
+### 7.2 Kiến trúc app Windows
+
+- Giao diện: QML cho bố cục và chuyển động, C++ cho mô hình dữ liệu (`QAbstractListModel` cho thư viện / chương / đoạn), ảnh bìa giải mã ngoài luồng chính đúng cỡ hiển thị. Đọc theo vẽ bằng `QQuickPaintedItem` hoặc node scene graph riêng trên `QTextLayout` của từng đoạn, chỉ vẽ lại vùng câu / từ đổi.
+- Lõi: backend Python giữ nguyên, nói chuyện qua đúng HTTP API mà app Tauri đang gọi (`_internal/ui/src/studio/api.ts`, `listen/*`). App Qt khởi chạy và giám sát tiến trình backend như vỏ Tauri làm hôm nay.
+- Thiết kế: token DESIGN.md (màu, chữ, khoảng, chuyển động §5) sinh ra một `Theme.qml` duy nhất. Luật chung với điện thoại: không fade thuần, Back đối xứng, không cắt chữ người dùng.
+- Không bê giao diện web sang: mỗi màn thiết kế lại cho chuột + bàn phím + cửa sổ rộng. Chủ sách 26-10 nhắc với "Đọc theo" trên điện thoại: điều khiển cũ không được gán vào chỗ mới khi cách tương tác đã đổi.
+- Thứ tự: D0 khung (cửa sổ, theme, ngăn xếp màn, khởi chạy backend, script đo RAM / mở nguội / khung) -> D1 Thư viện + thanh phát + Đang nghe + Đọc theo -> D2 Trang sách, Thêm / Sửa sách, Cài đặt -> D3 Studio, Xuất, phần còn lại -> D4 gỡ Tauri.
+
