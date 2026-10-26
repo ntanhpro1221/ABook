@@ -636,7 +636,7 @@ export function MusicTab({ bookId, chapterTitle }: { bookId: string; chapterTitl
               ))}
             </Select>
           </SettingsRow>
-          <SettingsRow label={<label htmlFor="music-level">Mức nhạc dưới giọng đọc</label>} hint="Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ">
+          <SettingsRow label={<label htmlFor="music-level">Mức nhạc nền</label>} hint="Nhỏ hơn giọng đọc bấy nhiêu; máy tự bù bài to hay nhỏ">
             <Select
               id="music-level"
               value={String(overrides.levelDb)}

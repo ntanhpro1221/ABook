@@ -45,7 +45,7 @@ function TryButton({ aloud, surface, spoken }: { aloud: ReadAloudTry; surface: s
   );
 }
 
-/** Ô cách đọc của một từ + "Nghe thử" + "Lưu cho cả cuốn" (+ "Đọc như chữ trong sách" khi từ đã có cách đọc riêng). */
+/** Ô cách đọc của một từ + "Nghe thử" + "Lưu cho cả cuốn" (+ "Đọc như trong sách" khi từ đã có cách đọc riêng). */
 function ReadingForm({ bookId, surface, current, aloud, onDone }: {
   bookId: string;
   surface: string;
@@ -113,7 +113,7 @@ function ReadingForm({ bookId, surface, current, aloud, onDone }: {
         </Button>
         {current && (
           <Button size="sm" variant="ghost" type="button" disabled={save.isPending} onClick={() => store("")}>
-            Đọc như chữ trong sách
+            Đọc như trong sách
           </Button>
         )}
       </div>

@@ -499,12 +499,12 @@ export function MusicMenu({ look = "chip" }: { look?: MenuLook }) {
   );
 }
 
-/** "Mức nhạc dưới giọng đọc": các mức (shared/musicLevels.ts), mức hiện tại có dấu, lời kèm mức (nếu có) chữ nhỏ cạnh tên. Chung cho nhạc
+/** "Mức nhạc nền": các mức (shared/musicLevels.ts), mức hiện tại có dấu, lời kèm mức (nếu có) chữ nhỏ cạnh tên. Chung cho nhạc
  *  người làm sách gắn và nhạc nền của sách chữ. */
 export function LevelButtons({ level, disabled, onChange }: { level: number; disabled: boolean; onChange: (levelDb: number) => void }) {
   return (
     <>
-      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Mức nhạc dưới giọng đọc</div>
+      <div className="px-2 pb-1 pt-1 text-xs font-medium text-fg-2">Mức nhạc nền</div>
       <div className={cn("flex flex-col gap-0.5", MENU_LIST)}>
         {levelOptions(level).map(([value, name]) => (
           <button

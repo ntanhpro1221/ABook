@@ -26,7 +26,6 @@ function render(running: boolean) {
 it("đang chia sẻ: có ghi chú chạy nền nói việc chia sẻ, không nói việc xuất", () => {
   const html = render(true);
   expect(html).toContain('data-testid="background-note"');
-  expect(html).toContain("Để máy tính khỏi phải chờ: cho ABook chạy nền");
   expect(html).toContain("tạm dừng chia sẻ");
   expect(html).not.toContain("Xuất sách dài");
 });

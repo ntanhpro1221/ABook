@@ -56,7 +56,7 @@ export function FootnoteChoices({
             checked={value.hideMarks}
             disabled={disabled}
             onChange={(on) => onChange({ ...value, hideMarks: on })}
-            label="Không đọc số chú thích"
+            label="Bỏ số chú thích"
             help="Bỏ các con số như ² hay [3] khỏi phần đọc; lời chú không đổi."
           />
         )}
@@ -64,7 +64,7 @@ export function FootnoteChoices({
           checked={value.notes === "end"}
           disabled={disabled}
           onChange={(on) => notes(on, "end")}
-          label="Đọc lời chú ở cuối chương"
+          label="Lời chú cuối chương"
           help="Mỗi lời chú nằm ở cuối chương có số gọi nó, kể cả khi trong sách nó nằm ở chương riêng."
         />
         <Choice

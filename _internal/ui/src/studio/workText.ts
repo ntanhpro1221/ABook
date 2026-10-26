@@ -25,11 +25,11 @@ export function narratorDecidedTitle(current: string, answer: string): string {
 /** Hai nút đầu của thẻ người kể của đoạn, và lựa chọn đã ghi (`requested`) ứng với nút nhận. `current`: người kể máy đang dùng
  *  ("" = chương kể ngôi thứ ba); `heading`: đoạn mở bằng dòng tiêu đề góc nhìn ("Góc nhìn của Mai") - nút nhận nói đúng tên ấy. */
 export function narratorButtons(current: string, heading?: { label: string } | null): { accept: string; keep: string; accepted: string } {
-  const keep = current ? `Giữ ${current} là người kể` : "Giữ nguyên ngôi thứ ba";
-  if (!heading) return { accept: `Không phải ${current} kể - đoạn kể ngôi thứ ba`, keep, accepted: "Đổi người kể" };
+  const keep = current ? `Giữ ${current}` : "Giữ ngôi thứ ba";
+  if (!heading) return { accept: "Kể ngôi thứ ba", keep, accepted: "Đổi người kể" };
   return heading.label
-    ? { accept: `Nhận: ${heading.label} kể đoạn này`, keep, accepted: `Người kể: ${heading.label}` }
-    : { accept: "Nhận: đoạn kể ngôi thứ ba", keep, accepted: "Đổi người kể" };
+    ? { accept: `${heading.label} kể`, keep, accepted: `Người kể: ${heading.label}` }
+    : { accept: "Kể ngôi thứ ba", keep, accepted: "Đổi người kể" };
 }
 
 /** Phần của thẻ việc mà tiêu đề đã quyết cần. */

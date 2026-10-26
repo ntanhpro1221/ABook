@@ -136,7 +136,7 @@ export function AddBookDialog({
   // File TXT cả truyện: "Tách theo N dòng “Chương N”" - tích sẵn khi máy chắc (`splitIsSure`: từ 3 dòng), không thì chỉ đề xuất; bỏ tích được,
   // file của người dùng không bị sửa.
   const [split, setSplit] = useState(false);
-  // Chú thích trong sách (EPUB / DOCX): đề xuất "Không đọc số", "Đọc lời chú ở cuối chương" / "Bỏ lời chú" - mặc định không tích gì, sách giữ nguyên như file.
+  // Chú thích trong sách (EPUB / DOCX): đề xuất "Bỏ số chú thích", "Lời chú cuối chương" / "Bỏ lời chú" - mặc định không tích gì, sách giữ nguyên như file.
   const [footnotes, setFootnotes] = useState<FootnoteChoice>(NO_FOOTNOTES);
   // Chương nào vào sách (số thứ tự hàng của bước xem trước) và tên người dùng đã đổi. Mặc định như máy đề xuất: mọi chương trừ mục rất ngắn.
   const [picked, setPicked] = useState<ReadonlySet<number>>(new Set());

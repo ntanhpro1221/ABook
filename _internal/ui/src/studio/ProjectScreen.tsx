@@ -1144,7 +1144,7 @@ function ActivityView({ book }: { book: BookSummary }) {
           onClick={() => setMode(mode === "technical" ? "story" : "technical")}
           className="touch-row -mr-2 inline-flex items-center rounded-lg px-2 text-xs font-medium text-accent-text hover:underline"
         >
-          {mode === "technical" ? "Ẩn chi tiết kỹ thuật" : "Chi tiết kỹ thuật"}
+          {mode === "technical" ? "Ẩn chi tiết" : "Chi tiết kỹ thuật"}
         </button>
       </div>
       <MotionRegion motionKey={[mode, isLoading, groups.length > 0]} slideIndex={mode === "story" ? 0 : 1}>
@@ -1349,7 +1349,7 @@ export function ProjectScreen() {
         icon={CircleAlert}
         title="Dự án này không còn"
         className="mt-20"
-        action={<Button onClick={() => navigate("/studio")}>Về danh sách dự án</Button>}
+        action={<Button onClick={() => navigate("/studio")}>Về Studio</Button>}
       >
         Cuốn này đã bị xoá hoặc chuyển đi khỏi thư viện.
       </EmptyState>
