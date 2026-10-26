@@ -73,15 +73,13 @@ class RepoNowPlayingModelTest {
         model.setSleep(SleepKind.Minutes, 7)
         model.setSleep(SleepKind.Chapter)
         model.setSleep(SleepKind.Off)
-        model.setMusic(true)
         assertEquals(
             listOf(
                 "toggle", "skip 15.0", "seek 45.0", "jump 1 0.0", "next", "previous", "rate 1.5",
-                "sleep minutes 15", "sleep chapter 0", "sleep off 0", "music true",
+                "sleep minutes 15", "sleep chapter 0", "sleep off 0",
             ),
             core.calls,
         )
-        assertTrue(model.state.value.musicEnabled)
         core.position = 777
         model.position.sample()
         assertEquals(777L, model.position.milliseconds.value)

@@ -89,6 +89,9 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 /** "Xuất" (web: FileDown ở menu sách). */
 @Composable fun ExportIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.FILE_DOWN, color, modifier, size)
 
+/** "Nhạc nền" (web: EighthNote ở trình phát và menu sách). */
+@Composable fun MusicIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.EIGHTH_NOTE, color, modifier, size)
+
 /* Sáu nhóm Cài đặt - đúng bộ của SettingsNav.tsx: AudioLines, Headphones, MoonStar, Palette, MonitorSmartphone, Wrench. */
 
 @Composable fun VoiceIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.AUDIO_LINES, color, modifier, size)
