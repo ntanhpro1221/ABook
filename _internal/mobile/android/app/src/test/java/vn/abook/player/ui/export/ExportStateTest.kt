@@ -246,6 +246,33 @@ class ExportStateTest {
         assertEquals(1, source.starts.size)
     }
 
+    @Test
+    fun `a run that ends before the start returns keeps its result`() {
+        // Việc nền hỏng ngay (mất quyền ghi thư mục): tin lỗi tới luồng chính trước lời đáp của lõi - màn không được kẹt ở "Đang xuất".
+        source.folder = "Music"
+        source.startGate = CompletableDeferred()
+        val exports = state()
+        exports.open(book)
+        exports.start(book)
+        source.events.tryEmit(event { copy(error = "Không ghi được vào thư mục đã chọn") })
+        source.startGate!!.complete(Unit)
+        assertEquals(ExportPhase.Failed(ExportKind.Mp3, "Không ghi được vào thư mục đã chọn"), exports.phase())
+        assertEquals("Không xuất được", exports.hint("b1").value)
+    }
+
+    @Test
+    fun `coming back while the core is still starting the run shows it running`() {
+        source.folder = "Music"
+        source.startGate = CompletableDeferred()
+        val exports = state()
+        exports.open(book)
+        exports.start(book)
+        exports.leave("b1")
+        exports.open(book)
+        source.startGate!!.complete(Unit)
+        assertEquals("run-1", (exports.phase() as ExportPhase.Running).run)
+    }
+
     // ---- tiến độ, kết quả ----
 
     @Test
