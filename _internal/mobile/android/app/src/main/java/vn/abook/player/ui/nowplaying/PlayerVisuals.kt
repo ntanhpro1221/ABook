@@ -21,6 +21,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
@@ -48,6 +53,7 @@ import vn.abook.player.ui.components.pressable
 import vn.abook.player.ui.data.CoverLoader
 import vn.abook.player.ui.data.CoverRef
 import vn.abook.player.ui.theme.Abook
+import vn.abook.player.ui.theme.BeVietnamPro
 import vn.abook.player.ui.theme.MotionMs
 
 private val LocalPlayerCovers = staticCompositionLocalOf { CoverLoader() }
@@ -190,6 +196,7 @@ fun PlayerGlyph(glyph: String) {
     val path = remember { Path() }
     val width = with(LocalDensity.current) { 1.8.dp.toPx() }
     val stroke = remember(width) { Stroke(width, cap = StrokeCap.Round, join = StrokeJoin.Round) }
+    val skipNumber = if (glyph == "↶15" || glyph == "15↷") rememberSkipNumber(color) else null
     Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
         Canvas(Modifier.fillMaxSize()) {
             val w = size.width; val h = size.height
@@ -205,11 +212,7 @@ fun PlayerGlyph(glyph: String) {
                     drawPath(path, color)
                     drawLine(color, Offset(w * 0.25f, h * 0.25f), Offset(w * 0.25f, h * 0.75f), width, StrokeCap.Round)
                 }
-                "↶15", "15↷" -> withTransform({ if (glyph == "15↷") scale(-1f, 1f) }) {
-                    drawArc(color, -90f, 300f, false, Offset(w * 0.15f, h * 0.12f), androidx.compose.ui.geometry.Size(w * 0.7f, h * 0.7f), style = stroke)
-                    path.moveTo(w * 0.5f, h * 0.02f); path.lineTo(w * 0.37f, h * 0.12f); path.lineTo(w * 0.5f, h * 0.23f)
-                    drawPath(path, color, style = stroke)
-                }
+                "↶15", "15↷" -> drawSkip(glyph == "15↷", color, path, skipNumber)
                 "◷" -> {
                     drawCircle(color, w * 0.34f, style = stroke)
                     path.moveTo(w * 0.5f, h * 0.28f); path.lineTo(w * 0.5f, h * 0.5f); path.lineTo(w * 0.66f, h * 0.56f)
@@ -228,10 +231,54 @@ fun PlayerGlyph(glyph: String) {
                 }
             }
         }
-        if (glyph == "↶15" || glyph == "15↷") BasicText("15", Modifier.padding(top = 2.dp),
-            style = Abook.type.caption.copy(fontSize = 10.sp, lineHeight = 12.sp, fontWeight = FontWeight.Medium, color = color))
     }
 }
+
+/**
+ * Số "15" của nút lùi / tới, đo một lần (không đo lại mỗi khung). Cỡ theo dp chứ không theo sp: đây là hình vẽ, phóng chữ hệ thống không được làm số
+ * chạm vào cung.
+ */
+@Composable
+private fun rememberSkipNumber(color: Color): TextLayoutResult {
+    val measurer = rememberTextMeasurer(cacheSize = 1)
+    val density = LocalDensity.current
+    return remember(color, density) {
+        val style = with(density) {
+            TextStyle(
+                fontFamily = BeVietnamPro, fontWeight = FontWeight.SemiBold, fontSize = SKIP_NUMBER_SIZE.dp.toSp(),
+                letterSpacing = (-0.2).dp.toSp(), fontFeatureSettings = "tnum", color = color,
+            )
+        }
+        measurer.measure("15", style)
+    }
+}
+
+/**
+ * Nút lùi / tới 15 giây - CÙNG hình với bản web (PlayerViews.tsx `skipIcon`, ô 24): cung nông ở trên (bán kính 8,5 qua (4,05; 9) và (19,95; 9)), mũi tên ở
+ * đầu cung, số 15 to ở dưới. Chủ sách 24-10 và 26-10: vòng gần kín với số nhét bên trong "xấu xí" - số không bao giờ chạm nét; khe đo bằng điểm ảnh
+ * trong SkipGlyphTest. Ô 24 đặt giữa ô 28 của nút.
+ */
+private fun DrawScope.drawSkip(forward: Boolean, color: Color, path: Path, number: TextLayoutResult?) {
+    val u = 24.dp.toPx() / 24f
+    withTransform({
+        translate((size.width - 24f * u) / 2f, (size.height - 24f * u) / 2f)
+        if (!forward) scale(-1f, 1f, pivot = Offset(12f * u, 12f * u))
+    }) {
+        val stroke = Stroke(1.9f * u, cap = StrokeCap.Round, join = StrokeJoin.Round)
+        drawArc(color, 200.73f, 138.54f, false, Offset(3.5f * u, 3.508f * u), Size(17f * u, 17f * u), style = stroke)
+        path.reset()
+        path.moveTo(20.94f * u, 6.17f * u); path.lineTo(19.95f * u, 9f * u); path.lineTo(17.34f * u, 7.53f * u)
+        drawPath(path, color, style = stroke)
+    }
+    if (number == null) return
+    // Chân số ở y = 22 (ô 24): mực số từ khoảng y 11,8 - cách đáy nét cung (y 9,95) gần 2 đơn vị.
+    val left = (size.width - number.size.width) / 2f
+    val top = (size.height - 24f * u) / 2f + SKIP_NUMBER_BASELINE * u - number.firstBaseline
+    drawText(number, topLeft = Offset(left, top))
+}
+
+private const val SKIP_NUMBER_SIZE = 14.5f
+private const val SKIP_NUMBER_BASELINE = 22f
 
 /** Full-only parts begin their rise/scale at 40% of the shared transition, also on the way back. */
 fun Modifier.playerReveal(progress: State<Float>): Modifier = graphicsLayer {
