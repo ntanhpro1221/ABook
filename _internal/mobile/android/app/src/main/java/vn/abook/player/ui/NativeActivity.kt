@@ -8,6 +8,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -18,6 +20,9 @@ import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.shell.AppShell
 import vn.abook.player.ui.shell.ShellState
 import vn.abook.player.ui.theme.AbookTheme
+import vn.abook.player.ui.nowplaying.FakeNowPlayingModel
+import vn.abook.player.ui.nowplaying.NowPlayingModel
+import vn.abook.player.ui.nowplaying.PlaybackNowPlayingModel
 
 /**
  * Màn mở app của giao diện native (docs/NATIVE_PHONE_UI.md): một Activity, Compose, không WebView. Chỉ là màn khởi động khi dựng với `-PnativeUi`
@@ -40,8 +45,13 @@ class NativeActivity : ComponentActivity() {
             AbookTheme {
                 val scope = rememberCoroutineScope()
                 val shell = remember { ShellState(scope) }
+                val player: NowPlayingModel = remember(demo) {
+                    if (demo > 0) FakeNowPlayingModel() else PlaybackNowPlayingModel(applicationContext, scope)
+                }
+                LaunchedEffect(player) { if (player is PlaybackNowPlayingModel) player.attach() }
+                DisposableEffect(player) { onDispose { if (player is PlaybackNowPlayingModel) player.detach() } }
                 val state by library.state.collectAsStateWithLifecycle()
-                AppShell(shell, state, covers, onFirstContent = ::reportFullyDrawn)
+                AppShell(shell, state, covers, onFirstContent = ::reportFullyDrawn, nowPlaying = player)
             }
         }
     }
