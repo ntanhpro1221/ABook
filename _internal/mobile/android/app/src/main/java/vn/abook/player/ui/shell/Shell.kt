@@ -18,7 +18,6 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -34,6 +33,7 @@ import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.hideFromAccessibility
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.Constraints
@@ -66,8 +66,6 @@ import vn.abook.player.ui.screens.StudioScreen
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import kotlin.math.abs
-import kotlin.math.ceil
-import kotlin.math.floor
 import kotlin.math.max
 
 /** Mọi trạng thái sống của khung (ngăn xếp, tab, vị trí cuộn từng tab) ở MỘT chỗ - tab rời khỏi cây vẫn giữ chỗ cuộn. */
@@ -213,19 +211,22 @@ private fun RootTabs(
 
 /**
  * Nội dung tab trượt ngang theo chỉ số: tab i ở `(i - position)` bề rộng. Tab đã từng hiện ở lại trong cây mãi (đổi tab không dựng lại, trạng thái cuộn
- * ở ShellState); dàn trang chỉ đo và đặt các tab đang lộ ra (low..high), còn vị trí trượt đọc trong khối lớp (pha vẽ).
+ * ở ShellState) và LUÔN được đặt (tab ngoài màn nằm ngoài vùng cắt, HWUI bỏ qua không vẽ): vị trí trượt chỉ đọc trong khối lớp (pha vẽ), nên đổi tab không
+ * làm đổi dàn trang gì. Trước đây tab chỉ được đặt khi lộ ra - mỗi lần Thư viện "đặt lại" là một lượt dàn trang + vẽ lại cả cây của nó (trace trên OPPO:
+ * measureAndLayout 2 ms + draw 3 ms đã AOT, 10-15 + 8-10 ms khi chưa AOT). Tab ngoài màn ẩn khỏi trợ năng (chỉ tab đang chọn được đọc).
  */
 @Composable
 fun TabHost(tabs: TabState, modifier: Modifier = Modifier, content: @Composable (Tab) -> Unit) {
     val mask = tabs.visitedMask
-    val last = Tab.entries.size - 1
-    val low by remember(tabs) { derivedStateOf { floor(tabs.position.value).toInt().coerceIn(0, last) } }
-    val high by remember(tabs) { derivedStateOf { ceil(tabs.position.value).toInt().coerceIn(0, last) } }
     Layout(
         content = {
             for (tab in Tab.entries) {
                 if (mask and (1 shl tab.ordinal) != 0) {
-                    key(tab) { Box(Modifier.layoutId(tab.ordinal).fillMaxSize()) { content(tab) } }
+                    key(tab) {
+                        Box(
+                            Modifier.layoutId(tab.ordinal).fillMaxSize().semantics { if (tabs.selected != tab.ordinal) hideFromAccessibility() },
+                        ) { content(tab) }
+                    }
                 }
             }
         },
@@ -234,15 +235,12 @@ fun TabHost(tabs: TabState, modifier: Modifier = Modifier, content: @Composable 
         val width = constraints.maxWidth
         val height = constraints.maxHeight
         val fixed = Constraints.fixed(width, height)
-        val from = low
-        val to = high
-        // Đo MỌI tab đã dựng (cỡ cố định nên lần sau lấy lại kết quả cũ, gần như miễn phí) để khung đầu của một lần đổi tab không phải đo cả màn;
-        // chỉ ĐẶT tab đang lộ - tab không được đặt thì không vẽ.
+        // Đo và đặt MỌI tab đã dựng (cỡ cố định nên lần sau lấy lại kết quả cũ, gần như miễn phí).
         val placeables = measurables.map { it.measure(fixed) }
         layout(width, height) {
             for (i in measurables.indices) {
                 val index = measurables[i].layoutId as Int
-                if (index in from..to) placeables[i].placeWithLayer(0, 0) { translationX = (index - tabs.position.value) * width }
+                placeables[i].placeWithLayer(0, 0) { translationX = (index - tabs.position.value) * width }
             }
         }
     }
