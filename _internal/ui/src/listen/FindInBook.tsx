@@ -115,6 +115,8 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
+            // Enter chốt chữ đang soạn của bộ gõ (IME) không phải lệnh mở kết quả.
+            if (event.nativeEvent.isComposing || event.keyCode === 229) return;
             if (event.key === "Enter" && hits[0]) pick(hits[0]);
             // ↓ từ ô tìm xuống kết quả đầu; trong danh sách ↑/↓ đi giữa các kết quả, ↑ ở kết quả đầu về ô tìm.
             else if (event.key === "ArrowDown" && hits.length) {
@@ -149,7 +151,7 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           {hits.map((hit) => (
             <li key={`${hit.chapterId}:${hit.sentence}`}>
               <button type="button" onClick={() => pick(hit)} className="block w-full rounded-control px-1.5 py-2.5 text-left hover:bg-hover">
-                <span className="block truncate text-xs font-medium text-fg-2">{labels.get(hit.chapterId)}</span>
+                <span className="block break-words text-xs font-medium text-fg-2">{labels.get(hit.chapterId)}</span>
                 <span className="mt-0.5 block text-sm leading-relaxed">
                   <Excerpt snippet={hit.snippet} />
                 </span>

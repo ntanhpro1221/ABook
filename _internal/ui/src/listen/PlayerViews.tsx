@@ -59,7 +59,7 @@ import { genderLabel, groupedVoices, groupLabel, voiceSections } from "./voiceGr
 import { revealVoiceSettings } from "./voiceSettingsLink";
 import { VieneuDownload } from "./VieneuDownload";
 import { chooseVoice, chosenVoice, isNoOfflineVoice, isVoiceStuck, localVoiceFor, noOfflineMessage, onlineNotice, resolveVoice, unusableVoiceMessage, voiceCaption } from "./readAloudVoice";
-import { bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel } from "./labels";
+import { bookHeardBase, bookProgressText, caughtUpDetail, nextChapterLabel, SHORTCUTS, withShortcut, otherBookLine, PREPARING_VOICE, PREPARING_VOICE_AFTER_MS, chapterSubline, toggleLabel } from "./labels";
 import { useAfter } from "@/shared/useAfter";
 import { useBackLayer } from "@/shared/backStack";
 import { MOTION, usePresence, useListPresence, withViewTransition } from "@/shared/motion";
@@ -1795,7 +1795,7 @@ export function ChapterPanel() {
               ) : <span aria-hidden />}
             </MotionRegion>
             <span className="min-w-0 flex-1">
-              <span className={cn("block truncate text-sm font-medium transition-colors duration-motion-fast", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
+              <span className={cn("block break-words text-sm font-medium transition-colors duration-motion-fast", current && "text-accent-text", !canPlay(chapter) && "text-fg-2")}>
                 {chapter.subtitle || chapter.title}
               </span>
               {/* Dòng phụ đổi khi chương thu xong ("Đang thu âm…" -> độ dài) hay đổi giọng: mờ chéo, không thay chữ cứng. */}
@@ -1833,20 +1833,9 @@ function initialPanel(): Panel {
 function BookProgressLine({ className }: { className?: string }) {
   const { queue, track, rate, atEnd } = usePlayer();
   const tens = useClock((time) => Math.floor(time / 10));
-  const { before, total } = useMemo(() => {
-    let heardBefore = 0;
-    let sum = 0;
-    let reached = false;
-    for (const chapter of queue) {
-      if (!chapter.available) continue;
-      if (chapter.id === track?.chapterId) reached = true;
-      else if (!reached) heardBefore += chapter.duration;
-      sum += chapter.duration;
-    }
-    return { before: heardBefore, total: sum };
-  }, [queue, track?.chapterId]);
+  const { before, total, inside } = useMemo(() => bookHeardBase(queue, track?.chapterId), [queue, track?.chapterId]);
   const shown = Boolean(track) && total > 0;
-  const heard = Math.min(total, before + tens * 10);
+  const heard = Math.min(total, before + (inside ? tens * 10 : 0));
   // Sách chưa thu xong: "Cả cuốn 99%" đọc như sắp hết truyện (soát UX 29-09) - đó là phần đã có.
   const whole = queue.every((chapter) => chapter.available);
   const finished = atEnd === "finished";
@@ -1917,7 +1906,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
                 >
                   <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-10" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold text-fg">{book.title}</span>
+                    <span className="block break-words text-sm font-semibold text-fg">{book.title}</span>
                     <span className="tabular block truncate text-xs text-fg-2">{otherBookLine(book)}</span>
                   </span>
                   <Play className="size-4 shrink-0 text-accent-text" fill="currentColor" strokeWidth={0} />
@@ -2064,10 +2053,10 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
         </div>
       )}
       <div className="mt-6 w-full min-w-0">
-        <h2 className="truncate text-xl font-bold leading-snug" title={track.chapterTitle}>
-          <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block truncate">{track.chapterTitle}</MotionRegion>
+        <h2 className="break-words text-xl font-bold leading-snug">
+          <MotionRegion as="span" motionKey={[track.bookId, track.chapterId, track.chapterTitle]} className="block">{track.chapterTitle}</MotionRegion>
         </h2>
-        <p className="mt-0.5 truncate text-sm text-fg-2">
+        <p className="mt-0.5 break-words text-sm text-fg-2">
           <TrackSubtitle />
         </p>
         <MusicCreditLine />

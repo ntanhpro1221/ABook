@@ -110,13 +110,13 @@ export function Producing() {
         >
           <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-8 rounded-control" />
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 truncate text-xs font-medium">
-              <MotionRegion as="span" className="flex size-3 shrink-0 items-center justify-center">{book.queuePosition != null ? <Clock className="size-3" aria-label={`Đang chờ ${book.queuePosition}`} /> : book.paused || book.stopping ? (
+            <div className="flex items-start gap-1.5 text-xs font-medium">
+              <MotionRegion as="span" className="flex size-3 shrink-0 items-center justify-center [--icon-w:0.75rem] mt-line-icon">{book.queuePosition != null ? <Clock className="size-3" aria-label={`Đang chờ ${book.queuePosition}`} /> : book.paused || book.stopping ? (
                 <Pause className="size-3 shrink-0 text-warning" aria-label={book.stopping ? "Đang dừng" : "Đang tạm dừng"} />
               ) : (
                 <Vu className="h-2.5 gap-px text-accent [&>span]:w-[2px]" />
               )}</MotionRegion>
-              <span className="truncate">{book.title}</span>
+              <span className="min-w-0 break-words">{book.title}</span>
             </div>
             <div className="mt-1 flex items-center gap-2">
               <Progress value={book.progress.overall} tone={book.queuePosition != null ? "muted" : "accent"} size="xs" className="flex-1" label={`Tiến độ: ${book.title}`} />

@@ -55,7 +55,8 @@ const BOOK_TYPES = /\.(epub|docx|pdf|txt|abook|abookproj)$/i;
 export function itemFromPath(path: string): PickedItem {
   const clean = path.trim();
   const name = clean.split(/[\\/]/).filter(Boolean).pop() ?? clean;
-  const last = name.includes(".") ? name.slice(name.lastIndexOf(".")) : "";
+  // Đuôi file là chữ Latin / số liền sau dấu chấm cuối, có ít nhất một chữ cái ("Vol. 2", "Tập 1.5", "1. Hòn đá" là tên thư mục, không phải đuôi).
+  const last = name.match(/\.(?=[a-z0-9]*[a-z])[a-z0-9]{1,10}$/i)?.[0] ?? "";
   if (last && !BOOK_TYPES.test(name)) {
     return { name, error: `Chưa hỗ trợ ${last.toLowerCase()}. Bạn hãy chọn EPUB, DOCX, PDF có chữ, TXT hoặc file .abook.` };
   }

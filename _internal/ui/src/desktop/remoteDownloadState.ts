@@ -20,7 +20,8 @@ export interface RemoteDownload {
 export function downloadFraction(status: RemoteDownload): number {
   if (status.state === "done") return 1;
   const fraction = status.bytes > 0 ? status.bytesDone / status.bytes : status.files > 0 ? status.filesDone / status.files : 0;
-  return Math.max(0, Math.min(status.filesDone < status.files ? 0.99 : 1, fraction));
+  // Máy chủ còn báo đang chạy (kiểm file, chuyển chỗ sau byte cuối) thì cũng chưa xong: "Đang tải… 100%" kèm nút dừng là tự mâu thuẫn.
+  return Math.max(0, Math.min(status.filesDone < status.files || status.state === "running" ? 0.99 : 1, fraction));
 }
 
 export interface DownloadNote {

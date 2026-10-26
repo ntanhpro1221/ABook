@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, rewindAfter, sleepButtonLabel, sleepLabel } from "./sleep";
+import { remoteSleepAfter, remoteSleepCommand, remoteSleepMode, rewindAfter, sleepButtonLabel, sleepLabel, sleepSpoken } from "./sleep";
 
 describe("hẹn giờ tắt của loa / TV", () => {
   it("đọc lời máy giữ phiên phát như hẹn giờ ở đây: chỉ trôi khi thiết bị đang phát", () => {
@@ -39,6 +39,17 @@ describe("nhãn trên nút hẹn giờ", () => {
     expect(sleepButtonLabel(mode, at + 850_000)).toBe("41 giây");
     expect(sleepButtonLabel({ kind: "chapter" }, at)).toBe("Hết chương");
     expect(sleepButtonLabel({ kind: "off" }, at)).toBe("");
+  });
+
+  it("còn 59,5 giây: không bao giờ \"60 giây\" - đồng hồ trong bảng đã là 1:00, nút và lời đọc nói 1 phút", () => {
+    const at = 1_000_000;
+    const mode = remoteSleepMode({ kind: "minutes", minutes: 5, left: 59.5, counting: false }, at);
+    expect(sleepLabel(mode, at)).toBe("1:00");
+    expect(sleepButtonLabel(mode, at)).toBe("1 phút");
+    expect(sleepSpoken(mode, at)).toBe("Hẹn giờ ngủ: còn 1 phút");
+    const later = remoteSleepMode({ kind: "minutes", minutes: 5, left: 59, counting: false }, at);
+    expect(sleepButtonLabel(later, at)).toBe("59 giây");
+    expect(sleepSpoken(later, at)).toBe("Hẹn giờ ngủ: còn 59 giây");
   });
 });
 

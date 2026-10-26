@@ -602,12 +602,13 @@ export function RenameChapterDialog({ book, chapter, onClose }: { book: ListenBo
 export function useSaveBook(book: ListenBook) {
   const source = useSource();
   const [busy, setBusy] = useState(false);
-  const save = async (options?: { folder?: string; as?: "abook" | "abookproj"; ask?: boolean }) => {
-    if (!source.saveBook) return;
+  /** Trả true khi đã lưu thành file; huỷ hộp chọn chỗ lưu hay lỗi thì false (hộp "Lưu thành" giữ nguyên lựa chọn để thử lại). */
+  const save = async (options?: { folder?: string; as?: "abook" | "abookproj"; ask?: boolean }): Promise<boolean> => {
+    if (!source.saveBook) return false;
     setBusy(true);
     try {
       const result = await source.saveBook(book.id, options);
-      if (!result.saved) return;
+      if (!result.saved) return false;
       const folder = result.folder;
       // Không có thay đổi nào vẫn lưu được, nhưng file giống hệt bản gốc: nói điều đó thành cảnh báo cùng dòng.
       toastDone("Đã lưu file sách", result.edits ? undefined : "Chưa có thay đổi nào - file giống bản gốc.", {
@@ -616,8 +617,10 @@ export function useSaveBook(book: ListenBook) {
           ? { label: "Mở thư mục", onClick: () => void api("/api/reveal-export", { method: "POST", body: { folder } }).catch(() => undefined) }
           : undefined,
       });
+      return true;
     } catch (error) {
       toast.error("Chưa lưu được file sách", { description: (error as Error).message });
+      return false;
     } finally {
       setBusy(false);
     }
@@ -671,7 +674,7 @@ export function SaveAsDialog({
           variant="primary"
           icon={FileDown}
           loading={busy}
-          onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then(() => onOpenChange(false))}
+          onClick={() => void save({ ...(folder ? { folder } : {}), as: kind, ask: true }).then((saved) => saved && onOpenChange(false))}
         >
           Lưu
         </Button>
