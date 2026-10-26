@@ -88,6 +88,14 @@ class ShareService : Service() {
         @Volatile
         var changed: (() -> Unit)? = null
 
+        private val watchers = java.util.concurrent.CopyOnWriteArrayList<() -> Unit>()
+
+        /** Người nghe thêm (giao diện native không có plugin): được gọi cùng [changed]; hàm trả về gỡ nó. */
+        fun watch(watcher: () -> Unit): () -> Unit {
+            watchers.add(watcher)
+            return { watchers.remove(watcher) }
+        }
+
         /**
          * Chạy chia sẻ: bật dịch vụ giữ tiến trình rồi mở [LibraryServer] (kéo theo [BluetoothShare]); idempotent. Không ghi
          * công tắc - xem [turnOn]. Chạy ngoài luồng chính. Không bật được dịch vụ (Android 12+ từ chối khi app không ở trước
@@ -120,6 +128,7 @@ class ShareService : Service() {
             SyncLink.prefs(context).edit().putBoolean(SHARE_KEY, false).commit()
             disable(context)
             changed?.invoke()
+            for (watcher in watchers) runCatching { watcher() }
         }
     }
 }
