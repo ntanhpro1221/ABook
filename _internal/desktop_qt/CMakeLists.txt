@@ -145,6 +145,20 @@ qt_add_qml_module(ABookDesk
         qml/SettingsSleep.qml
         qml/SettingsLook.qml
         qml/SettingsAdvanced.qml
+        qml/ListenSave.qml
+        qml/SleepWindow.qml
+        qml/LookKbd.qml
+        qml/LookShortcuts.qml
+        qml/MyMusicBar.qml
+        qml/MyMusicDetails.qml
+        qml/MyMusicModule.qml
+        qml/MyMusicTrack.qml
+        qml/MyMusicState.qml
+        qml/AdvancedUpdate.qml
+        qml/AdvancedStorage.qml
+        qml/AdvancedDiagnostics.qml
+        qml/AdvancedAbout.qml
+        qml/MyMusicText.js
         qml/Scrollbar.qml
         qml/ScrollEdges.qml
         qml/SmoothWheel.qml
