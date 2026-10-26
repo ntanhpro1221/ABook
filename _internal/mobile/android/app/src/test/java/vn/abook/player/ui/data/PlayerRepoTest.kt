@@ -227,4 +227,19 @@ class PlayerRepoTest {
         repo.playNow("b2")
         assertEquals(listOf("b2"), core.loads.map { it.id })
     }
+
+    @Test
+    fun `playChapter jumps inside the loaded book and loads another book at that chapter`() {
+        val core = FakePlaybackCore(snap(book = "b1"))
+        val repo = PlayerRepo(
+            core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null },
+            planAt = { id, chapter, seconds -> LoadRequest(id, "T", "", emptyList(), chapter, seconds, 1.0) },
+        )
+        repo.attach()
+        repo.playChapter("b1", 3, 12.0)
+        assertEquals(listOf("jump 3 12.0"), core.calls)
+        repo.playChapter("b2", 5, 0.0)
+        assertEquals(5, core.loads.single().startChapterId)
+        assertEquals("b2", core.loads.single().id)
+    }
 }

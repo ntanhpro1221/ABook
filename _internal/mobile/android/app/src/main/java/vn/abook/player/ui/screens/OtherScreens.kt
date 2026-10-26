@@ -19,7 +19,6 @@ import vn.abook.player.ui.components.BackButton
 import vn.abook.player.ui.components.PlaceholderTab
 import vn.abook.player.ui.components.BookCover
 import vn.abook.player.ui.data.CoverLoader
-import vn.abook.player.ui.data.ListenBook
 import vn.abook.player.ui.data.PlayerState
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
@@ -28,28 +27,6 @@ import vn.abook.player.ui.theme.Dim
 fun StudioScreen(modifier: Modifier = Modifier) {
     val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     PlaceholderTab("Studio", "Studio từ xa sắp có.", modifier.fillMaxSize().padding(top = top))
-}
-
-@Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
-    val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    PlaceholderTab("Cài đặt", "Cài đặt sắp có.", modifier.fillMaxSize().padding(top = top))
-}
-
-/** Trang sách (P0 giữ chỗ để có một màn con thật cho chuyển cảnh): bìa + tên + tác giả. Nội dung đầy đủ ở P2. */
-@Composable
-fun BookScreen(book: ListenBook, covers: CoverLoader, onBack: () -> Unit, modifier: Modifier = Modifier) {
-    val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    Column(modifier.fillMaxSize().testTag("book_screen").padding(top = top, start = Dim.margin, end = Dim.margin)) {
-        BackButton(onBack)
-        Spacer(Modifier.height(Dim.s16))
-        BookCover(book.cover, book.title, book.part, covers, 160.dp, Modifier.width(160.dp))
-        Spacer(Modifier.height(Dim.s16))
-        BasicText(book.title, style = Abook.type.sectionTitle, modifier = Modifier.fillMaxWidth())
-        if (book.author.isNotEmpty()) BasicText(book.author, style = Abook.type.bodySmall)
-        Spacer(Modifier.height(Dim.s24))
-        BasicText("Trang sách sắp có.", style = Abook.type.body.copy(color = Abook.colors.text2))
-    }
 }
 
 /** Trình phát đầy đủ (giữ chỗ cho tới khi màn thật vào): thanh phát nhỏ mở tới đây. */
