@@ -14,7 +14,7 @@ import { AnimatedRows, MotionPresence } from "@/shared/MotionPresence";
 import { MotionRegion } from "@/shared/MotionRegion";
 import { APP_TITLE } from "@/shared/title";
 import { formatPercent } from "@/shared/format";
-import { ContentSkeleton, IconButton, InlineError, OfflineStrip, Progress, Vu } from "@/shared/ui";
+import { ContentSkeleton, IconButton, InlineError, OfflineStrip, Progress, Tooltip, Vu } from "@/shared/ui";
 import { useAppInfo, useLibrary } from "@/studio/data";
 import { usePrecastInvites } from "@/studio/PrecastReview";
 import { PeerBar } from "./PeerBar";
@@ -47,12 +47,14 @@ const NAV_IDLE = "font-medium text-fg-2 hover:bg-hover hover:text-fg";
 
 /** Mục thanh bên sáng cả khi ở trang con: sách thuộc Thư viện, dự án thuộc Studio. `ink`: mực icon bắt đầu bao nhiêu phần 24 trong ô
  *  (đo getBBox: Library 3, Clapperboard 1,03, Settings 2,04) - icon kéo ra chừng ấy để mực mọi mục thẳng mép logo, chữ vẫn chung một cột. */
-function NavItem({ to, icon: Icon, ink, match, children }: { to: string; icon: typeof Library; ink: number; match: (path: string) => boolean; children: ReactNode }) {
+function NavItem({ to, icon: Icon, ink, match, collapsed = false, children }: { to: string; icon: typeof Library; ink: number; match: (path: string) => boolean; collapsed?: boolean; children: ReactNode }) {
   const shift = `calc(clamp(1.125rem, 0.75rlh, 1.96875rem) * ${ink} / 24)`;
   const { pathname } = useLocation();
   const { setExpanded } = useNowPlaying();
   const active = match(pathname);
+  // Thanh bên thu gọn chỉ còn icon: chú thích bên phải mang đúng tên đọc được của mục (DESIGN 5.5: nút chỉ icon trên máy tính có tooltip).
   return (
+    <Tooltip label={collapsed && typeof children === "string" ? children : undefined} side="right">
     <Link
       to={to}
       data-sidebar-top
@@ -64,6 +66,7 @@ function NavItem({ to, icon: Icon, ink, match, children }: { to: string; icon: t
       <Icon className="glyph" style={{ marginLeft: `calc(-1 * ${shift})`, marginRight: shift }} />
       <span data-sidebar-label>{children}</span>
     </Link>
+    </Tooltip>
   );
 }
 
@@ -164,14 +167,14 @@ const TITLES: [RegExp, string][] = [
 
 export function DesktopSidebar({ listenOnly = false, collapsed = false }: { listenOnly?: boolean; collapsed?: boolean }) {
   return (
-    <aside className="desktop-sidebar hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex" data-collapsed={collapsed}>
+    <aside aria-label="Thanh bên" className="desktop-sidebar hidden w-[236px] shrink-0 flex-col border-r border-line bg-sunken px-3 pb-4 pt-5 md:flex" data-collapsed={collapsed}>
       <div data-sidebar-brand><Brand /></div>
       <nav aria-label="Điều hướng chính" className="mt-8 space-y-2">
-        <NavItem to="/" icon={Library} ink={3} match={(path) => path === "/" || path.startsWith("/book/")}>
+        <NavItem to="/" icon={Library} ink={3} match={(path) => path === "/" || path.startsWith("/book/")} collapsed={collapsed}>
           Thư viện
         </NavItem>
         <MotionPresence open={!listenOnly}>
-          <NavItem to="/studio" icon={Clapperboard} ink={1.03} match={(path) => path.startsWith("/studio")}>
+          <NavItem to="/studio" icon={Clapperboard} ink={1.03} match={(path) => path.startsWith("/studio")} collapsed={collapsed}>
             Studio
           </NavItem>
           <div data-sidebar-extra><Producing /></div>
@@ -179,7 +182,7 @@ export function DesktopSidebar({ listenOnly = false, collapsed = false }: { list
       </nav>
       <div className="mt-auto pt-8">
         <div data-sidebar-extra><UpdateNotice /></div>
-        <NavItem to="/settings" icon={Settings} ink={2.04} match={(path) => path.startsWith("/settings")}>
+        <NavItem to="/settings" icon={Settings} ink={2.04} match={(path) => path.startsWith("/settings")} collapsed={collapsed}>
           Cài đặt
         </NavItem>
       </div>
@@ -241,17 +244,17 @@ export function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div ref={shell} className={cn("flex h-full", chrome && "desktop-chrome-shell")}>
-      <TitleBar toggle={<IconButton size="sm" label={collapsed ? "Mở rộng  (Ctrl+B)" : "Thu gọn  (Ctrl+B)"} icon={collapsed ? PanelLeftOpen : PanelLeftClose} onClick={toggleSidebar} />} />
-      {/* Người dùng bàn phím: Tab đầu tiên tới đây, bỏ qua thanh bên để vào thẳng nội dung. Màn "Đang nghe" mở thì nội dung bên dưới bị khoá (inert) - không hiện. */}
+      {/* Người dùng bàn phím: Tab đầu tiên tới đây (trước cả thanh cửa sổ), bỏ qua thanh bên để vào thẳng nội dung. Màn "Đang nghe" mở thì nội dung bên dưới bị khoá (inert) - không hiện. */}
       {!expanded && (
         <button
           type="button"
           onClick={() => main.current?.focus()}
-          className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-control bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float focus:translate-y-0"
+          className="fixed left-[calc(env(safe-area-inset-left)+0.75rem)] top-[calc(env(safe-area-inset-top)+0.75rem)] z-[60] -translate-y-[200%] rounded-control bg-accent px-4 py-2 text-sm font-semibold text-accent-ink shadow-float transition-transform duration-motion-fast focus:translate-y-0"
         >
           Tới nội dung
         </button>
       )}
+      <TitleBar toggle={<IconButton size="sm" label={collapsed ? "Mở rộng  (Ctrl+B)" : "Thu gọn  (Ctrl+B)"} icon={collapsed ? PanelLeftOpen : PanelLeftClose} onClick={toggleSidebar} />} />
       <ShortcutsHost remote={remote} />
       <DesktopSidebar listenOnly={listenOnly} collapsed={Boolean(chrome && collapsed)} />
       <div className="desktop-content relative flex min-w-0 flex-1 flex-col">

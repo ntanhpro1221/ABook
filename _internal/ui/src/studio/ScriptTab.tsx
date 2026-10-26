@@ -1025,7 +1025,6 @@ function ScriptRow({
       elementRef={rowRef}
       data-line={line.stableId}
       tabIndex={speech ? (active ? 0 : -1) : undefined}
-      aria-selected={speech ? selected : undefined}
       onFocus={speech ? onActivate : undefined}
       onMouseDown={(event) => {
         // Shift + bấm chọn cả đoạn - không để trình duyệt bôi đen chữ giữa hai lần bấm.
@@ -1069,6 +1068,8 @@ function ScriptRow({
       </div>
       <div className="flex min-w-0 flex-wrap items-start gap-x-2 gap-y-0.5">
       <SelectionMark selected={selected} className="mt-1" />
+      {/* Hàng là phần tử thường (chứa nút, chip), không phải option: trạng thái "đang chọn" đọc bằng chữ ẩn thay cho aria-selected. */}
+      {selected && <span className="sr-only">Đang chọn. </span>}
       <div className="min-w-0 max-w-[44rem] flex-1 basis-[min(100%,16rem)]">
         <p className={cn("text-[0.9375rem] leading-relaxed", selected ? "text-accent-text" : speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
           {line.kind === "thought" && <span className="mr-1.5 rounded-control bg-hover px-1.5 py-px align-[1px] text-[0.6875rem] font-medium not-italic text-fg-2">nghĩ</span>}
@@ -1436,7 +1437,7 @@ function ChapterScriptView({
           })()}
         </p>
       </MotionPresence>
-      <ol aria-label={`Kịch bản ${script.title}`} aria-multiselectable onKeyDown={onKeyDown} className="-mx-2 mt-3">
+      <ol aria-label={`Kịch bản ${script.title}`} onKeyDown={onKeyDown} className="-mx-2 mt-3">
       {/* Hàng rời / vào danh sách (gán câu sang người khác khi đang lọc theo người nói) khép / mở tại chỗ; đổi chương hay bộ lọc thì dựng
           lại từ đầu (key) - cả danh sách trượt theo vùng cha, không từng hàng. */}
       <LineRows key={`${script.chapterId}|${filter}|${who ?? ""}`} items={shown}>

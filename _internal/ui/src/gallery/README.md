@@ -72,6 +72,16 @@ bán kính đã co theo CSS nhỏ hơn quá 1 px, không có tổ tiên cắt th
 Fixture riêng dựng lại glyph HTML của `0bec019f` cạnh SVG mới `398db035`, dùng phông gallery thật và chính bộ đo trên Edge;
 không checkout/sửa component sản phẩm. Có unit test hình học và DOM ở `scripts/gallery_inspect.test.mjs`.
 
+## Trợ năng và bàn phím (máy tính, trong `npm test`)
+
+Hai bài thử chạy mọi mục máy tính trên jsdom (`jsdomShim.ts`: vá API thiếu, CSS ẩn / hiện theo mốc màn của Tailwind):
+
+- `a11yAxe.desktop.dom.test.tsx`: axe-core, mọi luật WCAG 2.x A / AA + "thực hành tốt"; không giữ vi phạm nào. Tương phản màu để cho
+  `npm run contrast` (jsdom không có màu thật); luật "region" bỏ qua lớp nổi gắn cuối `<body>` (menu, bảng nổi, hộp, thông báo).
+- `a11yKeyboard.desktop.dom.test.tsx`: mọi lớp nổi mà mục mở ra - tiêu điểm vào lớp, hộp thoại giữ Tab / Shift+Tab, Esc lùi đúng một bước
+  (lớp trên cùng hay một bước trong lớp), đóng hết thì tiêu điểm về nút đã mở. jsdom không tự chuyển tiêu điểm khi Tab: bài thử làm như
+  trình duyệt (gửi phím, không ai chặn thì sang phần tử kế).
+
 ## Cách giả (dữ liệu và nền tảng)
 
 | phần | file | cách |

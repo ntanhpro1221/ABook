@@ -25,6 +25,11 @@
         },
         {
           "side": "web",
+          "label": "Shift F10: sửa cách đọc.",
+          "reason": "computer only: keyboard hint read by screen readers (the phone opens the same sheet with a long press)"
+        },
+        {
+          "side": "web",
           "label": "Kéo xuống còn giọng khác",
           "reason": "computer only: scroll hint of the voice popover"
         },

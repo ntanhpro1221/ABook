@@ -300,6 +300,12 @@ export function ReadAlongText({
       event.preventDefault();
       event.stopPropagation();
       onTap(index, -1);
+    } else if (onWordMenu && (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10"))) {
+      // Phím menu / Shift+F10 thay cho chuột phải: không có điểm bấm nên mở từ chữ đầu câu (bảng sửa cách đọc đổi chữ được).
+      event.preventDefault();
+      event.stopPropagation();
+      menuAt.current = Date.now();
+      onWordMenu(index, 0);
     } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       const next = Math.max(0, Math.min(script.segments.length - 1, index + (event.key === "ArrowDown" ? 1 : -1)));
       const element = (event.currentTarget as HTMLElement).querySelector<HTMLElement>(`[data-index="${next}"]`);
@@ -330,7 +336,7 @@ export function ReadAlongText({
     <div className={className} onKeyDown={keys}>
       {hint && (
         <p id={hint} className="sr-only">
-          Mũi tên lên, xuống: sang câu trước, câu sau. Enter: nghe từ câu này.
+          Mũi tên lên, xuống: sang câu trước, câu sau. Enter: nghe từ câu này.{onWordMenu ? " Shift F10: sửa cách đọc." : ""}
         </p>
       )}
       {chunks.map((chunk) => (
