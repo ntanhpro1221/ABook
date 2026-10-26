@@ -115,6 +115,8 @@ export function FindInBook({ book, open, onOpenChange }: { book: ListenBook; ope
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
+            // Enter chốt chữ đang soạn của bộ gõ (IME) không phải lệnh mở kết quả.
+            if (event.nativeEvent.isComposing || event.keyCode === 229) return;
             if (event.key === "Enter" && hits[0]) pick(hits[0]);
             // ↓ từ ô tìm xuống kết quả đầu; trong danh sách ↑/↓ đi giữa các kết quả, ↑ ở kết quả đầu về ô tìm.
             else if (event.key === "ArrowDown" && hits.length) {
