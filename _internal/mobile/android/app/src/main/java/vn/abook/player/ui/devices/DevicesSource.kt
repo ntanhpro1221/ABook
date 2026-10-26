@@ -75,8 +75,8 @@ interface DevicesSource {
     suspend fun setDeviceName(name: String): String
     suspend fun storage(): Storage
 
-    /** Xoá khỏi máy, cùng lõi và cùng lời xác nhận với menu "Xoá khỏi máy" của trang sách: null = đã xoá, khác null = câu lỗi. */
-    suspend fun delete(id: String): String?
+    /** Xoá khỏi máy, cùng lõi và cùng lời xác nhận với menu "Xoá khỏi máy" của trang sách: null = đã nhận (nằm chờ Hoàn tác), khác null = câu lỗi. `title` / `partial` cho dòng "Đã xoá…" của thanh Hoàn tác. */
+    suspend fun delete(id: String, title: String = "", partial: Boolean = false): String?
 
     /** Lúc mở app: lượt tải còn giữ từ lần trước tính là đang tải; đã bật chia sẻ từ lần trước thì mở lại. */
     suspend fun restore()
