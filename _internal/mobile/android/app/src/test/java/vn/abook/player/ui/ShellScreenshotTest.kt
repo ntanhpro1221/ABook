@@ -111,7 +111,7 @@ class ShellScreenshotTest {
     fun studioTabLight() {
         show()
         rule.onNodeWithTag("tab_studio").performClick()
-        rule.onNodeWithText("Studio từ xa sắp có.").assertIsDisplayed()
+        rule.onNodeWithText("Nối máy tính để làm sách nói và xem tiến độ.").assertIsDisplayed()
         shot("shell_studio_light")
     }
 

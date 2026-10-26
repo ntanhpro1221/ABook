@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Immutable
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
@@ -27,10 +26,22 @@ sealed interface LibraryState {
 /**
  * Kho dữ liệu Thư viện cho giao diện native: đọc thẳng lõi ([Store]) - cùng nguồn với `LibraryPlugin.localBooks` (sách đã tải) và với gói sách
  * nghe thẳng đã cất (`stream.json`, cùng dữ liệu `streamableBooks` trả cho WebView) - không qua plugin. Cuốn nghe thẳng mang [RemoteRef]
- * (dấu "Trên máy tính"). Việc HỎI máy tính / thiết bị ghép xem có sách mới nằm trong `LibraryPlugin.streamableBooks` (thân phương thức plugin) và dời
- * vào lõi ở bước Thiết bị (P2); tới lúc đó danh sách nghe thẳng là những gì đã cất.
+ * (dấu "Trên máy tính"). DevicesRepo chuyển danh sách có thẩm quyền từ RemoteBooks.streamable vào [acceptRemote]; gói đã cất chỉ dùng trước lượt hỏi đầu.
  */
-class LibraryRepo(private val context: Context) : BookSource {
+class LibraryRepo(private val context: Context, scope: kotlinx.coroutines.CoroutineScope, removed: (String) -> Unit = {}) : BookSource {
+    // null until the first authoritative network catalogue; downloaded books always stay local.
+    @Volatile private var remoteIds: Set<String>? = null
+    val deletions: UndoDelete = UndoDelete(scope, erase = { id ->
+        edit { BookActions.deleteAfterUndo(context, id); null }
+    }, changed = { refresh() }, removed = removed)
+
+    suspend fun acceptRemote(rows: org.json.JSONArray) {
+        remoteIds = (0 until rows.length()).map { rows.getJSONObject(it).getString("id") }.toSet()
+        refresh()
+    }
+
+    fun isHidden(id: String) = deletions.contains(id)
+
     private val flow = MutableStateFlow<LibraryState>(LibraryState.Loading)
     val state: StateFlow<LibraryState> get() = flow
 
@@ -38,7 +49,7 @@ class LibraryRepo(private val context: Context) : BookSource {
     suspend fun refresh() = withContext(Dispatchers.IO) {
         flow.value = LibraryState.Ready(
             try {
-                readAll(context)
+                readAll(context).filter { !isHidden(it.id) && (it.remote == null || remoteIds?.contains(it.id) != false) }
             } catch (error: Exception) {
                 AppLog.w("Library", "Không đọc được thư viện: ${error.javaClass.simpleName}")
                 emptyList()
@@ -72,9 +83,10 @@ class LibraryRepo(private val context: Context) : BookSource {
 
     override suspend fun setChapterDone(id: String, chapterId: Int, done: Boolean) = write { BookActions.setChapterDone(context, id, chapterId, done) }
 
-    override suspend fun delete(id: String): String? = edit {
-        BookActions.delete(context, id) { Dispatchers.IO.asExecutor().execute(it) }
-        null
+    override suspend fun delete(id: String): String? {
+        if (vn.abook.player.BookDownloads.isActive(context, id)) return "Đang tải cuốn này, bạn huỷ tải trước"
+        deletions.remove(id)
+        return null
     }
 
     override suspend fun share(id: String): Intent? = withContext(Dispatchers.IO) {
