@@ -192,7 +192,7 @@ object ExportText {
     /** Chữ của giọng trực tuyến gửi CẢ CUỐN ra ngoài máy; rỗng khi giọng chạy trên máy. */
     fun wholeBookNotice(voice: ExportVoice): String {
         if (!voice.online) return ""
-        VoiceText.KEYED[voice.provider]?.let { return "Chữ của cả cuốn được gửi tới $it để đọc, bằng khóa của bạn - dịch vụ có thể tính tiền vào tài khoản của bạn." }
+        VoiceText.KEYED[voice.provider]?.let { return "Chữ của cả cuốn được gửi tới $it để đọc, bằng khoá của bạn - dịch vụ có thể tính tiền vào tài khoản của bạn." }
         if (voice.provider == "edge") return "Chữ của cả cuốn được gửi tới máy chủ Microsoft để đọc."
         return "Chữ của cả cuốn được gửi tới dịch vụ ngoài để đọc."
     }
