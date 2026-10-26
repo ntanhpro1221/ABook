@@ -46,6 +46,7 @@ ICONS = sorted({
     "eighth-note",
     "ellipsis",
     "file",
+    "file-audio",
     "file-down",
     "file-text",
     "folder",
