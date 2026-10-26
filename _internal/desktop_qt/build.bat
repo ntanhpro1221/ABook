@@ -45,6 +45,9 @@ rem Player unit tests (QtTest with fake audio/network): red stops the build befo
 if errorlevel 1 exit /b 1
 "%HERE%build\ReadAlongTests.exe"
 if errorlevel 1 exit /b 1
+rem Background music: shared fixtures with the server / web / Android + MusicBed on fake audio
+"%HERE%build\MusicTests.exe"
+if errorlevel 1 exit /b 1
 rem Skip-15 icon pixel check (gap between stroke and digits, ink inside the box)
 "%HERE%build\SkipGlyphTests.exe"
 if errorlevel 1 exit /b 1

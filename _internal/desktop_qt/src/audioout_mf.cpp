@@ -138,6 +138,7 @@ void MfAudioOut::openSource() {
     SysFreeString(source);
     d->engine->SetPlaybackRate(m_rate);
     d->engine->SetVolume(effectiveVolume(m_volume));
+    d->engine->SetLoop(m_loop);
 }
 
 void MfAudioOut::play() {
@@ -147,6 +148,17 @@ void MfAudioOut::play() {
     openSource();
     if (m_loaded && d->engine)
         d->engine->Play();
+}
+
+void MfAudioOut::preload() {
+    if (!m_url.isEmpty())
+        openSource();
+}
+
+void MfAudioOut::setLoop(bool loop) {
+    m_loop = loop;
+    if (d->engine)
+        d->engine->SetLoop(loop);
 }
 
 void MfAudioOut::pause() {

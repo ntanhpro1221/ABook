@@ -105,3 +105,32 @@ Resume rule: do the first step under "Next" below; every step appends here.
   Verified (shot.py nchit/ncdbl/sc/size/screen steps): WM_NCHITTEST blank strip = HTCAPTION, toggle = HTCLIENT, min = HTMINBUTTON, max = HTMAXBUTTON (Windows 11 Snap Layouts), close = HTCLOSE, top edge = HTTOP; invisible 10 px resize frame outside the client; sc=max / restore work, double-click on the strip toggles maximized; hover visuals on all three buttons, max button keeps its hover fill while Snap Layouts is open (cursorInside latch); dark + light shots in shots/deskqt/tb. Display is 140 % (dpi 134), so fractional scale is covered; 125/150 could not be tested (would change the user's display setting).
   Cost: exe 2,727,936 -> 2,909,696 B (+177 KB), no new DLL; interleaved before/after x8 runs: idle 53.1 -> 52.2 MB, cold first frame 448 -> 442 ms (noise +-50).
   Deviation: no theme colour animation on the strip (the rest of the app switches theme instantly; an animated strip would lag the page). THIRD_PARTY.md got the QWindowKit line.
+
+## D1c - Nhạc nền (Music lane, branch dev/desk-qt-music, worktree D:/Novels/ABook_qtmusic; lead brief 26-10)
+Resume rule: do the first step under "Next"; append after every step. Build/tests via build.bat (PowerShell), shots tools/shot.py, measure tools/measure.py.
+
+Scope decision: Qt plays only audio chapters (text chapters are "not playable" in D1), so the web's text-book menu (PlaylistSubmenu /
+MusicMenuFor, scene music, Nhạc của tôi) has nothing to drive yet -> port only what audio books use on the web desktop:
+PackagedMusicMenu (switch "Nhạc nền: Bật/Tắt", "Mức nhạc dưới giọng đọc", notes), the bed engine (musicBed.ts: cues per chapter,
+fades, crossfade loops, steps, sibling/tail, retry, warm next), and the credit row in Đang nghe ("Nhạc nền: ..." + credit/licence/page).
+Per-cue silence/swap is NOT in the web player (only Sửa sách), so not in the player here either.
+
+### Plan
+- m1: musiclogic.h (pure: cues, steps, loopBounds/loopPosition/loopSchedule/aligned/due/final/finished/sibling fade; constants from
+  abook/webui/assets/music_mix.json embedded as a resource) + tests/test_music.cpp mirroring musicBed.test.ts.
+- m2: musicbed.{h,cpp} (MusicBed on AudioOut instances made by a factory; QTimer 50 ms fades; loop ticket; standby) + fake tests.
+- m3: music.{h,cpp} QML singleton (GET/PUT /api/books/<id>/music, GET /api/books/<id>/music/chapters/<n>, POST /api/music/warm,
+  NextChapterWarm, credit of the active link, broken), wired to Player (position/playing/seek/chapter/volume incl. sleep fade).
+- m4: QML: music chip in the bar + menu (Popover), credit row in Đang nghe; icons via scripts/gen_lucide_icons.py --qml.
+- m5: build.bat, shots light/dark, measure (RAM/frame vs D1), report -> Lead.
+
+### Done
+- m0: worktree from origin/dev/desk-qt 9d2c9f15 + merged origin/dev/native1 f3ae8c70 (shared icon generator).
+- m1+m2 (26-10): src/musiclogic.h (pure logic; mix constants from music_mix.json via CMake ABOOK_MIX_*), src/musicbed.{h,cpp}
+  (MusicBed = musicBed.ts line by line; a "voice" = AudioOut + what <audio> remembers; AudioOut gained preload()/setLoop(), MF
+  implements both; events are connected QUEUED before load() so they arrive after the call like DOM events; readyState < 3 =
+  AudioOut::buffering). tests/test_music.cpp = MusicTests (29 pass): shared fixtures music_timeline + music_loop (same as server/web/
+  Android), parse, steps, handoff numbers, and the bed on FakeOut (switch/silence, announce once, release after fade, paused book
+  switch, gainDb x volume, step ramp/seek jump, broken song retry, seek in loop, crossfade loop with prepared voice, short loop,
+  standby released, tail + early sibling, silent until sounding, warm next once). build.bat runs MusicTests.
+  Gotcha: moc skips a file with C++ digit separators (1'000) or a raw string R"(..)" -> empty .moc, link error on metaObject.
