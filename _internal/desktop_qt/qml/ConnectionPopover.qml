@@ -1,7 +1,7 @@
 import QtQuick
 import ABook
 
-// Bảng nổi nhỏ cạnh chip trạng thái: chi tiết bộ máy (cổng, thời gian mở, bản) + "Khởi động lại" / "Mở nhật ký".
+// Bảng nổi nhỏ trên chip trạng thái: chi tiết (bản, lời nhắn khi lỗi) + hai hành động "Khởi động lại" / "Mở thư mục nhật ký".
 // Là một lớp của ngăn xếp Back: Esc, Alt+Left, nút Back của chuột hay bấm ra ngoài đều đóng; Back không lùi màn khi lớp còn mở.
 Item {
     id: root
@@ -33,7 +33,7 @@ Item {
     Item {
         id: panel
         width: 300
-        height: content.implicitHeight + 2 * Theme.s16
+        height: content.implicitHeight + Theme.s12 + Theme.s8
         x: root.anchorItem ? root.anchorItem.mapToItem(root, 0, 0).x : 0
         y: (root.anchorItem ? root.anchorItem.mapToItem(root, 0, 0).y : 0) - height - Theme.s8 + (1 - root.shown) * 8
         opacity: root.shown
@@ -52,46 +52,49 @@ Item {
         }
         MouseArea { anchors.fill: parent }   // bấm trong bảng không đóng
 
+        // Chip bên dưới đã nói trạng thái ("Sẵn sàng"...), bảng chỉ thêm phần chi tiết và hai việc có thể làm.
         Column {
             id: content
             x: Theme.s16
-            y: Theme.s16
+            y: Theme.s12
             width: parent.width - 2 * Theme.s16
-            spacing: Theme.s12
+            spacing: Theme.s4
 
-            Row {
-                spacing: Theme.s8
-                Rectangle {
-                    width: 8; height: 8; radius: 4
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: Backend.state === Backend.Failed ? Theme.danger : (Backend.state === Backend.Starting ? Theme.accent : Theme.success)
-                }
-                Text {
-                    text: Backend.state === Backend.Failed ? "Gặp lỗi" : (Backend.state === Backend.Starting ? "Đang mở…" : "Sẵn sàng")
-                    color: Theme.text
-                    font.pixelSize: Theme.sizeBody
-                    font.weight: Theme.weightMedium
-                }
-            }
             Text {
-                visible: Backend.state === Backend.Failed
                 width: parent.width
-                text: Backend.message
-                color: Theme.danger
+                topPadding: Theme.s4
+                text: Backend.state === Backend.Failed ? Backend.message
+                    : (Backend.state === Backend.Starting ? "ABook đang chuẩn bị, bạn chờ một chút." : "Mọi thứ đang chạy trên máy này.")
+                color: Backend.state === Backend.Failed ? Theme.danger : Theme.text2
                 wrapMode: Text.Wrap
                 font.pixelSize: Theme.sizeBodySmall
             }
-            Column {
-                visible: Backend.state === Backend.Ready
-                spacing: 2
-                Text { text: "Mọi thứ đang chạy trên máy này."; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
-                Text { text: "Bản " + Backend.version; color: Theme.text2; font.pixelSize: Theme.sizeCaption }
+            Text {
+                topPadding: 0
+                bottomPadding: Theme.s8
+                text: "Bản " + Backend.version
+                color: Theme.text3
+                font.pixelSize: Theme.sizeCaption
             }
-            Row {
-                spacing: Theme.s4
-                x: -Theme.s12      // nút chữ đầu hàng: mực thẳng mép cột chữ
-                Button { kind: "text"; text: "Khởi động lại"; onClicked: { root.close(); Backend.restart() } }
-                Button { kind: "text"; text: "Mở nhật ký"; onClicked: { root.close(); Platform.revealFile(Backend.logPath) } }
+            Item {
+                width: parent.width + 2 * Theme.s8
+                x: -Theme.s8
+                height: restart.height + log.height
+                MenuRow {
+                    id: restart
+                    width: parent.width
+                    glyph: ""
+                    text: "Khởi động lại"
+                    onClicked: { root.close(); Backend.restart() }
+                }
+                MenuRow {
+                    id: log
+                    y: restart.height
+                    width: parent.width
+                    glyph: ""
+                    text: "Mở thư mục nhật ký"
+                    onClicked: { root.close(); Platform.revealFile(Backend.logPath) }
+                }
             }
         }
     }

@@ -28,21 +28,25 @@ Rectangle {
         GradientStop { position: 1; color: root.palette[1] }
     }
 
+    // Tên sách in trên bìa: thu cỡ chữ cho vừa khung (không cắt, không '...'), chừa chỗ cho nhãn "Tập N" nếu có.
     Text {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: Math.max(8, root.width * 0.08)
+        readonly property real pad: Math.max(8, root.width * 0.08)
+        x: pad
+        y: pad
+        width: root.width - 2 * pad
+        height: root.height - 2 * pad - (tagBox.visible ? tagBox.height + 8 : 0)
+        verticalAlignment: Text.AlignTop
         text: root.parts[0]
         color: "#ffffff"
         wrapMode: Text.Wrap
-        maximumLineCount: 5
-        elide: Text.ElideRight
+        fontSizeMode: Text.Fit
+        minimumPixelSize: 9
         lineHeight: 1.1
         font.pixelSize: Math.max(11, Math.min(19, root.width * 0.1))
         font.weight: Theme.weightBold
     }
     Rectangle {
+        id: tagBox
         visible: root.parts[1] !== ""
         anchors.left: parent.left
         anchors.bottom: parent.bottom

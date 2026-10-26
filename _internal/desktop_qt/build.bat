@@ -24,6 +24,10 @@ rem Design tokens: Theme.qml must match DESIGN.md (regenerate with tools\gen_the
 "%ABOOK_PYTHON%" -X utf8 "%HERE%tools\gen_theme.py" --check
 if errorlevel 1 exit /b 1
 
+rem Owner rule: never cut the user's text (no elide / maximumLineCount / clip on Text)
+"%ABOOK_PYTHON%" -X utf8 "%HERE%tools\check_text_cut.py"
+if errorlevel 1 exit /b 1
+
 cmake -S "%HERE%." -B "%HERE%build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="%QT_ROOT%" -DCMAKE_MAKE_PROGRAM="%NINJA_BIN%\ninja.exe"
 if errorlevel 1 exit /b 1
 cmake --build "%HERE%build"
