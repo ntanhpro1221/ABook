@@ -188,7 +188,7 @@ export function StudioSetupCard({ className }: { className?: string }) {
     <MotionRegion as="section" className={cn("py-5 sm:py-6", className)} aria-labelledby="studio-setup-title">
       {/* Màn hẹp: chữ chiếm cả hàng, nút xuống dưới - không ép chữ thành cột hẹp cạnh nút (soát a64, 390 px). */}
       <div className="flex flex-wrap items-start gap-4">
-        <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent-text">
+        <div className="grid size-11 shrink-0 place-items-center rounded-cover bg-accent-soft text-accent-text">
           <Cpu className="size-5" />
         </div>
         <div className="min-w-0 flex-1 basis-[16rem]">

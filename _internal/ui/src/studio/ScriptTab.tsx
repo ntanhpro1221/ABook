@@ -669,7 +669,7 @@ export function DeliveryMenu({
           value={words}
           onChange={(event) => setWords(event.target.value)}
           rows={Math.min(5, Math.max(2, Math.ceil(words.length / 42)))}
-          className="w-full resize-y rounded-lg border border-line bg-panel px-2.5 py-1.5 text-sm leading-relaxed outline-none focus:border-focus"
+          className="w-full resize-y rounded-control border border-line bg-panel px-2.5 py-1.5 text-sm leading-relaxed outline-none focus:border-focus"
         />
         <span className="mt-1 block text-[0.6875rem] leading-snug text-fg-3">
           Chỉ sửa chữ đem đọc; sách giữ nguyên
@@ -751,7 +751,7 @@ function DeliveryChip({
       aria-label={`Cách đọc: ${text}. Bấm để sửa`}
       className={cn(
         // Màn cảm ứng: nút chỉ 24 px - nới vùng chạm theo chiều dọc lên ~44 px (soát UX 29-09).
-        "relative inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[0.6875rem] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
+        "relative inline-flex h-6 items-center gap-1 rounded-control px-1.5 text-[0.6875rem] font-medium text-fg-3 hover:bg-panel hover:text-fg focus-visible:opacity-100 pointer-coarse:after:absolute pointer-coarse:after:inset-x-0 pointer-coarse:after:-inset-y-2.5 pointer-coarse:after:content-['']",
         // Màn chạm không có hover: nhãn hiện mờ thay vì ẩn hẳn (soát UX a13 #16).
         hidden && !open && "opacity-0 group-hover:opacity-100 pointer-coarse:opacity-60",
         waiting && "text-fg-2",
@@ -784,7 +784,7 @@ function DeliveryChip({
           collisionPadding={12}
           onEscapeKeyDown={keepOpenForNameEditor}
           // Bảng cao hơn màn nhỏ (655 px trong khung 486 px: đỉnh ra ngoài màn, không với tới) - cuộn trong phần còn trống.
-          className="z-50 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float"
+          className="z-50 max-h-[var(--radix-popover-content-available-height)] overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float"
         >
           <DeliveryMenu bookId={bookId} line={line} script={script} onSave={onSave} dirty={dirty} />
         </Popover.Content>
@@ -825,7 +825,7 @@ export function SpeakerMenu({
         key={person.value}
         type="button"
         onClick={() => onPick(person)}
-        className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none pointer-coarse:h-11"
+        className="flex h-9 w-full items-center gap-2 rounded-control px-2 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none pointer-coarse:h-11"
       >
         <span className="avatar grid size-6 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold" style={hue(person.label)} aria-hidden>
           {hotkey ?? person.label.slice(0, 1).toUpperCase()}
@@ -839,7 +839,7 @@ export function SpeakerMenu({
   };
   return (
     <MotionRegion as="div">
-      <label className="flex h-9 items-center gap-2 rounded-lg border border-line bg-panel-2 px-2.5 focus-within:border-focus">
+      <label className="flex h-9 items-center gap-2 rounded-control border border-line bg-panel-2 px-2.5 focus-within:border-focus">
         <Search className="size-4 shrink-0 text-fg-3" />
         <input
           autoFocus={!phone && !embedded}
@@ -876,7 +876,7 @@ export function SpeakerMenu({
                     key={gender}
                     type="button"
                     onClick={() => onPick({ value: query.trim(), label: query.trim(), lines: 0, newGender: gender })}
-                    className="min-h-10 flex-1 rounded-lg text-xs font-medium text-accent-text hover:bg-hover"
+                    className="min-h-10 flex-1 rounded-control text-xs font-medium text-accent-text hover:bg-hover"
                   >
                     {label}
                   </button>
@@ -956,7 +956,7 @@ function SpeakerChip({
           align="start"
           sideOffset={6}
           collisionPadding={12}
-          className="z-50 w-72 rounded-xl border border-line bg-panel p-1.5 shadow-float"
+          className="z-50 w-72 rounded-cover border border-line bg-panel p-1.5 shadow-float"
         >
           <SpeakerMenu line={line} script={script} onPick={onPick} />
         </Popover.Content>
@@ -1031,7 +1031,7 @@ function ScriptRow({
       }}
       onClick={speech ? (event) => (event.shiftKey ? onExtend() : onActivate()) : undefined}
       className={cn(
-        "group transition-[background-color,box-shadow,opacity] duration-motion-fast grid grid-cols-[calc(var(--spacing)*7)_minmax(0,1fr)] gap-x-2 gap-y-1 rounded-lg px-2 py-1.5 outline-none lg:grid-cols-[10rem_calc(var(--spacing)*7)_minmax(0,1fr)]",
+        "group transition-[background-color,box-shadow,opacity] duration-motion-fast grid grid-cols-[calc(var(--spacing)*7)_minmax(0,1fr)] gap-x-2 gap-y-1 rounded-control px-2 py-1.5 outline-none lg:grid-cols-[10rem_calc(var(--spacing)*7)_minmax(0,1fr)]",
         active && !selected && "bg-hover",
         selected && "text-accent-text",
         speech && "focus-visible:ring-2 focus-visible:ring-focus",
@@ -1069,11 +1069,11 @@ function ScriptRow({
       <SelectionMark selected={selected} className="mt-1" />
       <div className="min-w-0 max-w-[44rem] flex-1 basis-[min(100%,16rem)]">
         <p className={cn("text-[0.9375rem] leading-relaxed", selected ? "text-accent-text" : speech ? "text-fg" : "text-fg-2", line.kind === "thought" && "italic")}>
-          {line.kind === "thought" && <span className="mr-1.5 rounded bg-hover px-1.5 py-px align-[1px] text-[0.6875rem] font-medium not-italic text-fg-2">nghĩ</span>}
+          {line.kind === "thought" && <span className="mr-1.5 rounded-control bg-hover px-1.5 py-px align-[1px] text-[0.6875rem] font-medium not-italic text-fg-2">nghĩ</span>}
           {marks?.length ? (
             splitByRanges(line.text, marks).map(([part, hit], index) =>
               hit ? (
-                <mark key={index} className="rounded-sm bg-warning-soft px-0.5 text-fg">
+                <mark key={index} className="rounded-control bg-warning-soft px-0.5 text-fg">
                   {part}
                 </mark>
               ) : (
@@ -1118,7 +1118,7 @@ function ScriptRow({
               <button
                 type="button"
                 onClick={() => onPick(suggested)}
-                className="rounded-md px-1.5 py-0.5 font-medium text-warning hover:bg-warning-soft"
+                className="rounded-control px-1.5 py-0.5 font-medium text-warning hover:bg-warning-soft"
               >
                 Gán cho {suggested.label}
               </button>
@@ -1412,7 +1412,7 @@ function ChapterScriptView({
     // motionKey: hàng vào / ra tự khép / mở tại chỗ (LineRows), vùng chỉ trượt khi đổi bộ lọc / người nói - không mờ cả danh sách mỗi lần gán.
     <MotionRegion slideIndex={FILTERS.indexOf(filter)} motionKey={[filter, who]}>
       <MotionPresence open={selected.length > 1}>
-        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-3 py-1.5 text-[0.8125rem]" role="status">
+        <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-control px-3 py-1.5 text-[0.8125rem]" role="status">
           <span className="font-semibold">Đang chọn {selected.length} câu</span>
           <span className="text-fg-2">- phím số hay chọn người ở một câu trong nhóm gán cả {selected.length} câu · Esc bỏ chọn</span>
           {(() => {
@@ -1566,7 +1566,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
           type="button"
           id="script-chapter"
           aria-label="Chương"
-          className="-ml-2.5 inline-flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial"
+          className="-ml-2.5 inline-flex h-9 min-w-0 flex-1 items-center gap-1.5 rounded-control px-2.5 text-sm font-medium transition-colors duration-motion-fast hover:bg-hover data-[state=open]:bg-hover sm:max-w-[26rem] sm:flex-initial"
         >
           <span className="truncate">{current ? chapterLabel(current) : ""}</span>
           <ChevronDown className="fold-chevron ink-end [--icon-w:14px] size-4 shrink-0 text-fg-3" aria-hidden />
@@ -1577,7 +1577,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
           align="start"
           sideOffset={4}
           collisionPadding={12}
-          className="z-50 max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height))] w-[min(30rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-xl border border-line bg-panel p-1.5 shadow-float"
+          className="z-50 max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height))] w-[min(30rem,calc(100vw-1.5rem))] overflow-y-auto overscroll-contain rounded-cover border border-line bg-panel p-1.5 shadow-float"
           ref={scrollToChecked}
         >
           <DropdownMenu.RadioGroup value={String(chapterId ?? "")} onValueChange={(value) => { if (Number(value) !== chapterId) onPick(Number(value)); }}>
@@ -1585,7 +1585,7 @@ function ChapterMenu({ chapters, chapterId, narrow, onPick }: { chapters: Chapte
               <DropdownMenu.RadioItem
                 key={chapter.chapterId}
                 value={String(chapter.chapterId)}
-                className="flex min-h-9 cursor-default items-center gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"
+                className="flex min-h-9 cursor-default items-center gap-2 rounded-control px-2 py-1.5 text-sm outline-none data-[highlighted]:bg-hover data-[state=checked]:text-accent-text"
               >
                 {/* Dấu chọn chung: luôn giữ chỗ, mờ vào / ra (ItemIndicator gắn / gỡ cứng). */}
                 <SelectionMark selected={chapter.chapterId === chapterId} />
@@ -1719,7 +1719,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
           <IconButton label="Chương sau" icon={SkipForward} disabled={!data?.next} onClick={() => go(data?.next ?? null)} />
         </div>
         {narrow && entry && <MotionRegion as="p" className="w-full text-xs text-fg-3">{chapterExtras(entry)}</MotionRegion>}
-        <div className="relative flex h-9 w-full items-center rounded-lg border border-line bg-panel focus-within:border-focus sm:w-60">
+        <div className="relative flex h-9 w-full items-center rounded-control border border-line bg-panel focus-within:border-focus sm:w-60">
           <Search className="pointer-events-none ml-2.5 size-4 shrink-0 text-fg-3" aria-hidden />
           <input
             id="script-find"
@@ -1802,7 +1802,7 @@ export function ScriptTab({ bookId }: { bookId: string }) {
       {!data ? (
         <div className="mt-4 space-y-2">
           {Array.from({ length: 8 }, (_, index) => (
-            <Skeleton key={index} className="h-9 rounded-lg" />
+            <Skeleton key={index} className="h-9 rounded-control" />
           ))}
         </div>
       ) : (

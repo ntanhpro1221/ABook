@@ -101,6 +101,9 @@ fun LucideIcon(data: String, color: Color, modifier: Modifier = Modifier, size: 
 @Composable fun FolderDownIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.FOLDER_DOWN, color, modifier, size)
 @Composable fun BookAudioIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.BOOK_AUDIO, color, modifier, size)
 @Composable fun BatteryChargingIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.BATTERY_CHARGING, color, modifier, size)
+/** "Đổi bài" và "Chọn" của một đoạn nhạc gắn sẵn (web: Shuffle / Pin ở Sửa sách > Nhạc nền). */
+@Composable fun ShuffleIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.SHUFFLE, color, modifier, size)
+@Composable fun PinIcon(color: Color, modifier: Modifier = Modifier, size: Dp = 20.dp) = LucideIcon(LucidePaths.PIN, color, modifier, size)
 
 /* Sáu nhóm Cài đặt - đúng bộ của SettingsNav.tsx: AudioLines, Headphones, MoonStar, Palette, MonitorSmartphone, Wrench. */
 

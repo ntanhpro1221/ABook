@@ -12,7 +12,7 @@ export const SCREEN_TITLE = "text-2xl font-bold tracking-tight sm:text-[2rem]";
 /** Nút ← của màn con: một kiểu cho mọi màn (Cài đặt con, trang sách, dự án, đọc theo). Nét mũi tên thẳng mép nội dung, vùng chạm 48 / 40. */
 export function BackButton({ label, onClick, className }: { label: string; onClick: () => void; className?: string }) {
   return (
-    <button type="button" onClick={onClick} aria-label={label} title={label} className={cn("back-button rounded-lg text-fg-2 transition-colors hover:text-fg", className)}>
+    <button type="button" onClick={onClick} aria-label={label} title={label} className={cn("back-button rounded-control text-fg-2 transition-colors hover:text-fg", className)}>
       <ArrowLeft className="size-[20px]" aria-hidden />
     </button>
   );

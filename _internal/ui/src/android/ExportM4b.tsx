@@ -176,7 +176,7 @@ export function ExportM4bMenuItem({ book }: { book: ListenBook }) {
       // Chưa có chương nào nghe được thì không có gì để xuất (như máy tính).
       disabled={!book.chaptersAvailable}
       onSelect={() => void chooseM4b(book)}
-      className="flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
+      className="flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[disabled]:opacity-40 data-[highlighted]:bg-hover"
     >
       <BookAudio className="size-4" /> Xuất M4B
     </DropdownMenu.Item>

@@ -55,6 +55,18 @@ class MusicRepo(context: Context, private val voice: VoiceSource) : MusicSource 
 
     override suspend fun enable(id: String, enabled: Boolean): BookMusic = put(id, JSONObject().put("enabled", enabled))
 
+    override suspend fun silence(id: String, key: String, silenced: Boolean): BookMusic = put(id, JSONObject().put("silence", JSONObject().put(key, silenced)))
+
+    /** Như Sửa sách của web: chọn một bài cho đoạn đang im thì cho đoạn ấy có nhạc lại; null = về bài gốc. */
+    override suspend fun pin(id: String, key: String, link: String?): BookMusic {
+        val body = JSONObject().put("pins", JSONObject().put(key, link ?: JSONObject.NULL))
+        if (link != null) body.put("silence", JSONObject().put(key, false))
+        return put(id, body)
+    }
+
+    override suspend fun alternatives(id: String, key: String): List<MineTrack> =
+        io("Chưa tìm được bài để đổi") { MusicJson.mine(LocalStudio.musicAlternatives(id, key)) }
+
     override suspend fun importMine(uris: List<String>, progress: (done: Int, total: Int) -> Unit): MusicImported {
         val result = try {
             voice.importMusic(uris, progress)
