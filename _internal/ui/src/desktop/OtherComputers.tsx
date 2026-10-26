@@ -22,7 +22,7 @@ import { PhoneDiagnostics } from "./PhoneDiagnostics";
 // phần đã nghe vẫn nghe được khi máy kia tắt. Không chung Wi-Fi thì đi Bluetooth: ghép bằng địa chỉ Bluetooth của điện thoại
 // (chọn từ thiết bị đã ghép ở Windows), hay máy đã ghép Wi-Fi có thêm đường Bluetooth dự phòng.
 
-const MENU_ITEM = "flex h-auto cursor-default items-start gap-2 rounded-lg px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-60 data-[highlighted]:bg-hover";
+const MENU_ITEM = "flex h-auto cursor-default items-start gap-2 rounded-control px-2 py-1.5 text-sm outline-none data-[disabled]:opacity-60 data-[highlighted]:bg-hover";
 
 interface Computer {
   id: string;
@@ -176,7 +176,7 @@ export function OtherComputers() {
                     {wakingLine(computer)}
                     <button
                       type="button"
-                      className="ml-2 rounded text-accent-text underline-offset-2 hover:underline disabled:opacity-60"
+                      className="ml-2 rounded-control text-accent-text underline-offset-2 hover:underline disabled:opacity-60"
                       disabled={stopWaiting.isPending}
                       onClick={() => stopWaiting.mutate(computer.id)}
                     >
@@ -292,7 +292,7 @@ export function OtherComputers() {
             inputMode="url"
             autoComplete="off"
             spellCheck={false}
-            className="mt-1 block h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
+            className="mt-1 block h-9 w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
         <label className="w-32 text-xs text-fg-2" htmlFor="other-computer-code">
@@ -305,7 +305,7 @@ export function OtherComputers() {
             placeholder="123456"
             inputMode="numeric"
             autoComplete="off"
-            className="tabular mt-1 block h-9 w-full rounded-lg border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
+            className="tabular mt-1 block h-9 w-full rounded-control border border-line bg-panel px-2.5 text-sm text-fg outline-none focus-visible:border-focus"
           />
         </label>
         <Button type="submit" size="md" variant="ghost" loading={pair.isPending} disabled={!address.trim() || code.replace(/\D/g, "").length !== 6}>
@@ -360,7 +360,7 @@ export function BluetoothFallback({
           aria-label={`Dự phòng qua Bluetooth cho ${computer.name}`}
           disabled={busy}
           className={cn(
-            "inline-flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg max-sm:h-9 max-sm:w-auto max-sm:px-2.5",
+            "inline-flex size-8 shrink-0 items-center justify-center rounded-control transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg max-sm:h-9 max-sm:w-auto max-sm:px-2.5",
             current ? "text-accent-text" : "text-fg-2",
           )}
         >
@@ -369,7 +369,7 @@ export function BluetoothFallback({
         </DropdownMenu.Trigger>
       </Tooltip>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
+        <DropdownMenu.Content align="end" sideOffset={6} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-cover border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
           <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Đường Bluetooth</DropdownMenu.Label>
           {!devices.length && (
             <p className="px-2 py-1.5 text-xs text-fg-3">

@@ -176,7 +176,7 @@ export function MorningRecap({ className }: { className?: string }) {
                 data-recap-marker=""
                 onClick={() => void resume(marker.chapterId, marker.seconds)}
                 className={cn(
-                  "-mx-2 flex h-full w-[calc(100%+14px)] gap-3 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-hover",
+                  "-mx-2 flex h-full w-[calc(100%+14px)] gap-3 rounded-control px-2 py-2.5 text-left transition-colors hover:bg-hover",
                 )}
               >
                 <marker.icon className={cn("mt-line-icon size-4 shrink-0", marker.suggested ? "text-accent-text" : "text-fg-2")} />
@@ -202,12 +202,12 @@ export function MorningRecap({ className }: { className?: string }) {
         <button
           type="button"
           onClick={() => void resume(suggested.chapterId, suggested.seconds)}
-          className="touch-box flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-accent px-4 font-semibold text-accent-ink sm:flex-none"
+          className="touch-box flex h-11 flex-1 items-center justify-center gap-2 rounded-control bg-accent px-4 font-semibold text-accent-ink sm:flex-none"
         >
           <Play className="size-4" fill="currentColor" strokeWidth={0} /> Nghe từ đây
         </button>
         {script?.timed && (
-          <Button variant="ghost" size="lg" onClick={() => setScrubbing((value) => !value)} className="touch-box -mr-4 rounded-lg px-4 text-sm" aria-expanded={scrubbing}>
+          <Button variant="ghost" size="lg" onClick={() => setScrubbing((value) => !value)} className="touch-box -mr-4 rounded-control px-4 text-sm" aria-expanded={scrubbing}>
             {scrubbing ? "Thu gọn" : "Tìm đúng câu"}
           </Button>
         )}
@@ -224,7 +224,7 @@ export function MorningRecap({ className }: { className?: string }) {
               key={segment.id}
               type="button"
               onClick={() => void resume(group.chapterId, segment.start ?? 0)}
-              className="-mx-2 block w-[calc(100%+14px)] rounded-lg px-2 py-2.5 text-left text-[0.9375rem] leading-snug hover:bg-hover active:bg-hover"
+              className="-mx-2 block w-[calc(100%+14px)] rounded-control px-2 py-2.5 text-left text-[0.9375rem] leading-snug hover:bg-hover active:bg-hover"
             >
               {segment.speaker && <SpeakerLabel speaker={segment.speaker} sentence={segment.text} />}
               {segment.text}

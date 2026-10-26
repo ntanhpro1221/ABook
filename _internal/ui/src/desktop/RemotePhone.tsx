@@ -228,7 +228,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
       />
       <div className="flex h-14 items-center gap-3 px-4 max-md:h-12 max-md:gap-2 max-md:px-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <BookCover title={phone.bookTitle} image={phone.cover} size="xs" className="size-9 shrink-0 rounded-md" />
+          <BookCover title={phone.bookTitle} image={phone.cover} size="xs" className="size-9 shrink-0 rounded-control" />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-accent-text">
               <DeviceIcon kind={phone.kind} className="size-3.5 shrink-0" />
@@ -276,7 +276,7 @@ function RemoteBar({ phone, receivedAt, onDismiss }: { phone: RemotePhone; recei
                 onClick={() => void listenHere()}
                 disabled={moving}
                 aria-label="Nghe trên máy này"
-                className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 text-xs font-medium text-fg hover:bg-hover disabled:opacity-50"
+                className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-control px-2 text-xs font-medium text-fg hover:bg-hover disabled:opacity-50"
               >
                 <MotionRegion as="span" className="inline-grid shrink-0 place-items-center">{moving ? <Loader2 className="size-4 animate-spin" /> : <Laptop className="size-4" />}</MotionRegion>
                 <span className="hidden lg:inline">Nghe trên máy này</span>
@@ -344,7 +344,7 @@ export function RemoteBars() {
   );
 }
 
-const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-lg px-2 text-sm outline-none data-[highlighted]:bg-hover";
+const MENU_ITEM = "flex h-9 cursor-default items-center gap-2 rounded-control px-2 text-sm outline-none data-[highlighted]:bg-hover";
 
 /**
  * "Phát trên…" ở thanh phát máy tính: máy nào nghe được cuốn đang phát - điện thoại đang kết nối (nghe thẳng, hoặc đã
@@ -438,7 +438,7 @@ export function HandOffButton({ className }: { className?: string }) {
         <DropdownMenu.Trigger
           aria-label="Phát trên máy khác"
           className={cn(
-            "inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg",
+            "inline-flex size-8 shrink-0 items-center justify-center rounded-control text-fg-2 transition-colors hover:bg-hover hover:text-fg data-[state=open]:bg-hover data-[state=open]:text-fg",
             className,
           )}
         >
@@ -447,7 +447,7 @@ export function HandOffButton({ className }: { className?: string }) {
       </Tooltip>
       )}
       <DropdownMenu.Portal>
-        <DropdownMenu.Content side={beside?.side ?? "top"} align={beside?.align ?? "end"} sideOffset={beside?.sideOffset ?? 8} alignOffset={beside?.alignOffset} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-xl border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
+        <DropdownMenu.Content side={beside?.side ?? "top"} align={beside?.align ?? "end"} sideOffset={beside?.sideOffset ?? 8} alignOffset={beside?.alignOffset} collisionPadding={12} className="z-50 max-h-[var(--radix-dropdown-menu-content-available-height)] overflow-y-auto overscroll-contain min-w-56 max-w-80 rounded-cover border border-line bg-panel p-1.5 shadow-float"><MotionRegion>
           <DropdownMenu.Label className="px-2 pb-1 pt-0.5 text-xs font-medium text-fg-3">Phát trên</DropdownMenu.Label>
           {/* Không có máy nào: nói rõ thay vì để nút biến mất (TV tắt, khác mạng - người dùng không biết đang tìm hay đã hết). */}
           {!targets.length && (

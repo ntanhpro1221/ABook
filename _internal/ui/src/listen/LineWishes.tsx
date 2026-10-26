@@ -144,7 +144,7 @@ function MenuRow({ icon: Icon, title, note, disabled, onClick, trailing }: { ico
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-hover disabled:cursor-default disabled:opacity-60 disabled:hover:bg-transparent"
+      className="flex w-full items-start gap-3 rounded-cover px-3 py-2.5 text-left hover:bg-hover disabled:cursor-default disabled:opacity-60 disabled:hover:bg-transparent"
     >
       <Icon className="mt-line-icon size-4 shrink-0 text-fg-2" />
       <span className="min-w-0 flex-1">
@@ -227,7 +227,7 @@ function WordView({ bookId, text, names, need, later, onWithdraw, onBack, initia
                 type="button"
                 onClick={() => onWithdraw(pending)}
                 aria-label={`Bỏ cách đọc “${pending.surface}”`}
-                className="ml-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
+                className="ml-1.5 inline-flex items-center gap-1 rounded-control px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
               >
                 <X className="size-3" /> Bỏ
               </button>
@@ -461,7 +461,7 @@ export function LineWishDialog({
                               goView("word");
                             }}
                             aria-label={`Sửa cách đọc “${item.name.surface}”`}
-                            className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-control px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
                           >
                             Sửa
                           </button>
@@ -474,7 +474,7 @@ export function LineWishDialog({
                             disabled={withdraw.isPending}
                             onClick={() => (item.name ? withdrawName(item.name) : withdraw.mutate(item))}
                             aria-label={`Bỏ: ${item.text}`}
-                            className="inline-flex shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-control px-1.5 py-0.5 text-xs font-medium text-accent-text hover:bg-hover"
                           >
                             <X className="size-3" /> Bỏ
                           </button>

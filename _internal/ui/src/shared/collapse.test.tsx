@@ -54,7 +54,7 @@ describe("Fold nhớ gấp / mở theo từng khối", () => {
 describe("Cài đặt: khối gập và Tìm hiểu thêm", () => {
   it("Fold luôn phẳng để dùng cả trên trang lẫn trong hộp thoại", () => {
     const html = renderToStaticMarkup(<Fold storageKey="flat-check" title="Tuỳ chọn" defaultOpen><p>Nội dung</p></Fold>);
-    expect(html).not.toMatch(/rounded-2xl|border-line|bg-panel|px-4/);
+    expect(html).not.toMatch(/rounded-cover|border-line|bg-panel|px-4/);
     expect(html).toContain('aria-expanded="true"');
   });
   it("SettingsBlock fold: tiêu đề thành nút gập / mở, nội dung vẫn có trong trang", () => {

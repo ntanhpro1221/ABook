@@ -10,7 +10,7 @@ function Inline({ text }: { text: string }) {
         part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
           <strong key={index} className="font-semibold text-fg">{part.slice(2, -2)}</strong>
         ) : part.startsWith("`") && part.endsWith("`") && part.length > 2 ? (
-          <code key={index} className="rounded bg-sunken px-1 text-[0.92em]">{part.slice(1, -1)}</code>
+          <code key={index} className="rounded-control bg-sunken px-1 text-[0.92em]">{part.slice(1, -1)}</code>
         ) : (
           part
         ),

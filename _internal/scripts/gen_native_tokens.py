@@ -1,11 +1,12 @@
 """Sinh hằng số token của giao diện native (Kotlin) từ docs/DESIGN.md - MỘT nguồn (docs/NATIVE_PHONE_UI.md §2).
 
 Đọc: §5.1 bảng màu (sáng / tối), §5.5 khoảng cách, chữ, bo góc, vùng chạm, §5.2 thời lượng chuyển động; đường cong lấy từ
-ui/src/shared/motion.ts (EASE - DESIGN.md chỉ gọi tên "Material 3"). Ghi ra
-mobile/android/app/src/main/java/vn/abook/player/ui/theme/Tokens.kt.
+ui/src/shared/motion.ts (EASE - DESIGN.md chỉ gọi tên "Material 3"). Ghi ra HAI file từ cùng một lần đọc:
+mobile/android/app/src/main/java/vn/abook/player/ui/theme/Tokens.kt (native) và ui/src/shared/tokens.generated.css (web: bo góc thành
+`rounded-control` / `rounded-cover` / `rounded-sheet` của Tailwind, thay hẳn thang bo góc mặc định).
 
-    python -X utf8 scripts/gen_native_tokens.py          # ghi lại Tokens.kt
-    python -X utf8 scripts/gen_native_tokens.py --check  # thoát 1 nếu Tokens.kt lệch DESIGN.md (tests/test_native_tokens.py)
+    python -X utf8 scripts/gen_native_tokens.py          # ghi lại Tokens.kt và tokens.generated.css
+    python -X utf8 scripts/gen_native_tokens.py --check  # thoát 1 nếu một trong hai file lệch DESIGN.md (tests/test_native_tokens.py)
 """
 from __future__ import annotations
 
@@ -17,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DESIGN = ROOT / "docs" / "DESIGN.md"
 MOTION_TS = ROOT / "ui" / "src" / "shared" / "motion.ts"
 OUT = ROOT / "mobile" / "android" / "app" / "src" / "main" / "java" / "vn" / "abook" / "player" / "ui" / "theme" / "Tokens.kt"
+OUT_CSS = ROOT / "ui" / "src" / "shared" / "tokens.generated.css"
 
 # Tên token trong DESIGN.md -> tên hằng Kotlin.
 COLOR_NAMES = {
@@ -175,17 +177,36 @@ def render() -> str:
     return "\n".join(lines)
 
 
+def render_css() -> str:
+    """Bo góc cho web. `--radius-*: initial` xoá thang mặc định của Tailwind (2/4/6/8/12/16/24 px): chỉ còn ba vai của DESIGN.md §5.5 +
+    `rounded-full` (nút tròn) và `rounded-none`. `static` để biến luôn có mặt, CSS thường dùng được `var(--radius-control)`."""
+    radius = sizes(DESIGN.read_text(encoding="utf-8"))["RADIUS"]
+    return "\n".join([
+        "/* SINH TỰ ĐỘNG bởi scripts/gen_native_tokens.py từ docs/DESIGN.md §5.5 (bo góc). KHÔNG sửa tay: sửa DESIGN.md rồi chạy lại script",
+        "   (tests/test_native_tokens.py bắt lệch). Cùng một nguồn với Tokens.kt của app điện thoại. */",
+        "@theme static {",
+        "  --radius-*: initial;",
+        f"  --radius-control: {radius[0]}px;",
+        f"  --radius-cover: {radius[1]}px;",
+        f"  --radius-sheet: {radius[2]}px;",
+        "}",
+        "",
+    ])
+
+
+OUTPUTS = ((OUT, render), (OUT_CSS, render_css))
+
+
 def main(argv: list[str]) -> int:
-    text = render()
     if "--check" in argv:
-        current = OUT.read_bytes().decode("utf-8") if OUT.is_file() else ""
-        if current != text:
-            print(f"{OUT} lệch DESIGN.md - chạy scripts/gen_native_tokens.py", file=sys.stderr)
-            return 1
-        return 0
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    OUT.write_bytes(text.encode("utf-8"))  # LF, không qua write_text (Windows ghi CRLF)
-    print(f"đã ghi {OUT}")
+        stale = [out for out, make in OUTPUTS if (out.read_bytes().decode("utf-8") if out.is_file() else "") != make()]
+        for out in stale:
+            print(f"{out} lệch DESIGN.md - chạy scripts/gen_native_tokens.py", file=sys.stderr)
+        return 1 if stale else 0
+    for out, make in OUTPUTS:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_bytes(make().encode("utf-8"))  # LF, không qua write_text (Windows ghi CRLF)
+        print(f"đã ghi {out}")
     return 0
 
 

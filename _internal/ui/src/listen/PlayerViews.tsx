@@ -380,7 +380,7 @@ export function MenuShell({
   const button = <button ref={triggerRef} type="button" aria-label={label} {...(inline ? { "aria-expanded": isOpen, "aria-controls": sheetId } : {})} onClick={inline ? () => changeOpen(!isOpen) : undefined} data-player-menu-row={look === "row" ? "" : undefined} {...keepFocus}
       className={cn(look === "action" ? ACTION_BUTTON : look === "row"
         ? MENU_ROW
-        : "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-lg px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
+        : "tabular inline-flex h-9 min-w-9 shrink-0 items-center justify-center gap-1 whitespace-nowrap rounded-control px-2 text-[0.8125rem] font-semibold transition-colors hover:bg-hover max-sm:h-[48px] max-sm:min-w-[48px]", look !== "row" && actionTone(active))}>
       {look === "row" && <span className="flex min-w-0 flex-1 items-center gap-3">{RowIcon && <RowIcon className="size-4 shrink-0 text-fg-2" />}<span className="truncate">{caption}</span></span>}
       <MotionRegion as="span" motionKey={triggerKey} className={cn(look === "action" ? ACTION_GLYPH : "inline-flex items-center gap-1", look === "row" && cn("tabular min-w-0 text-xs font-medium", actionTone(active)))}>{trigger}</MotionRegion>
       {look === "action" && <MotionRegion as="span" className={ACTION_LABEL} motionKey={typeof caption === "string" ? caption.replace(/\d+/g, "#") : undefined}>{caption}</MotionRegion>}
@@ -420,7 +420,7 @@ export function MenuShell({
           onKeyDown={menuArrowKeys}
           // Không bao giờ cao hơn chỗ còn lại của màn (điện thoại 375x812: danh sách nhạc / giọng từng tràn đáy): phần dài cuộn trong hộp.
           className={cn(
-            "z-50 flex max-h-[var(--radix-popover-content-available-height)] flex-col overflow-y-auto overscroll-contain rounded-[20px] border border-line bg-panel p-1.5 shadow-float",
+            "z-50 flex max-h-[var(--radix-popover-content-available-height)] flex-col overflow-y-auto overscroll-contain rounded-sheet border border-line bg-panel p-1.5 shadow-float",
             width,
           )}
         >
@@ -465,7 +465,7 @@ export function SpeedMenu({ look = "chip" }: { look?: MenuLook }) {
               aria-pressed={speed === rate}
               data-current-choice={speed === rate ? "" : undefined}
               className={cn(
-                "tabular touch-row inline-flex h-9 items-center justify-center rounded-lg text-sm hover:bg-hover",
+                "tabular touch-row inline-flex h-9 items-center justify-center rounded-control text-sm hover:bg-hover",
                 speed === rate ? "font-semibold text-accent-text" : "text-fg",
               )}
             >
@@ -765,7 +765,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                             });
                           }}
                           className={cn(
-                            "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm transition-colors duration-motion-fast hover:bg-hover max-sm:min-h-[48px]",
+                            "flex min-h-9 min-w-0 flex-1 items-center gap-2 rounded-control px-2 py-1 text-left text-sm transition-colors duration-motion-fast hover:bg-hover max-sm:min-h-[48px]",
                             selected ? "font-semibold text-accent-text" : "text-fg",
                           )}
                         >
@@ -782,7 +782,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
                           data-voice-try
                           onClick={() => (playing ? sample.stop() : void sample.play(voice.id))}
                           aria-label={`${playing ? "Dừng" : "Thử"} giọng ${voice.name}`}
-                          className="touch-box inline-flex h-9 shrink-0 items-center gap-1 rounded-lg px-2 text-xs font-medium text-fg-2 hover:bg-hover hover:text-fg max-sm:h-[48px]"
+                          className="touch-box inline-flex h-9 shrink-0 items-center gap-1 rounded-control px-2 text-xs font-medium text-fg-2 hover:bg-hover hover:text-fg max-sm:h-[48px]"
                         >
                           {/* Vùng riêng cho nhãn: nghe thử chỉ mờ qua nút này, không mờ lại cả menu giọng. */}
                           <MotionRegion as="span" className="inline-flex items-center gap-1">
@@ -804,7 +804,7 @@ export function VoiceMenu({ scope = "bar", look = "chip" }: { scope?: VoiceMenuS
         type="button"
         onClick={() => openVoiceSettings()}
         data-sheet-choice
-        className="flex min-h-9 w-full items-center rounded-lg px-2 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[48px]"
+        className="flex min-h-9 w-full items-center rounded-control px-2 text-left text-sm text-accent-text hover:bg-hover max-sm:min-h-[48px]"
       >
         Thêm giọng…
       </button>
@@ -895,12 +895,12 @@ function PrepareAhead({ voice, bookId, chapterId }: { voice: ReadAloudVoice; boo
       {!(mine && running) && plan && <p className="mt-1 text-pretty">{planLabel(plan)}</p>}
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         {mine && running ? (
-          <button type="button" data-focus-next className="touch-hit -ml-2 rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>
+          <button type="button" data-focus-next className="touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => void source.readAloudPrepareCancel?.().then(settle)}>
             Dừng làm trước
           </button>
         ) : (
           upcoming.length > 0 && (
-            <button type="button" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className="touch-hit -ml-2 rounded-lg px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void start())}>
+            <button type="button" data-focus-next aria-disabled={busy || undefined} aria-busy={busy || undefined} className="touch-hit -ml-2 rounded-control px-2 py-1 font-medium text-accent-text hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void start())}>
               {upcoming.length === 1 ? "Làm trước chương sau" : `Làm trước ${upcoming.length} chương tới`}
             </button>
           )
@@ -956,16 +956,16 @@ function ReadAloudCache({ bookId }: { bookId: string }) {
           <div ref={askBox} role="alertdialog" aria-label="Xoá bản đọc" className="mt-1.5">
             <p className="text-pretty text-fg">{clearCacheQuestion(usage)}</p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              <button type="button" aria-disabled={busy || undefined} aria-busy={busy || undefined} className="rounded-lg px-2 py-1 font-medium text-danger hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void clear())}>
+              <button type="button" aria-disabled={busy || undefined} aria-busy={busy || undefined} className="rounded-control px-2 py-1 font-medium text-danger hover:bg-hover aria-disabled:opacity-45" onClick={busyClick(busy, () => void clear())}>
                 Xoá
               </button>
-              <button type="button" data-focus-next aria-disabled={busy || undefined} className="rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={busyClick(busy, () => setAsking(false))}>
+              <button type="button" data-focus-next aria-disabled={busy || undefined} className="rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={busyClick(busy, () => setAsking(false))}>
                 Giữ lại
               </button>
             </div>
           </div>
         ) : (
-          <button type="button" data-focus-next className="mt-1.5 rounded-lg px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => setAsking(true)}>
+          <button type="button" data-focus-next className="mt-1.5 rounded-control px-2 py-1 font-medium text-fg hover:bg-hover" onClick={() => setAsking(true)}>
             Xoá bản đọc
           </button>
         ))}
@@ -999,7 +999,7 @@ export function SleepMenu({ look = "chip" }: { look?: MenuLook }) {
               <button
                 type="button"
                 onClick={withFeedback("toggle", () => setSleep({ kind: "minutes", minutes: lastSleepMinutes }))}
-                className="mt-2 h-9 w-full rounded-lg text-sm font-semibold text-accent-text"
+                className="mt-2 h-9 w-full rounded-control text-sm font-semibold text-accent-text"
               >
                 Bật lại {lastSleepMinutes} phút
               </button>
@@ -1106,13 +1106,13 @@ function SleepPicker({
               <button
                 type="button"
                 onClick={onExtend}
-                className="h-9 flex-1 rounded-lg text-sm font-semibold text-accent-text hover:brightness-95"
+                className="h-9 flex-1 rounded-control text-sm font-semibold text-accent-text hover:brightness-95"
               >
                 +{extendMinutes} phút
               </button>
             </Popover.Close>
             <Popover.Close asChild>
-              <button type="button" onClick={() => onSet({ kind: "off" })} className="h-9 flex-1 rounded-lg text-sm font-medium text-danger hover:bg-hover">
+              <button type="button" onClick={() => onSet({ kind: "off" })} className="h-9 flex-1 rounded-control text-sm font-medium text-danger hover:bg-hover">
                 Tắt hẹn giờ
               </button>
             </Popover.Close>
@@ -1205,13 +1205,13 @@ function VolumeControl({ look = "chip" }: { look?: "chip" | "row" }) {
           <button
             type="button"
             aria-label={`Âm lượng ${Math.round(volume * 100)}%`}
-            className="grid size-8 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg data-[state=open]:bg-hover max-sm:size-[48px]"
+            className="grid size-8 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg data-[state=open]:bg-hover max-sm:size-[48px]"
           >
             <Icon className="glyph" />
           </button>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content side="top" sideOffset={8} className="z-50 flex items-center gap-2 rounded-xl border border-line bg-panel p-2 shadow-float">
+          <Popover.Content side="top" sideOffset={8} className="z-50 flex items-center gap-2 rounded-cover border border-line bg-panel p-2 shadow-float">
             <IconButton label={withShortcut(volume === 0 ? "Bật tiếng" : "Tắt tiếng", "M")} icon={Icon} size="sm" onClick={toggleMute} />
             {slider("flex w-32")}
             <span className="tabular w-9 text-right text-xs text-fg-2">{Math.round(volume * 100)}%</span>
@@ -1260,10 +1260,10 @@ function FadingNotice({ className }: { className?: string }) {
   const content = () => {
   if (!fading) return null;
   return (
-    <div className={cn("motion-appear flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-accent-text", className)} role="status">
+    <div className={cn("motion-appear flex items-center gap-3 rounded-cover px-3 py-2 text-sm text-accent-text", className)} role="status">
       <Moon className="size-4 shrink-0" />
       <span className="min-w-0 flex-1">Sắp tắt · {EXTEND_GESTURE} để nghe thêm {options.extendMinutes} phút</span>
-      <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-lg bg-accent px-2.5 py-1 text-xs font-semibold text-accent-ink">
+      <button type="button" onClick={() => extendSleep()} className="shrink-0 rounded-control bg-accent px-2.5 py-1 text-xs font-semibold text-accent-ink">
         +{options.extendMinutes} phút
       </button>
     </div>
@@ -1289,7 +1289,7 @@ function MusicCreditLine() {
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
         title={musicCreditText(musicCredit) || label}
-        className="max-w-full truncate rounded outline-none focus-visible:ring-2 focus-visible:ring-focus"
+        className="max-w-full truncate rounded-control outline-none focus-visible:ring-2 focus-visible:ring-focus"
       >
         Nhạc nền: {label}
       </button>
@@ -1332,7 +1332,7 @@ function TrackSubtitle() {
   return (
     <MotionRegion>
       {purpose === "review" && (
-        <span className="mr-1.5 inline-block rounded bg-info-soft px-1.5 text-xs font-medium text-info">Nghe kiểm</span>
+        <span className="mr-1.5 inline-block rounded-control bg-info-soft px-1.5 text-xs font-medium text-info">Nghe kiểm</span>
       )}
       {preparing ? PREPARING_VOICE : atEnd === "caughtUp" ? "Đã nghe hết phần đã có" : track.bookTitle}
     </MotionRegion>
@@ -1359,7 +1359,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
   if (error) {
     const current = voices && track ? resolveVoice(voices, chosenVoice(track.bookId, track.recordId)) : undefined;
     const local = stuck && voices ? localVoiceFor(voices, current) : undefined;
-    const button = "min-h-[40px] shrink-0 rounded-lg px-3 text-sm font-medium text-accent-text hover:bg-hover max-sm:min-h-[48px]";
+    const button = "min-h-[40px] shrink-0 rounded-control px-3 text-sm font-medium text-accent-text hover:bg-hover max-sm:min-h-[48px]";
     return (
       <div key={errorRepeat} role="alert" className={cn("motion-appear flex items-start gap-3 py-2 text-sm text-fg", className)}>
         <TriangleAlert className="mt-line-icon size-4 shrink-0 text-danger" />
@@ -1409,7 +1409,7 @@ function PlayerAlert({ className, overlay = false, compact = false }: { classNam
           aria-label="Đóng lời báo"
           onClick={dismissError}
           {...keepFocus}
-          className="-my-1 -mr-1 grid size-9 shrink-0 place-items-center rounded-lg text-fg-2 hover:bg-hover hover:text-fg max-sm:size-[48px]"
+          className="-my-1 -mr-1 grid size-9 shrink-0 place-items-center rounded-control text-fg-2 hover:bg-hover hover:text-fg max-sm:size-[48px]"
         >
           <X className="size-4" />
         </button>
@@ -1501,7 +1501,7 @@ function FollowRecord() {
 const MENU_LIST = "p-1 -mx-1.5 px-1.5";
 /** Dòng lựa chọn có dấu ✓ / + đầu dòng (danh sách nhạc, mức nhạc): MỘT cấu trúc, kèm `data-sheet-choice` - bảng trượt điện thoại chuẩn hoá icon 20 px,
  *  khoảng 12 px, nền chọn tràn lề (styles.css); dòng tự chế thiếu thuộc tính này thì cột chữ lệch khỏi các dòng còn lại. */
-const CHOICE_ROW = "flex min-h-9 shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-left text-sm transition-colors duration-motion-fast hover:bg-hover";
+const CHOICE_ROW = "flex min-h-9 shrink-0 items-center gap-2 rounded-control px-2 py-1 text-left text-sm transition-colors duration-motion-fast hover:bg-hover";
 
 /** Một việc trong menu "…": chọn là làm và đóng menu. */
 function MenuRow({ icon: Icon, children, ...rest }: ButtonHTMLAttributes<HTMLButtonElement> & { icon: typeof Gauge }) {
@@ -1637,7 +1637,7 @@ export function PlayerBar({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="flex min-w-0 items-center gap-3 rounded-lg p-1 text-left hover:bg-hover"
+          className="flex min-w-0 items-center gap-3 rounded-control p-1 text-left hover:bg-hover"
           aria-label="Mở màn hình đang nghe"
           title={`${track.chapterTitle} · ${track.bookTitle}`}
         >
@@ -1779,7 +1779,7 @@ export function ChapterPanel() {
             onClick={() => jumpTo(chapter.id)}
             // Hàng đang phát: chữ màu nhấn, không tô nền cả hàng (docs/DESIGN.md mục 6).
             className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors duration-motion-fast",
+              "flex w-full items-center gap-3 rounded-control px-3 py-2.5 text-left transition-colors duration-motion-fast",
               canPlay(chapter) && "hover:bg-hover",
             )}
           >
@@ -1910,7 +1910,7 @@ function AfterTheEnd({ skipId }: { skipId?: string }) {
                   type="button"
                   onClick={() => void playBook(book)}
                   aria-label={`Nghe ${book.title}`}
-                  className="flex min-h-[48px] w-full items-center gap-3 rounded-lg px-1 py-1 text-left hover:bg-hover"
+                  className="flex min-h-[48px] w-full items-center gap-3 rounded-control px-1 py-1 text-left hover:bg-hover"
                 >
                   <BookCover title={book.title} part={book.series?.part} size="xs" image={book.cover} className="size-10" />
                   <span className="min-w-0 flex-1">
@@ -1944,7 +1944,7 @@ function CaughtUpNotice() {
   const content = () => {
   if (atEnd === "finished" && next) {
     return (
-      <div className="motion-appear mt-3 rounded-xl px-3 py-2.5 text-center text-sm">
+      <div className="motion-appear mt-3 rounded-cover px-3 py-2.5 text-center text-sm">
         <div className="text-fg">Đã nghe hết cuốn này.</div>
         <button type="button" onClick={() => void playBook(next)} className="mt-1.5 font-semibold text-accent-text underline underline-offset-2">
           Nghe tiếp {nextLabel(next.title)}
@@ -1955,7 +1955,7 @@ function CaughtUpNotice() {
   }
   if (atEnd === "finished") {
     return (
-      <div className="motion-appear mt-3 rounded-xl px-3 py-2.5 text-center text-sm">
+      <div className="motion-appear mt-3 rounded-cover px-3 py-2.5 text-center text-sm">
         <div className="text-fg">Đã nghe hết sách.</div>
         <button type="button" onClick={restart} className="mt-1.5 min-h-[48px] font-semibold text-accent-text underline underline-offset-2">
           Nghe lại từ đầu
@@ -1990,9 +1990,9 @@ function CoverToggle({ title, image }: { title: string; image: ComponentProps<ty
       type="button"
       onClick={withFeedback("playPause", toggle)}
       aria-label={`${toggleLabel(playing, buffering, speaking)} (chạm bìa)`}
-      className="size-[min(480px,100cqw,100cqh)] shrink-0 rounded-xl transition-transform press"
+      className="size-[min(480px,100cqw,100cqh)] shrink-0 rounded-cover transition-transform press"
     >
-      <BookCover title={title} image={image} size="xl" className={cn("w-full rounded-xl shadow-float", !plain && "cover-morph")} />
+      <BookCover title={title} image={image} size="xl" className={cn("w-full rounded-cover shadow-float", !plain && "cover-morph")} />
     </button>
   );
 }
@@ -2091,7 +2091,7 @@ const NowPlayingColumn = memo(function NowPlayingColumn({
           type="button"
           onClick={onReadAlong}
           {...keepFocus}
-          className="touch-hit mt-5 flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-hover text-sm font-medium text-fg transition-[transform,color,background-color] duration-motion-fast hover:bg-line active:scale-[0.97]"
+          className="touch-hit mt-5 flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-control bg-hover text-sm font-medium text-fg transition-[transform,color,background-color] duration-motion-fast hover:bg-line active:scale-[0.97]"
         >
           <Text className="size-4" />
           Đọc theo
