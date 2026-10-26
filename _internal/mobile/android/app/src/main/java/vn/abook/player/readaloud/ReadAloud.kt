@@ -498,6 +498,17 @@ object ReadAloud {
         pump()
     }
 
+    /** Các nhà cung cấp người nghe đã đồng ý gửi chữ tới (giao diện native hỏi trước khi chọn một giọng trực tuyến). */
+    fun onlineConsents(): List<String> = choices?.allowedProviders().orEmpty()
+
+    /** Người nghe vừa đồng ý gửi chữ cho `provider`: thêm vào danh sách đã đồng ý ([allowOnline]). */
+    fun grantOnline(provider: String) = allowOnline(onlineConsents() + provider)
+
+    /** Người nghe bấm đổi giọng (gợi ý "đọc chậm trên máy này"): cuốn đang dùng giọng bắt đầu bằng `fromPrefix`, và lựa chọn chung, sang `voice`. */
+    fun switchVoices(fromPrefix: String, voice: String) {
+        choices?.replaceVoices(fromPrefix, voice)
+    }
+
     /** Giọng `voice` (mặc định: giọng đang chọn) là giọng trực tuyến mà người nghe chưa đồng ý gửi chữ tới (giọng của máy, VieNeu, Supertonic: không gửi gì đi). */
     private fun needsConsent(voice: String = voiceId): Boolean {
         val provider = ClipCache.split(voice).first
