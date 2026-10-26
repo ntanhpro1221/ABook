@@ -207,7 +207,7 @@ class M4bExportWorker(context: Context, params: WorkerParameters) : Worker(conte
             val lost = if (missing > 0) " $missing đoạn chưa tải được nhạc — bạn tải lại nếu muốn xuất đủ nhạc." else ""
             M4bExports.finished(context, bookId, "Đã xuất M4B", "$title · ${result.chapters} chương, ${megabytes(result.size)} MB.$partial$lost")
             val finished = event().put("finished", true).put("name", result.name).put("size", result.size).put("chapters", result.chapters)
-                .put("chaptersTotal", result.chaptersTotal)
+                .put("chaptersTotal", result.chaptersTotal).put("uri", file.toString()) // địa chỉ để mở / gửi file vừa xuất (màn Xuất native; bản WebView bỏ qua)
             if (missing > 0) finished.put("musicMissing", missing)
             if (over.isNotEmpty()) {
                 finished.put("overCeiling", org.json.JSONArray(over.map { (chapter, dbtp) -> JSONObject().put("chapter", chapter).put("dbtp", dbtp) }))

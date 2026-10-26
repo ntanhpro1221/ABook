@@ -73,7 +73,7 @@ private fun DeviceActions(device: Paired, studio: StudioComputer?, state: Device
         Spacer(Modifier.height(Dim.s8))
         if (studio != null) {
             MenuRow(if (opening) "Đang mở Studio" else "Mở Studio", "device_studio", unavailable = studio.listenOnly,
-                supporting = if (studio.listenOnly) DeviceText.listenOnly(device.name) else null, onClick = {
+                hint = if (studio.listenOnly) DeviceText.listenOnly(device.name) else null, onClick = {
                 if (opening) return@MenuRow
                 opening = true
                 scope.launch {
