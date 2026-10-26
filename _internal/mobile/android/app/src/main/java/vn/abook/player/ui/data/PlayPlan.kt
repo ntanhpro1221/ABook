@@ -2,6 +2,7 @@ package vn.abook.player.ui.data
 
 import org.json.JSONObject
 import vn.abook.player.LibraryTree
+import vn.abook.player.Playback
 import vn.abook.player.Store
 
 /**
@@ -28,4 +29,7 @@ object PlayPlan {
 
     /** Đọc Store (đĩa - luồng nền): cuốn đã tải hay cuốn nghe thẳng đã cất gói. */
     fun fromStore(id: String): LoadRequest? = Store.playableManifest(id)?.let { of(it, Store.state(id)) }
+
+    /** Cuốn nghe gần nhất trên máy ([Playback.lastListened]) ở chỗ nghe tiếp của nó; null khi chưa nghe cuốn nào. Đọc Store - luồng nền. */
+    fun fromLast(): LoadRequest? = Playback.lastListened()?.let { (manifest, _) -> of(manifest, Store.state(manifest.getString("id"))) }
 }

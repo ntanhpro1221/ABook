@@ -29,6 +29,7 @@ class AbookApplication : Application() {
             AndroidPlaybackCore(this), uiScope, Dispatchers.IO,
             coverOf = LibraryRepo.Companion::coverOf,
             planOf = { id -> Store.init(this); PlayPlan.fromStore(id) },
+            lastPlan = { Store.init(this); PlayPlan.fromLast() },
         )
     }
 

@@ -105,16 +105,15 @@ fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, cover
     val actions = remember(shell, player) {
         LibraryActions(
             openBook = { book -> shell.nav.push(Destination.Book(book)) },
-            togglePlay = player::togglePlay,
             playNow = player::playNow,
-            openNowPlaying = { openNowPlaying(shell.nav) },
             addBook = { shell.sheets.show { dismiss -> AddBookSheet(dismiss) } },
         )
     }
+    val openPlayer = remember(shell) { { openNowPlaying(shell.nav) } }
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
         ScreenStack(
             nav = nav,
-            root = { RootTabs(shell, library, playerState, player, covers, actions) },
+            root = { RootTabs(shell, library, playerState, player, covers, actions, openPlayer) },
             screen = { destination ->
                 when (destination) {
                     is Destination.Book -> BookScreen(destination.book, covers, onBack = nav::pop)
@@ -182,6 +181,7 @@ private fun RootTabs(
     repo: PlayerRepo,
     covers: CoverLoader,
     actions: LibraryActions,
+    openNowPlaying: () -> Unit,
 ) {
     val tabs = shell.tabs
     // Thanh phát nhỏ giữ bài cuối cùng khi thu về (không nháy nội dung rỗng giữa lúc thu lại).
@@ -194,7 +194,7 @@ private fun RootTabs(
         TabHost(tabs, Modifier.weight(1f)) { tab ->
             when (tab) {
                 Tab.Library -> LibraryScreen(
-                    library, shell.library, shell.libraryGrid, player, covers, shell.sheets, actions, backEnabled = backToLibrary,
+                    library, shell.library, shell.libraryGrid, covers, shell.sheets, actions, backEnabled = backToLibrary,
                 )
                 Tab.Studio -> StudioScreen()
                 Tab.Settings -> SettingsScreen()
@@ -202,7 +202,7 @@ private fun RootTabs(
         }
         if (last[0].hasTrack) {
             MiniPlayerSlot(visible = player.hasTrack) {
-                MiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = actions.openNowPlaying)
+                MiniPlayer(last[0], position, covers, onToggle = repo::toggle, onOpenNowPlaying = openNowPlaying)
             }
         }
         TabBar(tabs)

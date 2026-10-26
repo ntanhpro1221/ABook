@@ -46,6 +46,9 @@ class AndroidPlaybackCore(context: Context) : PlaybackCore {
     override fun setRate(rate: Double) = withService { Playback.setRate(rate) }
     override fun jumpTo(chapterId: Int, seconds: Double) = withService { Playback.jumpTo(chapterId, seconds) }
     override fun load(request: LoadRequest) = withService {
-        with(request) { Playback.load(id, title, narrator, chapters, startChapterId, startSeconds, rate) }
+        // Nạp dừng chỉ để khôi phục lúc mở app: dịch vụ vừa bật xong mà đã có cuốn (widget, tai nghe, người nghe bấm phát cuốn khác) thì không đè.
+        if (request.autoplay || Playback.bookId.isEmpty()) {
+            with(request) { Playback.load(id, title, narrator, chapters, startChapterId, startSeconds, rate, autoplay) }
+        }
     }
 }

@@ -15,7 +15,7 @@ interface SeriesItem {
 }
 
 /**
- * Logic thuần của phần Nghe (model.ts + progress.ts): bỏ dấu, tìm, bộ sách, tiến độ, chỗ nghe tiếp, cuốn "Đang nghe".
+ * Logic thuần của phần Nghe (model.ts + progress.ts): bỏ dấu, tìm, bộ sách, tiến độ, chỗ nghe tiếp.
  * Không Android - thử trên JVM (ListenModelTest, bê ca test của model.test.ts / progress.test.ts).
  */
 object ListenLogic {
@@ -229,15 +229,6 @@ object ListenLogic {
         }
         val unheard = playable.firstOrNull { state.chapters[it.id]?.done != true }
         return if (unheard != null) spot(unheard, chapterResumeAt(state, unheard)) else spot(playable[0], 0.0)
-    }
-
-    /**
-     * Cuốn của thẻ "Đang nghe": cuốn đang nằm trong trình phát (chưa chắc thư viện đã biết chỗ nghe của nó), không thì cuốn chưa xong nghe
-     * gần nhất.
-     */
-    fun listeningBook(books: List<ListenBook>, playingBookId: String?): ListenBook? {
-        if (playingBookId != null) books.firstOrNull { it.id == playingBookId && !it.progress.finished }?.let { return it }
-        return books.filter { it.state.last != null && !it.progress.finished }.maxByOrNull { it.state.last!!.at }
     }
 
     // ---- dòng trạng thái ---------------------------------------------------------------------------------
