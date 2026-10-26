@@ -37,7 +37,7 @@ import { reportSaveFailure } from "./saveFailure";
 import { ProgressOutbox } from "./progressOutbox";
 import { letterShortcutsOn } from "@/shared/letterShortcuts";
 import { feedback, setBookPlaying } from "@/shared/feedback";
-import { MOTION, withViewTransition } from "@/shared/motion";
+import { MORPH } from "./nowPlayingMorph";
 
 export type { SleepMode, SleepRequest } from "./sleep";
 
@@ -210,7 +210,7 @@ export function useCoveredAfterOpen(expanded: boolean): boolean {
       setSettled(false);
       return;
     }
-    const timer = window.setTimeout(() => setSettled(true), MOTION.slow + 80);
+    const timer = window.setTimeout(() => setSettled(true), MORPH.open + 80);
     return () => window.clearTimeout(timer);
   }, [expanded]);
   return expanded && settled;
@@ -1875,18 +1875,16 @@ export function PlayerProvider({
     canGoBack, error, errorRepeat, notice, options, musicCredit, musicBroken, musicOffline, musicLoading, play, prepare, toggle, resume, retry, dismissError, wantsPlay, pause, seek, skip, next, previous, jumpTo, goBack, restart,
     setRate, setVolume, setSleep, extendSleep, close, switchRecord, positionStamp, setContinues]);
 
-  // Mở/đóng "Đang nghe" qua View Transitions: màn trượt lên từ đáy (đóng thì trượt xuống), bìa ở thanh phát bay lên thành bìa lớn
-  // (và bay về) - xem .now-playing-vt / .cover-morph trong styles.css. Xin giảm chuyển động: chỉ còn hiện / mờ (CSS). Không có API
-  // (trình duyệt cũ) thì đổi thẳng, màn mở vẫn trượt lên bằng hoạt ảnh CSS .now-playing. `plainOpen` (điện thoại): luôn đường CSS.
+  // Mở/đóng "Đang nghe": màn tự nở ra từ thanh phát nhỏ và thu về (PlayerViews.NowPlaying + nowPlayingMorph.ts), cả máy tính lẫn điện thoại -
+  // không qua View Transition. `plainOpen` (điện thoại) chỉ còn quyết việc dựng sẵn / dựng hoãn ruột màn.
   const expandedNow = useRef(expanded);
   expandedNow.current = expanded;
   const setExpandedAnimated = useCallback((value: boolean) => {
     // Không đổi gì thì không chạy View Transition rỗng: mục thanh bên gọi setExpanded(false) mỗi lần bấm, và một chuyển
     // cảnh rỗng khi cửa sổ không được vẽ (thu nhỏ, ẩn) bị trình duyệt huỷ thành lỗi console (soát UX 29-09).
     if (expandedNow.current === value) return;
-    if (plainOpen) setExpanded(value);
-    else withViewTransition(() => setExpanded(value));
-  }, [plainOpen]);
+    setExpanded(value);
+  }, []);
   const nowPlaying = useMemo(() => ({ expanded, setExpanded: setExpandedAnimated, plain: plainOpen }), [expanded, setExpandedAnimated, plainOpen]);
 
   return (

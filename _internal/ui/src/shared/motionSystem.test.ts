@@ -349,8 +349,9 @@ describe("không chỗ nào bật tắt cứng: các chỗ chung đều đi qua 
     expect(source("../android/main.tsx")).toContain("installDetailsMotion();");
   });
 
-  it("mở / đóng Đang nghe và đổi giao diện sáng / tối đi qua withViewTransition (kể cả khi xin giảm chuyển động)", () => {
-    expect(source("../listen/player.tsx")).toContain("withViewTransition(() => setExpanded(value))");
+  it("mở / đóng Đang nghe nở ra từ thanh phát nhỏ; đổi giao diện sáng / tối đi qua withViewTransition", () => {
+    // Chủ sách 26-10: màn Đang nghe nở ra từ thanh nhỏ, phần chung bay riêng (nowPlayingMorph.ts) - không trượt + mờ cả màn.
+    expect(source("../listen/PlayerViews.tsx")).toContain('morphNowPlaying(screen, open ? "open" : "close")');
     expect(source("../listen/player.tsx")).not.toContain("prefersReducedMotion()");
     expect(source("../android/settings.ts")).toContain("withViewTransition(set");
     expect(source("../desktop/App.tsx")).toContain("withViewTransition(() => (root.dataset.theme = next)");

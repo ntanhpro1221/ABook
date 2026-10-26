@@ -19,6 +19,7 @@ export function BookCover({
   badge,
   label = true,
   className,
+  morph,
 }: {
   title: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
@@ -33,6 +34,8 @@ export function BookCover({
    *  chứ không phải bìa (soát a66). */
   label?: boolean;
   className?: string;
+  /** Phần chung giữa thanh phát nhỏ và màn Đang nghe (listen/nowPlayingMorph.ts): bìa bay từ chỗ này sang chỗ kia. */
+  morph?: "cover";
 }) {
   const [failed, setFailed] = useState<string | null>(null);
   // Bìa ảnh và bìa vẽ là hai cây khác nhau: một gốc MotionRegion cho cả hai, khoá theo ảnh đang hiện + tên. Đổi cuốn (thanh phát), ảnh lỗi rơi
@@ -43,8 +46,9 @@ export function BookCover({
     return (
       <MotionRegion
         motionKey={motionKey}
-        className={cn("relative aspect-square shrink-0 self-start overflow-hidden rounded-lg shadow-card", className)}
+        className={cn("relative aspect-square shrink-0 overflow-hidden rounded-lg shadow-card", className)}
         style={{ backgroundColor: coverColor(photo.color) || "var(--color-hover)" }}
+        data-np={morph}
         aria-hidden
       >
         <PhotoCover image={photo} playing={playing} onError={() => setFailed(photo.url)} />
@@ -69,9 +73,10 @@ export function BookCover({
   return (
     <MotionRegion
       motionKey={motionKey}
-      className={cn("@container relative aspect-square shrink-0 self-start overflow-hidden rounded-lg text-left shadow-card", className)}
+      className={cn("@container relative aspect-square shrink-0 overflow-hidden rounded-lg text-left shadow-card", className)}
       style={{ background: `linear-gradient(155deg, ${style.from} 0%, ${style.to} 100%)` }}
       data-overlay="Chữ bìa trên hoạ tiết sóng"
+      data-np={morph}
       aria-hidden
     >
       <svg className="absolute inset-0 size-full" viewBox="0 0 100 100" preserveAspectRatio="none">

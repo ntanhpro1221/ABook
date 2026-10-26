@@ -1429,30 +1429,13 @@ body:has([role="dialog"][data-state="open"]) .page-motion { margin-bottom: -8px;
   transition: --tab-fade-l var(--motion-fast) var(--ease-standard), --tab-fade-r var(--motion-fast) var(--ease-standard);
 }
 
-/* Mở/đóng "Đang nghe": màn trượt lên từ đáy và hiện dần (nền phía dưới mờ khuất theo), đóng thì trượt xuống; bìa bay giữa thanh phát và màn lớn.
-   Chỉ MỘT phần tử mang mỗi tên ở mỗi trạng thái: bìa nhỏ bỏ tên khi màn lớn đang mở. */
-.now-playing-vt {
-  view-transition-name: now-playing;
-}
-.cover-morph {
-  view-transition-name: now-playing-cover;
-}
-::view-transition-group(now-playing-cover) {
-  animation-duration: var(--motion-slow);
-  animation-timing-function: var(--ease-standard);
-  /* Bìa bay trên mọi lớp khác */
-  z-index: 2;
-}
-::view-transition-new(now-playing):only-child {
-  --enter-y: calc(16% * var(--motion-amount));
-  animation: motion-enter var(--motion-slow) var(--ease-decelerate) backwards;
-}
-::view-transition-old(now-playing):only-child {
-  --enter-y: calc(16% * var(--motion-amount));
-  animation: motion-exit var(--motion-slow-out) var(--ease-accelerate) both;
-}
-/* Có View Transitions thì nó lo cả lúc mở lẫn lúc đóng; hoạt ảnh trượt lên chỉ còn là đường dự phòng. */
-html[data-vt] .now-playing-vt { animation: none; }
+/* Mở/đóng "Đang nghe": màn nở ra từ thanh phát nhỏ / thu về thanh ấy bằng Web Animations (listen/nowPlayingMorph.ts). Lúc ấy hoạt ảnh CSS
+   dự phòng (.now-playing trượt lên) phải tắt - nó dịch màn khỏi chỗ thật mà phép đo đang dựa vào; các khối .motion-reveal bên trong cũng
+   tắt hiện dần, phép biến hình tự đưa chúng vào (nếu không, bìa và tên vô hình lúc bắt đầu bay). */
+.now-playing[data-morph], .now-playing[data-morph] .motion-reveal { animation: none !important; }
+/* Vỏ màn lên trước ruột (điện thoại dựng ruột hoãn một nhịp): vỏ rỗng vẫn phải có hộp thật để nở ra từ thanh, không bị luật ẩn vùng rỗng
+   [data-motion-region]:empty bên dưới gỡ khỏi bố cục. */
+section.now-playing[data-motion-region]:empty { display: flex; }
 /* Dựng thử lúc rảnh (PlayerViews useWarmUp): ẩn hẳn, không hoạt ảnh, không nhận chạm. */
 .now-playing[data-state="warm"] { visibility: hidden; animation: none; pointer-events: none; }
 .now-playing[data-state="closed"] {
