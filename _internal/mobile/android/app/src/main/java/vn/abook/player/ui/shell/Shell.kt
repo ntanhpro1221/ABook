@@ -61,6 +61,8 @@ import vn.abook.player.ui.screens.LibraryActions
 import vn.abook.player.ui.screens.LibraryScreen
 import vn.abook.player.ui.screens.LibraryUiState
 import vn.abook.player.ui.screens.NowPlayingPlaceholder
+import vn.abook.player.ui.screens.SettingsEnv
+import vn.abook.player.ui.screens.SettingsGroupScreen
 import vn.abook.player.ui.screens.SettingsScreen
 import vn.abook.player.ui.screens.StudioScreen
 import vn.abook.player.ui.theme.Abook
@@ -86,7 +88,14 @@ class ShellState(scope: CoroutineScope, onSortChanged: (LibrarySort) -> Unit = {
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, covers: CoverLoader, onFirstContent: () -> Unit = {}) {
+fun AppShell(
+    shell: ShellState,
+    library: LibraryState,
+    player: PlayerRepo,
+    covers: CoverLoader,
+    settings: SettingsEnv,
+    onFirstContent: () -> Unit = {},
+) {
     val nav = shell.nav
     val playerState by player.state.collectAsState()
     PredictiveBackHandler(enabled = nav.canPop) { events ->
@@ -116,11 +125,12 @@ fun AppShell(shell: ShellState, library: LibraryState, player: PlayerRepo, cover
     Box(Modifier.fillMaxSize().background(Abook.colors.bg).semantics { testTagsAsResourceId = true }) {
         ScreenStack(
             nav = nav,
-            root = { RootTabs(shell, library, playerState, player, covers, actions) },
+            root = { RootTabs(shell, library, playerState, player, covers, actions, settings) },
             screen = { destination ->
                 when (destination) {
                     is Destination.Book -> BookScreen(destination.book, covers, onBack = nav::pop)
                     Destination.NowPlaying -> NowPlayingPlaceholder(playerState, covers, onBack = nav::pop)
+                    is Destination.Settings -> SettingsGroupScreen(destination.group, settings, shell.sheets, onBack = nav::pop)
                 }
             },
         )
@@ -184,6 +194,7 @@ private fun RootTabs(
     repo: PlayerRepo,
     covers: CoverLoader,
     actions: LibraryActions,
+    settings: SettingsEnv,
 ) {
     val tabs = shell.tabs
     // Thanh phát nhỏ giữ bài cuối cùng khi thu về (không nháy nội dung rỗng giữa lúc thu lại).
@@ -199,7 +210,11 @@ private fun RootTabs(
                     library, shell.library, shell.libraryGrid, player, covers, shell.sheets, actions, backEnabled = backToLibrary,
                 )
                 Tab.Studio -> StudioScreen()
-                Tab.Settings -> SettingsScreen()
+                Tab.Settings -> SettingsScreen(
+                    settings,
+                    onOpen = { group -> shell.nav.push(Destination.Settings(group)) },
+                    shown = { tabs.selected == Tab.Settings.ordinal },
+                )
             }
         }
         if (last[0].hasTrack) {

@@ -157,6 +157,29 @@ object Diagnostics {
         return out.toByteArray()
     }
 
+    /**
+     * "Gửi nhật ký" (cả hai giao diện): ghi gói .zip ([bundle]) vào `cacheDir/share` rồi trả Intent bảng chia sẻ của hệ thống - NGƯỜI DÙNG tự chọn gửi cho ai,
+     * app không gửi đi đâu. Chạy ở luồng nền (gom nhật ký + logcat). Trả (Intent, file đã ghi); lỗi thì thư mục tạm đã dọn và ném tiếp.
+     */
+    fun shareIntent(context: Context): Pair<Intent, java.io.File> {
+        val app = context.applicationContext
+        val target = java.io.File(java.io.File(BookShare.dir(app.cacheDir), java.lang.Long.toHexString(System.nanoTime())), bundleName(System.currentTimeMillis()))
+        try {
+            target.parentFile?.mkdirs()
+            target.writeBytes(bundle(collect(app, DEFAULT_LINES)))
+            val uri = androidx.core.content.FileProvider.getUriForFile(app, "${app.packageName}.fileprovider", target)
+            val send = Intent(Intent.ACTION_SEND).setType("application/zip")
+                .putExtra(Intent.EXTRA_STREAM, uri)
+                .putExtra(Intent.EXTRA_TITLE, target.name)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            send.clipData = android.content.ClipData.newUri(app.contentResolver, target.name, uri)
+            return Intent.createChooser(send, "Gửi nhật ký của ABook").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) to target
+        } catch (error: Exception) {
+            target.parentFile?.deleteRecursively()
+            throw error
+        }
+    }
+
     /** Tên file gói gửi đi: `abook-nhat-ky-<ngày-giờ>.zip`. */
     internal fun bundleName(now: Long): String = "abook-nhat-ky-" + SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date(now)) + ".zip"
 

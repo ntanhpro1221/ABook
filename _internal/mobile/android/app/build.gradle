@@ -55,6 +55,8 @@ android {
         buildTypes.configureEach { type ->
             sourceSets.maybeCreate(type.name).manifest.srcFile("src/nativeUi/AndroidManifest.xml")
         }
+        // Cài đặt > Giới thiệu > "Thành phần sử dụng" của giao diện native đọc docs/THIRD_PARTY.md (cùng file bản WebView gói lúc build): chép thành asset.
+        sourceSets.main.assets.srcDirs += layout.buildDirectory.dir("generated/nativeUiAssets").get().asFile
     }
     testOptions {
         // Robolectric (ảnh chụp màn bằng Roborazzi) cần tài nguyên gộp của app.
@@ -186,6 +188,14 @@ tasks.withType(Test).configureEach {
     dependsOn "prepareRobolectricJars"
     systemProperty "robolectric.offline", "true"
     systemProperty "robolectric.dependency.dir", robolectricDir.get().asFile.path
+}
+
+if (nativeUi) {
+    def thirdPartyAsset = tasks.register("nativeThirdPartyAsset", Copy) {
+        from "../../../docs/THIRD_PARTY.md"
+        into layout.buildDirectory.dir("generated/nativeUiAssets")
+    }
+    tasks.named("preBuild").configure { dependsOn thirdPartyAsset }
 }
 
 apply from: 'capacitor.build.gradle'

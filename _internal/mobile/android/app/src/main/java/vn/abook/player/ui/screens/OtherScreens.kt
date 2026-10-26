@@ -30,12 +30,6 @@ fun StudioScreen(modifier: Modifier = Modifier) {
     PlaceholderTab("Studio", "Studio từ xa sắp có.", modifier.fillMaxSize().padding(top = top))
 }
 
-@Composable
-fun SettingsScreen(modifier: Modifier = Modifier) {
-    val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
-    PlaceholderTab("Cài đặt", "Cài đặt sắp có.", modifier.fillMaxSize().padding(top = top))
-}
-
 /** Trang sách (P0 giữ chỗ để có một màn con thật cho chuyển cảnh): bìa + tên + tác giả. Nội dung đầy đủ ở P2. */
 @Composable
 fun BookScreen(book: ListenBook, covers: CoverLoader, onBack: () -> Unit, modifier: Modifier = Modifier) {
