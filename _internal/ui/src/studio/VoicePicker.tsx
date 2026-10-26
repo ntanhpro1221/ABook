@@ -19,6 +19,7 @@ import { modulePercent } from "./musicLocal";
 import { groupByEngine, moduleNote, plainGroupLabels, sharedText, takenText, type EngineModuleStatus, type EngineVoice } from "./voiceEngines";
 import { useVoiceTry } from "./VoiceTry";
 import { byGender, rerecordText, type GenderFilter, type Rerecord } from "./voiceTryText";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 // "Đổi giọng" một nhân vật (webui/voice_picker.py): mọi giọng dùng được cho nhân vật, nghe thử từng giọng, giọng đang dùng,
 // giọng máy gợi ý cho từng giới, và ai đang dùng giọng ấy cùng mấy chương. Chọn xong đi đúng đường của thẻ "Nam hay nữ"
@@ -163,6 +164,7 @@ export function VoicePicker({
   person: { name: string; displayName: string } | null;
   onClose: () => void;
 }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const client = useQueryClient();
   const clip = useClip();
   const { data, isLoading, error, refetch } = useQuery({
@@ -314,7 +316,7 @@ export function VoicePicker({
             </p>
             {tryVoice.note}
           </div>
-          <div className="focus-scroll voice-picker-scroll -mr-1 mt-3 max-h-[min(60vh,460px)] overflow-y-auto pr-1">
+          <div ref={scrollFade.ref} style={scrollFade.style} className="focus-scroll voice-picker-scroll -mr-1 mt-3 max-h-[min(60vh,460px)] overflow-y-auto pr-1">
             {groups.map((group, index) => (
               <Fold key={group.engine} storageKey={`voice-picker.${group.engine}`} title={groupLabels[index]} summary={`${group.voices.length} giọng`} defaultOpen={groups.length === 1} bodyClassName="px-2 pb-2">
                 {groups.length > 1 || group.engine !== "vieneu" ? (

@@ -70,7 +70,8 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
         try {
             val rows = core.players()
             if (started != generation || flow.value.busy) return
-            var problem = flow.value.problem
+            // Lượt hỏi này qua được: lời "chưa nối được" của lượt trước hết đúng; lời của lệnh bị từ chối thì giữ.
+            var problem = flow.value.problem.takeUnless { it == OFFLINE }.orEmpty()
             val players = (0 until rows.length()).map { index ->
                 val row = rows.getJSONObject(index)
                 val acks = row.optJSONArray("acks") ?: JSONArray()
@@ -85,7 +86,11 @@ class CompanionRepo(private val core: CompanionCore, private val now: () -> Long
             while (seen.size > 256) seen.remove(seen.first())
             flow.value = flow.value.copy(players = players, notices = core.notices(), receivedAt = now(), problem = problem)
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { flow.value = flow.value.copy(problem = "Chưa nối được, bạn thử lại") }
+        catch (_: Exception) { flow.value = flow.value.copy(problem = OFFLINE) }
+    }
+
+    private companion object {
+        const val OFFLINE = "Chưa nối được, bạn thử lại"
     }
 
     suspend fun setNotices(enabled: Boolean) = attempt { flow.value = flow.value.copy(notices = core.setNotices(enabled)) }

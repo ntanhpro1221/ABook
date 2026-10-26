@@ -78,6 +78,7 @@ Chủ sách 26-10: "trong các loại chuyển cảnh, loại fade là tôi ghé
 - Ảnh chụp mọi màn x mọi trạng thái x sáng / tối bằng Roborazzi (Robolectric, chạy JVM, không cần máy) - thay gallery của bản web.
 - Máy dò hình học trên cây semantics trong test: căn giữa theo trục chéo (CROSS CENTER), vùng chạm ≥ 44 dp, chữ không bị cắt "…" ở nhãn
   lựa chọn, một nút chính mỗi màn, nhãn 1-4 chữ.
+- Mép cuộn: mọi `LazyColumn` / `LazyVerticalGrid` / `verticalScroll` mờ mép bằng `Modifier.fadeEdges(state)` (DESIGN.md §6 "Mọi vùng cuộn dọc"); `ScrollFadeRulesTest` quét mã nguồn, thiếu là trượt.
 - Kịch bản bấm thật: test Compose UI (`createAndroidComposeRule`) cho mọi luồng ở DESIGN.md §2, đếm số chạm.
 
 ## 6. Giai đoạn
@@ -103,7 +104,7 @@ Nhạc nền là lựa chọn của TỪNG CUỐN, có một chỗ chung cho c�
 
 | Điều khiển | Ở đâu | Vì sao |
 |---|---|---|
-| Hàng "Nhạc nền" + giá trị ("Theo cảnh", "Đêm mưa", "Tắt", "Bật") | "Tuỳ chọn" của trình phát; bảng "Thêm" của trang sách (biểu tượng nốt nhạc) | đổi nhạc lúc đang nghe là chỗ hay dùng nhất; trang sách cho đổi trước khi nghe. Cuốn không có nhạc thì không có hàng (không hàng chết) |
+| Hàng "Nhạc nền" + giá trị ("Theo cảnh", "Đêm mưa", "Tắt", "Bật", "Chưa có nhạc" khi tự chọn đang tắt) | "Tuỳ chọn" của trình phát; bảng "Thêm" của trang sách (biểu tượng nốt nhạc) | đổi nhạc lúc đang nghe là chỗ hay dùng nhất; trang sách cho đổi trước khi nghe. Cuốn không có nhạc thì không có hàng (không hàng chết) |
 | Danh sách chọn: Để máy chọn (kèm thứ máy đang chọn) / Tắt / Theo cảnh / các danh sách (tả + "dài 8 giờ") / Nhạc của tôi ("3 bài", trống thì mờ) | tấm "Nhạc nền" (sách chỉ có chữ) | một chạm là xong, dấu chọn trượt theo; không hộp chọn thả xuống như bản web |
 | "Thêm nhạc của bạn" (dấu +) | cuối danh sách | thêm xong thì chọn luôn "Nhạc của tôi" cho cuốn này; kho chung với Cài đặt > Nhạc của tôi |
 | "Nhạc nền: Bật" / "Nhạc nền: Tắt" (công tắc) | tấm "Nhạc nền" (sách nói có nhạc người làm sách gắn) | chữ của web: nhãn nói trạng thái, không phải việc sẽ làm |
@@ -112,7 +113,7 @@ Nhạc nền là lựa chọn của TỪNG CUỐN, có một chỗ chung cho c�
 | Trang một đoạn: tên + chương · giờ, ba nút chữ "Về bài gốc" (khi đã đổi) · "Đổi bài" (icon Shuffle) · "Im lặng" / "Có nhạc" | chạm một đoạn, trượt ngang; Back khép "Đổi bài" trước rồi về trang chính | ba nút của web đúng chữ, đúng thứ tự, đúng icon; trang riêng vì một hàng điện thoại không đủ chỗ cho tên + ba nút |
 | "Đổi bài": các bài trong Nhạc của tôi (tên, nghệ sĩ · độ dài, chú thích "Có vẻ có lời…"/"Chưa phân tích…"), mỗi bài "Chọn" có ghim; trống thì "Chưa có bài nào khác trong Nhạc của tôi." + "Thêm nhạc của bạn" | dưới ba nút, mở / khép tại chỗ | SwapTrack của web; chọn bài cho đoạn đang im thì đoạn ấy có nhạc lại, chọn xong thì khép như web |
 | "Đang phát" + tên bài · tác giả, chạm mở ghi công / giấy phép / "Đã chỉnh sửa" / trang của bài | cuối tấm, khi có bài đang kêu | CC BY đòi ghi công ở nơi nhạc phát; khép sẵn để không chiếm chỗ, mở thì tự cuộn cho thấy |
-| Lời dưới bảng (mất mạng, bài hỏng, "Tự chọn nhạc nền" đang tắt) | dưới lựa chọn | chỉ khi có điều cần biết |
+| Lời dưới bảng (mất mạng, bài hỏng, "Tự chọn nhạc nền" đang tắt) | dưới lựa chọn | chỉ khi có điều cần biết; web cũng thôi nhắc suông "Nhạc nằm dưới giọng đọc…" |
 
 Back từ tấm "Nhạc nền" (và "Giọng đọc") về "Tuỳ chọn", không đóng cả bảng. Im lặng / đổi bài từng đoạn đi qua cùng lõi với WebView
 (`LocalStudio.setBookMusic` với `silence` / `pins`, `LocalStudio.musicAlternatives`).
@@ -127,8 +128,26 @@ Chữ chung với web (luật chủ sách 26-10 "đồng nhất từng cái ch�
 | Công tắc nhạc gắn sẵn, lỗi tải, sách không có nhạc | "Nhạc nền: Bật", "Bạn hãy thử tải lại nhạc nền của cuốn này.", "Người làm sách không gắn nhạc nền cho cuốn này." | "Phát nhạc nền", "Chưa đọc được nhạc nền", "Cuốn này không có nhạc nền." | bản web | |
 | Mức nhạc | ô chọn "Mức nhạc dưới giọng đọc", "Vừa (mặc định)"… | lưới "Mức nhạc", "Vừa"… + lời "Rất nhỏ: dễ nghe lời nhất." | chữ web; hình vạch của điện thoại | |
 | Đổi bài trống | "… - nhập nhạc của bạn ở mục “Nhạc của tôi” bên dưới." | (chưa có) | "Chưa có bài nào khác trong Nhạc của tôi." (sửa web) | điện thoại không có mục bên dưới mà có hàng "Thêm nhạc của bạn" ngay đó; web vẫn có mục Nhạc của tôi ngay dưới |
+| Thêm nhạc ở Nhạc của tôi (Cài đặt, Sửa sách, tab Nhạc của Studio) | "Nhập nhạc của tôi…" / "Nhập nhạc", "Đang nhập 2/5…", "Đã nhập: …", "bài đã có sẵn từ trước", "Không nhập được file này" | "Thêm nhạc", "Đang thêm 2/5", "Đã thêm: …", "Chưa nhập được nhạc" | động từ "Thêm" ở mọi chỗ: "Thêm nhạc của bạn", "Đang thêm 2/5", "Đã thêm: …", "bài đã có từ trước", "Không thêm được file này", "Chưa thêm được nhạc", "“tên”: chưa thêm được định dạng này…" (sửa cả hai + lõi Python / Kotlin) | một việc một động từ: menu Nhạc nền đã là "Thêm nhạc của bạn"; bỏ "…" theo luật Lead 26-10 |
+| Giới thiệu Nhạc của tôi | "Nhập nhạc làm nền; bài đã chọn đi cùng file sách." | (không có) | "Thêm nhạc làm nền; bài đã chọn đi cùng file sách." ở cả hai (`MusicText.MY_MUSIC_INTRO` = `MY_MUSIC_INTRO`) | một câu cho mọi nơi nói về Nhạc của tôi |
+| Kho trống | EmptyState "Thêm nhạc của bạn" + nút "Nhập nhạc"; tóm tắt "0 bài" | "Chưa có bài nào" | tiêu đề "Chưa có bài nào", nút "Thêm nhạc của bạn"; tóm tắt 0 = "Chưa có bài nào" | tiêu đề nói trạng thái, nút nói việc |
+| Lỗi đọc kho | "Bạn hãy thử tải lại nhạc của bạn." | "Chưa đọc được kho nhạc" | bản web | nói cách đi tiếp, như mọi lỗi khác |
+| Bài chưa phân tích | "Chưa phân tích - máy chưa tự chọn, bạn vẫn ghim được" | (không nói) | bản web ở cả hai (`MusicText.UNANALYSED`) | trên điện thoại web cũng chỉ nói bài chưa phân tích |
+| Xoá bài | hai bước "Xoá" → "Xoá khỏi kho" / "Giữ lại" | tấm "Xoá bài này?" → "Xoá bài" / "Giữ lại" | nút xác nhận "Xoá bài" ở cả hai | ngắn, cùng chữ; tấm xác nhận là dạng của điện thoại |
+| Giá trị khi tự chọn đang tắt / danh sách không còn | "Chưa có nhạc (tắt trong Cài đặt)" / "Danh sách đã chọn" | "Tắt" / "Đã chọn" | "Chưa có nhạc" / "Danh sách đã chọn" | "Tắt" nói sai (cuốn này không tắt nhạc); chỗ bật lại đã nói ở lời dưới bảng |
 
-Còn khác, chưa sửa trong lượt này (nằm ngoài tấm Nhạc nền): Cài đặt > Nhạc của tôi của điện thoại ghi "Thêm nhạc", web "Nhập nhạc của tôi…" / "Nhập nhạc".
+Chỉ điện thoại có, có lý do: cỡ file ở cuối hàng bài (bộ nhớ máy là chuyện của điện thoại); lời "Nhạc do người làm sách chọn. Đổi ở đây chỉ trên máy này."; "Bài nhạc chương này không phát được." Chỉ web có, chờ thành phần chung của đợt đồng nhất: "Nhạc riêng" (MoreInfo, chưa có bản native).
+Trạng thái đang làm của phần nhạc web cũng bỏ "…" ("Đang lưu lựa chọn", "Đang đổi", "Đang chọn lại", "Đang đọc không khí", "Đang thêm nhạc 2/5"); `RETRYING_NOTE` dùng chung với giọng đọc nên để đợt đồng nhất chung sửa.
+
+Cặp màn nhạc (tạm ở đây, gộp vào `scripts/ui_parity_pairs.json` khi file ấy có trên native1):
+
+| Điện thoại (native) | Web |
+|---|---|
+| `ui/voice/MyMusicScreen.kt` (Cài đặt > Nhạc của tôi) | `listen/MyMusic.tsx` `MyMusicSection`; `studio/MusicTab.tsx` (chữ thêm / xoá) |
+| `ui/screens/SettingsGroups.kt` "Tự chọn nhạc nền" | `android/SettingsScreen.tsx` (`AUTO_MUSIC_LABEL` / `AUTO_MUSIC_HINT` của `listen/playlistBed.ts`) |
+| `ui/music/MusicPanel.kt` trang chính (sách chỉ có chữ) | `listen/PlaylistChoice.tsx` `PlaylistSubmenu` (menu sách) + `listen/PlayerViews.tsx` `MusicMenu` (trình phát) |
+| `ui/music/MusicPanel.kt` danh sách đoạn + trang một đoạn | Sửa sách > Nhạc nền (`listen/EditBook.tsx` `MusicSection`, `listen/MyMusic.tsx` `SwapTrack`) |
+| `ui/music/MusicPanel.kt` "Đang phát" + ghi công | trình phát: ghi công nhạc (`shared/format.ts` `musicCreditText`) |
 
 ## 7. Máy tính
 

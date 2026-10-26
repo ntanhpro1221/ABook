@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.pressable
@@ -37,6 +38,8 @@ import vn.abook.player.ui.music.MusicText
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 enum class PlayerSheet { Speed, Sleep, Chapters, More, Voice, Music }
 
@@ -130,17 +133,20 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                             model.setSleep(SleepKind.Off); window.closeSheet()
                         }
                     }
-                    PlayerSheet.Chapters -> LazyColumn(Modifier.fillMaxWidth()) {
-                        items(state.chapters, key = { it.id }, contentType = { "chapter" }) { chapter ->
-                            val current = chapter.id == state.chapterId
-                            Column(Modifier.fillMaxWidth().pressable { model.jump(chapter.id); window.closeSheet() }
-                                .semantics { selected = current }.padding(vertical = 12.dp)) {
-                                BasicText(chapter.title, style = Abook.type.body.copy(color = if (current) Abook.colors.accentText else Abook.colors.text))
-                                BasicText(if (current) "Đang nghe" else PlayerLabels.time(chapter.durationMs), style = Abook.type.caption)
-                                if (current) Box(Modifier.fillMaxWidth().height(2.dp).drawBehind {
-                                    val fraction = if (state.durationMs > 0) model.position.milliseconds.value.toFloat() / state.durationMs else 0f
-                                    drawRect(accent, size = androidx.compose.ui.geometry.Size(size.width * fraction.coerceIn(0f, 1f), size.height))
-                                })
+                    PlayerSheet.Chapters -> {
+                        val chapterList = rememberLazyListState()
+                        LazyColumn(Modifier.fillMaxWidth().fadeEdges(chapterList), state = chapterList) {
+                            items(state.chapters, key = { it.id }, contentType = { "chapter" }) { chapter ->
+                                val current = chapter.id == state.chapterId
+                                Column(Modifier.fillMaxWidth().pressable { model.jump(chapter.id); window.closeSheet() }
+                                    .semantics { selected = current }.padding(vertical = 12.dp)) {
+                                    BasicText(chapter.title, style = Abook.type.body.copy(color = if (current) Abook.colors.accentText else Abook.colors.text))
+                                    RowHint(if (current) "Đang nghe" else PlayerLabels.time(chapter.durationMs))
+                                    if (current) Box(Modifier.fillMaxWidth().height(2.dp).drawBehind {
+                                        val fraction = if (state.durationMs > 0) model.position.milliseconds.value.toFloat() / state.durationMs else 0f
+                                        drawRect(accent, size = androidx.compose.ui.geometry.Size(size.width * fraction.coerceIn(0f, 1f), size.height))
+                                    })
+                                }
                             }
                         }
                     }
@@ -164,10 +170,13 @@ fun PlayerSheets(state: NowPlayingState, model: NowPlayingModel, window: NowPlay
                     PlayerSheet.Music -> if (music != null) MusicPanel(music, state.bookId, state.music)
                     PlayerSheet.Voice -> {
                         if (state.voices.isEmpty()) BasicText("Chưa có giọng cài sẵn. Bạn chọn giọng trong Cài đặt.", style = Abook.type.bodySmall)
-                        else LazyColumn {
-                            items(state.voices, key = { it.id }, contentType = { "voice" }) { voice ->
-                                SheetRow(voice.name, if (voice.id == state.voiceId) "Đang chọn" else "") {
-                                    model.setVoice(voice.id); window.closeSheet()
+                        else {
+                            val voiceList = rememberLazyListState()
+                            LazyColumn(Modifier.fadeEdges(voiceList), state = voiceList) {
+                                items(state.voices, key = { it.id }, contentType = { "voice" }) { voice ->
+                                    SheetRow(voice.name, if (voice.id == state.voiceId) "Đang chọn" else "") {
+                                        model.setVoice(voice.id); window.closeSheet()
+                                    }
                                 }
                             }
                         }

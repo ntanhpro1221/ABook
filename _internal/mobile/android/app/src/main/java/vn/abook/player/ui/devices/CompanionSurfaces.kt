@@ -25,6 +25,7 @@ import vn.abook.player.ui.theme.Dim
 import vn.abook.player.ui.theme.MotionMs
 import vn.abook.player.ui.motion.Motion
 import vn.abook.player.ui.motion.rememberPresence
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** One entry in the playback area, rather than stacking full control bars over library content. */
 @Composable
@@ -54,7 +55,8 @@ fun OtherPlayersSheet(repo: CompanionRepo, local: PlayerRepo, dismiss: () -> Uni
         Reveal(ui.busy) { Caption("Đang gửi lệnh") }
         Reveal(ui.problem.isNotEmpty()) { Caption(ui.problem) }
         Reveal(ui.players.isEmpty()) { Caption("Chưa thấy máy khác. Bạn kiểm tra kết nối.") }
-        LazyColumn(Modifier.fillMaxWidth().weight(1f, fill = false).testTag("remote_players_list")) {
+        val list = rememberLazyListState()
+        LazyColumn(Modifier.fillMaxWidth().weight(1f, fill = false).fadeEdges(list).testTag("remote_players_list"), state = list) {
             items(players, key = { it.item.device }, contentType = { "player" }) { row ->
                 AnimatedVisibility(row.visible, Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null),
                     enter = expandVertically(tween(MotionMs.MEDIUM, easing = Motion.Decelerate)) + slideInVertically(tween(MotionMs.MEDIUM)) { it / 4 },

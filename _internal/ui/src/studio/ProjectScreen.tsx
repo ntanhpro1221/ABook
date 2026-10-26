@@ -108,6 +108,7 @@ import { ExportDialog } from "@/studio/ExportBook";
 import { PrecastBanner, PrecastReview, PrecastWaitSwitch, usePrecastKeys } from "./PrecastReview";
 import { TellerModeSwitch } from "./TellerModeSwitch";
 import { canReview } from "./precast";
+import { useFadeScroller } from "@/shared/scrollFade";
 
 /** Phát một chương ngay trong Studio (nghe kiểm tra) bằng chính trình phát của phía Nghe - ở chế độ "nghe kiểm":
  *  không ghi đè chỗ đang nghe dở, tốc độ hay nhật ký đêm của người nghe. */
@@ -1121,6 +1122,7 @@ const LEVEL_DOT: Record<string, string> = {
 };
 
 function ActivityView({ book }: { book: BookSummary }) {
+  const scrollFade = useFadeScroller<HTMLDivElement>();
   const [mode, setMode] = useState<"story" | "technical">("story");
   const { data, isLoading } = useActivity(book.id, mode === "technical", book.running);
   const groups = useMemo(() => {
@@ -1159,7 +1161,7 @@ function ActivityView({ book }: { book: BookSummary }) {
           Diễn biến sẽ hiện ở đây khi sách bắt đầu chạy.
         </EmptyState>
       ) : mode === "technical" ? (
-        <div className="mt-4 max-h-[560px] overflow-auto py-3 font-mono text-[0.75rem] leading-relaxed">
+        <div ref={scrollFade.ref} style={scrollFade.style} className="mt-4 max-h-[560px] overflow-auto py-3 font-mono text-[0.75rem] leading-relaxed">
           <LogRows items={data ?? []}>
             {(item) => (
               <div className="flex gap-3 whitespace-pre-wrap break-words">

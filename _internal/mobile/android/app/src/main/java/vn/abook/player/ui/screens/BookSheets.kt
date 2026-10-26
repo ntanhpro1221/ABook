@@ -51,12 +51,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import vn.abook.player.ui.components.ReadAlongIcon
 import vn.abook.player.ui.components.DeleteBookPage
+import vn.abook.player.ui.components.RowHint
 import vn.abook.player.ui.components.SheetPages
 import vn.abook.player.ui.components.MenuRow
 import vn.abook.player.ui.components.CheckIcon
 import vn.abook.player.ui.components.DashedCircleIcon
-import vn.abook.player.ui.components.ExportIcon
+import vn.abook.player.ui.components.BookAudioIcon
+import vn.abook.player.ui.components.FolderDownIcon
+import vn.abook.player.ui.components.HeadphonesIcon
 import vn.abook.player.ui.components.MusicIcon
+import vn.abook.player.ui.export.ExportFormat
 import vn.abook.player.ui.components.PencilIcon
 import vn.abook.player.ui.components.Reveal
 import vn.abook.player.ui.components.PlayPauseGlyph
@@ -82,6 +86,8 @@ import vn.abook.player.ui.music.PlayerMusic
 import vn.abook.player.ui.theme.Abook
 import vn.abook.player.ui.theme.Dim
 import java.util.concurrent.ConcurrentHashMap
+import vn.abook.player.ui.components.fadeEdges
+import androidx.compose.foundation.lazy.rememberLazyListState
 
 /** Các trang của bảng "Thêm": danh sách việc, nhạc nền của cuốn, xác nhận xoá. Đi sâu = trượt sang trái, Back = trượt ngược lại. */
 private enum class MenuPage { Actions, Music, Delete }
@@ -105,7 +111,7 @@ fun BookMenuSheet(
             )
             MenuPage.Music -> if (music != null) Column(Modifier.fillMaxWidth()) {
                 BasicText("Nhạc nền", style = Abook.type.sectionTitle)
-                BasicText(book.title, style = Abook.type.bodySmall)
+                RowHint(book.title)
                 Spacer(Modifier.height(Dim.s8))
                 MusicPanel(music, book.id, playerMusic)
             }
@@ -174,7 +180,33 @@ private fun MenuActions(
                 MenuRow("Nhạc nền", tag = "menu_music", onClick = onMusic, value = MusicText.value(mine, ui.menu)) { ink -> MusicIcon(ink) }
             }
         }
-        MenuRow("Xuất MP3 hay M4B", tag = "menu_export", soon = true) { ink -> ExportIcon(ink) }
+        // Như web: sách có tiếng có hai hàng "Xuất MP3" / "Xuất M4B", sách chỉ có chữ có một hàng "Xuất sách nói (M4B)" - mỗi hàng đúng icon của web.
+        // Cuốn chưa có gì để xuất thì mờ đi, không hứa gì.
+        val exportHint by actions.exportHint(book.id).collectAsState()
+        if (book.textOnly) {
+            MenuRow(
+                "Xuất sách nói (M4B)", tag = "menu_export", hint = exportHint, unavailable = book.chaptersTotal == 0,
+                onClick = {
+                    dismiss()
+                    actions.export(book, null)
+                },
+            ) { ink -> HeadphonesIcon(ink) }
+        } else {
+            MenuRow(
+                "Xuất MP3", tag = "menu_export_mp3", hint = exportHint, unavailable = book.chaptersAvailable == 0,
+                onClick = {
+                    dismiss()
+                    actions.export(book, ExportFormat.Mp3)
+                },
+            ) { ink -> FolderDownIcon(ink) }
+            MenuRow(
+                "Xuất M4B", tag = "menu_export_m4b", hint = exportHint, unavailable = book.chaptersAvailable == 0,
+                onClick = {
+                    dismiss()
+                    actions.export(book, ExportFormat.M4b)
+                },
+            ) { ink -> BookAudioIcon(ink) }
+        }
         Box(Modifier.fillMaxWidth().padding(vertical = Dim.s8).height(1.dp).background(colors.line))
         MenuRow("Xoá khỏi điện thoại", tag = "menu_delete", danger = true, onClick = onDelete) { ink -> TrashIcon(ink) }
         if (problem.isNotEmpty()) {
@@ -197,7 +229,7 @@ fun ChapterSheet(book: ListenBook, chapter: ChapterLine, source: BookSource, onL
     val scope = rememberCoroutineScope()
     Column(Modifier.fillMaxWidth().testTag("chapter_sheet")) {
         BasicText(chapter.title, style = Abook.type.sectionTitle)
-        BasicText(book.title, style = Abook.type.bodySmall)
+        RowHint(book.title)
         Spacer(Modifier.height(Dim.s8))
         if (chapter.playable) {
             MenuRow("Nghe từ đầu chương", tag = "chapter_from_start", onClick = {
@@ -262,7 +294,7 @@ fun FindInBookSheet(detail: BookDetail, source: BookSource, onPick: (FindHit) ->
     }
     Column(Modifier.fillMaxWidth().imePadding().testTag("find_sheet")) {
         BasicText("Tìm trong sách", style = Abook.type.sectionTitle)
-        BasicText(detail.book.title, style = Abook.type.bodySmall)
+        RowHint(detail.book.title)
         Spacer(Modifier.height(Dim.s12))
         Row(
             Modifier.fillMaxWidth().heightIn(min = Dim.s48).clip(RoundedCornerShape(Dim.radiusControl)).background(colors.bgSunken)
@@ -292,7 +324,8 @@ fun FindInBookSheet(detail: BookDetail, source: BookSource, onPick: (FindHit) ->
         val hits = progress?.hits.orEmpty()
         if (hits.isNotEmpty()) {
             Spacer(Modifier.height(Dim.s8))
-            LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp).testTag("find_results")) {
+            val list = rememberLazyListState()
+            LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp).fadeEdges(list).testTag("find_results"), state = list) {
                 items(hits, key = { "${it.chapterId}:${it.index}" }, contentType = { "hit" }) { hit ->
                     FindRow(hit, titles[hit.chapterId].orEmpty(), onPick)
                 }
