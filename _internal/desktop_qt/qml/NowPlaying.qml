@@ -200,6 +200,7 @@ Item {
                         wrapMode: Text.Wrap
                         font.pixelSize: Theme.sizeCaption
                     }
+                    MusicCredit { width: parent.width }
                 }
 
                 // ---- điều khiển ----
@@ -278,7 +279,11 @@ Item {
                         id: chips
                         width: parent.width
                         spacing: Theme.s8
-                        readonly property real cellW: (width - (count - 1) * spacing) / count
+                        // Nhạc nền: ô vuông chỉ có biểu tượng (như nút của bản web), hiện / ẩn dần khi cuốn có / hết nhạc; ba ô chữ chia phần còn lại.
+                        property real musicT: Music.hasMusic ? 1 : 0
+                        Behavior on musicT { NumberAnimation { duration: Theme.motionMedium; easing.type: Easing.BezierSpline; easing.bezierCurve: Theme.easeStandard } }
+                        readonly property real musicW: musicT * (Theme.buttonHeight + spacing)
+                        readonly property real cellW: (width - musicW - (count - 1) * spacing) / count
                         readonly property int count: 3
                         ControlChip {
                             id: speedChip
@@ -304,6 +309,17 @@ Item {
                             text: "Chương"
                             tip: "Danh sách chương"
                             onClicked: chapters.toggle()
+                        }
+                        ControlChip {
+                            id: musicChip
+                            visible: chips.musicT > 0
+                            width: Math.max(0, chips.musicW - chips.spacing)
+                            opacity: chips.musicT
+                            icon: "eighth-note"
+                            struck: !Music.enabled
+                            active: Music.enabled
+                            tip: "Nhạc nền"
+                            onClicked: music.toggle()
                         }
                     }
                 }
@@ -340,4 +356,5 @@ Item {
     SpeedPopover { id: speed; anchorItem: speedChip }
     SleepPopover { id: sleep; anchorItem: sleepChip }
     ChaptersPopover { id: chapters; anchorItem: chaptersChip }
+    MusicPopover { id: music; anchorItem: musicChip }
 }

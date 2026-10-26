@@ -7,6 +7,7 @@ Interactive {
     property string text: ""
     property string icon: ""
     property bool active: false          // đang bật (đang hẹn giờ, đang có nhạc): chữ màu nhấn
+    property bool struck: false          // gạch chéo trên biểu tượng (nhạc nền tắt - lucide không có biểu tượng "nhạc tắt")
     implicitHeight: Theme.buttonHeight
 
     Rectangle {
@@ -25,13 +26,25 @@ Interactive {
         anchors.centerIn: parent
         spacing: Theme.s8
         Icon {
+            id: glyph
             visible: root.icon !== ""
             name: root.icon
             size: 16
             color: root.active ? Theme.accentText : Theme.text2
             anchors.verticalCenter: parent.verticalCenter
+            Rectangle {
+                anchors.centerIn: parent
+                width: 20
+                height: 2
+                radius: 1
+                rotation: 45
+                color: glyph.color
+                opacity: root.struck ? 1 : 0
+                Behavior on opacity { NumberAnimation { duration: Theme.motionFast } }
+            }
         }
         Text {
+            visible: root.text !== ""
             text: root.text
             color: root.active ? Theme.accentText : Theme.text
             font.pixelSize: Theme.sizeBodySmall
