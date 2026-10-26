@@ -21,6 +21,38 @@
   update-checked event from the shell has no Qt channel (polls /api/app); web toast actions ("Hoàn tác", "Mở thư mục") not in Api.notice;
   offscreen software renderer paints Shape icons outside a clipping Flickable (not checked on D3D).
 
+## RAM — 26/27-10-2026, dev/desk-qt-ram (Music lane, from 7a195ca9)
+
+Display conditions for every number below: Parsec virtual display 60 Hz (laptop panel not attached), D3D11, window 1920x1080 client, fixture deskqt_fixture_music, player scenario, muted. RAM = private working set (Task Manager "Memory"), not commit. Runner: D:/Novels/native_desk_proto/ramrun.py (configs interleaved per round, EXE= picks another build); results in D:/Novels/native_desk_proto/results/ram_*.{txt,json}.
+
+Changes:
+- Working set trimmed 2 s after the window is minimised (Platform::eventFilter, SetProcessWorkingSetSize -1/-1). Background playback only touches the audio pages.
+- Segment Heap opted in through src/abookdesk.manifest: freed heap goes back to the OS instead of staying in NT heap segments.
+- Bench player scenario: restore step after minimise (restore_begin/end). measure.py reports private_min_settled_mb (median of the last 3 s minimised), restore_first_ms and restore_max_gap_ms.
+
+Before/after, 4 interleaved rounds, medians (ram_final1; base = 7a195ca9 build):
+| | idle loaded | follow | minimised, settled |
+|---|---|---|---|
+| scale 1.0 before → after | 49.5 → 47.2 | 56.2 → 54.4 | 55.0 → 8.8 |
+| scale 1.4 before → after | 57.2 → 54.8 | 63.9 → 61.5 | 60.8 → 10.2 |
+- Restoring after trim costs nothing visible: first frame 32 → 17 ms; the ~250 ms gap on restore is present with and without the trim (ram_trim1). Pages come back lazily: 17-26 MB 1.5 s after restore.
+- CPU while minimised and playing: 1.8 → 1.6 % of one core (ram_gpu1); the trim does not add CPU. Both are above the < 1 % budget; this was not in scope.
+- Segment Heap alone (ram_seg1): follow −2 MB, minimised −4 MB, idle −1 MB at 1.0.
+
+Measured parts (ram_parts1..5, ram_probe1):
+- QApplication instead of QGuiApplication: +1.5 MB.
+- Music engines (MF): ~1.7 MB.
+- Scale 1.4 vs 1.0: +8-11 MB.
+- No gain: glyph atlas 512, no distance field, QQuickWindow::releaseResources on minimise, software backend.
+- Cover decode already uses setScaledSize (decodes at shown size).
+
+Open:
+- Idle at 1.4 is bimodal, ~50 or ~58 MB, both before and after. A private region grows in place to ~30 MB after library_loaded/first_cover (cover texture uploads) and stays; it most likely belongs to the graphics driver.
+- GPU adapter matters more than anything above (ram_gpu1, scale 1.4, new build):
+  - NVIDIA (default here): idle 55.8, follow 61.5.
+  - AMD Radeon 610M (QT_D3D_ADAPTER_INDEX=1): idle 62.9 (57-78), follow 76.9, minimised settled 8.7.
+  - On the laptop panel, Windows may run the app on the AMD iGPU. Re-measure there when the panel is back.
+
 ## qtwide2 — lead review, 26-10-2026
 
 - Book composition is centred and capped at 1360 px (summary + 32 px gap + chapters). Cover shares the title's left edge from expanded. ChapterRow keeps title/chapter on the left and duration at the right inset with tabular figures; current/hover fill and progress retain full row geometry.

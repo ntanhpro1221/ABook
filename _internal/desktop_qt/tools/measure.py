@@ -273,6 +273,11 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
     idle = [m for t, m, _c in samples if ev["idle_begin"] + 1500 <= t <= ev["idle_end"]]
     follow_ram = [m for t, m, _c in samples if follow[0][0] <= t <= follow[0][1]]
     mins = [(t, m, c) for t, m, c in samples if ev["min_begin"] + 1500 <= t <= ev["min_end"]]
+    settled = [m for t, m, _c in mins if t >= ev["min_end"] - 3000]       # 3 s cuối: sau khi app trả working set lúc thu nhỏ (2 s)
+    restore = None
+    if "restore_begin" in ev and "restore_end" in ev:      # mở lại sau thu nhỏ: khung đầu (ms từ lệnh mở) + khoảng cách khung lớn nhất
+        rf = [f for f in frames if ev["restore_begin"] <= f <= ev["restore_end"]]
+        restore = (rf[0] - ev["restore_begin"] if rf else float("nan"), max((b - a for a, b in zip(rf, rf[1:])), default=float("nan")))
     cpu_pct = float("nan")
     if len(mins) >= 2 and mins[-1][0] > mins[0][0]:
         cpu_pct = (mins[-1][2] - mins[0][2]) / (mins[-1][0] - mins[0][0]) * 100.0      # % của MỘT nhân
@@ -291,6 +296,9 @@ def player_run(exe: Path, env_extra: dict, topmost: bool) -> dict:
         "private_idle_loaded_mb": statistics.median(idle) if idle else float("nan"),
         "private_follow_mb": max(follow_ram) if follow_ram else float("nan"),
         "private_min_playing_mb": max(m for _, m, _c in mins) if mins else float("nan"),
+        "private_min_settled_mb": statistics.median(settled) if settled else float("nan"),
+        "restore_first_ms": restore[0] if restore else float("nan"),
+        "restore_max_gap_ms": restore[1] if restore else float("nan"),
         "cpu_min_playing_pct_of_core": cpu_pct,
         "morph_frames": len(iv_m), "morph_p50": pct(iv_m, .5), "morph_p99": pct(iv_m, .99), "morph_max": max(iv_m) if iv_m else float("nan"),
         "unmorph_frames": len(iv_u), "unmorph_p99": pct(iv_u, .99), "unmorph_max": max(iv_u) if iv_u else float("nan"),
@@ -329,9 +337,9 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
         good.append(r)
         print(f"lượt {attempt + 1}: nghỉ có sách {r['private_idle_loaded_mb']:.1f} MB | biến hình p99 {r['morph_p99']:.1f} max {r['morph_max']:.1f} ms ({r['morph_frames']} khung; "
               f"đóng p99 {r['unmorph_p99']:.1f}) | chữ chạy p50 {r['follow_p50']:.1f} p99 {r['follow_p99']:.1f} max {r['follow_max']:.1f} ms "
-              f"({r['follow_frames']} khung, >12ms {r['follow_over_12']}) RAM {r['private_follow_mb']:.1f} | thu nhỏ phát: RAM {r['private_min_playing_mb']:.1f} MB "
+              f"({r['follow_frames']} khung, >12ms {r['follow_over_12']}) RAM {r['private_follow_mb']:.1f} | thu nhỏ phát: RAM {r['private_min_playing_mb']:.1f} -> {r['private_min_settled_mb']:.1f} MB "
               f"CPU {r['cpu_min_playing_pct_of_core']:.2f} % | đếm lúc chữ chạy (nhịp, ảnh chụp, tính, đổi) {r['follow_counters_delta']} trong {r['follow_secs']:.0f} s; "
-              f"thu nhỏ {r['min_counters_delta']}")
+              f"thu nhỏ {r['min_counters_delta']} | mở lại: khung đầu {r['restore_first_ms']:.0f} ms, khoảng lớn nhất {r['restore_max_gap_ms']:.1f} ms")
         time.sleep(1.0)
     res = {"scenario": "player", "hz": refresh_hz(), "runs": good, "dropped": dropped}
     if good:
@@ -340,7 +348,9 @@ def player_main(a, exe: Path, fixture: Path, env: dict) -> int:
         res["summary"] = {
             "cold_first_frame_ms_median": med("cold_first_frame_ms"),
             "private_idle_loaded_mb_median": med("private_idle_loaded_mb"), "private_idle_loaded_mb_worst": worst("private_idle_loaded_mb"),
-            "private_min_playing_mb_worst": worst("private_min_playing_mb"), "cpu_min_playing_pct_worst": worst("cpu_min_playing_pct_of_core"),
+            "private_min_playing_mb_worst": worst("private_min_playing_mb"), "private_min_settled_mb_worst": worst("private_min_settled_mb"),
+            "restore_first_ms_worst": worst("restore_first_ms"), "restore_max_gap_ms_worst": worst("restore_max_gap_ms"),
+            "cpu_min_playing_pct_worst": worst("cpu_min_playing_pct_of_core"),
             "morph_p99_ms_median": med("morph_p99"), "morph_p99_ms_worst": worst("morph_p99"), "unmorph_p99_ms_worst": worst("unmorph_p99"),
             "follow_p99_ms_median": med("follow_p99"), "follow_p99_ms_worst": worst("follow_p99"), "follow_max_ms_worst": worst("follow_max"),
         }

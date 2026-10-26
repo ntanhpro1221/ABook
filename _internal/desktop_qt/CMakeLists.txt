@@ -58,6 +58,7 @@ qt_add_executable(ABookDesk WIN32
     src/desktopapi.cpp
     src/desktopapi.h
     src/main.cpp
+    src/abookdesk.manifest
     src/audioout_mf.cpp
     src/audioout_mf.h
     src/bookdetail.cpp
