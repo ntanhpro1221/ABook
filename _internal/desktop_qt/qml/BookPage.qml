@@ -31,9 +31,11 @@ Item {
     }
     ScreenHeader {
         id: header
-        x: Theme.margin
-        width: parent.width - 2 * Theme.margin
+        // Nút ← thẳng mép khối nội dung, kể cả khi khối bị giới hạn 1360 và căn giữa ở khổ rất lớn.
+        x: stage.x
+        width: stage.width
         showBack: true
+        backLabel: "Về Thư viện"
         title: ""
         implicitHeight: Theme.s32 + Theme.headerRow
     }
@@ -98,7 +100,7 @@ Item {
                     visible: root.book.progress > 0.005
                     width: parent.width
                     height: 4
-                    radius: 2
+                    radius: height / 2
                     color: Theme.sunken
                     Rectangle {
                         width: parent.width * Math.min(1, root.book.progress || 0)
@@ -110,8 +112,8 @@ Item {
                 Text {
                     visible: root.book.progress > 0.005
                     width: parent.width
-                    text: root.book.progress >= 0.995 ? "Bạn đã nghe xong"
-                        : "Bạn đã nghe " + Math.round((root.book.progress || 0) * 100) + " %"
+                    text: root.book.progress >= 0.995 ? "Đã nghe xong"
+                        : "Đã nghe " + Math.floor((root.book.progress || 0) * 100) + "%"
                           + (root.book.lastChapter ? " · " + root.book.lastChapter : "")
                     color: Theme.text2
                     wrapMode: Text.Wrap

@@ -45,7 +45,7 @@ Item {
             compare(sb.width, 232)
             compare(sb.panel.width, 232)
             compare(Platform.writes, 0)
-            compare(sb.toggleButton.tip, "Thu gọn  (Ctrl+B)")
+            compare(sb.toggleButton.tip, "Thu gọn (Ctrl+B)")
         }
 
         function test_toggleCollapsesExpandsAndPersists() {
@@ -53,11 +53,11 @@ Item {
             compare(sb.expanded, false)
             compare(Platform.store["sidebarExpanded"], "0")
             tryCompare(sb, "width", 56, 1500)
-            compare(sb.toggleButton.tip, "Mở rộng  (Ctrl+B)")
+            compare(sb.toggleButton.tip, "Mở rộng (Ctrl+B)")
             sb.toggle()
             compare(Platform.store["sidebarExpanded"], "1")
             tryCompare(sb, "width", 232, 1500)
-            compare(sb.toggleButton.tip, "Thu gọn  (Ctrl+B)")
+            compare(sb.toggleButton.tip, "Thu gọn (Ctrl+B)")
         }
 
         function test_ctrlBToggles() {

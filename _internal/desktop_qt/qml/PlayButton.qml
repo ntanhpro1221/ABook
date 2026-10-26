@@ -10,7 +10,7 @@ Interactive {
     ringRadius: size / 2
     enabled: Player.loaded
     opacity: enabled ? 1 : 0.4
-    tip: Player.playing ? "Tạm dừng  (Space)" : "Phát  (Space)"
+    tip: Player.playing ? "Tạm dừng (Space)" : "Phát (Space)"
     onClicked: Player.toggle()
 
     Rectangle {

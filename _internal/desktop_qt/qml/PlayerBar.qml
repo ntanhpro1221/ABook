@@ -65,7 +65,7 @@ Item {
             height: Math.round(width * Theme.coverRatio)
             coverKey: Player.coverKey
             title: Player.bookTitle
-            radius: 4
+            radius: Theme.radiusControl
             opacity: root.thumbShown ? 1 : 0
         }
         Column {
