@@ -171,17 +171,10 @@ class NativeActivity : ComponentActivity() {
         }
     }
 
-    private var nearbyResult: ((Boolean) -> Unit)? = null
-    private val nearby = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        nearbyResult?.invoke(granted)
-        nearbyResult = null
-    }
-    private var notificationsThen: (() -> Unit)? = null
-    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
-        // Từ chối thông báo thì chia sẻ vẫn chạy (chỉ không có thông báo "Tắt chia sẻ").
-        notificationsThen?.invoke()
-        notificationsThen = null
-    }
+    // Nơi đang đợi câu trả lời của các hộp hệ thống nằm ở Application ([PendingAnswers]): Activity bị huỷ lúc hộp còn mở thì Activity mới vẫn giao được.
+    private val nearby = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted -> app.answers.nearby.deliver(granted) }
+    // Từ chối thông báo thì chia sẻ vẫn chạy (chỉ không có thông báo "Tắt chia sẻ").
+    private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { app.answers.notifications.deliver(Unit) }
 
     /** Cửa ra hệ điều hành của ba màn Thiết bị: Studio của máy tính, trang thông tin ứng dụng, quyền "Thiết bị ở gần" và thông báo. */
     private val deviceLinks = DeviceLinks(
@@ -191,14 +184,14 @@ class NativeActivity : ComponentActivity() {
             if (Build.VERSION.SDK_INT < 31) {
                 result(true)
             } else {
-                nearbyResult = result
+                app.answers.nearby.expect(result)
                 openedByApp = true
                 nearby.launch(Manifest.permission.BLUETOOTH_CONNECT)
             }
         },
         askNotifications = { then ->
             if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                notificationsThen = then
+                app.answers.notifications.expect { then() }
                 openedByApp = true
                 notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
             } else {
@@ -207,25 +200,21 @@ class NativeActivity : ComponentActivity() {
         },
     )
 
-    private var pickFolderResult: ((String?) -> Unit)? = null
     private val pickFolder = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        pickFolderResult?.invoke(result.data?.data?.takeIf { result.resultCode == RESULT_OK }?.toString())
-        pickFolderResult = null
+        app.answers.folder.deliver(result.data?.data?.takeIf { result.resultCode == RESULT_OK }?.toString())
     }
-    private var createFileResult: ((String?) -> Unit)? = null
     private val createFile = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        createFileResult?.invoke(result.data?.data?.takeIf { result.resultCode == RESULT_OK }?.toString())
-        createFileResult = null
+        app.answers.file.deliver(result.data?.data?.takeIf { result.resultCode == RESULT_OK }?.toString())
     }
 
     /** Cửa ra hệ điều hành của màn Xuất sách: bộ chọn thư mục MP3, hộp "tạo file" của M4B và sách nói, bảng chia sẻ file vừa xuất, trang thông tin ứng dụng. */
     private val exportLinks = ExportLinks(
         pickFolder = { result ->
-            pickFolderResult = result
+            app.answers.folder.expect(result)
             pickFolder.launch(Mp3Exports.pickIntent(this))
         },
         createFile = { title, result ->
-            createFileResult = result
+            app.answers.file.expect(result)
             createFile.launch(M4bExports.createIntent(title))
         },
         share = ::shareExport,

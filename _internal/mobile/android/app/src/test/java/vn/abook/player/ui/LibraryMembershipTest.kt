@@ -12,7 +12,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.Shadows.shadowOf
-import vn.abook.player.BookActions
 import vn.abook.player.Store
 import vn.abook.player.ui.data.*
 import java.io.File
@@ -20,24 +19,47 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class LibraryMembershipTest {
-    @Test fun undoKeepsTheRealFilesAndExpiryActuallyDeletesThem() = runBlocking {
+    private fun awaitTrue(what: String, condition: () -> Boolean) {
+        val until = System.currentTimeMillis() + 5_000
+        while (!condition()) {
+            shadowOf(Looper.getMainLooper()).idle()
+            check(System.currentTimeMillis() < until) { "hết giờ chờ: $what" }
+            Thread.sleep(10)
+        }
+    }
+
+    private fun book(id: String): File = File(Store.bookDir(id), "book.json").apply { parentFile!!.mkdirs(); writeText("{}") }
+
+    @Test fun deletingMovesTheBookToTheWaitingPlaceAtOnceAndUndoBringsItBack() = runBlocking {
         val context = ApplicationProvider.getApplicationContext<Context>()
         Store.init(context)
-        val file = File(Store.bookDir("local"), "book.json").apply { parentFile!!.mkdirs(); writeText("{}") }
+        val file = book("local")
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-        val deletes = UndoDelete(scope, { BookActions.deleteAfterUndo(context, it); null }, {})
-        deletes.remove("local")
-        assertTrue(file.isFile)
-        deletes.undo()
-        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(28_000))
-        assertTrue("Undo must preserve the original bytes", file.isFile)
-        deletes.remove("local")
-        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(27_999))
-        assertTrue(file.isFile)
-        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(1))
-        assertFalse("Expiry must call the real Store deletion", file.exists())
-        assertFalse(deletes.contains("local"))
+        val repo = LibraryRepo(context, scope)
+        assertNull(repo.delete("local"))
+        assertFalse("cuốn nằm chờ ngay, không đợi hết hạn Hoàn tác (như bản WebView: bền qua tắt app)", file.exists())
+        assertTrue(repo.deletions.contains("local"))
+        repo.deletions.undo()
+        awaitTrue("cuốn về chỗ cũ") { file.isFile && !repo.deletions.contains("local") }
+        assertEquals("Đã khôi phục “”", repo.deletions.notice.value)
         scope.cancel()
+    }
+
+    @Test fun aBookStillWaitingWhenTheProcessDiedIsGoneForGoodNextTime() = runBlocking {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        Store.init(context)
+        val file = book("local")
+        val waiting = File(Store.bookDir("local").parentFile!!.parentFile, ".trash-pending")
+        val first = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+        val repo = LibraryRepo(context, first)
+        assertNull(repo.delete("local"))
+        assertTrue(waiting.isDirectory)
+        first.cancel() // tiến trình chết trước hạn Hoàn tác: nút Hoàn tác mất cùng nó
+        val second = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+        LibraryRepo(context, second)
+        awaitTrue("chỗ chờ được dọn") { !waiting.exists() }
+        assertFalse(file.exists())
+        second.cancel()
     }
 
     @Test fun authoritativeRemoteListDropsVanishedCacheButPreservesDownloadsAndOfflinePlayingBook() = runBlocking {
