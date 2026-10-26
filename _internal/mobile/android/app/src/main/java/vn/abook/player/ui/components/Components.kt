@@ -1,5 +1,6 @@
 package vn.abook.player.ui.components
 
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -23,11 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
@@ -79,16 +76,10 @@ fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
         modifier.size(Dim.s48).pressable(onClick = onClick).semantics { contentDescription = "Quay lại" },
         contentAlignment = Alignment.CenterStart,
     ) {
+        // lucide ArrowLeft như bản web; mũi nhọn (x 4 kể cả nửa nét) dời về mép trái ô để thẳng mép nội dung.
         Canvas(Modifier.size(24.dp)) {
-            val stroke = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round)
-            val path = Path().apply {
-                moveTo(size.width * 0.92f, size.height * 0.5f)
-                lineTo(size.width * 0.08f, size.height * 0.5f)
-                moveTo(size.width * 0.48f, size.height * 0.1f)
-                lineTo(size.width * 0.08f, size.height * 0.5f)
-                lineTo(size.width * 0.48f, size.height * 0.9f)
-            }
-            drawPath(path, ink, style = stroke)
+            val unit = size.width / 24f
+            translate(-4f * unit, 0f) { drawLucide(LucidePaths.ARROW_LEFT, ink, unit) }
         }
     }
 }

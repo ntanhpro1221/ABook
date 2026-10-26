@@ -27,7 +27,7 @@ import vn.abook.player.ui.components.HeadphonesIcon
 import vn.abook.player.ui.components.MoonIcon
 import vn.abook.player.ui.components.ScreenHeader
 import vn.abook.player.ui.components.SheetHost
-import vn.abook.player.ui.components.SlidersIcon
+import vn.abook.player.ui.components.WrenchIcon
 import vn.abook.player.ui.components.ThemeIcon
 import vn.abook.player.ui.components.VoiceIcon
 import vn.abook.player.ui.data.AppSettings
@@ -103,7 +103,7 @@ private fun GroupIcon(group: SettingsGroup, color: Color) = when (group) {
     SettingsGroup.Sleep -> MoonIcon(color)
     SettingsGroup.Look -> ThemeIcon(color)
     SettingsGroup.Devices -> DevicesIcon(color)
-    SettingsGroup.Advanced -> SlidersIcon(color)
+    SettingsGroup.Advanced -> WrenchIcon(color)
 }
 
 /** Màn con của một nhóm (cấp hai, cấp cuối). Bảng trượt (chọn giờ, nhật ký, thành phần) mở qua [sheets] - lớp nổi, không phải cấp thứ ba. */

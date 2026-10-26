@@ -119,7 +119,7 @@ private fun MenuActions(
                     source.setFinished(book.id, !finished)
                     dismiss()
                 }
-            }) { ink -> if (finished) DashedCircleIcon(ink, size = 20.dp) else CheckIcon(ink, size = 20.dp) }
+            }) { ink -> if (finished) DashedCircleIcon(ink) else CheckIcon(ink) }
         }
         MenuRow("Sửa thông tin", tag = "menu_edit", onClick = onEdit) { ink -> PencilIcon(ink) }
         if (detail?.canShare == true) {
@@ -177,7 +177,7 @@ fun ChapterSheet(book: ListenBook, chapter: ChapterLine, source: BookSource, onL
                     source.setChapterDone(book.id, chapter.id, !chapter.done)
                     dismiss()
                 }
-            }) { ink -> if (chapter.done) DashedCircleIcon(ink, size = 20.dp) else CheckIcon(ink, size = 20.dp) }
+            }) { ink -> if (chapter.done) DashedCircleIcon(ink) else CheckIcon(ink) }
         } else {
             BasicText("Chương này chưa có audio.", style = Abook.type.body.copy(color = colors.text2), modifier = Modifier.padding(vertical = Dim.s12))
         }
@@ -237,7 +237,7 @@ fun FindInBookSheet(detail: BookDetail, source: BookSource, onPick: (FindHit) ->
                 .padding(horizontal = Dim.s12),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            SearchIcon(colors.text3, size = 20.dp)
+            SearchIcon(colors.text3)
             Spacer(Modifier.width(Dim.s8))
             BasicTextField(
                 value = query,

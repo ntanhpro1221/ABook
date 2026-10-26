@@ -12,17 +12,19 @@ class PlayPauseGeometryTest {
     @Test
     fun `play is a triangle and pause is two bars`() {
         val play = at(0f)
-        // Tam giác: ba góc thật là (8,5) (19,12) (8,19); đỉnh thừa (13,...) nằm trên hai cạnh nghiêng.
-        assertEquals(8f, play[0], 0f)
-        assertEquals(19f, play[10], 0f)
+        // Tam giác: ba góc thật là (6,4) (20,12) (6,20); đỉnh thừa (13,...) nằm trên hai cạnh nghiêng.
+        assertEquals(6f, play[0], 0f)
+        assertEquals(20f, play[10], 0f)
         assertEquals(12f, play[11], 0f)
         val pause = at(1f)
-        // Hai thanh đứng: đỉnh trái-phải của mỗi thanh cùng x, cùng chiều cao 14.
+        // Hai thanh đứng: đỉnh trái-phải của mỗi thanh cùng x, cùng chiều cao 16 (đường tâm; mực 18 như lucide).
         assertEquals(pause[0], pause[6], 0f)
         assertEquals(pause[2], pause[4], 0f)
-        assertEquals(14f, pause[7] - pause[1], 0f)
+        assertEquals(16f, pause[7] - pause[1], 0f)
         assertEquals(pause[8], pause[14], 0f)
-        assertEquals(14f, pause[15] - pause[9], 0f)
+        assertEquals(16f, pause[15] - pause[9], 0f)
+        // Khe giữa hai thanh: đường tâm cách 6 = mực cách 4 sau nét 2 (lucide Pause). Hẹp hơn thì hai thanh dính thành một khối.
+        assertEquals(6f, pause[8] - pause[2], 0f)
     }
 
     @Test
