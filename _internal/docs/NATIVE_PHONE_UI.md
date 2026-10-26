@@ -63,6 +63,7 @@ Chủ sách 26-10: "trong các loại chuyển cảnh, loại fade là tôi ghé
 - **Đang nghe**: `SharedTransitionLayout`. Khung thanh nhỏ nở thành cả màn (`sharedBounds`, cắt bo góc từ góc thanh về 0); bìa, tên chương,
   tên sách, nút phát là `sharedElement` bay riêng (đổi chỗ, đổi cỡ, đổi màu); phần chỉ có ở màn lớn nhô lên + lớn dần từ 40 % tiến trình.
   Vuốt xuống / Back dự đoán kéo ngược đúng đường ấy theo ngón tay.
+- **Một nguồn trạng thái phát**: `PlayerRepo` là người nghe `Playback` DUY NHẤT và là chủ đồng hồ duy nhất (`PlayerClock`); thanh nhỏ, trang sách và cửa sổ Đang nghe (`RepoNowPlayingModel`) đều đọc ảnh chụp bất biến của nó, vị trí chỉ đọc trong pha vẽ. Cửa sổ là lớp phủ ở gốc app (trên cả ngăn xếp màn lẫn thanh tab), không phải màn con; thanh phát nhỏ THẬT ở gốc là nguồn của chuyển động nở ra; Back đóng cửa sổ trước mọi màn bên dưới. Menu "Đọc theo" của trang sách nạp cuốn ở trạng thái dừng rồi mở cửa sổ thẳng ở chế độ đọc.
 - **Đọc theo là một chế độ của Đang nghe** (chủ sách 26-10: "đọc theo phải là một mode có thể chuyển qua lại như một toggle của cửa sổ
   playing"): bật thì bìa thu về ô nhỏ ở thanh đầu, vùng chữ mở ra tại chỗ, thanh điều khiển giữ nguyên; tắt thì ngược lại. Cùng một cửa sổ.
 - **Đổi nội dung tại chỗ** (nhãn nút, số, icon): hình học - chữ cũ trượt lên, chữ mới từ dưới lên (`AnimatedContent` với slide dọc + cắt);

@@ -2,6 +2,9 @@ package vn.abook.player.ui.data
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import vn.abook.player.Playback
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -54,7 +57,7 @@ class PlayerRepoTest {
         assertEquals("Chương 1", state.chapterTitle)
         assertTrue(state.playing)
         assertEquals(600_000L, state.durationMs)
-        assertEquals(1.25f, state.rate, 0f)
+        assertEquals(1.25, state.rate, 0.0)
         assertEquals(12_500L, repo.clock.positionMs.value)
     }
 
@@ -241,5 +244,100 @@ class PlayerRepoTest {
         repo.playChapter("b2", 5, 0.0)
         assertEquals(5, core.loads.single().startChapterId)
         assertEquals("b2", core.loads.single().id)
+    }
+
+    // ---- những gì Đang nghe cần, vẫn từ MỘT nguồn ----
+
+    private fun chapter(id: Int, seconds: Double = 60.0) = Playback.Chapter(id, "Chương $id", "c$id.mp3", seconds)
+
+    @Test
+    fun `the snapshot carries the queue the music and the voice and rebuilds the queue only when the core changes it`() {
+        val core = FakePlaybackCore(snap())
+        core.chapterList = listOf(chapter(1, 90.0), chapter(2))
+        core.music = true
+        core.voiceChosen = "edge:x"
+        val repo = repo(core)
+        repo.attach()
+        val first = repo.state.value
+        assertEquals(listOf(PlayerChapter(1, "Chương 1", 90_000), PlayerChapter(2, "Chương 2", 60_000)), first.chapters)
+        assertTrue(first.musicEnabled)
+        assertEquals("edge:x", first.voiceId)
+        core.emit(snap(playing = true))
+        assertSame("cùng hàng chương của lõi thì dùng lại, không dựng mới", first.chapters, repo.state.value.chapters)
+        core.chapterList = listOf(chapter(7))
+        core.emit(snap(kind = "chapter"))
+        assertEquals(listOf(7), repo.state.value.chapters.map { it.id })
+    }
+
+    @Test
+    fun `music and voice commands go to the core and show at once`() {
+        val core = FakePlaybackCore(snap())
+        val repo = repo(core)
+        repo.attach()
+        repo.setAutoMusic(true)
+        repo.setVoice("v1")
+        repo.setSleep("minutes", 15)
+        assertEquals(listOf("music true", "voice v1", "sleep minutes 15"), core.calls)
+        assertTrue(repo.state.value.musicEnabled)
+        assertEquals("v1", repo.state.value.voiceId)
+    }
+
+    @Test
+    fun `sampling the clock reads the exact position and a tick still moves it`() {
+        val core = FakePlaybackCore(snap(position = 1.0))
+        val repo = repo(core)
+        repo.attach()
+        core.position = 4_321
+        repo.sampleClock()
+        assertEquals(4_321L, repo.clock.positionMs.value)
+        core.emit(snap(kind = "tick", position = 5.0))
+        assertEquals(5_000L, repo.clock.positionMs.value)
+    }
+
+    @Test
+    fun `events name every change that is not a tick even when the state is equal`() {
+        val core = FakePlaybackCore(snap())
+        val repo = repo(core)
+        repo.attach()
+        val seen = ArrayList<String>()
+        val job = CoroutineScope(Dispatchers.Unconfined).launch { repo.events.collect { seen += it } }
+        core.emit(snap(kind = "state"))
+        core.emit(snap(kind = "tick", position = 20.0))
+        core.emit(snap(kind = "state"))
+        job.cancel()
+        assertEquals(listOf("state", "state"), seen)
+    }
+
+    @Test
+    fun `prepare loads another book paused over the one in the player and waits for it`() = runBlocking {
+        val core = FakePlaybackCore(snap(book = "b1", playing = true), simulate = true)
+        val repo = repo(core, mapOf("b2" to plan("b2")))
+        repo.attach()
+        assertTrue(repo.prepare("b2"))
+        val load = core.loads.single()
+        assertEquals("b2", load.id)
+        assertFalse("không tự phát", load.autoplay)
+        assertFalse("người nghe chọn nên được thay cuốn đang có", load.restore)
+        assertEquals("b2", repo.state.value.bookId)
+        assertFalse(repo.state.value.playing)
+    }
+
+    @Test
+    fun `prepare leaves the book that is already in the player alone and says no when there is nothing to load`() = runBlocking {
+        val core = FakePlaybackCore(snap(book = "b1", playing = true), simulate = true)
+        val repo = repo(core)
+        repo.attach()
+        assertTrue(repo.prepare("b1"))
+        assertTrue(core.loads.isEmpty())
+        assertTrue(repo.state.value.playing)
+        assertFalse(repo.prepare("không có"))
+    }
+
+    @Test
+    fun `only the restore is a restore`() {
+        val core = emptyCore()
+        val repo = repo(core, last = plan("last"))
+        repo.attach()
+        assertTrue(core.loads.single().restore)
     }
 }

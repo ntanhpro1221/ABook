@@ -1,7 +1,9 @@
 package vn.abook.player.ui
 
 import androidx.activity.ComponentActivity
+import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.remember
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
@@ -27,6 +29,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import vn.abook.player.ui.data.CoverLoader
+import vn.abook.player.Playback
+import vn.abook.player.ui.nowplaying.DemoReadAlongSource
+import vn.abook.player.ui.nowplaying.ReadAlongSource
+import vn.abook.player.ui.nowplaying.RepoNowPlayingModel
 import vn.abook.player.ui.data.FakePlaybackCore
 import vn.abook.player.ui.data.LibraryState
 import vn.abook.player.ui.data.ListenBook
@@ -63,12 +69,15 @@ class ShellScreenshotTest {
         return PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
     }
 
-    private fun show(dark: Boolean = false, library: LibraryState = LibraryState.Ready(books), player: PlayerRepo = repo()) {
+    private fun show(dark: Boolean = false, library: LibraryState = LibraryState.Ready(books), player: PlayerRepo = repo(), readAlong: ReadAlongSource = ReadAlongSource.None) {
         rule.setContent {
             AbookTheme(dark) {
                 scope = rememberCoroutineScope()
                 shell = remember { ShellState(scope) }
-                AppShell(shell, library, player, CoverLoader(1 shl 20), SettingsEnv(settings, ThemeReveal(scope)))
+                AppShell(
+                    shell, library, player, CoverLoader(1 shl 20), SettingsEnv(settings, ThemeReveal(scope)),
+                    nowPlaying = remember(player, readAlong) { RepoNowPlayingModel(player, scope, readAlong) }, sampleClock = false,
+                )
             }
         }
     }
@@ -203,17 +212,143 @@ class ShellScreenshotTest {
         rule.onNodeWithTag("mini_player").assertIsDisplayed()
     }
 
+    // ---- cửa sổ Đang nghe nở ra từ thanh phát nhỏ thật ----
+
+    private fun back() = rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+
     @Test
-    fun tappingTheMiniPlayerOpensTheFullPlayerOnce() {
+    fun tappingTheMiniPlayerOpensTheWindowAndBackClosesItLeavingTheLibraryAlone() {
         show(player = repo(playing = false))
         rule.waitForIdle()
         rule.onNodeWithTag("mini_open").performClick()
         rule.waitForIdle()
-        rule.onNodeWithTag("now_playing_screen").assertIsDisplayed()
-        assertEquals(1, shell.nav.stack.size)
-        rule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        rule.onNodeWithTag("now_playing").assertIsDisplayed()
+        assertEquals("Đang nghe không còn là màn con", 0, shell.nav.stack.size)
+        shot("shell_now_playing_open_light")
+        back()
         rule.waitForIdle()
-        rule.onNodeWithTag("now_playing_screen").assertDoesNotExist()
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
+        rule.onNodeWithTag("library_grid").assertIsDisplayed()
+        rule.onNodeWithTag("mini_player").assertIsDisplayed()
+        assertEquals(0, shell.nav.stack.size)
+    }
+
+    @Test
+    fun midTransitionTheCoverFliesBetweenTheMiniAndTheFullPosition() {
+        show(player = repo(playing = true))
+        rule.waitForIdle()
+        val mini = rule.onNodeWithTag("mini_player").getUnclippedBoundsInRoot()
+        rule.mainClock.autoAdvance = false
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.mainClock.advanceTimeBy(160)
+        shot("shell_now_playing_mid_light")
+        val mid = rule.onNodeWithTag("player_cover").getUnclippedBoundsInRoot()
+        rule.mainClock.advanceTimeBy(1000)
+        val full = rule.onNodeWithTag("player_cover").getUnclippedBoundsInRoot()
+        // Bìa nhỏ nằm trong thanh phát ở đáy; bìa lớn ở giữa màn: giữa chừng nó đang ở khoảng giữa hai chỗ ấy, cả toạ độ lẫn cỡ.
+        assert(mid.top < mini.top && mid.top > full.top) { "bìa giữa chừng phải nằm giữa thanh nhỏ và màn đầy: mini=$mini mid=$mid full=$full" }
+        // Cỡ bìa giữa chừng do sharedBounds co giãn nội dung (ScaleToBounds) nên toạ độ bố cục vẫn là cỡ đầy; cỡ nhìn thấy kiểm trên ảnh shell_now_playing_mid_light.
+        rule.mainClock.autoAdvance = true
+    }
+
+    @Test
+    fun backWithTheWindowOpenOverABookPageClosesOnlyTheWindow() {
+        show(player = repo(playing = false))
+        rule.waitForIdle()
+        rule.onNodeWithTag("tab_library").performClick()
+        // Mở trang sách rồi cửa sổ (từ chỗ khác thanh nhỏ, vd. menu): Back đóng cửa sổ, trang sách vẫn nằm đó.
+        rule.onAllNodesWithTag("book_cell")[0].performClick()
+        rule.waitForIdle()
+        rule.runOnUiThread { shell.window.open() }
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing").assertIsDisplayed()
+        back()
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
+        rule.onNodeWithTag("book_screen").assertIsDisplayed()
+        assertEquals(1, shell.nav.stack.size)
+    }
+
+    @Test
+    fun readAlongFromTheBookMenuLoadsTheBookPausedAndOpensTheWindowInReadingMode() {
+        val core = FakePlaybackCore(playerSnapshot(book = "", chapter = null), simulate = true)
+        val readable = List(3) { ListenBook("b$it", "Tên sách số ${it + 1}", "Tác giả", chaptersTotal = 5, chaptersAvailable = 5) }
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { id -> LoadRequest(id, "Tên sách", "", listOf(Playback.Chapter(1, "Chương 1", "", 600.0, "texts/1.txt")), 1, 30.0, 1.0) }).also { it.attach() }
+        show(library = LibraryState.Ready(readable), player = repo, readAlong = DemoReadAlongSource)
+        rule.waitForIdle()
+        rule.onNodeWithTag("mini_player").assertDoesNotExist()
+        rule.onAllNodesWithTag("book_cell")[0].performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("book_more").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("menu_read").performClick()
+        rule.waitForIdle()
+        assertEquals("nạp dừng ở chỗ nghe tiếp, không tự phát", listOf(false), core.loads.map { it.autoplay })
+        assertEquals(emptyList<String>(), core.calls)
+        rule.onNodeWithTag("now_playing").assertIsDisplayed()
+        rule.onNodeWithTag("mode_read").assertIsSelected()
+        shot("shell_read_along_from_book_light")
+        back()
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
+        rule.onNodeWithTag("book_screen").assertIsDisplayed()
+        assertEquals(1, shell.nav.stack.size)
+    }
+
+    @Test
+    fun theWindowOpenOrClosedLeavesExactlyOneListenerOnThePlaybackCore() {
+        val core = FakePlaybackCore(playerSnapshot(playing = false))
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+        show(player = repo)
+        rule.waitForIdle()
+        assertEquals(1, core.listeners.size)
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("mode_read").performClick()
+        rule.waitForIdle()
+        assertEquals(1, core.listeners.size)
+        back()
+        rule.waitForIdle()
+        assertEquals(1, core.listeners.size)
+    }
+
+    @Test
+    fun clockTicksRecomposeNeitherTheShellNorTheOpenWindow() {
+        val core = FakePlaybackCore(playerSnapshot(playing = true))
+        val repo = PlayerRepo(core, CoroutineScope(Dispatchers.Unconfined), Dispatchers.Unconfined, { null }, { null }).also { it.attach() }
+        show(player = repo)
+        rule.waitForIdle()
+        fun ticks(at: Double, step: Double) = rule.runOnUiThread { repeat(20) { core.emit(playerSnapshot(playing = true, position = at + it * step, kind = "tick")) } }
+        fun changes() = Recomposer.runningRecomposers.value.sumOf { it.changeCount }
+        var before = changes()
+        ticks(20.0, 0.5)
+        rule.waitForIdle()
+        assertEquals("thanh nhỏ đóng: nhịp chỉ vẽ lại vạch tiến độ", before, changes())
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("mode_read").performClick()
+        rule.waitForIdle()
+        // Chữ mm:ss đổi mỗi giây (đúng một vùng nhỏ dựng lại); các nhịp trong CÙNG một giây thì không dựng lại gì - kể cả thanh tua, chữ Đọc theo.
+        ticks(30.0, 0.0)
+        rule.waitForIdle()
+        before = changes()
+        ticks(30.0, 0.04)
+        rule.waitForIdle()
+        assertEquals("cửa sổ mở: nhịp trong một giây không dựng lại gì", before, changes())
+    }
+
+    @Test
+    fun theWindowContentIsNotComposedWhileCollapsed() {
+        show(player = repo(playing = false))
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
+        rule.onNodeWithTag("now_playing_bounds").assertDoesNotExist()
+        rule.onNodeWithTag("mini_open").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing").assertIsDisplayed()
+        rule.onNodeWithTag("collapse_player").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("now_playing").assertDoesNotExist()
     }
 
     @Test
